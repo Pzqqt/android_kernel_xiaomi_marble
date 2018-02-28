@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,13 +30,11 @@ static QDF_STATUS pmo_core_cache_arp_in_vdev_priv(
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pmo_arp_offload_params *request = NULL;
-	struct pmo_psoc_priv_obj *psoc_ctx;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	int index;
 	struct qdf_mac_addr peer_bssid;
 
 	PMO_ENTER();
-	psoc_ctx = pmo_psoc_get_priv(arp_req->psoc);
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -44,13 +42,12 @@ static QDF_STATUS pmo_core_cache_arp_in_vdev_priv(
 	if (!request) {
 		pmo_err("cannot allocate arp request");
 		status = QDF_STATUS_E_NOMEM;
-		goto out;
+		goto exit_with_status;
 	}
 
-	status = pmo_get_vdev_bss_peer_mac_addr(vdev,
-			&peer_bssid);
+	status = pmo_get_vdev_bss_peer_mac_addr(vdev, &peer_bssid);
 	if (status != QDF_STATUS_SUCCESS)
-		goto out;
+		goto free_req;
 
 	qdf_mem_copy(&request->bssid.bytes, &peer_bssid.bytes,
 			QDF_MAC_ADDR_SIZE);
@@ -75,9 +72,11 @@ static QDF_STATUS pmo_core_cache_arp_in_vdev_priv(
 		request->host_ipv4_addr[2],
 		request->host_ipv4_addr[3],
 		request->enable);
-out:
-	if (request)
-		qdf_mem_free(request);
+
+free_req:
+	qdf_mem_free(request);
+
+exit_with_status:
 	PMO_EXIT();
 
 	return status;

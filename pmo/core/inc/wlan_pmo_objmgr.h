@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -142,6 +142,11 @@ pmo_psoc_get_priv(struct wlan_objmgr_psoc *psoc)
 
 	return psoc_priv;
 }
+
+#define pmo_psoc_with_ctx(psoc, cursor) \
+	for (cursor = pmo_psoc_get_priv(psoc), qdf_spin_lock_bh(&cursor->lock);\
+	     cursor; \
+	     qdf_spin_unlock_bh(&cursor->lock), cursor = NULL)
 
 /* Tree Navigation: pdev */
 

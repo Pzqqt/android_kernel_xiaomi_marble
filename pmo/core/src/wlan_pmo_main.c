@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -172,11 +172,10 @@ QDF_STATUS pmo_core_get_psoc_config(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		qdf_mem_copy(psoc_cfg, &psoc_ctx->psoc_cfg, sizeof(*psoc_cfg));
+	}
 
-	qdf_spin_lock(&psoc_ctx->lock);
-	qdf_mem_copy(psoc_cfg, &psoc_ctx->psoc_cfg, sizeof(*psoc_cfg));
-	qdf_spin_unlock(&psoc_ctx->lock);
 out:
 	PMO_EXIT();
 
@@ -196,11 +195,10 @@ QDF_STATUS pmo_core_update_psoc_config(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		qdf_mem_copy(&psoc_ctx->psoc_cfg, psoc_cfg, sizeof(*psoc_cfg));
+	}
 
-	qdf_spin_lock(&psoc_ctx->lock);
-	qdf_mem_copy(&psoc_ctx->psoc_cfg, psoc_cfg, sizeof(*psoc_cfg));
-	qdf_spin_unlock(&psoc_ctx->lock);
 out:
 	PMO_EXIT();
 
@@ -212,10 +210,9 @@ void pmo_core_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	qdf_spin_lock_bh(&psoc_ctx->lock);
-	psoc_ctx->hif_hdl = hif_hdl;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		psoc_ctx->hif_hdl = hif_hdl;
+	}
 }
 
 void *pmo_core_psoc_get_hif_handle(struct wlan_objmgr_psoc *psoc)
@@ -223,10 +220,9 @@ void *pmo_core_psoc_get_hif_handle(struct wlan_objmgr_psoc *psoc)
 	void *hif_hdl;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	qdf_spin_lock_bh(&psoc_ctx->lock);
-	hif_hdl = psoc_ctx->hif_hdl;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		hif_hdl = psoc_ctx->hif_hdl;
+	}
 
 	return hif_hdl;
 }
@@ -236,10 +232,9 @@ void pmo_core_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	qdf_spin_lock_bh(&psoc_ctx->lock);
-	psoc_ctx->txrx_hdl = txrx_hdl;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		psoc_ctx->txrx_hdl = txrx_hdl;
+	}
 }
 
 void *pmo_core_psoc_get_txrx_handle(struct wlan_objmgr_psoc *psoc)
@@ -247,10 +242,9 @@ void *pmo_core_psoc_get_txrx_handle(struct wlan_objmgr_psoc *psoc)
 	void *txrx_hdl;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	qdf_spin_lock_bh(&psoc_ctx->lock);
-	txrx_hdl = psoc_ctx->txrx_hdl;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		txrx_hdl = psoc_ctx->txrx_hdl;
+	}
 
 	return txrx_hdl;
 }

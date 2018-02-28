@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,16 +41,14 @@ void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc);
  *
  * Return: True if bus suspende else false
  */
-static inline
-bool pmo_core_get_wow_bus_suspend(struct wlan_objmgr_psoc *psoc)
+static inline bool pmo_core_get_wow_bus_suspend(struct wlan_objmgr_psoc *psoc)
 {
 	bool value;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	qdf_spin_lock_bh(&psoc_ctx->lock);
-	value = psoc_ctx->wow.is_wow_bus_suspended;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		value = psoc_ctx->wow.is_wow_bus_suspended;
+	}
 
 	return value;
 }
@@ -249,16 +247,15 @@ uint32_t pmo_core_vdev_get_dtim_policy(struct wlan_objmgr_vdev *vdev)
  *
  * Return: None
  */
-static inline
-void pmo_core_psoc_update_power_save_mode(struct wlan_objmgr_psoc *psoc,
-	uint8_t value)
+static inline void
+pmo_core_psoc_update_power_save_mode(struct wlan_objmgr_psoc *psoc,
+				     uint8_t value)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	qdf_spin_lock_bh(&psoc_ctx->lock);
-	psoc_ctx->psoc_cfg.power_save_mode = value;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		psoc_ctx->psoc_cfg.power_save_mode = value;
+	}
 }
 
 /**
@@ -267,16 +264,15 @@ void pmo_core_psoc_update_power_save_mode(struct wlan_objmgr_psoc *psoc,
  *
  * Return: vdev psoc power save mode value
  */
-static inline
-uint8_t pmo_core_psoc_get_power_save_mode(struct wlan_objmgr_psoc *psoc)
+static inline uint8_t
+pmo_core_psoc_get_power_save_mode(struct wlan_objmgr_psoc *psoc)
 {
 	uint8_t value;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	qdf_spin_lock_bh(&psoc_ctx->lock);
-	value = psoc_ctx->psoc_cfg.power_save_mode;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		value = psoc_ctx->psoc_cfg.power_save_mode;
+	}
 
 	return value;
 }
