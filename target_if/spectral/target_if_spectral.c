@@ -25,7 +25,7 @@
 #include <target_if_spectral.h>
 #include <wlan_lmac_if_def.h>
 #include <wlan_osif_priv.h>
-#include <init_deinit_ucfg.h>
+#include <init_deinit_lmac.h>
 #include <reg_services_public_struct.h>
 #ifdef CONFIG_WIN
 #include <wlan_mlme_dispatcher.h>

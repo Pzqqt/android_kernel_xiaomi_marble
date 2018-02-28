@@ -62,7 +62,7 @@
 #ifdef WLAN_SUPPORT_GREEN_AP
 #include <target_if_green_ap.h>
 #endif
-#include <init_deinit_ucfg.h>
+#include <init_deinit_lmac.h>
 #include <service_ready_util.h>
 
 #ifdef DIRECT_BUF_RX_ENABLE
@@ -354,13 +354,13 @@ static void target_if_target_tx_ops_register(
 		target_is_tgt_type_qca9888;
 
 	target_tx_ops->tgt_get_tgt_type =
-		ucfg_get_tgt_type;
+		lmac_get_tgt_type;
 
 	target_tx_ops->tgt_get_tgt_version =
-		ucfg_get_tgt_version;
+		lmac_get_tgt_version;
 
 	target_tx_ops->tgt_get_tgt_revision =
-		ucfg_get_tgt_revision;
+		lmac_get_tgt_revision;
 }
 
 static QDF_STATUS

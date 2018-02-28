@@ -17,7 +17,7 @@
  */
 
 /**
- * DOC: init_deinit_ucfg.c
+ * DOC: init_deinit_lmac.c
  *
  * APIs to get/set target_if params
  */
@@ -26,10 +26,10 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <target_if.h>
 #include <target_type.h>
-#include <init_deinit_ucfg.h>
+#include <init_deinit_lmac.h>
 #include <qdf_module.h>
 
-uint32_t *ucfg_get_service_param(struct wlan_objmgr_psoc *psoc)
+uint32_t *lmac_get_service_param(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -47,7 +47,7 @@ uint32_t *ucfg_get_service_param(struct wlan_objmgr_psoc *psoc)
 	return target_psoc_get_service_bitmap(tgt_hdl);
 }
 
-struct wlan_psoc_target_capability_info *ucfg_get_target_cap(
+struct wlan_psoc_target_capability_info *lmac_get_target_cap(
 				struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
@@ -66,7 +66,7 @@ struct wlan_psoc_target_capability_info *ucfg_get_target_cap(
 	return target_psoc_get_target_caps(tgt_hdl);
 }
 
-bool ucfg_is_service_param_bit_enabled(uint32_t *service_param,
+bool lmac_is_service_param_bit_enabled(uint32_t *service_param,
 					uint16_t bit_idx)
 {
 	bool retval = false;
@@ -81,7 +81,7 @@ bool ucfg_is_service_param_bit_enabled(uint32_t *service_param,
 /* dfs offload service bit */
 #define DFS_SERVICE_PHYERR_OFFLOAD 113
 
-QDF_STATUS ucfg_get_dfs_offload(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS lmac_get_dfs_offload(struct wlan_objmgr_psoc *psoc,
 			bool *is_tgt_offload)
 {
 	uint32_t *service_bitmap;
@@ -93,19 +93,19 @@ QDF_STATUS ucfg_get_dfs_offload(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	service_bitmap = ucfg_get_service_param(psoc);
+	service_bitmap = lmac_get_service_param(psoc);
 	if (!service_bitmap) {
 		target_if_err("pdev is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	*is_tgt_offload = ucfg_is_service_param_bit_enabled(service_bitmap,
+	*is_tgt_offload = lmac_is_service_param_bit_enabled(service_bitmap,
 				DFS_SERVICE_PHYERR_OFFLOAD);
 
 	return QDF_STATUS_SUCCESS;
 }
 
-target_resource_config *ucfg_get_tgt_res_cfg(struct wlan_objmgr_psoc *psoc)
+target_resource_config *lmac_get_tgt_res_cfg(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -123,7 +123,7 @@ target_resource_config *ucfg_get_tgt_res_cfg(struct wlan_objmgr_psoc *psoc)
 	return target_psoc_get_wlan_res_cfg(tgt_hdl);
 }
 
-int32_t ucfg_get_pdev_idx(struct wlan_objmgr_pdev *pdev)
+int32_t lmac_get_pdev_idx(struct wlan_objmgr_pdev *pdev)
 {
 	struct target_pdev_info *tgt_hdl;
 
@@ -141,7 +141,7 @@ int32_t ucfg_get_pdev_idx(struct wlan_objmgr_pdev *pdev)
 	return target_pdev_get_pdev_idx(tgt_hdl);
 }
 
-uint32_t ucfg_get_tgt_type(struct wlan_objmgr_psoc *psoc)
+uint32_t lmac_get_tgt_type(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -158,9 +158,9 @@ uint32_t ucfg_get_tgt_type(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_target_type(tgt_hdl);
 }
-qdf_export_symbol(ucfg_get_tgt_type);
+qdf_export_symbol(lmac_get_tgt_type);
 
-QDF_STATUS ucfg_get_pdev_target_type(struct wlan_objmgr_pdev *pdev,
+QDF_STATUS lmac_get_pdev_target_type(struct wlan_objmgr_pdev *pdev,
 					uint32_t *target_type)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -171,12 +171,12 @@ QDF_STATUS ucfg_get_pdev_target_type(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	*target_type = ucfg_get_tgt_type(psoc);
+	*target_type = lmac_get_tgt_type(psoc);
 	return QDF_STATUS_SUCCESS;
 }
-qdf_export_symbol(ucfg_get_pdev_target_type);
+qdf_export_symbol(lmac_get_pdev_target_type);
 
-uint32_t ucfg_get_tgt_version(struct wlan_objmgr_psoc *psoc)
+uint32_t lmac_get_tgt_version(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -194,7 +194,7 @@ uint32_t ucfg_get_tgt_version(struct wlan_objmgr_psoc *psoc)
 	return target_psoc_get_target_ver(tgt_hdl);
 }
 
-uint32_t ucfg_get_tgt_revision(struct wlan_objmgr_psoc *psoc)
+uint32_t lmac_get_tgt_revision(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -211,9 +211,9 @@ uint32_t ucfg_get_tgt_revision(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_target_rev(tgt_hdl);
 }
-qdf_export_symbol(ucfg_get_tgt_revision);
+qdf_export_symbol(lmac_get_tgt_revision);
 
-bool ucfg_is_target_ar900b(struct wlan_objmgr_psoc *psoc)
+bool lmac_is_target_ar900b(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 	uint32_t target_type;
@@ -241,9 +241,9 @@ bool ucfg_is_target_ar900b(struct wlan_objmgr_psoc *psoc)
 	}
 	return false;
 }
-qdf_export_symbol(ucfg_is_target_ar900b);
+qdf_export_symbol(lmac_is_target_ar900b);
 
-struct common_wmi_handle *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc)
+struct common_wmi_handle *lmac_get_wmi_hdl(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -260,15 +260,15 @@ struct common_wmi_handle *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_wmi_hdl(tgt_hdl);
 }
-qdf_export_symbol(ucfg_get_wmi_hdl);
+qdf_export_symbol(lmac_get_wmi_hdl);
 
-wmi_unified_t ucfg_get_wmi_unified_hdl(struct wlan_objmgr_psoc *psoc)
+wmi_unified_t lmac_get_wmi_unified_hdl(struct wlan_objmgr_psoc *psoc)
 {
-	return (wmi_unified_t)ucfg_get_wmi_hdl(psoc);
+	return (wmi_unified_t)lmac_get_wmi_hdl(psoc);
 }
-qdf_export_symbol(ucfg_get_wmi_unified_hdl);
+qdf_export_symbol(lmac_get_wmi_unified_hdl);
 
-struct common_htc_handle *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
+struct common_htc_handle *lmac_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -285,10 +285,10 @@ struct common_htc_handle *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_htc_hdl(tgt_hdl);
 }
-qdf_export_symbol(ucfg_get_htc_hdl);
+qdf_export_symbol(lmac_get_htc_hdl);
 
-void ucfg_set_htc_hdl(struct wlan_objmgr_psoc *psoc,
-			struct common_htc_handle *htc_hdl)
+void lmac_set_htc_hdl(struct wlan_objmgr_psoc *psoc,
+		struct common_htc_handle *htc_hdl)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -305,7 +305,7 @@ void ucfg_set_htc_hdl(struct wlan_objmgr_psoc *psoc,
 	target_psoc_set_htc_hdl(tgt_hdl, htc_hdl);
 }
 
-struct common_hif_handle *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc)
+struct common_hif_handle *lmac_get_hif_hdl(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -322,15 +322,15 @@ struct common_hif_handle *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_hif_hdl(tgt_hdl);
 }
-qdf_export_symbol(ucfg_get_hif_hdl);
+qdf_export_symbol(lmac_get_hif_hdl);
 
-struct hif_opaque_softc *ucfg_get_ol_hif_hdl(struct wlan_objmgr_psoc *psoc)
+struct hif_opaque_softc *lmac_get_ol_hif_hdl(struct wlan_objmgr_psoc *psoc)
 {
-	return (struct hif_opaque_softc *)ucfg_get_hif_hdl(psoc);
+	return (struct hif_opaque_softc *)lmac_get_hif_hdl(psoc);
 }
-qdf_export_symbol(ucfg_get_ol_hif_hdl);
+qdf_export_symbol(lmac_get_ol_hif_hdl);
 
-struct common_wmi_handle *ucfg_get_pdev_wmi_handle(
+struct common_wmi_handle *lmac_get_pdev_wmi_handle(
 		struct wlan_objmgr_pdev *pdev)
 {
 	struct target_pdev_info *tgt_hdl;
@@ -348,15 +348,14 @@ struct common_wmi_handle *ucfg_get_pdev_wmi_handle(
 
 	return target_pdev_get_wmi_handle(tgt_hdl);
 }
-qdf_export_symbol(ucfg_get_pdev_wmi_handle);
 
 wmi_unified_t
-ucfg_get_pdev_wmi_unified_handle(struct wlan_objmgr_pdev *pdev)
+lmac_get_pdev_wmi_unified_handle(struct wlan_objmgr_pdev *pdev)
 {
-	return (wmi_unified_t)ucfg_get_pdev_wmi_handle(pdev);
+	return (wmi_unified_t)lmac_get_pdev_wmi_handle(pdev);
 }
 
-uint32_t ucfg_get_num_radios(struct wlan_objmgr_psoc *psoc)
+uint32_t lmac_get_num_radios(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -372,8 +371,9 @@ uint32_t ucfg_get_num_radios(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_num_radios(tgt_hdl);
 }
+qdf_export_symbol(lmac_get_num_radios);
 
-void *ucfg_get_psoc_feature_ptr(struct wlan_objmgr_psoc *psoc)
+void *lmac_get_psoc_feature_ptr(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -389,9 +389,9 @@ void *ucfg_get_psoc_feature_ptr(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_feature_ptr(tgt_hdl);
 }
-qdf_export_symbol(ucfg_get_psoc_feature_ptr);
+qdf_export_symbol(lmac_get_psoc_feature_ptr);
 
-void *ucfg_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev)
+void *lmac_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev)
 {
 	struct target_pdev_info *tgt_hdl;
 
@@ -407,4 +407,4 @@ void *ucfg_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev)
 
 	return target_pdev_get_feature_ptr(tgt_hdl);
 }
-qdf_export_symbol(ucfg_get_pdev_feature_ptr);
+qdf_export_symbol(lmac_get_pdev_feature_ptr);

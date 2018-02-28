@@ -17,26 +17,26 @@
  */
 
 /**
- * DOC: init_deinit_ucfg.h
+ * DOC: init_deinit_lmac.h
  *
  * Public APIs to get target_if info
  */
 
-#ifndef _INIT_DEINIT_UCFG_H_
-#define _INIT_DEINIT_UCFG_H_
+#ifndef _INIT_DEINIT_LMAC_H_
+#define _INIT_DEINIT_LMAC_H_
 
 /**
- * ucfg_get_service_param() - get service param
+ * lmac_get_service_param() - get service param
  * @psoc: pointer to psoc
  *
  * API to get service parameters
  *
  * Return: service parameter array pointer
  */
-uint32_t *ucfg_get_service_param(struct wlan_objmgr_psoc *psoc);
+uint32_t *lmac_get_service_param(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_is_service_param_bit_enabled() - check service param bit enabled
+ * lmac_is_service_param_bit_enabled() - check service param bit enabled
  * @service_param: Service bitmap array
  * @bit_idx: Service bit index to be checked
  *
@@ -45,11 +45,11 @@ uint32_t *ucfg_get_service_param(struct wlan_objmgr_psoc *psoc);
  * Return: true, if service is enabled
  *         false, if service is not enabled
  */
-bool ucfg_is_service_param_bit_enabled(uint32_t *service_param,
+bool lmac_is_service_param_bit_enabled(uint32_t *service_param,
 					uint16_t bit_idx);
 
 /**
- * ucfg_get_dfs_offload() - get dfs offload
+ * lmac_get_dfs_offload() - get dfs offload
  * @psoc: pointer to psoc
  * @is_tgt_offload: boolean flag for offload enabled/disabled
  *
@@ -57,42 +57,42 @@ bool ucfg_is_service_param_bit_enabled(uint32_t *service_param,
  *
  * Return: SUCCESS, if API is invoked without any failures
  */
-QDF_STATUS ucfg_get_dfs_offload(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS lmac_get_dfs_offload(struct wlan_objmgr_psoc *psoc,
 			bool *is_tgt_offload);
 
 /**
- * ucfg_get_tgt_res_cfg() - get target resource config
+ * lmac_get_tgt_res_cfg() - get target resource config
  * @psoc: pointer to psoc
  *
  * API to get target resource config
  *
  * Return: target resource configuration
  */
-target_resource_config *ucfg_get_tgt_res_cfg(struct wlan_objmgr_psoc *psoc);
+target_resource_config *lmac_get_tgt_res_cfg(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_get_target_cap() - get target capability
+ * lmac_get_target_cap() - get target capability
  * @psoc: pointer to psoc
  *
  * API to get target capability
  *
  * Return: target capability Information
  */
-struct wlan_psoc_target_capability_info *ucfg_get_target_cap(
+struct wlan_psoc_target_capability_info *lmac_get_target_cap(
 				struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_get_pdev_idx() - get pdev id
+ * lmac_get_pdev_idx() - get pdev id
  * @pdev: pointer to pdev
  *
  * API to get pdev id
  *
  * Return: pdev id
  */
-int32_t ucfg_get_pdev_idx(struct wlan_objmgr_pdev *pdev);
+int32_t lmac_get_pdev_idx(struct wlan_objmgr_pdev *pdev);
 
 /**
- * ucfg_get_pdev_target_type() - check pdev target type
+ * lmac_get_pdev_target_type() - check pdev target type
  * @pdev: pointer to pdev
  * @target_type: target type ptr, it is assigned with pdev target_type
  *               target type stores the radio code
@@ -101,81 +101,81 @@ int32_t ucfg_get_pdev_idx(struct wlan_objmgr_pdev *pdev);
  *
  * Return: Success if found required target type else Failure
  */
-QDF_STATUS ucfg_get_pdev_target_type(struct wlan_objmgr_pdev *pdev,
+QDF_STATUS lmac_get_pdev_target_type(struct wlan_objmgr_pdev *pdev,
 				uint32_t *target_type);
 
 /**
- * ucfg_get_tgt_type() - get target type
+ * lmac_get_tgt_type() - get target type
  * @psoc: pointer to psoc
  *
  * API to get target type
  *
  * Return: target type (value to identify particular radio)
  */
-uint32_t ucfg_get_tgt_type(struct wlan_objmgr_psoc *psoc);
+uint32_t lmac_get_tgt_type(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_get_tgt_version() - get target version
+ * lmac_get_tgt_version() - get target version
  * @psoc: pointer to psoc
  *
  * API to get target version
  *
  * Return: target version
  */
-uint32_t ucfg_get_tgt_version(struct wlan_objmgr_psoc *psoc);
+uint32_t lmac_get_tgt_version(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_get_tgt_revision() - get target revision
+ * lmac_get_tgt_revision() - get target revision
  * @psoc: pointer to psoc
  *
  * API to get target revision
  *
  * Return: target revision
  */
-uint32_t ucfg_get_tgt_revision(struct wlan_objmgr_psoc *psoc);
+uint32_t lmac_get_tgt_revision(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_is_target_ar900b() - checks the target type
+ * lmac_is_target_ar900b() - checks the target type
  * @psoc: pointer to psoc
  *
  * API to check target type
  *
  * Return: True on presence of required target type else false
  */
-bool ucfg_is_target_ar900b(struct wlan_objmgr_psoc *psoc);
+bool lmac_is_target_ar900b(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_get_wmi_hdl() - get wmi handle
+ * lmac_get_wmi_hdl() - get wmi handle
  * @psoc: pointer to psoc
  *
  * API to get wmi handle
  *
  * Return: wmi handler
  */
-struct common_wmi_handle *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc);
+struct common_wmi_handle *lmac_get_wmi_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_get_wmi_unified_hdl() - get wmi handle
+ * lmac_get_wmi_unified_hdl() - get wmi handle
  * @psoc: pointer to psoc
  *
  * API to get wmi handle
  *
  * Return: wmi handler
  */
-wmi_unified_t ucfg_get_wmi_unified_hdl(struct wlan_objmgr_psoc *psoc);
+wmi_unified_t lmac_get_wmi_unified_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_get_htc_hdl() - get htc handler
+ * lmac_get_htc_hdl() - get htc handler
  * @psoc: pointer to psoc
  *
  * API to get htc handle
  *
  * Return: htc handler
  */
-struct common_htc_handle *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc);
+struct common_htc_handle *lmac_get_htc_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_set_htc_hdl() - set htc handle
+ * lmac_set_htc_hdl() - set htc handle
  * @psoc: pointer to psoc
  * @htc_hdl: HTC handle
  *
@@ -183,79 +183,79 @@ struct common_htc_handle *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc);
  *
  * Return: void
  */
-void ucfg_set_htc_hdl(struct wlan_objmgr_psoc *psoc,
-			struct common_htc_handle *htc_hdl);
+void lmac_set_htc_hdl(struct wlan_objmgr_psoc *psoc,
+		struct common_htc_handle *htc_hdl);
 
 /**
- * ucfg_get_hif_hdl() - get hif handle
+ * lmac_get_hif_hdl() - get hif handle
  * @psoc: pointer to psoc
  *
  * API to get hif handle
  *
  * Return: hif handler
  */
-struct common_hif_handle *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc);
+struct common_hif_handle *lmac_get_hif_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_get_ol_hif_hdl() - get hif handle
+ * lmac_get_ol_hif_hdl() - get hif handle
  * @psoc: pointer to psoc
  *
  * API to get hif handle
  *
  * Return: hif handler
  */
-struct hif_opaque_softc *ucfg_get_ol_hif_hdl(struct wlan_objmgr_psoc *psoc);
+struct hif_opaque_softc *lmac_get_ol_hif_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_get_pdev_wmi_handle() - get pdev wmi handle
+ * lmac_get_pdev_wmi_handle() - get pdev wmi handle
  * @pdev: pointer to dev
  *
  * API to get wmi handle
  *
  * Return: wmi handle
  */
-struct common_wmi_handle *ucfg_get_pdev_wmi_handle(
+struct common_wmi_handle *lmac_get_pdev_wmi_handle(
 		struct wlan_objmgr_pdev *pdev);
 
 /**
- * ucfg_get_pdev_wmi_unified_handle() - get pdev wmi handle
+ * lmac_get_pdev_wmi_unified_handle() - get pdev wmi handle
  * @pdev: pointer to dev
  *
  * API to get wmi handle
  *
  * Return: wmi handle
  */
-wmi_unified_t ucfg_get_pdev_wmi_unified_handle(
+wmi_unified_t lmac_get_pdev_wmi_unified_handle(
 		struct wlan_objmgr_pdev *pdev);
 
 /**
- * ucfg_get_psoc_feature_ptr() - get feature pointer
+ * lmac_get_psoc_feature_ptr() - get feature pointer
  * @psoc: pointer to psoc
  *
  * API to get legacy pointer
  *
  * Return: feature pointer
  */
-void *ucfg_get_psoc_feature_ptr(struct wlan_objmgr_psoc *psoc);
+void *lmac_get_psoc_feature_ptr(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_get_pdev_feature_ptr() - get feature pointer
+ * lmac_get_pdev_feature_ptr() - get feature pointer
  * @pdev: pointer to pdev
  *
  * API to get legacy pointer
  *
  * Return: pdev feature pointer
  */
-void *ucfg_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev);
+void *lmac_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev);
 
 /**
- * ucfg_get_num_radios() - get number of radios
+ * lmac_get_num_radios() - get number of radios
  * @psoc: pointer to psoc
  *
  * API to get number of radios
  *
  * Return: number of radios
  */
-uint32_t ucfg_get_num_radios(struct wlan_objmgr_psoc *psoc);
+uint32_t lmac_get_num_radios(struct wlan_objmgr_psoc *psoc);
 
-#endif /* _INIT_DEINIT_UCFG_H_ */
+#endif /* _INIT_DEINIT_LMAC_H_ */

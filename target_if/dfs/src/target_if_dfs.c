@@ -35,7 +35,7 @@
 #include <wmi_unified_dfs_api.h>
 #include "wlan_dfs_tgt_api.h"
 #include "target_type.h"
-#include <init_deinit_ucfg.h>
+#include <init_deinit_lmac.h>
 #include <wlan_reg_ucfg_api.h>
 #include <target_if_dfs_full_offload.h>
 #include <target_if_dfs_partial_offload.h>

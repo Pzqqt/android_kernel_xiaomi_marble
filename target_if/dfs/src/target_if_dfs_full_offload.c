@@ -25,7 +25,7 @@
 #include <target_if.h>
 #include <target_if_dfs.h>
 #include <wmi_unified_dfs_api.h>
-#include <init_deinit_ucfg.h>
+#include <init_deinit_lmac.h>
 #include <wlan_module_ids.h>
 #include <target_if_dfs_full_offload.h>
 

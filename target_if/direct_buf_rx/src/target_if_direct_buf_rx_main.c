@@ -23,7 +23,7 @@
 #include <target_if_direct_buf_rx_api.h>
 #include "hal_api.h"
 #include <service_ready_util.h>
-#include <init_deinit_ucfg.h>
+#include <init_deinit_lmac.h>
 
 static uint8_t get_num_dbr_modules_per_pdev(struct wlan_objmgr_pdev *pdev)
 {
@@ -574,7 +574,7 @@ static QDF_STATUS target_if_dbr_cfg_tgt(struct wlan_objmgr_pdev *pdev,
 
 	dbr_ring_cfg = mod_param->dbr_ring_cfg;
 	dbr_ring_cap = mod_param->dbr_ring_cap;
-	wmi_hdl = ucfg_get_pdev_wmi_handle(pdev);
+	wmi_hdl = lmac_get_pdev_wmi_handle(pdev);
 	if (!wmi_hdl) {
 		direct_buf_rx_err("WMI handle null. Can't send WMI CMD");
 		return QDF_STATUS_E_INVAL;
