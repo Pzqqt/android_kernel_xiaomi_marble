@@ -4297,6 +4297,7 @@ static int voice_send_cvp_mfc_config_v2(struct voice_data *v)
 	struct cvp_set_mfc_config_cmd_v2 cvp_set_mfc_config_cmd;
 	void *apr_cvp;
 	u16 cvp_handle;
+	uint8_t ch_idx;
 	struct vss_icommon_param_data_mfc_config_v2_t *cvp_config_param_data =
 		&cvp_set_mfc_config_cmd.cvp_set_mfc_param_v2.param_data;
 	struct vss_param_mfc_config_info_t *mfc_config_info =
@@ -4345,9 +4346,15 @@ static int voice_send_cvp_mfc_config_v2(struct voice_data *v)
 	mfc_config_info->num_channels = v->dev_rx.no_of_channels;
 	mfc_config_info->bits_per_sample = 16;
 	mfc_config_info->sample_rate = v->dev_rx.sample_rate;
-	memcpy(&mfc_config_info->channel_type,
-	       v->dev_rx.channel_mapping,
-	       VSS_NUM_CHANNELS_MAX * sizeof(uint8_t));
+
+	/*
+	 * Do not use memcpy here as channel_type in mfc_config structure is a
+	 * uint16_t array while channel_mapping array of device is of uint8_t
+	 */
+	for (ch_idx = 0; ch_idx < VSS_NUM_CHANNELS_MAX; ch_idx++) {
+		mfc_config_info->channel_type[ch_idx] =
+					v->dev_rx.channel_mapping[ch_idx];
+	}
 
 	v->cvp_state = CMD_STATUS_FAIL;
 	v->async_err = 0;
