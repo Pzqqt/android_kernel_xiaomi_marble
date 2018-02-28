@@ -4749,8 +4749,10 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 	}
 	frm.addba_param_set.tid = tid;
 	frm.addba_param_set.buff_size = buff_size;
-	frm.addba_param_set.amsdu_supp = SIR_MAC_BA_POLICY_IMMEDIATE;
-	frm.addba_param_set.policy = SIR_MAC_BA_AMSDU_SUPPORTED;
+	if (mac_ctx->usr_cfg_ba_buff_size)
+		frm.addba_param_set.buff_size = mac_ctx->usr_cfg_ba_buff_size;
+	frm.addba_param_set.amsdu_supp = SIR_MAC_BA_AMSDU_SUPPORTED;
+	frm.addba_param_set.policy = SIR_MAC_BA_POLICY_IMMEDIATE;
 	frm.ba_timeout.timeout = batimeout;
 	if (addba_extn_present) {
 		frm.addba_extn_element.present = 1;

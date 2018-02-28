@@ -2118,6 +2118,29 @@ static inline QDF_STATUS sme_handle_sae_msg(tHalHandle hal, uint8_t session_id,
 }
 #endif
 
+/**
+ * sme_set_ba_buff_size() - sets BA buffer size
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @buff_size: BA buffer size
+ *
+ * Return: 0 on success else err code
+ */
+int sme_set_ba_buff_size(tHalHandle hal, uint8_t session_id,
+		uint16_t buff_size);
+
+/**
+ * sme_send_addba_req() - send ADDBA request with user config
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @tid: tid val for BA session
+ * @buff_size: BA buffer size
+ *
+ * Return: 0 on success else err code
+ */
+int sme_send_addba_req(tHalHandle hal, uint8_t session_id, uint8_t tid,
+		uint16_t buff_size);
+
 #ifdef WLAN_FEATURE_11AX
 /**
  * sme_update_he_cap_nss() - sets the nss based on user request

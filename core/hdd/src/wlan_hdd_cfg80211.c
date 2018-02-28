@@ -6294,6 +6294,12 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WEP_TKIP_IN_HE] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADD_DEL_BA_SESSION] = {
+			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BA_TID] = {
+			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADDBA_BUFF_SIZE] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -7274,6 +7280,8 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	uint8_t set_val = 0;
 	tSmeConfigParams *sme_config;
 	bool update_sme_cfg = false;
+	uint8_t tid = 0;
+	uint16_t buff_size = 0;
 
 	ENTER_DEV(dev);
 
@@ -7284,26 +7292,28 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	}
 	sme_get_config_param(hdd_ctx->hHal, sme_config);
 
-
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
-		return -EPERM;
+		ret_val = -EPERM;
+		goto send_err;
 	}
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
 	if (ret_val)
-		return ret_val;
+		goto send_err;
 
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
 		hdd_err("Driver Modules are closed, can not start logger");
-		return -EINVAL;
+		ret_val = -EINVAL;
+		goto send_err;
 	}
 
 	if (wlan_cfg80211_nla_parse(tb,
 			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX,
 			data, data_len, wlan_hdd_wifi_test_config_policy)) {
 		hdd_err("invalid attr");
-		return -EINVAL;
+		ret_val = -EINVAL;
+		goto send_err;
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ACCEPT_ADDBA_REQ]) {
@@ -7314,7 +7324,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		ret_val = sme_set_addba_accept(hdd_ctx->hHal,
 				adapter->session_id, cfg_val);
 		if (ret_val)
-			return ret_val;
+			goto send_err;
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_MCS]) {
@@ -7324,7 +7334,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		ret_val = sme_update_he_mcs(hdd_ctx->hHal, adapter->session_id,
 					    cfg_val);
 		if (ret_val)
-			return ret_val;
+			goto send_err;
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WMM_ENABLE]) {
@@ -7382,9 +7392,52 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		update_sme_cfg = true;
 	}
 
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADD_DEL_BA_SESSION]) {
+		if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BA_TID]) {
+			tid = nla_get_u8(tb[
+				QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BA_TID]);
+		} else {
+			hdd_err("TID is not set for ADD/DEL BA cfg");
+			ret_val = -EINVAL;
+			goto send_err;
+		}
+		cfg_val = nla_get_u8(tb[
+		QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADD_DEL_BA_SESSION]);
+		if (cfg_val == QCA_WLAN_ADD_BA) {
+			if (tb[
+			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADDBA_BUFF_SIZE])
+				buff_size = nla_get_u8(tb[
+				QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADDBA_BUFF_SIZE]);
+			ret_val = sme_send_addba_req(hdd_ctx->hHal,
+					adapter->session_id, tid, buff_size);
+		} else if (cfg_val == QCA_WLAN_DELETE_BA) {
+		} else {
+			hdd_err("Invalid BA session cfg");
+			ret_val = -EINVAL;
+			goto send_err;
+		}
+	} else if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADDBA_BUFF_SIZE]) {
+		buff_size = nla_get_u8(tb[
+		QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADDBA_BUFF_SIZE]);
+		hdd_debug("set buff size to %d for all tids", buff_size);
+		ret_val = sme_set_ba_buff_size(hdd_ctx->hHal,
+				adapter->session_id, buff_size);
+		if (ret_val)
+			goto send_err;
+		if (buff_size > 64)
+			/* Configure ADDBA req buffer size to 256 */
+			set_val = 3;
+		else
+			/* Configure ADDBA req buffer size to 64 */
+			set_val = 2;
+		ret_val = wma_cli_set_command(adapter->session_id,
+				WMI_VDEV_PARAM_BA_MODE, set_val, VDEV_CMD);
+	}
+
 	if (update_sme_cfg)
 		sme_update_config(hdd_ctx->hHal, sme_config);
 
+send_err:
 	qdf_mem_free(sme_config);
 
 	return ret_val;

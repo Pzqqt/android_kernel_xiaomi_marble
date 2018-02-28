@@ -660,6 +660,31 @@ QDF_STATUS wma_form_unit_test_cmd_and_send(uint32_t vdev_id,
 	return status;
 }
 
+static void wma_process_send_addba_req(tp_wma_handle wma_handle,
+		struct send_add_ba_req *send_addba)
+{
+	QDF_STATUS status;
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE(FL("Invalid WMA/WMI handle"));
+		qdf_mem_free(send_addba);
+		return;
+	}
+
+	status = wmi_unified_addba_send_cmd_send(wma_handle->wmi_handle,
+					   send_addba->mac_addr,
+					   &send_addba->param);
+	if (QDF_STATUS_SUCCESS != status) {
+		WMA_LOGE(FL("Failed to process WMA_SEND_ADDBA_REQ"));
+	}
+	WMA_LOGD(FL("sent ADDBA req to" MAC_ADDRESS_STR "tid %d buff_size %d"),
+			MAC_ADDR_ARRAY(send_addba->mac_addr),
+			send_addba->param.tidno,
+			send_addba->param.buffersize);
+
+	qdf_mem_free(send_addba);
+}
+
 /**
  * wma_ipa_get_stat() - get IPA data path stats from FW
  *
@@ -7745,6 +7770,11 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 					    (tSirTxPowerLimit *) msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+	case WMA_SEND_ADDBA_REQ:
+		wma_process_send_addba_req(wma_handle,
+				(struct send_add_ba_req *)msg->bodyptr);
+		break;
+
 #ifdef FEATURE_WLAN_CH_AVOID
 	case WMA_CH_AVOID_UPDATE_REQ:
 		wma_process_ch_avoid_update_req(wma_handle,

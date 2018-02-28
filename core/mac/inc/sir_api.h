@@ -3969,6 +3969,11 @@ typedef struct sSirModifyIE {
 
 } tSirModifyIE, *tpSirModifyIE;
 
+struct send_add_ba_req {
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
+	struct addba_send_params param;
+};
+
 /* Message format for Update IE message sent to PE  */
 typedef struct sSirModifyIEsInd {
 	uint16_t msgType;

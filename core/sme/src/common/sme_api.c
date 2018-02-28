@@ -10089,6 +10089,74 @@ int sme_set_addba_accept(tHalHandle hal, uint8_t session_id, int value)
 	}
 	return 0;
 }
+
+int sme_set_ba_buff_size(tHalHandle hal, uint8_t session_id,
+		uint16_t buff_size)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	if (!buff_size) {
+		sme_err("invalid buff size %d", buff_size);
+		return -EINVAL;
+	}
+	mac_ctx->usr_cfg_ba_buff_size = buff_size;
+	sme_debug("addba buff size is set to %d",
+			mac_ctx->usr_cfg_ba_buff_size);
+
+	return 0;
+}
+
+#define DEFAULT_BA_BUFF_SIZE 64
+int sme_send_addba_req(tHalHandle hal, uint8_t session_id, uint8_t tid,
+		uint16_t buff_size)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	uint16_t ba_buff = 0;
+	QDF_STATUS status;
+	struct scheduler_msg msg = {0};
+	struct send_add_ba_req *send_ba_req;
+	struct csr_roam_session *csr_session = NULL;
+
+	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
+		sme_err("STA not infra/connected state session_id: %d",
+				session_id);
+		return -EINVAL;
+	}
+	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!csr_session) {
+		sme_err("CSR session is NULL");
+		return -EINVAL;
+	}
+	send_ba_req = qdf_mem_malloc(sizeof(*send_ba_req));
+	if (!send_ba_req) {
+		sme_err("mem alloc failed");
+		return -EIO;
+	}
+	qdf_mem_copy(send_ba_req->mac_addr,
+			csr_session->connectedProfile.bssid.bytes,
+			QDF_MAC_ADDR_SIZE);
+	ba_buff = buff_size;
+	if (!buff_size) {
+		if (mac_ctx->usr_cfg_ba_buff_size)
+			ba_buff = mac_ctx->usr_cfg_ba_buff_size;
+		else
+			ba_buff = DEFAULT_BA_BUFF_SIZE;
+	}
+	send_ba_req->param.vdev_id = session_id;
+	send_ba_req->param.tidno = tid;
+	send_ba_req->param.buffersize = ba_buff;
+	msg.type = WMA_SEND_ADDBA_REQ;
+	msg.bodyptr = send_ba_req;
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
+	if (QDF_STATUS_SUCCESS != status) {
+		sme_err("Failed to post WMA_SEND_ADDBA_REQ");
+		qdf_mem_free(send_ba_req);
+		return -EIO;
+	}
+	sme_debug("ADDBA_REQ sent to FW: tid %d buff_size %d", tid, ba_buff);
+
+	return 0;
+}
+
 #define HT20_SHORT_GI_MCS7_RATE 722
 /*
  * sme_send_rate_update_ind() -
