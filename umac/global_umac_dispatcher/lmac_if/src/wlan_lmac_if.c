@@ -63,12 +63,36 @@
 #include <wlan_fd_tgt_api.h>
 #endif
 
+#ifdef QCA_SUPPORT_CP_STATS
+#include <wlan_cp_stats_tgt_api.h>
+#endif /* QCA_SUPPORT_CP_STATS */
+
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
  */
 QDF_STATUS (*wlan_lmac_if_umac_tx_ops_register)
 				(struct wlan_lmac_if_tx_ops *tx_ops);
 qdf_export_symbol(wlan_lmac_if_umac_tx_ops_register);
+
+#ifdef QCA_SUPPORT_CP_STATS
+/**
+ * wlan_lmac_if_cp_stats_rx_ops_register() - API to register cp stats Rx Ops
+ * @rx_ops:	pointer to lmac rx ops
+ *
+ * This API will be used to register function pointers for FW events
+ *
+ * Return: void
+ */
+static void
+wlan_lmac_if_cp_stats_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#else
+static void
+wlan_lmac_if_cp_stats_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
 
 #ifdef WLAN_ATF_ENABLE
 /**
@@ -410,6 +434,8 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	rx_ops->scan.scan_set_max_active_scans = tgt_scan_set_max_active_scans;
 
 	wlan_lmac_if_atf_rx_ops_register(rx_ops);
+
+	wlan_lmac_if_cp_stats_rx_ops_register(rx_ops);
 
 	wlan_lmac_if_sa_api_rx_ops_register(rx_ops);
 
