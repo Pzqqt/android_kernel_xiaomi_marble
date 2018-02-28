@@ -2166,6 +2166,16 @@ ucfg_scan_set_global_config(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
+QDF_STATUS ucfg_scan_update_mlme_by_bssinfo(struct wlan_objmgr_pdev *pdev,
+		struct bss_info *bss_info, struct mlme_info *mlme)
+{
+	QDF_STATUS status;
+
+	status = scm_scan_update_mlme_by_bssinfo(pdev, bss_info, mlme);
+
+	return status;
+}
+
 QDF_STATUS
 ucfg_scan_get_global_config(struct wlan_objmgr_psoc *psoc,
 			       enum scan_config config, uint32_t *val)

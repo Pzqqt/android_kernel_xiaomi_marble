@@ -312,6 +312,12 @@ static void scm_check_and_age_out(struct scan_dbs *scan_db,
 	}
 }
 
+static bool scm_bss_is_connected(struct scan_cache_entry *entry)
+{
+	if (entry->mlme_info.assoc_state == SCAN_ENTRY_CON_STATE_ASSOC)
+		return true;
+	return false;
+}
 void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
 	struct scan_dbs *scan_db)
 {
@@ -330,7 +336,8 @@ void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
 		cur_node = scm_get_next_node(scan_db,
 			&scan_db->scan_hash_tbl[i], NULL);
 		while (cur_node) {
-			scm_check_and_age_out(scan_db, cur_node,
+			if (!scm_bss_is_connected(cur_node->entry))
+				scm_check_and_age_out(scan_db, cur_node,
 					def_param->scan_cache_aging_time);
 			next_node = scm_get_next_node(scan_db,
 				&scan_db->scan_hash_tbl[i], cur_node);
@@ -1388,6 +1395,52 @@ QDF_STATUS scm_update_scan_mlme_info(struct wlan_objmgr_pdev *pdev,
 			qdf_spin_unlock_bh(&scan_db->scan_db_lock);
 			scm_scan_entry_put_ref(scan_db,
 					cur_node, true);
+			return QDF_STATUS_SUCCESS;
+		}
+		next_node = scm_get_next_node(scan_db,
+				&scan_db->scan_hash_tbl[hash_idx], cur_node);
+		cur_node = next_node;
+	}
+
+	return QDF_STATUS_E_INVAL;
+}
+
+QDF_STATUS scm_scan_update_mlme_by_bssinfo(struct wlan_objmgr_pdev *pdev,
+		struct bss_info *bss_info, struct mlme_info *mlme)
+{
+	uint8_t hash_idx;
+	struct scan_dbs *scan_db;
+	struct scan_cache_node *cur_node;
+	struct scan_cache_node *next_node = NULL;
+	struct wlan_objmgr_psoc *psoc;
+	struct scan_cache_entry *entry;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		scm_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	scan_db = wlan_pdev_get_scan_db(psoc, pdev);
+	if (!scan_db) {
+		scm_err("scan_db is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	hash_idx = SCAN_GET_HASH(bss_info->bssid.bytes);
+	cur_node = scm_get_next_node(scan_db,
+			&scan_db->scan_hash_tbl[hash_idx], NULL);
+	while (cur_node) {
+		entry = cur_node->entry;
+		if (qdf_is_macaddr_equal(&bss_info->bssid, &entry->bssid) &&
+			(util_is_ssid_match(&bss_info->ssid, &entry->ssid)) &&
+			(bss_info->chan == entry->channel.chan_idx)) {
+			/* Acquire db lock to prevent simultaneous update */
+			qdf_spin_lock_bh(&scan_db->scan_db_lock);
+			qdf_mem_copy(&entry->mlme_info, mlme,
+					sizeof(struct mlme_info));
+			scm_scan_entry_put_ref(scan_db,
+					cur_node, false);
+			qdf_spin_unlock_bh(&scan_db->scan_db_lock);
 			return QDF_STATUS_SUCCESS;
 		}
 		next_node = scm_get_next_node(scan_db,

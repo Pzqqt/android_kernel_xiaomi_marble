@@ -331,10 +331,10 @@ ucfg_scan_db_iterate(struct wlan_objmgr_pdev *pdev,
 	scan_iterator_func func, void *arg);
 
 /**
- * ucfg_scan_update_mlme_info() - The Public API to update mlme
+ * ucfg_scan_update_mlme_by_bssinfo() - The Public API to update mlme
  * info in the scan entry
- * @vdev: vdev object
- * @bss: bss info to find the matching scan entry
+ * @pdev: pdev object
+ * @bssid: bssid info to find the matching scan entry
  * @mlme_info: mlme info to be updated.
  *
  * The Public API to update mlme info in the scan entry.
@@ -343,7 +343,8 @@ ucfg_scan_db_iterate(struct wlan_objmgr_pdev *pdev,
  * Return: 0 for success or error code.
  */
 QDF_STATUS
-ucfg_scan_update_mlme_info(struct wlan_objmgr_vdev *vdev, struct bss_info *bss,
+ucfg_scan_update_mlme_by_bssinfo(struct wlan_objmgr_pdev *pdev,
+	struct bss_info *bss_info,
 	struct mlme_info *mlme_info);
 
 /**

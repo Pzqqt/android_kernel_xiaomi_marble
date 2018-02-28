@@ -198,6 +198,12 @@ struct ie_list {
 	uint8_t *mbo_oce;
 };
 
+enum scan_entry_connection_state {
+	SCAN_ENTRY_CON_STATE_NONE,
+	SCAN_ENTRY_CON_STATE_AUTH,
+	SCAN_ENTRY_CON_STATE_ASSOC
+};
+
 /**
  * struct mlme_info - mlme specific info
  * temporarily maintained in scan cache for backward compatibility.

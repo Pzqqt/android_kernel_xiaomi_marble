@@ -195,4 +195,16 @@ QDF_STATUS scm_db_deinit(struct wlan_objmgr_psoc *psoc);
  */
 void scm_validate_scoring_config(
 			struct scoring_config *score_cfg);
+
+/**
+ * scm_scan_update_mlme_by_bssinfo() - updates scan entry with mlme data
+ * @pdev: pdev object
+ * @bss_info: BSS information
+ *
+ * This function updates scan db with scan_entry->mlme_info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS scm_scan_update_mlme_by_bssinfo(struct wlan_objmgr_pdev *pdev,
+		struct bss_info *bss_info, struct mlme_info *mlme);
 #endif
