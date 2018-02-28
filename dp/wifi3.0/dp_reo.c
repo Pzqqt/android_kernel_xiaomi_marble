@@ -178,12 +178,17 @@ void dp_reo_cmdlist_destroy(struct dp_soc *soc)
 {
 	struct dp_reo_cmd_info *reo_cmd = NULL;
 	struct dp_reo_cmd_info *tmp_cmd = NULL;
+	union hal_reo_status reo_status;
+
+	reo_status.queue_status.header.status =
+		HAL_REO_CMD_DRAIN;
 
 	qdf_spin_lock_bh(&soc->rx.reo_cmd_lock);
 	TAILQ_FOREACH_SAFE(reo_cmd, &soc->rx.reo_cmd_list,
-		      reo_cmd_list_elem, tmp_cmd) {
+			reo_cmd_list_elem, tmp_cmd) {
 		TAILQ_REMOVE(&soc->rx.reo_cmd_list, reo_cmd,
-		       reo_cmd_list_elem);
+			reo_cmd_list_elem);
+		reo_cmd->handler(soc, reo_cmd->data, &reo_status);
 		qdf_mem_free(reo_cmd);
 	}
 	qdf_spin_unlock_bh(&soc->rx.reo_cmd_lock);

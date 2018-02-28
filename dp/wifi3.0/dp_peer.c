@@ -1019,7 +1019,10 @@ static void dp_rx_tid_update_cb(struct dp_soc *soc, void *cb_ctxt,
 {
 	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
 
-	if (reo_status->queue_status.header.status) {
+	if ((reo_status->rx_queue_status.header.status !=
+		HAL_REO_CMD_SUCCESS) &&
+		(reo_status->rx_queue_status.header.status !=
+		HAL_REO_CMD_DRAIN)) {
 		/* Should not happen normally. Just print error for now */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: Rx tid HW desc update failed(%d): tid %d\n",
@@ -1114,7 +1117,10 @@ static void dp_reo_desc_free(struct dp_soc *soc, void *cb_ctxt,
 		(struct reo_desc_list_node *)cb_ctxt;
 	struct dp_rx_tid *rx_tid = &freedesc->rx_tid;
 
-	if (reo_status->rx_queue_status.header.status) {
+	if ((reo_status->fl_cache_status.header.status !=
+		HAL_REO_CMD_SUCCESS) &&
+		(reo_status->fl_cache_status.header.status !=
+		HAL_REO_CMD_DRAIN)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: Rx tid HW desc flush failed(%d): tid %d\n",
 			__func__,
@@ -1317,8 +1323,13 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 	uint32_t desc_size, tot_desc_size;
 	struct hal_reo_cmd_params params;
 
-
-	if (reo_status->rx_queue_status.header.status) {
+	if (reo_status->rx_queue_status.header.status == HAL_REO_CMD_DRAIN) {
+		qdf_mem_zero(reo_status, sizeof(*reo_status));
+		reo_status->fl_cache_status.header.status = HAL_REO_CMD_DRAIN;
+		dp_reo_desc_free(soc, (void *)freedesc, reo_status);
+		return;
+	} else if (reo_status->rx_queue_status.header.status !=
+		HAL_REO_CMD_SUCCESS) {
 		/* Should not happen normally. Just print error for now */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: Rx tid HW desc deletion failed(%d): tid %d\n",

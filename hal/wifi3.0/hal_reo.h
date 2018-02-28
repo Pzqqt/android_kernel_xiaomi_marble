@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -137,7 +137,8 @@ enum reo_cmd_exec_status {
 	HAL_REO_CMD_SUCCESS = 0,
 	HAL_REO_CMD_BLOCKED = 1,
 	HAL_REO_CMD_FAILED = 2,
-	HAL_REO_CMD_RESOURCE_BLOCKED = 3
+	HAL_REO_CMD_RESOURCE_BLOCKED = 3,
+	HAL_REO_CMD_DRAIN = 0xff
 };
 
 /**
