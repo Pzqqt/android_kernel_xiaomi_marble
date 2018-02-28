@@ -17383,7 +17383,7 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 		goto fils_conn_fail;
 	}
 	if (!wlan_hdd_fils_data_in_limits(req))
-	    goto fils_conn_fail;
+		goto fils_conn_fail;
 
 	roam_profile->fils_con_info->is_fils_connection = true;
 	roam_profile->fils_con_info->sequence_number =
@@ -21334,7 +21334,7 @@ static int __wlan_hdd_cfg80211_update_connect_params(
 
 	if (changed & UPDATE_FILS_ERP_INFO) {
 		if (!wlan_hdd_fils_data_in_limits(req))
-		    return -EINVAL;
+			return -EINVAL;
 		fils_info->key_nai_length = req->fils_erp_username_len +
 					    sizeof(char) +
 					    req->fils_erp_realm_len;
