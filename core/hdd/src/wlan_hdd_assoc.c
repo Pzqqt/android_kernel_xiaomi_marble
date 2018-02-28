@@ -2819,11 +2819,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					   eCSR_DISCONNECT_REASON_UNSPECIFIED);
 				}
 				return QDF_STATUS_E_FAILURE;
-			} else {
-				cfg80211_put_bss(
-					hdd_ctx->wiphy,
-					bss);
 			}
+
+			cfg80211_put_bss(hdd_ctx->wiphy, bss);
 
 			/* Association Response */
 			pFTAssocRsp =

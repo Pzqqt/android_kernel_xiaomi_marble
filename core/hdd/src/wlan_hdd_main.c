@@ -3798,16 +3798,16 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 			adapter->session_id = HDD_SESSION_ID_INVALID;
 			hdd_err("Session open event forcefully set");
 			return -EINVAL;
-		} else {
-			if (QDF_STATUS_E_TIMEOUT == status)
-				hdd_err("Session failed to open within timeout period");
-			else
-				hdd_err("Failed to wait for session open event(status-%d)",
-					status);
-			errno = -ETIMEDOUT;
-			set_bit(SME_SESSION_OPENED, &adapter->event_flags);
-			goto hdd_vdev_destroy_procedure;
 		}
+
+		if (QDF_STATUS_E_TIMEOUT == status)
+			hdd_err("Session failed to open within timeout period");
+		else
+			hdd_err("Failed to wait for session open event(status-%d)",
+				status);
+		errno = -ETIMEDOUT;
+		set_bit(SME_SESSION_OPENED, &adapter->event_flags);
+		goto hdd_vdev_destroy_procedure;
 	}
 
 	/* firmware ready for component communication, raise vdev_ready event */

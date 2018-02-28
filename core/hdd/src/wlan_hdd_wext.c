@@ -6796,17 +6796,15 @@ static int __iw_setint_getnone(struct net_device *dev,
 		ret = hdd_handle_pdev_reset(adapter, set_value);
 		break;
 	case WE_SET_MODULATED_DTIM:
-	{
 		if ((set_value < CFG_ENABLE_MODULATED_DTIM_MIN) ||
 				(set_value > CFG_ENABLE_MODULATED_DTIM_MAX)) {
 			hdd_err("Invalid gEnableModuleDTIM value %d",
 				set_value);
 			return -EINVAL;
-		} else {
-			hdd_ctx->config->enableModulatedDTIM = set_value;
 		}
+
+		hdd_ctx->config->enableModulatedDTIM = set_value;
 		break;
-	}
 	default:
 		hdd_err("Invalid sub command %d", sub_cmd);
 		ret = -EINVAL;
