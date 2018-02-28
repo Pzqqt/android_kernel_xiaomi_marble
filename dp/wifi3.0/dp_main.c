@@ -831,28 +831,33 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 					goto budget_done;
 				remaining_quota = budget;
 			}
-		}
 
-		if (int_ctx->rxdma2host_ring_mask & (1 << ring)) {
-			work_done = dp_rxdma_err_process(soc, ring,
-						remaining_quota);
-			budget -=  work_done;
-			if (budget <= 0)
-				goto budget_done;
-			remaining_quota = budget;
-		}
+			if (int_ctx->rxdma2host_ring_mask &
+					(1 << mac_for_pdev)) {
+				work_done = dp_rxdma_err_process(soc,
+							mac_for_pdev,
+							remaining_quota);
+				budget -=  work_done;
+				if (budget <= 0)
+					goto budget_done;
+				remaining_quota = budget;
+			}
 
-		if (int_ctx->host2rxdma_ring_mask & (1 << ring)) {
-			union dp_rx_desc_list_elem_t *desc_list = NULL;
-			union dp_rx_desc_list_elem_t *tail = NULL;
-			struct dp_srng *rx_refill_buf_ring =
-				&pdev->rx_refill_buf_ring;
+			if (int_ctx->host2rxdma_ring_mask &
+						(1 << mac_for_pdev)) {
+				union dp_rx_desc_list_elem_t *desc_list = NULL;
+				union dp_rx_desc_list_elem_t *tail = NULL;
+				struct dp_srng *rx_refill_buf_ring =
+					&pdev->rx_refill_buf_ring;
 
-			DP_STATS_INC(pdev, replenish.low_thresh_intrs, 1);
-			dp_rx_buffers_replenish(soc, ring,
-				rx_refill_buf_ring,
-				&soc->rx_desc_buf[ring], 0,
-				&desc_list, &tail, HAL_RX_BUF_RBM_SW3_BM);
+				DP_STATS_INC(pdev, replenish.low_thresh_intrs,
+						1);
+				dp_rx_buffers_replenish(soc, mac_for_pdev,
+					rx_refill_buf_ring,
+					&soc->rx_desc_buf[mac_for_pdev], 0,
+					&desc_list, &tail,
+					HAL_RX_BUF_RBM_SW3_BM);
+			}
 		}
 	}
 
