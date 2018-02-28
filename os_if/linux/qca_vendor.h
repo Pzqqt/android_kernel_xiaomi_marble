@@ -5524,6 +5524,38 @@ enum he_mcs_config {
 	HE_80p80_MCS0_11 = 10,
 };
 
+/**
+ * enum qca_wlan_ba_session_config - BA session configuration
+ *
+ * Indicates the configuration values for BA session configuration attribute.
+ *
+ * @QCA_WLAN_ADD_BA: Establish a new BA session with given configuration.
+ * @QCA_WLAN_DELETE_BA: Delete the existing BA session for given TID.
+ */
+enum qca_wlan_ba_session_config {
+	QCA_WLAN_ADD_BA = 1,
+	QCA_WLAN_DELETE_BA = 2,
+};
+
+/**
+ * enum qca_wlan_ac_type - access category type
+ *
+ * Indicates the access category type value.
+ *
+ * @QCA_WLAN_AC_BE: BE access category
+ * @QCA_WLAN_AC_BK: BK access category
+ * @QCA_WLAN_AC_VI: VI access category
+ * @QCA_WLAN_AC_VO: VO access category
+ * @QCA_WLAN_AC_ALL: All ACs
+ */
+enum qca_wlan_ac_type {
+	QCA_WLAN_AC_BE = 0,
+	QCA_WLAN_AC_BK = 1,
+	QCA_WLAN_AC_VI = 2,
+	QCA_WLAN_AC_VO = 3,
+	QCA_WLAN_AC_ALL = 4,
+};
+
 /* Attributes for data used by
  * QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION
  */
@@ -5550,14 +5582,18 @@ enum qca_wlan_vendor_attr_wifi_test_config {
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_SEND_ADDBA_REQ = 3,
 
 	/* 8-bit unsigned value to indicate the HE fragmentation support.
-	 * Uses enum he_fragmentation_val values
-	 * This attribute is used to configure the testbed device.
+	 * Uses enum he_fragmentation_val values.
+	 * This attribute is used to configure the testbed device to
+	 * allow the advertised hardware capabilities to be downgraded
+	 * for testing purposes.
 	 */
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_FRAGMENTATION = 4,
 
 	/* 8-bit unsigned value to indicate the HE MCS support.
-	 * Uses he_mcs_config enum values
-	 * This attribute is used to configure the testbed device.
+	 * Uses enum he_mcs_config values.
+	 * This attribute is used to configure the testbed device to
+	 * allow the advertised hardware capabilities to be downgraded
+	 * for testing purposes.
 	 */
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_MCS = 5,
 
@@ -5567,6 +5603,45 @@ enum qca_wlan_vendor_attr_wifi_test_config {
 	 * 1-allow wep/tkip in HT/VHT/HE, 0-do not allow wep/tkip
 	 */
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WEP_TKIP_IN_HE = 6,
+
+	/* 8-bit unsigned value to configure the driver to add a
+	 * new BA session or delete the existing BA session for
+	 * given TID. ADDBA command uses the buffer size and tid
+	 * configuration if user specifies the values else default
+	 * value for buffer size is used for all tids if the tid
+	 * also not specified. For DEL_BA command TID value is
+	 * required to process the command.
+	 * Uses enum qca_wlan_ba_session_config values.
+	 * This attribute is used to configure the testbed device.
+	 */
+	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADD_DEL_BA_SESSION = 7,
+
+	/* 8-bit unsigned value to configure the buffer size in addba
+	 * request and response frames.
+	 * This attribute is used to configure the testbed device.
+	 * The range of the value is 0 to 255
+	 */
+	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADDBA_BUFF_SIZE = 8,
+
+	/* 8-bit unsigned value to configure the buffer size in addba
+	 * request and response frames.
+	 * This attribute is used to configure the testbed device.
+	 */
+	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BA_TID = 9,
+
+	/* 8-bit unsigned value to configure the no ack policy.
+	 * To configure no ack policy, access category value
+	 * is required to process the command.
+	 * This attribute is used to configure the testbed device.
+	 * 1 - enable no ack, 0 - disable no ack
+	 */
+	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_NO_ACK = 10,
+
+	/* 8-bit unsigned value to configure the AC for no ack policy
+	 * This attribute is used to configure the testbed device.
+	 * uses the enum qca_wlan_ac_type values
+	 */
+	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_NO_ACK_AC = 11,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_AFTER_LAST,
