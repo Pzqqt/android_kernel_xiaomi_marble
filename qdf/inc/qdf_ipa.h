@@ -646,5 +646,18 @@ static inline int qdf_ipa_broadcast_wdi_quota_reach_ind(uint32_t index,
 	return __qdf_ipa_broadcast_wdi_quota_reach_ind(index, quota_bytes);
 }
 #endif
+
+#ifdef ENABLE_SMMU_S1_TRANSLATION
+/**
+ * qdf_get_ipa_smmu_enabled() - to get IPA SMMU enable status
+ *
+ * Return: true when IPA SMMU enabled, otherwise false
+ */
+static inline bool qdf_get_ipa_smmu_enabled(void)
+{
+	return __qdf_get_ipa_smmu_enabled();
+}
+#endif
+
 #endif /* IPA_OFFLOAD */
 #endif /* _QDF_IPA_H */

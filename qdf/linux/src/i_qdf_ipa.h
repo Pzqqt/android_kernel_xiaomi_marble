@@ -914,5 +914,24 @@ static inline int __qdf_ipa_broadcast_wdi_quota_reach_ind(uint32_t index,
 #endif
 
 void __qdf_ipa_set_meta_msg_type(__qdf_ipa_msg_meta_t *meta, int type);
+
+#ifdef ENABLE_SMMU_S1_TRANSLATION
+/**
+ * __qdf_get_ipa_smmu_enabled() - to get IPA SMMU enable status
+ *
+ * Return: true when IPA SMMU enabled, otherwise false
+ */
+static bool __qdf_get_ipa_smmu_enabled(void)
+{
+	struct ipa_smmu_in_params params_in;
+	struct ipa_smmu_out_params params_out;
+
+	params_in.smmu_client = IPA_SMMU_WLAN_CLIENT;
+	ipa_get_smmu_params(&params_in, &params_out);
+
+	return params_out.smmu_enable;
+}
+#endif
+
 #endif /* IPA_OFFLOAD */
 #endif /* _I_QDF_IPA_H */
