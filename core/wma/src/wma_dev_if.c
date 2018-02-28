@@ -530,7 +530,7 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 	if (!peer) {
 		WMA_LOGE("%s Failed to find peer %pM", __func__,
 			 del_sta_self_req_param->self_mac_addr);
-		qdf_status = QDF_STATUS_SUCCESS;
+		qdf_status = QDF_STATUS_E_FAULT;
 		goto error;
 	}
 	wma_remove_peer(wma_handle,
@@ -793,8 +793,16 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 		if ((status != QDF_STATUS_SUCCESS) && generateRsp) {
 			WMA_LOGE("can't remove selfpeer, send rsp session: %d",
 				 vdev_id);
-			goto send_fail_rsp;
-		} else {
+			if (!cds_is_driver_unloading()) {
+				WMA_LOGE("Trigger recovery for session: %d",
+					 vdev_id);
+				goto send_fail_rsp;
+			} else {
+				WMA_LOGE("driver unload, free mem vdev_id: %d",
+					 vdev_id);
+				goto send_rsp;
+			}
+		} else if (status != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("can't remove selfpeer, free msg session: %d",
 				 vdev_id);
 			qdf_mem_free(pdel_sta_self_req_param);
