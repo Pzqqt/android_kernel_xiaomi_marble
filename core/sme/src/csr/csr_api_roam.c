@@ -4415,13 +4415,12 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 		     sizeof(tSirMacCapabilityInfo));
 	/* get qos */
 	pBssConfig->qosType = csr_get_qo_s_from_bss_desc(pMac, pBssDesc, pIes);
-	/* get SSID */
-	if (pIes->SSID.present) {
-		qdf_mem_copy(&pBssConfig->SSID.ssId, pIes->SSID.ssid,
-			     pIes->SSID.num_ssid);
-		pBssConfig->SSID.length = pIes->SSID.num_ssid;
-	} else
-		pBssConfig->SSID.length = 0;
+	/* Take SSID always from profile */
+	qdf_mem_copy(&pBssConfig->SSID.ssId,
+		     pProfile->SSIDs.SSIDList->SSID.ssId,
+		     pProfile->SSIDs.SSIDList->SSID.length);
+	pBssConfig->SSID.length = pProfile->SSIDs.SSIDList->SSID.length;
+
 	if (csr_is_nullssid(pBssConfig->SSID.ssId, pBssConfig->SSID.length)) {
 		sme_warn("BSS desc SSID is a wild card");
 		/* Return failed if profile doesn't have an SSID either. */
