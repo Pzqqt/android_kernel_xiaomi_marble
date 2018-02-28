@@ -623,7 +623,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 		 * flag after which driver does not send the cfg80211_scan_done.
 		 * Ensure to cleanup the scan queue in NETDEV_GOING_DOWN
 		 */
-		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev);
+		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev, dev);
 		break;
 
 	default:
@@ -6462,7 +6462,7 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	 */
 	hdd_set_idle_ps_config(hdd_ctx, false);
 	/* clear the scan queue in all the scenarios */
-	wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev);
+	wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev, NULL);
 
 	if (driver_status != DRIVER_MODULES_CLOSED) {
 		hdd_unregister_wext_all_adapters(hdd_ctx);
@@ -12144,7 +12144,7 @@ static void hdd_stop_present_mode(struct hdd_context *hdd_ctx,
 	case QDF_GLOBAL_MISSION_MODE:
 	case QDF_GLOBAL_FTM_MODE:
 		hdd_abort_mac_scan_all_adapters(hdd_ctx);
-		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev);
+		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev, NULL);
 		hdd_stop_all_adapters(hdd_ctx);
 
 		break;

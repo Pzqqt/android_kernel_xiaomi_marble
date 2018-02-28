@@ -1487,7 +1487,7 @@ static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 		hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 		if (hdd_ctx != NULL)
 			wlan_cfg80211_cleanup_scan_queue(
-					hdd_ctx->hdd_pdev);
+					hdd_ctx->hdd_pdev, NULL);
 		break;
 	default:
 		break;
