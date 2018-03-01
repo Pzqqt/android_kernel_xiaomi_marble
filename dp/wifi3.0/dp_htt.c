@@ -1612,7 +1612,10 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	ppdu_desc->tx_duration = *tag_buf;
 	tag_buf += 3;
 	ppdu_desc->ppdu_start_timestamp = *tag_buf;
-	ppdu_desc->ppdu_end_timestamp = 0; /*TODO: value to be provided by FW */
+
+	ppdu_desc->ppdu_end_timestamp = ppdu_desc->ppdu_start_timestamp +
+					ppdu_desc->tx_duration;
+
 	tag_buf++;
 
 	freq = HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_GET(*tag_buf);
