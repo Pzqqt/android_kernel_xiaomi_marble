@@ -111,17 +111,18 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 		return NULL;
 	}
 	pdev->obj_state = WLAN_OBJ_STATE_ALLOCATED;
+	/* Initialize PDEV spinlock */
+	qdf_spinlock_create(&pdev->pdev_lock);
 	/* Attach PDEV with PSOC */
 	if (wlan_objmgr_psoc_pdev_attach(psoc, pdev)
 				!= QDF_STATUS_SUCCESS) {
 		obj_mgr_err("pdev psoc attach failed");
+		qdf_spinlock_destroy(&pdev->pdev_lock);
 		qdf_mem_free(pdev);
 		return NULL;
 	}
 	/* Save PSOC object pointer in PDEV */
 	wlan_pdev_set_psoc(pdev, psoc);
-	/* Initialize PDEV spinlock */
-	qdf_spinlock_create(&pdev->pdev_lock);
 	/* Initialize PDEV's VDEV list, assign default values */
 	qdf_list_create(&pdev->pdev_objmgr.wlan_vdev_list,
 			WLAN_UMAC_PDEV_MAX_VDEVS);

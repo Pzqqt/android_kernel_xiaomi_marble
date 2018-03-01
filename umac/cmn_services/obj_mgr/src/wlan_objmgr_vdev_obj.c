@@ -163,6 +163,8 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 		return NULL;
 	}
 
+	/* Initialize spinlock */
+	qdf_spinlock_create(&vdev->vdev_lock);
 	/* Attach VDEV to PSOC VDEV's list */
 	if (wlan_objmgr_psoc_vdev_attach(psoc, vdev) !=
 				QDF_STATUS_SUCCESS) {
@@ -170,6 +172,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 					vdev->vdev_objmgr.vdev_id);
 		qdf_mem_free(vdev->vdev_mlme.bss_chan);
 		qdf_mem_free(vdev->vdev_mlme.des_chan);
+		qdf_spinlock_destroy(&vdev->vdev_lock);
 		qdf_mem_free(vdev);
 		return NULL;
 	}
@@ -183,11 +186,10 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 		wlan_objmgr_psoc_vdev_detach(psoc, vdev);
 		qdf_mem_free(vdev->vdev_mlme.bss_chan);
 		qdf_mem_free(vdev->vdev_mlme.des_chan);
+		qdf_spinlock_destroy(&vdev->vdev_lock);
 		qdf_mem_free(vdev);
 		return NULL;
 	}
-	/* Initialize spinlock */
-	qdf_spinlock_create(&vdev->vdev_lock);
 	/* set opmode */
 	wlan_vdev_mlme_set_opmode(vdev, params->opmode);
 	/* set MAC address */
