@@ -1501,6 +1501,19 @@ QDF_STATUS tdls_process_del_peer_rsp(struct tdls_del_sta_rsp *rsp)
 
 			id = wlan_vdev_get_id(vdev);
 
+#ifdef USE_NEW_TDLS_PEER_CALLBACKS
+			if (TDLS_IS_LINK_CONNECTED(curr_peer)) {
+				soc_obj->tdls_dereg_peer(
+					soc_obj->tdls_peer_context,
+					id, curr_peer->sta_id);
+				tdls_decrement_peer_count(soc_obj);
+			} else if (TDLS_LINK_CONNECTING ==
+				   curr_peer->link_status) {
+				soc_obj->tdls_dereg_peer(
+					soc_obj->tdls_peer_context,
+					id, curr_peer->sta_id);
+			}
+#else
 			if (TDLS_IS_LINK_CONNECTED(curr_peer)) {
 				soc_obj->tdls_dereg_tl_peer(
 					soc_obj->tdls_tl_peer_data,
@@ -1512,6 +1525,7 @@ QDF_STATUS tdls_process_del_peer_rsp(struct tdls_del_sta_rsp *rsp)
 					soc_obj->tdls_tl_peer_data,
 					id, curr_peer->sta_id);
 			}
+#endif
 		}
 		tdls_reset_peer(vdev_obj, macaddr);
 		conn_rec[sta_idx].sta_id = 0;
@@ -1683,11 +1697,17 @@ QDF_STATUS tdls_process_enable_link(struct tdls_oper_request *req)
 					  TDLS_LINK_SUCCESS);
 
 	id = wlan_vdev_get_id(vdev);
+#ifdef USE_NEW_TDLS_PEER_CALLBACKS
+	status = soc_obj->tdls_reg_peer(soc_obj->tdls_peer_context,
+					id, mac, peer->sta_id,
+					peer->qos);
+#else
 	status = soc_obj->tdls_reg_tl_peer(soc_obj->tdls_tl_peer_data,
 					   id, mac, peer->sta_id,
 					   peer->signature, peer->qos);
+#endif
 	if (QDF_IS_STATUS_ERROR(status)) {
-		tdls_err("TDLS register with TL fail, status %d", status);
+		tdls_err("TDLS register peer fail, status %d", status);
 		goto error;
 	}
 

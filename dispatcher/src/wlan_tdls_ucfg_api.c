@@ -207,10 +207,17 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 	soc_obj->tdls_tx_cnf_cb = req->ack_cnf_cb;
 	soc_obj->tx_ack_cnf_cb_data = req->tx_ack_cnf_cb_data;
 
+#ifdef USE_NEW_TDLS_PEER_CALLBACKS
+	/* Save callbacks to register/deregister TDLS sta with TL */
+	soc_obj->tdls_reg_peer = req->tdls_reg_peer;
+	soc_obj->tdls_dereg_peer = req->tdls_dereg_peer;
+	soc_obj->tdls_peer_context = req->tdls_peer_context;
+#else
 	/* Save callbacks to register/deregister TDLS sta with TL */
 	soc_obj->tdls_reg_tl_peer = req->tdls_reg_tl_peer;
 	soc_obj->tdls_dereg_tl_peer = req->tdls_dereg_tl_peer;
 	soc_obj->tdls_tl_peer_data = req->tdls_tl_peer_data;
+#endif
 
 	/* Save legacy PE/WMA commands in TDLS soc object */
 	soc_obj->tdls_send_mgmt_req = req->tdls_send_mgmt_req;
