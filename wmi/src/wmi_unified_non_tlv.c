@@ -7285,7 +7285,7 @@ static QDF_STATUS extract_single_phyerr_non_tlv(wmi_unified_t wmi_handle,
 		 *
 		 * If "int" is 64 bits then this becomes a moot point.
 		 */
-		 if (ev->hdr.buf_len > 0x7f000000) {
+		 if (ev->hdr.buf_len > PHYERROR_MAX_BUFFER_LENGTH) {
 			qdf_print("%s: buf_len is garbage? (0x%x\n)\n",
 				__func__,
 				ev->hdr.buf_len);

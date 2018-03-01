@@ -22218,6 +22218,133 @@ static QDF_STATUS extract_obss_color_collision_info_tlv(uint8_t *evt_buf,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * extract_comb_phyerr_tlv() - extract comb phy error from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @datalen: data length of event buffer
+ * @buf_offset: Pointer to hold value of current event buffer offset
+ * post extraction
+ * @phyerr: Pointer to hold phyerr
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS extract_comb_phyerr_tlv(wmi_unified_t wmi_handle,
+					  void *evt_buf,
+					  uint16_t datalen,
+					  uint16_t *buf_offset,
+					  wmi_host_phyerr_t *phyerr)
+{
+	WMI_PHYERR_EVENTID_param_tlvs *param_tlvs;
+	wmi_comb_phyerr_rx_hdr *pe_hdr;
+
+	param_tlvs = (WMI_PHYERR_EVENTID_param_tlvs *)evt_buf;
+	if (!param_tlvs) {
+		WMI_LOGD("%s: Received null data from FW", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pe_hdr = param_tlvs->hdr;
+	if (!pe_hdr) {
+		WMI_LOGD("%s: Received Data PE Header is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Ensure it's at least the size of the header */
+	if (datalen < sizeof(*pe_hdr)) {
+		WMI_LOGD("%s: Expected minimum size %zu, received %d",
+			 __func__, sizeof(*pe_hdr), datalen);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	phyerr->pdev_id = wmi_handle->ops->
+		convert_pdev_id_target_to_host(pe_hdr->pdev_id);
+	phyerr->tsf64 = pe_hdr->tsf_l32;
+	phyerr->tsf64 |= (((uint64_t)pe_hdr->tsf_u32) << 32);
+	phyerr->bufp = param_tlvs->bufp;
+	phyerr->buf_len = pe_hdr->buf_len;
+	phyerr->phy_err_mask0 = pe_hdr->rsPhyErrMask0;
+	phyerr->phy_err_mask1 = pe_hdr->rsPhyErrMask1;
+	*buf_offset = sizeof(*pe_hdr) + sizeof(uint32_t);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_single_phyerr_tlv() - extract single phy error from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @datalen: data length of event buffer
+ * @buf_offset: Pointer to hold value of current event buffer offset
+ * post extraction
+ * @phyerr: Pointer to hold phyerr
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS extract_single_phyerr_tlv(wmi_unified_t wmi_handle,
+					    void *evt_buf,
+					    uint16_t datalen,
+					    uint16_t *buf_offset,
+					    wmi_host_phyerr_t *phyerr)
+{
+	wmi_single_phyerr_rx_event *ev;
+	uint16_t n = *buf_offset;
+	uint8_t *data = (uint8_t *)evt_buf;
+
+	if (n < datalen) {
+		if ((datalen - n) < sizeof(ev->hdr)) {
+			WMI_LOGD("%s: Not enough space. len=%d, n=%d, hdr=%zu",
+				 __func__, datalen, n, sizeof(ev->hdr));
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		/*
+		 * Obtain a pointer to the beginning of the current event.
+		 * data[0] is the beginning of the WMI payload.
+		 */
+		ev = (wmi_single_phyerr_rx_event *)&data[n];
+
+		/*
+		 * Sanity check the buffer length of the event against
+		 * what we currently have.
+		 *
+		 * Since buf_len is 32 bits, we check if it overflows
+		 * a large 32 bit value.  It's not 0x7fffffff because
+		 * we increase n by (buf_len + sizeof(hdr)), which would
+		 * in itself cause n to overflow.
+		 *
+		 * If "int" is 64 bits then this becomes a moot point.
+		 */
+		if (ev->hdr.buf_len > PHYERROR_MAX_BUFFER_LENGTH) {
+			WMI_LOGD("%s: buf_len is garbage 0x%x",
+				 __func__, ev->hdr.buf_len);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		if ((n + ev->hdr.buf_len) > datalen) {
+			WMI_LOGD("%s: len exceeds n=%d, buf_len=%d, datalen=%d",
+				 __func__, n, ev->hdr.buf_len, datalen);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		phyerr->phy_err_code = WMI_UNIFIED_PHYERRCODE_GET(&ev->hdr);
+		phyerr->tsf_timestamp = ev->hdr.tsf_timestamp;
+		phyerr->bufp = &ev->bufp[0];
+		phyerr->buf_len = ev->hdr.buf_len;
+		phyerr->rf_info.rssi_comb = WMI_UNIFIED_RSSI_COMB_GET(&ev->hdr);
+
+		/*
+		 * Advance the buffer pointer to the next PHY error.
+		 * buflen is the length of this payload, so we need to
+		 * advance past the current header _AND_ the payload.
+		 */
+		n += sizeof(*ev) + ev->hdr.buf_len;
+	}
+	*buf_offset = n;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -22695,6 +22822,8 @@ struct wmi_ops tlv_ops =  {
 		send_obss_color_collision_cfg_cmd_tlv,
 	.extract_obss_color_collision_info =
 		extract_obss_color_collision_info_tlv,
+	.extract_comb_phyerr = extract_comb_phyerr_tlv,
+	.extract_single_phyerr = extract_single_phyerr_tlv,
 };
 
 /**
