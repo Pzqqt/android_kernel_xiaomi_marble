@@ -89,48 +89,78 @@ target_if_ftm_process_utf_event(ol_scn_t sc, uint8_t *event_buf, uint32_t len)
 }
 
 QDF_STATUS target_if_ftm_cmd_send(struct wlan_objmgr_pdev *pdev,
-				uint8_t *buf, uint32_t len, uint8_t pdev_id)
+				  uint8_t *buf, uint32_t len,
+				  uint8_t pdev_id)
 {
 	QDF_STATUS ret;
-	wmi_unified_t handle = GET_WMI_HDL_FROM_PDEV(pdev);
+	wmi_unified_t handle;
 	struct pdev_utf_params param;
 
+	if (!pdev) {
+		target_if_err("null pdev");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	handle = GET_WMI_HDL_FROM_PDEV(pdev);
+	if (!handle) {
+		target_if_err("null handle");
+		return QDF_STATUS_E_FAILURE;
+	}
 	param.utf_payload = buf;
 	param.len = len;
 
 	ret = wmi_unified_pdev_utf_cmd_send(handle, &param, pdev_id);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret))
 		ftm_err("wmi utf cmd send failed, ret: %d", ret);
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	return ret;
 }
 
 QDF_STATUS target_if_ftm_attach(struct wlan_objmgr_psoc *psoc)
 {
-	QDF_STATUS ret;
-	wmi_unified_t handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	int ret;
+	wmi_unified_t handle;
 
-	ret = wmi_unified_register_event_handler(handle, wmi_pdev_utf_event_id,
-						target_if_ftm_process_utf_event,
-						WMI_RX_UMAC_CTX);
+	if (!psoc) {
+		target_if_err("null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	if (!handle) {
+		target_if_err("null handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+	ret = wmi_unified_register_event_handler(handle,
+			wmi_pdev_utf_event_id,
+			target_if_ftm_process_utf_event,
+			WMI_RX_UMAC_CTX);
 	if (ret) {
 		ftm_err("wmi event registration failed, ret: %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return ret;
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS target_if_ftm_detach(struct wlan_objmgr_psoc *psoc)
 
 {
 	int ret;
-	wmi_unified_t handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_unified_t handle;
 
+	if (!psoc) {
+		target_if_err("null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	if (!handle) {
+		target_if_err("null handle");
+		return QDF_STATUS_E_FAILURE;
+	}
 	ret = wmi_unified_unregister_event_handler(handle,
-							wmi_pdev_utf_event_id);
+						   wmi_pdev_utf_event_id);
 
 	if (ret) {
 		ftm_err("wmi event deregistration failed, ret: %d", ret);
