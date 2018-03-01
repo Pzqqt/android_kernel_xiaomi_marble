@@ -324,12 +324,21 @@ static QDF_STATUS target_process_bang_radar_cmd(
 		struct wlan_objmgr_pdev *pdev,
 		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	struct wmi_unit_test_cmd wmi_utest;
 	int i;
 	wmi_unified_t wmi_handle;
 
-	wmi_handle = (wmi_unified_t)ucfg_get_pdev_wmi_handle(pdev);
+	if (!pdev) {
+		target_if_err("null pdev");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wmi_handle = GET_WMI_HDL_FROM_PDEV(pdev);
+	if (!wmi_handle) {
+		target_if_err("null wmi_handle");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	wmi_utest.vdev_id = dfs_unit_test->vdev_id;
 	wmi_utest.module_id = WLAN_MODULE_PHYERR_DFS;
@@ -345,7 +354,7 @@ static QDF_STATUS target_process_bang_radar_cmd(
 		convert_pdev_id_host_to_target(pdev->pdev_objmgr.wlan_pdev_id);
 
 	status = wmi_unified_unit_test_cmd(wmi_handle, &wmi_utest);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	if (QDF_IS_STATUS_ERROR(status))
 		target_if_err("dfs: unit_test_cmd send failed %d", status);
 
 	return status;
@@ -393,28 +402,27 @@ static QDF_STATUS target_if_dfs_set_phyerr_filter_offload(
 					struct wlan_objmgr_pdev *pdev,
 					bool dfs_phyerr_filter_offload)
 {
-	int ret;
+	QDF_STATUS status;
 	void *wmi_handle;
-	struct wlan_objmgr_psoc *psoc = NULL;
 
-	psoc = wlan_pdev_get_psoc(pdev);
-	if (!psoc) {
-		target_if_err("null psoc");
+	if (!pdev) {
+		target_if_err("null pdev");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = GET_WMI_HDL_FROM_PDEV(pdev);
+	if (!wmi_handle) {
+		target_if_err("null wmi_handle");
+		return QDF_STATUS_E_FAILURE;
+	}
 
-	ret = wmi_unified_dfs_phyerr_filter_offload_en_cmd(
-					wmi_handle,
+	status = wmi_unified_dfs_phyerr_filter_offload_en_cmd(wmi_handle,
 					dfs_phyerr_filter_offload);
-	if (ret) {
-		target_if_err("phyerr filter offload %d set fail",
-				dfs_phyerr_filter_offload);
-		return QDF_STATUS_E_FAILURE;
-	}
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("phyerr filter offload %d set fail: %d",
+			      dfs_phyerr_filter_offload, status);
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 #else
 static QDF_STATUS target_if_dfs_set_phyerr_filter_offload(
