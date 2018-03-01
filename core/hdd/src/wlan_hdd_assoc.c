@@ -1493,13 +1493,6 @@ QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t staid)
 	int ret = 0;
 	struct qdf_mac_addr *peer_mac = NULL;
 	struct qdf_mac_addr broadcastMacAddr = QDF_MAC_ADDR_BCAST_INIT;
-	if (eConnectionState_IbssDisconnected ==
-	    sta_ctx->conn_info.connState) {
-		/*
-		 * Do not set the carrier off when the last peer leaves.
-		 * We will set the carrier off while stopping the IBSS.
-		 */
-	}
 
 	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
