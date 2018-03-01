@@ -583,15 +583,30 @@ scm_find_duplicate_and_del(struct scan_dbs *scan_db,
 
 /**
  * scm_add_update_entry() - add or update scan entry
- * @scan_db: scan database
+ * @psoc: psoc ptr
+ * @pdev: pdev pointer
  * @scan_params: new received entry
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS scm_add_update_entry(struct scan_dbs *scan_db,
-	struct scan_cache_entry *scan_params)
+static QDF_STATUS scm_add_update_entry(struct wlan_objmgr_psoc *psoc,
+	struct wlan_objmgr_pdev *pdev, struct scan_cache_entry *scan_params)
 {
 	QDF_STATUS status;
+	struct scan_dbs *scan_db;
+	struct wlan_scan_obj *scan_obj;
+
+	scan_db = wlan_pdev_get_scan_db(psoc, pdev);
+	if (!scan_db) {
+		scm_err("scan_db is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("scan_obj is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (scan_params->frm_subtype ==
 	   MGMT_SUBTYPE_PROBE_RESP &&
@@ -606,6 +621,10 @@ static QDF_STATUS scm_add_update_entry(struct scan_dbs *scan_db,
 			scan_params->bssid.bytes);
 
 	scm_find_duplicate_and_del(scan_db, scan_params);
+
+	if (scan_obj->cb.inform_beacon)
+		scan_obj->cb.inform_beacon(pdev, scan_params);
+
 	status = scm_add_scan_entry(scan_db, scan_params);
 
 	return status;
@@ -618,7 +637,6 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct scan_cache_entry *scan_entry;
 	struct wlan_scan_obj *scan_obj;
-	struct scan_dbs *scan_db;
 	qdf_list_t *scan_list = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t list_count, i;
@@ -655,12 +673,6 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 		status = QDF_STATUS_E_INVAL;
 		goto free_nbuf;
 	}
-	scan_db = wlan_pdev_get_scan_db(psoc, pdev);
-	if (!scan_db) {
-		scm_err("scan_db is NULL");
-		status = QDF_STATUS_E_INVAL;
-		goto free_nbuf;
-	}
 
 	if (qdf_nbuf_len(bcn->buf) <=
 	   (sizeof(struct wlan_frame_hdr) +
@@ -694,15 +706,17 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 
 		scan_entry = scan_node->entry;
 
+		scm_debug("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x  ssid:%.*s, rssi: %d",
+			  (bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
+			  "Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
+			  scan_entry->tsf_delta, scan_entry->seq_num,
+			  scan_entry->ssid.length, scan_entry->ssid.ssid,
+			  scan_entry->rssi_raw);
+
 		if (scan_obj->drop_bcn_on_chan_mismatch &&
 			scan_entry->channel_mismatch) {
-			scm_debug("Channel mismatch: Received %s from BSSID: %pM "
-				"tsf_delta = %u Seq Num: %x ssid:%.*s, rssi: %d",
-				(bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
-				"Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
-				scan_entry->tsf_delta, scan_entry->seq_num,
-				scan_entry->ssid.length, scan_entry->ssid.ssid,
-				scan_entry->rssi_raw);
+			scm_debug("Drop frame, as channel mismatch Received for from BSSID: %pM ",
+				   scan_entry->bssid.bytes);
 			util_scan_free_cache_entry(scan_entry);
 			qdf_mem_free(scan_node);
 			continue;
@@ -714,23 +728,15 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 		if (wlan_reg_11d_enabled_on_host(psoc))
 			scm_11d_handle_country_info(psoc, pdev, scan_entry);
 
-		status = scm_add_update_entry(scan_db, scan_entry);
+		status = scm_add_update_entry(psoc, pdev, scan_entry);
 		if (QDF_IS_STATUS_ERROR(status)) {
+			scm_debug("failed to add entry for BSSID: %pM",
+				  scan_entry->bssid.bytes);
 			util_scan_free_cache_entry(scan_entry);
 			qdf_mem_free(scan_node);
-			scm_err("failed to add entry");
 			continue;
 		}
-		scm_info("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x "
-			"ssid:%.*s, rssi: %d",
-			(bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
-			"Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
-			scan_entry->tsf_delta, scan_entry->seq_num,
-			scan_entry->ssid.length, scan_entry->ssid.ssid,
-			scan_entry->rssi_raw);
 
-		if (scan_obj->cb.inform_beacon)
-			scan_obj->cb.inform_beacon(pdev, scan_entry);
 		qdf_mem_free(scan_node);
 	}
 
