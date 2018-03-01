@@ -1780,6 +1780,99 @@ struct afe_loopback_iir_cfg_v2 {
 	struct param_hdr_v1 st_iir_filter_config_pdata;
 	struct afe_sidetone_iir_filter_config_params st_iir_filter_config_data;
 } __packed;
+
+
+/*
+ * Param ID and related structures for AFE event
+ * registration.
+ */
+#define AFE_PORT_CMD_MOD_EVENT_CFG		0x000100FD
+
+struct afe_port_cmd_event_cfg {
+	struct apr_hdr	hdr;
+	uint32_t version;
+	/* Version number. The current version is 0 */
+
+	uint32_t port_id;
+	/*
+	 * Port ID for the AFE port hosting the modules
+	 * being registered for the events
+	 */
+
+	uint32_t num_events;
+	/*
+	 * Number of events to be registered with the service
+	 * Each event has the structure of
+	 * afe_port_cmd_mod_evt_cfg_payload.
+	 */
+	uint8_t payload[0];
+};
+
+/** Event registration for a module. */
+#define AFE_MODULE_REGISTER_EVENT_FLAG    1
+
+/** Event de-registration for a module. */
+#define AFE_MODULE_DEREGISTER_EVENT_FLAG  0
+
+struct afe_port_cmd_mod_evt_cfg_payload {
+	uint32_t module_id;
+	/* Valid ID of the module. */
+
+	uint16_t instance_id;
+	/*
+	 * Valid ID of the module instance in the current topology.
+	 * If both module_id and instance_id ID are set to 0, the event is
+	 * registered with all modules and instances in the topology.
+	 * If module_id is set to 0 and instance_id is set to a non-zero value,
+	 * the payload is considered to be invalid.
+	 */
+
+	uint16_t reserved;
+	/* Used for alignment; must be set to 0.*/
+
+	uint32_t event_id;
+	/* Unique ID of the event. */
+
+	uint32_t reg_flag;
+	/*
+	 * Bit field for enabling or disabling event registration.
+	 * values
+	 * - #AFE_MODULE_REGISTER_EVENT_FLAG
+	 * - #AFE_MODULE_DEREGISTER_EVENT_FLAG
+	 */
+} __packed;
+
+
+#define AFE_PORT_MOD_EVENT			0x0001010C
+
+struct afe_port_mod_evt_rsp_hdr {
+	uint32_t minor_version;
+	/* This indicates the minor version of the payload */
+
+	uint32_t port_id;
+	/* AFE port hosting this module */
+
+	uint32_t module_id;
+	/* Module ID which is raising the event */
+
+	uint16_t instance_id;
+	/* Instance ID of the module which is raising the event */
+
+	uint16_t reserved;
+	/* For alignment purpose, should be set to 0 */
+
+	uint32_t event_id;
+	/* Valid event ID registered by client */
+
+	uint32_t payload_size;
+	/*
+	 * Size of the event payload
+	 * This is followed by actual payload corresponding to the event
+	 */
+} __packed;
+
+#define AFE_PORT_SP_DC_DETECTION_EVENT		0x0001010D
+
 #define AFE_MODULE_SPEAKER_PROTECTION	0x00010209
 #define AFE_PARAM_ID_SPKR_PROT_CONFIG	0x0001020a
 #define AFE_API_VERSION_SPKR_PROT_CONFIG	0x1

@@ -24,6 +24,7 @@
 #include <dsp/q6afe-v2.h>
 #include <dsp/q6audio-v2.h>
 #include <dsp/q6common.h>
+#include <dsp/msm-audio-event-notify.h>
 #include <ipc/apr_tal.h>
 #include "adsp_err.h"
 
@@ -326,6 +327,11 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
 	return 0;
 }
 
+static void afe_notify_dc_presence(void)
+{
+	msm_aud_evt_notifier_call_chain(MSM_AUD_DC_EVENT, NULL);
+}
+
 static int32_t afe_callback(struct apr_client_data *data, void *priv)
 {
 	if (!data) {
@@ -437,6 +443,7 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 			case AFE_PORTS_CMD_DTMF_CTL:
 			case AFE_SVC_CMD_SET_PARAM:
 			case AFE_SVC_CMD_SET_PARAM_V2:
+			case AFE_PORT_CMD_MOD_EVENT_CFG:
 				atomic_set(&this_afe.state, 0);
 				wake_up(&this_afe.wait[data->token]);
 				break;
@@ -497,6 +504,35 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 			wake_up(&this_afe.wait[data->token]);
 		} else if (data->opcode == AFE_EVENT_RT_PROXY_PORT_STATUS) {
 			port_id = (uint16_t)(0x0000FFFF & payload[0]);
+		} else if (data->opcode == AFE_PORT_MOD_EVENT) {
+			u32 flag_dc_presence[2];
+			uint32_t *payload = data->payload;
+			struct afe_port_mod_evt_rsp_hdr *evt_pl =
+				(struct afe_port_mod_evt_rsp_hdr *)payload;
+
+			if (!payload || (data->token >= AFE_MAX_PORTS)) {
+				pr_err("%s: Error: size %d payload %pK token %d\n",
+					__func__, data->payload_size,
+					payload, data->token);
+				return -EINVAL;
+			}
+			if ((evt_pl->module_id == AFE_MODULE_SPEAKER_PROTECTION_V2_EX_VI) &&
+			    (evt_pl->event_id == AFE_PORT_SP_DC_DETECTION_EVENT) &&
+			    (evt_pl->payload_size == sizeof(flag_dc_presence))) {
+
+				memcpy(&flag_dc_presence,
+					payload +
+					sizeof(struct afe_port_mod_evt_rsp_hdr),
+					evt_pl->payload_size);
+				if (flag_dc_presence[0] == 1 ||
+					flag_dc_presence[1] == 1) {
+					afe_notify_dc_presence();
+				}
+			} else {
+				pr_debug("%s: mod ID = 0x%x event_id = 0x%x\n",
+						__func__, evt_pl->module_id,
+						evt_pl->event_id);
+			}
 		}
 		pr_debug("%s: port_id = 0x%x\n", __func__, port_id);
 		switch (port_id) {
@@ -1475,6 +1511,79 @@ fail_cmd:
 	return ret;
 }
 
+static int afe_spkr_prot_reg_event_cfg(u16 port_id)
+{
+	struct afe_port_cmd_event_cfg *config;
+	struct afe_port_cmd_mod_evt_cfg_payload pl;
+	int index;
+	int ret;
+	int num_events = 1;
+	int cmd_size = sizeof(struct afe_port_cmd_event_cfg) +
+		(num_events * sizeof(struct afe_port_cmd_mod_evt_cfg_payload));
+
+	config = kzalloc(cmd_size, GFP_KERNEL);
+	if (!config)
+		return -ENOMEM;
+
+	index = q6audio_get_port_index(port_id);
+	if (index < 0) {
+		pr_err("%s: Invalid index number: %d\n", __func__, index);
+		ret = -EINVAL;
+		goto fail_idx;
+	}
+
+	memset(&pl, 0, sizeof(pl));
+	pl.module_id = AFE_MODULE_SPEAKER_PROTECTION_V2_EX_VI;
+	pl.event_id = AFE_PORT_SP_DC_DETECTION_EVENT;
+	pl.reg_flag = AFE_MODULE_REGISTER_EVENT_FLAG;
+
+
+	config->hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
+				APR_HDR_LEN(APR_HDR_SIZE), APR_PKT_VER);
+	config->hdr.pkt_size = cmd_size;
+	config->hdr.src_port = 0;
+	config->hdr.dest_port = 0;
+	config->hdr.token = index;
+
+	config->hdr.opcode = AFE_PORT_CMD_MOD_EVENT_CFG;
+	config->port_id = q6audio_get_port_id(port_id);
+	config->num_events = num_events;
+	config->version = 1;
+	memcpy(config->payload, &pl, sizeof(pl));
+	atomic_set(&this_afe.state, 1);
+	atomic_set(&this_afe.status, 0);
+	ret = apr_send_pkt(this_afe.apr, (uint32_t *) config);
+	if (ret < 0) {
+		pr_err("%s: port = 0x%x failed %d\n",
+			__func__, port_id, ret);
+		goto fail_cmd;
+	}
+	ret = wait_event_timeout(this_afe.wait[index],
+		(atomic_read(&this_afe.state) == 0),
+		msecs_to_jiffies(TIMEOUT_MS));
+	if (!ret) {
+		pr_err("%s: wait_event timeout\n", __func__);
+		ret = -EINVAL;
+		goto fail_cmd;
+	}
+	if (atomic_read(&this_afe.status) > 0) {
+		pr_err("%s: config cmd failed [%s]\n",
+			__func__, adsp_err_get_err_str(
+			atomic_read(&this_afe.status)));
+		ret = adsp_err_get_lnx_err_code(
+				atomic_read(&this_afe.status));
+		goto fail_idx;
+	}
+	ret = 0;
+fail_cmd:
+	pr_debug("%s: config.opcode 0x%x status %d\n",
+		__func__, config->hdr.opcode, ret);
+
+fail_idx:
+	kfree(config);
+	return ret;
+}
+
 static void afe_send_cal_spkr_prot_tx(int port_id)
 {
 	union afe_spkr_prot_config afe_spk_config;
@@ -1585,6 +1694,8 @@ static void afe_send_cal_spkr_prot_tx(int port_id)
 	}
 	mutex_unlock(&this_afe.cal_data[AFE_FB_SPKR_PROT_EX_VI_CAL]->lock);
 
+	/* Register for DC detection event */
+	afe_spkr_prot_reg_event_cfg(port_id);
 }
 
 static void afe_send_cal_spkr_prot_rx(int port_id)
