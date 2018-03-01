@@ -14179,6 +14179,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wip
 static void wlan_hdd_cfg80211_scan_randomization_init(struct wiphy *wiphy)
 {
 	struct hdd_context *hdd_ctx;
+
 	hdd_ctx = wiphy_priv(wiphy);
 
 	if (false == hdd_ctx->config->enable_mac_spoofing) {

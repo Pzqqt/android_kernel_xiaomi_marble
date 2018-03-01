@@ -1007,6 +1007,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 	count = 0;
 	if (tb[QCA_WLAN_VENDOR_ATTR_SCAN_SSIDS]) {
 		int ssid_length;
+
 		nla_for_each_nested(attr, tb[QCA_WLAN_VENDOR_ATTR_SCAN_SSIDS],
 				tmp) {
 			ssid_length = nla_len(attr);

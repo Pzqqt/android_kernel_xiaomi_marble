@@ -3131,6 +3131,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 #endif
 	} else {
 		bool connect_timeout = false;
+
 		if (roam_info && roam_info->is_fils_connection &&
 		    eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE == roamResult)
 			qdf_copy_macaddr(&roam_info->bssid,

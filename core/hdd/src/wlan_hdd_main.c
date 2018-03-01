@@ -10848,6 +10848,7 @@ void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
 {
 	struct sir_peer_sta_info peer_sta_info;
 	struct hdd_station_info *stainfo;
+
 	ENTER();
 
 	/* Ignore request to disassoc bcmc station */
