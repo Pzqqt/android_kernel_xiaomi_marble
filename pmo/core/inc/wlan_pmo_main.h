@@ -160,6 +160,15 @@ QDF_STATUS pmo_core_get_psoc_config(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS pmo_core_update_psoc_config(struct wlan_objmgr_psoc *psoc,
 		struct pmo_psoc_cfg *psoc_cfg);
 
+/**
+ * pmo_psoc_set_caps() - overwrite configured device capability flags
+ * @psoc: the psoc for which the capabilities apply
+ * @caps: the cabability information to configure
+ *
+ * Return: None
+ */
+void pmo_psoc_set_caps(struct wlan_objmgr_psoc *psoc,
+		       struct pmo_device_caps *caps);
 
 /**
  * pmo_core_get_vdev_op_mode(): API to get the vdev operation mode

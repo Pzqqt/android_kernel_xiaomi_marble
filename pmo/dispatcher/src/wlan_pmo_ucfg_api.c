@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,6 +41,22 @@ QDF_STATUS ucfg_pmo_update_psoc_config(struct wlan_objmgr_psoc *psoc,
 		struct pmo_psoc_cfg *psoc_cfg)
 {
 	return pmo_core_update_psoc_config(psoc, psoc_cfg);
+}
+
+QDF_STATUS ucfg_pmo_psoc_set_caps(struct wlan_objmgr_psoc *psoc,
+				  struct pmo_device_caps *caps)
+{
+	QDF_BUG(psoc);
+	if (!psoc)
+		return QDF_STATUS_E_INVAL;
+
+	QDF_BUG(caps);
+	if (!caps)
+		return QDF_STATUS_E_INVAL;
+
+	pmo_psoc_set_caps(psoc, caps);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 bool ucfg_pmo_is_ap_mode_supports_arp_ns(struct wlan_objmgr_psoc *psoc,

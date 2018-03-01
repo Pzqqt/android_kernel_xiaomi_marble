@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,6 +37,7 @@
  * @psoc_cfg: place holder for psoc configuration
  * @pmo_tx_ops: transmit ops for PMO
  * @wow: wow configuration
+ * @caps: PMO specific device capability bits
  * @dp_hdl: psoc data path handle
  * @htc_hdl: htc layer handle
  * @hif_hdl: hif layer handle
@@ -49,6 +50,7 @@ struct pmo_psoc_priv_obj {
 	struct pmo_psoc_cfg psoc_cfg;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 	struct pmo_wow wow;
+	struct pmo_device_caps caps;
 	void *dp_hdl;
 	void *htc_hdl;
 	void *hif_hdl;
