@@ -5330,6 +5330,30 @@ static void wma_update_ra__limit(tp_wma_handle handle)
 }
 #endif
 
+static void wma_set_pmo_caps(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status;
+	struct pmo_device_caps caps;
+
+	caps.arp_ns_offload =
+		wma_is_service_enabled(wmi_service_arpns_offload);
+	caps.apf =
+		wma_is_service_enabled(wmi_service_bpf_offload);
+	caps.packet_filter =
+		wma_is_service_enabled(wmi_service_packet_filter_offload);
+	caps.unified_wow =
+		wma_is_service_enabled(wmi_service_unified_wow_capability);
+
+	status = ucfg_pmo_psoc_set_caps(psoc, &caps);
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("Failed to set PMO capabilities; status:%d", status);
+}
+
+static void wma_set_component_caps(struct wlan_objmgr_psoc *psoc)
+{
+	wma_set_pmo_caps(psoc);
+}
+
 /**
  * wma_rx_service_ready_event() - event handler to process
  *                                wmi rx sevice ready event.
@@ -5618,6 +5642,9 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	qdf_mem_copy(target_cap.wmi_service_bitmap,
 		     service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));
+
+	wma_set_component_caps(wma_handle->psoc);
+
 	target_cap.wlan_resource_config = tgt_hdl->info.wlan_res_cfg;
 	wma_update_fw_config(wma_handle, &target_cap, tgt_hdl);
 	qdf_mem_copy(wma_handle->wmi_service_bitmap,

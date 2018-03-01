@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -82,6 +82,16 @@ QDF_STATUS ucfg_pmo_get_psoc_config(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS ucfg_pmo_update_psoc_config(struct wlan_objmgr_psoc *psoc,
 		struct pmo_psoc_cfg *psoc_cfg);
+
+/**
+ * ucfg_pmo_psoc_set_caps() - overwrite configured device capability flags
+ * @psoc: the psoc for which the capabilities apply
+ * @caps: the cabability information to configure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_pmo_psoc_set_caps(struct wlan_objmgr_psoc *psoc,
+				  struct pmo_device_caps *caps);
 
 /**
  * pmo_ucfg_enable_wakeup_event() -  enable wow wakeup events

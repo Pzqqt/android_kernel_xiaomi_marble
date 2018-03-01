@@ -205,6 +205,16 @@ out:
 	return status;
 }
 
+void pmo_psoc_set_caps(struct wlan_objmgr_psoc *psoc,
+		       struct pmo_device_caps *caps)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		qdf_mem_copy(&psoc_ctx->caps, caps, sizeof(psoc_ctx->caps));
+	}
+}
+
 void pmo_core_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
 				  void *hif_hdl)
 {

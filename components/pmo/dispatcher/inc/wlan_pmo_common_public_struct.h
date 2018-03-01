@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -314,6 +314,22 @@ struct pmo_psoc_cfg {
 	uint8_t sta_max_li_mod_dtim;
 	uint8_t power_save_mode;
 	enum pmo_auto_pwr_detect_failure_mode auto_power_save_fail_mode;
+};
+
+/**
+ * pmo_device_caps - device capability flags (true if feature is supported)
+ * @apf: Android Packet Filter (aka BPF)
+ * @arp_ns_offload: APR/NS offload
+ * @packet_filter: Legacy "Packet Filter"
+ * @unified_wow: Firmware supports "interface pause" flag in WoW command.
+ *	This allows both D0-WoW (bus up) and Non-D0-WoW (bus down) to use one
+ *	unified command
+ */
+struct pmo_device_caps {
+	bool apf;
+	bool arp_ns_offload;
+	bool packet_filter;
+	bool unified_wow;
 };
 
 #endif /* end  of _WLAN_PMO_COMMONP_STRUCT_H_ */
