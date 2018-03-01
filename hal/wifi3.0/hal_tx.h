@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -114,6 +114,7 @@ do {                                            \
 
 #define HAL_TX_DESC_ADDRX_EN 0x1
 #define HAL_TX_DESC_ADDRY_EN 0x2
+#define HAL_TX_DESC_DEFAULT_LMAC_ID 0x3
 
 enum hal_tx_ret_buf_manager {
 	HAL_WBM_SW0_BM_ID = 3,
@@ -515,6 +516,30 @@ static inline void hal_tx_desc_set_hlos_tid(void *desc,
 	   HAL_TX_SM(TCL_DATA_CMD_4, HLOS_TID_OVERWRITE, 1);
 }
 
+#ifdef QCA_WIFI_QCA6290_11AX
+/**
+ * hal_tx_desc_set_lmac_id - Set the lmac_id value
+ * @desc: Handle to Tx Descriptor
+ * @lmac_id: mac Id to ast matching
+ *                     b00 – mac 0
+ *                     b01 – mac 1
+ *                     b10 – mac 2
+ *                     b11 – all macs (legacy HK way)
+ *
+ * Return: void
+ */
+static inline void hal_tx_desc_set_lmac_id(void *desc,
+					    uint8_t lmac_id)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD_4, LMAC_ID) |=
+		HAL_TX_SM(TCL_DATA_CMD_4, LMAC_ID, lmac_id);
+}
+#else
+static inline void hal_tx_desc_set_lmac_id(void *desc,
+					    uint8_t lmac_id)
+{
+}
+#endif
 /**
  * hal_tx_desc_sync - Commit the descriptor to Hardware
  * @hal_tx_des_cached: Cached descriptor that software maintains

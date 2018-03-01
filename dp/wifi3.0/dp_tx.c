@@ -843,6 +843,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_buf_length(hal_tx_desc_cached, length);
 	hal_tx_desc_set_buf_offset(hal_tx_desc_cached, tx_desc->pkt_offset);
 	hal_tx_desc_set_encap_type(hal_tx_desc_cached, tx_desc->tx_encap_type);
+	hal_tx_desc_set_lmac_id(hal_tx_desc_cached,
+					HAL_TX_DESC_DEFAULT_LMAC_ID);
 	hal_tx_desc_set_dscp_tid_table_id(hal_tx_desc_cached,
 			vdev->dscp_tid_map_id);
 	hal_tx_desc_set_encrypt_type(hal_tx_desc_cached,
