@@ -2665,61 +2665,6 @@ static QDF_STATUS wma_extract_single_phyerr_spectral(void *handle,
 }
 
 /**
- * wma_extract_comb_phyerr_spectral() - extract comb phy error from event
- * @handle: wma handle
- * @param evt_buf: pointer to event buffer
- * @param datalen: data length of event buffer
- * @param buf_offset: Pointer to hold value of current event buffer offset
- * post extraction
- * @param phyerr: Pointer to hold phyerr
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS wma_extract_comb_phyerr_spectral(void *handle, void *data,
-		uint16_t datalen, uint16_t *buf_offset,
-		wmi_host_phyerr_t *phyerr)
-{
-	WMI_PHYERR_EVENTID_param_tlvs *param_tlvs;
-	wmi_comb_phyerr_rx_hdr *pe_hdr;
-
-	param_tlvs = (WMI_PHYERR_EVENTID_param_tlvs *) data;
-	if (!param_tlvs) {
-		WMA_LOGE("%s: Received NULL data from FW", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pe_hdr = param_tlvs->hdr;
-	if (pe_hdr == NULL) {
-		WMA_LOGE("%s: Received Data PE Header is NULL", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* Ensure it's at least the size of the header */
-	if (datalen < sizeof(*pe_hdr)) {
-		WMA_LOGE("%s:  Expected minimum size %zu, received %d",
-			 __func__, sizeof(*pe_hdr), datalen);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/*
-	 * Reconstruct the 64 bit event TSF. This isn't from the MAC, it's
-	 * at the time the event was sent to us, the TSF value will be
-	 * in the future.
-	 */
-	phyerr->tsf64 = pe_hdr->tsf_l32;
-	phyerr->tsf64 |= (((uint64_t) pe_hdr->tsf_u32) << 32);
-
-	phyerr->bufp = param_tlvs->bufp;
-	phyerr->buf_len = pe_hdr->buf_len;
-
-	phyerr->phy_err_mask0 = pe_hdr->rsPhyErrMask0;
-	phyerr->phy_err_mask1 = pe_hdr->rsPhyErrMask1;
-
-	*buf_offset = sizeof(*pe_hdr) + sizeof(uint32_t);
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * spectral_phyerr_event_handler() - spectral phyerr event handler
  * @handle: wma handle
  * @data: data buffer
@@ -2745,8 +2690,9 @@ static QDF_STATUS spectral_phyerr_event_handler(void *handle,
 	}
 
 	memset(&phyerr, 0, sizeof(wmi_host_phyerr_t));
-	if (wma_extract_comb_phyerr_spectral(handle, data,
-			datalen, &buf_offset, &phyerr)) {
+	status = wmi_extract_comb_phyerr(wma->wmi_handle, data, datalen,
+					 &buf_offset, &phyerr);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("%s: extract comb phyerr failed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2790,6 +2736,72 @@ static QDF_STATUS spectral_phyerr_event_handler(void *handle,
 }
 
 /**
+ * dfs_phyerr_event_handler() - dfs phyerr event handler
+ * @handle: wma handle
+ * @data: data buffer
+ * @datalen: buffer length
+ * @fulltsf: 64 bit event TSF
+ *
+ * Function to process DFS phy errors.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS dfs_phyerr_event_handler(tp_wma_handle handle,
+					   uint8_t *data,
+					   uint32_t datalen,
+					   uint64_t fulltsf)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_lmac_if_dfs_rx_ops *dfs_rx_ops;
+	wmi_host_phyerr_t phyerr;
+	int8_t rssi_comb;
+	uint16_t buf_offset;
+
+	if (!handle->psoc) {
+		WMA_LOGE("%s: psoc is null", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	dfs_rx_ops = wlan_lmac_if_get_dfs_rx_ops(handle->psoc);
+	if (!dfs_rx_ops) {
+		WMA_LOGE("%s: dfs_rx_ops is null", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!dfs_rx_ops->dfs_process_phyerr) {
+		WMA_LOGE("%s: dfs_process_phyerr handler is null", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!handle->pdev) {
+		WMA_LOGE("%s: pdev is null", __func__);
+		return -EINVAL;
+	}
+
+	buf_offset = 0;
+	while (buf_offset < datalen) {
+		status = wmi_extract_single_phyerr(handle->wmi_handle, data, datalen,
+						   &buf_offset, &phyerr);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			/* wmi_extract_single_phyerr has logs */
+			return status;
+		}
+
+		rssi_comb = phyerr.rf_info.rssi_comb & 0xFF;
+		if (phyerr.buf_len > 0)
+			dfs_rx_ops->dfs_process_phyerr(handle->pdev,
+						       &phyerr.bufp[0],
+						       phyerr.buf_len,
+						       rssi_comb,
+						       rssi_comb,
+						       phyerr.tsf_timestamp,
+						       fulltsf);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wma_unified_phyerr_rx_event_handler() - phyerr event handler
  * @handle: wma handle
  * @data: data buffer
@@ -2802,7 +2814,9 @@ static QDF_STATUS spectral_phyerr_event_handler(void *handle,
  * Return: 0 for success, other value for failure
  */
 static int wma_unified_phyerr_rx_event_handler(void *handle,
-		uint8_t *data, uint32_t datalen) {
+					       uint8_t *data,
+					       uint32_t datalen)
+{
 	/* phyerr handling is moved to cmn project
 	 * As WIN still uses handler registration in non-cmn code.
 	 * need complete testing of non offloaded DFS code before we enable
@@ -2813,36 +2827,45 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 	wmi_host_phyerr_t phyerr;
 	uint16_t buf_offset = 0;
 
-	if (NULL == wma) {
-		WMA_LOGE("%s:wma handle is NULL", __func__);
-		return QDF_STATUS_E_FAILURE;
+	if (!wma) {
+		WMA_LOGE("%s: wma handle is null", __func__);
+		return -EINVAL;
 	}
 
 	/* sanity check on data length */
-	if (wma_extract_comb_phyerr_spectral(wma->wmi_handle, data,
-			datalen, &buf_offset, &phyerr) != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: extract phy error from comb phy event failure",
-				__func__);
-		return QDF_STATUS_E_FAILURE;
+	status = wmi_extract_comb_phyerr(wma->wmi_handle, data, datalen,
+					 &buf_offset, &phyerr);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("%s: extract phyerr failed: %d", __func__, status);
+		return qdf_status_to_os_return(status);
 	}
 
 	/* handle different PHY Error conditions */
 	if (((phyerr.phy_err_mask0 & (WMI_PHY_ERROR_MASK0_RADAR |
-				WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT |
-				WMI_PHY_ERROR_MASK0_SPECTRAL_SCAN)) == 0)) {
-		WMA_LOGD("%s:Unknown phy error event", __func__);
-		return QDF_STATUS_E_FAILURE;
+	    WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT |
+	    WMI_PHY_ERROR_MASK0_SPECTRAL_SCAN)) == 0)) {
+		WMA_LOGD("%s: Unknown phy error event", __func__);
+		return -EINVAL;
 	}
 
 	/* Handle Spectral or DFS PHY Error */
 	if (phyerr.phy_err_mask0 & (WMI_PHY_ERROR_MASK0_RADAR |
-				WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT)) {
-		/* Do nothing*/
+	    WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT)) {
+		if (wma->is_dfs_offloaded) {
+			WMA_LOGD("%s: Unexpected phy error, dfs offloaded",
+				 __func__);
+			return -EINVAL;
+		}
+		status = dfs_phyerr_event_handler(wma,
+						  phyerr.bufp,
+						  phyerr.buf_len,
+						  phyerr.tsf64);
 	} else if (phyerr.phy_err_mask0 & (WMI_PHY_ERROR_MASK0_SPECTRAL_SCAN |
-				WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT)) {
+		   WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT)) {
 		status = spectral_phyerr_event_handler(wma, data, datalen);
 	}
-	return QDF_STATUS_SUCCESS;
+
+	return qdf_status_to_os_return(status);
 }
 
 void wma_vdev_init(struct wma_txrx_node *vdev)
@@ -5260,7 +5283,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 #endif /* WLAN_FEATURE_LPSS */
 	tgt_cfg.ap_arpns_support = wma_handle->ap_arpns_support;
 	tgt_cfg.bpf_enabled = wma_handle->bpf_enabled;
-	tgt_cfg.dfs_cac_offload = wma_handle->dfs_cac_offload;
+	tgt_cfg.dfs_cac_offload = wma_handle->is_dfs_offloaded;
 	tgt_cfg.rcpi_enabled = wma_handle->rcpi_enabled;
 	wma_update_ra_rate_limit(wma_handle, &tgt_cfg);
 	wma_update_hdd_band_cap(target_if_get_phy_capability(tgt_hdl),
@@ -5667,7 +5690,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	cdp_mark_first_wakeup_packet(soc,
 		wmi_service_enabled(wmi_handle,
 			wmi_service_mark_first_wakeup_packet));
-	wma_handle->dfs_cac_offload =
+	wma_handle->is_dfs_offloaded =
 		wmi_service_enabled(wmi_handle,
 			wmi_service_dfs_phyerr_offload);
 	wma_handle->nan_datapath_enabled =
