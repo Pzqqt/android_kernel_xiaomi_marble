@@ -863,7 +863,7 @@ QDF_STATUS hdd_tdls_register_tdls_peer(void *userdata, uint32_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return hdd_roam_register_tdlssta(adapter, mac, sta_id, ucastsig, qos);
+	return hdd_roam_register_tdlssta(adapter, mac, sta_id, qos);
 }
 
 QDF_STATUS hdd_tdls_deregister_tdl_peer(void *userdata,

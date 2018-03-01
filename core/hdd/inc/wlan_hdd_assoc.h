@@ -292,16 +292,16 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
  * @adapter: pointer to adapter
  * @peerMac: pointer to peer MAC address
  * @staId: station identifier
- * @ucastSig: unicast signature
+ * @qos: Quality of service
  *
- * Construct the staDesc and register with TL the new STA.
+ * Construct the staDesc and register the new STA with the Data Plane.
  * This is called as part of ADD_STA in the TDLS setup.
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 				     const uint8_t *peerMac, uint16_t staId,
-				     uint8_t ucastSig, uint8_t qos);
+				     uint8_t qos);
 #endif
 
 QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
