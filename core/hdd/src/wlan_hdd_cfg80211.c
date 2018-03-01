@@ -2178,10 +2178,18 @@ static void hdd_get_scan_band(struct hdd_context *hdd_ctx,
 		hdd_err("invalid band");
 		if (HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ ==
 			hdd_ctx->config->external_acs_freq_band)
-			hdd_update_acs_channel_list(sap_config, BAND_2G);
+			*band = BAND_2G;
 		else
-			hdd_update_acs_channel_list(sap_config, BAND_5G);
+			*band = BAND_5G;
+
+		hdd_update_acs_channel_list(sap_config, *band);
 	}
+
+	if (*band == BAND_2G &&
+	    (sap_config->acs_cfg.ch_width == CH_WIDTH_80MHZ ||
+	    sap_config->acs_cfg.ch_width == CH_WIDTH_160MHZ ||
+	    sap_config->acs_cfg.ch_width == CH_WIDTH_80P80MHZ))
+		sap_config->acs_cfg.ch_width = CH_WIDTH_40MHZ;
 }
 
 
