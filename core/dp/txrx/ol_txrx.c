@@ -3489,7 +3489,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 
 	if (!qdf_atomic_read(&peer->access_list[debug_id])) {
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
-		ol_txrx_err("peer %p ref was not taken by %d",
+		ol_txrx_err("peer %pK ref was not taken by %d",
 			    peer, debug_id);
 		ol_txrx_dump_peer_access_list(peer);
 		QDF_BUG(0);
@@ -3581,7 +3581,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 			qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 		}
 
-		ol_txrx_info_high("[%d][%d]: Deleting peer %p ref_cnt -> %d %s",
+		ol_txrx_info_high("[%d][%d]: Deleting peer %pK ref_cnt -> %d %s",
 				  debug_id,
 				  qdf_atomic_read(&peer->access_list[debug_id]),
 				  peer, rc,
@@ -3607,7 +3607,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 						&peer->access_list[debug_id]);
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 		if (!ref_silent)
-			ol_txrx_info_high("[%d][%d]: ref delete peer %p ref_cnt -> %d",
+			ol_txrx_info_high("[%d][%d]: ref delete peer %pK ref_cnt -> %d",
 					debug_id,
 					access_list,
 					peer, rc);
