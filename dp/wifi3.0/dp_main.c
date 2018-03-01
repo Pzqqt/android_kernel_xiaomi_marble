@@ -7165,13 +7165,11 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 				 */
 				return 0;
 			}
-			/* To enable HTT_H2T_MSG_TYPE_PPDU_STATS_CFG in FW
-			 * passing value 0xffff. Once these macros will define
-			 * in htt header file will use proper macros
-			*/
+
 			for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
 				pdev->pktlog_ppdu_stats = true;
-				dp_h2t_cfg_stats_msg_send(pdev, 0xffff,
+				dp_h2t_cfg_stats_msg_send(pdev,
+						DP_PPDU_TXLITE_STATS_BITMASK_CFG,
 						pdev->pdev_id + mac_id);
 			}
 			break;

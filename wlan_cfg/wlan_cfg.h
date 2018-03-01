@@ -31,6 +31,10 @@
  * 0 means each tx completion is 1 unit
  */
 #define DP_TX_NAPI_BUDGET_DIV_MASK 0
+
+/* PPDU Stats Configuration - Configure bitmask for enabling tx ppdu tlv's */
+#define DP_PPDU_TXLITE_STATS_BITMASK_CFG 0x1FFF
+
 #else
 #define MAX_PDEV_CNT 3
 #define WLAN_CFG_INT_NUM_CONTEXTS 4
@@ -39,6 +43,10 @@
  * 0xFFFF means each 64K tx frame completions account for 1 unit of NAPI budget
  */
 #define DP_TX_NAPI_BUDGET_DIV_MASK 0xFFFF
+
+/* PPDU Stats Configuration - Configure bitmask for enabling tx ppdu tlv's */
+#define DP_PPDU_TXLITE_STATS_BITMASK_CFG 0xFFFF
+
 #endif
 
 /* Tx configuration */
