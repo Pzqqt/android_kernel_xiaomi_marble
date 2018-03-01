@@ -5415,6 +5415,9 @@ static int hdd_ipa_setup_iface(struct hdd_ipa_priv *hdd_ipa,
 		goto end;
 	}
 
+	/* Register IPA Tx desc free callback */
+	qdf_nbuf_reg_free_cb(hdd_ipa_nbuf_cb);
+
 	hdd_ipa->num_iface++;
 
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit: num_iface=%d",
