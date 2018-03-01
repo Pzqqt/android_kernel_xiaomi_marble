@@ -86,6 +86,8 @@ typedef qdf_nbuf_t wmi_buf_t;
 #define WMI_LOGA(args ...)
 #endif
 
+#define PHYERROR_MAX_BUFFER_LENGTH 0x7F000000
+
 struct wmi_soc;
 /**
  * struct wmi_ops - service callbacks to upper layer
