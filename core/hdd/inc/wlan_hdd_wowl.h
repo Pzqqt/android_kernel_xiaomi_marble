@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -152,26 +152,6 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
  */
 bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter,
 			       uint8_t pattern_idx);
-
-/**
- * hdd_enter_wowl() - Function which will enable WoWL. At least one
- *		      of MP and PBM must be enabled
- * @adapter: pointer to the adapter
- * @enable_mp: Whether to enable magic packet WoWL mode
- * @enable_pbm: Whether to enable pattern byte matching WoWL mode
- *
- * Return: false if any errors encountered, true otherwise
- */
-bool hdd_enter_wowl(struct hdd_adapter *adapter,
-		    bool enable_mp, bool enable_pbm);
-
-/**
- * hdd_exit_wowl() - Function which will disable WoWL
- * @adapter: pointer to the adapter
- *
- * Return: false if any errors encountered, true otherwise
- */
-bool hdd_exit_wowl(struct hdd_adapter *adapter);
 
 /**
  * hdd_free_user_wowl_ptrns() - Deinit function to cleanup WoWL allocated memory

@@ -5570,7 +5570,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 	int sub_cmd = value[0];
 	int set_value = value[1];
 	int ret;
-	int enable_pbm, enable_mp;
 	QDF_STATUS status;
 	void *soc = NULL;
 	struct cdp_pdev *pdev = NULL;
@@ -5616,34 +5615,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 	}
 
-	case WE_WOWL:
-	{
-		if (!hHal)
-			return -EINVAL;
-
-		switch (set_value) {
-		case 0x00:
-			hdd_exit_wowl(adapter);
-			break;
-		case 0x01:
-		case 0x02:
-		case 0x03:
-			enable_mp = (set_value & 0x01) ? 1 : 0;
-			enable_pbm = (set_value & 0x02) ? 1 : 0;
-			hdd_debug("magic packet ? = %s pattern byte matching ? = %s",
-			       (enable_mp ? "YES" : "NO"),
-			       (enable_pbm ? "YES" : "NO"));
-			hdd_enter_wowl(adapter, enable_mp, enable_pbm);
-			break;
-		default:
-			hdd_err("Invalid arg  %d in WE_WOWL IOCTL",
-			       set_value);
-			ret = -EINVAL;
-			break;
-		}
-
-		break;
-	}
 	case WE_SET_POWER:
 	{
 		if (!hHal)
@@ -6806,7 +6777,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		hdd_ctx->config->enableModulatedDTIM = set_value;
 		break;
 	default:
-		hdd_err("Invalid sub command %d", sub_cmd);
+		hdd_debug("Invalid sub command %d", sub_cmd);
 		ret = -EINVAL;
 		break;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -49,126 +49,6 @@
 #ifdef WLAN_POWER_DEBUGFS
 #define POWER_DEBUGFS_BUFFER_MAX_LEN 4096
 #endif
-
-/**
- * __wcnss_wowenable_write() - wow_enable debugfs handler
- * @file: debugfs file handle
- * @buf: text being written to the debugfs
- * @count: size of @buf
- * @ppos: (unused) offset into the virtual file system
- *
- * Return: number of bytes processed
- */
-static ssize_t __wcnss_wowenable_write(struct file *file,
-				     const char __user *buf, size_t count,
-				     loff_t *ppos)
-{
-	struct hdd_adapter *adapter;
-	struct hdd_context *hdd_ctx;
-	char cmd[MAX_USER_COMMAND_SIZE_WOWL_ENABLE + 1];
-	char *sptr, *token;
-	uint8_t wow_enable = 0;
-	uint8_t wow_mp = 0;
-	uint8_t wow_pbm = 0;
-	int ret;
-
-	ENTER();
-
-	adapter = (struct hdd_adapter *)file->private_data;
-	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
-		hdd_err("Invalid adapter or adapter has invalid magic");
-		return -EINVAL;
-	}
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	if (!wlan_hdd_validate_modules_state(hdd_ctx))
-		return -EINVAL;
-
-	if (!sme_is_feature_supported_by_fw(WOW)) {
-		hdd_err("Wake-on-Wireless feature is not supported in firmware!");
-		return -EINVAL;
-	}
-
-	if (count > MAX_USER_COMMAND_SIZE_WOWL_ENABLE) {
-		hdd_err("Command length is larger than %d bytes",
-			MAX_USER_COMMAND_SIZE_WOWL_ENABLE);
-		return -EINVAL;
-	}
-
-	/* Get command from user */
-	if (copy_from_user(cmd, buf, count))
-		return -EFAULT;
-	cmd[count] = '\0';
-	sptr = cmd;
-
-	/* Get enable or disable wow */
-	token = strsep(&sptr, " ");
-	if (!token)
-		return -EINVAL;
-	if (kstrtou8(token, 0, &wow_enable))
-		return -EINVAL;
-
-	/* Disable wow */
-	if (!wow_enable) {
-		if (!hdd_exit_wowl(adapter)) {
-			hdd_err("hdd_exit_wowl failed!");
-			return -EFAULT;
-		}
-
-		return count;
-	}
-
-	/* Get enable or disable magic packet mode */
-	token = strsep(&sptr, " ");
-	if (!token)
-		return -EINVAL;
-	if (kstrtou8(token, 0, &wow_mp))
-		return -EINVAL;
-	if (wow_mp > 1)
-		wow_mp = 1;
-
-	/* Get enable or disable pattern byte matching mode */
-	token = strsep(&sptr, " ");
-	if (!token)
-		return -EINVAL;
-	if (kstrtou8(token, 0, &wow_pbm))
-		return -EINVAL;
-	if (wow_pbm > 1)
-		wow_pbm = 1;
-
-	if (!hdd_enter_wowl(adapter, wow_mp, wow_pbm)) {
-		hdd_err("hdd_enter_wowl failed!");
-		return -EFAULT;
-	}
-	EXIT();
-	return count;
-}
-
-/**
- * wcnss_wowenable_write() - SSR wrapper for wcnss_wowenable_write
- * @file: file pointer
- * @buf: buffer
- * @count: count
- * @ppos: position pointer
- *
- * Return: 0 on success, error number otherwise
- */
-static ssize_t wcnss_wowenable_write(struct file *file,
-				 const char __user *buf,
-				 size_t count, loff_t *ppos)
-{
-	ssize_t ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wcnss_wowenable_write(file, buf, count, ppos);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
 
 /**
  * __wcnss_wowpattern_write() - wow_pattern debugfs handler
@@ -779,13 +659,6 @@ static int wcnss_debugfs_open(struct inode *inode, struct file *file)
 	return ret;
 }
 
-static const struct file_operations fops_wowenable = {
-	.write = wcnss_wowenable_write,
-	.open = wcnss_debugfs_open,
-	.owner = THIS_MODULE,
-	.llseek = default_llseek,
-};
-
 static const struct file_operations fops_wowpattern = {
 	.write = wcnss_wowpattern_write,
 	.open = wcnss_debugfs_open,
@@ -850,11 +723,6 @@ QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter)
 	adapter->debugfs_phy = debugfs_create_dir(dev->name, 0);
 
 	if (NULL == adapter->debugfs_phy)
-		return QDF_STATUS_E_FAILURE;
-
-	if (NULL == debugfs_create_file("wow_enable", 00400 | 00200,
-					adapter->debugfs_phy, adapter,
-					&fops_wowenable))
 		return QDF_STATUS_E_FAILURE;
 
 	if (NULL == debugfs_create_file("wow_pattern", 00400 | 00200,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -58,20 +58,6 @@ static inline int find_ptrn_len(const char *ptrn)
 	}
 	return len;
 }
-
-static void hdd_wowl_callback(void *pContext, QDF_STATUS qdf_ret_status)
-{
-	hdd_info("Return code = (%d)", qdf_ret_status);
-}
-
-#ifdef WLAN_WAKEUP_EVENTS
-static void hdd_wowl_wake_indication_callback(void *pContext,
-		tpSirWakeReasonInd wake_reason_ind)
-{
-	hdd_info("Wake Reason %d", wake_reason_ind->ulReason);
-	hdd_exit_wowl((struct hdd_adapter *) pContext);
-}
-#endif
 
 /**
  * dump_hdd_wowl_ptrn() - log wow patterns
@@ -447,82 +433,6 @@ bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter,
 
 	g_hdd_wowl_ptrns_debugfs[pattern_idx] = 0;
 	g_hdd_wowl_ptrns_count--;
-
-	return true;
-}
-
-/**
- * hdd_enter_wowl() - Function which will enable WoWL. At least one
- *		      of MP and PBM must be enabled
- * @adapter: pointer to the adapter
- * @enable_mp: Whether to enable magic packet WoWL mode
- * @enable_pbm: Whether to enable pattern byte matching WoWL mode
- *
- * Return: false if any errors encountered, true otherwise
- */
-bool hdd_enter_wowl(struct hdd_adapter *adapter,
-		    bool enable_mp, bool enable_pbm)
-{
-	tSirSmeWowlEnterParams wowParams;
-	QDF_STATUS qdf_ret_status;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
-
-	qdf_mem_zero(&wowParams, sizeof(tSirSmeWowlEnterParams));
-
-	wowParams.ucPatternFilteringEnable = enable_pbm;
-	wowParams.ucMagicPktEnable = enable_mp;
-	wowParams.sessionId = adapter->session_id;
-	if (enable_mp) {
-		qdf_copy_macaddr(&wowParams.magic_ptrn,
-				 &adapter->mac_addr);
-	}
-#ifdef WLAN_WAKEUP_EVENTS
-	wowParams.ucWoWEAPIDRequestEnable = true;
-	wowParams.ucWoWEAPOL4WayEnable = true;
-	wowParams.ucWowNetScanOffloadMatch = true;
-	wowParams.ucWowGTKRekeyError = true;
-	wowParams.ucWoWBSSConnLoss = true;
-#endif /* WLAN_WAKEUP_EVENTS */
-
-	/* Request to put FW into WoWL */
-	qdf_ret_status = sme_enter_wowl(hHal, hdd_wowl_callback, adapter,
-#ifdef WLAN_WAKEUP_EVENTS
-					hdd_wowl_wake_indication_callback,
-					adapter,
-#endif /* WLAN_WAKEUP_EVENTS */
-					&wowParams, adapter->session_id);
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
-		if (QDF_STATUS_PMC_PENDING != qdf_ret_status) {
-			/* We failed to enter WoWL */
-			hdd_err("sme_enter_wowl failed with error code (%d)",
-				qdf_ret_status);
-			return false;
-		}
-	}
-	return true;
-}
-
-/**
- * hdd_exit_wowl() - Function which will disable WoWL
- * @adapter: pointer to the adapter
- *
- * Return: false if any errors encountered, true otherwise
- */
-bool hdd_exit_wowl(struct hdd_adapter *adapter)
-{
-	tSirSmeWowlExitParams wowParams;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
-	QDF_STATUS qdf_ret_status;
-
-	wowParams.sessionId = adapter->session_id;
-
-	qdf_ret_status = sme_exit_wowl(hHal, &wowParams);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
-		hdd_err("sme_exit_wowl failed with error code (%d)",
-			qdf_ret_status);
-		return false;
-	}
 
 	return true;
 }
