@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -75,14 +75,25 @@ QDF_STATUS hdd_softap_rx_mul_packet_cbk(void *cds_context,
 
 QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 				     uint8_t staId);
+
+/**
+ * hdd_softap_register_sta() - Register a SoftAP STA
+ * @adapter: pointer to adapter context
+ * @fAuthRequired: is additional authentication required?
+ * @fPrivacyBit: should 802.11 privacy bit be set?
+ * @staId: station ID assigned to this station
+ * @pPeerMacAddress: station MAC address
+ * @fWmmEnabled: is WMM enabled for this STA?
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
 QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 				   bool fAuthRequired,
 				   bool fPrivacyBit,
 				   uint8_t staId,
-				   uint8_t ucastSig,
-				   uint8_t bcastSig,
 				   struct qdf_mac_addr *pPeerMacAddress,
 				   bool fWmmEnabled);
+
 QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *adapter,
 				      bool fPrivacyBit);
 QDF_STATUS hdd_softap_deregister_bc_sta(struct hdd_adapter *adapter);

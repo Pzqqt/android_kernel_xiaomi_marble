@@ -882,25 +882,10 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 	return qdf_status;
 }
 
-/**
- * hdd_softap_register_sta() - Register a SoftAP STA
- * @adapter: pointer to adapter context
- * @fAuthRequired: is additional authentication required?
- * @fPrivacyBit: should 802.11 privacy bit be set?
- * @staId: station ID assigned to this station
- * @ucastSig: unicast security signature
- * @bcastSig: broadcast security signature
- * @pPeerMacAddress: station MAC address
- * @fWmmEnabled: is WMM enabled for this STA?
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
 QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 				   bool fAuthRequired,
 				   bool fPrivacyBit,
 				   uint8_t staId,
-				   uint8_t ucastSig,
-				   uint8_t bcastSig,
 				   struct qdf_mac_addr *pPeerMacAddress,
 				   bool fWmmEnabled)
 {
@@ -1014,7 +999,7 @@ QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *adapter,
 	qdf_status =
 		hdd_softap_register_sta(adapter, false, fPrivacyBit,
 					ap_ctx->broadcast_sta_id,
-					0, 1, &broadcastMacAddr, 0);
+					&broadcastMacAddr, 0);
 
 	return qdf_status;
 }

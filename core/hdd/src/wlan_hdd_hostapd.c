@@ -2131,7 +2131,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						adapter,
 						true,
 						ap_ctx->privacy,
-						event->staId, 0, 0,
+						event->staId,
 						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
 						event->wmmEnabled);
@@ -2144,7 +2144,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						adapter,
 						false,
 						ap_ctx->privacy,
-						event->staId, 0, 0,
+						event->staId,
 						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
 						event->wmmEnabled);
