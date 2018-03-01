@@ -1274,12 +1274,19 @@ void tdls_disable_offchan_and_teardown_links(
 		 */
 		tdls_reset_peer(tdls_vdev, curr_peer->peer_mac.bytes);
 
+#ifdef USE_NEW_TDLS_PEER_CALLBACKS
+		if (tdls_soc->tdls_dereg_peer)
+			tdls_soc->tdls_dereg_peer(
+					tdls_soc->tdls_peer_context,
+					wlan_vdev_get_id(vdev),
+					curr_peer->sta_id);
+#else
 		if (tdls_soc->tdls_dereg_tl_peer)
 			tdls_soc->tdls_dereg_tl_peer(
 					tdls_soc->tdls_tl_peer_data,
 					wlan_vdev_get_id(vdev),
 					curr_peer->sta_id);
-
+#endif
 		tdls_decrement_peer_count(tdls_soc);
 		tdls_soc->tdls_conn_info[staidx].sta_id = 0;
 		tdls_soc->tdls_conn_info[staidx].session_id = 255;
