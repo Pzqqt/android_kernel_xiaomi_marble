@@ -120,6 +120,11 @@ spectral_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev)
 	struct spectral_context *sc;
 
 	sc = spectral_get_spectral_ctx_from_vdev(vdev);
+	if (!sc) {
+		spectral_err("spectral context is Null");
+		return -EINVAL;
+	}
+
 	return sc->legacy_cbacks.vdev_get_chan_freq(vdev);
 }
 
@@ -129,6 +134,11 @@ spectral_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev)
 	struct spectral_context *sc;
 
 	sc = spectral_get_spectral_ctx_from_vdev(vdev);
+	if (!sc) {
+		spectral_err("spectral context is Null");
+		return CH_WIDTH_INVALID;
+	}
+
 	return sc->legacy_cbacks.vdev_get_ch_width(vdev);
 }
 
@@ -139,6 +149,11 @@ spectral_vdev_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,
 	struct spectral_context *sc;
 
 	sc = spectral_get_spectral_ctx_from_vdev(vdev);
+	if (!sc) {
+		spectral_err("spectral context is Null");
+		return -EINVAL;
+	}
+
 	return sc->legacy_cbacks.vdev_get_sec20chan_freq_mhz(vdev,
 							     sec20chan_freq);
 }
@@ -166,8 +181,10 @@ wlan_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
 		spectral_err("PDEV is NULL!");
 
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
-	if (!sc)
+	if (!sc) {
 		spectral_err("spectral context is NULL!");
+		return;
+	}
 
 	return sc->sptrlc_register_wmi_spectral_cmd_ops(pdev, cmd_ops);
 }

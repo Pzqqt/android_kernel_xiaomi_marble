@@ -561,6 +561,7 @@ target_if_spectral_info_read(
 	 */
 	init_def_retval = target_if_spectral_info_init_defaults(spectral);
 	if (init_def_retval != QDF_STATUS_SUCCESS) {
+		qdf_spin_unlock(&info->osps_lock);
 		if (init_def_retval == QDF_STATUS_E_NOENT)
 			return -ENOENT;
 		else

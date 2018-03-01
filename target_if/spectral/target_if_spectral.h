@@ -1131,6 +1131,10 @@ int16_t target_if_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		spectral_err("psoc is NULL");
+		return -EINVAL;
+	}
 
 	return psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_vdev_get_chan_freq(
 		vdev);
@@ -1151,6 +1155,10 @@ enum phy_ch_width target_if_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		spectral_err("psoc is NULL");
+		return CH_WIDTH_INVALID;
+	}
 
 	return psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_vdev_get_ch_width(
 		vdev);
@@ -1173,6 +1181,10 @@ int target_if_vdev_get_sec20chan_freq_mhz(
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		spectral_err("psoc is NULL");
+		return -EINVAL;
+	}
 
 	return psoc->soc_cb.rx_ops.sptrl_rx_ops.
 		sptrlro_vdev_get_sec20chan_freq_mhz(vdev, sec20chan_freq);
