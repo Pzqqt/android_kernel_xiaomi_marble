@@ -825,13 +825,14 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 				  struct wma_tgt_cfg *tgt_cfg)
 {
 	tDot11fIEhe_cap *he_cap = &tgt_cfg->he_cap;
-	int i, j = 0, max_mac, num_hw_modes;
+	int i, num_hw_modes, total_mac_phy_cnt;
 	struct wlan_psoc_host_mac_phy_caps *mac_cap, *mac_phy_cap;
 	tDot11fIEhe_cap he_cap_mac;
 	tDot11fIEhe_cap tmp_he_cap = {0};
 
 	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
+	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 
 	if (!num_hw_modes) {
 		WMA_LOGE(FL("No extended HE cap for current SOC"));
@@ -845,55 +846,48 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 		return;
 	}
 
-	for (i = 0; i < num_hw_modes; i++) {
-		if (mac_phy_cap[i].phy_id == PHY1_PHY2)
-			max_mac = j + 2;
-		else
-			max_mac = j + 1;
-		for ( ; j < max_mac; j++) {
-			qdf_mem_zero(&he_cap_mac,
-				     sizeof(tDot11fIEhe_cap));
-			mac_cap = &mac_phy_cap[j];
-			if (mac_cap->supported_bands & WLAN_2G_CAPABILITY) {
-				wma_convert_he_cap(&he_cap_mac,
-						mac_cap->he_cap_info_2G,
-						mac_cap->he_cap_phy_info_2G,
-						mac_cap->he_supp_mcs_2G,
-						mac_cap->tx_chain_mask_2G,
-						mac_cap->rx_chain_mask_2G);
-				WMA_LOGD(FL("2g phy: nss: %d, ru_idx_msk: %d"),
+	for (i = 0; i < total_mac_phy_cnt; i++) {
+		qdf_mem_zero(&he_cap_mac,
+				sizeof(tDot11fIEhe_cap));
+		mac_cap = &mac_phy_cap[i];
+		if (mac_cap->supported_bands & WLAN_2G_CAPABILITY) {
+			wma_convert_he_cap(&he_cap_mac,
+					mac_cap->he_cap_info_2G,
+					mac_cap->he_cap_phy_info_2G,
+					mac_cap->he_supp_mcs_2G,
+					mac_cap->tx_chain_mask_2G,
+					mac_cap->rx_chain_mask_2G);
+			WMA_LOGD(FL("2g phy: nss: %d, ru_idx_msk: %d"),
 					mac_cap->he_ppet2G.numss_m1,
 					mac_cap->he_ppet2G.ru_bit_mask);
-				wma_convert_he_ppet(tgt_cfg->ppet_2g,
+			wma_convert_he_ppet(tgt_cfg->ppet_2g,
 					(struct wmi_host_ppe_threshold *)
 					&mac_cap->he_ppet2G);
-			}
+		}
 
-			if (he_cap_mac.present)
-				wma_derive_ext_he_cap(&tmp_he_cap,
-						      &he_cap_mac);
+		if (he_cap_mac.present)
+			wma_derive_ext_he_cap(&tmp_he_cap,
+					&he_cap_mac);
 
-			qdf_mem_zero(&he_cap_mac,
-				     sizeof(tDot11fIEhe_cap));
-			if (mac_cap->supported_bands & WLAN_5G_CAPABILITY) {
-				wma_convert_he_cap(&he_cap_mac,
-						mac_cap->he_cap_info_5G,
-						mac_cap->he_cap_phy_info_5G,
-						mac_cap->he_supp_mcs_5G,
-						mac_cap->tx_chain_mask_5G,
-						mac_cap->rx_chain_mask_5G);
-				WMA_LOGD(FL("5g phy: nss: %d, ru_idx_msk: %d"),
+		qdf_mem_zero(&he_cap_mac,
+				sizeof(tDot11fIEhe_cap));
+		if (mac_cap->supported_bands & WLAN_5G_CAPABILITY) {
+			wma_convert_he_cap(&he_cap_mac,
+					mac_cap->he_cap_info_5G,
+					mac_cap->he_cap_phy_info_5G,
+					mac_cap->he_supp_mcs_5G,
+					mac_cap->tx_chain_mask_5G,
+					mac_cap->rx_chain_mask_5G);
+			WMA_LOGD(FL("5g phy: nss: %d, ru_idx_msk: %d"),
 					mac_cap->he_ppet2G.numss_m1,
 					mac_cap->he_ppet2G.ru_bit_mask);
-				wma_convert_he_ppet(tgt_cfg->ppet_5g,
+			wma_convert_he_ppet(tgt_cfg->ppet_5g,
 					(struct wmi_host_ppe_threshold *)
 					&mac_cap->he_ppet5G);
-			}
-
-			if (he_cap_mac.present)
-				wma_derive_ext_he_cap(&tmp_he_cap,
-						     &he_cap_mac);
 		}
+		if (he_cap_mac.present)
+			wma_derive_ext_he_cap(&tmp_he_cap,
+					&he_cap_mac);
 	}
 
 	qdf_mem_copy(he_cap, &tmp_he_cap, sizeof(*he_cap));

@@ -4813,12 +4813,13 @@ static void wma_derive_ext_ht_cap(
 static void wma_update_target_ext_ht_cap(struct target_psoc_info *tgt_hdl,
 					 struct wma_tgt_ht_cap *ht_cap)
 {
-	int i, j = 0, max_mac;
+	int i, total_mac_phy_cnt;
 	uint32_t ht_2g, ht_5g;
 	struct wma_tgt_ht_cap tmp_ht_cap = {0}, tmp_cap = {0};
 	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
 	int num_hw_modes;
 
+	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 	/*
@@ -4830,25 +4831,19 @@ static void wma_update_target_ext_ht_cap(struct target_psoc_info *tgt_hdl,
 		return;
 	}
 
-	for (i = 0; i < num_hw_modes; i++) {
-		if (mac_phy_cap[i].phy_id == PHY1_PHY2)
-			max_mac = j + 2;
-		else
-			max_mac = j + 1;
-		for ( ; j < max_mac; j++) {
-			ht_2g = mac_phy_cap[j].ht_cap_info_2G;
-			ht_5g = mac_phy_cap[j].ht_cap_info_5G;
-			if (ht_2g)
-				wma_derive_ext_ht_cap(&tmp_ht_cap,
-						      ht_2g,
-					mac_phy_cap[j].tx_chain_mask_2G,
-					mac_phy_cap[j].rx_chain_mask_2G);
-			if (ht_5g)
-				wma_derive_ext_ht_cap(&tmp_ht_cap,
-						      ht_5g,
-					mac_phy_cap[j].tx_chain_mask_5G,
-					mac_phy_cap[j].rx_chain_mask_5G);
-		}
+	for (i = 0; i < total_mac_phy_cnt; i++) {
+		ht_2g = mac_phy_cap[i].ht_cap_info_2G;
+		ht_5g = mac_phy_cap[i].ht_cap_info_5G;
+		if (ht_2g)
+			wma_derive_ext_ht_cap(&tmp_ht_cap,
+					ht_2g,
+					mac_phy_cap[i].tx_chain_mask_2G,
+					mac_phy_cap[i].rx_chain_mask_2G);
+		if (ht_5g)
+			wma_derive_ext_ht_cap(&tmp_ht_cap,
+					ht_5g,
+					mac_phy_cap[i].tx_chain_mask_5G,
+					mac_phy_cap[i].rx_chain_mask_5G);
 	}
 
 	if (qdf_mem_cmp(&tmp_cap, &tmp_ht_cap,
@@ -4986,11 +4981,12 @@ static void wma_derive_ext_vht_cap(
 static void wma_update_target_ext_vht_cap(struct target_psoc_info *tgt_hdl,
 					  struct wma_tgt_vht_cap *vht_cap)
 {
-	int i, j = 0, max_mac, num_hw_modes;
+	int i, num_hw_modes, total_mac_phy_cnt;
 	uint32_t vht_cap_info_2g, vht_cap_info_5g;
 	struct wma_tgt_vht_cap tmp_vht_cap = {0}, tmp_cap = {0};
 	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
 
+	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 
@@ -4998,26 +4994,20 @@ static void wma_update_target_ext_vht_cap(struct target_psoc_info *tgt_hdl,
 	 * for legacy device extended cap might not even come, so in that case
 	 * don't overwrite legacy values
 	 */
-	if (num_hw_modes) {
+	if (!num_hw_modes) {
 		WMA_LOGD("%s: No extended VHT cap for current SOC", __func__);
 		return;
 	}
 
-	for (i = 0; i < num_hw_modes; i++) {
-		if (mac_phy_cap[i].phy_id == PHY1_PHY2)
-			max_mac = j + 2;
-		else
-			max_mac = j + 1;
-		for ( ; j < max_mac; j++) {
-			vht_cap_info_2g = mac_phy_cap[j].vht_cap_info_2G;
-			vht_cap_info_5g = mac_phy_cap[j].vht_cap_info_5G;
-			if (vht_cap_info_2g)
-				wma_derive_ext_vht_cap(&tmp_vht_cap,
-						       vht_cap_info_2g);
-			if (vht_cap_info_5g)
-				wma_derive_ext_vht_cap(&tmp_vht_cap,
-						       vht_cap_info_5g);
-		}
+	for (i = 0; i < total_mac_phy_cnt; i++) {
+		vht_cap_info_2g = mac_phy_cap[i].vht_cap_info_2G;
+		vht_cap_info_5g = mac_phy_cap[i].vht_cap_info_5G;
+		if (vht_cap_info_2g)
+			wma_derive_ext_vht_cap(&tmp_vht_cap,
+					vht_cap_info_2g);
+		if (vht_cap_info_5g)
+			wma_derive_ext_vht_cap(&tmp_vht_cap,
+					vht_cap_info_5g);
 	}
 
 	if (qdf_mem_cmp(&tmp_cap, &tmp_vht_cap,
@@ -5869,29 +5859,24 @@ static void wma_print_mac_phy_capabilities(struct wlan_psoc_host_mac_phy_caps
  */
 static void wma_print_populate_soc_caps(struct target_psoc_info *tgt_hdl)
 {
-	int i, j = 0, max_mac, num_hw_modes;
+	int i, num_hw_modes, total_mac_phy_cnt;
 	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap, *tmp;
 
 	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
+	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 
 	/* print number of hw modes */
 	WMA_LOGD("%s: num of hw modes [%d]", __func__, num_hw_modes);
+	WMA_LOGD("%s: num mac_phy_cnt [%d]", __func__, total_mac_phy_cnt);
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 	WMA_LOGD("%s: <====== HW mode cap printing starts ======>", __func__);
 	/* print cap of each hw mode */
-	for (i = 0; i < num_hw_modes; i++) {
+	for (i = 0; i < total_mac_phy_cnt; i++) {
 		WMA_LOGD("====>: hw mode id[%d], phy_id map[%d]",
-			mac_phy_cap[i].hw_mode_id,
-			mac_phy_cap[i].phy_id);
-		if (mac_phy_cap[i].phy_id == PHY1_PHY2)
-			max_mac = j + 2;
-		else
-			max_mac = j + 1;
-
-		for ( ; j < max_mac; j++) {
-			tmp = &mac_phy_cap[j];
-			wma_print_mac_phy_capabilities(tmp, j);
-		}
+				mac_phy_cap[i].hw_mode_id,
+				mac_phy_cap[i].phy_id);
+		tmp = &mac_phy_cap[i];
+		wma_print_mac_phy_capabilities(tmp, i);
 	}
 	WMA_LOGI("%s: <====== HW mode cap printing ends ======>\n", __func__);
 }
