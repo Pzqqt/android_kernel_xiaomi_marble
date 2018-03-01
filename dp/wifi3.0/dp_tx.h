@@ -179,6 +179,11 @@ static inline void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
 
 #ifdef FEATURE_WDS
 void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status);
+#else
+static inline void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
+{
+	return;
+}
 #endif
 
 #ifdef ATH_SUPPORT_IQUE

@@ -2399,10 +2399,6 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 				CDP_TXRX_AST_TYPE_MEC,
 				flags);
 }
-#else
-static void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
-{
-}
 #endif
 
 /**

@@ -190,7 +190,7 @@ void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer)
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 }
 
-#ifdef FEATURE_WDS
+#ifdef FEATURE_AST
 /*
  * dp_peer_ast_hash_attach() - Allocate and initialize AST Hash Table
  * @soc: SoC handle

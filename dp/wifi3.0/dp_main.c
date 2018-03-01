@@ -524,7 +524,7 @@ static void dp_srng_msi_setup(struct dp_soc *soc, struct hal_srng_params
  *
  * return void
  */
-#ifdef FEATURE_WDS
+#ifdef FEATURE_AST
 static void dp_print_ast_stats(struct dp_soc *soc)
 {
 	uint8_t i;
@@ -533,6 +533,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 	struct dp_pdev *pdev;
 	struct dp_peer *peer;
 	struct dp_ast_entry *ase, *tmp_ase;
+	char type[5][10] = {"NONE", "STATIC", "WDS", "MEC", "HMWDS"};
 
 	DP_PRINT_STATS("AST Stats:");
 	DP_PRINT_STATS("	Entries Added   = %d", soc->stats.ast.added);
@@ -546,7 +547,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
 					DP_PRINT_STATS("%6d mac_addr = %pM"
 							" peer_mac_addr = %pM"
-							" type = %d"
+							" type = %s"
 							" next_hop = %d"
 							" is_active = %d"
 							" is_bss = %d"
@@ -556,7 +557,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 							++num_entries,
 							ase->mac_addr.raw,
 							ase->peer->mac_addr.raw,
-							ase->type,
+							type[ase->type],
 							ase->next_hop,
 							ase->is_active,
 							ase->is_bss,
@@ -571,7 +572,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 #else
 static void dp_print_ast_stats(struct dp_soc *soc)
 {
-	DP_PRINT_STATS("AST Stats not available.Enable FEATURE_WDS");
+	DP_PRINT_STATS("AST Stats not available.Enable FEATURE_AST");
 	return;
 }
 #endif
@@ -1527,7 +1528,7 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
  * dp_wds_aging_timer_fn() - Timer callback function for WDS aging
  * @soc: Datapath SOC handle
  *
- * This is a timer function used to age out stale WDS nodes from
+ * This is a timer function used to age out stale AST nodes from
  * AST table
  */
 #ifdef FEATURE_WDS
@@ -6386,7 +6387,7 @@ static struct cdp_wds_ops dp_ops_wds = {
  *
  * Delete the AST entries belonging to a peer
  */
-#ifdef FEATURE_WDS
+#ifdef FEATURE_AST
 static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
 		struct dp_peer *peer)
 {
@@ -6478,7 +6479,7 @@ dp_soc_set_dp_txrx_handle(struct cdp_soc *soc_handle, void *txrx_handle)
 	soc->external_txrx_handle = txrx_handle;
 }
 
-#ifdef CONFIG_WIN
+#ifdef FEATURE_AST
 static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *) vdev_hdl;
@@ -6535,7 +6536,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_pdev_detach = dp_pdev_detach_wifi3,
 	.txrx_peer_create = dp_peer_create_wifi3,
 	.txrx_peer_setup = dp_peer_setup_wifi3,
-#ifdef CONFIG_WIN
+#ifdef FEATURE_AST
 	.txrx_peer_teardown = dp_peer_teardown_wifi3,
 #else
 	.txrx_peer_teardown = NULL,
