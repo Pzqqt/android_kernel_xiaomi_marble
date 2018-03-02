@@ -658,7 +658,7 @@ QDF_STATUS p2p_cleanup_roc_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 	qdf_list_node_t *p_node;
 	QDF_STATUS status, ret;
 
-	p2p_debug("clean up idle roc request, roc queue size:%d",
+	p2p_info("clean up idle roc request, roc queue size:%d",
 		qdf_list_size(&p2p_soc_obj->roc_q));
 
 	status = qdf_list_peek_front(&p2p_soc_obj->roc_q, &p_node);
@@ -666,7 +666,7 @@ QDF_STATUS p2p_cleanup_roc_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 		roc_ctx = qdf_container_of(p_node,
 				struct p2p_roc_context, node);
 
-		p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+		p2p_info("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 			roc_ctx->p2p_soc_obj, roc_ctx,
 			roc_ctx->vdev_id, roc_ctx->scan_id,
 			roc_ctx->tx_ctx, roc_ctx->chan,
@@ -686,14 +686,14 @@ QDF_STATUS p2p_cleanup_roc_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 		}
 	}
 
-	p2p_debug("clean up started roc request, roc queue size:%d",
+	p2p_info("clean up started roc request, roc queue size:%d",
 		qdf_list_size(&p2p_soc_obj->roc_q));
 	status = qdf_list_peek_front(&p2p_soc_obj->roc_q, &p_node);
 	while (QDF_IS_STATUS_SUCCESS(status)) {
 		roc_ctx = qdf_container_of(p_node,
 				struct p2p_roc_context, node);
 
-	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx_ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+	p2p_info("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx_ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 		roc_ctx->p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
 		roc_ctx->scan_id, roc_ctx->tx_ctx, roc_ctx->chan,
 		roc_ctx->phy_mode, roc_ctx->duration,
@@ -723,14 +723,14 @@ QDF_STATUS p2p_cleanup_roc_by_vdev(
 	struct p2p_roc_context *roc_ctx;
 	qdf_list_node_t *p_node;
 
-	p2p_debug("clean up idle roc request, roc queue size:%d, vdev id:%d",
+	p2p_info("clean up idle roc request, roc queue size:%d, vdev id:%d",
 		qdf_list_size(&p2p_soc_obj->roc_q), vdev_id);
 	status = qdf_list_peek_front(&p2p_soc_obj->roc_q, &p_node);
 	while (QDF_IS_STATUS_SUCCESS(status)) {
 		roc_ctx = qdf_container_of(p_node,
 				struct p2p_roc_context, node);
 
-		p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+		p2p_info("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 			roc_ctx->p2p_soc_obj, roc_ctx,
 			roc_ctx->vdev_id, roc_ctx->scan_id,
 			roc_ctx->tx_ctx, roc_ctx->chan,
@@ -750,14 +750,14 @@ QDF_STATUS p2p_cleanup_roc_by_vdev(
 		}
 	}
 
-	p2p_debug("clean up started roc request, roc queue size:%d",
+	p2p_info("clean up started roc request, roc queue size:%d",
 		qdf_list_size(&p2p_soc_obj->roc_q));
 	status = qdf_list_peek_front(&p2p_soc_obj->roc_q, &p_node);
 	while (QDF_IS_STATUS_SUCCESS(status)) {
 		roc_ctx = qdf_container_of(p_node,
 				struct p2p_roc_context, node);
 
-		p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+		p2p_info("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 		roc_ctx->p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
 		roc_ctx->scan_id, roc_ctx->tx_ctx, roc_ctx->chan,
 		roc_ctx->phy_mode, roc_ctx->duration,
