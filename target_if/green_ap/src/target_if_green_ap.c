@@ -61,6 +61,7 @@ static int target_if_green_ap_egap_status_info_event(
 {
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_green_ap_egap_status_info egap_status_info_params;
+	void *wmi_hdl;
 
 	pdev = target_if_get_pdev_from_scn_hdl(scn);
 	if (!pdev) {
@@ -68,7 +69,13 @@ static int target_if_green_ap_egap_status_info_event(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (wmi_extract_green_ap_egap_status_info(GET_WMI_HDL_FROM_PDEV(pdev),
+	wmi_hdl = GET_WMI_HDL_FROM_PDEV(pdev);
+	if (!wmi_hdl) {
+		green_ap_err("null wmi_hdl");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (wmi_extract_green_ap_egap_status_info(wmi_hdl,
 						  evt_buf,
 						  &egap_status_info_params) !=
 						  QDF_STATUS_SUCCESS) {
@@ -91,10 +98,17 @@ QDF_STATUS target_if_green_ap_register_egap_event_handler(
 	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
 	struct wlan_green_ap_egap_params *egap_params;
 	int ret;
+	void *wmi_hdl;
 
-	if (!pdev || !GET_WMI_HDL_FROM_PDEV(pdev)) {
-		green_ap_err("pdev or pdev->tgt_if_handle is null");
+	if (!pdev) {
+		green_ap_err("pdev is null");
 		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_hdl = GET_WMI_HDL_FROM_PDEV(pdev);
+	if (!wmi_hdl) {
+		green_ap_err("null wmi_hdl");
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(
@@ -106,7 +120,7 @@ QDF_STATUS target_if_green_ap_register_egap_event_handler(
 	egap_params = &green_ap_ctx->egap_params;
 
 	ret = wmi_unified_register_event_handler(
-			GET_WMI_HDL_FROM_PDEV(pdev),
+			wmi_hdl,
 			wmi_ap_ps_egap_info_event_id,
 			target_if_green_ap_egap_status_info_event,
 			WMI_RX_UMAC_CTX);
@@ -126,10 +140,17 @@ QDF_STATUS target_if_green_ap_enable_egap(
 		struct wlan_green_ap_egap_params *egap_params)
 {
 	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+	void *wmi_hdl;
 
 	if (!pdev) {
 		green_ap_err("pdev context passed is NULL");
 		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_hdl = GET_WMI_HDL_FROM_PDEV(pdev);
+	if (!wmi_hdl) {
+		green_ap_err("null wmi_hdl");
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(
@@ -147,18 +168,26 @@ QDF_STATUS target_if_green_ap_enable_egap(
 	}
 	qdf_spin_unlock_bh(&green_ap_ctx->lock);
 
-	return wmi_unified_egap_conf_params_cmd(GET_WMI_HDL_FROM_PDEV(pdev),
+	return wmi_unified_egap_conf_params_cmd(wmi_hdl,
 							egap_params);
 }
 
 QDF_STATUS target_if_green_ap_set_ps_on_off(struct wlan_objmgr_pdev *pdev,
 					    bool value, uint8_t pdev_id)
 {
+	void *wmi_hdl;
+
 	if (!pdev) {
 		green_ap_err("pdev context passed is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	return wmi_unified_green_ap_ps_send(GET_WMI_HDL_FROM_PDEV(pdev),
+	wmi_hdl = GET_WMI_HDL_FROM_PDEV(pdev);
+	if (!wmi_hdl) {
+		green_ap_err("null wmi_hdl");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wmi_unified_green_ap_ps_send(wmi_hdl,
 					    value, pdev_id);
 }
