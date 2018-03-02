@@ -523,7 +523,7 @@ static int htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 		if (!mem_map_table) {
 			qdf_print("%s: Failed to allocate memory for mem map table\n",
 				  __func__);
-			goto fail;
+			goto update_alloc_idx;
 		}
 		mem_info = mem_map_table;
 	}
@@ -631,11 +631,30 @@ moretofill:
 		filled++;
 		idx &= pdev->rx_ring.size_mask;
 	}
+
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
+		cds_smmu_map_unmap(true, num_alloc, mem_map_table);
+		qdf_mem_free(mem_map_table);
+	}
+
+	num_alloc = 0;
 	if (debt_served <  qdf_atomic_read(&pdev->rx_ring.refill_debt)) {
 		num = qdf_atomic_read(&pdev->rx_ring.refill_debt);
 		debt_served += num;
+		if (qdf_mem_smmu_s1_enabled(pdev->osdev) &&
+				pdev->is_ipa_uc_enabled) {
+			mem_map_table = qdf_mem_map_table_alloc(num);
+			if (!mem_map_table) {
+				qdf_print("%s: Failed to allocate memory for mem map table\n",
+					  __func__);
+				goto update_alloc_idx;
+			}
+			mem_info = mem_map_table;
+		}
 		goto moretofill;
 	}
+
+	goto update_alloc_idx;
 
 free_mem_map_table:
 	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
@@ -643,7 +662,7 @@ free_mem_map_table:
 		qdf_mem_free(mem_map_table);
 	}
 
-fail:
+update_alloc_idx:
 	/*
 	 * Make sure alloc index write is reflected correctly before FW polls
 	 * remote ring write index as compiler can reorder the instructions
