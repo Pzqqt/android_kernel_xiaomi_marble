@@ -997,6 +997,7 @@ PMO_INC :=	-I$(WLAN_ROOT)/$(PMO_DIR)/core/inc \
 			-I$(WLAN_ROOT)/$(PMO_DIR)/dispatcher/src \
 
 PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
+		$(PMO_DIR)/core/src/wlan_pmo_apf.o \
 		$(PMO_DIR)/core/src/wlan_pmo_arp.o \
 		$(PMO_DIR)/core/src/wlan_pmo_ns.o \
 		$(PMO_DIR)/core/src/wlan_pmo_gtk.o \
