@@ -4758,7 +4758,6 @@ static void hdd_ipa_send_pkt_to_tl(
 
 /**
  * hdd_ipa_is_present() - get IPA hw status
- * @hdd_ctx: pointer to hdd context
  *
  * ipa_uc_reg_rdyCB is not directly designed to check
  * ipa hw status. This is an undocumented function which
@@ -4767,7 +4766,7 @@ static void hdd_ipa_send_pkt_to_tl(
  * Return: true - ipa hw present
  *         false - ipa hw not present
  */
-bool hdd_ipa_is_present(struct hdd_context *hdd_ctx)
+bool hdd_ipa_is_present(void)
 {
 	/*
 	 * Check if ipa hw is enabled

@@ -598,13 +598,14 @@ void cds_incr_arp_stats_tx_tgt_acked(void);
  * cds_smmu_mem_map_setup() - Check SMMU S1 stage enable
  *                            status and setup wlan driver
  * @osdev: Parent device instance
+ * @ipa_present: IPA HW support flag
  *
  * This API checks if SMMU S1 translation is enabled in
  * platform driver or not and sets it accordingly in driver.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev);
+QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present);
 
 /**
  * cds_smmu_map_unmap() - Map / Unmap DMA buffer to IPA UC

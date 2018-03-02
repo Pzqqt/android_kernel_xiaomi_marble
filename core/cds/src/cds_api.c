@@ -2845,40 +2845,49 @@ void cds_incr_arp_stats_tx_tgt_acked(void)
 }
 
 #ifdef ENABLE_SMMU_S1_TRANSLATION
-QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev)
+QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present)
 {
 	int attr = 0;
-	bool ipa_smmu_enable;
+	bool ipa_smmu_enable = false;
 	struct dma_iommu_mapping *mapping = pld_smmu_get_mapping(osdev->dev);
 
 	osdev->smmu_s1_enabled = false;
 
-	ipa_smmu_enable = qdf_get_ipa_smmu_enabled();
-	if (ipa_smmu_enable)
-		cds_info("SMMU enabled from IPA side");
-	else
-		cds_info("SMMU not enabled from IPA side");
+	if (ipa_present) {
+		ipa_smmu_enable = qdf_get_ipa_smmu_enabled();
+		if (ipa_smmu_enable)
+			cds_info("SMMU enabled from IPA side");
+		else
+			cds_info("SMMU not enabled from IPA side");
+	}
 
 	if (mapping && ((iommu_domain_get_attr(mapping->domain,
 			 DOMAIN_ATTR_S1_BYPASS, &attr) == 0) &&
 			 !attr)) {
 		cds_info("SMMU enabled from WLAN side");
-		if (ipa_smmu_enable) {
-			cds_info("SMMU enabled from both IPA and WLAN side");
-			osdev->smmu_s1_enabled = true;
-			return QDF_STATUS_SUCCESS;
+
+		if (ipa_present) {
+			if (ipa_smmu_enable) {
+				cds_info("SMMU enabled from both IPA and WLAN side");
+				osdev->smmu_s1_enabled = true;
+			} else {
+				cds_err("SMMU mismatch: IPA: disable, WLAN: enable");
+				return QDF_STATUS_E_FAILURE;
+			}
 		} else {
-			cds_err("SMMU mismatch: IPA: disable, WLAN: enable");
-			return QDF_STATUS_E_FAILURE;
+			osdev->smmu_s1_enabled = true;
 		}
+
 	} else {
 		cds_info("No SMMU mapping present or SMMU disabled from WLAN side");
-		if (ipa_smmu_enable) {
-			cds_err("SMMU mismatch: IPA: enable, WLAN: disable");
-			return QDF_STATUS_E_FAILURE;
-		} else {
-			cds_info("SMMU diabled from both IPA and WLAN side");
-			return QDF_STATUS_SUCCESS;
+
+		if (ipa_present) {
+			if (ipa_smmu_enable) {
+				cds_err("SMMU mismatch: IPA: enable, WLAN: disable");
+				return QDF_STATUS_E_FAILURE;
+			} else {
+				cds_info("SMMU diabled from both IPA and WLAN side");
+			}
 		}
 	}
 
@@ -2898,7 +2907,7 @@ int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
 #endif
 
 #else
-QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev)
+QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present)
 {
 	osdev->smmu_s1_enabled = false;
 	return QDF_STATUS_SUCCESS;

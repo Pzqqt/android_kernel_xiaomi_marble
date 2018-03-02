@@ -119,7 +119,7 @@ int hdd_ipa_uc_ssr_deinit(void);
 void hdd_ipa_uc_force_pipe_shutdown(struct hdd_context *hdd_ctx);
 struct sk_buff *hdd_ipa_tx_packet_ipa(struct hdd_context *hdd_ctx,
 	struct sk_buff *skb, uint8_t session_id);
-bool hdd_ipa_is_present(struct hdd_context *hdd_ctx);
+bool hdd_ipa_is_present(void);
 void hdd_ipa_dump_info(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_ipa_uc_ol_init(struct hdd_context *hdd_ctx);
 void hdd_ipa_set_tx_flow_info(void);
@@ -268,7 +268,6 @@ static inline struct sk_buff *hdd_ipa_tx_packet_ipa(struct hdd_context *hdd_ctx,
 
 /**
  * hdd_ipa_is_present() - get IPA hw status
- * @hdd_ctx: pointer to hdd context
  *
  * ipa_uc_reg_rdyCB is not directly designed to check
  * ipa hw status. This is an undocumented function which
@@ -277,7 +276,7 @@ static inline struct sk_buff *hdd_ipa_tx_packet_ipa(struct hdd_context *hdd_ctx,
  * Return: true - ipa hw present
  *         false - ipa hw not present
  */
-static inline bool hdd_ipa_is_present(struct hdd_context *hdd_ctx)
+static inline bool hdd_ipa_is_present(void)
 {
 	return false;
 }

@@ -47,6 +47,7 @@
 #include "cdp_txrx_misc.h"
 #include "pld_common.h"
 #include "wlan_hdd_driver_ops.h"
+#include "wlan_hdd_ipa.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -322,7 +323,8 @@ static int hdd_init_qdf_ctx(struct device *dev, void *bdev,
 	qdf_dev->drv_hdl = bdev;
 	qdf_dev->bus_type = bus_type;
 	qdf_dev->bid = bid;
-	if (cds_smmu_mem_map_setup(qdf_dev) !=
+
+	if (cds_smmu_mem_map_setup(qdf_dev, hdd_ipa_is_present()) !=
 		QDF_STATUS_SUCCESS) {
 		hdd_err("cds_smmu_mem_map_setup() failed");
 		return -EFAULT;
