@@ -483,10 +483,10 @@ int dp_peer_add_ast(struct dp_soc *soc,
 	dp_peer_ast_hash_add(soc, ast_entry);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
-	if (ast_entry->type == CDP_TXRX_AST_TYPE_WDS)
-		qdf_mem_copy(next_node_mac, peer->mac_addr.raw, 6);
-	else
+	if (ast_entry->type == CDP_TXRX_AST_TYPE_MEC)
 		qdf_mem_copy(next_node_mac, peer->vdev->mac_addr.raw, 6);
+	else
+		qdf_mem_copy(next_node_mac, peer->mac_addr.raw, 6);
 
 	if (ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) {
 		if (QDF_STATUS_SUCCESS ==
