@@ -22,6 +22,7 @@
 #include <spectral_defs_i.h>
 #include <wlan_nlink_srv.h>
 #include <wlan_nlink_common.h>
+#include <qdf_module.h>
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
 #endif
@@ -462,7 +463,7 @@ os_if_spectral_netlink_init(struct wlan_objmgr_pdev *pdev)
 	if (sptrl_ctx->sptrlc_register_netlink_cb)
 		sptrl_ctx->sptrlc_register_netlink_cb(pdev, &nl_cb);
 }
-EXPORT_SYMBOL(os_if_spectral_netlink_init);
+qdf_export_symbol(os_if_spectral_netlink_init);
 
 void os_if_spectral_netlink_deinit(struct wlan_objmgr_pdev *pdev)
 {
@@ -485,4 +486,4 @@ void os_if_spectral_netlink_deinit(struct wlan_objmgr_pdev *pdev)
 
 	os_if_spectral_destroy_netlink(pdev);
 }
-EXPORT_SYMBOL(os_if_spectral_netlink_deinit);
+qdf_export_symbol(os_if_spectral_netlink_deinit);

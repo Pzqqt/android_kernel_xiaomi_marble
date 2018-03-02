@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -18,6 +18,7 @@
  */
 
 #include "qdf_mem.h"
+#include "qdf_module.h"
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
 #include "wlan_global_lmac_if_api.h"
@@ -38,7 +39,7 @@ QDF_STATUS wlan_lmac_if_sptrl_set_rx_ops_register_cb(void (*handler)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_lmac_if_sptrl_set_rx_ops_register_cb);
+qdf_export_symbol(wlan_lmac_if_sptrl_set_rx_ops_register_cb);
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 /*
@@ -136,7 +137,7 @@ QDF_STATUS wlan_global_lmac_if_open(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_global_lmac_if_open);
+qdf_export_symbol(wlan_global_lmac_if_open);
 
 /**
  * wlan_global_lmac_if_close() - Close global lmac_if
@@ -153,7 +154,7 @@ QDF_STATUS wlan_global_lmac_if_close(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_global_lmac_if_close);
+qdf_export_symbol(wlan_global_lmac_if_close);
 
 /**
  * wlan_global_lmac_if_set_txops_registration_cb() - tx
@@ -173,4 +174,4 @@ QDF_STATUS wlan_global_lmac_if_set_txops_registration_cb(WLAN_DEV_TYPE dev_type,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_global_lmac_if_set_txops_registration_cb);
+qdf_export_symbol(wlan_global_lmac_if_set_txops_registration_cb);

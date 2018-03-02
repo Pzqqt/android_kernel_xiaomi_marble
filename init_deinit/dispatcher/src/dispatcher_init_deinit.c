@@ -19,6 +19,7 @@
 #include <qdf_types.h>
 #include <qdf_trace.h>
 #include <qdf_threads.h>
+#include <qdf_module.h>
 #include <dispatcher_init_deinit.h>
 #include <scheduler_api.h>
 #include <wlan_scan_ucfg_api.h>
@@ -290,7 +291,7 @@ QDF_STATUS dispatcher_register_spectral_pdev_open_handler(
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(dispatcher_register_spectral_pdev_open_handler);
+qdf_export_symbol(dispatcher_register_spectral_pdev_open_handler);
 
 static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev
 						  *pdev)
@@ -929,7 +930,7 @@ mgmt_txrx_init_fail:
 out:
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(dispatcher_init);
+qdf_export_symbol(dispatcher_init);
 
 QDF_STATUS dispatcher_deinit(void)
 {
@@ -979,7 +980,7 @@ QDF_STATUS dispatcher_deinit(void)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(dispatcher_deinit);
+qdf_export_symbol(dispatcher_deinit);
 
 QDF_STATUS dispatcher_enable(void)
 {
@@ -989,7 +990,7 @@ QDF_STATUS dispatcher_enable(void)
 
 	return status;
 }
-EXPORT_SYMBOL(dispatcher_enable);
+qdf_export_symbol(dispatcher_enable);
 
 QDF_STATUS dispatcher_disable(void)
 {
@@ -997,7 +998,7 @@ QDF_STATUS dispatcher_disable(void)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(dispatcher_disable);
+qdf_export_symbol(dispatcher_disable);
 
 QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
@@ -1055,7 +1056,7 @@ scan_psoc_open_fail:
 out:
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(dispatcher_psoc_open);
+qdf_export_symbol(dispatcher_psoc_open);
 
 QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
@@ -1081,7 +1082,7 @@ QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(dispatcher_psoc_close);
+qdf_export_symbol(dispatcher_psoc_close);
 
 QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
@@ -1144,7 +1145,7 @@ p2p_psoc_enable_fail:
 out:
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(dispatcher_psoc_enable);
+qdf_export_symbol(dispatcher_psoc_enable);
 
 QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
@@ -1173,7 +1174,7 @@ QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(dispatcher_psoc_disable);
+qdf_export_symbol(dispatcher_psoc_disable);
 
 QDF_STATUS dispatcher_pdev_open(struct wlan_objmgr_pdev *pdev)
 {
@@ -1194,7 +1195,7 @@ spectral_pdev_open_fail:
 out:
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(dispatcher_pdev_open);
+qdf_export_symbol(dispatcher_pdev_open);
 
 QDF_STATUS dispatcher_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
@@ -1206,4 +1207,4 @@ QDF_STATUS dispatcher_pdev_close(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(dispatcher_pdev_close);
+qdf_export_symbol(dispatcher_pdev_close);

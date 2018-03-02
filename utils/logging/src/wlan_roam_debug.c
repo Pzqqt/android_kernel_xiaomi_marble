@@ -25,6 +25,7 @@
 #include <qdf_mem.h>
 #include <qdf_time.h>
 #include <qdf_trace.h>
+#include <qdf_module.h>
 #include <wlan_cmn.h>
 #include "wlan_roam_debug.h"
 
@@ -94,7 +95,7 @@ void wlan_roam_debug_log(uint8_t vdev_id, uint8_t op,
 	rec->arg1 = arg1;
 	rec->arg2 = arg2;
 }
-EXPORT_SYMBOL(wlan_roam_debug_log);
+qdf_export_symbol(wlan_roam_debug_log);
 
 /**
  * wlan_roam_debug_string() - convert operation value to printable string
@@ -203,7 +204,7 @@ void wlan_roam_debug_dump_table(void)
 			  dbg_rec->arg1, dbg_rec->arg2);
 	} while (i != current_index);
 }
-EXPORT_SYMBOL(global_wlan_roam_debug_table);
+qdf_export_symbol(global_wlan_roam_debug_table);
 
 
 
