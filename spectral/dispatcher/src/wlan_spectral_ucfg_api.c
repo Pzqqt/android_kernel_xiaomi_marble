@@ -20,6 +20,7 @@
 #include <wlan_spectral_ucfg_api.h>
 #include "../../core/spectral_cmn_api_i.h"
 #include <wlan_spectral_utils_api.h>
+#include <qdf_module.h>
 
 int
 ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
@@ -43,7 +44,7 @@ ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
 					   id,
 					   indata, insize, outdata, outsize);
 }
-EXPORT_SYMBOL(ucfg_spectral_control);
+qdf_export_symbol(ucfg_spectral_control);
 
 void ucfg_spectral_scan_set_ppid(struct wlan_objmgr_pdev *pdev, uint32_t ppid)
 {

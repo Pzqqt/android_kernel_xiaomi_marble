@@ -21,7 +21,6 @@
 #include <qdf_module.h>
 #include "../../core/spectral_cmn_api_i.h"
 #include <wlan_spectral_tgt_api.h>
-#include <linux/export.h>
 
 QDF_STATUS
 wlan_spectral_init(void)
@@ -112,7 +111,7 @@ spectral_register_legacy_cb(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(spectral_register_legacy_cb);
+qdf_export_symbol(spectral_register_legacy_cb);
 
 int16_t
 spectral_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev)
@@ -188,7 +187,7 @@ wlan_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
 
 	return sc->sptrlc_register_wmi_spectral_cmd_ops(pdev, cmd_ops);
 }
-EXPORT_SYMBOL(wlan_register_wmi_spectral_cmd_ops);
+qdf_export_symbol(wlan_register_wmi_spectral_cmd_ops);
 
 QDF_STATUS spectral_pdev_open(struct wlan_objmgr_pdev *pdev)
 {
