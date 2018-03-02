@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -220,12 +220,12 @@ int wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 					const void *data,
 					int data_len);
 
-QDF_STATUS hdd_tdls_register_tdls_peer(void *userdata, uint32_t vdev_id,
-				       const uint8_t *mac, uint16_t sta_id,
-				       uint8_t ucastsig, uint8_t qos);
+QDF_STATUS hdd_tdls_register_peer(void *userdata, uint32_t vdev_id,
+				  const uint8_t *mac, uint16_t sta_id,
+				  uint8_t qos);
 
-QDF_STATUS hdd_tdls_deregister_tdl_peer(void *userdata,
-					uint32_t vdev_id, uint8_t sta_id);
+QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
+				    uint8_t sta_id);
 
 #else
 
@@ -250,18 +250,16 @@ hdd_tdls_notify_p2p_roc(struct hdd_context *hdd_ctx,
 {
 }
 
-static QDF_STATUS hdd_tdls_register_tdls_peer(void *userdata,
-					      uint32_t vdev_id,
-					      const uint8_t *mac,
-					      uint16_t sta_id,
-					      uint8_t ucastsig,
-					      uint8_t qos)
+static inline
+QDF_STATUS hdd_tdls_register_peer(void *userdata, uint32_t vdev_id,
+				  const uint8_t *mac, uint16_t sta_id,
+				  uint8_t qos);
 {
 }
 
-static QDF_STATUS hdd_tdls_deregister_tdl_peer(void *userdata,
-					       uint32_t vdev_id, uint8_t sta_id)
-
+static inline
+QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
+				    uint8_t sta_id)
 {
 }
 #endif /* End of FEATURE_WLAN_TDLS */

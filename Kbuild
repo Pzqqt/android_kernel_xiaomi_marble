@@ -2449,6 +2449,9 @@ ifeq ($(CONFIG_DYNAMIC_DEBUG),y)
 CDEFINES += -DFEATURE_MULTICAST_HOST_FW_MSGS
 endif
 
+# Temporary until this is made the default in qca-wifi-host-cmn
+CDEFINES += -DUSE_NEW_TDLS_PEER_CALLBACKS
+
 KBUILD_CPPFLAGS += $(CDEFINES)
 
 # Currently, for versions of gcc which support it, the kernel Makefile

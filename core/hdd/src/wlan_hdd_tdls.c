@@ -845,9 +845,9 @@ int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
 	return 0;
 }
 
-QDF_STATUS hdd_tdls_register_tdls_peer(void *userdata, uint32_t vdev_id,
-				       const uint8_t *mac, uint16_t sta_id,
-				       uint8_t ucastsig, uint8_t qos)
+QDF_STATUS hdd_tdls_register_peer(void *userdata, uint32_t vdev_id,
+				  const uint8_t *mac, uint16_t sta_id,
+				  uint8_t qos)
 {
 	struct hdd_adapter *adapter;
 	struct hdd_context *hddctx;
@@ -866,8 +866,8 @@ QDF_STATUS hdd_tdls_register_tdls_peer(void *userdata, uint32_t vdev_id,
 	return hdd_roam_register_tdlssta(adapter, mac, sta_id, qos);
 }
 
-QDF_STATUS hdd_tdls_deregister_tdl_peer(void *userdata,
-					uint32_t vdev_id, uint8_t sta_id)
+QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
+				    uint8_t sta_id)
 {
 	struct hdd_adapter *adapter;
 	struct hdd_context *hddctx;
