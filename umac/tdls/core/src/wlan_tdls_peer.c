@@ -684,21 +684,6 @@ QDF_STATUS tdls_set_sta_id(struct tdls_vdev_priv_obj *vdev_obj,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS tdls_set_signature(struct tdls_vdev_priv_obj *vdev_obj,
-			      const uint8_t *macaddr, uint8_t signature)
-{
-	struct tdls_peer *peer;
-
-	peer = tdls_find_peer(vdev_obj, macaddr);
-	if (!peer) {
-		tdls_err("peer is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	peer->signature = signature;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS tdls_set_force_peer(struct tdls_vdev_priv_obj *vdev_obj,
 			       const uint8_t *macaddr, bool forcepeer)
 {

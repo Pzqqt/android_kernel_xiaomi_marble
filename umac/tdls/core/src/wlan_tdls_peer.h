@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -172,19 +172,6 @@ void tdls_set_peer_caps(struct tdls_vdev_priv_obj *vdev_obj,
  */
 QDF_STATUS tdls_set_sta_id(struct tdls_vdev_priv_obj *vdev_obj,
 			   const uint8_t *macaddr, uint8_t sta_id);
-
-/**
- * tdls_set_signature() - set TDLS peer's signature
- * @vdev_obj: TDLS vdev object
- * @macaddr: MAC address of the TDLS peer
- * @signature: signature value
- *
- * This is used in scheduler thread context, no lock required.
- *
- * Return: QDF_STATUS_SUCCESS if success; other values if failed
- */
-QDF_STATUS tdls_set_signature(struct tdls_vdev_priv_obj *vdev_obj,
-			      const uint8_t *macaddr, uint8_t signature);
 
 /**
  * tdls_set_force_peer() - set/clear is_forced_peer flag on peer
