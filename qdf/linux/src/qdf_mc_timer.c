@@ -37,7 +37,7 @@
 #include "qdf_lock.h"
 #include "qdf_list.h"
 #include "qdf_mem.h"
-#include <linux/export.h>
+#include <qdf_module.h>
 
 /* Preprocessor definitions and constants */
 #define LINUX_TIMER_COOKIE 0x12341234
@@ -55,13 +55,13 @@ inline void qdf_timer_set_multiplier(uint32_t multiplier)
 {
 	g_qdf_timer_multiplier = multiplier;
 }
-EXPORT_SYMBOL(qdf_timer_set_multiplier);
+qdf_export_symbol(qdf_timer_set_multiplier);
 
 inline uint32_t qdf_timer_get_multiplier(void)
 {
 	return g_qdf_timer_multiplier;
 }
-EXPORT_SYMBOL(qdf_timer_get_multiplier);
+qdf_export_symbol(qdf_timer_get_multiplier);
 
 /* Type declarations */
 
@@ -74,7 +74,7 @@ void qdf_register_mc_timer_callback(void (*callback) (unsigned long data))
 {
 	scheduler_timer_callback = callback;
 }
-EXPORT_SYMBOL(qdf_register_mc_timer_callback);
+qdf_export_symbol(qdf_register_mc_timer_callback);
 
 /* Function declarations and documenation */
 
@@ -100,7 +100,7 @@ void qdf_try_allowing_sleep(QDF_TIMER_TYPE type)
 		}
 	}
 }
-EXPORT_SYMBOL(qdf_try_allowing_sleep);
+qdf_export_symbol(qdf_try_allowing_sleep);
 
 /**
  * qdf_mc_timer_get_current_state() - get the current state of the timer
@@ -127,7 +127,7 @@ QDF_TIMER_STATE qdf_mc_timer_get_current_state(qdf_mc_timer_t *timer)
 		return QDF_TIMER_STATE_UNUSED;
 	}
 }
-EXPORT_SYMBOL(qdf_mc_timer_get_current_state);
+qdf_export_symbol(qdf_mc_timer_get_current_state);
 
 /**
  * qdf_timer_module_init() - initializes a QDF timer module.
@@ -143,7 +143,7 @@ void qdf_timer_module_init(void)
 		  "Initializing the QDF MC timer module");
 	qdf_mutex_create(&persistent_timer_count_lock);
 }
-EXPORT_SYMBOL(qdf_timer_module_init);
+qdf_export_symbol(qdf_timer_module_init);
 
 #ifdef TIMER_MANAGER
 
@@ -170,7 +170,7 @@ void qdf_mc_timer_manager_init(void)
 		qdf_list_create(&qdf_timer_domains[i], 1000);
 	qdf_spinlock_create(&qdf_timer_list_lock);
 }
-EXPORT_SYMBOL(qdf_mc_timer_manager_init);
+qdf_export_symbol(qdf_mc_timer_manager_init);
 
 static inline void qdf_mc_timer_panic(void)
 {
@@ -264,7 +264,7 @@ static void qdf_timer_clean(void)
 	for (i = 0; i < QDF_DEBUG_DOMAIN_COUNT; ++i)
 		qdf_mc_timer_free_leaked_timers(&qdf_timer_domains[i]);
 }
-EXPORT_SYMBOL(qdf_timer_clean);
+qdf_export_symbol(qdf_timer_clean);
 
 /**
  * qdf_mc_timer_manager_exit() - exit QDF timer debug functionality
@@ -284,7 +284,7 @@ void qdf_mc_timer_manager_exit(void)
 
 	qdf_spinlock_destroy(&qdf_timer_list_lock);
 }
-EXPORT_SYMBOL(qdf_mc_timer_manager_exit);
+qdf_export_symbol(qdf_mc_timer_manager_exit);
 #endif
 
 /**
@@ -380,7 +380,7 @@ QDF_STATUS qdf_mc_timer_init_debug(qdf_mc_timer_t *timer,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(qdf_mc_timer_init_debug);
+qdf_export_symbol(qdf_mc_timer_init_debug);
 #else
 QDF_STATUS qdf_mc_timer_init(qdf_mc_timer_t *timer, QDF_TIMER_TYPE timer_type,
 			     qdf_mc_timer_callback_t callback,
@@ -413,7 +413,7 @@ QDF_STATUS qdf_mc_timer_init(qdf_mc_timer_t *timer, QDF_TIMER_TYPE timer_type,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(qdf_mc_timer_init);
+qdf_export_symbol(qdf_mc_timer_init);
 #endif
 
 /**
@@ -513,7 +513,7 @@ QDF_STATUS qdf_mc_timer_destroy(qdf_mc_timer_t *timer)
 
 	return v_status;
 }
-EXPORT_SYMBOL(qdf_mc_timer_destroy);
+qdf_export_symbol(qdf_mc_timer_destroy);
 
 #else
 
@@ -600,7 +600,7 @@ QDF_STATUS qdf_mc_timer_destroy(qdf_mc_timer_t *timer)
 
 	return v_status;
 }
-EXPORT_SYMBOL(qdf_mc_timer_destroy);
+qdf_export_symbol(qdf_mc_timer_destroy);
 #endif
 
 /**
@@ -686,7 +686,7 @@ QDF_STATUS qdf_mc_timer_start(qdf_mc_timer_t *timer, uint32_t expiration_time)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(qdf_mc_timer_start);
+qdf_export_symbol(qdf_mc_timer_start);
 
 /**
  * qdf_mc_timer_stop() - stop a QDF timer
@@ -741,7 +741,7 @@ QDF_STATUS qdf_mc_timer_stop(qdf_mc_timer_t *timer)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(qdf_mc_timer_stop);
+qdf_export_symbol(qdf_mc_timer_stop);
 
 /**
  * qdf_mc_timer_get_system_ticks() - get the system time in 10ms ticks
@@ -759,7 +759,7 @@ unsigned long qdf_mc_timer_get_system_ticks(void)
 {
 	return jiffies_to_msecs(jiffies) / 10;
 }
-EXPORT_SYMBOL(qdf_mc_timer_get_system_ticks);
+qdf_export_symbol(qdf_mc_timer_get_system_ticks);
 
 /**
  * qdf_mc_timer_get_system_time() - Get the system time in milliseconds
@@ -777,7 +777,7 @@ unsigned long qdf_mc_timer_get_system_time(void)
 	do_gettimeofday(&tv);
 	return tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
-EXPORT_SYMBOL(qdf_mc_timer_get_system_time);
+qdf_export_symbol(qdf_mc_timer_get_system_time);
 
 s64 qdf_get_monotonic_boottime_ns(void)
 {
@@ -786,7 +786,7 @@ s64 qdf_get_monotonic_boottime_ns(void)
 	ktime_get_ts(&ts);
 	return timespec_to_ns(&ts);
 }
-EXPORT_SYMBOL(qdf_get_monotonic_boottime_ns);
+qdf_export_symbol(qdf_get_monotonic_boottime_ns);
 
 qdf_time_t qdf_get_time_of_the_day_ms(void)
 {
@@ -802,7 +802,7 @@ qdf_time_t qdf_get_time_of_the_day_ms(void)
 		(tm.tm_min * 60 * 1000) + (tm.tm_sec * 1000) +
 		(tv.tv_usec / 1000);
 }
-EXPORT_SYMBOL(qdf_get_time_of_the_day_ms);
+qdf_export_symbol(qdf_get_time_of_the_day_ms);
 
 /**
  * qdf_timer_module_deinit() - Deinitializes a QDF timer module.
@@ -816,7 +816,7 @@ void qdf_timer_module_deinit(void)
 		  "De-Initializing the QDF MC timer module");
 	qdf_mutex_destroy(&persistent_timer_count_lock);
 }
-EXPORT_SYMBOL(qdf_timer_module_deinit);
+qdf_export_symbol(qdf_timer_module_deinit);
 
 void qdf_get_time_of_the_day_in_hr_min_sec_usec(char *tbuf, int len)
 {
@@ -833,4 +833,4 @@ void qdf_get_time_of_the_day_in_hr_min_sec_usec(char *tbuf, int len)
 		"[%02d:%02d:%02d.%06lu]",
 		tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec);
 }
-EXPORT_SYMBOL(qdf_get_time_of_the_day_in_hr_min_sec_usec);
+qdf_export_symbol(qdf_get_time_of_the_day_in_hr_min_sec_usec);

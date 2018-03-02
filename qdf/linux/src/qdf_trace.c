@@ -34,7 +34,7 @@
 /* Include Files */
 #include "qdf_str.h"
 #include <qdf_trace.h>
-#include <linux/export.h>
+#include <qdf_module.h>
 
 /* macro to map qdf trace levels into the bitmask */
 #define QDF_TRACE_LEVEL_TO_MODULE_BITMASK(_level) ((1 << (_level)))
@@ -167,7 +167,7 @@ void qdf_trace_set_level(QDF_MODULE_ID module, QDF_TRACE_LEVEL level)
 		g_qdf_trace_info[module].module_trace_level |=
 			QDF_TRACE_LEVEL_TO_MODULE_BITMASK(level);
 }
-EXPORT_SYMBOL(qdf_trace_set_level);
+qdf_export_symbol(qdf_trace_set_level);
 
 /**
  * qdf_trace_set_module_trace_level() - Set module trace level
@@ -186,7 +186,7 @@ void qdf_trace_set_module_trace_level(QDF_MODULE_ID module, uint32_t level)
 	}
 	g_qdf_trace_info[module].module_trace_level = level;
 }
-EXPORT_SYMBOL(qdf_trace_set_module_trace_level);
+qdf_export_symbol(qdf_trace_set_module_trace_level);
 
 /**
  * qdf_trace_set_value() - Set module trace value
@@ -240,7 +240,7 @@ void qdf_trace_set_value(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 				~(QDF_TRACE_LEVEL_TO_MODULE_BITMASK(level));
 	}
 }
-EXPORT_SYMBOL(qdf_trace_set_value);
+qdf_export_symbol(qdf_trace_set_value);
 
 /**
  * qdf_trace_get_level() - get the trace level
@@ -274,7 +274,7 @@ bool qdf_trace_get_level(QDF_MODULE_ID module, QDF_TRACE_LEVEL level)
 
 	return trace_on;
 }
-EXPORT_SYMBOL(qdf_trace_get_level);
+qdf_export_symbol(qdf_trace_get_level);
 
 /**
  * qdf_snprintf() - wrapper function to snprintf
@@ -294,7 +294,7 @@ void qdf_snprintf(char *str_buffer, unsigned int size, char *str_format, ...)
 	snprintf(str_buffer, size, str_format, val);
 	va_end(val);
 }
-EXPORT_SYMBOL(qdf_snprintf);
+qdf_export_symbol(qdf_snprintf);
 
 #ifdef QDF_ENABLE_TRACING
 
@@ -322,14 +322,14 @@ void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 	qdf_trace_msg_cmn(qdf_pidx, module, level, str_format, val);
 	va_end(val);
 }
-EXPORT_SYMBOL(qdf_trace_msg);
+qdf_export_symbol(qdf_trace_msg);
 
 void qdf_vtrace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 		    char *str_format, va_list val)
 {
 	qdf_trace_msg_cmn(qdf_pidx, module, level, str_format, val);
 }
-EXPORT_SYMBOL(qdf_vtrace_msg);
+qdf_export_symbol(qdf_vtrace_msg);
 
 #define ROW_SIZE 16
 /* Buffer size = data bytes(2 hex chars plus space) + NULL */
@@ -372,7 +372,7 @@ void qdf_trace_hex_dump(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 		i += ROW_SIZE;
 	}
 }
-EXPORT_SYMBOL(qdf_trace_hex_dump);
+qdf_export_symbol(qdf_trace_hex_dump);
 
 #endif
 
@@ -433,7 +433,7 @@ void qdf_trace_enable(uint32_t bitmask_of_module_id, uint8_t enable)
 		}
 	}
 }
-EXPORT_SYMBOL(qdf_trace_enable);
+qdf_export_symbol(qdf_trace_enable);
 
 /**
  * qdf_trace_init() - initializes qdf trace structures and variables
@@ -459,7 +459,7 @@ void qdf_trace_init(void)
 		qdf_trace_restore_cb_table[i] = NULL;
 	}
 }
-EXPORT_SYMBOL(qdf_trace_init);
+qdf_export_symbol(qdf_trace_init);
 
 /**
  * qdf_trace() - puts the messages in to ring-buffer
@@ -528,7 +528,7 @@ void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data)
 	g_qdf_trace_data.num_since_last_dump++;
 	spin_unlock_irqrestore(&ltrace_lock, flags);
 }
-EXPORT_SYMBOL(qdf_trace);
+qdf_export_symbol(qdf_trace);
 
 /**
  * qdf_trace_spin_lock_init() - initializes the lock variable before use
@@ -544,7 +544,7 @@ QDF_STATUS qdf_trace_spin_lock_init(void)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(qdf_trace_spin_lock_init);
+qdf_export_symbol(qdf_trace_spin_lock_init);
 
 /**
  * qdf_trace_register() - registers the call back functions
@@ -564,7 +564,7 @@ void qdf_trace_register(QDF_MODULE_ID module_iD,
 {
 	qdf_trace_cb_table[module_iD] = qdf_trace_callback;
 }
-EXPORT_SYMBOL(qdf_trace_register);
+qdf_export_symbol(qdf_trace_register);
 
 /**
  * qdf_trace_dump_all() - Dump data from ring buffer via call back functions
@@ -667,7 +667,7 @@ void qdf_trace_dump_all(void *p_mac, uint8_t code, uint8_t session,
 		spin_unlock(&ltrace_lock);
 	}
 }
-EXPORT_SYMBOL(qdf_trace_dump_all);
+qdf_export_symbol(qdf_trace_dump_all);
 #endif
 
 /**
@@ -683,7 +683,7 @@ void qdf_register_debugcb_init(void)
 	for (i = 0; i < QDF_MODULE_ID_MAX; i++)
 		qdf_state_info_table[i] = NULL;
 }
-EXPORT_SYMBOL(qdf_register_debugcb_init);
+qdf_export_symbol(qdf_register_debugcb_init);
 
 /**
  * qdf_register_debug_callback() - stores callback handlers to print
@@ -701,7 +701,7 @@ void qdf_register_debug_callback(QDF_MODULE_ID module_id,
 {
 	qdf_state_info_table[module_id] = qdf_state_infocb;
 }
-EXPORT_SYMBOL(qdf_register_debug_callback);
+qdf_export_symbol(qdf_register_debug_callback);
 
 /**
  * qdf_state_info_dump_all() - it invokes callback of layer which registered
@@ -732,7 +732,7 @@ QDF_STATUS qdf_state_info_dump_all(char *buf, uint16_t size,
 	*driver_dump_size = size - buf_len;
 	return ret;
 }
-EXPORT_SYMBOL(qdf_state_info_dump_all);
+qdf_export_symbol(qdf_state_info_dump_all);
 
 #ifdef CONFIG_DP_TRACE
 static void qdf_dp_unused(struct qdf_dp_trace_record_s *record,
@@ -798,7 +798,7 @@ void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
 
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_MAX] = qdf_dp_unused;
 }
-EXPORT_SYMBOL(qdf_dp_trace_init);
+qdf_export_symbol(qdf_dp_trace_init);
 
 /**
  * qdf_dp_trace_set_value() - Configure the value to control DP trace
@@ -815,7 +815,7 @@ void qdf_dp_trace_set_value(uint8_t proto_bitmap, uint8_t no_of_record,
 	g_qdf_dp_trace_data.no_of_record = no_of_record;
 	g_qdf_dp_trace_data.verbosity    = verbosity;
 }
-EXPORT_SYMBOL(qdf_dp_trace_set_value);
+qdf_export_symbol(qdf_dp_trace_set_value);
 
 /**
  * qdf_dp_trace_set_verbosity() - set verbosity value
@@ -828,7 +828,7 @@ void qdf_dp_trace_set_verbosity(uint32_t val)
 {
 	g_qdf_dp_trace_data.verbosity = val;
 }
-EXPORT_SYMBOL(qdf_dp_trace_set_verbosity);
+qdf_export_symbol(qdf_dp_trace_set_verbosity);
 
 /**
  * qdf_dp_get_verbosity) - get verbosity value
@@ -839,7 +839,7 @@ uint8_t qdf_dp_get_verbosity(void)
 {
 	return g_qdf_dp_trace_data.verbosity;
 }
-EXPORT_SYMBOL(qdf_dp_get_verbosity);
+qdf_export_symbol(qdf_dp_get_verbosity);
 
 /**
  * qdf_dp_set_proto_bitmap() - set dp trace proto bitmap
@@ -852,7 +852,7 @@ void qdf_dp_set_proto_bitmap(uint32_t val)
 {
 	g_qdf_dp_trace_data.proto_bitmap = val;
 }
-EXPORT_SYMBOL(qdf_dp_set_proto_bitmap);
+qdf_export_symbol(qdf_dp_set_proto_bitmap);
 
 /**
  * qdf_dp_set_no_of_record() - set dp trace no_of_record
@@ -865,7 +865,7 @@ void qdf_dp_set_no_of_record(uint32_t val)
 {
 	g_qdf_dp_trace_data.no_of_record = val;
 }
-EXPORT_SYMBOL(qdf_dp_set_no_of_record);
+qdf_export_symbol(qdf_dp_set_no_of_record);
 
 /**
  * qdf_dp_get_no_of_record() - get dp trace no_of_record
@@ -876,7 +876,7 @@ uint8_t qdf_dp_get_no_of_record(void)
 {
 	return g_qdf_dp_trace_data.no_of_record;
 }
-EXPORT_SYMBOL(qdf_dp_get_no_of_record);
+qdf_export_symbol(qdf_dp_get_no_of_record);
 
 
 /**
@@ -911,7 +911,7 @@ static bool qdf_dp_trace_enable_track(enum QDF_DP_TRACE_ID code)
 		return false;
 	}
 }
-EXPORT_SYMBOL(qdf_dp_trace_enable_track);
+qdf_export_symbol(qdf_dp_trace_enable_track);
 
 /**
  * qdf_dp_get_proto_bitmap() - get dp trace proto bitmap
@@ -955,7 +955,7 @@ void qdf_dp_trace_set_track(qdf_nbuf_t nbuf, enum qdf_proto_dir dir)
 	}
 	spin_unlock_bh(&l_dp_trace_lock);
 }
-EXPORT_SYMBOL(qdf_dp_trace_set_track);
+qdf_export_symbol(qdf_dp_trace_set_track);
 
 #define DPTRACE_PRINT(args...) \
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG, ## args)
@@ -1568,7 +1568,7 @@ bool qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
 		return true;
 	return false;
 }
-EXPORT_SYMBOL(qdf_dp_trace_log_pkt);
+qdf_export_symbol(qdf_dp_trace_log_pkt);
 
 /**
  * qdf_dp_display_mgmt_pkt() - display proto packet
@@ -1592,7 +1592,7 @@ void qdf_dp_display_mgmt_pkt(struct qdf_dp_trace_record_s *record,
 		qdf_dp_type_to_str(buf->type),
 		qdf_dp_subtype_to_str(buf->subtype));
 }
-EXPORT_SYMBOL(qdf_dp_display_mgmt_pkt);
+qdf_export_symbol(qdf_dp_display_mgmt_pkt);
 
 /**
  * qdf_dp_trace_mgmt_pkt() - record mgmt packet
@@ -1622,7 +1622,7 @@ void qdf_dp_trace_mgmt_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 	buf.vdev_id = vdev_id;
 	qdf_dp_add_record(code, (uint8_t *)&buf, buf_size, pdev_id, true);
 }
-EXPORT_SYMBOL(qdf_dp_trace_mgmt_pkt);
+qdf_export_symbol(qdf_dp_trace_mgmt_pkt);
 
 /**
  * qdf_dp_display_event_record() - display event records
@@ -1646,7 +1646,7 @@ void qdf_dp_display_event_record(struct qdf_dp_trace_record_s *record,
 		qdf_dp_type_to_str(buf->type),
 		qdf_dp_subtype_to_str(buf->subtype));
 }
-EXPORT_SYMBOL(qdf_dp_display_event_record);
+qdf_export_symbol(qdf_dp_display_event_record);
 
 /**
  * qdf_dp_trace_record_event() - record events
@@ -1676,7 +1676,7 @@ void qdf_dp_trace_record_event(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 	buf.vdev_id = vdev_id;
 	qdf_dp_add_record(code, (uint8_t *)&buf, buf_size, pdev_id, true);
 }
-EXPORT_SYMBOL(qdf_dp_trace_record_event);
+qdf_export_symbol(qdf_dp_trace_record_event);
 
 /**
  * qdf_dp_display_proto_pkt() - display proto packet
@@ -1702,7 +1702,7 @@ void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
 		QDF_MAC_ADDR_ARRAY(buf->sa.bytes),
 		qdf_dp_dir_to_str(buf->dir), QDF_MAC_ADDR_ARRAY(buf->da.bytes));
 }
-EXPORT_SYMBOL(qdf_dp_display_proto_pkt);
+qdf_export_symbol(qdf_dp_display_proto_pkt);
 
 /**
  * qdf_dp_trace_proto_pkt() - record proto packet
@@ -1740,7 +1740,7 @@ void qdf_dp_trace_proto_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 	buf.vdev_id = vdev_id;
 	qdf_dp_add_record(code, (uint8_t *)&buf, buf_size, pdev_id, print);
 }
-EXPORT_SYMBOL(qdf_dp_trace_proto_pkt);
+qdf_export_symbol(qdf_dp_trace_proto_pkt);
 
 /**
  * qdf_dp_display_ptr_record() - display record
@@ -1774,7 +1774,7 @@ void qdf_dp_display_ptr_record(struct qdf_dp_trace_record_s *record,
 			sizeof(buf->cookie));
 	}
 }
-EXPORT_SYMBOL(qdf_dp_display_ptr_record);
+qdf_export_symbol(qdf_dp_display_ptr_record);
 
 /**
  * qdf_dp_trace_ptr() - record dptrace
@@ -1806,7 +1806,7 @@ void qdf_dp_trace_ptr(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 	qdf_dp_add_record(code, (uint8_t *)&buf, buf_size, pdev_id,
 				QDF_NBUF_CB_DP_TRACE_PRINT(nbuf));
 }
-EXPORT_SYMBOL(qdf_dp_trace_ptr);
+qdf_export_symbol(qdf_dp_trace_ptr);
 
 /**
  * qdf_dp_display_trace() - Displays a record in DP trace
@@ -1850,7 +1850,7 @@ void qdf_dp_display_record(struct qdf_dp_trace_record_s *pRecord,
 		break;
 	};
 }
-EXPORT_SYMBOL(qdf_dp_display_record);
+qdf_export_symbol(qdf_dp_display_record);
 
 
 /**
@@ -1873,7 +1873,7 @@ void qdf_dp_trace(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code, uint8_t pdev_id,
 	qdf_dp_add_record(code, data, size, pdev_id,
 		(nbuf != NULL) ? QDF_NBUF_CB_DP_TRACE_PRINT(nbuf) : false);
 }
-EXPORT_SYMBOL(qdf_dp_trace);
+qdf_export_symbol(qdf_dp_trace);
 
 /**
  * qdf_dp_trace_spin_lock_init() - initializes the lock variable before use
@@ -1886,7 +1886,7 @@ void qdf_dp_trace_spin_lock_init(void)
 {
 	spin_lock_init(&l_dp_trace_lock);
 }
-EXPORT_SYMBOL(qdf_dp_trace_spin_lock_init);
+qdf_export_symbol(qdf_dp_trace_spin_lock_init);
 
 /**
  * qdf_dp_trace_disable_live_mode - disable live mode for dptrace
@@ -1897,7 +1897,7 @@ void qdf_dp_trace_disable_live_mode(void)
 {
 	g_qdf_dp_trace_data.live_mode = 0;
 }
-EXPORT_SYMBOL(qdf_dp_trace_disable_live_mode);
+qdf_export_symbol(qdf_dp_trace_disable_live_mode);
 
 /**
  * qdf_dp_trace_enable_live_mode() - enable live mode for dptrace
@@ -1908,7 +1908,7 @@ void qdf_dp_trace_enable_live_mode(void)
 {
 	g_qdf_dp_trace_data.live_mode = 1;
 }
-EXPORT_SYMBOL(qdf_dp_trace_enable_live_mode);
+qdf_export_symbol(qdf_dp_trace_enable_live_mode);
 
 /**
  * qdf_dp_trace_clear_buffer() - clear dp trace buffer
@@ -1923,7 +1923,7 @@ void qdf_dp_trace_clear_buffer(void)
 	memset(g_qdf_dp_trace_tbl, 0,
 	   MAX_QDF_DP_TRACE_RECORDS * sizeof(struct qdf_dp_trace_record_s));
 }
-EXPORT_SYMBOL(qdf_dp_trace_clear_buffer);
+qdf_export_symbol(qdf_dp_trace_clear_buffer);
 
 void qdf_dp_trace_dump_stats(void)
 {
@@ -2023,7 +2023,7 @@ void qdf_dp_trace_dump_all(uint32_t count, uint8_t pdev_id)
 		spin_unlock_bh(&l_dp_trace_lock);
 	}
 }
-EXPORT_SYMBOL(qdf_dp_trace_dump_all);
+qdf_export_symbol(qdf_dp_trace_dump_all);
 
 #endif
 
@@ -2126,7 +2126,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_CONFIG] = {"CONFIG"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
-EXPORT_SYMBOL(g_qdf_category_name);
+qdf_export_symbol(g_qdf_category_name);
 
 /**
  * qdf_trace_display() - Display trace
@@ -2160,7 +2160,7 @@ void qdf_trace_display(void)
 			       QDF_TRACE_LEVEL_DEBUG) ? "X" : " ");
 	}
 }
-EXPORT_SYMBOL(qdf_trace_display);
+qdf_export_symbol(qdf_trace_display);
 
 #ifdef CONFIG_MCL
 #define print_to_console(str)
@@ -2241,7 +2241,7 @@ void qdf_trace_msg_cmn(unsigned int idx,
 		va_end(val);
 	}
 }
-EXPORT_SYMBOL(qdf_trace_msg_cmn);
+qdf_export_symbol(qdf_trace_msg_cmn);
 
 /**
  * qdf_dp_trace_throttle_live_mode() - Throttle DP Trace live mode
@@ -2288,7 +2288,7 @@ void qdf_dp_trace_throttle_live_mode(bool high_bw_request)
 	}
 
 }
-EXPORT_SYMBOL(qdf_dp_trace_throttle_live_mode);
+qdf_export_symbol(qdf_dp_trace_throttle_live_mode);
 
 QDF_STATUS qdf_print_setup(void)
 {
@@ -2301,7 +2301,7 @@ QDF_STATUS qdf_print_setup(void)
 	}
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(qdf_print_setup);
+qdf_export_symbol(qdf_print_setup);
 
 QDF_STATUS qdf_print_ctrl_cleanup(unsigned int idx)
 {
@@ -2329,7 +2329,7 @@ QDF_STATUS qdf_print_ctrl_cleanup(unsigned int idx)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(qdf_print_ctrl_cleanup);
+qdf_export_symbol(qdf_print_ctrl_cleanup);
 
 int qdf_print_ctrl_register(const struct category_info *cinfo,
 			    void *custom_print_handler,
@@ -2401,21 +2401,21 @@ int qdf_print_ctrl_register(const struct category_info *cinfo,
 		__func__, idx);
 	return idx;
 }
-EXPORT_SYMBOL(qdf_print_ctrl_register);
+qdf_export_symbol(qdf_print_ctrl_register);
 
 #ifndef CONFIG_MCL
 void qdf_shared_print_ctrl_cleanup(void)
 {
 	qdf_print_ctrl_cleanup(qdf_pidx);
 }
-EXPORT_SYMBOL(qdf_shared_print_ctrl_cleanup);
+qdf_export_symbol(qdf_shared_print_ctrl_cleanup);
 
 /*
  * Set this to invalid value to differentiate with user-provided
  * value.
  */
 int qdf_dbg_mask = 0;
-EXPORT_SYMBOL(qdf_dbg_mask);
+qdf_export_symbol(qdf_dbg_mask);
 qdf_declare_param(qdf_dbg_mask, int);
 
 /*
@@ -2646,7 +2646,7 @@ void qdf_shared_print_ctrl_init(void)
 			"LOG_SHARED_OBJ");
 	qdf_mem_free(cinfo);
 }
-EXPORT_SYMBOL(qdf_shared_print_ctrl_init);
+qdf_export_symbol(qdf_shared_print_ctrl_init);
 #endif
 
 QDF_STATUS qdf_print_set_category_verbose(unsigned int idx,
@@ -2710,7 +2710,7 @@ QDF_STATUS qdf_print_set_category_verbose(unsigned int idx,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(qdf_print_set_category_verbose);
+qdf_export_symbol(qdf_print_set_category_verbose);
 
 bool qdf_print_is_category_enabled(unsigned int idx, QDF_MODULE_ID category)
 {
@@ -2742,7 +2742,7 @@ bool qdf_print_is_category_enabled(unsigned int idx, QDF_MODULE_ID category)
 	else
 		return true;
 }
-EXPORT_SYMBOL(qdf_print_is_category_enabled);
+qdf_export_symbol(qdf_print_is_category_enabled);
 
 bool qdf_print_is_verbose_enabled(unsigned int idx, QDF_MODULE_ID category,
 				  QDF_TRACE_LEVEL verbose)
@@ -2782,7 +2782,7 @@ bool qdf_print_is_verbose_enabled(unsigned int idx, QDF_MODULE_ID category,
 
 	return verbose_enabled;
 }
-EXPORT_SYMBOL(qdf_print_is_verbose_enabled);
+qdf_export_symbol(qdf_print_is_verbose_enabled);
 
 #ifdef DBG_LVL_MAC_FILTERING
 
@@ -2813,7 +2813,7 @@ QDF_STATUS qdf_print_set_node_flag(unsigned int idx, uint8_t enable)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(qdf_print_set_node_flag);
+qdf_export_symbol(qdf_print_set_node_flag);
 
 bool qdf_print_get_node_flag(unsigned int idx)
 {
@@ -2836,7 +2836,7 @@ bool qdf_print_get_node_flag(unsigned int idx)
 
 	return node_flag;
 }
-EXPORT_SYMBOL(qdf_print_get_node_flag);
+qdf_export_symbol(qdf_print_get_node_flag);
 
 void qdf_print_clean_node_flag(unsigned int idx)
 {
@@ -2868,7 +2868,7 @@ void QDF_PRINT_INFO(unsigned int idx, QDF_MODULE_ID module,
 	qdf_vprint(str_format, args);
 	va_end(args);
 }
-EXPORT_SYMBOL(QDF_PRINT_INFO);
+qdf_export_symbol(QDF_PRINT_INFO);
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 void qdf_logging_init(void)
@@ -2907,19 +2907,19 @@ int qdf_sprint_symbol(char *buffer, void *addr)
 	return 1;
 }
 #endif
-EXPORT_SYMBOL(qdf_sprint_symbol);
+qdf_export_symbol(qdf_sprint_symbol);
 
 void qdf_set_pidx(int pidx)
 {
 	qdf_pidx = pidx;
 }
-EXPORT_SYMBOL(qdf_set_pidx);
+qdf_export_symbol(qdf_set_pidx);
 
 int qdf_get_pidx(void)
 {
 	return qdf_pidx;
 }
-EXPORT_SYMBOL(qdf_get_pidx);
+qdf_export_symbol(qdf_get_pidx);
 
 #ifdef PANIC_ON_BUG
 #ifdef CONFIG_SLUB_DEBUG
@@ -2927,7 +2927,7 @@ void QDF_DEBUG_PANIC(void)
 {
 	BUG();
 }
-EXPORT_SYMBOL(QDF_DEBUG_PANIC);
+qdf_export_symbol(QDF_DEBUG_PANIC);
 #endif /* CONFIG_SLUB_DEBUG */
 #endif /* PANIC_ON_BUG */
 

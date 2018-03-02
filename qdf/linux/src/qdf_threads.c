@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -42,10 +42,10 @@
 #endif /* KERNEL_VERSION(4, 11, 0) */
 #include <linux/delay.h>
 #include <linux/interrupt.h>
-#include <linux/export.h>
 #include <linux/kthread.h>
 #include <linux/stacktrace.h>
 #include <qdf_defer.h>
+#include <qdf_module.h>
 
 /* Function declarations and documenation */
 
@@ -69,7 +69,7 @@ void qdf_sleep(uint32_t ms_interval)
 	}
 	msleep_interruptible(ms_interval);
 }
-EXPORT_SYMBOL(qdf_sleep);
+qdf_export_symbol(qdf_sleep);
 
 /**
  *  qdf_sleep_us() - sleep
@@ -95,7 +95,7 @@ void qdf_sleep_us(uint32_t us_interval)
 	while (timeout && !signal_pending(current))
 		timeout = schedule_timeout_interruptible(timeout);
 }
-EXPORT_SYMBOL(qdf_sleep_us);
+qdf_export_symbol(qdf_sleep_us);
 
 /**
  *  qdf_busy_wait() - busy wait
@@ -111,26 +111,26 @@ void qdf_busy_wait(uint32_t us_interval)
 {
 	udelay(us_interval);
 }
-EXPORT_SYMBOL(qdf_busy_wait);
+qdf_export_symbol(qdf_busy_wait);
 
 void qdf_set_user_nice(qdf_thread_t *thread, long nice)
 {
 	set_user_nice(thread, nice);
 }
-EXPORT_SYMBOL(qdf_set_user_nice);
+qdf_export_symbol(qdf_set_user_nice);
 
 qdf_thread_t *qdf_create_thread(int (*thread_handler)(void *data), void *data,
 				const char thread_name[])
 {
 	return kthread_create(thread_handler, data, thread_name);
 }
-EXPORT_SYMBOL(qdf_create_thread);
+qdf_export_symbol(qdf_create_thread);
 
 int qdf_wake_up_process(qdf_thread_t *thread)
 {
 	return wake_up_process(thread);
 }
-EXPORT_SYMBOL(qdf_wake_up_process);
+qdf_export_symbol(qdf_wake_up_process);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0) || \
 	defined(BACKPORTED_EXPORT_SAVE_STACK_TRACE_TSK_ARM)
@@ -153,10 +153,10 @@ void qdf_print_thread_trace(qdf_thread_t *thread)
 #else
 void qdf_print_thread_trace(qdf_thread_t *thread) { }
 #endif /* KERNEL_VERSION(4, 14, 0) */
-EXPORT_SYMBOL(qdf_print_thread_trace);
+qdf_export_symbol(qdf_print_thread_trace);
 
 qdf_thread_t *qdf_get_current_task(void)
 {
 	return current;
 }
-EXPORT_SYMBOL(qdf_get_current_task);
+qdf_export_symbol(qdf_get_current_task);

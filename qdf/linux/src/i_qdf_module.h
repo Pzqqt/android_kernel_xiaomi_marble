@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -55,7 +55,11 @@
 
 #define __qdf_virt_module_name(_name) MODULE_LICENSE("Dual BSD/GPL")
 
+#ifdef WLAN_DISABLE_EXPORT_SYMBOL
+#define __qdf_export_symbol(_sym)
+#else
 #define __qdf_export_symbol(_sym) EXPORT_SYMBOL(_sym)
+#endif
 
 #define __qdf_declare_param(_name, _type) \
 	module_param(_name, _type, 0600)

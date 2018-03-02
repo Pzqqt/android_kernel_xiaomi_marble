@@ -281,7 +281,7 @@ qdf_mem_header_assert_valid(struct qdf_mem_header *header,
 
 u_int8_t prealloc_disabled = 1;
 qdf_declare_param(prealloc_disabled, byte);
-EXPORT_SYMBOL(prealloc_disabled);
+qdf_export_symbol(prealloc_disabled);
 
 #if defined WLAN_DEBUGFS
 
@@ -770,7 +770,7 @@ int __qdf_mempool_init(qdf_device_t osdev, __qdf_mempool_t *pool_addr,
 	*pool_addr = new_pool;
 	return 0;
 }
-EXPORT_SYMBOL(__qdf_mempool_init);
+qdf_export_symbol(__qdf_mempool_init);
 
 /**
  * __qdf_mempool_destroy() - Destroy memory pool
@@ -798,7 +798,7 @@ void __qdf_mempool_destroy(qdf_device_t osdev, __qdf_mempool_t pool)
 	kfree(pool);
 	osdev->mem_pool[pool_id] = NULL;
 }
-EXPORT_SYMBOL(__qdf_mempool_destroy);
+qdf_export_symbol(__qdf_mempool_destroy);
 
 /**
  * __qdf_mempool_alloc() - Allocate an element memory pool
@@ -831,7 +831,7 @@ void *__qdf_mempool_alloc(qdf_device_t osdev, __qdf_mempool_t pool)
 
 	return buf;
 }
-EXPORT_SYMBOL(__qdf_mempool_alloc);
+qdf_export_symbol(__qdf_mempool_alloc);
 
 /**
  * __qdf_mempool_free() - Free a memory pool element
@@ -857,7 +857,7 @@ void __qdf_mempool_free(qdf_device_t osdev, __qdf_mempool_t pool, void *buf)
 		(&pool->free_list, (mempool_elem_t *)buf, mempool_entry);
 	spin_unlock_bh(&pool->lock);
 }
-EXPORT_SYMBOL(__qdf_mempool_free);
+qdf_export_symbol(__qdf_mempool_free);
 
 /**
  * qdf_mem_alloc_outline() - allocation QDF memory
@@ -877,7 +877,7 @@ qdf_mem_alloc_outline(qdf_device_t osdev, size_t size)
 {
 	return qdf_mem_malloc(size);
 }
-EXPORT_SYMBOL(qdf_mem_alloc_outline);
+qdf_export_symbol(qdf_mem_alloc_outline);
 
 /**
  * qdf_mem_free_outline() - QDF memory free API
@@ -893,7 +893,7 @@ qdf_mem_free_outline(void *buf)
 {
 	qdf_mem_free(buf);
 }
-EXPORT_SYMBOL(qdf_mem_free_outline);
+qdf_export_symbol(qdf_mem_free_outline);
 
 /**
  * qdf_mem_zero_outline() - zero out memory
@@ -910,7 +910,7 @@ qdf_mem_zero_outline(void *buf, qdf_size_t size)
 {
 	qdf_mem_zero(buf, size);
 }
-EXPORT_SYMBOL(qdf_mem_zero_outline);
+qdf_export_symbol(qdf_mem_zero_outline);
 
 #ifdef CONFIG_WCNSS_MEM_PRE_ALLOC
 /**
@@ -1173,7 +1173,7 @@ void *qdf_mem_malloc(size_t size)
 
 	return ptr;
 }
-EXPORT_SYMBOL(qdf_mem_malloc);
+qdf_export_symbol(qdf_mem_malloc);
 
 /**
  * qdf_mem_free() - free QDF memory
@@ -1195,7 +1195,7 @@ void qdf_mem_free(void *ptr)
 
 	kfree(ptr);
 }
-EXPORT_SYMBOL(qdf_mem_free);
+qdf_export_symbol(qdf_mem_free);
 #endif
 
 /**
@@ -1303,7 +1303,7 @@ out_fail:
 	pages->num_pages = 0;
 	return;
 }
-EXPORT_SYMBOL(qdf_mem_multi_pages_alloc);
+qdf_export_symbol(qdf_mem_multi_pages_alloc);
 
 /**
  * qdf_mem_multi_pages_free() - free large size of kernel memory
@@ -1343,7 +1343,7 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 	pages->num_pages = 0;
 	return;
 }
-EXPORT_SYMBOL(qdf_mem_multi_pages_free);
+qdf_export_symbol(qdf_mem_multi_pages_free);
 
 /**
  * qdf_mem_multi_page_link() - Make links for multi page elements
@@ -1405,7 +1405,7 @@ int qdf_mem_multi_page_link(qdf_device_t osdev,
 
 	return 0;
 }
-EXPORT_SYMBOL(qdf_mem_multi_page_link);
+qdf_export_symbol(qdf_mem_multi_page_link);
 
 /**
  * qdf_mem_copy() - copy memory
@@ -1438,7 +1438,7 @@ void qdf_mem_copy(void *dst_addr, const void *src_addr, uint32_t num_bytes)
 	}
 	memcpy(dst_addr, src_addr, num_bytes);
 }
-EXPORT_SYMBOL(qdf_mem_copy);
+qdf_export_symbol(qdf_mem_copy);
 
 /**
  * qdf_mem_zero() - zero out memory
@@ -1464,7 +1464,7 @@ void qdf_mem_zero(void *ptr, uint32_t num_bytes)
 	}
 	memset(ptr, 0, num_bytes);
 }
-EXPORT_SYMBOL(qdf_mem_zero);
+qdf_export_symbol(qdf_mem_zero);
 
 /**
  * qdf_mem_set() - set (fill) memory with a specified byte value.
@@ -1482,7 +1482,7 @@ void qdf_mem_set(void *ptr, uint32_t num_bytes, uint32_t value)
 	}
 	memset(ptr, value, num_bytes);
 }
-EXPORT_SYMBOL(qdf_mem_set);
+qdf_export_symbol(qdf_mem_set);
 
 /**
  * qdf_mem_move() - move memory
@@ -1512,7 +1512,7 @@ void qdf_mem_move(void *dst_addr, const void *src_addr, uint32_t num_bytes)
 	}
 	memmove(dst_addr, src_addr, num_bytes);
 }
-EXPORT_SYMBOL(qdf_mem_move);
+qdf_export_symbol(qdf_mem_move);
 
 #if defined(A_SIMOS_DEVHOST) || defined(HIF_SDIO) || defined(HIF_USB)
 /**
@@ -1716,7 +1716,7 @@ void qdf_mem_dma_sync_single_for_device(qdf_device_t osdev,
 {
 	dma_sync_single_for_device(osdev->dev, bus_addr,  size, direction);
 }
-EXPORT_SYMBOL(qdf_mem_dma_sync_single_for_device);
+qdf_export_symbol(qdf_mem_dma_sync_single_for_device);
 
 /**
  * qdf_mem_dma_sync_single_for_cpu() - assign memory to CPU
@@ -1736,7 +1736,7 @@ void qdf_mem_dma_sync_single_for_cpu(qdf_device_t osdev,
 {
 	dma_sync_single_for_cpu(osdev->dev, bus_addr,  size, direction);
 }
-EXPORT_SYMBOL(qdf_mem_dma_sync_single_for_cpu);
+qdf_export_symbol(qdf_mem_dma_sync_single_for_cpu);
 
 void qdf_mem_init(void)
 {
@@ -1744,7 +1744,7 @@ void qdf_mem_init(void)
 	qdf_mem_debugfs_init();
 	qdf_mem_debug_debugfs_init();
 }
-EXPORT_SYMBOL(qdf_mem_init);
+qdf_export_symbol(qdf_mem_init);
 
 void qdf_mem_exit(void)
 {
@@ -1752,7 +1752,7 @@ void qdf_mem_exit(void)
 	qdf_mem_debugfs_exit();
 	qdf_mem_debug_exit();
 }
-EXPORT_SYMBOL(qdf_mem_exit);
+qdf_export_symbol(qdf_mem_exit);
 
 /**
  * qdf_ether_addr_copy() - copy an Ethernet address
@@ -1775,5 +1775,5 @@ void qdf_ether_addr_copy(void *dst_addr, const void *src_addr)
 	}
 	ether_addr_copy(dst_addr, src_addr);
 }
-EXPORT_SYMBOL(qdf_ether_addr_copy);
+qdf_export_symbol(qdf_ether_addr_copy);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,6 +40,7 @@
 #include <linux/spinlock.h>
 
 #include <qdf_perf.h>
+#include <qdf_module.h>
 #ifdef QCA_PERF_PROFILING
 
 qdf_perf_entry_t     perf_root = {{0, 0} };
@@ -59,7 +60,7 @@ qdf_perfmod_init(void)
 	perf_root.proc = proc_mkdir(PROCFS_PERF_DIRNAME, 0);
 	return 0;
 }
-EXPORT_SYMBOL(qdf_perfmod_init);
+qdf_export_symbol(qdf_perfmod_init);
 
 /**
  * qdf_perfmod_exit() - Module exit
@@ -73,7 +74,7 @@ qdf_perfmod_exit(void)
 		  "Perf Debug Module Exit");
 	remove_proc_entry(PROCFS_PERF_DIRNAME, 0);
 }
-EXPORT_SYMBOL(qdf_perfmod_exit);
+qdf_export_symbol(qdf_perfmod_exit);
 
 /**
  * __qdf_perf_init() - Create the perf entry
@@ -138,7 +139,7 @@ __qdf_perf_init(qdf_perf_id_t parent, uint8_t *id_name,
 done:
 	return entry;
 }
-EXPORT_SYMBOL(__qdf_perf_init);
+qdf_export_symbol(__qdf_perf_init);
 
 /**
  * __qdf_perf_destroy - Destroy the perf entry
@@ -165,7 +166,7 @@ bool __qdf_perf_destroy(qdf_perf_id_t  id)
 
 	return true;
 }
-EXPORT_SYMBOL(__qdf_perf_destroy);
+qdf_export_symbol(__qdf_perf_destroy);
 
 /**
  * __qdf_perf_start - Start the sampling
@@ -179,7 +180,7 @@ void __qdf_perf_start(qdf_perf_id_t id)
 
 	api_tbl[entry->type].sample(entry, 0);
 }
-EXPORT_SYMBOL(__qdf_perf_start);
+qdf_export_symbol(__qdf_perf_start);
 
 /**
  * __qdf_perf_end - Stop sampling
@@ -193,6 +194,6 @@ void __qdf_perf_end(qdf_perf_id_t id)
 
 	api_tbl[entry->type].sample(entry, 1);
 }
-EXPORT_SYMBOL(__qdf_perf_end);
+qdf_export_symbol(__qdf_perf_end);
 
 #endif /* QCA_PERF_PROFILING */

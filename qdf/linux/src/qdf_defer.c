@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -36,6 +36,7 @@
 #include <linux/workqueue.h>
 
 #include "i_qdf_defer.h"
+#include <qdf_module.h>
 
 /**
  * __qdf_defer_func() - defer work handler
@@ -54,7 +55,7 @@ void __qdf_defer_func(struct work_struct *work)
 	}
 	ctx->fn(ctx->arg);
 }
-EXPORT_SYMBOL(__qdf_defer_func);
+qdf_export_symbol(__qdf_defer_func);
 
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 19)
 /**
@@ -82,4 +83,4 @@ __qdf_defer_delayed_func(struct work_struct *dwork)
 	ctx->fn(ctx->arg);
 }
 #endif
-EXPORT_SYMBOL(__qdf_defer_delayed_func);
+qdf_export_symbol(__qdf_defer_delayed_func);
