@@ -28,6 +28,7 @@
 #include "wmi_unified_api.h"
 #include "wmi_unified_priv.h"
 #include "target_type.h"
+#include <qdf_module.h>
 
 #if defined(WMI_NON_TLV_SUPPORT) || defined(WMI_TLV_AND_NON_TLV_SUPPORT)
 #include "wmi.h"
@@ -9347,7 +9348,7 @@ void wmi_non_tlv_attach(struct wmi_unified *wmi_handle)
 	qdf_print("%s: Not supported\n", __func__);
 #endif
 }
-EXPORT_SYMBOL(wmi_non_tlv_attach);
+qdf_export_symbol(wmi_non_tlv_attach);
 
 /**
  * wmi_non_tlv_init() - Initialize WMI NON TLV module by registering Non TLV

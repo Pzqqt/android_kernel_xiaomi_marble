@@ -22,6 +22,7 @@
  */
 
 #include <qdf_status.h>
+#include <qdf_module.h>
 #include <wmi_unified_api.h>
 #include <wmi_unified_priv.h>
 #include <wmi_unified_reg_api.h>
@@ -41,7 +42,7 @@ QDF_STATUS wmi_extract_reg_chan_list_update_event(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(wmi_extract_reg_chan_list_update_event);
+qdf_export_symbol(wmi_extract_reg_chan_list_update_event);
 
 /*
  * wmi_unified_send_start_11d_scan_cmd() - start 11d scan
@@ -59,7 +60,7 @@ QDF_STATUS wmi_unified_send_start_11d_scan_cmd(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(wmi_unified_send_start_11d_scan_cmd);
+qdf_export_symbol(wmi_unified_send_start_11d_scan_cmd);
 
 /*
  * wmi_unified_send_stop_11d_scan_cmd() - stop 11d scan
@@ -77,7 +78,7 @@ QDF_STATUS wmi_unified_send_stop_11d_scan_cmd(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(wmi_unified_send_stop_11d_scan_cmd);
+qdf_export_symbol(wmi_unified_send_stop_11d_scan_cmd);
 
 QDF_STATUS wmi_extract_reg_11d_new_cc_event(void *wmi_hdl,
 		uint8_t *evt_buf,
@@ -92,7 +93,7 @@ QDF_STATUS wmi_extract_reg_11d_new_cc_event(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(wmi_extract_reg_11d_new_cc_event);
+qdf_export_symbol(wmi_extract_reg_11d_new_cc_event);
 
 QDF_STATUS wmi_unified_set_user_country_code_cmd_send(void *wmi_hdl,
 		uint8_t pdev_id, struct cc_regdmn_s *rd)
@@ -105,7 +106,7 @@ QDF_STATUS wmi_unified_set_user_country_code_cmd_send(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(wmi_unified_set_user_country_code_cmd_send);
+qdf_export_symbol(wmi_unified_set_user_country_code_cmd_send);
 
 QDF_STATUS wmi_extract_reg_ch_avoid_event(void *wmi_hdl,
 		uint8_t *evt_buf,
@@ -120,4 +121,4 @@ QDF_STATUS wmi_extract_reg_ch_avoid_event(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(wmi_extract_reg_ch_avoid_event);
+qdf_export_symbol(wmi_extract_reg_ch_avoid_event);
