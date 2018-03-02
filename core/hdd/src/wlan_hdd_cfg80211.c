@@ -2480,7 +2480,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	tsap_Config_t *sap_config;
 	struct sk_buff *temp_skbuff;
-	int status = -EINVAL, i = 0;
+	int ret, i;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ACS_MAX + 1];
 	bool ht_enabled, ht40_enabled, vht_enabled;
 	uint8_t ch_width;
@@ -2508,19 +2508,19 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (status)
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
 		goto out;
 
 	if (cds_is_sub_20_mhz_enabled()) {
 		hdd_err("ACS not supported in sub 20 MHz ch wd.");
-		status = -EINVAL;
+		ret = -EINVAL;
 		goto out;
 	}
 
 	if (qdf_atomic_inc_return(&hdd_ctx->is_acs_allowed) > 1) {
 		hdd_err("ACS rejected as previous req already in progress");
-		status = -EINVAL;
+		ret = -EINVAL;
 		goto out;
 	}
 
@@ -2529,10 +2529,10 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		qdf_mem_free(sap_config->acs_cfg.ch_list);
 	qdf_mem_zero(&sap_config->acs_cfg, sizeof(struct sap_acs_cfg));
 
-	status = wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACS_MAX, data,
+	ret = wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACS_MAX, data,
 					 data_len,
 					 wlan_hdd_cfg80211_do_acs_policy);
-	if (status) {
+	if (ret) {
 		hdd_err("Invalid ATTR");
 		qdf_atomic_set(&hdd_ctx->is_acs_allowed, 0);
 		goto out;
@@ -2540,7 +2540,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ACS_HW_MODE]) {
 		hdd_err("Attr hw_mode failed");
-		status = -EINVAL;
+		ret = -EINVAL;
 		qdf_atomic_set(&hdd_ctx->is_acs_allowed, 0);
 		goto out;
 	}
@@ -2624,7 +2624,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 					sap_config->acs_cfg.ch_list_count);
 			if (!sap_config->acs_cfg.ch_list) {
 				hdd_err("ACS config alloc fail");
-				status = -ENOMEM;
+				ret = -ENOMEM;
 				qdf_atomic_set(&hdd_ctx->is_acs_allowed, 0);
 				goto out;
 			}
@@ -2643,7 +2643,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				sap_config->acs_cfg.ch_list_count);
 			if (!sap_config->acs_cfg.ch_list) {
 				hdd_err("ACS config alloc fail");
-				status = -ENOMEM;
+				ret = -ENOMEM;
 				qdf_atomic_set(&hdd_ctx->is_acs_allowed, 0);
 				goto out;
 			}
@@ -2653,6 +2653,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				sap_config->acs_cfg.ch_list[i] =
 					ieee80211_frequency_to_channel(freq[i]);
 		}
+	}
+
+	if (!sap_config->acs_cfg.ch_list_count) {
+		ret = -EINVAL;
+		goto out;
 	}
 
 	hdd_debug("get pcl for DO_ACS vendor command");
@@ -2684,18 +2689,18 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 
 	if (hdd_ctx->config->force_sap_acs) {
 		hdd_debug("forcing SAP acs start and end channel");
-		status = wlan_hdd_reset_force_acs_chan_range(hdd_ctx,
+		ret = wlan_hdd_reset_force_acs_chan_range(hdd_ctx,
 						sap_config);
-		if (status) {
+		if (ret) {
 			hdd_err("reset force acs channel range failed");
 			goto out;
 		}
 	}
 
 	sap_config->acs_cfg.band = hw_mode;
-	status = wlan_hdd_set_acs_ch_range(sap_config, hw_mode,
+	ret = wlan_hdd_set_acs_ch_range(sap_config, hw_mode,
 					   ht_enabled, vht_enabled);
-	if (status) {
+	if (ret) {
 		hdd_err("set acs channel range failed");
 		goto out;
 	}
@@ -2752,17 +2757,17 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		 */
 		set_bit(ACS_PENDING, &adapter->event_flags);
 		hdd_debug("ACS Pending for %s", adapter->dev->name);
-		status = 0;
+		ret = 0;
 	} else {
 		/* Check if vendor specific acs is enabled */
 		if (hdd_ctx->config->vendor_acs_support)
-			status = hdd_start_vendor_acs(adapter);
+			ret = hdd_start_vendor_acs(adapter);
 		else
-			status = wlan_hdd_cfg80211_start_acs(adapter);
+			ret = wlan_hdd_cfg80211_start_acs(adapter);
 	}
 
 out:
-	if (0 == status) {
+	if (ret == 0) {
 		temp_skbuff = cfg80211_vendor_cmd_alloc_reply_skb(wiphy,
 							      NLMSG_HDRLEN);
 		if (temp_skbuff != NULL)
@@ -2771,7 +2776,7 @@ out:
 	wlan_hdd_undo_acs(adapter);
 	clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 
-	return status;
+	return ret;
 }
 
 /**
