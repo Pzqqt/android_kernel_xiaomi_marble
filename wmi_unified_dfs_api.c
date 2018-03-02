@@ -22,6 +22,7 @@
  */
 
 #include <qdf_status.h>
+#include <qdf_module.h>
 #include <wmi_unified_api.h>
 #include <wmi_unified_priv.h>
 #include <wlan_dfs_utils_api.h>
@@ -40,7 +41,7 @@ QDF_STATUS wmi_extract_dfs_cac_complete_event(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(wmi_extract_dfs_cac_complete_event);
+qdf_export_symbol(wmi_extract_dfs_cac_complete_event);
 
 QDF_STATUS wmi_extract_dfs_radar_detection_event(void *wmi_hdl,
 		uint8_t *evt_buf,
@@ -71,4 +72,4 @@ QDF_STATUS wmi_extract_wlan_radar_event_info(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
-EXPORT_SYMBOL(wmi_extract_dfs_radar_detection_event);
+qdf_export_symbol(wmi_extract_dfs_radar_detection_event);

@@ -30,6 +30,7 @@
 #include "wmi_version.h"
 #include "wmi_unified_priv.h"
 #include "wmi_version_whitelist.h"
+#include <qdf_module.h>
 #include <wlan_defs.h>
 #include <htc_services.h>
 
@@ -23792,7 +23793,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	populate_tlv_service(wmi_handle->services);
 	populate_target_defines_tlv(wmi_handle);
 }
-EXPORT_SYMBOL(wmi_tlv_attach);
+qdf_export_symbol(wmi_tlv_attach);
 
 /**
  * wmi_tlv_init() - Initialize WMI TLV module by registering TLV attach routine
