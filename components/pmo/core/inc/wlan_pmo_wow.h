@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -315,28 +315,6 @@ QDF_STATUS pmo_core_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS pmo_core_del_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 			uint8_t pattern_id);
-
-/**
- * pmo_core_wow_enter() - store enable/disable status for pattern
- * @wma: wma handle
- * @info: wow parameters
- *
- * Records pattern enable/disable status locally. This choice will
- * take effect when the driver enter into suspend state.
- *
- * Return: QDF status
- */
-QDF_STATUS pmo_core_wow_enter(struct wlan_objmgr_vdev *vdev,
-		struct pmo_wow_enter_params *wow_enter_param);
-
-/**
- * pmo_core_wow_exit() - clear all wma states
- * @wma: wma handle
- * @info: wow params
- *
- * Return: QDF status
- */
-QDF_STATUS pmo_core_wow_exit(struct wlan_objmgr_vdev *vdev);
 
 /**
  * pmo_core_enable_wakeup_event() -  enable wow wakeup events

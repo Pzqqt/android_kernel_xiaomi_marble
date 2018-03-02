@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -256,22 +256,6 @@ struct pmo_wow_add_pattern {
 	uint8_t pattern_mask_size;
 	uint8_t pattern_mask[PMO_WOWL_BCAST_PATTERN_MAX_SIZE];
 	uint8_t session_id;
-};
-
-/**
- * struct pmo_wow_add_pattern - wow pattern add structure
- * @magic_pkt_enable: enables or disables magic packet filtering
- * @wow_deauth_rcv:  This configuration is valid only when magicPktEnable=1,
- *    It requests hardware to wake up when it receives the
- *    Deauthentication Frame.
- * @pattern_filtering_enable: Enables/disables packet pattern filtering
- * @wow_bss_conn_loss: wake up host when bss connection lost
- */
-struct pmo_wow_enter_params {
-	uint8_t magic_pkt_enable;
-	uint8_t wow_deauth_rcv;
-	uint8_t pattern_filtering_enable;
-	uint8_t wow_bss_conn_loss;
 };
 
 /**
