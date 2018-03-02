@@ -32,7 +32,7 @@ struct wlan_objmgr_psoc;
  *
  * Return: number of packet filters
  */
-uint8_t pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc);
+uint32_t pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc);
 
 /**
  * pmo_set_pkt_fltr_req() - Set packet filter

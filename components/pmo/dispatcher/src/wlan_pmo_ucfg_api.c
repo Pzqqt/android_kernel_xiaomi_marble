@@ -41,7 +41,7 @@ uint32_t ucfg_pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc)
 	return pmo_get_apf_instruction_size(psoc);
 }
 
-uint8_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
+uint32_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_BUG(psoc);
 	if (!psoc)

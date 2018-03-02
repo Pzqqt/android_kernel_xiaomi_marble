@@ -47,7 +47,7 @@ uint32_t ucfg_pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc);
  *
  * Return: number of packet filters
  */
-uint8_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc);
+uint32_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_pmo_get_num_wow_filters() - get the supported number of WoW filters

@@ -4566,6 +4566,7 @@ static void wma_update_fw_config(struct wlan_objmgr_psoc *psoc,
 
 	cfg->num_wow_filters = ucfg_pmo_get_num_wow_filters(psoc);
 	cfg->bpf_instruction_size = ucfg_pmo_get_apf_instruction_size(psoc);
+	cfg->num_packet_filters = ucfg_pmo_get_num_packet_filters(psoc);
 }
 
 /**
