@@ -6189,9 +6189,12 @@ static QDF_STATUS __hdd_ipa_init(struct hdd_context *hdd_ctx)
 		if (ret) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				    "IPA WDI init failed: ret=%d", ret);
-			if (ret == -EACCES)
-				ret = hdd_ipa_uc_send_wdi_control_msg(false);
-			goto fail_create_sys_pipe;
+			if (ret == -EACCES) {
+				if (hdd_ipa_uc_send_wdi_control_msg(false))
+					goto fail_create_sys_pipe;
+			} else {
+				goto fail_create_sys_pipe;
+			}
 		}
 	} else {
 		ret = hdd_ipa_setup_sys_pipe(hdd_ipa);
