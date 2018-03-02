@@ -1368,12 +1368,6 @@ struct csr_roam_info {
 	uint8_t disassoc_reason;
 
 	uint8_t staId;         /* Peer stationId when connected */
-	/*
-	 * The DPU signatures will be sent eventually to TL to help it
-	 * determine the assoc to which a packet belongs to unicast DPU sign
-	 */
-	uint8_t ucastSig;
-	uint8_t bcastSig;     /* Broadcast DPU signature */
 	/* false means auth needed from supplicant. true means authenticated */
 	bool fAuthRequired;
 	uint8_t sessionId;

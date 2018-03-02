@@ -7603,8 +7603,6 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 			session->connectedInfo.staId =
 				(uint8_t) join_rsp->staId;
 			roam_info.staId = (uint8_t) join_rsp->staId;
-			roam_info.ucastSig = (uint8_t) join_rsp->ucastSig;
-			roam_info.bcastSig = (uint8_t) join_rsp->bcastSig;
 			roam_info.timingMeasCap = join_rsp->timingMeasCap;
 			roam_info.chan_info.nss = join_rsp->nss;
 			roam_info.chan_info.rate_flags =
@@ -10329,8 +10327,6 @@ void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 		}
 
 		roam_info->staId = (uint8_t) pIbssPeerInd->staId;
-		roam_info->ucastSig = (uint8_t) pIbssPeerInd->ucastSig;
-		roam_info->bcastSig = (uint8_t) pIbssPeerInd->bcastSig;
 		qdf_copy_macaddr(&roam_info->peerMac, &pIbssPeerInd->peer_addr);
 		csr_roam_call_callback(pMac, pSmeRsp->sessionId, roam_info, 0,
 				       eCSR_ROAM_CONNECT_STATUS_UPDATE,
@@ -12025,8 +12021,6 @@ csr_roam_chk_lnk_ibss_new_peer_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 				roam_info.nBeaconLength);
 		}
 		roam_info.staId = (uint8_t) pIbssPeerInd->staId;
-		roam_info.ucastSig = (uint8_t) pIbssPeerInd->ucastSig;
-		roam_info.bcastSig = (uint8_t) pIbssPeerInd->bcastSig;
 		roam_info.pBssDesc = qdf_mem_malloc(
 					session->pConnectBssDesc->length);
 		if (NULL == roam_info.pBssDesc) {
@@ -12102,8 +12096,6 @@ csr_roam_chk_lnk_ibss_peer_departed_ind(tpAniSirGlobal mac_ctx,
 #endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
 		sme_debug("CSR: Peer departed notification from LIM");
 		roam_info.staId = (uint8_t) pIbssPeerInd->staId;
-		roam_info.ucastSig = (uint8_t) pIbssPeerInd->ucastSig;
-		roam_info.bcastSig = (uint8_t) pIbssPeerInd->bcastSig;
 		qdf_copy_macaddr(&roam_info.peerMac, &pIbssPeerInd->peer_addr);
 		csr_roam_call_callback(mac_ctx, sessionId, &roam_info, 0,
 				       eCSR_ROAM_CONNECT_STATUS_UPDATE,
@@ -21313,10 +21305,6 @@ static QDF_STATUS csr_process_roam_sync_callback(tpAniSirGlobal mac_ctx,
 	add_bss_params = (tpAddBssParams)roam_synch_data->add_bss_params;
 	session->connectedInfo.staId = add_bss_params->staContext.staIdx;
 	roam_info->staId = session->connectedInfo.staId;
-	roam_info->ucastSig =
-		(uint8_t) roam_synch_data->join_rsp->ucastSig;
-	roam_info->bcastSig =
-		(uint8_t) roam_synch_data->join_rsp->bcastSig;
 	roam_info->timingMeasCap =
 		roam_synch_data->join_rsp->timingMeasCap;
 	roam_info->chan_info.nss = roam_synch_data->join_rsp->nss;
