@@ -170,15 +170,9 @@ struct tdls_set_state_info {
  * @tx_ack_cnf_cb_data: user data to tdls_tx_cnf_cb
  * @tdls_event_cb: tdls event callback
  * @tdls_evt_cb_data: tdls event user data
-#ifdef USE_NEW_TDLS_PEER_CALLBACKS
  * @tdls_peer_context: userdata for register/deregister TDLS peer
  * @tdls_reg_peer: register tdls peer with datapath
  * @tdls_dereg_peer: deregister tdls peer from datapath
-#else
- * @tdls_tl_peer_data: userdata for register/deregister TDLS peer
- * @tdls_reg_tl_peer: callback to register the TDLS peer with TL
- * @tdls_dereg_tl_peer: callback to unregister the TDLS peer
-#endif
  * @tx_q_ack: queue for tx frames waiting for ack
  * @tdls_con_cap: tdls concurrency support
  * @tdls_send_mgmt_req: store eWNI_SME_TDLS_SEND_MGMT_REQ value
@@ -219,15 +213,9 @@ struct tdls_soc_priv_obj {
 	void *tx_ack_cnf_cb_data;
 	tdls_evt_callback tdls_event_cb;
 	void *tdls_evt_cb_data;
-#ifdef USE_NEW_TDLS_PEER_CALLBACKS
 	void *tdls_peer_context;
 	tdls_register_peer_callback tdls_reg_peer;
 	tdls_deregister_peer_callback tdls_dereg_peer;
-#else
-	void *tdls_tl_peer_data;
-	tdls_register_tl_peer_callback tdls_reg_tl_peer;
-	tdls_deregister_tl_peer_callback tdls_dereg_tl_peer;
-#endif
 	tdls_dp_vdev_update_flags_callback tdls_dp_vdev_update;
 	qdf_list_t tx_q_ack;
 	enum tdls_conc_cap tdls_con_cap;
