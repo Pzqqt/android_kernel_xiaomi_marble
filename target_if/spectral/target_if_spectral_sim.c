@@ -27,6 +27,7 @@
 #include "qdf_types.h"
 #include "ieee80211_var.h"
 #include <wlan_mlme_dispatcher.h>
+#include <qdf_module.h>
 
 /* Helper functions */
 
@@ -725,7 +726,7 @@ target_if_spectral_sops_sim_is_active(void *arg)
 
 	return simctx->is_active;
 }
-EXPORT_SYMBOL(target_if_spectral_sops_sim_is_active);
+qdf_export_symbol(target_if_spectral_sops_sim_is_active);
 
 uint32_t
 target_if_spectral_sops_sim_is_enabled(void *arg)
@@ -741,7 +742,7 @@ target_if_spectral_sops_sim_is_enabled(void *arg)
 
 	return simctx->is_enabled;
 }
-EXPORT_SYMBOL(target_if_spectral_sops_sim_is_enabled);
+qdf_export_symbol(target_if_spectral_sops_sim_is_enabled);
 
 uint32_t
 target_if_spectral_sops_sim_start_scan(void *arg)
@@ -789,7 +790,7 @@ target_if_spectral_sops_sim_start_scan(void *arg)
 
 	return 1;
 }
-EXPORT_SYMBOL(target_if_spectral_sops_sim_start_scan);
+qdf_export_symbol(target_if_spectral_sops_sim_start_scan);
 
 uint32_t
 target_if_spectral_sops_sim_stop_scan(void *arg)
@@ -814,7 +815,7 @@ target_if_spectral_sops_sim_stop_scan(void *arg)
 
 	return 1;
 }
-EXPORT_SYMBOL(target_if_spectral_sops_sim_stop_scan);
+qdf_export_symbol(target_if_spectral_sops_sim_stop_scan);
 
 #ifdef SPECTRAL_SIM_DUMP_PARAM_DATA
 static void
@@ -962,7 +963,7 @@ target_if_spectral_sops_sim_configure_params(
 
 	return 1;
 }
-EXPORT_SYMBOL(target_if_spectral_sops_sim_configure_params);
+qdf_export_symbol(target_if_spectral_sops_sim_configure_params);
 
 uint32_t
 target_if_spectral_sops_sim_get_params(
@@ -988,6 +989,6 @@ target_if_spectral_sops_sim_get_params(
 
 	return 1;
 }
-EXPORT_SYMBOL(target_if_spectral_sops_sim_get_params);
+qdf_export_symbol(target_if_spectral_sops_sim_get_params);
 
 #endif				/* QCA_SUPPORT_SPECTRAL_SIMULATION */

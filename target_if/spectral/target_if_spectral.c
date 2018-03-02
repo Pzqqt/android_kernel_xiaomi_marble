@@ -33,6 +33,7 @@
 #include <reg_services_public_struct.h>
 #include <target_if_spectral_sim.h>
 #include <target_if.h>
+#include <qdf_module.h>
 /**
  * @spectral_ops - Spectral function table, holds the Spectral functions that
  * depend on whether the architecture is Direct Attach or Offload. This is used
@@ -2839,7 +2840,7 @@ target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	tx_ops->sptrl_tx_ops.sptrlto_deregister_netlink_cb =
 	    target_if_deregister_netlink_cb;
 }
-EXPORT_SYMBOL(target_if_sptrl_register_tx_ops);
+qdf_export_symbol(target_if_sptrl_register_tx_ops);
 
 void
 target_if_spectral_send_intf_found_msg(struct wlan_objmgr_pdev *pdev,
@@ -2864,4 +2865,4 @@ target_if_spectral_send_intf_found_msg(struct wlan_objmgr_pdev *pdev,
 			spectral->spectral_sent_msg++;
 	}
 }
-EXPORT_SYMBOL(target_if_spectral_send_intf_found_msg);
+qdf_export_symbol(target_if_spectral_send_intf_found_msg);

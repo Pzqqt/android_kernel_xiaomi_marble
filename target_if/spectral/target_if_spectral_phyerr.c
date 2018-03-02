@@ -19,6 +19,7 @@
 
 #include <osdep.h>
 #include <qdf_types.h>
+#include <qdf_module.h>
 #include <wlan_tgt_def_config.h>
 #include <hif.h>
 #include <hif_hw_version.h>
@@ -1582,7 +1583,7 @@ int target_if_spectral_process_phyerr_gen3(
 
 	return ret;
 }
-EXPORT_SYMBOL(target_if_spectral_process_phyerr_gen3);
+qdf_export_symbol(target_if_spectral_process_phyerr_gen3);
 /* END of spectral GEN III HW specific functions */
 
 #endif  /* WLAN_SPECTRAL_ENABLE */
