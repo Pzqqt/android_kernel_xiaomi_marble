@@ -547,8 +547,6 @@ typedef void (*tdls_evt_callback) (void *data,
 typedef int (*tdls_tx_ack_cnf_callback)(void *user_data,
 					struct tdls_tx_cnf *tx_ack_cnf_cb_data);
 
-#ifdef USE_NEW_TDLS_PEER_CALLBACKS
-
 /* This callback is used to register TDLS peer with the datapath */
 typedef QDF_STATUS (*tdls_register_peer_callback)(void *userdata,
 						  uint32_t vdev_id,
@@ -560,23 +558,6 @@ typedef QDF_STATUS (*tdls_register_peer_callback)(void *userdata,
 typedef QDF_STATUS (*tdls_deregister_peer_callback)(void *userdata,
 						    uint32_t vdev_id,
 						    uint8_t sta_id);
-
-#else
-
-/* This callback is used to register TDLS peer with TL */
-typedef QDF_STATUS (*tdls_register_tl_peer_callback)(void *userdata,
-						     uint32_t vdev_id,
-						     const uint8_t *mac,
-						     uint16_t stat_id,
-						     uint8_t ucastsig,
-						     uint8_t qos);
-
-/* This callback is used to deregister TDLS peer */
-typedef QDF_STATUS (*tdls_deregister_tl_peer_callback)(void *userdata,
-						       uint32_t vdev_id,
-						       uint8_t sta_id);
-
-#endif
 
 /* This callback is used to update datapath vdev flags */
 typedef QDF_STATUS
@@ -598,15 +579,9 @@ typedef QDF_STATUS
  * @tdls_evt_cb_data: tdls event data
  * @ack_cnf_cb: tdls tx ack callback to indicate the tx status
  * @tx_ack_cnf_cb_data: tdls tx ack user data
-#ifdef USE_NEW_TDLS_PEER_CALLBACKS
  * @tdls_peer_context: userdata for register/deregister TDLS peer
  * @tdls_reg_peer: register tdls peer with datapath
  * @tdls_dereg_peer: deregister tdls peer from datapath
-#else
- * @tdls_tl_peer_data: userdata for register/deregister TDLS peer
- * @tdls_reg_tl_peer: tdls register tdls peer
- * @tdls_dereg_tl_peer: tdls deregister tdls peer
-#endif
  * @tdls_dp_vdev_update: update vdev flags in datapath
  */
 struct tdls_start_params {
@@ -625,15 +600,9 @@ struct tdls_start_params {
 	void *tdls_evt_cb_data;
 	tdls_tx_ack_cnf_callback ack_cnf_cb;
 	void *tx_ack_cnf_cb_data;
-#ifdef USE_NEW_TDLS_PEER_CALLBACKS
 	void *tdls_peer_context;
 	tdls_register_peer_callback tdls_reg_peer;
 	tdls_deregister_peer_callback tdls_dereg_peer;
-#else
-	void *tdls_tl_peer_data;
-	tdls_register_tl_peer_callback tdls_reg_tl_peer;
-	tdls_deregister_tl_peer_callback tdls_dereg_tl_peer;
-#endif
 	tdls_dp_vdev_update_flags_callback tdls_dp_vdev_update;
 };
 
