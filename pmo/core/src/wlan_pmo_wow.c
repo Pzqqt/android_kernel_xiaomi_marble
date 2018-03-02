@@ -63,7 +63,7 @@ QDF_STATUS pmo_core_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 	 * function (1 in mask value will become FF and 0 will
 	 * become 00),
 	 *
-	 *      Mask value    : FF:00:FF:00:0:00:00:FF
+	 *      Mask value    : FF:00:FF:00:00:00:00:FF
 	 *      Pattern value : 12:00:13:00:00:00:00:44
 	 */
 	qdf_mem_zero(new_mask, sizeof(new_mask));
