@@ -1693,6 +1693,7 @@ static void dp_process_ppdu_stats_user_common_tlv(
 		ppdu_user_desc->is_mcast = true;
 		ppdu_user_desc->mpdu_tried_mcast =
 		HTT_PPDU_STATS_USER_COMMON_TLV_MPDUS_TRIED_GET(*tag_buf);
+		ppdu_user_desc->num_mpdu = ppdu_user_desc->mpdu_tried_mcast;
 	} else {
 		ppdu_user_desc->mpdu_tried_ucast =
 		HTT_PPDU_STATS_USER_COMMON_TLV_MPDUS_TRIED_GET(*tag_buf);
