@@ -352,20 +352,12 @@ util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 		scan_params->ie_list.srp   = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_HECAP:
-		if ((extn_ie->ie_len < WLAN_HE_CAP_IE_MIN_LEN) ||
-		    (extn_ie->ie_len > WLAN_HE_CAP_IE_MAX_LEN))
-			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.hecap = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_HEOP:
-		if ((extn_ie->ie_len < WLAN_HE_OP_IE_MIN_LEN) ||
-		    (extn_ie->ie_len > WLAN_HE_OP_IE_MAX_LEN))
-			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.heop  = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_ESP:
-		if (extn_ie->ie_len > WLAN_EXT_ESP_IE_MAX_LEN)
-			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.esp = (uint8_t *)ie;
 		break;
 	default:

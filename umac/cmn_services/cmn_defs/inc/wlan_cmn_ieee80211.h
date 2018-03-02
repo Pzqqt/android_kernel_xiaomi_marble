@@ -104,11 +104,6 @@
 #define WLAN_MOBILITY_DOMAIN_IE_MAX_LEN          3
 #define WLAN_OPMODE_IE_MAX_LEN                   1
 #define WLAN_IBSSDFS_IE_MIN_LEN                  7
-#define WLAN_EXT_ESP_IE_MAX_LEN                  96
-#define WLAN_HE_CAP_IE_MIN_LEN                   18
-#define WLAN_HE_CAP_IE_MAX_LEN                   53
-#define WLAN_HE_OP_IE_MIN_LEN                     6
-#define WLAN_HE_OP_IE_MAX_LEN                    10
 
 /* HT capability flags */
 #define WLAN_HTCAP_C_ADVCODING             0x0001
