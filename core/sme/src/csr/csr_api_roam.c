@@ -18862,22 +18862,27 @@ QDF_STATUS csr_update_fils_config(tpAniSirGlobal mac, uint8_t session_id,
 /**
  * copy_all_before_char() - API to copy all character before a particular char
  * @str: Source string
+ * @str_len: Source string legnth
  * @dst: Destination string
+ * @dst_len: Destination string legnth
  * @c: Character before which all characters need to be copied
  *
  * Return: length of the copied string, if success. zero otherwise.
  */
-static uint32_t copy_all_before_char(char *str, char *dst, char c)
+static uint32_t copy_all_before_char(char *str, uint32_t str_len,
+				     char *dst, uint32_t dst_len, char c)
 {
 	uint32_t len = 0;
 
 	if (!str)
 		return len;
 
-	while (*str != '\0' && *str != c) {
+	while ((len < str_len) && (len < dst_len) &&
+	       (*str != '\0') && (*str != c)) {
 		*dst++ = *str++;
 		len++;
 	}
+
 	return len;
 }
 
@@ -18919,7 +18924,10 @@ static void csr_update_fils_params_rso(tpAniSirGlobal mac,
 	req_buffer->is_fils_connection = true;
 	roam_fils_params->username_length =
 			copy_all_before_char(fils_info->keyname_nai,
-				roam_fils_params->username, '@');
+					     sizeof(fils_info->keyname_nai),
+					     roam_fils_params->username,
+					     sizeof(roam_fils_params->username),
+					     '@');
 
 	roam_fils_params->next_erp_seq_num =
 			(fils_info->sequence_number + 1);
