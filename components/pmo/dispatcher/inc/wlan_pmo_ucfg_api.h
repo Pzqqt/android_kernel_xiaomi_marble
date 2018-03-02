@@ -34,6 +34,30 @@
 #include "wlan_pmo_hw_filter_public_struct.h"
 
 /**
+ * ucfg_pmo_get_apf_instruction_size() - get the current APF instruction size
+ * @psoc: the psoc to query
+ *
+ * Return: APF instruction size
+ */
+uint32_t ucfg_pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_num_packet_filters() - get the number of packet filters
+ * @psoc: the psoc to query
+ *
+ * Return: number of packet filters
+ */
+uint8_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_num_wow_filters() - get the supported number of WoW filters
+ * @psoc: the psoc to query
+ *
+ * Return: number of WoW filters supported
+ */
+uint8_t ucfg_pmo_get_num_wow_filters(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_pmo_is_ap_mode_supports_arp_ns() - Check ap mode support arp&ns offload
  * @psoc: objmgr psoc
  * @vdev_opmode: vdev opmode

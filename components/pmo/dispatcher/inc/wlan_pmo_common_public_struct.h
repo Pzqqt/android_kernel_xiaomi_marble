@@ -261,12 +261,13 @@ enum pmo_auto_pwr_detect_failure_mode {
  * struct pmo_psoc_cfg - user configuration required for pmo
  * @ptrn_match_enable_all_vdev: true when pattern match is enable for all vdev
  * @ptrn_id_per_vdev: true when pattern id can be same for different vdev
- * @bpf_enable: true if psoc supports bpf else false
+ * @apf_enable: true if psoc supports bpf else false
  * @arp_offload_enable: true if arp offload is supported for psoc else false
  * @hw_filter_mode: which mode the hardware filter should use during DTIM
  * @ns_offload_enable_static: true if psoc supports ns offload in ini else false
  * @ns_offload_enable_dynamic: to enable / disable the ns offload using
  *    ioctl or vendor command.
+ * @packet_filter_enabled: true if feature is enabled by configuration
  * @ssdp:  true if psoc supports if ssdp configuration in wow mode
  * @enable_mc_list: true if psoc supports mc addr list else false
  * @active_mode_offload: true if psoc supports active mode offload else false
@@ -290,11 +291,12 @@ enum pmo_auto_pwr_detect_failure_mode {
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
 	bool ptrn_id_per_vdev;
-	bool bpf_enable;
+	bool apf_enable;
 	bool arp_offload_enable;
 	enum pmo_hw_filter_mode hw_filter_mode;
 	bool ns_offload_enable_static;
 	bool ns_offload_enable_dynamic;
+	bool packet_filter_enabled;
 	bool ssdp;
 	bool enable_mc_list;
 	bool active_mode_offload;

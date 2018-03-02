@@ -12616,7 +12616,6 @@ static inline void hdd_ra_populate_pmo_config(
  */
 static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 {
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct pmo_psoc_cfg psoc_cfg;
 	QDF_STATUS status;
 
@@ -12632,40 +12631,36 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 		(hdd_ctx->config->wowEnable & 0x01) ? true : false;
 	psoc_cfg.ptrn_match_enable_all_vdev =
 		(hdd_ctx->config->wowEnable & 0x02) ? true : false;
-	psoc_cfg.ptrn_id_per_vdev = wma_is_service_enabled(
-		wmi_service_unified_wow_capability);
-	psoc_cfg.bpf_enable =
-		hdd_ctx->config->bpf_packet_filter_enable;
+	psoc_cfg.ptrn_id_per_vdev =
+		wma_is_service_enabled(wmi_service_unified_wow_capability);
+	psoc_cfg.apf_enable = hdd_ctx->config->bpf_packet_filter_enable;
 	psoc_cfg.arp_offload_enable = hdd_ctx->config->fhostArpOffload;
 	psoc_cfg.hw_filter_mode = hdd_ctx->config->hw_filter_mode;
+	psoc_cfg.ns_offload_enable_dynamic = hdd_ctx->config->fhostNSOffload;
 	psoc_cfg.ns_offload_enable_static = hdd_ctx->config->fhostNSOffload;
-	if (hdd_ctx->config->fhostNSOffload)
-		psoc_cfg.ns_offload_enable_dynamic = true;
+	psoc_cfg.packet_filter_enabled = !hdd_ctx->config->disablePacketFilter;
 	psoc_cfg.ssdp = hdd_ctx->config->ssdp;
 	psoc_cfg.enable_mc_list = hdd_ctx->config->fEnableMCAddrList;
-	psoc_cfg.active_mode_offload =
-		hdd_ctx->config->active_mode_offload;
+	psoc_cfg.active_mode_offload = hdd_ctx->config->active_mode_offload;
 	psoc_cfg.ap_arpns_support = hdd_ctx->ap_arpns_support;
 	psoc_cfg.d0_wow_supported = wma_d0_wow_is_supported();
 	psoc_cfg.max_wow_filters = hdd_ctx->config->maxWoWFilters;
 	psoc_cfg.sta_dynamic_dtim = hdd_ctx->config->enableDynamicDTIM;
 	psoc_cfg.sta_mod_dtim = hdd_ctx->config->enableModulatedDTIM;
 	psoc_cfg.sta_max_li_mod_dtim = hdd_ctx->config->fMaxLIModulatedDTIM;
-	psoc_cfg.power_save_mode =
-		hdd_ctx->config->enablePowersaveOffload;
+	psoc_cfg.power_save_mode = hdd_ctx->config->enablePowersaveOffload;
 	psoc_cfg.auto_power_save_fail_mode =
 		hdd_ctx->config->auto_pwr_save_fail_mode;
 
 	hdd_ra_populate_pmo_config(&psoc_cfg, hdd_ctx);
 	hdd_nan_populate_pmo_config(&psoc_cfg, hdd_ctx);
 	hdd_lpass_populate_pmo_config(&psoc_cfg, hdd_ctx);
-	status = ucfg_pmo_update_psoc_config(psoc, &psoc_cfg);
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("failed pmo psoc configuration");
-		return -EINVAL;
-	}
 
-	return 0;
+	status = ucfg_pmo_update_psoc_config(hdd_ctx->hdd_psoc, &psoc_cfg);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("failed pmo psoc configuration; status:%d", status);
+
+	return qdf_status_to_os_return(status);
 }
 
 #ifdef FEATURE_WLAN_SCAN_PNO

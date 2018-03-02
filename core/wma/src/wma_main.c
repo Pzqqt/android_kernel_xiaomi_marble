@@ -4486,33 +4486,23 @@ QDF_STATUS wma_close(void)
 
 /**
  * wma_update_fw_config() - update fw configuration
- * @wma_handle: wma handle
- * @tgt_cap: pointer to structure target_psoc_info
- * @tgt_hdl: Target capability info
+ * @psoc: psoc to query configuration from
+ * @tgt_hdl: target capability info
  *
  * Return: none
  */
-static void wma_update_fw_config(tp_wma_handle wma_handle,
-				 struct wma_target_cap *tgt_cap,
+static void wma_update_fw_config(struct wlan_objmgr_psoc *psoc,
 				 struct target_psoc_info *tgt_hdl)
 {
-	/*
-	 * tgt_cap contains default target resource configuration
-	 * which can be modified here, if required
-	 */
+	target_resource_config *cfg = &tgt_hdl->info.wlan_res_cfg;
+
 	/* Override the no. of max fragments as per platform configuration */
-	tgt_cap->wlan_resource_config.max_frag_entries =
-					QDF_MIN(QCA_OL_11AC_TX_MAX_FRAGS,
+	cfg->max_frag_entries =	QDF_MIN(QCA_OL_11AC_TX_MAX_FRAGS,
 					target_if_get_max_frag_entry(tgt_hdl));
+	target_if_set_max_frag_entry(tgt_hdl, cfg->max_frag_entries);
 
-	target_if_set_max_frag_entry(tgt_hdl,
-			tgt_cap->wlan_resource_config.max_frag_entries);
-
-	/* Update no. of maxWoWFilters depending on BPF service */
-	if (wmi_service_enabled(wma_handle->wmi_handle,
-				   wmi_service_bpf_offload))
-		tgt_cap->wlan_resource_config.num_wow_filters =
-					WMA_STA_WOW_DEFAULT_PTRN_MAX;
+	cfg->num_wow_filters = ucfg_pmo_get_num_wow_filters(psoc);
+	cfg->bpf_instruction_size = ucfg_pmo_get_apf_instruction_size(psoc);
 }
 
 /**
@@ -5655,7 +5645,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	wma_set_component_caps(wma_handle->psoc);
 
 	target_cap.wlan_resource_config = tgt_hdl->info.wlan_res_cfg;
-	wma_update_fw_config(wma_handle, &target_cap, tgt_hdl);
+	wma_update_fw_config(wma_handle->psoc, tgt_hdl);
 	qdf_mem_copy(wma_handle->wmi_service_bitmap,
 		     service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));

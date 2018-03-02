@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,11 +20,19 @@
  */
 
 #ifndef _WLAN_PMO_PKT_FILTER_H_
-#define _WLAN_PMO_PKT_FILTER_
+#define _WLAN_PMO_PKT_FILTER_H_
 
 #include "wlan_pmo_pkt_filter_public_struct.h"
 
 struct wlan_objmgr_psoc;
+
+/**
+ * pmo_get_num_packet_filters() - get the number of packet filters
+ * @psoc: the psoc to query
+ *
+ * Return: number of packet filters
+ */
+uint8_t pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc);
 
 /**
  * pmo_set_pkt_fltr_req() - Set packet filter
@@ -53,5 +61,5 @@ QDF_STATUS pmo_core_clear_pkt_filter(struct wlan_objmgr_psoc *psoc,
 		struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_req,
 		uint8_t vdev_id);
 
-#endif /* end  of _WLAN_PMO_PKT_FILTER_H_ */
+#endif /* _WLAN_PMO_PKT_FILTER_H_ */
 
