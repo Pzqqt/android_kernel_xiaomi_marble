@@ -20,5 +20,23 @@
  * DOC: PMO implementations for Android Packet Filter (APF) functions
  */
 
+#include "qdf_types.h"
+#include "wlan_objmgr_psoc_obj.h"
 #include "wlan_pmo_apf.h"
+#include "wlan_pmo_main.h"
+
+#define PMO_APF_SIZE_AUTO	0
+#define PMO_APF_SIZE_DISABLE	0xffffffff
+
+uint32_t pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	bool enabled;
+
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		enabled = pmo_intersect_apf(psoc_ctx);
+	}
+
+	return enabled ? PMO_APF_SIZE_AUTO : PMO_APF_SIZE_DISABLE;
+}
 

@@ -105,6 +105,10 @@
 
 #define PMO_WOW_MAX_EVENT_BM_LEN 4
 
+#define PMO_WOW_FILTERS_ARP_NS		2
+#define PMO_WOW_FILTERS_PKT_OR_APF	5
+#define PMO_WOW_FILTERS_MAX		22
+
 /**
  * pmo_get_and_increment_wow_default_ptrn() -Get and increment wow default ptrn
  * @vdev_ctx: pmo vdev priv ctx
@@ -684,4 +688,12 @@ static inline void pmo_get_event_bitmap_idx(WOW_WAKE_EVENT_TYPE event,
 		*bit_idx = event % (wow_bitmap_size * 8);
 	}
 }
+
+/**
+ * pmo_get_num_wow_filters() - get the supported number of WoW filters
+ * @psoc: the psoc to query
+ *
+ * Return: number of WoW filters supported
+ */
+uint8_t pmo_get_num_wow_filters(struct wlan_objmgr_psoc *psoc);
 #endif /* end  of _WLAN_PMO_WOW_H_ */

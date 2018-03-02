@@ -386,7 +386,6 @@ void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
 	pmo_set_wow_event_bitmap(WOW_11D_SCAN_EVENT,
 				 wow_bitmap_size,
 				 bitmask);
-
 }
 
 void pmo_set_sap_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
@@ -420,3 +419,26 @@ void pmo_set_sap_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
 				 wow_bitmap_size,
 				 bitmask);
 }
+
+uint8_t pmo_get_num_wow_filters(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	bool apf;
+	bool arp_ns;
+	bool pkt_filter;
+
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		apf = pmo_intersect_apf(psoc_ctx);
+		arp_ns = pmo_intersect_arp_ns_offload(psoc_ctx);
+		pkt_filter = pmo_intersect_packet_filter(psoc_ctx);
+	}
+
+	if (!apf && !pkt_filter)
+		return PMO_WOW_FILTERS_MAX;
+
+	if (arp_ns)
+		return PMO_WOW_FILTERS_ARP_NS;
+
+	return PMO_WOW_FILTERS_PKT_OR_APF;
+}
+

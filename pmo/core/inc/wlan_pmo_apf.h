@@ -23,4 +23,15 @@
 #ifndef __WLAN_PMO_APF_H
 #define __WLAN_PMO_APF_H
 
+#include "qdf_types.h"
+#include "wlan_objmgr_psoc_obj.h"
+
+/**
+ * pmo_get_apf_instruction_size() - get the current APF instruction size
+ * @psoc: the psoc to query
+ *
+ * Return: APF instruction size
+ */
+uint32_t pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc);
+
 #endif /* __WLAN_PMO_APF_H */

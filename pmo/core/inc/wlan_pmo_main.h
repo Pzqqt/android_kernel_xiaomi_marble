@@ -48,14 +48,9 @@
 #define PMO_VDEV_IN_STA_MODE(mode) \
 	((mode) == QDF_STA_MODE || (mode) == QDF_P2P_CLIENT_MODE ? 1 : 0)
 
-static inline enum QDF_OPMODE pmo_get_vdev_opmode(
-			struct wlan_objmgr_vdev *vdev)
+static inline enum QDF_OPMODE pmo_get_vdev_opmode(struct wlan_objmgr_vdev *vdev)
 {
-	enum QDF_OPMODE opmode;
-
-	opmode = wlan_vdev_mlme_get_opmode(vdev);
-
-	return opmode;
+	return wlan_vdev_mlme_get_opmode(vdev);
 }
 
 /**
@@ -353,6 +348,57 @@ bool pmo_is_vdev_up(struct wlan_objmgr_vdev *vdev)
 	state = wlan_vdev_mlme_get_state(vdev);
 
 	return state == WLAN_VDEV_S_RUN;
+}
+
+/**
+ * pmo_intersect_arp_ns_offload() - intersect config and firmware capability for
+ *	the ARP/NS Offload feature
+ * @psoc_ctx: A PMO psoc context
+ *
+ * Note: The caller is expected to grab the PMO context lock.
+ *
+ * Return: True if firmware supports and configuration has enabled the feature
+ */
+static inline bool
+pmo_intersect_arp_ns_offload(struct pmo_psoc_priv_obj *psoc_ctx)
+{
+	struct pmo_psoc_cfg *cfg = &psoc_ctx->psoc_cfg;
+	bool arp_ns_enabled =
+		cfg->ns_offload_enable_static ||
+		cfg->ns_offload_enable_dynamic ||
+		cfg->arp_offload_enable;
+
+	return arp_ns_enabled && psoc_ctx->caps.arp_ns_offload;
+}
+
+/**
+ * pmo_intersect_apf() - intersect config and firmware capability for
+ *	the BPF feature
+ * @psoc_ctx: A PMO psoc context
+ *
+ * Note: The caller is expected to grab the PMO context lock.
+ *
+ * Return: True if firmware supports and configuration has enabled the feature
+ */
+static inline bool pmo_intersect_apf(struct pmo_psoc_priv_obj *psoc_ctx)
+{
+	return psoc_ctx->psoc_cfg.apf_enable && psoc_ctx->caps.apf;
+}
+
+/**
+ * pmo_intersect_packet_filter() - intersect config and firmware capability for
+ *	the BPF feature
+ * @psoc_ctx: A PMO psoc context
+ *
+ * Note: The caller is expected to grab the PMO context lock.
+ *
+ * Return: True if firmware supports and configuration has enabled the feature
+ */
+static inline bool
+pmo_intersect_packet_filter(struct pmo_psoc_priv_obj *psoc_ctx)
+{
+	return psoc_ctx->psoc_cfg.packet_filter_enabled &&
+		psoc_ctx->caps.packet_filter;
 }
 
 #endif /* end  of _WLAN_PMO_MAIN_H_ */

@@ -20,6 +20,7 @@
  */
 
 #include "wlan_pmo_ucfg_api.h"
+#include "wlan_pmo_apf.h"
 #include "wlan_pmo_arp.h"
 #include "wlan_pmo_ns.h"
 #include "wlan_pmo_gtk.h"
@@ -30,6 +31,33 @@
 #include "wlan_pmo_suspend_resume.h"
 #include "wlan_pmo_pkt_filter.h"
 #include "wlan_pmo_hw_filter.h"
+
+uint32_t ucfg_pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_BUG(psoc);
+	if (!psoc)
+		return 0;
+
+	return pmo_get_apf_instruction_size(psoc);
+}
+
+uint8_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_BUG(psoc);
+	if (!psoc)
+		return 0;
+
+	return pmo_get_num_packet_filters(psoc);
+}
+
+uint8_t ucfg_pmo_get_num_wow_filters(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_BUG(psoc);
+	if (!psoc)
+		return 0;
+
+	return pmo_get_num_wow_filters(psoc);
+}
 
 QDF_STATUS ucfg_pmo_get_psoc_config(struct wlan_objmgr_psoc *psoc,
 		struct pmo_psoc_cfg *psoc_cfg)
