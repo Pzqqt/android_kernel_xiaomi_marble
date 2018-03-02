@@ -770,16 +770,24 @@ QDF_STATUS wlan_mgmt_txrx_pdev_close(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_mgmt_txrx_pdev_drain(struct wlan_objmgr_pdev *pdev,
+QDF_STATUS wlan_mgmt_txrx_vdev_drain(struct wlan_objmgr_vdev *vdev,
 				mgmt_frame_fill_peer_cb mgmt_fill_peer_cb,
 				void *status)
 {
+	struct wlan_objmgr_pdev *pdev;
 	struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx;
 	struct mgmt_txrx_desc_elem_t *mgmt_desc;
 	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_vdev *peer_vdev;
 	uint32_t pool_size;
 	int i;
 
+	if (!vdev) {
+		mgmt_txrx_err("vdev context is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
 		mgmt_txrx_err("pdev context is NULL");
 		return QDF_STATUS_E_INVAL;
@@ -802,11 +810,15 @@ QDF_STATUS wlan_mgmt_txrx_pdev_drain(struct wlan_objmgr_pdev *pdev,
 		if (mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[i].in_use) {
 			mgmt_desc = &mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[i];
 			peer = mgmt_txrx_get_peer(pdev, mgmt_desc->desc_id);
-			QDF_ASSERT(peer != NULL);
-			if (mgmt_fill_peer_cb)
-				mgmt_fill_peer_cb(peer, mgmt_desc->nbuf);
-			mgmt_txrx_tx_completion_handler(pdev,
-				mgmt_desc->desc_id, 0, status);
+			if (peer) {
+				peer_vdev = wlan_peer_get_vdev(peer);
+				if (peer_vdev == vdev) {
+					if (mgmt_fill_peer_cb)
+						mgmt_fill_peer_cb(peer, mgmt_desc->nbuf);
+					mgmt_txrx_tx_completion_handler(pdev,
+						mgmt_desc->desc_id, 0, status);
+				}
+			}
 		}
 	}
 

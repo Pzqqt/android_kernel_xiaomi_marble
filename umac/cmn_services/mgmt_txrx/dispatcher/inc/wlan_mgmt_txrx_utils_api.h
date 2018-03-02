@@ -843,18 +843,19 @@ QDF_STATUS wlan_mgmt_txrx_register_rx_cb(
 			uint8_t num_entries);
 
 /**
- * wlan_mgmt_txrx_pdev_drain() - Function to drain all mgmt packets
- * @pdev: pdev context
+ * wlan_mgmt_txrx_vdev_drain() - Function to drain all mgmt packets
+ * specific to a vdev
+ * @vdev: vdev context
  * @mgmt_fill_peer_cb: callback func to UMAC to fill peer into buf
  * @status: opaque pointer about the status of the pkts passed to UMAC
  *
- * This function drains all mgmt packets. This can be used in the
+ * This function drains all mgmt packets of a vdev. This can be used in the
  * event of target going down without sending completions.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS wlan_mgmt_txrx_pdev_drain(
-			struct wlan_objmgr_pdev *pdev,
+QDF_STATUS wlan_mgmt_txrx_vdev_drain(
+			struct wlan_objmgr_vdev *vdev,
 			mgmt_frame_fill_peer_cb mgmt_fill_peer_cb,
 			void *status);
 
