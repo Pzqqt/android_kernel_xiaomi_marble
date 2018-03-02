@@ -589,13 +589,6 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev);
 
 int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev);
 
-/**
- * htt_rx_ipa_uc_buf_pool_map() - create mappings for IPA rx buffers
- * @pdev: htt context
- *
- * Return: 0 success
- */
-int htt_rx_ipa_uc_buf_pool_map(struct htt_pdev_t *pdev);
 #else
 /**
  * htt_tx_ipa_uc_attach() - attach htt ipa uc tx resource
@@ -634,11 +627,6 @@ static inline int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 }
 
 static inline int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
-{
-	return 0;
-}
-
-static inline int htt_rx_ipa_uc_buf_pool_map(struct htt_pdev_t *pdev)
 {
 	return 0;
 }

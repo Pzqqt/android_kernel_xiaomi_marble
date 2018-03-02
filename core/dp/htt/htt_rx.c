@@ -155,9 +155,22 @@ static void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 	struct htt_rx_hash_entry *hash_entry;
 	struct htt_rx_hash_bucket **hash_table;
 	struct htt_list_node *list_iter = NULL;
+	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
+	uint32_t num_unmapped = 0;
 
 	if (NULL == pdev->rx_ring.hash_table)
 		return;
+
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
+		mem_map_table = qdf_mem_map_table_alloc(
+					pdev->rx_ring.fill_level);
+		if (!mem_map_table) {
+			qdf_print("%s: Failed to allocate memory for mem map table\n",
+				  __func__);
+			return;
+		}
+		mem_info = mem_map_table;
+	}
 
 	qdf_spin_lock_bh(&(pdev->rx_ring.rx_hash_lock));
 	hash_table = pdev->rx_ring.hash_table;
@@ -173,6 +186,16 @@ static void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 							     pdev->rx_ring.
 							     listnode_offset);
 			if (hash_entry->netbuf) {
+				if (qdf_mem_smmu_s1_enabled(pdev->osdev) &&
+						pdev->is_ipa_uc_enabled) {
+					qdf_update_mem_map_table(pdev->osdev,
+						mem_info,
+						QDF_NBUF_CB_PADDR(
+							hash_entry->netbuf),
+						HTT_RX_BUF_SIZE);
+					mem_info++;
+					num_unmapped++;
+				}
 #ifdef DEBUG_DMA_DONE
 				qdf_nbuf_unmap(pdev->osdev, hash_entry->netbuf,
 					       QDF_DMA_BIDIRECTIONAL);
@@ -196,6 +219,12 @@ static void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 
 	qdf_spinlock_destroy(&(pdev->rx_ring.rx_hash_lock));
 
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
+		if (num_unmapped)
+			cds_smmu_map_unmap(false, num_unmapped,
+					   mem_map_table);
+		qdf_mem_free(mem_map_table);
+	}
 }
 #endif
 
@@ -489,7 +518,7 @@ static int htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 	int num_alloc = 0;
 
 	idx = *(pdev->rx_ring.alloc_idx.vaddr);
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
 		mem_map_table = qdf_mem_map_table_alloc(num);
 		if (!mem_map_table) {
 			qdf_print("%s: Failed to allocate memory for mem map table\n",
@@ -586,7 +615,8 @@ moretofill:
 			pdev->rx_ring.buf.netbufs_ring[idx] = rx_netbuf;
 		}
 
-		if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+		if (qdf_mem_smmu_s1_enabled(pdev->osdev) &&
+					pdev->is_ipa_uc_enabled) {
 			qdf_update_mem_map_table(pdev->osdev, mem_info,
 						 paddr, HTT_RX_BUF_SIZE);
 			mem_info++;
@@ -608,7 +638,7 @@ moretofill:
 	}
 
 free_mem_map_table:
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
 		cds_smmu_map_unmap(true, num_alloc, mem_map_table);
 		qdf_mem_free(mem_map_table);
 	}
@@ -746,8 +776,31 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 		htt_rx_hash_deinit(pdev);
 	} else {
 		int sw_rd_idx = pdev->rx_ring.sw_rd_idx.msdu_payld;
+		qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
+		uint32_t num_unmapped = 0;
 
+		if (qdf_mem_smmu_s1_enabled(pdev->osdev) &&
+					pdev->is_ipa_uc_enabled) {
+			mem_map_table = qdf_mem_map_table_alloc(
+						pdev->rx_ring.fill_level);
+			if (!mem_map_table) {
+				qdf_print("%s: Failed to allocate memory for mem map table\n",
+					  __func__);
+				return;
+			}
+			mem_info = mem_map_table;
+		}
 		while (sw_rd_idx != *(pdev->rx_ring.alloc_idx.vaddr)) {
+			if (qdf_mem_smmu_s1_enabled(pdev->osdev) &&
+						pdev->is_ipa_uc_enabled) {
+				qdf_update_mem_map_table(pdev->osdev, mem_info,
+					QDF_NBUF_CB_PADDR(
+						pdev->rx_ring.buf.netbufs_ring[
+								sw_rd_idx]),
+					HTT_RX_BUF_SIZE);
+				mem_info++;
+				num_unmapped++;
+			}
 #ifdef DEBUG_DMA_DONE
 			qdf_nbuf_unmap(pdev->osdev,
 				       pdev->rx_ring.buf.
@@ -765,6 +818,14 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 			sw_rd_idx &= pdev->rx_ring.size_mask;
 		}
 		qdf_mem_free(pdev->rx_ring.buf.netbufs_ring);
+
+		if (qdf_mem_smmu_s1_enabled(pdev->osdev) &&
+					pdev->is_ipa_uc_enabled) {
+			if (num_unmapped)
+				cds_smmu_map_unmap(false, num_unmapped,
+						   mem_map_table);
+			qdf_mem_free(mem_map_table);
+		}
 	}
 
 	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
@@ -2375,7 +2436,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	/* Get the total number of MSDUs */
 	msdu_count = HTT_RX_IN_ORD_PADDR_IND_MSDU_CNT_GET(*(msg_word + 1));
 	HTT_RX_CHECK_MSDU_COUNT(msdu_count);
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
 		mem_map_table = qdf_mem_map_table_alloc(msdu_count);
 		if (!mem_map_table) {
 			qdf_print("%s: Failed to allocate memory for mem map table\n",
@@ -2409,7 +2470,8 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	}
 
 	while (msdu_count > 0) {
-		if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+		if (qdf_mem_smmu_s1_enabled(pdev->osdev) &&
+					pdev->is_ipa_uc_enabled) {
 			qdf_update_mem_map_table(pdev->osdev, mem_info,
 						 QDF_NBUF_CB_PADDR(msdu),
 						 HTT_RX_BUF_SIZE);
@@ -2553,7 +2615,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	}
 
 free_mem_map_table:
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
 		if (num_unmapped)
 			cds_smmu_map_unmap(false, num_unmapped,
 					   mem_map_table);
@@ -3973,44 +4035,6 @@ int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 				pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx);
 
 	htt_rx_ipa_uc_free_wdi2_rsc(pdev);
-	return 0;
-}
-
-int htt_rx_ipa_uc_buf_pool_map(struct htt_pdev_t *pdev)
-{
-	struct htt_rx_hash_entry *hash_entry;
-	struct htt_list_node *list_iter = NULL;
-	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
-	uint32_t num_alloc = 0;
-	uint32_t i;
-
-	mem_map_table = qdf_mem_map_table_alloc(HTT_RX_RING_SIZE_MAX);
-	if (!mem_map_table) {
-		qdf_print("%s: Failed to allocate memory for mem map table\n",
-			  __func__);
-		return 1;
-	}
-	mem_info = mem_map_table;
-	for (i = 0; i < RX_NUM_HASH_BUCKETS; i++) {
-		list_iter = pdev->rx_ring.hash_table[i]->listhead.next;
-		while (list_iter != &pdev->rx_ring.hash_table[i]->listhead) {
-			hash_entry = (struct htt_rx_hash_entry *)(
-				(char *)list_iter -
-				pdev->rx_ring.listnode_offset);
-			if (hash_entry->netbuf) {
-				qdf_update_mem_map_table(pdev->osdev,
-					mem_info,
-					QDF_NBUF_CB_PADDR(hash_entry->netbuf),
-					HTT_RX_BUF_SIZE);
-				mem_info++;
-				num_alloc++;
-			}
-			list_iter = list_iter->next;
-		}
-	}
-	cds_smmu_map_unmap(true, num_alloc, mem_map_table);
-	qdf_mem_free(mem_map_table);
-
 	return 0;
 }
 #endif /* IPA_OFFLOAD */

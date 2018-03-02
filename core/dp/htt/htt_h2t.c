@@ -1267,16 +1267,6 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 	pkt->msdu_id = HTT_TX_COMPL_INV_MSDU_ID;
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && uc_active && !is_tx) {
-		if (htt_rx_ipa_uc_buf_pool_map(pdev)) {
-			qdf_print("%s: Unable to create mapping for IPA rx buffers\n",
-				  __func__);
-			htt_htc_pkt_free(pdev, pkt);
-			return -A_NO_MEMORY;
-		}
-		pdev->uc_map_reqd = 1;
-	}
-
 	/* reserve room for HTC header */
 	msg = qdf_nbuf_alloc(pdev->osdev,
 			     HTT_MSG_BUF_SIZE(HTT_WDI_IPA_OP_REQUEST_SZ),

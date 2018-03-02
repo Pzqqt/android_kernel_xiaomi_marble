@@ -412,7 +412,7 @@ struct htt_pdev_t {
 
 	struct htt_ipa_uc_tx_resource_t ipa_uc_tx_rsc;
 	struct htt_ipa_uc_rx_resource_t ipa_uc_rx_rsc;
-	int uc_map_reqd;
+	int is_ipa_uc_enabled;
 
 	struct htt_tx_credit_t htt_tx_credit;
 

@@ -465,6 +465,10 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 	int i;
 	int ret = 0;
 
+	pdev->is_ipa_uc_enabled = false;
+	if (ol_cfg_ipa_uc_offload_enabled(pdev->ctrl_pdev))
+		pdev->is_ipa_uc_enabled = true;
+
 	ret = htt_tx_attach(pdev, desc_pool_size);
 	if (ret)
 		goto fail1;
@@ -843,7 +847,6 @@ int htt_ipa_uc_attach(struct htt_pdev_t *pdev)
 	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_DEBUG, "%s: enter",
 		  __func__);
 
-	pdev->uc_map_reqd = 0;
 	/* TX resource attach */
 	error = htt_tx_ipa_uc_attach(
 		pdev,
