@@ -103,10 +103,11 @@
  */
 
 #include <qdf_types.h>
+#include "wlan_pmo_wow.h"
 
-#define WOWL_PTRN_MAX_SIZE          146
-#define WOWL_PTRN_MASK_MAX_SIZE      19
-#define WOWL_MAX_PTRNS_ALLOWED       CFG_MAX_WOW_FILTERS_MAX
+#define WOWL_PTRN_MAX_SIZE	146
+#define WOWL_PTRN_MASK_MAX_SIZE	19
+#define WOWL_MAX_PTRNS_ALLOWED	PMO_WOW_FILTERS_MAX
 
 /**
  * hdd_add_wowl_ptrn() - Function which will add the WoWL pattern to be

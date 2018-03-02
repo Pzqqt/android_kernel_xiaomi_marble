@@ -2823,13 +2823,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_VHT_MPDU_LEN_MIN,
 		     CFG_VHT_MPDU_LEN_MAX),
 
-	REG_VARIABLE(CFG_MAX_WOW_FILTERS_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, maxWoWFilters,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_MAX_WOW_FILTERS_DEFAULT,
-		     CFG_MAX_WOW_FILTERS_MIN,
-		     CFG_MAX_WOW_FILTERS_MAX),
-
 	REG_VARIABLE(CFG_WOW_STATUS_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, wowEnable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,

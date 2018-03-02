@@ -2972,7 +2972,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	cds_cfg->max_bssid = WMA_MAX_SUPPORTED_BSS;
 
-	wlan_res_cfg->num_wow_filters = cds_cfg->max_wow_filters;
 	wlan_res_cfg->num_keep_alive_pattern = WMA_MAXNUM_PERIODIC_TX_PTRNS;
 
 	/* The current firmware implementation requires the number of
@@ -2984,7 +2983,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wlan_res_cfg->num_offload_reorder_buffs =
 		cds_cfg->ap_maxoffload_reorderbuffs + 1;
 
-	wma_handle->ol_ini_info = cds_cfg->ol_ini_info;
 	wma_handle->max_station = cds_cfg->max_station;
 	wma_handle->max_bssid = cds_cfg->max_bssid;
 	wma_handle->driver_type = cds_cfg->driver_type;

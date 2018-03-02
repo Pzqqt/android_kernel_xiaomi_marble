@@ -1998,14 +1998,6 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	 */
 	hdd_update_wiphy_vhtcap(hdd_ctx);
 
-	/*
-	 * If BPF is enabled, maxWowFilters set to WMA_STA_WOW_DEFAULT_PTRN_MAX
-	 * because we need atleast WMA_STA_WOW_DEFAULT_PTRN_MAX free slots to
-	 * configure the STA mode wow pattern.
-	 */
-	if (hdd_ctx->bpf_enabled)
-		hdd_ctx->config->maxWoWFilters = WMA_STA_WOW_DEFAULT_PTRN_MAX;
-
 	hdd_ctx->wmi_max_len = cfg->wmi_max_len;
 
 	/*
@@ -8842,16 +8834,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->sta_mod_dtim = hdd_ctx->config->enableModulatedDTIM;
 	cds_cfg->sta_maxlimod_dtim = hdd_ctx->config->fMaxLIModulatedDTIM;
 	cds_cfg->wow_enable = hdd_ctx->config->wowEnable;
-	cds_cfg->max_wow_filters = hdd_ctx->config->maxWoWFilters;
-
-	/* Here ol_ini_info is used to store ini status of arp offload
-	 * ns offload and others. Currently 1st bit is used for arp
-	 * off load and 2nd bit for ns offload currently, rest bits are unused
-	 */
-	if (hdd_ctx->config->fhostArpOffload)
-		cds_cfg->ol_ini_info = cds_cfg->ol_ini_info | 0x1;
-	if (hdd_ctx->config->fhostNSOffload)
-		cds_cfg->ol_ini_info = cds_cfg->ol_ini_info | 0x2;
 
 	/*
 	 * Copy the DFS Phyerr Filtering Offload status.
@@ -12644,7 +12626,6 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 	psoc_cfg.active_mode_offload = hdd_ctx->config->active_mode_offload;
 	psoc_cfg.ap_arpns_support = hdd_ctx->ap_arpns_support;
 	psoc_cfg.d0_wow_supported = wma_d0_wow_is_supported();
-	psoc_cfg.max_wow_filters = hdd_ctx->config->maxWoWFilters;
 	psoc_cfg.sta_dynamic_dtim = hdd_ctx->config->enableDynamicDTIM;
 	psoc_cfg.sta_mod_dtim = hdd_ctx->config->enableModulatedDTIM;
 	psoc_cfg.sta_max_li_mod_dtim = hdd_ctx->config->fMaxLIModulatedDTIM;

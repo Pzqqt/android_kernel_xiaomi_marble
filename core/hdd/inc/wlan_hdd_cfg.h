@@ -10689,28 +10689,6 @@ enum hdd_wext_control {
 
 /*
  * <ini>
- * gMaxWoWFilters - Maximum WoW patterns that can be configured
- * @Min: 0
- * @Max: WOW_MAX_BITMAP_FILTERS(32)
- * @Default: WOW_MAX_BITMAP_FILTERS(32)
- *
- * This ini is used to set the maximum WoW patterns that can be configured
- *
- * Related: gWowlPattern
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_MAX_WOW_FILTERS_NAME               "gMaxWoWFilters"
-#define CFG_MAX_WOW_FILTERS_MIN                (0)
-#define CFG_MAX_WOW_FILTERS_MAX                (WOW_MAX_BITMAP_FILTERS)
-#define CFG_MAX_WOW_FILTERS_DEFAULT            (WOW_MAX_BITMAP_FILTERS)
-
-/*
- * <ini>
  * gper_min_rssi_threshold_for_roam -  Minimum roamable AP RSSI for
  * candidate selection for PER based roam
  * @Min: 0
@@ -14867,7 +14845,6 @@ struct hdd_config {
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	uint32_t WlanAutoShutdown;
 #endif
-	uint8_t maxWoWFilters;
 	uint8_t wowEnable;
 	uint8_t maxNumberOfPeers;
 	uint8_t disableDFSChSwitch;

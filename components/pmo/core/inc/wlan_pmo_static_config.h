@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -81,8 +81,7 @@ void pmo_update_target_service(struct wlan_objmgr_psoc *psoc,
  *
  * Return: none
  */
-void pmo_update_ra_limit(struct wlan_objmgr_psoc *psoc,
-	bool bpf_enabled);
+void pmo_update_ra_limit(struct wlan_objmgr_psoc *psoc, bool bpf_enabled);
 
 /**
  * pmo_set_wow_event_bitmap() - Assign bitmask with wow event

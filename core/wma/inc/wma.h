@@ -270,7 +270,6 @@ enum ds_mode {
 #define WMA_NUM_BITS_IN_BYTE           8
 
 #define WMA_AP_WOW_DEFAULT_PTRN_MAX    4
-#define WMA_STA_WOW_DEFAULT_PTRN_MAX   5
 
 #define WMA_BSS_STATUS_STARTED 0x1
 #define WMA_BSS_STATUS_STOPPED 0x2
@@ -1277,7 +1276,6 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @pGetRssiReq: get RSSI request
  * @thermal_mgmt_info: Thermal mitigation related info
  * @roam_offload_enabled: is roam offload enable/disable
- * @ol_ini_info: store ini status of arp offload, ns offload
  * @ssdp: ssdp flag
  * @enable_mc_list : To Check if Multicast list filtering is enabled in FW
  * @ibss_started: is IBSS started or not
@@ -1427,13 +1425,6 @@ typedef struct {
 	struct qdf_mac_addr peer_macaddr;
 	t_thermal_mgmt thermal_mgmt_info;
 	bool roam_offload_enabled;
-	/* Here ol_ini_info is used to store ini
-	 * status of arp offload, ns offload
-	 * and others. Currently 1st bit is used
-	 * for arp off load and 2nd bit for ns
-	 * offload currently, rest bits are unused
-	 */
-	uint8_t ol_ini_info;
 	bool ssdp;
 	bool enable_mc_list;
 	uint8_t ibss_started;

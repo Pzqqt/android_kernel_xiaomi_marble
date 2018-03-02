@@ -33,6 +33,7 @@
 
 /* Include Files */
 
+#include "qdf_str.h"
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_wowl.h>
 #include <wlan_pmo_wow_public_struct.h>
@@ -81,6 +82,23 @@ static void dump_hdd_wowl_ptrn(struct pmo_wow_add_pattern *ptrn)
 		hdd_info("%02X", ptrn->pattern_mask[i]);
 }
 
+static QDF_STATUS
+hdd_get_num_wow_filters(struct hdd_context *hdd_ctx, uint8_t *num_filters)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+
+	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_HDD_ID_OBJ_MGR);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	*num_filters = ucfg_pmo_get_num_wow_filters(hdd_ctx->hdd_psoc);
+
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_HDD_ID_OBJ_MGR);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * hdd_add_wowl_ptrn() - Function which will add the WoWL pattern to be
  *			 used when PBM filtering is enabled
@@ -92,49 +110,46 @@ static void dump_hdd_wowl_ptrn(struct pmo_wow_add_pattern *ptrn)
 bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 {
 	struct pmo_wow_add_pattern localPattern;
-	int i, first_empty_slot, len, offset;
-	QDF_STATUS qdf_ret_status;
+	int i, empty_slot, len, offset;
+	QDF_STATUS status;
 	const char *temp;
 	uint8_t sessionId = adapter->session_id;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t num_filters;
 
-	len = find_ptrn_len(ptrn);
+	status = hdd_get_num_wow_filters(hdd_ctx, &num_filters);
+	if (QDF_IS_STATUS_ERROR(status))
+		return false;
 
 	/* There has to have at least 1 byte for each field (pattern
 	 * size, mask size, pattern, mask) e.g. PP:QQ:RR:SS ==> 11
 	 * chars
 	 */
+	len = find_ptrn_len(ptrn);
 	while (len >= 11) {
-		/* Detect duplicate pattern */
-		for (i = 0; i < hdd_ctx->config->maxWoWFilters; i++) {
-			if (g_hdd_wowl_ptrns[i] == NULL)
+		empty_slot = -1;
+
+		/* check if pattern is already configured */
+		for (i = num_filters - 1; i >= 0; i--) {
+			if (g_hdd_wowl_ptrns[i] == NULL) {
+				empty_slot = i;
 				continue;
+			}
 
 			if (!memcmp(ptrn, g_hdd_wowl_ptrns[i], len)) {
-				/* Pattern Already configured, skip to
-				 * next pattern
-				 */
-				hdd_err("Trying to add duplicate WoWL pattern. Skip it!");
+				hdd_err("WoWL pattern '%s' already configured",
+					g_hdd_wowl_ptrns[i]);
 				ptrn += len;
 				goto next_ptrn;
 			}
 		}
 
-		first_empty_slot = -1;
-
-		/* Find an empty slot to store the pattern */
-		for (i = 0; i < hdd_ctx->config->maxWoWFilters; i++) {
-			if (g_hdd_wowl_ptrns[i] == NULL) {
-				first_empty_slot = i;
-				break;
-			}
-		}
-
 		/* Maximum number of patterns have been configured already */
-		if (first_empty_slot == -1) {
-			hdd_err("Cannot add anymore patterns. No free slot!");
+		if (empty_slot == -1) {
+			hdd_err("Max WoW patterns (%u) reached", num_filters);
 			return false;
 		}
+
 		/* Validate the pattern */
 		if (ptrn[2] != WOWL_INTRA_PTRN_TOKENIZER ||
 		    ptrn[5] != WOWL_INTRA_PTRN_TOKENIZER) {
@@ -142,15 +157,14 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 			ptrn += len;
 			goto next_ptrn;
 		}
+
 		/* Extract the pattern size */
 		localPattern.pattern_size =
-			(hex_to_bin(ptrn[0]) * 0x10) +
-						hex_to_bin(ptrn[1]);
+			(hex_to_bin(ptrn[0]) * 0x10) + hex_to_bin(ptrn[1]);
 
 		/* Extract the pattern mask size */
 		localPattern.pattern_mask_size =
-			(hex_to_bin(ptrn[3]) * 0x10) +
-						hex_to_bin(ptrn[4]);
+			(hex_to_bin(ptrn[3]) * 0x10) + hex_to_bin(ptrn[4]);
 
 		if (localPattern.pattern_size > PMO_WOWL_BCAST_PATTERN_MAX_SIZE
 		    || localPattern.pattern_mask_size >
@@ -159,6 +173,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 			ptrn += len;
 			goto next_ptrn;
 		}
+
 		/* compute the offset of tokenizer after the pattern */
 		offset = 5 + 2 * localPattern.pattern_size + 1;
 		if ((offset >= len) ||
@@ -167,6 +182,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 			ptrn += len;
 			goto next_ptrn;
 		}
+
 		/* compute the end of pattern sring */
 		offset = offset + 2 * localPattern.pattern_mask_size;
 		if (offset + 1 != len) {
@@ -201,28 +217,27 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		}
 
 		/* All is good. Store the pattern locally */
-		g_hdd_wowl_ptrns[first_empty_slot] =
-			qdf_mem_malloc(len + 1);
-		if (g_hdd_wowl_ptrns[first_empty_slot] == NULL) {
+		g_hdd_wowl_ptrns[empty_slot] = qdf_mem_malloc(len + 1);
+		if (g_hdd_wowl_ptrns[empty_slot] == NULL) {
 			hdd_err("memory allocation failure");
 			return false;
 		}
 
-		memcpy(g_hdd_wowl_ptrns[first_empty_slot], temp, len);
-		g_hdd_wowl_ptrns[first_empty_slot][len] = '\0';
-		localPattern.pattern_id = first_empty_slot;
+		memcpy(g_hdd_wowl_ptrns[empty_slot], temp, len);
+		g_hdd_wowl_ptrns[empty_slot][len] = '\0';
+		localPattern.pattern_id = empty_slot;
 		localPattern.pattern_byte_offset = 0;
 		localPattern.session_id = sessionId;
 
 		/* Register the pattern downstream */
-		qdf_ret_status = pmo_ucfg_add_wow_user_pattern(
+		status = pmo_ucfg_add_wow_user_pattern(
 					adapter->hdd_vdev, &localPattern);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			/* Add failed, so invalidate the local storage */
 			hdd_err("sme_wowl_add_bcast_pattern failed with error code (%d)",
-				  qdf_ret_status);
-			qdf_mem_free(g_hdd_wowl_ptrns[first_empty_slot]);
-			g_hdd_wowl_ptrns[first_empty_slot] = NULL;
+				status);
+			qdf_mem_free(g_hdd_wowl_ptrns[empty_slot]);
+			g_hdd_wowl_ptrns[empty_slot] = NULL;
 		}
 
 		dump_hdd_wowl_ptrn(&localPattern);
@@ -233,8 +248,9 @@ next_ptrn:
 			ptrn += 1;
 			len = find_ptrn_len(ptrn);
 			continue;
-		} else
+		} else {
 			break;
+		}
 	}
 
 	return true;
@@ -249,36 +265,42 @@ next_ptrn:
  */
 bool hdd_del_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 {
-	unsigned char id;
+	uint8_t id;
 	bool patternFound = false;
-	QDF_STATUS qdf_ret_status;
+	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t num_filters;
 
-	/* Detect pattern */
-	for (id = 0;
-	     id < hdd_ctx->config->maxWoWFilters
-	     && g_hdd_wowl_ptrns[id] != NULL; id++) {
-		if (!strcmp(ptrn, g_hdd_wowl_ptrns[id])) {
+	status = hdd_get_num_wow_filters(hdd_ctx, &num_filters);
+	if (QDF_IS_STATUS_ERROR(status))
+		return false;
+
+	/* lookup pattern */
+	for (id = 0; id < num_filters; id++) {
+		if (!g_hdd_wowl_ptrns[id])
+			continue;
+
+		if (qdf_str_eq(ptrn, g_hdd_wowl_ptrns[id])) {
 			patternFound = true;
 			break;
 		}
 	}
 
 	/* If pattern present, remove it from downstream */
-	if (patternFound) {
-		qdf_ret_status = pmo_ucfg_del_wow_user_pattern(
-					adapter->hdd_vdev, id);
-		if (QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
-			/* Remove from local storage as well */
-			hdd_err("Deleted pattern with id %d [%s]", id,
-				  g_hdd_wowl_ptrns[id]);
+	if (!patternFound)
+		return false;
 
-			qdf_mem_free(g_hdd_wowl_ptrns[id]);
-			g_hdd_wowl_ptrns[id] = NULL;
-			return true;
-		}
-	}
-	return false;
+	status = pmo_ucfg_del_wow_user_pattern(adapter->hdd_vdev, id);
+	if (QDF_IS_STATUS_ERROR(status))
+		return false;
+
+	/* Remove from local storage as well */
+	hdd_err("Deleted pattern with id %d [%s]", id, g_hdd_wowl_ptrns[id]);
+
+	qdf_mem_free(g_hdd_wowl_ptrns[id]);
+	g_hdd_wowl_ptrns[id] = NULL;
+
+	return true;
 }
 
 /**

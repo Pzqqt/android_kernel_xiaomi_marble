@@ -65,9 +65,7 @@ enum active_bpf_mode {
  * @sta_mod_dtim: station mode DTIM
  * @sta_dynamic_dtim: station dynamic DTIM
  * @driver_type: Enumeration of Driver Type whether FTM or Mission mode
- * @max_wow_filters: Max wow filters to be configured to fw
  * @wow_enable: Indicate whether wow is enabled or not
- * @ol_ini_info: Status of offload enabled from ini 1st bit for arm,2nd for NS
  * currently rest of bits are not used
  * @ssdp: Indicate ssdp is enabled or not
  * @enable_mc_list : To Check if Multicast list filtering is enabled in FW
@@ -122,9 +120,7 @@ struct cds_config_info {
 	uint8_t sta_mod_dtim;
 	uint8_t sta_dynamic_dtim;
 	enum qdf_driver_type driver_type;
-	uint8_t max_wow_filters;
 	uint8_t wow_enable;
-	uint8_t ol_ini_info;
 	bool ssdp;
 	bool enable_mc_list;
 	uint8_t dfs_phyerr_filter_offload;
