@@ -278,7 +278,6 @@ struct tdls_peer_mlme_info {
  * @rssi: rssi
  * @tdls_support: tdls support
  * @link_status: tdls link status
- * @signature: signature
  * @is_responder: is responder
  * @discovery_processed: dicovery processed
  * @discovery_attempt: discovery attempt
@@ -311,7 +310,6 @@ struct tdls_peer {
 	int8_t rssi;
 	enum tdls_peer_capab tdls_support;
 	enum tdls_link_state link_status;
-	uint8_t signature;
 	uint8_t is_responder;
 	uint8_t discovery_processed;
 	uint16_t discovery_attempt;

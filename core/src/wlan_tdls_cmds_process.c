@@ -1417,11 +1417,7 @@ static QDF_STATUS tdls_add_peer_rsp(struct tdls_add_sta_rsp *rsp)
 			if (QDF_IS_STATUS_ERROR(status)) {
 				tdls_err("set staid failed");
 				status = QDF_STATUS_E_FAILURE;
-				goto cmddone;
 			}
-
-			tdls_set_signature(vdev_obj, rsp->peermac.bytes,
-					   rsp->ucast_sig);
 		} else {
 			status = QDF_STATUS_E_FAILURE;
 		}
