@@ -309,8 +309,8 @@ typedef  enum  {
         (svc_id) < WMI_MAX_SERVICE ? \
             WMI_SERVICE_IS_ENABLED(pwmi_svc_bmap, svc_id) : \
             /* If service ID is in the extended range, check ext_bmap */ \
-            (pwmi_svc_ext_bmap)[((svc_id) - WMI_MAX_SERVICE) / 32] >> \
-                ((svc_id) & 0x1f))
+            (((pwmi_svc_ext_bmap)[((svc_id) - WMI_MAX_SERVICE) / 32] >> \
+                ((svc_id) & 0x1f)) & 0x1))
 
 
 #ifdef __cplusplus
