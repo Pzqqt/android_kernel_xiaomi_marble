@@ -313,12 +313,23 @@ typedef struct ipa_wdi_in_params __qdf_ipa_wdi_in_params_t;
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul_smmu.rdy_comp_ring_wp_pa)
 #define QDF_IPA_PIPE_IN_UL_SMMU_RDY_COMP_RING_WP_VA(pipe_in)	\
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul_smmu.rdy_comp_ring_wp_va)
+
 #define QDF_IPA_PIPE_IN_UL_RDY_RING_BASE_PA(pipe_in)	\
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul.rdy_ring_base_pa)
 #define QDF_IPA_PIPE_IN_UL_RDY_RING_SIZE(pipe_in)	\
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul.rdy_ring_size)
 #define QDF_IPA_PIPE_IN_UL_RDY_RING_RP_PA(pipe_in)	\
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul.rdy_ring_rp_pa)
+#define QDF_IPA_PIPE_IN_UL_RDY_RING_RP_VA(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul.rdy_ring_rp_va)
+#define QDF_IPA_PIPE_IN_UL_RDY_COMP_RING(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul.rdy_comp_ring_base_pa)
+#define QDF_IPA_PIPE_IN_UL_RDY_COMP_RING_SIZE(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul.rdy_comp_ring_size)
+#define QDF_IPA_PIPE_IN_UL_RDY_COMP_RING_WP_PA(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul.rdy_comp_ring_wp_pa)
+#define QDF_IPA_PIPE_IN_UL_RDY_COMP_RING_WP_VA(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul.rdy_comp_ring_wp_va)
 
 /**
  * __qdf_ipa_wdi_out_params_t - information provided to WDI client
