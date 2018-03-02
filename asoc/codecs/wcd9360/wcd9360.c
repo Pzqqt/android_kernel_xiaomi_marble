@@ -3318,16 +3318,16 @@ int pahu_micbias_control(struct snd_soc_codec *codec,
 	}
 
 	switch (micb_num) {
-	case MIC_BIAS_1:
+	case WCD9360_MIC_BIAS_1:
 		micb_reg = WCD9360_ANA_MICB1;
 		break;
-	case MIC_BIAS_2:
+	case WCD9360_MIC_BIAS_2:
 		micb_reg = WCD9360_ANA_MICB2;
 		break;
-	case MIC_BIAS_3:
+	case WCD9360_MIC_BIAS_3:
 		micb_reg = WCD9360_ANA_MICB3;
 		break;
-	case MIC_BIAS_4:
+	case WCD9360_MIC_BIAS_4:
 		micb_reg = WCD9360_ANA_MICB4;
 		break;
 	default:
@@ -3338,25 +3338,25 @@ int pahu_micbias_control(struct snd_soc_codec *codec,
 	mutex_lock(&pahu->micb_lock);
 
 	switch (req) {
-	case MICB_PULLUP_ENABLE:
+	case WCD9360_MICB_PULLUP_ENABLE:
 		pahu->pullup_ref[micb_index]++;
 		if ((pahu->pullup_ref[micb_index] == 1) &&
 			(pahu->micb_ref[micb_index] == 0))
 			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x80);
 		break;
-	case MICB_PULLUP_DISABLE:
+	case WCD9360_MICB_PULLUP_DISABLE:
 		if (pahu->pullup_ref[micb_index] > 0)
 			pahu->pullup_ref[micb_index]--;
 		if ((pahu->pullup_ref[micb_index] == 0) &&
 			(pahu->micb_ref[micb_index] == 0))
 			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x00);
 		break;
-	case MICB_ENABLE:
+	case WCD9360_MICB_ENABLE:
 		pahu->micb_ref[micb_index]++;
 		if (pahu->micb_ref[micb_index] == 1)
 			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x40);
 		break;
-	case MICB_DISABLE:
+	case WCD9360_MICB_DISABLE:
 		if (pahu->micb_ref[micb_index] > 0)
 			pahu->micb_ref[micb_index]--;
 		if ((pahu->micb_ref[micb_index] == 0) &&
@@ -3387,13 +3387,13 @@ static int __pahu_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 		__func__, w->name, event);
 
 	if (strnstr(w->name, "MIC BIAS1", sizeof("MIC BIAS1")))
-		micb_num = MIC_BIAS_1;
+		micb_num = WCD9360_MIC_BIAS_1;
 	else if (strnstr(w->name, "MIC BIAS2", sizeof("MIC BIAS2")))
-		micb_num = MIC_BIAS_2;
+		micb_num = WCD9360_MIC_BIAS_2;
 	else if (strnstr(w->name, "MIC BIAS3", sizeof("MIC BIAS3")))
-		micb_num = MIC_BIAS_3;
+		micb_num = WCD9360_MIC_BIAS_3;
 	else if (strnstr(w->name, "MIC BIAS4", sizeof("MIC BIAS4")))
-		micb_num = MIC_BIAS_4;
+		micb_num = WCD9360_MIC_BIAS_4;
 	else
 		return -EINVAL;
 
@@ -3403,14 +3403,16 @@ static int __pahu_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 		 * Use ref count to handle micbias pullup
 		 * and enable requests
 		 */
-		pahu_micbias_control(codec, micb_num, MICB_ENABLE, true);
+		pahu_micbias_control(codec, micb_num, WCD9360_MICB_ENABLE,
+				     true);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		/* wait for cnp time */
 		usleep_range(1000, 1100);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		pahu_micbias_control(codec, micb_num, MICB_DISABLE, true);
+		pahu_micbias_control(codec, micb_num, WCD9360_MICB_DISABLE,
+				     true);
 		break;
 	};
 
