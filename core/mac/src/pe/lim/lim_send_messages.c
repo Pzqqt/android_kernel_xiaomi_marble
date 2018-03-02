@@ -366,6 +366,16 @@ void lim_set_active_edca_params(tpAniSirGlobal mac_ctx,
 	pe_session->gLimEdcaParamsActive[EDCA_AC_BK] = edca_params[EDCA_AC_BK];
 	pe_session->gLimEdcaParamsActive[EDCA_AC_VI] = edca_params[EDCA_AC_VI];
 	pe_session->gLimEdcaParamsActive[EDCA_AC_VO] = edca_params[EDCA_AC_VO];
+
+	pe_session->gLimEdcaParamsActive[EDCA_AC_BE].no_ack =
+					mac_ctx->no_ack_policy_cfg[EDCA_AC_BE];
+	pe_session->gLimEdcaParamsActive[EDCA_AC_BK].no_ack =
+					mac_ctx->no_ack_policy_cfg[EDCA_AC_BK];
+	pe_session->gLimEdcaParamsActive[EDCA_AC_VI].no_ack =
+					mac_ctx->no_ack_policy_cfg[EDCA_AC_VI];
+	pe_session->gLimEdcaParamsActive[EDCA_AC_VO].no_ack =
+					mac_ctx->no_ack_policy_cfg[EDCA_AC_VO];
+
 	/* An AC requires downgrade if the ACM bit is set, and the AC has not
 	 * yet been admitted in uplink or bi-directions.
 	 * If an AC requires downgrade, it will downgrade to the next beset AC

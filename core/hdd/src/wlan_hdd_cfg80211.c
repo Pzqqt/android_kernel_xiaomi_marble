@@ -6300,6 +6300,10 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADDBA_BUFF_SIZE] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_NO_ACK] = {
+			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_NO_ACK_AC] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -7280,7 +7284,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	uint8_t set_val = 0;
 	tSmeConfigParams *sme_config;
 	bool update_sme_cfg = false;
-	uint8_t tid = 0;
+	uint8_t tid = 0, ac;
 	uint16_t buff_size = 0;
 
 	ENTER_DEV(dev);
@@ -7432,6 +7436,22 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 			set_val = 2;
 		ret_val = wma_cli_set_command(adapter->session_id,
 				WMI_VDEV_PARAM_BA_MODE, set_val, VDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_NO_ACK]) {
+		if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_NO_ACK_AC]) {
+			ac = nla_get_u8(tb[
+			     QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_NO_ACK_AC]);
+		} else {
+			hdd_err("AC is not set for NO ACK policy config");
+			ret_val = -EINVAL;
+			goto send_err;
+		}
+		cfg_val = nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_NO_ACK]);
+		hdd_debug("Set NO_ACK to %d for ac %d", cfg_val, ac);
+		ret_val = sme_set_no_ack_policy(hdd_ctx->hHal,
+				adapter->session_id, cfg_val, ac);
 	}
 
 	if (update_sme_cfg)

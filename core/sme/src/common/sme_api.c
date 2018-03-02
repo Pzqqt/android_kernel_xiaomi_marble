@@ -10157,6 +10157,31 @@ int sme_send_addba_req(tHalHandle hal, uint8_t session_id, uint8_t tid,
 	return 0;
 }
 
+int sme_set_no_ack_policy(tHalHandle hal, uint8_t session_id,
+		uint8_t val, uint8_t ac)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	uint8_t i, set_val;
+
+	if (ac > MAX_NUM_AC) {
+		sme_err("invalid ac val %d", ac);
+		return -EINVAL;
+	}
+	if (val)
+		set_val = 1;
+	else
+		set_val = 0;
+	if (ac == MAX_NUM_AC) {
+		for (i = 0; i < ac; i++)
+			mac_ctx->no_ack_policy_cfg[i] = set_val;
+	} else {
+		mac_ctx->no_ack_policy_cfg[ac] = set_val;
+	}
+	sme_debug("no ack is set to %d for ac %d", set_val, ac);
+
+	return 0;
+}
+
 #define HT20_SHORT_GI_MCS7_RATE 722
 /*
  * sme_send_rate_update_ind() -

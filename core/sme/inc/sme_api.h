@@ -2141,6 +2141,18 @@ int sme_set_ba_buff_size(tHalHandle hal, uint8_t session_id,
 int sme_send_addba_req(tHalHandle hal, uint8_t session_id, uint8_t tid,
 		uint16_t buff_size);
 
+/**
+ * sme_set_no_ack_policy() - Sets no ack policy for AC
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @val: no ack policy value
+ * @ac: access category
+ *
+ * Return: 0 on success else err code
+ */
+int sme_set_no_ack_policy(tHalHandle hal, uint8_t session_id,
+		uint8_t val, uint8_t ac);
+
 #ifdef WLAN_FEATURE_11AX
 /**
  * sme_update_he_cap_nss() - sets the nss based on user request
