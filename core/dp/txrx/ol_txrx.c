@@ -2423,8 +2423,6 @@ ol_txrx_vdev_detach(struct cdp_vdev *pvdev,
 		qdf_nbuf_t next = qdf_nbuf_next(vdev->ll_pause.txq.head);
 
 		qdf_nbuf_set_next(vdev->ll_pause.txq.head, NULL);
-		qdf_nbuf_unmap(pdev->osdev, vdev->ll_pause.txq.head,
-			       QDF_DMA_TO_DEVICE);
 		qdf_nbuf_tx_free(vdev->ll_pause.txq.head, QDF_NBUF_PKT_ERROR);
 		vdev->ll_pause.txq.head = next;
 	}
