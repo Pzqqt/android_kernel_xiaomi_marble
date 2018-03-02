@@ -32,6 +32,7 @@
 #ifdef QCA_DFS_NOL_PLATFORM_DRV_SUPPORT
 #include <pld_common.h>
 #endif
+#include <qdf_module.h>
 
 struct dfs_nol_info {
 	uint16_t num_chans;
@@ -67,7 +68,7 @@ QDF_STATUS utils_dfs_cac_valid_reset(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_cac_valid_reset);
+qdf_export_symbol(utils_dfs_cac_valid_reset);
 
 QDF_STATUS utils_dfs_reset_precaclists(struct wlan_objmgr_pdev *pdev)
 {
@@ -81,7 +82,7 @@ QDF_STATUS utils_dfs_reset_precaclists(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_reset_precaclists);
+qdf_export_symbol(utils_dfs_reset_precaclists);
 
 QDF_STATUS utils_dfs_cancel_precac_timer(struct wlan_objmgr_pdev *pdev)
 {
@@ -95,7 +96,7 @@ QDF_STATUS utils_dfs_cancel_precac_timer(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_cancel_precac_timer);
+qdf_export_symbol(utils_dfs_cancel_precac_timer);
 
 QDF_STATUS utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
 		bool *is_precac_done)
@@ -110,7 +111,7 @@ QDF_STATUS utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_is_precac_done);
+qdf_export_symbol(utils_dfs_is_precac_done);
 
 QDF_STATUS utils_dfs_cancel_cac_timer(struct wlan_objmgr_pdev *pdev)
 {
@@ -124,7 +125,7 @@ QDF_STATUS utils_dfs_cancel_cac_timer(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_cancel_cac_timer);
+qdf_export_symbol(utils_dfs_cancel_cac_timer);
 
 QDF_STATUS utils_dfs_start_cac_timer(struct wlan_objmgr_pdev *pdev)
 {
@@ -138,7 +139,7 @@ QDF_STATUS utils_dfs_start_cac_timer(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_start_cac_timer);
+qdf_export_symbol(utils_dfs_start_cac_timer);
 
 QDF_STATUS utils_dfs_cac_stop(struct wlan_objmgr_pdev *pdev)
 {
@@ -151,7 +152,7 @@ QDF_STATUS utils_dfs_cac_stop(struct wlan_objmgr_pdev *pdev)
 	dfs_cac_stop(dfs);
 	return  QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_cac_stop);
+qdf_export_symbol(utils_dfs_cac_stop);
 
 QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev)
 {
@@ -165,7 +166,7 @@ QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_stacac_stop);
+qdf_export_symbol(utils_dfs_stacac_stop);
 
 QDF_STATUS utils_dfs_get_usenol(struct wlan_objmgr_pdev *pdev, uint16_t *usenol)
 {
@@ -179,7 +180,7 @@ QDF_STATUS utils_dfs_get_usenol(struct wlan_objmgr_pdev *pdev, uint16_t *usenol)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_get_usenol);
+qdf_export_symbol(utils_dfs_get_usenol);
 
 QDF_STATUS utils_dfs_radar_disable(struct wlan_objmgr_pdev *pdev)
 {
@@ -193,7 +194,7 @@ QDF_STATUS utils_dfs_radar_disable(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_radar_disable);
+qdf_export_symbol(utils_dfs_radar_disable);
 
 QDF_STATUS utils_dfs_set_update_nol_flag(struct wlan_objmgr_pdev *pdev,
 		bool val)
@@ -208,7 +209,7 @@ QDF_STATUS utils_dfs_set_update_nol_flag(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_set_update_nol_flag);
+qdf_export_symbol(utils_dfs_set_update_nol_flag);
 
 QDF_STATUS utils_dfs_get_update_nol_flag(struct wlan_objmgr_pdev *pdev,
 		bool *nol_flag)
@@ -223,7 +224,7 @@ QDF_STATUS utils_dfs_get_update_nol_flag(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_get_update_nol_flag);
+qdf_export_symbol(utils_dfs_get_update_nol_flag);
 
 QDF_STATUS utils_dfs_get_dfs_use_nol(struct wlan_objmgr_pdev *pdev,
 		int *dfs_use_nol)
@@ -238,7 +239,7 @@ QDF_STATUS utils_dfs_get_dfs_use_nol(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_get_dfs_use_nol);
+qdf_export_symbol(utils_dfs_get_dfs_use_nol);
 
 QDF_STATUS utils_dfs_get_nol_timeout(struct wlan_objmgr_pdev *pdev,
 		int *dfs_nol_timeout)
@@ -253,7 +254,7 @@ QDF_STATUS utils_dfs_get_nol_timeout(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_get_nol_timeout);
+qdf_export_symbol(utils_dfs_get_nol_timeout);
 
 QDF_STATUS utils_dfs_nol_addchan(struct wlan_objmgr_pdev *pdev,
 		uint16_t freq,
@@ -269,7 +270,7 @@ QDF_STATUS utils_dfs_nol_addchan(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_nol_addchan);
+qdf_export_symbol(utils_dfs_nol_addchan);
 
 QDF_STATUS utils_dfs_nol_update(struct wlan_objmgr_pdev *pdev)
 {
@@ -283,7 +284,7 @@ QDF_STATUS utils_dfs_nol_update(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_nol_update);
+qdf_export_symbol(utils_dfs_nol_update);
 
 QDF_STATUS utils_dfs_second_segment_radar_disable(struct wlan_objmgr_pdev *pdev)
 {
@@ -311,7 +312,7 @@ QDF_STATUS utils_dfs_is_ignore_dfs(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_is_ignore_dfs);
+qdf_export_symbol(utils_dfs_is_ignore_dfs);
 
 QDF_STATUS utils_dfs_is_cac_valid(struct wlan_objmgr_pdev *pdev,
 		bool *is_cac_valid)
@@ -326,7 +327,7 @@ QDF_STATUS utils_dfs_is_cac_valid(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_is_cac_valid);
+qdf_export_symbol(utils_dfs_is_cac_valid);
 
 QDF_STATUS utils_dfs_is_ignore_cac(struct wlan_objmgr_pdev *pdev,
 		bool *ignore_cac)
@@ -341,7 +342,7 @@ QDF_STATUS utils_dfs_is_ignore_cac(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_is_ignore_cac);
+qdf_export_symbol(utils_dfs_is_ignore_cac);
 
 QDF_STATUS utils_dfs_set_cac_timer_running(struct wlan_objmgr_pdev *pdev,
 		int val)
@@ -356,7 +357,7 @@ QDF_STATUS utils_dfs_set_cac_timer_running(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_set_cac_timer_running);
+qdf_export_symbol(utils_dfs_set_cac_timer_running);
 
 QDF_STATUS utils_dfs_get_nol_chfreq_and_chwidth(struct wlan_objmgr_pdev *pdev,
 		void *nollist,
@@ -374,7 +375,7 @@ QDF_STATUS utils_dfs_get_nol_chfreq_and_chwidth(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_get_nol_chfreq_and_chwidth);
+qdf_export_symbol(utils_dfs_get_nol_chfreq_and_chwidth);
 
 QDF_STATUS utils_dfs_update_cur_chan_flags(struct wlan_objmgr_pdev *pdev,
 		uint64_t flags,
@@ -667,7 +668,7 @@ random_chan_error:
 
 	return status;
 }
-EXPORT_SYMBOL(utils_dfs_get_random_channel);
+qdf_export_symbol(utils_dfs_get_random_channel);
 
 #ifndef QCA_DFS_NOL_PLATFORM_DRV_SUPPORT
 void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
@@ -708,7 +709,7 @@ void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 	}
 }
 #endif
-EXPORT_SYMBOL(utils_dfs_init_nol);
+qdf_export_symbol(utils_dfs_init_nol);
 
 #ifndef QCA_DFS_NOL_PLATFORM_DRV_SUPPORT
 void utils_dfs_save_nol(struct wlan_objmgr_pdev *pdev)
@@ -755,7 +756,7 @@ void utils_dfs_save_nol(struct wlan_objmgr_pdev *pdev)
 	}
 }
 #endif
-EXPORT_SYMBOL(utils_dfs_save_nol);
+qdf_export_symbol(utils_dfs_save_nol);
 
 void utils_dfs_print_nol_channels(struct wlan_objmgr_pdev *pdev)
 {
@@ -769,7 +770,7 @@ void utils_dfs_print_nol_channels(struct wlan_objmgr_pdev *pdev)
 
 	DFS_PRINT_NOL_LOCKED(dfs);
 }
-EXPORT_SYMBOL(utils_dfs_print_nol_channels);
+qdf_export_symbol(utils_dfs_print_nol_channels);
 
 void utils_dfs_clear_nol_channels(struct wlan_objmgr_pdev *pdev)
 {
@@ -794,13 +795,13 @@ void utils_dfs_clear_nol_channels(struct wlan_objmgr_pdev *pdev)
 	 */
 	utils_dfs_save_nol(pdev);
 }
-EXPORT_SYMBOL(utils_dfs_clear_nol_channels);
+qdf_export_symbol(utils_dfs_clear_nol_channels);
 
 bool utils_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
 {
 	return wlan_reg_is_dfs_ch(pdev, chan);
 }
-EXPORT_SYMBOL(utils_is_dfs_ch);
+qdf_export_symbol(utils_is_dfs_ch);
 
 void utils_dfs_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 		uint8_t *ch_list,
@@ -810,7 +811,7 @@ void utils_dfs_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 	/* TODO : Need locking?*/
 	wlan_reg_update_nol_ch(pdev, ch_list, num_ch, nol_ch);
 }
-EXPORT_SYMBOL(utils_dfs_reg_update_nol_ch);
+qdf_export_symbol(utils_dfs_reg_update_nol_ch);
 
 uint8_t utils_dfs_freq_to_chan(uint32_t freq)
 {
@@ -831,7 +832,7 @@ uint8_t utils_dfs_freq_to_chan(uint32_t freq)
 
 	return chan;
 }
-EXPORT_SYMBOL(utils_dfs_freq_to_chan);
+qdf_export_symbol(utils_dfs_freq_to_chan);
 
 uint32_t utils_dfs_chan_to_freq(uint8_t chan)
 {
@@ -850,7 +851,7 @@ uint32_t utils_dfs_chan_to_freq(uint8_t chan)
 	else
 		return DFS_5_GHZ_BASE_FREQ + (chan * DFS_CHAN_SPACING_5MHZ);
 }
-EXPORT_SYMBOL(utils_dfs_chan_to_freq);
+qdf_export_symbol(utils_dfs_chan_to_freq);
 
 #ifdef QCA_MCL_DFS_SUPPORT
 QDF_STATUS utils_dfs_mark_leaking_ch(struct wlan_objmgr_pdev *pdev,
@@ -868,7 +869,7 @@ QDF_STATUS utils_dfs_mark_leaking_ch(struct wlan_objmgr_pdev *pdev,
 
 	return dfs_mark_leaking_ch(dfs, ch_width, temp_ch_lst_sz, temp_ch_lst);
 }
-EXPORT_SYMBOL(utils_dfs_mark_leaking_ch);
+qdf_export_symbol(utils_dfs_mark_leaking_ch);
 #endif
 
 int utils_get_dfsdomain(struct wlan_objmgr_pdev *pdev)

@@ -29,6 +29,7 @@
 #include "../../core/src/dfs.h"
 #include "../../core/src/dfs_zero_cac.h"
 #include "../../core/src/dfs_process_radar_found_ind.h"
+#include <qdf_module.h>
 
 struct wlan_lmac_if_dfs_tx_ops *
 wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc)
@@ -62,7 +63,7 @@ QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(tgt_dfs_set_current_channel);
+qdf_export_symbol(tgt_dfs_set_current_channel);
 
 QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
 				int no_cac, uint32_t opmode)
@@ -103,7 +104,7 @@ QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
 
 	return status;
 }
-EXPORT_SYMBOL(tgt_dfs_radar_enable);
+qdf_export_symbol(tgt_dfs_radar_enable);
 
 QDF_STATUS tgt_dfs_process_phyerr(struct wlan_objmgr_pdev *pdev,
 				  void *buf,
@@ -131,7 +132,7 @@ QDF_STATUS tgt_dfs_process_phyerr(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(tgt_dfs_process_phyerr);
+qdf_export_symbol(tgt_dfs_process_phyerr);
 
 #ifdef QCA_MCL_DFS_SUPPORT
 QDF_STATUS tgt_dfs_process_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev,
@@ -154,7 +155,7 @@ QDF_STATUS tgt_dfs_process_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(tgt_dfs_process_phyerr_filter_offload);
+qdf_export_symbol(tgt_dfs_process_phyerr_filter_offload);
 
 QDF_STATUS tgt_dfs_is_phyerr_filter_offload(struct wlan_objmgr_psoc *psoc,
 					    bool *is_phyerr_filter_offload)
@@ -178,7 +179,7 @@ QDF_STATUS tgt_dfs_is_phyerr_filter_offload(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(tgt_dfs_is_phyerr_filter_offload);
+qdf_export_symbol(tgt_dfs_is_phyerr_filter_offload);
 #else
 QDF_STATUS tgt_dfs_process_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev,
 						 struct radar_event_info
@@ -209,7 +210,7 @@ QDF_STATUS tgt_dfs_is_precac_timer_running(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(tgt_dfs_is_precac_timer_running);
+qdf_export_symbol(tgt_dfs_is_precac_timer_running);
 
 QDF_STATUS tgt_dfs_get_radars(struct wlan_objmgr_pdev *pdev)
 {
@@ -226,7 +227,7 @@ QDF_STATUS tgt_dfs_get_radars(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(tgt_dfs_get_radars);
+qdf_export_symbol(tgt_dfs_get_radars);
 
 QDF_STATUS tgt_dfs_destroy_object(struct wlan_objmgr_pdev *pdev)
 {
@@ -242,7 +243,7 @@ QDF_STATUS tgt_dfs_destroy_object(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(tgt_dfs_destroy_object);
+qdf_export_symbol(tgt_dfs_destroy_object);
 
 #ifdef QCA_MCL_DFS_SUPPORT
 QDF_STATUS tgt_dfs_set_tx_leakage_threshold(struct wlan_objmgr_pdev *pdev,
@@ -260,7 +261,7 @@ QDF_STATUS tgt_dfs_set_tx_leakage_threshold(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(tgt_dfs_set_tx_leakage_threshold);
+qdf_export_symbol(tgt_dfs_set_tx_leakage_threshold);
 #endif
 
 QDF_STATUS tgt_dfs_control(struct wlan_objmgr_pdev *pdev,
@@ -283,7 +284,7 @@ QDF_STATUS tgt_dfs_control(struct wlan_objmgr_pdev *pdev,
 
 	return  QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(tgt_dfs_control);
+qdf_export_symbol(tgt_dfs_control);
 
 QDF_STATUS tgt_dfs_find_vht80_chan_for_precac(struct wlan_objmgr_pdev *pdev,
 					      uint32_t chan_mode,
@@ -313,7 +314,7 @@ QDF_STATUS tgt_dfs_find_vht80_chan_for_precac(struct wlan_objmgr_pdev *pdev,
 
 	return  QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(tgt_dfs_find_vht80_chan_for_precac);
+qdf_export_symbol(tgt_dfs_find_vht80_chan_for_precac);
 
 QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 				     struct radar_found_info *radar_found)
@@ -333,7 +334,7 @@ QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 
 	return dfs_process_radar_ind(dfs, radar_found);
 }
-EXPORT_SYMBOL(tgt_dfs_process_radar_ind);
+qdf_export_symbol(tgt_dfs_process_radar_ind);
 
 #ifndef QCA_MCL_DFS_SUPPORT
 QDF_STATUS tgt_dfs_cac_complete(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
@@ -348,7 +349,7 @@ QDF_STATUS tgt_dfs_cac_complete(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
-EXPORT_SYMBOL(tgt_dfs_cac_complete);
+qdf_export_symbol(tgt_dfs_cac_complete);
 
 QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
 				  bool dfs_offload)
@@ -371,7 +372,7 @@ QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(tgt_dfs_reg_ev_handler);
+qdf_export_symbol(tgt_dfs_reg_ev_handler);
 
 QDF_STATUS tgt_dfs_stop(struct wlan_objmgr_pdev *pdev)
 {
@@ -387,7 +388,7 @@ QDF_STATUS tgt_dfs_stop(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(tgt_dfs_stop);
+qdf_export_symbol(tgt_dfs_stop);
 
 QDF_STATUS tgt_dfs_process_emulate_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
 		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
@@ -411,7 +412,7 @@ QDF_STATUS tgt_dfs_process_emulate_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(tgt_dfs_process_emulate_bang_radar_cmd);
+qdf_export_symbol(tgt_dfs_process_emulate_bang_radar_cmd);
 
 #ifdef QCA_MCL_DFS_SUPPORT
 QDF_STATUS tgt_dfs_set_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev)
@@ -443,5 +444,5 @@ QDF_STATUS tgt_dfs_set_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_E_FAILURE;
 }
-EXPORT_SYMBOL(tgt_dfs_set_phyerr_filter_offload);
+qdf_export_symbol(tgt_dfs_set_phyerr_filter_offload);
 #endif

@@ -25,6 +25,7 @@
 #include "wlan_dfs_ucfg_api.h"
 #include "../../core/src/dfs.h"
 #include "../../core/src/dfs_zero_cac.h"
+#include <qdf_module.h>
 
 QDF_STATUS ucfg_dfs_is_ap_cac_timer_running(struct wlan_objmgr_pdev *pdev,
 		int *is_ap_cac_timer_running)
@@ -39,7 +40,7 @@ QDF_STATUS ucfg_dfs_is_ap_cac_timer_running(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(ucfg_dfs_is_ap_cac_timer_running);
+qdf_export_symbol(ucfg_dfs_is_ap_cac_timer_running);
 
 QDF_STATUS ucfg_dfs_getnol(struct wlan_objmgr_pdev *pdev,
 		void *dfs_nolinfo)
@@ -54,7 +55,7 @@ QDF_STATUS ucfg_dfs_getnol(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(ucfg_dfs_getnol);
+qdf_export_symbol(ucfg_dfs_getnol);
 
 QDF_STATUS ucfg_dfs_override_cac_timeout(struct wlan_objmgr_pdev *pdev,
 		int cac_timeout,
@@ -70,7 +71,7 @@ QDF_STATUS ucfg_dfs_override_cac_timeout(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(ucfg_dfs_override_cac_timeout);
+qdf_export_symbol(ucfg_dfs_override_cac_timeout);
 
 QDF_STATUS ucfg_dfs_get_override_cac_timeout(struct wlan_objmgr_pdev *pdev,
 		int *cac_timeout,
@@ -86,7 +87,7 @@ QDF_STATUS ucfg_dfs_get_override_cac_timeout(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(ucfg_dfs_get_override_cac_timeout);
+qdf_export_symbol(ucfg_dfs_get_override_cac_timeout);
 
 QDF_STATUS ucfg_dfs_get_override_precac_timeout(struct wlan_objmgr_pdev *pdev,
 		int *precac_timeout)
@@ -101,7 +102,7 @@ QDF_STATUS ucfg_dfs_get_override_precac_timeout(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(ucfg_dfs_get_override_precac_timeout);
+qdf_export_symbol(ucfg_dfs_get_override_precac_timeout);
 
 QDF_STATUS ucfg_dfs_override_precac_timeout(struct wlan_objmgr_pdev *pdev,
 		int precac_timeout)
@@ -116,7 +117,7 @@ QDF_STATUS ucfg_dfs_override_precac_timeout(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(ucfg_dfs_override_precac_timeout);
+qdf_export_symbol(ucfg_dfs_override_precac_timeout);
 
 QDF_STATUS ucfg_dfs_set_precac_enable(struct wlan_objmgr_pdev *pdev,
 		uint32_t value)
@@ -131,7 +132,7 @@ QDF_STATUS ucfg_dfs_set_precac_enable(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(ucfg_dfs_set_precac_enable);
+qdf_export_symbol(ucfg_dfs_set_precac_enable);
 
 QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev,
 		int *buff)
@@ -146,7 +147,7 @@ QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(ucfg_dfs_get_precac_enable);
+qdf_export_symbol(ucfg_dfs_get_precac_enable);
 
 #ifdef QCA_MCL_DFS_SUPPORT
 QDF_STATUS ucfg_dfs_update_config(struct wlan_objmgr_psoc *psoc,
@@ -173,5 +174,5 @@ QDF_STATUS ucfg_dfs_update_config(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(ucfg_dfs_update_config);
+qdf_export_symbol(ucfg_dfs_update_config);
 #endif
