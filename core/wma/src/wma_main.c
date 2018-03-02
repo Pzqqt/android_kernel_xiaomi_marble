@@ -2957,6 +2957,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	/* initialize default target config */
 	wlan_res_cfg = target_psoc_get_wlan_res_cfg(tgt_psoc_info);
+	if (!wlan_res_cfg) {
+		WMA_LOGE("%s: wlan_res_cfg is null", __func__);
+		qdf_status = QDF_STATUS_E_NOMEM;
+		goto err_wma_handle;
+	}
 
 	wma_set_default_tgt_config(wma_handle, wlan_res_cfg);
 
@@ -5185,6 +5190,10 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	}
 
 	wlan_res_cfg = target_psoc_get_wlan_res_cfg(tgt_hdl);
+	if (!wlan_res_cfg) {
+		WMA_LOGE("%s: wlan_res_cfg is null", __func__);
+		return;
+	}
 	service_ext_param =
 			target_psoc_get_service_ext_param(tgt_hdl);
 	wmi_handle = target_psoc_get_wmi_hdl(tgt_hdl);

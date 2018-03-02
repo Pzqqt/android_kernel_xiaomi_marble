@@ -16061,6 +16061,10 @@ int16_t sme_get_oper_chan_freq(struct wlan_objmgr_vdev *vdev)
 	}
 
 	h_hal = cds_get_context(QDF_MODULE_ID_SME);
+	if (!h_hal) {
+		sme_err("h_hal is null");
+		return 0;
+	}
 	mac_ctx = PMAC_STRUCT(h_hal);
 	vdev_id = wlan_vdev_get_id(vdev);
 	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
@@ -16090,6 +16094,10 @@ enum phy_ch_width sme_get_oper_ch_width(struct wlan_objmgr_vdev *vdev)
 	}
 
 	h_hal = cds_get_context(QDF_MODULE_ID_SME);
+	if (!h_hal) {
+		sme_err("h_hal is null");
+		return CH_WIDTH_INVALID;
+	}
 	mac_ctx = PMAC_STRUCT(h_hal);
 	vdev_id = wlan_vdev_get_id(vdev);
 	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
