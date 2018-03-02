@@ -23,6 +23,7 @@
 #include <wlan_objmgr_global_obj.h>
 #include "wlan_objmgr_psoc_obj.h"
 #include "qdf_mem.h"
+#include <qdf_module.h>
 
 /* Global object, it is declared globally */
 struct wlan_objmgr_global *g_umac_glb_obj;
@@ -55,7 +56,7 @@ QDF_STATUS wlan_objmgr_global_obj_init(void)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_global_obj_init);
+qdf_export_symbol(wlan_objmgr_global_obj_init);
 
 QDF_STATUS wlan_objmgr_global_obj_deinit(void)
 {
@@ -78,7 +79,7 @@ QDF_STATUS wlan_objmgr_global_obj_deinit(void)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_global_obj_deinit);
+qdf_export_symbol(wlan_objmgr_global_obj_deinit);
 
 /**
  ** APIs to register/unregister handlers
@@ -109,7 +110,7 @@ QDF_STATUS wlan_objmgr_register_psoc_create_handler(
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_register_psoc_create_handler);
+qdf_export_symbol(wlan_objmgr_register_psoc_create_handler);
 
 QDF_STATUS wlan_objmgr_unregister_psoc_create_handler(
 		enum wlan_umac_comp_id id,
@@ -136,7 +137,7 @@ QDF_STATUS wlan_objmgr_unregister_psoc_create_handler(
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_unregister_psoc_create_handler);
+qdf_export_symbol(wlan_objmgr_unregister_psoc_create_handler);
 
 QDF_STATUS wlan_objmgr_register_psoc_destroy_handler(
 		enum wlan_umac_comp_id id,
@@ -163,7 +164,7 @@ QDF_STATUS wlan_objmgr_register_psoc_destroy_handler(
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_register_psoc_destroy_handler);
+qdf_export_symbol(wlan_objmgr_register_psoc_destroy_handler);
 
 QDF_STATUS wlan_objmgr_unregister_psoc_destroy_handler(
 		enum wlan_umac_comp_id id,
@@ -190,7 +191,7 @@ QDF_STATUS wlan_objmgr_unregister_psoc_destroy_handler(
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_unregister_psoc_destroy_handler);
+qdf_export_symbol(wlan_objmgr_unregister_psoc_destroy_handler);
 
 QDF_STATUS wlan_objmgr_register_psoc_status_handler(
 		enum wlan_umac_comp_id id,
@@ -268,7 +269,7 @@ QDF_STATUS wlan_objmgr_register_pdev_create_handler(
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_register_pdev_create_handler);
+qdf_export_symbol(wlan_objmgr_register_pdev_create_handler);
 
 QDF_STATUS wlan_objmgr_unregister_pdev_create_handler(
 		enum wlan_umac_comp_id id,
@@ -295,7 +296,7 @@ QDF_STATUS wlan_objmgr_unregister_pdev_create_handler(
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_unregister_pdev_create_handler);
+qdf_export_symbol(wlan_objmgr_unregister_pdev_create_handler);
 
 QDF_STATUS wlan_objmgr_register_pdev_destroy_handler(
 		enum wlan_umac_comp_id id,
@@ -322,7 +323,7 @@ QDF_STATUS wlan_objmgr_register_pdev_destroy_handler(
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_register_pdev_destroy_handler);
+qdf_export_symbol(wlan_objmgr_register_pdev_destroy_handler);
 
 QDF_STATUS wlan_objmgr_unregister_pdev_destroy_handler(
 		enum wlan_umac_comp_id id,
@@ -349,7 +350,7 @@ QDF_STATUS wlan_objmgr_unregister_pdev_destroy_handler(
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_unregister_pdev_destroy_handler);
+qdf_export_symbol(wlan_objmgr_unregister_pdev_destroy_handler);
 
 QDF_STATUS wlan_objmgr_register_pdev_status_handler(
 		enum wlan_umac_comp_id id,
@@ -767,7 +768,7 @@ QDF_STATUS wlan_objmgr_global_obj_can_destroyed(void)
 
 	return status;
 }
-EXPORT_SYMBOL(wlan_objmgr_global_obj_can_destroyed);
+qdf_export_symbol(wlan_objmgr_global_obj_can_destroyed);
 
 void wlan_objmgr_print_ref_ids(qdf_atomic_t *id)
 {

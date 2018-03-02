@@ -27,6 +27,7 @@
 #include <wlan_objmgr_peer_obj.h>
 #include <qdf_mem.h>
 #include <qdf_types.h>
+#include <qdf_module.h>
 #include "wlan_objmgr_global_obj_i.h"
 #include "wlan_objmgr_psoc_obj_i.h"
 #include "wlan_objmgr_pdev_obj_i.h"
@@ -184,7 +185,7 @@ struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
 
 	return psoc;
 }
-EXPORT_SYMBOL(wlan_objmgr_psoc_obj_create);
+qdf_export_symbol(wlan_objmgr_psoc_obj_create);
 
 static QDF_STATUS wlan_objmgr_psoc_obj_destroy(struct wlan_objmgr_psoc *psoc)
 {
@@ -267,7 +268,7 @@ QDF_STATUS wlan_objmgr_psoc_obj_delete(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_psoc_obj_delete);
+qdf_export_symbol(wlan_objmgr_psoc_obj_delete);
 
 QDF_STATUS wlan_objmgr_psoc_component_obj_attach(
 		struct wlan_objmgr_psoc *psoc,
@@ -327,7 +328,7 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_attach(
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_psoc_component_obj_attach);
+qdf_export_symbol(wlan_objmgr_psoc_component_obj_attach);
 
 QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
 		struct wlan_objmgr_psoc *psoc,
@@ -399,7 +400,7 @@ QDF_STATUS wlan_objmgr_psoc_component_obj_detach(
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_psoc_component_obj_detach);
+qdf_export_symbol(wlan_objmgr_psoc_component_obj_detach);
 
 QDF_STATUS wlan_objmgr_iterate_obj_list(
 		struct wlan_objmgr_psoc *psoc,
@@ -485,7 +486,7 @@ QDF_STATUS wlan_objmgr_iterate_obj_list(
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_iterate_obj_list);
+qdf_export_symbol(wlan_objmgr_iterate_obj_list);
 
 QDF_STATUS wlan_objmgr_iterate_obj_list_all(
 		struct wlan_objmgr_psoc *psoc,
@@ -566,7 +567,7 @@ QDF_STATUS wlan_objmgr_iterate_obj_list_all(
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_iterate_obj_list_all);
+qdf_export_symbol(wlan_objmgr_iterate_obj_list_all);
 
 static void wlan_objmgr_psoc_peer_delete(struct wlan_objmgr_psoc *psoc,
 					 void *obj, void *args)
@@ -782,7 +783,7 @@ struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_id(
 
 	return pdev;
 }
-EXPORT_SYMBOL(wlan_objmgr_get_pdev_by_id);
+qdf_export_symbol(wlan_objmgr_get_pdev_by_id);
 
 struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_id_no_state(
 		struct wlan_objmgr_psoc *psoc, uint8_t id,
@@ -950,7 +951,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc(
 
 	return vdev;
 }
-EXPORT_SYMBOL(wlan_objmgr_get_vdev_by_id_from_psoc);
+qdf_export_symbol(wlan_objmgr_get_vdev_by_id_from_psoc);
 
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc_no_state(
 			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
@@ -975,7 +976,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc_no_state(
 
 	return vdev;
 }
-EXPORT_SYMBOL(wlan_objmgr_get_vdev_by_id_from_psoc_no_state);
+qdf_export_symbol(wlan_objmgr_get_vdev_by_id_from_psoc_no_state);
 
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_psoc(
 		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
@@ -1012,7 +1013,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_psoc(
 
 	return NULL;
 }
-EXPORT_SYMBOL(wlan_objmgr_get_vdev_by_macaddr_from_psoc);
+qdf_export_symbol(wlan_objmgr_get_vdev_by_macaddr_from_psoc);
 
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_psoc_no_state(
 		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
@@ -1046,7 +1047,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_psoc_no_state(
 
 	return NULL;
 }
-EXPORT_SYMBOL(wlan_objmgr_get_vdev_by_macaddr_from_psoc_no_state);
+qdf_export_symbol(wlan_objmgr_get_vdev_by_macaddr_from_psoc_no_state);
 
 static void wlan_obj_psoc_peerlist_add_tail(qdf_list_t *obj_list,
 				struct wlan_objmgr_peer *obj)
@@ -1502,7 +1503,7 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer(
 
 	return peer;
 }
-EXPORT_SYMBOL(wlan_objmgr_get_peer);
+qdf_export_symbol(wlan_objmgr_get_peer);
 
 struct wlan_objmgr_peer *wlan_objmgr_get_peer_nolock(
 			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
@@ -1528,7 +1529,7 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_nolock(
 
 	return peer;
 }
-EXPORT_SYMBOL(wlan_objmgr_get_peer_nolock);
+qdf_export_symbol(wlan_objmgr_get_peer_nolock);
 
 
 struct wlan_objmgr_peer *wlan_objmgr_get_peer_no_state(
@@ -1560,7 +1561,7 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_no_state(
 
 	return peer;
 }
-EXPORT_SYMBOL(wlan_objmgr_get_peer_no_state);
+qdf_export_symbol(wlan_objmgr_get_peer_no_state);
 
 struct wlan_objmgr_peer *wlan_objmgr_get_peer_by_mac_n_vdev(
 			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
@@ -1591,7 +1592,7 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_by_mac_n_vdev(
 
 	return peer;
 }
-EXPORT_SYMBOL(wlan_objmgr_get_peer_by_mac_n_vdev);
+qdf_export_symbol(wlan_objmgr_get_peer_by_mac_n_vdev);
 
 
 /**
@@ -1644,7 +1645,7 @@ qdf_list_t *wlan_objmgr_populate_logically_deleted_peerlist_by_mac_n_vdev(
 
 	return logical_del_peer_list;
 }
-EXPORT_SYMBOL(wlan_objmgr_populate_logically_deleted_peerlist_by_mac_n_vdev);
+qdf_export_symbol(wlan_objmgr_populate_logically_deleted_peerlist_by_mac_n_vdev);
 
 struct wlan_objmgr_peer *wlan_objmgr_get_peer_by_mac_n_vdev_no_state(
 			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
@@ -1675,7 +1676,7 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_by_mac_n_vdev_no_state(
 
 	return peer;
 }
-EXPORT_SYMBOL(wlan_objmgr_get_peer_by_mac_n_vdev_no_state);
+qdf_export_symbol(wlan_objmgr_get_peer_by_mac_n_vdev_no_state);
 
 void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc,
 					enum wlan_umac_comp_id id)
@@ -1697,7 +1698,7 @@ void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc,
 
 	return comp_private_obj;
 }
-EXPORT_SYMBOL(wlan_objmgr_psoc_get_comp_private_obj);
+qdf_export_symbol(wlan_objmgr_psoc_get_comp_private_obj);
 
 void wlan_objmgr_psoc_get_ref(struct wlan_objmgr_psoc *psoc,
 						wlan_objmgr_ref_dbgid id)
@@ -1712,7 +1713,7 @@ void wlan_objmgr_psoc_get_ref(struct wlan_objmgr_psoc *psoc,
 	qdf_atomic_inc(&psoc->soc_objmgr.ref_id_dbg[id]);
 	return;
 }
-EXPORT_SYMBOL(wlan_objmgr_psoc_get_ref);
+qdf_export_symbol(wlan_objmgr_psoc_get_ref);
 
 QDF_STATUS wlan_objmgr_psoc_try_get_ref(struct wlan_objmgr_psoc *psoc,
 						wlan_objmgr_ref_dbgid id)
@@ -1741,7 +1742,7 @@ QDF_STATUS wlan_objmgr_psoc_try_get_ref(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_psoc_try_get_ref);
+qdf_export_symbol(wlan_objmgr_psoc_try_get_ref);
 
 void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
 						wlan_objmgr_ref_dbgid id)
@@ -1771,7 +1772,7 @@ void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
 
 	return;
 }
-EXPORT_SYMBOL(wlan_objmgr_psoc_release_ref);
+qdf_export_symbol(wlan_objmgr_psoc_release_ref);
 
 static void wlan_objmgr_psoc_peer_ref_print(struct wlan_objmgr_psoc *psoc,
 					 void *obj, void *args)
@@ -1838,7 +1839,7 @@ QDF_STATUS wlan_objmgr_print_ref_all_objects_per_psoc(
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_print_ref_all_objects_per_psoc);
+qdf_export_symbol(wlan_objmgr_print_ref_all_objects_per_psoc);
 
 QDF_STATUS wlan_objmgr_psoc_set_user_config(struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_psoc_user_config *user_config_data)

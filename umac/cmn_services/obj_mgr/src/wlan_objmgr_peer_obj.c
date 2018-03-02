@@ -25,6 +25,7 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 #include <qdf_mem.h>
+#include <qdf_module.h>
 #include "wlan_objmgr_global_obj_i.h"
 #include "wlan_objmgr_psoc_obj_i.h"
 #include "wlan_objmgr_pdev_obj_i.h"
@@ -344,7 +345,7 @@ QDF_STATUS wlan_objmgr_peer_obj_delete(struct wlan_objmgr_peer *peer)
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_peer_obj_delete);
+qdf_export_symbol(wlan_objmgr_peer_obj_delete);
 /**
  ** APIs to attach/detach component objects
  */
@@ -572,7 +573,7 @@ void *wlan_objmgr_peer_get_comp_private_obj(
 	comp_priv_obj = peer->peer_comp_priv_obj[id];
 	return comp_priv_obj;
 }
-EXPORT_SYMBOL(wlan_objmgr_peer_get_comp_private_obj);
+qdf_export_symbol(wlan_objmgr_peer_get_comp_private_obj);
 
 void wlan_objmgr_peer_get_ref(struct wlan_objmgr_peer *peer,
 					wlan_objmgr_ref_dbgid id)
@@ -588,7 +589,7 @@ void wlan_objmgr_peer_get_ref(struct wlan_objmgr_peer *peer,
 
 	return;
 }
-EXPORT_SYMBOL(wlan_objmgr_peer_get_ref);
+qdf_export_symbol(wlan_objmgr_peer_get_ref);
 
 QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
 						 wlan_objmgr_ref_dbgid id)
@@ -620,7 +621,7 @@ QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_objmgr_peer_try_get_ref);
+qdf_export_symbol(wlan_objmgr_peer_try_get_ref);
 
 void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
 						 wlan_objmgr_ref_dbgid id)
@@ -668,4 +669,4 @@ void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
 
 	return;
 }
-EXPORT_SYMBOL(wlan_objmgr_peer_release_ref);
+qdf_export_symbol(wlan_objmgr_peer_release_ref);
