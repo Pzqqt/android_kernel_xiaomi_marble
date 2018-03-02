@@ -25,9 +25,9 @@
 #include "wlan_pmo_obj_mgmt_public_struct.h"
 
 #define PMO_PKT_FILTERS_DEFAULT 12
-#define PMO_PKT_FILTERS_DISABLED 0
+#define PMO_PKT_FILTERS_DISABLED 0xffffffff
 
-uint8_t pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
+uint32_t pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	bool pkt_filter = false;
