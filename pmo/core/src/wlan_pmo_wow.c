@@ -127,25 +127,14 @@ out:
 	return status;
 }
 
-
-QDF_STATUS pmo_core_wow_enter(struct wlan_objmgr_vdev *vdev,
-		struct pmo_wow_enter_params *wow_enter_param)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS pmo_core_wow_exit(struct wlan_objmgr_vdev *vdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
-	uint32_t vdev_id, uint32_t *bitmap)
+				  uint32_t vdev_id, uint32_t *bitmap)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 
 	PMO_ENTER();
+
 	if (!psoc) {
 		pmo_err("psoc is null");
 		goto out;
