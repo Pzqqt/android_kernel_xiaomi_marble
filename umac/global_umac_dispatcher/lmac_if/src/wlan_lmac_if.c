@@ -18,6 +18,7 @@
  */
 
 #include "qdf_mem.h"
+#include <qdf_module.h>
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
 #include "wlan_mgmt_txrx_tgt_api.h"
@@ -67,7 +68,7 @@
  */
 QDF_STATUS (*wlan_lmac_if_umac_tx_ops_register)
 				(struct wlan_lmac_if_tx_ops *tx_ops);
-EXPORT_SYMBOL(wlan_lmac_if_umac_tx_ops_register);
+qdf_export_symbol(wlan_lmac_if_umac_tx_ops_register);
 
 #ifdef WLAN_ATF_ENABLE
 /**
@@ -457,5 +458,5 @@ QDF_STATUS wlan_lmac_if_set_umac_txops_registration_cb(QDF_STATUS (*handler)
 	wlan_lmac_if_umac_tx_ops_register = handler;
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(wlan_lmac_if_set_umac_txops_registration_cb);
+qdf_export_symbol(wlan_lmac_if_set_umac_txops_registration_cb);
 

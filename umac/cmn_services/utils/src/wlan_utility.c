@@ -25,6 +25,7 @@
 #include <wlan_cmn.h>
 #include "wlan_osif_priv.h"
 #include <net/cfg80211.h>
+#include <qdf_module.h>
 
 uint32_t wlan_chan_to_freq(uint8_t chan)
 {
@@ -190,7 +191,7 @@ uint32_t wlan_get_pdev_id_from_vdev_id(struct wlan_objmgr_psoc *psoc,
 
 	return pdev_id;
 }
-EXPORT_SYMBOL(wlan_get_pdev_id_from_vdev_id);
+qdf_export_symbol(wlan_get_pdev_id_from_vdev_id);
 
 static void wlan_util_get_vdev_by_ifname_cb(struct wlan_objmgr_psoc *psoc,
 					    void *obj, void *arg)
@@ -263,7 +264,7 @@ uint8_t *wlan_util_vdev_get_if_name(struct wlan_objmgr_vdev *vdev)
 
 	return name;
 }
-EXPORT_SYMBOL(wlan_util_vdev_get_if_name);
+qdf_export_symbol(wlan_util_vdev_get_if_name);
 
 static void wlan_vap_active(struct wlan_objmgr_pdev *pdev,
 			void *object,

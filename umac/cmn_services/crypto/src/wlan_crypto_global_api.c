@@ -1028,7 +1028,7 @@ QDF_STATUS wlan_crypto_encap(struct wlan_objmgr_vdev *vdev,
 
 	return status;
 }
-EXPORT_SYMBOL(wlan_crypto_encap);
+qdf_export_symbol(wlan_crypto_encap);
 
 /**
  * wlan_crypto_decap - called by mgmt for decap the frame based on cipher
@@ -1121,7 +1121,7 @@ QDF_STATUS wlan_crypto_decap(struct wlan_objmgr_vdev *vdev,
 
 	return status;
 }
-EXPORT_SYMBOL(wlan_crypto_decap);
+qdf_export_symbol(wlan_crypto_decap);
 /**
  * wlan_crypto_enmic - called by mgmt for adding mic in frame based on cipher
  * @vdev: vdev
@@ -2725,7 +2725,7 @@ struct wlan_lmac_if_crypto_rx_ops *wlan_crypto_get_crypto_rx_ops(
 
 	return &(psoc->soc_cb.rx_ops.crypto_rx_ops);
 }
-EXPORT_SYMBOL(wlan_crypto_get_crypto_rx_ops);
+qdf_export_symbol(wlan_crypto_get_crypto_rx_ops);
 
 /**
  * wlan_crypto_vdev_has_auth_mode - check authmode for vdev
