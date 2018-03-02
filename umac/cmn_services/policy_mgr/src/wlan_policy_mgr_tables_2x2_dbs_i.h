@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1306,8 +1306,8 @@ static policy_mgr_next_action_two_connection_table_type
 	[PM_P2P_GO_24_2x2] = {PM_NOP,		PM_NOP},
 	[PM_P2P_GO_5_1x1] = {PM_DBS,		PM_SBS},
 	[PM_P2P_GO_5_2x2] = {PM_DBS,		PM_SBS_DOWNGRADE},
-	[PM_SAP_24_1x1] = {PM_NOP,		PM_DBS},
-	[PM_SAP_24_2x2] = {PM_NOP,		PM_DBS},
+	[PM_SAP_24_1x1] = {PM_NOP,		PM_NOP},
+	[PM_SAP_24_2x2] = {PM_NOP,		PM_NOP},
 	[PM_SAP_5_1x1] = {PM_DBS,		PM_SBS},
 	[PM_SAP_5_2x2] = {PM_DBS,		PM_SBS_DOWNGRADE},
 	[PM_IBSS_24_1x1] = {PM_NOP,		PM_NOP},
