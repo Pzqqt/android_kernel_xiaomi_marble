@@ -1630,6 +1630,11 @@ static int pahu_codec_enable_ldo_rxtx(struct snd_soc_dapm_widget *w,
 
 			snd_soc_update_bits(codec, WCD9360_LDORXTX_LDORXTX,
 						0x80, 0x80);
+			/*
+			 * 200us sleep is required after LDO_RXTX is enabled as per
+			 * HW requirement
+			 */
+			usleep_range(200, 250);
 		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
