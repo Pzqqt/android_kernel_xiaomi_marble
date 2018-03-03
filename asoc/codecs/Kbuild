@@ -74,6 +74,7 @@ ifdef CONFIG_WCD9XXX_CODEC_CORE
 	CORE_OBJS += msm-cdc-supply.o
 	CORE_OBJS += wcd934x/wcd934x-regmap.o
 	CORE_OBJS += wcd934x/wcd934x-tables.o
+	CORE_OBJS += wcd9360/wcd9360-regmap.o
 endif
 
 ifdef CONFIG_SND_SOC_WCD9XXX_V2
