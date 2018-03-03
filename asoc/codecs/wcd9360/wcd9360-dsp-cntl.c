@@ -1078,7 +1078,7 @@ static int wcd_ctrl_component_bind(struct device *dev,
 		return -EINVAL;
 	}
 
-	cntl = pahu_get_wcd_dsp_cntl(dev);
+	cntl = (struct wcd_dsp_cntl *) pahu_get_wcd_dsp_cntl(dev);
 	if (!cntl) {
 		dev_err(dev, "%s: Failed to get cntl reference\n",
 			__func__);
@@ -1165,7 +1165,7 @@ static void wcd_ctrl_component_unbind(struct device *dev,
 		return;
 	}
 
-	cntl = pahu_get_wcd_dsp_cntl(dev);
+	cntl = (struct wcd_dsp_cntl *) pahu_get_wcd_dsp_cntl(dev);
 	if (!cntl) {
 		dev_err(dev, "%s: Failed to get cntl reference\n",
 			__func__);
