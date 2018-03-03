@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -603,8 +603,11 @@ static int wcd_spi_clk_disable(struct spi_device *spi)
 	if (ret < 0)
 		dev_err(&spi->dev, "%s: Failed, err = %d\n",
 			__func__, ret);
-	else
-		clear_bit(WCD_SPI_CLK_STATE_ENABLED, &wcd_spi->status_mask);
+	/*
+	 * clear this bit even if clock disable failed
+	 * as the source clocks might get turned off.
+	 */
+	clear_bit(WCD_SPI_CLK_STATE_ENABLED, &wcd_spi->status_mask);
 
 	return ret;
 }
