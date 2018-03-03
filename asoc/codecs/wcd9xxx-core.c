@@ -51,7 +51,7 @@
  * Number of return values needs to be checked for each
  * registration of Slimbus of I2C bus for each codec
  */
-#define NUM_WCD9XXX_REG_RET	4
+#define NUM_WCD9XXX_REG_RET	5
 
 #define SLIM_USR_MC_REPEAT_CHANGE_VALUE 0x0
 #define SLIM_REPEAT_WRITE_MAX_SLICE 16
@@ -92,6 +92,8 @@ static const int wcd9xxx_cdc_types[] = {
 };
 
 static const struct of_device_id wcd9xxx_of_match[] = {
+	{ .compatible = "qcom,tavil-i2c",
+	  .data = (void *)&wcd9xxx_cdc_types[WCD934X]},
 	{ .compatible = "qcom,tasha-i2c-pgd",
 	  .data = (void *)&wcd9xxx_cdc_types[WCD9335]},
 	{ .compatible = "qcom,wcd9xxx-i2c",
@@ -1625,6 +1627,11 @@ static struct i2c_device_id tasha_id_table[] = {
 	{}
 };
 
+static struct i2c_device_id tavil_id_table[] = {
+	{"tavil-i2c", WCD9XXX_I2C_TOP_LEVEL},
+	{}
+};
+
 static struct i2c_device_id tabla_id_table[] = {
 	{"tabla top level", WCD9XXX_I2C_TOP_LEVEL},
 	{"tabla analog", WCD9XXX_I2C_ANALOG},
@@ -1672,6 +1679,17 @@ static struct i2c_driver wcd9335_i2c_driver = {
 	.remove                 =       wcd9xxx_i2c_remove,
 };
 
+static struct i2c_driver wcd934x_i2c_driver = {
+	.driver	                = {
+		.owner          =       THIS_MODULE,
+		.name           =       "tavil-i2c-core",
+		.pm             =       &wcd9xxx_i2c_pm_ops,
+	},
+	.id_table               =       tavil_id_table,
+	.probe                  =       wcd9xxx_i2c_probe,
+	.remove                 =       wcd9xxx_i2c_remove,
+};
+
 int wcd9xxx_init(void)
 {
 	int ret[NUM_WCD9XXX_REG_RET] = {0};
@@ -1699,6 +1717,11 @@ int wcd9xxx_init(void)
 		pr_err("%s: Failed to register wcd SB driver: %d\n",
 			__func__, ret[3]);
 
+	ret[4] = i2c_add_driver(&wcd934x_i2c_driver);
+	if (ret[4])
+		pr_err("%s: Failed to add the wcd934x I2C driver: %d\n",
+			__func__, ret[4]);
+
 	for (i = 0; i < NUM_WCD9XXX_REG_RET; i++) {
 		if (ret[i])
 			return ret[i];
@@ -1714,6 +1737,7 @@ void wcd9xxx_exit(void)
 	i2c_del_driver(&tabla_i2c_driver);
 	i2c_del_driver(&wcd9xxx_i2c_driver);
 	i2c_del_driver(&wcd9335_i2c_driver);
+	i2c_del_driver(&wcd934x_i2c_driver);
 	slim_driver_unregister(&wcd_slim_driver);
 }
 
