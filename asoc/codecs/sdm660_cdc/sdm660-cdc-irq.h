@@ -1,4 +1,4 @@
-/* Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -26,6 +26,7 @@ extern int wcd9xxx_spmi_free_irq(int irq, void *priv);
 extern void wcd9xxx_spmi_set_codec(struct snd_soc_codec *codec);
 extern void wcd9xxx_spmi_set_dev(struct platform_device *spmi, int i);
 extern int wcd9xxx_spmi_irq_init(void);
+extern void wcd9xxx_spmi_irq_exit(void);
 extern int wcd9xxx_spmi_suspend(pm_message_t pmesg);
 extern int wcd9xxx_spmi_resume(void);
 bool wcd9xxx_spmi_lock_sleep(void);

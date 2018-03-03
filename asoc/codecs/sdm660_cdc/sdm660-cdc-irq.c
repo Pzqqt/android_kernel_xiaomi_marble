@@ -1,4 +1,4 @@
-/* Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -409,5 +409,10 @@ int wcd9xxx_spmi_irq_init(void)
 	return 0;
 }
 
+void wcd9xxx_spmi_irq_exit(void)
+{
+	pm_qos_remove_request(&map.pm_qos_req);
+	mutex_destroy(&map.pm_lock);
+}
 MODULE_DESCRIPTION("MSM8x16 SPMI IRQ driver");
 MODULE_LICENSE("GPL v2");

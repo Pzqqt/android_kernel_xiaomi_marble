@@ -1,4 +1,4 @@
-/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1251,7 +1251,13 @@ static int msm_sdw_swrm_write(void *handle, int reg, int val)
 
 static int msm_sdw_swrm_clock(void *handle, bool enable)
 {
-	struct msm_sdw_priv *msm_sdw = (struct msm_sdw_priv *) handle;
+	struct msm_sdw_priv *msm_sdw;
+
+	if (!handle) {
+		pr_err("%s: NULL handle\n", __func__);
+		return -EINVAL;
+	}
+	msm_sdw = (struct msm_sdw_priv *)handle;
 
 	mutex_lock(&msm_sdw->sdw_clk_lock);
 
@@ -1934,6 +1940,7 @@ static void msm_sdw_add_child_devices(struct work_struct *work)
 			msm_sdw->nr = ctrl_num;
 			msm_sdw->sdw_ctrl_data = sdw_ctrl_data;
 		}
+		msm_sdw->pdev_child_devices[msm_sdw->child_count++] = pdev;
 	}
 
 	return;
@@ -2050,8 +2057,13 @@ err_sdw_cdc:
 static int msm_sdw_remove(struct platform_device *pdev)
 {
 	struct msm_sdw_priv *msm_sdw;
+	int count;
 
 	msm_sdw = dev_get_drvdata(&pdev->dev);
+
+	for (count = 0; count < msm_sdw->child_count &&
+				count < MSM_SDW_CHILD_DEVICES_MAX; count++)
+		platform_device_unregister(msm_sdw->pdev_child_devices[count]);
 
 	mutex_destroy(&msm_sdw->io_lock);
 	mutex_destroy(&msm_sdw->sdw_read_lock);
@@ -2059,6 +2071,7 @@ static int msm_sdw_remove(struct platform_device *pdev)
 	mutex_destroy(&msm_sdw->sdw_clk_lock);
 	mutex_destroy(&msm_sdw->codec_mutex);
 	mutex_destroy(&msm_sdw->cdc_int_mclk1_mutex);
+
 	devm_kfree(&pdev->dev, msm_sdw);
 	snd_soc_unregister_codec(&pdev->dev);
 	return 0;

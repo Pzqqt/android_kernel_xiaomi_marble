@@ -1,4 +1,4 @@
-/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -17,6 +17,7 @@
 #include "msm_sdw_registers.h"
 
 #define MSM_SDW_MAX_REGISTER 0x400
+#define MSM_SDW_CHILD_DEVICES_MAX 1
 
 extern const struct regmap_config msm_sdw_regmap_config;
 extern const u8 msm_sdw_page_map[MSM_SDW_MAX_REGISTER];
@@ -154,6 +155,9 @@ struct msm_sdw_priv {
 	/* Entry for version info */
 	struct snd_info_entry *entry;
 	struct snd_info_entry *version_entry;
+	struct platform_device *pdev_child_devices
+		[MSM_SDW_CHILD_DEVICES_MAX];
+	int child_count;
 };
 
 #if IS_ENABLED(CONFIG_SND_SOC_MSM_SDW)

@@ -1440,10 +1440,68 @@ int adm_get_multi_ch_map(char *channel_map, int path)
 }
 EXPORT_SYMBOL(adm_get_multi_ch_map);
 
+static void adm_reset_data(void)
+{
+	int i, j;
+
+	apr_reset(this_adm.apr);
+	for (i = 0; i < AFE_MAX_PORTS; i++) {
+		for (j = 0; j < MAX_COPPS_PER_PORT; j++) {
+			atomic_set(&this_adm.copp.id[i][j],
+				   RESET_COPP_ID);
+			atomic_set(&this_adm.copp.cnt[i][j], 0);
+			atomic_set(
+			   &this_adm.copp.topology[i][j], 0);
+			atomic_set(&this_adm.copp.mode[i][j],
+				   0);
+			atomic_set(&this_adm.copp.stat[i][j],
+				   0);
+			atomic_set(&this_adm.copp.rate[i][j],
+				   0);
+			atomic_set(
+				&this_adm.copp.channels[i][j],
+				   0);
+			atomic_set(
+			    &this_adm.copp.bit_width[i][j], 0);
+			atomic_set(
+			    &this_adm.copp.app_type[i][j], 0);
+			atomic_set(
+			   &this_adm.copp.acdb_id[i][j], 0);
+			this_adm.copp.adm_status[i][j] =
+				ADM_STATUS_CALIBRATION_REQUIRED;
+		}
+	}
+	this_adm.apr = NULL;
+	cal_utils_clear_cal_block_q6maps(ADM_MAX_CAL_TYPES,
+		this_adm.cal_data);
+	mutex_lock(&this_adm.cal_data
+		[ADM_CUSTOM_TOP_CAL]->lock);
+	this_adm.set_custom_topology = 1;
+	mutex_unlock(&this_adm.cal_data[
+		ADM_CUSTOM_TOP_CAL]->lock);
+	rtac_clear_mapping(ADM_RTAC_CAL);
+	/*
+	 * Free the ION memory and clear the map handles
+	 * for Source Tracking
+	 */
+	if (this_adm.sourceTrackingData.memmap.paddr != 0) {
+		msm_audio_ion_free(
+			this_adm.sourceTrackingData.dma_buf);
+		this_adm.sourceTrackingData.dma_buf = NULL;
+		this_adm.sourceTrackingData.memmap.size = 0;
+		this_adm.sourceTrackingData.memmap.kvaddr =
+							 NULL;
+		this_adm.sourceTrackingData.memmap.paddr = 0;
+		this_adm.sourceTrackingData.apr_cmd_status = -1;
+		atomic_set(&this_adm.mem_map_handles[
+			ADM_MEM_MAP_INDEX_SOURCE_TRACKING], 0);
+	}
+}
+
 static int32_t adm_callback(struct apr_client_data *data, void *priv)
 {
 	uint32_t *payload;
-	int i, j, port_idx, copp_idx, idx, client_id;
+	int i, port_idx, copp_idx, idx, client_id;
 
 	if (data == NULL) {
 		pr_err("%s: data parameter is null\n", __func__);
@@ -1456,60 +1514,8 @@ static int32_t adm_callback(struct apr_client_data *data, void *priv)
 		pr_debug("%s: Reset event is received: %d %d apr[%pK]\n",
 			__func__,
 			data->reset_event, data->reset_proc, this_adm.apr);
-		if (this_adm.apr) {
-			apr_reset(this_adm.apr);
-			for (i = 0; i < AFE_MAX_PORTS; i++) {
-				for (j = 0; j < MAX_COPPS_PER_PORT; j++) {
-					atomic_set(&this_adm.copp.id[i][j],
-						   RESET_COPP_ID);
-					atomic_set(&this_adm.copp.cnt[i][j], 0);
-					atomic_set(
-					   &this_adm.copp.topology[i][j], 0);
-					atomic_set(&this_adm.copp.mode[i][j],
-						   0);
-					atomic_set(&this_adm.copp.stat[i][j],
-						   0);
-					atomic_set(&this_adm.copp.rate[i][j],
-						   0);
-					atomic_set(
-					&this_adm.copp.channels[i][j],
-						   0);
-					atomic_set(
-					    &this_adm.copp.bit_width[i][j], 0);
-					atomic_set(
-					    &this_adm.copp.app_type[i][j], 0);
-					atomic_set(
-					   &this_adm.copp.acdb_id[i][j], 0);
-					this_adm.copp.adm_status[i][j] =
-						ADM_STATUS_CALIBRATION_REQUIRED;
-				}
-			}
-			this_adm.apr = NULL;
-			cal_utils_clear_cal_block_q6maps(ADM_MAX_CAL_TYPES,
-				this_adm.cal_data);
-			mutex_lock(&this_adm.cal_data
-				[ADM_CUSTOM_TOP_CAL]->lock);
-			this_adm.set_custom_topology = 1;
-			mutex_unlock(&this_adm.cal_data[
-				ADM_CUSTOM_TOP_CAL]->lock);
-			rtac_clear_mapping(ADM_RTAC_CAL);
-			/*
-			 * Free the ION memory and clear the map handles
-			 * for Source Tracking
-			 */
-			if (this_adm.sourceTrackingData.memmap.paddr != 0) {
-				msm_audio_ion_free(
-					this_adm.sourceTrackingData.dma_buf);
-				this_adm.sourceTrackingData.dma_buf = NULL;
-				this_adm.sourceTrackingData.memmap.size = 0;
-				this_adm.sourceTrackingData.memmap.kvaddr =
-									 NULL;
-				this_adm.sourceTrackingData.memmap.paddr = 0;
-				this_adm.sourceTrackingData.apr_cmd_status = -1;
-				atomic_set(&this_adm.mem_map_handles[
-					ADM_MEM_MAP_INDEX_SOURCE_TRACKING], 0);
-			}
-		}
+		if (this_adm.apr)
+			adm_reset_data();
 		return 0;
 	}
 
@@ -5256,6 +5262,8 @@ int __init adm_init(void)
 
 void adm_exit(void)
 {
+	if (this_adm.apr)
+		adm_reset_data();
 	mutex_destroy(&dts_srs_lock);
 	adm_delete_cal_data();
 }
