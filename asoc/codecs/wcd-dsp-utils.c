@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -82,6 +82,15 @@ static int wdsp_add_segment_to_list(struct device *dev,
 		goto bad_seg;
 	}
 
+	if (phdr->p_filesz != seg->split_fw->size) {
+		dev_err(dev,
+			"%s: %s size mismatch, phdr_size: 0x%x fw_size: 0x%zx",
+			__func__, seg->split_fname, phdr->p_filesz,
+			seg->split_fw->size);
+		ret = -EINVAL;
+		goto bad_elf;
+	}
+
 	seg->load_addr = phdr->p_paddr;
 	seg->size = phdr->p_filesz;
 	seg->data = (u8 *) seg->split_fw->data;
@@ -89,6 +98,8 @@ static int wdsp_add_segment_to_list(struct device *dev,
 	list_add_tail(&seg->list, seg_list);
 done:
 	return ret;
+bad_elf:
+	release_firmware(seg->split_fw);
 bad_seg:
 	kfree(seg);
 	return ret;
