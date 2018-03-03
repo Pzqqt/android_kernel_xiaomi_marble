@@ -742,6 +742,8 @@ struct cdp_pdev_stats {
 		uint32_t mec;
 		/* Mesh Filtered packets */
 		uint32_t mesh_filter;
+		/* packets dropped on monitor vap */
+		uint32_t mon_rx_drop;
 	} dropped;
 
 	struct {

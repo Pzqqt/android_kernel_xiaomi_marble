@@ -26,6 +26,7 @@
 #include "hal_api_mon.h"
 #include "dp_rx_mon.h"
 #include "wlan_cfg.h"
+#include "dp_internal.h"
 
 /**
  * dp_rx_mon_link_desc_return() - Return a MPDU link descriptor to HW
@@ -374,7 +375,8 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	if (HAL_RX_DESC_GET_MPDU_LENGTH_ERR(rx_desc)) {
 		/* It looks like there is some issue on MPDU len err */
 		/* Need further investigate if drop the packet */
-		/* return NULL; */
+		DP_STATS_INC(dp_pdev, dropped.mon_rx_drop, 1);
+		return NULL;
 	}
 
 	rx_desc = qdf_nbuf_data(last_msdu);
@@ -439,6 +441,11 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 
 		/* If there were more fragments to this RAW frame */
 		if (head_frag_list) {
+			if (frag_list_sum_len <
+				sizeof(struct ieee80211_frame_min_one)) {
+				DP_STATS_INC(dp_pdev, dropped.mon_rx_drop, 1);
+				return NULL;
+			}
 			frag_list_sum_len -= HAL_RX_FCS_LEN;
 			qdf_nbuf_append_ext_list(mpdu_buf, head_frag_list,
 				frag_list_sum_len);
@@ -535,7 +542,6 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 
 	/* The first LLC len is copied into the MPDU buffer */
 	frag_list_sum_len = 0;
-	frag_list_sum_len -= msdu_llc_len;
 
 	msdu_orig = head_msdu;
 	is_first_frag = 1;
@@ -598,6 +604,8 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	qdf_nbuf_put_tail(prev_buf, HAL_RX_FCS_LEN);
 	frag_list_sum_len += HAL_RX_FCS_LEN;
 #endif
+
+	frag_list_sum_len -= msdu_llc_len;
 
 	/* TODO: Convert this to suitable adf routines */
 	qdf_nbuf_append_ext_list(mpdu_buf, head_frag_list,
