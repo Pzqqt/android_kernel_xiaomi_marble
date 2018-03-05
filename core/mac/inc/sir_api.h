@@ -3431,8 +3431,6 @@ typedef struct sSirTdlsAddStaRsp {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t staId;
 	uint16_t staType;
-	uint8_t ucastSig;
-	uint8_t bcastSig;
 	eTdlsAddOper tdlsAddOper;
 	struct wlan_objmgr_psoc *psoc;
 } tSirTdlsAddStaRsp;
