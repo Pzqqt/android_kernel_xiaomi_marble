@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -447,8 +447,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 	pStaDs->bssId = pAddBssParams->bssIdx;
 	/* STA Index(genr by HAL) for the BSS entry is stored here */
 	pStaDs->staIndex = pAddBssParams->staContext.staIdx;
-	pStaDs->ucUcastSig = pAddBssParams->staContext.ucUcastSig;
-	pStaDs->ucBcastSig = pAddBssParams->staContext.ucBcastSig;
 
 	rrm_cache_mgmt_tx_power(pMac, pAddBssParams->txMgmtPower,
 			psessionEntry);

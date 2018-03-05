@@ -2514,10 +2514,6 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 			 * entry is stored here
 			*/
 			sta_ds->staIndex = add_bss_params->staContext.staIdx;
-			sta_ds->ucUcastSig =
-				add_bss_params->staContext.ucUcastSig;
-			sta_ds->ucBcastSig =
-				add_bss_params->staContext.ucBcastSig;
 			/* Downgrade the EDCA parameters if needed */
 			lim_set_active_edca_params(mac_ctx,
 				session_entry->gLimEdcaParams, session_entry);

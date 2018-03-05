@@ -533,8 +533,6 @@ void lim_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx, tpPESession session,
 	}
 	sta_ds->bssId = add_sta_rsp->bssIdx;
 	sta_ds->staIndex = add_sta_rsp->staIdx;
-	sta_ds->ucUcastSig = add_sta_rsp->ucUcastSig;
-	sta_ds->ucBcastSig = add_sta_rsp->ucBcastSig;
 	sta_ds->valid = 1;
 	sta_ds->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	lim_send_sme_ndp_add_sta_rsp(mac_ctx, session, add_sta_rsp);

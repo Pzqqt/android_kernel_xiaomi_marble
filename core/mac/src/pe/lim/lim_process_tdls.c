@@ -2681,8 +2681,6 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 	addStaRsp->statusCode = status;
 	if (pStaDs) {
 		addStaRsp->staId = pStaDs->staIndex;
-		addStaRsp->ucastSig = pStaDs->ucUcastSig;
-		addStaRsp->bcastSig = pStaDs->ucBcastSig;
 	}
 	if (peerMac) {
 		qdf_mem_copy(addStaRsp->peermac.bytes,
@@ -2735,8 +2733,6 @@ QDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg,
 
 	pStaDs->bssId = pAddStaParams->bssIdx;
 	pStaDs->staIndex = pAddStaParams->staIdx;
-	pStaDs->ucUcastSig = pAddStaParams->ucUcastSig;
-	pStaDs->ucBcastSig = pAddStaParams->ucBcastSig;
 	pStaDs->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	pStaDs->valid = 1;
 add_sta_error:

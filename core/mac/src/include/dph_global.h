@@ -227,14 +227,6 @@ typedef struct sDphHashNode {
 	uint16_t staIndex;
 	uint8_t staAddr[6];
 	uint8_t staType;
-	/*
-	 * The DPU signatures will be sent eventually to TL to help
-	 * it determine the association to which a packet belongs to
-	 */
-	/*Unicast DPU signature */
-	uint8_t ucUcastSig;
-	/*Broadcast DPU signature */
-	uint8_t ucBcastSig;
 
 	uint8_t vhtSupportedChannelWidthSet;
 	uint8_t vhtSupportedRxNss;

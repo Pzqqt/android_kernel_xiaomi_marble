@@ -202,8 +202,6 @@ typedef struct sAniProbeRspStruct {
  * @respReqd: A flag to indicate to HAL if the response message is required
  * @rmfEnabled: Robust Management Frame (RMF) enabled/disabled
  * @encryptType: The unicast encryption type in the association
- * @ucUcastSig: Unicast DPU index
- * @ucBcastSig: Broadcast DPU index
  * @sessionId: PE session id
  * @p2pCapableSta: if this is a P2P Capable Sta
  * @csaOffloadEnable: CSA offload enable flag
@@ -299,8 +297,6 @@ typedef struct {
 	uint8_t respReqd;
 	uint8_t rmfEnabled;
 	uint32_t encryptType;
-	uint8_t ucUcastSig;
-	uint8_t ucBcastSig;
 	uint8_t sessionId;
 	uint8_t p2pCapableSta;
 	uint8_t csaOffloadEnable;

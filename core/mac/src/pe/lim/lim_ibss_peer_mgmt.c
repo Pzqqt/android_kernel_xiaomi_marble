@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -458,11 +458,8 @@ ibss_dph_entry_add(tpAniSirGlobal pMac,
 
 /* send a status change notification */
 static void
-ibss_status_chg_notify(tpAniSirGlobal pMac,
-		       tSirMacAddr peerAddr,
-		       uint16_t staIndex,
-		       uint8_t ucastSig,
-		       uint8_t bcastSig, uint16_t status, uint8_t sessionId)
+ibss_status_chg_notify(tpAniSirGlobal pMac, tSirMacAddr peerAddr,
+		       uint16_t staIndex, uint16_t status, uint8_t sessionId)
 {
 
 	tLimIbssPeerNode *peerNode;
@@ -479,7 +476,7 @@ ibss_status_chg_notify(tpAniSirGlobal pMac,
 		peerNode->beaconLen = 0;
 	}
 
-	lim_send_sme_ibss_peer_ind(pMac, peerAddr, staIndex, ucastSig, bcastSig,
+	lim_send_sme_ibss_peer_ind(pMac, peerAddr, staIndex,
 				   beacon, bcnLen, status, sessionId);
 
 	if (beacon != NULL) {
@@ -677,8 +674,6 @@ static void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
 
 			ibss_status_chg_notify(pMac, pCurrNode->peerMacAddr,
 					       pStaDs->staIndex,
-					       pStaDs->ucUcastSig,
-					       pStaDs->ucBcastSig,
 					       eWNI_SME_IBSS_PEER_DEPARTED_IND,
 					       psessionEntry->smeSessionId);
 			lim_release_peer_idx(pMac, peerIdx, psessionEntry);
@@ -1160,7 +1155,6 @@ void lim_process_ibss_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	ibss_status_chg_notify(mac_ctx,
 		del_sta_params->staMac,
 		sta_ds->staIndex,
-		sta_ds->ucUcastSig, sta_ds->ucBcastSig,
 		eWNI_SME_IBSS_PEER_DEPARTED_IND,
 		pe_session->smeSessionId);
 
@@ -1208,16 +1202,13 @@ lim_ibss_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEntry)
 
 	pStaDs->bssId = pAddStaParams->bssIdx;
 	pStaDs->staIndex = pAddStaParams->staIdx;
-	pStaDs->ucUcastSig = pAddStaParams->ucUcastSig;
-	pStaDs->ucBcastSig = pAddStaParams->ucBcastSig;
 	pStaDs->valid = 1;
 	pStaDs->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 
 	pe_debug("IBSS: sending IBSS_NEW_PEER msg to SME!");
 
 	ibss_status_chg_notify(pMac, pAddStaParams->staMac,
-			       pStaDs->staIndex, pStaDs->ucUcastSig,
-			       pStaDs->ucBcastSig,
+			       pStaDs->staIndex,
 			       eWNI_SME_IBSS_NEW_PEER_IND,
 			       psessionEntry->smeSessionId);
 
@@ -1573,8 +1564,6 @@ void lim_ibss_heart_beat_handle(tpAniSirGlobal mac_ctx, tpPESession session)
 	tpDphHashNode stads = 0;
 	uint32_t threshold = 0;
 	uint16_t sta_idx = 0;
-	uint8_t ucast_sig = 0;
-	uint8_t bcast_sig = 0;
 
 	/*
 	 * MLM BSS is started and if PE in scanmode then MLM state will be
@@ -1614,8 +1603,6 @@ void lim_ibss_heart_beat_handle(tpAniSirGlobal mac_ctx, tpPESession session)
 					&session->dph.dphHashTable);
 			if (stads) {
 				sta_idx = stads->staIndex;
-				ucast_sig = stads->ucUcastSig;
-				bcast_sig = stads->ucBcastSig;
 
 				(void)lim_del_sta(mac_ctx, stads, false,
 						  session);
@@ -1626,7 +1613,6 @@ void lim_ibss_heart_beat_handle(tpAniSirGlobal mac_ctx, tpPESession session)
 				/* Send indication. */
 				ibss_status_chg_notify(mac_ctx,
 					tempnode->peerMacAddr, sta_idx,
-					ucast_sig, bcast_sig,
 					eWNI_SME_IBSS_PEER_DEPARTED_IND,
 					session->smeSessionId);
 			}

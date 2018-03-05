@@ -90,8 +90,7 @@ void lim_send_sme_pe_ese_tsm_rsp(tpAniSirGlobal pMac, tAniGetTsmStatsRsp *pStats
 #endif
 
 void lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
-				uint16_t staIndex, uint8_t ucastIdx,
-				uint8_t bcastIdx, uint8_t *beacon,
+				uint16_t staIndex, uint8_t *beacon,
 				uint16_t beaconLen, uint16_t msgType,
 				uint8_t sessionId);
 void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,

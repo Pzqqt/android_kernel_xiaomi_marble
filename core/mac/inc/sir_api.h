@@ -1176,15 +1176,6 @@ typedef struct sSirSmeJoinRsp {
 #endif
 	uint32_t staId;         /* Station ID for peer */
 
-	/* The DPU signatures will be sent eventually to TL to help it determine
-	 * the association to which a packet belongs to
-	 * Unicast DPU signature
-	 */
-	uint8_t ucastSig;
-
-	/*Broadcast DPU signature */
-	uint8_t bcastSig;
-
 	/*Timing measurement capability */
 	uint8_t timingMeasCap;
 
@@ -1254,8 +1245,6 @@ typedef struct sSirSmeAssocInd {
 	uint16_t aid;
 	tSirMacAddr bssId;      /* Self BSSID */
 	uint16_t staId;         /* Station ID for peer */
-	uint8_t uniSig;         /* DPU signature for unicast packets */
-	uint8_t bcastSig;       /* DPU signature for broadcast packets */
 	tAniAuthType authType;
 	tAniSSID ssId;          /* SSID used by STA to associate */
 	tSirWAPIie wapiIE;      /* WAPI IE received from peer */
@@ -2162,16 +2151,6 @@ typedef struct sSmeIbssPeerInd {
 
 	struct qdf_mac_addr peer_addr;
 	uint16_t staId;
-
-	/*
-	 * The DPU signatures will be sent eventually to TL to help it determine
-	 * the association to which a packet belongs to
-	 */
-	/* Unicast DPU signature */
-	uint8_t ucastSig;
-
-	/*Broadcast DPU signature */
-	uint8_t bcastSig;
 
 	/* Beacon will be appended for new Peer indication. */
 } tSmeIbssPeerInd, *tpSmeIbssPeerInd;

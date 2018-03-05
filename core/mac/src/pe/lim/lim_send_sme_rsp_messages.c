@@ -545,10 +545,6 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 			} else {
 				/* Pass the peer's staId */
 				sme_join_rsp->staId = sta_ds->staIndex;
-				sme_join_rsp->ucastSig =
-					sta_ds->ucUcastSig;
-				sme_join_rsp->bcastSig =
-					sta_ds->ucBcastSig;
 				sme_join_rsp->timingMeasCap =
 					sta_ds->timingMeasCap;
 #ifdef FEATURE_WLAN_TDLS
@@ -1855,8 +1851,6 @@ void
 lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac,
 			   tSirMacAddr peerMacAddr,
 			   uint16_t staIndex,
-			   uint8_t ucastIdx,
-			   uint8_t bcastIdx,
 			   uint8_t *beacon,
 			   uint16_t beaconLen, uint16_t msgType, uint8_t sessionId)
 {
@@ -1872,8 +1866,6 @@ lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac,
 	qdf_mem_copy((uint8_t *) pNewPeerInd->peer_addr.bytes,
 		     peerMacAddr, QDF_MAC_ADDR_SIZE);
 	pNewPeerInd->staId = staIndex;
-	pNewPeerInd->ucastSig = ucastIdx;
-	pNewPeerInd->bcastSig = bcastIdx;
 	pNewPeerInd->mesgLen = sizeof(tSmeIbssPeerInd) + beaconLen;
 	pNewPeerInd->mesgType = msgType;
 	pNewPeerInd->sessionId = sessionId;

@@ -2340,10 +2340,6 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	curr_sta_ds->bssId = add_bss_params->bssIdx;
 	curr_sta_ds->staIndex =
 		add_bss_params->staContext.staIdx;
-	curr_sta_ds->ucUcastSig =
-		add_bss_params->staContext.ucUcastSig;
-	curr_sta_ds->ucBcastSig =
-		add_bss_params->staContext.ucBcastSig;
 	rrm_cache_mgmt_tx_power(mac_ctx,
 		add_bss_params->txMgmtPower, ft_session_ptr);
 	mac_ctx->roam.reassocRespLen = roam_sync_ind_ptr->reassocRespLength;
@@ -2425,8 +2421,6 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	roam_sync_ind_ptr->join_rsp->vht_channel_width =
 		ft_session_ptr->ch_width;
 	roam_sync_ind_ptr->join_rsp->staId = curr_sta_ds->staIndex;
-	roam_sync_ind_ptr->join_rsp->ucastSig = curr_sta_ds->ucUcastSig;
-	roam_sync_ind_ptr->join_rsp->bcastSig = curr_sta_ds->ucBcastSig;
 	roam_sync_ind_ptr->join_rsp->timingMeasCap = curr_sta_ds->timingMeasCap;
 	roam_sync_ind_ptr->join_rsp->nss = curr_sta_ds->nss;
 	roam_sync_ind_ptr->join_rsp->max_rate_flags =
