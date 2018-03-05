@@ -301,7 +301,6 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;
 	struct direct_buf_rx_buf_info *dbr_buf_pool;
-	QDF_STATUS status;
 
 	direct_buf_rx_enter();
 
@@ -337,7 +336,7 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 					       dbr_ring_cap->min_buf_size,
 					       &paddr);
 	if (map_status) {
-		direct_buf_rx_err("mem map failed status = %d", status);
+		direct_buf_rx_err("mem map failed status = %d", map_status);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -769,7 +768,7 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 						uint8_t *data_buf,
 						uint32_t data_len)
 {
-	int ret;
+	int ret = 0;
 	uint8_t i = 0;
 	QDF_STATUS status;
 	uint32_t cookie = 0;
@@ -951,7 +950,6 @@ QDF_STATUS target_if_deinit_dbr_ring(struct wlan_objmgr_pdev *pdev,
 {
 	struct direct_buf_rx_module_param *mod_param;
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;
-	QDF_STATUS status;
 
 	direct_buf_rx_enter();
 	mod_param = &(dbr_pdev_obj->dbr_mod_param[mod_id]);
@@ -970,7 +968,7 @@ QDF_STATUS target_if_deinit_dbr_ring(struct wlan_objmgr_pdev *pdev,
 	qdf_mem_free(mod_param);
 	mod_param = NULL;
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS target_if_direct_buf_rx_register_events(
