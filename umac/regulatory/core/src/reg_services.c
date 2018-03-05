@@ -2762,7 +2762,7 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 			channel_map[chan_enum].chan_num;
 		mas_chan_list[chan_enum].center_freq =
 			channel_map[chan_enum].center_freq;
-		mas_chan_list[chan_enum].chan_flags |=
+		mas_chan_list[chan_enum].chan_flags =
 			REGULATORY_CHAN_DISABLED;
 		mas_chan_list[chan_enum].state =
 			CHANNEL_STATE_DISABLE;
