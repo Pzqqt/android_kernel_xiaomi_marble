@@ -498,55 +498,40 @@ struct adm_cmd_device_open_v6 {
 
 /* Sets one or more parameters to a COPP. */
 #define ADM_CMD_SET_PP_PARAMS_V5                        0x00010328
+#define ADM_CMD_SET_PP_PARAMS_V6 0x0001035D
 
-/*  Payload of the #ADM_CMD_SET_PP_PARAMS_V5 command.
- *	If the data_payload_addr_lsw and data_payload_addr_msw element
- *	are NULL, a series of adm_param_datastructures immediately
- *	follows, whose total size is data_payload_size bytes.
+/*
+ * Structure of the ADM Set PP Params command. Parameter data must be
+ * pre-packed with correct header for either V2 or V3 when sent in-band.
+ * Use q6core_pack_pp_params to pack the header and data correctly depending on
+ * Instance ID support.
  */
-struct adm_cmd_set_pp_params_v5 {
-	struct apr_hdr hdr;
-	u32		payload_addr_lsw;
-/* LSW of parameter data payload address. */
-	u32		payload_addr_msw;
-/* MSW of parameter data payload address. */
+struct adm_cmd_set_pp_params {
+	/* APR Header */
+	struct apr_hdr apr_hdr;
 
-	u32		mem_map_handle;
-/* Memory map handle returned by ADM_CMD_SHARED_MEM_MAP_REGIONS
- * command
- *
- * If mem_map_handle is zero implies the message is in
- * the payload
- */
+	/* The memory mapping header to be used when sending out of band */
+	struct mem_mapping_hdr mem_hdr;
 
-	u32		payload_size;
-/* Size in bytes of the variable payload accompanying this
- * message or
- * in shared memory. This is used for parsing the parameter
- * payload.
- */
+	/*
+	 * Size in bytes of the variable payload accompanying this
+	 * message or
+	 * in shared memory. This is used for parsing the parameter
+	 * payload.
+	 */
+	u32 payload_size;
+
+	/*
+	 * Parameter data for in band payload. This should be structured as the
+	 * parameter header immediately followed by the parameter data. Multiple
+	 * parameters can be set in one command by repeating the header followed
+	 * by the data for as many parameters as need to be set.
+	 * Use q6core_pack_pp_params to pack the header and data correctly
+	 * depending on Instance ID support.
+	 */
+	u8 param_data[0];
 } __packed;
 
-/*  Payload format for COPP parameter data.
- * Immediately following this structure are param_size bytes
- * of parameter
- * data.
- */
-struct adm_param_data_v5 {
-	u32                  module_id;
-	/* Unique ID of the module. */
-	u32                  param_id;
-	/* Unique ID of the parameter. */
-	u16                  param_size;
-	/* Data size of the param_id/module_id combination.
-	 * This value is a
-	 * multiple of 4 bytes.
-	 */
-	u16                  reserved;
-	/* Reserved for future enhancements.
-	 * This field must be set to zero.
-	 */
-} __packed;
 
 #define ASM_STREAM_CMD_REGISTER_PP_EVENTS 0x00013213
 #define ASM_STREAM_PP_EVENT 0x00013214
@@ -590,25 +575,6 @@ struct adm_cmd_set_pspd_mtmx_strtr_params_v5 {
 	u16		reserved;
 } __packed;
 
-/* Defined specifically for in-band use, includes params */
-struct adm_cmd_set_pp_params_inband_v5 {
-	struct apr_hdr hdr;
-	/* LSW of parameter data payload address.*/
-	u32             payload_addr_lsw;
-	/* MSW of parameter data payload address.*/
-	u32             payload_addr_msw;
-	/* Memory map handle returned by ADM_CMD_SHARED_MEM_MAP_REGIONS */
-	/* command. If mem_map_handle is zero implies the message is in */
-	/* the payload */
-	u32             mem_map_handle;
-	/* Size in bytes of the variable payload accompanying this */
-	/* message or in shared memory. This is used for parsing the */
-	/* parameter payload. */
-	u32             payload_size;
-	/* Parameters passed for in band payload */
-	struct adm_param_data_v5        params;
-} __packed;
-
 /* Returns the status and COPP ID to an #ADM_CMD_DEVICE_OPEN_V5 command.
  */
 #define ADM_CMDRSP_DEVICE_OPEN_V5                      0x00010329
@@ -639,43 +605,21 @@ struct adm_cmd_rsp_device_open_v5 {
 
 /* This command allows a query of one COPP parameter. */
 #define ADM_CMD_GET_PP_PARAMS_V5                                0x0001032A
+#define ADM_CMD_GET_PP_PARAMS_V6 0x0001035E
 
-/*  Payload an #ADM_CMD_GET_PP_PARAMS_V5 command. */
-struct adm_cmd_get_pp_params_v5 {
-	struct apr_hdr hdr;
-	u32                  data_payload_addr_lsw;
-	/* LSW of parameter data payload address.*/
+/*
+ * Structure of the ADM Get PP Params command. Parameter header must be
+ * packed correctly for either V2 or V3. Use q6core_pack_pp_params to pack the
+ * header correctly depending on Instance ID support.
+ */
+struct adm_cmd_get_pp_params {
+	struct apr_hdr apr_hdr;
 
-	u32                  data_payload_addr_msw;
-	/* MSW of parameter data payload address.*/
+	/* The memory mapping header to be used when requesting outband */
+	struct mem_mapping_hdr mem_hdr;
 
-	/* If the mem_map_handle is non zero,
-	 * on ACK, the ParamData payloads begin at
-	 * the address specified (out-of-band).
-	 */
-
-	u32                  mem_map_handle;
-	/* Memory map handle returned
-	 * by ADM_CMD_SHARED_MEM_MAP_REGIONS command.
-	 * If the mem_map_handle is 0, it implies that
-	 * the ACK's payload will contain the ParamData (in-band).
-	 */
-
-	u32                  module_id;
-	/* Unique ID of the module. */
-
-	u32                  param_id;
-	/* Unique ID of the parameter. */
-
-	u16                  param_max_size;
-	/* Maximum data size of the parameter
-	 *ID/module ID combination. This
-	 * field is a multiple of 4 bytes.
-	 */
-	u16                  reserved;
-	/* Reserved for future enhancements.
-	 * This field must be set to zero.
-	 */
+	/* Parameter header for in band payload. */
+	union param_hdrs param_hdr;
 } __packed;
 
 /* Returns parameter values
@@ -687,15 +631,49 @@ struct adm_cmd_get_pp_params_v5 {
  * which returns parameter values in response
  * to an #ADM_CMD_GET_PP_PARAMS_V5 command.
  * Immediately following this
- * structure is the adm_param_data_v5
+ * structure is the param_hdr_v1
  * structure containing the pre/postprocessing
  * parameter data. For an in-band
  * scenario, the variable payload depends
  * on the size of the parameter.
  */
 struct adm_cmd_rsp_get_pp_params_v5 {
-	u32                  status;
 	/* Status message (error code).*/
+	u32 status;
+
+	/* The header that identifies the subsequent parameter data */
+	struct param_hdr_v1 param_hdr;
+
+	/* The parameter data returned */
+	u32 param_data[0];
+} __packed;
+
+/*
+ * Returns parameter values in response to an #ADM_CMD_GET_PP_PARAMS_V5/6
+ * command.
+ */
+#define ADM_CMDRSP_GET_PP_PARAMS_V6 0x0001035F
+
+/*
+ * Payload of the #ADM_CMDRSP_GET_PP_PARAMS_V6 message,
+ * which returns parameter values in response
+ * to an #ADM_CMD_GET_PP_PARAMS_V6 command.
+ * Immediately following this
+ * structure is the param_hdr_v3
+ * structure containing the pre/postprocessing
+ * parameter data. For an in-band
+ * scenario, the variable payload depends
+ * on the size of the parameter.
+ */
+struct adm_cmd_rsp_get_pp_params_v6 {
+	/* Status message (error code).*/
+	u32 status;
+
+	/* The header that identifies the subsequent parameter data */
+	struct param_hdr_v3 param_hdr;
+
+	/* The parameter data returned */
+	u32 param_data[0];
 } __packed;
 
 /* Structure for holding soft stepping volume parameters. */
@@ -728,9 +706,40 @@ struct audproc_softvolume_params {
 #define AUDPROC_CHMIXER_PARAM_ID_COEFF                      0x00010342
 
 
+struct adm_cmd_set_pp_params_v5 {
+	struct apr_hdr hdr;
+	u32 payload_addr_lsw;
+	/* LSW of parameter data payload address.*/
+	u32 payload_addr_msw;
+	/* MSW of parameter data payload address.*/
+
+	u32 mem_map_handle;
+	/*
+	 * Memory map handle returned by ADM_CMD_SHARED_MEM_MAP_REGIONS
+	 * command.
+	 * If mem_map_handle is zero implies the message is in
+	 * the payload
+	 */
+
+	u32 payload_size;
+	/*
+	 * Size in bytes of the variable payload accompanying this
+	 * message or
+	 * in shared memory. This is used for parsing the parameter
+	 * payload.
+	 */
+} __packed;
+
 struct audproc_mfc_output_media_fmt {
 	struct adm_cmd_set_pp_params_v5 params;
-	struct adm_param_data_v5 data;
+	struct param_hdr_v1 data;
+	uint32_t sampling_rate;
+	uint16_t bits_per_sample;
+	uint16_t num_channels;
+	uint16_t channel_type[8];
+} __packed;
+
+struct audproc_mfc_param_media_fmt {
 	uint32_t sampling_rate;
 	uint16_t bits_per_sample;
 	uint16_t num_channels;
@@ -738,8 +747,6 @@ struct audproc_mfc_output_media_fmt {
 } __packed;
 
 struct audproc_volume_ctrl_master_gain {
-	struct adm_cmd_set_pp_params_v5 params;
-	struct adm_param_data_v5 data;
 	/* Linear gain in Q13 format. */
 	uint16_t                  master_gain;
 	/* Clients must set this field to zero. */
@@ -747,8 +754,6 @@ struct audproc_volume_ctrl_master_gain {
 } __packed;
 
 struct audproc_soft_step_volume_params {
-	struct adm_cmd_set_pp_params_v5 params;
-	struct adm_param_data_v5 data;
 /*
  * Period in milliseconds.
  * Supported values: 0 to 15000
@@ -770,7 +775,6 @@ struct audproc_soft_step_volume_params {
 } __packed;
 
 struct audproc_enable_param_t {
-	struct adm_cmd_set_pp_params_inband_v5 pp_params;
 	/*
 	 * Specifies whether the Audio processing module is enabled.
 	 * This parameter is generic/common parameter to configure or
@@ -1534,46 +1538,79 @@ struct afe_sidetone_iir_filter_config_params {
 #define AFE_PARAM_ID_LOOPBACK_GAIN_PER_PATH	0x00010206
 
 /* Used by RTAC */
-struct afe_rtac_set_param_v2 {
+struct afe_rtac_user_data_set_v2 {
+	/* Port interface and direction (Rx or Tx) to start. */
 	u16 port_id;
-/* Port interface and direction (Rx or Tx) to start. */
 
+	/* Actual size of the payload in bytes.
+	 * This is used for parsing the parameter payload.
+	 * Supported values: > 0
+	 */
 	u16 payload_size;
-/* Actual size of the payload in bytes.
- * This is used for parsing the parameter payload.
- * Supported values: > 0
- */
 
-u32 payload_address_lsw;
-/* LSW of 64 bit Payload address.
- * Address should be 32-byte,
- * 4kbyte aligned and must be contiguous memory.
- */
+	/* The header detailing the memory mapping for out of band. */
+	struct mem_mapping_hdr mem_hdr;
 
-u32 payload_address_msw;
-/* MSW of 64 bit Payload address.
- * In case of 32-bit shared memory address,
- * this field must be set to zero.
- * In case of 36-bit shared memory address,
- * bit-4 to bit-31 must be set to zero.
- * Address should be 32-byte, 4kbyte aligned
- * and must be contiguous memory.
- */
+	/* The parameter header for the parameter data to set */
+	struct param_hdr_v1 param_hdr;
 
-u32 mem_map_handle;
-/* Memory map handle returned by
- * AFE_SERVICE_CMD_SHARED_MEM_MAP_REGIONS commands.
- * Supported Values:
- * - NULL -- Message. The parameter data is in-band.
- * - Non-NULL -- The parameter data is Out-band.Pointer to
- * the physical address
- * in shared memory of the payload data.
- * An optional field is available if parameter
- * data is in-band:
- * afe_param_data_v2 param_data[...].
- * For detailed payload content, see the
- * afe_port_param_data_v2 structure.
- */
+	/* The parameter data to be filled when sent inband */
+	u32 *param_data;
+} __packed;
+
+struct afe_rtac_user_data_set_v3 {
+	/* Port interface and direction (Rx or Tx) to start. */
+	u16 port_id;
+	/* Reserved for future enhancements. Must be 0. */
+	u16 reserved;
+
+	/* The header detailing the memory mapping for out of band. */
+	struct mem_mapping_hdr mem_hdr;
+
+	/* The size of the parameter header and parameter data */
+	u32 payload_size;
+
+	/* The parameter header for the parameter data to set */
+	struct param_hdr_v3 param_hdr;
+
+	/* The parameter data to be filled when sent inband */
+	u32 *param_data;
+} __packed;
+
+struct afe_rtac_user_data_get_v2 {
+	/* Port interface and direction (Rx or Tx) to start. */
+	u16 port_id;
+
+	/* Actual size of the payload in bytes.
+	 * This is used for parsing the parameter payload.
+	 * Supported values: > 0
+	 */
+	u16 payload_size;
+
+	/* The header detailing the memory mapping for out of band. */
+	struct mem_mapping_hdr mem_hdr;
+
+	/* The module ID of the parameter to get */
+	u32 module_id;
+
+	/* The parameter ID of the parameter to get */
+	u32 param_id;
+
+	/* The parameter data to be filled when sent inband */
+	struct param_hdr_v1 param_hdr;
+} __packed;
+
+struct afe_rtac_user_data_get_v3 {
+	/* Port interface and direction (Rx or Tx) to start. */
+	u16 port_id;
+	/* Reserved for future enhancements. Must be 0. */
+	u16 reserved;
+
+	/* The header detailing the memory mapping for out of band. */
+	struct mem_mapping_hdr mem_hdr;
+
+	/* The parameter data to be filled when sent inband */
+	struct param_hdr_v3 param_hdr;
 } __packed;
 
 #define AFE_PORT_CMD_SET_PARAM_V2	0x000100EF
@@ -6571,6 +6608,7 @@ struct asm_stream_cmd_open_transcode_loopback_t {
 
 #define ASM_STREAM_CMD_FLUSH_READBUFS   0x00010C09
 #define ASM_STREAM_CMD_SET_PP_PARAMS_V2 0x00010DA1
+#define ASM_STREAM_CMD_SET_PP_PARAMS_V3 0x0001320D
 
 struct asm_stream_cmd_set_pp_params_v2 {
 	u32                  data_payload_addr_lsw;
@@ -6624,6 +6662,7 @@ struct asm_stream_param_data_v2 {
 } __packed;
 
 #define ASM_STREAM_CMD_GET_PP_PARAMS_V2		0x00010DA2
+#define ASM_STREAM_CMD_GET_PP_PARAMS_V3 0x0001320E
 
 struct asm_stream_cmd_get_pp_params_v2 {
 	u32                  data_payload_addr_lsw;
@@ -6801,6 +6840,7 @@ struct asm_aac_dual_mono_mapping_param {
 } __packed;
 
 #define ASM_STREAM_CMDRSP_GET_PP_PARAMS_V2 0x00010DA4
+#define ASM_STREAM_CMDRSP_GET_PP_PARAMS_V3 0x0001320F
 
 struct asm_stream_cmdrsp_get_pp_params_v2 {
 	u32                  status;
@@ -7576,12 +7616,6 @@ struct admx_mic_gain {
 	/*< Clients must set this field to zero. */
 } __packed;
 
-struct adm_set_mic_gain_params {
-	struct adm_cmd_set_pp_params_v5 params;
-	struct adm_param_data_v5 data;
-	struct admx_mic_gain mic_gain_data;
-} __packed;
-
 /* end_addtogroup audio_pp_param_ids */
 
 /* @ingroup audio_pp_module_ids
@@ -7939,56 +7973,23 @@ struct adm_qensemble_param_set_new_angle {
 
 #define ADM_CMD_GET_PP_TOPO_MODULE_LIST				0x00010349
 #define ADM_CMDRSP_GET_PP_TOPO_MODULE_LIST			0x00010350
+#define ADM_CMD_GET_PP_TOPO_MODULE_LIST_V2			0x00010360
+#define ADM_CMDRSP_GET_PP_TOPO_MODULE_LIST_V2			0x00010361
 #define AUDPROC_PARAM_ID_ENABLE					0x00010904
- /*
-  * Payload of the ADM_CMD_GET_PP_TOPO_MODULE_LIST command.
-  */
-struct adm_cmd_get_pp_topo_module_list_t {
-	struct apr_hdr hdr;
-	/* Lower 32 bits of the 64-bit parameter data payload address. */
-	uint32_t                  data_payload_addr_lsw;
-	/*
-	 * Upper 32 bits of the 64-bit parameter data payload address.
-	 *
-	 *
-	 * The size of the shared memory, if specified, must be large enough to
-	 * contain the entire parameter data payload, including the module ID,
-	 * parameter ID, parameter size, and parameter values.
-	 */
-	uint32_t                  data_payload_addr_msw;
-	/*
-	 *  Unique identifier for an address.
-	 *
-	 * This memory map handle is returned by the aDSP through the
-	 * #ADM_CMD_SHARED_MEM_MAP_REGIONS command.
-	 *
-	 * @values
-	 * - Non-NULL -- On acknowledgment, the parameter data payloads begin at
-	 * the address specified (out-of-band)
-	 * - NULL -- The acknowledgment's payload contains the parameter data
-	 * (in-band) @tablebulletend
-	 */
-	uint32_t                  mem_map_handle;
+/*
+ * Payload of the ADM_CMD_GET_PP_TOPO_MODULE_LIST command.
+ */
+struct adm_cmd_get_pp_topo_module_list {
+	struct apr_hdr apr_hdr;
+
+	/* The memory mapping header to be used when requesting out of band */
+	struct mem_mapping_hdr mem_hdr;
+
 	/*
 	 * Maximum data size of the list of modules. This
 	 * field is a multiple of 4 bytes.
 	 */
-	uint16_t                  param_max_size;
-	/* This field must be set to zero. */
-	uint16_t                  reserved;
-} __packed;
-
-/*
- * Payload of the ADM_CMDRSP_GET_PP_TOPO_MODULE_LIST message, which returns
- * module ids in response to an ADM_CMD_GET_PP_TOPO_MODULE_LIST command.
- * Immediately following this structure is the acknowledgment <b>module id
- * data variable payload</b> containing the pre/postprocessing module id
- * values. For an in-band scenario, the variable payload depends on the size
- * of the parameter.
- */
-struct adm_cmd_rsp_get_pp_topo_module_list_t {
-	/* Status message (error code). */
-	uint32_t                  status;
+	uint32_t param_max_size;
 } __packed;
 
 struct audproc_topology_module_id_info_t {
@@ -10888,18 +10889,14 @@ enum {
 #define AUDPROC_PARAM_ID_COMPRESSED_MUTE                 0x00010771
 
 struct adm_set_compressed_device_mute {
-	struct adm_cmd_set_pp_params_v5 command;
-	struct adm_param_data_v5 params;
-	u32    mute_on;
+	u32 mute_on;
 } __packed;
 
 #define AUDPROC_MODULE_ID_COMPRESSED_LATENCY             0x0001076E
 #define AUDPROC_PARAM_ID_COMPRESSED_LATENCY              0x0001076F
 
 struct adm_set_compressed_device_latency {
-	struct adm_cmd_set_pp_params_v5 command;
-	struct adm_param_data_v5 params;
-	u32    latency;
+	u32 latency;
 } __packed;
 
 #define VOICEPROC_MODULE_ID_GENERIC_TX                      0x00010EF6
@@ -10927,12 +10924,6 @@ struct adm_param_fluence_soundfocus_t {
 	uint8_t enables[MAX_SECTORS];
 	uint16_t gain_step;
 	uint16_t reserved;
-} __packed;
-
-struct adm_set_fluence_soundfocus_param {
-	struct adm_cmd_set_pp_params_v5 params;
-	struct adm_param_data_v5 data;
-	struct adm_param_fluence_soundfocus_t soundfocus_data;
 } __packed;
 
 struct adm_param_fluence_sourcetracking_t {
@@ -10964,10 +10955,4 @@ struct admx_sec_primary_mic_ch {
 	uint16_t reserved1;
 } __packed;
 
-
-struct adm_set_sec_primary_ch_params {
-	struct adm_cmd_set_pp_params_v5 params;
-	struct adm_param_data_v5 data;
-	struct admx_sec_primary_mic_ch sec_primary_mic_ch_data;
-} __packed;
 #endif /*_APR_AUDIO_V2_H_ */

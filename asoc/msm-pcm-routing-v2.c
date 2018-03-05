@@ -11517,10 +11517,11 @@ static int msm_routing_put_module_cfg_control(struct snd_kcontrol *kcontrol,
 	int ret = 0;
 	unsigned long copp;
 	struct msm_pcm_routing_bdai_data *bedai;
-	char *param_data = NULL;
-	uint32_t *update_param_data = NULL;
-	uint32_t param_size = sizeof(uint32_t) +
-			sizeof(struct adm_param_data_v5);
+	u8 *packed_params = NULL;
+	struct param_hdr_v3 param_hdr;
+	u32 packed_param_size = (sizeof(struct param_hdr_v3) +
+				 sizeof(uint32_t));
+
 	int dir = ucontrol->value.integer.value[0] ? SESSION_TYPE_TX :
 						     SESSION_TYPE_RX;
 	int app_type = ucontrol->value.integer.value[1];
@@ -11535,15 +11536,17 @@ static int msm_routing_put_module_cfg_control(struct snd_kcontrol *kcontrol,
 		  __func__, app_type, module_id,
 		  instance_id, param_id, param_value);
 
-	param_data = kzalloc(param_size, GFP_KERNEL);
-	if (!param_data)
+	packed_params = kzalloc(packed_param_size, GFP_KERNEL);
+	if (!packed_params)
 		return -ENOMEM;
 
-	update_param_data = (uint32_t *)param_data;
-	*update_param_data++ = module_id;
-	*update_param_data++ = param_id;
-	*update_param_data++ = sizeof(uint32_t);
-	*update_param_data++ = param_value;
+	memset(&param_hdr, 0, sizeof(param_hdr));
+	param_hdr.module_id = module_id;
+	param_hdr.instance_id = instance_id;
+	param_hdr.param_id = param_id;
+	param_hdr.param_size = sizeof(uint32_t);
+
+	packed_param_size = 0;
 
 	mutex_lock(&routing_lock);
 	for (be_id = 0; be_id < MSM_BACKEND_DAI_MAX; be_id++) {
@@ -11571,10 +11574,20 @@ static int msm_routing_put_module_cfg_control(struct snd_kcontrol *kcontrol,
 				if (!test_bit(copp_idx, &copp))
 					continue;
 
-				ret = adm_send_params_v5(bedai->port_id,
-							 copp_idx,
-							 param_data,
-							 param_size);
+				ret = q6common_pack_pp_params(packed_params,
+							&param_hdr,
+							(u8 *) &param_value,
+							&packed_param_size);
+				if (ret) {
+					pr_err("%s: Failed to pack params, error %d\n",
+					       __func__, ret);
+					goto done;
+				}
+
+				ret = adm_set_pp_params(bedai->port_id,
+							 copp_idx, NULL,
+							 packed_params,
+							 packed_param_size);
 				if (ret) {
 					pr_err("%s: Setting param failed with err=%d\n",
 						__func__, ret);
@@ -11586,7 +11599,7 @@ static int msm_routing_put_module_cfg_control(struct snd_kcontrol *kcontrol,
 	}
 done:
 	mutex_unlock(&routing_lock);
-	kfree(param_data);
+	kfree(packed_params);
 	return ret;
 }
 
@@ -11662,22 +11675,24 @@ int msm_routing_get_rms_value_control(struct snd_kcontrol *kcontrol,
 	int be_idx = 0;
 	char *param_value;
 	int *update_param_value;
-	uint32_t param_length = sizeof(uint32_t);
-	uint32_t param_payload_len = RMS_PAYLOAD_LEN * sizeof(uint32_t);
+	uint32_t param_size = (RMS_PAYLOAD_LEN + 1) * sizeof(uint32_t);
+	struct param_hdr_v3 param_hdr;
 
-	param_value = kzalloc(param_length + param_payload_len, GFP_KERNEL);
+	param_value = kzalloc(param_size, GFP_KERNEL);
 	if (!param_value)
 		return -ENOMEM;
 
+	memset(&param_hdr, 0, sizeof(param_hdr));
 	for (be_idx = 0; be_idx < MSM_BACKEND_DAI_MAX; be_idx++)
 		if (msm_bedais[be_idx].port_id == SLIMBUS_0_TX)
 			break;
 	if ((be_idx < MSM_BACKEND_DAI_MAX) && msm_bedais[be_idx].active) {
-		rc = adm_get_params(SLIMBUS_0_TX, 0,
-				RMS_MODULEID_APPI_PASSTHRU,
-				RMS_PARAM_FIRST_SAMPLE,
-				param_length + param_payload_len,
-				param_value);
+		param_hdr.module_id = RMS_MODULEID_APPI_PASSTHRU;
+		param_hdr.instance_id = INSTANCE_ID_0;
+		param_hdr.param_id = RMS_PARAM_FIRST_SAMPLE;
+		param_hdr.param_size = param_size;
+		rc = adm_get_pp_params(SLIMBUS_0_TX, 0, ADM_CLIENT_ID_DEFAULT,
+				       NULL, &param_hdr, (u8 *) param_value);
 		if (rc) {
 			pr_err("%s: get parameters failed:%d\n", __func__, rc);
 			kfree(param_value);
