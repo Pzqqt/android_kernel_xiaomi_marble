@@ -93,17 +93,11 @@ int adm_dts_eagle_get(int port_id, int copp_idx, int param_id,
 
 void adm_copp_mfc_cfg(int port_id, int copp_idx, int dst_sample_rate);
 
-int adm_get_params(int port_id, int copp_idx, uint32_t module_id,
-		   uint32_t param_id, uint32_t params_length, char *params);
-
 int adm_get_pp_params(int port_id, int copp_idx, uint32_t client_id,
 		      struct mem_mapping_hdr *mem_hdr,
 		      struct param_hdr_v3 *param_hdr, u8 *returned_param_data);
 
 int adm_send_params_v5(int port_id, int copp_idx, char *params,
-			      uint32_t params_length);
-
-int adm_dolby_dap_send_params(int port_id, int copp_idx, char *params,
 			      uint32_t params_length);
 
 int adm_set_pp_params(int port_id, int copp_idx,
