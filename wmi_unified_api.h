@@ -81,14 +81,7 @@ typedef qdf_nbuf_t wmi_buf_t;
 #define WMI_LOGP(args ...) \
 	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_FATAL, ## args)
 
-#define WMI_DEBUG_ALWAYS
 
-#ifdef WMI_DEBUG_ALWAYS
-#define WMI_LOGA(args ...) \
-	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_FATAL, ## args)
-#else
-#define WMI_LOGA(args ...)
-#endif
 
 #define PHYERROR_MAX_BUFFER_LENGTH 0x7F000000
 
