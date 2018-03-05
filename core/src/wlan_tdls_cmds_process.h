@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -140,8 +140,6 @@ struct tdls_add_sta_req {
  * @session_id: session id
  * @sta_id: sta id
  * @sta_type: sta type
- * @ucast_sig: unicast signature
- * @bcast_sig: broadcast signature
  * @tdls_oper: add peer type
  * @psoc: soc object
  */
@@ -153,8 +151,6 @@ struct tdls_add_sta_rsp {
 	uint8_t session_id;
 	uint16_t sta_id;
 	uint16_t sta_type;
-	uint8_t ucast_sig;
-	uint8_t bcast_sig;
 	enum tdls_add_oper tdls_oper;
 	struct wlan_objmgr_psoc *psoc;
 };
