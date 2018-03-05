@@ -215,7 +215,7 @@ pmo_core_psoc_update_dp_handle(struct wlan_objmgr_psoc *psoc, void *dp_hdl)
  */
 static inline void *pmo_core_psoc_get_dp_handle(struct wlan_objmgr_psoc *psoc)
 {
-	void *dp_hdl;
+	void *dp_hdl = NULL;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
@@ -289,7 +289,7 @@ pmo_core_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc, void *htc_hdl)
  */
 static inline void *pmo_core_psoc_get_htc_handle(struct wlan_objmgr_psoc *psoc)
 {
-	void *htc_hdl;
+	void *htc_hdl = NULL;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
