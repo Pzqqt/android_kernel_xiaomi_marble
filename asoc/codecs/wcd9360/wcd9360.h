@@ -14,7 +14,6 @@
 #define __WCD9360_H__
 
 #include <dsp/apr_audio-v2.h>
-#include "wcd9360-dsp-cntl.h"
 #include "../wcd9xxx-slimslave.h"
 #include "../wcd9xxx-common-v2.h"
 
@@ -73,21 +72,6 @@ enum {
 	WCD9360_TX14,
 	WCD9360_TX15,
 	WCD9360_TX_MAX,
-};
-
-enum {
-	INTERP_EAR = 0,
-	/* Headset and Lineout are not avalible in pahu */
-	INTERP_HPHL_NA,
-	INTERP_HPHR_NA,
-	INTERP_LO1_NA,
-	INTERP_LO2_NA,
-	INTERP_LO3_NA,
-	INTERP_LO4_NA,
-	INTERP_SPKR1,
-	INTERP_SPKR2,
-	INTERP_AUX,
-	INTERP_MAX,
 };
 
 /*
@@ -149,7 +133,7 @@ extern int pahu_cdc_mclk_enable(struct snd_soc_codec *codec, bool enable);
 extern int pahu_cdc_mclk_tx_enable(struct snd_soc_codec *codec, bool enable);
 extern int pahu_set_spkr_mode(struct snd_soc_codec *codec, int mode);
 extern int pahu_set_spkr_gain_offset(struct snd_soc_codec *codec, int offset);
-extern struct wcd_dsp_cntl *pahu_get_wcd_dsp_cntl(struct device *dev);
+extern void *pahu_get_wcd_dsp_cntl(struct device *dev);
 extern int wcd9360_get_micb_vout_ctl_val(u32 micb_mv);
 extern int pahu_codec_info_create_codec_entry(
 				struct snd_info_entry *codec_root,

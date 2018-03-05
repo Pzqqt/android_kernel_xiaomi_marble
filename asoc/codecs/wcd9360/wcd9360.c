@@ -154,6 +154,21 @@ static const struct snd_kcontrol_new name##_mux = \
 #define WCD9360_DIG_CORE_COLLAPSE_TIMER_MS  (5 * 1000)
 
 enum {
+	INTERP_EAR = 0,
+	/* Headset and Lineout are not avalible in pahu */
+	INTERP_HPHL_NA,
+	INTERP_HPHR_NA,
+	INTERP_LO1_NA,
+	INTERP_LO2_NA,
+	INTERP_LO3_NA,
+	INTERP_LO4_NA,
+	INTERP_SPKR1,
+	INTERP_SPKR2,
+	INTERP_AUX,
+	INTERP_MAX,
+};
+
+enum {
 	POWER_COLLAPSE,
 	POWER_RESUME,
 };
@@ -7904,7 +7919,7 @@ static int __pahu_enable_efuse_sensing(struct pahu_priv *pahu)
  *
  * This API gets the reference to codec's struct wcd_dsp_cntl
  */
-struct wcd_dsp_cntl *pahu_get_wcd_dsp_cntl(struct device *dev)
+void *pahu_get_wcd_dsp_cntl(struct device *dev)
 {
 	struct platform_device *pdev;
 	struct pahu_priv *pahu;
