@@ -43,7 +43,7 @@ void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc);
  */
 static inline bool pmo_core_get_wow_bus_suspend(struct wlan_objmgr_psoc *psoc)
 {
-	bool value;
+	bool value = false;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
@@ -267,7 +267,7 @@ pmo_core_psoc_update_power_save_mode(struct wlan_objmgr_psoc *psoc,
 static inline uint8_t
 pmo_core_psoc_get_power_save_mode(struct wlan_objmgr_psoc *psoc)
 {
-	uint8_t value;
+	uint8_t value = 0;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {

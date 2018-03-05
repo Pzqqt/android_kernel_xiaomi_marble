@@ -143,9 +143,19 @@ pmo_psoc_get_priv(struct wlan_objmgr_psoc *psoc)
 	return psoc_priv;
 }
 
+static inline bool __pmo_spinlock_bh_safe(struct pmo_psoc_priv_obj *psoc_ctx)
+{
+	if (!psoc_ctx)
+		return false;
+
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+
+	return true;
+}
+
 #define pmo_psoc_with_ctx(psoc, cursor) \
-	for (cursor = pmo_psoc_get_priv(psoc), qdf_spin_lock_bh(&cursor->lock);\
-	     cursor; \
+	for (cursor = pmo_psoc_get_priv(psoc); \
+	     __pmo_spinlock_bh_safe(cursor); \
 	     qdf_spin_unlock_bh(&cursor->lock), cursor = NULL)
 
 /* Tree Navigation: pdev */

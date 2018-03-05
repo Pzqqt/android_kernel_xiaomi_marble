@@ -227,7 +227,7 @@ void pmo_core_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
 
 void *pmo_core_psoc_get_hif_handle(struct wlan_objmgr_psoc *psoc)
 {
-	void *hif_hdl;
+	void *hif_hdl = NULL;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
@@ -249,7 +249,7 @@ void pmo_core_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
 
 void *pmo_core_psoc_get_txrx_handle(struct wlan_objmgr_psoc *psoc)
 {
-	void *txrx_hdl;
+	void *txrx_hdl = NULL;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
