@@ -4158,7 +4158,8 @@ static int dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 	pdev_id = pdev->pdev_id;
 	soc = pdev->soc;
 
-	pdev->monitor_vdev = NULL;
+	qdf_spin_lock_bh(&pdev->mon_lock);
+
 	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
@@ -4172,6 +4173,10 @@ static int dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
 			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
 	}
+
+	pdev->monitor_vdev = NULL;
+
+	qdf_spin_unlock_bh(&pdev->mon_lock);
 
 	return 0;
 }
