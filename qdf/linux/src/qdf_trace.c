@@ -2171,6 +2171,18 @@ static inline void print_to_console(char *str_buffer)
 }
 #endif
 
+#ifdef MULTI_IF_NAME
+static const char *qdf_trace_wlan_modname(void)
+{
+	return MULTI_IF_NAME;
+}
+#else
+static const char *qdf_trace_wlan_modname(void)
+{
+	return "wlan";
+}
+#endif
+
 void qdf_trace_msg_cmn(unsigned int idx,
 			QDF_MODULE_ID category,
 			QDF_TRACE_LEVEL verbose,
@@ -2223,7 +2235,7 @@ void qdf_trace_msg_cmn(unsigned int idx,
 
 		/* print the prefix string into the string buffer... */
 		n = scnprintf(str_buffer, QDF_TRACE_BUFFER_SIZE,
-			     "wlan: [%d:%2s:%s] ",
+			     "%s: [%d:%2s:%s] ", qdf_trace_wlan_modname(),
 			     in_interrupt() ? 0 : current->pid,
 			     VERBOSE_STR[verbose],
 			     g_qdf_category_name[category].category_name_str);
