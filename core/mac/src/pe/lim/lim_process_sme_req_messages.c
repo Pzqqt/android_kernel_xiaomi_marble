@@ -5714,10 +5714,8 @@ static void obss_color_collision_process_color_disable(tpAniSirGlobal mac_ctx,
 	qdf_mem_zero(&beacon_params, sizeof(beacon_params));
 	beacon_params.paramChangeBitmap |= PARAM_BSS_COLOR_CHANGED;
 	session->he_op.bss_col_disabled = 1;
-	session->he_bss_color_change.new_color = 0;
-	session->he_op.bss_color = 0;
-	beacon_params.bss_color = 0;
 	beacon_params.bss_color_disabled = 1;
+	beacon_params.bss_color = session->he_op.bss_color;
 
 	if (sch_set_fixed_beacon_fields(mac_ctx, session) !=
 	    eSIR_SUCCESS) {
@@ -5862,8 +5860,8 @@ void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	session_entry->he_bss_color_change.countdown =
 		BSS_COLOR_SWITCH_COUNTDOWN;
 	session_entry->he_bss_color_change.new_color = bss_color->bss_color;
-	beacon_params.bss_color_disabled =
-		session_entry->he_op.bss_col_disabled;
+	beacon_params.bss_color_disabled = 1;
+	beacon_params.bss_color = session_entry->he_op.bss_color;
 	session_entry->bss_color_changing = 1;
 
 	if (sch_set_fixed_beacon_fields(mac_ctx, session_entry) !=
