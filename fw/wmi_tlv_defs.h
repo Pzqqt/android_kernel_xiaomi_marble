@@ -909,6 +909,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_twt_del_dialog_complete_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_twt_pause_dialog_complete_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_twt_resume_dialog_complete_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_request_roam_scan_stats_cmd_fixed_param,
+  WMITLV_TAG_STRUC_wmi_roam_scan_stats_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1278,6 +1280,7 @@ typedef enum {
     OP(WMI_TWT_DEL_DIALOG_CMDID) \
     OP(WMI_TWT_PAUSE_DIALOG_CMDID) \
     OP(WMI_TWT_RESUME_DIALOG_CMDID) \
+    OP(WMI_REQUEST_ROAM_SCAN_STATS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1483,6 +1486,7 @@ typedef enum {
     OP(WMI_TWT_DEL_DIALOG_COMPLETE_EVENTID) \
     OP(WMI_TWT_PAUSE_DIALOG_COMPLETE_EVENTID) \
     OP(WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID) \
+    OP(WMI_ROAM_SCAN_STATS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -2857,6 +2861,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_LPI_START_SCAN_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_lpi_stop_scan_cmd_fixed_param, wmi_lpi_stop_scan_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_LPI_STOP_SCAN_CMDID);
+
+/* Request for roam stats Cmd */
+#define WMITLV_TABLE_WMI_REQUEST_ROAM_SCAN_STATS_CMDID(id,op,buf,len) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_request_roam_scan_stats_cmd_fixed_param, wmi_request_roam_scan_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_ROAM_SCAN_STATS_CMDID);
 
 #define WMITLV_TABLE_WMI_LPI_RESULT_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_lpi_result_event_fixed_param, wmi_lpi_result_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
@@ -4924,6 +4934,24 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TWT_PAUSE_DIALOG_COMPLETE_EVENTID);
 #define WMITLV_TABLE_WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_resume_dialog_complete_event_fixed_param, wmi_twt_resume_dialog_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID);
+
+/* Event to send roam scan stats */
+#define WMITLV_TABLE_WMI_ROAM_SCAN_STATS_EVENTID(id,op,buf,len) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_scan_stats_event_fixed_param, wmi_roam_scan_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, client_id, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_roaming_timestamp, timestamp, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, num_channels, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, chan_info, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, old_bssid, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, is_roaming_success, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, new_bssid, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, num_roam_candidates, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_roam_scan_trigger_reason, roam_reason, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, bssid, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, score, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, channel, WMITLV_SIZE_VAR) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, rssi, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SCAN_STATS_EVENTID);
 
 
 #ifdef __cplusplus

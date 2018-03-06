@@ -624,6 +624,8 @@ typedef enum {
     WMI_ROAM_BTM_CONFIG_CMDID,
     /** Enable or Disable Fast Initial Link Setup (FILS) feature */
     WMI_ENABLE_FILS_CMDID,
+    /** Request for roam scan stats */
+  WMI_REQUEST_ROAM_SCAN_STATS_CMDID,
 
     /** offload scan specific commands */
     /** set offload scan AP profile   */
@@ -1362,6 +1364,8 @@ typedef enum {
     WMI_ROAM_SYNCH_EVENTID,
     /** roam synch frame event */
     WMI_ROAM_SYNCH_FRAME_EVENTID,
+    /** various roam scan stats */
+  WMI_ROAM_SCAN_STATS_EVENTID,
 
     /** P2P disc found */
     WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
@@ -21406,6 +21410,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_TWT_DEL_DIALOG_CMDID);
         WMI_RETURN_STRING(WMI_TWT_PAUSE_DIALOG_CMDID);
         WMI_RETURN_STRING(WMI_TWT_RESUME_DIALOG_CMDID);
+        WMI_RETURN_STRING(WMI_REQUEST_ROAM_SCAN_STATS_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -22325,6 +22330,103 @@ typedef struct {
     /*  Max duration for dpd re-cal. Unit: ms */
     A_UINT32 dpd_dur_max_ms;
 } wmi_runtime_dpd_recal_cmd_fixed_param;
+
+typedef enum {
+    WMI_ROAM_TRIGGER_REASON_NONE = 0,
+    WMI_ROAM_TRIGGER_REASON_PER,
+    WMI_ROAM_TRIGGER_REASON_BMISS,
+    WMI_ROAM_TRIGGER_REASON_LOW_RSSI,
+    WMI_ROAM_TRIGGER_REASON_HIGH_RSSI,
+    WMI_ROAM_TRIGGER_REASON_PERIODIC,
+    WMI_ROAM_TRIGGER_REASON_MAWC,
+    WMI_ROAM_TRIGGER_REASON_DENSE,
+    WMI_ROAM_TRIGGER_REASON_BACKGROUND,
+    WMI_ROAM_TRIGGER_REASON_FORCED,
+    WMI_ROAM_TRIGGER_REASON_BTM,
+    WMI_ROAM_TRIGGER_REASON_UNIT_TEST,
+    WMI_ROAM_TRIGGER_REASON_MAX,
+} WMI_ROAM_TRIGGER_REASON_ID;
+
+/* value for DENSE roam trigger */
+#define WMI_RX_TRAFFIC_ABOVE_THRESHOLD 0x1
+#define WMI_TX_TRAFFIC_ABOVE_THRESHOLD 0x2
+
+typedef struct {
+    A_UINT32 trigger_id; /* id from WMI_ROAM_TRIGGER_REASON_ID */
+    /* interpretation of trigger value is as follows, for different trigger IDs
+     * ID = PER -> value = PER percentage
+     * ID = LOW_RSSI -> value = rssi in dB wrt noise floor,
+     * ID = HIGH_RSSI -> value = rssi in dB wrt to noise floor,
+     * ID = DENSE -> value = specification if it is tx or rx traffic threshold,
+     *      (see WMI_[RX,TX]_TRAFFIC_ABOVE_THRESHOLD)
+     * ID = PERIODIC -> value = periodicity in ms
+     *
+     * for other IDs trigger_value would be 0 (invalid)
+     */
+    A_UINT32 trigger_value;
+} wmi_roam_scan_trigger_reason;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_request_roam_scan_stats_cmd_fixed_param */
+    A_UINT32 vdev_id;
+} wmi_request_roam_scan_stats_cmd_fixed_param;
+
+typedef struct {
+    /*
+     * The timestamp is in units of ticks of a 19.2MHz clock.
+     * The timestamp is taken at roam scan start.
+     */
+    A_UINT32 lower32bit;
+    A_UINT32 upper32bit;
+} wmi_roaming_timestamp;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_scan_stats_event_fixed_param */
+    A_UINT32 vdev_id;
+    /* number of roam scans */
+    A_UINT32 num_roam_scans;
+    /* This TLV is followed by TLV's:
+     *   A_UINT32 client_id[num_roam_scans]; based on WMI_SCAN_CLIENT_ID
+     *   wmi_roaming_timestamp timestamp[num_roam_scans]; clock ticks at the time of scan start
+     *   A_UINT32 num_channels[num_roam_scans]; number of channels that are scanned
+     *   A_UINT32 chan_info[]; channel frequencies (MHz) in each scan
+     *       The num_channels[] elements specify how many elements there are
+     *       within chan_info[] for each scan.
+     *       For example, if num_channels = [2, 3] then chan_info will have 5
+     *       elements, with the first 2 elements from the first scan, and
+     *       the last 3 elements from the second scan.
+     *   wmi_mac_addr old_bssid[num_roam_scans]; bssid we are connected to at the time of roaming
+     *   A_UINT32 is_roaming_success[num_roam_scans]; value is 1 if roaming is successful, 0 if roaming failed
+     *   wmi_mac_addr new_bssid[num_roam_scans]; bssid after roaming
+     *   A_UINT32 num_of_roam_candidates[num_roam_scans]; number of candidates found in each roam scan
+     *   roam_scan_trigger_reason roam_reason[num_roam_scans]; reason for each roam scan
+     *   wmi_mac_addr bssid[]; bssids of candidates in each roam scan
+     *       The num_of_roam_candidates[] elements specify how many elements
+     *       there are within bssid[] for each scan.
+     *       For example, if num_of_roam_candidates = [2, 3] then bssid will
+     *       have 5 elements, with the first 2 elements from the first scan,
+     *       and the last 3 elements from the second scan.
+     *   A_UINT32 score[]; score of candidates in each roam scan
+     *       The num_of_roam_candidates[] elements specify how many elements
+     *       there are within score[] for each scan.
+     *       For example, if num_of_roam_candidates = [2, 3] then score will
+     *       have 5 elements, with the first 2 elements from the first scan,
+     *       and the last 3 elements from the second scan.
+     *   A_UINT32 channel[]; channel frequency (MHz) of candidates in each roam scan
+     *       The num_of_roam_candidates[] elements specify how many elements
+     *       there are within channel[] for each scan.
+     *       For example, if num_of_roam_candidates = [2, 3] then channel will
+     *       have 5 elements, with the first 2 elements from the first scan,
+     *       and the last 3 elements from the second scan.
+     *   A_UINT32 rssi[]; rssi in dB w.r.t. noise floor of candidates
+     *       in each roam scan.
+     *       The num_of_roam_candidates[] elements specify how many elements
+     *       there are within rssi[] for each scan.
+     *       For example, if num_of_roam_candidates = [2, 3] then rssi will
+     *       have 5 elements, with the first 2 elements from the first scan,
+     *       and the last 3 elements from the second scan.
+     */
+} wmi_roam_scan_stats_event_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
