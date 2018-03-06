@@ -3257,7 +3257,6 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_vdev *vdev = qdf_mem_malloc(sizeof(*vdev));
-	int tx_ring_size;
 
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -3292,7 +3291,6 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	vdev->rx_decap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
 	vdev->dscp_tid_map_id = 0;
 	vdev->mcast_enhancement_en = 0;
-	tx_ring_size = wlan_cfg_tx_ring_size(soc->wlan_cfg_ctx);
 
 	/* TODO: Initialize default HTT meta data that will be used in
 	 * TCL descriptors for packets transmitted from this VDEV
@@ -3305,10 +3303,6 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	pdev->vdev_count++;
 
 	dp_tx_vdev_attach(vdev);
-
-	if (QDF_STATUS_SUCCESS != dp_tx_flow_pool_map_handler(pdev, vdev_id,
-					FLOW_TYPE_VDEV, vdev_id, tx_ring_size))
-		goto fail1;
 
 
 	if ((soc->intr_mode == DP_INTR_POLL) &&
@@ -3337,9 +3331,6 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 
 	return (struct cdp_vdev *)vdev;
 
-fail1:
-	dp_tx_vdev_detach(vdev);
-	qdf_mem_free(vdev);
 fail0:
 	return NULL;
 }
@@ -3476,8 +3467,6 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	}
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
-	dp_tx_flow_pool_unmap_handler(pdev, vdev->vdev_id, FLOW_TYPE_VDEV,
-		vdev->vdev_id);
 	dp_tx_vdev_detach(vdev);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 		FL("deleting vdev object %pK (%pM)"), vdev, vdev->mac_addr.raw);
@@ -7033,6 +7022,8 @@ static struct cdp_misc_ops dp_ops_misc = {
 static struct cdp_flowctl_ops dp_ops_flowctl = {
 	/* WIFI 3.0 DP implement as required. */
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
+	.flow_pool_map_handler = dp_tx_flow_pool_map,
+	.flow_pool_unmap_handler = dp_tx_flow_pool_unmap,
 	.register_pause_cb = dp_txrx_register_pause_cb,
 	.dump_flow_pool_info = dp_tx_dump_flow_pool_info,
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */

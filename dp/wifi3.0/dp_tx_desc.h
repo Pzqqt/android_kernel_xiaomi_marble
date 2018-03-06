@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -69,6 +69,10 @@ void dp_tx_flow_control_deinit(struct dp_soc *);
 
 QDF_STATUS dp_txrx_register_pause_cb(struct cdp_soc_t *soc,
 	tx_pause_callback pause_cb);
+QDF_STATUS dp_tx_flow_pool_map(struct cdp_soc_t *soc, struct cdp_pdev *pdev,
+				uint8_t vdev_id);
+void dp_tx_flow_pool_unmap(struct cdp_soc_t *soc, struct cdp_pdev *pdev,
+			   uint8_t vdev_id);
 void dp_tx_clear_flow_pool_stats(struct dp_soc *soc);
 struct dp_tx_desc_pool_s *dp_tx_create_flow_pool(struct dp_soc *soc,
 	uint8_t flow_pool_id, uint16_t flow_pool_size);

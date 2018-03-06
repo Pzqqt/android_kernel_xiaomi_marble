@@ -868,9 +868,16 @@ struct cdp_cfg_ops {
  * @dump_flow_pool_info:
  */
 struct cdp_flowctl_ops {
+	QDF_STATUS (*flow_pool_map_handler)(struct cdp_soc_t *soc,
+					    struct cdp_pdev *pdev,
+					    uint8_t vdev_id);
+	void (*flow_pool_unmap_handler)(struct cdp_soc_t *soc,
+					struct cdp_pdev *pdev,
+					uint8_t vdev_id);
 	QDF_STATUS (*register_pause_cb)(struct cdp_soc_t *soc,
 					tx_pause_callback);
 	void (*set_desc_global_pool_size)(uint32_t num_msdu_desc);
+
 	void (*dump_flow_pool_info)(void *);
 };
 
