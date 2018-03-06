@@ -2729,8 +2729,11 @@ typedef struct {
     A_UINT32 num_ns_ext_tuples_cfg;
 
     /**
-     * size (in bytes) of the buffer the FW shall allocate to store
-     * packet filtering instructions
+     * size (in bytes) of the buffer the FW shall allocate per vdev
+     * firmware can dynamic allocate memory (or disable)
+     * packet filtering feature.
+     * 0 - fw chooses its default value
+     * -1 (0XFFFFFFFF) - disable APF
      */
     A_UINT32 bpf_instruction_size;
 
@@ -2793,6 +2796,26 @@ typedef struct {
      * configuration specification.
      */
     A_UINT32 max_nlo_ssids;
+
+    /**
+     * num_packet_filters: the num that host requests fw to support for
+     * pktfilter in total, then firmware can dynamic allocate
+     * memory(or disable) pktfilter feature.
+     *
+     * 0 -  fw chooses its default value.
+     * -1(0XFFFFFFFF)- disable pktfilter.
+     */
+    A_UINT32 num_packet_filters;
+
+    /**
+     * num_max_sta_vdevs: the max num for the sta vdevs
+     * fw will use it to config the memory of offload features that
+     * are only for sta vdevs.
+     * p2p client should be included.
+     *
+     *  0 - fw chooses its default value: 'num_vdevs' of this structure.
+     */
+    A_UINT32 num_max_sta_vdevs;
 } wmi_resource_config;
 
 #define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
