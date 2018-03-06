@@ -1641,6 +1641,8 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 
 	ppdu_desc->ppdu_end_timestamp = ppdu_desc->ppdu_start_timestamp +
 					ppdu_desc->tx_duration;
+	/* Ack time stamp is same as end time stamp*/
+	ppdu_desc->ack_timestamp = ppdu_desc->ppdu_end_timestamp;
 
 	tag_buf++;
 
