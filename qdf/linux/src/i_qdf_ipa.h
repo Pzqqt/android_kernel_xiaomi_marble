@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@
 
 #ifndef _I_QDF_IPA_H
 #define _I_QDF_IPA_H
+
+#ifdef IPA_OFFLOAD
 
 #include <linux/ipa.h>
 
@@ -482,6 +484,23 @@ typedef struct ipa_ioc_rx_intf_prop __qdf_ipa_ioc_rx_intf_prop_t;
 
 typedef struct ipa_wlan_hdr_attrib_val __qdf_ipa_wlan_hdr_attrib_val_t;
 
+#define __QDF_IPA_SET_META_MSG_TYPE(meta, msg_type)	\
+	__qdf_ipa_set_meta_msg_type(meta, msg_type)
+
+#define __QDF_IPA_RM_RESOURCE_GRANTED IPA_RM_RESOURCE_GRANTED
+#define __QDF_IPA_RM_RESOURCE_RELEASED IPA_RM_RESOURCE_RELEASED
+
+#define __QDF_IPA_RM_RESOURCE_WLAN_PROD IPA_RM_RESOURCE_WLAN_PROD
+#define __QDF_IPA_RM_RESOURCE_WLAN_CONS IPA_RM_RESOURCE_WLAN_CONS
+#define __QDF_IPA_RM_RESOURCE_APPS_CONS IPA_RM_RESOURCE_APPS_CONS
+
+#define __QDF_IPA_VOLTAGE_LEVEL IPA_VOLTAGE_SVS
+
+#define __QDF_IPA_CLIENT_WLAN1_PROD IPA_CLIENT_WLAN1_PROD
+#define __QDF_IPA_CLIENT_WLAN2_CONS IPA_CLIENT_WLAN2_CONS
+#define __QDF_IPA_CLIENT_WLAN3_CONS IPA_CLIENT_WLAN3_CONS
+#define __QDF_IPA_CLIENT_WLAN4_CONS IPA_CLIENT_WLAN4_CONS
+
 /*
  * Resume / Suspend
  */
@@ -886,4 +905,14 @@ static inline int __qdf_ipa_register_ipa_ready_cb(
 	return ipa_register_ipa_ready_cb(ipa_ready_cb, user_data);
 }
 
+#ifdef FEATURE_METERING
+static inline int __qdf_ipa_broadcast_wdi_quota_reach_ind(uint32_t index,
+							  uint64_t quota_bytes)
+{
+	return ipa_broadcast_wdi_quota_reach_ind(index, quota_bytes);
+}
+#endif
+
+void __qdf_ipa_set_meta_msg_type(__qdf_ipa_msg_meta_t *meta, int type);
+#endif /* IPA_OFFLOAD */
 #endif /* _I_QDF_IPA_H */

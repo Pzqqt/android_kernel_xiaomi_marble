@@ -22,6 +22,8 @@
 #ifndef _QDF_IPA_WDI3_H
 #define _QDF_IPA_WDI3_H
 
+#ifdef IPA_OFFLOAD
+
 #ifdef CONFIG_IPA_WDI_UNIFIED_API
 
 #include <qdf_ipa.h>
@@ -341,4 +343,5 @@ static inline int qdf_ipa_wdi3_set_perf_profile(
 
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */
 
-#endif
+#endif /* IPA_OFFLOAD */
+#endif /* _QDF_IPA_WDI3_H */

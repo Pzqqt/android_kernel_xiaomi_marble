@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,39 @@
 #ifndef _QDF_IPA_H
 #define _QDF_IPA_H
 
+#ifdef IPA_OFFLOAD
+
 #include <i_qdf_ipa.h>
+
+/**
+ * enum qdf_ipa_wlan_event - QDF IPA events
+ * @QDF_IPA_CLIENT_CONNECT: Client Connects
+ * @QDF_IPA_CLIENT_DISCONNECT: Client Disconnects
+ * @QDF_IPA_AP_CONNECT: SoftAP is started
+ * @QDF_IPA_AP_DISCONNECT: SoftAP is stopped
+ * @QDF_IPA_STA_CONNECT: STA associates to AP
+ * @QDF_IPA_STA_DISCONNECT: STA dissociates from AP
+ * @QDF_IPA_CLIENT_CONNECT_EX: Peer associates/re-associates to softap
+ * @QDF_SWITCH_TO_SCC: WLAN interfaces in scc mode
+ * @QDF_SWITCH_TO_MCC: WLAN interfaces in mcc mode
+ * @QDF_WDI_ENABLE: WDI enable complete
+ * @QDF_WDI_DISABLE: WDI teardown
+ * @QDF_IPA_WLAN_EVENT_MAX: Max value for the enum
+ */
+typedef enum {
+	QDF_IPA_CLIENT_CONNECT,
+	QDF_IPA_CLIENT_DISCONNECT,
+	QDF_IPA_AP_CONNECT,
+	QDF_IPA_AP_DISCONNECT,
+	QDF_IPA_STA_CONNECT,
+	QDF_IPA_STA_DISCONNECT,
+	QDF_IPA_CLIENT_CONNECT_EX,
+	QDF_SWITCH_TO_SCC,
+	QDF_SWITCH_TO_MCC,
+	QDF_WDI_ENABLE,
+	QDF_WDI_DISABLE,
+	QDF_IPA_WLAN_EVENT_MAX
+} qdf_ipa_wlan_event;
 
 /**
  * qdf_ipa_wdi_meter_evt_type_t - type of event client callback is
@@ -199,6 +231,23 @@ typedef __qdf_ipa_ioc_rx_intf_prop_t qdf_ipa_ioc_rx_intf_prop_t;
 typedef __qdf_ipa_wlan_hdr_attrib_val_t qdf_ipa_wlan_hdr_attrib_val_t;
 typedef int (*qdf_ipa_msg_pull_fn)(void *buff, u32 len, u32 type);
 typedef void (*qdf_ipa_ready_cb)(void *user_data);
+
+#define QDF_IPA_SET_META_MSG_TYPE(meta, msg_type) \
+	__QDF_IPA_SET_META_MSG_TYPE(meta, msg_type)
+
+#define QDF_IPA_RM_RESOURCE_GRANTED __QDF_IPA_RM_RESOURCE_GRANTED
+#define QDF_IPA_RM_RESOURCE_RELEASED __QDF_IPA_RM_RESOURCE_RELEASED
+
+#define QDF_IPA_VOLTAGE_LEVEL __QDF_IPA_VOLTAGE_LEVEL
+
+#define QDF_IPA_RM_RESOURCE_WLAN_PROD __QDF_IPA_RM_RESOURCE_WLAN_PROD
+#define QDF_IPA_RM_RESOURCE_WLAN_CONS __QDF_IPA_RM_RESOURCE_WLAN_CONS
+#define QDF_IPA_RM_RESOURCE_APPS_CONS __QDF_IPA_RM_RESOURCE_APPS_CONS
+
+#define QDF_IPA_CLIENT_WLAN1_PROD __QDF_IPA_CLIENT_WLAN1_PROD
+#define QDF_IPA_CLIENT_WLAN2_CONS __QDF_IPA_CLIENT_WLAN2_CONS
+#define QDF_IPA_CLIENT_WLAN3_CONS __QDF_IPA_CLIENT_WLAN3_CONS
+#define QDF_IPA_CLIENT_WLAN4_CONS __QDF_IPA_CLIENT_WLAN4_CONS
 
 /*
  * Resume / Suspend
@@ -590,4 +639,12 @@ static inline int qdf_ipa_register_ipa_ready_cb(
 	return __qdf_ipa_register_ipa_ready_cb(qdf_ipa_ready_cb, user_data);
 }
 
+#ifdef FEATURE_METERING
+static inline int qdf_ipa_broadcast_wdi_quota_reach_ind(uint32_t index,
+							uint64_t quota_bytes)
+{
+	return __qdf_ipa_broadcast_wdi_quota_reach_ind(index, quota_bytes);
+}
+#endif
+#endif /* IPA_OFFLOAD */
 #endif /* _QDF_IPA_H */
