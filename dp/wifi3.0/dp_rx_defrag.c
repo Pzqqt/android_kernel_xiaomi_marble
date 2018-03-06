@@ -134,6 +134,12 @@ void dp_rx_defrag_waitlist_flush(struct dp_soc *soc)
 			break;
 
 		tid = rx_reorder->tid;
+		if (tid >= DP_MAX_TIDS) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "%s: TID out of bounds: %d", __func__, tid);
+			qdf_assert(0);
+			continue;
+		}
 		/* get index 0 of the rx_reorder array */
 		rx_reorder_base = rx_reorder - tid;
 		peer =
