@@ -171,81 +171,6 @@ fail:
 }
 
 /**
- * p2p_execute_cancel_roc_req() - Execute cancel roc request
- * @roc_ctx: remain on channel request
- *
- * This function stop roc timer, abort scan and unregister mgmt rx
- * callbak.
- *
- * Return: QDF_STATUS_SUCCESS - in case of success
- */
-static QDF_STATUS p2p_execute_cancel_roc_req(
-	struct p2p_roc_context *roc_ctx)
-{
-	QDF_STATUS status;
-	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
-
-	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
-		p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
-		roc_ctx->scan_id, roc_ctx->tx_ctx, roc_ctx->chan,
-		roc_ctx->phy_mode, roc_ctx->duration,
-		roc_ctx->roc_type, roc_ctx->roc_state);
-
-	roc_ctx->roc_state = ROC_STATE_CANCEL_IN_PROG;
-	qdf_event_reset(&p2p_soc_obj->cancel_roc_done);
-	status = qdf_mc_timer_stop(&roc_ctx->roc_timer);
-	if (status != QDF_STATUS_SUCCESS)
-		p2p_err("Failed to stop roc timer, roc %pK", roc_ctx);
-
-	status = p2p_scan_abort(roc_ctx);
-	if (status != QDF_STATUS_SUCCESS) {
-		p2p_err("Failed to abort scan, status:%d", status);
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * p2p_roc_timeout() - Callback for roc timeout
- * @pdata: pointer to p2p soc private object
- *
- * This function is callback for roc time out.
- *
- * Return: None
- */
-static void p2p_roc_timeout(void *pdata)
-{
-	struct p2p_roc_context *roc_ctx;
-	struct p2p_soc_priv_obj *p2p_soc_obj;
-
-	p2p_debug("p2p soc obj:%pK", pdata);
-
-	p2p_soc_obj = pdata;
-	if (!p2p_soc_obj) {
-		p2p_err("Invalid p2p soc object");
-		return;
-	}
-
-	roc_ctx = p2p_find_current_roc_ctx(p2p_soc_obj);
-	if (!roc_ctx) {
-		p2p_debug("No P2P roc is pending");
-		return;
-	}
-
-	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
-		roc_ctx->p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
-		roc_ctx->scan_id, roc_ctx->tx_ctx, roc_ctx->chan,
-		roc_ctx->phy_mode, roc_ctx->duration,
-		roc_ctx->roc_type, roc_ctx->roc_state);
-
-	if (roc_ctx->roc_state == ROC_STATE_CANCEL_IN_PROG) {
-		p2p_err("Cancellation already in progress");
-		return;
-	}
-	p2p_execute_cancel_roc_req(roc_ctx);
-}
-
-/**
  * p2p_send_roc_event() - Send roc event
  * @roc_ctx: remain on channel request
  * @evt: roc event information
@@ -322,6 +247,86 @@ static QDF_STATUS p2p_destroy_roc_ctx(struct p2p_roc_context *roc_ctx,
 	qdf_mem_free(roc_ctx);
 
 	return status;
+}
+
+/**
+ * p2p_execute_cancel_roc_req() - Execute cancel roc request
+ * @roc_ctx: remain on channel request
+ *
+ * This function stop roc timer, abort scan and unregister mgmt rx
+ * callbak.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static QDF_STATUS p2p_execute_cancel_roc_req(
+	struct p2p_roc_context *roc_ctx)
+{
+	QDF_STATUS status;
+	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
+
+	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+		p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
+		roc_ctx->scan_id, roc_ctx->tx_ctx, roc_ctx->chan,
+		roc_ctx->phy_mode, roc_ctx->duration,
+		roc_ctx->roc_type, roc_ctx->roc_state);
+
+	roc_ctx->roc_state = ROC_STATE_CANCEL_IN_PROG;
+	qdf_event_reset(&p2p_soc_obj->cancel_roc_done);
+	status = qdf_mc_timer_stop(&roc_ctx->roc_timer);
+	if (status != QDF_STATUS_SUCCESS)
+		p2p_err("Failed to stop roc timer, roc %pK", roc_ctx);
+
+	status = p2p_scan_abort(roc_ctx);
+	if (status != QDF_STATUS_SUCCESS) {
+		p2p_err("Failed to abort scan, status:%d, destroy roc %pK",
+			status, roc_ctx);
+		qdf_mc_timer_destroy(&roc_ctx->roc_timer);
+		p2p_destroy_roc_ctx(roc_ctx, true, true);
+		qdf_event_set(&p2p_soc_obj->cancel_roc_done);
+		return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * p2p_roc_timeout() - Callback for roc timeout
+ * @pdata: pointer to p2p soc private object
+ *
+ * This function is callback for roc time out.
+ *
+ * Return: None
+ */
+static void p2p_roc_timeout(void *pdata)
+{
+	struct p2p_roc_context *roc_ctx;
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+
+	p2p_debug("p2p soc obj:%pK", pdata);
+
+	p2p_soc_obj = pdata;
+	if (!p2p_soc_obj) {
+		p2p_err("Invalid p2p soc object");
+		return;
+	}
+
+	roc_ctx = p2p_find_current_roc_ctx(p2p_soc_obj);
+	if (!roc_ctx) {
+		p2p_debug("No P2P roc is pending");
+		return;
+	}
+
+	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+		roc_ctx->p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
+		roc_ctx->scan_id, roc_ctx->tx_ctx, roc_ctx->chan,
+		roc_ctx->phy_mode, roc_ctx->duration,
+		roc_ctx->roc_type, roc_ctx->roc_state);
+
+	if (roc_ctx->roc_state == ROC_STATE_CANCEL_IN_PROG) {
+		p2p_err("Cancellation already in progress");
+		return;
+	}
+	p2p_execute_cancel_roc_req(roc_ctx);
 }
 
 /**
