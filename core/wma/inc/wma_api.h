@@ -75,6 +75,10 @@ enum GEN_PARAM {
  * @vht_5g: entire VHT cap for 5G band in terms of 32 bit flag
  * @he_2g: entire HE cap for 2G band in terms of 32 bit flag
  * @he_5g: entire HE cap for 5G band in terms of 32 bit flag
+ * @tx_chain_mask_2G: tx chain mask for 2g
+ * @rx_chain_mask_2G: rx chain mask for 2g
+ * @tx_chain_mask_5G: tx chain mask for 5g
+ * @rx_chain_mask_5G: rx chain mask for 5g
  */
 struct wma_caps_per_phy {
 	uint32_t ht_2g;
@@ -83,6 +87,10 @@ struct wma_caps_per_phy {
 	uint32_t vht_5g;
 	uint32_t he_2g;
 	uint32_t he_5g;
+	uint32_t tx_chain_mask_2G;
+	uint32_t rx_chain_mask_2G;
+	uint32_t tx_chain_mask_5G;
+	uint32_t rx_chain_mask_5G;
 };
 
 

@@ -5897,6 +5897,11 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 	caps_per_phy->he_2g = mac_phy_cap[phyid].he_cap_info_2G;
 	caps_per_phy->he_5g = mac_phy_cap[phyid].he_cap_info_5G;
 
+	caps_per_phy->tx_chain_mask_2G = mac_phy_cap->tx_chain_mask_2G;
+	caps_per_phy->rx_chain_mask_2G = mac_phy_cap->rx_chain_mask_2G;
+	caps_per_phy->tx_chain_mask_5G = mac_phy_cap->tx_chain_mask_5G;
+	caps_per_phy->rx_chain_mask_5G = mac_phy_cap->rx_chain_mask_5G;
+
 	return QDF_STATUS_SUCCESS;
 }
 
