@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -51,17 +51,16 @@ struct scheduler_ctx *scheduler_get_context(void)
 }
 
 
-static QDF_STATUS scheduler_all_queues_init(
-			struct scheduler_ctx *sched_ctx)
+static QDF_STATUS scheduler_all_queues_init(struct scheduler_ctx *sched_ctx)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	int i;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("enter"));
+	sched_enter();
+
 	if (!sched_ctx) {
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Null params being passed", __func__);
+		sched_err("sched_ctx is null");
+		QDF_DEBUG_PANIC();
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -69,45 +68,41 @@ static QDF_STATUS scheduler_all_queues_init(
 	if (QDF_STATUS_SUCCESS != status)
 		return status;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-		QDF_TRACE_LEVEL_DEBUG, FL("free msg queue init complete"));
+	sched_debug("free msg queue init complete");
 
 	/* Initialize all message queues */
 	for (i = 0; i < SCHEDULER_NUMBER_OF_MSG_QUEUE; i++) {
-		status = scheduler_mq_init(
-				&sched_ctx->queue_ctx.sch_msg_q[i]);
+		status = scheduler_mq_init(&sched_ctx->queue_ctx.sch_msg_q[i]);
 		if (QDF_STATUS_SUCCESS != status)
 			return status;
 	}
+
 	/* Initialize all qid to qidx mapping to invalid values */
 	for (i = 0; i < QDF_MODULE_ID_MAX; i++)
 		sched_ctx->queue_ctx.scheduler_msg_qid_to_qidx[i] =
 					SCHEDULER_NUMBER_OF_MSG_QUEUE;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("exit"));
+	sched_exit();
 
 	return status;
 }
 
 
-static QDF_STATUS scheduler_all_queues_deinit(
-		struct scheduler_ctx *sched_ctx)
+static QDF_STATUS scheduler_all_queues_deinit(struct scheduler_ctx *sched_ctx)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int i;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("enter"));
+	sched_enter();
+
 	if (!sched_ctx) {
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Null params being passed", __func__);
+		sched_err("sched_ctx is null");
+		QDF_DEBUG_PANIC();
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	scheduler_mq_deinit(&sched_ctx->queue_ctx.free_msg_q);
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-		  QDF_TRACE_LEVEL_DEBUG, FL("free msg queue inited"));
+	sched_debug("free msg queue inited");
 
 	/* De-Initialize all message queues */
 	for (i = 0; i < SCHEDULER_NUMBER_OF_MSG_QUEUE; i++)
@@ -118,58 +113,68 @@ static QDF_STATUS scheduler_all_queues_deinit(
 		sched_ctx->queue_ctx.scheduler_msg_qid_to_qidx[i] =
 					SCHEDULER_NUMBER_OF_MSG_QUEUE;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("exit"));
-	return status;
+	sched_exit();
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS scheduler_mq_init(struct scheduler_mq_type *msg_q)
 {
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("Enter"));
-	if (msg_q == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-			  "%s: NULL pointer passed", __func__);
+	sched_enter();
+
+	if (!msg_q) {
+		sched_err("msg_q is null");
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	/* Now initialize the lock */
 	qdf_spinlock_create(&msg_q->mq_lock);
+
 	/* Now initialize the List data structure */
 	qdf_list_create(&msg_q->mq_list, SCHEDULER_CORE_MAX_MESSAGES);
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("Exit"));
+
+	sched_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
 
 void scheduler_mq_deinit(struct scheduler_mq_type *msg_q)
 {
-	if (msg_q == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-				"%s: NULL pointer passed", __func__);
-		return;
-	}
+	if (!msg_q)
+		sched_err("msg_q is null");
 }
 
 void scheduler_mq_put(struct scheduler_mq_type *msg_q,
-			struct scheduler_msg_wrapper *msg_wrapper)
+		      struct scheduler_msg_wrapper *msg_wrapper)
 {
-	if (msg_q == NULL || msg_wrapper == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-				"%s: NULL pointer passed", __func__);
+	if (!msg_q) {
+		sched_err("msg_q is null");
 		return;
 	}
+
+	if (!msg_wrapper) {
+		sched_err("msg_wrapper is null");
+		return;
+	}
+
 	qdf_spin_lock_irqsave(&msg_q->mq_lock);
 	qdf_list_insert_back(&msg_q->mq_list, &msg_wrapper->msg_node);
 	qdf_spin_unlock_irqrestore(&msg_q->mq_lock);
-
 }
 
 void scheduler_mq_put_front(struct scheduler_mq_type *msg_q,
-			struct scheduler_msg_wrapper *msg_wrapper)
+			    struct scheduler_msg_wrapper *msg_wrapper)
 {
-	if ((msg_q == NULL) || (msg_wrapper == NULL)) {
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-				"%s: NULL pointer passed", __func__);
+	if (!msg_q) {
+		sched_err("msg_q is null");
 		return;
 	}
+
+	if (!msg_wrapper) {
+		sched_err("msg_wrapper is null");
+		return;
+	}
+
 	qdf_spin_lock_irqsave(&msg_q->mq_lock);
 	qdf_list_insert_front(&msg_q->mq_list, &msg_wrapper->msg_node);
 	qdf_spin_unlock_irqrestore(&msg_q->mq_lock);
@@ -180,16 +185,14 @@ struct scheduler_msg_wrapper *scheduler_mq_get(struct scheduler_mq_type *msg_q)
 	qdf_list_node_t *listptr;
 	struct scheduler_msg_wrapper *msg_wrapper = NULL;
 
-	if (msg_q == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-				"%s: NULL pointer passed", __func__);
+	if (!msg_q) {
+		sched_err("msg_q is null");
 		return NULL;
 	}
 
 	qdf_spin_lock_irqsave(&msg_q->mq_lock);
 	if (qdf_list_empty(&msg_q->mq_list)) {
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_WARN,
-			  "%s: Scheduler Message Queue is empty", __func__);
+		sched_warn("Scheduler Message Queue is empty");
 	} else {
 		listptr = msg_q->mq_list.anchor.next;
 		msg_wrapper = (struct scheduler_msg_wrapper *)
@@ -199,22 +202,23 @@ struct scheduler_msg_wrapper *scheduler_mq_get(struct scheduler_mq_type *msg_q)
 		qdf_list_remove_node(&msg_q->mq_list, listptr);
 	}
 	qdf_spin_unlock_irqrestore(&msg_q->mq_lock);
-	return msg_wrapper;
 
+	return msg_wrapper;
 }
 
 bool scheduler_is_mq_empty(struct scheduler_mq_type *msg_q)
 {
-	bool is_empty = false;
+	bool is_empty;
 
-	if (msg_q == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-				"%s: NULL pointer passed", __func__);
-		return QDF_STATUS_E_FAILURE;
+	if (!msg_q) {
+		sched_err("msg_q is null");
+		return true;
 	}
+
 	qdf_spin_lock_irqsave(&msg_q->mq_lock);
-	is_empty = qdf_list_empty(&msg_q->mq_list) ? true : false;
+	is_empty = qdf_list_empty(&msg_q->mq_list);
 	qdf_spin_unlock_irqrestore(&msg_q->mq_lock);
+
 	return is_empty;
 }
 
@@ -225,26 +229,25 @@ QDF_STATUS scheduler_queues_deinit(struct scheduler_ctx *sched_ctx)
 
 QDF_STATUS scheduler_queues_init(struct scheduler_ctx *sched_ctx)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status;
 	int i;
 
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("Enter"));
+	sched_enter();
+
 	if (!sched_ctx) {
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Null params being passed", __func__);
+		sched_err("sched_ctx is null");
+		QDF_DEBUG_PANIC();
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	status = scheduler_all_queues_init(sched_ctx);
 	if (QDF_STATUS_SUCCESS != status) {
 		scheduler_all_queues_deinit(sched_ctx);
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_FATAL,
-				FL("Failed to initialize the msg queues"));
+		sched_err("Failed to initialize the msg queues");
 		return status;
 	}
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-		QDF_TRACE_LEVEL_DEBUG, FL("Queue init passed"));
+
+	sched_debug("Queue init passed");
 
 	for (i = 0; i < SCHEDULER_CORE_MAX_MESSAGES; i++) {
 		(sched_ctx->queue_ctx.msg_wrappers[i]).msg_buf =
@@ -254,25 +257,24 @@ QDF_STATUS scheduler_queues_init(struct scheduler_ctx *sched_ctx)
 		scheduler_mq_put(&sched_ctx->queue_ctx.free_msg_q,
 			   &(sched_ctx->queue_ctx.msg_wrappers[i]));
 	}
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG, FL("Exit"));
-	return status;
+
+	sched_exit();
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static void scheduler_core_return_msg(struct scheduler_ctx *sch_ctx,
-			struct scheduler_msg_wrapper *msg_wrapper)
+				      struct scheduler_msg_wrapper *msg_wrapper)
 {
 	if (!sch_ctx) {
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-			"%s: gp_cds_context != p_cds_context", __func__);
+		sched_err("sch_ctx is null");
+		QDF_DEBUG_PANIC();
 		return;
 	}
 
-	QDF_ASSERT(NULL != msg_wrapper);
-
-	if (msg_wrapper == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-			FL("msg_wrapper == NULL in function"));
+	QDF_ASSERT(msg_wrapper);
+	if (!msg_wrapper) {
+		sched_err("msg_wrapper is null");
 		return;
 	}
 
@@ -287,13 +289,12 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 					    bool *shutdown)
 {
 	int i;
-	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct scheduler_msg_wrapper *msg_wrapper = NULL;
+	QDF_STATUS status;
+	struct scheduler_msg_wrapper *msg_wrapper;
 
 	if (!sch_ctx) {
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-				FL("sch_ctx null"));
+		sched_err("sch_ctx is null");
+		QDF_DEBUG_PANIC();
 		return;
 	}
 
@@ -303,11 +304,9 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 		/* Check if MC needs to shutdown */
 		if (qdf_atomic_test_bit(MC_SHUTDOWN_EVENT_MASK,
 					&sch_ctx->sch_event_flag)) {
-			QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-				QDF_TRACE_LEVEL_ERROR,
-				"%s: scheduler thread signaled to shutdown",
-				__func__);
+			sched_info("scheduler thread signaled to shutdown");
 			*shutdown = true;
+
 			/* Check for any Suspend Indication */
 			if (qdf_atomic_test_and_clear_bit(MC_SUSPEND_EVENT_MASK,
 						&sch_ctx->sch_event_flag)) {
@@ -315,22 +314,24 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 				if (gp_sched_ctx->hdd_callback)
 					gp_sched_ctx->hdd_callback();
 			}
+
 			break;
 		}
+
 		if (scheduler_is_mq_empty(&sch_ctx->queue_ctx.sch_msg_q[i])) {
 			/* check next queue */
 			i++;
 			continue;
 		}
+
 		msg_wrapper =
 			scheduler_mq_get(&sch_ctx->queue_ctx.sch_msg_q[i]);
-		if (msg_wrapper == NULL) {
-			QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-				QDF_TRACE_LEVEL_ERROR,
-				"%s: msg_wrapper is NULL", __func__);
+		if (!msg_wrapper) {
+			sched_err("msg_wrapper is NULL");
 			QDF_ASSERT(0);
 			return;
 		}
+
 		if (sch_ctx->queue_ctx.scheduler_msg_process_fn[i]) {
 			struct scheduler_msg *msg = msg_wrapper->msg_buf;
 
@@ -338,24 +339,24 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 			sch_ctx->watchdog_callback = msg->callback;
 			qdf_timer_start(&sch_ctx->watchdog_timer,
 					SCHEDULER_WATCHDOG_TIMEOUT);
-			qdf_status = sch_ctx->queue_ctx.
+			status = sch_ctx->queue_ctx.
 					scheduler_msg_process_fn[i](msg);
 			qdf_timer_stop(&sch_ctx->watchdog_timer);
 
-			if (QDF_IS_STATUS_ERROR(qdf_status)) {
-				QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-					QDF_TRACE_LEVEL_ERROR,
-					FL("Failed processing Qid[%d] message"),
-					sch_ctx->queue_ctx.sch_msg_q[i].qid);
-			}
+			if (QDF_IS_STATUS_ERROR(status))
+				sched_err("Failed processing Qid[%d] message",
+					  sch_ctx->queue_ctx.sch_msg_q[i].qid);
+
 			/* return message to the Core */
 			scheduler_core_return_msg(sch_ctx, msg_wrapper);
 		}
 
 		/* start again with highest priority queue at index 0 */
 		i = 0;
+
 		continue;
 	}
+
 	/* Check for any Suspend Indication */
 	if (qdf_atomic_test_and_clear_bit(MC_SUSPEND_EVENT_MASK,
 			&sch_ctx->sch_event_flag)) {
@@ -378,10 +379,9 @@ int scheduler_thread(void *arg)
 	int retWaitStatus = 0;
 	bool shutdown = false;
 
-	if (arg == NULL) {
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Bad Args passed", __func__);
+	if (!arg) {
+		sched_err("arg is null");
+		QDF_DEBUG_PANIC();
 		return 0;
 	}
 	qdf_set_user_nice(current, -2);
@@ -390,9 +390,8 @@ int scheduler_thread(void *arg)
 	 * has been created
 	 */
 	qdf_event_set(&sch_ctx->sch_start_event);
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: scheduler_thread %d (%s) starting up", __func__, current->pid,
-		  current->comm);
+	sched_debug("scheduler thread %d (%s) starting up",
+		    current->pid, current->comm);
 
 	while (!shutdown) {
 		/* This implements the execution model algorithm */
@@ -404,17 +403,16 @@ int scheduler_thread(void *arg)
 						&sch_ctx->sch_event_flag));
 
 		if (retWaitStatus == -ERESTARTSYS) {
-			QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-					"%s: wait_event_interruptible returned -ERESTARTSYS",
-					__func__);
-			QDF_BUG(0);
+			sched_err("wait_event_interruptible returned -ERESTARTSYS");
+			QDF_DEBUG_PANIC();
 		}
+
 		qdf_atomic_clear_bit(MC_POST_EVENT_MASK, &sch_ctx->sch_event_flag);
 		scheduler_thread_process_queues(sch_ctx, &shutdown);
 	}
-	/* If we get here the MC thread must exit */
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-		  "%s: Scheduler thread exiting!!!!", __func__);
+
+	/* If we get here the scheduler thread must exit */
+	sched_info("Scheduler thread exiting");
 	qdf_event_set(&sch_ctx->sch_shutdown);
 	qdf_exit_thread(QDF_STATUS_SUCCESS);
 
@@ -423,42 +421,38 @@ int scheduler_thread(void *arg)
 
 void scheduler_cleanup_queues(struct scheduler_ctx *sch_ctx, int idx)
 {
-	struct scheduler_msg_wrapper *msg_wrapper = NULL;
+	struct scheduler_msg_wrapper *msg_wrapper;
 	QDF_STATUS (*scheduler_flush_callback) (struct scheduler_msg *);
 
 	if (!sch_ctx) {
-		QDF_ASSERT(0);
-		QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Null params being passed", __func__);
+		sched_err("sch_ctx is null");
+		QDF_DEBUG_PANIC();
 		return;
 	}
 
 	while ((msg_wrapper =
 			scheduler_mq_get(&sch_ctx->queue_ctx.sch_msg_q[idx]))) {
-		if (msg_wrapper->msg_buf != NULL) {
-			QDF_TRACE(QDF_MODULE_ID_SCHEDULER, QDF_TRACE_LEVEL_INFO,
-				"%s: Freeing MC WMA MSG message type %d",
-				__func__, msg_wrapper->msg_buf->type);
+		if (msg_wrapper->msg_buf) {
+			sched_info("Freeing MC WMA MSG message type %d",
+				   msg_wrapper->msg_buf->type);
+
 			if (msg_wrapper->msg_buf->flush_callback) {
-				QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-					QDF_TRACE_LEVEL_DEBUG,
-					"%s: Flush callback called for type-%x",
-					__func__, msg_wrapper->msg_buf->type);
+				sched_debug("Flush callback called for type-%x",
+					    msg_wrapper->msg_buf->type);
 				scheduler_flush_callback =
 					msg_wrapper->msg_buf->flush_callback;
 				scheduler_flush_callback(msg_wrapper->msg_buf);
 			} else if (msg_wrapper->msg_buf->bodyptr) {
-				QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-					QDF_TRACE_LEVEL_DEBUG,
-					"%s: noflush cb given for type-%x",
-					__func__, msg_wrapper->msg_buf->type);
-				qdf_mem_free(
-					(void *)msg_wrapper->msg_buf->bodyptr);
+				sched_debug("noflush cb given for type-%x",
+					    msg_wrapper->msg_buf->type);
+				qdf_mem_free(msg_wrapper->msg_buf->bodyptr);
 			}
+
 			msg_wrapper->msg_buf->bodyptr = NULL;
 			msg_wrapper->msg_buf->bodyval = 0;
 			msg_wrapper->msg_buf->type = 0;
 		}
+
 		scheduler_core_return_msg(sch_ctx, msg_wrapper);
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,21 +41,19 @@
 #define SCHEDULER_WRAPPER_MAX_FAIL_COUNT (SCHEDULER_CORE_MAX_MESSAGES * 3)
 #define SCHEDULER_WATCHDOG_TIMEOUT (10 * 1000) /* 10s */
 
-#define sched_log(level, args...) \
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, level, ## args)
-#define sched_logfl(level, format, args...) \
-	sched_log(level, FL(format), ## args)
+#define __sched_log(level, format, args...) \
+	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, level, FL(format), ## args)
 
 #define sched_fatal(format, args...) \
-	sched_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
+	__sched_log(QDF_TRACE_LEVEL_FATAL, format, ## args)
 #define sched_err(format, args...) \
-	sched_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
+	__sched_log(QDF_TRACE_LEVEL_ERROR, format, ## args)
 #define sched_warn(format, args...) \
-	sched_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
+	__sched_log(QDF_TRACE_LEVEL_WARN, format, ## args)
 #define sched_info(format, args...) \
-	sched_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
+	__sched_log(QDF_TRACE_LEVEL_INFO, format, ## args)
 #define sched_debug(format, args...) \
-	sched_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+	__sched_log(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
 #define sched_enter() sched_debug("Enter")
 #define sched_exit() sched_debug("Exit")
