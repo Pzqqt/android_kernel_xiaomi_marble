@@ -2565,6 +2565,7 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 	DP_STATS_INCC(peer, tx.ofdma, 1, ts->ofdma);
 
 	DP_STATS_INCC(peer, tx.amsdu_cnt, 1, ts->msdu_part_of_amsdu);
+	DP_STATS_INCC(peer, tx.non_amsdu_cnt, 1, !ts->msdu_part_of_amsdu);
 
 	if (!(soc->process_tx_status))
 		return;

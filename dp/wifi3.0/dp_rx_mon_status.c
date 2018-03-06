@@ -81,6 +81,7 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_soc *soc,
 	cdp_rx_ppdu->u.nss = ppdu_info->rx_status.nss;
 	cdp_rx_ppdu->u.mcs = ppdu_info->rx_status.mcs;
 	cdp_rx_ppdu->u.gi = ppdu_info->rx_status.sgi;
+	cdp_rx_ppdu->u.ldpc = ppdu_info->rx_status.ldpc;
 	cdp_rx_ppdu->u.preamble = ppdu_info->rx_status.preamble_type;
 	cdp_rx_ppdu->u.ppdu_type = ppdu_info->rx_status.reception_type;
 	cdp_rx_ppdu->rssi = ppdu_info->rx_status.rssi_comb;
