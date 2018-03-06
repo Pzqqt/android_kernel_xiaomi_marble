@@ -2542,6 +2542,26 @@ static const char * const native_mux_text[] = {
 AQT_DAPM_ENUM(int1_1_native, SND_SOC_NOPM, 0, native_mux_text);
 AQT_DAPM_ENUM(int2_1_native, SND_SOC_NOPM, 0, native_mux_text);
 
+static int aqt_mclk_event(struct snd_soc_dapm_widget *w,
+			  struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	int ret = 0;
+
+	dev_dbg(codec->dev, "%s: event = %d\n", __func__, event);
+
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		ret = aqt_cdc_mclk_enable(codec, true);
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		ret = aqt_cdc_mclk_enable(codec, false);
+		break;
+	}
+
+	return ret;
+}
+
 static int aif_cap_mixer_get(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
@@ -2561,7 +2581,16 @@ static const struct snd_kcontrol_new aif1_cap_mixer[] = {
 			aif_cap_mixer_get, aif_cap_mixer_put),
 };
 
+static const char * const rx_inp_st_mux_text[] = {
+	"ZERO", "SRC0",
+};
+AQT_DAPM_ENUM(rx_inp_st, AQT1000_CDC_RX_INP_MUX_SIDETONE_SRC_CFG0, 4,
+	      rx_inp_st_mux_text);
+
 static const struct snd_soc_dapm_widget aqt_dapm_widgets[] = {
+
+	SND_SOC_DAPM_SUPPLY("AQT MCLK", SND_SOC_NOPM, 0, 0, aqt_mclk_event,
+			    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_AIF_OUT_E("AQT AIF1 CAP", "AQT AIF1 Capture", 0,
 		SND_SOC_NOPM, AIF1_CAP, 0, aqt_codec_enable_i2s_tx,
@@ -2720,6 +2749,10 @@ static const struct snd_soc_dapm_widget aqt_dapm_widgets[] = {
 
 	AQT_DAPM_MUX("AQT RX INT1_1 NATIVE MUX", 0, int1_1_native),
 	AQT_DAPM_MUX("AQT RX INT2_1 NATIVE MUX", 0, int2_1_native),
+
+	SND_SOC_DAPM_MUX("AQT RX ST MUX",
+			 AQT1000_CDC_RX_INP_MUX_SIDETONE_SRC_CFG0, 2, 0,
+			 &rx_inp_st_mux),
 };
 
 static int aqt_startup(struct snd_pcm_substream *substream,
@@ -3230,14 +3263,10 @@ int aqt_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 EXPORT_SYMBOL(aqt_codec_info_create_codec_entry);
 
 static const struct aqt_reg_mask_val aqt_codec_reg_init[] = {
-	{AQT1000_CHIP_CFG0_CLK_CFG_MCLK, 0x04, 0x00},
 	{AQT1000_CHIP_CFG0_EFUSE_CTL, 0x01, 0x01},
 };
 
 static const struct aqt_reg_mask_val aqt_codec_reg_update[] = {
-	{AQT1000_CDC_CLK_RST_CTRL_MCLK_CONTROL, 0x01, 0x01},
-	{AQT1000_CDC_CLK_RST_CTRL_FS_CNT_CONTROL, 0x01, 0x01},
-	{AQT1000_CHIP_CFG0_CLK_CTL_CDC_DIG, 0x01, 0x01},
 	{AQT1000_LDOH_MODE, 0x1F, 0x0B},
 	{AQT1000_MICB1_TEST_CTL_2, 0x07, 0x01},
 	{AQT1000_MICB1_MISC_MICB1_INM_RES_BIAS, 0x03, 0x02},

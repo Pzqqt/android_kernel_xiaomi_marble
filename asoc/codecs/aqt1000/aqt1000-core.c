@@ -13,6 +13,8 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/of_device.h>
+#include <linux/of.h>
+#include <linux/of_irq.h>
 #include <linux/slab.h>
 #include <linux/ratelimit.h>
 #include <linux/mfd/core.h>
@@ -21,6 +23,9 @@
 #include <linux/debugfs.h>
 #include <linux/i2c.h>
 #include <linux/regmap.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
+#include <linux/pm_runtime.h>
 #include <sound/soc.h>
 #include "../msm-cdc-pinctrl.h"
 #include "../msm-cdc-supply.h"
@@ -93,8 +98,22 @@ static int aqt1000_bringup(struct aqt1000 *aqt)
 	regmap_update_bits(aqt->regmap, AQT1000_CLK_SYS_MCLK2_I2S_HS_CLK_PRG,
 			   0x01, 0x01);
 
+	regmap_update_bits(aqt->regmap, AQT1000_CHIP_CFG0_CLK_CFG_MCLK,
+			   0x04, 0x00);
+
+	/* Add 100usec delay as per HW requirement */
+	usleep_range(100, 110);
+	regmap_update_bits(aqt->regmap, AQT1000_CDC_CLK_RST_CTRL_MCLK_CONTROL,
+			   0x01, 0x01);
+	regmap_update_bits(aqt->regmap, AQT1000_CDC_CLK_RST_CTRL_FS_CNT_CONTROL,
+			   0x01, 0x01);
+	regmap_update_bits(aqt->regmap, AQT1000_CHIP_CFG0_CLK_CTL_CDC_DIG,
+			   0x01, 0x01);
+
 	/* Codec digital reset */
 	regmap_update_bits(aqt->regmap, AQT1000_CHIP_CFG0_RST_CTL, 0x01, 0x01);
+	/* Add 100usec delay as per HW requirement */
+	usleep_range(100, 110);
 
 	return 0;
 }
@@ -378,6 +397,13 @@ static struct aqt1000_pdata *aqt1000_populate_dt_data(struct device *dev)
 		goto err_parse_dt_prop;
 	}
 
+	pdata->irq_gpio = of_get_named_gpio(dev->of_node,
+					    "qcom,gpio-connect", 0);
+	if (!gpio_is_valid(pdata->irq_gpio)) {
+		dev_err(dev, "%s: TLMM connect gpio not found\n", __func__);
+		goto err_parse_dt_prop;
+	}
+
 	return pdata;
 
 err_parse_dt_prop:
@@ -457,6 +483,7 @@ static int aqt1000_i2c_probe(struct i2c_client *client,
 	aqt1000->dev = &client->dev;
 	aqt1000->dev_up = true;
 	aqt1000->mclk_rate = pdata->mclk_rate;
+	aqt1000->irq = client->irq;
 
 	aqt1000->num_of_supplies = pdata->num_supplies;
 	ret = msm_cdc_init_supplies(aqt1000->dev, &aqt1000->supplies,
@@ -496,6 +523,9 @@ static int aqt1000_i2c_probe(struct i2c_client *client,
 		goto err_supplies;
 	}
 
+	pm_runtime_set_active(aqt1000->dev);
+	pm_runtime_enable(aqt1000->dev);
+
 	ret = aqt_register_codec(&client->dev);
 	if (ret) {
 		dev_err(aqt1000->dev, "%s: Codec registration failed\n",
@@ -506,6 +536,7 @@ static int aqt1000_i2c_probe(struct i2c_client *client,
 	return ret;
 
 err_cdc_register:
+	pm_runtime_disable(aqt1000->dev);
 	aqt1000_device_exit(aqt1000);
 err_supplies:
 	msm_cdc_release_supplies(aqt1000->dev, aqt1000->supplies,
@@ -527,6 +558,7 @@ static int aqt1000_i2c_remove(struct i2c_client *client)
 
 	aqt = dev_get_drvdata(&client->dev);
 
+	pm_runtime_disable(aqt->dev);
 	msm_cdc_release_supplies(aqt->dev, aqt->supplies,
 				 pdata->regulator,
 				 pdata->num_supplies);
@@ -534,6 +566,22 @@ static int aqt1000_i2c_remove(struct i2c_client *client)
 	dev_set_drvdata(&client->dev, NULL);
 	return 0;
 }
+
+#ifdef CONFIG_PM
+static int aqt1000_runtime_resume(struct device *dev)
+{
+	dev_dbg(dev, "%s system resume\n", __func__);
+
+	return 0;
+}
+
+static int aqt1000_runtime_suspend(struct device *dev)
+{
+	dev_dbg(dev, "%s system suspend\n", __func__);
+
+	return 0;
+}
+#endif
 
 #ifdef CONFIG_PM_SLEEP
 static int aqt1000_i2c_resume(struct device *dev)
@@ -556,8 +604,10 @@ static struct i2c_device_id aqt1000_id_table[] = {
 MODULE_DEVICE_TABLE(i2c, aqt1000_id_table);
 
 static const struct dev_pm_ops aqt1000_i2c_pm_ops = {
-	.suspend = aqt1000_i2c_suspend,
-	.resume = aqt1000_i2c_resume,
+	SET_RUNTIME_PM_OPS(aqt1000_runtime_suspend,
+			   aqt1000_runtime_resume, NULL)
+	SET_SYSTEM_SLEEP_PM_OPS(aqt1000_i2c_suspend,
+				aqt1000_i2c_resume)
 };
 
 static const struct of_device_id aqt_match_table[] = {
