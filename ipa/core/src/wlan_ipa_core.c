@@ -310,6 +310,74 @@ static inline int wlan_ipa_wdi_teardown_sys_pipe(
 
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */
 
+QDF_STATUS wlan_ipa_uc_enable_pipes(struct wlan_ipa_priv *ipa_ctx)
+{
+	int result;
+
+	ipa_debug("enter");
+
+	if (!ipa_ctx->ipa_pipes_down) {
+		/*
+		 * IPA WDI Pipes are already activated due to
+		 * rm deferred resources grant
+		 */
+		ipa_warn("IPA WDI Pipes are already activated");
+		goto end;
+	}
+
+	result = cdp_ipa_enable_pipes(ipa_ctx->dp_soc,
+				      ipa_ctx->dp_pdev);
+	if (result) {
+		ipa_err("Enable IPA WDI PIPE failed: ret=%d", result);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_event_reset(&ipa_ctx->ipa_resource_comp);
+	ipa_ctx->ipa_pipes_down = false;
+
+	cdp_ipa_enable_autonomy(ipa_ctx->dp_soc,
+				ipa_ctx->dp_pdev);
+
+end:
+	ipa_debug("exit: ipa_pipes_down=%d", ipa_ctx->ipa_pipes_down);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_ipa_uc_disable_pipes(struct wlan_ipa_priv *ipa_ctx)
+{
+	int result;
+
+	ipa_debug("enter");
+
+	if (ipa_ctx->ipa_pipes_down) {
+		/*
+		 * This shouldn't happen :
+		 * IPA WDI Pipes are already deactivated
+		 */
+		QDF_ASSERT(0);
+		ipa_warn("IPA WDI Pipes are already deactivated");
+		goto end;
+	}
+
+	cdp_ipa_disable_autonomy(ipa_ctx->dp_soc,
+				 ipa_ctx->dp_pdev);
+
+	result = cdp_ipa_disable_pipes(ipa_ctx->dp_soc,
+				       ipa_ctx->dp_pdev);
+	if (result) {
+		ipa_err("Disable IPA WDI PIPE failed: ret=%d", result);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ipa_ctx->ipa_pipes_down = true;
+
+end:
+	ipa_debug("exit: ipa_pipes_down=%d", ipa_ctx->ipa_pipes_down);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wlan_ipa_alloc_tx_desc_list() - Allocate IPA Tx desc list
  * @ipa_ctx: IPA context
@@ -593,6 +661,10 @@ QDF_STATUS wlan_ipa_setup(struct wlan_ipa_priv *ipa_ctx,
 	qdf_mutex_create(&ipa_ctx->event_lock);
 	qdf_mutex_create(&ipa_ctx->ipa_lock);
 
+	status = wlan_ipa_wdi_setup_rm(ipa_ctx);
+	if (status != QDF_STATUS_SUCCESS)
+		goto fail_setup_rm;
+
 	for (i = 0; i < WLAN_IPA_MAX_SYSBAM_PIPE; i++)
 		qdf_mem_zero(&ipa_ctx->sys_pipe[i],
 			     sizeof(struct wlan_ipa_sys_pipe));
@@ -636,7 +708,18 @@ QDF_STATUS wlan_ipa_setup(struct wlan_ipa_priv *ipa_ctx,
 	return QDF_STATUS_SUCCESS;
 
 fail_create_sys_pipe:
+	wlan_ipa_wdi_destroy_rm(ipa_ctx);
+
+fail_setup_rm:
 	qdf_spinlock_destroy(&ipa_ctx->pm_lock);
+	qdf_spinlock_destroy(&ipa_ctx->q_lock);
+	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
+		iface_context = &ipa_ctx->iface_context[i];
+		qdf_spinlock_destroy(&iface_context->interface_lock);
+	}
+	qdf_mutex_destroy(&ipa_ctx->event_lock);
+	qdf_mutex_destroy(&ipa_ctx->ipa_lock);
+	qdf_list_destroy(&ipa_ctx->pending_event);
 	gp_ipa = NULL;
 	ipa_debug("exit: fail");
 
@@ -654,6 +737,8 @@ QDF_STATUS wlan_ipa_cleanup(struct wlan_ipa_priv *ipa_ctx)
 	/* Teardown IPA sys_pipe for MCC */
 	if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config))
 		wlan_ipa_teardown_sys_pipe(ipa_ctx);
+
+	wlan_ipa_wdi_destroy_rm(ipa_ctx);
 
 	qdf_spinlock_destroy(&ipa_ctx->pm_lock);
 	qdf_spinlock_destroy(&ipa_ctx->q_lock);
