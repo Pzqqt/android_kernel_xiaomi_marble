@@ -2567,6 +2567,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	struct wma_target_req *req_msg;
 	uint32_t chan_mode;
 	enum phy_ch_width ch_width;
+	QDF_STATUS status;
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (mac_ctx == NULL) {
@@ -2816,6 +2817,20 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
 			wma->interfaces[params.vdev_id].handle,
 			0xffffffff);
+		status = cdp_flow_pool_map(cds_get_context(QDF_MODULE_ID_SOC),
+				cds_get_context(QDF_MODULE_ID_TXRX),
+				params.vdev_id);
+		/*
+		 * For Adrastea flow control v2 is based on FW MAP events,
+		 * so this above callback is not implemented.
+		 * Hence this is not actual failure. Dont return failure
+		 */
+		if ((status != QDF_STATUS_SUCCESS) &&
+		    (status != QDF_STATUS_E_INVAL)) {
+			WMA_LOGE("%s: vdev_id: %d, failed to create flow pool status %d",
+			__func__, params.vdev_id, status);
+			return status;
+		}
 		wma_vdev_update_pause_bitmap(params.vdev_id, 0);
 	}
 
@@ -5609,6 +5624,11 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 	cdp_fc_vdev_pause(soc,
 		wma->interfaces[params->smesessionId].handle,
 		OL_TXQ_PAUSE_REASON_VDEV_STOP);
+
+	/* smesessionId is not equal to vdev_id with which pool is created */
+	cdp_flow_pool_unmap(cds_get_context(QDF_MODULE_ID_SOC),
+			cds_get_context(QDF_MODULE_ID_TXRX),
+			params->smesessionId);
 
 	if (wma_send_vdev_stop_to_fw(wma, params->smesessionId)) {
 		WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
