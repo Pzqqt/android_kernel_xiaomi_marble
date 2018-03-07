@@ -1082,6 +1082,7 @@ IPA_OBJS :=	$(IPA_DIR)/dispatcher/src/wlan_ipa_ucfg_api.o \
 		$(IPA_DIR)/dispatcher/src/wlan_ipa_tgt_api.o \
 		$(IPA_DIR)/core/src/wlan_ipa_main.o \
 		$(IPA_DIR)/core/src/wlan_ipa_core.o \
+		$(IPA_DIR)/core/src/wlan_ipa_stats.o \
 		$(IPA_DIR)/core/src/wlan_ipa_rm.o
 endif
 

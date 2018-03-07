@@ -49,3 +49,35 @@ QDF_STATUS ucfg_ipa_set_perf_level(struct wlan_objmgr_pdev *pdev,
 {
 	return ipa_rm_set_perf_level(pdev, tx_packets, rx_packets);
 }
+
+void ucfg_ipa_uc_info(struct wlan_objmgr_pdev *pdev)
+{
+	return ipa_uc_info(pdev);
+}
+
+void ucfg_ipa_uc_stat(struct wlan_objmgr_pdev *pdev)
+{
+	return ipa_uc_stat(pdev);
+}
+
+void ucfg_ipa_uc_rt_debug_host_dump(struct wlan_objmgr_pdev *pdev)
+{
+	return ipa_uc_rt_debug_host_dump(pdev);
+}
+
+void ucfg_ipa_dump_info(struct wlan_objmgr_pdev *pdev)
+{
+	return ipa_dump_info(pdev);
+}
+
+void ucfg_ipa_uc_stat_request(struct wlan_objmgr_pdev *pdev,
+			      uint8_t reason)
+{
+	return ipa_uc_stat_request(pdev, reason);
+}
+
+void ucfg_ipa_uc_stat_query(struct wlan_objmgr_pdev *pdev,
+			    uint32_t *ipa_tx_diff, uint32_t *ipa_rx_diff)
+{
+	return ipa_uc_stat_query(pdev, ipa_tx_diff, ipa_rx_diff);
+}

@@ -167,5 +167,59 @@ void ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc, void *txrx_handle);
  */
 QDF_STATUS ipa_rm_set_perf_level(struct wlan_objmgr_pdev *pdev,
 				 uint64_t tx_packets, uint64_t rx_packets);
+
+/**
+ * ipa_uc_info() - Print IPA uC resource and session information
+ * @pdev: pdev obj
+ *
+ * Return: None
+ */
+void ipa_uc_info(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ipa_uc_stat() - Print IPA uC stats
+ * @pdev: pdev obj
+ *
+ * Return: None
+ */
+void ipa_uc_stat(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ipa_uc_rt_debug_host_dump() - IPA rt debug host dump
+ * @pdev: pdev obj
+ *
+ * Return: None
+ */
+void ipa_uc_rt_debug_host_dump(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ipa_dump_info() - Dump IPA context information
+ * @pdev: pdev obj
+ *
+ * Return: None
+ */
+void ipa_dump_info(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ipa_uc_stat_request() - Get IPA stats from IPA.
+ * @pdev: pdev obj
+ * @reason: STAT REQ Reason
+ *
+ * Return: None
+ */
+void ipa_uc_stat_request(struct wlan_objmgr_pdev *pdev,
+			 uint8_t reason);
+
+/**
+ * ipa_uc_stat_query() - Query the IPA stats
+ * @pdev: pdev obj
+ * @ipa_tx_diff: tx packet count diff from previous tx packet count
+ * @ipa_rx_diff: rx packet count diff from previous rx packet count
+ *
+ * Return: None
+ */
+void ipa_uc_stat_query(struct wlan_objmgr_pdev *pdev,
+		       uint32_t *ipa_tx_diff, uint32_t *ipa_rx_diff);
+
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */

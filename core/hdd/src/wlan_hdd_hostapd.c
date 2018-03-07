@@ -92,6 +92,7 @@
 #include <wlan_green_ap_ucfg_api.h>
 #include "sme_api.h"
 #include "wlan_hdd_regulatory.h"
+#include <wlan_ipa_ucfg_api.h>
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -3904,16 +3905,16 @@ static __iw_softap_setparam(struct net_device *dev,
 		/* If input value is non-zero get stats */
 		switch (set_value) {
 		case 1:
-			hdd_ipa_uc_stat(adapter);
+			ucfg_ipa_uc_stat(hdd_ctx->hdd_pdev);
 			break;
 		case 2:
-			hdd_ipa_uc_info(hdd_ctx);
+			ucfg_ipa_uc_info(hdd_ctx->hdd_pdev);
 			break;
 		case 3:
-			hdd_ipa_uc_rt_debug_host_dump(hdd_ctx);
+			ucfg_ipa_uc_rt_debug_host_dump(hdd_ctx->hdd_pdev);
 			break;
 		case 4:
-			hdd_ipa_dump_info(hdd_ctx);
+			ucfg_ipa_dump_info(hdd_ctx->hdd_pdev);
 			break;
 		default:
 			/* place holder for stats clean up
