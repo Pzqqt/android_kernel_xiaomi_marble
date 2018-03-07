@@ -1237,6 +1237,14 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 				(iface->type == WMI_VDEV_TYPE_MONITOR))) ||
 			((resp_event->resp_type == WMI_VDEV_START_RESP_EVENT) &&
 			 (iface->type == WMI_VDEV_TYPE_MONITOR))) {
+			/* for CSA case firmware expects phymode before ch_wd */
+			err = wma_set_peer_param(wma, iface->bssid,
+					WMI_PEER_PHYMODE, iface->chanmode,
+					resp_event->vdev_id);
+			WMA_LOGD("%s:vdev_id %d chanmode %d status %d",
+				__func__, resp_event->vdev_id,
+				iface->chanmode, err);
+
 			chanwidth = chanmode_to_chanwidth(iface->chanmode);
 			err = wma_set_peer_param(wma, iface->bssid,
 					WMI_PEER_CHWIDTH, chanwidth,
@@ -1244,13 +1252,6 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			WMA_LOGD("%s:vdev_id %d chanwidth %d status %d",
 				__func__, resp_event->vdev_id,
 				chanwidth, err);
-
-			err = wma_set_peer_param(wma, iface->bssid,
-					WMI_PEER_PHYMODE, iface->chanmode,
-					resp_event->vdev_id);
-			WMA_LOGD("%s:vdev_id %d chanmode %d status %d",
-				__func__, resp_event->vdev_id,
-				iface->chanmode, err);
 
 			param.vdev_id = resp_event->vdev_id;
 			param.assoc_id = iface->aid;
