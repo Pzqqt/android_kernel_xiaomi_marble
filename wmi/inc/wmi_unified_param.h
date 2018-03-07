@@ -6039,6 +6039,8 @@ struct wmi_host_fw_abi_ver {
  * @num_ocb_vdevs:
  * @num_ocb_channels:
  * @num_ocb_schedules:
+ * @num_packet_filters: maximum number of packet filter rules to support
+ * @num_max_sta_vdevs: maximum number of concurrent station vdevs to support
  * @num_ns_ext_tuples_cfg:
  * @bpf_instruction_size:
  * @max_bssid_rx_filters:
@@ -6109,6 +6111,8 @@ typedef struct {
 	uint32_t num_ocb_vdevs;
 	uint32_t num_ocb_channels;
 	uint32_t num_ocb_schedules;
+	uint32_t num_packet_filters;
+	uint32_t num_max_sta_vdevs;
 	uint32_t num_ns_ext_tuples_cfg;
 	uint32_t bpf_instruction_size;
 	uint32_t max_bssid_rx_filters;
