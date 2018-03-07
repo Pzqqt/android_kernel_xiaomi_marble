@@ -7315,11 +7315,24 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 static void dp_service_mon_rings(void *arg)
 {
 	struct dp_soc *soc = (struct dp_soc *) arg;
-	int ring = 0, work_done;
+	int ring = 0, work_done, mac_id;
+	struct dp_pdev *pdev = NULL;
 
-	work_done = dp_mon_process(soc, ring, QCA_NAPI_BUDGET);
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		FL("Reaped %d descs from Monitor rings"), work_done);
+	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
+		pdev = soc->pdev_list[ring];
+		if (pdev == NULL)
+			continue;
+		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
+								pdev->pdev_id);
+			work_done = dp_mon_process(soc, mac_for_pdev,
+							QCA_NAPI_BUDGET);
+
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				FL("Reaped %d descs from Monitor rings"),
+				work_done);
+		}
+	}
 
 	qdf_timer_mod(&soc->mon_reap_timer, DP_INTR_POLL_TIMER_MS);
 }
