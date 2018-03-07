@@ -1023,13 +1023,14 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 
 	if (adapter->sta_info[staId].in_use) {
 		if (ucfg_ipa_is_enabled()) {
-			ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev, adapter->dev,
+			if (ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev, adapter->dev,
 					  adapter->device_mode,
 					  adapter->sta_info[staId].sta_id,
 					  adapter->session_id,
 					  WLAN_IPA_CLIENT_DISCONNECT,
 					  adapter->sta_info[staId].sta_mac.
-					  bytes);
+					  bytes) != QDF_STATUS_SUCCESS)
+				hdd_err("WLAN_CLIENT_DISCONNECT event failed");
 		}
 		spin_lock_bh(&adapter->sta_info_lock);
 		qdf_mem_zero(&adapter->sta_info[staId],
@@ -1189,8 +1190,10 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	uint8_t staId = 0;
 	struct hdd_context *hdd_ctx;
+	struct hdd_ap_ctx *ap_ctx;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
 	/* This is stop bss callback running in scheduler thread so do not
 	 * driver unload in progress check otherwise it can lead to peer
@@ -1198,13 +1201,9 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 	 */
 	qdf_status = hdd_softap_deregister_bc_sta(adapter);
 
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		struct hdd_ap_ctx *ap_ctx;
-
-		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		hdd_err("Failed to deregister BC sta Id %d",
 			ap_ctx->broadcast_sta_id);
-	}
 
 	for (staId = 0; staId < WLAN_MAX_STA_COUNT; staId++) {
 		/* This excludes BC sta as it is already deregistered */
@@ -1221,6 +1220,16 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 	if (hdd_ctx->config->force_ssc_disable_indoor_channel) {
 		hdd_update_indoor_channel(hdd_ctx, false);
 		sme_update_channel_list(hdd_ctx->hHal);
+	}
+
+	if (ucfg_ipa_is_enabled()) {
+		if (ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev,
+				adapter->dev, adapter->device_mode,
+				ap_ctx->broadcast_sta_id,
+				adapter->session_id,
+				WLAN_IPA_AP_DISCONNECT,
+				adapter->dev->dev_addr) != QDF_STATUS_SUCCESS)
+			hdd_err("WLAN_AP_DISCONNECT event failed");
 	}
 
 	return qdf_status;
