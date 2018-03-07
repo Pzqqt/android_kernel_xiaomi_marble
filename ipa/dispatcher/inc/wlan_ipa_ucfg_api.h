@@ -39,6 +39,34 @@
  *         false - ipa hw not present
  */
 bool ucfg_ipa_is_present(void);
+
+/**
+ * ucfg_ipa_update_config() - Update IPA component config
+ *
+ * Return: None
+ */
+void ucfg_ipa_update_config(struct wlan_ipa_config *config);
+
+/**
+ * ucfg_ipa_set_dp_handle() - register DP handle
+ * @psoc: psoc handle
+ * @dp_soc: data path soc handle
+ *
+ * Return: None
+ */
+void ucfg_ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc,
+			       void *dp_soc);
+
+/**
+ * ucfg_ipa_set_txrx_handle() - register pdev txrx handler
+ * @psoc: psoc handle
+ * @txrx_handle: data path pdev txrx handle
+ *
+ * Return: None
+ */
+void ucfg_ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
+			      void *txrx_handle);
+
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -46,5 +74,22 @@ static inline bool ucfg_ipa_is_present(void)
 	return false;
 }
 
+static inline void ucfg_ipa_update_config(struct wlan_ipa_config *config)
+{
+}
+
+static inline
+QDF_STATUS ucfg_ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc,
+				     void *dp_soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
+				    void *txrx_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_UCFG_API_H_ */

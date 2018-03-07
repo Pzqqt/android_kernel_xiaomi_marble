@@ -51,6 +51,7 @@ ipa_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 	if (QDF_IS_STATUS_ERROR(status))
 		ipa_err("Failed to detatch ipa pdev object");
 
+	ipa_obj_cleanup(ipa_obj);
 	qdf_mem_free(ipa_obj);
 
 	return status;
@@ -72,10 +73,17 @@ ipa_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 
 	ipa_info("ipa pdev created");
 
+	if (!ipa_config_is_enabled()) {
+		ipa_info("IPA is disabled");
+		wlan_objmgr_unregister_pdev_destroy_handler(WLAN_UMAC_COMP_IPA,
+				ipa_pdev_obj_destroy_notification, NULL);
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
 	ipa_obj = qdf_mem_malloc(sizeof(*ipa_obj));
 	if (!ipa_obj) {
 		ipa_err("Failed to allocate memory for ipa pdev object");
-		return QDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	status = wlan_objmgr_pdev_component_obj_attach(pdev,
@@ -84,6 +92,16 @@ ipa_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 						       QDF_STATUS_SUCCESS);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		ipa_err("Failed to attach pdev ipa component");
+		qdf_mem_free(ipa_obj);
+		return status;
+	}
+
+	status = ipa_obj_setup(ipa_obj);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ipa_err("Failed to setup ipa component");
+		wlan_objmgr_pdev_component_obj_detach(pdev,
+						      WLAN_UMAC_COMP_IPA,
+						      ipa_obj);
 		qdf_mem_free(ipa_obj);
 		return status;
 	}
@@ -101,10 +119,14 @@ QDF_STATUS ipa_init(void)
 
 	ipa_info("ipa module dispatcher init");
 
-	if (!wlan_ipa_is_present()) {
+	if (!ipa_check_hw_present()) {
 		ipa_info("ipa hw not present");
 		return status;
 	}
+
+	status = ipa_config_mem_alloc();
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
 	status = wlan_objmgr_register_pdev_create_handler(WLAN_UMAC_COMP_IPA,
 		ipa_pdev_obj_create_notification, NULL);
@@ -138,7 +160,7 @@ QDF_STATUS ipa_deinit(void)
 
 	ipa_info("ipa module dispatcher deinit");
 
-	if (!wlan_ipa_is_present()) {
+	if (!ipa_is_hw_support()) {
 		ipa_info("ipa hw not present");
 		return status;
 	}
@@ -152,6 +174,8 @@ QDF_STATUS ipa_deinit(void)
 				ipa_pdev_obj_create_notification, NULL);
 	if (QDF_IS_STATUS_ERROR(status))
 		ipa_err("Failed to unregister pdev create handler");
+
+	ipa_config_mem_free();
 
 	return status;
 }
