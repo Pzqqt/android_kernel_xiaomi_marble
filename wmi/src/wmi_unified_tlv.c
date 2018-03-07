@@ -2485,37 +2485,6 @@ static inline void scan_copy_ie_buffer(uint8_t *buf_ptr,
 	qdf_mem_copy(buf_ptr, params->extraie.ptr, params->extraie.len);
 }
 
-/*
- * get_pdev_wmi_handle() - Helper func to derive pdev wmi handle from vdev_id
- * @param wmi_handle : Handle to WMI
- * @param vdev_id : vdev identifier
- *
- * Return : void *
- */
-static inline void *get_pdev_wmi_handle(wmi_unified_t wmi_handle, uint8_t vdev_id)
-{
-	struct wlan_objmgr_vdev *vdev = NULL;
-	struct wlan_objmgr_pdev *pdev = NULL;
-	uint8_t pdev_id = 0;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
-			(struct wlan_objmgr_psoc *)wmi_handle->soc->wmi_psoc,
-			vdev_id, WLAN_SCAN_ID);
-	if (vdev) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_SCAN_ID);
-		pdev = wlan_vdev_get_pdev(vdev);
-		if (pdev)
-			pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
-		else {
-			qdf_print("%s : Invalid PDEV, forcing pdev_id to 0\n", __func__);
-		}
-	} else {
-		qdf_print("%s : Invalid VDEV, forcing pdev_id to 0\n", __func__);
-	}
-
-	return wmi_unified_get_pdev_handle(wmi_handle->soc, pdev_id);
-}
-
 /**
  * wmi_copy_scan_random_mac() - To copy scan randomization attrs to wmi buffer
  * @mac: random mac addr
@@ -2607,7 +2576,6 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	uint8_t extraie_len_with_pad = 0;
 	uint8_t phymode_roundup = 0;
 	struct probe_req_whitelist_attr *ie_whitelist = &params->ie_whitelist;
-	wmi_unified_t pdev_wmi_handle;
 
 	/* Length TLV placeholder for array of uint32_t */
 	len += WMI_TLV_HDR_SIZE;
@@ -2771,13 +2739,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, 0);
 	}
 
-	pdev_wmi_handle = get_pdev_wmi_handle(wmi_handle, cmd->vdev_id);
-	if (pdev_wmi_handle == NULL) {
-		WMI_LOGE("%s: Invalid PDEV WMI handle", __func__);
-		goto error;
-	}
-
-	ret = wmi_unified_cmd_send(pdev_wmi_handle, wmi_buf,
+	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
 				   len, WMI_START_SCAN_CMDID);
 	if (ret) {
 		WMI_LOGE("%s: Failed to start scan: %d", __func__, ret);
@@ -2803,7 +2765,6 @@ static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 	int ret;
 	int len = sizeof(*cmd);
 	wmi_buf_t wmi_buf;
-	wmi_unified_t pdev_wmi_handle;
 
 	/* Allocate the memory */
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
@@ -2839,14 +2800,7 @@ static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	pdev_wmi_handle = get_pdev_wmi_handle(wmi_handle, cmd->vdev_id);
-	if (pdev_wmi_handle == NULL) {
-		WMI_LOGE("%s: Invalid PDEV WMI handle", __func__);
-		wmi_buf_free(wmi_buf);
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	ret = wmi_unified_cmd_send(pdev_wmi_handle, wmi_buf,
+	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
 				   len, WMI_STOP_SCAN_CMDID);
 	if (ret) {
 		WMI_LOGE("%s: Failed to send stop scan: %d", __func__, ret);

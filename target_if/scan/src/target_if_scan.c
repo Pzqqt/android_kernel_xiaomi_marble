@@ -327,18 +327,31 @@ target_if_scan_unregister_event_handler(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
-target_if_scan_start(struct wlan_objmgr_psoc *psoc,
+target_if_scan_start(struct wlan_objmgr_pdev *pdev,
 		struct scan_start_request *req)
 {
-	return wmi_unified_scan_start_cmd_send(GET_WMI_HDL_FROM_PSOC(psoc),
-		&req->scan_req);
+	void *pdev_wmi_handle;
+
+	pdev_wmi_handle = GET_WMI_HDL_FROM_PDEV(pdev);
+	if (!pdev_wmi_handle) {
+		target_if_err("Invalid PDEV WMI handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+	return wmi_unified_scan_start_cmd_send(pdev_wmi_handle, &req->scan_req);
 }
 
 QDF_STATUS
-target_if_scan_cancel(struct wlan_objmgr_psoc *psoc,
+target_if_scan_cancel(struct wlan_objmgr_pdev *pdev,
 		struct scan_cancel_param *req)
 {
-	return wmi_unified_scan_stop_cmd_send(GET_WMI_HDL_FROM_PSOC(psoc), req);
+	void *pdev_wmi_handle;
+
+	pdev_wmi_handle = GET_WMI_HDL_FROM_PDEV(pdev);
+	if (!pdev_wmi_handle) {
+		target_if_err("Invalid PDEV WMI handle");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	return wmi_unified_scan_stop_cmd_send(pdev_wmi_handle, req);
 }
 
 QDF_STATUS

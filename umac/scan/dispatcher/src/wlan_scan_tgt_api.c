@@ -109,15 +109,17 @@ tgt_scan_start(struct scan_start_request *req)
 {
 	struct wlan_lmac_if_scan_tx_ops *scan_ops;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_vdev *vdev = req->vdev;
 
 	psoc = wlan_vdev_get_psoc(vdev);
+	pdev = wlan_vdev_get_pdev(vdev);
 
 	scan_ops = wlan_psoc_get_scan_txops(psoc);
 	/* invoke wmi_unified_scan_start_cmd_send() */
 	QDF_ASSERT(scan_ops->scan_start);
 	if (scan_ops->scan_start)
-		return scan_ops->scan_start(psoc, req);
+		return scan_ops->scan_start(pdev, req);
 	else
 		return QDF_STATUS_SUCCESS;
 }
@@ -128,15 +130,17 @@ tgt_scan_cancel(struct scan_cancel_request *req)
 {
 	struct wlan_lmac_if_scan_tx_ops *scan_ops;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_vdev *vdev = req->vdev;
 
 	psoc = wlan_vdev_get_psoc(vdev);
+	pdev = wlan_vdev_get_pdev(vdev);
 
 	scan_ops = wlan_psoc_get_scan_txops(psoc);
 	/* invoke wmi_unified_scan_stop_cmd_send() */
 	QDF_ASSERT(scan_ops->scan_cancel);
 	if (scan_ops->scan_cancel)
-		return scan_ops->scan_cancel(psoc, &(req->cancel_req));
+		return scan_ops->scan_cancel(pdev, &req->cancel_req);
 	else
 		return QDF_STATUS_SUCCESS;
 }

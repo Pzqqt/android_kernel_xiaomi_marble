@@ -126,9 +126,9 @@ struct wlan_lmac_if_mgmt_txrx_tx_ops {
  * scan module uses these functions to avail ol/da lmac services
  */
 struct wlan_lmac_if_scan_tx_ops {
-	QDF_STATUS (*scan_start)(struct wlan_objmgr_psoc *psoc,
+	QDF_STATUS (*scan_start)(struct wlan_objmgr_pdev *pdev,
 			struct scan_start_request *req);
-	QDF_STATUS (*scan_cancel)(struct wlan_objmgr_psoc *psoc,
+	QDF_STATUS (*scan_cancel)(struct wlan_objmgr_pdev *pdev,
 			struct scan_cancel_param *req);
 	QDF_STATUS (*pno_start)(struct wlan_objmgr_psoc *psoc,
 			struct pno_scan_req_params *req);

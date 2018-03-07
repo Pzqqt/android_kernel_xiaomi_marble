@@ -86,25 +86,25 @@ target_if_scan_unregister_event_handler(struct wlan_objmgr_psoc *psoc,
 
 /**
  * target_if_scan_start() - lmac handler API to start scan
- * @psoc: psoc object
+ * @pdev: pdev object
  * @req: scan_req_params object
  *
  * Return: QDF_STATUS
  */
 
 QDF_STATUS
-target_if_scan_start(struct wlan_objmgr_psoc *psoc,
+target_if_scan_start(struct wlan_objmgr_pdev *pdev,
 		struct scan_start_request *req);
 
 /**
  * target_if_scan_cancel() - lmac handler API to cancel a previous active scan
- * @psoc: psoc object
+ * @pdev: pdev object
  * @req: scan_cancel_param object
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
-target_if_scan_cancel(struct wlan_objmgr_psoc *psoc,
+target_if_scan_cancel(struct wlan_objmgr_pdev *pdev,
 		struct scan_cancel_param *req);
 
 /**
