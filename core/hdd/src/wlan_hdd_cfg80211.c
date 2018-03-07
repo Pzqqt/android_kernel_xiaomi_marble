@@ -16232,7 +16232,7 @@ wlan_hdd_get_frame_len(struct bss_description *bss_desc)
 }
 
 static inline void wlan_hdd_add_age_ie(struct ieee80211_mgmt *mgmt,
-	uint32_t ie_length, struct bss_description *bss_desc)
+	uint32_t *ie_length, struct bss_description *bss_desc)
 {
 	qcom_ie_age *qie_age = NULL;
 
@@ -16240,8 +16240,8 @@ static inline void wlan_hdd_add_age_ie(struct ieee80211_mgmt *mgmt,
 	 * GPS Requirement: need age ie per entry. Using vendor specific.
 	 * Assuming this is the last IE, copy at the end
 	 */
-	ie_length -= sizeof(qcom_ie_age);
-	qie_age = (qcom_ie_age *)mgmt->u.probe_resp.variable + ie_length;
+	*ie_length -= sizeof(qcom_ie_age);
+	qie_age = (qcom_ie_age *)(mgmt->u.probe_resp.variable + *ie_length);
 	qie_age->element_id = QCOM_VENDOR_IE_ID;
 	qie_age->len = QCOM_VENDOR_IE_AGE_LEN;
 	qie_age->oui_1 = QCOM_OUI1;
@@ -16269,7 +16269,7 @@ wlan_hdd_get_frame_len(struct bss_description *bss_desc)
 	return GET_IE_LEN_IN_BSS(bss_desc->length);
 }
 static inline void wlan_hdd_add_age_ie(struct ieee80211_mgmt *mgmt,
-	uint32_t ie_length, struct bss_description *bss_desc)
+	uint32_t *ie_length, struct bss_description *bss_desc)
 {
 }
 #endif /* WLAN_ENABLE_AGEIE_ON_SCAN_RESULTS */
@@ -16281,7 +16281,7 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 {
 	struct wireless_dev *wdev = adapter->dev->ieee80211_ptr;
 	struct wiphy *wiphy = wdev->wiphy;
-	int ie_length = wlan_hdd_get_frame_len(bss_desc);
+	uint32_t ie_length = wlan_hdd_get_frame_len(bss_desc);
 	const char *ie =
 		((ie_length != 0) ? (const char *)&bss_desc->ieFields : NULL);
 	uint32_t freq, i;
@@ -16334,7 +16334,7 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 	bss_data.mgmt->u.probe_resp.beacon_int = bss_desc->beaconInterval;
 	bss_data.mgmt->u.probe_resp.capab_info = bss_desc->capabilityInfo;
 
-	wlan_hdd_add_age_ie(bss_data.mgmt, ie_length, bss_desc);
+	wlan_hdd_add_age_ie(bss_data.mgmt, &ie_length, bss_desc);
 
 	memcpy(bss_data.mgmt->u.probe_resp.variable, ie, ie_length);
 	if (bss_desc->fProbeRsp) {
