@@ -4078,54 +4078,6 @@ int wlan_hdd_get_peer_info(struct hdd_adapter *adapter,
 }
 
 /**
- * hdd_statistics_cb() - "Get statistics" callback function
- * @pStats: statistics payload
- * @pContext: opaque context originally passed to SME.  HDD always passes
- *	a pointer to an adapter
- *
- * Return: None
- */
-static void hdd_statistics_cb(void *pStats, void *pContext)
-{
-	struct hdd_adapter *adapter = (struct hdd_adapter *) pContext;
-	struct hdd_stats *pStatsCache = NULL;
-	struct hdd_wext_state *pWextState;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-
-	tCsrSummaryStatsInfo *pSummaryStats = NULL;
-	tCsrGlobalClassAStatsInfo *pClassAStats = NULL;
-	tCsrGlobalClassDStatsInfo *pClassDStats = NULL;
-
-	if (adapter != NULL)
-		pStatsCache = &adapter->hdd_stats;
-
-	pSummaryStats = (tCsrSummaryStatsInfo *) pStats;
-	pClassAStats = (tCsrGlobalClassAStatsInfo *) (pSummaryStats + 1);
-	pClassDStats = (tCsrGlobalClassDStatsInfo *) (pClassAStats + 1);
-
-	if (pStatsCache != NULL) {
-		/* copy the stats into the cache we keep in the
-		 * adapter instance structure
-		 */
-		qdf_mem_copy(&pStatsCache->summary_stat, pSummaryStats,
-			     sizeof(pStatsCache->summary_stat));
-		qdf_mem_copy(&pStatsCache->class_a_stat, pClassAStats,
-			     sizeof(pStatsCache->class_a_stat));
-		qdf_mem_copy(&pStatsCache->class_d_stat, pClassDStats,
-			     sizeof(pStatsCache->class_d_stat));
-	}
-
-	if (adapter) {
-		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-		qdf_status = qdf_event_set(&pWextState->hdd_qdf_event);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			hdd_err("qdf_event_set failed");
-			return;
-		}
-	}
-}
-
-/**
  * hdd_clear_roam_profile_ie() - Clear Roam Profile IEs
  * @adapter: adapter who's IEs are to be cleared
  *
@@ -9863,6 +9815,54 @@ static int iw_set_packet_filter_params(struct net_device *dev,
 }
 #endif
 
+
+/**
+ * hdd_statistics_cb() - "Get statistics" callback function
+ * @pStats: statistics payload
+ * @pContext: opaque context originally passed to SME.  HDD always passes
+ *	a pointer to an adapter
+ *
+ * Return: None
+ */
+static void hdd_statistics_cb(void *pStats, void *pContext)
+{
+	struct hdd_adapter *adapter = (struct hdd_adapter *) pContext;
+	struct hdd_stats *pStatsCache = NULL;
+	struct hdd_wext_state *pWextState;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+
+	tCsrSummaryStatsInfo *pSummaryStats = NULL;
+	tCsrGlobalClassAStatsInfo *pClassAStats = NULL;
+	tCsrGlobalClassDStatsInfo *pClassDStats = NULL;
+
+	if (adapter != NULL)
+		pStatsCache = &adapter->hdd_stats;
+
+	pSummaryStats = (tCsrSummaryStatsInfo *) pStats;
+	pClassAStats = (tCsrGlobalClassAStatsInfo *) (pSummaryStats + 1);
+	pClassDStats = (tCsrGlobalClassDStatsInfo *) (pClassAStats + 1);
+
+	if (pStatsCache != NULL) {
+		/* copy the stats into the cache we keep in the
+		 * adapter instance structure
+		 */
+		qdf_mem_copy(&pStatsCache->summary_stat, pSummaryStats,
+			     sizeof(pStatsCache->summary_stat));
+		qdf_mem_copy(&pStatsCache->class_a_stat, pClassAStats,
+			     sizeof(pStatsCache->class_a_stat));
+		qdf_mem_copy(&pStatsCache->class_d_stat, pClassDStats,
+			     sizeof(pStatsCache->class_d_stat));
+	}
+
+	if (adapter) {
+		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+		qdf_status = qdf_event_set(&pWextState->hdd_qdf_event);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			hdd_err("qdf_event_set failed");
+			return;
+		}
+	}
+}
 
 static int __iw_get_statistics(struct net_device *dev,
 			       struct iw_request_info *info,
