@@ -8971,7 +8971,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		smeConfig->csrConfig.Is11hSupportEnabled =
 			pConfig->Is11hSupportEnabled;
 	}
-	smeConfig->csrConfig.cbChoice = 0;
 	smeConfig->csrConfig.eBand = pConfig->nBandCapability;
 	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
 	smeConfig->csrConfig.allow_tpc_from_ap = pConfig->allow_tpc_from_ap;

@@ -2588,7 +2588,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.AdHocChannel24 = pParam->AdHocChannel24;
 		pMac->roam.configParam.AdHocChannel5G = pParam->AdHocChannel5G;
 		pMac->roam.configParam.bandCapability = pParam->bandCapability;
-		pMac->roam.configParam.cbChoice = pParam->cbChoice;
 		pMac->roam.configParam.wep_tkip_in_he = pParam->wep_tkip_in_he;
 		pMac->roam.configParam.neighborRoamConfig.
 			delay_before_vdev_stop =
@@ -3122,7 +3121,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->AdHocChannel24 = cfg_params->AdHocChannel24;
 	pParam->AdHocChannel5G = cfg_params->AdHocChannel5G;
 	pParam->bandCapability = cfg_params->bandCapability;
-	pParam->cbChoice = cfg_params->cbChoice;
 	pParam->nActiveMaxChnTime = cfg_params->nActiveMaxChnTime;
 	pParam->nActiveMinChnTime = cfg_params->nActiveMinChnTime;
 	pParam->nPassiveMaxChnTime = cfg_params->nPassiveMaxChnTime;

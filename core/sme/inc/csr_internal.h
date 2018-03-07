@@ -267,9 +267,6 @@ struct bss_config_param {
 	uint32_t uDeferThresh;
 	enum csr_cfgdot11mode uCfgDot11Mode;
 	enum band_info eBand;
-	uint8_t standardRate[CSR_DOT11_SUPPORTED_RATES_MAX];
-	uint8_t extendedRate[CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX];
-	eCsrExposedTxRate txRate;
 	tAniAuthType authType;
 	eCsrEncryptionType encType;
 	uint32_t uShortSlotTime;
@@ -437,7 +434,6 @@ struct csr_config {
 	enum band_info eBand;
 	uint32_t HeartbeatThresh50;
 	uint32_t HeartbeatThresh24;
-	eCsrCBChoice cbChoice;
 	enum band_info bandCapability;        /* indicate hw capability */
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;

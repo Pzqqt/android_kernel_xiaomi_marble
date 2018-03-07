@@ -671,34 +671,6 @@ typedef enum eCSR_MEDIUM_ACCESS {
 } eCsrMediaAccessType;
 
 typedef enum {
-	eCSR_TX_RATE_AUTO    = 0,  /* use rate adaption to determine Tx rate. */
-	eCSR_TX_RATE_1Mbps   = 0x00000001,
-	eCSR_TX_RATE_2Mbps   = 0x00000002,
-	eCSR_TX_RATE_5_5Mbps = 0x00000004,
-	eCSR_TX_RATE_6Mbps   = 0x00000008,
-	eCSR_TX_RATE_9Mbps   = 0x00000010,
-	eCSR_TX_RATE_11Mbps  = 0x00000020,
-	eCSR_TX_RATE_12Mbps  = 0x00000040,
-	eCSR_TX_RATE_18Mbps  = 0x00000080,
-	eCSR_TX_RATE_24Mbps  = 0x00000100,
-	eCSR_TX_RATE_36Mbps  = 0x00000200,
-	eCSR_TX_RATE_42Mbps  = 0x00000400,
-	eCSR_TX_RATE_48Mbps  = 0x00000800,
-	eCSR_TX_RATE_54Mbps  = 0x00001000,
-	eCSR_TX_RATE_72Mbps  = 0x00002000,
-	eCSR_TX_RATE_84Mbps  = 0x00004000,
-	eCSR_TX_RATE_96Mbps  = 0x00008000,
-	eCSR_TX_RATE_108Mbps = 0x00010000,
-	eCSR_TX_RATE_126Mbps = 0x00020000,
-	eCSR_TX_RATE_144Mbps = 0x00040000,
-	eCSR_TX_RATE_168Mbps = 0x00080000,
-	eCSR_TX_RATE_192Mbps = 0x00100000,
-	eCSR_TX_RATE_216Mbps = 0x00200000,
-	eCSR_TX_RATE_240Mbps = 0x00400000,
-
-} eCsrExposedTxRate;
-
-typedef enum {
 	eCSR_OPERATING_CHANNEL_ALL = 0,
 	eCSR_OPERATING_CHANNEL_AUTO = eCSR_OPERATING_CHANNEL_ALL,
 	eCSR_OPERATING_CHANNEL_ANY = eCSR_OPERATING_CHANNEL_ALL,
@@ -710,14 +682,6 @@ typedef enum {
 	eCSR_DOT11_FRAG_THRESH_MAX = 2346,
 	eCSR_DOT11_FRAG_THRESH_DEFAULT = 2000
 } eCsrDot11FragThresh;
-
-/* for channel bonding for ibss */
-typedef enum {
-	eCSR_CB_OFF = 0,
-	eCSR_CB_AUTO = 1,
-	eCSR_CB_DOWN = 2,
-	eCSR_CB_UP = 3,
-} eCsrCBChoice;
 
 /*
  * For channel bonding, the channel number gap is 4, either up or down.
@@ -1125,7 +1089,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t RTSThreshold;
 	uint32_t HeartbeatThresh50;
 	uint32_t HeartbeatThresh24;
-	eCsrCBChoice cbChoice;
 	enum band_info bandCapability;     /* indicate hw capability */
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
