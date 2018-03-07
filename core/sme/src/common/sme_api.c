@@ -4892,43 +4892,6 @@ QDF_STATUS sme_get_wcnss_hardware_version(tHalHandle hHal,
 	return status;
 }
 
-#ifdef FEATURE_WLAN_WAPI
-
-/*
- * sme_scan_get_bkid_candidate_list() -
- * A wrapper function to return the BKID candidate list
- *
- * pBkidList - caller allocated buffer point to an array of
- *		       tBkidCandidateInfo
- * pNumItems - pointer to a variable that has the number of
- *		       tBkidCandidateInfo allocated when retruning, this is
- *		       either the number needed or number of items put into
- *		       pPmkidList
- * Return QDF_STATUS - when fail, it usually means the buffer allocated is not
- *			 big enough and pNumItems
- *			 has the number of tBkidCandidateInfo.
- * Note: pNumItems is a number of tBkidCandidateInfo,
- *	   not sizeof(tBkidCandidateInfo) * something
- */
-QDF_STATUS sme_scan_get_bkid_candidate_list(tHalHandle hHal, uint32_t sessionId,
-					    tBkidCandidateInfo *pBkidList,
-					    uint32_t *pNumItems)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status =
-			csr_scan_get_bkid_candidate_list(pMac, sessionId,
-							pBkidList, pNumItems);
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-#endif /* FEATURE_WLAN_WAPI */
-
 #ifdef FEATURE_OEM_DATA_SUPPORT
 /**
  * sme_oem_data_req() - send oem data request to WMA

@@ -546,11 +546,6 @@ QDF_STATUS sme_get_wcnss_software_version(tHalHandle hHal,
 		uint8_t *pVersion, uint32_t versionBufferSize);
 QDF_STATUS sme_get_wcnss_hardware_version(tHalHandle hHal,
 		uint8_t *pVersion, uint32_t versionBufferSize);
-#ifdef FEATURE_WLAN_WAPI
-QDF_STATUS sme_scan_get_bkid_candidate_list(tHalHandle hHal, uint32_t sessionId,
-		tBkidCandidateInfo * pBkidList,
-		uint32_t *pNumItems);
-#endif /* FEATURE_WLAN_WAPI */
 #ifdef FEATURE_OEM_DATA_SUPPORT
 QDF_STATUS sme_oem_data_req(tHalHandle hHal, struct oem_data_req *);
 QDF_STATUS sme_oem_update_capability(tHalHandle hHal,

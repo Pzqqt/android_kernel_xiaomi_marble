@@ -1267,9 +1267,6 @@ QDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType);
 QDF_STATUS csr_ready(tpAniSirGlobal pMac);
 
 #ifdef FEATURE_WLAN_WAPI
-QDF_STATUS csr_scan_get_bkid_candidate_list(tpAniSirGlobal pMac,
-		uint32_t sessionId, tBkidCandidateInfo * pBkidList,
-		uint32_t *pNumItems);
 QDF_STATUS csr_roam_get_wapi_req_ie(tpAniSirGlobal pMac,
 		uint32_t sessionId, uint32_t *pLen, uint8_t *pBuf);
 QDF_STATUS csr_roam_get_wapi_rsp_ie(tpAniSirGlobal pMac,
