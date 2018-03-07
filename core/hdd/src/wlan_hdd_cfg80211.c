@@ -13923,8 +13923,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_LOGGER_FEATURE_SET,
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			 WIPHY_VENDOR_CMD_NEED_NETDEV |
-			 WIPHY_VENDOR_CMD_NEED_RUNNING,
+			 WIPHY_VENDOR_CMD_NEED_NETDEV,
 		.doit = wlan_hdd_cfg80211_get_logger_supp_feature
 	},
 	{
