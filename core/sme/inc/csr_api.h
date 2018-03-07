@@ -1127,7 +1127,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t HeartbeatThresh24;
 	eCsrCBChoice cbChoice;
 	enum band_info bandCapability;     /* indicate hw capability */
-	uint16_t TxRate;
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool Is11dSupportEnabled;

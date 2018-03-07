@@ -1472,7 +1472,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.shortSlotTime = true;
 	pMac->roam.configParam.WMMSupportMode = eCsrRoamWmmAuto;
 	pMac->roam.configParam.ProprietaryRatesEnabled = true;
-	pMac->roam.configParam.TxRate = eCSR_TX_RATE_AUTO;
 	for (i = 0; i < CSR_NUM_RSSI_CAT; i++)
 		pMac->roam.configParam.BssPreferValue[i] = i;
 	csr_assign_rssi_for_category(pMac, CSR_BEST_RSSI_VALUE,
@@ -2586,7 +2585,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->HeartbeatThresh50;
 		pMac->roam.configParam.ProprietaryRatesEnabled =
 			pParam->ProprietaryRatesEnabled;
-		pMac->roam.configParam.TxRate = pParam->TxRate;
 		pMac->roam.configParam.AdHocChannel24 = pParam->AdHocChannel24;
 		pMac->roam.configParam.AdHocChannel5G = pParam->AdHocChannel5G;
 		pMac->roam.configParam.bandCapability = pParam->bandCapability;
@@ -3121,7 +3119,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->HeartbeatThresh24 = cfg_params->HeartbeatThresh24;
 	pParam->HeartbeatThresh50 = cfg_params->HeartbeatThresh50;
 	pParam->ProprietaryRatesEnabled = cfg_params->ProprietaryRatesEnabled;
-	pParam->TxRate = cfg_params->TxRate;
 	pParam->AdHocChannel24 = cfg_params->AdHocChannel24;
 	pParam->AdHocChannel5G = cfg_params->AdHocChannel5G;
 	pParam->bandCapability = cfg_params->bandCapability;

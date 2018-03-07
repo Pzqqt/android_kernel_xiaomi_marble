@@ -510,13 +510,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_HT_MPDU_DENSITY_MIN,
 		     CFG_HT_MPDU_DENSITY_MAX),
 
-	REG_VARIABLE(CFG_FIXED_RATE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, TxRate,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_FIXED_RATE_DEFAULT,
-		     CFG_FIXED_RATE_MIN,
-		     CFG_FIXED_RATE_MAX),
-
 	REG_VARIABLE(CFG_SHORT_GI_20MHZ_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, ShortGI20MhzEnable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -8173,12 +8166,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't set HE CAP in cfg");
 	}
 
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_FIXED_RATE, config->TxRate)
-			    == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_FIXED_RATE to CFG");
-	}
-
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_MAX_RX_AMPDU_FACTOR,
 			    config->MaxRxAmpduFactor) ==
 			QDF_STATUS_E_FAILURE) {
@@ -8913,7 +8900,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		smeConfig->csrConfig.channelBondingMode5GHz =
 			pConfig->nChannelBondingMode5GHz;
 	}
-	smeConfig->csrConfig.TxRate = pConfig->TxRate;
 	smeConfig->csrConfig.nScanResultAgeCount = pConfig->ScanResultAgeCount;
 	smeConfig->csrConfig.AdHocChannel24 = pConfig->OperatingChannel;
 	smeConfig->csrConfig.fSupplicantCountryCodeHasPriority =

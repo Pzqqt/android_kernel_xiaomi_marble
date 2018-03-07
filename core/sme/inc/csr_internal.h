@@ -449,7 +449,6 @@ struct csr_config {
 	bool fenableMCCMode;
 	bool mcc_rts_cts_prot_enable;
 	bool mcc_bcast_prob_resp_enable;
-	uint16_t TxRate;
 	uint8_t fAllowMCCGODiffBI;
 	uint8_t AdHocChannel24;
 	uint8_t AdHocChannel5G;

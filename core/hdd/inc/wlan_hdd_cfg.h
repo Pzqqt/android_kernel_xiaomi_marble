@@ -352,29 +352,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gFixedRate - It will provide fixed rate
- * @Min: 0
- * @Max: 44
- * @Default: 0
- *
- * This ini is used to set default fixed rate
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_FIXED_RATE_NAME                    "gFixedRate"
-#define CFG_FIXED_RATE_MIN                     WNI_CFG_FIXED_RATE_STAMIN
-#define CFG_FIXED_RATE_MAX                     WNI_CFG_FIXED_RATE_STAMAX
-#define CFG_FIXED_RATE_DEFAULT                 WNI_CFG_FIXED_RATE_STADEF
-
-/*
- * <ini>
  * gShortGI20Mhz - Short Guard Interval for HT20
  * @Min: 0
  * @Max: 1
@@ -14444,7 +14421,6 @@ struct hdd_config {
 	bool override_ht20_40_24g;
 	uint32_t nChannelBondingMode5GHz;
 	uint32_t MaxRxAmpduFactor;
-	uint16_t TxRate;
 	uint32_t ShortGI20MhzEnable;
 	uint32_t ScanResultAgeCount;
 	uint8_t nRssiCatGap;
