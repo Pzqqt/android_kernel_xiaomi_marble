@@ -1968,6 +1968,11 @@ void hdd_update_tgt_cfg(void *context, void *param)
 
 	ret = hdd_update_green_ap_config(hdd_ctx);
 
+	ucfg_ipa_set_dp_handle(hdd_ctx->hdd_psoc,
+			       cds_get_context(QDF_MODULE_ID_SOC));
+	ucfg_ipa_set_txrx_handle(hdd_ctx->hdd_psoc,
+				 cds_get_context(QDF_MODULE_ID_TXRX));
+
 	if (cds_cfg) {
 		if (hdd_ctx->config->enable_sub_20_channel_width !=
 			WLAN_SUB_20_CH_WIDTH_NONE && !cfg->sub_20_support) {
@@ -2553,6 +2558,36 @@ hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 	}
 }
 
+#ifdef IPA_OFFLOAD
+/**
+ * hdd_update_ipa_component_config() - update ipa config
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * Return: none
+ */
+static void hdd_update_ipa_component_config(struct hdd_context *hdd_ctx)
+{
+	struct hdd_config *cfg = hdd_ctx->config;
+	struct wlan_ipa_config ipa_cfg;
+
+	ipa_cfg.ipa_config = cfg->IpaConfig;
+	ipa_cfg.desc_size = cfg->IpaDescSize;
+	ipa_cfg.txbuf_count = cfg->IpaUcTxBufCount;
+	ipa_cfg.bus_bw_high = cfg->busBandwidthHighThreshold;
+	ipa_cfg.bus_bw_medium = cfg->busBandwidthMediumThreshold;
+	ipa_cfg.bus_bw_low = cfg->busBandwidthLowThreshold;
+	ipa_cfg.ipa_bw_high = cfg->IpaHighBandwidthMbps;
+	ipa_cfg.ipa_bw_medium = cfg->IpaMediumBandwidthMbps;
+	ipa_cfg.ipa_bw_low = cfg->IpaLowBandwidthMbps;
+
+	ucfg_ipa_update_config(&ipa_cfg);
+}
+#else
+static void hdd_update_ipa_component_config(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 static enum policy_mgr_con_mode wlan_hdd_get_mode_for_non_connected_vdev(
 			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
@@ -2746,6 +2781,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 			ret = qdf_status_to_os_return(status);
 			goto hif_close;
 		}
+
+		hdd_update_ipa_component_config(hdd_ctx);
 
 		ret = hdd_update_config(hdd_ctx);
 		if (ret) {

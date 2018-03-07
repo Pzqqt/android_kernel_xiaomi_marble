@@ -70,6 +70,7 @@
 #include "target_type.h"
 #include "wlan_ocb_ucfg_api.h"
 #include "qdf_platform.h"
+#include "wlan_ipa_ucfg_api.h"
 
 #ifdef ENABLE_SMMU_S1_TRANSLATION
 #include "pld_common.h"

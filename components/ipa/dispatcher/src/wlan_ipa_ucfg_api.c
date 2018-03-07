@@ -24,5 +24,22 @@
 
 bool ucfg_ipa_is_present(void)
 {
-	return wlan_ipa_is_present();
+	return ipa_is_hw_support();
+}
+
+void ucfg_ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
+				    void *txrx_handle)
+{
+	return ipa_set_txrx_handle(psoc, txrx_handle);
+}
+
+void ucfg_ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc,
+				     void *dp_soc)
+{
+	return ipa_set_dp_handle(psoc, dp_soc);
+}
+
+void ucfg_ipa_update_config(struct wlan_ipa_config *config)
+{
+	ipa_config_update(config);
 }

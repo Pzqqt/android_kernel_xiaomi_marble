@@ -48,7 +48,7 @@
 #define IPA_EXIT() ipa_debug("exit")
 
 /**
- * wlan_ipa_is_present() - get IPA hw status
+ * ipa_check_hw_present() - get IPA hw status
  *
  * ipa_uc_reg_rdyCB is not directly designed to check
  * ipa hw status. This is an undocumented function which
@@ -57,7 +57,7 @@
  * Return: true - ipa hw present
  *         false - ipa hw not present
  */
-bool wlan_ipa_is_present(void);
+bool ipa_check_hw_present(void);
 
 /**
  * wlan_get_pdev_ipa_obj() - private API to get ipa pdev object
@@ -78,6 +78,58 @@ ipa_pdev_get_priv_obj(struct wlan_objmgr_pdev *pdev)
 }
 
 /**
+ * ipa_is_hw_support() - Is IPA HW support?
+ *
+ * Return: true if IPA HW  is present or false otherwise
+ */
+bool ipa_is_hw_support(void);
+
+/**
+ * ipa_config_mem_alloc() - IPA config allocation
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS ipa_config_mem_alloc(void);
+
+/**
+ * ipa_config_mem_free() - IPA config mem free
+ *
+ * Return: None
+ */
+void ipa_config_mem_free(void);
+
+/**
+ * ipa_config_update() - IPA component config update
+ * @config: IPA config
+ *
+ * Return: None
+ */
+void ipa_config_update(struct wlan_ipa_config *config);
+
+/**
+ * ipa_config_is_enabled() - Is IPA config enabled?
+ *
+ * Return: true if IPA is enabled in IPA config
+ */
+bool ipa_config_is_enabled(void);
+
+/**
+ * ipa_obj_setup() - IPA obj initialization and setup
+ * @ipa_ctx: IPA obj context
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS ipa_obj_setup(struct wlan_ipa_priv *ipa_ctx);
+
+/**
+ * ipa_obj_cleanup() - IPA obj cleanup
+ * @ipa_ctx: IPA obj context
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS ipa_obj_cleanup(struct wlan_ipa_priv *ipa_ctx);
+
+/**
  * ipa_send_uc_offload_enable_disable() - wdi enable/disable notify to fw
  * @pdev: objmgr pdev object
  * @req: ipa offload control request
@@ -86,5 +138,23 @@ ipa_pdev_get_priv_obj(struct wlan_objmgr_pdev *pdev)
  */
 QDF_STATUS ipa_send_uc_offload_enable_disable(struct wlan_objmgr_pdev *pdev,
 				struct ipa_uc_offload_control_params *req);
+
+/**
+ * ipa_set_dp_handle() - set dp soc handle
+ * @psoc: psoc handle
+ * @dp_soc: dp soc handle
+ *
+ * Return: None
+ */
+void ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc, void *dp_soc);
+
+/**
+ * ipa_set_txrx_handle() - set dp txrx handle
+ * @psoc: psoc handle
+ * @txrx_handle: dp txrx handle
+ *
+ * Return: None
+ */
+void ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc, void *txrx_handle);
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */
