@@ -849,24 +849,6 @@ QDF_STATUS csr_roam_connect_to_last_profile(tpAniSirGlobal pMac,
 QDF_STATUS csr_roam_disconnect(tpAniSirGlobal pMac, uint32_t sessionId,
 			       eCsrRoamDisconnectReason reason);
 
-/*
- * csr_scan_get_pmkid_candidate_list() -
- *  Return the PMKID candidate list
- *
- * pPmkidList - caller allocated buffer point to an array of tPmkidCandidateInfo
- * pNumItems - pointer to a variable that has the number of tPmkidCandidateInfo
- * allocated when retruning, this is either the number needed or number of
- * itemsput into pPmkidList
- * Return QDF_STATUS - when fail, it usually means the buffer allocated is not
- * big enough and pNumItems has the number of tPmkidCandidateInfo.
- * Note: pNumItems is a number of tPmkidCandidateInfo, not
- * sizeof(tPmkidCandidateInfo) * something
- */
-QDF_STATUS csr_scan_get_pmkid_candidate_list(tpAniSirGlobal pMac,
-						uint32_t sessionId,
-					     tPmkidCandidateInfo *pPmkidList,
-					     uint32_t *pNumItems);
-
 /* This function is used to stop a BSS. It is similar of csr_roamIssueDisconnect
  * but this function doesn't have any logic other than blindly trying to stop
  * BSS

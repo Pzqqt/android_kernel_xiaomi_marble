@@ -3035,42 +3035,6 @@ QDF_STATUS sme_scan_result_purge(tScanResultHandle hScanResult)
 	return status;
 }
 
-/*
- * sme_scan_get_pmkid_candidate_list() -
- * A wrapper function to return the PMKID candidate list
- *   This is a synchronous call
- *
- * pPmkidList - caller allocated buffer point to an array of
- *			tPmkidCandidateInfo
- * pNumItems - pointer to a variable that has the number of
- *		       tPmkidCandidateInfo allocated when retruning, this is
- *		       either the number needed or number of items put into
- *		       pPmkidList
- * Return QDF_STATUS - when fail, it usually means the buffer allocated is not
- *			 big enough and pNumItems
- *			 has the number of tPmkidCandidateInfo.
- *  \Note: pNumItems is a number of tPmkidCandidateInfo,
- *	   not sizeof(tPmkidCandidateInfo) * something
- */
-QDF_STATUS sme_scan_get_pmkid_candidate_list(tHalHandle hHal, uint8_t sessionId,
-					     tPmkidCandidateInfo *pPmkidList,
-					     uint32_t *pNumItems)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status =
-			csr_scan_get_pmkid_candidate_list(pMac, sessionId,
-							  pPmkidList,
-							  pNumItems);
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-
 eCsrPhyMode sme_get_phy_mode(tHalHandle hHal)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);

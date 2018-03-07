@@ -382,9 +382,6 @@ tCsrScanResultInfo *sme_scan_result_get_first(tHalHandle,
 tCsrScanResultInfo *sme_scan_result_get_next(tHalHandle,
 		tScanResultHandle hScanResult);
 QDF_STATUS sme_scan_result_purge(tScanResultHandle hScanResult);
-QDF_STATUS sme_scan_get_pmkid_candidate_list(tHalHandle hHal, uint8_t sessionId,
-		tPmkidCandidateInfo *pPmkidList,
-		uint32_t *pNumItems);
 QDF_STATUS sme_roam_connect(tHalHandle hHal, uint8_t sessionId,
 		tCsrRoamProfile *pProfile, uint32_t *pRoamId);
 QDF_STATUS sme_roam_reassoc(tHalHandle hHal, uint8_t sessionId,
