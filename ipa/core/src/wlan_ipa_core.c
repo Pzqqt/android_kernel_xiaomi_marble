@@ -180,6 +180,11 @@ static QDF_STATUS wlan_ipa_uc_send_wdi_control_msg(bool ctrl)
 	return QDF_STATUS_SUCCESS;
 }
 
+struct wlan_ipa_priv *wlan_ipa_get_obj_context(void)
+{
+	return gp_ipa;
+}
+
 #ifdef CONFIG_IPA_WDI_UNIFIED_API
 
 /*
@@ -202,6 +207,33 @@ static inline void wlan_ipa_wdi_get_wdi_version(struct wlan_ipa_priv *ipa_ctx)
 }
 #endif
 
+#ifdef FEATURE_METERING
+/**
+ * wlan_ipa_wdi_init_metering() - IPA WDI metering init
+ * @ipa_ctx: IPA context
+ * @in: IPA WDI in param
+ *
+ * Return: QDF_STATUS
+ */
+static inline void wlan_ipa_wdi_init_metering(struct wlan_ipa_priv *ipa_ctxt,
+					      qdf_ipa_wdi_init_in_params_t *in)
+{
+	QDF_IPA_WDI_INIT_IN_PARAMS_WDI_NOTIFY(in) =
+				wlan_ipa_wdi_meter_notifier_cb;
+}
+#else
+static inline void wlan_ipa_wdi_init_metering(struct wlan_ipa_priv *ipa_ctxt,
+					      qdf_ipa_wdi_init_in_params_t *in)
+{
+}
+#endif
+
+/**
+ * wlan_ipa_wdi_init() - IPA WDI init
+ * @ipa_ctx: IPA context
+ *
+ * Return: QDF_STATUS
+ */
 static inline QDF_STATUS wlan_ipa_wdi_init(struct wlan_ipa_priv *ipa_ctx)
 {
 	qdf_ipa_wdi_init_in_params_t in;
@@ -212,7 +244,8 @@ static inline QDF_STATUS wlan_ipa_wdi_init(struct wlan_ipa_priv *ipa_ctx)
 
 	QDF_IPA_WDI_INIT_IN_PARAMS_WDI_VERSION(&in) = ipa_ctx->wdi_version;
 	QDF_IPA_WDI_INIT_IN_PARAMS_NOTIFY(&in) = wlan_ipa_uc_loaded_uc_cb;
-	QDF_IPA_WDI_INIT_IN_PARAMS_PRIV(&in) = (void *)ipa_ctx;
+	QDF_IPA_WDI_INIT_IN_PARAMS_PRIV(&in) = ipa_ctx;
+	wlan_ipa_wdi_init_metering(ipa_ctx, &in);
 
 	ret = qdf_ipa_wdi_init(&in, &out);
 	if (ret) {
@@ -760,4 +793,20 @@ QDF_STATUS wlan_ipa_cleanup(struct wlan_ipa_priv *ipa_ctx)
 	gp_ipa = NULL;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+struct wlan_ipa_iface_context
+*wlan_ipa_get_iface(struct wlan_ipa_priv *ipa_ctx, uint8_t mode)
+{
+	struct wlan_ipa_iface_context *iface_ctx = NULL;
+	int i;
+
+	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
+		iface_ctx = &ipa_ctx->iface_context[i];
+
+		if (iface_ctx->device_mode == mode)
+			return iface_ctx;
+	}
+
+	return NULL;
 }

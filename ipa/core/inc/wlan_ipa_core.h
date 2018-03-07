@@ -81,6 +81,19 @@ bool wlan_ipa_is_clk_scaling_enabled(struct wlan_ipa_config *ipa_cfg)
 }
 
 /**
+ * wlan_ipa_is_rt_debugging_enabled() - Is IPA RT debugging enabled?
+ * @ipa_cfg: IPA config
+ *
+ * Return: true if IPA RT debugging is enabled, false otherwise
+ */
+static inline
+bool wlan_ipa_is_rt_debugging_enabled(struct wlan_ipa_config *ipa_cfg)
+{
+	return WLAN_IPA_IS_CONFIG_ENABLED(ipa_cfg,
+					  WLAN_IPA_REAL_TIME_DEBUGGING);
+}
+
+/**
  * wlan_ipa_setup - IPA initialize and setup
  * @ipa_ctx: IPA priv obj
  * @ipa_cfg: IPA config
@@ -131,6 +144,16 @@ QDF_STATUS wlan_ipa_uc_disable_pipes(struct wlan_ipa_priv *ipa_ctx);
  */
 QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
 				   uint64_t tx_packets, uint64_t rx_packets);
+
+/**
+ * wlan_ipa_get_iface() - Get IPA interface
+ * @ipa_ctx: IPA context
+ * @mode: Interface device mode
+ *
+ * Return: IPA interface address
+ */
+struct wlan_ipa_iface_context
+*wlan_ipa_get_iface(struct wlan_ipa_priv *ipa_ctx, uint8_t mode);
 
 #ifndef CONFIG_IPA_WDI_UNIFIED_API
 /**
@@ -233,6 +256,140 @@ static inline QDF_STATUS wlan_ipa_wdi_rm_try_release(struct wlan_ipa_priv
 }
 
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */
+
+#ifdef FEATURE_METERING
+
+/**
+ * wlan_ipa_uc_op_metering() - IPA uC operation for stats and quota limit
+ * @ipa_ctx: IPA context
+ * @op_msg: operation message received from firmware
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS wlan_ipa_uc_op_metering(struct wlan_ipa_priv *ipa_ctx,
+				  struct op_msg_type *op_msg);
+
+/**
+ * wlan_ipa_wdi_meter_notifier_cb() - WLAN to IPA callback handler.
+ * IPA calls to get WLAN stats or set quota limit.
+ * @priv: pointer to private data registered with IPA (we register a
+ *        pointer to the global IPA context)
+ * @evt: the IPA event which triggered the callback
+ * @data: data associated with the event
+ *
+ * Return: None
+ */
+void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
+				   void *data);
+#else
+
+static inline
+QDF_STATUS wlan_ipa_uc_op_metering(struct wlan_ipa_priv *ipa_ctx,
+				   struct op_msg_type *op_msg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void wlan_ipa_wdi_meter_notifier_cb(void)
+{
+}
+#endif /* FEATURE_METERING */
+
+/**
+ * wlan_ipa_uc_stat() - Print IPA uC stats
+ * @ipa_ctx: IPA context
+ *
+ * Return: None
+ */
+void wlan_ipa_uc_stat(struct wlan_ipa_priv *ipa_ctx);
+
+/**
+ * wlan_ipa_uc_info() - Print IPA uC resource and session information
+ * @ipa_ctx: IPA context
+ *
+ * Return: None
+ */
+void wlan_ipa_uc_info(struct wlan_ipa_priv *ipa_ctx);
+
+/**
+ * wlan_ipa_print_fw_wdi_stats() - Print FW IPA WDI stats
+ * @ipa_ctx: IPA context
+ *
+ * Return: None
+ */
+void wlan_ipa_print_fw_wdi_stats(struct wlan_ipa_priv *ipa_ctx,
+				 struct ipa_uc_fw_stats *uc_fw_stat);
+
+/**
+ * wlan_ipa_uc_stat_request() - Get IPA stats from IPA
+ * @ipa_ctx: IPA context
+ * @reason: STAT REQ Reason
+ *
+ * Return: None
+ */
+void wlan_ipa_uc_stat_request(struct wlan_ipa_priv *ipa_ctx, uint8_t reason);
+
+/**
+ * wlan_ipa_uc_stat_query() - Query the IPA stats
+ * @ipa_ctx: IPA context
+ * @ipa_tx_diff: tx packet count diff from previous tx packet count
+ * @ipa_rx_diff: rx packet count diff from previous rx packet count
+ *
+ * Return: None
+ */
+void wlan_ipa_uc_stat_query(struct wlan_ipa_priv *ipa_ctx,
+			    uint32_t *ipa_tx_diff, uint32_t *ipa_rx_diff);
+
+/**
+ * wlan_ipa_dump_info() - dump IPA IPA struct
+ * @ipa_ctx: IPA context
+ *
+ * Dump entire struct ipa_ctx
+ *
+ * Return: none
+ */
+void wlan_ipa_dump_info(struct wlan_ipa_priv *ipa_ctx);
+
+/**
+ * wlan_ipa_uc_rt_debug_host_dump - dump rt debug buffer
+ * @ipa_ctx: IPA context
+ *
+ * If rt debug enabled, dump debug buffer contents based on requirement
+ *
+ * Return: none
+ */
+void wlan_ipa_uc_rt_debug_host_dump(struct wlan_ipa_priv *ipa_ctx);
+
+/**
+ * wlan_ipa_uc_rt_debug_destructor() - called by data packet free
+ * @nbuff: packet pinter
+ *
+ * when free data packet, will be invoked by wlan client and will increase
+ * free counter
+ *
+ * Return: none
+ */
+void wlan_ipa_uc_rt_debug_destructor(qdf_nbuf_t nbuff);
+
+/**
+ * wlan_ipa_uc_rt_debug_deinit() - remove resources to handle rt debugging
+ * @ipa_ctx: IPA context
+ *
+ * free all rt debugging resources
+ *
+ * Return: none
+ */
+void wlan_ipa_uc_rt_debug_deinit(struct wlan_ipa_priv *ipa_ctx);
+
+/**
+ * wlan_ipa_uc_rt_debug_init() - initialize resources to handle rt debugging
+ * @ipa_ctx: IPA context
+ *
+ * alloc and initialize all rt debugging resources
+ *
+ * Return: none
+ */
+void wlan_ipa_uc_rt_debug_init(struct wlan_ipa_priv *ipa_ctx);
 
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_CORE_H_ */

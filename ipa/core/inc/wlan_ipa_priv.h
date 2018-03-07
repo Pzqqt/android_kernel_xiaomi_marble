@@ -302,7 +302,7 @@ struct wlan_ipa_iface_context {
 	qdf_ipa_client_type_t prod_client;
 
 	uint8_t iface_id;       /* This iface ID */
-	qdf_device_t dev;
+	qdf_netdev_t dev;
 	enum tQDF_ADAPTER_MODE device_mode;
 	uint8_t sta_id;         /* This iface station ID */
 	uint8_t session_id;
@@ -681,6 +681,11 @@ struct wlan_ipa_priv {
 #define WLAN_IPA_DBG_DUMP_TX_LEN 48
 
 #define IPA_RESOURCE_COMP_WAIT_TIME	100
+
+#ifdef FEATURE_METERING
+#define IPA_UC_SHARING_STATES_WAIT_TIME	500
+#define IPA_UC_SET_QUOTA_WAIT_TIME	500
+#endif
 
 /**
  * wlan_ipa_wlan_event_to_str() - convert IPA WLAN event to string
