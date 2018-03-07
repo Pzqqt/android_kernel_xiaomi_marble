@@ -5426,15 +5426,13 @@ static void wma_set_component_caps(struct wlan_objmgr_psoc *psoc)
  * Return: none
  */
 int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
-					uint32_t length)
+			       uint32_t length)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	struct wma_target_cap target_cap;
 	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
 	wmi_service_ready_event_fixed_param *ev;
-	int status;
+	QDF_STATUS status;
 	uint32_t *ev_wlan_dbs_hw_mode_list;
-	QDF_STATUS ret;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct target_psoc_info *tgt_hdl;
 	struct wlan_psoc_target_capability_info *tgt_cap_info;
@@ -5545,31 +5543,26 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		WMA_LOGW("%s: Board version is unknown!", __func__);
 	}
 
-	/* TODO: Recheck below line to dump service ready event */
-	/* dbg_print_wmi_service_11ac(ev); */
-
 	/* wmi service is ready */
 	qdf_mem_copy(wma_handle->wmi_service_bitmap,
 		     service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));
 
 	cdp_cfg_tx_set_is_mgmt_over_wmi_enabled(soc,
-		wmi_service_enabled(wmi_handle,
-				       wmi_service_mgmt_tx_wmi));
+		wmi_service_enabled(wmi_handle, wmi_service_mgmt_tx_wmi));
 	cdp_set_desc_global_pool_size(soc, ev->num_msdu_desc);
 	/* SWBA event handler for beacon transmission */
 	status = wmi_unified_register_event_handler(wmi_handle,
 						    wmi_host_swba_event_id,
 						    wma_beacon_swba_handler,
 						    WMA_RX_SERIALIZER_CTX);
-	if (status) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Failed to register swba beacon event cb");
 		goto free_hw_mode_list;
 	}
 #ifdef WLAN_FEATURE_LPSS
 	wma_handle->lpss_support =
-		wmi_service_enabled(wmi_handle,
-				       wmi_service_lpass);
+		wmi_service_enabled(wmi_handle, wmi_service_lpass);
 #endif /* WLAN_FEATURE_LPSS */
 
 	/*
@@ -5577,29 +5570,26 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	 * support for LL/HL targets
 	 */
 	wma_handle->ap_arpns_support =
-		wmi_service_enabled(wmi_handle,
-				wmi_service_ap_arpns_offload);
+		wmi_service_enabled(wmi_handle, wmi_service_ap_arpns_offload);
 
 	wma_handle->bpf_enabled = (wma_handle->bpf_packet_filter_enable &&
-		wmi_service_enabled(wmi_handle,
-				wmi_service_bpf_offload));
+		wmi_service_enabled(wmi_handle, wmi_service_bpf_offload));
 	wma_update_ra_limit(wma_handle);
-	if (wmi_service_enabled(wmi_handle,
-				   wmi_service_csa_offload)) {
+
+	if (wmi_service_enabled(wmi_handle, wmi_service_csa_offload)) {
 		WMA_LOGD("%s: FW support CSA offload capability", __func__);
 		status = wmi_unified_register_event_handler(
 						wmi_handle,
 						wmi_csa_handling_event_id,
 						wma_csa_offload_handler,
 						WMA_RX_SERIALIZER_CTX);
-		if (status) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("Failed to register CSA offload event cb");
 			goto free_hw_mode_list;
 		}
 	}
 
-	if (wmi_service_enabled(wmi_handle,
-				   wmi_service_mgmt_tx_wmi)) {
+	if (wmi_service_enabled(wmi_handle, wmi_service_mgmt_tx_wmi)) {
 		WMA_LOGD("Firmware supports management TX over WMI,use WMI interface instead of HTT for management Tx");
 		/*
 		 * Register Tx completion event handler for MGMT Tx over WMI
@@ -5610,7 +5600,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 					wmi_mgmt_tx_completion_event_id,
 					wma_mgmt_tx_completion_handler,
 					WMA_RX_SERIALIZER_CTX);
-		if (status) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("Failed to register MGMT over WMI completion handler");
 			goto free_hw_mode_list;
 		}
@@ -5620,7 +5610,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 				wmi_mgmt_tx_bundle_completion_event_id,
 				wma_mgmt_tx_bundle_completion_handler,
 				WMA_RX_SERIALIZER_CTX);
-		if (status) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("Failed to register MGMT over WMI completion handler");
 			goto free_hw_mode_list;
 		}
@@ -5628,16 +5618,15 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	} else {
 		WMA_LOGE("FW doesnot support WMI_SERVICE_MGMT_TX_WMI, Use HTT interface for Management Tx");
 	}
+
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
-	if (wmi_service_enabled(wmi_handle,
-				   wmi_service_gtk_offload)) {
-		status =
-			wmi_unified_register_event_handler(
+	if (wmi_service_enabled(wmi_handle, wmi_service_gtk_offload)) {
+		status = wmi_unified_register_event_handler(
 					wma_handle->wmi_handle,
 					wmi_gtk_offload_status_event_id,
 					target_if_pmo_gtk_offload_status_event,
 					WMA_RX_WORK_CTX);
-		if (status) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("Failed to register GTK offload event cb");
 			goto free_hw_mode_list;
 		}
@@ -5648,7 +5637,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 				wmi_tbttoffset_update_event_id,
 				wma_tbttoffset_update_event_handler,
 				WMA_RX_SERIALIZER_CTX);
-	if (status) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Failed to register WMI_TBTTOFFSET_UPDATE_EVENTID callback");
 		goto free_hw_mode_list;
 	}
@@ -5661,7 +5650,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 							wmi_update_rcpi_event_id,
 							wma_rcpi_event_handler,
 							WMA_RX_SERIALIZER_CTX);
-		if (status) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("Failed to register RCPI event handler");
 			goto free_hw_mode_list;
 		}
@@ -5688,7 +5677,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 			wmi_diag_event_id_log_supported_event_id,
 			wma_log_supported_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
-	if (status != QDF_STATUS_SUCCESS) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Failed to register log supported event cb");
 		goto free_hw_mode_list;
 	}
@@ -5702,34 +5691,24 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	wma_handle->nan_datapath_enabled =
 		wmi_service_enabled(wma_handle->wmi_handle,
 			wmi_service_nan_data);
-	qdf_mem_copy(target_cap.wmi_service_bitmap,
-		     service_bitmap,
-		     sizeof(wma_handle->wmi_service_bitmap));
 
 	wma_set_component_caps(wma_handle->psoc);
 
-	target_cap.wlan_resource_config = tgt_hdl->info.wlan_res_cfg;
 	wma_update_fw_config(wma_handle->psoc, tgt_hdl);
-	qdf_mem_copy(wma_handle->wmi_service_bitmap,
-		     service_bitmap,
-		     sizeof(wma_handle->wmi_service_bitmap));
 
-	status = wmi_unified_save_fw_version_cmd(wmi_handle,
-				param_buf);
-	if (status != EOK) {
+	status = wmi_unified_save_fw_version_cmd(wmi_handle, param_buf);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Failed to send WMI_INIT_CMDID command");
 		goto free_hw_mode_list;
 	}
 
-	ret = qdf_mc_timer_start(&wma_handle->service_ready_ext_timer,
-				 WMA_SERVICE_READY_EXT_TIMEOUT);
-	if (!QDF_IS_STATUS_SUCCESS(ret))
+	status = qdf_mc_timer_start(&wma_handle->service_ready_ext_timer,
+				    WMA_SERVICE_READY_EXT_TIMEOUT);
+	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE("Failed to start the service ready ext timer");
 
-	if (wmi_service_enabled(wmi_handle, wmi_service_8ss_tx_bfee))
-		wma_handle->tx_bfee_8ss_enabled = true;
-	else
-		wma_handle->tx_bfee_8ss_enabled = false;
+	wma_handle->tx_bfee_8ss_enabled =
+		wmi_service_enabled(wmi_handle, wmi_service_8ss_tx_bfee);
 
 	target_psoc_set_num_radios(tgt_hdl, 1);
 
