@@ -25,7 +25,7 @@
 #include <qdf_types.h>
 
 /* Max no of UMAC components */
-#define WLAN_UMAC_MAX_COMPONENTS 25
+#define WLAN_UMAC_MAX_COMPONENTS WLAN_UMAC_COMP_ID_MAX
 /* Max no. of radios, a pSoc/Device can support */
 #define WLAN_UMAC_MAX_PDEVS 3
 /* Max no. of VDEV per PSOC */
@@ -242,6 +242,7 @@
  * @WLAN_UMAC_COMP_FTM:           FTM component
  * @WLAN_UMAC_COMP_FD:            FILS Discovery
  * @WLAN_UMAC_COMP_OCB:           OCB
+ * @WLAN_UMAC_COMP_IPA:           IPA
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
@@ -274,6 +275,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_FTM,
 	WLAN_UMAC_COMP_FD,
 	WLAN_UMAC_COMP_OCB,
+	WLAN_UMAC_COMP_IPA,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 

@@ -2124,6 +2124,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_FTM] = {"FTM"},
 	[QDF_MODULE_ID_OCB] = {"OCB"},
 	[QDF_MODULE_ID_CONFIG] = {"CONFIG"},
+	[QDF_MODULE_ID_IPA] = {"IPA"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 qdf_export_symbol(g_qdf_category_name);
