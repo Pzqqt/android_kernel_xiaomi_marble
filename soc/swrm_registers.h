@@ -1,4 +1,4 @@
-/* Copyright (c) 2015, 2017 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015, 2018 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -33,6 +33,7 @@
 #define SWRM_COMP_PARAMS_AUTO_ENUM_SLAVES	0x00F00000
 #define SWRM_COMP_PARAMS_DATA_LANES		0x07000000
 
+#define SWRM_COMP_MASTER_ID			(SWRM_BASE_ADDRESS+0x104)
 
 #define SWRM_INTERRUPT_STATUS		(SWRM_BASE_ADDRESS+0x00000200)
 #define SWRM_INTERRUPT_STATUS_RMSK		0x1FFFD
@@ -177,6 +178,11 @@
 #define SWRM_DP_PORT_CTRL_OFFSET2_SHFT		0x10
 #define SWRM_DP_PORT_CTRL_OFFSET1_SHFT		0x08
 #define SWRM_DP_PORT_CTRL_SAMPLE_INTERVAL	0x00
+
+#define SWRM_DIN_DPn_PCM_PORT_CTRL(n) (SWRM_BASE_ADDRESS + \
+						0x00001054 + 0x100*n)
+
+#define SWRM_MAX_REGISTER SWRM_DIN_DPn_PCM_PORT_CTRL(7)
 
 /* Soundwire Slave Register definition */
 

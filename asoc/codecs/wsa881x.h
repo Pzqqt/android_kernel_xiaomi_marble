@@ -1,4 +1,4 @@
-/* Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -23,7 +23,7 @@
 #if IS_ENABLED(CONFIG_SND_SOC_WSA881X)
 extern int wsa881x_set_channel_map(struct snd_soc_codec *codec, u8 *port,
 				   u8 num_port, unsigned int *ch_mask,
-				   unsigned int *ch_rate);
+				   unsigned int *ch_rate, u8 *port_type);
 
 extern const u8 wsa881x_reg_readable[WSA881X_CACHE_SIZE];
 extern struct regmap_config wsa881x_regmap_config;
@@ -35,7 +35,7 @@ void wsa881x_regmap_defaults(struct regmap *regmap, u8 version);
 #else
 extern int wsa881x_set_channel_map(struct snd_soc_codec *codec, u8 *port,
 				   u8 num_port, unsigned int *ch_mask,
-				   unsigned int *ch_rate)
+				   unsigned int *ch_rate, u8 *port_type);
 {
 	return 0;
 }

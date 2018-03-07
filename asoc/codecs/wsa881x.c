@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -71,6 +71,7 @@ struct swr_port {
 	u8 ch_mask;
 	u32 ch_rate;
 	u8 num_ch;
+	u8 port_type;
 };
 
 enum {
@@ -753,7 +754,8 @@ static const struct snd_kcontrol_new swr_dac_port[] = {
 };
 
 static int wsa881x_set_port(struct snd_soc_codec *codec, int port_idx,
-			u8 *port_id, u8 *num_ch, u8 *ch_mask, u32 *ch_rate)
+			u8 *port_id, u8 *num_ch, u8 *ch_mask, u32 *ch_rate,
+			u8 *port_type)
 {
 	struct wsa881x_priv *wsa881x = snd_soc_codec_get_drvdata(codec);
 
@@ -761,6 +763,7 @@ static int wsa881x_set_port(struct snd_soc_codec *codec, int port_idx,
 	*num_ch = wsa881x->port[port_idx].num_ch;
 	*ch_mask = wsa881x->port[port_idx].ch_mask;
 	*ch_rate = wsa881x->port[port_idx].ch_rate;
+	*port_type = wsa881x->port[port_idx].port_type;
 	return 0;
 }
 
@@ -773,6 +776,7 @@ static int wsa881x_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 	u8 num_ch[WSA881X_MAX_SWR_PORTS];
 	u8 ch_mask[WSA881X_MAX_SWR_PORTS];
 	u32 ch_rate[WSA881X_MAX_SWR_PORTS];
+	u8 port_type[WSA881X_MAX_SWR_PORTS];
 	u8 num_port = 0;
 
 	dev_dbg(codec->dev, "%s: event %d name %s\n", __func__,
@@ -784,53 +788,69 @@ static int wsa881x_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMU:
 		wsa881x_set_port(codec, SWR_DAC_PORT,
 				&port_id[num_port], &num_ch[num_port],
-				&ch_mask[num_port], &ch_rate[num_port]);
+				&ch_mask[num_port], &ch_rate[num_port],
+				&port_type[num_port]);
 		++num_port;
 
 		if (wsa881x->comp_enable) {
 			wsa881x_set_port(codec, SWR_COMP_PORT,
 					&port_id[num_port], &num_ch[num_port],
-					&ch_mask[num_port], &ch_rate[num_port]);
+					&ch_mask[num_port], &ch_rate[num_port],
+					&port_type[num_port]);
 			++num_port;
 		}
 		if (wsa881x->boost_enable) {
 			wsa881x_set_port(codec, SWR_BOOST_PORT,
 					&port_id[num_port], &num_ch[num_port],
-					&ch_mask[num_port], &ch_rate[num_port]);
+					&ch_mask[num_port], &ch_rate[num_port],
+					&port_type[num_port]);
 			++num_port;
 		}
 		if (wsa881x->visense_enable) {
 			wsa881x_set_port(codec, SWR_VISENSE_PORT,
 					&port_id[num_port], &num_ch[num_port],
-					&ch_mask[num_port], &ch_rate[num_port]);
+					&ch_mask[num_port], &ch_rate[num_port],
+					&port_type[num_port]);
 			++num_port;
 		}
 		swr_connect_port(wsa881x->swr_slave, &port_id[0], num_port,
-				&ch_mask[0], &ch_rate[0], &num_ch[0]);
+				&ch_mask[0], &ch_rate[0], &num_ch[0],
+					&port_type[0]);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		port_id[num_port] = wsa881x->port[SWR_DAC_PORT].port_id;
+		wsa881x_set_port(codec, SWR_DAC_PORT,
+				&port_id[num_port], &num_ch[num_port],
+				&ch_mask[num_port], &ch_rate[num_port],
+				&port_type[num_port]);
 		++num_port;
+
 		if (wsa881x->comp_enable) {
-			port_id[num_port] =
-				wsa881x->port[SWR_COMP_PORT].port_id;
+			wsa881x_set_port(codec, SWR_COMP_PORT,
+					&port_id[num_port], &num_ch[num_port],
+					&ch_mask[num_port], &ch_rate[num_port],
+					&port_type[num_port]);
 			++num_port;
 		}
 		if (wsa881x->boost_enable) {
-			port_id[num_port] =
-				wsa881x->port[SWR_BOOST_PORT].port_id;
+			wsa881x_set_port(codec, SWR_BOOST_PORT,
+					&port_id[num_port], &num_ch[num_port],
+					&ch_mask[num_port], &ch_rate[num_port],
+					&port_type[num_port]);
 			++num_port;
 		}
 		if (wsa881x->visense_enable) {
-			port_id[num_port] =
-				wsa881x->port[SWR_VISENSE_PORT].port_id;
+			wsa881x_set_port(codec, SWR_VISENSE_PORT,
+					&port_id[num_port], &num_ch[num_port],
+					&ch_mask[num_port], &ch_rate[num_port],
+					&port_type[num_port]);
 			++num_port;
 		}
-		swr_disconnect_port(wsa881x->swr_slave, &port_id[0], num_port);
+		swr_disconnect_port(wsa881x->swr_slave, &port_id[0], num_port,
+				&ch_mask[0], &port_type[0]);
 		break;
 	default:
 		break;
@@ -1001,7 +1021,8 @@ static const struct snd_soc_dapm_route wsa881x_audio_map[] = {
 };
 
 int wsa881x_set_channel_map(struct snd_soc_codec *codec, u8 *port, u8 num_port,
-				unsigned int *ch_mask, unsigned int *ch_rate)
+				unsigned int *ch_mask, unsigned int *ch_rate,
+					u8 *port_type)
 {
 	struct wsa881x_priv *wsa881x = snd_soc_codec_get_drvdata(codec);
 	int i;
@@ -1018,6 +1039,8 @@ int wsa881x_set_channel_map(struct snd_soc_codec *codec, u8 *port, u8 num_port,
 		wsa881x->port[i].ch_mask = ch_mask[i];
 		wsa881x->port[i].ch_rate = ch_rate[i];
 		wsa881x->port[i].num_ch = __sw_hweight8(ch_mask[i]);
+		if (port_type)
+			wsa881x->port[i].port_type = port_type[i];
 	}
 	return 0;
 }

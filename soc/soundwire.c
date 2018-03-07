@@ -1,4 +1,4 @@
-/* Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -268,6 +268,7 @@ int swr_slvdev_datapath_control(struct swr_device *dev, u8 dev_num,
 				bool enable)
 {
 	struct swr_master *master;
+	int ret = 0;
 
 	if (!dev)
 		return -ENODEV;
@@ -287,9 +288,9 @@ int swr_slvdev_datapath_control(struct swr_device *dev, u8 dev_num,
 	}
 
 	if (master->slvdev_datapath_control)
-		master->slvdev_datapath_control(master, enable);
+		ret = master->slvdev_datapath_control(master, enable);
 
-	return 0;
+	return ret;
 }
 EXPORT_SYMBOL(swr_slvdev_datapath_control);
 
@@ -308,7 +309,7 @@ EXPORT_SYMBOL(swr_slvdev_datapath_control);
  * and enable master and slave ports
  */
 int swr_connect_port(struct swr_device *dev, u8 *port_id, u8 num_port,
-			u8 *ch_mask, u32 *ch_rate, u8 *num_ch)
+			u8 *ch_mask, u32 *ch_rate, u8 *num_ch, u8 *port_type)
 {
 	u8 i = 0;
 	int ret = 0;
@@ -368,13 +369,14 @@ int swr_connect_port(struct swr_device *dev, u8 *port_id, u8 num_port,
 	mutex_unlock(&master->mlock);
 	txn->tid = i;
 
-	txn->dev_id = dev->dev_num;
+	txn->dev_num = dev->dev_num;
 	txn->num_port = num_port;
 	for (i = 0; i < num_port; i++) {
 		txn->port_id[i] = port_id[i];
 		txn->num_ch[i]  = num_ch[i];
 		txn->ch_rate[i] = ch_rate[i];
 		txn->ch_en[i]   = ch_mask[i];
+		txn->port_type[i] = port_type[i];
 	}
 	ret = master->connect_port(master, txn);
 	return ret;
@@ -391,7 +393,8 @@ EXPORT_SYMBOL(swr_connect_port);
  * its ports. This API will call master disconnect_port callback function to
  * disable master and slave port and (re)configure frame structure
  */
-int swr_disconnect_port(struct swr_device *dev, u8 *port_id, u8 num_port)
+int swr_disconnect_port(struct swr_device *dev, u8 *port_id, u8 num_port,
+					u8 *ch_mask, u8 *port_type)
 {
 	u8 i = 0;
 	int ret;
@@ -445,10 +448,13 @@ int swr_disconnect_port(struct swr_device *dev, u8 *port_id, u8 num_port)
 	mutex_unlock(&master->mlock);
 	txn->tid = i;
 
-	txn->dev_id = dev->dev_num;
+	txn->dev_num = dev->dev_num;
 	txn->num_port = num_port;
-	for (i = 0; i < num_port; i++)
+	for (i = 0; i < num_port; i++) {
 		txn->port_id[i] = port_id[i];
+		txn->ch_en[i]   = ch_mask[i];
+		txn->port_type[i] = port_type[i];
+	}
 	ret = master->disconnect_port(master, txn);
 	return ret;
 }
@@ -855,13 +861,18 @@ int swr_register_master(struct swr_master *master)
 	int status = 0;
 
 	mutex_lock(&swr_lock);
+	id = of_alias_get_id(master->dev.of_node, "swr");
+
+	if (id >= 0)
+		master->bus_num = id;
 	id = idr_alloc(&master_idr, master, master->bus_num,
-			master->bus_num+1, GFP_KERNEL);
+				master->bus_num + 1, GFP_KERNEL);
 	mutex_unlock(&swr_lock);
+
 	if (id < 0)
 		return id;
-	master->bus_num = id;
 
+	master->bus_num = id;
 	/* Can't register until driver model init */
 	if (WARN_ON(!soundwire_type.p)) {
 		status = -EAGAIN;

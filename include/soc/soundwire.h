@@ -1,4 +1,4 @@
-/* Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -38,16 +38,24 @@ enum {
 };
 
 /*
- * struct swr_port_info - represent soundwire frame shape
- * @dev_id: logical device number of the soundwire slave device
+ * struct swr_port_info - represents new soundwire frame shape
+ *							with full data ports
+ * @list: link with other soundwire port info nodes
+ * @dev_num: logical device number of the soundwire slave device
  * @port_en: flag indicates whether the port is enabled
- * @port_id: logical port number of the soundwire slave device
+ * @slave_port_id: logical port number of the soundwire slave device
  * @offset1: sample offset indicating the offset of the channel
  * from the start of the frame
  * @offset2: channel offset indicating offset between to channels
+ * @hstart: start offset for subframe window.
+ * @hstop: start offset for subframe window.
+ * @master_port_id: logical port number of corresponding soundwire master device
+ * @blk_grp_count: grouping count for n.o of channels.
+ * @blk_pack_mode: packing mode for channels in each port.
  * @sinterval: sample interval indicates spacing from one sample
  * event to the next
- * @ch_en: channels in a port that need to be enabled
+ * @ch_en: channels enabled in a port.
+ * @req_ch: channels requested to be enabled in a port.
  * @num_ch: number of channels enabled in a port
  * @ch_rate: sampling rate of the channel with which data will be
  * transferred
@@ -56,13 +64,20 @@ enum {
  * parameters.
  */
 struct swr_port_info {
-	u8 dev_id;
+	u8 dev_num;
 	u8 port_en;
-	u8 port_id;
+	u8 slave_port_id;
 	u8 offset1;
 	u8 offset2;
 	u8 sinterval;
+	struct list_head list;
+	u8 master_port_id;
+	u8 hstart;
+	u8 hstop;
+	u8 blk_grp_count;
+	u8 blk_pack_mode;
 	u8 ch_en;
+	u8 req_ch;
 	u8 num_ch;
 	u32 ch_rate;
 };
@@ -71,22 +86,24 @@ struct swr_port_info {
  * struct swr_params - represent transfer of data from soundwire slave
  * to soundwire master
  * @tid: transaction ID to track each transaction
- * @dev_id: logical device number of the soundwire slave device
+ * @dev_num: logical device number of the soundwire slave device
  * @num_port: number of ports that needs to be configured
  * @port_id: array of logical port numbers of the soundwire slave device
  * @num_ch: array of number of channels enabled
  * @ch_rate: array of sampling rate of different channels that need to
  * be configured
  * @ch_en: array of channels mask for all the ports
+ * @port_type: the required master port type
  */
 struct swr_params {
 	u8 tid;
-	u8 dev_id;
+	u8 dev_num;
 	u8 num_port;
 	u8 port_id[SWR_MAX_DEV_PORT_NUM];
 	u8 num_ch[SWR_MAX_DEV_PORT_NUM];
 	u32 ch_rate[SWR_MAX_DEV_PORT_NUM];
 	u8 ch_en[SWR_MAX_DEV_PORT_NUM];
+	u8 port_type[SWR_MAX_DEV_PORT_NUM];
 };
 
 /*
@@ -127,6 +144,7 @@ struct swr_reg {
  * @write: callback for soundwire slave register write
  * @get_logical_dev_num: callback to get soundwire slave logical
  * device number
+ * @port_en_mask: bit mask of active ports on soundwire master
  */
 struct swr_master {
 	struct device dev;
@@ -151,8 +169,10 @@ struct swr_master {
 			  const void *buf, size_t len);
 	int (*get_logical_dev_num)(struct swr_master *mstr, u64 dev_id,
 				u8 *dev_num);
-	void (*slvdev_datapath_control)(struct swr_master *mstr, bool enable);
+	int (*slvdev_datapath_control)(struct swr_master *mstr, bool enable);
 	bool (*remove_from_group)(struct swr_master *mstr);
+	u16 port_en_mask;
+
 };
 
 static inline struct swr_master *to_swr_master(struct device *dev)
@@ -172,6 +192,8 @@ static inline struct swr_master *to_swr_master(struct device *dev)
  * @addr: represents "ea-addr" which is unique-id of soundwire slave
  * device
  * @group_id: group id supported by the slave device
+ * @slave_irq: irq handle of slave to be invoked by master
+ * during slave interrupt
  */
 struct swr_device {
 	char name[SOUNDWIRE_NAME_SIZE];
@@ -182,6 +204,7 @@ struct swr_device {
 	struct device    dev;
 	unsigned long    addr;
 	u8 group_id;
+	u8 slave_irq;
 };
 
 static inline struct swr_device *to_swr_device(struct device *dev)
@@ -277,10 +300,12 @@ extern int swr_bulk_write(struct swr_device *dev, u8 dev_num, void *reg_addr,
 			  const void *buf, size_t len);
 
 extern int swr_connect_port(struct swr_device *dev, u8 *port_id, u8 num_port,
-				u8 *ch_mask, u32 *ch_rate, u8 *num_ch);
+				u8 *ch_mask, u32 *ch_rate, u8 *num_ch,
+				u8 *port_type);
 
 extern int swr_disconnect_port(struct swr_device *dev,
-				u8 *port_id, u8 num_port);
+				u8 *port_id, u8 num_port, u8 *ch_mask,
+				u8 *port_type);
 
 extern int swr_set_device_group(struct swr_device *swr_dev, u8 id);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -6603,7 +6603,7 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 			__func__, codec->component.name);
 		wsa881x_set_channel_map(codec, &spkleft_ports[0],
 				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
-				&ch_rate[0]);
+				&ch_rate[0], NULL);
 		if (dapm->component) {
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrLeft IN");
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrLeft SPKR");
@@ -6613,7 +6613,7 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 			__func__, codec->component.name);
 		wsa881x_set_channel_map(codec, &spkright_ports[0],
 				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
-				&ch_rate[0]);
+				&ch_rate[0], NULL);
 		if (dapm->component) {
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrRight IN");
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrRight SPKR");
