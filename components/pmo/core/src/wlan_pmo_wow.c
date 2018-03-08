@@ -423,9 +423,9 @@ void pmo_set_sap_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
 uint8_t pmo_get_num_wow_filters(struct wlan_objmgr_psoc *psoc)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
-	bool apf;
-	bool arp_ns;
-	bool pkt_filter;
+	bool apf = false;
+	bool arp_ns = false;
+	bool pkt_filter = false;
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
 		apf = pmo_intersect_apf(psoc_ctx);

@@ -30,13 +30,13 @@
 uint8_t pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
-	bool enabled;
+	bool pkt_filter = false;
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
-		enabled = pmo_intersect_packet_filter(psoc_ctx);
+		pkt_filter = pmo_intersect_packet_filter(psoc_ctx);
 	}
 
-	return enabled ? PMO_PKT_FILTERS_DEFAULT : PMO_PKT_FILTERS_DISABLED;
+	return pkt_filter ? PMO_PKT_FILTERS_DEFAULT : PMO_PKT_FILTERS_DISABLED;
 }
 
 QDF_STATUS pmo_core_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
