@@ -1906,7 +1906,7 @@ end:
 static inline void wmi_workqueue_watchdog_warn(uint32_t msg_type_id)
 {
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-		  "%s: Message type %x has exceeded its alloted time of %ds",
+		  "%s: WLAN_BUG_RCA: Message type %x has exceeded its alloted time of %ds",
 		  __func__, msg_type_id, WMI_WQ_WD_TIMEOUT / 1000);
 }
 
