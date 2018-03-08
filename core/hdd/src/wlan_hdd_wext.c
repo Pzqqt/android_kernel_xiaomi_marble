@@ -12176,12 +12176,6 @@ int hdd_register_wext(struct net_device *dev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = qdf_event_create(&pwextBuf->hdd_qdf_event);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("ERROR: HDD qdf event init failed!!");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	hdd_initialize_fils_info(pwextBuf);
 	/* Register as a wireless device */
 	dev->wireless_handlers = (struct iw_handler_def *)&we_handler_def;

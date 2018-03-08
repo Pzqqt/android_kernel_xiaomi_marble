@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -215,9 +215,6 @@ struct hdd_wext_state {
 
 	/**auth key mgmt */
 	int32_t authKeyMgmt;
-
-	/* qdf event */
-	qdf_event_t hdd_qdf_event;
 };
 
 struct ccp_freq_chan_map {
