@@ -5069,9 +5069,11 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			   adapter->device_mode);
 
 		if ((adapter->device_mode == QDF_STA_MODE) ||
-		    (adapter->device_mode == QDF_P2P_CLIENT_MODE))
+		    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 			/* Stop tdls timers */
 			hdd_notify_tdls_reset_adapter(adapter->hdd_vdev);
+			adapter->session.station.hdd_reassoc_scenario = false;
+		}
 
 		if (hdd_ctx->config->sap_internal_restart &&
 		    adapter->device_mode == QDF_SAP_MODE) {
@@ -5089,7 +5091,6 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		}
 
 		hdd_reset_scan_operation(hdd_ctx, adapter);
-		adapter->session.station.hdd_reassoc_scenario = false;
 
 		hdd_deinit_tx_rx(adapter);
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
