@@ -7655,32 +7655,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_FW_LOG_MAX                    (CFG_ENABLE_FW_LOG_DIAG)
 #define CFG_ENABLE_FW_LOG_DEFAULT                (CFG_ENABLE_FW_LOG_WMI)
 
-/*
- * <ini>
- * gEnableFwSelfRecovery - Enable/disable FW self-recovery for USB
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable FW self-recovery
- * gEnableFwSelfRecovery = 0: Disabled
- * gEnableFwSelfRecovery = 1: Driver triggers SSR instead of triggering
- * kernel  panic after firmware crash.
- *
- * Related: gEnableSSR
- *
- * Supported Feature: SSR
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_FW_SELF_RECOVERY_NAME         "gEnableFwSelfRecovery"
-#define CFG_ENABLE_FW_SELF_RECOVERY_DISABLE      (0)
-#define CFG_ENABLE_FW_SELF_RECOVERY_ENABLE       (1)
-#define CFG_ENABLE_FW_SELF_RECOVERY_DEFAULT      (CFG_ENABLE_FW_SELF_RECOVERY_DISABLE)
-
 /* Macro to handle maximum receive AMPDU size configuration */
 #define CFG_VHT_AMPDU_LEN_EXPONENT_NAME                "gVhtAmpduLenExponent"
 #define CFG_VHT_AMPDU_LEN_EXPONENT_MIN                 (0)
