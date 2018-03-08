@@ -177,6 +177,7 @@ QDF_STATUS cds_init(void)
 	qdf_event_list_init();
 	qdf_cpuhp_init();
 	qdf_register_self_recovery_callback(cds_trigger_recovery);
+	qdf_register_fw_down_callback(cds_is_fw_down);
 
 	gp_cds_context = &g_cds_context;
 
