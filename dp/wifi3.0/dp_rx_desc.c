@@ -115,21 +115,16 @@ uint16_t dp_rx_get_free_desc_list(struct dp_soc *soc, uint32_t pool_id,
 
 	qdf_spin_lock_bh(&soc->rx_desc_mutex[pool_id]);
 
-	*desc_list = rx_desc_pool->freelist;
-
-	if (!(*desc_list)) {
-		qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
-		return 0;
-	}
+	*desc_list = *tail = rx_desc_pool->freelist;
 
 	for (count = 0; count < num_descs; count++) {
 
-		*tail = rx_desc_pool->freelist;
-		rx_desc_pool->freelist = rx_desc_pool->freelist->next;
 		if (qdf_unlikely(!rx_desc_pool->freelist)) {
 			qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
 			return count;
 		}
+		*tail = rx_desc_pool->freelist;
+		rx_desc_pool->freelist = rx_desc_pool->freelist->next;
 	}
 	(*tail)->next = NULL;
 	qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
