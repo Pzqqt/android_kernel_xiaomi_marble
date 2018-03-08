@@ -7324,6 +7324,7 @@ void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
 		      tpPESession session)
 {
 	uint32_t val;
+	uint8_t color;
 	struct he_ops_network_endian *he_ops_from_ie;
 	tDot11fIEhe_op *he_ops = &add_bss->he_op;
 	tSirAddIeParams *add_ie = &session->addIeParams;
@@ -7343,7 +7344,13 @@ void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
 	he_ops_from_ie = (struct he_ops_network_endian *)
 					&extracted_buff[HE_OP_OUI_SIZE + 2];
 
-	he_ops->bss_color = he_ops_from_ie->bss_color;
+	if (he_ops_from_ie->bss_color) {
+		he_ops->bss_color = he_ops_from_ie->bss_color;
+	} else {
+		cds_rand_get_bytes(0, &color, 1);
+		/* make sure color is within 1-63*/
+		he_ops->bss_color = (color % WNI_CFG_HE_OPS_BSS_COLOR_MAX) + 1;
+	}
 	he_ops->default_pe = he_ops_from_ie->default_pe;
 	he_ops->twt_required = he_ops_from_ie->twt_required;
 	he_ops->rts_threshold = he_ops_from_ie->rts_threshold;
