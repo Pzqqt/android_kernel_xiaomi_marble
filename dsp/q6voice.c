@@ -8446,7 +8446,7 @@ uint32_t voice_get_topology(uint32_t topology_idx)
 	if (topology_idx == CVP_VOC_RX_TOPOLOGY_CAL) {
 		topology = VSS_IVOCPROC_TOPOLOGY_ID_RX_DEFAULT;
 	} else if (topology_idx == CVP_VOC_TX_TOPOLOGY_CAL) {
-		topology = VSS_IVOCPROC_TOPOLOGY_ID_TX_SM_ECNS_V2;
+		topology = VSS_IVOCPROC_TOPOLOGY_ID_NONE;
 	} else {
 		pr_err("%s: cal index %x is invalid!\n",
 			__func__, topology_idx);
