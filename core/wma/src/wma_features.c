@@ -575,9 +575,10 @@ error:
  *
  * Return: QDF Status
  */
-QDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
+QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE handle,
 				tAniDHCPInd *ta_dhcp_ind)
 {
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	uint8_t vdev_id;
 	int status = 0;
 	wmi_peer_set_param_cmd_fixed_param peer_set_param_fp = {0};

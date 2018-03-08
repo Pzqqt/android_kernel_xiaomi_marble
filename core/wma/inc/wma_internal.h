@@ -891,9 +891,6 @@ QDF_STATUS wma_sar_register_event_handlers(WMA_HANDLE handle);
 void wma_process_link_status_req(tp_wma_handle wma,
 				 tAniGetLinkStatus *pGetLinkStatus);
 
-QDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
-				tAniDHCPInd *ta_dhcp_ind);
-
 QDF_STATUS wma_get_peer_info(WMA_HANDLE handle,
 				struct sir_peer_info_req *peer_info_req);
 

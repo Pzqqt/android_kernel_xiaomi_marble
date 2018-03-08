@@ -50,6 +50,7 @@
 #include "wlan_p2p_ucfg_api.h"
 #include <wlan_hdd_regulatory.h>
 #include "wlan_ipa_ucfg_api.h"
+#include <wma_types.h>
 
 /* Preprocessor definitions and constants */
 #undef QCA_HDD_SAP_DUMP_SK_BUFF
@@ -271,6 +272,145 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 /**
+ * hdd_post_dhcp_ind() - Send DHCP START/STOP indication to FW
+ * @adapter: pointer to hdd adapter
+ * @sta_id: peer station ID
+ * @type: WMA message type
+ *
+ * Return: error number
+ */
+int hdd_post_dhcp_ind(struct hdd_adapter *adapter,
+			     uint8_t sta_id, uint16_t type)
+{
+	tAniDHCPInd pmsg;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	hdd_debug("Post DHCP indication,sta_id=%d,  type=%d", sta_id, type);
+
+	if (!adapter) {
+		hdd_err("NULL adapter");
+		return -EINVAL;
+	}
+
+	pmsg.msgType = type;
+	pmsg.msgLen = (uint16_t) sizeof(tAniDHCPInd);
+	pmsg.device_mode = adapter->device_mode;
+	qdf_mem_copy(pmsg.adapterMacAddr.bytes,
+		     adapter->mac_addr.bytes,
+		     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(pmsg.peerMacAddr.bytes,
+		     adapter->sta_info[sta_id].sta_mac.bytes,
+		     QDF_MAC_ADDR_SIZE);
+
+	status = wma_process_dhcp_ind(cds_get_context(QDF_MODULE_ID_WMA),
+				      &pmsg);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Post DHCP Ind MSG fail", __func__);
+		return -EFAULT;
+	}
+
+	return 0;
+}
+
+/**
+ * hdd_inspect_dhcp_packet() - Inspect DHCP packet
+ * @adapter: pointer to hdd adapter
+ * @sta_id: peer station ID
+ * @skb: pointer to OS packet (sk_buff)
+ * @dir: direction
+ *
+ * Inspect the Tx/Rx frame, and send DHCP START/STOP notification to the FW
+ * through WMI message, during DHCP based IP address acquisition phase.
+ *
+ * - Send DHCP_START notification to FW when SAP gets DHCP Discovery
+ * - Send DHCP_STOP notification to FW when SAP sends DHCP ACK/NAK
+ *
+ * DHCP subtypes are determined by a status octet in the DHCP Message type
+ * option (option code 53 (0x35)).
+ *
+ * Each peer will be in one of 4 DHCP phases, starts from QDF_DHCP_PHASE_ACK,
+ * and transitioned per DHCP message type as it arrives.
+ *
+ * - QDF_DHCP_PHASE_DISCOVER: upon receiving DHCP_DISCOVER message in ACK phase
+ * - QDF_DHCP_PHASE_OFFER: upon receiving DHCP_OFFER message in DISCOVER phase
+ * - QDF_DHCP_PHASE_REQUEST: upon receiving DHCP_REQUEST message in OFFER phase
+ *	or ACK phase (Renewal process)
+ * - QDF_DHCP_PHASE_ACK : upon receiving DHCP_ACK/NAK message in REQUEST phase
+ *	or DHCP_DELINE message in OFFER phase
+ *
+ * Return: error number
+ */
+int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
+				       uint8_t sta_id,
+				       struct sk_buff *skb,
+				       enum qdf_proto_dir dir)
+{
+	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
+	struct hdd_station_info *hdd_sta_info;
+	int errno = 0;
+
+	hdd_debug("sta_id=%d, dir=%d", sta_id, dir);
+
+	if ((adapter->device_mode == QDF_SAP_MODE) &&
+	    ((dir == QDF_TX && QDF_NBUF_CB_PACKET_TYPE_DHCP ==
+				QDF_NBUF_CB_GET_PACKET_TYPE(skb)) ||
+	     (dir == QDF_RX && qdf_nbuf_is_ipv4_dhcp_pkt(skb) == true))) {
+
+		subtype = qdf_nbuf_get_dhcp_subtype(skb);
+		hdd_sta_info = &adapter->sta_info[sta_id];
+
+		hdd_debug("ENTER: type=%d, phase=%d, nego_status=%d",
+			  subtype,
+			  hdd_sta_info->dhcp_phase,
+			  hdd_sta_info->dhcp_nego_status);
+
+		switch (subtype) {
+		case QDF_PROTO_DHCP_DISCOVER:
+			if (dir != QDF_RX)
+				break;
+			if (hdd_sta_info->dhcp_nego_status == DHCP_NEGO_STOP)
+				errno = hdd_post_dhcp_ind(adapter, sta_id,
+							   WMA_DHCP_START_IND);
+			hdd_sta_info->dhcp_phase = DHCP_PHASE_DISCOVER;
+			hdd_sta_info->dhcp_nego_status = DHCP_NEGO_IN_PROGRESS;
+			break;
+		case QDF_PROTO_DHCP_OFFER:
+			hdd_sta_info->dhcp_phase = DHCP_PHASE_OFFER;
+			break;
+		case QDF_PROTO_DHCP_REQUEST:
+			if (dir != QDF_RX)
+				break;
+			if (hdd_sta_info->dhcp_nego_status == DHCP_NEGO_STOP)
+				errno = hdd_post_dhcp_ind(adapter, sta_id,
+							   WMA_DHCP_START_IND);
+			hdd_sta_info->dhcp_nego_status = DHCP_NEGO_IN_PROGRESS;
+		case QDF_PROTO_DHCP_DECLINE:
+			if (dir == QDF_RX)
+				hdd_sta_info->dhcp_phase = DHCP_PHASE_REQUEST;
+			break;
+		case QDF_PROTO_DHCP_ACK:
+		case QDF_PROTO_DHCP_NACK:
+			hdd_sta_info->dhcp_phase = DHCP_PHASE_ACK;
+			if ((hdd_sta_info->dhcp_nego_status ==
+				DHCP_NEGO_IN_PROGRESS))
+				errno = hdd_post_dhcp_ind(adapter, sta_id,
+							   WMA_DHCP_STOP_IND);
+			hdd_sta_info->dhcp_nego_status = DHCP_NEGO_STOP;
+			break;
+		default:
+			break;
+		}
+
+		hdd_debug("EXIT: phase=%d, nego_status=%d",
+			  hdd_sta_info->dhcp_phase,
+			  hdd_sta_info->dhcp_nego_status);
+	}
+
+	return errno;
+}
+
+/**
  * __hdd_softap_hard_start_xmit() - Transmit a frame
  * @skb: pointer to OS packet (sk_buff)
  * @dev: pointer to network device
@@ -433,6 +573,9 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		adapter->sta_info[STAId].tx_packets++;
 	}
 	adapter->sta_info[STAId].last_tx_rx_ts = qdf_system_ticks();
+
+	if (STAId != ap_ctx->broadcast_sta_id)
+		hdd_inspect_dhcp_packet(adapter, STAId, skb, QDF_TX);
 
 	hdd_event_eapol_log(skb, QDF_TX);
 	qdf_dp_trace_log_pkt(adapter->session_id, skb, QDF_TX,
@@ -698,7 +841,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	struct sk_buff *skb = NULL;
 	struct sk_buff *next = NULL;
 	struct hdd_context *hdd_ctx = NULL;
-	struct qdf_mac_addr src_mac;
+	struct qdf_mac_addr *src_mac;
 	uint8_t staid;
 	bool proto_pkt_logged = false;
 
@@ -742,8 +885,8 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		skb->dev = adapter->dev;
 
 		if (unlikely(skb->dev == NULL)) {
-
-			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
+				  QDF_TRACE_LEVEL_ERROR,
 				  "%s: ERROR!!Invalid netdevice", __func__);
 			continue;
 		}
@@ -752,17 +895,21 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		++adapter->stats.rx_packets;
 		adapter->stats.rx_bytes += skb->len;
 
-	qdf_mem_copy(&src_mac, skb->data + QDF_NBUF_SRC_MAC_OFFSET,
-		     sizeof(src_mac));
-	if (QDF_STATUS_SUCCESS ==
-		hdd_softap_get_sta_id(adapter, &src_mac, &staid)) {
-		if (staid < WLAN_MAX_STA_COUNT) {
-			adapter->sta_info[staid].rx_packets++;
-			adapter->sta_info[staid].rx_bytes += skb->len;
-			adapter->sta_info[staid].last_tx_rx_ts =
-				qdf_system_ticks();
+		/* Send DHCP Indication to FW */
+		src_mac = (struct qdf_mac_addr *)(skb->data +
+						  QDF_NBUF_SRC_MAC_OFFSET);
+		if (QDF_STATUS_SUCCESS ==
+			hdd_softap_get_sta_id(adapter, src_mac, &staid)) {
+			if (staid < WLAN_MAX_STA_COUNT) {
+				adapter->sta_info[staid].rx_packets++;
+				adapter->sta_info[staid].rx_bytes += skb->len;
+				adapter->sta_info[staid].last_tx_rx_ts =
+					qdf_system_ticks();
+			}
 		}
-	}
+
+		hdd_inspect_dhcp_packet(adapter, staid, skb, QDF_RX);
+
 		hdd_event_eapol_log(skb, QDF_RX);
 		proto_pkt_logged = qdf_dp_trace_log_pkt(adapter->session_id,
 						skb, QDF_RX,

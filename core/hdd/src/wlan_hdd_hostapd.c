@@ -1535,6 +1535,10 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 		hdd_copy_ht_caps(&stainfo->ht_caps, &event->ht_caps);
 	}
 
+	/* Initialize DHCP info */
+	stainfo->dhcp_phase = DHCP_PHASE_ACK;
+	stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
+
 	while (i < WLAN_MAX_STA_COUNT) {
 		if (!qdf_mem_cmp(adapter->cache_sta_info[i].sta_mac.bytes,
 				 event->staMac.bytes,
@@ -2329,6 +2333,14 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			adapter->session_id,
 			QDF_TRACE_DEFAULT_PDEV_ID,
 			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_DISASSOC));
+
+		/* Send DHCP STOP indication to FW */
+		stainfo->dhcp_phase = DHCP_PHASE_ACK;
+		if ((stainfo->dhcp_nego_status ==
+					DHCP_NEGO_IN_PROGRESS))
+			hdd_post_dhcp_ind(adapter, staId,
+					WMA_DHCP_STOP_IND);
+		stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
 
 		hdd_softap_deregister_sta(adapter, staId);
 

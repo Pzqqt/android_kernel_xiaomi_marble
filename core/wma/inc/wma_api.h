@@ -334,4 +334,7 @@ uint32_t wma_critical_events_in_flight(void);
 QDF_STATUS wma_set_vc_mode_config(void *wma_handle,
 		uint32_t vc_bitmap);
 
+QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE wma_handle,
+				tAniDHCPInd *ta_dhcp_ind);
+
 #endif
