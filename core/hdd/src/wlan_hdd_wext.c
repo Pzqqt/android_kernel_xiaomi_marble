@@ -9815,53 +9815,47 @@ static int iw_set_packet_filter_params(struct net_device *dev,
 }
 #endif
 
+struct hdd_statistics_priv {
+	tCsrSummaryStatsInfo summary_stats;
+	tCsrGlobalClassAStatsInfo class_a_stats;
+	tCsrGlobalClassDStatsInfo class_d_stats;
+};
 
 /**
  * hdd_statistics_cb() - "Get statistics" callback function
- * @pStats: statistics payload
- * @pContext: opaque context originally passed to SME.  HDD always passes
- *	a pointer to an adapter
+ * @stats: statistics payload
+ * @context: opaque context originally passed to SME.  HDD always passes
+ *	a cookie for the request context
  *
  * Return: None
  */
-static void hdd_statistics_cb(void *pStats, void *pContext)
+static void hdd_statistics_cb(void *stats, void *context)
 {
-	struct hdd_adapter *adapter = (struct hdd_adapter *) pContext;
-	struct hdd_stats *pStatsCache = NULL;
-	struct hdd_wext_state *pWextState;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	struct hdd_request *request;
+	struct hdd_statistics_priv *priv;
+	tCsrSummaryStatsInfo *summary_stats;
+	tCsrGlobalClassAStatsInfo *class_a_stats;
+	tCsrGlobalClassDStatsInfo *class_d_stats;
 
-	tCsrSummaryStatsInfo *pSummaryStats = NULL;
-	tCsrGlobalClassAStatsInfo *pClassAStats = NULL;
-	tCsrGlobalClassDStatsInfo *pClassDStats = NULL;
-
-	if (adapter != NULL)
-		pStatsCache = &adapter->hdd_stats;
-
-	pSummaryStats = (tCsrSummaryStatsInfo *) pStats;
-	pClassAStats = (tCsrGlobalClassAStatsInfo *) (pSummaryStats + 1);
-	pClassDStats = (tCsrGlobalClassDStatsInfo *) (pClassAStats + 1);
-
-	if (pStatsCache != NULL) {
-		/* copy the stats into the cache we keep in the
-		 * adapter instance structure
-		 */
-		qdf_mem_copy(&pStatsCache->summary_stat, pSummaryStats,
-			     sizeof(pStatsCache->summary_stat));
-		qdf_mem_copy(&pStatsCache->class_a_stat, pClassAStats,
-			     sizeof(pStatsCache->class_a_stat));
-		qdf_mem_copy(&pStatsCache->class_d_stat, pClassDStats,
-			     sizeof(pStatsCache->class_d_stat));
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
 	}
 
-	if (adapter) {
-		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-		qdf_status = qdf_event_set(&pWextState->hdd_qdf_event);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			hdd_err("qdf_event_set failed");
-			return;
-		}
-	}
+	priv = hdd_request_priv(request);
+
+	summary_stats = (tCsrSummaryStatsInfo *)stats;
+	priv->summary_stats = *summary_stats;
+
+	class_a_stats = (tCsrGlobalClassAStatsInfo *)(summary_stats + 1);
+	priv->class_a_stats = *class_a_stats;
+
+	class_d_stats = (tCsrGlobalClassDStatsInfo *)(class_a_stats + 1);
+	priv->class_d_stats = *class_d_stats;
+
+	hdd_request_complete(request);
+	hdd_request_put(request);
 }
 
 static int __iw_get_statistics(struct net_device *dev,
@@ -9869,17 +9863,26 @@ static int __iw_get_statistics(struct net_device *dev,
 			       union iwreq_data *wrqu, char *extra)
 {
 
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct hdd_wext_state *pWextState;
+	QDF_STATUS status;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	char *p = extra;
-	int tlen = 0;
-	tCsrSummaryStatsInfo *pStats = &(adapter->hdd_stats.summary_stat);
-	tCsrGlobalClassAStatsInfo *aStats = &(adapter->hdd_stats.class_a_stat);
-	tCsrGlobalClassDStatsInfo *dStats = &(adapter->hdd_stats.class_d_stat);
+	struct hdd_station_ctx *sta_ctx;
+	char *p;
+	int tlen;
+	tCsrSummaryStatsInfo *summary_stats =
+		&(adapter->hdd_stats.summary_stat);
+	tCsrGlobalClassAStatsInfo *class_a_stats =
+		&(adapter->hdd_stats.class_a_stat);
+	tCsrGlobalClassDStatsInfo *class_d_stats =
+		&(adapter->hdd_stats.class_d_stat);
 	int ret;
+	void *cookie;
+	struct hdd_request *request;
+	struct hdd_statistics_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
 
 	ENTER_DEV(dev);
 
@@ -9891,131 +9894,139 @@ static int __iw_get_statistics(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	if (eConnectionState_Associated !=
-	    (WLAN_HDD_GET_STATION_CTX_PTR(adapter))->conn_info.connState) {
-
-		wrqu->txpower.value = 0;
-	} else {
-		status = sme_get_statistics(hdd_ctx->hHal, eCSR_HDD,
-					    SME_SUMMARY_STATS |
-					    SME_GLOBAL_CLASSA_STATS |
-					    SME_GLOBAL_CLASSD_STATS,
-					    hdd_statistics_cb,
-					    (WLAN_HDD_GET_STATION_CTX_PTR
-						(adapter))->conn_info.staId[0],
-					    adapter, adapter->session_id);
-
-		if (QDF_STATUS_SUCCESS != status) {
-			hdd_err("Unable to retrieve SME statistics");
-			return -EINVAL;
-		}
-
-		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-
-		qdf_status = qdf_wait_for_event_completion(
-				&pWextState->hdd_qdf_event,
-				WLAN_WAIT_TIME_STATS);
-
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			hdd_err("SME timeout while retrieving statistics");
-			/* Remove the SME statistics list by
-			 * passing NULL in callback argument
-			 */
-			status = sme_get_statistics(hdd_ctx->hHal, eCSR_HDD,
-						    SME_SUMMARY_STATS |
-						    SME_GLOBAL_CLASSA_STATS |
-						    SME_GLOBAL_CLASSD_STATS,
-						    NULL,
-						    (WLAN_HDD_GET_STATION_CTX_PTR
-							 (adapter))->conn_info.
-						    staId[0], adapter,
-						    adapter->session_id);
-
-			return -EINVAL;
-		}
-		FILL_TLV(p, (uint8_t) WLAN_STATS_RETRY_CNT,
-			 (uint8_t) sizeof(pStats->retry_cnt),
-			 (char *)&(pStats->retry_cnt[0]), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_MUL_RETRY_CNT,
-			 (uint8_t) sizeof(pStats->multiple_retry_cnt),
-			 (char *)&(pStats->multiple_retry_cnt[0]), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_TX_FRM_CNT,
-			 (uint8_t) sizeof(pStats->tx_frm_cnt),
-			 (char *)&(pStats->tx_frm_cnt[0]), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_RX_FRM_CNT,
-			 (uint8_t) sizeof(pStats->rx_frm_cnt),
-			 (char *)&(pStats->rx_frm_cnt), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_FRM_DUP_CNT,
-			 (uint8_t) sizeof(pStats->frm_dup_cnt),
-			 (char *)&(pStats->frm_dup_cnt), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_FAIL_CNT,
-			 (uint8_t) sizeof(pStats->fail_cnt),
-			 (char *)&(pStats->fail_cnt[0]), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_RTS_FAIL_CNT,
-			 (uint8_t) sizeof(pStats->rts_fail_cnt),
-			 (char *)&(pStats->rts_fail_cnt), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_ACK_FAIL_CNT,
-			 (uint8_t) sizeof(pStats->ack_fail_cnt),
-			 (char *)&(pStats->ack_fail_cnt), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_RTS_SUC_CNT,
-			 (uint8_t) sizeof(pStats->rts_succ_cnt),
-			 (char *)&(pStats->rts_succ_cnt), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_RX_DISCARD_CNT,
-			 (uint8_t) sizeof(pStats->rx_discard_cnt),
-			 (char *)&(pStats->rx_discard_cnt), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_RX_ERROR_CNT,
-			 (uint8_t) sizeof(pStats->rx_error_cnt),
-			 (char *)&(pStats->rx_error_cnt), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_TX_BYTE_CNT,
-			 (uint8_t) sizeof(dStats->tx_uc_byte_cnt[0]),
-			 (char *)&(dStats->tx_uc_byte_cnt[0]), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_RX_BYTE_CNT,
-			 (uint8_t) sizeof(dStats->rx_byte_cnt),
-			 (char *)&(dStats->rx_byte_cnt), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_RX_RATE,
-			 (uint8_t) sizeof(dStats->rx_rate),
-			 (char *)&(dStats->rx_rate), tlen);
-
-		/* Transmit rate, in units of 500 kbit/sec */
-		FILL_TLV(p, (uint8_t) WLAN_STATS_TX_RATE,
-			 (uint8_t) sizeof(aStats->tx_rate),
-			 (char *)&(aStats->tx_rate), tlen);
-
-		FILL_TLV(p, (uint8_t) WLAN_STATS_RX_UC_BYTE_CNT,
-			 (uint8_t) sizeof(dStats->rx_uc_byte_cnt[0]),
-			 (char *)&(dStats->rx_uc_byte_cnt[0]), tlen);
-		FILL_TLV(p, (uint8_t) WLAN_STATS_RX_MC_BYTE_CNT,
-			 (uint8_t) sizeof(dStats->rx_mc_byte_cnt),
-			 (char *)&(dStats->rx_mc_byte_cnt), tlen);
-		FILL_TLV(p, (uint8_t) WLAN_STATS_RX_BC_BYTE_CNT,
-			 (uint8_t) sizeof(dStats->rx_bc_byte_cnt),
-			 (char *)&(dStats->rx_bc_byte_cnt), tlen);
-		FILL_TLV(p, (uint8_t) WLAN_STATS_TX_UC_BYTE_CNT,
-			 (uint8_t) sizeof(dStats->tx_uc_byte_cnt[0]),
-			 (char *)&(dStats->tx_uc_byte_cnt[0]), tlen);
-		FILL_TLV(p, (uint8_t) WLAN_STATS_TX_MC_BYTE_CNT,
-			 (uint8_t) sizeof(dStats->tx_mc_byte_cnt),
-			 (char *)&(dStats->tx_mc_byte_cnt), tlen);
-		FILL_TLV(p, (uint8_t) WLAN_STATS_TX_BC_BYTE_CNT,
-			 (uint8_t) sizeof(dStats->tx_bc_byte_cnt),
-			 (char *)&(dStats->tx_bc_byte_cnt), tlen);
-
-		wrqu->data.length = tlen;
-
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+		wrqu->data.length = 0;
+		return 0;
 	}
+
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_warn("request allocation failed");
+		goto return_cached_stats;
+	}
+
+	cookie = hdd_request_cookie(request);
+
+	status = sme_get_statistics(hdd_ctx->hHal, eCSR_HDD,
+				    SME_SUMMARY_STATS |
+				    SME_GLOBAL_CLASSA_STATS |
+				    SME_GLOBAL_CLASSD_STATS,
+				    hdd_statistics_cb,
+				    sta_ctx->conn_info.staId[0],
+				    cookie, adapter->session_id);
+
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_warn("Unable to retrieve SME statistics");
+		goto put_request;
+	}
+
+	/* request was sent -- wait for the response */
+	ret = hdd_request_wait_for_response(request);
+	if (ret) {
+		hdd_err("Failed to wait for statistics, errno %d", ret);
+		goto put_request;
+	}
+
+	/* update the adapter cache with the fresh results */
+	priv = hdd_request_priv(request);
+	*summary_stats = priv->summary_stats;
+	*class_a_stats = priv->class_a_stats;
+	*class_d_stats = priv->class_d_stats;
+
+put_request:
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	hdd_request_put(request);
+
+return_cached_stats:
+	p = extra;
+	tlen = 0;
+
+	FILL_TLV(p, WLAN_STATS_RETRY_CNT,
+		 sizeof(summary_stats->retry_cnt),
+		 &(summary_stats->retry_cnt[0]), tlen);
+
+	FILL_TLV(p, WLAN_STATS_MUL_RETRY_CNT,
+		 sizeof(summary_stats->multiple_retry_cnt),
+		 &(summary_stats->multiple_retry_cnt[0]), tlen);
+
+	FILL_TLV(p, WLAN_STATS_TX_FRM_CNT,
+		 sizeof(summary_stats->tx_frm_cnt),
+		 &(summary_stats->tx_frm_cnt[0]), tlen);
+
+	FILL_TLV(p, WLAN_STATS_RX_FRM_CNT,
+		 sizeof(summary_stats->rx_frm_cnt),
+		 &(summary_stats->rx_frm_cnt), tlen);
+
+	FILL_TLV(p, WLAN_STATS_FRM_DUP_CNT,
+		 sizeof(summary_stats->frm_dup_cnt),
+		 &(summary_stats->frm_dup_cnt), tlen);
+
+	FILL_TLV(p, WLAN_STATS_FAIL_CNT,
+		 sizeof(summary_stats->fail_cnt),
+		 &(summary_stats->fail_cnt[0]), tlen);
+
+	FILL_TLV(p, WLAN_STATS_RTS_FAIL_CNT,
+		 sizeof(summary_stats->rts_fail_cnt),
+		 &(summary_stats->rts_fail_cnt), tlen);
+
+	FILL_TLV(p, WLAN_STATS_ACK_FAIL_CNT,
+		 sizeof(summary_stats->ack_fail_cnt),
+		 &(summary_stats->ack_fail_cnt), tlen);
+
+	FILL_TLV(p, WLAN_STATS_RTS_SUC_CNT,
+		 sizeof(summary_stats->rts_succ_cnt),
+		 &(summary_stats->rts_succ_cnt), tlen);
+
+	FILL_TLV(p, WLAN_STATS_RX_DISCARD_CNT,
+		 sizeof(summary_stats->rx_discard_cnt),
+		 &(summary_stats->rx_discard_cnt), tlen);
+
+	FILL_TLV(p, WLAN_STATS_RX_ERROR_CNT,
+		 sizeof(summary_stats->rx_error_cnt),
+		 &(summary_stats->rx_error_cnt), tlen);
+
+	FILL_TLV(p, WLAN_STATS_TX_BYTE_CNT,
+		 sizeof(class_d_stats->tx_uc_byte_cnt[0]),
+		 &(class_d_stats->tx_uc_byte_cnt[0]), tlen);
+
+	FILL_TLV(p, WLAN_STATS_RX_BYTE_CNT,
+		 sizeof(class_d_stats->rx_byte_cnt),
+		 &(class_d_stats->rx_byte_cnt), tlen);
+
+	FILL_TLV(p, WLAN_STATS_RX_RATE,
+		 sizeof(class_d_stats->rx_rate),
+		 &(class_d_stats->rx_rate), tlen);
+
+	/* Transmit rate, in units of 500 kbit/sec */
+	FILL_TLV(p, WLAN_STATS_TX_RATE,
+		 sizeof(class_a_stats->tx_rate),
+		 &(class_a_stats->tx_rate), tlen);
+
+	FILL_TLV(p, WLAN_STATS_RX_UC_BYTE_CNT,
+		 sizeof(class_d_stats->rx_uc_byte_cnt[0]),
+		 &(class_d_stats->rx_uc_byte_cnt[0]), tlen);
+	FILL_TLV(p, WLAN_STATS_RX_MC_BYTE_CNT,
+		 sizeof(class_d_stats->rx_mc_byte_cnt),
+		 &(class_d_stats->rx_mc_byte_cnt), tlen);
+	FILL_TLV(p, WLAN_STATS_RX_BC_BYTE_CNT,
+		 sizeof(class_d_stats->rx_bc_byte_cnt),
+		 &(class_d_stats->rx_bc_byte_cnt), tlen);
+	FILL_TLV(p, WLAN_STATS_TX_UC_BYTE_CNT,
+		 sizeof(class_d_stats->tx_uc_byte_cnt[0]),
+		 &(class_d_stats->tx_uc_byte_cnt[0]), tlen);
+	FILL_TLV(p, WLAN_STATS_TX_MC_BYTE_CNT,
+		 sizeof(class_d_stats->tx_mc_byte_cnt),
+		 &(class_d_stats->tx_mc_byte_cnt), tlen);
+	FILL_TLV(p, WLAN_STATS_TX_BC_BYTE_CNT,
+		 sizeof(class_d_stats->tx_bc_byte_cnt),
+		 &(class_d_stats->tx_bc_byte_cnt), tlen);
+
+	wrqu->data.length = tlen;
 
 	EXIT();
 
