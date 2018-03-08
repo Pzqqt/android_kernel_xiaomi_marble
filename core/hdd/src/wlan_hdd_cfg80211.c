@@ -6322,6 +6322,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_NO_ACK_AC] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_LTF] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -7470,6 +7472,23 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		hdd_debug("Set NO_ACK to %d for ac %d", cfg_val, ac);
 		ret_val = sme_set_no_ack_policy(hdd_ctx->hHal,
 				adapter->session_id, cfg_val, ac);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_LTF]) {
+		cfg_val = nla_get_u8(tb[
+				QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_LTF]);
+		hdd_debug("Set HE LTF to %d", cfg_val);
+		ret_val = sme_set_auto_rate_he_ltf(hdd_ctx->hHal,
+						   adapter->session_id,
+						   cfg_val);
+		if (ret_val)
+			sme_err("Failed to set auto rate HE LTF");
+
+		ret_val = wma_cli_set_command(adapter->session_id,
+					      WMI_VDEV_PARAM_HE_LTF,
+					      cfg_val, VDEV_CMD);
+		if (ret_val)
+			goto send_err;
 	}
 
 	if (update_sme_cfg)

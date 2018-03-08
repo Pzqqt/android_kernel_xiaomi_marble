@@ -7187,6 +7187,24 @@ struct wow_enable_params {
 	enum wow_resume_trigger resume_trigger;
 };
 
+#define HE_LTF_1X	0
+#define HE_LTF_2X	1
+#define HE_LTF_4X	2
+
+#define HE_LTF_ALL	0x7
+#define HE_SGI_MASK	0xFF00
+
+#define AUTO_RATE_GI_400NS	8
+#define AUTO_RATE_GI_800NS	9
+#define AUTO_RATE_GI_1600NS	10
+#define AUTO_RATE_GI_3200NS	11
+
+#define SET_AUTO_RATE_SGI_VAL(set_val, bit_mask) \
+	(set_val = (set_val & HE_LTF_ALL) | bit_mask)
+
+#define SET_AUTO_RATE_HE_LTF_VAL(set_val, bit_mask) \
+	(set_val = (set_val & HE_SGI_MASK) | bit_mask)
+
 #ifdef WLAN_FEATURE_11AX
 #define HE_CAP_OUI_TYPE "\x23"
 #define HE_CAP_OUI_SIZE 1
@@ -7246,6 +7264,7 @@ struct ppet_hdr {
 #define HE_MCS_0_9     0x1
 #define HE_MCS_0_11    0x2
 #define HE_MCS_DISABLE 0x3
+
 /*
  * Following formuala has been arrived at using karnaugh map and unit tested
  * with sample code. Take MCS for each NSS as 2 bit value first and solve for

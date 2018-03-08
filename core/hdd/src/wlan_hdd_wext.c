@@ -291,13 +291,14 @@
 #define WE_SET_RX_STBC       14
 /*
  * <ioctl>
- * shortgi  - Enables or disables a short-guard interval
+ * shortgi  - Sets the short-guard interval
  *
- * @INPUT: Int 0 – Disable, 1 - Enable
+ * @INPUT: Fixed Rate: 0 - 400ns, 1 - 800ns, 2 - 1600ns, 3 - 3200us
+ * Auto Rate: 8 - 400ns, 9 - 800ns, 10 - 1600ns, 11 - 3200us
  *
  * @OUTPUT: None
  *
- * This IOCTL enables or disables a short-guard interval.
+ * This IOCTL sets the short-guard interval.
  *
  * @E.g: iwpriv wlan0 shortgi <value>
  *
@@ -3667,6 +3668,7 @@ int hdd_set_11ax_rate(struct hdd_adapter *adapter, int set_value,
 {
 	uint8_t preamble = 0, nss = 0, rix = 0;
 	int ret;
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
 
 	if (!sap_config) {
 		if (!sme_is_feature_supported_by_fw(DOT11AX)) {
@@ -3686,6 +3688,9 @@ int hdd_set_11ax_rate(struct hdd_adapter *adapter, int set_value,
 		nss = HT_RC_2_STREAMS_11AX(set_value);
 
 		set_value = hdd_assemble_rate_code(preamble, nss, rix);
+	} else {
+		ret = sme_set_auto_rate_he_ltf(hal, adapter->session_id,
+					       QCA_WLAN_HE_LTF_AUTO);
 	}
 
 	hdd_info("SET_11AX_RATE val %d rix %d preamble %x nss %d",
@@ -4492,11 +4497,17 @@ static int __iw_setint_getnone(struct net_device *dev,
 			return -EINVAL;
 
 		hdd_debug("WMI_VDEV_PARAM_SGI val %d", set_value);
-		ret = sme_update_ht_config(hHal, adapter->session_id,
-					   WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
-					   set_value);
+		if (set_value & HDD_AUTO_RATE_SGI)
+			ret = sme_set_auto_rate_he_sgi(hHal,
+						       adapter->session_id,
+						       set_value);
+		else
+			ret = sme_update_ht_config(hHal, adapter->session_id,
+					WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
+					set_value);
 		if (ret)
-			hdd_err("Failed to set ShortGI value");
+			hdd_err("Failed to set ShortGI value %d", set_value);
+
 		break;
 	}
 

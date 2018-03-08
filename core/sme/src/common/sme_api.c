@@ -9814,6 +9814,78 @@ int sme_set_no_ack_policy(tHalHandle hal, uint8_t session_id,
 	return 0;
 }
 
+int sme_set_auto_rate_he_ltf(tHalHandle hal, uint8_t session_id,
+		uint8_t cfg_val)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	uint32_t set_val;
+	uint32_t bit_mask = 0;
+	int status;
+
+	if (cfg_val > QCA_WLAN_HE_LTF_4X) {
+		sme_err("invalid HE LTF cfg %d", cfg_val);
+		return -EINVAL;
+	}
+
+	/*set the corresponding HE LTF cfg BIT*/
+	if (cfg_val == QCA_WLAN_HE_LTF_AUTO)
+		bit_mask = HE_LTF_ALL;
+	else
+		bit_mask = (1 << (cfg_val - 1));
+
+	set_val = mac_ctx->he_sgi_ltf_cfg_bit_mask;
+
+	SET_AUTO_RATE_HE_LTF_VAL(set_val, bit_mask);
+
+	mac_ctx->he_sgi_ltf_cfg_bit_mask = set_val;
+	status = wma_cli_set_command(session_id,
+			WMI_VDEV_PARAM_AUTORATE_MISC_CFG,
+			set_val, VDEV_CMD);
+	if (status) {
+		sme_err("failed to set he_ltf_sgi");
+		return status;
+	}
+
+	sme_debug("HE SGI_LTF is set to 0x%08X",
+			mac_ctx->he_sgi_ltf_cfg_bit_mask);
+
+	return 0;
+}
+
+int sme_set_auto_rate_he_sgi(tHalHandle hal, uint8_t session_id,
+		uint8_t cfg_val)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	uint32_t set_val;
+	uint32_t sgi_bit_mask = 0;
+	int status;
+
+	if ((cfg_val > AUTO_RATE_GI_3200NS) ||
+			(cfg_val < AUTO_RATE_GI_400NS)) {
+		sme_err("invalid auto rate GI cfg %d", cfg_val);
+		return -EINVAL;
+	}
+
+	sgi_bit_mask = (1 << cfg_val);
+
+	set_val = mac_ctx->he_sgi_ltf_cfg_bit_mask;
+	SET_AUTO_RATE_SGI_VAL(set_val, sgi_bit_mask);
+
+	mac_ctx->he_sgi_ltf_cfg_bit_mask = set_val;
+	status = wma_cli_set_command(session_id,
+				     WMI_VDEV_PARAM_AUTORATE_MISC_CFG,
+				     set_val, VDEV_CMD);
+	if (status) {
+		sme_err("failed to set he_ltf_sgi");
+		return status;
+	}
+
+	sme_debug("auto rate HE SGI_LTF is set to 0x%08X",
+			mac_ctx->he_sgi_ltf_cfg_bit_mask);
+
+	return 0;
+}
+
 #define HT20_SHORT_GI_MCS7_RATE 722
 /*
  * sme_send_rate_update_ind() -

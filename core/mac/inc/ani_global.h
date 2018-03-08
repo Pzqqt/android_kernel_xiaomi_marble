@@ -94,6 +94,7 @@
 #define LOW_SEQ_NUM_MASK                                0x000F
 #define HIGH_SEQ_NUM_MASK                               0x0FF0
 #define HIGH_SEQ_NUM_OFFSET                             4
+#define DEF_HE_AUTO_SGI_LTF                             0x0F07
 
 /* vendor element ID */
 #define IE_EID_VENDOR        (221) /* 0xDD */
@@ -947,6 +948,7 @@ typedef struct sAniSirGlobal {
 	uint8_t reject_addba_req;
 	uint16_t usr_cfg_ba_buff_size;
 	uint8_t no_ack_policy_cfg[MAX_NUM_AC];
+	uint32_t he_sgi_ltf_cfg_bit_mask;
 } tAniSirGlobal;
 
 
