@@ -1104,6 +1104,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	struct pdev_params pdev_param;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct target_psoc_info *tgt_hdl;
+	struct sir_set_tx_rx_aggregation_size aggr;
 
 	WMA_LOGD("wmihandle %pK", wma->wmi_handle);
 
@@ -1196,6 +1197,17 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 				else
 					intr[privcmd->param_vdev_id].config.
 						ampdu = privcmd->param_value;
+				aggr.vdev_id = vid;
+				aggr.tx_aggregation_size =
+					privcmd->param_value;
+				aggr.rx_aggregation_size =
+					privcmd->param_value;
+				ret = wma_set_tx_rx_aggregation_size(&aggr);
+				if (QDF_IS_STATUS_ERROR(ret)) {
+					WMA_LOGE("set_aggr_size failed ret %d",
+							ret);
+					return;
+				}
 			} else {
 				WMA_LOGE("%s:SOC context is NULL", __func__);
 				return;
