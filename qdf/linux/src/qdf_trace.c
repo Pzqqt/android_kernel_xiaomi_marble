@@ -2920,3 +2920,14 @@ int qdf_get_pidx(void)
 	return qdf_pidx;
 }
 EXPORT_SYMBOL(qdf_get_pidx);
+
+#ifdef PANIC_ON_BUG
+#ifdef CONFIG_SLUB_DEBUG
+void QDF_DEBUG_PANIC(void)
+{
+	BUG();
+}
+EXPORT_SYMBOL(QDF_DEBUG_PANIC);
+#endif /* CONFIG_SLUB_DEBUG */
+#endif /* PANIC_ON_BUG */
+

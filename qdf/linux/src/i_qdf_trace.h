@@ -117,13 +117,48 @@ static inline void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 #endif
 
 #ifdef PANIC_ON_BUG
+#ifdef CONFIG_SLUB_DEBUG
+/**
+ * QDF_DEBUG_PANIC() - Causes a panic if PANIC_ON_BUG option is enabled
+ *
+ * Note: Calling panic can cause a compiler to assume any following code is
+ * unreachable. Because these panics may or may not be enabled by the build
+ * configuration, this can cause developers some pain. Consider:
+ *
+ *	bool bit;
+ *
+ *	if (ptr)
+ *		bit = ptr->returns_bool();
+ *	else
+ *		panic();
+ *
+ *	// do stuff with @bit
+ *
+ *	return bit;
+ *
+ * In this case, @bit is potentially uninitialized when we return! However, the
+ * compiler can correctly assume this case is impossible when PANIC_ON_BUG is
+ * enabled. Because developers typically enable this feature, the "maybe
+ * uninitialized" warning will not be emitted, and the bug remains uncaught
+ * until someone tries to make a build without PANIC_ON_BUG.
+ *
+ * A simple workaround for this, is to put the definition of QDF_DEBUG_PANIC in
+ * another compilation unit, which prevents the compiler from assuming
+ * subsequent code is unreachable. For CONFIG_SLUB_DEBUG, do this to catch more
+ * bugs. Otherwise, use the typical inlined approach.
+ *
+ * Return: None
+ */
+void QDF_DEBUG_PANIC(void);
+#else
 static inline void QDF_DEBUG_PANIC(void)
 {
 	BUG();
 }
+#endif /* CONFIG_SLUB_DEBUG */
 #else
 static inline void QDF_DEBUG_PANIC(void) { }
-#endif
+#endif /* PANIC_ON_BUG */
 
 #define QDF_BUG(_condition) \
 	do { \
