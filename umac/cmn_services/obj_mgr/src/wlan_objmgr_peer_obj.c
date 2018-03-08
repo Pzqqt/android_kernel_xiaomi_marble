@@ -188,7 +188,7 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 	/* Attach peer to psoc, psoc maintains the node table for the device */
 	if (wlan_objmgr_psoc_peer_attach(psoc, peer) !=
 					QDF_STATUS_SUCCESS) {
-		obj_mgr_err(
+		obj_mgr_warn(
 		"Peer(%02x:%02x:%02x:%02x:%02x:%02x) PSOC attach failure",
 				macaddr[0], macaddr[1], macaddr[2],
 				macaddr[3], macaddr[4], macaddr[5]);
@@ -199,7 +199,7 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 	/* Attach peer to vdev peer table */
 	if (wlan_objmgr_vdev_peer_attach(vdev, peer) !=
 					QDF_STATUS_SUCCESS) {
-		obj_mgr_err(
+		obj_mgr_warn(
 		"Peer(%02x:%02x:%02x:%02x:%02x:%02x) VDEV attach failure",
 				macaddr[0], macaddr[1], macaddr[2],
 				macaddr[3], macaddr[4], macaddr[5]);
@@ -606,7 +606,7 @@ QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
 		wlan_peer_obj_unlock(peer);
 		if (peer->peer_objmgr.print_cnt++ <=
 				WLAN_OBJMGR_RATELIMIT_THRESH)
-			obj_mgr_err(
+			obj_mgr_warn(
 			"peer(" QDF_MAC_ADDR_STR ") not in Created st(%d)",
 			QDF_MAC_ADDR_ARRAY(macaddr),
 				peer->obj_state);
