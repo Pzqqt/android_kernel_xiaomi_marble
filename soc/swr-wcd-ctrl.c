@@ -1292,15 +1292,20 @@ static int swrm_get_logical_dev_num(struct swr_master *mstr, u64 dev_id,
 	int ret = -EINVAL;
 	struct swr_mstr_ctrl *swrm = swr_get_ctrl_data(mstr);
 	struct swr_device *swr_dev;
+	u32 num_dev = 0;
 
 	if (!swrm) {
 		pr_err("%s: Invalid handle to swr controller\n",
 			__func__);
 		return ret;
 	}
+	if (swrm->num_dev)
+		num_dev = swrm->num_dev;
+	else
+		num_dev = mstr->num_dev;
 
 	pm_runtime_get_sync(&swrm->pdev->dev);
-	for (i = 1; i < (mstr->num_dev + 1); i++) {
+	for (i = 1; i < (num_dev + 1); i++) {
 		id = ((u64)(swrm->read(swrm->handle,
 			    SWRM_ENUMERATOR_SLAVE_DEV_ID_2(i))) << 32);
 		id |= swrm->read(swrm->handle,
@@ -1477,6 +1482,19 @@ static int swrm_probe(struct platform_device *pdev)
 	INIT_LIST_HEAD(&swrm->mport_list);
 	mutex_init(&swrm->reslock);
 
+	ret = of_property_read_u32(swrm->dev->of_node, "qcom,swr-num-dev",
+				   &swrm->num_dev);
+	if (ret)
+		dev_dbg(&pdev->dev, "%s: Looking up %s property failed\n",
+			__func__, "qcom,swr-num-dev");
+	else {
+		if (swrm->num_dev > SWR_MAX_SLAVE_DEVICES) {
+			dev_err(&pdev->dev, "%s: num_dev %d > max limit %d\n",
+				__func__, swrm->num_dev, SWR_MAX_SLAVE_DEVICES);
+			ret = -EINVAL;
+			goto err_pdata_fail;
+		}
+	}
 	ret = swrm->reg_irq(swrm->handle, swr_mstr_interrupt, swrm,
 			    SWR_IRQ_REGISTER);
 	if (ret) {
