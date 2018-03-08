@@ -264,6 +264,9 @@ while (0)
 			DP_STATS_AGGR(_tgtobj, _srcobj, rx.sgi_count[i]); \
 		} \
 		\
+		for (i = 0; i < MAX_RECEPTION_TYPES; i++) \
+			DP_STATS_AGGR(_tgtobj, _srcobj, rx.reception_type[i]); \
+		\
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.comp_pkt); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.ucast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.mcast); \
