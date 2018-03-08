@@ -3289,58 +3289,6 @@ struct wmi_host_mem_chunk {
 };
 
 /**
- * struct target_resource_config - Resource config given to target
- *              This structure is union of wmi_resource_config defined
- *              by both TLV and non-TLV target.
- */
-struct target_resource_config {
-	uint32_t num_vdevs;
-	uint32_t num_peers;
-	uint32_t num_active_peers;
-	uint32_t num_offload_peers;
-	uint32_t num_offload_reorder_buffs;
-	uint32_t num_peer_keys;
-	uint32_t num_tids;
-	uint32_t ast_skid_limit;
-	uint32_t tx_chain_mask;
-	uint32_t rx_chain_mask;
-	uint32_t rx_timeout_pri[4];
-	uint32_t rx_decap_mode;
-	uint32_t scan_max_pending_req;
-	uint32_t bmiss_offload_max_vdev;
-	uint32_t roam_offload_max_vdev;
-	uint32_t roam_offload_max_ap_profiles;
-	uint32_t num_mcast_groups;
-	uint32_t num_mcast_table_elems;
-	uint32_t mcast2ucast_mode;
-	uint32_t tx_dbg_log_size;
-	uint32_t num_wds_entries;
-	uint32_t dma_burst_size;
-	uint32_t mac_aggr_delim;
-	uint32_t rx_skip_defrag_timeout_dup_detection_check;
-	uint32_t vow_config;
-	uint32_t gtk_offload_max_vdev;
-	uint32_t num_msdu_desc; /* Number of msdu desc */
-	uint32_t max_frag_entries;
-    /* End common */
-
-	/* Added in MCL */
-	uint32_t num_tdls_vdevs;
-	uint32_t num_tdls_conn_table_entries;
-	uint32_t beacon_tx_offload_max_vdev;
-	uint32_t num_multicast_filter_entries;
-	uint32_t num_wow_filters;
-	uint32_t num_keep_alive_pattern;
-	uint32_t keep_alive_pattern_size;
-	uint32_t max_tdls_concurrent_sleep_sta;
-	uint32_t max_tdls_concurrent_buffer_sta;
-	uint32_t wmi_send_separate;
-	uint32_t num_ocb_vdevs;
-	uint32_t num_ocb_channels;
-	uint32_t num_ocb_schedules;
-};
-
-/**
  * struct wmi_wifi_start_log - Structure to store the params sent to start/
  * stop logging
  * @name:          Attribute which indicates the type of logging like per packet
