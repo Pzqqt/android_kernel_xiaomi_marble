@@ -19,9 +19,9 @@
 #include "qdf_module.h"
 #include "qdf_util.h"
 
-static qdf_is_fw_down_callback *is_fw_down_cb;
+static qdf_is_fw_down_callback is_fw_down_cb;
 
-void qdf_register_fw_down_callback(qdf_is_fw_down_callback *is_fw_down)
+void qdf_register_fw_down_callback(qdf_is_fw_down_callback is_fw_down)
 {
 	is_fw_down_cb = is_fw_down;
 }

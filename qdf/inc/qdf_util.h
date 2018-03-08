@@ -682,5 +682,5 @@ void qdf_get_random_bytes(void *buf, int nbytes)
  *
  * Return: none
  */
-void qdf_register_fw_down_callback(qdf_is_fw_down_callback *is_fw_down);
+void qdf_register_fw_down_callback(qdf_is_fw_down_callback is_fw_down);
 #endif /*_QDF_UTIL_H*/
