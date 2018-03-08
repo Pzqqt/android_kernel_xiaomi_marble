@@ -8814,7 +8814,7 @@ void sme_get_command_q_status(tHalHandle hHal)
 	if (pEntry)
 		pTempCmd = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 
-	sme_err("Currently smeCmdActiveList has command (0x%X)",
+	sme_err("WLAN_BUG_RCA: Currently smeCmdActiveList has command (0x%X)",
 		(pTempCmd) ? pTempCmd->command : eSmeNoCommand);
 	if (pTempCmd) {
 		if (eSmeCsrCommandMask & pTempCmd->command)
