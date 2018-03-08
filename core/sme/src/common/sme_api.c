@@ -10089,6 +10089,8 @@ int sme_set_no_ack_policy(tHalHandle hal, uint8_t session_id,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	uint8_t i, set_val;
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
 
 	if (ac > MAX_NUM_AC) {
 		sme_err("invalid ac val %d", ac);
@@ -10105,6 +10107,15 @@ int sme_set_no_ack_policy(tHalHandle hal, uint8_t session_id,
 		mac_ctx->no_ack_policy_cfg[ac] = set_val;
 	}
 	sme_debug("no ack is set to %d for ac %d", set_val, ac);
+	qdf_mem_zero(&msg, sizeof(msg));
+	msg.type = eWNI_SME_UPDATE_EDCA_PROFILE;
+	msg.reserved = 0;
+	msg.bodyval = session_id;
+	status = scheduler_post_msg(QDF_MODULE_ID_PE, &msg);
+	if (status != QDF_STATUS_SUCCESS) {
+		sme_err("Not able to post update edca profile");
+		return -EIO;
+	}
 
 	return 0;
 }

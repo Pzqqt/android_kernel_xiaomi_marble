@@ -3528,6 +3528,35 @@ static void lim_process_sme_set_addba_accept(tpAniSirGlobal mac_ctx,
 		mac_ctx->reject_addba_req = 0;
 }
 
+static void lim_process_sme_update_edca_params(tpAniSirGlobal mac_ctx,
+					       uint32_t sme_session_id)
+{
+	tpPESession pe_session;
+	tpDphHashNode sta_ds_ptr;
+
+	pe_session = pe_find_session_by_sme_session_id(mac_ctx, sme_session_id);
+	if (!pe_session) {
+		pe_err("Session does not exist: sme_id %d", sme_session_id);
+		return;
+	}
+	pe_session->gLimEdcaParamsActive[EDCA_AC_BE].no_ack =
+		mac_ctx->no_ack_policy_cfg[EDCA_AC_BE];
+	pe_session->gLimEdcaParamsActive[EDCA_AC_BK].no_ack =
+		mac_ctx->no_ack_policy_cfg[EDCA_AC_BK];
+	pe_session->gLimEdcaParamsActive[EDCA_AC_VI].no_ack =
+		mac_ctx->no_ack_policy_cfg[EDCA_AC_VI];
+	pe_session->gLimEdcaParamsActive[EDCA_AC_VO].no_ack =
+		mac_ctx->no_ack_policy_cfg[EDCA_AC_VO];
+	sta_ds_ptr = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
+					&pe_session->dph.dphHashTable);
+	if (sta_ds_ptr)
+		lim_send_edca_params(mac_ctx,
+				     pe_session->gLimEdcaParamsActive,
+				     sta_ds_ptr->bssId);
+	else
+		pe_err("Self entry missing in Hash Table");
+}
+
 static void lim_process_sme_update_config(tpAniSirGlobal mac_ctx,
 					  struct update_config *msg)
 {
@@ -4715,6 +4744,9 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 	case eWNI_SME_SET_ADDBA_ACCEPT:
 		lim_process_sme_set_addba_accept(pMac,
 					(struct sme_addba_accept *)pMsgBuf);
+		break;
+	case eWNI_SME_UPDATE_EDCA_PROFILE:
+		lim_process_sme_update_edca_params(pMac, pMsg->bodyval);
 		break;
 	default:
 		qdf_mem_free((void *)pMsg->bodyptr);

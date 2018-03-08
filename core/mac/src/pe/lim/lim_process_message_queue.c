@@ -1484,6 +1484,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
 	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
 	case eWNI_SME_SET_ADDBA_ACCEPT:
+	case eWNI_SME_UPDATE_EDCA_PROFILE:
 		/* These messages are from HDD.No need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, false);
 		break;
