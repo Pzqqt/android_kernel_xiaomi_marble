@@ -5641,6 +5641,79 @@ void lim_diag_event_report(tpAniSirGlobal pMac, uint16_t eventType,
 	return;
 }
 
+static void lim_diag_fill_mgmt_event_report(tpAniSirGlobal mac_ctx,
+			tpSirMacMgmtHdr mac_hdr,
+			tpPESession session, uint16_t result_code,
+			uint16_t reason_code,
+			struct host_event_wlan_mgmt_payload_type *mgmt_event)
+{
+	uint8_t length;
+
+	qdf_mem_set(mgmt_event, sizeof(*mgmt_event), 0);
+	mgmt_event->mgmt_type = mac_hdr->fc.type;
+	mgmt_event->mgmt_subtype = mac_hdr->fc.subType;
+	qdf_mem_copy(mgmt_event->self_mac_addr, session->selfMacAddr,
+		     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(mgmt_event->bssid, session->bssId,
+		     QDF_MAC_ADDR_SIZE);
+	length = session->ssId.length;
+	if (length > SIR_MAC_MAX_SSID_LENGTH)
+		length = SIR_MAC_MAX_SSID_LENGTH;
+	qdf_mem_copy(mgmt_event->ssid, session->ssId.ssId, length);
+	mgmt_event->ssid_len = length;
+	mgmt_event->operating_channel = session->currentOperChannel;
+	mgmt_event->result_code = result_code;
+	mgmt_event->reason_code = reason_code;
+}
+
+void lim_diag_mgmt_tx_event_report(tpAniSirGlobal mac_ctx, void *mgmt_hdr,
+				   tpPESession session, uint16_t result_code,
+				   uint16_t reason_code)
+{
+	tpSirMacMgmtHdr mac_hdr = mgmt_hdr;
+
+	WLAN_HOST_DIAG_EVENT_DEF(mgmt_event,
+				 struct host_event_wlan_mgmt_payload_type);
+	if (!session || !mac_hdr) {
+		pe_err("not valid input");
+		return;
+	}
+	lim_diag_fill_mgmt_event_report(mac_ctx, mac_hdr, session,
+					result_code, reason_code, &mgmt_event);
+
+	pe_debug("TX frame: type:%d sub_type:%d seq_num:%d ssid:%.*s selfmacaddr:%pM bssid:%pM channel:%d",
+		 mgmt_event.mgmt_type, mgmt_event.mgmt_subtype,
+		 ((mac_hdr->seqControl.seqNumHi << 4) |
+				mac_hdr->seqControl.seqNumLo),
+		 mgmt_event.ssid_len, mgmt_event.ssid,
+		 mgmt_event.self_mac_addr, mgmt_event.bssid,
+		 mgmt_event.operating_channel);
+	WLAN_HOST_DIAG_EVENT_REPORT(&mgmt_event, EVENT_WLAN_HOST_MGMT_TX_V2);
+}
+
+void lim_diag_mgmt_rx_event_report(tpAniSirGlobal mac_ctx, void *mgmt_hdr,
+				   tpPESession session, uint16_t result_code,
+				   uint16_t reason_code)
+{
+	tpSirMacMgmtHdr mac_hdr = mgmt_hdr;
+
+	WLAN_HOST_DIAG_EVENT_DEF(mgmt_event,
+				 struct host_event_wlan_mgmt_payload_type);
+	if (!session || !mac_hdr) {
+		pe_err("not valid input");
+		return;
+	}
+	lim_diag_fill_mgmt_event_report(mac_ctx, mac_hdr, session,
+					result_code, reason_code, &mgmt_event);
+	pe_debug("RX frame: type:%d sub_type:%d seq_num:%d ssid:%.*s selfmacaddr:%pM bssid:%pM channel:%d",
+		 mgmt_event.mgmt_type, mgmt_event.mgmt_subtype,
+		 ((mac_hdr->seqControl.seqNumHi << 4) |
+				mac_hdr->seqControl.seqNumLo),
+		 mgmt_event.ssid_len, mgmt_event.ssid,
+		 mgmt_event.self_mac_addr, mgmt_event.bssid,
+		 mgmt_event.operating_channel);
+	WLAN_HOST_DIAG_EVENT_REPORT(&mgmt_event, EVENT_WLAN_HOST_MGMT_RX_V2);
+}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 /* Returns length of P2P stream and Pointer ie passed to this function is filled with noa stream */

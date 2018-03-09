@@ -924,6 +924,42 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
 	return match;
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * lim_is_mgmt_frame_loggable() - to log non-excessive mgmt frames
+ * @type: type of frames i.e. mgmt, control, data
+ * @subtype: subtype of frames i.e. beacon, probe rsp, probe req and etc
+ *
+ * This API tells if given mgmt frame is expected to come excessive in
+ * amount or not.
+ *
+ * Return: true if mgmt is expected to come not that often, so makes it
+ *         loggable. false if mgmt is expected to come too often, so makes
+ *         it not loggable
+ */
+static bool
+lim_is_mgmt_frame_loggable(uint8_t type, uint8_t subtype)
+{
+	if (type != SIR_MAC_MGMT_FRAME)
+		return false;
+
+	switch (subtype) {
+	case SIR_MAC_MGMT_BEACON:
+	case SIR_MAC_MGMT_PROBE_REQ:
+	case SIR_MAC_MGMT_PROBE_RSP:
+		return false;
+	default:
+		return true;
+	}
+}
+#else
+static bool
+lim_is_mgmt_frame_loggable(uint8_t type, uint8_t subtype)
+{
+	return false;
+}
+#endif
+
 /**
  * lim_handle80211_frames()
  *
@@ -1192,7 +1228,10 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 		break;
 
 	} /* switch (fc.type) */
-
+	if (lim_is_mgmt_frame_loggable(fc.type, fc.subType))
+		lim_diag_mgmt_rx_event_report(pMac, pHdr,
+					      psessionEntry,
+					      eSIR_SUCCESS, eSIR_SUCCESS);
 end:
 	lim_pkt_free(pMac, TXRX_FRM_802_11_MGMT, pRxPacketInfo,
 		     (void *)limMsg->bodyptr);

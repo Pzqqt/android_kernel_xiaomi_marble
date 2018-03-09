@@ -1073,6 +1073,9 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
+	lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+				      psessionEntry, eSIR_SUCCESS,
+				      eSIR_SUCCESS);
 
 	/* Queue Addts Response frame in high priority WQ */
 	qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
@@ -1424,6 +1427,8 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
+	lim_diag_mgmt_tx_event_report(mac_ctx, mac_hdr,
+				      pe_session, eSIR_SUCCESS, status_code);
 	/* Queue Association Response frame in high priority WQ */
 	qdf_status = wma_tx_frame(mac_ctx, packet, (uint16_t) bytes,
 				TXRX_FRM_802_11_MGMT,
@@ -1572,6 +1577,9 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
+	lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+				      psessionEntry, eSIR_SUCCESS,
+				      eSIR_SUCCESS);
 	qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
@@ -2069,16 +2077,16 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_session->pePersona == QDF_STA_MODE)
 		tx_flag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
-	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_ASSOC_START_EVENT,
-			      pe_session, eSIR_SUCCESS, eSIR_SUCCESS);
-#endif
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
 
 	pe_debug("Sending Association Request length %d to ", bytes);
 	min_rid = lim_get_min_session_txrate(pe_session);
+	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_ASSOC_START_EVENT,
+			      pe_session, eSIR_SUCCESS, eSIR_SUCCESS);
+	lim_diag_mgmt_tx_event_report(mac_ctx, mac_hdr,
+				      pe_session, eSIR_SUCCESS, eSIR_SUCCESS);
 	qdf_status =
 		wma_tx_frameWithTxComplete(mac_ctx, packet,
 			   (uint16_t) (sizeof(tSirMacMgmtHdr) + payload),
@@ -2455,6 +2463,8 @@ alloc_packet:
 
 	mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
 	min_rid = lim_get_min_session_txrate(session);
+	lim_diag_mgmt_tx_event_report(mac_ctx, mac_hdr,
+				      session, eSIR_SUCCESS, eSIR_SUCCESS);
 	qdf_status = wma_tx_frameWithTxComplete(mac_ctx, packet,
 				 (uint16_t)frame_len,
 				 TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
@@ -2840,6 +2850,9 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 				 psessionEntry->peSessionId,
 				 pMacHdr->fc.subType));
+		lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+					      psessionEntry, eSIR_SUCCESS,
+					      eSIR_SUCCESS);
 		/* Queue Disassociation frame in high priority WQ */
 		/* get the duration from the request */
 		qdf_status =
@@ -2872,6 +2885,9 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 				 psessionEntry->peSessionId,
 				 pMacHdr->fc.subType));
+		lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+					      psessionEntry,
+					      eSIR_SUCCESS, eSIR_SUCCESS);
 		/* Queue Disassociation frame in high priority WQ */
 		qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 					TXRX_FRM_802_11_MGMT,
@@ -3017,6 +3033,9 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 				 psessionEntry->peSessionId,
 				 pMacHdr->fc.subType));
+		lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+					      psessionEntry,
+					      eSIR_SUCCESS, eSIR_SUCCESS);
 		/* Queue Disassociation frame in high priority WQ */
 		qdf_status =
 			wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
@@ -3063,6 +3082,10 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 		if ((NULL != pStaDs)
 		    && (STA_ENTRY_TDLS_PEER == pStaDs->staType)) {
 			/* Queue Disassociation frame in high priority WQ */
+			lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+						      psessionEntry,
+						      eSIR_SUCCESS,
+						      eSIR_SUCCESS);
 			qdf_status =
 				wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 					   TXRX_FRM_802_11_MGMT, ANI_TXDIR_IBSS,
@@ -3070,6 +3093,10 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 					   smeSessionId, 0, RATEID_DEFAULT);
 		} else {
 #endif
+		lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+					      psessionEntry,
+					      eSIR_SUCCESS,
+					      eSIR_SUCCESS);
 		/* Queue Disassociation frame in high priority WQ */
 		qdf_status =
 			wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,

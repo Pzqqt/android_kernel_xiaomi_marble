@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -442,12 +442,12 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_session->assocReqLen = 0;
 	}
 
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
-	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_REASSOC_START_EVENT,
-			      pe_session, eSIR_SUCCESS, eSIR_SUCCESS);
-#endif
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
+	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_REASSOC_START_EVENT,
+			      pe_session, eSIR_SUCCESS, eSIR_SUCCESS);
+	lim_diag_mgmt_tx_event_report(mac_ctx, mac_hdr,
+				      pe_session, eSIR_SUCCESS, eSIR_SUCCESS);
 	qdf_status = wma_tx_frame(mac_ctx, packet,
 				(uint16_t) (bytes + ft_ies_length),
 				TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
@@ -770,12 +770,13 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 		psessionEntry->pePersona == QDF_STA_MODE)
 		txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
-	lim_diag_event_report(pMac, WLAN_PE_DIAG_REASSOC_START_EVENT,
-			      psessionEntry, eSIR_SUCCESS, eSIR_SUCCESS);
-#endif
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
+	lim_diag_event_report(pMac, WLAN_PE_DIAG_REASSOC_START_EVENT,
+			      psessionEntry, eSIR_SUCCESS, eSIR_SUCCESS);
+	lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+				      psessionEntry, eSIR_SUCCESS,
+				      eSIR_SUCCESS);
 	qdf_status =
 		wma_tx_frame(pMac, pPacket,
 			   (uint16_t) (sizeof(tSirMacMgmtHdr) + nPayload),

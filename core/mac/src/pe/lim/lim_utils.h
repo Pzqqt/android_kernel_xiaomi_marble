@@ -679,10 +679,50 @@ typedef enum {
 void lim_diag_event_report(tpAniSirGlobal pMac, uint16_t eventType,
 		tpPESession pSessionEntry, uint16_t status,
 		uint16_t reasonCode);
+/**
+ * lim_diag_mgmt_tx_event_report() - to log TX event to external application
+ * @mac_ctx: mac context
+ * @mgmt_hdr: 802.11 mgmt header of given frame
+ * @session: PE session for given frame
+ * @result_code: result code of to be populated in TX frame
+ * @reason_code: reason code if TX OTA status
+ *
+ * Anytime driver sends some mgmt frame down to firmware for OTA delivery,
+ * log mgmt frame through DIAG utility. Don't log frames which come too
+ * excessively.
+ *
+ * Return: void
+ */
+void lim_diag_mgmt_tx_event_report(tpAniSirGlobal mac_ctx, void *mgmt_hdr,
+		tpPESession session, uint16_t result_code,
+		uint16_t reason_code);
+/**
+ * lim_diag_mgmt_rx_event_report() - to log RX event to external application
+ * @mac_ctx: mac context
+ * @mgmt_hdr: 802.11 mgmt header of given frame
+ * @session: PE session for given frame
+ * @result_code: result code given in RX frame
+ * @reason_code: reason code for RX OTA status
+ *
+ * Anytime driver receives some mgmt frame from firmware OTA,
+ * log mgmt frame through DIAG utility. Don't log frames which come too
+ * excessively.
+ *
+ * Return: void
+ */
+void lim_diag_mgmt_rx_event_report(tpAniSirGlobal mac_ctx, void *mgmt_hdr,
+		tpPESession session, uint16_t result_code,
+		uint16_t reason_code);
 #else
 static inline void lim_diag_event_report(tpAniSirGlobal pMac, uint16_t
 		eventType, tpPESession pSessionEntry, uint16_t status,
 		uint16_t reasonCode) {}
+void lim_diag_mgmt_tx_event_report(tpAniSirGlobal mac_ctx, void *mgmt_hdr,
+		tpPESession session, uint16_t result_code,
+		uint16_t reason_code) {}
+void lim_diag_mgmt_rx_event_report(tpAniSirGlobal mac_ctx, void *mgmt_hdr,
+		tpPESession session, uint16_t result_code,
+		uint16_t reason_code) {}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 void pe_set_resume_channel(tpAniSirGlobal pMac, uint16_t channel,

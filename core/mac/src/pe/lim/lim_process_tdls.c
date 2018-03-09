@@ -670,6 +670,9 @@ static tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.tdls_frm_session_id = psessionEntry->smeSessionId;
+	lim_diag_mgmt_tx_event_report(pMac, (tpSirMacMgmtHdr) pFrame,
+				      psessionEntry, eSIR_SUCCESS,
+				      eSIR_SUCCESS);
 	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket,
 					(uint16_t) nBytes,
 					TXRX_FRM_802_11_DATA,
@@ -971,6 +974,9 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.tdls_frm_session_id = psessionEntry->smeSessionId;
+	lim_diag_mgmt_tx_event_report(pMac, (tpSirMacMgmtHdr) pFrame,
+				      psessionEntry, eSIR_SUCCESS,
+				      eSIR_SUCCESS);
 	/*
 	 * Transmit Discovery response and watch if this is delivered to
 	 * peer STA.
@@ -1344,6 +1350,9 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.tdls_frm_session_id = psessionEntry->smeSessionId;
+	lim_diag_mgmt_tx_event_report(pMac, (tpSirMacMgmtHdr) pFrame,
+				      psessionEntry, eSIR_SUCCESS,
+				      eSIR_SUCCESS);
 
 	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
 						     (uint16_t) nBytes,
@@ -1534,6 +1543,9 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.tdls_frm_session_id = psessionEntry->smeSessionId;
+	lim_diag_mgmt_tx_event_report(pMac, (tpSirMacMgmtHdr) pFrame,
+				      psessionEntry, eSIR_SUCCESS,
+				      eSIR_SUCCESS);
 
 	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
 						     (uint16_t) nBytes,
@@ -1549,6 +1561,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 
 	}
+
 	return eSIR_SUCCESS;
 }
 
@@ -1790,6 +1803,9 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.tdls_frm_session_id = psessionEntry->smeSessionId;
+	lim_diag_mgmt_tx_event_report(pMac, (tpSirMacMgmtHdr) pFrame,
+				      psessionEntry, eSIR_SUCCESS,
+				      eSIR_SUCCESS);
 
 	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
 						     (uint16_t) nBytes,
@@ -1994,6 +2010,9 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 	       MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.tdls_frm_session_id = psessionEntry->smeSessionId;
+	lim_diag_mgmt_tx_event_report(pMac, (tpSirMacMgmtHdr) pFrame,
+				      psessionEntry, eSIR_SUCCESS,
+				      eSIR_SUCCESS);
 
 	qdf_status = wma_tx_frame_with_tx_complete_send(pMac, pPacket,
 						     (uint16_t) nBytes,
