@@ -76,7 +76,7 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 
 tSirRetStatus lim_send_edca_params(tpAniSirGlobal pMac,
 				   tSirMacEdcaParamRecord *pUpdatedEdcaParams,
-				   uint16_t bssIdx);
+				   uint16_t bssIdx, bool mu_edca);
 tSirRetStatus lim_set_link_state(tpAniSirGlobal pMac, tSirLinkState state,
 				 tSirMacAddr bssId, tSirMacAddr selfMac,
 				 tpSetLinkStateCallback callback,

@@ -1028,6 +1028,7 @@ typedef tSirRetStatus (*tHalMsgCallback)(tpAniSirGlobal pMac, uint32_t mesgId,
  * @acbk: Background access catagory
  * @acvi: video access catagory
  * @acvo: voice access catagory
+ * @mu_edca_params: flag to indicate MU EDCA
  */
 typedef struct {
 	uint16_t bssIdx;
@@ -1035,6 +1036,7 @@ typedef struct {
 	tSirMacEdcaParamRecord acbk;
 	tSirMacEdcaParamRecord acvi;
 	tSirMacEdcaParamRecord acvo;
+	bool mu_edca_params;
 } tEdcaParams, *tpEdcaParams;
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -371,6 +371,42 @@ void convert_edca_param(tpAniSirGlobal pMac,
 	pOld->acvo.cw.min = pNew->acvo_acwmin;
 	pOld->acvo.cw.max = pNew->acvo_acwmax;
 	pOld->acvo.txoplimit = pNew->acvo_txoplimit;
+
+}
+
+void convert_mu_edca_param(tpAniSirGlobal mac_ctx,
+			tSirMacEdcaParamSetIE *mu_edca,
+			tDot11fIEmu_edca_param_set *ie)
+{
+	qdf_mem_copy((uint8_t *) &mu_edca->qosInfo, (uint8_t *) &ie->qos, 1);
+
+	mu_edca->acbe.aci.aifsn = ie->acbe_aifsn;
+	mu_edca->acbe.aci.acm = ie->acbe_acm;
+	mu_edca->acbe.aci.aci = ie->acbe_aci;
+	mu_edca->acbe.cw.min = ie->acbe_acwmin;
+	mu_edca->acbe.cw.max = ie->acbe_acwmax;
+	mu_edca->acbe.mu_edca_timer = ie->acbe_muedca_timer;
+
+	mu_edca->acbk.aci.aifsn = ie->acbk_aifsn;
+	mu_edca->acbk.aci.acm = ie->acbk_acm;
+	mu_edca->acbk.aci.aci = ie->acbk_aci;
+	mu_edca->acbk.cw.min = ie->acbk_acwmin;
+	mu_edca->acbk.cw.max = ie->acbk_acwmax;
+	mu_edca->acbk.mu_edca_timer = ie->acbk_muedca_timer;
+
+	mu_edca->acvi.aci.aifsn = ie->acvi_aifsn;
+	mu_edca->acvi.aci.acm = ie->acvi_acm;
+	mu_edca->acvi.aci.aci = ie->acvi_aci;
+	mu_edca->acvi.cw.min = ie->acvi_acwmin;
+	mu_edca->acvi.cw.max = ie->acvi_acwmax;
+	mu_edca->acvi.mu_edca_timer = ie->acvi_muedca_timer;
+
+	mu_edca->acvo.aci.aifsn = ie->acvo_aifsn;
+	mu_edca->acvo.aci.acm = ie->acvo_acm;
+	mu_edca->acvo.aci.aci = ie->acvo_aci;
+	mu_edca->acvo.cw.min = ie->acvo_acwmin;
+	mu_edca->acvo.cw.max = ie->acvo_acwmax;
+	mu_edca->acvo.mu_edca_timer = ie->acvo_muedca_timer;
 
 }
 

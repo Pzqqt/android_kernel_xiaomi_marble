@@ -447,7 +447,7 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
 					session->gLimEdcaParams, session);
 				lim_send_edca_params(mac_ctx,
 					session->gLimEdcaParamsActive,
-					pStaDs->bssId);
+					pStaDs->bssId, false);
 			} else {
 				pe_err("Self Entry missing in Hash Table");
 			}

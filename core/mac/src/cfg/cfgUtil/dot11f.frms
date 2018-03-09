@@ -2959,7 +2959,7 @@ IE he_op (EID_EXTN_ID_ELEMENT) OUI (0x24)
     };
 }
 
-IE mu_edca_param_set (EID_VENDOR_SPECIFIC) OUI (0x00, 0x13, 0x74, 0x04)
+IE mu_edca_param_set (EID_EXTN_ID_ELEMENT) OUI (0x26)
 {
     qos, 1;
     {

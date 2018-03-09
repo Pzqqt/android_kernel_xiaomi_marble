@@ -854,7 +854,7 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
 				   &session->dph.dphHashTable);
 	if (sta_ds_ptr != NULL)
 		lim_send_edca_params(mac_ctx, session->gLimEdcaParamsActive,
-				     sta_ds_ptr->bssId);
+				     sta_ds_ptr->bssId, false);
 	else
 		pe_err("Self entry missing in Hash Table");
 	sir_copy_mac_addr(peer_macaddr, session->bssId);
@@ -1060,7 +1060,7 @@ static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
 				   &session->dph.dphHashTable);
 	if (sta_ds_ptr != NULL)
 		lim_send_edca_params(mac_ctx, session->gLimEdcaParamsActive,
-				     sta_ds_ptr->bssId);
+				     sta_ds_ptr->bssId, false);
 	else
 		pe_err("Self entry missing in Hash Table");
 

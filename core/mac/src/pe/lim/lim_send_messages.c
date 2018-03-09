@@ -293,12 +293,11 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
  */
 tSirRetStatus lim_send_edca_params(tpAniSirGlobal pMac,
 				   tSirMacEdcaParamRecord *pUpdatedEdcaParams,
-				   uint16_t bssIdx)
+				   uint16_t bssIdx, bool mu_edca)
 {
 	tEdcaParams *pEdcaParams = NULL;
 	tSirRetStatus retCode = eSIR_SUCCESS;
 	struct scheduler_msg msgQ = {0};
-	uint8_t i;
 
 	pEdcaParams = qdf_mem_malloc(sizeof(tEdcaParams));
 	if (NULL == pEdcaParams) {
@@ -311,19 +310,12 @@ tSirRetStatus lim_send_edca_params(tpAniSirGlobal pMac,
 	pEdcaParams->acbk = pUpdatedEdcaParams[EDCA_AC_BK];
 	pEdcaParams->acvi = pUpdatedEdcaParams[EDCA_AC_VI];
 	pEdcaParams->acvo = pUpdatedEdcaParams[EDCA_AC_VO];
+	pEdcaParams->mu_edca_params = mu_edca;
 	msgQ.type = WMA_UPDATE_EDCA_PROFILE_IND;
 	msgQ.reserved = 0;
 	msgQ.bodyptr = pEdcaParams;
 	msgQ.bodyval = 0;
-	pe_debug("Sending WMA_UPDATE_EDCA_PROFILE_IND, EDCA Parameters:");
-	for (i = 0; i < MAX_NUM_AC; i++) {
-		pe_debug("AC[%d]:  AIFSN %d, ACM %d, CWmin %d, CWmax %d, TxOp %d ",
-		       i, pUpdatedEdcaParams[i].aci.aifsn,
-		       pUpdatedEdcaParams[i].aci.acm,
-		       pUpdatedEdcaParams[i].cw.min,
-		       pUpdatedEdcaParams[i].cw.max,
-		       pUpdatedEdcaParams[i].txoplimit);
-	}
+	pe_debug("Sending WMA_UPDATE_EDCA_PROFILE_IND");
 	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
 	if (eSIR_SUCCESS != retCode) {

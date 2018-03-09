@@ -1050,7 +1050,7 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 
 				lim_send_edca_params(pMac,
 					     psessionEntry->gLimEdcaParamsActive,
-					     pSta->bssId);
+					     pSta->bssId, false);
 
 			if (eSIR_SUCCESS !=
 			    lim_tspec_add(pMac, pSta->staAddr, pSta->assocId,

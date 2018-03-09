@@ -3054,7 +3054,6 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 		pAssocRsp->edcaPresent = 1;
 		convert_edca_param(pMac, &pAssocRsp->edca, &ar->EDCAParamSet);
 	}
-
 	if (ar->WMMParams.present) {
 		pAssocRsp->wmeEdcaPresent = 1;
 		convert_wmm_params(pMac, &pAssocRsp->edca, &ar->WMMParams);
@@ -3197,6 +3196,13 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 				pAssocRsp->he_op.default_pe,
 				pAssocRsp->he_op.partial_bss_col,
 				pAssocRsp->he_op.bss_col_disabled);
+	}
+
+	if (ar->mu_edca_param_set.present) {
+		pe_debug("11AX: HE MU EDCA param IE present");
+		pAssocRsp->mu_edca_present = true;
+		convert_mu_edca_param(pMac, &pAssocRsp->mu_edca,
+				&ar->mu_edca_param_set);
 	}
 
 	if (ar->MBO_IE.present && ar->MBO_IE.rssi_assoc_rej.present) {

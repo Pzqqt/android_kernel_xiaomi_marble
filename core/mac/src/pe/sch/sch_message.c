@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -436,7 +436,7 @@ void sch_qos_update_local(tpAniSirGlobal pMac, tpPESession psessionEntry)
 
 	/* For AP, the bssID is stored in LIM Global context. */
 	lim_send_edca_params(pMac, psessionEntry->gLimEdcaParams,
-			     psessionEntry->bssIdx);
+			     psessionEntry->bssIdx, false);
 }
 
 /** ----------------------------------------------------------

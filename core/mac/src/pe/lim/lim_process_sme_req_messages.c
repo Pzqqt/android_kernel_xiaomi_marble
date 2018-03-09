@@ -3416,7 +3416,7 @@ static void __lim_process_sme_delts_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 				   &psessionEntry->dph.dphHashTable);
 	if (pStaDs != NULL) {
 		lim_send_edca_params(pMac, psessionEntry->gLimEdcaParamsActive,
-				     pStaDs->bssId);
+				     pStaDs->bssId, false);
 		status = eSIR_SUCCESS;
 	} else {
 		pe_err("Self entry missing in Hash Table");
@@ -3575,7 +3575,7 @@ static void lim_process_sme_update_edca_params(tpAniSirGlobal mac_ctx,
 	if (sta_ds_ptr)
 		lim_send_edca_params(mac_ctx,
 				     pe_session->gLimEdcaParamsActive,
-				     sta_ds_ptr->bssId);
+				     sta_ds_ptr->bssId, false);
 	else
 		pe_err("Self entry missing in Hash Table");
 }

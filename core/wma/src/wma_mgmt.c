@@ -2332,7 +2332,8 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 			goto fail;
 		}
 
-		wma_update_edca_params_for_ac(edca_record, &wmm_param[ac], ac);
+		wma_update_edca_params_for_ac(edca_record, &wmm_param[ac], ac,
+				edca_params->mu_edca_params);
 
 		ol_tx_wmm_param.ac[ac].aifs = wmm_param[ac].aifs;
 		ol_tx_wmm_param.ac[ac].cwmin = wmm_param[ac].cwmin;
@@ -2340,7 +2341,9 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 	}
 
 	status = wmi_unified_process_update_edca_param(wma_handle->wmi_handle,
-						vdev_id, wmm_param);
+						vdev_id,
+						edca_params->mu_edca_params,
+						wmm_param);
 	if (status == QDF_STATUS_E_NOMEM)
 		return status;
 	else if (status == QDF_STATUS_E_FAILURE)

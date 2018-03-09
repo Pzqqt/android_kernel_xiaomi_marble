@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -75,6 +75,9 @@ void convert_wmm_params(tpAniSirGlobal, tSirMacEdcaParamSetIE *,
 void convert_erp_info(tpAniSirGlobal, tSirMacErpInfo *, tDot11fIEERPInfo *);
 void convert_edca_param(tpAniSirGlobal, tSirMacEdcaParamSetIE *,
 			tDot11fIEEDCAParamSet *);
+void convert_mu_edca_param(tpAniSirGlobal mac_ctx,
+			tSirMacEdcaParamSetIE *mu_edca,
+			tDot11fIEmu_edca_param_set *ie);
 void convert_tspec(tpAniSirGlobal, tSirMacTspecIE *, tDot11fIETSPEC *);
 tSirRetStatus convert_tclas(tpAniSirGlobal, tSirTclasInfo *, tDot11fIETCLAS *);
 void convert_wmmtspec(tpAniSirGlobal, tSirMacTspecIE *, tDot11fIEWMMTSPEC *);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -281,10 +281,9 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 						session_entry->
 						gLimEdcaParams,
 						session_entry);
-					lim_send_edca_params(mac_ctx,
-					session_entry->
-					gLimEdcaParamsActive,
-					sta_ds->bssId);
+				lim_send_edca_params(mac_ctx,
+					session_entry->gLimEdcaParamsActive,
+					sta_ds->bssId, false);
 			} else {
 				pe_err("SelfEntry missing in Hash");
 			}

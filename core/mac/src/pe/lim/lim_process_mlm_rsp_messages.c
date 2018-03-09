@@ -2519,7 +2519,7 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 				session_entry->gLimEdcaParams, session_entry);
 			lim_send_edca_params(mac_ctx,
 				session_entry->gLimEdcaParamsActive,
-				sta_ds->bssId);
+				sta_ds->bssId, false);
 			rrm_cache_mgmt_tx_power(mac_ctx,
 				add_bss_params->txMgmtPower, session_entry);
 			if (lim_add_sta_self(mac_ctx, sta_idx, update_sta,

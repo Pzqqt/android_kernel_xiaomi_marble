@@ -1166,7 +1166,10 @@ typedef struct sSirMacCW {
 typedef struct sSirMacEdcaParamRecord {
 	tSirMacAciAifsn aci;
 	tSirMacCW cw;
-	uint16_t txoplimit;
+	union {
+		uint16_t txoplimit;
+		uint16_t mu_edca_timer;
+	};
 	uint8_t no_ack;
 } qdf_packed tSirMacEdcaParamRecord;
 

@@ -422,6 +422,8 @@ typedef struct sSirAssocRsp {
 	tSirQCNIE QCN_IE;
 	tDot11fIEhe_cap he_cap;
 	tDot11fIEhe_op he_op;
+	bool mu_edca_present;
+	tSirMacEdcaParamSetIE mu_edca;
 #ifdef WLAN_FEATURE_FILS_SK
 	tDot11fIEfils_session fils_session;
 	tDot11fIEfils_key_confirmation fils_key_auth;

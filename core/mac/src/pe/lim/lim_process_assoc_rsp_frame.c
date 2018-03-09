@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -517,6 +517,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	uint8_t sme_sessionid = 0;
 	struct csr_roam_session *roam_session;
 #endif
+	tSirMacEdcaParamRecord mu_edca_set[MAX_NUM_AC];
 
 	/* Initialize status code to success. */
 	if (lim_is_roam_synch_in_progress(session_entry))
@@ -923,7 +924,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			if (!lim_is_roam_synch_in_progress(session_entry)) {
 				lim_send_edca_params(mac_ctx,
 					session_entry->gLimEdcaParamsActive,
-					sta_ds->bssId);
+					sta_ds->bssId, false);
 				lim_add_ft_sta_self(mac_ctx,
 					(assoc_rsp->aid & 0x3FFF),
 					session_entry);
@@ -1002,6 +1003,18 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		(uint8_t *) session_entry->pLimJoinReq->bssDescription.ieFields,
 		ie_len,
 		beacon);
+
+	if (lim_is_session_he_capable(session_entry) &&
+			assoc_rsp->mu_edca_present) {
+		pe_debug("Send MU EDCA params to FW");
+		mu_edca_set[EDCA_AC_BE] = assoc_rsp->mu_edca.acbe;
+		mu_edca_set[EDCA_AC_BK] = assoc_rsp->mu_edca.acbk;
+		mu_edca_set[EDCA_AC_VI] = assoc_rsp->mu_edca.acvi;
+		mu_edca_set[EDCA_AC_VO] = assoc_rsp->mu_edca.acvo;
+		lim_send_edca_params(mac_ctx, mu_edca_set,
+				sta_ds->bssId, true);
+
+	}
 
 	if (beacon->VHTCaps.present)
 		sta_ds->parsed_ies.vht_caps = beacon->VHTCaps;

@@ -663,7 +663,8 @@ QDF_STATUS wma_set_ap_peer_uapsd(tp_wma_handle wma, uint32_t vdev_id,
 				     uint8_t max_sp);
 
 void wma_update_edca_params_for_ac(tSirMacEdcaParamRecord *edca_param,
-					  struct wmi_host_wme_vparams *wmm_param, int ac);
+				   struct wmi_host_wme_vparams *wmm_param,
+				   int ac, bool mu_edca_param);
 
 void wma_set_tx_power(WMA_HANDLE handle,
 			     tMaxTxPowerParams *tx_pwr_params);
