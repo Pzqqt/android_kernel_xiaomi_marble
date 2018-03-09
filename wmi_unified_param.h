@@ -6432,11 +6432,13 @@ typedef struct {
  * @desc_id: from tx_send_cmd
  * @status: WMI_MGMT_TX_COMP_STATUS_TYPE
  * @pdev_id: pdev_id
+ * @ppdu_id: ppdu_id
  */
 typedef struct {
 	uint32_t	desc_id;
 	uint32_t	status;
 	uint32_t	pdev_id;
+	uint32_t        ppdu_id;
 } wmi_host_mgmt_tx_compl_event;
 
 /**
