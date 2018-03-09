@@ -5135,6 +5135,8 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			}
 		}
 
+		hdd_softap_deinit_tx_rx(adapter);
+
 		/* Destroy vdev which will be recreated during reinit. */
 		hdd_vdev_destroy(adapter);
 	}
