@@ -48,6 +48,9 @@ qdf_export_symbol(qdf_debugfs_init);
 
 QDF_STATUS qdf_debugfs_exit(void)
 {
+	if (!qdf_debugfs_root)
+		return QDF_STATUS_SUCCESS;
+
 	debugfs_remove_recursive(qdf_debugfs_root);
 	qdf_debugfs_root = NULL;
 
