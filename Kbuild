@@ -9,6 +9,7 @@ endif
 ifeq ($(CONFIG_CNSS_QCA6290), y)
 	CONFIG_LITHIUM := y
 	CONFIG_WLAN_FEATURE_11AX := y
+	CONFIG_WLAN_FEATURE_DFS_OFFLOAD := y
 endif
 
 ifeq ($(CONFIG_CLD_HL_SDIO_CORE), y)
@@ -693,35 +694,40 @@ DFS_INC :=	-I$(WLAN_ROOT)/$(DFS_DISP_INC_DIR) \
 		-I$(WLAN_ROOT)/$(DFS_TARGET_INC_DIR) \
 		-I$(WLAN_ROOT)/$(DFS_CMN_SERVICES_INC_DIR)
 
-DFS_OBJS :=	$(DFS_CORE_SRC_DIR)/filtering/dfs_bindetects.o \
-		$(DFS_CORE_SRC_DIR)/filtering/dfs_debug.o\
-		$(DFS_CORE_SRC_DIR)/filtering/dfs_fcc_bin5.o\
-		$(DFS_CORE_SRC_DIR)/filtering/dfs_init.o\
-		$(DFS_CORE_SRC_DIR)/filtering/dfs_misc.o\
-		$(DFS_CORE_SRC_DIR)/filtering/dfs_radar.o\
-		$(DFS_CORE_SRC_DIR)/filtering/dfs_ar.o\
-		$(DFS_CORE_SRC_DIR)/filtering/ar5416_radar.o\
-		$(DFS_CORE_SRC_DIR)/filtering/ar9300_radar.o\
-		$(DFS_CORE_SRC_DIR)/filtering/ar5212_radar.o\
-		$(DFS_CORE_SRC_DIR)/filtering/dfs_phyerr_tlv.o\
-		$(DFS_CORE_SRC_DIR)/filtering/dfs_process_phyerr.o\
-		$(DFS_CORE_SRC_DIR)/filtering/dfs_process_radarevent.o\
-		$(DFS_CORE_SRC_DIR)/filtering/dfs_staggered.o \
-		$(DFS_CORE_SRC_DIR)/misc/dfs.o \
-		$(DFS_CORE_SRC_DIR)/misc/dfs_cac.o\
-		$(DFS_CORE_SRC_DIR)/misc/dfs_nol.o\
-		$(DFS_CORE_SRC_DIR)/misc/dfs_nol.o\
-		$(DFS_CORE_SRC_DIR)/misc/dfs_zero_cac.o\
-		$(DFS_CORE_SRC_DIR)/misc/dfs_random_chan_sel.o\
-		$(DFS_CORE_SRC_DIR)/misc/dfs_process_radar_found_ind.o\
-		$(DFS_DISP_SRC_DIR)/wlan_dfs_init_deinit_api.o\
-		$(DFS_DISP_SRC_DIR)/wlan_dfs_lmac_api.o\
-		$(DFS_DISP_SRC_DIR)/wlan_dfs_mlme_api.o\
-		$(DFS_DISP_SRC_DIR)/wlan_dfs_tgt_api.o\
-		$(DFS_DISP_SRC_DIR)/wlan_dfs_ucfg_api.o\
-		$(DFS_DISP_SRC_DIR)/wlan_dfs_tgt_api.o\
-		$(DFS_DISP_SRC_DIR)/wlan_dfs_utils_api.o\
+DFS_OBJS :=	$(DFS_CORE_SRC_DIR)/misc/dfs.o \
+		$(DFS_CORE_SRC_DIR)/misc/dfs_cac.o \
+		$(DFS_CORE_SRC_DIR)/misc/dfs_nol.o \
+		$(DFS_CORE_SRC_DIR)/misc/dfs_random_chan_sel.o \
+		$(DFS_CORE_SRC_DIR)/misc/dfs_process_radar_found_ind.o \
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_init_deinit_api.o \
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_lmac_api.o \
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_mlme_api.o \
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_tgt_api.o \
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_ucfg_api.o \
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_tgt_api.o \
+		$(DFS_DISP_SRC_DIR)/wlan_dfs_utils_api.o \
 		$(WLAN_COMMON_ROOT)/target_if/dfs/src/target_if_dfs.o
+
+ifeq ($(CONFIG_WLAN_FEATURE_DFS_OFFLOAD),y)
+DFS_OBJS +=	$(WLAN_COMMON_ROOT)/target_if/dfs/src/target_if_dfs_full_offload.o \
+		$(DFS_CORE_SRC_DIR)/misc/dfs_full_offload.o
+else
+DFS_OBJS +=	$(WLAN_COMMON_ROOT)/target_if/dfs/src/target_if_dfs_partial_offload.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_fcc_bin5.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_bindetects.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_debug.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_init.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_misc.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_phyerr_tlv.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_process_phyerr.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_process_radarevent.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_staggered.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_radar.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_ar.o \
+		$(DFS_CORE_SRC_DIR)/filtering/dfs_partial_offload_radar.o \
+		$(DFS_CORE_SRC_DIR)/misc/dfs_filter_init.o \
+		$(DFS_CORE_SRC_DIR)/misc/dfs_zero_cac.o
+endif
 
 ############ SME ############
 SME_DIR :=	core/sme
@@ -2511,6 +2517,11 @@ CDEFINES += -DQCA_HOST2FW_RXBUF_RING
 
 # DFS component
 CDEFINES += -DQCA_MCL_DFS_SUPPORT
+ifeq ($(CONFIG_WLAN_FEATURE_DFS_OFFLOAD),y)
+CDEFINES += -DWLAN_DFS_FULL_OFFLOAD
+else
+CDEFINES += -DWLAN_DFS_PARTIAL_OFFLOAD
+endif
 CDEFINES += -DDFS_COMPONENT_ENABLE
 CDEFINES += -DQCA_DFS_USE_POLICY_MANAGER
 CDEFINES += -DQCA_DFS_NOL_PLATFORM_DRV_SUPPORT
