@@ -479,12 +479,11 @@ static QDF_STATUS p2p_process_ready_on_channel_evt(
 		p2p_debug("user required roc, send roc event");
 		status = p2p_send_roc_event(roc_ctx,
 				ROC_EVENT_READY_ON_CHAN);
-	} else {
-		p2p_debug("roc for off chan tx, ready to send frame");
-		cookie = (uintptr_t)roc_ctx;
-		/* ready to tx frame */
-		p2p_ready_to_tx_frame(p2p_soc_obj, cookie);
 	}
+
+	cookie = (uintptr_t)roc_ctx;
+		/* ready to tx frame */
+	p2p_ready_to_tx_frame(p2p_soc_obj, cookie);
 
 	return status;
 }
