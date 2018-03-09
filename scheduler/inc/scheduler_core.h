@@ -33,7 +33,7 @@
 #include <qdf_list.h>
 
 #ifdef CONFIG_MCL
-#define SCHEDULER_CORE_MAX_MESSAGES 8000
+#define SCHEDULER_CORE_MAX_MESSAGES 1000
 #else
 #define SCHEDULER_CORE_MAX_MESSAGES 2000
 #endif
