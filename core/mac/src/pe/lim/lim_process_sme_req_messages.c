@@ -1607,6 +1607,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->maxTxPower = lim_get_max_tx_power(reg_max,
 					local_power_constraint,
 					mac_ctx->roam.configParam.nTxPowerCap);
+		session->def_max_tx_pwr = session->maxTxPower;
 
 		pe_debug("Reg max %d local power con %d max tx pwr %d",
 			reg_max, local_power_constraint, session->maxTxPower);

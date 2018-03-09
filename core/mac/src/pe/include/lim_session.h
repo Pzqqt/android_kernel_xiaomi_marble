@@ -563,6 +563,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	bool deauth_disassoc_rc;
 	enum wmi_obss_color_collision_evt_type obss_color_collision_dec_evt;
 	bool is_session_obss_color_collision_det_enabled;
+	int8_t def_max_tx_pwr;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------
