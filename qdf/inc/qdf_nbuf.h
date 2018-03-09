@@ -217,6 +217,7 @@
  * @he_data3: HE property of received frame
  * @he_data4: HE property of received frame
  * @he_data5: HE property of received frame
+ * @prev_ppdu_id: ppdu_id in previously received message
  *
  */
 struct mon_rx_status {
@@ -286,6 +287,7 @@ struct mon_rx_status {
 	uint16_t he_data5;
 	uint16_t he_data6;
 	uint32_t ppdu_len;
+	uint32_t prev_ppdu_id;
 };
 
 /* Masks for HE SIG known fields in mon_rx_status structure */

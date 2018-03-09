@@ -1002,6 +1002,26 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->msdu_info.first_msdu_payload = rx_tlv;
 		ppdu_info->msdu_info.payload_len = tlv_len;
 		break;
+	case WIFIRX_MPDU_START_E:
+	{
+		uint8_t *rx_mpdu_start =
+			(uint8_t *)rx_tlv + HAL_RX_OFFSET(RX_MPDU_START_0,
+					RX_MPDU_INFO_RX_MPDU_INFO_DETAILS);
+		uint32_t ppdu_id = HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0,
+					      PHY_PPDU_ID);
+
+		if (ppdu_info->rx_status.prev_ppdu_id != ppdu_id) {
+			ppdu_info->rx_status.prev_ppdu_id = ppdu_id;
+			ppdu_info->rx_status.ppdu_len =
+				HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_13,
+					   MPDU_LENGTH);
+		} else {
+			ppdu_info->rx_status.ppdu_len +=
+				HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_13,
+				MPDU_LENGTH);
+		}
+		break;
+	}
 	case 0:
 		return HAL_TLV_STATUS_PPDU_DONE;
 

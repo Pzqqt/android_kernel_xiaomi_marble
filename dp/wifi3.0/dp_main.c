@@ -5811,7 +5811,7 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 	struct htt_rx_ring_tlv_filter htt_tlv_filter = {0};
 	int mac_id;
 
-	htt_tlv_filter.mpdu_start = 0;
+	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 0;
 	htt_tlv_filter.packet = 0;
 	htt_tlv_filter.msdu_end = 0;
