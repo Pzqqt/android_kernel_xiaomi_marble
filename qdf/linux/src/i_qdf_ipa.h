@@ -266,12 +266,15 @@ typedef struct ipa_wdi_in_params __qdf_ipa_wdi_in_params_t;
 	(((struct ipa_wdi_in_params *)(pipe_in))->sys.keep_ipa_awake)
 #define QDF_IPA_PIPE_IN_KEEP_IPA_AWAKE(pipe_in)	\
 	(((struct ipa_wdi_in_params *)(pipe_in))->sys.keep_ipa_awake)
-#define QDF_IPA_PIPE_IN_SMMU_ENABLED(pipe_in)	\
-	(((struct ipa_wdi_in_params *)(pipe_in))->smmu_enabled)
 #ifdef FEATURE_METERING
 #define QDF_IPA_PIPE_IN_WDI_NOTIFY(pipe_in)	\
 	(((struct ipa_wdi_in_params *)(pipe_in))->wdi_notify)
 #endif
+
+#ifdef ENABLE_SMMU_S1_TRANSLATION
+#define QDF_IPA_PIPE_IN_SMMU_ENABLED(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->smmu_enabled)
+
 #define QDF_IPA_PIPE_IN_DL_SMMU_COMP_RING(pipe_in)	\
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl_smmu.comp_ring)
 #define QDF_IPA_PIPE_IN_DL_SMMU_CE_RING(pipe_in)	\
@@ -284,18 +287,6 @@ typedef struct ipa_wdi_in_params __qdf_ipa_wdi_in_params_t;
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl_smmu.ce_door_bell_pa)
 #define QDF_IPA_PIPE_IN_DL_SMMU_NUM_TX_BUFFERS(pipe_in)	\
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl_smmu.num_tx_buffers)
-#define QDF_IPA_PIPE_IN_DL_COMP_RING_BASE_PA(pipe_in)	\
-	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.comp_ring_base_pa)
-#define QDF_IPA_PIPE_IN_DL_COMP_RING_SIZE(pipe_in)	\
-	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.comp_ring_size)
-#define QDF_IPA_PIPE_IN_DL_CE_RING_BASE_PA(pipe_in)	\
-	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.ce_ring_base_pa)
-#define QDF_IPA_PIPE_IN_DL_CE_RING_SIZE(pipe_in)	\
-	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.ce_ring_size)
-#define QDF_IPA_PIPE_IN_DL_CE_DOOR_BELL_PA(pipe_in)	\
-	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.ce_door_bell_pa)
-#define QDF_IPA_PIPE_IN_DL_NUM_TX_BUFFERS(pipe_in)	\
-	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.num_tx_buffers)
 
 #define QDF_IPA_PIPE_IN_UL_SMMU_RDY_RING(pipe_in)	\
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul_smmu.rdy_ring)
@@ -313,6 +304,20 @@ typedef struct ipa_wdi_in_params __qdf_ipa_wdi_in_params_t;
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul_smmu.rdy_comp_ring_wp_pa)
 #define QDF_IPA_PIPE_IN_UL_SMMU_RDY_COMP_RING_WP_VA(pipe_in)	\
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul_smmu.rdy_comp_ring_wp_va)
+#endif
+
+#define QDF_IPA_PIPE_IN_DL_COMP_RING_BASE_PA(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.comp_ring_base_pa)
+#define QDF_IPA_PIPE_IN_DL_COMP_RING_SIZE(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.comp_ring_size)
+#define QDF_IPA_PIPE_IN_DL_CE_RING_BASE_PA(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.ce_ring_base_pa)
+#define QDF_IPA_PIPE_IN_DL_CE_RING_SIZE(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.ce_ring_size)
+#define QDF_IPA_PIPE_IN_DL_CE_DOOR_BELL_PA(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.ce_door_bell_pa)
+#define QDF_IPA_PIPE_IN_DL_NUM_TX_BUFFERS(pipe_in)	\
+	(((struct ipa_wdi_in_params *)(pipe_in))->u.dl.num_tx_buffers)
 
 #define QDF_IPA_PIPE_IN_UL_RDY_RING_BASE_PA(pipe_in)	\
 	(((struct ipa_wdi_in_params *)(pipe_in))->u.ul.rdy_ring_base_pa)
