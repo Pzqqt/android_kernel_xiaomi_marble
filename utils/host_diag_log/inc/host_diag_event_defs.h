@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -895,6 +895,9 @@ typedef enum {
 	 */
 
 	EVENT_WLAN_SSR_SHUTDOWN_SUBSYSTEM = 0xB3D,
+	EVENT_WLAN_HOST_MGMT_TX_V2 = 0xC52,
+	EVENT_WLAN_HOST_MGMT_RX_V2 = 0xC53,
+	EVENT_WLAN_CONN_STATS_V2 = 0xC56,
 
 	EVENT_MAX_ID = 0x0FFF
 } event_id_enum_type;

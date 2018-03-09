@@ -55,6 +55,52 @@ extern "C" {
 
 #define WAKE_LOCK_NAME_LEN 80
 
+/**
+ * enum wifi_frm_type: type of frame
+ *
+ * @MGMT: Indicates management frames
+ * @CTRL: Indicates control frames
+ * @DATA: Inidcates data frames
+ */
+enum wifi_frm_type {
+	MGMT = 0x00,
+	CTRL = 0x01,
+	DATA = 0x02,
+};
+
+/*
+ * enum mgmt_frm_subtype: sub types of mgmt frames
+ *
+ * @ASSOC_REQ:       association request frame
+ * @ASSOC_RESP:      association response frame
+ * @REASSOC_REQ:     reassociation request frame
+ * @REASSOC_RESP:    reassociation response frame
+ * @PROBE_REQ:       probe request frame
+ * @PROBE_RESP:      probe response frame
+ * @BEACON:          beacon frame
+ * @ATIM:            ATIM frame
+ * @DISASSOC:        disassociation frame
+ * @AUTH:            authentication frame
+ * @DEAUTH:          deauthentication frame
+ * @ACTION:          action frame
+ * @ACTION_NO_ACK:   action no ack frame
+ */
+enum mgmt_frm_subtype {
+	ASSOC_REQ = 0x00,
+	ASSOC_RESP = 0x10,
+	REASSOC_REQ = 0x20,
+	REASSOC_RESP = 0x30,
+	PROBE_REQ = 0x40,
+	PROBE_RESP = 0x50,
+	BEACON = 0x80,
+	ATIM = 0x90,
+	DISASSOC = 0xa0,
+	AUTH = 0xb0,
+	DEAUTH = 0xc0,
+	ACTION = 0xd0,
+	ACTION_NO_ACK = 0xe0,
+};
+
 /*-------------------------------------------------------------------------
    Event ID: EVENT_WLAN_SECURITY
    ------------------------------------------------------------------------*/
@@ -126,6 +172,31 @@ typedef struct {
 	uint16_t status;
 	uint16_t reason_code;
 } host_event_wlan_pe_payload_type;
+
+/**
+ * host_event_wlan_mgmt_payload_type: To capture TX/RX mgmt frames' payload
+ *
+ * @mgmt_type: type of frames, value: enum wifi_frm_type
+ * @mgmt_subtype: subtype of mgmt frame, value: enum mgmt_frm_subtype
+ * @operating_channel: operating channel of AP
+ * @ssid_len: length of SSID, max 32 bytes long as per standard
+ * @ssid: SSID of connected AP
+ * @self_mac_addr: mac address of self interface
+ * @bssid: BSSID for which frame is received
+ * @result_code: result code TX/RX OTA delivery
+ * @reason_code: reason code given in TX/RX frame
+ */
+struct host_event_wlan_mgmt_payload_type {
+	uint8_t mgmt_type;
+	uint8_t mgmt_subtype;
+	uint8_t operating_channel;
+	uint8_t ssid_len;
+	char ssid[32];
+	char self_mac_addr[6];
+	char bssid[6];
+	uint16_t result_code;
+	uint16_t reason_code;
+} qdf_packed;
 
 /*-------------------------------------------------------------------------
    Event ID: EVENT_WLAN_ADD_BLOCK_ACK_SUCCESS
