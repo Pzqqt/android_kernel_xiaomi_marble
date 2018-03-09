@@ -910,7 +910,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_twt_pause_dialog_complete_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_twt_resume_dialog_complete_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_request_roam_scan_stats_cmd_fixed_param,
-  WMITLV_TAG_STRUC_wmi_roam_scan_stats_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_scan_stats_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_tid_configurations_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1281,6 +1282,7 @@ typedef enum {
     OP(WMI_TWT_PAUSE_DIALOG_CMDID) \
     OP(WMI_TWT_RESUME_DIALOG_CMDID) \
     OP(WMI_REQUEST_ROAM_SCAN_STATS_CMDID) \
+    OP(WMI_PEER_TID_CONFIGURATIONS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3685,6 +3687,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TWT_PAUSE_DIALOG_CMDID);
 #define WMITLV_TABLE_WMI_TWT_RESUME_DIALOG_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_resume_dialog_cmd_fixed_param, wmi_twt_resume_dialog_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_TWT_RESUME_DIALOG_CMDID);
+
+/* Set peer tid configurations Cmd */
+#define WMITLV_TABLE_WMI_PEER_TID_CONFIGURATIONS_CMDID(id,op,buf,len) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_tid_configurations_cmd_fixed_param, wmi_peer_tid_configurations_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_TID_CONFIGURATIONS_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/

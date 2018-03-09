@@ -249,6 +249,7 @@ typedef  enum  {
     WMI_SERVICE_AP_TWT=153, /* support for TWT (Target Wake Time) on AP */
     WMI_SERVICE_GMAC_OFFLOAD_SUPPORT=154, /* Support for GMAC */
     WMI_SERVICE_SPOOF_MAC_SUPPORT=155,  /* support for SERVICE_SPOOF_MAC */
+    WMI_SERVICE_PEER_TID_CONFIGS_SUPPORT=156,  /* Support TID specific configurations per peer (ack,aggr,retry,rate) */
 
 
     /******* ADD NEW SERVICES HERE *******/
