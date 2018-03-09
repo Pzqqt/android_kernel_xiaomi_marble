@@ -35,6 +35,7 @@
 #include "wlan_hdd_request_manager.h"
 #include "wlan_hdd_debugfs_llstat.h"
 #include "wlan_reg_services_api.h"
+#include <wlan_cfg80211_mc_cp_stats.h>
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 #define HDD_INFO_SIGNAL                 STATION_INFO_SIGNAL
@@ -4960,6 +4961,65 @@ int wlan_hdd_get_rcpi(struct hdd_adapter *adapter, uint8_t *mac,
 	return ret;
 }
 
+#ifdef QCA_SUPPORT_CP_STATS
+QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
+{
+	int ret, i;
+	struct hdd_station_ctx *sta_ctx;
+	struct stats_event rssi_info;
+
+	if (NULL == adapter) {
+		hdd_err("Invalid context, adapter");
+		return QDF_STATUS_E_FAULT;
+	}
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
+		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
+			cds_get_driver_state());
+		/* return a cached value */
+		*rssi_value = adapter->rssi;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+		hdd_debug("Not associated!, rssi on disconnect %d",
+			  adapter->rssi_on_disconnect);
+		*rssi_value = adapter->rssi_on_disconnect;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (sta_ctx->hdd_reassoc_scenario) {
+		hdd_debug("Roaming in progress, return cached RSSI");
+		*rssi_value = adapter->rssi;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	ret = wlan_cfg80211_mc_cp_stats_get_peer_rssi(adapter->hdd_vdev,
+						sta_ctx->conn_info.bssId.bytes,
+						&rssi_info);
+	if (ret) {
+		hdd_err("Unable to retrieve peer rssi: %d", ret);
+		wlan_cfg80211_mc_cp_stats_put_peer_rssi(&rssi_info);
+		return ret;
+	}
+
+	for (i = 0; i < rssi_info.num_peer_stats; i++) {
+		if (!qdf_mem_cmp(rssi_info.peer_stats[i].peer_macaddr,
+				 sta_ctx->conn_info.bssId.bytes,
+				 WLAN_MACADDR_LEN)) {
+			*rssi_value = rssi_info.peer_stats[i].peer_rssi;
+			hdd_debug("RSSI = %d", *rssi_value);
+			wlan_cfg80211_mc_cp_stats_put_peer_rssi(&rssi_info);
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+
+	wlan_cfg80211_mc_cp_stats_put_peer_rssi(&rssi_info);
+	hdd_err("bss peer not present in returned result");
+	return QDF_STATUS_E_FAULT;
+}
+#else /* QCA_SUPPORT_CP_STATS */
 struct rssi_priv {
 	int8_t rssi;
 };
@@ -5083,6 +5143,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif /* QCA_SUPPORT_CP_STATS */
 
 struct snr_priv {
 	int8_t snr;

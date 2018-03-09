@@ -84,6 +84,8 @@
 #include "sme_api.h"
 #include "wlan_hdd_regulatory.h"
 #include <wlan_ipa_ucfg_api.h>
+#include <wlan_cfg80211_mc_cp_stats.h>
+#include <wlan_cp_stats_mc_ucfg_api.h>
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -5282,6 +5284,70 @@ iw_get_softap_linkspeed(struct net_device *dev,
  *
  * Return: 0 on success, otherwise error value
  */
+#ifdef QCA_SUPPORT_CP_STATS
+static int
+__iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
+		   union iwreq_data *wrqu, char *extra)
+{
+	int ret, i;
+	struct hdd_context *hddctx;
+	struct stats_event rssi_info;
+	char macaddrarray[MAC_ADDRESS_STR_LEN];
+	struct hdd_adapter *adapter = netdev_priv(dev);
+	struct qdf_mac_addr macaddress = QDF_MAC_ADDR_BCAST_INIT;
+
+	hdd_enter();
+
+	hddctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hddctx);
+	if (ret != 0)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hddctx, info);
+	if (0 != ret)
+		return ret;
+
+	hdd_debug("wrqu->data.length= %d", wrqu->data.length);
+
+	if (wrqu->data.length >= MAC_ADDRESS_STR_LEN - 1) {
+		if (copy_from_user(macaddrarray,
+				   wrqu->data.pointer,
+				   MAC_ADDRESS_STR_LEN - 1)) {
+			hdd_info("failed to copy data from user buffer");
+			return -EFAULT;
+		}
+
+		macaddrarray[MAC_ADDRESS_STR_LEN - 1] = '\0';
+		hdd_debug("%s", macaddrarray);
+
+		if (!mac_pton(macaddrarray, macaddress.bytes))
+			hdd_err("String to Hex conversion Failed");
+	}
+
+	ret = wlan_cfg80211_mc_cp_stats_get_peer_rssi(adapter->hdd_vdev,
+						      macaddress.bytes,
+						      &rssi_info);
+	if (ret) {
+		hdd_err("Unable to retrieve peer rssi: %d", ret);
+		wlan_cfg80211_mc_cp_stats_put_peer_rssi(&rssi_info);
+		return ret;
+	}
+
+	wrqu->data.length = scnprintf(extra, IW_PRIV_SIZE_MASK, "\n");
+	for (i = 0; i < rssi_info.num_peer_stats; i++) {
+		wrqu->data.length += scnprintf(extra + wrqu->data.length,
+					IW_PRIV_SIZE_MASK - wrqu->data.length,
+					"[%pM] [%d]\n",
+					rssi_info.peer_stats[i].peer_macaddr,
+					rssi_info.peer_stats[i].peer_rssi);
+	}
+	wrqu->data.length++;
+	wlan_cfg80211_mc_cp_stats_put_peer_rssi(&rssi_info);
+
+	hdd_exit();
+	return 0;
+}
+#else
 static int
 __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 		   union iwreq_data *wrqu, char *extra)
@@ -5354,11 +5420,11 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 		length += buf;
 	}
 	wrqu->data.length = length + 1;
-
 	hdd_exit();
 
 	return 0;
 }
+#endif
 
 /**
  * iw_get_peer_rssi() - get station's rssi
