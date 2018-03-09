@@ -145,6 +145,11 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 	}
 
 	reg_cap_ptr = ucfg_reg_get_hal_reg_cap(psoc);
+	if (!reg_cap_ptr) {
+		hdd_err("Failed to get reg capability");
+		status = QDF_STATUS_E_INVAL;
+		goto free_priv;
+	}
 	reg_cap_ptr->phy_id = 0;
 	reg_cap_ptr->low_2ghz_chan = LOW_2GHZ_FREQ;
 	reg_cap_ptr->high_2ghz_chan = HIGH_2GHZ_FREQ;
