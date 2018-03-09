@@ -760,6 +760,10 @@ struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_id(
 	struct wlan_objmgr_psoc_objmgr *objmgr;
 	struct wlan_objmgr_pdev *pdev = NULL;
 
+	/* If id is invalid, return */
+	if (id >= WLAN_UMAC_MAX_PDEVS)
+		return NULL;
+
 	wlan_psoc_obj_lock(psoc);
 	objmgr = &psoc->soc_objmgr;
 	/* get pdev from pdev list */
@@ -783,6 +787,10 @@ struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_id_no_state(
 {
 	struct wlan_objmgr_psoc_objmgr *objmgr;
 	struct wlan_objmgr_pdev *pdev = NULL;
+
+	/* If id is invalid, return */
+	if (id >= WLAN_UMAC_MAX_PDEVS)
+		return NULL;
 
 	wlan_psoc_obj_lock(psoc);
 	objmgr = &psoc->soc_objmgr;
