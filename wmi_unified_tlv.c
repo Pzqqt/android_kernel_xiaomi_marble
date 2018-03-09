@@ -18792,6 +18792,7 @@ static QDF_STATUS extract_mgmt_tx_compl_param_tlv(wmi_unified_t wmi_handle,
 							cmpl_params->pdev_id);
 	param->desc_id = cmpl_params->desc_id;
 	param->status = cmpl_params->status;
+	param->ppdu_id = cmpl_params->ppdu_id;
 
 	return QDF_STATUS_SUCCESS;
 }
