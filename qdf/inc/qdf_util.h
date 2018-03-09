@@ -42,12 +42,6 @@
 #endif
 
 typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
-/**
- * qdf_is_fw_down_callback - callback to query if fw is down
- *
- * Return: true if fw is down and false if fw is not down
- */
-typedef bool (*qdf_is_fw_down_callback)(void);
 
 /**
  * qdf_unlikely - Compiler-dependent macro denoting code likely to execute
@@ -675,12 +669,4 @@ void qdf_get_random_bytes(void *buf, int nbytes)
 {
 	return __qdf_get_random_bytes(buf, nbytes);
 }
-
-/**
- * qdf_register_fw_down_callback() - API to register fw down callback
- * @is_fw_down: callback to query if fw is down or not
- *
- * Return: none
- */
-void qdf_register_fw_down_callback(qdf_is_fw_down_callback is_fw_down);
 #endif /*_QDF_UTIL_H*/
