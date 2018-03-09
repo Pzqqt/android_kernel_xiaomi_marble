@@ -255,30 +255,30 @@ struct ccp_freq_chan_map {
 #define HDD_FWTEST_MU_DEFAULT_VALUE 40
 #define HDD_FWTEST_MAX_VALUE 500
 
-extern int hdd_unregister_wext(struct net_device *dev);
-extern int hdd_register_wext(struct net_device *dev);
-extern int hdd_wlan_get_freq(uint32_t chan, uint32_t *freq);
-extern void hdd_display_stats_help(void);
-extern void hdd_wlan_get_version(struct hdd_context *hdd_ctx,
-				 union iwreq_data *wrqu, char *extra);
+int hdd_unregister_wext(struct net_device *dev);
+int hdd_register_wext(struct net_device *dev);
+int hdd_wlan_get_freq(uint32_t chan, uint32_t *freq);
+void hdd_display_stats_help(void);
+void hdd_wlan_get_version(struct hdd_context *hdd_ctx,
+			 union iwreq_data *wrqu, char *extra);
 
-extern void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
-			       char *buffer, uint16_t buf_len);
-extern void hdd_wlan_list_fw_profile(uint16_t *length,
-			       char *buffer, uint16_t buf_len);
+void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
+		       char *buffer, uint16_t buf_len);
+void hdd_wlan_list_fw_profile(uint16_t *length,
+			      char *buffer, uint16_t buf_len);
 
-extern int iw_set_var_ints_getnone(struct net_device *dev,
-				   struct iw_request_info *info,
-				   union iwreq_data *wrqu, char *extra);
+int iw_set_var_ints_getnone(struct net_device *dev,
+			   struct iw_request_info *info,
+			   union iwreq_data *wrqu, char *extra);
 
-extern int iw_set_three_ints_getnone(struct net_device *dev,
-				     struct iw_request_info *info,
-				     union iwreq_data *wrqu, char *extra);
+int iw_set_three_ints_getnone(struct net_device *dev,
+			     struct iw_request_info *info,
+			     union iwreq_data *wrqu, char *extra);
 
-extern int hdd_priv_get_data(struct iw_point *p_priv_data,
-			     union iwreq_data *wrqu);
+int hdd_priv_get_data(struct iw_point *p_priv_data,
+		     union iwreq_data *wrqu);
 
-extern void *mem_alloc_copy_from_user_helper(const void *wrqu_data, size_t len);
+void *mem_alloc_copy_from_user_helper(const void *wrqu_data, size_t len);
 
 /**
  * wlan_hdd_get_linkspeed_for_peermac() - Get link speed for a peer
