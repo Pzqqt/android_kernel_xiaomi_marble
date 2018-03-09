@@ -2176,35 +2176,27 @@ static void dp_process_ppdu_stats_user_compltn_flush_tlv(struct dp_pdev *pdev,
  *
  * return:void
  */
-static void dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(
-	struct dp_pdev *pdev, uint32_t *tag_buf, uint32_t length)
+static void
+dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
+					      qdf_nbuf_t tag_buf,
+					      uint32_t length,
+					      uint32_t ppdu_id)
 {
-	htt_ppdu_stats_tx_mgmtctrl_payload_tlv *dp_stats_buf;
-	qdf_nbuf_t nbuf;
-	uint32_t payload_size;
+	uint32_t *nbuf_ptr;
 
 	if ((!pdev->tx_sniffer_enable) && (!pdev->mcopy_mode))
 		return;
 
-	payload_size = length - HTT_MGMT_CTRL_TLV_RESERVERD_LEN;
-	nbuf = NULL;
-	dp_stats_buf = (htt_ppdu_stats_tx_mgmtctrl_payload_tlv *)tag_buf;
-
-
-	nbuf = qdf_nbuf_alloc(pdev->soc->osdev, payload_size, 0, 4, true);
-
-	if (!nbuf) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"Nbuf Allocation failed for Mgmt. payload");
-		qdf_assert(0);
+	if (qdf_nbuf_pull_head(tag_buf, HTT_MGMT_CTRL_TLV_RESERVERD_LEN + 4)
+			       == NULL)
 		return;
-	}
 
-	qdf_nbuf_put_tail(nbuf, payload_size);
-	qdf_mem_copy(qdf_nbuf_data(nbuf), dp_stats_buf->payload, payload_size);
+	nbuf_ptr = (uint32_t *)qdf_nbuf_push_head(
+				tag_buf, sizeof(ppdu_id));
+	*nbuf_ptr = ppdu_id;
 
 	dp_wdi_event_handler(WDI_EVENT_TX_MGMT_CTRL, pdev->soc,
-		nbuf, HTT_INVALID_PEER,
+		tag_buf, HTT_INVALID_PEER,
 		WDI_NO_VAL, pdev->pdev_id);
 }
 
@@ -2286,10 +2278,6 @@ static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
 			sizeof(htt_ppdu_stats_flush_tlv));
 		dp_process_ppdu_stats_user_compltn_flush_tlv(
 				pdev, tag_buf);
-		break;
-	case HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV:
-		dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(
-				pdev, tag_buf, tlv_len);
 		break;
 	default:
 		break;
@@ -2471,7 +2459,7 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
  */
 
 static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
-		qdf_nbuf_t htt_t2h_msg)
+		qdf_nbuf_t htt_t2h_msg, bool *free_buf)
 {
 	uint32_t length;
 	uint32_t ppdu_id;
@@ -2507,10 +2495,13 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 		 * doesn't contain any ppdu information
 		 */
 		if (tlv_type == HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV) {
-			dp_process_ppdu_tag(pdev, msg_word, tlv_length, NULL);
-			msg_word = (uint32_t *)((uint8_t *)tlv_buf + tlv_length);
+			dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(pdev,
+					htt_t2h_msg, tlv_length, ppdu_id);
+			msg_word =
+				(uint32_t *)((uint8_t *)tlv_buf + tlv_length);
 			length -= (tlv_length);
-			continue;
+			*free_buf = false;
+			return NULL;
 		}
 
 		ppdu_info = dp_get_ppdu_desc(pdev, ppdu_id, tlv_type);
@@ -2531,6 +2522,9 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 		msg_word = (uint32_t *)((uint8_t *)tlv_buf + tlv_length);
 		length -= (tlv_length);
 	}
+
+	if (!ppdu_info)
+		return NULL;
 
 	pdev->last_ppdu_id = ppdu_id;
 
@@ -2562,25 +2556,28 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
  */
 #if defined(WDI_EVENT_ENABLE)
 #ifdef FEATURE_PERPKT_INFO
-static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
-		uint8_t pdev_id, qdf_nbuf_t htt_t2h_msg)
+static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
+				       uint8_t pdev_id, qdf_nbuf_t htt_t2h_msg)
 {
 	struct dp_pdev *pdev = soc->pdev_list[pdev_id];
 	struct ppdu_info *ppdu_info = NULL;
+	bool free_buf = true;
 
 	if (!pdev->enhanced_stats_en && !pdev->tx_sniffer_enable &&
 			!pdev->mcopy_mode)
-		return;
+		return free_buf;
 
-	ppdu_info = dp_htt_process_tlv(pdev, htt_t2h_msg);
+	ppdu_info = dp_htt_process_tlv(pdev, htt_t2h_msg, &free_buf);
 	if (ppdu_info)
 		dp_ppdu_desc_deliver(pdev, ppdu_info);
+
+	return free_buf;
 }
 #else
-static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
-		uint8_t pdev_id, qdf_nbuf_t htt_t2h_msg)
+static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
+				       uint8_t pdev_id, qdf_nbuf_t htt_t2h_msg)
 {
-
+	return true;
 }
 #endif
 #endif
@@ -2672,22 +2669,24 @@ int htt_soc_attach_target(void *htt_soc)
  *
  * Return: None
  */
-static void
+static bool
 dp_ppdu_stats_ind_handler(struct htt_soc *soc,
 				uint32_t *msg_word,
 				qdf_nbuf_t htt_t2h_msg)
 {
 	u_int8_t pdev_id;
+	bool free_buf;
 	qdf_nbuf_set_pktlen(htt_t2h_msg, HTT_T2H_MAX_MSG_SIZE);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 		"received HTT_T2H_MSG_TYPE_PPDU_STATS_IND\n");
 	pdev_id = HTT_T2H_PPDU_STATS_PDEV_ID_GET(*msg_word);
 	pdev_id = DP_HW2SW_MACID(pdev_id);
-	dp_txrx_ppdu_stats_handler(soc->dp_soc, pdev_id,
-				  htt_t2h_msg);
+	free_buf = dp_txrx_ppdu_stats_handler(soc->dp_soc, pdev_id,
+					      htt_t2h_msg);
 	dp_wdi_event_handler(WDI_EVENT_LITE_T2H, soc->dp_soc,
 		htt_t2h_msg, HTT_INVALID_PEER, WDI_NO_VAL,
 		pdev_id);
+	return free_buf;
 }
 #else
 dp_ppdu_stats_ind_handler(struct htt_soc *soc,
@@ -2739,6 +2738,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	qdf_nbuf_t htt_t2h_msg = (qdf_nbuf_t) pkt->pPktContext;
 	u_int32_t *msg_word;
 	enum htt_t2h_msg_type msg_type;
+	bool free_buf = true;
 
 	/* check for successful message reception */
 	if (pkt->Status != QDF_STATUS_SUCCESS) {
@@ -2805,7 +2805,8 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 
 	case HTT_T2H_MSG_TYPE_PPDU_STATS_IND:
 		{
-			dp_ppdu_stats_ind_handler(soc, msg_word, htt_t2h_msg);
+			free_buf = dp_ppdu_stats_ind_handler(soc, msg_word,
+							     htt_t2h_msg);
 			break;
 		}
 
@@ -2888,7 +2889,8 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	};
 
 	/* Free the indication buffer */
-	qdf_nbuf_free(htt_t2h_msg);
+	if (free_buf)
+		qdf_nbuf_free(htt_t2h_msg);
 }
 
 /*
