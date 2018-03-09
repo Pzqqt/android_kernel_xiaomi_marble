@@ -5158,6 +5158,7 @@ typedef struct {
     /* tlv for completion
      * A_UINT32 desc_ids[num_reports]; <- from tx_send_cmd
      * A_UINT32 status[num_reports];   <- WMI_MGMT_TX_COMP_STATUS_TYPE
+     * A_UINT32 ppdu_id[num_reports];  <- list of PPDU IDs
      */
 } wmi_mgmt_tx_compl_bundle_event_fixed_param;
 
