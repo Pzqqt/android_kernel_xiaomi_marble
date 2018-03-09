@@ -178,11 +178,11 @@ static inline QDF_STATUS csr_sae_callback(tpAniSirGlobal mac_ctx,
 
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-int diag_auth_type_from_csr_type(eCsrAuthType authType)
+enum mgmt_auth_type diag_auth_type_from_csr_type(eCsrAuthType authtype)
 {
 	int n = AUTH_OPEN;
 
-	switch (authType) {
+	switch (authtype) {
 	case eCSR_AUTH_TYPE_SHARED_KEY:
 		n = AUTH_SHARED;
 		break;
@@ -218,11 +218,11 @@ int diag_auth_type_from_csr_type(eCsrAuthType authType)
 	return n;
 }
 
-int diag_enc_type_from_csr_type(eCsrEncryptionType encType)
+enum mgmt_encrypt_type diag_enc_type_from_csr_type(eCsrEncryptionType enctype)
 {
 	int n = ENC_MODE_OPEN;
 
-	switch (encType) {
+	switch (enctype) {
 	case eCSR_ENCRYPT_TYPE_WEP40_STATICKEY:
 	case eCSR_ENCRYPT_TYPE_WEP40:
 		n = ENC_MODE_WEP40;
@@ -253,7 +253,101 @@ int diag_enc_type_from_csr_type(eCsrEncryptionType encType)
 	}
 	return n;
 }
+
+enum mgmt_dot11_mode
+diag_dot11_mode_from_csr_type(enum csr_cfgdot11mode dot11mode)
+{
+	switch (dot11mode) {
+	case eCSR_CFG_DOT11_MODE_ABG:
+		return DOT11_MODE_ABG;
+	case eCSR_CFG_DOT11_MODE_11A:
+		return DOT11_MODE_11A;
+	case eCSR_CFG_DOT11_MODE_11B:
+		return DOT11_MODE_11B;
+	case eCSR_CFG_DOT11_MODE_11G:
+		return DOT11_MODE_11G;
+	case eCSR_CFG_DOT11_MODE_11N:
+		return DOT11_MODE_11N;
+	case eCSR_CFG_DOT11_MODE_11AC:
+		return DOT11_MODE_11AC;
+	case eCSR_CFG_DOT11_MODE_11G_ONLY:
+		return DOT11_MODE_11G_ONLY;
+	case eCSR_CFG_DOT11_MODE_11N_ONLY:
+		return DOT11_MODE_11N_ONLY;
+	case eCSR_CFG_DOT11_MODE_11AC_ONLY:
+		return DOT11_MODE_11AC_ONLY;
+	case eCSR_CFG_DOT11_MODE_AUTO:
+		return DOT11_MODE_AUTO;
+	case eCSR_CFG_DOT11_MODE_11AX:
+		return DOT11_MODE_11AX;
+	case eCSR_CFG_DOT11_MODE_11AX_ONLY:
+		return DOT11_MODE_11AX_ONLY;
+	default:
+		return DOT11_MODE_MAX;
+	}
+}
+
+enum mgmt_ch_width diag_ch_width_from_csr_type(enum phy_ch_width ch_width)
+{
+	switch (ch_width) {
+	case CH_WIDTH_20MHZ:
+		return BW_20MHZ;
+	case CH_WIDTH_40MHZ:
+		return BW_40MHZ;
+	case CH_WIDTH_80MHZ:
+		return BW_80MHZ;
+	case CH_WIDTH_160MHZ:
+		return BW_160MHZ;
+	case CH_WIDTH_80P80MHZ:
+		return BW_80P80MHZ;
+	case CH_WIDTH_5MHZ:
+		return BW_5MHZ;
+	case CH_WIDTH_10MHZ:
+		return BW_10MHZ;
+	default:
+		return BW_MAX;
+	}
+}
+
+enum mgmt_bss_type diag_persona_from_csr_type(enum QDF_OPMODE persona)
+{
+	switch (persona) {
+	case QDF_STA_MODE:
+		return STA_PERSONA;
+	case QDF_SAP_MODE:
+		return SAP_PERSONA;
+	case QDF_P2P_CLIENT_MODE:
+		return P2P_CLIENT_PERSONA;
+	case QDF_P2P_GO_MODE:
+		return P2P_GO_PERSONA;
+	case QDF_FTM_MODE:
+		return FTM_PERSONA;
+	case QDF_IBSS_MODE:
+		return IBSS_PERSONA;
+	case QDF_MONITOR_MODE:
+		return MONITOR_PERSONA;
+	case QDF_P2P_DEVICE_MODE:
+		return P2P_DEVICE_PERSONA;
+	case QDF_OCB_MODE:
+		return OCB_PERSONA;
+	case QDF_EPPING_MODE:
+		return EPPING_PERSONA;
+	case QDF_QVIT_MODE:
+		return QVIT_PERSONA;
+	case QDF_NDI_MODE:
+		return NDI_PERSONA;
+	case QDF_WDS_MODE:
+		return WDS_PERSONA;
+	case QDF_BTAMP_MODE:
+		return BTAMP_PERSONA;
+	case QDF_AHDEMO_MODE:
+		return AHDEMO_PERSONA;
+	default:
+		return MAX_PERSONA;
+	}
+}
 #endif /* #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR */
+
 static const uint8_t
 csr_start_ibss_channels50[CSR_NUM_IBSS_START_CHAN_50] = { 36, 44, 52, 56, 140 };
 static const uint8_t
@@ -3920,6 +4014,148 @@ static void csr_roam_populate_channels(tDot11fBeaconIEs *beacon_ies,
 	}
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+static const char *csr_get_ch_width_str(uint8_t ch_width)
+{
+	switch (ch_width) {
+	CASE_RETURN_STRING(BW_20MHZ);
+	CASE_RETURN_STRING(BW_40MHZ);
+	CASE_RETURN_STRING(BW_80MHZ);
+	CASE_RETURN_STRING(BW_160MHZ);
+	CASE_RETURN_STRING(BW_80P80MHZ);
+	CASE_RETURN_STRING(BW_5MHZ);
+	CASE_RETURN_STRING(BW_10MHZ);
+	default:
+		return "Unknown";
+	}
+}
+
+static const char *csr_get_dot11_mode_str(enum csr_cfgdot11mode dot11mode)
+{
+	switch (dot11mode) {
+	CASE_RETURN_STRING(DOT11_MODE_AUTO);
+	CASE_RETURN_STRING(DOT11_MODE_ABG);
+	CASE_RETURN_STRING(DOT11_MODE_11A);
+	CASE_RETURN_STRING(DOT11_MODE_11B);
+	CASE_RETURN_STRING(DOT11_MODE_11G);
+	CASE_RETURN_STRING(DOT11_MODE_11N);
+	CASE_RETURN_STRING(DOT11_MODE_11AC);
+	CASE_RETURN_STRING(DOT11_MODE_11G_ONLY);
+	CASE_RETURN_STRING(DOT11_MODE_11N_ONLY);
+	CASE_RETURN_STRING(DOT11_MODE_11AC_ONLY);
+	CASE_RETURN_STRING(DOT11_MODE_11AX);
+	CASE_RETURN_STRING(DOT11_MODE_11AX_ONLY);
+	default:
+		return "Unknown";
+	}
+}
+
+static const char *csr_get_auth_type_str(uint8_t auth_type)
+{
+	switch (auth_type) {
+	CASE_RETURN_STRING(AUTH_OPEN);
+	CASE_RETURN_STRING(AUTH_SHARED);
+	CASE_RETURN_STRING(AUTH_WPA_EAP);
+	CASE_RETURN_STRING(AUTH_WPA_PSK);
+	CASE_RETURN_STRING(AUTH_WPA2_EAP);
+	CASE_RETURN_STRING(AUTH_WPA2_PSK);
+	CASE_RETURN_STRING(AUTH_WAPI_CERT);
+	CASE_RETURN_STRING(AUTH_WAPI_PSK);
+	default:
+		return "Unknown";
+	}
+}
+
+static const char *csr_get_encr_type_str(uint8_t encr_type)
+{
+	switch (encr_type) {
+	CASE_RETURN_STRING(ENC_MODE_OPEN);
+	CASE_RETURN_STRING(ENC_MODE_WEP40);
+	CASE_RETURN_STRING(ENC_MODE_WEP104);
+	CASE_RETURN_STRING(ENC_MODE_TKIP);
+	CASE_RETURN_STRING(ENC_MODE_AES);
+	CASE_RETURN_STRING(ENC_MODE_AES_GCMP);
+	CASE_RETURN_STRING(ENC_MODE_AES_GCMP_256);
+	CASE_RETURN_STRING(ENC_MODE_SMS4);
+	default:
+		return "Unknown";
+	}
+}
+
+static void csr_dump_connection_stats(tpAniSirGlobal mac_ctx,
+		struct csr_roam_session *session,
+		struct csr_roam_info *roam_info,
+		eRoamCmdStatus u1, eCsrRoamResult u2)
+{
+	struct tagCsrRoamConnectedProfile *conn_profile;
+	struct csr_roam_profile *profile;
+	WLAN_HOST_DIAG_EVENT_DEF(conn_stats,
+				 struct host_event_wlan_connection_stats);
+
+	if (!session || !session->pCurRoamProfile || !roam_info)
+		return;
+
+	conn_profile = roam_info->u.pConnectedProfile;
+	if (!conn_profile)
+		return;
+	profile = session->pCurRoamProfile;
+	qdf_mem_set(&conn_stats,
+		    sizeof(struct host_event_wlan_connection_stats), 0);
+	qdf_mem_copy(conn_stats.bssid, conn_profile->bssid.bytes,
+		     QDF_MAC_ADDR_SIZE);
+	conn_stats.ssid_len = conn_profile->SSID.length;
+	if (conn_stats.ssid_len > SIR_MAC_MAX_SSID_LENGTH)
+		conn_stats.ssid_len = SIR_MAC_MAX_SSID_LENGTH;
+	qdf_mem_copy(conn_stats.ssid, conn_profile->SSID.ssId,
+		     conn_stats.ssid_len);
+	sme_get_rssi_snr_by_bssid(mac_ctx, session->pCurRoamProfile,
+				  &conn_stats.bssid[0],
+				  &conn_stats.rssi, NULL);
+	conn_stats.est_link_speed = 0;
+	conn_stats.chnl_bw =
+		diag_ch_width_from_csr_type(conn_profile->vht_channel_width);
+	conn_stats.dot11mode =
+		diag_dot11_mode_from_csr_type(conn_profile->dot11Mode);
+	conn_stats.bss_type =
+	     diag_persona_from_csr_type(session->pCurRoamProfile->csrPersona);
+	conn_stats.operating_channel = conn_profile->operationChannel;
+	conn_stats.qos_capability = conn_profile->qosConnection;
+	conn_stats.auth_type =
+	     diag_auth_type_from_csr_type(conn_profile->AuthType);
+	conn_stats.encryption_type =
+	     diag_enc_type_from_csr_type(conn_profile->EncryptionType);
+	conn_stats.result_code = (u2 == eCSR_ROAM_RESULT_ASSOCIATED) ? 1 : 0;
+	conn_stats.reason_code = 0;
+	sme_debug("+---------CONNECTION INFO START------------+");
+	sme_debug("connection stats for session-id: %d", session->sessionId);
+	sme_debug("ssid: %.*s", conn_stats.ssid_len, conn_stats.ssid);
+	sme_debug("bssid: %pM", conn_stats.bssid);
+	sme_debug("rssi: %d dBm", conn_stats.rssi);
+	sme_debug("channel: %d", conn_stats.operating_channel);
+	sme_debug("dot11Mode: %s",
+		  csr_get_dot11_mode_str(conn_stats.dot11mode));
+	sme_debug("channel bw: %s",
+		  csr_get_ch_width_str(conn_stats.chnl_bw));
+	sme_debug("Qos enable: %d", conn_stats.qos_capability);
+	sme_debug("Auth-type: %s",
+		  csr_get_auth_type_str(conn_stats.auth_type));
+	sme_debug("Encry-type: %s",
+		  csr_get_encr_type_str(conn_stats.encryption_type));
+	sme_debug("is associated?: %s",
+		  (conn_stats.result_code ? "yes" : "no"));
+	sme_debug("+---------CONNECTION INFO END------------+");
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&conn_stats, EVENT_WLAN_CONN_STATS_V2);
+}
+#else
+static void csr_dump_connection_stats(tpAniSirGlobal mac_ctx,
+		struct csr_roam_session *session,
+		struct csr_roam_info *roam_info,
+		eRoamCmdStatus u1, eCsrRoamResult u2)
+{}
+
+#endif
+
 QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 				  struct csr_roam_info *roam_info,
 				  uint32_t roamId,
@@ -4009,6 +4245,8 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 		else
 			sme_err("session_open_cb is not registered");
 	}
+	if (eCSR_ROAM_ASSOCIATION_COMPLETION == u1)
+		csr_dump_connection_stats(pMac, pSession, roam_info, u1, u2);
 
 	if (NULL != pSession->callback) {
 		if (roam_info) {

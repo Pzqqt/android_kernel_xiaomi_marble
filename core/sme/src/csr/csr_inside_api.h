@@ -597,29 +597,6 @@ void csr_get_vdev_type_nss(tpAniSirGlobal mac_ctx,
 #define WLAN_SECURITY_EVENT_SET_BCAST_REQ    12
 #define WLAN_SECURITY_EVENT_SET_BCAST_RSP    13
 
-
-#define AUTH_OPEN       0
-#define AUTH_SHARED     1
-#define AUTH_WPA_EAP    2
-#define AUTH_WPA_PSK    3
-#define AUTH_WPA2_EAP   4
-#define AUTH_WPA2_PSK   5
-#ifdef FEATURE_WLAN_WAPI
-#define AUTH_WAPI_CERT  6
-#define AUTH_WAPI_PSK   7
-#endif /* FEATURE_WLAN_WAPI */
-
-#define ENC_MODE_OPEN   0
-#define ENC_MODE_WEP40  1
-#define ENC_MODE_WEP104 2
-#define ENC_MODE_TKIP   3
-#define ENC_MODE_AES    4
-#define ENC_MODE_AES_GCMP    5
-#define ENC_MODE_AES_GCMP_256    6
-#ifdef FEATURE_WLAN_WAPI
-#define ENC_MODE_SMS4   5       /* WAPI */
-#endif /* FEATURE_WLAN_WAPI */
-
 #define NO_MATCH    0
 #define MATCH       1
 
@@ -663,8 +640,58 @@ void csr_get_vdev_type_nss(tpAniSirGlobal mac_ctx,
 #define WLAN_80211D_SUPPORT_MULTI_DOMAIN     1
 #define WLAN_80211D_NOT_SUPPORT_MULTI_DOMAIN     2
 
-int diag_auth_type_from_csr_type(eCsrAuthType authType);
-int diag_enc_type_from_csr_type(eCsrEncryptionType encType);
+/**
+ * diag_auth_type_from_csr_type() - to convert CSR auth type to DIAG auth type
+ * @authtype: CSR auth type
+ *
+ * DIAG tool understands its own ENUMs, so this API can be used to convert
+ * CSR defined auth type ENUMs to DIAG defined auth type ENUMs
+ *
+ *
+ * Return: DIAG auth type
+ */
+enum mgmt_auth_type diag_auth_type_from_csr_type(eCsrAuthType authtype);
+/**
+ * diag_enc_type_from_csr_type() - to convert CSR encr type to DIAG encr type
+ * @enctype: CSR encryption type
+ *
+ * DIAG tool understands its own ENUMs, so this API can be used to convert
+ * CSR defined encr type ENUMs to DIAG defined encr type ENUMs
+ *
+ * Return: DIAG encryption type
+ */
+enum mgmt_encrypt_type diag_enc_type_from_csr_type(eCsrEncryptionType enctype);
+/**
+ * diag_dot11_mode_from_csr_type() - to convert CSR .11 mode to DIAG .11 mode
+ * @dot11mode: CSR 80211 mode
+ *
+ * DIAG tool understands its own ENUMs, so this API can be used to convert
+ * CSR defined 80211 mode ENUMs to DIAG defined 80211 mode ENUMs
+ *
+ * Return: DIAG 80211mode
+ */
+enum mgmt_dot11_mode
+diag_dot11_mode_from_csr_type(enum csr_cfgdot11mode dot11mode);
+/**
+ * diag_ch_width_from_csr_type() - to convert CSR ch width to DIAG ch width
+ * @ch_width: CSR channel width
+ *
+ * DIAG tool understands its own ENUMs, so this API can be used to convert
+ * CSR defined ch width ENUMs to DIAG defined ch width ENUMs
+ *
+ * Return: DIAG channel width
+ */
+enum mgmt_ch_width diag_ch_width_from_csr_type(enum phy_ch_width ch_width);
+/**
+ * diag_persona_from_csr_type() - to convert QDF persona to DIAG persona
+ * @persona: QDF persona
+ *
+ * DIAG tool understands its own ENUMs, so this API can be used to convert
+ * QDF defined persona type ENUMs to DIAG defined persona type ENUMs
+ *
+ * Return: DIAG persona
+ */
+enum mgmt_bss_type diag_persona_from_csr_type(enum QDF_OPMODE persona);
 #endif /* #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR */
 /*
  * csr_scan_result_purge() -
