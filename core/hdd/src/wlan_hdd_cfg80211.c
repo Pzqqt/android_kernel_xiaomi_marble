@@ -106,6 +106,7 @@
 #include "wlan_hdd_spectralscan.h"
 #include "wlan_ipa_ucfg_api.h"
 #include <wlan_cfg80211_mc_cp_stats.h>
+#include <wlan_cp_stats_mc_ucfg_api.h>
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -4490,6 +4491,32 @@ hdd_get_station_policy[STATION_MAX + 1] = {
 	[STATION_REMOTE] = {.type = NLA_BINARY, .len = QDF_MAC_ADDR_SIZE},
 };
 
+#ifdef QCA_SUPPORT_CP_STATS
+static int hdd_get_sta_congestion(struct hdd_adapter *adapter,
+				  uint32_t *congestion)
+{
+	QDF_STATUS status;
+	struct cca_stats cca_stats;
+
+	status = ucfg_mc_cp_stats_cca_stats_get(adapter->hdd_vdev, &cca_stats);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
+
+	*congestion = cca_stats.congestion;
+	return 0;
+}
+#else
+static int hdd_get_sta_congestion(struct hdd_adapter *adapter,
+				  uint32_t *congestion)
+{
+	struct hdd_station_ctx *hdd_sta_ctx;
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	*congestion = hdd_sta_ctx->conn_info.cca;
+	return 0;
+}
+#endif
+
 /**
  * hdd_get_station_assoc_fail() - Handle get station assoc fail
  * @hdd_ctx: HDD context within host driver
@@ -4506,6 +4533,7 @@ static int hdd_get_station_assoc_fail(struct hdd_context *hdd_ctx,
 	struct sk_buff *skb = NULL;
 	uint32_t nl_buf_len;
 	struct hdd_station_ctx *hdd_sta_ctx;
+	uint32_t congestion;
 
 	nl_buf_len = NLMSG_HDRLEN;
 	nl_buf_len += sizeof(uint32_t);
@@ -4524,9 +4552,12 @@ static int hdd_get_station_assoc_fail(struct hdd_context *hdd_ctx,
 		goto fail;
 	}
 
-	hdd_info("congestion:%d", hdd_sta_ctx->conn_info.cca);
+	if (hdd_get_sta_congestion(adapter, &congestion))
+		congestion = 0;
+
+	hdd_info("congestion:%d", congestion);
 	if (nla_put_u32(skb, NL80211_SURVEY_INFO_CHANNEL_TIME_BUSY,
-			hdd_sta_ctx->conn_info.cca)) {
+			congestion)) {
 		hdd_err("put fail");
 		goto fail;
 	}
