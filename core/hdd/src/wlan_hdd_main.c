@@ -3307,6 +3307,11 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 
 	hdd_enter_dev(dev);
 
+	if (netif_running(dev)) {
+		hdd_err("On iface up, set mac address change isn't supported");
+		return -EBUSY;
+	}
+
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
