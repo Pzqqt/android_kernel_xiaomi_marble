@@ -18,3 +18,4 @@ header-y += msm_audio_ape.h
 header-y += msm_audio_g711.h
 header-y += msm_audio_g711_dec.h
 header-y += mfd/
+header-y += wcd-spi-ac-params.h
