@@ -401,6 +401,7 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 	if (!elem)
 		goto bad;
 
+	qdf_mem_zero(elem, sizeof(*elem));
 	elem->nol_dfs = dfs;
 	elem->nol_freq = freq;
 	elem->nol_chwidth = ch_width;
