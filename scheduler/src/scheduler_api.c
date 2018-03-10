@@ -20,28 +20,6 @@
 #include <scheduler_core.h>
 #include <qdf_atomic.h>
 
-/* Debug variable to detect if controller thread is stuck */
-static qdf_atomic_t scheduler_msg_post_fail_count;
-
-static void scheduler_flush_mqs(struct scheduler_ctx *sched_ctx)
-{
-	int i;
-
-	/* Here each of the MC thread MQ shall be drained and returned to the
-	 * Core. Before returning a wrapper to the Core, the Scheduler message
-	 * shall be freed first
-	 */
-	sched_info("Flushing scheduler message queue");
-
-	QDF_ASSERT(sched_ctx);
-	if (!sched_ctx) {
-		sched_err("sched_ctx is NULL");
-		return;
-	}
-	for (i = 0; i < SCHEDULER_NUMBER_OF_MSG_QUEUE; i++)
-		scheduler_cleanup_queues(sched_ctx, i);
-}
-
 QDF_STATUS scheduler_disable(void)
 {
 	struct scheduler_ctx *sched_ctx;
@@ -65,7 +43,7 @@ QDF_STATUS scheduler_disable(void)
 	sched_ctx->sch_thread = NULL;
 
 	/* flush any unprocessed scheduler messages */
-	scheduler_flush_mqs(sched_ctx);
+	scheduler_queues_flush(sched_ctx);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -247,19 +225,20 @@ QDF_STATUS scheduler_deinit(void)
 }
 
 QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
-		struct scheduler_msg *pMsg, bool is_high_priority)
+					  struct scheduler_msg *msg,
+					  bool is_high_priority)
 {
 	uint8_t qidx;
-	uint32_t msg_wrapper_fail_count;
-	struct scheduler_mq_type *target_mq = NULL;
-	struct scheduler_msg_wrapper *msg_wrapper = NULL;
-	struct scheduler_ctx *sched_ctx = scheduler_get_context();
+	struct scheduler_mq_type *target_mq;
+	struct scheduler_msg *queue_msg;
+	struct scheduler_ctx *sched_ctx;
 
-	if (!pMsg) {
-		sched_err("pMsg is null");
+	if (!msg) {
+		sched_err("msg is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
+	sched_ctx = scheduler_get_context();
 	if (!sched_ctx) {
 		sched_err("sched_ctx is null");
 		return QDF_STATUS_E_INVAL;
@@ -270,9 +249,9 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if ((0 != pMsg->reserved) && (SYS_MSG_COOKIE != pMsg->reserved)) {
-		sched_err("Un-initialized message pointer.. please initialize it");
-		QDF_BUG(0);
+	if (msg->reserved != 0 && msg->reserved != SYS_MSG_COOKIE) {
+		sched_err("Uninitialized scheduler message. Please initialize it");
+		QDF_DEBUG_PANIC();
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -288,7 +267,7 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 	 * handled in right order.
 	 */
 	if (QDF_MODULE_ID_WMA == qid) {
-		pMsg->callback = NULL;
+		msg->callback = NULL;
 		/* change legacy WMA message id to new target_if mq id */
 		qid = QDF_MODULE_ID_TARGET_IF;
 	}
@@ -306,36 +285,15 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 	}
 
 	target_mq = &(sched_ctx->queue_ctx.sch_msg_q[qidx]);
-	QDF_ASSERT(target_mq);
-	if (target_mq == NULL) {
-		sched_err("target_mq == NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
 
-	/* Try and get a free Msg wrapper */
-	msg_wrapper = scheduler_mq_get(&sched_ctx->queue_ctx.free_msg_q);
-	if (NULL == msg_wrapper) {
-		msg_wrapper_fail_count =
-			qdf_atomic_inc_return(&scheduler_msg_post_fail_count);
-		/* log only 1st failure to avoid over running log buffer */
-		if (msg_wrapper_fail_count == 1)
-			sched_err("Scheduler message wrapper empty");
-
-		if (SCHEDULER_WRAPPER_MAX_FAIL_COUNT == msg_wrapper_fail_count)
-			QDF_BUG(0);
-
-		return QDF_STATUS_E_RESOURCES;
-	}
-	qdf_atomic_set(&scheduler_msg_post_fail_count, 0);
-
-	/* Copy the message now */
-	qdf_mem_copy((void *)msg_wrapper->msg_buf,
-			(void *)pMsg, sizeof(struct scheduler_msg));
+	queue_msg = scheduler_core_msg_dup(msg);
+	if (!queue_msg)
+		return QDF_STATUS_E_NOMEM;
 
 	if (is_high_priority)
-		scheduler_mq_put_front(target_mq, msg_wrapper);
+		scheduler_mq_put_front(target_mq, queue_msg);
 	else
-		scheduler_mq_put(target_mq, msg_wrapper);
+		scheduler_mq_put(target_mq, queue_msg);
 
 	qdf_atomic_set_bit(MC_POST_EVENT_MASK, &sched_ctx->sch_event_flag);
 	qdf_wake_up_interruptible(&sched_ctx->sch_wait_queue);
@@ -601,6 +559,11 @@ QDF_STATUS scheduler_deregister_sys_legacy_handler(void)
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS scheduler_msg_flush_noop(struct scheduler_msg *msg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 void scheduler_mc_timer_callback(unsigned long data)
 {
 	qdf_mc_timer_t *timer = (qdf_mc_timer_t *)data;
@@ -681,6 +644,9 @@ void scheduler_mc_timer_callback(unsigned long data)
 	msg.callback = callback;
 	msg.bodyptr = user_data;
 	msg.bodyval = 0;
+
+	/* bodyptr points to user data, do not free it during msg flush */
+	msg.flush_callback = scheduler_msg_flush_noop;
 
 	if (scheduler_post_msg(QDF_MODULE_ID_SYS, &msg) == QDF_STATUS_SUCCESS)
 		return;

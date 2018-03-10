@@ -195,3 +195,4 @@ void qdf_flex_mem_release(struct qdf_flex_mem_pool *pool)
 	qdf_spin_unlock_bh(&pool->lock);
 }
 qdf_export_symbol(qdf_flex_mem_release);
+
