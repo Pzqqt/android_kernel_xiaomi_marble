@@ -21,6 +21,7 @@
 #include <linux/input.h>
 #include <linux/of_device.h>
 #include <linux/pm_qos.h>
+#include <linux/soc/qcom/fsa4480-i2c.h>
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
@@ -165,6 +166,7 @@ struct msm_asoc_mach_data {
 	struct device_node *us_euro_gpio_p; /* used by pinctrl API */
 	struct device_node *hph_en1_gpio_p; /* used by pinctrl API */
 	struct device_node *hph_en0_gpio_p; /* used by pinctrl API */
+	struct device_node *fsa_handle;
 };
 
 struct msm_asoc_wcd93xx_codec {
@@ -3581,7 +3583,14 @@ done:
 
 static bool msm_usbc_swap_gnd_mic(struct snd_soc_codec *codec, bool active)
 {
-	return false;
+	struct snd_soc_card *card = codec->component.card;
+	struct msm_asoc_mach_data *pdata =
+				snd_soc_card_get_drvdata(card);
+
+	if (!pdata->fsa_handle)
+		return false;
+
+	return fsa4480_switch_event(pdata->fsa_handle, FSA_MIC_GND_SWAP);
 }
 
 static bool msm_swap_gnd_mic(struct snd_soc_codec *codec, bool active)
@@ -7293,6 +7302,12 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			"qcom,us-euro-gpios");
 		wcd_mbhc_cfg.swap_gnd_mic = msm_swap_gnd_mic;
 	}
+	pdata->fsa_handle = of_parse_phandle(pdev->dev.of_node,
+					     "fsa4480-i2c-handle", 0);
+	if (!pdata->fsa_handle)
+		dev_dbg(&pdev->dev, "property %s not detected in node %s\n",
+			"fsa4480-i2c-handle", pdev->dev.of_node->full_name);
+
 	/* Parse pinctrl info from devicetree */
 	ret = msm_get_pinctrl(pdev);
 	if (!ret) {
