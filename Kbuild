@@ -883,6 +883,12 @@ ifeq ($(CONFIG_IPA_OFFLOAD), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_ipa.o
 endif
 
+ifeq ($(CONFIG_WLAN_FASTPATH), y)
+TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_ll_fastpath.o
+else
+TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_ll_legacy.o
+endif
+
 ifeq ($(CONFIG_LITHIUM), y)
 ############ DP 3.0 ############
 DP_INC := -I$(WLAN_COMMON_ROOT)/dp/inc \

@@ -25,10 +25,6 @@
 #include <qdf_atomic.h>         /* qdf_atomic_read */
 #include <qdf_debugfs.h>
 
-#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
-/* Required for WLAN_FEATURE_FASTPATH */
-#include <ce_api.h>
-#endif
 /* header files for utilities */
 #include <cds_queue.h>          /* TAILQ */
 
@@ -710,34 +706,6 @@ credit_update:
 	qdf_spin_unlock_bh(&pdev->tx_queue_spinlock);
 }
 #endif
-
-#ifdef WLAN_FEATURE_FASTPATH
-/**
- * setup_fastpath_ce_handles() Update pdev with ce_handle for fastpath use.
- *
- * @osc: pointer to HIF context
- * @pdev: pointer to ol pdev
- *
- * Return: void
- */
-static inline void setup_fastpath_ce_handles(struct hif_opaque_softc *osc,
-						struct ol_txrx_pdev_t *pdev)
-{
-	/*
-	 * Before the HTT attach, set up the CE handles
-	 * CE handles are (struct CE_state *)
-	 * This is only required in the fast path
-	 */
-	pdev->ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_H2T_MSG);
-
-}
-
-#else  /* not WLAN_FEATURE_FASTPATH */
-static inline void setup_fastpath_ce_handles(struct hif_opaque_softc *osc,
-						struct ol_txrx_pdev_t *pdev)
-{
-}
-#endif /* WLAN_FEATURE_FASTPATH */
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /**
@@ -1554,7 +1522,7 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 
 	ol_tx_desc_dup_detect_init(pdev, desc_pool_size);
 
-	setup_fastpath_ce_handles(osc, pdev);
+	ol_tx_setup_fastpath_ce_handles(osc, pdev);
 
 	ret = htt_attach(pdev->htt_pdev, desc_pool_size);
 	if (ret)

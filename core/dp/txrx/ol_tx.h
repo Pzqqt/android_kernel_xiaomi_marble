@@ -29,6 +29,7 @@
 #include <cdp_txrx_misc.h>      /* ol_tx_spec */
 #include <cdp_txrx_handle.h>
 #include <ol_txrx_types.h>      /* ol_tx_desc_t, ol_txrx_msdu_info_t */
+#include <hif.h>
 
 #ifdef IPA_OFFLOAD
 /**
@@ -41,10 +42,24 @@
 qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb);
 #endif
 
-qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
+struct ol_tx_desc_t *
+ol_tx_prepare_ll(ol_txrx_vdev_handle vdev,
+		 qdf_nbuf_t msdu,
+		 struct ol_txrx_msdu_info_t *msdu_info);
+
 qdf_nbuf_t ol_tx_ll_wrapper(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
 #ifdef WLAN_FEATURE_FASTPATH
 qdf_nbuf_t ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
+
+void ol_tx_setup_fastpath_ce_handles(struct hif_opaque_softc *osc,
+				     struct ol_txrx_pdev_t *pdev);
+#else
+static inline
+void ol_tx_setup_fastpath_ce_handles(struct hif_opaque_softc *osc,
+				     struct ol_txrx_pdev_t *pdev)
+{ }
+
+qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
 #endif
 
 qdf_nbuf_t ol_tx_ll_queue(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
@@ -165,19 +180,48 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg);
 void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev);
 void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg);
 void ol_tso_num_seg_list_deinit(struct ol_txrx_pdev_t *pdev);
+uint32_t ol_tx_tso_get_stats_idx(struct ol_txrx_pdev_t *pdev);
+uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
+			  qdf_nbuf_t msdu,
+			  struct ol_txrx_msdu_info_t *msdu_info);
+void ol_tx_tso_update_stats(struct ol_txrx_pdev_t *pdev,
+			    struct qdf_tso_info_t  *tso_info, qdf_nbuf_t msdu,
+			    uint32_t tso_msdu_idx);
 #else
+static inline uint32_t ol_tx_tso_get_stats_idx(struct ol_txrx_pdev_t *pdev)
+{
+	return 0;
+}
+
 static inline void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev,
 	uint32_t num_seg)
 {
 }
+
 static inline void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 {
 }
+
 static inline void ol_tso_num_seg_list_init(struct ol_txrx_pdev_t *pdev,
 	uint32_t num_seg)
 {
 }
+
 static inline void ol_tso_num_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
+{
+}
+
+static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
+					qdf_nbuf_t msdu,
+					struct ol_txrx_msdu_info_t *msdu_info)
+{
+	return 0;
+}
+
+static inline void ol_tx_tso_update_stats(struct ol_txrx_pdev_t *pdev,
+					  struct qdf_tso_info_t  *tso_info,
+					  qdf_nbuf_t msdu,
+					  uint32_t tso_msdu_idx)
 {
 }
 #endif

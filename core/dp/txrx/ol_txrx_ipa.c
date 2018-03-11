@@ -22,10 +22,6 @@
 #include <qdf_lock.h>           /* qdf_spinlock */
 #include <qdf_atomic.h>         /* qdf_atomic_read */
 
-#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
-/* Required for WLAN_FEATURE_FASTPATH */
-#include <ce_api.h>
-#endif
 /* header files for utilities */
 #include <cds_queue.h>          /* TAILQ */
 
