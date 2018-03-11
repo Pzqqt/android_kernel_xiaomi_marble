@@ -541,7 +541,7 @@ static struct service_to_pipe target_service_to_ce_map_ar900b[] = {
 		PIPEDIR_OUT,    /* out = UL = host -> target */
 		4,
 	},
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 	{
 		HTT_DATA_MSG_SVC,
 		PIPEDIR_IN,     /* in = DL = target -> host */

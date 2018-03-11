@@ -343,7 +343,7 @@ static struct CE_attr host_ce_config_wlan_ar9888[] = {
 	/* host->target HTT */
 	{ /* CE4 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B, 256, 0, NULL, },
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 	/* target->host HTT messages */
 	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },
 #else   /* WLAN_FEATURE_FASTPATH */
@@ -371,7 +371,7 @@ static struct CE_attr host_ce_config_wlan_ar900b[] = {
 	/* host->target HTT */
 	{ /* CE4 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B, 256, 0, NULL, },
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 	/* target->host HTT messages */
 	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },
 #else   /* WLAN_FEATURE_FASTPATH */
@@ -396,7 +396,7 @@ static struct CE_attr host_lowdesc_ce_cfg_wlan_ar9888[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 256, 0, NULL, },
 	/* could be moved to share CE3 */
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 	/* target->host BMI + HTC control */
 	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0, 512, 64, NULL, },
 #else
@@ -410,7 +410,7 @@ static struct CE_attr host_lowdesc_ce_cfg_wlan_ar9888[] = {
 	/* host->target HTT */
 	{ /* CE4 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B, 256, 0, NULL, },
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 	/* target->host HTT messages */
 	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },
 #else   /* WLAN_FEATURE_FASTPATH */
@@ -429,7 +429,7 @@ static struct CE_attr host_lowdesc_ce_cfg_wlan_ar900b[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 256, 0, NULL, },
 	/* could be moved to share CE3 */
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 	/* target->host BMI + HTC control */
 	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0, 512, 64, NULL, },
 #else
@@ -443,7 +443,7 @@ static struct CE_attr host_lowdesc_ce_cfg_wlan_ar900b[] = {
 	/* host->target HTT */
 	{ /* CE4 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B, 256, 0, NULL, },
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 	/* target->host HTT messages */
 	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },
 #else   /* WLAN_FEATURE_FASTPATH */
@@ -468,7 +468,7 @@ static struct CE_attr host_lowdesc_ce_cfg_wlan_ar900b_nopktlog[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 256, 0, NULL, },
 	/* could be moved to share CE3 */
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 	/* target->host BMI + HTC control */
 	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0, 512, 64, NULL, },
 #else
@@ -482,7 +482,7 @@ static struct CE_attr host_lowdesc_ce_cfg_wlan_ar900b_nopktlog[] = {
 	/* host->target HTT */
 	{ /* CE4 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES_AR900B, 256, 0, NULL, },
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 	/* target->host HTT messages */
 	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 512, 512, NULL, },
 #else   /* WLAN_FEATURE_FASTPATH */
@@ -515,7 +515,7 @@ static struct CE_pipe_config target_ce_config_wlan_ar9888[] = {
 	/* host->target HTT */
 	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256, CE_ATTR_FLAGS, 0, },
 	/* NB: 50% of src nentries, since tx has 2 frags */
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 	/* target->host HTT */
 	{ /* CE5 */ 5, PIPEDIR_IN, 32, 512, CE_ATTR_FLAGS, 0, },
 #else
@@ -539,7 +539,7 @@ static struct CE_pipe_config target_ce_config_wlan_ar900b[] = {
 	/* host->target HTT */
 	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256, CE_ATTR_FLAGS, 0, },
 	/* NB: 50% of src nentries, since tx has 2 frags */
-#if WLAN_FEATURE_FASTPATH
+#ifdef WLAN_FEATURE_FASTPATH
 	/* target->host HTT */
 	{ /* CE5 */ 5, PIPEDIR_IN, 32, 512, CE_ATTR_FLAGS, 0, },
 #else
