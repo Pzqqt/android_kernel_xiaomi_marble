@@ -16117,3 +16117,43 @@ bool sme_find_session_by_bssid(tHalHandle hal, uint8_t *bssid)
 
 	return ret;
 }
+
+QDF_STATUS
+sme_get_roam_scan_stats(tHalHandle hal, roam_scan_stats_cb cb, void *context,
+			uint32_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	struct scheduler_msg msg = {0};
+	struct sir_roam_scan_stats *req;
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		sme_err("Failed allocate memory for roam scan stats req");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	req->vdev_id = vdev_id;
+	req->cb = cb;
+	req->context = context;
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		msg.bodyptr = req;
+		msg.type = WMA_GET_ROAM_SCAN_STATS;
+		msg.reserved = 0;
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
+		sme_release_global_lock(&mac->sme);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  FL("post roam scan stats req failed"));
+			status = QDF_STATUS_E_FAILURE;
+			qdf_mem_free(req);
+		}
+	} else {
+		sme_err("sme_acquire_global_lock failed");
+		qdf_mem_free(req);
+	}
+
+	return status;
+}

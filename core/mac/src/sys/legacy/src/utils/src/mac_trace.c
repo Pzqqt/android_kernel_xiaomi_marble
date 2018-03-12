@@ -651,6 +651,7 @@ uint8_t *mac_trace_get_wma_msg_string(uint16_t wma_msg)
 		CASE_RETURN_STRING(WMA_SET_PER_ROAM_CONFIG_CMD);
 		CASE_RETURN_STRING(WMA_GET_RCPI_REQ);
 		CASE_RETURN_STRING(WMA_SET_DBS_SCAN_SEL_CONF_PARAMS);
+		CASE_RETURN_STRING(WMA_GET_ROAM_SCAN_STATS);
 	default:
 		return (uint8_t *) "UNKNOWN";
 		break;

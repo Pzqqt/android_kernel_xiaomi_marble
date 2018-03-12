@@ -73,6 +73,7 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_llstat.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_csr.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_connect.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_offload.o
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_roam.o
 endif
 endif
 

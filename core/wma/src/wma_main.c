@@ -2997,6 +2997,14 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 		vdev->rcpi_req = NULL;
 	}
 
+	if (vdev->roam_scan_stats_req) {
+		struct sir_roam_scan_stats *req;
+
+		req = vdev->roam_scan_stats_req;
+		vdev->roam_scan_stats_req = NULL;
+		qdf_mem_free(req);
+	}
+
 	if (vdev->roam_synch_frame_ind.bcn_probe_rsp) {
 		qdf_mem_free(vdev->roam_synch_frame_ind.bcn_probe_rsp);
 		vdev->roam_synch_frame_ind.bcn_probe_rsp = NULL;
@@ -3428,6 +3436,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wmi_update_vdev_rate_stats_event_id,
 					   wma_link_status_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
+
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   wmi_roam_scan_stats_event_id,
+					   wma_roam_scan_stats_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
+
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	/* Register event handler for processing Link Layer Stats
 	 * response from the FW
@@ -8504,6 +8518,10 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 	case WMA_OBSS_COLOR_COLLISION_REQ:
 		wma_process_obss_color_collision_req(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_GET_ROAM_SCAN_STATS:
+		wma_get_roam_scan_stats(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	default:

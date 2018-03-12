@@ -2775,4 +2775,18 @@ QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle)
  *         false - if not has the session
  */
 bool sme_find_session_by_bssid(tHalHandle hal, uint8_t *bssid);
+
+/**
+ * sme_get_roam_scan_stats() - Send roam scan stats cmd to wma
+ * @hal: handle returned by mac_open
+ * @cb: call-back invoked for roam scan stats response
+ * @context: context of callback
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_get_roam_scan_stats(tHalHandle hal, roam_scan_stats_cb cb, void *context,
+			uint32_t vdev_id);
+
 #endif /* #if !defined( __SME_API_H ) */
