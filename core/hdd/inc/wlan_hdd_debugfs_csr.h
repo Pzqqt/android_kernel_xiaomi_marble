@@ -39,6 +39,8 @@
 
 #ifdef WLAN_DEBUGFS
 
+#define DEBUGFS_CONNECT_INFO_BUF_SIZE    (4 * 1024)
+
 /**
  * struct wlan_hdd_debugfs_buffer_info - Debugfs buffer info
  * @length: current length of the debugfs buffer
@@ -84,6 +86,19 @@ void wlan_hdd_debugfs_csr_deinit(struct hdd_adapter *adapter);
 ssize_t
 wlan_hdd_current_time_info_debugfs(uint8_t *buf, ssize_t buf_avail_len);
 
+/**
+ * wlan_hdd_debugfs_update_connect_info() - API to get connect info
+ * into user buffer
+ * @buf: output buffer to hold connect info
+ * @buf_avail_len: available buffer length
+ *
+ * Return: No.of bytes copied
+ */
+ssize_t
+wlan_hdd_debugfs_update_connect_info(struct hdd_context *hdd_ctx,
+				     struct hdd_adapter *adapter,
+				     uint8_t *buf, ssize_t buf_avail_len);
+
 #else
 /**
  * wlan_hdd_debugfs_csr_init() - Create wifi diagnostic debugfs files
@@ -114,6 +129,22 @@ static inline void wlan_hdd_debugfs_csr_deinit(struct hdd_adapter *adapter)
  */
 static inline ssize_t
 wlan_hdd_current_time_info_debugfs(uint8_t *buf, ssize_t buf_avail_len)
+{
+	return 0;
+}
+
+/**
+ * wlan_hdd_debugfs_update_connect_info() - API to get connect info
+ * into user buffer
+ * @buf: output buffer to hold connect info
+ * @buf_avail_len: available buffer length
+ *
+ * Return: No.of bytes copied
+ */
+static inline ssize_t
+wlan_hdd_debugfs_update_connect_info(struct hdd_context *hdd_ctx,
+				     struct hdd_adapter *adapter,
+				     uint8_t *buf, ssize_t buf_avail_len)
 {
 	return 0;
 }

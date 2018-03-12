@@ -211,7 +211,7 @@ static inline void wlan_hdd_sae_callback(struct hdd_adapter *adapter,
 /**
  * hdd_conn_set_authenticated() - set authentication state
  * @adapter: pointer to the adapter
- * @authState: authentication state
+ * @auth_state: authentication state
  *
  * This function updates the global HDD station context
  * authentication state.
@@ -219,14 +219,26 @@ static inline void wlan_hdd_sae_callback(struct hdd_adapter *adapter,
  * Return: none
  */
 static void
-hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t authState)
+hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t auth_state)
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	char *auth_time;
+	uint32_t time_buffer_size;
 
 	/* save the new connection state */
 	hdd_debug("Authenticated state Changed from oldState:%d to State:%d",
-		   sta_ctx->conn_info.uIsAuthenticated, authState);
-	sta_ctx->conn_info.uIsAuthenticated = authState;
+		   sta_ctx->conn_info.uIsAuthenticated, auth_state);
+	sta_ctx->conn_info.uIsAuthenticated = auth_state;
+
+	auth_time = sta_ctx->conn_info.auth_time;
+	time_buffer_size = sizeof(sta_ctx->conn_info.auth_time);
+
+	if (auth_state)
+		qdf_get_time_of_the_day_in_hr_min_sec_usec(auth_time,
+							   time_buffer_size);
+	else
+		qdf_mem_set(auth_time, 0x00, time_buffer_size);
+
 }
 
 /**
@@ -243,6 +255,8 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 {
 	struct hdd_station_ctx *hdd_sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	char *connect_time;
+	uint32_t time_buffer_size;
 
 	/* save the new connection state */
 	hdd_debug("Changed conn state from old:%d to new:%d for dev %s",
@@ -253,6 +267,15 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 					 hdd_sta_ctx->conn_info.connState,
 					 conn_state);
 	hdd_sta_ctx->conn_info.connState = conn_state;
+
+	connect_time = hdd_sta_ctx->conn_info.connect_time;
+	time_buffer_size = sizeof(hdd_sta_ctx->conn_info.connect_time);
+	if (conn_state == eConnectionState_Associated)
+		qdf_get_time_of_the_day_in_hr_min_sec_usec(connect_time,
+							   time_buffer_size);
+	else
+		qdf_mem_set(connect_time, 0x00, time_buffer_size);
+
 }
 
 /**
@@ -997,6 +1020,9 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 
 			sta_ctx->conn_info.rate_flags =
 				roam_info->chan_info.rate_flags;
+
+			sta_ctx->conn_info.ch_width =
+				roam_info->chan_info.ch_width;
 		}
 		hdd_save_bss_info(adapter, roam_info);
 	}

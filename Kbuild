@@ -71,6 +71,7 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs.o
 ifeq ($(CONFIG_WLAN_FEATURE_LINK_LAYER_STATS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_llstat.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_csr.o
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_connect.o
 endif
 endif
 
