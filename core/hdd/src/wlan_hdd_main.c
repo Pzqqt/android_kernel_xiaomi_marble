@@ -7238,7 +7238,7 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 
 	hdd_pld_request_bus_bandwidth(hdd_ctx, tx_packets, rx_packets);
 
-	hdd_ipa_set_perf_level(hdd_ctx, tx_packets, rx_packets);
+	ucfg_ipa_set_perf_level(hdd_ctx->hdd_pdev, tx_packets, rx_packets);
 	hdd_ipa_uc_stat_request(adapter, 2);
 
 restart_timer:
@@ -11387,7 +11387,7 @@ void hdd_bus_bw_compute_timer_try_start(struct hdd_context *hdd_ctx)
 
 static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 {
-	hdd_ipa_set_perf_level(hdd_ctx, 0, 0);
+	ucfg_ipa_set_perf_level(hdd_ctx->hdd_pdev, 0, 0);
 
 	qdf_spinlock_acquire(&hdd_ctx->bus_bw_timer_lock);
 	qdf_timer_stop(&hdd_ctx->bus_bw_timer);

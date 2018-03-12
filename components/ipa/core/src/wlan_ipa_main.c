@@ -157,3 +157,22 @@ void ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc, void *txrx_handle)
 	ipa_obj->dp_pdev = txrx_handle;
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_IPA_ID);
 }
+
+QDF_STATUS ipa_rm_set_perf_level(struct wlan_objmgr_pdev *pdev,
+				 uint64_t tx_packets, uint64_t rx_packets)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wlan_ipa_set_perf_level(ipa_obj, tx_packets, rx_packets);
+}

@@ -43,3 +43,9 @@ void ucfg_ipa_update_config(struct wlan_ipa_config *config)
 {
 	ipa_config_update(config);
 }
+
+QDF_STATUS ucfg_ipa_set_perf_level(struct wlan_objmgr_pdev *pdev,
+				   uint64_t tx_packets, uint64_t rx_packets)
+{
+	return ipa_rm_set_perf_level(pdev, tx_packets, rx_packets);
+}

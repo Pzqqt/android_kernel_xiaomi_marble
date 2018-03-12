@@ -67,6 +67,17 @@ void ucfg_ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc,
 void ucfg_ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
 			      void *txrx_handle);
 
+/**
+ * ucfg_ipa_set_perf_level() - Set IPA perf level
+ * @pdev: Pdev obj handle
+ * @tx_packets: Number of packets transmitted in the last sample period
+ * @rx_packets: Number of packets received in the last sample period
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS ucfg_ipa_set_perf_level(struct wlan_objmgr_pdev *pdev,
+				   uint64_t tx_packets, uint64_t rx_packets);
+
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -88,6 +99,13 @@ QDF_STATUS ucfg_ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc,
 static inline
 QDF_STATUS ucfg_ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
 				    void *txrx_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_ipa_set_perf_level(struct wlan_objmgr_pdev *pdev,
+				   uint64_t tx_packets, uint64_t rx_packets)
 {
 	return QDF_STATUS_SUCCESS;
 }
