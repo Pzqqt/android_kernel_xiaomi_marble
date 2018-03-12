@@ -28,7 +28,73 @@
 /* Include Files */
 #include "wlan_ipa_core.h"
 #include "wlan_ipa_main.h"
+#include "cdp_txrx_ipa.h"
 #include "host_diag_core_event.h"
+
+QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
+				    uint64_t tx_packets,
+				    uint64_t rx_packets)
+{
+	uint32_t next_cons_bw, next_prod_bw;
+	qdf_ipa_rm_perf_profile_t profile;
+	int ret;
+
+	if ((!wlan_ipa_is_enabled(ipa_ctx->config)) ||
+		(!wlan_ipa_is_clk_scaling_enabled(ipa_ctx->config)))
+		return 0;
+
+	qdf_mem_set(&profile, 0, sizeof(profile));
+
+	if (tx_packets > (ipa_ctx->config->bus_bw_high / 2))
+		next_cons_bw = ipa_ctx->config->ipa_bw_high;
+	else if (tx_packets > (ipa_ctx->config->bus_bw_medium / 2))
+		next_cons_bw = ipa_ctx->config->ipa_bw_medium;
+	else
+		next_cons_bw = ipa_ctx->config->ipa_bw_low;
+
+	if (rx_packets > (ipa_ctx->config->bus_bw_high / 2))
+		next_prod_bw = ipa_ctx->config->ipa_bw_high;
+	else if (rx_packets > (ipa_ctx->config->bus_bw_medium / 2))
+		next_prod_bw = ipa_ctx->config->ipa_bw_medium;
+	else
+		next_prod_bw = ipa_ctx->config->ipa_bw_low;
+
+	ipa_debug("CONS perf curr: %d, next: %d", ipa_ctx->curr_cons_bw,
+		  next_cons_bw);
+	ipa_debug("PROD perf curr: %d, next: %d", ipa_ctx->curr_prod_bw,
+		  next_prod_bw);
+
+	if (ipa_ctx->curr_cons_bw != next_cons_bw) {
+		ipa_debug("Requesting CONS perf curr: %d, next: %d",
+			  ipa_ctx->curr_cons_bw, next_cons_bw);
+		ret = cdp_ipa_set_perf_level(ipa_ctx->dp_soc,
+					     QDF_IPA_RM_RESOURCE_WLAN_CONS,
+					     next_cons_bw);
+		if (ret) {
+			ipa_err("RM CONS set perf profile failed: %d", ret);
+
+			return QDF_STATUS_E_FAILURE;
+		}
+		ipa_ctx->curr_cons_bw = next_cons_bw;
+		ipa_ctx->stats.num_cons_perf_req++;
+	}
+
+	if (ipa_ctx->curr_prod_bw != next_prod_bw) {
+		ipa_debug("Requesting PROD perf curr: %d, next: %d",
+			  ipa_ctx->curr_prod_bw, next_prod_bw);
+		ret = cdp_ipa_set_perf_level(ipa_ctx->dp_soc,
+					     QDF_IPA_RM_RESOURCE_WLAN_PROD,
+					     next_prod_bw);
+		if (ret) {
+			ipa_err("RM PROD set perf profile failed: %d", ret);
+			return QDF_STATUS_E_FAILURE;
+		}
+		ipa_ctx->curr_prod_bw = next_prod_bw;
+		ipa_ctx->stats.num_prod_perf_req++;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * wlan_ipa_rm_notify() - IPA resource manager notifier callback

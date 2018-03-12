@@ -67,6 +67,20 @@ static inline bool wlan_ipa_is_rm_enabled(struct wlan_ipa_config *ipa_cfg)
 }
 
 /**
+ * wlan_ipa_is_clk_scaling_enabled() - Is IPA clock scaling enabled?
+ * @ipa_cfg: IPA config
+ *
+ * Return: true if IPA RM is enabled, false otherwise
+ */
+static inline
+bool wlan_ipa_is_clk_scaling_enabled(struct wlan_ipa_config *ipa_cfg)
+{
+	return WLAN_IPA_IS_CONFIG_ENABLED(ipa_cfg,
+					  WLAN_IPA_CLK_SCALING_ENABLE_MASK |
+					  WLAN_IPA_RM_ENABLE_MASK);
+}
+
+/**
  * wlan_ipa_setup - IPA initialize and setup
  * @ipa_ctx: IPA priv obj
  * @ipa_cfg: IPA config
@@ -106,6 +120,17 @@ QDF_STATUS wlan_ipa_uc_enable_pipes(struct wlan_ipa_priv *ipa_ctx);
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_ipa_uc_disable_pipes(struct wlan_ipa_priv *ipa_ctx);
+
+/**
+ * wlan_ipa_set_perf_level() - Set IPA performance level
+ * @ipa_ctx: IPA context
+ * @tx_packets: Number of packets transmitted in the last sample period
+ * @rx_packets: Number of packets received in the last sample period
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
+				   uint64_t tx_packets, uint64_t rx_packets);
 
 #ifndef CONFIG_IPA_WDI_UNIFIED_API
 /**

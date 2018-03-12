@@ -156,5 +156,16 @@ void ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc, void *dp_soc);
  * Return: None
  */
 void ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc, void *txrx_handle);
+
+/**
+ * ipa_rm_set_perf_level() - set ipa rm perf level
+ * @pdev: pdev handle
+ * @tx_packets: packets transmitted in the last sample period
+ * @rx_packets: packets received in the last sample period
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ipa_rm_set_perf_level(struct wlan_objmgr_pdev *pdev,
+				 uint64_t tx_packets, uint64_t rx_packets);
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */
