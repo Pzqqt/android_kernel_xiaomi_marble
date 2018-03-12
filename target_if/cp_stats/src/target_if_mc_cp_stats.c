@@ -1,5 +1,8 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ *
+ * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
+ *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -14,6 +17,12 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
  */
 
 /**
@@ -31,7 +40,7 @@
 #include <wlan_tgt_def_config.h>
 #include <wmi_unified_api.h>
 #include <wlan_osif_priv.h>
-#include <wlan_cp_stats_utils_api.h>
+#include "wlan_cp_stats_utils_api.h"
 
 static QDF_STATUS
 target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)

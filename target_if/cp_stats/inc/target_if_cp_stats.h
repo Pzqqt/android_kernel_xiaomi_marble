@@ -26,10 +26,35 @@
 #ifndef __TARGET_IF_CP_STATS_H__
 #define __TARGET_IF_CP_STATS_H__
 
+#include <target_if.h>
 #include <wlan_lmac_if_def.h>
+#include <wlan_cp_stats_utils_api.h>
 
 #ifdef QCA_SUPPORT_CP_STATS
-#include <wlan_cp_stats_utils_api.h>
+
+/**
+ * target_if_cp_stats_get_rx_ops() - get rx ops
+ * @tx_ops: pointer to lmac tx ops
+ *
+ * Return: pointer to rx ops
+ */
+static inline struct wlan_lmac_if_cp_stats_rx_ops *
+target_if_cp_stats_get_rx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	return &psoc->soc_cb.rx_ops.cp_stats_rx_ops;
+}
+
+/**
+ * target_if_cp_stats_get_tx_ops() - get tx ops
+ * @tx_ops: pointer to lmac tx ops
+ *
+ * Return: pointer to tx ops
+ */
+static inline struct wlan_lmac_if_cp_stats_tx_ops *
+target_if_cp_stats_get_tx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	return &psoc->soc_cb.tx_ops.cp_stats_tx_ops;
+}
 
 /**
  * target_if_cp_stats_register_tx_ops() - define cp_stats lmac tx ops functions
@@ -39,9 +64,24 @@
  */
 QDF_STATUS
 target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
+
+/**
+ * target_if_cp_stats_register_rx_ops() - define cp_stats lmac rx ops functions
+ * @rx_ops: pointer to lmac rx ops
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS
+target_if_cp_stats_register_rx_ops(struct wlan_lmac_if_rx_ops *tx_ops);
 #else
 static inline QDF_STATUS
 target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+target_if_cp_stats_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	return QDF_STATUS_SUCCESS;
 }
