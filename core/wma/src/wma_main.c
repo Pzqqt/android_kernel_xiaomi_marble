@@ -5318,6 +5318,8 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
 	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
 	target_if_store_pdev_target_if_ctx(wma_get_pdev_from_scn_handle);
+	target_pdev_set_wmi_handle(wma_handle->pdev->tgt_if_handle,
+				   wma_handle->wmi_handle);
 
 	/* register the Enhanced Green AP event handler */
 	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
@@ -6389,10 +6391,7 @@ int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
 	/* copy the mac addr */
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->mac_addr, wma_handle->myaddr);
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->mac_addr, wma_handle->hwaddr);
-
 	wma_update_hdd_cfg(wma_handle);
-	target_pdev_set_wmi_handle(wma_handle->pdev->tgt_if_handle,
-				   wma_handle->wmi_handle);
 	WMA_LOGD("Exit");
 
 	return 0;
