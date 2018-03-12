@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -33,7 +33,7 @@
 #endif
 #include "pld_internal.h"
 
-#ifndef CONFIG_PCI
+#ifndef HIF_PCI
 static inline int pld_pcie_register_driver(void)
 {
 	return 0;
