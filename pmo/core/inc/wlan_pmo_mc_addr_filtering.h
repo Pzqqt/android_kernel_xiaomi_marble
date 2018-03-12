@@ -144,6 +144,19 @@ int pmo_core_get_mc_addr_list_count(struct wlan_objmgr_psoc *psoc,
  */
 uint8_t pmo_core_max_mc_addr_supported(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * pmo_core_get_mc_addr_list() - Get mc addr list configured
+ * @psoc: objmgr psoc
+ * @vdev_id: vdev identifier
+ * @mc_list_req: output pointer to hold mc addr list params
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success else return error
+ */
+QDF_STATUS
+pmo_core_get_mc_addr_list(struct wlan_objmgr_psoc *psoc,
+			  uint8_t vdev_id,
+			  struct pmo_mc_addr_list *mc_list_req);
+
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_MC_ADDR_FILTERING_H_ */

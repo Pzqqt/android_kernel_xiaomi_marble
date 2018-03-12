@@ -79,8 +79,17 @@ QDF_STATUS pmo_tgt_enable_ns_offload_req(struct wlan_objmgr_vdev *vdev,
 	}
 	status = pmo_tx_ops.send_ns_offload_req(
 			vdev, arp_offload_req, ns_offload_req);
-	if (status != QDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS) {
 		pmo_err("Failed to send NS offload");
+		goto out;
+	}
+
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	if (vdev_ctx->vdev_arp_req.enable)
+		vdev_ctx->vdev_arp_req.is_offload_applied = true;
+	if (vdev_ctx->vdev_ns_req.enable)
+		vdev_ctx->vdev_ns_req.is_offload_applied = true;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
 out:
 	if (arp_offload_req)
@@ -147,6 +156,11 @@ QDF_STATUS pmo_tgt_disable_ns_offload_req(struct wlan_objmgr_vdev *vdev,
 			vdev, arp_offload_req, ns_offload_req);
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to send NS offload");
+
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->vdev_arp_req.is_offload_applied = false;
+	vdev_ctx->vdev_ns_req.is_offload_applied = false;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
 out:
 	if (arp_offload_req)

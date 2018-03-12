@@ -634,3 +634,54 @@ out:
 	return status;
 }
 
+QDF_STATUS
+pmo_core_get_mc_addr_list(struct wlan_objmgr_psoc *psoc,
+			  uint8_t vdev_id,
+			  struct pmo_mc_addr_list *mc_list_req)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	pmo_enter();
+
+	if (!mc_list_req)
+		return QDF_STATUS_E_INVAL;
+
+	qdf_mem_zero(mc_list_req, sizeof(*mc_list_req));
+
+	status = pmo_psoc_get_ref(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto exit_with_status;
+
+	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
+	if (!vdev) {
+		pmo_err("vdev is NULL");
+		status = QDF_STATUS_E_INVAL;
+		goto put_psoc;
+	}
+
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto put_psoc;
+
+	status = pmo_core_mc_addr_flitering_sanity(vdev);
+	if (status != QDF_STATUS_SUCCESS)
+		goto put_vdev;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	*mc_list_req = vdev_ctx->vdev_mc_list_req;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+put_vdev:
+	pmo_vdev_put_ref(vdev);
+
+put_psoc:
+	pmo_psoc_put_ref(psoc);
+
+exit_with_status:
+	pmo_exit();
+
+	return status;
+}

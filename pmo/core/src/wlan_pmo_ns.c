@@ -61,6 +61,8 @@ static void pmo_core_fill_ns_addr(struct pmo_ns_offload_params *request,
 		request->target_ipv6_addr_ac_type[i] =
 			ns_req->ipv6_addr_type[i];
 
+		request->scope[i] = ns_req->scope[i];
+
 		pmo_debug("NSoffload solicitIp: %pI6 targetIp: %pI6 Index: %d",
 			&request->self_ipv6_addr[i],
 			&request->target_ipv6_addr[i], i);
@@ -84,6 +86,7 @@ static QDF_STATUS pmo_core_cache_ns_in_vdev_priv(
 	pmo_core_fill_ns_addr(&request, ns_req);
 
 	request.enable = PMO_OFFLOAD_ENABLE;
+	request.is_offload_applied = false;
 	qdf_mem_copy(&request.self_macaddr.bytes,
 			  wlan_vdev_mlme_get_macaddr(vdev),
 			  QDF_MAC_ADDR_SIZE);
@@ -128,6 +131,7 @@ static QDF_STATUS pmo_core_flush_ns_from_vdev_priv(
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	qdf_mem_zero(&vdev_ctx->vdev_ns_req, sizeof(vdev_ctx->vdev_ns_req));
 	vdev_ctx->vdev_ns_req.enable = PMO_OFFLOAD_DISABLE;
+	vdev_ctx->vdev_ns_req.is_offload_applied = false;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
 	pmo_exit();
@@ -453,3 +457,44 @@ out:
 	return status;
 }
 
+QDF_STATUS
+pmo_core_get_ns_offload_params(struct wlan_objmgr_vdev *vdev,
+			       struct pmo_ns_offload_params *params)
+{
+	QDF_STATUS status;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	pmo_enter();
+
+	if (!params)
+		return QDF_STATUS_E_INVAL;
+
+	qdf_mem_zero(params, sizeof(*params));
+
+	if (!vdev) {
+		pmo_err("vdev is NULL");
+		status = QDF_STATUS_E_INVAL;
+		goto out;
+	}
+
+	status = pmo_vdev_get_ref(vdev);
+	if (status != QDF_STATUS_SUCCESS)
+		goto out;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+
+	status = pmo_core_ns_offload_sanity(vdev);
+	if (status != QDF_STATUS_SUCCESS)
+		goto dec_ref;
+
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	*params = vdev_ctx->vdev_ns_req;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+dec_ref:
+	pmo_vdev_put_ref(vdev);
+out:
+	pmo_exit();
+
+	return status;
+}
