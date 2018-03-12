@@ -90,6 +90,15 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 			DP_MAC_ADDR_LEN)))
 		return true;
 
+	/*
+	 * In case of qwrap isolation mode, donot drop loopback packets.
+	 * In isolation mode, all packets from the wired stations need to go
+	 * to rootap and loop back to reach the wireless stations and
+	 * vice-versa.
+	 */
+	if (qdf_unlikely(vdev->isolation_vdev))
+		return false;
+
 	/* if the received pkts src mac addr matches with the
 	 * wired PCs MAC addr which is behind the STA or with
 	 * wireless STAs MAC addr which are behind the Repeater,
