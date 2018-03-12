@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -97,7 +97,9 @@ enum htt_dbg_ext_stats_type {
 
     /* HTT_DBG_EXT_STATS_TQM_CMDQ
      * PARAMS:
-     *   - No Params
+     *   - config_param0:
+     *      [Bit15: Bit0 ] cmdq id :if 0xFFFF print all cmdq's
+     *      [Bit31: Bit16] reserved
      * RESP MSG:
      *   - htt_tx_tqm_cmdq_stats_t
      */
@@ -139,7 +141,7 @@ enum htt_dbg_ext_stats_type {
      *           1 bit htt_peer_details_tlv
      *           2 bit htt_tx_peer_rate_stats_tlv
      *           3 bit htt_rx_peer_rate_stats_tlv
-     *           4 bit htt_tx_tid_stats_tlv
+     *           4 bit htt_tx_tid_stats_tlv/htt_tx_tid_stats_v1_tlv
      *           5 bit htt_rx_tid_stats_tlv
      *           6 bit htt_msdu_flow_stats_tlv
      *   - config_param2: [Bit31 : Bit0] mac_addr31to0
@@ -168,7 +170,9 @@ enum htt_dbg_ext_stats_type {
 
     /* HTT_DBG_EXT_STATS_RING_IF_INFO
      * PARAMS:
-     *   - No Params
+     *   - config_param0:
+     *      [Bit15: Bit0 ] ring id :if 0xFFFF print all rings
+     *      [Bit31: Bit16] reserved
      * RESP MSG:
      *   - htt_ring_if_stats_t
      */
@@ -176,6 +180,9 @@ enum htt_dbg_ext_stats_type {
 
     /* HTT_DBG_EXT_STATS_SRNG_INFO
      * PARAMS:
+     *   - config_param0:
+     *      [Bit15: Bit0 ] ring id :if 0xFFFF print all rings
+     *      [Bit31: Bit16] reserved
      *   - No Params
      * RESP MSG:
      *   - htt_sring_stats_t
@@ -208,6 +215,35 @@ enum htt_dbg_ext_stats_type {
      *   - htt_active_peer_details_list_t
      */
     HTT_DBG_EXT_STATS_ACTIVE_PEERS_LIST          =  18,
+
+    /* HTT_DBG_EXT_STATS_PDEV_CCA_STATS
+     * PARAMS:
+     *   - config_param0:
+     *      [Bit0] - 1 sec interval histogram
+     *      [Bit1] - 100ms interval histogram
+     *      [Bit3] - Cumulative CCA stats
+     * RESP MSG:
+     *   - htt_pdev_cca_stats_t
+     */
+    HTT_DBG_EXT_STATS_PDEV_CCA_STATS             = 19,
+
+    /* HTT_DBG_EXT_STATS_TWT_SESSIONS
+     * PARAMS:
+     *   - config_param0:
+     *      No params
+     * RESP MSG:
+     *   - htt_pdev_twt_sessions_stats_t
+     */
+    HTT_DBG_EXT_STATS_TWT_SESSIONS               = 20,
+
+    /* HTT_DBG_EXT_STATS_REO_CNTS
+     * PARAMS:
+     *   - config_param0:
+     *      No params
+     * RESP MSG:
+     *   - htt_soc_reo_resource_stats_t
+     */
+    HTT_DBG_EXT_STATS_REO_RESOURCE_STATS         = 21,
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS                        =  256,
@@ -282,6 +318,18 @@ typedef enum {
     HTT_STATS_TX_DE_COMPL_STATS_TAG                     = 65,    /* htt_tx_de_compl_stats_tlv */
     HTT_STATS_WHAL_TX_TAG                               = 66,    /* htt_hw_stats_whal_tx_tlv */
     HTT_STATS_TX_PDEV_SIFS_HIST_TAG                     = 67,    /* htt_tx_pdev_stats_sifs_hist_tlv_v */
+    HTT_STATS_RX_PDEV_FW_STATS_PHY_ERR_TAG              = 68,    /* htt_rx_pdev_fw_stats_phy_err_tlv */
+    HTT_STATS_TX_TID_DETAILS_V1_TAG                     = 69,    /* htt_tx_tid_stats_v1_tlv */
+    HTT_STATS_PDEV_CCA_1SEC_HIST_TAG                    = 70,    /* htt_pdev_cca_stats_hist_tlv (for 1 sec interval stats) */
+    HTT_STATS_PDEV_CCA_100MSEC_HIST_TAG                 = 71,    /* htt_pdev_cca_stats_hist_tlv (for 100 msec interval stats) */
+    HTT_STATS_PDEV_CCA_STAT_CUMULATIVE_TAG              = 72,    /* htt_pdev_stats_cca_stats_tlv */
+    HTT_STATS_PDEV_CCA_COUNTERS_TAG                     = 73,    /* htt_pdev_stats_cca_counters_tlv */
+    HTT_STATS_TX_PDEV_MPDU_STATS_TAG                    = 74,    /* htt_tx_pdev_mpdu_stats_tlv */
+    HTT_STATS_PDEV_TWT_SESSIONS_TAG                     = 75,    /* htt_pdev_stats_twt_sessions_tlv */
+    HTT_STATS_PDEV_TWT_SESSION_TAG                      = 76,    /* htt_pdev_stats_twt_session_tlv */
+    HTT_STATS_RX_REFILL_RXDMA_ERR_TAG                   = 77,    /* htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v */
+    HTT_STATS_RX_REFILL_REO_ERR_TAG                     = 78,    /* htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v */
+    HTT_STATS_RX_REO_RESOURCE_STATS_TAG                 = 79,    /* htt_rx_reo_debug_stats_tlv_v */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -333,10 +381,11 @@ typedef enum {
     HTT_TX_PDEV_MAX_URRN_STATS                   = 3,
 } htt_tx_pdev_underrun_enum;
 
-#define HTT_TX_PDEV_MAX_FLUSH_REASON_STATS   71
-#define HTT_TX_PDEV_MAX_SIFS_BURST_STATS     9
-#define HTT_TX_PDEV_MAX_PHY_ERR_STATS        18
-#define HTT_TX_PDEV_SCHED_TX_MODE_MAX        4
+#define HTT_TX_PDEV_MAX_FLUSH_REASON_STATS     71
+#define HTT_TX_PDEV_MAX_SIFS_BURST_STATS       9
+#define HTT_TX_PDEV_MAX_SIFS_BURST_HIST_STATS  10
+#define HTT_TX_PDEV_MAX_PHY_ERR_STATS          18
+#define HTT_TX_PDEV_SCHED_TX_MODE_MAX          4
 
 #define HTT_RX_STATS_REFILL_MAX_RING         4
 #define HTT_RX_STATS_RXDMA_MAX_ERR           16
@@ -454,6 +503,22 @@ typedef struct {
     A_UINT32 num_total_ppdus_tried_ota;
     /* Number of data PPDUs tried over the air (OTA) */
     A_UINT32 num_data_ppdus_tried_ota;
+    /* Num Local control/mgmt frames (MSDUs) queued */
+    A_UINT32 local_ctrl_mgmt_enqued;
+    /* local_ctrl_mgmt_freed:
+     * Num Local control/mgmt frames (MSDUs) done
+     * It includes all local ctrl/mgmt completions
+     * (acked, no ack, flush, TTL, etc)
+     */
+    A_UINT32 local_ctrl_mgmt_freed;
+    /* Num Local data frames (MSDUs) queued */
+    A_UINT32 local_data_enqued;
+    /* local_data_freed:
+     * Num Local data frames (MSDUs) done
+     * It includes all local data completions
+     * (acked, no ack, flush, TTL, etc)
+     */
+    A_UINT32 local_data_freed;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -511,6 +576,7 @@ typedef struct _htt_tx_pdev_stats {
     htt_tx_pdev_stats_sifs_tlv_v sifs_tlv;
     htt_tx_pdev_stats_flush_tlv_v flush_tlv;
     htt_tx_pdev_stats_phy_err_tlv_v phy_err_tlv;
+    htt_tx_pdev_stats_sifs_hist_tlv_v sifs_hist_tlv;
 } htt_tx_pdev_stats_t;
 
 /* == SOC ERROR STATS == */
@@ -658,6 +724,13 @@ typedef struct _htt_msdu_flow_stats_tlv {
      * BIT [31 : 21]   :- reserved
      */
     A_UINT32 tx_flow_no__tid_num__drop_rule;
+    A_UINT32 last_cycle_enqueue_count;
+    A_UINT32 last_cycle_dequeue_count;
+    A_UINT32 last_cycle_drop_count;
+    /* BIT [15 :  0]   :- current_drop_th
+     * BIT [31 : 16]   :- reserved
+     */
+    A_UINT32 current_drop_th;
 } htt_msdu_flow_stats_tlv;
 
 #define MAX_HTT_TID_NAME 8
@@ -749,6 +822,43 @@ typedef struct _htt_tx_tid_stats_tlv {
     A_UINT32 tid_tx_airtime;
 } htt_tx_tid_stats_tlv;
 
+/* Tidq stats */
+typedef struct _htt_tx_tid_stats_v1_tlv {
+    htt_tlv_hdr_t tlv_hdr;
+    /* Stored as little endian */
+    A_UINT8     tid_name[MAX_HTT_TID_NAME];
+    /* BIT [15 :  0]   :- sw_peer_id
+     * BIT [31 : 16]   :- tid_num
+     */
+    A_UINT32 sw_peer_id__tid_num;
+    /* BIT [ 7 :  0]   :- num_sched_pending
+     * BIT [15 :  8]   :- num_ppdu_in_hwq
+     * BIT [31 : 16]   :- reserved
+     */
+    A_UINT32 num_sched_pending__num_ppdu_in_hwq;
+    A_UINT32 tid_flags;
+    /* Max qdepth in bytes reached by this tid*/
+    A_UINT32 max_qdepth_bytes;
+    /* number of msdus qdepth reached max */
+    A_UINT32 max_qdepth_n_msdus;
+    /* Made reserved this field */
+    A_UINT32 rsvd;
+
+    A_UINT32 qdepth_bytes;
+    A_UINT32 qdepth_num_msdu;
+    A_UINT32 qdepth_num_mpdu;
+    A_UINT32 last_scheduled_tsmp;
+    A_UINT32 pause_module_id;
+    A_UINT32 block_module_id;
+    /* tid tx airtime in sec */
+    A_UINT32 tid_tx_airtime;
+    A_UINT32 allow_n_flags;
+    /* BIT [15 :  0]   :- sendn_frms_allowed
+     * BIT [31 : 16]   :- reserved
+     */
+    A_UINT32 sendn_frms_allowed;
+} htt_tx_tid_stats_v1_tlv;
+
 #define HTT_RX_TID_STATS_SW_PEER_ID_M     0x0000ffff
 #define HTT_RX_TID_STATS_SW_PEER_ID_S              0
 #define HTT_RX_TID_STATS_TID_NUM_M        0xffff0000
@@ -823,6 +933,16 @@ typedef struct {
     A_UINT32 peer_rx_airtime;
     /* Peer current rssi in dBm */
     A_INT32 rssi;
+    /* Total enqueued, dequeued and dropped msdu's for peer */
+    A_UINT32 peer_enqueued_count_low;
+    A_UINT32 peer_enqueued_count_high;
+    A_UINT32 peer_dequeued_count_low;
+    A_UINT32 peer_dequeued_count_high;
+    A_UINT32 peer_dropped_count_low;
+    A_UINT32 peer_dropped_count_high;
+    /* Total ppdu transmitted bytes for peer: includes MAC header overhead */
+    A_UINT32 ppdu_transmitted_bytes_low;
+    A_UINT32 ppdu_transmitted_bytes_high;
 } htt_peer_stats_cmn_tlv;
 
 typedef struct {
@@ -962,7 +1082,7 @@ typedef enum {
 
 #define HTT_DBG_EXT_STATS_PEER_REQ_MODE_SET(_var, _val) \
      do { \
-         ((_var) |= ((_val) << HTT_DBG_EXT_STATS_PEER_REQ_MODE_M)); \
+         ((_var) |= ((_val) << HTT_DBG_EXT_STATS_PEER_REQ_MODE_S)); \
      } while (0)
 
 #define HTT_DBG_EXT_STATS_PEER_INFO_SW_PEER_ID_GET(_var) \
@@ -980,9 +1100,10 @@ typedef enum {
  *   - HTT_STATS_PEER_DETAILS_TAG
  *   - HTT_STATS_PEER_TX_RATE_STATS_TAG
  *   - HTT_STATS_PEER_RX_RATE_STATS_TAG
- *   - HTT_STATS_TX_TID_DETAILS_TAG (multiple)
+ *   - HTT_STATS_TX_TID_DETAILS_TAG (multiple) (deprecated, so 0 elements in updated systems)
  *   - HTT_STATS_RX_TID_DETAILS_TAG (multiple)
  *   - HTT_STATS_PEER_MSDU_FLOWQ_TAG (multiple)
+ *   - HTT_STATS_TX_TID_DETAILS_V1_TAG (multiple)
  */
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -997,6 +1118,7 @@ typedef struct _htt_peer_stats {
     htt_tx_tid_stats_tlv tx_tid_stats[1];
     htt_rx_tid_stats_tlv rx_tid_stats[1];
     htt_msdu_flow_stats_tlv msdu_flowq[1];
+    htt_tx_tid_stats_v1_tlv tx_tid_stats_v1[1];
 } htt_peer_stats_t;
 
 /* =========== ACTIVE PEER LIST ========== */
@@ -1327,6 +1449,10 @@ typedef struct {
 
 /* == TX MU STATS == */
 
+#define HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS 4
+#define HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS 8
+#define HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS    74
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /* mu-mimo sw sched cmd stats */
@@ -1334,11 +1460,24 @@ typedef struct {
     A_UINT32 mu_mimo_sch_failed;
     /* MU PPDU stats per hwQ */
     A_UINT32 mu_mimo_ppdu_posted;
+    /*
+     * Counts the number of users in each transmission of
+     * the given TX mode.
+     *
+     * Index is the number of users - 1.
+     */
+    A_UINT32 ac_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
+    A_UINT32 ax_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+    A_UINT32 ax_ofdma_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
 } htt_tx_pdev_mu_mimo_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /* mu-mimo mpdu level stats */
+    /*
+     * This first block of stats is limited to 11ac
+     * MU-MIMO transmission.
+     */
     A_UINT32 mu_mimo_mpdus_queued_usr;
     A_UINT32 mu_mimo_mpdus_tried_usr;
     A_UINT32 mu_mimo_mpdus_failed_usr;
@@ -1346,12 +1485,46 @@ typedef struct {
     A_UINT32 mu_mimo_err_no_ba_usr;
     A_UINT32 mu_mimo_mpdu_underrun_usr;
     A_UINT32 mu_mimo_ampdu_underrun_usr;
+
+    A_UINT32 ax_mu_mimo_mpdus_queued_usr;
+    A_UINT32 ax_mu_mimo_mpdus_tried_usr;
+    A_UINT32 ax_mu_mimo_mpdus_failed_usr;
+    A_UINT32 ax_mu_mimo_mpdus_requeued_usr;
+    A_UINT32 ax_mu_mimo_err_no_ba_usr;
+    A_UINT32 ax_mu_mimo_mpdu_underrun_usr;
+    A_UINT32 ax_mu_mimo_ampdu_underrun_usr;
+
+    A_UINT32 ax_ofdma_mpdus_queued_usr;
+    A_UINT32 ax_ofdma_mpdus_tried_usr;
+    A_UINT32 ax_ofdma_mpdus_failed_usr;
+    A_UINT32 ax_ofdma_mpdus_requeued_usr;
+    A_UINT32 ax_ofdma_err_no_ba_usr;
+    A_UINT32 ax_ofdma_mpdu_underrun_usr;
+    A_UINT32 ax_ofdma_ampdu_underrun_usr;
 } htt_tx_pdev_mu_mimo_mpdu_stats_tlv;
+
+#define HTT_STATS_TX_SCHED_MODE_MU_MIMO_AC  1 /* SCHED_TX_MODE_MU_MIMO_AC */
+#define HTT_STATS_TX_SCHED_MODE_MU_MIMO_AX  2 /* SCHED_TX_MODE_MU_MIMO_AX */
+#define HTT_STATS_TX_SCHED_MODE_MU_OFDMA_AX 3 /* SCHED_TX_MODE_MU_OFDMA_AX */
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* mpdu level stats */
+    A_UINT32 mpdus_queued_usr;
+    A_UINT32 mpdus_tried_usr;
+    A_UINT32 mpdus_failed_usr;
+    A_UINT32 mpdus_requeued_usr;
+    A_UINT32 err_no_ba_usr;
+    A_UINT32 mpdu_underrun_usr;
+    A_UINT32 ampdu_underrun_usr;
+    A_UINT32 user_index;
+    A_UINT32 tx_sched_mode; /* HTT_STATS_TX_SCHED_MODE_xxx */
+} htt_tx_pdev_mpdu_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_MU
  * TLV_TAGS:
  *      - HTT_STATS_TX_PDEV_MU_MIMO_STATS_TAG (multiple)
- *      - HTT_STATS_TX_PDEV_MUMIMO_MPDU_STATS_TAG (multiple)
+ *      - HTT_STATS_TX_PDEV_MPDU_STATS_TAG (multiple)
  */
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -1359,7 +1532,11 @@ typedef struct {
  */
 typedef struct {
     htt_tx_pdev_mu_mimo_sch_stats_tlv mu_mimo_sch_stats_tlv[1]; /* WAL_TX_STATS_MAX_GROUP_SIZE */
-    htt_tx_pdev_mu_mimo_mpdu_stats_tlv mu_mimo_mpdu_stats_tlv[1]; /* WAL_TX_STATS_MAX_NUM_USERS */
+    /*
+     * Note that though mu_mimo_mpdu_stats_tlv is named MU-MIMO,
+     * it can also hold MU-OFDMA stats.
+     */
+    htt_tx_pdev_mpdu_stats_tlv mu_mimo_mpdu_stats_tlv[1]; /* WAL_TX_STATS_MAX_NUM_USERS */
 } htt_tx_pdev_mu_mimo_stats_t;
 
 /* == TX SCHED STATS == */
@@ -2337,6 +2514,9 @@ typedef struct {
 #define HTT_TX_PDEV_STATS_NUM_BW_COUNTERS          4
 #define HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS      8
 #define HTT_TX_PDEV_STATS_NUM_PREAMBLE_TYPES       HTT_STATS_PREAM_COUNT
+#define HTT_TX_PDEV_STATS_NUM_LEGACY_CCK_STATS     4
+#define HTT_TX_PDEV_STATS_NUM_LEGACY_OFDM_STATS    8
+#define HTT_TX_PDEV_STATS_NUM_LTF                  4
 
 #define HTT_TX_PDEV_RATE_STATS_MAC_ID_M     0x000000ff
 #define HTT_TX_PDEV_RATE_STATS_MAC_ID_S              0
@@ -2366,8 +2546,11 @@ typedef struct {
     A_UINT32 ack_rssi;
 
     A_UINT32 tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+
+    /* tx_xx_mcs: currently unused */
     A_UINT32 tx_su_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
     A_UINT32 tx_mu_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+
     A_UINT32 tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS]; /* element 0,1, ...7 -> NSS 1,2, ...8 */
     A_UINT32 tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS]; /* element 0: 20 MHz, 1: 40 MHz, 2: 80 MHz, 3: 160 and 80+80 MHz */
     A_UINT32 tx_stbc[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
@@ -2378,9 +2561,50 @@ typedef struct {
 
     /* Counters to track packets in dcm mcs (MCS 0, 1, 3, 4) */
     A_UINT32 tx_dcm[HTT_TX_PDEV_STATS_NUM_DCM_COUNTERS];
-
     /* Number of CTS-acknowledged RTS packets */
     A_UINT32 rts_success;
+
+    /*
+     * Counters for legacy 11a and 11b transmissions.
+     *
+     * The index corresponds to:
+     *
+     * CCK: 0: 1 Mbps, 1: 2 Mbps, 2: 5.5 Mbps, 3: 11 Mbps
+     *
+     * OFDM: 0: 6 Mbps, 1: 9 Mbps, 2: 12 Mbps, 3: 18 Mbps,
+     *       4: 24 Mbps, 5: 36 Mbps, 6: 48 Mbps, 7: 54 Mbps
+     */
+    A_UINT32 tx_legacy_cck_rate[HTT_TX_PDEV_STATS_NUM_LEGACY_CCK_STATS];
+    A_UINT32 tx_legacy_ofdm_rate[HTT_TX_PDEV_STATS_NUM_LEGACY_OFDM_STATS];
+
+    A_UINT32 ac_mu_mimo_tx_ldpc;
+    A_UINT32 ax_mu_mimo_tx_ldpc;
+    A_UINT32 ofdma_tx_ldpc;
+
+    /*
+     * Counters for 11ax HE LTF selection during TX.
+     *
+     * The index corresponds to:
+     *
+     * 0: unused, 1: 1x LTF, 2: 2x LTF, 3: 4x LTF
+     */
+    A_UINT32 tx_he_ltf[HTT_TX_PDEV_STATS_NUM_LTF];
+
+    A_UINT32 ac_mu_mimo_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ax_mu_mimo_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ofdma_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+
+    A_UINT32 ac_mu_mimo_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ax_mu_mimo_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ofdma_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+
+    A_UINT32 ac_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 ax_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 ofdma_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+
+    A_UINT32 ac_mu_mimo_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ax_mu_mimo_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ofdma_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
 } htt_tx_pdev_rate_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
@@ -2475,6 +2699,21 @@ typedef struct {
     A_UINT32 ofld_remote_data_buf_recycle_cnt;
     /* Num remote free buf given to offload */
     A_UINT32 ofld_remote_free_buf_indication_cnt;
+
+    /* Num unicast packets from local path indicated to host */
+    A_UINT32 ofld_buf_to_host_data_msdu_uc;
+    /* Num unicast packets from REO indicated to host */
+    A_UINT32 reo_fw_ring_to_host_data_msdu_uc;
+
+    /* Num Packets received from WBM SW1 ring */
+    A_UINT32 wbm_sw_ring_reap;
+    /* Num packets from WBM forwarded from fw to host via WBM */
+    A_UINT32 wbm_forward_to_host_cnt;
+    /* Num packets from WBM recycled to target refill ring */
+    A_UINT32 wbm_target_recycle_cnt;
+
+    /* Total Num of recycled to refill ring, including packets from WBM and REO */
+    A_UINT32 target_refill_ring_recycle_cnt;
 } htt_rx_soc_fw_stats_tlv;
 
 #define HTT_RX_SOC_FW_REFILL_RING_EMPTY_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -2496,6 +2735,89 @@ typedef struct {
     A_UINT32 refill_ring_num_refill[1]; /* HTT_RX_STATS_REFILL_MAX_RING */
 } htt_rx_soc_fw_refill_ring_num_refill_tlv_v;
 
+/* RXDMA error code from WBM released packets */
+typedef enum {
+    HTT_RX_RXDMA_OVERFLOW_ERR                           = 0,
+    HTT_RX_RXDMA_MPDU_LENGTH_ERR                        = 1,
+    HTT_RX_RXDMA_FCS_ERR                                = 2,
+    HTT_RX_RXDMA_DECRYPT_ERR                            = 3,
+    HTT_RX_RXDMA_TKIP_MIC_ERR                           = 4,
+    HTT_RX_RXDMA_UNECRYPTED_ERR                         = 5,
+    HTT_RX_RXDMA_MSDU_LEN_ERR                           = 6,
+    HTT_RX_RXDMA_MSDU_LIMIT_ERR                         = 7,
+    HTT_RX_RXDMA_WIFI_PARSE_ERR                         = 8,
+    HTT_RX_RXDMA_AMSDU_PARSE_ERR                        = 9,
+    HTT_RX_RXDMA_SA_TIMEOUT_ERR                         = 10,
+    HTT_RX_RXDMA_DA_TIMEOUT_ERR                         = 11,
+    HTT_RX_RXDMA_FLOW_TIMEOUT_ERR                       = 12,
+    HTT_RX_RXDMA_FLUSH_REQUEST                          = 13,
+    HTT_RX_RXDMA_ERR_CODE_RVSD0                         = 14,
+    HTT_RX_RXDMA_ERR_CODE_RVSD1                         = 15,
+
+    /*
+     * This MAX_ERR_CODE should not be used in any host/target messages,
+     * so that even though it is defined within a host/target interface
+     * definition header file, it isn't actually part of the host/target
+     * interface, and thus can be modified.
+     */
+    HTT_RX_RXDMA_MAX_ERR_CODE
+} htt_rx_rxdma_error_code_enum;
+
+/* NOTE: Variable length TLV, use length spec to infer array size */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* NOTE:
+    * The mapping of RXDMA error types to rxdma_err array elements is HW dependent.
+    * It is expected but not required that the target will provide a rxdma_err element
+    * for each of the htt_rx_rxdma_error_code_enum values, up to but not including
+    * MAX_ERR_CODE.  The host should ignore any array elements whose
+    * indices are >= the MAX_ERR_CODE value the host was compiled with.
+    */
+    A_UINT32 rxdma_err[1]; /* HTT_RX_RXDMA_MAX_ERR_CODE */
+} htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v;
+
+/* REO error code from WBM released packets */
+typedef enum {
+    HTT_RX_REO_QUEUE_DESC_ADDR_ZERO                     = 0,
+    HTT_RX_REO_QUEUE_DESC_NOT_VALID                     = 1,
+    HTT_RX_AMPDU_IN_NON_BA                              = 2,
+    HTT_RX_NON_BA_DUPLICATE                             = 3,
+    HTT_RX_BA_DUPLICATE                                 = 4,
+    HTT_RX_REGULAR_FRAME_2K_JUMP                        = 5,
+    HTT_RX_BAR_FRAME_2K_JUMP                            = 6,
+    HTT_RX_REGULAR_FRAME_OOR                            = 7,
+    HTT_RX_BAR_FRAME_OOR                                = 8,
+    HTT_RX_BAR_FRAME_NO_BA_SESSION                      = 9,
+    HTT_RX_BAR_FRAME_SN_EQUALS_SSN                      = 10,
+    HTT_RX_PN_CHECK_FAILED                              = 11,
+    HTT_RX_2K_ERROR_HANDLING_FLAG_SET                   = 12,
+    HTT_RX_PN_ERROR_HANDLING_FLAG_SET                   = 13,
+    HTT_RX_QUEUE_DESCRIPTOR_BLOCKED_SET                 = 14,
+    HTT_RX_REO_ERR_CODE_RVSD                            = 15,
+
+    /*
+     * This MAX_ERR_CODE should not be used in any host/target messages,
+     * so that even though it is defined within a host/target interface
+     * definition header file, it isn't actually part of the host/target
+     * interface, and thus can be modified.
+     */
+    HTT_RX_REO_MAX_ERR_CODE
+} htt_rx_reo_error_code_enum;
+
+/* NOTE: Variable length TLV, use length spec to infer array size */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* NOTE:
+    * The mapping of REO error types to reo_err array elements is HW dependent.
+    * It is expected but not required that the target will provide a rxdma_err element
+    * for each of the htt_rx_reo_error_code_enum values, up to but not including
+    * MAX_ERR_CODE.  The host should ignore any array elements whose
+    * indices are >= the MAX_ERR_CODE value the host was compiled with.
+    */
+    A_UINT32 reo_err[1]; /* HTT_RX_REO_MAX_ERR_CODE */
+} htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v;
 
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -2505,6 +2827,8 @@ typedef struct {
     htt_rx_soc_fw_stats_tlv fw_tlv;
     htt_rx_soc_fw_refill_ring_empty_tlv_v fw_refill_ring_empty_tlv;
     htt_rx_soc_fw_refill_ring_num_refill_tlv_v fw_refill_ring_num_refill_tlv;
+    htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v fw_refill_ring_num_rxdma_err_tlv;
+    htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v fw_refill_ring_num_reo_err_tlv;
 } htt_rx_soc_stats_t;
 
 /* == RX PDEV STATS == */
@@ -2622,7 +2946,71 @@ typedef struct {
     A_UINT32 rx_ring_restore_cnt;
     /* Num rx flush issued */
     A_UINT32 rx_flush_cnt;
+    /* Num rx recovery */
+    A_UINT32 rx_recovery_reset_cnt;
 } htt_rx_pdev_fw_stats_tlv;
+
+#define HTT_STATS_PHY_ERR_MAX 43
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    A_UINT32 mac_id__word;
+    /* Num of phy err */
+    A_UINT32 total_phy_err_cnt;
+    /* Counts of different types of phy errs
+     * The mapping of PHY error types to phy_err array elements is HW dependent.
+     * The only currently-supported mapping is shown below:
+     *
+     * 0 phyrx_err_phy_off Reception aborted due to receiving a PHY_OFF TLV
+     * 1 phyrx_err_synth_off
+     * 2 phyrx_err_ofdma_timing
+     * 3 phyrx_err_ofdma_signal_parity
+     * 4 phyrx_err_ofdma_rate_illegal
+     * 5 phyrx_err_ofdma_length_illegal
+     * 6 phyrx_err_ofdma_restart
+     * 7 phyrx_err_ofdma_service
+     * 8 phyrx_err_ppdu_ofdma_power_drop
+     * 9 phyrx_err_cck_blokker
+     * 10 phyrx_err_cck_timing
+     * 11 phyrx_err_cck_header_crc
+     * 12 phyrx_err_cck_rate_illegal
+     * 13 phyrx_err_cck_length_illegal
+     * 14 phyrx_err_cck_restart
+     * 15 phyrx_err_cck_service
+     * 16 phyrx_err_cck_power_drop
+     * 17 phyrx_err_ht_crc_err
+     * 18 phyrx_err_ht_length_illegal
+     * 19 phyrx_err_ht_rate_illegal
+     * 20 phyrx_err_ht_zlf
+     * 21 phyrx_err_false_radar_ext
+     * 22 phyrx_err_green_field
+     * 23 phyrx_err_bw_gt_dyn_bw
+     * 24 phyrx_err_leg_ht_mismatch
+     * 25 phyrx_err_vht_crc_error
+     * 26 phyrx_err_vht_siga_unsupported
+     * 27 phyrx_err_vht_lsig_len_invalid
+     * 28 phyrx_err_vht_ndp_or_zlf
+     * 29 phyrx_err_vht_nsym_lt_zero
+     * 30 phyrx_err_vht_rx_extra_symbol_mismatch
+     * 31 phyrx_err_vht_rx_skip_group_id0
+     * 32 phyrx_err_vht_rx_skip_group_id1to62
+     * 33 phyrx_err_vht_rx_skip_group_id63
+     * 34 phyrx_err_ofdm_ldpc_decoder_disabled
+     * 35 phyrx_err_defer_nap
+     * 36 phyrx_err_fdomain_timeout
+     * 37 phyrx_err_lsig_rel_check
+     * 38 phyrx_err_bt_collision
+     * 39 phyrx_err_unsupported_mu_feedback
+     * 40 phyrx_err_ppdu_tx_interrupt_rx
+     * 41 phyrx_err_unsupported_cbf
+     * 42 phyrx_err_other
+     */
+    A_UINT32 phy_err[HTT_STATS_PHY_ERR_MAX];
+} htt_rx_pdev_fw_stats_phy_err_tlv;
 
 #define HTT_RX_PDEV_FW_RING_MPDU_ERR_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
 
@@ -2660,6 +3048,262 @@ typedef struct {
     htt_rx_pdev_fw_stats_tlv fw_stats_tlv;
     htt_rx_pdev_fw_ring_mpdu_err_tlv_v fw_ring_mpdu_err_tlv;
     htt_rx_pdev_fw_mpdu_drop_tlv_v fw_ring_mpdu_drop;
+    htt_rx_pdev_fw_stats_phy_err_tlv fw_stats_phy_err_tlv;
 } htt_rx_pdev_stats_t;
+
+#define HTT_PDEV_CCA_STATS_TX_FRAME_INFO_PRESENT               (0x1)
+#define HTT_PDEV_CCA_STATS_RX_FRAME_INFO_PRESENT               (0x2)
+#define HTT_PDEV_CCA_STATS_RX_CLEAR_INFO_PRESENT               (0x4)
+#define HTT_PDEV_CCA_STATS_MY_RX_FRAME_INFO_PRESENT            (0x8)
+#define HTT_PDEV_CCA_STATS_USEC_CNT_INFO_PRESENT              (0x10)
+#define HTT_PDEV_CCA_STATS_MED_RX_IDLE_INFO_PRESENT           (0x20)
+#define HTT_PDEV_CCA_STATS_MED_TX_IDLE_GLOBAL_INFO_PRESENT    (0x40)
+#define HTT_PDEV_CCA_STATS_CCA_OBBS_USEC_INFO_PRESENT         (0x80)
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* Below values are obtained from the HW Cycles counter registers */
+    A_UINT32      tx_frame_usec;
+    A_UINT32      rx_frame_usec;
+    A_UINT32      rx_clear_usec;
+    A_UINT32      my_rx_frame_usec;
+    A_UINT32      usec_cnt;
+    A_UINT32      med_rx_idle_usec;
+    A_UINT32      med_tx_idle_global_usec;
+    A_UINT32      cca_obss_usec;
+} htt_pdev_stats_cca_counters_tlv;
+
+/* NOTE: THIS htt_pdev_cca_stats_hist_tlv STRUCTURE IS DEPRECATED,
+ * due to lack of support in some host stats infrastructures for
+ * TLVs nested within TLVs.
+ */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* The channel number on which these stats were collected */
+    A_UINT32    chan_num;
+
+    /* num of CCA records (Num of htt_pdev_stats_cca_counters_tlv)*/
+    A_UINT32    num_records;
+
+    /*
+     * Bit map of valid CCA counters
+     * Bit0 - tx_frame_usec
+     * Bit1 - rx_frame_usec
+     * Bit2 - rx_clear_usec
+     * Bit3 - my_rx_frame_usec
+     * bit4 - usec_cnt
+     * Bit5 - med_rx_idle_usec
+     * Bit6 - med_tx_idle_global_usec
+     * Bit7 - cca_obss_usec
+     *
+     * See HTT_PDEV_CCA_STATS_xxx_INFO_PRESENT defs
+     */
+    A_UINT32    valid_cca_counters_bitmap;
+
+    /* Indicates the stats collection interval
+     *  Valid Values:
+     *      100        - For the 100ms interval CCA stats histogram
+     *      1000       - For 1sec interval CCA histogram
+     *      0xFFFFFFFF - For Cumulative CCA Stats
+     */
+    A_UINT32    collection_interval;
+
+    /**
+     * This will be followed by an array which contains the CCA stats
+     * collected in the last N intervals,
+     * if the indication is for last N intervals CCA stats.
+     * Then the pdev_cca_stats[0] element contains the oldest CCA stats
+     * and pdev_cca_stats[N-1] will have the most recent CCA stats.
+     */
+    htt_pdev_stats_cca_counters_tlv cca_hist_tlv[1];
+} htt_pdev_cca_stats_hist_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* The channel number on which these stats were collected */
+    A_UINT32    chan_num;
+
+    /* num of CCA records (Num of htt_pdev_stats_cca_counters_tlv)*/
+    A_UINT32    num_records;
+
+    /*
+     * Bit map of valid CCA counters
+     * Bit0 - tx_frame_usec
+     * Bit1 - rx_frame_usec
+     * Bit2 - rx_clear_usec
+     * Bit3 - my_rx_frame_usec
+     * bit4 - usec_cnt
+     * Bit5 - med_rx_idle_usec
+     * Bit6 - med_tx_idle_global_usec
+     * Bit7 - cca_obss_usec
+     *
+     * See HTT_PDEV_CCA_STATS_xxx_INFO_PRESENT defs
+     */
+    A_UINT32    valid_cca_counters_bitmap;
+
+    /* Indicates the stats collection interval
+     *  Valid Values:
+     *      100        - For the 100ms interval CCA stats histogram
+     *      1000       - For 1sec interval CCA histogram
+     *      0xFFFFFFFF - For Cumulative CCA Stats
+     */
+    A_UINT32    collection_interval;
+
+    /**
+     * This will be followed by an array which contains the CCA stats
+     * collected in the last N intervals,
+     * if the indication is for last N intervals CCA stats.
+     * Then the pdev_cca_stats[0] element contains the oldest CCA stats
+     * and pdev_cca_stats[N-1] will have the most recent CCA stats.
+     * htt_pdev_stats_cca_counters_tlv cca_hist_tlv[1];
+     */
+} htt_pdev_cca_stats_hist_v1_tlv;
+
+#define HTT_TWT_SESSION_FLAG_FLOW_ID_M      0x0000ffff
+#define HTT_TWT_SESSION_FLAG_FLOW_ID_S      0
+
+#define HTT_TWT_SESSION_FLAG_BCAST_TWT_M    0x00010000
+#define HTT_TWT_SESSION_FLAG_BCAST_TWT_S    16
+
+#define HTT_TWT_SESSION_FLAG_TRIGGER_TWT_M  0x00020000
+#define HTT_TWT_SESSION_FLAG_TRIGGER_TWT_S  17
+
+#define HTT_TWT_SESSION_FLAG_ANNOUN_TWT_M   0x00040000
+#define HTT_TWT_SESSION_FLAG_ANNOUN_TWT_S   18
+
+#define HTT_TWT_SESSION_FLAG_FLOW_ID_GET(_var) \
+        (((_var) & HTT_TWT_SESSION_FLAG_FLOW_ID_M) >> \
+        HTT_TWT_SESSION_FLAG_FLOW_ID_S)
+
+#define HTT_TWT_SESSION_FLAG_FLOW_ID_SET(_var, _val) \
+         do { \
+             HTT_CHECK_SET_VAL(HTT_TWT_SESSION_FLAG_FLOW_ID, _val); \
+             ((_var) |= ((_val) << HTT_TWT_SESSION_FLAG_FLOW_ID_S)); \
+         } while (0)
+
+#define HTT_TWT_SESSION_FLAG_BCAST_TWT_GET(_var) \
+         (((_var) & HTT_TWT_SESSION_FLAG_BCAST_TWT_M) >> \
+         HTT_TWT_SESSION_FLAG_BCAST_TWT_S)
+
+#define HTT_TWT_SESSION_FLAG_BCAST_TWT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TWT_SESSION_FLAG_BCAST_TWT, _val); \
+            ((_var) |= ((_val) << HTT_TWT_SESSION_FLAG_BCAST_TWT_S)); \
+        } while (0)
+
+#define HTT_TWT_SESSION_FLAG_TRIGGER_TWT_GET(_var) \
+        (((_var) & HTT_TWT_SESSION_FLAG_TRIGGER_TWT_M) >> \
+        HTT_TWT_SESSION_FLAG_TRIGGER_TWT_S)
+
+#define HTT_TWT_SESSION_FLAG_TRIGGER_TWT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TWT_SESSION_FLAG_TRIGGER_TWT, _val); \
+            ((_var) |= ((_val) << HTT_TWT_SESSION_FLAG_TRIGGER_TWT_S)); \
+        } while (0)
+
+#define HTT_TWT_SESSION_FLAG_ANNOUN_TWT_GET(_var) \
+        (((_var) & HTT_TWT_SESSION_FLAG_ANNOUN_TWT_M) >> \
+        HTT_TWT_SESSION_FLAG_ANNOUN_TWT_S)
+
+#define HTT_TWT_SESSION_FLAG_ANNOUN_TWT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_TWT_SESSION_FLAG_ANNOUN_TWT, _val); \
+            ((_var) |= ((_val) << HTT_TWT_SESSION_FLAG_ANNOUN_TWT_S)); \
+        } while (0)
+
+#define TWT_DIALOG_ID_UNAVAILABLE       0xFFFFFFFF
+
+typedef struct {
+    htt_tlv_hdr_t   tlv_hdr;
+
+    A_UINT32        vdev_id;
+    htt_mac_addr    peer_mac;
+    A_UINT32        flow_id_flags;
+    A_UINT32        dialog_id; /* TWT_DIALOG_ID_UNAVAILABLE is used when TWT session is not initiated by host */
+    A_UINT32        wake_dura_us;
+    A_UINT32        wake_intvl_us;
+    A_UINT32        sp_offset_us;
+} htt_pdev_stats_twt_session_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t   tlv_hdr;
+
+    A_UINT32        pdev_id;
+    A_UINT32        num_sessions;
+
+    htt_pdev_stats_twt_session_tlv twt_session[1];
+} htt_pdev_stats_twt_sessions_tlv;
+
+/* STATS_TYPE: HTT_DBG_EXT_STATS_TWT_SESSIONS
+ * TLV_TAGS:
+ *     - HTT_STATS_PDEV_TWT_SESSIONS_TAG
+ *     - HTT_STATS_PDEV_TWT_SESSION_TAG
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_pdev_stats_twt_sessions_tlv twt_sessions[1];
+} htt_pdev_twt_sessions_stats_t;
+
+typedef enum {
+    /* Global link descriptor queued in REO */
+    HTT_RX_REO_RESOURCE_GLOBAL_LINK_DESC_COUNT_0           = 0,
+    HTT_RX_REO_RESOURCE_GLOBAL_LINK_DESC_COUNT_1           = 1,
+    HTT_RX_REO_RESOURCE_GLOBAL_LINK_DESC_COUNT_2           = 2,
+    /*Number of queue descriptors of this aging group */
+    HTT_RX_REO_RESOURCE_BUFFERS_USED_AC0                   = 3,
+    HTT_RX_REO_RESOURCE_BUFFERS_USED_AC1                   = 4,
+    HTT_RX_REO_RESOURCE_BUFFERS_USED_AC2                   = 5,
+    HTT_RX_REO_RESOURCE_BUFFERS_USED_AC3                   = 6,
+    /* Total number of MSDUs buffered in AC */
+    HTT_RX_REO_RESOURCE_AGING_NUM_QUEUES_AC0               = 7,
+    HTT_RX_REO_RESOURCE_AGING_NUM_QUEUES_AC1               = 8,
+    HTT_RX_REO_RESOURCE_AGING_NUM_QUEUES_AC2               = 9,
+    HTT_RX_REO_RESOURCE_AGING_NUM_QUEUES_AC3               = 10,
+
+    HTT_RX_REO_RESOURCE_STATS_MAX                          = 16
+} htt_rx_reo_resource_sample_id_enum;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* Variable based on the Number of records. HTT_RX_REO_RESOURCE_STATS_MAX */
+    /* htt_rx_reo_debug_sample_id_enum */
+    A_UINT32 sample_id;
+    /* Max value of all samples */
+    A_UINT32 total_max;
+    /* Average value of total samples */
+    A_UINT32 total_avg;
+    /* Num of samples including both zeros and non zeros ones*/
+    A_UINT32 total_sample;
+    /* Average value of all non zeros samples */
+    A_UINT32 non_zeros_avg;
+    /* Num of non zeros samples */
+    A_UINT32 non_zeros_sample;
+    /* Max value of last N non zero samples (N = last_non_zeros_sample) */
+    A_UINT32 last_non_zeros_max;
+    /* Min value of last N non zero samples (N = last_non_zeros_sample) */
+    A_UINT32 last_non_zeros_min;
+    /* Average value of last N non zero samples (N = last_non_zeros_sample) */
+    A_UINT32 last_non_zeros_avg;
+    /* Num of last non zero samples */
+    A_UINT32 last_non_zeros_sample;
+} htt_rx_reo_resource_stats_tlv_v;
+
+/* STATS_TYPE: HTT_DBG_EXT_STATS_REO_RESOURCE_STATS
+ * TLV_TAGS:
+ *     - HTT_STATS_RX_REO_RESOURCE_STATS_TAG
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_rx_reo_resource_stats_tlv_v reo_resource_stats;
+} htt_soc_reo_resource_stats_t;
 
 #endif /* __HTT_STATS_H__ */

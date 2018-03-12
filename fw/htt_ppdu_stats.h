@@ -15,7 +15,6 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
 /**
  * @file htt_ppdu_stats.h
  *
@@ -29,7 +28,7 @@
 
 #define HTT_BA_64_BIT_MAP_SIZE_DWORDS 2
 #define HTT_BA_256_BIT_MAP_SIZE_DWORDS 8
-typedef enum {
+enum htt_ppdu_stats_tlv_tag {
     HTT_PPDU_STATS_COMMON_TLV,
     HTT_PPDU_STATS_USR_COMMON_TLV,
     HTT_PPDU_STATS_USR_RATE_TLV,
@@ -41,10 +40,179 @@ typedef enum {
     HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_256_TLV,
     HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV,
     HTT_PPDU_STATS_USR_COMPLTN_FLUSH_TLV,
+    HTT_PPDU_STATS_USR_COMMON_ARRAY_TLV,
+    HTT_PPDU_STATS_INFO_TLV,
+    HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV,
 
     /* New TLV's are added above to this line */
     HTT_PPDU_STATS_MAX_TAG,
-} htt_ppdu_stats_tlv_tag_t;
+};
+typedef enum htt_ppdu_stats_tlv_tag htt_ppdu_stats_tlv_tag_t;
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RATE_M     0x000000ff
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RATE_S              0
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RATE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RATE_M) >> \
+    HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RATE_S)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RATE_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RATE, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RATE_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_IS_AMPDU_M     0x00000100
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_IS_AMPDU_S              8
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_IS_AMPDU_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_ARRAY_ITEM_TLV_IS_AMPDU_M) >> \
+    HTT_PPDU_STATS_ARRAY_ITEM_TLV_IS_AMPDU_S)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_IS_AMPDU_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_ARRAY_ITEM_TLV_IS_AMPDU, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_IS_AMPDU_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_BA_ACK_FAILED_M     0x00000600
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_BA_ACK_FAILED_S              9
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_BA_ACK_FAILED_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_ARRAY_ITEM_TLV_BA_ACK_FAILED_M) >> \
+    HTT_PPDU_STATS_ARRAY_ITEM_TLV_BA_ACK_FAILED_S)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_BA_ACK_FAILED_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_ARRAY_ITEM_TLV_BA_ACK_FAILED, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_BA_ACK_FAILED_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_BW_M     0x00003800
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_BW_S             11
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_BW_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_ARRAY_ITEM_TLV_BW_M) >> \
+    HTT_PPDU_STATS_ARRAY_ITEM_TLV_BW_S)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_BW_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_ARRAY_ITEM_TLV_BW, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_BW_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_SGI_M     0x00004000
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_SGI_S             14
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_SGI_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_ARRAY_ITEM_TLV_SGI_M) >> \
+    HTT_PPDU_STATS_ARRAY_ITEM_TLV_SGI_S)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_SGI_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_ARRAY_ITEM_TLV_SGI, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_SGI_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_PEERID_M     0xffff0000
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_PEERID_S             16
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_PEERID_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_ARRAY_ITEM_TLV_PEERID_M) >> \
+    HTT_PPDU_STATS_ARRAY_ITEM_TLV_PEERID_S)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_PEERID_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_ARRAY_ITEM_TLV_PEERID, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_PEERID_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_SUCC_MSDUS_M     0x0000ffff
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_SUCC_MSDUS_S              0
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_SUCC_MSDUS_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_SUCC_MSDUS_M) >> \
+    HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_SUCC_MSDUS_S)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_SUCC_MSDUS_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_SUCC_MSDUS, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_SUCC_MSDUS_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RETRY_MSDUS_M     0xffff0000
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RETRY_MSDUS_S             16
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RETRY_MSDUS_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RETRY_MSDUS_M) >> \
+    HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RETRY_MSDUS_S)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RETRY_MSDUS_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RETRY_MSDUS, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_RETRY_MSDUS_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_FAILED_MSDUS_M     0x0000ffff
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_FAILED_MSDUS_S              0
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_FAILED_MSDUS_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_FAILED_MSDUS_M) >> \
+    HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_FAILED_MSDUS_S)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_FAILED_MSDUS_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_FAILED_MSDUS, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_FAILED_MSDUS_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_DUR_M     0xffff0000
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_DUR_S             16
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_DUR_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_DUR_M) >> \
+    HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_DUR_S)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_DUR_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_DUR, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_DUR_S)); \
+     } while (0)
+
+PREPACK struct htt_tx_ppdu_stats_info {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 tx_success_bytes;
+    A_UINT32 tx_retry_bytes;
+    A_UINT32 tx_failed_bytes;
+    A_UINT32 tx_ratecode:       8,
+             is_ampdu:          1,
+             ba_ack_failed:     2,
+             /*  0: 20 MHz
+                 1: 40 MHz
+                 2: 80 MHz
+                 3: 160 MHz or 80+80 MHz */
+             bw:                3,
+             sgi:               1,
+             reserved0:         1,
+             peer_id:          16;
+    A_UINT32 tx_success_msdus: 16,
+             tx_retry_msdus:   16;
+    A_UINT32 tx_failed_msdus:  16,
+             /* united in us */
+             tx_duration:      16;
+} POSTPACK;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 number_of_ppdu_stats;
+    /*
+     * tx_ppdu_stats_info is filled by multiple struct htt_tx_ppdu_stats_info
+     * elements.
+     * tx_ppdu_stats_info is variable length, with length =
+     *     number_of_ppdu_stats * sizeof (struct htt_tx_ppdu_stats_info)
+     */
+    A_UINT32 tx_ppdu_stats_info[1/*number_of_ppdu_stats*/];
+} htt_ppdu_stats_usr_common_array_tlv_v;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -94,7 +262,7 @@ typedef struct {
      } while (0)
 
 /* HW queue type */
-typedef enum {
+enum HTT_TX_QUEUE_TYPE {
     HTT_TX_QUEUE_INACTIVE,
     HTT_TX_QUEUE_DATA,
     HTT_TX_QUEUE_BEACON,
@@ -106,11 +274,13 @@ typedef enum {
     HTT_TX_QUEUE_NAN_MGMT,
     HTT_TX_QUEUE_UL_DATA,
     HTT_TX_QUEUE_UL_BSR_RESP,
+    HTT_TX_QUEUE_MGMT,
     HTT_TX_QUEUE_MAX,
-} HTT_TX_QUEUE_TYPE;
+};
+typedef enum HTT_TX_QUEUE_TYPE HTT_TX_QUEUE_TYPE;
 
 /* frame_type */
-typedef enum {
+enum HTT_STATS_FTYPE {
     HTT_STATS_FTYPE_SGEN_NDPA = 0,
     HTT_STATS_FTYPE_SGEN_NDP,
     HTT_STATS_FTYPE_SGEN_BRP,
@@ -129,7 +299,8 @@ typedef enum {
     HTT_STATS_FTYPE_TIDQ_DATA_SU,
     HTT_STATS_FTYPE_TIDQ_DATA_MU,
     HTT_STATS_FTYPE_MAX,
-} HTT_STATS_FTYPE;
+};
+typedef enum HTT_STATS_FTYPE HTT_STATS_FTYPE;
 
 /* FRM_TYPE defined in HTT_STATS_FTYPE */
 #define HTT_PPDU_STATS_COMMON_TLV_FRM_TYPE_M     0x000000ff
@@ -160,14 +331,16 @@ typedef enum {
      } while (0)
 
 
-typedef enum {
+enum HTT_PPDU_STATS_BW {
     HTT_PPDU_STATS_BANDWIDTH_5MHZ   = 0,
     HTT_PPDU_STATS_BANDWIDTH_10MHZ  = 1,
     HTT_PPDU_STATS_BANDWIDTH_20MHZ  = 2,
     HTT_PPDU_STATS_BANDWIDTH_40MHZ  = 3,
     HTT_PPDU_STATS_BANDWIDTH_80MHZ  = 4,
     HTT_PPDU_STATS_BANDWIDTH_160MHZ = 5, /* includes 80+80 */
-}HTT_PPDU_STATS_BW;
+    HTT_PPDU_STATS_BANDWIDTH_DYN    = 6,
+};
+typedef enum HTT_PPDU_STATS_BW HTT_PPDU_STATS_BW;
 
 #define HTT_PPDU_STATS_COMMON_TLV_BW_M     0x000f0000
 #define HTT_PPDU_STATS_COMMON_TLV_BW_S             16
@@ -182,6 +355,31 @@ typedef enum {
          ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_BW_S)); \
      } while (0)
 
+#define HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_M     0x0000ffff
+#define HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_S              0
+
+#define HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_S)
+
+#define HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_PHY_MODE, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_M     0xffff0000
+#define HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_S             16
+
+#define HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_S)
+
+#define HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_S)); \
+     } while (0)
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -191,18 +389,43 @@ typedef struct {
      * BIT [ 23 :  16]   :- ring_id
      * BIT [ 31 :  24]   :- num_users
      */
-    A_UINT32 ring_id__sched_cmdid;
+    union {
+        A_UINT32 ring_id__sched_cmdid;
+        struct {
+            A_UINT32 sched_cmdid:   16,
+                     ring_id:        8,
+                     num_users:      8;
+        };
+    };
     /* BIT [ 7 :   0]   :- frame_type - HTT_STATS_FTYPE
      * BIT [ 15:   8]   :- queue_type - HTT_TX_QUEUE_TYPE
      * BIT [ 19:  16]   :- bw - HTT_PPDU_STATS_BW
      * BIT [ 31:  20]   :- reserved
      */
-    A_UINT32 bw__queue_type__frame_type;
+    union {
+        A_UINT32 bw__queue_type__frame_type;
+        struct {
+            A_UINT32 frame_type:     8,
+                     queue_type:     8,
+                     bw:             4,
+                     reserved0:     12;
+        };
+    };
     A_UINT32 chain_mask;
     A_UINT32 fes_duration_us; /* frame exchange sequence */
     A_UINT32 ppdu_sch_eval_start_tstmp_us;
     A_UINT32 ppdu_sch_end_tstmp_us;
     A_UINT32 ppdu_start_tstmp_us;
+    /* BIT [15 :  0] - phy mode (WLAN_PHY_MODE) with which ppdu was transmitted
+     * BIT [31 : 16] - bandwidth (in MHz) with which ppdu was transmitted
+     */
+    union {
+        A_UINT32 chan_mhz__phy_mode;
+        struct {
+            A_UINT32 phy_mode:     16,
+                     chan_mhz:     16;
+        };
+    };
 } htt_ppdu_stats_common_tlv;
 
 #define HTT_PPDU_STATS_USER_COMMON_TLV_TID_NUM_M     0x000000ff
@@ -317,21 +540,42 @@ typedef struct {
      * BIT [ 15:   8]   :- vap_id
      * BIT [ 31:  16]   :- sw_peer_id
      */
-    A_UINT32 sw_peer_id__vapid__tid_num;
+    union {
+        A_UINT32 sw_peer_id__vapid__tid_num;
+        struct {
+            A_UINT32 tid_num:           8,
+                     vap_id:            8,
+                     sw_peer_id:       16;
+        };
+    };
 
     /* BIT [ 0 :    0]   :- mcast
      * BIT [ 9 :    1]   :- mpdus_tried
      * BIT [ 13:   10]   :- bw - HTT_PPDU_STATS_BW
      * BIT [ 31:   14]   :- rsvd
      */
-    A_UINT32 bw__mpdus_tried__mcast;
+    union {
+        A_UINT32 bw__mpdus_tried__mcast;
+        struct {
+            A_UINT32 mcast:              1,
+                     mpdus_tried:        9,
+                     bw:                 4,
+                     reserved0:         18;
+        };
+    };
 
     /* BIT [ 15:   0]   :- frame_ctrl
      * BIT [ 31:  16]   :- qos_ctrl
      */
-    A_UINT32 qos_ctrl_frame_ctrl;
+    union {
+        A_UINT32 qos_ctrl_frame_ctrl;
+        struct {
+            A_UINT32 frame_ctrl:       16,
+                     qos_ctrl:         16;
+        };
+    };
 
- } htt_ppdu_stats_user_common_tlv;
+} htt_ppdu_stats_user_common_tlv;
 
 #define HTT_PPDU_STATS_USER_RATE_TLV_TID_NUM_M     0x000000ff
 #define HTT_PPDU_STATS_USER_RATE_TLV_TID_NUM_S              0
@@ -428,6 +672,33 @@ typedef struct {
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_RESP_TYPE_VALID_S)); \
      } while (0)
 
+enum HTT_PPDU_STATS_PPDU_TYPE {
+    HTT_PPDU_STATS_PPDU_TYPE_SU,
+    HTT_PPDU_STATS_PPDU_TYPE_MU_MIMO,
+    HTT_PPDU_STATS_PPDU_TYPE_MU_OFDMA,
+    HTT_PPDU_STATS_PPDU_TYPE_MU_MIMO_OFDMA,
+    HTT_PPDU_STATS_PPDU_TYPE_UL_TRIG,
+    HTT_PPDU_STATS_PPDU_TYPE_BURST_BCN,
+    HTT_PPDU_STATS_PPDU_TYPE_UL_BSR_RESP,
+    HTT_PPDU_STATS_PPDU_TYPE_UL_BSR_TRIG,
+    HTT_PPDU_STATS_PPDU_TYPE_UL_RESP,
+
+    HTT_PPDU_STATS_PPDU_TYPE_UNKNOWN = 0x1F,
+};
+typedef enum HTT_PPDU_STATS_PPDU_TYPE HTT_PPDU_STATS_PPDU_TYPE;
+
+#define HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_M     0x0000003E
+#define HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_S              1
+
+#define HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_M) >> \
+    HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_S)
+
+#define HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_S)); \
+     } while (0)
 
 enum HTT_PPDU_STATS_TXBF_TYPE {
     HTT_PPDU_STATS_TXBF_OPEN_LOOP,
@@ -542,13 +813,14 @@ enum HTT_PPDU_STATS_TXBF_TYPE {
      } while (0)
 
 /* Guard Intervals */
-typedef enum {
+enum HTT_PPDU_STATS_GI {
     HTT_PPDU_STATS_GI_800,
     HTT_PPDU_STATS_GI_400,
     HTT_PPDU_STATS_GI_1600,
     HTT_PPDU_STATS_GI_3200,
     HTT_PPDU_STATS_GI_CNT,
-} HTT_PPDU_STATS_GI;
+};
+typedef enum HTT_PPDU_STATS_GI HTT_PPDU_STATS_GI;
 
 /* Refer HTT_PPDU_STATS_GI */
 #define HTT_PPDU_STATS_USER_RATE_TLV_GI_M     0x0f000000
@@ -591,31 +863,11 @@ typedef enum {
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_LDPC_S)); \
      } while (0)
 
-typedef enum {
-    HTT_PPDU_STATS_PPDU_TYPE_SU,
-    HTT_PPDU_STATS_PPDU_TYPE_MU_MIMO,
-    HTT_PPDU_STATS_PPDU_TYPE_MU_OFDMA,
-    HTT_PPDU_STATS_PPDU_TYPE_MU_MIMO_OFDMA,
-} HTT_PPDU_STATS_PPDU_TYPE;
-
-#define HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_M     0xC0000000
-#define HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_S             30
-
-#define HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_GET(_var) \
-    (((_var) & HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_M) >> \
-    HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_S)
-
-#define HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_SET(_var, _val) \
-     do { \
-         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE, _val); \
-         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_S)); \
-     } while (0)
-
-
-typedef enum {
+enum HTT_PPDU_STATS_RESP_PPDU_TYPE {
     HTT_PPDU_STATS_RESP_PPDU_TYPE_MU_MIMO_UL,
     HTT_PPDU_STATS_RESP_PPDU_TYPE_MU_OFDMA_UL,
-} HTT_PPDU_STATS_RESP_PPDU_TYPE;
+};
+typedef enum HTT_PPDU_STATS_RESP_PPDU_TYPE HTT_PPDU_STATS_RESP_PPDU_TYPE;
 
 #define HTT_PPDU_STATS_USER_RATE_TLV_RESP_PPDU_TYPE_M     0xC0000000
 #define HTT_PPDU_STATS_USER_RATE_TLV_RESP_PPDU_TYPE_S             30
@@ -635,31 +887,65 @@ typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
     /* BIT [ 7 :   0]   :- tid_num
-     * BIT [ 15:   8]   :- reserved
+     * BIT [ 15:   8]   :- reserved0
      * BIT [ 31:  16]   :- sw_peer_id
      */
-    A_UINT32 sw_peer_id__tid_num;
+    union {
+        A_UINT32 sw_peer_id__tid_num;
+        struct {
+            A_UINT32 tid_num:            8,
+                     reserved0:          8,
+                     sw_peer_id:        16;
+        };
+    };
 
     /* BIT [ 3 :   0]   :- user_pos
      * BIT [ 11:   4]   :- mu_group_id
-     * BIT [ 31:  12]   :- rsvd
+     * BIT [ 31:  12]   :- reserved1
      */
-    A_UINT32 mu_group_id__user_pos;
+    union {
+        A_UINT32 mu_group_id__user_pos;
+        struct {
+            A_UINT32 user_pos:           4,
+                     mu_group_id:        8,
+                     reserved1:         20;
+        };
+    };
 
     /* BIT [ 15 :   0]   :- ru_end
      * BIT [ 31 :  16]   :- ru_start
      */
-    A_UINT32 ru_start__ru_end;
+    union {
+        A_UINT32 ru_start__ru_end;
+        struct {
+            A_UINT32 ru_end:            16,
+                     ru_start:          16;
+        };
+    };
 
     /* BIT [ 15 :   0]   :- ru_end
      * BIT [ 31 :  16]   :- ru_start
      */
-    A_UINT32 resp_ru_start__ru_end;
+    union {
+        A_UINT32 resp_ru_start__ru_end;
+        struct {
+            A_UINT32 resp_ru_end:       16,
+                     resp_ru_start:     16;
+        };
+    };
 
     /* BIT [ 0 :   0 ]   :- resp_type_valid
-     * BIT [ 31:   1 ]   :- rsvd
+     * BIT [ 5 :   1 ]   :- ppdu_type - HTT_PPDU_STAT_PPDU_TYPE
+     * BIT [ 31:   6 ]   :- reserved2
      */
-    A_UINT32 resp_type_valid;
+    union {
+        A_UINT32 resp_type_vld_ppdu_type;
+        struct {
+            A_UINT32 resp_type_vld:      1,
+                     ppdu_type:          5,
+                     reserved2:         26;
+        };
+    };
 
     /* BIT [ 1 :   0 ]   :- ltf_size
      * BIT [ 2 :   2 ]   :- stbc
@@ -672,15 +958,31 @@ typedef struct {
      * BIT [ 27:   24]   :- gi - HTT_PPDU_STATS_GI
      * BIT [ 28:   28]   :- dcm
      * BIT [ 29:   29]   :- ldpc
-     * BIT [ 31:   30]   :- ppdu_type -  HTT_PPDU_STATS_PPDU_TYPE
+     * BIT [ 31:   30]   :- reserved4
      */
-    A_UINT32 rate_info;
+    union {
+        A_UINT32 rate_info;
+        struct {
+            A_UINT32 ltf_size:           2,
+                     stbc:               1,
+                     he_re:              1,
+                     txbf:               4,
+                     bw:                 4,
+                     nss:                4,
+                     mcs:                4,
+                     preamble:           4,
+                     gi:                 4,
+                     dcm:                1,
+                     ldpc:               1,
+                     reserved4:          2;
+        };
+    };
 
     /* Note: resp_rate_info is only valid for if resp_type is UL
      * BIT [ 1 :   0 ]   :- ltf_size
      * BIT [ 2 :   2 ]   :- stbc
      * BIT [ 3 :   3 ]   :- he_re (range extension)
-     * BIT [ 7 :   4 ]   :- rsvd
+     * BIT [ 7 :   4 ]   :- reserved3
      * BIT [ 11:   8 ]   :- bw
      * BIT [ 15:   12]   :- nss  NSS 1,2, ...8
      * BIT [ 19:   16]   :- mcs
@@ -690,8 +992,23 @@ typedef struct {
      * BIT [ 29:   29]   :- ldpc
      * BIT [ 31:   30]   :- resp_ppdu_type - HTT_PPDU_STATS_RESP_PPDU_TYPE
      */
-    A_UINT32 resp_rate_info;
-
+    union {
+        A_UINT32 resp_rate_info;
+        struct {
+            A_UINT32 resp_ltf_size:           2,
+                     resp_stbc:               1,
+                     resp_he_re:              1,
+                     reserved3:               4,
+                     resp_bw:                 4,
+                     resp_nss:                4,
+                     resp_mcs:                4,
+                     resp_preamble:           4,
+                     resp_gi:                 4,
+                     resp_dcm:                1,
+                     resp_ldpc:               1,
+                     resp_ppdu_type:          2;
+        };
+    };
 } htt_ppdu_stats_user_rate_tlv;
 
 #define HTT_PPDU_STATS_ENQ_MPDU_BITMAP_TLV_TID_NUM_M     0x000000ff
@@ -727,10 +1044,17 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /* BIT [ 7 :   0]   :- tid_num
-     * BIT [ 15:   8]   :- reserved
+     * BIT [ 15:   8]   :- reserved0
      * BIT [ 31:  16]   :- sw_peer_id
      */
-    A_UINT32 sw_peer_id__tid_num;
+    union {
+        A_UINT32 sw_peer_id__tid_num;
+        struct {
+            A_UINT32 tid_num:         8,
+                     reserved0:       8,
+                     sw_peer_id:     16;
+        };
+    };
     A_UINT32 start_seq;
     A_UINT32 enq_bitmap[HTT_BA_64_BIT_MAP_SIZE_DWORDS];
 } htt_ppdu_stats_enq_mpdu_bitmap_64_tlv;
@@ -738,10 +1062,17 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /* BIT [ 7 :   0]   :- tid_num
-     * BIT [ 15:   8]   :- reserved
+     * BIT [ 15:   8]   :- reserved0
      * BIT [ 31:  16]   :- sw_peer_id
      */
-    A_UINT32 sw_peer_id__tid_num;
+    union {
+        A_UINT32 sw_peer_id__tid_num;
+        struct {
+            A_UINT32 tid_num:         8,
+                     reserved0:       8,
+                     sw_peer_id:     16;
+        };
+    };
     A_UINT32 start_seq;
     A_UINT32 enq_bitmap[HTT_BA_256_BIT_MAP_SIZE_DWORDS];
 } htt_ppdu_stats_enq_mpdu_bitmap_256_tlv;
@@ -851,7 +1182,7 @@ typedef struct {
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_AMPDU_S)); \
      } while (0)
 
-typedef enum {
+enum HTT_PPDU_STATS_RESP_TYPE {
     HTT_PPDU_STATS_NO_RESPONSE_EXPECTED_E                      = 0,
     HTT_PPDU_STATS_ACK_EXPECTED_E                              = 1,
     HTT_PPDU_STATS_BA_BITMAP_EXPECTED_E                        = 2,
@@ -859,7 +1190,8 @@ typedef enum {
     HTT_PPDU_STATS_UL_MU_BA_AND_DATA_EXPECTED_E                = 4,
     HTT_PPDU_STATS_CTS_EXPECTED_E                              = 5,
     HTT_PPDU_STATS_MU_CBF_EXPECTED_E                           = 6,
-} HTT_PPDU_STATS_RESP_TYPE;
+};
+typedef enum HTT_PPDU_STATS_RESP_TYPE HTT_PPDU_STATS_RESP_TYPE;
 
 /* Refer HTT_PPDU_STATS_RESP_TYPE */
 #define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RESP_TYPE_M     0x00001e00
@@ -875,13 +1207,14 @@ typedef enum {
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RESP_TYPE_S)); \
      } while (0)
 
-typedef enum {
+enum  HTT_PPDU_STATS_USER_COMPLETION_STATUS {
     HTT_PPDU_STATS_USER_STATUS_OK,
     HTT_PPDU_STATS_USER_STATUS_FILTERED,
     HTT_PPDU_STATS_USER_STATUS_RESP_TIMEOUT,
     HTT_PPDU_STATS_USER_STATUS_RESP_MISMATCH,
     HTT_PPDU_STATS_USER_STATUS_ABORT,
-}HTT_PPDU_STATS_USER_COMPLETION_STATUS;
+};
+typedef enum HTT_PPDU_STATS_USER_COMPLETION_STATUS HTT_PPDU_STATS_USER_COMPLETION_STATUS;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -889,7 +1222,14 @@ typedef struct {
      * BIT [ 15:   8]   :- tid_num
      * BIT [ 31:  16]   :- sw_peer_id
      */
-    A_UINT32 sw_peer_id__tid_num__completion_status;
+    union {
+        A_UINT32 sw_peer_id__tid_num__completion_status;
+        struct {
+            A_UINT32 completion_status:         8,
+                     tid_num:                   8,
+                     sw_peer_id:               16;
+        };
+    };
 
     /* RSSI value of last ack packet (units = dB above noise floor) */
     A_UINT32 ack_rssi;
@@ -897,15 +1237,30 @@ typedef struct {
     /* BIT [ 15 :   0]   :- mpdu_tried
      * BIT [ 31 :  16]   :- mpdu_success
      */
-    A_UINT32 mpdu_tried__mpdu_success;
+    union {
+        A_UINT32 mpdu_tried__mpdu_success;
+        struct {
+            A_UINT32 mpdu_tried:                16,
+                     mpdu_success:              16;
+        };
+    };
 
     /* BIT [ 3 :   0]   :- long_retries
      * BIT [ 7 :   4]   :- short_retries
      * BIT [ 8 :   8]   :- is_ampdu
      * BIT [ 12:   9]   :- resp_type
-     * BIT [ 31:  13]   :- reserved
+     * BIT [ 31:  13]   :- reserved0
      */
-    A_UINT32 resp_type_is_ampdu__short_retry__long_retry;
+    union {
+        A_UINT32 resp_type_is_ampdu__short_retry__long_retry;
+        struct {
+            A_UINT32 long_retries:               4,
+                     short_retries:              4,
+                     is_ampdu:                   1,
+                     resp_type:                  4,
+                     reserved0:                 19;
+        };
+    };
 } htt_ppdu_stats_user_cmpltn_common_tlv;
 
 #define HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_TID_NUM_M     0x000000ff
@@ -942,10 +1297,17 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /* BIT [ 7 :   0]   :- tid_num
-     * BIT [ 15:   8]   :- reserved
+     * BIT [ 15:   8]   :- reserved0
      * BIT [ 31:  16]   :- sw_peer_id
      */
-    A_UINT32 sw_peer_id__tid_num;
+    union {
+        A_UINT32 sw_peer_id__tid_num;
+        struct {
+            A_UINT32 tid_num:        8,
+                     reserved0:      8,
+                     sw_peer_id:    16;
+        };
+    };
     A_UINT32 ba_seq_no;
     A_UINT32 ba_bitmap[HTT_BA_64_BIT_MAP_SIZE_DWORDS];
 } htt_ppdu_stats_user_compltn_ba_bitmap_64_tlv;
@@ -953,10 +1315,17 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /* BIT [ 7 :   0]   :- tid_num
-     * BIT [ 15:   8]   :- reserved
+     * BIT [ 15:   8]   :- reserved0
      * BIT [ 31:  16]   :- sw_peer_id
      */
-    A_UINT32 sw_peer_id__tid_num;
+    union {
+        A_UINT32 sw_peer_id__tid_num;
+        struct {
+            A_UINT32 tid_num:        8,
+                     reserved0:      8,
+                     sw_peer_id:    16;
+        };
+    };
     A_UINT32 ba_seq_no;
     A_UINT32 ba_bitmap[HTT_BA_256_BIT_MAP_SIZE_DWORDS];
 } htt_ppdu_stats_user_compltn_ba_bitmap_256_tlv;
@@ -1042,20 +1411,42 @@ typedef struct {
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     A_UINT32 ppdu_id;
+
     /* BIT [ 15 :   0]   :- sw_peer_id
-     * BIT [ 31 :  16]   :- rsvd
+     * BIT [ 31 :  16]   :- reserved0
      */
-    A_UINT32 rsvd_sw_peer_id;
+    union {
+        A_UINT32 rsvd_sw_peer_id;
+        struct {
+            A_UINT32 sw_peer_id:          16,
+                     reserved0:           16;
+        };
+    };
+
     /* BIT [ 8  :   0]   :- num_mpdu
      * BIT [ 24 :   9]   :- num_msdu
      * BIT [ 31 :  25]   :- tid_num
      */
-    A_UINT32 tid_num__num_msdu__num_mpdu;
+    union {
+        A_UINT32 tid_num__num_msdu__num_mpdu;
+        struct {
+            A_UINT32 num_mpdu:             9,
+                     num_msdu:            16,
+                     tid_num:              7;
+        };
+    };
 
     /* BIT [ 15 :   0]   :- current_seq
      * BIT [ 31 :  16]   :- start_seq
      */
-    A_UINT32 start_seq__current_seq;
+    union {
+        A_UINT32 start_seq__current_seq;
+        struct {
+            A_UINT32 current_seq:          16,
+                     start_seq:            16;
+        };
+    };
+
     A_UINT32 success_bytes;
 } htt_ppdu_stats_user_compltn_ack_ba_status_tlv;
 
@@ -1159,20 +1550,46 @@ typedef struct {
     /* BIT [ 7 :   0]   :- flow_type
      * BIT [ 16:   8]   :- num_mpdu
      * BIT [ 30:  17]   :- num_msdu
-     * BIT [ 31:  31]   :- rsvd
+     * BIT [ 31:  31]   :- reserved0
      */
-    A_UINT32 num_msdu__num_mpdu__flow_type;
+    union {
+        A_UINT32 num_msdu__num_mpdu__flow_type;
+        struct {
+            A_UINT32 flow_type:        8,
+                     num_mpdu:         9,
+                     num_msdu:        14,
+                     reserved0:        1;
+        };
+    };
 
     /* BIT [ 7  :   0]   :- tid_num
      * BIT [ 15 :   8]   :- queue_type
      * BIT [ 31 :  16]   :- sw_peer_id
      */
-    A_UINT32 sw_peer_id__queue_type__tid_num;
+    union {
+        A_UINT32 sw_peer_id__queue_type__tid_num;
+        struct {
+            A_UINT32 tid_num:          8,
+                     queue_type:       8,
+                     sw_peer_id:       16;
+        };
+    };
 } htt_ppdu_stats_flush_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* Future purpose */
+    A_UINT32 reserved1; /* set to 0x0 */
+    A_UINT32 reserved2; /* set to 0x0 */
+    A_UINT32 reserved3; /* set to 0x0 */
+
+    /* mgmt/ctrl frame payload
+     * The size of payload (in bytes) can be derived from the length in
+     * tlv parametes, minus the 12 bytes of the above fields.
+     */
+    A_UINT32 payload[1];
+} htt_ppdu_stats_tx_mgmtctrl_payload_tlv;
+
+
 #endif //__HTT_PPDU_STATS_H__
-
-
-
-
-
