@@ -847,7 +847,7 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	struct mgmt_rx_handler *rx_handler;
 	struct mgmt_rx_handler *rx_handler_head = NULL, *rx_handler_tail = NULL;
 	u_int8_t *data, *ivp = NULL;
-	uint16_t buflen;
+	uint16_t buflen, exp_buflen;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!buf) {
@@ -864,10 +864,17 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	data = (uint8_t *)qdf_nbuf_data(buf);
 	wh = (struct ieee80211_frame *)data;
 	buflen = qdf_nbuf_len(buf);
+	exp_buflen = sizeof(struct ieee80211_frame) + WLAN_HDR_EXT_IV_LEN;
 
-	if (buflen > (sizeof(struct ieee80211_frame) + WLAN_HDR_EXT_IV_LEN))
-		ivp = data + sizeof(struct ieee80211_frame);
+	/* It is always required for buflen to be greater than exp_buflen */
+	if (buflen < exp_buflen) {
+		mgmt_txrx_err("buflen:%d, exp_buflen:%d\n", buflen, exp_buflen);
+		qdf_nbuf_free(buf);
+		status = QDF_STATUS_E_FAILURE;
+		goto dec_peer_ref_cnt;
+	}
 
+	ivp = data + sizeof(struct ieee80211_frame);
 	/* peer can be NULL in following 2 scenarios:
 	 * 1. broadcast frame received
 	 * 2. operating in monitor mode
