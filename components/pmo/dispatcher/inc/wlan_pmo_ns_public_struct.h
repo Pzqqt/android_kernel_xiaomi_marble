@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,6 +29,24 @@
 #include "wlan_pmo_common_public_struct.h"
 
 /**
+ * enum pmo_ns_addr_scope - Internal identification of IPv6 addr scope
+ * @PMO_NS_ADDR_SCOPE_INVALID: invalid scope
+ * @PMO_NS_ADDR_SCOPE_NODELOCAL: node local scope
+ * @PMO_NS_ADDR_SCOPE_LINKLOCAL: link local scope
+ * @PMO_NS_ADDR_SCOPE_SITELOCAL: site local scope
+ * @PMO_NS_ADDR_SCOPE_ORGLOCAL: org local scope
+ * @PMO_NS_ADDR_SCOPE_GLOBAL: global scope
+ */
+enum pmo_ns_addr_scope {
+	PMO_NS_ADDR_SCOPE_INVALID = 0,
+	PMO_NS_ADDR_SCOPE_NODELOCAL = 1,
+	PMO_NS_ADDR_SCOPE_LINKLOCAL = 2,
+	PMO_NS_ADDR_SCOPE_SITELOCAL = 3,
+	PMO_NS_ADDR_SCOPE_ORGLOCAL = 4,
+	PMO_NS_ADDR_SCOPE_GLOBAL = 5
+};
+
+/**
  * struct pmo_ns_offload_params - pmo ns offload parameters
  * @enable: true when ns offload enable
  * @num_ns_offload_count: total ns entries
@@ -55,6 +73,8 @@ struct pmo_ns_offload_params {
 	uint8_t target_ipv6_addr_ac_type[PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
 	uint8_t slot_idx;
 	struct qdf_mac_addr bssid;
+	enum pmo_ns_addr_scope scope[PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
+	bool is_offload_applied;
 };
 
 /**
@@ -74,5 +94,6 @@ struct pmo_ns_req {
 	uint8_t ipv6_addr[PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA]
 				[PMO_MAC_IPV6_ADDR_LEN];
 	uint8_t ipv6_addr_type[PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
+	enum pmo_ns_addr_scope scope[PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
 };
 #endif /* end  of _WLAN_PMO_NS_PUBLIC_STRUCT_H_ */

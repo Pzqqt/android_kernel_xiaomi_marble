@@ -52,6 +52,7 @@ struct pmo_arp_offload_params {
 	uint8_t enable;
 	uint8_t host_ipv4_addr[PMO_IPV4_ADDR_LEN];
 	struct qdf_mac_addr bssid;
+	bool is_offload_applied;
 };
 
 #endif /* end  of _WLAN_PMO_ARP_PUBLIC_STRUCT_H_ */

@@ -56,6 +56,7 @@ static QDF_STATUS pmo_core_cache_arp_in_vdev_priv(
 		peer_bssid.bytes);
 
 	request->enable = PMO_OFFLOAD_ENABLE;
+	request->is_offload_applied = false;
 	/* converting u32 to IPV4 address */
 	for (index = 0; index < PMO_IPV4_ADDR_LEN; index++)
 		request->host_ipv4_addr[index] =
@@ -93,6 +94,7 @@ static QDF_STATUS pmo_core_flush_arp_from_vdev_priv(
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	qdf_mem_zero(&vdev_ctx->vdev_arp_req, sizeof(vdev_ctx->vdev_arp_req));
 	vdev_ctx->vdev_arp_req.enable = PMO_OFFLOAD_DISABLE;
+	vdev_ctx->vdev_arp_req.is_offload_applied = false;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
 	pmo_exit();
@@ -366,3 +368,45 @@ out:
 	return status;
 }
 
+QDF_STATUS
+pmo_core_get_arp_offload_params(struct wlan_objmgr_vdev *vdev,
+				struct pmo_arp_offload_params *params)
+{
+	QDF_STATUS status;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+	uint8_t vdev_id;
+
+	pmo_enter();
+
+	if (!params)
+		return QDF_STATUS_E_INVAL;
+
+	qdf_mem_zero(params, sizeof(*params));
+
+	if (!vdev) {
+		pmo_err("vdev is NULL");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto out;
+	}
+
+	status = pmo_vdev_get_ref(vdev);
+	if (status != QDF_STATUS_SUCCESS)
+		goto out;
+
+	status = pmo_core_arp_offload_sanity(vdev);
+	if (status != QDF_STATUS_SUCCESS)
+		goto put_ref;
+
+	vdev_id = pmo_vdev_get_id(vdev);
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	*params = vdev_ctx->vdev_arp_req;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+put_ref:
+	pmo_vdev_put_ref(vdev);
+out:
+	pmo_exit();
+
+	return status;
+}

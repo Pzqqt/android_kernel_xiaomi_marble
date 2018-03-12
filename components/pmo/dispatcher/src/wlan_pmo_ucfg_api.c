@@ -128,6 +128,13 @@ QDF_STATUS pmo_ucfg_disable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 	return pmo_core_disable_arp_offload_in_fwr(vdev, trigger);
 }
 
+QDF_STATUS
+pmo_ucfg_get_arp_offload_params(struct wlan_objmgr_vdev *vdev,
+				struct pmo_arp_offload_params *params)
+{
+	return pmo_core_get_arp_offload_params(vdev, params);
+}
+
 #ifdef WLAN_NS_OFFLOAD
 QDF_STATUS pmo_ucfg_cache_ns_offload_req(struct pmo_ns_req *ns_req)
 {
@@ -151,6 +158,32 @@ QDF_STATUS pmo_ucfg_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 	return pmo_core_disable_ns_offload_in_fwr(vdev, trigger);
 }
 #endif /* WLAN_NS_OFFLOAD */
+
+QDF_STATUS
+pmo_ucfg_get_ns_offload_params(struct wlan_objmgr_vdev *vdev,
+			       struct pmo_ns_offload_params *params)
+{
+	return pmo_core_get_ns_offload_params(vdev, params);
+}
+
+enum pmo_ns_addr_scope
+pmo_ucfg_ns_addr_scope(uint32_t ipv6_scope)
+{
+	switch (ipv6_scope) {
+	case IPV6_ADDR_SCOPE_NODELOCAL:
+		return PMO_NS_ADDR_SCOPE_NODELOCAL;
+	case IPV6_ADDR_SCOPE_LINKLOCAL:
+		return PMO_NS_ADDR_SCOPE_LINKLOCAL;
+	case IPV6_ADDR_SCOPE_SITELOCAL:
+		return PMO_NS_ADDR_SCOPE_SITELOCAL;
+	case IPV6_ADDR_SCOPE_ORGLOCAL:
+		return PMO_NS_ADDR_SCOPE_ORGLOCAL;
+	case IPV6_ADDR_SCOPE_GLOBAL:
+		return PMO_NS_ADDR_SCOPE_GLOBAL;
+	}
+
+	return PMO_NS_ADDR_SCOPE_INVALID;
+}
 
 QDF_STATUS pmo_ucfg_cache_mc_addr_list(
 		struct pmo_mc_addr_list_params *mc_list_config)
@@ -185,6 +218,14 @@ QDF_STATUS pmo_ucfg_disable_mc_addr_filtering_in_fwr(
 uint8_t pmo_ucfg_max_mc_addr_supported(struct wlan_objmgr_psoc *psoc)
 {
 	return pmo_core_max_mc_addr_supported(psoc);
+}
+
+QDF_STATUS
+pmo_ucfg_get_mc_addr_list(struct wlan_objmgr_psoc *psoc,
+			  uint8_t vdev_id,
+			  struct pmo_mc_addr_list *mc_list_req)
+{
+	return pmo_core_get_mc_addr_list(psoc, vdev_id, mc_list_req);
 }
 
 QDF_STATUS pmo_ucfg_cache_gtk_offload_req(struct wlan_objmgr_vdev *vdev,

@@ -312,6 +312,10 @@ fail:
 	if (apf_set_offload->current_length)
 		qdf_mem_free(apf_set_offload->program);
 	qdf_mem_free(apf_set_offload);
+
+	if (!ret)
+		hdd_ctx->apf_enabled_v2 = true;
+
 	return ret;
 }
 

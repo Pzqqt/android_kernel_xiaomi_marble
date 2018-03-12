@@ -174,6 +174,17 @@ QDF_STATUS pmo_ucfg_disable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 		enum pmo_offload_trigger trigger);
 
 /**
+ * pmo_ucfg_get_arp_offload_params() - API to get arp offload params
+ * @vdev: objmgr vdev
+ * @params: output pointer to hold offload params
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success else return error
+ */
+QDF_STATUS
+pmo_ucfg_get_arp_offload_params(struct wlan_objmgr_vdev *vdev,
+				struct pmo_arp_offload_params *params);
+
+/**
  * pmo_ucfg_cache_ns_offload_req(): API to cache ns req in pmo vdev priv ctx
  * @ns_req: pmo ns req param
  *
@@ -212,6 +223,27 @@ QDF_STATUS pmo_ucfg_enable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS pmo_ucfg_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 		enum pmo_offload_trigger trigger);
+
+/**
+ * pmo_ucfg_get_ns_offload_params() - API to get ns offload params
+ * @vdev: objmgr vdev
+ * @params: output pointer to hold offload params
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success else return error
+ */
+QDF_STATUS
+pmo_ucfg_get_ns_offload_params(struct wlan_objmgr_vdev *vdev,
+			       struct pmo_ns_offload_params *params);
+
+/**
+ * pmo_ucfg_ns_addr_scope() - Convert linux specific IPv6 addr scope to
+ *			      WLAN driver specific value
+ * @scope: linux specific IPv6 addr scope
+ *
+ * Return: PMO identifier of linux IPv6 addr scope
+ */
+enum pmo_ns_addr_scope
+pmo_ucfg_ns_addr_scope(uint32_t ipv6_scope);
 
 /**
  * pmo_ucfg_enable_hw_filter_in_fwr() - enable previously configured hw filter
@@ -313,6 +345,19 @@ QDF_STATUS pmo_ucfg_disable_mc_addr_filtering_in_fwr(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id,
 		enum pmo_offload_trigger trigger);
+
+/**
+ * pmo_ucfg_get_mc_addr_list() - API to get mc addr list configured
+ * @psoc: objmgr psoc
+ * @vdev_id: vdev identifier
+ * @mc_list_req: output pointer to hold mc addr list params
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success else return error
+ */
+QDF_STATUS
+pmo_ucfg_get_mc_addr_list(struct wlan_objmgr_psoc *psoc,
+			  uint8_t vdev_id,
+			  struct pmo_mc_addr_list *mc_list_req);
 
 /**
  * pmo_ucfg_cache_gtk_offload_req(): API to cache gtk req in pmo vdev priv obj
@@ -766,6 +811,13 @@ pmo_ucfg_disable_arp_offload_in_fwr(
 }
 
 static inline QDF_STATUS
+pmo_ucfg_get_arp_offload_params(struct wlan_objmgr_vdev *vdev,
+				struct pmo_arp_offload_params *params)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
 pmo_ucfg_cache_ns_offload_req(struct pmo_ns_req *ns_req)
 {
 	return QDF_STATUS_SUCCESS;
@@ -791,6 +843,19 @@ pmo_ucfg_disable_ns_offload_in_fwr(
 		enum pmo_offload_trigger trigger)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_get_ns_offload_params(struct wlan_objmgr_vdev *vdev,
+			       struct pmo_ns_offload_params *params)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline enum pmo_ns_addr_scope
+pmo_ucfg_ns_addr_scope(uint32_t ipv6_scope)
+{
+	return PMO_NS_ADDR_SCOPE_INVALID;
 }
 
 static inline QDF_STATUS
@@ -830,6 +895,14 @@ static inline uint8_t
 pmo_ucfg_max_mc_addr_supported(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_get_mc_addr_list(struct wlan_objmgr_psoc *psoc,
+			  uint8_t vdev_id,
+			  struct pmo_mc_addr_list *mc_list_req)
+{
+	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS

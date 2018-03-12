@@ -84,6 +84,8 @@ wlan_hdd_debugfs_update_csr(struct hdd_context *hdd_ctx,
 		break;
 	case HDD_DEBUFS_FILE_ID_OFFLOAD_INFO:
 		/* populate offload info */
+		len = wlan_hdd_debugfs_update_filters_info(hdd_ctx, adapter,
+							   buf, buf_avail_len);
 		break;
 	default:
 		hdd_err("Failed to fetch stats, unknown stats type");
@@ -338,6 +340,18 @@ void wlan_hdd_debugfs_csr_init(struct hdd_adapter *adapter)
 		if (!csr->entry)
 			hdd_err("Failed to create debugfs file: %s",
 				csr->name);
+	}
+
+	csr = &adapter->csr_file[HDD_DEBUFS_FILE_ID_OFFLOAD_INFO];
+	if (!csr->entry) {
+		strlcpy(csr->name, "offload_info", max_len);
+		csr->id = HDD_DEBUFS_FILE_ID_OFFLOAD_INFO;
+		csr->buf_max_size = DEBUGFS_OFFLOAD_INFO_BUF_SIZE;
+		csr->entry = debugfs_create_file(csr->name, 0444,
+						 adapter->debugfs_phy,
+						 csr, &fops_csr_debugfs);
+		if (!csr->entry)
+			hdd_err("Failed to create generic_info debugfs file");
 	}
 }
 

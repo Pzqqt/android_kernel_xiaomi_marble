@@ -71,6 +71,17 @@ QDF_STATUS pmo_core_enable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS pmo_core_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 		enum pmo_offload_trigger trigger);
 
+/**
+ * pmo_core_get_ns_offload_params() - API to get ns offload params
+ * @vdev: objmgr vdev
+ * @params: output pointer to hold offload params
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success else return error
+ */
+QDF_STATUS
+pmo_core_get_ns_offload_params(struct wlan_objmgr_vdev *vdev,
+			       struct pmo_ns_offload_params *params);
+
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_NS_H_ */
