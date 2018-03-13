@@ -154,6 +154,7 @@ struct p2p_frame_info {
  * @off_chan:       Is this off channel tx
  * @no_cck:         Required cck or not
  * @no_ack:         Required ack or not
+ * @is_deleting:    Received tx ack and waiting for deleting
  * @duration:       Duration for the RoC
  * @tx_timer:       RoC timer
  * @frame_info:     Frame type information
@@ -170,6 +171,7 @@ struct tx_action_context {
 	bool off_chan;
 	bool no_cck;
 	bool no_ack;
+	bool is_deleting;
 	uint32_t duration;
 	qdf_mc_timer_t tx_timer;
 	struct p2p_frame_info frame_info;
