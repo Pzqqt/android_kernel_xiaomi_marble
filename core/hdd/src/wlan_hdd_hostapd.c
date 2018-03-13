@@ -1727,6 +1727,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		else
 			ap_ctx->dfs_cac_block_tx = true;
 
+		ucfg_ipa_set_dfs_cac_tx(hdd_ctx->hdd_pdev,
+					ap_ctx->dfs_cac_block_tx);
+
 		hdd_debug("The value of dfs_cac_block_tx[%d] for ApCtx[%pK]:%d",
 				ap_ctx->dfs_cac_block_tx, ap_ctx,
 				adapter->session_id);
@@ -1875,7 +1878,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		we_custom_event_generic = we_custom_start_event;
 		hdd_ipa_set_tx_flow_info();
 		/* Send SCC/MCC Switching event to IPA */
-		hdd_ipa_send_mcc_scc_msg(hdd_ctx, hdd_ctx->mcc_mode);
+		ucfg_ipa_send_mcc_scc_msg(hdd_ctx->hdd_pdev, hdd_ctx->mcc_mode);
 
 		if (policy_mgr_is_hw_mode_change_after_vdev_up(
 			hdd_ctx->hdd_psoc)) {
@@ -1990,6 +1993,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					    &dfs_info,
 					    sizeof(struct wlan_dfs_info));
 		ap_ctx->dfs_cac_block_tx = false;
+		ucfg_ipa_set_dfs_cac_tx(hdd_ctx->hdd_pdev,
+					ap_ctx->dfs_cac_block_tx);
 		hdd_ctx->dev_dfs_cac_status = DFS_CAC_ALREADY_DONE;
 		if (QDF_STATUS_SUCCESS !=
 			hdd_send_radar_event(hdd_ctx, eSAP_DFS_CAC_END,
@@ -2043,6 +2048,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_send_conditional_chan_switch_status(hdd_ctx,
 			&adapter->wdev, true);
 		ap_ctx->dfs_cac_block_tx = false;
+		ucfg_ipa_set_dfs_cac_tx(hdd_ctx->hdd_pdev,
+					ap_ctx->dfs_cac_block_tx);
 		hdd_ctx->dev_dfs_cac_status = DFS_CAC_ALREADY_DONE;
 
 		qdf_create_work(0, &hdd_ctx->sap_pre_cac_work,
@@ -2681,7 +2688,7 @@ stopbss:
 
 		hdd_ipa_set_tx_flow_info();
 		/* Send SCC/MCC Switching event to IPA */
-		hdd_ipa_send_mcc_scc_msg(hdd_ctx, hdd_ctx->mcc_mode);
+		ucfg_ipa_send_mcc_scc_msg(hdd_ctx->hdd_pdev, hdd_ctx->mcc_mode);
 	}
 	return QDF_STATUS_SUCCESS;
 }

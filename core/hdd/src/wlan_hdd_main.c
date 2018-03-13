@@ -1972,6 +1972,10 @@ void hdd_update_tgt_cfg(void *context, void *param)
 			       cds_get_context(QDF_MODULE_ID_SOC));
 	ucfg_ipa_set_txrx_handle(hdd_ctx->hdd_psoc,
 				 cds_get_context(QDF_MODULE_ID_TXRX));
+	ucfg_ipa_reg_sap_xmit_cb(hdd_ctx->hdd_pdev,
+				 hdd_softap_hard_start_xmit);
+	ucfg_ipa_reg_send_to_nw_cb(hdd_ctx->hdd_pdev,
+				   hdd_ipa_send_skb_to_network);
 
 	if (cds_cfg) {
 		if (hdd_ctx->config->enable_sub_20_channel_width !=
@@ -2843,15 +2847,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		if (unint) {
 			hdd_debug("In phase-1 initialization  don't enable modules");
 			break;
-		}
-
-		if (reinit) {
-			ret = hdd_ipa_uc_ssr_reinit(hdd_ctx);
-			if (ret) {
-				hdd_err("HDD IPA UC reinit failed; errno: %d",
-					ret);
-				goto post_disable;
-			}
 		}
 
 	/* Fall through dont add break here */
@@ -7763,10 +7758,10 @@ static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
 
 	/* Change IPA to SW path when throttle level greater than 0 */
 	if (level > THROTTLE_LEVEL_0)
-		hdd_ipa_send_mcc_scc_msg(hdd_ctx, true);
+		ucfg_ipa_send_mcc_scc_msg(hdd_ctx->hdd_pdev, true);
 	else
 		/* restore original concurrency mode */
-		hdd_ipa_send_mcc_scc_msg(hdd_ctx, hdd_ctx->mcc_mode);
+		ucfg_ipa_send_mcc_scc_msg(hdd_ctx->hdd_pdev, hdd_ctx->mcc_mode);
 }
 
 /**
@@ -8305,7 +8300,7 @@ static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 		hdd_debug("Module enable_11d set to %d", enable_11d);
 	}
 
-	if (!hdd_ipa_is_present()) {
+	if (!ucfg_ipa_is_present()) {
 		hdd_ctx->config->IpaConfig = 0;
 		hdd_debug("IpaConfig override to %d",
 			hdd_ctx->config->IpaConfig);
@@ -13736,7 +13731,7 @@ void hdd_pld_ipa_uc_shutdown_pipes(void)
 	if (!hdd_ctx)
 		return;
 
-	hdd_ipa_uc_force_pipe_shutdown(hdd_ctx);
+	ucfg_ipa_uc_force_pipe_shutdown(hdd_ctx->hdd_pdev);
 }
 
 /**

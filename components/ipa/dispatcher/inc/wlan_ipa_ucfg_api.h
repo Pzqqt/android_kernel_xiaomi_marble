@@ -133,6 +133,58 @@ void ucfg_ipa_uc_stat_request(struct wlan_objmgr_pdev *pdev,
 void ucfg_ipa_uc_stat_query(struct wlan_objmgr_pdev *pdev,
 			    uint32_t *ipa_tx_diff, uint32_t *ipa_rx_diff);
 
+/**
+ * ucfg_ipa_reg_sap_xmit_cb() - Register upper layer SAP cb to transmit
+ * @pdev: pdev obj
+ * @cb: callback
+ *
+ * Return: None
+ */
+void ucfg_ipa_reg_sap_xmit_cb(struct wlan_objmgr_pdev *pdev, void *cb);
+
+/**
+ * ucfg_ipa_reg_send_to_nw_cb() - Register cb to send IPA Rx packet to network
+ * @pdev: pdev obj
+ * @cb: callback
+ *
+ * Return: None
+ */
+void ucfg_ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev, void *cb);
+
+/**
+ * ucfg_ipa_set_mcc_mode() - Set MCC mode
+ * @pdev: pdev obj
+ * @mcc_mode: 0=MCC/1=SCC
+ *
+ * Return: void
+ */
+void ucfg_ipa_set_mcc_mode(struct wlan_objmgr_pdev *pdev, bool mcc_mode);
+
+/**
+ * ucfg_ipa_set_dfs_cac_tx() - Set DFS cac tx block
+ * @pdev: pdev obj
+ * @tx_block: dfs cac tx block
+ *
+ * Return: void
+ */
+void ucfg_ipa_set_dfs_cac_tx(struct wlan_objmgr_pdev *pdev, bool tx_block);
+
+/**
+ * ucfg_ipa_set_ap_ibss_fwd() - Set AP intra bss forward
+ * @pdev: pdev obj
+ * @intra_bss: enable or disable ap intra bss forward
+ *
+ * Return: void
+ */
+void ucfg_ipa_set_ap_ibss_fwd(struct wlan_objmgr_pdev *pdev, bool intra_bss);
+
+/**
+ * ucfg_ipa_uc_force_pipe_shutdown() - Force shutdown IPA pipe
+ * @pdev: pdev obj
+ *
+ * Return: void
+ */
+void ucfg_ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev);
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -194,6 +246,36 @@ void ucfg_ipa_uc_stat_request(struct wlan_objmgr_pdev *pdev,
 static inline
 void ucfg_ipa_uc_stat_query(struct wlan_objmgr_pdev *pdev,
 			    uint32_t *ipa_tx_diff, uint32_t *ipa_rx_diff)
+{
+}
+
+static inline
+void ucfg_ipa_reg_sap_xmit_cb(struct wlan_objmgr_pdev *pdev, void *cb)
+{
+}
+
+static inline
+void ucfg_ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev, void *cb)
+{
+}
+
+static inline
+void ucfg_ipa_set_mcc_mode(struct wlan_objmgr_pdev *pdev, bool mcc_mode)
+{
+}
+
+static inline
+void ucfg_ipa_set_dfs_cac_tx(struct wlan_objmgr_pdev *pdev, bool tx_block)
+{
+}
+
+static inline
+void ucfg_ipa_set_ap_ibss_fwd(struct wlan_objmgr_pdev *pdev, bool intra_bss)
+{
+}
+
+static inline
+void ucfg_ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev)
 {
 }
 #endif /* IPA_OFFLOAD */

@@ -58,7 +58,6 @@
 #include "wlan_logging_sock_svc.h"
 #include "wma.h"
 #include "pktlog_ac.h"
-#include "wlan_hdd_ipa.h"
 #include "wlan_policy_mgr_api.h"
 
 #include <cdp_txrx_cmn_reg.h>

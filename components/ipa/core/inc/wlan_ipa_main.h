@@ -221,5 +221,57 @@ void ipa_uc_stat_request(struct wlan_objmgr_pdev *pdev,
 void ipa_uc_stat_query(struct wlan_objmgr_pdev *pdev,
 		       uint32_t *ipa_tx_diff, uint32_t *ipa_rx_diff);
 
+/**
+ * ipa_reg_sap_xmit_cb() - Register upper layer SAP cb to transmit
+ * @pdev: pdev obj
+ * @cb: callback
+ *
+ * Return: None
+ */
+void ipa_reg_sap_xmit_cb(struct wlan_objmgr_pdev *pdev, void *cb);
+
+/**
+ * ipa_reg_send_to_nw_cb() - Register cb to send IPA Rx packet to network
+ * @pdev: pdev obj
+ * @cb: callback
+ *
+ * Return: None
+ */
+void ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev, void *cb);
+
+/**
+ * ipa_set_mcc_mode() - Set MCC mode
+ * @pdev: pdev obj
+ * @mcc_mode: 0=MCC/1=SCC
+ *
+ * Return: void
+ */
+void ipa_set_mcc_mode(struct wlan_objmgr_pdev *pdev, bool mcc_mode);
+
+/**
+ * ipa_set_dfs_cac_tx() - Set DFS cac tx block
+ * @pdev: pdev obj
+ * @tx_block: dfs cac tx block
+ *
+ * Return: void
+ */
+void ipa_set_dfs_cac_tx(struct wlan_objmgr_pdev *pdev, bool tx_block);
+
+/**
+ * ipa_set_ap_ibss_fwd() - Set AP intra bss forward
+ * @pdev: pdev obj
+ * @intra_bss: enable or disable ap intra bss forward
+ *
+ * Return: void
+ */
+void ipa_set_ap_ibss_fwd(struct wlan_objmgr_pdev *pdev, bool intra_bss);
+
+/**
+ * ipa_uc_force_pipe_shutdown() - Force IPA pipe shutdown
+ * @pdev: pdev obj
+ *
+ * Return: void
+ */
+void ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev);
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */

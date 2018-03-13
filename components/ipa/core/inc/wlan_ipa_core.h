@@ -391,5 +391,70 @@ void wlan_ipa_uc_rt_debug_deinit(struct wlan_ipa_priv *ipa_ctx);
  */
 void wlan_ipa_uc_rt_debug_init(struct wlan_ipa_priv *ipa_ctx);
 
+/**
+ * wlan_ipa_reg_sap_xmit_cb() - Register upper layer SAP cb to transmit
+ * @ipa_ctx: IPA context
+ * @cb: callback
+ *
+ * Return: None
+ */
+static inline
+void wlan_ipa_reg_sap_xmit_cb(struct wlan_ipa_priv *ipa_ctx, void *cb)
+{
+	ipa_ctx->softap_xmit = cb;
+}
+
+/**
+ * wlan_ipa_reg_send_to_nw_cb() - Register cb to send IPA Rx packet to network
+ * @ipa_ctx: IPA context
+ * @cb: callback
+ *
+ * Return: None
+ */
+static inline
+void wlan_ipa_reg_send_to_nw_cb(struct wlan_ipa_priv *ipa_ctx, void *cb)
+{
+	ipa_ctx->send_to_nw = cb;
+}
+
+/**
+ * wlan_ipa_set_mcc_mode() - Set MCC mode
+ * @ipa_ctx: IPA context
+ * @mcc_mode: 0=MCC/1=SCC
+ *
+ * Return: void
+ */
+static inline
+void wlan_ipa_set_mcc_mode(struct wlan_ipa_priv *ipa_ctx, bool mcc_mode)
+{
+	ipa_ctx->mcc_mode = mcc_mode;
+}
+
+/**
+ * wlan_ipa_set_dfs_cac_tx() - Set DFS cac tx block
+ * @ipa_ctx: IPA context
+ * @tx_block: dfs cac tx block
+ *
+ * Return: void
+ */
+static inline
+void wlan_ipa_set_dfs_cac_tx(struct wlan_ipa_priv *ipa_ctx, bool tx_block)
+{
+	ipa_ctx->dfs_cac_block_tx = tx_block;
+}
+
+/**
+ * wlan_ipa_set_ap_ibss_fwd() - Set AP intra bss forward
+ * @ipa_ctx: IPA context
+ * @intra_bss: enable or disable ap intra bss forward
+ *
+ * Return: void
+ */
+static inline
+void wlan_ipa_set_ap_ibss_fwd(struct wlan_ipa_priv *ipa_ctx, bool intra_bss)
+{
+	ipa_ctx->ap_intrabss_fwd = intra_bss;
+}
+
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_CORE_H_ */

@@ -1433,7 +1433,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	}
 	hdd_ipa_set_tx_flow_info();
 	/* Send SCC/MCC Switching event to IPA */
-	hdd_ipa_send_mcc_scc_msg(hdd_ctx, hdd_ctx->mcc_mode);
+	ucfg_ipa_send_mcc_scc_msg(hdd_ctx->hdd_pdev, hdd_ctx->mcc_mode);
 
 	msg = NULL;
 	/* During the WLAN uninitialization,supplicant is stopped before the

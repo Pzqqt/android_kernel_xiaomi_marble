@@ -49,7 +49,6 @@
 #include "wma_types.h"
 #include "wlan_policy_mgr_api.h"
 #include <qca_vendor.h>
-#include "wlan_hdd_ipa.h"
 
 /**
  * enum qca_wlan_vendor_tdls_trigger_mode_hdd_map: Maps the user space TDLS

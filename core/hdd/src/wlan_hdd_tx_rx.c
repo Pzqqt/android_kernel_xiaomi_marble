@@ -52,7 +52,6 @@
 #include "sap_api.h"
 #include "wlan_hdd_wmm.h"
 #include "wlan_hdd_tdls.h"
-#include <wlan_hdd_ipa.h>
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_lro.h"
 #include <cdp_txrx_cmn.h>

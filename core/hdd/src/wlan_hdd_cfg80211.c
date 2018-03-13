@@ -69,7 +69,6 @@
 #include "wma.h"
 #include "wlan_hdd_misc.h"
 #include "wlan_hdd_nan.h"
-#include <wlan_hdd_ipa.h>
 #include "wlan_logging_sock_svc.h"
 #include "sap_api.h"
 #include "csr_api.h"
@@ -114,6 +113,8 @@
 #include "wlan_reg_ucfg_api.h"
 #include "wifi_pos_api.h"
 #include "wlan_hdd_spectralscan.h"
+#include "wlan_ipa_ucfg_api.h"
+
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
 
@@ -15917,6 +15918,10 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 							      disable_intrabss_fwd);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status))
 			ret = -EINVAL;
+
+		ucfg_ipa_set_ap_ibss_fwd(hdd_ctx->hdd_pdev,
+					 adapter->session.ap.
+					 disable_intrabss_fwd);
 	}
 
 	hdd_exit();

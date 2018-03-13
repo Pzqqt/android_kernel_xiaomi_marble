@@ -285,3 +285,111 @@ void ipa_uc_stat_query(struct wlan_objmgr_pdev *pdev,
 
 	return wlan_ipa_uc_stat_query(ipa_obj, ipa_tx_diff, ipa_rx_diff);
 }
+
+void ipa_reg_sap_xmit_cb(struct wlan_objmgr_pdev *pdev, void *cb)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return;
+	}
+
+	return wlan_ipa_reg_sap_xmit_cb(ipa_obj, cb);
+}
+
+void ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev, void *cb)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return;
+	}
+
+	return wlan_ipa_reg_send_to_nw_cb(ipa_obj, cb);
+}
+
+void ipa_set_mcc_mode(struct wlan_objmgr_pdev *pdev, bool mcc_mode)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return;
+	}
+
+	return wlan_ipa_set_mcc_mode(ipa_obj, mcc_mode);
+}
+
+void ipa_set_dfs_cac_tx(struct wlan_objmgr_pdev *pdev, bool tx_block)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return;
+	}
+
+	return wlan_ipa_set_dfs_cac_tx(ipa_obj, tx_block);
+}
+
+void ipa_set_ap_ibss_fwd(struct wlan_objmgr_pdev *pdev, bool intra_bss)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return;
+	}
+
+	return wlan_ipa_set_ap_ibss_fwd(ipa_obj, intra_bss);
+}
+
+void ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return;
+	}
+
+	wlan_ipa_uc_disable_pipes(ipa_obj);
+}
