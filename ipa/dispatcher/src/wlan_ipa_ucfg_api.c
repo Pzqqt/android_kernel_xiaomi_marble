@@ -81,3 +81,34 @@ void ucfg_ipa_uc_stat_query(struct wlan_objmgr_pdev *pdev,
 {
 	return ipa_uc_stat_query(pdev, ipa_tx_diff, ipa_rx_diff);
 }
+
+void ucfg_ipa_reg_sap_xmit_cb(struct wlan_objmgr_pdev *pdev, void *cb)
+{
+	return ipa_reg_sap_xmit_cb(pdev, cb);
+}
+
+void ucfg_ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev, void *cb)
+{
+	return ipa_reg_send_to_nw_cb(pdev, cb);
+
+}
+
+void ucfg_ipa_set_mcc_mode(struct wlan_objmgr_pdev *pdev, bool mcc_mode)
+{
+	return ipa_set_mcc_mode(pdev, mcc_mode);
+}
+
+void ucfg_ipa_set_dfs_cac_tx(struct wlan_objmgr_pdev *pdev, bool tx_block)
+{
+	return ipa_set_dfs_cac_tx(pdev, tx_block);
+}
+
+void ucfg_ipa_set_ap_ibss_fwd(struct wlan_objmgr_pdev *pdev, bool intra_bss)
+{
+	return ipa_set_ap_ibss_fwd(pdev, intra_bss);
+}
+
+void ucfg_ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev)
+{
+	return ipa_uc_force_pipe_shutdown(pdev);
+}

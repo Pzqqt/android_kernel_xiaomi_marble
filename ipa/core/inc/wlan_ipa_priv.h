@@ -555,6 +555,7 @@ struct wlan_ipa_tx_desc {
 };
 
 typedef int (*wlan_ipa_softap_xmit)(qdf_nbuf_t skb, qdf_netdev_t dev);
+typedef int (*wlan_ipa_send_to_nw)(qdf_nbuf_t skb, qdf_netdev_t dev);
 
 /* IPA private context structure definition */
 struct wlan_ipa_priv {
@@ -629,7 +630,7 @@ struct wlan_ipa_priv {
 	uint8_t vdev_to_iface[WLAN_IPA_MAX_SESSION];
 	bool vdev_offload_enabled[WLAN_IPA_MAX_SESSION];
 	bool mcc_mode;
-	bool ap_disable_ibss_fwd;
+	bool ap_intrabss_fwd;
 	bool dfs_cac_block_tx;
 #ifdef FEATURE_METERING
 	struct ipa_uc_sharing_stats ipa_sharing_stats;
@@ -640,6 +641,7 @@ struct wlan_ipa_priv {
 #endif
 
 	wlan_ipa_softap_xmit softap_xmit;
+	wlan_ipa_send_to_nw send_to_nw;
 	ipa_uc_offload_control_req ipa_tx_op;
 
 	qdf_event_t ipa_resource_comp;
