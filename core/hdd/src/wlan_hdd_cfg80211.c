@@ -15939,7 +15939,7 @@ static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_config *config = hdd_ctx->config;
-	struct hdd_wext_state *wext;
+	struct csr_roam_profile *roam_profile;
 	struct wireless_dev *wdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -15968,14 +15968,15 @@ static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 	}
 	memset(&adapter->session, 0, sizeof(adapter->session));
 	hdd_set_station_ops(adapter->dev);
-	wext = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	wext->roamProfile.pAddIEScan = adapter->scan_info.scan_add_ie.addIEdata;
-	wext->roamProfile.nAddIEScanLength =
+
+	roam_profile = hdd_roam_profile(adapter);
+	roam_profile->pAddIEScan = adapter->scan_info.scan_add_ie.addIEdata;
+	roam_profile->nAddIEScanLength =
 		adapter->scan_info.scan_add_ie.length;
 	if (type == NL80211_IFTYPE_ADHOC) {
 		status = hdd_start_station_adapter(adapter);
-		wext->roamProfile.BSSType = eCSR_BSS_TYPE_START_IBSS;
-		wext->roamProfile.phyMode =
+		roam_profile->BSSType = eCSR_BSS_TYPE_START_IBSS;
+		roam_profile->phyMode =
 			hdd_cfg_xlate_to_csr_phy_mode(config->dot11Mode);
 	}
 	hdd_exit();
@@ -16080,10 +16081,8 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
 	    (adapter->device_mode == QDF_P2P_DEVICE_MODE) ||
 	    (adapter->device_mode == QDF_IBSS_MODE)) {
-		struct hdd_wext_state *pWextState =
-			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 
-		roam_profile = &pWextState->roamProfile;
+		roam_profile = hdd_roam_profile(adapter);
 		LastBSSType = roam_profile->BSSType;
 
 		switch (type) {
@@ -16607,6 +16606,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 		struct hdd_station_ctx *sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		struct csr_roam_profile *roam_profile;
 
 		if (!pairwise) {
 			/* set group key */
@@ -16616,14 +16616,13 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			}
 		}
 
-		pWextState->roamProfile.Keys.KeyLength[key_index] =
-			(u8) params->key_len;
+		roam_profile = hdd_roam_profile(adapter);
+		roam_profile->Keys.KeyLength[key_index] = params->key_len;
 
-		pWextState->roamProfile.Keys.defaultIndex = key_index;
+		roam_profile->Keys.defaultIndex = key_index;
 
-		qdf_mem_copy(&pWextState->roamProfile.Keys.
-			     KeyMaterial[key_index][0], params->key,
-			     params->key_len);
+		qdf_mem_copy(&roam_profile->Keys.KeyMaterial[key_index][0],
+			     params->key, params->key_len);
 
 		hdd_debug("Set key for peerMac "MAC_ADDRESS_STR" direction %d",
 		       MAC_ADDR_ARRAY(setKey.peerMac.bytes),
@@ -16657,9 +16656,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		 * key intialized with NULL key, so re-initialize
 		 * group key with correct value
 		 */
-		if ((eCSR_BSS_TYPE_START_IBSS ==
-		     pWextState->roamProfile.BSSType)
-		    &&
+		if ((eCSR_BSS_TYPE_START_IBSS == roam_profile->BSSType) &&
 		    !((IW_AUTH_KEY_MGMT_802_1X ==
 		       (pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X))
 		      && (eCSR_AUTH_TYPE_OPEN_SYSTEM ==
@@ -16749,12 +16746,11 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 	    (adapter->device_mode == QDF_P2P_GO_MODE)) {
 		struct hdd_ap_ctx *ap_ctx =
 			WLAN_HDD_GET_AP_CTX_PTR(adapter);
+
 		roam_profile =
 			wlan_sap_get_roam_profile(ap_ctx->sap_context);
 	} else {
-		struct hdd_wext_state *pWextState =
-			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-		roam_profile = &(pWextState->roamProfile);
+		roam_profile = hdd_roam_profile(adapter);
 	}
 
 	if (roam_profile == NULL) {
@@ -16946,10 +16942,11 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 
 	if ((adapter->device_mode == QDF_STA_MODE) ||
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
-		struct hdd_wext_state *pWextState =
-			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 		struct hdd_station_ctx *sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		struct csr_roam_profile *roam_profile;
+
+		roam_profile = hdd_roam_profile(adapter);
 
 		if ((eCSR_ENCRYPT_TYPE_TKIP !=
 		     sta_ctx->conn_info.ucEncryptionType) &&
@@ -16967,7 +16964,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 
 			tCsrRoamSetKey setKey;
 			uint32_t roamId = INVALID_ROAM_ID;
-			tCsrKeys *Keys = &pWextState->roamProfile.Keys;
+			tCsrKeys *Keys = &roam_profile->Keys;
 
 			hdd_debug("Default tx key index %d", key_index);
 
@@ -16986,7 +16983,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 					 &sta_ctx->conn_info.bssId);
 
 			if (Keys->KeyLength[key_index] == CSR_WEP40_KEY_LEN &&
-			    pWextState->roamProfile.EncryptionType.
+			    roam_profile->EncryptionType.
 			    encryptionType[0] == eCSR_ENCRYPT_TYPE_WEP104) {
 				/* In the case of dynamic wep
 				 * supplicant hardcodes DWEP type to
@@ -16998,14 +16995,14 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 				 * lenght(5) and encryption type(104)
 				 * and switching encryption type to 40
 				 */
-				pWextState->roamProfile.EncryptionType.
+				roam_profile->EncryptionType.
 				encryptionType[0] = eCSR_ENCRYPT_TYPE_WEP40;
-				pWextState->roamProfile.mcEncryptionType.
+				roam_profile->mcEncryptionType.
 				encryptionType[0] = eCSR_ENCRYPT_TYPE_WEP40;
 			}
 
 			setKey.encType =
-				pWextState->roamProfile.EncryptionType.
+				roam_profile->EncryptionType.
 				encryptionType[0];
 
 			/* Issue set key request */
@@ -17678,8 +17675,7 @@ static
 int wlan_hdd_cfg80211_check_pmf_valid(struct csr_roam_profile *roam_profile)
 {
 	if (roam_profile->MFPEnabled &&
-	    !(roam_profile->MFPRequired ||
-	    roam_profile->MFPCapable)) {
+	    !(roam_profile->MFPRequired || roam_profile->MFPCapable)) {
 		hdd_err("Drop connect req as supplicant has indicated PMF required for the non-PMF peer. MFPEnabled %d MFPRequired %d MFPCapable %d",
 				roam_profile->MFPEnabled,
 				roam_profile->MFPRequired,
@@ -17718,7 +17714,6 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 {
 	int status = 0;
 	QDF_STATUS qdf_status;
-	struct hdd_wext_state *pWextState;
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *hdd_sta_ctx;
 	uint32_t roamId = INVALID_ROAM_ID;
@@ -17729,7 +17724,6 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
-	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -17751,10 +17745,10 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 
 	hdd_notify_teardown_tdls_links(adapter->hdd_vdev);
 
-	roam_profile = &pWextState->roamProfile;
 	qdf_mem_zero(&hdd_sta_ctx->conn_info.conn_flag,
 		     sizeof(hdd_sta_ctx->conn_info.conn_flag));
 
+	roam_profile = hdd_roam_profile(adapter);
 	if (roam_profile) {
 		struct hdd_station_ctx *sta_ctx;
 
@@ -17921,8 +17915,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 					  &roam_profile->ch_params);
 		}
 
-		if (wlan_hdd_cfg80211_check_pmf_valid(
-		   &pWextState->roamProfile)) {
+		if (wlan_hdd_cfg80211_check_pmf_valid(roam_profile)) {
 			status = -EINVAL;
 			goto conn_failure;
 		}
@@ -18070,10 +18063,9 @@ ret_status:
 static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 					   enum nl80211_auth_type auth_type)
 {
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct csr_roam_profile *roam_profile;
 
 	/*set authentication type */
 	switch (auth_type) {
@@ -18116,19 +18108,19 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	pWextState->roamProfile.AuthType.authType[0] =
-		sta_ctx->conn_info.authType;
+	roam_profile = hdd_roam_profile(adapter);
+	roam_profile->AuthType.authType[0] = sta_ctx->conn_info.authType;
 	return 0;
 }
 
 #if defined(WLAN_FEATURE_FILS_SK) && \
 	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
-static bool hdd_validate_fils_info_ptr(struct hdd_wext_state *wext_state)
+static bool hdd_validate_fils_info_ptr(struct csr_roam_profile *roam_profile)
 {
 	struct cds_fils_connection_info *fils_con_info;
 
-	fils_con_info = wext_state->roamProfile.fils_con_info;
+	fils_con_info = roam_profile->fils_con_info;
 	if (!fils_con_info) {
 		hdd_err("No valid Roam profile");
 		return false;
@@ -18182,14 +18174,12 @@ static bool wlan_hdd_fils_data_in_limits(struct cfg80211_connect_params *req)
 static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 					 struct cfg80211_connect_params *req)
 {
-	struct hdd_wext_state *wext_state;
 	struct csr_roam_profile *roam_profile;
 	enum eAniAuthType auth_type;
 	uint8_t *buf;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	roam_profile = &wext_state->roamProfile;
+	roam_profile = hdd_roam_profile(adapter);
 
 	if (!hdd_ctx->config->is_fils_enabled) {
 		hdd_err("FILS disabled");
@@ -18323,7 +18313,7 @@ static bool wlan_hdd_is_conn_type_fils(struct cfg80211_connect_params *req)
 }
 
 #else
-static bool hdd_validate_fils_info_ptr(struct hdd_wext_state *wext_state)
+static bool hdd_validate_fils_info_ptr(struct csr_roam_profile *roam_profile)
 {
 	return true;
 }
@@ -18360,10 +18350,10 @@ static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct csr_roam_profile *roam_profile;
 
-	roam_profile = &pWextState->roamProfile;
+	roam_profile = hdd_roam_profile(adapter);
 
 	if (wlan_hdd_is_akm_suite_fils(key_mgmt) &&
-	    !hdd_validate_fils_info_ptr(pWextState))
+	    !hdd_validate_fils_info_ptr(roam_profile))
 		return -EINVAL;
 #ifndef WLAN_AKM_SUITE_8021X_SHA256
 #define WLAN_AKM_SUITE_8021X_SHA256 0x000FAC05
@@ -18476,10 +18466,9 @@ static int wlan_hdd_cfg80211_set_cipher(struct hdd_adapter *adapter,
 					u32 cipher, bool ucast)
 {
 	eCsrEncryptionType encryptionType = eCSR_ENCRYPT_TYPE_NONE;
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct csr_roam_profile *roam_profile;
 
 	if (!cipher) {
 		hdd_debug("received cipher %d - considering none", cipher);
@@ -18535,17 +18524,18 @@ static int wlan_hdd_cfg80211_set_cipher(struct hdd_adapter *adapter,
 		}
 	}
 
+	roam_profile = hdd_roam_profile(adapter);
 	if (ucast) {
 		hdd_debug("setting unicast cipher type to %d", encryptionType);
 		sta_ctx->conn_info.ucEncryptionType = encryptionType;
-		pWextState->roamProfile.EncryptionType.numEntries = 1;
-		pWextState->roamProfile.EncryptionType.encryptionType[0] =
+		roam_profile->EncryptionType.numEntries = 1;
+		roam_profile->EncryptionType.encryptionType[0] =
 			encryptionType;
 	} else {
 		hdd_debug("setting mcast cipher type to %d", encryptionType);
 		sta_ctx->conn_info.mcEncryptionType = encryptionType;
-		pWextState->roamProfile.mcEncryptionType.numEntries = 1;
-		pWextState->roamProfile.mcEncryptionType.encryptionType[0] =
+		roam_profile->mcEncryptionType.numEntries = 1;
+		roam_profile->mcEncryptionType.encryptionType[0] =
 			encryptionType;
 	}
 
@@ -18554,32 +18544,33 @@ static int wlan_hdd_cfg80211_set_cipher(struct hdd_adapter *adapter,
 
 /**
  * wlan_hdd_add_assoc_ie() - Add Assoc IE to roamProfile
- * @wext_state: Pointer to wext state
+ * @adapter: Pointer to adapter
  * @gen_ie: Pointer to IE data
  * @len: length of IE data
  *
  * Return: 0 for success, non-zero for failure
  */
-static int wlan_hdd_add_assoc_ie(struct hdd_wext_state *wext_state,
-				const uint8_t *gen_ie, uint16_t len)
+static int wlan_hdd_add_assoc_ie(struct hdd_adapter *adapter,
+				 const uint8_t *gen_ie, uint16_t len)
 {
-	uint16_t cur_add_ie_len =
-		wext_state->assocAddIE.length;
+	struct csr_roam_profile *roam_profile;
+	tSirAddie *assoc_add_ie;
+	uint16_t cur_add_ie_len;
 
-	if (SIR_MAC_MAX_ADD_IE_LENGTH <
-			(wext_state->assocAddIE.length + len)) {
-		hdd_err("Cannot accommodate assocAddIE Need bigger buffer space");
-		QDF_ASSERT(0);
+	assoc_add_ie = hdd_assoc_additional_ie(adapter);
+	cur_add_ie_len = assoc_add_ie->length;
+	if (SIR_MAC_MAX_ADD_IE_LENGTH < (cur_add_ie_len + len)) {
+		hdd_err("current len %u, new ie of len %u will overflow",
+			cur_add_ie_len, len);
 		return -ENOMEM;
 	}
-	memcpy(wext_state->assocAddIE.addIEdata +
-			cur_add_ie_len, gen_ie, len);
-	wext_state->assocAddIE.length += len;
+	memcpy(assoc_add_ie->addIEdata + cur_add_ie_len, gen_ie, len);
+	assoc_add_ie->length += len;
 
-	wext_state->roamProfile.pAddIEAssoc =
-		wext_state->assocAddIE.addIEdata;
-	wext_state->roamProfile.nAddIEAssocLength =
-		wext_state->assocAddIE.length;
+	roam_profile = hdd_roam_profile(adapter);
+	roam_profile->pAddIEAssoc = assoc_add_ie->addIEdata;
+	roam_profile->nAddIEAssocLength = assoc_add_ie->length;
+
 	return 0;
 }
 
@@ -18594,8 +18585,8 @@ static int wlan_hdd_add_assoc_ie(struct hdd_wext_state *wext_state,
  * Return: None
  */
 static void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
-				const uint8_t *gen_ie, uint16_t len,
-				bool flush)
+				 const uint8_t *gen_ie, uint16_t len,
+				 bool flush)
 {
 	uint8_t *hlp_ie = roam_profile->hlp_ie;
 
@@ -18629,8 +18620,8 @@ static void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
 }
 #else
 static inline void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
-				const uint8_t *gen_ie, uint16_t len,
-				bool flush)
+					const uint8_t *gen_ie, uint16_t len,
+					bool flush)
 {}
 #endif
 /**
@@ -18645,8 +18636,8 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 				    const uint8_t *ie,
 				    size_t ie_len)
 {
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct csr_roam_profile *roam_profile;
+	tSirAddie *assoc_add_ie;
 	const uint8_t *genie = ie;
 	uint16_t remLen = ie_len;
 #ifdef FEATURE_WLAN_WAPI
@@ -18656,11 +18647,16 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 	int *akmlist;
 #endif
 	int status;
+	uint8_t *security_ie;
+
+	roam_profile = hdd_roam_profile(adapter);
 
 	/* clear previous assocAddIE */
-	pWextState->assocAddIE.length = 0;
-	pWextState->roamProfile.bWPSAssociation = false;
-	pWextState->roamProfile.bOSENAssociation = false;
+	assoc_add_ie = hdd_assoc_additional_ie(adapter);
+	assoc_add_ie->length = 0;
+	roam_profile->bWPSAssociation = false;
+	roam_profile->bOSENAssociation = false;
+	security_ie = hdd_security_ie(adapter);
 
 	while (remLen >= 2) {
 		uint16_t eLen = 0;
@@ -18687,26 +18683,26 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 				return -EINVAL;
 			} else if (0 ==
 				   memcmp(&genie[0], "\x00\x50\xf2\x04", 4)) {
-				uint16_t curAddIELen =
-					pWextState->assocAddIE.length;
+				uint16_t curAddIELen = assoc_add_ie->length;
+
 				hdd_debug("Set WPS IE(len %d)", eLen + 2);
 
 				if (SIR_MAC_MAX_ADD_IE_LENGTH <
-				    (pWextState->assocAddIE.length + eLen)) {
+				    (assoc_add_ie->length + eLen)) {
 					hdd_err("Cannot accommodate assocAddIE. Need bigger buffer space");
 					QDF_ASSERT(0);
 					return -ENOMEM;
 				}
 				/* WSC IE is saved to Additional IE ; it should be accumulated to handle WPS IE + P2P IE */
-				memcpy(pWextState->assocAddIE.addIEdata +
+				memcpy(assoc_add_ie->addIEdata +
 				       curAddIELen, genie - 2, eLen + 2);
-				pWextState->assocAddIE.length += eLen + 2;
+				assoc_add_ie->length += eLen + 2;
 
-				pWextState->roamProfile.bWPSAssociation = true;
-				pWextState->roamProfile.pAddIEAssoc =
-					pWextState->assocAddIE.addIEdata;
-				pWextState->roamProfile.nAddIEAssocLength =
-					pWextState->assocAddIE.length;
+				roam_profile->bWPSAssociation = true;
+				roam_profile->pAddIEAssoc =
+					assoc_add_ie->addIEdata;
+				roam_profile->nAddIEAssocLength =
+					assoc_add_ie->length;
 			} else if (0 == memcmp(&genie[0], "\x00\x50\xf2", 3)) {
 				if (eLen > (MAX_WPA_RSN_IE_LEN - 2)) {
 					hdd_err("%s: Invalid WPA IE length[%d]",
@@ -18715,34 +18711,31 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 					return -EINVAL;
 				}
 				hdd_debug("Set WPA IE (len %d)", eLen + 2);
-				memset(pWextState->WPARSNIE, 0,
-				       MAX_WPA_RSN_IE_LEN);
-				memcpy(pWextState->WPARSNIE, genie - 2,
-				       (eLen + 2));
-				pWextState->roamProfile.pWPAReqIE =
-					pWextState->WPARSNIE;
-				pWextState->roamProfile.nWPAReqIELength = eLen + 2;     /* ie_len; */
+				memset(security_ie, 0, MAX_WPA_RSN_IE_LEN);
+				memcpy(security_ie, genie - 2, (eLen + 2));
+				roam_profile->pWPAReqIE = security_ie;
+				roam_profile->nWPAReqIELength = eLen + 2;     /* ie_len; */
 			} else if ((0 == memcmp(&genie[0], P2P_OUI_TYPE,
 						P2P_OUI_TYPE_SIZE))) {
 				uint16_t curAddIELen =
-					pWextState->assocAddIE.length;
+					assoc_add_ie->length;
 				hdd_debug("Set P2P IE(len %d)", eLen + 2);
 
 				if (SIR_MAC_MAX_ADD_IE_LENGTH <
-				    (pWextState->assocAddIE.length + eLen)) {
+				    (assoc_add_ie->length + eLen)) {
 					hdd_err("Cannot accommodate assocAddIE Need bigger buffer space");
 					QDF_ASSERT(0);
 					return -ENOMEM;
 				}
 				/* P2P IE is saved to Additional IE ; it should be accumulated to handle WPS IE + P2P IE */
-				memcpy(pWextState->assocAddIE.addIEdata +
+				memcpy(assoc_add_ie->addIEdata +
 				       curAddIELen, genie - 2, eLen + 2);
-				pWextState->assocAddIE.length += eLen + 2;
+				assoc_add_ie->length += eLen + 2;
 
-				pWextState->roamProfile.pAddIEAssoc =
-					pWextState->assocAddIE.addIEdata;
-				pWextState->roamProfile.nAddIEAssocLength =
-					pWextState->assocAddIE.length;
+				roam_profile->pAddIEAssoc =
+					assoc_add_ie->addIEdata;
+				roam_profile->nAddIEAssocLength =
+					assoc_add_ie->length;
 			}
 #ifdef WLAN_FEATURE_WFD
 			else if ((0 == memcmp(&genie[0], WFD_OUI_TYPE,
@@ -18751,11 +18744,11 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 				 (QDF_P2P_CLIENT_MODE ==
 				     adapter->device_mode)) {
 				uint16_t curAddIELen =
-					pWextState->assocAddIE.length;
+					assoc_add_ie->length;
 				hdd_debug("Set WFD IE(len %d)", eLen + 2);
 
 				if (SIR_MAC_MAX_ADD_IE_LENGTH <
-				    (pWextState->assocAddIE.length + eLen)) {
+				    (assoc_add_ie->length + eLen)) {
 					hdd_err("Cannot accommodate assocAddIE Need bigger buffer space");
 					QDF_ASSERT(0);
 					return -ENOMEM;
@@ -18764,88 +18757,88 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 				 * be accumulated to handle WPS IE + P2P IE +
 				 * WFD IE
 				 */
-				memcpy(pWextState->assocAddIE.addIEdata +
+				memcpy(assoc_add_ie->addIEdata +
 				       curAddIELen, genie - 2, eLen + 2);
-				pWextState->assocAddIE.length += eLen + 2;
+				assoc_add_ie->length += eLen + 2;
 
-				pWextState->roamProfile.pAddIEAssoc =
-					pWextState->assocAddIE.addIEdata;
-				pWextState->roamProfile.nAddIEAssocLength =
-					pWextState->assocAddIE.length;
+				roam_profile->pAddIEAssoc =
+					assoc_add_ie->addIEdata;
+				roam_profile->nAddIEAssocLength =
+					assoc_add_ie->length;
 			}
 #endif
 			/* Appending HS 2.0 Indication Element in Assiciation Request */
 			else if ((0 == memcmp(&genie[0], HS20_OUI_TYPE,
 					      HS20_OUI_TYPE_SIZE))) {
 				uint16_t curAddIELen =
-					pWextState->assocAddIE.length;
+					assoc_add_ie->length;
 				hdd_debug("Set HS20 IE(len %d)", eLen + 2);
 
 				if (SIR_MAC_MAX_ADD_IE_LENGTH <
-				    (pWextState->assocAddIE.length + eLen)) {
+				    (assoc_add_ie->length + eLen)) {
 					hdd_err("Cannot accommodate assocAddIE Need bigger buffer space");
 					QDF_ASSERT(0);
 					return -ENOMEM;
 				}
-				memcpy(pWextState->assocAddIE.addIEdata +
+				memcpy(assoc_add_ie->addIEdata +
 				       curAddIELen, genie - 2, eLen + 2);
-				pWextState->assocAddIE.length += eLen + 2;
+				assoc_add_ie->length += eLen + 2;
 
-				pWextState->roamProfile.pAddIEAssoc =
-					pWextState->assocAddIE.addIEdata;
-				pWextState->roamProfile.nAddIEAssocLength =
-					pWextState->assocAddIE.length;
+				roam_profile->pAddIEAssoc =
+					assoc_add_ie->addIEdata;
+				roam_profile->nAddIEAssocLength =
+					assoc_add_ie->length;
 			}
 			/* Appending OSEN Information  Element in Assiciation Request */
 			else if ((0 == memcmp(&genie[0], OSEN_OUI_TYPE,
 					      OSEN_OUI_TYPE_SIZE))) {
 				uint16_t curAddIELen =
-					pWextState->assocAddIE.length;
+					assoc_add_ie->length;
 				hdd_debug("Set OSEN IE(len %d)", eLen + 2);
 
 				if (SIR_MAC_MAX_ADD_IE_LENGTH <
-				    (pWextState->assocAddIE.length + eLen)) {
+				    (assoc_add_ie->length + eLen)) {
 					hdd_err("Cannot accommodate assocAddIE Need bigger buffer space");
 					QDF_ASSERT(0);
 					return -ENOMEM;
 				}
-				memcpy(pWextState->assocAddIE.addIEdata +
+				memcpy(assoc_add_ie->addIEdata +
 				       curAddIELen, genie - 2, eLen + 2);
-				pWextState->assocAddIE.length += eLen + 2;
+				assoc_add_ie->length += eLen + 2;
 
-				pWextState->roamProfile.bOSENAssociation = true;
-				pWextState->roamProfile.pAddIEAssoc =
-					pWextState->assocAddIE.addIEdata;
-				pWextState->roamProfile.nAddIEAssocLength =
-					pWextState->assocAddIE.length;
+				roam_profile->bOSENAssociation = true;
+				roam_profile->pAddIEAssoc =
+					assoc_add_ie->addIEdata;
+				roam_profile->nAddIEAssocLength =
+					assoc_add_ie->length;
 			} else if ((0 == memcmp(&genie[0], MBO_OUI_TYPE,
 							MBO_OUI_TYPE_SIZE))){
 				hdd_debug("Set MBO IE(len %d)", eLen + 2);
-				status = wlan_hdd_add_assoc_ie(pWextState,
+				status = wlan_hdd_add_assoc_ie(adapter,
 							genie - 2, eLen + 2);
 				if (status)
 					return status;
 			} else {
 				uint16_t add_ie_len =
-					pWextState->assocAddIE.length;
+					assoc_add_ie->length;
 
 				hdd_debug("Set OSEN IE(len %d)", eLen + 2);
 
 				if (SIR_MAC_MAX_ADD_IE_LENGTH <
-				    (pWextState->assocAddIE.length + eLen)) {
+				    (assoc_add_ie->length + eLen)) {
 					hdd_err("Cannot accommodate assocAddIE Need bigger buffer space");
 					QDF_ASSERT(0);
 					return -ENOMEM;
 				}
 
-				memcpy(pWextState->assocAddIE.addIEdata +
+				memcpy(assoc_add_ie->addIEdata +
 				       add_ie_len, genie - 2, eLen + 2);
-				pWextState->assocAddIE.length += eLen + 2;
+				assoc_add_ie->length += eLen + 2;
 
-				pWextState->roamProfile.pAddIEAssoc =
-					pWextState->assocAddIE.addIEdata;
-				pWextState->roamProfile.nAddIEAssocLength =
-					pWextState->assocAddIE.length;
+				roam_profile->pAddIEAssoc =
+					assoc_add_ie->addIEdata;
+				roam_profile->nAddIEAssocLength =
+					assoc_add_ie->length;
 			}
 			break;
 		case DOT11F_EID_RSN:
@@ -18855,12 +18848,10 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 					__func__, eLen);
 				return -EINVAL;
 			}
-			memset(pWextState->WPARSNIE, 0, MAX_WPA_RSN_IE_LEN);
-			memcpy(pWextState->WPARSNIE, genie - 2,
-			       (eLen + 2));
-			pWextState->roamProfile.pRSNReqIE =
-				pWextState->WPARSNIE;
-			pWextState->roamProfile.nRSNReqIELength = eLen + 2;     /* ie_len; */
+			memset(security_ie, 0, MAX_WPA_RSN_IE_LEN);
+			memcpy(security_ie, genie - 2, (eLen + 2));
+			roam_profile->pRSNReqIE = security_ie;
+			roam_profile->nRSNReqIELength = eLen + 2;     /* ie_len; */
 			break;
 		/*
 		 * Appending Extended Capabilities with Interworking bit set
@@ -18876,23 +18867,20 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 		case DOT11F_EID_EXTCAP:
 		{
 			uint16_t curAddIELen =
-				pWextState->assocAddIE.length;
+				assoc_add_ie->length;
 			hdd_debug("Set Extended CAPS IE(len %d)", eLen + 2);
 
 			if (SIR_MAC_MAX_ADD_IE_LENGTH <
-			    (pWextState->assocAddIE.length + eLen)) {
+			    (assoc_add_ie->length + eLen)) {
 				hdd_err("Cannot accommodate assocAddIE Need bigger buffer space");
 				QDF_ASSERT(0);
 				return -ENOMEM;
 			}
-			memcpy(pWextState->assocAddIE.addIEdata +
-			       curAddIELen, genie - 2, eLen + 2);
-			pWextState->assocAddIE.length += eLen + 2;
+			memcpy(assoc_add_ie->addIEdata + curAddIELen, genie - 2, eLen + 2);
+			assoc_add_ie->length += eLen + 2;
 
-			pWextState->roamProfile.pAddIEAssoc =
-				pWextState->assocAddIE.addIEdata;
-			pWextState->roamProfile.nAddIEAssocLength =
-				pWextState->assocAddIE.length;
+			roam_profile->pAddIEAssoc = assoc_add_ie->addIEdata;
+			roam_profile->nAddIEAssocLength = assoc_add_ie->length;
 			break;
 		}
 #ifdef FEATURE_WLAN_WAPI
@@ -18929,7 +18917,7 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 		case DOT11F_EID_SUPPOPERATINGCLASSES:
 			{
 				hdd_debug("Set Supported Operating Classes IE(len %d)", eLen + 2);
-				status = wlan_hdd_add_assoc_ie(pWextState,
+				status = wlan_hdd_add_assoc_ie(adapter,
 							genie - 2, eLen + 2);
 				if (status)
 					return status;
@@ -18940,12 +18928,11 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 				if (genie[0] == SIR_FILS_HLP_EXT_EID) {
 					hdd_debug("Set HLP EXT IE(len %d)",
 							eLen + 2);
-					wlan_hdd_save_hlp_ie(&pWextState->
-							roamProfile,
+					wlan_hdd_save_hlp_ie(roam_profile,
 							genie - 2, eLen + 2,
 							true);
 					status = wlan_hdd_add_assoc_ie(
-							pWextState, genie - 2,
+							adapter, genie - 2,
 							eLen + 2);
 					if (status)
 						return status;
@@ -18954,7 +18941,7 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 					hdd_debug("Set DH EXT IE(len %d)",
 							eLen + 2);
 					status = wlan_hdd_add_assoc_ie(
-							pWextState, genie - 2,
+							adapter, genie - 2,
 							eLen + 2);
 					if (status)
 						return status;
@@ -18966,10 +18953,10 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 		case DOT11F_EID_FRAGMENT_IE:
 			{
 				hdd_debug("Set Fragment IE(len %d)", eLen + 2);
-				wlan_hdd_save_hlp_ie(&pWextState->roamProfile,
+				wlan_hdd_save_hlp_ie(roam_profile,
 							genie - 2, eLen + 2,
 							false);
-				status = wlan_hdd_add_assoc_ie(pWextState,
+				status = wlan_hdd_add_assoc_ie(adapter,
 							genie - 2, eLen + 2);
 				if (status)
 					return status;
@@ -19039,12 +19026,15 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct hdd_station_ctx *sta_ctx;
+	struct csr_roam_profile *roam_profile;
 
 	hdd_enter();
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	sta_ctx->wpa_versions = req->crypto.wpa_versions;
 	hdd_debug("set wpa version to %d", sta_ctx->wpa_versions);
+
+	roam_profile = hdd_roam_profile(adapter);
 
 	/*set authentication type */
 	status = wlan_hdd_cfg80211_set_auth_type(adapter, req->auth_type);
@@ -19097,7 +19087,7 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 		return status;
 	}
 #ifdef WLAN_FEATURE_11W
-	pWextState->roamProfile.MFPEnabled = (req->mfp == NL80211_MFP_REQUIRED);
+	roam_profile->MFPEnabled = (req->mfp == NL80211_MFP_REQUIRED);
 #endif
 
 	/*parse WPA/RSN IE, and set the correspoing fileds in Roam profile */
@@ -19131,13 +19121,12 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 			    && (CSR_MAX_NUM_KEY > key_idx)) {
 				hdd_debug("setting default wep key, key_idx = %hu key_len %hu",
 					   key_idx, key_len);
-				qdf_mem_copy(&pWextState->roamProfile.
-					     Keys.
+				qdf_mem_copy(&roam_profile->Keys.
 					     KeyMaterial[key_idx][0],
 					     req->key, key_len);
-				pWextState->roamProfile.Keys.
+				roam_profile->Keys.
 					KeyLength[key_idx] = (u8) key_len;
-				pWextState->roamProfile.Keys.
+				roam_profile->Keys.
 					defaultIndex = (u8) key_idx;
 			}
 		}
@@ -19310,20 +19299,19 @@ static bool wlan_hdd_reassoc_bssid_hint(struct hdd_adapter *adapter,
  * Return: void
  */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)
-static void wlan_hdd_check_ht20_ht40_ind(struct hdd_context *hdd_ctx,
-	struct hdd_adapter *adapter,
-	struct cfg80211_connect_params *req)
+static void
+wlan_hdd_check_ht20_ht40_ind(struct hdd_context *hdd_ctx,
+			     struct hdd_adapter *adapter,
+			     struct cfg80211_connect_params *req)
 {
-	struct hdd_wext_state *wext_state =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct csr_roam_profile *roam_profile;
 
-	roam_profile = &wext_state->roamProfile;
+	roam_profile = hdd_roam_profile(adapter);
+
 	roam_profile->force_24ghz_in_ht20 = false;
 
 	if (hdd_ctx->config->override_ht20_40_24g &&
-	    !(req->ht_capa.cap_info &
-	      IEEE80211_HT_CAP_SUP_WIDTH_20_40))
+	    !(req->ht_capa.cap_info & IEEE80211_HT_CAP_SUP_WIDTH_20_40))
 		roam_profile->force_24ghz_in_ht20 = true;
 
 	hdd_debug("req->ht_capa.cap_info %x override_ht20_40_24g %d",
@@ -19331,15 +19319,14 @@ static void wlan_hdd_check_ht20_ht40_ind(struct hdd_context *hdd_ctx,
 		  hdd_ctx->config->override_ht20_40_24g);
 }
 #else
-static inline void wlan_hdd_check_ht20_ht40_ind(struct hdd_context *hdd_ctx,
-	struct hdd_adapter *adapter,
-	struct cfg80211_connect_params *req)
+static inline void
+wlan_hdd_check_ht20_ht40_ind(struct hdd_context *hdd_ctx,
+			     struct hdd_adapter *adapter,
+			     struct cfg80211_connect_params *req)
 {
-	struct hdd_wext_state *wext_state =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct csr_roam_profile *roam_profile;
 
-	roam_profile = &wext_state->roamProfile;
+	roam_profile = hdd_roam_profile(adapter);
 
 	roam_profile->force_24ghz_in_ht20 = false;
 }
@@ -19845,11 +19832,10 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 {
 	uint32_t ret;
 	int status = 0;
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	eCsrEncryptionType encryptionType = eCSR_ENCRYPT_TYPE_NONE;
 	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct csr_roam_profile *roam_profile;
 
 	hdd_enter();
 
@@ -19910,7 +19896,8 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 		}
 	}
 
-	pWextState->roamProfile.AuthType.authType[0] =
+	roam_profile = hdd_roam_profile(adapter);
+	roam_profile->AuthType.authType[0] =
 		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
 	if (params->privacy) {
@@ -19926,8 +19913,8 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 	}
 	hdd_debug("encryptionType=%d", encryptionType);
 	sta_ctx->conn_info.ucEncryptionType = encryptionType;
-	pWextState->roamProfile.EncryptionType.numEntries = 1;
-	pWextState->roamProfile.EncryptionType.encryptionType[0] =
+	roam_profile->EncryptionType.numEntries = 1;
+	roam_profile->EncryptionType.encryptionType[0] =
 		encryptionType;
 	return status;
 }
@@ -19947,8 +19934,6 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 					 struct cfg80211_ibss_params *params)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct csr_roam_profile *roam_profile;
 	int status;
 	struct hdd_station_ctx *sta_ctx =
@@ -20045,7 +20030,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		return -EALREADY;
 	}
 
-	roam_profile = &pWextState->roamProfile;
+	roam_profile = hdd_roam_profile(adapter);
 
 	if (eCSR_BSS_TYPE_START_IBSS != roam_profile->BSSType) {
 		hdd_err("Interface type is not set to IBSS");
@@ -20156,8 +20141,6 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 					  struct net_device *dev)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct csr_roam_profile *roam_profile;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int status;
@@ -20188,12 +20171,8 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 	hdd_debug("Device_mode %s(%d)",
 		hdd_device_mode_to_string(adapter->device_mode),
 		adapter->device_mode);
-	if (NULL == pWextState) {
-		hdd_err("Data Storage Corruption");
-		return -EIO;
-	}
 
-	roam_profile = &pWextState->roamProfile;
+	roam_profile = hdd_roam_profile(adapter);
 
 	/* Issue disconnect only if interface type is set to IBSS */
 	if (eCSR_BSS_TYPE_START_IBSS != roam_profile->BSSType) {
@@ -22146,7 +22125,6 @@ static int __wlan_hdd_cfg80211_update_connect_params(
 			struct wiphy *wiphy, struct net_device *dev,
 			struct cfg80211_connect_params *req, uint32_t changed)
 {
-	struct hdd_wext_state *wext_state;
 	struct csr_roam_profile *roam_profile;
 	uint8_t *buf;
 	int ret;
@@ -22167,8 +22145,7 @@ static int __wlan_hdd_cfg80211_update_connect_params(
 	if (ret)
 		return -EINVAL;
 
-	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	roam_profile = &wext_state->roamProfile;
+	roam_profile = hdd_roam_profile(adapter);
 	fils_info = roam_profile->fils_con_info;
 
 	if (!fils_info) {
