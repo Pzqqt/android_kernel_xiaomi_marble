@@ -1123,6 +1123,7 @@ struct cdp_rx_indication_ppdu {
 	uint64_t timestamp;
 	uint32_t length;
 	uint8_t channel;
+	uint8_t beamformed;
 };
 
 /**

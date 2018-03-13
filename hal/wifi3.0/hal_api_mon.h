@@ -737,6 +737,10 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.vht_flag_values4 =
 			HAL_RX_GET(vht_sig_a_info,
 				  VHT_SIG_A_INFO_1, SU_MU_CODING);
+
+		ppdu_info->rx_status.beamformed = HAL_RX_GET(vht_sig_a_info,
+				VHT_SIG_A_INFO_1, BEAMFORMED);
+
 		break;
 	}
 	case WIFIPHYRX_HE_SIG_A_SU_E:
@@ -885,6 +889,8 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		value = value << QDF_MON_STATUS_TXOP_SHIFT;
 		ppdu_info->rx_status.he_data6 |= value;
 
+		ppdu_info->rx_status.beamformed = HAL_RX_GET(he_sig_a_su_info,
+					HE_SIG_A_SU_INFO_1, TXBF);
 		break;
 	}
 	case WIFIPHYRX_HE_SIG_A_MU_DL_E:

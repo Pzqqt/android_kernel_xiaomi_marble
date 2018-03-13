@@ -67,6 +67,7 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	cdp_rx_ppdu->rssi = ppdu_info->rx_status.rssi_comb;
 	cdp_rx_ppdu->timestamp = ppdu_info->rx_status.tsft;
 	cdp_rx_ppdu->channel = ppdu_info->rx_status.chan_num;
+	cdp_rx_ppdu->beamformed = ppdu_info->rx_status.beamformed;
 	cdp_rx_ppdu->num_msdu = (cdp_rx_ppdu->tcp_msdu_count +
 			cdp_rx_ppdu->udp_msdu_count +
 			cdp_rx_ppdu->other_msdu_count);
