@@ -63,6 +63,7 @@
 /* Preprocessor Definitions and Constants */
 #define QDF_MEM_MAX_MALLOC (4096 * 1024) /* 4 Mega Bytes */
 #define QDF_MEM_WARN_THRESHOLD 300 /* ms */
+#define QDF_DEBUG_STRING_SIZE 512
 
 static qdf_list_t qdf_mem_domains[QDF_DEBUG_DOMAIN_COUNT];
 static qdf_spinlock_t qdf_mem_list_lock;
@@ -408,6 +409,12 @@ static void qdf_mem_meta_table_print(struct __qdf_mem_info *table,
 				     void *print_priv)
 {
 	int i;
+	char debug_str[QDF_DEBUG_STRING_SIZE];
+	size_t len = 0;
+	char *debug_prefix = "WLAN_BUG_RCA: memory leak detected";
+
+	len += qdf_scnprintf(debug_str, sizeof(debug_str) - len,
+			     "%s", debug_prefix);
 
 	for (i = 0; i < QDF_MEM_STAT_TABLE_SIZE; i++) {
 		if (!table[i].count)
@@ -420,7 +427,14 @@ static void qdf_mem_meta_table_print(struct __qdf_mem_info *table,
 		      table[i].count * table[i].size,
 		      kbasename(table[i].file),
 		      table[i].line, table[i].caller);
+		len += qdf_scnprintf(debug_str + len,
+				     sizeof(debug_str) - len,
+				     " @ %s:%u %pS",
+				     kbasename(table[i].file),
+				     table[i].line,
+				     table[i].caller);
 	}
+	print(print_priv, "%s", debug_str);
 }
 
 /**
