@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -69,7 +69,9 @@ struct ath_pktlog_hdr {
 #endif
 	uint16_t size;
 	uint32_t timestamp;
+#ifdef HELIUMPLUS
 	uint32_t type_specific_data;
+#endif
 } __ATTRIB_PACK;
 
 /**
