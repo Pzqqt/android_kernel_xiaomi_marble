@@ -281,6 +281,14 @@ QDF_STATUS wlan_ipa_uc_op_metering(struct wlan_ipa_priv *ipa_ctx,
  */
 void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
 				   void *data);
+
+/**
+ * wlan_ipa_init_metering() - IPA metering stats completion event reset
+ * @ipa_ctx: IPA context
+ *
+ * Return: QDF_STATUS enumeration
+ */
+void wlan_ipa_init_metering(struct wlan_ipa_priv *ipa_ctx);
 #else
 
 static inline
@@ -291,6 +299,10 @@ QDF_STATUS wlan_ipa_uc_op_metering(struct wlan_ipa_priv *ipa_ctx,
 }
 
 static inline void wlan_ipa_wdi_meter_notifier_cb(void)
+{
+}
+
+static inline void wlan_ipa_init_metering(struct wlan_ipa_priv *ipa_ctx)
 {
 }
 #endif /* FEATURE_METERING */
@@ -455,6 +467,51 @@ void wlan_ipa_set_ap_ibss_fwd(struct wlan_ipa_priv *ipa_ctx, bool intra_bss)
 {
 	ipa_ctx->ap_intrabss_fwd = intra_bss;
 }
+
+/**
+ * wlan_ipa_uc_ol_init() - Initialize IPA uC offload
+ * @ipa_ctx: IPA context
+ * @osdev: Parent device instance
+ *
+ * This function is called to update IPA pipe configuration with resources
+ * allocated by wlan driver (cds_pre_enable) before enabling it in FW
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_ipa_uc_ol_init(struct wlan_ipa_priv *ipa_ctx,
+			       qdf_device_t osdev);
+
+/**
+ * wlan_ipa_uc_ol_deinit() - Disconnect IPA TX and RX pipes
+ * @ipa_ctx: IPA context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_ipa_uc_ol_deinit(struct wlan_ipa_priv *ipa_ctx);
+
+/**
+ * wlan_ipa_flush() - flush IPA exception path SKB's
+ * @ipa_ctx: IPA context
+ *
+ * Return: None
+ */
+void wlan_ipa_flush(struct wlan_ipa_priv *ipa_ctx);
+
+/**
+ * wlan_ipa_suspend() - Suspend IPA
+ * @ipa_ctx: IPA context
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS wlan_ipa_suspend(struct wlan_ipa_priv *ipa_ctx);
+
+/**
+ * wlan_ipa_resume() - Resume IPA
+ * @ipa_ctx: IPA context
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS wlan_ipa_resume(struct wlan_ipa_priv *ipa_ctx);
 
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_CORE_H_ */

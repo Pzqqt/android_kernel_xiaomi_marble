@@ -112,3 +112,29 @@ void ucfg_ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev)
 {
 	return ipa_uc_force_pipe_shutdown(pdev);
 }
+
+void ucfg_ipa_flush(struct wlan_objmgr_pdev *pdev)
+{
+	return ipa_flush(pdev);
+}
+
+QDF_STATUS ucfg_ipa_suspend(struct wlan_objmgr_pdev *pdev)
+{
+	return ipa_suspend(pdev);
+}
+
+QDF_STATUS ucfg_ipa_resume(struct wlan_objmgr_pdev *pdev)
+{
+	return ipa_resume(pdev);
+}
+
+QDF_STATUS ucfg_ipa_uc_ol_init(struct wlan_objmgr_pdev *pdev,
+			       qdf_device_t osdev)
+{
+	return ipa_uc_ol_init(pdev, osdev);
+}
+
+QDF_STATUS ucfg_ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev)
+{
+	return ipa_uc_ol_deinit(pdev);
+}

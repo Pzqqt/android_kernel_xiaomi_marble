@@ -185,6 +185,49 @@ void ucfg_ipa_set_ap_ibss_fwd(struct wlan_objmgr_pdev *pdev, bool intra_bss);
  * Return: void
  */
 void ucfg_ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_ipa_flush() - flush IPA exception path SKB's
+ * @pdev: pdev obj
+ *
+ * Return: None
+ */
+void ucfg_ipa_flush(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_ipa_suspend() - Suspend IPA
+ * @pdev: pdev obj
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS ucfg_ipa_suspend(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_ipa_resume() - Resume IPA
+ * @pdev: pdev obj
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS ucfg_ipa_resume(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_ipa_uc_ol_init() - Initialize IPA uC offload
+ * @pdev: pdev obj
+ * @osdev: OS dev
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS ucfg_ipa_uc_ol_init(struct wlan_objmgr_pdev *pdev,
+			       qdf_device_t osdev);
+
+/**
+ * ucfg_ipa_uc_ol_deinit() - Deinitialize IPA uC offload
+ * @pdev: pdev obj
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS ucfg_ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev);
+
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -277,6 +320,36 @@ void ucfg_ipa_set_ap_ibss_fwd(struct wlan_objmgr_pdev *pdev, bool intra_bss)
 static inline
 void ucfg_ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev)
 {
+}
+
+static inline
+void ucfg_ipa_flush(struct wlan_objmgr_pdev *pdev)
+{
+}
+
+static inline
+QDF_STATUS ucfg_ipa_suspend(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_ipa_resume(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_ipa_uc_ol_init(struct wlan_objmgr_pdev *pdev,
+			       qdf_device_t osdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_UCFG_API_H_ */
