@@ -4754,7 +4754,7 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 		pe_err("refused addba req");
 	}
 	frm.addba_param_set.tid = tid;
-	frm.addba_param_set.buff_size = buff_size;
+	frm.addba_param_set.buff_size = SIR_MAC_BA_DEFAULT_BUFF_SIZE;
 	if (mac_ctx->usr_cfg_ba_buff_size)
 		frm.addba_param_set.buff_size = mac_ctx->usr_cfg_ba_buff_size;
 	frm.addba_param_set.amsdu_supp = SIR_MAC_BA_AMSDU_SUPPORTED;
