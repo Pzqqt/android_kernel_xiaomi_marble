@@ -66,7 +66,6 @@
 #include <wlan_hdd_scan.h>
 #include <wlan_hdd_cfg80211.h>
 #include <net/addrconf.h>
-#include <wlan_hdd_ipa.h>
 #include <wlan_hdd_lpass.h>
 
 #include <wma_types.h>
@@ -83,6 +82,7 @@
 #include "cds_utils.h"
 #include "wlan_hdd_packet_filter_api.h"
 #include "wlan_cfg80211_scan.h"
+#include "wlan_ipa_ucfg_api.h"
 
 /* Preprocessor definitions and constants */
 #ifdef QCA_WIFI_NAPIER_EMULATION
@@ -1173,7 +1173,7 @@ static int hdd_resume_wlan(void)
 			status = hdd_disable_default_pkt_filters(adapter);
 	}
 
-	hdd_ipa_resume(hdd_ctx);
+	ucfg_ipa_resume(hdd_ctx->hdd_pdev);
 	status = pmo_ucfg_psoc_user_space_resume_req(hdd_ctx->hdd_psoc,
 			QDF_SYSTEM_SUSPEND);
 	if (status != QDF_STATUS_SUCCESS)
@@ -1741,7 +1741,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	 * Suspend IPA early before proceeding to suspend other entities like
 	 * firmware to avoid any race conditions.
 	 */
-	if (hdd_ipa_suspend(hdd_ctx)) {
+	if (ucfg_ipa_suspend(hdd_ctx->hdd_pdev)) {
 		hdd_err("IPA not ready to suspend!");
 		wlan_hdd_inc_suspend_stats(hdd_ctx, SUSPEND_FAIL_IPA);
 		return -EAGAIN;

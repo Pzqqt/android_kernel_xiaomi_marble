@@ -273,5 +273,48 @@ void ipa_set_ap_ibss_fwd(struct wlan_objmgr_pdev *pdev, bool intra_bss);
  * Return: void
  */
 void ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ipa_flush() - flush IPA exception path SKB's
+ * @pdev: pdev obj
+ *
+ * Return: None
+ */
+void ipa_flush(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ipa_suspend() - Suspend IPA
+ * @pdev: pdev obj
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS ipa_suspend(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ipa_resume() - Resume IPA
+ * @pdev: pdev obj
+ *
+ * Return: None
+ */
+QDF_STATUS ipa_resume(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_ipa_uc_ol_init() - Initialize IPA uC offload
+ * @pdev: pdev obj
+ * @osdev: OS dev
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS ipa_uc_ol_init(struct wlan_objmgr_pdev *pdev,
+			  qdf_device_t osdev);
+
+/**
+ * ucfg_ipa_uc_ol_deinit() - Deinitialize IPA uC offload
+ * @pdev: pdev obj
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev);
+
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */

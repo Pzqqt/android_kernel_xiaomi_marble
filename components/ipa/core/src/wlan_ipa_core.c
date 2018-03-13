@@ -47,6 +47,12 @@ static struct wlan_ipa_iface_2_client {
 	}
 };
 
+/* Local Function Prototypes */
+static void wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
+			    unsigned long data);
+static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
+			    unsigned long data);
+
 /**
  * wlan_ipa_uc_sta_is_enabled() - Is STA mode IPA uC offload enabled?
  * @ipa_cfg: IPA config
@@ -207,6 +213,36 @@ static inline void wlan_ipa_wdi_get_wdi_version(struct wlan_ipa_priv *ipa_ctx)
 }
 #endif
 
+static inline bool wlan_ipa_wdi_is_smmu_enabled(struct wlan_ipa_priv *ipa_ctx,
+					       qdf_device_t osdev)
+{
+	/* TODO: Need to check if SMMU is supported on cld_3.2 */
+	/* return hdd_ipa->is_smmu_enabled && qdf_mem_smmu_s1_enabled(osdev); */
+	return 0;
+}
+
+static inline QDF_STATUS wlan_ipa_wdi_setup(struct wlan_ipa_priv *ipa_ctx,
+					    qdf_device_t osdev)
+{
+	qdf_ipa_sys_connect_params_t sys_in[WLAN_IPA_MAX_IFACE];
+	int i;
+
+	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++)
+		qdf_mem_copy(&sys_in[i],
+			     &ipa_ctx->sys_pipe[i].ipa_sys_params,
+			     sizeof(qdf_ipa_sys_connect_params_t));
+
+	return cdp_ipa_setup(ipa_ctx->dp_soc, ipa_ctx->dp_pdev,
+			     wlan_ipa_i2w_cb, wlan_ipa_w2i_cb,
+			     wlan_ipa_wdi_meter_notifier_cb,
+			     ipa_ctx->config->desc_size,
+			     ipa_ctx, wlan_ipa_is_rm_enabled(ipa_ctx->config),
+			     &ipa_ctx->tx_pipe_handle,
+			     &ipa_ctx->rx_pipe_handle,
+			     wlan_ipa_wdi_is_smmu_enabled(ipa_ctx, osdev),
+			     sys_in);
+}
+
 #ifdef FEATURE_METERING
 /**
  * wlan_ipa_wdi_init_metering() - IPA WDI metering init
@@ -295,6 +331,18 @@ static inline void wlan_ipa_wdi_get_wdi_version(struct wlan_ipa_priv *ipa_ctx)
 {
 }
 
+static inline QDF_STATUS wlan_ipa_wdi_setup(struct wlan_ipa_priv *ipa_ctx,
+					    qdf_device_t osdev)
+{
+	return cdp_ipa_setup(ipa_ctx->dp_soc, ipa_ctx->dp_pdev,
+			     wlan_ipa_i2w_cb, wlan_ipa_w2i_cb,
+			     wlan_ipa_wdi_meter_notifier_cb,
+			     ipa_ctx->config->desc_size,
+			     ipa_ctx, wlan_ipa_is_rm_enabled(ipa_ctx->config),
+			     &ipa_ctx->tx_pipe_handle,
+			     &ipa_ctx->rx_pipe_handle);
+}
+
 static inline QDF_STATUS wlan_ipa_wdi_init(struct wlan_ipa_priv *ipa_ctx)
 {
 	struct ipa_wdi_uc_ready_params uc_ready_param;
@@ -342,6 +390,472 @@ static inline int wlan_ipa_wdi_teardown_sys_pipe(
 }
 
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */
+
+/**
+ * wlan_ipa_send_skb_to_network() - Send skb to kernel
+ * @skb: network buffer
+ * @iface_ctx: IPA interface context
+ *
+ * Called when a network buffer is received which should not be routed
+ * to the IPA module.
+ *
+ * Return: None
+ */
+static void
+wlan_ipa_send_skb_to_network(qdf_nbuf_t skb,
+			     struct wlan_ipa_iface_context *iface_ctx)
+{
+	struct wlan_ipa_priv *ipa_ctx = gp_ipa;
+
+	if (!iface_ctx->dev) {
+		WLAN_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "Invalid interface");
+		ipa_ctx->ipa_rx_internal_drop_count++;
+		qdf_nbuf_free(skb);
+		return;
+	}
+
+	skb->destructor = wlan_ipa_uc_rt_debug_destructor;
+
+	if (ipa_ctx->send_to_nw)
+		ipa_ctx->send_to_nw(skb, iface_ctx->dev);
+
+	ipa_ctx->ipa_rx_net_send_count++;
+}
+
+/**
+ * wlan_ipa_forward() - handle packet forwarding to wlan tx
+ * @ipa_ctx: pointer to ipa ipa context
+ * @iface_ctx: interface context
+ * @skb: data pointer
+ *
+ * if exception packet has set forward bit, copied new packet should be
+ * forwarded to wlan tx. if wlan subsystem is in suspend state, packet should
+ * put into pm queue and tx procedure will be differed
+ *
+ * Return: None
+ */
+static void wlan_ipa_forward(struct wlan_ipa_priv *ipa_ctx,
+			     struct wlan_ipa_iface_context *iface_ctx,
+			     qdf_nbuf_t skb)
+{
+	struct wlan_ipa_pm_tx_cb *pm_tx_cb;
+
+	qdf_spin_lock_bh(&ipa_ctx->pm_lock);
+
+	/* Set IPA ownership for intra-BSS Tx packets to avoid skb_orphan */
+	qdf_nbuf_ipa_owned_set(skb);
+
+	/* WLAN subsystem is in suspend, put in queue */
+	if (ipa_ctx->suspended) {
+		qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
+		WLAN_IPA_LOG(QDF_TRACE_LEVEL_INFO,
+			"Tx in suspend, put in queue");
+		qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+		pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
+		pm_tx_cb->exception = true;
+		pm_tx_cb->iface_context = iface_ctx;
+		qdf_spin_lock_bh(&ipa_ctx->pm_lock);
+		qdf_nbuf_queue_add(&ipa_ctx->pm_queue_head, skb);
+		qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
+		ipa_ctx->stats.num_tx_queued++;
+	} else {
+		/* Resume, put packet into WLAN TX */
+		qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
+
+		if (ipa_ctx->softap_xmit) {
+			if (ipa_ctx->softap_xmit(skb, iface_ctx->dev)) {
+				WLAN_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+					     "packet Tx fail");
+				ipa_ctx->stats.num_tx_fwd_err++;
+			} else {
+				ipa_ctx->stats.num_tx_fwd_ok++;
+			}
+		} else {
+			pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
+			ipa_free_skb(pm_tx_cb->ipa_tx_desc);
+		}
+	}
+}
+
+/**
+ * wlan_ipa_intrabss_forward() - Forward intra bss packets.
+ * @ipa_ctx: pointer to IPA IPA struct
+ * @iface_ctx: ipa interface context
+ * @desc: Firmware descriptor
+ * @skb: Data buffer
+ *
+ * Return:
+ *      WLAN_IPA_FORWARD_PKT_NONE
+ *      WLAN_IPA_FORWARD_PKT_DISCARD
+ *      WLAN_IPA_FORWARD_PKT_LOCAL_STACK
+ *
+ */
+
+static enum wlan_ipa_forward_type wlan_ipa_intrabss_forward(
+		struct wlan_ipa_priv *ipa_ctx,
+		struct wlan_ipa_iface_context *iface_ctx,
+		uint8_t desc,
+		qdf_nbuf_t skb)
+{
+	int ret = WLAN_IPA_FORWARD_PKT_NONE;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if ((desc & FW_RX_DESC_FORWARD_M)) {
+		if (!ol_txrx_fwd_desc_thresh_check(
+			(struct ol_txrx_vdev_t *)cdp_get_vdev_from_vdev_id(soc,
+						(struct cdp_pdev *)pdev,
+						iface_ctx->session_id))) {
+			/* Drop the packet*/
+			ipa_ctx->stats.num_tx_fwd_err++;
+			kfree_skb(skb);
+			ret = WLAN_IPA_FORWARD_PKT_DISCARD;
+			return ret;
+		}
+		WLAN_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
+				"Forward packet to Tx (fw_desc=%d)", desc);
+		ipa_ctx->ipa_tx_forward++;
+
+		if ((desc & FW_RX_DESC_DISCARD_M)) {
+			wlan_ipa_forward(ipa_ctx, iface_ctx, skb);
+			ipa_ctx->ipa_rx_internal_drop_count++;
+			ipa_ctx->ipa_rx_discard++;
+			ret = WLAN_IPA_FORWARD_PKT_DISCARD;
+		} else {
+			struct sk_buff *cloned_skb = skb_clone(skb, GFP_ATOMIC);
+
+			if (cloned_skb)
+				wlan_ipa_forward(ipa_ctx, iface_ctx,
+						 cloned_skb);
+			else
+				WLAN_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+						"tx skb alloc failed");
+			ret = WLAN_IPA_FORWARD_PKT_LOCAL_STACK;
+		}
+	}
+
+	return ret;
+}
+
+/**
+ * wlan_ipa_w2i_cb() - WLAN to IPA callback handler
+ * @priv: pointer to private data registered with IPA (we register a
+ *	pointer to the global IPA context)
+ * @evt: the IPA event which triggered the callback
+ * @data: data associated with the event
+ *
+ * Return: None
+ */
+static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
+			    unsigned long data)
+{
+	struct wlan_ipa_priv *ipa_ctx = NULL;
+	qdf_nbuf_t skb;
+	uint8_t iface_id;
+	uint8_t session_id;
+	struct wlan_ipa_iface_context *iface_context;
+	uint8_t fw_desc;
+
+	ipa_ctx = (struct wlan_ipa_priv *)priv;
+
+	if (!ipa_ctx)
+		return;
+
+	switch (evt) {
+	case IPA_RECEIVE:
+		skb = (qdf_nbuf_t) data;
+
+		if (wlan_ipa_uc_is_enabled(ipa_ctx->config)) {
+			session_id = (uint8_t)skb->cb[0];
+			iface_id = ipa_ctx->vdev_to_iface[session_id];
+			ipa_debug("IPA_RECEIVE: session_id=%u, iface_id=%u",
+				  session_id, iface_id);
+		} else {
+			iface_id = WLAN_IPA_GET_IFACE_ID(skb->data);
+		}
+		if (iface_id >= WLAN_IPA_MAX_IFACE) {
+			ipa_err("IPA_RECEIVE: Invalid iface_id: %u",
+				iface_id);
+			ipa_ctx->ipa_rx_internal_drop_count++;
+			qdf_nbuf_free(skb);
+			return;
+		}
+
+		iface_context = &ipa_ctx->iface_context[iface_id];
+		if (!iface_context->tl_context) {
+			ipa_err("IPA_RECEIVE: TL context is NULL");
+			ipa_ctx->ipa_rx_internal_drop_count++;
+			qdf_nbuf_free(skb);
+			return;
+		}
+
+		if (wlan_ipa_uc_is_enabled(ipa_ctx->config)) {
+			ipa_ctx->stats.num_rx_excep++;
+			qdf_nbuf_pull_head(skb, WLAN_IPA_UC_WLAN_CLD_HDR_LEN);
+		} else {
+			qdf_nbuf_pull_head(skb, WLAN_IPA_WLAN_CLD_HDR_LEN);
+		}
+
+		iface_context->stats.num_rx_ipa_excep++;
+
+		/* Disable to forward Intra-BSS Rx packets when
+		 * ap_isolate=1 in hostapd.conf
+		 */
+		if (!ipa_ctx->ap_intrabss_fwd) {
+			/*
+			 * When INTRA_BSS_FWD_OFFLOAD is enabled, FW will send
+			 * all Rx packets to IPA uC, which need to be forwarded
+			 * to other interface.
+			 * And, IPA driver will send back to WLAN host driver
+			 * through exception pipe with fw_desc field set by FW.
+			 * Here we are checking fw_desc field for FORWARD bit
+			 * set, and forward to Tx. Then copy to kernel stack
+			 * only when DISCARD bit is not set.
+			 */
+			fw_desc = (uint8_t)skb->cb[1];
+			if (WLAN_IPA_FORWARD_PKT_DISCARD ==
+			    wlan_ipa_intrabss_forward(ipa_ctx, iface_context,
+						     fw_desc, skb))
+				break;
+		} else {
+			ipa_debug("Intra-BSS FWD is disabled-skip forward to Tx");
+		}
+
+		wlan_ipa_send_skb_to_network(skb, iface_context);
+		break;
+
+	default:
+		ipa_err("w2i cb wrong event: 0x%x", evt);
+		return;
+	}
+}
+
+/**
+ * wlan_ipa_send_pkt_to_tl() - Send an IPA packet to TL
+ * @iface_context: interface-specific IPA context
+ * @ipa_tx_desc: packet data descriptor
+ *
+ * Return: None
+ */
+static void wlan_ipa_send_pkt_to_tl(
+		struct wlan_ipa_iface_context *iface_context,
+		qdf_ipa_rx_data_t *ipa_tx_desc)
+{
+	struct wlan_ipa_priv *ipa_ctx = iface_context->ipa_ctx;
+	qdf_nbuf_t skb;
+	struct wlan_ipa_tx_desc *tx_desc;
+
+	qdf_spin_lock_bh(&iface_context->interface_lock);
+	/*
+	 * During CAC period, data packets shouldn't be sent over the air so
+	 * drop all the packets here
+	 */
+	if (iface_context->device_mode == QDF_SAP_MODE ||
+	    iface_context->device_mode == QDF_P2P_GO_MODE) {
+		if (ipa_ctx->dfs_cac_block_tx) {
+			ipa_free_skb(ipa_tx_desc);
+			qdf_spin_unlock_bh(&iface_context->interface_lock);
+			iface_context->stats.num_tx_cac_drop++;
+			wlan_ipa_wdi_rm_try_release(ipa_ctx);
+			return;
+		}
+	}
+	qdf_spin_unlock_bh(&iface_context->interface_lock);
+
+	skb = QDF_IPA_RX_DATA_SKB(ipa_tx_desc);
+
+	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+
+	/* Store IPA Tx buffer ownership into SKB CB */
+	qdf_nbuf_ipa_owned_set(skb);
+	if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config)) {
+		qdf_nbuf_mapped_paddr_set(skb,
+					  QDF_IPA_RX_DATA_DMA_ADDR(ipa_tx_desc)
+					  + WLAN_IPA_WLAN_FRAG_HEADER
+					  + WLAN_IPA_WLAN_IPA_HEADER);
+		QDF_IPA_RX_DATA_SKB_LEN(ipa_tx_desc) -=
+			WLAN_IPA_WLAN_FRAG_HEADER + WLAN_IPA_WLAN_IPA_HEADER;
+	} else
+		qdf_nbuf_mapped_paddr_set(skb, ipa_tx_desc->dma_addr);
+
+	qdf_spin_lock_bh(&ipa_ctx->q_lock);
+	/* get free Tx desc and assign ipa_tx_desc pointer */
+	if (qdf_list_remove_front(&ipa_ctx->tx_desc_list,
+				 (qdf_list_node_t **)&tx_desc) ==
+	    QDF_STATUS_SUCCESS) {
+		tx_desc->ipa_tx_desc_ptr = ipa_tx_desc;
+		ipa_ctx->stats.num_tx_desc_q_cnt++;
+		qdf_spin_unlock_bh(&ipa_ctx->q_lock);
+		/* Store Tx Desc index into SKB CB */
+		QDF_NBUF_CB_TX_IPA_PRIV(skb) = tx_desc->id;
+	} else {
+		ipa_ctx->stats.num_tx_desc_error++;
+		qdf_spin_unlock_bh(&ipa_ctx->q_lock);
+		qdf_ipa_free_skb(ipa_tx_desc);
+		wlan_ipa_wdi_rm_try_release(ipa_ctx);
+		return;
+	}
+
+	skb = cdp_ipa_tx_send_data_frame(cds_get_context(QDF_MODULE_ID_SOC),
+			(struct cdp_vdev *)iface_context->tl_context,
+			QDF_IPA_RX_DATA_SKB(ipa_tx_desc));
+	if (skb) {
+		qdf_nbuf_free(skb);
+		iface_context->stats.num_tx_err++;
+		return;
+	}
+
+	atomic_inc(&ipa_ctx->tx_ref_cnt);
+
+	iface_context->stats.num_tx++;
+}
+
+/**
+ * wlan_ipa_i2w_cb() - IPA to WLAN callback
+ * @priv: pointer to private data registered with IPA (we register a
+ *	pointer to the interface-specific IPA context)
+ * @evt: the IPA event which triggered the callback
+ * @data: data associated with the event
+ *
+ * Return: None
+ */
+static void wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
+			     unsigned long data)
+{
+	struct wlan_ipa_priv *ipa_ctx = NULL;
+	qdf_ipa_rx_data_t *ipa_tx_desc;
+	struct wlan_ipa_iface_context *iface_context;
+	qdf_nbuf_t skb;
+	struct wlan_ipa_pm_tx_cb *pm_tx_cb = NULL;
+
+	iface_context = (struct wlan_ipa_iface_context *)priv;
+	ipa_tx_desc = (qdf_ipa_rx_data_t *)data;
+	ipa_ctx = iface_context->ipa_ctx;
+
+	if (evt != IPA_RECEIVE) {
+		WLAN_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "Event is not IPA_RECEIVE");
+		ipa_free_skb(ipa_tx_desc);
+		iface_context->stats.num_tx_drop++;
+		return;
+	}
+
+	skb = QDF_IPA_RX_DATA_SKB(ipa_tx_desc);
+
+	/*
+	 * If PROD resource is not requested here then there may be cases where
+	 * IPA hardware may be clocked down because of not having proper
+	 * dependency graph between WLAN CONS and modem PROD pipes. Adding the
+	 * workaround to request PROD resource while data is going over CONS
+	 * pipe to prevent the IPA hardware clockdown.
+	 */
+	wlan_ipa_wdi_rm_request(ipa_ctx);
+
+	qdf_spin_lock_bh(&ipa_ctx->pm_lock);
+	/*
+	 * If host is still suspended then queue the packets and these will be
+	 * drained later when resume completes. When packet is arrived here and
+	 * host is suspended, this means that there is already resume is in
+	 * progress.
+	 */
+	if (ipa_ctx->suspended) {
+		qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+		pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
+		pm_tx_cb->iface_context = iface_context;
+		pm_tx_cb->ipa_tx_desc = ipa_tx_desc;
+		qdf_nbuf_queue_add(&ipa_ctx->pm_queue_head, skb);
+		ipa_ctx->stats.num_tx_queued++;
+
+		qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
+		return;
+	}
+
+	qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
+
+	/*
+	 * If we are here means, host is not suspended, wait for the work queue
+	 * to finish.
+	 */
+	qdf_flush_work(&ipa_ctx->pm_work);
+
+	return wlan_ipa_send_pkt_to_tl(iface_context, ipa_tx_desc);
+}
+
+QDF_STATUS wlan_ipa_suspend(struct wlan_ipa_priv *ipa_ctx)
+{
+	/*
+	 * Check if IPA is ready for suspend, If we are here means, there is
+	 * high chance that suspend would go through but just to avoid any race
+	 * condition after suspend started, these checks are conducted before
+	 * allowing to suspend.
+	 */
+	if (atomic_read(&ipa_ctx->tx_ref_cnt))
+		return QDF_STATUS_E_AGAIN;
+
+	qdf_spin_lock_bh(&ipa_ctx->rm_lock);
+
+	if (ipa_ctx->rm_state != WLAN_IPA_RM_RELEASED) {
+		qdf_spin_unlock_bh(&ipa_ctx->rm_lock);
+		return QDF_STATUS_E_AGAIN;
+	}
+	qdf_spin_unlock_bh(&ipa_ctx->rm_lock);
+
+	qdf_spin_lock_bh(&ipa_ctx->pm_lock);
+	ipa_ctx->suspended = true;
+	qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_ipa_resume(struct wlan_ipa_priv *ipa_ctx)
+{
+	qdf_sched_work(0, &ipa_ctx->pm_work);
+
+	qdf_spin_lock_bh(&ipa_ctx->pm_lock);
+	ipa_ctx->suspended = false;
+	qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_ipa_pm_flush() - flush queued packets
+ * @work: pointer to the scheduled work
+ *
+ * Called during PM resume to send packets to TL which were queued
+ * while host was in the process of suspending.
+ *
+ * Return: None
+ */
+static void wlan_ipa_pm_flush(void *data)
+{
+	struct wlan_ipa_priv *ipa_ctx = (struct wlan_ipa_priv *)data;
+	struct wlan_ipa_pm_tx_cb *pm_tx_cb = NULL;
+	qdf_nbuf_t skb;
+	uint32_t dequeued = 0;
+
+	qdf_wake_lock_acquire(&ipa_ctx->wake_lock,
+			      WIFI_POWER_EVENT_WAKELOCK_IPA);
+	qdf_spin_lock_bh(&ipa_ctx->pm_lock);
+	while (((skb = qdf_nbuf_queue_remove(&ipa_ctx->pm_queue_head)) !=
+	       NULL)) {
+		qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
+
+		pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
+		dequeued++;
+
+		wlan_ipa_send_pkt_to_tl(pm_tx_cb->iface_context,
+					pm_tx_cb->ipa_tx_desc);
+
+		qdf_spin_lock_bh(&ipa_ctx->pm_lock);
+	}
+	qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
+	qdf_wake_lock_release(&ipa_ctx->wake_lock,
+			      WIFI_POWER_EVENT_WAKELOCK_IPA);
+
+	ipa_ctx->stats.num_tx_dequeued += dequeued;
+	if (dequeued > ipa_ctx->stats.num_max_pm_queue)
+		ipa_ctx->stats.num_max_pm_queue = dequeued;
+}
 
 QDF_STATUS wlan_ipa_uc_enable_pipes(struct wlan_ipa_priv *ipa_ctx)
 {
@@ -466,7 +980,7 @@ static int wlan_ipa_setup_tx_sys_pipe(struct wlan_ipa_priv *ipa_ctx,
 		ipa->client = wlan_ipa_iface_2_client[i].cons_client;
 		ipa->desc_fifo_sz = desc_fifo_sz;
 		ipa->priv = &ipa_ctx->iface_context[i];
-		ipa->notify = NULL;
+		ipa->notify = wlan_ipa_i2w_cb;
 
 		if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config)) {
 			ipa->ipa_ep_cfg.hdr.hdr_len =
@@ -536,7 +1050,7 @@ static int wlan_ipa_setup_rx_sys_pipe(struct wlan_ipa_priv *ipa_ctx,
 
 	ipa->desc_fifo_sz = desc_fifo_sz;
 	ipa->priv = ipa_ctx;
-	ipa->notify = NULL;
+	ipa->notify = wlan_ipa_w2i_cb;
 
 	ipa->ipa_ep_cfg.nat.nat_en = IPA_BYPASS_NAT;
 	ipa->ipa_ep_cfg.hdr.hdr_len = WLAN_IPA_WLAN_RX_HDR_LEN;
@@ -687,6 +1201,7 @@ QDF_STATUS wlan_ipa_setup(struct wlan_ipa_priv *ipa_ctx,
 		qdf_spinlock_create(&iface_context->interface_lock);
 	}
 
+	qdf_create_work(0, &ipa_ctx->pm_work, wlan_ipa_pm_flush, ipa_ctx);
 	qdf_spinlock_create(&ipa_ctx->pm_lock);
 	qdf_spinlock_create(&ipa_ctx->q_lock);
 	qdf_nbuf_queue_init(&ipa_ctx->pm_queue_head);
@@ -759,9 +1274,34 @@ fail_setup_rm:
 	return QDF_STATUS_E_FAILURE;
 }
 
+void wlan_ipa_flush(struct wlan_ipa_priv *ipa_ctx)
+{
+	qdf_nbuf_t skb;
+	struct wlan_ipa_pm_tx_cb *pm_tx_cb;
+
+	if (!wlan_ipa_is_enabled(ipa_ctx->config))
+		return;
+
+	qdf_cancel_work(&ipa_ctx->pm_work);
+
+	qdf_spin_lock_bh(&ipa_ctx->pm_lock);
+
+	while (((skb = qdf_nbuf_queue_remove(&ipa_ctx->pm_queue_head))
+	       != NULL)) {
+		qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
+
+		pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
+		if (pm_tx_cb->ipa_tx_desc)
+			ipa_free_skb(pm_tx_cb->ipa_tx_desc);
+
+		qdf_spin_lock_bh(&ipa_ctx->pm_lock);
+	}
+	qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
+}
+
 QDF_STATUS wlan_ipa_cleanup(struct wlan_ipa_priv *ipa_ctx)
 {
-	struct wlan_ipa_iface_context *iface_context = NULL;
+	struct wlan_ipa_iface_context *iface_context;
 	int i;
 
 	if (!wlan_ipa_uc_is_enabled(ipa_ctx->config))
@@ -772,6 +1312,8 @@ QDF_STATUS wlan_ipa_cleanup(struct wlan_ipa_priv *ipa_ctx)
 		wlan_ipa_teardown_sys_pipe(ipa_ctx);
 
 	wlan_ipa_wdi_destroy_rm(ipa_ctx);
+
+	wlan_ipa_flush(ipa_ctx);
 
 	qdf_spinlock_destroy(&ipa_ctx->pm_lock);
 	qdf_spinlock_destroy(&ipa_ctx->q_lock);
@@ -809,4 +1351,78 @@ struct wlan_ipa_iface_context
 	}
 
 	return NULL;
+}
+
+QDF_STATUS wlan_ipa_uc_ol_init(struct wlan_ipa_priv *ipa_ctx,
+			       qdf_device_t osdev)
+{
+	uint8_t i;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!wlan_ipa_uc_is_enabled(ipa_ctx->config))
+		return QDF_STATUS_SUCCESS;
+
+	ipa_debug("enter");
+
+	for (i = 0; i < WLAN_IPA_MAX_SESSION; i++) {
+		ipa_ctx->vdev_to_iface[i] = WLAN_IPA_MAX_SESSION;
+		ipa_ctx->vdev_offload_enabled[i] = false;
+	}
+
+	/* Set the lowest bandwidth to start with */
+	status = wlan_ipa_set_perf_level(ipa_ctx, 0, 0);
+	if (status != QDF_STATUS_SUCCESS) {
+		ipa_err("Set perf level failed: %d", status);
+		qdf_ipa_rm_inactivity_timer_destroy(
+					QDF_IPA_RM_RESOURCE_WLAN_PROD);
+		goto fail_return;
+	}
+
+	if (cdp_ipa_get_resource(ipa_ctx->dp_soc, ipa_ctx->dp_pdev)) {
+		ipa_err("IPA UC resource alloc fail");
+		status = QDF_STATUS_E_FAILURE;
+		goto fail_return;
+	}
+
+	if (true == ipa_ctx->uc_loaded) {
+		status = wlan_ipa_wdi_setup(ipa_ctx, osdev);
+		if (status) {
+			ipa_err("Failure to setup IPA pipes (status=%d)",
+				status);
+			status = QDF_STATUS_E_FAILURE;
+			goto fail_return;
+		}
+
+		cdp_ipa_set_doorbell_paddr(ipa_ctx->dp_soc, ipa_ctx->dp_pdev);
+		wlan_ipa_init_metering(ipa_ctx);
+	}
+
+fail_return:
+	ipa_debug("exit: status=%d", status);
+	return status;
+}
+
+QDF_STATUS wlan_ipa_uc_ol_deinit(struct wlan_ipa_priv *ipa_ctx)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	ipa_debug("enter");
+
+	if (!wlan_ipa_uc_is_enabled(ipa_ctx->config))
+		return status;
+
+	if (!ipa_ctx->ipa_pipes_down)
+		wlan_ipa_uc_disable_pipes(ipa_ctx);
+
+	if (true == ipa_ctx->uc_loaded) {
+		status = cdp_ipa_cleanup(ipa_ctx->dp_soc,
+					 ipa_ctx->tx_pipe_handle,
+					 ipa_ctx->rx_pipe_handle);
+		if (status)
+			ipa_err("Failure to cleanup IPA pipes (status=%d)",
+				status);
+	}
+
+	ipa_debug("exit: ret=%d", status);
+	return status;
 }

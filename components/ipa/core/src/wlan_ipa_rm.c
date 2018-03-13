@@ -388,6 +388,14 @@ end:
 	qdf_spin_unlock_bh(&ipa_ctx->rm_lock);
 }
 
+#ifdef FEATURE_METERING
+void wlan_ipa_init_metering(struct wlan_ipa_priv *ipa_ctx)
+{
+	qdf_event_create(&ipa_ctx->ipa_uc_sharing_stats_comp);
+	qdf_event_create(&ipa_ctx->ipa_uc_set_quota_comp);
+}
+#endif
+
 #ifndef CONFIG_IPA_WDI_UNIFIED_API
 QDF_STATUS wlan_ipa_wdi_setup_rm(struct wlan_ipa_priv *ipa_ctx)
 {

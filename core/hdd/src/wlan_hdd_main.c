@@ -286,6 +286,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_ROAM_DEBUG] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_GREEN_AP] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_OCB] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_IPA] = {QDF_TRACE_LEVEL_ALL},
 };
 
 int limit_off_chan_tbl[HDD_MAX_AC][HDD_MAX_OFF_CHAN_ENTRIES] = {
@@ -5039,7 +5040,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		if (sap_config)
 			wlansap_reset_sap_config_add_ie(sap_config,
 							eUPDATE_IE_ALL);
-		hdd_ipa_flush(hdd_ctx);
+		ucfg_ipa_flush(hdd_ctx->hdd_pdev);
 		cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 
 	case QDF_P2P_GO_MODE:
@@ -6681,8 +6682,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	hdd_request_manager_deinit();
 
 	hdd_close_all_adapters(hdd_ctx, false);
-
-	hdd_ipa_cleanup(hdd_ctx);
 
 	wlansap_global_deinit();
 	/*
@@ -10104,7 +10103,8 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 	 * IPA module before configuring them to FW. Sequence required as crash
 	 * observed otherwise.
 	 */
-	if (hdd_ipa_uc_ol_init(hdd_ctx)) {
+	if (ucfg_ipa_uc_ol_init(hdd_ctx->hdd_pdev,
+	    cds_get_context(QDF_MODULE_ID_QDF_DEVICE))) {
 		hdd_err("Failed to setup pipes");
 		goto out;
 	}
@@ -10207,7 +10207,7 @@ static int hdd_deconfigure_cds(struct hdd_context *hdd_ctx)
 		ret = -EINVAL;
 	}
 
-	if (hdd_ipa_uc_ol_deinit(hdd_ctx)) {
+	if (ucfg_ipa_uc_ol_deinit(hdd_ctx->hdd_pdev) != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to disconnect pipes");
 		ret = -EINVAL;
 	}
@@ -10612,16 +10612,12 @@ int hdd_wlan_startup(struct device *dev)
 	if (hdd_ctx->config->enable_dp_trace)
 		hdd_dp_trace_init(hdd_ctx->config);
 
-	ret = hdd_ipa_init(hdd_ctx);
-	if (ret == QDF_STATUS_E_FAILURE)
-		goto err_wiphy_unregister;
-
 	hdd_initialize_mac_address(hdd_ctx);
 
 	ret = register_netdevice_notifier(&hdd_netdev_notifier);
 	if (ret) {
 		hdd_err("register_netdevice_notifier failed: %d", ret);
-		goto err_ipa_cleanup;
+		goto err_wiphy_unregister;
 	}
 
 	rtnl_held = hdd_hold_rtnl_lock();
@@ -10687,9 +10683,6 @@ err_release_rtnl_lock:
 		hdd_release_rtnl_lock();
 
 	unregister_netdevice_notifier(&hdd_netdev_notifier);
-
-err_ipa_cleanup:
-	hdd_ipa_cleanup(hdd_ctx);
 
 err_wiphy_unregister:
 	wiphy_unregister(hdd_ctx->wiphy);

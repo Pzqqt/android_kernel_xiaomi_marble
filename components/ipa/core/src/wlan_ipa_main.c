@@ -393,3 +393,94 @@ void ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev)
 
 	wlan_ipa_uc_disable_pipes(ipa_obj);
 }
+
+void ipa_flush(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return;
+	}
+
+	return wlan_ipa_flush(ipa_obj);
+}
+
+QDF_STATUS ipa_suspend(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wlan_ipa_suspend(ipa_obj);
+}
+
+QDF_STATUS ipa_resume(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wlan_ipa_resume(ipa_obj);
+}
+
+QDF_STATUS ipa_uc_ol_init(struct wlan_objmgr_pdev *pdev,
+			  qdf_device_t osdev)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wlan_ipa_uc_ol_init(ipa_obj, osdev);
+}
+
+QDF_STATUS ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wlan_ipa_uc_ol_deinit(ipa_obj);
+}
