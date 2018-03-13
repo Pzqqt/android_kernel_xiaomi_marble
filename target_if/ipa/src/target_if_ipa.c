@@ -44,12 +44,7 @@ target_if_ipa_uc_offload_control_req(struct wlan_objmgr_psoc *psoc,
 						   req);
 }
 
-void target_if_ipa_register_tx_ops(ipa_uc_offload_control_req ipa_tx_op)
+void target_if_ipa_register_tx_ops(ipa_uc_offload_control_req *ipa_tx_op)
 {
-	if (!ipa_tx_op) {
-		target_if_err("ipa_tx_op is null");
-		return;
-	}
-
-	ipa_tx_op = target_if_ipa_uc_offload_control_req;
+	*ipa_tx_op = target_if_ipa_uc_offload_control_req;
 }

@@ -27,6 +27,16 @@ bool ucfg_ipa_is_present(void)
 	return ipa_is_hw_support();
 }
 
+bool ucfg_ipa_is_enabled(void)
+{
+	return ipa_config_is_enabled();
+}
+
+bool ucfg_ipa_uc_is_enabled(void)
+{
+	return ipa_config_is_uc_enabled();
+}
+
 void ucfg_ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
 				    void *txrx_handle)
 {
@@ -143,4 +153,14 @@ QDF_STATUS ucfg_ipa_send_mcc_scc_msg(struct wlan_objmgr_pdev *pdev,
 				     bool mcc_mode)
 {
 	return ipa_send_mcc_scc_msg(pdev, mcc_mode);
+}
+
+QDF_STATUS ucfg_ipa_wlan_evt(struct wlan_objmgr_pdev *pdev,
+			     qdf_netdev_t net_dev, uint8_t device_mode,
+			     uint8_t sta_id, uint8_t session_id,
+			     enum wlan_ipa_wlan_event ipa_event_type,
+			     uint8_t *mac_addr)
+{
+	return ipa_wlan_evt(pdev, net_dev, device_mode, sta_id, session_id,
+			    ipa_event_type, mac_addr);
 }
