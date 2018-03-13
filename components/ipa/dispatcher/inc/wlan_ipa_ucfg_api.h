@@ -228,6 +228,15 @@ QDF_STATUS ucfg_ipa_uc_ol_init(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS ucfg_ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * ucfg_ipa_send_mcc_scc_msg() - Send IPA WLAN_SWITCH_TO_MCC/SCC message
+ * @mcc_mode: 0=MCC/1=SCC
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS ucfg_ipa_send_mcc_scc_msg(struct wlan_objmgr_pdev *pdev,
+				     bool mcc_mode);
+
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -348,6 +357,13 @@ QDF_STATUS ucfg_ipa_uc_ol_init(struct wlan_objmgr_pdev *pdev,
 
 static inline
 QDF_STATUS ucfg_ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_ipa_send_mcc_scc_msg(struct wlan_objmgr_pdev *pdev,
+				     bool mcc_mode)
 {
 	return QDF_STATUS_SUCCESS;
 }

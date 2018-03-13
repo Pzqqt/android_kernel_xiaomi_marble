@@ -484,3 +484,22 @@ QDF_STATUS ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev)
 
 	return wlan_ipa_uc_ol_deinit(ipa_obj);
 }
+
+QDF_STATUS ipa_send_mcc_scc_msg(struct wlan_objmgr_pdev *pdev,
+				bool mcc_mode)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!g_ipa_hw_support) {
+		ipa_info("ipa hw not present");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wlan_ipa_send_mcc_scc_msg(ipa_obj, mcc_mode);
+}
