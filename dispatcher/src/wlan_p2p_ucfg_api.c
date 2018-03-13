@@ -264,6 +264,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	tx_action->no_cck = mgmt_frm->no_cck;
 	tx_action->no_ack = mgmt_frm->dont_wait_for_ack;
 	tx_action->off_chan = mgmt_frm->off_chan;
+	tx_action->is_deleting = false;
 	tx_action->buf = qdf_mem_malloc(tx_action->buf_len);
 	if (!(tx_action->buf)) {
 		p2p_err("Failed to allocate buffer for action frame");

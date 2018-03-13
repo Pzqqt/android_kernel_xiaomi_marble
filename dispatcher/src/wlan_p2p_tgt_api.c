@@ -145,6 +145,12 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 		return QDF_STATUS_E_FAULT;
 	}
 
+	if (tx_ctx->is_deleting) {
+		p2p_info("Received duplicate tx ack");
+		return QDF_STATUS_SUCCESS;
+	}
+	tx_ctx->is_deleting = true;
+
 	tx_conf_event = qdf_mem_malloc(sizeof(*tx_conf_event));
 	if (!tx_conf_event) {
 		p2p_err("Failed to allocate tx cnf event");
