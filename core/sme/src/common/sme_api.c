@@ -12572,6 +12572,33 @@ QDF_STATUS sme_handle_dfs_chan_scan(tHalHandle h_hal, uint8_t dfs_flag)
 	return status;
 }
 
+/**
+ *  sme_enable_dfS_chan_scan() - set DFS channel scan enable/disable
+ *  @h_hal:         corestack handler
+ *  @dfs_flag:      flag indicating dfs channel enable/disable
+ *  Return:         QDF_STATUS
+ */
+QDF_STATUS sme_enable_dfs_chan_scan(tHalHandle h_hal, uint8_t dfs_flag)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac;
+
+	if (!h_hal) {
+		sme_err("hal is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mac = PMAC_STRUCT(h_hal);
+	if (!mac) {
+		sme_err("mac is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mac->scan.fEnableDFSChnlScan = dfs_flag;
+
+	return status;
+}
+
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 /**
  * sme_validate_sap_channel_switch() - validate target channel switch w.r.t

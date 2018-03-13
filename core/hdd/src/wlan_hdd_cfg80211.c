@@ -4239,6 +4239,13 @@ int wlan_hdd_enable_dfs_chan_scan(struct hdd_context *hdd_ctx,
 
 	hdd_ctx->config->enableDFSChnlScan = enable_dfs_channels;
 
+	status = sme_enable_dfs_chan_scan(hdd_ctx->hHal, enable_dfs_channels);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to set DFS channel scan flag to %d",
+			enable_dfs_channels);
+		return qdf_status_to_os_return(status);
+	}
+
 	hdd_abort_mac_scan_all_adapters(hdd_ctx);
 
 	/* pass dfs channel status to regulatory component */
