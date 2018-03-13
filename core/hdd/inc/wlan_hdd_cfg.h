@@ -13979,8 +13979,25 @@ enum hdd_external_acs_policy {
 #define CFG_ENABLE_UINT_TEST_FRAMEWORK_DEFAULT (0)
 
 /*
+ * <ini>
+ * enable_rtt_mac_randomization - Enable/Disable rtt mac randomization
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_RTT_MAC_RANDOMIZATION_NAME    "enable_rtt_mac_randomization"
+#define CFG_ENABLE_RTT_MAC_RANDOMIZATION_MIN     (0)
+#define CFG_ENABLE_RTT_MAC_RANDOMIZATION_MAX     (1)
+#define CFG_ENABLE_RTT_MAC_RANDOMIZATION_DEFAULT (0)
+
+/*
  * Type declarations
  */
+
 struct hdd_config {
 	/* Bitmap to track what is explicitly configured */
 	DECLARE_BITMAP(bExplicitCfg, MAX_CFG_INI_ITEMS);
@@ -14853,6 +14870,7 @@ struct hdd_config {
 	HDD_GREEN_AP_CFG_FIELDS
 	bool is_unit_test_framework_enabled;
 	bool enable_ftopen;
+	bool enable_rtt_mac_randomization;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
