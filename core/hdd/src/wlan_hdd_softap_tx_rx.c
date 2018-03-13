@@ -48,8 +48,8 @@
 #include <cdp_txrx_misc.h>
 #include <wlan_hdd_object_manager.h>
 #include "wlan_p2p_ucfg_api.h"
-#include <wlan_hdd_ipa.h>
 #include <wlan_hdd_regulatory.h>
+#include "wlan_ipa_ucfg_api.h"
 
 /* Preprocessor definitions and constants */
 #undef QCA_HDD_SAP_DUMP_SK_BUFF
@@ -864,12 +864,14 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 			adapter->sta_info[staId].sta_mac.bytes);
 
 	if (adapter->sta_info[staId].in_use) {
-		if (hdd_ipa_uc_is_enabled(hdd_ctx)) {
-			hdd_ipa_wlan_evt(adapter,
-					 adapter->sta_info[staId].sta_id,
-					 HDD_IPA_CLIENT_DISCONNECT,
-					 adapter->sta_info[staId].sta_mac.
-					 bytes);
+		if (ucfg_ipa_is_enabled()) {
+			ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev, adapter->dev,
+					  adapter->device_mode,
+					  adapter->sta_info[staId].sta_id,
+					  adapter->session_id,
+					  WLAN_IPA_CLIENT_DISCONNECT,
+					  adapter->sta_info[staId].sta_mac.
+					  bytes);
 		}
 		spin_lock_bh(&adapter->sta_info_lock);
 		qdf_mem_zero(&adapter->sta_info[staId],

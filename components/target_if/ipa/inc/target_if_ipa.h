@@ -34,7 +34,7 @@
  *
  * Return: None
  */
-void target_if_ipa_register_tx_ops(ipa_uc_offload_control_req ipa_tx_op);
+void target_if_ipa_register_tx_ops(ipa_uc_offload_control_req *ipa_tx_op);
 
 #endif /* IPA_OFFLOAD */
 #endif /* _TARGET_IF_IPA_H_ */

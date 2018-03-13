@@ -96,6 +96,8 @@ ipa_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 		return status;
 	}
 
+	ipa_obj->pdev = pdev;
+
 	status = ipa_obj_setup(ipa_obj);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		ipa_err("Failed to setup ipa component");
@@ -106,7 +108,7 @@ ipa_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 		return status;
 	}
 
-	target_if_ipa_register_tx_ops(ipa_obj->ipa_tx_op);
+	target_if_ipa_register_tx_ops(&ipa_obj->ipa_tx_op);
 
 	ipa_info("ipa pdev attached");
 

@@ -41,6 +41,22 @@
 bool ucfg_ipa_is_present(void);
 
 /**
+ * ucfg_ipa_is_enabled() - get IPA enable status
+ *
+ * Return: true - ipa is enabled
+ *         false - ipa is not enabled
+ */
+bool ucfg_ipa_is_enabled(void);
+
+/**
+ * ucfg_ipa_uc_is_enabled() - get IPA uC enable status
+ *
+ * Return: true - ipa uC is enabled
+ *         false - ipa uC is not enabled
+ */
+bool ucfg_ipa_uc_is_enabled(void);
+
+/**
  * ucfg_ipa_update_config() - Update IPA component config
  *
  * Return: None
@@ -237,6 +253,24 @@ QDF_STATUS ucfg_ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS ucfg_ipa_send_mcc_scc_msg(struct wlan_objmgr_pdev *pdev,
 				     bool mcc_mode);
 
+/**
+ * ucfg_ipa_wlan_evt() - IPA event handler
+ * @pdev: pdev obj
+ * @net_dev: Interface net device
+ * @device_mode: Net interface device mode
+ * @sta_id: station id for the event
+ * @session_id: session id for the event
+ * @type: event enum of type ipa_wlan_event
+ * @mac_address: MAC address associated with the event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_ipa_wlan_evt(struct wlan_objmgr_pdev *pdev,
+			     qdf_netdev_t net_dev, uint8_t device_mode,
+			     uint8_t sta_id, uint8_t session_id,
+			     enum wlan_ipa_wlan_event ipa_event_type,
+			     uint8_t *mac_addr);
+
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -246,6 +280,16 @@ static inline bool ucfg_ipa_is_present(void)
 
 static inline void ucfg_ipa_update_config(struct wlan_ipa_config *config)
 {
+}
+
+static inline bool ucfg_ipa_is_enabled(void)
+{
+	return false;
+}
+
+static inline bool ucfg_ipa_uc_is_enabled(void)
+{
+	return false;
 }
 
 static inline
@@ -367,5 +411,16 @@ QDF_STATUS ucfg_ipa_send_mcc_scc_msg(struct wlan_objmgr_pdev *pdev,
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline
+QDF_STATUS ucfg_ipa_wlan_evt(struct wlan_objmgr_pdev *pdev,
+			     qdf_netdev_t net_dev, uint8_t device_mode,
+			     uint8_t sta_id, uint8_t session_id,
+			     enum wlan_ipa_wlan_event ipa_event_type,
+			     uint8_t *mac_addr)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_UCFG_API_H_ */

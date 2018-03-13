@@ -532,5 +532,21 @@ QDF_STATUS wlan_ipa_send_mcc_scc_msg(struct wlan_ipa_priv *ipa_ctx,
 }
 #endif
 
+/**
+ * wlan_ipa_wlan_evt() - IPA event handler
+ * @net_dev: Interface net device
+ * @device_mode: Net interface device mode
+ * @sta_id: station id for the event
+ * @session_id: session id for the event
+ * @type: event enum of type ipa_wlan_event
+ * @mac_address: MAC address associated with the event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
+			     uint8_t sta_id, uint8_t session_id,
+			     enum wlan_ipa_wlan_event ipa_event_type,
+			     uint8_t *mac_addr);
+
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_CORE_H_ */

@@ -8996,7 +8996,7 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->reorderOffloadSupport;
 
 	/* IPA micro controller data path offload resource config item */
-	cds_cfg->uc_offload_enabled = hdd_ipa_uc_is_enabled(hdd_ctx);
+	cds_cfg->uc_offload_enabled = ucfg_ipa_uc_is_enabled();
 	if (!is_power_of_2(hdd_ctx->config->IpaUcTxBufCount)) {
 		/* IpaUcTxBufCount should be power of 2 */
 		hdd_debug("Round down IpaUcTxBufCount %d to nearest power of 2",

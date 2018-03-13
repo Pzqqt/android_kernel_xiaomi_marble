@@ -67,6 +67,7 @@
 #include "wlan_hdd_tsf.h"
 #include "wlan_utility.h"
 #include "wlan_p2p_ucfg_api.h"
+#include "wlan_ipa_ucfg_api.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -1617,10 +1618,13 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
 
-	if (hdd_ipa_is_enabled(hdd_ctx))
-		hdd_ipa_wlan_evt(adapter, sta_ctx->conn_info.staId[0],
-				HDD_IPA_STA_DISCONNECT,
-				sta_ctx->conn_info.bssId.bytes);
+	if (ucfg_ipa_is_enabled())
+		ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev, adapter->dev,
+				  adapter->device_mode,
+				  sta_ctx->conn_info.staId[0],
+				  adapter->session_id,
+				  WLAN_IPA_STA_DISCONNECT,
+				  sta_ctx->conn_info.bssId.bytes);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
@@ -2735,10 +2739,13 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		else
 			hdd_err("Wrong Staid: %d", roam_info->staId);
 
-		if (hdd_ipa_is_enabled(hdd_ctx))
-			hdd_ipa_wlan_evt(adapter, roam_info->staId,
-					 HDD_IPA_STA_CONNECT,
-					 roam_info->bssid.bytes);
+		if (ucfg_ipa_is_enabled())
+			ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev, adapter->dev,
+					  adapter->device_mode,
+					  roam_info->staId,
+					  adapter->session_id,
+					  WLAN_IPA_STA_CONNECT,
+					  roam_info->bssid.bytes);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, false);

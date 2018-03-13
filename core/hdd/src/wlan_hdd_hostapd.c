@@ -1768,10 +1768,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 		}
 
-		if (hdd_ipa_is_enabled(hdd_ctx)) {
-			status = hdd_ipa_wlan_evt(adapter,
+		if (ucfg_ipa_is_enabled()) {
+			status = ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev,
+					adapter->dev, adapter->device_mode,
 					ap_ctx->broadcast_sta_id,
-					HDD_IPA_AP_CONNECT,
+					adapter->session_id,
+					WLAN_IPA_AP_CONNECT,
 					adapter->dev->dev_addr);
 			if (status) {
 				hdd_err("WLAN_AP_CONNECT event failed!!");
@@ -1913,10 +1915,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		/* Invalidate the channel info. */
 		ap_ctx->operating_channel = 0;
-		if (hdd_ipa_is_enabled(hdd_ctx)) {
-			status = hdd_ipa_wlan_evt(adapter,
+		if (ucfg_ipa_is_enabled()) {
+			status = ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev,
+					adapter->dev, adapter->device_mode,
 					ap_ctx->broadcast_sta_id,
-					HDD_IPA_AP_DISCONNECT,
+					adapter->session_id,
+					WLAN_IPA_AP_DISCONNECT,
 					adapter->dev->dev_addr);
 			if (status) {
 				hdd_err("WLAN_AP_DISCONNECT event failed!!");
@@ -2168,10 +2172,14 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		adapter->sta_info[staId].ecsa_capable = event->ecsa_capable;
 
-		if (hdd_ipa_is_enabled(hdd_ctx)) {
-			status = hdd_ipa_wlan_evt(adapter,
-					event->staId, HDD_IPA_CLIENT_CONNECT_EX,
-					event->staMac.bytes);
+		if (ucfg_ipa_is_enabled()) {
+			status = ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev,
+						   adapter->dev,
+						   adapter->device_mode,
+						   event->staId,
+						   adapter->session_id,
+						   WLAN_IPA_CLIENT_CONNECT_EX,
+						   event->staMac.bytes);
 			if (status) {
 				hdd_err("WLAN_CLIENT_CONNECT_EX event failed");
 				goto stopbss;

@@ -443,7 +443,7 @@ struct ipa_uc_fw_stats {
  */
 struct wlan_ipa_uc_pending_event {
 	qdf_list_node_t node;
-	qdf_ipa_wlan_event_t type;
+	qdf_ipa_wlan_event type;
 	qdf_netdev_t net_dev;
 	uint8_t device_mode;
 	uint8_t sta_id;
@@ -559,6 +559,7 @@ typedef int (*wlan_ipa_send_to_nw)(qdf_nbuf_t skb, qdf_netdev_t dev);
 
 /* IPA private context structure definition */
 struct wlan_ipa_priv {
+	struct wlan_objmgr_pdev *pdev;
 	struct wlan_ipa_sys_pipe sys_pipe[WLAN_IPA_MAX_SYSBAM_PIPE];
 	struct wlan_ipa_iface_context iface_context[WLAN_IPA_MAX_IFACE];
 	uint8_t num_iface;
