@@ -387,7 +387,8 @@ static void __cds_cpu_hotplug_notify(uint32_t cpu, bool cpu_up)
 	if (pref_cpu == 0)
 		return;
 
-	if (!cds_set_cpus_allowed_ptr(pSchedContext->ol_rx_thread, pref_cpu))
+	if (pSchedContext->ol_rx_thread &&
+	    !cds_set_cpus_allowed_ptr(pSchedContext->ol_rx_thread, pref_cpu))
 		affine_cpu = pref_cpu;
 }
 
