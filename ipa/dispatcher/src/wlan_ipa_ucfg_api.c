@@ -138,3 +138,9 @@ QDF_STATUS ucfg_ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev)
 {
 	return ipa_uc_ol_deinit(pdev);
 }
+
+QDF_STATUS ucfg_ipa_send_mcc_scc_msg(struct wlan_objmgr_pdev *pdev,
+				     bool mcc_mode)
+{
+	return ipa_send_mcc_scc_msg(pdev, mcc_mode);
+}

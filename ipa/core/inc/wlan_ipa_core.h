@@ -513,5 +513,24 @@ QDF_STATUS wlan_ipa_suspend(struct wlan_ipa_priv *ipa_ctx);
  */
 QDF_STATUS wlan_ipa_resume(struct wlan_ipa_priv *ipa_ctx);
 
+#ifndef QCA_LL_TX_FLOW_CONTROL_V2
+/**
+ * wlan_ipa_send_mcc_scc_msg() - Send IPA WLAN_SWITCH_TO_MCC/SCC message
+ * @ipa_ctx: IPA context
+ * @mcc_mode: 0=MCC/1=SCC
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS wlan_ipa_send_mcc_scc_msg(struct wlan_ipa_priv *ipa_ctx,
+				     bool mcc_mode);
+#else
+static inline
+QDF_STATUS wlan_ipa_send_mcc_scc_msg(struct wlan_ipa_priv *ipa_ctx,
+				     bool mcc_mode)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_CORE_H_ */
