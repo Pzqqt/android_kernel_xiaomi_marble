@@ -216,7 +216,7 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 {
 	uint8_t size = 0;
 
-	if (ppdu_info->first_msdu_payload == NULL)
+	if (ppdu_info->msdu_info.first_msdu_payload == NULL)
 		return QDF_STATUS_SUCCESS;
 
 	if (pdev->m_copy_id.rx_ppdu_id == ppdu_info->com_info.ppdu_id)
@@ -225,12 +225,16 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 	pdev->m_copy_id.rx_ppdu_id = ppdu_info->com_info.ppdu_id;
 
 	/* Include 2 bytes of reserved space appended to the msdu payload */
-	size = (ppdu_info->first_msdu_payload - qdf_nbuf_data(nbuf)) + 2;
-	ppdu_info->first_msdu_payload = NULL;
+	size = (ppdu_info->msdu_info.first_msdu_payload -
+				qdf_nbuf_data(nbuf)) + 2;
+	ppdu_info->msdu_info.first_msdu_payload = NULL;
 
 	if (qdf_nbuf_pull_head(nbuf, size) == NULL)
 		return QDF_STATUS_SUCCESS;
 
+	/* only retain RX MSDU payload in the skb */
+	qdf_nbuf_trim_tail(nbuf, qdf_nbuf_len(nbuf) -
+				ppdu_info->msdu_info.payload_len);
 	dp_wdi_event_handler(WDI_EVENT_RX_DATA, soc,
 			nbuf, HTT_INVALID_PEER, WDI_NO_VAL, pdev->pdev_id);
 	return QDF_STATUS_E_ALREADY;

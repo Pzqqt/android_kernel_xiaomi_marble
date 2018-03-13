@@ -440,11 +440,16 @@ struct hal_rx_ppdu_common_info {
 	uint32_t mpdu_cnt_fcs_err;
 };
 
+struct hal_rx_msdu_payload_info {
+	uint8_t *first_msdu_payload;
+	uint32_t payload_len;
+};
+
 struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_common_info com_info;
 	struct hal_rx_ppdu_user_info user_info[HAL_MAX_UL_MU_USERS];
 	struct mon_rx_status rx_status;
-	uint8_t *first_msdu_payload;
+	struct hal_rx_msdu_payload_info msdu_info;
 };
 
 static inline uint32_t
@@ -994,7 +999,8 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		break;
 	}
 	case WIFIRX_HEADER_E:
-		ppdu_info->first_msdu_payload = rx_tlv;
+		ppdu_info->msdu_info.first_msdu_payload = rx_tlv;
+		ppdu_info->msdu_info.payload_len = tlv_len;
 		break;
 	case 0:
 		return HAL_TLV_STATUS_PPDU_DONE;
