@@ -2046,17 +2046,23 @@ int __init rtac_init(void)
 		goto nomem;
 	}
 
-	return misc_register(&rtac_misc);
+	if (misc_register(&rtac_misc) != 0) {
+		kzfree(rtac_adm_buffer);
+		kzfree(rtac_asm_buffer);
+		kzfree(rtac_afe_buffer);
+		kzfree(rtac_voice_buffer);
+	}
 nomem:
 	return -ENOMEM;
 }
 
 void rtac_exit(void)
 {
+	misc_deregister(&rtac_misc);
 	kzfree(rtac_adm_buffer);
 	kzfree(rtac_asm_buffer);
 	kzfree(rtac_afe_buffer);
-	misc_deregister(&rtac_misc);
+	kzfree(rtac_voice_buffer);
 }
 
 MODULE_DESCRIPTION("SoC QDSP6v2 Real-Time Audio Calibration driver");
