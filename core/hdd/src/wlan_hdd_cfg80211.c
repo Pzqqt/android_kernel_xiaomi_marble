@@ -1885,7 +1885,7 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 
 	qdf_mem_copy(sap_config->self_macaddr.bytes,
 		adapter->mac_addr.bytes, sizeof(struct qdf_mac_addr));
-	hdd_notice("ACS Started for %s", adapter->dev->name);
+	hdd_info("ACS Started for %s", adapter->dev->name);
 	status = wlansap_acs_chselect(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 		acs_event_callback, sap_config, adapter->dev);
@@ -4118,7 +4118,7 @@ void hdd_chip_pwr_save_fail_detected_cb(void *hddctx,
 			  flags);
 
 	if (!skb) {
-		hdd_notice("cfg80211_vendor_event_alloc failed");
+		hdd_info("cfg80211_vendor_event_alloc failed");
 		return;
 	}
 
@@ -7693,7 +7693,7 @@ static int __wlan_hdd_cfg80211_wifi_logger_get_ring_data(struct wiphy *wiphy,
 		 * As part of DRIVER ring ID, flush both driver and fw logs.
 		 * For other Ring ID's driver doesn't have any rings to flush
 		 */
-		hdd_notice("Bug report triggered by framework");
+		hdd_info("Bug report triggered by framework");
 
 		status = cds_flush_logs(WLAN_LOG_TYPE_NON_FATAL,
 				WLAN_LOG_INDICATOR_FRAMEWORK,
@@ -11326,14 +11326,14 @@ static QDF_STATUS wlan_hdd_validate_acs_channel(struct hdd_adapter *adapter,
 	if ((wlansap_is_channel_in_nol_list(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 				channel,
 				PHY_SINGLE_CHANNEL_CENTERED))) {
-		hdd_notice("channel %d is in nol", channel);
+		hdd_info("channel %d is in nol", channel);
 		return -EINVAL;
 	}
 
 	if ((wlansap_is_channel_leaking_in_nol(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 				channel, chan_bw))) {
-		hdd_notice("channel %d is leaking in nol", channel);
+		hdd_info("channel %d is leaking in nol", channel);
 		return -EINVAL;
 	}
 
@@ -16695,8 +16695,7 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	hdd_notice(MAC_ADDRESS_STR,
-	       MAC_ADDR_ARRAY(roam_info->bssid.bytes));
+	hdd_info(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(roam_info->bssid.bytes));
 	cfg80211_pmksa_candidate_notify(dev, index,
 					roam_info->bssid.bytes,
 					preauth, GFP_KERNEL);
@@ -17468,7 +17467,7 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 	case NL80211_AUTHTYPE_FILS_SK:
-		hdd_notice("set authentication type to FILS SHARED");
+		hdd_debug("set authentication type to FILS SHARED");
 		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 		break;
 #endif

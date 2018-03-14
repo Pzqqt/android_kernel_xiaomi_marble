@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -626,7 +625,7 @@ static QDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 	case SME_QOS_STATUS_SETUP_NOT_QOS_AP_RSP:
 		hdd_err("Setup failed, not a QoS AP");
 		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
-			hdd_notice("Explicit Qos, notifying user space");
+			hdd_info("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
 			pQosContext->lastStatus =
@@ -702,7 +701,7 @@ static QDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 			pAc->wmmAcAccessPending = false;
 
 		} else {
-			hdd_notice("Explicit Qos, notifying user space");
+			hdd_info("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
 			pQosContext->lastStatus =

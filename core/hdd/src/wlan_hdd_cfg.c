@@ -7059,9 +7059,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		   hdd_ctx->config->force_ssc_disable_indoor_channel);
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
-	hdd_notice("Name = [%s] Value = [%d]",
-		   CFG_ENABLE_LFR_SUBNET_DETECTION,
-		   hdd_ctx->config->enable_lfr_subnet_detection);
+	hdd_debug("Name = [%s] Value = [%d]",
+		  CFG_ENABLE_LFR_SUBNET_DETECTION,
+		  hdd_ctx->config->enable_lfr_subnet_detection);
 #endif
 	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_ROAM_DENSE_TRAFFIC_THRESHOLD,
@@ -7803,7 +7803,7 @@ QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, bool val)
 	hdd_debug("Enter Val %d", val);
 
 	if (hdd_ctx->imps_enabled == val) {
-		hdd_notice("Already in the requested power state:%d", val);
+		hdd_info("Already in the requested power state:%d", val);
 		return QDF_STATUS_SUCCESS;
 	}
 

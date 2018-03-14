@@ -2108,16 +2108,16 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	case eSAP_STA_REASSOC_EVENT:
 		event = &pSapEvent->sapevt.sapStationAssocReassocCompleteEvent;
 		if (eSAP_STATUS_FAILURE == event->status) {
-			hdd_notice("assoc failure: " MAC_ADDRESS_STR,
-				   MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+			hdd_info("assoc failure: " MAC_ADDRESS_STR,
+				 MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 			break;
 		}
 
 		wrqu.addr.sa_family = ARPHRD_ETHER;
 		memcpy(wrqu.addr.sa_data,
 		       &event->staMac, QDF_MAC_ADDR_SIZE);
-		hdd_notice(" associated " MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+		hdd_info("associated " MAC_ADDRESS_STR,
+			 MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		we_event = IWEVREGISTERED;
 
 		if ((eCSR_ENCRYPT_TYPE_NONE == ap_ctx->encryption_type) ||
@@ -2279,8 +2279,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			&pSapEvent->sapevt.sapStationDisassocCompleteEvent;
 		memcpy(wrqu.addr.sa_data,
 		       &disassoc_comp->staMac, QDF_MAC_ADDR_SIZE);
-		hdd_notice(" disassociated " MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+		hdd_info("disassociated " MAC_ADDRESS_STR,
+			 MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 
 		stainfo = hdd_get_stainfo(adapter->cache_sta_info,
 					  disassoc_comp->staMac);
@@ -2415,12 +2415,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			     i <
 			     pSapEvent->sapevt.sapAssocStaListEvent.
 			     noOfAssocSta; i++) {
-				hdd_notice("Associated Sta Num %d:assocId=%d, staId=%d, staMac="
-				       MAC_ADDRESS_STR, i + 1,
-				       pAssocStasArray->assocId,
-				       pAssocStasArray->staId,
-				       MAC_ADDR_ARRAY(pAssocStasArray->staMac.
-						      bytes));
+				hdd_info("Associated Sta Num %d:assocId=%d, staId=%d, staMac="
+					 MAC_ADDRESS_STR, i + 1,
+					 pAssocStasArray->assocId,
+					 pAssocStasArray->staId,
+					 MAC_ADDR_ARRAY(pAssocStasArray->staMac.
+							bytes));
 				pAssocStasArray++;
 			}
 		}
@@ -2587,7 +2587,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			return QDF_STATUS_SUCCESS;
 
 	case eSAP_DFS_NEXT_CHANNEL_REQ:
-		hdd_notice("Sending next channel query to userspace");
+		hdd_debug("Sending next channel query to userspace");
 		hdd_update_acs_timer_reason(adapter,
 				QCA_WLAN_VENDOR_ACS_SELECT_REASON_DFS);
 		return QDF_STATUS_SUCCESS;
@@ -3494,7 +3494,7 @@ static __iw_softap_setparam(struct net_device *dev,
 		}
 		req.stats = set_value;
 		req.channel = adapter->session.ap.operating_channel;
-		hdd_notice("QCSAP_PARAM_SET_TXRX_STATS val %d", set_value);
+		hdd_info("QCSAP_PARAM_SET_TXRX_STATS val %d", set_value);
 		ret = cdp_txrx_stats_request(soc, vdev, &req);
 		break;
 	}
@@ -3996,13 +3996,13 @@ static __iw_softap_setparam(struct net_device *dev,
 		ret = hdd_set_peer_rate(adapter, set_value);
 		break;
 	case QCASAP_PARAM_DCM:
-		hdd_notice("Set WMI_VDEV_PARAM_HE_DCM: %d", set_value);
+		hdd_debug("Set WMI_VDEV_PARAM_HE_DCM: %d", set_value);
 		ret = wma_cli_set_command(adapter->session_id,
 					  WMI_VDEV_PARAM_HE_DCM, set_value,
 					  VDEV_CMD);
 		break;
 	case QCASAP_PARAM_RANGE_EXT:
-		hdd_notice("Set WMI_VDEV_PARAM_HE_RANGE_EXT: %d", set_value);
+		hdd_debug("Set WMI_VDEV_PARAM_HE_RANGE_EXT: %d", set_value);
 		ret = wma_cli_set_command(adapter->session_id,
 					  WMI_VDEV_PARAM_HE_RANGE_EXT,
 					  set_value, VDEV_CMD);

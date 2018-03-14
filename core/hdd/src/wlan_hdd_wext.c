@@ -4390,8 +4390,8 @@ int hdd_set_11ax_rate(struct hdd_adapter *adapter, int set_value,
 		set_value = hdd_assemble_rate_code(preamble, nss, rix);
 	}
 
-	hdd_notice("SET_11AX_RATE val %d rix %d preamble %x nss %d",
-	       set_value, rix, preamble, nss);
+	hdd_info("SET_11AX_RATE val %d rix %d preamble %x nss %d",
+		 set_value, rix, preamble, nss);
 
 	ret = wma_cli_set_command(adapter->session_id,
 				  WMI_VDEV_PARAM_FIXED_RATE,
@@ -5732,7 +5732,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		if (!hHal)
 			return -EINVAL;
 
-		hdd_notice("Set Thermal Mitigation Level %d", set_value);
+		hdd_debug("Set Thermal Mitigation Level %d", set_value);
 		(void)sme_set_thermal_level(hHal, set_value);
 		break;
 	}
@@ -5755,7 +5755,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		if (!hHal)
 			return -EINVAL;
 
-		hdd_notice("Set NSS = %d", set_value);
+		hdd_debug("Set NSS = %d", set_value);
 		if ((set_value > 2) || (set_value <= 0)) {
 			hdd_err("NSS greater than 2 not supported");
 			ret = -EINVAL;
@@ -5873,7 +5873,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		if (!hHal)
 			return -EINVAL;
 
-		hdd_notice("WMI_VDEV_PARAM_SGI val %d", set_value);
+		hdd_debug("WMI_VDEV_PARAM_SGI val %d", set_value);
 		ret = sme_update_ht_config(hHal, adapter->session_id,
 					   WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
 					   set_value);
@@ -5889,8 +5889,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		if (!hHal)
 			return -EINVAL;
 
-		hdd_notice("WMI_VDEV_PARAM_ENABLE_RTSCTS val 0x%x",
-		       set_value);
+		hdd_debug("WMI_VDEV_PARAM_ENABLE_RTSCTS val 0x%x", set_value);
 
 		if ((set_value & HDD_RTSCTS_EN_MASK) ==
 		    HDD_RTSCTS_ENABLE)
@@ -6301,7 +6300,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_SET_TXRX_STATS:
 	{
-		hdd_notice("WE_SET_TXRX_STATS val %d", set_value);
+		hdd_debug("WE_SET_TXRX_STATS val %d", set_value);
 		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
 				       adapter->session_id);
 
@@ -6653,7 +6652,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		if (!hHal)
 			return -EINVAL;
 
-		hdd_notice("SET SCAN DISABLE %d", set_value);
+		hdd_debug("SET SCAN DISABLE %d", set_value);
 		sme_set_scan_disable(WLAN_HDD_GET_HAL_CTX(adapter), set_value);
 		break;
 	}
@@ -6708,13 +6707,13 @@ static int __iw_setint_getnone(struct net_device *dev,
 		ret = hdd_set_11ax_rate(adapter, set_value, NULL);
 		break;
 	case WE_SET_DCM:
-		hdd_notice("Set WMI_VDEV_PARAM_HE_DCM: %d", set_value);
+		hdd_debug("Set WMI_VDEV_PARAM_HE_DCM: %d", set_value);
 		ret = wma_cli_set_command(adapter->session_id,
 					  WMI_VDEV_PARAM_HE_DCM, set_value,
 					  VDEV_CMD);
 		break;
 	case WE_SET_RANGE_EXT:
-		hdd_notice("Set WMI_VDEV_PARAM_HE_RANGE_EXT: %d", set_value);
+		hdd_debug("Set WMI_VDEV_PARAM_HE_RANGE_EXT: %d", set_value);
 		ret = wma_cli_set_command(adapter->session_id,
 					  WMI_VDEV_PARAM_HE_RANGE_EXT,
 					  set_value, VDEV_CMD);
@@ -7460,13 +7459,13 @@ static int __iw_setnone_getint(struct net_device *dev,
 		break;
 	}
 	case WE_GET_DCM:
-		hdd_notice("GET WMI_VDEV_PARAM_HE_DCM");
+		hdd_debug("GET WMI_VDEV_PARAM_HE_DCM");
 		*value = wma_cli_get_command(adapter->session_id,
 					     WMI_VDEV_PARAM_HE_DCM,
 					     VDEV_CMD);
 		break;
 	case WE_GET_RANGE_EXT:
-		hdd_notice("GET WMI_VDEV_PARAM_HE_RANGE_EXT");
+		hdd_debug("GET WMI_VDEV_PARAM_HE_RANGE_EXT");
 		*value = wma_cli_get_command(adapter->session_id,
 					     WMI_VDEV_PARAM_HE_RANGE_EXT,
 					     VDEV_CMD);
@@ -8516,7 +8515,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 	{
 		bool allow;
 
-		hdd_notice("<iwpriv wlan0 pm_query_allow> is called");
+		hdd_debug("<iwpriv wlan0 pm_query_allow> is called");
 		allow = policy_mgr_allow_concurrency(hdd_ctx->hdd_psoc,
 				apps_args[0], apps_args[1], apps_args[2]);
 		pr_info("allow %d {0 = don't allow, 1 = allow}", allow);

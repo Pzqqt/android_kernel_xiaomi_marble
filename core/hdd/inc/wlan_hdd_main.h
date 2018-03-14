@@ -258,8 +258,6 @@
 		hdd_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
 #define hdd_warn(format, args...) \
 		hdd_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define hdd_notice(format, args...) \
-		hdd_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
 #define hdd_info(format, args...) \
 		hdd_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
 #define hdd_debug(format, args...) \

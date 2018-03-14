@@ -931,7 +931,7 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 	} else
 		hdd_info("fail to cache arp offload request");
 	} else {
-		hdd_notice("IP Address is not assigned");
+		hdd_info("IP Address is not assigned");
 		status = QDF_STATUS_NOT_INITIALIZED;
 	}
 out:

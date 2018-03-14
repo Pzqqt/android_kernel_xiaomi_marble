@@ -1023,8 +1023,8 @@ bool wlan_hdd_validate_modules_state(struct hdd_context *hdd_ctx)
 	mutex_lock(&hdd_ctx->iface_change_lock);
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
 		mutex_unlock(&hdd_ctx->iface_change_lock);
-		hdd_notice("Modules not enabled, Present status: %d",
-			   hdd_ctx->driver_status);
+		hdd_info("Modules not enabled, Present status: %d",
+			 hdd_ctx->driver_status);
 		return false;
 	}
 	mutex_unlock(&hdd_ctx->iface_change_lock);
@@ -3060,7 +3060,7 @@ static int __hdd_stop(struct net_device *dev)
 	 * Disable TX on the interface, after this hard_start_xmit() will not
 	 * be called on that interface
 	 */
-	hdd_notice("Disabling queues, adapter device mode: %s(%d)",
+	hdd_info("Disabling queues, adapter device mode: %s(%d)",
 		 hdd_device_mode_to_string(adapter->device_mode),
 		 adapter->device_mode);
 
@@ -5145,9 +5145,9 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		hdd_notice("[SSR] reset adapter with device mode %s(%d)",
-			   hdd_device_mode_to_string(adapter->device_mode),
-			   adapter->device_mode);
+		hdd_info("[SSR] reset adapter with device mode %s(%d)",
+			 hdd_device_mode_to_string(adapter->device_mode),
+			 adapter->device_mode);
 
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
@@ -7861,7 +7861,7 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
 	}
 	/* Update config to application */
 	status = hdd_cfg80211_update_acs_config(adapter, reason);
-	hdd_notice("Updated ACS config to nl with reason %d", reason);
+	hdd_info("Updated ACS config to nl with reason %d", reason);
 
 	return status;
 }
@@ -10747,16 +10747,16 @@ static void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp)
 		return;
 	}
 
-	hdd_notice("rsp->arp_req_enqueue :%x", rsp->arp_req_enqueue);
-	hdd_notice("rsp->arp_req_tx_success :%x", rsp->arp_req_tx_success);
-	hdd_notice("rsp->arp_req_tx_failure :%x", rsp->arp_req_tx_failure);
-	hdd_notice("rsp->arp_rsp_recvd :%x", rsp->arp_rsp_recvd);
-	hdd_notice("rsp->out_of_order_arp_rsp_drop_cnt :%x",
-		   rsp->out_of_order_arp_rsp_drop_cnt);
-	hdd_notice("rsp->dad_detected :%x", rsp->dad_detected);
-	hdd_notice("rsp->connect_status :%x", rsp->connect_status);
-	hdd_notice("rsp->ba_session_establishment_status :%x",
-		   rsp->ba_session_establishment_status);
+	hdd_info("rsp->arp_req_enqueue :%x", rsp->arp_req_enqueue);
+	hdd_info("rsp->arp_req_tx_success :%x", rsp->arp_req_tx_success);
+	hdd_info("rsp->arp_req_tx_failure :%x", rsp->arp_req_tx_failure);
+	hdd_info("rsp->arp_rsp_recvd :%x", rsp->arp_rsp_recvd);
+	hdd_info("rsp->out_of_order_arp_rsp_drop_cnt :%x",
+		 rsp->out_of_order_arp_rsp_drop_cnt);
+	hdd_info("rsp->dad_detected :%x", rsp->dad_detected);
+	hdd_info("rsp->connect_status :%x", rsp->connect_status);
+	hdd_info("rsp->ba_session_establishment_status :%x",
+		 rsp->ba_session_establishment_status);
 
 	adapter->hdd_stats.hdd_arp_stats.rx_fw_cnt = rsp->arp_rsp_recvd;
 	adapter->dad |= rsp->dad_detected;
@@ -11228,8 +11228,8 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 	    != QDF_STATUS_SUCCESS)
 		hdd_err("Failed to start wlan auto shutdown timer");
 	else
-		hdd_notice("Auto Shutdown timer for %d seconds enabled",
-			   hdd_ctx->config->WlanAutoShutdown);
+		hdd_info("Auto Shutdown timer for %d seconds enabled",
+			 hdd_ctx->config->WlanAutoShutdown);
 }
 #endif
 
