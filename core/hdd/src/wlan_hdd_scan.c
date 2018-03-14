@@ -63,11 +63,6 @@
 #define SCAN_DONE_EVENT_BUF_SIZE 4096
 #define RATE_MASK 0x7f
 
-/*
- * Count to ratelimit the HDD logs during Scan and connect
- */
-#define HDD_SCAN_REJECT_RATE_LIMIT 5
-
 /**
  * enum essid_bcast_type - SSID broadcast type
  * @eBCAST_UNKNOWN: Broadcast unknown
@@ -534,9 +529,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	/* Check if scan is allowed at this point of time */
 	if (hdd_is_connection_in_progress(&curr_session_id, &curr_reason)) {
 		scan_ebusy_cnt++;
-		hdd_err_ratelimited(HDD_SCAN_REJECT_RATE_LIMIT,
-			"Scan not allowed. scan_ebusy_cnt: %d Session %d Reason %d",
-			scan_ebusy_cnt, curr_session_id, curr_reason);
+		hdd_err_rl("Scan not allowed. scan_ebusy_cnt: %d Session %d Reason %d",
+			   scan_ebusy_cnt, curr_session_id, curr_reason);
 		if (hdd_ctx->last_scan_reject_session_id != curr_session_id ||
 		    hdd_ctx->last_scan_reject_reason != curr_reason ||
 		    !hdd_ctx->last_scan_reject_timestamp) {

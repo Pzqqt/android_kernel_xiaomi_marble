@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2011-2012, 2014-2015, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2015, 2017-2018 The Linux Foundation. All
+ * rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,28 +46,14 @@
 #define MAC_ADDR_ARRAY(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
 #define MAC_ADDRESS_STR "%02x:%02x:%02x:%02x:%02x:%02x"
 
-#define pe_log_rate_limited(rate, level, args...) \
-		QDF_TRACE_RATE_LIMITED(rate, QDF_MODULE_ID_PE, level, ## args)
-#define pe_log_rate_limited_fl(rate, level, format, args...) \
-		pe_log_rate_limited(rate, level, FL(format), ## args)
-#define pe_alert_rate_limited(rate, format, args...) \
-		pe_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_FATAL,\
-			format, ## args)
-#define pe_err_rate_limited(rate, format, args...) \
-		pe_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_ERROR,\
-			format, ## args)
-#define pe_warn_rate_limited(rate, format, args...) \
-		pe_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_WARN,\
-			format, ## args)
-#define pe_notice_rate_limited(rate, format, args...) \
-		pe_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_INFO,\
-			format, ## args)
-#define pe_info_rate_limited(rate, format, args...) \
-		pe_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_INFO,\
-			format, ## args)
-#define pe_debug_rate_limited(rate, format, args...) \
-		pe_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_DEBUG,\
-			format, ## args)
+#define __pe_log_rl(level, format, args...) \
+	QDF_TRACE_RATE_LIMITED(QDF_MODULE_ID_PE, level, FL(format), ## args)
+
+#define pe_alert_rl(params...) __pe_log_rl(QDF_TRACE_LEVEL_FATAL, params)
+#define pe_err_rl(params...) __pe_log_rl(QDF_TRACE_LEVEL_ERROR, params)
+#define pe_warn_rl(params...) __pe_log_rl(QDF_TRACE_LEVEL_WARN, params)
+#define pe_info_rl(params...) __pe_log_rl(QDF_TRACE_LEVEL_INFO, params)
+#define pe_debug_rl(params...) __pe_log_rl(QDF_TRACE_LEVEL_DEBUG, params)
 
 #define pe_log(level, args...) QDF_TRACE(QDF_MODULE_ID_PE, level, ## args)
 #define pe_logfl(level, format, args...) pe_log(level, FL(format), ## args)

@@ -65,11 +65,6 @@
 #include "wlan_hdd_power.h"
 #include <wlan_hdd_tsf.h>
 
-/*
- * Count to ratelimit the HDD logs during TX failures
- */
-#define HDD_TX_BLOCKED_RATE 256
-
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /*
  * Mapping Linux AC interpretation to SME AC.
@@ -539,9 +534,7 @@ static inline bool hdd_is_tx_allowed(struct sk_buff *skb, uint8_t peer_id)
 	peer = cdp_peer_find_by_local_id(soc, pdev, peer_id);
 
 	if (peer == NULL) {
-		hdd_err_ratelimited(HDD_TX_BLOCKED_RATE,
-				    "Unable to find peer entry for staid: %d",
-				    peer_id);
+		hdd_err_rl("Unable to find peer entry for staid: %d", peer_id);
 		return false;
 	}
 
