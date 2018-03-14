@@ -569,7 +569,7 @@ static int wdsp_register_rpmsg(struct platform_device *pdev,
 		return -ENOMEM;
 
 	no_of_channels = of_property_count_strings(pdev->dev.of_node,
-						   "qcom,wdsp_channles");
+						   "qcom,wdsp-channels");
 	if (no_of_channels < 0) {
 		dev_err(&pdev->dev, "%s: channel name parse error %d\n",
 			__func__, no_of_channels);
