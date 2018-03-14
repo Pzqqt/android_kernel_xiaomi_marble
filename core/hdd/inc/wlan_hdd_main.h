@@ -242,10 +242,6 @@
 #define hdd_enter_dev(dev) hdd_debug("enter(%s)", (dev)->name)
 #define hdd_exit() hdd_debug("exit")
 
-#define ENTER() hdd_enter()
-#define ENTER_DEV(dev) hdd_enter_dev(dev)
-#define EXIT() hdd_exit()
-
 #define WLAN_HDD_GET_PRIV_PTR(__dev__) \
 		(struct hdd_adapter *)(netdev_priv((__dev__)))
 
