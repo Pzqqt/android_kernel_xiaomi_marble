@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -190,10 +189,7 @@ HTC_PACKET *hif_dev_alloc_rx_buffer(struct hif_sdio_device *pdev)
 	headsize = sizeof(HTC_PACKET);
 	netbuf = qdf_nbuf_alloc(NULL, bufsize + headsize, 0, 4, false);
 	if (netbuf == NULL) {
-		QDF_TRACE_RATE_LIMITED(HIF_DBG_PRINT_RATE, QDF_MODULE_ID_HIF,
-				       QDF_TRACE_LEVEL_ERROR,
-				       "(%s)Allocate netbuf failed\n",
-				       __func__);
+		hif_err_rl("Allocate netbuf failed");
 		return NULL;
 	}
 	packet = (HTC_PACKET *) qdf_nbuf_data(netbuf);
