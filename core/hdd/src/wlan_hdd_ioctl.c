@@ -6919,6 +6919,272 @@ static int drv_cmd_set_channel_switch(struct hdd_adapter *adapter,
 	return 0;
 }
 
+#ifdef DISABLE_CHANNEL_LIST
+void wlan_hdd_free_cache_channels(struct hdd_context *hdd_ctx)
+{
+	hdd_enter();
+
+	if (!hdd_ctx->original_channels)
+		return;
+
+	qdf_mutex_acquire(&hdd_ctx->cache_channel_lock);
+	hdd_ctx->original_channels->num_channels = 0;
+	if (hdd_ctx->original_channels->channel_info) {
+		qdf_mem_free(hdd_ctx->original_channels->channel_info);
+		hdd_ctx->original_channels->channel_info = NULL;
+	}
+	qdf_mem_free(hdd_ctx->original_channels);
+	hdd_ctx->original_channels = NULL;
+	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
+
+	hdd_exit();
+}
+
+/**
+ * hdd_alloc_chan_cache() - Allocate the memory to cache the channel
+ * info for the channels received in command SET_DISABLE_CHANNEL_LIST
+ * @hdd_ctx: Pointer to HDD context
+ * @num_chan: Number of channels for which memory needs to
+ * be allocated
+ *
+ * Return: 0 on success and error code on failure
+ */
+static int hdd_alloc_chan_cache(struct hdd_context *hdd_ctx, int num_chan)
+{
+	hdd_ctx->original_channels =
+			qdf_mem_malloc(sizeof(struct hdd_cache_channels));
+	if (!hdd_ctx->original_channels) {
+		hdd_err("QDF_MALLOC_ERR");
+		return -ENOMEM;
+	}
+	hdd_ctx->original_channels->num_channels = num_chan;
+	hdd_ctx->original_channels->channel_info =
+					qdf_mem_malloc(num_chan *
+					sizeof(struct hdd_cache_channel_info));
+	if (!hdd_ctx->original_channels->channel_info) {
+		hdd_err("QDF_MALLOC_ERR");
+		hdd_ctx->original_channels->num_channels = 0;
+		qdf_mem_free(hdd_ctx->original_channels);
+		hdd_ctx->original_channels = NULL;
+		return -ENOMEM;
+	}
+	return 0;
+}
+
+/**
+ * hdd_parse_disable_chan_cmd() - Parse the channel list received
+ * in command.
+ * @adapter: pointer to hdd adapter
+ * @ptr: Pointer to the command string
+ *
+ * This function parses the channel list received in the command.
+ * command should be a string having format
+ * SET_DISABLE_CHANNEL_LIST <num of channels>
+ * <channels separated by spaces>.
+ * If the command comes multiple times than this function will compare
+ * the channels received in the command with the channles cached in the
+ * first command, if the channel list matches with the cached channles,
+ * it returns success otherwise returns failure.
+ *
+ * Return: 0 on success, Error code on failure
+ */
+
+static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t *param;
+	int j, i, temp_int, ret = 0, num_channels;
+	uint32_t parsed_channels[MAX_CHANNEL];
+	bool is_command_repeated = false;
+
+	if (NULL == hdd_ctx) {
+		hdd_err("HDD Context is NULL");
+		return -EINVAL;
+	}
+
+	param = strnchr(ptr, strlen(ptr), ' ');
+	/*no argument after the command*/
+	if (NULL == param)
+		return -EINVAL;
+
+	/*no space after the command*/
+	else if (SPACE_ASCII_VALUE != *param)
+		return -EINVAL;
+
+	param++;
+
+	/*removing empty spaces*/
+	while ((SPACE_ASCII_VALUE  == *param) && ('\0' !=  *param))
+		param++;
+
+	/*no argument followed by spaces*/
+	if ('\0' == *param)
+		return -EINVAL;
+
+	/*getting the first argument ie the number of channels*/
+	if (sscanf(param, "%d ", &temp_int) != 1) {
+		hdd_err("Cannot get number of channels from input");
+		return -EINVAL;
+	}
+
+	if (temp_int < 0 || temp_int > MAX_CHANNEL) {
+		hdd_err("Invalid Number of channel received");
+		return -EINVAL;
+	}
+
+	hdd_debug("Number of channel to disable are: %d", temp_int);
+
+	if (!temp_int) {
+		if (!wlan_hdd_restore_channels(hdd_ctx, false)) {
+			/*
+			 * Free the cache channels only when the command is
+			 * received with num channels as 0
+			 */
+			wlan_hdd_free_cache_channels(hdd_ctx);
+		}
+		return 0;
+	}
+
+	qdf_mutex_acquire(&hdd_ctx->cache_channel_lock);
+
+	if (!hdd_ctx->original_channels) {
+		if (hdd_alloc_chan_cache(hdd_ctx, temp_int)) {
+			ret = -ENOMEM;
+			goto mem_alloc_failed;
+		}
+	} else if (hdd_ctx->original_channels->num_channels != temp_int) {
+		hdd_err("Invalid Number of channels");
+		ret = -EINVAL;
+		is_command_repeated = true;
+		goto parse_failed;
+	} else {
+		is_command_repeated = true;
+	}
+	num_channels = temp_int;
+	for (j = 0; j < num_channels; j++) {
+		/*
+		 * param pointing to the beginning of first space
+		 * after number of channels
+		 */
+		param = strpbrk(param, " ");
+		/*no channel list after the number of channels argument*/
+		if (NULL == param) {
+			hdd_err("Invalid No of channel provided in the list");
+			ret = -EINVAL;
+			goto parse_failed;
+		}
+
+		param++;
+
+		/*removing empty space*/
+		while ((SPACE_ASCII_VALUE == *param) && ('\0' != *param))
+			param++;
+
+		if ('\0' == *param) {
+			hdd_err("No channel is provided in the list");
+			ret = -EINVAL;
+			goto parse_failed;
+		}
+
+		if (sscanf(param, "%d ", &temp_int) != 1) {
+			hdd_err("Cannot read channel number");
+			ret = -EINVAL;
+			goto parse_failed;
+		}
+
+		if (!IS_CHANNEL_VALID(temp_int)) {
+			hdd_err("Invalid channel number received");
+			ret = -EINVAL;
+			goto parse_failed;
+		}
+
+		hdd_debug("channel[%d] = %d", j, temp_int);
+		parsed_channels[j] = temp_int;
+	}
+
+	/*extra arguments check*/
+	param = strpbrk(param, " ");
+	if (NULL != param) {
+		while ((SPACE_ASCII_VALUE == *param) && ('\0' != *param))
+			param++;
+
+		if ('\0' !=  *param) {
+			hdd_err("Invalid argument received");
+			ret = -EINVAL;
+			goto parse_failed;
+		}
+	}
+
+	/*
+	 * If command is received first time, cache the channels to
+	 * be disabled else compare the channels received in the
+	 * command with the cached channels, if channel list matches
+	 * return success otherewise return failure.
+	 */
+	if (!is_command_repeated) {
+		for (j = 0; j < num_channels; j++)
+			hdd_ctx->original_channels->
+					channel_info[j].channel_num =
+							parsed_channels[j];
+			/*
+			 * Cache the channel list in regulatory also
+			 */
+			ucfg_reg_cache_channel_state(hdd_ctx->hdd_pdev,
+						     parsed_channels,
+						     num_channels);
+	} else {
+		for (i = 0; i < num_channels; i++) {
+			for (j = 0; j < num_channels; j++)
+				if (hdd_ctx->original_channels->
+					channel_info[i].channel_num ==
+							parsed_channels[j])
+					break;
+			if (j == num_channels) {
+				ret = -EINVAL;
+				goto parse_failed;
+			}
+		}
+		ret = 0;
+	}
+mem_alloc_failed:
+
+	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
+	hdd_exit();
+
+	return ret;
+
+parse_failed:
+	if (!is_command_repeated)
+		wlan_hdd_free_cache_channels(hdd_ctx);
+	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
+	hdd_exit();
+
+	return ret;
+}
+
+static int drv_cmd_set_disable_chan_list(struct hdd_adapter *adapter,
+					 struct hdd_context *hdd_ctx,
+					 uint8_t *command,
+					 uint8_t command_len,
+					 struct hdd_priv_data *priv_data)
+{
+	return hdd_parse_disable_chan_cmd(adapter, command);
+}
+#else
+
+static int drv_cmd_set_disable_chan_list(struct hdd_adapter *adapter,
+					 struct hdd_context *hdd_ctx,
+					 uint8_t *command,
+					 uint8_t command_len,
+					 struct hdd_priv_data *priv_data)
+{
+	return 0;
+}
+
+void wlan_hdd_free_cache_channels(struct hdd_context *hdd_ctx)
+{
+}
+#endif
 /*
  * The following table contains all supported WLAN HDD
  * IOCTL driver commands and the handler for each of them.
@@ -7032,6 +7298,7 @@ static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 	{"CHANNEL_SWITCH",            drv_cmd_set_channel_switch, true},
 	{"SETANTENNAMODE",            drv_cmd_set_antenna_mode, true},
 	{"GETANTENNAMODE",            drv_cmd_get_antenna_mode, false},
+	{"SET_DISABLE_CHANNEL_LIST",  drv_cmd_set_disable_chan_list, true},
 	{"STOP",                      drv_cmd_dummy, false},
 	/* Deprecated commands */
 	{"RXFILTER-START",            drv_cmd_dummy, false},

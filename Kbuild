@@ -2081,6 +2081,9 @@ cppflags-$(CONFIG_ENABLE_SMMU_S1_TRANSLATION) += -DENABLE_SMMU_S1_TRANSLATION
 #Flag to enable NUD tracking
 cppflags-$(CONFIG_WLAN_NUD_TRACKING) += -DWLAN_NUD_TRACKING
 
+#Flag to enable set and get disable channel list feature
+cppflags-$(CONFIG_DISABLE_CHANNEL_LIST) += -DDISABLE_CHANNEL_LIST
+
 # configure log buffer size
 ifdef CONFIG_CFG_NUM_DP_TRACE_RECORD
 ccflags-y += -DMAX_QDF_DP_TRACE_RECORDS=$(CONFIG_CFG_NUM_DP_TRACE_RECORD)

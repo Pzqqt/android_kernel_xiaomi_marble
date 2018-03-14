@@ -1168,6 +1168,8 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 			}
 		}
 	}
+	if (adapter->device_mode == QDF_SAP_MODE)
+		wlan_hdd_restore_channels(hdd_ctx, true);
 
 	/*  Mark the indoor channel (passive) to enable  */
 	if (hdd_ctx->config->force_ssc_disable_indoor_channel) {

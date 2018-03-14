@@ -6909,6 +6909,17 @@ static void wlan_destroy_bug_report_lock(void)
 	qdf_spinlock_destroy(&p_cds_context->bug_report_lock);
 }
 
+#ifdef DISABLE_CHANNEL_LIST
+static void wlan_hdd_cache_chann_mutex_destroy(struct hdd_context *hdd_ctx)
+{
+	qdf_mutex_destroy(&hdd_ctx->cache_channel_lock);
+}
+#else
+static void wlan_hdd_cache_chann_mutex_destroy(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 /**
  * hdd_wlan_exit() - HDD WLAN exit function
  * @hdd_ctx:	Pointer to the HDD Context
@@ -7002,6 +7013,7 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	qdf_spinlock_destroy(&hdd_ctx->hdd_adapter_lock);
 	qdf_spinlock_destroy(&hdd_ctx->sta_update_info_lock);
 	qdf_spinlock_destroy(&hdd_ctx->connection_status_lock);
+	wlan_hdd_cache_chann_mutex_destroy(hdd_ctx);
 
 	osif_request_manager_deinit();
 
@@ -10928,6 +10940,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 			hdd_err("CNSS power down failed put device into Low power mode:%d",
 				ret);
 	}
+	/* Free the cache channels of the command SET_DISABLE_CHANNEL_LIST */
+	wlan_hdd_free_cache_channels(hdd_ctx);
 
 	hdd_check_for_leaks(hdd_ctx, is_recovery_stop);
 	hdd_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
@@ -11097,6 +11111,18 @@ void hdd_dp_trace_init(struct hdd_config *config)
 }
 #endif
 
+#ifdef DISABLE_CHANNEL_LIST
+static int wlan_hdd_cache_chann_mutex_create(struct hdd_context *hdd_ctx)
+{
+	return qdf_mutex_create(&hdd_ctx->cache_channel_lock);
+}
+#else
+static int wlan_hdd_cache_chann_mutex_create(struct hdd_context *hdd_ctx)
+{
+	return 0;
+}
+#endif
+
 /**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
@@ -11131,6 +11157,11 @@ int hdd_wlan_startup(struct device *dev)
 	hdd_action_oui_config(hdd_ctx);
 
 	qdf_nbuf_init_replenish_timer();
+
+	ret = wlan_hdd_cache_chann_mutex_create(hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(ret))
+		goto err_hdd_free_context;
+
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_init(&hdd_ctx->avoid_freq_lock);
 #endif

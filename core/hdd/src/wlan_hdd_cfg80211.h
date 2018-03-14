@@ -600,4 +600,16 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
  * Return : 0 on success and errno on failure
  */
 int wlan_hdd_send_mode_change_event(void);
+
+/**
+ * wlan_hdd_restore_channels() - Restore the channels which were cached
+ * and disabled in wlan_hdd_disable_channels api.
+ * @hdd_ctx: Pointer to the HDD context
+ * @notify_sap_event: Indicates if SAP event needs to be notified
+ *
+ * Return: 0 on success, Error code on failure
+ */
+int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
+			      bool notify_sap_event);
+
 #endif
