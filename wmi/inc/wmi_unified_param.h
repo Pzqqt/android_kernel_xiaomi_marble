@@ -5762,6 +5762,7 @@ typedef enum {
 	wmi_vdev_param_rate_dropdown_bmap,
 	wmi_vdev_param_tx_power,
 	wmi_vdev_param_set_ba_mode,
+	wmi_vdev_param_autorate_misc_cfg,
 	wmi_vdev_param_max,
 } wmi_conv_vdev_param_id;
 
