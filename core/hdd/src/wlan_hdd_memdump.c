@@ -94,7 +94,7 @@ static void hdd_driver_mem_cleanup(void)
 
 
 /**
- * hdd_driver_memdump_read() - perform read operation in driver
+ * __hdd_driver_memdump_read() - perform read operation in driver
  * memory dump proc file
  * @file  - handle for the proc file.
  * @buf   - pointer to user space buffer.
@@ -103,10 +103,12 @@ static void hdd_driver_mem_cleanup(void)
  *
  * This function performs read operation for the driver memory dump proc file.
  *
- * Return: number of bytes read on success, error code otherwise.
+ * Return: number of bytes read on success
+ *         negative error code in case of failure
+ *         0 in case of no more data
  */
-static ssize_t hdd_driver_memdump_read(struct file *file, char __user *buf,
-					size_t count, loff_t *pos)
+static ssize_t __hdd_driver_memdump_read(struct file *file, char __user *buf,
+					 size_t count, loff_t *pos)
 {
 	int status;
 	QDF_STATUS qdf_status;
@@ -184,6 +186,31 @@ static ssize_t hdd_driver_memdump_read(struct file *file, char __user *buf,
 	return no_of_bytes_read;
 }
 
+/**
+ * hdd_driver_memdump_read() - perform read operation in driver
+ * memory dump proc file
+ * @file  - handle for the proc file.
+ * @buf   - pointer to user space buffer.
+ * @count - number of bytes to be read.
+ * @pos   - offset in the from buffer.
+ *
+ * This function performs read operation for the driver memory dump proc file.
+ *
+ * Return: number of bytes read on success
+ *         negative error code in case of failure
+ *         0 in case of no more data
+ */
+static ssize_t hdd_driver_memdump_read(struct file *file, char __user *buf,
+				       size_t count, loff_t *pos)
+{
+	ssize_t len;
+
+	cds_ssr_protect(__func__);
+	len = __hdd_driver_memdump_read(file, buf, count, pos);
+	cds_ssr_unprotect(__func__);
+
+	return len;
+}
 
 /**
  * struct driver_dump_fops - file operations for driver dump feature
