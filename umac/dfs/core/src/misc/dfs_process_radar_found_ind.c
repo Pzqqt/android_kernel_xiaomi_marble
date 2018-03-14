@@ -427,6 +427,16 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (radar_found->segment_id == SEG_ID_SECONDARY)
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			 "Radar found on second segment VHT80 freq=%d MHz",
+			 dfs->dfs_precac_secondary_freq);
+	else
+		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			 "Radar found on channel=%d, freq=%d MHz",
+			 dfs->dfs_curchan->dfs_ch_ieee,
+			 dfs->dfs_curchan->dfs_ch_freq);
+
 	if (!dfs->dfs_use_nol) {
 		dfs_send_csa_to_current_chan(dfs);
 		return QDF_STATUS_SUCCESS;
@@ -447,16 +457,6 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 			"radar event received on invalid channel");
 		return status;
 	}
-
-	if (radar_found->segment_id == SEG_ID_SECONDARY)
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			 "Radar found on second segment VHT80 freq=%d MHz",
-			 dfs->dfs_precac_secondary_freq);
-	else
-		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
-			 "Radar found on channel=%d, freq=%d MHz",
-			 dfs->dfs_curchan->dfs_ch_ieee,
-			 dfs->dfs_curchan->dfs_ch_freq);
 
 	/*
 	 * If precac is running and the radar found in secondary
