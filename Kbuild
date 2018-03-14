@@ -280,6 +280,13 @@ else
 	PANIC_ON_BUG := 0
 endif
 
+# Compile all log levels by default
+CONFIG_WLAN_LOG_FATAL := y
+CONFIG_WLAN_LOG_ERROR := y
+CONFIG_WLAN_LOG_WARN := y
+CONFIG_WLAN_LOG_INFO := y
+CONFIG_WLAN_LOG_DEBUG := y
+
 #Enable OL debug and wmi unified functions
 CONFIG_ATH_PERF_PWR_OFFLOAD := 1
 
@@ -2025,6 +2032,26 @@ endif
 
 ifeq ($(PANIC_ON_BUG),1)
 CDEFINES += -DPANIC_ON_BUG
+endif
+
+ifeq ($(CONFIG_WLAN_LOG_FATAL), y)
+CDEFINES += -DWLAN_LOG_FATAL
+endif
+
+ifeq ($(CONFIG_WLAN_LOG_ERROR), y)
+CDEFINES += -DWLAN_LOG_ERROR
+endif
+
+ifeq ($(CONFIG_WLAN_LOG_WARN), y)
+CDEFINES += -DWLAN_LOG_WARN
+endif
+
+ifeq ($(CONFIG_WLAN_LOG_INFO), y)
+CDEFINES += -DWLAN_LOG_INFO
+endif
+
+ifeq ($(CONFIG_WLAN_LOG_DEBUG), y)
+CDEFINES += -DWLAN_LOG_DEBUG
 endif
 
 ifeq ($(WLAN_OPEN_SOURCE), 1)
