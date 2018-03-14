@@ -1594,7 +1594,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD;
 	pMac->roam.configParam.statsReqPeriodicityInPS =
 		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD_IN_BMPS;
-	pMac->roam.configParam.csr11rConfig.IsFTResourceReqSupported = 0;
 	pMac->roam.configParam.neighborRoamConfig.nMaxNeighborRetries = 3;
 	pMac->roam.configParam.neighborRoamConfig.nNeighborLookupRssiThreshold =
 		120;
@@ -2808,12 +2807,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 				!wlan_reg_11d_enabled_on_host(pMac->psoc))
 			csr_init_channel_power_list(pMac, &pParam->Csr11dinfo);
 
-		qdf_mem_copy(&pMac->roam.configParam.csr11rConfig,
-			     &pParam->csr11rConfig,
-			     sizeof(tCsr11rConfigParams));
-		sme_debug("IsFTResourceReqSupp: %d",
-			pMac->roam.configParam.csr11rConfig.
-			IsFTResourceReqSupported);
 		pMac->roam.configParam.isFastTransitionEnabled =
 			pParam->isFastTransitionEnabled;
 		pMac->roam.configParam.RoamRssiDiff = pParam->RoamRssiDiff;
@@ -2902,7 +2895,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			nRoamBeaconRssiWeight);
 		pMac->roam.configParam.addTSWhenACMIsOff =
 			pParam->addTSWhenACMIsOff;
-		pMac->scan.fValidateList = pParam->fValidateList;
 		pMac->scan.fEnableBypass11d = pParam->fEnableBypass11d;
 		pMac->scan.fEnableDFSChnlScan = pParam->fEnableDFSChnlScan;
 		pMac->scan.scanResultCfgAgingTime = pParam->scanCfgAgingTime;
@@ -3236,7 +3228,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->statsReqPeriodicity = cfg_params->statsReqPeriodicity;
 	pParam->statsReqPeriodicityInPS = cfg_params->statsReqPeriodicityInPS;
 	pParam->addTSWhenACMIsOff = cfg_params->addTSWhenACMIsOff;
-	pParam->fValidateList = cfg_params->fValidateList;
 	pParam->fEnableBypass11d = pMac->scan.fEnableBypass11d;
 	pParam->fEnableDFSChnlScan = pMac->scan.fEnableDFSChnlScan;
 	pParam->fScanTwice = cfg_params->fScanTwice;
@@ -3256,8 +3247,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->enableVhtFor24GHz = cfg_params->enableVhtFor24GHz;
 	pParam->ignore_peer_erp_info = cfg_params->ignore_peer_erp_info;
 	pParam->enable2x2 = cfg_params->enable2x2;
-	qdf_mem_copy(&cfg_params->csr11rConfig, &pParam->csr11rConfig,
-		     sizeof(tCsr11rConfigParams));
 	pParam->isFastTransitionEnabled = cfg_params->isFastTransitionEnabled;
 	pParam->RoamRssiDiff = cfg_params->RoamRssiDiff;
 	pParam->rssi_abs_thresh = cfg_params->rssi_abs_thresh;

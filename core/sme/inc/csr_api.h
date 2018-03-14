@@ -985,10 +985,6 @@ typedef struct tagCsrRoamConnectedProfile {
 #endif
 } tCsrRoamConnectedProfile;
 
-typedef struct tagCsr11rConfigParams {
-	bool IsFTResourceReqSupported;
-} tCsr11rConfigParams;
-
 typedef struct tagCsrNeighborRoamConfigParams {
 
 	uint32_t nNeighborScanTimerPeriod;
@@ -1151,7 +1147,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t statsReqPeriodicity;
 	/* stats request frequency from PE while in power save */
 	uint32_t statsReqPeriodicityInPS;
-	tCsr11rConfigParams csr11rConfig;
 #ifdef FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;
 #endif
@@ -1167,12 +1162,6 @@ typedef struct tagCsrConfigParam {
 	 * This is mandated by WMM-AC certification
 	 */
 	bool addTSWhenACMIsOff;
-	/*
-	 * channelPowerInfoList24 has been seen corrupted. Set this flag to true
-	 * trying to detect when it happens. Adding this into code because we
-	 * can't reproduce it easily. We don't know when it happens.
-	 */
-	bool fValidateList;
 	/*
 	 * Customer wants to start with an active scan based on the default
 	 * country code. This optimization will minimize the driver load to

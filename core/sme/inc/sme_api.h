@@ -651,8 +651,6 @@ QDF_STATUS sme_update_enable_fast_roam_in_concurrency(tHalHandle hHal,
 QDF_STATUS sme_update_is_ese_feature_enabled(tHalHandle hHal, uint8_t sessionId,
 		const bool isEseIniFeatureEnabled);
 #endif /* FEATURE_WLAN_ESE */
-QDF_STATUS sme_update_config_fw_rssi_monitoring(tHalHandle hHal,
-		bool fEnableFwRssiMonitoring);
 QDF_STATUS sme_set_roam_rescan_rssi_diff(tHalHandle hHal,
 		uint8_t sessionId,
 		const uint8_t nRoamRescanRssiDiff);

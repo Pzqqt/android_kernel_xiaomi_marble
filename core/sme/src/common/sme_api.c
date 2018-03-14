@@ -7081,24 +7081,6 @@ QDF_STATUS sme_update_enable_fast_roam_in_concurrency(tHalHandle hHal,
 }
 
 /*
- * sme_update_config_fw_rssi_monitoring() - enable/disable firmware RSSI
- *	Monitoring at runtime
- *  It is used at in the REG_DYNAMIC_VARIABLE macro definition of
- *  fEnableFwRssiMonitoring.
- *  This is a synchronous call
- *
- * hHal - The handle returned by mac_open.
- * Return QDF_STATUS_SUCCESS - SME update fEnableFwRssiMonitoring.
- *	config successfully.
- * Other status means SME is failed to update fEnableFwRssiMonitoring.
- */
-QDF_STATUS sme_update_config_fw_rssi_monitoring(tHalHandle hHal,
-						bool fEnableFwRssiMonitoring)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/*
  * sme_set_roam_opportunistic_scan_threshold_diff() -
  * Update Opportunistic Scan threshold diff
  *	This function is called through dynamic setConfig callback function

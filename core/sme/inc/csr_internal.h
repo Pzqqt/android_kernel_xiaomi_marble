@@ -385,10 +385,6 @@ struct delstafor_sessionCmd {
 	tSirMacAddr selfMacAddr;
 };
 
-struct csr_11rconfig {
-	bool IsFTResourceReqSupported;
-};
-
 struct csr_neighbor_roamconfig {
 	uint32_t nNeighborScanTimerPeriod;
 	uint32_t neighbor_scan_min_timer_period;
@@ -492,7 +488,6 @@ struct csr_config {
 	uint32_t statsReqPeriodicityInPS;/* stats req freq while in powersave */
 	uint32_t dtimPeriod;
 	bool ssidHidden;
-	struct csr_11rconfig csr11rConfig;
 	uint8_t isFastRoamIniFeatureEnabled;
 	struct mawc_params csr_mawc_config;
 	uint8_t isRoamOffloadScanEnabled;
@@ -517,7 +512,6 @@ struct csr_config {
 	 * that AC This is mandated by WMM-AC certification
 	 */
 	bool addTSWhenACMIsOff;
-	bool fValidateList;
 	/*
 	 * Remove this code once SLM_Sessionization is supported
 	 * BMPS_WORKAROUND_NOT_NEEDED
@@ -669,12 +663,6 @@ struct csr_scanstruct {
 	 * will use the most popular one (max count)
 	 */
 	uint8_t countryCodeElected[WNI_CFG_COUNTRY_CODE_LEN];
-	/*
-	 * channelPowerInfoList24 has been seen corrupted. Set this flag to true
-	 * trying to detect when it happens. Adding this into code because we
-	 * can't reproduce it easily. We don't know when it happens.
-	 */
-	bool fValidateList;
 	/*
 	 * Customer wants to start with an active scan based on the default
 	 * country code. This optimization will minimize the driver load to
