@@ -595,6 +595,7 @@ void sap_dfs_set_current_channel(void *ctx)
 
 	if (wlan_reg_is_dfs_ch(pdev, sap_ctx->channel)) {
 		tgt_dfs_get_radars(pdev);
+		tgt_dfs_set_phyerr_filter_offload(pdev);
 		if (sap_ctx->csr_roamProfile.disableDFSChSwitch)
 			tgt_dfs_control(pdev, DFS_SET_USENOL, &use_nol,
 					sizeof(uint32_t), NULL, NULL, &error);
