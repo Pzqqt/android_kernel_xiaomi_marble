@@ -590,19 +590,11 @@ void qdf_vtrace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 #define qdf_print(args...) \
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
 
-#define qdf_logfl(level, format, args...) \
-	QDF_TRACE(QDF_MODULE_ID_QDF, level, FL(format), ## args)
-
-#define qdf_alert(format, args...) \
-	qdf_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define qdf_err(format, args...) \
-	qdf_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define qdf_warn(format, args...) \
-	qdf_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define qdf_info(format, args...) \
-	qdf_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define qdf_debug(format, args...) \
-	qdf_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define qdf_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_QDF, ## params)
+#define qdf_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_QDF, ## params)
+#define qdf_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_QDF, ## params)
+#define qdf_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_QDF, ## params)
+#define qdf_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_QDF, ## params)
 
 #else /* CONFIG_MCL */
 
