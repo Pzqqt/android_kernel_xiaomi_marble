@@ -2154,11 +2154,4 @@ wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc);
  */
 void dfs_nol_free_list(struct wlan_dfs *dfs);
 
-/**
- * dfs_set_phyerr_filter_offload - config phyerr filter offload.
- * @dfs: Pointer to wlan_dfs structure.
- *
- * Return: None
- */
-void dfs_set_phyerr_filter_offload(struct wlan_dfs *dfs);
 #endif  /* _DFS_H_ */

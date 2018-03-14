@@ -276,7 +276,6 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	dfs->dfs_phyerr_w53_counter  = 0;
 	dfs->dfs_pri_multiplier      = 2;
 	dfs_get_radars(dfs);
-	dfs_set_phyerr_filter_offload(dfs);
 
 	return 0;
 
@@ -1080,14 +1079,3 @@ void dfs_update_cur_chan_flags(struct wlan_dfs *dfs,
 	dfs->dfs_curchan->dfs_ch_flags = flags;
 	dfs->dfs_curchan->dfs_ch_flagext = flagext;
 }
-
-#ifdef QCA_MCL_DFS_SUPPORT
-void dfs_set_phyerr_filter_offload(struct wlan_dfs *dfs)
-{
-	tgt_dfs_set_phyerr_filter_offload(dfs->dfs_pdev_obj);
-}
-#else
-void dfs_set_phyerr_filter_offload(struct wlan_dfs *dfs)
-{
-}
-#endif
