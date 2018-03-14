@@ -799,19 +799,18 @@ static int hdd_parse_reassoc_command_v1_data(const uint8_t *pValue,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
-				const tSirMacAddr bssid, int channel)
+				  const tSirMacAddr bssid, int channel)
 {
-	struct hdd_wext_state *wext_state =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct hdd_station_ctx *hdd_sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct csr_roam_profile *profile = &wext_state->roamProfile;
+	struct csr_roam_profile *roam_profile;
 	tSirMacAddr connected_bssid;
 
+	roam_profile = hdd_roam_profile(adapter);
 	qdf_mem_copy(connected_bssid, hdd_sta_ctx->conn_info.bssId.bytes,
 		     ETH_ALEN);
-	sme_fast_reassoc(WLAN_HDD_GET_HAL_CTX(adapter),
-			 profile, bssid, channel, adapter->session_id,
+	sme_fast_reassoc(WLAN_HDD_GET_HAL_CTX(adapter), roam_profile,
+			 bssid, channel, adapter->session_id,
 			 connected_bssid);
 }
 #endif
@@ -4751,8 +4750,6 @@ static int drv_cmd_set_ibss_beacon_oui_data(struct hdd_adapter *adapter,
 	uint8_t *value = command;
 	tSirModifyIE ibssModifyIE;
 	struct csr_roam_profile *roam_profile;
-	struct hdd_wext_state *pWextState;
-
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {
 		hdd_debug("Device_mode %s(%d) not IBSS",
@@ -4761,10 +4758,7 @@ static int drv_cmd_set_ibss_beacon_oui_data(struct hdd_adapter *adapter,
 		return ret;
 	}
 
-	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-
 	hdd_debug("received command %s", ((char *)value));
-
 
 	/* validate argument of command */
 	if (strlen(value) <= command_len) {
@@ -4805,7 +4799,7 @@ static int drv_cmd_set_ibss_beacon_oui_data(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	roam_profile = &pWextState->roamProfile;
+	roam_profile = hdd_roam_profile(adapter);
 
 	qdf_copy_macaddr(&ibssModifyIE.bssid,
 		     roam_profile->BSSIDs.bssid);
