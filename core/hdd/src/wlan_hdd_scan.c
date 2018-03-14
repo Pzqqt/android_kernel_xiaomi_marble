@@ -96,7 +96,7 @@ static void hdd_vendor_scan_callback(struct hdd_adapter *adapter,
 	uint8_t scan_status;
 	uint64_t cookie;
 
-	ENTER();
+	hdd_enter();
 
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
 		hdd_err("Invalid adapter magic");
@@ -430,7 +430,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	static uint32_t scan_ebusy_cnt;
 	struct scan_params params = {0};
 
-	ENTER();
+	hdd_enter();
 
 	if (cds_is_fw_down()) {
 		hdd_err("firmware is down, scan cmd cannot be processed");
@@ -1216,7 +1216,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	tHalHandle hHal;
 	int ret = 0;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");

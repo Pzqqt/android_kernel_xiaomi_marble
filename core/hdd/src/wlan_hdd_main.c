@@ -3674,7 +3674,7 @@ static QDF_STATUS hdd_register_interface(struct hdd_adapter *adapter, bool rtnl_
 	struct net_device *dev = adapter->dev;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	if (rtnl_held) {
 		if (strnchr(dev->name, IFNAMSIZ - 1, '%')) {
@@ -4110,7 +4110,7 @@ void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
 			struct hdd_adapter *adapter,
 			bool rtnl_held)
 {
-	ENTER();
+	hdd_enter();
 
 	switch (adapter->device_mode) {
 	case QDF_STA_MODE:
@@ -4814,7 +4814,7 @@ QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 	struct hdd_adapter *adapter;
 	QDF_STATUS status;
 
-	ENTER();
+	hdd_enter();
 
 	do {
 		status = hdd_remove_front_adapter(hdd_ctx, &adapter);
@@ -4891,7 +4891,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	unsigned long rc;
 	tsap_Config_t *sap_config;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
@@ -5140,7 +5140,7 @@ void  hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	struct hdd_adapter *adapter;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_for_each_adapter(hdd_ctx, adapter)
 		hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
@@ -5152,7 +5152,7 @@ QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 
-	ENTER();
+	hdd_enter();
 
 	cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 
@@ -5197,7 +5197,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	struct qdf_mac_addr peerMacAddr;
 	int sta_id;
 
-	ENTER();
+	hdd_enter();
 
 	cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 
@@ -5708,7 +5708,7 @@ static int hdd_fils_update_connect_results(struct net_device *dev,
 			bool connect_timeout,
 			tSirResultCodes timeout_reason)
 {
-	ENTER();
+	hdd_enter();
 	if (!roam_info || !roam_info->is_fils_connection)
 		return -EINVAL;
 
@@ -5819,7 +5819,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 #endif
 	eConnectionState connState;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (!hdd_is_interface_up(adapter))
@@ -6191,7 +6191,7 @@ static inline QDF_STATUS hdd_unregister_wext_all_adapters(struct hdd_context *
 {
 	struct hdd_adapter *adapter;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter->device_mode == QDF_STA_MODE ||
@@ -6214,7 +6214,7 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter->device_mode == QDF_STA_MODE ||
@@ -6246,7 +6246,7 @@ static QDF_STATUS hdd_abort_sched_scan_all_adapters(struct hdd_context *hdd_ctx)
 	struct hdd_adapter *adapter;
 	int err;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter->device_mode == QDF_STA_MODE ||
@@ -6562,7 +6562,7 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	int driver_status;
 
-	ENTER();
+	hdd_enter();
 
 	qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
 
@@ -6682,7 +6682,7 @@ void __hdd_wlan_exit(void)
 {
 	struct hdd_context *hdd_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -7610,7 +7610,7 @@ static QDF_STATUS hdd_11d_scan_done(tHalHandle halHandle, void *pContext,
 				    uint8_t sessionId, uint32_t scanId,
 				    eCsrScanStatus status)
 {
-	ENTER();
+	hdd_enter();
 
 	sme_scan_flush_result(halHandle);
 
@@ -8202,7 +8202,7 @@ void hdd_acs_response_timeout_handler(void *context)
 	struct hdd_context *hdd_ctx;
 	uint8_t reason;
 
-	ENTER();
+	hdd_enter();
 	if (!timer_context) {
 		hdd_err("invlaid timer context");
 		return;
@@ -8459,7 +8459,7 @@ static void hdd_iface_change_callback(void *priv)
 	if (status)
 		return;
 
-	ENTER();
+	hdd_enter();
 	hdd_debug("Interface change timer expired close the modules!");
 	ret = hdd_wlan_stop_modules(hdd_ctx, false);
 	if (ret)
@@ -8494,7 +8494,7 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 	int ret = 0;
 	struct hdd_context *hdd_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_ctx = hdd_cfg80211_wiphy_alloc(sizeof(struct hdd_context));
 	if (hdd_ctx == NULL) {
@@ -8720,7 +8720,7 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 	int ret;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ENTER();
+	hdd_enter();
 
 	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
 		hdd_err("session is already opened, %d",
@@ -9673,7 +9673,7 @@ static void wlan_hdd_p2p_lo_event_callback(void *context_ptr,
 	struct sk_buff *vendor_event;
 	struct hdd_adapter *adapter;
 
-	ENTER();
+	hdd_enter();
 
 	if (hdd_ctx == NULL) {
 		hdd_err("Invalid HDD context pointer");
@@ -9851,7 +9851,7 @@ static int hdd_features_init(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
 	struct sme_5g_band_pref_params band_pref_params;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	/* FW capabilities received, Set the Dot11 mode */
 	sme_setdef_dot11mode(hdd_ctx->hHal);
@@ -10159,7 +10159,7 @@ static int hdd_deconfigure_cds(struct hdd_context *hdd_ctx)
 	QDF_STATUS qdf_status;
 	int ret = 0;
 
-	ENTER();
+	hdd_enter();
 
 	/* De-init features */
 	hdd_features_deinit(hdd_ctx);
@@ -10227,7 +10227,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	int active_threads;
 	struct target_psoc_info *tgt_hdl;
 
-	ENTER();
+	hdd_enter();
 	hdd_alert("stop WLAN module: entering driver status=%d",
 		  hdd_ctx->driver_status);
 
@@ -10535,7 +10535,7 @@ int hdd_wlan_startup(struct device *dev)
 	int ret;
 	bool rtnl_held;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_ctx = hdd_context_create(dev);
 
@@ -10731,7 +10731,7 @@ static void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp)
 	int status;
 	struct hdd_adapter *adapter = NULL;
 
-	ENTER();
+	hdd_enter();
 
 	if (!rsp) {
 		hdd_err("data is null");
@@ -10784,7 +10784,7 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 	int ret = 0;
 
-	ENTER();
+	hdd_enter();
 
 	sme_register11d_scan_done_callback(hdd_ctx->hHal, hdd_11d_scan_done);
 
@@ -10868,7 +10868,7 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	sme_deregister_tx_queue_cb(hdd_ctx->hHal);
 	status = sme_deregister_for_dcc_stats_event(hdd_ctx->hHal);
@@ -10912,7 +10912,7 @@ QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
 
-	ENTER();
+	hdd_enter();
 
 	/* Ignore request to deauth bcmc station */
 	if (pDelStaParams->peerMacAddr.bytes[0] & 0x1)
@@ -10941,7 +10941,7 @@ void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
 	struct sir_peer_sta_info peer_sta_info;
 	struct hdd_station_info *stainfo;
 
-	ENTER();
+	hdd_enter();
 
 	/* Ignore request to disassoc bcmc station */
 	if (pDelStaParams->peerMacAddr.bytes[0] & 0x1)
@@ -11318,7 +11318,7 @@ static void __hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
 
 void hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
 {
-	ENTER();
+	hdd_enter();
 
 	if (hdd_bus_bw_compute_timer_is_running(hdd_ctx)) {
 		hdd_debug("Bandwidth compute timer already started");
@@ -11332,7 +11332,7 @@ void hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
 
 void hdd_bus_bw_compute_timer_try_start(struct hdd_context *hdd_ctx)
 {
-	ENTER();
+	hdd_enter();
 
 	if (hdd_bus_bw_compute_timer_is_running(hdd_ctx)) {
 		hdd_debug("Bandwidth compute timer already started");
@@ -11359,7 +11359,7 @@ static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 
 void hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 {
-	ENTER();
+	hdd_enter();
 
 	if (!hdd_bus_bw_compute_timer_is_running(hdd_ctx)) {
 		hdd_debug("Bandwidth compute timer already stopped");
@@ -11373,7 +11373,7 @@ void hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 
 void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx)
 {
-	ENTER();
+	hdd_enter();
 
 	if (!hdd_bus_bw_compute_timer_is_running(hdd_ctx)) {
 		hdd_debug("Bandwidth compute timer already stopped");

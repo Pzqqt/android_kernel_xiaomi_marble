@@ -3677,7 +3677,7 @@ QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *adapter, int8_t *snr)
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
 
-	ENTER();
+	hdd_enter();
 
 	if (NULL == adapter) {
 		hdd_err("Invalid context, adapter");
@@ -4089,7 +4089,7 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 
-	ENTER();
+	hdd_enter();
 
 	/* clear WPA/RSN/WSC IE information in the profile */
 	pWextState->roamProfile.nWPAReqIELength = 0;
@@ -4156,7 +4156,7 @@ int hdd_get_ldpc(struct hdd_adapter *adapter, int *value)
 	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
 	int ret;
 
-	ENTER();
+	hdd_enter();
 	ret = sme_get_ht_config(hal, adapter->session_id,
 				WNI_CFG_HT_CAP_INFO_ADVANCE_CODING);
 	if (ret < 0) {
@@ -4223,7 +4223,7 @@ int hdd_get_tx_stbc(struct hdd_adapter *adapter, int *value)
 	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
 	int ret;
 
-	ENTER();
+	hdd_enter();
 	ret = sme_get_ht_config(hal, adapter->session_id,
 				WNI_CFG_HT_CAP_INFO_TX_STBC);
 	if (ret < 0) {
@@ -4293,7 +4293,7 @@ int hdd_get_rx_stbc(struct hdd_adapter *adapter, int *value)
 	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
 	int ret;
 
-	ENTER();
+	hdd_enter();
 	ret = sme_get_ht_config(hal, adapter->session_id,
 				WNI_CFG_HT_CAP_INFO_RX_STBC);
 	if (ret < 0) {
@@ -4760,7 +4760,7 @@ static void hdd_get_class_a_statistics_cb(void *stats, void *context)
 	struct class_a_stats *priv;
 	tCsrGlobalClassAStatsInfo *returned_stats;
 
-	ENTER();
+	hdd_enter();
 	if ((NULL == stats) || (NULL == context)) {
 		hdd_err("Bad param, stats [%pK] context [%pK]",
 			stats, context);
@@ -5391,7 +5391,7 @@ static void hdd_get_temperature_cb(int temperature, void *context)
 	struct hdd_request *request;
 	struct temperature_priv *priv;
 
-	ENTER();
+	hdd_enter();
 
 	request = hdd_request_get(context);
 	if (!request) {
@@ -5427,7 +5427,7 @@ int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature)
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
 
-	ENTER();
+	hdd_enter();
 	if (NULL == adapter) {
 		hdd_err("adapter is NULL");
 		return -EPERM;
@@ -12074,7 +12074,7 @@ static int hdd_set_wext(struct hdd_adapter *adapter)
 	struct hdd_wext_state *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	ENTER();
+	hdd_enter();
 
 	if (!pwextBuf) {
 		hdd_err("ERROR: pwextBuf is NULL");
@@ -12151,7 +12151,7 @@ int hdd_register_wext(struct net_device *dev)
 	struct hdd_wext_state *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	QDF_STATUS status;
 
-	ENTER();
+	hdd_enter();
 
 	if (!pwextBuf) {
 		hdd_err("ERROR: pwextBuf is NULL");

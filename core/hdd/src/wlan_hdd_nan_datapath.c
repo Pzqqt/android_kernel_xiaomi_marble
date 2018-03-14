@@ -88,7 +88,7 @@ static int hdd_close_ndi(struct hdd_adapter *adapter)
 	int errno;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ENTER();
+	hdd_enter();
 
 	/* check if the adapter is in NAN Data mode */
 	if (QDF_NDI_MODE != adapter->device_mode) {
@@ -172,7 +172,7 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct csr_roam_profile *roam_profile = &wext_state->roamProfile;
 
-	ENTER();
+	hdd_enter();
 
 	if (!roam_profile) {
 		hdd_err("No valid roam profile");
@@ -331,7 +331,7 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 	int ret_val;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
-	ENTER();
+	hdd_enter();
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
 	if (ret_val)
@@ -473,7 +473,7 @@ struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	uint8_t *ndi_mac_addr;
 
-	ENTER();
+	hdd_enter();
 
 	if (!hdd_ctx) {
 		hdd_err("hdd_ctx null");
@@ -511,7 +511,7 @@ int hdd_ndi_start(uint8_t vdev_id)
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
-	ENTER();
+	hdd_enter();
 
 	if (!hdd_ctx) {
 		hdd_err("hdd_ctx is null");
@@ -733,7 +733,7 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 	struct bss_description tmp_bss_descp = {0};
 	struct csr_roam_info roam_info = {0};
 
-	ENTER();
+	hdd_enter();
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -794,7 +794,7 @@ void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {

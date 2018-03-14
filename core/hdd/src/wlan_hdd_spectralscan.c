@@ -55,7 +55,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_start(struct wiphy *wiphy,
 	int ret;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
-	ENTER();
+	hdd_enter();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -93,7 +93,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_stop(struct wiphy *wiphy,
 	int ret;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
-	ENTER();
+	hdd_enter();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -131,7 +131,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_config(
 	int ret;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
-	ENTER();
+	hdd_enter();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -169,7 +169,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_diag_stats(
 	int ret;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
-	ENTER();
+	hdd_enter();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -208,7 +208,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_cap_info(
 	int ret;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
-	ENTER();
+	hdd_enter();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -247,7 +247,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_status(
 	int ret;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
-	ENTER();
+	hdd_enter();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)

@@ -1258,7 +1258,7 @@ QDF_STATUS hdd_wmm_init(struct hdd_adapter *adapter)
 	enum sme_qos_wmmuptype *dscp_to_up_map = adapter->dscp_to_up_map;
 	uint8_t dscp;
 
-	ENTER();
+	hdd_enter();
 
 	/* DSCP to User Priority Lookup Table
 	 * By default use the 3 Precedence bits of DSCP as the User Priority
@@ -1287,7 +1287,7 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 	struct hdd_wmm_ac_status *pAcStatus;
 	sme_ac_enum_type acType;
 
-	ENTER();
+	hdd_enter();
 
 	adapter->hdd_wmm_status.wmmQap = false;
 	INIT_LIST_HEAD(&adapter->hdd_wmm_status.wmmContextList);
@@ -1325,7 +1325,7 @@ QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter)
 	struct hdd_wmm_ac_status *pAcStatus;
 	sme_ac_enum_type acType;
 
-	ENTER();
+	hdd_enter();
 	for (acType = 0; acType < WLAN_MAX_AC; acType++) {
 		pAcStatus = &adapter->hdd_wmm_status.wmmAcStatus[acType];
 		pAcStatus->wmmAcAccessRequired = false;
@@ -1353,7 +1353,7 @@ QDF_STATUS hdd_wmm_adapter_close(struct hdd_adapter *adapter)
 {
 	struct hdd_wmm_qos_context *pQosContext;
 
-	ENTER();
+	hdd_enter();
 
 	/* free any context records that we still have linked */
 	while (!list_empty(&adapter->hdd_wmm_status.wmmContextList)) {
@@ -1402,7 +1402,7 @@ void hdd_wmm_classify_pkt(struct hdd_adapter *adapter,
 	 */
 
 #ifdef HDD_WMM_DEBUG
-	ENTER();
+	hdd_enter();
 #endif /* HDD_WMM_DEBUG */
 
 	pkt = skb->data;
@@ -1805,7 +1805,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 	 * enable UAPSD for any access categories
 	 */
 
-	ENTER();
+	hdd_enter();
 
 	if (roam_info->fReassocReq) {
 		/* when we reassociate we should continue to use
@@ -1921,7 +1921,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 	bool qosConnection;
 	uint8_t acmMask;
 
-	ENTER();
+	hdd_enter();
 
 	if ((eCSR_BSS_TYPE_INFRASTRUCTURE == eBssType) &&
 	    roam_info && roam_info->u.pConnectedProfile) {

@@ -52,7 +52,7 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 	ssize_t len = 0;
 	uint8_t *buffer;
 
-	ENTER();
+	hdd_enter();
 
 	mutex_lock(&llstats_mutex);
 	if (!ll_stats.result) {
@@ -159,7 +159,7 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 	ssize_t len = 0;
 	uint8_t *buffer;
 
-	ENTER();
+	hdd_enter();
 
 	mutex_lock(&llstats_mutex);
 	if (!ll_stats.result) {
@@ -224,7 +224,7 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 	tSirWifiRadioStat *radio_stat = (tpSirWifiRadioStat) data;
 	tSirWifiChannelStats *chan_stat;
 
-	ENTER();
+	hdd_enter();
 
 	mutex_lock(&llstats_mutex);
 	if (!ll_stats.result) {
@@ -338,7 +338,7 @@ static ssize_t hdd_debugfs_stats_update(char __user *buf, size_t count,
 {
 	ssize_t ret_cnt;
 
-	ENTER();
+	hdd_enter();
 	mutex_lock(&llstats_mutex);
 	if (!ll_stats.result) {
 		mutex_unlock(&llstats_mutex);
@@ -371,7 +371,7 @@ static ssize_t __wlan_hdd_read_ll_stats_debugfs(struct file *file,
 	struct hdd_context *hdd_ctx;
 	ssize_t ret = 0;
 
-	ENTER();
+	hdd_enter();
 
 	adapter = (struct hdd_adapter *)file->private_data;
 	if ((!adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
@@ -429,7 +429,7 @@ static int __wlan_hdd_open_ll_stats_debugfs(struct inode *inode,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	if (inode->i_private)
 		file->private_data = inode->i_private;
@@ -493,7 +493,7 @@ static int __wlan_hdd_release_ll_stats_debugfs(struct inode *inode,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	if (inode->i_private)
 		file->private_data = inode->i_private;

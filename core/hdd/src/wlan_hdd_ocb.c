@@ -2005,7 +2005,7 @@ static void wlan_hdd_dcc_stats_event_callback(void *context_ptr,
 	struct ocb_dcc_get_stats_response *resp = response_ptr;
 	struct sk_buff *vendor_event;
 
-	ENTER();
+	hdd_enter();
 
 	vendor_event =
 		cfg80211_vendor_event_alloc(hdd_ctx->wiphy,

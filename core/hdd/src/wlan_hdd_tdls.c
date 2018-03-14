@@ -85,7 +85,7 @@ int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *adapter,
 	int len;
 	struct hdd_context *hdd_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (0 != (wlan_hdd_validate_context(hdd_ctx))) {
@@ -640,7 +640,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");

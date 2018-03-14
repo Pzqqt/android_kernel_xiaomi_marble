@@ -6927,7 +6927,7 @@ static int hdd_driver_command(struct hdd_adapter *adapter,
 	int ret = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");

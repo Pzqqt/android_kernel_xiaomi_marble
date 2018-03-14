@@ -565,7 +565,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 	struct nlattr *peers;
 	int numRate;
 
-	ENTER();
+	hdd_enter();
 
 	pWifiPeerStat = pData;
 
@@ -678,7 +678,7 @@ static void hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	pWifiIfaceStat = pData;
 
@@ -916,7 +916,7 @@ static void hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
 	tSirWifiRadioStat *pWifiRadioStat = pData;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ENTER();
+	hdd_enter();
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
@@ -1343,7 +1343,7 @@ int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 	struct hdd_station_ctx *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_warn("Command not allowed in FTM mode");
@@ -2226,7 +2226,7 @@ void wlan_hdd_cfg80211_link_layer_stats_ext_callback(tHddHandle ctx,
 	uint8_t *results;
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	if (!ctx) {
 		hdd_err("Invalid HDD context.");
@@ -4858,7 +4858,7 @@ static int __wlan_hdd_get_rcpi(struct hdd_adapter *adapter,
 	};
 	bool reassoc;
 
-	ENTER();
+	hdd_enter();
 
 	/* initialize the rcpi value to zero, useful in error cases */
 	*rcpi_value = 0;

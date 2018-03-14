@@ -207,7 +207,7 @@ wlan_hdd_cfg80211_extscan_get_capabilities_rsp(void *ctx,
 	struct hdd_ext_scan_context *context;
 	struct hdd_context *hdd_ctx  = ctx;
 
-	ENTER();
+	hdd_enter();
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -563,7 +563,7 @@ wlan_hdd_cfg80211_extscan_hotlist_match_ind(void *ctx,
 	uint32_t i, index;
 	int flags = cds_get_gfp_flags();
 
-	ENTER();
+	hdd_enter();
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -701,7 +701,7 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 	uint32_t i, j;
 	int flags = cds_get_gfp_flags();
 
-	ENTER();
+	hdd_enter();
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -964,7 +964,7 @@ wlan_hdd_cfg80211_extscan_scan_res_available_event(
 	struct sk_buff *skb = NULL;
 	int flags = cds_get_gfp_flags();
 
-	ENTER();
+	hdd_enter();
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -1102,7 +1102,7 @@ wlan_hdd_cfg80211_extscan_epno_match_found(void *ctx,
 	uint32_t len, i;
 	int flags = cds_get_gfp_flags();
 
-	ENTER();
+	hdd_enter();
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -1217,7 +1217,7 @@ wlan_hdd_cfg80211_passpoint_match_found(void *ctx,
 	struct nlattr *nla_aps, *nla_bss;
 	int flags = cds_get_gfp_flags();
 
-	ENTER();
+	hdd_enter();
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -1346,7 +1346,7 @@ wlan_hdd_cfg80211_extscan_generic_rsp
 	struct hdd_context *hdd_ctx = ctx;
 	struct hdd_ext_scan_context *context;
 
-	ENTER();
+	hdd_enter();
 
 	if (wlan_hdd_validate_context(hdd_ctx) || !response) {
 		hdd_err("HDD context is not valid or response(%pK) is null",

@@ -58,7 +58,7 @@ static void hdd_encrypt_decrypt_msg_cb(void *cookie,
 	struct hdd_request *request;
 	struct hdd_encrypt_decrypt_msg_context *context;
 
-	ENTER();
+	hdd_enter();
 
 	if (!resp) {
 		hdd_err("rsp params is NULL");
@@ -118,7 +118,7 @@ static int hdd_post_encrypt_decrypt_msg_rsp(struct hdd_context *hdd_ctx,
 	struct sk_buff *skb;
 	uint32_t nl_buf_len;
 
-	ENTER();
+	hdd_enter();
 
 	nl_buf_len = resp->data_len + NLA_HDRLEN;
 

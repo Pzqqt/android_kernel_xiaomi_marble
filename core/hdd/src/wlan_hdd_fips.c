@@ -86,7 +86,7 @@ static void hdd_fips_cb(void *cookie,
 	struct hdd_request *request;
 	struct hdd_fips_context *context;
 
-	ENTER();
+	hdd_enter();
 
 	if (!response) {
 		hdd_err("response is NULL");

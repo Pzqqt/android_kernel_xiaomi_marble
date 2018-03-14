@@ -368,7 +368,7 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 	struct pmo_ns_req *ns_req = NULL;
 	int err;
 
-	ENTER();
+	hdd_enter();
 	if (!psoc) {
 		hdd_err("psoc is NULL");
 		goto out;
@@ -435,7 +435,7 @@ void hdd_disable_ns_offload(struct hdd_adapter *adapter,
 {
 	QDF_STATUS status;
 
-	ENTER();
+	hdd_enter();
 	status = pmo_ucfg_flush_ns_offload_req(adapter->hdd_vdev);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to flush NS Offload");
@@ -470,7 +470,7 @@ static void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 	struct hdd_adapter *adapter;
 	int errno;
 
-	ENTER();
+	hdd_enter();
 
 	adapter = container_of(work, struct hdd_adapter, ipv6_notifier_work);
 	errno = hdd_validate_adapter(adapter);
@@ -505,7 +505,7 @@ static void hdd_enable_hw_filter(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 
-	ENTER();
+	hdd_enter();
 
 	status = pmo_ucfg_enable_hw_filter_in_fwr(adapter->hdd_vdev);
 	if (status != QDF_STATUS_SUCCESS)
@@ -518,7 +518,7 @@ static void hdd_disable_hw_filter(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 
-	ENTER();
+	hdd_enter();
 
 	status = pmo_ucfg_disable_hw_filter_in_fwr(adapter->hdd_vdev);
 	if (status != QDF_STATUS_SUCCESS)
@@ -530,7 +530,7 @@ static void hdd_disable_hw_filter(struct hdd_adapter *adapter)
 void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 	enum pmo_offload_trigger trigger)
 {
-	ENTER();
+	hdd_enter();
 
 	if (!ucfg_pmo_is_vdev_supports_offload(adapter->hdd_vdev)) {
 		hdd_info("offload is not supported on this vdev opmode: %d",
@@ -557,7 +557,7 @@ out:
 void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 	enum pmo_offload_trigger trigger)
 {
-	ENTER();
+	hdd_enter();
 
 	if (!ucfg_pmo_is_vdev_supports_offload(adapter->hdd_vdev)) {
 		hdd_info("offload is not supported on this vdev opmode: %d",
@@ -733,7 +733,7 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 	struct csr_roam_profile *roam_profile;
 	struct in_ifaddr *ifa;
 
-	ENTER();
+	hdd_enter();
 
 	adapter = container_of(work, struct hdd_adapter, ipv4_notifier_work);
 	errno = hdd_validate_adapter(adapter);
@@ -904,7 +904,7 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 	struct pmo_arp_req *arp_req = NULL;
 	struct in_ifaddr *ifa = NULL;
 
-	ENTER();
+	hdd_enter();
 	arp_req = qdf_mem_malloc(sizeof(*arp_req));
 	if (!arp_req) {
 		hdd_err("cannot allocate arp_req");
@@ -946,7 +946,7 @@ void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 {
 	QDF_STATUS status;
 
-	ENTER();
+	hdd_enter();
 	status = pmo_ucfg_flush_arp_offload_req(adapter->hdd_vdev);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to flush arp Offload");
@@ -971,7 +971,7 @@ void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 
-	ENTER();
+	hdd_enter();
 	if (wlan_hdd_validate_context(hdd_ctx))
 		goto out;
 
@@ -991,7 +991,7 @@ void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 
-	ENTER();
+	hdd_enter();
 	if (wlan_hdd_validate_context(hdd_ctx))
 		goto out;
 
@@ -1009,7 +1009,7 @@ int hdd_cache_mc_addr_list(struct pmo_mc_addr_list_params *mc_list_config)
 	QDF_STATUS status;
 	int ret = 0;
 
-	ENTER();
+	hdd_enter();
 	/* cache mc addr list */
 	status = pmo_ucfg_cache_mc_addr_list(mc_list_config);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -1028,7 +1028,7 @@ void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	ENTER();
+	hdd_enter();
 	/* disable mc list first */
 	status = pmo_ucfg_disable_mc_addr_filtering_in_fwr(psoc,
 			adapter->session_id, trigger);
@@ -1212,7 +1212,7 @@ static void hdd_ssr_restart_sap(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter->device_mode == QDF_SAP_MODE) {
@@ -1548,7 +1548,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	int exit_code;
 	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
 
-	ENTER();
+	hdd_enter();
 
 	if (cds_is_driver_recovering()) {
 		hdd_debug("Driver is recovering; Skipping resume");
@@ -1664,7 +1664,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	struct hdd_scan_info *scan_info;
 	int rc;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -1891,7 +1891,7 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx;
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	if (timeout < 0) {
 		hdd_debug("User space timeout: %d; Enter full power or power save",
@@ -1980,7 +1980,7 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BCAST_INIT;
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -2075,7 +2075,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	int status;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");

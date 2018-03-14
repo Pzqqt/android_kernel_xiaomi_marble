@@ -1260,7 +1260,7 @@ static int wlan_hdd_pld_probe(struct device *dev,
 static void wlan_hdd_pld_remove(struct device *dev,
 		     enum pld_bus_type bus_type)
 {
-	ENTER();
+	hdd_enter();
 	mutex_lock(&hdd_init_deinit_lock);
 	hdd_start_driver_ops_timer(eHDD_DRV_OP_REMOVE);
 
@@ -1281,7 +1281,7 @@ static void wlan_hdd_pld_remove(struct device *dev,
 static void wlan_hdd_pld_shutdown(struct device *dev,
 		       enum pld_bus_type bus_type)
 {
-	ENTER();
+	hdd_enter();
 	mutex_lock(&hdd_init_deinit_lock);
 	hdd_start_driver_ops_timer(eHDD_DRV_OP_SHUTDOWN);
 
@@ -1430,7 +1430,7 @@ static void wlan_hdd_purge_notifier(void)
 {
 	struct hdd_context *hdd_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -1511,7 +1511,7 @@ static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 static void wlan_hdd_pld_uevent(struct device *dev,
 				struct pld_uevent_data *uevent)
 {
-	ENTER();
+	hdd_enter();
 	hdd_info("pld event %d", uevent->uevent);
 
 	mutex_lock(&hdd_init_deinit_lock);

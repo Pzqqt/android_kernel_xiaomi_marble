@@ -313,7 +313,7 @@ __wlan_hdd_cfg80211_get_he_cap(struct wiphy *wiphy,
 	struct he_capability he_cap;
 	uint8_t he_supported = 0;
 
-	ENTER();
+	hdd_enter();
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;

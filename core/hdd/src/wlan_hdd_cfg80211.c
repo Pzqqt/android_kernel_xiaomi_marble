@@ -834,7 +834,7 @@ int wlan_hdd_send_avoid_freq_event(struct hdd_context *hdd_ctx,
 {
 	struct sk_buff *vendor_event;
 
-	ENTER();
+	hdd_enter();
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is null");
@@ -931,7 +931,7 @@ int wlan_hdd_send_hang_reason_event(struct hdd_context *hdd_ctx,
 	struct sk_buff *vendor_event;
 	enum qca_wlan_vendor_hang_reason hang_reason;
 
-	ENTER();
+	hdd_enter();
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is null");
@@ -1013,7 +1013,7 @@ int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx, uint8_t op_ch
 	int ret;
 	int chan;
 
-	ENTER();
+	hdd_enter();
 
 	if (!hdd_ctx) {
 		hdd_err("invalid param");
@@ -2236,7 +2236,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	ENTER();
+	hdd_enter();
 	sap_config = &adapter->session.ap.sap_config;
 	/* When first 2 connections are on the same frequency band,
 	 * then PCL would include only channels from the other
@@ -4102,7 +4102,7 @@ void hdd_chip_pwr_save_fail_detected_cb(void *hddctx,
 	struct sk_buff *skb;
 	int flags = cds_get_gfp_flags();
 
-	ENTER();
+	hdd_enter();
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -6092,7 +6092,7 @@ int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 	uint32_t fils_params_len;
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	if (wlan_hdd_validate_context(hdd_ctx_ptr))
 		return -EINVAL;
@@ -8310,7 +8310,7 @@ void hdd_rssi_threshold_breached(void *hddctx,
 	struct hdd_context *hdd_ctx  = hddctx;
 	struct sk_buff *skb;
 
-	ENTER();
+	hdd_enter();
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -9618,7 +9618,7 @@ static void hdd_get_bpf_offload_cb(void *context,
 	struct hdd_request *request;
 	struct bpf_offload_priv *priv;
 
-	ENTER();
+	hdd_enter();
 
 	request = hdd_request_get(context);
 	if (!request) {
@@ -9645,7 +9645,7 @@ static int hdd_post_get_bpf_capabilities_rsp(struct hdd_context *hdd_ctx,
 	struct sk_buff *skb;
 	uint32_t nl_buf_len;
 
-	ENTER();
+	hdd_enter();
 
 	nl_buf_len = NLMSG_HDRLEN;
 	nl_buf_len +=
@@ -9696,7 +9696,7 @@ static int hdd_get_bpf_offload(struct hdd_context *hdd_ctx)
 		.timeout_ms = WLAN_WAIT_TIME_BPF,
 	};
 
-	ENTER();
+	hdd_enter();
 
 	request = hdd_request_alloc(&params);
 	if (!request) {
@@ -9754,7 +9754,7 @@ static int hdd_set_reset_bpf_offload(struct hdd_context *hdd_ctx,
 	int prog_len;
 	int ret = 0;
 
-	ENTER();
+	hdd_enter();
 
 	if (adapter->device_mode == QDF_STA_MODE ||
 	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
@@ -9868,7 +9868,7 @@ __wlan_hdd_cfg80211_bpf_offload(struct wiphy *wiphy,
 	struct nlattr *tb[BPF_MAX + 1];
 	int ret_val, packet_filter_subcmd;
 
-	ENTER();
+	hdd_enter();
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
 	if (ret_val)
@@ -10819,7 +10819,7 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 	int ret;
 	QDF_STATUS status;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -11011,7 +11011,7 @@ static uint32_t hdd_send_wakelock_stats(struct hdd_context *hdd_ctx,
 	uint32_t ipv6_rx_multicast_addr_cnt;
 	uint32_t icmpv6_cnt;
 
-	ENTER();
+	hdd_enter();
 
 	nl_buf_len = NLMSG_HDRLEN;
 	nl_buf_len +=
@@ -11145,7 +11145,7 @@ static int __wlan_hdd_cfg80211_get_wakelock_stats(struct wiphy *wiphy,
 	struct sir_wake_lock_stats wake_lock_stats;
 	QDF_STATUS qdf_status;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -11220,7 +11220,7 @@ __wlan_hdd_cfg80211_get_bus_size(struct wiphy *wiphy,
 	struct sk_buff *skb;
 	uint32_t nl_buf_len;
 
-	ENTER();
+	hdd_enter();
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
 	if (ret_val)
@@ -11301,7 +11301,7 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 	static const struct nla_policy policy[QCA_WLAN_VENDOR_ATTR_MAX + 1]
 		= {[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE] = { .type = NLA_U32 } };
 
-	ENTER();
+	hdd_enter();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -11597,7 +11597,7 @@ static int __wlan_hdd_cfg80211_update_vendor_channel(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct hdd_vendor_chan_info *channel_list_ptr;
 
-	ENTER();
+	hdd_enter();
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
 	if (ret_val)
@@ -11867,7 +11867,7 @@ static void hdd_sar_cb(void *cookie,
 	struct hdd_request *request;
 	struct hdd_sar_context *context;
 
-	ENTER();
+	hdd_enter();
 
 	if (!event) {
 		hdd_err("response is NULL");
@@ -12031,7 +12031,7 @@ static int __wlan_hdd_get_sar_power_limits(struct wiphy *wiphy,
 		.timeout_ms = WLAN_WAIT_TIME_SAR,
 	};
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -12118,7 +12118,7 @@ static int __wlan_hdd_set_sar_power_limits(struct wiphy *wiphy,
 	struct sar_limit_cmd_params sar_limit_cmd = {0};
 	int ret = -EINVAL, i = 0, rem = 0;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -12466,7 +12466,7 @@ __wlan_hdd_cfg80211_set_trace_level(struct wiphy *wiphy,
 	int bit_mask = -1;
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 		hdd_err("Command not allowed in FTM mode");
@@ -12598,7 +12598,7 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 	struct set_arp_stats_params arp_stats_params;
 	int err = 0;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -12755,7 +12755,7 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct sk_buff *skb;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -12938,7 +12938,7 @@ static void hdd_get_chain_rssi_cb(void *context,
 	struct hdd_request *request;
 	struct chain_rssi_priv *priv;
 
-	ENTER();
+	hdd_enter();
 
 	request = hdd_request_get(context);
 	if (!request) {
@@ -13015,7 +13015,7 @@ static int __wlan_hdd_cfg80211_get_chain_rssi(struct wiphy *wiphy,
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
 
-	ENTER();
+	hdd_enter();
 
 	retval = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != retval)
@@ -13120,7 +13120,7 @@ static int __wlan_hdd_cfg80211_set_limit_offchan_param(struct wiphy *wiphy,
 	uint8_t tos;
 	uint8_t tos_status;
 
-	ENTER();
+	hdd_enter();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret < 0)
@@ -13268,7 +13268,7 @@ static int __wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
 							.type = NLA_U32},
 		};
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -13533,7 +13533,7 @@ int wlan_hdd_send_mode_change_event(void)
 	struct connection_info info[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint32_t conn_count, mac_id;
 
-	ENTER();
+	hdd_enter();
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -14376,7 +14376,7 @@ struct hdd_context *hdd_cfg80211_wiphy_alloc(int priv_size)
 	struct wiphy *wiphy;
 	struct hdd_context *hdd_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	wiphy = wiphy_new(&wlan_hdd_cfg80211_ops, priv_size);
 
@@ -14403,7 +14403,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wip
 	int i, j;
 	enum channel_state channelEnabledState;
 
-	ENTER();
+	hdd_enter();
 
 	for (i = 0; i < HDD_NUM_NL80211_BANDS; i++) {
 
@@ -14522,7 +14522,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	int len = 0;
 	uint32_t *cipher_suites;
 
-	ENTER();
+	hdd_enter();
 
 	/* Now bind the underlying wlan device with wiphy */
 	set_wiphy_dev(wiphy, dev);
@@ -14895,7 +14895,7 @@ void wlan_hdd_update_11n_mode(struct hdd_config *cfg)
 /* In this function we are registering wiphy. */
 int wlan_hdd_cfg80211_register(struct wiphy *wiphy)
 {
-	ENTER();
+	hdd_enter();
 	/* Register our wiphy dev with cfg80211 */
 	if (0 > wiphy_register(wiphy)) {
 		hdd_err("wiphy register failed");
@@ -14943,7 +14943,7 @@ int wlan_hdd_cfg80211_register_frames(struct hdd_adapter *adapter)
 	uint16_t type = (SIR_MAC_MGMT_FRAME << 2) | (SIR_MAC_MGMT_ACTION << 4);
 	QDF_STATUS status;
 
-	ENTER();
+	hdd_enter();
 
 	/* Register frame indication call back */
 	status = sme_register_mgmt_frame_ind_callback(hHal,
@@ -15042,7 +15042,7 @@ void wlan_hdd_cfg80211_deregister_frames(struct hdd_adapter *adapter)
 	/* Register for all P2P action, public action etc frames */
 	uint16_t type = (SIR_MAC_MGMT_FRAME << 2) | (SIR_MAC_MGMT_ACTION << 4);
 
-	ENTER();
+	hdd_enter();
 
 	/* Right now we are registering these frame when driver is getting
 	 * initialized. Once we will move to 2.6.37 kernel, in which we have
@@ -15256,7 +15256,7 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 	int ret = 0;
 	QDF_STATUS qdf_ret_status;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -15325,7 +15325,7 @@ static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 	struct wireless_dev *wdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	ENTER();
+	hdd_enter();
 
 	if (test_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags)) {
 		hdd_warn("ACS is in progress, don't change iface!");
@@ -15413,7 +15413,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	struct hdd_config *pConfig = NULL;
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -15671,7 +15671,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	struct qdf_mac_addr STAMacAddress;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -15773,7 +15773,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	QDF_STATUS qdf_ret_status;
 	struct hdd_context *hdd_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -16104,7 +16104,7 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 	struct csr_roam_profile *roam_profile;
 	struct key_params params;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -16295,7 +16295,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx;
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -16702,7 +16702,7 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 {
 	struct net_device *dev = adapter->dev;
 
-	ENTER();
+	hdd_enter();
 	hdd_debug("is going to notify supplicant of:");
 
 	if (NULL == roam_info) {
@@ -16735,7 +16735,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
 	unsigned char metrics_notification[MAX_LFR_METRICS_EVENT_LENGTH + 1];
 	union iwreq_data wrqu;
 
-	ENTER();
+	hdd_enter();
 
 	if (NULL == adapter) {
 		hdd_err("adapter is NULL!");
@@ -16778,7 +16778,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
 	unsigned char metrics_notification[MAX_LFR_METRICS_EVENT_LENGTH + 1];
 	union iwreq_data wrqu;
 
-	ENTER();
+	hdd_enter();
 
 	if (NULL == adapter) {
 		hdd_err("adapter is NULL!");
@@ -16827,7 +16827,7 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 	unsigned char metrics_notification[MAX_LFR_METRICS_EVENT_LENGTH + 1];
 	union iwreq_data wrqu;
 
-	ENTER();
+	hdd_enter();
 
 	if (NULL == adapter) {
 		hdd_err("adapter is NULL!");
@@ -17109,7 +17109,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	tSmeConfigParams *sme_config;
 	uint8_t channel = 0;
 
-	ENTER();
+	hdd_enter();
 
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -18422,7 +18422,7 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct hdd_station_ctx *sta_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	sta_ctx->wpa_versions = req->crypto.wpa_versions;
@@ -18752,7 +18752,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_context *hdd_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -18920,7 +18920,7 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
 	uint32_t wait_time = WLAN_WAIT_TIME_DISCONNECT;
 
-	ENTER();
+	hdd_enter();
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 
@@ -19103,7 +19103,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -19233,7 +19233,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	ENTER();
+	hdd_enter();
 
 	sta_ctx->wpa_versions = 0;
 	qdf_mem_zero(&sta_ctx->ibss_enc_key, sizeof(tCsrRoamSetKey));
@@ -19339,7 +19339,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	struct qdf_mac_addr bssid;
 	u8 channelNum = 0;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -19547,7 +19547,7 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 	unsigned long rc;
 	tSirUpdateIE updateIE;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -19663,7 +19663,7 @@ static int __wlan_hdd_cfg80211_set_wiphy_params(struct wiphy *wiphy,
 	tHalHandle hHal = hdd_ctx->hHal;
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -19787,7 +19787,7 @@ static int __wlan_hdd_set_default_mgmt_key(struct wiphy *wiphy,
 					 struct net_device *netdev,
 					 u8 key_index)
 {
-	ENTER();
+	hdd_enter();
 	return 0;
 }
 
@@ -19825,7 +19825,7 @@ static int __wlan_hdd_set_txq_params(struct wiphy *wiphy,
 				   struct net_device *dev,
 				   struct ieee80211_txq_params *params)
 {
-	ENTER();
+	hdd_enter();
 	return 0;
 }
 
@@ -19870,7 +19870,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 	uint8_t staId;
 	uint8_t *mac;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -20107,7 +20107,7 @@ static int __wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	u32 mask, set;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -20289,7 +20289,7 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 	int status;
 	tPmkidCacheInfo pmk_cache;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -20386,7 +20386,7 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 	int status = 0;
 	tPmkidCacheInfo pmk_cache;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -20474,7 +20474,7 @@ static int __wlan_hdd_cfg80211_flush_pmksa(struct wiphy *wiphy,
 	tHalHandle halHandle;
 	int status = 0;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -20548,7 +20548,7 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status)
@@ -20615,7 +20615,7 @@ void wlan_hdd_cfg80211_update_replay_counter_cb(
 	int i;
 	uint8_t *p;
 
-	ENTER();
+	hdd_enter();
 
 	if (!adapter) {
 		hdd_err("HDD adapter is Null");
@@ -20696,7 +20696,7 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 	uint8_t *buf;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -20792,7 +20792,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 	int status;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -20980,7 +20980,7 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 	int err;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
-	ENTER();
+	hdd_enter();
 
 	err = wlan_hdd_validate_context(hdd_ctx);
 	if (err)
@@ -21288,7 +21288,7 @@ int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ENTER();
+	hdd_enter();
 	if (0 != wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
 
@@ -21361,7 +21361,7 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	int ret;
 	uint16_t chan_num = cds_freq_to_chan(chandef->chan->center_freq);
 
-	ENTER();
+	hdd_enter();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -21662,7 +21662,7 @@ static void wlan_hdd_chan_info_cb(struct scan_chan_info *info)
 	struct scan_chan_info *chan;
 	uint8_t idx;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (wlan_hdd_validate_context(hdd_ctx) != 0) {

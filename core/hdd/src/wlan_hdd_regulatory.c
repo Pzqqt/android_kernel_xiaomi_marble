@@ -625,7 +625,7 @@ void hdd_update_indoor_channel(struct hdd_context *hdd_ctx,
 	uint8_t band_capability;
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 
-	ENTER();
+	hdd_enter();
 	hdd_debug("mark indoor channel disable: %d", disable);
 
 	band_capability = hdd_ctx->curr_band;

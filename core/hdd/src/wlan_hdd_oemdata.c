@@ -147,7 +147,7 @@ int iw_get_oem_data_cap(struct net_device *dev,
 	struct hdd_context *pHddContext;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	pHddContext = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(pHddContext);

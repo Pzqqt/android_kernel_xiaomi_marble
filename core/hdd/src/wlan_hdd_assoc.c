@@ -2505,7 +2505,7 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 	bool fConnected = false;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	ENTER();
+	hdd_enter();
 
 	if (NULL == roam_info) {
 		hdd_err("roam_info is NULL");

@@ -73,7 +73,7 @@ static ssize_t __wcnss_wowpattern_write(struct file *file,
 	char *pattern_mask;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
@@ -196,7 +196,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	QDF_STATUS status;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	adapter = (struct hdd_adapter *)file->private_data;
 	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
@@ -408,7 +408,7 @@ static void hdd_power_debugstats_cb(struct power_stats_response *response,
 	uint32_t *debug_registers;
 	uint32_t debug_registers_len;
 
-	ENTER();
+	hdd_enter();
 
 	request = hdd_request_get(context);
 	if (!request) {
@@ -471,7 +471,7 @@ static ssize_t __wlan_hdd_read_power_debugfs(struct file *file,
 		.dealloc = hdd_power_debugstats_dealloc,
 	};
 
-	ENTER();
+	hdd_enter();
 	adapter = (struct hdd_adapter *)file->private_data;
 	if ((!adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
@@ -622,7 +622,7 @@ static int __wcnss_debugfs_open(struct inode *inode, struct file *file)
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	if (inode->i_private)
 		file->private_data = inode->i_private;

@@ -841,7 +841,7 @@ static int hdd_stop_bss_link(struct hdd_adapter *adapter,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	dev = (struct net_device *)usrDataForCallback;
-	ENTER();
+	hdd_enter();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -1117,7 +1117,7 @@ static void __wlan_hdd_sap_pre_cac_failure(void *data)
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	adapter = (struct hdd_adapter *) data;
 	if (!adapter ||
@@ -1168,7 +1168,7 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 	int i;
 	struct hdd_context *hdd_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	adapter = (struct hdd_adapter *) data;
 	if (!adapter) {
@@ -2903,7 +2903,7 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *ap_adapter,
 	struct net_device *dev = ap_adapter->dev;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	if (!dev) {
 		hdd_err("Invalid dev pointer");
@@ -3097,7 +3097,7 @@ static int hdd_sap_get_chan_width(struct hdd_adapter *adapter, int *value)
 	struct sap_context *sap_ctx;
 	struct hdd_hostapd_state *hostapdstate;
 
-	ENTER();
+	hdd_enter();
 	hostapdstate = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
 	if (hostapdstate->bss_state != BSS_START) {
@@ -5271,7 +5271,7 @@ static int hdd_softap_get_sta_info(struct hdd_adapter *adapter,
 	int written;
 	uint8_t bc_sta_id;
 
-	ENTER();
+	hdd_enter();
 
 	bc_sta_id = WLAN_HDD_GET_AP_CTX_PTR(adapter)->broadcast_sta_id;
 
@@ -5490,7 +5490,7 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 	int buf;
 	int length;
 
-	ENTER();
+	hdd_enter();
 
 	hddctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hddctx);
@@ -6274,7 +6274,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	int ret;
 	enum dfs_mode acs_dfs_mode;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_info("SSR in progress: %d", reinit);
 
@@ -6591,7 +6591,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 	tSmeConfigParams *sme_config;
 	tsap_Config_t *sap_config;
 
-	ENTER();
+	hdd_enter();
 
 
 	if (NULL == dev) {
@@ -6964,7 +6964,7 @@ wlan_hdd_cfg80211_alloc_new_beacon(struct hdd_adapter *adapter,
 	int head_len, tail_len, proberesp_ies_len, assocresp_ies_len;
 	const u8 *head, *tail, *proberesp_ies, *assocresp_ies;
 
-	ENTER();
+	hdd_enter();
 	if (params->head && !params->head_len) {
 		hdd_err("head_len is NULL");
 		return -EINVAL;
@@ -7677,7 +7677,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	enum dfs_mode mode;
 	struct hdd_adapter *sta_adapter;
 
-	ENTER();
+	hdd_enter();
 
 	hdd_notify_teardown_tdls_links(adapter->hdd_vdev);
 
@@ -8380,7 +8380,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	struct hdd_beacon_data *old;
 	int ret;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -8687,7 +8687,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	int status;
 	struct sme_sta_inactivity_timeout  *sta_inactivity_timer;
 	uint8_t channel;
-	ENTER();
+
+	hdd_enter();
 
 	clear_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
@@ -8950,7 +8951,7 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 	struct hdd_beacon_data *old, *new;
 	int status;
 
-	ENTER();
+	hdd_enter();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -9038,7 +9039,7 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 	int sta_id;
 	struct sap_context *sap_ctx;
 
-	ENTER();
+	hdd_enter();
 
 	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
 	if (!sap_ctx) {
