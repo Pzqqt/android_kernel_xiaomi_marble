@@ -147,6 +147,9 @@ static struct msm_pcm_route_bdai_name be_dai_name_table[MSM_BACKEND_DAI_MAX];
 static int msm_routing_send_device_pp_params(int port_id,  int copp_idx,
 					     int fe_id);
 
+static void msm_routing_load_topology(size_t data_size, void *data);
+static void msm_routing_unload_topology(uint32_t topology_id);
+
 static int msm_routing_get_bit_width(unsigned int format)
 {
 	int bit_width;
@@ -1547,6 +1550,7 @@ void msm_pcm_routing_dereg_phy_stream(int fedai_id, int stream_type)
 			}
 			topology = adm_get_topology_for_port_copp_idx(
 					msm_bedais[i].port_id, idx);
+			msm_routing_unload_topology(topology);
 			adm_close(msm_bedais[i].port_id, fdai->perf_mode, idx);
 			pr_debug("%s:copp:%ld,idx bit fe:%d,type:%d,be:%d\n",
 				 __func__, copp, fedai_id, session_type, i);
@@ -1745,6 +1749,7 @@ static void msm_pcm_routing_process_audio(u16 reg, u16 val, int set)
 			port_id = msm_bedais[reg].port_id;
 			topology = adm_get_topology_for_port_copp_idx(port_id,
 								      idx);
+			msm_routing_unload_topology(topology);
 			adm_close(msm_bedais[reg].port_id, fdai->perf_mode,
 				  idx);
 			pr_debug("%s: copp: %ld, reset idx bit fe:%d, type: %d, be:%d topology=0x%x\n",
@@ -16308,6 +16313,7 @@ static int msm_pcm_routing_close(struct snd_pcm_substream *substream)
 			port_id = bedai->port_id;
 			topology = adm_get_topology_for_port_copp_idx(port_id,
 								     idx);
+			msm_routing_unload_topology(topology);
 			adm_close(bedai->port_id, fdai->perf_mode, idx);
 			pr_debug("%s: copp:%ld,idx bit fe:%d, type:%d,be:%d topology=0x%x\n",
 				 __func__, copp, i, session_type, be_id,
@@ -16598,6 +16604,60 @@ static int msm_routing_send_device_pp_params(int port_id, int copp_idx,
 							   latency);
 	}
 	return 0;
+}
+
+static uint32_t msm_routing_get_topology(size_t data_size, void *data)
+{
+	uint32_t topology = NULL_COPP_TOPOLOGY;
+	void *cal_info = NULL;
+	uint32_t size = 0;
+
+	/* Retrieve cal_info size from cal data*/
+	size = data_size - sizeof(struct audio_cal_type_basic);
+	cal_info = kzalloc(size, GFP_KERNEL);
+
+	if (!cal_info)
+		goto done;
+
+	memcpy(cal_info,
+		((uint8_t *)data + sizeof(struct audio_cal_type_basic)), size);
+
+	topology = ((struct audio_cal_info_adm_top *)cal_info)->topology;
+	kfree(cal_info);
+	cal_info = NULL;
+
+done:
+	pr_debug("%s: Using topology %d\n", __func__, topology);
+
+	return topology;
+}
+
+static void msm_routing_load_topology(size_t data_size, void *data)
+{
+	uint32_t topology_id;
+	int ret;
+
+	topology_id = msm_routing_get_topology(data_size, data);
+	if (topology_id != NULL_COPP_TOPOLOGY)
+		ret = q6core_load_unload_topo_modules(topology_id,
+			CORE_LOAD_TOPOLOGY);
+	if (ret < 0)
+		pr_debug("%s %d load topology failed\n",
+				 __func__, topology_id);
+
+}
+
+static void msm_routing_unload_topology(uint32_t topology_id)
+{
+	int ret;
+
+	if (topology_id != NULL_COPP_TOPOLOGY)
+		ret = q6core_load_unload_topo_modules(topology_id,
+			CORE_UNLOAD_TOPOLOGY);
+	if (ret < 0)
+		pr_debug("%s %d unload topology failed\n",
+				 __func__, topology_id);
+
 }
 
 static int msm_routing_put_device_pp_params_mixer(struct snd_kcontrol *kcontrol,
@@ -17064,6 +17124,11 @@ static int msm_routing_set_cal(int32_t cal_type,
 			__func__, ret, cal_type);
 		ret = -EINVAL;
 		goto done;
+	}
+	/* Pre-load if it is ADM topology */
+	if ((cal_index == ADM_TOPOLOGY_CAL_TYPE_IDX) ||
+		(cal_index == ADM_LSM_TOPOLOGY_CAL_TYPE_IDX)) {
+		msm_routing_load_topology(data_size, data);
 	}
 done:
 	return ret;

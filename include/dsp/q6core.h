@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -158,8 +158,24 @@ struct avcs_cmd_deregister_topologies {
 
 #define AVCS_MODE_DEREGISTER_ALL_CUSTOM_TOPOLOGIES	2
 
+#define AVCS_CMD_LOAD_TOPO_MODULES                 0x0001296C
+
+#define AVCS_CMD_UNLOAD_TOPO_MODULES               0x0001296D
+
+#define CORE_LOAD_TOPOLOGY	0
+
+#define CORE_UNLOAD_TOPOLOGY	1
+
+struct avcs_cmd_load_unload_topo_modules {
+	struct apr_hdr hdr;
+	uint32_t topology_id;
+} __packed;
+
 
 int32_t core_set_license(uint32_t key, uint32_t module_id);
 int32_t core_get_license_status(uint32_t module_id);
+
+int32_t q6core_load_unload_topo_modules(uint32_t topology_id,
+			bool preload_type);
 
 #endif /* __Q6CORE_H__ */
