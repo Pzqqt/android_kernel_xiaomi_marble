@@ -200,6 +200,8 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 	struct cdp_pdev *pdev = NULL;
 	void *soc = NULL;
 	struct cdp_txrx_stats_req req = {0};
+	uint8_t count = 0;
+	struct hdd_station_info *sta_info;
 
 	hdd_enter_dev(dev);
 
@@ -225,6 +227,18 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		req.mac_id = value[2];
 		hdd_info("QCSAP_PARAM_SET_TXRX_STATS stats_id: %d mac_id: %d",
 			req.stats, req.mac_id);
+		sta_info = adapter->sta_info;
+		if (value[1] == CDP_TXRX_STATS_28) {
+			for (count = 0; count < WLAN_MAX_STA_COUNT; count++) {
+				if (sta_info[count].in_use) {
+					hdd_debug("sta: %d: bss_id: %pM",
+						  sta_info->sta_id,
+						  (void *)&sta_info->sta_mac);
+					req.peer_addr =
+						(char *)&sta_info->sta_mac;
+				}
+			}
+		}
 		ret = cdp_txrx_stats_request(soc, vdev, &req);
 		break;
 	}

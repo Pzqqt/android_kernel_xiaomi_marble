@@ -56,7 +56,6 @@
 #include "wlan_hdd_misc.h"
 #include <cds_utils.h>
 #include "pld_common.h"
-
 #include "wma.h"
 #ifdef WLAN_DEBUG
 #include "wma_api.h"
@@ -2989,7 +2988,6 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	phostapdBuf = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
 	sme_set_curr_device_mode(hdd_ctx->mac_handle, adapter->device_mode);
-
 	/* Zero the memory.  This zeros the profile structure. */
 	memset(phostapdBuf, 0, sizeof(struct hdd_hostapd_state));
 

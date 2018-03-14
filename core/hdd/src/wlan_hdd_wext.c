@@ -3187,7 +3187,6 @@ static void hdd_display_stats_help(void)
 	hdd_err("  5 -- Flow control statistics");
 	hdd_err("  6 -- Per Layer statistics");
 	hdd_err("  7 -- Copy engine interrupt statistics");
-	hdd_err("  8 -- LRO statistics");
 	hdd_err("  9 -- NAPI statistics");
 }
 
@@ -3208,27 +3207,33 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 	case CDP_TXRX_HIST_STATS:
 		wlan_hdd_display_tx_rx_histogram(hdd_ctx);
 		break;
+
 	case CDP_HDD_NETIF_OPER_HISTORY:
 		wlan_hdd_display_netif_queue_history
 					(hdd_ctx,
 					 QDF_STATS_VERBOSITY_LEVEL_HIGH);
 		break;
+
 	case CDP_HIF_STATS:
 		hdd_display_hif_stats();
 		break;
+
 	case CDP_LRO_STATS:
 		hdd_lro_display_stats(hdd_ctx);
 		break;
+
 	case CDP_NAPI_STATS:
 		if (hdd_display_napi_stats()) {
 			hdd_err("error displaying napi stats");
 			ret = EFAULT;
 		}
 		break;
+
 	case CDP_DISCONNECT_STATS:
 		sme_display_disconnect_stats(hdd_ctx->mac_handle,
 					     adapter->session_id);
 		break;
+
 	default:
 		status = cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC),
 					   value,
@@ -7112,6 +7117,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	mac_handle_t mac_handle;
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int sub_cmd;
 	int *apps_args = (int *) extra;
 	struct hdd_context *hdd_ctx;
@@ -7353,6 +7359,14 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 
 		hdd_debug("WE_SET_TXRX_STATS stats cmd: %d mac_id: %d",
 			  req.stats, req.mac_id);
+		if (apps_args[0] == CDP_TXRX_STATS_28) {
+			if (sta_ctx->conn_info.uIsAuthenticated) {
+				hdd_debug("ap mac addr: %pM",
+					  (void *)&sta_ctx->conn_info.bssId);
+				req.peer_addr =
+					(char *)&sta_ctx->conn_info.bssId;
+			}
+		}
 		ret = cdp_txrx_stats_request(soc, vdev, &req);
 		break;
 	}
