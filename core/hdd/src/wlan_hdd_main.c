@@ -7365,18 +7365,17 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 	for (i = 0; i < NUM_TX_RX_HISTOGRAM; i++) {
 		/* using hdd_log to avoid printing function name */
 		if (hdd_ctx->hdd_txrx_hist[i].qtime > 0)
-			hdd_log(QDF_TRACE_LEVEL_DEBUG,
-				"[%3d][%15llu]: %6llu, %6llu, %s, %s, %s",
-				i, hdd_ctx->hdd_txrx_hist[i].qtime,
-				hdd_ctx->hdd_txrx_hist[i].interval_rx,
-				hdd_ctx->hdd_txrx_hist[i].interval_tx,
-				convert_level_to_string(
+			hdd_debug("[%3d][%15llu]: %6llu, %6llu, %s, %s, %s",
+				  i, hdd_ctx->hdd_txrx_hist[i].qtime,
+				  hdd_ctx->hdd_txrx_hist[i].interval_rx,
+				  hdd_ctx->hdd_txrx_hist[i].interval_tx,
+				  convert_level_to_string(
 					hdd_ctx->hdd_txrx_hist[i].
 						next_vote_level),
-				convert_level_to_string(
+				  convert_level_to_string(
 					hdd_ctx->hdd_txrx_hist[i].
 						next_rx_level),
-				convert_level_to_string(
+				  convert_level_to_string(
 					hdd_ctx->hdd_txrx_hist[i].
 						next_tx_level));
 	}
@@ -7531,14 +7530,13 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 				pause_delta = delta;
 
 			/* using hdd_log to avoid printing function name */
-			hdd_log(QDF_TRACE_LEVEL_DEBUG,
-				"%s: %d: %d: %ums",
-				hdd_reason_type_to_string(i),
-				adapter->queue_oper_stats[i].pause_count,
-				adapter->queue_oper_stats[i].unpause_count,
-				qdf_system_ticks_to_msecs(
-				adapter->queue_oper_stats[i].total_pause_time +
-				pause_delta));
+			hdd_debug("%s: %d: %d: %ums",
+				 hdd_reason_type_to_string(i),
+				 adapter->queue_oper_stats[i].pause_count,
+				 adapter->queue_oper_stats[i].unpause_count,
+				 qdf_system_ticks_to_msecs(
+				 adapter->queue_oper_stats[i].total_pause_time +
+				 pause_delta));
 		}
 
 		hdd_debug("Netif queue operation history:");
@@ -7551,15 +7549,14 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 			/* using hdd_log to avoid printing function name */
 			if (adapter->queue_oper_history[i].time == 0)
 				continue;
-			hdd_log(QDF_TRACE_LEVEL_DEBUG,
-				"%d: %u: %s: %s: %x",
-				i, qdf_system_ticks_to_msecs(
+			hdd_debug("%d: %u: %s: %s: %x",
+				  i, qdf_system_ticks_to_msecs(
 					adapter->queue_oper_history[i].time),
-				hdd_action_type_to_string(
-				adapter->queue_oper_history[i].netif_action),
-				hdd_reason_type_to_string(
-				adapter->queue_oper_history[i].netif_reason),
-				adapter->queue_oper_history[i].pause_map);
+				  hdd_action_type_to_string(
+				  adapter->queue_oper_history[i].netif_action),
+				  hdd_reason_type_to_string(
+				  adapter->queue_oper_history[i].netif_reason),
+				  adapter->queue_oper_history[i].pause_map);
 		}
 	}
 }

@@ -226,25 +226,17 @@
 
 #define WLAN_CHIP_VERSION   "WCNSS"
 
+#define hdd_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_HDD, params)
+#define hdd_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_HDD, params)
+#define hdd_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_HDD, params)
+#define hdd_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_HDD, params)
+#define hdd_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_HDD, params)
+
 #define hdd_alert_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_HDD, params)
 #define hdd_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_HDD, params)
 #define hdd_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_HDD, params)
 #define hdd_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_HDD, params)
 #define hdd_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_HDD, params)
-
-#define hdd_log(level, args...) QDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
-#define hdd_logfl(level, format, args...) hdd_log(level, FL(format), ## args)
-
-#define hdd_alert(format, args...) \
-		hdd_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define hdd_err(format, args...) \
-		hdd_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define hdd_warn(format, args...) \
-		hdd_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define hdd_info(format, args...) \
-		hdd_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define hdd_debug(format, args...) \
-		hdd_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
 #define hdd_enter() hdd_debug("enter")
 #define hdd_enter_dev(dev) hdd_debug("enter(%s)", (dev)->name)

@@ -10659,9 +10659,8 @@ static int hdd_validate_avoid_freq_chanlist(
 				if (ch_idx ==
 					hdd_ctx->unsafe_channel_list[
 					unsafe_channel_index]) {
-					hdd_log(QDF_TRACE_LEVEL_INFO,
-						"Duplicate channel %d",
-						ch_idx);
+					hdd_info("Duplicate channel %d",
+						 ch_idx);
 					ch_found = true;
 					break;
 				}
@@ -10723,8 +10722,7 @@ __wlan_hdd_cfg80211_avoid_freq(struct wiphy *wiphy,
 
 	channel_list = (struct ch_avoid_ind_type *)data;
 	if (!channel_list) {
-		hdd_log(QDF_TRACE_LEVEL_ERROR,
-			"Avoid frequency channel list empty");
+		hdd_err("Avoid frequency channel list empty");
 		return -EINVAL;
 	}
 

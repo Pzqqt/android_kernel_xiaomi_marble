@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -482,8 +481,7 @@ int hdd_display_napi_stats(void)
 		hdd_err("%s unable to retrieve napi structure", __func__);
 		return -EFAULT;
 	}
-	hdd_log(QDF_TRACE_LEVEL_INFO_LOW,
-	"[NAPI %u][BL %d]:  scheds   polls   comps    done t-lim p-lim  corr napi-buckets(%d)",
+	hdd_debug("[NAPI %u][BL %d]:  scheds   polls   comps    done t-lim p-lim  corr napi-buckets(%d)",
 		  napid->napi_mode,
 		  hif_napi_cpu_blacklist(napid, BLACKLIST_QUERY),
 		  QCA_NAPI_NUM_BUCKETS);
@@ -506,8 +504,7 @@ int hdd_display_napi_stats(void)
 				}
 
 				if (napis->napi_schedules != 0)
-					hdd_log(QDF_TRACE_LEVEL_INFO_LOW,
-						"NAPI[%2d]CPU[%d]: %7d %7d %7d %7d %5d %5d %5d %s",
+					hdd_debug("NAPI[%2d]CPU[%d]: %7d %7d %7d %7d %5d %5d %5d %s",
 						  i, j,
 						  napis->napi_schedules,
 						  napis->napi_polls,
