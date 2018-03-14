@@ -6661,13 +6661,9 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 		       adapter->device_mode);
 	}
 
-	if ((adapter->device_mode == QDF_STA_MODE)
-	    || (adapter->device_mode == QDF_P2P_CLIENT_MODE)
-	    ) {
-		struct hdd_wext_state *pWextState =
-			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-		struct csr_roam_profile *roam_profile =
-			&pWextState->roamProfile;
+	if ((adapter->device_mode == QDF_STA_MODE) ||
+	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
+		struct csr_roam_profile *roam_profile;
 		struct hdd_station_ctx *sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -6678,6 +6674,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 			return -EINVAL;
 		}
 
+		roam_profile = hdd_roam_profile(adapter);
 		num_ch = roam_profile->ChannelInfo.numOfChannels = 1;
 		sta_ctx->conn_info.operationChannel = channel;
 		roam_profile->ChannelInfo.ChannelList =
