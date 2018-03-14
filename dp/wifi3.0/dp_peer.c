@@ -682,13 +682,8 @@ uint8_t dp_peer_ast_get_next_hop(struct dp_soc *soc,
 }
 #endif
 
-#if ATH_SUPPORT_WRAP
-static struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
+struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	uint8_t *peer_mac_addr, int mac_addr_is_aligned, uint8_t vdev_id)
-#else
-static struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
-	uint8_t *peer_mac_addr, int mac_addr_is_aligned)
-#endif
 {
 	union dp_align_mac_addr local_mac_addr_aligned, *mac_addr;
 	unsigned index;
@@ -899,12 +894,8 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 
 	QDF_ASSERT(peer_id <= wlan_cfg_max_peer_id(soc->wlan_cfg_ctx) + 1);
 	/* check if there's already a peer object with this MAC address */
-#if ATH_SUPPORT_WRAP
 	peer = dp_peer_find_hash_find(soc, peer_mac_addr,
 		0 /* is aligned */, vdev_id);
-#else
-	peer = dp_peer_find_hash_find(soc, peer_mac_addr, 0 /* is aligned */);
-#endif
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		"%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x\n",
 		__func__, peer, peer_id, vdev_id, peer_mac_addr[0],
@@ -1081,12 +1072,8 @@ void *dp_find_peer_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 	struct dp_pdev *pdev = (struct dp_pdev *)dev;
 	struct dp_peer *peer;
 
-#if ATH_SUPPORT_WRAP
 	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0, 0);
-	/* WAR, VDEV ID? TEMP 0 */
-#else
-	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0);
-#endif
+
 	if (!peer)
 		return NULL;
 
@@ -1974,7 +1961,7 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 	struct dp_peer *peer;
 
 	DP_TRACE(INFO, "vdev %pK peer_addr %pK", vdev, peer_addr);
-	peer = dp_peer_find_hash_find(pdev->soc, peer_addr, 0);
+	peer = dp_peer_find_hash_find(pdev->soc, peer_addr, 0, 0);
 	DP_TRACE(INFO, "peer %pK vdev %pK", peer, vdev);
 
 	if (!peer)
@@ -2045,7 +2032,7 @@ QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 	struct dp_peer *peer;
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
-	peer =  dp_peer_find_hash_find(pdev->soc, peer_mac, 0);
+	peer =  dp_peer_find_hash_find(pdev->soc, peer_mac, 0, 0);
 	if (NULL == peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		"Failed to find peer for: [%pM]", peer_mac);
@@ -2368,3 +2355,4 @@ void dp_peer_rxtid_stats(struct dp_peer *peer, void (*dp_stats_cmd_cb),
 		}
 	}
 }
+

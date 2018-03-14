@@ -335,6 +335,9 @@ extern void dp_rx_discard(struct dp_vdev *vdev, struct dp_peer *peer,
 	unsigned tid, qdf_nbuf_t msdu_list);
 extern void *dp_find_peer_by_addr(struct cdp_pdev *dev,
 	uint8_t *peer_mac_addr, uint8_t *peer_id);
+extern struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
+	uint8_t *peer_mac_addr, int mac_addr_is_aligned, uint8_t vdev_id);
+
 #ifndef CONFIG_WIN
 QDF_STATUS dp_register_peer(struct cdp_pdev *pdev_handle,
 		struct ol_txrx_desc_type *sta_desc);

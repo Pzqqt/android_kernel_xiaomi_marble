@@ -3388,6 +3388,15 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 	pdev = vdev->pdev;
 	soc = pdev->soc;
+
+	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr,
+					0, vdev->vdev_id);
+
+	if (peer) {
+		peer->delete_in_progress = false;
+		return (void *)peer;
+	}
+
 #ifdef notyet
 	peer = (struct dp_peer *)qdf_mempool_alloc(soc->osdev,
 		soc->mempool_ol_ath_peer);
@@ -4081,6 +4090,7 @@ static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap)
 	/* redirect the peer's rx delivery function to point to a
 	 * discard func
 	 */
+
 	peer->rx_opt_proc = dp_rx_discard;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
