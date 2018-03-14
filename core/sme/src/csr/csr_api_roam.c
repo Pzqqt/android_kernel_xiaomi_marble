@@ -10101,12 +10101,6 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 						pNeighborRoamInfo, &hBSSList))
 			goto POST_ROAM_FAILURE;
 
-		/*
-		 * After ensuring that the roam profile is in the scan result
-		 * list, dequeue the command from the active list.
-		 */
-		csr_dequeue_command(pMac);
-
 		/* notify HDD about handoff and provide the BSSID too */
 		roamInfo->reasonCode = eCsrRoamReasonBetterAP;
 
@@ -10132,6 +10126,12 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 					      NULL);
 			csr_roam_copy_profile(pMac, pCurRoamProfile,
 					      pSession->pCurRoamProfile);
+			/*
+			 * After ensuring that the roam profile is in the scan
+			 * result list, and pSession->pCurRoamProfile is saved,
+			 * dequeue the command from the active list.
+			 */
+			csr_dequeue_command(pMac);
 			/* make sure to put it at the head of the cmd queue */
 			status = csr_roam_issue_connect(pMac, sessionId,
 					pCurRoamProfile, hBSSList,
@@ -10149,7 +10149,9 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 			qdf_mem_free(roamInfo);
 			return;
 		} else {
-			csr_scan_result_purge(pMac, hBSSList);
+			sme_err("pCurRoamProfile memory alloc failed");
+			QDF_ASSERT(0);
+			csr_dequeue_command(pMac);
 		}
 		csr_scan_result_purge(pMac, hBSSList);
 
