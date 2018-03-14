@@ -2158,8 +2158,8 @@ int hdd_set_qpower_config(struct hdd_context *hddctx,
 	}
 	if (adapter->device_mode != QDF_STA_MODE &&
 	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
-		hdd_info(FL("QPOWER only allowed in STA/P2P-Client modes:%d "),
-			adapter->device_mode);
+		hdd_info("QPOWER only allowed in STA/P2P-Client modes:%d",
+			 adapter->device_mode);
 		return -EINVAL;
 	}
 

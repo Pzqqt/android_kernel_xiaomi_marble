@@ -7414,13 +7414,12 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx, struct hdd_adapter *
 							eSAP_DO_NEW_ACS_SCAN;
 
 
-			hdd_debug(FL(
-				"SecAP ACS Skip=%d, ACS CH RANGE=%d-%d, %d-%d"),
-				sap_config->acs_cfg.skip_scan_status,
-				sap_config->acs_cfg.skip_scan_range1_stch,
-				sap_config->acs_cfg.skip_scan_range1_endch,
-				sap_config->acs_cfg.skip_scan_range2_stch,
-				sap_config->acs_cfg.skip_scan_range2_endch);
+			hdd_debug("SecAP ACS Skip=%d, ACS CH RANGE=%d-%d, %d-%d",
+				  sap_config->acs_cfg.skip_scan_status,
+				  sap_config->acs_cfg.skip_scan_range1_stch,
+				  sap_config->acs_cfg.skip_scan_range1_endch,
+				  sap_config->acs_cfg.skip_scan_range2_stch,
+				  sap_config->acs_cfg.skip_scan_range2_endch);
 		}
 	}
 #endif

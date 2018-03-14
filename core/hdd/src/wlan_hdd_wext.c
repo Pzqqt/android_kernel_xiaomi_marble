@@ -12153,7 +12153,7 @@ int hdd_register_wext(struct net_device *dev)
 	ENTER();
 
 	if (!pwextBuf) {
-		hdd_err(FL("ERROR: pwextBuf is NULL"));
+		hdd_err("ERROR: pwextBuf is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 

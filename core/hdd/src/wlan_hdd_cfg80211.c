@@ -2573,7 +2573,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	     ((adapter->device_mode == QDF_P2P_GO_MODE) &&
 	     (hdd_ctx->config->go_force_11n_for_11ac))) {
 		vht_enabled = 0;
-		hdd_log(LOG1, FL("VHT is Disabled in ACS"));
+		hdd_info("VHT is Disabled in ACS");
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_ACS_CHWIDTH]) {
@@ -4122,8 +4122,7 @@ void hdd_chip_pwr_save_fail_detected_cb(void *hddctx,
 		return;
 	}
 
-	hdd_debug(FL("failure reason code: %u"),
-		data->failure_reason_code);
+	hdd_debug("failure reason code: %u", data->failure_reason_code);
 
 	if (nla_put_u32(skb,
 		QCA_ATTR_CHIP_POWER_SAVE_FAILURE_REASON,
@@ -4882,7 +4881,7 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
 	if (!skb) {
-		hdd_err(FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		return -ENOMEM;
 	}
 
@@ -5284,7 +5283,7 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
 	if (!skb) {
-		hdd_err(FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		return -ENOMEM;
 	}
 
@@ -6552,7 +6551,7 @@ static int wlan_hdd_cfg80211_wifi_set_rx_blocksize(struct hdd_context *hdd_ctx,
 		/* if one is specified, both must be specified */
 		if (!tb[RX_BLOCKSIZE_PEER_MAC] ||
 		    !tb[RX_BLOCKSIZE_WINLIMIT]) {
-			hdd_err(FL("Both Peer MAC and windows limit required"));
+			hdd_err("Both Peer MAC and windows limit required");
 			return -EINVAL;
 		}
 
@@ -11295,12 +11294,12 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 
 	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_MAX,
 				    data, data_len, policy)) {
-		hdd_err(FL("Invalid ATTR"));
+		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE]) {
-		hdd_err(FL("attr SETBAND_VALUE failed"));
+		hdd_err("attr SETBAND_VALUE failed");
 		return -EINVAL;
 	}
 
@@ -18634,8 +18633,8 @@ static bool wlan_hdd_reassoc_bssid_hint(struct hdd_adapter *adapter,
 
 	if (bssid && channel && req->prev_bssid) {
 		reassoc = true;
-		hdd_debug(FL("REASSOC Attempt on channel %d to "MAC_ADDRESS_STR),
-				channel, MAC_ADDR_ARRAY(bssid));
+		hdd_debug("REASSOC Attempt on channel %d to " MAC_ADDRESS_STR,
+			  channel, MAC_ADDR_ARRAY(bssid));
 		/*
 		 * Save BSSID in a separate variable as
 		 * roam_profile's BSSID is getting zeroed out in the
