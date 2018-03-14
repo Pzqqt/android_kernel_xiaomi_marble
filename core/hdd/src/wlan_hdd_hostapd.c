@@ -429,7 +429,7 @@ static int __hdd_hostapd_open(struct net_device *dev)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_HOSTAPD_OPEN_REQUEST, NO_SESSION, 0));
@@ -505,7 +505,7 @@ static int __hdd_hostapd_stop(struct net_device *dev)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
 		return ret;
@@ -568,7 +568,7 @@ static void __hdd_hostapd_uninit(struct net_device *dev)
 	struct hdd_adapter *adapter = netdev_priv(dev);
 	struct hdd_context *hdd_ctx;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
 		hdd_err("Invalid magic");
@@ -612,7 +612,7 @@ static void hdd_hostapd_uninit(struct net_device *dev)
  */
 static int __hdd_hostapd_change_mtu(struct net_device *dev, int new_mtu)
 {
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	return 0;
 }
@@ -680,7 +680,7 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 	int ret = 0;
 	struct qdf_mac_addr mac_addr;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -759,7 +759,7 @@ static void hdd_hostapd_inactivity_timer_cb(void *context)
 	/* For the NULL at the end */
 	int event_len = strlen(autoShutEvent) + 1;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 #ifdef DISABLE_CONCURRENCY_AUTOSAVE
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -828,7 +828,7 @@ static void hdd_clear_all_sta(struct hdd_adapter *adapter)
 {
 	uint8_t sta_id;
 
-	ENTER_DEV(adapter->dev);
+	hdd_enter_dev(adapter->dev);
 	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++)
 		hdd_clear_sta(adapter, sta_id);
 }
@@ -1053,7 +1053,7 @@ static void hdd_send_conditional_chan_switch_status(struct hdd_context *hdd_ctx,
 {
 	struct sk_buff *event;
 
-	ENTER_DEV(wdev->netdev);
+	hdd_enter_dev(wdev->netdev);
 
 	if (!hdd_ctx) {
 		hdd_err("Invalid HDD context pointer");
@@ -3044,7 +3044,7 @@ static int __iw_softap_set_ini_cfg(struct net_device *dev,
 	char *value;
 	size_t len;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	adapter = netdev_priv(dev);
 	errno = hdd_validate_adapter(adapter);
@@ -3120,7 +3120,7 @@ static __iw_softap_get_ini_cfg(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -3171,7 +3171,7 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 	int sub_cmd = value[0];
 	struct hdd_context *hdd_ctx;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -3340,7 +3340,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	void *soc = NULL;
 	struct cdp_txrx_stats_req req;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4118,7 +4118,7 @@ static __iw_softap_getparam(struct net_device *dev,
 	int ret;
 	struct hdd_context *hdd_ctx;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4398,7 +4398,7 @@ int __iw_softap_modify_acl(struct net_device *dev,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct hdd_context *hdd_ctx;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4454,7 +4454,7 @@ static __iw_softap_getchannel(struct net_device *dev,
 	int *value = (int *)extra;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4501,7 +4501,7 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BCAST_INIT;
 	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BCAST_INIT;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (NULL == value)
 		return -ENOMEM;
@@ -4553,7 +4553,7 @@ static __iw_softap_set_pktlog(struct net_device *dev,
 	int *value = (int *)extra;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = hdd_check_private_wext_control(hdd_ctx, info);
@@ -4596,7 +4596,7 @@ static __iw_softap_set_tx_power(struct net_device *dev,
 	struct qdf_mac_addr bssid;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4651,7 +4651,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 	/* maclist_index must be u32 to match userspace */
 	u32 maclist_index;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	/*
 	 * NOTE WELL: this is a "get" ioctl but it uses an even ioctl
@@ -4756,7 +4756,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	int ret;
 	struct csr_del_sta_params del_sta_params;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (!capable(CAP_NET_ADMIN)) {
 		hdd_err("permission check failed");
@@ -4821,7 +4821,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	int sub_cmd = wrqu->data.flags;
 	struct hdd_context *hdd_ctx;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4869,7 +4869,7 @@ static int wlan_hdd_set_force_acs_ch_range(struct net_device *dev,
 	int ret;
 	int *value = (int *)extra;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (!capable(CAP_NET_ADMIN)) {
 		hdd_err("permission check failed");
@@ -4928,7 +4928,7 @@ static int __iw_get_channel_list(struct net_device *dev,
 	int ret;
 	bool is_dfs_mode_enabled = false;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(hostapd_adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -5018,7 +5018,7 @@ int __iw_get_genie(struct net_device *dev,
 	uint32_t length = DOT11F_IE_RSN_MAX_LEN;
 	uint8_t genIeBytes[DOT11F_IE_RSN_MAX_LEN];
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -5088,7 +5088,7 @@ static int __iw_get_ap_freq(struct net_device *dev,
 	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -5167,7 +5167,7 @@ __iw_softap_stopbss(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -5229,7 +5229,7 @@ __iw_softap_version(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -5309,7 +5309,7 @@ static int __iw_softap_get_sta_info(struct net_device *dev,
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	adapter = netdev_priv(dev);
 	errno = hdd_validate_adapter(adapter);
@@ -5367,7 +5367,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int rc, ret, i;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -6371,7 +6371,7 @@ void hdd_deinit_ap_mode(struct hdd_context *hdd_ctx,
 			struct hdd_adapter *adapter,
 			bool rtnl_held)
 {
-	ENTER_DEV(adapter->dev);
+	hdd_enter_dev(adapter->dev);
 
 	if (test_bit(WMM_INIT_DONE, &adapter->event_flags)) {
 		hdd_wmm_adapter_close(adapter);

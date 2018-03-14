@@ -4475,7 +4475,7 @@ static int __iw_set_commit(struct net_device *dev, struct iw_request_info *info,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -4528,7 +4528,7 @@ static int __iw_get_name(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	adapter  = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -4594,7 +4594,7 @@ static int __iw_get_range(struct net_device *dev, struct iw_request_info *info,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret =  wlan_hdd_validate_context(hdd_ctx);
@@ -4991,7 +4991,7 @@ static int __iw_get_linkspeed(struct net_device *dev,
 	int ret;
 	int rc;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -5528,7 +5528,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	struct cdp_vdev *vdev = NULL;
 	struct cdp_txrx_stats_req req;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -6776,7 +6776,7 @@ static int __iw_setnone_get_threeint(struct net_device *dev,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
@@ -6842,7 +6842,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	struct hdd_config *pConfig = hdd_ctx->config;
 	struct iw_point s_priv_data;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (!capable(CAP_NET_ADMIN)) {
 		hdd_err("permission check failed");
@@ -6987,7 +6987,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	tSmeConfigParams *sme_config;
 	struct hdd_context *hdd_ctx;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -7556,7 +7556,7 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 	int ret;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (!capable(CAP_NET_ADMIN)) {
 		hdd_err("permission check failed");
@@ -7721,7 +7721,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 #endif
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -8288,7 +8288,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	int ret;
 	int sub_cmd;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -8643,7 +8643,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	int ret, num_args;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -8965,7 +8965,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -9139,7 +9139,7 @@ static int __iw_del_tspec(struct net_device *dev, struct iw_request_info *info,
 	uint32_t handle;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -9206,7 +9206,7 @@ static int __iw_get_tspec(struct net_device *dev, struct iw_request_info *info,
 	uint32_t handle;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -9268,7 +9268,7 @@ static int __iw_set_fties(struct net_device *dev, struct iw_request_info *info,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -9362,7 +9362,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -9474,7 +9474,7 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -9741,7 +9741,7 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 		return -EPERM;
 	}
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -9888,7 +9888,7 @@ static int __iw_get_statistics(struct net_device *dev,
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -10155,7 +10155,7 @@ static int __iw_set_pno(struct net_device *dev,
 	 */
 	static struct pno_scan_req_params req;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -10528,7 +10528,7 @@ static int __iw_set_band_config(struct net_device *dev,
 	int ret;
 	int *value = (int *)extra;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (!capable(CAP_NET_ADMIN)) {
 		hdd_err("permission check failed");
@@ -10666,7 +10666,7 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	int ret;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)

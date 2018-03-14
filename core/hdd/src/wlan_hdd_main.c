@@ -554,7 +554,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	/* Make sure that this callback corresponds to our device. */
 	if ((strncmp(dev->name, "wlan", 4)) && (strncmp(dev->name, "p2p", 3)))
@@ -2126,7 +2126,7 @@ static int __hdd_mon_open(struct net_device *dev)
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -2196,7 +2196,7 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 	int ret;
 	enum QDF_OPMODE device_mode = adapter->device_mode;
 
-	ENTER_DEV(adapter->dev);
+	hdd_enter_dev(adapter->dev);
 	hdd_debug("Start_adapter for mode : %d", adapter->device_mode);
 
 	switch (device_mode) {
@@ -2824,7 +2824,7 @@ static int __hdd_open(struct net_device *dev)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_OPEN_REQUEST,
 		adapter->session_id, adapter->device_mode));
 
@@ -2936,7 +2936,7 @@ static int __hdd_stop(struct net_device *dev)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_STOP_REQUEST,
 			 adapter->session_id, adapter->device_mode));
@@ -3056,7 +3056,7 @@ static void __hdd_uninit(struct net_device *dev)
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	do {
 		if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
@@ -3156,7 +3156,7 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 	int ret;
 	struct qdf_mac_addr mac_addr;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -3260,7 +3260,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	int mc_count = 0;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		goto out;
 
@@ -3930,7 +3930,7 @@ static void hdd_deinit_station_mode(struct hdd_context *hdd_ctx,
 				       struct hdd_adapter *adapter,
 				       bool rtnl_held)
 {
-	ENTER_DEV(adapter->dev);
+	hdd_enter_dev(adapter->dev);
 
 	if (adapter->dev) {
 		if (rtnl_held)
@@ -4255,7 +4255,7 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	int ret;
 	struct hdd_context *hdd_ctx;
 
-	ENTER_DEV(adapter->dev);
+	hdd_enter_dev(adapter->dev);
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx)
@@ -8586,7 +8586,7 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	int ret;
 
-	ENTER_DEV(adapter->dev);
+	hdd_enter_dev(adapter->dev);
 	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
 		hdd_err("session is already opened, %d",
 			adapter->session_id);

@@ -1139,7 +1139,7 @@ static int __wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 	struct sk_buff *reply_skb;
 	uint32_t tsf_op_resp[3], tsf_cmd;
 
-	ENTER_DEV(wdev->netdev);
+	hdd_enter_dev(wdev->netdev);
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)

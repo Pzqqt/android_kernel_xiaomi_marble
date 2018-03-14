@@ -7058,7 +7058,7 @@ static int __hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (dev != adapter->dev) {
 		hdd_err("HDD adapter/dev inconsistency");

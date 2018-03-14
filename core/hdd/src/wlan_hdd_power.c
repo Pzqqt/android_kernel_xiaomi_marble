@@ -205,7 +205,7 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 	struct hdd_context *hdd_ctx;
 	int errno;
 
-	ENTER_DEV(ndev);
+	hdd_enter_dev(ndev);
 
 	errno = hdd_validate_adapter(adapter);
 	if (errno)
@@ -798,7 +798,7 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 	struct hdd_context *hdd_ctx;
 	int errno;
 
-	ENTER_DEV(ndev);
+	hdd_enter_dev(ndev);
 
 	errno = hdd_validate_adapter(adapter);
 	if (errno)

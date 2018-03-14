@@ -1081,7 +1081,7 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 	uint8_t sta_id = WLAN_MAX_STA_COUNT;
 	QDF_STATUS qdf_status;
 
-	ENTER_DEV(adapter->dev);
+	hdd_enter_dev(adapter->dev);
 
 	qdf_status = hdd_softap_get_sta_id(adapter, pDestMacAddress, &sta_id);
 	if (QDF_STATUS_SUCCESS != qdf_status) {

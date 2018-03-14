@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -131,7 +130,7 @@ int hdd_enable_monitor_mode(struct net_device *dev)
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	return cdp_set_monitor_mode(soc,
 			(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,

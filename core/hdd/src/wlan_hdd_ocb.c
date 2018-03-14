@@ -482,7 +482,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 	int i, j;
 	struct ocb_config_chan *curr_chan;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	rc = wlan_hdd_validate_context(hdd_ctx);
@@ -795,7 +795,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 	int rc = -EINVAL;
 	uint8_t *mac_addr;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
@@ -988,7 +988,7 @@ static int __wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 	struct ocb_utc_param *utc;
 	int rc = -EINVAL;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
@@ -1101,7 +1101,7 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 	struct ocb_timing_advert_param *timing_advert;
 	int rc = -EINVAL;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
@@ -1218,7 +1218,7 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 	struct ocb_timing_advert_param *timing_advert;
 	int rc = -EINVAL;
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
@@ -1399,7 +1399,7 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 		.timeout_ms = WLAN_WAIT_TIME_OCB_CMD,
 	};
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
 	if (rc)
@@ -1622,7 +1622,7 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 		.dealloc = hdd_dcc_get_stats_dealloc,
 	};
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
 	if (rc)
@@ -1752,7 +1752,7 @@ static int __wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_DCC_CLEAR_STATS_MAX + 1];
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
@@ -1881,7 +1881,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 		.timeout_ms = WLAN_WAIT_TIME_OCB_CMD,
 	};
 
-	ENTER_DEV(dev);
+	hdd_enter_dev(dev);
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
 	if (rc)
