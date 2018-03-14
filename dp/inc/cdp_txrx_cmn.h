@@ -1395,13 +1395,8 @@ void cdp_vdev_tx_unlock(ol_txrx_soc_handle soc,
  *
  * Return: void
  */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 static inline void cdp_ath_getstats(ol_txrx_soc_handle soc,
-		struct cdp_pdev *pdev, struct net_device_stats *stats)
-#else
-static inline void cdp_ath_getstats(ol_txrx_soc_handle soc,
-		struct cdp_pdev *pdev, struct rtnl_link_stats64 *stats)
-#endif
+		struct cdp_pdev *pdev, struct cdp_dev_stats *stats)
 {
 	if (soc && soc->ops && soc->ops->cmn_drv_ops->txrx_ath_getstats)
 		soc->ops->cmn_drv_ops->txrx_ath_getstats(pdev, stats);

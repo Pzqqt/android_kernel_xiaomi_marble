@@ -138,11 +138,7 @@ struct cdp_cmn_ops {
 	void (*txrx_vdev_tx_unlock)(struct cdp_vdev *vdev);
 
 	void (*txrx_ath_getstats)(struct cdp_pdev *pdev,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
-			struct rtnl_link_stats64 *stats);
-#else
-			struct net_device_stats *stats);
-#endif
+			struct cdp_dev_stats *stats);
 
 	void (*txrx_set_gid_flag)(struct cdp_pdev *pdev, u_int8_t *mem_status,
 			u_int8_t *user_position);

@@ -969,6 +969,24 @@ struct cdp_tx_completion_ppdu {
 };
 
 /**
+ * struct cdp_dev_stats - Network device stats structure
+ * @tx_packets: Tx total packets transmitted
+ * @tx_bytes  : Tx total bytes transmitted
+ * @tx_errors : Tx error due to FW tx failure, Ring failure DMA etc
+ * @tx_dropped: Tx dropped is same as tx errors as above
+ * @rx_packets: Rx total packets transmitted
+ * @rx_bytes  : Rx total bytes transmitted
+ */
+struct cdp_dev_stats {
+	uint32_t tx_packets;
+	uint32_t tx_bytes;
+	uint32_t tx_errors;
+	uint32_t tx_dropped;
+	uint32_t rx_packets;
+	uint32_t rx_bytes;
+};
+
+/**
  * struct cdp_rate_stats - Tx/Rx Rate statistics
  * @bw: Indicates the BW of the upcoming transmission -
  *       <enum 2 transmit_bw_20_MHz>
