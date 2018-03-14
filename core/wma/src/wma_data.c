@@ -2376,6 +2376,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	struct wlan_objmgr_peer *peer = NULL;
 	struct wlan_objmgr_psoc *psoc;
 	void *mac_addr;
+	bool is_5g = false;
 
 	if (NULL == wma_handle) {
 		WMA_LOGE("wma_handle is NULL");
@@ -2712,6 +2713,9 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		}
 	}
 
+	if (wma_handle->interfaces[vdev_id].channel >= SIR_11A_CHANNEL_BEGIN)
+		is_5g = true;
+
 	mgmt_param.tx_frame = tx_frame;
 	mgmt_param.frm_len = frmLen;
 	mgmt_param.vdev_id = vdev_id;
@@ -2726,7 +2730,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	 * other than 1Mbps and 6 Mbps
 	 */
 	if (rid < RATEID_DEFAULT &&
-	    (rid != RATEID_1MBPS && rid != RATEID_6MBPS)) {
+	    (rid != RATEID_1MBPS && !(rid == RATEID_6MBPS && is_5g))) {
 		WMA_LOGD(FL("using rate id: %d for Tx"), rid);
 		mgmt_param.tx_params_valid = true;
 		wma_update_tx_send_params(&mgmt_param.tx_param, rid);
