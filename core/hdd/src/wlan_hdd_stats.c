@@ -654,7 +654,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 	}
 
 	cfg80211_vendor_cmd_reply(vendor_event);
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -717,7 +717,7 @@ static void hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
 	}
 
 	cfg80211_vendor_cmd_reply(vendor_event);
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -955,7 +955,7 @@ static void hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
 		pWifiRadioStat++;
 	}
 
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -1261,7 +1261,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 	}
 
 	adapter->is_link_layer_stats_set = true;
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -1374,7 +1374,7 @@ int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 		hdd_err("Send LL stats req failed, id:%u, mask:%d, session:%d",
 			req_id, req_mask, adapter->session_id);
 
-	EXIT();
+	hdd_exit();
 	return ret;
 
 }
@@ -1463,7 +1463,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 		return ret;
 	}
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -1610,7 +1610,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 
 			return cfg80211_vendor_cmd_reply(temp_skbuff);
 		}
-		EXIT();
+		hdd_exit();
 		return -ENOMEM;
 	}
 
@@ -2291,7 +2291,7 @@ void wlan_hdd_cfg80211_link_layer_stats_ext_callback(tHddHandle ctx,
 		cfg80211_vendor_event(skb, GFP_KERNEL);
 	else
 		kfree_skb(skb);
-	EXIT();
+	hdd_exit();
 }
 
 static const struct nla_policy
@@ -4402,7 +4402,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_GET_STA,
 			 adapter->session_id, maxRate));
 
-	EXIT();
+	hdd_exit();
 
 	return 0;
 }
@@ -4660,7 +4660,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 
 	if (!filled)
 		return -ENONET;
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -4943,7 +4943,7 @@ out:
 	qdf_mem_free(rcpi_req);
 	hdd_request_put(request);
 
-	EXIT();
+	hdd_exit();
 	return status;
 }
 

@@ -234,7 +234,7 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 	}
 
 exit:
-	EXIT();
+	hdd_exit();
 
 	return NOTIFY_DONE;
 }
@@ -426,7 +426,7 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 out:
 	if (ns_req)
 		qdf_mem_free(ns_req);
-	EXIT();
+	hdd_exit();
 
 }
 
@@ -449,7 +449,7 @@ void hdd_disable_ns_offload(struct hdd_adapter *adapter,
 		hdd_wlan_offload_event(SIR_IPV6_NS_OFFLOAD,
 			SIR_OFFLOAD_DISABLE);
 out:
-	EXIT();
+	hdd_exit();
 
 }
 
@@ -485,7 +485,7 @@ static void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 	hdd_enable_ns_offload(adapter, pmo_ipv6_change_notify);
 
 exit:
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -511,7 +511,7 @@ static void hdd_enable_hw_filter(struct hdd_adapter *adapter)
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to enable hardware filter");
 
-	EXIT();
+	hdd_exit();
 }
 
 static void hdd_disable_hw_filter(struct hdd_adapter *adapter)
@@ -524,7 +524,7 @@ static void hdd_disable_hw_filter(struct hdd_adapter *adapter)
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to disable hardware filter");
 
-	EXIT();
+	hdd_exit();
 }
 
 void hdd_enable_host_offloads(struct hdd_adapter *adapter,
@@ -550,7 +550,7 @@ void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 	hdd_enable_mc_addr_filtering(adapter, trigger);
 	hdd_enable_hw_filter(adapter);
 out:
-	EXIT();
+	hdd_exit();
 
 }
 
@@ -577,7 +577,7 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 	hdd_disable_mc_addr_filtering(adapter, trigger);
 	hdd_disable_hw_filter(adapter);
 out:
-	EXIT();
+	hdd_exit();
 
 }
 
@@ -760,7 +760,7 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 		sme_send_hlp_ie_info(hdd_ctx->hHal, adapter->session_id,
 				     roam_profile, ifa->ifa_local);
 exit:
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -836,7 +836,7 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 	}
 
 exit:
-	EXIT();
+	hdd_exit();
 
 	return NOTIFY_DONE;
 }
@@ -937,7 +937,7 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 out:
 	if (arp_req)
 		qdf_mem_free(arp_req);
-	EXIT();
+	hdd_exit();
 
 }
 
@@ -961,7 +961,7 @@ void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 	else
 		hdd_info("fail to disable arp offload");
 out:
-	EXIT();
+	hdd_exit();
 }
 
 void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
@@ -980,7 +980,7 @@ void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("failed to enable mc list status %d", status);
 out:
-	EXIT();
+	hdd_exit();
 
 }
 
@@ -1000,7 +1000,7 @@ void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("failed to disable mc list status %d", status);
 out:
-	EXIT();
+	hdd_exit();
 
 }
 
@@ -1016,7 +1016,7 @@ int hdd_cache_mc_addr_list(struct pmo_mc_addr_list_params *mc_list_config)
 		hdd_info("fail to cache mc list status %d", status);
 		ret = -EINVAL;
 	}
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -1039,7 +1039,7 @@ void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
 	status = pmo_ucfg_flush_mc_addr_list(psoc, adapter->session_id);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("fail to flush mc list status %d", status);
-	EXIT();
+	hdd_exit();
 
 	return;
 
@@ -1223,7 +1223,7 @@ static void hdd_ssr_restart_sap(struct hdd_context *hdd_ctx)
 		}
 	}
 
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -1606,7 +1606,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	exit_code = 0;
 
 exit_with_code:
-	EXIT();
+	hdd_exit();
 	return exit_code;
 }
 
@@ -1792,7 +1792,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	pld_request_bus_bandwidth(hdd_ctx->parent_dev, PLD_BUS_WIDTH_NONE);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 
 #ifdef QCA_CONFIG_SMP
@@ -1932,7 +1932,7 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	allow_power_save ? hdd_stop_dhcp_ind(adapter) :
 		hdd_start_dhcp_ind(adapter);
 
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -2027,7 +2027,7 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 		return -EIO;
 	}
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -2117,7 +2117,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	wlan_hdd_get_class_astats(adapter);
 	*dbm = adapter->hdd_stats.class_a_stat.max_pwr;
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 

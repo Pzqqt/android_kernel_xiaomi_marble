@@ -175,7 +175,7 @@ static void hdd_get_tsm_stats_cb(tAniTrafStrmMetrics tsm_metrics,
 	priv->tsm_metrics = tsm_metrics;
 	hdd_request_complete(request);
 	hdd_request_put(request);
-	EXIT();
+	hdd_exit();
 
 }
 
@@ -6978,7 +6978,7 @@ static int hdd_driver_command(struct hdd_adapter *adapter,
 exit:
 	if (command)
 		qdf_mem_free(command);
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -7098,7 +7098,7 @@ static int __hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		break;
 	}
 exit:
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 

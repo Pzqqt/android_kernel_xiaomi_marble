@@ -638,7 +638,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	status = wlan_cfg80211_scan(hdd_ctx->hdd_pdev, request, &params);
 	if (params.default_ie.ptr)
 		qdf_mem_free(params.default_ie.ptr);
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -1371,7 +1371,7 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct net_device *dev)
 
 	err = wlan_hdd_sched_scan_stop(dev);
 
-	EXIT();
+	hdd_exit();
 	return err;
 }
 
@@ -1440,7 +1440,7 @@ static void __wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
 
 	wlan_cfg80211_abort_scan(hdd_ctx->hdd_pdev);
 
-	EXIT();
+	hdd_exit();
 }
 
 /**

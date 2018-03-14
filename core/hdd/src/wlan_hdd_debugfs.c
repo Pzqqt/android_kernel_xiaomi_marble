@@ -143,7 +143,7 @@ static ssize_t __wcnss_wowpattern_write(struct file *file,
 
 	hdd_add_wowl_ptrn_debugfs(adapter, pattern_idx, pattern_offset,
 				  pattern_buf, pattern_mask);
-	EXIT();
+	hdd_exit();
 	return count;
 }
 
@@ -357,7 +357,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	}
 	qdf_mem_free(cmd);
 	qdf_mem_free(addPeriodicTxPtrnParams);
-	EXIT();
+	hdd_exit();
 	return count;
 
 failure:
@@ -438,7 +438,7 @@ static void hdd_power_debugstats_cb(struct power_stats_response *response,
 	}
 	hdd_request_complete(request);
 	hdd_request_put(request);
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -637,7 +637,7 @@ static int __wcnss_debugfs_open(struct inode *inode, struct file *file)
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 

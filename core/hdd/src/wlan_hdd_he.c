@@ -382,7 +382,7 @@ __wlan_hdd_cfg80211_get_he_cap(struct wiphy *wiphy,
 		goto nla_put_failure;
 end:
 	ret = cfg80211_vendor_cmd_reply(reply_skb);
-	EXIT();
+	hdd_exit();
 	return ret;
 
 nla_put_failure:

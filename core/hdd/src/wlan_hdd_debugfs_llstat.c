@@ -147,7 +147,7 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 
 	ll_stats.len += len;
 	mutex_unlock(&llstats_mutex);
-	EXIT();
+	hdd_exit();
 }
 
 void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
@@ -211,7 +211,7 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 	}
 	ll_stats.len += len;
 	mutex_unlock(&llstats_mutex);
-	EXIT();
+	hdd_exit();
 
 }
 
@@ -291,7 +291,7 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 	}
 	ll_stats.len += len;
 	mutex_unlock(&llstats_mutex);
-	EXIT();
+	hdd_exit();
 }
 
 static inline void wlan_hdd_llstats_free_buf(void)
@@ -351,7 +351,7 @@ static ssize_t hdd_debugfs_stats_update(char __user *buf, size_t count,
 	mutex_unlock(&llstats_mutex);
 	hdd_debug("LL stats read req: count: %zu, pos: %lld", count, *pos);
 
-	EXIT();
+	hdd_exit();
 	return ret_cnt;
 }
 
@@ -388,7 +388,7 @@ static ssize_t __wlan_hdd_read_ll_stats_debugfs(struct file *file,
 	ret = hdd_debugfs_stats_update(buf, count, pos);
 	hdd_info("%zu characters written into debugfs", ret);
 
-	EXIT();
+	hdd_exit();
 	return ret;
 
 }
@@ -454,7 +454,7 @@ static int __wlan_hdd_open_ll_stats_debugfs(struct inode *inode,
 	if (0 != ret)
 		return ret;
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -511,7 +511,7 @@ static int __wlan_hdd_release_ll_stats_debugfs(struct inode *inode,
 
 	wlan_hdd_llstats_free_buf();
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 

@@ -116,7 +116,7 @@ static void hdd_fips_cb(void *cookie,
 
 	hdd_request_complete(request);
 	hdd_request_put(request);
-	EXIT();
+	hdd_exit();
 }
 
 static void hdd_fips_context_dealloc(void *priv)
@@ -273,7 +273,7 @@ static int __hdd_fips_test(struct net_device *dev,
 cleanup:
 	hdd_request_put(request);
 
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 

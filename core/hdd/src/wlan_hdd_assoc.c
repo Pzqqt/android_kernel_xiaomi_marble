@@ -2525,7 +2525,7 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 						    roamResult);
 	}
 
-	EXIT();
+	hdd_exit();
 	return QDF_STATUS_SUCCESS;
 }
 

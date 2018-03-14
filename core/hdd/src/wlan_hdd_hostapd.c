@@ -470,7 +470,7 @@ static int __hdd_hostapd_open(struct net_device *dev)
 	wlan_hdd_netif_queue_control(adapter,
 				   WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 				   WLAN_CONTROL_PATH);
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -531,7 +531,7 @@ static int __hdd_hostapd_stop(struct net_device *dev)
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -587,7 +587,7 @@ static void __hdd_hostapd_uninit(struct net_device *dev)
 	adapter->dev = NULL;
 	adapter->magic = 0;
 
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -706,7 +706,7 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 	}
 
 	memcpy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -785,7 +785,7 @@ static void hdd_hostapd_inactivity_timer_cb(void *context)
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_err("Failed to init AP inactivity timer");
 
-		EXIT();
+		hdd_exit();
 		return;
 	}
 #endif /* DISABLE_CONCURRENCY_AUTOSAVE */
@@ -798,7 +798,7 @@ static void hdd_hostapd_inactivity_timer_cb(void *context)
 	hdd_debug("Shutting down AP interface due to inactivity");
 	wireless_send_event(dev, IWEVCUSTOM, &wrqu, (char *)we_custom_event);
 
-	EXIT();
+	hdd_exit();
 }
 
 static void hdd_clear_sta(struct hdd_adapter *adapter, uint8_t sta_id)
@@ -862,7 +862,7 @@ static int hdd_stop_bss_link(struct hdd_adapter *adapter,
 		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
 	}
-	EXIT();
+	hdd_exit();
 	return (status == QDF_STATUS_SUCCESS) ? 0 : -EBUSY;
 }
 
@@ -3073,7 +3073,7 @@ static int __iw_softap_set_ini_cfg(struct net_device *dev,
 	status = hdd_execute_global_config_command(hdd_ctx, value);
 	qdf_mem_free(value);
 
-	EXIT();
+	hdd_exit();
 
 	return qdf_status_to_os_return(status);
 }
@@ -4025,7 +4025,7 @@ static __iw_softap_setparam(struct net_device *dev,
 		ret = -EINVAL;
 		break;
 	}
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -4349,7 +4349,7 @@ static __iw_softap_getparam(struct net_device *dev,
 		break;
 
 	}
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -4428,7 +4428,7 @@ int __iw_softap_modify_acl(struct net_device *dev,
 		hdd_err("Modify ACL failed");
 		ret = -EIO;
 	}
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -4471,7 +4471,7 @@ static __iw_softap_getchannel(struct net_device *dev,
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags))
 		*value = (WLAN_HDD_GET_AP_CTX_PTR(
 					adapter))->operating_channel;
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -4527,7 +4527,7 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 		hdd_err("Setting maximum tx power failed");
 		return -EIO;
 	}
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -4618,7 +4618,7 @@ static __iw_softap_set_tx_power(struct net_device *dev,
 		hdd_err("Setting tx power failed");
 		return -EIO;
 	}
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -4716,7 +4716,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 		ret = -EFAULT;
 	}
 	qdf_mem_free(buf);
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -4787,7 +4787,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 			&del_sta_params);
 	hdd_softap_sta_disassoc(adapter, &del_sta_params);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -4845,7 +4845,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		break;
 	}
 
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -4990,7 +4990,7 @@ static int __iw_get_channel_list(struct net_device *dev,
 	hdd_debug("number of channels %d", num_channels);
 
 	channel_list->num_channels = num_channels;
-	EXIT();
+	hdd_exit();
 
 	return 0;
 }
@@ -5052,7 +5052,7 @@ int __iw_get_genie(struct net_device *dev,
 		hdd_debug(" RSN IE failed to populate");
 	}
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -5132,7 +5132,7 @@ static int __iw_get_ap_freq(struct net_device *dev,
 		}
 	}
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -5206,7 +5206,7 @@ __iw_softap_stopbss(struct net_device *dev,
 					    false);
 		ret = qdf_status_to_os_return(status);
 	}
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -5245,7 +5245,7 @@ __iw_softap_version(struct net_device *dev,
 		return ret;
 
 	hdd_wlan_get_version(hdd_ctx, wrqu, extra);
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -5300,7 +5300,7 @@ static int hdd_softap_get_sta_info(struct hdd_adapter *adapter,
 				     sta->ecsa_capable);
 	}
 
-	EXIT();
+	hdd_exit();
 
 	return 0;
 }
@@ -5337,7 +5337,7 @@ static int __iw_softap_get_sta_info(struct net_device *dev,
 
 	wrqu->data.length = strlen(extra);
 
-	EXIT();
+	hdd_exit();
 
 	return 0;
 }
@@ -5443,7 +5443,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 		hdd_err("Unable to encode link speed");
 		return -EIO;
 	}
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -5547,7 +5547,7 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 	}
 	wrqu->data.length = length + 1;
 
-	EXIT();
+	hdd_exit();
 
 	return 0;
 }
@@ -6356,7 +6356,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	/* rcpi info initialization */
 	qdf_mem_zero(&adapter->rcpi, sizeof(adapter->rcpi));
 
-	EXIT();
+	hdd_exit();
 
 	return status;
 
@@ -6367,7 +6367,7 @@ error_release_sap_session:
 error_release_vdev:
 	QDF_BUG(!hdd_vdev_destroy(adapter));
 
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -6401,7 +6401,7 @@ void hdd_deinit_ap_mode(struct hdd_context *hdd_ctx,
 	if (hdd_hostapd_deinit_sap_session(adapter))
 		hdd_err("Failed:hdd_hostapd_deinit_sap_session");
 
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -6743,7 +6743,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 		hdd_err("Invalid device mode failed to set valid channel");
 		return -EINVAL;
 	}
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -8236,7 +8236,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		/* Bss already started. just return. */
 		/* TODO Probably it should update some beacon params. */
 		hdd_debug("Bss Already started...Ignore the request");
-		EXIT();
+		hdd_exit();
 		ret = 0;
 		goto free;
 	}
@@ -8315,7 +8315,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	hdd_unsafe_channel_restart_sap(hdd_ctx);
 
 	hdd_set_connection_in_progress(false);
-	EXIT();
+	hdd_exit();
 
 	ret = 0;
 	goto free;
@@ -8534,7 +8534,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	ucfg_p2p_status_stop_bss(adapter->hdd_vdev);
 
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -8907,7 +8907,7 @@ err_start_bss:
 	adapter->session.ap.beacon = NULL;
 
 success:
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -8999,7 +8999,7 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 	status = wlan_hdd_cfg80211_start_bss(adapter, params, NULL,
 					0, 0, false);
 
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -9072,7 +9072,7 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 		}
 	}
 
-	EXIT();
+	hdd_exit();
 }
 
 bool hdd_is_peer_associated(struct hdd_adapter *adapter,

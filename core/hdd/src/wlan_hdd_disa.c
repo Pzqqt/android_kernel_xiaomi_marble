@@ -103,7 +103,7 @@ static void hdd_encrypt_decrypt_msg_cb(void *cookie,
 
 	hdd_request_complete(request);
 	hdd_request_put(request);
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -137,7 +137,7 @@ static int hdd_post_encrypt_decrypt_msg_rsp(struct hdd_context *hdd_ctx,
 	}
 
 	cfg80211_vendor_cmd_reply(skb);
-	EXIT();
+	hdd_exit();
 	return 0;
 
 nla_put_failure:
@@ -413,7 +413,7 @@ static int hdd_encrypt_decrypt_msg(struct hdd_adapter *adapter,
 cleanup:
 	hdd_request_put(request);
 
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 

@@ -861,7 +861,7 @@ int wlan_hdd_send_avoid_freq_event(struct hdd_context *hdd_ctx,
 
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -959,7 +959,7 @@ int wlan_hdd_send_hang_reason_event(struct hdd_context *hdd_ctx,
 
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -4130,7 +4130,7 @@ void hdd_chip_pwr_save_fail_detected_cb(void *hddctx,
 		goto fail;
 
 	cfg80211_vendor_event(skb, flags);
-	EXIT();
+	hdd_exit();
 	return;
 
 fail:
@@ -4401,7 +4401,7 @@ static int __wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
 				adapter->session_id),
 			wisa_mode);
 err:
-	EXIT();
+	hdd_exit();
 	return ret_val;
 }
 
@@ -5553,7 +5553,7 @@ __hdd_cfg80211_get_station_cmd(struct wiphy *wiphy,
 		status = -EINVAL;
 		goto out;
 	}
-	EXIT();
+	hdd_exit();
 out:
 	return status;
 }
@@ -7953,7 +7953,7 @@ wlan_hdd_add_tx_ptrn(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 		goto fail;
 	}
 
-	EXIT();
+	hdd_exit();
 	qdf_mem_free(add_req);
 	return 0;
 
@@ -8016,7 +8016,7 @@ wlan_hdd_del_tx_ptrn(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 		goto fail;
 	}
 
-	EXIT();
+	hdd_exit();
 	qdf_mem_free(del_req);
 	return 0;
 
@@ -9655,7 +9655,7 @@ static int hdd_post_get_bpf_capabilities_rsp(struct hdd_context *hdd_ctx,
 	}
 
 	cfg80211_vendor_cmd_reply(skb);
-	EXIT();
+	hdd_exit();
 	return 0;
 
 nla_put_failure:
@@ -9717,7 +9717,7 @@ cleanup:
 	 * regardless we are done with the request.
 	 */
 	hdd_request_put(request);
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -9824,7 +9824,7 @@ post_sme:
 		ret = -EINVAL;
 		goto fail;
 	}
-	EXIT();
+	hdd_exit();
 
 fail:
 	if (bpf_set_offload->current_length)
@@ -11098,7 +11098,7 @@ static uint32_t hdd_send_wakelock_stats(struct hdd_context *hdd_ctx,
 
 	cfg80211_vendor_cmd_reply(skb);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 
 nla_put_failure:
@@ -11152,7 +11152,7 @@ static int __wlan_hdd_cfg80211_get_wakelock_stats(struct wiphy *wiphy,
 	if (ret)
 		hdd_err("Failed to post wake lock stats");
 
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -11235,7 +11235,7 @@ __wlan_hdd_cfg80211_get_bus_size(struct wiphy *wiphy,
 
 	cfg80211_vendor_cmd_reply(skb);
 
-	EXIT();
+	hdd_exit();
 
 	return 0;
 
@@ -11306,7 +11306,7 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 	ret = hdd_reg_set_band(dev,
 		nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE]));
 
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -11436,7 +11436,7 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 	default:
 		hdd_info("invalid reason for timer invoke");
 	}
-	EXIT();
+	hdd_exit();
 	return qdf_status_to_os_return(status);
 }
 
@@ -11870,7 +11870,7 @@ static void hdd_sar_cb(void *cookie,
 	hdd_request_complete(request);
 	hdd_request_put(request);
 
-	EXIT();
+	hdd_exit();
 }
 
 static uint32_t hdd_sar_get_response_len(const struct sar_limit_event *event)
@@ -12366,7 +12366,7 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 		}
 	}
 
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -12511,7 +12511,7 @@ __wlan_hdd_cfg80211_set_trace_level(struct wiphy *wiphy,
 				bit_mask, module_id);
 	}
 
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -12636,7 +12636,7 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	EXIT();
+	hdd_exit();
 
 	return err;
 }
@@ -13054,7 +13054,7 @@ static int __wlan_hdd_cfg80211_get_chain_rssi(struct wiphy *wiphy,
 	}
 	hdd_request_put(request);
 
-	EXIT();
+	hdd_exit();
 	return retval;
 }
 
@@ -13369,7 +13369,7 @@ static int __wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
 	}
 	nla_nest_end(reply_skb, attr);
 
-	EXIT();
+	hdd_exit();
 
 	return cfg80211_vendor_cmd_reply(reply_skb);
 }
@@ -13558,7 +13558,7 @@ int wlan_hdd_send_mode_change_event(void)
 	nla_nest_end(skb, attr);
 
 	cfg80211_vendor_event(skb, GFP_KERNEL);
-	EXIT();
+	hdd_exit();
 
 	return err;
 }
@@ -14757,7 +14757,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	if (pCfg->enable_mac_spoofing)
 		wlan_hdd_cfg80211_scan_randomization_init(wiphy);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 
 mem_fail:
@@ -14887,7 +14887,7 @@ int wlan_hdd_cfg80211_register(struct wiphy *wiphy)
 		return -EIO;
 	}
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -15286,7 +15286,7 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 			ret = -EINVAL;
 	}
 
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -15345,7 +15345,7 @@ static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 		wext->roamProfile.phyMode =
 			hdd_cfg_xlate_to_csr_phy_mode(config->dot11Mode);
 	}
-	EXIT();
+	hdd_exit();
 
 	return qdf_status_to_os_return(status);
 }
@@ -15581,7 +15581,7 @@ done:
 
 	hdd_lpass_notify_mode_change(adapter);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -15703,7 +15703,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 #endif
 		}
 	}
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -16053,7 +16053,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			}
 		}
 	}
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -16172,7 +16172,7 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 	params.key = &roam_profile->Keys.KeyMaterial[key_index][0];
 	callback(cookie, &params);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -16219,7 +16219,7 @@ static int __wlan_hdd_cfg80211_del_key(struct wiphy *wiphy,
 				     u8 key_index,
 				     bool pairwise, const u8 *mac_addr)
 {
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -16414,7 +16414,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 		}
 	}
 
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -16740,7 +16740,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
 	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -16791,7 +16791,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
 	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -16833,7 +16833,7 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -17419,7 +17419,7 @@ conn_failure:
 	hdd_set_connection_in_progress(false);
 
 ret_status:
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -18868,7 +18868,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 		hdd_err("connect failed");
 		return status;
 	}
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -19481,7 +19481,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		hdd_err("connect failed");
 		return status;
 	}
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -19604,7 +19604,7 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 		return -ETIMEDOUT;
 	}
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -19735,7 +19735,7 @@ static int __wlan_hdd_cfg80211_set_wiphy_params(struct wiphy *wiphy,
 			hdd_debug("set short retry count %hu", retry_value);
 		}
 	}
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -19990,7 +19990,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 	}
 
 fn_end:
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -20122,7 +20122,7 @@ static int __wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 							     dev, mac);
 	}
 #endif
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -20326,7 +20326,7 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 	sme_set_del_pmkid_cache(halHandle, adapter->session_id,
 					&pmk_cache, true);
 
-	EXIT();
+	hdd_exit();
 	return QDF_IS_STATUS_SUCCESS(result) ? 0 : -EINVAL;
 }
 
@@ -20416,7 +20416,7 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 
 	sme_set_del_pmkid_cache(halHandle, adapter->session_id, &pmk_cache,
 						false);
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -20489,7 +20489,7 @@ static int __wlan_hdd_cfg80211_flush_pmksa(struct wiphy *wiphy,
 	}
 
 	sme_set_del_pmkid_cache(halHandle, adapter->session_id, NULL, false);
-	EXIT();
+	hdd_exit();
 	return status;
 }
 
@@ -20562,7 +20562,7 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 	/* Pass the received FT IEs to SME */
 	sme_set_ft_ies(WLAN_HDD_GET_HAL_CTX(adapter), adapter->session_id,
 		       (const u8 *)ftie->ie, ftie->ie_len);
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -20628,7 +20628,7 @@ void wlan_hdd_cfg80211_update_replay_counter_cb(
 					gtk_rsp_param->bssid.bytes,
 					temp_replay_counter, GFP_KERNEL);
 out:
-	EXIT();
+	hdd_exit();
 
 }
 
@@ -20726,7 +20726,7 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 out:
 	if (gtk_req)
 		qdf_mem_free(gtk_req);
-	EXIT();
+	hdd_exit();
 
 	return result;
 }
@@ -20868,7 +20868,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 			adapter->device_mode);
 		return -EINVAL;
 	}
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -21049,7 +21049,7 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 		return -EOPNOTSUPP;
 	}
 
-	EXIT();
+	hdd_exit();
 	return err;
 }
 
@@ -21313,7 +21313,7 @@ int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
 		break;
 
 	}
-	EXIT();
+	hdd_exit();
 
 	return 0;
 }
@@ -21397,7 +21397,7 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 		ret = qdf_status_to_os_return(status);
 		return ret;
 	}
-	EXIT();
+	hdd_exit();
 
 	return 0;
 }
@@ -21675,7 +21675,7 @@ static void wlan_hdd_chan_info_cb(struct scan_chan_info *info)
 		}
 	}
 
-	EXIT();
+	hdd_exit();
 }
 
 /**

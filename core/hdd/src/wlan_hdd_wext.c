@@ -3726,7 +3726,7 @@ QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *adapter, int8_t *snr)
 	hdd_request_put(request);
 
 	*snr = adapter->snr;
-	EXIT();
+	hdd_exit();
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -4141,7 +4141,7 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	qdf_zero_macaddr(&sta_ctx->requested_bssid);
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -4541,7 +4541,7 @@ static int __iw_get_name(struct net_device *dev,
 		return ret;
 
 	strlcpy(wrqu, "Qcom:802.11n", IFNAMSIZ);
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -4717,7 +4717,7 @@ static int __iw_get_range(struct net_device *dev, struct iw_request_info *info,
 		IW_SCAN_CAPA_ESSID | IW_SCAN_CAPA_TYPE | IW_SCAN_CAPA_CHANNEL;
 #endif
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -4778,7 +4778,7 @@ static void hdd_get_class_a_statistics_cb(void *stats, void *context)
 	priv->class_a_stats = *returned_stats;
 	hdd_request_complete(request);
 	hdd_request_put(request);
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -5015,7 +5015,7 @@ static int __iw_get_linkspeed(struct net_device *dev,
 		return -EIO;
 	}
 
-	EXIT();
+	hdd_exit();
 	/* a value is being successfully returned */
 	return 0;
 }
@@ -5403,7 +5403,7 @@ static void hdd_get_temperature_cb(int temperature, void *context)
 	priv->temperature = temperature;
 	hdd_request_complete(request);
 	hdd_request_put(request);
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -5463,7 +5463,7 @@ int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature)
 	hdd_request_put(request);
 
 	*temperature = adapter->temperature;
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -6736,7 +6736,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		ret = -EINVAL;
 		break;
 	}
-	EXIT();
+	hdd_exit();
 free:
 	qdf_mem_free(sme_config);
 	return ret;
@@ -6949,7 +6949,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	}
 	}
 	qdf_mem_free(pBuffer);
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -7477,7 +7477,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 		break;
 	}
 	}
-	EXIT();
+	hdd_exit();
 	qdf_mem_free(sme_config);
 	return ret;
 }
@@ -7620,7 +7620,7 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 		break;
 
 	}
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -8252,7 +8252,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	}
 	}
 
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -8388,7 +8388,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 		break;
 	}
 	}
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -8864,7 +8864,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	}
 	break;
 	}
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -9102,7 +9102,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 	}
 
 	*pStatus = hdd_wmm_addts(adapter, handle, &tSpec);
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -9169,7 +9169,7 @@ static int __iw_del_tspec(struct net_device *dev, struct iw_request_info *info,
 	}
 
 	*pStatus = hdd_wmm_delts(adapter, handle);
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -9229,7 +9229,7 @@ static int __iw_get_tspec(struct net_device *dev, struct iw_request_info *info,
 	}
 
 	*pStatus = hdd_wmm_checkts(adapter, handle);
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -9297,7 +9297,7 @@ static int __iw_set_fties(struct net_device *dev, struct iw_request_info *info,
 	/* Pass the received FT IEs to SME */
 	sme_set_ft_ies(WLAN_HDD_GET_HAL_CTX(adapter), adapter->session_id,
 			extra, wrqu->data.length);
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -9438,7 +9438,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 		hdd_err("Failure to execute host offload request");
 		return -EINVAL;
 	}
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -9529,7 +9529,7 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 		hdd_err("Failure to execute Keep Alive");
 		return -EINVAL;
 	}
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -9791,7 +9791,7 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 	ret = wlan_hdd_set_filter(hdd_ctx, request, adapter->session_id);
 
 	qdf_mem_free(request);
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -10031,7 +10031,7 @@ return_cached_stats:
 
 	wrqu->data.length = tlen;
 
-	EXIT();
+	hdd_exit();
 
 	return 0;
 }
@@ -12120,7 +12120,7 @@ static int hdd_set_wext(struct hdd_adapter *adapter)
 
 	hdd_clear_roam_profile_ie(adapter);
 
-	EXIT();
+	hdd_exit();
 	return QDF_STATUS_SUCCESS;
 
 }
@@ -12172,7 +12172,7 @@ int hdd_register_wext(struct net_device *dev)
 	/* Register as a wireless device */
 	dev->wireless_handlers = (struct iw_handler_def *)&we_handler_def;
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 

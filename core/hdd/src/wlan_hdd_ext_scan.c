@@ -671,7 +671,7 @@ wlan_hdd_cfg80211_extscan_hotlist_match_ind(void *ctx,
 	}
 
 	cfg80211_vendor_event(skb, flags);
-	EXIT();
+	hdd_exit();
 	return;
 
 fail:
@@ -998,7 +998,7 @@ wlan_hdd_cfg80211_extscan_scan_res_available_event(
 	}
 
 	cfg80211_vendor_event(skb, flags);
-	EXIT();
+	hdd_exit();
 	return;
 
 nla_put_failure:
@@ -1707,7 +1707,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	ret = wlan_hdd_send_ext_scan_capability(hdd_ctx);
 	if (ret)
 		hdd_err("Failed to send ext scan capability to user space");
-	EXIT();
+	hdd_exit();
 	return ret;
 fail:
 	qdf_mem_free(pReqMsg);
@@ -2090,7 +2090,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-	EXIT();
+	hdd_exit();
 	return retval;
 
 fail:
@@ -2332,7 +2332,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-	EXIT();
+	hdd_exit();
 	return retval;
 
 fail:
@@ -3279,7 +3279,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-	EXIT();
+	hdd_exit();
 	return retval;
 
 fail:
@@ -3421,7 +3421,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-	EXIT();
+	hdd_exit();
 	return retval;
 
 fail:
@@ -3554,7 +3554,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-	EXIT();
+	hdd_exit();
 	return retval;
 
 fail:
@@ -3686,7 +3686,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-	EXIT();
+	hdd_exit();
 	return retval;
 
 fail:
@@ -3989,7 +3989,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 		goto fail;
 	}
 
-	EXIT();
+	hdd_exit();
 	qdf_mem_free(req_msg);
 	return 0;
 
@@ -4214,7 +4214,7 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 		goto fail;
 	}
 
-	EXIT();
+	hdd_exit();
 	qdf_mem_free(req_msg);
 	return 0;
 
@@ -4315,7 +4315,7 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 		goto fail;
 	}
 
-	EXIT();
+	hdd_exit();
 	qdf_mem_free(req_msg);
 	return 0;
 

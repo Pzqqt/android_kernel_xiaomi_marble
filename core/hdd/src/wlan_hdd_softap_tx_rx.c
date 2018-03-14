@@ -1106,7 +1106,7 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 		p2p_peer_authorized(adapter->hdd_vdev, pDestMacAddress->bytes);
 	}
 
-	EXIT();
+	hdd_exit();
 	return qdf_status;
 }
 

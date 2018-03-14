@@ -1255,7 +1255,7 @@ static void wlan_hdd_pld_remove(struct device *dev,
 
 	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -1276,7 +1276,7 @@ static void wlan_hdd_pld_shutdown(struct device *dev,
 
 	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -1431,7 +1431,7 @@ static void wlan_hdd_purge_notifier(void)
 	cds_shutdown_notifier_call();
 	cds_shutdown_notifier_purge();
 	mutex_unlock(&hdd_ctx->iface_change_lock);
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -1507,7 +1507,7 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 	mutex_unlock(&hdd_init_deinit_lock);
 
 	wlan_hdd_purge_notifier();
-	EXIT();
+	hdd_exit();
 }
 
 #ifdef FEATURE_RUNTIME_PM

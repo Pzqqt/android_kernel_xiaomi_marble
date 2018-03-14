@@ -163,7 +163,7 @@ int iw_get_oem_data_cap(struct net_device *dev,
 	pHddOemDataCap = (struct oem_data_cap *) (extra);
 	*pHddOemDataCap = oemDataCap;
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 

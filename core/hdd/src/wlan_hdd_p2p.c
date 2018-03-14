@@ -746,7 +746,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	if (hdd_ctx->rps)
 		hdd_send_rps_ind(adapter);
 
-	EXIT();
+	hdd_exit();
 	return adapter->dev->ieee80211_ptr;
 
 stop_modules:
@@ -891,7 +891,7 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 		hdd_close_adapter(hdd_ctx, pVirtAdapter, true);
 	}
 
-	EXIT();
+	hdd_exit();
 
 	return 0;
 }

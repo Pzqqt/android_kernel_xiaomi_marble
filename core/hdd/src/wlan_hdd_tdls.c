@@ -675,11 +675,11 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 	if (hdd_ctx->tdls_umac_comp_active) {
 		status = wlan_cfg80211_tdls_oper(hdd_ctx->hdd_pdev,
 						 dev, peer, oper);
-		EXIT();
+		hdd_exit();
 		return status;
 	}
 
-	EXIT();
+	hdd_exit();
 	return -EINVAL;
 }
 

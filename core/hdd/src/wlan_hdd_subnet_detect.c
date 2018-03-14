@@ -163,7 +163,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 		ret = -EINVAL;
 	}
 
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 

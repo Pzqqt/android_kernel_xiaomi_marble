@@ -1890,7 +1890,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_wmm_init(adapter);
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1981,7 +1981,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 
 	}
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }

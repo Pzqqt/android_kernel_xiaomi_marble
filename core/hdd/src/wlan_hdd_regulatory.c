@@ -657,7 +657,7 @@ void hdd_update_indoor_channel(struct hdd_context *hdd_ctx,
 		disable))) {
 		hdd_err("Failed to notify sap event");
 	}
-	EXIT();
+	hdd_exit();
 
 }
 

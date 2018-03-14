@@ -116,7 +116,7 @@ static int hdd_close_ndi(struct hdd_adapter *adapter)
 	/* We are good to close the adapter */
 	hdd_close_adapter(hdd_ctx, adapter, true);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -229,7 +229,7 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 	roam_profile->ChannelInfo.ChannelList = NULL;
 	roam_profile->ChannelInfo.numOfChannels = 0;
 
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -501,7 +501,7 @@ struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
 		return NULL;
 	}
 
-	EXIT();
+	hdd_exit();
 	return adapter->hdd_vdev;
 }
 
@@ -542,11 +542,11 @@ int hdd_ndi_start(uint8_t vdev_id)
 		hdd_err("NDI start bss failed");
 		/* Start BSS failed, delete the interface */
 		hdd_close_ndi(adapter);
-		EXIT();
+		hdd_exit();
 		return -EINVAL;
 	}
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -775,7 +775,7 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 		wlan_hdd_netif_queue_control(adapter,
 				WLAN_WAKE_ALL_NETIF_QUEUE, WLAN_CONTROL_PATH);
 	}
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -827,5 +827,5 @@ void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 		wlan_hdd_netif_queue_control(adapter, WLAN_STOP_ALL_NETIF_QUEUE,
 					     WLAN_CONTROL_PATH);
 	}
-	EXIT();
+	hdd_exit();
 }

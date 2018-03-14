@@ -2393,7 +2393,7 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 	wlan_hdd_update_dbs_scan_and_fw_mode_config();
 
 exit_with_success:
-	EXIT();
+	hdd_exit();
 
 	return 0;
 
@@ -2695,7 +2695,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 	if (hdd_ctx->driver_status == DRIVER_MODULES_ENABLED) {
 		mutex_unlock(&hdd_ctx->iface_change_lock);
 		hdd_info("Driver modules already Enabled");
-		EXIT();
+		hdd_exit();
 		return 0;
 	}
 
@@ -2858,7 +2858,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 	}
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 
-	EXIT();
+	hdd_exit();
 
 	return 0;
 
@@ -2897,7 +2897,7 @@ release_lock:
 		hdd_check_for_leaks();
 	hdd_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
 
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -3168,7 +3168,7 @@ static int __hdd_stop(struct net_device *dev)
 			WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);
 	}
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -3229,7 +3229,7 @@ static void __hdd_uninit(struct net_device *dev)
 		adapter->magic = 0;
 	} while (0);
 
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -3332,7 +3332,7 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 	memcpy(&adapter->mac_addr, psta_mac_addr->sa_data, ETH_ALEN);
 	memcpy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
 
-	EXIT();
+	hdd_exit();
 	return qdf_ret_status;
 }
 
@@ -3480,7 +3480,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 out:
 	if (mc_list_request)
 		qdf_mem_free(mc_list_request);
-	EXIT();
+	hdd_exit();
 }
 
 
@@ -3699,7 +3699,7 @@ static QDF_STATUS hdd_register_interface(struct hdd_adapter *adapter, bool rtnl_
 	}
 	set_bit(NET_DEVICE_REGISTERED, &adapter->event_flags);
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4098,7 +4098,7 @@ static void hdd_deinit_station_mode(struct hdd_context *hdd_ctx,
 	}
 
 
-	EXIT();
+	hdd_exit();
 }
 
 void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
@@ -4129,7 +4129,7 @@ void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
 		break;
 	}
 
-	EXIT();
+	hdd_exit();
 }
 
 static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
@@ -4514,7 +4514,7 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	}
 
 	hdd_set_fw_log_params(hdd_ctx, adapter);
-	EXIT();
+	hdd_exit();
 
 	return 0;
 
@@ -4824,7 +4824,7 @@ QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 		}
 	} while (QDF_IS_STATUS_SUCCESS(status));
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5120,7 +5120,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		adapter->scan_info.default_scan_ies = NULL;
 	}
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5140,7 +5140,7 @@ void  hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 	hdd_for_each_adapter(hdd_ctx, adapter)
 		hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
 
-	EXIT();
+	hdd_exit();
 }
 
 QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx)
@@ -5154,7 +5154,7 @@ QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx)
 	hdd_for_each_adapter(hdd_ctx, adapter)
 		hdd_stop_adapter(hdd_ctx, adapter);
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5277,7 +5277,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		hdd_vdev_destroy(adapter);
 	}
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5912,7 +5912,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 		wlan_hdd_cfg80211_register_frames(adapter);
 	}
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6200,7 +6200,7 @@ static inline QDF_STATUS hdd_unregister_wext_all_adapters(struct hdd_context *
 		}
 	}
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6224,7 +6224,7 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx)
 		}
 	}
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6256,7 +6256,7 @@ static QDF_STATUS hdd_abort_sched_scan_all_adapters(struct hdd_context *hdd_ctx)
 		}
 	}
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6682,14 +6682,14 @@ void __hdd_wlan_exit(void)
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hdd_err("Invalid HDD Context");
-		EXIT();
+		hdd_exit();
 		return;
 	}
 
 	/* Do all the cleanup before deregistering the driver */
 	hdd_wlan_exit(hdd_ctx);
 
-	EXIT();
+	hdd_exit();
 }
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
@@ -7609,7 +7609,7 @@ static QDF_STATUS hdd_11d_scan_done(tHalHandle halHandle, void *pContext,
 
 	sme_scan_flush_result(halHandle);
 
-	EXIT();
+	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8459,7 +8459,7 @@ static void hdd_iface_change_callback(void *priv)
 	ret = hdd_wlan_stop_modules(hdd_ctx, false);
 	if (ret)
 		hdd_err("Failed to stop modules");
-	EXIT();
+	hdd_exit();
 }
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
@@ -8564,7 +8564,7 @@ skip_multicast_logging:
 
 	cds_set_context(QDF_MODULE_ID_HDD, hdd_ctx);
 
-	EXIT();
+	hdd_exit();
 
 	return hdd_ctx;
 
@@ -8696,7 +8696,7 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter)
 		hdd_tx_resume_cb,
 		hdd_tx_flow_control_is_pause);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -8762,7 +8762,7 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 		hdd_softap_tx_resume_cb,
 		hdd_tx_flow_control_is_pause);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -9192,7 +9192,7 @@ static int hdd_pktlog_set_buff_size(struct hdd_context *hdd_ctx, int set_value2)
 	status = sme_wifi_start_logger(hdd_ctx->hHal, start_log);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_wifi_start_logger failed(err=%d)", status);
-		EXIT();
+		hdd_exit();
 		return -EINVAL;
 	}
 
@@ -9220,7 +9220,7 @@ static int hdd_pktlog_clear_buff(struct hdd_context *hdd_ctx)
 	status = sme_wifi_start_logger(hdd_ctx->hHal, start_log);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_wifi_start_logger failed(err=%d)", status);
-		EXIT();
+		hdd_exit();
 		return -EINVAL;
 	}
 
@@ -9322,7 +9322,7 @@ int hdd_pktlog_enable_disable(struct hdd_context *hdd_ctx, bool enable,
 	status = sme_wifi_start_logger(hdd_ctx->hHal, start_log);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_wifi_start_logger failed(err=%d)", status);
-		EXIT();
+		hdd_exit();
 		return -EINVAL;
 	}
 
@@ -9946,7 +9946,7 @@ static int hdd_features_init(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
 
 	wlan_hdd_init_chan_info(hdd_ctx);
 
-	EXIT();
+	hdd_exit();
 	return 0;
 
 deregister_cb:
@@ -10180,7 +10180,7 @@ static int hdd_deconfigure_cds(struct hdd_context *hdd_ctx)
 		ret = -EINVAL;
 	}
 
-	EXIT();
+	hdd_exit();
 	return ret;
 }
 
@@ -10380,7 +10380,7 @@ done:
 	hdd_alert("stop WLAN module: exit driver status=%d",
 		  hdd_ctx->driver_status);
 
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -10684,7 +10684,7 @@ err_hdd_free_context:
 	return ret;
 
 success:
-	EXIT();
+	hdd_exit();
 	return 0;
 }
 
@@ -10764,7 +10764,7 @@ static void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp)
 	complete(&context->response_event);
 	spin_unlock(&hdd_context_lock);
 
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -10846,7 +10846,7 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Register tx queue callback failed");
 
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -10891,7 +10891,7 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 	sme_deregister_oem_data_rsp_callback(hdd_ctx->hHal);
 	sme_deregister11d_scan_done_callback(hdd_ctx->hHal);
 
-	EXIT();
+	hdd_exit();
 }
 
 /**
@@ -10918,7 +10918,7 @@ QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
 		wlansap_deauth_sta(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 				   pDelStaParams);
 
-	EXIT();
+	hdd_exit();
 	return qdf_status;
 }
 
@@ -11323,7 +11323,7 @@ void hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
 
 	__hdd_bus_bw_compute_timer_start(hdd_ctx);
 
-	EXIT();
+	hdd_exit();
 }
 
 void hdd_bus_bw_compute_timer_try_start(struct hdd_context *hdd_ctx)
@@ -11338,7 +11338,7 @@ void hdd_bus_bw_compute_timer_try_start(struct hdd_context *hdd_ctx)
 	if (hdd_any_adapter_is_assoc(hdd_ctx))
 		__hdd_bus_bw_compute_timer_start(hdd_ctx);
 
-	EXIT();
+	hdd_exit();
 }
 
 static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
@@ -11364,7 +11364,7 @@ void hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 
 	__hdd_bus_bw_compute_timer_stop(hdd_ctx);
 
-	EXIT();
+	hdd_exit();
 }
 
 void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx)
@@ -11379,7 +11379,7 @@ void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx)
 	if (!hdd_any_adapter_is_assoc(hdd_ctx))
 		__hdd_bus_bw_compute_timer_stop(hdd_ctx);
 
-	EXIT();
+	hdd_exit();
 }
 #endif
 

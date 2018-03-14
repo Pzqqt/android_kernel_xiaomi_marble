@@ -69,7 +69,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_start(struct wiphy *wiphy,
 	ret = wlan_cfg80211_spectral_scan_config_and_start(wiphy,
 					hdd_ctx->hdd_pdev,
 					data, data_len);
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -106,7 +106,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_stop(struct wiphy *wiphy,
 
 	ret = wlan_cfg80211_spectral_scan_stop(wiphy, hdd_ctx->hdd_pdev,
 					data, data_len);
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -144,7 +144,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_config(
 
 	ret = wlan_cfg80211_spectral_scan_get_config(wiphy, hdd_ctx->hdd_pdev,
 					data, data_len);
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -183,7 +183,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_diag_stats(
 	ret = wlan_cfg80211_spectral_scan_get_diag_stats(wiphy,
 					hdd_ctx->hdd_pdev,
 					data, data_len);
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -221,7 +221,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_cap_info(
 
 	ret = wlan_cfg80211_spectral_scan_get_cap(wiphy, hdd_ctx->hdd_pdev,
 					data, data_len);
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
@@ -260,7 +260,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_status(
 
 	ret = wlan_cfg80211_spectral_scan_get_status(wiphy, hdd_ctx->hdd_pdev,
 					data, data_len);
-	EXIT();
+	hdd_exit();
 
 	return ret;
 }
