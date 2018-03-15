@@ -735,7 +735,7 @@ int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	 * else give weigtage to 2.4 GH.
 	 */
 	if ((entry->rssi_raw > rssi_pref_5g_rssi_thresh) && !same_bucket) {
-		if (WLAN_CHAN_IS_2GHZ(entry->channel.chan_idx))
+		if (WLAN_CHAN_IS_5GHZ(entry->channel.chan_idx))
 			band_score = weight_config->chan_band_weightage *
 					WLAN_GET_SCORE_PERCENTAGE(
 					score_config->band_weight_per_index,
