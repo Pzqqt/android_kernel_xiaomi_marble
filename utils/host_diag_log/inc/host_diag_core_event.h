@@ -101,6 +101,146 @@ enum mgmt_frm_subtype {
 	ACTION_NO_ACK = 0xe0,
 };
 
+/**
+ * enum mgmt_auth_type: type of authentication
+ *
+ * @AUTH_OPEN: no security applied
+ * @AUTH_SHARED: WEP type of auth
+ * @AUTH_WPA_EAP: WPA1 EAP based auth
+ * @AUTH_WPA_PSK: WPA1 PSK based auth
+ * @AUTH_WPA2_EAP: WPA2 EAP based auth
+ * @AUTH_WPA2_PSK: WPA2 PSK based auth
+ * @AUTH_WAPI_CERT: WAPI CERT based auth
+ * @AUTH_WAPI_PSK: WAPI PSK based auth
+ */
+enum mgmt_auth_type {
+	AUTH_OPEN = 0x00,
+	AUTH_SHARED = 0x01,
+	AUTH_WPA_EAP = 0x02,
+	AUTH_WPA_PSK = 0x03,
+	AUTH_WPA2_EAP = 0x04,
+	AUTH_WPA2_PSK = 0x05,
+	AUTH_WAPI_CERT = 0x06,
+	AUTH_WAPI_PSK = 0x07,
+	AUTH_MAX = 0xff,
+};
+
+/**
+ * enum mgmt_encrypt_type: type of encryption
+ *
+ * @ENC_MODE_OPEN: no encryption applied
+ * @ENC_MODE_WEP40: WEP 40 bits encryption
+ * @ENC_MODE_WEP104: WEP 104 bits encryption
+ * @ENC_MODE_TKIP: TKIP based encryption
+ * @ENC_MODE_AES: AES based encryption
+ * @ENC_MODE_AES_GCMP: AES with GCMP encryption
+ * @ENC_MODE_AES_GCMP_256: AES with 256 bit GCMP encryption
+ * @ENC_MODE_SMS4: WAPI based SMS4 encryption
+ */
+enum mgmt_encrypt_type {
+	ENC_MODE_OPEN = 0x00,
+	ENC_MODE_WEP40 = 0x01,
+	ENC_MODE_WEP104 = 0x02,
+	ENC_MODE_TKIP = 0x03,
+	ENC_MODE_AES = 0x04,
+	ENC_MODE_AES_GCMP = 0x05,
+	ENC_MODE_AES_GCMP_256 = 0x06,
+	ENC_MODE_SMS4 = 0x07,
+	ENC_MODE_MAX = 0x0f,
+};
+
+/**
+ * enum mgmt_ch_width: channel width of connection
+ *
+ * @BW_20MHZ: 20 MHz of channel bonding
+ * @BW_40MHZ: 40 MHz of channel bonding
+ * @BW_80MHZ: 80 MHz of channel bonding
+ * @BW_160MHZ: 160 MHz of channel bonding
+ * @BW_80P80MHZ: 80 + 80 MHz of channel bonding
+ * @BW_5MHZ: 5 MHz of channel bonding
+ * @BW_10MHZ: 10 MHz of channel bonding
+ */
+enum mgmt_ch_width {
+	BW_20MHZ = 0x00,
+	BW_40MHZ = 0x01,
+	BW_80MHZ = 0x02,
+	BW_160MHZ = 0x03,
+	BW_80P80MHZ = 0x04,
+	BW_5MHZ = 0x05,
+	BW_10MHZ = 0x06,
+	BW_MAX = 0xff,
+};
+
+/**
+ * enum mgmt_dot11_mode: 80211 mode of operation
+ *
+ * @DOT11_MODE_ABG: 802.11-ABG mix mode
+ * @DOT11_MODE_11A: 802.11-A mode
+ * @DOT11_MODE_11B: 802.11-B mode
+ * @DOT11_MODE_11G: 802.11-G mode
+ * @DOT11_MODE_11N: 802.11-N mode
+ * @DOT11_MODE_11AC: 802.11-AC mode
+ * @DOT11_MODE_11G_ONLY: 802.11-G only mode
+ * @DOT11_MODE_11N_ONLY: 802.11-N only mode
+ * @DOT11_MODE_11AC_ONLY: 802.11-AC only mode
+ * @DOT11_MODE_AUTO: 802.11 auto mode
+ * @DOT11_MODE_11AX: 802.11-AX mode
+ * @DOT11_MODE_11AX_ONLY: 802.11-AX only mode
+ */
+enum mgmt_dot11_mode {
+	DOT11_MODE_ABG = 0x00,
+	DOT11_MODE_11A = 0x01,
+	DOT11_MODE_11B = 0x02,
+	DOT11_MODE_11G = 0x03,
+	DOT11_MODE_11N = 0x04,
+	DOT11_MODE_11AC = 0x05,
+	DOT11_MODE_11G_ONLY = 0x06,
+	DOT11_MODE_11N_ONLY = 0x07,
+	DOT11_MODE_11AC_ONLY = 0x08,
+	DOT11_MODE_AUTO = 0x09,
+	DOT11_MODE_11AX = 0x0a,
+	DOT11_MODE_11AX_ONLY = 0x0b,
+	DOT11_MODE_MAX = 0xff,
+};
+
+/**
+ * enum mgmt_bss_type: persona type
+ *
+ * @STA_PERSONA: STA mode
+ * @SAP_PERSONA: SAP mode
+ * @P2P_CLIENT_PERSONA: P2P cli mode
+ * @P2P_GO_PERSONA: P2P go mode
+ * @FTM_PERSONA: FTM mode
+ * @IBSS_PERSONA: IBSS mode
+ * @MONITOR_PERSONA: monitor mode
+ * @P2P_DEVICE_PERSONA: P2P device mode
+ * @OCB_PERSONA: OCB mode
+ * @EPPING_PERSONA: epping mode
+ * @QVIT_PERSONA: QVIT mode
+ * @NDI_PERSONA: NDI mode
+ * @WDS_PERSONA: WDS mode
+ * @BTAMP_PERSONA: BT amp mode
+ * @AHDEMO_PERSONA: AH demo mode
+ */
+enum mgmt_bss_type {
+	STA_PERSONA = 0x00,
+	SAP_PERSONA = 0x01,
+	P2P_CLIENT_PERSONA = 0x02,
+	P2P_GO_PERSONA = 0x03,
+	FTM_PERSONA = 0x04,
+	IBSS_PERSONA = 0x05,
+	MONITOR_PERSONA = 0x06,
+	P2P_DEVICE_PERSONA = 0x07,
+	OCB_PERSONA = 0x08,
+	EPPING_PERSONA = 0x09,
+	QVIT_PERSONA = 0x0a,
+	NDI_PERSONA = 0x0b,
+	WDS_PERSONA = 0x0c,
+	BTAMP_PERSONA = 0x0d,
+	AHDEMO_PERSONA = 0x0e,
+	MAX_PERSONA = 0xff,
+};
+
 /*-------------------------------------------------------------------------
    Event ID: EVENT_WLAN_SECURITY
    ------------------------------------------------------------------------*/
@@ -160,6 +300,48 @@ typedef struct {
 	uint8_t eventId;
 	uint8_t reasonCode;
 } host_event_wlan_qos_payload_type;
+
+/**
+ * host_event_wlan_connection_stats: to capture connection details
+ *
+ * @rssi: RSSI signal strength of connected AP, units in dbM
+ * @ssid_len: length of SSID
+ * @ssid: SSID of AP where STA is connected
+ * @bssid: bssid of AP where STA is connected
+ * @operating_channel: channel on which AP is connected
+ * @qos_capability: QoS is enabled or no
+ * @chnl_bw: channel BW of connection, units in MHz
+ *		Range: enum mgmt_ch_width
+ * @dot11mode: 802.11 mode of current connection
+ *		Range: enum mgmt_dot11_mode
+ * @bss_type: type of the BSS whether AP/IBSS/P2PGO
+ *		Range: enum mgmt_bss_type bss_type
+ * @auth_type: type of authentication for connected AP
+ *		Range: enum mgmt_auth_type
+ * @encryption_type: type of encryption applied
+ *		Range: enum mgmt_encrypt_type
+ * @reserved1: reserved for future use
+ * @est_link_speed: link speed of connection, units in Mbps
+ * @result_code: result code of connection success or failure
+ * @reason_code: if failed then what is the reason
+ */
+struct host_event_wlan_connection_stats {
+	int8_t rssi;
+	uint8_t ssid_len;
+	char ssid[32];
+	uint8_t bssid[6];
+	uint8_t operating_channel;
+	uint8_t qos_capability;
+	uint8_t chnl_bw;
+	uint8_t dot11mode;
+	uint8_t bss_type;
+	uint8_t auth_type;
+	uint8_t encryption_type;
+	uint8_t reserved1;
+	uint32_t est_link_speed;
+	uint16_t result_code;
+	uint16_t reason_code;
+} qdf_packed;
 
 /*-------------------------------------------------------------------------
    Event ID: EVENT_WLAN_PE
