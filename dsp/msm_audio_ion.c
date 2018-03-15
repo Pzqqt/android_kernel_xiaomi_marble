@@ -208,10 +208,8 @@ err:
 
 static void *msm_audio_ion_map_kernel(struct dma_buf *dma_buf)
 {
-	int i = 0;
 	int rc = 0;
 	void *addr = NULL;
-	unsigned int pg_cnt = 0;
 	struct msm_audio_alloc_data *alloc_data = NULL;
 
 	rc = dma_buf_begin_cpu_access(dma_buf, DMA_BIDIRECTIONAL);
@@ -220,29 +218,11 @@ static void *msm_audio_ion_map_kernel(struct dma_buf *dma_buf)
 		goto exit;
 	}
 
-	pg_cnt = dma_buf->size / PAGE_SIZE;
-	if (dma_buf->size % PAGE_SIZE)
-		pg_cnt++;
-
-	if (pg_cnt == 0) {
-		pr_err("%s: Page count is NULL\n", __func__);
-		goto exit;
-	}
-
-	/* Map the first page, and store the address to addr */
-	addr = dma_buf_kmap(dma_buf, 0);
+	addr = dma_buf_vmap(dma_buf);
 	if (!addr) {
-		pr_err("%s: mapping kernel buffer failed for page 0\n",
+		pr_err("%s: kernel mapping of dma_buf failed\n",
 		       __func__);
 		goto exit;
-	}
-	/* Map remaining pages */
-	for (i = 1; i < pg_cnt; i++) {
-		if (!dma_buf_kmap(dma_buf, i)) {
-			pr_err("%s: mapping kernel buffer failed for page %d\n",
-			       __func__, i);
-			goto err;
-		}
 	}
 
 	/*
@@ -259,20 +239,13 @@ static void *msm_audio_ion_map_kernel(struct dma_buf *dma_buf)
 	}
 	mutex_unlock(&(msm_audio_ion_data.list_mutex));
 
-	return addr;
-
-err:
-	for (; i > 0; i--)
-		dma_buf_kunmap(dma_buf, i - 1, addr);
-	addr = NULL;
 exit:
 	return addr;
 }
 
 static void msm_audio_ion_unmap_kernel(struct dma_buf *dma_buf)
 {
-	int i, rc = 0;
-	unsigned int pg_cnt = 0;
+	int rc = 0;
 	void *vaddr = NULL;
 	struct msm_audio_alloc_data *alloc_data = NULL;
 	struct device *cb_dev = msm_audio_ion_data.cb_dev;
@@ -298,12 +271,7 @@ static void msm_audio_ion_unmap_kernel(struct dma_buf *dma_buf)
 		goto err;
 	}
 
-	pg_cnt = dma_buf->size / PAGE_SIZE;
-	if (dma_buf->size % PAGE_SIZE)
-		pg_cnt++;
-
-	for (i = 0; i < pg_cnt; i++)
-		dma_buf_kunmap(dma_buf, i, vaddr);
+	dma_buf_vunmap(dma_buf, vaddr);
 
 	rc = dma_buf_end_cpu_access(dma_buf, DMA_BIDIRECTIONAL);
 	if (rc) {
