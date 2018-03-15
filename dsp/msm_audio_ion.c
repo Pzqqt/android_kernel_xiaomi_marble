@@ -599,18 +599,11 @@ int msm_audio_ion_cache_operations(struct audio_buffer *abuff, int cache_op)
 		/* MSM_AUDIO_ION_INV_CACHES or MSM_AUDIO_ION_CLEAN_CACHES */
 		switch (cache_op) {
 		case MSM_AUDIO_ION_INV_CACHES:
-			rc = dma_buf_begin_cpu_access(abuff->dma_buf,
-						      DMA_BIDIRECTIONAL);
-			if (rc)
-				pr_err("%s: failed to invalidate caches. rc = %d\n",
-				       __func__, rc);
-			break;
 		case MSM_AUDIO_ION_CLEAN_CACHES:
-			rc = dma_buf_end_cpu_access(abuff->dma_buf,
-						    DMA_BIDIRECTIONAL);
-			if (rc)
-				pr_err("%s: failed to clean caches. rc = %d\n",
-				       __func__, rc);
+			dma_buf_begin_cpu_access(abuff->dma_buf,
+						  DMA_BIDIRECTIONAL);
+			dma_buf_end_cpu_access(abuff->dma_buf,
+						  DMA_BIDIRECTIONAL);
 			break;
 		default:
 			pr_err("%s: Invalid cache operation %d\n",
