@@ -105,53 +105,88 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 
 #if defined(FEATURE_TSO)
 /**
- * dp_tx_tso_desc_release() - Release the tso segment
- *                            after unmapping all the fragments
+ * dp_tx_tso_unmap_segment() - Unmap TSO segment
  *
- * @pdev - physical device handle
+ * @soc - core txrx main context
+ * @tx_desc - Tx software descriptor
+ */
+static void dp_tx_tso_unmap_segment(struct dp_soc *soc,
+				    struct dp_tx_desc_s *tx_desc)
+{
+	TSO_DEBUG("%s: Unmap the tso segment", __func__);
+	if (qdf_unlikely(!tx_desc->tso_desc)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s %d TSO desc is NULL!",
+			  __func__, __LINE__);
+		qdf_assert(0);
+	} else if (qdf_unlikely(!tx_desc->tso_num_desc)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s %d TSO num desc is NULL!",
+			  __func__, __LINE__);
+		qdf_assert(0);
+	} else {
+		bool is_last_seg;
+		struct qdf_tso_num_seg_elem_t *tso_num_desc =
+			(struct qdf_tso_num_seg_elem_t *)tx_desc->tso_num_desc;
+
+		if (tso_num_desc->num_seg.tso_cmn_num_seg > 1)
+			is_last_seg = false;
+		else
+			is_last_seg = true;
+		tso_num_desc->num_seg.tso_cmn_num_seg--;
+		qdf_nbuf_unmap_tso_segment(soc->osdev,
+					   tx_desc->tso_desc, is_last_seg);
+	}
+}
+
+/**
+ * dp_tx_tso_desc_release() - Release the tso segment and tso_cmn_num_seg
+ *                            back to the freelist
+ *
+ * @soc - soc device handle
  * @tx_desc - Tx software descriptor
  */
 static void dp_tx_tso_desc_release(struct dp_soc *soc,
-		struct dp_tx_desc_s *tx_desc)
+				   struct dp_tx_desc_s *tx_desc)
 {
 	TSO_DEBUG("%s: Free the tso descriptor", __func__);
-	if (qdf_unlikely(tx_desc->tso_desc == NULL)) {
+	if (qdf_unlikely(!tx_desc->tso_desc)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s %d TSO desc is NULL!",
-			__func__, __LINE__);
+			  "%s %d TSO desc is NULL!",
+			  __func__, __LINE__);
 		qdf_assert(0);
-	} else if (qdf_unlikely(tx_desc->tso_num_desc == NULL)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d TSO common info is NULL!",
-			__func__, __LINE__);
+	} else if (qdf_unlikely(!tx_desc->tso_num_desc)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s %d TSO num desc is NULL!",
+			  __func__, __LINE__);
 		qdf_assert(0);
 	} else {
 		struct qdf_tso_num_seg_elem_t *tso_num_desc =
-			(struct qdf_tso_num_seg_elem_t *) tx_desc->tso_num_desc;
+			(struct qdf_tso_num_seg_elem_t *)tx_desc->tso_num_desc;
 
-		if (tso_num_desc->num_seg.tso_cmn_num_seg > 1) {
-			tso_num_desc->num_seg.tso_cmn_num_seg--;
-			qdf_nbuf_unmap_tso_segment(soc->osdev,
-					tx_desc->tso_desc, false);
-		} else {
-			tso_num_desc->num_seg.tso_cmn_num_seg--;
-			qdf_assert(tso_num_desc->num_seg.tso_cmn_num_seg == 0);
-			qdf_nbuf_unmap_tso_segment(soc->osdev,
-					tx_desc->tso_desc, true);
+		/* Add the tso num segment into the free list */
+		if (tso_num_desc->num_seg.tso_cmn_num_seg == 0) {
 			dp_tso_num_seg_free(soc, tx_desc->pool_id,
-					tx_desc->tso_num_desc);
+					    tx_desc->tso_num_desc);
 			tx_desc->tso_num_desc = NULL;
 		}
+
+		/* Add the tso segment into the free list*/
 		dp_tx_tso_desc_free(soc,
-				tx_desc->pool_id, tx_desc->tso_desc);
+				    tx_desc->pool_id, tx_desc->tso_desc);
 		tx_desc->tso_desc = NULL;
 	}
 }
 #else
-static void dp_tx_tso_desc_release(struct dp_soc *soc,
-		struct dp_tx_desc_s *tx_desc)
+static void dp_tx_tso_unmap_segment(struct dp_soc *soc,
+				    struct dp_tx_desc_s *tx_desc)
+
 {
-	return;
+}
+
+static void dp_tx_tso_desc_release(struct dp_soc *soc,
+				   struct dp_tx_desc_s *tx_desc)
+{
 }
 #endif
 /**
@@ -2351,13 +2386,8 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 		/* TSO free */
 		if (hal_tx_ext_desc_get_tso_enable(
 					desc->msdu_ext_desc->vaddr)) {
-			/* If remaining number of segment is 0
-			 * actual TSO may unmap and free */
-			if (qdf_nbuf_get_users(nbuf) == 1)
-				__qdf_nbuf_unmap_single(soc->osdev,
-						nbuf,
-						QDF_DMA_TO_DEVICE);
-
+			/* unmap eash TSO seg before free the nbuf */
+			dp_tx_tso_unmap_segment(soc, desc);
 			qdf_nbuf_free(nbuf);
 			return;
 		}
