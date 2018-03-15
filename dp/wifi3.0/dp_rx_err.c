@@ -692,13 +692,25 @@ dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 	peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
 	peer = dp_peer_find_by_id(soc, peer_id);
 
+	l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
+	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
+	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
+
+	/* Set length in nbuf */
+	qdf_nbuf_set_pktlen(nbuf, pkt_len);
+
+	qdf_nbuf_set_next(nbuf, NULL);
+
+	qdf_nbuf_set_rx_chfrag_start(nbuf, 1);
+	qdf_nbuf_set_rx_chfrag_end(nbuf, 1);
+
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("peer is NULL"));
 		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
 				qdf_nbuf_len(nbuf));
-		/* Drop & free packet */
-		qdf_nbuf_free(nbuf);
+		/* Trigger invalid peer handler wrapper */
+		dp_rx_process_invalid_peer_wrapper(soc, nbuf, true);
 		return;
 	}
 
@@ -719,23 +731,12 @@ dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 		return;
 	}
 
-	l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
-	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
-	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
-
-	/* Set length in nbuf */
-	qdf_nbuf_set_pktlen(nbuf, pkt_len);
-
-	qdf_nbuf_set_next(nbuf, NULL);
-
 	/*
 	 * Advance the packet start pointer by total size of
 	 * pre-header TLV's
 	 */
 	qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
 
-	qdf_nbuf_set_rx_chfrag_start(nbuf, 1);
-	qdf_nbuf_set_rx_chfrag_end(nbuf, 1);
 	if (dp_rx_filter_mesh_packets(vdev, nbuf, rx_tlv_hdr)
 							== QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_MED,
