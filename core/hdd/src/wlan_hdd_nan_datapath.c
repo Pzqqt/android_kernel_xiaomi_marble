@@ -186,13 +186,11 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 
 	roam_profile->csrPersona = adapter->device_mode;
 
+	if (!operating_channel)
+		operating_channel = NAN_SOCIAL_CHANNEL_2_4GHZ;
+
 	roam_profile->ChannelInfo.numOfChannels = 1;
-	if (operating_channel) {
-		roam_profile->ChannelInfo.ChannelList = &operating_channel;
-	} else {
-		roam_profile->ChannelInfo.ChannelList[0] =
-			NAN_SOCIAL_CHANNEL_2_4GHZ;
-	}
+	roam_profile->ChannelInfo.ChannelList = &operating_channel;
 
 	roam_profile->SSIDs.numOfSSIDs = 1;
 	roam_profile->SSIDs.SSIDList->SSID.length = 0;
