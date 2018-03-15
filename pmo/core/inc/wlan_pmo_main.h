@@ -28,19 +28,11 @@
 #include "wlan_pmo_priv.h"
 #include "wlan_pmo_objmgr.h"
 
-#define pmo_log(level, args...) QDF_TRACE(QDF_MODULE_ID_PMO, level, ## args)
-#define pmo_logfl(level, format, args...) pmo_log(level, FL(format), ## args)
-
-#define pmo_fatal(format, args...) \
-		pmo_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define pmo_err(format, args...) \
-		pmo_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define pmo_warn(format, args...) \
-		pmo_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define pmo_info(format, args...) \
-		pmo_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define pmo_debug(format, args...) \
-		pmo_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define pmo_fatal(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_PMO, params)
+#define pmo_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_PMO, params)
+#define pmo_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_PMO, params)
+#define pmo_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_PMO, params)
+#define pmo_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_PMO, params)
 
 #define pmo_enter() pmo_debug("enter")
 #define pmo_exit() pmo_debug("exit")
