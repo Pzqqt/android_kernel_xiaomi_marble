@@ -176,8 +176,10 @@ wlan_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
 {
 	struct spectral_context *sc;
 
-	if (!pdev)
+	if (!pdev) {
 		spectral_err("PDEV is NULL!");
+		return;
+	}
 
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
 	if (!sc) {
