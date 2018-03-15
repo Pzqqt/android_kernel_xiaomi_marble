@@ -4629,28 +4629,6 @@ QDF_STATUS sme_tx_fail_monitor_start_stop_ind(tHalHandle hHal, uint8_t
 }
 
 /*
- * sme_set_cfg_privacy() -
- * API to set configure privacy parameters
- *
- * hHal - The handle returned by mac_open.
- * pProfile - Pointer CSR Roam profile.
- * fPrivacy - This parameter indicates status of privacy
- * Return void
- */
-void sme_set_cfg_privacy(tHalHandle hHal,
-			 struct csr_roam_profile *pProfile, bool fPrivacy)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_SET_CFGPRIVACY, NO_SESSION, 0));
-	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&pMac->sme)) {
-		csr_set_cfg_privacy(pMac, pProfile, fPrivacy);
-		sme_release_global_lock(&pMac->sme);
-	}
-}
-
-/*
  * sme_neighbor_report_request() -
  * API to request neighbor report.
  *

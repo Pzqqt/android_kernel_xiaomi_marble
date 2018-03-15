@@ -9819,21 +9819,6 @@ bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac,
 	return fRet;
 }
 
-bool csr_is_roam_command_waiting(tpAniSirGlobal pMac)
-{
-	bool fRet = false;
-	uint32_t i;
-
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-		fRet = csr_is_roam_command_waiting_for_session(pMac, i);
-		if (CSR_IS_SESSION_VALID(pMac, i)
-		    && (fRet)) {
-			break;
-		}
-	}
-	return fRet;
-}
-
 static void
 csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 			tSmeCmd *cmd, uint32_t result, uint8_t sme_session_id)

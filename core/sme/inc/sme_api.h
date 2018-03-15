@@ -524,8 +524,6 @@ QDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 		uint8_t device_mode,
 		uint8_t *macAddr, uint8_t sessionId);
-void sme_set_cfg_privacy(tHalHandle hHal, struct csr_roam_profile *pProfile,
-			 bool fPrivacy);
 void sme_get_recovery_stats(tHalHandle hHal);
 QDF_STATUS sme_neighbor_report_request(tHalHandle hHal, uint8_t sessionId,
 		tpRrmNeighborReq pRrmNeighborReq,
@@ -1236,18 +1234,11 @@ QDF_STATUS sme_reset_tsfcb(tHalHandle h_hal);
 
 #ifdef WLAN_FEATURE_TSF
 QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue);
-QDF_STATUS sme_reset_tsf_gpio(tHalHandle h_hal);
-
 #else
 static inline QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue)
 {
 	return QDF_STATUS_E_FAILURE;
 }
-static inline QDF_STATUS sme_reset_tsf_gpio(tHalHandle h_hal)
-{
-	return QDF_STATUS_E_FAILURE;
-}
-
 #endif
 
 QDF_STATUS sme_update_mimo_power_save(tHalHandle hHal,

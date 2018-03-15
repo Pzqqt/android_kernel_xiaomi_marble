@@ -330,7 +330,6 @@ QDF_STATUS csr_roam_issue_stop_bss(tpAniSirGlobal pMac, uint32_t sessionId,
 				   enum csr_roam_substate NewSubstate);
 bool csr_is_same_profile(tpAniSirGlobal pMac, tCsrRoamConnectedProfile
 			*pProfile1, struct csr_roam_profile *pProfile2);
-bool csr_is_roam_command_waiting(tpAniSirGlobal pMac);
 bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac,
 					uint32_t sessionId);
 eRoamCmdStatus csr_get_roam_complete_status(tpAniSirGlobal pMac,
