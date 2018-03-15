@@ -2246,7 +2246,7 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx);
 QDF_STATUS
 wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
 					struct hdd_adapter *ap_adapter,
-					tCsrRoamProfile *roam_profile,
+					struct csr_roam_profile *roam_profile,
 					tScanResultHandle *scan_cache,
 					bool *concurrent_chnl_same);
 

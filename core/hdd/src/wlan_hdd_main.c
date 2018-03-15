@@ -11405,7 +11405,7 @@ void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx)
 QDF_STATUS
 wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
 					struct hdd_adapter *ap_adapter,
-					tCsrRoamProfile *roam_profile,
+					struct csr_roam_profile *roam_profile,
 					tScanResultHandle *scan_cache,
 					bool *concurrent_chnl_same)
 {
@@ -13494,7 +13494,7 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
 	QDF_STATUS status;
 	struct hdd_wext_state *wext_state =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *profile = &wext_state->roamProfile;
+	struct csr_roam_profile *profile = &wext_state->roamProfile;
 
 	status = sme_get_rssi_snr_by_bssid(WLAN_HDD_GET_HAL_CTX(adapter),
 				profile, bssid, rssi, snr);

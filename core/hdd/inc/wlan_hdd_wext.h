@@ -205,7 +205,7 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
  */
 struct hdd_wext_state {
 	/** The CSR "desired" Profile */
-	tCsrRoamProfile roamProfile;
+	struct csr_roam_profile roamProfile;
 
 	/**WPA or RSN IE*/
 	uint8_t WPARSNIE[MAX_WPA_RSN_IE_LEN];

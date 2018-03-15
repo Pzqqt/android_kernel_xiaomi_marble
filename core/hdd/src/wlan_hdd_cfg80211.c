@@ -15401,7 +15401,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	struct wireless_dev *wdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_context *hdd_ctx;
-	tCsrRoamProfile *roam_profile = NULL;
+	struct csr_roam_profile *roam_profile = NULL;
 	eCsrRoamBssType LastBSSType;
 	struct hdd_config *pConfig = NULL;
 	int status;
@@ -16094,7 +16094,7 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 				       )
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
-	tCsrRoamProfile *roam_profile;
+	struct csr_roam_profile *roam_profile;
 	struct key_params params;
 
 	ENTER();
@@ -16397,7 +16397,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	} else if (QDF_SAP_MODE == adapter->device_mode) {
 		struct hdd_ap_ctx *ap_ctx =
 			WLAN_HDD_GET_AP_CTX_PTR(adapter);
-		tCsrRoamProfile *profile =
+		struct csr_roam_profile *profile =
 			wlan_sap_get_roam_profile(ap_ctx->sap_context);
 
 		if (!profile) {
@@ -16931,8 +16931,9 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t operationChannel,
  *
  * Return: false if sta-sap conc is not allowed, else return true
  */
-static bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
-						tCsrRoamProfile *roam_profile)
+static
+bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
+				      struct csr_roam_profile *roam_profile)
 {
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *ap_adapter;
@@ -17048,7 +17049,8 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
  *
  * Return: 0 if check result is valid, otherwise return error code
  */
-static int wlan_hdd_cfg80211_check_pmf_valid(tCsrRoamProfile *roam_profile)
+static
+int wlan_hdd_cfg80211_check_pmf_valid(struct csr_roam_profile *roam_profile)
 {
 	if (roam_profile->MFPEnabled &&
 	    !(roam_profile->MFPRequired ||
@@ -17063,7 +17065,7 @@ static int wlan_hdd_cfg80211_check_pmf_valid(tCsrRoamProfile *roam_profile)
 }
 #else
 static inline
-int wlan_hdd_cfg80211_check_pmf_valid(tCsrRoamProfile *roam_profile)
+int wlan_hdd_cfg80211_check_pmf_valid(struct csr_roam_profile *roam_profile)
 {
 	return 0;
 }
@@ -17095,7 +17097,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *hdd_sta_ctx;
 	uint32_t roamId = INVALID_ROAM_ID;
-	tCsrRoamProfile *roam_profile;
+	struct csr_roam_profile *roam_profile;
 	eCsrAuthType RSNAuthType;
 	tSmeConfigParams *sme_config;
 	uint8_t channel = 0;
@@ -17556,7 +17558,7 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 					 struct cfg80211_connect_params *req)
 {
 	struct hdd_wext_state *wext_state;
-	tCsrRoamProfile *roam_profile;
+	struct csr_roam_profile *roam_profile;
 	enum eAniAuthType auth_type;
 	uint8_t *buf;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -17731,7 +17733,7 @@ static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 {
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *roam_profile;
+	struct csr_roam_profile *roam_profile;
 
 	roam_profile = &pWextState->roamProfile;
 
@@ -17966,7 +17968,7 @@ static int wlan_hdd_add_assoc_ie(struct hdd_wext_state *wext_state,
  *
  * Return: None
  */
-static void wlan_hdd_save_hlp_ie(tCsrRoamProfile *roam_profile,
+static void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
 				const uint8_t *gen_ie, uint16_t len,
 				bool flush)
 {
@@ -18001,7 +18003,7 @@ static void wlan_hdd_save_hlp_ie(tCsrRoamProfile *roam_profile,
 	roam_profile->hlp_ie_len += len;
 }
 #else
-static inline void wlan_hdd_save_hlp_ie(tCsrRoamProfile *roam_profile,
+static inline void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
 				const uint8_t *gen_ie, uint16_t len,
 				bool flush)
 {}
@@ -18689,7 +18691,7 @@ static void wlan_hdd_check_ht20_ht40_ind(struct hdd_context *hdd_ctx,
 {
 	struct hdd_wext_state *wext_state =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *roam_profile;
+	struct csr_roam_profile *roam_profile;
 
 	roam_profile = &wext_state->roamProfile;
 	roam_profile->force_24ghz_in_ht20 = false;
@@ -18710,7 +18712,7 @@ static inline void wlan_hdd_check_ht20_ht40_ind(struct hdd_context *hdd_ctx,
 {
 	struct hdd_wext_state *wext_state =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *roam_profile;
+	struct csr_roam_profile *roam_profile;
 
 	roam_profile = &wext_state->roamProfile;
 
@@ -19322,7 +19324,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *roam_profile;
+	struct csr_roam_profile *roam_profile;
 	int status;
 	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -19531,7 +19533,7 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *roam_profile;
+	struct csr_roam_profile *roam_profile;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int status;
 	QDF_STATUS hal_status;
@@ -21346,7 +21348,7 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	QDF_STATUS status;
 	tHalHandle hal_hdl;
 	struct qdf_mac_addr bssid;
-	tCsrRoamProfile roam_profile;
+	struct csr_roam_profile roam_profile;
 	struct ch_params ch_params;
 	uint8_t sec_ch = 0;
 	int ret;
@@ -21520,7 +21522,7 @@ static int __wlan_hdd_cfg80211_update_connect_params(
 			struct cfg80211_connect_params *req, uint32_t changed)
 {
 	struct hdd_wext_state *wext_state;
-	tCsrRoamProfile *roam_profile;
+	struct csr_roam_profile *roam_profile;
 	uint8_t *buf;
 	int ret;
 	enum eAniAuthType auth_type;

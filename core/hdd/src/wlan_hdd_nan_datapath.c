@@ -170,7 +170,7 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 	uint32_t roam_id;
 	struct hdd_wext_state *wext_state =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *roam_profile = &wext_state->roamProfile;
+	struct csr_roam_profile *roam_profile = &wext_state->roamProfile;
 
 	ENTER();
 

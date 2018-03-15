@@ -1268,7 +1268,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	/* rather than with cfg to see if FT is enabled */
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *roam_profile = &(pWextState->roamProfile);
+	struct csr_roam_profile *roam_profile = &(pWextState->roamProfile);
 
 	memset(&wrqu, '\0', sizeof(wrqu));
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
@@ -5110,7 +5110,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
  * Return: void
  */
 static void hdd_set_def_rsne_override(
-	tCsrRoamProfile *roam_profile, eCsrAuthType *auth_type)
+	struct csr_roam_profile *roam_profile, eCsrAuthType *auth_type)
 {
 
 	hdd_debug("Set def values in roam profile");
@@ -5250,8 +5250,9 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
  *
  * Return: true if FILS auth else false
  */
-static bool hdd_check_fils_rsn_n_set_auth_type(tCsrRoamProfile *roam_profile,
-			    eCsrAuthType rsn_auth_type)
+static
+bool hdd_check_fils_rsn_n_set_auth_type(struct csr_roam_profile *roam_profile,
+					eCsrAuthType rsn_auth_type)
 {
 	bool is_fils_rsn = false;
 
@@ -5269,8 +5270,9 @@ static bool hdd_check_fils_rsn_n_set_auth_type(tCsrRoamProfile *roam_profile,
 	return is_fils_rsn;
 }
 #else
-static bool hdd_check_fils_rsn_n_set_auth_type(tCsrRoamProfile *roam_profile,
-			    eCsrAuthType rsn_auth_type)
+static
+bool hdd_check_fils_rsn_n_set_auth_type(struct csr_roam_profile *roam_profile,
+					eCsrAuthType rsn_auth_type)
 {
 	return false;
 }
@@ -5288,7 +5290,7 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 {
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *roam_profile = &(pWextState->roamProfile);
+	struct csr_roam_profile *roam_profile = &(pWextState->roamProfile);
 	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 

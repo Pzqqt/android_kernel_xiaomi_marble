@@ -10564,7 +10564,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 	QDF_STATUS status;
 	tHalHandle hal_hdl = hdd_ctx->hHal;
 	struct qdf_mac_addr bssid;
-	tCsrRoamProfile roam_profile;
+	struct csr_roam_profile roam_profile;
 	struct ch_params ch_params;
 
 	if (QDF_GLOBAL_MONITOR_MODE != hdd_get_conparam()) {

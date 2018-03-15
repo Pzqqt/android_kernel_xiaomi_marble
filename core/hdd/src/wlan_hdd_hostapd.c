@@ -6669,7 +6669,8 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 	    ) {
 		struct hdd_wext_state *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-		tCsrRoamProfile *roam_profile = &pWextState->roamProfile;
+		struct csr_roam_profile *roam_profile =
+			&pWextState->roamProfile;
 		struct hdd_station_ctx *sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 

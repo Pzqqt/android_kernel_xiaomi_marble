@@ -730,7 +730,7 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 	struct hdd_adapter *adapter;
 	int errno;
 	struct hdd_wext_state *wext_state;
-	tCsrRoamProfile *roam_profile;
+	struct csr_roam_profile *roam_profile;
 	struct in_ifaddr *ifa;
 
 	ENTER();
