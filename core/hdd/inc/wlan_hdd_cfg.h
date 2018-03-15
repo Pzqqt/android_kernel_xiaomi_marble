@@ -5113,6 +5113,33 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
+ * enable_bt_chain_separation - Enables/disables bt /wlan chainmask assignment
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini disables/enables chainmask setting on 2x2, mainly used for ROME
+ * BT/WLAN chainmask assignment.
+ *
+ * 0, Disable
+ * 1, Enable
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11n/11ac
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_ENABLE_BT_CHAIN_SEPARATION         "enableBTChainSeparation"
+#define CFG_ENABLE_BT_CHAIN_SEPARATION_MIN     (0)
+#define CFG_ENABLE_BT_CHAIN_SEPARATION_MAX     (1)
+#define CFG_ENABLE_BT_CHAIN_SEPARATION_DEFAULT (0)
+
+/*
+ * <ini>
  * disable_high_ht_mcs_2x2 - disable high mcs index for 2nd stream in 2.4G
  * @Min: 0
  * @Max: 8
@@ -15252,6 +15279,7 @@ struct hdd_config {
 	uint16_t wmi_wq_watchdog_timeout;
 	bool enable_dtim_selection_diversity;
 	uint32_t channel_select_logic_conc;
+	bool enable_bt_chain_separation;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

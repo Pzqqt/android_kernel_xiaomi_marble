@@ -1353,6 +1353,9 @@ static void hdd_update_vdev_nss(struct hdd_context *hdd_ctx)
 
 	if (cfg_ini->enable2x2 && !cds_is_sub_20_mhz_enabled())
 		max_supp_nss = 2;
+	hdd_debug("max nss %d vdev_type_nss_2g %x vdev_type_nss_5g %x",
+		  max_supp_nss, cfg_ini->vdev_type_nss_2g,
+		  cfg_ini->vdev_type_nss_5g);
 
 	sme_update_vdev_type_nss(hdd_ctx->hHal, max_supp_nss,
 			cfg_ini->vdev_type_nss_2g, BAND_2G);
@@ -4340,8 +4343,11 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 	hdd_debug("tx_chain_mask_5g: %d, rx_chain_mask_5g: %d",
 		  hdd_ctx->config->tx_chain_mask_5g,
 		  hdd_ctx->config->rx_chain_mask_5g);
+	hdd_debug("enable_bt_chain_separation %d",
+		  hdd_ctx->config->enable_bt_chain_separation);
 
-	if (hdd_ctx->config->enable2x2) {
+	if (hdd_ctx->config->enable2x2 &&
+	    !hdd_ctx->config->enable_bt_chain_separation) {
 		hdd_info("2x2 enabled. skip chain mask programming");
 		return 0;
 	}
@@ -4491,6 +4497,9 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 				ret);
 			goto error;
 		}
+
+		if (hdd_configure_chain_mask(adapter))
+			goto error;
 	} else {
 #define HDD_DTIM_1CHAIN_RX_ID 0x5
 #define HDD_SMPS_PARAM_VALUE_S 29
