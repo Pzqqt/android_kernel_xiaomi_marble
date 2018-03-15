@@ -2527,11 +2527,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		goto out;
 	}
 
-	sap_config = &adapter->session.ap.sap_config;
-	if (sap_config->acs_cfg.ch_list)
-		qdf_mem_free(sap_config->acs_cfg.ch_list);
-	qdf_mem_zero(&sap_config->acs_cfg, sizeof(struct sap_acs_cfg));
-
 	ret = wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACS_MAX, data,
 					 data_len,
 					 wlan_hdd_cfg80211_do_acs_policy);
@@ -2595,6 +2590,13 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			ch_width = 20;
 	}
 
+	sap_config = &adapter->session.ap.sap_config;
+
+	/* Check and free if memory is already allocated for acs channel list */
+	wlan_hdd_undo_acs(adapter);
+
+	qdf_mem_zero(&sap_config->acs_cfg, sizeof(struct sap_acs_cfg));
+
 	hdd_debug("channel width =%d", ch_width);
 	if (ch_width == 160)
 		sap_config->acs_cfg.ch_width = CH_WIDTH_160MHZ;
@@ -2615,7 +2617,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	 * is present
 	 */
 
-	wlan_hdd_undo_acs(adapter);
 	if (tb[QCA_WLAN_VENDOR_ATTR_ACS_CH_LIST]) {
 		char *tmp = nla_data(tb[QCA_WLAN_VENDOR_ATTR_ACS_CH_LIST]);
 
