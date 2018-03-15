@@ -391,11 +391,24 @@ dp_rx_2k_jump_handle(struct dp_soc *soc, void *ring_desc,
 				head, tail, quota);
 }
 
+/**
+ * dp_rx_chain_msdus() - Function to chain all msdus of a mpdu
+ *                       to pdev invalid peer list
+ *
+ * @soc: core DP main context
+ * @nbuf: Buffer pointer
+ * @rx_tlv_hdr: start of rx tlv header
+ * @mac_id: mac id
+ *
+ *  Return: bool: true for last msdu of mpdu
+ */
 static bool
 dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 								uint8_t mac_id)
 {
 	bool mpdu_done = false;
+	qdf_nbuf_t curr_nbuf = NULL;
+	qdf_nbuf_t tmp_nbuf = NULL;
 
 	/* TODO: Currently only single radio is supported, hence
 	 * pdev hard coded to '0' index
@@ -404,6 +417,21 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 
 	if (hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr)) {
 		qdf_nbuf_set_rx_chfrag_start(nbuf, 1);
+
+		/* If the new nbuf received is the first msdu of the
+		 * amsdu and there are msdus in the invalid peer msdu
+		 * list, then let us free all the msdus of the invalid
+		 * peer msdu list.
+		 * This scenario can happen when we start receiving
+		 * new a-msdu even before the previous a-msdu is completely
+		 * received.
+		 */
+		curr_nbuf = dp_pdev->invalid_peer_head_msdu;
+		while (curr_nbuf) {
+			tmp_nbuf = curr_nbuf->next;
+			qdf_nbuf_free(curr_nbuf);
+			curr_nbuf = tmp_nbuf;
+		}
 
 		dp_pdev->invalid_peer_head_msdu = NULL;
 		dp_pdev->invalid_peer_tail_msdu = NULL;
@@ -426,26 +454,24 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 }
 
 /**
-* dp_rx_null_q_desc_handle() - Function to handle NULL Queue
-*                              descriptor violation on either a
-*                              REO or WBM ring
-*
-* @soc: core DP main context
-* @rx_desc : pointer to the sw rx descriptor
-* @head: pointer to head of rx descriptors to be added to free list
-* @tail: pointer to tail of rx descriptors to be added to free list
-* quota: upper limit of descriptors that can be reaped
-*
-* This function handles NULL queue descriptor violations arising out
-* a missing REO queue for a given peer or a given TID. This typically
-* may happen if a packet is received on a QOS enabled TID before the
-* ADDBA negotiation for that TID, when the TID queue is setup. Or
-* it may also happen for MC/BC frames if they are not routed to the
-* non-QOS TID queue, in the absence of any other default TID queue.
-* This error can show up both in a REO destination or WBM release ring.
-*
-* Return: uint32_t: No. of Rx buffers reaped
-*/
+ * dp_rx_null_q_desc_handle() - Function to handle NULL Queue
+ *                              descriptor violation on either a
+ *                              REO or WBM ring
+ *
+ * @soc: core DP main context
+ * @nbuf: buffer pointer
+ * @rx_tlv_hdr: start of rx tlv header
+ * @pool_id: mac id
+ *
+ * This function handles NULL queue descriptor violations arising out
+ * a missing REO queue for a given peer or a given TID. This typically
+ * may happen if a packet is received on a QOS enabled TID before the
+ * ADDBA negotiation for that TID, when the TID queue is setup. Or
+ * it may also happen for MC/BC frames if they are not routed to the
+ * non-QOS TID queue, in the absence of any other default TID queue.
+ * This error can show up both in a REO destination or WBM release ring.
+ *
+ */
 static void
 dp_rx_null_q_desc_handle(struct dp_soc *soc,
 			qdf_nbuf_t nbuf,
@@ -489,6 +515,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 
 	if (!peer) {
 		bool mpdu_done = false;
+		struct dp_pdev *pdev = soc->pdev_list[pool_id];
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		FL("peer is NULL"));
@@ -497,6 +524,10 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 		/* Trigger invalid peer handler wrapper */
 		dp_rx_process_invalid_peer_wrapper(soc, nbuf, mpdu_done);
 
+		if (mpdu_done) {
+			pdev->invalid_peer_head_msdu = NULL;
+			pdev->invalid_peer_tail_msdu = NULL;
+		}
 		return;
 	}
 
