@@ -7170,6 +7170,67 @@ static int drv_cmd_set_disable_chan_list(struct hdd_adapter *adapter,
 {
 	return hdd_parse_disable_chan_cmd(adapter, command);
 }
+
+/**
+ * hdd_get_disable_ch_list() - get disable channel list
+ * @hdd_ctx: hdd context
+ * @buf: buffer to hold disable channel list
+ * @buf_len: buffer length
+ *
+ * Return: length of data copied to buf
+ */
+static int hdd_get_disable_ch_list(struct hdd_context *hdd_ctx, uint8_t *buf,
+				   uint32_t buf_len)
+{
+	struct hdd_cache_channel_info *ch_list;
+	unsigned char i, num_ch;
+	int len = 0;
+
+	qdf_mutex_acquire(&hdd_ctx->cache_channel_lock);
+	if (hdd_ctx->original_channels &&
+	    hdd_ctx->original_channels->num_channels &&
+	    hdd_ctx->original_channels->channel_info) {
+		num_ch = hdd_ctx->original_channels->num_channels;
+
+		len = scnprintf(buf, buf_len, "%s %hhu",
+				"GET_DISABLE_CHANNEL_LIST", num_ch);
+		ch_list = hdd_ctx->original_channels->channel_info;
+		for (i = 0; (i < num_ch) && (len < buf_len - 1); i++) {
+			len += scnprintf(buf + len, buf_len - len,
+					 " %d", ch_list[i].channel_num);
+		}
+	}
+	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
+
+	return len;
+}
+
+static int drv_cmd_get_disable_chan_list(struct hdd_adapter *adapter,
+					 struct hdd_context *hdd_ctx,
+					 uint8_t *command,
+					 uint8_t command_len,
+					 struct hdd_priv_data *priv_data)
+{
+	char extra[512] = {0};
+	int max_len, copied_length;
+
+	hdd_debug("Received Command to get disable Channels list");
+
+	max_len = QDF_MIN(priv_data->total_len, sizeof(extra));
+	copied_length = hdd_get_disable_ch_list(hdd_ctx, extra, max_len);
+	if (copied_length == 0) {
+		hdd_err("disable channel list is not yet programmed");
+		return -EINVAL;
+	}
+
+	if (copy_to_user(priv_data->buf, &extra, copied_length + 1)) {
+		hdd_err("failed to copy data to user buffer");
+		return -EFAULT;
+	}
+
+	hdd_debug("data:%s", extra);
+	return 0;
+}
 #else
 
 static int drv_cmd_set_disable_chan_list(struct hdd_adapter *adapter,
@@ -7183,6 +7244,15 @@ static int drv_cmd_set_disable_chan_list(struct hdd_adapter *adapter,
 
 void wlan_hdd_free_cache_channels(struct hdd_context *hdd_ctx)
 {
+}
+
+static int drv_cmd_get_disable_chan_list(struct hdd_adapter *adapter,
+					 struct hdd_context *hdd_ctx,
+					 uint8_t *command,
+					 uint8_t command_len,
+					 struct hdd_priv_data *priv_data)
+{
+	return 0;
 }
 #endif
 /*
@@ -7299,6 +7369,7 @@ static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 	{"SETANTENNAMODE",            drv_cmd_set_antenna_mode, true},
 	{"GETANTENNAMODE",            drv_cmd_get_antenna_mode, false},
 	{"SET_DISABLE_CHANNEL_LIST",  drv_cmd_set_disable_chan_list, true},
+	{"GET_DISABLE_CHANNEL_LIST",  drv_cmd_get_disable_chan_list, false},
 	{"STOP",                      drv_cmd_dummy, false},
 	/* Deprecated commands */
 	{"RXFILTER-START",            drv_cmd_dummy, false},
