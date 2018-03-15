@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /**
  * DOC: Implements public API for pmo to interact with target/WMI
  */
@@ -35,7 +36,7 @@ QDF_STATUS pmo_tgt_enable_arp_offload_req(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -85,7 +86,7 @@ out:
 		qdf_mem_free(arp_offload_req);
 	if (ns_offload_req)
 		qdf_mem_free(ns_offload_req);
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -100,7 +101,7 @@ QDF_STATUS pmo_tgt_disable_arp_offload_req(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -151,7 +152,7 @@ out:
 		qdf_mem_free(arp_offload_req);
 	if (ns_offload_req)
 		qdf_mem_free(ns_offload_req);
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

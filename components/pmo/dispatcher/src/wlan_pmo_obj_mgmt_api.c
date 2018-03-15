@@ -31,7 +31,7 @@ QDF_STATUS pmo_init(void)
 	QDF_STATUS status;
 	struct wlan_pmo_ctx *pmo_ctx;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (pmo_allocate_ctx() != QDF_STATUS_SUCCESS) {
 		pmo_err("unable to allocate psoc ctx");
 		status = QDF_STATUS_E_FAULT;
@@ -79,7 +79,7 @@ QDF_STATUS pmo_init(void)
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("unable to register vdev create handle");
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -89,7 +89,7 @@ QDF_STATUS pmo_deinit(void)
 	QDF_STATUS status;
 	struct wlan_pmo_ctx *pmo_ctx;
 
-	PMO_ENTER();
+	pmo_enter();
 	pmo_ctx = pmo_get_context();
 	if (!pmo_ctx) {
 		pmo_err("unable to get pmo ctx");
@@ -135,7 +135,7 @@ QDF_STATUS pmo_deinit(void)
 
 out:
 	pmo_free_ctx();
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -147,7 +147,7 @@ QDF_STATUS pmo_psoc_object_created_notification(
 	QDF_STATUS status;
 	struct wlan_pmo_ctx *pmo_ctx;
 
-	PMO_ENTER();
+	pmo_enter();
 	pmo_ctx = pmo_get_context();
 	if (!pmo_ctx) {
 		QDF_ASSERT(0);
@@ -190,7 +190,7 @@ QDF_STATUS pmo_psoc_object_created_notification(
 	/* Register PMO tx ops*/
 	target_if_pmo_register_tx_ops(&psoc_ctx->pmo_tx_ops);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -201,7 +201,7 @@ QDF_STATUS pmo_psoc_object_destroyed_notification(
 	struct pmo_psoc_priv_obj *psoc_ctx = NULL;
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 
@@ -221,7 +221,7 @@ QDF_STATUS pmo_psoc_object_destroyed_notification(
 	qdf_mem_zero(psoc_ctx, sizeof(*psoc_ctx));
 	qdf_mem_free(psoc_ctx);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -234,7 +234,7 @@ QDF_STATUS pmo_vdev_object_created_notification(
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	psoc = pmo_vdev_get_psoc(vdev);
 
@@ -263,7 +263,7 @@ QDF_STATUS pmo_vdev_object_created_notification(
 	qdf_atomic_init(&vdev_ctx->gtk_err_enable);
 
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -272,7 +272,7 @@ QDF_STATUS pmo_vdev_ready(struct wlan_objmgr_vdev *vdev)
 {
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -287,7 +287,7 @@ QDF_STATUS pmo_vdev_ready(struct wlan_objmgr_vdev *vdev)
 
 	pmo_vdev_put_ref(vdev);
 
-	PMO_EXIT();
+	pmo_exit();
 
 	/*
 	 * The above APIs should return a status but don't.
@@ -302,7 +302,7 @@ QDF_STATUS pmo_vdev_object_destroyed_notification(
 	struct pmo_vdev_priv_obj *vdev_ctx = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -315,7 +315,7 @@ QDF_STATUS pmo_vdev_object_destroyed_notification(
 	qdf_spinlock_destroy(&vdev_ctx->pmo_vdev_lock);
 	qdf_mem_free(vdev_ctx);
 
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -328,7 +328,7 @@ QDF_STATUS pmo_register_suspend_handler(
 	struct wlan_pmo_ctx *pmo_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	PMO_ENTER();
+	pmo_enter();
 	pmo_ctx = pmo_get_context();
 	if (!pmo_ctx) {
 		QDF_ASSERT(0);
@@ -349,7 +349,7 @@ QDF_STATUS pmo_register_suspend_handler(
 	pmo_ctx->pmo_suspend_handler_arg[id] = arg;
 	qdf_spin_unlock_bh(&pmo_ctx->lock);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -361,7 +361,7 @@ QDF_STATUS pmo_unregister_suspend_handler(
 	struct wlan_pmo_ctx *pmo_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	PMO_ENTER();
+	pmo_enter();
 	pmo_ctx = pmo_get_context();
 	if (!pmo_ctx) {
 		QDF_ASSERT(0);
@@ -388,7 +388,7 @@ QDF_STATUS pmo_unregister_suspend_handler(
 		status = QDF_STATUS_E_FAILURE;
 	}
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -401,7 +401,7 @@ QDF_STATUS pmo_register_resume_handler(
 	struct wlan_pmo_ctx *pmo_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	PMO_ENTER();
+	pmo_enter();
 	pmo_ctx = pmo_get_context();
 	if (!pmo_ctx) {
 		pmo_err("unable to get pmo ctx");
@@ -421,7 +421,7 @@ QDF_STATUS pmo_register_resume_handler(
 	pmo_ctx->pmo_resume_handler_arg[id] = arg;
 	qdf_spin_unlock_bh(&pmo_ctx->lock);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -433,7 +433,7 @@ QDF_STATUS pmo_unregister_resume_handler(
 	struct wlan_pmo_ctx *pmo_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	PMO_ENTER();
+	pmo_enter();
 	pmo_ctx = pmo_get_context();
 	if (!pmo_ctx) {
 		pmo_err("unable to get pmo ctx");
@@ -459,7 +459,7 @@ QDF_STATUS pmo_unregister_resume_handler(
 		status = QDF_STATUS_E_FAILURE;
 	}
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -474,7 +474,7 @@ QDF_STATUS pmo_suspend_all_components(struct wlan_objmgr_psoc *psoc,
 	pmo_psoc_suspend_handler handler;
 	void *arg;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	pmo_ctx = pmo_get_context();
 	if (!pmo_ctx) {
@@ -526,7 +526,7 @@ suspend_recovery:
 	}
 
 exit_with_status:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -540,7 +540,7 @@ QDF_STATUS pmo_resume_all_components(struct wlan_objmgr_psoc *psoc,
 	pmo_psoc_suspend_handler handler;
 	void *arg;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	pmo_ctx = pmo_get_context();
 	if (!pmo_ctx) {
@@ -570,7 +570,7 @@ QDF_STATUS pmo_resume_all_components(struct wlan_objmgr_psoc *psoc,
 	}
 
 exit_with_status:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

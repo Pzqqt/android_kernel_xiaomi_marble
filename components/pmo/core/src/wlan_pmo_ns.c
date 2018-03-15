@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /**
  * DOC: Implements ns offload feature API's
  */
@@ -25,7 +26,7 @@
 #include "wlan_pmo_obj_mgmt_public_struct.h"
 
 static void pmo_core_fill_ns_addr(struct pmo_ns_offload_params *request,
-	struct pmo_ns_req *ns_req)
+				  struct pmo_ns_req *ns_req)
 {
 	int i;
 
@@ -75,7 +76,7 @@ static QDF_STATUS pmo_core_cache_ns_in_vdev_priv(
 	struct pmo_ns_offload_params request;
 	struct wlan_objmgr_peer *peer;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -109,7 +110,7 @@ static QDF_STATUS pmo_core_cache_ns_in_vdev_priv(
 		sizeof(vdev_ctx->vdev_ns_req));
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -119,7 +120,7 @@ static QDF_STATUS pmo_core_flush_ns_from_vdev_priv(
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -129,7 +130,7 @@ static QDF_STATUS pmo_core_flush_ns_from_vdev_priv(
 	vdev_ctx->vdev_ns_req.enable = PMO_OFFLOAD_DISABLE;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
-	PMO_EXIT();
+	pmo_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -141,7 +142,7 @@ static QDF_STATUS pmo_core_do_enable_ns_offload(struct wlan_objmgr_vdev *vdev,
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -180,7 +181,7 @@ static QDF_STATUS pmo_core_do_enable_ns_offload(struct wlan_objmgr_vdev *vdev,
 		break;
 	}
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -191,7 +192,7 @@ static QDF_STATUS pmo_core_do_disable_ns_offload(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	psoc_ctx = pmo_vdev_get_psoc_priv(vdev);
 
@@ -223,7 +224,7 @@ static QDF_STATUS pmo_core_do_disable_ns_offload(struct wlan_objmgr_vdev *vdev,
 		break;
 	}
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -263,7 +264,7 @@ QDF_STATUS pmo_core_cache_ns_offload_req(
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!ns_req) {
 		pmo_err("ns is NULL");
 		status = QDF_STATUS_E_INVAL;
@@ -301,7 +302,7 @@ QDF_STATUS pmo_core_cache_ns_offload_req(
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -311,7 +312,7 @@ QDF_STATUS pmo_core_flush_ns_offload_req(struct wlan_objmgr_vdev *vdev)
 	QDF_STATUS status;
 	uint8_t vdev_id;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_INVAL;
@@ -333,7 +334,7 @@ QDF_STATUS pmo_core_flush_ns_offload_req(struct wlan_objmgr_vdev *vdev)
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -345,7 +346,7 @@ QDF_STATUS pmo_core_enable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	uint8_t vdev_id;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_INVAL;
@@ -394,7 +395,7 @@ skip_ns_dynamic_check:
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -406,7 +407,7 @@ QDF_STATUS pmo_core_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 	uint8_t vdev_id;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_INVAL;
@@ -447,7 +448,7 @@ skip_ns_dynamic_check:
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

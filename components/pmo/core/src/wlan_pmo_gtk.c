@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /**
  * DOC: Implements gtk offload feature API's
  */
@@ -173,7 +174,7 @@ QDF_STATUS pmo_core_cache_gtk_offload_req(struct wlan_objmgr_vdev *vdev,
 	enum QDF_OPMODE opmode;
 	uint8_t vdev_id;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!gtk_req) {
 		pmo_err("gtk_req is NULL");
 		status = QDF_STATUS_E_INVAL;
@@ -204,7 +205,7 @@ QDF_STATUS pmo_core_cache_gtk_offload_req(struct wlan_objmgr_vdev *vdev,
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -215,7 +216,7 @@ QDF_STATUS pmo_core_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev)
 	uint8_t vdev_id;
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!vdev) {
 		pmo_err("psoc is NULL");
 		status = QDF_STATUS_E_INVAL;
@@ -240,7 +241,7 @@ QDF_STATUS pmo_core_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev)
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -251,7 +252,7 @@ QDF_STATUS pmo_core_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	struct pmo_gtk_req *op_gtk_req = NULL;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_INVAL;
@@ -276,7 +277,7 @@ dec_ref:
 out:
 	if (op_gtk_req)
 		qdf_mem_free(op_gtk_req);
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -287,7 +288,7 @@ QDF_STATUS pmo_core_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	struct pmo_gtk_req *op_gtk_req = NULL;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_INVAL;
@@ -313,7 +314,7 @@ dec_ref:
 out:
 	if (op_gtk_req)
 		qdf_mem_free(op_gtk_req);
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -324,7 +325,7 @@ QDF_STATUS pmo_core_get_gtk_rsp(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!gtk_rsp_req || !vdev) {
 		pmo_err("%s is null", !vdev ? "vdev":"gtk_rsp_req");
 		status = QDF_STATUS_E_INVAL;
@@ -351,7 +352,7 @@ QDF_STATUS pmo_core_get_gtk_rsp(struct wlan_objmgr_vdev *vdev,
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

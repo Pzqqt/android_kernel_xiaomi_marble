@@ -46,7 +46,7 @@ QDF_STATUS pmo_core_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	if (!psoc) {
 		pmo_err("psoc is null");
@@ -68,7 +68,7 @@ QDF_STATUS pmo_core_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
 dec_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 
@@ -81,7 +81,7 @@ QDF_STATUS pmo_core_clear_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	if (!psoc) {
 		pmo_err("psoc is null");
@@ -104,7 +104,7 @@ QDF_STATUS pmo_core_clear_pkt_filter(struct wlan_objmgr_psoc *psoc,
 dec_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 
