@@ -249,9 +249,10 @@ while (0)
 			DP_STATS_AGGR(_tgtobj, _srcobj, rx.bw[i]); \
 		} \
 		  \
-		for (i = 0; i < SS_COUNT; i++) \
+		for (i = 0; i < SS_COUNT; i++) { \
 			DP_STATS_AGGR(_tgtobj, _srcobj, rx.nss[i]); \
-		\
+			DP_STATS_AGGR(_tgtobj, _srcobj, tx.nss[i]); \
+		} \
 		for (i = 0; i < WME_AC_MAX; i++) { \
 			DP_STATS_AGGR(_tgtobj, _srcobj, tx.wme_ac_type[i]); \
 			DP_STATS_AGGR(_tgtobj, _srcobj, rx.wme_ac_type[i]); \
