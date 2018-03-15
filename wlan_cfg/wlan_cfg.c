@@ -230,10 +230,13 @@ static const int rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_RX_RING_MASK_3};
 
 static const int rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
+					0,
 					WLAN_CFG_RX_MON_RING_MASK_0,
 					WLAN_CFG_RX_MON_RING_MASK_1,
-					WLAN_CFG_RX_MON_RING_MASK_2,
-					WLAN_CFG_RX_MON_RING_MASK_3};
+					WLAN_CFG_RX_MON_RING_MASK_2};
 
 #endif
 
