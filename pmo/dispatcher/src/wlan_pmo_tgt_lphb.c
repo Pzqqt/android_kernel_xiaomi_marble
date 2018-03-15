@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /**
  * DOC: Implements public API for pmo low power hear beat feature
  * to interact with target/WMI.
@@ -31,7 +32,7 @@ QDF_STATUS pmo_tgt_send_lphb_enable(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_lphb_enable) {
 		pmo_err("send_lphb_enable is null");
@@ -42,7 +43,7 @@ QDF_STATUS pmo_tgt_send_lphb_enable(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to send lphb enable");
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -53,7 +54,7 @@ QDF_STATUS pmo_tgt_send_lphb_tcp_params(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_lphb_tcp_params) {
 		pmo_err("send_lphb_tcp_params is null");
@@ -64,7 +65,7 @@ QDF_STATUS pmo_tgt_send_lphb_tcp_params(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to send lphb tcp params");
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -75,7 +76,7 @@ QDF_STATUS pmo_tgt_send_lphb_tcp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_lphb_tcp_filter_req) {
 		pmo_err("send_lphb_tcp_filter_req is null");
@@ -86,7 +87,7 @@ QDF_STATUS pmo_tgt_send_lphb_tcp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to send lphb tcp filter req");
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -97,7 +98,7 @@ QDF_STATUS pmo_tgt_send_lphb_udp_params(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_lphb_upd_params) {
 		pmo_err("send_lphb_upd_params is null");
@@ -108,7 +109,7 @@ QDF_STATUS pmo_tgt_send_lphb_udp_params(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to send lphb udp param");
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -119,7 +120,7 @@ QDF_STATUS pmo_tgt_send_lphb_udp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_lphb_udp_filter_req) {
 		pmo_err("send_lphb_udp_filter_req is null");
@@ -130,7 +131,7 @@ QDF_STATUS pmo_tgt_send_lphb_udp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to send lphb udp filter req");
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,7 +31,7 @@ QDF_STATUS pmo_tgt_conf_hw_filter(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	struct wlan_pmo_tx_ops ops;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	pmo_debug("Configure hw filter; vdev_id:%u, mode:%d",
 		  req->vdev_id, req->mode);
@@ -46,7 +46,7 @@ QDF_STATUS pmo_tgt_conf_hw_filter(struct wlan_objmgr_psoc *psoc,
 	status = ops.send_conf_hw_filter_req(psoc, req);
 
 exit_with_status:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

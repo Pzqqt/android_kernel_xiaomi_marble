@@ -88,7 +88,7 @@ QDF_STATUS pmo_core_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -122,7 +122,7 @@ QDF_STATUS pmo_core_del_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 rel_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -133,7 +133,7 @@ void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	if (!psoc) {
 		pmo_err("psoc is null");
@@ -157,7 +157,7 @@ void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	pmo_vdev_put_ref(vdev);
 
 out:
-	PMO_EXIT();
+	pmo_exit();
 }
 
 void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
@@ -166,7 +166,7 @@ void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!psoc) {
 		pmo_err("psoc is null");
 		goto out;
@@ -189,7 +189,7 @@ void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	pmo_vdev_put_ref(vdev);
 
 out:
-	PMO_EXIT();
+	pmo_exit();
 }
 
 /**

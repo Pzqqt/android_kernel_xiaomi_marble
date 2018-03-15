@@ -34,7 +34,7 @@ static QDF_STATUS pmo_core_cache_arp_in_vdev_priv(
 	int index;
 	struct qdf_mac_addr peer_bssid;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -77,7 +77,7 @@ free_req:
 	qdf_mem_free(request);
 
 exit_with_status:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -87,7 +87,7 @@ static QDF_STATUS pmo_core_flush_arp_from_vdev_priv(
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -97,7 +97,7 @@ static QDF_STATUS pmo_core_flush_arp_from_vdev_priv(
 	vdev_ctx->vdev_arp_req.enable = PMO_OFFLOAD_DISABLE;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
-	PMO_EXIT();
+	pmo_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -109,7 +109,7 @@ static QDF_STATUS pmo_core_do_enable_arp_offload(struct wlan_objmgr_vdev *vdev,
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -147,7 +147,7 @@ static QDF_STATUS pmo_core_do_enable_arp_offload(struct wlan_objmgr_vdev *vdev,
 		break;
 	}
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -159,7 +159,7 @@ static QDF_STATUS pmo_core_do_disable_arp_offload(struct wlan_objmgr_vdev *vdev,
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -187,7 +187,7 @@ static QDF_STATUS pmo_core_do_disable_arp_offload(struct wlan_objmgr_vdev *vdev,
 		break;
 	}
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -225,7 +225,7 @@ QDF_STATUS pmo_core_cache_arp_offload_req(struct pmo_arp_req *arp_req)
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!arp_req) {
 		pmo_err("arp_req is NULL");
 		status = QDF_STATUS_E_INVAL;
@@ -260,7 +260,7 @@ QDF_STATUS pmo_core_cache_arp_offload_req(struct pmo_arp_req *arp_req)
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -270,7 +270,7 @@ QDF_STATUS pmo_core_flush_arp_offload_req(struct wlan_objmgr_vdev *vdev)
 	QDF_STATUS status;
 	uint8_t vdev_id;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
@@ -292,7 +292,7 @@ QDF_STATUS pmo_core_flush_arp_offload_req(struct wlan_objmgr_vdev *vdev)
 def_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -303,7 +303,7 @@ QDF_STATUS pmo_core_enable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 	uint8_t vdev_id;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
@@ -326,7 +326,7 @@ QDF_STATUS pmo_core_enable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 def_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -337,7 +337,7 @@ QDF_STATUS pmo_core_disable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 	uint8_t vdev_id;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!vdev) {
 		pmo_err("vdev is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
@@ -360,7 +360,7 @@ QDF_STATUS pmo_core_disable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 def_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

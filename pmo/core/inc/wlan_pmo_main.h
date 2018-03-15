@@ -42,8 +42,8 @@
 #define pmo_debug(format, args...) \
 		pmo_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
-#define PMO_ENTER() pmo_debug("enter")
-#define PMO_EXIT() pmo_debug("exit")
+#define pmo_enter() pmo_debug("enter")
+#define pmo_exit() pmo_debug("exit")
 
 #define PMO_VDEV_IN_STA_MODE(mode) \
 	((mode) == QDF_STA_MODE || (mode) == QDF_P2P_CLIENT_MODE ? 1 : 0)

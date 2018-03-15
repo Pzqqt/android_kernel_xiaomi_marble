@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /**
  * DOC: Implements public API for pmo to interact with target/WMI
  */
@@ -34,7 +35,7 @@ QDF_STATUS pmo_tgt_set_pkt_filter(struct wlan_objmgr_vdev *vdev,
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 	struct qdf_mac_addr peer_bssid;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
@@ -85,7 +86,7 @@ QDF_STATUS pmo_tgt_set_pkt_filter(struct wlan_objmgr_vdev *vdev,
 out:
 	if (request_buf)
 		qdf_mem_free(request_buf);
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -100,7 +101,7 @@ QDF_STATUS pmo_tgt_clear_pkt_filter(struct wlan_objmgr_vdev *vdev,
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 	struct qdf_mac_addr peer_bssid;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
@@ -149,7 +150,7 @@ QDF_STATUS pmo_tgt_clear_pkt_filter(struct wlan_objmgr_vdev *vdev,
 out:
 	if (request_buf)
 		qdf_mem_free(request_buf);
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

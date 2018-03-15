@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,7 +32,7 @@ static QDF_STATUS pmo_core_conf_hw_filter(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 	struct pmo_hw_filter_params req = { .mode = mode, };
 
-	PMO_ENTER();
+	pmo_enter();
 
 	if (!pmo_core_is_vdev_connected(vdev)) {
 		status = QDF_STATUS_E_NOSUPPORT;
@@ -43,7 +43,7 @@ static QDF_STATUS pmo_core_conf_hw_filter(struct wlan_objmgr_vdev *vdev,
 	status = pmo_tgt_conf_hw_filter(pmo_vdev_get_psoc(vdev), &req);
 
 exit_with_status:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -54,7 +54,7 @@ QDF_STATUS pmo_core_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 	struct pmo_psoc_priv_obj *psoc_priv;
 	enum pmo_hw_filter_mode mode;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -70,7 +70,7 @@ QDF_STATUS pmo_core_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 	pmo_vdev_put_ref(vdev);
 
 exit_with_status:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -79,7 +79,7 @@ QDF_STATUS pmo_core_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 {
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -90,7 +90,7 @@ QDF_STATUS pmo_core_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 	pmo_vdev_put_ref(vdev);
 
 exit_with_status:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

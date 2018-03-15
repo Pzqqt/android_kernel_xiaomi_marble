@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /**
  * DOC: Implements public API for pmo to interact with target/WMI
  */
@@ -31,7 +32,7 @@ QDF_STATUS pmo_tgt_vdev_update_param_req(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	psoc = pmo_vdev_get_psoc(vdev);
 
@@ -45,7 +46,7 @@ QDF_STATUS pmo_tgt_vdev_update_param_req(struct wlan_objmgr_vdev *vdev,
 	status = pmo_tx_ops.send_vdev_param_update_req(vdev, param_id,
 			param_value);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -57,7 +58,7 @@ QDF_STATUS pmo_tgt_send_vdev_sta_ps_param(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	psoc = pmo_vdev_get_psoc(vdev);
 
@@ -71,7 +72,7 @@ QDF_STATUS pmo_tgt_send_vdev_sta_ps_param(struct wlan_objmgr_vdev *vdev,
 	status = pmo_tx_ops.send_vdev_sta_ps_param_req(vdev, ps_param,
 			param_value);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

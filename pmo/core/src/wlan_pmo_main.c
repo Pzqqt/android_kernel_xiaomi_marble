@@ -165,7 +165,7 @@ QDF_STATUS pmo_core_get_psoc_config(struct wlan_objmgr_psoc *psoc,
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!psoc || !psoc_cfg) {
 		pmo_err("%s is null", !psoc ? "psoc":"psoc_cfg");
 		status = QDF_STATUS_E_NULL_VALUE;
@@ -177,7 +177,7 @@ QDF_STATUS pmo_core_get_psoc_config(struct wlan_objmgr_psoc *psoc,
 	}
 
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -188,7 +188,7 @@ QDF_STATUS pmo_core_update_psoc_config(struct wlan_objmgr_psoc *psoc,
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!psoc || !psoc_cfg) {
 		pmo_err("%s is null", !psoc ? "psoc":"psoc_cfg");
 		status = QDF_STATUS_E_NULL_VALUE;
@@ -200,7 +200,7 @@ QDF_STATUS pmo_core_update_psoc_config(struct wlan_objmgr_psoc *psoc,
 	}
 
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

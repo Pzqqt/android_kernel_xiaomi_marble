@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /**
  * DOC: Implements public API for pmo to interact with target/WMI
  */
@@ -32,7 +33,7 @@ QDF_STATUS pmo_tgt_enable_wow_wakeup_event(
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	psoc = pmo_vdev_get_psoc(vdev);
 
@@ -46,7 +47,7 @@ QDF_STATUS pmo_tgt_enable_wow_wakeup_event(
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to enable wow wakeup event");
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -59,7 +60,7 @@ QDF_STATUS pmo_tgt_disable_wow_wakeup_event(
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	psoc = pmo_vdev_get_psoc(vdev);
 
@@ -73,7 +74,7 @@ QDF_STATUS pmo_tgt_disable_wow_wakeup_event(
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to disable wow wakeup event");
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -89,7 +90,7 @@ QDF_STATUS pmo_tgt_send_wow_patterns_to_fw(
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 	psoc = pmo_vdev_get_psoc(vdev);
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
@@ -114,7 +115,7 @@ QDF_STATUS pmo_tgt_send_wow_patterns_to_fw(
 	if (user)
 		pmo_increment_wow_user_ptrn(vdev_ctx);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -128,7 +129,7 @@ QDF_STATUS pmo_tgt_del_wow_pattern(
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	PMO_ENTER();
+	pmo_enter();
 	psoc = pmo_vdev_get_psoc(vdev);
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -147,7 +148,7 @@ QDF_STATUS pmo_tgt_del_wow_pattern(
 	if (user)
 		pmo_decrement_wow_user_ptrn(vdev_ctx);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }

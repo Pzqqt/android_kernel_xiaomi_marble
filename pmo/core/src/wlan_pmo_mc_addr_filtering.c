@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
 /**
  * DOC: Implements mc addr filtering offload feature API's
  */
@@ -23,7 +24,6 @@
 #include "wlan_pmo_tgt_api.h"
 #include "wlan_pmo_main.h"
 #include "wlan_pmo_obj_mgmt_public_struct.h"
-
 
 #define PMO_INVALID_MC_ADDR_COUNT (-1)
 
@@ -106,7 +106,7 @@ QDF_STATUS pmo_core_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
 {
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -117,7 +117,7 @@ QDF_STATUS pmo_core_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
 	pmo_vdev_put_ref(vdev);
 
 exit_with_status:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -126,7 +126,7 @@ QDF_STATUS pmo_core_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
 {
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -137,7 +137,7 @@ QDF_STATUS pmo_core_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
 	pmo_vdev_put_ref(vdev);
 
 exit_with_status:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -147,7 +147,7 @@ QDF_STATUS pmo_core_set_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 {
 	int i;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	if (pmo_tgt_get_multiple_mc_filter_support(vdev)) {
 		pmo_debug("FW supports multiple mcast filter");
@@ -158,7 +158,7 @@ QDF_STATUS pmo_core_set_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 			pmo_tgt_set_mc_filter_req(vdev, mc_list->mc_addr[i]);
 	}
 
-	PMO_EXIT();
+	pmo_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -168,7 +168,7 @@ QDF_STATUS pmo_core_clear_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 {
 	int i;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (pmo_tgt_get_multiple_mc_filter_support(vdev)) {
 		pmo_debug("FW supports multiple mcast filter");
 		pmo_tgt_clear_multiple_mc_filter_req(vdev, mc_list);
@@ -178,7 +178,7 @@ QDF_STATUS pmo_core_clear_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 			pmo_tgt_clear_mc_filter_req(vdev, mc_list->mc_addr[i]);
 	}
 
-	PMO_EXIT();
+	pmo_exit();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -189,7 +189,7 @@ static QDF_STATUS pmo_core_do_enable_mc_addr_list(struct wlan_objmgr_vdev *vdev,
 {
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	if (!vdev_ctx->vdev_mc_list_req.mc_cnt) {
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -212,7 +212,7 @@ static QDF_STATUS pmo_core_do_enable_mc_addr_list(struct wlan_objmgr_vdev *vdev,
 	vdev_ctx->vdev_mc_list_req.is_filter_applied = true;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -224,7 +224,7 @@ static QDF_STATUS pmo_core_do_disable_mc_addr_list(
 {
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	/* validate filter is applied before clearing in fwr */
 	if (!vdev_ctx->vdev_mc_list_req.is_filter_applied) {
@@ -248,7 +248,7 @@ static QDF_STATUS pmo_core_do_disable_mc_addr_list(
 	vdev_ctx->vdev_mc_list_req.is_filter_applied = false;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -350,7 +350,7 @@ QDF_STATUS pmo_core_cache_mc_addr_list(
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	if (!mc_list_config->psoc) {
 		pmo_err("psoc is NULL");
@@ -383,7 +383,7 @@ QDF_STATUS pmo_core_cache_mc_addr_list(
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -394,7 +394,7 @@ QDF_STATUS pmo_core_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!psoc) {
 		pmo_err("psoc is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
@@ -427,7 +427,7 @@ QDF_STATUS pmo_core_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -440,7 +440,7 @@ static QDF_STATUS pmo_core_handle_enable_mc_list_trigger(
 	QDF_STATUS status;
 	struct pmo_mc_addr_list *op_mc_list_req;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
@@ -482,7 +482,7 @@ free_req:
 	qdf_mem_free(op_mc_list_req);
 
 exit_with_status:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -495,7 +495,7 @@ QDF_STATUS pmo_core_enable_mc_addr_filtering_in_fwr(
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 
-	PMO_ENTER();
+	pmo_enter();
 
 	status = pmo_psoc_get_ref(psoc);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -526,7 +526,7 @@ put_psoc:
 	pmo_psoc_put_ref(psoc);
 
 exit_with_status:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
@@ -590,7 +590,7 @@ QDF_STATUS pmo_core_disable_mc_addr_filtering_in_fwr(
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 
-	PMO_ENTER();
+	pmo_enter();
 	if (!psoc) {
 		pmo_err("psoc is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
@@ -617,7 +617,7 @@ QDF_STATUS pmo_core_disable_mc_addr_filtering_in_fwr(
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	PMO_EXIT();
+	pmo_exit();
 
 	return status;
 }
