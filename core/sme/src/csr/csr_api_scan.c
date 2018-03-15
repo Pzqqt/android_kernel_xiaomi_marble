@@ -2215,6 +2215,7 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	struct scan_start_request *req;
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t i, chan, num_chan = 0;
+	uint8_t pdev_id;
 	wlan_scan_id scan_id;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
@@ -2229,6 +2230,12 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 			ucfg_scan_get_enable(mac_ctx->psoc), profile->SSIDs.numOfSSIDs);
 		return status;
 	}
+
+	if (!mac_ctx->pdev) {
+		sme_err("pdev ctx is NULL");
+		return status;
+	}
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(mac_ctx->pdev);
 
 	session->scan_info.profile =
 			qdf_mem_malloc(sizeof(struct csr_roam_profile));
@@ -2250,7 +2257,9 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 			  FL("Failed to allocate memory"));
 		goto error;
 	}
+
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_psoc(mac_ctx->psoc,
+				pdev_id,
 				session->selfMacAddr.bytes,
 				WLAN_LEGACY_SME_ID);
 	ucfg_scan_init_default_params(vdev, req);

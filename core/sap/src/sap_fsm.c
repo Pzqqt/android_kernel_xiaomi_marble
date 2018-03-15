@@ -834,6 +834,7 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 	struct scan_start_request *req;
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t i;
+	uint8_t pdev_id;
 
 #ifdef SOFTAP_CHANNEL_RANGE
 	uint8_t *channel_list = NULL;
@@ -979,8 +980,10 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 			  FL("Failed to allocate memory"));
 			return QDF_STATUS_E_NOMEM;
 		}
-		vdev = wlan_objmgr_get_vdev_by_macaddr_from_psoc(
-						mac_ctx->psoc,
+
+		pdev_id = wlan_objmgr_pdev_get_pdev_id(mac_ctx->pdev);
+		vdev = wlan_objmgr_get_vdev_by_macaddr_from_psoc(mac_ctx->psoc,
+						pdev_id,
 						sap_context->self_mac_addr,
 						WLAN_LEGACY_SME_ID);
 		if (!vdev) {

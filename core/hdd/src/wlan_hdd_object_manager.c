@@ -359,7 +359,9 @@ int hdd_objmgr_remove_peer_object(struct wlan_objmgr_vdev *vdev,
 				  uint8_t *mac_addr)
 {
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_peer *peer;
+	uint8_t pdev_id;
 
 	if (!vdev) {
 		hdd_err("vdev NULL");
@@ -374,7 +376,16 @@ int hdd_objmgr_remove_peer_object(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 
-	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_HDD_ID_OBJ_MGR);
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		hdd_err("pdev NULL");
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	peer = wlan_objmgr_get_peer(psoc, pdev_id, mac_addr,
+				    WLAN_HDD_ID_OBJ_MGR);
 	if (peer) {
 		wlan_objmgr_peer_obj_delete(peer);
 

@@ -2369,6 +2369,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	struct wlan_objmgr_psoc *psoc;
 	void *mac_addr;
 	bool is_5g = false;
+	uint8_t pdev_id;
 
 	if (NULL == wma_handle) {
 		WMA_LOGE("wma_handle is NULL");
@@ -2743,12 +2744,18 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		goto error;
 	}
 
+	if (!wma_handle->pdev) {
+		WMA_LOGE("%s: pdev ctx is NULL", __func__);
+		goto error;
+	}
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(wma_handle->pdev);
 	wh = (struct ieee80211_frame *)(qdf_nbuf_data(tx_frame));
 	mac_addr = wh->i_addr1;
-	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_MGMT_NB_ID);
+	peer = wlan_objmgr_get_peer(psoc, pdev_id, mac_addr, WLAN_MGMT_NB_ID);
 	if (!peer) {
 		mac_addr = wh->i_addr2;
-		peer = wlan_objmgr_get_peer(psoc, mac_addr,
+		peer = wlan_objmgr_get_peer(psoc, pdev_id, mac_addr,
 					WLAN_MGMT_NB_ID);
 	}
 
