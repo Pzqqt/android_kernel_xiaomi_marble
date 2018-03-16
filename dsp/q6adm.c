@@ -3705,6 +3705,7 @@ int adm_param_enable(int port_id, int copp_idx, int module_id,  int enable)
 
 	return adm_param_enable_v2(port_id, copp_idx, mod_inst_info, enable);
 }
+EXPORT_SYMBOL(adm_param_enable);
 
 /**
  * adm_param_enable_v2 -
@@ -3751,7 +3752,7 @@ int adm_param_enable_v2(int port_id, int copp_idx,
 	return rc;
 
 }
-EXPORT_SYMBOL(adm_param_enable);
+EXPORT_SYMBOL(adm_param_enable_v2);
 
 /**
  * adm_send_calibration -
