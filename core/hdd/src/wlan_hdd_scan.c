@@ -424,7 +424,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	struct hdd_scan_info *scan_info = NULL;
 	struct hdd_adapter *con_sap_adapter;
 	uint16_t con_dfs_ch;
-	struct hdd_wext_state *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	uint8_t curr_session_id;
 	enum scan_reject_states curr_reason;
 	static uint32_t scan_ebusy_cnt;
@@ -618,9 +617,12 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if ((QDF_STA_MODE == adapter->device_mode) ||
 	    (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
 	    (QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
-		pwextBuf->roamProfile.pAddIEScan =
+		struct csr_roam_profile *roam_profile =
+			hdd_roam_profile(adapter);
+
+		roam_profile->pAddIEScan =
 			scan_info->scan_add_ie.addIEdata;
-		pwextBuf->roamProfile.nAddIEScanLength =
+		roam_profile->nAddIEScanLength =
 			scan_info->scan_add_ie.length;
 	}
 
