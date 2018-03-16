@@ -8329,6 +8329,13 @@ typedef enum {
      */
     WMI_VDEV_PARAM_AUTORATE_MISC_CFG,                       /* 0x80 */
 
+    /** VDEV parameter to enable or disable RTT initiator mac address
+      * randomization.
+      * Default: Disabled.
+      * valid values: 0-Disable random mac 1-Enable random mac
+      */
+    WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_INITIATOR_RANDOM_MAC, /* 0x81 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
