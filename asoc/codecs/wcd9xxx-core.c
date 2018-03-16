@@ -1350,7 +1350,8 @@ static int wcd9xxx_slim_probe(struct slim_device *slim)
 	 * Vout_D to be ready after BUCK_SIDO is powered up.
 	 * SYS_RST_N shouldn't be pulled high during this time
 	 */
-	if (wcd9xxx->type == WCD9335 || wcd9xxx->type == WCD934X)
+	if (wcd9xxx->type == WCD9335 || wcd9xxx->type == WCD934X ||
+	    wcd9xxx->type == WCD9360)
 		usleep_range(600, 650);
 	else
 		usleep_range(5, 10);
@@ -1596,6 +1597,7 @@ static const struct slim_device_id wcd_slim_device_id[] = {
 	{"tomtom-slim-pgd", WCD9330},
 	{"tasha-slim-pgd", WCD9335},
 	{"tavil-slim-pgd", WCD934X},
+	{"pahu-slim-pgd", WCD9360},
 	{}
 };
 
