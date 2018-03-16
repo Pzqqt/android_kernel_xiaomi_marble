@@ -4088,51 +4088,53 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	struct hdd_station_ctx *sta_ctx;
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct csr_roam_profile *roam_profile;
 
 	hdd_enter();
 
 	/* clear WPA/RSN/WSC IE information in the profile */
-	pWextState->roamProfile.nWPAReqIELength = 0;
-	pWextState->roamProfile.pWPAReqIE = (uint8_t *) NULL;
-	pWextState->roamProfile.nRSNReqIELength = 0;
-	pWextState->roamProfile.pRSNReqIE = (uint8_t *) NULL;
+	roam_profile = hdd_roam_profile(adapter);
+
+	roam_profile->nWPAReqIELength = 0;
+	roam_profile->pWPAReqIE = NULL;
+	roam_profile->nRSNReqIELength = 0;
+	roam_profile->pRSNReqIE = NULL;
 
 #ifdef FEATURE_WLAN_WAPI
-	pWextState->roamProfile.nWAPIReqIELength = 0;
-	pWextState->roamProfile.pWAPIReqIE = (uint8_t *) NULL;
+	roam_profile->nWAPIReqIELength = 0;
+	roam_profile->pWAPIReqIE = NULL;
 #endif
 
-	pWextState->roamProfile.bWPSAssociation = false;
-	pWextState->roamProfile.bOSENAssociation = false;
-	pWextState->roamProfile.pAddIEScan = (uint8_t *) NULL;
-	pWextState->roamProfile.nAddIEScanLength = 0;
-	pWextState->roamProfile.pAddIEAssoc = (uint8_t *) NULL;
-	pWextState->roamProfile.nAddIEAssocLength = 0;
+	roam_profile->bWPSAssociation = false;
+	roam_profile->bOSENAssociation = false;
+	roam_profile->pAddIEScan = NULL;
+	roam_profile->nAddIEScanLength = 0;
+	roam_profile->pAddIEAssoc = NULL;
+	roam_profile->nAddIEAssocLength = 0;
 
-	pWextState->roamProfile.EncryptionType.numEntries = 1;
-	pWextState->roamProfile.EncryptionType.encryptionType[0]
-		= eCSR_ENCRYPT_TYPE_NONE;
+	roam_profile->EncryptionType.numEntries = 1;
+	roam_profile->EncryptionType.encryptionType[0] =
+		eCSR_ENCRYPT_TYPE_NONE;
 
-	pWextState->roamProfile.mcEncryptionType.numEntries = 1;
-	pWextState->roamProfile.mcEncryptionType.encryptionType[0]
-		= eCSR_ENCRYPT_TYPE_NONE;
+	roam_profile->mcEncryptionType.numEntries = 1;
+	roam_profile->mcEncryptionType.encryptionType[0] =
+		eCSR_ENCRYPT_TYPE_NONE;
 
-	pWextState->roamProfile.AuthType.numEntries = 1;
-	pWextState->roamProfile.AuthType.authType[0] =
+	roam_profile->AuthType.numEntries = 1;
+	roam_profile->AuthType.authType[0] =
 		eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
-	qdf_mem_zero(pWextState->roamProfile.bssid_hint.bytes,
-		QDF_MAC_ADDR_SIZE);
+	qdf_mem_zero(roam_profile->bssid_hint.bytes, QDF_MAC_ADDR_SIZE);
 
 #ifdef WLAN_FEATURE_11W
-	pWextState->roamProfile.MFPEnabled = false;
-	pWextState->roamProfile.MFPRequired = 0;
-	pWextState->roamProfile.MFPCapable = 0;
+	roam_profile->MFPEnabled = false;
+	roam_profile->MFPRequired = 0;
+	roam_profile->MFPCapable = 0;
 #endif
 
 	pWextState->authKeyMgmt = 0;
 
-	qdf_mem_zero(pWextState->roamProfile.Keys.KeyLength, CSR_MAX_NUM_KEY);
+	qdf_mem_zero(roam_profile->Keys.KeyLength, CSR_MAX_NUM_KEY);
 
 #ifdef FEATURE_WLAN_WAPI
 	adapter->wapi_info.wapi_auth_mode = WAPI_AUTH_MODE_OPEN;
@@ -7711,13 +7713,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	int sub_cmd = wrqu->data.flags;
 	struct hdd_context *hdd_ctx;
 	int ret;
-#ifdef WLAN_FEATURE_11W
-	struct hdd_wext_state *pWextState;
-#endif
-
-#ifdef WLAN_FEATURE_11W
-	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-#endif
 
 	hdd_enter_dev(dev);
 
@@ -8041,20 +8036,23 @@ static int __iw_get_char_setnone(struct net_device *dev,
 #ifdef WLAN_FEATURE_11W
 	case WE_GET_11W_INFO:
 	{
+		struct csr_roam_profile *roam_profile =
+			hdd_roam_profile(adapter);
+
 		hdd_debug("WE_GET_11W_ENABLED = %d",
-		       pWextState->roamProfile.MFPEnabled);
+		       roam_profile->MFPEnabled);
 
 		snprintf(extra, WE_MAX_STR_LEN,
 			 "\n BSSID %02X:%02X:%02X:%02X:%02X:%02X, Is PMF Assoc? %d"
 			 "\n Number of Unprotected Disassocs %d"
 			 "\n Number of Unprotected Deauths %d",
-			 pWextState->roamProfile.BSSIDs.bssid->bytes[0],
-			 pWextState->roamProfile.BSSIDs.bssid->bytes[1],
-			 pWextState->roamProfile.BSSIDs.bssid->bytes[2],
-			 pWextState->roamProfile.BSSIDs.bssid->bytes[3],
-			 pWextState->roamProfile.BSSIDs.bssid->bytes[4],
-			 pWextState->roamProfile.BSSIDs.bssid->bytes[5],
-			 pWextState->roamProfile.MFPEnabled,
+			 roam_profile->BSSIDs.bssid->bytes[0],
+			 roam_profile->BSSIDs.bssid->bytes[1],
+			 roam_profile->BSSIDs.bssid->bytes[2],
+			 roam_profile->BSSIDs.bssid->bytes[3],
+			 roam_profile->BSSIDs.bssid->bytes[4],
+			 roam_profile->BSSIDs.bssid->bytes[5],
+			 roam_profile->MFPEnabled,
 			 adapter->hdd_stats.hdd_pmf_stats.
 			 num_unprot_disassoc_rx,
 			 adapter->hdd_stats.hdd_pmf_stats.
@@ -12070,48 +12068,40 @@ const struct iw_handler_def we_handler_def = {
  */
 static int hdd_set_wext(struct hdd_adapter *adapter)
 {
-	struct hdd_wext_state *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct csr_roam_profile *roam_profile;
 
 	hdd_enter();
 
-	if (!pwextBuf) {
-		hdd_err("ERROR: pwextBuf is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!sta_ctx) {
-		hdd_err("ERROR: sta_ctx is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
+	roam_profile = hdd_roam_profile(adapter);
 
 	/* Now configure the roaming profile links. To SSID and bssid. */
-	pwextBuf->roamProfile.SSIDs.numOfSSIDs = 0;
-	pwextBuf->roamProfile.SSIDs.SSIDList = &sta_ctx->conn_info.SSID;
+	roam_profile->SSIDs.numOfSSIDs = 0;
+	roam_profile->SSIDs.SSIDList = &sta_ctx->conn_info.SSID;
 
-	pwextBuf->roamProfile.BSSIDs.numOfBSSIDs = 0;
-	pwextBuf->roamProfile.BSSIDs.bssid = &sta_ctx->conn_info.bssId;
+	roam_profile->BSSIDs.numOfBSSIDs = 0;
+	roam_profile->BSSIDs.bssid = &sta_ctx->conn_info.bssId;
 
 	/*Set the numOfChannels to zero to scan all the channels */
-	pwextBuf->roamProfile.ChannelInfo.numOfChannels = 0;
-	pwextBuf->roamProfile.ChannelInfo.ChannelList = NULL;
+	roam_profile->ChannelInfo.numOfChannels = 0;
+	roam_profile->ChannelInfo.ChannelList = NULL;
 
 	/* Default is no encryption */
-	pwextBuf->roamProfile.EncryptionType.numEntries = 1;
-	pwextBuf->roamProfile.EncryptionType.encryptionType[0] =
+	roam_profile->EncryptionType.numEntries = 1;
+	roam_profile->EncryptionType.encryptionType[0] =
 		eCSR_ENCRYPT_TYPE_NONE;
 
-	pwextBuf->roamProfile.mcEncryptionType.numEntries = 1;
-	pwextBuf->roamProfile.mcEncryptionType.encryptionType[0] =
+	roam_profile->mcEncryptionType.numEntries = 1;
+	roam_profile->mcEncryptionType.encryptionType[0] =
 		eCSR_ENCRYPT_TYPE_NONE;
 
-	pwextBuf->roamProfile.BSSType = eCSR_BSS_TYPE_INFRASTRUCTURE;
+	roam_profile->BSSType = eCSR_BSS_TYPE_INFRASTRUCTURE;
 
 	/* Default is no authentication */
-	pwextBuf->roamProfile.AuthType.numEntries = 1;
-	pwextBuf->roamProfile.AuthType.authType[0] = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+	roam_profile->AuthType.numEntries = 1;
+	roam_profile->AuthType.authType[0] = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
-	pwextBuf->roamProfile.phyMode = eCSR_DOT11_MODE_AUTO;
+	roam_profile->phyMode = eCSR_DOT11_MODE_AUTO;
 	sta_ctx->wpa_versions = 0;
 
 	/*Set the default scan mode */
@@ -12125,14 +12115,17 @@ static int hdd_set_wext(struct hdd_adapter *adapter)
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
-static void hdd_initialize_fils_info(struct hdd_wext_state *pwextBuf)
+static void hdd_initialize_fils_info(struct hdd_adapter *adapter)
 {
-	pwextBuf->roamProfile.fils_con_info = NULL;
-	pwextBuf->roamProfile.hlp_ie = NULL;
-	pwextBuf->roamProfile.hlp_ie_len = 0;
+	struct csr_roam_profile *roam_profile;
+
+	roam_profile = hdd_roam_profile(adapter);
+	roam_profile->fils_con_info = NULL;
+	roam_profile->hlp_ie = NULL;
+	roam_profile->hlp_ie_len = 0;
 }
 #else
-static void hdd_initialize_fils_info(struct hdd_wext_state *pwextBuf)
+static void hdd_initialize_fils_info(struct hdd_adapter *adapter)
 { }
 #endif
 
@@ -12152,11 +12145,6 @@ int hdd_register_wext(struct net_device *dev)
 
 	hdd_enter();
 
-	if (!pwextBuf) {
-		hdd_err("ERROR: pwextBuf is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	/* Zero the memory. This zeros the profile structure */
 	memset(pwextBuf, 0, sizeof(struct hdd_wext_state));
 
@@ -12167,7 +12155,7 @@ int hdd_register_wext(struct net_device *dev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	hdd_initialize_fils_info(pwextBuf);
+	hdd_initialize_fils_info(adapter);
 	/* Register as a wireless device */
 	dev->wireless_handlers = (struct iw_handler_def *)&we_handler_def;
 
