@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2007-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -59,13 +59,25 @@ void dfs_zero_cac_timer_init(struct wlan_dfs *dfs);
  * dfs_print_precaclists() - Print precac list.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_print_precaclists(struct wlan_dfs *dfs);
+#else
+static inline void dfs_print_precaclists(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 /**
  * dfs_reset_precac_lists() - Resets the precac lists.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_reset_precac_lists(struct wlan_dfs *dfs);
+#else
+static inline void dfs_reset_precac_lists(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 /**
  * dfs_reset_precaclists() - Clears and initiakizes precac_required_list,
@@ -73,7 +85,13 @@ void dfs_reset_precac_lists(struct wlan_dfs *dfs);
  *
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_reset_precaclists(struct wlan_dfs *dfs);
+#else
+static inline void dfs_reset_precaclists(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 /**
  * dfs_deinit_precac_list() - Clears the precac list.
@@ -85,7 +103,13 @@ void dfs_deinit_precac_list(struct wlan_dfs *dfs);
  * dfs_zero_cac_detach() - Free zero_cac memory.
  * @dfs: Pointer to wlan_dfs dtructure.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_zero_cac_detach(struct wlan_dfs *dfs);
+#else
+static inline void dfs_zero_cac_detach(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 /**
  * dfs_init_precac_list() - Init precac list.
@@ -105,25 +129,50 @@ void dfs_start_precac_timer(struct wlan_dfs *dfs,
  * dfs_cancel_precac_timer() - Cancel the precac timer.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_cancel_precac_timer(struct wlan_dfs *dfs);
+#else
+static inline void dfs_cancel_precac_timer(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 /**
  * dfs_zero_cac_attach() - Initialize dfs zerocac variables.
  * @dfs: Pointer to DFS structure.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_zero_cac_attach(struct wlan_dfs *dfs);
+#else
+static inline void dfs_zero_cac_attach(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 /**
  * dfs_zero_cac_reset() - Reset Zero cac DFS variables.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_zero_cac_reset(struct wlan_dfs *dfs);
+#else
+static inline void dfs_zero_cac_reset(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 /**
  * dfs_is_precac_done() - Is precac done.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 bool dfs_is_precac_done(struct wlan_dfs *dfs);
+#else
+static inline bool dfs_is_precac_done(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif
 
 /**
  * dfs_get_freq_from_precac_required_list() - Get VHT80 freq from
@@ -140,16 +189,32 @@ uint8_t dfs_get_freq_from_precac_required_list(struct wlan_dfs *dfs,
  * @dfs: Pointer to wlan_dfs structure.
  * @precac_timeout: Precac timeout value.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_override_precac_timeout(struct wlan_dfs *dfs,
 		int precac_timeout);
+#else
+static inline int dfs_override_precac_timeout(struct wlan_dfs *dfs,
+		int precac_timeout)
+{
+	return 0;
+}
+#endif
 
 /**
  * dfs_get_override_precac_timeout() - Get precac timeout.
  * @dfs: Pointer wlan_dfs structure.
  * @precac_timeout: Get precac timeout value in this variable.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_get_override_precac_timeout(struct wlan_dfs *dfs,
 		int *precac_timeout);
+#else
+static inline int dfs_get_override_precac_timeout(struct wlan_dfs *dfs,
+		int *precac_timeout)
+{
+	return 0;
+}
+#endif
 
 /**
  * dfs_find_vht80_chan_for_precac() - Find VHT80 channel for precac.
@@ -186,6 +251,7 @@ int dfs_get_override_precac_timeout(struct wlan_dfs *dfs,
  * Which means when all the channels in precac-required-list are
  * exhausted the VHT80_80/VHT160 comes back to VHT80 mode.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 		uint32_t chan_mode,
 		uint8_t ch_freq_seg1,
@@ -194,20 +260,46 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 		uint32_t *phy_mode,
 		bool *dfs_set_cfreq2,
 		bool *set_agile);
+#else
+static inline void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
+		uint32_t chan_mode,
+		uint8_t ch_freq_seg1,
+		uint32_t *cfreq1,
+		uint32_t *cfreq2,
+		uint32_t *phy_mode,
+		bool *dfs_set_cfreq2,
+		bool *set_agile)
+{
+}
+#endif
 
 /**
  * dfs_set_precac_enable() - Set precac enable flag.
  * @dfs: Pointer to wlan_dfs structure.
  * @value: input value for dfs_precac_enable flag.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_set_precac_enable(struct wlan_dfs *dfs,
 		uint32_t value);
+#else
+static inline void dfs_set_precac_enable(struct wlan_dfs *dfs,
+		uint32_t value)
+{
+}
+#endif
 
 /**
  * dfs_get_precac_enable() - Get precac enable flag.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 uint32_t dfs_get_precac_enable(struct wlan_dfs *dfs);
+#else
+static inline uint32_t dfs_get_precac_enable(struct wlan_dfs *dfs)
+{
+	return 0;
+}
+#endif
 
 /**
  * dfs_zero_cac_reset() - Reset Zero cac DFS variables.
@@ -233,12 +325,26 @@ bool dfs_is_ht80_80_chan_in_precac_done_list(struct wlan_dfs *dfs);
  * dfs_mark_precac_dfs() - Mark the precac channel as radar.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 		uint8_t is_radar_found_on_secondary_seg);
+#else
+static inline void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
+		uint8_t is_radar_found_on_secondary_seg)
+{
+}
+#endif
 
 /**
  * dfs_is_precac_timer_running() - Check whether precac timer is running.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 bool dfs_is_precac_timer_running(struct wlan_dfs *dfs);
+#else
+static inline bool dfs_is_precac_timer_running(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif
 #endif /* _DFS_ZERO_CAC_H_ */

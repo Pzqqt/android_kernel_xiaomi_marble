@@ -459,6 +459,8 @@ struct dfs_event {
 #define DFS_MAX_NUM_RADAR_FILTERS 10
 /* Number of different radar types */
 #define DFS_MAX_RADAR_TYPES  32
+/* Number of filter index table rows */
+#define DFS_NUM_FT_IDX_TBL_ROWS  256
 
 /* RADAR filter pattern type 1*/
 #define WLAN_DFS_RF_PATTERN_TYPE_1 1
@@ -1424,7 +1426,13 @@ uint32_t dfs_round(int32_t val);
  * dfs_reset_alldelaylines() - Reset alldelaylines.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_reset_alldelaylines(struct wlan_dfs *dfs);
+#else
+static inline void dfs_reset_alldelaylines(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 /**
  * dfs_reset_delayline() - Clear only a single delay line.
@@ -1442,7 +1450,13 @@ void dfs_reset_filter_delaylines(struct dfs_filtertype *dft);
  * dfs_reset_radarq() - Reset radar queue.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_reset_radarq(struct wlan_dfs *dfs);
+#else
+static inline void dfs_reset_radarq(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 /**
  * dfs_add_pulse() - Adds pulse to the queue.
@@ -1592,8 +1606,15 @@ void dfs_reset(struct wlan_dfs *dfs);
  * @dfs: Pointer to wlan_dfs structure.
  * @no_cac: If no_cac is 0, it cancels the CAC.
  */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_radar_enable(struct wlan_dfs *dfs,
 		int no_cac, uint32_t opmode);
+#else
+static inline void dfs_radar_enable(struct wlan_dfs *dfs,
+		int no_cac, uint32_t opmode)
+{
+}
+#endif
 
 /**
  * dfs_process_phyerr() - Process phyerr.
@@ -1605,6 +1626,7 @@ void dfs_radar_enable(struct wlan_dfs *dfs,
  * @r_rs_tstamp: Timestamp.
  * @r_fulltsf: TSF64.
  */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_process_phyerr(struct wlan_dfs *dfs,
 		void *buf,
 		uint16_t datalen,
@@ -1612,6 +1634,17 @@ void dfs_process_phyerr(struct wlan_dfs *dfs,
 		uint8_t r_ext_rssi,
 		uint32_t r_rs_tstamp,
 		uint64_t r_fulltsf);
+#else
+static inline void dfs_process_phyerr(struct wlan_dfs *dfs,
+		void *buf,
+		uint16_t datalen,
+		uint8_t r_rssi,
+		uint8_t r_ext_rssi,
+		uint32_t r_rs_tstamp,
+		uint64_t r_fulltsf)
+{
+}
+#endif
 
 #ifdef QCA_MCL_DFS_SUPPORT
 /**
@@ -1621,21 +1654,29 @@ void dfs_process_phyerr(struct wlan_dfs *dfs,
  *
  * Return: None
  */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_process_phyerr_filter_offload(struct wlan_dfs *dfs,
 		struct radar_event_info *wlan_radar_event);
+#else
+static inline void dfs_process_phyerr_filter_offload(
+		struct wlan_dfs *dfs,
+		struct radar_event_info *wlan_radar_event)
+{
+}
 #endif
-
-/**
- * dfs_is_precac_timer_running() - Check whether precac timer is running.
- * @dfs: Pointer to wlan_dfs structure.
- */
-bool dfs_is_precac_timer_running(struct wlan_dfs *dfs);
+#endif
 
 /**
  * dfs_get_radars() - Based on the chipset, calls init radar table functions.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_get_radars(struct wlan_dfs *dfs);
+#else
+static inline void dfs_get_radars(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 /**
  * dfs_attach() - Wrapper function to allocate memory for wlan_dfs members.
@@ -1643,11 +1684,6 @@ void dfs_get_radars(struct wlan_dfs *dfs);
  */
 int dfs_attach(struct wlan_dfs *dfs);
 
-/**
- * dfs_main_attach() - Allocates memory for wlan_dfs members.
- * @dfs: Pointer to wlan_dfs structure.
- */
-int dfs_main_attach(struct wlan_dfs *dfs);
 
 /**
  * dfs_create_object() - Creates DFS object.
@@ -1666,12 +1702,6 @@ void dfs_destroy_object(struct wlan_dfs *dfs);
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_detach(struct wlan_dfs *dfs);
-
-/**
- * dfs_main_detach() - Free dfs variables.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_main_detach(struct wlan_dfs *dfs);
 
 /**
  * dfs_cac_valid_reset() - Cancels the dfs_cac_valid_timer timer.
@@ -1837,14 +1867,14 @@ void dfs_clear_stats(struct wlan_dfs *dfs);
  * dfs_radar_disable() - Disables the radar.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_radar_disable(struct wlan_dfs *dfs);
-
-/**
- * dfs_mark_precac_dfs() - Mark the precac channel as radar.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
-		uint8_t is_radar_found_on_secondary_seg);
+#else
+static inline int dfs_radar_disable(struct wlan_dfs *dfs)
+{
+	return 0;
+}
+#endif
 
 /**
  * dfs_get_debug_info() - Get debug info.
@@ -1924,8 +1954,16 @@ void dfs_phyerr_param_copy(struct wlan_dfs_phyerr_param *dst,
  * @dfs: Pointer to wlan_dfs structure.
  * @param: Pointer to wlan_dfs_phyerr_param structure.
  */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_get_thresholds(struct wlan_dfs *dfs,
 		struct wlan_dfs_phyerr_param *param);
+#else
+static inline int dfs_get_thresholds(struct wlan_dfs *dfs,
+		struct wlan_dfs_phyerr_param *param)
+{
+		return 0;
+}
+#endif
 
 /**
  * dfs_set_thresholds() - Sets the threshold value.
@@ -1933,9 +1971,18 @@ int dfs_get_thresholds(struct wlan_dfs *dfs,
  * @threshtype: DFS ioctl param type.
  * @value: Threshold value.
  */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_set_thresholds(struct wlan_dfs *dfs,
 		const uint32_t threshtype,
 		const uint32_t value);
+#else
+static inline int dfs_set_thresholds(struct wlan_dfs *dfs,
+		const uint32_t threshtype,
+		const uint32_t value)
+{
+		return 0;
+}
+#endif
 
 /**
  * dfs_set_current_channel() - Set DFS current channel.
@@ -1954,17 +2001,6 @@ void dfs_set_current_channel(struct wlan_dfs *dfs,
 		uint8_t dfs_ch_ieee,
 		uint8_t dfs_ch_vhtop_ch_freq_seg1,
 		uint8_t dfs_ch_vhtop_ch_freq_seg2);
-
-/**
- * dfs_second_segment_radar_disable() - Disables the second segment radar.
- * @dfs: Pointer to wlan_dfs structure.
- *
- * This is called when AP detects the radar, to (potentially) disable
- * the radar code.
- *
- * Return: returns 0.
- */
-int dfs_second_segment_radar_disable(struct wlan_dfs *dfs);
 
 /**
  * dfs_get_nol_chfreq_and_chwidth() - Get channel freq and width from NOL list.
@@ -2086,22 +2122,10 @@ void bin5_rules_check_internal(struct wlan_dfs *dfs,
 		int *index);
 
 /**
- * dfs_main_task_timer_init() - Initialize dfs task timer.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_main_task_timer_init(struct wlan_dfs *dfs);
-
-/**
  * dfs_main_task_testtimer_init() - Initialize dfs task testtimer.
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_main_task_testtimer_init(struct wlan_dfs *dfs);
-
-/**
- * dfs_main_timer_reset() - Stop dfs timers.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_main_timer_reset(struct wlan_dfs *dfs);
 
 /**
  * dfs_stop() - Clear dfs timers.
@@ -2118,15 +2142,6 @@ void dfs_stop(struct wlan_dfs *dfs);
 void dfs_update_cur_chan_flags(struct wlan_dfs *dfs,
 		uint64_t flags,
 		uint16_t flagext);
-
-/**
- * dfs_send_csa_to_current_chan() - Send CSA to current channel
- * @dfs: Pointer to wlan_dfs structure.
- *
- * For the test mode(usenol = 0), don't do a CSA; but setup the test timer so
- * we get a CSA _back_ to the current operating channel.
- */
-void dfs_send_csa_to_current_chan(struct wlan_dfs *dfs);
 
 /**
  * dfs_radarevent_basic_sanity() - Check basic sanity of the radar event
@@ -2153,5 +2168,16 @@ wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc);
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_nol_free_list(struct wlan_dfs *dfs);
+
+/**
+ * dfs_second_segment_radar_disable() - Disables the second segment radar.
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * This is called when AP detects the radar, to (potentially) disable
+ * the radar code.
+ *
+ * Return: returns 0.
+ */
+int dfs_second_segment_radar_disable(struct wlan_dfs *dfs);
 
 #endif  /* _DFS_H_ */

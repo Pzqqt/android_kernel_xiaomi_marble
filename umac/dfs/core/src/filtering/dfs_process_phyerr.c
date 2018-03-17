@@ -23,6 +23,7 @@
  */
 
 #include "../dfs.h"
+#include "../dfs_zero_cac.h"
 #include "../dfs_channel.h"
 #include "wlan_dfs_mlme_api.h"
 #include "../dfs_internal.h"
@@ -480,28 +481,6 @@ static inline void dfs_filter_short_pulses(
 }
 
 /**
- * dfs_is_second_seg_radar_disabled() - Check for second segment radar disabled.
- * @dfs: Pointer to wlan_dfs structure.
- * @seg_id: Segment id.
- *
- * Return: true if the second segment RADAR is enabled else false.
- */
-static inline bool dfs_is_second_seg_radar_disabled(
-		struct wlan_dfs *dfs,
-		int seg_id)
-{
-	if ((seg_id == SEG_ID_SECONDARY) &&
-			!(dfs->dfs_proc_phyerr &
-				DFS_SECOND_SEGMENT_RADAR_EN)) {
-		dfs_debug(dfs, WLAN_DEBUG_DFS3,
-				"Do not process PHY error data from Second segment, DFS_SECOND_SEGMENT_RADAR_EN is not enabled");
-		return true;
-	}
-
-	return false;
-}
-
-/**
  * dfs_set_chan_index() - Set channel index.
  * @dfs: Pointer to wlan_dfs structure.
  * @e: Pointer to dfs_phy_err structure.
@@ -521,6 +500,26 @@ static inline void dfs_set_chan_index(
 				(event->re_chanindex == -1) ?
 				"- phyerr on ext channel" : "");
 	}
+}
+
+/**
+ * dfs_is_second_seg_radar_disabled() - Check for second segment radar disabled.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @seg_id: Segment id.
+ *
+ * Return: true if the second segment RADAR is enabled else false.
+ */
+static bool dfs_is_second_seg_radar_disabled(
+		struct wlan_dfs *dfs, int seg_id)
+{
+	if ((seg_id == SEG_ID_SECONDARY) &&
+			!(dfs->dfs_proc_phyerr & DFS_SECOND_SEGMENT_RADAR_EN)) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS3,
+				"Second segment radar detection is disabled");
+		return true;
+	}
+
+	return false;
 }
 
 void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,

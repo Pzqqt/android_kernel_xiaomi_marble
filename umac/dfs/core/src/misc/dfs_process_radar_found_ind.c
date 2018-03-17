@@ -22,6 +22,7 @@
  */
 
 #include "../dfs.h"
+#include "../dfs_zero_cac.h"
 #include "../dfs_process_radar_found_ind.h"
 #include <wlan_reg_services_api.h>
 #include <wlan_dfs_utils_api.h>
@@ -405,6 +406,48 @@ static uint8_t dfs_get_bonding_channels(struct dfs_channel *curchan,
 	}
 
 	return nchannels;
+}
+
+int dfs_radarevent_basic_sanity(struct wlan_dfs *dfs,
+		struct dfs_channel *chan)
+{
+	if (!(dfs->dfs_second_segment_bangradar ||
+				dfs_is_precac_timer_running(dfs)))
+		if (!(WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(chan))) {
+			dfs_debug(dfs, WLAN_DEBUG_DFS2,
+					"radar event on non-DFS chan");
+			if (!(dfs->dfs_is_offload_enabled)) {
+				dfs_reset_radarq(dfs);
+				dfs_reset_alldelaylines(dfs);
+				dfs->dfs_bangradar = 0;
+			}
+			return 0;
+		}
+
+	return 1;
+}
+
+/**
+ * dfs_send_csa_to_current_chan() - Send CSA to current channel
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * For the test mode(usenol = 0), don't do a CSA; but setup the test timer so
+ * we get a CSA _back_ to the current operating channel.
+ */
+static inline void dfs_send_csa_to_current_chan(struct wlan_dfs *dfs)
+{
+	qdf_timer_stop(&dfs->wlan_dfstesttimer);
+	dfs->wlan_dfstest = 1;
+	dfs->wlan_dfstest_ieeechan = dfs->dfs_curchan->dfs_ch_ieee;
+	dfs->wlan_dfstesttime = 1;   /* 1ms */
+	qdf_timer_mod(&dfs->wlan_dfstesttimer, dfs->wlan_dfstesttime);
+}
+
+int dfs_second_segment_radar_disable(struct wlan_dfs *dfs)
+{
+	dfs->dfs_proc_phyerr &= ~DFS_SECOND_SEGMENT_RADAR_EN;
+
+	return 0;
 }
 
 QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,

@@ -17,30 +17,33 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
- /**
- * DOC: target_if_dfs.h
- * This file contains dfs target interface
+/**
+ * DOC: dfs_full_offload.h
+ * This file contains full offload specific dfs interfaces
  */
 
-/**
- * target_if_register_dfs_tx_ops() - register dfs tx ops
- * @dfs_tx_ops: tx ops pointer
- *
- * Register dfs tx ops
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS target_if_register_dfs_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
+#ifndef _DFS_FULL_OFFLOAD_H_
+#define _DFS_FULL_OFFLOAD_H_
 
 /**
- * target_if_dfs_get_rx_ops() - Get dfs_rx_ops
- * @psoc: psoc handle.
+ * dfs_fill_emulate_bang_radar_test() - Update dfs unit test arguments and
+ * send bangradar command to firmware.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @segid: Segment Identifier(Primary and Secondary)
+ * @dfs_unit_test: Pointer to Unit test command structure
  *
- * Return: dfs_rx_ops.
+ * Return: If the event is received return 0.
  */
-static inline struct wlan_lmac_if_dfs_rx_ops *
-target_if_dfs_get_rx_ops(struct wlan_objmgr_psoc *psoc)
+#if defined(WLAN_DFS_FULL_OFFLOAD)
+int dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
+		uint32_t segid,
+		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
+#else
+static inline int dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
+		uint32_t segid,
+		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
 {
-	return &psoc->soc_cb.rx_ops.dfs_rx_ops;
+	return 0;
 }
-
+#endif
+#endif /* _DFS_FULL_OFFLOAD_H_ */

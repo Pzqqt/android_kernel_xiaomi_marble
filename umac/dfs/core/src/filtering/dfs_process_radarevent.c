@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013, 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -22,6 +22,7 @@
  */
 
 #include "../dfs.h"
+#include "../dfs_zero_cac.h"
 #include "../dfs_channel.h"
 #include "../dfs_internal.h"
 #include "../dfs_process_radar_found_ind.h"
@@ -496,25 +497,6 @@ static inline void dfs_radarfound_reset_vars(
 		dfs->wlan_dfs_stats.num_seg_two_radar_detects++;
 		dfs->is_radar_found_on_secondary_seg = 1;
 	}
-}
-
-int dfs_radarevent_basic_sanity(struct wlan_dfs *dfs,
-	struct dfs_channel *chan)
-{
-	if (!(dfs->dfs_second_segment_bangradar ||
-				dfs_is_precac_timer_running(dfs)))
-		if (!(WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(chan))) {
-			dfs_debug(dfs, WLAN_DEBUG_DFS2,
-					"radar event on non-DFS chan");
-			if (!(dfs->dfs_is_offload_enabled)) {
-				dfs_reset_radarq(dfs);
-				dfs_reset_alldelaylines(dfs);
-				dfs->dfs_bangradar = 0;
-			}
-			return 0;
-		}
-
-	return 1;
 }
 
 /**

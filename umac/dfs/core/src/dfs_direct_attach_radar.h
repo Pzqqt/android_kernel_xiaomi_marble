@@ -17,30 +17,23 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
- /**
- * DOC: target_if_dfs.h
- * This file contains dfs target interface
+/**
+ * DOC: dfs_direct_attach_radar.h
+ * This file contains direct attach specific dfs interfaces
  */
 
-/**
- * target_if_register_dfs_tx_ops() - register dfs tx ops
- * @dfs_tx_ops: tx ops pointer
- *
- * Register dfs tx ops
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS target_if_register_dfs_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
+#ifndef _DFS_DIRECT_ATTACH_RADAR_H_
+#define _DFS_DIRECT_ATTACH_RADAR_H_
 
 /**
- * target_if_dfs_get_rx_ops() - Get dfs_rx_ops
- * @psoc: psoc handle.
- *
- * Return: dfs_rx_ops.
+ * dfs_get_da_radars() - Initialize the RADAR table for DA.
+ * @dfs: Pointer to wlan_dfs structure.
  */
-static inline struct wlan_lmac_if_dfs_rx_ops *
-target_if_dfs_get_rx_ops(struct wlan_objmgr_psoc *psoc)
+#if defined(WLAN_DFS_DIRECT_ATTACH)
+void dfs_get_da_radars(struct wlan_dfs *dfs);
+#else
+static inline void dfs_get_da_radars(struct wlan_dfs *dfs)
 {
-	return &psoc->soc_cb.rx_ops.dfs_rx_ops;
 }
-
+#endif
+#endif /* _DFS_DIRECT_ATTACH_RADAR_H_ */
