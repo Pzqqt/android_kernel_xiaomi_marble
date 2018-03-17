@@ -426,8 +426,10 @@ ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 
 	psoc = wlan_vdev_get_psoc(req->vdev);
 
-	if (DISABLE_DBS_CXN_AND_SCAN ==
-			wlan_objmgr_psoc_get_dual_mac_disable(psoc))
+	if ((DISABLE_DBS_CXN_AND_SCAN ==
+	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)) ||
+	    (ENABLE_DBS_CXN_AND_DISABLE_DBS_SCAN ==
+	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)))
 		goto end;
 
 	if (req->scan_req.scan_policy_high_accuracy)

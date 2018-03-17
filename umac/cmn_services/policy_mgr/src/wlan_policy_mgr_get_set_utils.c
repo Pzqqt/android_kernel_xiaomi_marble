@@ -2683,11 +2683,13 @@ uint32_t policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
 
 bool policy_mgr_is_scan_simultaneous_capable(struct wlan_objmgr_psoc *psoc)
 {
-	if (DISABLE_DBS_CXN_AND_SCAN !=
-			wlan_objmgr_psoc_get_dual_mac_disable(psoc))
-		return true;
+	if ((DISABLE_DBS_CXN_AND_SCAN ==
+	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)) ||
+	    (ENABLE_DBS_CXN_AND_DISABLE_DBS_SCAN ==
+	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)))
+		return false;
 
-	return false;
+	return true;
 }
 
 void policy_mgr_set_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc,
@@ -2751,6 +2753,11 @@ QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
 		policy_mgr_debug("dual_mac_disable_ini:%d async off",
 			dual_mac_disable_ini);
 		WMI_DBS_CONC_SCAN_CFG_ASYNC_DBS_SCAN_SET(*scan_config, 0);
+		break;
+	case ENABLE_DBS_CXN_AND_DISABLE_DBS_SCAN:
+		policy_mgr_debug("%s: dual_mac_disable_ini:%d ", __func__,
+				dual_mac_disable_ini);
+		WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_SET(*scan_config, 0);
 		break;
 	default:
 		break;
