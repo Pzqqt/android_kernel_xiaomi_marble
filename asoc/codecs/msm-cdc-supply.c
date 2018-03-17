@@ -309,10 +309,7 @@ int msm_cdc_release_supplies(struct device *dev,
 		regulator_set_voltage(supplies[i].consumer, 0,
 				      cdc_vreg[i].max_uV);
 		regulator_set_load(supplies[i].consumer, 0);
-		devm_regulator_put(supplies[i].consumer);
-		supplies[i].consumer = NULL;
 	}
-	devm_kfree(dev, supplies);
 
 	return rc;
 }
@@ -430,14 +427,14 @@ int msm_cdc_init_supplies(struct device *dev,
 		if (rc) {
 			dev_err(dev, "%s: set regulator voltage failed for %s, err:%d\n",
 				__func__, vsup[i].supply, rc);
-			goto err_set_supply;
+			goto err_supply;
 		}
 		rc = regulator_set_load(vsup[i].consumer,
 					cdc_vreg[i].optimum_uA);
 		if (rc < 0) {
 			dev_err(dev, "%s: set regulator optimum mode failed for %s, err:%d\n",
 				__func__, vsup[i].supply, rc);
-			goto err_set_supply;
+			goto err_supply;
 		}
 	}
 
@@ -445,11 +442,7 @@ int msm_cdc_init_supplies(struct device *dev,
 
 	return 0;
 
-err_set_supply:
-	for (i = 0; i < num_supplies; i++)
-		devm_regulator_put(vsup[i].consumer);
 err_supply:
-	devm_kfree(dev, vsup);
 	return rc;
 }
 EXPORT_SYMBOL(msm_cdc_init_supplies);
@@ -548,7 +541,6 @@ int msm_cdc_get_power_supplies(struct device *dev,
 	return 0;
 
 err_sup:
-	devm_kfree(dev, cdc_reg);
 err_supply_cnt:
 err_mem_alloc:
 	return rc;
