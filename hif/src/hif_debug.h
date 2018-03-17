@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +21,15 @@
 #ifndef __HIF_DEBUG_H__
 #define __HIF_DEBUG_H__
 #include "qdf_trace.h"
+
+#define __hif_log_rl(level, format, args...) \
+	QDF_TRACE_RATE_LIMITED(QDF_MODULE_ID_HIF, level, FL(format), ## args)
+
+#define hif_alert_rl(params...) __hif_log_rl(QDF_TRACE_LEVEL_FATAL, params)
+#define hif_err_rl(params...) __hif_log_rl(QDF_TRACE_LEVEL_ERROR, params)
+#define hif_warn_rl(params...) __hif_log_rl(QDF_TRACE_LEVEL_WARN, params)
+#define hif_info_rl(params...) __hif_log_rl(QDF_TRACE_LEVEL_INFO, params)
+#define hif_debug_rl(params...) __hif_log_rl(QDF_TRACE_LEVEL_DEBUG, params)
 
 #define HIF_ERROR(args ...) \
 	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR, ## args)

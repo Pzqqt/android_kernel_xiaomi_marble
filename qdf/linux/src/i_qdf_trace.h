@@ -58,14 +58,26 @@
 #define QDF_TRACE qdf_trace_msg
 #define QDF_VTRACE qdf_vtrace_msg
 #define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
-#define QDF_TRACE_RATE_LIMITED(rate, module, level, format, ...)\
+#define QDF_MAX_LOGS_PER_SEC 2
+/**
+ * QDF_TRACE_RATE_LIMITED() - rate limited version of QDF_TRACE
+ * @params: parameters to pass through to QDF_TRACE
+ *
+ * This API prevents logging a message more than QDF_MAX_LOGS_PER_SEC times per
+ * second. This means any subsequent calls to this API from the same location
+ * within 1/QDF_MAX_LOGS_PER_SEC seconds will be dropped.
+ *
+ * Return: None
+ */
+#define QDF_TRACE_RATE_LIMITED(params...)\
 	do {\
-		static int rate_limit;\
-		rate_limit++;\
-		if (rate)\
-			if (0 == (rate_limit % rate))\
-				qdf_trace_msg(module, level, format,\
-						##__VA_ARGS__);\
+		static ulong __last_ticks;\
+		ulong __ticks = jiffies;\
+		if (time_after(__ticks,\
+			       __last_ticks + HZ / QDF_MAX_LOGS_PER_SEC)) {\
+			QDF_TRACE(params);\
+			__last_ticks = __ticks;\
+		} \
 	} while (0)
 #else
 #define QDF_TRACE(arg ...)

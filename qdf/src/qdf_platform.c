@@ -17,7 +17,8 @@
  */
 
 #include "qdf_module.h"
-#include "qdf_util.h"
+#include "qdf_trace.h"
+#include "qdf_platform.h"
 
 static qdf_is_fw_down_callback is_fw_down_cb;
 
@@ -26,3 +27,15 @@ void qdf_register_fw_down_callback(qdf_is_fw_down_callback is_fw_down)
 	is_fw_down_cb = is_fw_down;
 }
 qdf_export_symbol(qdf_register_fw_down_callback);
+
+bool qdf_is_fw_down(void)
+{
+	if (!is_fw_down_cb) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"fw down callback is not registered");
+			return false;
+	}
+
+	return is_fw_down_cb();
+}
+qdf_export_symbol(qdf_is_fw_down);
