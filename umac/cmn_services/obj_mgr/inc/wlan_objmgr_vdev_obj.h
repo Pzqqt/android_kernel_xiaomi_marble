@@ -68,7 +68,7 @@
 #define WLAN_VDEV_F_SLEEP                0x00008000
 	/* drop uapsd EOSP frames for test */
 #define WLAN_VDEV_F_EOSPDROP             0x00010000
-	/* drop uapsd EOSP frames for test */
+	/* CONF: A-MPDU supported */
 #define WLAN_VDEV_F_AMPDU                0x00020000
 	/* STATE: beacon APP IE updated */
 #define WLAN_VDEV_F_APPIE_UPDATE         0x00040000
@@ -146,10 +146,12 @@
 #define WLAN_VDEV_FEXT_NO_MULCHAN           0x00200000
 	/*non-beaconing AP VAP*/
 #define WLAN_VDEV_FEXT_NON_BEACON           0x00400000
-/* SPL repeater enabled for SON*/
+	/* SPL repeater enabled for SON*/
 #define WLAN_VDEV_FEXT_SON_SPL_RPT          0x00800000
-/* SON IE update in MGMT frame */
+	/* SON IE update in MGMT frame */
 #define WLAN_VDEV_FEXT_SON_INFO_UPDATE      0x01000000
+	/* CONF: A-MSDU supported */
+#define WLAN_VDEV_FEXT_AMSDU                0x02000000
 
 /* VDEV OP flags  */
   /* if the vap destroyed by user */
