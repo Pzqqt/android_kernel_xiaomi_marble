@@ -32,11 +32,11 @@
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 /* Start NDI BSS */
 QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session_id,
-			      tCsrRoamProfile *profile);
+			      struct csr_roam_profile *profile);
 
 void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
 				      uint32_t session_id,
-				      tCsrRoamProfile *roam_profile,
+				      struct csr_roam_profile *roam_profile,
 				      tSirBssDescription *bss_desc);
 
 void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
@@ -49,14 +49,14 @@ void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 /* Start NDI BSS */
 static inline QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx,
 					uint32_t session_id,
-					tCsrRoamProfile *profile)
+					struct csr_roam_profile *profile)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
 					uint32_t session_id,
-					tCsrRoamProfile *roam_profile,
+					struct csr_roam_profile *roam_profile,
 					tSirBssDescription *bss_desc)
 {
 }

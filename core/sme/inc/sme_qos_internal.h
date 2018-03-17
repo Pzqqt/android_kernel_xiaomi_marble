@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -107,7 +107,7 @@ typedef enum {
   ---------------------------------------------------------------------------*/
 typedef struct {
 	tSirBssDescription *pBssDesc;
-	tCsrRoamProfile *pProfile;
+	struct csr_roam_profile *pProfile;
 } sme_QosAssocInfo;
 
 /*--------------------------------------------------------------------------

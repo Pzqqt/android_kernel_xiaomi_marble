@@ -1913,7 +1913,7 @@ static QDF_STATUS sap_cac_start_notify(tHalHandle hHal)
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *pSapContext =
 			pMac->sap.sapCtxList[intf].pSapContext;
-		tCsrRoamProfile *profile;
+		struct csr_roam_profile *profile;
 
 		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
 		    ||
@@ -2013,7 +2013,7 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *pSapContext =
 			pMac->sap.sapCtxList[intf].pSapContext;
-		tCsrRoamProfile *profile;
+		struct csr_roam_profile *profile;
 
 		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
 		    ||
@@ -2369,7 +2369,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 
 		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 			struct sap_context *t_sap_ctx;
-			tCsrRoamProfile *profile;
+			struct csr_roam_profile *profile;
 
 			t_sap_ctx = mac_ctx->sap.sapCtxList[intf].pSapContext;
 			if (((QDF_SAP_MODE ==
@@ -2591,7 +2591,7 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 		 */
 		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 			struct sap_context *temp_sap_ctx;
-			tCsrRoamProfile *profile;
+			struct csr_roam_profile *profile;
 
 			if (((QDF_SAP_MODE ==
 				mac_ctx->sap.sapCtxList[intf].sapPersona) ||
@@ -2790,7 +2790,7 @@ QDF_STATUS sap_fsm(struct sap_context *sap_ctx, ptWLAN_SAPEvent sap_event)
 
 eSapStatus
 sapconvert_to_csr_profile(tsap_Config_t *pconfig_params, eCsrRoamBssType bssType,
-			  tCsrRoamProfile *profile)
+			  struct csr_roam_profile *profile)
 {
 	/* Create Roam profile for SoftAP to connect */
 	profile->BSSType = eCSR_BSS_TYPE_INFRA_AP;
@@ -2963,7 +2963,7 @@ sapconvert_to_csr_profile(tsap_Config_t *pconfig_params, eCsrRoamBssType bssType
 	return eSAP_STATUS_SUCCESS;     /* Success. */
 }
 
-void sap_free_roam_profile(tCsrRoamProfile *profile)
+void sap_free_roam_profile(struct csr_roam_profile *profile)
 {
 	if (profile->pRSNReqIE) {
 		qdf_mem_free(profile->pRSNReqIE);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -48,7 +48,7 @@
  */
 QDF_STATUS csr_roam_issue_reassociate(tpAniSirGlobal pMac,
 	uint32_t sessionId, tSirBssDescription *pSirBssDesc,
-	tDot11fBeaconIEs *pIes, tCsrRoamProfile *pProfile)
+	tDot11fBeaconIEs *pIes, struct csr_roam_profile *pProfile)
 {
 	csr_roam_state_change(pMac, eCSR_ROAMING_STATE_JOINING, sessionId);
 	/* Set the roaming substate to 'join attempt'... */

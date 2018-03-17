@@ -2663,7 +2663,7 @@ QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
 					tScanResultHandle *scan_cache,
 					uint8_t *ap_chnl_id)
 {
-	return sme_get_ap_channel_from_scan_cache((tCsrRoamProfile *)
+	return sme_get_ap_channel_from_scan_cache((struct csr_roam_profile *)
 						  profile,
 						  scan_cache,
 						  ap_chnl_id);
@@ -2683,7 +2683,7 @@ QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
  * Return: QDF_STATUS.
  */
 QDF_STATUS sme_get_ap_channel_from_scan_cache(
-	tCsrRoamProfile *profile, tScanResultHandle *scan_cache,
+	struct csr_roam_profile *profile, tScanResultHandle *scan_cache,
 	uint8_t *ap_chnl_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -2790,7 +2790,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
  * Return: true or false based on function's overall success.
  **/
 bool sme_store_joinreq_param(tHalHandle hal_handle,
-		tCsrRoamProfile *profile,
+		struct csr_roam_profile *profile,
 		tScanResultHandle scan_cache,
 		uint32_t *roam_id,
 		uint32_t session_id)
@@ -3134,7 +3134,8 @@ QDF_STATUS sme_get_channel_bonding_mode24_g(tHalHandle hHal, uint32_t *mode)
  * Return QDF_STATUS
  */
 QDF_STATUS sme_roam_connect(tHalHandle hHal, uint8_t sessionId,
-			    tCsrRoamProfile *pProfile, uint32_t *pRoamId)
+			    struct csr_roam_profile *pProfile,
+			    uint32_t *pRoamId)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -3204,7 +3205,7 @@ QDF_STATUS sme_set_phy_mode(tHalHandle hHal, eCsrPhyMode phyMode)
  * Return QDF_STATUS
  */
 QDF_STATUS sme_roam_reassoc(tHalHandle hHal, uint8_t sessionId,
-			    tCsrRoamProfile *pProfile,
+			    struct csr_roam_profile *pProfile,
 			    tCsrRoamModifyProfileFields modProfileFields,
 			    uint32_t *pRoamId, bool fForce)
 {
@@ -4721,7 +4722,7 @@ QDF_STATUS sme_tx_fail_monitor_start_stop_ind(tHalHandle hHal, uint8_t
  * Return void
  */
 void sme_set_cfg_privacy(tHalHandle hHal,
-			 tCsrRoamProfile *pProfile, bool fPrivacy)
+			 struct csr_roam_profile *pProfile, bool fPrivacy)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -6780,7 +6781,7 @@ QDF_STATUS sme_update_roam_rssi_diff(tHalHandle hHal, uint8_t sessionId,
 
 #ifdef WLAN_FEATURE_FILS_SK
 QDF_STATUS sme_update_fils_config(tHalHandle hal, uint8_t session_id,
-				  tCsrRoamProfile *src_profile)
+				  struct csr_roam_profile *src_profile)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -6820,7 +6821,7 @@ QDF_STATUS sme_update_fils_config(tHalHandle hal, uint8_t session_id,
 }
 
 void sme_send_hlp_ie_info(tHalHandle hal, uint8_t session_id,
-			  tCsrRoamProfile *profile, uint32_t if_addr)
+			  struct csr_roam_profile *profile, uint32_t if_addr)
 {
 	int i;
 	struct scheduler_msg msg;
@@ -6912,7 +6913,7 @@ void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info)
 
 #else
 inline void sme_send_hlp_ie_info(tHalHandle hal, uint8_t session_id,
-			  tCsrRoamProfile *profile, uint32_t if_addr)
+			  struct csr_roam_profile *profile, uint32_t if_addr)
 {}
 #endif
 
@@ -10618,7 +10619,7 @@ QDF_STATUS sme_set_mas(uint32_t val)
 QDF_STATUS sme_roam_channel_change_req(tHalHandle hHal,
 				       struct qdf_mac_addr bssid,
 				       struct ch_params *ch_params,
-				       tCsrRoamProfile *profile)
+				       struct csr_roam_profile *profile)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -15144,7 +15145,7 @@ static void sme_prepare_beacon_from_bss_descp(uint8_t *frame_buf,
 }
 
 QDF_STATUS sme_get_rssi_snr_by_bssid(tHalHandle hal,
-				tCsrRoamProfile *profile,
+				struct csr_roam_profile *profile,
 				const uint8_t *bssid,
 				int8_t *rssi, int8_t *snr)
 {
@@ -15219,10 +15220,10 @@ free_scan_flter:
 	return status;
 }
 
-QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
-				const tSirMacAddr bssid,
-				uint8_t **frame_buf, uint32_t *frame_len,
-				int *channel)
+QDF_STATUS sme_get_beacon_frm(tHalHandle hal, struct csr_roam_profile *profile,
+			      const tSirMacAddr bssid,
+			      uint8_t **frame_buf, uint32_t *frame_len,
+			      int *channel)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tScanResultHandle result_handle = NULL;
@@ -15317,7 +15318,7 @@ free_scan_flter:
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS sme_fast_reassoc(tHalHandle hal, tCsrRoamProfile *profile,
+QDF_STATUS sme_fast_reassoc(tHalHandle hal, struct csr_roam_profile *profile,
 			    const tSirMacAddr bssid, int channel,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid)
 {

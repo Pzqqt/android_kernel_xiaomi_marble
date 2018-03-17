@@ -358,14 +358,14 @@ QDF_STATUS sme_scan_get_result(tHalHandle hHal, uint8_t sessionId,
 		tCsrScanResultFilter *pFilter,
 		tScanResultHandle *phResult);
 QDF_STATUS sme_get_ap_channel_from_scan_cache(
-		tCsrRoamProfile *profile,
+		struct csr_roam_profile *profile,
 		tScanResultHandle *scan_cache,
 		uint8_t *ap_chnl_id);
 QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
 		tScanResultHandle *scan_cache,
 		uint8_t *ap_chnl_id);
 bool sme_store_joinreq_param(tHalHandle hal_handle,
-		tCsrRoamProfile *profile,
+		struct csr_roam_profile *profile,
 		tScanResultHandle scan_cache,
 		uint32_t *roam_id,
 		uint32_t session_id);
@@ -383,9 +383,9 @@ tCsrScanResultInfo *sme_scan_result_get_next(tHalHandle,
 		tScanResultHandle hScanResult);
 QDF_STATUS sme_scan_result_purge(tScanResultHandle hScanResult);
 QDF_STATUS sme_roam_connect(tHalHandle hHal, uint8_t sessionId,
-		tCsrRoamProfile *pProfile, uint32_t *pRoamId);
+		struct csr_roam_profile *pProfile, uint32_t *pRoamId);
 QDF_STATUS sme_roam_reassoc(tHalHandle hHal, uint8_t sessionId,
-		tCsrRoamProfile *pProfile,
+		struct csr_roam_profile *pProfile,
 		tCsrRoamModifyProfileFields modProfileFields,
 		uint32_t *pRoamId, bool fForce);
 QDF_STATUS sme_roam_connect_to_last_profile(tHalHandle hHal, uint8_t sessionId);
@@ -532,8 +532,8 @@ QDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 		uint8_t device_mode,
 		uint8_t *macAddr, uint8_t sessionId);
-void sme_set_cfg_privacy(tHalHandle hHal, tCsrRoamProfile *pProfile,
-		bool fPrivacy);
+void sme_set_cfg_privacy(tHalHandle hHal, struct csr_roam_profile *pProfile,
+			 bool fPrivacy);
 void sme_get_recovery_stats(tHalHandle hHal);
 QDF_STATUS sme_neighbor_report_request(tHalHandle hHal, uint8_t sessionId,
 		tpRrmNeighborReq pRrmNeighborReq,
@@ -815,7 +815,7 @@ QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_value);
 QDF_STATUS sme_roam_channel_change_req(tHalHandle hHal,
 				       struct qdf_mac_addr bssid,
 				       struct ch_params *ch_params,
-				       tCsrRoamProfile *profile);
+				       struct csr_roam_profile *profile);
 
 QDF_STATUS sme_roam_start_beacon_req(tHalHandle hHal,
 		struct qdf_mac_addr bssid, uint8_t dfsCacWaitStatus);
@@ -1545,7 +1545,8 @@ void sme_set_chan_info_callback(tHalHandle hal_handle,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_get_rssi_snr_by_bssid(tHalHandle hal, tCsrRoamProfile *profile,
+QDF_STATUS sme_get_rssi_snr_by_bssid(tHalHandle hal,
+				     struct csr_roam_profile *profile,
 				     const uint8_t *bssid, int8_t *rssi,
 				     int8_t *snr);
 
@@ -1561,10 +1562,10 @@ QDF_STATUS sme_get_rssi_snr_by_bssid(tHalHandle hal, tCsrRoamProfile *profile,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
-			    const tSirMacAddr bssid,
-			    uint8_t **frame_buf, uint32_t *frame_len,
-			    int *channel);
+QDF_STATUS sme_get_beacon_frm(tHalHandle hal, struct csr_roam_profile *profile,
+			      const tSirMacAddr bssid,
+			      uint8_t **frame_buf, uint32_t *frame_len,
+			      int *channel);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
@@ -1578,7 +1579,7 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, tCsrRoamProfile *profile,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_fast_reassoc(tHalHandle hal, tCsrRoamProfile *profile,
+QDF_STATUS sme_fast_reassoc(tHalHandle hal, struct csr_roam_profile *profile,
 			    const tSirMacAddr bssid, int channel,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid);
 #endif
@@ -1940,7 +1941,7 @@ QDF_STATUS sme_set_del_pmkid_cache(tHalHandle hal, uint8_t session_id,
  * Return: QDF_STATUS
  */
 void sme_send_hlp_ie_info(tHalHandle hal, uint8_t session_id,
-			  tCsrRoamProfile *profile, uint32_t if_addr);
+			  struct csr_roam_profile *profile, uint32_t if_addr);
 
 #if defined(WLAN_FEATURE_FILS_SK)
 /**
@@ -1955,7 +1956,7 @@ void sme_send_hlp_ie_info(tHalHandle hal, uint8_t session_id,
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_update_fils_config(tHalHandle hal, uint8_t session_id,
-				tCsrRoamProfile *src_profile);
+				struct csr_roam_profile *src_profile);
 
 /**
  * sme_free_join_rsp_fils_params - free fils params
@@ -1967,7 +1968,7 @@ void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info);
 #else
 static inline QDF_STATUS sme_update_fils_config(tHalHandle hal,
 				uint8_t session_id,
-				tCsrRoamProfile *src_profile)
+				struct csr_roam_profile *src_profile)
 {
 	return QDF_STATUS_SUCCESS;
 }

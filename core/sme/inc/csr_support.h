@@ -251,38 +251,41 @@ eCsrPhyMode csr_get_phy_mode_from_bssDesc(tSirBssDescription *pSirBssDesc);
 uint32_t csr_get11h_power_constraint(tHalHandle hHal,
 		tDot11fIEPowerConstraints *pPowerConstraint);
 uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
-		tCsrRoamProfile *pProfile,
+		struct csr_roam_profile *pProfile,
 		tSirBssDescription *pSirBssDesc,
 		tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe);
-uint8_t csr_construct_wpa_ie(tHalHandle hHal, tCsrRoamProfile *pProfile,
-		tSirBssDescription *pSirBssDesc,
-		tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
+
+uint8_t csr_construct_wpa_ie(tHalHandle hHal, struct csr_roam_profile *pProfile,
+			     tSirBssDescription *pSirBssDesc,
+			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
+
 #ifdef FEATURE_WLAN_WAPI
-bool csr_is_profile_wapi(tCsrRoamProfile *pProfile);
+bool csr_is_profile_wapi(struct csr_roam_profile *pProfile);
 #endif /* FEATURE_WLAN_WAPI */
 /*
  * If a WPAIE exists in the profile, just use it.
  * Or else construct one from the BSS Caller allocated memory for pWpaIe and
  * guarrantee it can contain a max length WPA IE
  */
-uint8_t csr_retrieve_wpa_ie(tHalHandle hHal, tCsrRoamProfile *pProfile,
-		tSirBssDescription *pSirBssDesc,
-		tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
+uint8_t csr_retrieve_wpa_ie(tHalHandle hHal, struct csr_roam_profile *pProfile,
+			    tSirBssDescription *pSirBssDesc,
+			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
+
 bool csr_is_ssid_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
 		tSirBssDescription *pSirBssDesc2,
 		tDot11fBeaconIEs *pIes2);
 /* Null ssid means match */
 bool csr_is_ssid_in_list(tHalHandle hHal, tSirMacSSid *pSsid,
 		tCsrSSIDs *pSsidList);
-bool csr_is_profile_wpa(tCsrRoamProfile *pProfile);
-bool csr_is_profile_rsn(tCsrRoamProfile *pProfile);
+bool csr_is_profile_wpa(struct csr_roam_profile *pProfile);
+bool csr_is_profile_rsn(struct csr_roam_profile *pProfile);
 /*
  * If a RSNIE exists in the profile, just use it. Or
  * else construct one from the BSS Caller allocated memory for pWpaIe and
  * guarrantee it can contain a max length WPA IE
  */
 uint8_t csr_retrieve_rsn_ie(tHalHandle hHal, uint32_t sessionId,
-		tCsrRoamProfile *pProfile,
+		struct csr_roam_profile *pProfile,
 		tSirBssDescription *pSirBssDesc,
 		tDot11fBeaconIEs *pIes, tCsrRSNIe *pRsnIe);
 #ifdef FEATURE_WLAN_WAPI
@@ -292,7 +295,7 @@ uint8_t csr_retrieve_rsn_ie(tHalHandle hHal, uint32_t sessionId,
  * guarrantee it can contain a max length WAPI IE
  */
 uint8_t csr_retrieve_wapi_ie(tHalHandle hHal, uint32_t sessionId,
-		tCsrRoamProfile *pProfile,
+		struct csr_roam_profile *pProfile,
 		tSirBssDescription *pSirBssDesc,
 		tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
 #endif /* FEATURE_WLAN_WAPI */
@@ -354,10 +357,10 @@ QDF_STATUS csr_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channelId,
 		uint16_t *beaconInterval, uint32_t cursessionId,
 		enum QDF_OPMODE currBssPersona);
-bool csr_is_profile11r(tCsrRoamProfile *pProfile);
+bool csr_is_profile11r(struct csr_roam_profile *pProfile);
 bool csr_is_auth_type11r(eCsrAuthType AuthType, uint8_t mdiePresent);
 #ifdef FEATURE_WLAN_ESE
-bool csr_is_profile_ese(tCsrRoamProfile *pProfile);
+bool csr_is_profile_ese(struct csr_roam_profile *pProfile);
 #endif
 
 /**

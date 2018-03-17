@@ -324,7 +324,7 @@ struct csr_roamstart_bssparams {
 struct roam_cmd {
 	uint32_t roamId;
 	enum csr_roam_reason roamReason;
-	tCsrRoamProfile roamProfile;
+	struct csr_roam_profile roamProfile;
 	tScanResultHandle hBSSList;       /* BSS list fits the profile */
 	/*
 	 * point to the current BSS in the list that is roaming.
@@ -813,7 +813,7 @@ struct csr_roam_offload_synch_params {
 
 struct csr_roam_stored_profile {
 	uint32_t session_id;
-	tCsrRoamProfile profile;
+	struct csr_roam_profile profile;
 	tScanResultHandle bsslist_handle;
 	enum csr_roam_reason reason;
 	uint32_t roam_id;
@@ -832,7 +832,7 @@ struct csr_roam_stored_profile {
 struct scan_cmd_info {
 	wlan_scan_id scan_id;
 	enum csr_scan_reason scan_reason;
-	tCsrRoamProfile *profile;
+	struct csr_roam_profile *profile;
 	uint32_t roam_id;
 	tListElem *roambssentry;
 };
@@ -869,7 +869,7 @@ struct csr_roam_session {
 	eCsrConnectState connectState;
 	tCsrRoamConnectedProfile connectedProfile;
 	struct csr_roam_connectedinfo connectedInfo;
-	tCsrRoamProfile *pCurRoamProfile;
+	struct csr_roam_profile *pCurRoamProfile;
 	tSirBssDescription *pConnectBssDesc;
 	uint16_t NumPmkidCache; /* valid number of pmkid in the cache*/
 	uint16_t curr_cache_idx; /* the index in pmkidcache to write next to */
@@ -1268,14 +1268,14 @@ QDF_STATUS csr_roam_get_wapi_rsp_ie(tpAniSirGlobal pMac,
 						uint32_t sessionId,
 		uint32_t *pLen, uint8_t *pBuf);
 uint8_t csr_construct_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
-		tCsrRoamProfile *pProfile,
+		struct csr_roam_profile *pProfile,
 		tSirBssDescription *pSirBssDesc,
 		tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
 #endif /* FEATURE_WLAN_WAPI */
 
 void csr_set_cfg_privacy(tpAniSirGlobal pMac,
-						tCsrRoamProfile *pProfile,
-						bool fPrivacy);
+			 struct csr_roam_profile *pProfile,
+			 bool fPrivacy);
 int8_t csr_get_infra_session_id(tpAniSirGlobal pMac);
 uint8_t csr_get_infra_operation_channel(tpAniSirGlobal pMac,
 							uint8_t sessionId);
@@ -1342,7 +1342,7 @@ bool csr_roam_is_sta_mode(tpAniSirGlobal pMac, uint32_t sessionId);
 QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
 					struct qdf_mac_addr
 				       bssid, struct ch_params *ch_params,
-				       tCsrRoamProfile *profile);
+				       struct csr_roam_profile *profile);
 
 /* Post Beacon Tx Start Indication */
 QDF_STATUS csr_roam_start_beacon_req(tpAniSirGlobal pMac,
@@ -1379,7 +1379,7 @@ static inline void csr_roaming_report_diag_event(
 #endif
 
 bool csr_store_joinreq_param(tpAniSirGlobal mac_ctx,
-		tCsrRoamProfile *profile,
+		struct csr_roam_profile *profile,
 		tScanResultHandle scan_cache,
 		uint32_t *roam_id,
 		uint32_t session_id);

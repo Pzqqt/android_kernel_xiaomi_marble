@@ -1484,7 +1484,7 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 		&mac_ctx->roam.neighborRoamInfo[session_id];
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t roam_id;
-	tCsrRoamProfile *profile = NULL;
+	struct csr_roam_profile *profile = NULL;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 	uint8_t i = 0;
 	uint8_t roam_now = 0;
@@ -1498,7 +1498,7 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 	}
 
 	roam_id = GET_NEXT_ROAM_ID(&mac_ctx->roam);
-	profile = qdf_mem_malloc(sizeof(tCsrRoamProfile));
+	profile = qdf_mem_malloc(sizeof(struct csr_roam_profile));
 	if (NULL == profile) {
 		sme_err("Memory alloc failed");
 		return QDF_STATUS_E_NOMEM;

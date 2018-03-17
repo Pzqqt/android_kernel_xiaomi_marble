@@ -2056,7 +2056,7 @@ static bool csr_get_phy_mode_in_use(eCsrPhyMode phyModeIn,
  */
 bool csr_is_phy_mode_match(tpAniSirGlobal pMac, uint32_t phyMode,
 			   tSirBssDescription *pSirBssDesc,
-			   tCsrRoamProfile *pProfile,
+			   struct csr_roam_profile *pProfile,
 			   enum csr_cfgdot11mode *pReturnCfgDot11Mode,
 			   tDot11fBeaconIEs *pIes)
 {
@@ -2212,7 +2212,7 @@ uint32_t csr_get11h_power_constraint(tHalHandle hHal,
 	return localPowerConstraint;
 }
 
-bool csr_is_profile_wpa(tCsrRoamProfile *pProfile)
+bool csr_is_profile_wpa(struct csr_roam_profile *pProfile)
 {
 	bool fWpaProfile = false;
 
@@ -2248,7 +2248,7 @@ bool csr_is_profile_wpa(tCsrRoamProfile *pProfile)
 	return fWpaProfile;
 }
 
-bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
+bool csr_is_profile_rsn(struct csr_roam_profile *pProfile)
 {
 	bool fRSNProfile = false;
 
@@ -2723,7 +2723,7 @@ bool csr_is_auth_type11r(eCsrAuthType auth_type, uint8_t mdie_present)
 }
 
 /* Function to return true if the profile is 11r */
-bool csr_is_profile11r(tCsrRoamProfile *pProfile)
+bool csr_is_profile11r(struct csr_roam_profile *pProfile)
 {
 	return csr_is_auth_type11r(pProfile->negotiatedAuthType,
 				   pProfile->MDID.mdiePresent);
@@ -2744,7 +2744,7 @@ bool csr_is_auth_type_ese(eCsrAuthType AuthType)
 #ifdef FEATURE_WLAN_ESE
 
 /* Function to return true if the profile is ESE */
-bool csr_is_profile_ese(tCsrRoamProfile *pProfile)
+bool csr_is_profile_ese(struct csr_roam_profile *pProfile)
 {
 	return csr_is_auth_type_ese(pProfile->negotiatedAuthType);
 }
@@ -2752,7 +2752,7 @@ bool csr_is_profile_ese(tCsrRoamProfile *pProfile)
 #endif
 
 #ifdef FEATURE_WLAN_WAPI
-bool csr_is_profile_wapi(tCsrRoamProfile *pProfile)
+bool csr_is_profile_wapi(struct csr_roam_profile *pProfile)
 {
 	bool fWapiProfile = false;
 
@@ -3809,7 +3809,7 @@ static bool csr_lookup_pmkid(tpAniSirGlobal pMac, uint32_t sessionId,
  * Return: true if cache identifier present else false
  */
 static bool csr_update_pmksa_for_cache_id(tSirBssDescription *bss_desc,
-				tCsrRoamProfile *profile,
+				struct csr_roam_profile *profile,
 				tPmkidCacheInfo *pmkid_cache)
 {
 	if (!bss_desc->fils_info_element.is_cache_id_present)
@@ -3838,8 +3838,8 @@ static bool csr_update_pmksa_for_cache_id(tSirBssDescription *bss_desc,
  *
  * Return: None
  */
-static inline void csr_update_pmksa_to_profile(tCsrRoamProfile *profile,
-		tPmkidCacheInfo *pmkid_cache)
+static inline void csr_update_pmksa_to_profile(struct csr_roam_profile *profile,
+					       tPmkidCacheInfo *pmkid_cache)
 {
 	if (!profile->fils_con_info)
 		return;
@@ -3853,20 +3853,20 @@ static inline void csr_update_pmksa_to_profile(tCsrRoamProfile *profile,
 }
 #else
 static inline bool csr_update_pmksa_for_cache_id(tSirBssDescription *bss_desc,
-				tCsrRoamProfile *profile,
+				struct csr_roam_profile *profile,
 				tPmkidCacheInfo *pmkid_cache)
 {
 	return false;
 }
 
-static inline void csr_update_pmksa_to_profile(tCsrRoamProfile *profile,
-		tPmkidCacheInfo *pmkid_cache)
+static inline void csr_update_pmksa_to_profile(struct csr_roam_profile *profile,
+					       tPmkidCacheInfo *pmkid_cache)
 {
 }
 #endif
 
 uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
-			     tCsrRoamProfile *pProfile,
+			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe)
 {
@@ -4243,7 +4243,7 @@ static bool csr_lookup_bkid(tpAniSirGlobal pMac, uint32_t sessionId,
 }
 
 uint8_t csr_construct_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
-			      tCsrRoamProfile *pProfile,
+			      struct csr_roam_profile *pProfile,
 			      tSirBssDescription *pSirBssDesc,
 			      tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe)
 {
@@ -4518,7 +4518,7 @@ static bool csr_is_wpa_encryption_match(tpAniSirGlobal pMac,
 	return fWpaMatch;
 }
 
-uint8_t csr_construct_wpa_ie(tHalHandle hHal, tCsrRoamProfile *pProfile,
+uint8_t csr_construct_wpa_ie(tHalHandle hHal, struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe)
 {
@@ -4604,7 +4604,7 @@ uint8_t csr_construct_wpa_ie(tHalHandle hHal, tCsrRoamProfile *pProfile,
  * one from the BSS Caller allocated memory for pWpaIe and guarrantee
  * it can contain a max length WPA IE
  */
-uint8_t csr_retrieve_wpa_ie(tHalHandle hHal, tCsrRoamProfile *pProfile,
+uint8_t csr_retrieve_wpa_ie(tHalHandle hHal, struct csr_roam_profile *pProfile,
 			    tSirBssDescription *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe)
 {
@@ -4636,7 +4636,7 @@ uint8_t csr_retrieve_wpa_ie(tHalHandle hHal, tCsrRoamProfile *pProfile,
  * it can contain a max length WPA IE
  */
 uint8_t csr_retrieve_rsn_ie(tHalHandle hHal, uint32_t sessionId,
-			    tCsrRoamProfile *pProfile,
+			    struct csr_roam_profile *pProfile,
 			    tSirBssDescription *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrRSNIe *pRsnIe)
 {
@@ -4695,7 +4695,7 @@ uint8_t csr_retrieve_rsn_ie(tHalHandle hHal, uint32_t sessionId,
  * it can contain a max length WAPI IE
  */
 uint8_t csr_retrieve_wapi_ie(tHalHandle hHal, uint32_t sessionId,
-			     tCsrRoamProfile *pProfile,
+			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe)
 {
@@ -5746,7 +5746,7 @@ uint16_t csr_rates_find_best_rate(tSirMacRateSet *pSuppRates,
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
-static inline void csr_free_fils_profile_info(tCsrRoamProfile *profile)
+static inline void csr_free_fils_profile_info(struct csr_roam_profile *profile)
 {
 	if (profile->fils_con_info) {
 		qdf_mem_free(profile->fils_con_info);
@@ -5760,11 +5760,11 @@ static inline void csr_free_fils_profile_info(tCsrRoamProfile *profile)
 	}
 }
 #else
-static inline void csr_free_fils_profile_info(tCsrRoamProfile *profile)
+static inline void csr_free_fils_profile_info(struct csr_roam_profile *profile)
 { }
 #endif
 
-void csr_release_profile(tpAniSirGlobal pMac, tCsrRoamProfile *pProfile)
+void csr_release_profile(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile)
 {
 	if (pProfile) {
 		if (pProfile->BSSIDs.bssid) {
@@ -5804,7 +5804,7 @@ void csr_release_profile(tpAniSirGlobal pMac, tCsrRoamProfile *pProfile)
 			pProfile->ChannelInfo.ChannelList = NULL;
 		}
 		csr_free_fils_profile_info(pProfile);
-		qdf_mem_set(pProfile, sizeof(tCsrRoamProfile), 0);
+		qdf_mem_set(pProfile, sizeof(struct csr_roam_profile), 0);
 	}
 }
 
@@ -5929,10 +5929,10 @@ tSirBssType csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
 /* This function use the parameters to decide the CFG value. */
 /* CSR never sets WNI_CFG_DOT11_MODE_ALL to the CFG */
 /* So PE should not see WNI_CFG_DOT11_MODE_ALL when it gets the CFG value */
-enum csr_cfgdot11mode csr_get_cfg_dot11_mode_from_csr_phy_mode(tCsrRoamProfile
-							*pProfile,
-							  eCsrPhyMode phyMode,
-							  bool fProprietary)
+enum csr_cfgdot11mode
+csr_get_cfg_dot11_mode_from_csr_phy_mode(struct csr_roam_profile *pProfile,
+					 eCsrPhyMode phyMode,
+					 bool fProprietary)
 {
 	uint32_t cfgDot11Mode = eCSR_CFG_DOT11_MODE_ABG;
 

@@ -1065,7 +1065,7 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 		/* Issue stopbss for each sapctx */
 		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 			struct sap_context *pSapContext;
-			tCsrRoamProfile *profile;
+			struct csr_roam_profile *profile;
 
 			if (((QDF_SAP_MODE ==
 			    mac_ctx->sap.sapCtxList[intf].sapPersona) ||

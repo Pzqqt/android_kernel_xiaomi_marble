@@ -936,7 +936,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tScanResultHandle hBSSList = CSR_INVALID_SCANRESULT_HANDLE;
 	tCsrScanResultFilter *pScanFilter = NULL;
-	tCsrRoamProfile *profile;
+	struct csr_roam_profile *profile;
 	struct csr_roam_session *session;
 
 	session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -1008,9 +1008,9 @@ QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac_ctx,
  * Return: true for FILS connection else false
  */
 #ifdef WLAN_FEATURE_FILS_SK
-static
-bool csr_handle_fils_scan_for_ssid_failure(tCsrRoamProfile *roam_profile,
-					   struct csr_roam_info *roam_info)
+static bool
+csr_handle_fils_scan_for_ssid_failure(struct csr_roam_profile *roam_profile,
+				      struct csr_roam_info *roam_info)
 {
 	if (roam_profile && roam_profile->fils_con_info &&
 	    roam_profile->fils_con_info->is_fils_connection) {
@@ -1025,9 +1025,9 @@ bool csr_handle_fils_scan_for_ssid_failure(tCsrRoamProfile *roam_profile,
 	return false;
 }
 #else
-static
-bool csr_handle_fils_scan_for_ssid_failure(tCsrRoamProfile *roam_profile,
-					   struct csr_roam_info *roam_info)
+static bool
+csr_handle_fils_scan_for_ssid_failure(struct csr_roam_profile *roam_profile,
+				      struct csr_roam_info *roam_info)
 {
 	return false;
 }
@@ -1037,7 +1037,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac_ctx,
 						  uint32_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamProfile *profile;
+	struct csr_roam_profile *profile;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 	eCsrRoamResult roam_result;
 	struct csr_roam_info *roam_info = NULL;
@@ -2242,7 +2242,7 @@ QDF_STATUS csr_move_bss_to_head_from_bssid(tpAniSirGlobal pMac,
 /**
  * csr_scan_for_ssid() -  Function usually used for BSSs that suppresses SSID
  * @mac_ctx: Pointer to Global Mac structure
- * @profile: pointer to tCsrRoamProfile
+ * @profile: pointer to struct csr_roam_profile
  * @roam_id: variable representing roam id
  * @notify: boolean variable
  *
@@ -2252,7 +2252,7 @@ QDF_STATUS csr_move_bss_to_head_from_bssid(tpAniSirGlobal pMac,
  * Return: Success - QDF_STATUS_SUCCESS, Failure - error number
  */
 QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
-			tCsrRoamProfile *profile, uint32_t roam_id,
+			struct csr_roam_profile *profile, uint32_t roam_id,
 			bool notify)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
@@ -2276,7 +2276,7 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	}
 
 	session->scan_info.profile =
-			qdf_mem_malloc(sizeof(tCsrRoamProfile));
+			qdf_mem_malloc(sizeof(struct csr_roam_profile));
 	if (!session->scan_info.profile)
 		status = QDF_STATUS_E_NOMEM;
 	else

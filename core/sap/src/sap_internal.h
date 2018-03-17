@@ -156,7 +156,7 @@ struct sap_context {
 	uint8_t ucSecEnabled;
 
 	/* Include the SME(CSR) context here */
-	tCsrRoamProfile csr_roamProfile;
+	struct csr_roam_profile csr_roamProfile;
 	uint32_t csr_roamId;
 
 	/* SAP event Callback to hdd */
@@ -337,9 +337,9 @@ QDF_STATUS sap_fsm(struct sap_context *sapContext, ptWLAN_SAPEvent sapEvent);
 eSapStatus
 sapconvert_to_csr_profile(tsap_Config_t *pconfig_params,
 		       eCsrRoamBssType bssType,
-		       tCsrRoamProfile *profile);
+		       struct csr_roam_profile *profile);
 
-void sap_free_roam_profile(tCsrRoamProfile *profile);
+void sap_free_roam_profile(struct csr_roam_profile *profile);
 
 QDF_STATUS
 sap_is_peer_mac_allowed(struct sap_context *sapContext, uint8_t *peerMac);

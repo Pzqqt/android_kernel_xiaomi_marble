@@ -39,7 +39,7 @@
  * Return: Success or failure code
  */
 QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session,
-			tCsrRoamProfile *profile)
+			struct csr_roam_profile *profile)
 {
 	QDF_STATUS status;
 	struct bss_config_param bss_cfg = {0};
@@ -79,7 +79,7 @@ QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session,
  */
 void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
 				      uint32_t session_id,
-				      tCsrRoamProfile *roam_profile,
+				      struct csr_roam_profile *roam_profile,
 				      tSirBssDescription *bssdesc)
 {
 	struct csr_roam_session *roam_session = NULL;

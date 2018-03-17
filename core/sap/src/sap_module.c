@@ -559,7 +559,7 @@ wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
  *
  * Return: SAP RoamProfile
  */
-tCsrRoamProfile *wlan_sap_get_roam_profile(struct sap_context *sap_ctx)
+struct csr_roam_profile *wlan_sap_get_roam_profile(struct sap_context *sap_ctx)
 {
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,

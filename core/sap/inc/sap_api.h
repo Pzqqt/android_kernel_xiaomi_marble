@@ -1281,7 +1281,7 @@ QDF_STATUS wlansap_set_dfs_target_chnl(tHalHandle hHal,
  *
  * Return: SAP RoamProfile
  */
-tCsrRoamProfile *wlan_sap_get_roam_profile(struct sap_context *sap_ctx);
+struct csr_roam_profile *wlan_sap_get_roam_profile(struct sap_context *sap_ctx);
 
 /**
  * wlan_sap_get_phymode() - Returns sap phymode.

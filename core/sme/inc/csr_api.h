@@ -393,7 +393,7 @@ typedef enum {
 	eCSR_ROAM_CONNECT_COMPLETION,
 	/*
 	 * an association or start_IBSS operation starts,
-	 * callback may get a pointer to tCsrRoamProfile and
+	 * callback may get a pointer to struct csr_roam_profile and
 	 * a pointer to tSirBssDescription
 	 */
 	eCSR_ROAM_ASSOCIATION_START,
@@ -823,7 +823,7 @@ typedef struct tagCsrRoamModifyProfileFields {
 	uint16_t listen_interval;
 } tCsrRoamModifyProfileFields;
 
-typedef struct csr_roam_profile {
+struct csr_roam_profile {
 	tCsrSSIDs SSIDs;
 	tCsrBSSIDs BSSIDs;
 	/* this is bit mask of all the needed phy mode defined in eCsrPhyMode */
@@ -920,7 +920,7 @@ typedef struct csr_roam_profile {
 	struct cds_fils_connection_info *fils_con_info;
 #endif
 	bool force_rsne_override;
-} tCsrRoamProfile;
+};
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 typedef struct tagCsrRoamHTProfile {
@@ -1340,7 +1340,7 @@ typedef struct tagCsrUpdateConfigParam {
 #endif
 
 struct csr_roam_info {
-	tCsrRoamProfile *pProfile;
+	struct csr_roam_profile *pProfile;
 	tSirBssDescription *pBssDesc;
 	uint32_t nBeaconLength;
 	uint32_t nAssocReqLength;

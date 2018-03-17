@@ -267,7 +267,7 @@ static bool csr_roam_process_results(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 				     enum csr_roamcomplete_result Result,
 				     void *Context);
 static QDF_STATUS csr_roam_start_ibss(tpAniSirGlobal pMac, uint32_t sessionId,
-				      tCsrRoamProfile *pProfile,
+				      struct csr_roam_profile *pProfile,
 				      bool *pfSameIbss);
 static void csr_roam_update_connected_profile_from_new_bss(tpAniSirGlobal pMac,
 							   uint32_t sessionId,
@@ -283,7 +283,7 @@ static QDF_STATUS csr_roam_open(tpAniSirGlobal pMac);
 static QDF_STATUS csr_roam_close(tpAniSirGlobal pMac);
 static bool csr_roam_is_same_profile_keys(tpAniSirGlobal pMac,
 				   tCsrRoamConnectedProfile *pConnProfile,
-				   tCsrRoamProfile *pProfile2);
+				   struct csr_roam_profile *pProfile2);
 
 static QDF_STATUS csr_roam_start_roaming_timer(tpAniSirGlobal pMac,
 					       uint32_t sessionId,
@@ -324,7 +324,7 @@ static void csr_roam_remove_stat_list_entry(tpAniSirGlobal pMac,
 							tListElem *pEntry);
 static enum csr_cfgdot11mode
 csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal pMac,
-				   tCsrRoamProfile *pProfile,
+				   struct csr_roam_profile *pProfile,
 				   uint8_t operationChn,
 				   enum band_info *pBand);
 static QDF_STATUS csr_roam_get_qos_info_from_bss(
@@ -353,7 +353,7 @@ static bool csr_is_conn_allow_5g_band(tpAniSirGlobal pMac,
 						uint32_t chnl);
 static QDF_STATUS csr_roam_start_wds(tpAniSirGlobal pMac,
 						uint32_t sessionId,
-				     tCsrRoamProfile *pProfile,
+				     struct csr_roam_profile *pProfile,
 				     tSirBssDescription *pBssDesc);
 static void csr_init_session(tpAniSirGlobal pMac, uint32_t sessionId);
 static QDF_STATUS csr_roam_issue_set_key_command(tpAniSirGlobal pMac,
@@ -4395,7 +4395,7 @@ QDF_STATUS csr_roam_save_connected_bss_desc(tpAniSirGlobal pMac,
 
 static
 QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
-				       tCsrRoamProfile *pProfile,
+				       struct csr_roam_profile *pProfile,
 				       tSirBssDescription *pBssDesc,
 				       struct bss_config_param *pBssConfig,
 				       tDot11fBeaconIEs *pIes)
@@ -4545,7 +4545,7 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 }
 
 QDF_STATUS csr_roam_prepare_bss_config_from_profile(
-	tpAniSirGlobal pMac, tCsrRoamProfile *pProfile,
+	tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 					struct bss_config_param *pBssConfig,
 					tSirBssDescription *pBssDesc)
 {
@@ -4677,7 +4677,7 @@ static QDF_STATUS csr_roam_get_qos_info_from_bss(tpAniSirGlobal pMac,
 	return status;
 }
 
-void csr_set_cfg_privacy(tpAniSirGlobal pMac, tCsrRoamProfile *pProfile,
+void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 			 bool fPrivacy)
 {
 	/*
@@ -4900,11 +4900,12 @@ static QDF_STATUS csr_set_qos_to_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 }
 
 static QDF_STATUS csr_get_rate_set(tpAniSirGlobal pMac,
-				tCsrRoamProfile *pProfile, eCsrPhyMode phyMode,
-				tSirBssDescription *pBssDesc,
-				tDot11fBeaconIEs *pIes,
-				tSirMacRateSet *pOpRateSet,
-				tSirMacRateSet *pExRateSet)
+				   struct csr_roam_profile *pProfile,
+				   eCsrPhyMode phyMode,
+				   tSirBssDescription *pBssDesc,
+				   tDot11fBeaconIEs *pIes,
+				   tSirMacRateSet *pOpRateSet,
+				   tSirMacRateSet *pExRateSet)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int i;
@@ -4974,7 +4975,7 @@ static QDF_STATUS csr_get_rate_set(tpAniSirGlobal pMac,
 }
 
 static void csr_set_cfg_rate_set(tpAniSirGlobal pMac, eCsrPhyMode phyMode,
-				 tCsrRoamProfile *pProfile,
+				 struct csr_roam_profile *pProfile,
 				 tSirBssDescription *pBssDesc,
 				 tDot11fBeaconIEs *pIes)
 {
@@ -5074,7 +5075,7 @@ static void csr_set_cfg_rate_set(tpAniSirGlobal pMac, eCsrPhyMode phyMode,
 }
 
 static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
-					      tCsrRoamProfile *pProfile)
+					      struct csr_roam_profile *pProfile)
 {
 	tSirMacRateSetIE DefaultSupportedRates11a = { SIR_MAC_RATESET_EID,
 						      {8,
@@ -5244,7 +5245,7 @@ void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result,
 
 /* pIes may be NULL */
 QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
-				       tCsrRoamProfile *pProfile,
+				       struct csr_roam_profile *pProfile,
 				       tSirBssDescription *pBssDesc,
 				       struct bss_config_param *pBssConfig,
 				       struct sDot11fBeaconIEs *pIes,
@@ -5335,7 +5336,7 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 
 static
 QDF_STATUS csr_roam_stop_network(tpAniSirGlobal pMac, uint32_t sessionId,
-				 tCsrRoamProfile *pProfile,
+				 struct csr_roam_profile *pProfile,
 				 tSirBssDescription *pBssDesc,
 				 tDot11fBeaconIEs *pIes)
 {
@@ -5433,7 +5434,7 @@ QDF_STATUS csr_roam_stop_network(tpAniSirGlobal pMac, uint32_t sessionId,
  * Return: Roaming state.
  */
 static enum csr_join_state csr_roam_state_for_same_profile(
-	tpAniSirGlobal mac_ctx, tCsrRoamProfile *profile,
+	tpAniSirGlobal mac_ctx, struct csr_roam_profile *profile,
 			struct csr_roam_session *session,
 			uint32_t session_id, tDot11fBeaconIEs *ies_local,
 			tSirBssDescription *bss_descr)
@@ -5467,7 +5468,7 @@ static enum csr_join_state csr_roam_state_for_same_profile(
 
 static enum csr_join_state csr_roam_join(tpAniSirGlobal pMac,
 	uint32_t sessionId, tCsrScanResultInfo *pScanResult,
-				   tCsrRoamProfile *pProfile)
+				   struct csr_roam_profile *pProfile)
 {
 	enum csr_join_state eRoamState = eCsrContinueRoaming;
 	tSirBssDescription *pBssDesc = &pScanResult->BssDescriptor;
@@ -5712,7 +5713,7 @@ static void csr_roam_join_handle_profile(tpAniSirGlobal mac_ctx,
 #endif
 	QDF_STATUS status;
 	struct csr_roam_session *session;
-	tCsrRoamProfile *profile = &cmd->u.roamCmd.roamProfile;
+	struct csr_roam_profile *profile = &cmd->u.roamCmd.roamProfile;
 	tDot11fBeaconIEs *ies_local = NULL;
 
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
@@ -5892,7 +5893,7 @@ static enum csr_join_state csr_roam_join_next_bss(tpAniSirGlobal mac_ctx,
 	struct csr_roam_info *roam_info = NULL;
 	uint32_t session_id = cmd->sessionId;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
-	tCsrRoamProfile *profile = &cmd->u.roamCmd.roamProfile;
+	struct csr_roam_profile *profile = &cmd->u.roamCmd.roamProfile;
 	struct csr_roam_joinstatus *join_status;
 	tCsrScanResultInfo *result = NULL;
 
@@ -6268,7 +6269,7 @@ QDF_STATUS csr_roam_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 			/* Remember the roaming profile */
 			csr_free_roam_profile(pMac, sessionId);
 			pSession->pCurRoamProfile =
-					qdf_mem_malloc(sizeof(tCsrRoamProfile));
+				qdf_mem_malloc(sizeof(struct csr_roam_profile));
 			if (NULL != pSession->pCurRoamProfile) {
 				csr_roam_copy_profile(pMac,
 					pSession->pCurRoamProfile,
@@ -6969,7 +6970,7 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 		     tSmeCmd *cmd, void *context)
 {
 	uint32_t session_id = cmd->sessionId;
-	tCsrRoamProfile *profile = &cmd->u.roamCmd.roamProfile;
+	struct csr_roam_profile *profile = &cmd->u.roamCmd.roamProfile;
 	struct csr_roam_session *session;
 	tSirBssDescription *bss_desc = NULL;
 	struct csr_roam_info roam_info;
@@ -7264,7 +7265,7 @@ free_fils_join_rsp:
  * Return: None
  */
 static void csr_process_fils_join_rsp(tpAniSirGlobal mac_ctx,
-					tCsrRoamProfile *profile,
+					struct csr_roam_profile *profile,
 					uint32_t session_id,
 					struct csr_roam_info *roam_info,
 					tSirBssDescription *bss_desc,
@@ -7314,11 +7315,11 @@ process_fils_join_rsp_fail:
 #else
 
 static inline void csr_process_fils_join_rsp(tpAniSirGlobal mac_ctx,
-						tCsrRoamProfile *profile,
-						uint32_t session_id,
-						struct csr_roam_info *roam_info,
-						tSirBssDescription *bss_desc,
-						tSirSmeJoinRsp *join_rsp)
+					     struct csr_roam_profile *profile,
+					     uint32_t session_id,
+					     struct csr_roam_info *roam_info,
+					     tSirBssDescription *bss_desc,
+					     tSirSmeJoinRsp *join_rsp)
 {}
 #endif
 
@@ -7341,7 +7342,7 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 	uint32_t key_timeout_interval = 0;
 	uint8_t acm_mask = 0;   /* HDD needs ACM mask in assoc rsp callback */
 	uint32_t session_id = cmd->sessionId;
-	tCsrRoamProfile *profile = &cmd->u.roamCmd.roamProfile;
+	struct csr_roam_profile *profile = &cmd->u.roamCmd.roamProfile;
 	struct csr_roam_session *session;
 	tSirBssDescription *bss_desc = NULL;
 	struct tag_csrscan_result *scan_res = NULL;
@@ -7745,7 +7746,7 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 	struct csr_roam_info roam_info;
 	uint32_t session_id = cmd->sessionId;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
-	tCsrRoamProfile *profile = &cmd->u.roamCmd.roamProfile;
+	struct csr_roam_profile *profile = &cmd->u.roamCmd.roamProfile;
 	eRoamCmdStatus roam_status;
 	eCsrRoamResult roam_result;
 	host_log_ibss_pkt_type *ibss_log;
@@ -7910,8 +7911,8 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
  *
  * Return: None
  */
-static void update_profile_fils_info(tCsrRoamProfile *des_profile,
-					tCsrRoamProfile *src_profile)
+static void update_profile_fils_info(struct csr_roam_profile *des_profile,
+				     struct csr_roam_profile *src_profile)
 {
 	if (!src_profile || !src_profile->fils_con_info)
 		return;
@@ -7944,18 +7945,19 @@ static void update_profile_fils_info(tCsrRoamProfile *des_profile,
 	des_profile->hlp_ie_len = src_profile->hlp_ie_len;
 }
 #else
-static inline void update_profile_fils_info(tCsrRoamProfile *des_profile,
-					tCsrRoamProfile *src_profile)
+static inline
+void update_profile_fils_info(struct csr_roam_profile *des_profile,
+			      struct csr_roam_profile *src_profile)
 { }
 #endif
 QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
-				 tCsrRoamProfile *pDstProfile,
-				 tCsrRoamProfile *pSrcProfile)
+				 struct csr_roam_profile *pDstProfile,
+				 struct csr_roam_profile *pSrcProfile)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t size = 0;
 
-	qdf_mem_set(pDstProfile, sizeof(tCsrRoamProfile), 0);
+	qdf_mem_set(pDstProfile, sizeof(struct csr_roam_profile), 0);
 	if (pSrcProfile->BSSIDs.numOfBSSIDs) {
 		size = sizeof(struct qdf_mac_addr) * pSrcProfile->BSSIDs.
 								numOfBSSIDs;
@@ -8155,13 +8157,14 @@ end:
 }
 
 QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
-			uint32_t sessionId, tCsrRoamProfile *pDstProfile)
+					   uint32_t sessionId,
+					   struct csr_roam_profile *pDstProfile)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tCsrRoamConnectedProfile *pSrcProfile =
 		&pMac->roam.roamSession[sessionId].connectedProfile;
 
-	qdf_mem_set(pDstProfile, sizeof(tCsrRoamProfile), 0);
+	qdf_mem_set(pDstProfile, sizeof(struct csr_roam_profile), 0);
 
 	pDstProfile->BSSIDs.bssid = qdf_mem_malloc(sizeof(struct qdf_mac_addr));
 	if (NULL == pDstProfile->BSSIDs.bssid) {
@@ -8248,7 +8251,7 @@ end:
 }
 
 QDF_STATUS csr_roam_issue_connect(tpAniSirGlobal pMac, uint32_t sessionId,
-				  tCsrRoamProfile *pProfile,
+				  struct csr_roam_profile *pProfile,
 				  tScanResultHandle hBSSList,
 				  enum csr_roam_reason reason, uint32_t roamId,
 				  bool fImediate, bool fClearScan)
@@ -8311,7 +8314,7 @@ QDF_STATUS csr_roam_issue_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 }
 
 QDF_STATUS csr_roam_issue_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
-				  tCsrRoamProfile *pProfile,
+				  struct csr_roam_profile *pProfile,
 				  tCsrRoamModifyProfileFields
 				*pMmodProfileFields,
 				  enum csr_roam_reason reason, uint32_t roamId,
@@ -8415,7 +8418,7 @@ QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac,
  *
  * Return: true, if fils connection, false otherwise
  */
-static bool csr_is_fils_connection(tCsrRoamProfile *profile)
+static bool csr_is_fils_connection(struct csr_roam_profile *profile)
 {
 	if (!profile->fils_con_info)
 		return false;
@@ -8423,7 +8426,7 @@ static bool csr_is_fils_connection(tCsrRoamProfile *profile)
 	return profile->fils_con_info->is_fils_connection;
 }
 #else
-static bool csr_is_fils_connection(tCsrRoamProfile *pProfile)
+static bool csr_is_fils_connection(struct csr_roam_profile *pProfile)
 {
 	return false;
 }
@@ -8459,7 +8462,7 @@ static void csr_roam_print_candidate_aps(tScanResultHandle results)
 }
 
 QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
-		tCsrRoamProfile *pProfile,
+		struct csr_roam_profile *pProfile,
 		uint32_t *pRoamId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -8684,7 +8687,7 @@ end:
  */
 QDF_STATUS
 csr_roam_reassoc(tpAniSirGlobal mac_ctx, uint32_t session_id,
-		 tCsrRoamProfile *profile,
+		 struct csr_roam_profile *profile,
 		 tCsrRoamModifyProfileFields mod_fields,
 		 uint32_t *roam_id)
 {
@@ -8758,7 +8761,7 @@ static QDF_STATUS csr_roam_join_last_profile(tpAniSirGlobal pMac,
 	tScanResultHandle hBSSList = NULL;
 	tCsrScanResultFilter *pScanFilter = NULL;
 	uint32_t roamId;
-	tCsrRoamProfile *pProfile = NULL;
+	struct csr_roam_profile *pProfile = NULL;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
 
 	if (!pSession) {
@@ -8771,7 +8774,7 @@ static QDF_STATUS csr_roam_join_last_profile(tpAniSirGlobal pMac,
 		/* We have to make a copy of pCurRoamProfile because it
 		 * will be free inside csr_roam_issue_connect
 		 */
-		pProfile = qdf_mem_malloc(sizeof(tCsrRoamProfile));
+		pProfile = qdf_mem_malloc(sizeof(struct csr_roam_profile));
 		if (NULL == pProfile) {
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
@@ -9133,7 +9136,7 @@ QDF_STATUS csr_roam_disconnect(tpAniSirGlobal pMac, uint32_t sessionId,
 
 QDF_STATUS csr_roam_save_connected_infomation(tpAniSirGlobal pMac,
 					      uint32_t sessionId,
-					      tCsrRoamProfile *pProfile,
+					      struct csr_roam_profile *pProfile,
 					      tSirBssDescription *pSirBssDesc,
 					      tDot11fBeaconIEs *pIes)
 {
@@ -9437,7 +9440,7 @@ static void csr_roam_join_rsp_processor(tpAniSirGlobal pMac,
 static QDF_STATUS csr_roam_issue_join(tpAniSirGlobal pMac, uint32_t sessionId,
 				      tSirBssDescription *pSirBssDesc,
 				      tDot11fBeaconIEs *pIes,
-				      tCsrRoamProfile *pProfile,
+				      struct csr_roam_profile *pProfile,
 				      uint32_t roamId)
 {
 	QDF_STATUS status;
@@ -9866,7 +9869,7 @@ static void csr_roam_roaming_state_stop_bss_rsp_processor(tpAniSirGlobal pMac,
 							  tSirSmeRsp *pSmeRsp)
 {
 	enum csr_roamcomplete_result result_code = eCsrNothingToJoin;
-	tCsrRoamProfile *profile;
+	struct csr_roam_profile *profile;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	{
@@ -9959,7 +9962,7 @@ csr_post_roam_failure(tpAniSirGlobal mac_ctx,
 		      uint32_t session_id,
 		      struct csr_roam_info *roam_info,
 		      tCsrScanResultFilter *scan_filter,
-		      tCsrRoamProfile *cur_roam_profile)
+		      struct csr_roam_profile *cur_roam_profile)
 {
 	QDF_STATUS status;
 
@@ -10045,7 +10048,7 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 	struct csr_roam_info *roamInfo;
 	tCsrScanResultFilter *pScanFilter = NULL;
 	uint32_t roamId = 0;
-	tCsrRoamProfile *pCurRoamProfile = NULL;
+	struct csr_roam_profile *pCurRoamProfile = NULL;
 	QDF_STATUS status;
 	uint32_t sessionId;
 	struct csr_roam_session *pSession;
@@ -10115,7 +10118,7 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 		 * Copy the connected profile to apply the same for this
 		 * connection as well
 		 */
-		pCurRoamProfile = qdf_mem_malloc(sizeof(tCsrRoamProfile));
+		pCurRoamProfile = qdf_mem_malloc(sizeof(*pCurRoamProfile));
 		if (pCurRoamProfile != NULL) {
 			/*
 			 * notify sub-modules like QoS etc. that handoff
@@ -10941,7 +10944,7 @@ csr_create_fils_realm_hash(struct cds_fils_connection_info *fils_con_info,
  * Return: None
  */
 static void csr_update_fils_scan_filter(tCsrScanResultFilter *scan_fltr,
-				tCsrRoamProfile *profile)
+				struct csr_roam_profile *profile)
 {
 	if (profile->fils_con_info &&
 	    profile->fils_con_info->is_fils_connection) {
@@ -10958,7 +10961,7 @@ static void csr_update_fils_scan_filter(tCsrScanResultFilter *scan_fltr,
 }
 #else
 static void csr_update_fils_scan_filter(tCsrScanResultFilter *scan_fltr,
-				tCsrRoamProfile *profile)
+				struct csr_roam_profile *profile)
 { }
 #endif
 
@@ -10969,7 +10972,7 @@ static void csr_update_fils_scan_filter(tCsrScanResultFilter *scan_fltr,
  */
 QDF_STATUS
 csr_roam_prepare_filter_from_profile(tpAniSirGlobal mac_ctx,
-				     tCsrRoamProfile *profile,
+				     struct csr_roam_profile *profile,
 				     tCsrScanResultFilter *scan_fltr)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -13063,7 +13066,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
  */
 static enum csr_cfgdot11mode
 csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal mac_ctx,
-				   tCsrRoamProfile *profile,
+				   struct csr_roam_profile *profile,
 				   uint8_t opr_chn,
 				   enum band_info *p_band)
 {
@@ -13386,7 +13389,7 @@ static bool csr_is_auth_in_list(tpAniSirGlobal pMac, tCsrAuthList *pAuthList,
 
 bool csr_is_same_profile(tpAniSirGlobal pMac,
 			 tCsrRoamConnectedProfile *pProfile1,
-			 tCsrRoamProfile *pProfile2)
+			 struct csr_roam_profile *pProfile2)
 {
 	uint32_t i;
 	bool fCheck = false;
@@ -13442,7 +13445,7 @@ free_scan_filter:
 
 static bool csr_roam_is_same_profile_keys(tpAniSirGlobal pMac,
 				   tCsrRoamConnectedProfile *pConnProfile,
-				   tCsrRoamProfile *pProfile2)
+				   struct csr_roam_profile *pProfile2)
 {
 	bool fCheck = false;
 	int i;
@@ -13684,7 +13687,7 @@ csr_convert_mode_to_nw_type(enum csr_cfgdot11mode dot11_mode,
  */
 static void csr_populate_supported_rates_from_hostapd(tSirMacRateSet *opr_rates,
 		tSirMacRateSet *ext_rates,
-		tCsrRoamProfile *profile)
+		struct csr_roam_profile *profile)
 {
 	int i = 0;
 
@@ -13733,7 +13736,7 @@ static void csr_populate_supported_rates_from_hostapd(tSirMacRateSet *opr_rates,
  */
 static void
 csr_roam_get_bss_start_parms(tpAniSirGlobal pMac,
-			     tCsrRoamProfile *pProfile,
+			     struct csr_roam_profile *pProfile,
 			     struct csr_roamstart_bssparams *pParam,
 			     bool skip_hostapd_rate)
 {
@@ -13927,7 +13930,7 @@ static void csr_roam_determine_max_rate_for_ad_hoc(tpAniSirGlobal pMac,
 
 QDF_STATUS csr_roam_issue_start_bss(tpAniSirGlobal pMac, uint32_t sessionId,
 				    struct csr_roamstart_bssparams *pParam,
-				    tCsrRoamProfile *pProfile,
+				    struct csr_roam_profile *pProfile,
 				    tSirBssDescription *pBssDesc,
 					uint32_t roamId)
 {
@@ -14033,7 +14036,7 @@ QDF_STATUS csr_roam_issue_start_bss(tpAniSirGlobal pMac, uint32_t sessionId,
 }
 
 void csr_roam_prepare_bss_params(tpAniSirGlobal pMac, uint32_t sessionId,
-					tCsrRoamProfile *pProfile,
+					struct csr_roam_profile *pProfile,
 					tSirBssDescription *pBssDesc,
 					struct bss_config_param *pBssConfig,
 					tDot11fBeaconIEs *pIes)
@@ -14103,7 +14106,7 @@ void csr_roam_prepare_bss_params(tpAniSirGlobal pMac, uint32_t sessionId,
 }
 
 static QDF_STATUS csr_roam_start_ibss(tpAniSirGlobal pMac, uint32_t sessionId,
-				      tCsrRoamProfile *pProfile,
+				      struct csr_roam_profile *pProfile,
 				      bool *pfSameIbss)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -14609,7 +14612,7 @@ eRoamCmdStatus csr_get_roam_complete_status(tpAniSirGlobal pMac,
 }
 
 static QDF_STATUS csr_roam_start_wds(tpAniSirGlobal pMac, uint32_t sessionId,
-				     tCsrRoamProfile *pProfile,
+				     struct csr_roam_profile *pProfile,
 				     tSirBssDescription *pBssDesc)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -14657,7 +14660,7 @@ static QDF_STATUS csr_roam_start_wds(tpAniSirGlobal pMac, uint32_t sessionId,
 			/* Save profile for late use */
 			csr_free_roam_profile(pMac, sessionId);
 			pSession->pCurRoamProfile =
-				qdf_mem_malloc(sizeof(tCsrRoamProfile));
+				qdf_mem_malloc(sizeof(struct csr_roam_profile));
 			if (pSession->pCurRoamProfile != NULL) {
 				csr_roam_copy_profile(pMac,
 						      pSession->pCurRoamProfile,
@@ -14797,8 +14800,9 @@ bool csr_is_mfpc_capable(struct sDot11fIERSN *rsn)
  *
  * Return: void
  */
-static void csr_set_mgmt_enc_type(tCsrRoamProfile *profile,
-	tDot11fBeaconIEs *ies, tSirSmeJoinReq *csr_join_req)
+static void csr_set_mgmt_enc_type(struct csr_roam_profile *profile,
+				  tDot11fBeaconIEs *ies,
+				  tSirSmeJoinReq *csr_join_req)
 {
 	sme_debug("mgmt encryption type %d MFPe %d MFPr %d",
 		 profile->mgmt_encryption_type,
@@ -14816,8 +14820,9 @@ static void csr_set_mgmt_enc_type(tCsrRoamProfile *profile,
 		csr_join_req->MgmtEncryptionType = eSIR_ED_NONE;
 }
 #else
-static inline void csr_set_mgmt_enc_type(tCsrRoamProfile *profile,
-	tDot11fBeaconIEs *pIes, tSirSmeJoinReq *csr_join_req)
+static inline void csr_set_mgmt_enc_type(struct csr_roam_profile *profile,
+					 tDot11fBeaconIEs *pIes,
+					 tSirSmeJoinReq *csr_join_req)
 {
 }
 #endif
@@ -14830,8 +14835,8 @@ static inline void csr_set_mgmt_enc_type(tCsrRoamProfile *profile,
  *
  * Return: None
  */
-static void csr_update_fils_connection_info(tCsrRoamProfile *profile,
-					tSirSmeJoinReq *csr_join_req)
+static void csr_update_fils_connection_info(struct csr_roam_profile *profile,
+					    tSirSmeJoinReq *csr_join_req)
 {
 	if (!profile->fils_con_info)
 		return;
@@ -14846,8 +14851,8 @@ static void csr_update_fils_connection_info(tCsrRoamProfile *profile,
 	}
 }
 #else
-static void csr_update_fils_connection_info(tCsrRoamProfile *profile,
-					tSirSmeJoinReq *csr_join_req)
+static void csr_update_fils_connection_info(struct csr_roam_profile *profile,
+					    tSirSmeJoinReq *csr_join_req)
 { }
 #endif
 
@@ -14894,7 +14899,7 @@ static void csr_update_sae_config(tSirSmeJoinReq *csr_join_req,
  */
 QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 				 tSirBssDescription *pBssDescription,
-				 tCsrRoamProfile *pProfile,
+				 struct csr_roam_profile *pProfile,
 				 tDot11fBeaconIEs *pIes, uint16_t messageType)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -18834,10 +18839,10 @@ csr_roam_offload_per_scan(tpAniSirGlobal mac_ctx, uint8_t session_id)
 
 #if defined(WLAN_FEATURE_FILS_SK)
 QDF_STATUS csr_update_fils_config(tpAniSirGlobal mac, uint8_t session_id,
-				  tCsrRoamProfile *src_profile)
+				  struct csr_roam_profile *src_profile)
 {
 	struct csr_roam_session *session = CSR_GET_SESSION(mac, session_id);
-	tCsrRoamProfile *dst_profile = NULL;
+	struct csr_roam_profile *dst_profile = NULL;
 
 	if (!session) {
 		sme_err("session NULL");
@@ -19979,7 +19984,7 @@ QDF_STATUS csr_handoff_request(tpAniSirGlobal pMac,
 QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
 				       struct qdf_mac_addr bssid,
 				       struct ch_params *ch_params,
-				       tCsrRoamProfile *profile)
+				       struct csr_roam_profile *profile)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirChanChangeRequest *pMsg;
@@ -20614,7 +20619,7 @@ bool csr_clear_joinreq_param(tpAniSirGlobal mac_ctx,
  * Return: true or false based on function's overall success.
  **/
 bool csr_store_joinreq_param(tpAniSirGlobal mac_ctx,
-		tCsrRoamProfile *profile,
+		struct csr_roam_profile *profile,
 		tScanResultHandle scan_cache,
 		uint32_t *roam_id,
 		uint32_t session_id)
