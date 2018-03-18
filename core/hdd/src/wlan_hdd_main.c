@@ -4884,8 +4884,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			    struct hdd_adapter *adapter)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct csr_roam_profile *roam_profile;
 	union iwreq_data wrqu;
 	tSirUpdateIE updateIE;
 	unsigned long rc;
@@ -4920,16 +4919,14 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			hdd_is_connecting(
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
 			INIT_COMPLETION(adapter->disconnect_comp_var);
-			/*
-			 * For NDI do not use pWextState from sta_ctx, if needed
-			 * extract from ndi_ctx.
-			 */
+			roam_profile = hdd_roam_profile(adapter);
+			/* For NDI do not use roam_profile */
 			if (QDF_NDI_MODE == adapter->device_mode)
 				qdf_ret_status = sme_roam_disconnect(
 					hdd_ctx->hHal,
 					adapter->session_id,
 					eCSR_DISCONNECT_REASON_NDI_DELETE);
-			else if (pWextState->roamProfile.BSSType ==
+			else if (roam_profile->BSSType ==
 						eCSR_BSS_TYPE_START_IBSS)
 				qdf_ret_status = sme_roam_disconnect(
 					hdd_ctx->hHal,
@@ -13496,12 +13493,11 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
 			      int8_t *rssi, int8_t *snr)
 {
 	QDF_STATUS status;
-	struct hdd_wext_state *wext_state =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	struct csr_roam_profile *profile = &wext_state->roamProfile;
+	struct csr_roam_profile *roam_profile;
 
+	roam_profile = hdd_roam_profile(adapter);
 	status = sme_get_rssi_snr_by_bssid(WLAN_HDD_GET_HAL_CTX(adapter),
-				profile, bssid, rssi, snr);
+					   roam_profile, bssid, rssi, snr);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_warn("sme_get_rssi_snr_by_bssid failed");
 		return -EINVAL;
