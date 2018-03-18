@@ -729,7 +729,6 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter;
 	int errno;
-	struct hdd_wext_state *wext_state;
 	struct csr_roam_profile *roam_profile;
 	struct in_ifaddr *ifa;
 
@@ -752,8 +751,7 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 
 	hdd_debug("FILS Roaming support: %d",
 		  hdd_ctx->is_fils_roaming_supported);
-	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	roam_profile = &wext_state->roamProfile;
+	roam_profile = hdd_roam_profile(adapter);
 
 	ifa = hdd_lookup_ifaddr(adapter);
 	if (ifa && hdd_ctx->is_fils_roaming_supported)
