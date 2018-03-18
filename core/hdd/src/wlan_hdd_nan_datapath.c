@@ -168,16 +168,11 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 {
 	int ret;
 	uint32_t roam_id;
-	struct hdd_wext_state *wext_state =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	struct csr_roam_profile *roam_profile = &wext_state->roamProfile;
+	struct csr_roam_profile *roam_profile;
 
 	hdd_enter();
 
-	if (!roam_profile) {
-		hdd_err("No valid roam profile");
-		return -EINVAL;
-	}
+	roam_profile = hdd_roam_profile(adapter);
 
 	if (HDD_WMM_USER_MODE_NO_QOS ==
 		(WLAN_HDD_GET_CTX(adapter))->config->WmmMode) {
