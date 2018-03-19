@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -338,6 +338,28 @@ cdp_get_vdev_id(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 
 	if (soc->ops->misc_ops->get_vdev_id)
 		return soc->ops->misc_ops->get_vdev_id(vdev);
+	return 0;
+}
+
+/**
+ * cdp_get_tx_ack_stats() - get tx ack count for vdev
+ * @soc - data path soc handle
+ * @vdev_id - vdev id
+ *
+ * return tx ack count
+ *          0 invalid count
+ */
+static inline uint32_t
+cdp_get_tx_ack_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return 0;
+	}
+
+	if (soc->ops->misc_ops->get_tx_ack_stats)
+		return soc->ops->misc_ops->get_tx_ack_stats(vdev_id);
 	return 0;
 }
 
