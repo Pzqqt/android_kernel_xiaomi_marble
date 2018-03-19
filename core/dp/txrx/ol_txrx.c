@@ -2245,6 +2245,9 @@ ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
 	vdev->osif_flow_control_is_pause = NULL;
 	vdev->osif_fc_ctx = NULL;
 
+	vdev->txrx_stats.txack_success = 0;
+	vdev->txrx_stats.txack_failed = 0;
+
 	/* Default MAX Q depth for every VDEV */
 	vdev->ll_pause.max_q_depth =
 		ol_tx_cfg_max_tx_queue_depth_ll(vdev->pdev->ctrl_pdev);
@@ -4668,6 +4671,24 @@ static void ol_txrx_update_mac_id(uint8_t vdev_id, uint8_t mac_id)
 	vdev->mac_id = mac_id;
 }
 
+/**
+ * ol_txrx_get_tx_ack_count() - get tx ack count
+ * @vdev_id: vdev_id
+ *
+ * Return: tx ack count
+ */
+static uint32_t ol_txrx_get_tx_ack_stats(uint8_t vdev_id)
+{
+	struct ol_txrx_vdev_t *vdev =
+		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid vdev_id %d", __func__, vdev_id);
+		return 0;
+	}
+	return vdev->txrx_stats.txack_success;
+}
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 
 /**
@@ -5837,6 +5858,7 @@ static struct cdp_misc_ops ol_ops_misc = {
 	.hl_tdls_flag_reset = ol_txrx_hl_tdls_flag_reset,
 	.tx_non_std = ol_tx_non_std,
 	.get_vdev_id = ol_txrx_get_vdev_id,
+	.get_tx_ack_stats = ol_txrx_get_tx_ack_stats,
 	.set_wisa_mode = ol_txrx_set_wisa_mode,
 	.txrx_data_stall_cb_register = ol_register_data_stall_detect_cb,
 	.txrx_data_stall_cb_deregister = ol_deregister_data_stall_detect_cb,

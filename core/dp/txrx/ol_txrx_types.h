@@ -1040,6 +1040,11 @@ struct ol_txrx_vdev_t {
 	ol_txrx_stats_rx_fp stats_rx; /* receive function used by this vdev */
 
 	struct {
+		uint32_t txack_success;
+		uint32_t txack_failed;
+	} txrx_stats;
+
+	struct {
 		/*
 		 * If the vdev object couldn't be deleted immediately because
 		 * it still had some peer objects left, remember that a delete

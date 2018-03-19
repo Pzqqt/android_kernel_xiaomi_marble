@@ -629,6 +629,17 @@ static inline void ol_tx_timestamp(ol_txrx_pdev_handle pdev,
 }
 #endif
 
+static void ol_tx_update_ack_count(struct ol_tx_desc_t *tx_desc,
+				   enum htt_tx_status status)
+{
+	if (!tx_desc->vdev)
+		return;
+
+	if (status == htt_tx_status_ok)
+		++tx_desc->vdev->txrx_stats.txack_success;
+	else
+		++tx_desc->vdev->txrx_stats.txack_failed;
+}
 /**
  * ol_tx_update_connectivity_stats() - update connectivity stats
  * @tx_desc: tx desc
@@ -750,6 +761,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 		if (pkt_type_bitmap)
 			ol_tx_update_connectivity_stats(tx_desc, netbuf,
 							status);
+		ol_tx_update_ack_count(tx_desc, status);
 
 		if (tx_desc->pkt_type != OL_TX_FRM_TSO) {
 			packetdump_cb = pdev->ol_tx_packetdump_cb;
