@@ -265,22 +265,6 @@ V    RW    NP
 SCH
 0    65535    1
 
-
-*
-* WEP Key Length (5 or 13 bytes)
-*
-
-WNI_CFG_WEP_KEY_LENGTH    I    4    5
-V    RW    NP RESTART
-NONE
-5    13    5
-V    RW    NP RESTART
-NONE
-5    13    5
-
-#ENUM 5    5
-#ENUM 13   13
-
 *
 * Default Key Table
 *
@@ -315,18 +299,6 @@ LIM
 #ENUM 3    3
 
 *
-* Exclude unencrypted frames (WEP)
-*
-
-WNI_CFG_EXCLUDE_UNENCRYPTED    I    4    5
-V    RW    NP
-LIM
-0    1    0
-V    RW    NP
-LIM
-0    1    0
-
-*
 * RTS Threshold
 *
 
@@ -339,29 +311,8 @@ HAL
 0    1048576   2347
 
 *
-* Short Retry Limit
-*
-
-WNI_CFG_SHORT_RETRY_LIMIT    I    4    6
-V    RW    NP
-HAL
-0    255   6
-V    RW    NP
-HAL
-0    255   6
-
-*
 * Long Retry Limit
 *
-
-WNI_CFG_LONG_RETRY_LIMIT    I    4    6
-V    RW    NP
-HAL
-0    255   6
-V    RW    NP
-HAL
-0    255   6
-
 
 *
 * Fragmentation Threshold
@@ -497,43 +448,6 @@ NONE
 0    0    0
 
 *
-* Beacon Filter Enable/Disable (TU)
-*
-
-WNI_CFG_PS_ENABLE_BCN_FILTER    I    4    7
-V    RW    NP
-HAL
-0    1    1
-NV    RW    NP
-NONE
-0    1    1
-
-*
-* Heart Beat Enable/Disable (TU)
-*
-
-WNI_CFG_PS_ENABLE_HEART_BEAT    I    4    7
-V    RW    NP
-HAL
-0    1    1
-NV    RW    NP
-NONE
-0    1    1
-
-*
-* RSSI Monitor Enable/Disable (TU)
-*
-
-WNI_CFG_PS_ENABLE_RSSI_MONITOR    I    4    7
-V    RW    NP
-HAL
-0    1    0
-NV    RW    NP
-NONE
-0    1    0
-
-
-*
 * PS Data InActivity Timeout (TU)
 *
 
@@ -544,19 +458,6 @@ HAL
 NV    RW    NP
 NONE
 1    255    20
-
-
-*
-* RF Settling Time Clk (In US)
-*
-
-WNI_CFG_RF_SETTLING_TIME_CLK I    4    7
-V    RW    NP
-HAL
-0    60000    1500
-NV    RW    NP
-NONE
-0    60000    1500
 
 *
 * Supported Rate Set for 11b
@@ -581,25 +482,6 @@ NONE
 V    RO    NP
 NONE
 8    12 18 24 36 48 72 96 108
-
-
-*
-* PHY Mode
-*
-
-WNI_CFG_PHY_MODE    I    4    9
-V    RW    NP RESTART
-NONE
-0    3    0
-V    RW    NP RESTART
-NONE
-0    3    0
-
-#ENUM  11A  0
-#ENUM  11B  1
-#ENUM  11G  2
-#ENUM  NONE 3
-
 
 *
 *The Dot11 mode can change dynamically on STA
@@ -654,18 +536,6 @@ NONE
 0
 
 *
-* Proprietary Operational Rate Set
-*
-
-WNI_CFG_PROPRIETARY_OPERATIONAL_RATE_SET    S    4    7
-V    RW    NP RESTART
-NONE
-4    1 3 5 7
-V    RW    NP RESTART
-NONE
-4    1 3 5 7
-
-*
 * BSSID
 * In IBSS, this can be changed for coalescing, should SME go into IDLE state?
 *
@@ -695,19 +565,6 @@ LIM
 55   36 40 44 48 52 56 60 64 1 6 11 34 38 42 46 2 3 4 5 7 8 9 10 12 13 14 100 104 108 112 116 120 124 128 132 136 140 149 151 153 155 157 159 161 50 54 58 62 240 242 244 246 248 250 252
 
 *
-* Current Channel
-*
-
-WNI_CFG_CURRENT_CHANNEL    I    4    9
-V    RO    NP
-NONE
-0    165    1
-V    RO    NP
-NONE
-0    165    1
-
-
-*
 * For 11a or pure 11g, use 6Mbps(rateindex 11)
 * as the default beaconRateIndex and
 * nonBeaconRateIndex.
@@ -719,20 +576,6 @@ NONE
 V    RW    NP
 NONE
 0    11    5
-
-*
-* For 11b/g, use 1Mbps
-* as the default beaconRateIndex and
-* nonBeaconRateIndex.
-*
-WNI_CFG_DEFAULT_RATE_INDEX_24GHZ    I    4    9
-V    RW    NP
-NONE
-0    31    1
-V    RW    NP
-NONE
-0    31    1
-
 
 * *********************************************************
 *
@@ -1301,15 +1144,9 @@ V    RW    NP
 NONE
 0    128    27
 
-
 *
-
-
-
-
 * Parameter to indicate or not new BSS found
 *
-
 WNI_CFG_NEW_BSS_FOUND_IND         I    4    9
 V    RW    NP
 NONE
@@ -2088,49 +1925,6 @@ NONE
 #ENUM 11AC_20MHZ_HIGH_40MHZ_LOW           7
 #ENUM 11AC_20MHZ_LOW_40MHZ_HIGH           8
 #ENUM 11AC_20MHZ_HIGH_40MHZ_HIGH          9
-
-*************************************
-* Feature:   Dynamic Retry Rates
-*************************************
-*
-*  When the short/long retry count reach the
-*  adaptive_retry_threshold(0), then the retry0
-*  template shall be used
-*
-WNI_CFG_DYNAMIC_THRESHOLD_ZERO    I    4    12
-V    RW    NP
-HAL
-0    255     2
-V    RW    NP
-HAL
-0    255     2
-
-*
-*  When the short/long retry count reach the
-*  adaptive_retry_threshold(1), then the retry1
-*  template shall be used
-*
-WNI_CFG_DYNAMIC_THRESHOLD_ONE    I    4    12
-V    RW    NP
-HAL
-0    255     4
-V    RW    NP
-HAL
-0    255     4
-
-*
-*  When the short/long retry count reach the
-*  adaptive_retry_threshold(2), then the retry2
-*  template shall be used
-*
-WNI_CFG_DYNAMIC_THRESHOLD_TWO    I    4    12
-V    RW    NP
-HAL
-0    255     6
-V    RW    NP
-HAL
-0    255     6
-
 
 *
 *  Trigger Station Background Scan Flag
@@ -3002,22 +2796,6 @@ NV    RW    NP
 LIM
 1    20    20
 
-
-*
-* Period for which Firmware will collect the
-* RSSI stats. Its in units of beacon interval.
-* Rssi Filter period should always be >=
-* the num_beacon_per_rssi_average.
-*
-WNI_CFG_RSSI_FILTER_PERIOD    I    4    5
-V    RW    NP
-LIM
-0    255    5
-NV    RW    NP
-LIM
-0    255    5
-
-
 WNI_CFG_MIN_RSSI_THRESHOLD    I    4    5
 V    RW    NP
 LIM
@@ -3052,23 +2830,6 @@ LIM
 V    RW    NP
 LIM
 0    1    1
-
-
-*
-* Ignore DTIM support - If disabled(value=0), HAL will
-* try to align the Listen Interval to the DTIM
-* period and the following rules will be applied:
-* 1) If LI=DTIM, then set LI=DTIM
-* 2) If LI<DTIM, then align LI to DTIM
-* 3) If LI>DTIM, then set LI=DTIM
-*
-WNI_CFG_IGNORE_DTIM    I    4    5
-V    RW    NP
-NONE
-0    1    0
-V    RW    NP
-NONE
-0    1    0
 
 * *********************************************************
 *
@@ -3228,19 +2989,6 @@ V    RW    NP
 LIM
 55   36 40 44 48 52 56 60 64 1 6 11 34 38 42 46 2 3 4 5 7 8 9 10 12 13 14 100 104 108 112 116 120 124 128 132 136 140 149 151 153 155 157 159 161 50 54 58 62 240 242 244 246 248 250 252
 
-
-*
-* AMPDU default TX medium Time (in us)
-*
-WNI_CFG_MAX_MEDIUM_TIME    I    4    8
-V    RW    NP
-HAL
-0    65535    2048
-V    RW    NP
-HAL
-0    65535    2048
-
-
 *
 * Maximum number of MPDUs in single A-MPDU.
 *
@@ -3374,19 +3122,6 @@ NONE
 V    RW    NP
 NONE
 0 0
-
-
-*
-* Include Additional IEs in probe response/beacon.
-*
-WNI_CFG_PROBE_RSP_BCN_ADDNIE_FLAG    I    4    0
-V    RW    NP
-LIM
-0 1 0
-V    RW    NP
-LIM
-0 1 0
-
 
 *
 * Include Additional IEs in probe response/beacon.
@@ -3764,18 +3499,6 @@ LIM
 0 0xffff 0
 
 *
-* Low gain override
-*
-
-WNI_CFG_LOW_GAIN_OVERRIDE    I    4    9
-V    RW    NP
-HAL
-0    1    0
-V    RW    NP
-HAL
-0    1    0
-
-*
 * Listen Mode Enable/Disable
 *
 
@@ -3934,30 +3657,6 @@ HAL
 0    0xFF     0
 
 *
-*  Config parameter to Enable/Disable Dynamic PS-Poll mechanism
-*  0: Disable, x: FW will send x number of NULL frames before switching to PS-Poll mexhanism
-*
-WNI_CFG_DYNAMIC_PS_POLL_VALUE    I    4    7
-V    RW    NP
-HAL
-0    0xFF    0
-V    RW    NP
-HAL
-0    0xFF    0
-
-*
-* PS Data InActivity Timeout (TU)
-*
-
-WNI_CFG_PS_NULLDATA_AP_RESP_TIMEOUT    I    4    7
-V    RW    NP
-HAL
-0    80    0
-NV    RW    NP
-NONE
-0    80    0
-
-*
 *  Config parameter to Enable/Disable Telescopic Bcn Wakeups
 *  0: Disable, 1: Enable
 *
@@ -3969,33 +3668,6 @@ HAL
 V    RW    NP
 HAL
 0    1    0
-
-
-*
-*  Config parameter for Transient LI
-*  0: Disable, x: Transient LI
-*
-
-WNI_CFG_TELE_BCN_TRANS_LI    I    4    7
-V    RW    NP
-HAL
-0    7    3
-V    RW    NP
-HAL
-0    7    3
-
-*
-*  Config parameter for Idle bcns for Transient LI
-*  x: Num Idle bcns before switch to trans LI
-*
-
-WNI_CFG_TELE_BCN_TRANS_LI_IDLE_BCNS    I    4    7
-V    RW    NP
-HAL
-5    255    10
-V    RW    NP
-HAL
-5    255    10
 
 *
 *  Config parameter for Max LI
@@ -4009,19 +3681,6 @@ HAL
 V    RW    NP
 HAL
 0    7    5
-
-*
-*  Config parameter for Idle bcns for max LI
-*  x: Num Idle bcns before switch to max LI
-*
-
-WNI_CFG_TELE_BCN_MAX_LI_IDLE_BCNS    I    4    7
-V    RW    NP
-HAL
-5    255    15
-V    RW    NP
-HAL
-5    255    15
 
 *
 *  BTC DHCP No of Bt sub interval during DHCP
@@ -4092,20 +3751,6 @@ NONE
 V    RW    NP
 NONE
 0    0x5     0
-
-*
-* Softap data available poll period (in milliseconds) for
-* queueing (Qos)Null frames to the station if there
-* is no data available and PS-Poll/Trigger frame is pending.
-* 0 = disabled. Recommended values is 5ms
-*
-WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD   I    4    8
-V    RW    NP
-NONE
-0    65535    5
-V    RW    NP
-NONE
-0    65535    5
 
 *
 * Close loop power control will be enabled if value is set to 1
@@ -4179,19 +3824,6 @@ HAL
 0    1     0
 V    RW    NP
 HAL
-0    1     0
-
-*
-* Low Power Image Transition will be enabled if value is set to 1
-*
-*
-*
-WNI_CFG_ENABLE_LPWR_IMG_TRANSITION  I   4   0
-V    RW    NP
-NONE
-0    1     0
-V    RW    NP
-NONE
 0    1     0
 
 *
@@ -4301,20 +3933,6 @@ V    RW   NP RESTART
 NONE
 10    2000 200
 
-
-*
-*MCC ENABLE/DISABLE ADAPTIVE RX Drain feature
-*
-*
-*
-WNI_CFG_ENABLE_ADAPT_RX_DRAIN I   4   7
-V    RW    NP
-HAL
-0    1    1
-NV    RW    NP
-HAL
-0    1    1
-
 *
 * FlexConnect Power Factor
 * Default is set to 0 (disable)
@@ -4327,22 +3945,6 @@ NONE
 V    RW    NP
 NONE
 0    9     0
-
-*
-* Antenna Diversity
-*
-* 0 = disabled
-* 1 = Ant 1
-* 2 = Ant 2
-* 3 = Adaptive
-*
-WNI_CFG_ANTENNA_DIVESITY    I    4    7
-V    RW    NP
-HAL
-0    3    0
-V    RW    NP
-HAL
-0    3    0
 
 * GO Link Monitor Timeout (TU)
 *
