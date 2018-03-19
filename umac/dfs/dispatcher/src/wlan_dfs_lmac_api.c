@@ -202,8 +202,10 @@ uint32_t lmac_get_phymode_info(struct wlan_objmgr_pdev *pdev,
 
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
+	/* since dfs never comes into 2G, hardcode is_2gvht_en flag to false */
 	if (dfs_tx_ops->dfs_get_phymode_info)
-		dfs_tx_ops->dfs_get_phymode_info(pdev, chan_mode, &mode_info);
+		dfs_tx_ops->dfs_get_phymode_info(pdev, chan_mode, &mode_info,
+						 false);
 
 	return mode_info;
 }

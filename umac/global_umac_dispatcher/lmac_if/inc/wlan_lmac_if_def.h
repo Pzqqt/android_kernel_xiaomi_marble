@@ -556,7 +556,8 @@ struct wlan_lmac_if_dfs_tx_ops {
 			uint16_t *devid);
 	QDF_STATUS (*dfs_get_phymode_info)(struct wlan_objmgr_pdev *pdev,
 			uint32_t chan_mode,
-			uint32_t *mode_info);
+			uint32_t *mode_info,
+			bool is_2gvht_en);
 	QDF_STATUS (*dfs_reg_ev_handler)(struct wlan_objmgr_psoc *psoc,
 			bool dfs_offload);
 	QDF_STATUS (*dfs_process_emulate_bang_radar_cmd)(
