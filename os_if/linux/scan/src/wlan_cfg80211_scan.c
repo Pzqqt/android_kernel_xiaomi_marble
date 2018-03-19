@@ -1714,12 +1714,26 @@ wlan_cfg80211_inform_bss_frame_data(struct wiphy *wiphy,
 }
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0))
+static inline void wlan_cfg80211_put_bss(struct wiphy *wiphy,
+		struct cfg80211_bss *bss)
+{
+	cfg80211_put_bss(wiphy, bss);
+}
+#else
+static inline void wlan_cfg80211_put_bss(struct wiphy *wiphy,
+		struct cfg80211_bss *bss)
+{
+	cfg80211_put_bss(bss);
+}
+#endif
+
 void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 		struct scan_cache_entry *scan_params)
 {
 	struct pdev_osif_priv *pdev_ospriv = wlan_pdev_get_ospriv(pdev);
 	struct wiphy *wiphy;
-	struct cfg80211_bss *bss_status = NULL;
+	struct cfg80211_bss *bss = NULL;
 	struct wlan_cfg80211_inform_bss bss_data = {0};
 
 	if (!pdev_ospriv) {
@@ -1772,9 +1786,11 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 		bss_data.mgmt->bssid, bss_data.chan->center_freq,
 		(int)(bss_data.rssi / 100));
 
-	bss_status = wlan_cfg80211_inform_bss_frame_data(wiphy, &bss_data);
-	if (!bss_status)
+	bss = wlan_cfg80211_inform_bss_frame_data(wiphy, &bss_data);
+	if (!bss)
 		cfg80211_err("failed to inform bss");
+	else
+		wlan_cfg80211_put_bss(wiphy, bss);
 
 	qdf_mem_free(bss_data.mgmt);
 }
