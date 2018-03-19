@@ -59,8 +59,6 @@
 #define SCM_MAX_ESTIMATED_AIR_TIME_FRACTION 255
 #define MAX_AP_LOAD 255
 
-#define SCM_MAX_OCE_WAN_DL_CAP 16
-
 #define SCM_MAX_WEIGHT_OF_PCL_CHANNELS 255
 #define SCM_PCL_GROUPS_WEIGHT_DIFFERENCE 20
 
@@ -612,15 +610,18 @@ static int32_t scm_calculate_oce_wan_score(
 		score_params->oce_wan_scoring.num_slot =
 			SCM_SCORE_MAX_INDEX;
 
-	window_size = SCM_MAX_OCE_WAN_DL_CAP/
+	window_size = SCM_SCORE_MAX_INDEX/
 			score_params->oce_wan_scoring.num_slot;
 	mbo_oce_ie = util_scan_entry_mbo_oce(entry);
 	if (wlan_parse_oce_reduced_wan_metrics_ie(mbo_oce_ie,
 	    &wan_metrics)) {
 		scm_err("downlink_av_cap %d", wan_metrics.downlink_av_cap);
-		/* Desired values are from 1 to 15, as 0 is for not present.*/
+		/* if capacity is 0 return 0 score */
+		if (!wan_metrics.downlink_av_cap)
+			return 0;
+		/* Desired values are from 1 to WLAN_SCORE_MAX_INDEX */
 		index = qdf_do_div(wan_metrics.downlink_av_cap,
-				   window_size) + 1;
+				   window_size);
 	} else {
 		index = SCM_SCORE_INDEX_0;
 	}
