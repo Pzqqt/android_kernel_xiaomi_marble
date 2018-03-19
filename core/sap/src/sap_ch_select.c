@@ -1633,16 +1633,21 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 					break;
 
 				case eCSR_DOT11_MODE_abg:
-					sap_interference_rssi_count_5G(
-					    pSpectCh, channelWidth,
-					    secondaryChannelOffset,
-					    centerFreq,
-					    centerFreq_2,
-					    channel_id,
-					    spectch_start,
-					    spectch_end);
-					sap_interference_rssi_count(pSpectCh,
-						spectch_start, spectch_end);
+					if (pSpectCh->chNum >=
+					    SIR_11A_CHANNEL_BEGIN)
+						sap_interference_rssi_count_5G(
+						    pSpectCh, channelWidth,
+						    secondaryChannelOffset,
+						    centerFreq,
+						    centerFreq_2,
+						    channel_id,
+						    spectch_start,
+						    spectch_end);
+					else
+						sap_interference_rssi_count(
+						    pSpectCh,
+						    spectch_start,
+						    spectch_end);
 					break;
 				}
 
