@@ -971,17 +971,21 @@ static bool dp_cce_classify(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 		ether_type = *(uint16_t *)(nbuf->data + 2*ETHER_ADDR_LEN +
 				sizeof(*llcHdr));
 		nbuf_clone = qdf_nbuf_clone(nbuf);
-		qdf_nbuf_pull_head(nbuf_clone, sizeof(*llcHdr));
+		if (qdf_unlikely(nbuf_clone)) {
+			qdf_nbuf_pull_head(nbuf_clone, sizeof(*llcHdr));
 
-		if (ether_type == htons(ETHERTYPE_8021Q)) {
-			qdf_nbuf_pull_head(nbuf_clone,
+			if (ether_type == htons(ETHERTYPE_8021Q)) {
+				qdf_nbuf_pull_head(nbuf_clone,
 						sizeof(qdf_net_vlanhdr_t));
+			}
 		}
 	} else {
 		if (ether_type == htons(ETHERTYPE_8021Q)) {
 			nbuf_clone = qdf_nbuf_clone(nbuf);
-			qdf_nbuf_pull_head(nbuf_clone,
+			if (qdf_unlikely(nbuf_clone)) {
+				qdf_nbuf_pull_head(nbuf_clone,
 					sizeof(qdf_net_vlanhdr_t));
+			}
 		}
 	}
 
