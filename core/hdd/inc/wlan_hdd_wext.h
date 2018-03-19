@@ -199,21 +199,6 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
 #define QCN_OUI_TYPE   "\x8c\xfd\xf0\x01"
 #define QCN_OUI_TYPE_SIZE  4
 
-/*
- * This structure contains the interface level (granularity)
- * configuration information in support of wireless extensions.
- */
-struct hdd_wext_state {
-	/** The CSR "desired" Profile */
-	struct csr_roam_profile roamProfile;
-
-	/**WPA or RSN IE*/
-	uint8_t WPARSNIE[MAX_WPA_RSN_IE_LEN];
-
-	/**Additional IE for assoc */
-	tSirAddie assocAddIE;
-};
-
 struct ccp_freq_chan_map {
 	/* List of frequencies */
 	uint32_t freq;

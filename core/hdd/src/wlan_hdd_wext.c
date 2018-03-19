@@ -12137,13 +12137,21 @@ static void hdd_initialize_fils_info(struct hdd_adapter *adapter)
 int hdd_register_wext(struct net_device *dev)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_wext_state *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct csr_roam_profile *roam_profile;
+	uint8_t *security_ie;
+	tSirAddie *assoc_additional_ie;
 	QDF_STATUS status;
 
 	hdd_enter();
 
-	/* Zero the memory. This zeros the profile structure */
-	memset(pwextBuf, 0, sizeof(struct hdd_wext_state));
+	roam_profile = hdd_roam_profile(adapter);
+	qdf_mem_zero(roam_profile, sizeof(*roam_profile));
+
+	security_ie = hdd_security_ie(adapter);
+	qdf_mem_zero(security_ie, MAX_WPA_RSN_IE_LEN);
+
+	assoc_additional_ie = hdd_assoc_additional_ie(adapter);
+	qdf_mem_zero(assoc_additional_ie, sizeof(*assoc_additional_ie));
 
 	status = hdd_set_wext(adapter);
 

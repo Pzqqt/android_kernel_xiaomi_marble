@@ -693,7 +693,9 @@ struct hdd_mon_set_ch_info {
 
 /**
  * struct hdd_station_ctx -- STA-specific information
- * @wext_state: wireless extensions state
+ * @roam_profile: current roaming profile
+ * @security_ie: WPA or RSN IE used by the @roam_profile
+ * @assoc_additional_ie: association additional IE used by the @roam_profile
  * @wpa_versions: bitmap of supported WPA versions
  * @auth_key_mgmt: bitmap of supported auth key mgmt protocols
  * @requested_bssid: Specific BSSID to which to connect
@@ -716,7 +718,9 @@ struct hdd_mon_set_ch_info {
  *    to immediately go into power save?
  */
 struct hdd_station_ctx {
-	struct hdd_wext_state wext_state;
+	struct csr_roam_profile roam_profile;
+	uint8_t security_ie[MAX_WPA_RSN_IE_LEN];
+	tSirAddie assoc_additional_ie;
 	enum nl80211_wpa_versions wpa_versions;
 	enum hdd_auth_key_mgmt auth_key_mgmt;
 	struct qdf_mac_addr requested_bssid;
@@ -1318,8 +1322,6 @@ struct hdd_adapter {
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
 #define WLAN_HDD_GET_AP_CTX_PTR(adapter) (&(adapter)->session.ap)
-#define WLAN_HDD_GET_WEXT_STATE_PTR(adapter) \
-				(&(adapter)->session.station.wext_state)
 #define WLAN_HDD_GET_CTX(adapter) ((adapter)->hdd_ctx)
 #define WLAN_HDD_GET_HAL_CTX(adapter)  ((adapter)->hdd_ctx->hHal)
 #define WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter) \
@@ -2650,11 +2652,11 @@ static inline int wlan_hdd_validate_session_id(u8 session_id)
 static inline
 struct csr_roam_profile *hdd_roam_profile(struct hdd_adapter *adapter)
 {
-	struct hdd_wext_state *wext_state;
+	struct hdd_station_ctx *sta_ctx;
 
-	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	return &wext_state->roamProfile;
+	return &sta_ctx->roam_profile;
 }
 
 /**
@@ -2674,11 +2676,11 @@ struct csr_roam_profile *hdd_roam_profile(struct hdd_adapter *adapter)
 static inline
 uint8_t *hdd_security_ie(struct hdd_adapter *adapter)
 {
-	struct hdd_wext_state *wext_state;
+	struct hdd_station_ctx *sta_ctx;
 
-	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	return wext_state->WPARSNIE;
+	return sta_ctx->security_ie;
 }
 
 /**
@@ -2698,11 +2700,11 @@ uint8_t *hdd_security_ie(struct hdd_adapter *adapter)
 static inline
 tSirAddie *hdd_assoc_additional_ie(struct hdd_adapter *adapter)
 {
-	struct hdd_wext_state *wext_state;
+	struct hdd_station_ctx *sta_ctx;
 
-	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	return &wext_state->assocAddIE;
+	return &sta_ctx->assoc_additional_ie;
 }
 
 bool hdd_is_roaming_in_progress(struct hdd_adapter *adapter);
