@@ -212,9 +212,6 @@ struct hdd_wext_state {
 
 	/**Additional IE for assoc */
 	tSirAddie assocAddIE;
-
-	/**auth key mgmt */
-	int32_t authKeyMgmt;
 };
 
 struct ccp_freq_chan_map {

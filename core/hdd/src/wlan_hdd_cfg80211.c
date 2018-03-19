@@ -16607,8 +16607,6 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 	} else if ((adapter->device_mode == QDF_STA_MODE) ||
 		   (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
-		struct hdd_wext_state *pWextState =
-			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 		struct hdd_station_ctx *sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		struct csr_roam_profile *roam_profile;
@@ -16662,8 +16660,8 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		 * group key with correct value
 		 */
 		if ((eCSR_BSS_TYPE_START_IBSS == roam_profile->BSSType) &&
-		    !((IW_AUTH_KEY_MGMT_802_1X ==
-		       (pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X))
+		    !((HDD_AUTH_KEY_MGMT_802_1X ==
+		       (sta_ctx->auth_key_mgmt & HDD_AUTH_KEY_MGMT_802_1X))
 		      && (eCSR_AUTH_TYPE_OPEN_SYSTEM ==
 			  sta_ctx->conn_info.authType)
 		      )
@@ -18351,8 +18349,7 @@ static bool wlan_hdd_is_conn_type_fils(struct cfg80211_connect_params *req)
  */
 static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 {
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct hdd_station_ctx *sta_ctx;
 	struct csr_roam_profile *roam_profile;
 
 	roam_profile = hdd_roam_profile(adapter);
@@ -18366,6 +18363,9 @@ static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 #ifndef WLAN_AKM_SUITE_PSK_SHA256
 #define WLAN_AKM_SUITE_PSK_SHA256   0x000FAC06
 #endif
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
 	/*set key mgmt type */
 	switch (key_mgmt) {
 	case WLAN_AKM_SUITE_PSK:
@@ -18373,21 +18373,20 @@ static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 	case WLAN_AKM_SUITE_FT_PSK:
 	case WLAN_AKM_SUITE_DPP_RSN:
 		hdd_debug("setting key mgmt type to PSK");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_PSK;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_PSK;
 		break;
 
 	case WLAN_AKM_SUITE_8021X_SHA256:
 	case WLAN_AKM_SUITE_8021X:
 	case WLAN_AKM_SUITE_FT_8021X:
 		hdd_debug("setting key mgmt type to 8021x");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_802_1X;
 		break;
 #ifdef FEATURE_WLAN_ESE
 #define WLAN_AKM_SUITE_CCKM         0x00409600  /* Should be in ieee802_11_defs.h */
-#define IW_AUTH_KEY_MGMT_CCKM       8   /* Should be in linux/wireless.h */
 	case WLAN_AKM_SUITE_CCKM:
 		hdd_debug("setting key mgmt type to CCKM");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_CCKM;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_CCKM;
 		break;
 #endif
 #ifndef WLAN_AKM_SUITE_OSEN
@@ -18395,35 +18394,35 @@ static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 #endif
 	case WLAN_AKM_SUITE_OSEN:
 		hdd_debug("setting key mgmt type to OSEN");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_802_1X;
 		break;
 #if defined(WLAN_FEATURE_FILS_SK) && \
 	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 	case WLAN_AKM_SUITE_FILS_SHA256:
 		hdd_debug("setting key mgmt type to FILS SHA256");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_802_1X;
 		roam_profile->fils_con_info->akm_type =
 			eCSR_AUTH_TYPE_FILS_SHA256;
 		break;
 
 	case WLAN_AKM_SUITE_FILS_SHA384:
 		hdd_debug("setting key mgmt type to FILS SHA384");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_802_1X;
 		roam_profile->fils_con_info->akm_type =
 			eCSR_AUTH_TYPE_FILS_SHA384;
 		break;
 
 	case WLAN_AKM_SUITE_FT_FILS_SHA256:
 		hdd_debug("setting key mgmt type to FILS FT SHA256");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_802_1X;
 		roam_profile->fils_con_info->akm_type =
 			eCSR_AUTH_TYPE_FT_FILS_SHA256;
 		break;
 
 	case WLAN_AKM_SUITE_FT_FILS_SHA384:
 		hdd_debug("setting key mgmt type to FILS FT SHA384");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_802_1X;
 		roam_profile->fils_con_info->akm_type =
 			eCSR_AUTH_TYPE_FT_FILS_SHA384;
 		break;
@@ -18431,21 +18430,21 @@ static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 
 	case WLAN_AKM_SUITE_OWE:
 		hdd_debug("setting key mgmt type to OWE");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_802_1X;
 		break;
 
 	case WLAN_AKM_SUITE_EAP_SHA256:
 		hdd_debug("setting key mgmt type to EAP_SHA256");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_802_1X;
 		break;
 	case WLAN_AKM_SUITE_EAP_SHA384:
 		hdd_debug("setting key mgmt type to EAP_SHA384");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_802_1X;
 		break;
 
 	case WLAN_AKM_SUITE_SAE:
 		hdd_debug("setting key mgmt type to SAE");
-		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		sta_ctx->auth_key_mgmt |= HDD_AUTH_KEY_MGMT_802_1X;
 		break;
 
 	default:
@@ -19028,8 +19027,6 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 					 struct cfg80211_connect_params *req)
 {
 	int status = 0;
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct hdd_station_ctx *sta_ctx;
 	struct csr_roam_profile *roam_profile;
 
@@ -19109,15 +19106,14 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 	if (req->key && req->key_len) {
 		u8 key_len = req->key_len;
 		u8 key_idx = req->key_idx;
+		u32 cipher = req->crypto.ciphers_pairwise[0];
 
-		if ((WLAN_CIPHER_SUITE_WEP40 == req->crypto.ciphers_pairwise[0])
-		    || (WLAN_CIPHER_SUITE_WEP104 ==
-			req->crypto.ciphers_pairwise[0])
-		    ) {
-			if (IW_AUTH_KEY_MGMT_802_1X
-			    ==
-			    (pWextState->
-			     authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)) {
+		if ((WLAN_CIPHER_SUITE_WEP40 == cipher) ||
+		    (WLAN_CIPHER_SUITE_WEP104 == cipher)) {
+			enum hdd_auth_key_mgmt key_mgmt =
+				sta_ctx->auth_key_mgmt;
+
+			if (key_mgmt & HDD_AUTH_KEY_MGMT_802_1X) {
 				hdd_err("Dynamic WEP not supported");
 				return -EOPNOTSUPP;
 			}

@@ -386,6 +386,18 @@ extern struct mutex hdd_init_deinit_lock;
 #define NUM_TX_RX_HISTOGRAM_MASK (NUM_TX_RX_HISTOGRAM - 1)
 
 /**
+ * enum hdd_auth_key_mgmt - auth key mgmt protocols
+ * @HDD_AUTH_KEY_MGMT_802_1X: 802.1x
+ * @HDD_AUTH_KEY_MGMT_PSK: PSK
+ * @HDD_AUTH_KEY_MGMT_CCKM: CCKM
+ */
+enum hdd_auth_key_mgmt {
+	HDD_AUTH_KEY_MGMT_802_1X = BIT(0),
+	HDD_AUTH_KEY_MGMT_PSK = BIT(1),
+	HDD_AUTH_KEY_MGMT_CCKM = BIT(2)
+};
+
+/**
  * struct hdd_tx_rx_histogram - structure to keep track of tx and rx packets
  *				received over 100ms intervals
  * @interval_rx:	# of rx packets received in the last 100ms interval
@@ -683,6 +695,7 @@ struct hdd_mon_set_ch_info {
  * struct hdd_station_ctx -- STA-specific information
  * @wext_state: wireless extensions state
  * @wpa_versions: bitmap of supported WPA versions
+ * @auth_key_mgmt: bitmap of supported auth key mgmt protocols
  * @requested_bssid: Specific BSSID to which to connect
  * @conn_info: current connection information
  * @roam_info: current roaming information
@@ -705,6 +718,7 @@ struct hdd_mon_set_ch_info {
 struct hdd_station_ctx {
 	struct hdd_wext_state wext_state;
 	enum nl80211_wpa_versions wpa_versions;
+	enum hdd_auth_key_mgmt auth_key_mgmt;
 	struct qdf_mac_addr requested_bssid;
 	struct hdd_connection_info conn_info;
 	struct hdd_connection_info cache_conn_info;

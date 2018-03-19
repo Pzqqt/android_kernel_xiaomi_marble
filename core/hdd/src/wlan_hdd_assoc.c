@@ -5292,10 +5292,9 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 			  eCsrAuthType RSNAuthType)
 {
 	struct csr_roam_profile *roam_profile;
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	enum hdd_auth_key_mgmt key_mgmt = sta_ctx->auth_key_mgmt;
 
 	roam_profile = hdd_roam_profile(adapter);
 	roam_profile->AuthType.numEntries = 1;
@@ -5317,8 +5316,8 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 
 #ifdef FEATURE_WLAN_ESE
 			if ((RSNAuthType == eCSR_AUTH_TYPE_CCKM_WPA) &&
-			    ((pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
-			     == IW_AUTH_KEY_MGMT_802_1X)) {
+			    ((key_mgmt & HDD_AUTH_KEY_MGMT_802_1X)
+			     == HDD_AUTH_KEY_MGMT_802_1X)) {
 				hdd_debug("set authType to CCKM WPA. AKM also 802.1X.");
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_CCKM_WPA;
@@ -5328,14 +5327,13 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 					eCSR_AUTH_TYPE_CCKM_WPA;
 			} else
 #endif
-			if ((pWextState->
-			     authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
-			    == IW_AUTH_KEY_MGMT_802_1X) {
+			if ((key_mgmt & HDD_AUTH_KEY_MGMT_802_1X)
+			    == HDD_AUTH_KEY_MGMT_802_1X) {
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_WPA;
 			} else
-			if ((pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_PSK)
-			    == IW_AUTH_KEY_MGMT_PSK) {
+			if ((key_mgmt & HDD_AUTH_KEY_MGMT_PSK)
+			    == HDD_AUTH_KEY_MGMT_PSK) {
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_WPA_PSK;
 			} else {
@@ -5346,8 +5344,8 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 		if (sta_ctx->wpa_versions & NL80211_WPA_VERSION_2) {
 #ifdef FEATURE_WLAN_ESE
 			if ((RSNAuthType == eCSR_AUTH_TYPE_CCKM_RSN) &&
-			    ((pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
-			     == IW_AUTH_KEY_MGMT_802_1X)) {
+			    ((key_mgmt & HDD_AUTH_KEY_MGMT_802_1X)
+			     == HDD_AUTH_KEY_MGMT_802_1X)) {
 				hdd_debug("set authType to CCKM RSN. AKM also 802.1X.");
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_CCKM_RSN;
@@ -5361,16 +5359,14 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 				roam_profile->AuthType.authType[0] =
 							eCSR_AUTH_TYPE_DPP_RSN;
 			} else if ((RSNAuthType == eCSR_AUTH_TYPE_FT_RSN) &&
-			    ((pWextState->
-			      authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
-			     == IW_AUTH_KEY_MGMT_802_1X)) {
+			    ((key_mgmt & HDD_AUTH_KEY_MGMT_802_1X)
+			     == HDD_AUTH_KEY_MGMT_802_1X)) {
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_FT_RSN;
 			} else if ((RSNAuthType == eCSR_AUTH_TYPE_FT_RSN_PSK)
 				   &&
-				   ((pWextState->
-				     authKeyMgmt & IW_AUTH_KEY_MGMT_PSK)
-				    == IW_AUTH_KEY_MGMT_PSK)) {
+				   ((key_mgmt & HDD_AUTH_KEY_MGMT_PSK)
+				    == HDD_AUTH_KEY_MGMT_PSK)) {
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_FT_RSN_PSK;
 			} else
@@ -5393,36 +5389,32 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 					RSNAuthType);
 
 			} else if ((RSNAuthType == eCSR_AUTH_TYPE_OWE) &&
-				  ((pWextState->
-				  authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
-				  == IW_AUTH_KEY_MGMT_802_1X)) {
+				  ((key_mgmt & HDD_AUTH_KEY_MGMT_802_1X)
+				  == HDD_AUTH_KEY_MGMT_802_1X)) {
 				/* OWE case */
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_OWE;
 			} else if ((RSNAuthType ==
 				  eCSR_AUTH_TYPE_SUITEB_EAP_SHA256) &&
-				  ((pWextState->
-				  authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
-				  == IW_AUTH_KEY_MGMT_802_1X)) {
+				  ((key_mgmt & HDD_AUTH_KEY_MGMT_802_1X)
+				  == HDD_AUTH_KEY_MGMT_802_1X)) {
 				/* Suite B EAP SHA 256 */
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_SUITEB_EAP_SHA256;
 			} else if ((RSNAuthType ==
 				  eCSR_AUTH_TYPE_SUITEB_EAP_SHA384) &&
-				  ((pWextState->
-				  authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
-				  == IW_AUTH_KEY_MGMT_802_1X)) {
+				  ((key_mgmt & HDD_AUTH_KEY_MGMT_802_1X)
+				  == HDD_AUTH_KEY_MGMT_802_1X)) {
 				/* Suite B EAP SHA 384 */
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_SUITEB_EAP_SHA384;
-			} else if ((pWextState->
-			     authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
-			    == IW_AUTH_KEY_MGMT_802_1X) {
+			} else if ((key_mgmt & HDD_AUTH_KEY_MGMT_802_1X)
+			    == HDD_AUTH_KEY_MGMT_802_1X) {
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_RSN;
 			} else
-			if ((pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_PSK)
-			    == IW_AUTH_KEY_MGMT_PSK) {
+			if ((key_mgmt & HDD_AUTH_KEY_MGMT_PSK)
+			    == HDD_AUTH_KEY_MGMT_PSK) {
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_RSN_PSK;
 			} else {

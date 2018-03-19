@@ -4086,8 +4086,6 @@ int wlan_hdd_get_peer_info(struct hdd_adapter *adapter,
 void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 {
 	struct hdd_station_ctx *sta_ctx;
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct csr_roam_profile *roam_profile;
 
 	hdd_enter();
@@ -4132,8 +4130,6 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	roam_profile->MFPCapable = 0;
 #endif
 
-	pWextState->authKeyMgmt = 0;
-
 	qdf_mem_zero(roam_profile->Keys.KeyLength, CSR_MAX_NUM_KEY);
 
 #ifdef FEATURE_WLAN_WAPI
@@ -4142,6 +4138,7 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 #endif
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx->auth_key_mgmt = 0;
 	qdf_zero_macaddr(&sta_ctx->requested_bssid);
 	hdd_exit();
 }
