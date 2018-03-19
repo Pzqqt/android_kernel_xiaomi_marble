@@ -351,6 +351,7 @@ scm_scan_serialize_callback(struct wlan_serialization_command *cmd,
 		/* command successfully completed.
 		 * Release vdev reference and free scan_start_request memory
 		 */
+		cmd->umac_cmd = NULL;
 		wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
 		status = scm_scan_free_scan_request_mem(req);
 		break;
