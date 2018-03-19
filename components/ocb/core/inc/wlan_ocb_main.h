@@ -29,14 +29,11 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_ocb_public_structs.h>
 
-#define __ocb_log_rl(level, format, args...) \
-	QDF_TRACE_RATE_LIMITED(QDF_MODULE_ID_OCB, level, FL(format), ## args)
-
-#define ocb_alert_rl(params...) __ocb_log_rl(QDF_TRACE_LEVEL_FATAL, params)
-#define ocb_err_rl(params...) __ocb_log_rl(QDF_TRACE_LEVEL_ERROR, params)
-#define ocb_warn_rl(params...) __ocb_log_rl(QDF_TRACE_LEVEL_WARN, params)
-#define ocb_info_rl(params...) __ocb_log_rl(QDF_TRACE_LEVEL_INFO, params)
-#define ocb_debug_rl(params...) __ocb_log_rl(QDF_TRACE_LEVEL_DEBUG, params)
+#define ocb_alert_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_OCB, params)
+#define ocb_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_OCB, params)
+#define ocb_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_OCB, params)
+#define ocb_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_OCB, params)
+#define ocb_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_OCB, params)
 
 #define ocb_log(level, args...) \
 		QDF_TRACE(QDF_MODULE_ID_OCB, level, ## args)
