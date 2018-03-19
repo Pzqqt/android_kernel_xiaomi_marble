@@ -12857,7 +12857,7 @@ enum hdd_external_acs_freq_band {
  * oce_wan_weightage - OCE WAN DL capacity Weightage to calculate best candidate
  * @Min: 0
  * @Max: 100
- * @Default: 0
+ * @Default: 2
  *
  * This ini is used to increase/decrease OCE WAN caps weightage in best
  * candidate selection. If AP have OCE WAN information, give weightage depending
@@ -12872,7 +12872,7 @@ enum hdd_external_acs_freq_band {
  * </ini>
  */
 #define CFG_OCE_WAN_WEIGHTAGE_NAME    "oce_wan_weightage"
-#define CFG_OCE_WAN_WEIGHTAGE_DEFAULT (0)
+#define CFG_OCE_WAN_WEIGHTAGE_DEFAULT (2)
 #define CFG_OCE_WAN_WEIGHTAGE_MIN     (0)
 #define CFG_OCE_WAN_WEIGHTAGE_MAX     (100)
 
@@ -13327,7 +13327,7 @@ enum hdd_external_acs_freq_band {
  * </ini>
  */
 #define CFG_OCE_WAN_SLOTS_NAME      "num_oce_wan_slots"
-#define CFG_OCE_WAN_SLOTS_DEFAULT   (8)
+#define CFG_OCE_WAN_SLOTS_DEFAULT   (15)
 #define CFG_OCE_WAN_SLOTS_MIN       (1)
 #define CFG_OCE_WAN_SLOTS_MAX       (15)
 
@@ -13336,7 +13336,7 @@ enum hdd_external_acs_freq_band {
  * oce_wan_score_idx3_to_0 - percentage for OCE WAN metrics score for slots 0-3
  * @Min: 0x00000000
  * @Max: 0x64646464
- * @Default: 0x00000000
+ * @Default: 0x00000032
  *
  * This INI give percentage value of OCE WAN metrics DL CAP, to be used as
  * index in which the DL CAP value falls. Index 0 is for percentage when
@@ -13358,7 +13358,7 @@ enum hdd_external_acs_freq_band {
  * </ini>
  */
 #define CFG_OCE_WAN_SCORE_IDX3_TO_0_NAME      "oce_wan_score_idx3_to_0"
-#define CFG_OCE_WAN_SCORE_IDX3_TO_0_DEFAULT   (0x00000000)
+#define CFG_OCE_WAN_SCORE_IDX3_TO_0_DEFAULT   (0x00000032)
 #define CFG_OCE_WAN_SCORE_IDX3_TO_0_MIN       (0x00000000)
 #define CFG_OCE_WAN_SCORE_IDX3_TO_0_MAX       (0x64646464)
 
@@ -13367,7 +13367,7 @@ enum hdd_external_acs_freq_band {
  * oce_wan_score_idx7_to_4 - percentage for OCE WAN metrics score for slots 4-7
  * @Min: 0x00000000
  * @Max: 0x64646464
- * @Default: 0x64640000
+ * @Default: 0x00000000
  *
  * This INI give percentage value of OCE WAN metrics DL CAP, to be used as
  * index in which the DL CAP value falls. Used only if num_oce_wan_slots is
@@ -13389,7 +13389,7 @@ enum hdd_external_acs_freq_band {
  * </ini>
  */
 #define CFG_OCE_WAN_SCORE_IDX7_TO_4_NAME      "oce_wan_score_idx7_to_4"
-#define CFG_OCE_WAN_SCORE_IDX7_TO_4_DEFAULT   (0x64640000)
+#define CFG_OCE_WAN_SCORE_IDX7_TO_4_DEFAULT   (0x00000000)
 #define CFG_OCE_WAN_SCORE_IDX7_TO_4_MIN       (0x00000000)
 #define CFG_OCE_WAN_SCORE_IDX7_TO_4_MAX       (0x64646464)
 
@@ -13398,7 +13398,7 @@ enum hdd_external_acs_freq_band {
  * oce_wan_score_idx11_to_8 - percentage for OCE WAN metrics score for slot 8-11
  * @Min: 0x00000000
  * @Max: 0x64646464
- * @Default: 0x00000064
+ * @Default: 0x06030000
  *
  * This INI give percentage value of OCE WAN metrics DL CAP, to be used as
  * index in which the DL CAP value falls. Used only if num_oce_wan_slots is
@@ -13420,7 +13420,7 @@ enum hdd_external_acs_freq_band {
  * </ini>
  */
 #define CFG_OCE_WAN_SCORE_IDX11_TO_8_NAME      "oce_wan_score_idx11_to_8"
-#define CFG_OCE_WAN_SCORE_IDX11_TO_8_DEFAULT   (0x00000064)
+#define CFG_OCE_WAN_SCORE_IDX11_TO_8_DEFAULT   (0x06030000)
 #define CFG_OCE_WAN_SCORE_IDX11_TO_8_MIN       (0x00000000)
 #define CFG_OCE_WAN_SCORE_IDX11_TO_8_MAX       (0x64646464)
 
@@ -13429,7 +13429,7 @@ enum hdd_external_acs_freq_band {
  * oce_wan_score_idx15_to_12 - % for OCE WAN metrics score for slot 12-15
  * @Min: 0x00000000
  * @Max: 0x64646464
- * @Default: 0x00000000
+ * @Default: 0x6432190C
  *
  * This INI give percentage value of OCE WAN metrics DL CAP, to be used as
  * index in which the DL CAP value falls. Used only if num_oce_wan_slots is
@@ -13451,7 +13451,7 @@ enum hdd_external_acs_freq_band {
  * </ini>
  */
 #define CFG_OCE_WAN_SCORE_IDX15_TO_12_NAME      "oce_wan_score_idx15_to_12"
-#define CFG_OCE_WAN_SCORE_IDX15_TO_12_DEFAULT   (0x00000000)
+#define CFG_OCE_WAN_SCORE_IDX15_TO_12_DEFAULT   (0x6432190C)
 #define CFG_OCE_WAN_SCORE_IDX15_TO_12_MIN       (0x00000000)
 #define CFG_OCE_WAN_SCORE_IDX15_TO_12_MAX       (0x64646464)
 
