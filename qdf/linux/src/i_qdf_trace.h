@@ -60,7 +60,7 @@
 #define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
 #define QDF_MAX_LOGS_PER_SEC 2
 /**
- * QDF_TRACE_RATE_LIMITED() - rate limited version of QDF_TRACE
+ * __QDF_TRACE_RATE_LIMITED() - rate limited version of QDF_TRACE
  * @params: parameters to pass through to QDF_TRACE
  *
  * This API prevents logging a message more than QDF_MAX_LOGS_PER_SEC times per
@@ -69,7 +69,7 @@
  *
  * Return: None
  */
-#define QDF_TRACE_RATE_LIMITED(params...)\
+#define __QDF_TRACE_RATE_LIMITED(params...)\
 	do {\
 		static ulong __last_ticks;\
 		ulong __ticks = jiffies;\
@@ -83,7 +83,7 @@
 #define QDF_TRACE(arg ...)
 #define QDF_VTRACE(arg ...)
 #define QDF_TRACE_HEX_DUMP(arg ...)
-#define QDF_TRACE_RATE_LIMITED(arg ...)
+#define __QDF_TRACE_RATE_LIMITED(arg ...)
 #endif
 #else /* CONFIG_MCL */
 
@@ -105,7 +105,7 @@
 	QDF_TRACE(module_id, log_level, FL(format), ## args)
 
 #define __QDF_TRACE_RL(log_level, module_id, format, args...) \
-	QDF_TRACE_RATE_LIMITED(module_id, log_level, FL(format), ## args)
+	__QDF_TRACE_RATE_LIMITED(module_id, log_level, FL(format), ## args)
 
 static inline void __qdf_trace_noop(QDF_MODULE_ID module, char *format, ...) { }
 

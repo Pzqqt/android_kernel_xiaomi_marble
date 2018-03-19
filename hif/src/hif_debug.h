@@ -22,14 +22,11 @@
 #define __HIF_DEBUG_H__
 #include "qdf_trace.h"
 
-#define __hif_log_rl(level, format, args...) \
-	QDF_TRACE_RATE_LIMITED(QDF_MODULE_ID_HIF, level, FL(format), ## args)
-
-#define hif_alert_rl(params...) __hif_log_rl(QDF_TRACE_LEVEL_FATAL, params)
-#define hif_err_rl(params...) __hif_log_rl(QDF_TRACE_LEVEL_ERROR, params)
-#define hif_warn_rl(params...) __hif_log_rl(QDF_TRACE_LEVEL_WARN, params)
-#define hif_info_rl(params...) __hif_log_rl(QDF_TRACE_LEVEL_INFO, params)
-#define hif_debug_rl(params...) __hif_log_rl(QDF_TRACE_LEVEL_DEBUG, params)
+#define hif_alert_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_HIF, params)
+#define hif_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_HIF, params)
+#define hif_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_HIF, params)
+#define hif_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_HIF, params)
+#define hif_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_HIF, params)
 
 #define HIF_ERROR(args ...) \
 	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR, ## args)
