@@ -95,17 +95,44 @@ static void dp_rx_clear_saved_desc_info(struct dp_peer *peer, unsigned tid)
 void dp_rx_reorder_flush_frag(struct dp_peer *peer,
 			 unsigned int tid)
 {
-	struct dp_rx_reorder_array_elem *rx_reorder_array_elem;
+	struct dp_soc *soc;
+	struct dp_srng *dp_rxdma_srng;
+	struct rx_desc_pool *rx_desc_pool;
+	struct dp_pdev *pdev;
+	union dp_rx_desc_list_elem_t *head = NULL;
+	union dp_rx_desc_list_elem_t *tail = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("Flushing TID %d"), tid);
 
-	rx_reorder_array_elem = peer->rx_tid[tid].array;
-	if (rx_reorder_array_elem->head) {
-		dp_rx_defrag_frames_free(rx_reorder_array_elem->head);
-		rx_reorder_array_elem->head = NULL;
-		rx_reorder_array_elem->tail = NULL;
+	if (peer == NULL)
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"%s: NULL peer\n", __func__);
+
+	pdev = peer->vdev->pdev;
+	soc = pdev->soc;
+
+	if (peer->rx_tid[tid].dst_ring_desc) {
+		if (dp_rx_link_desc_return(soc,
+					peer->rx_tid[tid].dst_ring_desc,
+					HAL_BM_ACTION_PUT_IN_IDLE_LIST) !=
+					QDF_STATUS_SUCCESS)
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"%s: Failed to return link desc\n",
+					__func__);
 	}
+
+	if (peer->rx_tid[tid].head_frag_desc) {
+		dp_rxdma_srng = &pdev->rx_refill_buf_ring;
+		rx_desc_pool = &soc->rx_desc_buf[0];
+
+		dp_rx_add_to_free_desc_list(&head, &tail,
+				peer->rx_tid[tid].head_frag_desc);
+		dp_rx_buffers_replenish(soc, 0, dp_rxdma_srng, rx_desc_pool,
+			1, &head, &tail, HAL_RX_BUF_RBM_SW3_BM);
+	}
+
+	dp_rx_defrag_cleanup(peer, tid);
 }
 
 /*
@@ -1194,7 +1221,7 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
  *
  * Returns: None
  */
-static void dp_rx_defrag_cleanup(struct dp_peer *peer, unsigned tid)
+void dp_rx_defrag_cleanup(struct dp_peer *peer, unsigned tid)
 {
 	struct dp_rx_reorder_array_elem *rx_reorder_array_elem =
 				peer->rx_tid[tid].array;
@@ -1210,6 +1237,7 @@ static void dp_rx_defrag_cleanup(struct dp_peer *peer, unsigned tid)
 	peer->rx_tid[tid].defrag_timeout_ms = 0;
 	peer->rx_tid[tid].curr_frag_num = 0;
 	peer->rx_tid[tid].curr_seq_num = 0;
+	peer->rx_tid[tid].head_frag_desc = NULL;
 }
 
 /*
@@ -1221,7 +1249,7 @@ static void dp_rx_defrag_cleanup(struct dp_peer *peer, unsigned tid)
  * Returns: None
  */
 static QDF_STATUS dp_rx_defrag_save_info_from_ring_desc(void *ring_desc,
-	struct dp_peer *peer, unsigned tid)
+	struct dp_rx_desc *rx_desc, struct dp_peer *peer, unsigned tid)
 {
 	void *dst_ring_desc = qdf_mem_malloc(
 			sizeof(struct reo_destination_ring));
@@ -1237,6 +1265,7 @@ static QDF_STATUS dp_rx_defrag_save_info_from_ring_desc(void *ring_desc,
 		       sizeof(struct reo_destination_ring));
 
 	peer->rx_tid[tid].dst_ring_desc = dst_ring_desc;
+	peer->rx_tid[tid].head_frag_desc = rx_desc;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1287,6 +1316,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 
 		qdf_nbuf_free(frag);
 		dp_rx_add_to_free_desc_list(head, tail, rx_desc);
+		*rx_bfs = 1;
 
 		return QDF_STATUS_E_DEFRAG_ERROR;
 	}
@@ -1305,6 +1335,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 			"Invalid MPDU seq control field, dropping MPDU");
 		qdf_nbuf_free(frag);
 		dp_rx_add_to_free_desc_list(head, tail, rx_desc);
+		*rx_bfs = 1;
 
 		qdf_assert(0);
 		goto end;
@@ -1319,6 +1350,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 			"Invalid frame control field, dropping MPDU");
 		qdf_nbuf_free(frag);
 		dp_rx_add_to_free_desc_list(head, tail, rx_desc);
+		*rx_bfs = 1;
 
 		qdf_assert(0);
 		goto end;
@@ -1347,6 +1379,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 			"Rcvd unfragmented pkt on REO Err srng, dropping");
 		qdf_nbuf_free(frag);
 		dp_rx_add_to_free_desc_list(head, tail, rx_desc);
+		*rx_bfs = 1;
 
 		qdf_assert(0);
 		goto end;
@@ -1401,7 +1434,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 			(rx_reorder_array_elem->head == frag)) {
 
 		status = dp_rx_defrag_save_info_from_ring_desc(ring_desc,
-					peer, tid);
+					rx_desc, peer, tid);
 
 		if (status != QDF_STATUS_SUCCESS) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1447,6 +1480,11 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"Fragment processing failed");
+
+		dp_rx_add_to_free_desc_list(head, tail,
+				peer->rx_tid[tid].head_frag_desc);
+		*rx_bfs = 1;
+
 		if (dp_rx_link_desc_return(soc,
 					peer->rx_tid[tid].dst_ring_desc,
 					HAL_BM_ACTION_PUT_IN_IDLE_LIST) !=
@@ -1564,10 +1602,10 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 				head, tail, mpdu_desc_info,
 				tid, rx_desc, &rx_bfs);
 
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			if (rx_bfs)
-				rx_bufs_used++;
-		} else {
+		if (rx_bfs)
+			rx_bufs_used++;
+
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"Rx Defrag err seq#:0x%x msdu_count:%d flags:%d",
 				mpdu_desc_info->mpdu_seq,

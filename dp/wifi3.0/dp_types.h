@@ -449,6 +449,7 @@ struct dp_rx_tid {
 
 	/* Store dst desc for reinjection */
 	void *dst_ring_desc;
+	struct dp_rx_desc *head_frag_desc;
 
 	/* Sequence and fragments that are being processed currently */
 	uint32_t curr_seq_num;
