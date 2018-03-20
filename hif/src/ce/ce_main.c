@@ -436,6 +436,7 @@ static struct service_to_pipe target_service_to_ce_map_qca6290[] = {
 	{ HTT_DATA_MSG_SVC, PIPEDIR_IN , 1, },
 	{ WMI_CONTROL_SVC_WMAC1, PIPEDIR_OUT, 7},
 	{ WMI_CONTROL_SVC_WMAC1, PIPEDIR_IN, 2},
+	{ PACKET_LOG_SVC, PIPEDIR_IN, 5, },
 	/* (Additions here) */
 	{ 0, 0, 0, },
 };
