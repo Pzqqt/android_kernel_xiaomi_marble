@@ -216,9 +216,7 @@ static inline void wlan_ipa_wdi_get_wdi_version(struct wlan_ipa_priv *ipa_ctx)
 static inline bool wlan_ipa_wdi_is_smmu_enabled(struct wlan_ipa_priv *ipa_ctx,
 					       qdf_device_t osdev)
 {
-	/* TODO: Need to check if SMMU is supported on cld_3.2 */
-	/* return hdd_ipa->is_smmu_enabled && qdf_mem_smmu_s1_enabled(osdev); */
-	return 0;
+	return ipa_ctx->is_smmu_enabled && qdf_mem_smmu_s1_enabled(osdev);
 }
 
 static inline QDF_STATUS wlan_ipa_wdi_setup(struct wlan_ipa_priv *ipa_ctx,
@@ -329,6 +327,12 @@ static inline int wlan_ipa_wdi_teardown_sys_pipe(struct wlan_ipa_priv *ipa_ctx,
 
 static inline void wlan_ipa_wdi_get_wdi_version(struct wlan_ipa_priv *ipa_ctx)
 {
+}
+
+static inline int wlan_ipa_wdi_is_smmu_enabled(struct wlan_ipa_priv *ipa_ctx,
+					       qdf_device_t osdev)
+{
+	return qdf_mem_smmu_s1_enabled(osdev);
 }
 
 static inline QDF_STATUS wlan_ipa_wdi_setup(struct wlan_ipa_priv *ipa_ctx,
@@ -2586,4 +2590,19 @@ QDF_STATUS wlan_ipa_uc_ol_deinit(struct wlan_ipa_priv *ipa_ctx)
 
 	ipa_debug("exit: ret=%d", status);
 	return status;
+}
+
+int wlan_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
+{
+	ipa_debug("Map: %d Num_buf: %d", map, num_buf);
+
+	if (!num_buf) {
+		ipa_info("No buffers to map/unmap");
+		return 0;
+	}
+
+	if (map)
+		return qdf_ipa_create_wdi_mapping(num_buf, buf_arr);
+	else
+		return qdf_ipa_release_wdi_mapping(num_buf, buf_arr);
 }

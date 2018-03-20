@@ -530,3 +530,8 @@ QDF_STATUS ipa_wlan_evt(struct wlan_objmgr_pdev *pdev, qdf_netdev_t net_dev,
 	return wlan_ipa_wlan_evt(net_dev, device_mode, sta_id, session_id,
 				 ipa_event_type, mac_addr);
 }
+
+int ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
+{
+	return wlan_ipa_uc_smmu_map(map, num_buf, buf_arr);
+}

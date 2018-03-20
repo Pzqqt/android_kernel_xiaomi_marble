@@ -25,6 +25,7 @@
 #include "wlan_ipa_public_struct.h"
 #include "wlan_ipa_obj_mgmt_api.h"
 #include "wlan_objmgr_pdev_obj.h"
+#include "qdf_types.h"
 
 #ifdef IPA_OFFLOAD
 
@@ -271,6 +272,16 @@ QDF_STATUS ucfg_ipa_wlan_evt(struct wlan_objmgr_pdev *pdev,
 			     enum wlan_ipa_wlan_event ipa_event_type,
 			     uint8_t *mac_addr);
 
+/**
+ * ucfg_ipa_uc_smmu_map() - Map / Unmap DMA buffer to IPA UC
+ * @map: Map / unmap operation
+ * @num_buf: Number of buffers in array
+ * @buf_arr: Buffer array of DMA mem mapping info
+ *
+ * Return: Status of map operation
+ */
+int ucfg_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr);
+
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -422,5 +433,10 @@ QDF_STATUS ucfg_ipa_wlan_evt(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline
+int ucfg_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
+{
+	return 0;
+}
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_UCFG_API_H_ */
