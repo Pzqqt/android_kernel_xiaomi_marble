@@ -73,7 +73,8 @@ void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
 	uint32_t *reo_queue_desc = (uint32_t *)hw_qdesc_vaddr;
 	uint32_t *reo_queue_ext_desc;
 	uint32_t reg_val;
-	uint32_t pn_enable, pn_size;
+	uint32_t pn_enable;
+	uint32_t pn_size = 0;
 
 	qdf_mem_zero(hw_qdesc_vaddr, sizeof(struct rx_reo_queue));
 

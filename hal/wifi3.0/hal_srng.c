@@ -680,7 +680,7 @@ static void hal_validate_shadow_register(struct hal_soc *hal,
 
 	index =	shadow_address - shadow_0_offset;
 
-	if (index > MAX_SHADOW_REGISTERS) {
+	if (index >= MAX_SHADOW_REGISTERS) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: index %x out of bounds\n", __func__, index);
 		goto error;
