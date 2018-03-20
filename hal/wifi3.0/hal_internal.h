@@ -82,6 +82,10 @@
 #include "pld_common.h"
 #include "rx_msdu_link.h"
 
+#ifdef QCA_WIFI_QCA6290_11AX
+#include "phyrx_other_receive_info_ru_details.h"
+#endif /* QCA_WIFI_QCA6290_11AX */
+
 #ifdef FEATURE_PERPKT_INFO
 #include "rx_header.h"
 #endif /* FEATURE_PERPKT_INFO */
