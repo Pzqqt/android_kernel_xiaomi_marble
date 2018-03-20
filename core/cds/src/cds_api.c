@@ -2920,7 +2920,7 @@ QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present)
 #ifdef IPA_OFFLOAD
 int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
 {
-	return hdd_ipa_uc_smmu_map(map, num_buf, buf_arr);
+	return ucfg_ipa_uc_smmu_map(map, num_buf, buf_arr);
 }
 #else
 int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
