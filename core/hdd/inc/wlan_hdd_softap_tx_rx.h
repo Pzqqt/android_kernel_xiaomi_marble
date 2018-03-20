@@ -37,8 +37,8 @@
 #include <wlan_hdd_hostapd.h>
 #include <cdp_txrx_peer_ops.h>
 
-int hdd_softap_hard_start_xmit(struct sk_buff *skb,
-			       struct net_device *dev);
+netdev_tx_t hdd_softap_hard_start_xmit(struct sk_buff *skb,
+				       struct net_device *dev);
 void hdd_softap_tx_timeout(struct net_device *dev);
 QDF_STATUS hdd_softap_init_tx_rx(struct hdd_adapter *adapter);
 QDF_STATUS hdd_softap_deinit_tx_rx(struct hdd_adapter *adapter);
