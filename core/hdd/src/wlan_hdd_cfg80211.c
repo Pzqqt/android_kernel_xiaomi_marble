@@ -13386,7 +13386,11 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 	INIT_COMPLETION(context->response_event);
 	spin_unlock(&hdd_context_lock);
 
-	if (hdd_ctx->config->enable_data_stall_det)
+	pkt_type_bitmap = adapter->pkt_type_bitmap;
+
+	/* send NUD failure event only when ARP tracking is enabled. */
+	if (hdd_ctx->config->enable_data_stall_det &&
+	    (pkt_type_bitmap & CONNECTIVITY_CHECK_SET_ARP))
 		cdp_post_data_stall_event(soc,
 				      DATA_STALL_LOG_INDICATOR_FRAMEWORK,
 				      DATA_STALL_LOG_NUD_FAILURE,
@@ -13441,7 +13445,6 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 	if (adapter->dad)
 		nla_put_flag(skb, AP_LINK_DAD);
 
-	pkt_type_bitmap = adapter->pkt_type_bitmap;
 	/* ARP tracking is done above. */
 	pkt_type_bitmap &= ~CONNECTIVITY_CHECK_SET_ARP;
 
