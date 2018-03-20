@@ -1505,14 +1505,21 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 					soc->hal_soc, total_mem_size,
 					soc->wbm_idle_scatter_buf_size);
 
+		if (num_scatter_bufs > MAX_IDLE_SCATTER_BUFS) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					FL("scatter bufs size out of bounds"));
+			goto fail;
+		}
+
 		for (i = 0; i < num_scatter_bufs; i++) {
 			soc->wbm_idle_scatter_buf_base_vaddr[i] =
-				qdf_mem_alloc_consistent(soc->osdev, soc->osdev->dev,
+				qdf_mem_alloc_consistent(soc->osdev,
+							soc->osdev->dev,
 				soc->wbm_idle_scatter_buf_size,
 				&(soc->wbm_idle_scatter_buf_base_paddr[i]));
 			if (soc->wbm_idle_scatter_buf_base_vaddr[i] == NULL) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_ERROR,
+						QDF_TRACE_LEVEL_ERROR,
 					FL("Scatter list memory alloc failed"));
 				goto fail;
 			}
