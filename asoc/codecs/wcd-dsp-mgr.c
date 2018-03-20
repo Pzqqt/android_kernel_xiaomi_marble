@@ -1059,8 +1059,10 @@ static int wdsp_mgr_bind(struct device *dev)
 		dev_info(dev, "%s: create_ramdump_device failed\n", __func__);
 
 	ret = component_bind_all(dev, wdsp->ops);
-	if (ret < 0)
+	if (ret < 0) {
 		WDSP_ERR(wdsp, "component_bind_all failed %d\n", ret);
+		return ret;
+	}
 
 	/* Make sure all components registered ops */
 	for (idx = 0; idx < WDSP_CMPNT_TYPE_MAX; idx++) {
