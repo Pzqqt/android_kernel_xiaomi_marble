@@ -164,6 +164,11 @@ static void scm_scan_entry_del(struct scan_dbs *scan_db,
 		scm_warn("node is already deleted");
 		return;
 	}
+	/* Seems node is already deleted */
+	if (!qdf_atomic_read(&scan_node->ref_cnt)) {
+		scm_warn("node is already deleted ref 0");
+		return;
+	}
 	scan_node->active = false;
 
 	scm_scan_entry_put_ref(scan_db, scan_node, false);
@@ -381,8 +386,8 @@ static QDF_STATUS scm_flush_oldest_entry(struct scan_dbs *scan_db)
 				util_scan_entry_age(oldest_node->entry));
 		/* Release ref_cnt taken for oldest_node and delete it */
 		qdf_spin_lock_bh(&scan_db->scan_db_lock);
-		scm_scan_entry_put_ref(scan_db, oldest_node, false);
 		scm_scan_entry_del(scan_db, oldest_node);
+		scm_scan_entry_put_ref(scan_db, oldest_node, false);
 		qdf_spin_unlock_bh(&scan_db->scan_db_lock);
 	}
 
@@ -641,13 +646,21 @@ static QDF_STATUS scm_add_update_entry(struct wlan_objmgr_psoc *psoc,
 
 	if (scan_db->num_entries >= MAX_SCAN_CACHE_SIZE) {
 		status = scm_flush_oldest_entry(scan_db);
-		if (QDF_IS_STATUS_ERROR(status))
+		if (QDF_IS_STATUS_ERROR(status)) {
+			/* release ref taken for dup node */
+			if (is_dup_found)
+				scm_scan_entry_put_ref(scan_db, dup_node, true);
 			return status;
+		}
 	}
 
 	scan_node = qdf_mem_malloc(sizeof(*scan_node));
-	if (!scan_node)
+	if (!scan_node) {
+		/* release ref taken for dup node */
+		if (is_dup_found)
+			scm_scan_entry_put_ref(scan_db, dup_node, true);
 		return QDF_STATUS_E_NOMEM;
+	}
 
 	scan_node->entry = scan_params;
 	qdf_spin_lock_bh(&scan_db->scan_db_lock);
@@ -655,8 +668,8 @@ static QDF_STATUS scm_add_update_entry(struct wlan_objmgr_psoc *psoc,
 
 	if (is_dup_found) {
 		/* release ref taken for dup node and delete it */
-		scm_scan_entry_put_ref(scan_db, dup_node, false);
 		scm_scan_entry_del(scan_db, dup_node);
+		scm_scan_entry_put_ref(scan_db, dup_node, false);
 	}
 	qdf_spin_unlock_bh(&scan_db->scan_db_lock);
 
