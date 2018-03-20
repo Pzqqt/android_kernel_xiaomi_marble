@@ -196,7 +196,7 @@ static uint8_t *sme_trace_get_command_string(uint32_t command)
 	}
 }
 
-static void sme_trace_dump(tpAniSirGlobal mac_ctx, tp_qdf_trace_record record,
+static void sme_trace_dump(void *mac_ctx, tp_qdf_trace_record record,
 			   uint16_t rec_index)
 {
 	switch (record->code) {
@@ -233,7 +233,6 @@ static void sme_trace_dump(tpAniSirGlobal mac_ctx, tp_qdf_trace_record record,
 
 void sme_trace_init(tpAniSirGlobal pMac)
 {
-	qdf_trace_register(QDF_MODULE_ID_SME, (tp_qdf_trace_cb)
-				&sme_trace_dump);
+	qdf_trace_register(QDF_MODULE_ID_SME, &sme_trace_dump);
 }
 #endif
