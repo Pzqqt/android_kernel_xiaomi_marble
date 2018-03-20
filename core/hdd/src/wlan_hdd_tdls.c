@@ -662,8 +662,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_TDLS_OPER,
 			 adapter->session_id, oper));
 	if (NULL == peer) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid arguments", __func__);
+		hdd_err("Invalid arguments");
 		return -EINVAL;
 	}
 

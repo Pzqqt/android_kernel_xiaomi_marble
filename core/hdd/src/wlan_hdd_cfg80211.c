@@ -12866,8 +12866,7 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 	err = wlan_cfg80211_nla_parse(tb, STATS_SET_MAX, data, data_len,
 				      qca_wlan_vendor_set_nud_stats);
 	if (err) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s STATS_SET_START ATTR", __func__);
+		hdd_err("STATS_SET_START ATTR");
 		return err;
 	}
 
@@ -12877,8 +12876,7 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 	}
 
 	if (adapter->device_mode != QDF_STA_MODE) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s STATS supported in only STA mode !!", __func__);
+		hdd_err("STATS supported in only STA mode!");
 		return -EINVAL;
 	}
 
@@ -12899,9 +12897,7 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 				return err;
 		} else {
 			if (!tb[STATS_GW_IPV4]) {
-				QDF_TRACE(QDF_MODULE_ID_HDD,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s STATS_SET_START CMD", __func__);
+				hdd_err("STATS_SET_START CMD");
 				return -EINVAL;
 			}
 
@@ -12942,16 +12938,13 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 		}
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s STATS_SET_START Received flag %d!!", __func__,
-		  arp_stats_params.flag);
+	hdd_info("STATS_SET_START Received flag %d!", arp_stats_params.flag);
 
 	arp_stats_params.vdev_id = adapter->session_id;
 
 	if (QDF_STATUS_SUCCESS !=
 	    sme_set_nud_debug_stats(hdd_ctx->hHal, &arp_stats_params)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s STATS_SET_START CMD Failed!!", __func__);
+		hdd_err("STATS_SET_START CMD Failed!");
 		return -EINVAL;
 	}
 
@@ -13085,8 +13078,7 @@ static int hdd_populate_dns_stats_info(struct hdd_adapter *adapter,
 
 	dns_query = qdf_mem_malloc(adapter->track_dns_domain_len + 1);
 	if (!dns_query) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: mem alloc fail.", __func__);
+		hdd_err("mem alloc fail");
 		return -EINVAL;
 	}
 
@@ -13382,8 +13374,7 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 		return err;
 
 	if (adapter->device_mode != QDF_STA_MODE) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s STATS supported in only STA mode !!", __func__);
+		hdd_err("STATS supported in only STA mode!");
 		return -EINVAL;
 	}
 
@@ -13404,8 +13395,7 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 
 	if (QDF_STATUS_SUCCESS !=
 	    sme_get_nud_debug_stats(hdd_ctx->hHal, &arp_stats_params)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s STATS_SET_START CMD Failed!!", __func__);
+		hdd_err("STATS_SET_START CMD Failed!");
 		return -EINVAL;
 	}
 

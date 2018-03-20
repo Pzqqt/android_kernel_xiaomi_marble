@@ -10442,8 +10442,7 @@ QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_val)
 		auto_sh_cmd = (tSirAutoShutdownCmdParams *)
 			      qdf_mem_malloc(sizeof(tSirAutoShutdownCmdParams));
 		if (auto_sh_cmd == NULL) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "%s Request Buffer Alloc Fail", __func__);
+			sme_err("Request Buffer Alloc Fail");
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -10493,8 +10492,7 @@ QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
 		cauReq = (tSirChAvoidUpdateReq *)
 			 qdf_mem_malloc(sizeof(tSirChAvoidUpdateReq));
 		if (NULL == cauReq) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "%s Request Buffer Alloc Fail", __func__);
+			sme_err("Request Buffer Alloc Fail");
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}

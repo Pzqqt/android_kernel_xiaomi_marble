@@ -11156,9 +11156,8 @@ void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len)
 		radio_info->length = (unsigned short) sizeof(radio_info->radio);
 		radio_info->radio = radio;
 		tlv_len = sizeof(*radio_info);
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
-			"Added radio index tlv - radio index %d",
-			radio_info->radio);
+		hdd_debug("Added radio index tlv - radio index %d",
+			  radio_info->radio);
 	}
 
 	nlh->nlmsg_len += tlv_len;
@@ -12656,8 +12655,7 @@ static int hdd_update_dp_config(struct hdd_context *hdd_ctx)
 					cds_get_context(QDF_MODULE_ID_SOC),
 					&params);
 	if (status) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			"%s: Failed to attach config parameters", __func__);
+		hdd_err("Failed to attach config parameters");
 		return status;
 	}
 

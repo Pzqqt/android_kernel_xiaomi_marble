@@ -6305,8 +6305,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 				       adapter->session_id);
 
 		if (ret != 0) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				"Invalid handles");
+			hdd_err("Invalid handles");
 			break;
 		}
 

@@ -1817,9 +1817,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hostapd_state->bss_state = BSS_START;
 
 		/* Set default key index */
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
-			"%s: default key index %hu", __func__,
-			ap_ctx->wep_def_key_idx);
+		hdd_debug("default key index %hu", ap_ctx->wep_def_key_idx);
 
 		sme_roam_set_default_key_index(
 			WLAN_HDD_GET_HAL_CTX(adapter),
@@ -3488,8 +3486,7 @@ static __iw_softap_setparam(struct net_device *dev,
 		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
 				 adapter->session_id);
 		if (ret != 0) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				"Invalid Handles");
+			hdd_err("Invalid Handles");
 			break;
 		}
 		req.stats = set_value;
