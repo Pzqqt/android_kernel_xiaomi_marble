@@ -123,6 +123,10 @@ while (0)
 	DP_STATS_AGGR(_handle_a, _handle_b, _field.bytes);\
 }
 
+#define DP_STATS_UPD_STRUCT(_handle_a, _handle_b, _field) \
+{ \
+	_handle_a->stats._field = _handle_b->stats._field; \
+}
 
 #define DP_HIST_INIT() \
 	uint32_t num_of_packets[MAX_PDEV_CNT] = {0};
@@ -289,6 +293,8 @@ while (0)
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.age_out); \
 								\
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.err.mic_err); \
+		DP_STATS_UPD_STRUCT(_tgtobj, _srcobj, rx.rssi); \
+		DP_STATS_UPD_STRUCT(_tgtobj, _srcobj, rx.rx_rate); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.err.decrypt_err); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.non_ampdu_cnt); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.ampdu_cnt); \
