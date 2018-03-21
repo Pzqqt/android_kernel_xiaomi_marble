@@ -5083,95 +5083,6 @@ int iw_get_genie(struct net_device *dev,
 	return ret;
 }
 
-/**
- * __iw_get_ap_freq() - get ap frequency
- * @dev - Pointer to the net device.
- * @info - Pointer to the iw_request_info.
- * @wrqu - Pointer to the iwreq_data.
- * @extra - Pointer to the data.
- *
- * Return: 0 for success, non zero for failure.
- */
-static int __iw_get_ap_freq(struct net_device *dev,
-			  struct iw_request_info *info, struct iw_freq *fwrq,
-			  char *extra) {
-	uint32_t status = false, channel = 0, freq = 0;
-	struct hdd_adapter *adapter = (netdev_priv(dev));
-	struct hdd_context *hdd_ctx;
-	tHalHandle hHal;
-	struct hdd_hostapd_state *hostapd_state;
-	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
-	int ret;
-
-	hdd_enter_dev(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
-	hHal = WLAN_HDD_GET_HAL_CTX(adapter);
-
-	if (hostapd_state->bss_state == BSS_STOP) {
-		if (sme_cfg_get_int(hHal, WNI_CFG_CURRENT_CHANNEL, &channel)
-		    != QDF_STATUS_SUCCESS) {
-			return -EIO;
-		}
-		status = hdd_wlan_get_freq(channel, &freq);
-		if (true == status) {
-			/* Set Exponent parameter as 6 (MHZ) in struct
-			 * iw_freq * iwlist & iwconfig command
-			 * shows frequency into proper
-			 * format (2.412 GHz instead of 246.2 MHz)
-			 */
-			fwrq->m = freq;
-			fwrq->e = MHZ;
-		}
-	} else {
-		channel = ap_ctx->operating_channel;
-		status = hdd_wlan_get_freq(channel, &freq);
-		if (true == status) {
-			/* Set Exponent parameter as 6 (MHZ) in struct iw_freq
-			 * iwlist & iwconfig command shows frequency into proper
-			 * format (2.412 GHz instead of 246.2 MHz)
-			 */
-			fwrq->m = freq;
-			fwrq->e = MHZ;
-		}
-	}
-
-	hdd_exit();
-	return 0;
-}
-
-/**
- * iw_get_ap_freq() - Wrapper function to protect
- *                    __iw_get_ap_freq from the SSR.
- * @dev - Pointer to the net device.
- * @info - Pointer to the iw_request_info.
- * @wrqu - Pointer to the iwreq_data.
- * @extra - Pointer to the data.
- *
- * Return: 0 for success, non zero for failure.
- */
-static int iw_get_ap_freq(struct net_device *dev,
-			  struct iw_request_info *info,
-			  struct iw_freq *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_get_ap_freq(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
 static int
 __iw_softap_stopbss(struct net_device *dev,
 		    struct iw_request_info *info,
@@ -5595,7 +5506,7 @@ static const iw_handler hostapd_handler[] = {
 	(iw_handler) NULL,      /* SIOCSIWNWID */
 	(iw_handler) NULL,      /* SIOCGIWNWID */
 	(iw_handler) NULL,      /* SIOCSIWFREQ */
-	(iw_handler) iw_get_ap_freq,            /* SIOCGIWFREQ */
+	(iw_handler) NULL,      /* SIOCGIWFREQ */
 	(iw_handler) NULL,      /* SIOCSIWMODE */
 	(iw_handler) NULL,      /* SIOCGIWMODE */
 	(iw_handler) NULL,      /* SIOCSIWSENS */
