@@ -1263,13 +1263,9 @@ static void hdd_send_association_event(struct net_device *dev,
 	int we_event;
 	char *msg;
 	struct qdf_mac_addr peerMacAddr;
+	struct csr_roam_profile *roam_profile;
 
-	/* Added to find the auth type on the fly at run time */
-	/* rather than with cfg to see if FT is enabled */
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	struct csr_roam_profile *roam_profile = &(pWextState->roamProfile);
-
+	roam_profile = hdd_roam_profile(adapter);
 	memset(&wrqu, '\0', sizeof(wrqu));
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
 	we_event = SIOCGIWAP;
@@ -1400,7 +1396,7 @@ static void hdd_send_association_event(struct net_device *dev,
 #endif
 
 		if ((adapter->device_mode == QDF_STA_MODE) ||
-			(adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
+		    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 			qdf_copy_macaddr(&peerMacAddr,
 					 &sta_ctx->conn_info.bssId);
 
@@ -2568,22 +2564,22 @@ void hdd_perform_roam_set_key_complete(struct hdd_adapter *adapter)
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 {
-	struct hdd_wext_state *wext_state;
+	struct csr_roam_profile *roam_profile;
 
 	if ((adapter->device_mode == QDF_SAP_MODE) ||
 	    (adapter->device_mode == QDF_P2P_GO_MODE))
 		return;
 
-	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	if (wext_state->roamProfile.fils_con_info) {
-		qdf_mem_free(wext_state->roamProfile.fils_con_info);
-		wext_state->roamProfile.fils_con_info = NULL;
+	roam_profile = hdd_roam_profile(adapter);
+	if (roam_profile->fils_con_info) {
+		qdf_mem_free(roam_profile->fils_con_info);
+		roam_profile->fils_con_info = NULL;
 	}
 
-	if (wext_state->roamProfile.hlp_ie) {
-		qdf_mem_free(wext_state->roamProfile.hlp_ie);
-		wext_state->roamProfile.hlp_ie = NULL;
-		wext_state->roamProfile.hlp_ie_len = 0;
+	if (roam_profile->hlp_ie) {
+		qdf_mem_free(roam_profile->hlp_ie);
+		roam_profile->hlp_ie = NULL;
+		roam_profile->hlp_ie_len = 0;
 	}
 }
 #endif
@@ -4432,7 +4428,6 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	struct hdd_adapter *adapter = (struct hdd_adapter *) pContext;
-	struct hdd_wext_state *pWextState = NULL;
 	struct hdd_station_ctx *sta_ctx = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct cfg80211_bss *bss_status;
@@ -4447,7 +4442,6 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -4960,12 +4954,11 @@ hdd_translate_wpa_to_csr_encryption_type(uint8_t cipher_suite[4])
  */
 static inline bool hdd_is_fils_connection(struct hdd_adapter *adapter)
 {
-	struct hdd_wext_state *wext_state =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct csr_roam_profile *roam_profile;
 
-	if (wext_state->roamProfile.fils_con_info)
-		return wext_state->roamProfile.
-			fils_con_info->is_fils_connection;
+	roam_profile = hdd_roam_profile(adapter);
+	if (roam_profile->fils_con_info)
+		return roam_profile->fils_con_info->is_fils_connection;
 
 	return false;
 }
@@ -5139,8 +5132,8 @@ static void hdd_set_def_rsne_override(
 int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 			 eCsrAuthType *RSNAuthType)
 {
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct csr_roam_profile *roam_profile;
+	uint8_t *security_ie;
 	uint32_t status = 0;
 	eCsrEncryptionType RSNEncryptType;
 	eCsrEncryptionType mcRSNEncryptType;
@@ -5150,13 +5143,15 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 	uint8_t RSNMfpCapable = 0;
 #endif
 	u8 bssid[ETH_ALEN];        /* MAC address of assoc peer */
+
+	roam_profile = hdd_roam_profile(adapter);
+	security_ie = hdd_security_ie(adapter);
+
 	/* MAC address of assoc peer */
 	/* But, this routine is only called when we are NOT associated. */
-	qdf_mem_copy(bssid,
-		     pWextState->roamProfile.BSSIDs.bssid,
-		     sizeof(bssid));
-	if (pWextState->WPARSNIE[0] == DOT11F_EID_RSN
-	    || pWextState->WPARSNIE[0] == DOT11F_EID_WPA) {
+	qdf_mem_copy(bssid, roam_profile->BSSIDs.bssid, sizeof(bssid));
+	if (security_ie[0] == DOT11F_EID_RSN ||
+	    security_ie[0] == DOT11F_EID_WPA) {
 		/* continue */
 	} else {
 		return 0;
@@ -5170,21 +5165,21 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 #ifdef WLAN_FEATURE_11W
 				   &RSNMfpRequired, &RSNMfpCapable,
 #endif
-				   pWextState->WPARSNIE[1] + 2,
-				   pWextState->WPARSNIE);
+				   security_ie[1] + 2,
+				   security_ie);
 
 	if (status == 0) {
 		/*
 		 * Now copy over all the security attributes
 		 * you have parsed out.
 		 */
-		pWextState->roamProfile.EncryptionType.numEntries = 1;
-		pWextState->roamProfile.mcEncryptionType.numEntries = 1;
+		roam_profile->EncryptionType.numEntries = 1;
+		roam_profile->mcEncryptionType.numEntries = 1;
 
 		/* Use the cipher type in the RSN IE */
-		pWextState->roamProfile.EncryptionType.encryptionType[0] =
+		roam_profile->EncryptionType.encryptionType[0] =
 			RSNEncryptType;
-		pWextState->roamProfile.mcEncryptionType.encryptionType[0] =
+		roam_profile->mcEncryptionType.encryptionType[0] =
 			mcRSNEncryptType;
 
 		if ((QDF_IBSS_MODE == adapter->device_mode) &&
@@ -5201,14 +5196,14 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 			 */
 
 			/* Set the unicast cipher same as multicast cipher */
-			pWextState->roamProfile.EncryptionType.encryptionType[0]
+			roam_profile->EncryptionType.encryptionType[0]
 				= mcRSNEncryptType;
 		}
 #ifdef WLAN_FEATURE_11W
 		hdd_debug("RSNMfpRequired = %d, RSNMfpCapable = %d",
 			 RSNMfpRequired, RSNMfpCapable);
-		pWextState->roamProfile.MFPRequired = RSNMfpRequired;
-		pWextState->roamProfile.MFPCapable = RSNMfpCapable;
+		roam_profile->MFPRequired = RSNMfpRequired;
+		roam_profile->MFPCapable = RSNMfpCapable;
 #endif
 		hdd_debug("CSR AuthType = %d, EncryptionType = %d mcEncryptionType = %d",
 			 *RSNAuthType, RSNEncryptType, mcRSNEncryptType);
@@ -5216,29 +5211,28 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (hdd_ctx->force_rsne_override &&
-	    (pWextState->WPARSNIE[0] == DOT11F_EID_RSN)) {
+	    (security_ie[0] == DOT11F_EID_RSN)) {
 		hdd_warn("Test mode enabled set def Auth and enc type. RSN IE passed in connect req: ");
 		qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
-				   pWextState->roamProfile.pRSNReqIE,
-				   pWextState->roamProfile.nRSNReqIELength);
+				   roam_profile->pRSNReqIE,
+				   roam_profile->nRSNReqIELength);
 
-		pWextState->roamProfile.force_rsne_override = true;
+		roam_profile->force_rsne_override = true;
 
-		hdd_debug("MFPEnabled %d", pWextState->roamProfile.MFPEnabled);
+		hdd_debug("MFPEnabled %d", roam_profile->MFPEnabled);
 		/*
 		 * Reset MFPEnabled if testmode RSNE passed doesnt have MFPR
 		 * or MFPC bit set
 		 */
-		if (pWextState->roamProfile.MFPEnabled &&
-		    !(pWextState->roamProfile.MFPRequired ||
-		      pWextState->roamProfile.MFPCapable)) {
+		if (roam_profile->MFPEnabled &&
+		    !(roam_profile->MFPRequired ||
+		      roam_profile->MFPCapable)) {
 			hdd_debug("Reset MFPEnabled");
-			pWextState->roamProfile.MFPEnabled = 0;
+			roam_profile->MFPEnabled = 0;
 		}
 		/* If parsing failed set the def value for the roam profile */
 		if (status)
-			hdd_set_def_rsne_override(&pWextState->roamProfile,
-					    RSNAuthType);
+			hdd_set_def_rsne_override(roam_profile, RSNAuthType);
 		return 0;
 	}
 	return status;
@@ -5290,12 +5284,13 @@ bool hdd_check_fils_rsn_n_set_auth_type(struct csr_roam_profile *roam_profile,
 int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 			  eCsrAuthType RSNAuthType)
 {
+	struct csr_roam_profile *roam_profile;
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	struct csr_roam_profile *roam_profile = &(pWextState->roamProfile);
 	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
+	roam_profile = hdd_roam_profile(adapter);
 	roam_profile->AuthType.numEntries = 1;
 	hdd_debug("authType = %d RSNAuthType %d wpa_versions %d",
 		  sta_ctx->conn_info.authType, RSNAuthType,
@@ -5449,7 +5444,7 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 	}
 
 	hdd_debug("Set roam Authtype to %d",
-		 pWextState->roamProfile.AuthType.authType[0]);
+		 roam_profile->AuthType.authType[0]);
 
 	return 0;
 }
