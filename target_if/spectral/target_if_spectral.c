@@ -43,11 +43,21 @@
 struct target_if_spectral_ops spectral_ops;
 int spectral_debug_level = DEBUG_SPECTRAL;
 
+static void target_if_spectral_get_firstvdev_pdev(struct wlan_objmgr_pdev *pdev,
+						  void *obj, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = obj;
+	struct wlan_objmgr_vdev **first_vdev = arg;
+
+	if (!(*first_vdev))
+		*first_vdev = vdev;
+}
+
 struct wlan_objmgr_vdev *
 target_if_spectral_get_vdev(struct target_if_spectral *spectral)
 {
 	struct wlan_objmgr_pdev *pdev = NULL;
-	struct wlan_objmgr_vdev *vdev = NULL;
+	struct wlan_objmgr_vdev *first_vdev = NULL;
 
 	qdf_assert_always(spectral);
 	pdev = spectral->pdev_obj;
@@ -59,16 +69,22 @@ target_if_spectral_get_vdev(struct target_if_spectral *spectral)
 		return NULL;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, 0, WLAN_SPECTRAL_ID);
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+					  target_if_spectral_get_firstvdev_pdev,
+					  &first_vdev, 0, WLAN_SPECTRAL_ID);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_SPECTRAL_ID);
 
-	if (!vdev) {
+	if (wlan_objmgr_vdev_try_get_ref(first_vdev, WLAN_SPECTRAL_ID) !=
+			QDF_STATUS_SUCCESS)
+		first_vdev = NULL;
+
+	if (!first_vdev) {
 		spectral_warn("Unable to get first vdev of pdev.");
 		return NULL;
 	}
 
-	return vdev;
+	return first_vdev;
 }
 
 /**
