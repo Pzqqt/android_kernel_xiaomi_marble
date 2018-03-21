@@ -2365,6 +2365,11 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 			wlan_reg_set_channel_params(mac_ctx->pdev,
 				mac_ctx->sap.SapDfsInfo.target_channel, 0,
 				&sap_ctx->ch_params);
+		} else {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				FL("Invalid target channel %d"),
+				mac_ctx->sap.SapDfsInfo.target_channel);
+			return qdf_status;
 		}
 
 		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
@@ -2584,6 +2589,13 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 		qdf_status = sap_goto_disconnecting(sap_ctx);
 	} else if (eSAP_DFS_CHNL_SWITCH_ANNOUNCEMENT_START == msg) {
 		uint8_t intf;
+		if (!mac_ctx->sap.SapDfsInfo.target_channel) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				FL("Invalid target channel %d"),
+				mac_ctx->sap.SapDfsInfo.target_channel);
+			return qdf_status;
+		}
+
 		/*
 		 * Radar is seen on the current operating channel
 		 * send CSA IE for all associated stations
