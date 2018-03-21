@@ -1295,6 +1295,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 	struct htt_host_rx_desc_base *rx_desc;
 	uint8_t *rx_ind_data;
 	uint32_t *msg_word, num_msdu_bytes;
+	qdf_dma_addr_t rx_desc_paddr;
 	enum htt_t2h_msg_type msg_type;
 	uint8_t pad_bytes = 0;
 
@@ -1342,13 +1343,14 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 		if (HTT_WIFI_IP(pdev, 2, 0))
 			pad_bytes = rx_desc->msdu_end.l3_header_padding;
 #endif /* defined(HELIUMPLUS) */
-		/*
-		 * Make the netbuf's data pointer point to the payload rather
-		 * than the descriptor.
-		 */
 
-		qdf_nbuf_pull_head(msdu,
-				   HTT_RX_STD_DESC_RESERVATION + pad_bytes);
+		/*
+		 * Save PADDR of descriptor and make the netbuf's data pointer
+		 * point to the payload rather than the descriptor.
+		 */
+		rx_desc_paddr = QDF_NBUF_CB_PADDR(msdu);
+		qdf_nbuf_pull_head(msdu, HTT_RX_STD_DESC_RESERVATION +
+					 pad_bytes);
 
 		/*
 		 * Sanity check - confirm the HW is finished filling in
@@ -1372,10 +1374,11 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 			       (!((*(uint32_t *) &rx_desc->attention) &
 				  RX_ATTENTION_0_MSDU_DONE_MASK))) {
 				qdf_mdelay(1);
-
-				qdf_invalidate_range((void *)rx_desc,
-						     (void *)((char *)rx_desc +
-						 HTT_RX_STD_DESC_RESERVATION));
+				qdf_mem_dma_sync_single_for_cpu(
+					pdev->osdev,
+					rx_desc_paddr,
+					HTT_RX_STD_DESC_RESERVATION,
+					DMA_FROM_DEVICE);
 
 				QDF_TRACE(QDF_MODULE_ID_HTT,
 					  QDF_TRACE_LEVEL_INFO,
