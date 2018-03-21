@@ -370,7 +370,12 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 		return A_ERROR;
 	}
 
-	qdf_assert(pl_dev);
+	if (!pl_dev) {
+		pr_err("Invalid pktlog handle in %s\n", __func__);
+		qdf_assert(pl_dev);
+		return A_ERROR;
+	}
+
 	qdf_assert(data);
 
 	fw_data = (struct ol_fw_data *)data;
