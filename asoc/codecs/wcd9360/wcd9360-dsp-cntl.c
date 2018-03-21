@@ -31,6 +31,7 @@
 #define WCD_PROCFS_ENTRY_MAX_LEN 16
 #define WCD_9360_RAMDUMP_START_ADDR 0x20100000
 #define WCD_9360_RAMDUMP_SIZE ((1024 * 1024) - 128)
+#define WCD_MISCDEV_CMD_MAX_LEN 2
 
 #define WCD_CNTL_MUTEX_LOCK(codec, lock)             \
 {                                                    \
@@ -893,11 +894,11 @@ static ssize_t wcd_miscdev_write(struct file *filep, const char __user *ubuf,
 {
 	struct wcd_dsp_cntl *cntl = container_of(filep->private_data,
 						 struct wcd_dsp_cntl, miscdev);
-	char val[count];
+	char val[WCD_MISCDEV_CMD_MAX_LEN];
 	bool vote;
 	int ret = 0;
 
-	if (count == 0 || count > 2) {
+	if (count == 0 || count > WCD_MISCDEV_CMD_MAX_LEN) {
 		pr_err("%s: Invalid count = %zd\n", __func__, count);
 		ret = -EINVAL;
 		goto done;
