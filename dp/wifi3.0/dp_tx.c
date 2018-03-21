@@ -2967,6 +2967,55 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRX_EN;
 }
 
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+static void dp_tx_desc_flush(struct dp_vdev *vdev)
+{
+}
+#else /* QCA_LL_TX_FLOW_CONTROL_V2! */
+
+/* dp_tx_desc_flush() - release resources associated
+ *                      to tx_desc
+ * @vdev: virtual device instance
+ *
+ * This function will free all outstanding Tx buffers,
+ * including ME buffer for which either free during
+ * completion didn't happened or completion is not
+ * received.
+*/
+static void dp_tx_desc_flush(struct dp_vdev *vdev)
+{
+	uint8_t i, num_pool;
+	uint32_t j;
+	uint32_t num_desc;
+	struct dp_soc *soc = vdev->pdev->soc;
+	struct dp_tx_desc_s *tx_desc = NULL;
+	struct dp_tx_desc_pool_s *tx_desc_pool = NULL;
+
+	num_desc = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
+	num_pool = wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
+
+	for (i = 0; i < num_pool; i++) {
+		for (j = 0; j < num_desc; j++) {
+			tx_desc_pool = &((soc)->tx_desc[(i)]);
+			if (tx_desc_pool &&
+				tx_desc_pool->desc_pages.cacheable_pages) {
+				tx_desc = dp_tx_desc_find(soc, i,
+					(j & DP_TX_DESC_ID_PAGE_MASK) >>
+					DP_TX_DESC_ID_PAGE_OS,
+					(j & DP_TX_DESC_ID_OFFSET_MASK) >>
+					DP_TX_DESC_ID_OFFSET_OS);
+
+				if (tx_desc && (tx_desc->vdev == vdev) &&
+					(tx_desc->flags & DP_TX_DESC_FLAG_ALLOCATED)) {
+					dp_tx_comp_free_buf(soc, tx_desc);
+					dp_tx_desc_release(tx_desc, i);
+				}
+			}
+		}
+	}
+}
+#endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
+
 /**
  * dp_tx_vdev_detach() - detach vdev from dp tx
  * @vdev: virtual device instance
@@ -2976,6 +3025,7 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
  */
 QDF_STATUS dp_tx_vdev_detach(struct dp_vdev *vdev)
 {
+	dp_tx_desc_flush(vdev);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3003,6 +3053,19 @@ QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * dp_tx_pdev_detach() - detach pdev from dp tx
+ * @pdev: physical device instance
+ *
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_RESOURCES: Error return
+ */
+QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev)
+{
+	dp_tx_me_exit(pdev);
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /* Pools will be allocated dynamically */
 static int dp_tx_alloc_static_pools(struct dp_soc *soc, int num_pool,
@@ -3024,10 +3087,6 @@ static void dp_tx_delete_static_pools(struct dp_soc *soc, int num_pool)
 
 	for (i = 0; i < num_pool; i++)
 		qdf_spinlock_destroy(&soc->tx_desc[i].flow_pool_lock);
-}
-
-static void dp_tx_desc_flush(struct dp_pdev *pdev)
-{
 }
 #else /* QCA_LL_TX_FLOW_CONTROL_V2! */
 static int dp_tx_alloc_static_pools(struct dp_soc *soc, int num_pool,
@@ -3052,6 +3111,7 @@ static void dp_tx_delete_static_pools(struct dp_soc *soc, int num_pool)
 	uint8_t i;
 
 	for (i = 0; i < num_pool; i++) {
+		qdf_assert_always(!soc->tx_desc[i].num_allocated);
 		if (dp_tx_desc_pool_free(soc, i)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"%s Tx Desc Pool Free failed\n", __func__);
@@ -3059,62 +3119,7 @@ static void dp_tx_delete_static_pools(struct dp_soc *soc, int num_pool)
 	}
 }
 
-/* dp_tx_desc_flush() - release resources associated
- *                      to tx_desc
- * @pdev: physical device instance
- *
- * This function will free all outstanding Tx buffers,
- * including ME buffer for which either free during
- * completion didn't happened or completion is not
- * received.
-*/
-static void dp_tx_desc_flush(struct dp_pdev *pdev)
-{
-	uint8_t i, num_pool;
-	uint32_t j;
-	uint32_t num_desc;
-	struct dp_soc *soc = pdev->soc;
-	struct dp_tx_desc_s *tx_desc = NULL;
-	struct dp_tx_desc_pool_s *tx_desc_pool = NULL;
-
-	num_desc = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
-	num_pool = wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
-
-	for (i = 0; i < num_pool; i++) {
-		for (j = 0; j < num_desc; j++) {
-			tx_desc_pool = &((soc)->tx_desc[(i)]);
-			if (tx_desc_pool &&
-				tx_desc_pool->desc_pages.cacheable_pages) {
-				tx_desc = dp_tx_desc_find(soc, i,
-					(j & DP_TX_DESC_ID_PAGE_MASK) >>
-					DP_TX_DESC_ID_PAGE_OS,
-					(j & DP_TX_DESC_ID_OFFSET_MASK) >>
-					DP_TX_DESC_ID_OFFSET_OS);
-
-				if (tx_desc && (tx_desc->pdev == pdev) &&
-					(tx_desc->flags & DP_TX_DESC_FLAG_ALLOCATED)) {
-					dp_tx_comp_free_buf(soc, tx_desc);
-					dp_tx_desc_release(tx_desc, i);
-				}
-			}
-		}
-	}
-}
 #endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
-
-/**
- * dp_tx_pdev_detach() - detach pdev from dp tx
- * @pdev: physical device instance
- *
- * Return: QDF_STATUS_SUCCESS: success
- *         QDF_STATUS_E_RESOURCES: Error return
- */
-QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev)
-{
-	dp_tx_desc_flush(pdev);
-	dp_tx_me_exit(pdev);
-	return QDF_STATUS_SUCCESS;
-}
 
 /**
  * dp_tx_soc_detach() - detach soc from dp tx
