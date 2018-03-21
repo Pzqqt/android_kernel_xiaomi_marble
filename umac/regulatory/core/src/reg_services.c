@@ -1413,6 +1413,11 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc;
 	struct cc_regdmn_s rd;
 
+	if (!pdev) {
+		reg_err("pdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	if (!country) {
 		reg_err("country code is NULL");
 		return QDF_STATUS_E_INVAL;
