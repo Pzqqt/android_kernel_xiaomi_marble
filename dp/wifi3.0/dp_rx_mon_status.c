@@ -374,18 +374,15 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 		}
 
 		if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
-			pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;
-			dp_rx_mon_dest_process(soc, mac_id, quota);
 			if (pdev->enhanced_stats_en ||
 					pdev->mcopy_mode)
 				dp_rx_handle_ppdu_stats(soc, pdev, ppdu_info);
 
+			pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;
+			dp_rx_mon_dest_process(soc, mac_id, quota);
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 			pdev->ppdu_info.com_info.last_ppdu_id =
 				pdev->ppdu_info.com_info.ppdu_id;
-
-			qdf_mem_zero(&(pdev->ppdu_info.rx_status),
-				sizeof(pdev->ppdu_info.rx_status));
 		}
 	}
 	return;

@@ -4442,6 +4442,8 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 		pdev->mo_mgmt_filter, pdev->mo_ctrl_filter,
 		pdev->mo_data_filter);
 
+	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+
 	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 1;
 	htt_tlv_filter.packet = 1;
@@ -4475,33 +4477,35 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 			RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
 	}
 
+	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+
 	htt_tlv_filter.mpdu_start = 1;
-	htt_tlv_filter.msdu_start = 1;
+	htt_tlv_filter.msdu_start = 0;
 	htt_tlv_filter.packet = 0;
-	htt_tlv_filter.msdu_end = 1;
-	htt_tlv_filter.mpdu_end = 1;
-	htt_tlv_filter.packet_header = 1;
-	htt_tlv_filter.attention = 1;
+	htt_tlv_filter.msdu_end = 0;
+	htt_tlv_filter.mpdu_end = 0;
+	htt_tlv_filter.attention = 0;
 	htt_tlv_filter.ppdu_start = 1;
 	htt_tlv_filter.ppdu_end = 1;
 	htt_tlv_filter.ppdu_end_user_stats = 1;
 	htt_tlv_filter.ppdu_end_user_stats_ext = 1;
 	htt_tlv_filter.ppdu_end_status_done = 1;
-	htt_tlv_filter.header_per_msdu = 0;
-	htt_tlv_filter.enable_fp =
-		(pdev->mon_filter_mode & MON_FILTER_PASS) ? 1 : 0;
+	htt_tlv_filter.enable_fp = 1;
 	htt_tlv_filter.enable_md = 0;
-	htt_tlv_filter.enable_mo =
-		(pdev->mon_filter_mode & MON_FILTER_OTHER) ? 1 : 0;
-	htt_tlv_filter.fp_mgmt_filter = pdev->fp_mgmt_filter;
-	htt_tlv_filter.fp_ctrl_filter = pdev->fp_ctrl_filter;
-	htt_tlv_filter.fp_data_filter = pdev->fp_data_filter;
-	htt_tlv_filter.mo_mgmt_filter = pdev->mo_mgmt_filter;
-	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
-	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
+	htt_tlv_filter.enable_mo = 1;
+	if (pdev->mcopy_mode) {
+		htt_tlv_filter.packet_header = 1;
+	}
+	htt_tlv_filter.fp_mgmt_filter = FILTER_MGMT_ALL;
+	htt_tlv_filter.fp_ctrl_filter = FILTER_CTRL_ALL;
+	htt_tlv_filter.fp_data_filter = FILTER_DATA_ALL;
+	htt_tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
+	htt_tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
+	htt_tlv_filter.mo_data_filter = FILTER_DATA_ALL;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
+						pdev->pdev_id);
 
 		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
 			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
@@ -4607,33 +4611,35 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 			RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
 	}
 
+	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+
 	htt_tlv_filter.mpdu_start = 1;
-	htt_tlv_filter.msdu_start = 1;
+	htt_tlv_filter.msdu_start = 0;
 	htt_tlv_filter.packet = 0;
-	htt_tlv_filter.msdu_end = 1;
-	htt_tlv_filter.mpdu_end = 1;
-	htt_tlv_filter.packet_header = 1;
-	htt_tlv_filter.attention = 1;
+	htt_tlv_filter.msdu_end = 0;
+	htt_tlv_filter.mpdu_end = 0;
+	htt_tlv_filter.attention = 0;
 	htt_tlv_filter.ppdu_start = 1;
 	htt_tlv_filter.ppdu_end = 1;
 	htt_tlv_filter.ppdu_end_user_stats = 1;
 	htt_tlv_filter.ppdu_end_user_stats_ext = 1;
 	htt_tlv_filter.ppdu_end_status_done = 1;
-	htt_tlv_filter.header_per_msdu = 0;
-	htt_tlv_filter.enable_fp =
-		(pdev->mon_filter_mode & MON_FILTER_PASS) ? 1 : 0;
+	htt_tlv_filter.enable_fp = 1;
 	htt_tlv_filter.enable_md = 0;
-	htt_tlv_filter.enable_mo =
-		(pdev->mon_filter_mode & MON_FILTER_OTHER) ? 1 : 0;
-	htt_tlv_filter.fp_mgmt_filter = pdev->fp_mgmt_filter;
-	htt_tlv_filter.fp_ctrl_filter = pdev->fp_ctrl_filter;
-	htt_tlv_filter.fp_data_filter = pdev->fp_data_filter;
-	htt_tlv_filter.mo_mgmt_filter = pdev->mo_mgmt_filter;
-	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
-	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
+	htt_tlv_filter.enable_mo = 1;
+	if (pdev->mcopy_mode) {
+		htt_tlv_filter.packet_header = 1;
+	}
+	htt_tlv_filter.fp_mgmt_filter = FILTER_MGMT_ALL;
+	htt_tlv_filter.fp_ctrl_filter = FILTER_CTRL_ALL;
+	htt_tlv_filter.fp_data_filter = FILTER_DATA_ALL;
+	htt_tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
+	htt_tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
+	htt_tlv_filter.mo_data_filter = FILTER_DATA_ALL;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
+						pdev->pdev_id);
 
 		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
 			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
@@ -5819,8 +5825,7 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 	htt_tlv_filter.packet = 0;
 	htt_tlv_filter.msdu_end = 0;
 	htt_tlv_filter.mpdu_end = 0;
-	htt_tlv_filter.packet_header = 1;
-	htt_tlv_filter.attention = 1;
+	htt_tlv_filter.attention = 0;
 	htt_tlv_filter.ppdu_start = 1;
 	htt_tlv_filter.ppdu_end = 1;
 	htt_tlv_filter.ppdu_end_user_stats = 1;
@@ -5828,8 +5833,10 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 	htt_tlv_filter.ppdu_end_status_done = 1;
 	htt_tlv_filter.enable_fp = 1;
 	htt_tlv_filter.enable_md = 0;
-	if (pdev->mcopy_mode)
+	if (pdev->mcopy_mode) {
+		htt_tlv_filter.packet_header = 1;
 		htt_tlv_filter.enable_mo = 1;
+	}
 	htt_tlv_filter.fp_mgmt_filter = FILTER_MGMT_ALL;
 	htt_tlv_filter.fp_ctrl_filter = FILTER_CTRL_ALL;
 	htt_tlv_filter.fp_data_filter = FILTER_DATA_ALL;
