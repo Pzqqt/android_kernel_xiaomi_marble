@@ -96,55 +96,15 @@ QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlan_ipa_rm_notify() - IPA resource manager notifier callback
- * @user_data: user data registered with IPA
- * @event: the IPA resource manager event that occurred
- * @data: the data associated with the event
- *
- * Return: None
- */
-static void wlan_ipa_rm_notify(void *user_data, qdf_ipa_rm_event_t event,
-			       unsigned long data)
+#ifdef FEATURE_METERING
+void wlan_ipa_init_metering(struct wlan_ipa_priv *ipa_ctx)
 {
-	struct wlan_ipa_priv *ipa_ctx = user_data;
-
-	if (qdf_unlikely(!ipa_ctx))
-		return;
-
-	if (!wlan_ipa_is_rm_enabled(ipa_ctx->config))
-		return;
-
-	ipa_debug("Evt: %d", event);
-
-	switch (event) {
-	case QDF_IPA_RM_RESOURCE_GRANTED:
-		if (wlan_ipa_uc_is_enabled(ipa_ctx->config)) {
-			/* RM Notification comes with ISR context
-			 * it should be serialized into work queue to avoid
-			 * ISR sleep problem
-			 */
-			ipa_ctx->uc_rm_work.event = event;
-			qdf_sched_work(0, &ipa_ctx->uc_rm_work.work);
-			break;
-		}
-		qdf_spin_lock_bh(&ipa_ctx->rm_lock);
-		ipa_ctx->rm_state = WLAN_IPA_RM_GRANTED;
-		qdf_spin_unlock_bh(&ipa_ctx->rm_lock);
-		ipa_ctx->stats.num_rm_grant++;
-		break;
-
-	case QDF_IPA_RM_RESOURCE_RELEASED:
-		ipa_debug("RM Release");
-		ipa_ctx->resource_unloading = false;
-		break;
-
-	default:
-		ipa_err("Unknown RM Evt: %d", event);
-		break;
-	}
+	qdf_event_create(&ipa_ctx->ipa_uc_sharing_stats_comp);
+	qdf_event_create(&ipa_ctx->ipa_uc_set_quota_comp);
 }
+#endif
 
+#ifndef CONFIG_IPA_WDI_UNIFIED_API
 /**
  * wlan_ipa_rm_cons_release() - WLAN consumer resource release handler
  *
@@ -158,7 +118,6 @@ static int wlan_ipa_rm_cons_release(void)
 	return 0;
 }
 
-#ifndef CONFIG_IPA_WDI_UNIFIED_API
 /**
  * wlan_ipa_wdi_rm_request() - Request resource from IPA
  * @ipa_ctx: IPA context
@@ -269,35 +228,6 @@ QDF_STATUS wlan_ipa_wdi_rm_try_release(struct wlan_ipa_priv *ipa_ctx)
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* CONFIG_IPA_WDI_UNIFIED_API */
-
-/**
- * wlan_ipa_rm_cons_request() - WLAN consumer resource request handler
- *
- * Callback function registered with IPA that is called when IPA wants
- * to access the WLAN consumer resource
- *
- * Return: 0 if the request is granted, negative errno otherwise
- */
-static int wlan_ipa_rm_cons_request(void)
-{
-	struct wlan_ipa_priv *ipa_ctx;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	ipa_ctx = wlan_ipa_get_obj_context();
-
-	if (ipa_ctx->resource_loading) {
-		ipa_err("IPA resource loading in progress");
-		ipa_ctx->pending_cons_req = true;
-		status = QDF_STATUS_E_PENDING;
-	} else if (ipa_ctx->resource_unloading) {
-		ipa_err("IPA resource unloading in progress");
-		ipa_ctx->pending_cons_req = true;
-		status = QDF_STATUS_E_PERM;
-	}
-
-	return qdf_status_to_os_return(status);
-}
 
 /**
  * wlan_ipa_uc_rm_notify_handler() - IPA uC resource notification handler
@@ -388,15 +318,83 @@ end:
 	qdf_spin_unlock_bh(&ipa_ctx->rm_lock);
 }
 
-#ifdef FEATURE_METERING
-void wlan_ipa_init_metering(struct wlan_ipa_priv *ipa_ctx)
+/**
+ * wlan_ipa_rm_cons_request() - WLAN consumer resource request handler
+ *
+ * Callback function registered with IPA that is called when IPA wants
+ * to access the WLAN consumer resource
+ *
+ * Return: 0 if the request is granted, negative errno otherwise
+ */
+static int wlan_ipa_rm_cons_request(void)
 {
-	qdf_event_create(&ipa_ctx->ipa_uc_sharing_stats_comp);
-	qdf_event_create(&ipa_ctx->ipa_uc_set_quota_comp);
-}
-#endif
+	struct wlan_ipa_priv *ipa_ctx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-#ifndef CONFIG_IPA_WDI_UNIFIED_API
+	ipa_ctx = wlan_ipa_get_obj_context();
+
+	if (ipa_ctx->resource_loading) {
+		ipa_err("IPA resource loading in progress");
+		ipa_ctx->pending_cons_req = true;
+		status = QDF_STATUS_E_PENDING;
+	} else if (ipa_ctx->resource_unloading) {
+		ipa_err("IPA resource unloading in progress");
+		ipa_ctx->pending_cons_req = true;
+		status = QDF_STATUS_E_PERM;
+	}
+
+	return qdf_status_to_os_return(status);
+}
+
+/**
+ * wlan_ipa_rm_notify() - IPA resource manager notifier callback
+ * @user_data: user data registered with IPA
+ * @event: the IPA resource manager event that occurred
+ * @data: the data associated with the event
+ *
+ * Return: None
+ */
+static void wlan_ipa_rm_notify(void *user_data, qdf_ipa_rm_event_t event,
+			       unsigned long data)
+{
+	struct wlan_ipa_priv *ipa_ctx = user_data;
+
+	if (qdf_unlikely(!ipa_ctx))
+		return;
+
+	if (!wlan_ipa_is_rm_enabled(ipa_ctx->config))
+		return;
+
+	ipa_debug("Evt: %d", event);
+
+	switch (event) {
+	case QDF_IPA_RM_RESOURCE_GRANTED:
+		if (wlan_ipa_uc_is_enabled(ipa_ctx->config)) {
+			/* RM Notification comes with ISR context
+			 * it should be serialized into work queue to avoid
+			 * ISR sleep problem
+			 */
+			ipa_ctx->uc_rm_work.event = event;
+			qdf_sched_work(0, &ipa_ctx->uc_rm_work.work);
+			break;
+		}
+		qdf_spin_lock_bh(&ipa_ctx->rm_lock);
+		ipa_ctx->rm_state = WLAN_IPA_RM_GRANTED;
+		qdf_spin_unlock_bh(&ipa_ctx->rm_lock);
+		ipa_ctx->stats.num_rm_grant++;
+		break;
+
+	case QDF_IPA_RM_RESOURCE_RELEASED:
+		ipa_debug("RM Release");
+		ipa_ctx->resource_unloading = false;
+		break;
+
+	default:
+		ipa_err("Unknown RM Evt: %d", event);
+		break;
+	}
+}
+
 QDF_STATUS wlan_ipa_wdi_setup_rm(struct wlan_ipa_priv *ipa_ctx)
 {
 	qdf_ipa_rm_create_params_t create_params;
