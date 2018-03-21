@@ -2569,20 +2569,6 @@ bool qdf_nbuf_is_bcast_pkt(qdf_nbuf_t buf)
 }
 
 /**
- * qdf_invalidate_range() - invalidate virtual address range
- * @start: start address of the address range
- * @end: end address of the address range
- *
- * Note that this function does not write back the cache entries.
- *
- * Return: none
- */
-static inline void qdf_invalidate_range(void *start, void *end)
-{
-	__qdf_invalidate_range(start, end);
-}
-
-/**
  * qdf_nbuf_reset_num_frags() - decrement the number of fragments
  * @buf: Network buffer
  *

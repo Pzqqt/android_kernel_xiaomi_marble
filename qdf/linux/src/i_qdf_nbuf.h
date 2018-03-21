@@ -1798,31 +1798,6 @@ __qdf_nbuf_get_priv_ptr(struct sk_buff *skb)
 }
 
 /**
- * __qdf_invalidate_range() - invalidate virtual address range
- * @start: start address of the address range
- * @end: end address of the address range
- *
- * Note that this function does not write back the cache entries.
- *
- * Return: none
- */
-#ifdef MSM_PLATFORM
-static inline void __qdf_invalidate_range(void *start, void *end)
-{
-	dmac_inv_range(start, end);
-}
-
-#else
-static inline void __qdf_invalidate_range(void *start, void *end)
-{
-	/* TODO figure out how to invalidate cache on x86 and other
-	 * non-MSM platform
-	 */
-	pr_err("Cache invalidate not yet implemneted for non-MSM platforms\n");
-}
-#endif
-
-/**
  * __qdf_nbuf_mark_wakeup_frame() - mark wakeup frame.
  * @buf: Pointer to nbuf
  *
