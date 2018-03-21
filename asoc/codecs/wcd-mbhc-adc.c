@@ -996,6 +996,7 @@ static irqreturn_t wcd_mbhc_adc_hs_rem_irq(int irq, void *data)
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_ADC_MODE, 0);
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_ADC_EN, 0);
 		wcd_mbhc_elec_hs_report_unplug(mbhc);
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 0);
 
 		if (hphpa_on) {
 			hphpa_on = false;
