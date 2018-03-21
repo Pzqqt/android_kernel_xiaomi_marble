@@ -164,10 +164,6 @@
  * struct mon_rx_status - This will have monitor mode rx_status extracted from
  * htt_rx_desc used later to update radiotap information.
  * @tsft: Time Synchronization Function timer
- * @he_sig_A1: HE (11ax) sig A1 field
- * @he_sig_A2: HE (11ax) sig A1 field
- * @he_sig_b_user: HE (11ax) sig B user field
- * @he_sig_b_user_known: HE (11ax) sig B user known field
  * @preamble_type: Preamble type in radio header
  * @chan_freq: Capture channel frequency
  * @chan_num: Capture channel number
@@ -222,10 +218,6 @@
  */
 struct mon_rx_status {
 	uint64_t tsft;
-	uint32_t he_sig_A1;
-	uint32_t he_sig_A2;
-	uint32_t he_sig_b_user;
-	uint32_t he_sig_b_user_known;
 	uint32_t preamble_type;
 	uint16_t chan_freq;
 	uint16_t chan_num;
@@ -292,10 +284,6 @@ struct mon_rx_status {
 };
 
 /* Masks for HE SIG known fields in mon_rx_status structure */
-#define QDF_MON_STATUS_HE_SIG_A1_SU_KNOWN_ALL		0x000007ff
-#define QDF_MON_STATUS_HE_SIG_A1_MU_KNOWN_ALL		0x000003ff
-#define QDF_MON_STATUS_HE_SIG_A2_SU_KNOWN_ALL		0x00000ffd
-#define QDF_MON_STATUS_HE_SIG_A2_MU_KNOWN_ALL		0x00000ffd
 #define QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU0	0x00000001
 #define QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU1	0x00000002
 #define QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU2	0x00000004
@@ -303,7 +291,6 @@ struct mon_rx_status {
 #define QDF_MON_STATUS_HE_SIG_B_USER_KNOWN_SIG_B_ALL   0x00fe0000
 #define QDF_MON_STATUS_HE_SIG_A1_HE_FORMAT_SU		0x00000000
 #define QDF_MON_STATUS_HE_SIG_A1_HE_FORMAT_EXT_SU	0x40000000
-#define QDF_MON_STATUS_HE_SIG_A1_HE_FORMAT_MU		0x80000000
 #define QDF_MON_STATUS_HE_SIG_A1_HE_FORMAT_TRIG		0xc0000000
 
 /* DHCP Related Mask */
@@ -366,8 +353,12 @@ struct mon_rx_status {
 #define QDF_NBUF_IPA_CHECK_MASK		0x80000000
 
 /* HE Radiotap data1 Mask */
+#define QDF_MON_STATUS_HE_SU_FORMAT_TYPE 0x0000
+#define QDF_MON_STATUS_HE_EXT_SU_FORMAT_TYPE 0x0001
+#define QDF_MON_STATUS_HE_MU_FORMAT_TYPE 0x0002
 #define QDF_MON_STATUS_HE_TRIG_FORMAT_TYPE 0x0003
-#define QDF_MON_STATUS_HE_SU_OR_EXT_SU_FORMAT_TYPE 0x0000
+
+
 #define QDF_MON_STATUS_HE_BEAM_CHANGE_KNOWN 0x0008
 #define QDF_MON_STATUS_HE_DL_UL_KNOWN 0x0010
 #define QDF_MON_STATUS_HE_MCS_KNOWN 0x0020
@@ -396,6 +387,9 @@ struct mon_rx_status {
 #define QDF_MON_STATUS_CODING_SHIFT 13
 #define QDF_MON_STATUS_LDPC_EXTRA_SYMBOL_SHIFT 14
 #define QDF_MON_STATUS_STBC_SHIFT 15
+
+/* HE radiotap data4 shift values */
+#define QDF_MON_STATUS_STA_ID_SHIFT 4
 
 /* HE radiotap data5 */
 #define QDF_MON_STATUS_GI_SHIFT 4
