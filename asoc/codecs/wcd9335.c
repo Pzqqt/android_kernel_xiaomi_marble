@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -845,8 +845,8 @@ static const struct tasha_reg_mask_val tasha_spkr_default[] = {
 	{WCD9335_CDC_COMPANDER8_CTL3, 0x80, 0x80},
 	{WCD9335_CDC_COMPANDER7_CTL7, 0x01, 0x01},
 	{WCD9335_CDC_COMPANDER8_CTL7, 0x01, 0x01},
-	{WCD9335_CDC_BOOST0_BOOST_CTL, 0x7C, 0x50},
-	{WCD9335_CDC_BOOST1_BOOST_CTL, 0x7C, 0x50},
+	{WCD9335_CDC_BOOST0_BOOST_CTL, 0x7C, 0x58},
+	{WCD9335_CDC_BOOST1_BOOST_CTL, 0x7C, 0x58},
 };
 
 static const struct tasha_reg_mask_val tasha_spkr_mode1[] = {
@@ -12405,8 +12405,8 @@ static const struct tasha_reg_mask_val tasha_codec_reg_init_common_val[] = {
 	{WCD9335_CDC_CLSH_K2_MSB, 0x0F, 0x00},
 	{WCD9335_CDC_CLSH_K2_LSB, 0xFF, 0x60},
 	{WCD9335_CPE_SS_DMIC_CFG, 0x80, 0x00},
-	{WCD9335_CDC_BOOST0_BOOST_CTL, 0x70, 0x50},
-	{WCD9335_CDC_BOOST1_BOOST_CTL, 0x70, 0x50},
+	{WCD9335_CDC_BOOST0_BOOST_CTL, 0x70, 0x58},
+	{WCD9335_CDC_BOOST1_BOOST_CTL, 0x70, 0x58},
 	{WCD9335_CDC_RX7_RX_PATH_CFG1, 0x08, 0x08},
 	{WCD9335_CDC_RX8_RX_PATH_CFG1, 0x08, 0x08},
 	{WCD9335_ANA_LO_1_2, 0x3C, 0X3C},

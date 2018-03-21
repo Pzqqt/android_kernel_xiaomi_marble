@@ -1,4 +1,4 @@
-/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -65,11 +65,11 @@ static const struct reg_default msm_sdw_defaults[] = {
 	{ MSM_SDW_RX8_RX_PATH_MIX_SEC1, 0x00 },
 	/* Page #12 registers */
 	{ MSM_SDW_BOOST0_BOOST_PATH_CTL, 0x00 },
-	{ MSM_SDW_BOOST0_BOOST_CTL, 0xb2 },
+	{ MSM_SDW_BOOST0_BOOST_CTL, 0xba },
 	{ MSM_SDW_BOOST0_BOOST_CFG1, 0x00 },
 	{ MSM_SDW_BOOST0_BOOST_CFG2, 0x00 },
 	{ MSM_SDW_BOOST1_BOOST_PATH_CTL, 0x00 },
-	{ MSM_SDW_BOOST1_BOOST_CTL, 0xb2 },
+	{ MSM_SDW_BOOST1_BOOST_CTL, 0xba },
 	{ MSM_SDW_BOOST1_BOOST_CFG1, 0x00 },
 	{ MSM_SDW_BOOST1_BOOST_CFG2, 0x00 },
 	{ MSM_SDW_AHB_BRIDGE_WR_DATA_0, 0x00 },

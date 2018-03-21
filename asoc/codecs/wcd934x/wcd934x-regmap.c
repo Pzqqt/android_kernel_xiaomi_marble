@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1248,11 +1248,11 @@ static const struct reg_default wcd934x_defaults[] = {
 	{ WCD934X_CDC_CLSH_TEST1,                          0x00 },
 	{ WCD934X_CDC_CLSH_OVR_VREF,                       0x00 },
 	{ WCD934X_CDC_BOOST0_BOOST_PATH_CTL,               0x00 },
-	{ WCD934X_CDC_BOOST0_BOOST_CTL,                    0xb2 },
+	{ WCD934X_CDC_BOOST0_BOOST_CTL,                    0xba },
 	{ WCD934X_CDC_BOOST0_BOOST_CFG1,                   0x00 },
 	{ WCD934X_CDC_BOOST0_BOOST_CFG2,                   0x00 },
 	{ WCD934X_CDC_BOOST1_BOOST_PATH_CTL,               0x00 },
-	{ WCD934X_CDC_BOOST1_BOOST_CTL,                    0xb2 },
+	{ WCD934X_CDC_BOOST1_BOOST_CTL,                    0xba },
 	{ WCD934X_CDC_BOOST1_BOOST_CFG1,                   0x00 },
 	{ WCD934X_CDC_BOOST1_BOOST_CFG2,                   0x00 },
 	{ WCD934X_CDC_VBAT_VBAT_PATH_CTL,                  0x00 },

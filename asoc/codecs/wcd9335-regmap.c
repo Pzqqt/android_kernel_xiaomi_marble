@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1213,11 +1213,11 @@ static const struct reg_default wcd9335_defaults[] = {
 	{ WCD9335_CDC_CLSH_TEST1,                         0x00 },
 	{ WCD9335_CDC_CLSH_OVR_VREF,                      0x00 },
 	{ WCD9335_CDC_BOOST0_BOOST_PATH_CTL,              0x00 },
-	{ WCD9335_CDC_BOOST0_BOOST_CTL,                   0xb2 },
+	{ WCD9335_CDC_BOOST0_BOOST_CTL,                   0xba },
 	{ WCD9335_CDC_BOOST0_BOOST_CFG1,                  0x00 },
 	{ WCD9335_CDC_BOOST0_BOOST_CFG2,                  0x00 },
 	{ WCD9335_CDC_BOOST1_BOOST_PATH_CTL,              0x00 },
-	{ WCD9335_CDC_BOOST1_BOOST_CTL,                   0xb2 },
+	{ WCD9335_CDC_BOOST1_BOOST_CTL,                   0xba },
 	{ WCD9335_CDC_BOOST1_BOOST_CFG1,                  0x00 },
 	{ WCD9335_CDC_BOOST1_BOOST_CFG2,                  0x00 },
 	{ WCD9335_SWR_AHB_BRIDGE_WR_DATA_0,               0x00 },
