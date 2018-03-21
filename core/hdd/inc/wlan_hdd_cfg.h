@@ -10503,7 +10503,7 @@ enum dot11p_mode {
  *
  * enum hdd_wext_control is used to enable coarse grained control on
  * wireless extensions ioctls. This control is used by configuration
- * items standard_wext_control and private_wext_control.
+ * item private_wext_control.
  *
  */
 enum hdd_wext_control {
@@ -10511,34 +10511,6 @@ enum hdd_wext_control {
 	hdd_wext_deprecated = 1,
 	hdd_wext_enabled = 2,
 };
-
-/*
- * <ini>
- * standard_wext_control - Standard wireless extensions control
- * @Min: 0
- * @Max: 2
- * @Default: 0
- *
- * Values are per enum hdd_wext_control.
- *
- * This ini is used to control access to standard wireless extensions
- * ioctls SIOCSIWCOMMIT (0x8B00) thru SIOCSIWPMKSA (0x8B36). The
- * functionality originally provided by these ioctls has been
- * completely superceeded by the functionality of cfg80211, and hence
- * by default support for these ioctls is disabled.
- *
- * Related: None
- *
- * Supported Feature: All
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_STANDARD_WEXT_CONTROL_NAME          "standard_wext_control"
-#define CFG_STANDARD_WEXT_CONTROL_MIN           (hdd_wext_disabled)
-#define CFG_STANDARD_WEXT_CONTROL_MAX           (hdd_wext_enabled)
-#define CFG_STANDARD_WEXT_CONTROL_DEFAULT       (hdd_wext_disabled)
 
 /*
  * <ini>
@@ -15114,7 +15086,6 @@ struct hdd_config {
 	uint16_t wow_pulse_interval_high;
 	uint16_t wow_pulse_interval_low;
 #endif
-	enum hdd_wext_control standard_wext_control;
 	enum hdd_wext_control private_wext_control;
 	bool sap_internal_restart;
 	enum restart_beaconing_on_ch_avoid_rule
