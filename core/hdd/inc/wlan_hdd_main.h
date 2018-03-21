@@ -2622,6 +2622,75 @@ static inline int wlan_hdd_validate_session_id(u8 session_id)
 	return -EINVAL;
 }
 
+/**
+ * hdd_roam_profile() - Get adapter's roam profile
+ * @adapter: The adapter being queried
+ *
+ * Given an adapter this function returns a pointer to its roam profile.
+ *
+ * NOTE WELL: Caller is responsible for ensuring this interface is only
+ * invoked for STA-type interfaces
+ *
+ * Return: pointer to the adapter's roam profile
+ */
+static inline
+struct csr_roam_profile *hdd_roam_profile(struct hdd_adapter *adapter)
+{
+	struct hdd_wext_state *wext_state;
+
+	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+
+	return &wext_state->roamProfile;
+}
+
+/**
+ * hdd_security_ie() - Get adapter's security IE
+ * @adapter: The adapter being queried
+ *
+ * Given an adapter this function returns a pointer to its security IE
+ * buffer. Note that this buffer is maintained outside the roam
+ * profile but, when in use, is referenced by a pointer within the
+ * roam profile.
+ *
+ * NOTE WELL: Caller is responsible for ensuring this interface is only
+ * invoked for STA-type interfaces
+ *
+ * Return: pointer to the adapter's roam profile security IE buffer
+ */
+static inline
+uint8_t *hdd_security_ie(struct hdd_adapter *adapter)
+{
+	struct hdd_wext_state *wext_state;
+
+	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+
+	return wext_state->WPARSNIE;
+}
+
+/**
+ * hdd_assoc_additional_ie() - Get adapter's assoc additional IE
+ * @adapter: The adapter being queried
+ *
+ * Given an adapter this function returns a pointer to its assoc
+ * additional IE buffer. Note that this buffer is maintained outside
+ * the roam profile but, when in use, is referenced by a pointer
+ * within the roam profile.
+ *
+ * NOTE WELL: Caller is responsible for ensuring this interface is only
+ * invoked for STA-type interfaces
+ *
+ * Return: pointer to the adapter's assoc additional IE buffer
+ */
+static inline
+tSirAddie *hdd_assoc_additional_ie(struct hdd_adapter *adapter)
+{
+	struct hdd_wext_state *wext_state;
+
+	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+
+	return &wext_state->assocAddIE;
+}
+
 bool hdd_is_roaming_in_progress(struct hdd_adapter *adapter);
 void hdd_set_roaming_in_progress(bool value);
 bool hdd_is_connection_in_progress(uint8_t *session_id,
