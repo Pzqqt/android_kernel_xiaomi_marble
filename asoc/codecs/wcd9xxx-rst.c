@@ -518,7 +518,7 @@ version_unknown:
 	wcd_type->slim_slave_type = WCD9XXX_SLIM_SLAVE_ADDR_TYPE_1;
 	wcd_type->i2c_chip_status = 0x01;
 	wcd_type->intr_tbl = wcd9360_intr_table;
-	wcd_type->intr_tbl_size = ARRAY_SIZE(wcd934x_intr_table);
+	wcd_type->intr_tbl_size = ARRAY_SIZE(wcd9360_intr_table);
 
 	wcd_type->intr_reg[WCD9XXX_INTR_STATUS_BASE] =
 						WCD9360_INTR_PIN1_STATUS0;
