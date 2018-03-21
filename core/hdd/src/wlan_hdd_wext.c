@@ -4459,59 +4459,6 @@ int hdd_set_peer_rate(struct hdd_adapter *adapter, int set_value)
 }
 
 /**
- * __iw_set_commit() - SIOCSIWCOMMIT ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_set_commit(struct net_device *dev, struct iw_request_info *info,
-			 union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_adapter *adapter;
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	hdd_enter_dev(dev);
-
-	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	/* Do nothing for now */
-	return 0;
-}
-
-/**
- * iw_set_commit() - SSR wrapper function for __iw_set_commit
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: extra
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_set_commit(struct net_device *dev, struct iw_request_info *info,
-		  union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_set_commit(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_get_name() - SIOCGIWNAME ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -10780,7 +10727,7 @@ static int iw_set_two_ints_getnone(struct net_device *dev,
 /* A number of these routines are NULL (meaning they are not implemented.) */
 
 static const iw_handler we_handler[] = {
-	(iw_handler) iw_set_commit,     /* SIOCSIWCOMMIT */
+	(iw_handler) NULL,      /* SIOCSIWCOMMIT */
 	(iw_handler) iw_get_name,       /* SIOCGIWNAME */
 	(iw_handler) NULL,      /* SIOCSIWNWID */
 	(iw_handler) NULL,      /* SIOCGIWNWID */
