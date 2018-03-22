@@ -14352,10 +14352,13 @@ typedef struct
 #define LPI_IE_BITMAP_FLAGS                  0x00200000     /* reserved as a bitmap to indicate more scan information; one such use being to indicate if the on-going scan is interrupted or not */
 #define LPI_IE_BITMAP_CACHING_REQD           0x00400000     /* extscan will use this field to indicate if this frame info needs to be cached in LOWI LP or not */
 #define LPI_IE_BITMAP_REPORT_CONTEXT_HUB     0x00800000     /* extscan will use this field to indicate to LOWI LP whether to report result to context hub or not. */
-#define LPI_IE_BITMAP_CHRE_ESS               0x010000000    /* ESS capability info for CHRE */
-#define LPI_IE_BITMAP_CHRE_SEC_MODE          0x020000000    /* Security capability info for CHRE */
-#define LPI_IE_BITMAP_CHRE_SUPPORTED_RATE    0x040000000    /* Hightest MCS corresponding NCC for TX and RX */
-#define LPI_IE_BITMAP_COUNTRY_STRING         0x080000000    /* send country string inside Country IE to LOWI LP */
+#define LPI_IE_BITMAP_CHRE_RADIO_CHAIN       0x01000000     /* include radio chain and rssi per chain information if this bit is set - for CHRE */
+
+/* 0x02000000, 0x04000000, and 0x08000000 are unused / available */
+
+#define LPI_IE_BITMAP_CHRE_ESS               0x10000000     /* ESS capability info for CHRE */
+#define LPI_IE_BITMAP_CHRE_SEC_MODE          0x20000000     /* Security capability info for CHRE */
+#define LPI_IE_BITMAP_CHRE_SUPPORTED_RATE    0x40000000     /* Highest MCS corresponding NCC for TX and RX */
 #define LPI_IE_BITMAP_ALL                    0xFFFFFFFF
 
 typedef struct {
@@ -14420,6 +14423,8 @@ typedef struct {
     A_UINT32 num_ssids;
     /** number of bytes in ie data. In the TLV ie_data[] */
     A_UINT32 ie_len;
+    /** Scan control flags extended (see WMI_SCAN_FLAG_EXT_xxx) */
+    A_UINT32 scan_ctrl_flags_ext;
 
 /**
  * TLV (tag length value) parameters follow the scan_cmd
