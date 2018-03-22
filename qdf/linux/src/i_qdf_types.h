@@ -129,6 +129,7 @@ typedef unsigned long __sgtable_t;
  * max sg that we support
  */
 #define __QDF_MAX_SCATTER        1
+#define __QDF_NSEC_PER_MSEC NSEC_PER_MSEC
 
 #if defined(__LITTLE_ENDIAN_BITFIELD)
 #define QDF_LITTLE_ENDIAN_MACHINE

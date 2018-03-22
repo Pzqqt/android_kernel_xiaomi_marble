@@ -63,6 +63,7 @@ typedef struct qdf_sglist {
 } qdf_sglist_t;
 
 #define QDF_MAX_SCATTER __QDF_MAX_SCATTER
+#define QDF_NSEC_PER_MSEC __QDF_NSEC_PER_MSEC
 
 /**
  * QDF_SWAP_U16 - swap input u16 value
