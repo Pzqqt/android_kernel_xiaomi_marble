@@ -1036,6 +1036,11 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	qdf_llc_t *llcHdr;
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
 
+	DP_TX_TID_OVERRIDE(msdu_info, nbuf);
+
+	if (vdev->dscp_tid_map_id <= 1)
+		return;
+
 	/* for mesh packets don't do any classification */
 	if (qdf_unlikely(vdev->mesh_vdev))
 		return;
@@ -1922,8 +1927,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	 * map to a TID and store in msdu_info. This is later used
 	 * to fill in TCL Input descriptor (per-packet TID override).
 	 */
-	if (vdev->dscp_tid_map_id > 1)
-		dp_tx_classify_tid(vdev, nbuf, &msdu_info);
+	dp_tx_classify_tid(vdev, nbuf, &msdu_info);
 
 	/* Reset the control block */
 	qdf_nbuf_reset_ctxt(nbuf);

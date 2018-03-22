@@ -1076,6 +1076,9 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	nss = hal_rx_msdu_start_nss_get(rx_tlv_hdr);
 	pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
 
+	/* Save tid to skb->priority */
+	DP_RX_TID_SAVE(nbuf, tid);
+
 	DP_STATS_INC(vdev->pdev, rx.bw[bw], 1);
 	DP_STATS_INC(vdev->pdev, rx.reception_type[reception_type], 1);
 	DP_STATS_INCC(vdev->pdev, rx.nss[nss], 1,

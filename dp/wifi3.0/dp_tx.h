@@ -206,6 +206,20 @@ void  dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 					qdf_nbuf_t netbuf);
 #endif
 
+#ifdef ATH_TX_PRI_OVERRIDE
+#define DP_TX_TID_OVERRIDE((_msdu_info), _nbuf) \
+	((_msdu_info)->tid = qdf_nbuf_get_priority(_nbuf))
+#else
+#define DP_TX_TID_OVERRIDE(_msdu_info, _nbuf)
+#endif
+
+#ifdef ATH_RX_PRI_SAVE
+#define DP_RX_TID_SAVE(_nbuf, _tid) \
+	(qdf_nbuf_set_priority(_nbuf, _tid))
+#else
+#define DP_RX_TID_SAVE(_nbuf, _tid)
+#endif
+
 /* TODO TX_FEATURE_NOT_YET */
 static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 {
