@@ -31,6 +31,16 @@
 #include "cdp_txrx_ipa.h"
 #include "host_diag_core_event.h"
 
+
+#ifdef FEATURE_METERING
+void wlan_ipa_init_metering(struct wlan_ipa_priv *ipa_ctx)
+{
+	qdf_event_create(&ipa_ctx->ipa_uc_sharing_stats_comp);
+	qdf_event_create(&ipa_ctx->ipa_uc_set_quota_comp);
+}
+#endif
+
+#ifndef CONFIG_IPA_WDI_UNIFIED_API
 QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
 				    uint64_t tx_packets,
 				    uint64_t rx_packets)
@@ -96,15 +106,6 @@ QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef FEATURE_METERING
-void wlan_ipa_init_metering(struct wlan_ipa_priv *ipa_ctx)
-{
-	qdf_event_create(&ipa_ctx->ipa_uc_sharing_stats_comp);
-	qdf_event_create(&ipa_ctx->ipa_uc_set_quota_comp);
-}
-#endif
-
-#ifndef CONFIG_IPA_WDI_UNIFIED_API
 /**
  * wlan_ipa_rm_cons_release() - WLAN consumer resource release handler
  *
