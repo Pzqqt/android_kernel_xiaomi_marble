@@ -787,7 +787,7 @@ QDF_STATUS wmi_extract_encrypt_decrypt_resp_params(void *wmi_hdl,
 #endif
 
 QDF_STATUS wmi_unified_p2p_go_set_beacon_ie_cmd(void *wmi_hdl,
-				    A_UINT32 vdev_id, uint8_t *p2p_ie);
+				    uint32_t vdev_id, uint8_t *p2p_ie);
 
 
 QDF_STATUS wmi_unified_set_gateway_params_cmd(void *wmi_hdl,
