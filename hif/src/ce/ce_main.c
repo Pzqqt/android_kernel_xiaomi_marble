@@ -840,13 +840,18 @@ static QDF_STATUS ce_alloc_desc_ring(struct hif_softc *scn, unsigned int CE_id,
 				     struct CE_ring_state *ce_ring,
 				     unsigned int nentries, uint32_t desc_size)
 {
-	if (CE_id == HIF_PCI_IPA_UC_ASSIGNED_CE) {
-		scn->ipa_ce_ring = qdf_mem_shared_mem_alloc(scn->qdf_dev,
-			nentries * desc_size + CE_DESC_RING_ALIGN);
+	if ((CE_id == HIF_PCI_IPA_UC_ASSIGNED_CE) &&
+	    !ce_srng_based(scn)) {
 		if (!scn->ipa_ce_ring) {
-			HIF_ERROR("%s: Failed to allocate memory for IPA ce ring",
-				  __func__);
-			return QDF_STATUS_E_NOMEM;
+			scn->ipa_ce_ring = qdf_mem_shared_mem_alloc(
+				scn->qdf_dev,
+				nentries * desc_size + CE_DESC_RING_ALIGN);
+			if (!scn->ipa_ce_ring) {
+				HIF_ERROR(
+				"%s: Failed to allocate memory for IPA ce ring",
+				__func__);
+				return QDF_STATUS_E_NOMEM;
+			}
 		}
 		*base_addr = qdf_mem_get_dma_addr(scn->qdf_dev,
 						&scn->ipa_ce_ring->mem_info);
@@ -880,9 +885,13 @@ static QDF_STATUS ce_alloc_desc_ring(struct hif_softc *scn, unsigned int CE_id,
 static void ce_free_desc_ring(struct hif_softc *scn, unsigned int CE_id,
 			      struct CE_ring_state *ce_ring, uint32_t desc_size)
 {
-	if (CE_id == HIF_PCI_IPA_UC_ASSIGNED_CE) {
-		qdf_mem_shared_mem_free(scn->qdf_dev,
-					scn->ipa_ce_ring);
+	if ((CE_id == HIF_PCI_IPA_UC_ASSIGNED_CE) &&
+	    !ce_srng_based(scn)) {
+		if (scn->ipa_ce_ring) {
+			qdf_mem_shared_mem_free(scn->qdf_dev,
+						scn->ipa_ce_ring);
+			scn->ipa_ce_ring = NULL;
+		}
 		ce_ring->base_addr_owner_space_unaligned = NULL;
 	} else {
 		qdf_mem_free_consistent(scn->qdf_dev, scn->qdf_dev->dev,
