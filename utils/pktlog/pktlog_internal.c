@@ -523,9 +523,9 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 	}
 
 	if (pl_hdr.log_type == PKTLOG_TYPE_TX_VIRT_ADDR) {
-		A_UINT32 desc_id = (A_UINT32) *((A_UINT32 *)(fw_data->data +
+		uint32_t desc_id = (uint32_t) *((uint32_t *)(fw_data->data +
 						 sizeof(pl_hdr)));
-		A_UINT32 vdev_id = desc_id;
+		uint32_t vdev_id = desc_id;
 
 		/* if the pkt log msg is for the bcn frame the vdev id
 		 * is piggybacked in desc_id and the MSB of the desc ID
@@ -534,7 +534,7 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 #define BCN_DESC_ID 0xFF
 		if ((desc_id >> 24) == BCN_DESC_ID) {
 			void *data;
-			A_UINT32 buf_size;
+			uint32_t buf_size;
 
 			vdev_id &= 0x00FFFFFF;
 			/* TODO: MCL specific API */

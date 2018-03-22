@@ -584,7 +584,7 @@ void hif_fw_assert_ramdump_pattern(struct hif_usb_softc *sc)
 
 	data = sc->fw_data;
 	len = sc->fw_data_len;
-	pattern = *((A_UINT32 *) data);
+	pattern = *((uint32_t *) data);
 
 	qdf_assert(sc->ramdump_index < FW_RAM_SEG_CNT);
 	i = sc->ramdump_index;
@@ -613,7 +613,7 @@ void hif_fw_assert_ramdump_pattern(struct hif_usb_softc *sc)
 	ram_ptr = (sc->ramdump[i])->mem + (sc->ramdump[i])->length;
 	(sc->ramdump[i])->length += (len - 8);
 	if (sc->ramdump[i]->length <= fw_ram_reg_size[i]) {
-		qdf_mem_copy(ram_ptr, (A_UINT8 *) reg, len - 8);
+		qdf_mem_copy(ram_ptr, (uint8_t *) reg, len - 8);
 	} else {
 		HIF_ERROR("memory copy overlap\n");
 		QDF_BUG(0);
@@ -664,7 +664,7 @@ void hif_usb_ramdump_handler(struct hif_opaque_softc *scn)
 
 	data = sc->fw_data;
 	len = sc->fw_data_len;
-	pattern = *((A_UINT32 *) data);
+	pattern = *((uint32_t *) data);
 
 	if (pattern == FW_ASSERT_PATTERN) {
 		HIF_ERROR("Firmware crash detected...\n");
@@ -676,7 +676,7 @@ void hif_usb_ramdump_handler(struct hif_opaque_softc *scn)
 
 		reg = (uint32_t *) (data + 4);
 		print_hex_dump(KERN_DEBUG, " ", DUMP_PREFIX_OFFSET, 16, 4, reg,
-				min_t(A_UINT32, len - 4, FW_REG_DUMP_CNT * 4),
+				min_t(uint32_t, len - 4, FW_REG_DUMP_CNT * 4),
 				false);
 		sc->fw_ram_dumping = 0;
 

@@ -420,7 +420,7 @@ QDF_STATUS (*send_set_enable_disable_mcc_adaptive_scheduler_cmd)(
 		  uint32_t pdev_id);
 
 QDF_STATUS (*send_p2p_go_set_beacon_ie_cmd)(wmi_unified_t wmi_handle,
-				    A_UINT32 vdev_id, uint8_t *p2p_ie);
+				    uint32_t vdev_id, uint8_t *p2p_ie);
 
 QDF_STATUS (*send_probe_rsp_tmpl_send_cmd)(wmi_unified_t wmi_handle,
 			     uint8_t vdev_id,
@@ -537,7 +537,7 @@ QDF_STATUS (*send_process_ll_stats_get_cmd)
 
 
 QDF_STATUS (*send_congestion_cmd)(wmi_unified_t wmi_handle,
-			A_UINT8 vdev_id);
+			uint8_t vdev_id);
 
 QDF_STATUS (*send_snr_request_cmd)(wmi_unified_t wmi_handle);
 
@@ -1547,15 +1547,15 @@ QDF_STATUS (*send_invoke_neighbor_report_cmd)(wmi_unified_t wmi_handle,
 
 void (*wmi_pdev_id_conversion_enable)(wmi_unified_t wmi_handle);
 void (*send_time_stamp_sync_cmd)(wmi_unified_t wmi_handle);
-void (*wmi_free_allocated_event)(A_UINT32 cmd_event_id,
+void (*wmi_free_allocated_event)(uint32_t cmd_event_id,
 				void **wmi_cmd_struct_ptr);
 int (*wmi_check_and_pad_event)(void *os_handle, void *param_struc_ptr,
-				A_UINT32 param_buf_len,
-				A_UINT32 wmi_cmd_event_id,
+				uint32_t param_buf_len,
+				uint32_t wmi_cmd_event_id,
 				void **wmi_cmd_struct_ptr);
 int (*wmi_check_command_params)(void *os_handle, void *param_struc_ptr,
-				A_UINT32 param_buf_len,
-				A_UINT32 wmi_cmd_event_id);
+				uint32_t param_buf_len,
+				uint32_t wmi_cmd_event_id);
 QDF_STATUS (*send_bss_color_change_enable_cmd)(wmi_unified_t wmi_handle,
 					       uint32_t vdev_id,
 					       bool enable);

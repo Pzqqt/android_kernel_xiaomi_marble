@@ -226,12 +226,12 @@ typedef struct _HTC_TARGET {
 	qdf_work_t queue_kicker;
 
 #ifdef HIF_SDIO
-	A_UINT16 AltDataCreditSize;
+	uint16_t AltDataCreditSize;
 #endif
-	A_UINT32 avail_tx_credits;
+	uint32_t avail_tx_credits;
 #if defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT)
-	A_UINT32 rx_bundle_stats[HTC_MAX_MSG_PER_BUNDLE_RX];
-	A_UINT32 tx_bundle_stats[HTC_MAX_MSG_PER_BUNDLE_TX];
+	uint32_t rx_bundle_stats[HTC_MAX_MSG_PER_BUNDLE_RX];
+	uint32_t tx_bundle_stats[HTC_MAX_MSG_PER_BUNDLE_TX];
 #endif
 
 	uint32_t con_mode;

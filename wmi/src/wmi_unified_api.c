@@ -1525,7 +1525,7 @@ QDF_STATUS wmi_unified_setup_install_key_cmd(void *wmi_hdl,
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_p2p_go_set_beacon_ie_cmd(void *wmi_hdl,
-				    A_UINT32 vdev_id, uint8_t *p2p_ie)
+				    uint32_t vdev_id, uint8_t *p2p_ie)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 

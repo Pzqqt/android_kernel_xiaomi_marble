@@ -85,9 +85,9 @@ ATH_DEBUG_INSTANTIATE_MODULE_VAR(fwlog,
 
 module_dbg_print mod_print[WLAN_MODULE_ID_MAX];
 
-A_UINT32 dbglog_process_type = DBGLOG_PROCESS_NET_RAW;
+uint32_t dbglog_process_type = DBGLOG_PROCESS_NET_RAW;
 
-static const char *dbglog_get_module_str(A_UINT32 module_id)
+static const char *dbglog_get_module_str(uint32_t module_id)
 {
 	switch (module_id) {
 	case WLAN_MODULE_INF:
@@ -1267,10 +1267,10 @@ char *DBG_MSG_ARR[WLAN_MODULE_ID_MAX][MAX_DBG_MSGS] = {
 	},
 };
 
-int dbglog_module_log_enable(wmi_unified_t wmi_handle, A_UINT32 mod_id,
+int dbglog_module_log_enable(wmi_unified_t wmi_handle, uint32_t mod_id,
 			     bool isenable)
 {
-	A_UINT32 val = 0;
+	uint32_t val = 0;
 
 	if (mod_id > WLAN_MODULE_ID_MAX) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
@@ -1293,7 +1293,7 @@ int dbglog_module_log_enable(wmi_unified_t wmi_handle, A_UINT32 mod_id,
 	return 0;
 }
 
-int dbglog_vap_log_enable(wmi_unified_t wmi_handle, A_UINT16 vap_id,
+int dbglog_vap_log_enable(wmi_unified_t wmi_handle, uint16_t vap_id,
 			  bool isenable)
 {
 	if (vap_id > DBGLOG_MAX_VDEVID) {
@@ -1313,7 +1313,7 @@ int dbglog_vap_log_enable(wmi_unified_t wmi_handle, A_UINT16 vap_id,
 
 int dbglog_set_log_lvl(wmi_unified_t wmi_handle, DBGLOG_LOG_LVL log_lvl)
 {
-	A_UINT32 val = 0;
+	uint32_t val = 0;
 
 	if (log_lvl > DBGLOG_LVL_MAX) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
@@ -1330,7 +1330,7 @@ int dbglog_set_log_lvl(wmi_unified_t wmi_handle, DBGLOG_LOG_LVL log_lvl)
 	return 0;
 }
 
-int dbglog_set_mod_log_lvl(wmi_unified_t wmi_handle, A_UINT32 mod_log_lvl)
+int dbglog_set_mod_log_lvl(wmi_unified_t wmi_handle, uint32_t mod_log_lvl)
 {
 	/* set the global module level to log_lvl */
 	wma_config_debug_module_cmd(wmi_handle, WMI_DEBUG_LOG_PARAM_LOG_LEVEL,
@@ -1341,7 +1341,7 @@ int dbglog_set_mod_log_lvl(wmi_unified_t wmi_handle, A_UINT32 mod_log_lvl)
 
 void
 dbglog_set_vap_enable_bitmap(wmi_unified_t wmi_handle,
-			     A_UINT32 vap_enable_bitmap)
+			     uint32_t vap_enable_bitmap)
 {
 	wma_config_debug_module_cmd(wmi_handle,
 				    WMI_DEBUG_LOG_PARAM_VDEV_ENABLE_BITMAP,
@@ -1349,8 +1349,8 @@ dbglog_set_vap_enable_bitmap(wmi_unified_t wmi_handle,
 }
 
 void
-dbglog_set_mod_enable_bitmap(wmi_unified_t wmi_handle, A_UINT32 log_level,
-			     A_UINT32 *mod_enable_bitmap, A_UINT32 bitmap_len)
+dbglog_set_mod_enable_bitmap(wmi_unified_t wmi_handle, uint32_t log_level,
+			     uint32_t *mod_enable_bitmap, uint32_t bitmap_len)
 {
 	wma_config_debug_module_cmd(wmi_handle,
 				    WMI_DEBUG_LOG_PARAM_MOD_ENABLE_BITMAP,
@@ -1376,7 +1376,7 @@ int dbglog_report_enable(wmi_unified_t wmi_handle, bool isenable)
 	return 0;
 }
 
-static char *dbglog_get_msg(A_UINT32 moduleid, A_UINT32 debugid)
+static char *dbglog_get_msg(uint32_t moduleid, uint32_t debugid)
 {
 	static char unknown_str[64];
 
@@ -1393,7 +1393,7 @@ static char *dbglog_get_msg(A_UINT32 moduleid, A_UINT32 debugid)
 }
 
 static
-void dbglog_printf(A_UINT32 timestamp, A_UINT16 vap_id, const char *fmt, ...)
+void dbglog_printf(uint32_t timestamp, uint16_t vap_id, const char *fmt, ...)
 {
 	char buf[128];
 	va_list ap;
@@ -1415,8 +1415,8 @@ void dbglog_printf(A_UINT32 timestamp, A_UINT16 vap_id, const char *fmt, ...)
 }
 
 static void
-dbglog_printf_no_line_break(A_UINT32 timestamp,
-			    A_UINT16 vap_id, const char *fmt, ...)
+dbglog_printf_no_line_break(uint32_t timestamp,
+			    uint16_t vap_id, const char *fmt, ...)
 {
 	char buf[128];
 	va_list ap;
@@ -1440,9 +1440,9 @@ dbglog_printf_no_line_break(A_UINT32 timestamp,
 #define USE_NUMERIC 0
 
 static A_BOOL
-dbglog_default_print_handler(A_UINT32 mod_id, A_UINT16 vap_id, A_UINT32 dbg_id,
-			     A_UINT32 timestamp, A_UINT16 numargs,
-			     A_UINT32 *args)
+dbglog_default_print_handler(uint32_t mod_id, uint16_t vap_id, uint32_t dbg_id,
+			     uint32_t timestamp, uint16_t numargs,
+			     uint32_t *args)
 {
 	int i;
 
@@ -1473,13 +1473,13 @@ dbglog_default_print_handler(A_UINT32 mod_id, A_UINT16 vap_id, A_UINT32 dbg_id,
 }
 
 #define DBGLOG_PARSE_ARGS_STRING_LENGTH    (DBGLOG_NUM_ARGS_MAX * 11 + 10)
-static int dbglog_print_raw_data(A_UINT32 *buffer, A_UINT32 length)
+static int dbglog_print_raw_data(uint32_t *buffer, uint32_t length)
 {
-	A_UINT32 timestamp;
-	A_UINT32 debugid;
-	A_UINT32 moduleid;
-	A_UINT16 numargs, curArgs;
-	A_UINT32 count = 0, totalWriteLen, writeLen;
+	uint32_t timestamp;
+	uint32_t debugid;
+	uint32_t moduleid;
+	uint16_t numargs, curArgs;
+	uint32_t count = 0, totalWriteLen, writeLen;
 	char parseArgsString[DBGLOG_PARSE_ARGS_STRING_LENGTH];
 	char *dbgidString;
 
@@ -1558,7 +1558,7 @@ skip_args_processing:
 #ifdef WLAN_OPEN_SOURCE
 static int
 dbglog_debugfs_raw_data(wmi_unified_t wmi_handle, const uint8_t *buf,
-			A_UINT32 length, A_UINT32 dropped)
+			uint32_t length, uint32_t dropped)
 {
 	struct fwdebug *fwlog = (struct fwdebug *)&wmi_handle->dbglog;
 	struct dbglog_slot *slot;
@@ -1575,7 +1575,7 @@ dbglog_debugfs_raw_data(wmi_unified_t wmi_handle, const uint8_t *buf,
 		return -ENOMEM;
 
 	slot = (struct dbglog_slot *)skb_put(skb, slot_len);
-	slot->diag_type = (A_UINT32) DIAG_TYPE_FW_DEBUG_MSG;
+	slot->diag_type = (uint32_t) DIAG_TYPE_FW_DEBUG_MSG;
 	slot->timestamp = cpu_to_le32(jiffies);
 	slot->length = cpu_to_le32(length);
 	slot->dropped = cpu_to_le32(dropped);
@@ -1628,8 +1628,8 @@ static int nl_srv_bcast_fw_logs(struct sk_buff *skb)
  *
  * return: 0 if sent successfully, otherwise error code
  */
-static int send_fw_diag_nl_data(const uint8_t *buffer, A_UINT32 len,
-				A_UINT32 event_type)
+static int send_fw_diag_nl_data(const uint8_t *buffer, uint32_t len,
+				uint32_t event_type)
 {
 	struct sk_buff *skb_out;
 	struct nlmsghdr *nlh;
@@ -1725,7 +1725,7 @@ process_fw_diag_event_data(uint8_t *datap, uint32_t num_data)
 }
 
 static int
-send_diag_netlink_data(const uint8_t *buffer, A_UINT32 len, A_UINT32 cmd)
+send_diag_netlink_data(const uint8_t *buffer, uint32_t len, uint32_t cmd)
 {
 	struct sk_buff *skb_out;
 	struct nlmsghdr *nlh;
@@ -1786,7 +1786,7 @@ send_diag_netlink_data(const uint8_t *buffer, A_UINT32 len, A_UINT32 cmd)
 
 static int
 dbglog_process_netlink_data(wmi_unified_t wmi_handle, const uint8_t *buffer,
-			    A_UINT32 len, A_UINT32 dropped)
+			    uint32_t len, uint32_t dropped)
 {
 	struct sk_buff *skb_out;
 	struct nlmsghdr *nlh;
@@ -1827,7 +1827,7 @@ dbglog_process_netlink_data(wmi_unified_t wmi_handle, const uint8_t *buffer,
 		wnl->radio = radio;
 		/* data buffer offset from: nlmsg_hdr + sizeof(int) radio */
 		slot = (struct dbglog_slot *) (nlmsg_data(nlh) + sizeof(radio));
-		slot->diag_type = (A_UINT32) DIAG_TYPE_FW_DEBUG_MSG;
+		slot->diag_type = (uint32_t) DIAG_TYPE_FW_DEBUG_MSG;
 		slot->timestamp = cpu_to_le32(jiffies);
 		slot->length = cpu_to_le32(len);
 		slot->dropped = cpu_to_le32(dropped);
@@ -1918,7 +1918,7 @@ static int diag_fw_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	}
 
 	if (dbglog_process_type == DBGLOG_PROCESS_NET_RAW) {
-		return send_diag_netlink_data((A_UINT8 *) datap,
+		return send_diag_netlink_data((uint8_t *) datap,
 					      len, DIAG_TYPE_FW_MSG);
 	}
 #ifdef WLAN_OPEN_SOURCE
@@ -1969,15 +1969,15 @@ fw_diag_data_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 {
 	tp_wma_handle wma = (tp_wma_handle) scn;
-	A_UINT32 count;
-	A_UINT32 *buffer;
-	A_UINT32 timestamp;
-	A_UINT32 debugid;
-	A_UINT32 moduleid;
-	A_UINT16 vapid;
-	A_UINT16 numargs;
+	uint32_t count;
+	uint32_t *buffer;
+	uint32_t timestamp;
+	uint32_t debugid;
+	uint32_t moduleid;
+	uint16_t vapid;
+	uint16_t numargs;
 	qdf_size_t length;
-	A_UINT32 dropped;
+	uint32_t dropped;
 	WMI_DEBUG_MESG_EVENTID_param_tlvs *param_buf;
 	uint8_t *datap;
 	uint32_t len;
@@ -2008,7 +2008,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 		return A_ERROR;
 	}
 
-	dropped = *((A_UINT32 *) datap);
+	dropped = *((uint32_t *) datap);
 	if (dropped > 0) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
 				("%d log buffers are dropped\n", dropped));
@@ -2017,7 +2017,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	len -= sizeof(dropped);
 
 	count = 0;
-	buffer = (A_UINT32 *) datap;
+	buffer = (uint32_t *) datap;
 	length = (len >> 2);
 
 	if (dbglog_process_type == DBGLOG_PROCESS_PRINT_RAW)
@@ -2026,13 +2026,13 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	if (dbglog_process_type == DBGLOG_PROCESS_NET_RAW) {
 		return dbglog_process_netlink_data((wmi_unified_t) wma->
 							   wmi_handle,
-						   (A_UINT8 *) buffer,
+						   (uint8_t *) buffer,
 						   len, dropped);
 	}
 #ifdef WLAN_OPEN_SOURCE
 	if (dbglog_process_type == DBGLOG_PROCESS_POOL_RAW) {
 		return dbglog_debugfs_raw_data((wmi_unified_t) wma->wmi_handle,
-					       (A_UINT8 *) buffer, len,
+					       (uint8_t *) buffer, len,
 					       dropped);
 	}
 #endif /* WLAN_OPEN_SOURCE */
@@ -2057,12 +2057,12 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 			 */
 			dbglog_default_print_handler(moduleid, vapid, debugid,
 						     timestamp, numargs,
-						     (((A_UINT32 *) buffer) +
+						     (((uint32_t *) buffer) +
 						      2 + count));
 		} else {
 			if (!(mod_print[moduleid](moduleid, vapid, debugid,
 						  timestamp, numargs,
-						  (((A_UINT32 *) buffer) +
+						  (((uint32_t *) buffer) +
 						  2 + count)))) {
 				/*
 				 * The message is not handled
@@ -2071,7 +2071,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 				dbglog_default_print_handler(moduleid, vapid,
 							     debugid, timestamp,
 							     numargs,
-							     (((A_UINT32 *)
+							     (((uint32_t *)
 							       buffer) + 2 +
 							      count));
 
@@ -2085,7 +2085,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	return A_OK;
 }
 
-void dbglog_reg_modprint(A_UINT32 mod_id, module_dbg_print printfn)
+void dbglog_reg_modprint(uint32_t mod_id, module_dbg_print printfn)
 {
 	if (!mod_print[mod_id]) {
 		mod_print[mod_id] = printfn;
@@ -2097,16 +2097,16 @@ void dbglog_reg_modprint(A_UINT32 mod_id, module_dbg_print printfn)
 }
 
 static void
-dbglog_sm_print(A_UINT32 timestamp,
-		A_UINT16 vap_id,
-		A_UINT16 numargs,
-		A_UINT32 *args,
+dbglog_sm_print(uint32_t timestamp,
+		uint16_t vap_id,
+		uint16_t numargs,
+		uint32_t *args,
 		const char *module_prefix,
-		const char *const states[], A_UINT32 num_states,
-		const char *const events[], A_UINT32 num_events)
+		const char *const states[], uint32_t num_states,
+		const char *const events[], uint32_t num_events)
 {
-	A_UINT8 type, arg1, arg2, arg3;
-	A_UINT32 extra, extra2, extra3;
+	uint8_t type, arg1, arg2, arg3;
+	uint32_t extra, extra2, extra3;
 
 	if (numargs != 4)
 		return;
@@ -2172,11 +2172,11 @@ dbglog_sm_print(A_UINT32 timestamp,
 }
 
 static A_BOOL
-dbglog_sta_powersave_print_handler(A_UINT32 mod_id,
-				   A_UINT16 vap_id,
-				   A_UINT32 dbg_id,
-				   A_UINT32 timestamp,
-				   A_UINT16 numargs, A_UINT32 *args)
+dbglog_sta_powersave_print_handler(uint32_t mod_id,
+				   uint16_t vap_id,
+				   uint32_t dbg_id,
+				   uint32_t timestamp,
+				   uint16_t numargs, uint32_t *args)
 {
 	static const char *const states[] = {
 		"IDLE",
@@ -2323,8 +2323,8 @@ dbglog_sta_powersave_print_handler(A_UINT32 mod_id,
 					"QPOWER_ENABLE", 0
 				},
 			};
-			A_UINT32 param = args[0];
-			A_UINT32 value = args[1];
+			uint32_t param = args[0];
+			uint32_t value = args[1];
 
 			if (param < QDF_ARRAY_SIZE(params)) {
 				if (params[param].is_time_param) {
@@ -2371,11 +2371,11 @@ enum wlan_ibss_ps_sub_module {
 #define WLAN_IBSS_PS_SUB_MODULE_OFFSET  0x1E
 
 static A_BOOL
-dbglog_ibss_powersave_print_handler(A_UINT32 mod_id,
-				    A_UINT16 vap_id,
-				    A_UINT32 dbg_id,
-				    A_UINT32 timestamp,
-				    A_UINT16 numargs, A_UINT32 *args)
+dbglog_ibss_powersave_print_handler(uint32_t mod_id,
+				    uint16_t vap_id,
+				    uint32_t dbg_id,
+				    uint32_t timestamp,
+				    uint16_t numargs, uint32_t *args)
 {
 	static const char *const nw_states[] = {
 		"WAIT_FOR_TBTT",
@@ -2735,11 +2735,11 @@ dbglog_ibss_powersave_print_handler(A_UINT32 mod_id,
 }
 
 static
-A_BOOL dbglog_ratectrl_print_handler(A_UINT32 mod_id,
-				     A_UINT16 vap_id,
-				     A_UINT32 dbg_id,
-				     A_UINT32 timestamp,
-				     A_UINT16 numargs, A_UINT32 *args)
+A_BOOL dbglog_ratectrl_print_handler(uint32_t mod_id,
+				     uint16_t vap_id,
+				     uint32_t dbg_id,
+				     uint32_t timestamp,
+				     uint16_t numargs, uint32_t *args)
 {
 	switch (dbg_id) {
 	case RATECTRL_DBGID_ASSOC:
@@ -2798,11 +2798,11 @@ A_BOOL dbglog_ratectrl_print_handler(A_UINT32 mod_id,
 }
 
 static
-A_BOOL dbglog_ani_print_handler(A_UINT32 mod_id,
-				A_UINT16 vap_id,
-				A_UINT32 dbg_id,
-				A_UINT32 timestamp,
-				A_UINT16 numargs, A_UINT32 *args)
+A_BOOL dbglog_ani_print_handler(uint32_t mod_id,
+				uint16_t vap_id,
+				uint32_t dbg_id,
+				uint32_t timestamp,
+				uint16_t numargs, uint32_t *args)
 {
 	switch (dbg_id) {
 	case ANI_DBGID_ENABLE:
@@ -2893,11 +2893,11 @@ A_BOOL dbglog_ani_print_handler(A_UINT32 mod_id,
 }
 
 static A_BOOL
-dbglog_ap_powersave_print_handler(A_UINT32 mod_id,
-				  A_UINT16 vap_id,
-				  A_UINT32 dbg_id,
-				  A_UINT32 timestamp,
-				  A_UINT16 numargs, A_UINT32 *args)
+dbglog_ap_powersave_print_handler(uint32_t mod_id,
+				  uint16_t vap_id,
+				  uint32_t dbg_id,
+				  uint32_t timestamp,
+				  uint16_t numargs, uint32_t *args)
 {
 	switch (dbg_id) {
 	case AP_PS_DBGID_UPDATE_TIM:
@@ -3036,10 +3036,10 @@ dbglog_ap_powersave_print_handler(A_UINT32 mod_id,
 }
 
 static A_BOOL
-dbglog_wal_print_handler(A_UINT32 mod_id,
-			 A_UINT16 vap_id,
-			 A_UINT32 dbg_id,
-			 A_UINT32 timestamp, A_UINT16 numargs, A_UINT32 *args)
+dbglog_wal_print_handler(uint32_t mod_id,
+			 uint16_t vap_id,
+			 uint32_t dbg_id,
+			 uint32_t timestamp, uint16_t numargs, uint32_t *args)
 {
 	static const char *const states[] = {
 		"ACTIVE",
@@ -3191,10 +3191,10 @@ dbglog_wal_print_handler(A_UINT32 mod_id,
 }
 
 static A_BOOL
-dbglog_scan_print_handler(A_UINT32 mod_id,
-			  A_UINT16 vap_id,
-			  A_UINT32 dbg_id,
-			  A_UINT32 timestamp, A_UINT16 numargs, A_UINT32 *args)
+dbglog_scan_print_handler(uint32_t mod_id,
+			  uint16_t vap_id,
+			  uint32_t dbg_id,
+			  uint32_t timestamp, uint16_t numargs, uint32_t *args)
 {
 	static const char *const states[] = {
 		"IDLE",
@@ -3229,13 +3229,13 @@ dbglog_scan_print_handler(A_UINT32 mod_id,
 }
 
 static
-A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
-				 A_UINT16 vap_id,
-				 A_UINT32 dbg_id,
-				 A_UINT32 timestamp,
-				 A_UINT16 numargs, A_UINT32 *args)
+A_BOOL dbglog_coex_print_handler(uint32_t mod_id,
+				 uint16_t vap_id,
+				 uint32_t dbg_id,
+				 uint32_t timestamp,
+				 uint16_t numargs, uint32_t *args)
 {
-	A_UINT8 i;
+	uint8_t i;
 	char *dbg_id_str;
 
 	static const char *const wlan_rx_xput_status[] = {
@@ -3723,11 +3723,11 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 }
 
 static A_BOOL
-dbglog_beacon_print_handler(A_UINT32 mod_id,
-			    A_UINT16 vap_id,
-			    A_UINT32 dbg_id,
-			    A_UINT32 timestamp,
-			    A_UINT16 numargs, A_UINT32 *args)
+dbglog_beacon_print_handler(uint32_t mod_id,
+			    uint16_t vap_id,
+			    uint32_t dbg_id,
+			    uint32_t timestamp,
+			    uint16_t numargs, uint32_t *args)
 {
 	static const char *const states[] = {
 		"INIT",
@@ -3805,11 +3805,11 @@ dbglog_beacon_print_handler(A_UINT32 mod_id,
 }
 
 static A_BOOL
-dbglog_data_txrx_print_handler(A_UINT32 mod_id,
-			       A_UINT16 vap_id,
-			       A_UINT32 dbg_id,
-			       A_UINT32 timestamp,
-			       A_UINT16 numargs, A_UINT32 *args)
+dbglog_data_txrx_print_handler(uint32_t mod_id,
+			       uint16_t vap_id,
+			       uint32_t dbg_id,
+			       uint32_t timestamp,
+			       uint16_t numargs, uint32_t *args)
 {
 	switch (dbg_id) {
 	case DATA_TXRX_DBGID_RX_DATA_SEQ_LEN_INFO:
@@ -3826,11 +3826,11 @@ dbglog_data_txrx_print_handler(A_UINT32 mod_id,
 }
 
 static
-A_BOOL dbglog_smps_print_handler(A_UINT32 mod_id,
-				 A_UINT16 vap_id,
-				 A_UINT32 dbg_id,
-				 A_UINT32 timestamp,
-				 A_UINT16 numargs, A_UINT32 *args)
+A_BOOL dbglog_smps_print_handler(uint32_t mod_id,
+				 uint16_t vap_id,
+				 uint32_t dbg_id,
+				 uint32_t timestamp,
+				 uint16_t numargs, uint32_t *args)
 {
 	static const char *const states[] = {
 		"S_INACTIVE",
@@ -3945,10 +3945,10 @@ A_BOOL dbglog_smps_print_handler(A_UINT32 mod_id,
 }
 
 static A_BOOL
-dbglog_p2p_print_handler(A_UINT32 mod_id,
-			 A_UINT16 vap_id,
-			 A_UINT32 dbg_id,
-			 A_UINT32 timestamp, A_UINT16 numargs, A_UINT32 *args)
+dbglog_p2p_print_handler(uint32_t mod_id,
+			 uint16_t vap_id,
+			 uint32_t dbg_id,
+			 uint32_t timestamp, uint16_t numargs, uint32_t *args)
 {
 	static const char *const states[] = {
 		"ACTIVE",
@@ -3984,11 +3984,11 @@ dbglog_p2p_print_handler(A_UINT32 mod_id,
 }
 
 static A_BOOL
-dbglog_pcielp_print_handler(A_UINT32 mod_id,
-			    A_UINT16 vap_id,
-			    A_UINT32 dbg_id,
-			    A_UINT32 timestamp,
-			    A_UINT16 numargs, A_UINT32 *args)
+dbglog_pcielp_print_handler(uint32_t mod_id,
+			    uint16_t vap_id,
+			    uint32_t dbg_id,
+			    uint32_t timestamp,
+			    uint16_t numargs, uint32_t *args)
 {
 	static const char *const states[] = {
 		"STOP",
@@ -4276,7 +4276,7 @@ int cnss_diag_activate_service(void)
 static int cnss_diag_msg_callback(struct sk_buff *skb)
 {
 	struct nlmsghdr *nlh;
-	A_UINT8 *msg;
+	uint8_t *msg;
 
 	nlh = (struct nlmsghdr *)skb->data;
 	if (!nlh) {
@@ -4318,10 +4318,10 @@ int cnss_diag_activate_service(void)
 #endif
 
 static A_BOOL
-dbglog_wow_print_handler(A_UINT32 mod_id,
-			 A_UINT16 vap_id,
-			 A_UINT32 dbg_id,
-			 A_UINT32 timestamp, A_UINT16 numargs, A_UINT32 *args)
+dbglog_wow_print_handler(uint32_t mod_id,
+			 uint16_t vap_id,
+			 uint32_t dbg_id,
+			 uint32_t timestamp, uint16_t numargs, uint32_t *args)
 {
 
 	switch (dbg_id) {
@@ -4329,22 +4329,22 @@ dbglog_wow_print_handler(A_UINT32 mod_id,
 		if (4 == numargs) {
 			dbglog_printf(timestamp, vap_id,
 				      "Enable NS offload, for sender %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
-				      *(A_UINT8 *) &args[0],
-				      *((A_UINT8 *) &args[0] + 1),
-				      *((A_UINT8 *) &args[0] + 2),
-				      *((A_UINT8 *) &args[0] + 3),
-				      *(A_UINT8 *) &args[1],
-				      *((A_UINT8 *) &args[1] + 1),
-				      *((A_UINT8 *) &args[1] + 2),
-				      *((A_UINT8 *) &args[1] + 3),
-				      *(A_UINT8 *) &args[2],
-				      *((A_UINT8 *) &args[2] + 1),
-				      *((A_UINT8 *) &args[2] + 2),
-				      *((A_UINT8 *) &args[2] + 3),
-				      *(A_UINT8 *) &args[3],
-				      *((A_UINT8 *) &args[3] + 1),
-				      *((A_UINT8 *) &args[3] + 2),
-				      *((A_UINT8 *) &args[3] + 3));
+				      *(uint8_t *) &args[0],
+				      *((uint8_t *) &args[0] + 1),
+				      *((uint8_t *) &args[0] + 2),
+				      *((uint8_t *) &args[0] + 3),
+				      *(uint8_t *) &args[1],
+				      *((uint8_t *) &args[1] + 1),
+				      *((uint8_t *) &args[1] + 2),
+				      *((uint8_t *) &args[1] + 3),
+				      *(uint8_t *) &args[2],
+				      *((uint8_t *) &args[2] + 1),
+				      *((uint8_t *) &args[2] + 2),
+				      *((uint8_t *) &args[2] + 3),
+				      *(uint8_t *) &args[3],
+				      *((uint8_t *) &args[3] + 1),
+				      *((uint8_t *) &args[3] + 2),
+				      *((uint8_t *) &args[3] + 3));
 		} else {
 			return false;
 		}
@@ -4353,10 +4353,10 @@ dbglog_wow_print_handler(A_UINT32 mod_id,
 		if (1 == numargs) {
 			dbglog_printf(timestamp, vap_id,
 				      "Enable ARP offload, for sender %d.%d.%d.%d",
-				      *(A_UINT8 *) args,
-				      *((A_UINT8 *) args + 1),
-				      *((A_UINT8 *) args + 2),
-				      *((A_UINT8 *) args + 3));
+				      *(uint8_t *) args,
+				      *((uint8_t *) args + 1),
+				      *((uint8_t *) args + 2),
+				      *((uint8_t *) args + 3));
 		} else {
 			return false;
 		}
@@ -4373,22 +4373,22 @@ dbglog_wow_print_handler(A_UINT32 mod_id,
 		if (4 == numargs) {
 			dbglog_printf(timestamp, vap_id,
 				      "NS requested from %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
-				      *(A_UINT8 *) &args[0],
-				      *((A_UINT8 *) &args[0] + 1),
-				      *((A_UINT8 *) &args[0] + 2),
-				      *((A_UINT8 *) &args[0] + 3),
-				      *(A_UINT8 *) &args[1],
-				      *((A_UINT8 *) &args[1] + 1),
-				      *((A_UINT8 *) &args[1] + 2),
-				      *((A_UINT8 *) &args[1] + 3),
-				      *(A_UINT8 *) &args[2],
-				      *((A_UINT8 *) &args[2] + 1),
-				      *((A_UINT8 *) &args[2] + 2),
-				      *((A_UINT8 *) &args[2] + 3),
-				      *(A_UINT8 *) &args[3],
-				      *((A_UINT8 *) &args[3] + 1),
-				      *((A_UINT8 *) &args[3] + 2),
-				      *((A_UINT8 *) &args[3] + 3));
+				      *(uint8_t *) &args[0],
+				      *((uint8_t *) &args[0] + 1),
+				      *((uint8_t *) &args[0] + 2),
+				      *((uint8_t *) &args[0] + 3),
+				      *(uint8_t *) &args[1],
+				      *((uint8_t *) &args[1] + 1),
+				      *((uint8_t *) &args[1] + 2),
+				      *((uint8_t *) &args[1] + 3),
+				      *(uint8_t *) &args[2],
+				      *((uint8_t *) &args[2] + 1),
+				      *((uint8_t *) &args[2] + 2),
+				      *((uint8_t *) &args[2] + 3),
+				      *(uint8_t *) &args[3],
+				      *((uint8_t *) &args[3] + 1),
+				      *((uint8_t *) &args[3] + 2),
+				      *((uint8_t *) &args[3] + 3));
 		} else {
 			return false;
 		}
@@ -4397,22 +4397,22 @@ dbglog_wow_print_handler(A_UINT32 mod_id,
 		if (4 == numargs) {
 			dbglog_printf(timestamp, vap_id,
 				      "NS replied to %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x",
-				      *(A_UINT8 *) &args[0],
-				      *((A_UINT8 *) &args[0] + 1),
-				      *((A_UINT8 *) &args[0] + 2),
-				      *((A_UINT8 *) &args[0] + 3),
-				      *(A_UINT8 *) &args[1],
-				      *((A_UINT8 *) &args[1] + 1),
-				      *((A_UINT8 *) &args[1] + 2),
-				      *((A_UINT8 *) &args[1] + 3),
-				      *(A_UINT8 *) &args[2],
-				      *((A_UINT8 *) &args[2] + 1),
-				      *((A_UINT8 *) &args[2] + 2),
-				      *((A_UINT8 *) &args[2] + 3),
-				      *(A_UINT8 *) &args[3],
-				      *((A_UINT8 *) &args[3] + 1),
-				      *((A_UINT8 *) &args[3] + 2),
-				      *((A_UINT8 *) &args[3] + 3));
+				      *(uint8_t *) &args[0],
+				      *((uint8_t *) &args[0] + 1),
+				      *((uint8_t *) &args[0] + 2),
+				      *((uint8_t *) &args[0] + 3),
+				      *(uint8_t *) &args[1],
+				      *((uint8_t *) &args[1] + 1),
+				      *((uint8_t *) &args[1] + 2),
+				      *((uint8_t *) &args[1] + 3),
+				      *(uint8_t *) &args[2],
+				      *((uint8_t *) &args[2] + 1),
+				      *((uint8_t *) &args[2] + 2),
+				      *((uint8_t *) &args[2] + 3),
+				      *(uint8_t *) &args[3],
+				      *((uint8_t *) &args[3] + 1),
+				      *((uint8_t *) &args[3] + 2),
+				      *((uint8_t *) &args[3] + 3));
 		} else {
 			return false;
 		}
@@ -4421,10 +4421,10 @@ dbglog_wow_print_handler(A_UINT32 mod_id,
 		if (1 == numargs) {
 			dbglog_printf(timestamp, vap_id,
 				      "ARP requested from %d.%d.%d.%d",
-				      *(A_UINT8 *) args,
-				      *((A_UINT8 *) args + 1),
-				      *((A_UINT8 *) args + 2),
-				      *((A_UINT8 *) args + 3));
+				      *(uint8_t *) args,
+				      *((uint8_t *) args + 1),
+				      *((uint8_t *) args + 2),
+				      *((uint8_t *) args + 3));
 		} else {
 			return false;
 		}
@@ -4434,10 +4434,10 @@ dbglog_wow_print_handler(A_UINT32 mod_id,
 		if (1 == numargs) {
 			dbglog_printf(timestamp, vap_id,
 				      "ARP replied to %d.%d.%d.%d",
-				      *(A_UINT8 *) args,
-				      *((A_UINT8 *) args + 1),
-				      *((A_UINT8 *) args + 2),
-				      *((A_UINT8 *) args + 3));
+				      *(uint8_t *) args,
+				      *((uint8_t *) args + 1),
+				      *((uint8_t *) args + 2),
+				      *((uint8_t *) args + 3));
 		} else {
 			return false;
 		}

@@ -3467,17 +3467,17 @@ struct hlp_params {
  * @action_flag: add/delete the entry
  */
 struct wmi_unified_pmk_cache {
-	A_UINT32            tlv_header;
-	A_UINT32            pmk_len;
-	A_UINT8             session_id;
-	A_UINT8             pmk[WMI_UNIFIED_MAX_PMK_LEN];
-	A_UINT32            pmkid_len;
-	A_UINT8             pmkid[WMI_UNIFIED_MAX_PMKID_LEN];
+	uint32_t            tlv_header;
+	uint32_t            pmk_len;
+	uint8_t             session_id;
+	uint8_t             pmk[WMI_UNIFIED_MAX_PMK_LEN];
+	uint32_t            pmkid_len;
+	uint8_t             pmkid[WMI_UNIFIED_MAX_PMKID_LEN];
 	wmi_host_mac_addr   bssid;
 	struct mac_ssid     ssid;
-	A_UINT32            cache_id;
-	A_UINT32            cat_flag;
-	A_UINT32            action_flag;
+	uint32_t            cache_id;
+	uint32_t            cat_flag;
+	uint32_t            action_flag;
 };
 
 
@@ -4688,7 +4688,7 @@ typedef struct {
 	/* VERSION_4 (4 wire coex) */
 	uint32_t coex_version;
 
-	/* No. of A_UINT32 elements in payload buffer. Will depend on the coex
+	/* No. of uint32_t elements in payload buffer. Will depend on the coex
 	 * version
 	 */
 	uint32_t length;
@@ -7745,7 +7745,7 @@ typedef struct {
 	uint32_t board_cal_version;
 	/* board_mcn_detail:
 	 * Provide a calibration message string for the host to display.
-	 * Note: on a big-endian host, the 4 bytes within each A_UINT32 portion
+	 * Note: on a big-endian host, the 4 bytes within each uint32_t portion
 	 * of a WMI message will be automatically byteswapped by the copy engine
 	 * as the messages are transferred between host and target, to convert
 	 * between the target's little-endianness and the host's big-endianness.
@@ -8097,7 +8097,7 @@ struct bcn_offload_control {
 struct wdsentry {
 	u_int8_t peer_mac[IEEE80211_ADDR_LEN];
 	u_int8_t wds_mac[IEEE80211_ADDR_LEN];
-	A_UINT32 flags;
+	uint32_t flags;
 };
 
 #define WMI_HOST_DBR_RING_ADDR_LO_S 0

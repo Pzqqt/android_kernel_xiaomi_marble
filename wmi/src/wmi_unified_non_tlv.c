@@ -1639,7 +1639,7 @@ static QDF_STATUS send_beacon_send_cmd_non_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_t wmi_buf;
 		int bcn_len = qdf_nbuf_len(param->wbuf);
 		int len = sizeof(wmi_bcn_send_from_host_cmd_t);
-		A_UINT32   dtim_flag = 0;
+		uint32_t   dtim_flag = 0;
 
 		/* get the DTIM count */
 
@@ -1828,7 +1828,7 @@ static QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
 	/* Update peer rate information */
 	cmd->peer_rate_caps = param->peer_rate_caps;
 	cmd->peer_legacy_rates.num_rates = param->peer_legacy_rates.num_rates;
-	/* NOTE: cmd->peer_legacy_rates.rates is of type A_UINT32 */
+	/* NOTE: cmd->peer_legacy_rates.rates is of type uint32_t */
 	/* ni->ni_rates.rs_rates is of type u_int8_t */
 	/**
 	 * for cmd->peer_legacy_rates.rates:
@@ -1841,7 +1841,7 @@ static QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
 			param->peer_legacy_rates.num_rates);
 #ifdef BIG_ENDIAN_HOST
 	for (i = 0;
-		i < param->peer_legacy_rates.num_rates/sizeof(A_UINT32) + 1;
+		i < param->peer_legacy_rates.num_rates/sizeof(uint32_t) + 1;
 		i++)
 		cmd->peer_legacy_rates.rates[i] =
 		    qdf_le32_to_cpu(cmd->peer_legacy_rates.rates[i]);
@@ -1852,7 +1852,7 @@ static QDF_STATUS send_peer_assoc_cmd_non_tlv(wmi_unified_t wmi_handle,
 			param->peer_ht_rates.num_rates);
 
 #ifdef BIG_ENDIAN_HOST
-	for (i = 0; i < param->peer_ht_rates.num_rates/sizeof(A_UINT32) + 1;
+	for (i = 0; i < param->peer_ht_rates.num_rates/sizeof(uint32_t) + 1;
 		i++)
 		cmd->peer_ht_rates.rates[i] =
 		    qdf_le32_to_cpu(cmd->peer_ht_rates.rates[i]);
@@ -1914,15 +1914,15 @@ static QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
 	wmi_bssid_list *bssid_list;
 	wmi_ssid_list *ssid_list;
 	wmi_ie_data *ie_data;
-	A_UINT32 *tmp_ptr;
+	uint32_t *tmp_ptr;
 	int i, len = sizeof(wmi_start_scan_cmd);
 
 #ifdef TEST_CODE
-	len += sizeof(wmi_chan_list) + 3 * sizeof(A_UINT32);
+	len += sizeof(wmi_chan_list) + 3 * sizeof(uint32_t);
 #else
 	if (param->chan_list.num_chan) {
 		len += sizeof(wmi_chan_list) + (param->chan_list.num_chan - 1)
-		    * sizeof(A_UINT32);
+		    * sizeof(uint32_t);
 	}
 #endif
 	if (param->num_ssids) {
@@ -1934,10 +1934,10 @@ static QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
 		    * sizeof(wmi_mac_addr);
 	}
 	if (param->extraie.len) {
-		i = param->extraie.len % sizeof(A_UINT32);
+		i = param->extraie.len % sizeof(uint32_t);
 		if (i)
-			len += sizeof(A_UINT32) - i;
-		len += 2 * sizeof(A_UINT32) + param->extraie.len;
+			len += sizeof(uint32_t) - i;
+		len += 2 * sizeof(uint32_t) + param->extraie.len;
 	}
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -2027,7 +2027,7 @@ static QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
 #else
 	cmd->max_scan_time = param->max_scan_time;
 #endif
-	tmp_ptr = (A_UINT32 *)  (cmd + 1);
+	tmp_ptr = (uint32_t *)  (cmd + 1);
 #ifdef TEST_CODE
 #define DEFAULT_TIME 150
 	 cmd->min_rest_time = DEFAULT_TIME;
@@ -2065,7 +2065,7 @@ static QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
 					param->ssid[i].length);
 		}
 		tmp_ptr +=  (2 + (sizeof(wmi_ssid) *
-			    param->num_ssids)/sizeof(A_UINT32));
+			    param->num_ssids)/sizeof(uint32_t));
 	}
 	if (param->num_bssid) {
 		bssid_list  = (wmi_bssid_list *) tmp_ptr;
@@ -2077,7 +2077,7 @@ static QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
 				&bssid_list->bssid_list[i]);
 		}
 		tmp_ptr +=  (2 + (sizeof(wmi_mac_addr) *
-			    param->num_bssid)/sizeof(A_UINT32));
+			    param->num_bssid)/sizeof(uint32_t));
 	}
 	if (param->extraie.len) {
 		ie_data  = (wmi_ie_data *) tmp_ptr;
@@ -3598,7 +3598,7 @@ void wmi_host_swap_bytes(void *pv, size_t n)
 {
 	int noWords;
 	int i;
-	A_UINT32 *wordPtr;
+	uint32_t *wordPtr;
 
 	noWords =   n/sizeof(u_int32_t);
 	wordPtr = (u_int32_t *)pv;
@@ -3790,7 +3790,7 @@ send_set_ratepwr_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 
 	len = sizeof(wmi_pdev_ratepwr_table_cmd);
-	len += roundup(param->ratepwr_len, sizeof(A_UINT32)) - sizeof(A_UINT32);
+	len += roundup(param->ratepwr_len, sizeof(uint32_t)) - sizeof(uint32_t);
 	/* already 4 bytes in cmd structure */
 	qdf_print("wmi buf len = %d\n", len);
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -3925,7 +3925,7 @@ send_set_ctl_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	len = sizeof(wmi_pdev_set_ctl_table_cmd);
-	len += roundup(param->ctl_cmd_len, sizeof(A_UINT32)) - sizeof(A_UINT32);
+	len += roundup(param->ctl_cmd_len, sizeof(uint32_t)) - sizeof(uint32_t);
 	qdf_print("wmi buf len = %d\n", len);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -3976,7 +3976,7 @@ send_set_mimogain_table_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 
 	len = sizeof(wmi_pdev_set_mimogain_table_cmd);
-	len += roundup(param->tbl_len, sizeof(A_UINT32)) - sizeof(A_UINT32);
+	len += roundup(param->tbl_len, sizeof(uint32_t)) - sizeof(uint32_t);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
 		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
@@ -4021,7 +4021,7 @@ send_set_ratepwr_chainmsk_cmd_non_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 
 	len = sizeof(wmi_pdev_ratepwr_chainmsk_tbl_cmd);
-	len += roundup(param->num_rate*sizeof(uint32_t), sizeof(A_UINT32));
+	len += roundup(param->num_rate*sizeof(uint32_t), sizeof(uint32_t));
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
 		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
@@ -4195,7 +4195,7 @@ send_set_vap_dscp_tid_map_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 	cmd_vdev = (wmi_vdev_set_dscp_tid_map_cmd *)wmi_buf_data(buf);
 	qdf_mem_copy(cmd_vdev->dscp_to_tid_map, param->dscp_to_tid_map,
-		sizeof(A_UINT32) * WMI_DSCP_MAP_MAX);
+		sizeof(uint32_t) * WMI_DSCP_MAP_MAX);
 
 	cmd_vdev->vdev_id = param->vdev_id;
 

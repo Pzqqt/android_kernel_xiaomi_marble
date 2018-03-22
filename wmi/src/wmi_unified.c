@@ -54,11 +54,11 @@ WMI_CMD_HDR to be defined here. */
 #define WO(_f)      ((_f##_OFFSET) >> 2)
 
 #undef GET_FIELD
-#define GET_FIELD(_addr, _f) MS(*((A_UINT32 *)(_addr) + WO(_f)), _f)
+#define GET_FIELD(_addr, _f) MS(*((uint32_t *)(_addr) + WO(_f)), _f)
 #undef SET_FIELD
 #define SET_FIELD(_addr, _f, _val)  \
-	    (*((A_UINT32 *)(_addr) + WO(_f)) = \
-		(*((A_UINT32 *)(_addr) + WO(_f)) & ~_f##_MASK) | SM(_val, _f))
+	    (*((uint32_t *)(_addr) + WO(_f)) = \
+		(*((uint32_t *)(_addr) + WO(_f)) & ~_f##_MASK) | SM(_val, _f))
 
 #define WMI_GET_FIELD(_msg_buf, _msg_type, _f) \
 	    GET_FIELD(_msg_buf, _msg_type ## _ ## _f)
@@ -74,7 +74,7 @@ WMI_CMD_HDR to be defined here. */
  *  * Control Path
  *   */
 typedef PREPACK struct {
-	A_UINT32	commandId:24,
+	uint32_t	commandId:24,
 			reserved:2, /* used for WMI endpoint ID */
 			plt_priv:6; /* platform private */
 } POSTPACK WMI_CMD_HDR;        /* used for commands and events */
@@ -1359,7 +1359,7 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 
 	if (wmi_get_runtime_pm_inprogress(wmi_handle)) {
 		htc_tag =
-			(A_UINT16)wmi_handle->ops->wmi_set_htc_tx_tag(
+			(uint16_t)wmi_handle->ops->wmi_set_htc_tx_tag(
 						wmi_handle, buf, cmd_id);
 	} else if (qdf_atomic_read(&wmi_handle->is_target_suspended) &&
 		(!wmi_is_pm_resume_cmd(cmd_id))) {

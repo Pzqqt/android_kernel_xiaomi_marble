@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -104,7 +104,7 @@ static int epping_tx_send_int(qdf_nbuf_t skb, epping_adapter_t *adapter)
 	EPPING_HEADER *eppingHdr = (EPPING_HEADER *) qdf_nbuf_data(skb);
 	HTC_ENDPOINT_ID eid = ENDPOINT_UNUSED;
 	struct epping_cookie *cookie = NULL;
-	A_UINT8 ac = 0;
+	uint8_t ac = 0;
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	int skb_len;
 	EPPING_HEADER tmpHdr = *eppingHdr;
@@ -219,7 +219,7 @@ int epping_tx_send(qdf_nbuf_t skb, epping_adapter_t *adapter)
 {
 	qdf_nbuf_t nodrop_skb;
 	EPPING_HEADER *eppingHdr;
-	A_UINT8 ac = 0;
+	uint8_t ac = 0;
 
 	eppingHdr = (EPPING_HEADER *) qdf_nbuf_data(skb);
 

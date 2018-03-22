@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -54,7 +54,7 @@
 
 int epping_cookie_init(epping_context_t *pEpping_ctx)
 {
-	A_UINT32 i, j;
+	uint32_t i, j;
 
 	pEpping_ctx->cookie_list = NULL;
 	pEpping_ctx->cookie_count = 0;
@@ -203,7 +203,7 @@ void epping_log_stats(epping_adapter_t *adapter, const char *str)
 }
 
 void epping_set_kperf_flag(epping_adapter_t *adapter,
-			   HTC_ENDPOINT_ID eid, A_UINT8 kperf_flag)
+			   HTC_ENDPOINT_ID eid, uint8_t kperf_flag)
 {
 	adapter->pEpping_ctx->kperf_num_rx_recv[eid] = 0;
 	adapter->pEpping_ctx->kperf_num_tx_acks[eid] = 0;

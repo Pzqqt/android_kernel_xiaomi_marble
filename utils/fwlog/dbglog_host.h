@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -100,7 +100,7 @@ dbglog_deinit(wmi_unified_t wmi_handle);
  * @brief size - Report size
  */
 int
-dbglog_set_report_size(wmi_unified_t wmi_handle, A_UINT16 size);
+dbglog_set_report_size(wmi_unified_t wmi_handle, uint16_t size);
 
 /** Set the resolution for time stamp
  * @brief wmi_handle - handle to Wmi module
@@ -108,7 +108,7 @@ dbglog_set_report_size(wmi_unified_t wmi_handle, A_UINT16 size);
  */
 int
 dbglog_set_timestamp_resolution(wmi_unified_t wmi_handle,
-				A_UINT16 tsr);
+				uint16_t tsr);
 
 /** Enable reporting. If it is set to false then Traget wont deliver
  * any debug information
@@ -142,21 +142,21 @@ dbglog_set_log_lvl(wmi_unified_t wmi_handle, DBGLOG_LOG_LVL log_lvl);
  *           to be passed from user to the driver.
  */
 int
-dbglog_set_mod_log_lvl(wmi_unified_t wmi_handle, A_UINT32 mod_id_lvl);
+dbglog_set_mod_log_lvl(wmi_unified_t wmi_handle, uint32_t mod_id_lvl);
 
 /** Enable/Disable the logging for VAP */
 int
-dbglog_vap_log_enable(wmi_unified_t wmi_handle, A_UINT16 vap_id,
+dbglog_vap_log_enable(wmi_unified_t wmi_handle, uint16_t vap_id,
 		      A_BOOL isenable);
 /** Enable/Disable logging for Module */
 int
-dbglog_module_log_enable(wmi_unified_t wmi_handle, A_UINT32 mod_id,
+dbglog_module_log_enable(wmi_unified_t wmi_handle, uint32_t mod_id,
 			 A_BOOL isenable);
 
 /** set vap enablie bitmap */
 void
 dbglog_set_vap_enable_bitmap(wmi_unified_t wmi_handle,
-			     A_UINT32 vap_enable_bitmap);
+			     uint32_t vap_enable_bitmap);
 
 /** set log level for all the modules specified in the bitmap.
  *  for all other modules with 0 in the bitmap (or) outside the bitmap,
@@ -164,9 +164,9 @@ dbglog_set_vap_enable_bitmap(wmi_unified_t wmi_handle,
  */
 void
 dbglog_set_mod_enable_bitmap(wmi_unified_t wmi_handle,
-			     A_UINT32 log_level,
-			     A_UINT32 *mod_enable_bitmap,
-			     A_UINT32 bitmap_len);
+			     uint32_t log_level,
+			     uint32_t *mod_enable_bitmap,
+			     uint32_t bitmap_len);
 
 int
 dbglog_parse_debug_logs(ol_scn_t scn, u_int8_t *datap,
