@@ -846,7 +846,7 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 	hdr = (struct wlan_frame_hdr *)frame;
 
 	/* update timestamp in nanoseconds needed by kernel layers */
-	scan_entry->boottime_ns = qdf_get_monotonic_boottime_ns();
+	scan_entry->boottime_ns = qdf_get_bootbased_boottime_ns();
 
 	scan_entry->frm_subtype = frm_subtype;
 	qdf_mem_copy(scan_entry->bssid.bytes,
