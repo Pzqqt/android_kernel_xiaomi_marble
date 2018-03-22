@@ -467,6 +467,8 @@ QDF_STATUS wlan_objmgr_iterate_obj_list(
  * @lock_free_op: This gives provision to run this API with out lock protected
  *                 It would be useful, for operations like Obj Delete, where
  *                 lock should not be taken by caller.
+ *                 Please be cautious, when you do lock_free_op, it would cause
+ *                 issues in SMP scenarios
  * @dbg_id: id of the caller
  *
  * API to be used for performing the operations on all PDEV/VDEV/PEER objects
