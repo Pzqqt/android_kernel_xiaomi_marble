@@ -439,6 +439,40 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 }
 
 #else
+
+/**
+ * ol_tx_update_free_desc_to_pool() - update free desc to pool
+ * @pdev: pdev handle
+ * @tx_desc: descriptor
+ *
+ * Return : 1 desc distribution required / 0 don't need distribution
+ */
+#ifdef QCA_LL_TX_FLOW_CONTROL_RESIZE
+static inline bool ol_tx_update_free_desc_to_pool(struct ol_txrx_pdev_t *pdev,
+						  struct ol_tx_desc_t *tx_desc)
+{
+	struct ol_tx_flow_pool_t *pool = tx_desc->pool;
+	bool distribute_desc = false;
+
+	if (unlikely(pool->overflow_desc)) {
+		ol_tx_put_desc_global_pool(pdev, tx_desc);
+		--pool->overflow_desc;
+		distribute_desc = true;
+	} else {
+		ol_tx_put_desc_flow_pool(pool, tx_desc);
+	}
+
+	return distribute_desc;
+}
+#else
+static inline bool ol_tx_update_free_desc_to_pool(struct ol_txrx_pdev_t *pdev,
+						  struct ol_tx_desc_t *tx_desc)
+{
+	ol_tx_put_desc_flow_pool(tx_desc->pool, tx_desc);
+	return false;
+}
+#endif
+
 /**
  * ol_tx_desc_free() - put descriptor to pool freelist
  * @pdev: pdev handle
@@ -448,12 +482,14 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
  */
 void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 {
+	bool distribute_desc = false;
 	struct ol_tx_flow_pool_t *pool = tx_desc->pool;
 
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
 
 	ol_tx_desc_free_common(pdev, tx_desc);
-	ol_tx_put_desc_flow_pool(pool, tx_desc);
+	distribute_desc = ol_tx_update_free_desc_to_pool(pdev, tx_desc);
+
 	switch (pool->status) {
 	case FLOW_POOL_ACTIVE_PAUSED:
 		if (pool->avail_desc > pool->start_priority_th) {
@@ -490,6 +526,9 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 	};
 
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
+
+	if (unlikely(distribute_desc))
+		ol_tx_distribute_descs_to_deficient_pools_from_global_pool();
 
 }
 #endif

@@ -289,6 +289,17 @@ void ol_tx_put_desc_global_pool(struct ol_txrx_pdev_t *pdev,
 
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
+
+#ifdef QCA_LL_TX_FLOW_CONTROL_RESIZE
+int ol_tx_distribute_descs_to_deficient_pools_from_global_pool(void);
+#else
+static inline
+int ol_tx_distribute_descs_to_deficient_pools_from_global_pool(void)
+{
+	return 0;
+}
+#endif
+
 int ol_tx_free_invalid_flow_pool(struct ol_tx_flow_pool_t *pool);
 /**
  * ol_tx_get_desc_flow_pool() - get descriptor from flow pool

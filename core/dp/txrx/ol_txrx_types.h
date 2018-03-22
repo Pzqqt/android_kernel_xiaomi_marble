@@ -456,11 +456,13 @@ enum flow_pool_status {
  * struct ol_txrx_pool_stats - flow pool related statistics
  * @pool_map_count: flow pool map received
  * @pool_unmap_count: flow pool unmap received
+ * @pool_resize_count: flow pool resize command received
  * @pkt_drop_no_pool: packets dropped due to unavailablity of pool
  */
 struct ol_txrx_pool_stats {
 	uint16_t pool_map_count;
 	uint16_t pool_unmap_count;
+	uint16_t pool_resize_count;
 	uint16_t pkt_drop_no_pool;
 };
 
@@ -472,6 +474,7 @@ struct ol_txrx_pool_stats {
  * @flow_pool_size: flow_pool size
  * @avail_desc: available descriptors
  * @deficient_desc: deficient descriptors
+ * @overflow_desc: overflow descriptors
  * @status: flow pool status
  * @flow_type: flow pool type
  * @member_flow_id: member flow id
@@ -490,6 +493,7 @@ struct ol_tx_flow_pool_t {
 	uint16_t flow_pool_size;
 	uint16_t avail_desc;
 	uint16_t deficient_desc;
+	uint16_t overflow_desc;
 	enum flow_pool_status status;
 	enum htt_flow_type flow_type;
 	uint8_t member_flow_id;
