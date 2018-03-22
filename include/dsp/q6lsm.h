@@ -88,6 +88,7 @@ struct lsm_client {
 	bool		poll_enable;
 	int		perf_mode;
 	uint32_t	event_mode;
+	uint32_t	event_type;
 };
 
 struct lsm_stream_cmd_open_tx {
@@ -210,6 +211,12 @@ struct lsm_cmd_read_done {
 	uint32_t timestamp_lsw;
 	uint32_t timestamp_msw;
 	uint32_t flags;
+} __packed;
+
+struct lsm_param_det_event_type {
+	uint32_t minor_version;
+	uint32_t event_type;
+	uint32_t mode;
 } __packed;
 
 struct lsm_client *q6lsm_client_alloc(lsm_app_cb cb, void *priv);
