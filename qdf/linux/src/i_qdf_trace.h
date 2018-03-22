@@ -226,9 +226,6 @@ static inline void QDF_DEBUG_PANIC(void)
 	BUG();
 }
 #endif /* CONFIG_SLUB_DEBUG */
-#else
-static inline void QDF_DEBUG_PANIC(void) { }
-#endif /* PANIC_ON_BUG */
 
 #define QDF_BUG(_condition) \
 	do { \
@@ -238,6 +235,18 @@ static inline void QDF_DEBUG_PANIC(void) { }
 			QDF_DEBUG_PANIC(); \
 		} \
 	} while (0)
+
+#else
+
+static inline void QDF_DEBUG_PANIC(void) { }
+
+#define QDF_BUG(_condition) \
+	do { \
+		if (!(_condition)) { \
+			/* no-op */ \
+		} \
+	} while (0)
+#endif /* PANIC_ON_BUG */
 
 #ifdef KSYM_SYMBOL_LEN
 #define __QDF_SYMBOL_LEN KSYM_SYMBOL_LEN
