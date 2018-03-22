@@ -10487,65 +10487,6 @@ static int iw_set_two_ints_getnone(struct net_device *dev,
 }
 
 /* Define the Wireless Extensions to the Linux Network Device structure */
-/* A number of these routines are NULL (meaning they are not implemented.) */
-
-static const iw_handler we_handler[] = {
-	(iw_handler) NULL,      /* SIOCSIWCOMMIT */
-	(iw_handler) NULL,      /* SIOCGIWNAME */
-	(iw_handler) NULL,      /* SIOCSIWNWID */
-	(iw_handler) NULL,      /* SIOCGIWNWID */
-	(iw_handler) NULL,      /* SIOCSIWFREQ */
-	(iw_handler) NULL,      /* SIOCGIWFREQ */
-	(iw_handler) NULL,      /* SIOCSIWMODE */
-	(iw_handler) NULL,      /* SIOCGIWMODE */
-	(iw_handler) NULL,      /* SIOCSIWSENS */
-	(iw_handler) NULL,      /* SIOCGIWSENS */
-	(iw_handler) NULL,      /* SIOCSIWRANGE */
-	(iw_handler) NULL,      /* SIOCGIWRANGE */
-	(iw_handler) NULL,      /* SIOCSIWPRIV */
-	(iw_handler) NULL,      /* SIOCGIWPRIV */
-	(iw_handler) NULL,      /* SIOCSIWSTATS */
-	(iw_handler) NULL,      /* SIOCGIWSTATS */
-	(iw_handler) NULL,      /* SIOCSIWSPY */
-	(iw_handler) NULL,      /* SIOCGIWSPY */
-	(iw_handler) NULL,      /* SIOCSIWTHRSPY */
-	(iw_handler) NULL,      /* SIOCGIWTHRSPY */
-	(iw_handler) NULL,      /* SIOCSIWAP */
-	(iw_handler) NULL,      /* SIOCGIWAP */
-	(iw_handler) NULL,      /* SIOCSIWMLME */
-	(iw_handler) NULL,      /* SIOCGIWAPLIST */
-	(iw_handler) NULL,      /* SIOCSIWSCAN */
-	(iw_handler) NULL,      /* SIOCGIWSCAN */
-	(iw_handler) NULL,      /* SIOCSIWESSID */
-	(iw_handler) NULL,      /* SIOCGIWESSID */
-	(iw_handler) NULL,      /* SIOCSIWNICKN */
-	(iw_handler) NULL,      /* SIOCGIWNICKN */
-	(iw_handler) NULL,      /* -- hole -- */
-	(iw_handler) NULL,      /* -- hole -- */
-	(iw_handler) NULL,      /* SIOCSIWRATE */
-	(iw_handler) NULL,      /* SIOCGIWRATE */
-	(iw_handler) NULL,      /* SIOCSIWRTS */
-	(iw_handler) NULL,      /* SIOCGIWRTS */
-	(iw_handler) NULL,      /* SIOCSIWFRAG */
-	(iw_handler) NULL,      /* SIOCGIWFRAG */
-	(iw_handler) NULL,      /* SIOCSIWTXPOW */
-	(iw_handler) NULL,      /* SIOCGIWTXPOW */
-	(iw_handler) NULL,      /* SIOCSIWRETRY */
-	(iw_handler) NULL,      /* SIOCGIWRETRY */
-	(iw_handler) NULL,      /* SIOCSIWENCODE */
-	(iw_handler) NULL,      /* SIOCGIWENCODE */
-	(iw_handler) NULL,      /* SIOCSIWPOWER */
-	(iw_handler) NULL,      /* SIOCGIWPOWER */
-	(iw_handler) NULL,      /* -- hole -- */
-	(iw_handler) NULL,      /* -- hole -- */
-	(iw_handler) NULL,      /* SIOCSIWGENIE */
-	(iw_handler) NULL,      /* SIOCGIWGENIE */
-	(iw_handler) NULL,      /* SIOCSIWAUTH */
-	(iw_handler) NULL,      /* SIOCGIWAUTH */
-	(iw_handler) NULL,      /* SIOCSIWENCODEEXT */
-	(iw_handler) NULL,      /* SIOCGIWENCODEEXT */
-	(iw_handler) NULL,      /* SIOCSIWPMKSA */
-};
 
 static const iw_handler we_private[] = {
 
@@ -11758,11 +11699,11 @@ static const struct iw_priv_args we_private_args[] = {
 };
 
 const struct iw_handler_def we_handler_def = {
-	.num_standard = QDF_ARRAY_SIZE(we_handler),
+	.num_standard = 0,
 	.num_private = QDF_ARRAY_SIZE(we_private),
 	.num_private_args = QDF_ARRAY_SIZE(we_private_args),
 
-	.standard = (iw_handler *) we_handler,
+	.standard = NULL,
 	.private = (iw_handler *) we_private,
 	.private_args = we_private_args,
 	.get_wireless_stats = NULL,

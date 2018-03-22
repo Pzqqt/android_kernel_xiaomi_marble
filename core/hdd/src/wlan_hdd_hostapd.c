@@ -5500,64 +5500,6 @@ iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 	return ret;
 }
 
-static const iw_handler hostapd_handler[] = {
-	(iw_handler) NULL,      /* SIOCSIWCOMMIT */
-	(iw_handler) NULL,      /* SIOCGIWNAME */
-	(iw_handler) NULL,      /* SIOCSIWNWID */
-	(iw_handler) NULL,      /* SIOCGIWNWID */
-	(iw_handler) NULL,      /* SIOCSIWFREQ */
-	(iw_handler) NULL,      /* SIOCGIWFREQ */
-	(iw_handler) NULL,      /* SIOCSIWMODE */
-	(iw_handler) NULL,      /* SIOCGIWMODE */
-	(iw_handler) NULL,      /* SIOCSIWSENS */
-	(iw_handler) NULL,      /* SIOCGIWSENS */
-	(iw_handler) NULL,      /* SIOCSIWRANGE */
-	(iw_handler) NULL,      /* SIOCGIWRANGE */
-	(iw_handler) NULL,      /* SIOCSIWPRIV */
-	(iw_handler) NULL,      /* SIOCGIWPRIV */
-	(iw_handler) NULL,      /* SIOCSIWSTATS */
-	(iw_handler) NULL,      /* SIOCGIWSTATS */
-	(iw_handler) NULL,      /* SIOCSIWSPY */
-	(iw_handler) NULL,      /* SIOCGIWSPY */
-	(iw_handler) NULL,      /* SIOCSIWTHRSPY */
-	(iw_handler) NULL,      /* SIOCGIWTHRSPY */
-	(iw_handler) NULL,      /* SIOCSIWAP */
-	(iw_handler) NULL,      /* SIOCGIWAP */
-	(iw_handler) NULL,      /* SIOCSIWMLME */
-	(iw_handler) NULL,      /* SIOCGIWAPLIST */
-	(iw_handler) NULL,      /* SIOCSIWSCAN */
-	(iw_handler) NULL,      /* SIOCGIWSCAN */
-	(iw_handler) NULL,      /* SIOCSIWESSID */
-	(iw_handler) NULL,      /* SIOCGIWESSID */
-	(iw_handler) NULL,      /* SIOCSIWNICKN */
-	(iw_handler) NULL,      /* SIOCGIWNICKN */
-	(iw_handler) NULL,      /* -- hole -- */
-	(iw_handler) NULL,      /* -- hole -- */
-	(iw_handler) NULL,      /* SIOCSIWRATE */
-	(iw_handler) NULL,      /* SIOCGIWRATE */
-	(iw_handler) NULL,      /* SIOCSIWRTS */
-	(iw_handler) NULL,      /* SIOCGIWRTS */
-	(iw_handler) NULL,      /* SIOCSIWFRAG */
-	(iw_handler) NULL,      /* SIOCGIWFRAG */
-	(iw_handler) NULL,      /* SIOCSIWTXPOW */
-	(iw_handler) NULL,      /* SIOCGIWTXPOW */
-	(iw_handler) NULL,      /* SIOCSIWRETRY */
-	(iw_handler) NULL,      /* SIOCGIWRETRY */
-	(iw_handler) NULL,      /* SIOCSIWENCODE */
-	(iw_handler) NULL,      /* SIOCGIWENCODE */
-	(iw_handler) NULL,      /* SIOCSIWPOWER */
-	(iw_handler) NULL,      /* SIOCGIWPOWER */
-	(iw_handler) NULL,      /* -- hole -- */
-	(iw_handler) NULL,      /* -- hole -- */
-	(iw_handler) NULL,      /* SIOCSIWGENIE */
-	(iw_handler) NULL,      /* SIOCGIWGENIE */
-	(iw_handler) NULL,      /* SIOCSIWAUTH */
-	(iw_handler) NULL,      /* SIOCGIWAUTH */
-	(iw_handler) NULL,      /* SIOCSIWENCODEEXT */
-	(iw_handler) NULL,      /* SIOCGIWENCODEEXT */
-	(iw_handler) NULL,      /* SIOCSIWPMKSA */
-};
-
 /*
  * Note that the following ioctls were defined with semantics which
  * cannot be handled by the "iwpriv" userspace application and hence
@@ -6142,10 +6084,10 @@ static const iw_handler hostapd_private[] = {
 };
 
 const struct iw_handler_def hostapd_handler_def = {
-	.num_standard = QDF_ARRAY_SIZE(hostapd_handler),
+	.num_standard = 0,
 	.num_private = QDF_ARRAY_SIZE(hostapd_private),
 	.num_private_args = QDF_ARRAY_SIZE(hostapd_private_args),
-	.standard = (iw_handler *) hostapd_handler,
+	.standard = NULL,
 	.private = (iw_handler *) hostapd_private,
 	.private_args = hostapd_private_args,
 	.get_wireless_stats = NULL,
