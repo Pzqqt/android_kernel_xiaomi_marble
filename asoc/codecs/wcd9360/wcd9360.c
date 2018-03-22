@@ -137,7 +137,7 @@ static const struct snd_kcontrol_new name##_mux = \
 #define DAPM_MICBIAS3_STANDALONE "MIC BIAS3 Standalone"
 #define DAPM_MICBIAS4_STANDALONE "MIC BIAS4 Standalone"
 
-#define WCD9360_LDO_RXTX_SUPPLY_NAME "vdd_ldo_rxtx_supply"
+#define WCD9360_LDO_RXTX_SUPPLY_NAME "cdc-vdd-ldo-rxtx"
 
 #define  TX_HPF_CUT_OFF_FREQ_MASK	0x60
 #define  CF_MIN_3DB_4HZ			0x0
@@ -4323,7 +4323,7 @@ static const struct snd_kcontrol_new pahu_snd_controls[] = {
 	SOC_SINGLE_MULTI_EXT("IIR0 Band5", IIR0, BAND5, 255, 0, 5,
 		pahu_iir_band_audio_mixer_get, pahu_iir_band_audio_mixer_put),
 
-	SOC_SINGLE_EXT("COMP0 Switch", SND_SOC_NOPM, COMPANDER_1, 1, 0,
+	SOC_SINGLE_EXT("COMP0 Switch", SND_SOC_NOPM, COMPANDER_0, 1, 0,
 		pahu_compander_get, pahu_compander_put),
 	SOC_SINGLE_EXT("COMP7 Switch", SND_SOC_NOPM, COMPANDER_7, 1, 0,
 		pahu_compander_get, pahu_compander_put),
@@ -6749,8 +6749,6 @@ static const struct pahu_reg_mask_val pahu_codec_reg_defaults[] = {
 	{WCD9360_CDC_COMPANDER7_CTL7, 0x01, 0x01},
 	{WCD9360_CDC_COMPANDER8_CTL7, 0x01, 0x01},
 	{WCD9360_CODEC_RPM_CLK_GATE, 0x08, 0x00},
-	{WCD9360_TLMM_DMIC3_CLK_PINCFG, 0xFF, 0x0a},
-	{WCD9360_TLMM_DMIC3_DATA_PINCFG, 0xFF, 0x0a},
 	{WCD9360_CPE_SS_SVA_CFG, 0x60, 0x00},
 	{WCD9360_CPE_SS_CPAR_CFG, 0x10, 0x10},
 };

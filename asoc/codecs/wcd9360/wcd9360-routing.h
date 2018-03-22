@@ -862,8 +862,13 @@ const struct snd_soc_dapm_route pahu_audio_map[] = {
 	{"RX INT8 SEC MIX", NULL, "ASRC3 MUX"},
 
 	/* SLIMBUS-I2S Bridge interface */
-	{"I2S TX1_0 MUX", "AIF4_PB", "AIF4 PB"},
-	{"I2S TX1_1 MUX", "AIF4_PB", "AIF4 PB"},
+	{"I2S TX1_0 MUX", "SB_RX2", "SLIM RX2"},
+
+	{"I2S TX1_1 MUX", "SB_RX0", "SLIM RX0"},
+	{"I2S TX1_1 MUX", "SB_RX1", "SLIM RX1"},
+	{"I2S TX1_1 MUX", "SB_RX2", "SLIM RX2"},
+	{"I2S TX1_1 MUX", "SB_RX3", "SLIM RX3"},
+
 	{"I2S TX1 MIXER", NULL, "I2S TX1_0 MUX"},
 	{"I2S TX1 MIXER", NULL, "I2S TX1_1 MUX"},
 	{"I2S1 CAP", NULL, "I2S TX1 MIXER"},
