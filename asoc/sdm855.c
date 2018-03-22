@@ -3072,7 +3072,8 @@ static const struct snd_soc_dapm_widget msm_dapm_widgets[] = {
 	msm_mclk_tx_event, SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_MIC("Handset Mic", NULL),
-	SND_SOC_DAPM_MIC("Headset Mic", NULL),
+	SND_SOC_DAPM_MIC("Analog Mic3", NULL),
+	SND_SOC_DAPM_MIC("Analog Mic4", NULL),
 
 	SND_SOC_DAPM_MIC("Digital Mic0", NULL),
 	SND_SOC_DAPM_MIC("Digital Mic1", NULL),
@@ -3852,7 +3853,6 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	}
 
 	snd_soc_dapm_ignore_suspend(dapm, "Handset Mic");
-	snd_soc_dapm_ignore_suspend(dapm, "Headset Mic");
 	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic0");
 	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic1");
 	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic2");
@@ -3871,10 +3871,10 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	snd_soc_dapm_ignore_suspend(dapm, "VIINPUT");
 
 	if (!strcmp(dev_name(codec_dai->dev), "tavil_codec")) {
+		snd_soc_dapm_ignore_suspend(dapm, "Headset Mic");
 		snd_soc_dapm_ignore_suspend(dapm, "ANCRight Headset Mic");
 		snd_soc_dapm_ignore_suspend(dapm, "ANCLeft Headset Mic");
 		snd_soc_dapm_ignore_suspend(dapm, "Analog Mic5");
-		snd_soc_dapm_ignore_suspend(dapm, "Analog Mic6");
 		snd_soc_dapm_ignore_suspend(dapm, "LINEOUT1");
 		snd_soc_dapm_ignore_suspend(dapm, "LINEOUT2");
 		snd_soc_dapm_ignore_suspend(dapm, "HPHL");
@@ -3884,6 +3884,8 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	} else {
 		snd_soc_dapm_ignore_suspend(dapm, "Digital Mic6");
 		snd_soc_dapm_ignore_suspend(dapm, "Digital Mic7");
+		snd_soc_dapm_ignore_suspend(dapm, "Analog Mic3");
+		snd_soc_dapm_ignore_suspend(dapm, "Analog Mic4");
 	}
 
 	snd_soc_dapm_sync(dapm);
