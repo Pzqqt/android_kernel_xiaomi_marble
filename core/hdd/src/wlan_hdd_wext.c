@@ -4021,11 +4021,21 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 	case IEEE80211_MODE_11AC_VHT40:
 	case IEEE80211_MODE_11AC_VHT80:
 		sme_set_phy_mode(hal, eCSR_DOT11_MODE_11ac);
-		if (hdd_reg_set_band(net, WLAN_HDD_UI_BAND_5_GHZ) == 0) {
-			phymode = eCSR_DOT11_MODE_11ac;
-			hdd_dot11mode = eHDD_DOT11_MODE_11ac;
-			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
+		phymode = eCSR_DOT11_MODE_11ac;
+		hdd_dot11mode = eHDD_DOT11_MODE_11ac;
+		chwidth = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
+		if (band_5g && band_24) {
+			curr_band = BAND_ALL;
+			break;
+		} else if (band_5g) {
 			curr_band = BAND_5G;
+			break;
+		} else if (new_phymode != IEEE80211_MODE_11AC_VHT80) {
+			curr_band = BAND_2G;
+			break;
+		}
+		if (hdd_reg_set_band(net, WLAN_HDD_UI_BAND_AUTO) == 0) {
+			curr_band = BAND_ALL;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
