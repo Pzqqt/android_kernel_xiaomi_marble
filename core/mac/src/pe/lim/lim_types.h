@@ -1021,8 +1021,10 @@ enum {
 };
 
 QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
-		tSirMacAddr peer_mac, uint16_t tid,
-		tpPESession session, uint8_t addba_extn_present);
+					 tSirMacAddr peer_mac, uint16_t tid,
+					 tpPESession session,
+					 uint8_t addba_extn_present,
+					 uint8_t amsdu_support);
 /**
  * lim_process_join_failure_timeout() - This function is called to process
  * JoinFailureTimeout

@@ -1698,7 +1698,8 @@ static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	if (QDF_STATUS_SUCCESS == qdf_status) {
 		lim_send_addba_response_frame(mac_ctx, mac_hdr->sa,
 			addba_req->addba_param_set.tid, session,
-			addba_req->addba_extn_element.present);
+			addba_req->addba_extn_element.present,
+			addba_req->addba_param_set.amsdu_supp);
 	} else {
 		pe_err("Failed to process addba request");
 	}

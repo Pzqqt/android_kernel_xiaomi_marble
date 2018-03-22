@@ -4726,6 +4726,7 @@ returnAfterError:
  * @tid: TID for which addba response is being sent
  * @session: PE session entry
  * @addba_extn_present: ADDBA extension present flag
+ * @amsdu_support: amsdu in ampdu support
  *
  * This function is called when ADDBA request is successful. ADDBA response is
  * setup by calling addba_response_setup API and frame is then sent out OTA.
@@ -4734,7 +4735,8 @@ returnAfterError:
  */
 QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 		tSirMacAddr peer_mac, uint16_t tid,
-		tpPESession session, uint8_t addba_extn_present)
+		tpPESession session, uint8_t addba_extn_present,
+		uint8_t amsdu_support)
 {
 
 	tDot11faddba_rsp frm;
@@ -4784,7 +4786,7 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 	frm.addba_param_set.buff_size = SIR_MAC_BA_DEFAULT_BUFF_SIZE;
 	if (mac_ctx->usr_cfg_ba_buff_size)
 		frm.addba_param_set.buff_size = mac_ctx->usr_cfg_ba_buff_size;
-	frm.addba_param_set.amsdu_supp = SIR_MAC_BA_AMSDU_SUPPORTED;
+	frm.addba_param_set.amsdu_supp = amsdu_support;
 	frm.addba_param_set.policy = SIR_MAC_BA_POLICY_IMMEDIATE;
 	frm.ba_timeout.timeout = batimeout;
 	if (addba_extn_present) {
