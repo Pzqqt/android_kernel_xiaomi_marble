@@ -555,6 +555,18 @@ static void wlan_hdd_shutdown(void)
 		hdd_err("Load/unload in progress, ignore SSR shutdown");
 		return;
 	}
+
+	/*
+	 * Force Complete all the wait events before shutdown.
+	 * This is done at "hdd_cleanup_on_fw_down" api also to clean up the
+	 * wait events of north bound apis.
+	 * In case of SSR there is significant dely between FW down event and
+	 * wlan_hdd_shutdown, there is a possibility of race condition that
+	 * these wait events gets complete at "hdd_cleanup_on_fw_down" and
+	 * some new event is added before shutdown.
+	 */
+	qdf_complete_wait_events();
+
 	/* this is for cases, where shutdown invoked from platform */
 	cds_set_recovery_in_progress(true);
 	hdd_wlan_ssr_shutdown_event();
