@@ -783,7 +783,8 @@ s64 qdf_get_monotonic_boottime_ns(void)
 {
 	struct timespec ts;
 
-	ktime_get_ts(&ts);
+	get_monotonic_boottime(&ts);
+
 	return timespec_to_ns(&ts);
 }
 qdf_export_symbol(qdf_get_monotonic_boottime_ns);

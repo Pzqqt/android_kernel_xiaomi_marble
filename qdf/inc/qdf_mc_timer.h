@@ -263,7 +263,7 @@ unsigned long qdf_mc_timer_get_system_time(void);
 /**
  * qdf_get_monotonic_boottime_ns() - Get kernel boottime in ns
  *
- * Return: kernel boottime in nano sec
+ * Return: kernel boottime in nano sec (includes time spent in suspend)
  */
 s64 qdf_get_monotonic_boottime_ns(void);
 
