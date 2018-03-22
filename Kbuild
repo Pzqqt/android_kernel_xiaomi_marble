@@ -276,13 +276,15 @@ BUILD_DEBUG_VERSION := 1
 #Enable this flag to build driver in diag version
 BUILD_DIAG_VERSION := 1
 
-#Do we panic on bug?  default is to warn
 ifeq ($(CONFIG_SLUB_DEBUG), y)
 	PANIC_ON_BUG := 1
+	WLAN_WARN_ON_ASSERT := 1
 else ifeq ($(CONFIG_PERF_DEBUG), y)
 	PANIC_ON_BUG := 1
+	WLAN_WARN_ON_ASSERT := 1
 else
 	PANIC_ON_BUG := 0
+	WLAN_WARN_ON_ASSERT := 0
 endif
 
 # Compile all log levels by default
@@ -2078,6 +2080,10 @@ endif
 
 ifeq ($(PANIC_ON_BUG),1)
 CDEFINES += -DPANIC_ON_BUG
+endif
+
+ifeq ($(WLAN_WARN_ON_ASSERT), 1)
+CDEFINES += -DWLAN_WARN_ON_ASSERT
 endif
 
 ifeq ($(CONFIG_WLAN_LOG_FATAL), y)
