@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -65,11 +65,5 @@ typedef struct ol_pdev_t *ol_pdev_handle;
  */
 struct ol_txrx_peer_t;
 typedef struct ol_txrx_peer_t *ol_txrx_peer_handle;
-
-/**
- * @wmi_event_handler function prototype
- */
-typedef int (*wmi_unified_event_handler)(ol_scn_t scn_handle,
-					 uint8_t *event_buf, uint32_t len);
 
 #endif /* _DEV_OL_DEFINES_H */

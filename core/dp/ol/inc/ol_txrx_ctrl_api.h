@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -279,12 +279,6 @@ void ol_txrx_pdev_unpause(struct ol_txrx_pdev_t *pdev, uint32_t reason)
  *      is equal to or greater than this counter value
  */
 void ol_txrx_tx_sync(ol_txrx_pdev_handle data_pdev, uint8_t sync_cnt);
-
-typedef void (*ol_txrx_vdev_delete_cb)(void *context);
-
-
-typedef void
-(*ol_txrx_data_tx_cb)(void *ctxt, qdf_nbuf_t tx_frm, int had_error);
 
 /**
  * @brief Store a delivery notification callback for specific data frames.
