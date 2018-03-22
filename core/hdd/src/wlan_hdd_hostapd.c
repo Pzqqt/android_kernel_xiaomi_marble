@@ -7128,7 +7128,7 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
 
 	pConfig->SapHw_mode = eCSR_DOT11_MODE_11b;
 
-	pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_HT_CAPABILITY,
+	pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_SUPP_RATES,
 				       &pMgmt_frame->u.beacon.variable[0],
 				       pBeacon->head_len);
 	if (pIe != NULL) {
