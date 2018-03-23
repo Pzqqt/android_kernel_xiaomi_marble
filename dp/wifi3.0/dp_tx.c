@@ -482,7 +482,8 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 				sizeof(struct htt_tx_msdu_desc_ext2_t));
 		qdf_atomic_inc(&vdev->pdev->num_tx_exception);
 		HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 1);
-	}
+	} else
+		HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 0);
 
 	switch (msdu_info->frm_type) {
 	case dp_tx_frm_sg:
@@ -1201,7 +1202,7 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	uint16_t htt_tcl_metadata = 0;
 	uint8_t tid = msdu_info->tid;
 
-	HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 0);
+	HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 0);
 	/* Setup Tx descriptor for an MSDU, and MSDU extension descriptor */
 	tx_desc = dp_tx_prepare_desc_single(vdev, nbuf, tx_q->desc_pool_id,
 			msdu_info, tx_exc_metadata);
