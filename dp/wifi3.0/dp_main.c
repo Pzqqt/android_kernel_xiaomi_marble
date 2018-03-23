@@ -317,12 +317,10 @@ static int dp_peer_update_ast_wifi3(struct cdp_soc_t *soc_hdl,
 {
 	int status;
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
-	qdf_spin_lock_bh(&soc->ast_lock);
 	status = dp_peer_update_ast(soc,
 					(struct dp_peer *)peer_hdl,
 					(struct dp_ast_entry *)ast_entry_hdl,
 					flags);
-	qdf_spin_unlock_bh(&soc->ast_lock);
 	return status;
 }
 

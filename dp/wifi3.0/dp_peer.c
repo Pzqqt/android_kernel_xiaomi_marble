@@ -547,6 +547,8 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	int ret = -1;
 	struct dp_peer *old_peer;
 
+	qdf_spin_lock_bh(&soc->ast_lock);
+
 	old_peer = ast_entry->peer;
 	TAILQ_REMOVE(&old_peer->ast_entry_list, ast_entry, ase_list_elem);
 
@@ -563,9 +565,13 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 				peer->vdev->osif_vdev,
 				ast_entry->mac_addr.raw,
 				peer->mac_addr.raw,
-				flags))
+				flags)) {
+			qdf_spin_unlock_bh(&soc->ast_lock);
 			return 0;
+		}
 	}
+
+	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	return ret;
 }
