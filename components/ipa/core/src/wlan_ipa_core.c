@@ -1543,12 +1543,17 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		/* Enable IPA UC Data PIPEs when first STA connected */
 		if (ipa_ctx->sap_num_connected_sta == 0 &&
 				ipa_ctx->uc_loaded == true) {
+			struct wlan_ipa_iface_context *iface_ctx;
+			uint8_t sta_session_id;
+
 			if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config) &&
 			    ipa_ctx->sta_connected) {
 				qdf_mutex_release(&ipa_ctx->event_lock);
+				iface_ctx = wlan_ipa_get_iface(ipa_ctx, QDF_STA_MODE);
+				sta_session_id = iface_ctx->session_id;
 				wlan_ipa_uc_offload_enable_disable(ipa_ctx,
 							SIR_STA_RX_DATA_OFFLOAD,
-							session_id, true);
+							sta_session_id, true);
 				qdf_mutex_acquire(&ipa_ctx->event_lock);
 			}
 
@@ -1561,10 +1566,13 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 					ipa_ctx->config) &&
 				    ipa_ctx->sta_connected) {
 					qdf_mutex_release(&ipa_ctx->event_lock);
+					iface_ctx = wlan_ipa_get_iface(ipa_ctx,
+								QDF_STA_MODE);
+					sta_session_id = iface_ctx->session_id;
 					wlan_ipa_uc_offload_enable_disable(
 							ipa_ctx,
 							SIR_STA_RX_DATA_OFFLOAD,
-							session_id, false);
+							sta_session_id, false);
 				} else {
 					qdf_mutex_release(&ipa_ctx->event_lock);
 				}
@@ -1652,10 +1660,17 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 
 			if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config) &&
 			    ipa_ctx->sta_connected) {
+				struct wlan_ipa_iface_context *iface_ctx;
+				uint8_t sta_session_id;
+
+				iface_ctx = wlan_ipa_get_iface(ipa_ctx,
+							       QDF_STA_MODE);
+				sta_session_id = iface_ctx->session_id;
+
 				qdf_mutex_release(&ipa_ctx->event_lock);
 				wlan_ipa_uc_offload_enable_disable(ipa_ctx,
 							SIR_STA_RX_DATA_OFFLOAD,
-							session_id, false);
+							sta_session_id, false);
 			} else {
 				qdf_mutex_release(&ipa_ctx->event_lock);
 			}
