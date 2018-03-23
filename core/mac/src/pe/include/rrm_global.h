@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -217,6 +217,7 @@ typedef struct sRrmPEContext {
 	int8_t txMgmtPower;
 	/* Dialog token for the request initiated from station. */
 	uint8_t DialogToken;
+	uint16_t prev_rrm_report_seq_num;
 	tpRRMReq pCurrentReq;
 } tRrmPEContext, *tpRrmPEContext;
 

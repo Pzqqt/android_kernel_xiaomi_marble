@@ -1254,6 +1254,7 @@ tSirRetStatus rrm_initialize(tpAniSirGlobal pMac)
 	pMac->rrm.rrmPEContext.DialogToken = 0;
 
 	pMac->rrm.rrmPEContext.rrmEnable = 0;
+	pMac->rrm.rrmPEContext.prev_rrm_report_seq_num = 0xFFFF;
 
 	qdf_mem_set(pRRMCaps, sizeof(tRRMCaps), 0);
 	pRRMCaps->LinkMeasurement = 1;
