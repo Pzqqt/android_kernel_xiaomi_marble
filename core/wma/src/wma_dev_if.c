@@ -718,7 +718,7 @@ VDEV_DETACH:
 
 /**
  * wma_vdev_wait_for_peer_delete_completion(): wait for all peers of the vdev
- * to be deleted.
+ * to be deleted except vdev type is P2P device.
  * @wma_handle: wma handle
  * @vdev_id: vdev id
  *
@@ -731,6 +731,18 @@ void wma_vdev_wait_for_peer_delete_completion(tp_wma_handle wma_handle,
 
 	if (!iface) {
 		WMA_LOGE("%s: iface of vdev-%d is NULL", __func__, vdev_id);
+		return;
+	}
+
+	/* For P2P Device, firstly it will delete the last peer in
+	 * wma vdev detach, so not wait before deliver
+	 * WMA_DEL_STA_SELF_REQ. Secondly, no throughput case run on
+	 * P2P device, and no need to take care the case which no
+	 * vdev stop response from FW.
+	 */
+	if ((iface->type == WMI_VDEV_TYPE_AP) &&
+	    (iface->sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE)) {
+		WMA_LOGD("%s: P2P devices, do not wait", __func__);
 		return;
 	}
 
