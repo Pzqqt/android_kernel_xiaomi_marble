@@ -18474,6 +18474,7 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
  * @mac_ctx: MAC context
  * @session: Pointer to the CSR Roam Session
  * @req_buffer: Pointer to the RSO Request buffer
+ * @enabled: 11k offload enabled/disabled.
  *
  * API to update 11k offload params to Roam Scan Offload request buffer
  *
@@ -18481,7 +18482,8 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
  */
 static void csr_update_11k_offload_params(tpAniSirGlobal mac_ctx,
 					  struct csr_roam_session *session,
-					  tSirRoamOffloadScanReq *req_buffer)
+					  tSirRoamOffloadScanReq *req_buffer,
+					  bool enabled)
 {
 	struct wmi_11k_offload_params *params = &req_buffer->offload_11k_params;
 	struct csr_config *csr_config = &mac_ctx->roam.configParam;
@@ -18489,7 +18491,15 @@ static void csr_update_11k_offload_params(tpAniSirGlobal mac_ctx,
 		&csr_config->neighbor_report_offload;
 
 	params->vdev_id = session->sessionId;
-	params->offload_11k_bitmask = csr_config->offload_11k_enable_bitmask;
+
+	if (enabled) {
+		params->offload_11k_bitmask =
+				csr_config->offload_11k_enable_bitmask;
+	} else {
+		params->offload_11k_bitmask = 0;
+		sme_debug("11k offload disabled in RSO");
+		return;
+	}
 
 	/*
 	 * If none of the parameters are enabled, then set the
@@ -18501,6 +18511,7 @@ static void csr_update_11k_offload_params(tpAniSirGlobal mac_ctx,
 		sme_err("No valid neighbor report offload params %x",
 			neighbor_report_offload->params_bitmask);
 		params->offload_11k_bitmask = 0;
+		return;
 	}
 
 	/*
@@ -19538,10 +19549,18 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		csr_update_driver_assoc_ies(mac_ctx, session, req_buf);
 		csr_update_score_params(mac_ctx, req_buf);
 		csr_update_fils_params_rso(mac_ctx, session, req_buf);
-		if (reason == REASON_CTX_INIT)
-			csr_update_11k_offload_params(mac_ctx, session,
-						      req_buf);
 	}
+
+	/*
+	 * 11k offload is enabled during RSO Start after connect indication and
+	 * 11k offload is disabled during RSO Stop after disconnect indication
+	 */
+	if (command == ROAM_SCAN_OFFLOAD_START &&
+	    reason == REASON_CTX_INIT)
+		csr_update_11k_offload_params(mac_ctx, session, req_buf, TRUE);
+	else if (command == ROAM_SCAN_OFFLOAD_STOP &&
+		 reason == REASON_DISCONNECTED)
+		csr_update_11k_offload_params(mac_ctx, session, req_buf, FALSE);
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"Assoc IE buffer:");
