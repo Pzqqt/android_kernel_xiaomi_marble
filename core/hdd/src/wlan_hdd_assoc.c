@@ -1485,6 +1485,72 @@ static void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)
 }
 
 /**
+ * hdd_clear_roam_profile_ie() - Clear Roam Profile IEs
+ * @adapter: adapter who's IEs are to be cleared
+ *
+ * Return: None
+ */
+static void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
+{
+	struct hdd_station_ctx *sta_ctx;
+	struct csr_roam_profile *roam_profile;
+
+	hdd_enter();
+
+	/* clear WPA/RSN/WSC IE information in the profile */
+	roam_profile = hdd_roam_profile(adapter);
+
+	roam_profile->nWPAReqIELength = 0;
+	roam_profile->pWPAReqIE = NULL;
+	roam_profile->nRSNReqIELength = 0;
+	roam_profile->pRSNReqIE = NULL;
+
+#ifdef FEATURE_WLAN_WAPI
+	roam_profile->nWAPIReqIELength = 0;
+	roam_profile->pWAPIReqIE = NULL;
+#endif
+
+	roam_profile->bWPSAssociation = false;
+	roam_profile->bOSENAssociation = false;
+	roam_profile->pAddIEScan = NULL;
+	roam_profile->nAddIEScanLength = 0;
+	roam_profile->pAddIEAssoc = NULL;
+	roam_profile->nAddIEAssocLength = 0;
+
+	roam_profile->EncryptionType.numEntries = 1;
+	roam_profile->EncryptionType.encryptionType[0] =
+		eCSR_ENCRYPT_TYPE_NONE;
+
+	roam_profile->mcEncryptionType.numEntries = 1;
+	roam_profile->mcEncryptionType.encryptionType[0] =
+		eCSR_ENCRYPT_TYPE_NONE;
+
+	roam_profile->AuthType.numEntries = 1;
+	roam_profile->AuthType.authType[0] =
+		eCSR_AUTH_TYPE_OPEN_SYSTEM;
+
+	qdf_mem_zero(roam_profile->bssid_hint.bytes, QDF_MAC_ADDR_SIZE);
+
+#ifdef WLAN_FEATURE_11W
+	roam_profile->MFPEnabled = false;
+	roam_profile->MFPRequired = 0;
+	roam_profile->MFPCapable = 0;
+#endif
+
+	qdf_mem_zero(roam_profile->Keys.KeyLength, CSR_MAX_NUM_KEY);
+
+#ifdef FEATURE_WLAN_WAPI
+	adapter->wapi_info.wapi_auth_mode = WAPI_AUTH_MODE_OPEN;
+	adapter->wapi_info.wapi_mode = false;
+#endif
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx->auth_key_mgmt = 0;
+	qdf_zero_macaddr(&sta_ctx->requested_bssid);
+	hdd_exit();
+}
+
+/**
  * hdd_roam_deregister_sta() - deregister station
  * @adapter: pointer to adapter
  * @staId: station identifier
@@ -5446,4 +5512,65 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 		 roam_profile->AuthType.authType[0]);
 
 	return 0;
+}
+
+#ifdef WLAN_FEATURE_FILS_SK
+static void hdd_initialize_fils_info(struct hdd_adapter *adapter)
+{
+	struct csr_roam_profile *roam_profile;
+
+	roam_profile = hdd_roam_profile(adapter);
+	roam_profile->fils_con_info = NULL;
+	roam_profile->hlp_ie = NULL;
+	roam_profile->hlp_ie_len = 0;
+}
+#else
+static void hdd_initialize_fils_info(struct hdd_adapter *adapter)
+{ }
+#endif
+
+void hdd_roam_profile_init(struct hdd_adapter *adapter)
+{
+	struct csr_roam_profile *roam_profile;
+	uint8_t *security_ie;
+	tSirAddie *assoc_additional_ie;
+	struct hdd_station_ctx *sta_ctx;
+
+	hdd_enter();
+
+	roam_profile = hdd_roam_profile(adapter);
+	qdf_mem_zero(roam_profile, sizeof(*roam_profile));
+
+	security_ie = hdd_security_ie(adapter);
+	qdf_mem_zero(security_ie, MAX_WPA_RSN_IE_LEN);
+
+	assoc_additional_ie = hdd_assoc_additional_ie(adapter);
+	qdf_mem_zero(assoc_additional_ie, sizeof(*assoc_additional_ie));
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	/* Configure the roaming profile links to SSID and bssid. */
+	roam_profile->SSIDs.numOfSSIDs = 0;
+	roam_profile->SSIDs.SSIDList = &sta_ctx->conn_info.SSID;
+
+	roam_profile->BSSIDs.numOfBSSIDs = 0;
+	roam_profile->BSSIDs.bssid = &sta_ctx->conn_info.bssId;
+
+	/* Set the numOfChannels to zero to scan all the channels */
+	roam_profile->ChannelInfo.numOfChannels = 0;
+	roam_profile->ChannelInfo.ChannelList = NULL;
+
+	roam_profile->BSSType = eCSR_BSS_TYPE_INFRASTRUCTURE;
+
+	roam_profile->phyMode = eCSR_DOT11_MODE_AUTO;
+	sta_ctx->wpa_versions = 0;
+
+	/* Set the default scan mode */
+	adapter->scan_info.scan_mode = eSIR_ACTIVE_SCAN;
+
+	hdd_clear_roam_profile_ie(adapter);
+
+	hdd_initialize_fils_info(adapter);
+
+	hdd_exit();
 }

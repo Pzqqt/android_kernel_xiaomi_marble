@@ -412,4 +412,15 @@ void hdd_copy_ht_caps(struct ieee80211_ht_cap *hdd_ht_cap,
 void hdd_copy_vht_caps(struct ieee80211_vht_cap *hdd_vht_cap,
 		       tDot11fIEVHTCaps *roam_vht_cap);
 
+/**
+ * hdd_roam_profile_init() - initialize adapter roam profile
+ * @adapter: The HDD adapter being initialized
+ *
+ * This function initializes the roam profile that is embedded within
+ * the adapter.
+ *
+ * Return: void
+ */
+void hdd_roam_profile_init(struct hdd_adapter *adapter);
+
 #endif

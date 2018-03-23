@@ -4029,12 +4029,9 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	sme_set_pdev_ht_vht_ies(hdd_ctx->hHal, hdd_ctx->config->enable2x2);
 	sme_set_vdev_ies_per_band(hdd_ctx->hHal, adapter->session_id);
 
-	/* Register wireless extensions */
-	status = hdd_register_wext(adapter->dev);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("failed to register wireless extensions: %d", status);
-		goto error_register_wext;
-	}
+	hdd_roam_profile_init(adapter);
+	hdd_register_wext(adapter->dev);
+
 	hdd_conn_set_connection_state(adapter, eConnectionState_NotConnected);
 
 	qdf_mem_set(sta_ctx->conn_info.staId,
@@ -4093,7 +4090,6 @@ error_wmm_init:
 	hdd_deinit_tx_rx(adapter);
 error_init_txrx:
 	hdd_unregister_wext(adapter->dev);
-error_register_wext:
 	QDF_BUG(!hdd_vdev_destroy(adapter));
 
 	return status;

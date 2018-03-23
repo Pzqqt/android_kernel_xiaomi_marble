@@ -237,8 +237,26 @@ struct ccp_freq_chan_map {
 #define HDD_FWTEST_MU_DEFAULT_VALUE 40
 #define HDD_FWTEST_MAX_VALUE 500
 
-int hdd_unregister_wext(struct net_device *dev);
-int hdd_register_wext(struct net_device *dev);
+/**
+ * hdd_unregister_wext() - unregister wext context
+ * @dev: net device handle
+ *
+ * Unregisters wext interface context for a given net device
+ *
+ * Returns: None
+ */
+void hdd_unregister_wext(struct net_device *dev);
+
+/**
+ * hdd_register_wext() - register wext context
+ * @dev: net device handle
+ *
+ * Registers wext interface context for a given net device
+ *
+ * Returns: None
+ */
+void hdd_register_wext(struct net_device *dev);
+
 int hdd_wlan_get_freq(uint32_t chan, uint32_t *freq);
 void hdd_display_stats_help(void);
 void hdd_wlan_get_version(struct hdd_context *hdd_ctx,
@@ -276,7 +294,6 @@ void *mem_alloc_copy_from_user_helper(const void *wrqu_data, size_t len);
 int wlan_hdd_get_linkspeed_for_peermac(struct hdd_adapter *adapter,
 				       struct qdf_mac_addr *mac_address,
 				       uint32_t *linkspeed);
-void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter);
 
 QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *adapter);
 

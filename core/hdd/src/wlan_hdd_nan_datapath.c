@@ -410,14 +410,8 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 	sme_set_pdev_ht_vht_ies(hdd_ctx->hHal, hdd_ctx->config->enable2x2);
 	sme_set_vdev_ies_per_band(hdd_ctx->hHal, adapter->session_id);
 
-	/* Register wireless extensions */
-	ret_val = hdd_register_wext(wlan_dev);
-	if (0 > ret_val) {
-		hdd_err("Wext registration failed with status code %d",
-			ret_val);
-		ret_val = -EAGAIN;
-		goto error_register_wext;
-	}
+	hdd_roam_profile_init(adapter);
+	hdd_register_wext(wlan_dev);
 
 	status = hdd_init_tx_rx(adapter);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -455,7 +449,6 @@ error_wmm_init:
 error_init_txrx:
 	hdd_unregister_wext(wlan_dev);
 
-error_register_wext:
 	QDF_BUG(!hdd_vdev_destroy(adapter));
 
 	return ret_val;
