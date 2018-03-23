@@ -98,6 +98,10 @@
 #endif
 #include "wlan_hdd_he.h"
 
+#include <net/neighbour.h>
+#include <net/netevent.h>
+#include "wlan_hdd_nud_tracking.h"
+
 /*
  * Preprocessor definitions and constants
  */
@@ -1156,6 +1160,12 @@ struct hdd_adapter {
 
 	/** Current MAC Address for the adapter  */
 	struct qdf_mac_addr mac_addr;
+
+#ifdef WLAN_NUD_TRACKING
+	struct hdd_nud_tracking_info nud_tracking;
+#endif
+	bool disconnection_in_progress;
+	qdf_mutex_t disconnection_status_lock;
 
 	/**Event Flags*/
 	unsigned long event_flags;
@@ -3108,5 +3118,14 @@ void hdd_driver_memdump_deinit(void);
  *         else return false
  */
 bool hdd_is_cli_iface_up(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_set_disconnect_status() - set adapter disconnection status
+ * @hdd_adapter: Pointer to hdd adapter
+ * @disconnecting: Disconnect status to set
+ *
+ * Return: None
+ */
+void hdd_set_disconnect_status(struct hdd_adapter *adapter, bool disconnecting);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

@@ -349,6 +349,15 @@ cb_notify_set_roam_scan_hi_rssi_scan_params(struct hdd_context *hdd_ctx,
 
 
 struct reg_table_entry g_registry_table[] = {
+#ifdef WLAN_NUD_TRACKING
+	REG_VARIABLE(CFG_ENABLE_NUD_TRACKING_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_nud_tracking,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_NUD_TRACKING_DEFAULT,
+		     CFG_ENABLE_NUD_TRACKING_MIN,
+		     CFG_ENABLE_NUD_TRACKING_MAX),
+#endif
+
 	REG_VARIABLE(CFG_ENABLE_CONNECTED_SCAN_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_connected_scan,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -7446,6 +7455,8 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] value = [0x%x]",
 		  CFG_CHANNEL_SELECT_LOGIC_CONC_NAME,
 		  hdd_ctx->config->channel_select_logic_conc);
+
+	hdd_nud_cfg_print(hdd_ctx);
 }
 
 

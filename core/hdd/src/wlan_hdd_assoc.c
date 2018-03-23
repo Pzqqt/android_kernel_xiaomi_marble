@@ -69,6 +69,7 @@
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_ipa_ucfg_api.h"
 
+#include "wlan_hdd_nud_tracking.h"
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
 #define HDD_RSN_OUI_SIZE 4
@@ -1892,6 +1893,10 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 
 	/* Unblock anyone waiting for disconnect to complete */
 	complete(&adapter->disconnect_comp_var);
+
+	hdd_nud_reset_tracking(adapter);
+
+	hdd_set_disconnect_status(adapter, false);
 
 	hdd_reset_limit_off_chan(adapter);
 

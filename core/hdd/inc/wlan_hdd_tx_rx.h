@@ -205,4 +205,11 @@ hdd_skb_fill_gso_size(struct net_device *dev, struct sk_buff *skb)
 	}
 }
 
+/**
+ * hdd_txrx_get_tx_ack_count() - get tx acked count
+ * @adapter: Pointer to adapter
+ *
+ * Return: tx acked count
+ */
+uint32_t hdd_txrx_get_tx_ack_count(struct hdd_adapter *adapter);
 #endif /* end #if !defined(WLAN_HDD_TX_RX_H) */

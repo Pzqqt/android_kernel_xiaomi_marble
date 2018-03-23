@@ -133,6 +133,7 @@
 #include "wlan_disa_ucfg_api.h"
 #include "wlan_ipa_ucfg_api.h"
 #include <target_if.h>
+#include "wlan_hdd_nud_tracking.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -3672,6 +3673,7 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 
 		adapter->offloads_configured = false;
 		adapter->is_link_up_service_needed = false;
+		adapter->disconnection_in_progress = false;
 		/* Init the net_device structure */
 		strlcpy(dev->name, name, IFNAMSIZ);
 
@@ -4181,6 +4183,9 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter 
 		return;
 	}
 
+	hdd_nud_deinit_tracking(adapter);
+	qdf_mutex_destroy(&adapter->disconnection_status_lock);
+
 	hdd_debugfs_exit(adapter);
 
 	/*
@@ -4677,6 +4682,10 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 				goto err_free_netdev;
 		}
 
+		hdd_nud_init_tracking(adapter);
+
+		qdf_mutex_create(&adapter->disconnection_status_lock);
+
 		break;
 
 	case QDF_P2P_GO_MODE:
@@ -4929,6 +4938,9 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	tsap_Config_t *sap_config;
 
 	hdd_enter();
+
+	hdd_nud_ignore_tracking(adapter, true);
+	hdd_nud_reset_tracking(adapter);
 
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
@@ -5310,6 +5322,10 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 				}
 			}
 		}
+
+		hdd_nud_reset_tracking(adapter);
+		hdd_nud_ignore_tracking(adapter, true);
+		hdd_set_disconnect_status(adapter, false);
 
 		hdd_softap_deinit_tx_rx(adapter);
 
@@ -5916,6 +5932,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 					hdd_tx_resume_cb,
 					hdd_tx_flow_control_is_pause);
 
+			hdd_nud_ignore_tracking(adapter, false);
 			break;
 
 		case QDF_SAP_MODE:
@@ -6365,6 +6382,14 @@ static int hdd_wlan_register_ip6_notifier(struct hdd_context *hdd_ctx)
 }
 #endif
 
+void hdd_set_disconnect_status(struct hdd_adapter *adapter, bool status)
+{
+	qdf_mutex_acquire(&adapter->disconnection_status_lock);
+	adapter->disconnection_in_progress = status;
+	qdf_mutex_release(&adapter->disconnection_status_lock);
+	hdd_debug("setting disconnection status: %d", status);
+}
+
 /**
  * hdd_register_notifiers - Register netdev notifiers.
  * @hdd_ctx: HDD context
@@ -6388,8 +6413,16 @@ static int hdd_register_notifiers(struct hdd_context *hdd_ctx)
 		goto unregister_ip6_notifier;
 	}
 
+	ret = hdd_nud_register_netevent_notifier(hdd_ctx);
+	if (ret) {
+		hdd_err("Failed to register netevent notifier: %d",
+			ret);
+		goto unregister_inetaddr_notifier;
+	}
 	return 0;
 
+unregister_inetaddr_notifier:
+	unregister_inetaddr_notifier(&hdd_ctx->ipv4_notifier);
 unregister_ip6_notifier:
 	hdd_wlan_unregister_ip6_notifier(hdd_ctx);
 out:
@@ -6407,6 +6440,7 @@ out:
  */
 void hdd_unregister_notifiers(struct hdd_context *hdd_ctx)
 {
+	hdd_nud_unregister_netevent_notifier(hdd_ctx);
 	hdd_wlan_unregister_ip6_notifier(hdd_ctx);
 
 	unregister_inetaddr_notifier(&hdd_ctx->ipv4_notifier);

@@ -18002,6 +18002,8 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			hdd_conn_set_connection_state(adapter,
 			eConnectionState_Connecting);
 
+		hdd_set_disconnect_status(adapter, false);
+
 		qdf_runtime_pm_prevent_suspend(
 				&hdd_ctx->runtime_context.connect);
 		hdd_prevent_suspend_timeout(HDD_WAKELOCK_TIMEOUT_CONNECT,
@@ -19739,6 +19741,15 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
+	qdf_mutex_acquire(&adapter->disconnection_status_lock);
+	if (adapter->disconnection_in_progress) {
+		qdf_mutex_release(&adapter->disconnection_status_lock);
+		hdd_debug("Disconnect is already in progress");
+		return 0;
+	}
+	adapter->disconnection_in_progress = true;
+	qdf_mutex_release(&adapter->disconnection_status_lock);
+
 	/* Issue disconnect request to SME, if station is in connected state */
 	if ((sta_ctx->conn_info.connState == eConnectionState_Associated) ||
 	    (sta_ctx->conn_info.connState == eConnectionState_Connecting)) {
@@ -19794,11 +19805,13 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		status = wlan_hdd_disconnect(adapter, reasonCode);
 		if (0 != status) {
 			hdd_err("wlan_hdd_disconnect failed, status: %d", status);
+			hdd_set_disconnect_status(adapter, false);
 			return -EINVAL;
 		}
 	} else {
 		hdd_err("Unexpected cfg disconnect called while in state: %d",
 		       sta_ctx->conn_info.connState);
+		hdd_set_disconnect_status(adapter, false);
 	}
 
 	return status;

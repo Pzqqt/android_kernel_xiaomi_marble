@@ -65,6 +65,8 @@
 #include "wlan_hdd_cfg80211.h"
 #include <wlan_hdd_tsf.h>
 
+#include "wlan_hdd_nud_tracking.h"
+
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /*
  * Mapping Linux AC interpretation to SME AC.
@@ -349,6 +351,12 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 	return nskb;
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
+
+uint32_t hdd_txrx_get_tx_ack_count(struct hdd_adapter *adapter)
+{
+	return cdp_get_tx_ack_stats(cds_get_context(QDF_MODULE_ID_SOC),
+				    adapter->session_id);
+}
 
 /**
  * qdf_event_eapol_log() - send event to wlan diag
@@ -1621,6 +1629,9 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		++adapter->hdd_stats.tx_rx_stats.rx_packets[cpu_index];
 		++adapter->stats.rx_packets;
 		adapter->stats.rx_bytes += skb->len;
+
+		/* Incr GW Rx count for NUD tracking based on GW mac addr */
+		hdd_nud_incr_gw_rx_pkt_cnt(adapter, mac_addr);
 
 		/* Check & drop replayed mcast packets (for IPV6) */
 		if (hdd_ctx->config->multicast_replay_filter &&

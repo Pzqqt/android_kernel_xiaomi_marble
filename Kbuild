@@ -421,6 +421,10 @@ CONFIG_TRACE_RECORD_FEATURE := 1
 #Flag to enable p2p debug feature
 CONFIG_WLAN_FEATURE_P2P_DEBUG := 1
 
+#Flag to enable nud tracking feature
+CONFIG_WLAN_NUD_TRACKING := 1
+
+
 ifeq ($(CONFIG_CFG80211),y)
 HAVE_CFG80211 := 1
 else
@@ -556,6 +560,10 @@ endif
 
 ifeq ($(CONFIG_LITHIUM), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_rx_monitor.o
+endif
+
+ifeq ($(CONFIG_WLAN_NUD_TRACKING), 1)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nud_tracking.o
 endif
 
 ########### HOST DIAG LOG ###########
@@ -1876,6 +1884,7 @@ CDEFINES += -DFEATURE_OEM_DATA_SUPPORT
 endif
 ####################################
 
+
 ifeq ($(CONFIG_FEATURE_HTC_CREDIT_HISTORY), 1)
 CDEFINES += -DFEATURE_HTC_CREDIT_HISTORY
 endif
@@ -2550,6 +2559,11 @@ endif
 #Flag to enable SMMU S1 support
 ifeq ($(CONFIG_ARCH_SDM845), y)
 CDEFINES += -DENABLE_SMMU_S1_TRANSLATION
+endif
+
+#Flag to enable NUD tracking
+ifeq ($(CONFIG_WLAN_NUD_TRACKING), 1)
+CDEFINES += -DWLAN_NUD_TRACKING
 endif
 
 KBUILD_CPPFLAGS += $(CDEFINES)

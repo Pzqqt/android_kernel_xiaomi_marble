@@ -96,6 +96,31 @@ struct hdd_context;
 #define CFG_ENABLE_CONNECTED_SCAN_MAX         (1)
 #define CFG_ENABLE_CONNECTED_SCAN_DEFAULT     (1)
 
+#ifdef WLAN_NUD_TRACKING
+/*
+ * <ini>
+ * gEnableNUDTracking - Will enable or disable NUD tracking within driver
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable or disable NUD tracking within driver
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * <ini>
+ */
+
+#define CFG_ENABLE_NUD_TRACKING_NAME            "gEnableNUDTracking"
+#define CFG_ENABLE_NUD_TRACKING_MIN             (0)
+#define CFG_ENABLE_NUD_TRACKING_MAX             (1)
+#define CFG_ENABLE_NUD_TRACKING_DEFAULT         (0)
+#endif
+
 /*
  * <ini>
  * RTSThreshold - Will provide RTSThreshold
@@ -14375,6 +14400,9 @@ struct hdd_config {
 	DECLARE_BITMAP(bExplicitCfg, MAX_CFG_INI_ITEMS);
 
 	/* Config parameters */
+#ifdef WLAN_NUD_TRACKING
+	bool enable_nud_tracking;
+#endif
 	bool enable_connected_scan;
 	uint32_t RTSThreshold;
 	uint32_t FragmentationThreshold;

@@ -157,6 +157,8 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	hdd_info("ipv4 addr: %pI4", req.ipv4_addr);
 	hdd_info("ipv6 addr: %pI6c", req.ipv6_addr);
 
+	hdd_nud_set_gateway_addr(adapter, req.gw_mac_addr);
+
 	status = sme_gateway_param_update(hdd_ctx->hHal, &req);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_gateway_param_update failed(err=%d)", status);
