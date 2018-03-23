@@ -1488,13 +1488,6 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	if (fixed_param->radio_id >= link_stats_results->num_radio) {
-		WMA_LOGE("%s, invalid radio id:%d, num radio:%d",
-			__func__, fixed_param->radio_id,
-			link_stats_results->num_radio);
-		return -EINVAL;
-	}
-
 	WMA_LOGD("%s: tot_num_tx_pwr_lvls: %u num_tx_pwr_lvls: %u pwr_lvl_offset: %u radio_id: %u",
 			__func__, fixed_param->total_num_tx_power_levels,
 			 fixed_param->num_tx_power_levels,
@@ -1511,8 +1504,8 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	if (fixed_param->radio_id > link_stats_results->num_radio) {
-		WMA_LOGD("%s: Invalid radio_id %d num_radio %d",
+	if (fixed_param->radio_id >= link_stats_results->num_radio) {
+		WMA_LOGE("%s: Invalid radio_id %d num_radio %d",
 			 __func__, fixed_param->radio_id,
 			 link_stats_results->num_radio);
 		return -EINVAL;
@@ -1677,6 +1670,13 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	link_stats_results_size = sizeof(*link_stats_results) +
 				  fixed_param->num_radio * radio_stats_size;
 
+	if (radio_stats->radio_id >= fixed_param->num_radio) {
+		WMA_LOGE("%s, invalid radio id:%d, num radio:%d",
+			__func__, radio_stats->radio_id,
+			fixed_param->num_radio);
+		return -EINVAL;
+	}
+
 	if (!wma_handle->link_stats_results) {
 		wma_handle->link_stats_results = qdf_mem_malloc(
 						link_stats_results_size);
@@ -1687,13 +1687,6 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		}
 	}
 	link_stats_results = wma_handle->link_stats_results;
-
-	if (radio_stats->radio_id >= link_stats_results->num_radio) {
-		WMA_LOGE("%s, invalid radio id:%d, num radio:%d",
-			__func__, radio_stats->radio_id,
-			link_stats_results->num_radio);
-		return -EINVAL;
-	}
 
 	WMA_LOGD("Radio stats Fixed Param:");
 	WMA_LOGD("req_id: %u num_radio: %u more_radio_events: %u",
