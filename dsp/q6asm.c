@@ -2230,6 +2230,13 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 		 * package is composed of event type + size + actual payload
 		 */
 		payload_size = data->payload_size;
+		if (payload_size > UINT_MAX - sizeof(struct msm_adsp_event_data)) {
+			pr_err("%s: payload size = %d exceeds limit.\n",
+				__func__, payload_size);
+			spin_unlock(&(session[session_id].session_lock));
+			return -EINVAL;
+		}
+
 		pp_event_package = kzalloc(payload_size
 				+ sizeof(struct msm_adsp_event_data),
 				GFP_ATOMIC);
