@@ -325,6 +325,7 @@ QDF_STATUS ucfg_p2p_set_ps(struct wlan_objmgr_psoc *soc,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint16_t obj_id;
 	struct wlan_objmgr_vdev *vdev;
+	struct p2p_ps_config go_ps_config;
 
 	p2p_debug("soc:%pK, vdev_id:%d, opp_ps:%d, ct_window:%d, count:%d, duration:%d, duration:%d, ps_selection:%d",
 		soc, ps_config->vdev_id, ps_config->opp_ps,
@@ -342,19 +343,26 @@ QDF_STATUS ucfg_p2p_set_ps(struct wlan_objmgr_psoc *soc,
 		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(soc, obj_id,
 							WLAN_P2P_ID);
 		if (vdev) {
-			if (is_p2p_ps_allowed(vdev,
-				WLAN_UMAC_COMP_P2P) == false) {
-				p2p_debug("p2p set ps, NoA is disabled as legacy STA is connected to GO.");
-				return QDF_STATUS_E_BUSY;
+			if (is_p2p_ps_allowed(vdev, WLAN_UMAC_COMP_P2P)) {
+				wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
+				break;
 			}
 			wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
+			p2p_debug("skip p2p set ps vdev %d, NoA is disabled as legacy STA is connected to GO.",
+				  obj_id);
 		}
 	}
+	if (obj_id >= WLAN_UMAC_PSOC_MAX_VDEVS) {
+		p2p_debug("No GO found!");
+		return QDF_STATUS_E_INVAL;
+	}
+	go_ps_config = *ps_config;
+	go_ps_config.vdev_id = obj_id;
 
 	p2p_ops = ucfg_p2p_psoc_get_tx_ops(soc);
 	if (p2p_ops->set_ps) {
-		status = p2p_ops->set_ps(soc, ps_config);
-		p2p_debug("p2p set ps, status:%d", status);
+		status = p2p_ops->set_ps(soc, &go_ps_config);
+		p2p_debug("p2p set ps vdev %d, status:%d", obj_id, status);
 	}
 
 	return status;
