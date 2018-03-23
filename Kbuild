@@ -10,6 +10,7 @@ ifeq ($(CONFIG_CNSS_QCA6290), y)
 	CONFIG_LITHIUM := y
 	CONFIG_WLAN_FEATURE_11AX := y
 	CONFIG_WLAN_FEATURE_DFS_OFFLOAD := y
+	CONFIG_IPA3 := n
 endif
 
 ifeq ($(CONFIG_CLD_HL_SDIO_CORE), y)
@@ -2558,7 +2559,9 @@ endif
 
 #Flag to enable SMMU S1 support
 ifeq ($(CONFIG_ARCH_SDM845), y)
+ifeq ($(CONFIG_IPA_OFFLOAD), 1)
 CDEFINES += -DENABLE_SMMU_S1_TRANSLATION
+endif
 endif
 
 #Flag to enable NUD tracking
