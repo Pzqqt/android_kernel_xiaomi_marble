@@ -324,5 +324,105 @@ int wlan_hdd_get_rcpi(struct hdd_adapter *adapter, uint8_t *mac,
 		      int32_t *rcpi_value,
 		      enum rcpi_measurement_type measurement_type);
 
-#endif /* end #if !defined(WLAN_HDD_STATS_H) */
+/**
+ * wlan_hdd_get_rssi() - Get the current RSSI
+ * @adapter: adapter upon which the measurement is requested
+ * @rssi_value: pointer to where the RSSI should be returned
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value);
 
+/**
+ * wlan_hdd_get_snr() - Get the current SNR
+ * @adapter: adapter upon which the measurement is requested
+ * @snr: pointer to where the SNR should be returned
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *adapter, int8_t *snr);
+
+/**
+ * wlan_hdd_get_linkspeed_for_peermac() - Get link speed for a peer
+ * @adapter: adapter upon which the peer is active
+ * @mac_address: MAC address of the peer
+ * @linkspeed: pointer to memory where returned link speed is to be placed
+ *
+ * This function will send a query to SME for the linkspeed of the
+ * given peer, and then wait for the callback to be invoked.
+ *
+ * Return: 0 if linkspeed data is available, negative errno otherwise
+ */
+int wlan_hdd_get_linkspeed_for_peermac(struct hdd_adapter *adapter,
+				       struct qdf_mac_addr *mac_address,
+				       uint32_t *linkspeed);
+
+/**
+ * wlan_hdd_get_link_speed() - get link speed
+ * @adapter:     pointer to the adapter
+ * @link_speed:   pointer to link speed
+ *
+ * This function fetches per bssid link speed.
+ *
+ * Return: if associated, link speed shall be returned.
+ *         if not associated, link speed of 0 is returned.
+ *         On error, error number will be returned.
+ */
+int wlan_hdd_get_link_speed(struct hdd_adapter *adapter, uint32_t *link_speed);
+
+/**
+ * wlan_hdd_get_peer_rssi() - get station's rssi
+ * @adapter: hostapd interface
+ * @macaddress: peer sta mac address or ff:ff:ff:ff:ff:ff to query all peer
+ * @peer_sta_info: output pointer which will fill by peer sta info
+ *
+ * This function will call sme_get_peer_info to get rssi
+ *
+ * Return: 0 on success, otherwise error value
+ */
+int wlan_hdd_get_peer_rssi(struct hdd_adapter *adapter,
+			   struct qdf_mac_addr *macaddress,
+			   struct sir_peer_sta_info *peer_sta_info);
+
+/**
+ * wlan_hdd_get_peer_info() - get peer info
+ * @adapter: hostapd interface
+ * @macaddress: request peer mac address
+ * @peer_info_ext: one peer extended info retrieved
+ *
+ * This function will call sme_get_peer_info_ext to get peer info
+ *
+ * Return: 0 on success, otherwise error value
+ */
+int wlan_hdd_get_peer_info(struct hdd_adapter *adapter,
+			   struct qdf_mac_addr macaddress,
+			   struct sir_peer_info_ext *peer_info_ext);
+
+/**
+ * wlan_hdd_get_class_astats() - Get Class A statistics
+ * @adapter: adapter for which statistics are desired
+ *
+ * Return: QDF_STATUS_SUCCESS if adapter's Class A statistics were updated
+ */
+QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *adapter);
+
+/**
+ * wlan_hdd_get_station_stats() - Get station statistics
+ * @adapter: adapter for which statistics are desired
+ *
+ * Return: QDF_STATUS_SUCCESS if adapter's statistics were updated
+ */
+QDF_STATUS wlan_hdd_get_station_stats(struct hdd_adapter *adapter);
+
+/**
+ * wlan_hdd_get_temperature() - get current device temperature
+ * @adapter: device upon which the request was made
+ * @temperature: pointer to where the temperature is to be returned
+ *
+ * Return: 0 if a temperature value (either current or cached) was
+ * returned, otherwise a negative errno is returned.
+ *
+ */
+int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature);
+
+#endif /* end #if !defined(WLAN_HDD_STATS_H) */

@@ -280,29 +280,6 @@ int hdd_priv_get_data(struct iw_point *p_priv_data,
 
 void *mem_alloc_copy_from_user_helper(const void *wrqu_data, size_t len);
 
-/**
- * wlan_hdd_get_linkspeed_for_peermac() - Get link speed for a peer
- * @adapter: adapter upon which the peer is active
- * @mac_address: MAC address of the peer
- * @linkspeed: pointer to memory where returned link speed is to be placed
- *
- * This function will send a query to SME for the linkspeed of the
- * given peer, and then wait for the callback to be invoked.
- *
- * Return: 0 if linkspeed data is available, negative errno otherwise
- */
-int wlan_hdd_get_linkspeed_for_peermac(struct hdd_adapter *adapter,
-				       struct qdf_mac_addr *mac_address,
-				       uint32_t *linkspeed);
-
-QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *adapter);
-
-QDF_STATUS wlan_hdd_get_station_stats(struct hdd_adapter *adapter);
-
-QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value);
-
-QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *adapter, int8_t *snr);
-
 int hdd_get_ldpc(struct hdd_adapter *adapter, int *value);
 int hdd_set_ldpc(struct hdd_adapter *adapter, int value);
 int hdd_get_tx_stbc(struct hdd_adapter *adapter, int *value);
@@ -349,21 +326,6 @@ void wlan_hdd_change_country_code_callback(void *adapter);
 int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			    int new_phymode, struct hdd_context *phddctx);
 
-int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature);
-
-/**
- * wlan_hdd_get_link_speed() - get link speed
- * @adapter:     pointer to the adapter
- * @link_speed:   pointer to link speed
- *
- * This function fetches per bssid link speed.
- *
- * Return: if associated, link speed shall be returned.
- *         if not associated, link speed of 0 is returned.
- *         On error, error number will be returned.
- */
-int wlan_hdd_get_link_speed(struct hdd_adapter *adapter, uint32_t *link_speed);
-
 struct iw_request_info;
 
 /**
@@ -383,34 +345,6 @@ struct iw_request_info;
  */
 int hdd_check_private_wext_control(struct hdd_context *hdd_ctx,
 				   struct iw_request_info *info);
-
-/**
- * wlan_hdd_get_peer_rssi() - get station's rssi
- * @adapter: hostapd interface
- * @macaddress: peer sta mac address or ff:ff:ff:ff:ff:ff to query all peer
- * @peer_sta_info: output pointer which will fill by peer sta info
- *
- * This function will call sme_get_peer_info to get rssi
- *
- * Return: 0 on success, otherwise error value
- */
-int wlan_hdd_get_peer_rssi(struct hdd_adapter *adapter,
-			   struct qdf_mac_addr *macaddress,
-			   struct sir_peer_sta_info *peer_sta_info);
-
-/**
- * wlan_hdd_get_peer_info() - get peer info
- * @adapter: hostapd interface
- * @macaddress: request peer mac address
- * @peer_info_ext: one peer extended info retrieved
- *
- * This function will call sme_get_peer_info_ext to get peer info
- *
- * Return: 0 on success, otherwise error value
- */
-int wlan_hdd_get_peer_info(struct hdd_adapter *adapter,
-			   struct qdf_mac_addr macaddress,
-			   struct sir_peer_info_ext *peer_info_ext);
 
 /**
  * wlan_hdd_set_mon_chan() - Set capture channel on the monitor mode interface.

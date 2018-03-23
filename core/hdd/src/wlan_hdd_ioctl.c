@@ -29,6 +29,7 @@
 
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_wowl.h>
+#include <wlan_hdd_stats.h>
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_ioctl.h"
 #include "wlan_hdd_power.h"

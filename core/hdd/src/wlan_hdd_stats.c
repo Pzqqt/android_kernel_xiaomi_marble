@@ -4962,3 +4962,880 @@ int wlan_hdd_get_rcpi(struct hdd_adapter *adapter, uint8_t *mac,
 
 	return ret;
 }
+
+struct rssi_priv {
+	int8_t rssi;
+};
+
+/**
+ * hdd_get_rssi_cb() - "Get RSSI" callback function
+ * @rssi: Current RSSI of the station
+ * @sta_id: ID of the station
+ * @context: opaque context originally passed to SME.  HDD always passes
+ *	a cookie for the request context
+ *
+ * Return: None
+ */
+static void hdd_get_rssi_cb(int8_t rssi, uint32_t sta_id, void *context)
+{
+	struct hdd_request *request;
+	struct rssi_priv *priv;
+
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
+	}
+
+	priv = hdd_request_priv(request);
+	priv->rssi = rssi;
+	hdd_request_complete(request);
+	hdd_request_put(request);
+}
+
+QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
+{
+	struct hdd_context *hdd_ctx;
+	struct hdd_station_ctx *sta_ctx;
+	QDF_STATUS hstatus;
+	int ret;
+	void *cookie;
+	struct hdd_request *request;
+	struct rssi_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
+
+	if (NULL == adapter) {
+		hdd_err("Invalid context, adapter");
+		return QDF_STATUS_E_FAULT;
+	}
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
+		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
+			cds_get_driver_state());
+		/* return a cached value */
+		*rssi_value = adapter->rssi;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+		hdd_debug("Not associated!, rssi on disconnect %d",
+			adapter->rssi_on_disconnect);
+		*rssi_value = adapter->rssi_on_disconnect;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (sta_ctx->hdd_reassoc_scenario) {
+		hdd_debug("Roaming in progress, return cached RSSI");
+		*rssi_value = adapter->rssi;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure, return cached RSSI");
+		*rssi_value = adapter->rssi;
+		return QDF_STATUS_SUCCESS;
+	}
+	cookie = hdd_request_cookie(request);
+
+	hstatus = sme_get_rssi(hdd_ctx->hHal, hdd_get_rssi_cb,
+			       sta_ctx->conn_info.staId[0],
+			       sta_ctx->conn_info.bssId, adapter->rssi,
+			       cookie);
+	if (QDF_STATUS_SUCCESS != hstatus) {
+		hdd_err("Unable to retrieve RSSI");
+		/* we'll returned a cached value below */
+	} else {
+		/* request was sent -- wait for the response */
+		ret = hdd_request_wait_for_response(request);
+		if (ret) {
+			hdd_warn("SME timed out while retrieving RSSI");
+			/* we'll returned a cached value below */
+		} else {
+			/* update the adapter with the fresh results */
+			priv = hdd_request_priv(request);
+			/*
+			 * update rssi only if its valid else return previous
+			 * valid rssi.
+			 */
+			if (priv->rssi)
+				adapter->rssi = priv->rssi;
+
+			/*
+			 * for new connection there might be no valid previous
+			 * RSSI.
+			 */
+			if (!adapter->rssi) {
+				hdd_get_rssi_snr_by_bssid(adapter,
+					sta_ctx->conn_info.bssId.bytes,
+					&adapter->rssi, NULL);
+			}
+		}
+	}
+
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	hdd_request_put(request);
+
+	*rssi_value = adapter->rssi;
+	hdd_debug("RSSI = %d", *rssi_value);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+struct snr_priv {
+	int8_t snr;
+};
+
+/**
+ * hdd_get_snr_cb() - "Get SNR" callback function
+ * @snr: Current SNR of the station
+ * @sta_id: ID of the station
+ * @context: opaque context originally passed to SME.  HDD always passes
+ *	a cookie for the request context
+ *
+ * Return: None
+ */
+static void hdd_get_snr_cb(int8_t snr, uint32_t sta_id, void *context)
+{
+	struct hdd_request *request;
+	struct snr_priv *priv;
+
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
+	}
+
+	/* propagate response back to requesting thread */
+	priv = hdd_request_priv(request);
+	priv->snr = snr;
+	hdd_request_complete(request);
+	hdd_request_put(request);
+}
+
+QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *adapter, int8_t *snr)
+{
+	struct hdd_context *hdd_ctx;
+	struct hdd_station_ctx *sta_ctx;
+	QDF_STATUS hstatus;
+	int valid;
+	int ret;
+	void *cookie;
+	struct hdd_request *request;
+	struct snr_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
+
+	hdd_enter();
+
+	if (NULL == adapter) {
+		hdd_err("Invalid context, adapter");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	valid = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != valid)
+		return QDF_STATUS_E_FAULT;
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return QDF_STATUS_E_FAULT;
+	}
+	cookie = hdd_request_cookie(request);
+
+	hstatus = sme_get_snr(hdd_ctx->hHal, hdd_get_snr_cb,
+			      sta_ctx->conn_info.staId[0],
+			      sta_ctx->conn_info.bssId, cookie);
+	if (QDF_STATUS_SUCCESS != hstatus) {
+		hdd_err("Unable to retrieve RSSI");
+		/* we'll returned a cached value below */
+	} else {
+		/* request was sent -- wait for the response */
+		ret = hdd_request_wait_for_response(request);
+		if (ret) {
+			hdd_err("SME timed out while retrieving SNR");
+			/* we'll now returned a cached value below */
+		} else {
+			/* update the adapter with the fresh results */
+			priv = hdd_request_priv(request);
+			adapter->snr = priv->snr;
+		}
+	}
+
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	hdd_request_put(request);
+
+	*snr = adapter->snr;
+	hdd_exit();
+	return QDF_STATUS_SUCCESS;
+}
+
+struct linkspeed_priv {
+	tSirLinkSpeedInfo linkspeed_info;
+};
+
+static void
+hdd_get_link_speed_cb(tSirLinkSpeedInfo *linkspeed_info, void *context)
+{
+	struct hdd_request *request;
+	struct linkspeed_priv *priv;
+
+	if (!linkspeed_info) {
+		hdd_err("NULL linkspeed");
+		return;
+	}
+
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
+	}
+
+	priv = hdd_request_priv(request);
+	priv->linkspeed_info = *linkspeed_info;
+	hdd_request_complete(request);
+	hdd_request_put(request);
+}
+
+int wlan_hdd_get_linkspeed_for_peermac(struct hdd_adapter *adapter,
+				       struct qdf_mac_addr *mac_address,
+				       uint32_t *linkspeed)
+{
+	int ret;
+	QDF_STATUS status;
+	void *cookie;
+	tSirLinkSpeedInfo *linkspeed_info;
+	struct hdd_request *request;
+	struct linkspeed_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
+
+	if ((!adapter) || (!linkspeed)) {
+		hdd_err("NULL argument");
+		return -EINVAL;
+	}
+
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		ret = -ENOMEM;
+		goto return_cached_value;
+	}
+
+	cookie = hdd_request_cookie(request);
+	priv = hdd_request_priv(request);
+
+	linkspeed_info = &priv->linkspeed_info;
+	qdf_copy_macaddr(&linkspeed_info->peer_macaddr, mac_address);
+	status = sme_get_link_speed(WLAN_HDD_GET_HAL_CTX(adapter),
+				    linkspeed_info,
+				    cookie, hdd_get_link_speed_cb);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Unable to retrieve statistics for link speed");
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+	ret = hdd_request_wait_for_response(request);
+	if (ret) {
+		hdd_err("SME timed out while retrieving link speed");
+		goto cleanup;
+	}
+	adapter->estimated_linkspeed = linkspeed_info->estLinkSpeed;
+
+cleanup:
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	hdd_request_put(request);
+
+return_cached_value:
+	*linkspeed = adapter->estimated_linkspeed;
+
+	return ret;
+}
+
+int wlan_hdd_get_link_speed(struct hdd_adapter *adapter, uint32_t *link_speed)
+{
+	struct hdd_context *hddctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_station_ctx *hdd_stactx =
+				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	int ret;
+
+	ret = wlan_hdd_validate_context(hddctx);
+	if (ret)
+		return ret;
+
+	/* Linkspeed is allowed only for P2P mode */
+	if (adapter->device_mode != QDF_P2P_CLIENT_MODE) {
+		hdd_err("Link Speed is not allowed in Device mode %s(%d)",
+			hdd_device_mode_to_string(adapter->device_mode),
+			adapter->device_mode);
+		return -ENOTSUPP;
+	}
+
+	if (eConnectionState_Associated != hdd_stactx->conn_info.connState) {
+		/* we are not connected so we don't have a classAstats */
+		*link_speed = 0;
+	} else {
+		struct qdf_mac_addr bssid;
+
+		qdf_copy_macaddr(&bssid, &hdd_stactx->conn_info.bssId);
+
+		ret = wlan_hdd_get_linkspeed_for_peermac(adapter, &bssid,
+							 link_speed);
+		if (ret) {
+			hdd_err("Unable to retrieve SME linkspeed");
+			return ret;
+		}
+		/* linkspeed in units of 500 kbps */
+		*link_speed = (*link_speed) / 500;
+	}
+	return 0;
+}
+
+struct peer_rssi_priv {
+	struct sir_peer_sta_info peer_sta_info;
+};
+
+/**
+ * hdd_get_peer_rssi_cb() - get peer station's rssi callback
+ * @sta_rssi: pointer of peer information
+ * @context: get rssi callback context
+ *
+ * This function will fill rssi information to rssi priv
+ * adapter
+ *
+ */
+static void hdd_get_peer_rssi_cb(struct sir_peer_info_resp *sta_rssi,
+				 void *context)
+{
+	struct hdd_request *request;
+	struct peer_rssi_priv *priv;
+	struct sir_peer_info *rssi_info;
+	uint8_t peer_num;
+
+	if ((!sta_rssi)) {
+		hdd_err("Bad param, sta_rssi [%pK]", sta_rssi);
+		return;
+	}
+
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
+	}
+
+	priv = hdd_request_priv(request);
+
+	peer_num = sta_rssi->count;
+	rssi_info = sta_rssi->info;
+
+	hdd_debug("%d peers", peer_num);
+
+	if (peer_num > MAX_PEER_STA) {
+		hdd_warn("Exceed max peer sta to handle one time %d", peer_num);
+		peer_num = MAX_PEER_STA;
+	}
+
+	qdf_mem_copy(priv->peer_sta_info.info, rssi_info,
+		     peer_num * sizeof(*rssi_info));
+	priv->peer_sta_info.sta_num = peer_num;
+
+	hdd_request_complete(request);
+	hdd_request_put(request);
+
+}
+
+int wlan_hdd_get_peer_rssi(struct hdd_adapter *adapter,
+			   struct qdf_mac_addr *macaddress,
+			   struct sir_peer_sta_info *peer_sta_info)
+{
+	QDF_STATUS status;
+	void *cookie;
+	int ret;
+	struct sir_peer_info_req rssi_req;
+	struct hdd_request *request;
+	struct peer_rssi_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
+
+	if (!adapter || !macaddress || !peer_sta_info) {
+		hdd_err("adapter [%pK], macaddress [%pK], peer_sta_info[%pK]",
+			adapter, macaddress, peer_sta_info);
+		return -EFAULT;
+	}
+
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+
+	cookie = hdd_request_cookie(request);
+	priv = hdd_request_priv(request);
+
+	qdf_mem_copy(&rssi_req.peer_macaddr, macaddress,
+		     QDF_MAC_ADDR_SIZE);
+	rssi_req.sessionid = adapter->session_id;
+	status = sme_get_peer_info(WLAN_HDD_GET_HAL_CTX(adapter),
+				   rssi_req,
+				   cookie,
+				   hdd_get_peer_rssi_cb);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Unable to retrieve statistics for rssi");
+		ret = -EFAULT;
+	} else {
+		ret = hdd_request_wait_for_response(request);
+		if (ret) {
+			hdd_err("SME timed out while retrieving rssi");
+			ret = -EFAULT;
+		} else {
+			*peer_sta_info = priv->peer_sta_info;
+			ret = 0;
+		}
+	}
+
+	hdd_request_put(request);
+
+	return ret;
+}
+
+struct peer_info_priv {
+	struct sir_peer_sta_ext_info peer_sta_ext_info;
+};
+
+/**
+ * wlan_hdd_get_peer_info_cb() - get peer info callback
+ * @sta_info: pointer of peer information
+ * @context: get peer info callback context
+ *
+ * This function will fill stats info to peer info priv
+ *
+ */
+static void wlan_hdd_get_peer_info_cb(struct sir_peer_info_ext_resp *sta_info,
+				      void *context)
+{
+	struct hdd_request *request;
+	struct peer_info_priv *priv;
+	uint8_t sta_num;
+
+	if ((!sta_info) || (!context)) {
+		hdd_err("Bad param, sta_info [%pK] context [%pK]",
+			sta_info, context);
+		return;
+	}
+
+	if (!sta_info->count) {
+		hdd_err("Fail to get remote peer info");
+		return;
+	}
+
+	if (sta_info->count > MAX_PEER_STA) {
+		hdd_warn("Exceed max peer number %d", sta_info->count);
+		sta_num = MAX_PEER_STA;
+	} else {
+		sta_num = sta_info->count;
+	}
+
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
+	}
+
+	priv = hdd_request_priv(request);
+
+	priv->peer_sta_ext_info.sta_num = sta_num;
+	qdf_mem_copy(&priv->peer_sta_ext_info.info,
+		     sta_info->info,
+		     sta_num * sizeof(sta_info->info[0]));
+
+	hdd_request_complete(request);
+	hdd_request_put(request);
+}
+
+int wlan_hdd_get_peer_info(struct hdd_adapter *adapter,
+			   struct qdf_mac_addr macaddress,
+			   struct sir_peer_info_ext *peer_info_ext)
+{
+	QDF_STATUS status;
+	void *cookie;
+	int ret;
+	struct sir_peer_info_ext_req peer_info_req;
+	struct hdd_request *request;
+	struct peer_info_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
+
+	if (!adapter) {
+		hdd_err("adapter is NULL");
+		return -EFAULT;
+	}
+
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+
+	cookie = hdd_request_cookie(request);
+	priv = hdd_request_priv(request);
+
+	qdf_mem_copy(&peer_info_req.peer_macaddr, &macaddress,
+		     QDF_MAC_ADDR_SIZE);
+	peer_info_req.sessionid = adapter->session_id;
+	peer_info_req.reset_after_request = 0;
+	status = sme_get_peer_info_ext(WLAN_HDD_GET_HAL_CTX(adapter),
+				       &peer_info_req,
+				       cookie,
+				       wlan_hdd_get_peer_info_cb);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Unable to retrieve statistics for peer info");
+		ret = -EFAULT;
+	} else {
+		ret = hdd_request_wait_for_response(request);
+		if (ret) {
+			hdd_err("SME timed out while retrieving peer info");
+			ret = -EFAULT;
+		} else {
+			/* only support one peer by now */
+			*peer_info_ext = priv->peer_sta_ext_info.info[0];
+			ret = 0;
+		}
+	}
+
+	hdd_request_put(request);
+
+	return ret;
+}
+
+struct class_a_stats {
+	tCsrGlobalClassAStatsInfo class_a_stats;
+};
+
+/**
+ * hdd_get_class_a_statistics_cb() - Get Class A stats callback function
+ * @stats: pointer to Class A stats
+ * @context: user context originally registered with SME (always the
+ *	cookie from the request context)
+ *
+ * Return: None
+ */
+static void hdd_get_class_a_statistics_cb(void *stats, void *context)
+{
+	struct hdd_request *request;
+	struct class_a_stats *priv;
+	tCsrGlobalClassAStatsInfo *returned_stats;
+
+	hdd_enter();
+	if ((NULL == stats) || (NULL == context)) {
+		hdd_err("Bad param, stats [%pK] context [%pK]",
+			stats, context);
+		return;
+	}
+
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
+	}
+
+	returned_stats = stats;
+	priv = hdd_request_priv(request);
+	priv->class_a_stats = *returned_stats;
+	hdd_request_complete(request);
+	hdd_request_put(request);
+	hdd_exit();
+}
+
+QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *adapter)
+{
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	QDF_STATUS hstatus;
+	int ret;
+	void *cookie;
+	struct hdd_request *request;
+	struct class_a_stats *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
+
+	if (NULL == adapter) {
+		hdd_err("adapter is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
+		hdd_debug("Recovery in Progress. State: 0x%x Ignore!!!",
+			 cds_get_driver_state());
+		return QDF_STATUS_SUCCESS;
+	}
+
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return QDF_STATUS_E_NOMEM;
+	}
+	cookie = hdd_request_cookie(request);
+
+	/* query only for Class A statistics (which include link speed) */
+	hstatus = sme_get_statistics(WLAN_HDD_GET_HAL_CTX(adapter),
+				     eCSR_HDD, SME_GLOBAL_CLASSA_STATS,
+				     hdd_get_class_a_statistics_cb,
+				     sta_ctx->conn_info.staId[0],
+				     cookie, adapter->session_id);
+	if (QDF_STATUS_SUCCESS != hstatus) {
+		hdd_warn("Unable to retrieve Class A statistics");
+		goto return_cached_results;
+	}
+
+	/* request was sent -- wait for the response */
+	ret = hdd_request_wait_for_response(request);
+	if (ret) {
+		hdd_warn("SME timed out while retrieving Class A statistics");
+		goto return_cached_results;
+	}
+
+	/* update the adapter with the fresh results */
+	priv = hdd_request_priv(request);
+	adapter->hdd_stats.class_a_stat = priv->class_a_stats;
+
+return_cached_results:
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	hdd_request_put(request);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+struct station_stats {
+	tCsrSummaryStatsInfo summary_stats;
+	tCsrGlobalClassAStatsInfo class_a_stats;
+	struct csr_per_chain_rssi_stats_info per_chain_rssi_stats;
+};
+
+/**
+ * hdd_get_station_statistics_cb() - Get stats callback function
+ * @stats: pointer to combined station stats
+ * @context: user context originally registered with SME (always the
+ *	cookie from the request context)
+ *
+ * Return: None
+ */
+static void hdd_get_station_statistics_cb(void *stats, void *context)
+{
+	struct hdd_request *request;
+	struct station_stats *priv;
+	tCsrSummaryStatsInfo *summary_stats;
+	tCsrGlobalClassAStatsInfo *class_a_stats;
+	struct csr_per_chain_rssi_stats_info *per_chain_rssi_stats;
+
+	if ((NULL == stats) || (NULL == context)) {
+		hdd_err("Bad param, pStats [%pK] pContext [%pK]",
+			stats, context);
+		return;
+	}
+
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
+	}
+
+	summary_stats = (tCsrSummaryStatsInfo *) stats;
+	class_a_stats = (tCsrGlobalClassAStatsInfo *) (summary_stats + 1);
+	per_chain_rssi_stats = (struct csr_per_chain_rssi_stats_info *)
+				(class_a_stats + 1);
+	priv = hdd_request_priv(request);
+
+	/* copy over the stats. do so as a struct copy */
+	priv->summary_stats = *summary_stats;
+	priv->class_a_stats = *class_a_stats;
+	priv->per_chain_rssi_stats = *per_chain_rssi_stats;
+
+	hdd_request_complete(request);
+	hdd_request_put(request);
+}
+
+QDF_STATUS wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
+{
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	QDF_STATUS status;
+	int errno;
+	void *cookie;
+	struct hdd_request *request;
+	struct station_stats *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
+
+	if (NULL == adapter) {
+		hdd_err("adapter is NULL");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return QDF_STATUS_E_NOMEM;
+	}
+	cookie = hdd_request_cookie(request);
+
+	/* query only for Summary & Class A statistics */
+	status = sme_get_statistics(WLAN_HDD_GET_HAL_CTX(adapter),
+				    eCSR_HDD,
+				    SME_SUMMARY_STATS |
+					    SME_GLOBAL_CLASSA_STATS |
+					    SME_PER_CHAIN_RSSI_STATS,
+				    hdd_get_station_statistics_cb,
+				    sta_ctx->conn_info.staId[0],
+				    cookie,
+				    adapter->session_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to retrieve statistics, status %d", status);
+		goto put_request;
+	}
+
+	/* request was sent -- wait for the response */
+	errno = hdd_request_wait_for_response(request);
+	if (errno) {
+		hdd_err("Failed to wait for statistics, errno %d", errno);
+		goto put_request;
+	}
+
+	/* update the adapter with the fresh results */
+	priv = hdd_request_priv(request);
+	adapter->hdd_stats.summary_stat = priv->summary_stats;
+	adapter->hdd_stats.class_a_stat = priv->class_a_stats;
+	adapter->hdd_stats.per_chain_rssi_stats = priv->per_chain_rssi_stats;
+
+put_request:
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	hdd_request_put(request);
+
+	/* either callback updated adapter stats or it has cached data */
+	return QDF_STATUS_SUCCESS;
+}
+
+struct temperature_priv {
+	int temperature;
+};
+
+/**
+ * hdd_get_temperature_cb() - "Get Temperature" callback function
+ * @temperature: measured temperature
+ * @context: callback context
+ *
+ * This function is passed to sme_get_temperature() as the callback
+ * function to be invoked when the temperature measurement is
+ * available.
+ *
+ * Return: None
+ */
+static void hdd_get_temperature_cb(int temperature, void *context)
+{
+	struct hdd_request *request;
+	struct temperature_priv *priv;
+
+	hdd_enter();
+
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
+	}
+
+	priv = hdd_request_priv(request);
+	priv->temperature = temperature;
+	hdd_request_complete(request);
+	hdd_request_put(request);
+	hdd_exit();
+}
+
+int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature)
+{
+	QDF_STATUS status;
+	int ret;
+	void *cookie;
+	struct hdd_request *request;
+	struct temperature_priv *priv;
+	static const struct hdd_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
+
+	hdd_enter();
+	if (NULL == adapter) {
+		hdd_err("adapter is NULL");
+		return -EPERM;
+	}
+
+	request = hdd_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	cookie = hdd_request_cookie(request);
+	status = sme_get_temperature(WLAN_HDD_GET_HAL_CTX(adapter),
+				     cookie, hdd_get_temperature_cb);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Unable to retrieve temperature");
+	} else {
+		ret = hdd_request_wait_for_response(request);
+		if (ret) {
+			hdd_err("SME timed out while retrieving temperature");
+		} else {
+			/* update the adapter with the fresh results */
+			priv = hdd_request_priv(request);
+			if (priv->temperature)
+				adapter->temperature = priv->temperature;
+		}
+	}
+
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	hdd_request_put(request);
+
+	*temperature = adapter->temperature;
+	hdd_exit();
+	return 0;
+}

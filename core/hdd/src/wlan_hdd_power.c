@@ -64,6 +64,7 @@
 #include <linux/inetdevice.h>
 #include <wlan_hdd_cfg.h>
 #include <wlan_hdd_scan.h>
+#include <wlan_hdd_stats.h>
 #include <wlan_hdd_cfg80211.h>
 #include <net/addrconf.h>
 #include <wlan_hdd_lpass.h>
