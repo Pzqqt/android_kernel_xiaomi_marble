@@ -1559,7 +1559,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.HeartbeatThresh24 = 40;
 	pMac->roam.configParam.HeartbeatThresh50 = 40;
 	pMac->roam.configParam.Is11dSupportEnabled = false;
-	pMac->roam.configParam.Is11dSupportEnabledOriginal = false;
 	pMac->roam.configParam.Is11eSupportEnabled = true;
 	pMac->roam.configParam.Is11hSupportEnabled = true;
 	pMac->roam.configParam.RTSThreshold = 2346;
@@ -2638,8 +2637,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->FragmentationThreshold;
 		pMac->roam.configParam.Is11dSupportEnabled =
 			pParam->Is11dSupportEnabled;
-		pMac->roam.configParam.Is11dSupportEnabledOriginal =
-			pParam->Is11dSupportEnabled;
 		pMac->roam.configParam.Is11hSupportEnabled =
 			pParam->Is11hSupportEnabled;
 
@@ -3199,8 +3196,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->Is11eSupportEnabled = cfg_params->Is11eSupportEnabled;
 	pParam->FragmentationThreshold = cfg_params->FragmentationThreshold;
 	pParam->Is11dSupportEnabled = cfg_params->Is11dSupportEnabled;
-	pParam->Is11dSupportEnabledOriginal =
-		cfg_params->Is11dSupportEnabledOriginal;
 	pParam->Is11hSupportEnabled = cfg_params->Is11hSupportEnabled;
 	pParam->channelBondingMode24GHz = csr_convert_phy_cb_state_to_ini_value(
 					cfg_params->channelBondingMode24GHz);

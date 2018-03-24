@@ -1093,7 +1093,6 @@ typedef struct tagCsrConfigParam {
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool Is11dSupportEnabled;
-	bool Is11dSupportEnabledOriginal;
 	bool Is11hSupportEnabled;
 	bool shortSlotTime;
 	bool ProprietaryRatesEnabled;
