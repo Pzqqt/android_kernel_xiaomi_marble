@@ -668,7 +668,6 @@ struct csr_scanstruct {
 	 * will use the most popular one (max count)
 	 */
 	uint8_t countryCodeElected[WNI_CFG_COUNTRY_CODE_LEN];
-	uint16_t nBssLimit;     /* the maximum number of BSS in scan cache */
 	/*
 	 * channelPowerInfoList24 has been seen corrupted. Set this flag to true
 	 * trying to detect when it happens. Adding this into code because we

@@ -82,8 +82,6 @@
 
 #define PCL_ADVANTAGE 30
 #define PCL_RSSI_THRESHOLD -75
-#define CSR_SCAN_IS_OVER_BSS_LIMIT(pMac)  \
-	((pMac)->scan.nBssLimit <= (csr_ll_count(&(pMac)->scan.scanResultList)))
 
 static void csr_set_cfg_valid_channel_list(tpAniSirGlobal pMac, uint8_t
 					*pChannelList, uint8_t NumChannels);
