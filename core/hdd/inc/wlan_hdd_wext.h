@@ -321,8 +321,6 @@ int hdd_set_11ax_rate(struct hdd_adapter *adapter, int value,
  */
 int hdd_set_peer_rate(struct hdd_adapter *adapter, int value);
 
-void wlan_hdd_change_country_code_callback(void *adapter);
-
 int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			    int new_phymode, struct hdd_context *phddctx);
 

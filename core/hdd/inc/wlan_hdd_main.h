@@ -1150,9 +1150,6 @@ struct hdd_adapter {
 
 	struct completion roaming_comp_var;
 
-	/** Completion of change country code */
-	struct completion change_country_code;
-
 	/* completion variable for Linkup Event */
 	struct completion linkup_event_var;
 

@@ -317,7 +317,6 @@ int wlan_hdd_cfg80211_send_tdls_discover_req(struct wiphy *wiphy,
 					     struct net_device *dev, u8 *peer);
 #endif
 
-void *wlan_hdd_change_country_code_cb(void *adapter);
 void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t operationChannel,
 		       struct ch_params *ch_params);
 

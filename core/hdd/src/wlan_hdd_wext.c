@@ -3861,30 +3861,6 @@ static int iw_get_linkspeed(struct net_device *dev,
 }
 
 /**
- * wlan_hdd_change_country_code_callback() - Change country code callback
- * @context: opaque context originally passed to SME.  All functions
- * which use this callback pass the adapter upon which the country
- * code change is active
- *
- * This function is registered as the callback function when
- * sme_change_country_code() is invoked.  Callers of
- * sme_change_country_code() subsequently wait for the adapter's
- * @change_country_code completion variable, so all this function
- * needs to do is set that completion variable so that execution can
- * continue.
- *
- * Return: none
- */
-void wlan_hdd_change_country_code_callback(void *context)
-{
-
-	struct hdd_adapter *adapter = context;
-
-	if (adapter && (WLAN_HDD_ADAPTER_MAGIC == adapter->magic))
-		complete(&adapter->change_country_code);
-}
-
-/**
  * wlan_hdd_update_phymode() - handle change in PHY mode
  * @net: device upon which PHY mode change was received
  * @hal: umac handle for the driver

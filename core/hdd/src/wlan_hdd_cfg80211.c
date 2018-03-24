@@ -16018,17 +16018,6 @@ static int wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 	return ret;
 }
 
-/* FUNCTION: wlan_hdd_change_country_code_cd
- *  to wait for contry code completion
- */
-void *wlan_hdd_change_country_code_cb(void *adapter)
-{
-	struct hdd_adapter *call_back_adapter = adapter;
-
-	complete(&call_back_adapter->change_country_code);
-	return NULL;
-}
-
 /**
  * __wlan_hdd_cfg80211_change_iface() - change interface cfg80211 op
  * @wiphy: Pointer to the wiphy structure
