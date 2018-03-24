@@ -3729,7 +3729,6 @@ static QDF_STATUS csr_init11d_info(tpAniSirGlobal pMac, tCsr11dinfo *ps11dinfo)
 	tSirMacChanInfo *pChanInfoStart;
 	bool applyConfig = true;
 
-	pMac->scan.currentCountryRSSI = -128;
 	if (!ps11dinfo)
 		return status;
 
@@ -5502,14 +5501,6 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 		if ((wlan_reg_11d_enabled_on_host(pMac->psoc)) && pIes) {
 			if (!pIes->Country.present)
 				csr_apply_channel_power_info_wrapper(pMac);
-			else
-				/* Let's also update the below to make sure
-				 * we don't update CC while connected to an
-				 * AP which is advertising some CC
-				 */
-				qdf_mem_copy(pMac->scan.currentCountryBssid.
-					bytes, pBssDesc->bssId,
-					     sizeof(tSirMacAddr));
 		}
 	}
 	/* Qos */

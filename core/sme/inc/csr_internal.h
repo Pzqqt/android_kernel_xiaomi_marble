@@ -666,10 +666,6 @@ struct csr_scanstruct {
 	v_REGDOMAIN_t domainIdDefault;  /* default regulatory domain */
 	v_REGDOMAIN_t domainIdCurrent;  /* current regulatory domain */
 
-	/* Bssid for current country code */
-	struct qdf_mac_addr currentCountryBssid;
-
-	int8_t currentCountryRSSI;      /* RSSI for current country code */
 	bool fCancelIdleScan;
 	uint8_t countryCodeCount;
 	/* counts for various advertized country codes */
