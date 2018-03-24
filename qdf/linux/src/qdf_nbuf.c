@@ -4010,6 +4010,10 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 
 	/* IEEE80211_RADIOTAP_FLAGS u8 */
 	rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_FLAGS);
+
+	if (rx_status->rs_fcs_err)
+		rx_status->rtap_flags |= IEEE80211_RADIOTAP_F_BADFCS;
+
 	rtap_buf[rtap_len] = rx_status->rtap_flags;
 	rtap_len += 1;
 
