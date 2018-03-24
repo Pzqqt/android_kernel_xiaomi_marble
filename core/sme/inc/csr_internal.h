@@ -666,7 +666,6 @@ struct csr_scanstruct {
 	v_REGDOMAIN_t domainIdDefault;  /* default regulatory domain */
 	v_REGDOMAIN_t domainIdCurrent;  /* current regulatory domain */
 
-	bool fCancelIdleScan;
 	uint8_t countryCodeCount;
 	/* counts for various advertized country codes */
 	struct csr_votes11d votes11d[CSR_MAX_NUM_COUNTRY_CODE];
@@ -675,8 +674,6 @@ struct csr_scanstruct {
 	 * will use the most popular one (max count)
 	 */
 	uint8_t countryCodeElected[WNI_CFG_COUNTRY_CODE_LEN];
-	bool fRestartIdleScan;
-	uint32_t nIdleScanTimeGap;
 	/* keep a track of channels to be scnned while in traffic condition */
 	struct csr_oschannel_mask osScanChannelMask;
 	uint16_t nBssLimit;     /* the maximum number of BSS in scan cache */

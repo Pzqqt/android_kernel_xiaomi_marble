@@ -1156,8 +1156,6 @@ QDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType)
 		csr_roam_close_session(pMac, sessionId, true);
 
 	ucfg_scan_set_enable(pMac->psoc, false);
-	pMac->scan.fCancelIdleScan = false;
-	pMac->scan.fRestartIdleScan = false;
 
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
 		csr_neighbor_roam_close(pMac, sessionId);
