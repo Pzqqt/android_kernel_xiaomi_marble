@@ -31,14 +31,6 @@
 #ifndef _DEV_OL_DEFINES_H
 #define _DEV_OL_DEFINES_H
 
-/**
- * @brief Opaque handle of wmi structure
- */
-struct wmi_unified;
-typedef struct wmi_unified *wmi_unified_t;
-
-typedef void *ol_scn_t;
-
  /**
   * ol_txrx_pdev_handle - opaque handle for txrx physical device
   * object
