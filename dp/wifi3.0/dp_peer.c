@@ -969,16 +969,18 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
 		peer = dp_peer_find_add_id(soc, peer_mac_addr, peer_id,
 					hw_peer_id, vdev_id);
 
-	qdf_assert_always(peer->vdev);
-	/*
-	 * For every peer MAp message search and set if bss_peer
-	 */
-	if (!(qdf_mem_cmp(peer->mac_addr.raw, peer->vdev->mac_addr.raw,
-					DP_MAC_ADDR_LEN))) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+	if (peer) {
+		qdf_assert_always(peer->vdev);
+		/*
+		 * For every peer MAp message search and set if bss_peer
+		 */
+		if (!(qdf_mem_cmp(peer->mac_addr.raw, peer->vdev->mac_addr.raw,
+				 DP_MAC_ADDR_LEN))) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 				"vdev bss_peer!!!!");
-		peer->bss_peer = 1;
-		peer->vdev->vap_bss_peer = peer;
+			peer->bss_peer = 1;
+			peer->vdev->vap_bss_peer = peer;
+		}
 	}
 
 	dp_peer_map_ast(soc, peer, peer_mac_addr,
