@@ -1823,20 +1823,6 @@ typedef struct sAniGetSnrReq {
 	int8_t snr;
 } tAniGetSnrReq, *tpAniGetSnrReq;
 
-/* Change country code request MSG structure */
-typedef struct sAniChangeCountryCodeReq {
-	/* Common for all types are requests */
-	uint16_t msgType;       /* message type is same as the request type */
-	uint16_t msgLen;        /* length of the entire request */
-	uint8_t countryCode[WNI_CFG_COUNTRY_CODE_LEN]; /* 3 char country code */
-	bool countryFromUserSpace;
-	bool sendRegHint;   /* true if we want to send hint to NL80211 */
-	void *changeCCCallback;
-	void *pDevContext;      /* device context */
-	void *p_cds_context;    /* cds context */
-
-} tAniChangeCountryCodeReq, *tpAniChangeCountryCodeReq;
-
 /**
  * struct ani_scan_req - Scan request
  * @msg_type: Message type

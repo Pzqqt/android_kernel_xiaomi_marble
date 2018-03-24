@@ -71,9 +71,6 @@ static tSelfRecoveryStats g_self_recovery_stats;
 
 static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac);
 
-static QDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac,
-						void *pMsgBuf);
-
 static void sme_disconnect_connected_sessions(tpAniSirGlobal pMac);
 
 static QDF_STATUS sme_handle_generic_change_country_code(tpAniSirGlobal pMac,
@@ -2017,15 +2014,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 	case eWNI_SME_DEL_STA_SELF_RSP:
 		if (pMsg->bodyptr) {
 			status = csr_process_del_sta_session_rsp(pMac,
-								pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
-		break;
-	case eWNI_SME_CHANGE_COUNTRY_CODE:
-		if (pMsg->bodyptr) {
-			status = sme_handle_change_country_code((void *)pMac,
 								pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
 		} else {
@@ -5671,128 +5659,6 @@ void sme_set_cc_src(tHalHandle hHal, enum country_src cc_src)
 
 	sme_debug("Country source is %s",
 		  sme_reg_hint_to_str(cc_src));
-}
-/*
- * sme_handle_change_country_code() -
- *  Change Country code, Reg Domain and channel list
- *
- * Details Country Code Priority
- * If Supplicant country code is priority than 11d is disabled.
- * If 11D is enabled, we update the country code after every scan.
- * Hence when Supplicant country code is priority, we don't need 11D info.
- * Country code from Supplicant is set as current courtry code.
- * User can send reset command XX (instead of country code) to reset the
- * country code to default values. If 11D is priority,
- * Than Supplicant country code code is set to default code. But 11D code
- * is set as current country code
- *
- * pMac - The handle returned by mac_open.
- * pMsgBuf - MSG Buffer
- * Return QDF_STATUS
- */
-static QDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac,
-						void *pMsgBuf)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tAniChangeCountryCodeReq *pMsg;
-	v_REGDOMAIN_t domainIdIoctl;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	static uint8_t default_country[CDS_COUNTRY_CODE_LEN + 1];
-
-	pMsg = (tAniChangeCountryCodeReq *) pMsgBuf;
-	/*
-	 * if the reset Supplicant country code command is triggered,
-	 * enable 11D, reset the country code and return
-	 */
-	if (!qdf_mem_cmp(pMsg->countryCode, SME_INVALID_COUNTRY_CODE, 2)) {
-		pMac->roam.configParam.Is11dSupportEnabled =
-			pMac->roam.configParam.Is11dSupportEnabledOriginal;
-
-		qdf_status = ucfg_reg_get_default_country(pMac->psoc,
-							  default_country);
-
-		/* read the country code and use it */
-		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			qdf_mem_copy(pMsg->countryCode,
-				     default_country,
-				     WNI_CFG_COUNTRY_CODE_LEN);
-		} else {
-			status = QDF_STATUS_E_FAILURE;
-			return status;
-		}
-		/*
-		 * Update the 11d country to default country so that when
-		 * callback is received for this default country, driver will
-		 * not disable the 11d taking it as valid country by user.
-		 */
-		sme_debug(
-			"Set default country code (%c%c) as invalid country received",
-			pMsg->countryCode[0], pMsg->countryCode[1]);
-			qdf_mem_copy(pMac->scan.countryCode11d,
-			pMsg->countryCode,
-			WNI_CFG_COUNTRY_CODE_LEN);
-	} else {
-		/* if Supplicant country code has priority, disable 11d */
-		if (pMac->roam.configParam.fSupplicantCountryCodeHasPriority &&
-		    pMsg->countryFromUserSpace)
-			pMac->roam.configParam.Is11dSupportEnabled = false;
-	}
-
-	if (pMac->roam.configParam.Is11dSupportEnabled)
-		return QDF_STATUS_SUCCESS;
-
-	/* Set Current Country code and Current Regulatory domain */
-	status = csr_set_country_code(pMac, pMsg->countryCode);
-	if (QDF_STATUS_SUCCESS != status) {
-		/* Supplicant country code failed. So give 11D priority */
-		pMac->roam.configParam.Is11dSupportEnabled =
-			pMac->roam.configParam.Is11dSupportEnabledOriginal;
-		sme_err("Set Country Code Fail %d", status);
-		return status;
-	}
-
-	/* overwrite the defualt country code */
-	qdf_mem_copy(pMac->scan.countryCodeDefault,
-		     pMac->scan.countryCodeCurrent, WNI_CFG_COUNTRY_CODE_LEN);
-
-	/* Get Domain ID from country code */
-	status = csr_get_regulatory_domain_for_country(pMac,
-						  pMac->scan.countryCodeCurrent,
-						       (v_REGDOMAIN_t *) &
-						       domainIdIoctl,
-						       SOURCE_QUERY);
-	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("Fail to get regId %d", domainIdIoctl);
-		return status;
-	} else if (REGDOMAIN_WORLD == domainIdIoctl) {
-		/* Supplicant country code is invalid, so we are on world mode
-		 * now. So give 11D chance to update
-		 */
-		pMac->roam.configParam.Is11dSupportEnabled =
-			pMac->roam.configParam.Is11dSupportEnabledOriginal;
-		sme_warn("Country Code unrecognized by driver");
-	}
-
-	if (domainIdIoctl >= REGDOMAIN_COUNT) {
-		sme_err("Invalid regId %d", domainIdIoctl);
-		return QDF_STATUS_E_FAILURE;
-	} else {
-		/* if 11d has priority, clear currentCountryBssid & countryCode11d to get */
-		/* set again if we find AP with 11d info during scan */
-		if (!pMac->roam.configParam.fSupplicantCountryCodeHasPriority) {
-			sme_warn("Clearing currentCountryBssid, countryCode11d");
-			qdf_mem_zero(&pMac->scan.currentCountryBssid,
-				     sizeof(struct qdf_mac_addr));
-			qdf_mem_zero(pMac->scan.countryCode11d,
-				     sizeof(pMac->scan.countryCode11d));
-		}
-	}
-
-	if (pMsg->changeCCCallback)
-		((tSmeChangeCountryCallback) (pMsg->changeCCCallback))((void *)
-							pMsg->pDevContext);
-
-	return QDF_STATUS_SUCCESS;
 }
 
 /**

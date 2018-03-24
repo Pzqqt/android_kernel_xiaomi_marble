@@ -509,7 +509,6 @@ bool sme_is11d_supported(tHalHandle hHal);
 bool sme_is11h_supported(tHalHandle hHal);
 bool sme_is_wmm_supported(tHalHandle hHal);
 
-typedef void (*tSmeChangeCountryCallback)(void *pContext);
 QDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 					   uint8_t *pCountry);
 
