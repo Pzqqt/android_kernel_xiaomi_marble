@@ -531,8 +531,6 @@ typedef struct sAniSirLim {
 	/* / Previous MLM State */
 	tLimMlmStates gLimPrevMlmState;
 
-	/* LIM to HAL SCAN Management Message Interface states */
-	tLimLimHalScanState gLimHalScanState;
 /* WLAN_SUSPEND_LINK Related */
 	SUSPEND_RESUME_LINK_CALLBACK gpLimSuspendCallback;
 	uint32_t *gpLimSuspendData;

@@ -209,25 +209,6 @@ typedef void (*SUSPEND_RESUME_LINK_CALLBACK)(tpAniSirGlobal pMac,
 					     QDF_STATUS status,
 					     uint32_t *data);
 
-/* LIM to HAL SCAN Management Message Interface states */
-typedef enum eLimHalScanState {
-	eLIM_HAL_IDLE_SCAN_STATE,
-	eLIM_HAL_INIT_SCAN_WAIT_STATE,
-	eLIM_HAL_START_SCAN_WAIT_STATE,
-	eLIM_HAL_END_SCAN_WAIT_STATE,
-	eLIM_HAL_FINISH_SCAN_WAIT_STATE,
-	eLIM_HAL_INIT_LEARN_WAIT_STATE,
-	eLIM_HAL_START_LEARN_WAIT_STATE,
-	eLIM_HAL_END_LEARN_WAIT_STATE,
-	eLIM_HAL_FINISH_LEARN_WAIT_STATE,
-	eLIM_HAL_SCANNING_STATE,
-/* WLAN_SUSPEND_LINK Related */
-	eLIM_HAL_SUSPEND_LINK_WAIT_STATE,
-	eLIM_HAL_SUSPEND_LINK_STATE,
-	eLIM_HAL_RESUME_LINK_WAIT_STATE,
-/* end WLAN_SUSPEND_LINK Related */
-} tLimLimHalScanState;
-
 /* MLM Req/Cnf structure definitions */
 typedef struct sLimMlmAuthReq {
 	tSirMacAddr peerMacAddr;

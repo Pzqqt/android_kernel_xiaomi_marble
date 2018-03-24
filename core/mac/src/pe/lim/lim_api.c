@@ -185,9 +185,6 @@ static void __lim_init_states(tpAniSirGlobal pMac)
 	/* / Previous MLM State */
 	pMac->lim.gLimPrevMlmState = eLIM_MLM_OFFLINE_STATE;
 
-	/* LIM to HAL SCAN Management Message Interface states */
-	pMac->lim.gLimHalScanState = eLIM_HAL_IDLE_SCAN_STATE;
-
 	/**
 	 * Initialize state to eLIM_SME_OFFLINE_STATE
 	 */
@@ -736,8 +733,6 @@ static void lim_state_info_dump(char **buf_ptr, uint16_t *size)
 		mac->lim.gLimSystemInScanLearnMode);
 	len += qdf_scnprintf(buf + len, *size - len,
 		"\n ProcessDefdMsgs: %d", mac->lim.gLimProcessDefdMsgs);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n gLimHalScanState: %d", mac->lim.gLimHalScanState);
 
 	*size -= len;
 	*buf_ptr += len;

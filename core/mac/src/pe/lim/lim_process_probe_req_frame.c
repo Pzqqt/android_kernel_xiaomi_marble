@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -356,8 +356,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	 * come to idle state.
 	 */
 	if ((session->pePersona == QDF_P2P_GO_MODE) &&
-		((mac_ctx->lim.gpLimRemainOnChanReq) ||
-		 (mac_ctx->lim.gLimHalScanState != eLIM_HAL_IDLE_SCAN_STATE))) {
+	    mac_ctx->lim.gpLimRemainOnChanReq) {
 		pe_debug("GO is scanning, don't send probersp on diff chnl");
 		return;
 	}
