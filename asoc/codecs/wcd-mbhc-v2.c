@@ -959,8 +959,11 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 		mbhc->extn_cable_hph_rem = false;
 		wcd_mbhc_report_plug(mbhc, 0, jack_type);
 
-		if (mbhc->mbhc_cfg->enable_usbc_analog)
+		if (mbhc->mbhc_cfg->enable_usbc_analog) {
 			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0);
+			if (mbhc->mbhc_cb->clk_setup)
+				mbhc->mbhc_cb->clk_setup(mbhc->codec, false);
+		}
 
 	} else if (!detection_type) {
 		/* Disable external voltage source to micbias if present */
@@ -1342,8 +1345,12 @@ static int wcd_mbhc_initialise(struct wcd_mbhc *mbhc)
 	/* enable bias */
 	mbhc->mbhc_cb->mbhc_bias(codec, true);
 	/* enable MBHC clock */
-	if (mbhc->mbhc_cb->clk_setup)
-		mbhc->mbhc_cb->clk_setup(codec, true);
+	if (mbhc->mbhc_cb->clk_setup) {
+		if (mbhc->mbhc_cfg->enable_usbc_analog)
+			mbhc->mbhc_cb->clk_setup(codec, false);
+		else
+			mbhc->mbhc_cb->clk_setup(codec, true);
+	}
 
 	/* program HS_VREF value */
 	wcd_program_hs_vref(mbhc);
@@ -1505,6 +1512,8 @@ static int wcd_mbhc_usbc_ana_event_handler(struct notifier_block *nb,
 	dev_dbg(mbhc->codec->dev, "%s: mode = %lu\n", __func__, mode);
 
 	if (mode == POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER) {
+		if (mbhc->mbhc_cb->clk_setup)
+			mbhc->mbhc_cb->clk_setup(mbhc->codec, true);
 		/* insertion detected, enable L_DET_EN */
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 1);
 	}
