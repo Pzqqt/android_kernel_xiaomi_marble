@@ -106,11 +106,6 @@ static void __lim_init_scan_vars(tpAniSirGlobal pMac)
 	pMac->lim.abortScan = 0;
 	qdf_mem_set(&pMac->lim.scanChnInfo, sizeof(tLimScanChnInfo), 0);
 	qdf_mem_set(&pMac->lim.dfschannelList, sizeof(tSirDFSChannelList), 0);
-
-/* WLAN_SUSPEND_LINK Related */
-	pMac->lim.gpLimSuspendCallback = NULL;
-	pMac->lim.gpLimResumeCallback = NULL;
-/* end WLAN_SUSPEND_LINK Related */
 }
 
 static void __lim_init_bss_vars(tpAniSirGlobal pMac)

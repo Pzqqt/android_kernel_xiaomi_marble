@@ -531,12 +531,6 @@ typedef struct sAniSirLim {
 	/* / Previous MLM State */
 	tLimMlmStates gLimPrevMlmState;
 
-/* WLAN_SUSPEND_LINK Related */
-	SUSPEND_RESUME_LINK_CALLBACK gpLimSuspendCallback;
-	uint32_t *gpLimSuspendData;
-	SUSPEND_RESUME_LINK_CALLBACK gpLimResumeCallback;
-	uint32_t *gpLimResumeData;
-/* end WLAN_SUSPEND_LINK Related */
 	/* Can be set to invalid channel. If it is invalid, HAL */
 	/* should move to previous valid channel or stay in the */
 	/* current channel. CB state goes along with channel to resume to */
