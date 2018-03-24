@@ -7304,6 +7304,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			"qcom,us-euro-gpios");
 		wcd_mbhc_cfg.swap_gnd_mic = msm_swap_gnd_mic;
 	}
+
+	if (wcd_mbhc_cfg.enable_usbc_analog)
+		wcd_mbhc_cfg.swap_gnd_mic = msm_usbc_swap_gnd_mic;
+
 	pdata->fsa_handle = of_parse_phandle(pdev->dev.of_node,
 					     "fsa4480-i2c-handle", 0);
 	if (!pdata->fsa_handle)
