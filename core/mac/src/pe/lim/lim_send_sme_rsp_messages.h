@@ -64,7 +64,6 @@ void lim_send_sme_wm_status_change_ntf(tpAniSirGlobal, tSirSmeStatusChangeCode,
 				       uint32_t *, uint16_t, uint8_t);
 void lim_send_sme_set_context_rsp(tpAniSirGlobal, struct qdf_mac_addr, uint16_t,
 				  tSirResultCodes, tpPESession, uint8_t, uint16_t);
-void lim_send_sme_neighbor_bss_ind(tpAniSirGlobal, tLimScanResultNode *);
 void lim_handle_delete_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *MsgQ);
 void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 				struct scheduler_msg *msg);

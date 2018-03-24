@@ -328,8 +328,6 @@ char *lim_msg_str(uint32_t msgType)
 		return "eWNI_SME_STOP_BSS_REQ";
 	case eWNI_SME_STOP_BSS_RSP:
 		return "eWNI_SME_STOP_BSS_RSP";
-	case eWNI_SME_NEIGHBOR_BSS_IND:
-		return "eWNI_SME_NEIGHBOR_BSS_IND";
 	case eWNI_SME_DEAUTH_CNF:
 		return "eWNI_SME_DEAUTH_CNF";
 	case eWNI_SME_ADDTS_REQ:

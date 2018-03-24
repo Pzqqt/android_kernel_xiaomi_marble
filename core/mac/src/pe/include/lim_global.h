@@ -223,12 +223,6 @@ typedef struct sLimMlmJoinReq {
 	 */
 } tLimMlmJoinReq, *tpLimMlmJoinReq;
 
-typedef struct tLimScanResultNode tLimScanResultNode;
-struct tLimScanResultNode {
-	tLimScanResultNode *next;
-	tSirBssDescription bssDescription;
-};
-
 #ifdef FEATURE_OEM_DATA_SUPPORT
 
 /* OEM Data related structure definitions */
