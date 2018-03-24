@@ -408,32 +408,6 @@ typedef void (*ol_txrx_vdev_peer_remove_cb)(void *handle, uint8_t *bssid,
 		uint8_t vdev_id, void *peer);
 
 /**
- * ol_txrx_tx_flow_control_fp - tx flow control notification
- * function from txrx to OS shim
- * @osif_dev - the virtual device's OS shim object
- * @tx_resume - tx os q should be resumed or not
- */
-typedef void (*ol_txrx_tx_flow_control_fp)(void *osif_dev, bool tx_resume);
-
-/**
- * ol_txrx_tx_flow_control_is_pause_fp - is tx paused by flow control
- * function from txrx to OS shim
- * @osif_dev - the virtual device's OS shim object
- *
- * Return: true if tx is paused by flow control
- */
-typedef bool (*ol_txrx_tx_flow_control_is_pause_fp)(void *osif_dev);
-
-/**
- * ol_txrx_tx_flow_control_fp - tx flow control notification
- * function from txrx to OS shim
- * @osif_dev - the virtual device's OS shim object
- * @tx_resume - tx os q should be resumed or not
- */
-typedef void (*tx_flow_control_fp)(void *osif_dev,
-			 bool tx_resume);
-
-/**
  * @typedef tx_pause_callback
  * @brief OSIF function registered with the data path
  */
