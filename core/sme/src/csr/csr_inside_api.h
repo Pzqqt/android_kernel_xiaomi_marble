@@ -532,17 +532,6 @@ QDF_STATUS csr_get_country_code(tpAniSirGlobal pMac, uint8_t *pBuf,
 				uint8_t *pbLen);
 
 /*
- * csr_set_country_code() -
- * This function is to set the country code so channel/power setting matches
- * the countrycode and the domain it belongs to.
- *
- * pCountry - Caller allocated buffer with at least 3 bytes specifying the
- * country code
- * Return QDF_STATUS
- */
-QDF_STATUS csr_set_country_code(tpAniSirGlobal pMac, uint8_t *pCountry);
-
-/*
  * csr_get_regulatory_domain_for_country() -
  * This function is to get the regulatory domain for a country.
  * This function must be called after CFG is downloaded and all the band/mode

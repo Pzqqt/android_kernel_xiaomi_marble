@@ -1543,35 +1543,6 @@ void csr_clear_votes_for_country_info(tpAniSirGlobal pMac)
 		    sizeof(struct csr_votes11d) * CSR_MAX_NUM_COUNTRY_CODE, 0);
 }
 
-/**
- * csr_set_country_code() - Set country code
- * @pMac: main MAC data structure
- * @pCountry: ptr to Country Code
- *
- * This function sends the channel power info to firmware
- *
- * Return: none
- */
-QDF_STATUS csr_set_country_code(tpAniSirGlobal pMac, uint8_t *pCountry)
-{
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
-	v_REGDOMAIN_t domainId;
-
-	if (pCountry) {
-
-		status = csr_get_regulatory_domain_for_country(pMac, pCountry,
-							     &domainId,
-							     SOURCE_USERSPACE);
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			qdf_mem_copy(pMac->scan.countryCodeCurrent,
-				     pCountry,
-				     WNI_CFG_COUNTRY_CODE_LEN);
-			csr_set_cfg_country_code(pMac, pCountry);
-		}
-	}
-	return status;
-}
-
 /* caller allocated memory for pNumChn and pChnPowerInfo */
 /* As input, *pNumChn has the size of the array of pChnPowerInfo */
 /* Upon return, *pNumChn has the number of channels assigned. */
