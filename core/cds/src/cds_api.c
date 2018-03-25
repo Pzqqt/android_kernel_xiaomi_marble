@@ -303,6 +303,22 @@ cds_cfg_update_ac_specs_params(struct txrx_pdev_cfg_param_t *olcfg,
 	}
 }
 
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+static inline void
+cds_cdp_set_flow_control_params(struct cds_config_info *cds_cfg,
+				struct txrx_pdev_cfg_param_t *cdp_cfg)
+{
+	cdp_cfg->tx_flow_stop_queue_th = cds_cfg->tx_flow_stop_queue_th;
+	cdp_cfg->tx_flow_start_queue_offset =
+				 cds_cfg->tx_flow_start_queue_offset;
+}
+#else
+static inline void
+cds_cdp_set_flow_control_params(struct cds_config_info *cds_cfg,
+				struct txrx_pdev_cfg_param_t *cdp_cfg)
+{}
+#endif
+
 /**
  * cds_cdp_cfg_attach() - attach data path config module
  * @cds_cfg: generic platform level config instance
@@ -337,8 +353,9 @@ static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
 	cdp_cfg_set_flow_steering(soc, gp_cds_context->cfg_ctx,
 				 cds_cfg->flow_steering_enabled);
 
+	cds_cdp_set_flow_control_params(cds_cfg, &cdp_cfg);
 	cdp_cfg_set_flow_control_parameters(soc, gp_cds_context->cfg_ctx,
-			(void *)&cdp_cfg);
+					    (void *)&cdp_cfg);
 
 	/* adjust the cfg_ctx default value based on setting */
 	cdp_cfg_set_rx_fwd_disabled(soc, gp_cds_context->cfg_ctx,
