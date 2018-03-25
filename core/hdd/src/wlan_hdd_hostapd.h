@@ -128,7 +128,7 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
 			 uint16_t gen_ie_len, uint8_t *gen_ie);
 
 QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
-				    void *usrDataForCallback);
+				    void *context);
 /**
  * hdd_init_ap_mode() - to init the AP adaptor
  * @adapter: SAP/GO adapter

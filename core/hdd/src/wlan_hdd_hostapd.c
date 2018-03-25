@@ -834,21 +834,18 @@ static void hdd_clear_all_sta(struct hdd_adapter *adapter)
 		hdd_clear_sta(adapter, sta_id);
 }
 
-static int hdd_stop_bss_link(struct hdd_adapter *adapter,
-			     void *usrDataForCallback)
+static int hdd_stop_bss_link(struct hdd_adapter *adapter)
 {
-	struct net_device *dev;
-	struct hdd_context *hdd_ctx = NULL;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct hdd_context *hdd_ctx;
+	int errno;
+	QDF_STATUS status;
 
-	dev = (struct net_device *)usrDataForCallback;
 	hdd_enter();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	status = wlan_hdd_validate_context(hdd_ctx);
-
-	if (0 != status)
-		return status;
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
 
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
 		status = wlansap_stop_bss(
@@ -862,9 +859,10 @@ static int hdd_stop_bss_link(struct hdd_adapter *adapter,
 					adapter->session_id);
 		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
+		errno = (status == QDF_STATUS_SUCCESS) ? 0 : -EBUSY;
 	}
 	hdd_exit();
-	return (status == QDF_STATUS_SUCCESS) ? 0 : -EBUSY;
+	return errno;
 }
 
 /**
@@ -1625,7 +1623,7 @@ hdd_stop_sap_due_to_invalid_channel(struct work_struct *work)
 }
 
 QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
-				    void *usrDataForCallback)
+				    void *context)
 {
 	struct hdd_adapter *adapter;
 	struct hdd_ap_ctx *ap_ctx;
@@ -1661,9 +1659,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	tSap_StationDisassocCompleteEvent *disassoc_comp;
 	struct hdd_station_info *stainfo;
 
-	dev = (struct net_device *)usrDataForCallback;
+	dev = context;
 	if (!dev) {
-		hdd_err("usrDataForCallback is null");
+		hdd_err("context is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1767,8 +1765,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hdd_warn("Failed to register BC STA %d",
 				       qdf_status);
-				hdd_stop_bss_link(adapter,
-						  usrDataForCallback);
+				hdd_stop_bss_link(adapter);
 			}
 		}
 
@@ -2495,12 +2492,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		return QDF_STATUS_SUCCESS;
 
 	case eSAP_MAC_TRIG_STOP_BSS_EVENT:
-		qdf_status =
-			hdd_stop_bss_link(adapter, usrDataForCallback);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			hdd_warn("hdd_stop_bss_link failed %d",
-			       qdf_status);
-		}
+		ret = hdd_stop_bss_link(adapter);
+		if (ret)
+			hdd_warn("hdd_stop_bss_link failed %d", ret);
 		return QDF_STATUS_SUCCESS;
 
 	case eSAP_CHANNEL_CHANGE_EVENT:
