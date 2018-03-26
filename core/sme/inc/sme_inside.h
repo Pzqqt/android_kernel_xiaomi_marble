@@ -154,6 +154,8 @@ typedef struct s_tdls_cmd {
  * @session_id: Session ID
  * @set_hw_mode_cb: HDD nss update callback
  * @context: Adapter context
+ * @next_action: Action to be taken after nss update
+ * @reason: reason for nss update
  */
 struct s_nss_update_cmd {
 	uint32_t new_nss;
@@ -161,7 +163,7 @@ struct s_nss_update_cmd {
 	void *nss_update_cb;
 	void *context;
 	uint8_t next_action;
-	enum sir_conn_update_reason reason;
+	enum policy_mgr_conn_update_reason reason;
 };
 
 typedef struct tagSmeCmd {

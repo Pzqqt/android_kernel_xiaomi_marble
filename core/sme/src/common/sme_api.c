@@ -154,7 +154,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	bool found;
 	policy_mgr_pdev_set_hw_mode_cback callback = NULL;
 	struct sir_set_hw_mode_resp *param;
-	enum sir_conn_update_reason reason;
+	enum policy_mgr_conn_update_reason reason;
 	struct csr_roam_session *session;
 	uint32_t session_id;
 
@@ -219,7 +219,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 		goto end;
 	}
 	session = CSR_GET_SESSION(mac, session_id);
-	if (reason == SIR_UPDATE_REASON_HIDDEN_STA) {
+	if (reason == POLICY_MGR_UPDATE_REASON_HIDDEN_STA) {
 		/* In the case of hidden SSID, connection update
 		 * (set hw mode) is done after the scan with reason
 		 * code eCsrScanForSsid completes. The connect/failure

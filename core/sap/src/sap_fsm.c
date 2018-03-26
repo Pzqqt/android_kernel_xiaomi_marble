@@ -1098,7 +1098,7 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 					mac_ctx->psoc,
 					sap_context->sessionId,
 					sap_context->channel,
-					SIR_UPDATE_REASON_START_AP);
+					POLICY_MGR_UPDATE_REASON_START_AP);
 			if (QDF_IS_STATUS_ERROR(qdf_status))
 				return qdf_status;
 		}

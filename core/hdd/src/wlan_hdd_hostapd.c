@@ -8653,7 +8653,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 
 	status = policy_mgr_current_connections_update(hdd_ctx->hdd_psoc,
 			adapter->session_id, channel,
-			SIR_UPDATE_REASON_START_AP);
+			POLICY_MGR_UPDATE_REASON_START_AP);
 	if (QDF_STATUS_E_FAILURE == status) {
 		hdd_err("ERROR: connections update failed!!");
 		return -EINVAL;

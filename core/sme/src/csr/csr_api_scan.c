@@ -2061,7 +2061,7 @@ static void csr_handle_nxt_cmd(tpAniSirGlobal mac_ctx,
 	case eCsrNextCheckAllowConc:
 		ret = policy_mgr_current_connections_update(mac_ctx->psoc,
 					session_id, chan,
-					SIR_UPDATE_REASON_HIDDEN_STA);
+					POLICY_MGR_UPDATE_REASON_HIDDEN_STA);
 		sme_debug("chan: %d session: %d status: %d",
 					chan, session_id, ret);
 

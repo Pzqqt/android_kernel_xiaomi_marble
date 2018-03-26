@@ -8120,7 +8120,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 					HW_MODE_DBS_NONE,
 					HW_MODE_AGILE_DFS_NONE,
 					HW_MODE_SBS_NONE,
-					SIR_UPDATE_REASON_UT, PM_NOP);
+					POLICY_MGR_UPDATE_REASON_UT, PM_NOP);
 		} else if (apps_args[0] == 1) {
 			hdd_err("set hw mode for dual mac");
 			policy_mgr_pdev_set_hw_mode(hdd_ctx->hdd_psoc,
@@ -8131,7 +8131,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 					HW_MODE_DBS,
 					HW_MODE_AGILE_DFS_NONE,
 					HW_MODE_SBS_NONE,
-					SIR_UPDATE_REASON_UT, PM_NOP);
+					POLICY_MGR_UPDATE_REASON_UT, PM_NOP);
 		}
 	}
 	break;
@@ -8144,7 +8144,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		action = policy_mgr_current_connections_update(
 			hdd_ctx->hdd_psoc,
 			adapter->session_id, apps_args[0],
-			SIR_UPDATE_REASON_UT);
+			POLICY_MGR_UPDATE_REASON_UT);
 		pr_info("next action is %d {HDD_NOP = 0, HDD_DBS, HDD_DBS_DOWNGRADE, HDD_MCC, HDD_MCC_UPGRADE}", action);
 	}
 	break;
