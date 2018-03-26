@@ -518,6 +518,50 @@ static void hdd_get_transmit_sta_id(struct hdd_adapter *adapter,
 }
 
 /**
+ * hdd_clear_tx_rx_connectivity_stats() - clear connectivity stats
+ * @hdd_ctx: pointer to HDD Station Context
+ *
+ * Return: None
+ */
+static void hdd_clear_tx_rx_connectivity_stats(struct hdd_adapter *adapter)
+{
+	hdd_info("Clear txrx connectivity stats");
+	qdf_mem_zero(&adapter->hdd_stats.hdd_arp_stats,
+		     sizeof(adapter->hdd_stats.hdd_arp_stats));
+	qdf_mem_zero(&adapter->hdd_stats.hdd_dns_stats,
+		     sizeof(adapter->hdd_stats.hdd_dns_stats));
+	qdf_mem_zero(&adapter->hdd_stats.hdd_tcp_stats,
+		     sizeof(adapter->hdd_stats.hdd_tcp_stats));
+	qdf_mem_zero(&adapter->hdd_stats.hdd_icmpv4_stats,
+		     sizeof(adapter->hdd_stats.hdd_icmpv4_stats));
+	adapter->pkt_type_bitmap = 0;
+	adapter->track_arp_ip = 0;
+	qdf_mem_zero(adapter->dns_payload, adapter->track_dns_domain_len);
+	adapter->track_dns_domain_len = 0;
+	adapter->track_src_port = 0;
+	adapter->track_dest_port = 0;
+	adapter->track_dest_ipv4 = 0;
+}
+
+void hdd_reset_all_adapters_connectivity_stats(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter = NULL, *pNext = NULL;
+	QDF_STATUS status;
+
+	hdd_enter();
+
+	status = hdd_get_front_adapter(hdd_ctx, &adapter);
+
+	while (NULL != adapter && QDF_STATUS_SUCCESS == status) {
+		hdd_clear_tx_rx_connectivity_stats(adapter);
+		status = hdd_get_next_adapter(hdd_ctx, adapter, &pNext);
+		adapter = pNext;
+	}
+
+	hdd_exit();
+}
+
+/**
  * hdd_is_tx_allowed() - check if Tx is allowed based on current peer state
  * @skb: pointer to OS packet (sk_buff)
  * @peer_id: Peer STA ID in peer table
@@ -557,6 +601,7 @@ static inline bool hdd_is_tx_allowed(struct sk_buff *skb, uint8_t peer_id)
 		  FL("Invalid peer state for Tx: %d"), peer_state);
 	return false;
 }
+
 /**
  * hdd_tx_rx_is_dns_domain_name_match() - function to check whether dns
  * domain name in the received skb matches with the tracking dns domain

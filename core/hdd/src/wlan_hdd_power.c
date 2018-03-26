@@ -1252,6 +1252,21 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	hdd_debug("Invoking packetdump deregistration API");
 	wlan_deregister_txrx_packetdump();
+
+	/*
+	 * After SSR, FW clear its txrx stats. In host,
+	 * as adapter is intact so those counts are still
+	 * available. Now if agains Set stats command comes,
+	 * then host will increment its counts start from its
+	 * last saved value, i.e., count before SSR, and FW will
+	 * increment its count from 0. This will finally sends a
+	 * mismatch of packet counts b/w host and FW to framework
+	 * that will create ambiquity. Therfore, Resetting the host
+	 * counts here so that after SSR both FW and host start
+	 * increment their counts from 0.
+	 */
+	hdd_reset_all_adapters_connectivity_stats(hdd_ctx);
+
 	hdd_reset_all_adapters(hdd_ctx);
 
 	/* Flush cached rx frame queue */

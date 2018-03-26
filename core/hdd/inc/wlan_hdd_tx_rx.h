@@ -70,6 +70,14 @@ QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
 				struct qdf_mac_addr *peer_mac_addr,
 				uint8_t *sta_id);
 /**
+ * hdd_reset_all_adapters_connectivity_stats() - reset connectivity stats
+ * @hdd_ctx: pointer to HDD Station Context
+ *
+ * Return: None
+ */
+void hdd_reset_all_adapters_connectivity_stats(struct hdd_context *hdd_ctx);
+
+/**
  * hdd_tx_rx_collect_connectivity_stats_info() - collect connectivity stats
  * @skb: pointer to skb data
  * @adapter: pointer to vdev apdapter
