@@ -39,8 +39,6 @@
 #include <linux/timekeeping.h>
 #ifdef MSM_PLATFORM
 #include <asm/arch_timer.h>
-#else
-#include <linux/hrtimer.h>
 #endif
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
@@ -264,8 +262,7 @@ static inline uint64_t __qdf_get_monotonic_boottime(void)
 	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 }
 
-#ifdef QCA_WIFI_3_0_ADRASTEA
-#include <asm/arch_timer.h>
+#if defined (QCA_WIFI_3_0_ADRASTEA) && defined (MSM_PLATFORM)
 
 /**
  * __qdf_get_log_timestamp() - get QTIMER ticks
