@@ -4939,6 +4939,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		cds_flush_work(&adapter->sap_stop_bss_work);
 
 		/* Any softap specific cleanup here... */
+		qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
 		wlan_hdd_undo_acs(adapter);
 		if (adapter->device_mode == QDF_P2P_GO_MODE)
 			wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
@@ -5099,6 +5100,7 @@ static void hdd_reset_scan_operation(struct hdd_context *hdd_ctx,
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 		break;
 	case QDF_SAP_MODE:
+		qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
 		wlan_hdd_undo_acs(adapter);
 		break;
 	default:

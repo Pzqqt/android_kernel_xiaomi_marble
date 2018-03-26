@@ -985,6 +985,7 @@ struct hdd_station_info {
  * @vendor_acs_timer_initialized: Is @vendor_acs_timer initialized?
  * @bss_stop_reason: Reason why the BSS was stopped
  * @txrx_stats: TX RX statistics from firmware
+ * @acs_in_progress: In progress acs flag for an adapter
  */
 struct hdd_ap_ctx {
 	struct hdd_hostapd_state hostapd_state;
@@ -1005,6 +1006,7 @@ struct hdd_ap_ctx {
 	bool vendor_acs_timer_initialized;
 	enum bss_stop_reason bss_stop_reason;
 	struct hdd_fw_txrx_stats txrx_stats;
+	qdf_atomic_t acs_in_progress;
 };
 
 /**
@@ -1821,7 +1823,6 @@ struct hdd_context {
 	/* Lock to control access to dnbs and coex avoid freq list */
 	struct mutex avoid_freq_lock;
 #endif
-	qdf_atomic_t is_acs_allowed;
 #ifdef WLAN_FEATURE_TSF
 	/* indicate whether tsf has been initialized */
 	qdf_atomic_t tsf_ready_flag;
