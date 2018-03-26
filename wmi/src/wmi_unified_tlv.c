@@ -3000,9 +3000,13 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 		WMI_SET_CHANNEL_MODE(chan_info,
 				tchan_info->phy_mode);
 
-		/* Add tchan_info->half_rate and tchan_info->quarter_rate later
-		 * after FW support
-		 */
+		if (tchan_info->half_rate)
+			WMI_SET_CHANNEL_FLAG(chan_info,
+					WMI_CHAN_FLAG_HALF_RATE);
+
+		if (tchan_info->quarter_rate)
+			WMI_SET_CHANNEL_FLAG(chan_info,
+					WMI_CHAN_FLAG_QUARTER_RATE);
 
 		/* also fill in power information */
 		WMI_SET_CHANNEL_MIN_POWER(chan_info,
