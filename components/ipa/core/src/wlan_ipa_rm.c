@@ -253,6 +253,7 @@ wlan_ipa_uc_rm_notify_handler(struct wlan_ipa_priv *ipa_ctx,
 		if ((!ipa_ctx->resource_unloading) &&
 		    (!ipa_ctx->activated_fw_pipe)) {
 			wlan_ipa_uc_enable_pipes(ipa_ctx);
+			ipa_ctx->resource_loading = false;
 		}
 		qdf_mutex_release(&ipa_ctx->ipa_lock);
 		break;
