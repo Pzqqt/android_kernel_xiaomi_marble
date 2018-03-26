@@ -536,22 +536,6 @@ typedef enum {
 	WMI_HOST_CHAN_WIDTH_10    = 6,
 } wmi_host_channel_width;
 
-/**
- * enum wmi_dwelltime_adaptive_mode: dwelltime_mode
- * @WMI_DWELL_MODE_DEFAULT: Use firmware default mode
- * @WMI_DWELL_MODE_CONSERVATIVE: Conservative adaptive mode
- * @WMI_DWELL_MODE_MODERATE: Moderate adaptive mode
- * @WMI_DWELL_MODE_AGGRESSIVE: Aggressive adaptive mode
- * @WMI_DWELL_MODE_STATIC: static adaptive mode
- */
-enum wmi_dwelltime_adaptive_mode {
-	WMI_DWELL_MODE_DEFAULT = 0,
-	WMI_DWELL_MODE_CONSERVATIVE = 1,
-	WMI_DWELL_MODE_MODERATE = 2,
-	WMI_DWELL_MODE_AGGRESSIVE = 3,
-	WMI_DWELL_MODE_STATIC = 4
-};
-
 #define MAX_NUM_CHAN 128
 
 #define ATH_EXPONENT_TO_VALUE(v)	((1<<v)-1)
@@ -2473,7 +2457,7 @@ struct wifi_scan_cmd_req_params {
 	uint32_t min_dwell_time_passive;
 	uint32_t max_dwell_time_passive;
 	uint32_t configuration_flags;
-	enum wmi_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
+	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
 	struct wifi_scan_bucket_params buckets[WMI_WLAN_EXTSCAN_MAX_BUCKETS];
 };
 
@@ -7486,7 +7470,7 @@ struct wmi_power_dbg_params {
 struct wmi_adaptive_dwelltime_params {
 	uint32_t vdev_id;
 	bool is_enabled;
-	enum wmi_dwelltime_adaptive_mode dwelltime_mode;
+	enum scan_dwelltime_adaptive_mode dwelltime_mode;
 	uint8_t lpf_weight;
 	uint8_t passive_mon_intval;
 	uint8_t wifi_act_threshold;
