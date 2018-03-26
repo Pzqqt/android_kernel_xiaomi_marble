@@ -29,6 +29,7 @@
 
 #define P2P_EVENT_PROPAGATE_TIME 10
 #define P2P_WAIT_CANCEL_ROC      1000
+#define P2P_WAIT_CLEANUP_ROC     2000
 
 #ifdef QCA_WIFI_3_0_EMU
 #define P2P_ROC_DURATION_MULTI_GO_PRESENT   2
@@ -112,6 +113,16 @@ struct cancel_roc_context {
 };
 
 /**
+ * struct p2p_cleanup_param - p2p cleanup parameters
+ * @p2p_soc_obj:      Pointer to SoC global p2p private object
+ * @vdev_id:          vdev id
+ */
+struct p2p_cleanup_param {
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	uint32_t vdev_id;
+};
+
+/**
  * p2p_mgmt_rx_action_ops() - register or unregister rx action callback
  * @psoc: psoc object
  * @isregister: register if true, unregister if false
@@ -162,29 +173,31 @@ struct p2p_roc_context *p2p_find_roc_by_tx_ctx(
 QDF_STATUS p2p_restart_roc_timer(struct p2p_roc_context *roc_ctx);
 
 /**
- * p2p_cleanup_roc_queue() - Cleanup roc context in queue
+ * p2p_cleanup_roc_sync() - Cleanup roc context in queue
  * @p2p_soc_obj: p2p psoc private object
+ * @vdev:        vdev object
  *
  * This function cleanup roc context in queue, include the roc
- * context in progressing.
+ * context in progressing until cancellation done. To avoid deadlock,
+ * don't call from scheduler thread.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS p2p_cleanup_roc_queue(
-	struct p2p_soc_priv_obj *p2p_soc_obj);
+QDF_STATUS p2p_cleanup_roc_sync(
+	struct p2p_soc_priv_obj *p2p_soc_obj,
+	struct wlan_objmgr_vdev *vdev);
 
 /**
- * p2p_cleanup_roc_by_vdev() - Cleanup roc context by vdev id
- * @p2p_soc_obj: p2p psoc private object
- * @vdev_id:     vdev id
+ * p2p_process_cleanup_roc_queue() - process the message to cleanup roc
+ * @param: pointer to cleanup parameters
  *
- * This function cleanup roc context by vdev id, include the roc
- * context in progressing.
+ * This function process the message to cleanup roc context in queue,
+ * include the roc context in progressing.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS p2p_cleanup_roc_by_vdev(
-	struct p2p_soc_priv_obj *p2p_soc_obj, uint32_t vdev_id);
+QDF_STATUS p2p_process_cleanup_roc_queue(
+	struct p2p_cleanup_param *param);
 
 /**
  * p2p_process_roc_req() - Process roc request

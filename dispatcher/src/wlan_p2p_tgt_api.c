@@ -123,11 +123,9 @@ QDF_STATUS tgt_p2p_mgmt_download_comp_cb(void *context,
 QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 	uint32_t status, void *tx_compl_params)
 {
-	struct p2p_tx_cnf *tx_cnf;
 	struct p2p_tx_conf_event *tx_conf_event;
-	struct p2p_soc_priv_obj *p2p_soc_obj;
-	struct tx_action_context *tx_ctx;
 	struct scheduler_msg msg = {0};
+	QDF_STATUS ret;
 
 	p2p_debug("context:%pK, buf:%pK, status:%d, tx complete params:%pK",
 		context, buf, status, tx_compl_params);
@@ -137,19 +135,6 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_INVAL;
 	}
-	p2p_soc_obj = (struct p2p_soc_priv_obj *)context;
-	tx_ctx = p2p_find_tx_ctx_by_nbuf(p2p_soc_obj, buf);
-	if (!tx_ctx) {
-		p2p_err("can't find tx_ctx, tx ack comes late");
-		qdf_nbuf_free(buf);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	if (tx_ctx->is_deleting) {
-		p2p_info("Received duplicate tx ack");
-		return QDF_STATUS_SUCCESS;
-	}
-	tx_ctx->is_deleting = true;
 
 	tx_conf_event = qdf_mem_malloc(sizeof(*tx_conf_event));
 	if (!tx_conf_event) {
@@ -158,26 +143,19 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	tx_cnf = qdf_mem_malloc(sizeof(*tx_cnf));
-	if (!tx_cnf) {
-		p2p_err("Failed to allocate tx cnf");
-		qdf_nbuf_free(buf);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	qdf_nbuf_free(buf);
-	tx_cnf->vdev_id = tx_ctx->vdev_id;
-	tx_cnf->action_cookie = (uint64_t)tx_ctx->id;
-	tx_cnf->buf = tx_ctx->buf;
-	tx_cnf->buf_len = tx_ctx->buf_len;
-	tx_cnf->status = status;
-	tx_conf_event->p2p_soc_obj = p2p_soc_obj;
-	tx_conf_event->tx_cnf = tx_cnf;
-	tx_conf_event->tx_ctx = tx_ctx;
+	tx_conf_event->status = status;
+	tx_conf_event->nbuf = buf;
+	tx_conf_event->p2p_soc_obj = (struct p2p_soc_priv_obj *)context;
 	msg.type = P2P_EVENT_MGMT_TX_ACK_CNF;
 	msg.bodyptr = tx_conf_event;
 	msg.callback = p2p_process_evt;
-	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	ret = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	if (ret != QDF_STATUS_SUCCESS) {
+		qdf_mem_free(tx_conf_event);
+		qdf_mem_free(buf);
+		p2p_err("failed to post message");
+		return status;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

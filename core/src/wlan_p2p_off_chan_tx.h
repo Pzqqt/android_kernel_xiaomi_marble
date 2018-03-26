@@ -155,7 +155,6 @@ struct p2p_frame_info {
  * @off_chan:       Is this off channel tx
  * @no_cck:         Required cck or not
  * @no_ack:         Required ack or not
- * @is_deleting:    Received tx ack and waiting for deleting
  * @duration:       Duration for the RoC
  * @tx_timer:       RoC timer
  * @frame_info:     Frame type information
@@ -173,7 +172,6 @@ struct tx_action_context {
 	bool off_chan;
 	bool no_cck;
 	bool no_ack;
-	bool is_deleting;
 	uint32_t duration;
 	qdf_mc_timer_t tx_timer;
 	struct p2p_frame_info frame_info;
@@ -205,14 +203,29 @@ QDF_STATUS p2p_ready_to_tx_frame(struct p2p_soc_priv_obj *p2p_soc_obj,
 	uint64_t cookie);
 
 /**
- * p2p_cleanup_tx_queue() - cleanup tx queue
- * @p2p_soc_obj: p2p soc private object
+ * p2p_cleanup_tx_sync() - Cleanup tx queue
+ * @p2p_soc_obj: p2p psoc private object
+ * @vdev:        vdev object
+ *
+ * This function cleanup tx context in queue until cancellation done.
+ * To avoid deadlock, don't call from scheduler thread.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_cleanup_tx_sync(
+	struct p2p_soc_priv_obj *p2p_soc_obj,
+	struct wlan_objmgr_vdev *vdev);
+
+/**
+ * p2p_process_cleanup_tx_queue() - process the message to cleanup tx
+ * @param: pointer to cleanup parameters
  *
  * This function cleanup wait for roc queue and wait for ack queue.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS p2p_cleanup_tx_queue(struct p2p_soc_priv_obj *p2p_soc_obj);
+QDF_STATUS p2p_process_cleanup_tx_queue(
+	struct p2p_cleanup_param *param);
 
 /**
  * p2p_process_mgmt_tx() - Process mgmt frame tx request
