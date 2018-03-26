@@ -37,6 +37,7 @@
 #include "sir_api.h"
 #include "sir_mac_prot_def.h"
 #include "csr_link_list.h"
+#include "wlan_scan_public_structs.h"
 
 #define CSR_INVALID_SCANRESULT_HANDLE       (NULL)
 #define CSR_NUM_WLM_LATENCY_LEVEL   4
@@ -1282,9 +1283,9 @@ typedef struct tagCsrConfigParam {
 	uint32_t edca_bk_aifs;
 	uint32_t edca_be_aifs;
 	bool enable_fatal_event;
-	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
-	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
-	enum wmi_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
+	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
+	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
+	enum scan_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
 	struct csr_sta_roam_policy_params sta_roam_policy_params;
 	uint32_t tx_aggregation_size;
 	uint32_t rx_aggregation_size;

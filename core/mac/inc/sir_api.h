@@ -3084,7 +3084,7 @@ typedef struct sSirRoamOffloadScanReq {
 	uint8_t early_stop_scan_enable;
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
-	enum wmi_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
+	enum scan_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
 	tSirAddie assoc_ie;
 	struct lca_disallow_config_params lca_config_params;
 	struct scoring_param score_params;
@@ -4463,7 +4463,7 @@ typedef struct {
 	uint32_t min_dwell_time_passive;
 	uint32_t max_dwell_time_passive;
 	uint32_t configuration_flags;
-	enum wmi_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
+	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
 	tSirWifiScanBucketSpec buckets[WLAN_EXTSCAN_MAX_BUCKETS];
 } tSirWifiScanCmdReqParams, *tpSirWifiScanCmdReqParams;
 

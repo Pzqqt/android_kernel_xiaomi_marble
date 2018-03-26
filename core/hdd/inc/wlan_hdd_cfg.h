@@ -1293,7 +1293,7 @@ enum hdd_dot11_mode {
  *
  * This ini will set the algo used in dwell time optimization
  * during host scan with connection.
- * See enum wmi_dwelltime_adaptive_mode.
+ * See enum scan_dwelltime_adaptive_mode.
  * Acceptable values for this:
  * 0: Default (Use firmware default mode)
  * 1: Conservative optimization
@@ -1324,7 +1324,7 @@ enum hdd_dot11_mode {
  *
  * This ini will set the algo used in dwell time optimization
  * during host scan without connection.
- * See enum wmi_dwelltime_adaptive_mode.
+ * See enum scan_dwelltime_adaptive_mode.
  * Acceptable values for this:
  * 0: Default (Use firmware default mode)
  * 1: Conservative optimization
@@ -1354,7 +1354,7 @@ enum hdd_dot11_mode {
  * @Default: 1
  *
  * This ini will set the algo used in dwell time optimization
- * during ext scan. see enum wmi_dwelltime_adaptive_mode.
+ * during ext scan. see enum scan_dwelltime_adaptive_mode.
  * Acceptable values for this:
  * 0: Default (Use firmware default mode)
  * 1: Conservative optimization
@@ -1384,7 +1384,7 @@ enum hdd_dot11_mode {
  * @Default: 1
  *
  * This ini will set the algo used in dwell time optimization
- * during pno scan. see enum wmi_dwelltime_adaptive_mode.
+ * during pno scan. see enum scan_dwelltime_adaptive_mode.
  * Acceptable values for this:
  * 0: Default (Use firmware default mode)
  * 1: Conservative optimization
@@ -1441,7 +1441,7 @@ enum hdd_dot11_mode {
  *
  * This parameter will set default adaptive mode, will be used if any of the
  * scan dwell mode is set to default.
- * For uses : see enum wmi_dwelltime_adaptive_mode
+ * For uses : see enum scan_dwelltime_adaptive_mode
  *
  * Related: None
  *
@@ -2161,7 +2161,7 @@ enum hdd_dot11_mode {
  * @Default: 1
  *
  * This parameter will set the algo used in dwell time optimization during
- * roam scan. see enum wmi_dwelltime_adaptive_mode.
+ * roam scan. see enum scan_dwelltime_adaptive_mode.
  * Acceptable values for this:
  * 0: Default (Use firmware default mode)
  * 1: Conservative optimization
@@ -15064,12 +15064,12 @@ struct hdd_config {
 	bool enable_dp_trace;
 	uint8_t dp_trace_config[DP_TRACE_CONFIG_STRING_LENGTH];
 	bool adaptive_dwell_mode_enabled;
-	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
-	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
-	enum wmi_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
-	enum wmi_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
-	enum wmi_dwelltime_adaptive_mode pnoscan_adaptive_dwell_mode;
-	enum wmi_dwelltime_adaptive_mode global_adapt_dwelltime_mode;
+	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
+	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
+	enum scan_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
+	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
+	enum scan_dwelltime_adaptive_mode pnoscan_adaptive_dwell_mode;
+	enum scan_dwelltime_adaptive_mode global_adapt_dwelltime_mode;
 	uint8_t adapt_dwell_lpf_weight;
 	uint8_t adapt_dwell_passive_mon_intval;
 	uint8_t adapt_dwell_wifi_act_threshold;

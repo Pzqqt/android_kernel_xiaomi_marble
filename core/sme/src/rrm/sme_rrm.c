@@ -774,7 +774,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 				max_chan_time);
 		}
 
-		req->scan_req.adaptive_dwell_time_mode = WMI_DWELL_MODE_STATIC;
+		req->scan_req.adaptive_dwell_time_mode = SCAN_DWELL_MODE_STATIC;
 		/*
 		 * For RRM scans timing is very important especially when the
 		 * request is for limited channels. There is no need for
