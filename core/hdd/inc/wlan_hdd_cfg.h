@@ -2936,28 +2936,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gAPAutoShutOff - Auto shutdown when timer expires
- * @Min: 0
- * @Max: 4294967295UL
- * @Default: 0
- *
- * This ini is used to configure timer value to shutdown AP once timer expired
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_AP_AUTO_SHUT_OFF                "gAPAutoShutOff"
-#define CFG_AP_AUTO_SHUT_OFF_MIN            (0)
-#define CFG_AP_AUTO_SHUT_OFF_MAX            (4294967295UL)
-#define CFG_AP_AUTO_SHUT_OFF_DEFAULT        (0)
-
-/*
- * <ini>
  * gApKeepAlivePeriod - AP keep alive period
  * @Min: 1
  * @Max: 65535
@@ -14441,7 +14419,6 @@ struct hdd_config {
 	uint16_t apProtection;
 	bool apOBSSProtEnabled;
 	bool apDisableIntraBssFwd;
-	uint32_t nAPAutoShutOff;
 	uint8_t enableLTECoex;
 	uint32_t apKeepAlivePeriod;
 	uint32_t goKeepAlivePeriod;

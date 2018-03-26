@@ -1321,13 +1321,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN,
 		     CFG_QOS_IMPLICIT_SETUP_ENABLED_MAX),
 
-	REG_VARIABLE(CFG_AP_AUTO_SHUT_OFF, WLAN_PARAM_Integer,
-		     struct hdd_config, nAPAutoShutOff,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_AP_AUTO_SHUT_OFF_DEFAULT,
-		     CFG_AP_AUTO_SHUT_OFF_MIN,
-		     CFG_AP_AUTO_SHUT_OFF_MAX),
-
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	REG_VARIABLE(CFG_WLAN_MCC_TO_SCC_SWITCH_MODE, WLAN_PARAM_Integer,
 		     struct hdd_config, WlanMccToSccSwitchMode,
@@ -6535,8 +6528,6 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 
 	hdd_debug("Name = [gEnableApProt] value = [%u]",
 		  hdd_ctx->config->apProtEnabled);
-	hdd_debug("Name = [gAPAutoShutOff] Value = [%u]",
-		  hdd_ctx->config->nAPAutoShutOff);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	hdd_debug("Name = [gWlanMccToSccSwitchMode] Value = [%u]",
 		  hdd_ctx->config->WlanMccToSccSwitchMode);

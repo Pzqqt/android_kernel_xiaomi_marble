@@ -729,79 +729,6 @@ static int hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 	return ret;
 }
 
-/**
- * hdd_hostapd_inactivity_timer_cb() - Inactivity timeout handler
- * @context: Context registered with qdf_mc_timer_init()
- *
- * This is the callback function registered with qdf_mc_timer_init()
- * to handle the AP inactivity timer. The @context registered is the
- * struct net_device associated with the interface.  When this
- * function is called it means the AP inactivity timer has fired, and
- * this function in turn indicates the timeout to userspace.
- */
-
-static void hdd_hostapd_inactivity_timer_cb(void *context)
-{
-	struct net_device *dev = (struct net_device *)context;
-	uint8_t we_custom_event[64];
-	union iwreq_data wrqu;
-#ifdef DISABLE_CONCURRENCY_AUTOSAVE
-	QDF_STATUS qdf_status;
-	struct hdd_adapter *adapter;
-	struct hdd_ap_ctx *ap_ctx;
-	struct hdd_context *hdd_ctx;
-#endif /* DISABLE_CONCURRENCY_AUTOSAVE */
-
-	/* event_name space-delimiter driver_module_name
-	 * Format of the event is "AUTO-SHUT.indication" " " "module_name"
-	 */
-	char *autoShutEvent = "AUTO-SHUT.indication" " " KBUILD_MODNAME;
-
-	/* For the NULL at the end */
-	int event_len = strlen(autoShutEvent) + 1;
-
-	hdd_enter_dev(dev);
-
-#ifdef DISABLE_CONCURRENCY_AUTOSAVE
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (policy_mgr_concurrent_open_sessions_running(hdd_ctx->hdd_psoc)) {
-		/*
-		 * This timer routine is going to be called only when AP
-		 * persona is up.
-		 * If there are concurrent sessions running we do not want
-		 * to shut down the Bss.Instead we run the timer again so
-		 * that if Autosave is enabled next time and other session
-		   was down only then we bring down AP
-		 */
-		adapter = netdev_priv(dev);
-		if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
-			hdd_err("invalid adapter: %pK", adapter);
-			return;
-		}
-		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
-		qdf_status =
-			qdf_mc_timer_start(&ap_ctx->hdd_ap_inactivity_timer,
-					(WLAN_HDD_GET_CTX(adapter))->
-					config->nAPAutoShutOff * 1000);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			hdd_err("Failed to init AP inactivity timer");
-
-		hdd_exit();
-		return;
-	}
-#endif /* DISABLE_CONCURRENCY_AUTOSAVE */
-	memset(&we_custom_event, '\0', sizeof(we_custom_event));
-	memcpy(&we_custom_event, autoShutEvent, event_len);
-
-	memset(&wrqu, 0, sizeof(wrqu));
-	wrqu.data.length = event_len;
-
-	hdd_debug("Shutting down AP interface due to inactivity");
-	wireless_send_event(dev, IWEVCUSTOM, &wrqu, (char *)we_custom_event);
-
-	hdd_exit();
-}
-
 static void hdd_clear_sta(struct hdd_adapter *adapter, uint8_t sta_id)
 {
 	struct hdd_ap_ctx *ap_ctx;
@@ -1789,29 +1716,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 		}
 
-		if (0 !=
-		    (WLAN_HDD_GET_CTX(adapter))->config->
-		     nAPAutoShutOff) {
-			/* AP Inactivity timer init and start */
-			qdf_status =
-				qdf_mc_timer_init(&ap_ctx->
-						  hdd_ap_inactivity_timer,
-						  QDF_TIMER_TYPE_SW,
-						  hdd_hostapd_inactivity_timer_cb,
-						  dev);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-				hdd_err("Failed to init inactivity timer");
-
-			qdf_status =
-				qdf_mc_timer_start(&ap_ctx->
-						   hdd_ap_inactivity_timer,
-						   (WLAN_HDD_GET_CTX
-						    (adapter))->config->
-						    nAPAutoShutOff * 1000);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-				hdd_err("Failed to init inactivity timer");
-
-		}
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
 #endif
@@ -2212,15 +2116,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 #endif
 		ap_ctx->ap_active = true;
-		/* Stop AP inactivity timer */
-		if (ap_ctx->hdd_ap_inactivity_timer.state ==
-		    QDF_TIMER_STATE_RUNNING) {
-			qdf_status =
-				qdf_mc_timer_stop(&ap_ctx->
-						  hdd_ap_inactivity_timer);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-				hdd_err("Failed to start inactivity timer");
-		}
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, false);
 #endif
@@ -2354,31 +2249,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 		spin_unlock_bh(&adapter->sta_info_lock);
 
-		/* Start AP inactivity timer if no stations associated */
-		if ((0 !=
-		     (WLAN_HDD_GET_CTX(adapter))->config->
-		     nAPAutoShutOff)) {
-			if (ap_ctx->ap_active == false) {
-				if (ap_ctx->hdd_ap_inactivity_timer.state ==
-				    QDF_TIMER_STATE_STOPPED) {
-					qdf_status =
-						qdf_mc_timer_start(&ap_ctx->
-								   hdd_ap_inactivity_timer,
-								   (WLAN_HDD_GET_CTX
-								    (adapter))->
-								   config->
-								   nAPAutoShutOff *
-								   1000);
-					if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-						hdd_err("Failed to init AP inactivity timer");
-				} else
-					QDF_ASSERT
-						(qdf_mc_timer_get_current_state
-							(&ap_ctx->
-							hdd_ap_inactivity_timer) ==
-						QDF_TIMER_STATE_STOPPED);
-			}
-		}
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
 #endif
@@ -2646,24 +2516,6 @@ stopbss:
 		 */
 		hostapd_state->bss_state = BSS_STOP;
 
-		if (0 !=
-		    (WLAN_HDD_GET_CTX(adapter))->config->
-		    nAPAutoShutOff) {
-			if (QDF_TIMER_STATE_RUNNING ==
-			    ap_ctx->hdd_ap_inactivity_timer.state) {
-				qdf_status =
-					qdf_mc_timer_stop(&ap_ctx->
-							  hdd_ap_inactivity_timer);
-				if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-					hdd_err("Failed to stop AP inactivity timer");
-			}
-
-			qdf_status =
-				qdf_mc_timer_destroy(&ap_ctx->
-						hdd_ap_inactivity_timer);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-				hdd_err("Failed to Destroy AP inactivity timer");
-		}
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
 #endif

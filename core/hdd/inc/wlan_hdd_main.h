@@ -970,8 +970,6 @@ struct hdd_station_info {
  * @hostapd_state: state control information
  * @dfs_cac_block_tx: Is data tramsmission blocked due to DFS CAC?
  * @ap_active: Are any stations active?
- * @hdd_ap_inactivity_timer: Timer used to shutdown the AP if it is
- *     inactive for an extended amount of time.
  * @disable_intrabss_fwd: Prevent forwarding between stations
  * @broadcast_sta_id: Station ID assigned after BSS starts
  * @privacy: The privacy bits of configuration
@@ -992,7 +990,6 @@ struct hdd_ap_ctx {
 	struct hdd_hostapd_state hostapd_state;
 	bool dfs_cac_block_tx;
 	bool ap_active;
-	qdf_mc_timer_t hdd_ap_inactivity_timer;
 	bool disable_intrabss_fwd;
 	uint8_t broadcast_sta_id;
 	uint8_t privacy;
