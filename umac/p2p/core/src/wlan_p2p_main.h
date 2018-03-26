@@ -65,12 +65,16 @@ struct tx_action_context;
  * @P2P_CANCEL_ROC_REQ:     Cancel P2P roc request
  * @P2P_MGMT_TX:            P2P tx action frame request
  * @P2P_MGMT_TX_CANCEL:     Cancel tx action frame request
+ * @P2P_CLEANUP_ROC:        Cleanup roc queue
+ * @P2P_CLEANUP_TX:         Cleanup tx mgmt queue
  */
 enum p2p_cmd_type {
 	P2P_ROC_REQ = 0,
 	P2P_CANCEL_ROC_REQ,
 	P2P_MGMT_TX,
 	P2P_MGMT_TX_CANCEL,
+	P2P_CLEANUP_ROC,
+	P2P_CLEANUP_TX,
 };
 
 /**
@@ -92,13 +96,13 @@ enum p2p_event_type {
 /**
  * struct p2p_tx_conf_event - p2p tx confirm event
  * @p2p_soc_obj:        p2p soc private object
- * @tx_cnf:             p2p tx confirm structure
- * @tx_ctx:             tx context
+ * @buf:                buffer address
+ * @status:             tx status
  */
 struct p2p_tx_conf_event {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
-	struct p2p_tx_cnf *tx_cnf;
-	struct tx_action_context *tx_ctx;
+	qdf_nbuf_t nbuf;
+	uint32_t status;
 };
 
 /**
@@ -167,6 +171,8 @@ enum p2p_connection_status {
  * @start_param:      Start parameters, include callbacks and user
  *                    data to HDD
  * @cancel_roc_done:  Cancel roc done event
+ * @cleanup_roc_done: Cleanup roc done event
+ * @cleanup_tx_done:  Cleanup tx done event
  * @roc_runtime_lock: Runtime lock for roc request
  * @p2p_cb: Callbacks to protocol stack
  * @cur_roc_vdev_id:  Vdev id of current roc
@@ -181,6 +187,8 @@ struct p2p_soc_priv_obj {
 	wlan_scan_requester scan_req_id;
 	struct p2p_start_param *start_param;
 	qdf_event_t cancel_roc_done;
+	qdf_event_t cleanup_roc_done;
+	qdf_event_t cleanup_tx_done;
 	qdf_runtime_lock_t roc_runtime_lock;
 	struct p2p_protocol_callbacks p2p_cb;
 	uint32_t cur_roc_vdev_id;

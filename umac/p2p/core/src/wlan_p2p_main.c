@@ -57,6 +57,10 @@ static char *p2p_get_cmd_type_str(enum p2p_cmd_type cmd_type)
 		return "P2P mgmt tx request";
 	case P2P_MGMT_TX_CANCEL:
 		return "P2P cancel mgmt tx request";
+	case P2P_CLEANUP_ROC:
+		return "P2P cleanup roc";
+	case P2P_CLEANUP_TX:
+		return "P2P cleanup tx";
 	default:
 		return "Invalid P2P command";
 	}
@@ -565,8 +569,8 @@ static QDF_STATUS p2p_suspend_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 	}
 
 	/* clean up queue of p2p psoc private object */
-	p2p_cleanup_tx_queue(p2p_soc_obj);
-	p2p_cleanup_roc_queue(p2p_soc_obj);
+	p2p_cleanup_tx_sync(p2p_soc_obj, NULL);
+	p2p_cleanup_roc_sync(p2p_soc_obj, NULL);
 
 	p2p_debug("handle suspend complete");
 
@@ -818,7 +822,19 @@ QDF_STATUS p2p_psoc_object_open(struct wlan_objmgr_psoc *soc)
 	status = qdf_event_create(&p2p_soc_obj->cancel_roc_done);
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("failed to create cancel roc done event");
-		goto fail_event;
+		goto fail_cancel_roc;
+	}
+
+	status = qdf_event_create(&p2p_soc_obj->cleanup_roc_done);
+	if (status != QDF_STATUS_SUCCESS) {
+		p2p_err("failed to create cleanup roc done event");
+		goto fail_cleanup_roc;
+	}
+
+	status = qdf_event_create(&p2p_soc_obj->cleanup_tx_done);
+	if (status != QDF_STATUS_SUCCESS) {
+		p2p_err("failed to create cleanup roc done event");
+		goto fail_cleanup_tx;
 	}
 
 	qdf_runtime_lock_init(&p2p_soc_obj->roc_runtime_lock);
@@ -830,7 +846,13 @@ QDF_STATUS p2p_psoc_object_open(struct wlan_objmgr_psoc *soc)
 
 	return QDF_STATUS_SUCCESS;
 
-fail_event:
+fail_cleanup_tx:
+	qdf_event_destroy(&p2p_soc_obj->cleanup_roc_done);
+
+fail_cleanup_roc:
+	qdf_event_destroy(&p2p_soc_obj->cancel_roc_done);
+
+fail_cancel_roc:
 	qdf_list_destroy(&p2p_soc_obj->tx_q_ack);
 	qdf_list_destroy(&p2p_soc_obj->tx_q_roc);
 	qdf_list_destroy(&p2p_soc_obj->roc_q);
@@ -857,6 +879,8 @@ QDF_STATUS p2p_psoc_object_close(struct wlan_objmgr_psoc *soc)
 	p2p_unregister_pmo_handler();
 	qdf_idr_destroy(&p2p_soc_obj->p2p_idr);
 	qdf_runtime_lock_deinit(&p2p_soc_obj->roc_runtime_lock);
+	qdf_event_destroy(&p2p_soc_obj->cleanup_tx_done);
+	qdf_event_destroy(&p2p_soc_obj->cleanup_roc_done);
 	qdf_event_destroy(&p2p_soc_obj->cancel_roc_done);
 	qdf_list_destroy(&p2p_soc_obj->tx_q_ack);
 	qdf_list_destroy(&p2p_soc_obj->tx_q_roc);
@@ -948,8 +972,8 @@ QDF_STATUS p2p_psoc_stop(struct wlan_objmgr_psoc *soc)
 	p2p_mgmt_rx_action_ops(soc, false);
 
 	/* clean up queue of p2p psoc private object */
-	p2p_cleanup_tx_queue(p2p_soc_obj);
-	p2p_cleanup_roc_queue(p2p_soc_obj);
+	p2p_cleanup_tx_sync(p2p_soc_obj, NULL);
+	p2p_cleanup_roc_sync(p2p_soc_obj, NULL);
 
 	/* unrgister scan request id*/
 	ucfg_scan_unregister_requester(soc, p2p_soc_obj->scan_req_id);
@@ -1002,6 +1026,18 @@ QDF_STATUS p2p_process_cmd(struct scheduler_msg *msg)
 	case P2P_MGMT_TX_CANCEL:
 		status = p2p_process_mgmt_tx_cancel(
 				(struct cancel_roc_context *)
+				msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case P2P_CLEANUP_ROC:
+		status = p2p_process_cleanup_roc_queue(
+				(struct p2p_cleanup_param *)
+				msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case P2P_CLEANUP_TX:
+		status = p2p_process_cleanup_tx_queue(
+				(struct p2p_cleanup_param *)
 				msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
