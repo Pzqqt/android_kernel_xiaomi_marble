@@ -2702,6 +2702,26 @@ static void dp_neighbour_peers_detach(struct dp_pdev *pdev)
 	qdf_spinlock_destroy(&pdev->neighbour_peer_mutex);
 }
 
+/**
+* dp_htt_ppdu_stats_detach() - detach stats resources
+* @pdev: Datapath PDEV handle
+*
+* Return: void
+*/
+static void dp_htt_ppdu_stats_detach(struct dp_pdev *pdev)
+{
+	struct ppdu_info *ppdu_info, *ppdu_info_next;
+
+	TAILQ_FOREACH_SAFE(ppdu_info, &pdev->ppdu_info_list,
+			ppdu_info_list_elem, ppdu_info_next) {
+		if (!ppdu_info)
+			break;
+		qdf_assert_always(ppdu_info->nbuf);
+		qdf_nbuf_free(ppdu_info->nbuf);
+		qdf_mem_free(ppdu_info);
+	}
+}
+
 /*
 * dp_pdev_detach_wifi3() - detach txrx pdev
 * @txrx_pdev: Datapath PDEV handle
@@ -2772,6 +2792,8 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 		qdf_nbuf_free(curr_nbuf);
 		curr_nbuf = next_nbuf;
 	}
+
+	dp_htt_ppdu_stats_detach(pdev);
 
 	soc->pdev_list[pdev->pdev_id] = NULL;
 	soc->pdev_count--;
