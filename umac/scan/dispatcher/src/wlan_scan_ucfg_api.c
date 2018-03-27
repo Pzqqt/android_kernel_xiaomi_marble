@@ -1963,6 +1963,7 @@ ucfg_scan_psoc_open(struct wlan_objmgr_psoc *psoc)
 	wlan_scan_global_init(scan_obj);
 	qdf_spinlock_create(&scan_obj->lock);
 	ucfg_scan_register_pmo_handler();
+	scm_db_init(psoc);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1977,6 +1978,7 @@ ucfg_scan_psoc_close(struct wlan_objmgr_psoc *psoc)
 		scm_err("null psoc");
 		return QDF_STATUS_E_FAILURE;
 	}
+	scm_db_deinit(psoc);
 	scan_obj = wlan_psoc_get_scan_obj(psoc);
 	if (scan_obj == NULL) {
 		scm_err("Failed to get scan object");
@@ -2027,7 +2029,6 @@ ucfg_scan_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	/* Subscribe for scan events from lmac layesr */
 	status = tgt_scan_register_ev_handler(psoc);
 	QDF_ASSERT(status == QDF_STATUS_SUCCESS);
-	scm_db_init(psoc);
 	if (wlan_reg_11d_original_enabled_on_host(psoc))
 		scm_11d_cc_db_init(psoc);
 	ucfg_scan_register_unregister_bcn_cb(psoc, true);
@@ -2054,7 +2055,6 @@ ucfg_scan_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	ucfg_scan_register_unregister_bcn_cb(psoc, false);
 	if (wlan_reg_11d_original_enabled_on_host(psoc))
 		scm_11d_cc_db_deinit(psoc);
-	scm_db_deinit(psoc);
 
 	return status;
 }
