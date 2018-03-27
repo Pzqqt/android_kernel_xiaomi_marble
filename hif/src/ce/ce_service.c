@@ -183,8 +183,12 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 	struct hif_ce_desc_event *event;
 
 	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
-	struct hif_ce_desc_event *hist_ev =
-			(struct hif_ce_desc_event *)ce_hist->hist_ev[ce_id];
+	struct hif_ce_desc_event *hist_ev = NULL;
+
+	if (ce_id < CE_COUNT_MAX)
+		hist_ev = (struct hif_ce_desc_event *)ce_hist->hist_ev[ce_id];
+	else
+		return;
 
 	if (ce_id >= CE_COUNT_MAX)
 		return;

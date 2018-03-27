@@ -114,6 +114,10 @@ ce_send_nolock_srng(struct CE_handle *copyeng,
 
 		src_desc = hal_srng_src_get_next_reaped(scn->hal_soc,
 				src_ring->srng_ctx);
+		if (!src_desc) {
+			Q_TARGET_ACCESS_END(scn);
+			return QDF_STATUS_E_INVAL;
+		}
 
 		/* Update low 32 bits source descriptor address */
 		src_desc->buffer_addr_lo =

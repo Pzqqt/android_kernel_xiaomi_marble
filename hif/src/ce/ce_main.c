@@ -2181,7 +2181,7 @@ QDF_STATUS hif_post_recv_buffers(struct hif_softc *scn)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	int pipe_num;
-	struct CE_state *ce_state;
+	struct CE_state *ce_state = NULL;
 	QDF_STATUS qdf_status;
 
 	A_TARGET_ACCESS_LIKELY(scn);
@@ -2196,7 +2196,7 @@ QDF_STATUS hif_post_recv_buffers(struct hif_softc *scn)
 			continue;
 
 		qdf_status = hif_post_recv_buffers_for_pipe(pipe_info);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status) &&
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status) && ce_state &&
 			ce_state->htt_rx_data &&
 			scn->fastpath_mode_on) {
 			A_TARGET_ACCESS_UNLIKELY(scn);
@@ -2761,7 +2761,7 @@ int hif_config_ce(struct hif_softc *scn)
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct HIF_CE_pipe_info *pipe_info;
 	int pipe_num;
-	struct CE_state *ce_state;
+	struct CE_state *ce_state = NULL;
 
 #ifdef ADRASTEA_SHADOW_REGISTERS
 	int i;
@@ -2795,6 +2795,10 @@ int hif_config_ce(struct hif_softc *scn)
 
 		pipe_info->ce_hdl = ce_init(scn, pipe_num, attr);
 		ce_state = scn->ce_id_to_state[pipe_num];
+		if (!ce_state) {
+			A_TARGET_ACCESS_UNLIKELY(scn);
+			goto err;
+		}
 		qdf_spinlock_create(&pipe_info->recv_bufs_needed_lock);
 		QDF_ASSERT(pipe_info->ce_hdl != NULL);
 		if (pipe_info->ce_hdl == NULL) {
