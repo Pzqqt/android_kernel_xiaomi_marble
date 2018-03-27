@@ -1958,6 +1958,7 @@ struct roam_offload_scan_params {
 	bool fw_pmksa_cache;
 #endif
 	bool is_ese_assoc;
+	bool is_11r_assoc;
 	struct mobility_domain_info mdid;
 #ifdef CONFIG_MCL
 	/* THis is not available in non tlv target.
