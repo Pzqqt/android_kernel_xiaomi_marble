@@ -199,6 +199,20 @@ bool qos_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void qos_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 QDF_STATUS csr_process_scan_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 QDF_STATUS csr_roam_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
+
+/**
+ * csr_roam_wm_status_change_complete() - Remove WM status change command
+ *                                        from SME active command list
+ * @mac_ctx: global mac context
+ * @session_id: session id
+ *
+ * This API removes WM status change command from SME active command list
+ * if present.
+ *
+ * Return: void
+ */
+void csr_roam_wm_status_change_complete(tpAniSirGlobal mac_ctx,
+					uint8_t session_id);
 void csr_roam_process_wm_status_change_command(tpAniSirGlobal pMac,
 		tSmeCmd *pCommand);
 void csr_reinit_roam_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);

@@ -44,6 +44,10 @@ void lim_send_sme_start_bss_rsp(tpAniSirGlobal, uint16_t, tSirResultCodes,
 				tpPESession, uint8_t, uint16_t);
 void lim_send_sme_join_reassoc_rsp(tpAniSirGlobal, uint16_t, tSirResultCodes,
 				   uint16_t, tpPESession, uint8_t, uint16_t);
+void lim_send_disconnect_done_ind(tpAniSirGlobal mac_ctx,
+				  tpPESession session_entry, uint8_t session_id,
+				  tSirResultCodes reason_code,
+				  tSirMacAddr peer_mac_addr);
 void lim_send_sme_disassoc_ntf(tpAniSirGlobal, tSirMacAddr, tSirResultCodes,
 			       uint16_t, uint16_t, uint8_t, uint16_t, tpPESession);
 void lim_send_sme_deauth_ntf(tpAniSirGlobal, tSirMacAddr, tSirResultCodes, uint16_t,
