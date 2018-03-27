@@ -1652,7 +1652,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		qdf_copy_macaddr(&disassoc_comp->staMac,
 				 &csr_roaminfo->peerMac);
 		disassoc_comp->staId = csr_roaminfo->staId;
-		if (csr_roaminfo->disassoc_reason == eCSR_ROAM_RESULT_FORCED)
+		if (csr_roaminfo->reasonCode == eCSR_ROAM_RESULT_FORCED)
 			disassoc_comp->reason = eSAP_USR_INITATED_DISASSOC;
 		else
 			disassoc_comp->reason = eSAP_MAC_INITATED_DISASSOC;
@@ -1662,7 +1662,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		disassoc_comp->rssi = csr_roaminfo->rssi;
 		disassoc_comp->rx_rate = csr_roaminfo->rx_rate;
 		disassoc_comp->tx_rate = csr_roaminfo->tx_rate;
-		disassoc_comp->reason_code = csr_roaminfo->reasonCode;
+		disassoc_comp->reason_code = csr_roaminfo->disassoc_reason;
 		break;
 
 	case eSAP_STA_SET_KEY_EVENT:

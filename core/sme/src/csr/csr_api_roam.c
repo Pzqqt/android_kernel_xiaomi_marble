@@ -7192,8 +7192,9 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 			qdf_mem_copy(roam_info.peerMac.bytes,
 					cmd->u.roamCmd.peerMac,
 					sizeof(tSirMacAddr));
-			roam_info.reasonCode = cmd->u.roamCmd.reason;
-			roam_info.disassoc_reason = eCSR_ROAM_RESULT_FORCED;
+			roam_info.reasonCode = eCSR_ROAM_RESULT_FORCED;
+			/* Update the MAC reason code */
+			roam_info.disassoc_reason = cmd->u.roamCmd.reason;
 			roam_info.statusCode = eSIR_SME_SUCCESS;
 			status = csr_roam_call_callback(mac_ctx, session_id,
 					&roam_info, cmd->u.roamCmd.roamId,
@@ -11756,6 +11757,7 @@ csr_roam_send_disconnect_done_indication(tpAniSirGlobal mac_ctx, tSirSmeRsp
 		roam_info.rssi = mac_ctx->peer_rssi;
 		roam_info.tx_rate = mac_ctx->peer_txrate;
 		roam_info.rx_rate = mac_ctx->peer_rxrate;
+		roam_info.disassoc_reason = discon_ind->reason_code;
 
 		csr_roam_call_callback(mac_ctx, discon_ind->session_id,
 				       &roam_info, 0, eCSR_ROAM_LOSTLINK,

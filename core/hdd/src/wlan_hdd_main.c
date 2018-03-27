@@ -10969,25 +10969,11 @@ QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
 void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
 			     struct csr_del_sta_params *pDelStaParams)
 {
-	struct sir_peer_sta_info peer_sta_info;
-	struct hdd_station_info *stainfo;
-
 	hdd_enter();
 
 	/* Ignore request to disassoc bcmc station */
 	if (pDelStaParams->peerMacAddr.bytes[0] & 0x1)
 		return;
-
-	wlan_hdd_get_peer_rssi(adapter, &pDelStaParams->peerMacAddr,
-			       &peer_sta_info);
-	stainfo = hdd_get_stainfo(adapter->cache_sta_info,
-				  pDelStaParams->peerMacAddr);
-	if (stainfo) {
-		stainfo->rssi = peer_sta_info.info[0].rssi;
-		stainfo->tx_rate = peer_sta_info.info[0].tx_rate;
-		stainfo->rx_rate = peer_sta_info.info[0].rx_rate;
-		stainfo->reason_code = pDelStaParams->reason_code;
-	}
 
 	wlansap_disassoc_sta(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 			     pDelStaParams);

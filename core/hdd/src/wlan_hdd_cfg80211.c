@@ -20605,8 +20605,6 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_warn("Deauth wait time expired");
 
-			adapter->cache_sta_info[staId].reason_code =
-				pDelStaParams->reason_code;
 		}
 	}
 
