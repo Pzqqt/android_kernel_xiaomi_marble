@@ -1310,6 +1310,21 @@ static inline uint16_t wlan_psoc_get_max_peer_count(
 }
 
 /**
+ * wlan_psoc_get_peer_count() - get psoc peer count
+ * @psoc: PSOC object
+ *
+ * API to get peer count
+ *
+ * Return: @peer count: peer count
+ */
+static inline uint16_t wlan_psoc_get_peer_count(
+					struct wlan_objmgr_psoc *psoc)
+{
+	return psoc->soc_objmgr.wlan_peer_count;
+}
+
+
+/**
  * DOC: Examples to use PSOC ref count APIs
  *
  * In all the scenarios, the pair of API should be followed
