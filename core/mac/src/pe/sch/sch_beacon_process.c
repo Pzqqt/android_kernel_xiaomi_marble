@@ -1285,7 +1285,7 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 		 cur_detect->obss_ht_mixed_detect_mode,
 		 cur_detect->obss_ht_20mhz_detect_mode);
 
-	if ((rf_band == BAND_2G)) {
+	if (rf_band == BAND_2G) {
 		if ((phy_mode == WNI_CFG_PHY_MODE_11G ||
 		    session->htCapability) &&
 		    !session->gLim11bParams.protectionEnabled) {
