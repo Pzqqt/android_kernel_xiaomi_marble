@@ -122,6 +122,16 @@ static void cfg_uint_item_handler(struct cfg_value_store *store,
 	QDF_STATUS status;
 	uint32_t *store_value = cfg_value_ptr(store, meta);
 	uint32_t value;
+	uint32_t min;
+	uint32_t max;
+
+	/**
+	 * Since meta min and max are of type int32_t
+	 * We need explicit type casting to avoid
+	 * implicit wrap around for uint32_t type cfg data.
+	*/
+	min = (uint32_t)meta->min;
+	max = (uint32_t)meta->max;
 
 	status = qdf_uint32_parse(str_value, &value);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -130,14 +140,13 @@ static void cfg_uint_item_handler(struct cfg_value_store *store,
 		return;
 	}
 
-	QDF_BUG(meta->min >= 0);
-	QDF_BUG(meta->min <= meta->max);
-	if (meta->min < 0 || meta->min > meta->max) {
+	QDF_BUG(min <= max);
+	if (min > max) {
 		cfg_err("Invalid config item meta for %s", meta->name);
 		return;
 	}
 
-	if (value >= meta->min && value <= meta->max) {
+	if (value >= min && value <= max) {
 		*store_value = value;
 		return;
 	}
@@ -150,12 +159,12 @@ static void cfg_uint_item_handler(struct cfg_value_store *store,
 		/* store already contains default */
 		break;
 	case CFG_VALUE_OR_CLAMP:
-		*store_value = __cfg_clamp(value, meta->min, meta->max);
+		*store_value = __cfg_clamp(value, min, max);
 		break;
 	}
 
 	cfg_err("%s=%u - Out of range [%d, %d]; Using %u",
-		meta->name, value, meta->min, meta->max, *store_value);
+		meta->name, value, min, max, *store_value);
 }
 
 static void cfg_bool_item_handler(struct cfg_value_store *store,
