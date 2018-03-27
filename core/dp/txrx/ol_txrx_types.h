@@ -422,8 +422,6 @@ enum throttle_phase {
  */
 #define MAX_TSO_SEGMENT_DESC (44)
 
-typedef void (*ipa_uc_op_cb_type)(uint8_t *op_msg, void *usr_ctxt);
-
 struct ol_tx_queue_group_t {
 	qdf_atomic_t credit;
 	u_int32_t membership;
