@@ -1,9 +1,0 @@
-
-#Enable High Latency Data Path
-WLAN_FEATURE_HL_DATA_PATH := 1
-
-CONFIG_HIF_SDIO := 1
-
-ifeq ($(CONFIG_ARCH_MSM8917), y)
-	CONFIG_WLAN_SYNC_TSF_PLUS := y
-endif

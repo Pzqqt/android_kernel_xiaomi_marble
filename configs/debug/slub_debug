@@ -1,8 +1,0 @@
-
-include $(src)/configs/debug/perf_debug
-
-CONFIG_WLAN_OBJMGR_DEBUG:= y
-# enable unit-test suspend for SLUB debug builds
-CONFIG_FEATURE_UNIT_TEST_SUSPEND := 1
-
-CONFIG_LEAK_DETECTION := 1

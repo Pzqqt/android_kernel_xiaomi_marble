@@ -1,7 +1,0 @@
-
-CONFIG_WLAN_FEATURE_11AX := y
-
-# enable unit-test suspend for napier builds
-CONFIG_FEATURE_UNIT_TEST_SUSPEND := 1
-
-CONFIG_WLAN_FEATURE_DFS_OFFLOAD := y
