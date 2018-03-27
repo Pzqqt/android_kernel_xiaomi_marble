@@ -2262,7 +2262,7 @@ void hdd_tx_queue_cb(void *context, uint32_t vdev_id,
  */
 void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx)
 {
-	enum pld_bus_width_type next_level = WLAN_SVC_TP_LOW;
+	enum wlan_tp_level next_level = WLAN_SVC_TP_LOW;
 	struct wlan_rx_tp_data rx_tp_data = {0};
 
 	rx_tp_data.rx_tp_flags |= TCP_DEL_ACK_IND;

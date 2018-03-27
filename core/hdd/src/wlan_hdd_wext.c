@@ -7172,14 +7172,11 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 
 	case WE_POLICY_MANAGER_QUERY_ACTION_CMD:
 	{
-		enum policy_mgr_conc_next_action action;
-
 		hdd_debug("<iwpriv wlan0 pm_query_action> is called");
-		action = policy_mgr_current_connections_update(
+		policy_mgr_current_connections_update(
 			hdd_ctx->hdd_psoc,
 			adapter->session_id, apps_args[0],
 			POLICY_MGR_UPDATE_REASON_UT);
-		pr_info("next action is %d {HDD_NOP = 0, HDD_DBS, HDD_DBS_DOWNGRADE, HDD_MCC, HDD_MCC_UPGRADE}", action);
 	}
 	break;
 
