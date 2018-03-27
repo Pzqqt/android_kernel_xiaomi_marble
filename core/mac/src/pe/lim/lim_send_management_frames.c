@@ -4889,7 +4889,7 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 			cds_packet_free((void *)pkt_ptr);
 		return qdf_status;
 	} else {
-		return eSIR_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 error_addba_rsp:
