@@ -955,6 +955,8 @@ struct ol_ath_radiostats {
 	uint32_t    rx_looplimit_start;
 	uint32_t    rx_looplimit_end;
 	uint8_t     ap_stats_tx_cal_enable;
+	uint8_t     self_bss_util;
+	uint8_t     obss_util;
 	uint32_t    tgt_asserts;
 	int16_t     chan_nf;
 	uint32_t    rx_last_msdu_unset_cnt;
@@ -1240,6 +1242,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_CCK_TX_ENABLE = 363,
 	OL_ATH_PARAM_PAPI_ENABLE = 364,
 	OL_ATH_PARAM_ISOLATION = 365,
+	OL_ATH_PARAM_MAX_CLIENTS_PER_RADIO = 366,
 };
 
 /* Enumeration of PDEV Configuration parameter */
