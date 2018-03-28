@@ -7903,7 +7903,7 @@ static int voice_alloc_oob_shared_mem(void)
 	int cnt = 0;
 	int rc = 0;
 	size_t len;
-	void *mem_addr;
+	void *mem_addr = NULL;
 	dma_addr_t phys;
 	int bufsz = BUFFER_BLOCK_SIZE;
 	int bufcnt = NUM_OF_BUFFERS;
