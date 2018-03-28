@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -104,8 +104,7 @@ struct regdomain   {
  * struct country_code_to_reg_domain
  * @country_code: country code
  * @reg_dmn_pair_id: reg domainpair id
- * @alpha2: internal alpha2(unique)
- * @alpha2_11d: iso-3166 alpha2
+ * @alpha2: iso-3166 alpha2
  * @max_bw_2g: maximum 2g bandwidth
  * @max_bw_5g: maximum 5g bandwidth
  * @phymode_bitmap: phymodes not supported
@@ -114,7 +113,6 @@ struct country_code_to_reg_domain   {
 	uint16_t country_code;
 	uint16_t reg_dmn_pair_id;
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
-	uint8_t alpha2_11d[REG_ALPHA2_LEN + 1];
 	uint16_t max_bw_2g;
 	uint16_t max_bw_5g;
 	uint16_t phymode_bitmap;

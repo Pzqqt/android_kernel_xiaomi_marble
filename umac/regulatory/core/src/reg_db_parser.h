@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -31,7 +31,7 @@ extern const struct regdomain regdomains_2g[];
 extern const struct regulatory_rule reg_rules_5g[];
 extern const struct regdomain regdomains_5g[];
 
-QDF_STATUS reg_is_country_code_valid(uint8_t alpha[3]);
+QDF_STATUS reg_is_country_code_valid(uint8_t *alpha2);
 
 QDF_STATUS reg_regrules_assign(uint8_t dmn_id_2g,
 		uint8_t dmn_id_5g,
