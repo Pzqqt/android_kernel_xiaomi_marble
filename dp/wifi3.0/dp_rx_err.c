@@ -1216,9 +1216,9 @@ done:
 			qdf_assert(0);
 		}
 
+		hal_rx_dump_pkt_tlvs(rx_tlv_hdr, QDF_TRACE_LEVEL_DEBUG);
 		qdf_nbuf_free(nbuf);
 		nbuf = next;
-		hal_rx_dump_pkt_tlvs(rx_tlv_hdr, QDF_TRACE_LEVEL_DEBUG);
 	}
 	return rx_bufs_used; /* Assume no scale factor for now */
 }
