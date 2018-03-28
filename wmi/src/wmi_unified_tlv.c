@@ -21140,7 +21140,33 @@ static QDF_STATUS send_get_rcpi_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = get_rcpi_param->vdev_id;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(get_rcpi_param->mac_addr,
 				   &cmd->peer_macaddr);
-	cmd->measurement_type = get_rcpi_param->measurement_type;
+
+	switch (get_rcpi_param->measurement_type) {
+
+	case RCPI_MEASUREMENT_TYPE_AVG_MGMT:
+		cmd->measurement_type = WMI_RCPI_MEASUREMENT_TYPE_AVG_MGMT;
+		break;
+
+	case RCPI_MEASUREMENT_TYPE_AVG_DATA:
+		cmd->measurement_type = WMI_RCPI_MEASUREMENT_TYPE_AVG_DATA;
+		break;
+
+	case RCPI_MEASUREMENT_TYPE_LAST_MGMT:
+		cmd->measurement_type = WMI_RCPI_MEASUREMENT_TYPE_LAST_MGMT;
+		break;
+
+	case RCPI_MEASUREMENT_TYPE_LAST_DATA:
+		cmd->measurement_type = WMI_RCPI_MEASUREMENT_TYPE_LAST_DATA;
+		break;
+
+	default:
+		/*
+		 * invalid rcpi measurement type, fall back to
+		 * RCPI_MEASUREMENT_TYPE_AVG_MGMT
+		 */
+		cmd->measurement_type = WMI_RCPI_MEASUREMENT_TYPE_AVG_MGMT;
+		break;
+	}
 	WMI_LOGD("RCPI REQ VDEV_ID:%d-->", cmd->vdev_id);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_REQUEST_RCPI_CMDID)) {
