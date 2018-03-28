@@ -4400,33 +4400,7 @@ QDF_STATUS wma_get_rcpi_req(WMA_HANDLE handle,
 
 	cmd.vdev_id = rcpi_request->session_id;
 	qdf_mem_copy(cmd.mac_addr, &rcpi_request->mac_addr, QDF_MAC_ADDR_SIZE);
-
-	switch (rcpi_request->measurement_type) {
-
-	case RCPI_MEASUREMENT_TYPE_AVG_MGMT:
-		cmd.measurement_type = WMI_RCPI_MEASUREMENT_TYPE_AVG_MGMT;
-		break;
-
-	case RCPI_MEASUREMENT_TYPE_AVG_DATA:
-		cmd.measurement_type = WMI_RCPI_MEASUREMENT_TYPE_AVG_DATA;
-		break;
-
-	case RCPI_MEASUREMENT_TYPE_LAST_MGMT:
-		cmd.measurement_type = WMI_RCPI_MEASUREMENT_TYPE_LAST_MGMT;
-		break;
-
-	case RCPI_MEASUREMENT_TYPE_LAST_DATA:
-		cmd.measurement_type = WMI_RCPI_MEASUREMENT_TYPE_LAST_DATA;
-		break;
-
-	default:
-		/*
-		 * invalid rcpi measurement type, fall back to
-		 * RCPI_MEASUREMENT_TYPE_AVG_MGMT
-		 */
-		cmd.measurement_type = WMI_RCPI_MEASUREMENT_TYPE_AVG_MGMT;
-		break;
-	}
+	cmd.measurement_type = rcpi_request->measurement_type;
 
 	if (wmi_unified_send_request_get_rcpi_cmd(wma_handle->wmi_handle,
 						  &cmd)) {
