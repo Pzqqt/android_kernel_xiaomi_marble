@@ -1300,7 +1300,7 @@ QDF_STATUS tdls_process_send_mgmt_rsp(struct tdls_send_mgmt_rsp *rsp)
 
 	if (tdls_soc && tdls_soc->tdls_event_cb) {
 		ind.vdev = vdev;
-		ind.status = rsp->status_code;
+		ind.status = status;
 		tdls_soc->tdls_event_cb(tdls_soc->tdls_evt_cb_data,
 				       TDLS_EVENT_MGMT_TX_ACK_CNF, &ind);
 	}
@@ -2276,7 +2276,9 @@ QDF_STATUS tdls_process_antenna_switch(struct tdls_antenna_switch_request *req)
 
 	vdev_id = wlan_vdev_get_id(vdev);
 	opmode = wlan_vdev_mlme_get_opmode(vdev);
-	channel = policy_mgr_get_channel(soc_obj->soc, opmode, &vdev_id);
+	channel = policy_mgr_get_channel(soc_obj->soc,
+			policy_mgr_convert_device_mode_to_qdf_type(opmode),
+			&vdev_id);
 
 	/* Check supported nss for TDLS, if is 1x1, no need to teardown links */
 	if (WLAN_REG_IS_24GHZ_CH(channel))
