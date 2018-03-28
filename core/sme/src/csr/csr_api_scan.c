@@ -3080,6 +3080,65 @@ static inline void csr_update_pmf_cap(tCsrScanResultFilter *src_filter,
 {}
 #endif
 
+/**
+ * csr_convert_dotllmod_phymode: Convert eCsrPhyMode to wlan_phymode
+ * @dotllmode: phy mode
+ *
+ * Return: returns enum wlan_phymode
+ */
+static enum wlan_phymode csr_convert_dotllmod_phymode(eCsrPhyMode dotllmode)
+{
+
+	enum wlan_phymode con_phy_mode;
+
+	switch (dotllmode) {
+	case eCSR_DOT11_MODE_abg:
+		con_phy_mode = WLAN_PHYMODE_AUTO;
+		break;
+	case eCSR_DOT11_MODE_11a:
+		con_phy_mode = WLAN_PHYMODE_11A;
+		break;
+	case eCSR_DOT11_MODE_11b:
+		con_phy_mode = WLAN_PHYMODE_11B;
+		break;
+	case eCSR_DOT11_MODE_11g:
+		con_phy_mode = WLAN_PHYMODE_11G;
+		break;
+	case eCSR_DOT11_MODE_11n:
+		con_phy_mode = WLAN_PHYMODE_11NA_HT20;
+		break;
+	case eCSR_DOT11_MODE_11g_ONLY:
+		con_phy_mode = WLAN_PHYMODE_11G;
+		break;
+	case eCSR_DOT11_MODE_11n_ONLY:
+		con_phy_mode = WLAN_PHYMODE_11NA_HT20;
+		break;
+	case eCSR_DOT11_MODE_11b_ONLY:
+		con_phy_mode = WLAN_PHYMODE_11B;
+		break;
+	case eCSR_DOT11_MODE_11ac:
+		con_phy_mode = WLAN_PHYMODE_11AC_VHT160;
+		break;
+	case eCSR_DOT11_MODE_11ac_ONLY:
+		con_phy_mode = WLAN_PHYMODE_11AC_VHT160;
+		break;
+	case eCSR_DOT11_MODE_AUTO:
+		con_phy_mode = WLAN_PHYMODE_AUTO;
+		break;
+	case eCSR_DOT11_MODE_11ax:
+		con_phy_mode = WLAN_PHYMODE_11AXA_HE160;
+		break;
+	case eCSR_DOT11_MODE_11ax_ONLY:
+		con_phy_mode = WLAN_PHYMODE_11AXA_HE160;
+		break;
+	default:
+		con_phy_mode = WLAN_PHYMODE_AUTO;
+		break;
+	}
+
+	return con_phy_mode;
+}
+
 static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 	tCsrScanResultFilter *pFilter, struct scan_filter *filter)
 {
@@ -3181,7 +3240,7 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 	else
 		filter->bss_type = WLAN_TYPE_ANY;
 
-	filter->dot11_mode = pFilter->phyMode;
+	filter->dot11_mode = csr_convert_dotllmod_phymode(pFilter->phyMode);
 
 	// enable bss scoring for only STA mode
 	if (pFilter->csrPersona == QDF_STA_MODE)
