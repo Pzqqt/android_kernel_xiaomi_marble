@@ -694,6 +694,12 @@ QDF_STATUS target_if_direct_buf_rx_module_register(
 	}
 	direct_buf_rx_info("Dbr pdev obj %pK", dbr_pdev_obj);
 
+	if (!dbr_pdev_obj->dbr_mod_param &&
+	    (mod_id >= dbr_pdev_obj->num_modules)) {
+		direct_buf_rx_err("Module %d not supported in target", mod_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	dbr_pdev_obj->dbr_mod_param[mod_id].dbr_rsp_handler =
 			dbr_rsp_handler;
 
