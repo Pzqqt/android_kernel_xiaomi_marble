@@ -743,7 +743,7 @@ bool policy_mgr_is_dbs_enable(struct wlan_objmgr_psoc *psoc)
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	if (policy_mgr_is_dual_mac_disabled_in_ini(psoc)) {
-		policy_mgr_err("DBS is disabled from ini");
+		policy_mgr_debug("DBS is disabled from ini");
 		return false;
 	}
 
