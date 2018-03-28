@@ -283,9 +283,6 @@ static enum hdd_tsf_op_result hdd_indicate_tsf_internal(
  */
 #define WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC 10
 #define WLAN_HDD_CAPTURE_TSF_INIT_INTERVAL_MS 100
-#define NORMAL_INTERVAL_TARGET \
-	((int64_t)((int64_t)WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC * \
-		NSEC_PER_SEC / HOST_TO_TARGET_TIME_RATIO))
 #define OVERFLOW_INDICATOR32 (((int64_t)0x1) << 32)
 #define CAP_TSF_TIMER_FIX_SEC 1
 
@@ -554,6 +551,7 @@ static inline int32_t hdd_get_hosttime_from_targettime(
 	int32_t ret = -EINVAL;
 	int64_t delta32_target;
 	bool in_cap_state;
+	int64_t normal_interval_target;
 
 	in_cap_state = hdd_tsf_is_in_cap(adapter);
 
@@ -568,11 +566,15 @@ static inline int32_t hdd_get_hosttime_from_targettime(
 	delta32_target = (int64_t)((target_time & U32_MAX) -
 			(adapter->last_target_time & U32_MAX));
 
+	normal_interval_target =
+		qdf_do_div(WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC *
+			   NSEC_PER_SEC, HOST_TO_TARGET_TIME_RATIO);
+
 	if (delta32_target <
-			(NORMAL_INTERVAL_TARGET - OVERFLOW_INDICATOR32))
+			(normal_interval_target - OVERFLOW_INDICATOR32))
 		delta32_target += OVERFLOW_INDICATOR32;
 	else if (delta32_target >
-			(OVERFLOW_INDICATOR32 - NORMAL_INTERVAL_TARGET))
+			(OVERFLOW_INDICATOR32 - normal_interval_target))
 		delta32_target -= OVERFLOW_INDICATOR32;
 
 	ret = hdd_64bit_plus(adapter->last_host_time,
