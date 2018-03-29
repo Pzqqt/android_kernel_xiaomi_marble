@@ -219,6 +219,7 @@ enum policy_mgr_conc_priority_mode {
  * @PM_P2P_CLIENT_MODE: P2P client mode
  * @PM_P2P_GO_MODE: P2P Go mode
  * @PM_IBSS_MODE: IBSS mode
+ * @PM_NDI_MODE: NDI mode
  * @PM_MAX_NUM_OF_MODE: max value place holder
  */
 enum policy_mgr_con_mode {
@@ -227,6 +228,7 @@ enum policy_mgr_con_mode {
 	PM_P2P_CLIENT_MODE,
 	PM_P2P_GO_MODE,
 	PM_IBSS_MODE,
+	PM_NDI_MODE,
 	PM_MAX_NUM_OF_MODE
 };
 

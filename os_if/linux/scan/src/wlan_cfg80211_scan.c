@@ -253,10 +253,10 @@ static void wlan_cfg80211_pno_callback(struct wlan_objmgr_vdev *vdev,
 static bool wlan_cfg80211_is_ap_go_present(struct wlan_objmgr_psoc *psoc)
 {
 	return policy_mgr_mode_specific_connection_count(psoc,
-							  QDF_SAP_MODE,
+							  PM_SAP_MODE,
 							  NULL) ||
 		policy_mgr_mode_specific_connection_count(psoc,
-							  QDF_P2P_GO_MODE,
+							  PM_P2P_GO_MODE,
 							  NULL);
 }
 
@@ -1325,9 +1325,9 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 #ifdef WLAN_POLICY_MGR_ENABLE
 		bool ap_or_go_present =
 			policy_mgr_mode_specific_connection_count(
-			     psoc, QDF_SAP_MODE, NULL) ||
+			     psoc, PM_SAP_MODE, NULL) ||
 			     policy_mgr_mode_specific_connection_count(
-			     psoc, QDF_P2P_GO_MODE, NULL);
+			     psoc, PM_P2P_GO_MODE, NULL);
 #endif
 
 		for (i = 0; i < request->n_channels; i++) {

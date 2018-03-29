@@ -278,11 +278,11 @@ static void ucfg_scan_update_pno_dwell_time(struct wlan_objmgr_vdev *vdev,
 		return;
 
 	sap_or_p2p_present = policy_mgr_mode_specific_connection_count(
-				psoc, QDF_SAP_MODE, NULL) ||
+				psoc, PM_SAP_MODE, NULL) ||
 				policy_mgr_mode_specific_connection_count(
-				psoc, QDF_P2P_GO_MODE, NULL) ||
+				psoc, PM_P2P_GO_MODE, NULL) ||
 				policy_mgr_mode_specific_connection_count(
-				psoc, QDF_P2P_CLIENT_MODE, NULL);
+				psoc, PM_P2P_CLIENT_MODE, NULL);
 
 	if (sap_or_p2p_present) {
 		req->active_dwell_time = scan_def->conc_active_dwell;
@@ -593,15 +593,15 @@ static void ucfg_scan_req_update_concurrency_params(
 		return;
 
 	ap_present = policy_mgr_mode_specific_connection_count(
-				psoc, QDF_SAP_MODE, NULL);
+				psoc, PM_SAP_MODE, NULL);
 	go_present = policy_mgr_mode_specific_connection_count(
-				psoc, QDF_P2P_GO_MODE, NULL);
+				psoc, PM_P2P_GO_MODE, NULL);
 	p2p_cli_present = policy_mgr_mode_specific_connection_count(
-				psoc, QDF_P2P_CLIENT_MODE, NULL);
+				psoc, PM_P2P_CLIENT_MODE, NULL);
 	sta_active = policy_mgr_mode_specific_connection_count(
-				psoc, QDF_STA_MODE, NULL);
+				psoc, PM_STA_MODE, NULL);
 	ndi_present = policy_mgr_mode_specific_connection_count(
-				psoc, QDF_NDI_MODE, NULL);
+				psoc, PM_NDI_MODE, NULL);
 
 	if (policy_mgr_get_connection_count(psoc)) {
 		if (req->scan_req.scan_f_passive)
@@ -700,7 +700,7 @@ static void ucfg_scan_req_update_concurrency_params(
 		uint8_t ap_chan;
 		struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 
-		ap_chan = policy_mgr_get_channel(psoc, QDF_SAP_MODE, NULL);
+		ap_chan = policy_mgr_get_channel(psoc, PM_SAP_MODE, NULL);
 		/*
 		 * P2P/STA scan while SoftAP is sending beacons.
 		 * Max duration of CTS2self is 32 ms, which limits the
@@ -1718,7 +1718,7 @@ ucfg_scan_get_vdev_status(struct wlan_objmgr_vdev *vdev)
 
 	if (!vdev) {
 		scm_err("null vdev");
-		return QDF_STATUS_E_NULL_VALUE;
+		return SCAN_NOT_IN_PROGRESS;
 	}
 	status = wlan_serialization_vdev_scan_status(vdev);
 
