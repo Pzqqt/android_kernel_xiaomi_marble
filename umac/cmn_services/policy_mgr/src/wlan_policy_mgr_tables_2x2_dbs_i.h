@@ -26,7 +26,7 @@
  */
 
 #ifndef __WLAN_POLICY_MGR_TABLES_2X2_DBS_H
-#define __WLAN_POLICY_MGR_TABLESY_2X2_DBS_H
+#define __WLAN_POLICY_MGR_TABLES_2X2_DBS_H
 
 #include "wlan_policy_mgr_api.h"
 

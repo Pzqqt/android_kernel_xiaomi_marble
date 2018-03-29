@@ -2176,7 +2176,7 @@ bool policy_mgr_is_sta_active_connection_exists(
 	struct wlan_objmgr_psoc *psoc)
 {
 	return (!policy_mgr_mode_specific_connection_count(
-		psoc, QDF_STA_MODE, NULL)) ? false : true;
+		psoc, PM_STA_MODE, NULL)) ? false : true;
 }
 
 bool policy_mgr_is_any_nondfs_chnl_present(struct wlan_objmgr_psoc *psoc,

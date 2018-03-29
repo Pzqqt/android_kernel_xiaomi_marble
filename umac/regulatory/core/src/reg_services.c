@@ -891,7 +891,7 @@ enum channel_state reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
 
 	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
 		reg_err("pdev reg obj is NULL");
-		return QDF_STATUS_E_FAILURE;
+		return CHANNEL_STATE_INVALID;
 	}
 
 	return pdev_priv_obj->cur_chan_list[ch_idx].state;

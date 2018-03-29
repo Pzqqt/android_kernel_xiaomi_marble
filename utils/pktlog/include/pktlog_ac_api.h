@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -39,7 +39,6 @@
  * @brief opaque handle for pktlog device object
  */
 struct ol_pktlog_dev_t;
-typedef struct ol_pktlog_dev_t *ol_pktlog_dev_handle;
 
 /**
  * @typedef hif_opaque_softc_handle

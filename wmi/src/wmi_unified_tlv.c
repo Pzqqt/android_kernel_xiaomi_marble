@@ -1872,7 +1872,7 @@ static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
 static void send_time_stamp_sync_cmd_tlv(wmi_unified_t wmi_handle)
 {
 	wmi_buf_t buf;
-	A_STATUS status = A_OK;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	WMI_DBGLOG_TIME_STAMP_SYNC_CMD_fixed_param *time_stamp;
 	int32_t len;
 	qdf_time_t time_ms;
@@ -12049,7 +12049,7 @@ static QDF_STATUS send_smart_ant_set_node_config_cmd_tlv(
 	args_tlv_len = WMI_TLV_HDR_SIZE + param->args_count * sizeof(uint32_t);
 	len = sizeof(*cmd) + args_tlv_len;
 
-	if ((param->args_count == 0)) {
+	if (param->args_count == 0) {
 		WMI_LOGE("%s: Can't send a command with %d arguments\n",
 			  __func__, param->args_count);
 		return QDF_STATUS_E_FAILURE;

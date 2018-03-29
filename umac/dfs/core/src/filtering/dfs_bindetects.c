@@ -816,7 +816,7 @@ static void dfs_count_the_other_delay_elements(
 	}
 
 	if (primatch && (deltadur < durmargin)) {
-		if ((*numpulses == 1)) {
+		if (*numpulses == 1) {
 			dl->dl_seq_num_second =
 				dl->dl_elems[delayindex].de_seq_num;
 			dfs_update_min_and_max_sidx(dl, delayindex,

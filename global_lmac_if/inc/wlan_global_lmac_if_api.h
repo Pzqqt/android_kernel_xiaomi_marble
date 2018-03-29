@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -18,7 +18,7 @@
  */
 
 #ifndef _WLAN_GLOBAL_LMAC_IF_API_H_
-#define _WLAN__GLOBAL_LMAC_IF_API_H_
+#define _WLAN_GLOBAL_LMAC_IF_API_H_
 
 #include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_psoc_obj.h"
