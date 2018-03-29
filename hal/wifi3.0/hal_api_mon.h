@@ -208,7 +208,7 @@ HAL_RX_DESC_GET_80211_HDR(void *hw_desc_addr) {
 }
 
 static inline
-uint32_t HAL_RX_MON_HW_DESC_GET_PPDUID_GET(void *hw_desc_addr)
+uint32_t HAL_RX_HW_DESC_GET_PPDUID_GET(void *hw_desc_addr)
 {
 	struct rx_mpdu_info *rx_mpdu_info;
 	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;

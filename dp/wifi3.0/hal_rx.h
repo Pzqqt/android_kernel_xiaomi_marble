@@ -803,6 +803,31 @@ hal_rx_attn_ip_cksum_fail_get(uint8_t *buf)
 	return ip_cksum_fail;
 }
 
+#define HAL_RX_ATTN_PHY_PPDU_ID_GET(_rx_attn)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_attn,	\
+		RX_ATTENTION_0_PHY_PPDU_ID_OFFSET)),	\
+		RX_ATTENTION_0_PHY_PPDU_ID_MASK,	\
+		RX_ATTENTION_0_PHY_PPDU_ID_LSB))
+
+/*
+ * hal_rx_attn_phy_ppdu_id_get(): get phy_ppdu_id value
+ * from rx attention
+ * @buf: pointer to rx_pkt_tlvs
+ *
+ * Return: phy_ppdu_id
+ */
+static inline uint16_t
+hal_rx_attn_phy_ppdu_id_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
+	uint16_t phy_ppdu_id;
+
+	phy_ppdu_id = HAL_RX_ATTN_PHY_PPDU_ID_GET(rx_attn);
+
+	return phy_ppdu_id;
+}
+
 /*
  * Get peer_meta_data from RX_MPDU_INFO within RX_MPDU_START
  */

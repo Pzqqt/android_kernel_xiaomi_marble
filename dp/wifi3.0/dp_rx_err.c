@@ -424,8 +424,10 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 	 */
 	struct dp_pdev *dp_pdev = soc->pdev_list[mac_id];
 
-	if (hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr)) {
+	if (!dp_pdev->first_nbuf) {
 		qdf_nbuf_set_rx_chfrag_start(nbuf, 1);
+		dp_pdev->ppdu_id = HAL_RX_HW_DESC_GET_PPDUID_GET(rx_tlv_hdr);
+		dp_pdev->first_nbuf = true;
 
 		/* If the new nbuf received is the first msdu of the
 		 * amsdu and there are msdus in the invalid peer msdu
@@ -450,8 +452,11 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 
 	}
 
-	if (hal_rx_msdu_end_last_msdu_get(rx_tlv_hdr)) {
+	if (dp_pdev->ppdu_id == hal_rx_attn_phy_ppdu_id_get(rx_tlv_hdr) &&
+	    hal_rx_attn_msdu_done_get(rx_tlv_hdr)) {
 		qdf_nbuf_set_rx_chfrag_end(nbuf, 1);
+		qdf_assert_always(dp_pdev->first_nbuf == true);
+		dp_pdev->first_nbuf = false;
 		mpdu_done = true;
 	}
 

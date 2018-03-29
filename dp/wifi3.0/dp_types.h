@@ -1163,6 +1163,8 @@ struct dp_pdev {
 	TAILQ_HEAD(, ppdu_info) ppdu_info_list;
 	uint32_t tlv_count;
 	uint32_t list_depth;
+	uint32_t ppdu_id;
+	bool first_nbuf;
 };
 
 struct dp_peer;

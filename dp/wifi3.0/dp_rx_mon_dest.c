@@ -205,7 +205,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			if (qdf_likely(check_ppdu_id)) {
 				if (is_first_msdu) {
 					msdu_ppdu_id =
-					HAL_RX_MON_HW_DESC_GET_PPDUID_GET(
+					HAL_RX_HW_DESC_GET_PPDUID_GET(
 						rx_desc_tlv);
 					is_first_msdu = false;
 				}
