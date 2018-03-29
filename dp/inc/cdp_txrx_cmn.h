@@ -1566,4 +1566,49 @@ cdp_peer_map_attach(ol_txrx_soc_handle soc, uint32_t max_peers)
 	    soc->ops->cmn_drv_ops->txrx_peer_map_attach)
 		soc->ops->cmn_drv_ops->txrx_peer_map_attach(soc, max_peers);
 }
+
+#ifdef RECEIVE_OFFLOAD
+/**
+ * cdp_register_rx_offld_flush_cb() - register LRO/GRO flush cb function pointer
+ * @soc - data path soc handle
+ * @pdev - device instance pointer
+ *
+ * register rx offload flush callback function pointer
+ *
+ * return none
+ */
+static inline void cdp_register_rx_offld_flush_cb(ol_txrx_soc_handle soc,
+						  void (rx_ol_flush_cb)(void *))
+{
+	if (!soc || !soc->ops || !soc->ops->rx_offld_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->rx_offld_ops->register_rx_offld_flush_cb)
+		return soc->ops->rx_offld_ops->register_rx_offld_flush_cb(
+								rx_ol_flush_cb);
+}
+
+/**
+ * cdp_deregister_rx_offld_flush_cb() - deregister Rx offld flush cb function
+ * @soc - data path soc handle
+ *
+ * deregister rx offload flush callback function pointer
+ *
+ * return none
+ */
+static inline void cdp_deregister_rx_offld_flush_cb(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops || !soc->ops->rx_offld_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->rx_offld_ops->deregister_rx_offld_flush_cb)
+		return soc->ops->rx_offld_ops->deregister_rx_offld_flush_cb();
+}
+#endif /* RECEIVE_OFFLOAD */
 #endif /* _CDP_TXRX_CMN_H_ */

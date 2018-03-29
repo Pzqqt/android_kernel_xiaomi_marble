@@ -63,6 +63,40 @@ enum napi_decision_vector {
 };
 #define ENABLE_NAPI_MASK (HIF_NAPI_INITED | HIF_NAPI_CONF_UP)
 
+#ifdef RECEIVE_OFFLOAD
+/**
+ * hif_rxthread_napi_poll() - dummy napi poll for rx_thread NAPI
+ * @napi: Rx_thread NAPI
+ * @budget: NAPI BUDGET
+ *
+ * Return: 0 as it is not supposed to be polled at all as it is not scheduled.
+ */
+static int hif_rxthread_napi_poll(struct napi_struct *napi, int budget)
+{
+	HIF_ERROR("This napi_poll should not be polled as we don't schedule it");
+	QDF_ASSERT(0);
+	return 0;
+}
+
+/**
+ * hif_init_rx_thread_napi() - Initialize dummy Rx_thread NAPI
+ * @napii: Handle to napi_info holding rx_thread napi
+ *
+ * Return: None
+ */
+static void hif_init_rx_thread_napi(struct qca_napi_info *napii)
+{
+	init_dummy_netdev(&napii->rx_thread_netdev);
+	netif_napi_add(&napii->rx_thread_netdev, &napii->rx_thread_napi,
+		       hif_rxthread_napi_poll, 64);
+	napi_enable(&napii->rx_thread_napi);
+}
+#else /* RECEIVE_OFFLOAD */
+static void hif_init_rx_thread_napi(struct qca_napi_info *napii)
+{
+}
+#endif
+
 /**
  * hif_napi_create() - creates the NAPI structures for a given CE
  * @hif    : pointer to hif context
@@ -177,6 +211,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 			   napii->netdev.napi_list.prev,
 			   napii->netdev.napi_list.next);
 
+		hif_init_rx_thread_napi(napii);
 		napii->lro_ctx = qdf_lro_init();
 		NAPI_DEBUG("Registering LRO for ce_id %d NAPI callback for %d lro_ctx %pK\n",
 				i, napii->id, napii->lro_ctx);
@@ -212,6 +247,62 @@ hnc_err:
 	return rc;
 }
 qdf_export_symbol(hif_napi_create);
+
+#ifdef RECEIVE_OFFLOAD
+void hif_napi_rx_offld_flush_cb_register(struct hif_opaque_softc *hif_hdl,
+					 void (offld_flush_handler)(void *))
+{
+	int i;
+	struct CE_state *ce_state;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
+	struct qca_napi_data *napid;
+	struct qca_napi_info *napii;
+
+	if (!scn) {
+		HIF_ERROR("%s: hif_state NULL!", __func__);
+		QDF_ASSERT(0);
+		return;
+	}
+
+	napid = hif_napi_get_all(hif_hdl);
+	for (i = 0; i < scn->ce_count; i++) {
+		ce_state = scn->ce_id_to_state[i];
+		if (ce_state && (ce_state->htt_rx_data)) {
+			napii = napid->napis[i];
+			napii->offld_flush_cb = offld_flush_handler;
+			HIF_DBG("Registering offload for ce_id %d NAPI callback for %d flush_cb %p\n",
+				i, napii->id, napii->offld_flush_cb);
+		}
+	}
+}
+
+void hif_napi_rx_offld_flush_cb_deregister(struct hif_opaque_softc *hif_hdl)
+{
+	int i;
+	struct CE_state *ce_state;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
+	struct qca_napi_data *napid;
+	struct qca_napi_info *napii;
+
+	if (!scn) {
+		HIF_ERROR("%s: hif_state NULL!", __func__);
+		QDF_ASSERT(0);
+		return;
+	}
+
+	napid = hif_napi_get_all(hif_hdl);
+	for (i = 0; i < scn->ce_count; i++) {
+		ce_state = scn->ce_id_to_state[i];
+		if (ce_state && (ce_state->htt_rx_data)) {
+			napii = napid->napis[i];
+			HIF_DBG("deRegistering offld for ce_id %d NAPI callback for %d flush_cb %pK\n",
+				i, napii->id, napii->offld_flush_cb);
+			/* Not required */
+			napii->offld_flush_cb = NULL;
+		}
+	}
+}
+#endif /* RECEIVE_OFFLOAD */
 
 /**
  *
@@ -318,17 +409,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 }
 qdf_export_symbol(hif_napi_destroy);
 
-/**
- * hif_napi_get_lro_info() - returns the address LRO data for napi_id
- * @hif: pointer to hif context
- * @napi_id: napi instance
- *
- * Description:
- *    Returns the address of the LRO structure
- *
- * Return:
- *  <addr>: address of the LRO structure
- */
+#ifdef FEATURE_LRO
 void *hif_napi_get_lro_info(struct hif_opaque_softc *hif_hdl, int napi_id)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
@@ -342,6 +423,7 @@ void *hif_napi_get_lro_info(struct hif_opaque_softc *hif_hdl, int napi_id)
 		return napii->lro_ctx;
 	return 0;
 }
+#endif
 
 /**
  *
@@ -361,11 +443,11 @@ inline struct qca_napi_data *hif_napi_get_all(struct hif_opaque_softc *hif_ctx)
 	return &(hif->napi_data);
 }
 
-struct napi_struct *hif_get_napi(int napi_id, struct qca_napi_data *napid)
+struct qca_napi_info *hif_get_napi(int napi_id, struct qca_napi_data *napid)
 {
 	int id = NAPI_ID2PIPE(napi_id);
 
-	return &(napid->napis[id]->napi);
+	return napid->napis[id];
 }
 
 /**
@@ -730,6 +812,24 @@ bool hif_napi_correct_cpu(struct qca_napi_info *napi_info)
 	return right_cpu;
 }
 
+#ifdef RECEIVE_OFFLOAD
+/**
+ * hif_napi_offld_flush_cb() - Call upper layer flush callback
+ * @napi_info: Handle to hif_napi_info
+ *
+ * Return: None
+ */
+static void hif_napi_offld_flush_cb(struct qca_napi_info *napi_info)
+{
+	if (napi_info->offld_flush_cb)
+		napi_info->offld_flush_cb(napi_info);
+}
+#else
+static void hif_napi_offld_flush_cb(struct qca_napi_info *napi_info)
+{
+}
+#endif
+
 /**
  * hif_napi_poll() - NAPI poll routine
  * @napi  : pointer to NAPI struct as kernel holds it
@@ -785,7 +885,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 	NAPI_DEBUG("%s: ce_per_engine_service processed %d msgs",
 		    __func__, rc);
 
-	qdf_lro_flush(napi_info->lro_ctx);
+	hif_napi_offld_flush_cb(napi_info);
 
 	/* do not return 0, if there was some work done,
 	 * even if it is below the scale
@@ -834,8 +934,8 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 		if (normalized >= budget)
 			normalized = budget - 1;
 
-		/* enable interrupts */
 		napi_complete(napi);
+		/* enable interrupts */
 		hif_napi_enable_irq(hif_ctx, napi_info->id);
 		/* support suspend/resume */
 		qdf_atomic_dec(&(hif->active_tasklet_cnt));

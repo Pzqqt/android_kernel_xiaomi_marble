@@ -883,6 +883,25 @@ struct hif_target_info *hif_get_target_info_handle(
 qdf_export_symbol(hif_get_target_info_handle);
 
 #ifdef RECEIVE_OFFLOAD
+void hif_offld_flush_cb_register(struct hif_opaque_softc *scn,
+				 void (offld_flush_handler)(void *))
+{
+	if (hif_napi_enabled(scn, -1))
+		hif_napi_rx_offld_flush_cb_register(scn, offld_flush_handler);
+	else
+		HIF_ERROR("NAPI not enabled\n");
+}
+qdf_export_symbol(hif_offld_flush_cb_register);
+
+void hif_offld_flush_cb_deregister(struct hif_opaque_softc *scn)
+{
+	if (hif_napi_enabled(scn, -1))
+		hif_napi_rx_offld_flush_cb_deregister(scn);
+	else
+		HIF_ERROR("NAPI not enabled\n");
+}
+qdf_export_symbol(hif_offld_flush_cb_deregister);
+
 int hif_get_rx_ctx_id(int ctx_id, struct hif_opaque_softc *hif_hdl)
 {
 	if (hif_napi_enabled(hif_hdl, -1))
@@ -890,12 +909,12 @@ int hif_get_rx_ctx_id(int ctx_id, struct hif_opaque_softc *hif_hdl)
 	else
 		return ctx_id;
 }
-#else
+#else /* RECEIVE_OFFLOAD */
 int hif_get_rx_ctx_id(int ctx_id, struct hif_opaque_softc *hif_hdl)
 {
 	return 0;
 }
-#endif
+#endif /* RECEIVE_OFFLOAD */
 
 #if defined(FEATURE_LRO)
 

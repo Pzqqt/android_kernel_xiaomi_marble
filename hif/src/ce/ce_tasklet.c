@@ -173,8 +173,6 @@ static void ce_tasklet(unsigned long data)
 
 	ce_per_engine_service(scn, tasklet_entry->ce_id);
 
-	qdf_lro_flush(CE_state->lro_data);
-
 	if (ce_check_rx_pending(CE_state)) {
 		/*
 		 * There are frames pending, schedule tasklet to process them.

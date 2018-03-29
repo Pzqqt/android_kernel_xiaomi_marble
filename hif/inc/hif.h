@@ -191,8 +191,12 @@ struct qca_napi_info {
 	uint8_t              cpu;
 	int                  irq;
 	struct qca_napi_stat stats[NR_CPUS];
+#ifdef RECEIVE_OFFLOAD
 	/* will only be present for data rx CE's */
-	void (*lro_flush_cb)(void *);
+	void (*offld_flush_cb)(void *);
+	struct napi_struct   rx_thread_napi;
+	struct net_device    rx_thread_netdev;
+#endif /* RECEIVE_OFFLOAD */
 	qdf_lro_ctx_t        lro_ctx;
 };
 
@@ -653,6 +657,28 @@ int hif_check_soc_status(struct hif_opaque_softc *hif_ctx);
 #endif
 void hif_get_hw_info(struct hif_opaque_softc *hif_ctx, u32 *version,
 			u32 *revision, const char **target_name);
+
+#ifdef RECEIVE_OFFLOAD
+/**
+ * hif_offld_flush_cb_register() - Register the offld flush callback
+ * @scn: HIF opaque context
+ * @offld_flush_handler: Flush callback is either ol_flush, incase of rx_thread
+ *			 Or GRO/LRO flush when RxThread is not enabled. Called
+ *			 with corresponding context for flush.
+ * Return: None
+ */
+void hif_offld_flush_cb_register(struct hif_opaque_softc *scn,
+				 void (offld_flush_handler)(void *ol_ctx));
+
+/**
+ * hif_offld_flush_cb_deregister() - deRegister the offld flush callback
+ * @scn: HIF opaque context
+ *
+ * Return: None
+ */
+void hif_offld_flush_cb_deregister(struct hif_opaque_softc *scn);
+#endif
+
 void hif_disable_isr(struct hif_opaque_softc *hif_ctx);
 void hif_reset_soc(struct hif_opaque_softc *hif_ctx);
 void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
@@ -828,11 +854,6 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn);
 void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx);
 void hif_get_hw_info(struct hif_opaque_softc *hif_ctx, u32 *version,
 		     u32 *revision, const char **target_name);
-void hif_lro_flush_cb_register(struct hif_opaque_softc *hif_ctx,
-			       void (lro_flush_handler)(void *arg),
-			       void *(lro_init_handler)(void));
-void hif_lro_flush_cb_deregister(struct hif_opaque_softc *hif_ctx,
-				 void (lro_deinit_cb)(void *arg));
 bool hif_needs_bmi(struct hif_opaque_softc *hif_ctx);
 enum qdf_bus_type hif_get_bus_type(struct hif_opaque_softc *hif_hdl);
 struct hif_target_info *hif_get_target_info_handle(struct hif_opaque_softc *
