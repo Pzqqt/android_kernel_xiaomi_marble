@@ -110,8 +110,8 @@ void ipa_set_dp_handle(struct wlan_objmgr_psoc *psoc, void *dp_soc)
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -139,8 +139,8 @@ void ipa_set_txrx_handle(struct wlan_objmgr_psoc *psoc, void *txrx_handle)
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -168,8 +168,8 @@ QDF_STATUS ipa_rm_set_perf_level(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -186,8 +186,8 @@ void ipa_uc_info(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -204,8 +204,8 @@ void ipa_uc_stat(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -222,8 +222,8 @@ void ipa_uc_rt_debug_host_dump(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -240,8 +240,8 @@ void ipa_dump_info(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -258,8 +258,8 @@ void ipa_uc_stat_request(struct wlan_objmgr_pdev *pdev, uint8_t reason)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -277,8 +277,8 @@ void ipa_uc_stat_query(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -295,8 +295,8 @@ void ipa_reg_sap_xmit_cb(struct wlan_objmgr_pdev *pdev, void *cb)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -313,8 +313,8 @@ void ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev, void *cb)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -331,8 +331,8 @@ void ipa_set_mcc_mode(struct wlan_objmgr_pdev *pdev, bool mcc_mode)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -349,8 +349,8 @@ void ipa_set_dfs_cac_tx(struct wlan_objmgr_pdev *pdev, bool tx_block)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -367,8 +367,8 @@ void ipa_set_ap_ibss_fwd(struct wlan_objmgr_pdev *pdev, bool intra_bss)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -385,8 +385,8 @@ void ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -403,8 +403,8 @@ void ipa_flush(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
 		return;
 	}
 
@@ -421,9 +421,9 @@ QDF_STATUS ipa_suspend(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
-		return QDF_STATUS_E_FAILURE;
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
+		return QDF_STATUS_SUCCESS;
 	}
 
 	ipa_obj = ipa_pdev_get_priv_obj(pdev);
@@ -439,9 +439,9 @@ QDF_STATUS ipa_resume(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
-		return QDF_STATUS_E_FAILURE;
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
+		return QDF_STATUS_SUCCESS;
 	}
 
 	ipa_obj = ipa_pdev_get_priv_obj(pdev);
@@ -458,9 +458,9 @@ QDF_STATUS ipa_uc_ol_init(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
-		return QDF_STATUS_E_FAILURE;
+	if (!ipa_config_is_enabled()) {
+		ipa_info("ipa is disabled");
+		return QDF_STATUS_SUCCESS;
 	}
 
 	ipa_obj = ipa_pdev_get_priv_obj(pdev);
@@ -476,9 +476,9 @@ QDF_STATUS ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
-		return QDF_STATUS_E_FAILURE;
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
+		return QDF_STATUS_SUCCESS;
 	}
 
 	ipa_obj = ipa_pdev_get_priv_obj(pdev);
@@ -495,9 +495,9 @@ QDF_STATUS ipa_send_mcc_scc_msg(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_ipa_priv *ipa_obj;
 
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
-		return QDF_STATUS_E_FAILURE;
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
+		return QDF_STATUS_SUCCESS;
 	}
 
 	ipa_obj = ipa_pdev_get_priv_obj(pdev);
@@ -515,11 +515,6 @@ QDF_STATUS ipa_wlan_evt(struct wlan_objmgr_pdev *pdev, qdf_netdev_t net_dev,
 			uint8_t *mac_addr)
 {
 	struct wlan_ipa_priv *ipa_obj;
-
-	if (!g_ipa_hw_support) {
-		ipa_info("ipa hw not present");
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	ipa_obj = ipa_pdev_get_priv_obj(pdev);
 	if (!ipa_obj) {
