@@ -496,10 +496,9 @@ void lim_perform_disassoc(tpAniSirGlobal mac_ctx, int32_t frame_rssi,
 void lim_disassoc_tdls_peers(tpAniSirGlobal mac_ctx,
 				    tpPESession pe_session, tSirMacAddr addr);
 #else
-void lim_disassoc_tdls_peers(tpAniSirGlobal mac_ctx,
+static inline void lim_disassoc_tdls_peers(tpAniSirGlobal mac_ctx,
 				    tpPESession pe_session, tSirMacAddr addr)
 {
-	return;
 }
 #endif
 void lim_process_deauth_frame(tpAniSirGlobal, uint8_t *, tpPESession);
