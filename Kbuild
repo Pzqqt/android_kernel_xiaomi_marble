@@ -2588,6 +2588,13 @@ ifdef WLAN_HDD_ADAPTER_MAGIC
 CDEFINES += -DWLAN_HDD_ADAPTER_MAGIC=$(WLAN_HDD_ADAPTER_MAGIC)
 endif
 
+# Determine if we are building against an arm architecture host
+ifeq ($(findstring arm, $(ARCH)),)
+	CDEFINES += -DWLAN_HOST_ARCH_ARM=0
+else
+	CDEFINES += -DWLAN_HOST_ARCH_ARM=1
+endif
+
 # inject some build related information
 ifeq ($(CONFIG_BUILD_TAG), y)
 CLD_CHECKOUT = $(shell cd "$(WLAN_ROOT)" && \
