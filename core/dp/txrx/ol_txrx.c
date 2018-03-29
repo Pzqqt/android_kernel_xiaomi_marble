@@ -4064,6 +4064,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 			 uint64_t cookie, uint8_t *stats_info_list)
 {
 	enum htt_dbg_stats_type type;
+	enum htt_cmn_dbg_stats_type cmn_type = HTT_DBG_CMN_NUM_STATS_INVALID;
 	enum htt_dbg_stats_status status;
 	int length;
 	uint8_t *stats_data;
@@ -4260,9 +4261,11 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 			}
 			buf = req->base.copy.buf ?
 				req->base.copy.buf : stats_data;
+
+			/* Not implemented for MCL */
 			if (req->base.callback.fp)
 				req->base.callback.fp(req->base.callback.ctxt,
-						      type, buf, bytes);
+						      cmn_type, buf, bytes);
 		}
 		stats_info_list += length;
 	} while (1);
