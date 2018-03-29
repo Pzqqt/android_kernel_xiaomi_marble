@@ -80,6 +80,8 @@
 #define WLAN_PDEV_F_STRICT_PSCAN_EN         0x02000000
   /* dupie (ANA,pre ANA ) */
 /*#define WLAN_PDEV_F_DUPIE                 0x00200000*/
+ /* QWRAP enable flag */
+#define WLAN_PDEV_F_WRAP_EN                 0x04000000
 
 /* PDEV op flags */
    /* Enable htrate for wep and tkip */
