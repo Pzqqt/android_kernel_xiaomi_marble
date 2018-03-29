@@ -750,6 +750,22 @@ void wma_vdev_wait_for_peer_delete_completion(tp_wma_handle wma_handle,
 				      WMA_WAIT_PEER_DELETE_COMPLETION_TIMEOUT);
 }
 
+static bool wma_vdev_uses_self_peer(uint32_t vdev_type, uint32_t vdev_subtype)
+{
+	switch (vdev_type) {
+	case WMI_VDEV_TYPE_AP:
+		return vdev_subtype == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE;
+
+	case WMI_VDEV_TYPE_MONITOR:
+	case WMI_VDEV_TYPE_NDI:
+	case WMI_VDEV_TYPE_OCB:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 /**
  * wma_vdev_detach() - send vdev delete command to fw
  * @wma_handle: wma handle
@@ -797,9 +813,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	}
 	iface->is_del_sta_defered = false;
 
-	/* P2P Device */
-	if ((iface->type == WMI_VDEV_TYPE_AP) &&
-	    (iface->sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE)) {
+	if (wma_vdev_uses_self_peer(iface->type, iface->sub_type)) {
 		status = wma_self_peer_remove(wma_handle,
 					pdel_sta_self_req_param, generateRsp);
 		if ((status != QDF_STATUS_SUCCESS) && generateRsp) {
@@ -825,7 +839,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 				wmi_service_sync_delete_cmds))
 			status = wma_handle_vdev_detach(wma_handle,
 				pdel_sta_self_req_param, generateRsp);
-	} else {  /* other than P2P */
+	} else {
 		status = wma_handle_vdev_detach(wma_handle,
 				pdel_sta_self_req_param, generateRsp);
 	}
@@ -2302,11 +2316,8 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	}
 	qdf_event_set(&wma_handle->interfaces[vdev_id].fw_peer_delete_completion);
 
-	if (((self_sta_req->type == WMI_VDEV_TYPE_AP) &&
-	    (self_sta_req->sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE)) ||
-	    (self_sta_req->type == WMI_VDEV_TYPE_OCB) ||
-	    (self_sta_req->type == WMI_VDEV_TYPE_MONITOR) ||
-	    (self_sta_req->type == WMI_VDEV_TYPE_NDI)) {
+	if (wma_vdev_uses_self_peer(self_sta_req->type,
+				    self_sta_req->sub_type)) {
 		status = wma_create_peer(wma_handle, txrx_pdev,
 					 txrx_vdev_handle,
 					 self_sta_req->self_mac_addr,
