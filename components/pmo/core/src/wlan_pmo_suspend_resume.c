@@ -557,10 +557,10 @@ out:
  *
  * Return: QDF status
  */
-static
-QDF_STATUS pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
-		struct pmo_psoc_priv_obj *psoc_ctx,
-		struct pmo_wow_enable_params *wow_params)
+static QDF_STATUS
+pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
+			  struct pmo_psoc_priv_obj *psoc_ctx,
+			  struct pmo_wow_enable_params *wow_params)
 {
 	int host_credits, wmi_pending_cmds;
 	struct pmo_wow_cmd_params param = {0};
@@ -621,15 +621,14 @@ QDF_STATUS pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 
 	pmo_tgt_update_target_suspend_flag(psoc, true);
 
-	if (qdf_wait_for_event_completion(&psoc_ctx->wow.target_suspend,
-				  PMO_TGT_SUSPEND_COMPLETE_TIMEOUT)
-	    != QDF_STATUS_SUCCESS) {
+	status = qdf_wait_for_event_completion(&psoc_ctx->wow.target_suspend,
+					       PMO_TARGET_SUSPEND_TIMEOUT);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		pmo_err("Failed to receive WoW Enable Ack from FW");
 		pmo_err("Credits:%d; Pending_Cmds: %d",
 			pmo_tgt_psoc_get_host_credits(psoc),
 			pmo_tgt_psoc_get_pending_cmnds(psoc));
 		pmo_tgt_update_target_suspend_flag(psoc, false);
-		status = QDF_STATUS_E_FAILURE;
 		qdf_trigger_self_recovery();
 		goto out;
 	}
@@ -654,6 +653,7 @@ QDF_STATUS pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 		host_credits, wmi_pending_cmds);
 
 	pmo_core_update_wow_enable_cmd_sent(psoc_ctx, true);
+
 out:
 	pmo_exit();
 
@@ -661,7 +661,7 @@ out:
 }
 
 QDF_STATUS pmo_core_psoc_suspend_target(struct wlan_objmgr_psoc *psoc,
-		int disable_target_intr)
+					int disable_target_intr)
 {
 	QDF_STATUS status;
 	struct pmo_suspend_params param;
@@ -679,14 +679,14 @@ QDF_STATUS pmo_core_psoc_suspend_target(struct wlan_objmgr_psoc *psoc,
 
 	pmo_tgt_update_target_suspend_flag(psoc, true);
 
-	if (qdf_wait_for_event_completion(&psoc_ctx->wow.target_suspend,
-				  PMO_TGT_SUSPEND_COMPLETE_TIMEOUT)
-	    != QDF_STATUS_SUCCESS) {
-		status = QDF_STATUS_E_TIMEOUT;
+	status = qdf_wait_for_event_completion(&psoc_ctx->wow.target_suspend,
+					       PMO_TARGET_SUSPEND_TIMEOUT);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		pmo_err("Failed to get ACK from firmware for pdev suspend");
 		pmo_tgt_update_target_suspend_flag(psoc, false);
-		/* wma_suspend_target_timeout(pmac->sme.enableSelfRecovery); */
+		qdf_trigger_self_recovery();
 	}
+
 out:
 	pmo_exit();
 
