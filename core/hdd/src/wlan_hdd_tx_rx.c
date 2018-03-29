@@ -1516,8 +1516,9 @@ static void hdd_resolve_rx_ol_mode(struct hdd_context *hdd_ctx)
  */
 static QDF_STATUS hdd_gro_rx(struct hdd_adapter *adapter, struct sk_buff *skb)
 {
-	struct napi_struct *napi;
+	struct qca_napi_info *qca_napii;
 	struct qca_napi_data *napid;
+	struct napi_struct *napi_to_use;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	/* Only enabling it for STA mode like LRO today */
@@ -1525,14 +1526,86 @@ static QDF_STATUS hdd_gro_rx(struct hdd_adapter *adapter, struct sk_buff *skb)
 		return QDF_STATUS_E_NOSUPPORT;
 
 	napid = hdd_napi_get_all();
-	napi = hif_get_napi(QDF_NBUF_CB_RX_CTX_ID(skb), napid);
-	skb_set_hash(skb, QDF_NBUF_CB_RX_FLOW_ID(skb), PKT_HASH_TYPE_L4);
+	if (unlikely(napid == NULL))
+		goto out;
 
-	if (GRO_DROP != napi_gro_receive(napi, skb))
-		status = QDF_STATUS_SUCCESS;
+	qca_napii = hif_get_napi(QDF_NBUF_CB_RX_CTX_ID(skb), napid);
+	if (unlikely(qca_napii == NULL))
+		goto out;
+
+	skb_set_hash(skb, QDF_NBUF_CB_RX_FLOW_ID(skb), PKT_HASH_TYPE_L4);
+	/*
+	 * As we are breaking context in Rxthread mode, there is rx_thread NAPI
+	 * corresponds each hif_napi.
+	 */
+	if (adapter->hdd_ctx->enable_rxthread)
+		napi_to_use =  &qca_napii->rx_thread_napi;
+	else
+		napi_to_use = &qca_napii->napi;
+
+	local_bh_disable();
+	napi_gro_receive(napi_to_use, skb);
+	local_bh_enable();
+
+	status = QDF_STATUS_SUCCESS;
+out:
 
 	return status;
 }
+
+/**
+ * hdd_rxthread_napi_gro_flush() - GRO flush callback for NAPI+Rx_Thread Rx mode
+ * @data: hif NAPI context
+ *
+ * Return: none
+ */
+static void hdd_rxthread_napi_gro_flush(void *data)
+{
+	struct qca_napi_info *qca_napii = (struct qca_napi_info *)data;
+
+	local_bh_disable();
+	/*
+	 * As we are breaking context in Rxthread mode, there is rx_thread NAPI
+	 * corresponds each hif_napi.
+	 */
+	napi_gro_flush(&qca_napii->rx_thread_napi, false);
+	local_bh_enable();
+}
+
+/**
+ * hdd_hif_napi_gro_flush() - GRO flush callback for NAPI Rx mode
+ * @data: hif NAPI context
+ *
+ * Return: none
+ */
+static void hdd_hif_napi_gro_flush(void *data)
+{
+	struct qca_napi_info *qca_napii = (struct qca_napi_info *)data;
+
+	local_bh_disable();
+	napi_gro_flush(&qca_napii->napi, false);
+	local_bh_enable();
+}
+
+#ifdef FEATURE_LRO
+/**
+ * hdd_qdf_lro_flush() - LRO flush wrapper
+ * @data: hif NAPI context
+ *
+ * Return: none
+ */
+static void hdd_qdf_lro_flush(void *data)
+{
+	struct qca_napi_info *qca_napii = (struct qca_napi_info *)data;
+	qdf_lro_ctx_t qdf_lro_ctx = qca_napii->lro_ctx;
+
+	qdf_lro_flush(qdf_lro_ctx);
+}
+#else
+static void hdd_qdf_lro_flush(void *data)
+{
+}
+#endif
 
 /**
  * hdd_register_rx_ol() - Register LRO/GRO rx processing callbacks
@@ -1542,15 +1615,22 @@ static QDF_STATUS hdd_gro_rx(struct hdd_adapter *adapter, struct sk_buff *skb)
 static void hdd_register_rx_ol(void)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if  (!hdd_ctx)
 		hdd_err("HDD context is NULL");
 
 	if (hdd_ctx->ol_enable == CFG_LRO_ENABLED) {
-		/* Register the flush callback */
+		cdp_register_rx_offld_flush_cb(soc, hdd_qdf_lro_flush);
 		hdd_ctx->receive_offload_cb = hdd_lro_rx;
 		hdd_debug("LRO is enabled");
 	} else if (hdd_ctx->ol_enable == CFG_GRO_ENABLED) {
+		if (hdd_ctx->enable_rxthread)
+			cdp_register_rx_offld_flush_cb(soc,
+						hdd_rxthread_napi_gro_flush);
+		else
+			cdp_register_rx_offld_flush_cb(soc,
+						       hdd_hif_napi_gro_flush);
 		hdd_ctx->receive_offload_cb = hdd_gro_rx;
 		hdd_debug("GRO is enabled");
 	}
@@ -1587,7 +1667,7 @@ int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
 			  LRO_IPV6_SEED_ARR_SZ));
 
 	if (0 != wma_lro_init(&lro_config)) {
-		hdd_err("Failed to send LRO configuration!");
+		hdd_err("Failed to send LRO/GRO configuration!");
 		hdd_ctx->ol_enable = 0;
 		return -EAGAIN;
 	}

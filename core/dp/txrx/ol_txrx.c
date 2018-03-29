@@ -5462,6 +5462,148 @@ static QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
 }
 #endif
 
+#ifdef RECEIVE_OFFLOAD
+/**
+ * ol_txrx_offld_flush_handler() - offld flush handler
+ * @context: dev handle
+ * @rxpkt: rx data
+ * @staid: station id
+ *
+ * This function handles an offld flush indication.
+ * If the rx thread is enabled, it will be invoked by the rx
+ * thread else it will be called in the tasklet context
+ *
+ * Return: none
+ */
+static void ol_txrx_offld_flush_handler(void *context,
+				      void *rxpkt,
+				      uint16_t staid)
+{
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (qdf_unlikely(!pdev)) {
+		ol_txrx_err("Invalid context");
+		qdf_assert(0);
+		return;
+	}
+
+	if (pdev->offld_flush_cb)
+		pdev->offld_flush_cb(context);
+	else
+		ol_txrx_err("offld_flush_cb NULL");
+}
+
+/**
+ * ol_txrx_offld_flush() - offld flush callback
+ * @data: opaque data pointer
+ *
+ * This is the callback registered with CE to trigger
+ * an offld flush
+ *
+ * Return: none
+ */
+static void ol_txrx_offld_flush(void *data)
+{
+	p_cds_sched_context sched_ctx = get_cds_sched_ctxt();
+	struct cds_ol_rx_pkt *pkt;
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (qdf_unlikely(!sched_ctx))
+		return;
+
+	if (!ol_cfg_is_rx_thread_enabled(pdev->ctrl_pdev)) {
+		ol_txrx_offld_flush_handler(data, NULL, 0);
+	} else {
+		pkt = cds_alloc_ol_rx_pkt(sched_ctx);
+		if (qdf_unlikely(!pkt)) {
+			ol_txrx_err("Not able to allocate context");
+			return;
+		}
+
+		pkt->callback = ol_txrx_offld_flush_handler;
+		pkt->context = data;
+		pkt->Rxpkt = NULL;
+		pkt->staId = 0;
+		cds_indicate_rxpkt(sched_ctx, pkt);
+	}
+}
+
+/**
+ * ol_register_offld_flush_cb() - register the offld flush callback
+ * @offld_flush_cb: flush callback function
+ * @offld_init_cb: Allocate and initialize offld data structure.
+ *
+ * Store the offld flush callback provided and in turn
+ * register OL's offld flush handler with CE
+ *
+ * Return: none
+ */
+static void ol_register_offld_flush_cb(void (offld_flush_cb)(void *))
+{
+	struct hif_opaque_softc *hif_device;
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (pdev == NULL) {
+		ol_txrx_err("pdev NULL!");
+		TXRX_ASSERT2(0);
+		goto out;
+	}
+	if (pdev->offld_flush_cb != NULL) {
+		ol_txrx_info("offld already initialised");
+		if (pdev->offld_flush_cb != offld_flush_cb) {
+			ol_txrx_err(
+				   "offld_flush_cb is differ to previously registered callback")
+			TXRX_ASSERT2(0);
+			goto out;
+		}
+		goto out;
+	}
+	pdev->offld_flush_cb = offld_flush_cb;
+	hif_device = cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (qdf_unlikely(hif_device == NULL)) {
+		ol_txrx_err("hif_device NULL!");
+		qdf_assert(0);
+		goto out;
+	}
+
+	hif_offld_flush_cb_register(hif_device, ol_txrx_offld_flush);
+
+out:
+	return;
+}
+
+/**
+ * ol_deregister_offld_flush_cb() - deregister the offld flush callback
+ *
+ * Remove the offld flush callback provided and in turn
+ * deregister OL's offld flush handler with CE
+ *
+ * Return: none
+ */
+static void ol_deregister_offld_flush_cb(void)
+{
+	struct hif_opaque_softc *hif_device;
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (pdev == NULL) {
+		ol_txrx_err("pdev NULL!");
+		return;
+	}
+	hif_device = cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (qdf_unlikely(hif_device == NULL)) {
+		ol_txrx_err("hif_device NULL!");
+		qdf_assert(0);
+		return;
+	}
+
+	hif_offld_flush_cb_deregister(hif_device);
+
+	pdev->offld_flush_cb = NULL;
+}
+#endif /* RECEIVE_OFFLOAD */
+
 /**
  * ol_register_data_stall_detect_cb() - register data stall callback
  * @data_stall_detect_callback: data stall callback function
@@ -6009,6 +6151,13 @@ static struct cdp_ipa_ops ol_ops_ipa = {
 };
 #endif
 
+#ifdef RECEIVE_OFFLOAD
+static struct cdp_rx_offld_ops ol_rx_offld_ops = {
+	.register_rx_offld_flush_cb = ol_register_offld_flush_cb,
+	.deregister_rx_offld_flush_cb = ol_deregister_offld_flush_cb
+};
+#endif
+
 static struct cdp_bus_ops ol_ops_bus = {
 	.bus_suspend = ol_txrx_bus_suspend,
 	.bus_resume = ol_txrx_bus_resume
@@ -6131,6 +6280,9 @@ static struct cdp_ops ol_txrx_ops = {
 	.l_flowctl_ops = &ol_ops_l_flowctl,
 #ifdef IPA_OFFLOAD
 	.ipa_ops = &ol_ops_ipa,
+#endif
+#ifdef RECEIVE_OFFLOAD
+	.rx_offld_ops = &ol_rx_offld_ops,
 #endif
 	.bus_ops = &ol_ops_bus,
 	.ocb_ops = &ol_ops_ocb,
