@@ -515,8 +515,9 @@ static QDF_STATUS
 hdd_parse_get_ibss_peer_info(uint8_t *pValue, struct qdf_mac_addr *pPeerMacAddr)
 {
 	uint8_t *inPtr = pValue;
+	size_t in_ptr_len = strlen(pValue);
 
-	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+	inPtr = strnchr(pValue, in_ptr_len, SPACE_ASCII_VALUE);
 
 	if (NULL == inPtr)
 		return QDF_STATUS_E_FAILURE;
@@ -529,10 +530,14 @@ hdd_parse_get_ibss_peer_info(uint8_t *pValue, struct qdf_mac_addr *pPeerMacAddr)
 	if ('\0' == *inPtr)
 		return QDF_STATUS_E_FAILURE;
 
-	if (inPtr[2] != ':' || inPtr[5] != ':' || inPtr[8] != ':' ||
-	    inPtr[11] != ':' || inPtr[14] != ':') {
+	in_ptr_len -= (inPtr - pValue);
+	if (in_ptr_len < 17)
 		return QDF_STATUS_E_FAILURE;
-	}
+
+	if (inPtr[2] != ':' || inPtr[5] != ':' || inPtr[8] != ':' ||
+	    inPtr[11] != ':' || inPtr[14] != ':')
+		return QDF_STATUS_E_FAILURE;
+
 	sscanf(inPtr, "%2x:%2x:%2x:%2x:%2x:%2x",
 	       (unsigned int *)&pPeerMacAddr->bytes[0],
 	       (unsigned int *)&pPeerMacAddr->bytes[1],
