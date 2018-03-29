@@ -171,7 +171,8 @@ enum htt_cmn_dbg_stats_type {
 	/* bits 18-23 currently reserved */
 
 	/* keep this last */
-	HTT_DBG_CMN_NUM_STATS
+	HTT_DBG_CMN_NUM_STATS,
+	HTT_DBG_CMN_NUM_STATS_INVALID        = 31, /* bit 31 -> 0x80000000 */
 };
 
 /*
