@@ -2575,6 +2575,11 @@ static int wma_wake_event_piggybacked(
 	uint32_t pb_event_len;
 	uint32_t wake_reason;
 	uint32_t event_id;
+	uint8_t *bssid;
+	uint8_t peer_id;
+	void *peer, *pdev;
+	tpDeleteStaContext del_sta_ctx;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/*
 	 * There are "normal" cases where a wake reason that usually contains a
@@ -2588,6 +2593,9 @@ static int wma_wake_event_piggybacked(
 		return 0;
 	}
 
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	bssid = wma->interfaces[event_param->fixed_param->vdev_id].bssid;
+	peer = cdp_peer_find_by_addr(soc, pdev, bssid, &peer_id);
 	wake_reason = event_param->fixed_param->wake_reason;
 
 	/* parse piggybacked event from param buffer */
@@ -2710,8 +2718,20 @@ static int wma_wake_event_piggybacked(
 		 * programmed. So do not check for cookie.
 		 */
 		WMA_LOGE("WOW_REASON_TIMER_INTR_RECV received, indicating key exchange did not finish. Initiate disconnect");
-		errno = wma_peer_sta_kickout_event_handler(wma, pb_event,
-							   pb_event_len);
+		del_sta_ctx = (tpDeleteStaContext) qdf_mem_malloc(
+							sizeof(*del_sta_ctx));
+		if (!del_sta_ctx) {
+			WMA_LOGE("%s: mem alloc failed ", __func__);
+			break;
+		}
+		del_sta_ctx->is_tdls = false;
+		del_sta_ctx->vdev_id = event_param->fixed_param->vdev_id;
+		del_sta_ctx->staId = peer_id;
+		qdf_mem_copy(del_sta_ctx->addr2, bssid, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(del_sta_ctx->bssId, bssid, IEEE80211_ADDR_LEN);
+		del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_KEEP_ALIVE;
+		wma_send_msg(wma, SIR_LIM_DELETE_STA_CONTEXT_IND, del_sta_ctx,
+			     0);
 		break;
 
 	default:
