@@ -46,7 +46,10 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_spin_lock_bh(&soc->rx_desc_mutex[pool_id]);
+	/* Initialize the lock */
+	qdf_spinlock_create(&rx_desc_pool->lock);
+
+	qdf_spin_lock_bh(&rx_desc_pool->lock);
 	rx_desc_pool->pool_size = pool_size;
 
 	/* link SW rx descs into a freelist */
@@ -61,7 +64,7 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 	rx_desc_pool->array[i].next = NULL;
 	rx_desc_pool->array[i].rx_desc.cookie = i | (pool_id << 18);
 	rx_desc_pool->array[i].rx_desc.pool_id = pool_id;
-	qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
+	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -78,7 +81,7 @@ void dp_rx_desc_pool_free(struct dp_soc *soc, uint32_t pool_id,
 {
 	int i;
 
-	qdf_spin_lock_bh(&soc->rx_desc_mutex[pool_id]);
+	qdf_spin_lock_bh(&rx_desc_pool->lock);
 	for (i = 0; i < rx_desc_pool->pool_size; i++) {
 		if (rx_desc_pool->array[i].rx_desc.in_use) {
 			if (!(rx_desc_pool->array[i].rx_desc.unmapped))
@@ -89,7 +92,8 @@ void dp_rx_desc_pool_free(struct dp_soc *soc, uint32_t pool_id,
 		}
 	}
 	qdf_mem_free(rx_desc_pool->array);
-	qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
+	qdf_spin_unlock_bh(&rx_desc_pool->lock);
+	qdf_spinlock_destroy(&rx_desc_pool->lock);
 }
 
 /*
@@ -113,21 +117,21 @@ uint16_t dp_rx_get_free_desc_list(struct dp_soc *soc, uint32_t pool_id,
 {
 	uint16_t count;
 
-	qdf_spin_lock_bh(&soc->rx_desc_mutex[pool_id]);
+	qdf_spin_lock_bh(&rx_desc_pool->lock);
 
 	*desc_list = *tail = rx_desc_pool->freelist;
 
 	for (count = 0; count < num_descs; count++) {
 
 		if (qdf_unlikely(!rx_desc_pool->freelist)) {
-			qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
+			qdf_spin_unlock_bh(&rx_desc_pool->lock);
 			return count;
 		}
 		*tail = rx_desc_pool->freelist;
 		rx_desc_pool->freelist = rx_desc_pool->freelist->next;
 	}
 	(*tail)->next = NULL;
-	qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
+	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 	return count;
 }
 
@@ -149,7 +153,7 @@ void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 {
 	union dp_rx_desc_list_elem_t *temp_list = NULL;
 
-	qdf_spin_lock_bh(&soc->rx_desc_mutex[pool_id]);
+	qdf_spin_lock_bh(&rx_desc_pool->lock);
 
 
 	temp_list = rx_desc_pool->freelist;
@@ -159,5 +163,5 @@ void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 	rx_desc_pool->freelist = *local_desc_list;
 	(*tail)->next = temp_list;
 
-	qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
+	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 }

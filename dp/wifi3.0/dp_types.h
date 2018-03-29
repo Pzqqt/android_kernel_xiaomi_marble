@@ -211,11 +211,13 @@ enum dp_nss_cfg {
  * @pool_size: number of RX descriptor in the pool
  * @array: pointer to array of RX descriptor
  * @freelist: pointer to free RX descriptor link list
+ * @lock: Protection for the RX descriptor pool
  */
 struct rx_desc_pool {
 	uint32_t pool_size;
 	union dp_rx_desc_list_elem_t *array;
 	union dp_rx_desc_list_elem_t *freelist;
+	qdf_spinlock_t lock;
 };
 
 /**
@@ -683,9 +685,6 @@ struct dp_soc {
 
 	/* Rx SW descriptor pool for RXDMA status buffer */
 	struct rx_desc_pool rx_desc_status[MAX_RXDESC_POOLS];
-
-	/* DP rx desc lock */
-	DP_MUTEX_TYPE rx_desc_mutex[MAX_RXDESC_POOLS];
 
 	/* HAL SOC handle */
 	void *hal_soc;

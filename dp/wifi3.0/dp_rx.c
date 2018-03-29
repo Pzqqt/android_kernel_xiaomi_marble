@@ -1650,7 +1650,6 @@ dp_rx_pdev_detach(struct dp_pdev *pdev)
 
 	if (rx_desc_pool->pool_size != 0) {
 		dp_rx_desc_pool_free(soc, pdev_id, rx_desc_pool);
-		qdf_spinlock_destroy(&soc->rx_desc_mutex[pdev_id]);
 	}
 
 	return;
@@ -1685,7 +1684,6 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 		return QDF_STATUS_SUCCESS;
 	}
 
-	qdf_spinlock_create(&soc->rx_desc_mutex[pdev_id]);
 	pdev = soc->pdev_list[pdev_id];
 	rxdma_srng = pdev->rx_refill_buf_ring;
 	soc->process_rx_status = CONFIG_PROCESS_RX_STATUS;
