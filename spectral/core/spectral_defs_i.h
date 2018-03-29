@@ -93,6 +93,7 @@ struct wmi_spectral_cmd_ops;
  * @sptrlc_register_netlink_cb: Register Netlink callbacks
  * @sptrlc_use_nl_bcast: Check whether to use Netlink broadcast/unicast
  * @sptrlc_deregister_netlink_cb: De-register Netlink callbacks
+ * @sptrlc_process_spectral_report: Process spectral report
  */
 struct spectral_context {
 	struct wlan_objmgr_psoc *psoc_obj;
@@ -130,6 +131,9 @@ struct spectral_context {
 		struct spectral_nl_cb *nl_cb);
 	bool (*sptrlc_use_nl_bcast)(struct wlan_objmgr_pdev *pdev);
 	void (*sptrlc_deregister_netlink_cb)(struct wlan_objmgr_pdev *pdev);
+	int (*sptrlc_process_spectral_report)(
+		struct wlan_objmgr_pdev *pdev,
+		void *payload);
 };
 
 #endif				/* _SPECTRAL_DEFS_I_H_ */

@@ -23,6 +23,9 @@
 #include <wlan_objmgr_cmn.h>
 #include <wlan_lmac_if_def.h>
 
+/* Forward declaration */
+struct direct_buf_rx_data;
+
 /**
  * wlan_spectral_init() - API to init spectral component
  *
@@ -142,4 +145,17 @@ spectral_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev);
  */
 QDF_STATUS spectral_pdev_open(struct wlan_objmgr_pdev *pdev);
 
+#ifdef DIRECT_BUF_RX_ENABLE
+/**
+ * spectral_dbr_event_handler() - Spectral dbr event handler
+ * @pdev:  pointer to pdev object
+ * @payload: dbr event buffer
+ *
+ * API to handle spectral dbr event
+ *
+ * Return: status
+ */
+int spectral_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
+			       struct direct_buf_rx_data *payload);
+#endif
 #endif /* _WLAN_SPECTRAL_UTILS_API_H_*/

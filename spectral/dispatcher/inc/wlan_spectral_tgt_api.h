@@ -219,4 +219,33 @@ bool tgt_spectral_use_nl_bcast(struct wlan_objmgr_pdev *pdev);
  * Return: void
  */
 void tgt_spectral_deregister_nl_cb(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * tgt_spectral_process_report() - Process spectral report
+ * @pdev: Pointer to pdev object
+ * @payload: Pointer to spectral report buffer
+ *
+ * Return: status
+ */
+int
+tgt_spectral_process_report(struct wlan_objmgr_pdev *pdev,
+			    void *payload);
+
+/**
+ * tgt_spectral_register_to_dbr() - Register to direct dma
+ * @pdev: Pointer to pdev object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+tgt_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * tgt_spectral_get_target_type() - Get target type
+ * @psoc: Pointer to psoc object
+ *
+ * Return: target type
+ */
+uint32_t
+tgt_spectral_get_target_type(struct wlan_objmgr_psoc *psoc);
 #endif /* _WLAN_SPECTRAL_TGT_API_H_ */

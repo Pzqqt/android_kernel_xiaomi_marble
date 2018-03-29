@@ -1311,16 +1311,7 @@ target_if_verify_sig_and_tag_gen3(struct target_if_spectral *spectral,
 	return 0;
 }
 
-/**
- * target_if_consume_sfft_report_gen3() -  Process fft report for gen3
- * @spectral: Pointer to spectral object
- * @data: Pointer to phyerror data
- *
- * Process fft report for gen3
- *
- * Return: Success/Failure
- */
-static int
+int
 target_if_consume_spectral_report_gen3(
 	 struct target_if_spectral *spectral,
 	 uint8_t *data)
@@ -1581,11 +1572,13 @@ target_if_consume_spectral_report_gen3(
 	return -EPERM;
 }
 
-int target_if_spectral_process_phyerr_gen3(
+#ifdef DIRECT_BUF_RX_ENABLE
+int target_if_spectral_process_report_gen3(
 	struct wlan_objmgr_pdev *pdev,
-	struct direct_buf_rx_data *payload)
+	void *buf)
 {
 	int ret = 0;
+	struct direct_buf_rx_data *payload = buf;
 	uint8_t *data = (uint8_t *)payload->vaddr;
 	struct target_if_spectral *spectral;
 
@@ -1612,7 +1605,16 @@ int target_if_spectral_process_phyerr_gen3(
 
 	return ret;
 }
-qdf_export_symbol(target_if_spectral_process_phyerr_gen3);
+#else
+int target_if_spectral_process_report_gen3(
+	struct wlan_objmgr_pdev *pdev,
+	void *buf)
+{
+	spectral_err("Direct dma support is not enabled");
+	return -EINVAL;
+}
+#endif
+qdf_export_symbol(target_if_spectral_process_report_gen3);
 /* END of spectral GEN III HW specific functions */
 
 #endif  /* WLAN_SPECTRAL_ENABLE */

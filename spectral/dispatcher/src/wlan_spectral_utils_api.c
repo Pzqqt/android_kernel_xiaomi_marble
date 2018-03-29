@@ -191,15 +191,31 @@ wlan_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
 }
 qdf_export_symbol(wlan_register_wmi_spectral_cmd_ops);
 
+#ifdef DIRECT_BUF_RX_ENABLE
+int spectral_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
+			       struct direct_buf_rx_data *payload)
+{
+	struct spectral_context *sc;
+
+	if (!pdev) {
+		spectral_err("PDEV is NULL!");
+		return -EINVAL;
+	}
+	sc = spectral_get_spectral_ctx_from_pdev(pdev);
+	if (!sc) {
+		spectral_err("spectral context is NULL!");
+		return -EINVAL;
+	}
+
+	return sc->sptrlc_process_spectral_report(pdev, payload);
+}
+#endif
+
 QDF_STATUS spectral_pdev_open(struct wlan_objmgr_pdev *pdev)
 {
-	struct wlan_objmgr_psoc *psoc;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 
-	psoc = wlan_pdev_get_psoc(pdev);
+	status = tgt_spectral_register_to_dbr(pdev);
 
-	/* Enable the registartion once FW supports this */
-	spectral_debug("Enable registration to direct dma once FW supports it");
-
-	return status;
+	return QDF_STATUS_SUCCESS;
 }

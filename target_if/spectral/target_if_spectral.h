@@ -27,8 +27,9 @@
 #include <qdf_lock.h>
 #include <wlan_spectral_public_structs.h>
 #include <reg_services_public_struct.h>
+#ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
-
+#endif
 #ifdef WIN32
 #pragma pack(push, target_if_spectral, 1)
 #define __ATTRIB_PACK
@@ -443,6 +444,7 @@ struct target_if_spectral_rfqual_info {
  * @reset_hw:                Reset HW
  * @get_chain_noise_floor:   Get Channel noise floor
  * @spectral_process_phyerr: Process phyerr event
+ * @process_spectral_report: Process spectral report
  */
 struct target_if_spectral_ops {
 	uint64_t (*get_tsf64)(void *arg);
@@ -474,6 +476,8 @@ struct target_if_spectral_ops {
 			struct target_if_spectral_chan_info *p_chaninfo,
 			uint64_t tsf64,
 			struct target_if_spectral_acs_stats *acs_stats);
+	int (*process_spectral_report)(struct wlan_objmgr_pdev *pdev,
+				       void *payload);
 };
 
 /**
@@ -945,9 +949,9 @@ void target_if_spectral_create_samp_msg(
  *
  * Return: Success/Failure
  */
-int target_if_spectral_process_phyerr_gen3(
+int target_if_spectral_process_report_gen3(
 	struct wlan_objmgr_pdev *pdev,
-	struct direct_buf_rx_data *payload);
+	void *buf);
 
 /**
  * target_if_process_phyerr_gen2() - Process PHY Error for gen2
@@ -1568,6 +1572,18 @@ void target_if_register_wmi_spectral_cmd_ops(
 	struct wlan_objmgr_pdev *pdev,
 	struct wmi_spectral_cmd_ops *cmd_ops);
 
+/**
+ * target_if_consume_sfft_report_gen3() -  Process fft report for gen3
+ * @spectral: Pointer to spectral object
+ * @data: Pointer to phyerror data
+ *
+ * Process fft report for gen3
+ *
+ * Return: Success/Failure
+ */
+int
+target_if_consume_spectral_report_gen3(struct target_if_spectral *spectral,
+				       uint8_t *data);
 
 #ifdef WIN32
 #pragma pack(pop, target_if_spectral)

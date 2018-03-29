@@ -18,6 +18,8 @@
  */
 
 #include <wlan_spectral_tgt_api.h>
+#include <wlan_spectral_utils_api.h>
+#include <target_type.h>
 
 void *
 tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
@@ -245,3 +247,57 @@ void tgt_spectral_deregister_nl_cb(struct wlan_objmgr_pdev *pdev)
 
 	psptrl_tx_ops->sptrlto_deregister_netlink_cb(pdev);
 }
+
+int
+tgt_spectral_process_report(struct wlan_objmgr_pdev *pdev,
+			    void *payload)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_lmac_if_sptrl_tx_ops *psptrl_tx_ops = NULL;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
+
+	return psptrl_tx_ops->sptrlto_process_spectral_report(pdev, payload);
+}
+
+uint32_t
+tgt_spectral_get_target_type(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t target_type = 0;
+	struct wlan_lmac_if_target_tx_ops *target_type_tx_ops;
+
+	target_type_tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
+
+	if (target_type_tx_ops->tgt_get_tgt_type)
+		target_type = target_type_tx_ops->tgt_get_tgt_type(psoc);
+
+	return target_type;
+}
+
+#ifdef DIRECT_BUF_RX_ENABLE
+QDF_STATUS
+tgt_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_direct_buf_rx_tx_ops *dbr_tx_ops = NULL;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
+
+	if (tgt_spectral_get_target_type(psoc) == TARGET_TYPE_QCA8074)
+		if (dbr_tx_ops->direct_buf_rx_module_register)
+			return dbr_tx_ops->direct_buf_rx_module_register
+				(pdev, 0,
+				 spectral_dbr_event_handler);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#else
+QDF_STATUS
+tgt_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
