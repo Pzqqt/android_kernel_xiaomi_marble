@@ -284,7 +284,7 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 	qdf_mem_copy(tdls_mgmt_req->peer_mac.bytes,
 		     action_req->tdls_mgmt.peer_mac.bytes, QDF_MAC_ADDR_SIZE);
 
-	if (action_req->tdls_mgmt.len && action_req->tdls_mgmt.buf) {
+	if (action_req->tdls_mgmt.len) {
 		qdf_mem_copy(tdls_mgmt_req->add_ie, action_req->tdls_mgmt.buf,
 			     action_req->tdls_mgmt.len);
 	}
