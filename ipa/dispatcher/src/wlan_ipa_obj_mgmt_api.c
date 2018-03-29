@@ -163,7 +163,13 @@ QDF_STATUS ipa_deinit(void)
 	ipa_info("ipa module dispatcher deinit");
 
 	if (!ipa_is_hw_support()) {
-		ipa_info("ipa hw not present");
+		ipa_info("ipa hw is not present");
+		return status;
+	}
+
+	if (!ipa_config_is_enabled()) {
+		ipa_info("ipa is disabled");
+		ipa_config_mem_free();
 		return status;
 	}
 
