@@ -663,7 +663,9 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 		 */
 		ring_params.low_threshold = num_entries >> 3;
 		ring_params.flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
-		ring_params.intr_timer_thres_us = 0x1000;
+		ring_params.intr_timer_thres_us =
+			wlan_cfg_get_int_timer_threshold_rx(soc->wlan_cfg_ctx);
+		ring_params.intr_batch_cntr_thres_entries = 0;
 	}
 
 	srng->hal_srng = hal_srng_setup(hal_soc, ring_type, ring_num,
