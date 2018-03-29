@@ -912,6 +912,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_request_roam_scan_stats_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_scan_stats_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_tid_configurations_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_set_custom_sw_retry_th_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1283,6 +1284,7 @@ typedef enum {
     OP(WMI_TWT_RESUME_DIALOG_CMDID) \
     OP(WMI_REQUEST_ROAM_SCAN_STATS_CMDID) \
     OP(WMI_PEER_TID_CONFIGURATIONS_CMDID) \
+    OP(WMI_VDEV_SET_CUSTOM_SW_RETRY_TH_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2388,6 +2390,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_TX_POWER_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_limit_offchan_cmd_fixed_param, wmi_vdev_limit_offchan_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_LIMIT_OFFCHAN_CMDID);
+
+/* vdev per-AC SW retry configuration cmd */
+#define WMITLV_TABLE_WMI_VDEV_SET_CUSTOM_SW_RETRY_TH_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_set_custom_sw_retry_th_cmd_fixed_param, wmi_vdev_set_custom_sw_retry_th_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_CUSTOM_SW_RETRY_TH_CMDID);
 
 /* PDEV Set Base Mac Address Cmd */
 #define WMITLV_TABLE_WMI_PDEV_SET_BASE_MACADDR_CMDID(id,op,buf,len) \

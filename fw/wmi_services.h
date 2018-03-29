@@ -250,6 +250,7 @@ typedef  enum  {
     WMI_SERVICE_GMAC_OFFLOAD_SUPPORT=154, /* Support for GMAC */
     WMI_SERVICE_SPOOF_MAC_SUPPORT=155,  /* support for SERVICE_SPOOF_MAC */
     WMI_SERVICE_PEER_TID_CONFIGS_SUPPORT=156,  /* Support TID specific configurations per peer (ack,aggr,retry,rate) */
+    WMI_SERVICE_VDEV_SWRETRY_PER_AC_CONFIG_SUPPORT=157,  /* Support vdev software retries configuration per AC (non aggr retry/aggr retry) */
 
 
     /******* ADD NEW SERVICES HERE *******/
