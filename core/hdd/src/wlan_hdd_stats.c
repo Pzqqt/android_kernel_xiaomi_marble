@@ -37,6 +37,7 @@
 #include "wlan_hdd_hostapd.h"
 #include "wlan_hdd_request_manager.h"
 #include "wlan_hdd_debugfs_llstat.h"
+#include "wlan_reg_services_api.h"
 
 /* 11B, 11G Rate table include Basic rate and Extended rate
  * The IDX field is the rate index
@@ -4579,7 +4580,8 @@ static bool wlan_fill_survey_result(struct survey_info *survey, int opfreq,
 #endif
 
 static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
-		struct hdd_adapter *adapter, struct survey_info *survey, int idx)
+					struct hdd_adapter *adapter,
+					struct survey_info *survey, int idx)
 {
 	bool filled = false;
 	int i, j = 0;
@@ -4588,7 +4590,7 @@ static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	sme_get_operation_channel(hdd_ctx->hHal, &channel, adapter->session_id);
-	hdd_wlan_get_freq(channel, &opfreq);
+	opfreq = wlan_reg_chan_to_freq(hdd_ctx->hdd_pdev, channel);
 
 	mutex_lock(&hdd_ctx->chan_info_lock);
 

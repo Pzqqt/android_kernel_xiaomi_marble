@@ -109,23 +109,6 @@
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
 #define HDD_DELETE_MCBC_FILTERS_FROM_FW 0
 
-/* To Validate Channel against the Frequency and Vice-Versa */
-static const struct ccp_freq_chan_map freq_chan_map[] = {
-	{2412, 1}, {2417, 2}, {2422, 3}, {2427, 4}, {2432, 5}, {2437, 6},
-	{2442, 7}, {2447, 8}, {2452, 9}, {2457, 10}, {2462, 11}, {2467, 12},
-	{2472, 13}, {2484, 14}, {4920, 240}, {4940, 244}, {4960, 248},
-	{4980, 252}, {5040, 208}, {5060, 212}, {5080, 216}, {5180, 36},
-	{5200, 40}, {5220, 44}, {5240, 48}, {5260, 52}, {5280, 56},
-	{5300, 60}, {5320, 64}, {5500, 100}, {5520, 104}, {5540, 108},
-	{5560, 112}, {5580, 116}, {5600, 120}, {5620, 124}, {5640, 128},
-	{5660, 132}, {5680, 136}, {5700, 140}, {5720, 144}, {5745, 149},
-	{5765, 153}, {5785, 157}, {5805, 161}, {5825, 165}, {5852, 170},
-	{5855, 171}, {5860, 172}, {5865, 173}, {5870, 174}, {5875, 175},
-	{5880, 176}, {5885, 177}, {5890, 178}, {5895, 179}, {5900, 180},
-	{5905, 181}, {5910, 182}, {5915, 183}, {5920, 184} };
-
-#define FREQ_CHAN_MAP_TABLE_SIZE QDF_ARRAY_SIZE(freq_chan_map)
-
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_INT_GET_NONE    (SIOCIWFIRSTPRIV + 0)
 #define WE_SET_11D_STATE     1
@@ -3457,29 +3440,6 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info_all(struct hdd_adapter *adapter)
 	}
 
 	return status;
-}
-
-/**
- * hdd_wlan_get_freq() - Convert channel to frequency
- * @channel: channel to be converted
- * @pfreq: where to store the frequency
- *
- * Return: 1 on success, otherwise a negative errno
- */
-int hdd_wlan_get_freq(uint32_t channel, uint32_t *pfreq)
-{
-	int i;
-
-	if (channel > 0) {
-		for (i = 0; i < FREQ_CHAN_MAP_TABLE_SIZE; i++) {
-			if (channel == freq_chan_map[i].chan) {
-				*pfreq = freq_chan_map[i].freq;
-				return 1;
-			}
-		}
-	}
-	hdd_err("Invalid channel no=%d!!", channel);
-	return -EINVAL;
 }
 
 /**

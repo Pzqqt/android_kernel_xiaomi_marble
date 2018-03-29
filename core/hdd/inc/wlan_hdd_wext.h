@@ -199,12 +199,6 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
 #define QCN_OUI_TYPE   "\x8c\xfd\xf0\x01"
 #define QCN_OUI_TYPE_SIZE  4
 
-struct ccp_freq_chan_map {
-	/* List of frequencies */
-	uint32_t freq;
-	uint32_t chan;
-};
-
 /* Packet Types. */
 #define WLAN_KEEP_ALIVE_UNSOLICIT_ARP_RSP     2
 #define WLAN_KEEP_ALIVE_NULL_PKT              1
@@ -257,7 +251,6 @@ void hdd_unregister_wext(struct net_device *dev);
  */
 void hdd_register_wext(struct net_device *dev);
 
-int hdd_wlan_get_freq(uint32_t chan, uint32_t *freq);
 void hdd_display_stats_help(void);
 void hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 			 union iwreq_data *wrqu, char *extra);
