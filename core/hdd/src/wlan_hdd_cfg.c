@@ -5328,6 +5328,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_UINT_TEST_FRAMEWORK_DEFAULT,
 		     CFG_ENABLE_UNIT_TEST_FRAMEWORK_MIN,
 		     CFG_ENABLE_UNIT_TEST_FRAMEWORK_MAX),
+
+	REG_VARIABLE(CFG_ROAM_FT_OPEN_ENABLE_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_ftopen,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ROAM_FT_OPEN_ENABLE_DEFAULT,
+		     CFG_ROAM_FT_OPEN_ENABLE_MIN,
+		     CFG_ROAM_FT_OPEN_ENABLE_MAX),
 };
 
 
@@ -7204,6 +7211,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] value = [0x%x]",
 		  CFG_ENABLE_UNIT_TEST_FRAMEWORK_NAME,
 		  hdd_ctx->config->is_unit_test_framework_enabled);
+	hdd_debug("Name = [%s] Value = [%u]",
+		  CFG_ROAM_FT_OPEN_ENABLE_NAME,
+		  hdd_ctx->config->enable_ftopen);
 }
 
 
@@ -8799,6 +8809,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->scan_adaptive_dwell_mode_nc;
 	smeConfig->csrConfig.roamscan_adaptive_dwell_mode =
 			hdd_ctx->config->roamscan_adaptive_dwell_mode;
+	smeConfig->csrConfig.enable_ftopen =
+			hdd_ctx->config->enable_ftopen;
 
 	hdd_update_per_config_to_sme(hdd_ctx, smeConfig);
 

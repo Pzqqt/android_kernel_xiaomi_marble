@@ -610,6 +610,7 @@ struct csr_config {
 	uint32_t offload_11k_enable_bitmask;
 	bool wep_tkip_in_he;
 	struct csr_neighbor_report_offload_params neighbor_report_offload;
+	bool enable_ftopen;
 };
 
 struct csr_channel_powerinfo {

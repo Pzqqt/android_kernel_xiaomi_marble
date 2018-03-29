@@ -2701,16 +2701,19 @@ QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal mac_ctx,
 
 /**
  * csr_is_auth_type11r() - Check if Authentication type is 11R
+ * @mac: pointer to mac context
  * @auth_type: The authentication type that is used to make the connection
  * @mdie_present: Is MDIE IE present
  *
  * Return: true if is 11R auth type, false otherwise
  */
-bool csr_is_auth_type11r(eCsrAuthType auth_type, uint8_t mdie_present)
+bool csr_is_auth_type11r(tpAniSirGlobal mac, eCsrAuthType auth_type,
+			uint8_t mdie_present)
 {
 	switch (auth_type) {
 	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
-		if (mdie_present)
+		if (mdie_present &&
+		    mac->roam.configParam.enable_ftopen)
 			return true;
 		break;
 	case eCSR_AUTH_TYPE_FT_RSN_PSK:
@@ -2723,9 +2726,10 @@ bool csr_is_auth_type11r(eCsrAuthType auth_type, uint8_t mdie_present)
 }
 
 /* Function to return true if the profile is 11r */
-bool csr_is_profile11r(struct csr_roam_profile *pProfile)
+bool csr_is_profile11r(tpAniSirGlobal mac,
+			struct csr_roam_profile *pProfile)
 {
-	return csr_is_auth_type11r(pProfile->negotiatedAuthType,
+	return csr_is_auth_type11r(mac, pProfile->negotiatedAuthType,
 				   pProfile->MDID.mdiePresent);
 }
 

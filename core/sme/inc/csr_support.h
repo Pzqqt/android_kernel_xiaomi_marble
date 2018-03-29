@@ -357,8 +357,9 @@ QDF_STATUS csr_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channelId,
 		uint16_t *beaconInterval, uint32_t cursessionId,
 		enum QDF_OPMODE currBssPersona);
-bool csr_is_profile11r(struct csr_roam_profile *pProfile);
-bool csr_is_auth_type11r(eCsrAuthType AuthType, uint8_t mdiePresent);
+bool csr_is_profile11r(tpAniSirGlobal mac, struct csr_roam_profile *pProfile);
+bool csr_is_auth_type11r(tpAniSirGlobal mac, eCsrAuthType AuthType,
+			 uint8_t mdiePresent);
 #ifdef FEATURE_WLAN_ESE
 bool csr_is_profile_ese(struct csr_roam_profile *pProfile);
 #endif

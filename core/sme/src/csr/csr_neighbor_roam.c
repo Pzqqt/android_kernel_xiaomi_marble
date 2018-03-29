@@ -1000,7 +1000,7 @@ static void csr_neighbor_roam_info_ctx_init(
 
 	/* Based on the auth scheme tell if we are 11r */
 	if (csr_is_auth_type11r
-		(session->connectedProfile.AuthType,
+		(pMac, session->connectedProfile.AuthType,
 		session->connectedProfile.MDID.mdiePresent)) {
 		if (pMac->roam.configParam.isFastTransitionEnabled)
 			init_ft_flag = true;

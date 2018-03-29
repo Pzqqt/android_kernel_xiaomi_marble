@@ -2043,6 +2043,28 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
+ * enable_ftopen - enable/disable FT open feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This INI is used to enable/disable FT open feature
+*
+* Related: None
+*
+* Supported Feature: Roaming
+*
+* Usage: External
+*
+* </ini>
+*/
+#define CFG_ROAM_FT_OPEN_ENABLE_NAME                "enable_ftopen"
+#define CFG_ROAM_FT_OPEN_ENABLE_MIN                 (0)
+#define CFG_ROAM_FT_OPEN_ENABLE_MAX                 (1)
+#define CFG_ROAM_FT_OPEN_ENABLE_DEFAULT             (1)
+
+/*
+ * <ini>
  * groam_dense_min_aps - Sets minimum number of AP for dense roam
  * @Min: 1
  * @Max: 5
@@ -14765,6 +14787,7 @@ struct hdd_config {
 	uint8_t enable_tx_sch_delay;
 	HDD_GREEN_AP_CFG_FIELDS
 	bool is_unit_test_framework_enabled;
+	bool enable_ftopen;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
