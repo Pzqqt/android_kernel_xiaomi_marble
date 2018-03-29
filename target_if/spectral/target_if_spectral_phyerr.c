@@ -1569,8 +1569,9 @@ int target_if_spectral_process_phyerr_gen3(
 
 	if (spectral_debug_level & (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4)) {
 		spectral_debug("Printing the spectral phyerr buffer for debug");
-		spectral_debug("Datalength of buffer = 0x%x(%d) bufptr = 0x%p",
-			  payload->dbr_len, payload->dbr_len, payload->vaddr);
+		spectral_debug("Datalength of buffer = 0x%x(%d) bufptr = 0x%pK",
+			       payload->dbr_len, payload->dbr_len,
+			       payload->vaddr);
 #ifdef CONFIG_WIN
 		RAWSIM_PKT_HEXDUMP((unsigned char *)payload->vaddr, 1024);
 #endif
