@@ -2733,7 +2733,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		return -EINVAL;
 	}
 
-	hdd_set_idle_ps_config(hdd_ctx, false);
 	qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
 
 	mutex_lock(&hdd_ctx->iface_change_lock);
