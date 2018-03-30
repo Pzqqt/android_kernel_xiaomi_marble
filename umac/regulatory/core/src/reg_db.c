@@ -210,6 +210,7 @@ enum reg_domain {
 
 	FCC1_FCCA = 0x10,
 	FCC1_WORLD = 0x11,
+	FCC2_FCCA = 0x20,
 	FCC2_WORLD = 0x21,
 	FCC2_ETSIC = 0x22,
 	FCC3_FCCA = 0x3A,
@@ -700,6 +701,7 @@ const struct reg_domain_pair g_reg_dmn_pairs[] = {
 
 	{FCC1_FCCA, FCC1, FCCA},
 	{FCC1_WORLD, FCC1, WORLD},
+	{FCC2_FCCA, FCC2, FCCA},
 	{FCC2_WORLD, FCC2, WORLD},
 	{FCC2_ETSIC, FCC2, ETSIC},
 	{FCC3_FCCA, FCC3, FCCA},
