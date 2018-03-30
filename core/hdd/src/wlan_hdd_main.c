@@ -7044,6 +7044,20 @@ void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 }
 
 /**
+ * hdd_clear_rps_cpu_mask - clear RPS CPU mask for interfaces
+ * @hdd_ctx: pointer to struct hdd_context
+ *
+ * Return: none
+ */
+static void hdd_clear_rps_cpu_mask(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter;
+
+	hdd_for_each_adapter(hdd_ctx, adapter)
+		hdd_send_rps_disable_ind(adapter);
+}
+
+/**
  * hdd_pld_request_bus_bandwidth() - Function to control bus bandwidth
  * @hdd_ctx - handle to hdd context
  * @tx_packets - transmit packet count
@@ -7086,13 +7100,17 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		hdd_ctx->cur_vote_level = next_vote_level;
 		vote_level_change = true;
 		pld_request_bus_bandwidth(hdd_ctx->parent_dev, next_vote_level);
-		if (next_vote_level == PLD_BUS_WIDTH_LOW) {
+		if ((next_vote_level == PLD_BUS_WIDTH_LOW) ||
+		    (next_vote_level == PLD_BUS_WIDTH_NONE)) {
 			if (hdd_ctx->hbw_requested) {
 				pld_remove_pm_qos(hdd_ctx->parent_dev);
 				hdd_ctx->hbw_requested = false;
 			}
 			if (cds_sched_handle_throughput_req(false))
 				hdd_warn("low bandwidth set rx affinity fail");
+
+			if (hdd_ctx->dynamic_rps)
+				hdd_clear_rps_cpu_mask(hdd_ctx);
 		} else {
 			if (!hdd_ctx->hbw_requested) {
 				pld_request_pm_qos(hdd_ctx->parent_dev, 1);
@@ -7101,6 +7119,9 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 			if (cds_sched_handle_throughput_req(true))
 				hdd_warn("high bandwidth set rx affinity fail");
+
+			if (hdd_ctx->dynamic_rps)
+				hdd_set_rps_cpu_mask(hdd_ctx);
 		}
 		hdd_napi_apply_throughput_policy(hdd_ctx, tx_packets, rx_packets);
 	}

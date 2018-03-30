@@ -2464,7 +2464,6 @@ err:
  */
 void hdd_send_rps_disable_ind(struct hdd_adapter *adapter)
 {
-	uint8_t cpu_map_list_len = 0;
 	struct hdd_context *hdd_ctxt = NULL;
 	struct wlan_rps_data rps_data;
 	struct cds_config_info *cds_cfg;
@@ -2487,10 +2486,6 @@ void hdd_send_rps_disable_ind(struct hdd_adapter *adapter)
 	hdd_info("Set cpu_map_list 0");
 
 	qdf_mem_zero(&rps_data.cpu_map_list, sizeof(rps_data.cpu_map_list));
-	cpu_map_list_len = 0;
-	rps_data.num_queues =
-		(cpu_map_list_len < rps_data.num_queues) ?
-				cpu_map_list_len : rps_data.num_queues;
 
 	strlcpy(rps_data.ifname, adapter->dev->name, sizeof(rps_data.ifname));
 	wlan_hdd_send_svc_nlink_msg(hdd_ctxt->radio_index,

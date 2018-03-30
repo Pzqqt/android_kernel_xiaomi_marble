@@ -47,6 +47,7 @@ struct hdd_context;
 #define CFG_ENABLE_RX_THREAD		(1 << 0)
 #define CFG_ENABLE_RPS			(1 << 1)
 #define CFG_ENABLE_NAPI			(1 << 2)
+#define CFG_ENABLE_DYNAMIC_RPS		(1 << 3)
 
 #ifdef DHCP_SERVER_OFFLOAD
 #define IPADDR_NUM_ENTRIES     (4)
@@ -9959,7 +9960,8 @@ enum dot11p_mode {
  * rx_mode - Control to decide rx mode
  *
  * @Min: 0
- * @Max: (CFG_ENABLE_RX_THREAD | CFG_ENABLE_RPS | CFG_ENABLE_NAPI)
+ * @Max: (CFG_ENABLE_RX_THREAD | CFG_ENABLE_RPS | CFG_ENABLE_NAPI | \
+ *        CFG_ENABLE_DYNAMIC_RPS)
  * @Default: MDM_PLATFORM   -  0
  *           HELIUMPLUS     -  CFG_ENABLE_NAPI
  *           Other cases    -  (CFG_ENABLE_RX_THREAD | CFG_ENABLE_NAPI)
@@ -9975,7 +9977,7 @@ enum dot11p_mode {
 #define CFG_RX_MODE_NAME     "rx_mode"
 #define CFG_RX_MODE_MIN      (0)
 #define CFG_RX_MODE_MAX      (CFG_ENABLE_RX_THREAD | CFG_ENABLE_RPS | \
-				 CFG_ENABLE_NAPI)
+				 CFG_ENABLE_NAPI | CFG_ENABLE_DYNAMIC_RPS)
 #ifdef MDM_PLATFORM
 #define CFG_RX_MODE_DEFAULT  (0)
 #elif defined(HELIUMPLUS)

@@ -7500,6 +7500,11 @@ static void hdd_override_all_ps(struct hdd_context *hdd_ctx)
  */
 static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
 {
+	/* RPS has higher priority than dynamic RPS when both bits are set */
+	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RPS &&
+	    hdd_ctx->config->rx_mode & CFG_ENABLE_DYNAMIC_RPS)
+		hdd_ctx->config->rx_mode &= ~CFG_ENABLE_DYNAMIC_RPS;
+
 	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RX_THREAD &&
 		 hdd_ctx->config->rx_mode & CFG_ENABLE_RPS) {
 		hdd_warn("rx_mode wrong configuration. Make it default");
@@ -7514,6 +7519,9 @@ static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
 
 	if (hdd_ctx->config->rx_mode & CFG_ENABLE_NAPI)
 		hdd_ctx->napi_enable = true;
+
+	if (hdd_ctx->config->rx_mode & CFG_ENABLE_DYNAMIC_RPS)
+		hdd_ctx->dynamic_rps = true;
 }
 
 /**
