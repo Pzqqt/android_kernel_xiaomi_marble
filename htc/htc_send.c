@@ -872,7 +872,7 @@ static void get_htc_send_packets(HTC_TARGET *target,
 	HTC_PACKET *pPacket;
 	HTC_PACKET_QUEUE *tx_queue;
 	HTC_PACKET_QUEUE pm_queue;
-	bool do_pm_get;
+	bool do_pm_get = false;
 
 	/*** NOTE : the TX lock is held when this function is called ***/
 	AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
