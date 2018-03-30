@@ -1475,6 +1475,9 @@ ol_tx_queue_log_display(struct ol_txrx_pdev_t *pdev)
 	 * don't bother.
 	 */
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		"Current target credit: %d",
+		 qdf_atomic_read(&pdev->target_tx_credit));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		  "Tx queue log:");
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		  ": Frames  Bytes  TID  PEER");
