@@ -5058,9 +5058,6 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 			}
 			hdd_debug("%s", &extra[numOfBytestoPrint]);
 		}
-
-		/* Free temporary buffer */
-		qdf_mem_free(extra);
 	} else {
 		/* Command failed, log error */
 		hdd_err("GETIBSSPEERINFOALL command failed with status code %d",
