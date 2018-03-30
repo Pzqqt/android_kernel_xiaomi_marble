@@ -575,7 +575,8 @@ static struct CE_attr host_ce_config_wlan_qca8074[] = {
 	/* target -> host PKTLOG */
 	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
 	/* Target autonomous HIF_memcpy */
-	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	{ /* CE6 */ CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR, 0, 0,
+		0, 0, NULL,},
 	/* host->target WMI (mac1) */
 	{ /* CE7 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
 	/* Target to uMC */
