@@ -186,17 +186,19 @@ enum htt_cmn_dbg_stats_type {
  * @TXRX_CLEAR_STATS: clear all host stats
  * @TXRX_SRNG_PTR_STATS: Print SRNG pointer stats
  * @TXRX_RX_MON_STATS: Print monitor mode stats
+ * @TXRX_REO_QUEUE_STATS: Print Per peer REO Queue Stats
 */
 enum cdp_host_txrx_stats {
 	TXRX_HOST_STATS_INVALID  = -1,
-	TXRX_CLEAR_STATS    = 0,
-	TXRX_RX_RATE_STATS  = 1,
-	TXRX_TX_RATE_STATS  = 2,
-	TXRX_TX_HOST_STATS  = 3,
-	TXRX_RX_HOST_STATS  = 4,
-	TXRX_AST_STATS = 5,
-	TXRX_SRNG_PTR_STATS	= 6,
-	TXRX_RX_MON_STATS   = 7,
+	TXRX_CLEAR_STATS     = 0,
+	TXRX_RX_RATE_STATS   = 1,
+	TXRX_TX_RATE_STATS   = 2,
+	TXRX_TX_HOST_STATS   = 3,
+	TXRX_RX_HOST_STATS   = 4,
+	TXRX_AST_STATS       = 5,
+	TXRX_SRNG_PTR_STATS  = 6,
+	TXRX_RX_MON_STATS    = 7,
+	TXRX_REO_QUEUE_STATS = 8,
 	TXRX_HOST_STATS_MAX,
 };
 
@@ -859,6 +861,7 @@ enum cdp_stats {
 	CDP_TXRX_STATS_25,
 	CDP_TXRX_STATS_26,
 	CDP_TXRX_STATS_27,
+	CDP_TXRX_STATS_28,
 	CDP_TXRX_STATS_HTT_MAX = 256,
 	CDP_TXRX_MAX_STATS = 512,
 };
@@ -1246,6 +1249,7 @@ struct cdp_txrx_stats_req {
 	uint32_t	param3;
 	uint32_t	cookie_val;
 	uint8_t		mac_id;
+	char *peer_addr;
 };
 
 /**

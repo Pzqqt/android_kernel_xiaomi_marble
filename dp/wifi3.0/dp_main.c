@@ -293,6 +293,7 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_AST_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_SRNG_PTR_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_RX_MON_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_REO_QUEUE_STATS},
 };
 
 /* MCL specific functions */
@@ -6096,6 +6097,32 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.rx.non_amsdu_cnt);
 }
 
+/*
+ * dp_get_host_peer_stats()- function to print peer stats
+ * @pdev_handle: DP_PDEV handle
+ * @mac_addr: mac address of the peer
+ *
+ * Return: void
+ */
+static void
+dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
+{
+	struct dp_peer *peer;
+	uint8_t local_id;
+
+	peer = (struct dp_peer *)dp_find_peer_by_addr(pdev_handle, mac_addr,
+			&local_id);
+
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid peer\n", __func__);
+		return;
+	}
+
+	dp_print_peer_stats(peer);
+	dp_peer_rxtid_stats(peer, dp_rx_tid_stats_cb, NULL);
+}
+
 /**
  * dp_print_host_stats()- Function to print the stats aggregated at host
  * @vdev_handle: DP_VDEV handle
@@ -6113,10 +6140,13 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
  * Return: 0 on success, print error message in case of failure
  */
 static int
-dp_print_host_stats(struct cdp_vdev *vdev_handle, enum cdp_host_txrx_stats type)
+dp_print_host_stats(struct cdp_vdev *vdev_handle,
+		    struct cdp_txrx_stats_req *req)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
+	enum cdp_host_txrx_stats type =
+			dp_stats_mapping_table[req->stats][STATS_HOST];
 
 	dp_aggregate_pdev_stats(pdev);
 
@@ -6148,37 +6178,14 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle, enum cdp_host_txrx_stats type)
 	case TXRX_RX_MON_STATS:
 		dp_print_pdev_rx_mon_stats(pdev);
 		break;
+	case TXRX_REO_QUEUE_STATS:
+		dp_get_host_peer_stats((struct cdp_pdev *)pdev, req->peer_addr);
+		break;
 	default:
 		DP_TRACE(FATAL, "Wrong Input For TxRx Host Stats");
 		break;
 	}
 	return 0;
-}
-
-/*
- * dp_get_host_peer_stats()- function to print peer stats
- * @pdev_handle: DP_PDEV handle
- * @mac_addr: mac address of the peer
- *
- * Return: void
- */
-static void
-dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
-{
-	struct dp_peer *peer;
-	uint8_t local_id;
-	peer = (struct dp_peer *)dp_find_peer_by_addr(pdev_handle, mac_addr,
-			&local_id);
-
-	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Invalid peer\n", __func__);
-		return;
-	}
-
-	dp_print_peer_stats(peer);
-	dp_peer_rxtid_stats(peer, dp_rx_tid_stats_cb, NULL);
-	return;
 }
 
 /*
@@ -6751,7 +6758,7 @@ static int dp_txrx_stats_request(struct cdp_vdev *vdev,
 
 	if ((host_stats != TXRX_HOST_STATS_INVALID) &&
 			(host_stats <= TXRX_HOST_STATS_MAX))
-		return dp_print_host_stats(vdev, host_stats);
+		return dp_print_host_stats(vdev, req);
 	else
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"Wrong Input for TxRx Stats");

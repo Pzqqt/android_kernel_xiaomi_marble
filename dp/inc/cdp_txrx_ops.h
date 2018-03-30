@@ -645,8 +645,10 @@ struct cdp_host_stats_ops {
 
 	A_STATUS
 		(*txrx_host_me_stats)(struct cdp_vdev *vdev);
+
 	void
 		(*txrx_per_peer_stats)(struct cdp_pdev *pdev, char *addr);
+
 	int (*txrx_host_msdu_ttl_stats)(struct cdp_vdev *vdev,
 			struct ol_txrx_stats_req *req);
 

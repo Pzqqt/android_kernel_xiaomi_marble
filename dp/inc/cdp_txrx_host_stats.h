@@ -304,12 +304,20 @@ cdp_host_me_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 	return soc->ops->host_stats_ops->txrx_host_me_stats(vdev);
 }
 
-static inline void cdp_per_peer_stats
-	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, char *addr)
+/**
+ * cdp_per_peer_stats(): function to print per peer REO Queue stats
+ * @soc: soc handle
+ * @pdev: physical device
+ * @addr: peer address
+ *
+ * return: status
+ */
+static inline void cdp_per_peer_stats(ol_txrx_soc_handle soc,
+				      struct cdp_pdev *pdev, char *addr)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance", __func__);
+			  "%s: Invalid Instance", __func__);
 		QDF_BUG(0);
 		return;
 	}
@@ -318,8 +326,7 @@ static inline void cdp_per_peer_stats
 	    !soc->ops->host_stats_ops->txrx_per_peer_stats)
 		return;
 
-	soc->ops->host_stats_ops->txrx_per_peer_stats
-			(pdev, addr);
+	soc->ops->host_stats_ops->txrx_per_peer_stats(pdev, addr);
 }
 
 static inline int cdp_host_msdu_ttl_stats(ol_txrx_soc_handle soc,
