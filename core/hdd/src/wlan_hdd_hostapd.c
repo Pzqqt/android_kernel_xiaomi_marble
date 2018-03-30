@@ -1784,8 +1784,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		we_event = IWEVCUSTOM;
 		we_custom_event_generic = we_custom_start_event;
 		hdd_ipa_set_tx_flow_info();
-		/* Send SCC/MCC Switching event to IPA */
-		ucfg_ipa_send_mcc_scc_msg(hdd_ctx->hdd_pdev, hdd_ctx->mcc_mode);
 
 		if (policy_mgr_is_hw_mode_change_after_vdev_up(
 			hdd_ctx->hdd_psoc)) {
@@ -2553,8 +2551,6 @@ stopbss:
 			qdf_event_set(&hostapd_state->qdf_stop_bss_event);
 
 		hdd_ipa_set_tx_flow_info();
-		/* Send SCC/MCC Switching event to IPA */
-		ucfg_ipa_send_mcc_scc_msg(hdd_ctx->hdd_pdev, hdd_ctx->mcc_mode);
 	}
 	return QDF_STATUS_SUCCESS;
 }

@@ -631,6 +631,7 @@ struct wlan_ipa_priv {
 	uint8_t vdev_to_iface[WLAN_IPA_MAX_SESSION];
 	bool vdev_offload_enabled[WLAN_IPA_MAX_SESSION];
 	bool mcc_mode;
+	qdf_work_t mcc_work;
 	bool ap_intrabss_fwd;
 	bool dfs_cac_block_tx;
 #ifdef FEATURE_METERING

@@ -320,9 +320,6 @@ void hdd_ipa_set_tx_flow_info(void)
 		targetChannel = 0;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 	}
-
-	hdd_ctx->mcc_mode = policy_mgr_current_concurrency_is_mcc(psoc);
-	ucfg_ipa_set_mcc_mode(hdd_ctx->hdd_pdev, hdd_ctx->mcc_mode);
 }
 
 #ifdef QCA_CONFIG_SMP
@@ -403,4 +400,17 @@ void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb, qdf_netdev_t dev)
 		++adapter->hdd_stats.tx_rx_stats.rx_delivered[cpu_index];
 	else
 		++adapter->hdd_stats.tx_rx_stats.rx_refused[cpu_index];
+}
+
+void hdd_ipa_set_mcc_mode(bool mcc_mode)
+{
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return;
+	}
+
+	ucfg_ipa_set_mcc_mode(hdd_ctx->hdd_pdev, mcc_mode);
 }

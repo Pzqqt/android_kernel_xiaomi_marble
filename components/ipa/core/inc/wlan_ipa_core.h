@@ -439,15 +439,11 @@ void wlan_ipa_reg_send_to_nw_cb(struct wlan_ipa_priv *ipa_ctx, void *cb)
 /**
  * wlan_ipa_set_mcc_mode() - Set MCC mode
  * @ipa_ctx: IPA context
- * @mcc_mode: 0=MCC/1=SCC
+ * @mcc_mode: 1=MCC/0=SCC
  *
  * Return: void
  */
-static inline
-void wlan_ipa_set_mcc_mode(struct wlan_ipa_priv *ipa_ctx, bool mcc_mode)
-{
-	ipa_ctx->mcc_mode = mcc_mode;
-}
+void wlan_ipa_set_mcc_mode(struct wlan_ipa_priv *ipa_ctx, bool mcc_mode);
 
 /**
  * wlan_ipa_set_dfs_cac_tx() - Set DFS cac tx block
@@ -536,6 +532,10 @@ QDF_STATUS wlan_ipa_send_mcc_scc_msg(struct wlan_ipa_priv *ipa_ctx,
 				     bool mcc_mode)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline void wlan_ipa_mcc_work_handler(void *data)
+{
 }
 #endif
 
