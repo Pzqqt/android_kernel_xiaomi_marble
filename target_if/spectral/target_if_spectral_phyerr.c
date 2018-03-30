@@ -34,7 +34,7 @@
 #include <target_if_direct_buf_rx_api.h>
 extern int spectral_debug_level;
 
-#if WLAN_SPECTRAL_ENABLE
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 
 /**
  * target_if_print_buf() - Prints given buffer for given length
@@ -1625,4 +1625,4 @@ int target_if_spectral_process_report_gen3(
 qdf_export_symbol(target_if_spectral_process_report_gen3);
 /* END of spectral GEN III HW specific functions */
 
-#endif  /* WLAN_SPECTRAL_ENABLE */
+#endif  /* WLAN_CONV_SPECTRAL_ENABLE */

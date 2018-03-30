@@ -22,8 +22,9 @@
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
 #include "wlan_global_lmac_if_api.h"
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 #include <wlan_spectral_utils_api.h>
-
+#endif
 /* Function pointer to call DA/OL specific tx_ops registration function */
 QDF_STATUS (*wlan_global_lmac_if_tx_ops_register[MAX_DEV_TYPE])
 				(struct wlan_lmac_if_tx_ops *tx_ops);

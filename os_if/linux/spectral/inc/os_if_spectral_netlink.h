@@ -51,8 +51,13 @@ extern struct net init_net;
  *
  * Return: None
  */
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 void os_if_spectral_netlink_init(struct wlan_objmgr_pdev *pdev);
-
+#else
+static inline void os_if_spectral_netlink_init(struct wlan_objmgr_pdev *pdev)
+{
+}
+#endif
 /**
  * os_if_spectral_prep_skb() - Prepare socket buffer
  * @pdev : Pointer to pdev

@@ -905,6 +905,7 @@ struct target_if_samp_msg_params {
 	struct ath_softc *sc;
 };
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 /**
  * target_if_spectral_dump_fft() - Dump Spectral FFT
  * @pfft: Pointer to Spectral Phyerr FFT
@@ -1607,4 +1608,5 @@ target_if_consume_spectral_report_gen3(
 #undef __ATTRIB_PACK
 #endif
 
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
 #endif /* _TARGET_IF_SPECTRAL_H_ */

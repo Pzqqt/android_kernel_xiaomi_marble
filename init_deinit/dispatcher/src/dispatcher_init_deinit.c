@@ -67,8 +67,9 @@
 #ifdef WLAN_SUPPORT_SPLITMAC
 #include <wlan_splitmac.h>
 #endif
-
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 #include <wlan_spectral_utils_api.h>
+#endif
 #ifdef WLAN_SUPPORT_FILS
 #include <wlan_fd_utils_api.h>
 #endif
@@ -349,6 +350,7 @@ static QDF_STATUS dispatcher_regulatory_pdev_open(struct wlan_objmgr_pdev
 	return regulatory_pdev_open(pdev);
 }
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 #ifdef CONFIG_WIN
 QDF_STATUS dispatcher_register_spectral_pdev_open_handler(
 			spectral_pdev_open_handler handler)
@@ -374,6 +376,18 @@ static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev
 						  *pdev)
 {
 	return spectral_pdev_open(pdev);
+}
+
+static QDF_STATUS dispatcher_spectral_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+#else
+static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev
+						  *pdev)
+{
+	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS dispatcher_spectral_pdev_close(struct wlan_objmgr_pdev *pdev)
@@ -755,6 +769,7 @@ static QDF_STATUS dispatcher_splitmac_deinit(void)
 }
 #endif  /* WLAN_SUPPORT_SPLITMAC */
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 #ifdef CONFIG_MCL
 static QDF_STATUS dispatcher_spectral_init(void)
 {
@@ -775,7 +790,18 @@ static QDF_STATUS dispatcher_spectral_deinit(void)
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif /*CONFIG_MCL*/
+#endif
+#else
+static QDF_STATUS dispatcher_spectral_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_spectral_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 #ifdef DIRECT_BUF_RX_ENABLE
 static QDF_STATUS dispatcher_dbr_psoc_enable(struct wlan_objmgr_psoc *psoc)
