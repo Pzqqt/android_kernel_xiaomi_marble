@@ -552,6 +552,7 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 		bool in_use)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool mcc_mode;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -564,6 +565,8 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 			conn_index);
 		return;
 	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	pm_conc_connection_list[conn_index].mode = mode;
 	pm_conc_connection_list[conn_index].chan = chan;
 	pm_conc_connection_list[conn_index].bw = bw;
@@ -572,6 +575,7 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 	pm_conc_connection_list[conn_index].original_nss = original_nss;
 	pm_conc_connection_list[conn_index].vdev_id = vdev_id;
 	pm_conc_connection_list[conn_index].in_use = in_use;
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	if (pm_ctx->mode_change_cb)
 		pm_ctx->mode_change_cb();
@@ -580,6 +584,15 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 	if (pm_ctx->cdp_cbacks.cdp_update_mac_id)
 		pm_ctx->cdp_cbacks.cdp_update_mac_id(psoc, vdev_id, mac);
 
+	/* IPA only cares about STA or SAP mode */
+	if (mode == PM_STA_MODE || mode == PM_SAP_MODE) {
+		qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+		mcc_mode = policy_mgr_current_concurrency_is_mcc(psoc);
+		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+		if (pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb)
+			pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb(mcc_mode);
+	}
 }
 
 /**

@@ -866,10 +866,12 @@ struct policy_mgr_cdp_cbacks {
  * from policy manager
  * @hdd_disable_lro_in_concurrency: Callback to disable LRO
  * @hdd_set_rx_mode_rps_cb: Callback to set RPS
+ * @hdd_ipa_set_mcc_mode_cb: Callback to set mcc mode for ipa module
  */
 struct policy_mgr_dp_cbacks {
 	void (*hdd_disable_lro_in_concurrency)(bool);
 	void (*hdd_set_rx_mode_rps_cb)(bool);
+	void (*hdd_ipa_set_mcc_mode_cb)(bool);
 };
 
 /**

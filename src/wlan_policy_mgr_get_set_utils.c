@@ -1190,6 +1190,7 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	QDF_STATUS qdf_status;
+	bool mcc_mode;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -1247,6 +1248,19 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 	}
 
 	policy_mgr_dump_current_concurrency(psoc);
+
+	/*
+	 * Check mode of entry being removed. Update mcc_mode only when STA
+	 * or SAP since IPA only cares about these two
+	 */
+	if (mode == QDF_STA_MODE || mode == QDF_SAP_MODE) {
+		qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+		mcc_mode = policy_mgr_current_concurrency_is_mcc(psoc);
+		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+		if (pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb)
+			pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb(mcc_mode);
+	}
 
 	return qdf_status;
 }
