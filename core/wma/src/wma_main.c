@@ -5234,6 +5234,21 @@ static void wma_update_obss_color_collision_support(tp_wma_handle wh,
 		tgt_cfg->obss_color_collision_offloaded = false;
 }
 
+#ifdef WLAN_SUPPORT_GREEN_AP
+static void wma_green_ap_register_handlers(tp_wma_handle wma_handle)
+{
+	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				   WMI_SERVICE_EGAP))
+		target_if_green_ap_register_egap_event_handler(
+					wma_handle->pdev);
+
+}
+#else
+static void wma_green_ap_register_handlers(tp_wma_handle wma_handle)
+{
+}
+#endif
+
 /**
  * wma_update_hdd_cfg() - update HDD config
  * @wma_handle: wma handle
@@ -5320,12 +5335,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	target_if_store_pdev_target_if_ctx(wma_get_pdev_from_scn_handle);
 	target_pdev_set_wmi_handle(wma_handle->pdev->tgt_if_handle,
 				   wma_handle->wmi_handle);
-
-	/* register the Enhanced Green AP event handler */
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_EGAP))
-		target_if_green_ap_register_egap_event_handler(
-					wma_handle->pdev);
+	wma_green_ap_register_handlers(wma_handle);
 }
 
 /**
