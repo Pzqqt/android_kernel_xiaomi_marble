@@ -8011,6 +8011,16 @@ static int pahu_probe(struct platform_device *pdev)
 	pahu->wcd_ext_clk = wcd_ext_clk;
 	dev_dbg(&pdev->dev, "%s: MCLK Rate = %x\n", __func__,
 		pahu->wcd9xxx->mclk_rate);
+	/* Probe defer if mlck is failed */
+	ret = clk_prepare_enable(pahu->wcd_ext_clk);
+	if (ret) {
+		dev_dbg(pahu->dev, "%s: ext clk enable failed\n",
+			__func__);
+		ret = -EPROBE_DEFER;
+		goto err_cdc_reg;
+	}
+	clk_disable_unprepare(pahu->wcd_ext_clk);
+
 	/* Update codec register default values */
 	pahu_update_reg_defaults(pahu);
 	__pahu_enable_efuse_sensing(pahu);
