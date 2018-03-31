@@ -27,6 +27,8 @@
 #include <qdf_status.h>
 #include <wlan_lmac_if_def.h>
 
+struct wlan_green_ap_egap_params;
+
 /**
  * target_if_register_green_ap_tx_ops() - lmac handler to register
  *   green ap tx_ops callback functions
