@@ -313,13 +313,13 @@ void hdd_start_complete(int ret)
 }
 
 /**
- * hdd_check_green_ap_enable() - to check whether to enable green ap or not
+ * hdd_green_ap_check_enable() - to check whether to enable green ap or not
  * @hdd_ctx: hdd context
  * @enable_green_ap: 1 - enable green ap enabled, 0 - disbale green ap
  *
  * Return: 0 - success, < 0 - failure
  */
-static int hdd_check_green_ap_enable(struct hdd_context *hdd_ctx,
+static int hdd_green_ap_check_enable(struct hdd_context *hdd_ctx,
 				     bool *enable_green_ap)
 {
 	uint8_t num_sessions, mode;
@@ -348,7 +348,7 @@ static int hdd_check_green_ap_enable(struct hdd_context *hdd_ctx,
 	return 0;
 }
 
-int hdd_start_green_ap_state_mc(struct hdd_context *hdd_ctx,
+int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 				enum QDF_OPMODE mode, bool is_session_start)
 {
 	struct hdd_config *cfg;
@@ -387,7 +387,7 @@ int hdd_start_green_ap_state_mc(struct hdd_context *hdd_ctx,
 						    false);
 			wlan_green_ap_stop(hdd_ctx->hdd_pdev);
 		} else {
-			ret = hdd_check_green_ap_enable(hdd_ctx,
+			ret = hdd_green_ap_check_enable(hdd_ctx,
 							&enable_green_ap);
 			if (!ret) {
 				if (enable_green_ap) {
@@ -404,7 +404,7 @@ int hdd_start_green_ap_state_mc(struct hdd_context *hdd_ctx,
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:
 		if (is_session_start) {
-			ret = hdd_check_green_ap_enable(hdd_ctx,
+			ret = hdd_green_ap_check_enable(hdd_ctx,
 							&enable_green_ap);
 			if (!ret) {
 				if (enable_green_ap) {
@@ -1927,7 +1927,7 @@ static void hdd_update_ra_rate_limit(struct hdd_context *hdd_ctx,
 }
 #endif
 
-static int hdd_update_green_ap_config(struct hdd_context *hdd_ctx)
+static int hdd_green_ap_update_config(struct hdd_context *hdd_ctx)
 {
 	struct green_ap_user_cfg green_ap_cfg;
 	struct hdd_config *cfg = hdd_ctx->config;
@@ -1971,7 +1971,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 		}
 	}
 
-	ret = hdd_update_green_ap_config(hdd_ctx);
+	ret = hdd_green_ap_update_config(hdd_ctx);
 
 	ucfg_ipa_set_dp_handle(hdd_ctx->hdd_psoc,
 			       cds_get_context(QDF_MODULE_ID_SOC));
@@ -5106,7 +5106,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 						adapter->device_mode,
 						adapter->session_id);
-			hdd_start_green_ap_state_mc(hdd_ctx,
+			hdd_green_ap_start_state_mc(hdd_ctx,
 						    adapter->device_mode,
 						    false);
 
@@ -5279,7 +5279,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		hdd_deinit_tx_rx(adapter);
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 				adapter->device_mode, adapter->session_id);
-		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
 		if (test_bit(WMM_INIT_DONE, &adapter->event_flags)) {
 			hdd_wmm_adapter_close(adapter);
@@ -11543,7 +11543,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 						ap_adapter->device_mode,
 						ap_adapter->session_id);
-		hdd_start_green_ap_state_mc(hdd_ctx, ap_adapter->device_mode,
+		hdd_green_ap_start_state_mc(hdd_ctx, ap_adapter->device_mode,
 					    false);
 		hdd_debug("SAP Stop Success");
 	} else {
@@ -11613,7 +11613,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 		policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 					ap_adapter->device_mode,
 					ap_adapter->session_id);
-		hdd_start_green_ap_state_mc(hdd_ctx, ap_adapter->device_mode,
+		hdd_green_ap_start_state_mc(hdd_ctx, ap_adapter->device_mode,
 					    true);
 	}
 	mutex_unlock(&hdd_ctx->sap_lock);
@@ -13361,7 +13361,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 		clear_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 			ap_adapter->device_mode, ap_adapter->session_id);
-		hdd_start_green_ap_state_mc(hdd_ctx, ap_adapter->device_mode,
+		hdd_green_ap_start_state_mc(hdd_ctx, ap_adapter->device_mode,
 					    false);
 		hdd_err("SAP Stop Success");
 
@@ -13398,7 +13398,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 			policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 						ap_adapter->device_mode,
 						ap_adapter->session_id);
-			hdd_start_green_ap_state_mc(hdd_ctx,
+			hdd_green_ap_start_state_mc(hdd_ctx,
 						    ap_adapter->device_mode,
 						    true);
 		}

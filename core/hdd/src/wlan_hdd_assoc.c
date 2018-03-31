@@ -1343,7 +1343,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		if (!hdd_is_roam_sync_in_progress(pCsrRoamInfo)) {
 			policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 				adapter->device_mode, adapter->session_id);
-			hdd_start_green_ap_state_mc(hdd_ctx,
+			hdd_green_ap_start_state_mc(hdd_ctx,
 						    adapter->device_mode, true);
 		}
 		memcpy(wrqu.ap_addr.sa_data, pCsrRoamInfo->pBssDesc->bssId,
@@ -1440,7 +1440,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 				adapter->device_mode, adapter->session_id);
-		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
@@ -2328,7 +2328,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	if (!hdd_is_roam_sync_in_progress(pCsrRoamInfo)) {
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 				adapter->device_mode, adapter->session_id);
-		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
 	}
 
@@ -3046,7 +3046,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 							hdd_ctx->hdd_psoc,
 							adapter->device_mode,
 							adapter->session_id);
-						hdd_start_green_ap_state_mc(
+						hdd_green_ap_start_state_mc(
 							hdd_ctx,
 							adapter->device_mode,
 							false);
@@ -3533,7 +3533,7 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 		if (eCSR_ROAM_RESULT_IBSS_STARTED == roamResult) {
 			policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 				adapter->device_mode, adapter->session_id);
-			hdd_start_green_ap_state_mc(hdd_ctx,
+			hdd_green_ap_start_state_mc(hdd_ctx,
 						    adapter->device_mode, true);
 		} else if (eCSR_ROAM_RESULT_IBSS_JOIN_SUCCESS == roamResult ||
 				eCSR_ROAM_RESULT_IBSS_COALESCED == roamResult) {

@@ -784,7 +784,7 @@ static int hdd_stop_bss_link(struct hdd_adapter *adapter)
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 					adapter->device_mode,
 					adapter->session_id);
-		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
 		errno = (status == QDF_STATUS_SUCCESS) ? 0 : -EBUSY;
 	}
@@ -4984,7 +4984,7 @@ __iw_softap_stopbss(struct net_device *dev,
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 					     adapter->device_mode,
 					     adapter->session_id);
-		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
 		ret = qdf_status_to_os_return(status);
 	}
@@ -8023,7 +8023,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 					adapter->device_mode,
 					adapter->session_id);
-		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    true);
 	}
 #ifdef DHCP_SERVER_OFFLOAD
@@ -8218,7 +8218,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 						adapter->device_mode,
 						adapter->session_id);
-		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
 		adapter->session.ap.beacon = NULL;
 		qdf_mem_free(old);

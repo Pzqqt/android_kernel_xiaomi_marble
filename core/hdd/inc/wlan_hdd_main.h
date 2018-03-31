@@ -1940,7 +1940,7 @@ enum {
  */
 
 /**
- * hdd_start_green_ap_state_mc() - to start green AP state mc based on
+ * hdd_green_ap_start_state_mc() - to start green AP state mc based on
  *        present concurrency and state of green AP state machine.
  * @hdd_ctx: hdd context
  * @mode: device mode
@@ -1948,7 +1948,7 @@ enum {
  *
  * Return: 0 - success, < 0 - failure
  */
-int hdd_start_green_ap_state_mc(struct hdd_context *hdd_ctx,
+int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 				enum QDF_OPMODE mode, bool is_session_start);
 
 int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
