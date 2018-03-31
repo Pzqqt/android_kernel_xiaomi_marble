@@ -48,6 +48,7 @@
 #include <wlan_hdd_includes.h>
 #include <qc_sap_ioctl.h>
 #include <wlan_hdd_hostapd.h>
+#include <wlan_hdd_green_ap.h>
 #include <sap_api.h>
 #include <sap_internal.h>
 #include <wlan_hdd_softap_tx_rx.h>
@@ -89,7 +90,6 @@
 #include "wlan_utility.h"
 #include <wlan_p2p_ucfg_api.h>
 #include "sir_api.h"
-#include <wlan_green_ap_ucfg_api.h>
 #include "sme_api.h"
 #include "wlan_hdd_regulatory.h"
 #include <wlan_ipa_ucfg_api.h>
@@ -2181,7 +2181,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 					MAC_ADDR_ARRAY(event->staMac.bytes));
 
-		wlan_green_ap_add_sta(hdd_ctx->hdd_pdev);
+		hdd_green_ap_add_sta(hdd_ctx);
 		break;
 
 	case eSAP_STA_DISASSOC_EVENT:
@@ -2293,7 +2293,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_bus_bw_compute_timer_try_stop(hdd_ctx);
 		}
 #endif
-		wlan_green_ap_del_sta(hdd_ctx->hdd_pdev);
+		hdd_green_ap_del_sta(hdd_ctx);
 		break;
 
 	case eSAP_WPS_PBC_PROBE_REQ_EVENT:

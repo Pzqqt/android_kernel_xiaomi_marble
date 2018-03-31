@@ -500,6 +500,10 @@ ifeq ($(CONFIG_WLAN_FEATURE_FIPS), y)
 HDD_OBJS+=	$(HDD_SRC_DIR)/wlan_hdd_fips.o
 endif
 
+ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP),y)
+HDD_OBJS+=	$(HDD_SRC_DIR)/wlan_hdd_green_ap.o
+endif
+
 ifeq ($(CONFIG_WLAN_FEATURE_LPSS),y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_lpass.o
 endif

@@ -1939,18 +1939,6 @@ enum {
  * Function declarations and documentation
  */
 
-/**
- * hdd_green_ap_start_state_mc() - to start green AP state mc based on
- *        present concurrency and state of green AP state machine.
- * @hdd_ctx: hdd context
- * @mode: device mode
- * @is_session_start: BSS start/stop
- *
- * Return: 0 - success, < 0 - failure
- */
-int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
-				enum QDF_OPMODE mode, bool is_session_start);
-
 int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 				uint32_t chan_number,
 				enum phy_ch_width chan_bw);

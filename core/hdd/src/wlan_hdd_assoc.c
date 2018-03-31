@@ -47,6 +47,7 @@
 #include "wlan_hdd_tdls.h"
 #include "sme_api.h"
 #include "wlan_hdd_hostapd.h"
+#include <wlan_hdd_green_ap.h>
 #include <wlan_hdd_ipa.h>
 #include "wlan_hdd_lpass.h"
 #include <wlan_logging_sock_svc.h>
