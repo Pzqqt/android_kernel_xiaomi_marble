@@ -2928,6 +2928,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 					pParam->enable_subfee_vendor_vhtie;
 		pMac->roam.configParam.enable_txbf_sap_mode =
 			pParam->enable_txbf_sap_mode;
+		pMac->roam.configParam.enable_vht20_mcs9 =
+			pParam->enable_vht20_mcs9;
 		pMac->roam.configParam.enable2x2 = pParam->enable2x2;
 		pMac->roam.configParam.enableVhtFor24GHz =
 			pParam->enableVhtFor24GHz;
@@ -3250,6 +3252,7 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 				cfg_params->enable_subfee_vendor_vhtie;
 	pParam->enable_txbf_sap_mode =
 		cfg_params->enable_txbf_sap_mode;
+	pParam->enable_vht20_mcs9 = cfg_params->enable_vht20_mcs9;
 	pParam->enableVhtFor24GHz = cfg_params->enableVhtFor24GHz;
 	pParam->ignore_peer_erp_info = cfg_params->ignore_peer_erp_info;
 	pParam->enable2x2 = cfg_params->enable2x2;

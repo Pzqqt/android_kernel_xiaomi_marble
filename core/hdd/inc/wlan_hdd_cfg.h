@@ -5091,6 +5091,27 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
+ * enable_vht20_mcs9 - Enables VHT MCS9 in 20M BW operation
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_ENABLE_VHT20_MCS9               "enable_vht20_mcs9"
+#define CFG_ENABLE_VHT20_MCS9_MIN           (0)
+#define CFG_ENABLE_VHT20_MCS9_MAX           (1)
+#define CFG_ENABLE_VHT20_MCS9_DEFAULT       (1)
+
+/*
+ * <ini>
  * gEnable2x2 - Enables/disables VHT Tx/Rx MCS values for 2x2
  * @Min: 0
  * @Max: 1
@@ -14678,6 +14699,7 @@ struct hdd_config {
 	bool enableTxBF;
 	bool enable_subfee_vendor_vhtie;
 	bool enable_txbf_sap_mode;
+	bool enable_vht20_mcs9;
 	uint8_t txBFCsnValue;
 	bool enable_su_tx_bformer;
 	uint8_t vhtRxMCS2x2;

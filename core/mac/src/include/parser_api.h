@@ -54,6 +54,14 @@
 #define IS_5G_CH(__chNum) ((__chNum >= 36) && (__chNum <= 165))
 #define IS_2X2_CHAIN(__chain) ((__chain & 0x3) == 0x3)
 #define DISABLE_NSS2_MCS 0xC
+#define VHT_1x1_MCS9_MAP 0x2
+#define VHT_2x2_MCS9_MAP 0xA
+#define VHT_1x1_MCS8_VAL 0xFFFD
+#define VHT_2x2_MCS8_VAL 0xFFF5
+#define VHT_1x1_MCS_MASK 0x3
+#define VHT_2x2_MCS_MASK 0xF
+#define DISABLE_VHT_MCS_9(mcs, nss) \
+	(mcs = (nss > 1) ? VHT_2x2_MCS8_VAL : VHT_1x1_MCS8_VAL)
 
 #define NSS_1x1_MODE 1
 #define NSS_2x2_MODE 2

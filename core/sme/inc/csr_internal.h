@@ -528,6 +528,7 @@ struct csr_config {
 	uint32_t nVhtChannelWidth;
 	bool enable_subfee_vendor_vhtie;
 	uint8_t enable_txbf_sap_mode;
+	bool enable_vht20_mcs9;
 	uint8_t enable2x2;
 	bool enableVhtFor24GHz;
 	uint8_t enableVhtpAid;
