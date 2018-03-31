@@ -3876,10 +3876,22 @@ qdf_nbuf_update_radiotap_he_mu_other_flags(struct mon_rx_status *rx_status,
 /* This is the length for radiotap, combined length
  * (Mandatory part struct ieee80211_radiotap_header + RADIOTAP_HEADER_LEN)
  * cannot be more than available headroom_sz.
- * Max size current radiotap we are populating is less than 100 bytes,
  * increase this when we add more radiotap elements.
  */
-#define RADIOTAP_HEADER_LEN (sizeof(struct ieee80211_radiotap_header) + 100)
+
+#define RADIOTAP_VHT_FLAGS_LEN 12
+#define RADIOTAP_HE_FLAGS_LEN 12
+#define RADIOTAP_HE_MU_FLAGS_LEN 8
+#define RADIOTAP_HE_MU_OTHER_FLAGS_LEN 18
+#define RADIOTAP_FIXED_HEADER_LEN 16
+#define RADIOTAP_HT_FLAGS_LEN 3
+#define RADIOTAP_HEADER_LEN (sizeof(struct ieee80211_radiotap_header) + \
+				RADIOTAP_FIXED_HEADER_LEN + \
+				RADIOTAP_HT_FLAGS_LEN + \
+				RADIOTAP_VHT_FLAGS_LEN + \
+				RADIOTAP_HE_FLAGS_LEN + \
+				RADIOTAP_HE_MU_FLAGS_LEN + \
+				RADIOTAP_HE_MU_OTHER_FLAGS_LEN)
 
 #define IEEE80211_RADIOTAP_HE 23
 #define IEEE80211_RADIOTAP_HE_MU	24
