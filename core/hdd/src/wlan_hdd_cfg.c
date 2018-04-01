@@ -3323,7 +3323,7 @@ struct reg_table_entry g_registry_table[] = {
 
 #ifdef WLAN_SUPPORT_GREEN_AP
 	REG_VARIABLE(CFG_ENABLE_GREEN_AP_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, enableGreenAP,
+		     struct hdd_config, enable_green_ap,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_ENABLE_GREEN_AP_FEATURE_DEFAULT,
 		     CFG_ENABLE_GREEN_AP_FEATURE_MIN,
@@ -6919,7 +6919,7 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->gDisableDfsJapanW53);
 #ifdef WLAN_SUPPORT_GREEN_AP
 	hdd_debug("Name = [gEnableGreenAp] Value = [%u] ",
-		  hdd_ctx->config->enableGreenAP);
+		  hdd_ctx->config->enable_green_ap);
 	hdd_debug("Name = [gEenableEGAP] Value = [%u] ",
 		  hdd_ctx->config->enable_egap);
 	hdd_debug("Name = [gEGAPInactTime] Value = [%u] ",

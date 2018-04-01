@@ -122,9 +122,9 @@ int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 		return -EINVAL;
 	}
 
-	if (!cfg->enable2x2 || !cfg->enableGreenAP) {
-		hdd_info("Green AP support not present: enable2x2: %d, enableGreenAp: %d",
-			 cfg->enable2x2, cfg->enableGreenAP);
+	if (!cfg->enable2x2 || !cfg->enable_green_ap) {
+		hdd_info("Green AP support not present: enable2x2: %d, enable_green_ap: %d",
+			 cfg->enable2x2, cfg->enable_green_ap);
 		return 0;
 	}
 

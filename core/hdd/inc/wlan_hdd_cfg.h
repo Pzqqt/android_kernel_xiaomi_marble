@@ -14912,7 +14912,7 @@ struct hdd_config {
 	bool IsSapDfsChSifsBurstEnabled;
 
 #ifdef WLAN_SUPPORT_GREEN_AP
-	bool enableGreenAP;
+	bool enable_green_ap;
 	bool enable_egap;
 	uint32_t egap_feature_flag;
 	uint32_t egap_inact_time;
