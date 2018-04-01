@@ -46,6 +46,7 @@
 #include "osapi_linux.h"
 #include <wmi_unified.h>
 #include "wlan_pmo_hw_filter_public_struct.h"
+#include "wlan_hdd_green_ap_cfg.h"
 
 struct hdd_context;
 
@@ -5871,35 +5872,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_FW_RTS_PROFILE_MAX          (66)
 #define CFG_ENABLE_FW_RTS_PROFILE_DEFAULT      (33)
 
-#ifdef WLAN_SUPPORT_GREEN_AP
-#define CFG_ENABLE_GREEN_AP_FEATURE         "gEnableGreenAp"
-#define CFG_ENABLE_GREEN_AP_FEATURE_MIN     (0)
-#define CFG_ENABLE_GREEN_AP_FEATURE_MAX     (1)
-#define CFG_ENABLE_GREEN_AP_FEATURE_DEFAULT (1)
-
-/* Enhanced Green AP (EGAP) flags/params */
-#define CFG_ENABLE_EGAP_ENABLE_FEATURE             "gEnableEGAP"
-#define CFG_ENABLE_EGAP_ENABLE_FEATURE_MIN         (0)
-#define CFG_ENABLE_EGAP_ENABLE_FEATURE_MAX         (1)
-#define CFG_ENABLE_EGAP_ENABLE_FEATURE_DEFAULT     (1)
-
-#define CFG_ENABLE_EGAP_INACT_TIME_FEATURE         "gEGAPInactTime"
-#define CFG_ENABLE_EGAP_INACT_TIME_FEATURE_MIN     (0)
-#define CFG_ENABLE_EGAP_INACT_TIME_FEATURE_MAX     (300000)
-#define CFG_ENABLE_EGAP_INACT_TIME_FEATURE_DEFAULT (2000)
-
-#define CFG_ENABLE_EGAP_WAIT_TIME_FEATURE          "gEGAPWaitTime"
-#define CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_MIN      (0)
-#define CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_MAX      (300000)
-#define CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_DEFAULT  (150)
-
-#define CFG_ENABLE_EGAP_FLAGS_FEATURE              "gEGAPFeatures"
-#define CFG_ENABLE_EGAP_FLAGS_FEATURE_MIN          (0)
-#define CFG_ENABLE_EGAP_FLAGS_FEATURE_MAX          (15)
-#define CFG_ENABLE_EGAP_FLAGS_FEATURE_DEFAULT      (3)
-/* end Enhanced Green AP flags/params */
-
-#endif
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 /*
@@ -14911,13 +14883,6 @@ struct hdd_config {
 	uint8_t ignoreCAC;
 	bool IsSapDfsChSifsBurstEnabled;
 
-#ifdef WLAN_SUPPORT_GREEN_AP
-	bool enable_green_ap;
-	bool enable_egap;
-	uint32_t egap_feature_flag;
-	uint32_t egap_inact_time;
-	uint32_t egap_wait_time;
-#endif
 	/* Flag to indicate crash inject enabled or not */
 	bool crash_inject_enabled;
 	uint8_t force_sap_acs;
@@ -15303,6 +15268,7 @@ struct hdd_config {
 	uint32_t channel_select_logic_conc;
 	bool enable_bt_chain_separation;
 	uint8_t enable_tx_sch_delay;
+	HDD_GREEN_AP_CFG_FIELDS
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

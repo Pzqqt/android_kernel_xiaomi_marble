@@ -48,6 +48,8 @@
 #include "wlan_hdd_he.h"
 #include <wlan_policy_mgr_api.h>
 #include "wifi_pos_api.h"
+#include "wlan_hdd_green_ap.h"
+#include "wlan_hdd_green_ap_cfg.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(struct hdd_context *hdd_ctx, unsigned long notifyId)
@@ -3321,39 +3323,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_MAX_CONCURRENT_CONNECTIONS_MIN,
 		     CFG_MAX_CONCURRENT_CONNECTIONS_MAX),
 
-#ifdef WLAN_SUPPORT_GREEN_AP
-	REG_VARIABLE(CFG_ENABLE_GREEN_AP_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_green_ap,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_GREEN_AP_FEATURE_DEFAULT,
-		     CFG_ENABLE_GREEN_AP_FEATURE_MIN,
-		     CFG_ENABLE_GREEN_AP_FEATURE_MAX),
-	REG_VARIABLE(CFG_ENABLE_EGAP_ENABLE_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_egap,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_EGAP_ENABLE_FEATURE_DEFAULT,
-		     CFG_ENABLE_EGAP_ENABLE_FEATURE_MIN,
-		     CFG_ENABLE_EGAP_ENABLE_FEATURE_MAX),
-	REG_VARIABLE(CFG_ENABLE_EGAP_INACT_TIME_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, egap_inact_time,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_EGAP_INACT_TIME_FEATURE_DEFAULT,
-		     CFG_ENABLE_EGAP_INACT_TIME_FEATURE_MIN,
-		     CFG_ENABLE_EGAP_INACT_TIME_FEATURE_MAX),
-	REG_VARIABLE(CFG_ENABLE_EGAP_WAIT_TIME_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, egap_wait_time,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_DEFAULT,
-		     CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_MIN,
-		     CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_MAX),
-	REG_VARIABLE(CFG_ENABLE_EGAP_FLAGS_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, egap_feature_flag,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_EGAP_FLAGS_FEATURE_DEFAULT,
-		     CFG_ENABLE_EGAP_FLAGS_FEATURE_MIN,
-		     CFG_ENABLE_EGAP_FLAGS_FEATURE_MAX),
-#endif
-
 	REG_VARIABLE(CFG_ENABLE_CRASH_INJECT, WLAN_PARAM_Integer,
 		     struct hdd_config, crash_inject_enabled,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5553,6 +5522,8 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TX_SCH_DELAY_DEFAULT,
 		     CFG_TX_SCH_DELAY_MIN,
 		     CFG_TX_SCH_DELAY_MAX),
+
+	HDD_GREEN_AP_REG_VARIABLES
 };
 
 
@@ -6917,18 +6888,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->gSapPreferredChanLocation);
 	hdd_debug("Name = [gDisableDfsJapanW53] Value = [%u] ",
 		  hdd_ctx->config->gDisableDfsJapanW53);
-#ifdef WLAN_SUPPORT_GREEN_AP
-	hdd_debug("Name = [gEnableGreenAp] Value = [%u] ",
-		  hdd_ctx->config->enable_green_ap);
-	hdd_debug("Name = [gEenableEGAP] Value = [%u] ",
-		  hdd_ctx->config->enable_egap);
-	hdd_debug("Name = [gEGAPInactTime] Value = [%u] ",
-		  hdd_ctx->config->egap_inact_time);
-	hdd_debug("Name = [gEGAPWaitTime] Value = [%u] ",
-		  hdd_ctx->config->egap_wait_time);
-	hdd_debug("Name = [gEGAPFeatures] Value = [%u] ",
-		  hdd_ctx->config->egap_feature_flag);
-#endif
+
+	hdd_green_ap_print_config(hdd_ctx);
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	hdd_debug("Name = [isRoamOffloadEnabled] Value = [%u]",
 		  hdd_ctx->config->isRoamOffloadEnabled);
