@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -52,7 +52,7 @@ QDF_STATUS target_if_pmo_send_gtk_offload_req(struct wlan_objmgr_vdev *vdev,
 		gtk_offload_opcode = GTK_OFFLOAD_DISABLE_OPCODE;
 
 	status = wmi_unified_send_gtk_offload_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			vdev_id,
 			gtk_req,
 			gtk_req->flags,
@@ -87,7 +87,7 @@ QDF_STATUS target_if_pmo_send_gtk_response_req(struct wlan_objmgr_vdev *vdev)
 
 	/* send the wmi command */
 	status = wmi_unified_process_gtk_offload_getinfo_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			vdev_id, offload_req_opcode);
 
 	return status;
@@ -115,7 +115,7 @@ int target_if_pmo_gtk_offload_status_event(void *scn_handle,
 		goto out;
 	}
 
-	if (wmi_extract_gtk_rsp_event(GET_WMI_HDL_FROM_PSOC(psoc),
+	if (wmi_extract_gtk_rsp_event(get_wmi_unified_hdl_from_psoc(psoc),
 			event, gtk_rsp_param, len) != QDF_STATUS_SUCCESS) {
 		target_if_err("Extraction of gtk rsp event failed");
 		qdf_mem_free(gtk_rsp_param);

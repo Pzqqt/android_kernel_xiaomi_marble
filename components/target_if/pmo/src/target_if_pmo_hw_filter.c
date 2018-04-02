@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,7 +38,7 @@ QDF_STATUS target_if_pmo_conf_hw_filter(struct wlan_objmgr_psoc *psoc,
 	}
 
 	status = wmi_unified_conf_hw_filter_cmd(
-		GET_WMI_HDL_FROM_PSOC(psoc),
+		get_wmi_unified_hdl_from_psoc(psoc),
 		req);
 
 	if (QDF_IS_STATUS_ERROR(status))

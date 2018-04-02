@@ -1339,7 +1339,7 @@ TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/regulatory/src/target_if_reg.o \
 		$(TARGET_IF_DIR)/tdls/src/target_if_tdls.o \
 		$(TARGET_IF_DIR)/init_deinit/src/init_cmd_api.o \
-		$(TARGET_IF_DIR)/init_deinit/src/init_deinit_ucfg.o \
+		$(TARGET_IF_DIR)/init_deinit/src/init_deinit_lmac.o \
 		$(TARGET_IF_DIR)/init_deinit/src/init_event_handler.o \
 		$(TARGET_IF_DIR)/init_deinit/src/service_ready_util.o \
 

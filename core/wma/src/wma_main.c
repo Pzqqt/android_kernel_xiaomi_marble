@@ -85,7 +85,7 @@
 #include <target_if_spectral.h>
 #include <wlan_spectral_utils_api.h>
 #include "init_event_handler.h"
-#include "init_deinit_ucfg.h"
+#include "init_deinit_lmac.h"
 #include "target_if_green_ap.h"
 #include "service_ready_param.h"
 #include "wlan_cp_stats_mc_ucfg_api.h"
@@ -3624,7 +3624,7 @@ QDF_STATUS wma_pre_start(void)
 		goto end;
 	}
 
-	htc_handle = ucfg_get_htc_hdl(wma_handle->psoc);
+	htc_handle = lmac_get_htc_hdl(wma_handle->psoc);
 	if (!htc_handle) {
 		WMA_LOGE("%s: invalid htc handle", __func__);
 		qdf_status = QDF_STATUS_E_INVAL;
@@ -4129,7 +4129,7 @@ QDF_STATUS wma_start(void)
 		goto end;
 	}
 
-	wmi_handle = ucfg_get_wmi_hdl(wma_handle->psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(wma_handle->psoc);
 	if (!wmi_handle) {
 		WMA_LOGE("%s: Invalid wmi handle", __func__);
 		qdf_status = QDF_STATUS_E_INVAL;
@@ -5425,7 +5425,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	}
 	service_ext_param =
 			target_psoc_get_service_ext_param(tgt_hdl);
-	wmi_handle = target_psoc_get_wmi_hdl(tgt_hdl);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(wma_handle->psoc);
 	if (!wmi_handle) {
 		WMA_LOGE("%s: wmi handle is NULL", __func__);
 		return;
@@ -5641,7 +5641,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
-	wmi_handle = target_psoc_get_wmi_hdl(tgt_hdl);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(wma_handle->psoc);
 	if (!wmi_handle) {
 		WMA_LOGE("%s: wmi handle is NULL", __func__);
 		return -EINVAL;

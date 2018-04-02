@@ -72,7 +72,7 @@
 #include "wma_he.h"
 #include "wlan_roam_debug.h"
 #include "wlan_ocb_ucfg_api.h"
-#include "init_deinit_ucfg.h"
+#include "init_deinit_lmac.h"
 #include <target_if.h>
 
 /**
@@ -1079,7 +1079,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 
 	WMA_LOGD("%s: Enter", __func__);
 
-	wlan_res_cfg = ucfg_get_tgt_res_cfg(psoc);
+	wlan_res_cfg = lmac_get_tgt_res_cfg(psoc);
 	if (!wlan_res_cfg) {
 		WMA_LOGE("%s: Wlan resource config is NULL", __func__);
 		return -EINVAL;
@@ -1544,7 +1544,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wlan_res_cfg = ucfg_get_tgt_res_cfg(psoc);
+	wlan_res_cfg = lmac_get_tgt_res_cfg(psoc);
 	if (!wlan_res_cfg) {
 		WMA_LOGE("%s: psoc target res cfg is null", __func__);
 		return QDF_STATUS_E_INVAL;
@@ -5255,7 +5255,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
 	void *htc_handle;
 
-	htc_handle = ucfg_get_htc_hdl(wma->psoc);
+	htc_handle = lmac_get_htc_hdl(wma->psoc);
 	if (!htc_handle) {
 		WMA_LOGE(":%sHTC handle is NULL:%d", __func__, __LINE__);
 		return;
@@ -5314,7 +5314,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	bool rsp_requested = del_sta->respReqd;
 	void *htc_handle;
 
-	htc_handle = ucfg_get_htc_hdl(wma->psoc);
+	htc_handle = lmac_get_htc_hdl(wma->psoc);
 	if (!htc_handle) {
 		WMA_LOGE(":%sHTC handle is NULL:%d", __func__, __LINE__);
 		return;

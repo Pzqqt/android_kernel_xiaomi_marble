@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,7 +48,7 @@ QDF_STATUS target_if_pmo_send_pkt_filter_req(struct wlan_objmgr_vdev *vdev,
 
 	/* send the command along with data */
 	status = wmi_unified_config_packet_filter_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc), vdev_id,
+			get_wmi_unified_hdl_from_psoc(psoc), vdev_id,
 			rcv_filter_param,
 			rcv_filter_param->filter_id, true);
 	if (status) {
@@ -58,7 +58,7 @@ QDF_STATUS target_if_pmo_send_pkt_filter_req(struct wlan_objmgr_vdev *vdev,
 
 	/* Enable packet filter */
 	status = wmi_unified_enable_disable_packet_filter_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			vdev_id, true);
 	if (status)
 		target_if_err("Failed to send packet filter wmi cmd to fw");
@@ -87,7 +87,7 @@ QDF_STATUS target_if_pmo_clear_pkt_filter_req(struct wlan_objmgr_vdev *vdev,
 
 	/* send the command along with data */
 	status = wmi_unified_config_packet_filter_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc), vdev_id,
+			get_wmi_unified_hdl_from_psoc(psoc), vdev_id,
 			NULL, rcv_clear_param->filter_id, false);
 
 	if (status)
