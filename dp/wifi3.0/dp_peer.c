@@ -911,8 +911,6 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 			   qdf_atomic_read(&peer->ref_cnt));
 		soc->peer_id_to_obj_map[peer_id] = peer;
 
-		qdf_assert_always(!peer->delete_in_progress);
-
 		if (dp_peer_find_add_id_to_obj(peer, peer_id)) {
 			/* TBDXXX: assert for now */
 			QDF_ASSERT(0);
