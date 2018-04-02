@@ -1719,14 +1719,14 @@ end:
 
 /**
  * wlan_host_to_ipa_wlan_event() - convert wlan_ipa_wlan_event to ipa_wlan_event
- * @wlan_ipa_event_type: IPA IPA WLAN event to be converted to an ipa_wlan_event
+ * @wlan_ipa_event_type: event to be converted to an ipa_wlan_event
  *
  * Return: qdf_ipa_wlan_event representing the wlan_ipa_wlan_event
  */
 static qdf_ipa_wlan_event
 wlan_host_to_ipa_wlan_event(enum wlan_ipa_wlan_event wlan_ipa_event_type)
 {
-	qdf_ipa_wlan_event_t ipa_event;
+	qdf_ipa_wlan_event ipa_event;
 
 	switch (wlan_ipa_event_type) {
 	case WLAN_IPA_CLIENT_CONNECT:
