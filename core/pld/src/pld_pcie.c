@@ -698,7 +698,7 @@ int pld_pcie_get_platform_cap(struct device *dev, struct pld_platform_cap *cap)
 int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info)
 {
 	int ret = 0;
-	struct cnss_soc_info cnss_info;
+	struct cnss_soc_info cnss_info = {0};
 
 	if (info == NULL)
 		return -ENODEV;
