@@ -38,6 +38,7 @@
 #include "qdf_module.h"
 #include <qdf_trace.h>
 #include "qdf_atomic.h"
+#include "qdf_str.h"
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include <linux/string.h>
@@ -64,6 +65,7 @@
 #define QDF_MEM_MAX_MALLOC (4096 * 1024) /* 4 Mega Bytes */
 #define QDF_MEM_WARN_THRESHOLD 300 /* ms */
 #define QDF_DEBUG_STRING_SIZE 512
+#define QDF_MEM_FILE_NAME_SIZE 48
 
 static qdf_list_t qdf_mem_domains[QDF_DEBUG_DOMAIN_COUNT];
 static qdf_spinlock_t qdf_mem_list_lock;
@@ -97,7 +99,7 @@ struct qdf_mem_header {
 	qdf_list_node_t node;
 	enum qdf_debug_domain domain;
 	uint8_t freed;
-	const char *file;
+	char file[QDF_MEM_FILE_NAME_SIZE];
 	uint32_t line;
 	uint32_t size;
 	void *caller;
@@ -153,7 +155,10 @@ static void qdf_mem_header_init(struct qdf_mem_header *header, qdf_size_t size,
 
 	header->domain = qdf_debug_domain_get();
 	header->freed = false;
-	header->file = file;
+
+	/* copy the file name, rather than pointing to it */
+	qdf_str_lcopy(header->file, kbasename(file), QDF_MEM_FILE_NAME_SIZE);
+
 	header->line = line;
 	header->size = size;
 	header->caller = caller;
@@ -276,7 +281,7 @@ qdf_mem_header_assert_valid(struct qdf_mem_header *header,
 			qdf_debug_domain_name(current_domain), current_domain);
 
 	panic("A fatal memory error was detected @ %s:%d",
-	      kbasename(file), line);
+	      file, line);
 }
 #endif /* MEMORY_DEBUG */
 
@@ -366,7 +371,7 @@ static int seq_printf_printer(void *priv, const char *fmt, ...)
  *
  */
 struct __qdf_mem_info {
-	const char *file;
+	char file[QDF_MEM_FILE_NAME_SIZE];
 	uint32_t line;
 	uint32_t size;
 	void *caller;
@@ -425,12 +430,12 @@ static void qdf_mem_meta_table_print(struct __qdf_mem_info *table,
 		      table[i].count,
 		      table[i].size,
 		      table[i].count * table[i].size,
-		      kbasename(table[i].file),
+		      table[i].file,
 		      table[i].line, table[i].caller);
 		len += qdf_scnprintf(debug_str + len,
 				     sizeof(debug_str) - len,
 				     " @ %s:%u %pS",
-				     kbasename(table[i].file),
+				     table[i].file,
 				     table[i].line,
 				     table[i].caller);
 	}
@@ -451,7 +456,8 @@ static bool qdf_mem_meta_table_insert(struct __qdf_mem_info *table,
 
 	for (i = 0; i < QDF_MEM_STAT_TABLE_SIZE; i++) {
 		if (!table[i].count) {
-			table[i].file = meta->file;
+			qdf_str_lcopy(table[i].file, meta->file,
+				      QDF_MEM_FILE_NAME_SIZE);
 			table[i].line = meta->line;
 			table[i].size = meta->size;
 			table[i].count = 1;
@@ -459,7 +465,7 @@ static bool qdf_mem_meta_table_insert(struct __qdf_mem_info *table,
 			break;
 		}
 
-		if (table[i].file == meta->file &&
+		if (qdf_str_eq(table[i].file, meta->file) &&
 		    table[i].line == meta->line &&
 		    table[i].size == meta->size &&
 		    table[i].caller == meta->caller) {

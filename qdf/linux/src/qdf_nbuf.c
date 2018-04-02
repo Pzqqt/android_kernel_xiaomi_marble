@@ -541,7 +541,7 @@ void __qdf_nbuf_free(struct sk_buff *skb)
 
 qdf_export_symbol(__qdf_nbuf_free);
 
-#ifdef MEMORY_DEBUG
+#ifdef NBUF_MEMORY_DEBUG
 enum qdf_nbuf_event_type {
 	QDF_NBUF_ALLOC,
 	QDF_NBUF_FREE,
@@ -737,6 +737,8 @@ QDF_STATUS qdf_nbuf_map_debug(qdf_device_t osdev,
 	return status;
 }
 
+qdf_export_symbol(qdf_nbuf_map_debug);
+
 void qdf_nbuf_unmap_debug(qdf_device_t osdev,
 			  qdf_nbuf_t buf,
 			  qdf_dma_dir_t dir,
@@ -746,6 +748,8 @@ void qdf_nbuf_unmap_debug(qdf_device_t osdev,
 	qdf_nbuf_untrack_map(buf, file, line);
 	__qdf_nbuf_unmap_single(osdev, buf, dir);
 }
+
+qdf_export_symbol(qdf_nbuf_unmap_debug);
 
 QDF_STATUS qdf_nbuf_map_single_debug(qdf_device_t osdev,
 				     qdf_nbuf_t buf,
@@ -766,6 +770,8 @@ QDF_STATUS qdf_nbuf_map_single_debug(qdf_device_t osdev,
 	return status;
 }
 
+qdf_export_symbol(qdf_nbuf_map_single_debug);
+
 void qdf_nbuf_unmap_single_debug(qdf_device_t osdev,
 				 qdf_nbuf_t buf,
 				 qdf_dma_dir_t dir,
@@ -775,6 +781,8 @@ void qdf_nbuf_unmap_single_debug(qdf_device_t osdev,
 	qdf_nbuf_untrack_map(buf, file, line);
 	__qdf_nbuf_unmap_single(osdev, buf, dir);
 }
+
+qdf_export_symbol(qdf_nbuf_unmap_single_debug);
 
 QDF_STATUS qdf_nbuf_map_nbytes_debug(qdf_device_t osdev,
 				     qdf_nbuf_t buf,
@@ -796,6 +804,8 @@ QDF_STATUS qdf_nbuf_map_nbytes_debug(qdf_device_t osdev,
 	return status;
 }
 
+qdf_export_symbol(qdf_nbuf_map_nbytes_debug);
+
 void qdf_nbuf_unmap_nbytes_debug(qdf_device_t osdev,
 				 qdf_nbuf_t buf,
 				 qdf_dma_dir_t dir,
@@ -806,6 +816,8 @@ void qdf_nbuf_unmap_nbytes_debug(qdf_device_t osdev,
 	qdf_nbuf_untrack_map(buf, file, line);
 	__qdf_nbuf_unmap_nbytes(osdev, buf, dir, nbytes);
 }
+
+qdf_export_symbol(qdf_nbuf_unmap_nbytes_debug);
 
 QDF_STATUS qdf_nbuf_map_nbytes_single_debug(qdf_device_t osdev,
 					    qdf_nbuf_t buf,
@@ -827,6 +839,8 @@ QDF_STATUS qdf_nbuf_map_nbytes_single_debug(qdf_device_t osdev,
 	return status;
 }
 
+qdf_export_symbol(qdf_nbuf_map_nbytes_single_debug);
+
 void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
 					qdf_nbuf_t buf,
 					qdf_dma_dir_t dir,
@@ -837,7 +851,9 @@ void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
 	qdf_nbuf_untrack_map(buf, file, line);
 	__qdf_nbuf_unmap_nbytes_single(osdev, buf, dir, nbytes);
 }
-#endif /* MEMORY_DEBUG */
+
+qdf_export_symbol(qdf_nbuf_unmap_nbytes_single_debug);
+#endif /* NBUF_MEMORY_DEBUG */
 
 /**
  * __qdf_nbuf_map() - map a buffer to local bus address space
@@ -2055,7 +2071,7 @@ bool __qdf_nbuf_is_bcast_pkt(qdf_nbuf_t nbuf)
 }
 qdf_export_symbol(__qdf_nbuf_is_bcast_pkt);
 
-#ifdef MEMORY_DEBUG
+#ifdef NBUF_MEMORY_DEBUG
 #define QDF_NET_BUF_TRACK_MAX_SIZE    (1024)
 
 /**
@@ -2625,7 +2641,20 @@ free_buf:
 }
 qdf_export_symbol(qdf_nbuf_free_debug);
 
-#endif /*MEMORY_DEBUG */
+#else
+void qdf_net_buf_debug_init(void)
+{
+}
+
+qdf_export_symbol(qdf_net_buf_debug_init);
+
+void qdf_net_buf_debug_exit(void)
+{
+}
+
+qdf_export_symbol(qdf_net_buf_debug_exit);
+
+#endif /*NBUF_MEMORY_DEBUG */
 #if defined(FEATURE_TSO)
 
 /**

@@ -196,7 +196,7 @@ wmi_unified_remove_work(struct wmi_unified *wmi_handle);
  *  @param len             : length of the buffer
  *  @return wmi_buf_t.
  */
-#ifdef MEMORY_DEBUG
+#ifdef NBUF_MEMORY_DEBUG
 #define wmi_buf_alloc(h, l) wmi_buf_alloc_debug(h, l, __FILE__, __LINE__)
 wmi_buf_t
 wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint16_t len,

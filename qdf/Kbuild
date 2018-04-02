@@ -53,6 +53,10 @@ src/qdf_types.o
 #linux/src/qdf_net_ioctl.o
 #linux/src/qdf_net_wext.o
 
+ifeq ($(MEMORY_DEBUG),1)
+qdf-objs += src/qdf_debug_domain.o
+endif
+
 ifeq ($(LOGGING_UTILS_SUPPORT),1)
 qdf-objs += \
 $(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o \

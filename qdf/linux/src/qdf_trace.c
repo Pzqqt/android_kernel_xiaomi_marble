@@ -2579,7 +2579,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_PE] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_WMA] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_SYS] = QDF_TRACE_LEVEL_NONE,
-		[QDF_MODULE_ID_QDF] = QDF_TRACE_LEVEL_NONE,
+		[QDF_MODULE_ID_QDF] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_SAP] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_HDD_SOFTAP] = QDF_TRACE_LEVEL_NONE,
 		[QDF_MODULE_ID_HDD_DATA] = QDF_TRACE_LEVEL_NONE,
@@ -2640,14 +2640,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 void qdf_shared_print_ctrl_init(void)
 {
 	int i;
-	struct category_info *cinfo = qdf_mem_malloc((sizeof(*cinfo))*
-			MAX_SUPPORTED_CATEGORY);
-	if (cinfo == NULL) {
-		pr_info("ERROR!! qdf_mem_malloc failed. \
-			Shared Print Ctrl object not initialized \
-			\nQDF_TRACE messages may not be logged/displayed");
-		return;
-	}
+	struct category_info cinfo[MAX_SUPPORTED_CATEGORY];
 
 	set_default_trace_levels(cinfo);
 
@@ -2674,7 +2667,6 @@ void qdf_shared_print_ctrl_init(void)
 	}
 	qdf_pidx = qdf_print_ctrl_register(cinfo, NULL, NULL,
 			"LOG_SHARED_OBJ");
-	qdf_mem_free(cinfo);
 }
 qdf_export_symbol(qdf_shared_print_ctrl_init);
 #endif

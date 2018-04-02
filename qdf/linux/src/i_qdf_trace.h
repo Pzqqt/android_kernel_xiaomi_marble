@@ -98,6 +98,7 @@
 
 #define QDF_TRACE qdf_trace_msg
 
+#define QDF_VTRACE qdf_vtrace_msg
 #define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
 #endif /* CONFIG_MCL */
 
