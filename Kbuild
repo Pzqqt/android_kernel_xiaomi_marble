@@ -1263,8 +1263,7 @@ WMI_OBJS := $(WMI_OBJ_DIR)/wmi_unified.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_pmo_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_reg_api.o \
-	    $(WMI_OBJ_DIR)/wmi_unified_dfs_api.o \
-	    $(WMI_OBJ_DIR)/wmi_unified_non_tlv.o
+	    $(WMI_OBJ_DIR)/wmi_unified_dfs_api.o
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 ifeq ($(CONFIG_OCB_UT_FRAMEWORK), y)
