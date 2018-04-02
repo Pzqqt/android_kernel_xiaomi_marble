@@ -62,7 +62,7 @@ static QDF_STATUS target_if_ocb_set_config(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_ocb_set_config(GET_WMI_HDL_FROM_PSOC(psoc),
+	status = wmi_unified_ocb_set_config(get_wmi_unified_hdl_from_psoc(psoc),
 					    config);
 	if (status)
 		target_if_err("Failed to set OCB config %d", status);
@@ -82,8 +82,8 @@ static QDF_STATUS target_if_ocb_set_utc_time(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_ocb_set_utc_time_cmd(GET_WMI_HDL_FROM_PSOC(psoc),
-						  utc);
+	status = wmi_unified_ocb_set_utc_time_cmd(
+			get_wmi_unified_hdl_from_psoc(psoc), utc);
 	if (status)
 		target_if_err("Failed to set OCB UTC time %d", status);
 
@@ -105,7 +105,7 @@ target_if_ocb_start_timing_advert(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 
 	status = wmi_unified_ocb_start_timing_advert(
-			GET_WMI_HDL_FROM_PSOC(psoc), ta);
+			get_wmi_unified_hdl_from_psoc(psoc), ta);
 	if (status)
 		target_if_err("Failed to start OCB timing advert %d", status);
 
@@ -127,8 +127,8 @@ target_if_ocb_stop_timing_advert(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 
 	status =
-		wmi_unified_ocb_stop_timing_advert(GET_WMI_HDL_FROM_PSOC(psoc),
-						   ta);
+		wmi_unified_ocb_stop_timing_advert(
+				get_wmi_unified_hdl_from_psoc(psoc), ta);
 	if (status)
 		target_if_err("Failed to stop OCB timing advert %d", status);
 
@@ -148,8 +148,8 @@ target_if_ocb_get_tsf_timer(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_ocb_get_tsf_timer(GET_WMI_HDL_FROM_PSOC(psoc),
-					       request);
+	status = wmi_unified_ocb_get_tsf_timer(
+			get_wmi_unified_hdl_from_psoc(psoc), request);
 	if (status)
 		target_if_err("Failed to send get tsf timer cmd: %d", status);
 
@@ -169,8 +169,8 @@ target_if_dcc_get_stats(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_dcc_get_stats_cmd(GET_WMI_HDL_FROM_PSOC(psoc),
-					       get_stats_param);
+	status = wmi_unified_dcc_get_stats_cmd(
+			get_wmi_unified_hdl_from_psoc(psoc), get_stats_param);
 	if (status)
 		target_if_err("Failed to send get DCC stats cmd: %d", status);
 
@@ -190,8 +190,8 @@ target_if_dcc_clear_stats(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_dcc_clear_stats(GET_WMI_HDL_FROM_PSOC(psoc),
-					     clear_stats_param);
+	status = wmi_unified_dcc_clear_stats(
+			get_wmi_unified_hdl_from_psoc(psoc), clear_stats_param);
 	if (status)
 		target_if_err("Failed to send clear DCC stats cmd: %d", status);
 
@@ -212,7 +212,7 @@ target_if_dcc_update_ndl(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 
 	/* Send the WMI command */
-	status = wmi_unified_dcc_update_ndl(GET_WMI_HDL_FROM_PSOC(psoc),
+	status = wmi_unified_dcc_update_ndl(get_wmi_unified_hdl_from_psoc(psoc),
 					    update_ndl_param);
 	if (status)
 		target_if_err("Failed to send NDL update cmd: %d", status);
@@ -262,7 +262,7 @@ target_if_ocb_set_config_resp(ol_scn_t scn, uint8_t *event_buf,
 	ocb_rx_ops = target_if_ocb_get_rx_ops(pdev);
 	if (ocb_rx_ops->ocb_set_config_status) {
 		status = wmi_extract_ocb_set_channel_config_resp(
-					GET_WMI_HDL_FROM_PSOC(psoc),
+					get_wmi_unified_hdl_from_psoc(psoc),
 					event_buf, &resp);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			target_if_err("Failed to extract config status");
@@ -328,8 +328,9 @@ static int target_if_ocb_get_tsf_timer_resp(ol_scn_t scn,
 
 	ocb_rx_ops = target_if_ocb_get_rx_ops(pdev);
 	if (ocb_rx_ops->ocb_tsf_timer) {
-		status = wmi_extract_ocb_tsf_timer(GET_WMI_HDL_FROM_PSOC(psoc),
-						   event_buf, &response);
+		status = wmi_extract_ocb_tsf_timer(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			event_buf, &response);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			target_if_err("Failed to extract tsf timer");
 			rc = -EINVAL;
@@ -402,7 +403,7 @@ static int target_if_dcc_update_ndl_resp(ol_scn_t scn,
 	ocb_rx_ops = target_if_ocb_get_rx_ops(pdev);
 	if (ocb_rx_ops->ocb_dcc_ndl_update) {
 		status = wmi_extract_dcc_update_ndl_resp(
-					GET_WMI_HDL_FROM_PSOC(psoc),
+					get_wmi_unified_hdl_from_psoc(psoc),
 					event_buf, resp);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			target_if_err("Failed to extract ndl status");
@@ -470,8 +471,9 @@ static int target_if_dcc_get_stats_resp(ol_scn_t scn,
 
 	ocb_rx_ops = target_if_ocb_get_rx_ops(pdev);
 	if (ocb_rx_ops->ocb_dcc_stats_indicate) {
-		status = wmi_extract_dcc_stats(GET_WMI_HDL_FROM_PSOC(psoc),
-					       event_buf, &response);
+		status = wmi_extract_dcc_stats(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			event_buf, &response);
 		if (!response || QDF_IS_STATUS_ERROR(status)) {
 			target_if_err("Cannot get DCC stats");
 			rc = -ENOMEM;
@@ -540,8 +542,9 @@ static int target_if_dcc_stats_resp(ol_scn_t scn, uint8_t *event_buf,
 
 	ocb_rx_ops = target_if_ocb_get_rx_ops(pdev);
 	if (ocb_rx_ops->ocb_dcc_stats_indicate) {
-		status = wmi_extract_dcc_stats(GET_WMI_HDL_FROM_PSOC(psoc),
-					       event_buf, &response);
+		status = wmi_extract_dcc_stats(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			event_buf, &response);
 		if (!response || QDF_IS_STATUS_ERROR(status)) {
 			target_if_err("Cannot get DCC stats");
 			rc = -ENOMEM;
@@ -575,7 +578,7 @@ QDF_STATUS target_if_ocb_register_event_handler(struct wlan_objmgr_psoc *psoc,
 	int rc;
 
 	/* Initialize the members in WMA used by wma_ocb */
-	rc = wmi_unified_register_event(GET_WMI_HDL_FROM_PSOC(psoc),
+	rc = wmi_unified_register_event(get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_ocb_set_config_resp_event_id,
 			target_if_ocb_set_config_resp);
 	if (rc) {
@@ -584,7 +587,7 @@ QDF_STATUS target_if_ocb_register_event_handler(struct wlan_objmgr_psoc *psoc,
 	}
 
 	rc = wmi_unified_register_event(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_ocb_get_tsf_timer_resp_event_id,
 			target_if_ocb_get_tsf_timer_resp);
 	if (rc) {
@@ -593,7 +596,7 @@ QDF_STATUS target_if_ocb_register_event_handler(struct wlan_objmgr_psoc *psoc,
 	}
 
 	rc = wmi_unified_register_event(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_get_stats_resp_event_id,
 			target_if_dcc_get_stats_resp);
 	if (rc) {
@@ -602,7 +605,7 @@ QDF_STATUS target_if_ocb_register_event_handler(struct wlan_objmgr_psoc *psoc,
 	}
 
 	rc = wmi_unified_register_event(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_update_ndl_resp_event_id,
 			target_if_dcc_update_ndl_resp);
 	if (rc) {
@@ -610,7 +613,7 @@ QDF_STATUS target_if_ocb_register_event_handler(struct wlan_objmgr_psoc *psoc,
 		goto unreg_get_stats;
 	}
 
-	rc = wmi_unified_register_event(GET_WMI_HDL_FROM_PSOC(psoc),
+	rc = wmi_unified_register_event(get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_stats_event_id,
 			target_if_dcc_stats_resp);
 	if (rc) {
@@ -622,18 +625,18 @@ QDF_STATUS target_if_ocb_register_event_handler(struct wlan_objmgr_psoc *psoc,
 
 unreg_ndl:
 	wmi_unified_unregister_event_handler(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_update_ndl_resp_event_id);
 unreg_get_stats:
 	wmi_unified_unregister_event_handler(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_get_stats_resp_event_id);
 unreg_tsf_timer:
 	wmi_unified_unregister_event_handler(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_ocb_get_tsf_timer_resp_event_id);
 unreg_set_config:
-	wmi_unified_unregister_event(GET_WMI_HDL_FROM_PSOC(psoc),
+	wmi_unified_unregister_event(get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_ocb_set_config_resp_event_id);
 
 	return QDF_STATUS_E_FAILURE;
@@ -646,30 +649,30 @@ target_if_ocb_unregister_event_handler(struct wlan_objmgr_psoc *psoc,
 	int rc;
 
 	rc = wmi_unified_unregister_event_handler(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_stats_event_id);
 	if (rc)
 		target_if_err("Failed to unregister DCC stats event cb");
 
 	rc = wmi_unified_unregister_event_handler(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_update_ndl_resp_event_id);
 	if (rc)
 		target_if_err("Failed to unregister NDL update event cb");
 
 	rc = wmi_unified_unregister_event_handler(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dcc_get_stats_resp_event_id);
 	if (rc)
 		target_if_err("Failed to unregister DCC get stats resp cb");
 
 	rc = wmi_unified_unregister_event_handler(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_ocb_get_tsf_timer_resp_event_id);
 	if (rc)
 		target_if_err("Failed to unregister OCB TSF resp event cb");
 
-	rc = wmi_unified_unregister_event(GET_WMI_HDL_FROM_PSOC(psoc),
+	rc = wmi_unified_unregister_event(get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_ocb_set_config_resp_event_id);
 	if (rc)
 		target_if_err("Failed to unregister OCB config resp event cb");

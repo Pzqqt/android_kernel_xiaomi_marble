@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,7 +47,8 @@ QDF_STATUS target_if_pmo_enable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
 	}
 
 	status = wmi_unified_add_wow_wakeup_event_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc), vdev_id, bitmap, true);
+			get_wmi_unified_hdl_from_psoc(psoc),
+			vdev_id, bitmap, true);
 	if (status)
 		target_if_err("Failed to config wow wakeup event");
 
@@ -74,7 +75,8 @@ QDF_STATUS target_if_pmo_disable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
 	}
 
 	status = wmi_unified_add_wow_wakeup_event_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc), vdev_id, bitmap, false);
+			get_wmi_unified_hdl_from_psoc(psoc),
+			vdev_id, bitmap, false);
 	if (status)
 		target_if_err("Failed to config wow wakeup event");
 
@@ -104,7 +106,7 @@ QDF_STATUS target_if_pmo_send_wow_patterns_to_fw(struct wlan_objmgr_vdev *vdev,
 	}
 
 	status = wmi_unified_wow_patterns_to_fw_cmd(
-				GET_WMI_HDL_FROM_PSOC(psoc),
+				get_wmi_unified_hdl_from_psoc(psoc),
 				vdev_id, ptrn_id, ptrn,
 				ptrn_len, ptrn_offset, mask,
 				mask_len, user, 0);
@@ -132,7 +134,7 @@ QDF_STATUS target_if_pmo_del_wow_patterns_to_fw(struct wlan_objmgr_vdev *vdev,
 	}
 
 	status = wmi_unified_wow_delete_pattern_cmd(
-				GET_WMI_HDL_FROM_PSOC(psoc), ptrn_id,
+				get_wmi_unified_hdl_from_psoc(psoc), ptrn_id,
 				vdev_id);
 
 	return status;

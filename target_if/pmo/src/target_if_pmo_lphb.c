@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,7 +56,7 @@ QDF_STATUS target_if_pmo_send_lphb_enable(struct wlan_objmgr_psoc *psoc,
 	hb_enable_fp.session = ts_lphb_enable->session;
 
 	status = wmi_unified_lphb_config_hbenable_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			&hb_enable_fp);
 	if (status != EOK) {
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -104,7 +104,7 @@ QDF_STATUS target_if_pmo_send_lphb_tcp_params(struct wlan_objmgr_psoc *psoc,
 				   &hb_tcp_params_fp.gateway_mac);
 
 	status = wmi_unified_lphb_config_tcp_params_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			&hb_tcp_params_fp);
 	if (status != EOK) {
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -146,7 +146,7 @@ QDF_STATUS target_if_pmo_send_lphb_tcp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	       WMI_WLAN_HB_MAX_FILTER_SIZE);
 
 	status = wmi_unified_lphb_config_tcp_pkt_filter_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			&hb_tcp_filter_fp);
 	if (status != EOK) {
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -192,7 +192,7 @@ QDF_STATUS target_if_pmo_send_lphb_udp_params(struct wlan_objmgr_psoc *psoc,
 				   &hb_udp_params_fp.gateway_mac);
 
 	status = wmi_unified_lphb_config_udp_params_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			&hb_udp_params_fp);
 	if (status != EOK) {
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -241,7 +241,7 @@ QDF_STATUS target_if_pmo_send_lphb_udp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	       WMI_WLAN_HB_MAX_FILTER_SIZE);
 
 	status = wmi_unified_lphb_config_udp_pkt_filter_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			&hb_udp_filter_fp);
 	if (status != EOK) {
 		qdf_status = QDF_STATUS_E_FAILURE;

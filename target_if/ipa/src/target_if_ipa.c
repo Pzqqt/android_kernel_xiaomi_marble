@@ -40,8 +40,8 @@ static QDF_STATUS
 target_if_ipa_uc_offload_control_req(struct wlan_objmgr_psoc *psoc,
 			struct ipa_uc_offload_control_params *req)
 {
-	return wmi_unified_ipa_offload_control_cmd(GET_WMI_HDL_FROM_PSOC(psoc),
-						   req);
+	return wmi_unified_ipa_offload_control_cmd(
+			get_wmi_unified_hdl_from_psoc(psoc), req);
 }
 
 void target_if_ipa_register_tx_ops(ipa_uc_offload_control_req *ipa_tx_op)

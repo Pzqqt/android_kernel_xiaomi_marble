@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -66,8 +66,8 @@ QDF_STATUS target_if_pmo_send_vdev_update_param_req(
 	param.param_value = param_value;
 	target_if_info("set vdev param vdev_id: %d value: %d for param_id: %d",
 		vdev_id, param_value, param_id);
-	return wmi_unified_vdev_set_param_send(GET_WMI_HDL_FROM_PSOC(psoc),
-			&param);
+	return wmi_unified_vdev_set_param_send(
+			get_wmi_unified_hdl_from_psoc(psoc), &param);
 }
 
 QDF_STATUS target_if_pmo_send_vdev_ps_param_req(
@@ -107,8 +107,8 @@ QDF_STATUS target_if_pmo_send_vdev_ps_param_req(
 	target_if_info("set vdev param vdev_id: %d value: %d for param_id: %d",
 		vdev_id, param_value, param_id);
 
-	status = wmi_unified_sta_ps_cmd_send(GET_WMI_HDL_FROM_PSOC(psoc),
-			&sta_ps_param);
+	status = wmi_unified_sta_ps_cmd_send(
+			get_wmi_unified_hdl_from_psoc(psoc), &sta_ps_param);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
@@ -119,23 +119,24 @@ QDF_STATUS target_if_pmo_send_vdev_ps_param_req(
 void target_if_pmo_psoc_update_bus_suspend(struct wlan_objmgr_psoc *psoc,
 		uint8_t value)
 {
-	wmi_set_is_wow_bus_suspended(GET_WMI_HDL_FROM_PSOC(psoc), value);
+	wmi_set_is_wow_bus_suspended(
+			get_wmi_unified_hdl_from_psoc(psoc), value);
 }
 
 int target_if_pmo_psoc_get_host_credits(struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_get_host_credits(GET_WMI_HDL_FROM_PSOC(psoc));
+	return wmi_get_host_credits(get_wmi_unified_hdl_from_psoc(psoc));
 }
 
 int target_if_pmo_psoc_get_pending_cmnds(struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_get_pending_cmds(GET_WMI_HDL_FROM_PSOC(psoc));
+	return wmi_get_pending_cmds(get_wmi_unified_hdl_from_psoc(psoc));
 }
 
 void target_if_pmo_update_target_suspend_flag(struct wlan_objmgr_psoc *psoc,
 		uint8_t value)
 {
-	wmi_set_target_suspend(GET_WMI_HDL_FROM_PSOC(psoc), value);
+	wmi_set_target_suspend(get_wmi_unified_hdl_from_psoc(psoc), value);
 }
 
 QDF_STATUS target_if_pmo_psoc_send_wow_enable_req(
@@ -143,7 +144,7 @@ QDF_STATUS target_if_pmo_psoc_send_wow_enable_req(
 		struct pmo_wow_cmd_params *param)
 {
 	wma_check_and_set_wake_timer(SIR_INSTALL_KEY_TIMEOUT_MS);
-	return wmi_unified_wow_enable_send(GET_WMI_HDL_FROM_PSOC(psoc),
+	return wmi_unified_wow_enable_send(get_wmi_unified_hdl_from_psoc(psoc),
 			(struct wow_cmd_params *)param,
 			TGT_WILDCARD_PDEV_ID);
 }
@@ -152,7 +153,7 @@ QDF_STATUS target_if_pmo_psoc_send_suspend_req(
 		struct wlan_objmgr_psoc *psoc,
 		struct pmo_suspend_params *param)
 {
-	return wmi_unified_suspend_send(GET_WMI_HDL_FROM_PSOC(psoc),
+	return wmi_unified_suspend_send(get_wmi_unified_hdl_from_psoc(psoc),
 			(struct suspend_params *) param,
 			TGT_WILDCARD_PDEV_ID);
 }
@@ -160,27 +161,28 @@ QDF_STATUS target_if_pmo_psoc_send_suspend_req(
 void target_if_pmo_set_runtime_pm_in_progress(struct wlan_objmgr_psoc *psoc,
 					      bool value)
 {
-	return wmi_set_runtime_pm_inprogress(GET_WMI_HDL_FROM_PSOC(psoc),
-					     value);
+	return wmi_set_runtime_pm_inprogress(
+			get_wmi_unified_hdl_from_psoc(psoc), value);
 }
 
 bool target_if_pmo_get_runtime_pm_in_progress(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_get_runtime_pm_inprogress(GET_WMI_HDL_FROM_PSOC(psoc));
+	return wmi_get_runtime_pm_inprogress(
+			get_wmi_unified_hdl_from_psoc(psoc));
 }
 
 QDF_STATUS target_if_pmo_psoc_send_host_wakeup_ind(
 		struct wlan_objmgr_psoc *psoc)
 {
 	return wmi_unified_host_wakeup_ind_to_fw_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc));
+			get_wmi_unified_hdl_from_psoc(psoc));
 }
 
 QDF_STATUS target_if_pmo_psoc_send_target_resume_req(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_unified_resume_send(GET_WMI_HDL_FROM_PSOC(psoc),
+	return wmi_unified_resume_send(get_wmi_unified_hdl_from_psoc(psoc),
 					TGT_WILDCARD_PDEV_ID);
 }
 
@@ -188,14 +190,16 @@ QDF_STATUS target_if_pmo_psoc_send_target_resume_req(
 QDF_STATUS target_if_pmo_psoc_send_d0wow_enable_req(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_unified_d0wow_enable_send(GET_WMI_HDL_FROM_PSOC(psoc),
+	return wmi_unified_d0wow_enable_send(
+			get_wmi_unified_hdl_from_psoc(psoc),
 			TGT_WILDCARD_PDEV_ID);
 }
 
 QDF_STATUS target_if_pmo_psoc_send_d0wow_disable_req(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_unified_d0wow_disable_send(GET_WMI_HDL_FROM_PSOC(psoc),
+	return wmi_unified_d0wow_disable_send(
+			get_wmi_unified_hdl_from_psoc(psoc),
 			TGT_WILDCARD_PDEV_ID);
 }
 #else

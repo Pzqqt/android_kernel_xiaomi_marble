@@ -48,7 +48,7 @@ QDF_STATUS target_if_pmo_set_mc_filter_req(
 	}
 
 	status = wmi_unified_add_clear_mcbc_filter_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			vdev_id,
 			multicast_addr, false);
 	if (status)
@@ -78,7 +78,7 @@ QDF_STATUS target_if_pmo_clear_mc_filter_req(
 	}
 
 	status = wmi_unified_add_clear_mcbc_filter_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			vdev_id,
 			multicast_addr, true);
 	if (status)
@@ -91,7 +91,7 @@ QDF_STATUS target_if_pmo_clear_mc_filter_req(
 bool target_if_pmo_get_multiple_mc_filter_support(
 		struct wlan_objmgr_psoc *psoc)
 {
-	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 
 	return wmi_service_enabled(wmi_handle,
 				      wmi_service_multiple_mcast_filter_set);
@@ -126,7 +126,7 @@ QDF_STATUS target_if_pmo_set_multiple_mc_filter_req(
 	filter_params.action = 1;
 
 	status = wmi_unified_multiple_add_clear_mcbc_filter_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			vdev_id,
 			&filter_params);
 	if (status)
@@ -164,7 +164,7 @@ QDF_STATUS target_if_pmo_clear_multiple_mc_filter_req(
 	filter_params.action = 0;
 
 	status = wmi_unified_multiple_add_clear_mcbc_filter_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc),
+			get_wmi_unified_hdl_from_psoc(psoc),
 			vdev_id,
 			&filter_params);
 	if (status)

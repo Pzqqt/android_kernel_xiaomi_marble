@@ -44,7 +44,7 @@ target_if_encrypt_decrypt_event_handler(ol_scn_t scn_handle, uint8_t *data,
 	}
 
 	if (wmi_extract_encrypt_decrypt_resp_params(
-				GET_WMI_HDL_FROM_PSOC(psoc),
+				get_wmi_unified_hdl_from_psoc(psoc),
 				data, &resp) != QDF_STATUS_SUCCESS) {
 		target_if_err("Extraction of encrypt decrypt resp params failed");
 		return -EINVAL;
@@ -60,7 +60,7 @@ target_if_disa_register_ev_handlers(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_register_event(GET_WMI_HDL_FROM_PSOC(psoc),
+	status = wmi_unified_register_event(get_wmi_unified_hdl_from_psoc(psoc),
 				wmi_vdev_encrypt_decrypt_data_rsp_event_id,
 				target_if_encrypt_decrypt_event_handler);
 	if (status) {
@@ -76,7 +76,8 @@ target_if_disa_unregister_ev_handlers(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
 
-	status = wmi_unified_unregister_event(GET_WMI_HDL_FROM_PSOC(psoc),
+	status = wmi_unified_unregister_event(
+				get_wmi_unified_hdl_from_psoc(psoc),
 				wmi_vdev_encrypt_decrypt_data_rsp_event_id);
 	if (status) {
 		target_if_err("Failed to unregister Scan match event cb");
@@ -90,8 +91,8 @@ QDF_STATUS
 target_if_disa_encrypt_decrypt_req(struct wlan_objmgr_psoc *psoc,
 		struct disa_encrypt_decrypt_req_params *req)
 {
-	return wmi_unified_encrypt_decrypt_send_cmd(GET_WMI_HDL_FROM_PSOC(psoc),
-							req);
+	return wmi_unified_encrypt_decrypt_send_cmd(
+			get_wmi_unified_hdl_from_psoc(psoc), req);
 }
 
 

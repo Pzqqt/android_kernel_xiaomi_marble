@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,7 +47,7 @@ QDF_STATUS target_if_pmo_send_ra_filter_req(struct wlan_objmgr_vdev *vdev,
 	}
 
 	status = wmi_unified_wow_sta_ra_filter_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc), vdev_id,
+			get_wmi_unified_hdl_from_psoc(psoc), vdev_id,
 			default_pattern, rate_limit_interval);
 	if (status)
 		target_if_err("Failed to send RA rate limit to fw");
@@ -76,7 +76,7 @@ QDF_STATUS target_if_pmo_send_action_frame_patterns(
 	}
 
 	status = wmi_unified_action_frame_patterns_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc), ip_cmd);
+			get_wmi_unified_hdl_from_psoc(psoc), ip_cmd);
 	if (status != QDF_STATUS_SUCCESS)
 		target_if_err("Failed to config wow action frame map, ret %d",
 			status);
@@ -104,7 +104,7 @@ QDF_STATUS target_if_pmo_send_enhance_mc_offload_req(
 	}
 
 	status = wmi_unified_enable_enhance_multicast_offload_cmd(
-			GET_WMI_HDL_FROM_PSOC(psoc), vdev_id, enable);
+			get_wmi_unified_hdl_from_psoc(psoc), vdev_id, enable);
 	if (status)
 		target_if_err("Failed to config wow wakeup event");
 
