@@ -154,7 +154,7 @@ static void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 
 	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
 		mem_map_table = qdf_mem_map_table_alloc(
-					pdev->rx_ring.fill_level);
+					RX_NUM_HASH_BUCKETS * RX_ENTRIES_SIZE);
 		if (!mem_map_table) {
 			qdf_print("%s: Failed to allocate memory for mem map table\n",
 				  __func__);
