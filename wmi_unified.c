@@ -1216,7 +1216,7 @@ qdf_export_symbol(wmi_mgmt_cmd_record);
 int wmi_get_host_credits(wmi_unified_t wmi_handle);
 /* WMI buffer APIs */
 
-#ifdef MEMORY_DEBUG
+#ifdef NBUF_MEMORY_DEBUG
 wmi_buf_t
 wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint16_t len, uint8_t *file_name,
 			uint32_t line_num)
