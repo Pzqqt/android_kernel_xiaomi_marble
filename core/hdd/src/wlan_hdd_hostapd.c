@@ -2228,8 +2228,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		/* Send DHCP STOP indication to FW */
 		stainfo->dhcp_phase = DHCP_PHASE_ACK;
-		if ((stainfo->dhcp_nego_status ==
-					DHCP_NEGO_IN_PROGRESS))
+		if (stainfo->dhcp_nego_status ==
+					DHCP_NEGO_IN_PROGRESS)
 			hdd_post_dhcp_ind(adapter, staId,
 					WMA_DHCP_STOP_IND);
 		stainfo->dhcp_nego_status = DHCP_NEGO_STOP;

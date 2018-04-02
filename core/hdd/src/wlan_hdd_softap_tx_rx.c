@@ -392,8 +392,8 @@ int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
 		case QDF_PROTO_DHCP_ACK:
 		case QDF_PROTO_DHCP_NACK:
 			hdd_sta_info->dhcp_phase = DHCP_PHASE_ACK;
-			if ((hdd_sta_info->dhcp_nego_status ==
-				DHCP_NEGO_IN_PROGRESS))
+			if (hdd_sta_info->dhcp_nego_status ==
+				DHCP_NEGO_IN_PROGRESS)
 				errno = hdd_post_dhcp_ind(adapter, sta_id,
 							   WMA_DHCP_STOP_IND);
 			hdd_sta_info->dhcp_nego_status = DHCP_NEGO_STOP;
