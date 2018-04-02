@@ -14374,8 +14374,8 @@ enum hdd_external_acs_freq_band {
  * <ini>
  * gTxSchDelay - Enable/Disable Tx sch delay
  * @Min: 0
- * @Max: 1
- * @Default: 1
+ * @Max: 5
+ * @Default: 2
  *
  * Usage: Internal/External
  *
@@ -14384,8 +14384,8 @@ enum hdd_external_acs_freq_band {
 
 #define CFG_TX_SCH_DELAY_NAME          "gTxSchDelay"
 #define CFG_TX_SCH_DELAY_MIN           (0)
-#define CFG_TX_SCH_DELAY_MAX           (1)
-#define CFG_TX_SCH_DELAY_DEFAULT       (1)
+#define CFG_TX_SCH_DELAY_MAX           (5)
+#define CFG_TX_SCH_DELAY_DEFAULT       (2)
 
 /*
  * Type declarations
@@ -15302,7 +15302,7 @@ struct hdd_config {
 	bool enable_dtim_selection_diversity;
 	uint32_t channel_select_logic_conc;
 	bool enable_bt_chain_separation;
-	bool enable_tx_sch_delay;
+	uint8_t enable_tx_sch_delay;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
