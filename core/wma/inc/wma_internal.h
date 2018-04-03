@@ -1279,9 +1279,9 @@ int wma_wlan_bt_activity_evt_handler(void *handle, uint8_t *event,
 				     uint32_t len);
 
 /**
- * wma_peer_ant_info_evt_handler - event handler to handle antenna info
+ * wma_pdev_div_info_evt_handler - event handler to handle antenna info
  * @handle: the wma handle
- * @event: buffer with event
+ * @event_buf: buffer with event
  * @len: buffer length
  *
  * This function receives antenna info from firmware and passes the event
@@ -1289,7 +1289,7 @@ int wma_wlan_bt_activity_evt_handler(void *handle, uint8_t *event,
  *
  * Return: 0 on success
  */
-int wma_peer_ant_info_evt_handler(void *handle, u_int8_t *event,
+int wma_pdev_div_info_evt_handler(void *handle, u_int8_t *event_buf,
 	u_int32_t len);
 
 /**

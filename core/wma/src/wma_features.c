@@ -5283,57 +5283,54 @@ int wma_wlan_bt_activity_evt_handler(void *handle, uint8_t *event, uint32_t len)
 	return 0;
 }
 
-int wma_peer_ant_info_evt_handler(void *handle, u_int8_t *event,
+int wma_pdev_div_info_evt_handler(void *handle, u_int8_t *event_buf,
 	u_int32_t len)
 {
-	wmi_peer_antdiv_info *peer_ant_info;
-	WMI_PEER_ANTDIV_INFO_EVENTID_param_tlvs *param_buf;
-	wmi_peer_antdiv_info_event_fixed_param *fix_param;
-	struct chain_rssi_result *chain_rssi_result;
-	u_int32_t chain_index;
+	WMI_PDEV_DIV_RSSI_ANTID_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_div_rssi_antid_event_fixed_param *event;
+	struct chain_rssi_result chain_rssi_result;
+	u_int32_t i;
+	u_int8_t macaddr[IEEE80211_ADDR_LEN];
 
 	tpAniSirGlobal pmac = (tpAniSirGlobal)cds_get_context(
 					QDF_MODULE_ID_PE);
 	if (!pmac) {
-		WMA_LOGE("%s: Invalid pmac", __func__);
+		WMA_LOGE(FL("Invalid pmac"));
 		return -EINVAL;
 	}
 
-	param_buf = (WMI_PEER_ANTDIV_INFO_EVENTID_param_tlvs *) event;
+	param_buf = (WMI_PDEV_DIV_RSSI_ANTID_EVENTID_param_tlvs *) event_buf;
 	if (!param_buf) {
-		WMA_LOGE("Invalid peer_ant_info event buffer");
-		return -EINVAL;
-	}
-	fix_param = param_buf->fixed_param;
-	peer_ant_info = param_buf->peer_info;
-
-	WMA_LOGD("num_peers=%d\tvdev_id=%d",
-		fix_param->num_peers, fix_param->vdev_id);
-	WMA_LOGD("peer_ant_info: %pK", peer_ant_info);
-
-	if (!peer_ant_info) {
-		WMA_LOGE("Invalid peer_ant_info ptr");
+		WMA_LOGE(FL("Invalid rssi antid event buffer"));
 		return -EINVAL;
 	}
 
-	chain_rssi_result = qdf_mem_malloc(sizeof(*chain_rssi_result));
-	if (!chain_rssi_result) {
-		WMA_LOGE("%s: Failed to malloc", __func__);
-		return -ENOMEM;
+	event = param_buf->fixed_param;
+	if (!event) {
+		WMA_LOGE(FL("Invalid fixed param"));
+		return -EINVAL;
 	}
 
-	for (chain_index = 0; chain_index < CHAIN_RSSI_NUM; chain_index++)
-		WMA_LOGD("chain%d rssi: %x", chain_index,
-				peer_ant_info->chain_rssi[chain_index]);
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->macaddr, macaddr);
+	WMA_LOGD(FL("macaddr: " MAC_ADDRESS_STR), MAC_ADDR_ARRAY(macaddr));
 
-	qdf_mem_copy(chain_rssi_result->chain_rssi,
-				peer_ant_info->chain_rssi,
-				sizeof(peer_ant_info->chain_rssi));
+	WMA_LOGD(FL("num_chains_valid: %d"), event->num_chains_valid);
+	chain_rssi_result.num_chains_valid = event->num_chains_valid;
+
+	for (i = 0; i < CHAIN_MAX_NUM; i++)
+		WMA_LOGD(FL("chain_rssi: %d, ant_id: %d"),
+			event->chain_rssi[i], event->ant_id[i]);
+
+	qdf_mem_copy(chain_rssi_result.chain_rssi, event->chain_rssi,
+				sizeof(event->chain_rssi));
+	for (i = 0; i < event->num_chains_valid; i++)
+		chain_rssi_result.chain_rssi[i] += WMA_TGT_NOISE_FLOOR_DBM;
+
+	qdf_mem_copy(chain_rssi_result.ant_id, event->ant_id,
+				sizeof(event->ant_id));
 
 	pmac->sme.get_chain_rssi_cb(pmac->sme.get_chain_rssi_context,
-				chain_rssi_result);
-
-	qdf_mem_free(chain_rssi_result);
+				&chain_rssi_result);
 
 	return 0;
 }

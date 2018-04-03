@@ -13584,18 +13584,27 @@ static int hdd_post_get_chain_rssi_rsp(struct hdd_context *hdd_ctx,
 				       struct chain_rssi_result *result)
 {
 	struct sk_buff *skb;
-	int data_len = sizeof(result->chain_rssi);
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
-		data_len + NLA_HDRLEN + NLMSG_HDRLEN);
+		(sizeof(result->chain_rssi) + NLA_HDRLEN) +
+		(sizeof(result->ant_id) + NLA_HDRLEN) +
+		NLMSG_HDRLEN);
 
 	if (!skb) {
 		hdd_err("cfg80211_vendor_event_alloc failed");
 		return -ENOMEM;
 	}
 
-	if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_CHAIN_RSSI, data_len,
+	if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_CHAIN_RSSI,
+			sizeof(result->chain_rssi),
 			result->chain_rssi)) {
+		hdd_err("put fail");
+		goto nla_put_failure;
+	}
+
+	if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_ANTENNA_INFO,
+			sizeof(result->ant_id),
+			result->ant_id)) {
 		hdd_err("put fail");
 		goto nla_put_failure;
 	}
