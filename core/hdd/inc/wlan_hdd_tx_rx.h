@@ -46,6 +46,10 @@ struct hdd_context;
 #define HDD_ETHERTYPE_802_1_X_FRAME_OFFSET 12
 #ifdef FEATURE_WLAN_WAPI
 #define HDD_ETHERTYPE_WAI                  0x88b4
+#define IS_HDD_ETHERTYPE_WAI(_skb) (ntohs(_skb->protocol) == \
+					HDD_ETHERTYPE_WAI)
+#else
+#define IS_HDD_ETHERTYPE_WAI(_skb) (false)
 #endif
 
 #define HDD_PSB_CFG_INVALID                   0xFF
