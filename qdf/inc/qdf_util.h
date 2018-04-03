@@ -528,6 +528,14 @@ static inline uint8_t *qdf_get_u32(uint8_t *ptr, uint32_t *value)
 #define qdf_min(a, b)   __qdf_min(a, b)
 
 /**
+ * qdf_ffz() - find first (least significant) zero bit
+ * @mask: the bitmask to check
+ *
+ * Return: The zero-based index of the first zero bit, or -1 if none are found
+ */
+#define qdf_ffz(mask) __qdf_ffz(mask)
+
+/**
  * qdf_get_pwr2() - get next power of 2 integer from input value
  * @value: input value to find next power of 2 integer
  *
