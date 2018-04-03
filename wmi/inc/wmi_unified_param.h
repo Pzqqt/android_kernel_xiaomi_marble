@@ -5505,6 +5505,7 @@ typedef enum {
 	wmi_obss_color_collision_report_event_id,
 	wmi_host_swfda_event_id,
 	wmi_sar_get_limits_event_id,
+	wmi_pdev_div_rssi_antid_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;

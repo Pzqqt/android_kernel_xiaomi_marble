@@ -23126,6 +23126,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_sar_get_limits_event_id] = WMI_SAR_GET_LIMITS_EVENTID;
 	event_ids[wmi_obss_color_collision_report_event_id] =
 		WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID;
+	event_ids[wmi_pdev_div_rssi_antid_event_id] =
+		WMI_PDEV_DIV_RSSI_ANTID_EVENTID;
 }
 
 /**
