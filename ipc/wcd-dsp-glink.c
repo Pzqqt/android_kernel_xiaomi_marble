@@ -266,7 +266,7 @@ static void wdsp_tx_buf_work(struct work_struct *work)
 
 	spin_lock(&ch->ch_lock);
 	rpdev = ch->handle;
-	if (rpdev || ch->ch_state == WDSP_CH_CONNECTED) {
+	if (rpdev && ch->ch_state == WDSP_CH_CONNECTED) {
 		spin_unlock(&ch->ch_lock);
 		ret = rpmsg_send(rpdev->ept, cpkt->payload,
 				 cpkt->payload_size);
@@ -275,8 +275,11 @@ static void wdsp_tx_buf_work(struct work_struct *work)
 				__func__, ret);
 	} else {
 		spin_unlock(&ch->ch_lock);
-		dev_err(wpriv->dev, "%s: channel %s is not in connected state\n",
-			__func__, ch->ch_name);
+		if (rpdev)
+			dev_err(wpriv->dev, "%s: channel %s is not in connected state\n",
+				__func__, ch->ch_name);
+		else
+			dev_err(wpriv->dev, "%s: rpdev is NULL\n", __func__);
 	}
 	vfree(tx_buf);
 }
