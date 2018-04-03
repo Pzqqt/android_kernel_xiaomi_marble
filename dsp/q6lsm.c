@@ -225,7 +225,7 @@ static void q6lsm_session_free(struct lsm_client *client)
 
 	pr_debug("%s: Freeing session ID %d\n", __func__, client->session);
 	spin_lock_irqsave(&lsm_session_lock, flags);
-	lsm_session[client->session] = LSM_INVALID_SESSION_ID;
+	lsm_session[client->session] = NULL;
 	spin_unlock_irqrestore(&lsm_session_lock, flags);
 	client->session = LSM_INVALID_SESSION_ID;
 }
