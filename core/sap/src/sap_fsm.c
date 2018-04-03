@@ -3301,6 +3301,15 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 				WLAN_REG_CH_NUM(loop_count),
 				sap_ctx, &spect_info_obj))
 			continue;
+		/* Dont scan DFS channels in case of MCC disallowed
+		 * As it can result in SAP starting on DFS channel
+		 * resulting  MCC on DFS channel
+		 */
+		if (wlan_reg_is_dfs_ch(mac_ctx->pdev,
+		    WLAN_REG_CH_NUM(loop_count)) &&
+		    policy_mgr_disallow_mcc(mac_ctx->psoc,
+		    WLAN_REG_CH_NUM(loop_count)))
+			continue;
 
 		/*
 		 * If we have any 5Ghz channel in the channel list
