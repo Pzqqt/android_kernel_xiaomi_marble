@@ -1205,6 +1205,25 @@ QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len)
 	return status;
 }
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+static QDF_STATUS sme_register_spectral_cb(tpAniSirGlobal mac_ctx)
+{
+	struct spectral_legacy_cbacks spectral_cb;
+	QDF_STATUS status;
+
+	spectral_cb.vdev_get_chan_freq = sme_get_oper_chan_freq;
+	spectral_cb.vdev_get_ch_width = sme_get_oper_ch_width;
+	spectral_cb.vdev_get_sec20chan_freq_mhz = sme_get_sec20chan_freq_mhz;
+	status = spectral_register_legacy_cb(mac_ctx->psoc, &spectral_cb);
+
+	return status;
+}
+#else
+static QDF_STATUS sme_register_spectral_cb(tpAniSirGlobal mac_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /*
  * sme_start() - Put all SME modules at ready state.
  *  The function starts each module in SME, PMC, CSR, etc. . Upon
@@ -1220,7 +1239,6 @@ QDF_STATUS sme_start(tHalHandle hHal)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct policy_mgr_sme_cbacks sme_cbacks;
-	struct spectral_legacy_cbacks spectral_cb;
 
 	do {
 		status = csr_start(pMac);
@@ -1246,10 +1264,7 @@ QDF_STATUS sme_start(tHalHandle hHal)
 				status);
 			break;
 		}
-		spectral_cb.vdev_get_chan_freq = sme_get_oper_chan_freq;
-		spectral_cb.vdev_get_ch_width = sme_get_oper_ch_width;
-		spectral_cb.vdev_get_sec20chan_freq_mhz = sme_get_sec20chan_freq_mhz;
-		spectral_register_legacy_cb(pMac->psoc, &spectral_cb);
+		sme_register_spectral_cb(pMac);
 		pMac->sme.state = SME_STATE_START;
 
 		/* START RRM */

@@ -359,7 +359,7 @@ int wlan_hdd_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
 	return ret;
 }
 
-#ifdef CNSS_GENL
+#if defined(CNSS_GENL) && defined(WLAN_CONV_SPECTRAL_ENABLE)
 static void send_spectral_scan_reg_rsp_msg(struct hdd_context *hdd_ctx)
 {
 	struct sk_buff *skb;
@@ -477,11 +477,6 @@ int spectral_scan_activate_service(void)
 {
 	register_cld_cmd_cb(WLAN_NL_MSG_SPECTRAL_SCAN,
 				spectral_scan_msg_handler, NULL);
-	return 0;
-}
-#else
-int spectral_scan_activate_service(void)
-{
 	return 0;
 }
 #endif

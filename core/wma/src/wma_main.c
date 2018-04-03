@@ -2567,6 +2567,8 @@ static int wma_flush_complete_evt_handler(void *handle,
 			WLAN_LOG_INDICATOR_FIRMWARE, reason_code);
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 /**
  * wma_extract_single_phyerr_spectral() - extract single phy error from event
  * @handle: wma handle
@@ -2783,7 +2785,8 @@ static QDF_STATUS wma_extract_single_phyerr_spectral(void *handle,
  * Return:  QDF_STATUS
  */
 static QDF_STATUS spectral_phyerr_event_handler(void *handle,
-					uint8_t *data, uint32_t datalen)
+						uint8_t *data,
+						uint32_t datalen)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -2844,6 +2847,13 @@ static QDF_STATUS spectral_phyerr_event_handler(void *handle,
 
 	return status;
 }
+#else
+static QDF_STATUS spectral_phyerr_event_handler(void *handle,
+					uint8_t *data, uint32_t datalen)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * dfs_phyerr_event_handler() - dfs phyerr event handler
@@ -4113,6 +4123,22 @@ static void wma_send_time_stamp_sync_cmd(void *data)
 		WMA_LOGE("Failed to start the firmware time sync timer");
 }
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+static void wma_register_spectral_cmds(tp_wma_handle wma_handle)
+{
+	struct wmi_spectral_cmd_ops cmd_ops;
+
+	cmd_ops.wmi_spectral_configure_cmd_send =
+			wmi_unified_vdev_spectral_configure_cmd_send;
+	cmd_ops.wmi_spectral_enable_cmd_send =
+			wmi_unified_vdev_spectral_enable_cmd_send;
+	wlan_register_wmi_spectral_cmd_ops(wma_handle->pdev, &cmd_ops);
+}
+#else
+static void wma_register_spectral_cmds(tp_wma_handle wma_handle)
+{
+}
+#endif
 /**
  * wma_start() - wma start function.
  *               Initialize event handlers and timers.
@@ -4124,7 +4150,6 @@ QDF_STATUS wma_start(void)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle;
 	int status;
-	struct wmi_spectral_cmd_ops cmd_ops;
 	struct wmi_unified *wmi_handle;
 
 	WMA_LOGD("%s: Enter", __func__);
@@ -4372,12 +4397,7 @@ QDF_STATUS wma_start(void)
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
-
-	cmd_ops.wmi_spectral_configure_cmd_send =
-			wmi_unified_vdev_spectral_configure_cmd_send;
-	cmd_ops.wmi_spectral_enable_cmd_send =
-			wmi_unified_vdev_spectral_enable_cmd_send;
-	wlan_register_wmi_spectral_cmd_ops(wma_handle->pdev, &cmd_ops);
+	wma_register_spectral_cmds(wma_handle);
 
 end:
 	WMA_LOGD("%s: Exit", __func__);
