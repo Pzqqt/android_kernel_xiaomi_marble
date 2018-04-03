@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -332,20 +332,7 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	radio = cds_get_radio_index();
 #endif
 
-	if (
-#ifdef CONFIG_MCL
-		!cds_is_multicast_logging() ||
-#endif
-		 (radio == -EINVAL) ||
-		(!gwlan_logging.is_active)) {
-		/*
-		 * This is to make sure that we print the logs to kmsg console
-		 * when no logger app is running. This is also needed to
-		 * log the initial messages during loading of driver where even
-		 * if app is running it will not be able to
-		 * register with driver immediately and start logging all the
-		 * messages.
-		 */
+	if ((radio == -EINVAL) || (!gwlan_logging.is_active)) {
 		/*
 		 * R%d: if the radio index is invalid, just post the message
 		 * to console.
