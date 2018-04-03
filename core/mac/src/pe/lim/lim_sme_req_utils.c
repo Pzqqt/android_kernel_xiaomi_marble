@@ -297,7 +297,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
 		   && (rsn_ie->rsnIEdata[0] == SIR_MAC_WPA_EID)) {
 		pe_debug("Only WPA IE is present");
 		ret = dot11f_unpack_ie_wpa(mac_ctx, &rsn_ie->rsnIEdata[6],
-					   (uint8_t) rsn_ie->length - 4,
+					   rsn_ie->rsnIEdata[1] - 4,
 					   &session->gStartBssWPAIe, false);
 		if (!DOT11F_SUCCEEDED(ret)) {
 			pe_err("unpack failed, ret: %d", ret);
