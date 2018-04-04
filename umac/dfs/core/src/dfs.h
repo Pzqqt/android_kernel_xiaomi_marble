@@ -311,6 +311,8 @@
 
 /* ETSI11_WORLD regdmn pair id */
 #define ETSI11_WORLD_REGDMN_PAIR_ID 0x26
+#define ETSI12_WORLD_REGDMN_PAIR_ID 0x28
+#define ETSI13_WORLD_REGDMN_PAIR_ID 0x27
 
 /* Array offset to ETSI legacy pulse */
 #define ETSI_LEGACY_PULSE_ARR_OFFSET 2

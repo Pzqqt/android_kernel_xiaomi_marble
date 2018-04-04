@@ -336,8 +336,10 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		ch_freq = dfs->dfs_curchan->dfs_ch_freq;
 		regdmn = utils_dfs_get_cur_rd(dfs->dfs_pdev_obj);
 
-		if ((regdmn == ETSI11_WORLD_REGDMN_PAIR_ID) &&
-				DFS_CURCHAN_IS_58GHz(ch_freq)) {
+		if (((regdmn == ETSI11_WORLD_REGDMN_PAIR_ID) ||
+		    (regdmn == ETSI12_WORLD_REGDMN_PAIR_ID) ||
+		    (regdmn == ETSI13_WORLD_REGDMN_PAIR_ID)) &&
+		    DFS_CURCHAN_IS_58GHz(ch_freq)) {
 			rinfo.dfs_radars = dfs_etsi_radars;
 			rinfo.numradars = QDF_ARRAY_SIZE(dfs_etsi_radars);
 		} else {

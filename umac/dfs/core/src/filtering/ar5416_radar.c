@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2005 Atheros Communications, Inc.
  * Copyright (c) 2008-2010, Atheros Communications Inc.
  * All Rights Reserved.
@@ -137,8 +137,10 @@ void dfs_get_radars_for_ar5416(struct wlan_dfs *dfs)
 		ch_freq = dfs->dfs_curchan->dfs_ch_freq;
 		regdmn = utils_dfs_get_cur_rd(dfs->dfs_pdev_obj);
 
-		if ((regdmn == ETSI11_WORLD_REGDMN_PAIR_ID) &&
-				DFS_CURCHAN_IS_58GHz(ch_freq)) {
+		if (((regdmn == ETSI11_WORLD_REGDMN_PAIR_ID) ||
+		    (regdmn == ETSI12_WORLD_REGDMN_PAIR_ID) ||
+		    (regdmn == ETSI13_WORLD_REGDMN_PAIR_ID)) &&
+		    DFS_CURCHAN_IS_58GHz(ch_freq)) {
 			rinfo.dfs_radars = ar5416_etsi_radars;
 			rinfo.numradars = QDF_ARRAY_SIZE(ar5416_etsi_radars);
 		} else {
