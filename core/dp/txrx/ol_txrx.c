@@ -2819,7 +2819,8 @@ static void ol_txrx_dump_peer_access_list(ol_txrx_peer_handle peer)
  * fails
  */
 static void *
-ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
+ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
+		    void *ol_peer)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_peer_t *peer;

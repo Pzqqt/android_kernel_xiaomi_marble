@@ -337,6 +337,7 @@ enum ds_mode {
 
 #define WMA_TXMIC_LEN 8
 #define WMA_RXMIC_LEN 8
+#define WMA_IV_KEY_LEN 16
 
 /*
  * Length = (2 octets for Index and CTWin/Opp PS) and

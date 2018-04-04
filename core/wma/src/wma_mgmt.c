@@ -1965,6 +1965,10 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 
 	/* Set PN check & security type in data path */
 	cdp_set_pn_check(soc, txrx_vdev, peer, sec_type, pn);
+	cdp_set_key(soc, peer, key_params->unicast,
+		    (uint32_t *)(key_params->key_data +
+				WMA_IV_KEY_LEN +
+				WMA_TXMIC_LEN));
 
 	status = wmi_unified_setup_install_key_cmd(wma_handle->wmi_handle,
 								&params);
