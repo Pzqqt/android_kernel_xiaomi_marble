@@ -1975,10 +1975,13 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	/* Set the default values for spectral parameters */
 	target_if_spectral_init_param_defaults(spectral);
 #ifdef CONFIG_WIN
-	if (target_type == TARGET_TYPE_QCA8074)
+	if (target_type == TARGET_TYPE_QCA8074) {
 		spectral->fftbin_size_war = 1;
-	else
+		spectral->inband_fftbin_size_adj = 1;
+	} else {
 		spectral->fftbin_size_war = 0;
+		spectral->inband_fftbin_size_adj = 0;
+	}
 	if ((target_type == TARGET_TYPE_QCA8074) || (
 		target_type == TARGET_TYPE_QCA6290)) {
 		spectral->spectral_gen = SPECTRAL_GEN3;
