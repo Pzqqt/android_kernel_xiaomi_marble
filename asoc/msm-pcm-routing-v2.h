@@ -185,6 +185,16 @@
 #define LPASS_BE_INT5_MI2S_TX "INT5_MI2S_TX"
 #define LPASS_BE_INT6_MI2S_RX "INT6_MI2S_RX"
 #define LPASS_BE_INT6_MI2S_TX "INT6_MI2S_TX"
+
+#define LPASS_BE_WSA_CDC_DMA_RX_0 "WSA_CDC_DMA_RX_0"
+#define LPASS_BE_WSA_CDC_DMA_TX_0 "WSA_CDC_DMA_TX_0"
+#define LPASS_BE_WSA_CDC_DMA_RX_1 "WSA_CDC_DMA_RX_1"
+#define LPASS_BE_WSA_CDC_DMA_TX_1 "WSA_CDC_DMA_TX_1"
+#define LPASS_BE_WSA_CDC_DMA_TX_2 "WSA_CDC_DMA_TX_2"
+#define LPASS_BE_VA_CDC_DMA_TX_0 "VA_CDC_DMA_TX_0"
+#define LPASS_BE_VA_CDC_DMA_TX_1 "VA_CDC_DMA_TX_1"
+
+
 /* For multimedia front-ends, asm session is allocated dynamically.
  * Hence, asm session/multimedia front-end mapping has to be maintained.
  * Due to this reason, additional multimedia front-end must be placed before
@@ -399,6 +409,13 @@ enum {
 	MSM_BACKEND_DAI_INT5_MI2S_TX,
 	MSM_BACKEND_DAI_INT6_MI2S_RX,
 	MSM_BACKEND_DAI_INT6_MI2S_TX,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_TX_0,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_RX_1,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_TX_1,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_TX_2,
+	MSM_BACKEND_DAI_VA_CDC_DMA_TX_0,
+	MSM_BACKEND_DAI_VA_CDC_DMA_TX_1,
 	MSM_BACKEND_DAI_MAX,
 };
 
