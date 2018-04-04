@@ -7137,6 +7137,8 @@ typedef struct _hp_dcs_mib_stats  {
  *      in mib structure
  * @chan_nf: Channel noise floor (Units are in dBm)
  * @my_bss_rx_cycle_count: BSS rx cycle count
+ * @reg_rxclr_ext40_cnt: extension channel 40Mhz rxclear count
+ * @reg_rxclr_ext80_cnt: extension channel 80Mhz rxclear count
  */
 typedef struct _wmi_host_dcs_im_tgt_stats {
 	uint32_t                     reg_tsf32;
@@ -7147,6 +7149,11 @@ typedef struct _wmi_host_dcs_im_tgt_stats {
 	wmi_host_dcs_mib_stats_t     mib_stats;
 	uint32_t		     chan_nf;
 	uint32_t		     my_bss_rx_cycle_count;
+	/* these fields are added here for backward compatibility instead of
+	 * wmi_host_dcs_mib_stats_t
+	 */
+	uint32_t                     reg_rxclr_ext40_cnt;
+	uint32_t                     reg_rxclr_ext80_cnt;
 } wmi_host_dcs_im_tgt_stats_t;
 
 /**
