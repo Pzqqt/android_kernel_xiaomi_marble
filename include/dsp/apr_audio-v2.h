@@ -1263,6 +1263,27 @@ struct adm_cmd_connect_afe_port_v5 {
 #define AFE_PORT_ID_USB_RX                       0x7000
 #define AFE_PORT_ID_USB_TX                       0x7001
 
+/* AFE WSA Codec DMA Rx port 0 */
+#define AFE_PORT_ID_WSA_CODEC_DMA_RX_0           0xB000
+
+/* AFE WSA Codec DMA Tx port 0 */
+#define AFE_PORT_ID_WSA_CODEC_DMA_TX_0           0xB001
+
+/* AFE WSA Codec DMA Rx port 1 */
+#define AFE_PORT_ID_WSA_CODEC_DMA_RX_1           0xB002
+
+/* AFE WSA Codec DMA Tx port 1 */
+#define AFE_PORT_ID_WSA_CODEC_DMA_TX_1           0xB003
+
+/* AFE WSA Codec DMA Tx port 2 */
+#define AFE_PORT_ID_WSA_CODEC_DMA_TX_2           0xB005
+
+/* AFE VA Codec DMA Tx port 0 */
+#define AFE_PORT_ID_VA_CODEC_DMA_TX_0            0xB021
+
+/* AFE VA Codec DMA Tx port 1 */
+#define AFE_PORT_ID_VA_CODEC_DMA_TX_1            0xB023
+
 /* Generic pseudoport 1. */
 #define AFE_PORT_ID_PSEUDOPORT_01      0x8001
 /* Generic pseudoport 2. */
@@ -3920,6 +3941,73 @@ struct avs_dec_depacketizer_id_param_t {
 	uint32_t dec_depacketizer_id;
 };
 
+/* ID of the parameter used by #AFE_MODULE_AUDIO_DEV_INTERFACE to configure
+ * the Codec DMA interface.
+ */
+
+#define AFE_PARAM_ID_CODEC_DMA_CONFIG	0x000102B8
+
+/* Version information used to handle future additions to codec DMA
+ * configuration (for backward compatibility).
+ */
+#define AFE_API_VERSION_CODEC_DMA_CONFIG                                   0x1
+
+/* Payload of the AFE_PARAM_ID_CODEC_DMA_CONFIG parameter used by
+ * AFE_MODULE_AUDIO_DEV_INTERFACE.
+ */
+struct afe_param_id_cdc_dma_cfg_t {
+	uint32_t	cdc_dma_cfg_minor_version;
+	/* Tracks the configuration of this parameter.
+	 * Supported values: #AFE_API_VERSION_CODEC_DMA_CONFIG
+	 */
+
+	uint32_t	sample_rate;
+	/* Sampling rate of the port.
+	 * Supported values:
+	 * - #AFE_PORT_SAMPLE_RATE_8K
+	 * - #AFE_PORT_SAMPLE_RATE_11_025K
+	 * - #AFE_PORT_SAMPLE_RATE_12K
+	 * - #AFE_PORT_SAMPLE_RATE_16K
+	 * - #AFE_PORT_SAMPLE_RATE_22_05K
+	 * - #AFE_PORT_SAMPLE_RATE_24K
+	 * - #AFE_PORT_SAMPLE_RATE_32K
+	 * - #AFE_PORT_SAMPLE_RATE_44_1K
+	 * - #AFE_PORT_SAMPLE_RATE_48K
+	 * - #AFE_PORT_SAMPLE_RATE_88_2K
+	 * - #AFE_PORT_SAMPLE_RATE_96K
+	 * - #AFE_PORT_SAMPLE_RATE_176_4K
+	 * - #AFE_PORT_SAMPLE_RATE_192K
+	 * - #AFE_PORT_SAMPLE_RATE_352_8K
+	 * - #AFE_PORT_SAMPLE_RATE_384K
+	 */
+
+	uint16_t	bit_width;
+	/* Bit width of the sample.
+	 * Supported values: 16, 24, 32
+	 */
+
+	uint16_t	data_format;
+	/* Data format supported by the codec DMA interface.
+	 * Supported values:
+	 * - #AFE_LINEAR_PCM_DATA
+	 * - #AFE_LINEAR_PCM_DATA_PACKED_16BIT
+	 */
+
+	uint16_t	num_channels;
+	/* Number of channels.
+	 * Supported values: 1 to Maximum number of channels supported
+	 * for each interface
+	 */
+
+	uint16_t	active_channels_mask;
+	/* Active channels mask to denote the bit mask for active channels.
+	 * Bits 0 to 7 denote channels 0 to 7. A 1 denotes the channel is active
+	 * while a 0 denotes a channel is inactive.
+	 * Supported values:
+	 * Any mask with number of active bits equal to num_channels
+	 */
+} __packed;
+
 union afe_port_config {
 	struct afe_param_id_pcm_cfg               pcm;
 	struct afe_param_id_i2s_cfg               i2s;
@@ -3942,6 +4030,7 @@ union afe_port_config {
 	struct avs_dec_depacketizer_id_param_t    dec_depkt_id_param;
 	struct afe_enc_level_to_bitrate_map_param_t    map_param;
 	struct afe_enc_dec_imc_info_param_t       imc_info_param;
+	struct afe_param_id_cdc_dma_cfg_t         cdc_dma;
 } __packed;
 
 #define AFE_PORT_CMD_DEVICE_START 0x000100E5
