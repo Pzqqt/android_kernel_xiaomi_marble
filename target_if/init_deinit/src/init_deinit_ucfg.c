@@ -334,6 +334,7 @@ void *ucfg_get_pdev_wmi_handle(struct wlan_objmgr_pdev *pdev)
 
 	return target_pdev_get_wmi_handle(tgt_hdl);
 }
+qdf_export_symbol(ucfg_get_pdev_wmi_handle);
 
 uint32_t ucfg_get_num_radios(struct wlan_objmgr_psoc *psoc)
 {
