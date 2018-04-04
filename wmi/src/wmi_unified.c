@@ -1209,8 +1209,8 @@ int wmi_get_host_credits(wmi_unified_t wmi_handle);
 
 #ifdef NBUF_MEMORY_DEBUG
 wmi_buf_t
-wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint16_t len, uint8_t *file_name,
-			uint32_t line_num)
+wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint32_t len, uint8_t *file_name,
+		    uint32_t line_num)
 {
 	wmi_buf_t wmi_buf;
 
@@ -1245,7 +1245,7 @@ void wmi_buf_free(wmi_buf_t net_buf)
 }
 qdf_export_symbol(wmi_buf_free);
 #else
-wmi_buf_t wmi_buf_alloc(wmi_unified_t wmi_handle, uint16_t len)
+wmi_buf_t wmi_buf_alloc(wmi_unified_t wmi_handle, uint32_t len)
 {
 	wmi_buf_t wmi_buf;
 
