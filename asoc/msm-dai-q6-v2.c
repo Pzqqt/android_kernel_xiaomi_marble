@@ -5252,9 +5252,6 @@ static int msm_dai_tdm_q6_probe(struct platform_device *pdev)
 	dev_dbg(&pdev->dev, "%s: Group ID from DT file 0x%x\n",
 		__func__, tdm_group_cfg.group_id);
 
-	dev_info(&pdev->dev, "%s: dev_name: %s group_id: 0x%x\n",
-		__func__, dev_name(&pdev->dev), tdm_group_cfg.group_id);
-
 	rc = of_property_read_u32(pdev->dev.of_node,
 		"qcom,msm-cpudai-tdm-group-num-ports",
 		&num_tdm_group_ports);
@@ -6919,6 +6916,13 @@ static int msm_dai_q6_tdm_prepare(struct snd_pcm_substream *substream,
 	u16 group_id = dai_data->group_cfg.tdm_cfg.group_id;
 	int group_idx = 0;
 	atomic_t *group_ref = NULL;
+
+	dev_dbg(dai->dev, "%s: dev_name: %s dev_id: 0x%x group_id: 0x%x\n",
+		 __func__, dev_name(dai->dev), dai->dev->id, group_id);
+
+	if (dai_data->port_cfg.custom_tdm_header.minor_version == 0)
+		dev_dbg(dai->dev,
+			 "%s: Custom tdm header not supported\n", __func__);
 
 	group_idx = msm_dai_q6_get_group_idx(dai->id);
 	if (group_idx < 0) {
@@ -8688,9 +8692,6 @@ static int msm_dai_q6_tdm_dev_probe(struct platform_device *pdev)
 	}
 	pdev->id = tdm_dev_id;
 
-	dev_info(&pdev->dev, "%s: dev_name: %s dev_id: 0x%x\n",
-		__func__, dev_name(&pdev->dev), tdm_dev_id);
-
 	dai_data = kzalloc(sizeof(struct msm_dai_q6_tdm_dai_data),
 				GFP_KERNEL);
 	if (!dai_data) {
@@ -8831,8 +8832,6 @@ static int msm_dai_q6_tdm_dev_probe(struct platform_device *pdev)
 		custom_tdm_header->header_type =
 			AFE_CUSTOM_TDM_HEADER_TYPE_INVALID;
 	} else {
-		dev_info(&pdev->dev,
-			"%s: Custom tdm header not supported\n", __func__);
 		/* CUSTOM TDM HEADER CFG -- set default */
 		custom_tdm_header->header_type =
 			AFE_CUSTOM_TDM_HEADER_TYPE_INVALID;
