@@ -338,12 +338,20 @@ static int
 htt_htc_attach_all(struct htt_pdev_t *pdev)
 {
 	if (htt_htc_attach(pdev, HTT_DATA_MSG_SVC))
-		return -EIO;
+		goto flush_endpoint;
+
 	if (htt_htc_attach(pdev, HTT_DATA2_MSG_SVC))
-		return -EIO;
+		goto flush_endpoint;
+
 	if (htt_htc_attach(pdev, HTT_DATA3_MSG_SVC))
-		return -EIO;
+		goto flush_endpoint;
+
 	return 0;
+
+flush_endpoint:
+	htc_flush_endpoint(pdev->htc_pdev, ENDPOINT_0, HTC_TX_PACKET_TAG_ALL);
+
+	return -EIO;
 }
 #else
 /**
