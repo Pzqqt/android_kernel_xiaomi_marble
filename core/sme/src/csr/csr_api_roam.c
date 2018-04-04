@@ -19161,6 +19161,7 @@ static void csr_update_fils_params_rso(tpAniSirGlobal mac,
 {
 	struct roam_fils_params *roam_fils_params;
 	struct cds_fils_connection_info *fils_info;
+	uint32_t usr_name_len;
 
 	if (!session->pCurRoamProfile)
 		return;
@@ -19182,13 +19183,19 @@ static void csr_update_fils_params_rso(tpAniSirGlobal mac,
 		return;
 	}
 
+	usr_name_len = copy_all_before_char(fils_info->keyname_nai,
+					    sizeof(fils_info->keyname_nai),
+					    roam_fils_params->username,
+					    sizeof(roam_fils_params->username),
+					    '@');
+	if (fils_info->key_nai_length <= usr_name_len) {
+		sme_err("Fils info len error: key nai len %d, user name len %d",
+			fils_info->key_nai_length, usr_name_len);
+		return;
+	}
+
+	roam_fils_params->username_length = usr_name_len;
 	req_buffer->is_fils_connection = true;
-	roam_fils_params->username_length =
-			copy_all_before_char(fils_info->keyname_nai,
-					     sizeof(fils_info->keyname_nai),
-					     roam_fils_params->username,
-					     sizeof(roam_fils_params->username),
-					     '@');
 
 	roam_fils_params->next_erp_seq_num =
 			(fils_info->sequence_number + 1);
