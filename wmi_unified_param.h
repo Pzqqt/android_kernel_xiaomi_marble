@@ -6059,6 +6059,9 @@ struct wmi_host_fw_abi_ver {
  * @use_pdev_id:
  * @max_num_dbs_scan_duty_cycle: max dbs can duty cycle value
  * @cce_disable: disable cce component
+ * @twt_ap_pdev_count: Number of MAC on which AP TWT feature is supported
+ * @twt_ap_sta_count: Max no of STA with which TWT sessions can be formed
+ *                    by the AP
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -6131,6 +6134,8 @@ typedef struct {
 	uint32_t use_pdev_id;
 	uint32_t max_num_dbs_scan_duty_cycle;
 	bool cce_disable;
+	uint32_t twt_ap_pdev_count;
+	uint32_t twt_ap_sta_count;
 } target_resource_config;
 
 /**
