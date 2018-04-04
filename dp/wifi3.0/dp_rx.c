@@ -191,6 +191,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 		rxdma_ring_entry = hal_srng_src_get_next(dp_soc->hal_soc,
 								rxdma_srng);
+		qdf_assert_always(rxdma_ring_entry);
 
 		next = (*desc_list)->next;
 
@@ -385,6 +386,18 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 					return false;
 
 				nbuf = qdf_nbuf_unshare(nbuf);
+				if (!nbuf) {
+					DP_STATS_INC_PKT(sa_peer,
+							 rx.intra_bss.fail,
+							 1,
+							 len);
+					/* return true even though the pkt is
+					 * not forwarded. Basically skb_unshare
+					 * failed and we want to continue with
+					 * next nbuf.
+					 */
+					return true;
+				}
 			}
 
 			if (!dp_tx_send(sa_peer->vdev, nbuf)) {

@@ -348,17 +348,17 @@ dp_rx_pn_error_handle(struct dp_soc *soc, void *ring_desc,
 		/*
 		 * TODO: Check for peer specific policies & set peer_pn_policy
 		 */
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"discard rx due to PN error for peer  %pK  "
+			"(%02x:%02x:%02x:%02x:%02x:%02x)\n",
+			peer,
+			peer->mac_addr.raw[0], peer->mac_addr.raw[1],
+			peer->mac_addr.raw[2], peer->mac_addr.raw[3],
+			peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
+
 	}
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		"Packet received with PN error");
-
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"discard rx due to PN error for peer  %pK  "
-		"(%02x:%02x:%02x:%02x:%02x:%02x)\n",
-		peer,
-		peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-		peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-		peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
 
 	/* No peer PN policy -- definitely drop */
 	if (!peer_pn_policy)
