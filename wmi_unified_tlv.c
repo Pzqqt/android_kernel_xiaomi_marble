@@ -13237,6 +13237,23 @@ send_coex_config_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+
+#ifdef WLAN_SUPPORT_TWT
+static void wmi_copy_twt_resource_config(wmi_resource_config *resource_cfg,
+					target_resource_config *tgt_res_cfg)
+{
+	resource_cfg->twt_ap_pdev_count = tgt_res_cfg->twt_ap_pdev_count;
+	resource_cfg->twt_ap_sta_count = tgt_res_cfg->twt_ap_sta_count;
+}
+#else
+static void wmi_copy_twt_resource_config(wmi_resource_config *resource_cfg,
+					target_resource_config *tgt_res_cfg)
+{
+	resource_cfg->twt_ap_pdev_count = 0;
+	resource_cfg->twt_ap_sta_count = 0;
+}
+#endif
+
 static
 void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 				target_resource_config *tgt_res_cfg)
@@ -13322,6 +13339,8 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 			resource_cfg->flag1, 1);
 	if (tgt_res_cfg->cce_disable)
 		WMI_RSRC_CFG_FLAG_TCL_CCE_DISABLE_SET(resource_cfg->flag1, 1);
+
+	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
