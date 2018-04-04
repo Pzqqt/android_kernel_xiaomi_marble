@@ -61,12 +61,6 @@ void dfs_reset_alldelaylines(struct wlan_dfs *dfs)
 		return;
 	}
 
-	if (!(dfs->dfs_b5radars)) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "pl==NULL, b5radars=%pK",
-				dfs->dfs_b5radars);
-		return;
-	}
-
 	/* Reset the pulse log. */
 	pl->pl_firstelem = pl->pl_numelems = 0;
 	pl->pl_lastelem = DFS_MAX_PULSE_BUFFER_MASK;
@@ -76,6 +70,12 @@ void dfs_reset_alldelaylines(struct wlan_dfs *dfs)
 			ft = dfs->dfs_radarf[i];
 			dfs_reset_filtertype(ft);
 		}
+	}
+
+	if (!(dfs->dfs_b5radars)) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "b5radars=%pK",
+				dfs->dfs_b5radars);
+		return;
 	}
 
 	for (i = 0; i < dfs->dfs_rinfo.rn_numbin5radars; i++) {
@@ -337,16 +337,25 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 	dfs_print_filters(dfs);
 
 	dfs->dfs_rinfo.rn_numbin5radars  = numb5radars;
-	if (dfs->dfs_b5radars)
+	if (dfs->dfs_b5radars) {
 		qdf_mem_free(dfs->dfs_b5radars);
-
-	dfs->dfs_b5radars = (struct dfs_bin5radars *)qdf_mem_malloc(
-			numb5radars * sizeof(struct dfs_bin5radars));
-	if (!(dfs->dfs_b5radars)) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"cannot allocate memory for bin5 radars");
-		goto bad4;
+		dfs->dfs_b5radars = NULL;
 	}
+
+	if (numb5radars) {
+		dfs->dfs_b5radars = (struct dfs_bin5radars *)qdf_mem_malloc(
+				numb5radars * sizeof(struct dfs_bin5radars));
+		/*
+		 * Malloc can return NULL if numb5radars is zero. But we still
+		 * want to reset the delay lines.
+		 */
+		if (!(dfs->dfs_b5radars)) {
+			dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"cannot allocate memory for bin5 radars");
+			goto bad4;
+		}
+	}
+
 	for (n = 0; n < numb5radars; n++) {
 		dfs->dfs_b5radars[n].br_pulse = b5pulses[n];
 		dfs->dfs_b5radars[n].br_pulse.b5_timewindow *= 1000000;
