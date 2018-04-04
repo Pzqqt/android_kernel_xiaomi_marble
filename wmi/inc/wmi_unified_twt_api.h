@@ -20,7 +20,7 @@
  * DOC: Implement API's specific to TWT component.
  */
 
-#ifdef _WMI_UNIFIED_TWT_API_H_
+#ifndef _WMI_UNIFIED_TWT_API_H_
 #define _WMI_UNIFIED_TWT_API_H_
 
 #include "wmi_unified_twt_param.h"
