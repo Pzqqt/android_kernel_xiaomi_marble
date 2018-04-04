@@ -1,8 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,11 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
- */
 #if !defined(__SCHEDULER_API_H)
 #define __SCHEDULER_API_H
 
@@ -241,6 +233,15 @@ QDF_STATUS scheduler_os_if_mq_handler(struct scheduler_msg *msg);
  * Return: none
  */
 QDF_STATUS scheduler_timer_q_mq_handler(struct scheduler_msg *msg);
+
+/**
+ * scheduler_scan_mq_handler() - top level message queue handler for
+ *                               scan queue
+ * @msg: pointer to actual message being handled
+ *
+ * Return: QDF status
+ */
+QDF_STATUS scheduler_scan_mq_handler(struct scheduler_msg *msg);
 
 /**
  * scheduler_register_wma_legacy_handler() - register legacy wma handler

@@ -211,7 +211,7 @@ tgt_scan_event_handler(struct wlan_objmgr_psoc *psoc,
 	msg.callback = scm_scan_event_handler;
 	msg.flush_callback = scm_scan_event_flush_callback;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_SCAN, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wlan_objmgr_vdev_release_ref(event_info->vdev, WLAN_SCAN_ID);
 	}
@@ -272,11 +272,11 @@ QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,
 	msg.callback = scm_handle_bcn_probe;
 	msg.flush_callback = scm_bcn_probe_flush_callback;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_msg(QDF_MODULE_ID_SCAN, &msg);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		wlan_objmgr_psoc_release_ref(psoc, WLAN_SCAN_ID);
-		scm_err("failed to post to QDF_MODULE_ID_TARGET_IF");
+		scm_err("failed to post to QDF_MODULE_ID_SCAN");
 		qdf_mem_free(bcn->rx_data);
 		qdf_mem_free(bcn);
 		qdf_nbuf_free(buf);

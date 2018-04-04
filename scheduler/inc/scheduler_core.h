@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -19,11 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
- */
 #if !defined(__SCHEDULER_CORE_H)
 #define __SCHEDULER_CORE_H
 
@@ -37,7 +29,7 @@
 #else
 #define SCHEDULER_CORE_MAX_MESSAGES 2000
 #endif
-#define SCHEDULER_NUMBER_OF_MSG_QUEUE 5
+#define SCHEDULER_NUMBER_OF_MSG_QUEUE 6
 #define SCHEDULER_WRAPPER_MAX_FAIL_COUNT (SCHEDULER_CORE_MAX_MESSAGES * 3)
 #define SCHEDULER_WATCHDOG_TIMEOUT (10 * 1000) /* 10s */
 

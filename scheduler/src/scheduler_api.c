@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -17,12 +14,6 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
  */
 
 #include <scheduler_api.h>
@@ -529,6 +520,27 @@ QDF_STATUS scheduler_timer_q_mq_handler(struct scheduler_msg *msg)
 
 		return status;
 	}
+}
+
+QDF_STATUS scheduler_scan_mq_handler(struct scheduler_msg *msg)
+{
+	QDF_STATUS (*scan_q_msg_handler)(struct scheduler_msg *);
+
+	if (NULL == msg) {
+		sched_err("Msg is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	scan_q_msg_handler = msg->callback;
+
+	if (NULL == scan_q_msg_handler) {
+		sched_err("Msg callback is NULL");
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+	scan_q_msg_handler(msg);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS scheduler_register_wma_legacy_handler(scheduler_msg_process_fn_t
