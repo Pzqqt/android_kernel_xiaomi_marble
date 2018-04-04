@@ -4147,12 +4147,12 @@ int wma_extscan_change_results_event_handler(void *handle,
 	tSirWifiSignificantChange *dest_ap;
 	wmi_extscan_wlan_change_result_bssid *src_chglist;
 
-	int numap;
+	uint32_t numap;
 	int i, k;
 	uint8_t *src_rssi;
 	int count = 0;
 	int moredata;
-	int rssi_num = 0;
+	uint32_t rssi_num = 0;
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t buf_len;
 	bool excess_data = false;
@@ -4184,8 +4184,17 @@ int wma_extscan_change_results_event_handler(void *handle,
 		WMA_LOGE("%s: Invalid num of entries in page: %d", __func__, numap);
 		return -EINVAL;
 	}
-	for (i = 0; i < numap; i++)
+	for (i = 0; i < numap; i++) {
+		if (src_chglist->num_rssi_samples > (UINT_MAX - rssi_num)) {
+			WMA_LOGE("%s: Invalid num of rssi samples %d numap %d rssi_num %d",
+				 __func__, src_chglist->num_rssi_samples,
+				 numap, rssi_num);
+			return -EINVAL;
+		}
 		rssi_num += src_chglist->num_rssi_samples;
+		src_chglist++;
+	}
+	src_chglist = param_buf->bssid_signal_descriptor_list;
 
 	if (event->first_entry_index +
 	    event->num_entries_in_page < event->total_entries) {
