@@ -150,20 +150,20 @@
 #define DFS_DEFAULT_PRI_MARGIN      6
 #define DFS_DEFAULT_FIXEDPATTERN_PRI_MARGIN	4
 
-#define WLAN_DFSQ_LOCK(_dfs)         qdf_spin_lock(&(_dfs)->dfs_radarqlock)
-#define WLAN_DFSQ_UNLOCK(_dfs)       qdf_spin_unlock(&(_dfs)->dfs_radarqlock)
+#define WLAN_DFSQ_LOCK(_dfs)         qdf_spin_lock_bh(&(_dfs)->dfs_radarqlock)
+#define WLAN_DFSQ_UNLOCK(_dfs)       qdf_spin_unlock_bh(&(_dfs)->dfs_radarqlock)
 #define WLAN_DFSQ_LOCK_CREATE(_dfs)  qdf_spinlock_create( \
 		&(_dfs)->dfs_radarqlock)
 #define WLAN_DFSQ_LOCK_DESTROY(_dfs) qdf_spinlock_destroy( \
 		&(_dfs)->dfs_radarqlock)
 
-#define WLAN_ARQ_LOCK(_dfs)          qdf_spin_lock(&(_dfs)->dfs_arqlock)
-#define WLAN_ARQ_UNLOCK(_dfs)        qdf_spin_unlock(&(_dfs)->dfs_arqlock)
+#define WLAN_ARQ_LOCK(_dfs)          qdf_spin_lock_bh(&(_dfs)->dfs_arqlock)
+#define WLAN_ARQ_UNLOCK(_dfs)        qdf_spin_unlock_bh(&(_dfs)->dfs_arqlock)
 #define WLAN_ARQ_LOCK_CREATE(_dfs)   qdf_spinlock_create(&(_dfs)->dfs_arqlock)
 #define WLAN_ARQ_LOCK_DESTROY(_dfs)  qdf_spinlock_destroy(&(_dfs)->dfs_arqlock)
 
-#define WLAN_DFSEVENTQ_LOCK(_dfs)         qdf_spin_lock(&(_dfs)->dfs_eventqlock)
-#define WLAN_DFSEVENTQ_UNLOCK(_dfs)       qdf_spin_unlock( \
+#define WLAN_DFSEVENTQ_LOCK(_dfs)         qdf_spin_lock_bh(&(_dfs)->dfs_eventqlock)
+#define WLAN_DFSEVENTQ_UNLOCK(_dfs)       qdf_spin_unlock_bh( \
 		&(_dfs)->dfs_eventqlock)
 #define WLAN_DFSEVENTQ_LOCK_CREATE(_dfs)  qdf_spinlock_create( \
 		&(_dfs)->dfs_eventqlock)
