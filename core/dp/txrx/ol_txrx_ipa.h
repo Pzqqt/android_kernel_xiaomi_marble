@@ -29,11 +29,20 @@
  * @reserved2: Reserved not used
  *
  */
+#ifdef QCA_WIFI_3_0
 struct frag_header {
 	uint16_t length;
 	uint32_t reserved1;
 	uint32_t reserved2;
 } __packed;
+#else
+struct frag_header {
+	uint32_t
+		length:16,
+		reserved16:16;
+	uint32_t reserved2;
+} __packed;
+#endif
 
 /**
  * struct ipa_header - ipa header type registered to IPA hardware

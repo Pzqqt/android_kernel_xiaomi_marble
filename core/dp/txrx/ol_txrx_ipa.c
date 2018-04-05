@@ -77,6 +77,7 @@
 #include <ol_txrx_ipa.h>
 
 /* For Tx pipes, use Ethernet-II Header format */
+#ifdef QCA_WIFI_3_0
 struct ol_txrx_ipa_uc_tx_hdr ipa_uc_tx_hdr = {
 	{
 		0x0000,
@@ -92,6 +93,22 @@ struct ol_txrx_ipa_uc_tx_hdr ipa_uc_tx_hdr = {
 		0x0008
 	}
 };
+#else
+struct ol_txrx_ipa_uc_tx_hdr ipa_uc_tx_hdr = {
+	{
+		0x00000000,
+		0x00000000
+	},
+	{
+		0x00000000
+	},
+	{
+		{0x00, 0x03, 0x7f, 0xaa, 0xbb, 0xcc},
+		{0x00, 0x03, 0x7f, 0xdd, 0xee, 0xff},
+		0x0008
+	}
+};
+#endif
 
 /**
  * ol_txrx_ipa_uc_get_resource() - Client request resource information

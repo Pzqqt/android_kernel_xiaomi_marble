@@ -179,11 +179,20 @@ struct wlan_ipa_tx_hdr {
  * @reserved1: Reserved not used
  * @reserved2: Reserved not used
  */
+#if defined (QCA_WIFI_3_0) || defined (CONFIG_LITHIUM)
 struct frag_header {
 	uint16_t length;
 	uint32_t reserved1;
 	uint32_t reserved2;
 } qdf_packed;
+#else
+struct frag_header {
+	uint32_t
+		length:16,
+		reserved16:16;
+	uint32_t reserved2;
+} qdf_packed;
+#endif
 
 /**
  * struct ipa_header - ipa header type registered to IPA hardware
