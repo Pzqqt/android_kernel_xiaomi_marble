@@ -55,6 +55,7 @@
 #include "wlan_hdd_stats.h"
 #include "wlan_hdd_scan.h"
 #include "wlan_hdd_request_manager.h"
+#include <wlan_osif_request_manager.h>
 #ifdef CONFIG_LEAK_DETECTION
 #include "qdf_debug_domain.h"
 #endif
@@ -6663,6 +6664,7 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	 */
 
 	hdd_request_manager_deinit();
+	osif_request_manager_deinit();
 
 	hdd_close_all_adapters(hdd_ctx, false);
 
@@ -10566,6 +10568,7 @@ int hdd_wlan_startup(struct device *dev)
 	mutex_init(&hdd_ctx->avoid_freq_lock);
 #endif
 
+	osif_request_manager_init();
 	hdd_request_manager_init();
 	qdf_atomic_init(&hdd_ctx->con_mode_flag);
 
@@ -10685,6 +10688,7 @@ err_memdump_deinit:
 	hdd_driver_memdump_deinit();
 
 	hdd_request_manager_deinit();
+	osif_request_manager_deinit();
 	hdd_exit_netlink_services(hdd_ctx);
 
 	hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
