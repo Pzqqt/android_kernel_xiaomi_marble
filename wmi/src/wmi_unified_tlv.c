@@ -6279,6 +6279,8 @@ static QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 		roam_offload_params->rssi_cat_gap = roam_req->roam_rssi_cat_gap;
 		roam_offload_params->select_5g_margin =
 			roam_req->select_5ghz_margin;
+		roam_offload_params->handoff_delay_for_rx =
+			roam_req->roam_offload_params.ho_delay_for_rx;
 		roam_offload_params->reassoc_failure_timeout =
 			roam_req->reassoc_failure_timeout;
 
