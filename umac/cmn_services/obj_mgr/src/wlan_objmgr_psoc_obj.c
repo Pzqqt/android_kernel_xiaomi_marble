@@ -1859,15 +1859,19 @@ static void wlan_objmgr_psoc_peer_ref_print(struct wlan_objmgr_psoc *psoc,
 					 void *obj, void *args)
 {
 	struct wlan_objmgr_peer *peer = (struct wlan_objmgr_peer *)obj;
+	WLAN_OBJ_STATE obj_state;
+	uint8_t vdev_id;
 	uint8_t *macaddr;
 
 	wlan_peer_obj_lock(peer);
 	macaddr = wlan_peer_get_macaddr(peer);
+	obj_state = peer->obj_state;
+	vdev_id = wlan_vdev_get_id(wlan_peer_get_vdev(peer));
 	wlan_peer_obj_unlock(peer);
 
-	obj_mgr_info("Peer MAC is %02x:%02x:%02x:%02x:%02x:%02x",
+	obj_mgr_err("Peer MAC is %02x:%02x:%02x:%02x:%02x:%02x state:%d vdev_id:%d",
 		  macaddr[0], macaddr[1], macaddr[2], macaddr[3],
-		  macaddr[4], macaddr[5]);
+		  macaddr[4], macaddr[5], obj_state, vdev_id);
 	wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg);
 }
 
@@ -1875,12 +1879,14 @@ static void wlan_objmgr_psoc_vdev_ref_print(struct wlan_objmgr_psoc *psoc,
 					 void *obj, void *args)
 {
 	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)obj;
+	WLAN_OBJ_STATE obj_state;
 	uint8_t id;
 
 	wlan_vdev_obj_lock(vdev);
 	id = wlan_vdev_get_id(vdev);
+	obj_state =  vdev->obj_state;
 	wlan_vdev_obj_unlock(vdev);
-	obj_mgr_info("Vdev ID is %d", id);
+	obj_mgr_err("Vdev ID is %d, state %d", id, obj_state);
 
 	wlan_objmgr_print_ref_ids(vdev->vdev_objmgr.ref_id_dbg);
 }
@@ -1894,7 +1900,7 @@ static void wlan_objmgr_psoc_pdev_ref_print(struct wlan_objmgr_psoc *psoc,
 	wlan_pdev_obj_lock(pdev);
 	id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	wlan_pdev_obj_unlock(pdev);
-	obj_mgr_info("pdev ID is %d", id);
+	obj_mgr_err("pdev ID is %d", id);
 
 	wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg);
 }
@@ -1902,17 +1908,17 @@ static void wlan_objmgr_psoc_pdev_ref_print(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_objmgr_print_ref_all_objects_per_psoc(
 		struct wlan_objmgr_psoc *psoc)
 {
-	obj_mgr_info("Ref counts of PEER");
+	obj_mgr_err("Ref counts of PEER");
 	wlan_objmgr_iterate_obj_list_all_noref(psoc, WLAN_PEER_OP,
 				wlan_objmgr_psoc_peer_ref_print, NULL);
-	obj_mgr_info("Ref counts of VDEV");
+	obj_mgr_err("Ref counts of VDEV");
 	wlan_objmgr_iterate_obj_list_all_noref(psoc, WLAN_VDEV_OP,
 				wlan_objmgr_psoc_vdev_ref_print, NULL);
-	obj_mgr_info("Ref counts of PDEV");
+	obj_mgr_err("Ref counts of PDEV");
 	wlan_objmgr_iterate_obj_list_all_noref(psoc, WLAN_PDEV_OP,
 				wlan_objmgr_psoc_pdev_ref_print, NULL);
 
-	obj_mgr_info(" Ref counts of PSOC");
+	obj_mgr_err(" Ref counts of PSOC");
 	wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
 
 	return QDF_STATUS_SUCCESS;
