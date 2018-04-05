@@ -200,12 +200,40 @@ static int wsa881x_set_mute(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wsa881x_get_t0_init(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct wsa881x_priv *wsa881x = snd_soc_codec_get_drvdata(codec);
+	struct wsa881x_tz_priv *pdata = &wsa881x->tz_pdata;
+
+	ucontrol->value.integer.value[0] = pdata->t0_init;
+	dev_dbg(codec->dev, "%s: t0 init %d\n", __func__, pdata->t0_init);
+
+	return 0;
+}
+
+static int wsa881x_set_t0_init(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct wsa881x_priv *wsa881x = snd_soc_codec_get_drvdata(codec);
+	struct wsa881x_tz_priv *pdata = &wsa881x->tz_pdata;
+
+	pdata->t0_init = ucontrol->value.integer.value[0];
+	dev_dbg(codec->dev, "%s: t0 init %d\n", __func__, pdata->t0_init);
+
+	return 0;
+}
 
 static const struct snd_kcontrol_new wsa_snd_controls[] = {
 	SOC_ENUM_EXT("WSA PA Gain", wsa_pa_gain_enum,
 		     wsa_pa_gain_get, wsa_pa_gain_put),
 	SOC_SINGLE_EXT("WSA PA Mute", SND_SOC_NOPM, 0, 1, 0,
 		wsa881x_get_mute, wsa881x_set_mute),
+	SOC_SINGLE_EXT("WSA T0 Init", SND_SOC_NOPM, 0, 1, 0,
+		wsa881x_get_t0_init, wsa881x_set_t0_init),
 };
 
 static int codec_debug_open(struct inode *inode, struct file *file)
