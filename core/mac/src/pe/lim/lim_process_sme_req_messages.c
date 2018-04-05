@@ -540,6 +540,27 @@ lim_configure_ap_start_bss_session(tpAniSirGlobal mac_ctx, tpPESession session,
 }
 
 /**
+ * lim_clear_he_tx_stbc() - Clear tx stbc for a given session
+ * @session: Session
+ *
+ * Clear tx stbc for a given session
+ *
+ * Return: None
+ */
+#ifdef WLAN_FEATURE_11AX
+static void lim_clear_he_tx_stbc(tpPESession session)
+{
+	if (session) {
+		session->he_config.tx_stbc_lt_80mhz = 0;
+		session->he_config.tx_stbc_gt_80mhz = 0;
+	}
+}
+#else
+static void lim_clear_he_tx_stbc(tpPESession session)
+{}
+#endif
+
+/**
  * __lim_handle_sme_start_bss_request() - process SME_START_BSS_REQ message
  *@mac_ctx: Pointer to Global MAC structure
  *@msg_buf: A pointer to the SME message buffer
@@ -853,6 +874,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->vht_config.tx_stbc = 0;
 			session->vht_config.num_soundingdim = 0;
 			session->htConfig.ht_tx_stbc = 0;
+			lim_clear_he_tx_stbc(session);
 		}
 		/*
 		 * keep the RSN/WPA IE information in PE Session Entry

@@ -2117,6 +2117,29 @@ static uint32_t lim_populate_vht_caps(tDot11fIEVHTCaps input_caps)
 }
 
 /**
+ * lim_update_he_stbc_capable() - Update stbc capable flag based on
+ * HE capability
+ * @add_sta_params: add sta related parameters
+ *
+ * Update stbc cpable flag based on HE capability
+ *
+ * Return: None
+ */
+#ifdef WLAN_FEATURE_11AX
+static void lim_update_he_stbc_capable(tpAddStaParams add_sta_params)
+{
+	if (add_sta_params &&
+	    add_sta_params->he_capable &&
+	    add_sta_params->stbc_capable)
+		add_sta_params->stbc_capable =
+			add_sta_params->he_config.rx_stbc_lt_80mhz;
+}
+#else
+static void lim_update_he_stbc_capable(tpAddStaParams add_sta_params)
+{}
+#endif
+
+/**
  * lim_add_sta()- called to add an STA context at hardware
  * @mac_ctx: pointer to global mac structure
  * @sta_ds: station node
@@ -2517,8 +2540,27 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 			add_sta_params->nwType = eSIR_11B_NW_TYPE;
 	}
 
-	msg_q.type = WMA_ADD_STA_REQ;
+	if (add_sta_params->htCapable && session_entry->htConfig.ht_tx_stbc) {
+		struct sDot11fIEHTCaps *ht_caps = (struct sDot11fIEHTCaps *)
+			&add_sta_params->ht_caps;
+		if (ht_caps->rxSTBC)
+			add_sta_params->stbc_capable = 1;
+		else
+			add_sta_params->stbc_capable = 0;
+	}
 
+	if (add_sta_params->vhtCapable && add_sta_params->stbc_capable) {
+		struct sDot11fIEVHTCaps *vht_caps = (struct sDot11fIEVHTCaps *)
+			&add_sta_params->vht_caps;
+		if (vht_caps->rxSTBC)
+			add_sta_params->stbc_capable = 1;
+		else
+			add_sta_params->stbc_capable = 0;
+	}
+
+	lim_update_he_stbc_capable(add_sta_params);
+
+	msg_q.type = WMA_ADD_STA_REQ;
 	msg_q.reserved = 0;
 	msg_q.bodyptr = add_sta_params;
 	msg_q.bodyval = 0;
@@ -3802,6 +3844,10 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				pAddBssParams->staContext.htCapable,
 				pAddBssParams->staContext.greenFieldCapable,
 				pAddBssParams->staContext.lsigTxopProtection);
+		if (psessionEntry->htConfig.ht_tx_stbc)
+			pAddBssParams->staContext.stbc_capable =
+				pAssocRsp->HTCaps.rxSTBC;
+
 		if (psessionEntry->vhtCapability &&
 				(IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps) ||
 				 IS_BSS_VHT_CAPABLE(pBeaconStruct->
@@ -3828,11 +3874,19 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			if ((vht_caps != NULL) && vht_caps->suBeamformeeCap &&
 				psessionEntry->vht_config.su_beam_former)
 				sta_context->enable_su_tx_bformer = 1;
+
+			if (vht_caps && pAddBssParams->staContext.stbc_capable)
+				pAddBssParams->staContext.stbc_capable =
+					vht_caps->rxSTBC;
 		}
 		if (lim_is_session_he_capable(psessionEntry) &&
-			pAssocRsp->he_cap.present)
-			lim_intersect_ap_he_caps(psessionEntry, pAddBssParams,
-					      NULL, pAssocRsp);
+		    pAssocRsp->he_cap.present) {
+			lim_intersect_ap_he_caps(psessionEntry,
+						 pAddBssParams,
+						 NULL,
+						 pAssocRsp);
+			lim_update_he_stbc_capable(&pAddBssParams->staContext);
+		}
 
 		if ((pAssocRsp->HTCaps.supportedChannelWidthSet) &&
 				(chanWidthSupp)) {

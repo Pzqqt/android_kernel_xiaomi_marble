@@ -1043,7 +1043,6 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	struct cdp_pdev *pdev;
 	struct peer_assoc_params *cmd;
 	int32_t ret, max_rates, i;
-	uint8_t rx_stbc, tx_stbc;
 	uint8_t *rate_pos;
 	wmi_rate_set peer_legacy_rates, peer_ht_rates;
 	uint32_t num_peer_11b_rates = 0;
@@ -1214,19 +1213,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	if (params->rmfEnabled)
 		cmd->peer_flags |= WMI_PEER_PMF;
 
-	rx_stbc = (params->ht_caps & IEEE80211_HTCAP_C_RXSTBC) >>
-		  IEEE80211_HTCAP_C_RXSTBC_S;
-	if (rx_stbc) {
+	if (params->stbc_capable)
 		cmd->peer_flags |= WMI_PEER_STBC;
-		cmd->peer_rate_caps |= (rx_stbc << WMI_RC_RX_STBC_FLAG_S);
-	}
-
-	tx_stbc = (params->ht_caps & IEEE80211_HTCAP_C_TXSTBC) >>
-		  IEEE80211_HTCAP_C_TXSTBC_S;
-	if (tx_stbc) {
-		cmd->peer_flags |= WMI_PEER_STBC;
-		cmd->peer_rate_caps |= (tx_stbc << WMI_RC_TX_STBC_FLAG_S);
-	}
 
 	if (params->htLdpcCapable || params->vhtLdpcCapable)
 		cmd->peer_flags |= WMI_PEER_LDPC;

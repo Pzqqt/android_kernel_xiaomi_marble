@@ -227,6 +227,7 @@ typedef struct sAniProbeRspStruct {
  * @atimIePresent: Peer Atim Info
  * @peerAtimWindowLength: peer ATIM Window length
  * @nss: Return the number of spatial streams supported
+ * @stbc_capable: stbc capable
  * @max_amsdu_num: Maximum number of MSDUs in a tx aggregate frame
  *
  * This structure contains parameter required for
@@ -329,6 +330,7 @@ typedef struct {
 	tDot11fIEhe_cap he_config;
 	tDot11fIEhe_op he_op;
 #endif
+	uint8_t stbc_capable;
 	uint8_t max_amsdu_num;
 } tAddStaParams, *tpAddStaParams;
 
