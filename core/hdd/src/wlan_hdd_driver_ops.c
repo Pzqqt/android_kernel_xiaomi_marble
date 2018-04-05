@@ -1490,6 +1490,17 @@ static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 	if (cds_is_driver_loading())
 		return;
 
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL return");
+		return;
+	}
+
+	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
+		hdd_info("Driver modules are already closed!");
+		return;
+	}
+
 	switch (uevent->uevent) {
 	case PLD_RECOVERY:
 		cds_set_target_ready(false);
@@ -1498,10 +1509,7 @@ static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 	case PLD_FW_DOWN:
 		qdf_complete_wait_events();
 		cds_set_target_ready(false);
-		hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-		if (hdd_ctx != NULL)
-			wlan_cfg80211_cleanup_scan_queue(
-					hdd_ctx->hdd_pdev, NULL);
+		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev, NULL);
 		break;
 	default:
 		break;
@@ -1521,8 +1529,8 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 	hdd_enter();
 	hdd_info("pld event %d", uevent->uevent);
 
-	mutex_lock(&hdd_init_deinit_lock);
 	wlan_hdd_set_the_pld_uevent(uevent);
+	mutex_lock(&hdd_init_deinit_lock);
 	wlan_hdd_handle_the_pld_uevent(uevent);
 	mutex_unlock(&hdd_init_deinit_lock);
 
