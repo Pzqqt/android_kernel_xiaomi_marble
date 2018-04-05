@@ -1,8 +1,6 @@
 /*
  * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -450,13 +448,17 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 			psessionEntry->ftPEContext.ftPreAuthStatus = status;
 			goto send_rsp;
 		}
-		pftSessionEntry->peSessionId = sessionId;
+
 		pftSessionEntry->smeSessionId = psessionEntry->smeSessionId;
 		sir_copy_mac_addr(pftSessionEntry->selfMacAddr,
 				  psessionEntry->selfMacAddr);
 		sir_copy_mac_addr(pftSessionEntry->limReAssocbssId,
 				  pbssDescription->bssId);
-		pftSessionEntry->bssType = psessionEntry->bssType;
+
+		/* Update the beacon/probe filter in mac_ctx */
+		lim_set_bcn_probe_filter(pMac,
+					 pftSessionEntry,
+					 NULL, 0);
 
 		if (pftSessionEntry->bssType == eSIR_INFRASTRUCTURE_MODE)
 			pftSessionEntry->limSystemRole = eLIM_STA_ROLE;

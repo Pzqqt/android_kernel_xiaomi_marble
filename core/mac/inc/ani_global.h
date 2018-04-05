@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -17,12 +14,6 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
  */
 
 #ifndef _ANIGLOBAL_H
@@ -875,6 +866,28 @@ struct vdev_type_nss {
 	uint8_t ocb;
 };
 
+/**
+ * struct mgmt_beacon_probe_filter
+ * @bcn_filter_lock: Spinlock for the filter structure
+ * @num_sta_sessions: Number of active PE STA sessions
+ * @sta_bssid: Array of PE STA session's peer BSSIDs
+ * @num_ibss_sessions: Number of active PE IBSS sessions
+ * @ibss_ssid: Array of PE IBSS session's SSID
+ * @num_sap_session: Number of active PE SAP sessions
+ * @sap_channel: Array of PE SAP session's channels
+ *
+ * Used to filter the STA/IBSS/SAP beacons/probes required in PE and
+ * drop other unwanted beacon/probe response frames
+ */
+struct mgmt_beacon_probe_filter {
+	uint8_t num_sta_sessions;
+	tSirMacAddr sta_bssid[SIR_MAX_SUPPORTED_BSS];
+	uint8_t num_ibss_sessions;
+	tSirMacSSid ibss_ssid[SIR_MAX_SUPPORTED_BSS];
+	uint8_t num_sap_sessions;
+	uint8_t sap_channel[SIR_MAX_SUPPORTED_BSS];
+};
+
 /* ------------------------------------------------------------------- */
 /* / MAC Sirius parameter structure */
 typedef struct sAniSirGlobal {
@@ -949,6 +962,7 @@ typedef struct sAniSirGlobal {
 	uint16_t usr_cfg_ba_buff_size;
 	uint8_t no_ack_policy_cfg[MAX_NUM_AC];
 	uint32_t he_sgi_ltf_cfg_bit_mask;
+	struct mgmt_beacon_probe_filter bcn_filter;
 } tAniSirGlobal;
 
 

@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -17,12 +14,6 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
  */
 
 /**=========================================================================
@@ -379,6 +370,152 @@ lim_get_peer_idxpool_size(uint16_t num_sta, tSirBssType bss_type)
 }
 #endif
 
+void lim_set_bcn_probe_filter(tpAniSirGlobal mac_ctx,
+				tpPESession session,
+				tSirMacSSid *ibss_ssid,
+				uint8_t sap_channel)
+{
+	struct mgmt_beacon_probe_filter *filter;
+	tSirBssType bss_type;
+	uint8_t session_id;
+	tSirMacAddr *bssid;
+
+	if (!session) {
+		pe_err("Invalid session pointer");
+		return;
+	}
+
+	bss_type = session->bssType;
+	session_id = session->peSessionId;
+	bssid = &session->bssId;
+
+	if (session_id >= SIR_MAX_SUPPORTED_BSS) {
+		pe_err("Invalid session_id %d of type %d",
+			session_id, bss_type);
+		return;
+	}
+
+	filter = &mac_ctx->bcn_filter;
+
+	if (eSIR_INFRASTRUCTURE_MODE == bss_type) {
+		filter->num_sta_sessions++;
+		sir_copy_mac_addr(filter->sta_bssid[session_id], *bssid);
+		pe_debug("Set filter for STA Session %d bssid "MAC_ADDRESS_STR,
+			session_id, MAC_ADDR_ARRAY(*bssid));
+	} else if (eSIR_IBSS_MODE == bss_type) {
+		if (!ibss_ssid) {
+			pe_err("IBSS Type with NULL SSID");
+			goto done;
+		}
+		filter->num_ibss_sessions++;
+		filter->ibss_ssid[session_id].length = ibss_ssid->length;
+		qdf_mem_copy(&filter->ibss_ssid[session_id].length,
+			     ibss_ssid->ssId,
+			     ibss_ssid->length);
+		pe_debug("Set filter for IBSS session %d ssid %s",
+			session_id, ibss_ssid->ssId);
+	} else if (eSIR_INFRA_AP_MODE == bss_type) {
+		if (!sap_channel) {
+			pe_err("SAP Type with invalid channel");
+			goto done;
+		}
+		filter->num_sap_sessions++;
+		filter->sap_channel[session_id] = sap_channel;
+		pe_debug("Set filter for SAP session %d channel %d",
+			session_id, sap_channel);
+	}
+
+done:
+	pe_debug("sta %d ibss %d sap %d",
+		filter->num_sta_sessions, filter->num_ibss_sessions,
+		filter->num_sap_sessions);
+}
+
+void lim_reset_bcn_probe_filter(tpAniSirGlobal mac_ctx,
+				tpPESession session)
+{
+	struct mgmt_beacon_probe_filter *filter;
+	tSirBssType bss_type;
+	uint8_t session_id;
+
+	if (!session) {
+		pe_err("Invalid session pointer");
+		return;
+	}
+
+	bss_type = session->bssType;
+	session_id = session->peSessionId;
+
+	if (session_id >= SIR_MAX_SUPPORTED_BSS) {
+		pe_err("Invalid session_id %d of type %d",
+			session_id, bss_type);
+		return;
+	}
+
+	filter = &mac_ctx->bcn_filter;
+
+	if (eSIR_INFRASTRUCTURE_MODE == bss_type) {
+		if (filter->num_sta_sessions)
+			filter->num_sta_sessions--;
+		qdf_mem_set(&filter->sta_bssid[session_id],
+			    sizeof(tSirMacAddr), 0);
+		pe_debug("Cleared STA Filter for session %d", session_id);
+	} else if (eSIR_IBSS_MODE == bss_type) {
+		if (filter->num_ibss_sessions)
+			filter->num_ibss_sessions--;
+		filter->ibss_ssid[session_id].length = 0;
+		qdf_mem_set(&filter->ibss_ssid[session_id].ssId,
+			    SIR_MAC_MAX_SSID_LENGTH, 0);
+		pe_debug("Cleared IBSS Filter for session %d", session_id);
+	} else if (eSIR_INFRA_AP_MODE == bss_type) {
+		if (filter->num_sap_sessions)
+			filter->num_sap_sessions--;
+		filter->sap_channel[session_id] = 0;
+		pe_debug("Cleared SAP Filter for session %d", session_id);
+	}
+
+	pe_debug("sta %d ibss %d sap %d",
+		filter->num_sta_sessions, filter->num_ibss_sessions,
+		filter->num_sap_sessions);
+}
+
+void lim_update_bcn_probe_filter(tpAniSirGlobal mac_ctx,
+					tpPESession session)
+{
+	struct mgmt_beacon_probe_filter *filter;
+	tSirBssType bss_type;
+	uint8_t session_id;
+
+	if (!session) {
+		pe_err("Invalid session pointer");
+		return;
+	}
+
+	bss_type = session->bssType;
+	session_id = session->peSessionId;
+
+	if (session_id >= SIR_MAX_SUPPORTED_BSS) {
+		pe_err("Invalid session_id %d of type %d",
+			session_id, bss_type);
+		return;
+	}
+
+	filter = &mac_ctx->bcn_filter;
+
+	if (eSIR_INFRA_AP_MODE == bss_type) {
+		filter->sap_channel[session_id] = session->currentOperChannel;
+		pe_debug("Updated SAP Filter for session %d channel %d",
+			session_id, filter->sap_channel[session_id]);
+	} else {
+		pe_debug("Invalid session type %d session id %d",
+			bss_type, session_id);
+	}
+
+	pe_debug("sta %d ibss %d sap %d",
+		filter->num_sta_sessions, filter->num_ibss_sessions,
+		filter->num_sap_sessions);
+}
+
 /**
  * pe_create_session() creates a new PE session given the BSSID
  * @param pMac:        pointer to global adapter context
@@ -459,6 +596,8 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	session_ptr->isFastTransitionEnabled = false;
 	session_ptr->isFastRoamIniFeatureEnabled = false;
 	*sessionId = i;
+	session_ptr->peSessionId = i;
+	session_ptr->bssType = bssType;
 	session_ptr->gLimPhyMode = WNI_CFG_PHY_MODE_11G;
 	/* Initialize CB mode variables when session is created */
 	session_ptr->htSupportedChannelWidthSet = 0;
@@ -689,6 +828,9 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 		session->peSessionId, session->operMode,
 		session->bssIdx,
 		MAC_ADDR_ARRAY(session->bssId));
+
+	lim_reset_bcn_probe_filter(mac_ctx, session);
+
 	for (n = 0; n < (mac_ctx->lim.maxStation + 1); n++) {
 		timer_ptr = &mac_ctx->lim.limTimers.gpLimCnfWaitTimer[n];
 		if (session->peSessionId == timer_ptr->sessionId)

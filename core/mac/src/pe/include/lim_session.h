@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -17,12 +14,6 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
  */
 
 #if !defined(__LIM_SESSION_H)
@@ -697,4 +688,46 @@ uint8_t pe_get_active_session_count(tpAniSirGlobal mac_ctx);
  */
 void pe_delete_fils_info(tpPESession session);
 #endif
+
+/**
+ * lim_set_bcn_probe_filter - set the beacon/probe filter in mac context
+ *
+ * @mac_ctx: pointer to global mac context
+ * @session: pointer to the PE session
+ * @ibss_ssid: SSID of the session for IBSS sessions
+ * @sap_channel: Operating Channel of the session for SAP sessions
+ *
+ * Sets the beacon/probe filter in the global mac context to filter
+ * and drop beacon/probe frames before posting it to PE queue
+ *
+ * Return: None
+ */
+void lim_set_bcn_probe_filter(tpAniSirGlobal mac_ctx,
+				tpPESession session,
+				tSirMacSSid *ibss_ssid,
+				uint8_t sap_channel);
+
+/**
+ * lim_reset_bcn_probe_filter - clear the beacon/probe filter in mac context
+ *
+ * @mac_ctx: pointer to the global mac context
+ * @session: pointer to the PE session whose filter is to be cleared
+ *
+ * Return: None
+ */
+void lim_reset_bcn_probe_filter(tpAniSirGlobal mac_ctx, tpPESession session);
+
+/**
+ * lim_update_bcn_probe_filter - Update the beacon/probe filter in mac context
+ *
+ * @mac_ctx: pointer to the global mac context
+ * @session: pointer to the PE session whose filter is to be cleared
+ *
+ * This API is applicable only for SAP sessions to update the SAP channel
+ * in the filter during a channel switch
+ *
+ * Return: None
+ */
+void lim_update_bcn_probe_filter(tpAniSirGlobal mac_ctx, tpPESession session);
+
 #endif /* #if !defined( __LIM_SESSION_H ) */
