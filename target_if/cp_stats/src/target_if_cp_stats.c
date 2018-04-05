@@ -65,6 +65,12 @@ target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	cp_stats_tx_ops = &tx_ops->cp_stats_tx_ops;
+	if (!cp_stats_tx_ops) {
+		cp_stats_err("lmac tx ops is NULL!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	cp_stats_tx_ops->cp_stats_attach =
 		target_if_cp_stats_register_event_handler;
 	cp_stats_tx_ops->cp_stats_detach =

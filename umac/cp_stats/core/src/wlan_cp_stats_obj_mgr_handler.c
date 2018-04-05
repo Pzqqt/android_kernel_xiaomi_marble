@@ -33,10 +33,10 @@
 QDF_STATUS
 wlan_cp_stats_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 {
-	QDF_STATUS status   = QDF_STATUS_E_FAILURE;
 	WLAN_DEV_TYPE dev_type;
-	struct psoc_cp_stats *psoc_cs;
-	struct cp_stats_context *csc;
+	struct cp_stats_context *csc = NULL;
+	struct psoc_cp_stats *psoc_cs = NULL;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (!psoc) {
 		cp_stats_err("PSOC is NULL");
@@ -144,9 +144,9 @@ wlan_cp_stats_psoc_obj_destroy_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 QDF_STATUS
 wlan_cp_stats_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 {
+	struct cp_stats_context *csc = NULL;
+	struct pdev_cp_stats *pdev_cs = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct pdev_cp_stats *pdev_cs;
-	struct cp_stats_context *csc;
 
 	if (!pdev) {
 		cp_stats_err("PDEV is NULL");
@@ -231,9 +231,9 @@ wlan_cp_stats_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 QDF_STATUS
 wlan_cp_stats_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev, void *arg)
 {
+	struct cp_stats_context *csc = NULL;
+	struct vdev_cp_stats *vdev_cs = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct vdev_cp_stats *vdev_cs;
-	struct cp_stats_context *csc;
 
 	if (!vdev) {
 		cp_stats_err("vdev is NULL");
@@ -318,9 +318,9 @@ wlan_cp_stats_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev, void *arg)
 QDF_STATUS
 wlan_cp_stats_peer_obj_create_handler(struct wlan_objmgr_peer *peer, void *arg)
 {
+	struct cp_stats_context *csc = NULL;
+	struct peer_cp_stats *peer_cs = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct peer_cp_stats *peer_cs;
-	struct cp_stats_context *csc;
 
 	if (!peer) {
 		cp_stats_err("peer is NULL");
