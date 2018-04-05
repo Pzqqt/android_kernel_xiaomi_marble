@@ -828,7 +828,8 @@ void hdd_tx_rx_collect_connectivity_stats_info(struct sk_buff *skb,
  *
  * Return: Always returns NETDEV_TX_OK
  */
-static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
+					 struct net_device *dev)
 {
 	QDF_STATUS status;
 	sme_ac_enum_type ac;
@@ -1117,9 +1118,9 @@ drop_pkt_accounting:
  *
  * Return: Always returns NETDEV_TX_OK
  */
-int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+netdev_tx_t hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
-	int ret;
+	netdev_tx_t ret;
 
 	cds_ssr_protect(__func__);
 	ret = __hdd_hard_start_xmit(skb, dev);

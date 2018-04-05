@@ -423,8 +423,8 @@ int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
  *
  * Return: Always returns NETDEV_TX_OK
  */
-static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
-					struct net_device *dev)
+static netdev_tx_t __hdd_softap_hard_start_xmit(struct sk_buff *skb,
+						struct net_device *dev)
 {
 	sme_ac_enum_type ac = SME_AC_BE;
 	struct hdd_adapter *adapter = (struct hdd_adapter *) netdev_priv(dev);
@@ -640,9 +640,10 @@ drop_pkt_accounting:
  *
  * Return: Always returns NETDEV_TX_OK
  */
-int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+netdev_tx_t hdd_softap_hard_start_xmit(struct sk_buff *skb,
+				       struct net_device *dev)
 {
-	int ret;
+	netdev_tx_t ret;
 
 	cds_ssr_protect(__func__);
 	ret = __hdd_softap_hard_start_xmit(skb, dev);
