@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -144,7 +144,8 @@ end:
 
 }
 
-static int epping_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t epping_hard_start_xmit(struct sk_buff *skb,
+					  struct net_device *dev)
 {
 	epping_adapter_t *adapter;
 	int ret = 0;
@@ -153,12 +154,13 @@ static int epping_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	if (NULL == adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: EPPING adapter context is Null", __func__);
+		kfree_skb(skb);
 		ret = -ENODEV;
 		goto end;
 	}
 	ret = epping_tx_send(skb, adapter);
 end:
-	return ret;
+	return NETDEV_TX_OK;
 }
 
 static struct net_device_stats *epping_get_stats(struct net_device *dev)
