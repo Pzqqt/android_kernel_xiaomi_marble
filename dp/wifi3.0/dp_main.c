@@ -3516,6 +3516,16 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 	if (peer) {
 		peer->delete_in_progress = false;
+		/*
+		* on peer create, peer ref count decrements, sice new peer is not
+		* getting created earlier reference is reused, peer_unref_delete will
+		* take care of incrementing count
+		* */
+		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
+			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->osif_pdev,
+				vdev->vdev_id, peer->mac_addr.raw);
+		}
+
 		return (void *)peer;
 	}
 
