@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -17,16 +17,25 @@
  */
 
 /**
- * DOC: This file contains centralized definitions of converged configuration.
+ * DOC: This file contains centralized definitions of SCAN component
  */
+#ifndef __CONFIG_SCAN_H
+#define __CONFIG_SCAN_H
 
-#ifndef __CFG_CONVERGED_H
-#define __CFG_CONVERGED_H
+#include "cfg_define.h"
 
-#include <wlan_scan_cfg.h>
+#define CFG_ACTIVE_MAX_CHANNEL_TIME CFG_INI_UINT(\
+		"gActiveMaxChannelTime",\
+		0, 10000, 40,\
+		CFG_VALUE_OR_DEFAULT, "active dwell time")
 
-#define CFG_CONVERGED_ALL \
-		CFG_SCAN_ALL
+#define CFG_PASSIVE_MAX_CHANNEL_TIME CFG_INI_UINT(\
+		"gPassiveMaxChannelTime",\
+		0, 10000, 100,\
+		CFG_VALUE_OR_DEFAULT, "passive dwell time")
 
-#endif /* __CFG_CONVERGED_H */
+#define CFG_SCAN_ALL \
+	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME) \
+	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME)
 
+#endif

@@ -40,6 +40,7 @@
 #include <wlan_dfs_utils_api.h>
 #include <wlan_policy_mgr_api.h>
 #endif
+#include "cfg_ucfg_api.h"
 
 QDF_STATUS ucfg_scan_register_bcn_cb(struct wlan_objmgr_psoc *psoc,
 	update_beacon_cb cb, enum scan_cb_type type)
@@ -1334,14 +1335,73 @@ ucfg_scan_register_event_handler(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+void wlan_scan_cfg_get_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
+					 uint32_t *dwell_time)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return;
+	}
+
+	*dwell_time = scan_obj->scan_def.passive_dwell;
+}
+
+void wlan_scan_cfg_set_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
+					 uint32_t dwell_time)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return;
+	}
+
+	scan_obj->scan_def.passive_dwell = dwell_time;
+}
+
+void wlan_scan_cfg_get_active_dwelltime(struct wlan_objmgr_psoc *psoc,
+					uint32_t *dwell_time)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return;
+	}
+
+	*dwell_time = scan_obj->scan_def.active_dwell;
+}
+
+void wlan_scan_cfg_set_active_dwelltime(struct wlan_objmgr_psoc *psoc,
+					uint32_t dwell_time)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return;
+	}
+
+	scan_obj->scan_def.active_dwell = dwell_time;
+}
+
 static QDF_STATUS
-wlan_scan_global_init(struct wlan_scan_obj *scan_obj)
+wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
+		      struct wlan_scan_obj *scan_obj)
 {
 	scan_obj->enable_scan = true;
 	scan_obj->drop_bcn_on_chan_mismatch = true;
 	scan_obj->disable_timeout = false;
-	scan_obj->scan_def.active_dwell = SCAN_ACTIVE_DWELL_TIME;
-	scan_obj->scan_def.passive_dwell = SCAN_PASSIVE_DWELL_TIME;
+	scan_obj->scan_def.active_dwell =
+			 cfg_get(psoc, CFG_ACTIVE_MAX_CHANNEL_TIME);
+	scan_obj->scan_def.passive_dwell =
+			 cfg_get(psoc, CFG_PASSIVE_MAX_CHANNEL_TIME);
 	scan_obj->scan_def.max_rest_time = SCAN_MAX_REST_TIME;
 	scan_obj->scan_def.sta_miracast_mcc_rest_time =
 					SCAN_STA_MIRACAST_MCC_REST_TIME;
@@ -1837,7 +1897,6 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	}
 
 	scan_def = &scan_obj->scan_def;
-	scan_def->active_dwell = scan_cfg->active_dwell;
 	scan_def->passive_dwell = scan_cfg->passive_dwell;
 	scan_def->conc_active_dwell = scan_cfg->conc_active_dwell;
 	scan_def->conc_passive_dwell = scan_cfg->conc_passive_dwell;
@@ -2001,7 +2060,7 @@ ucfg_scan_psoc_open(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Initialize the scan Globals */
-	wlan_scan_global_init(scan_obj);
+	wlan_scan_global_init(psoc, scan_obj);
 	qdf_spinlock_create(&scan_obj->lock);
 	ucfg_scan_register_pmo_handler();
 	scm_db_init(psoc);
