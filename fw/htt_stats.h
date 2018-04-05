@@ -2669,6 +2669,7 @@ typedef struct {
 
     /* Counters to track number of rx packets in each GI in each mcs (0-11) */
     A_UINT32 rx_gi[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_INT32 rssi_in_dbm; /* rx Signal Strength value in dBm unit */
 } htt_rx_pdev_rate_stats_tlv;
 
 
