@@ -305,15 +305,6 @@ int hdd_assemble_rate_code(uint8_t preamble, uint8_t nss, uint8_t rate);
 int hdd_set_11ax_rate(struct hdd_adapter *adapter, int value,
 		      struct sap_Config *sap_config);
 
-/**
- * hdd_set_peer_rate() - set peer rate
- * @adapter: adapter being modified
- * @value: rate code with AID
- *
- * Return: 0 on success, negative errno on failure
- */
-int hdd_set_peer_rate(struct hdd_adapter *adapter, int value);
-
 int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			    int new_phymode, struct hdd_context *phddctx);
 

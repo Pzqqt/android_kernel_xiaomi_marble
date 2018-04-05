@@ -3196,6 +3196,72 @@ static QDF_STATUS hdd_print_acl(struct hdd_adapter *adapter)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * hdd_get_aid_rc() - Get AID and rate code passed from user
+ * @aid: pointer to AID
+ * @rc: pointer to rate code
+ * @set_value: value passed from user
+ *
+ * If target is 11ax capable, set_value will have AID left shifted 16 bits
+ * and 16 bits for rate code. If the target is not 11ax capable, rate code
+ * will only be 8 bits.
+ *
+ * Return: None
+ */
+static void hdd_get_aid_rc(uint8_t *aid, uint16_t *rc, int set_value)
+{
+	uint8_t rc_bits;
+
+	if (sme_is_feature_supported_by_fw(DOT11AX))
+		rc_bits = 16;
+	else
+		rc_bits = 8;
+
+	*aid = set_value >> rc_bits;
+	*rc = set_value & ((1 << (rc_bits + 1)) - 1);
+}
+
+/**
+ * hdd_set_peer_rate() - set peer rate
+ * @adapter: adapter being modified
+ * @set_value: rate code with AID
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int hdd_set_peer_rate(struct hdd_adapter *adapter, int set_value)
+{
+	uint8_t aid, *peer_mac;
+	uint16_t rc;
+	QDF_STATUS status;
+
+	if (adapter->device_mode != QDF_SAP_MODE) {
+		hdd_err("Invalid devicde mode - %d", adapter->device_mode);
+		return -EINVAL;
+	}
+
+	hdd_get_aid_rc(&aid, &rc, set_value);
+
+	if ((adapter->sta_info[aid].in_use) &&
+	    (OL_TXRX_PEER_STATE_CONN == adapter->sta_info[aid].peer_state)) {
+		peer_mac =
+		    (uint8_t *)&(adapter->sta_info[aid].sta_mac.bytes[0]);
+		hdd_info("Peer AID: %d MAC_ADDR: "MAC_ADDRESS_STR,
+			 aid, MAC_ADDR_ARRAY(peer_mac));
+	} else {
+		hdd_err("No matching peer found for AID: %d", aid);
+		return -EINVAL;
+	}
+
+	status = sme_set_peer_param(peer_mac, WMI_PEER_PARAM_FIXED_RATE,
+				    rc, adapter->session_id);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to set peer fixed rate - status: %d", status);
+		return -EIO;
+	}
+
+	return 0;
+}
+
 int
 static __iw_softap_setparam(struct net_device *dev,
 			    struct iw_request_info *info,
