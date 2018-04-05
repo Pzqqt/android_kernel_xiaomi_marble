@@ -13062,7 +13062,8 @@ typedef enum
     WMI_VENDOR_OUI_ACTION_CONNECTION_1X1 = 0, /* Connect in 1X1 only */
     WMI_VENDOR_OUI_ACTION_ITO_EXTENSION = 1,  /* Extend the Immediate Time-Out (ITO) if data is not received from AP after beacon with TIM bit set */
     WMI_VENDOR_OUI_ACTION_CCKM_1X1 = 2,       /* TX (only) CCKM rates with 1 chain only */
-    WMI_VENDOR_OUI_ACTION_ALT_ITO = 3,
+    WMI_VENDOR_OUI_ACTION_ALT_ITO = 3, /* inactivity time-out */
+    WMI_VENDOR_OUI_ACTION_SWITCH_TO_11N_MODE = 4, /* Switch from 11ac to 11n mode to avoid IOT issues with ONM frame */
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
 } wmi_vendor_oui_action_id;
