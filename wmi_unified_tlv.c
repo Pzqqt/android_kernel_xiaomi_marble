@@ -6246,6 +6246,10 @@ static QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_roam_scan_mode_fixed_param));
 
+	roam_scan_mode_fp->min_delay_roam_trigger_reason_bitmask =
+			roam_req->roam_trigger_reason_bitmask;
+	roam_scan_mode_fp->min_delay_btw_scans =
+			WMI_SEC_TO_MSEC(roam_req->min_delay_btw_roam_scans);
 	roam_scan_mode_fp->roam_scan_mode = roam_req->mode;
 	roam_scan_mode_fp->vdev_id = roam_req->vdev_id;
 	if (roam_req->mode == (WMI_ROAM_SCAN_MODE_NONE |
