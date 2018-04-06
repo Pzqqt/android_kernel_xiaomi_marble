@@ -281,7 +281,8 @@ static void wlan_vap_active(struct wlan_objmgr_pdev *pdev,
 	wlan_vdev_obj_unlock(vdev);
 }
 
-QDF_STATUS wlan_util_is_vap_active(struct wlan_objmgr_pdev *pdev)
+QDF_STATUS wlan_util_is_vap_active(struct wlan_objmgr_pdev *pdev,
+				   wlan_objmgr_ref_dbgid dbg_id)
 {
 	uint8_t flag = 0;
 
@@ -291,7 +292,7 @@ QDF_STATUS wlan_util_is_vap_active(struct wlan_objmgr_pdev *pdev)
 	wlan_objmgr_pdev_iterate_obj_list(pdev,
 				WLAN_VDEV_OP,
 				wlan_vap_active,
-				&flag, 0, WLAN_OBJMGR_ID);
+				&flag, 0, dbg_id);
 
 	if (flag == 1)
 		return QDF_STATUS_SUCCESS;
