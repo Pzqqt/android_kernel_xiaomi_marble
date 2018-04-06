@@ -925,6 +925,7 @@ typedef struct {
  * @key_length: key length
  * @key: key
  * @key_id: key id
+ * @key_cipher: key type
  */
 typedef struct {
 	uint16_t key_length;
@@ -1074,6 +1075,7 @@ struct wma_txrx_node {
 	uint8_t rmfEnabled;
 #ifdef WLAN_FEATURE_11W
 	wma_igtk_key_t key;
+	uint32_t ucast_key_cipher;
 #endif /* WLAN_FEATURE_11W */
 	uint32_t uapsd_cached_val;
 	tAniGetPEStatsRsp *stats_rsp;

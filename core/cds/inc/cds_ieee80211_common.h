@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1759,6 +1759,8 @@ enum {
 
 #define IEEE80211_CCMP_HEADERLEN    8
 #define IEEE80211_CCMP_MICLEN       8
+#define WLAN_IEEE80211_GCMP_HEADERLEN    8
+#define WLAN_IEEE80211_GCMP_MICLEN      16
 
 /*
  * 802.11w defines a MMIE chunk to be attached at the end of

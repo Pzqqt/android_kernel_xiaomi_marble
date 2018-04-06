@@ -2425,11 +2425,20 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		if (!IEEE80211_IS_BROADCAST(wh->i_addr1) &&
 		    !IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 			if (pFc->wep) {
+				uint8_t mic_len, hdr_len;
+
 				/* Allocate extra bytes for privacy header and
 				 * trailer
 				 */
-				newFrmLen = frmLen + IEEE80211_CCMP_HEADERLEN +
-					    IEEE80211_CCMP_MICLEN;
+				if (iface->ucast_key_cipher ==
+				    WMI_CIPHER_AES_GCM) {
+					hdr_len = WLAN_IEEE80211_GCMP_HEADERLEN;
+					mic_len = WLAN_IEEE80211_GCMP_MICLEN;
+				} else {
+					hdr_len = IEEE80211_CCMP_HEADERLEN;
+					mic_len = IEEE80211_CCMP_MICLEN;
+				}
+				newFrmLen = frmLen + hdr_len + mic_len;
 				qdf_status =
 					cds_packet_alloc((uint16_t) newFrmLen,
 							 (void **)&pFrame,
@@ -2452,7 +2461,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 				qdf_mem_set(pFrame, newFrmLen, 0);
 				qdf_mem_copy(pFrame, wh, sizeof(*wh));
 				qdf_mem_copy(pFrame + sizeof(*wh) +
-					     IEEE80211_CCMP_HEADERLEN,
+					     hdr_len,
 					     pData + sizeof(*wh),
 					     frmLen - sizeof(*wh));
 
