@@ -52,5 +52,16 @@ struct wlan_objmgr_psoc;
 int wlan_cfg80211_mc_cp_stats_get_wakelock_stats(struct wlan_objmgr_psoc *psoc,
 						 struct wiphy *wiphy);
 
+/**
+ * wlan_cfg80211_mc_cp_stats_get_tx_power() - API to fetch tx power
+ * @vdev:    Pointer to vdev
+ * @dbm:     Pointer to TX power in dbm
+ *
+ * Return: 0 on success, negative value on failure
+ */
+int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
+					   int *dbm);
+
+
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CFG80211_MC_CP_STATS_H__ */

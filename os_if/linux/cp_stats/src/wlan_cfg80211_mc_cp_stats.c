@@ -35,6 +35,10 @@
 #include <wlan_cp_stats_mc_defs.h>
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_cfg80211_mc_cp_stats.h>
+#include "wlan_osif_request_manager.h"
+
+/* max time in ms, caller may wait for stats request get serviced */
+#define CP_STATS_WAIT_TIME_STAT 800
 
 /**
  * wlan_cfg80211_mc_cp_stats_send_wake_lock_stats() - API to send wakelock stats
@@ -181,3 +185,97 @@ int wlan_cfg80211_mc_cp_stats_get_wakelock_stats(struct wlan_objmgr_psoc *psoc,
 
 	return wlan_cfg80211_mc_cp_stats_send_wake_lock_stats(wiphy, &stats);
 }
+
+struct tx_power_priv {
+	int dbm;
+};
+
+/**
+ * get_tx_power_cb() - "Get tx power" callback function
+ * @tx_power: tx_power
+ * @cookie: a cookie for the request context
+ *
+ * Return: None
+ */
+static void get_tx_power_cb(int tx_power, void *cookie)
+{
+	struct osif_request *request;
+	struct tx_power_priv *priv;
+
+	request = osif_request_get(cookie);
+	if (!request) {
+		cfg80211_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+	priv->dbm = tx_power;
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
+					   int *dbm)
+{
+	int ret = 0;
+	void *cookie;
+	QDF_STATUS status;
+	struct request_info info = {0};
+	struct tx_power_priv *priv = NULL;
+	struct osif_request *request = NULL;
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = CP_STATS_WAIT_TIME_STAT,
+	};
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		cfg80211_err("Request allocation failure, return cached value");
+		goto fetch_tx_power;
+	}
+
+	cookie = osif_request_cookie(request);
+	info.cookie = cookie;
+	info.u.get_tx_power_cb = get_tx_power_cb;
+	info.vdev_id = wlan_vdev_get_id(vdev);
+	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
+	qdf_mem_copy(info.peer_mac_addr, wlan_vdev_mlme_get_macaddr(vdev),
+		     WLAN_MACADDR_LEN);
+	status = ucfg_mc_cp_stats_send_stats_request(vdev,
+						     TYPE_CONNECTION_TX_POWER,
+						     &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("wlan_mc_cp_stats_request_tx_power status: %d",
+			     status);
+		ret = qdf_status_to_os_return(status);
+	} else {
+		ret = osif_request_wait_for_response(request);
+		if (ret)
+			cfg80211_err("wait failed or timed out ret: %d", ret);
+		else
+			priv = osif_request_priv(request);
+	}
+
+fetch_tx_power:
+	if (priv) {
+		*dbm = priv->dbm;
+	} else {
+		status = ucfg_mc_cp_stats_get_tx_power(vdev, dbm);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			cfg80211_err("ucfg_mc_cp_stats_get_tx_power status: %d",
+				     status);
+			ret = qdf_status_to_os_return(status);
+		}
+	}
+
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	if (request)
+		osif_request_put(request);
+
+	return ret;
+}
+
