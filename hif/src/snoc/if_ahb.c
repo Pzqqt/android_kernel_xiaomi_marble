@@ -571,6 +571,7 @@ void hif_ahb_nointrs(struct hif_softc *scn)
 	int i;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct CE_attr *host_ce_conf = hif_state->host_ce_config;
 
 	ce_unregister_irq(hif_state, CE_ALL_BITMAP);
 
@@ -588,6 +589,10 @@ void hif_ahb_nointrs(struct hif_softc *scn)
 			free_irq(sc->irq, sc);
 		} else {
 			for (i = 0; i < scn->ce_count; i++) {
+				if (host_ce_conf[i].flags
+						& CE_ATTR_DISABLE_INTR)
+					continue;
+
 				free_irq(ic_irqnum[HIF_IC_CE0_IRQ_OFFSET + i],
 						&hif_state->tasklets[i]);
 			}
