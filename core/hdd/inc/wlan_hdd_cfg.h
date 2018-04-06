@@ -14195,6 +14195,31 @@ enum hdd_external_acs_policy {
 #define CFG_ENABLE_RTT_MAC_RANDOMIZATION_DEFAULT (0)
 
 /*
+ * <ini>
+ * gEnableSecondaryRate - Enable/Disable Secondary Retry Rate feature subset
+ *
+ * @Min: 0x0
+ * @Max: 0x3F
+ * @Default: 0x18
+ *
+ * It is a 32 bit value such that the various bits represent as below -
+ * Bit-0 : is Enable/Disable Control for "PPDU Secondary Retry Support"
+ * Bit-1 : is Enable/Disable Control for "RTS Black/White-listing Support"
+ * Bit-2 : is Enable/Disable Control for "Higher MCS retry restriction
+ *         on XRETRY failures"
+ * Bit 3-5 : is "Xretry threshold" to use
+ * Bit 3~31 : reserved for future use.
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_SECONDARY_RATE_NAME          "gEnableSecondaryRate"
+#define CFG_ENABLE_SECONDARY_RATE_MIN           (0)
+#define CFG_ENABLE_SECONDARY_RATE_MAX           (0x3F)
+#define CFG_ENABLE_SECONDARY_RATE_DEFAULT       (0x18)
+
+/*
  * Type declarations
  */
 
@@ -15075,6 +15100,7 @@ struct hdd_config {
 	uint32_t channel_select_logic_conc;
 	bool enable_bt_chain_separation;
 	uint8_t enable_tx_sch_delay;
+	uint32_t enable_secondary_rate;
 	HDD_GREEN_AP_CFG_FIELDS
 	bool is_unit_test_framework_enabled;
 	bool enable_ftopen;
