@@ -23,9 +23,11 @@
  */
 
 #include <wlan_objmgr_psoc_obj.h>
-#include <wlan_cp_stats_utils_api.h>
+#include "wlan_cp_stats_mc_defs.h"
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_cp_stats_mc_tgt_api.h>
+#include <wlan_cp_stats_utils_api.h>
+#include "../../core/src/wlan_cp_stats_defs.h"
 #include "../../core/src/wlan_cp_stats_defs.h"
 #include "../../core/src/wlan_cp_stats_cmn_api_i.h"
 
@@ -66,11 +68,18 @@ QDF_STATUS wlan_cp_stats_vdev_cs_deinit(struct vdev_cp_stats *vdev_cs)
 
 QDF_STATUS wlan_cp_stats_pdev_cs_init(struct pdev_cp_stats *pdev_cs)
 {
+	pdev_cs->pdev_stats = qdf_mem_malloc(sizeof(struct pdev_mc_cp_stats));
+	if (!pdev_cs->pdev_stats) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_cp_stats_pdev_cs_deinit(struct pdev_cp_stats *pdev_cs)
 {
+	qdf_mem_free(pdev_cs->pdev_stats);
+	pdev_cs->pdev_stats = NULL;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -394,6 +403,131 @@ QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
 			     wow_stats.oem_response_wake_up_count,
 			     wow_stats.pwr_save_fail_detected,
 			     wow_stats.scan_11d);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_mc_cp_stats_send_stats_request(struct wlan_objmgr_vdev *vdev,
+					       enum stats_req_type type,
+					       struct request_info *info)
+{
+	QDF_STATUS status;
+
+	status = ucfg_mc_cp_stats_set_pending_req(wlan_vdev_get_psoc(vdev),
+						  type, info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("ucfg_mc_cp_stats_set_pending_req pdev failed: %d",
+			     status);
+		return status;
+	}
+
+	return tgt_send_mc_cp_stats_req(wlan_vdev_get_psoc(vdev), type, info);
+}
+
+QDF_STATUS ucfg_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
+					 int *dbm)
+{
+	struct wlan_objmgr_pdev *pdev;
+	struct pdev_mc_cp_stats *pdev_mc_stats;
+	struct pdev_cp_stats *pdev_cp_stats_priv;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	pdev_cp_stats_priv = wlan_cp_stats_get_pdev_stats_obj(pdev);
+	if (!pdev_cp_stats_priv) {
+		cp_stats_err("pdev cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_pdev_obj_lock(pdev_cp_stats_priv);
+	pdev_mc_stats = pdev_cp_stats_priv->pdev_stats;
+	*dbm = pdev_mc_stats->max_pwr;
+	wlan_cp_stats_pdev_obj_unlock(pdev_cp_stats_priv);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool ucfg_mc_cp_stats_is_req_pending(struct wlan_objmgr_psoc *psoc,
+				     enum stats_req_type type)
+{
+	uint32_t pending_req_map;
+	struct psoc_mc_cp_stats *psoc_mc_stats;
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
+		return false;
+	}
+
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+	pending_req_map = psoc_mc_stats->pending.type_map;
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
+
+	return (pending_req_map & (1 << type));
+}
+
+QDF_STATUS ucfg_mc_cp_stats_set_pending_req(struct wlan_objmgr_psoc *psoc,
+					    enum stats_req_type type,
+					    struct request_info *req)
+{
+	struct psoc_mc_cp_stats *psoc_mc_stats;
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+	psoc_mc_stats->pending.type_map |= (1 << type);
+	psoc_mc_stats->pending.req[type] = *req;
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_mc_cp_stats_reset_pending_req(struct wlan_objmgr_psoc *psoc,
+					      enum stats_req_type type)
+{
+	struct psoc_mc_cp_stats *psoc_mc_stats;
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+	psoc_mc_stats->pending.type_map &= ~(1 << type);
+	qdf_mem_zero(&psoc_mc_stats->pending.req[type],
+		     sizeof(psoc_mc_stats->pending.req[type]));
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_mc_cp_stats_get_pending_req(struct wlan_objmgr_psoc *psoc,
+					    enum stats_req_type type,
+					    struct request_info *info)
+{
+	struct psoc_mc_cp_stats *psoc_mc_stats;
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+	*info = psoc_mc_stats->pending.req[type];
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
 
 	return QDF_STATUS_SUCCESS;
 }

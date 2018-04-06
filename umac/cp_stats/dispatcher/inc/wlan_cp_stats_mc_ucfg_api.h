@@ -110,5 +110,71 @@ QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
 				struct wlan_objmgr_psoc *psoc,
 				char *buffer, uint16_t max_len, int *ret);
 
+/**
+ * ucfg_mc_cp_stats_send_tx_power_request() - API to send tx_power request to
+ * lmac
+ * @vdev: pointer to vdev object
+ * @type: request type
+ *
+ * Return - status of operation
+ */
+QDF_STATUS ucfg_mc_cp_stats_send_stats_request(struct wlan_objmgr_vdev *vdev,
+					       enum stats_req_type type,
+					       struct request_info *info);
+
+/**
+ * ucfg_mc_cp_stats_get_tx_power() - API to fetch tx_power
+ * @vdev: pointer to vdev object
+ * @dbm: pointer to tx power in dbm
+ *
+ * Return - status of operation
+ */
+QDF_STATUS ucfg_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
+					 int *dbm);
+
+/**
+ * ucfg_mc_cp_stats_is_req_pending() - API to tell if given request is pending
+ * @psoc: pointer to psoc object
+ * @type: request type to check
+ *
+ * Return - true of request is pending, false otherwise
+ */
+bool ucfg_mc_cp_stats_is_req_pending(struct wlan_objmgr_psoc *psoc,
+				     enum stats_req_type type);
+
+/**
+ * ucfg_mc_cp_stats_set_pending_req() - API to set pending request
+ * @psoc: pointer to psoc object
+ * @type: request to update
+ * @req: value to update
+ *
+ * Return - status of operation
+ */
+QDF_STATUS ucfg_mc_cp_stats_set_pending_req(struct wlan_objmgr_psoc *psoc,
+					    enum stats_req_type type,
+					    struct request_info *req);
+
+/**
+ * ucfg_mc_cp_stats_reset_pending_req() - API to reset pending request
+ * @psoc: pointer to psoc object
+ * @type: request to update
+ *
+ * Return - status of operation
+ */
+QDF_STATUS ucfg_mc_cp_stats_reset_pending_req(struct wlan_objmgr_psoc *psoc,
+					      enum stats_req_type type);
+
+/**
+ * ucfg_mc_cp_stats_get_pending_req() - API to get pending request
+ * @psoc: pointer to psoc object
+ * @type: request to update
+ * @info: buffer to populate
+ *
+ * Return - status of operation
+ */
+QDF_STATUS ucfg_mc_cp_stats_get_pending_req(struct wlan_objmgr_psoc *psoc,
+					    enum stats_req_type type,
+					    struct request_info *info);
+
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_UCFG_API_H__ */

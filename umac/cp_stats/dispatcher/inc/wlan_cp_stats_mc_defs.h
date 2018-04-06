@@ -35,6 +35,23 @@
 #ifndef __WLAN_CP_STATS_MC_DEFS_H__
 #define __WLAN_CP_STATS_MC_DEFS_H__
 
+#ifdef CONFIG_MCL
+
+#include "wlan_cmn.h"
+#include "qdf_event.h"
+
+/**
+ * enum stats_req_type: enum indicating bit position of various stats type in
+ * request map
+ * @TYPE_CONNECTION_TX_POWER: tx power was requested
+ * @TYPE_STATION_STATS: station stats was requested
+ */
+enum stats_req_type {
+	TYPE_CONNECTION_TX_POWER = 0,
+	TYPE_STATION_STATS,
+	TYPE_MAX,
+};
+
 /**
  * struct wake_lock_stats - wake lock stats structure
  * @ucast_wake_up_count:        Unicast wakeup count
@@ -76,11 +93,49 @@ struct wake_lock_stats {
 };
 
 /**
- * struct psoc_mc_cp_stats -       psoc specific stats
+ * struct request_info: details of each request
+ * @cookie: identifier for os_if request
+ * @callback: callback to process os_if request when response comes.
+ * @vdev_id: vdev_id of request
+ * @pdev_id: pdev_id of request
+ * @peer_mac_addr: peer mac address
+ */
+struct request_info {
+	void *cookie;
+	union {
+		void (*get_tx_power_cb)(int tx_power, void *cookie);
+	} u;
+	uint32_t vdev_id;
+	uint32_t pdev_id;
+	uint8_t peer_mac_addr[WLAN_MACADDR_LEN];
+};
+
+/**
+ * struct pending_stats_requests: details of pending requests
+ * @type_map: map indicating type of outstanding requests
+ * @req: array of info for outstanding request of each type
+ */
+struct pending_stats_requests {
+	uint32_t type_map;
+	struct request_info req[TYPE_MAX];
+};
+
+/**
+ * struct psoc_mc_cp_stats: psoc specific stats
+ * @pending: details of pending requests
  * @wow_unspecified_wake_up_count: number of non-wow related wake ups
  */
 struct psoc_mc_cp_stats {
+	struct pending_stats_requests pending;
 	uint32_t wow_unspecified_wake_up_count;
+};
+
+/**
+ * struct pdev_mc_cp_stats: pdev specific stats
+ * @max_pwr: max tx power for vdev
+ */
+struct pdev_mc_cp_stats {
+	int32_t max_pwr;
 };
 
 /**
@@ -91,4 +146,15 @@ struct vdev_mc_cp_stats {
 	struct wake_lock_stats wow_stats;
 };
 
+/**
+ * struct stats_event - parameters populated by stats event
+ * @num_pdev_stats: number of pdev stats
+ * @pdev_stats: array of per pdev stats (index = pdev_id)
+ */
+struct stats_event {
+	uint32_t num_pdev_stats;
+	struct pdev_mc_cp_stats *pdev_stats;
+};
+
+#endif /* CONFIG_MCL */
 #endif /* __WLAN_CP_STATS_MC_DEFS_H__ */

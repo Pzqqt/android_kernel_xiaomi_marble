@@ -25,6 +25,27 @@
 #define __WLAN_CP_STATS_MC_TGT_API_H__
 
 #ifdef QCA_SUPPORT_CP_STATS
+#include "wlan_cp_stats_mc_defs.h"
+
+/**
+ * tgt_mc_cp_stats_process_stats_event(): API to process stats event
+ * @psoc: pointer to psoc object
+ * @event: event parameters
+ *
+ * Return: status of operation
+ */
+QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
+					       struct stats_event *event);
+
+/**
+ * tgt_send_mc_cp_stats_req(): API to send stats request to lmac
+ * @psoc: pointer to psoc object
+ *
+ * Return: status of operation
+ */
+QDF_STATUS tgt_send_mc_cp_stats_req(struct wlan_objmgr_psoc *psoc,
+				    enum stats_req_type type,
+				    struct request_info *req);
 
 /**
  * tgt_mc_cp_stats_inc_wake_lock_stats() : API to increment wake lock stats
@@ -42,4 +63,3 @@ QDF_STATUS tgt_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_MC_TGT_API_H__ */
-

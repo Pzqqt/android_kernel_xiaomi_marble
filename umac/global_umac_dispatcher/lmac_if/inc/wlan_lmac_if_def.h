@@ -28,6 +28,7 @@
 #endif
 #include "wlan_mgmt_txrx_utils_api.h"
 #include "wlan_scan_public_structs.h"
+
 #ifdef WLAN_ATF_ENABLE
 #include "wlan_atf_utils_defs.h"
 #endif
@@ -90,6 +91,9 @@ struct wlan_lmac_if_cp_stats_tx_ops {
 	void (*inc_wake_lock_stats)(uint32_t reason,
 				    struct wake_lock_stats *stats,
 				    uint32_t *unspecified_wake_count);
+	QDF_STATUS (*send_req_stats)(struct wlan_objmgr_psoc *psoc,
+				     enum stats_req_type type,
+				     struct request_info *req);
 #endif
 };
 
@@ -100,6 +104,10 @@ struct wlan_lmac_if_cp_stats_tx_ops {
  */
 struct wlan_lmac_if_cp_stats_rx_ops {
 	QDF_STATUS (*cp_stats_rx_event_handler)(struct wlan_objmgr_vdev *vdev);
+#ifdef CONFIG_MCL
+	QDF_STATUS (*process_stats_event)(struct wlan_objmgr_psoc *psoc,
+					  struct stats_event *ev);
+#endif
 };
 #endif
 

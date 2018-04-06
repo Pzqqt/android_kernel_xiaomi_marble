@@ -32,6 +32,7 @@
 
 #include "wlan_cp_stats_ic_ucfg_handler.h"
 #include <wlan_cp_stats_utils_api.h>
+#include <target_if_cp_stats.h>
 
 QDF_STATUS wlan_cp_stats_psoc_obj_init_ol(struct psoc_cp_stats *psoc_cs)
 {
@@ -111,21 +112,49 @@ QDF_STATUS wlan_cp_stats_close_ol(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS wlan_cp_stats_enable_ol(struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_lmac_if_cp_stats_tx_ops *tx_ops;
+
 	if (!psoc) {
-		cp_stats_err("PSOC is null!\n");
+		cp_stats_err("PSOC is null!");
 		return QDF_STATUS_E_INVAL;
 	}
 
+	tx_ops = target_if_cp_stats_get_tx_ops(psoc);
+	if (!tx_ops) {
+		cp_stats_err("tx_ops is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!tx_ops->cp_stats_attach) {
+		cp_stats_err("cp_stats_attach function ptr is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tx_ops->cp_stats_attach(psoc);
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_cp_stats_disable_ol(struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_lmac_if_cp_stats_tx_ops *tx_ops;
+
 	if (!psoc) {
-		cp_stats_err("PSOC is null!\n");
+		cp_stats_err("PSOC is null!");
 		return QDF_STATUS_E_INVAL;
 	}
 
+	tx_ops = target_if_cp_stats_get_tx_ops(psoc);
+	if (!tx_ops) {
+		cp_stats_err("tx_ops is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!tx_ops->cp_stats_detach) {
+		cp_stats_err("cp_stats_detach function ptr is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tx_ops->cp_stats_detach(psoc);
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -23,13 +23,97 @@
  * from southbound interface
  */
 
-#include "target_if_cp_stats.h"
 #include "wlan_cp_stats_mc_defs.h"
+#include "target_if_cp_stats.h"
 #include "wlan_cp_stats_tgt_api.h"
 #include "wlan_cp_stats_mc_tgt_api.h"
-#include "../../core/src/wlan_cp_stats_defs.h"
+#include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_cp_stats_utils_api.h>
+#include "../../core/src/wlan_cp_stats_defs.h"
 
+static void tgt_mc_cp_stats_extract_tx_power(struct wlan_objmgr_psoc *psoc,
+					struct stats_event *ev,
+					bool is_station_stats)
+{
+	int32_t max_pwr;
+	uint8_t pdev_id;
+	QDF_STATUS status;
+	struct wlan_objmgr_pdev *pdev;
+	struct request_info last_req = {0};
+	struct wlan_objmgr_vdev *vdev = NULL;
+	struct pdev_mc_cp_stats *pdev_mc_stats;
+	struct pdev_cp_stats *pdev_cp_stats_priv;
+
+	if (!ev->pdev_stats) {
+		cp_stats_err("no pdev stats");
+		return;
+	}
+
+	if (is_station_stats)
+		status = ucfg_mc_cp_stats_get_pending_req(psoc,
+					TYPE_STATION_STATS, &last_req);
+	else
+		status = ucfg_mc_cp_stats_get_pending_req(psoc,
+					TYPE_CONNECTION_TX_POWER, &last_req);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("ucfg_mc_cp_stats_get_pending_req failed");
+		goto end;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, last_req.vdev_id,
+						    WLAN_CP_STATS_ID);
+	if (!vdev) {
+		cp_stats_err("vdev is null");
+		goto end;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		cp_stats_err("pdev is null");
+		goto end;
+	}
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	if (pdev_id >= ev->num_pdev_stats) {
+		cp_stats_err("pdev_id: %d invalid", pdev_id);
+		goto end;
+	}
+
+	pdev_cp_stats_priv = wlan_cp_stats_get_pdev_stats_obj(pdev);
+	if (!pdev_cp_stats_priv) {
+		cp_stats_err("pdev_cp_stats_priv is null");
+		goto end;
+	}
+
+	wlan_cp_stats_pdev_obj_lock(pdev_cp_stats_priv);
+	pdev_mc_stats = pdev_cp_stats_priv->pdev_stats;
+	max_pwr = pdev_mc_stats->max_pwr = ev->pdev_stats[pdev_id].max_pwr;
+	wlan_cp_stats_pdev_obj_unlock(pdev_cp_stats_priv);
+
+	if (is_station_stats)
+		goto end;
+
+	if (last_req.u.get_tx_power_cb)
+		last_req.u.get_tx_power_cb(max_pwr, last_req.cookie);
+	ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_CONNECTION_TX_POWER);
+
+end:
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+	qdf_mem_free(ev->pdev_stats);
+	ev->pdev_stats = NULL;
+}
+
+QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
+					       struct stats_event *ev)
+{
+	if (ucfg_mc_cp_stats_is_req_pending(psoc, TYPE_CONNECTION_TX_POWER))
+		tgt_mc_cp_stats_extract_tx_power(psoc, ev, false);
+
+
+	return QDF_STATUS_SUCCESS;
+}
 
 QDF_STATUS tgt_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
 					       uint32_t reason,
@@ -45,4 +129,19 @@ QDF_STATUS tgt_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
 	tx_ops->inc_wake_lock_stats(reason, stats, unspecified_wake_count);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS tgt_send_mc_cp_stats_req(struct wlan_objmgr_psoc *psoc,
+				    enum stats_req_type type,
+				    struct request_info *req)
+{
+	struct wlan_lmac_if_cp_stats_tx_ops *tx_ops;
+
+	tx_ops = target_if_cp_stats_get_tx_ops(psoc);
+	if (!tx_ops) {
+		cp_stats_err("could not get tx_ops");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return tx_ops->send_req_stats(psoc, type, req);
 }
