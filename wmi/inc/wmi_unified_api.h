@@ -1830,6 +1830,22 @@ QDF_STATUS wmi_extract_dbr_buf_release_entry(
 			void *wmi_hdl,
 			uint8_t *evt_buf, uint8_t idx,
 			struct direct_buf_rx_entry *param);
+
+/**
+ * wmi_extract_dbr_buf_metadata: Extract direct buffer metadata
+ *
+ * @wmi_hdl: WMI handle
+ * @evt_buf: Event buffer
+ * @idx: Index of the module for which capability is received
+ * @param: Pointer to direct buffer metadata
+ *
+ * Return: QDF status of operation
+ */
+QDF_STATUS wmi_extract_dbr_buf_metadata(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t idx,
+			struct direct_buf_rx_metadata *param);
+
 QDF_STATUS wmi_extract_pdev_utf_event(void *wmi_hdl,
 				      uint8_t *evt_buf,
 				      struct wmi_host_pdev_utf_event *param);

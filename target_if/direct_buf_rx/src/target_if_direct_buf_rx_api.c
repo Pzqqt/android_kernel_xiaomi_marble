@@ -17,6 +17,7 @@
  */
 
 #include <qdf_status.h>
+#include <wmi_unified_api.h>
 #include <target_if_direct_buf_rx_api.h>
 #include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_global_obj.h>

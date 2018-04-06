@@ -832,6 +832,13 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 	dbr_rsp.dbr_entries = qdf_mem_malloc(dbr_rsp.num_buf_release_entry *
 					sizeof(struct direct_buf_rx_entry));
 
+	if (dbr_rsp.num_meta_data_entry > dbr_rsp.num_buf_release_entry) {
+		direct_buf_rx_err("More than expected number of metadata");
+		wlan_objmgr_pdev_release_ref(pdev,
+					     WLAN_DIRECT_BUF_RX_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	for (i = 0; i < dbr_rsp.num_buf_release_entry; i++) {
 		if (wmi_extract_dbr_buf_release_entry(
 			GET_WMI_HDL_FROM_PSOC(psoc), data_buf, i,
@@ -850,6 +857,14 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 			wlan_objmgr_pdev_release_ref(pdev,
 						     WLAN_DIRECT_BUF_RX_ID);
 			return QDF_STATUS_E_FAILURE;
+		}
+
+		dbr_data.meta_data_valid = false;
+		if (i < dbr_rsp.num_meta_data_entry) {
+			if (wmi_extract_dbr_buf_metadata(
+				GET_WMI_HDL_FROM_PSOC(psoc), data_buf, i,
+				&dbr_data.meta_data) == QDF_STATUS_SUCCESS)
+				dbr_data.meta_data_valid = true;
 		}
 		ret = mod_param->dbr_rsp_handler(pdev, &dbr_data);
 		status = target_if_dbr_replenish_ring(pdev, mod_param,

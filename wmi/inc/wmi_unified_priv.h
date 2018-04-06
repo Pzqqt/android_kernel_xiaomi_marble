@@ -1425,6 +1425,11 @@ QDF_STATUS (*extract_dbr_buf_release_entry)(
 			uint8_t *evt_buf, uint8_t idx,
 			struct direct_buf_rx_entry *param);
 
+QDF_STATUS (*extract_dbr_buf_metadata)(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf, uint8_t idx,
+			struct direct_buf_rx_metadata *param);
+
 QDF_STATUS (*extract_pdev_utf_event)(wmi_unified_t wmi_hdl,
 				     uint8_t *evt_buf,
 				     struct wmi_host_pdev_utf_event *param);

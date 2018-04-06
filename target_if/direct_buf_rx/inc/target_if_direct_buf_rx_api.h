@@ -43,6 +43,8 @@
 #define direct_buf_rx_exit() \
 		direct_buf_rx_logfl(QDF_TRACE_LEVEL_DEBUG, "exit")
 
+#define DBR_MAX_CHAINS      (8)
+
 struct wlan_objmgr_psoc;
 struct wlan_lmac_if_tx_ops;
 
@@ -50,10 +52,14 @@ struct wlan_lmac_if_tx_ops;
  * struct direct_buf_rx_data - direct buffer rx data
  * @dbr_len: Length of the buffer DMAed
  * @vaddr: Virtual address of the buffer that has DMAed data
+ * @meta_data_valid: Indicates that metadata is valid
+ * @meta_data: Meta data
  */
 struct direct_buf_rx_data {
 	size_t dbr_len;
 	void *vaddr;
+	bool meta_data_valid;
+	struct direct_buf_rx_metadata meta_data;
 };
 
 /**
