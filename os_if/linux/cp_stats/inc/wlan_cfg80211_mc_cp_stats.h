@@ -37,6 +37,20 @@
 
 #ifdef QCA_SUPPORT_CP_STATS
 
+/* forward declaration */
+struct wiphy;
+struct wlan_objmgr_psoc;
+
+/**
+ * wlan_cfg80211_mc_cp_stats_get_wakelock_stats() - API to request wake lock
+ * stats. Stats are returned to user space via vender event
+ * @psoc:    Pointer to psoc
+ * @wiphy:   wiphy pointer
+ *
+ * Return: 0 on success, negative value on failure
+ */
+int wlan_cfg80211_mc_cp_stats_get_wakelock_stats(struct wlan_objmgr_psoc *psoc,
+						 struct wiphy *wiphy);
+
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CFG80211_MC_CP_STATS_H__ */
-
