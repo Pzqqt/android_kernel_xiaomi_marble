@@ -23,11 +23,22 @@
  * more than 5 ms and thus ref count is used along with scan_db_lock.
  * Below are the operation on scan cache entry:
  * - While adding new node to the entry scan_db_lock is taken and ref_cnt
- *   is initialized and incremented.
- * - While reading the entry ref_cnt is incremented while holding the lock.
- * - Once reading operation is done ref_cnt is decremented while holding
- *   the lock.
- * - Once ref_cnt become 0 the node is deleted from the scan cache.
+ *   is initialized and incremented. Also the cookie will be set to valid value.
+ * - The ref count incremented during adding new node should be decremented only
+ *   by a delete operation on the node. But there can be multiple concurrent
+ *   delete operations on a node from different threads which may lead to ref
+ *   count being decremented multiple time and freeing the node even if node
+ *   is in use. So to maintain atomicity between multiple delete operations
+ *   on a same node from different threads, a cookie is used to check if node is
+ *   logically deleted or not. A delete operation will set the cookie to 0
+ *   making it invalid. So if the 2nd thread find the cookie as invalid it will
+ *   not try to delete and decrement the ref count of the node again.
+ * - This Cookie is also used to check if node is valid while iterating through
+ *   the scan cache to avoid duplicate entries.
+ * - Once ref_cnt become 0, i.e. it is logically deleted and no thread is using
+ *   it the node is physically deleted from the scan cache.
+ * - While reading the node the ref_cnt should be incremented. Once reading
+ *   operation is done ref_cnt is decremented.
  */
 #include <qdf_status.h>
 #include <wlan_objmgr_psoc_obj.h>
@@ -160,16 +171,16 @@ static void scm_scan_entry_del(struct scan_dbs *scan_db,
 		return;
 	}
 
-	if (!scan_node->active) {
-		scm_warn("node is already deleted");
+	if (scan_node->cookie != SCAN_NODE_ACTIVE_COOKIE) {
+		scm_debug("node is already deleted");
 		return;
 	}
 	/* Seems node is already deleted */
 	if (!qdf_atomic_read(&scan_node->ref_cnt)) {
-		scm_warn("node is already deleted ref 0");
+		scm_debug("node is already deleted ref 0");
 		return;
 	}
-	scan_node->active = false;
+	scan_node->cookie = 0;
 
 	scm_scan_entry_put_ref(scan_db, scan_node, false);
 }
@@ -195,7 +206,7 @@ static void scm_add_scan_node(struct scan_dbs *scan_db,
 		SCAN_GET_HASH(scan_node->entry->bssid.bytes);
 
 	qdf_atomic_init(&scan_node->ref_cnt);
-	scan_node->active = true;
+	scan_node->cookie = SCAN_NODE_ACTIVE_COOKIE;
 	scm_scan_entry_get_ref(scan_node);
 	if (!dup_node)
 		qdf_list_insert_back(&scan_db->scan_hash_tbl[hash_idx],
@@ -236,7 +247,7 @@ scm_get_next_valid_node(qdf_list_t *list,
 	while (next_node) {
 		scan_node = qdf_container_of(next_node,
 			struct scan_cache_node, node);
-		if (scan_node->active)
+		if (scan_node->cookie == SCAN_NODE_ACTIVE_COOKIE)
 			return next_node;
 		/*
 		 * If node is not valid check for next entry
