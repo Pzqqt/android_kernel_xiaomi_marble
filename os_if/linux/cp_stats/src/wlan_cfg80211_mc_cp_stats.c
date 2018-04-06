@@ -361,3 +361,83 @@ void wlan_cfg80211_mc_cp_stats_put_peer_rssi(struct stats_event *rssi_info)
 {
 	ucfg_mc_cp_stats_free_stats_resources(rssi_info);
 }
+
+/**
+ * get_station_stats_cb() - get_station_stats_cb callback function
+ * @cookie: a cookie for the request context
+ *
+ * Return: None
+ */
+static void get_station_stats_cb(struct stats_event *station_info, void *cookie)
+{
+	struct stats_event *priv;
+	struct osif_request *request;
+
+	request = osif_request_get(cookie);
+	if (!request) {
+		cfg80211_err("Obsolete request");
+		return;
+	}
+	priv = osif_request_priv(request);
+	*priv = *station_info;
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+int wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
+						struct stats_event *out)
+{
+	int ret;
+	void *cookie;
+	QDF_STATUS status;
+	struct stats_event *priv;
+	struct osif_request *request;
+	struct request_info info = {0};
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = 2 * CP_STATS_WAIT_TIME_STAT,
+	};
+
+	qdf_mem_zero(out, sizeof(*out));
+	request = osif_request_alloc(&params);
+	if (!request) {
+		cfg80211_err("Request allocation failure, return cached value");
+		return -EINVAL;
+	}
+
+	cookie = osif_request_cookie(request);
+	priv = osif_request_priv(request);
+	info.cookie = cookie;
+	info.u.get_station_stats_cb = get_station_stats_cb;
+	info.vdev_id = wlan_vdev_get_id(vdev);
+	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
+	qdf_mem_copy(info.peer_mac_addr, wlan_vdev_mlme_get_macaddr(vdev),
+		     WLAN_MACADDR_LEN);
+	status = ucfg_mc_cp_stats_send_stats_request(vdev, TYPE_STATION_STATS,
+						     &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("wlan_mc_cp_stats_send_stats_request status: %d",
+			     status);
+		ret = qdf_status_to_os_return(status);
+	} else {
+		ret = osif_request_wait_for_response(request);
+		if (ret)
+			cfg80211_err("wait failed or timed out ret: %d", ret);
+		else
+			*out = *priv;
+	}
+
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	osif_request_put(request);
+
+	return ret;
+}
+
+void wlan_cfg80211_mc_cp_stats_put_station_stats(struct stats_event *info)
+{
+	ucfg_mc_cp_stats_free_stats_resources(info);
+}

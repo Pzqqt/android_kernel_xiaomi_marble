@@ -63,6 +63,30 @@ int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 					   int *dbm);
 
 /**
+ * wlan_cfg80211_mc_cp_stats_get_station_stats() - API to get station
+ * statistics to firmware
+ * @vdev:    Pointer to vdev
+ * @info:    pointer to object to populate with station stats
+ *
+ * Call of this API must call wlan_cfg80211_mc_cp_stats_put_station_stats
+ * API when done with information provided by info.
+ * Return: 0 on success, negative value on failure
+ */
+int wlan_cfg80211_mc_cp_stats_get_station_stats(
+					struct wlan_objmgr_vdev *vdev,
+					struct stats_event *info);
+
+/**
+ * wlan_cfg80211_mc_cp_stats_put_station_stats() - API to release station
+ * statistics buffer
+ * @vdev:    Pointer to vdev
+ * @info:    pointer to object to populate with station stats
+ *
+ * Return: None
+ */
+void wlan_cfg80211_mc_cp_stats_put_station_stats(struct stats_event *info);
+
+/**
  * wlan_cfg80211_mc_cp_stats_get_peer_rssi() - API to fetch peer rssi
  * @vdev:    Pointer to vdev
  * @macaddress: mac address
