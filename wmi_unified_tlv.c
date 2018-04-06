@@ -20070,6 +20070,7 @@ static QDF_STATUS extract_dbr_buf_release_fixed_tlv(wmi_unified_t wmi_handle,
 								ev->pdev_id);
 	param->mod_id = ev->mod_id;
 	param->num_buf_release_entry = ev->num_buf_release_entry;
+	param->num_meta_data_entry = ev->num_meta_data_entry;
 	WMI_LOGD("%s:pdev id %d mod id %d num buf release entry %d\n", __func__,
 		 param->pdev_id, param->mod_id, param->num_buf_release_entry);
 
@@ -20098,6 +20099,29 @@ static QDF_STATUS extract_dbr_buf_release_entry_tlv(wmi_unified_t wmi_handle,
 	param->paddr_lo = entry->paddr_lo;
 	param->paddr_hi = entry->paddr_hi;
 
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS extract_dbr_buf_metadata_tlv(
+		wmi_unified_t wmi_handle, uint8_t *event,
+		uint8_t idx, struct direct_buf_rx_metadata *param)
+{
+	WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID_param_tlvs *param_buf;
+	wmi_dma_buf_release_spectral_meta_data *entry;
+
+	param_buf = (WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	entry = &param_buf->meta_data[idx];
+
+	if (!entry) {
+		WMI_LOGE("%s: Entry is NULL\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_copy(param->noisefloor, entry->noise_floor,
+		     sizeof(entry->noise_floor));
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -22730,6 +22754,7 @@ struct wmi_ops tlv_ops =  {
 				extract_dbr_ring_cap_service_ready_ext_tlv,
 	.extract_dbr_buf_release_fixed = extract_dbr_buf_release_fixed_tlv,
 	.extract_dbr_buf_release_entry = extract_dbr_buf_release_entry_tlv,
+	.extract_dbr_buf_metadata = extract_dbr_buf_metadata_tlv,
 	.extract_pdev_utf_event = extract_pdev_utf_event_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_tlv,
 	.extract_dcs_interference_type = extract_dcs_interference_type_tlv,

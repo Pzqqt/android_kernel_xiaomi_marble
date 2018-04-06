@@ -6907,6 +6907,21 @@ QDF_STATUS wmi_extract_dbr_buf_release_entry(
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_extract_dbr_buf_metadata(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t idx,
+			struct direct_buf_rx_metadata *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_dbr_buf_metadata)
+		return wmi_handle->ops->extract_dbr_buf_metadata(
+				wmi_handle,
+				evt_buf, idx, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 /**
  * wmi_extract_pdev_utf_event() -
  *       extract UTF data from pdev utf event
