@@ -1931,6 +1931,8 @@ struct roam_fils_params {
  * @is_ese_assoc: flag to determine ese assoc
  * @mdid: mobility domain info
  * @roam_offload_params: roam offload tlv params
+ * @min_delay_btw_roam_scans: Delay btw two scans
+ * @roam_trigger_reason_bitmask: Roam reason bitmark
  * @assoc_ie_length: Assoc IE length
  * @assoc_ie: Assoc IE buffer
  * @add_fils_tlv: add FILS TLV boolean
@@ -1957,6 +1959,8 @@ struct roam_offload_scan_params {
 	bool fw_okc;
 	bool fw_pmksa_cache;
 #endif
+	uint32_t min_delay_btw_roam_scans;
+	uint32_t roam_trigger_reason_bitmask;
 	bool is_ese_assoc;
 	bool is_11r_assoc;
 	struct mobility_domain_info mdid;
