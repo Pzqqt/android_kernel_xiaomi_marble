@@ -8161,6 +8161,15 @@ struct wdsentry {
 		WMI_HOST_F_RMW(dword, val, WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA)
 
 /**
+ * struct direct_buf_rx_metadata: direct buffer metadata
+ *
+ * @noisefloor: noisefloor
+ */
+struct direct_buf_rx_metadata {
+	int32_t noisefloor[WMI_HOST_MAX_NUM_CHAINS];
+};
+
+/**
  * struct direct_buf_rx_entry: direct buffer rx release entry structure
  *
  * @addr_lo: LSB 32-bits of the buffer
@@ -8185,6 +8194,7 @@ struct direct_buf_rx_rsp {
 	uint32_t pdev_id;
 	uint32_t mod_id;
 	uint32_t num_buf_release_entry;
+	uint32_t num_meta_data_entry;
 	struct direct_buf_rx_entry *dbr_entries;
 };
 
