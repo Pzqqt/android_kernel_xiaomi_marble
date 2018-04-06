@@ -1457,6 +1457,7 @@ QDF_STATUS wmi_unified_vdev_set_gtx_cfg_cmd(void *wmi_hdl, uint32_t if_id,
  * wmi_unified_process_update_edca_param() - update EDCA params
  * @wmi_hdl: wmi handle
  * @vdev_id: vdev id.
+ * @mu_edca_param: mu_edca_param.
  * @wmm_vparams: edca parameters
  *
  * This function updates EDCA parameters to the target
@@ -1464,14 +1465,14 @@ QDF_STATUS wmi_unified_vdev_set_gtx_cfg_cmd(void *wmi_hdl, uint32_t if_id,
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_process_update_edca_param(void *wmi_hdl,
-				uint8_t vdev_id,
+				uint8_t vdev_id, bool mu_edca_param,
 				struct wmi_host_wme_vparams wmm_vparams[WMI_MAX_NUM_AC])
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_process_update_edca_param_cmd)
 		return wmi_handle->ops->send_process_update_edca_param_cmd(wmi_handle,
-					 vdev_id, wmm_vparams);
+					 vdev_id, mu_edca_param, wmm_vparams);
 
 	return QDF_STATUS_E_FAILURE;
 }

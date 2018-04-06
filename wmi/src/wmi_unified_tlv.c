@@ -5173,7 +5173,7 @@ static QDF_STATUS send_vdev_set_gtx_cfg_cmd_tlv(wmi_unified_t wmi_handle, uint32
  * Return: CDF Status
  */
 static QDF_STATUS send_process_update_edca_param_cmd_tlv(wmi_unified_t wmi_handle,
-				    uint8_t vdev_id,
+				    uint8_t vdev_id, bool mu_edca_param,
 				    struct wmi_host_wme_vparams wmm_vparams[WMI_MAX_NUM_AC])
 {
 	uint8_t *buf_ptr;
@@ -5198,6 +5198,7 @@ static QDF_STATUS send_process_update_edca_param_cmd_tlv(wmi_unified_t wmi_handl
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_vdev_set_wmm_params_cmd_fixed_param));
 	cmd->vdev_id = vdev_id;
+	cmd->wmm_param_type = mu_edca_param;
 
 	for (ac = 0; ac < WMI_MAX_NUM_AC; ac++) {
 		wmm_param = (wmi_wmm_vparams *) (&cmd->wmm_params[ac]);
@@ -5208,7 +5209,10 @@ static QDF_STATUS send_process_update_edca_param_cmd_tlv(wmi_unified_t wmi_handl
 		wmm_param->cwmin = twmm_param->cwmin;
 		wmm_param->cwmax = twmm_param->cwmax;
 		wmm_param->aifs = twmm_param->aifs;
-		wmm_param->txoplimit = twmm_param->txoplimit;
+		if (mu_edca_param)
+			wmm_param->mu_edca_timer = twmm_param->mu_edca_timer;
+		else
+			wmm_param->txoplimit = twmm_param->txoplimit;
 		wmm_param->acm = twmm_param->acm;
 		wmm_param->no_ack = twmm_param->noackpolicy;
 	}
