@@ -1147,7 +1147,8 @@ static QDF_STATUS wlan_ipa_uc_handle_first_con(struct wlan_ipa_priv *ipa_ctx)
 	 * PROD resource may return sync or async manners
 	 */
 	if (wlan_ipa_is_rm_enabled(ipa_ctx->config)) {
-		if (!ipa_rm_request_resource(IPA_RM_RESOURCE_WLAN_PROD)) {
+		if (!wlan_ipa_wdi_rm_request_resource(ipa_ctx,
+						IPA_RM_RESOURCE_WLAN_PROD)) {
 			/* RM PROD request sync return
 			 * enable pipe immediately
 			 */
@@ -2399,7 +2400,7 @@ static void wlan_ipa_uc_op_cb(struct op_msg_type *op_msg,
 			}
 			wlan_ipa_uc_proc_pending_event(ipa_ctx, true);
 			if (ipa_ctx->pending_cons_req)
-				qdf_ipa_rm_notify_completion(
+				wlan_ipa_wdi_rm_notify_completion(
 						QDF_IPA_RM_RESOURCE_GRANTED,
 						QDF_IPA_RM_RESOURCE_WLAN_CONS);
 			ipa_ctx->pending_cons_req = false;
@@ -2418,8 +2419,8 @@ static void wlan_ipa_uc_op_cb(struct op_msg_type *op_msg,
 			qdf_event_set(&ipa_ctx->ipa_resource_comp);
 			wlan_ipa_uc_disable_pipes(ipa_ctx);
 			if (wlan_ipa_is_rm_enabled(ipa_ctx->config))
-				qdf_ipa_rm_release_resource(
-					QDF_IPA_RM_RESOURCE_WLAN_PROD);
+				wlan_ipa_wdi_rm_release_resource(ipa_ctx,
+						QDF_IPA_RM_RESOURCE_WLAN_PROD);
 			wlan_ipa_uc_proc_pending_event(ipa_ctx, false);
 			ipa_ctx->pending_cons_req = false;
 		}
@@ -2541,7 +2542,7 @@ QDF_STATUS wlan_ipa_uc_ol_init(struct wlan_ipa_priv *ipa_ctx,
 	status = wlan_ipa_set_perf_level(ipa_ctx, 0, 0);
 	if (status != QDF_STATUS_SUCCESS) {
 		ipa_err("Set perf level failed: %d", status);
-		qdf_ipa_rm_inactivity_timer_destroy(
+		wlan_ipa_wdi_rm_inactivity_timer_destroy(
 					QDF_IPA_RM_RESOURCE_WLAN_PROD);
 		goto fail_return;
 	}
