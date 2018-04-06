@@ -26,6 +26,20 @@
 
 #ifdef QCA_SUPPORT_CP_STATS
 
+/**
+ * tgt_mc_cp_stats_inc_wake_lock_stats() : API to increment wake lock stats
+ * given the wake reason code
+ * @psoc: pointer to psoc object
+ * @reason: wake reason
+ * @stats: vdev wow stats to update
+ * @unspecified_wake_count: unspecified wake count to update
+ *
+ * Return : status of operation
+ */
+QDF_STATUS tgt_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
+				uint32_t reason, struct wake_lock_stats *stats,
+				uint32_t *unspecified_wake_count);
+
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_MC_TGT_API_H__ */
 

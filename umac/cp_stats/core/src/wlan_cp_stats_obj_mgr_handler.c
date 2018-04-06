@@ -28,7 +28,12 @@
 #include "wlan_cp_stats_defs.h"
 #include "wlan_cp_stats_da_api.h"
 #include "wlan_cp_stats_ol_api.h"
+
+#include "wlan_cp_stats_defs.h"
+#include "wlan_cp_stats_ic_ucfg_handler.h"
+
 #include <wlan_cp_stats_ucfg_api.h>
+#include "wlan_cp_stats_utils_api.h"
 
 QDF_STATUS
 wlan_cp_stats_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
@@ -108,6 +113,7 @@ wlan_cp_stats_psoc_obj_create_handler_return:
 			qdf_mem_free(csc);
 			csc = NULL;
 		}
+		return status;
 	}
 
 	cp_stats_debug("cp stats context attach at psoc");
@@ -132,6 +138,8 @@ wlan_cp_stats_psoc_obj_destroy_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 
 	wlan_objmgr_psoc_component_obj_detach(psoc,
 			WLAN_UMAC_COMP_CP_STATS, csc);
+	if (csc->cp_stats_psoc_obj_deinit)
+		csc->cp_stats_psoc_obj_deinit(csc->psoc_cs);
 	qdf_mem_free(csc->psoc_cs);
 	if (csc->cp_stats_ctx_deinit)
 		csc->cp_stats_ctx_deinit(csc);

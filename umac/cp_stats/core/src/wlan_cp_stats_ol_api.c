@@ -30,6 +30,9 @@
 #include "wlan_cp_stats_cmn_api_i.h"
 #include <wlan_cp_stats_ucfg_api.h>
 
+#include "wlan_cp_stats_ic_ucfg_handler.h"
+#include <wlan_cp_stats_utils_api.h>
+
 QDF_STATUS wlan_cp_stats_psoc_obj_init_ol(struct psoc_cp_stats *psoc_cs)
 {
 	qdf_spinlock_create(&psoc_cs->psoc_cp_stats_lock);

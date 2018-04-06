@@ -41,11 +41,15 @@
  * @psoc_obj: pointer to psoc
  * @psoc_comp_priv_obj[]: component's private object pointers
  * @psoc_cp_stats_lock: lock to protect object
+ * @cmn_stats: stats common for AP and STA devices
+ * @obj_stats: stats specific to AP or STA devices
  */
 struct psoc_cp_stats {
 	struct wlan_objmgr_psoc *psoc_obj;
 	void *psoc_comp_priv_obj[WLAN_CP_STATS_MAX_COMPONENTS];
 	qdf_spinlock_t psoc_cp_stats_lock;
+	struct psoc_cmn_cp_stats *cmn_stats;
+	void *obj_stats;
 };
 
 /**
@@ -242,14 +246,18 @@ static inline
 struct psoc_cp_stats *wlan_cp_stats_get_psoc_stats_obj(struct wlan_objmgr_psoc
 							*psoc)
 {
-	struct psoc_cp_stats *psoc_cs = NULL;
+	struct cp_stats_context *csc;
 
-	if (psoc) {
-		psoc_cs = wlan_objmgr_psoc_get_comp_private_obj
-				(psoc, WLAN_UMAC_COMP_CP_STATS);
-	}
+	if (!psoc)
+		return NULL;
 
-	return psoc_cs;
+	csc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						    WLAN_UMAC_COMP_CP_STATS);
+
+	if (!csc)
+		return NULL;
+
+	return csc->psoc_cs;
 }
 
 /**

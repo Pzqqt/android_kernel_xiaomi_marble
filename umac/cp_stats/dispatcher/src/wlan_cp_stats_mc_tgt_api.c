@@ -23,3 +23,26 @@
  * from southbound interface
  */
 
+#include "target_if_cp_stats.h"
+#include "wlan_cp_stats_mc_defs.h"
+#include "wlan_cp_stats_tgt_api.h"
+#include "wlan_cp_stats_mc_tgt_api.h"
+#include "../../core/src/wlan_cp_stats_defs.h"
+#include <wlan_cp_stats_utils_api.h>
+
+
+QDF_STATUS tgt_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
+					       uint32_t reason,
+					       struct wake_lock_stats *stats,
+					       uint32_t *unspecified_wake_count)
+{
+	struct wlan_lmac_if_cp_stats_tx_ops *tx_ops;
+
+	tx_ops = target_if_cp_stats_get_tx_ops(psoc);
+	if (!tx_ops)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	tx_ops->inc_wake_lock_stats(reason, stats, unspecified_wake_count);
+
+	return QDF_STATUS_SUCCESS;
+}

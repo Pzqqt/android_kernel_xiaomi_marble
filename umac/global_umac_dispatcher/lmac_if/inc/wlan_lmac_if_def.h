@@ -73,7 +73,8 @@ struct scheduler_msg;
 
 #ifdef QCA_SUPPORT_CP_STATS
 #include <wlan_cp_stats_tgt_api.h>
-#endif
+#include <wlan_cp_stats_mc_defs.h>
+#endif /* QCA_SUPPORT_CP_STATS */
 
 #ifdef QCA_SUPPORT_CP_STATS
 /**
@@ -85,6 +86,11 @@ struct scheduler_msg;
 struct wlan_lmac_if_cp_stats_tx_ops {
 	QDF_STATUS (*cp_stats_attach)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*cp_stats_detach)(struct wlan_objmgr_psoc *posc);
+#ifdef CONFIG_MCL
+	void (*inc_wake_lock_stats)(uint32_t reason,
+				    struct wake_lock_stats *stats,
+				    uint32_t *unspecified_wake_count);
+#endif
 };
 
 /**

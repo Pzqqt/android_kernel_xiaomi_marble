@@ -862,6 +862,10 @@ QDF_STATUS qdf_ipv6_parse(const char *ipv6_str, struct qdf_ipv6_addr *out_addr);
 
 #define QDF_MAX_NUM_CHAN   (128)
 
+#define QDF_BCAST_MAC_ADDR (0xFF)
+#define QDF_MCAST_IPV4_MAC_ADDR (0x01)
+#define QDF_MCAST_IPV6_MAC_ADDR (0x33)
+
 /**
  * struct qdf_tso_frag_t - fragments of a single TCP segment
  * @paddr_low_32: Lower 32 bits of the buffer pointer

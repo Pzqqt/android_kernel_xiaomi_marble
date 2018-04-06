@@ -17,8 +17,383 @@
  */
 
 /**
- * DOC: wlan_cp_stats_mc_ucfg_api.h
+ * DOC: wlan_cp_stats_mc_ucfg_api.c
  *
  * This file provide API definitions required for northbound interaction
  */
 
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_cp_stats_utils_api.h>
+#include <wlan_cp_stats_mc_ucfg_api.h>
+#include <wlan_cp_stats_mc_tgt_api.h>
+#include "../../core/src/wlan_cp_stats_defs.h"
+#include "../../core/src/wlan_cp_stats_cmn_api_i.h"
+
+QDF_STATUS wlan_cp_stats_psoc_cs_init(struct psoc_cp_stats *psoc_cs)
+{
+	psoc_cs->obj_stats = qdf_mem_malloc(sizeof(struct psoc_mc_cp_stats));
+	if (!psoc_cs->obj_stats) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_cp_stats_psoc_cs_deinit(struct psoc_cp_stats *psoc_cs)
+{
+	qdf_mem_free(psoc_cs->obj_stats);
+	psoc_cs->obj_stats = NULL;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_cp_stats_vdev_cs_init(struct vdev_cp_stats *vdev_cs)
+{
+	vdev_cs->vdev_stats = qdf_mem_malloc(sizeof(struct vdev_mc_cp_stats));
+	if (!vdev_cs->vdev_stats) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_cp_stats_vdev_cs_deinit(struct vdev_cp_stats *vdev_cs)
+{
+	qdf_mem_free(vdev_cs->vdev_stats);
+	vdev_cs->vdev_stats = NULL;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_cp_stats_pdev_cs_init(struct pdev_cp_stats *pdev_cs)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_cp_stats_pdev_cs_deinit(struct pdev_cp_stats *pdev_cs)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_cp_stats_peer_cs_init(struct peer_cp_stats *peer_cs)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_cp_stats_peer_cs_deinit(struct peer_cp_stats *peer_cs)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats_by_protocol(
+					struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id,
+					enum qdf_proto_subtype protocol)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wake_lock_stats *stats;
+	struct vdev_mc_cp_stats *vdev_mc_stats;
+	struct vdev_cp_stats *vdev_cp_stats_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_CP_STATS_ID);
+	if (!vdev) {
+		cp_stats_err("vdev numm for vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (!vdev_cp_stats_priv) {
+		cp_stats_err("vdev cp stats object is null");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
+	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
+	stats = &vdev_mc_stats->wow_stats;
+	switch (protocol) {
+	case QDF_PROTO_ICMP_RES:
+		stats->icmpv4_count++;
+		break;
+	case QDF_PROTO_ICMPV6_REQ:
+	case QDF_PROTO_ICMPV6_RES:
+	case QDF_PROTO_ICMPV6_RS:
+		stats->icmpv6_count++;
+		break;
+	case QDF_PROTO_ICMPV6_RA:
+		stats->icmpv6_count++;
+		stats->ipv6_mcast_ra_stats++;
+		break;
+	case QDF_PROTO_ICMPV6_NS:
+		stats->icmpv6_count++;
+		stats->ipv6_mcast_ns_stats++;
+		break;
+	case QDF_PROTO_ICMPV6_NA:
+		stats->icmpv6_count++;
+		stats->ipv6_mcast_na_stats++;
+		break;
+	default:
+		break;
+	}
+
+	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats_by_dst_addr(
+					struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id, uint8_t *dest_mac)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wake_lock_stats *stats;
+	struct vdev_mc_cp_stats *vdev_mc_stats;
+	struct vdev_cp_stats *vdev_cp_stats_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_CP_STATS_ID);
+	if (!vdev) {
+		cp_stats_err("vdev numm for vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (!vdev_cp_stats_priv) {
+		cp_stats_err("vdev cp stats object is null");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
+	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
+	stats = &vdev_mc_stats->wow_stats;
+	switch (*dest_mac) {
+	case QDF_BCAST_MAC_ADDR:
+		stats->bcast_wake_up_count++;
+		break;
+	case QDF_MCAST_IPV4_MAC_ADDR:
+		stats->ipv4_mcast_wake_up_count++;
+		break;
+	case QDF_MCAST_IPV6_MAC_ADDR:
+		stats->ipv6_mcast_wake_up_count++;
+		break;
+	default:
+		stats->ucast_wake_up_count++;
+		break;
+	}
+
+	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
+						uint8_t vdev_id,
+						uint32_t reason)
+{
+	struct wake_lock_stats *stats;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_vdev *vdev = NULL;
+	struct psoc_mc_cp_stats *psoc_mc_stats;
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+	struct vdev_mc_cp_stats *vdev_mc_stats;
+	struct vdev_cp_stats *vdev_cp_stats_priv;
+
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_CP_STATS_ID);
+	if (!vdev) {
+		cp_stats_err("vdev numm for vdev_id: %d", vdev_id);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (!vdev_cp_stats_priv) {
+		cp_stats_err("vdev cp stats object is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto release_vdev_ref;
+	}
+
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
+
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
+	stats = &vdev_mc_stats->wow_stats;
+	status = tgt_mc_cp_stats_inc_wake_lock_stats(psoc, reason, stats,
+				&psoc_mc_stats->wow_unspecified_wake_up_count);
+	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
+
+release_vdev_ref:
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+
+	return status;
+}
+
+/**
+ * vdev_iterator() - iterator function to collect wake_lock_stats from all vdev
+ * @psoc: pointer to psoc object
+ * @vdev: pointer to vdev object
+ * @arg: stats object pointer passed as arg
+ *
+ * Return - none
+ */
+static void vdev_iterator(struct wlan_objmgr_psoc *psoc, void *vdev, void *arg)
+{
+	struct wake_lock_stats *vdev_stats;
+	struct wake_lock_stats *stats = arg;
+	struct vdev_mc_cp_stats *vdev_mc_stats;
+	struct vdev_cp_stats *vdev_cp_stats_priv;
+
+	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (NULL == vdev_cp_stats_priv) {
+		cp_stats_err("vdev cp stats object is null");
+		return;
+	}
+
+	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
+	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
+	vdev_stats = &vdev_mc_stats->wow_stats;
+	stats->ucast_wake_up_count += vdev_stats->ucast_wake_up_count;
+	stats->bcast_wake_up_count += vdev_stats->bcast_wake_up_count;
+	stats->ipv4_mcast_wake_up_count += vdev_stats->ipv4_mcast_wake_up_count;
+	stats->ipv6_mcast_wake_up_count += vdev_stats->ipv6_mcast_wake_up_count;
+	stats->ipv6_mcast_ra_stats += vdev_stats->ipv6_mcast_ra_stats;
+	stats->ipv6_mcast_ns_stats += vdev_stats->ipv6_mcast_ns_stats;
+	stats->ipv6_mcast_na_stats += vdev_stats->ipv6_mcast_na_stats;
+	stats->icmpv4_count += vdev_stats->icmpv4_count;
+	stats->icmpv6_count += vdev_stats->icmpv6_count;
+	stats->rssi_breach_wake_up_count +=
+			vdev_stats->rssi_breach_wake_up_count;
+	stats->low_rssi_wake_up_count += vdev_stats->low_rssi_wake_up_count;
+	stats->gscan_wake_up_count += vdev_stats->gscan_wake_up_count;
+	stats->pno_complete_wake_up_count +=
+			vdev_stats->pno_complete_wake_up_count;
+	stats->pno_match_wake_up_count += vdev_stats->pno_match_wake_up_count;
+	stats->oem_response_wake_up_count +=
+			vdev_stats->oem_response_wake_up_count;
+	stats->pwr_save_fail_detected += vdev_stats->pwr_save_fail_detected;
+	stats->scan_11d += vdev_stats->scan_11d;
+	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+}
+
+QDF_STATUS ucfg_mc_cp_stats_get_psoc_wake_lock_stats(
+						struct wlan_objmgr_psoc *psoc,
+						struct wake_lock_stats *stats)
+{
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+	struct psoc_mc_cp_stats *psoc_mc_stats;
+
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (NULL == psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+	/* iterate through all vdevs, and get wow stats from vdev_cs object */
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP, vdev_iterator,
+				     stats, true, WLAN_CP_STATS_ID);
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_mc_cp_stats_get_vdev_wake_lock_stats(
+						struct wlan_objmgr_vdev *vdev,
+						struct wake_lock_stats *stats)
+{
+	struct vdev_cp_stats *vdev_cp_stats_priv;
+	struct vdev_mc_cp_stats *vdev_mc_stats;
+
+	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (NULL == vdev_cp_stats_priv) {
+		cp_stats_err("vdev cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
+	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
+	qdf_mem_copy(stats, &vdev_mc_stats->wow_stats, sizeof(*stats));
+	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
+				struct wlan_objmgr_psoc *psoc,
+				char *buffer, uint16_t max_len, int *ret)
+{
+	QDF_STATUS status;
+	uint32_t unspecified_wake_count;
+	struct wake_lock_stats wow_stats = {0};
+	struct psoc_mc_cp_stats *psoc_mc_stats;
+	struct psoc_cp_stats *psoc_cp_stats_priv;
+
+	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
+	if (!psoc_cp_stats_priv) {
+		cp_stats_err("psoc cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	/* get stats from psoc */
+	status = ucfg_mc_cp_stats_get_psoc_wake_lock_stats(psoc, &wow_stats);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("Failed to get WoW stats");
+		return status;
+	}
+
+	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
+	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+	unspecified_wake_count = psoc_mc_stats->wow_unspecified_wake_up_count;
+	wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
+
+	*ret = qdf_scnprintf(buffer, max_len,
+			     "WoW Wake Reasons\n"
+			     "\tunspecified wake count: %u\n"
+			     "\tunicast: %u\n"
+			     "\tbroadcast: %u\n"
+			     "\tIPv4 multicast: %u\n"
+			     "\tIPv6 multicast: %u\n"
+			     "\tIPv6 multicast RA: %u\n"
+			     "\tIPv6 multicast NS: %u\n"
+			     "\tIPv6 multicast NA: %u\n"
+			     "\tICMPv4: %u\n"
+			     "\tICMPv6: %u\n"
+			     "\tRSSI Breach: %u\n"
+			     "\tLow RSSI: %u\n"
+			     "\tG-Scan: %u\n"
+			     "\tPNO Complete: %u\n"
+			     "\tPNO Match: %u\n"
+			     "\tOEM rsp wake_count: %u\n"
+			     "\twake count due to pwr_save_fail_detected: %u\n"
+			     "\twake count due to 11d scan: %u\n",
+			     unspecified_wake_count,
+			     wow_stats.ucast_wake_up_count,
+			     wow_stats.bcast_wake_up_count,
+			     wow_stats.ipv4_mcast_wake_up_count,
+			     wow_stats.ipv6_mcast_wake_up_count,
+			     wow_stats.ipv6_mcast_ra_stats,
+			     wow_stats.ipv6_mcast_ns_stats,
+			     wow_stats.ipv6_mcast_na_stats,
+			     wow_stats.icmpv4_count,
+			     wow_stats.icmpv6_count,
+			     wow_stats.rssi_breach_wake_up_count,
+			     wow_stats.low_rssi_wake_up_count,
+			     wow_stats.gscan_wake_up_count,
+			     wow_stats.pno_complete_wake_up_count,
+			     wow_stats.pno_match_wake_up_count,
+			     wow_stats.oem_response_wake_up_count,
+			     wow_stats.pwr_save_fail_detected,
+			     wow_stats.scan_11d);
+
+	return QDF_STATUS_SUCCESS;
+}
