@@ -218,6 +218,20 @@ QDF_STATUS wlan_ipa_wdi_setup_rm(struct wlan_ipa_priv *ipa_ctx);
  */
 void wlan_ipa_wdi_destroy_rm(struct wlan_ipa_priv *ipa_ctx);
 
+static inline
+int wlan_ipa_wdi_rm_notify_completion(qdf_ipa_rm_event_t event,
+				      qdf_ipa_rm_resource_name_t res_name)
+{
+	return qdf_ipa_rm_notify_completion(event, res_name);
+}
+
+static inline
+int wlan_ipa_wdi_rm_inactivity_timer_destroy(
+					qdf_ipa_rm_resource_name_t res_name)
+{
+	return qdf_ipa_rm_inactivity_timer_destroy(res_name);
+}
+
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
 
 static inline
@@ -260,6 +274,20 @@ static inline QDF_STATUS wlan_ipa_wdi_rm_try_release(struct wlan_ipa_priv
 						     *ipa_ctx)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+int wlan_ipa_wdi_rm_notify_completion(qdf_ipa_rm_event_t event,
+				      qdf_ipa_rm_resource_name_t res_name)
+{
+	return 0;
+}
+
+static inline
+int wlan_ipa_wdi_rm_inactivity_timer_destroy(
+					qdf_ipa_rm_resource_name_t res_name)
+{
+	return 0;
 }
 
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */
