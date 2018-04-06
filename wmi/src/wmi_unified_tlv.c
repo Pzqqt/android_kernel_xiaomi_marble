@@ -19145,14 +19145,16 @@ static QDF_STATUS extract_peer_sta_kickout_ev_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	void *evt_buf, wmi_host_stats_event *stats_param)
 {
-	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
 	wmi_stats_event_fixed_param *ev;
+	wmi_per_chain_rssi_stats *rssi_event;
+	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
 
+	qdf_mem_zero(stats_param, sizeof(*stats_param));
 	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *) evt_buf;
-
 	ev = (wmi_stats_event_fixed_param *) param_buf->fixed_param;
+	rssi_event = param_buf->chain_stats;
 	if (!ev) {
-		WMI_LOGE("%s: Failed to alloc memory\n", __func__);
+		WMI_LOGE("%s: event fixed param NULL\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -19200,6 +19202,20 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	stats_param->num_bcn_stats = ev->num_bcn_stats;
 	stats_param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
 							ev->pdev_id);
+
+	/* if chain_stats is not populated */
+	if (!param_buf->chain_stats || !param_buf->num_chain_stats)
+		return QDF_STATUS_SUCCESS;
+
+	if (WMITLV_TAG_STRUC_wmi_per_chain_rssi_stats !=
+	    WMITLV_GET_TLVTAG(rssi_event->tlv_header))
+		return QDF_STATUS_SUCCESS;
+
+	if (WMITLV_GET_STRUCT_TLVLEN(wmi_per_chain_rssi_stats) !=
+	    WMITLV_GET_TLVTAG(rssi_event->tlv_header))
+		return QDF_STATUS_SUCCESS;
+
+	stats_param->num_rssi_stats = rssi_event->num_per_chain_rssi_stats;
 
 	return QDF_STATUS_SUCCESS;
 }

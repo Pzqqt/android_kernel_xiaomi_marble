@@ -4874,6 +4874,7 @@ struct rx_reorder_queue_remove_params {
  * @num_chan_stats: number of channel stats
  * @pdev_id: device id for the radio
  * @num_bcn_stats: number of beacon stats
+ * @num_rssi_stats: number of rssi stats
  */
 typedef struct {
 	wmi_host_stats_id stats_id;
@@ -4885,6 +4886,7 @@ typedef struct {
 	uint32_t num_chan_stats;
 	uint32_t pdev_id;
 	uint32_t num_bcn_stats;
+	uint32_t num_rssi_stats;
 } wmi_host_stats_event;
 
 /**
