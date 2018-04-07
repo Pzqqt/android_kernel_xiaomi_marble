@@ -2284,10 +2284,9 @@ endif
 #Enable GTK Offload
 ifeq ($(CONFIG_GTK_OFFLOAD), 1)
 CDEFINES += -DWLAN_FEATURE_GTK_OFFLOAD
-CDEFINES += -DIGTK_OFFLOAD
 endif
 
-#Enable GTK Offload
+#Enable External WoW
 ifeq ($(CONFIG_EXT_WOW), 1)
 CDEFINES += -DWLAN_FEATURE_EXTWOW_SUPPORT
 endif
