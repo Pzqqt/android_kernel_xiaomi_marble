@@ -2345,13 +2345,6 @@ CDEFINES += -DFEATURE_METERING
 endif
 endif
 
-#Enable RX Full re-order OL feature only "LL and NON-MDM9630 platform"
-ifneq ($(CONFIG_ARCH_MDM9630), y)
-ifeq ($(CONFIG_HIF_PCI), 1)
-CDEFINES += -DWLAN_FEATURE_RX_FULL_REORDER_OL
-endif
-endif
-
 ifeq ($(CONFIG_ARCH_MDM9607), y)
 CDEFINES += -DCONFIG_TUFELLO_DUAL_FW_SUPPORT
 endif
