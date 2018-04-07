@@ -312,9 +312,6 @@ ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_ATH_11AC_TXCOMPACT := 0
 endif
 
-#Enable OS specific IRQ abstraction
-CONFIG_ATH_SUPPORT_SHARED_IRQ := 1
-
 #Enable message based HIF instead of RAW access in BMI
 ifeq ($(CONFIG_QCA_WIFI_SDIO), 1)
 CONFIG_HIF_MESSAGE_BASED := 0
@@ -2163,11 +2160,6 @@ endif
 #Enable 11AC TX
 ifeq ($(CONFIG_ATH_11AC_TXCOMPACT), 1)
 CDEFINES += -DATH_11AC_TXCOMPACT
-endif
-
-#Enable OS specific IRQ abstraction
-ifeq ($(CONFIG_ATH_SUPPORT_SHARED_IRQ), 1)
-CDEFINES += -DATH_SUPPORT_SHARED_IRQ
 endif
 
 #Enable message based HIF instead of RAW access in BMI
