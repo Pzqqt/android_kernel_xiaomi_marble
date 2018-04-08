@@ -124,7 +124,7 @@ ifeq ($(KERNEL_BUILD), n)
 	CONFIG_WLAN_FEATURE_FILS := y
 	ifneq ($(CONFIG_QCA_CLD_WLAN),)
 		ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2) $(CONFIG_ICNSS)))
-		#Flag to enable Protected Managment Frames (11w) feature
+		#Flag to enable Protected Management Frames (11w) feature
 		CONFIG_WLAN_FEATURE_11W := y
 		#Flag to enable LTE CoEx feature
 		CONFIG_QCOM_LTE_COEX := y
@@ -135,7 +135,7 @@ ifeq ($(KERNEL_BUILD), n)
 		endif
 	endif
 
-	#Flag to enable Protected Managment Frames (11w) feature
+	#Flag to enable Protected Management Frames (11w) feature
 	ifeq ($(CONFIG_ROME_IF),usb)
 		CONFIG_WLAN_FEATURE_11W := y
 	endif
@@ -364,7 +364,7 @@ CONFIG_SUPPORT_HOST_STATISTICS := n
 #Enable WDI Event support
 CONFIG_WDI_EVENT_ENABLE := y
 
-#Endianess selection
+#Endianness selection
 CONFIG_LITTLE_ENDIAN := y
 
 #Enable TX reclaim support
@@ -1837,7 +1837,7 @@ ifeq ($(CONFIG_LITHIUM), y)
 OBJS +=		$(DP_OBJS)
 endif
 
-EXTRA_CFLAGS += $(INCS)
+ccflags-y += $(INCS)
 
 CDEFINES :=	-DANI_OS_TYPE_ANDROID=6 \
 		-DPTT_SOCK_SVC_ENABLE \
@@ -2236,7 +2236,7 @@ ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
 CDEFINES += -DWDI_EVENT_ENABLE
 endif
 
-#Endianess selection
+#Endianness selection
 ifeq ($(CONFIG_LITTLE_ENDIAN), y)
 CDEFINES += -DANI_LITTLE_BYTE_ENDIAN
 CDEFINES += -DANI_LITTLE_BIT_ENDIAN
@@ -2555,18 +2555,18 @@ KBUILD_CPPFLAGS += $(CDEFINES)
 
 # Currently, for versions of gcc which support it, the kernel Makefile
 # is disabling the maybe-uninitialized warning.  Re-enable it for the
-# WLAN driver.  Note that we must use EXTRA_CFLAGS here so that it
+# WLAN driver.  Note that we must use ccflags-y here so that it
 # will override the kernel settings.
 ifeq ($(call cc-option-yn, -Wmaybe-uninitialized), y)
-EXTRA_CFLAGS += -Wmaybe-uninitialized
+ccflags-y += -Wmaybe-uninitialized
 ifneq (y,$(CONFIG_ARCH_MSM))
-EXTRA_CFLAGS += -Wframe-larger-than=4096
+ccflags-y += -Wframe-larger-than=4096
 endif
 endif
-EXTRA_CFLAGS += -Wmissing-prototypes
+ccflags-y += -Wmissing-prototypes
 
 ifeq ($(call cc-option-yn, -Wheader-guard), y)
-EXTRA_CFLAGS += -Wheader-guard
+ccflags-y += -Wheader-guard
 endif
 # If the module name is not "wlan", then the define MULTI_IF_NAME to be the
 # same a the QCA CHIP name. The host driver will then append MULTI_IF_NAME to
