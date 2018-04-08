@@ -372,6 +372,7 @@ static void dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 
 	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
 		pdev = soc->pdev_list[i];
+		qdf_spin_lock_bh(&pdev->vdev_list_lock);
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
@@ -382,6 +383,7 @@ static void dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 				}
 			}
 		}
+		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
@@ -406,6 +408,7 @@ static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 
 	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
 		pdev = soc->pdev_list[i];
+		qdf_spin_lock_bh(&pdev->vdev_list_lock);
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
@@ -416,6 +419,7 @@ static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 				}
 			}
 		}
+		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
@@ -637,6 +641,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("AST Table:");
 	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
 		pdev = soc->pdev_list[i];
+		qdf_spin_lock_bh(&pdev->vdev_list_lock);
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
@@ -662,6 +667,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 				}
 			}
 		}
+		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
 }
 #else
@@ -1684,6 +1690,7 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 
 	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
 		pdev = soc->pdev_list[i];
+		qdf_spin_lock_bh(&pdev->vdev_list_lock);
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
@@ -1704,7 +1711,7 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 				}
 			}
 		}
-
+		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
@@ -2437,6 +2444,7 @@ static os_timer_func(dp_txrx_peer_find_inact_timeout_handler)
 
 	for (i = 0; i < soc->pdev_count; i++) {
 	pdev = soc->pdev_list[i];
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		if (vdev->opmode != wlan_op_mode_ap)
 			continue;
@@ -2464,6 +2472,7 @@ static os_timer_func(dp_txrx_peer_find_inact_timeout_handler)
 				dp_mark_peer_inact(peer, true);
 		}
 	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
 
 	qdf_spin_unlock(&soc->peer_ref_mutex);
@@ -2598,6 +2607,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	soc->pdev_count++;
 
 	TAILQ_INIT(&pdev->vdev_list);
+	qdf_spinlock_create(&pdev->vdev_list_lock);
 	pdev->vdev_count = 0;
 
 	qdf_spinlock_create(&pdev->tx_mutex);
@@ -2880,6 +2890,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 
 	dp_neighbour_peers_detach(pdev);
 	qdf_spinlock_destroy(&pdev->tx_mutex);
+	qdf_spinlock_destroy(&pdev->vdev_list_lock);
 
 	dp_ipa_uc_detach(soc, pdev);
 
@@ -3302,8 +3313,10 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 
 	TAILQ_INIT(&vdev->peer_list);
 
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	/* add this vdev into the pdev's list */
 	TAILQ_INSERT_TAIL(&pdev->vdev_list, vdev, vdev_list_elem);
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	pdev->vdev_count++;
 
 	dp_tx_vdev_attach(vdev);
@@ -3436,8 +3449,10 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	/* preconditions */
 	qdf_assert(vdev);
 
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	/* remove the vdev from its parent pdev's list */
 	TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 
 	if (wlan_op_mode_sta == vdev->opmode)
 		dp_peer_delete_wifi3(vdev->vap_bss_peer, 0);
@@ -3875,6 +3890,7 @@ dp_txrx_update_inact_threshold(struct cdp_pdev *pdev_handle,
 	soc->pdev_bs_inact_reload = new_threshold;
 
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		if (vdev->opmode != wlan_op_mode_ap)
 			continue;
@@ -3893,6 +3909,7 @@ dp_txrx_update_inact_threshold(struct cdp_pdev *pdev_handle,
 			}
 		}
 	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 }
 
@@ -3911,6 +3928,7 @@ dp_txrx_reset_inact_count(struct cdp_pdev *pdev_handle)
 	struct dp_soc *soc = pdev->soc;
 
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		if (vdev->opmode != wlan_op_mode_ap)
 			continue;
@@ -3922,6 +3940,7 @@ dp_txrx_reset_inact_count(struct cdp_pdev *pdev_handle)
 			peer->peer_bs_inact = soc->pdev_bs_inact_reload;
 		}
 	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 }
 
@@ -4281,10 +4300,12 @@ static struct cdp_vdev *dp_get_vdev_from_vdev_id_wifi3(struct cdp_pdev *dev,
 	if (qdf_unlikely(!pdev))
 		return NULL;
 
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		if (vdev->vdev_id == vdev_id)
 			break;
 	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 
 	return (struct cdp_vdev *)vdev;
 }
@@ -4862,6 +4883,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 	qdf_mem_set(&(pdev->stats.rx), sizeof(pdev->stats.rx), 0x0);
 	qdf_mem_set(&(pdev->stats.tx_i), sizeof(pdev->stats.tx_i), 0x0);
 
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 
 		dp_aggregate_vdev_stats(vdev);
@@ -4911,6 +4933,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 		pdev->stats.tx_i.tso.num_seg =
 			vdev->stats.tx_i.tso.num_seg;
 	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	if (soc->cdp_soc.ol_ops->update_dp_stats)
 		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
 				&pdev->stats, pdev->pdev_id, UPDATE_PDEV_STATS);

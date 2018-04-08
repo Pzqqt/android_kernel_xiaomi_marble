@@ -1024,6 +1024,9 @@ struct dp_pdev {
 	/* VDEV list */
 	TAILQ_HEAD(, dp_vdev) vdev_list;
 
+	/* vdev list lock */
+	qdf_spinlock_t vdev_list_lock;
+
 	/* Number of vdevs this device have */
 	uint16_t vdev_count;
 
