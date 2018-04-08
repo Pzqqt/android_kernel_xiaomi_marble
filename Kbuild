@@ -422,6 +422,19 @@ CONFIG_WLAN_FEATURE_P2P_DEBUG := y
 #Flag to enable nud tracking feature
 CONFIG_WLAN_NUD_TRACKING := y
 
+CONFIG_WIFI_POS_CONVERGED := y
+
+CONFIG_CP_STATS := y
+
+ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
+CONFIG_HELIUMPLUS := y
+CONFIG_64BIT_PADDR := y
+CONFIG_FEATURE_TSO := y
+CONFIG_FEATURE_TSO_DEBUG := y
+ifneq ($(CONFIG_FORCE_ALLOC_FROM_DMA_ZONE), y)
+CONFIG_ENABLE_DEBUG_ADDRESS_MARKING := y
+endif
+endif
 
 ifeq ($(CONFIG_CFG80211), y)
 HAVE_CFG80211 := y
@@ -813,6 +826,7 @@ WLAN_LOGGING_SRC_DIR :=	$(WLAN_LOGGING_DIR)/src
 WLAN_LOGGING_INC     := -I$(WLAN_ROOT)/$(WLAN_LOGGING_INC_DIR)
 WLAN_LOGGING_OBJS    := $(WLAN_LOGGING_SRC_DIR)/wlan_logging_sock_svc.o \
 		$(WLAN_LOGGING_SRC_DIR)/wlan_roam_debug.o
+
 ############ SYS ############
 SYS_DIR :=	core/mac/src/sys
 
@@ -954,6 +968,7 @@ UMAC_GREEN_AP_OBJS := $(UMAC_GREEN_AP_CORE_DIR)/wlan_green_ap_main.o \
 		$(UMAC_GREEN_AP_DISP_DIR)/wlan_green_ap_api.o \
                 $(UMAC_GREEN_AP_DISP_DIR)/wlan_green_ap_ucfg_api.o \
                 $(WLAN_COMMON_ROOT)/target_if/green_ap/src/target_if_green_ap.o
+
 ############# FTM CORE ############
 FTM_CORE_DIR := ftm
 TARGET_IF_FTM_DIR := target_if/ftm
@@ -1400,8 +1415,6 @@ UMAC_SER_OBJS := $(UMAC_SER_OBJ_DIR)/wlan_serialization_dequeue.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_rules.o
 
 ###### WIFI POS ########
-CONFIG_WIFI_POS_CONVERGED := y
-
 WIFI_POS_OS_IF_DIR := $(WLAN_COMMON_ROOT)/os_if/linux/wifi_pos/src
 WIFI_POS_OS_IF_INC := -I$(WLAN_COMMON_INC)/os_if/linux/wifi_pos/inc
 WIFI_POS_TGT_DIR := $(WLAN_COMMON_ROOT)/target_if/wifi_pos/src
@@ -1420,8 +1433,6 @@ WIFI_POS_OBJS := $(WIFI_POS_CORE_DIR)/wifi_pos_api.o \
 endif
 
 ###### CP STATS ########
-CONFIG_CP_STATS := y
-
 CP_STATS_OS_IF_INC      := -I$(WLAN_COMMON_INC)/os_if/linux/cp_stats/inc
 CP_STATS_TGT_INC        := -I$(WLAN_COMMON_INC)/target_if/cp_stats/inc
 CP_STATS_DISPATCHER_INC := -I$(WLAN_COMMON_INC)/umac/cp_stats/dispatcher/inc
@@ -2403,17 +2414,11 @@ CDEFINES += -DATH_11AC_TXCOMPACT
 endif
 
 # NOTE: CONFIG_64BIT_PADDR requires CONFIG_HELIUMPLUS
-ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
-CONFIG_HELIUMPLUS := y
-CONFIG_64BIT_PADDR := y
-CONFIG_FEATURE_TSO := y
-CONFIG_FEATURE_TSO_DEBUG := y
-ifneq ($(CONFIG_FORCE_ALLOC_FROM_DMA_ZONE), y)
-CONFIG_ENABLE_DEBUG_ADDRESS_MARKING := y
-endif
 ifeq ($(CONFIG_HELIUMPLUS), y)
+
 CDEFINES += -DHELIUMPLUS
 CDEFINES += -DAR900B
+
 ifeq ($(CONFIG_64BIT_PADDR), y)
 CDEFINES += -DHTT_PADDR64
 endif
@@ -2423,8 +2428,7 @@ CDEFINES += -DOL_RX_INDICATION_RECORD
 CDEFINES += -DTSOSEG_DEBUG
 endif
 
-endif
-endif
+endif #CONFIG_HELIUMPLUS
 
 ifeq ($(CONFIG_ENABLE_DEBUG_ADDRESS_MARKING), y)
 CDEFINES += -DENABLE_DEBUG_ADDRESS_MARKING
