@@ -1108,7 +1108,9 @@ void tdls_notify_reset_adapter(struct wlan_objmgr_vdev *vdev)
 void tdls_peers_deleted_notification(struct wlan_objmgr_vdev *vdev,
 					 uint32_t session_id)
 {
+	struct scheduler_msg msg = {0, };
 	struct tdls_sta_notify_params *notify;
+	QDF_STATUS status;
 
 	notify = qdf_mem_malloc(sizeof(*notify));
 	if (!notify) {
@@ -1123,7 +1125,15 @@ void tdls_peers_deleted_notification(struct wlan_objmgr_vdev *vdev,
 	notify->vdev = vdev;
 	notify->user_disconnect = false;
 
-	tdls_notify_sta_disconnect(notify);
+	msg.bodyptr = notify;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_NOTIFY_STA_DISCONNECTION;
+
+	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(notify);
+		tdls_alert("message post failed ");
+	}
 }
 
 /**
