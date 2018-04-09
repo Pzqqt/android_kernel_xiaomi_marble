@@ -266,7 +266,6 @@ int32_t wlan_crypto_get_param(struct wlan_objmgr_vdev *vdev,
 
 	return value;
 }
-
 /**
  * wlan_crypto_get_peer_param - called to get value for param from peer
  * @peer:  peer
@@ -1093,6 +1092,7 @@ QDF_STATUS wlan_crypto_decap(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_peer *peer;
 	uint8_t bssid_mac[WLAN_ALEN];
+	uint8_t keyid;
 
 	wlan_vdev_obj_lock(vdev);
 	qdf_mem_copy(bssid_mac, wlan_vdev_mlme_get_macaddr(vdev), WLAN_ALEN);
@@ -1103,6 +1103,11 @@ QDF_STATUS wlan_crypto_decap(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 	wlan_vdev_obj_unlock(vdev);
+
+	keyid = wlan_crypto_get_keyid((uint8_t *)qdf_nbuf_data(wbuf));
+
+	if (keyid >= WLAN_CRYPTO_MAXKEYIDX)
+		return QDF_STATUS_E_INVAL;
 
 	/* FILS Decap required only for (Re-)Assoc request */
 	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_CRYPTO_ID);
@@ -1125,7 +1130,7 @@ QDF_STATUS wlan_crypto_decap(struct wlan_objmgr_vdev *vdev,
 			return QDF_STATUS_E_INVAL;
 		}
 
-		key = crypto_priv->key[crypto_priv->def_tx_keyid];
+		key = crypto_priv->key[keyid];
 		if (!key)
 			return QDF_STATUS_E_INVAL;
 
@@ -1150,7 +1155,7 @@ QDF_STATUS wlan_crypto_decap(struct wlan_objmgr_vdev *vdev,
 			return QDF_STATUS_E_INVAL;
 		}
 
-		key = crypto_priv->key[crypto_priv->def_tx_keyid];
+		key = crypto_priv->key[keyid];
 		if (!key)
 			return QDF_STATUS_E_INVAL;
 	}

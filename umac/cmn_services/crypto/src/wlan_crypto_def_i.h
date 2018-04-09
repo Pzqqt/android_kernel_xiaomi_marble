@@ -494,6 +494,26 @@ static inline int ieee80211_hdrsize(const void *data)
 }
 
 /**
+ * wlan_crypto_get_keyid - get keyid from frame
+ * @data: frame
+ *
+ * This function parse frame and returns keyid
+ *
+ * Return: keyid
+ */
+static inline uint16_t wlan_crypto_get_keyid(uint8_t *data)
+{
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)data;
+
+	if (hdr->frame_control & WLAN_FC_ISWEP) {
+		uint8_t *iv;
+		iv = data + ieee80211_hdrsize(data);
+		return ((iv[3] >> 6) & 0x3);
+	} else
+		return WLAN_CRYPTO_KEYIX_NONE;
+}
+
+/**
  * wlan_get_tid - get tid of the frame
  * @data: frame
  *

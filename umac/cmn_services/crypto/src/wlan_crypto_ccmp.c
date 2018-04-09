@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,14 +73,14 @@ static QDF_STATUS ccmp_encap(struct wlan_crypto_key *key,
 	/* XXX wrap at 48 bits */
 	key->keytsc++;
 
-	ivp[0] = key->keytsc >> 0;         /* PN0 */
-	ivp[1] = key->keytsc >> 8;         /* PN1 */
-	ivp[2] = 0;                         /* Reserved */
-	ivp[3] = key->keyix | WLAN_CRYPTO_EXT_IV_BIT;       /* KeyID | ExtID */
-	ivp[4] = key->keytsc >> 16;                /* PN2 */
-	ivp[5] = key->keytsc >> 24;                /* PN3 */
-	ivp[6] = key->keytsc >> 32;                /* PN4 */
-	ivp[7] = key->keytsc >> 40;                /* PN5 */
+	ivp[0] = key->keytsc >> 0;                         /* PN0 */
+	ivp[1] = key->keytsc >> 8;                         /* PN1 */
+	ivp[2] = 0;                                        /* Reserved */
+	ivp[3] = (key->keyix << 6)| WLAN_CRYPTO_EXT_IV_BIT;/* KeyID | ExtID */
+	ivp[4] = key->keytsc >> 16;                        /* PN2 */
+	ivp[5] = key->keytsc >> 24;                        /* PN3 */
+	ivp[6] = key->keytsc >> 32;                        /* PN4 */
+	ivp[7] = key->keytsc >> 40;                        /* PN5 */
 
 	/*
 	 * Finally, do software encrypt if neeed.
@@ -89,7 +89,7 @@ static QDF_STATUS ccmp_encap(struct wlan_crypto_key *key,
 		if (!wlan_crypto_ccmp_encrypt(key->keyval,
 						qdf_nbuf_data(wbuf),
 						qdf_nbuf_len(wbuf), hdrlen)) {
-			return 0;
+			return QDF_STATUS_CRYPTO_ENCRYPT_FAILED;
 		}
 	}
 
@@ -204,9 +204,15 @@ static QDF_STATUS ccmp_decap(struct wlan_crypto_key *key,
 	/*
 	 * Copy up 802.11 header and strip crypto bits.
 	 */
-	qdf_mem_move(origHdr + cipher_table->header, origHdr, hdrlen);
-	qdf_nbuf_pull_head(wbuf, cipher_table->header);
-	qdf_nbuf_trim_tail(wbuf, cipher_table->trailer);
+	if (!(key->flags & WLAN_CRYPTO_KEY_SWDECRYPT)) {
+		qdf_mem_move(origHdr + cipher_table->header, origHdr, hdrlen);
+		qdf_nbuf_pull_head(wbuf, cipher_table->header);
+		qdf_nbuf_trim_tail(wbuf, cipher_table->trailer
+						+ cipher_table->miclen);
+	} else {
+		qdf_nbuf_trim_tail(wbuf, cipher_table->header
+					+ cipher_table->miclen);
+	}
 
 	if (update_keyrsc) {
 		/*

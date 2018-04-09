@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -69,7 +69,7 @@ static QDF_STATUS tkip_encap(struct wlan_crypto_key *key,
 	ivp[0] = key->keytsc >> 8;            /* TSC1 */
 	ivp[1] = (ivp[0] | 0x20) & 0x7f;      /* WEP seed */
 	ivp[2] = key->keytsc >> 0;            /* TSC0*/
-	ivp[3] = key->keyix | WLAN_CRYPTO_EXT_IV_BIT; /* KeyID | ExtID */
+	ivp[3] = (key->keyix << 6) | WLAN_CRYPTO_EXT_IV_BIT; /* KeyID | ExtID */
 	ivp[4] = key->keytsc >> 16;           /* PN2 */
 	ivp[5] = key->keytsc >> 24;           /* PN3 */
 	ivp[6] = key->keytsc >> 32;           /* PN4 */

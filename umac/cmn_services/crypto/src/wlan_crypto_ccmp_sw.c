@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  */
 /*
  * CTR with CBC-MAC Protocol (CCMP)
@@ -85,7 +85,7 @@ uint8_t *wlan_crypto_ccmp_decrypt(const uint8_t *tk,
 	size_t mlen;
 	uint8_t *plain;
 
-	if (data_len < 8 + 8)
+	if (data_len < CCMP_IV_SIZE + WLAN_CRYPTO_MIC_LEN)
 		return NULL;
 
 	plain = qdf_mem_malloc(data_len + AES_BLOCK_SIZE);
@@ -94,15 +94,19 @@ uint8_t *wlan_crypto_ccmp_decrypt(const uint8_t *tk,
 		return NULL;
 	}
 
-	mlen = data_len - 8 - 8;
+	mlen = data_len - CCMP_IV_SIZE - WLAN_CRYPTO_MIC_LEN;
 
 	qdf_mem_set(aad, sizeof(aad), 0);
 	ccmp_aad_nonce(hdr, data, aad, &aad_len, nonce);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP AAD", aad, aad_len);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP nonce", nonce, 13);
 
-	if (wlan_crypto_aes_ccm_ad(tk, 16, nonce, 8, data + 8, mlen,
-				aad, aad_len, data + 8 + mlen, plain) < 0) {
+	if (wlan_crypto_aes_ccm_ad(tk, 16, nonce,
+					WLAN_CRYPTO_MIC_LEN,
+					data + CCMP_IV_SIZE, mlen,
+					aad, aad_len,
+					data + CCMP_IV_SIZE + mlen,
+					plain) < 0) {
 		/*uint16_t seq_ctrl = qdf_le16_to_cpu(hdr->seq_ctrl);
 		wpa_printf(MSG_INFO, "Invalid CCMP MIC in frame: A1=" MACSTR
 			" A2=" MACSTR " A3=" MACSTR " seq=%u frag=%u",
@@ -141,15 +145,16 @@ uint8_t *wlan_crypto_ccmp_encrypt(const uint8_t *tk, uint8_t *frame,
 
 	if (len < hdrlen || hdrlen < 24)
 		return NULL;
-	plen = len - hdrlen;
+	plen = len - hdrlen - CCMP_IV_SIZE - WLAN_CRYPTO_MIC_LEN;
 
-	crypt = qdf_mem_malloc(hdrlen + 8 + plen + 8 + AES_BLOCK_SIZE);
+	crypt = qdf_mem_malloc(hdrlen + CCMP_IV_SIZE + plen
+				+ WLAN_CRYPTO_MIC_LEN + AES_BLOCK_SIZE);
 	if (crypt == NULL) {
 		qdf_print("%s[%d] mem alloc failed\n", __func__, __LINE__);
 		return NULL;
 	}
 
-	qdf_mem_copy(crypt, frame, hdrlen);
+	qdf_mem_copy(crypt, frame, hdrlen + CCMP_IV_SIZE);
 
 	hdr = (struct ieee80211_hdr *) crypt;
 	hdr->frame_control |= qdf_cpu_to_le16(WLAN_FC_ISWEP);
@@ -160,14 +165,16 @@ uint8_t *wlan_crypto_ccmp_encrypt(const uint8_t *tk, uint8_t *frame,
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP AAD", aad, aad_len);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP nonce", nonce, 13);
 
-	if (wlan_crypto_aes_ccm_ae(tk, 16, nonce, 8, frame + hdrlen,
+	if (wlan_crypto_aes_ccm_ae(tk, 16, nonce, WLAN_CRYPTO_MIC_LEN,
+					frame + hdrlen + CCMP_IV_SIZE,
 			plen, aad, aad_len, pos, pos + plen) < 0) {
 		qdf_mem_free(crypt);
 		return NULL;
 	}
 
 	qdf_mem_copy(frame, crypt, len);
-	wpa_hexdump(MSG_EXCESSIVE, "CCMP encrypted", crypt + hdrlen + 8, plen);
+	wpa_hexdump(MSG_EXCESSIVE, "CCMP encrypted",
+				crypt + hdrlen + CCMP_IV_SIZE, plen);
 	qdf_mem_free(crypt);
 
 	return frame;
@@ -183,7 +190,7 @@ uint8_t *wlan_crypto_ccmp_256_decrypt(const uint8_t *tk,
 	size_t mlen;
 	uint8_t *plain;
 
-	if (data_len < 8 + 16)
+	if (data_len < CCMP_IV_SIZE + WLAN_CRYPTO_MIC256_LEN)
 		return NULL;
 
 	plain = qdf_mem_malloc(data_len + AES_BLOCK_SIZE);
@@ -192,15 +199,18 @@ uint8_t *wlan_crypto_ccmp_256_decrypt(const uint8_t *tk,
 		return NULL;
 	}
 
-	mlen = data_len - 8 - 16;
+	mlen = data_len - CCMP_IV_SIZE - WLAN_CRYPTO_MIC256_LEN;
 
 	qdf_mem_set(aad, sizeof(aad), 0);
 	ccmp_aad_nonce(hdr, data, aad, &aad_len, nonce);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP-256 AAD", aad, aad_len);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP-256 nonce", nonce, 13);
 
-	if (wlan_crypto_aes_ccm_ad(tk, 32, nonce, 16, data + 8, mlen,
-			aad, aad_len, data + 8 + mlen, plain) < 0) {
+	if (wlan_crypto_aes_ccm_ad(tk, 32, nonce, WLAN_CRYPTO_MIC256_LEN,
+					data + CCMP_IV_SIZE, mlen,
+					aad, aad_len,
+					data + CCMP_IV_SIZE + mlen,
+					plain) < 0) {
 		/*uint16_t seq_ctrl = qdf_le16_to_cpu(hdr->seq_ctrl);
 		wpa_printf(MSG_INFO, "Invalid CCMP-256 MIC in frame: A1=" MACSTR
 			   " A2=" MACSTR " A3=" MACSTR " seq=%u frag=%u",
@@ -231,7 +241,8 @@ uint8_t *wlan_crypto_ccmp_256_encrypt(const uint8_t *tk, uint8_t *frame,
 		return NULL;
 	plen = len - hdrlen;
 
-	crypt = qdf_mem_malloc(hdrlen + 8 + plen + 16 + AES_BLOCK_SIZE);
+	crypt = qdf_mem_malloc(hdrlen + CCMP_IV_SIZE + plen
+				+ WLAN_CRYPTO_MIC256_LEN + AES_BLOCK_SIZE);
 	if (crypt == NULL) {
 		qdf_print("%s[%d] mem alloc failed\n", __func__, __LINE__);
 		return NULL;
@@ -255,7 +266,8 @@ uint8_t *wlan_crypto_ccmp_256_encrypt(const uint8_t *tk, uint8_t *frame,
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP-256 AAD", aad, aad_len);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP-256 nonce", nonce, 13);
 
-	if (wlan_crypto_aes_ccm_ae(tk, 32, nonce, 16, frame + hdrlen, plen,
+	if (wlan_crypto_aes_ccm_ae(tk, 32, nonce, WLAN_CRYPTO_MIC256_LEN,
+				frame + hdrlen, plen,
 				aad, aad_len, pos, pos + plen) < 0) {
 		qdf_mem_free(crypt);
 		return NULL;
@@ -264,7 +276,8 @@ uint8_t *wlan_crypto_ccmp_256_encrypt(const uint8_t *tk, uint8_t *frame,
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP-256 encrypted", crypt + hdrlen + 8,
 		    plen);
 
-	*encrypted_len = hdrlen + 8 + plen + 16;
+	*encrypted_len = hdrlen + CCMP_IV_SIZE
+				+ plen + WLAN_CRYPTO_MIC256_LEN;
 
 	return crypt;
 }

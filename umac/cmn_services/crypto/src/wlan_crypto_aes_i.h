@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  */
 /*
  * AES (Rijndael) cipher
@@ -21,6 +21,9 @@
 #include <wlan_objmgr_peer_obj.h>
 #include "wlan_crypto_global_def.h"
 
+
+#define CCMP_IV_SIZE (WLAN_CRYPTO_IV_LEN + WLAN_CRYPTO_KEYID_LEN \
+				+ WLAN_CRYPTO_EXT_IV_LEN)
 
 #define AES_BLOCK_SIZE 16
 #define wpa_printf(args...) do { } while (0)
