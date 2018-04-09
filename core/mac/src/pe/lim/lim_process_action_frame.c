@@ -400,7 +400,8 @@ lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	if (eLIM_AP_ROLE == session_entry->limSystemRole) {
+	if ((eLIM_STA_ROLE == session_entry->limSystemRole) ||
+	    (eLIM_P2P_DEVICE_CLIENT == session_entry->limSystemRole)) {
 
 		struct sir_sme_ext_cng_chan_ind *ext_cng_chan_ind;
 		struct scheduler_msg mmh_msg = {0};
