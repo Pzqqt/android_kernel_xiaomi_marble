@@ -546,8 +546,25 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 {
 	int ret = -1;
 	struct dp_peer *old_peer;
+	struct dp_peer *sa_peer;
 
-	qdf_spin_lock_bh(&soc->ast_lock);
+	if (ast_entry->type == CDP_TXRX_AST_TYPE_STATIC) {
+		sa_peer = ast_entry->peer;
+
+		/*
+		 * Kickout, when direct associated peer(SA) roams
+		 * to another AP and reachable via TA peer
+		 */
+		if (!sa_peer->delete_in_progress) {
+			sa_peer->delete_in_progress = true;
+			if (soc->cdp_soc.ol_ops->peer_sta_kickout) {
+				soc->cdp_soc.ol_ops->peer_sta_kickout(
+						sa_peer->vdev->pdev->osif_pdev,
+						ast_entry->mac_addr.raw);
+			}
+			return 0;
+		}
+	}
 
 	old_peer = ast_entry->peer;
 	TAILQ_REMOVE(&old_peer->ast_entry_list, ast_entry, ase_list_elem);
@@ -559,19 +576,11 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	ast_entry->is_active = TRUE;
 	TAILQ_INSERT_TAIL(&peer->ast_entry_list, ast_entry, ase_list_elem);
 
-	if (ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) {
-		if (QDF_STATUS_SUCCESS ==
-				soc->cdp_soc.ol_ops->peer_update_wds_entry(
-				peer->vdev->osif_vdev,
+	ret = soc->cdp_soc.ol_ops->peer_update_wds_entry(
+			peer->vdev->osif_vdev,
 				ast_entry->mac_addr.raw,
 				peer->mac_addr.raw,
-				flags)) {
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			return 0;
-		}
-	}
-
-	qdf_spin_unlock_bh(&soc->ast_lock);
+				flags);
 
 	return ret;
 }

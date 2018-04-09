@@ -749,6 +749,8 @@ struct ol_if_ops {
 	int (*config_bssid_in_fw_for_nac_rssi)(struct wlan_objmgr_pdev *pdev,
 		u_int8_t vdev_id, enum cdp_nac_param_cmd cmd, char *bssid);
 #endif
+	int (*peer_sta_kickout)(void *osif_pdev, uint8_t *peer_macaddr);
+
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
