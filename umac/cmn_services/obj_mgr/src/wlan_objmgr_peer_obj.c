@@ -104,7 +104,8 @@ static QDF_STATUS wlan_objmgr_peer_obj_free(struct wlan_objmgr_peer *peer)
 
 	/* Decrement ref count for BSS peer, so that BSS peer deletes last*/
 	if ((wlan_peer_get_peer_type(peer) == WLAN_PEER_STA) ||
-	    (wlan_peer_get_peer_type(peer) == WLAN_PEER_STA_TEMP))
+	    (wlan_peer_get_peer_type(peer) == WLAN_PEER_STA_TEMP) ||
+	    (wlan_peer_get_peer_type(peer) == WLAN_PEER_P2P_CLI))
 		wlan_objmgr_peer_release_ref(wlan_vdev_get_bsspeer(vdev),
 					     WLAN_OBJMGR_ID);
 
