@@ -540,8 +540,6 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.ast_index =
 				HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_4,
 						AST_INDEX);
-		ppdu_info->rx_status.mcs =
-			 HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1, MCS);
 
 		tid = HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_12,
 				RECEIVED_QOS_DATA_TID_BITMAP);
