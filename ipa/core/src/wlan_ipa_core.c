@@ -1462,8 +1462,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		} else {
 			/* Disable IPA UC TX PIPE when STA disconnected */
 			if ((ipa_ctx->num_iface == 1) &&
-			    (ipa_ctx->activated_fw_pipe ==
-			     WLAN_IPA_UC_NUM_WDI_PIPE) &&
+			    wlan_ipa_is_fw_wdi_activated(ipa_ctx) &&
 			    !ipa_ctx->ipa_pipes_down)
 				wlan_ipa_uc_handle_last_discon(ipa_ctx);
 		}
@@ -1496,7 +1495,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		qdf_mutex_acquire(&ipa_ctx->event_lock);
 
 		if ((ipa_ctx->num_iface == 1) &&
-		    (ipa_ctx->activated_fw_pipe == WLAN_IPA_UC_NUM_WDI_PIPE) &&
+		    wlan_ipa_is_fw_wdi_activated(ipa_ctx) &&
 		    !ipa_ctx->ipa_pipes_down) {
 			if (cds_is_driver_unloading()) {
 				/*
@@ -1664,10 +1663,9 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		/* Disable IPA UC TX PIPE when last STA disconnected */
 		if (!ipa_ctx->sap_num_connected_sta &&
 				ipa_ctx->uc_loaded == true) {
-			if ((false == ipa_ctx->resource_unloading)
-			    && (WLAN_IPA_UC_NUM_WDI_PIPE ==
-				ipa_ctx->activated_fw_pipe) &&
-				!ipa_ctx->ipa_pipes_down) {
+			if ((false == ipa_ctx->resource_unloading) &&
+			    wlan_ipa_is_fw_wdi_activated(ipa_ctx) &&
+			    !ipa_ctx->ipa_pipes_down) {
 				wlan_ipa_uc_handle_last_discon(ipa_ctx);
 			}
 
@@ -2401,7 +2399,7 @@ static void wlan_ipa_uc_op_cb(struct op_msg_type *op_msg,
 	    (msg->op_code == WLAN_IPA_UC_OPCODE_RX_RESUME)) {
 		qdf_mutex_acquire(&ipa_ctx->ipa_lock);
 		ipa_ctx->activated_fw_pipe++;
-		if (ipa_ctx->activated_fw_pipe == WLAN_IPA_UC_NUM_WDI_PIPE) {
+		if (wlan_ipa_is_fw_wdi_activated(ipa_ctx)) {
 			ipa_ctx->resource_loading = false;
 			qdf_event_set(&ipa_ctx->ipa_resource_comp);
 			if (ipa_ctx->wdi_enabled == false) {
@@ -2658,3 +2656,15 @@ int wlan_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
 	else
 		return qdf_ipa_release_wdi_mapping(num_buf, buf_arr);
 }
+
+/**
+ * wlan_ipa_is_fw_wdi_activated() - Is FW WDI actived?
+ * @ipa_ctx: IPA contex
+ *
+ * Return: true if FW WDI actived, false otherwise
+ */
+bool wlan_ipa_is_fw_wdi_activated(struct wlan_ipa_priv *ipa_ctx)
+{
+	return (WLAN_IPA_UC_NUM_WDI_PIPE == ipa_ctx->activated_fw_pipe);
+}
+

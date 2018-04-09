@@ -360,5 +360,12 @@ QDF_STATUS ipa_wlan_evt(struct wlan_objmgr_pdev *pdev, qdf_netdev_t net_dev,
  */
 int ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr);
 
+/**
+ * ipa_is_fw_wdi_activated - Is FW WDI activated?
+ * @pdev: pdev obj
+ *
+ * Return: true if FW WDI activated, false otherwise
+ */
+bool ipa_is_fw_wdi_activated(struct wlan_objmgr_pdev *pdev);
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */

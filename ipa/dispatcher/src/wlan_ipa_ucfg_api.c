@@ -169,3 +169,8 @@ int ucfg_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
 {
 	return ipa_uc_smmu_map(map, num_buf, buf_arr);
 }
+
+bool ucfg_ipa_is_fw_wdi_activated(struct wlan_objmgr_pdev *pdev)
+{
+	return ipa_is_fw_wdi_activated(pdev);
+}
