@@ -18017,7 +18017,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 
 		qdf_runtime_pm_prevent_suspend(
 				&hdd_ctx->runtime_context.connect);
-		hdd_prevent_suspend_timeout(HDD_WAKELOCK_TIMEOUT_CONNECT,
+		hdd_prevent_suspend_timeout(HDD_WAKELOCK_CONNECT_COMPLETE,
 					    WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 		qdf_status = sme_roam_connect(WLAN_HDD_GET_HAL_CTX(adapter),
 					  adapter->session_id, roam_profile,
