@@ -105,7 +105,13 @@ void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
 
 	if (ba_window_size < 1)
 		ba_window_size = 1;
-
+	/*
+	 * WAR to get 2k exception in Non BA case.
+	 * Setting window size to 2 to get 2k jump exception
+	 * when we receive aggregates in Non BA case
+	 */
+	if (ba_window_size == 1)
+		ba_window_size++;
 	/* Set RTY bit for non-BA case. Duplicate detection is currently not
 	 * done by HW in non-BA case if RTY bit is not set.
 	 * TODO: This is a temporary War and should be removed once HW fix is

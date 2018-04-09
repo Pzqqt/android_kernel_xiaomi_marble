@@ -92,6 +92,9 @@
 
 #define DP_MAX_INTERRUPT_CONTEXTS 8
 
+/* Maximum retries for Delba per tid per peer */
+#define DP_MAX_DELBA_RETRY 3
+
 #ifndef REMOVE_PKT_LOG
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
@@ -480,6 +483,20 @@ struct dp_rx_tid {
 	uint16_t statuscode;
 	/* user defined ADDBA response status code */
 	uint16_t userstatuscode;
+
+	/* Store ppdu_id when 2k exception is received */
+	uint32_t ppdu_id_2k;
+
+	/* Delba Tx completion status */
+	uint8_t delba_tx_status;
+
+	/* Delba Tx retry count */
+	uint8_t delba_tx_retry;
+
+	/* Delba stats */
+	uint32_t delba_tx_success_cnt;
+	uint32_t delba_tx_fail_cnt;
+
 };
 
 /* per interrupt context  */

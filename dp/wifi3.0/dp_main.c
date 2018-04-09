@@ -7607,6 +7607,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_peer_flush_ast_table = dp_wds_flush_ast_table_wifi3,
 	.txrx_peer_map_attach = dp_peer_map_attach_wifi3,
 	.txrx_pdev_set_ctrl_pdev = dp_pdev_set_ctrl_pdev,
+	.delba_tx_completion = dp_delba_tx_completion_wifi3,
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {

@@ -271,6 +271,17 @@ struct cdp_cmn_ops {
 	int (*delba_process)(void *peer_handle,
 		int tid, uint16_t reasoncode);
 
+	/**
+	 * delba_tx_completion() - Indicate delba tx status
+	 * @peer_handle: Peer handle
+	 * @tid: Tid number
+	 * @status: Tx completion status
+	 *
+	 * Return: 0 on Success, 1 on failure
+	 */
+	int (*delba_tx_completion)(void *peer_handle,
+				   uint8_t tid, int status);
+
 	void (*set_addba_response)(void *peer_handle,
 		uint8_t tid, uint16_t statuscode);
 
@@ -806,6 +817,17 @@ struct ol_if_ops {
 #endif
 	int (*peer_sta_kickout)(void *ctrl_pdev, uint8_t *peer_macaddr);
 
+	/**
+	 * send_delba() - Send delba to peer
+	 * @pdev_handle: Dp pdev handle
+	 * @ctrl_peer: Peer handle
+	 * @peer_macaddr: Peer mac addr
+	 * @tid: Tid number
+	 *
+	 * Return: 0 for success, non-zero for failure
+	 */
+	int (*send_delba)(void *pdev_handle,  void *ctrl_peer,
+			  uint8_t *peer_macaddr, uint8_t tid, void *vdev_handle);
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 

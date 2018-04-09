@@ -656,7 +656,18 @@ extern void dp_set_addba_response(void *peer_handle, uint8_t tid,
 	uint16_t statuscode);
 extern int dp_delba_process_wifi3(void *peer_handle,
 	int tid, uint16_t reasoncode);
-
+/*
+ * dp_delba_tx_completion_wifi3() -  Handle delba tx completion
+ *
+ * @peer_handle: Peer handle
+ * @tid: Tid number
+ * @status: Tx completion status
+ * Indicate status of delba Tx to DP for stats update and retry
+ * delba if tx failed.
+ *
+ */
+int dp_delba_tx_completion_wifi3(void *peer_handle, uint8_t tid,
+				  int status);
 extern int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	uint32_t ba_window_size, uint32_t start_seq);
 

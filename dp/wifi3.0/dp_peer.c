@@ -900,15 +900,24 @@ void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 		queue_status->late_recv_mpdu_cnt, queue_status->win_jump_2k,
 		queue_status->hole_cnt);
 
-	DP_PRINT_STATS("Num of Addba Req = %d\n", rx_tid->num_of_addba_req);
-	DP_PRINT_STATS("Num of Addba Resp = %d\n", rx_tid->num_of_addba_resp);
-	DP_PRINT_STATS("Num of Addba Resp successful = %d\n",
-		       rx_tid->num_addba_rsp_success);
-	DP_PRINT_STATS("Num of Addba Resp failed = %d\n",
-		       rx_tid->num_addba_rsp_failed);
-	DP_PRINT_STATS("Num of Delba Req = %d\n", rx_tid->num_of_delba_req);
-	DP_PRINT_STATS("BA window size   = %d\n", rx_tid->ba_win_size);
-	DP_PRINT_STATS("Pn size = %d\n", rx_tid->pn_size);
+	DP_PRINT_STATS("Addba Req          : %d\n"
+			"Addba Resp         : %d\n"
+			"Addba Resp success : %d\n"
+			"Addba Resp failed  : %d\n"
+			"Delba Req received : %d\n"
+			"Delba Tx success   : %d\n"
+			"Delba Tx Fail      : %d\n"
+			"BA window size     : %d\n"
+			"Pn size            : %d\n",
+			rx_tid->num_of_addba_req,
+			rx_tid->num_of_addba_resp,
+			rx_tid->num_addba_rsp_success,
+			rx_tid->num_addba_rsp_failed,
+			rx_tid->num_of_delba_req,
+			rx_tid->delba_tx_success_cnt,
+			rx_tid->delba_tx_fail_cnt,
+			rx_tid->ba_win_size,
+			rx_tid->pn_size);
 }
 
 static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
@@ -1239,11 +1248,16 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	if (rx_tid->hw_qdesc_vaddr_unaligned != NULL)
 		return dp_rx_tid_update_wifi3(peer, tid, ba_window_size,
 			start_seq);
+	rx_tid->delba_tx_status = 0;
+	rx_tid->ppdu_id_2k = 0;
 	rx_tid->num_of_addba_req = 0;
 	rx_tid->num_of_delba_req = 0;
 	rx_tid->num_of_addba_resp = 0;
 	rx_tid->num_addba_rsp_failed = 0;
 	rx_tid->num_addba_rsp_success = 0;
+	rx_tid->delba_tx_success_cnt = 0;
+	rx_tid->delba_tx_fail_cnt = 0;
+	rx_tid->statuscode = 0;
 #ifdef notyet
 	hw_qdesc_size = hal_get_reo_qdesc_size(soc->hal_soc, ba_window_size);
 #else
@@ -1648,8 +1662,14 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 				      uint8_t tid, int status)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+	struct dp_rx_tid *rx_tid = NULL;
 
+	if (!peer || peer->delete_in_progress) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Peer is NULL!\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	rx_tid = &peer->rx_tid[tid];
 	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	if (status) {
 		rx_tid->num_addba_rsp_failed++;
@@ -1659,7 +1679,7 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Rx Tid- %d addba rsp tx completion failed!",
 			 __func__, tid);
-		return 0;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	rx_tid->num_addba_rsp_success++;
@@ -1671,19 +1691,9 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (dp_rx_tid_update_wifi3(peer, tid, rx_tid->ba_win_size,
-				   rx_tid->startseqnum)) {
-		qdf_spin_unlock_bh(&rx_tid->tid_lock);
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (rx_tid->userstatuscode != IEEE80211_STATUS_SUCCESS)
-		rx_tid->statuscode = rx_tid->userstatuscode;
-	else
-		rx_tid->statuscode = IEEE80211_STATUS_SUCCESS;
-
 	rx_tid->ba_status = DP_RX_BA_ACTIVE;
 	qdf_spin_unlock_bh(&rx_tid->tid_lock);
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -1701,8 +1711,14 @@ void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
 	uint16_t *buffersize, uint16_t *batimeout)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+	struct dp_rx_tid *rx_tid = NULL;
 
+	if (!peer || peer->delete_in_progress) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Peer is NULL!\n", __func__);
+		return;
+	}
+	rx_tid = &peer->rx_tid[tid];
 	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	rx_tid->num_of_addba_resp++;
 	/* setup ADDBA response parameters */
@@ -1732,8 +1748,14 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 				  uint16_t startseqnum)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+	struct dp_rx_tid *rx_tid = NULL;
 
+	if (!peer || peer->delete_in_progress) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Peer is NULL!\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	rx_tid = &peer->rx_tid[tid];
 	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	rx_tid->num_of_addba_req++;
 	if ((rx_tid->ba_status == DP_RX_BA_ACTIVE &&
@@ -1748,7 +1770,7 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (dp_rx_tid_setup_wifi3(peer, tid, 1, 0)) {
+	if (dp_rx_tid_setup_wifi3(peer, tid, buffersize, 0)) {
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		return QDF_STATUS_E_FAILURE;
@@ -1758,8 +1780,15 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 	rx_tid->ba_win_size = buffersize;
 	rx_tid->dialogtoken = dialogtoken;
 	rx_tid->startseqnum = startseqnum;
+
+	if (rx_tid->userstatuscode != IEEE80211_STATUS_SUCCESS)
+		rx_tid->statuscode = rx_tid->userstatuscode;
+	else
+		rx_tid->statuscode = IEEE80211_STATUS_SUCCESS;
+
 	qdf_spin_unlock_bh(&rx_tid->tid_lock);
-	return 0;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -1809,6 +1838,53 @@ int dp_delba_process_wifi3(void *peer_handle,
 	rx_tid->ba_status = DP_RX_BA_INACTIVE;
 	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 	return 0;
+}
+
+/*
+ * dp_rx_delba_tx_completion_wifi3() – Send Delba Request
+ *
+ * @peer: Datapath peer handle
+ * @tid: TID number
+ * @status: tx completion status
+ * Return: 0 on success, error code on failure
+ */
+
+int dp_delba_tx_completion_wifi3(void *peer_handle,
+				 uint8_t tid, int status)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+	struct dp_rx_tid *rx_tid = NULL;
+
+	if (!peer || peer->delete_in_progress) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Peer is NULL!", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	rx_tid = &peer->rx_tid[tid];
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
+	if (status) {
+		rx_tid->delba_tx_fail_cnt++;
+		if (rx_tid->delba_tx_retry >= DP_MAX_DELBA_RETRY) {
+			rx_tid->delba_tx_retry = 0;
+			rx_tid->delba_tx_status = 0;
+			qdf_spin_unlock_bh(&rx_tid->tid_lock);
+		} else {
+			rx_tid->delba_tx_retry++;
+			rx_tid->delba_tx_status = 1;
+			qdf_spin_unlock_bh(&rx_tid->tid_lock);
+			peer->vdev->pdev->soc->cdp_soc.ol_ops->send_delba(
+				peer->vdev->pdev->ctrl_pdev, peer->ctrl_peer,
+				peer->mac_addr.raw, tid, peer->vdev->ctrl_vdev);
+		}
+		return QDF_STATUS_SUCCESS;
+	} else {
+		rx_tid->delba_tx_success_cnt++;
+		rx_tid->delba_tx_retry = 0;
+		rx_tid->delba_tx_status = 0;
+	}
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 void dp_rx_discard(struct dp_vdev *vdev, struct dp_peer *peer, unsigned tid,

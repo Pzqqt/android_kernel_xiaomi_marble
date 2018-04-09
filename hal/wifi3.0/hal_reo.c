@@ -496,7 +496,13 @@ inline int hal_reo_cmd_update_rx_queue(void *reo_ring, struct hal_soc *soc,
 
 	if (p->ba_window_size < 1)
 		p->ba_window_size = 1;
-
+	/*
+	 * WAR to get 2k exception in Non BA case.
+	 * Setting window size to 2 to get 2k jump exception
+	 * when we receive aggregates in Non BA case
+	 */
+	if (p->ba_window_size == 1)
+		p->ba_window_size++;
 	HAL_DESC_SET_FIELD(reo_desc, REO_UPDATE_RX_REO_QUEUE_4,
 		BA_WINDOW_SIZE, p->ba_window_size - 1);
 

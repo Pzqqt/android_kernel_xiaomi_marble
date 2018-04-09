@@ -1061,6 +1061,36 @@ static inline int cdp_delba_process(ol_txrx_soc_handle soc,
 			tid, reasoncode);
 }
 
+/**
+ * cdp_delba_tx_completion() - Handle delba tx completion
+ * to update stats and retry transmission if failed.
+ * @soc: soc handle
+ * @peer_handle: peer handle
+ * @tid: Tid number
+ * @status: Tx completion status
+ *
+ * Return: 0 on Success, 1 on failure
+ */
+
+static inline int cdp_delba_tx_completion(ol_txrx_soc_handle soc,
+					  void *peer_handle,
+					  uint8_t tid, int status)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->delba_tx_completion)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->delba_tx_completion(peer_handle,
+							  tid, status);
+}
+
 static inline void cdp_set_addbaresponse(ol_txrx_soc_handle soc,
 	void *peer_handle, int tid, uint16_t statuscode)
 {

@@ -469,6 +469,73 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 }
 
 /**
+ * dp_2k_jump_handle() - Function to handle 2k jump exception
+ *                        on WBM ring
+ *
+ * @soc: core DP main context
+ * @nbuf: buffer pointer
+ * @rx_tlv_hdr: start of rx tlv header
+ * @peer_id: peer id of first msdu
+ * @tid: Tid for which exception occurred
+ *
+ * This function handles 2k jump violations arising out
+ * of receiving aggregates in non BA case. This typically
+ * may happen if aggregates are received on a QOS enabled TID
+ * while Rx window size is still initialized to value of 2. Or
+ * it may also happen if negotiated window size is 1 but peer
+ * sends aggregates.
+ *
+ */
+
+static void
+dp_2k_jump_handle(struct dp_soc *soc,
+		  qdf_nbuf_t nbuf,
+		  uint8_t *rx_tlv_hdr,
+		  uint16_t peer_id,
+		  uint8_t tid)
+{
+	uint32_t ppdu_id;
+	struct dp_peer *peer = NULL;
+	struct dp_rx_tid *rx_tid = NULL;
+
+	peer = dp_peer_find_by_id(soc, peer_id);
+	if (!peer || peer->delete_in_progress) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "peer not found");
+		goto free_nbuf;
+	}
+	rx_tid = &peer->rx_tid[tid];
+	if (qdf_unlikely(rx_tid == NULL)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "rx_tid is NULL!!");
+		goto free_nbuf;
+	}
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
+	ppdu_id = hal_rx_attn_phy_ppdu_id_get(rx_tlv_hdr);
+	if (rx_tid->ppdu_id_2k != ppdu_id) {
+		rx_tid->ppdu_id_2k = ppdu_id;
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
+		goto free_nbuf;
+	}
+	if (!rx_tid->delba_tx_status) {
+		rx_tid->delba_tx_retry++;
+		rx_tid->delba_tx_status = 1;
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
+		soc->cdp_soc.ol_ops->send_delba(peer->vdev->pdev->ctrl_pdev,
+						peer->ctrl_peer,
+						peer->mac_addr.raw,
+						tid,
+						peer->vdev->ctrl_vdev);
+	} else {
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
+	}
+
+free_nbuf:
+	qdf_nbuf_free(nbuf);
+	return;
+}
+
+/**
  * dp_rx_null_q_desc_handle() - Function to handle NULL Queue
  *                              descriptor violation on either a
  *                              REO or WBM ring
@@ -1053,6 +1120,8 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	qdf_nbuf_t nbuf, next;
 	struct hal_wbm_err_desc_info wbm_err_info = { 0 };
 	uint8_t pool_id;
+	uint16_t peer_id = 0xFFFF;
+	uint8_t tid = 0;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -1190,10 +1259,25 @@ done:
 					continue;
 				/* TODO */
 				/* Add per error code accounting */
-
+				case HAL_REO_ERR_REGULAR_FRAME_2K_JUMP:
+					pool_id = wbm_err_info.pool_id;
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						  QDF_TRACE_LEVEL_ERROR,
+						"Got pkt with REO ERROR: %d",
+						wbm_err_info.reo_err_code);
+					if (hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr)) {
+						peer_id =
+						hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
+						tid =
+						hal_rx_mpdu_start_tid_get(hal_soc, rx_tlv_hdr);
+					}
+					dp_2k_jump_handle(soc, nbuf, rx_tlv_hdr,
+							  peer_id, tid);
+					nbuf = next;
+					continue;
 				default:
 					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_DEBUG,
+						QDF_TRACE_LEVEL_ERROR,
 						"REO error %d detected",
 						wbm_err_info.reo_err_code);
 				}
