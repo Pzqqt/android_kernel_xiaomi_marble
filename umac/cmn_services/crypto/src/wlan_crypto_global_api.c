@@ -1180,7 +1180,7 @@ QDF_STATUS wlan_crypto_decap(struct wlan_objmgr_vdev *vdev,
 		hdrlen = ieee80211_hdrspace(wlan_vdev_get_pdev(vdev),
 					    (uint8_t *)qdf_nbuf_data(wbuf));
 
-	keyid = wlan_crypto_get_keyid((uint8_t *)qdf_nbuf_data(wbuf));
+	keyid = wlan_crypto_get_keyid((uint8_t *)qdf_nbuf_data(wbuf), hdrlen);
 
 	if (keyid >= WLAN_CRYPTO_MAXKEYIDX)
 		return QDF_STATUS_E_INVAL;
@@ -3111,6 +3111,69 @@ wlan_crypto_set_peer_fils_aead(struct wlan_objmgr_peer *peer, uint8_t value)
 
 	crypto_priv->fils_aead_set = value;
 }
+
+/**
+ * wlan_crypto_get_key_header - get header length
+ * @key: key
+ *
+ * This function gets header length based on keytype
+ *
+ * Return: header length
+ */
+uint8_t wlan_crypto_get_key_header(struct wlan_crypto_key *key)
+{
+	struct wlan_crypto_cipher *cipher_table;
+
+	cipher_table = (struct wlan_crypto_cipher *)key->cipher_table;
+	if (cipher_table)
+		return cipher_table->header;
+	else
+		return 0;
+}
+
+qdf_export_symbol(wlan_crypto_get_key_header);
+
+/**
+ * wlan_crypto_get_key_trailer - get cipher trailer length
+ * @key: key
+ *
+ * This function gets cipher trailer length based on keytype
+ *
+ * Return: cipher trailer length
+ */
+uint8_t wlan_crypto_get_key_trailer(struct wlan_crypto_key *key)
+{
+	struct wlan_crypto_cipher *cipher_table;
+
+	cipher_table = (struct wlan_crypto_cipher *)key->cipher_table;
+	if (cipher_table)
+		return cipher_table->trailer;
+	else
+		return 0;
+}
+
+qdf_export_symbol(wlan_crypto_get_key_trailer);
+
+/**
+ * wlan_crypto_get_key_miclen - get cipher miclen length
+ * @key: key
+ *
+ * This function gets cipher miclen length based on keytype
+ *
+ * Return: cipher miclen length
+ */
+uint8_t wlan_crypto_get_key_miclen(struct wlan_crypto_key *key)
+{
+	struct wlan_crypto_cipher *cipher_table;
+
+	cipher_table = (struct wlan_crypto_cipher *)key->cipher_table;
+	if (cipher_table)
+		return cipher_table->miclen;
+	else
+		return 0;
+}
+
+qdf_export_symbol(wlan_crypto_get_key_miclen);
 
 /**
  * wlan_crypto_get_keyid - get keyid from frame

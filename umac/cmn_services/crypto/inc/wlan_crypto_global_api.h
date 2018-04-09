@@ -535,6 +535,37 @@ uint8_t wlan_crypto_get_peer_fils_aead(struct wlan_objmgr_peer *peer);
  */
 void wlan_crypto_set_peer_fils_aead(
 			struct wlan_objmgr_peer *peer, uint8_t value);
+
+/**
+ * wlan_crypto_get_key_header - get header length
+ * @key: key
+ *
+ * This function gets header length based on keytype
+ *
+ * Return: header length
+ */
+uint8_t wlan_crypto_get_key_header(struct wlan_crypto_key *key);
+
+/**
+ * wlan_crypto_get_key_trailer - get cipher trailer length
+ * @key: key
+ *
+ * This function gets cipher trailer length based on keytype
+ *
+ * Return: cipher trailer length
+ */
+uint8_t wlan_crypto_get_key_trailer(struct wlan_crypto_key *key);
+
+/**
+ * wlan_crypto_get_key_miclen - get cipher miclen length
+ * @key: key
+ *
+ * This function gets cipher miclen length based on keytype
+ *
+ * Return: cipher miclen length
+ */
+uint8_t wlan_crypto_get_key_miclen(struct wlan_crypto_key *key);
+
 /**
  * wlan_crypto_get_keyid - get keyid from frame
  * @data: frame
