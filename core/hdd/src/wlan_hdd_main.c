@@ -590,29 +590,19 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 #else
 	struct net_device *dev = data;
 #endif
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 
 	hdd_enter_dev(dev);
-
-	/* Make sure that this callback corresponds to our device. */
-	if ((strncmp(dev->name, "wlan", 4)) && (strncmp(dev->name, "p2p", 3)))
-		return NOTIFY_DONE;
-
-	if ((adapter->magic != WLAN_HDD_ADAPTER_MAGIC) ||
-	    (adapter->dev != dev)) {
-		hdd_err("device adapter is not matching!!!");
-		return NOTIFY_DONE;
-	}
 
 	if (!dev->ieee80211_ptr) {
 		hdd_err("ieee80211_ptr is NULL!!!");
 		return NOTIFY_DONE;
 	}
 
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (NULL == hdd_ctx) {
-		hdd_err("HDD Context Null Pointer");
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("HDD Context is Null");
 		QDF_ASSERT(0);
 		return NOTIFY_DONE;
 	}
@@ -622,11 +612,24 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 		return NOTIFY_DONE;
 	}
 
-	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state())
+	/* Make sure that this callback corresponds to our device. */
+	adapter = hdd_get_adapter_by_iface_name(hdd_ctx, dev->name);
+	if (!adapter) {
+		hdd_err("Couldn't find adapter for dev name %s", dev->name);
 		return NOTIFY_DONE;
+	}
 
-	hdd_debug("%s New Net Device State = %lu",
-	       dev->name, state);
+	if (adapter != WLAN_HDD_GET_PRIV_PTR(dev)) {
+		hdd_err("HDD adapter mismatch!");
+		return NOTIFY_DONE;
+	}
+
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
+		hdd_err("Driver is in recovery or bad state");
+		return NOTIFY_DONE;
+	}
+
+	hdd_debug("%s New Net Device State = %lu", dev->name, state);
 
 	switch (state) {
 	case NETDEV_REGISTER:
