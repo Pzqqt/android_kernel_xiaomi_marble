@@ -4281,6 +4281,9 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 				if (rate_flags & TX_RATE_HT40)
 					hdd_set_rate_bw(&sinfo->txrate,
 							HDD_RATE_BW_40);
+				else if (rate_flags & TX_RATE_HT20)
+					hdd_set_rate_bw(&sinfo->txrate,
+							HDD_RATE_BW_20);
 			} else {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 			}
