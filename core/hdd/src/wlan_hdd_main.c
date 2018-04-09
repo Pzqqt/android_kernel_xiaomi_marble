@@ -7251,24 +7251,26 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 		connected = true;
 	}
 
-	/* add intra bss forwarded tx and rx packets */
-	tx_packets += fwd_tx_packets_diff;
-	rx_packets += fwd_rx_packets_diff;
-
-	ucfg_ipa_uc_stat_query(hdd_ctx->hdd_pdev, &ipa_tx_packets,
-			       &ipa_rx_packets);
-	tx_packets += (uint64_t)ipa_tx_packets;
-	rx_packets += (uint64_t)ipa_rx_packets;
-
 	if (!connected) {
 		hdd_err("bus bandwidth timer running in disconnected state");
 		return;
 	}
 
-	hdd_pld_request_bus_bandwidth(hdd_ctx, tx_packets, rx_packets);
+	/* add intra bss forwarded tx and rx packets */
+	tx_packets += fwd_tx_packets_diff;
+	rx_packets += fwd_rx_packets_diff;
 
-	ucfg_ipa_set_perf_level(hdd_ctx->hdd_pdev, tx_packets, rx_packets);
-	ucfg_ipa_uc_stat_request(hdd_ctx->hdd_pdev, 2);
+	if (ucfg_ipa_is_fw_wdi_activated(hdd_ctx->hdd_pdev)) {
+		ucfg_ipa_uc_stat_query(hdd_ctx->hdd_pdev, &ipa_tx_packets,
+				&ipa_rx_packets);
+		tx_packets += (uint64_t)ipa_tx_packets;
+		rx_packets += (uint64_t)ipa_rx_packets;
+
+		ucfg_ipa_set_perf_level(hdd_ctx->hdd_pdev, tx_packets, rx_packets);
+		ucfg_ipa_uc_stat_request(hdd_ctx->hdd_pdev, 2);
+	}
+
+	hdd_pld_request_bus_bandwidth(hdd_ctx, tx_packets, rx_packets);
 
 restart_timer:
 	/* ensure periodic timer should still be running before restarting it */
