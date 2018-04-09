@@ -2073,7 +2073,6 @@ static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 #ifdef QCA_COMPUTE_TX_DELAY
 	qdf_spinlock_destroy(&pdev->tx_delay.mutex);
 #endif
-	qdf_mem_free(ppdev);
 }
 
 /**
@@ -2142,6 +2141,8 @@ static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 
 	ol_txrx_pdev_txq_log_destroy(pdev);
 	ol_txrx_pdev_grp_stat_destroy(pdev);
+
+	qdf_mem_free(pdev);
 }
 
 #if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
