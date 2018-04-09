@@ -642,6 +642,7 @@ QDF_STATUS wlan_objmgr_vdev_peer_attach(struct wlan_objmgr_vdev *vdev,
 {
 	struct wlan_objmgr_vdev_objmgr *objmgr = &vdev->vdev_objmgr;
 	struct wlan_objmgr_pdev *pdev;
+	enum QDF_OPMODE opmode;
 
 	wlan_vdev_obj_lock(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
@@ -675,8 +676,9 @@ QDF_STATUS wlan_objmgr_vdev_peer_attach(struct wlan_objmgr_vdev *vdev,
 		 * this peer as self peer
 		 */
 		wlan_vdev_set_selfpeer(vdev, peer);
+		opmode = wlan_vdev_mlme_get_opmode(vdev);
 		/* For AP mode, self peer and BSS peer are same */
-		if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE)
+		if ((opmode == QDF_SAP_MODE) || (opmode == QDF_P2P_GO_MODE))
 			wlan_vdev_set_bsspeer(vdev, peer);
 	}
 	/* set BSS peer for sta */
