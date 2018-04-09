@@ -126,17 +126,6 @@ QDF_STATUS wlan_ipa_uc_enable_pipes(struct wlan_ipa_priv *ipa_ctx);
 QDF_STATUS wlan_ipa_uc_disable_pipes(struct wlan_ipa_priv *ipa_ctx);
 
 /**
- * wlan_ipa_get_iface() - Get IPA interface
- * @ipa_ctx: IPA context
- * @mode: Interface device mode
- *
- * Return: IPA interface address
- */
-struct wlan_ipa_iface_context
-*wlan_ipa_get_iface(struct wlan_ipa_priv *ipa_ctx, uint8_t mode);
-
-#ifndef CONFIG_IPA_WDI_UNIFIED_API
-/**
  * wlan_ipa_set_perf_level() - Set IPA performance level
  * @ipa_ctx: IPA context
  * @tx_packets: Number of packets transmitted in the last sample period
@@ -147,6 +136,17 @@ struct wlan_ipa_iface_context
 QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
 				   uint64_t tx_packets, uint64_t rx_packets);
 
+/**
+ * wlan_ipa_get_iface() - Get IPA interface
+ * @ipa_ctx: IPA context
+ * @mode: Interface device mode
+ *
+ * Return: IPA interface address
+ */
+struct wlan_ipa_iface_context
+*wlan_ipa_get_iface(struct wlan_ipa_priv *ipa_ctx, uint8_t mode);
+
+#ifndef CONFIG_IPA_WDI_UNIFIED_API
 /**
  * wlan_ipa_wdi_rm_request_resource() - IPA WDI request resource
  * @ipa_ctx: IPA context
@@ -224,13 +224,6 @@ int wlan_ipa_wdi_rm_inactivity_timer_destroy(
 }
 
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
-
-static inline
-QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
-				   uint64_t tx_packets, uint64_t rx_packets)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
 static inline int wlan_ipa_wdi_rm_request_resource(
 			struct wlan_ipa_priv *ipa_ctx,

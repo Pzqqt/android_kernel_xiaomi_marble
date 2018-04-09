@@ -758,6 +758,34 @@ QDF_STATUS ol_txrx_ipa_disable_pipes(struct cdp_pdev *ppdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * ol_txrx_ipa_set_perf_level() - Set IPA clock bandwidth based on data rates
+ * @client: Client type
+ * @max_supported_bw_mbps: Maximum bandwidth needed (in Mbps)
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_ipa_set_perf_level(int client,
+				      uint32_t max_supported_bw_mbps)
+{
+	qdf_ipa_wdi_perf_profile_t profile;
+	int result;
+
+	QDF_IPA_WDI_PERF_PROFILE_CLIENT(&profile) = client;
+	QDF_IPA_WDI_PERF_PROFILE_MAX_SUPPORTED_BW_MBPS(&profile) =
+		max_supported_bw_mbps;
+	result = qdf_ipa_wdi_set_perf_profile(&profile);
+
+	if (result) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"Set perf profile failed, code %d", result);
+
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
 
 #ifdef ENABLE_SMMU_S1_TRANSLATION
@@ -1490,8 +1518,6 @@ QDF_STATUS ol_txrx_ipa_disable_pipes(struct cdp_pdev *ppdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-#endif /* CONFIG_IPA_WDI_UNIFIED_API */
-
 /**
  * ol_txrx_ipa_set_perf_level() - Set IPA clock bandwidth based on data rates
  * @client: Client type
@@ -1502,12 +1528,23 @@ QDF_STATUS ol_txrx_ipa_disable_pipes(struct cdp_pdev *ppdev)
 QDF_STATUS ol_txrx_ipa_set_perf_level(int client,
 				      uint32_t max_supported_bw_mbps)
 {
+	qdf_ipa_rm_resource_name_t resource_name;
 	qdf_ipa_rm_perf_profile_t profile;
 	int result;
 
+	if (client == QDF_IPA_CLIENT_WLAN1_PROD) {
+		resource_name = QDF_IPA_RM_RESOURCE_WLAN_PROD;
+	} else if (client == QDF_IPA_CLIENT_WLAN1_CONS) {
+		resource_name = QDF_IPA_RM_RESOURCE_WLAN_CONS;
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"not supported client %d", client);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	QDF_IPA_RM_PERF_PROFILE_MAX_SUPPORTED_BANDWIDTH_MBPS(&profile) =
 		max_supported_bw_mbps;
-	result = qdf_ipa_rm_set_perf_profile(client, &profile);
+	result = qdf_ipa_rm_set_perf_profile(resource_name, &profile);
 
 	if (result) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -1518,6 +1555,8 @@ QDF_STATUS ol_txrx_ipa_set_perf_level(int client,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#endif /* CONFIG_IPA_WDI_UNIFIED_API */
 
 #ifdef FEATURE_METERING
 QDF_STATUS ol_txrx_ipa_uc_get_share_stats(struct cdp_pdev *ppdev,
