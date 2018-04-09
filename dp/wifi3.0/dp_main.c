@@ -5180,6 +5180,11 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 			pdev->stats.tx.dropped.fw_reason3);
 	DP_PRINT_STATS("	Aged Out from msdu/mpdu queues = %d",
 			pdev->stats.tx.dropped.age_out);
+	DP_PRINT_STATS("	Multicast:");
+	DP_PRINT_STATS("	Packets: %u",
+		       pdev->stats.tx.mcast.num);
+	DP_PRINT_STATS("	Bytes: %llu",
+		       pdev->stats.tx.mcast.bytes);
 	DP_PRINT_STATS("Scatter Gather:");
 	DP_PRINT_STATS("	Packets = %d",
 			pdev->stats.tx_i.sg.sg_pkt.num);
@@ -5656,7 +5661,9 @@ dp_print_tx_rates(struct dp_vdev *vdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
 	uint8_t mcs, pkt_type;
-	uint32_t index;
+	uint8_t index;
+	char nss[DP_NSS_LENGTH];
+	int nss_index;
 
 	DP_PRINT_STATS("Tx Rate Info:\n");
 
@@ -5689,6 +5696,13 @@ dp_print_tx_rates(struct dp_vdev *vdev)
 			pdev->stats.tx.bw[0], pdev->stats.tx.bw[1],
 			pdev->stats.tx.bw[2], pdev->stats.tx.bw[3]);
 
+	index = 0;
+	for (nss_index = 0; nss_index < SS_COUNT; nss_index++) {
+		index += qdf_snprint(&nss[index], DP_NSS_LENGTH - index,
+				" %d", pdev->stats.tx.nss[nss_index]);
+	}
+
+	DP_PRINT_STATS("NSS(1-8) = %s", nss);
 	DP_PRINT_STATS("OFDMA = %d", pdev->stats.tx.ofdma);
 	DP_PRINT_STATS("STBC = %d", pdev->stats.tx.stbc);
 	DP_PRINT_STATS("LDPC = %d", pdev->stats.tx.ldpc);

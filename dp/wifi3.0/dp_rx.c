@@ -1145,6 +1145,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	/* Save tid to skb->priority */
 	DP_RX_TID_SAVE(nbuf, tid);
 
+	DP_STATS_INC(peer, rx.bw[bw], 1);
 	DP_STATS_INC(peer, rx.nss[nss], 1);
 	DP_STATS_INC(peer, rx.sgi_count[sgi], 1);
 	DP_STATS_INCC(peer, rx.err.mic_err, 1,
@@ -1153,7 +1154,6 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 		      hal_rx_mpdu_end_decrypt_err_get(rx_tlv_hdr));
 
 	DP_STATS_INC(peer, rx.wme_ac_type[TID_TO_WME_AC(tid)], 1);
-	DP_STATS_INC(peer, rx.bw[bw], 1);
 	DP_STATS_INC(peer, rx.reception_type[reception_type], 1);
 
 	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,

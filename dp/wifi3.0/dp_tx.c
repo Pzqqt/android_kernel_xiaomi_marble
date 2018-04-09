@@ -2613,32 +2613,34 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 	if (peer->bss_peer) {
 		DP_STATS_INC_PKT(peer, tx.mcast, 1, length);
 	} else {
-		if (ts->status == HAL_TX_TQM_RR_FRAME_ACKED) {
-			DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
-		}
 		DP_STATS_INC_PKT(peer, tx.ucast, 1, length);
 	}
 
+	DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
+
+	DP_STATS_INCC_PKT(peer, tx.tx_success, 1, length,
+			  (ts->status == HAL_TX_TQM_RR_FRAME_ACKED));
+
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
-			(ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
+		     (ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
 
 	DP_STATS_INCC(peer, tx.dropped.fw_rem, 1,
-			(ts->status == HAL_TX_TQM_RR_REM_CMD_REM));
+		     (ts->status == HAL_TX_TQM_RR_REM_CMD_REM));
 
 	DP_STATS_INCC(peer, tx.dropped.fw_rem_notx, 1,
-			(ts->status == HAL_TX_TQM_RR_REM_CMD_NOTX));
+		     (ts->status == HAL_TX_TQM_RR_REM_CMD_NOTX));
 
 	DP_STATS_INCC(peer, tx.dropped.fw_rem_tx, 1,
-			(ts->status == HAL_TX_TQM_RR_REM_CMD_TX));
+		     (ts->status == HAL_TX_TQM_RR_REM_CMD_TX));
 
 	DP_STATS_INCC(peer, tx.dropped.fw_reason1, 1,
-			(ts->status == HAL_TX_TQM_RR_FW_REASON1));
+		     (ts->status == HAL_TX_TQM_RR_FW_REASON1));
 
 	DP_STATS_INCC(peer, tx.dropped.fw_reason2, 1,
-			(ts->status == HAL_TX_TQM_RR_FW_REASON2));
+		     (ts->status == HAL_TX_TQM_RR_FW_REASON2));
 
 	DP_STATS_INCC(peer, tx.dropped.fw_reason3, 1,
-			(ts->status == HAL_TX_TQM_RR_FW_REASON3));
+		     (ts->status == HAL_TX_TQM_RR_FW_REASON3));
 
 	if (!ts->status == HAL_TX_TQM_RR_FRAME_ACKED)
 		return;
@@ -2677,7 +2679,6 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 	DP_STATS_INC(peer, tx.wme_ac_type[TID_TO_WME_AC(ts->tid)], 1);
 	DP_STATS_INCC(peer, tx.stbc, 1, ts->stbc);
 	DP_STATS_INCC(peer, tx.ldpc, 1, ts->ldpc);
-	DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
 	DP_STATS_INCC(peer, tx.retries, 1, ts->transmit_cnt > 1);
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
