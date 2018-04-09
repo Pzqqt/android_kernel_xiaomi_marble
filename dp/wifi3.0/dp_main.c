@@ -4937,13 +4937,29 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 }
 
 /**
+ * dp_vdev_getstats() - get vdev packet level stats
+ * @vdev_handle: Datapath VDEV handle
+ * @stats: cdp network device stats structure
+ *
+ * Return: void
+ */
+static void dp_vdev_getstats(void *vdev_handle,
+		struct cdp_dev_stats *stats)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+
+	dp_aggregate_vdev_stats(vdev);
+}
+
+
+/**
  * dp_pdev_getstats() - get pdev packet level stats
  * @pdev_handle: Datapath PDEV handle
  * @stats: cdp network device stats structure
  *
  * Return: void
  */
-static void dp_pdev_getstats(struct cdp_pdev *pdev_handle,
+static void dp_pdev_getstats(void *pdev_handle,
 		struct cdp_dev_stats *stats)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
@@ -4964,6 +4980,34 @@ static void dp_pdev_getstats(struct cdp_pdev *pdev_handle,
 		pdev->stats.rx.multicast.bytes +
 		pdev->stats.rx.bcast.bytes;
 }
+
+/**
+ * dp_get_device_stats() - get interface level packet stats
+ * @handle: device handle
+ * @stats: cdp network device stats structure
+ * @type: device type pdev/vdev
+ *
+ * Return: void
+ */
+static void dp_get_device_stats(void *handle,
+		struct cdp_dev_stats *stats, uint8_t type)
+{
+	switch (type) {
+	case UPDATE_VDEV_STATS:
+		dp_vdev_getstats(handle, stats);
+		break;
+	case UPDATE_PDEV_STATS:
+		dp_pdev_getstats(handle, stats);
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"apstats cannot be updated for this input "
+			"type %d\n", type);
+		break;
+	}
+
+}
+
 
 /**
  * dp_print_pdev_tx_stats(): Print Pdev level TX stats
@@ -6869,7 +6913,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_get_vdev_mac_addr = dp_get_vdev_mac_addr_wifi3,
 	.txrx_get_vdev_from_vdev_id = dp_get_vdev_from_vdev_id_wifi3,
 	.txrx_get_ctrl_pdev_from_vdev = dp_get_ctrl_pdev_from_vdev_wifi3,
-	.txrx_ath_getstats = dp_pdev_getstats,
+	.txrx_ath_getstats = dp_get_device_stats,
 	.addba_requestprocess = dp_addba_requestprocess_wifi3,
 	.addba_responsesetup = dp_addba_responsesetup_wifi3,
 	.delba_process = dp_delba_process_wifi3,

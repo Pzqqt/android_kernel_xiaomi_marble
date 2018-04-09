@@ -138,8 +138,8 @@ struct cdp_cmn_ops {
 
 	void (*txrx_vdev_tx_unlock)(struct cdp_vdev *vdev);
 
-	void (*txrx_ath_getstats)(struct cdp_pdev *pdev,
-			struct cdp_dev_stats *stats);
+	void (*txrx_ath_getstats)(void *pdev,
+			struct cdp_dev_stats *stats, uint8_t type);
 
 	void (*txrx_set_gid_flag)(struct cdp_pdev *pdev, u_int8_t *mem_status,
 			u_int8_t *user_position);

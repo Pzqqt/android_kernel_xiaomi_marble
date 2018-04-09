@@ -198,7 +198,6 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 				&peer->stats, ppdu->peer_id,
 				UPDATE_PEER_STATS);
 
-		dp_aggregate_vdev_stats(peer->vdev);
 	}
 }
 #endif
