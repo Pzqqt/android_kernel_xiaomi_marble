@@ -42,6 +42,47 @@
 #include <wlan_osif_priv.h>
 #include "wlan_cp_stats_utils_api.h"
 
+static void target_if_cp_stats_inc_wake_lock_stats(uint32_t reason,
+					struct wake_lock_stats *stats,
+					uint32_t *unspecified_wake_count)
+{
+	switch (reason) {
+	case WOW_REASON_UNSPECIFIED:
+		(*unspecified_wake_count)++;
+		break;
+	case WOW_REASON_RA_MATCH:
+		stats->ipv6_mcast_wake_up_count++;
+		stats->ipv6_mcast_ra_stats++;
+		stats->icmpv6_count++;
+		break;
+	case WOW_REASON_NLOD:
+		stats->pno_match_wake_up_count++;
+		break;
+	case WOW_REASON_NLO_SCAN_COMPLETE:
+		stats->pno_complete_wake_up_count++;
+		break;
+	case WOW_REASON_LOW_RSSI:
+		stats->low_rssi_wake_up_count++;
+		break;
+	case WOW_REASON_EXTSCAN:
+		stats->gscan_wake_up_count++;
+		break;
+	case WOW_REASON_RSSI_BREACH_EVENT:
+		stats->rssi_breach_wake_up_count++;
+		break;
+	case WOW_REASON_OEM_RESPONSE_EVENT:
+		stats->oem_response_wake_up_count++;
+	case WOW_REASON_11D_SCAN:
+		stats->scan_11d++;
+		break;
+	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
+		stats->pwr_save_fail_detected++;
+		break;
+	default:
+		break;
+	}
+}
+
 static QDF_STATUS
 target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 {
@@ -84,6 +125,9 @@ target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_cp_stats_register_event_handler;
 	cp_stats_tx_ops->cp_stats_detach =
 		target_if_cp_stats_unregister_event_handler;
+	cp_stats_tx_ops->inc_wake_lock_stats =
+		target_if_cp_stats_inc_wake_lock_stats;
 
 	return QDF_STATUS_SUCCESS;
 }
+
