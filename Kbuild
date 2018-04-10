@@ -48,6 +48,18 @@ ifeq ($(KERNEL_BUILD), n)
 	# These are configurable via Kconfig for kernel-based builds
 	# Need to explicitly configure for Android-based builds
 
+	ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
+		CONFIG_HELIUMPLUS := y
+		CONFIG_64BIT_PADDR := y
+		CONFIG_FEATURE_TSO := y
+		CONFIG_FEATURE_TSO_DEBUG := y
+		ifeq ($(CONFIG_INET_LRO), y)
+			CONFIG_WLAN_LRO := y
+		else
+			CONFIG_WLAN_LRO := n
+		endif
+	endif
+
 	ifneq ($(DEVELOPER_DISABLE_BUILD_TIMESTAMP), y)
 	ifneq ($(WLAN_DISABLE_BUILD_TAG), y)
 	CONFIG_BUILD_TAG := y
@@ -193,12 +205,6 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := n
 	endif
 
-	# Flag to enable LRO (Large Receive Offload)
-	ifeq ($(CONFIG_INET_LRO), y)
-		CONFIG_WLAN_LRO := y
-	else
-		CONFIG_WLAN_LRO := n
-	endif
 endif
 endif
 
@@ -405,11 +411,7 @@ CONFIG_WIFI_POS_CONVERGED := y
 
 CONFIG_CP_STATS := y
 
-ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
-CONFIG_HELIUMPLUS := y
-CONFIG_64BIT_PADDR := y
-CONFIG_FEATURE_TSO := y
-CONFIG_FEATURE_TSO_DEBUG := y
+ifeq ($(CONFIG_HELIUMPLUS), y)
 ifneq ($(CONFIG_FORCE_ALLOC_FROM_DMA_ZONE), y)
 CONFIG_ENABLE_DEBUG_ADDRESS_MARKING := y
 endif
