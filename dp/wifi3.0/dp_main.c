@@ -6744,6 +6744,19 @@ static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	struct dp_peer *peer = (struct dp_peer *) peer_hdl;
 	struct dp_soc *soc = (struct dp_soc *) vdev->pdev->soc;
 
+	/*
+	 * For BSS peer, new peer is not created on alloc_node if the
+	 * peer with same address already exists , instead refcnt is
+	 * increased for existing peer. Correspondingly in delete path,
+	 * only refcnt is decreased; and peer is only deleted , when all
+	 * references are deleted. So delete_in_progress should not be set
+	 * for bss_peer, unless only 2 reference remains (peer map reference
+	 * and peer hash table reference).
+	 */
+	if (peer->bss_peer && (qdf_atomic_read(&peer->ref_cnt) > 2)) {
+		return;
+	}
+
 	peer->delete_in_progress = true;
 	dp_peer_delete_ast_entries(soc, peer);
 }

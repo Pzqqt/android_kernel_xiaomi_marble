@@ -1035,7 +1035,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	uint32_t sgi, mcs, tid, nss, bw, reception_type, pkt_type;
 	struct dp_vdev *vdev = peer->vdev;
 	struct ether_header *eh;
-	bool is_broadcast = false;
+	uint16_t msdu_len = qdf_nbuf_len(nbuf);
 
 	peer_id = DP_PEER_METADATA_PEER_ID_GET(
 			       hal_rx_mpdu_peer_meta_data_get(rx_tlv_hdr));
@@ -1043,14 +1043,19 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	is_not_amsdu = qdf_nbuf_is_rx_chfrag_start(nbuf) &
 			qdf_nbuf_is_rx_chfrag_end(nbuf);
 
-	DP_STATS_INC_PKT(peer, rx.rcvd_reo[ring_id], 1,
-			 hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr));
-
+	DP_STATS_INC_PKT(peer, rx.rcvd_reo[ring_id], 1, msdu_len);
 	DP_STATS_INCC(peer, rx.non_amsdu_cnt, 1, is_not_amsdu);
 	DP_STATS_INCC(peer, rx.amsdu_cnt, 1, !is_not_amsdu);
 
-	DP_STATS_INCC_PKT(peer, rx.multicast, 1, qdf_nbuf_len(nbuf),
-			  hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr));
+	if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
+			 (vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))) {
+		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+		if (IEEE80211_IS_BROADCAST(eh->ether_dhost)) {
+			DP_STATS_INC_PKT(peer, rx.bcast, 1, msdu_len);
+		} else {
+			DP_STATS_INC_PKT(peer, rx.multicast, 1, msdu_len);
+		}
+	}
 
 	/*
 	 * currently we can return from here as we have similar stats
@@ -1106,15 +1111,6 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 		      ((mcs >= MAX_MCS) && (pkt_type == DOT11_AX)));
 	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[mcs], 1,
 		      ((mcs <= MAX_MCS) && (pkt_type == DOT11_AX)));
-
-	if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
-			 (vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))) {
-		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
-		is_broadcast =
-			IEEE80211_IS_BROADCAST(eh->ether_dhost) ? true : false;
-		if (is_broadcast)
-			DP_STATS_INC_PKT(peer, rx.bcast, 1, qdf_nbuf_len(nbuf));
-	}
 
 	if ((soc->process_rx_status) &&
 	    hal_rx_attn_first_mpdu_get(rx_tlv_hdr)) {
@@ -1522,8 +1518,6 @@ done:
 
 		dp_rx_cksum_offload(nbuf, rx_tlv_hdr);
 
-		dp_rx_msdu_stats_update(soc, nbuf, rx_tlv_hdr, peer, ring_id);
-
 		/*
 		 * HW structures call this L3 header padding --
 		 * even though this is actually the offset from
@@ -1548,6 +1542,8 @@ done:
 					RX_PKT_TLVS_LEN +
 					l2_hdr_offset);
 		}
+
+		dp_rx_msdu_stats_update(soc, nbuf, rx_tlv_hdr, peer, ring_id);
 
 		if (qdf_unlikely(vdev->mesh_vdev)) {
 			if (dp_rx_filter_mesh_packets(vdev, nbuf,
