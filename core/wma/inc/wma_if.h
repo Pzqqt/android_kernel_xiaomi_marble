@@ -449,9 +449,7 @@ typedef struct sLimMlmSetKeysReq {
  */
 typedef struct {
 	tSirMacAddr bssId;
-#ifdef HAL_SELF_STA_PER_BSS
 	tSirMacAddr selfMacAddr;
-#endif /* HAL_SELF_STA_PER_BSS */
 	tSirBssType bssType;
 	uint8_t operMode;
 	tSirNwType nwType;
