@@ -48,7 +48,7 @@ ifeq ($(KERNEL_BUILD), n)
 	# These are configurable via Kconfig for kernel-based builds
 	# Need to explicitly configure for Android-based builds
 
-	ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
+	ifeq ($(CONFIG_ICNSS), y)
 		CONFIG_HELIUMPLUS := y
 		CONFIG_64BIT_PADDR := y
 		CONFIG_FEATURE_TSO := y
@@ -199,7 +199,7 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	CONFIG_WLAN_NAPI_DEBUG := n
 
 	# Flag to enable FW based TX Flow control
-	ifeq (y,$(findstring y,$(CONFIG_CNSS_EOS) $(CONFIG_LITHIUM)))
+	ifeq ($(CONFIG_LITHIUM), y)
 		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := y
 	else
 		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := n
@@ -1926,7 +1926,7 @@ ifeq ($(CONFIG_ICNSS), y)
 CDEFINES += -DCONFIG_PLD_SNOC_ICNSS
 endif
 
-ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
+ifeq ($(CONFIG_ICNSS), y)
 CDEFINES += -DQCA_WIFI_3_0
 endif
 
@@ -2272,7 +2272,7 @@ CDEFINES += -DQCA_CONFIG_SMP
 endif
 
 #Enable Channel Matrix restriction for all Rome only targets
-ifneq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
+ifneq ($(CONFIG_ICNSS), y)
 CDEFINES += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION
 endif
 
