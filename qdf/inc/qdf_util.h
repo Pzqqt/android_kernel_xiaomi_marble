@@ -577,6 +577,22 @@ int qdf_get_cpu(void)
 }
 
 /**
+ * qdf_get_hweight8() - count num of 1's in bitmap
+ * @value: input bitmap
+ *
+ * Count num of 1's set in the bitmap
+ *
+ * Return: num of 1's
+ */
+static inline
+unsigned int qdf_get_hweight8(unsigned int w)
+{
+	unsigned int res = w - ((w >> 1) & 0x55);
+	res = (res & 0x33) + ((res >> 2) & 0x33);
+	return (res + (res >> 4)) & 0x0F;
+}
+
+/**
  * qdf_device_init_wakeup() - allow a device to wake up the aps system
  * @qdf_dev: the qdf device context
  * @enable: enable/disable the device as a wakup source

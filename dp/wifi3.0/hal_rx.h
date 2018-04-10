@@ -1532,10 +1532,23 @@ hal_rx_msdu_start_nss_get(uint8_t *buf)
 	return nss;
 }
 #else
+#define HAL_RX_MSDU_START_MIMO_SS_BITMAP(_rx_msdu_start)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
+	RX_MSDU_START_5_MIMO_SS_BITMAP_OFFSET)),	\
+	RX_MSDU_START_5_MIMO_SS_BITMAP_MASK,		\
+	RX_MSDU_START_5_MIMO_SS_BITMAP_LSB))
+
 static inline uint32_t
 hal_rx_msdu_start_nss_get(uint8_t *buf)
 {
-	return 0;
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+				&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint8_t mimo_ss_bitmap;
+
+	mimo_ss_bitmap = HAL_RX_MSDU_START_MIMO_SS_BITMAP(msdu_start);
+
+	return qdf_get_hweight8(mimo_ss_bitmap);
 }
 #endif
 
