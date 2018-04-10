@@ -260,10 +260,6 @@ endif
 WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn
 WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 
-ifneq ($(CONFIG_MOBILE_ROUTER), y)
-CONFIG_QCOM_ESE := y
-endif
-
 # Feature flags which are not (currently) configurable via Kconfig
 
 #Whether to build debug version
@@ -332,9 +328,20 @@ ifeq ($(CONFIG_ROME_IF),snoc)
 	CONFIG_HIF_SNOC:= y
 endif
 
-ifneq ($(CONFIG_MOBILE_ROUTER), y)
-#Enable IBSS support on CLD
+# enable/disable feature flags based upon mobile router profile
+ifeq ($(CONFIG_MOBILE_ROUTER), y)
+CONFIG_FEATURE_WLAN_MCC_TO_SCC_SWITCH := y
+CONFIG_FEATURE_WLAN_AUTO_SHUTDOWN := y
+CONFIG_FEATURE_WLAN_AP_AP_ACS_OPTIMIZE := y
+CONFIG_FEATURE_WLAN_STA_4ADDR_SCHEME := y
+CONFIG_MDM_PLATFORM := y
+CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE := y
+CONFIG_FEATURE_AP_MCC_CH_AVOIDANCE := y
+else
+CONFIG_QCOM_ESE := y
 CONFIG_QCA_IBSS_SUPPORT := y
+CONFIG_WLAN_OPEN_P2P_INTERFACE := y
+CONFIG_WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY := y
 endif
 
 #Enable power management suspend/resume functionality to PCI
@@ -2284,36 +2291,45 @@ endif
 #Enable OBSS feature
 CDEFINES += -DQCA_HT_2040_COEX
 
-#features specific to mobile router use case
-ifeq ($(CONFIG_MOBILE_ROUTER), y)
-
 #enable MCC TO SCC switch
+ifeq ($(CONFIG_FEATURE_WLAN_MCC_TO_SCC_SWITCH), y)
 CDEFINES += -DFEATURE_WLAN_MCC_TO_SCC_SWITCH
+endif
 
 #enable wlan auto shutdown feature
+ifeq ($(CONFIG_FEATURE_WLAN_AUTO_SHUTDOWN), y)
 CDEFINES += -DFEATURE_WLAN_AUTO_SHUTDOWN
+endif
 
 #enable AP-AP ACS Optimization
+ifeq ($(CONFIG_FEATURE_WLAN_AP_AP_ACS_OPTIMIZE), y)
 CDEFINES += -DFEATURE_WLAN_AP_AP_ACS_OPTIMIZE
+endif
 
 #Enable 4address scheme
+ifeq ($(CONFIG_FEATURE_WLAN_STA_4ADDR_SCHEME), y)
 CDEFINES += -DFEATURE_WLAN_STA_4ADDR_SCHEME
+endif
 
 #enable MDM/SDX special config
+ifeq ($(CONFIG_MDM_PLATFORM), y)
 CDEFINES += -DMDM_PLATFORM
+endif
 
 #Disable STA-AP Mode DFS support
+ifeq ($(CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE), y)
 CDEFINES += -DFEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
-
-else #CONFIG_MOBILE_ROUTER
+endif
 
 #Open P2P device interface only for non-Mobile router use cases
+ifeq ($(CONFIG_WLAN_OPEN_P2P_INTERFACE), y)
 CDEFINES += -DWLAN_OPEN_P2P_INTERFACE
+endif
 
 #Enable 2.4 GHz social channels in 5 GHz only mode for p2p usage
+ifeq ($(CONFIG_WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY), y)
 CDEFINES += -DWLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
-
-endif #CONFIG_MOBILE_ROUTER
+endif
 
 #Green AP feature
 ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP), y)
@@ -2419,7 +2435,7 @@ ifeq ($(CONFIG_WLAN_LRO), y)
 CDEFINES += -DFEATURE_LRO
 endif
 
-ifeq ($(CONFIG_MOBILE_ROUTER), y)
+ifeq ($(CONFIG_FEATURE_AP_MCC_CH_AVOIDANCE), y)
 CDEFINES += -DFEATURE_AP_MCC_CH_AVOIDANCE
 endif
 
