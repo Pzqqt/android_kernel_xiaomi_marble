@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -429,9 +429,10 @@ void wlan_crypto_fils_delkey(struct wlan_objmgr_peer *peer)
 	}
 
 	key = crypto_priv->key[0];
-	if (key && key->private)
-		qdf_mem_free((struct wlan_crypto_fils_aad_key *)key->private);
-	key->private = 0;
+	if (key) {
+		qdf_mem_free(key->private);
+		key->private = NULL;
+	}
 }
 #else
 
