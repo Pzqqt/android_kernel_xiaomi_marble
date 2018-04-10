@@ -340,9 +340,6 @@ CONFIG_ATH_SUPPORT_FLOWMAC_MODULE := n
 #Enable spectral support
 CONFIG_ATH_SUPPORT_SPECTRAL := n
 
-#Enable HOST statistics support
-CONFIG_SUPPORT_HOST_STATISTICS := n
-
 #Enable WDI Event support
 CONFIG_WDI_EVENT_ENABLE := y
 
