@@ -461,8 +461,6 @@ qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 					 msdu_info.tso_info.curr_seg->next;
 			}
 
-			qdf_nbuf_reset_num_frags(msdu);
-
 			if (msdu_info.tso_info.is_tso) {
 				TXRX_STATS_TSO_INC_SEG(vdev->pdev,
 					tso_msdu_stats_idx);
@@ -847,7 +845,6 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 
 
 				if (msdu_info.tso_info.is_tso) {
-					qdf_nbuf_reset_num_frags(msdu);
 					TXRX_STATS_TSO_INC_SEG(vdev->pdev,
 						tso_msdu_stats_idx);
 					TXRX_STATS_TSO_INC_SEG_IDX(vdev->pdev,
