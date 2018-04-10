@@ -676,9 +676,19 @@ static void ol_tx_update_arp_stats(struct ol_tx_desc_t *tx_desc,
 				   enum htt_tx_status status)
 {
 	uint32_t tgt_ip;
+	struct ol_tx_flow_pool_t *pool;
 
 	qdf_assert(tx_desc);
+
+	pool = tx_desc->pool;
+	qdf_spin_lock_bh(&pool->flow_pool_lock);
+	if (!tx_desc->vdev) {
+		qdf_spin_unlock_bh(&pool->flow_pool_lock);
+		return;
+	}
+
 	tgt_ip = cds_get_arp_stats_gw_ip(tx_desc->vdev->osif_dev);
+	qdf_spin_unlock_bh(&pool->flow_pool_lock);
 
 	if (tgt_ip == qdf_nbuf_get_arp_tgt_ip(netbuf)) {
 		if (status != htt_tx_status_download_fail)

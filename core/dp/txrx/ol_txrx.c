@@ -2410,7 +2410,7 @@ void ol_txrx_set_drop_unenc(ol_txrx_vdev_handle vdev, uint32_t val)
 	vdev->drop_unenc = val;
 }
 
-#if defined(CONFIG_HL_SUPPORT)
+#if defined(CONFIG_HL_SUPPORT) || defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)
 
 static void
 ol_txrx_tx_desc_reset_vdev(ol_txrx_vdev_handle vdev)
@@ -2429,14 +2429,37 @@ ol_txrx_tx_desc_reset_vdev(ol_txrx_vdev_handle vdev)
 }
 
 #else
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+static void ol_txrx_tx_desc_reset_vdev(ol_txrx_vdev_handle vdev)
+{
+	struct ol_txrx_pdev_t *pdev = vdev->pdev;
+	struct ol_tx_flow_pool_t *pool;
+	int i;
+	struct ol_tx_desc_t *tx_desc;
 
+	qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
+	for (i = 0; i < pdev->tx_desc.pool_size; i++) {
+		tx_desc = ol_tx_desc_find(pdev, i);
+		if (!qdf_atomic_read(&tx_desc->ref_cnt))
+			/* not in use */
+			continue;
+
+		pool = tx_desc->pool;
+		qdf_spin_lock_bh(&pool->flow_pool_lock);
+		if (tx_desc->vdev == vdev)
+			tx_desc->vdev = NULL;
+		qdf_spin_unlock_bh(&pool->flow_pool_lock);
+	}
+	qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
+}
+
+#else
 static void
 ol_txrx_tx_desc_reset_vdev(ol_txrx_vdev_handle vdev)
 {
-
 }
-
-#endif
+#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
+#endif /* CONFIG_HL_SUPPORT */
 
 /**
  * ol_txrx_vdev_detach - Deallocate the specified data virtual
