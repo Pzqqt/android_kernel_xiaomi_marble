@@ -79,17 +79,6 @@ ifeq ($(KERNEL_BUILD), n)
 	CONFIG_QCACLD_WLAN_LFR3 := y
 	endif
 
-	# JB kernel has CPU enablement patches, so enable
-	ifeq ($(CONFIG_ROME_IF),pci)
-		CONFIG_PRIMA_WLAN_11AC_HIGH_TP := y
-	endif
-	ifeq ($(CONFIG_ROME_IF),usb)
-		CONFIG_PRIMA_WLAN_11AC_HIGH_TP := n
-	endif
-	ifeq ($(CONFIG_ROME_IF),sdio)
-		CONFIG_PRIMA_WLAN_11AC_HIGH_TP := n
-	endif
-
 	ifneq ($(CONFIG_MOBILE_ROUTER), y)
 	#Flag to enable TDLS feature
 	CONFIG_QCOM_TDLS := y
