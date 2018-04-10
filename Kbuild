@@ -301,13 +301,6 @@ ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_ATH_11AC_TXCOMPACT := n
 endif
 
-#Enable message based HIF instead of RAW access in BMI
-ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
-CONFIG_HIF_MESSAGE_BASED := n
-else
-CONFIG_HIF_MESSAGE_BASED := y
-endif
-
 #Enable PCI specific APIS (dma, etc)
 ifeq ($(CONFIG_ROME_IF),pci)
 	CONFIG_HIF_PCI := y
@@ -2149,11 +2142,6 @@ endif
 #Enable 11AC TX
 ifeq ($(CONFIG_ATH_11AC_TXCOMPACT), y)
 CDEFINES += -DATH_11AC_TXCOMPACT
-endif
-
-#Enable message based HIF instead of RAW access in BMI
-ifeq ($(CONFIG_HIF_MESSAGE_BASED), y)
-CDEFINES += -DHIF_MESSAGE_BASED
 endif
 
 #Enable PCI specific APIS (dma, etc)
