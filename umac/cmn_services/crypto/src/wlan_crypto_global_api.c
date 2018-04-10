@@ -447,7 +447,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 
 		if (IS_MGMT_CIPHER(req_key->type)) {
 			igtk_idx = req_key->keyix - WLAN_CRYPTO_MAXKEYIDX;
-			if (igtk_idx > WLAN_CRYPTO_MAXIGTKKEYIDX) {
+			if (igtk_idx >= WLAN_CRYPTO_MAXIGTKKEYIDX) {
 				qdf_print("%s[%d] igtk key invalid keyid %d \n",
 						  __func__, __LINE__, igtk_idx);
 				return QDF_STATUS_E_INVAL;
@@ -777,7 +777,7 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 	uint8_t bssid_mac[WLAN_ALEN];
 
 	if (!vdev || !macaddr ||
-		(key_idx >
+		(key_idx >=
 			(WLAN_CRYPTO_MAXKEYIDX + WLAN_CRYPTO_MAXIGTKKEYIDX))) {
 			QDF_TRACE(QDF_MODULE_ID_CRYPTO, QDF_TRACE_LEVEL_ERROR,
 				"%s[%d] Invalid params vdev %pK, macaddr %pK"
@@ -1402,7 +1402,7 @@ uint8_t *wlan_crypto_add_mmie(struct wlan_objmgr_vdev *vdev,
 		return NULL;
 	}
 
-	if (crypto_priv->def_igtk_tx_keyid > WLAN_CRYPTO_MAXIGTKKEYIDX) {
+	if (crypto_priv->def_igtk_tx_keyid >= WLAN_CRYPTO_MAXIGTKKEYIDX) {
 		qdf_print("%s[%d] igtk key invalid keyid %d \n",
 			__func__, __LINE__, crypto_priv->def_igtk_tx_keyid);
 		return NULL;
@@ -1558,7 +1558,7 @@ bool wlan_crypto_is_mmie_valid(struct wlan_objmgr_vdev *vdev,
 		return false;
 	}
 
-	if (mmie->key_id > (WLAN_CRYPTO_MAXKEYIDX +
+	if (mmie->key_id >= (WLAN_CRYPTO_MAXKEYIDX +
 				WLAN_CRYPTO_MAXIGTKKEYIDX)) {
 		qdf_print("%s[%d] keyid not valid\n", __func__, __LINE__);
 		return false;
@@ -2322,6 +2322,8 @@ bool wlan_crypto_rsn_info(struct wlan_objmgr_vdev *vdev,
 	struct wlan_crypto_params *my_crypto_params;
 	my_crypto_params = wlan_crypto_vdev_get_crypto_params(vdev);
 
+	if (!my_crypto_params)
+		return false;
 	/*
 	 * Check peer's pairwise ciphers.
 	 * At least one must match with our unicast cipher
