@@ -243,6 +243,17 @@ QDF_STATUS ucfg_scan_set_wide_band_scan(
 bool ucfg_scan_get_wide_band_scan(struct wlan_objmgr_pdev *pdev);
 
 /**
+ * ucfg_scan_set_custom_scan_chan_list() - Public API to restrict scan
+ * to few pre configured channels
+ * @pdev: psoc on which scans need to be disabled
+ * @chan_list: list of channels to scan if set
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS ucfg_scan_set_custom_scan_chan_list(
+		struct wlan_objmgr_pdev *pdev, struct chan_list *chan_list);
+
+/**
  * ucfg_scan_cancel() - Public API to stop a scan
  * @req: stop scan request params
  *

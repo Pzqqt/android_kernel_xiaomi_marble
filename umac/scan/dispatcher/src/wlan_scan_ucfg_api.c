@@ -739,6 +739,26 @@ ucfg_scan_update_dbs_scan_ctrl_ext_flag(
 	struct scan_start_request *req) {}
 #endif
 
+QDF_STATUS
+ucfg_scan_set_custom_scan_chan_list(struct wlan_objmgr_pdev *pdev,
+		struct chan_list *chan_list)
+{
+	uint8_t pdev_id;
+	struct wlan_scan_obj *scan_obj;
+
+	if (!pdev || !chan_list) {
+		scm_warn("pdev: 0x%pK, chan_list: 0x%pK", pdev, chan_list);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	scan_obj = wlan_pdev_get_scan_obj(pdev);
+
+	qdf_mem_copy(&scan_obj->pdev_info[pdev_id].custom_chan_list,
+			chan_list, sizeof(*chan_list));
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * ucfg_scan_req_update_params() - update scan req params depending on modes
  * and scan type.
@@ -752,6 +772,9 @@ static void
 ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 	struct scan_start_request *req, struct wlan_scan_obj *scan_obj)
 {
+	struct chan_list *custom_chan_list;
+	struct wlan_objmgr_pdev *pdev;
+	uint8_t pdev_id;
 
 	/* Ensure correct number of probes are sent on active channel */
 	if (!req->scan_req.repeat_probe_time)
@@ -831,11 +854,34 @@ ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 	      req->scan_req.chan_list.num_chan == 1))
 		ucfg_scan_req_update_concurrency_params(vdev, req, scan_obj);
 
-	scm_debug("dwell time: active %d ;passive %d, repeat_probe_time %d n_probes %d flags_ext %x",
-		  req->scan_req.dwell_time_active,
-		  req->scan_req.dwell_time_passive,
-		  req->scan_req.repeat_probe_time, req->scan_req.n_probes,
-		  req->scan_req.scan_ctrl_flags_ext);
+	/* Set wide band flag if enabled. This will cause
+	 * phymode TLV being sent to FW.
+	 */
+	pdev = wlan_vdev_get_pdev(vdev);
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	if (ucfg_scan_get_wide_band_scan(pdev))
+		req->scan_req.scan_f_wide_band = true;
+	else
+		req->scan_req.scan_f_wide_band = false;
+
+	/* Overwrite scan channles with custom scan channel
+	 * list if configured.
+	 */
+	custom_chan_list = &scan_obj->pdev_info[pdev_id].custom_chan_list;
+	if (custom_chan_list->num_chan)
+		qdf_mem_copy(&req->scan_req.chan_list, custom_chan_list,
+				sizeof(struct chan_list));
+	else if (req->scan_req.scan_f_wide_band &&
+			!req->scan_req.chan_list.num_chan)
+		ucfg_scan_init_chanlist_params(req, 0, NULL, NULL);
+
+	scm_debug("dwell time: active %d, passive %d, repeat_probe_time %d "
+			"n_probes %d flags_ext %x, wide_bw_scan: %d",
+			req->scan_req.dwell_time_active,
+			req->scan_req.dwell_time_passive,
+			req->scan_req.repeat_probe_time, req->scan_req.n_probes,
+			req->scan_req.scan_ctrl_flags_ext,
+			req->scan_req.scan_f_wide_band);
 }
 
 QDF_STATUS
@@ -879,16 +925,6 @@ ucfg_scan_start(struct scan_start_request *req)
 		req->scan_req.vdev_id);
 
 	ucfg_scan_req_update_params(req->vdev, req, scan_obj);
-
-	/* Overwrite scan parameters as required */
-	if (!ucfg_scan_get_wide_band_scan(pdev)) {
-		req->scan_req.scan_f_wide_band = false;
-	} else {
-		req->scan_req.scan_f_wide_band = true;
-		if (req->scan_req.chan_list.num_chan == 0)
-			ucfg_scan_init_chanlist_params(req, 0, NULL, NULL);
-	}
-	scm_debug("scan_f_wide_band: %d", req->scan_req.scan_f_wide_band);
 
 	/* Try to get vdev reference. Return if reference could
 	 * not be taken. Reference will be released once scan

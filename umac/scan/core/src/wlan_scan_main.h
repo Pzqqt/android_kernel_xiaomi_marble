@@ -207,10 +207,12 @@ struct scan_requester_info {
  * struct pdev_scan_info - defines per pdev scan info
  * @wide_band_scan: wide band scan capability
  * @last_scan_time: time of last scan start on this pdev
+ * @custom_chan_list: scan only these channels
  */
 struct pdev_scan_info {
 	bool wide_band_scan;
 	qdf_time_t last_scan_time;
+	struct chan_list custom_chan_list;
 };
 
 /**
