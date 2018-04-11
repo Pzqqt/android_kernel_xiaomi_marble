@@ -69,9 +69,8 @@ static int dp_peer_find_map_attach(struct dp_soc *soc)
 {
 	uint32_t max_peers, peer_map_size;
 
+	max_peers = soc->max_peers;
 	/* allocate the peer ID -> peer object map */
-	max_peers = wlan_cfg_max_peer_id(soc->wlan_cfg_ctx) + 1;
-	soc->max_peers = max_peers;
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 		"\n<=== cfg max peer id %d ====>\n", max_peers);
 	peer_map_size = max_peers * sizeof(soc->peer_id_to_obj_map[0]);
@@ -133,7 +132,7 @@ static int dp_peer_find_hash_attach(struct dp_soc *soc)
 	int i, hash_elems, log2;
 
 	/* allocate the peer MAC address -> peer object hash table */
-	hash_elems = wlan_cfg_max_peer_id(soc->wlan_cfg_ctx) + 1;
+	hash_elems = soc->max_peers;
 	hash_elems *= DP_PEER_HASH_LOAD_MULT;
 	hash_elems >>= DP_PEER_HASH_LOAD_SHIFT;
 	log2 = dp_log2_ceil(hash_elems);
@@ -201,7 +200,7 @@ static int dp_peer_ast_hash_attach(struct dp_soc *soc)
 {
 	int i, hash_elems, log2;
 
-	hash_elems = ((WLAN_UMAC_PSOC_MAX_PEERS * DP_AST_HASH_LOAD_MULT) >>
+	hash_elems = ((soc->max_peers * DP_AST_HASH_LOAD_MULT) >>
 		DP_AST_HASH_LOAD_SHIFT);
 
 	log2 = dp_log2_ceil(hash_elems);
@@ -902,7 +901,7 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 {
 	struct dp_peer *peer;
 
-	QDF_ASSERT(peer_id <= wlan_cfg_max_peer_id(soc->wlan_cfg_ctx) + 1);
+	QDF_ASSERT(peer_id <= soc->max_peers);
 	/* check if there's already a peer object with this MAC address */
 	peer = dp_peer_find_hash_find(soc, peer_mac_addr,
 		0 /* is aligned */, vdev_id);

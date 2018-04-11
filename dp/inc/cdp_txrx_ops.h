@@ -303,6 +303,9 @@ struct cdp_cmn_ops {
 
 	void (*txrx_peer_flush_ast_table)(ol_txrx_soc_handle soc);
 
+	QDF_STATUS (*txrx_peer_map_attach)(ol_txrx_soc_handle soc,
+			uint32_t num_peers);
+
 	ol_txrx_tx_fp tx_send;
 };
 

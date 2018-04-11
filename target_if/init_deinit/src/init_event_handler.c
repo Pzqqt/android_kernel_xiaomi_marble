@@ -31,6 +31,7 @@
 #include <service_ready_util.h>
 #include <service_ready_param.h>
 #include <init_cmd_api.h>
+#include <cdp_txrx_cmn.h>
 
 static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 							uint8_t *event,
@@ -309,6 +310,7 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 	struct wmi_host_ready_ev_param ready_ev;
 	wmi_legacy_service_ready_callback legacy_callback;
 	uint8_t num_radios, i;
+	uint32_t max_peers;
 
 	if (!scn_handle) {
 		target_if_err("scn handle NULL");
@@ -357,6 +359,16 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 			       info->wlan_res_cfg.num_peers,
 			       ready_ev.num_total_peer);
 		info->wlan_res_cfg.num_peers = ready_ev.num_total_peer;
+	}
+
+	/* for non legacy  num_total_peer will be non zero
+	 * allocate peer memory in this case
+	 */
+	if (ready_ev.num_total_peer != 0) {
+		max_peers = info->wlan_res_cfg.num_peers +
+			ready_ev.num_extra_peer + 1;
+
+		cdp_peer_map_attach(wlan_psoc_get_dp_handle(psoc), max_peers);
 	}
 
 	/* Indicate to the waiting thread that the ready

@@ -1558,4 +1558,12 @@ void cdp_if_mgmt_drain(ol_txrx_soc_handle soc,
 	if (soc->ops->cmn_drv_ops->txrx_if_mgmt_drain)
 		soc->ops->cmn_drv_ops->txrx_if_mgmt_drain(ni, force);
 }
+
+static inline void
+cdp_peer_map_attach(ol_txrx_soc_handle soc, uint32_t max_peers)
+{
+	if (soc && soc->ops && soc->ops->cmn_drv_ops &&
+	    soc->ops->cmn_drv_ops->txrx_peer_map_attach)
+		soc->ops->cmn_drv_ops->txrx_peer_map_attach(soc, max_peers);
+}
 #endif /* _CDP_TXRX_CMN_H_ */
