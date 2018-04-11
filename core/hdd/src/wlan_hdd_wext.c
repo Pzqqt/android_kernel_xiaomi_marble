@@ -1150,6 +1150,27 @@
  */
 #define WE_SET_MODULATED_DTIM                 96
 
+/*
+ * <ioctl>
+ * set_ppdu_dur - Sets the global ppdu duration
+ *
+ * @INPUT: Atleast one int argument
+ *
+ * @OUTPUT: None
+ *
+ * This IOTCL used to set global ppdu duration
+ *
+ * @E.g: iwpriv wlan0 set_ppdu_dur <value>
+ * Valid values are 1 to 4000
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_SET_PPDU_DUR                   97
+
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
 #define WE_GET_11D_STATE     1
@@ -5358,6 +5379,23 @@ static int __iw_setint_getnone(struct net_device *dev,
 		}
 
 		hdd_ctx->config->enableModulatedDTIM = set_value;
+		break;
+	case WE_SET_PPDU_DUR:
+		/*Validate set value for Min and Max range*/
+		if (!set_value || (set_value > 4000)) {
+			hdd_err("Invalid ppdu duraion value: %d usec",
+				set_value);
+			return -EINVAL;
+		}
+		ret = wma_cli_set_command(adapter->session_id,
+					WMI_PDEV_PARAM_SET_PPDU_DURATION_CMDID,
+					set_value, PDEV_CMD);
+		if (ret)
+			hdd_err("SET_PPDU_DURATION_CMDID %d usec set failed",
+				set_value);
+		else
+			hdd_debug("PDEV_PARAM_SET_PPDU_DUR_CMDID is set to %d",
+					set_value);
 		break;
 	default:
 		hdd_debug("Invalid sub command %d", sub_cmd);
@@ -9886,6 +9924,10 @@ static const struct iw_priv_args we_private_args[] = {
 	{WE_SET_MODULATED_DTIM,
 	IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	0, "setModDTIM" },
+
+	{WE_SET_PPDU_DUR,
+	IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	0, "set_ppdu_dur" },
 
 	{WLAN_PRIV_SET_NONE_GET_INT,
 	 0,
