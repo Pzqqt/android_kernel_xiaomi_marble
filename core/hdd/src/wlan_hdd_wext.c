@@ -4758,7 +4758,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_BURST_ENABLE:
 	{
 		hdd_debug("SET Burst enable val %d", set_value);
-		if ((set_value == 0) || (set_value == 1)) {
+		if ((set_value == 0) || (set_value == 1) || (set_value == 3)) {
 			ret = wma_cli_set_command(adapter->session_id,
 						  WMI_PDEV_PARAM_BURST_ENABLE,
 						  set_value, PDEV_CMD);
