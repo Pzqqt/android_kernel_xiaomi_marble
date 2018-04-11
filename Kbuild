@@ -387,6 +387,13 @@ ifeq ($(CONFIG_IPA3), y)
 CONFIG_IPA_OFFLOAD := y
 endif
 
+#Flag to enable SMMU S1 support
+ifeq ($(CONFIG_ARCH_SDM845), y)
+ifeq ($(CONFIG_IPA_OFFLOAD), y)
+CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
+endif
+endif
+
 #Enable Signed firmware support for split binary format
 CONFIG_QCA_SIGNED_SPLIT_BINARY_SUPPORT := n
 
@@ -2537,12 +2544,7 @@ ifeq ($(CONFIG_DYNAMIC_DEBUG), y)
 CDEFINES += -DFEATURE_MULTICAST_HOST_FW_MSGS
 endif
 
-#Flag to enable SMMU S1 support
-ifeq ($(CONFIG_ARCH_SDM845), y)
-ifeq ($(CONFIG_IPA_OFFLOAD), y)
-CDEFINES += -DENABLE_SMMU_S1_TRANSLATION
-endif
-endif
+ccflags-$(CONFIG_ENABLE_SMMU_S1_TRANSLATION) += -DENABLE_SMMU_S1_TRANSLATION
 
 #Flag to enable NUD tracking
 ifeq ($(CONFIG_WLAN_NUD_TRACKING), y)
