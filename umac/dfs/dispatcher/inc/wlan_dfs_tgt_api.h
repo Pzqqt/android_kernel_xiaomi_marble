@@ -78,6 +78,7 @@ extern struct dfs_to_mlme global_dfs_to_mlme;
  * @dfs_ch_vhtop_ch_freq_seg1: Channel Center frequency1.
  * @dfs_ch_vhtop_ch_freq_seg2: Channel Center frequency2.
  */
+#ifdef DFS_COMPONENT_ENABLE
 QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
 		uint16_t dfs_ch_freq,
 		uint64_t dfs_ch_flags,
@@ -87,6 +88,34 @@ QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
 		uint8_t dfs_ch_vhtop_ch_freq_seg2);
 
 /**
+ * tgt_dfs_radar_enable() - Enables the radar.
+ * @pdev: Pointer to DFS pdev object.
+ * @no_cac: If no_cac is 0, it cancels the CAC.
+ *
+ * This is called each time a channel change occurs, to (potentially) enable
+ * the radar code.
+ */
+QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
+	int no_cac, uint32_t opmode);
+
+/**
+ * tgt_dfs_control()- Used to process ioctls related to DFS.
+ * @pdev: Pointer to DFS pdev object.
+ * @id: Command type.
+ * @indata: Input buffer.
+ * @insize: size of the input buffer.
+ * @outdata: A buffer for the results.
+ * @outsize: Size of the output buffer.
+ */
+QDF_STATUS tgt_dfs_control(struct wlan_objmgr_pdev *pdev,
+	u_int id,
+	void *indata,
+	uint32_t insize,
+	void *outdata,
+	uint32_t *outsize,
+	int *error);
+
+/**
  * tgt_dfs_get_radars() - Based on the chipset, calls init radar table functions
  * @pdev: Pointer to DFS pdev object.
  *
@@ -94,6 +123,60 @@ QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
  * outside of DFS component.
  */
 QDF_STATUS tgt_dfs_get_radars(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * tgt_dfs_process_radar_ind() - Process radar found indication.
+ * @pdev: Pointer to DFS pdev object.
+ * @radar_found: radar found info.
+ *
+ * Process radar found indication.
+ *
+ * Return QDF_STATUS.
+ */
+QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
+		struct radar_found_info *radar_found);
+#else
+static inline QDF_STATUS tgt_dfs_set_current_channel(
+		struct wlan_objmgr_pdev *pdev,
+		uint16_t dfs_ch_freq,
+		uint64_t dfs_ch_flags,
+		uint16_t dfs_ch_flagext,
+		uint8_t dfs_ch_ieee,
+		uint8_t dfs_ch_vhtop_ch_freq_seg1,
+		uint8_t dfs_ch_vhtop_ch_freq_seg2)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
+	int no_cac, uint32_t opmode)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS tgt_dfs_control(struct wlan_objmgr_pdev *pdev,
+	u_int id,
+	void *indata,
+	uint32_t insize,
+	void *outdata,
+	uint32_t *outsize,
+	int *error)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS tgt_dfs_get_radars(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS tgt_dfs_process_radar_ind(
+		struct wlan_objmgr_pdev *pdev,
+		struct radar_found_info *radar_found)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * tgt_dfs_process_phyerr() - Process phyerr.
@@ -147,17 +230,6 @@ QDF_STATUS tgt_dfs_is_phyerr_filter_offload(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS tgt_dfs_destroy_object(struct wlan_objmgr_pdev *pdev);
 
-/**
- * tgt_dfs_radar_enable() - Enables the radar.
- * @pdev: Pointer to DFS pdev object.
- * @no_cac: If no_cac is 0, it cancels the CAC.
- *
- * This is called each time a channel change occurs, to (potentially) enable
- * the radar code.
- */
-QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
-	int no_cac, uint32_t opmode);
-
 #ifdef QCA_MCL_DFS_SUPPORT
 /**
  * tgt_dfs_set_tx_leakage_threshold() - set tx_leakage_threshold.
@@ -168,24 +240,14 @@ QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS tgt_dfs_set_tx_leakage_threshold(struct wlan_objmgr_pdev *pdev,
 		uint16_t tx_leakage_threshold);
+#else
+static inline QDF_STATUS tgt_dfs_set_tx_leakage_threshold
+		(struct wlan_objmgr_pdev *pdev,
+		uint16_t tx_leakage_threshold)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
-
-/**
- * tgt_dfs_control()- Used to process ioctls related to DFS.
- * @pdev: Pointer to DFS pdev object.
- * @id: Command type.
- * @indata: Input buffer.
- * @insize: size of the input buffer.
- * @outdata: A buffer for the results.
- * @outsize: Size of the output buffer.
- */
-QDF_STATUS tgt_dfs_control(struct wlan_objmgr_pdev *pdev,
-	u_int id,
-	void *indata,
-	uint32_t insize,
-	void *outdata,
-	uint32_t *outsize,
-	int *error);
 
 /**
  * tgt_dfs_is_precac_timer_running() - Check whether precac timer is running.
@@ -220,18 +282,6 @@ QDF_STATUS tgt_dfs_find_vht80_chan_for_precac(struct wlan_objmgr_pdev *pdev,
 		uint32_t *phy_mode,
 		bool *dfs_set_cfreq2,
 		bool *set_agile);
-
-/**
- * tgt_dfs_process_radar_ind() - Process radar found indication.
- * @pdev: Pointer to DFS pdev object.
- * @radar_found: radar found info.
- *
- * Process radar found indication.
- *
- * Return QDF_STATUS.
- */
-QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
-		struct radar_found_info *radar_found);
 
 /**
  * tgt_dfs_cac_complete() - Process cac complete indication.
@@ -283,6 +333,12 @@ QDF_STATUS tgt_dfs_process_emulate_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS tgt_dfs_set_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev);
+#else
+static inline QDF_STATUS tgt_dfs_set_phyerr_filter_offload
+	(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)

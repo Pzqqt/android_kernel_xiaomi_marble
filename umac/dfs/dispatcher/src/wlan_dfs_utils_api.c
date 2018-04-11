@@ -670,11 +670,7 @@ random_chan_error:
 }
 qdf_export_symbol(utils_dfs_get_random_channel);
 
-#ifndef QCA_DFS_NOL_PLATFORM_DRV_SUPPORT
-void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
-{
-}
-#else
+#ifdef QCA_DFS_NOL_PLATFORM_DRV_SUPPORT
 void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
@@ -796,12 +792,6 @@ void utils_dfs_clear_nol_channels(struct wlan_objmgr_pdev *pdev)
 	utils_dfs_save_nol(pdev);
 }
 qdf_export_symbol(utils_dfs_clear_nol_channels);
-
-bool utils_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
-{
-	return wlan_reg_is_dfs_ch(pdev, chan);
-}
-qdf_export_symbol(utils_is_dfs_ch);
 
 void utils_dfs_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 		uint8_t *ch_list,

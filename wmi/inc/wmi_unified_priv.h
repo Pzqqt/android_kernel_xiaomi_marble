@@ -1474,7 +1474,6 @@ QDF_STATUS (*extract_rcpi_response_event)(wmi_unified_t wmi_handle,
 					  void *evt_buf,
 					  struct rcpi_res *res);
 
-#ifdef DFS_COMPONENT_ENABLE
 QDF_STATUS (*extract_dfs_cac_complete_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		uint32_t *vdev_id,
@@ -1487,7 +1486,7 @@ QDF_STATUS (*extract_wlan_radar_event_info)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct radar_event_info *wlan_radar_event,
 		uint32_t len);
-#endif
+
 QDF_STATUS (*send_set_country_cmd)(wmi_unified_t wmi_handle,
 				struct set_country *param);
 

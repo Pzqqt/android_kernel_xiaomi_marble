@@ -251,6 +251,12 @@ QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev, int *buff);
  */
 QDF_STATUS ucfg_dfs_update_config(struct wlan_objmgr_psoc *psoc,
 		struct dfs_user_config *req);
+#else
+static inline QDF_STATUS ucfg_dfs_update_config(struct wlan_objmgr_psoc *psoc,
+		struct dfs_user_config *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 /**
