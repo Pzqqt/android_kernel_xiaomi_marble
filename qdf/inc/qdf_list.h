@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,7 +23,6 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
-
 
 /**
  *  DOC: qdf_list.h
@@ -98,6 +96,18 @@ static inline void qdf_list_create(__qdf_list_t *list, uint32_t max_size)
 {
 	__qdf_list_create(list, max_size);
 }
+
+#define QDF_LIST_ANCHOR(list) __QDF_LIST_ANCHOR(list)
+
+#define QDF_LIST_NODE_INIT(prev, next) __QDF_LIST_NODE_INIT(prev, next)
+#define QDF_LIST_NODE_INIT_SINGLE(node) __QDF_LIST_NODE_INIT_SINGLE(node)
+
+#define QDF_LIST_INIT(tail, head) __QDF_LIST_INIT(tail, head)
+#define QDF_LIST_INIT_SINGLE(node) __QDF_LIST_INIT_SINGLE(node)
+#define QDF_LIST_INIT_EMPTY(list) __QDF_LIST_INIT_EMPTY(list)
+
+#define qdf_list_for_each(list_ptr, cursor, node_field) \
+	__qdf_list_for_each(list_ptr, cursor, node_field)
 
 /**
  * qdf_init_list_head() - initialize list head

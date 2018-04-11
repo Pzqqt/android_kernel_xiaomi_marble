@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,6 +58,26 @@ static inline void __qdf_list_create(__qdf_list_t *list, uint32_t max_size)
 	list->count = 0;
 	list->max_size = max_size;
 }
+
+#define __QDF_LIST_ANCHOR(list) ((list).anchor)
+
+#define __QDF_LIST_NODE_INIT(prev_node, next_node) \
+	{ .prev = &(prev_node), .next = &(next_node), }
+
+#define __QDF_LIST_NODE_INIT_SINGLE(node) \
+	__QDF_LIST_NODE_INIT(node, node)
+
+#define __QDF_LIST_INIT(tail, head) \
+	{ .anchor = __QDF_LIST_NODE_INIT(tail, head), }
+
+#define __QDF_LIST_INIT_SINGLE(node) \
+	__QDF_LIST_INIT(node, node)
+
+#define __QDF_LIST_INIT_EMPTY(list) \
+	__QDF_LIST_INIT_SINGLE(list.anchor)
+
+#define __qdf_list_for_each(list_ptr, cursor, node_field) \
+	list_for_each_entry(cursor, &(list_ptr)->anchor, node_field)
 
 /**
  * __qdf_init_list_head() - initialize list head
