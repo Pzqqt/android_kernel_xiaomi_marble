@@ -1257,6 +1257,35 @@ static QDF_STATUS pe_drop_pending_rx_mgmt_frames(tpAniSirGlobal mac_ctx,
 }
 
 /**
+ * pe_is_ext_scan_bcn - Check if the beacon is from Ext or EPNO scan
+ *
+ * @hdr: pointer to the 802.11 header of the frame
+ * @rx_pkt_info: pointer to the rx packet meta
+ *
+ * Checks if the beacon is from Ext Scan or EPNO scan
+ *
+ * Return: true or false
+ */
+#ifdef FEATURE_WLAN_EXTSCAN
+static inline bool pe_is_ext_scan_bcn(tpSirMacMgmtHdr hdr,
+				uint8_t *rx_pkt_info)
+{
+	if ((hdr->fc.subType == SIR_MAC_MGMT_BEACON) &&
+	    (WMA_IS_EXTSCAN_SCAN_SRC(rx_pkt_info) ||
+	    WMA_IS_EPNO_SCAN_SRC(rx_pkt_info)))
+		return true;
+
+	return false;
+}
+#else
+static inline bool pe_is_ext_scan_bcn(tpSirMacMgmtHdr hdr,
+				uint8_t *rx_pkt_info)
+{
+	return false;
+}
+#endif
+
+/**
  * pe_filter_drop_bcn_probe_frame - Apply filter on the received frame
  *
  * @mac_ctx: pointer to the global mac context
@@ -1279,6 +1308,9 @@ static bool pe_filter_bcn_probe_frame(tpAniSirGlobal mac_ctx,
 	struct mgmt_beacon_probe_filter *filter;
 	tpSirMacCapabilityInfo bcn_caps;
 	tSirMacSSid bcn_ssid;
+
+	if (pe_is_ext_scan_bcn(hdr, rx_pkt_info))
+		return true;
 
 	filter = &mac_ctx->bcn_filter;
 
