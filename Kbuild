@@ -441,16 +441,6 @@ CONFIG_ENABLE_DEBUG_ADDRESS_MARKING := y
 endif
 endif
 
-ifeq ($(CONFIG_CFG80211), y)
-HAVE_CFG80211 := y
-else
-ifeq ($(CONFIG_CFG80211),m)
-HAVE_CFG80211 := y
-else
-HAVE_CFG80211 := n
-endif
-endif
-
 ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
 	CONFIG_FEATURE_UNIT_TEST_SUSPEND := y
 	CONFIG_LEAK_DETECTION := y
@@ -486,25 +476,29 @@ HDD_INC := 	-I$(WLAN_ROOT)/$(HDD_INC_DIR) \
 
 HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_cfg.o \
+		$(HDD_SRC_DIR)/wlan_hdd_cfg80211.o \
 		$(HDD_SRC_DIR)/wlan_hdd_data_stall_detection.o \
 		$(HDD_SRC_DIR)/wlan_hdd_driver_ops.o \
+		$(HDD_SRC_DIR)/wlan_hdd_ext_scan.o \
 		$(HDD_SRC_DIR)/wlan_hdd_ftm.o \
 		$(HDD_SRC_DIR)/wlan_hdd_hostapd.o \
 		$(HDD_SRC_DIR)/wlan_hdd_ioctl.o \
 		$(HDD_SRC_DIR)/wlan_hdd_main.o \
-		$(HDD_SRC_DIR)/wlan_hdd_object_manager.o \
 		$(HDD_SRC_DIR)/wlan_hdd_memdump.o \
+		$(HDD_SRC_DIR)/wlan_hdd_object_manager.o \
 		$(HDD_SRC_DIR)/wlan_hdd_oemdata.o \
+		$(HDD_SRC_DIR)/wlan_hdd_p2p.o \
 		$(HDD_SRC_DIR)/wlan_hdd_packet_filter.o \
 		$(HDD_SRC_DIR)/wlan_hdd_power.o \
 		$(HDD_SRC_DIR)/wlan_hdd_regulatory.o \
 		$(HDD_SRC_DIR)/wlan_hdd_request_manager.o \
 		$(HDD_SRC_DIR)/wlan_hdd_scan.o \
-		$(HDD_SRC_DIR)/wlan_hdd_spectralscan.o \
 		$(HDD_SRC_DIR)/wlan_hdd_softap_tx_rx.o \
+		$(HDD_SRC_DIR)/wlan_hdd_spectralscan.o \
+		$(HDD_SRC_DIR)/wlan_hdd_stats.o \
 		$(HDD_SRC_DIR)/wlan_hdd_sysfs.o \
-		$(HDD_SRC_DIR)/wlan_hdd_tx_rx.o \
 		$(HDD_SRC_DIR)/wlan_hdd_trace.o \
+		$(HDD_SRC_DIR)/wlan_hdd_tx_rx.o \
 		$(HDD_SRC_DIR)/wlan_hdd_wext.o \
 		$(HDD_SRC_DIR)/wlan_hdd_wmm.o \
 		$(HDD_SRC_DIR)/wlan_hdd_wowl.o
@@ -540,13 +534,6 @@ endif
 
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_ipa.o
-endif
-
-ifeq ($(HAVE_CFG80211), y)
-HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_cfg80211.o \
-		$(HDD_SRC_DIR)/wlan_hdd_ext_scan.o \
-		$(HDD_SRC_DIR)/wlan_hdd_stats.o \
-		$(HDD_SRC_DIR)/wlan_hdd_p2p.o
 endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
@@ -2032,13 +2019,11 @@ CDEFINES += \
 	-DTIMER_MANAGER
 endif
 
-ifeq ($(HAVE_CFG80211), y)
 CDEFINES += -DWLAN_FEATURE_P2P
 CDEFINES += -DWLAN_FEATURE_WFD
 ifeq ($(CONFIG_QCOM_VOWIFI_11R), y)
 CDEFINES += -DKERNEL_SUPPORT_11R_CFG80211
 CDEFINES += -DUSE_80211_WMMTSPEC_FOR_RIC
-endif
 endif
 
 ifeq ($(CONFIG_QCOM_ESE), y)
