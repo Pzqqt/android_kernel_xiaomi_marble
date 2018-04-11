@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -17,12 +14,6 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
  */
 
 /*
@@ -737,6 +728,129 @@ __lim_handle_beacon(tpAniSirGlobal pMac, struct scheduler_msg *pMsg,
 		lim_process_beacon_frame(pMac, pRxPacketInfo, psessionEntry);
 
 	return;
+}
+
+/*
+ * lim_fill_sap_bcn_pkt_meta(): Fills essential fields in Rx Pkt Meta
+ * @scan_entry: pointer to the scan cache entry of the beacon
+ * @rx_pkt: pointer to the cds pkt allocated
+ *
+ * This API fills only the essential paramters in the Rx Pkt Meta which are
+ * required while converting the beacon frame to struct and while handling
+ * the beacon for implementation of SAP protection mechanisms.
+ *
+ * Return: None
+ */
+static void lim_fill_sap_bcn_pkt_meta(struct scan_cache_entry *scan_entry,
+					cds_pkt_t *rx_pkt)
+{
+	rx_pkt->pkt_meta.channel = scan_entry->channel.chan_idx;
+
+	rx_pkt->pkt_meta.mpdu_hdr_len = sizeof(struct ieee80211_frame);
+	rx_pkt->pkt_meta.mpdu_len = scan_entry->raw_frame.len;
+	rx_pkt->pkt_meta.mpdu_data_len = rx_pkt->pkt_meta.mpdu_len -
+					rx_pkt->pkt_meta.mpdu_hdr_len;
+
+	rx_pkt->pkt_meta.mpdu_hdr_ptr = scan_entry->raw_frame.ptr;
+	rx_pkt->pkt_meta.mpdu_data_ptr = rx_pkt->pkt_meta.mpdu_hdr_ptr +
+					rx_pkt->pkt_meta.mpdu_hdr_len;
+
+	/*
+	 * The scan_entry->raw_frame contains the qdf_nbuf->data from the SKB
+	 * of the beacon. We set the rx_pkt->pkt_meta.mpdu_hdr_ptr to point
+	 * to this memory directly. However we do not have the pointer to
+	 * the SKB itself here which is usually is pointed by rx_pkt->pkt_buf.
+	 * Also, we always get the pkt data using WMA_GET_RX_MPDU_DATA and
+	 * dont actually use the pkt_buf. So setting this to NULL.
+	 */
+	rx_pkt->pkt_buf = NULL;
+}
+
+void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
+				struct scan_cache_entry *scan_entry)
+{
+	tpAniSirGlobal mac_ctx;
+	cds_pkt_t *pkt = NULL;
+	struct mgmt_beacon_probe_filter *filter;
+	tSchBeaconStruct *bcn = NULL;
+	bool allow_frame = false;
+	QDF_STATUS qdf_status;
+	uint8_t *rx_pkt_info;
+	int session_id;
+
+	if (!scan_entry) {
+		pe_err("scan_entry is NULL");
+		return;
+	}
+
+	if (scan_entry->frm_subtype != SIR_MAC_MGMT_BEACON)
+		return;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		pe_err("Failed to get mac_ctx");
+		return;
+	}
+
+	filter = &mac_ctx->bcn_filter;
+
+	if (!filter->num_sap_sessions) {
+		return;
+	}
+
+	for (session_id = 0; session_id < SIR_MAX_SUPPORTED_BSS; session_id++) {
+		if (filter->sap_channel[session_id] &&
+		    (filter->sap_channel[session_id] ==
+		    scan_entry->channel.chan_idx)) {
+			allow_frame = true;
+			break;
+		}
+	}
+
+	if (!allow_frame)
+		return;
+
+	pkt = qdf_mem_malloc(sizeof(*pkt));
+	if (!pkt) {
+		pe_err("Failed to allocate rx packet");
+		goto free;
+	}
+
+	lim_fill_sap_bcn_pkt_meta(scan_entry, pkt);
+
+	qdf_status =
+		wma_ds_peek_rx_packet_info(pkt, (void *)&rx_pkt_info, false);
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		pe_err("Failed to peek rx pkt info");
+		goto free;
+	}
+
+	bcn = qdf_mem_malloc(sizeof(tSchBeaconStruct));
+	if (!bcn) {
+		pe_err("Failed to allocate bcn struct");
+		goto free;
+	}
+
+	/* Convert the beacon frame into a structure */
+	if (sir_convert_beacon_frame2_struct(mac_ctx, (uint8_t *) rx_pkt_info,
+		bcn) != eSIR_SUCCESS) {
+		pe_err_rl("beacon parsing failed");
+		goto free;
+	}
+
+	sch_beacon_process_for_ap(mac_ctx, rx_pkt_info, bcn);
+
+free:
+	/*
+	 * Free only the pkt memory we allocated and not the pkt->pkt_buf.
+	 * The actual SKB buffer is freed in the scan module from where
+	 * this API is invoked via callback
+	 */
+	if (bcn)
+		qdf_mem_free(bcn);
+	if (pkt)
+		qdf_mem_free(pkt);
 }
 
 /**

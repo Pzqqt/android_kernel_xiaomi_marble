@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -17,12 +14,6 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
  */
 
 /*
@@ -372,6 +363,21 @@ static inline void lim_fill_join_rsp_ht_caps(tpPESession session,
 #endif
 QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	uint8_t *ie_data, uint8_t *local_ie_buf, uint16_t *local_ie_len);
+
+/**
+ * lim_handle_sap_beacon(): Handle the beacon received from scan module for SAP
+ * @pdev: pointer to the pdev object
+ * @scan_entry: pointer to the scan cache entry for the beacon
+ *
+ * Registered as callback to the scan module for handling beacon frames.
+ * This API filters the and allows beacons for SAP protection mechanisms
+ * if there are active SAP sessions and the received beacon's channel
+ * matches the SAP active channel
+ *
+ * Return: None
+ */
+void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
+					struct scan_cache_entry *scan_entry);
 
 /************************************************************/
 #endif /* __LIM_API_H */

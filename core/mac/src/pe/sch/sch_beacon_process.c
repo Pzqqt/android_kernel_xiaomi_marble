@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -17,12 +14,6 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
  */
 
 /*
@@ -1014,48 +1005,29 @@ static void  sch_check_bss_color_ie(tpAniSirGlobal mac_ctx,
 }
 #endif
 
-/**
- * sch_beacon_process() - process the beacon frame
- * @mac_ctx:        mac global context
- * @rx_pkt_info:  pointer to buffer descriptor
- *
- * Return: None
- */
-void
-sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
-		   tpPESession session)
+void sch_beacon_process_for_ap(tpAniSirGlobal mac_ctx,
+				uint8_t *rx_pkt_info,
+				tSchBeaconStruct *bcn)
 {
-	static tSchBeaconStruct bcn;
-	tUpdateBeaconParams bcn_prm;
-	tpPESession ap_session = NULL;
 	uint8_t i;
+	tpPESession ap_session = NULL;
+	tUpdateBeaconParams bcn_prm;
 
-	qdf_mem_zero(&bcn_prm, sizeof(tUpdateBeaconParams));
-	bcn_prm.paramChangeBitmap = 0;
-	/* Convert the beacon frame into a structure */
-	if (sir_convert_beacon_frame2_struct(mac_ctx, (uint8_t *) rx_pkt_info,
-		&bcn) != eSIR_SUCCESS) {
-		pe_err("beacon parsing failed");
+	if (!bcn || !rx_pkt_info) {
+		pe_err_rl("bcn %pK or rx_pkt_info %pK NULL",
+			  bcn, rx_pkt_info);
 		return;
 	}
 
-	if (bcn.ssidPresent)
-		bcn.ssId.ssId[bcn.ssId.length] = 0;
-	/*
-	 * First process the beacon in the context of any existing AP or BTAP
-	 * session. This takes cares of following two scenarios:
-	 *  - session = NULL:
-	 * e.g. beacon received from a neighboring BSS, you want to apply the
-	 * protection settings to BTAP/InfraAP beacons
-	 *  - session is non NULL:
-	 * e.g. beacon received is from the INFRA AP to which you are connected
-	 * on another concurrent link. In this case also, we want to apply the
-	 * protection settings(as advertised by Infra AP) to BTAP beacons
-	 */
+	qdf_mem_zero(&bcn_prm, sizeof(tUpdateBeaconParams));
+	bcn_prm.paramChangeBitmap = 0;
+
+	if (bcn->ssidPresent)
+		bcn->ssId.ssId[bcn->ssId.length] = 0;
+
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		ap_session = pe_find_session_by_session_id(mac_ctx, i);
-		if (!((ap_session != NULL) &&
-			(!(WMA_GET_OFFLOADSCANLEARN(rx_pkt_info)))))
+		if (!ap_session)
 			continue;
 
 		if (!LIM_IS_AP_ROLE(ap_session))
@@ -1065,13 +1037,13 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 		if (!ap_session->is_session_obss_color_collision_det_enabled)
 			sch_check_bss_color_ie(mac_ctx, ap_session,
-					       &bcn, &bcn_prm);
+						bcn, &bcn_prm);
 
 		if ((ap_session->gLimProtectionControl !=
 		     WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE) &&
 		    !ap_session->is_session_obss_offload_enabled)
 			ap_beacon_process(mac_ctx, rx_pkt_info,
-					  &bcn, &bcn_prm, ap_session);
+						bcn, &bcn_prm, ap_session);
 
 		if ((false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)
 		    && bcn_prm.paramChangeBitmap) {
@@ -1084,6 +1056,31 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			lim_send_beacon_params(mac_ctx, &bcn_prm, ap_session);
 		}
 	}
+}
+
+/**
+ * sch_beacon_process() - process the beacon frame
+ * @mac_ctx: mac global context
+ * @rx_pkt_info: pointer to buffer descriptor
+ * @session: pointer to the PE session
+ *
+ * Return: None
+ */
+void
+sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
+		   tpPESession session)
+{
+	static tSchBeaconStruct bcn;
+
+	/* Convert the beacon frame into a structure */
+	if (sir_convert_beacon_frame2_struct(mac_ctx, (uint8_t *) rx_pkt_info,
+		&bcn) != eSIR_SUCCESS) {
+		pe_err_rl("beacon parsing failed");
+		return;
+	}
+
+	if (bcn.ssidPresent)
+		bcn.ssId.ssId[bcn.ssId.length] = 0;
 
 	/*
 	 * Now process the beacon in the context of the BSS which is

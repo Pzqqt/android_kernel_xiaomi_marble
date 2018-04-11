@@ -4874,6 +4874,10 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 		ch_change_req->targetChannel;
 	session_entry->limRFBand =
 		lim_get_rf_band(session_entry->currentOperChannel);
+
+	/* Update the global beacon filter */
+	lim_update_bcn_probe_filter(mac_ctx, session_entry);
+
 	/* Initialize 11h Enable Flag */
 	if (CHAN_HOP_ALL_BANDS_ENABLE ||
 	    BAND_5G == session_entry->limRFBand) {

@@ -853,6 +853,53 @@ static void p2p_register_callbacks(tpAniSirGlobal mac_ctx)
 	ucfg_p2p_register_callbacks(mac_ctx->psoc, &p2p_cb);
 }
 
+/*
+ * lim_register_sap_bcn_callback(): Register a callback with scan module for SAP
+ * @mac_ctx: pointer to the global mac context
+ *
+ * Registers the function lim_handle_sap_beacon as callback with the Scan
+ * module to handle beacon frames for SAP sessions
+ *
+ * Return: QDF Status
+ */
+static QDF_STATUS lim_register_sap_bcn_callback(tpAniSirGlobal mac_ctx)
+{
+	QDF_STATUS status;
+
+	status = ucfg_scan_register_bcn_cb(mac_ctx->psoc,
+			lim_handle_sap_beacon,
+			SCAN_CB_TYPE_UPDATE_BCN);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		pe_err("failed with status code %08d [x%08x]",
+			status, status);
+	}
+
+	return status;
+}
+
+/*
+ * lim_unregister_sap_bcn_callback(): Unregister the callback with scan module
+ * @mac_ctx: pointer to the global mac context
+ *
+ * Unregisters the callback registered with the Scan
+ * module to handle beacon frames for SAP sessions
+ *
+ * Return: QDF Status
+ */
+static QDF_STATUS lim_unregister_sap_bcn_callback(tpAniSirGlobal mac_ctx)
+{
+	QDF_STATUS status;
+
+	status = ucfg_scan_register_bcn_cb(mac_ctx->psoc,
+			NULL, SCAN_CB_TYPE_UPDATE_BCN);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		pe_err("failed with status code %08d [x%08x]",
+			status, status);
+	}
+
+	return status;
+}
+
 /** -------------------------------------------------------------
    \fn pe_open
    \brief will be called in Open sequence from mac_open
@@ -910,6 +957,7 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 	lim_register_debug_callback();
 	lim_nan_register_callbacks(pMac);
 	p2p_register_callbacks(pMac);
+	lim_register_sap_bcn_callback(pMac);
 
 	if (!QDF_IS_STATUS_SUCCESS(
 	    cds_shutdown_notifier_register(pe_shutdown_notifier_cb, pMac))) {
@@ -943,6 +991,7 @@ tSirRetStatus pe_close(tpAniSirGlobal pMac)
 		return eSIR_SUCCESS;
 
 	lim_cleanup(pMac);
+	lim_unregister_sap_bcn_callback(pMac);
 
 	if (pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq) {
 		qdf_mem_free(pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq);

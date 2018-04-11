@@ -1,8 +1,5 @@
 /*
- * Copyright (c) 2011-2015, 2017 The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
+ * Copyright (c) 2011-2015, 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -17,12 +14,6 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
- */
-
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
  */
 
 /*
@@ -98,5 +89,27 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal, tpPESession, uint32_
 
 int sch_gen_timing_advert_frame(tpAniSirGlobal pMac, tSirMacAddr self_addr,
 	uint8_t **buf, uint32_t *timestamp_offset, uint32_t *time_value_offset);
+
+/*
+ * sch_beacon_process_for_ap() - process the beacon frame for AP sessions
+ * @mac_ctx: pointer to the global mac_ctx
+ * @rx_pkt_info: pointer to the frame Rx Meta
+ * @bcn: pointer to the beacon struct
+ *
+ * Process the beacon in the context of any existing AP or BTAP
+ * session. This takes cares of following two scenarios:
+ *  - session = NULL:
+ * e.g. beacon received from a neighboring BSS, you want to apply the
+ * protection settings to BTAP/InfraAP beacons
+ *  - session is non NULL:
+ * e.g. beacon received is from the INFRA AP to which you are connected
+ * on another concurrent link. In this case also, we want to apply the
+ * protection settings(as advertised by Infra AP) to BTAP beacons
+ *
+ * Return: None
+ */
+void sch_beacon_process_for_ap(tpAniSirGlobal mac_ctx,
+					uint8_t *rx_pkt_info,
+					tSchBeaconStruct *bcn);
 
 #endif
