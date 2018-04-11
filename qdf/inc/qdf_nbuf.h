@@ -1166,7 +1166,10 @@ qdf_nbuf_copy_debug(qdf_nbuf_t buf, uint8_t *file_name,
 	return copied_buf;
 }
 
-#else
+#else /* NBUF_MEMORY_DEBUG */
+
+static inline void qdf_net_buf_debug_init(void) {}
+static inline void qdf_net_buf_debug_exit(void) {}
 
 static inline void qdf_net_buf_debug_acquire_skb(qdf_nbuf_t net_buf,
 			uint8_t *file_name, uint32_t line_num)
@@ -1219,7 +1222,7 @@ static inline qdf_nbuf_t qdf_nbuf_copy(qdf_nbuf_t buf)
 	return __qdf_nbuf_copy(buf);
 }
 
-#endif
+#endif /* NBUF_MEMORY_DEBUG */
 
 #ifdef WLAN_FEATURE_FASTPATH
 /**
