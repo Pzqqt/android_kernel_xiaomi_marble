@@ -6746,11 +6746,11 @@ struct snd_soc_card snd_soc_card_stub_msm = {
 };
 
 static const struct of_device_id sdm855_asoc_machine_of_match[]  = {
-	{ .compatible = "qcom,sdm855-asoc-snd-pahu",
+	{ .compatible = "qcom,sm8150-asoc-snd-pahu",
 	  .data = "pahu_codec"},
-	{ .compatible = "qcom,sdm855-asoc-snd-tavil",
+	{ .compatible = "qcom,sm8150-asoc-snd-tavil",
 	  .data = "tavil_codec"},
-	{ .compatible = "qcom,sdm855-asoc-snd-stub",
+	{ .compatible = "qcom,sm8150-asoc-snd-stub",
 	  .data = "stub_codec"},
 	{},
 };

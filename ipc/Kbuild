@@ -16,7 +16,7 @@ endif
 ifeq ($(CONFIG_ARCH_SDM670), y)
 	TARGET_KERNEL_VERSION := 4.9
 endif
-ifeq ($(CONFIG_ARCH_SDM855), y)
+ifeq ($(CONFIG_ARCH_SM8150), y)
 	TARGET_KERNEL_VERSION := 4.14
 endif
 
@@ -42,7 +42,7 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sdm670autoconf.h
 	endif
-	ifeq ($(CONFIG_ARCH_SDM855), y)
+	ifeq ($(CONFIG_ARCH_SM8150), y)
 		include $(AUDIO_ROOT)/config/sdm855auto.conf
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sdm855autoconf.h
