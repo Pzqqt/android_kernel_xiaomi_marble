@@ -795,7 +795,13 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 					  ppdu_id, pdev->ppdu_info.com_info.ppdu_id);
 			break;
 		}
-
+		if (qdf_unlikely(head_msdu == NULL) ||
+			qdf_unlikely(tail_msdu == NULL)) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s %d : Head_msdu or Tail_msdu is NULL !!\n",
+			__func__, __LINE__);
+			break;
+		}
 		dp_rx_mon_deliver(soc, mac_id, head_msdu, tail_msdu);
 
 		rxdma_dst_ring_desc = hal_srng_dst_get_next(hal_soc,

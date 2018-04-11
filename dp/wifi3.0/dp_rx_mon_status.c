@@ -724,13 +724,22 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		paddr = qdf_nbuf_get_frag_paddr(rx_netbuf, 0);
 
 		next = (*desc_list)->next;
+		rxdma_ring_entry = hal_srng_src_get_next(dp_soc->hal_soc,
+							 rxdma_srng);
+
+		if (qdf_unlikely(rxdma_ring_entry == NULL)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"[%s][%d] rxdma_ring_entry is NULL, count - %d\n",
+					__func__, __LINE__, count);
+			qdf_nbuf_unmap_single(dp_soc->osdev, rx_netbuf,
+					      QDF_DMA_BIDIRECTIONAL);
+			qdf_nbuf_free(rx_netbuf);
+			break;
+		}
 
 		(*desc_list)->rx_desc.nbuf = rx_netbuf;
 		(*desc_list)->rx_desc.in_use = 1;
-
 		count++;
-		rxdma_ring_entry = hal_srng_src_get_next(dp_soc->hal_soc,
-							 rxdma_srng);
 
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 			(*desc_list)->rx_desc.cookie, owner);
