@@ -394,6 +394,14 @@ CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_SDX20), y)
+ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
+ifeq ($(CONFIG_WCNSS_SKB_PRE_ALLOC), y)
+CONFIG_FEATURE_SKB_PRE_ALLOC := y
+endif
+endif
+endif
+
 #Enable Signed firmware support for split binary format
 CONFIG_QCA_SIGNED_SPLIT_BINARY_SUPPORT := n
 
@@ -2202,13 +2210,7 @@ endif
 
 endif
 
-ifeq ($(CONFIG_ARCH_SDX20), y)
-ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
-ifeq ($(CONFIG_WCNSS_SKB_PRE_ALLOC), y)
-CDEFINES += -DFEATURE_SKB_PRE_ALLOC
-endif
-endif
-endif
+ccflags-$(CONFIG_FEATURE_SKB_PRE_ALLOC) += -DFEATURE_SKB_PRE_ALLOC
 
 #Enable USB specific APIS
 ifeq ($(CONFIG_HIF_USB), y)
