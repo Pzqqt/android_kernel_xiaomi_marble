@@ -245,6 +245,21 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_REO_RESOURCE_STATS         = 21,
 
+    /* HTT_DBG_EXT_STATS_TX_SOUNDING_INFO
+     * PARAMS:
+     *   - config_param0:
+     *      [Bit0]          vdev_id_set:1
+         *      set to 1 if vdev_id is set and vdev stats are requested
+     *      [Bit8 : Bit1]   vdev_id:8
+     *          note:0xFF to get all active vdevs based on pdev_mask.
+     *      [Bit31 : Bit9]  rsvd:22
+
+     * RESP MSG:
+     *   - htt_tx_sounding_stats_t
+     */
+    HTT_DBG_EXT_STATS_TX_SOUNDING_INFO           = 22,
+
+
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS                        =  256,
 };
@@ -330,6 +345,7 @@ typedef enum {
     HTT_STATS_RX_REFILL_RXDMA_ERR_TAG                   = 77,    /* htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v */
     HTT_STATS_RX_REFILL_REO_ERR_TAG                     = 78,    /* htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v */
     HTT_STATS_RX_REO_RESOURCE_STATS_TAG                 = 79,    /* htt_rx_reo_debug_stats_tlv_v */
+    HTT_STATS_TX_SOUNDING_STATS_TAG                     = 80,    /* htt_tx_sounding_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -2517,6 +2533,9 @@ typedef struct {
 #define HTT_TX_PDEV_STATS_NUM_LEGACY_CCK_STATS     4
 #define HTT_TX_PDEV_STATS_NUM_LEGACY_OFDM_STATS    8
 #define HTT_TX_PDEV_STATS_NUM_LTF                  4
+#define HTT_TX_NUM_OF_SOUNDING_STATS_WORDS \
+    (HTT_TX_PDEV_STATS_NUM_BW_COUNTERS * \
+    HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS)
 
 #define HTT_TX_PDEV_RATE_STATS_MAC_ID_M     0x000000ff
 #define HTT_TX_PDEV_RATE_STATS_MAC_ID_S              0
@@ -3306,5 +3325,66 @@ typedef struct {
 typedef struct {
     htt_rx_reo_resource_stats_tlv_v reo_resource_stats;
 } htt_soc_reo_resource_stats_t;
+
+/* == TX SOUNDING STATS == */
+
+/* config_param0 */
+
+#define HTT_DBG_EXT_STATS_SET_VDEV_MASK(_var)              ((_var << 1) | 0x1)
+#define HTT_DBG_EXT_STATS_GET_VDEV_ID_FROM_VDEV_MASK(_var) ((_var >> 1) & 0xFF)
+#define HTT_DBG_EXT_STATS_IS_VDEV_ID_SET(_var)             ((_var) & 0x1)
+
+typedef enum {
+    /* Implicit beamforming stats */
+    HTT_IMPLICIT_TXBF_STEER_STATS                = 0,
+    /* Single user short inter frame sequence steer stats */
+    HTT_EXPLICIT_TXBF_SU_SIFS_STEER_STATS        = 1,
+    /* Single user random back off steer stats */
+    HTT_EXPLICIT_TXBF_SU_RBO_STEER_STATS         = 2,
+    /* Multi user short inter frame sequence steer stats */
+    HTT_EXPLICIT_TXBF_MU_SIFS_STEER_STATS        = 3,
+    /* Multi user random back off steer stats */
+    HTT_EXPLICIT_TXBF_MU_RBO_STEER_STATS         = 4,
+    /* For backward compatability new modes cannot be added */
+    HTT_TXBF_MAX_NUM_OF_MODES                    = 5
+} htt_txbf_sound_steer_modes;
+
+typedef enum {
+    HTT_TX_AC_SOUNDING_MODE                      = 0,
+    HTT_TX_AX_SOUNDING_MODE                      = 1,
+} htt_stats_sounding_tx_mode;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 tx_sounding_mode; /* HTT_TX_XX_SOUNDING_MODE */
+    /* Counts number of soundings for all steering modes in each bw */
+    A_UINT32 cbf_20[HTT_TXBF_MAX_NUM_OF_MODES];
+    A_UINT32 cbf_40[HTT_TXBF_MAX_NUM_OF_MODES];
+    A_UINT32 cbf_80[HTT_TXBF_MAX_NUM_OF_MODES];
+    A_UINT32 cbf_160[HTT_TXBF_MAX_NUM_OF_MODES];
+    /*
+     * The sounding array is a 2-D array stored as an 1-D array of
+     * A_UINT32. The stats for a particular user/bw combination is
+     * referenced with the following:
+     *
+     *          sounding[(user* max_bw) + bw]
+     *
+     * ... where max_bw == 4 for 160mhz
+     */
+    A_UINT32 sounding[HTT_TX_NUM_OF_SOUNDING_STATS_WORDS];
+} htt_tx_sounding_stats_tlv;
+
+/* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SOUNDING_INFO
+ * TLV_TAGS:
+ *      - HTT_STATS_TX_SOUNDING_STATS_TAG
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_tx_sounding_stats_tlv sounding_tlv;
+} htt_tx_sounding_stats_t;
+
 
 #endif /* __HTT_STATS_H__ */
