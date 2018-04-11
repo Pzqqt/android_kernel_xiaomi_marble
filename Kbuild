@@ -477,6 +477,9 @@ CONFIG_TRACE_RECORD_FEATURE := y
 #Flag to enable p2p debug feature
 CONFIG_WLAN_FEATURE_P2P_DEBUG := y
 
+#Flag to enable DFS Master feature
+CONFIG_WLAN_DFS_MASTER_ENABLE := y
+
 #Flag to enable nud tracking feature
 CONFIG_WLAN_NUD_TRACKING := y
 
@@ -1350,13 +1353,16 @@ WMI_OBJS := $(WMI_OBJ_DIR)/wmi_unified.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_tlv.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_pmo_api.o \
-	    $(WMI_OBJ_DIR)/wmi_unified_reg_api.o \
-	    $(WMI_OBJ_DIR)/wmi_unified_dfs_api.o
+	    $(WMI_OBJ_DIR)/wmi_unified_reg_api.o
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 ifeq ($(CONFIG_OCB_UT_FRAMEWORK), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_ocb_ut.o
 endif
+endif
+
+ifeq ($(CONFIG_WLAN_DFS_MASTER_ENABLE), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_dfs_api.o
 endif
 
 ########### FWLOG ###########
@@ -1886,7 +1892,6 @@ OBJS :=		$(HDD_OBJS) \
 		$(SYS_OBJS) \
 		$(QDF_OBJS) \
 		$(CDS_OBJS) \
-		$(DFS_OBJS) \
 		$(FTM_OBJS)
 
 OBJS +=		$(WMA_OBJS) \
@@ -1896,8 +1901,7 @@ OBJS +=		$(WMA_OBJS) \
 		$(HTC_OBJS) \
 		$(INIT_DEINIT_OBJS) \
 		$(SCHEDULER_OBJS) \
-		$(REGULATORY_OBJS) \
-		$(DFS_OBJS)
+		$(REGULATORY_OBJS)
 
 OBJS +=		$(HIF_OBJS) \
 		$(BMI_OBJS) \
@@ -1915,6 +1919,9 @@ ifeq ($(CONFIG_FEATURE_EPPING), y)
 OBJS += 	$(EPPING_OBJS)
 endif
 
+ifeq ($(CONFIG_WLAN_DFS_MASTER_ENABLE), y)
+OBJS +=		$(DFS_OBJS)
+endif
 
 OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(WIFI_POS_OBJS)
@@ -2399,15 +2406,15 @@ cppflags-y += -DQCA_HOST2FW_RXBUF_RING
 #endof dummy flags
 
 # DFS component
-cppflags-y += -DQCA_MCL_DFS_SUPPORT
+cppflags-$(CONFIG_WLAN_DFS_MASTER_ENABLE) += -DQCA_MCL_DFS_SUPPORT
 ifeq ($(CONFIG_WLAN_FEATURE_DFS_OFFLOAD), y)
-cppflags-y += -DWLAN_DFS_FULL_OFFLOAD
+cppflags-$(CONFIG_WLAN_DFS_MASTER_ENABLE) += -DWLAN_DFS_FULL_OFFLOAD
 else
-cppflags-y += -DWLAN_DFS_PARTIAL_OFFLOAD
+cppflags-$(CONFIG_WLAN_DFS_MASTER_ENABLE) += -DWLAN_DFS_PARTIAL_OFFLOAD
 endif
-cppflags-y += -DDFS_COMPONENT_ENABLE
-cppflags-y += -DQCA_DFS_USE_POLICY_MANAGER
-cppflags-y += -DQCA_DFS_NOL_PLATFORM_DRV_SUPPORT
+cppflags-$(CONFIG_WLAN_DFS_MASTER_ENABLE) += -DDFS_COMPONENT_ENABLE
+cppflags-$(CONFIG_WLAN_DFS_MASTER_ENABLE) += -DQCA_DFS_USE_POLICY_MANAGER
+cppflags-$(CONFIG_WLAN_DFS_MASTER_ENABLE) += -DQCA_DFS_NOL_PLATFORM_DRV_SUPPORT
 
 cppflags-$(CONFIG_WLAN_DEBUGFS) += -DWLAN_DEBUGFS
 

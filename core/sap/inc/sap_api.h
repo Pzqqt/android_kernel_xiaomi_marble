@@ -1323,8 +1323,16 @@ void wlansap_extend_to_acs_range(tHalHandle hal, uint8_t *startChannelNum,
  *
  * Return: QDF_STATUS
  */
+#ifdef DFS_COMPONENT_ENABLE
 QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
 			       eSapDfsNolType conf);
+#else
+static inline QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
+			       eSapDfsNolType conf)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * wlan_sap_set_vendor_acs() - Set vendor specific acs in sap context

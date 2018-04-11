@@ -2352,6 +2352,7 @@ QDF_STATUS wlan_sap_set_vendor_acs(struct sap_context *sap_context,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef DFS_COMPONENT_ENABLE
 QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
 			       eSapDfsNolType conf)
 {
@@ -2397,6 +2398,7 @@ QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 /**
  * wlansap_populate_del_sta_params() - populate delete station parameter

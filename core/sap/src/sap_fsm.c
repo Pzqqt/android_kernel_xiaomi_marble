@@ -213,6 +213,7 @@ static inline void sap_event_init(ptWLAN_SAPEvent sapEvent)
 	sapEvent->u2 = 0;
 }
 
+#ifdef DFS_COMPONENT_ENABLE
 /**
  * sap_random_channel_sel() - This function randomly pick up an available
  * channel
@@ -288,6 +289,12 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 	sap_ctx->ch_params.center_freq_seg1 = ch_params->center_freq_seg1;
 	return ch;
 }
+#else
+static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
+{
+	return 0;
+}
+#endif
 
 /**
  * sap_is_channel_bonding_etsi_weather_channel() - check weather chan bonding.
@@ -3410,6 +3417,7 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 }
 #endif
 
+#ifdef DFS_COMPONENT_ENABLE
 uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
 {
 	uint8_t target_channel = 0;
@@ -3467,6 +3475,7 @@ uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
 
 	return target_channel;
 }
+#endif
 
 /*
  * CAC timer callback function.
