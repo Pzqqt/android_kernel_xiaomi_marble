@@ -1092,6 +1092,16 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 		goto drop_pkt_and_release_skb;
 	}
 
+	/* check whether need to linearize skb, like non-linear udp data */
+	if (hdd_skb_nontso_linearize(skb) != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
+			  QDF_TRACE_LEVEL_INFO_HIGH,
+			  "%s: skb %pK linearize failed. drop the pkt",
+			  __func__, skb);
+		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
+		goto drop_pkt_and_release_skb;
+	}
+
 	/*
 	 * If a transmit function is not registered, drop packet
 	 */

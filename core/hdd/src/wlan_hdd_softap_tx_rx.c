@@ -597,6 +597,16 @@ static netdev_tx_t __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 			(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
 			(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE), QDF_TX));
 
+	/* check whether need to linearize skb, like non-linear udp data */
+	if (hdd_skb_nontso_linearize(skb) != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
+			  QDF_TRACE_LEVEL_INFO_HIGH,
+			  "%s: skb %pK linearize failed. drop the pkt",
+			  __func__, skb);
+		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
+		goto drop_pkt_and_release_skb;
+	}
+
 	if (adapter->tx_fn(adapter->txrx_vdev,
 		 (qdf_nbuf_t) skb) != NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
