@@ -372,7 +372,7 @@ CONFIG_CHECKSUM_OFFLOAD := y
 CONFIG_GTK_OFFLOAD := y
 
 #Enable EXT WOW
-ifeq ($(CONFIG_ROME_IF),pci)
+ifeq ($(CONFIG_HIF_PCI), y)
 	CONFIG_EXT_WOW := y
 endif
 
@@ -1926,7 +1926,7 @@ CDEFINES += -DWLAN_NL80211_TESTMODE
 endif
 
 # Flag to enable bus auto suspend
-ifeq ($(CONFIG_ROME_IF),pci)
+ifeq ($(CONFIG_HIF_PCI), y)
 ifeq ($(CONFIG_BUS_AUTO_SUSPEND), y)
 CDEFINES += -DFEATURE_RUNTIME_PM
 endif
@@ -1980,7 +1980,7 @@ ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 CDEFINES +=	-DQCA_LL_TX_FLOW_CONTROL_V2
 CDEFINES +=	-DQCA_LL_TX_FLOW_GLOBAL_MGMT_POOL
 else
-ifeq ($(CONFIG_ROME_IF),pci)
+ifeq ($(CONFIG_HIF_PCI), y)
 ifneq ($(CONFIG_LITHIUM), y)
 CDEFINES +=	-DQCA_LL_LEGACY_TX_FLOW_CONTROL
 endif
@@ -2480,7 +2480,7 @@ endif
 
 #Flag to enable/disable WLAN D0-WOW
 ifeq ($(CONFIG_PCI_MSM), y)
-ifeq ($(CONFIG_ROME_IF),pci)
+ifeq ($(CONFIG_HIF_PCI), y)
 CDEFINES += -DFEATURE_WLAN_D0WOW
 endif
 endif
