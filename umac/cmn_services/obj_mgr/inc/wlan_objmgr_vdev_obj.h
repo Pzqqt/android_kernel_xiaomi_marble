@@ -495,8 +495,8 @@ QDF_STATUS wlan_objmgr_trigger_vdev_comp_priv_object_creation(
 		enum wlan_umac_comp_id id);
 
 /**
- * wlan_objmgr_trigger_vdev_comp_priv_object_deletion() - vdev
- * comp object deletion
+ * wlan_objmgr_trigger_vdev_comp_priv_object_deletion() - vdev comp
+ *                                                        object deletion
  * @vdev: VDEV object
  * @id: Component id
  *
@@ -544,7 +544,7 @@ static inline struct wlan_objmgr_pdev *wlan_vdev_get_pdev(
  * wlan_pdev_vdev_list_peek_head() - get first vdev from pdev list
  * @peer_list: qdf_list_t
  *
- * API to get the head vdev of given peer (of pdev's vdev list)
+ * API to get the head vdev of given vdev (of pdev's vdev list)
  *
  * Caller need to acquire lock with wlan_vdev_obj_lock()
  *
@@ -564,6 +564,22 @@ static inline struct wlan_objmgr_vdev *wlan_pdev_vdev_list_peek_head(
 	vdev = qdf_container_of(vdev_node, struct wlan_objmgr_vdev, vdev_node);
 	return vdev;
 }
+
+/**
+ * wlan_pdev_vdev_list_peek_active_head() - get first active vdev from pdev list
+ * @vdev: VDEV object
+ * @vdev_list: qdf_list_t
+ * @dbg_id: id of the caller
+ *
+ * API to get the head active vdev of given vdev (of pdev's vdev list)
+ *
+ * Return:
+ * @peer: head peer
+ */
+struct wlan_objmgr_vdev *wlan_pdev_vdev_list_peek_active_head(
+				struct wlan_objmgr_pdev *pdev,
+				qdf_list_t *vdev_list,
+				wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_vdev_get_next_vdev_of_pdev() - get next vdev
@@ -596,6 +612,25 @@ static inline struct wlan_objmgr_vdev *wlan_vdev_get_next_vdev_of_pdev(
 				vdev_node);
 	return vdev_next;
 }
+
+/**
+ * wlan_vdev_get_next_active_vdev_of_pdev() - get next active vdev
+ * @pdev: PDEV object
+ * @vdev_list: qdf_list_t
+ * @vdev: VDEV object
+ * @dbg_id: id of the caller
+ *
+ * API to get next active vdev object pointer of vdev
+ *
+ * Return:
+ * @vdev_next: VDEV object
+ */
+struct wlan_objmgr_vdev *wlan_vdev_get_next_active_vdev_of_pdev(
+					struct wlan_objmgr_pdev *pdev,
+					qdf_list_t *vdev_list,
+					struct wlan_objmgr_vdev *vdev,
+					wlan_objmgr_ref_dbgid dbg_id);
+
 
 /**
  * wlan_vdev_set_pdev() - set pdev

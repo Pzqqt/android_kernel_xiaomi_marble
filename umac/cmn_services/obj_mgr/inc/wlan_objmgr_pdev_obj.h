@@ -279,9 +279,7 @@ typedef void (*wlan_objmgr_pdev_op_handler)(struct wlan_objmgr_pdev *pdev,
  * @handler: the handler will be called for each object of requested type
  *           the handler should be implemented to perform required operation
  * @arg: agruments passed by caller
- * @lock_free_op: This gives provision to run this API with out lock protected
- *                It would be useful, for operations like Obj Delete, where
- *                lock should not be taken by caller.
+ * @lock_free_op: its obsolete
  * @dbg_id: id of the caller
  *
  * API to be used for performing the operations on all VDEV/PEER objects

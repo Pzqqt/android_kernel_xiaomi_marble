@@ -416,27 +416,18 @@ QDF_STATUS wlan_objmgr_iterate_obj_list(
 	uint8_t i;
 	struct wlan_objmgr_psoc_objmgr *objmgr = &psoc->soc_objmgr;
 	struct wlan_peer_list *peer_list;
-	qdf_list_t *obj_list;
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_peer *peer;
 	struct wlan_objmgr_peer *peer_next;
 	uint16_t max_vdev_cnt;
 
-	/* If caller requests for lock free opeation, do not acquire,
-	 * handler will handle the synchronization
-	 */
-	if (!lock_free_op)
-		wlan_psoc_obj_lock(psoc);
-
 	switch (obj_type) {
 	case WLAN_PDEV_OP:
 		/* Iterate through PDEV list, invoke handler for each pdev */
 		for (obj_id = 0; obj_id < WLAN_UMAC_MAX_PDEVS; obj_id++) {
-			pdev = objmgr->wlan_pdev_list[obj_id];
-			if ((pdev != NULL) &&
-			    (wlan_objmgr_pdev_try_get_ref(pdev, dbg_id) ==
-				QDF_STATUS_SUCCESS)) {
+			pdev = wlan_objmgr_get_pdev_by_id(psoc, obj_id, dbg_id);
+			if (pdev != NULL) {
 				handler(psoc, (void *)pdev, arg);
 				wlan_objmgr_pdev_release_ref(pdev, dbg_id);
 			}
@@ -446,10 +437,9 @@ QDF_STATUS wlan_objmgr_iterate_obj_list(
 		/* Iterate through VDEV list, invoke handler for each vdev */
 		max_vdev_cnt = wlan_psoc_get_max_vdev_count(psoc);
 		for (obj_id = 0; obj_id < max_vdev_cnt; obj_id++) {
-			vdev = objmgr->wlan_vdev_list[obj_id];
-			if ((vdev != NULL) &&
-			    (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) ==
-				QDF_STATUS_SUCCESS)) {
+			vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						obj_id, dbg_id);
+			if (vdev != NULL) {
 				handler(psoc, vdev, arg);
 				wlan_objmgr_vdev_release_ref(vdev, dbg_id);
 			}
@@ -458,34 +448,24 @@ QDF_STATUS wlan_objmgr_iterate_obj_list(
 	case WLAN_PEER_OP:
 		/* Iterate through PEER list, invoke handler for each peer */
 		peer_list = &objmgr->peer_list;
-		/* psoc lock should be taken before list lock */
-		if (!lock_free_op)
-			qdf_spin_lock_bh(&peer_list->peer_list_lock);
 		/* Since peer list has sublist, iterate through sublists */
 		for (i = 0; i < WLAN_PEER_HASHSIZE; i++) {
-			obj_list = &peer_list->peer_hash[i];
-			peer = wlan_psoc_peer_list_peek_head(obj_list);
+			peer = wlan_psoc_peer_list_peek_active_head(peer_list,
+					i, dbg_id);
 			while (peer) {
+				handler(psoc, (void *)peer, arg);
 				/* Get next peer */
-				peer_next = wlan_peer_get_next_peer_of_psoc(
-								obj_list, peer);
-				if (wlan_objmgr_peer_try_get_ref(peer, dbg_id)
-						== QDF_STATUS_SUCCESS) {
-					handler(psoc, (void *)peer, arg);
-					wlan_objmgr_peer_release_ref(peer,
-								     dbg_id);
-				}
+				peer_next =
+					wlan_peer_get_next_active_peer_of_psoc(
+						peer_list, i, peer, dbg_id);
+				wlan_objmgr_peer_release_ref(peer,  dbg_id);
 				peer = peer_next;
 			}
 		}
-		if (!lock_free_op)
-			qdf_spin_unlock_bh(&peer_list->peer_list_lock);
 		break;
 	default:
 		break;
 	}
-	if (!lock_free_op)
-		wlan_psoc_obj_unlock(psoc);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -502,7 +482,6 @@ QDF_STATUS wlan_objmgr_iterate_obj_list_all(
 	uint8_t i;
 	struct wlan_objmgr_psoc_objmgr *objmgr = &psoc->soc_objmgr;
 	struct wlan_peer_list *peer_list;
-	qdf_list_t *obj_list;
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_peer *peer;
@@ -512,16 +491,14 @@ QDF_STATUS wlan_objmgr_iterate_obj_list_all(
 	/* If caller requests for lock free opeation, do not acquire,
 	 * handler will handle the synchronization
 	 */
-	if (!lock_free_op)
-		wlan_psoc_obj_lock(psoc);
 
 	switch (obj_type) {
 	case WLAN_PDEV_OP:
 		/* Iterate through PDEV list, invoke handler for each pdev */
 		for (obj_id = 0; obj_id < WLAN_UMAC_MAX_PDEVS; obj_id++) {
-			pdev = objmgr->wlan_pdev_list[obj_id];
+			pdev = wlan_objmgr_get_pdev_by_id_no_state(psoc,
+							obj_id, dbg_id);
 			if (pdev != NULL) {
-				wlan_objmgr_pdev_get_ref(pdev, dbg_id);
 				handler(psoc, (void *)pdev, arg);
 				wlan_objmgr_pdev_release_ref(pdev, dbg_id);
 			}
@@ -531,9 +508,9 @@ QDF_STATUS wlan_objmgr_iterate_obj_list_all(
 		/* Iterate through VDEV list, invoke handler for each vdev */
 		max_vdev_cnt = wlan_psoc_get_max_vdev_count(psoc);
 		for (obj_id = 0; obj_id < max_vdev_cnt; obj_id++) {
-			vdev = objmgr->wlan_vdev_list[obj_id];
+			vdev = wlan_objmgr_get_vdev_by_id_from_psoc_no_state(
+					psoc, obj_id, dbg_id);
 			if (vdev != NULL) {
-				wlan_objmgr_vdev_get_ref(vdev, dbg_id);
 				handler(psoc, vdev, arg);
 				wlan_objmgr_vdev_release_ref(vdev, dbg_id);
 			}
@@ -542,31 +519,25 @@ QDF_STATUS wlan_objmgr_iterate_obj_list_all(
 	case WLAN_PEER_OP:
 		/* Iterate through PEER list, invoke handler for each peer */
 		peer_list = &objmgr->peer_list;
-		/* psoc lock should be taken before list lock */
-		if (!lock_free_op)
-			qdf_spin_lock_bh(&peer_list->peer_list_lock);
 		/* Since peer list has sublist, iterate through sublists */
 		for (i = 0; i < WLAN_PEER_HASHSIZE; i++) {
-			obj_list = &peer_list->peer_hash[i];
-			peer = wlan_psoc_peer_list_peek_head(obj_list);
+			peer = wlan_psoc_peer_list_peek_head_ref(peer_list, i,
+									dbg_id);
+
 			while (peer) {
-				/* Get next peer */
-				peer_next = wlan_peer_get_next_peer_of_psoc(
-								obj_list, peer);
-				wlan_objmgr_peer_get_ref(peer, dbg_id);
 				handler(psoc, (void *)peer, arg);
+				/* Get next peer */
+				peer_next = wlan_peer_get_next_peer_of_psoc_ref(
+								peer_list, i,
+								peer, dbg_id);
 				wlan_objmgr_peer_release_ref(peer, dbg_id);
 				peer = peer_next;
 			}
 		}
-		if (!lock_free_op)
-			qdf_spin_unlock_bh(&peer_list->peer_list_lock);
 		break;
 	default:
 		break;
 	}
-	if (!lock_free_op)
-		wlan_psoc_obj_unlock(psoc);
 
 	return QDF_STATUS_SUCCESS;
 }

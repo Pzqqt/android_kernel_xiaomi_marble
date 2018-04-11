@@ -672,3 +672,193 @@ void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
 	return;
 }
 qdf_export_symbol(wlan_objmgr_peer_release_ref);
+
+struct wlan_objmgr_peer *wlan_vdev_peer_list_peek_active_head(
+				struct wlan_objmgr_vdev *vdev,
+				qdf_list_t *peer_list,
+				wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_peer *peer;
+	qdf_list_node_t *vdev_node = NULL;
+	qdf_list_node_t *prev_vdev_node = NULL;
+
+	wlan_vdev_obj_lock(vdev);
+
+	if (qdf_list_peek_front(peer_list, &vdev_node) != QDF_STATUS_SUCCESS) {
+		wlan_vdev_obj_unlock(vdev);
+		return NULL;
+	}
+
+	do {
+		peer = qdf_container_of(vdev_node, struct wlan_objmgr_peer,
+						vdev_peer);
+
+		if (wlan_objmgr_peer_try_get_ref(peer, dbg_id) ==
+				QDF_STATUS_SUCCESS) {
+			wlan_vdev_obj_unlock(vdev);
+			return peer;
+		}
+
+		prev_vdev_node = vdev_node;
+	} while (qdf_list_peek_next(peer_list, prev_vdev_node, &vdev_node) ==
+							QDF_STATUS_SUCCESS);
+
+	wlan_vdev_obj_unlock(vdev);
+
+	return NULL;
+}
+
+struct wlan_objmgr_peer *wlan_peer_get_next_active_peer_of_vdev(
+					struct wlan_objmgr_vdev *vdev,
+					qdf_list_t *peer_list,
+					struct wlan_objmgr_peer *peer,
+					wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_peer *peer_next;
+	qdf_list_node_t *vdev_node = NULL;
+	qdf_list_node_t *prev_vdev_node = NULL;
+
+	if (peer == NULL)
+		return NULL;
+
+	wlan_vdev_obj_lock(vdev);
+
+	prev_vdev_node = &peer->vdev_peer;
+	while (qdf_list_peek_next(peer_list, prev_vdev_node, &vdev_node) ==
+						QDF_STATUS_SUCCESS) {
+		peer_next = qdf_container_of(vdev_node, struct wlan_objmgr_peer,
+					vdev_peer);
+
+		if (wlan_objmgr_peer_try_get_ref(peer_next, dbg_id) ==
+				QDF_STATUS_SUCCESS) {
+			wlan_vdev_obj_unlock(vdev);
+			return peer_next;
+		}
+
+		prev_vdev_node = vdev_node;
+	}
+
+	wlan_vdev_obj_unlock(vdev);
+
+	return NULL;
+}
+
+struct wlan_objmgr_peer *wlan_peer_get_next_active_peer_of_psoc(
+					struct wlan_peer_list *peer_list,
+					uint8_t hash_index,
+					struct wlan_objmgr_peer *peer,
+					wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_peer *peer_next = NULL;
+	qdf_list_node_t *psoc_node = NULL;
+	qdf_list_node_t *prev_psoc_node = NULL;
+	qdf_list_t *obj_list;
+
+	qdf_spin_lock_bh(&peer_list->peer_list_lock);
+	obj_list = &peer_list->peer_hash[hash_index];
+
+	prev_psoc_node = &peer->psoc_peer;
+	while (qdf_list_peek_next(obj_list, prev_psoc_node, &psoc_node) ==
+						QDF_STATUS_SUCCESS) {
+		peer_next = qdf_container_of(psoc_node, struct wlan_objmgr_peer,
+						psoc_peer);
+
+		if (wlan_objmgr_peer_try_get_ref(peer_next, dbg_id) ==
+				QDF_STATUS_SUCCESS) {
+			qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+			return peer_next;
+		}
+
+		prev_psoc_node = psoc_node;
+	}
+
+	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+
+	return NULL;
+}
+
+struct wlan_objmgr_peer *wlan_psoc_peer_list_peek_active_head(
+					struct wlan_peer_list *peer_list,
+					uint8_t hash_index,
+					wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_peer *peer;
+	qdf_list_node_t *psoc_node = NULL;
+	qdf_list_node_t *prev_psoc_node = NULL;
+	qdf_list_t *obj_list;
+
+	qdf_spin_lock_bh(&peer_list->peer_list_lock);
+	obj_list = &peer_list->peer_hash[hash_index];
+
+	if (qdf_list_peek_front(obj_list, &psoc_node) != QDF_STATUS_SUCCESS) {
+		qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+		return NULL;
+	}
+
+	do {
+		peer = qdf_container_of(psoc_node, struct wlan_objmgr_peer,
+						psoc_peer);
+		if (wlan_objmgr_peer_try_get_ref(peer, dbg_id) ==
+				QDF_STATUS_SUCCESS) {
+			qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+			return peer;
+		}
+
+		prev_psoc_node = psoc_node;
+	} while (qdf_list_peek_next(obj_list, prev_psoc_node, &psoc_node) ==
+						QDF_STATUS_SUCCESS);
+
+	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+	return NULL;
+}
+
+struct wlan_objmgr_peer *wlan_psoc_peer_list_peek_head_ref(
+					struct wlan_peer_list *peer_list,
+					uint8_t hash_index,
+					wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_peer *peer;
+	qdf_list_t *obj_list;
+
+	qdf_spin_lock_bh(&peer_list->peer_list_lock);
+	obj_list = &peer_list->peer_hash[hash_index];
+
+	peer = wlan_psoc_peer_list_peek_head(obj_list);
+
+	/**
+	 * This API is invoked by caller, only when caller need to access the
+	 * peer object, though object is not in active state, this API should be
+	 * used carefully, where multiple object frees are not triggered
+	 */
+	if (peer)
+		wlan_objmgr_peer_get_ref(peer, dbg_id);
+
+	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+
+	return peer;
+}
+
+struct wlan_objmgr_peer *wlan_peer_get_next_peer_of_psoc_ref(
+			struct wlan_peer_list *peer_list, uint8_t hash_index,
+			struct wlan_objmgr_peer *peer,
+			wlan_objmgr_ref_dbgid dbg_id)
+{
+	qdf_list_t *obj_list;
+	struct wlan_objmgr_peer *peer_next;
+
+	qdf_spin_lock_bh(&peer_list->peer_list_lock);
+	obj_list = &peer_list->peer_hash[hash_index];
+
+	peer_next = wlan_peer_get_next_peer_of_psoc(obj_list, peer);
+	/**
+	 * This API is invoked by caller, only when caller need to access the
+	 * peer object, though object is not in active state, this API should be
+	 * used carefully, where multiple free on object are not triggered
+	 */
+	if (peer_next)
+		wlan_objmgr_peer_get_ref(peer_next, dbg_id);
+
+	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
+
+	return peer_next;
+}
