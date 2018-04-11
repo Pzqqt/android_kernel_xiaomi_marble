@@ -5460,8 +5460,8 @@ dp_print_tx_rates(struct dp_vdev *vdev)
 			pdev->stats.tx.sgi_count[3]);
 
 	DP_PRINT_STATS("BW Counts = 20MHZ %d, 40MHZ %d, 80MHZ %d, 160MHZ %d",
-			pdev->stats.tx.bw[2], pdev->stats.tx.bw[3],
-			pdev->stats.tx.bw[4], pdev->stats.tx.bw[5]);
+			pdev->stats.tx.bw[0], pdev->stats.tx.bw[1],
+			pdev->stats.tx.bw[2], pdev->stats.tx.bw[3]);
 
 	DP_PRINT_STATS("OFDMA = %d", pdev->stats.tx.ofdma);
 	DP_PRINT_STATS("STBC = %d", pdev->stats.tx.stbc);
