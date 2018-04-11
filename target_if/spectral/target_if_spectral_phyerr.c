@@ -1243,6 +1243,7 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 	return 0;
 }
 
+#ifdef DIRECT_BUF_RX_ENABLE
 /**
  * target_if_consume_sscan_report_gen3() - Consume spectral summary report
  * @spectral: Pointer to spectral object
@@ -1311,10 +1312,23 @@ target_if_verify_sig_and_tag_gen3(struct target_if_spectral *spectral,
 	return 0;
 }
 
+static uint8_t
+target_if_spectral_get_lowest_chn_idx(uint8_t chainmask)
+{
+	uint8_t idx;
+
+	for (idx = 0; idx < DBR_MAX_CHAINS; idx++) {
+		if (chainmask & 0x1)
+			break;
+		chainmask >>= 1;
+	}
+	return idx;
+}
+
 int
 target_if_consume_spectral_report_gen3(
 	 struct target_if_spectral *spectral,
-	 uint8_t *data)
+	 struct spectral_report *report)
 {
 	/*
 	 * XXX : The classifier do not use all the members of the SAMP
@@ -1347,7 +1361,6 @@ target_if_consume_spectral_report_gen3(
 	struct spectral_search_fft_info_gen3 *p_sfft = &search_fft_info;
 	int8_t rssi_up = 0;
 	int8_t rssi_low = 0;
-	int8_t chn_idx_highest_enabled = 0;
 	int8_t chn_idx_lowest_enabled  = 0;
 	uint8_t control_rssi   = 0;
 	uint8_t extension_rssi = 0;
@@ -1358,6 +1371,9 @@ target_if_consume_spectral_report_gen3(
 		GET_TARGET_IF_SPECTRAL_OPS(spectral);
 	struct spectral_phyerr_fft_report_gen3 *p_fft_report;
 	int8_t rssi;
+	uint8_t *data = report->data;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t vdev_rxchainmask;
 
 	OS_MEMZERO(&params, sizeof(params));
 
@@ -1428,40 +1444,27 @@ target_if_consume_spectral_report_gen3(
 		params.chain_ext_rssi[2] = 0;
 	}
 
-	/*
-	 * XXX : This actually depends on the programmed chain mask
-	 *       There are three chains in Peregrine and 4 chains in Beeliner &
-	 *       Cascade
-	 *       This value decides the per-chain enable mask to select
-	 *       the input ADC for search FTT.
-	 *       For modes upto VHT80, if more than one chain is enabled, the
-	 *       max valid chain
-	 *       is used. LSB corresponds to chain zero.
-	 *       For VHT80_80 and VHT160, the lowest enabled chain is used for
-	 *       primary
-	 *       detection and highest enabled chain is used for secondary
-	 *       detection.
-	 *
-	 *  XXX: The current algorithm do not use these control and extension
-	 *       channel
-	 *       Instead, it just relies on the combined RSSI values only.
-	 *       For fool-proof detection algorithm, we should take these RSSI
-	 *       values
-	 *       in to account. This is marked for future enhancements.
-	 */
-	chn_idx_highest_enabled = ((spectral->params.ss_chn_mask & 0x8) ? 3 :
-			(spectral->params.ss_chn_mask & 0x4) ? 2 :
-			(spectral->params.ss_chn_mask & 0x2) ? 1 : 0);
-		chn_idx_lowest_enabled  =
-			((spectral->params.ss_chn_mask & 0x1) ? 0 :
-			(spectral->params.ss_chn_mask & 0x2) ? 1 :
-			(spectral->params.ss_chn_mask & 0x4) ? 2 : 3);
-		control_rssi    = 0;
-		extension_rssi  = 0;
+	vdev = target_if_spectral_get_vdev(spectral);
+	if (!vdev)
+		return -ENOENT;
 
-		params.bwinfo   = 0;
-		params.tstamp   = 0;
-		params.max_mag  = p_sfft->fft_peak_mag;
+	vdev_rxchainmask =
+	    wlan_vdev_mlme_get_rxchainmask(vdev);
+	QDF_ASSERT(vdev_rxchainmask != 0);
+	wlan_objmgr_vdev_release_ref(vdev,
+				     WLAN_SPECTRAL_ID);
+
+	chn_idx_lowest_enabled =
+	target_if_spectral_get_lowest_chn_idx(vdev_rxchainmask);
+	if (chn_idx_lowest_enabled >= DBR_MAX_CHAINS)
+		return -EINVAL;
+
+	control_rssi    = 0;
+	extension_rssi  = 0;
+
+	params.bwinfo   = 0;
+	params.tstamp   = 0;
+	params.max_mag  = p_sfft->fft_peak_mag;
 
 	/* params.max_index    = p_sfft->peak_inx; */
 	params.max_exp = 0;
@@ -1482,7 +1485,7 @@ target_if_consume_spectral_report_gen3(
 	 * to the highest enabled antenna chain
 	 */
 	/* TODO:  Fill proper values once FW provides them*/
-	params.noise_floor       = DUMMY_NF_VALUE;
+	params.noise_floor       = report->noisefloor[chn_idx_lowest_enabled];
 	params.datalen           = (fft_hdr_length * 4);
 	params.pwr_count         = fft_bin_len;
 	params.tstamp            = (tsf64 & SPECTRAL_TSMASK);
@@ -1572,21 +1575,25 @@ target_if_consume_spectral_report_gen3(
 	return -EPERM;
 }
 
-#ifdef DIRECT_BUF_RX_ENABLE
 int target_if_spectral_process_report_gen3(
 	struct wlan_objmgr_pdev *pdev,
 	void *buf)
 {
 	int ret = 0;
 	struct direct_buf_rx_data *payload = buf;
-	uint8_t *data = (uint8_t *)payload->vaddr;
 	struct target_if_spectral *spectral;
+	struct spectral_report report;
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 	if (spectral == NULL) {
 		spectral_err("Spectral target object is null");
 		return -EINVAL;
 	}
+
+	report.data = payload->vaddr;
+	if (payload->meta_data_valid)
+		qdf_mem_copy(report.noisefloor, &payload->meta_data,
+			     sizeof(payload->meta_data));
 
 	if (spectral_debug_level & (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4)) {
 		spectral_debug("Printing the spectral phyerr buffer for debug");
@@ -1598,7 +1605,7 @@ int target_if_spectral_process_report_gen3(
 #endif
 	}
 
-	ret = target_if_consume_spectral_report_gen3(spectral, data);
+	ret = target_if_consume_spectral_report_gen3(spectral, &report);
 
 	if (spectral_debug_level & DEBUG_SPECTRAL4)
 		spectral_debug_level = DEBUG_SPECTRAL;

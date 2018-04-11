@@ -330,6 +330,18 @@ struct spectral_sscan_report_gen3 {
 	u_int32_t hdr_b;
 	u_int32_t res2;
 } __ATTRIB_PACK;
+
+#ifdef DIRECT_BUF_RX_ENABLE
+/**
+ * struct Spectral_report - spectral report
+ * @data: Report buffer
+ * @noisefloor: Noise floor values
+ */
+struct spectral_report {
+	uint8_t *data;
+	int32_t noisefloor[DBR_MAX_CHAINS];
+};
+#endif
 /* END of spectral GEN III HW specific details */
 
 typedef signed char pwr_dbm;
@@ -1572,18 +1584,21 @@ void target_if_register_wmi_spectral_cmd_ops(
 	struct wlan_objmgr_pdev *pdev,
 	struct wmi_spectral_cmd_ops *cmd_ops);
 
+#ifdef DIRECT_BUF_RX_ENABLE
 /**
  * target_if_consume_sfft_report_gen3() -  Process fft report for gen3
  * @spectral: Pointer to spectral object
- * @data: Pointer to phyerror data
+ * @report: Pointer to spectral report
  *
  * Process fft report for gen3
  *
  * Return: Success/Failure
  */
 int
-target_if_consume_spectral_report_gen3(struct target_if_spectral *spectral,
-				       uint8_t *data);
+target_if_consume_spectral_report_gen3(
+	 struct target_if_spectral *spectral,
+	 struct spectral_report *report);
+#endif
 
 #ifdef WIN32
 #pragma pack(pop, target_if_spectral)
