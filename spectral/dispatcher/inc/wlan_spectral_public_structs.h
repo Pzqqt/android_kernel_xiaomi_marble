@@ -102,7 +102,9 @@
 #define SPECTRAL_SCAN_ACTIVE_DEFAULT           (0)
 #define SPECTRAL_SCAN_ENABLE_DEFAULT           (0)
 #define SPECTRAL_SCAN_COUNT_DEFAULT            (0)
-#define SPECTRAL_SCAN_PERIOD_DEFAULT           (35)
+#define SPECTRAL_SCAN_PERIOD_GEN_I_DEFAULT     (35)
+#define SPECTRAL_SCAN_PERIOD_GEN_II_DEFAULT    (35)
+#define SPECTRAL_SCAN_PERIOD_GEN_III_DEFAULT   (224)
 #define SPECTRAL_SCAN_PRIORITY_DEFAULT         (1)
 #define SPECTRAL_SCAN_FFT_SIZE_DEFAULT         (7)
 #define SPECTRAL_SCAN_GC_ENA_DEFAULT           (1)
@@ -228,12 +230,14 @@ struct spectral_diag_stats {
  * @radar_cap:           Radar detection capability
  * @spectral_cap:        Spectral capability
  * @advncd_spectral_cap: Advanced spectral capability
+ * @hw_gen: Spectral hw generation
  */
 struct spectral_caps {
 	uint8_t phydiag_cap;
 	uint8_t radar_cap;
 	uint8_t spectral_cap;
 	uint8_t advncd_spectral_cap;
+	uint32_t hw_gen;
 };
 
 /**
