@@ -2527,6 +2527,7 @@ static struct reg_sched_payload
 	return payload;
 }
 
+#ifdef CONFIG_MCL
 static QDF_STATUS reg_chan_change_flush_cbk_sb(struct scheduler_msg *msg)
 {
 	struct reg_sched_payload *load = msg->bodyptr;
@@ -2734,7 +2735,24 @@ static QDF_STATUS reg_sched_11d_msg(struct wlan_objmgr_psoc *psoc)
 
 	return status;
 }
+#else
+QDF_STATUS reg_send_scheduler_msg_sb(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
 
+static QDF_STATUS reg_send_scheduler_msg_nb(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS reg_sched_11d_msg(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 						void *object, void *arg)
