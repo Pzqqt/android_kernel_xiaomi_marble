@@ -15,7 +15,7 @@ endif
 
 ifeq ($(call is-board-platform,msmnile),true)
 TARGET := msmnile
-AUDIO_SELECT  := CONFIG_SND_SOC_SDM855=m
+AUDIO_SELECT  := CONFIG_SND_SOC_SM8150=m
 endif
 
 AUDIO_CHIPSET := audio

@@ -4,7 +4,7 @@
 
 # Check if this driver needs be built for current target
 ifeq ($(call is-board-platform,msmnile),true)
-AUDIO_SELECT  := CONFIG_SND_SOC_SDM855=m
+AUDIO_SELECT  := CONFIG_SND_SOC_SM8150=m
 endif
 
 AUDIO_CHIPSET := audio

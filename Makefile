@@ -12,11 +12,11 @@ include $(srctree)/techpack/audio/config/sdxpoorwillsauto.conf
 export
 endif
 ifeq ($(CONFIG_ARCH_SM8150), y)
-include $(srctree)/techpack/audio/config/sdm855auto.conf
+include $(srctree)/techpack/audio/config/sm8150auto.conf
 export
 endif
 ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
-include $(srctree)/techpack/audio/config/sdm855auto.conf
+include $(srctree)/techpack/audio/config/sm8150auto.conf
 export
 endif
 
@@ -44,11 +44,11 @@ LINUXINCLUDE    += \
 endif
 ifeq ($(CONFIG_ARCH_SM8150), y)
 LINUXINCLUDE    += \
-                -include $(srctree)/techpack/audio/config/sdm855autoconf.h
+                -include $(srctree)/techpack/audio/config/sm8150autoconf.h
 endif
 ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 LINUXINCLUDE    += \
-                -include $(srctree)/techpack/audio/config/sdm855autoconf.h
+                -include $(srctree)/techpack/audio/config/sm8150autoconf.h
 endif
 
 obj-y += asoc/

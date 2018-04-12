@@ -40,9 +40,9 @@
 #include "codecs/wsa881x.h"
 #include "codecs/wcd-mbhc-v2.h"
 
-#define DRV_NAME "sdm855-asoc-snd"
+#define DRV_NAME "sm8150-asoc-snd"
 
-#define __CHIPSET__ "SDM855 "
+#define __CHIPSET__ "SM8150 "
 #define MSM_DAILINK_NAME(name) (__CHIPSET__#name)
 
 #define DEV_NAME_STR_LEN            32
@@ -3740,7 +3740,7 @@ err:
 	return ret;
 }
 
-static int sdm855_notifier_service_cb(struct notifier_block *this,
+static int sm8150_notifier_service_cb(struct notifier_block *this,
 					 unsigned long opcode, void *ptr)
 {
 	int ret;
@@ -3798,7 +3798,7 @@ err:
 }
 
 static struct notifier_block service_nb = {
-	.notifier_call  = sdm855_notifier_service_cb,
+	.notifier_call  = sm8150_notifier_service_cb,
 	.priority = -INT_MAX,
 };
 
@@ -4509,7 +4509,7 @@ static int msm_tdm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	return 0;
 }
 
-static int sdm855_tdm_snd_hw_params(struct snd_pcm_substream *substream,
+static int sm8150_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 				     struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
@@ -4625,7 +4625,7 @@ end:
 	return ret;
 }
 
-static int sdm855_tdm_snd_startup(struct snd_pcm_substream *substream)
+static int sm8150_tdm_snd_startup(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
@@ -4646,7 +4646,7 @@ static int sdm855_tdm_snd_startup(struct snd_pcm_substream *substream)
 	return ret;
 }
 
-static void sdm855_tdm_snd_shutdown(struct snd_pcm_substream *substream)
+static void sm8150_tdm_snd_shutdown(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
@@ -4665,10 +4665,10 @@ static void sdm855_tdm_snd_shutdown(struct snd_pcm_substream *substream)
 	}
 }
 
-static struct snd_soc_ops sdm855_tdm_be_ops = {
-	.hw_params = sdm855_tdm_snd_hw_params,
-	.startup = sdm855_tdm_snd_startup,
-	.shutdown = sdm855_tdm_snd_shutdown
+static struct snd_soc_ops sm8150_tdm_be_ops = {
+	.hw_params = sm8150_tdm_snd_hw_params,
+	.startup = sm8150_tdm_snd_startup,
+	.shutdown = sm8150_tdm_snd_shutdown
 };
 
 static int msm_fe_qos_prepare(struct snd_pcm_substream *substream)
@@ -5630,7 +5630,7 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.dpcm_playback = 1,
 		.id = MSM_BACKEND_DAI_PRI_TDM_RX_0,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ops = &sdm855_tdm_be_ops,
+		.ops = &sm8150_tdm_be_ops,
 		.ignore_suspend = 1,
 		.ignore_pmdown_time = 1,
 	},
@@ -5645,7 +5645,7 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_PRI_TDM_TX_0,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ops = &sdm855_tdm_be_ops,
+		.ops = &sm8150_tdm_be_ops,
 		.ignore_suspend = 1,
 	},
 	{
@@ -5659,7 +5659,7 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.dpcm_playback = 1,
 		.id = MSM_BACKEND_DAI_SEC_TDM_RX_0,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ops = &sdm855_tdm_be_ops,
+		.ops = &sm8150_tdm_be_ops,
 		.ignore_suspend = 1,
 		.ignore_pmdown_time = 1,
 	},
@@ -5674,7 +5674,7 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_SEC_TDM_TX_0,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ops = &sdm855_tdm_be_ops,
+		.ops = &sm8150_tdm_be_ops,
 		.ignore_suspend = 1,
 	},
 	{
@@ -5688,7 +5688,7 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.dpcm_playback = 1,
 		.id = MSM_BACKEND_DAI_TERT_TDM_RX_0,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ops = &sdm855_tdm_be_ops,
+		.ops = &sm8150_tdm_be_ops,
 		.ignore_suspend = 1,
 		.ignore_pmdown_time = 1,
 	},
@@ -5703,7 +5703,7 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_TERT_TDM_TX_0,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ops = &sdm855_tdm_be_ops,
+		.ops = &sm8150_tdm_be_ops,
 		.ignore_suspend = 1,
 	},
 	{
@@ -5717,7 +5717,7 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.dpcm_playback = 1,
 		.id = MSM_BACKEND_DAI_QUAT_TDM_RX_0,
 		.be_hw_params_fixup = msm_tdm_be_hw_params_fixup,
-		.ops = &sdm855_tdm_be_ops,
+		.ops = &sm8150_tdm_be_ops,
 		.ignore_suspend = 1,
 		.ignore_pmdown_time = 1,
 	},
@@ -5732,7 +5732,7 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_QUAT_TDM_TX_0,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ops = &sdm855_tdm_be_ops,
+		.ops = &sm8150_tdm_be_ops,
 		.ignore_suspend = 1,
 	},
 };
@@ -6532,11 +6532,11 @@ err_pcm_runtime:
 }
 
 struct snd_soc_card snd_soc_card_pahu_msm = {
-	.name		= "sdm855-pahu-snd-card",
+	.name		= "sm8150-pahu-snd-card",
 };
 
 struct snd_soc_card snd_soc_card_tavil_msm = {
-	.name		= "sdm855-tavil-snd-card",
+	.name		= "sm8150-tavil-snd-card",
 	.late_probe	= msm_snd_card_tavil_late_probe,
 };
 
@@ -6742,10 +6742,10 @@ static struct snd_soc_dai_link msm_stub_dai_links[
 			 ARRAY_SIZE(msm_stub_be_dai_links)];
 
 struct snd_soc_card snd_soc_card_stub_msm = {
-	.name		= "sdm855-stub-snd-card",
+	.name		= "sm8150-stub-snd-card",
 };
 
-static const struct of_device_id sdm855_asoc_machine_of_match[]  = {
+static const struct of_device_id sm8150_asoc_machine_of_match[]  = {
 	{ .compatible = "qcom,sm8150-asoc-snd-pahu",
 	  .data = "pahu_codec"},
 	{ .compatible = "qcom,sm8150-asoc-snd-tavil",
@@ -6763,7 +6763,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	int total_links;
 	const struct of_device_id *match;
 
-	match = of_match_node(sdm855_asoc_machine_of_match, dev->of_node);
+	match = of_match_node(sm8150_asoc_machine_of_match, dev->of_node);
 	if (!match) {
 		dev_err(dev, "%s: No DT match found for sound card\n",
 			__func__);
@@ -7327,7 +7327,7 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 
 	msm_i2s_auxpcm_init(pdev);
 	is_initial_boot = true;
-	ret = audio_notifier_register("sdm855", AUDIO_NOTIFIER_ADSP_DOMAIN,
+	ret = audio_notifier_register("sm8150", AUDIO_NOTIFIER_ADSP_DOMAIN,
 				      &service_nb);
 	if (ret < 0)
 		pr_err("%s: Audio notifier register failed ret = %d\n",
@@ -7342,26 +7342,26 @@ err:
 
 static int msm_asoc_machine_remove(struct platform_device *pdev)
 {
-	audio_notifier_deregister("sdm855");
+	audio_notifier_deregister("sm8150");
 	msm_i2s_auxpcm_deinit();
 
 	msm_release_pinctrl(pdev);
 	return 0;
 }
 
-static struct platform_driver sdm855_asoc_machine_driver = {
+static struct platform_driver sm8150_asoc_machine_driver = {
 	.driver = {
 		.name = DRV_NAME,
 		.owner = THIS_MODULE,
 		.pm = &snd_soc_pm_ops,
-		.of_match_table = sdm855_asoc_machine_of_match,
+		.of_match_table = sm8150_asoc_machine_of_match,
 	},
 	.probe = msm_asoc_machine_probe,
 	.remove = msm_asoc_machine_remove,
 };
-module_platform_driver(sdm855_asoc_machine_driver);
+module_platform_driver(sm8150_asoc_machine_driver);
 
 MODULE_DESCRIPTION("ALSA SoC msm");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:" DRV_NAME);
-MODULE_DEVICE_TABLE(of, sdm855_asoc_machine_of_match);
+MODULE_DEVICE_TABLE(of, sm8150_asoc_machine_of_match);
