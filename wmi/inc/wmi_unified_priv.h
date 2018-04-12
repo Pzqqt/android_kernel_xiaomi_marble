@@ -1290,6 +1290,10 @@ QDF_STATUS (*extract_pdev_ext_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS (*extract_vdev_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 			 uint32_t index, wmi_host_vdev_stats *vdev_stats);
 
+QDF_STATUS (*extract_per_chain_rssi_stats)(wmi_unified_t wmi_handle,
+			void *evt_buf, uint32_t index,
+			struct wmi_host_per_chain_rssi_stats *rssi_stats);
+
 QDF_STATUS (*extract_peer_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 			 uint32_t index, wmi_host_peer_stats *peer_stats);
 

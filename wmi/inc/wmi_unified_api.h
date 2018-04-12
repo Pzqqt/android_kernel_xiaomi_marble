@@ -1705,6 +1705,9 @@ QDF_STATUS wmi_extract_atf_token_info_ev(void *wmi_hdl, void *evt_buf,
 QDF_STATUS wmi_extract_vdev_stats(void *wmi_hdl, void *evt_buf,
 		uint32_t index, wmi_host_vdev_stats *vdev_stats);
 
+QDF_STATUS wmi_extract_per_chain_rssi_stats(void *wmi_hdl, void *evt_buf,
+	uint32_t index, struct wmi_host_per_chain_rssi_stats *rssi_stats);
+
 QDF_STATUS wmi_extract_vdev_extd_stats(void *wmi_hdl, void *evt_buf,
 		uint32_t index, wmi_host_vdev_extd_stats *vdev_extd_stats);
 

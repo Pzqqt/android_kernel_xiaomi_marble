@@ -19517,6 +19517,57 @@ static QDF_STATUS extract_vdev_stats_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_per_chain_rssi_stats_tlv() - api to extract rssi stats from event
+ * buffer
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @index: Index into vdev stats
+ * @rssi_stats: Pointer to hold rssi stats
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_per_chain_rssi_stats_tlv(wmi_unified_t wmi_handle,
+			void *evt_buf, uint32_t index,
+			struct wmi_host_per_chain_rssi_stats *rssi_stats)
+{
+	uint8_t *data;
+	wmi_rssi_stats *fw_rssi_stats;
+	wmi_per_chain_rssi_stats *rssi_event;
+	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
+
+	if (!evt_buf) {
+		WMI_LOGE("evt_buf is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *) evt_buf;
+	rssi_event = param_buf->chain_stats;
+
+	if (index >= rssi_event->num_per_chain_rssi_stats) {
+		WMI_LOGE("invalid index");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	data = ((uint8_t *)(&rssi_event[1])) + WMI_TLV_HDR_SIZE;
+	fw_rssi_stats = &((wmi_rssi_stats *)data)[index];
+
+	rssi_stats->vdev_id = fw_rssi_stats->vdev_id;
+	qdf_mem_copy(rssi_stats->rssi_avg_beacon,
+		     fw_rssi_stats->rssi_avg_beacon,
+		     sizeof(fw_rssi_stats->rssi_avg_beacon));
+	qdf_mem_copy(rssi_stats->rssi_avg_data,
+		     fw_rssi_stats->rssi_avg_data,
+		     sizeof(fw_rssi_stats->rssi_avg_data));
+	qdf_mem_copy(&rssi_stats->peer_macaddr,
+		     &fw_rssi_stats->peer_macaddr,
+		     sizeof(fw_rssi_stats->peer_macaddr));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+
+/**
  * extract_bcn_stats_tlv() - extract bcn stats from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -22805,6 +22856,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_unit_test = extract_unit_test_tlv,
 	.extract_pdev_ext_stats = extract_pdev_ext_stats_tlv,
 	.extract_vdev_stats = extract_vdev_stats_tlv,
+	.extract_per_chain_rssi_stats = extract_per_chain_rssi_stats_tlv,
 	.extract_peer_stats = extract_peer_stats_tlv,
 	.extract_bcn_stats = extract_bcn_stats_tlv,
 	.extract_bcnflt_stats = extract_bcnflt_stats_tlv,
