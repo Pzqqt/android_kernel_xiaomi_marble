@@ -1684,10 +1684,7 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 					 * Do not expire static ast entries
 					 * and HM WDS entries
 					 */
-					if (ase->type ==
-						CDP_TXRX_AST_TYPE_STATIC ||
-						ase->type ==
-						CDP_TXRX_AST_TYPE_WDS_HM)
+					if (ase->type != CDP_TXRX_AST_TYPE_WDS)
 						continue;
 
 					if (ase->is_active) {
@@ -3505,6 +3502,11 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 	if (peer) {
 		peer->delete_in_progress = false;
+
+		qdf_spin_lock_bh(&soc->ast_lock);
+		TAILQ_INIT(&peer->ast_entry_list);
+		qdf_spin_unlock_bh(&soc->ast_lock);
+
 		/*
 		* on peer create, peer ref count decrements, sice new peer is not
 		* getting created earlier reference is reused, peer_unref_delete will
@@ -3515,6 +3517,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 				vdev->vdev_id, peer->mac_addr.raw);
 		}
 
+		DP_STATS_INIT(peer);
 		return (void *)peer;
 	}
 
