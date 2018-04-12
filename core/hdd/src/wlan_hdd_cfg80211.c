@@ -3065,9 +3065,7 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 		fset |= WIFI_FEATURE_TDLS_OFFCHANNEL;
 	}
 #endif
-#ifdef WLAN_AP_STA_CONCURRENCY
 	fset |= WIFI_FEATURE_AP_STA;
-#endif
 	fset |= WIFI_FEATURE_RSSI_MONITOR;
 	fset |= WIFI_FEATURE_TX_TRANSMIT_POWER;
 	fset |= WIFI_FEATURE_SET_TX_POWER_LIMIT;
