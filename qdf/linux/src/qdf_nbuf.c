@@ -3973,6 +3973,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 		(struct ieee80211_radiotap_header *)rtap_buf;
 	uint32_t rtap_hdr_len = sizeof(struct ieee80211_radiotap_header);
 	uint32_t rtap_len = rtap_hdr_len;
+	uint8_t length = rtap_len;
 
 	/* IEEE80211_RADIOTAP_TSFT              __le64       microseconds*/
 	rthdr->it_present = cpu_to_le32(1 << IEEE80211_RADIOTAP_TSFT);
@@ -4031,7 +4032,13 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	rtap_buf[rtap_len] = rx_status->nr_ant;
 	rtap_len += 1;
 
+	if ((rtap_len - length) > RADIOTAP_FIXED_HEADER_LEN) {
+		qdf_print("length is greater than RADIOTAP_FIXED_HEADER_LEN");
+		return 0;
+	}
+
 	if (rx_status->ht_flags) {
+		length = rtap_len;
 		/* IEEE80211_RADIOTAP_VHT u8, u8, u8 */
 		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_MCS);
 		rtap_buf[rtap_len] = IEEE80211_RADIOTAP_MCS_HAVE_BW |
@@ -4049,6 +4056,11 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 
 		rtap_buf[rtap_len] = rx_status->mcs;
 		rtap_len += 1;
+
+		if ((rtap_len - length) > RADIOTAP_HT_FLAGS_LEN) {
+			qdf_print("length is greater than RADIOTAP_HT_FLAGS_LEN");
+			return 0;
+		}
 	}
 
 	if (rx_status->rs_flags & IEEE80211_AMPDU_FLAG) {
@@ -4061,30 +4073,49 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	}
 
 	if (rx_status->vht_flags) {
+		length = rtap_len;
 		/* IEEE80211_RADIOTAP_VHT u16, u8, u8, u8[4], u8, u8, u16 */
 		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_VHT);
 		rtap_len = qdf_nbuf_update_radiotap_vht_flags(rx_status,
-							      rtap_buf,
-							      rtap_len);
+								rtap_buf,
+								rtap_len);
+
+		if ((rtap_len - length) > RADIOTAP_VHT_FLAGS_LEN) {
+			qdf_print("length is greater than RADIOTAP_VHT_FLAGS_LEN");
+			return 0;
+		}
 	}
 
 	if (rx_status->he_flags) {
+		length = rtap_len;
 		/* IEEE80211_RADIOTAP_HE */
 		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_HE);
 		rtap_len = qdf_nbuf_update_radiotap_he_flags(rx_status,
 								rtap_buf,
 								rtap_len);
+
+		if ((rtap_len - length) > RADIOTAP_HE_FLAGS_LEN) {
+			qdf_print("length is greater than RADIOTAP_HE_FLAGS_LEN");
+			return 0;
+		}
 	}
 
 	if (rx_status->he_mu_flags) {
+		length = rtap_len;
 		/* IEEE80211_RADIOTAP_HE-MU */
 		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_HE_MU);
 		rtap_len = qdf_nbuf_update_radiotap_he_mu_flags(rx_status,
 								rtap_buf,
 								rtap_len);
+
+		if ((rtap_len - length) > RADIOTAP_HE_MU_FLAGS_LEN) {
+			qdf_print("length is greater than RADIOTAP_HE_MU_FLAGS_LEN");
+			return 0;
+		}
 	}
 
 	if (rx_status->he_mu_other_flags) {
+		length = rtap_len;
 		/* IEEE80211_RADIOTAP_HE-MU-OTHER */
 		rthdr->it_present |=
 			cpu_to_le32(1 << IEEE80211_RADIOTAP_HE_MU_OTHER);
@@ -4092,6 +4123,11 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 			qdf_nbuf_update_radiotap_he_mu_other_flags(rx_status,
 								rtap_buf,
 								rtap_len);
+
+		if ((rtap_len - length) > RADIOTAP_HE_MU_OTHER_FLAGS_LEN) {
+			qdf_print("length is greater than RADIOTAP_HE_MU_OTHER_FLAGS_LEN");
+			return 0;
+		}
 	}
 
 	rthdr->it_len = cpu_to_le16(rtap_len);
