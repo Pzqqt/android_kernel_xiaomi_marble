@@ -3606,6 +3606,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	uint32_t retCode;
 	tpDphHashNode pStaDs = NULL;
 	uint8_t chanWidthSupp = 0;
+	bool is_vht_cap_in_vendor_ie = false;
 	uint32_t enableTxBF20MHz;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	tDot11fIEVHTOperation *vht_oper = NULL;
@@ -3851,6 +3852,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			else if (pAssocRsp->vendor_vht_ie.VHTCaps.present) {
 				vht_caps = &pAssocRsp->vendor_vht_ie.VHTCaps;
 				pe_debug("VHT Caps are in vendor Specfic IE");
+				is_vht_cap_in_vendor_ie = true;
 			}
 
 			if ((vht_caps != NULL) && (vht_caps->suBeamFormerCap ||
@@ -3931,17 +3933,17 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 		 * hardcode this values to 0.
 		 */
 		if (psessionEntry->htConfig.ht_sgi20) {
-				pAddBssParams->staContext.fShortGI20Mhz =
-					(uint8_t)pAssocRsp->HTCaps.shortGI20MHz;
-			} else {
-				pAddBssParams->staContext.fShortGI20Mhz = false;
-			}
+			pAddBssParams->staContext.fShortGI20Mhz =
+				(uint8_t)pAssocRsp->HTCaps.shortGI20MHz;
+		} else {
+			pAddBssParams->staContext.fShortGI20Mhz = false;
+		}
 
 		if (psessionEntry->htConfig.ht_sgi40) {
 			pAddBssParams->staContext.fShortGI40Mhz =
 				(uint8_t) pAssocRsp->HTCaps.shortGI40MHz;
 		} else {
-				pAddBssParams->staContext.fShortGI40Mhz = false;
+			pAddBssParams->staContext.fShortGI40Mhz = false;
 		}
 
 		if (!pAddBssParams->staContext.vhtCapable)
@@ -3973,11 +3975,16 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				pe_debug("VHT Caps is in vendor Specfic IE");
 			}
 			if (vht_caps != NULL &&
-				(psessionEntry->txLdpcIniFeatureEnabled & 0x2))
-				pAddBssParams->staContext.vhtLdpcCapable =
-					(uint8_t) vht_caps->ldpcCodingCap;
-			else
+				(psessionEntry->txLdpcIniFeatureEnabled & 0x2)) {
+				if (!is_vht_cap_in_vendor_ie)
+					pAddBssParams->staContext.vhtLdpcCapable =
+					  (uint8_t) pAssocRsp->VHTCaps.ldpcCodingCap;
+				else
+					pAddBssParams->staContext.vhtLdpcCapable =
+					    (uint8_t) vht_caps->ldpcCodingCap;
+			} else {
 				pAddBssParams->staContext.vhtLdpcCapable = 0;
+			}
 		}
 
 		if (pBeaconStruct->HTInfo.present)
