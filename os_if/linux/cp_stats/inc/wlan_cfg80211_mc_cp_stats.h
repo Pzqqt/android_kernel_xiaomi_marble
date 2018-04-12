@@ -62,6 +62,17 @@ int wlan_cfg80211_mc_cp_stats_get_wakelock_stats(struct wlan_objmgr_psoc *psoc,
 int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 					   int *dbm);
 
+/**
+ * wlan_cfg80211_mc_cp_stats_get_peer_rssi() - API to fetch peer rssi
+ * @vdev:    Pointer to vdev
+ * @macaddress: mac address
+ * @rssi_info: stats structure within which rssi info will be populated
+ *
+ * Return: 0 on success, negative value on failure
+ */
+int wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
+					    uint8_t *macaddress,
+					    struct stats_event *rssi_info);
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CFG80211_MC_CP_STATS_H__ */

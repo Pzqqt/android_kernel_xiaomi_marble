@@ -279,3 +279,80 @@ fetch_tx_power:
 	return ret;
 }
 
+/**
+ * get_peer_rssi_cb() - get_peer_rssi_cb callback function
+ * @mac_addr: mac address
+ * @cookie: a cookie for the request context
+ *
+ * Return: None
+ */
+static void get_peer_rssi_cb(struct stats_event *ev, void *cookie)
+{
+	struct stats_event *priv;
+	struct osif_request *request;
+
+	request = osif_request_get(cookie);
+	if (!request) {
+		cfg80211_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+	*priv = *ev;
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+int wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
+					    uint8_t *mac_addr,
+					    struct stats_event *rssi_info)
+{
+	int ret = 0;
+	void *cookie;
+	QDF_STATUS status;
+	struct stats_event *priv;
+	struct request_info info = {0};
+	struct osif_request *request = NULL;
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = CP_STATS_WAIT_TIME_STAT,
+	};
+
+	qdf_mem_zero(rssi_info, sizeof(*rssi_info));
+	request = osif_request_alloc(&params);
+	if (!request) {
+		cfg80211_err("Request allocation failure, return cached value");
+		return -EINVAL;
+	}
+
+	cookie = osif_request_cookie(request);
+	priv = osif_request_priv(request);
+	info.cookie = cookie;
+	info.u.get_peer_rssi_cb = get_peer_rssi_cb;
+	info.vdev_id = wlan_vdev_get_id(vdev);
+	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
+	qdf_mem_copy(info.peer_mac_addr, mac_addr, WLAN_MACADDR_LEN);
+	status = ucfg_mc_cp_stats_send_stats_request(vdev, TYPE_PEER_STATS,
+						     &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("stats req failed: %d", status);
+		ret = qdf_status_to_os_return(status);
+	} else {
+		ret = osif_request_wait_for_response(request);
+		if (ret) {
+			cfg80211_err("wait failed or timed out ret: %d", ret);
+		} else {
+			*rssi_info = *priv;
+		}
+	}
+
+	/*
+	 * either we never sent a request, we sent a request and
+	 * received a response or we sent a request and timed out.
+	 * regardless we are done with the request.
+	 */
+	if (request)
+		osif_request_put(request);
+
+	return ret;
+}
