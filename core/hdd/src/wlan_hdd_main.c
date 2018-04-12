@@ -5846,6 +5846,32 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 		return -EINVAL;
 	}
 
+	/* Validate Channel */
+	if (!WLAN_REG_IS_24GHZ_CH(chan) && !WLAN_REG_IS_5GHZ_CH(chan)) {
+		hdd_err("Channel %d Not supported", chan);
+		return -EINVAL;
+	}
+
+	if (WLAN_REG_IS_24GHZ_CH(chan)) {
+		if (bandwidth == CH_WIDTH_80MHZ) {
+			hdd_err("BW80 not possible in 2.4GHz band");
+			return -EINVAL;
+		}
+		if ((bandwidth != CH_WIDTH_20MHZ) && (chan == 14) &&
+				(bandwidth != CH_WIDTH_MAX)) {
+			hdd_err("Only BW20 possible on channel 14");
+			return -EINVAL;
+		}
+	}
+
+	if (WLAN_REG_IS_5GHZ_CH(chan)) {
+		if ((bandwidth != CH_WIDTH_20MHZ) && (chan == 165) &&
+				(bandwidth != CH_WIDTH_MAX)) {
+			hdd_err("Only BW20 possible on channel 165");
+			return -EINVAL;
+		}
+	}
+
 	hdd_debug("Set monitor mode Channel %d", chan);
 	qdf_mem_zero(&roam_profile, sizeof(roam_profile));
 	roam_profile.ChannelInfo.ChannelList = &ch_info->channel;
