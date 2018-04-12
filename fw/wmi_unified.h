@@ -4419,6 +4419,8 @@ typedef struct {
 
 #define WMI_BEACON_CTRL_TX_DISABLE  0
 #define WMI_BEACON_CTRL_TX_ENABLE   1
+#define WMI_BEACON_CTRL_SWBA_EVENT_DISABLE  2
+#define WMI_BEACON_CTRL_SWBA_EVENT_ENABLE   3
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_bcn_offload_ctrl_cmd_fixed_param */
