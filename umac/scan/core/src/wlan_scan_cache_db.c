@@ -736,7 +736,7 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 	}
 
 	scan_list =
-		 util_scan_unpack_beacon_frame(qdf_nbuf_data(bcn->buf),
+		 util_scan_unpack_beacon_frame(pdev, qdf_nbuf_data(bcn->buf),
 			qdf_nbuf_len(bcn->buf), bcn->frm_type,
 			bcn->rx_data);
 	if (!scan_list || qdf_list_empty(scan_list)) {

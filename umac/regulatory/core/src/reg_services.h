@@ -318,6 +318,16 @@ uint32_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev, uint32_t freq);
 uint32_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev, uint32_t chan_num);
 
 /**
+ * reg_chan_is_49ghz() - Check if the input channel number is 4.9GHz
+ * @pdev: Pdev pointer
+ * @chan_num: Input channel number
+ *
+ * Return: true if the channel is 4.9GHz else false.
+ */
+bool reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev,
+		uint8_t chan_num);
+
+/**
  * reg_set_config_vars () - set configration variables
  * @psoc: psoc ptr
  * @config_vars: configuration struct

@@ -47,6 +47,7 @@ bool util_is_scan_entry_match(
 
 /**
  * util_scan_unpack_beacon_frame() - func to unpack beacon frame to scan entry
+ * @pdev: pdev pointer
  * @frame: beacon/probe frame
  * @frame_len: beacon frame len
  * @frm_subtype: beacon or probe
@@ -57,6 +58,7 @@ bool util_is_scan_entry_match(
  * Return: unpacked list of scan entries.
  */
 qdf_list_t *util_scan_unpack_beacon_frame(
+	struct wlan_objmgr_pdev *pdev,
 	uint8_t *frame, qdf_size_t frame_len, uint32_t frm_subtype,
 	struct mgmt_rx_event_params *rx_param);
 

@@ -391,6 +391,17 @@ bool wlan_reg_is_world(uint8_t *country);
 bool wlan_reg_is_us(uint8_t *country);
 
 /**
+ * wlan_reg_chan_is_49ghz() - Check if the input channel number is 4.9GHz
+ * @pdev: Pdev pointer
+ * @chan_num: Input channel number
+ *
+ * Return: true if the channel is 4.9GHz else false.
+ */
+
+bool wlan_reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev,
+		uint8_t chan_num);
+
+/**
  * wlan_reg_set_country() - Set the current regulatory country
  * @pdev: The physical dev to set current country for
  * @country: The country information to configure

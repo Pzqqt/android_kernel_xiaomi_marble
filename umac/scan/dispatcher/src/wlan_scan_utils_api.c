@@ -815,7 +815,7 @@ static int util_scan_scm_calc_nss_supported_by_ap(
 }
 
 qdf_list_t *
-util_scan_unpack_beacon_frame(uint8_t *frame,
+util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
 	qdf_size_t frame_len, uint32_t frm_subtype,
 	struct mgmt_rx_event_params *rx_param)
 {
@@ -931,7 +931,8 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 				rx_param->channel;
 	} else if (rx_param->channel !=
 	   scan_entry->channel.chan_idx) {
-		scan_entry->channel_mismatch = true;
+		if (!wlan_reg_chan_is_49ghz(pdev, scan_entry->channel.chan_idx))
+			scan_entry->channel_mismatch = true;
 	}
 
 	if (util_scan_is_hidden_ssid(ssid)) {

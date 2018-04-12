@@ -1776,6 +1776,24 @@ uint32_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 	return 0;
 }
 
+#ifndef CONFIG_LEGACY_CHAN_ENUM
+bool reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev,
+		uint8_t chan_num)
+{
+	uint32_t freq = 0;
+
+	freq = reg_chan_to_freq(pdev, chan_num);
+
+	return REG_IS_49GHZ_FREQ(freq) ? true : false;
+}
+#else
+bool reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev,
+		uint8_t chan_num)
+{
+	return false;
+}
+#endif
+
 enum band_info reg_chan_to_band(uint32_t chan_num)
 {
 	if (chan_num <= 14)
