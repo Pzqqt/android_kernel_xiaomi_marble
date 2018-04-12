@@ -36,6 +36,38 @@
 #include "wlan_hdd_debugfs_llstat.h"
 #include "wlan_reg_services_api.h"
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
+#define HDD_INFO_SIGNAL                 STATION_INFO_SIGNAL
+#define HDD_INFO_SIGNAL_AVG             STATION_INFO_SIGNAL_AVG
+#define HDD_INFO_TX_PACKETS             STATION_INFO_TX_PACKETS
+#define HDD_INFO_TX_RETRIES             STATION_INFO_TX_RETRIES
+#define HDD_INFO_TX_FAILED              STATION_INFO_TX_FAILED
+#define HDD_INFO_TX_BITRATE             STATION_INFO_TX_BITRATE
+#define HDD_INFO_TX_BYTES               STATION_INFO_TX_BYTES
+#define HDD_INFO_CHAIN_SIGNAL_AVG       STATION_INFO_CHAIN_SIGNAL_AVG
+#define HDD_INFO_RX_BYTES               STATION_INFO_RX_BYTES
+#define HDD_INFO_RX_PACKETS             STATION_INFO_RX_PACKETS
+#define HDD_INFO_TX_BYTES64             0
+#define HDD_INFO_RX_BYTES64             0
+#define HDD_INFO_INACTIVE_TIME          0
+#define HDD_INFO_CONNECTED_TIME         0
+#else
+#define HDD_INFO_SIGNAL                 BIT(NL80211_STA_INFO_SIGNAL)
+#define HDD_INFO_SIGNAL_AVG             BIT(NL80211_STA_INFO_SIGNAL_AVG)
+#define HDD_INFO_TX_PACKETS             BIT(NL80211_STA_INFO_TX_PACKETS)
+#define HDD_INFO_TX_RETRIES             BIT(NL80211_STA_INFO_TX_RETRIES)
+#define HDD_INFO_TX_FAILED              BIT(NL80211_STA_INFO_TX_FAILED)
+#define HDD_INFO_TX_BITRATE             BIT(NL80211_STA_INFO_TX_BITRATE)
+#define HDD_INFO_TX_BYTES               BIT(NL80211_STA_INFO_TX_BYTES)
+#define HDD_INFO_CHAIN_SIGNAL_AVG       BIT(NL80211_STA_INFO_CHAIN_SIGNAL_AVG)
+#define HDD_INFO_RX_BYTES               BIT(NL80211_STA_INFO_RX_BYTES)
+#define HDD_INFO_RX_PACKETS             BIT(NL80211_STA_INFO_RX_PACKETS)
+#define HDD_INFO_TX_BYTES64             BIT(NL80211_STA_INFO_TX_BYTES64)
+#define HDD_INFO_RX_BYTES64             BIT(NL80211_STA_INFO_RX_BYTES64)
+#define HDD_INFO_INACTIVE_TIME          BIT(NL80211_STA_INFO_INACTIVE_TIME)
+#define HDD_INFO_CONNECTED_TIME         BIT(NL80211_STA_INFO_CONNECTED_TIME)
+#endif /* kernel version less than 4.0.0 && no_backport */
+
 /* 11B, 11G Rate table include Basic rate and Extended rate
  * The IDX field is the rate index
  * The HI field is the rate when RSSI is strong or being ignored
@@ -2957,20 +2989,6 @@ void wlan_hdd_cfg80211_stats_ext2_callback(void *ctx,
 
 #endif /* End of WLAN_FEATURE_STATS_EXT */
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
-static inline void wlan_hdd_fill_station_info_signal(struct station_info
-						     *sinfo)
-{
-	sinfo->filled |= STATION_INFO_SIGNAL;
-}
-#else
-static inline void wlan_hdd_fill_station_info_signal(struct station_info
-						     *sinfo)
-{
-	sinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL);
-}
-#endif
-
 #ifdef LINKSPEED_DEBUG_ENABLED
 #define linkspeed_dbg(format, args...) pr_info(format, ## args)
 #else
@@ -3000,17 +3018,10 @@ static void wlan_hdd_fill_summary_stats(tCsrSummaryStatsInfo *stats,
 		info->tx_failed += stats->fail_cnt[i];
 	}
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
-	info->filled |= STATION_INFO_TX_PACKETS |
-			STATION_INFO_TX_RETRIES |
-			STATION_INFO_TX_FAILED |
-			STATION_INFO_RX_PACKETS;
-#else
-	info->filled |= BIT(NL80211_STA_INFO_RX_PACKETS) |
-			BIT(NL80211_STA_INFO_TX_PACKETS) |
-			BIT(NL80211_STA_INFO_TX_RETRIES) |
-			BIT(NL80211_STA_INFO_TX_FAILED);
-#endif
+	info->filled |= HDD_INFO_TX_PACKETS |
+			HDD_INFO_TX_RETRIES |
+			HDD_INFO_TX_FAILED  |
+			HDD_INFO_RX_PACKETS;
 }
 
 /**
@@ -3398,18 +3409,18 @@ static void hdd_fill_sinfo_rate_info(struct station_info *sinfo,
  */
 static void hdd_fill_station_info_flags(struct station_info *sinfo)
 {
-	sinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL) |
-		BIT(NL80211_STA_INFO_TX_BYTES)   |
-		BIT(NL80211_STA_INFO_TX_BYTES64)   |
-		BIT(NL80211_STA_INFO_TX_BITRATE) |
-		BIT(NL80211_STA_INFO_TX_PACKETS) |
-		BIT(NL80211_STA_INFO_TX_RETRIES) |
-		BIT(NL80211_STA_INFO_TX_FAILED)  |
-		BIT(NL80211_STA_INFO_RX_BYTES)   |
-		BIT(NL80211_STA_INFO_RX_BYTES64)   |
-		BIT(NL80211_STA_INFO_RX_PACKETS) |
-		BIT(NL80211_STA_INFO_INACTIVE_TIME) |
-		BIT(NL80211_STA_INFO_CONNECTED_TIME);
+	sinfo->filled |= HDD_INFO_SIGNAL        |
+			 HDD_INFO_TX_BYTES      |
+			 HDD_INFO_TX_BYTES64    |
+			 HDD_INFO_TX_BITRATE    |
+			 HDD_INFO_TX_PACKETS    |
+			 HDD_INFO_TX_RETRIES    |
+			 HDD_INFO_TX_FAILED     |
+			 HDD_INFO_RX_BYTES      |
+			 HDD_INFO_RX_BYTES64    |
+			 HDD_INFO_RX_PACKETS    |
+			 HDD_INFO_INACTIVE_TIME |
+			 HDD_INFO_CONNECTED_TIME;
 }
 
 /**
@@ -3958,7 +3969,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		 * send the cached rssi when get_station
 		 */
 		sinfo->signal = adapter->rssi;
-		wlan_hdd_fill_station_info_signal(sinfo);
+		sinfo->filled |= HDD_INFO_SIGNAL;
 		return 0;
 	}
 
@@ -3987,7 +3998,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		sta_ctx->conn_info.signal - snr;
 	sta_ctx->cache_conn_info.signal = sinfo->signal;
 	sta_ctx->cache_conn_info.noise = sta_ctx->conn_info.noise;
-	wlan_hdd_fill_station_info_signal(sinfo);
+	sinfo->filled |= HDD_INFO_SIGNAL;
 
 	/*
 	 * we notify connect to lpass here instead of during actual
@@ -4349,17 +4360,10 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	qdf_mem_copy(&sta_ctx->cache_conn_info.txrate,
 		     &sinfo->txrate, sizeof(sinfo->txrate));
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
-	sinfo->filled |= STATION_INFO_TX_BITRATE |
-			 STATION_INFO_TX_BYTES   |
-			 STATION_INFO_RX_BYTES   |
-			 STATION_INFO_RX_PACKETS;
-#else
-	sinfo->filled |= BIT(NL80211_STA_INFO_TX_BITRATE) |
-			 BIT(NL80211_STA_INFO_TX_BYTES)   |
-			 BIT(NL80211_STA_INFO_RX_BYTES)   |
-			 BIT(NL80211_STA_INFO_RX_PACKETS);
-#endif
+	sinfo->filled |= HDD_INFO_TX_BITRATE |
+			 HDD_INFO_TX_BYTES   |
+			 HDD_INFO_RX_BYTES   |
+			 HDD_INFO_RX_PACKETS;
 
 	if (rate_flags & eHAL_TX_RATE_LEGACY)
 		hdd_debug("Reporting legacy rate %d pkt cnt tx %d rx %d",
@@ -4388,13 +4392,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	}
 
 	if (rssi_stats_valid) {
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
-		sinfo->filled |= STATION_INFO_CHAIN_SIGNAL_AVG;
-		sinfo->filled |= STATION_INFO_SIGNAL_AVG;
-#else
-		sinfo->filled |= BIT(NL80211_STA_INFO_CHAIN_SIGNAL_AVG);
-		sinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL_AVG);
-#endif
+		sinfo->filled |= HDD_INFO_CHAIN_SIGNAL_AVG;
+		sinfo->filled |= HDD_INFO_SIGNAL_AVG;
 	}
 #endif
 
