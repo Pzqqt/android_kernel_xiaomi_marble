@@ -47,6 +47,13 @@
 	((chan_num >= REG_MIN_24GHZ_CH_NUM) &&	\
 	 (chan_num <= REG_MAX_24GHZ_CH_NUM))
 
+#define REG_MIN_24GHZ_CH_FREQ channel_map[MIN_24GHZ_CHANNEL].center_freq
+#define REG_MAX_24GHZ_CH_FREQ channel_map[MAX_24GHZ_CHANNEL].center_freq
+
+#define REG_IS_24GHZ_CH_FREQ(freq) \
+	((freq >= REG_MIN_24GHZ_CH_FREQ) &&   \
+	(freq <= REG_MAX_24GHZ_CH_FREQ))
+
 #ifndef CONFIG_LEGACY_CHAN_ENUM
 #define REG_MIN_49GHZ_CH_FREQ channel_map[MIN_49GHZ_CHANNEL].center_freq
 #define REG_MAX_49GHZ_CH_FREQ channel_map[MAX_49GHZ_CHANNEL].center_freq
@@ -498,5 +505,23 @@ struct wlan_psoc_host_hal_reg_capabilities_ext *reg_get_hal_reg_cap(
 QDF_STATUS reg_set_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
 		struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap,
 		uint16_t phy_cnt);
+
+/**
+ * reg_chan_in_range() - Check if the given channel is in pdev's channel range
+ * @chan_list: Pointer to regulatory channel list.
+ * @low_freq_2g: Low frequency 2G.
+ * @high_freq_2g: High frequency 2G.
+ * @low_freq_5g: Low frequency 5G.
+ * @high_freq_5g: High frequency 5G.
+ * @ch_enum: Channel enum.
+ *
+ * Return: true if ch_enum is with in pdev's channel range, else false.
+ */
+bool reg_chan_in_range(struct regulatory_channel *chan_list,
+		uint32_t low_freq_2g,
+		uint32_t high_freq_2g,
+		uint32_t low_freq_5g,
+		uint32_t high_freq_5g,
+		enum channel_enum ch_enum);
 
 #endif

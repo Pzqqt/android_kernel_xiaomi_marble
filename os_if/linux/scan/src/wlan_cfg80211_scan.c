@@ -37,6 +37,7 @@
 #ifdef WLAN_POLICY_MGR_ENABLE
 #include <wlan_policy_mgr_api.h>
 #endif
+#include <wlan_reg_services_api.h>
 
 static const
 struct nla_policy scan_policy[QCA_WLAN_VENDOR_ATTR_SCAN_MAX + 1] = {
@@ -1212,6 +1213,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	uint8_t i;
 	int status;
 	uint8_t num_chan = 0, channel;
+	uint32_t c_freq;
 	struct wlan_objmgr_vdev *vdev;
 	wlan_scan_requester req_id;
 	struct pdev_osif_priv *osif_priv;
@@ -1293,6 +1295,11 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	   (wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_GO_MODE))
 		req->scan_req.scan_f_passive = false;
 
+	if (params->half_rate)
+		req->scan_req.scan_f_half_rate = true;
+	else if (params->quarter_rate)
+		req->scan_req.scan_f_quarter_rate = true;
+
 	if ((request->n_ssids == 1) && request->ssids &&
 	   !qdf_mem_cmp(&request->ssids[0], "DIRECT-", 7))
 		is_p2p_scan = true;
@@ -1332,7 +1339,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 
 		for (i = 0; i < request->n_channels; i++) {
 			channel = request->channels[i]->hw_value;
-			if (wlan_is_dsrc_channel(wlan_chan_to_freq(channel)))
+			c_freq = wlan_reg_chan_to_freq(pdev, channel);
+			if (wlan_is_dsrc_channel(c_freq))
 				continue;
 #ifdef WLAN_POLICY_MGR_ENABLE
 			if (ap_or_go_present) {
@@ -1354,9 +1362,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 			}
 #endif
 			len += snprintf(chl + len, 5, "%d ", channel);
-			req->scan_req.chan_list.chan[num_chan].freq =
-				wlan_chan_to_freq(channel);
-			band = util_scan_scm_chan_to_band(channel);
+			req->scan_req.chan_list.chan[num_chan].freq = c_freq;
+			band = util_scan_scm_freq_to_band(c_freq);
 			if (band == WLAN_BAND_2_4_GHZ)
 				req->scan_req.chan_list.chan[num_chan].phymode =
 					SCAN_PHY_MODE_11G;
@@ -1610,28 +1617,15 @@ int wlan_vendor_abort_scan(struct wlan_objmgr_pdev *pdev,
 }
 
 static inline struct ieee80211_channel *
-wlan_get_ieee80211_channel(struct wiphy *wiphy, int chan_no)
+wlan_get_ieee80211_channel(struct wiphy *wiphy,
+		struct wlan_objmgr_pdev *pdev,
+		int chan_no)
 {
 	unsigned int freq;
 	struct ieee80211_channel *chan;
 
-	if (WLAN_CHAN_IS_2GHZ(chan_no) &&
-	   (wiphy->bands[NL80211_BAND_2GHZ] != NULL)) {
-		freq =
-			ieee80211_channel_to_frequency(chan_no,
-			NL80211_BAND_2GHZ);
-	} else if (WLAN_CHAN_IS_5GHZ(chan_no) &&
-	   (wiphy->bands[NL80211_BAND_5GHZ] != NULL)) {
-		freq =
-			ieee80211_channel_to_frequency(chan_no,
-			NL80211_BAND_5GHZ);
-	} else {
-		cfg80211_err("Invalid chan_no %d", chan_no);
-		return NULL;
-	}
-
+	freq = wlan_reg_chan_to_freq(pdev, chan_no);
 	chan = ieee80211_get_channel(wiphy, freq);
-
 	if (!chan)
 		cfg80211_err("chan is NULL, chan_no: %d freq: %d",
 			chan_no, freq);
@@ -1806,7 +1800,7 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	 */
 	bss_data.rssi = scan_params->rssi_raw;
 
-	bss_data.chan = wlan_get_ieee80211_channel(wiphy,
+	bss_data.chan = wlan_get_ieee80211_channel(wiphy, pdev,
 		scan_params->channel.chan_idx);
 	if (!bss_data.chan) {
 		qdf_mem_free(bss_data.mgmt);

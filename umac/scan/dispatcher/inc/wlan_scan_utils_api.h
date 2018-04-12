@@ -1444,4 +1444,11 @@ util_scan_entry_mbo_oce(struct scan_cache_entry *scan_entry)
  */
 enum wlan_band util_scan_scm_chan_to_band(uint32_t chan);
 
+/**
+ * util_scan_scm_freq_to_band() - API to get band from frequency
+ * @freq: Channel frequency
+ *
+ * Return: Band information as per frequency
+ */
+enum wlan_band util_scan_scm_freq_to_band(uint16_t freq);
 #endif
