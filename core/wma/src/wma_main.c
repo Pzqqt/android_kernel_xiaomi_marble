@@ -7762,14 +7762,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_aggr_qos_req(wma_handle, (tAggrAddTsParams *) msg->bodyptr);
 		break;
 
-	case WMA_WOWL_ENTER_REQ:
-		wma_wow_enter(wma_handle,
-			      (tpSirHalWowlEnterParams) msg->bodyptr);
-		break;
-	case WMA_WOWL_EXIT_REQ:
-		wma_wow_exit(wma_handle, (tpSirHalWowlExitParams) msg->bodyptr);
-		break;
-
 	case WMA_8023_MULTICAST_LIST_REQ:
 		wma_process_mcbc_set_filter_req(wma_handle,
 				(tpSirRcvFltMcAddrList) msg->bodyptr);

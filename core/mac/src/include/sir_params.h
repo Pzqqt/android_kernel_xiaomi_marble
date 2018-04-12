@@ -312,13 +312,9 @@ struct sir_mgmt_msg {
 
 #define SIR_HAL_LOW_RSSI_IND               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 80)
 #define SIR_HAL_BEACON_FILTER_IND          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 81)
-/* / PE <-> HAL WOWL messages */
-#define SIR_HAL_WOW_ADD_PTRN               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 82)
-#define SIR_HAL_WOW_DEL_PTRN               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 83)
-#define SIR_HAL_WOWL_ENTER_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 84)
-#define SIR_HAL_WOWL_ENTER_RSP             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 85)
-#define SIR_HAL_WOWL_EXIT_REQ              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 86)
-#define SIR_HAL_WOWL_EXIT_RSP              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 87)
+
+/* 82-87 are unused */
+
 /* / PE <-> HAL statistics messages */
 #define SIR_HAL_GET_STATISTICS_REQ         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 88)
 #define SIR_HAL_GET_STATISTICS_RSP         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 89)

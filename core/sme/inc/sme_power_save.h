@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -72,17 +72,12 @@ enum ps_state {
  *		setting which keep tracks of ACs being admitted.
  *		If bit is set to 0: That particular AC is not admitted
  *		If bit is set to 1: That particular AC is admitted
- * @ uapsd_per_ac_bit_mask: This is a static UAPSD mask setting
+ * @uapsd_per_ac_bit_mask: This is a static UAPSD mask setting
  *		derived from SME_JOIN_REQ and SME_REASSOC_REQ.
  *		If a particular AC bit is set, it means the AC is both
  *		trigger enabled and delivery enabled.
- * @enter_wowl_callback_routine: routine to call for wowl request.
- * @enter_wowl_callback_context: value to be passed as parameter to
- *			routine specified above.
- * @wowl_enter_params: WOWL mode configuration.
- * @wake_reason_ind_cb: routine to call for wake reason indication.
- * @wake_reason_ind_cb_ctx: value to be passed as parameter to
- *			routine specified above.
+ * @auto_ps_enable_timer: Upon expiration of this timer	Power Save Offload
+ *		module will try to enable sta mode ps
  */
 
 struct ps_params {
@@ -93,23 +88,6 @@ struct ps_params {
 	uint8_t uapsd_per_ac_delivery_enable_mask;
 	uint8_t ac_admit_mask[SIR_MAC_DIRECTION_DIRECT];
 	uint8_t uapsd_per_ac_bit_mask;
-	/* WOWL param */
-	void (*enter_wowl_callback_routine)(void *callback_context,
-			QDF_STATUS status);
-	void *enter_wowl_callback_context;
-	tSirSmeWowlEnterParams wowl_enter_params;
-#ifdef WLAN_WAKEUP_EVENTS
-	void (*wake_reason_ind_cb)(void *callback_context,
-			tpSirWakeReasonInd wake_reason_ind);
-	void *wake_reason_ind_cb_ctx;
-#endif /* WLAN_WAKEUP_EVENTS */
-
-	/*
-	 * Auto Sta Ps Enable Timer
-	 * Upon expiration of this timer
-	 * Power Save Offload module will
-	 * try to enable sta mode ps
-	 */
 	qdf_mc_timer_t auto_ps_enable_timer;
 
 };

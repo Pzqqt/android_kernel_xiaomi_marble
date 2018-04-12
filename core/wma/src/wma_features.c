@@ -2883,33 +2883,6 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len)
 }
 
 /**
- * wma_wow_enter() - store enable/disable status for pattern
- * @wma: wma handle
- * @info: wow parameters
- *
- * Records pattern enable/disable status locally. This choice will
- * take effect when the driver enter into suspend state.
- *
- * Return: QDF status
- */
-QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wma_wow_exit() - clear all wma states
- * @wma: wma handle
- * @info: wow params
- *
- * Return: QDF status
- */
-QDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wma_del_ts_req() - send DELTS request to fw
  * @wma: wma handle
  * @msg: delts params

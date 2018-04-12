@@ -483,22 +483,6 @@ static inline void sme_deregister_oem_data_rsp_callback(tHalHandle h_hal)
 
 #endif
 
-extern QDF_STATUS sme_enter_wowl(tHalHandle hHal,
-			 void (*enter_wowl_callback_routine)(void
-						  *callbackContext,
-						  QDF_STATUS  status),
-			 void *enter_wowl_callback_context,
-#ifdef WLAN_WAKEUP_EVENTS
-			 void (*wake_reason_ind_cb)(void *callbackContext,
-						 tpSirWakeReasonInd
-						 wake_reason_ind),
-			 void *wake_reason_ind_cb_ctx,
-#endif /* WLAN_WAKEUP_EVENTS */
-			 tpSirSmeWowlEnterParams wowl_enter_params,
-			 uint8_t sessionId);
-
-extern QDF_STATUS sme_exit_wowl(tHalHandle hHal,
-		tpSirSmeWowlExitParams wowl_exit_params);
 QDF_STATUS sme_roam_set_key(tHalHandle, uint8_t sessionId,
 		tCsrRoamSetKey *pSetKey, uint32_t *pRoamId);
 QDF_STATUS sme_get_country_code(tHalHandle hHal, uint8_t *pBuf, uint8_t *pbLen);
