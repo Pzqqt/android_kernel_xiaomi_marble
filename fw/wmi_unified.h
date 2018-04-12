@@ -901,6 +901,8 @@ typedef enum {
     WMI_THERM_THROT_SET_CONF_CMDID,
     /* set runtime dpd recalibration params */
     WMI_RUNTIME_DPD_RECAL_CMDID,
+    /* get TX power for input HALPHY parameters */
+    WMI_GET_TPC_POWER_CMDID,
 
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
@@ -1562,6 +1564,9 @@ typedef enum {
 
     /** event to report result of host configure SAR2 */
     WMI_SAR2_RESULT_EVENTID,
+
+    /** event to get TX power per input HALPHY parameters */
+    WMI_GET_TPC_POWER_EVENTID,
 
     /* GPIO Event */
     WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
@@ -21597,6 +21602,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_REQUEST_ROAM_SCAN_STATS_CMDID);
         WMI_RETURN_STRING(WMI_PEER_TID_CONFIGURATIONS_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SET_CUSTOM_SW_RETRY_TH_CMDID);
+        WMI_RETURN_STRING(WMI_GET_TPC_POWER_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -22613,6 +22619,41 @@ typedef struct {
      *       and the last 3 elements from the second scan.
      */
 } wmi_roam_scan_stats_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals wmi_txpower_query_cmd_fixed_param  */
+    A_UINT32 request_id;    /* unique request ID to distinguish the command / event set */
+
+    /* The mode value has the following meaning :
+     * 0  : 11a
+     * 1  : 11bg
+     * 2  : 11b
+     * 3  : 11g only
+     * 4  : 11a HT20
+     * 5  : 11g HT20
+     * 6  : 11a HT40
+     * 7  : 11g HT40
+     * 8  : 11a VHT20
+     * 9  : 11a VHT40
+     * 10 : 11a VHT80
+     * 11 : 11g VHT20
+     * 12 : 11g VHT40
+     * 13 : 11g VHT80
+     * 14 : unknown
+     */
+    A_UINT32 mode;
+    A_UINT32 rate;          /* rate index */
+    A_UINT32 nss;           /* number of spacial stream */
+    A_UINT32 beamforming;   /* beamforming parameter 0:disabled, 1:enabled */
+    A_UINT32 chain_mask;    /* mask for the antenna set to get power */
+    A_UINT32 chain_index;   /* index for the antenna */
+} wmi_get_tpc_power_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_get_tpc_power_evt_fixed_param  */
+    A_UINT32 request_id;    /* request ID set by the command */
+    A_INT32  tx_power;      /* TX power for the specified HALPHY parameters in half dBm unit */
+} wmi_get_tpc_power_evt_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
