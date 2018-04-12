@@ -241,6 +241,7 @@ enum qdf_bus_type {
  * @bus_type: Bus type
  * @bid: Bus ID
  * @smmu_s1_enabled: SMMU S1 enabled or not
+ * @iommu_mapping: DMA iommu mapping pointer
  */
 struct __qdf_device {
 	void *drv;
@@ -256,6 +257,7 @@ struct __qdf_device {
 	const struct hif_bus_id *bid;
 #endif
 	bool smmu_s1_enabled;
+	struct dma_iommu_mapping *iommu_mapping;
 };
 typedef struct __qdf_device *__qdf_device_t;
 

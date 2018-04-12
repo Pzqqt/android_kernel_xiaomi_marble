@@ -241,7 +241,7 @@ __qdf_mem_paddr_from_dmaaddr(qdf_device_t osdev,
 	struct dma_iommu_mapping *mapping;
 
 	if (__qdf_mem_smmu_s1_enabled(osdev)) {
-		mapping = pld_smmu_get_mapping(osdev->dev);
+		mapping = osdev->iommu_mapping;
 		if (mapping)
 			return iommu_iova_to_phys(mapping->domain, dma_addr);
 	}
