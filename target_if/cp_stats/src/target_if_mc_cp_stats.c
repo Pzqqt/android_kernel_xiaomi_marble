@@ -52,6 +52,8 @@ static void target_if_cp_stats_free_stats_event(struct stats_event *ev)
 {
 	qdf_mem_free(ev->pdev_stats);
 	ev->pdev_stats = NULL;
+	qdf_mem_free(ev->peer_stats);
+	ev->peer_stats = NULL;
 }
 
 static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
@@ -91,6 +93,43 @@ static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS target_if_cp_stats_extract_peer_stats(
+					struct wmi_unified *wmi_hdl,
+					wmi_host_stats_event *stats_param,
+					struct stats_event *ev,
+					uint8_t *data)
+{
+	uint32_t i;
+	QDF_STATUS status;
+	wmi_host_peer_stats peer_stats;
+
+	ev->num_peer_stats = stats_param->num_peer_stats;
+	if (!ev->num_peer_stats)
+		return QDF_STATUS_SUCCESS;
+
+	ev->peer_stats = qdf_mem_malloc(sizeof(*ev->peer_stats) *
+						ev->num_peer_stats);
+	if (!ev->peer_stats) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	for (i = 0; i < ev->num_peer_stats; i++) {
+		status = wmi_extract_peer_stats(wmi_hdl, data, i, &peer_stats);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			cp_stats_err("wmi_extract_pdev_stats failed");
+			continue;
+		}
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&peer_stats.peer_macaddr,
+						ev->peer_stats[i].peer_macaddr);
+		ev->peer_stats[i].tx_rate = peer_stats.peer_tx_rate;
+		ev->peer_stats[i].rx_rate = peer_stats.peer_rx_rate;
+		ev->peer_stats[i].peer_rssi = peer_stats.peer_rssi;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 						   struct stats_event *ev,
 						   uint8_t *data)
@@ -108,6 +147,11 @@ static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 		       stats_param.num_peer_stats, stats_param.num_rssi_stats);
 
 	status = target_if_cp_stats_extract_pdev_stats(wmi_hdl, &stats_param,
+						       ev, data);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = target_if_cp_stats_extract_peer_stats(wmi_hdl, &stats_param,
 						       ev, data);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
@@ -248,6 +292,8 @@ static uint32_t get_stats_id(enum stats_req_type type)
 		break;
 	case TYPE_CONNECTION_TX_POWER:
 		return WMI_REQUEST_PDEV_STAT;
+	case TYPE_PEER_STATS:
+		return WMI_REQUEST_PEER_STAT;
 	}
 	return 0;
 }
