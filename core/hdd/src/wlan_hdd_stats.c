@@ -3887,20 +3887,22 @@ int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 }
 
 /**
- * __wlan_hdd_cfg80211_get_station() - get station statistics
- * @wiphy: Pointer to wiphy
- * @dev: Pointer to network device
- * @mac: Pointer to mac
- * @sinfo: Pointer to station info
+ * wlan_hdd_get_sta_stats() - get aggregate STA stats
+ * @wiphy: wireless phy
+ * @adapter: STA adapter to get stats for
+ * @mac: mac address of sta
+ * @sinfo: kernel station_info struct to populate
  *
- * Return: 0 for success, non-zero for failure
+ * Fetch the vdev-level aggregate stats for the given STA adapter. This is to
+ * support "station dump" and "station get" for STA vdevs
+ *
+ * Return: errno
  */
-static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
-					   struct net_device *dev,
-					   const uint8_t *mac,
-					   struct station_info *sinfo)
+static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
+				  struct hdd_adapter *adapter,
+				  const uint8_t *mac,
+				  struct station_info *sinfo)
 {
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int ssidlen = sta_ctx->conn_info.SSID.SSID.length;
 	uint8_t rate_flags;
@@ -3924,7 +3926,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	uint8_t rateFlag = 1;
 	uint8_t i, j, rssidx;
 	uint8_t nss = 1;
-	int status, mode = 0, maxHtIdx;
+	int mode = 0, maxHtIdx;
 	struct index_vht_data_rate_type *supported_vht_mcs_rate;
 	struct index_data_rate_type *supported_mcs_rate;
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
@@ -3934,25 +3936,6 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	uint32_t vht_mcs_map;
 	enum data_rate_11ac_max_mcs vht_max_mcs;
 	int32_t rcpi_value;
-
-	hdd_enter_dev(dev);
-
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hdd_err("Command not allowed in FTM mode");
-		return -EINVAL;
-	}
-
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (status)
-		return status;
-
-	if (wlan_hdd_validate_session_id(adapter->session_id)) {
-		hdd_err("invalid session id: %d", adapter->session_id);
-		return -EINVAL;
-	}
-
-	if (adapter->device_mode == QDF_SAP_MODE)
-		return wlan_hdd_get_sap_stats(adapter, sinfo);
 
 	if ((eConnectionState_Associated != sta_ctx->conn_info.connState) ||
 	    (0 == ssidlen)) {
@@ -4408,6 +4391,46 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 }
 
 /**
+ * __wlan_hdd_cfg80211_get_station() - get station statistics
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer to network device
+ * @mac: Pointer to mac
+ * @sinfo: Pointer to station info
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
+					   struct net_device *dev,
+					   const uint8_t *mac,
+					   struct station_info *sinfo)
+{
+	int status;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = (struct hdd_context *) wiphy_priv(wiphy);
+
+	hdd_enter_dev(dev);
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (status)
+		return status;
+
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
+		return -EINVAL;
+	}
+
+	if (adapter->device_mode == QDF_SAP_MODE)
+		return wlan_hdd_get_sap_stats(adapter, sinfo);
+	else
+		return wlan_hdd_get_sta_stats(wiphy, adapter, mac, sinfo);
+}
+
+/**
  * wlan_hdd_cfg80211_get_station() - get station statistics
  * @wiphy: Pointer to wiphy
  * @dev: Pointer to network device
@@ -4416,15 +4439,9 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
  *
  * Return: 0 for success, non-zero for failure
  */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0))
 int wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				  struct net_device *dev, const uint8_t *mac,
 				  struct station_info *sinfo)
-#else
-int wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
-				  struct net_device *dev, uint8_t *mac,
-				  struct station_info *sinfo)
-#endif
 {
 	int ret;
 
