@@ -4058,6 +4058,9 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	WMA_LOGD("reg_dmn: %d regdmn2g: %d regdmn5g :%d ctl2g: %d ctl5g: %d",
+		 reg_dmn, regdmn2G, regdmn5G, ctl2G, ctl5G);
+
 	if (NULL == wma) {
 		WMA_LOGE("%s: wma context is NULL", __func__);
 		return;
