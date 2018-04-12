@@ -5330,6 +5330,14 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TX_SCH_DELAY_MAX),
 
 	HDD_GREEN_AP_REG_VARIABLES
+
+	REG_VARIABLE(CFG_ENABLE_UNIT_TEST_FRAMEWORK_NAME,
+		     WLAN_PARAM_Integer,
+		     struct hdd_config, is_unit_test_framework_enabled,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_UINT_TEST_FRAMEWORK_DEFAULT,
+		     CFG_ENABLE_UNIT_TEST_FRAMEWORK_MIN,
+		     CFG_ENABLE_UNIT_TEST_FRAMEWORK_MAX),
 };
 
 
@@ -7203,6 +7211,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->channel_select_logic_conc);
 
 	hdd_nud_cfg_print(hdd_ctx);
+	hdd_debug("Name = [%s] value = [0x%x]",
+		  CFG_ENABLE_UNIT_TEST_FRAMEWORK_NAME,
+		  hdd_ctx->config->is_unit_test_framework_enabled);
 }
 
 
