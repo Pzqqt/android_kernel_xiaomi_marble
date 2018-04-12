@@ -1912,9 +1912,7 @@ ccflags-$(CONFIG_WLAN_CONV_SPECTRAL_ENABLE) += -DWLAN_CONV_SPECTRAL_ENABLE
 ccflags-$(CONFIG_WLAN_SPECTRAL_ENABLE) += -DWLAN_SPECTRAL_ENABLE
 ccflags-$(CONFIG_WMI_CMD_STRINGS) += -DWMI_CMD_STRINGS
 
-ifeq ($(CONFIG_WLAN_DISABLE_EXPORT_SYMBOL), y)
-ccflags-y += -DWLAN_DISABLE_EXPORT_SYMBOL
-endif
+ccflags-$(CONFIG_WLAN_DISABLE_EXPORT_SYMBOL) += -DWLAN_DISABLE_EXPORT_SYMBOL
 
 ############ WIFI POS ##############
 ifeq ($(CONFIG_WIFI_POS_CONVERGED), y)
@@ -1925,21 +1923,14 @@ endif
 ####################################
 
 
-ifeq ($(CONFIG_FEATURE_HTC_CREDIT_HISTORY), y)
-ccflags-y += -DFEATURE_HTC_CREDIT_HISTORY
-endif
-
-ifeq ($(CONFIG_WLAN_FEATURE_P2P_DEBUG), y)
-ccflags-y += -DWLAN_FEATURE_P2P_DEBUG
-endif
+ccflags-$(CONFIG_FEATURE_HTC_CREDIT_HISTORY) += -DFEATURE_HTC_CREDIT_HISTORY
+ccflags-$(CONFIG_WLAN_FEATURE_P2P_DEBUG) += -DWLAN_FEATURE_P2P_DEBUG
 
 ifneq ($(CONFIG_HIF_USB), y)
 ccflags-y += -DWLAN_LOGGING_SOCK_SVC_ENABLE
 endif
 
-ifeq ($(CONFIG_WLAN_FEATURE_FILS), y)
-ccflags-y += -DWLAN_FEATURE_FILS_SK
-endif
+ccflags-$(CONFIG_WLAN_FEATURE_FILS) += -DWLAN_FEATURE_FILS_SK
 
 ifeq ($(CONFIG_CNSS), y)
 ifeq ($(CONFIG_CNSS_SDIO), y)
@@ -1955,9 +1946,7 @@ ccflags-y += -DCONFIG_PLD_PCIE_INIT
 endif
 
 #Enable NL80211 test mode
-ifeq ($(CONFIG_NL80211_TESTMODE), y)
-ccflags-y += -DWLAN_NL80211_TESTMODE
-endif
+ccflags-$(CONFIG_NL80211_TESTMODE) += -DWLAN_NL80211_TESTMODE
 
 # Flag to enable bus auto suspend
 ifeq ($(CONFIG_HIF_PCI), y)
@@ -1966,13 +1955,9 @@ ccflags-y += -DFEATURE_RUNTIME_PM
 endif
 endif
 
-ifeq ($(CONFIG_ICNSS), y)
-ccflags-y += -DCONFIG_PLD_SNOC_ICNSS
-endif
+ccflags-$(CONFIG_ICNSS) += -DCONFIG_PLD_SNOC_ICNSS
 
-ifeq ($(CONFIG_ICNSS), y)
-ccflags-y += -DQCA_WIFI_3_0
-endif
+ccflags-$(CONFIG_ICNSS) += -DQCA_WIFI_3_0
 
 ifeq (y,$(filter y,$(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
 ccflags-y += -DQCA_WIFI_3_0_ADRASTEA
@@ -1986,13 +1971,9 @@ ifeq ($(CONFIG_QMI_SUPPORT), n)
 ccflags-y += -DCONFIG_BYPASS_QMI
 endif
 
-ifeq ($(CONFIG_WLAN_FASTPATH), y)
-ccflags-y +=	-DWLAN_FEATURE_FASTPATH
-endif
+ccflags-$(CONFIG_WLAN_FASTPATH) +=	-DWLAN_FEATURE_FASTPATH
 
-ifeq ($(CONFIG_FEATURE_PKTLOG), y)
-ccflags-y +=     -DFEATURE_PKTLOG
-endif
+ccflags-$(CONFIG_FEATURE_PKTLOG) +=     -DFEATURE_PKTLOG
 
 ccflags-y +=	-DCONFIG_DP_TRACE
 
@@ -2033,9 +2014,7 @@ ccflags-y +=	-DTRACE_RECORD \
 endif
 endif
 
-ifeq ($(CONFIG_FEATURE_UNIT_TEST_SUSPEND), y)
-	ccflags-y += -DWLAN_SUSPEND_RESUME_TEST
-endif
+ccflags-$(CONFIG_FEATURE_UNIT_TEST_SUSPEND) += -DWLAN_SUSPEND_RESUME_TEST
 
 ifeq ($(CONFIG_LEAK_DETECTION), y)
 ccflags-y += \
@@ -2060,34 +2039,20 @@ ccflags-y += -DQCA_COMPUTE_TX_DELAY_PER_TID
 endif
 
 #normally, TDLS negative behavior is not needed
-ifeq ($(CONFIG_QCOM_TDLS), y)
-ccflags-y += -DFEATURE_WLAN_TDLS
-endif
+ccflags-$(CONFIG_QCOM_TDLS) += -DFEATURE_WLAN_TDLS
 
-ifeq ($(CONFIG_QCACLD_WLAN_LFR3), y)
-ccflags-y += -DWLAN_FEATURE_ROAM_OFFLOAD
-endif
+ccflags-$(CONFIG_QCACLD_WLAN_LFR3) += -DWLAN_FEATURE_ROAM_OFFLOAD
 
-ifeq ($(CONFIG_CNSS_GENL), y)
-ccflags-y += -DCNSS_GENL
-endif
+ccflags-$(CONFIG_CNSS_GENL) += -DCNSS_GENL
 
-ifeq ($(CONFIG_QCACLD_WLAN_LFR2), y)
-ccflags-y += -DWLAN_FEATURE_HOST_ROAM
-endif
+ccflags-$(CONFIG_QCACLD_WLAN_LFR2) += -DWLAN_FEATURE_HOST_ROAM
 
-ifeq ($(CONFIG_WLAN_POWER_DEBUGFS), y)
-ccflags-y += -DWLAN_POWER_DEBUGFS
-endif
+ccflags-$(CONFIG_WLAN_POWER_DEBUGFS) += -DWLAN_POWER_DEBUGFS
 
 # Enable object manager reference count debug infrastructure
-ifeq ($(CONFIG_WLAN_OBJMGR_DEBUG), y)
-ccflags-y += -DWLAN_OBJMGR_DEBUG
-endif
+ccflags-$(CONFIG_WLAN_OBJMGR_DEBUG) += -DWLAN_OBJMGR_DEBUG
 
-ifeq ($(CONFIG_WLAN_FEATURE_SAE), y)
-ccflags-y += -DWLAN_FEATURE_SAE
-endif
+ccflags-$(CONFIG_WLAN_FEATURE_SAE) += -DWLAN_FEATURE_SAE
 
 ifeq ($(BUILD_DIAG_VERSION), y)
 ccflags-y += -DFEATURE_WLAN_DIAG_SUPPORT
@@ -2104,94 +2069,50 @@ ccflags-y += -DQCA_SUPPORT_OL_RX_REORDER_TIMEOUT
 ccflags-y += -DCONFIG_ATH_PCIE_MAX_PERF=0 -DCONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD=0 -DCONFIG_DISABLE_CDC_MAX_PERF_WAR=0
 endif
 
-ifeq ($(CONFIG_WLAN_FEATURE_11W), y)
-ccflags-y += -DWLAN_FEATURE_11W
-endif
+ccflags-$(CONFIG_WLAN_FEATURE_11W) += -DWLAN_FEATURE_11W
 
-ifeq ($(CONFIG_QCA_TXDESC_SANITY_CHECKS), y)
-ccflags-y += -DQCA_SUPPORT_TXDESC_SANITY_CHECKS
-endif
+ccflags-$(CONFIG_QCA_TXDESC_SANITY_CHECKS) += -DQCA_SUPPORT_TXDESC_SANITY_CHECKS
 
-ifeq ($(CONFIG_QCOM_LTE_COEX), y)
-ccflags-y += -DFEATURE_WLAN_CH_AVOID
-endif
+ccflags-$(CONFIG_QCOM_LTE_COEX) += -DFEATURE_WLAN_CH_AVOID
 
-ifeq ($(CONFIG_WLAN_FEATURE_LPSS), y)
-ccflags-y += -DWLAN_FEATURE_LPSS
-endif
+ccflags-$(CONFIG_WLAN_FEATURE_LPSS) += -DWLAN_FEATURE_LPSS
 
 ifneq ($(TARGET_BUILD_VARIANT),user)
 ccflags-y += -DDESC_DUP_DETECT_DEBUG
 ccflags-y += -DDEBUG_RX_RING_BUFFER
 endif
 
-ifeq ($(PANIC_ON_BUG), y)
-ccflags-y += -DPANIC_ON_BUG
-endif
+ccflags-$(PANIC_ON_BUG) += -DPANIC_ON_BUG
 
-ifeq ($(WLAN_WARN_ON_ASSERT), y)
-ccflags-y += -DWLAN_WARN_ON_ASSERT
-endif
+ccflags-$(WLAN_WARN_ON_ASSERT) += -DWLAN_WARN_ON_ASSERT
 
-ifeq ($(CONFIG_WLAN_LOG_FATAL), y)
-ccflags-y += -DWLAN_LOG_FATAL
-endif
+ccflags-$(CONFIG_WLAN_LOG_FATAL) += -DWLAN_LOG_FATAL
+ccflags-$(CONFIG_WLAN_LOG_ERROR) += -DWLAN_LOG_ERROR
+ccflags-$(CONFIG_WLAN_LOG_WARN) += -DWLAN_LOG_WARN
+ccflags-$(CONFIG_WLAN_LOG_INFO) += -DWLAN_LOG_INFO
+ccflags-$(CONFIG_WLAN_LOG_DEBUG) += -DWLAN_LOG_DEBUG
 
-ifeq ($(CONFIG_WLAN_LOG_ERROR), y)
-ccflags-y += -DWLAN_LOG_ERROR
-endif
+ccflags-$(WLAN_OPEN_SOURCE) += -DWLAN_OPEN_SOURCE
 
-ifeq ($(CONFIG_WLAN_LOG_WARN), y)
-ccflags-y += -DWLAN_LOG_WARN
-endif
+ccflags-$(CONFIG_FEATURE_STATS_EXT) += -DWLAN_FEATURE_STATS_EXT
 
-ifeq ($(CONFIG_WLAN_LOG_INFO), y)
-ccflags-y += -DWLAN_LOG_INFO
-endif
+ccflags-$(CONFIG_QCACLD_FEATURE_NAN) += -DWLAN_FEATURE_NAN
 
-ifeq ($(CONFIG_WLAN_LOG_DEBUG), y)
-ccflags-y += -DWLAN_LOG_DEBUG
-endif
-
-ifeq ($(WLAN_OPEN_SOURCE), y)
-ccflags-y += -DWLAN_OPEN_SOURCE
-endif
-
-ifeq ($(CONFIG_FEATURE_STATS_EXT), y)
-ccflags-y += -DWLAN_FEATURE_STATS_EXT
-endif
-
-ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
-ccflags-y += -DWLAN_FEATURE_NAN
-endif
-
-ifeq ($(CONFIG_QCA_IBSS_SUPPORT), y)
-ccflags-y += -DQCA_IBSS_SUPPORT
-endif
+ccflags-$(CONFIG_QCA_IBSS_SUPPORT) += -DQCA_IBSS_SUPPORT
 
 #Enable OL debug and wmi unified functions
-ifeq ($(CONFIG_ATH_PERF_PWR_OFFLOAD), y)
-ccflags-y += -DATH_PERF_PWR_OFFLOAD
-endif
+ccflags-$(CONFIG_ATH_PERF_PWR_OFFLOAD) += -DATH_PERF_PWR_OFFLOAD
 
 #Disable packet log
-ifeq ($(CONFIG_REMOVE_PKT_LOG), y)
-ccflags-y += -DREMOVE_PKT_LOG
-endif
+ccflags-$(CONFIG_REMOVE_PKT_LOG) += -DREMOVE_PKT_LOG
 
 #Enable 11AC TX
-ifeq ($(CONFIG_ATH_11AC_TXCOMPACT), y)
-ccflags-y += -DATH_11AC_TXCOMPACT
-endif
+ccflags-$(CONFIG_ATH_11AC_TXCOMPACT) += -DATH_11AC_TXCOMPACT
 
 #Enable PCI specific APIS (dma, etc)
-ifeq ($(CONFIG_HIF_PCI), y)
-ccflags-y += -DHIF_PCI
-endif
+ccflags-$(CONFIG_HIF_PCI) += -DHIF_PCI
 
-ifeq ($(CONFIG_HIF_SNOC), y)
-ccflags-y += -DHIF_SNOC
-endif
+ccflags-$(CONFIG_HIF_SNOC) += -DHIF_SNOC
 
 #Enable High Latency related Flags
 ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
@@ -2234,29 +2155,19 @@ endif
 ccflags-y += -DCONFIG_FW_LOGS_BASED_ON_INI
 
 #Enable pci read/write config functions
-ifeq ($(CONFIG_ATH_PCI), y)
-ccflags-y += -DATH_PCI
-endif
+ccflags-$(CONFIG_ATH_PCI) += -DATH_PCI
 
 #Enable power management suspend/resume functionality
-ifeq ($(CONFIG_ATH_BUS_PM), y)
-ccflags-y += -DATH_BUS_PM
-endif
+ccflags-$(CONFIG_ATH_BUS_PM) += -DATH_BUS_PM
 
 #Enable FLOWMAC module support
-ifeq ($(CONFIG_ATH_SUPPORT_FLOWMAC_MODULE), y)
-ccflags-y += -DATH_SUPPORT_FLOWMAC_MODULE
-endif
+ccflags-$(CONFIG_ATH_SUPPORT_FLOWMAC_MODULE) += -DATH_SUPPORT_FLOWMAC_MODULE
 
 #Enable spectral support
-ifeq ($(CONFIG_ATH_SUPPORT_SPECTRAL), y)
-ccflags-y += -DATH_SUPPORT_SPECTRAL
-endif
+ccflags-$(CONFIG_ATH_SUPPORT_SPECTRAL) += -DATH_SUPPORT_SPECTRAL
 
 #Enable WDI Event support
-ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
-ccflags-y += -DWDI_EVENT_ENABLE
-endif
+ccflags-$(CONFIG_WDI_EVENT_ENABLE) += -DWDI_EVENT_ENABLE
 
 #Endianness selection
 ifeq ($(CONFIG_LITTLE_ENDIAN), y)
@@ -2269,43 +2180,29 @@ ccflags-y += -DBIG_ENDIAN_HOST
 endif
 
 #Enable TX reclaim support
-ifeq ($(CONFIG_TX_CREDIT_RECLAIM_SUPPORT), y)
-ccflags-y += -DTX_CREDIT_RECLAIM_SUPPORT
-endif
+ccflags-$(CONFIG_TX_CREDIT_RECLAIM_SUPPORT) += -DTX_CREDIT_RECLAIM_SUPPORT
 
 #Enable FTM support
-ifeq ($(CONFIG_QCA_WIFI_FTM), y)
-ccflags-y += -DQCA_WIFI_FTM
-endif
+ccflags-$(CONFIG_QCA_WIFI_FTM) += -DQCA_WIFI_FTM
 
 #Enable Checksum Offload support
-ifeq ($(CONFIG_CHECKSUM_OFFLOAD), y)
-ccflags-y += -DCHECKSUM_OFFLOAD
-endif
+ccflags-$(CONFIG_CHECKSUM_OFFLOAD) += -DCHECKSUM_OFFLOAD
 
 #Enable Checksum Offload support
-ifeq ($(CONFIG_IPA_OFFLOAD), y)
-ccflags-y += -DIPA_OFFLOAD
-endif
+ccflags-$(CONFIG_IPA_OFFLOAD) += -DIPA_OFFLOAD
 
 ifeq ($(CONFIG_ARCH_SDX20), y)
 ccflags-y += -DSYNC_IPA_READY
 endif
 
 #Enable GTK Offload
-ifeq ($(CONFIG_GTK_OFFLOAD), y)
-ccflags-y += -DWLAN_FEATURE_GTK_OFFLOAD
-endif
+ccflags-$(CONFIG_GTK_OFFLOAD) += -DWLAN_FEATURE_GTK_OFFLOAD
 
 #Enable External WoW
-ifeq ($(CONFIG_EXT_WOW), y)
-ccflags-y += -DWLAN_FEATURE_EXTWOW_SUPPORT
-endif
+ccflags-$(CONFIG_EXT_WOW) += -DWLAN_FEATURE_EXTWOW_SUPPORT
 
 #Mark it as SMP Kernel
-ifeq ($(CONFIG_SMP), y)
-ccflags-y += -DQCA_CONFIG_SMP
-endif
+ccflags-$(CONFIG_SMP) += -DQCA_CONFIG_SMP
 
 #Enable Channel Matrix restriction for all Rome only targets
 ifneq ($(CONFIG_ICNSS), y)
@@ -2313,57 +2210,37 @@ ccflags-y += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION
 endif
 
 #Enable ICMP packet disable powersave feature
-ifeq ($(CONFIG_ICMP_DISABLE_PS), y)
-ccflags-y += -DWLAN_ICMP_DISABLE_PS
-endif
+ccflags-$(CONFIG_ICMP_DISABLE_PS) += -DWLAN_ICMP_DISABLE_PS
 
 #Enable OBSS feature
 ccflags-y += -DQCA_HT_2040_COEX
 
 #enable MCC TO SCC switch
-ifeq ($(CONFIG_FEATURE_WLAN_MCC_TO_SCC_SWITCH), y)
-ccflags-y += -DFEATURE_WLAN_MCC_TO_SCC_SWITCH
-endif
+ccflags-$(CONFIG_FEATURE_WLAN_MCC_TO_SCC_SWITCH) += -DFEATURE_WLAN_MCC_TO_SCC_SWITCH
 
 #enable wlan auto shutdown feature
-ifeq ($(CONFIG_FEATURE_WLAN_AUTO_SHUTDOWN), y)
-ccflags-y += -DFEATURE_WLAN_AUTO_SHUTDOWN
-endif
+ccflags-$(CONFIG_FEATURE_WLAN_AUTO_SHUTDOWN) += -DFEATURE_WLAN_AUTO_SHUTDOWN
 
 #enable AP-AP ACS Optimization
-ifeq ($(CONFIG_FEATURE_WLAN_AP_AP_ACS_OPTIMIZE), y)
-ccflags-y += -DFEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-endif
+ccflags-$(CONFIG_FEATURE_WLAN_AP_AP_ACS_OPTIMIZE) += -DFEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 
 #Enable 4address scheme
-ifeq ($(CONFIG_FEATURE_WLAN_STA_4ADDR_SCHEME), y)
-ccflags-y += -DFEATURE_WLAN_STA_4ADDR_SCHEME
-endif
+ccflags-$(CONFIG_FEATURE_WLAN_STA_4ADDR_SCHEME) += -DFEATURE_WLAN_STA_4ADDR_SCHEME
 
 #enable MDM/SDX special config
-ifeq ($(CONFIG_MDM_PLATFORM), y)
-ccflags-y += -DMDM_PLATFORM
-endif
+ccflags-$(CONFIG_MDM_PLATFORM) += -DMDM_PLATFORM
 
 #Disable STA-AP Mode DFS support
-ifeq ($(CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE), y)
-ccflags-y += -DFEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
-endif
+ccflags-$(CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE) += -DFEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
 
 #Open P2P device interface only for non-Mobile router use cases
-ifeq ($(CONFIG_WLAN_OPEN_P2P_INTERFACE), y)
-ccflags-y += -DWLAN_OPEN_P2P_INTERFACE
-endif
+ccflags-$(CONFIG_WLAN_OPEN_P2P_INTERFACE) += -DWLAN_OPEN_P2P_INTERFACE
 
 #Enable 2.4 GHz social channels in 5 GHz only mode for p2p usage
-ifeq ($(CONFIG_WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY), y)
-ccflags-y += -DWLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
-endif
+ccflags-$(CONFIG_WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY) += -DWLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
 
 #Green AP feature
-ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP), y)
-ccflags-y += -DWLAN_SUPPORT_GREEN_AP
-endif
+ccflags-$(CONFIG_QCACLD_FEATURE_GREEN_AP) += -DWLAN_SUPPORT_GREEN_AP
 
 #Stats & Quota Metering feature
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
@@ -2381,42 +2258,25 @@ ccflags-y += -DCHANNEL_HOPPING_ALL_BANDS
 endif
 
 #Enable Signed firmware support for split binary format
-ifeq ($(CONFIG_QCA_SIGNED_SPLIT_BINARY_SUPPORT), y)
-ccflags-y += -DQCA_SIGNED_SPLIT_BINARY_SUPPORT
-endif
+ccflags-$(CONFIG_QCA_SIGNED_SPLIT_BINARY_SUPPORT) += -DQCA_SIGNED_SPLIT_BINARY_SUPPORT
 
 #Enable single firmware binary format
-ifeq ($(CONFIG_QCA_SINGLE_BINARY_SUPPORT), y)
-ccflags-y += -DQCA_SINGLE_BINARY_SUPPORT
-endif
+ccflags-$(CONFIG_QCA_SINGLE_BINARY_SUPPORT) += -DQCA_SINGLE_BINARY_SUPPORT
 
 #Enable collecting target RAM dump after kernel panic
-ifeq ($(CONFIG_TARGET_RAMDUMP_AFTER_KERNEL_PANIC), y)
-ccflags-y += -DTARGET_RAMDUMP_AFTER_KERNEL_PANIC
-endif
+ccflags-$(CONFIG_TARGET_RAMDUMP_AFTER_KERNEL_PANIC) += -DTARGET_RAMDUMP_AFTER_KERNEL_PANIC
 
 #Enable/disable secure firmware feature
-ifeq ($(CONFIG_FEATURE_SECURE_FIRMWARE), y)
-ccflags-y += -DFEATURE_SECURE_FIRMWARE
-endif
+ccflags-$(CONFIG_FEATURE_SECURE_FIRMWARE) += -DFEATURE_SECURE_FIRMWARE
 
-ifeq ($(CONFIG_ATH_PCIE_ACCESS_DEBUG), y)
-ccflags-y += -DCONFIG_ATH_PCIE_ACCESS_DEBUG
-endif
+ccflags-$(CONFIG_ATH_PCIE_ACCESS_DEBUG) += -DCONFIG_ATH_PCIE_ACCESS_DEBUG
 
-# Enable feature support fo Linux version QCMBR
-ifeq ($(CONFIG_LINUX_QCMBR), y)
-ccflags-y += -DLINUX_QCMBR
-endif
+# Enable feature support for Linux version QCMBR
+ccflags-$(CONFIG_LINUX_QCMBR) += -DLINUX_QCMBR
 
 # Enable featue sync tsf between multi devices
-ifeq ($(CONFIG_WLAN_SYNC_TSF), y)
-ccflags-y += -DWLAN_FEATURE_TSF
-endif
-
-ifeq ($(CONFIG_WLAN_SYNC_TSF_PLUS), y)
-ccflags-y += -DWLAN_FEATURE_TSF_PLUS
-endif
+ccflags-$(CONFIG_WLAN_SYNC_TSF) += -DWLAN_FEATURE_TSF
+ccflags-$(CONFIG_WLAN_SYNC_TSF_PLUS) += -DWLAN_FEATURE_TSF_PLUS
 
 # Enable full rx re-order offload for adrastea
 ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
@@ -2450,59 +2310,31 @@ endif
 
 endif #CONFIG_HELIUMPLUS
 
-ifeq ($(CONFIG_ENABLE_DEBUG_ADDRESS_MARKING), y)
-ccflags-y += -DENABLE_DEBUG_ADDRESS_MARKING
-endif
-ifeq ($(CONFIG_FEATURE_TSO), y)
-ccflags-y += -DFEATURE_TSO
-endif
-ifeq ($(CONFIG_FEATURE_TSO_DEBUG), y)
-ccflags-y += -DFEATURE_TSO_DEBUG
-endif
+ccflags-$(CONFIG_ENABLE_DEBUG_ADDRESS_MARKING) += -DENABLE_DEBUG_ADDRESS_MARKING
+ccflags-$(CONFIG_FEATURE_TSO) += -DFEATURE_TSO
+ccflags-$(CONFIG_FEATURE_TSO_DEBUG) += -DFEATURE_TSO_DEBUG
 
-ifeq ($(CONFIG_WLAN_LRO), y)
-ccflags-y += -DFEATURE_LRO
-endif
+ccflags-$(CONFIG_WLAN_LRO) += -DFEATURE_LRO
 
-ifeq ($(CONFIG_FEATURE_AP_MCC_CH_AVOIDANCE), y)
-ccflags-y += -DFEATURE_AP_MCC_CH_AVOIDANCE
-endif
+ccflags-$(CONFIG_FEATURE_AP_MCC_CH_AVOIDANCE) += -DFEATURE_AP_MCC_CH_AVOIDANCE
 
-ifeq ($(CONFIG_MPC_UT_FRAMEWORK), y)
-ccflags-y += -DMPC_UT_FRAMEWORK
-endif
+ccflags-$(CONFIG_MPC_UT_FRAMEWORK) += -DMPC_UT_FRAMEWORK
 
-ifeq ($(CONFIG_FEATURE_EPPING), y)
-ccflags-y += -DWLAN_FEATURE_EPPING
-endif
+ccflags-$(CONFIG_FEATURE_EPPING) += -DWLAN_FEATURE_EPPING
 
-ifeq ($(CONFIG_WLAN_OFFLOAD_PACKETS), y)
-ccflags-y += -DWLAN_FEATURE_OFFLOAD_PACKETS
-endif
+ccflags-$(CONFIG_WLAN_OFFLOAD_PACKETS) += -DWLAN_FEATURE_OFFLOAD_PACKETS
 
-ifeq ($(CONFIG_WLAN_FEATURE_DISA), y)
-ccflags-y += -DWLAN_FEATURE_DISA
-endif
+ccflags-$(CONFIG_WLAN_FEATURE_DISA) += -DWLAN_FEATURE_DISA
 
-ifeq ($(CONFIG_WLAN_FEATURE_FIPS), y)
-ccflags-y += -DWLAN_FEATURE_FIPS
-endif
+ccflags-$(CONFIG_WLAN_FEATURE_FIPS) += -DWLAN_FEATURE_FIPS
 
-ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)
-ccflags-y += -DFEATURE_LFR_SUBNET_DETECTION
-endif
+ccflags-$(CONFIG_LFR_SUBNET_DETECTION) += -DFEATURE_LFR_SUBNET_DETECTION
 
-ifeq ($(CONFIG_MCC_TO_SCC_SWITCH), y)
-ccflags-y += -DFEATURE_WLAN_MCC_TO_SCC_SWITCH
-endif
+ccflags-$(CONFIG_MCC_TO_SCC_SWITCH) += -DFEATURE_WLAN_MCC_TO_SCC_SWITCH
 
-ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
-ccflags-y += -DWLAN_FEATURE_NAN_DATAPATH
-endif
+ccflags-$(CONFIG_WLAN_FEATURE_NAN_DATAPATH) += -DWLAN_FEATURE_NAN_DATAPATH
 
-ifeq ($(CONFIG_NAN_CONVERGENCE), y)
-ccflags-y += -DWLAN_FEATURE_NAN_CONVERGENCE
-endif
+ccflags-$(CONFIG_NAN_CONVERGENCE) += -DWLAN_FEATURE_NAN_CONVERGENCE
 
 ccflags-$(CONFIG_FEATURE_WLAN_D0WOW) += -DFEATURE_WLAN_D0WOW
 
@@ -2528,10 +2360,8 @@ ifeq ($(CONFIG_QCA6290_11AX), y)
 ccflags-y += -DQCA_WIFI_QCA6290_11AX
 endif
 
-ifeq ($(CONFIG_WLAN_FEATURE_11AX), y)
-ccflags-y += -DWLAN_FEATURE_11AX
-ccflags-y += -DWLAN_FEATURE_11AX_BSS_COLOR
-endif
+ccflags-$(CONFIG_WLAN_FEATURE_11AX) += -DWLAN_FEATURE_11AX
+ccflags-$(CONFIG_WLAN_FEATURE_11AX) += -DWLAN_FEATURE_11AX_BSS_COLOR
 
 # Dummy flag for WIN/MCL converged data path compilation
 ccflags-y += -DDP_PRINT_ENABLE=0
@@ -2550,20 +2380,14 @@ ccflags-y += -DDFS_COMPONENT_ENABLE
 ccflags-y += -DQCA_DFS_USE_POLICY_MANAGER
 ccflags-y += -DQCA_DFS_NOL_PLATFORM_DRV_SUPPORT
 
-ifeq ($(CONFIG_WLAN_DEBUGFS), y)
-ccflags-y += -DWLAN_DEBUGFS
-endif
+ccflags-$(CONFIG_WLAN_DEBUGFS) += -DWLAN_DEBUGFS
 
-ifeq ($(CONFIG_DYNAMIC_DEBUG), y)
-ccflags-y += -DFEATURE_MULTICAST_HOST_FW_MSGS
-endif
+ccflags-$(CONFIG_DYNAMIC_DEBUG) += -DFEATURE_MULTICAST_HOST_FW_MSGS
 
 ccflags-$(CONFIG_ENABLE_SMMU_S1_TRANSLATION) += -DENABLE_SMMU_S1_TRANSLATION
 
 #Flag to enable NUD tracking
-ifeq ($(CONFIG_WLAN_NUD_TRACKING), y)
-ccflags-y += -DWLAN_NUD_TRACKING
-endif
+ccflags-$(CONFIG_WLAN_NUD_TRACKING) += -DWLAN_NUD_TRACKING
 
 # Currently, for versions of gcc which support it, the kernel Makefile
 # is disabling the maybe-uninitialized warning.  Re-enable it for the
