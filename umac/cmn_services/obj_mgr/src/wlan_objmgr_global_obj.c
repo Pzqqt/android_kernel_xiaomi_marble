@@ -775,11 +775,11 @@ void wlan_objmgr_print_ref_ids(qdf_atomic_t *id)
 	uint32_t i;
 	uint32_t pending_ref;
 
-	obj_mgr_err("Pending references of object");
+	obj_mgr_alert("Pending references of object");
 	for (i = 0; i < WLAN_REF_ID_MAX; i++) {
 		pending_ref = qdf_atomic_read(&id[i]);
 		if (pending_ref)
-			obj_mgr_err("%s -- %d",
+			obj_mgr_alert("%s -- %d",
 				string_from_dbgid(i), pending_ref);
 	}
 

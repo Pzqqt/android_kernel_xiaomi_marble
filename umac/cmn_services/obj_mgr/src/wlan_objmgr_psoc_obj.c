@@ -1869,7 +1869,7 @@ static void wlan_objmgr_psoc_peer_ref_print(struct wlan_objmgr_psoc *psoc,
 	vdev_id = wlan_vdev_get_id(wlan_peer_get_vdev(peer));
 	wlan_peer_obj_unlock(peer);
 
-	obj_mgr_err("Peer MAC is %02x:%02x:%02x:%02x:%02x:%02x state:%d vdev_id:%d",
+	obj_mgr_alert("Peer MAC:%02x:%02x:%02x:%02x:%02x:%02x state:%d vdev_id:%d",
 		  macaddr[0], macaddr[1], macaddr[2], macaddr[3],
 		  macaddr[4], macaddr[5], obj_state, vdev_id);
 	wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg);
@@ -1886,7 +1886,7 @@ static void wlan_objmgr_psoc_vdev_ref_print(struct wlan_objmgr_psoc *psoc,
 	id = wlan_vdev_get_id(vdev);
 	obj_state =  vdev->obj_state;
 	wlan_vdev_obj_unlock(vdev);
-	obj_mgr_err("Vdev ID is %d, state %d", id, obj_state);
+	obj_mgr_alert("Vdev ID is %d, state %d", id, obj_state);
 
 	wlan_objmgr_print_ref_ids(vdev->vdev_objmgr.ref_id_dbg);
 }
@@ -1900,7 +1900,7 @@ static void wlan_objmgr_psoc_pdev_ref_print(struct wlan_objmgr_psoc *psoc,
 	wlan_pdev_obj_lock(pdev);
 	id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	wlan_pdev_obj_unlock(pdev);
-	obj_mgr_err("pdev ID is %d", id);
+	obj_mgr_alert("pdev ID is %d", id);
 
 	wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg);
 }
@@ -1908,17 +1908,17 @@ static void wlan_objmgr_psoc_pdev_ref_print(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_objmgr_print_ref_all_objects_per_psoc(
 		struct wlan_objmgr_psoc *psoc)
 {
-	obj_mgr_err("Ref counts of PEER");
+	obj_mgr_alert("Ref counts of PEER");
 	wlan_objmgr_iterate_obj_list_all_noref(psoc, WLAN_PEER_OP,
 				wlan_objmgr_psoc_peer_ref_print, NULL);
-	obj_mgr_err("Ref counts of VDEV");
+	obj_mgr_alert("Ref counts of VDEV");
 	wlan_objmgr_iterate_obj_list_all_noref(psoc, WLAN_VDEV_OP,
 				wlan_objmgr_psoc_vdev_ref_print, NULL);
-	obj_mgr_err("Ref counts of PDEV");
+	obj_mgr_alert("Ref counts of PDEV");
 	wlan_objmgr_iterate_obj_list_all_noref(psoc, WLAN_PDEV_OP,
 				wlan_objmgr_psoc_pdev_ref_print, NULL);
 
-	obj_mgr_err(" Ref counts of PSOC");
+	obj_mgr_alert(" Ref counts of PSOC");
 	wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
 
 	return QDF_STATUS_SUCCESS;
