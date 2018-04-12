@@ -6211,6 +6211,27 @@ QDF_STATUS wmi_extract_vdev_stats(void *wmi_hdl, void *evt_buf,
 }
 
 /**
+ * wmi_extract_per_chain_rssi_stats() - extract rssi stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param index: Index into rssi stats
+ * @param rssi_stats: Pointer to hold rssi stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_per_chain_rssi_stats(void *wmi_hdl, void *evt_buf,
+	uint32_t index, struct wmi_host_per_chain_rssi_stats *rssi_stats)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_per_chain_rssi_stats)
+		return wmi_handle->ops->extract_per_chain_rssi_stats(wmi_handle,
+			evt_buf, index, rssi_stats);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_extract_rtt_hdr() - extract rtt header from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
