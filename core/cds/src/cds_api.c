@@ -2913,6 +2913,7 @@ QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present)
 			}
 		}
 	}
+	osdev->iommu_mapping = mapping;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2933,6 +2934,7 @@ int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
 QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present)
 {
 	osdev->smmu_s1_enabled = false;
+	osdev->iommu_mapping = NULL;
 	return QDF_STATUS_SUCCESS;
 }
 
