@@ -1734,7 +1734,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
 
-	if (ucfg_ipa_is_enabled())
+	if (ucfg_ipa_is_enabled() &&
+	    (sta_ctx->conn_info.staId[0] != HDD_WLAN_INVALID_STA_ID))
 		ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev, adapter->dev,
 				  adapter->device_mode,
 				  sta_ctx->conn_info.staId[0],
