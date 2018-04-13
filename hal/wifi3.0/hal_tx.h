@@ -1100,6 +1100,10 @@ static inline void hal_tx_update_dscp_tid(void *hal_soc, uint8_t tid,
 			(regval & HWIO_TCL_R0_DSCP_TID1_MAP_1_RMSK));
 }
 #else
+
+#define DSCP_TID_TABLE_SIZE 24
+#define NUM_WORDS_PER_DSCP_TID_TABLE (DSCP_TID_TABLE_SIZE/4)
+
 /**
  * hal_tx_set_dscp_tid_map_default() - Configure default DSCP to TID map table
  * @soc: HAL SoC context
@@ -1115,8 +1119,9 @@ static inline void hal_tx_set_dscp_tid_map(void *hal_soc, uint8_t *map,
 		uint8_t id)
 {
 	int i;
-	uint32_t addr;
-	uint32_t value;
+	uint32_t addr, cmn_reg_addr;
+	uint32_t value = 0, regval;
+	uint8_t val[DSCP_TID_TABLE_SIZE], cnt = 0;
 
 	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 
@@ -1124,10 +1129,22 @@ static inline void hal_tx_set_dscp_tid_map(void *hal_soc, uint8_t *map,
 		return;
 	}
 
-	addr = HWIO_TCL_R0_DSCP_TID_MAP_n_ADDR(
-				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET, id);
+	cmn_reg_addr = HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_ADDR(
+					SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
 
-	for (i = 0; i < 64; i += 10) {
+	addr = HWIO_TCL_R0_DSCP_TID_MAP_n_ADDR(
+				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET,
+				id * NUM_WORDS_PER_DSCP_TID_TABLE);
+
+	/* Enable read/write access */
+	regval = HAL_REG_READ(soc, cmn_reg_addr);
+	regval |=
+		(1 << HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_DSCP_TID_MAP_PROGRAM_EN_SHFT);
+
+	HAL_REG_WRITE(soc, cmn_reg_addr, regval);
+
+	/* Write 8 (24 bits) DSCP-TID mappings in each interation */
+	for (i = 0; i < 64; i += 8) {
 		value = (map[i] |
 			(map[i+1] << 0x3) |
 			(map[i+2] << 0x6) |
@@ -1135,16 +1152,27 @@ static inline void hal_tx_set_dscp_tid_map(void *hal_soc, uint8_t *map,
 			(map[i+4] << 0xc) |
 			(map[i+5] << 0xf) |
 			(map[i+6] << 0x12) |
-			(map[i+7] << 0x15) |
-			(map[i+8] << 0x18) |
-			(map[i+9] << 0x1b));
+			(map[i+7] << 0x15));
 
+		qdf_mem_copy(&val[cnt], (void *)&value, 3);
+		cnt += 3;
+	}
+
+	for (i = 0; i < DSCP_TID_TABLE_SIZE; i += 4) {
+		regval = *(uint32_t *)(val + i);
 		HAL_REG_WRITE(soc, addr,
-				(value & HWIO_TCL_R0_DSCP_TID_MAP_n_RMSK));
-
+				(regval & HWIO_TCL_R0_DSCP_TID_MAP_n_RMSK));
 		addr += 4;
 	}
+
+	/* Diasble read/write access */
+	regval = HAL_REG_READ(soc, cmn_reg_addr);
+	regval &=
+		~(HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_DSCP_TID_MAP_PROGRAM_EN_BMSK);
+
+	HAL_REG_WRITE(soc, cmn_reg_addr, regval);
 }
+
 static inline void hal_tx_update_dscp_tid(void *hal_soc, uint8_t tid,
 		uint8_t id, uint8_t dscp)
 {
