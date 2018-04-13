@@ -224,6 +224,14 @@ ifeq ($(CONFIG_SLUB_DEBUG), y)
 endif
 endif
 
+ifeq ($(CONFIG_HIF_PCI), y)
+ifneq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
+ifneq ($(CONFIG_LITHIUM), y)
+CONFIG_WLAN_TX_FLOW_CONTROL_LEGACY := y
+endif
+endif
+endif
+
 # As per target team, build is done as follows:
 # Defconfig : build with default flags
 # Slub      : defconfig  + CONFIG_SLUB_DEBUG=y +
@@ -1991,16 +1999,9 @@ endif
 
 ccflags-y +=	-DQCA_SUPPORT_TXRX_LOCAL_PEER_ID
 
-ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
-ccflags-y +=	-DQCA_LL_TX_FLOW_CONTROL_V2
-ccflags-y +=	-DQCA_LL_TX_FLOW_GLOBAL_MGMT_POOL
-else
-ifeq ($(CONFIG_HIF_PCI), y)
-ifneq ($(CONFIG_LITHIUM), y)
-ccflags-y +=	-DQCA_LL_LEGACY_TX_FLOW_CONTROL
-endif
-endif
-endif
+ccflags-$(CONFIG_WLAN_TX_FLOW_CONTROL_V2) += -DQCA_LL_TX_FLOW_CONTROL_V2
+ccflags-$(CONFIG_WLAN_TX_FLOW_CONTROL_V2) += -DQCA_LL_TX_FLOW_GLOBAL_MGMT_POOL
+ccflags-$(CONFIG_WLAN_TX_FLOW_CONTROL_LEGACY) += -DQCA_LL_LEGACY_TX_FLOW_CONTROL
 
 ifeq ($(BUILD_DEBUG_VERSION), y)
 ccflags-y +=	-DWLAN_DEBUG \
