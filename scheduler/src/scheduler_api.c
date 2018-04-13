@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -86,7 +86,7 @@ static inline void scheduler_watchdog_notify(struct scheduler_ctx *sched)
 	if (sched->watchdog_callback)
 		qdf_sprint_symbol(symbol, sched->watchdog_callback);
 
-	sched_err("Callback %s (type 0x%x) exceeded its allotted time of %ds",
+	sched_err("WLAN_BUG_RCA: Callback %s (type 0x%x) exceeded its allotted time of %ds",
 		  sched->watchdog_callback ? symbol : "<null>",
 		  sched->watchdog_msg_type, SCHEDULER_WATCHDOG_TIMEOUT / 1000);
 }
