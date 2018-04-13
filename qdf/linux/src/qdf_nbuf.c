@@ -39,6 +39,7 @@
 #include <qdf_atomic.h>
 #include <qdf_types.h>
 #include <qdf_nbuf.h>
+#include "qdf_flex_mem.h"
 #include <qdf_mem.h>
 #include <qdf_status.h>
 #include <qdf_lock.h>
@@ -586,10 +587,6 @@ qdf_nbuf_history_add(qdf_nbuf_t nbuf, const char *file, uint32_t line,
 	event->timestamp = qdf_get_log_timestamp();
 }
 
-#define QDF_NBUF_MAP_HT_BITS 10 /* 1024 buckets */
-static DECLARE_HASHTABLE(qdf_nbuf_map_ht, QDF_NBUF_MAP_HT_BITS);
-static qdf_spinlock_t qdf_nbuf_map_lock;
-
 struct qdf_nbuf_map_metadata {
 	struct hlist_node node;
 	qdf_nbuf_t nbuf;
@@ -597,8 +594,15 @@ struct qdf_nbuf_map_metadata {
 	uint32_t line;
 };
 
+DEFINE_QDF_FLEX_MEM_POOL(qdf_nbuf_map_pool,
+			 sizeof(struct qdf_nbuf_map_metadata), 0);
+#define QDF_NBUF_MAP_HT_BITS 10 /* 1024 buckets */
+static DECLARE_HASHTABLE(qdf_nbuf_map_ht, QDF_NBUF_MAP_HT_BITS);
+static qdf_spinlock_t qdf_nbuf_map_lock;
+
 static void qdf_nbuf_map_tracking_init(void)
 {
+	qdf_flex_mem_init(&qdf_nbuf_map_pool);
 	hash_init(qdf_nbuf_map_ht);
 	qdf_spinlock_create(&qdf_nbuf_map_lock);
 }
@@ -609,6 +613,8 @@ void qdf_nbuf_map_check_for_leaks(void)
 	int bucket;
 	uint32_t count = 0;
 	bool is_empty;
+
+	qdf_flex_mem_release(&qdf_nbuf_map_pool);
 
 	qdf_spin_lock_irqsave(&qdf_nbuf_map_lock);
 	is_empty = hash_empty(qdf_nbuf_map_ht);
@@ -641,6 +647,7 @@ static void qdf_nbuf_map_tracking_deinit(void)
 {
 	qdf_nbuf_map_check_for_leaks();
 	qdf_spinlock_destroy(&qdf_nbuf_map_lock);
+	qdf_flex_mem_deinit(&qdf_nbuf_map_pool);
 }
 
 static struct qdf_nbuf_map_metadata *qdf_nbuf_meta_get(qdf_nbuf_t nbuf)
@@ -673,7 +680,7 @@ qdf_nbuf_track_map(qdf_nbuf_t nbuf, const char *file, uint32_t line)
 		panic("Double nbuf map detected @ %s:%u",
 		      kbasename(file), line);
 
-	meta = qdf_mem_malloc(sizeof(*meta));
+	meta = qdf_flex_mem_alloc(&qdf_nbuf_map_pool);
 	if (!meta) {
 		qdf_err("Failed to allocate nbuf map tracking metadata");
 		return QDF_STATUS_E_NOMEM;
@@ -713,7 +720,7 @@ qdf_nbuf_untrack_map(qdf_nbuf_t nbuf, const char *file, uint32_t line)
 	hash_del(&meta->node);
 	qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
 
-	qdf_mem_free(meta);
+	qdf_flex_mem_free(&qdf_nbuf_map_pool, meta);
 
 	qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_UNMAP);
 }
