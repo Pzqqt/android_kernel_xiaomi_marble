@@ -26,6 +26,9 @@
 #define __WLAN_CP_STATS_UCFG_API_H__
 
 #ifdef QCA_SUPPORT_CP_STATS
+#include <wlan_cp_stats_utils_api.h>
+#include "../../core/src/wlan_cp_stats_defs.h"
+#include "../../core/src/wlan_cp_stats_cmn_api_i.h"
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_UCFG_API_H__ */
