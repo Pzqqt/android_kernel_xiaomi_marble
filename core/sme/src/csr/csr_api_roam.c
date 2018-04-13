@@ -3453,6 +3453,13 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 
 	csr_get_11k_offload_config_param(&pMac->roam.configParam, pParam);
 
+	pParam->wlm_latency_enable = pMac->roam.configParam.wlm_latency_enable;
+	pParam->wlm_latency_level = pMac->roam.configParam.wlm_latency_level;
+	for (i = 0; i < CSR_NUM_WLM_LATENCY_LEVEL; i++) {
+		pParam->wlm_latency_flags[i] =
+			pMac->roam.configParam.wlm_latency_flags[i];
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
