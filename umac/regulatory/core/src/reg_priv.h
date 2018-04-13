@@ -83,6 +83,11 @@ struct wlan_regulatory_psoc_priv_obj {
 struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
 	struct regulatory_channel mas_chan_list[NUM_CHANNELS];
+#ifdef DISABLE_CHANNEL_LIST
+	struct regulatory_channel cache_disable_chan_list[NUM_CHANNELS];
+	uint32_t num_cache_channels;
+	bool disable_cached_channels;
+#endif
 	char default_country[REG_ALPHA2_LEN + 1];
 	uint16_t def_region_domain;
 	uint16_t def_country_code;

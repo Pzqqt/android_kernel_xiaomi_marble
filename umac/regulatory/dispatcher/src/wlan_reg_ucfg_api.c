@@ -131,6 +131,30 @@ QDF_STATUS ucfg_reg_notify_sap_event(struct wlan_objmgr_pdev *pdev,
 	return reg_notify_sap_event(pdev, sap_state);
 }
 
+#ifdef DISABLE_CHANNEL_LIST
+/**
+ * ucfg_reg_cache_channel_state() - Cache the current state of the channles
+ * @pdev: The physical dev to cache the channels for
+ * @channel_list: List of the channels for which states needs to be cached
+ * @num_channels: Number of channels in the list
+ *
+ */
+void ucfg_reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
+				  uint32_t *channel_list, uint32_t num_channels)
+{
+	reg_cache_channel_state(pdev, channel_list, num_channels);
+}
+
+/**
+ * ucfg_reg_restore_cached_channels() - Cache the current state of the channles
+ * @pdev: The physical dev to cache the channels for
+ */
+void ucfg_reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
+{
+	reg_restore_cached_channels(pdev);
+}
+#endif
+
 /**
  * ucfg_reg_set_fcc_constraint() - apply fcc constraints on channels 12/13
  * @pdev: The physical pdev to reduce tx power for

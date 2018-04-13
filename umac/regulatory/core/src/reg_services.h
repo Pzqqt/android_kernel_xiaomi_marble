@@ -131,6 +131,41 @@ void reg_set_channel_params(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS reg_set_band(struct wlan_objmgr_pdev *pdev, enum band_info band);
 
 /**
+ * reg_restore_cached_channels() - Cache the current state of the channles
+ * @pdev: The physical dev to cache the channels for
+ */
+#ifdef DISABLE_CHANNEL_LIST
+QDF_STATUS reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev);
+#else
+static inline
+QDF_STATUS reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * reg_cache_channel_state() - Cache the current state of the channles
+ * @pdev: The physical dev to cache the channels for
+ * @channel_list: List of the channels for which states needs to be cached
+ * @num_channels: Number of channels in the list
+ *
+ */
+#ifdef DISABLE_CHANNEL_LIST
+QDF_STATUS reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
+				   uint32_t *channel_list,
+				   uint32_t num_channels);
+#else
+static inline
+QDF_STATUS reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
+				   uint32_t *channel_list,
+				   uint32_t num_channels)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
  * reg_notify_sap_event() - Notify regulatory domain for sap event
  * @pdev: The physical dev to set the band for
  * @sap_state: true for sap start else false

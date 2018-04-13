@@ -2181,6 +2181,37 @@ static void reg_modify_chan_list_for_indoor_channels(
 	}
 }
 
+#ifdef DISABLE_CHANNEL_LIST
+static void reg_modify_chan_list_for_cached_channels(
+			struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+	uint32_t i, j, num_cache_channels = pdev_priv_obj->num_cache_channels;
+	struct regulatory_channel *chan_list = pdev_priv_obj->cur_chan_list;
+	struct regulatory_channel *cache_chan_list =
+					pdev_priv_obj->cache_disable_chan_list;
+
+	if (!num_cache_channels)
+		return;
+
+	if (pdev_priv_obj->disable_cached_channels) {
+		for (i = 0; i < num_cache_channels; i++)
+			for (j = 0; j < NUM_CHANNELS; j++)
+				if (cache_chan_list[i].chan_num ==
+							chan_list[j].chan_num) {
+					chan_list[j].state =
+							CHANNEL_STATE_DISABLE;
+					chan_list[j].chan_flags |=
+						REGULATORY_CHAN_DISABLED;
+				}
+	}
+}
+#else
+static void reg_modify_chan_list_for_cached_channels(
+			struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+}
+#endif
+
 static void reg_modify_chan_list_for_band(struct regulatory_channel *chan_list,
 					  enum band_info band_val)
 {
@@ -2522,6 +2553,8 @@ static void reg_compute_pdev_current_chan_list(
 
 	reg_modify_chan_list_for_chan_144(pdev_priv_obj->cur_chan_list,
 					  pdev_priv_obj->en_chan_144);
+
+	reg_modify_chan_list_for_cached_channels(pdev_priv_obj);
 }
 
 static void reg_call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,
@@ -3287,6 +3320,105 @@ QDF_STATUS reg_set_band(struct wlan_objmgr_pdev *pdev,
 	return status;
 }
 
+#ifdef DISABLE_CHANNEL_LIST
+QDF_STATUS reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		reg_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev_priv_obj->disable_cached_channels = false;
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
+	status = reg_send_scheduler_msg_sb(psoc, pdev);
+	return status;
+}
+
+QDF_STATUS reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
+				   uint32_t *channel_list,
+				   uint32_t num_channels)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t i, j;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		reg_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	if (pdev_priv_obj->num_cache_channels > 0) {
+		pdev_priv_obj->num_cache_channels = 0;
+		qdf_mem_set(&pdev_priv_obj->cache_disable_chan_list,
+			    sizeof(pdev_priv_obj->cache_disable_chan_list), 0);
+	}
+
+	for (i = 0; i < num_channels; i++) {
+		for (j = 0; j < NUM_CHANNELS; j++) {
+			if (channel_list[i] == pdev_priv_obj->
+						cur_chan_list[j].chan_num) {
+				pdev_priv_obj->
+					cache_disable_chan_list[i].chan_num =
+							channel_list[i];
+				pdev_priv_obj->
+					cache_disable_chan_list[i].state =
+					pdev_priv_obj->cur_chan_list[j].state;
+				pdev_priv_obj->
+					cache_disable_chan_list[i].chan_flags =
+					pdev_priv_obj->
+						cur_chan_list[j].chan_flags;
+			}
+		}
+	}
+	pdev_priv_obj->num_cache_channels = num_channels;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void set_disable_channel_state(
+			struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+	pdev_priv_obj->disable_cached_channels = pdev_priv_obj->sap_state;
+}
+#else
+static void set_disable_channel_state(
+			struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+}
+#endif
+
 QDF_STATUS reg_notify_sap_event(struct wlan_objmgr_pdev *pdev,
 			bool sap_state)
 {
@@ -3320,6 +3452,7 @@ QDF_STATUS reg_notify_sap_event(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_SUCCESS;
 
 	pdev_priv_obj->sap_state = sap_state;
+	set_disable_channel_state(pdev_priv_obj);
 
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 	status = reg_send_scheduler_msg_sb(psoc, pdev);
