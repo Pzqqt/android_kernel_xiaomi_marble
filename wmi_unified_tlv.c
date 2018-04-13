@@ -17806,6 +17806,36 @@ static QDF_STATUS extract_ndp_end_ind_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
+#ifdef QCA_SUPPORT_CP_STATS
+/**
+ * extract_cca_stats_tlv - api to extract congestion stats from event buffer
+ * @wmi_handle: wma handle
+ * @evt_buf: event buffer
+ * @out_buff: buffer to populated after stats extraction
+ *
+ * Return: status of operation
+ */
+static QDF_STATUS extract_cca_stats_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf, struct wmi_host_congestion_stats *out_buff)
+{
+	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_congestion_stats *congestion_stats;
+
+	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *)evt_buf;
+	congestion_stats = param_buf->congestion_stats;
+	if (!congestion_stats) {
+		WMI_LOGD("%s: no cca stats in event buffer", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	out_buff->vdev_id = congestion_stats->vdev_id;
+	out_buff->congestion = congestion_stats->congestion;
+
+	WMI_LOGD("%s: cca stats event processed", __func__);
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* QCA_SUPPORT_CP_STATS */
+
 /**
  * save_service_bitmap_tlv() - save service bitmap
  * @wmi_handle: wmi handle
@@ -22891,6 +22921,9 @@ struct wmi_ops tlv_ops =  {
 		extract_obss_color_collision_info_tlv,
 	.extract_comb_phyerr = extract_comb_phyerr_tlv,
 	.extract_single_phyerr = extract_single_phyerr_tlv,
+#ifdef QCA_SUPPORT_CP_STATS
+	.extract_cca_stats = extract_cca_stats_tlv,
+#endif
 };
 
 /**
