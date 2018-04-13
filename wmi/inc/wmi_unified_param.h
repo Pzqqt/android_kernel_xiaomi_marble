@@ -8391,4 +8391,19 @@ struct wmi_obss_color_collision_info {
 	uint32_t obss_color_bitmap_bit0to31;
 	uint32_t obss_color_bitmap_bit32to63;
 };
+
+#ifdef QCA_SUPPORT_CP_STATS
+/**
+ * struct wmi_host_congestion_stats - host definition of congestion stats
+ * @vdev_id: ID of the vdev to which this info belongs.
+ * @congestion: This field holds the congestion percentage =
+ *                                             (busy_time/total_time)*100
+ * for the interval from when the vdev was started to the current time
+ * (or the time at which the vdev was stopped).
+ */
+struct wmi_host_congestion_stats {
+	uint32_t vdev_id;
+	uint32_t congestion;
+};
+#endif
 #endif /* _WMI_UNIFIED_PARAM_H_ */

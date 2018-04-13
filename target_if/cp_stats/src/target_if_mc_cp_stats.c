@@ -54,6 +54,8 @@ static void target_if_cp_stats_free_stats_event(struct stats_event *ev)
 	ev->pdev_stats = NULL;
 	qdf_mem_free(ev->peer_stats);
 	ev->peer_stats = NULL;
+	qdf_mem_free(ev->cca_stats);
+	ev->cca_stats = NULL;
 }
 
 static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
@@ -130,6 +132,33 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS target_if_cp_stats_extract_cca_stats(
+					struct wmi_unified *wmi_hdl,
+					wmi_host_stats_event *stats_param,
+					struct stats_event *ev, uint8_t *data)
+{
+	QDF_STATUS status;
+	struct wmi_host_congestion_stats stats = {0};
+
+	status = wmi_extract_cca_stats(wmi_hdl, data, &stats);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_debug("no congestion stats");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	ev->cca_stats = qdf_mem_malloc(sizeof(*ev->cca_stats));
+	if (!ev->cca_stats) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+
+	ev->cca_stats->vdev_id = stats.vdev_id;
+	ev->cca_stats->congestion = stats.congestion;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 						   struct stats_event *ev,
 						   uint8_t *data)
@@ -153,6 +182,11 @@ static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 
 	status = target_if_cp_stats_extract_peer_stats(wmi_hdl, &stats_param,
 						       ev, data);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = target_if_cp_stats_extract_cca_stats(wmi_hdl, &stats_param,
+						      ev, data);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 

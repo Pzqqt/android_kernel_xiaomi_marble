@@ -1616,6 +1616,11 @@ QDF_STATUS (*extract_twt_resume_dialog_comp_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wmi_twt_resume_dialog_complete_event_param *params);
 #endif
+
+#ifdef QCA_SUPPORT_CP_STATS
+QDF_STATUS (*extract_cca_stats)(wmi_unified_t wmi_handle, void *evt_buf,
+				struct wmi_host_congestion_stats *stats);
+#endif /* QCA_SUPPORT_CP_STATS */
 };
 
 /* Forward declartion for psoc*/
