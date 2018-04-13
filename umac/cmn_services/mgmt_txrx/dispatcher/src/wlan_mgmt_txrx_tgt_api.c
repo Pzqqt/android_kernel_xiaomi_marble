@@ -847,7 +847,7 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	struct mgmt_rx_handler *rx_handler;
 	struct mgmt_rx_handler *rx_handler_head = NULL, *rx_handler_tail = NULL;
 	u_int8_t *data, *ivp = NULL;
-	uint16_t buflen, exp_buflen;
+	uint16_t buflen;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!buf) {
@@ -864,17 +864,7 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	data = (uint8_t *)qdf_nbuf_data(buf);
 	wh = (struct ieee80211_frame *)data;
 	buflen = qdf_nbuf_len(buf);
-	exp_buflen = sizeof(struct ieee80211_frame) + WLAN_HDR_EXT_IV_LEN;
 
-	/* It is always required for buflen to be greater than exp_buflen */
-	if (buflen < exp_buflen) {
-		mgmt_txrx_err("buflen:%d, exp_buflen:%d\n", buflen, exp_buflen);
-		qdf_nbuf_free(buf);
-		status = QDF_STATUS_E_FAILURE;
-		goto dec_peer_ref_cnt;
-	}
-
-	ivp = data + sizeof(struct ieee80211_frame);
 	/* peer can be NULL in following 2 scenarios:
 	 * 1. broadcast frame received
 	 * 2. operating in monitor mode
@@ -913,10 +903,32 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	if ((wh->i_fc[1] & IEEE80211_FC1_WEP) &&
 	    !qdf_is_macaddr_group((struct qdf_mac_addr *)wh->i_addr1) &&
 	    !qdf_is_macaddr_broadcast((struct qdf_mac_addr *)wh->i_addr1)) {
-		if (ivp[WLAN_HDR_IV_LEN] & WLAN_HDR_EXT_IV_BIT)
+
+		if (buflen > (sizeof(struct ieee80211_frame) +
+			WLAN_HDR_EXT_IV_LEN))
+			ivp = data + sizeof(struct ieee80211_frame);
+
+		/* Set mpdu_data_ptr based on EXT IV bit
+		 * if EXT IV bit set, CCMP using PMF 8 bytes of IV is present
+		 * else for WEP using PMF, 4 bytes of IV is present
+		 */
+		if (ivp && (ivp[WLAN_HDR_IV_LEN] & WLAN_HDR_EXT_IV_BIT)) {
+			if (buflen <= (sizeof(struct ieee80211_frame)
+					+ IEEE80211_CCMP_HEADERLEN)) {
+				qdf_nbuf_free(buf);
+				status = QDF_STATUS_E_FAILURE;
+				goto dec_peer_ref_cnt;
+			}
 			mpdu_data_ptr += IEEE80211_CCMP_HEADERLEN;
-		else
+		} else {
+			if (buflen <= (sizeof(struct ieee80211_frame)
+					+ WLAN_HDR_EXT_IV_LEN)) {
+				qdf_nbuf_free(buf);
+				status = QDF_STATUS_E_FAILURE;
+				goto dec_peer_ref_cnt;
+			}
 			mpdu_data_ptr += WLAN_HDR_EXT_IV_LEN;
+		}
 	}
 
 	frm_type = mgmt_txrx_get_frm_type(mgmt_subtype, mpdu_data_ptr);
