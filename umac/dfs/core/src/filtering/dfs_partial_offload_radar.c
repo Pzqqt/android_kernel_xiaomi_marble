@@ -97,7 +97,7 @@ static struct dfs_pulse dfs_mkk4_radars[] = {
  *                                           chipsets.
  */
 static struct dfs_bin5pulse dfs_fcc_bin5pulses[] = {
-	{5, 28, 105, 12, 22, 5},
+	{6, 28, 105, 12, 18, 5},
 };
 
 /**
