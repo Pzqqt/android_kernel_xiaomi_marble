@@ -1783,6 +1783,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		we_custom_event_generic = we_custom_start_event;
 		hdd_ipa_set_tx_flow_info();
 
+		hdd_debug("check for SAP restart");
+		policy_mgr_check_concurrent_intf_and_restart_sap(
+						hdd_ctx->hdd_psoc);
+
 		if (policy_mgr_is_hw_mode_change_after_vdev_up(
 			hdd_ctx->hdd_psoc)) {
 			hdd_debug("check for possible hw mode change");
