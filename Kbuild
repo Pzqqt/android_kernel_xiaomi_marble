@@ -232,6 +232,23 @@ endif
 endif
 endif
 
+#Whether have QMI support
+CONFIG_QMI_SUPPORT := y
+
+ifeq ($(CONFIG_ICNSS), y)
+CONFIG_WIFI_3_0_ADRASTEA := y
+CONFIG_ADRASTEA_RRI_ON_DDR := y
+# Enable full rx re-order offload for adrastea
+CONFIG_WLAN_RX_FULL_REORDER_OL := y
+# Enable athdiag procfs debug support for adrastea
+CONFIG_ATH_PROCFS_DIAG_SUPPORT := y
+# Enable 11AC TX compact feature for adrastea
+CONFIG_11AC_TXCOMPACT := y
+ifeq ($(CONFIG_QMI_SUPPORT), y)
+CONFIG_ADRASTEA_SHADOW_REGISTERS := y
+endif
+endif
+
 # As per target team, build is done as follows:
 # Defconfig : build with default flags
 # Slub      : defconfig  + CONFIG_SLUB_DEBUG=y +
@@ -299,9 +316,6 @@ CONFIG_ATH_PERF_PWR_OFFLOAD := y
 
 #Disable packet log
 CONFIG_REMOVE_PKT_LOG := n
-
-#Whether have QMI support
-CONFIG_QMI_SUPPORT := y
 
 #Enable 11AC TX
 ifeq ($(CONFIG_ROME_IF),pci)
@@ -1967,13 +1981,9 @@ ccflags-$(CONFIG_ICNSS) += -DCONFIG_PLD_SNOC_ICNSS
 
 ccflags-$(CONFIG_ICNSS) += -DQCA_WIFI_3_0
 
-ifeq (y,$(filter y,$(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
-ccflags-y += -DQCA_WIFI_3_0_ADRASTEA
-ifeq ($(CONFIG_QMI_SUPPORT), y)
-ccflags-y += -DADRASTEA_SHADOW_REGISTERS
-endif
-ccflags-y += -DADRASTEA_RRI_ON_DDR
-endif
+ccflags-$(CONFIG_WIFI_3_0_ADRASTEA) += -DQCA_WIFI_3_0_ADRASTEA
+ccflags-$(CONFIG_ADRASTEA_SHADOW_REGISTERS) += -DADRASTEA_SHADOW_REGISTERS
+ccflags-$(CONFIG_ADRASTEA_RRI_ON_DDR) += -DADRASTEA_RRI_ON_DDR
 
 ifeq ($(CONFIG_QMI_SUPPORT), n)
 ccflags-y += -DCONFIG_BYPASS_QMI
@@ -2279,20 +2289,9 @@ ccflags-$(CONFIG_LINUX_QCMBR) += -DLINUX_QCMBR
 ccflags-$(CONFIG_WLAN_SYNC_TSF) += -DWLAN_FEATURE_TSF
 ccflags-$(CONFIG_WLAN_SYNC_TSF_PLUS) += -DWLAN_FEATURE_TSF_PLUS
 
-# Enable full rx re-order offload for adrastea
-ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
-ccflags-y += -DWLAN_FEATURE_RX_FULL_REORDER_OL
-endif
-
-# Enable athdiag procfs debug support for adrastea
-ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
-ccflags-y += -DCONFIG_ATH_PROCFS_DIAG_SUPPORT
-endif
-
-# Enable 11AC TX compact feature for adrastea
-ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
-ccflags-y += -DATH_11AC_TXCOMPACT
-endif
+ccflags-$(CONFIG_WLAN_RX_FULL_REORDER_OL) += -DWLAN_FEATURE_RX_FULL_REORDER_OL
+ccflags-$(CONFIG_ATH_PROCFS_DIAG_SUPPORT) += -DCONFIG_ATH_PROCFS_DIAG_SUPPORT
+ccflags-$(CONFIG_11AC_TXCOMPACT) += -DATH_11AC_TXCOMPACT
 
 # NOTE: CONFIG_64BIT_PADDR requires CONFIG_HELIUMPLUS
 ifeq ($(CONFIG_HELIUMPLUS), y)
