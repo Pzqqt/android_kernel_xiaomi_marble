@@ -2252,4 +2252,18 @@ QDF_STATUS wmi_unified_invoke_neighbor_report_cmd(void *wmi_hdl,
 wmi_host_channel_width wmi_get_ch_width_from_phy_mode(void *wmi_hdl,
 					WMI_HOST_WLAN_PHY_MODE phymode);
 
+#ifdef QCA_SUPPORT_CP_STATS
+/**
+ * wmi_extract_cca_stats() - api to extract congestion stats from event buffer
+ * @wmi_handle: wma handle
+ * @evt_buf: event buffer
+ * @datalen: length of buffer
+ * @stats: buffer to populated after stats extraction
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_extract_cca_stats(wmi_unified_t wmi_handle, void *evt_buf,
+				 struct wmi_host_congestion_stats *stats);
+#endif /* QCA_SUPPORT_CP_STATS */
+
 #endif /* _WMI_UNIFIED_API_H_ */
