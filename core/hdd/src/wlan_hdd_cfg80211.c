@@ -2177,23 +2177,6 @@ static void hdd_get_scan_band(struct hdd_context *hdd_ctx,
 	} else if (sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211ANY) {
 		*band = BAND_ALL;
 	}
-	/* Auto is not supported currently */
-	if (!((*band == BAND_2G) || (BAND_5G == *band))) {
-		hdd_err("invalid band");
-		if (HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ ==
-			hdd_ctx->config->external_acs_freq_band)
-			*band = BAND_2G;
-		else
-			*band = BAND_5G;
-
-		hdd_update_acs_channel_list(sap_config, *band);
-	}
-
-	if (*band == BAND_2G &&
-	    (sap_config->acs_cfg.ch_width == CH_WIDTH_80MHZ ||
-	    sap_config->acs_cfg.ch_width == CH_WIDTH_160MHZ ||
-	    sap_config->acs_cfg.ch_width == CH_WIDTH_80P80MHZ))
-		sap_config->acs_cfg.ch_width = CH_WIDTH_40MHZ;
 }
 
 

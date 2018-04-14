@@ -11735,46 +11735,6 @@ enum hdd_external_acs_policy {
 #define CFG_EXTERNAL_ACS_POLICY_DEFAULT (HDD_EXTERNAL_ACS_PCL_PREFERRED)
 
 /*
- * enum hdd_external_acs_policyl - Preferred freq band for external ACS
- * @HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ -2.4GHz band
- * @HDD_EXTERNAL_ACS_FREQ_BAND_5GHZ -5GHz band
- *
- * enum hdd_external_acs_freq_band is used to select the freq band for ACS.
- *
- */
-enum hdd_external_acs_freq_band {
-	HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ = 0,
-	HDD_EXTERNAL_ACS_FREQ_BAND_5GHZ = 1,
-};
-
-/*
- * <ini>
- * external_acs_freq_band - External ACS freq band
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * Values are per enum hdd_external_acs_freq_band.
- *
- * This ini is used to select the ACS freq band. Currently
- * the external ACS module doesn't support channels from
- * both the bands. Once multiple band support is added in
- * ICM, this ini can be removed
- *
- * Related: None
- *
- * Supported Feature: ACS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_EXTERNAL_ACS_FREQ_BAND          "acs_freq_band"
-#define CFG_EXTERNAL_ACS_FREQ_BAND_MIN      (HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ)
-#define CFG_EXTERNAL_ACS_FREQ_BAND_MAX      (HDD_EXTERNAL_ACS_FREQ_BAND_5GHZ)
-#define CFG_EXTERNAL_ACS_FREQ_BAND_DEFAULT  (HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ)
-
-/*
  * gSapMaxMCSForTxData - sap 11n max mcs
  * @Min: 0
  * @Max: 383
@@ -14688,7 +14648,6 @@ struct hdd_config {
 	uint32_t mawc_nlo_init_scan_interval;
 	uint32_t mawc_nlo_max_scan_interval;
 	enum hdd_external_acs_policy external_acs_policy;
-	enum hdd_external_acs_freq_band external_acs_freq_band;
 	/* threshold of packet drops at which FW initiates disconnect */
 	uint16_t pkt_err_disconn_th;
 	bool is_force_1x1;
