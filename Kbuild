@@ -545,6 +545,10 @@ CONFIG_FEATURE_WLAN_D0WOW := y
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_MDM9607), y)
+CONFIG_TUFELLO_DUAL_FW_SUPPORT := y
+endif
+
 ifeq ($(CONFIG_ARCH_MSM8996), y)
 CONFIG_CHANNEL_HOPPING_ALL_BANDS := y
 endif
@@ -2292,10 +2296,7 @@ ccflags-y += -DFEATURE_METERING
 endif
 endif
 
-ifeq ($(CONFIG_ARCH_MDM9607), y)
-ccflags-y += -DCONFIG_TUFELLO_DUAL_FW_SUPPORT
-endif
-
+ccflags-$(CONFIG_TUFELLO_DUAL_FW_SUPPORT) += -DCONFIG_TUFELLO_DUAL_FW_SUPPORT
 ccflags-$(CONFIG_CHANNEL_HOPPING_ALL_BANDS) += -DCHANNEL_HOPPING_ALL_BANDS
 
 #Enable Signed firmware support for split binary format
