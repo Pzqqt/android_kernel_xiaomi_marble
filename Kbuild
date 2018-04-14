@@ -545,6 +545,11 @@ CONFIG_FEATURE_WLAN_D0WOW := y
 endif
 endif
 
+#Enable Channel Matrix restriction for all Rome only targets
+ifneq ($(CONFIG_ICNSS), y)
+CONFIG_CHNL_MATRIX_RESTRICTION := y
+endif
+
 ifeq ($(CONFIG_ARCH_MDM9607), y)
 CONFIG_TUFELLO_DUAL_FW_SUPPORT := y
 endif
@@ -2251,10 +2256,7 @@ ccflags-$(CONFIG_EXT_WOW) += -DWLAN_FEATURE_EXTWOW_SUPPORT
 #Mark it as SMP Kernel
 ccflags-$(CONFIG_SMP) += -DQCA_CONFIG_SMP
 
-#Enable Channel Matrix restriction for all Rome only targets
-ifneq ($(CONFIG_ICNSS), y)
-ccflags-y += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION
-endif
+ccflags-$(CONFIG_CHNL_MATRIX_RESTRICTION) += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION
 
 #Enable ICMP packet disable powersave feature
 ccflags-$(CONFIG_ICMP_DISABLE_PS) += -DWLAN_ICMP_DISABLE_PS
