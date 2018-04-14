@@ -7064,8 +7064,14 @@ typedef struct {
 #define WMI_HEOPS_DEFPE_SET(he_ops, value) WMI_SET_BITS(he_ops, 6, 3, value)
 
 /* TWT required */
-#define WMI_HEOPS_TWT_GET(he_ops) WMI_GET_BITS(he_ops, 9, 1)
-#define WMI_HEOPS_TWT_SET(he_ops, value) WMI_SET_BITS(he_ops, 9, 1, value)
+#define WMI_HEOPS_TWT_REQUIRED_GET(he_ops) WMI_GET_BITS(he_ops, 9, 1)
+#define WMI_HEOPS_TWT_REQUIRED_SET(he_ops, value) WMI_SET_BITS(he_ops, 9, 1, value)
+/* DEPRECATED, use WMI_HEOPS_TWT_REQUIRED_GET instead */
+#define WMI_HEOPS_TWT_GET(he_ops) \
+    WMI_HEOPS_TWT_REQUIRED_GET(he_ops)
+/* DEPRECATED, use WMI_HEOPS_TWT_REQUIRED_SET instead */
+#define WMI_HEOPS_TWT_SET(he_ops, value) \
+    WMI_HEOPS_TWT_REQUIRED_SET(he_ops, value)
 
 /* RTS threshold in units of 32 us,0 - always use RTS 1023 - this is disabled */
 #define WMI_HEOPS_RTSTHLD_GET(he_ops) WMI_GET_BITS(he_ops, 10, 10)
@@ -22289,8 +22295,8 @@ typedef struct {
     /* 1. wake_intvl_mantis must be <= 0xFFFF
      * 2. wake_intvl_us must be divided evenly by wake_intvl_mantis,
      *    i.e., wake_intvl_us % wake_intvl_mantis == 0
-     * 2. the quotient of wake_intvl_us/wake_intvl_mantis must be 2 to N-th(0<=N<=31) power,
-          i.e., wake_intvl_us/wake_intvl_mantis == 2^N, 0<=N<=31
+     * 3. the quotient of wake_intvl_us/wake_intvl_mantis must be 2 to N-th(0<=N<=31) power,
+     *    i.e., wake_intvl_us/wake_intvl_mantis == 2^N, 0<=N<=31
      */
     A_UINT32 wake_intvl_us;         /* TWT Wake Interval in units of us */
     A_UINT32 wake_intvl_mantis;     /* TWT Wake Interval Mantissa */
@@ -22376,6 +22382,7 @@ typedef struct {
     A_UINT32 vdev_id;       /* VDEV identifier */
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 sp_offset_us;  /* this long time after TWT resumed the 1st SP will start */
+    A_UINT32 next_twt_size; /* Next TWT subfield Size, refer to IEEE 802.11ax sectin "9.4.1.60 TWT Information field" */
 } wmi_twt_resume_dialog_cmd_fixed_param;
 
 /* status code of resuming TWT dialog */
