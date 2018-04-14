@@ -11481,6 +11481,10 @@ static int wlan_hdd_cfg80211_sar_convert_limit_set(u32 nl80211_value,
 	case QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_USER:
 		*wmi_value = WMI_SAR_FEATURE_ON_USER_DEFINED;
 		break;
+	case QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_V2_0:
+		*wmi_value = WMI_SAR_FEATURE_ON_SAR_V2_0;
+		break;
+
 	default:
 		ret = -1;
 	}
@@ -11556,6 +11560,8 @@ static u32 hdd_sar_wmi_to_nl_enable(uint32_t wmi_value)
 		return QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_BDF4;
 	case WMI_SAR_FEATURE_ON_USER_DEFINED:
 		return QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_USER;
+	case WMI_SAR_FEATURE_ON_SAR_V2_0:
+		return QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SELECT_V2_0;
 	}
 }
 
@@ -11589,6 +11595,7 @@ sar_limits_policy[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_CHAIN] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT_INDEX] = {.type = NLA_U32},
 };
 
 #define WLAN_WAIT_TIME_SAR 5000
@@ -11942,8 +11949,13 @@ static int __wlan_hdd_set_sar_power_limits(struct wiphy *wiphy,
 			sar_limit_cmd.sar_limit_row_list[i].limit_value =
 				nla_get_u32(sar_spec[
 				QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT]);
+		} else if (sar_spec[
+			    QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT_INDEX]) {
+			sar_limit_cmd.sar_limit_row_list[i].limit_value =
+				nla_get_u32(sar_spec[
+				QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT_INDEX]);
 		} else {
-			hdd_err("SAR Spec does not have power limit value");
+			hdd_err("SAR Spec does not have power limit or index value");
 			goto fail;
 		}
 

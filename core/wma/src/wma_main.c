@@ -4131,6 +4131,17 @@ QDF_STATUS wma_start(void)
 					WMA_RX_TASKLET_CTX);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
+	WMA_LOGD("Registering SAR2 response handler");
+	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
+						wmi_wlan_sar2_result_event_id,
+						wma_sar_rsp_evt_handler,
+						WMA_RX_SERIALIZER_CTX);
+	if (status) {
+		WMA_LOGE("Failed to register sar response event cb");
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto end;
+	}
+
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	WMA_LOGD("Registering auto shutdown handler");
 	status = wmi_unified_register_event_handler(wmi_handle,
