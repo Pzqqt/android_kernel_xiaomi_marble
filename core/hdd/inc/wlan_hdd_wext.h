@@ -340,4 +340,27 @@ int hdd_check_private_wext_control(struct hdd_context *hdd_ctx,
  */
 int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 			  uint32_t bandwidth);
+
+/**
+ * hdd_crash_inject() - Inject a crash
+ * @adapter: Adapter upon which the command was received
+ * @v1: first value to inject
+ * @v2: second value to inject
+ *
+ * This function is the handler for the crash inject debug feature.
+ * This feature only exists for internal testing and must not be
+ * enabled on a production device.
+ *
+ * Return: result of the command
+ */
+#ifdef CONFIG_WLAN_DEBUG_CRASH_INJECT
+int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2);
+#else
+static inline
+int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)
+{
+	return -ENOTSUPP;
+}
+#endif
+
 #endif /* __WEXT_IW_H__ */

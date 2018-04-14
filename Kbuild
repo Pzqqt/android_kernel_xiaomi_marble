@@ -303,6 +303,7 @@ ifneq ($(TARGET_BUILD_VARIANT),user)
 	else
 		CONFIG_FEATURE_PKTLOG := y
 	endif
+	CONFIG_WLAN_DEBUG_CRASH_INJECT := y
 endif
 
 #Enable WLAN/Power debugfs feature only if debug_fs is enabled
@@ -2063,7 +2064,7 @@ ccflags-y +=	-DTRACE_RECORD \
 		-DHDD_TRACE_RECORD
 endif
 endif
-
+ccflags-$(CONFIG_WLAN_DEBUG_CRASH_INJECT) += -DCONFIG_WLAN_DEBUG_CRASH_INJECT
 ccflags-$(CONFIG_FEATURE_UNIT_TEST_SUSPEND) += -DWLAN_SUSPEND_RESUME_TEST
 
 ifeq ($(CONFIG_LEAK_DETECTION), y)

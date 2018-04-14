@@ -2786,9 +2786,7 @@
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_TWO_INT_GET_NONE   (SIOCIWFIRSTPRIV + 28)
 #define WE_SET_SMPS_PARAM    1
-#ifdef WLAN_DEBUG
 #define WE_SET_FW_CRASH_INJECT    2
-#endif
 #define WE_DUMP_DP_TRACE_LEVEL    3
 /* Private sub ioctl for enabling and setting histogram interval of profiling */
 #define WE_ENABLE_FW_PROFILE    4
@@ -9314,6 +9312,32 @@ static void hdd_ioctl_log_buffer(int log_id, uint32_t count)
 	}
 }
 
+#ifdef CONFIG_WLAN_DEBUG_CRASH_INJECT
+int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)
+{
+	struct hdd_context *hdd_ctx;
+	int ret;
+
+	hdd_debug("WE_SET_FW_CRASH_INJECT: %d %d",
+		  v1, v2);
+	pr_err("SSR is triggered by iwpriv CRASH_INJECT: %d %d\n",
+	       v1, v2);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx->config->crash_inject_enabled) {
+		hdd_err("Crash Inject ini disabled, Ignore Crash Inject");
+		return 0;
+	}
+	if (v1 == 3) {
+		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
+		return 0;
+	}
+	ret = wma_cli_set2_command(adapter->session_id,
+				   GEN_PARAM_CRASH_INJECT,
+				   v1, v2, GEN_CMD);
+	return ret;
+}
+#endif
+
 static int __iw_set_two_ints_getnone(struct net_device *dev,
 				     struct iw_request_info *info,
 				     union iwreq_data *wrqu, char *extra)
@@ -9343,25 +9367,9 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 					      | value[2],
 					  VDEV_CMD);
 		break;
-#ifdef WLAN_DEBUG
 	case WE_SET_FW_CRASH_INJECT:
-		hdd_debug("WE_SET_FW_CRASH_INJECT: %d %d",
-		       value[1], value[2]);
-		pr_err("SSR is triggered by iwpriv CRASH_INJECT: %d %d\n",
-			   value[1], value[2]);
-		if (!hdd_ctx->config->crash_inject_enabled) {
-			hdd_err("Crash Inject ini disabled, Ignore Crash Inject");
-			return 0;
-		}
-		if (value[1] == 3) {
-			cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
-			return 0;
-		}
-		ret = wma_cli_set2_command(adapter->session_id,
-					   GEN_PARAM_CRASH_INJECT,
-					   value[1], value[2], GEN_CMD);
+		ret = hdd_crash_inject(adapter, value[1], value[2]);
 		break;
-#endif
 	case WE_ENABLE_FW_PROFILE:
 		hdd_err("WE_ENABLE_FW_PROFILE: %d %d",
 		       value[1], value[2]);
@@ -10585,17 +10593,17 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_BYTE | sizeof(struct dot11p_channel_sched),
 	 0, "set_dot11p" }
 	,
-#ifdef WLAN_DEBUG
+#ifdef CONFIG_WLAN_DEBUG_CRASH_INJECT
 	{WE_SET_FW_CRASH_INJECT,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "crash_inject"}
 	,
+#endif
 #if defined(WMI_INTERFACE_EVENT_LOGGING) || defined(FEATURE_HTC_CREDIT_HISTORY)
 	{WE_LOG_BUFFER,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "log_buffer"}
 	,
-#endif
 #endif
 #ifdef WLAN_SUSPEND_RESUME_TEST
 	{WE_SET_WLAN_SUSPEND,

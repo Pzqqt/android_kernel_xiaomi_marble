@@ -3055,24 +3055,9 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		return ret;
 
 	switch (sub_cmd) {
-#ifdef WLAN_DEBUG
 	case QCSAP_IOCTL_SET_FW_CRASH_INJECT:
-		hdd_err("WE_SET_FW_CRASH_INJECT: %d %d",
-		       value[1], value[2]);
-		if (!hdd_ctx->config->crash_inject_enabled) {
-			hdd_err("Crash Inject ini disabled, Ignore Crash Inject");
-			return 0;
-		}
-		if (value[1] == 3) {
-			cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
-			return 0;
-		}
-		ret = wma_cli_set2_command(adapter->session_id,
-					   GEN_PARAM_CRASH_INJECT,
-					   value[1], value[2],
-					   GEN_CMD);
+		ret = hdd_crash_inject(adapter, value[1], value[2]);
 		break;
-#endif
 	case QCSAP_IOCTL_DUMP_DP_TRACE_LEVEL:
 		hdd_debug("WE_DUMP_DP_TRACE: %d %d",
 		       value[1], value[2]);
@@ -5868,7 +5853,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	}
 	,
 	/* handlers for sub-ioctl */
-#ifdef WLAN_DEBUG
+#ifdef CONFIG_WLAN_DEBUG_CRASH_INJECT
 	{
 		QCSAP_IOCTL_SET_FW_CRASH_INJECT,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
