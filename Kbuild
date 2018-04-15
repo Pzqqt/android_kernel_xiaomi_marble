@@ -453,6 +453,13 @@ ifeq ($(CONFIG_LITHIUM), y)
 	CONFIG_FEATURE_UNIT_TEST_SUSPEND := y
 endif
 
+#Flag to enable/disable WLAN D0-WOW
+ifeq ($(CONFIG_PCI_MSM), y)
+ifeq ($(CONFIG_HIF_PCI), y)
+CONFIG_FEATURE_WLAN_D0WOW := y
+endif
+endif
+
 ############ UAPI ############
 UAPI_DIR :=	uapi
 UAPI_INC :=	-I$(WLAN_ROOT)/$(UAPI_DIR)/linux
@@ -2485,12 +2492,7 @@ ifeq ($(CONFIG_NAN_CONVERGENCE), y)
 CDEFINES += -DWLAN_FEATURE_NAN_CONVERGENCE
 endif
 
-#Flag to enable/disable WLAN D0-WOW
-ifeq ($(CONFIG_PCI_MSM), y)
-ifeq ($(CONFIG_HIF_PCI), y)
-CDEFINES += -DFEATURE_WLAN_D0WOW
-endif
-endif
+ccflags-$(CONFIG_FEATURE_WLAN_D0WOW) += -DFEATURE_WLAN_D0WOW
 
 ifeq ($(CONFIG_LITHIUM), y)
 CDEFINES += -DCONFIG_SHADOW_V2
