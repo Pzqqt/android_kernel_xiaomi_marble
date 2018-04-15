@@ -1124,13 +1124,11 @@ typedef struct tagCsrConfigParam {
 	uint32_t nActiveMaxChnTime;         /* in units of milliseconds */
 	uint32_t nInitialDwellTime;         /* in units of milliseconds */
 	bool initial_scan_no_dfs_chnl;
-#ifdef WLAN_AP_STA_CONCURRENCY
 	uint32_t nPassiveMinChnTimeConc;    /* in units of milliseconds */
 	uint32_t nPassiveMaxChnTimeConc;    /* in units of milliseconds */
 	uint32_t nActiveMinChnTimeConc;     /* in units of milliseconds */
 	uint32_t nActiveMaxChnTimeConc;     /* in units of milliseconds */
 	uint32_t nRestTimeConc;             /* in units of milliseconds */
-#endif
 	/*In units of milliseconds*/
 	uint32_t       min_rest_time_conc;
 	/*In units of milliseconds*/

@@ -466,7 +466,6 @@ struct csr_config {
 
 	uint32_t nInitialDwellTime;     /* in units of milliseconds */
 	bool initial_scan_no_dfs_chnl;
-#ifdef WLAN_AP_STA_CONCURRENCY
 	uint32_t nPassiveMinChnTimeConc;/* in units of milliseconds */
 	uint32_t nPassiveMaxChnTimeConc;/* in units of milliseconds */
 	uint32_t nActiveMinChnTimeConc; /* in units of milliseconds */
@@ -476,8 +475,6 @@ struct csr_config {
 	uint32_t  min_rest_time_conc;
 	/* In units of milliseconds */
 	uint32_t  idle_time_conc;
-
-#endif
 	/*
 	 * in dBm, the max TX power. The actual TX power is the lesser of this
 	 * value & 11d. If 11d is disable, the lesser of this & default setting.
@@ -682,9 +679,6 @@ struct csr_scanstruct {
 	bool fFirstScanOnly2GChnl;
 	bool fDropScanCmd;      /* true means we don't accept scan commands */
 
-#ifdef WLAN_AP_STA_CONCURRENCY
-	tDblLinkList scanCmdPendingList;
-#endif
 	/* This includes all channels on which candidate APs are found */
 	struct csr_channel occupiedChannels[CSR_ROAM_SESSION_MAX];
 	int8_t roam_candidate_count[CSR_ROAM_SESSION_MAX];

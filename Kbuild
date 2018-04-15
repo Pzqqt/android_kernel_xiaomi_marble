@@ -394,6 +394,14 @@ CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_SDX20), y)
+ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
+ifeq ($(CONFIG_WCNSS_SKB_PRE_ALLOC), y)
+CONFIG_FEATURE_SKB_PRE_ALLOC := y
+endif
+endif
+endif
+
 #Enable Signed firmware support for split binary format
 CONFIG_QCA_SIGNED_SPLIT_BINARY_SUPPORT := n
 
@@ -1255,8 +1263,7 @@ WMI_OBJS := $(WMI_OBJ_DIR)/wmi_unified.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_pmo_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_reg_api.o \
-	    $(WMI_OBJ_DIR)/wmi_unified_dfs_api.o \
-	    $(WMI_OBJ_DIR)/wmi_unified_non_tlv.o
+	    $(WMI_OBJ_DIR)/wmi_unified_dfs_api.o
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 ifeq ($(CONFIG_OCB_UT_FRAMEWORK), y)
@@ -1860,7 +1867,6 @@ CDEFINES :=	-DANI_OS_TYPE_ANDROID=6 \
 		-Werror\
 		-D__linux__ \
 		-DSOFTAP_CHANNEL_RANGE \
-		-DWLAN_AP_STA_CONCURRENCY \
 		-DFEATURE_WLAN_SCAN_PNO \
 		-DWLAN_FEATURE_PACKET_FILTERING \
 		-DWLAN_ENABLE_AGEIE_ON_SCAN_RESULTS \
@@ -2202,13 +2208,7 @@ endif
 
 endif
 
-ifeq ($(CONFIG_ARCH_SDX20), y)
-ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
-ifeq ($(CONFIG_WCNSS_SKB_PRE_ALLOC), y)
-CDEFINES += -DFEATURE_SKB_PRE_ALLOC
-endif
-endif
-endif
+ccflags-$(CONFIG_FEATURE_SKB_PRE_ALLOC) += -DFEATURE_SKB_PRE_ALLOC
 
 #Enable USB specific APIS
 ifeq ($(CONFIG_HIF_USB), y)

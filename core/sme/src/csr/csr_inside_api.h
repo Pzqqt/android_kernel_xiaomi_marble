@@ -44,7 +44,6 @@
 #define CSR_ACTIVE_MAX_CHANNEL_TIME    40
 #define CSR_ACTIVE_MIN_CHANNEL_TIME    20
 
-#ifdef WLAN_AP_STA_CONCURRENCY
 #define CSR_PASSIVE_MAX_CHANNEL_TIME_CONC   110
 #define CSR_PASSIVE_MIN_CHANNEL_TIME_CONC   60
 
@@ -54,8 +53,6 @@
 #define CSR_REST_TIME_CONC                  100
 #define CSR_MIN_REST_TIME_CONC              50
 #define CSR_IDLE_TIME_CONC                  25
-
-#endif
 
 #define CSR_MAX_NUM_SUPPORTED_CHANNELS 55
 
