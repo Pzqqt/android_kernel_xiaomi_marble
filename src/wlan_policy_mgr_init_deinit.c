@@ -645,8 +645,8 @@ QDF_STATUS policy_mgr_register_dp_cb(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pm_ctx->dp_cbacks.hdd_disable_lro_in_concurrency =
-		dp_cbacks->hdd_disable_lro_in_concurrency;
+	pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency =
+		dp_cbacks->hdd_disable_rx_ol_in_concurrency;
 	pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb =
 		dp_cbacks->hdd_set_rx_mode_rps_cb;
 	pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb =
