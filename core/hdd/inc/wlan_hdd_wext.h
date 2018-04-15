@@ -173,6 +173,8 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
 #define HDD_RTSCTS_ENABLE                   1
 #define HDD_CTS_ENABLE                      2
 
+#define HDD_AUTO_RATE_SGI    0x8
+
 #define WPS_OUI_TYPE   "\x00\x50\xf2\x04"
 #define WPS_OUI_TYPE_SIZE  4
 

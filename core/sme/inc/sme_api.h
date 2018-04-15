@@ -2107,6 +2107,28 @@ int sme_send_addba_req(tHalHandle hal, uint8_t session_id, uint8_t tid,
 int sme_set_no_ack_policy(tHalHandle hal, uint8_t session_id,
 		uint8_t val, uint8_t ac);
 
+/**
+ * sme_set_auto_rate_he_sgi() - Sets SGI for auto rate
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @cfg_val: SGI configuration value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_set_auto_rate_he_sgi(tHalHandle hal, uint8_t session_id,
+		uint8_t cfg_val);
+
+/**
+ * sme_set_auto_rate_he_ltf() - Sets HE LTF for auto rate
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @cfg_val: LTF configuration value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_set_auto_rate_he_ltf(tHalHandle hal, uint8_t session_id,
+		uint8_t cfg_val);
+
 #ifdef WLAN_FEATURE_11AX
 /**
  * sme_update_he_cap_nss() - sets the nss based on user request
