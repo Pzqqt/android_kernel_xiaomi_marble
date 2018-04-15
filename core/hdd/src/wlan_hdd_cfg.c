@@ -2391,15 +2391,6 @@ struct reg_table_entry g_registry_table[] = {
 
 #endif
 
-#ifdef WLAN_SOFTAP_VSTA_FEATURE
-	REG_VARIABLE(CFG_VSTA_SUPPORT_ENABLE, WLAN_PARAM_Integer,
-		     struct hdd_config, fEnableVSTASupport,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_VSTA_SUPPORT_ENABLE_DEFAULT,
-		     CFG_VSTA_SUPPORT_ENABLE_MIN,
-		     CFG_VSTA_SUPPORT_ENABLE_MAX),
-#endif
-
 	REG_VARIABLE(CFG_SCAN_AGING_PARAM_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, scanAgingTimeout,
 		     VAR_FLAGS_OPTIONAL,
@@ -7912,7 +7903,6 @@ static bool hdd_update_vht_cap_in_cfg(struct hdd_context *hdd_ctx)
 bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 {
 	bool status = true;
-	uint32_t val;
 	struct hdd_config *config = hdd_ctx->config;
 
 	/*
@@ -8086,22 +8076,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_ENABLE_MC_ADDR_LIST to CFG");
 	}
-
-#ifdef WLAN_SOFTAP_VSTA_FEATURE
-	if (config->fEnableVSTASupport) {
-		sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_ASSOC_STA_LIMIT, &val);
-		if (val <= WNI_CFG_ASSOC_STA_LIMIT_STADEF)
-			val = WNI_CFG_ASSOC_STA_LIMIT_STAMAX;
-	} else {
-		val = config->maxNumberOfPeers;
-
-	}
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_ASSOC_STA_LIMIT, val) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_ASSOC_STA_LIMIT to CFG");
-	}
-#endif
 
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
 		    config->enableMCCAdaptiveScheduler) ==

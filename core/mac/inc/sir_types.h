@@ -92,24 +92,8 @@ typedef enum {
 	HAL_STOP_TYPE_RF_KILL,
 } tHalStopType;
 
-#ifdef WLAN_SOFTAP_VSTA_FEATURE
 #define HAL_NUM_ASSOC_STA           32
 #define HAL_NUM_STA                 41
-#define HAL_NUM_HW_STA              16
-#define HAL_NUM_GPSTA               4
-
-/* is the STA a HW STA (excluding GP STAs) */
-#define IS_HWSTA_IDX(__x) \
-	((__x) < (HAL_NUM_HW_STA-HAL_NUM_GPSTA))
-
-#else
-/*In prima 12 HW stations are supported including BCAST STA(staId 0)
-   and SELF STA(staId 1) so total ASSOC stations which can connect to Prima
-   SoftAP = 12 - 1(Self STa) - 1(Bcast Sta) = 10 Stations. */
-#define HAL_NUM_STA                 12
-#define HAL_NUM_ASSOC_STA           10
-#define HAL_NUM_HW_STA              12
-#endif
 
 #define STACFG_MAX_TC               8
 

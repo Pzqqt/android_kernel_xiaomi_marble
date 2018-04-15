@@ -46,12 +46,6 @@
 #define IS_ADVANCE_TDLS_ENABLE 0
 #endif
 
-#ifdef WLAN_SOFTAP_VSTA_FEATURE
-#define WMA_MAX_STA    (41)
-#else
-#define WMA_MAX_STA    (16)
-#endif
-
 #define WMA_NVDownload_Start(x)    ({ QDF_STATUS_SUCCESS; })
 
 #define DPU_FEEDBACK_UNPROTECTED_ERROR 0x0F

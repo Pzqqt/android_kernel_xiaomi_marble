@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -44,11 +44,7 @@
 
 #include "parser_api.h"
 
-#ifdef WLAN_SOFTAP_VSTA_FEATURE
 #define TIM_IE_SIZE 0xB
-#else
-#define TIM_IE_SIZE 0x7
-#endif
 
 /* ----------------------- Beacon processing ------------------------ */
 

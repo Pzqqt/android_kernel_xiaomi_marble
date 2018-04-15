@@ -3002,31 +3002,6 @@ enum hdd_dot11_mode {
 #define CFG_BEACON_INTERVAL_MAX                WNI_CFG_BEACON_INTERVAL_STAMAX
 #define CFG_BEACON_INTERVAL_DEFAULT            WNI_CFG_BEACON_INTERVAL_STADEF
 
-/*
- * <ini>
- * gEnableVSTASupport - Enable/disable VSTA support
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable VSTA based on max assoc limit.
- * Enable to have maximum 32 STA (P2P GC) on DUT as P2P GO or SAP
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#ifdef WLAN_SOFTAP_VSTA_FEATURE
-#define CFG_VSTA_SUPPORT_ENABLE               "gEnableVSTASupport"
-#define CFG_VSTA_SUPPORT_ENABLE_MIN           (0)
-#define CFG_VSTA_SUPPORT_ENABLE_MAX           (1)
-#define CFG_VSTA_SUPPORT_ENABLE_DEFAULT       (0)
-#endif
-
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 #define CFG_WLAN_AUTO_SHUTDOWN              "gWlanAutoShutdown"
 #define CFG_WLAN_AUTO_SHUTDOWN_MIN          (0)
@@ -14268,9 +14243,6 @@ struct hdd_config {
 	uint8_t fTDLSPrefOffChanBandwidth;
 	uint8_t enable_tdls_scan;
 	uint32_t tdls_peer_kickout_threshold;
-#endif
-#ifdef WLAN_SOFTAP_VSTA_FEATURE
-	bool fEnableVSTASupport;
 #endif
 	uint8_t scanAgingTimeout;
 	uint8_t disableLDPCWithTxbfAP;

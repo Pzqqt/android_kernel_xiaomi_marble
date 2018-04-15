@@ -78,16 +78,6 @@
 #define WMA_MAC_TO_PDEV_MAP(x) ((x) + (1))
 #define WMA_PDEV_TO_MAC_MAP(x) ((x) - (1))
 
-/* In prima 12 HW stations are supported including BCAST STA(staId 0)
- * and SELF STA(staId 1) so total ASSOC stations which can connect to Prima
- * SoftAP = 12 - 1(Self STa) - 1(Bcast Sta) = 10 Stations.
- */
-
-#ifdef WLAN_SOFTAP_VSTA_FEATURE
-#define WMA_MAX_SUPPORTED_STAS    38
-#else
-#define WMA_MAX_SUPPORTED_STAS    12
-#endif
 #define WMA_MAX_SUPPORTED_BSS     SIR_MAX_SUPPORTED_BSS
 
 #define WMA_MAX_MGMT_MPDU_LEN 2000
