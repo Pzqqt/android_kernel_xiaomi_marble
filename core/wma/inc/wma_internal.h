@@ -958,10 +958,6 @@ int wma_d0_wow_disable_ack_event(void *handle, uint8_t *event, uint32_t len);
 
 int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len);
 
-QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info);
-
-QDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info);
-
 void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg);
 
 void wma_aggr_qos_req(tp_wma_handle wma,

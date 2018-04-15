@@ -219,13 +219,6 @@
 #define WMA_ENABLE_UAPSD_REQ            SIR_HAL_ENABLE_UAPSD_REQ
 #define WMA_DISABLE_UAPSD_REQ           SIR_HAL_DISABLE_UAPSD_REQ
 
-/* / PE <-> HAL WOWL messages */
-#define WMA_WOW_ADD_PTRN               SIR_HAL_WOW_ADD_PTRN
-#define WMA_WOW_DEL_PTRN               SIR_HAL_WOW_DEL_PTRN
-#define WMA_WOWL_ENTER_REQ             SIR_HAL_WOWL_ENTER_REQ
-#define WMA_WOWL_ENTER_RSP             SIR_HAL_WOWL_ENTER_RSP
-#define WMA_WOWL_EXIT_REQ              SIR_HAL_WOWL_EXIT_REQ
-#define WMA_WOWL_EXIT_RSP              SIR_HAL_WOWL_EXIT_RSP
 /* / PE <-> HAL statistics messages */
 #define WMA_GET_STATISTICS_REQ         SIR_HAL_GET_STATISTICS_REQ
 #define WMA_GET_STATISTICS_RSP         SIR_HAL_GET_STATISTICS_RSP

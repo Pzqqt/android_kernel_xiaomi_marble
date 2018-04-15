@@ -63,17 +63,6 @@ ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
 /* default sme timeout is set to 30 secs */
 #define SME_DEFAULT_CMD_TIMEOUT  30000
 
-typedef struct sGenericPmcCmd {
-	uint32_t size;          /* sizeof the data in the union, if any */
-	uint32_t sessionId;
-	/* if true, the cmd shalln't put back to the queue, free mem instead. */
-	bool fReleaseWhenDone;
-	union {
-		tSirSmeWowlEnterParams enterWowlInfo;
-		tSirSmeWowlExitParams exitWowlInfo;
-	} u;
-} tGenericPmcCmd;
-
 typedef struct sGenericQosCmd {
 	struct sme_qos_wmmtspecinfo tspecInfo;
 	sme_QosEdcaAcType ac;
@@ -173,7 +162,6 @@ typedef struct tagSmeCmd {
 	union {
 		struct roam_cmd roamCmd;
 		struct wmstatus_changecmd wmStatusChangeCmd;
-		tGenericPmcCmd pmcCmd;
 		tGenericQosCmd qosCmd;
 		tRemainChlCmd remainChlCmd;
 		struct addstafor_sessioncmd addStaSessionCmd;
