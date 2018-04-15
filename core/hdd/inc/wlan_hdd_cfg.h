@@ -8629,6 +8629,27 @@ enum hdd_link_speed_rpt_type {
 #define CFG_LRO_ENABLED_DEFAULT        (0)
 
 /*
+ * <ini>
+ * GROEnable - Control to enable gro feature
+ *
+ * @Disable: 0
+ * @Enable: 1
+ * @Default: 0
+ *
+ * This ini is used to enable GRO feature
+ *
+ * Supported Feature: GRO
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_GRO_ENABLED_NAME           "GROEnable"
+#define CFG_GRO_ENABLED_MIN            (0)
+#define CFG_GRO_ENABLED_MAX            (1)
+#define CFG_GRO_ENABLED_DEFAULT        (0)
+
+/*
  * Enable Rx traffic flow steering to enable Rx interrupts on multiple CEs based
  * on the flows. Different CEs<==>different IRQs<==>probably different CPUs.
  * Parallel Rx paths.
@@ -14794,6 +14815,7 @@ struct hdd_config {
 	bool send_deauth_before_con;
 	bool tso_enable;
 	bool lro_enable;
+	bool gro_enable;
 	bool flow_steering_enable;
 	uint8_t max_msdus_per_rxinorderind;
 	bool active_mode_offload;

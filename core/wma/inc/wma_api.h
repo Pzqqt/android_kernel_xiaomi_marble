@@ -190,9 +190,15 @@ int wma_unified_radio_tx_mem_free(void *handle);
 QDF_STATUS wma_form_unit_test_cmd_and_send(uint32_t vdev_id,
 		uint32_t module_id, uint32_t arg_count, uint32_t *arg);
 
-#if defined(FEATURE_LRO)
+/**
+ * wma_lro_init() - sends LRO configuration to FW
+ * @lro_config:         pointer to the config parameters
+ *
+ * This function ends LRO configuration to FW.
+ *
+ * Return: 0 for success or reasons for failure
+ */
 int wma_lro_init(struct cdp_lro_hash_config *lro_config);
-#endif
 
 QDF_STATUS wma_remove_beacon_filter(WMA_HANDLE wma,
 				struct beacon_filter_param *filter_params);

@@ -1622,6 +1622,16 @@ enum tos {
 #define HDD_AC_BIT_INDX                 0
 #define HDD_DWELL_TIME_INDX             1
 
+/**
+ * enum RX_OFFLOAD - Receive offload modes
+ * @CFG_LRO_ENABLED: Large Rx offload
+ * @CFG_GRO_ENABLED: Generic Rx Offload
+ */
+enum RX_OFFLOAD {
+	CFG_LRO_ENABLED = 1,
+	CFG_GRO_ENABLED,
+};
+
 /* One per STA: 1 for BCMC_STA_ID, 1 for each SAP_SELF_STA_ID,
  * 1 for WDS_STAID
  */
@@ -1821,6 +1831,7 @@ struct hdd_context {
 	qdf_work_t sap_pre_cac_work;
 	bool hbw_requested;
 	uint32_t last_nil_scan_bug_report_timestamp;
+	enum RX_OFFLOAD ol_enable;
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 	bool nan_datapath_enabled;
 #endif
@@ -1876,6 +1887,8 @@ struct hdd_context {
 	bool imps_enabled;
 	int user_configured_pkt_filter_rules;
 	bool is_fils_roaming_supported;
+	QDF_STATUS (*receive_offload_cb)(struct hdd_adapter *,
+					 struct sk_buff *);
 	qdf_atomic_t vendor_disable_lro_flag;
 	qdf_atomic_t disable_lro_in_concurrency;
 	qdf_atomic_t disable_lro_in_low_tput;

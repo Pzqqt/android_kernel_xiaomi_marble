@@ -8766,15 +8766,7 @@ QDF_STATUS wma_crash_inject(WMA_HANDLE wma_handle, uint32_t type,
 	return wmi_crash_inject(wma->wmi_handle, &param);
 }
 
-#if defined(FEATURE_LRO)
-/**
- * wma_lro_init() - sends LRO configuration to FW
- * @lro_config:         pointer to the config parameters
- *
- * This function ends LRO configuration to FW.
- *
- * Return: 0 for success or reasons for failure
- */
+#ifdef RECEIVE_OFFLOAD
 int wma_lro_init(struct cdp_lro_hash_config *lro_config)
 {
 	struct scheduler_msg msg = {0};

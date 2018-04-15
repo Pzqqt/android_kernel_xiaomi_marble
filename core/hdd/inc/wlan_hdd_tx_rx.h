@@ -57,6 +57,31 @@ QDF_STATUS hdd_init_tx_rx(struct hdd_adapter *adapter);
 QDF_STATUS hdd_deinit_tx_rx(struct hdd_adapter *adapter);
 QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf);
 
+/**
+ * hdd_rx_ol_init() - Initialize Rx mode(LRO or GRO) method
+ * @hdd_ctx: pointer to HDD Station Context
+ *
+ * Return: 0 on success and non zero on failure.
+ */
+int hdd_rx_ol_init(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_disable_rx_ol_in_concurrency() - Disable Rx offload due to concurrency
+ * @disable: true/false to disable/enable the Rx offload
+ *
+ * Return: none
+ */
+void hdd_disable_rx_ol_in_concurrency(bool disable);
+
+/**
+ * hdd_disable_rx_ol_for_low_tput() - Disable Rx offload in low TPUT scenario
+ * @hdd_ctx: hdd context
+ * @disable: true/false to disable/enable the Rx offload
+ *
+ * Return: none
+ */
+void hdd_disable_rx_ol_for_low_tput(struct hdd_context *hdd_ctx, bool disable);
+
 QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
 				struct qdf_mac_addr *peer_mac_addr,
 				uint8_t *sta_id);

@@ -4005,7 +4005,7 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	 * the LRO again. Keep the LRO state same as before SSR.
 	 */
 	if (!(qdf_atomic_read(&hdd_ctx->vendor_disable_lro_flag)))
-	adapter->dev->features |= NETIF_F_LRO;
+		adapter->dev->features |= NETIF_F_LRO;
 
 	/* rcpi info initialization */
 	qdf_mem_zero(&adapter->rcpi, sizeof(adapter->rcpi));
@@ -7114,9 +7114,9 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	hdd_ctx->prev_rx = rx_packets;
 
 	if (temp_rx < hdd_ctx->config->busBandwidthLowThreshold)
-		hdd_disable_lro_for_low_tput(hdd_ctx, true);
+		hdd_disable_rx_ol_for_low_tput(hdd_ctx, true);
 	else
-		hdd_disable_lro_for_low_tput(hdd_ctx, false);
+		hdd_disable_rx_ol_for_low_tput(hdd_ctx, false);
 
 	if (temp_rx > hdd_ctx->config->tcpDelackThresholdHigh) {
 		if ((hdd_ctx->cur_rx_level != WLAN_SVC_TP_HIGH) &&
@@ -9955,8 +9955,8 @@ static int hdd_features_init(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
 	if (sme_set_vc_mode_config(hdd_ctx->config->vc_mode_cfg_bitmap))
 		hdd_warn("Error in setting Voltage Corner mode config to FW");
 
-	if (hdd_lro_init(hdd_ctx))
-		hdd_err("Unable to initialize LRO in fw");
+	if (hdd_rx_ol_init(hdd_ctx))
+		hdd_err("Unable to initialize Rx LRO/GRO in fw");
 
 	if (hdd_adaptive_dwelltime_init(hdd_ctx))
 		hdd_err("Unable to send adaptive dwelltime setting to FW");
@@ -10094,7 +10094,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 	uint32_t num_abg_tx_chains = 0;
 	uint32_t num_11b_tx_chains = 0;
 	uint32_t num_11ag_tx_chains = 0;
-	struct policy_mgr_dp_cbacks dp_cbs;
+	struct policy_mgr_dp_cbacks dp_cbs = {0};
 
 	if (hdd_ctx->config->sifs_burst_duration) {
 		set_value = (SIFS_BURST_DUR_MULTIPLIER) *
@@ -10189,7 +10189,9 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 	if (ret)
 		goto cds_disable;
 
-	dp_cbs.hdd_disable_lro_in_concurrency = hdd_disable_lro_in_concurrency;
+	if (hdd_ctx->ol_enable)
+		dp_cbs.hdd_disable_rx_ol_in_concurrency =
+				hdd_disable_rx_ol_in_concurrency;
 	dp_cbs.hdd_set_rx_mode_rps_cb = hdd_set_rx_mode_rps;
 	dp_cbs.hdd_ipa_set_mcc_mode_cb = hdd_ipa_set_mcc_mode;
 	status = policy_mgr_register_dp_cb(hdd_ctx->hdd_psoc, &dp_cbs);

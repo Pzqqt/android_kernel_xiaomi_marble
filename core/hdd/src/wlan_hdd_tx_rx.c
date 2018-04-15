@@ -55,6 +55,8 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_cfg80211.h"
 #include <wlan_hdd_tsf.h>
+#include <net/tcp.h>
+#include "wma_api.h"
 
 #include "wlan_hdd_nud_tracking.h"
 
@@ -1522,6 +1524,201 @@ static bool hdd_is_rx_wake_lock_needed(struct sk_buff *skb)
 	return false;
 }
 
+#ifdef RECEIVE_OFFLOAD
+/**
+ * hdd_resolve_rx_ol_mode() - Resolve Rx offload method, LRO or GRO
+ * @hdd_ctx: pointer to HDD Station Context
+ *
+ * Return: None
+ */
+static void hdd_resolve_rx_ol_mode(struct hdd_context *hdd_ctx)
+{
+	if (!(hdd_ctx->config->lro_enable ^
+	    hdd_ctx->config->gro_enable)) {
+		hdd_ctx->config->lro_enable && hdd_ctx->config->gro_enable ?
+		hdd_err("Can't enable both LRO and GRO, disabling Rx offload") :
+		hdd_debug("LRO and GRO both are disabled");
+		hdd_ctx->ol_enable = 0;
+	} else if (hdd_ctx->config->lro_enable) {
+		hdd_debug("Rx offload LRO is enabled");
+		hdd_ctx->ol_enable = CFG_LRO_ENABLED;
+	} else {
+		hdd_debug("Rx offload GRO is enabled");
+		hdd_ctx->ol_enable = CFG_GRO_ENABLED;
+	}
+}
+
+/**
+ * hdd_gro_rx() - Handle Rx procesing via GRO
+ * @adapter: pointer to adapter context
+ * @skb: pointer to sk_buff
+ *
+ * Return: QDF_STATUS_SUCCESS if processed via GRO or non zero return code
+ */
+static QDF_STATUS hdd_gro_rx(struct hdd_adapter *adapter, struct sk_buff *skb)
+{
+	struct napi_struct *napi;
+	struct qca_napi_data *napid;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	/* Only enabling it for STA mode like LRO today */
+	if (QDF_STA_MODE != adapter->device_mode)
+		return QDF_STATUS_E_NOSUPPORT;
+
+	napid = hdd_napi_get_all();
+	napi = hif_get_napi(QDF_NBUF_CB_RX_CTX_ID(skb), napid);
+	skb_set_hash(skb, QDF_NBUF_CB_RX_FLOW_ID(skb), PKT_HASH_TYPE_L4);
+
+	if (GRO_DROP != napi_gro_receive(napi, skb))
+		status = QDF_STATUS_SUCCESS;
+
+	return status;
+}
+
+/**
+ * hdd_register_rx_ol() - Register LRO/GRO rx processing callbacks
+ *
+ * Return: none
+ */
+static void hdd_register_rx_ol(void)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if  (!hdd_ctx)
+		hdd_err("HDD context is NULL");
+
+	if (hdd_ctx->ol_enable == CFG_LRO_ENABLED) {
+		/* Register the flush callback */
+		hdd_ctx->receive_offload_cb = hdd_lro_rx;
+		hdd_debug("LRO is enabled");
+	} else if (hdd_ctx->ol_enable == CFG_GRO_ENABLED) {
+		hdd_ctx->receive_offload_cb = hdd_gro_rx;
+		hdd_debug("GRO is enabled");
+	}
+}
+
+int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
+{
+	struct cdp_lro_hash_config lro_config = {0};
+
+	hdd_resolve_rx_ol_mode(hdd_ctx);
+
+	hdd_register_rx_ol();
+
+	/*
+	 * This will enable flow steering and Toeplitz hash
+	 * So enable it for LRO or GRO processing.
+	 */
+	if (hdd_napi_enabled(HDD_NAPI_ANY) == 0) {
+		hdd_warn("NAPI is disabled");
+		return 0;
+	}
+
+	lro_config.lro_enable = 1;
+	lro_config.tcp_flag = TCPHDR_ACK;
+	lro_config.tcp_flag_mask = TCPHDR_FIN | TCPHDR_SYN | TCPHDR_RST |
+		TCPHDR_ACK | TCPHDR_URG | TCPHDR_ECE | TCPHDR_CWR;
+
+	get_random_bytes(lro_config.toeplitz_hash_ipv4,
+			 (sizeof(lro_config.toeplitz_hash_ipv4[0]) *
+			  LRO_IPV4_SEED_ARR_SZ));
+
+	get_random_bytes(lro_config.toeplitz_hash_ipv6,
+			 (sizeof(lro_config.toeplitz_hash_ipv6[0]) *
+			  LRO_IPV6_SEED_ARR_SZ));
+
+	if (0 != wma_lro_init(&lro_config)) {
+		hdd_err("Failed to send LRO configuration!");
+		hdd_ctx->ol_enable = 0;
+		return -EAGAIN;
+	}
+
+	return 0;
+}
+
+void hdd_disable_rx_ol_in_concurrency(bool disable)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return;
+	}
+
+	if (disable) {
+		if (hdd_ctx->en_tcp_delack_no_lro) {
+			struct wlan_rx_tp_data rx_tp_data;
+
+			hdd_info("Enable TCP delack as LRO disabled in concurrency");
+			rx_tp_data.rx_tp_flags = TCP_DEL_ACK_IND;
+			rx_tp_data.level = GET_CUR_RX_LVL(hdd_ctx);
+			wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+						    WLAN_SVC_WLAN_TP_IND,
+						    &rx_tp_data,
+						    sizeof(rx_tp_data));
+			hdd_ctx->en_tcp_delack_no_lro = 1;
+		}
+		qdf_atomic_set(&hdd_ctx->disable_lro_in_concurrency, 1);
+	} else {
+		if (hdd_ctx->en_tcp_delack_no_lro) {
+			hdd_info("Disable TCP delack as LRO is enabled");
+			hdd_ctx->en_tcp_delack_no_lro = 0;
+			hdd_reset_tcp_delack(hdd_ctx);
+		}
+		qdf_atomic_set(&hdd_ctx->disable_lro_in_concurrency, 0);
+	}
+}
+
+void hdd_disable_rx_ol_for_low_tput(struct hdd_context *hdd_ctx, bool disable)
+{
+	if (disable)
+		qdf_atomic_set(&hdd_ctx->disable_lro_in_low_tput, 1);
+	else
+		qdf_atomic_set(&hdd_ctx->disable_lro_in_low_tput, 0);
+}
+
+/**
+ * hdd_can_handle_receive_offload() - Check for dynamic disablement
+ * @hdd_ctx: hdd context
+ * @skb: pointer to sk_buff which will be processed by Rx OL
+ *
+ * Check for dynamic disablement of Rx offload
+ *
+ * Return: false if we cannot process otherwise true
+ */
+static bool hdd_can_handle_receive_offload(struct hdd_context *hdd_ctx,
+					   struct sk_buff *skb)
+{
+	if (!QDF_NBUF_CB_RX_TCP_PROTO(skb) ||
+	    qdf_atomic_read(&hdd_ctx->disable_lro_in_concurrency) ||
+	    QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb) ||
+	    qdf_atomic_read(&hdd_ctx->disable_lro_in_low_tput))
+		return false;
+	else
+		return true;
+}
+#else /* RECEIVE_OFFLOAD */
+static bool hdd_can_handle_receive_offload(struct hdd_context *hdd_ctx,
+					   struct sk_buff *skb)
+{
+	return false;
+}
+
+int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
+{
+	hdd_err("Rx_OL, LRO/GRO not supported");
+	return -EPERM;
+}
+
+void hdd_disable_rx_ol_in_concurrency(bool disable)
+{
+}
+
+void hdd_disable_rx_ol_for_low_tput(struct hdd_context *hdd_ctx, bool disable)
+{
+}
+#endif /* RECEIVE_OFFLOAD */
+
 #ifdef WLAN_FEATURE_TSF_PLUS
 static inline void hdd_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
 					qdf_nbuf_t netbuf,
@@ -1556,7 +1753,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 {
 	struct hdd_adapter *adapter = NULL;
 	struct hdd_context *hdd_ctx = NULL;
-	int rxstat;
+	int rxstat = 0;
+	QDF_STATUS rx_ol_status = QDF_STATUS_E_FAILURE;
 	struct sk_buff *skb = NULL;
 	struct sk_buff *next = NULL;
 	struct hdd_station_ctx *sta_ctx = NULL;
@@ -1712,40 +1910,21 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 		hdd_tsf_timestamp_rx(hdd_ctx, skb, ktime_to_us(skb->tstamp));
 
-		if (HDD_LRO_NO_RX ==
-			 hdd_lro_rx(hdd_ctx, adapter, skb)) {
+		if (hdd_can_handle_receive_offload(hdd_ctx, skb) &&
+		    hdd_ctx->receive_offload_cb)
+			rx_ol_status = hdd_ctx->receive_offload_cb(adapter,
+								   skb);
+
+		if (rx_ol_status != QDF_STATUS_SUCCESS) {
 			if (hdd_napi_enabled(HDD_NAPI_ANY) &&
 				!hdd_ctx->enable_rxthread &&
 				!QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb))
 				rxstat = netif_receive_skb(skb);
 			else
 				rxstat = netif_rx_ni(skb);
+		}
 
-			if (NET_RX_SUCCESS == rxstat) {
-				++adapter->hdd_stats.tx_rx_stats.
-					 rx_delivered[cpu_index];
-				if (track_arp)
-					++adapter->hdd_stats.hdd_arp_stats.
-						rx_delivered;
-				/* track connectivity stats */
-				if (adapter->pkt_type_bitmap)
-					hdd_tx_rx_collect_connectivity_stats_info(
-						skb, adapter,
-						PKT_TYPE_RX_DELIVERED,
-						&pkt_type);
-			} else {
-				++adapter->hdd_stats.tx_rx_stats.
-					 rx_refused[cpu_index];
-				if (track_arp)
-					++adapter->hdd_stats.hdd_arp_stats.
-						rx_refused;
-				/* track connectivity stats */
-				if (adapter->pkt_type_bitmap)
-					hdd_tx_rx_collect_connectivity_stats_info(
-						skb, adapter,
-						PKT_TYPE_RX_REFUSED, &pkt_type);
-			}
-		} else {
+		if (!rxstat) {
 			++adapter->hdd_stats.tx_rx_stats.
 						rx_delivered[cpu_index];
 			if (track_arp)
@@ -1756,6 +1935,17 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 				hdd_tx_rx_collect_connectivity_stats_info(
 					skb, adapter,
 					PKT_TYPE_RX_DELIVERED, &pkt_type);
+		} else {
+			++adapter->hdd_stats.tx_rx_stats.rx_refused[cpu_index];
+			if (track_arp)
+				++adapter->hdd_stats.hdd_arp_stats.rx_refused;
+
+			/* track connectivity stats */
+			if (adapter->pkt_type_bitmap)
+				hdd_tx_rx_collect_connectivity_stats_info(
+					skb, adapter,
+					PKT_TYPE_RX_REFUSED, &pkt_type);
+
 		}
 	}
 

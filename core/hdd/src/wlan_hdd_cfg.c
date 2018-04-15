@@ -3457,6 +3457,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_LRO_ENABLED_MIN,
 		     CFG_LRO_ENABLED_MAX),
 
+	REG_VARIABLE(CFG_GRO_ENABLED_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, gro_enable,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_GRO_ENABLED_DEFAULT,
+		     CFG_GRO_ENABLED_MIN,
+		     CFG_GRO_ENABLED_MAX),
+
 	REG_VARIABLE(CFG_BPF_PACKET_FILTER_OFFLOAD, WLAN_PARAM_Integer,
 		     struct hdd_config, bpf_packet_filter_enable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
