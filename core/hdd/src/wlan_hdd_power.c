@@ -2285,14 +2285,23 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 			       enum wow_interface_pause pause_setting,
 			       enum wow_resume_trigger resume_setting)
 {
+	int errno;
 	qdf_device_t qdf_dev;
 	struct hif_opaque_softc *hif_ctx;
-	int errno;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct wow_enable_params wow_params = {
 		.is_unit_test = true,
 		.interface_pause = pause_setting,
 		.resume_trigger = resume_setting
 	};
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return -EINVAL;
+
+	if (!hdd_ctx->config->is_unit_test_framework_enabled) {
+		hdd_warn_rl("UT framework is disabled");
+		return -EINVAL;
+	}
 
 	hdd_info("Unit-test suspend WLAN");
 
@@ -2393,6 +2402,15 @@ link_down:
 int hdd_wlan_fake_apps_resume(struct wiphy *wiphy, struct net_device *dev)
 {
 	struct hif_opaque_softc *hif_ctx;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return -EINVAL;
+
+	if (!hdd_ctx->config->is_unit_test_framework_enabled) {
+		hdd_warn_rl("UT framework is disabled");
+		return -EINVAL;
+	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
