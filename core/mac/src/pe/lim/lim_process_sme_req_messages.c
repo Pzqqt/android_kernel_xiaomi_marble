@@ -5774,7 +5774,7 @@ static void obss_color_collision_process_color_change(tpAniSirGlobal mac_ctx,
 			is_color_collision = (obss_color_info->
 					     obss_color_bitmap_bit32to63 >>
 					     (session->he_op.bss_color -
-					      31)) & 0x01;
+					      32)) & 0x01;
 		if (!is_color_collision) {
 			pe_err("%d: color collision not found, curr_color: %d",
 			       session->smeSessionId,
