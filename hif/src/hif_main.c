@@ -882,6 +882,21 @@ struct hif_target_info *hif_get_target_info_handle(
 }
 qdf_export_symbol(hif_get_target_info_handle);
 
+#ifdef RECEIVE_OFFLOAD
+int hif_get_rx_ctx_id(int ctx_id, struct hif_opaque_softc *hif_hdl)
+{
+	if (hif_napi_enabled(hif_hdl, -1))
+		return NAPI_PIPE2ID(ctx_id);
+	else
+		return ctx_id;
+}
+#else
+int hif_get_rx_ctx_id(int ctx_id, struct hif_opaque_softc *hif_hdl)
+{
+	return 0;
+}
+#endif
+
 #if defined(FEATURE_LRO)
 
 /**
@@ -901,27 +916,6 @@ void *hif_get_lro_info(int ctx_id, struct hif_opaque_softc *hif_hdl)
 		data = hif_ce_get_lro_ctx(hif_hdl, ctx_id);
 
 	return data;
-}
-
-/**
- * hif_get_rx_ctx_id - Returns LRO instance ID based on underlying LRO instance
- * @ctx_id: LRO context ID
- * @hif_hdl: HIF Context
- *
- * Return: LRO instance ID
- */
-int hif_get_rx_ctx_id(int ctx_id, struct hif_opaque_softc *hif_hdl)
-{
-	if (hif_napi_enabled(hif_hdl, -1))
-		return NAPI_PIPE2ID(ctx_id);
-	else
-		return ctx_id;
-}
-
-#else /* !defined(FEATURE_LRO) */
-int hif_get_rx_ctx_id(int ctx_id, struct hif_opaque_softc *hif_hdl)
-{
-	return 0;
 }
 #endif
 

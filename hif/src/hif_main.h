@@ -277,6 +277,13 @@ void hif_wlan_disable(struct hif_softc *scn);
 int hif_target_sleep_state_adjust(struct hif_softc *scn,
 					 bool sleep_ok,
 					 bool wait_for_it);
+/**
+ * hif_get_rx_ctx_id() - Returns NAPI instance ID based on CE ID
+ * @ctx_id: Rx CE context ID
+ * @hif_hdl: HIF Context
+ *
+ * Return: Rx instance ID
+ */
 int hif_get_rx_ctx_id(int ctx_id, struct hif_opaque_softc *hif_hdl);
 void hif_ramdump_handler(struct hif_opaque_softc *scn);
 #ifdef HIF_USB

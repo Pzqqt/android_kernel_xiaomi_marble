@@ -361,6 +361,13 @@ inline struct qca_napi_data *hif_napi_get_all(struct hif_opaque_softc *hif_ctx)
 	return &(hif->napi_data);
 }
 
+struct napi_struct *hif_get_napi(int napi_id, struct qca_napi_data *napid)
+{
+	int id = NAPI_ID2PIPE(napi_id);
+
+	return &(napid->napis[id]->napi);
+}
+
 /**
  *
  * hif_napi_event() - reacts to events that impact NAPI

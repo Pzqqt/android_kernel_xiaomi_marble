@@ -124,6 +124,15 @@ int hif_napi_destroy(struct hif_opaque_softc  *hif,
 
 struct qca_napi_data *hif_napi_get_all(struct hif_opaque_softc   *hif);
 
+/**
+ * hif_get_napi() - get NAPI corresponding to napi_id
+ * @napi_id: NAPI instance
+ * @napi_d: Handle NAPI
+ *
+ * Return: napi corresponding napi_id
+ */
+struct napi_struct *hif_get_napi(int napi_id, struct qca_napi_data *napid);
+
 int hif_napi_event(struct hif_opaque_softc     *hif,
 		   enum  qca_napi_event event,
 		   void                *data);
