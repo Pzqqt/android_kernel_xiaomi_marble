@@ -20,6 +20,10 @@ ifeq ($(CONFIG_ARCH_SM8150), y)
 	TARGET_KERNEL_VERSION := 4.14
 endif
 
+ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
+	TARGET_KERNEL_VERSION := 4.14
+endif
+
 KDIR := $(TOP)/kernel/msm-$(TARGET_KERNEL_VERSION)
 
 ifeq ($(KERNEL_BUILD), 1)
@@ -43,6 +47,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		INCS    +=  -include $(AUDIO_ROOT)/config/sdm670autoconf.h
 	endif
 	ifeq ($(CONFIG_ARCH_SM8150), y)
+		include $(AUDIO_ROOT)/config/sdm855auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sdm855autoconf.h
+	endif
+	ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 		include $(AUDIO_ROOT)/config/sdm855auto.conf
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sdm855autoconf.h

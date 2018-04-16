@@ -15,6 +15,10 @@ ifeq ($(CONFIG_ARCH_SM8150), y)
 include $(srctree)/techpack/audio/config/sdm855auto.conf
 export
 endif
+ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
+include $(srctree)/techpack/audio/config/sdm855auto.conf
+export
+endif
 
 # Use USERINCLUDE when you must reference the UAPI directories only.
 USERINCLUDE     += \
@@ -39,6 +43,10 @@ LINUXINCLUDE    += \
                 -include $(srctree)/techpack/audio/config/sdxpoorwillsautoconf.h
 endif
 ifeq ($(CONFIG_ARCH_SM8150), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/sdm855autoconf.h
+endif
+ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 LINUXINCLUDE    += \
                 -include $(srctree)/techpack/audio/config/sdm855autoconf.h
 endif
