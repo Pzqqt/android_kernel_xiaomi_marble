@@ -3527,19 +3527,25 @@ int wma_unified_debug_print_event_handler(void *handle, uint8_t *datap,
 	uint32_t datalen;
 
 	param_buf = (WMI_DEBUG_PRINT_EVENTID_param_tlvs *) datap;
-	if (!param_buf) {
+	if (!param_buf || !param_buf->data) {
 		WMA_LOGE("Get NULL point message from FW");
 		return -ENOMEM;
 	}
 	data = param_buf->data;
 	datalen = param_buf->num_data;
+	if (datalen > WMI_SVC_MSG_MAX_SIZE) {
+		WMA_LOGE("Received data len %d exceeds max value %d",
+				datalen, WMI_SVC_MSG_MAX_SIZE);
+		return QDF_STATUS_E_FAILURE;
+	}
+	data[datalen - 1] = '\0';
 
 #ifdef BIG_ENDIAN_HOST
 	{
-		if (datalen > BIG_ENDIAN_MAX_DEBUG_BUF) {
+		if (datalen >= BIG_ENDIAN_MAX_DEBUG_BUF) {
 			WMA_LOGE("%s Invalid data len %d, limiting to max",
 				 __func__, datalen);
-			datalen = BIG_ENDIAN_MAX_DEBUG_BUF;
+			datalen = BIG_ENDIAN_MAX_DEBUG_BUF - 1;
 		}
 		char dbgbuf[BIG_ENDIAN_MAX_DEBUG_BUF] = { 0 };
 
