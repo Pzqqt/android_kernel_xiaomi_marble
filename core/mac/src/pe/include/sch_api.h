@@ -109,6 +109,7 @@ int sch_gen_timing_advert_frame(tpAniSirGlobal pMac, tSirMacAddr self_addr,
  * Return: None
  */
 void sch_beacon_process_for_ap(tpAniSirGlobal mac_ctx,
+					uint8_t session_id,
 					uint8_t *rx_pkt_info,
 					tSchBeaconStruct *bcn);
 

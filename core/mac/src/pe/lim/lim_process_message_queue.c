@@ -766,16 +766,81 @@ static void lim_fill_sap_bcn_pkt_meta(struct scan_cache_entry *scan_entry,
 	rx_pkt->pkt_buf = NULL;
 }
 
+/*
+ * lim_allocate_and_get_bcn() - Allocate and get the bcn frame pkt and structure
+ * @mac_ctx: pointer to global mac_ctx
+ * @pkt: pointer to the pkt to be allocated
+ * @rx_pkt_info: pointer to the allocated pkt meta
+ * @bcn: pointer to the beacon struct
+ * @scan_entry: pointer to the scan cache entry from scan module
+ *
+ * Allocates a cds_pkt for beacon frame in scan cache entry,
+ * fills the essential pkt_meta elements and converts the
+ * pkt to beacon strcut.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS lim_allocate_and_get_bcn(tpAniSirGlobal mac_ctx,
+				cds_pkt_t *pkt,
+				uint8_t *rx_pkt_info,
+				tSchBeaconStruct *bcn,
+				struct scan_cache_entry *scan_entry)
+{
+	QDF_STATUS status;
+
+	pkt = qdf_mem_malloc(sizeof(*pkt));
+	if (!pkt) {
+		pe_err("Failed to allocate pkt");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wma_ds_peek_rx_packet_info(pkt, (void *)&rx_pkt_info, false);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		pe_err("Failed to get Rx Pkt meta");
+		goto free;
+	}
+
+	bcn = qdf_mem_malloc(sizeof(tSchBeaconStruct));
+	if (!bcn) {
+		pe_err("Failed to allocate bcn struct");
+		goto free;
+	}
+
+	lim_fill_sap_bcn_pkt_meta(scan_entry, pkt);
+
+	/* Convert the beacon frame into a structure */
+	if (sir_convert_beacon_frame2_struct(mac_ctx,
+	    (uint8_t *) rx_pkt_info,
+	    bcn) != eSIR_SUCCESS) {
+		pe_err_rl("beacon parsing failed");
+		goto free;
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+free:
+	if (pkt) {
+		qdf_mem_free(pkt);
+		pkt = NULL;
+	}
+
+	if (bcn) {
+		qdf_mem_free(bcn);
+		bcn = NULL;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
 				struct scan_cache_entry *scan_entry)
 {
 	tpAniSirGlobal mac_ctx;
 	cds_pkt_t *pkt = NULL;
-	struct mgmt_beacon_probe_filter *filter;
 	tSchBeaconStruct *bcn = NULL;
-	bool allow_frame = false;
-	QDF_STATUS qdf_status;
-	uint8_t *rx_pkt_info;
+	struct mgmt_beacon_probe_filter *filter;
+	QDF_STATUS status;
+	uint8_t *rx_pkt_info = NULL;
 	int session_id;
 
 	if (!scan_entry) {
@@ -797,51 +862,21 @@ void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
 	if (!filter->num_sap_sessions) {
 		return;
 	}
-
-	for (session_id = 0; session_id < SIR_MAX_SUPPORTED_BSS; session_id++) {
+	for (session_id = 0; session_id < mac_ctx->lim.maxBssId; session_id++) {
 		if (filter->sap_channel[session_id] &&
 		    (filter->sap_channel[session_id] ==
 		    scan_entry->channel.chan_idx)) {
-			allow_frame = true;
-			break;
+			if (!pkt) {
+				status = lim_allocate_and_get_bcn(mac_ctx, pkt,
+						rx_pkt_info, bcn, scan_entry);
+				if (!QDF_IS_STATUS_SUCCESS(status))
+					return;
+			}
+			sch_beacon_process_for_ap(mac_ctx, session_id,
+						  rx_pkt_info, bcn);
 		}
 	}
 
-	if (!allow_frame)
-		return;
-
-	pkt = qdf_mem_malloc(sizeof(*pkt));
-	if (!pkt) {
-		pe_err("Failed to allocate rx packet");
-		goto free;
-	}
-
-	lim_fill_sap_bcn_pkt_meta(scan_entry, pkt);
-
-	qdf_status =
-		wma_ds_peek_rx_packet_info(pkt, (void *)&rx_pkt_info, false);
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		pe_err("Failed to peek rx pkt info");
-		goto free;
-	}
-
-	bcn = qdf_mem_malloc(sizeof(tSchBeaconStruct));
-	if (!bcn) {
-		pe_err("Failed to allocate bcn struct");
-		goto free;
-	}
-
-	/* Convert the beacon frame into a structure */
-	if (sir_convert_beacon_frame2_struct(mac_ctx, (uint8_t *) rx_pkt_info,
-		bcn) != eSIR_SUCCESS) {
-		pe_err_rl("beacon parsing failed");
-		goto free;
-	}
-
-	sch_beacon_process_for_ap(mac_ctx, rx_pkt_info, bcn);
-
-free:
 	/*
 	 * Free only the pkt memory we allocated and not the pkt->pkt_buf.
 	 * The actual SKB buffer is freed in the scan module from where

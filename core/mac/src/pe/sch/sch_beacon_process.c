@@ -1006,55 +1006,50 @@ static void  sch_check_bss_color_ie(tpAniSirGlobal mac_ctx,
 #endif
 
 void sch_beacon_process_for_ap(tpAniSirGlobal mac_ctx,
+				uint8_t session_id,
 				uint8_t *rx_pkt_info,
 				tSchBeaconStruct *bcn)
 {
-	uint8_t i;
-	tpPESession ap_session = NULL;
+	tpPESession ap_session;
 	tUpdateBeaconParams bcn_prm;
 
 	if (!bcn || !rx_pkt_info) {
-		pe_err_rl("bcn %pK or rx_pkt_info %pK NULL",
+		pe_err_rl("bcn %pK or rx_pkt_info %pKis NULL",
 			  bcn, rx_pkt_info);
 		return;
 	}
 
+	ap_session = pe_find_session_by_session_id(mac_ctx, session_id);
+	if (!ap_session)
+		return;
+
+	if (!LIM_IS_AP_ROLE(ap_session))
+		return;
+
 	qdf_mem_zero(&bcn_prm, sizeof(tUpdateBeaconParams));
 	bcn_prm.paramChangeBitmap = 0;
 
-	if (bcn->ssidPresent)
-		bcn->ssId.ssId[bcn->ssId.length] = 0;
+	bcn_prm.bssIdx = ap_session->bssIdx;
 
-	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
-		ap_session = pe_find_session_by_session_id(mac_ctx, i);
-		if (!ap_session)
-			continue;
+	if (!ap_session->is_session_obss_color_collision_det_enabled)
+		sch_check_bss_color_ie(mac_ctx, ap_session,
+					bcn, &bcn_prm);
 
-		if (!LIM_IS_AP_ROLE(ap_session))
-			continue;
+	if ((ap_session->gLimProtectionControl !=
+	     WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE) &&
+	    !ap_session->is_session_obss_offload_enabled)
+		ap_beacon_process(mac_ctx, rx_pkt_info,
+					bcn, &bcn_prm, ap_session);
 
-		bcn_prm.bssIdx = ap_session->bssIdx;
-
-		if (!ap_session->is_session_obss_color_collision_det_enabled)
-			sch_check_bss_color_ie(mac_ctx, ap_session,
-						bcn, &bcn_prm);
-
-		if ((ap_session->gLimProtectionControl !=
-		     WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE) &&
-		    !ap_session->is_session_obss_offload_enabled)
-			ap_beacon_process(mac_ctx, rx_pkt_info,
-						bcn, &bcn_prm, ap_session);
-
-		if ((false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)
-		    && bcn_prm.paramChangeBitmap) {
-			/* Update the bcn and apply the new settings to HAL */
-			sch_set_fixed_beacon_fields(mac_ctx, ap_session);
-			pe_debug("Beacon for PE session[%d] got changed",
-			       ap_session->peSessionId);
-			pe_debug("sending beacon param change bitmap: 0x%x",
-			       bcn_prm.paramChangeBitmap);
-			lim_send_beacon_params(mac_ctx, &bcn_prm, ap_session);
-		}
+	if ((false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)
+	    && bcn_prm.paramChangeBitmap) {
+		/* Update the bcn and apply the new settings to HAL */
+		sch_set_fixed_beacon_fields(mac_ctx, ap_session);
+		pe_debug("Beacon for PE session[%d] got changed",
+		       ap_session->peSessionId);
+		pe_debug("sending beacon param change bitmap: 0x%x",
+		       bcn_prm.paramChangeBitmap);
+		lim_send_beacon_params(mac_ctx, &bcn_prm, ap_session);
 	}
 }
 
