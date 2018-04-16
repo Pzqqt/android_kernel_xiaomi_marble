@@ -2756,12 +2756,19 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 				ret);
 			goto close;
 		}
+
 		status = cds_dp_open(hdd_ctx->psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to Open cds post open; status: %d",
 				status);
 			ret = qdf_status_to_os_return(status);
 			goto close;
+		}
+
+		ret = hdd_register_cb(hdd_ctx);
+		if (ret) {
+			hdd_err("Failed to register HDD callbacks!");
+			goto cds_txrx_free;
 		}
 
 		/*
@@ -2775,7 +2782,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to pre-enable CDS; status: %d", status);
 			ret = qdf_status_to_os_return(status);
-			goto cds_txrx_free;
+			goto deregister_cb;
 		}
 
 		hdd_register_policy_manager_callback(
@@ -2825,6 +2832,9 @@ destroy_driver_sysfs:
 	hdd_sysfs_destroy_version_interface();
 	hdd_sysfs_destroy_driver_root_obj();
 	cds_post_disable();
+
+deregister_cb:
+	hdd_deregister_cb(hdd_ctx);
 
 cds_txrx_free:
 	tgt_hdl = wlan_psoc_get_tgt_if_handle(hdd_ctx->psoc);
@@ -10507,16 +10517,10 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 
 	wlan_hdd_tsf_init(hdd_ctx);
 
-	ret = hdd_register_cb(hdd_ctx);
-	if (ret) {
-		hdd_err("Failed to register HDD callbacks!");
-		return ret;
-	}
-
 	status = sme_enable_disable_chanavoidind_event(mac_handle, 0);
 	if (QDF_IS_STATUS_ERROR(status) && (status != QDF_STATUS_E_NOSUPPORT)) {
 		hdd_err("Failed to disable Chan Avoidance Indication");
-		goto deregister_cb;
+		return -EINVAL;
 	}
 
 	/* register P2P Listen Offload event callback */
@@ -10527,18 +10531,13 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	ret = hdd_set_auto_shutdown_cb(hdd_ctx);
 
 	if (ret)
-		goto deregister_cb;
+		return -EINVAL;
 
 	wlan_hdd_init_chan_info(hdd_ctx);
 	wlan_hdd_twt_init(hdd_ctx);
 
 	hdd_exit();
 	return 0;
-
-deregister_cb:
-	hdd_deregister_cb(hdd_ctx);
-
-	return -EINVAL;
 }
 
 /**
@@ -10880,9 +10879,6 @@ static int hdd_deconfigure_cds(struct hdd_context *hdd_ctx)
 	/* De-init features */
 	hdd_features_deinit(hdd_ctx);
 
-	/* De-register the SME callbacks */
-	hdd_deregister_cb(hdd_ctx);
-
 	qdf_status = policy_mgr_deregister_mode_change_cb(hdd_ctx->psoc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		hdd_debug("Failed to deregister mode change cb with Policy Manager");
@@ -11021,6 +11017,9 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		ret = -EINVAL;
 		QDF_ASSERT(0);
 	}
+
+	/* De-register the SME callbacks */
+	hdd_deregister_cb(hdd_ctx);
 
 	hdd_runtime_suspend_context_deinit(hdd_ctx);
 
@@ -11638,6 +11637,10 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 	mac_handle_t mac_handle;
 
 	hdd_enter();
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("in ftm mode, no need to register callbacks");
+		return ret;
+	}
 
 	mac_handle = hdd_ctx->mac_handle;
 
@@ -11721,6 +11724,10 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 	mac_handle_t mac_handle;
 
 	hdd_enter();
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("in ftm mode, no need to deregister callbacks");
+		return;
+	}
 
 	mac_handle = hdd_ctx->mac_handle;
 	sme_deregister_tx_queue_cb(mac_handle);
