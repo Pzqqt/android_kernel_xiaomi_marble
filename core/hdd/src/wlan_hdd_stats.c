@@ -3971,18 +3971,17 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	wlan_hdd_get_station_stats(adapter);
 
-	if (adapter->hdd_stats.summary_stat.rssi)
-		adapter->rssi = adapter->hdd_stats.summary_stat.rssi;
+	adapter->rssi = adapter->hdd_stats.summary_stat.rssi;
+	snr = adapter->hdd_stats.summary_stat.snr;
 
 	/* for new connection there might be no valid previous RSSI */
 	if (!adapter->rssi) {
 		hdd_get_rssi_snr_by_bssid(adapter,
 				sta_ctx->conn_info.bssId.bytes,
-				&adapter->rssi, NULL);
+				&adapter->rssi, &snr);
 	}
 
 	sinfo->signal = adapter->rssi;
-	snr = adapter->hdd_stats.summary_stat.snr;
 	hdd_debug("snr: %d, rssi: %d",
 		adapter->hdd_stats.summary_stat.snr,
 		adapter->hdd_stats.summary_stat.rssi);
@@ -5061,12 +5060,8 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 		} else {
 			/* update the adapter with the fresh results */
 			priv = hdd_request_priv(request);
-			/*
-			 * update rssi only if its valid else return previous
-			 * valid rssi.
-			 */
-			if (priv->rssi)
-				adapter->rssi = priv->rssi;
+
+			adapter->rssi = priv->rssi;
 
 			/*
 			 * for new connection there might be no valid previous
