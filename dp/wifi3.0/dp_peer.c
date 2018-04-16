@@ -714,7 +714,8 @@ struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 		 * modified find will take care of finding the correct BSS peer.
 		 */
 		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0 &&
-			(peer->vdev->vdev_id == vdev_id)) {
+			((peer->vdev->vdev_id == vdev_id) ||
+			 (vdev_id == DP_VDEV_ALL))) {
 #else
 		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0) {
 #endif
@@ -1081,7 +1082,7 @@ void *dp_find_peer_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 	struct dp_pdev *pdev = (struct dp_pdev *)dev;
 	struct dp_peer *peer;
 
-	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0, 0);
+	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0, DP_VDEV_ALL);
 
 	if (!peer)
 		return NULL;
@@ -2041,7 +2042,7 @@ QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 	struct dp_peer *peer;
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
-	peer =  dp_peer_find_hash_find(pdev->soc, peer_mac, 0, 0);
+	peer =  dp_peer_find_hash_find(pdev->soc, peer_mac, 0, DP_VDEV_ALL);
 	if (NULL == peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		"Failed to find peer for: [%pM]", peer_mac);

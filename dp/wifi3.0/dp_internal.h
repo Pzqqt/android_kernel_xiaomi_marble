@@ -301,19 +301,21 @@ while (0)
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.non_amsdu_cnt); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.amsdu_cnt); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.to_stack); \
-		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.bcast);\
 								\
 		for (i = 0; i <  CDP_MAX_RX_RINGS; i++)	\
 			DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.rcvd_reo[i]); \
 									\
 		_srcobj->stats.rx.unicast.num = \
 			_srcobj->stats.rx.to_stack.num - \
-					_srcobj->stats.rx.multicast.num; \
+					(_srcobj->stats.rx.multicast.num +  \
+					_srcobj->stats.rx.bcast.num); \
 		_srcobj->stats.rx.unicast.bytes = \
 			_srcobj->stats.rx.to_stack.bytes - \
-					_srcobj->stats.rx.multicast.bytes; \
+					(_srcobj->stats.rx.multicast.bytes + \
+					_srcobj->stats.rx.bcast.bytes); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.unicast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.multicast); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.bcast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.raw); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.intra_bss.pkts); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.intra_bss.fail); \

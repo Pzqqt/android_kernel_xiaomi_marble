@@ -4923,9 +4923,11 @@ static void dp_pdev_getstats(struct cdp_pdev *pdev_handle,
 	stats->tx_dropped = stats->tx_errors;
 
 	stats->rx_packets = pdev->stats.rx.unicast.num +
-		pdev->stats.rx.multicast.num;
+		pdev->stats.rx.multicast.num +
+		pdev->stats.rx.bcast.num;
 	stats->rx_bytes = pdev->stats.rx.unicast.bytes +
-		pdev->stats.rx.multicast.bytes;
+		pdev->stats.rx.multicast.bytes +
+		pdev->stats.rx.bcast.bytes;
 }
 
 /**
@@ -5098,9 +5100,11 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 			pdev->stats.rx.to_stack.bytes);
 	DP_PRINT_STATS("Multicast/Broadcast:");
 	DP_PRINT_STATS("	Packets = %d",
-			pdev->stats.rx.multicast.num);
+			(pdev->stats.rx.multicast.num +
+			pdev->stats.rx.bcast.num));
 	DP_PRINT_STATS("	Bytes = %llu",
-			pdev->stats.rx.multicast.bytes);
+			(pdev->stats.rx.multicast.bytes +
+			pdev->stats.rx.bcast.bytes));
 	DP_PRINT_STATS("Errors:");
 	DP_PRINT_STATS("	Rxdma Ring Un-inititalized = %d",
 			pdev->stats.replenish.rxdma_err);

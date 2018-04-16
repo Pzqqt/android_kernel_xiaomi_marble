@@ -69,6 +69,7 @@
 #define DP_QOS_TID 0x0f
 #define DP_IPV6_PRIORITY_SHIFT 20
 #define MAX_MON_LINK_DESC_BANKS 2
+#define DP_VDEV_ALL 0xff
 
 #if defined(CONFIG_MCL)
 #define MAX_PDEV_CNT 1
