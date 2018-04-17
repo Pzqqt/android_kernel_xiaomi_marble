@@ -1717,12 +1717,11 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal pMac,
 			pe_warn("AP capabilities are not matching, sending directed probe request");
 			status =
 				lim_send_probe_req_mgmt_frame(pMac, &psessionEntry->ssId,
-							      psessionEntry->bssId,
-							      psessionEntry->
-							      currentOperChannel,
-							      psessionEntry->selfMacAddr,
-							      psessionEntry->dot11mode,
-							      0, NULL);
+					      psessionEntry->bssId,
+					      psessionEntry->currentOperChannel,
+					      psessionEntry->selfMacAddr,
+					      psessionEntry->dot11mode,
+					      NULL, NULL);
 
 			if (eSIR_SUCCESS != status) {
 				pe_err("send ProbeReq failed");

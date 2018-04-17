@@ -522,7 +522,7 @@ void lim_populate_mac_header(tpAniSirGlobal, uint8_t *, uint8_t, uint8_t,
 				      tSirMacAddr, tSirMacAddr);
 tSirRetStatus lim_send_probe_req_mgmt_frame(tpAniSirGlobal, tSirMacSSid *,
 					    tSirMacAddr, uint8_t, tSirMacAddr,
-					    uint32_t, uint32_t, uint8_t *);
+					    uint32_t, uint16_t *, uint8_t *);
 void lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal, tSirMacAddr, tpAniSSID, short,
 				   uint8_t, tpPESession, uint8_t);
 void lim_send_auth_mgmt_frame(tpAniSirGlobal, tSirMacAuthFrameBody *, tSirMacAddr,

@@ -903,7 +903,7 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 	if (sendProbeReq)
 		lim_send_probe_req_mgmt_frame(mac_ctx, &session->ssId,
 			session->bssId, session->currentOperChannel,
-			session->selfMacAddr, session->dot11mode, 0, NULL);
+			session->selfMacAddr, session->dot11mode, NULL, NULL);
 
 	if ((false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)
 	    && beaconParams.paramChangeBitmap) {

@@ -212,7 +212,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			      uint8_t channel,
 			      tSirMacAddr self_macaddr,
 			      uint32_t dot11mode,
-			      uint32_t additional_ielen, uint8_t *additional_ie)
+			      uint16_t *additional_ielen, uint8_t *additional_ie)
 {
 	tDot11fProbeRequest pr;
 	uint32_t status, bytes, payload;
@@ -226,7 +226,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint8_t sme_sessionid = 0;
 	bool is_vht_enabled = false;
 	uint8_t txPower;
-	uint16_t addn_ielen = additional_ielen;
+	uint16_t addn_ielen = *additional_ielen;
 	bool extracted_ext_cap_flag = false;
 	tDot11fIEExtCap extracted_ext_cap;
 	tSirRetStatus sir_status;
@@ -373,6 +373,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 					(&extracted_ext_cap);
 			extracted_ext_cap_flag =
 				(extracted_ext_cap.num_bytes > 0);
+			*additional_ielen = addn_ielen;
 		}
 		qcn_ie = wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_QCN_OUI_TYPE,
 				SIR_MAC_QCN_OUI_TYPE_SIZE,

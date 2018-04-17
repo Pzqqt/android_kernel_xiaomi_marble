@@ -2239,6 +2239,7 @@ end:
 	mlm_set_keys_cnf.sessionId = mlm_set_keys_req->sessionId;
 	lim_post_sme_set_keys_cnf(mac_ctx, mlm_set_keys_req, &mlm_set_keys_cnf);
 }
+
 void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
 {
 	tLimMlmJoinCnf mlm_join_cnf;
@@ -2331,7 +2332,7 @@ static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal mac_ctx)
 			session->pLimMlmJoinReq->bssDescription.bssId,
 			session->currentOperChannel /*chanNum */,
 			session->selfMacAddr, session->dot11mode,
-			session->pLimJoinReq->addIEScan.length,
+			&session->pLimJoinReq->addIEScan.length,
 			session->pLimJoinReq->addIEScan.addIEdata);
 		lim_deactivate_and_change_timer(mac_ctx,
 				eLIM_PERIODIC_JOIN_PROBE_REQ_TIMER);

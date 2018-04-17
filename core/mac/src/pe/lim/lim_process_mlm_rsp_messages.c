@@ -3080,7 +3080,7 @@ static void lim_process_switch_channel_join_req(
 		session_entry->pLimMlmJoinReq->bssDescription.bssId,
 		session_entry->currentOperChannel, session_entry->selfMacAddr,
 		session_entry->dot11mode,
-		session_entry->pLimJoinReq->addIEScan.length,
+		&session_entry->pLimJoinReq->addIEScan.length,
 		session_entry->pLimJoinReq->addIEScan.addIEdata);
 
 	if (session_entry->pePersona == QDF_P2P_CLIENT_MODE) {
