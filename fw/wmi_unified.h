@@ -1349,6 +1349,10 @@ typedef enum {
     /** software FILS Discovery Frame alert event to Host, requesting host to Queue an FD frame for transmission */
     WMI_HOST_SWFDA_EVENTID,
 
+    /** software beacon alert event to Host requesting host to Queue a beacon for transmission.
+     *   Used only in host beacon mode. */
+    WMI_HOST_SWBA_V2_EVENTID,
+
     /* ADDBA Related WMI Events*/
     /** Indication the completion of the prior
      WMI_PEER_TID_DELBA_CMDID(initiator) */
@@ -2711,6 +2715,9 @@ typedef struct {
     #define WMI_RSRC_CFG_FLAG_TCL_CCE_DISABLE_S 12
     #define WMI_RSRC_CFG_FLAG_TCL_CCE_DISABLE_M 0x1000
 
+    #define WMI_RSRC_CFG_FLAG_TIM_V2_SUPPORT_ENABLE_S 13
+    #define WMI_RSRC_CFG_FLAG_TIM_V2_SUPPORT_ENABLE_M 0x2000
+
     A_UINT32 flag1;
 
     /** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -2902,6 +2909,11 @@ typedef struct {
     WMI_RSRC_CFG_FLAG_SET((word32), TCL_CCE_DISABLE, (value))
 #define WMI_RSRC_CFG_FLAG_TCL_CCE_DISABLE_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), TCL_CCE_DISABLE)
+
+#define WMI_RSRC_CFG_FLAG_TIM_V2_SUPPORT_ENABLE_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), TIM_V2_SUPPORT_ENABLE, (value))
+#define WMI_RSRC_CFG_FLAG_TIM_V2_SUPPORT_ENABLE_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), TIM_V2_SUPPORT_ENABLE)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
@@ -9219,6 +9231,21 @@ typedef struct {
     /** unique id identifying the VDEV */
     A_UINT32 vdev_id;
 } wmi_tim_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tim_info  */
+    /** TIM Partial Virtual Bitmap */
+    A_UINT32 tim_mcast;
+    A_UINT32 tim_changed;
+    A_UINT32 tim_num_ps_pending;
+    /** Use the vdev_id only if vdev_id_valid is set */
+    A_UINT32 vdev_id_valid;
+    /** unique id identifying the VDEV */
+    A_UINT32 vdev_id;
+    /** TIM bitmap len (in bytes) */
+    A_UINT32 tim_len;
+    /* followed by WMITLV_TAG_ARRAY_BYTE holding the TIM bitmap */
+} wmi_tim_info_v2;
 
 typedef struct {
     /** Flag to enable quiet period IE support */
