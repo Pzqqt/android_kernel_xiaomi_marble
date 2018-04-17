@@ -20,6 +20,7 @@
 #include "qdf_list.h"
 #include "qdf_lock.h"
 #include "qdf_mem.h"
+#include "qdf_module.h"
 #include "qdf_trace.h"
 #include "qdf_util.h"
 
@@ -27,17 +28,20 @@ void qdf_flex_mem_init(struct qdf_flex_mem_pool *pool)
 {
 	qdf_spinlock_create(&pool->lock);
 }
+qdf_export_symbol(qdf_flex_mem_init);
 
 void qdf_flex_mem_deinit(struct qdf_flex_mem_pool *pool)
 {
 	qdf_spinlock_destroy(&pool->lock);
 }
+qdf_export_symbol(qdf_flex_mem_deinit);
 
-static struct qdf_flex_mem_segment *qdf_flex_mem_seg_alloc(uint16_t item_size)
+static struct qdf_flex_mem_segment *
+qdf_flex_mem_seg_alloc(struct qdf_flex_mem_pool *pool)
 {
-	size_t bytes_size = item_size * QDF_FM_BITMAP_BITS;
-	size_t total_size = sizeof(struct qdf_flex_mem_segment) + bytes_size;
 	struct qdf_flex_mem_segment *seg;
+	size_t total_size = sizeof(struct qdf_flex_mem_segment) +
+		pool->item_size * QDF_FM_BITMAP_BITS;
 
 	seg = qdf_mem_malloc(total_size);
 	if (!seg)
@@ -70,7 +74,7 @@ static void *__qdf_flex_mem_alloc(struct qdf_flex_mem_pool *pool)
 		return ptr;
 	}
 
-	seg = qdf_flex_mem_seg_alloc(pool->item_size);
+	seg = qdf_flex_mem_seg_alloc(pool);
 	if (!seg)
 		return NULL;
 
@@ -94,10 +98,18 @@ void *qdf_flex_mem_alloc(struct qdf_flex_mem_pool *pool)
 
 	return ptr;
 }
+qdf_export_symbol(qdf_flex_mem_alloc);
 
 static void qdf_flex_mem_seg_free(struct qdf_flex_mem_pool *pool,
 				  struct qdf_flex_mem_segment *seg)
 {
+	if (!seg->dynamic)
+		return;
+
+	if (qdf_list_size(&pool->seg_list) <= pool->reduction_limit)
+		return;
+
+
 	qdf_list_remove_node(&pool->seg_list, &seg->node);
 	qdf_mem_free(seg);
 }
@@ -120,7 +132,7 @@ static void __qdf_flex_mem_free(struct qdf_flex_mem_pool *pool, void *ptr)
 		QDF_BUG(index < QDF_FM_BITMAP_BITS);
 
 		seg->used_bitmap ^= (QDF_FM_BITMAP)1 << index;
-		if (!seg->used_bitmap && seg->dynamic)
+		if (!seg->used_bitmap)
 			qdf_flex_mem_seg_free(pool, seg);
 
 		return;
@@ -144,4 +156,33 @@ void qdf_flex_mem_free(struct qdf_flex_mem_pool *pool, void *ptr)
 	__qdf_flex_mem_free(pool, ptr);
 	qdf_spin_unlock_bh(&pool->lock);
 }
+qdf_export_symbol(qdf_flex_mem_free);
 
+static void __qdf_flex_mem_release(struct qdf_flex_mem_pool *pool)
+{
+	struct qdf_flex_mem_segment *seg;
+	struct qdf_flex_mem_segment *next;
+
+	qdf_list_for_each_del(&pool->seg_list, seg, next, node) {
+		if (!seg->dynamic)
+			continue;
+
+		if (seg->used_bitmap != 0)
+			continue;
+
+		qdf_list_remove_node(&pool->seg_list, &seg->node);
+		qdf_mem_free(seg);
+	}
+}
+
+void qdf_flex_mem_release(struct qdf_flex_mem_pool *pool)
+{
+	QDF_BUG(pool);
+	if (!pool)
+		return;
+
+	qdf_spin_lock_bh(&pool->lock);
+	__qdf_flex_mem_release(pool);
+	qdf_spin_unlock_bh(&pool->lock);
+}
+qdf_export_symbol(qdf_flex_mem_release);

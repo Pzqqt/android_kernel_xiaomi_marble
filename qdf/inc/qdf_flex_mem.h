@@ -44,11 +44,13 @@
  * qdf_flex_mem_pool - a pool of memory segments
  * @seg_list: the list containing the memory segments
  * @lock: spinlock for protecting internal data structures
+ * @reduction_limit: the minimum number of segments to keep during reduction
  * @item_size: the size of the items the pool will allocate
  */
 struct qdf_flex_mem_pool {
 	qdf_list_t seg_list;
 	struct qdf_spinlock lock;
+	uint16_t reduction_limit;
 	uint16_t item_size;
 };
 
@@ -70,8 +72,9 @@ struct qdf_flex_mem_segment {
  * DEFINE_QDF_FLEX_MEM_POOL() - define a new flex mem pool with one segment
  * @name: the name of the pool variable
  * @size_of_item: size of the items the pool will allocate
+ * @rm_limit: min number of segments to keep during reduction
  */
-#define DEFINE_QDF_FLEX_MEM_POOL(name, size_of_item) \
+#define DEFINE_QDF_FLEX_MEM_POOL(name, size_of_item, rm_limit) \
 	struct qdf_flex_mem_pool name; \
 	uint8_t __ ## name ## _head_bytes[QDF_FM_BITMAP_BITS * (size_of_item)];\
 	struct qdf_flex_mem_segment __ ## name ## _head = { \
@@ -81,6 +84,7 @@ struct qdf_flex_mem_segment {
 	}; \
 	struct qdf_flex_mem_pool name = { \
 		.seg_list = QDF_LIST_INIT_SINGLE(__ ## name ## _head.node), \
+		.reduction_limit = (rm_limit), \
 		.item_size = (size_of_item), \
 	}
 
@@ -125,5 +129,15 @@ void *qdf_flex_mem_alloc(struct qdf_flex_mem_pool *pool);
  * Return: None
  */
 void qdf_flex_mem_free(struct qdf_flex_mem_pool *pool, void *ptr);
+
+/**
+ * qdf_flex_mem_release() - release unused segments
+ * @pool: the pool to operate against
+ *
+ * This function physically releases as much unused pool memory as possible.
+ *
+ * Return: None
+ */
+void qdf_flex_mem_release(struct qdf_flex_mem_pool *pool);
 
 #endif /* __QDF_FLEX_MEM_H */

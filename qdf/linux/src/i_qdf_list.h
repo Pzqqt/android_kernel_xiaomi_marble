@@ -79,6 +79,9 @@ static inline void __qdf_list_create(__qdf_list_t *list, uint32_t max_size)
 #define __qdf_list_for_each(list_ptr, cursor, node_field) \
 	list_for_each_entry(cursor, &(list_ptr)->anchor, node_field)
 
+#define __qdf_list_for_each_del(list_ptr, cursor, next, node_field) \
+	list_for_each_entry_safe(cursor, next, &(list_ptr)->anchor, node_field)
+
 /**
  * __qdf_init_list_head() - initialize list head
  * @list_head: pointer to list head

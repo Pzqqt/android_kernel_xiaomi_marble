@@ -45,6 +45,7 @@ linux/src/qdf_perf.o        \
 linux/src/qdf_threads.o     \
 linux/src/qdf_trace.o \
 linux/src/qdf_file.o \
+src/qdf_flex_mem.o \
 src/qdf_parse.o \
 src/qdf_str.o \
 src/qdf_types.o
