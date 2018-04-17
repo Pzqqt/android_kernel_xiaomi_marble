@@ -32,6 +32,7 @@
 #include <qdf_types.h>          /* qdf_device_t, qdf_print */
 #include <qdf_lock.h>           /* qdf_spinlock */
 #include <qdf_atomic.h>         /* qdf_atomic_read */
+#include <qdf_debugfs.h>
 
 #if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
 /* Required for WLAN_FEATURE_FASTPATH */
@@ -93,6 +94,11 @@
 #include "wlan_roam_debug.h"
 
 #ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
+#define DPT_DEBUGFS_PERMS	(QDF_FILE_USR_READ |	\
+				QDF_FILE_USR_WRITE |	\
+				QDF_FILE_GRP_READ |	\
+				QDF_FILE_OTH_READ)
+
 ol_txrx_peer_handle
 ol_txrx_peer_find_by_local_id(struct cdp_pdev *pdev,
 			      uint8_t local_peer_id);
@@ -1257,6 +1263,82 @@ static void ol_txrx_tso_stats_clear(ol_txrx_pdev_handle pdev)
 #endif /* defined(FEATURE_TSO) && defined(FEATURE_TSO_DEBUG) */
 
 /**
+ * ol_txrx_read_dpt_buff_debugfs() - read dp trace buffer
+ * @file: file to read
+ * @arg: pdev object
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS ol_txrx_read_dpt_buff_debugfs(qdf_debugfs_file_t file,
+						void *arg)
+{
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)arg;
+	uint32_t i = 0;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (pdev->state == QDF_DPT_DEBUGFS_STATE_SHOW_STATE_INVALID)
+		return QDF_STATUS_E_INVAL;
+	else if (pdev->state == QDF_DPT_DEBUGFS_STATE_SHOW_COMPLETE) {
+		pdev->state = QDF_DPT_DEBUGFS_STATE_SHOW_STATE_INIT;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	i = qdf_dpt_get_curr_pos_debugfs(file, pdev->state);
+	status =  qdf_dpt_dump_stats_debugfs(file, i);
+	if (status == QDF_STATUS_E_FAILURE)
+		pdev->state = QDF_DPT_DEBUGFS_STATE_SHOW_IN_PROGRESS;
+	else if (status == QDF_STATUS_SUCCESS)
+		pdev->state = QDF_DPT_DEBUGFS_STATE_SHOW_COMPLETE;
+
+	return status;
+}
+
+/**
+ * ol_txrx_write_dpt_buff_debugfs() - set dp trace parameters
+ * @priv: pdev object
+ * @buf: buff to get value for dpt parameters
+ * @len: buf length
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS ol_txrx_write_dpt_buff_debugfs(void *priv,
+					      const char *buf,
+					      qdf_size_t len)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static int ol_txrx_debugfs_init(struct ol_txrx_pdev_t *pdev)
+{
+	pdev->dpt_debugfs_fops.show = ol_txrx_read_dpt_buff_debugfs;
+	pdev->dpt_debugfs_fops.write = ol_txrx_write_dpt_buff_debugfs;
+	pdev->dpt_debugfs_fops.priv = pdev;
+
+	pdev->dpt_stats_log_dir = qdf_debugfs_create_dir("dpt_stats", NULL);
+
+	if (!pdev->dpt_stats_log_dir) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: error while creating debugfs dir for %s",
+				__func__, "dpt_stats");
+		pdev->state = QDF_DPT_DEBUGFS_STATE_SHOW_STATE_INVALID;
+		return -EBUSY;
+	}
+
+	if (!qdf_debugfs_create_file("dump_set_dpt_logs", DPT_DEBUGFS_PERMS,
+				     pdev->dpt_stats_log_dir,
+				     &pdev->dpt_debugfs_fops)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: debug Entry creation failed!",
+				__func__);
+		pdev->state = QDF_DPT_DEBUGFS_STATE_SHOW_STATE_INVALID;
+		return -EBUSY;
+	}
+
+	pdev->state = QDF_DPT_DEBUGFS_STATE_SHOW_STATE_INIT;
+	return 0;
+}
+
+/**
  * ol_txrx_pdev_attach() - allocate txrx pdev
  * @ctrl_pdev: cfg pdev
  * @htc_pdev: HTC pdev
@@ -1339,6 +1421,8 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
 		OL_TX_SCHED_WRR_ADV_CAT_MCAST_DATA;
 	pdev->tid_to_ac[OL_TX_NUM_TIDS + OL_TX_VDEV_DEFAULT_MGMT] =
 		OL_TX_SCHED_WRR_ADV_CAT_MCAST_MGMT;
+
+	ol_txrx_debugfs_init(pdev);
 
 	return (struct cdp_pdev *)pdev;
 
@@ -2075,6 +2159,11 @@ static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 #endif
 }
 
+static void ol_txrx_debugfs_exit(ol_txrx_pdev_handle pdev)
+{
+	qdf_debugfs_remove_dir_recursive(pdev->dpt_stats_log_dir);
+}
+
 /**
  * ol_txrx_pdev_detach() - delete the data SW state
  * @ppdev - the data physical device object being removed
@@ -2141,6 +2230,8 @@ static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 
 	ol_txrx_pdev_txq_log_destroy(pdev);
 	ol_txrx_pdev_grp_stat_destroy(pdev);
+
+	ol_txrx_debugfs_exit(pdev);
 
 	qdf_mem_free(pdev);
 }
