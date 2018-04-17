@@ -433,6 +433,77 @@ bool wlan_crypto_peer_has_auth_mode(struct wlan_objmgr_peer *peer,
 					wlan_crypto_auth_mode authvalue);
 
 /**
+ * wlan_crypto_vdev_has_ucastcipher - check ucastcipher for vdev
+ * @vdev: vdev
+ * @ucastcipher: ucastcipher to be checked
+ *
+ * This function check is ucastcipher passed is set in vdev or not
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_vdev_has_ucastcipher(struct wlan_objmgr_vdev *vdev,
+					wlan_crypto_cipher_type ucastcipher);
+
+/**
+ * wlan_crypto_peer_has_ucastcipher - check ucastcipher for peer
+ * @peer: peer
+ * @ucastcipher: ucastcipher to be checked
+ *
+ * This function check is ucastcipher passed is set in peer or not
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_peer_has_ucastcipher(struct wlan_objmgr_peer *peer,
+					wlan_crypto_cipher_type ucastcipher);
+
+
+/**
+ * wlan_crypto_vdev_has_mcastcipher - check mcastcipher for vdev
+ * @vdev: vdev
+ * @mcastcipher: mcastcipher to be checked
+ *
+ * This function check is mcastcipher passed is set in vdev or not
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_vdev_has_mcastcipher(struct wlan_objmgr_vdev *vdev,
+					wlan_crypto_cipher_type mcastcipher);
+
+/**
+ * wlan_crypto_peer_has_mcastcipher - check mcastcipher for peer
+ * @peer: peer
+ * @mcastcipher: mcastcipher to be checked
+ *
+ * This function check is mcastcipher passed is set in peer or not
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_peer_has_mcastcipher(struct wlan_objmgr_peer *peer,
+					wlan_crypto_cipher_type mcastcipher);
+
+/**
+ * wlan_crypto_vdev_getkey - get key from vdev
+ * @vdev: vdev
+ * @keyix: keyix
+ *
+ * This function gets key from vdev
+ *
+ * Return: key or NULL
+ */
+struct wlan_crypto_key *wlan_crypto_vdev_getkey(struct wlan_objmgr_vdev *vdev,
+						uint16_t keyix);
+/**
+ * wlan_crypto_peer_getkey - get key from peer
+ * @peer: peer
+ * @keyix: keyix
+ *
+ * This function gets key from peer
+ *
+ * Return: key or NULL
+ */
+struct wlan_crypto_key *wlan_crypto_peer_getkey(struct wlan_objmgr_peer *peer,
+						uint16_t keyix);
+/**
  * wlan_crypto_get_peer_fils_aead - Get peer fils aead set flag
  * @peer: Peer object
  *
