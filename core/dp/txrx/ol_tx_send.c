@@ -561,6 +561,48 @@ void ol_tx_credit_completion_handler(ol_txrx_pdev_handle pdev, int credits)
 	ol_tx_flow_ct_unpause_os_q(pdev);
 }
 
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+/**
+ * ol_tx_flow_pool_lock() - take flow pool lock
+ * @tx_desc: tx desc
+ *
+ * Return: None
+ */
+static inline
+void ol_tx_flow_pool_lock(struct ol_tx_desc_t *tx_desc)
+{
+	struct ol_tx_flow_pool_t *pool;
+
+	pool = tx_desc->pool;
+	qdf_spin_lock_bh(&pool->flow_pool_lock);
+}
+
+/**
+ * ol_tx_flow_pool_unlock() - release flow pool lock
+ * @tx_desc: tx desc
+ *
+ * Return: None
+ */
+static inline
+void ol_tx_flow_pool_unlock(struct ol_tx_desc_t *tx_desc)
+{
+	struct ol_tx_flow_pool_t *pool;
+
+	pool = tx_desc->pool;
+	qdf_spin_unlock_bh(&pool->flow_pool_lock);
+}
+#else
+static inline
+void ol_tx_flow_pool_lock(struct ol_tx_desc_t *tx_desc)
+{
+}
+
+static inline
+void ol_tx_flow_pool_unlock(struct ol_tx_desc_t *tx_desc)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_TSF_PLUS
 static inline struct htt_tx_compl_ind_append_tx_tstamp *ol_tx_get_txtstamps(
 		u_int32_t *msg_word, int num_msdus)
@@ -645,14 +687,31 @@ static void ol_tx_update_connectivity_stats(struct ol_tx_desc_t *tx_desc,
 					    enum htt_tx_status status)
 {
 	void *osif_dev;
+	uint32_t pkt_type_bitmap;
 	ol_txrx_stats_rx_fp stats_rx = NULL;
 	uint8_t pkt_type = 0;
 
 	qdf_assert(tx_desc);
+
+	ol_tx_flow_pool_lock(tx_desc);
+	/*
+	 * In cases when vdev has gone down and tx completion
+	 * are received, leads to NULL vdev access.
+	 * So, check for NULL before dereferencing it.
+	 */
+	if (!tx_desc->vdev ||
+	    !tx_desc->vdev->osif_dev ||
+	    !tx_desc->vdev->stats_rx) {
+		ol_tx_flow_pool_unlock(tx_desc);
+		return;
+	}
 	osif_dev = tx_desc->vdev->osif_dev;
 	stats_rx = tx_desc->vdev->stats_rx;
+	ol_tx_flow_pool_unlock(tx_desc);
 
-	if (stats_rx) {
+	pkt_type_bitmap = cds_get_connectivity_stats_pkt_bitmap(osif_dev);
+
+	if (pkt_type_bitmap) {
 		if (status != htt_tx_status_download_fail)
 			stats_rx(netbuf, osif_dev,
 				 PKT_TYPE_TX_HOST_FW_SENT, &pkt_type);
@@ -676,19 +735,17 @@ static void ol_tx_update_arp_stats(struct ol_tx_desc_t *tx_desc,
 				   enum htt_tx_status status)
 {
 	uint32_t tgt_ip;
-	struct ol_tx_flow_pool_t *pool;
 
 	qdf_assert(tx_desc);
 
-	pool = tx_desc->pool;
-	qdf_spin_lock_bh(&pool->flow_pool_lock);
+	ol_tx_flow_pool_lock(tx_desc);
 	if (!tx_desc->vdev) {
-		qdf_spin_unlock_bh(&pool->flow_pool_lock);
+		ol_tx_flow_pool_unlock(tx_desc);
 		return;
 	}
 
 	tgt_ip = cds_get_arp_stats_gw_ip(tx_desc->vdev->osif_dev);
-	qdf_spin_unlock_bh(&pool->flow_pool_lock);
+	ol_tx_flow_pool_unlock(tx_desc);
 
 	if (tgt_ip == qdf_nbuf_get_arp_tgt_ip(netbuf)) {
 		if (status != htt_tx_status_download_fail)
@@ -714,7 +771,6 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 	struct ol_tx_desc_t *tx_desc;
 	uint32_t byte_cnt = 0;
 	qdf_nbuf_t netbuf;
-	uint32_t pkt_type_bitmap;
 	tp_ol_packetdump_cb packetdump_cb;
 	uint32_t is_tx_desc_freed = 0;
 	struct htt_tx_compl_ind_append_tx_tstamp *txtstamp_list = NULL;
@@ -757,18 +813,15 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 		}
 
 		/* track connectivity stats */
-		pkt_type_bitmap = cds_get_connectivity_stats_pkt_bitmap(
-						tx_desc->vdev->osif_dev);
-		if (pkt_type_bitmap)
-			ol_tx_update_connectivity_stats(tx_desc, netbuf,
-							status);
+		ol_tx_update_connectivity_stats(tx_desc, netbuf,
+						status);
 		ol_tx_update_ack_count(tx_desc, status);
 
 		if (tx_desc->pkt_type != OL_TX_FRM_TSO) {
 			packetdump_cb = pdev->ol_tx_packetdump_cb;
 			if (packetdump_cb)
 				packetdump_cb(netbuf, status,
-					tx_desc->vdev->vdev_id, TX_DATA_PKT);
+					tx_desc->vdev_id, TX_DATA_PKT);
 		}
 
 		DPTRACE(qdf_dp_trace_ptr(netbuf,
