@@ -4038,6 +4038,8 @@ uint8_t csr_construct_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 				     gp_mgmt_cipher_suite, CSR_RSN_OUI_SIZE);
 		}
 #endif
+	host_log_rsn_info(UnicastCypher, MulticastCypher,
+			  AuthSuite, gp_mgmt_cipher_suite);
 
 		/* Add in the fixed fields plus 1 Unicast cypher, less the
 		 * IE Header length Add in the size of the Auth suite (count
