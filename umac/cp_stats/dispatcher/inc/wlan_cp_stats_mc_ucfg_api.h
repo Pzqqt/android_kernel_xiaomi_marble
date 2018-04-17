@@ -177,4 +177,4 @@ QDF_STATUS ucfg_mc_cp_stats_get_pending_req(struct wlan_objmgr_psoc *psoc,
 					    struct request_info *info);
 
 #endif /* QCA_SUPPORT_CP_STATS */
-#endif /* __WLAN_CP_STATS_UCFG_API_H__ */
+#endif /* __WLAN_CP_STATS_MC_UCFG_API_H__ */

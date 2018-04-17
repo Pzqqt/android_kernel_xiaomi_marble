@@ -106,6 +106,18 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 #define QDF_MIN(_x, _y) (((_x) < (_y)) ? (_x) : (_y))
 
 /**
+ * QDF_IS_ADDR_BROADCAST - is mac address broadcast mac address
+ * @_a: pointer to mac address
+ */
+#define QDF_IS_ADDR_BROADCAST(_a)  \
+	((_a)[0] == 0xff &&        \
+	 (_a)[1] == 0xff &&        \
+	 (_a)[2] == 0xff &&        \
+	 (_a)[3] == 0xff &&        \
+	 (_a)[4] == 0xff &&        \
+	 (_a)[5] == 0xff)
+
+/**
  * qdf_status_to_os_return - returns the status to OS.
  * @status: enum QDF_STATUS
  *

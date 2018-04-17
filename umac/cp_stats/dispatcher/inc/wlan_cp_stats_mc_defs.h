@@ -41,14 +41,16 @@
 #include "qdf_event.h"
 
 /**
- * enum stats_req_type: enum indicating bit position of various stats type in
+ * enum stats_req_type - enum indicating bit position of various stats type in
  * request map
  * @TYPE_CONNECTION_TX_POWER: tx power was requested
  * @TYPE_STATION_STATS: station stats was requested
+ * @TYPE_PEER_STATS: peer stats was requested
  */
 enum stats_req_type {
 	TYPE_CONNECTION_TX_POWER = 0,
 	TYPE_STATION_STATS,
+	TYPE_PEER_STATS,
 	TYPE_MAX,
 };
 
@@ -92,6 +94,8 @@ struct wake_lock_stats {
 	uint32_t scan_11d;
 };
 
+struct stats_event;
+
 /**
  * struct request_info: details of each request
  * @cookie: identifier for os_if request
@@ -104,6 +108,7 @@ struct request_info {
 	void *cookie;
 	union {
 		void (*get_tx_power_cb)(int tx_power, void *cookie);
+		void (*get_peer_rssi_cb)(struct stats_event *ev, void *cookie);
 	} u;
 	uint32_t vdev_id;
 	uint32_t pdev_id;
@@ -147,13 +152,31 @@ struct vdev_mc_cp_stats {
 };
 
 /**
+ * struct peer_mc_cp_stats - peer specific stats
+ * @tx_rate: tx rate
+ * @rx_rate: rx rate
+ * @peer_rssi: rssi
+ * @peer_macaddr: mac address
+ */
+struct peer_mc_cp_stats {
+	uint32_t tx_rate;
+	uint32_t rx_rate;
+	uint32_t peer_rssi;
+	uint8_t peer_macaddr[WLAN_MACADDR_LEN];
+};
+
+/**
  * struct stats_event - parameters populated by stats event
- * @num_pdev_stats: number of pdev stats
- * @pdev_stats: array of per pdev stats (index = pdev_id)
+ * @num_pdev_stats: num pdev stats
+ * @pdev_stats: if populated array indicating pdev stats (index = pdev_id)
+ * @num_peer_stats: num peer stats
+ * @peer_stats: if populated array indicating peer stats
  */
 struct stats_event {
 	uint32_t num_pdev_stats;
 	struct pdev_mc_cp_stats *pdev_stats;
+	uint32_t num_peer_stats;
+	struct peer_mc_cp_stats *peer_stats;
 };
 
 #endif /* CONFIG_MCL */
