@@ -1172,6 +1172,7 @@ QDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType)
 		csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_NONE,
 					 sessionId);
 	}
+	ucfg_scan_unregister_requester(pMac->psoc, pMac->scan.requester_id);
 
 	return QDF_STATUS_SUCCESS;
 }
