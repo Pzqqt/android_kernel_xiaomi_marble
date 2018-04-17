@@ -104,7 +104,7 @@ QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
  * @max_len: The maximum number of chars to write
  * @ret: number of bytes written
  *
- * Return - status of operation
+ * Return: status of operation
  */
 QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
 				struct wlan_objmgr_psoc *psoc,
@@ -116,7 +116,7 @@ QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
  * @vdev: pointer to vdev object
  * @type: request type
  *
- * Return - status of operation
+ * Return: status of operation
  */
 QDF_STATUS ucfg_mc_cp_stats_send_stats_request(struct wlan_objmgr_vdev *vdev,
 					       enum stats_req_type type,
@@ -127,7 +127,7 @@ QDF_STATUS ucfg_mc_cp_stats_send_stats_request(struct wlan_objmgr_vdev *vdev,
  * @vdev: pointer to vdev object
  * @dbm: pointer to tx power in dbm
  *
- * Return - status of operation
+ * Return: status of operation
  */
 QDF_STATUS ucfg_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 					 int *dbm);
@@ -137,7 +137,7 @@ QDF_STATUS ucfg_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
  * @psoc: pointer to psoc object
  * @type: request type to check
  *
- * Return - true of request is pending, false otherwise
+ * Return: true of request is pending, false otherwise
  */
 bool ucfg_mc_cp_stats_is_req_pending(struct wlan_objmgr_psoc *psoc,
 				     enum stats_req_type type);
@@ -148,7 +148,7 @@ bool ucfg_mc_cp_stats_is_req_pending(struct wlan_objmgr_psoc *psoc,
  * @type: request to update
  * @req: value to update
  *
- * Return - status of operation
+ * Return: status of operation
  */
 QDF_STATUS ucfg_mc_cp_stats_set_pending_req(struct wlan_objmgr_psoc *psoc,
 					    enum stats_req_type type,
@@ -159,7 +159,7 @@ QDF_STATUS ucfg_mc_cp_stats_set_pending_req(struct wlan_objmgr_psoc *psoc,
  * @psoc: pointer to psoc object
  * @type: request to update
  *
- * Return - status of operation
+ * Return: status of operation
  */
 QDF_STATUS ucfg_mc_cp_stats_reset_pending_req(struct wlan_objmgr_psoc *psoc,
 					      enum stats_req_type type);
@@ -170,7 +170,7 @@ QDF_STATUS ucfg_mc_cp_stats_reset_pending_req(struct wlan_objmgr_psoc *psoc,
  * @type: request to update
  * @info: buffer to populate
  *
- * Return - status of operation
+ * Return: status of operation
  */
 QDF_STATUS ucfg_mc_cp_stats_get_pending_req(struct wlan_objmgr_psoc *psoc,
 					    enum stats_req_type type,
@@ -190,10 +190,20 @@ void ucfg_mc_cp_stats_free_stats_resources(struct stats_event *ev);
  * @vdev: pointer to vdev object
  * @cca_stats: pointer to cca info
  *
- * Return - status of operation
+ * Return: status of operation
  */
 QDF_STATUS ucfg_mc_cp_stats_cca_stats_get(struct wlan_objmgr_vdev *vdev,
 					  struct cca_stats *cca_stats);
+
+/**
+ * ucfg_mc_cp_stats_set_rate_flags() - API to set rate flags
+ * @vdev: pointer to vdev object
+ * @flags: value to set (enum tx_rate_info)
+ *
+ * Return: status of operation
+ */
+QDF_STATUS ucfg_mc_cp_stats_set_rate_flags(struct wlan_objmgr_vdev *vdev,
+					   enum tx_rate_info flags);
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_MC_UCFG_API_H__ */

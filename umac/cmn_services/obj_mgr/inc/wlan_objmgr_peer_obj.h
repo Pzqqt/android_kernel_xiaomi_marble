@@ -592,6 +592,37 @@ static inline enum wlan_peer_type wlan_peer_get_peer_type(
 }
 
 /**
+ * wlan_peer_set_phymode() - set phymode
+ * @peer: PEER object
+ * @phymode: phymode of peer
+ *
+ * API to set phymode
+ *
+ * Return: void
+ */
+static inline void wlan_peer_set_phymode(struct wlan_objmgr_peer *peer,
+					 enum wlan_phymode phymode)
+{
+	peer->peer_mlme.phymode = phymode;
+}
+
+/**
+ * wlan_peer_get_phymode() - get phymode
+ * @peer: PEER object
+ *
+ * API to get phymode
+ *
+ * Return:
+ * @phymode: phymode of PEER
+ */
+static inline enum wlan_phymode wlan_peer_get_phymode(
+				struct wlan_objmgr_peer *peer)
+{
+	return peer->peer_mlme.phymode;
+}
+
+
+/**
  * wlan_peer_set_macaddr() - set mac addr
  * @peer: PEER object
  * @macaddr: MAC address

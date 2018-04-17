@@ -85,11 +85,18 @@ QDF_STATUS wlan_cp_stats_pdev_cs_deinit(struct pdev_cp_stats *pdev_cs)
 
 QDF_STATUS wlan_cp_stats_peer_cs_init(struct peer_cp_stats *peer_cs)
 {
+	peer_cs->peer_stats = qdf_mem_malloc(sizeof(struct peer_mc_cp_stats));
+	if (!peer_cs->peer_stats) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_cp_stats_peer_cs_deinit(struct peer_cp_stats *peer_cs)
 {
+	qdf_mem_free(peer_cs->peer_stats);
+	peer_cs->peer_stats = NULL;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -262,7 +269,7 @@ static void vdev_iterator(struct wlan_objmgr_psoc *psoc, void *vdev, void *arg)
 	struct vdev_cp_stats *vdev_cp_stats_priv;
 
 	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
-	if (NULL == vdev_cp_stats_priv) {
+	if (!vdev_cp_stats_priv) {
 		cp_stats_err("vdev cp stats object is null");
 		return;
 	}
@@ -301,7 +308,7 @@ QDF_STATUS ucfg_mc_cp_stats_get_psoc_wake_lock_stats(
 	struct psoc_mc_cp_stats *psoc_mc_stats;
 
 	psoc_cp_stats_priv = wlan_cp_stats_get_psoc_stats_obj(psoc);
-	if (NULL == psoc_cp_stats_priv) {
+	if (!psoc_cp_stats_priv) {
 		cp_stats_err("psoc cp stats object is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -324,7 +331,7 @@ QDF_STATUS ucfg_mc_cp_stats_get_vdev_wake_lock_stats(
 	struct vdev_mc_cp_stats *vdev_mc_stats;
 
 	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
-	if (NULL == vdev_cp_stats_priv) {
+	if (!vdev_cp_stats_priv) {
 		cp_stats_err("vdev cp stats object is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -532,6 +539,16 @@ QDF_STATUS ucfg_mc_cp_stats_get_pending_req(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+void ucfg_mc_cp_stats_free_stats_resources(struct stats_event *ev)
+{
+	qdf_mem_free(ev->pdev_stats);
+	qdf_mem_free(ev->peer_stats);
+	qdf_mem_free(ev->cca_stats);
+	qdf_mem_free(ev->vdev_summary_stats);
+	qdf_mem_free(ev->vdev_chain_rssi);
+	qdf_mem_zero(ev, sizeof(*ev));
+}
+
 QDF_STATUS ucfg_mc_cp_stats_cca_stats_get(struct wlan_objmgr_vdev *vdev,
 					  struct cca_stats *cca_stats)
 {
@@ -551,9 +568,22 @@ QDF_STATUS ucfg_mc_cp_stats_cca_stats_get(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-void ucfg_mc_cp_stats_free_stats_resources(struct stats_event *ev)
+QDF_STATUS ucfg_mc_cp_stats_set_rate_flags(struct wlan_objmgr_vdev *vdev,
+					   uint32_t flags)
 {
-	qdf_mem_free(ev->pdev_stats);
-	qdf_mem_free(ev->peer_stats);
-	qdf_mem_zero(ev, sizeof(*ev));
+	struct vdev_mc_cp_stats *vdev_mc_stats;
+	struct vdev_cp_stats *vdev_cp_stats_priv;
+
+	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (!vdev_cp_stats_priv) {
+		cp_stats_err("vdev cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
+	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
+	vdev_mc_stats->tx_rate_flags = flags;
+	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+
+	return QDF_STATUS_SUCCESS;
 }
