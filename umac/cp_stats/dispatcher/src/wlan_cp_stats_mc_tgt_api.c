@@ -325,6 +325,39 @@ static void tgt_mc_cp_stats_extract_peer_stats(struct wlan_objmgr_psoc *psoc,
 	ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_PEER_STATS);
 }
 
+static void tgt_mc_cp_stats_extract_cca_stats(struct wlan_objmgr_psoc *psoc,
+						  struct stats_event *ev)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_mc_cp_stats *vdev_mc_stats;
+	struct vdev_cp_stats *vdev_cp_stats_priv;
+
+	if (!ev->cca_stats)
+		return;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						    ev->cca_stats->vdev_id,
+						    WLAN_CP_STATS_ID);
+	if (!vdev) {
+		cp_stats_err("vdev is null");
+		return;
+	}
+
+	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (!vdev_cp_stats_priv) {
+		cp_stats_err("vdev cp stats object is null");
+		goto end;
+	}
+
+	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
+	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
+	vdev_mc_stats->cca.congestion =  ev->cca_stats->congestion;
+	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+}
+
 QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
 					       struct stats_event *ev)
 {
@@ -333,6 +366,8 @@ QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
 
 	if (ucfg_mc_cp_stats_is_req_pending(psoc, TYPE_PEER_STATS))
 		tgt_mc_cp_stats_extract_peer_stats(psoc, ev, false);
+
+	tgt_mc_cp_stats_extract_cca_stats(psoc, ev);
 
 	return QDF_STATUS_SUCCESS;
 }
