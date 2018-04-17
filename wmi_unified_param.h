@@ -5523,6 +5523,7 @@ typedef enum {
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
 	wmi_host_dfs_status_check_event_id,
 #endif
+	wmi_twt_enable_complete_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
