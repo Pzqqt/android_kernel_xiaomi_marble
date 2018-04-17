@@ -710,6 +710,9 @@ static void wma_force_vdev_cleanup(tp_wma_handle wma_handle, uint8_t vdev_id)
 					 wma_peer_remove_for_vdev_callback,
 					 wma_handle);
 
+	qdf_atomic_init(&iface->fw_peer_count);
+	qdf_event_destroy(&iface->fw_peer_delete_completion);
+
 VDEV_DETACH:
 	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 }
@@ -729,8 +732,17 @@ void wma_vdev_wait_for_peer_delete_completion(tp_wma_handle wma_handle,
 {
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
 
-	if (!iface) {
-		WMA_LOGE("%s: iface of vdev-%d is NULL", __func__, vdev_id);
+	/* Do NOT wait when SSR is in progress
+	 * since all WMI commands will be ignored and not sent to FW
+	 */
+	if (cds_is_driver_recovering()) {
+		WMA_LOGD("%s: SSR is in progress", __func__);
+		return;
+	}
+
+	if (!iface || !iface->vdev_active) {
+		WMA_LOGE("%s: iface of vdev-%d is not available",
+			 __func__, vdev_id);
 		return;
 	}
 
