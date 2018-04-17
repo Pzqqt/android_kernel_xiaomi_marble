@@ -341,14 +341,12 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			 * and SAP has instructed to announce channel switch IEs
 			 * in beacon and probe responses
 			 */
-			if (!CHAN_HOP_ALL_BANDS_ENABLE) {
-				populate_dot11f_chan_switch_ann(mac_ctx,
+			populate_dot11f_chan_switch_ann(mac_ctx,
 						&bcn_2->ChanSwitchAnn, session);
-				pe_debug("csa: mode:%d chan:%d count:%d",
-					 bcn_2->ChanSwitchAnn.switchMode,
-					 bcn_2->ChanSwitchAnn.newChannel,
-					 bcn_2->ChanSwitchAnn.switchCount);
-			 }
+			pe_debug("csa: mode:%d chan:%d count:%d",
+				 bcn_2->ChanSwitchAnn.switchMode,
+				 bcn_2->ChanSwitchAnn.newChannel,
+				 bcn_2->ChanSwitchAnn.switchCount);
 			/*
 			 * TODO: depending the CB mode, extended channel switch
 			 * announcement need to be called
