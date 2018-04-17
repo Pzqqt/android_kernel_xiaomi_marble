@@ -614,7 +614,7 @@ void __printf(3, 4) qdf_snprintf(char *str_buffer, unsigned int size,
 
 static inline void qdf_tso_seg_dbg_bug(char *msg)
 {
-	qdf_print(msg);
+	qdf_print("%s", msg);
 	QDF_BUG(0);
 };
 
