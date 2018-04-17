@@ -30,22 +30,7 @@
 #include "if_meta_hdr.h"
 #endif
 
-#ifdef TX_PER_PDEV_DESC_POOL
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->vdev_id)
-#else /* QCA_LL_TX_FLOW_CONTROL_V2 */
-#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->pdev->pdev_id)
-#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
-	#define DP_TX_GET_RING_ID(vdev) (vdev->pdev->pdev_id)
-#else
-	#ifdef TX_PER_VDEV_DESC_POOL
-		#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->vdev_id)
-		#define DP_TX_GET_RING_ID(vdev) (vdev->pdev->pdev_id)
-	#else
-		#define DP_TX_GET_DESC_POOL_ID(vdev) qdf_get_cpu()
-		#define DP_TX_GET_RING_ID(vdev) vdev->pdev->soc->tx_ring_map[qdf_get_cpu()]
-	#endif /* TX_PER_VDEV_DESC_POOL */
-#endif /* TX_PER_PDEV_DESC_POOL */
+#define DP_TX_QUEUE_MASK 0x3
 
 /* TODO Add support in TSO */
 #define DP_DESC_NUM_FRAG(x) 0
@@ -88,6 +73,21 @@ static const uint8_t sec_type_map[MAX_CDP_SEC_TYPE] = {
  *
  * Return: None
  */
+#ifdef QCA_OL_TX_MULTIQ_SUPPORT
+static inline void dp_tx_get_queue(struct dp_vdev *vdev,
+		qdf_nbuf_t nbuf, struct dp_tx_queue *queue)
+{
+	uint16_t queue_offset = qdf_nbuf_get_queue_mapping(nbuf) & DP_TX_QUEUE_MASK;
+	queue->desc_pool_id = queue_offset;
+	queue->ring_id = vdev->pdev->soc->tx_ring_map[queue_offset];
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			"%s, pool_id:%d ring_id: %d",
+			__func__, queue->desc_pool_id, queue->ring_id);
+
+	return;
+}
+#else /* QCA_OL_TX_MULTIQ_SUPPORT */
 static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 		qdf_nbuf_t nbuf, struct dp_tx_queue *queue)
 {
@@ -101,6 +101,7 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 
 	return;
 }
+#endif
 
 #if defined(FEATURE_TSO)
 /**

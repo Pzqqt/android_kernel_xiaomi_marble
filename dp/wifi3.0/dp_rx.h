@@ -137,6 +137,25 @@ static inline uint32_t dp_rx_rotr(uint32_t val, int bits)
 }
 
 /*
+ * dp_set_rx_queue() - set queue_mapping in skb
+ * @nbuf: skb
+ * @queue_id: rx queue_id
+ *
+ * Return: void
+ */
+#ifdef QCA_OL_RX_MULTIQ_SUPPORT
+static inline void dp_set_rx_queue(qdf_nbuf_t nbuf, uint8_t queue_id)
+{
+	qdf_nbuf_record_rx_queue(nbuf, queue_id);
+	return;
+}
+#else
+static inline void dp_set_rx_queue(qdf_nbuf_t nbuf, uint8_t queue_id)
+{
+}
+#endif
+
+/*
  *dp_rx_xswap() - swap the bits left
  *@val: unsigned integer input value
  *

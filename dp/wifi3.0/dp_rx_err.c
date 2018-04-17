@@ -1130,6 +1130,9 @@ done:
 		 */
 		hal_rx_wbm_err_info_get_from_tlv(rx_tlv_hdr, &wbm_err_info);
 
+		/* Set queue_mapping in nbuf to 0 */
+		dp_set_rx_queue(nbuf, 0);
+
 		next = nbuf->next;
 		if (wbm_err_info.wbm_err_src == HAL_RX_WBM_ERR_SRC_REO) {
 			if (wbm_err_info.reo_psh_rsn
