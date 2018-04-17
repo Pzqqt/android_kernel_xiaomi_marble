@@ -21,6 +21,7 @@
 #include "wmi.h"
 #include "wmi_unified_priv.h"
 #include "wmi_unified_twt_param.h"
+#include "wmi_unified_twt_api.h"
 
 static QDF_STATUS send_twt_enable_cmd_tlv(wmi_unified_t wmi_handle,
 			struct wmi_twt_enable_param *params)

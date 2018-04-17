@@ -39,6 +39,7 @@
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "nan_public_structs.h"
 #endif
+#include "wmi_unified_twt_api.h"
 
 #ifdef WLAN_POLICY_MGR_ENABLE
 #include "wlan_policy_mgr_public_struct.h"
@@ -23267,6 +23268,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 		WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID;
 	event_ids[wmi_pdev_div_rssi_antid_event_id] =
 		WMI_PDEV_DIV_RSSI_ANTID_EVENTID;
+	event_ids[wmi_twt_enable_complete_event_id] =
+		WMI_TWT_ENABLE_COMPLETE_EVENTID;
 }
 
 /**
@@ -23927,14 +23930,6 @@ static inline void wmi_ocb_ut_attach(struct wmi_unified *wmi_handle)
 }
 #endif
 
-#ifdef WLAN_SUPPORT_TWT
-void wmi_twt_attach_tlv(struct wmi_unified *wmi_handle);
-#else
-static void wmi_twt_attach_tlv(struct wmi_unified *wmi_handle)
-{
-	return;
-}
-#endif
 /**
  * wmi_tlv_attach() - Attach TLV APIs
  *
