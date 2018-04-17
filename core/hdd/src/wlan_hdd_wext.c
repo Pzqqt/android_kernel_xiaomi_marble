@@ -4826,6 +4826,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		ret = wma_cli_set_command(adapter->session_id,
 					  WMI_PDEV_PARAM_TX_CHAIN_MASK,
 					  set_value, PDEV_CMD);
+		ret = hdd_set_antenna_mode(adapter, hdd_ctx, set_value);
 		break;
 	}
 
@@ -4836,6 +4837,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		ret = wma_cli_set_command(adapter->session_id,
 					  WMI_PDEV_PARAM_RX_CHAIN_MASK,
 					  set_value, PDEV_CMD);
+		ret = hdd_set_antenna_mode(adapter, hdd_ctx, set_value);
 		break;
 	}
 

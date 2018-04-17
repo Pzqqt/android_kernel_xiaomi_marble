@@ -6402,47 +6402,16 @@ QDF_STATUS hdd_update_smps_antenna_mode(struct hdd_context *hdd_ctx, int mode)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * drv_cmd_set_antenna_mode() - SET ANTENNA MODE driver command
- * handler
- * @adapter: Pointer to network adapter
- * @hdd_ctx: Pointer to hdd context
- * @command: Pointer to input command
- * @command_len: Command length
- * @priv_data: Pointer to private data in command
- */
-static int drv_cmd_set_antenna_mode(struct hdd_adapter *adapter,
-				struct hdd_context *hdd_ctx,
-				uint8_t *command,
-				uint8_t command_len,
-				struct hdd_priv_data *priv_data)
+int hdd_set_antenna_mode(struct hdd_adapter *adapter,
+				  struct hdd_context *hdd_ctx, int mode)
 {
+
 	struct sir_antenna_mode_param params;
 	QDF_STATUS status;
 	int ret = 0;
-	int mode;
-	uint8_t *value = command;
-
-	if (((1 << QDF_STA_MODE) !=
-		    policy_mgr_get_concurrency_mode(hdd_ctx->hdd_psoc)) ||
-	    (policy_mgr_is_multiple_active_sta_sessions(hdd_ctx->hdd_psoc))) {
-		hdd_err("Operation invalid in non sta or concurrent mode");
-		ret = -EPERM;
-		goto exit;
-	}
-
-	mode = hdd_parse_setantennamode_command(value);
-	if (mode < 0) {
-		hdd_err("Invalid SETANTENNA command");
-		ret = mode;
-		goto exit;
-	}
-
-	hdd_debug("Processing antenna mode switch to: %d", mode);
 
 	if (hdd_ctx->current_antenna_mode == mode) {
 		hdd_err("System already in the requested mode");
-		ret = 0;
 		goto exit;
 	}
 
@@ -6456,7 +6425,6 @@ static int drv_cmd_set_antenna_mode(struct hdd_adapter *adapter,
 	if ((HDD_ANTENNA_MODE_1X1 == mode) &&
 	    hdd_is_supported_chain_mask_1x1(hdd_ctx)) {
 		hdd_err("System only supports 1x1 mode");
-		ret = 0;
 		goto exit;
 	}
 
@@ -6494,7 +6462,7 @@ static int drv_cmd_set_antenna_mode(struct hdd_adapter *adapter,
 
 	INIT_COMPLETION(hdd_ctx->set_antenna_mode_cmpl);
 	status = sme_soc_set_antenna_mode(hdd_ctx->hHal, &params);
-	if (QDF_STATUS_SUCCESS != status) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("set antenna mode failed status : %d", status);
 		ret = -EFAULT;
 		goto exit;
@@ -6504,8 +6472,8 @@ static int drv_cmd_set_antenna_mode(struct hdd_adapter *adapter,
 		&hdd_ctx->set_antenna_mode_cmpl,
 		msecs_to_jiffies(WLAN_WAIT_TIME_ANTENNA_MODE_REQ));
 	if (!ret) {
-		ret = -EFAULT;
 		hdd_err("send set antenna mode timed out");
+		ret = -EFAULT;
 		goto exit;
 	}
 
@@ -6518,8 +6486,36 @@ static int drv_cmd_set_antenna_mode(struct hdd_adapter *adapter,
 exit:
 	hdd_debug("Set antenna status: %d current mode: %d",
 		 ret, hdd_ctx->current_antenna_mode);
-	return ret;
 
+	return ret;
+}
+/**
+ * drv_cmd_set_antenna_mode() - SET ANTENNA MODE driver command
+ * handler
+ * @adapter: Pointer to network adapter
+ * @hdd_ctx: Pointer to hdd context
+ * @command: Pointer to input command
+ * @command_len: Command length
+ * @priv_data: Pointer to private data in command
+ */
+static int drv_cmd_set_antenna_mode(struct hdd_adapter *adapter,
+				struct hdd_context *hdd_ctx,
+				uint8_t *command,
+				uint8_t command_len,
+				struct hdd_priv_data *priv_data)
+{
+	int mode;
+	uint8_t *value = command;
+
+	mode = hdd_parse_setantennamode_command(value);
+	if (mode < 0) {
+		hdd_err("Invalid SETANTENNA command");
+		return mode;
+	}
+
+	hdd_debug("Processing antenna mode switch to: %d", mode);
+
+	return hdd_set_antenna_mode(adapter, hdd_ctx, mode);
 }
 
 /**
