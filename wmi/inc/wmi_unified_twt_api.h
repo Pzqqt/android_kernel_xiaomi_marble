@@ -164,4 +164,13 @@ QDF_STATUS wmi_extract_twt_resume_dialog_comp_event(void *wmi_hdl,
 		uint8_t *evt_buf,
 		struct wmi_twt_resume_dialog_complete_event_param *params);
 
+#ifdef WLAN_SUPPORT_TWT
+void wmi_twt_attach_tlv(struct wmi_unified *wmi_handle);
+#else
+static void wmi_twt_attach_tlv(struct wmi_unified *wmi_handle)
+{
+	return;
+}
+#endif
+
 #endif /* _WMI_UNIFIED_TWT_API_H_ */
