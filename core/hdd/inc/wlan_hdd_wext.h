@@ -253,7 +253,6 @@ void hdd_unregister_wext(struct net_device *dev);
  */
 void hdd_register_wext(struct net_device *dev);
 
-void hdd_display_stats_help(void);
 void hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 			 union iwreq_data *wrqu, char *extra);
 

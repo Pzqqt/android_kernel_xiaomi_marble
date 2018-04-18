@@ -3212,7 +3212,7 @@ void hdd_wlan_list_fw_profile(uint16_t *length,
  *
  * Return: none
  */
-void hdd_display_stats_help(void)
+static void hdd_display_stats_help(void)
 {
 	hdd_err("iwpriv wlan0 dumpStats [option] - dump statistics");
 	hdd_err("iwpriv wlan0 clearStats [option] - clear statistics");
