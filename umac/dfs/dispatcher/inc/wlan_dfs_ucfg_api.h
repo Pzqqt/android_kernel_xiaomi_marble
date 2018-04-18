@@ -243,4 +243,50 @@ QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev, int *buff);
 QDF_STATUS ucfg_dfs_update_config(struct wlan_objmgr_psoc *psoc,
 		struct dfs_user_config *req);
 #endif
+
+/**
+ * ucfg_dfs_set_override_status_timeout() - override the value of host dfs
+ * status wait timeout.
+ * @pdev: Pointer to DFS pdev object.
+ * @status_timeout: timeout value.
+ *
+ * Wrapper function for dfs_set_override_status_timeout().
+ * This function called from outside of dfs component.
+ *
+ * Return: QDF_STATUS
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+QDF_STATUS ucfg_dfs_set_override_status_timeout(struct wlan_objmgr_pdev *pdev,
+					    int status_timeout);
+#else
+static inline
+QDF_STATUS ucfg_dfs_set_override_status_timeout(struct wlan_objmgr_pdev *pdev,
+					    int status_timeout)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * ucfg_dfs_get_override_status_timeout() - Get the value of host dfs status
+ * wait timeout.
+ * @pdev: Pointer to DFS pdev object.
+ * @status_timeout: Pointer to save the timeout value.
+ *
+ * Wrapper function for dfs_get_override_status_timeout().
+ * This function called from outside of dfs component.
+ *
+ * Return: QDF_STATUS
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+QDF_STATUS ucfg_dfs_get_override_status_timeout(struct wlan_objmgr_pdev *pdev,
+						int *status_timeout);
+#else
+static inline
+QDF_STATUS ucfg_dfs_get_override_status_timeout(struct wlan_objmgr_pdev *pdev,
+						int *status_timeout)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif /* _WLAN_DFS_UCFG_API_H_ */

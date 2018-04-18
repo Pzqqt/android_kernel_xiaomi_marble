@@ -284,4 +284,18 @@ QDF_STATUS tgt_dfs_process_emulate_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS tgt_dfs_set_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev);
 #endif
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+/**
+ * tgt_dfs_send_avg_params_to_fw() - send average radar parameters to fw.
+ * @pdev: Pointer to DFS pdev object.
+ * @params: Pointer to dfs radar average parameters.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+tgt_dfs_send_avg_params_to_fw(struct wlan_objmgr_pdev *pdev,
+			      struct dfs_radar_found_params *params);
+#endif
+
 #endif /* _WLAN_DFS_TGT_API_H_ */

@@ -446,3 +446,43 @@ QDF_STATUS tgt_dfs_set_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev)
 }
 qdf_export_symbol(tgt_dfs_set_phyerr_filter_offload);
 #endif
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+QDF_STATUS
+tgt_dfs_send_avg_params_to_fw(struct wlan_objmgr_pdev *pdev,
+			      struct dfs_radar_found_params *params)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+	struct wlan_dfs *dfs;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return  status;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS, "psoc is null");
+		return status;
+	}
+
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
+	if (dfs_tx_ops && dfs_tx_ops->dfs_send_avg_radar_params_to_fw)
+		status = dfs_tx_ops->dfs_send_avg_radar_params_to_fw(pdev,
+			params);
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		dfs->dfs_average_params_sent = 1;
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			 "Average radar parameters sent %d",
+			 dfs->dfs_average_params_sent);
+	}
+
+	return status;
+}
+
+qdf_export_symbol(tgt_dfs_send_avg_params_to_fw);
+#endif

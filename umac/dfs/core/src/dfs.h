@@ -353,6 +353,13 @@
 		WLAN_DFSNOL_UNLOCK(dfs);                    \
 	} while (0)
 
+/* Host sends the average parameters of the radar pulses and starts the status
+ * wait timer with this timeout.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+#define HOST_DFS_STATUS_WAIT_TIMER_MS 100
+#endif
+
 /**
  * struct dfs_pulseparams - DFS pulse param structure.
  * @p_time:        Time for start of pulse in usecs.
@@ -921,6 +928,26 @@ struct dfs_event_log {
  * @dfs_use_nol_subchannel_marking:  Use subchannel marking logic to add only
  *                                   radar affected subchannel instead of all
  *                                   bonding channels.
+ * @dfs_host_wait_timer:             The timer that is started from host after
+ *                                   sending the average radar parameters.
+ *                                   Before this timeout host expects its dfs
+ *                                   status from fw.
+ * @dfs_average_pri:                 Average pri value of the received radar
+ *                                   pulses.
+ * @dfs_average_duration:            Average duration of the received radar
+ *                                   pulses.
+ * @dfs_average_sidx:                Average sidx of the received radar pulses.
+ * @dfs_is_host_wait_running:        Indicates if host dfs status wait timer is
+ *                                   running.
+ * @dfs_average_params_sent:         Indicates if host has sent the average
+ *                                   radar parameters.
+ * @dfs_no_res_from_fw:              Indicates no response from fw.
+ * @dfs_spoof_check_failed:          Indicates if the spoof check has failed.
+ * @dfs_spoof_test_done:             Indicates if the sppof test is done.
+ * @dfs_seg_id:                      Segment ID of the radar hit channel.
+ * @dfs_false_radar_found:           Indicates if false radar is found.
+ * @dfs_status_timeout_override:     Used to change the timeout value of
+ *                                   dfs_host_wait_timer.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1020,6 +1047,21 @@ struct wlan_dfs {
 	qdf_spinlock_t dfs_nol_lock;
 	uint16_t tx_leakage_threshold;
 	bool dfs_use_nol_subchannel_marking;
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+	os_timer_t     dfs_host_wait_timer;
+	uint32_t       dfs_average_pri;
+	uint32_t       dfs_average_duration;
+	uint32_t       dfs_average_sidx;
+	uint8_t        dfs_is_host_wait_running:1,
+				   dfs_average_params_sent:1,
+				   dfs_no_res_from_fw:1,
+				   dfs_spoof_check_failed:1,
+				   dfs_spoof_test_done:1;
+	uint8_t        dfs_seg_id;
+	int            dfs_false_radar_found;
+	struct dfs_channel dfs_radar_found_chan;
+	int            dfs_status_timeout_override;
+#endif
 };
 
 /**
