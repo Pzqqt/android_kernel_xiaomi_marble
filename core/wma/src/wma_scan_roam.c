@@ -2852,9 +2852,18 @@ int wma_rssi_breached_event_handler(void *handle,
  */
 static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 	tSirSmeHOFailureInd *ho_failure_ind;
 	struct scheduler_msg sme_msg = { 0 };
 	QDF_STATUS qdf_status;
+
+	/* For LFR 3.0 hand-off failure, peers will be deleted by FW
+	 * no WMI_PEER_DELETE_CMDID will be sent to FW
+	 * reset the peer count here
+	 */
+	WMA_LOGD("Reset FW peer count");
+	qdf_atomic_init(&iface->fw_peer_count);
+	qdf_event_set(&iface->fw_peer_delete_completion);
 
 	ho_failure_ind = qdf_mem_malloc(sizeof(tSirSmeHOFailureInd));
 
