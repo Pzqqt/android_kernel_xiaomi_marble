@@ -152,9 +152,6 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
 	HDD_WLAN_WMM_TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK = 1,
 };
 
-/** Maximum Length of WPA/RSN IE */
-#define MAX_WPA_RSN_IE_LEN 255
-
 /** Enable 11d */
 #define ENABLE_11D  1
 
@@ -175,53 +172,9 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
 
 #define HDD_AUTO_RATE_SGI    0x8
 
-#define WPS_OUI_TYPE   "\x00\x50\xf2\x04"
-#define WPS_OUI_TYPE_SIZE  4
-
-#define SS_OUI_TYPE    "\x00\x16\x32"
-#define SS_OUI_TYPE_SIZE   3
-
-#define P2P_OUI_TYPE   "\x50\x6f\x9a\x09"
-#define P2P_OUI_TYPE_SIZE  4
-
-#define HS20_OUI_TYPE   "\x50\x6f\x9a\x10"
-#define HS20_OUI_TYPE_SIZE  4
-
-#define OSEN_OUI_TYPE   "\x50\x6f\x9a\x12"
-#define OSEN_OUI_TYPE_SIZE  4
-
-#ifdef WLAN_FEATURE_WFD
-#define WFD_OUI_TYPE   "\x50\x6f\x9a\x0a"
-#define WFD_OUI_TYPE_SIZE  4
-#endif
-
-#define MBO_OUI_TYPE   "\x50\x6f\x9a\x16"
-#define MBO_OUI_TYPE_SIZE  4
-
-#define QCN_OUI_TYPE   "\x8c\xfd\xf0\x01"
-#define QCN_OUI_TYPE_SIZE  4
-
 /* Packet Types. */
 #define WLAN_KEEP_ALIVE_UNSOLICIT_ARP_RSP     2
 #define WLAN_KEEP_ALIVE_NULL_PKT              1
-
-#define wlan_hdd_get_wps_ie_ptr(ie, ie_len) \
-	wlan_get_vendor_ie_ptr_from_oui(WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE, \
-	ie, ie_len)
-
-#define wlan_hdd_get_p2p_ie_ptr(ie, ie_len) \
-	wlan_get_vendor_ie_ptr_from_oui(P2P_OUI_TYPE, P2P_OUI_TYPE_SIZE, \
-	ie, ie_len)
-
-#ifdef WLAN_FEATURE_WFD
-#define wlan_hdd_get_wfd_ie_ptr(ie, ie_len) \
-	wlan_get_vendor_ie_ptr_from_oui(WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE, \
-	ie, ie_len)
-#endif
-
-#define wlan_hdd_get_mbo_ie_ptr(ie, ie_len) \
-	wlan_get_vendor_ie_ptr_from_oui(MBO_OUI_TYPE, MBO_OUI_TYPE_SIZE, \
-	ie, ie_len)
 
 /*
  * Defines for fw_test command

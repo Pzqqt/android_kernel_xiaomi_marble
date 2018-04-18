@@ -241,6 +241,53 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
 #define MAX_GENIE_LEN (512)
 #define MIN_GENIE_LEN (2)
 
+/** Maximum Length of WPA/RSN IE */
+#define MAX_WPA_RSN_IE_LEN 255
+
+#define WPS_OUI_TYPE   "\x00\x50\xf2\x04"
+#define WPS_OUI_TYPE_SIZE  4
+
+#define SS_OUI_TYPE    "\x00\x16\x32"
+#define SS_OUI_TYPE_SIZE   3
+
+#define P2P_OUI_TYPE   "\x50\x6f\x9a\x09"
+#define P2P_OUI_TYPE_SIZE  4
+
+#define HS20_OUI_TYPE   "\x50\x6f\x9a\x10"
+#define HS20_OUI_TYPE_SIZE  4
+
+#define OSEN_OUI_TYPE   "\x50\x6f\x9a\x12"
+#define OSEN_OUI_TYPE_SIZE  4
+
+#ifdef WLAN_FEATURE_WFD
+#define WFD_OUI_TYPE   "\x50\x6f\x9a\x0a"
+#define WFD_OUI_TYPE_SIZE  4
+#endif
+
+#define MBO_OUI_TYPE   "\x50\x6f\x9a\x16"
+#define MBO_OUI_TYPE_SIZE  4
+
+#define QCN_OUI_TYPE   "\x8c\xfd\xf0\x01"
+#define QCN_OUI_TYPE_SIZE  4
+
+#define wlan_hdd_get_wps_ie_ptr(ie, ie_len) \
+	wlan_get_vendor_ie_ptr_from_oui(WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE, \
+	ie, ie_len)
+
+#define wlan_hdd_get_p2p_ie_ptr(ie, ie_len) \
+	wlan_get_vendor_ie_ptr_from_oui(P2P_OUI_TYPE, P2P_OUI_TYPE_SIZE, \
+	ie, ie_len)
+
+#ifdef WLAN_FEATURE_WFD
+#define wlan_hdd_get_wfd_ie_ptr(ie, ie_len) \
+	wlan_get_vendor_ie_ptr_from_oui(WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE, \
+	ie, ie_len)
+#endif
+
+#define wlan_hdd_get_mbo_ie_ptr(ie, ie_len) \
+	wlan_get_vendor_ie_ptr_from_oui(MBO_OUI_TYPE, MBO_OUI_TYPE_SIZE, \
+	ie, ie_len)
+
 #define WLAN_CHIP_VERSION   "WCNSS"
 
 #define hdd_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_HDD, params)
