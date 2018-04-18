@@ -73,9 +73,7 @@
 #include <wlan_cfg80211_scan.h>
 #include <wlan_cfg80211_ftm.h>
 
-#ifdef FEATURE_WLAN_EXTSCAN
 #include "wlan_hdd_ext_scan.h"
-#endif
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 #include "wlan_hdd_stats.h"

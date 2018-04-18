@@ -361,8 +361,12 @@ int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx,
 #ifdef FEATURE_WLAN_EXTSCAN
 void wlan_hdd_cfg80211_extscan_callback(void *ctx,
 					const uint16_t evType, void *pMsg);
+#else
+static inline void wlan_hdd_cfg80211_extscan_callback(void *ctx,
+					const uint16_t evType, void *pMsg)
+{
+}
 #endif /* FEATURE_WLAN_EXTSCAN */
-
 /**
  * wlan_hdd_rso_cmd_status_cb() - HDD callback to read RSO command status
  * @ctx: void pointer to hdd context

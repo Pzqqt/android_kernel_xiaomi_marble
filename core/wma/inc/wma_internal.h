@@ -138,6 +138,7 @@ struct index_vht_data_rate_type {
 	uint16_t ht80_rate[2];
 };
 
+struct tSirWifiScanCmdReqParams;
 /*
  * wma_main.c functions declarations
  */
@@ -348,9 +349,11 @@ int wma_passpoint_match_event_handler(void *handle,
 
 #endif
 
+#ifdef FEATURE_WLAN_EXTSCAN
+int wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len);
+
 void wma_register_extscan_event_handler(tp_wma_handle wma_handle);
 
-#ifdef FEATURE_WLAN_EXTSCAN
 QDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
 					 tSirWifiScanCmdReqParams *pstart,
 					 wmi_buf_t *buf, int *buf_len);
@@ -561,8 +564,6 @@ uint32_t wma_get_bcn_rate_code(uint16_t rate);
 int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len);
 
 int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len);
-
-int wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len);
 
 int wma_unified_bcntx_status_event_handler(void *handle,
 					   uint8_t *cmd_param_info,

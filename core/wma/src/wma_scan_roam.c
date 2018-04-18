@@ -3290,7 +3290,6 @@ int wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len)
 		return 0;
 	}
 }
-#endif
 
 /**
  * wma_register_extscan_event_handler() - register extscan event handler
@@ -3345,8 +3344,6 @@ void wma_register_extscan_event_handler(tp_wma_handle wma_handle)
 			wma_passpoint_match_event_handler,
 			WMA_RX_SERIALIZER_CTX);
 }
-
-#ifdef FEATURE_WLAN_EXTSCAN
 
 /**
  * wma_extscan_start_stop_event_handler() -  extscan start/stop event handler

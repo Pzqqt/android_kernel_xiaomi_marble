@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +28,8 @@
 
 struct hdd_context;
 
+#define EXTSCAN_EVENT_BUF_SIZE 4096
+
 #ifdef FEATURE_WLAN_EXTSCAN
 
 #include "wlan_hdd_main.h"
@@ -38,8 +40,6 @@ struct hdd_context;
  * respective event fit with in the limit.Please take a call
  * on the limit based on the data requirements.
  */
-
-#define EXTSCAN_EVENT_BUF_SIZE 4096
 
 int wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 				    struct wireless_dev *wdev,
@@ -104,7 +104,7 @@ void wlan_hdd_cfg80211_extscan_init(struct hdd_context *hdd_ctx);
 
 #else /* FEATURE_WLAN_EXTSCAN */
 
-static void wlan_hdd_cfg80211_extscan_init(struct hdd_context *hdd_ctx)
+static inline void wlan_hdd_cfg80211_extscan_init(struct hdd_context *hdd_ctx)
 {
 }
 

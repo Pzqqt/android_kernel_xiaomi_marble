@@ -11382,39 +11382,6 @@ QDF_STATUS sme_reset_bss_hotlist(tHalHandle hHal,
 	return status;
 }
 
-/**
- * sme_send_wisa_params(): Pass WISA mode to WMA
- * @hal: HAL context
- * @wisa_params: pointer to WISA params struct
- * @sessionId: SME session id
- *
- * Pass WISA params to WMA
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_set_wisa_params(tHalHandle hal,
-				struct sir_wisa_params *wisa_params)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-	struct scheduler_msg message = {0};
-	struct sir_wisa_params *cds_msg_wisa_params;
-
-	cds_msg_wisa_params = qdf_mem_malloc(sizeof(struct sir_wisa_params));
-	if (!cds_msg_wisa_params)
-		return QDF_STATUS_E_NOMEM;
-
-	*cds_msg_wisa_params = *wisa_params;
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		message.bodyptr = cds_msg_wisa_params;
-		message.type = WMA_SET_WISA_PARAMS;
-		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
-		sme_release_global_lock(&mac->sme);
-	}
-	return status;
-}
-
 /*
  * sme_set_significant_change() -
  * SME API to set significant change
@@ -11725,6 +11692,39 @@ QDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
 	return status;
 }
 #endif /* FEATURE_WLAN_EXTSCAN */
+
+/**
+ * sme_send_wisa_params(): Pass WISA mode to WMA
+ * @hal: HAL context
+ * @wisa_params: pointer to WISA params struct
+ * @sessionId: SME session id
+ *
+ * Pass WISA params to WMA
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_wisa_params(tHalHandle hal,
+				struct sir_wisa_params *wisa_params)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	struct scheduler_msg message = {0};
+	struct sir_wisa_params *cds_msg_wisa_params;
+
+	cds_msg_wisa_params = qdf_mem_malloc(sizeof(struct sir_wisa_params));
+	if (!cds_msg_wisa_params)
+		return QDF_STATUS_E_NOMEM;
+
+	*cds_msg_wisa_params = *wisa_params;
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		message.bodyptr = cds_msg_wisa_params;
+		message.type = WMA_SET_WISA_PARAMS;
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+		sme_release_global_lock(&mac->sme);
+	}
+	return status;
+}
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 
