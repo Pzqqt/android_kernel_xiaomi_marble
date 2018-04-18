@@ -330,17 +330,6 @@ int hdd_check_private_wext_control(struct hdd_context *hdd_ctx,
 				   struct iw_request_info *info);
 
 /**
- * wlan_hdd_set_mon_chan() - Set capture channel on the monitor mode interface.
- * @adapter: Handle to adapter
- * @chan: Monitor mode channel
- * @bandwidth: Capture channel bandwidth
- *
- * Return: 0 on success else error code.
- */
-int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
-			  uint32_t bandwidth);
-
-/**
  * hdd_crash_inject() - Inject a crash
  * @adapter: Adapter upon which the command was received
  * @v1: first value to inject

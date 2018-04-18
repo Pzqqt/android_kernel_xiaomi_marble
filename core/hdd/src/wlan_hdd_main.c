@@ -5808,6 +5808,57 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 }
 #endif
 
+int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
+				 uint32_t bandwidth)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_mon_set_ch_info *ch_info = &sta_ctx->ch_info;
+	QDF_STATUS status;
+	tHalHandle hal_hdl = hdd_ctx->hHal;
+	struct qdf_mac_addr bssid;
+	struct csr_roam_profile roam_profile;
+	struct ch_params ch_params;
+
+	if (QDF_GLOBAL_MONITOR_MODE != hdd_get_conparam()) {
+		hdd_err("Not supported, device is not in monitor mode");
+		return -EINVAL;
+	}
+
+	hdd_debug("Set monitor mode Channel %d", chan);
+	qdf_mem_zero(&roam_profile, sizeof(roam_profile));
+	roam_profile.ChannelInfo.ChannelList = &ch_info->channel;
+	roam_profile.ChannelInfo.numOfChannels = 1;
+	roam_profile.phyMode = ch_info->phy_mode;
+	roam_profile.ch_params.ch_width = bandwidth;
+	hdd_select_cbmode(adapter, chan, &roam_profile.ch_params);
+
+	qdf_mem_copy(bssid.bytes, adapter->mac_addr.bytes,
+		     QDF_MAC_ADDR_SIZE);
+
+	ch_params.ch_width = bandwidth;
+	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, chan, 0, &ch_params);
+	if (ch_params.ch_width == CH_WIDTH_INVALID) {
+		hdd_err("Invalid capture channel or bandwidth for a country");
+		return -EINVAL;
+	}
+	if (wlan_hdd_change_hw_mode_for_given_chnl(adapter, chan,
+				POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN)) {
+		hdd_err("Failed to change hw mode");
+		return -EINVAL;
+	}
+
+	status = sme_roam_channel_change_req(hal_hdl, bssid, &ch_params,
+					     &roam_profile);
+	if (status) {
+		hdd_err("Status: %d Failed to set sme_roam Channel for monitor mode",
+			status);
+	}
+
+	adapter->mon_chan = chan;
+	adapter->mon_bandwidth = bandwidth;
+	return qdf_status_to_os_return(status);
+}
 
 QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 {
