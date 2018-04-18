@@ -770,6 +770,10 @@ struct cdp_pdev_stats {
 	struct {
 		/* desc alloc failed errors */
 		uint32_t desc_alloc_fail;
+		/* ip csum errors */
+		uint32_t ip_csum_err;
+		/* tcp/udp csum errors */
+		uint32_t tcp_udp_csum_err;
 	} err;
 
 	/* buffers added back in freelist */

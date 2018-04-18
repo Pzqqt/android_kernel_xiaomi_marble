@@ -1061,15 +1061,20 @@ static inline void dp_rx_deliver_to_stack(struct dp_vdev *vdev,
  *
  * Return: void
  */
-static inline void dp_rx_cksum_offload(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
+static inline void dp_rx_cksum_offload(struct dp_pdev *pdev,
+				       qdf_nbuf_t nbuf,
+				       uint8_t *rx_tlv_hdr)
 {
 	qdf_nbuf_rx_cksum_t cksum = {0};
+	bool ip_csum_err = hal_rx_attn_ip_cksum_fail_get(rx_tlv_hdr);
+	bool tcp_udp_csum_er = hal_rx_attn_tcp_udp_cksum_fail_get(rx_tlv_hdr);
 
-	if (qdf_likely(!hal_rx_attn_tcp_udp_cksum_fail_get(rx_tlv_hdr) &&
-		       !hal_rx_attn_ip_cksum_fail_get(rx_tlv_hdr))) {
+	if (qdf_likely(!ip_csum_err && !tcp_udp_csum_er)) {
 		cksum.l4_result = QDF_NBUF_RX_CKSUM_TCP_UDP_UNNECESSARY;
-
 		qdf_nbuf_set_rx_cksum(nbuf, &cksum);
+	} else {
+		DP_STATS_INCC(pdev, err.ip_csum_err, 1, ip_csum_err);
+		DP_STATS_INCC(pdev, err.tcp_udp_csum_err, 1, tcp_udp_csum_er);
 	}
 }
 
@@ -1561,7 +1566,7 @@ done:
 			continue;
 		}
 
-		dp_rx_cksum_offload(nbuf, rx_tlv_hdr);
+		dp_rx_cksum_offload(vdev->pdev, nbuf, rx_tlv_hdr);
 
 		dp_set_rx_queue(nbuf, ring_id);
 

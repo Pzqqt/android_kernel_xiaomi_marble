@@ -5190,6 +5190,10 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 			pdev->stats.replenish.rxdma_err);
 	DP_PRINT_STATS("	Desc Alloc Failed: = %d",
 			pdev->stats.err.desc_alloc_fail);
+	DP_PRINT_STATS("IP checksum error = %d",
+		       pdev->stats.err.ip_csum_err);
+	DP_PRINT_STATS("TCP/UDP checksum error = %d",
+		       pdev->stats.err.tcp_udp_csum_err);
 
 	/* Get bar_recv_cnt */
 	dp_aggregate_pdev_ctrl_frames_stats(pdev);
