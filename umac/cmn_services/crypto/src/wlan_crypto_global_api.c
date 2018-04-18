@@ -550,6 +550,11 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 			uint16_t kid = req_key->keyix;
 			if (kid == WLAN_CRYPTO_KEYIX_NONE)
 				kid = 0;
+			if (kid >= WLAN_CRYPTO_MAXKEYIDX) {
+				qdf_print("%s[%d] invalid keyid %d \n",
+						  __func__, __LINE__, kid);
+				return QDF_STATUS_E_INVAL;
+			}
 			if (!crypto_priv->key[kid]) {
 				crypto_priv->key[kid]
 					= qdf_mem_malloc(
@@ -856,6 +861,11 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 
 	if (key_idx >= WLAN_CRYPTO_MAXKEYIDX) {
 		uint8_t igtk_idx = key_idx - WLAN_CRYPTO_MAXKEYIDX;
+		if (igtk_idx >= WLAN_CRYPTO_MAXIGTKKEYIDX) {
+			qdf_print("%s[%d] Igtk key invalid keyid %d\n",
+			__func__, __LINE__, igtk_idx);
+			return QDF_STATUS_E_INVAL;
+		}
 		key = crypto_priv->igtk_key[igtk_idx];
 		crypto_priv->igtk_key[igtk_idx] = NULL;
 		if (key)
