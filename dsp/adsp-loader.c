@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -134,9 +134,6 @@ load_adsp:
 					__func__);
 				goto fail;
 			}
-
-			/* Set the state of the ADSP in APR driver */
-			apr_set_q6_state(APR_SUBSYS_LOADED);
 		} else if (adsp_state == APR_SUBSYS_LOADED) {
 			dev_dbg(&pdev->dev,
 			"%s: ADSP state = %x\n", __func__, adsp_state);
