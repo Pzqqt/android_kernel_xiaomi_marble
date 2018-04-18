@@ -4533,6 +4533,27 @@ typedef enum {
     PKT_PWR_SAVE_FSM_ENABLE     = 0x80000000,
 } WMI_PDEV_PKT_PWR_SAVE_LEVEL;
 
+/** MACROs to get user setting for enabling/disabling Secondary Rate Feature set
+ * Bit-0    : Enable/Disable Control for "PPDU Secondary Retry Support"
+ * Bit-1    : Enable/Disable Control for "RTS Black/White-listing Support"
+ * Bit-2    : Enable/Disable Control for "Higher MCS retry restriction on XRETRY failures"
+ * Bit 3-5  : "Xretry threshold" to use
+ * Bit 6~31 : reserved for future use.
+ */
+#define WMI_PDEV_PARAM_SECONDARY_RATE_ENABLE_BIT_S      0
+#define WMI_PDEV_PARAM_SECONDARY_RATE_ENABLE_BIT        0x00000001
+#define WMI_PDEV_PARAM_RTS_BL_WL_ENABLE_BIT_S           1
+#define WMI_PDEV_PARAM_RTS_BL_WL_ENABLE_BIT             0x00000002
+#define WMI_PDEV_PARAM_HIGHER_MCS_XRETRY_RESTRICTION_S  2
+#define WMI_PDEV_PARAM_HIGHER_MCS_XRETRY_RESTRICTION    0x00000004
+#define WMI_PDEV_PARAM_XRETRY_THRESHOLD_S               3
+#define WMI_PDEV_PARAM_XRETRY_THRESHOLD                 0x00000038
+
+#define WMI_PDEV_PARAM_IS_SECONDARY_RATE_ENABLED(word32)            WMI_F_MS(word32, WMI_PDEV_PARAM_SECONDARY_RATE_ENABLE_BIT)
+#define WMI_PDEV_PARAM_IS_RTS_BL_WL_ENABLED(word32)                 WMI_F_MS(word32, WMI_PDEV_PARAM_RTS_BL_WL_ENABLE_BIT)
+#define WMI_PDEV_PARAM_IS_HIGHER_MCS_XRETRY_RESTRICTION_SET(word32) WMI_F_MS(word32, WMI_PDEV_PARAM_HIGHER_MCS_XRETRY_RESTRICTION)
+#define WMI_PDEV_PARAM_GET_XRETRY_THRESHOLD(word32)                 WMI_F_MS(word32, WMI_PDEV_PARAM_XRETRY_THRESHOLD)
+
 typedef enum {
     /** TX chain mask */
     WMI_PDEV_PARAM_TX_CHAIN_MASK = 0x1,
@@ -4983,6 +5004,15 @@ typedef enum {
      * value accompanying the PDEV_PARAM_ANTENNA_GAIN_HALF_DB parameter type.
      */
     WMI_PDEV_PARAM_ANTENNA_GAIN_HALF_DB,              /* 0x9f */
+    /*
+     * Global Enable/Disable control for Secondary Retry Feature Set
+     *
+     * Bit-0  : Enable/Disable Control for "PPDU Secondary Retry Support"
+     * Bit-1  : Enable/Disable Control for "RTS Black/White-listing Support"
+     * Bit-2  : Enable/Disable Control for "Higher MCS retry restriction on XRETRY failures"
+     * Bit 3-5: "Xretry threshold" to use
+     */
+    WMI_PDEV_PARAM_SECONDARY_RETRY_ENABLE,            /* 0xA0 */
 } WMI_PDEV_PARAM;
 
 typedef struct {
