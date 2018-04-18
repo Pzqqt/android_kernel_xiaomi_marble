@@ -8609,10 +8609,22 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("ERR: clear event failed");
 
+	/*
+	 * Stop opportunistic timer here if running as we are already doing
+	 * hw mode change before vdev start based on the new concurrency
+	 * situation. If timer is not stopped and if it gets triggered before
+	 * VDEV_UP, it will reset the hw mode to some wrong value.
+	 */
+	status = policy_mgr_stop_opportunistic_timer(hdd_ctx->hdd_psoc);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to stop DBS opportunistic timer");
+		return -EINVAL;
+	}
+
 	status = policy_mgr_current_connections_update(hdd_ctx->hdd_psoc,
 			adapter->session_id, channel,
 			POLICY_MGR_UPDATE_REASON_START_AP);
-	if (QDF_STATUS_E_FAILURE == status) {
+	if (status == QDF_STATUS_E_FAILURE) {
 		hdd_err("ERROR: connections update failed!!");
 		return -EINVAL;
 	}
