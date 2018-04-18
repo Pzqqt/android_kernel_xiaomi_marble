@@ -6194,7 +6194,7 @@ static int hdd_driver_rxfilter_comand_handler(uint8_t *command,
 		value = command + 13;
 	ret = kstrtou8(value, 10, &type);
 	if (ret < 0) {
-		hdd_err("kstrtou8 failed invalid input value %d", type);
+		hdd_err("kstrtou8 failed invalid input value");
 		return -EINVAL;
 	}
 
