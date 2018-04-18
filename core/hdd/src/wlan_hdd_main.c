@@ -3276,6 +3276,8 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 		hdd_err("MAC is Multicast");
 		return -EINVAL;
 	}
+	hdd_info("Changing MAC to " MAC_ADDRESS_STR " of the interface %s ",
+		 MAC_ADDR_ARRAY(mac_addr.bytes), dev->name);
 
 	memcpy(&adapter->mac_addr, psta_mac_addr->sa_data, ETH_ALEN);
 	memcpy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
