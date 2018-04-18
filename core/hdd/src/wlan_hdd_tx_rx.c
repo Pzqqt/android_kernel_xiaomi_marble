@@ -85,6 +85,57 @@ const uint8_t hdd_qdisc_ac_to_tl_ac[] = {
 
 #endif
 
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
+void hdd_register_hl_netdev_fc_timer(struct hdd_adapter *adapter,
+				     qdf_mc_timer_callback_t timer_callback)
+{
+	if (!adapter->tx_flow_timer_initialized) {
+		qdf_mc_timer_init(&adapter->tx_flow_control_timer,
+				  QDF_TIMER_TYPE_SW, timer_callback, adapter);
+		adapter->tx_flow_timer_initialized = true;
+	}
+}
+
+/**
+ * hdd_deregister_hl_netdev_fc_timer() - Deregister HL Flow Control Timer
+ * @adapter: adapter handle
+ *
+ * Return: none
+ */
+void hdd_deregister_hl_netdev_fc_timer(struct hdd_adapter *adapter)
+{
+	if (adapter->tx_flow_timer_initialized) {
+		qdf_mc_timer_stop(&adapter->tx_flow_control_timer);
+		qdf_mc_timer_destroy(&adapter->tx_flow_control_timer);
+		adapter->tx_flow_timer_initialized = false;
+	}
+}
+
+/**
+ * hdd_tx_resume_timer_expired_handler() - TX Q resume timer handler
+ * @adapter_context: pointer to vdev adapter
+ *
+ * If Blocked OS Q is not resumed during timeout period, to prevent
+ * permanent stall, resume OS Q forcefully.
+ *
+ * Return: None
+ */
+void hdd_tx_resume_timer_expired_handler(void *adapter_context)
+{
+	struct hdd_adapter *adapter = (struct hdd_adapter *)adapter_context;
+
+	if (!adapter) {
+		/* INVALID ARG */
+		return;
+	}
+
+	hdd_debug("Enabling queues");
+	wlan_hdd_netif_queue_control(adapter, WLAN_WAKE_NON_PRIORITY_QUEUE,
+				     WLAN_DATA_FLOW_CONTROL);
+}
+
+#endif /* QCA_HL_NETDEV_FLOW_CONTROL */
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 /**
  * hdd_tx_resume_timer_expired_handler() - TX Q resume timer handler

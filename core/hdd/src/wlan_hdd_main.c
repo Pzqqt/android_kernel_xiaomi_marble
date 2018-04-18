@@ -321,6 +321,32 @@ static void hdd_set_rps_cpu_mask(struct hdd_context *hdd_ctx)
 		hdd_send_rps_ind(adapter);
 }
 
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
+void wlan_hdd_mod_fc_timer(struct hdd_adapter *adapter,
+			   enum netif_action_type action)
+{
+	if (!adapter->tx_flow_timer_initialized)
+		return;
+
+	if (action == WLAN_WAKE_NON_PRIORITY_QUEUE) {
+		qdf_mc_timer_stop(&adapter->tx_flow_control_timer);
+	} else if (action == WLAN_STOP_NON_PRIORITY_QUEUE) {
+		QDF_STATUS status =
+		qdf_mc_timer_start(&adapter->tx_flow_control_timer,
+				   WLAN_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME);
+
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("Failed to start tx_flow_control_timer");
+		else
+			adapter->
+			hdd_stats.tx_rx_stats.txflow_timer_cnt++;
+
+		adapter->hdd_stats.tx_rx_stats.txflow_pause_cnt++;
+		adapter->hdd_stats.tx_rx_stats.is_txflow_paused = true;
+	}
+}
+#endif /* QCA_HL_NETDEV_FLOW_CONTROL */
+
 /**
  * wlan_hdd_txrx_pause_cb() - pause callback from txrx layer
  * @vdev_id: vdev_id
@@ -340,7 +366,7 @@ void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
 		return;
 	}
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-
+	wlan_hdd_mod_fc_timer(adapter, action);
 	wlan_hdd_netif_queue_control(adapter, action, reason);
 }
 
@@ -4807,6 +4833,9 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		hdd_err("Interface %s wow debug_fs init failed",
 			netdev_name(adapter->dev));
 
+	hdd_register_hl_netdev_fc_timer(adapter,
+					hdd_tx_resume_timer_expired_handler);
+
 	hdd_info("%s interface created. iftype: %d", netdev_name(adapter->dev),
 		 session_type);
 
@@ -5199,6 +5228,8 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 	default:
 		break;
 	}
+
+	hdd_deregister_hl_netdev_fc_timer(adapter);
 
 	if (adapter->scan_info.default_scan_ies) {
 		qdf_mem_free(adapter->scan_info.default_scan_ies);

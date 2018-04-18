@@ -1340,12 +1340,16 @@ struct hdd_adapter {
 	uint64_t prev_fwd_rx_packets;
 	int connection;
 #endif
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
+#if  defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
+				defined(QCA_HL_NETDEV_FLOW_CONTROL)
 	qdf_mc_timer_t tx_flow_control_timer;
 	bool tx_flow_timer_initialized;
+#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL || QCA_HL_NETDEV_FLOW_CONTROL */
+#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	unsigned int tx_flow_low_watermark;
 	unsigned int tx_flow_high_watermark_offset;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
+
 	bool offloads_configured;
 
 	/* DSCP to UP QoS Mapping */
@@ -2468,6 +2472,16 @@ void hdd_clean_up_pre_cac_interface(struct hdd_context *hdd_ctx);
 
 void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
 	enum netif_action_type action, enum netif_reason_type reason);
+
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
+void wlan_hdd_mod_fc_timer(struct hdd_adapter *adapter,
+			   enum netif_action_type action);
+#else
+static inline void wlan_hdd_mod_fc_timer(struct hdd_adapter *adapter,
+					 enum netif_action_type action)
+{
+}
+#endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 
 int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value);
 void wlan_hdd_deinit_tx_rx_histogram(struct hdd_context *hdd_ctx);

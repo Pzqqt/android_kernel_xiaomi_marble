@@ -129,7 +129,6 @@ void hdd_tx_resume_cb(void *adapter_context, bool tx_resume);
  * Return: true if TX Q is paused by flow control
  */
 bool hdd_tx_flow_control_is_pause(void *adapter_context);
-void hdd_tx_resume_timer_expired_handler(void *adapter_context);
 
 /**
  * hdd_register_tx_flow_control() - Register TX Flow control
@@ -156,9 +155,6 @@ static inline bool hdd_tx_flow_control_is_pause(void *adapter_context)
 {
 	return false;
 }
-static inline void hdd_tx_resume_timer_expired_handler(void *adapter_context)
-{
-}
 static inline void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 		qdf_mc_timer_callback_t timer_callback,
 		ol_txrx_tx_flow_control_fp flowControl,
@@ -173,6 +169,30 @@ static inline void hdd_get_tx_resource(struct hdd_adapter *adapter,
 {
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
+
+#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
+		defined(QCA_HL_NETDEV_FLOW_CONTROL)
+void hdd_tx_resume_timer_expired_handler(void *adapter_context);
+#else
+static inline void hdd_tx_resume_timer_expired_handler(void *adapter_context)
+{
+}
+#endif
+
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
+void hdd_register_hl_netdev_fc_timer(struct hdd_adapter *adapter,
+				     qdf_mc_timer_callback_t timer_callback);
+void hdd_deregister_hl_netdev_fc_timer(struct hdd_adapter *adapter);
+#else
+static inline void hdd_register_hl_netdev_fc_timer(struct hdd_adapter *adapter,
+						   qdf_mc_timer_callback_t
+						   timer_callback)
+{}
+
+static inline void
+	hdd_deregister_hl_netdev_fc_timer(struct hdd_adapter *adapter)
+{}
+#endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 
 int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx,
 		     struct qdf_mac_addr *addr);
