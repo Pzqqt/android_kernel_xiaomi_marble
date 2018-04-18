@@ -573,6 +573,9 @@ struct wlan_lmac_if_reg_tx_ops {
  * @dfs_is_pdev_5ghz:                   Check if the given pdev is 5GHz.
  * @dfs_set_phyerr_filter_offload:      Config phyerr filter offload.
  * @dfs_send_offload_enable_cmd:        Send dfs offload enable command to fw.
+ * @dfs_host_dfs_check_support:         To check Host DFS confirmation feature
+ *                                      support.
+ * @dfs_send_avg_radar_params_to_fw:    Send average radar parameters to FW.
  */
 
 struct wlan_lmac_if_dfs_tx_ops {
@@ -616,6 +619,11 @@ struct wlan_lmac_if_dfs_tx_ops {
 	QDF_STATUS (*dfs_send_offload_enable_cmd)(
 			struct wlan_objmgr_pdev *pdev,
 			bool enable);
+	QDF_STATUS (*dfs_host_dfs_check_support)(struct wlan_objmgr_pdev *pdev,
+						 bool *enabled);
+	QDF_STATUS (*dfs_send_avg_radar_params_to_fw)(
+			struct wlan_objmgr_pdev *pdev,
+			struct dfs_radar_found_params *params);
 };
 
 /**
@@ -1023,6 +1031,7 @@ struct wlan_lmac_if_nan_rx_ops {
  * @dfs_process_phyerr:               Process phyerr.
  * @dfs_destroy_object:               Destroys the DFS object.
  * @dfs_radar_enable:                 Enables the radar.
+ * @dfs_is_radar_enabled:             Check if the radar is enabled.
  * @dfs_control:                      Used to process ioctls related to DFS.
  * @dfs_is_precac_timer_running:      Check whether precac timer is running.
  * @dfs_find_vht80_chan_for_precac:   Find VHT80 channel for precac.
@@ -1037,6 +1046,13 @@ struct wlan_lmac_if_nan_rx_ops {
  * @dfs_stop:                         Clear dfs timers.
  * @dfs_process_phyerr_filter_offload:Process radar event.
  * @dfs_is_phyerr_filter_offload:     Check whether phyerr filter is offload.
+ * @dfs_action_on_status:             Trigger the action to be taken based on
+ *                                    on host dfs status received from fw.
+ * @dfs_override_status_timeout:      Override the value of host dfs status
+ *                                    wait timeout.
+ * @dfs_get_override_status_timeout:  Get the value of host dfs status wait
+ *                                    timeout.
+ * @dfs_reset_spoof_test:             Checks if radar detection is enabled.
  */
 struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_get_radars)(struct wlan_objmgr_pdev *pdev);
@@ -1051,24 +1067,27 @@ struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_radar_enable)(struct wlan_objmgr_pdev *pdev,
 			int no_cac,
 			uint32_t opmode);
+	void (*dfs_is_radar_enabled)(struct wlan_objmgr_pdev *pdev,
+				     int *ignore_dfs);
 	QDF_STATUS (*dfs_control)(struct wlan_objmgr_pdev *pdev,
-			u_int id,
-			void *indata,
-			uint32_t insize,
-			void *outdata,
-			uint32_t *outsize,
-			int *error);
+				  u_int id,
+				  void *indata,
+				  uint32_t insize,
+				  void *outdata,
+				  uint32_t *outsize,
+				  int *error);
 	QDF_STATUS (*dfs_is_precac_timer_running)(struct wlan_objmgr_pdev *pdev,
-			bool *is_precac_timer_running);
-	QDF_STATUS (*dfs_find_vht80_chan_for_precac)(
-			struct wlan_objmgr_pdev *pdev,
-			uint32_t chan_mode,
-			uint8_t ch_freq_seg1,
-			uint32_t *cfreq1,
-			uint32_t *cfreq2,
-			uint32_t *phy_mode,
-			bool *dfs_set_cfreq2,
-			bool *set_agile);
+						  bool *is_precac_timer_running
+						  );
+	QDF_STATUS
+	    (*dfs_find_vht80_chan_for_precac)(struct wlan_objmgr_pdev *pdev,
+					      uint32_t chan_mode,
+					      uint8_t ch_freq_seg1,
+					      uint32_t *cfreq1,
+					      uint32_t *cfreq2,
+					      uint32_t *phy_mode,
+					      bool *dfs_set_cfreq2,
+					      bool *set_agile);
 	QDF_STATUS (*dfs_cancel_precac_timer)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_override_precac_timeout)(
 			struct wlan_objmgr_pdev *pdev,
@@ -1100,6 +1119,15 @@ struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_is_phyerr_filter_offload)(
 			struct wlan_objmgr_psoc *psoc,
 			bool *is_phyerr_filter_offload);
+	QDF_STATUS (*dfs_action_on_status)(struct wlan_objmgr_pdev *pdev,
+			u_int32_t *dfs_status_check);
+	QDF_STATUS (*dfs_override_status_timeout)(
+			struct wlan_objmgr_pdev *pdev,
+			int status_timeout);
+	QDF_STATUS (*dfs_get_override_status_timeout)(
+			struct wlan_objmgr_pdev *pdev,
+			int *status_timeout);
+	QDF_STATUS (*dfs_reset_spoof_test)(struct wlan_objmgr_pdev *pdev);
 };
 
 struct wlan_lmac_if_mlme_rx_ops {
