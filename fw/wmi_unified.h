@@ -22523,8 +22523,10 @@ typedef struct {
     A_UINT32 pdev_id;       /** ID of pdev whose DMA ring produced the data */
     A_UINT32 mod_id;        /* see WMI_DMA_RING_SUPPORTED_MODULE */
     A_UINT32 num_buf_release_entry;
+    A_UINT32 num_meta_data_entry;
     /* This TLV is followed by another TLV of array of structs.
-     * wmi_dma_buf_release_entry entries;
+     * wmi_dma_buf_release_entry entries[num_buf_release_entry];
+     * wmi_dma_buf_release_spectral_meta_data meta_datat[num_meta_data_entry];
      */
 } wmi_dma_buf_release_fixed_param;
 
@@ -22540,6 +22542,19 @@ typedef struct {
      */
     A_UINT32 paddr_hi;
 } wmi_dma_buf_release_entry;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_dma_buf_release_spectral_meta_data */
+    /**
+     * meta data information.
+     * Host uses the noise floor values as one of the major parameter
+     * to classify the spectral data.
+     * This information will not be provided by ucode unlike the fft reports
+     * which gets DMAed to DDR buffer.
+     * Hence sending the NF values in dBm units as meta data information.
+     */
+    A_INT32 noise_floor[WMI_MAX_CHAINS];
+} wmi_dma_buf_release_spectral_meta_data;
 
 typedef struct {
     A_UINT32 tlv_header;  /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_runtime_dpd_recal_cmd_fixed_param  */
