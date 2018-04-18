@@ -50,10 +50,54 @@ target_if_dfs_reg_phyerr_events(struct wlan_objmgr_psoc *psoc)
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 QDF_STATUS target_if_dfs_get_caps(struct wlan_objmgr_pdev *pdev,
-		struct wlan_dfs_caps *dfs_caps);
+				  struct wlan_dfs_caps *dfs_caps);
 #else
-static QDF_STATUS target_if_dfs_get_caps(struct wlan_objmgr_pdev *pdev,
-		struct wlan_dfs_caps *dfs_caps)
+static inline QDF_STATUS target_if_dfs_get_caps(struct wlan_objmgr_pdev *pdev,
+						struct wlan_dfs_caps *dfs_caps)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * target_if_dfs_status_check_event_handler() - Host dfs confirmation event
+ * handler.
+ * @scn: Handle to HIF context
+ * @data: radar event buffer
+ * @datalen: radar event buffer length
+ *
+ * Return: 0 on success
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+int target_if_dfs_status_check_event_handler(ol_scn_t scn,
+					     uint8_t *data,
+					     uint32_t datalen);
+#else
+static inline
+int target_if_dfs_status_check_event_handler(ol_scn_t scn,
+					     uint8_t *data,
+					     uint32_t datalen)
+{
+	return 0;
+}
+#endif
+
+/**
+ * target_if_dfs_send_avg_params_to_fw() - Send average parameters to FW.
+ * @pdev: pdev pointer
+ * @params: Pointer to dfs_radar_found_params structure.
+ *
+ * Return: QDF_STATUS
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+QDF_STATUS target_if_dfs_send_avg_params_to_fw(
+		struct wlan_objmgr_pdev *pdev,
+		struct dfs_radar_found_params *params);
+#else
+static inline
+QDF_STATUS target_if_dfs_send_avg_params_to_fw(
+		struct wlan_objmgr_pdev *pdev,
+		struct dfs_radar_found_params *params)
 {
 	return QDF_STATUS_SUCCESS;
 }

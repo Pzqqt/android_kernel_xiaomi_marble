@@ -41,6 +41,44 @@
 #include <target_if_dfs_partial_offload.h>
 
 /**
+ * target_if_dfs_register_host_status_check_event() - Register host dfs
+ * confirmation event.
+ * @psoc: pointer to psoc.
+ *
+ * Return: QDF_STATUS.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+static QDF_STATUS target_if_dfs_register_host_status_check_event(
+		struct wlan_objmgr_psoc *psoc)
+
+{
+	wmi_unified_t wmi_handle;
+	QDF_STATUS retval;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("null wmi_handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	retval = wmi_unified_register_event(wmi_handle,
+			wmi_host_dfs_status_check_event_id,
+			target_if_dfs_status_check_event_handler);
+	if (QDF_IS_STATUS_ERROR(retval))
+		target_if_err("wmi_dfs_radar_detection_event_id ret=%d",
+			      retval);
+
+	return retval;
+}
+#else
+static QDF_STATUS target_if_dfs_register_host_status_check_event(
+		struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
  * target_if_is_dfs_3() - Is dfs3 support or not
  * @target_type: target type being used.
  *
@@ -174,6 +212,9 @@ static QDF_STATUS target_if_dfs_register_event_handler(
 			target_if_err("null tgt_psoc_info");
 			return QDF_STATUS_E_FAILURE;
 		}
+
+		target_if_dfs_register_host_status_check_event(psoc);
+
 		if (target_if_is_dfs_3(
 				target_psoc_get_target_type(tgt_psoc_info)))
 			return target_if_dfs_reg_phyerr_events(psoc);
@@ -316,6 +357,8 @@ QDF_STATUS target_if_register_dfs_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 				&target_if_dfs_set_phyerr_filter_offload;
 
 	dfs_tx_ops->dfs_get_caps = &target_if_dfs_get_caps;
+	dfs_tx_ops->dfs_send_avg_radar_params_to_fw =
+		&target_if_dfs_send_avg_params_to_fw;
 
 	return QDF_STATUS_SUCCESS;
 }
