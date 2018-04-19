@@ -2847,25 +2847,24 @@ static int drv_cmd_p2p_dev_addr(struct hdd_adapter *adapter,
 				uint8_t command_len,
 				struct hdd_priv_data *priv_data)
 {
-	int ret = 0;
+	struct qdf_mac_addr *addr = &hdd_ctx->p2p_device_address;
+	size_t user_size = qdf_min(sizeof(addr->bytes),
+				   (size_t)priv_data->total_len);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_P2P_DEV_ADDR_IOCTL,
 			 adapter->session_id,
-			(unsigned int)(*(hdd_ctx->p2p_device_address.bytes + 2)
-				<< 24 | *(hdd_ctx->p2p_device_address.bytes
-				+ 3) << 16 | *(hdd_ctx->
-				p2p_device_address.bytes + 4) << 8 |
-				*(hdd_ctx->p2p_device_address.bytes +
-				5))));
+			 (unsigned int)(*(addr->bytes + 2) << 24 |
+				*(addr->bytes + 3) << 16 |
+				*(addr->bytes + 4) << 8 |
+				*(addr->bytes + 5))));
 
-	if (copy_to_user(priv_data->buf, hdd_ctx->p2p_device_address.bytes,
-			 sizeof(tSirMacAddr))) {
+	if (copy_to_user(priv_data->buf, addr->bytes, user_size)) {
 		hdd_err("failed to copy data to user buffer");
-		ret = -EFAULT;
+		return -EFAULT;
 	}
 
-	return ret;
+	return 0;
 }
 
 /**
