@@ -3564,6 +3564,13 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 			wma_vdev_bss_color_collision_info_handler,
 			WMA_RX_WORK_CTX);
 
+#ifdef WLAN_FEATURE_TWT
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   wmi_twt_enable_complete_event_id,
+					   wma_twt_en_complete_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
+#endif
+
 
 	return QDF_STATUS_SUCCESS;
 

@@ -2007,7 +2007,6 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		hdd_update_tgt_he_cap(hdd_ctx, cfg);
 	}
 	hdd_update_tgt_twt_cap(hdd_ctx, cfg);
-	hdd_send_twt_enable_cmd(hdd_ctx);
 
 	hdd_update_vdev_nss(hdd_ctx);
 
@@ -10228,6 +10227,7 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 		goto deregister_cb;
 
 	wlan_hdd_init_chan_info(hdd_ctx);
+	wlan_hdd_twt_init(hdd_ctx);
 
 	hdd_exit();
 	return 0;
@@ -10248,6 +10248,7 @@ deregister_cb:
  */
 static void hdd_features_deinit(struct hdd_context *hdd_ctx)
 {
+	wlan_hdd_twt_deinit(hdd_ctx);
 	wlan_hdd_deinit_chan_info(hdd_ctx);
 	wlan_hdd_tsf_deinit(hdd_ctx);
 }

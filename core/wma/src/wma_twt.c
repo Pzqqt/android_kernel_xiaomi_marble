@@ -24,6 +24,8 @@
 
 #include "wma_twt.h"
 #include "wmi_unified_twt_api.h"
+#include "wma_internal.h"
+#include "wmi_unified_priv.h"
 
 void wma_send_twt_enable_cmd(uint32_t pdev_id, uint32_t congestion_timeout)
 {
@@ -37,5 +39,36 @@ void wma_send_twt_enable_cmd(uint32_t pdev_id, uint32_t congestion_timeout)
 
 	if (ret)
 		WMA_LOGE("Failed to enable TWT");
+}
+
+int wma_twt_en_complete_event_handler(void *handle,
+				      uint8_t *event, uint32_t len)
+{
+	struct wmi_twt_enable_complete_event_param param;
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+	wmi_unified_t wmi_handle;
+	tpAniSirGlobal mac = (tpAniSirGlobal)cds_get_context(QDF_MODULE_ID_PE);
+	int status = -EINVAL;
+
+	if (!wma_handle) {
+		WMA_LOGE("Invalid wma handle for TWT complete");
+		return status;
+	}
+	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		WMA_LOGE("Invalid wmi handle for TWT complete");
+		return status;
+	}
+	if (wmi_handle->ops->extract_twt_enable_comp_event)
+		status = wmi_handle->ops->extract_twt_enable_comp_event(
+								wmi_handle,
+								event,
+								&param);
+	WMA_LOGD("TWT: Received TWT enable comp event, status:%d", status);
+
+	if (mac->sme.twt_enable_cb)
+		mac->sme.twt_enable_cb(mac->hHdd, &param);
+
+	return status;
 }
 

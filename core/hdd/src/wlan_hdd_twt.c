@@ -79,3 +79,91 @@ void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 		wma_send_twt_enable_cmd(pdev_id, congestion_timeout);
 }
 
+void hdd_twt_enable_comp_cb(void *hddctx,
+		struct wmi_twt_enable_complete_event_param *params)
+{
+	struct hdd_context *hdd_ctx = hddctx;
+	enum twt_status prev_state;
+
+	if (!hdd_ctx) {
+		hdd_err("TWT: Invalid HDD Context");
+		return;
+	}
+	prev_state = hdd_ctx->twt_state;
+	if (params->status == WMI_HOST_ENABLE_TWT_STATUS_OK ||
+	    params->status == WMI_HOST_ENABLE_TWT_STATUS_ALREADY_ENABLED) {
+		switch (prev_state) {
+		case TWT_FW_TRIGGER_ENABLE_REQUESTED:
+			hdd_ctx->twt_state = TWT_FW_TRIGGER_ENABLED;
+			break;
+		case TWT_HOST_TRIGGER_ENABLE_REQUESTED:
+			hdd_ctx->twt_state = TWT_HOST_TRIGGER_ENABLED;
+			break;
+		default:
+			break;
+		}
+	}
+	if (params->status == WMI_HOST_ENABLE_TWT_INVALID_PARAM ||
+	    params->status == WMI_HOST_ENABLE_TWT_STATUS_UNKNOWN_ERROR)
+		hdd_ctx->twt_state = TWT_INIT;
+
+	hdd_debug("TWT: pdev ID:%d, status:%d State transitioned from %d to %d",
+		  params->pdev_id, params->status,
+		  prev_state, hdd_ctx->twt_state);
+}
+
+void hdd_twt_disable_comp_cb(void *hddctx)
+{
+	struct hdd_context *hdd_ctx = hddctx;
+	enum twt_status prev_state;
+
+	if (!hdd_ctx) {
+		hdd_err("TWT: Invalid HDD Context");
+		return;
+	}
+	prev_state = hdd_ctx->twt_state;
+	hdd_ctx->twt_state = TWT_DISABLED;
+
+	hdd_debug("TWT: State transitioned from %d to %d",
+		  prev_state, hdd_ctx->twt_state);
+}
+
+void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	hdd_ctx->twt_state = TWT_INIT;
+	status = sme_register_twt_enable_complete_cb(hdd_ctx->hHal,
+						     hdd_twt_enable_comp_cb);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Register twt enable complete failed");
+		return;
+	}
+
+	status = sme_register_twt_disable_complete_cb(hdd_ctx->hHal,
+						      hdd_twt_disable_comp_cb);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Register twt disable complete failed");
+		goto twt_init_fail;
+	}
+	hdd_send_twt_enable_cmd(hdd_ctx);
+	return;
+
+twt_init_fail:
+
+	sme_deregister_twt_enable_complete_cb(hdd_ctx->hHal);
+}
+
+void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	status  = sme_deregister_twt_disable_complete_cb(hdd_ctx->hHal);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("De-register of twt disable cb failed: %d", status);
+	status  = sme_deregister_twt_enable_complete_cb(hdd_ctx->hHal);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("De-register of twt enable cb failed: %d", status);
+
+	hdd_ctx->twt_state = TWT_CLOSED;
+}

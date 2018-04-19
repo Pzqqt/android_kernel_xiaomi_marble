@@ -36,7 +36,7 @@
 #include "host_diag_core_event.h"
 #include "csr_link_list.h"
 #include "sme_power_save.h"
-
+struct wmi_twt_enable_complete_event_param;
 /*--------------------------------------------------------------------------
   Type declarations
   ------------------------------------------------------------------------*/
@@ -256,6 +256,9 @@ typedef struct tagSmeStruct {
 	void (*tx_queue_cb)(void *, uint32_t vdev_id,
 			    enum netif_action_type action,
 			    enum netif_reason_type reason);
+	void (*twt_enable_cb)(void *hdd_ctx,
+			struct wmi_twt_enable_complete_event_param *params);
+	void (*twt_disable_cb)(void *hdd_ctx);
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

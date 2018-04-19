@@ -2336,4 +2336,68 @@ void sme_set_amsdu(tHalHandle hal, bool enable);
 uint8_t sme_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
 			uint8_t nss, uint8_t *mcs_rate_flags);
 
+#ifdef WLAN_FEATURE_TWT
+/**
+ * sme_register_twt_enable_complete_cb() - TWT enable registrar
+ * @hal: HAL handle
+ * @twt_enable_cb: Function callback to handle enable event
+ * @hdd_ctx: Global HDD Context
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS sme_register_twt_enable_complete_cb(tHalHandle hal,
+		void (*twt_enable_cb)(void *hdd_ctx,
+		struct wmi_twt_enable_complete_event_param *params));
+
+/**
+ * sme_register_twt_disable_complete_cb - TWT disable registrar
+ * @hal: HAL handle
+ * @twt_disable_cb: Function callback to handle disable event
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS sme_register_twt_disable_complete_cb(tHalHandle hal,
+			void (*twt_disable_cb)(void *hdd_ctx));
+
+/**
+ * sme_deregister_twt_enable_complete_cb() - TWT enable deregistrar
+ * @hal: HAL handle
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS sme_deregister_twt_enable_complete_cb(tHalHandle hal);
+
+/**
+ * sme_deregister_twt_disable_complete_cb - TWT disable deregistrar
+ * @hal: HAL handle
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS sme_deregister_twt_disable_complete_cb(tHalHandle hal);
+
+#else
+static inline QDF_STATUS sme_register_twt_enable_complete_cb(tHalHandle hal,
+		void (*twt_enable_cb)(void *hdd_ctx,
+		struct wmi_twt_enable_complete_event_param *params))
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_register_twt_disable_complete_cb(tHalHandle hal,
+					void (*twt_disable_cb)(void *hdd_ctx))
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_deregister_twt_enable_complete_cb(tHalHandle hal)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS sme_deregister_twt_disable_complete_cb(tHalHandle hal)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #endif /* #if !defined( __SME_API_H ) */

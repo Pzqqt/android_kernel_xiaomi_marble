@@ -1355,4 +1355,6 @@ int wma_vdev_bss_color_collision_info_handler(void *handle,
 					      uint8_t *event,
 					      uint32_t len);
 
+int wma_twt_en_complete_event_handler(void *handle,
+				      uint8_t *event, uint32_t len);
 #endif

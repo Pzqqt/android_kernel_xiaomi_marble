@@ -15536,6 +15536,55 @@ QDF_STATUS sme_deregister_tx_queue_cb(tHalHandle hal)
 	return sme_register_tx_queue_cb(hal, NULL);
 }
 
+#ifdef WLAN_FEATURE_TWT
+QDF_STATUS sme_register_twt_enable_complete_cb(tHalHandle hal,
+		void (*twt_enable_cb)(void *hdd_ctx,
+		struct wmi_twt_enable_complete_event_param *params))
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.twt_enable_cb = twt_enable_cb;
+		sme_release_global_lock(&mac->sme);
+		sme_debug("TWT: enable callback set");
+	} else {
+		sme_err("Aquiring lock failed %d", status);
+	}
+
+	return status;
+}
+
+QDF_STATUS sme_register_twt_disable_complete_cb(tHalHandle hal,
+				void (*twt_disable_cb)(void *hdd_ctx))
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.twt_disable_cb = twt_disable_cb;
+		sme_release_global_lock(&mac->sme);
+		sme_debug("TWT: disable callback set");
+	} else {
+		sme_err("Aquiring lock failed %d", status);
+	}
+
+	return status;
+}
+
+QDF_STATUS sme_deregister_twt_enable_complete_cb(tHalHandle hal)
+{
+	return sme_register_twt_enable_complete_cb(hal, NULL);
+}
+
+QDF_STATUS sme_deregister_twt_disable_complete_cb(tHalHandle hal)
+{
+	return sme_register_twt_disable_complete_cb(hal, NULL);
+}
+#endif
+
 QDF_STATUS sme_set_smps_cfg(uint32_t vdev_id, uint32_t param_id,
 						uint32_t param_val)
 {
