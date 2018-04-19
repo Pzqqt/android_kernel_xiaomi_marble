@@ -208,6 +208,8 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 endif
 endif
 
+CONFIG_POWER_MANAGEMENT_OFFLOAD := y
+
 ifeq ($(CONFIG_ROME_IF), snoc)
 	CONFIG_WLAN_TX_FLOW_CONTROL_V2 := y
 endif
@@ -1161,6 +1163,7 @@ PMO_INC :=	-I$(WLAN_ROOT)/$(PMO_DIR)/core/inc \
 			-I$(WLAN_ROOT)/$(PMO_DIR)/dispatcher/inc \
 			-I$(WLAN_ROOT)/$(PMO_DIR)/dispatcher/src \
 
+ifeq ($(CONFIG_POWER_MANAGEMENT_OFFLOAD), y)
 PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/core/src/wlan_pmo_apf.o \
 		$(PMO_DIR)/core/src/wlan_pmo_arp.o \
@@ -1185,6 +1188,7 @@ PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_suspend_resume.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_hw_filter.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_pkt_filter.o
+endif
 
 ########## DISA (ENCRYPTION TEST) ##########
 
@@ -2157,6 +2161,8 @@ endif
 cppflags-$(PANIC_ON_BUG) += -DPANIC_ON_BUG
 
 cppflags-$(WLAN_WARN_ON_ASSERT) += -DWLAN_WARN_ON_ASSERT
+
+ccflags-$(CONFIG_POWER_MANAGEMENT_OFFLOAD) += -DWLAN_POWER_MANAGEMENT_OFFLOAD
 
 cppflags-$(CONFIG_WLAN_LOG_FATAL) += -DWLAN_LOG_FATAL
 cppflags-$(CONFIG_WLAN_LOG_ERROR) += -DWLAN_LOG_ERROR
