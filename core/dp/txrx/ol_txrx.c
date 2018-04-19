@@ -5007,6 +5007,30 @@ static inline int ol_txrx_drop_nbuf_list(qdf_nbuf_t buf_list)
 	return num_dropped;
 }
 
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
+/**
+ * ol_txrx_register_hl_flow_control() -register hl netdev flow control callback
+ * @vdev_id: vdev_id
+ * @flowControl: flow control callback
+ *
+ * Return: 0 for success or error code
+ */
+static int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc,
+					    tx_pause_callback flowcontrol)
+{
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!pdev || !flowcontrol) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "pdev or pause_cb is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev->pause_cb = flowcontrol;
+	return 0;
+}
+#endif /* QCA_HL_NETDEV_FLOW_CONTROL */
+
 /**
  * ol_rx_data_cb() - data rx callback
  * @peer: peer
@@ -5994,8 +6018,8 @@ static struct cdp_flowctl_ops ol_ops_flowctl = {
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 };
 
+#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)
 static struct cdp_lflowctl_ops ol_ops_l_flowctl = {
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	.register_tx_flow_control = ol_txrx_register_tx_flow_control,
 	.deregister_tx_flow_control_cb = ol_txrx_deregister_tx_flow_control_cb,
 	.flow_control_cb = ol_txrx_flow_control_cb,
@@ -6004,8 +6028,17 @@ static struct cdp_lflowctl_ops ol_ops_l_flowctl = {
 	.vdev_flush = ol_txrx_vdev_flush,
 	.vdev_pause = ol_txrx_vdev_pause,
 	.vdev_unpause = ol_txrx_vdev_unpause
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
+}; /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
+#elif defined(QCA_HL_NETDEV_FLOW_CONTROL)
+static struct cdp_lflowctl_ops ol_ops_l_flowctl = {
+	.register_tx_flow_control = ol_txrx_register_hl_flow_control,
+	.vdev_flush = ol_txrx_vdev_flush,
+	.vdev_pause = ol_txrx_vdev_pause,
+	.vdev_unpause = ol_txrx_vdev_unpause
 };
+#else /* QCA_HL_NETDEV_FLOW_CONTROL */
+static struct cdp_lflowctl_ops ol_ops_l_flowctl = { };
+#endif
 
 #ifdef IPA_OFFLOAD
 static struct cdp_ipa_ops ol_ops_ipa = {

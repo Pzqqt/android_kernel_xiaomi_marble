@@ -9836,6 +9836,8 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	cdp_register_pause_cb(soc, wlan_hdd_txrx_pause_cb);
+	/* Register HL netdev flow control callback */
+	cdp_hl_fc_register(soc, wlan_hdd_txrx_pause_cb);
 	/*
 	 * Set 802.11p config
 	 * TODO-OCB: This has been temporarily added here to ensure this
