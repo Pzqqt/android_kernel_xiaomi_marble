@@ -13887,7 +13887,7 @@ enum hdd_external_acs_policy {
  * gTxSchDelay - Enable/Disable Tx sch delay
  * @Min: 0
  * @Max: 5
- * @Default: 2
+ * @Default: 0
  *
  * Usage: Internal/External
  *
@@ -13897,7 +13897,7 @@ enum hdd_external_acs_policy {
 #define CFG_TX_SCH_DELAY_NAME          "gTxSchDelay"
 #define CFG_TX_SCH_DELAY_MIN           (0)
 #define CFG_TX_SCH_DELAY_MAX           (5)
-#define CFG_TX_SCH_DELAY_DEFAULT       (2)
+#define CFG_TX_SCH_DELAY_DEFAULT       (0)
 
 /*
  * <ini>
