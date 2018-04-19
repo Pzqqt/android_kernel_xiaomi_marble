@@ -753,12 +753,14 @@ static inline
 uint32_t qdf_dpt_get_curr_pos_debugfs(qdf_debugfs_file_t file,
 				      enum qdf_dpt_debugfs_state state)
 {
+	return 0;
 }
 
 static inline
 QDF_STATUS qdf_dpt_dump_stats_debugfs(qdf_debugfs_file_t file,
 				      uint32_t curr_pos)
 {
+	return QDF_STATUS_SUCCESS;
 }
 
 static inline
@@ -791,6 +793,7 @@ void qdf_dp_trace_clear_buffer(void)
 {
 }
 
+static inline
 void qdf_dp_trace_data_pkt(qdf_nbuf_t nbuf, uint8_t pdev_id,
 			   enum QDF_DP_TRACE_ID code, uint16_t msdu_id,
 			   enum qdf_proto_dir dir)

@@ -2488,6 +2488,52 @@ void qdf_dp_trace_dump_all(uint32_t count, uint8_t pdev_id)
 }
 qdf_export_symbol(qdf_dp_trace_dump_all);
 
+/**
+ * qdf_dp_trace_throttle_live_mode() - Throttle DP Trace live mode
+ * @high_bw_request: whether this is a high BW req or not
+ *
+ * The function tries to prevent excessive logging into the live buffer by
+ * having an upper limit on number of packets that can be logged per second.
+ *
+ * The intention is to allow occasional pings and data packets and really low
+ * throughput levels while suppressing bursts and higher throughput levels so
+ * that we donot hog the live buffer.
+ *
+ * If the number of packets printed in a particular second exceeds the thresh,
+ * disable printing in the next second.
+ *
+ * Return: None
+ */
+void qdf_dp_trace_throttle_live_mode(bool high_bw_request)
+{
+	static int bw_interval_counter;
+
+	if (g_qdf_dp_trace_data.enable == false ||
+		g_qdf_dp_trace_data.live_mode_config == false)
+		return;
+
+	if (high_bw_request) {
+		g_qdf_dp_trace_data.live_mode = 0;
+		bw_interval_counter = 0;
+		return;
+	}
+
+	bw_interval_counter++;
+
+	if (0 == (bw_interval_counter %
+			g_qdf_dp_trace_data.thresh_time_limit)) {
+
+		spin_lock_bh(&l_dp_trace_lock);
+			if (g_qdf_dp_trace_data.print_pkt_cnt <=
+				g_qdf_dp_trace_data.high_tput_thresh)
+				g_qdf_dp_trace_data.live_mode = 1;
+
+		g_qdf_dp_trace_data.print_pkt_cnt = 0;
+		spin_unlock_bh(&l_dp_trace_lock);
+	}
+
+}
+qdf_export_symbol(qdf_dp_trace_throttle_live_mode);
 #endif
 
 struct qdf_print_ctrl print_ctrl_obj[MAX_PRINT_CONFIG_SUPPORTED];
@@ -2719,53 +2765,6 @@ void qdf_trace_msg_cmn(unsigned int idx,
 	}
 }
 qdf_export_symbol(qdf_trace_msg_cmn);
-
-/**
- * qdf_dp_trace_throttle_live_mode() - Throttle DP Trace live mode
- * @high_bw_request: whether this is a high BW req or not
- *
- * The function tries to prevent excessive logging into the live buffer by
- * having an upper limit on number of packets that can be logged per second.
- *
- * The intention is to allow occasional pings and data packets and really low
- * throughput levels while suppressing bursts and higher throughput levels so
- * that we donot hog the live buffer.
- *
- * If the number of packets printed in a particular second exceeds the thresh,
- * disable printing in the next second.
- *
- * Return: None
- */
-void qdf_dp_trace_throttle_live_mode(bool high_bw_request)
-{
-	static int bw_interval_counter;
-
-	if (g_qdf_dp_trace_data.enable == false ||
-		g_qdf_dp_trace_data.live_mode_config == false)
-		return;
-
-	if (high_bw_request) {
-		g_qdf_dp_trace_data.live_mode = 0;
-		bw_interval_counter = 0;
-		return;
-	}
-
-	bw_interval_counter++;
-
-	if (0 == (bw_interval_counter %
-			g_qdf_dp_trace_data.thresh_time_limit)) {
-
-		spin_lock_bh(&l_dp_trace_lock);
-			if (g_qdf_dp_trace_data.print_pkt_cnt <=
-				g_qdf_dp_trace_data.high_tput_thresh)
-				g_qdf_dp_trace_data.live_mode = 1;
-
-		g_qdf_dp_trace_data.print_pkt_cnt = 0;
-		spin_unlock_bh(&l_dp_trace_lock);
-	}
-
-}
-qdf_export_symbol(qdf_dp_trace_throttle_live_mode);
 
 QDF_STATUS qdf_print_setup(void)
 {
