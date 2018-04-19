@@ -5951,6 +5951,8 @@ typedef enum {
 	wmi_service_bss_color_offload,
 	wmi_service_gmac_offload_support,
 	wmi_service_host_dfs_check_support,
+	wmi_service_dual_beacon_on_single_mac_scc_support,
+	wmi_service_dual_beacon_on_single_mac_mcc_support,
 
 	wmi_services_max,
 } wmi_conv_service_ids;

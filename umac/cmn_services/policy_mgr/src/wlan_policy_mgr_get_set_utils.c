@@ -1693,6 +1693,11 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
+	if (!policy_mgr_allow_sap_go_concurrency(psoc, mode, channel)) {
+		policy_mgr_err("This concurrency combination is not allowed");
+		goto done;
+	}
+
 	/* don't allow two P2P GO on same band */
 	if (channel && (mode == PM_P2P_GO_MODE) && num_connections) {
 		index = 0;
@@ -2949,4 +2954,118 @@ uint32_t policy_mgr_get_connection_info(struct wlan_objmgr_psoc *psoc,
 	}
 
 	return count;
+}
+
+bool policy_mgr_allow_sap_go_concurrency(struct wlan_objmgr_psoc *psoc,
+					 enum policy_mgr_con_mode mode,
+					 uint8_t channel)
+{
+	uint32_t sap_cnt;
+	uint32_t go_cnt;
+	enum policy_mgr_con_mode con_mode;
+	uint8_t con_chan;
+	int id;
+
+	sap_cnt = policy_mgr_mode_specific_connection_count(psoc,
+							    PM_SAP_MODE,
+							    NULL);
+	go_cnt = policy_mgr_mode_specific_connection_count(psoc,
+							   PM_P2P_GO_MODE,
+							   NULL);
+
+	if ((mode == PM_SAP_MODE || mode == PM_P2P_GO_MODE) &&
+	    (sap_cnt || go_cnt)) {
+		if (policy_mgr_dual_beacon_on_single_mac_mcc_capable(psoc))
+			return true;
+		if (policy_mgr_dual_beacon_on_single_mac_scc_capable(psoc)) {
+			for (id = 0; id < MAX_NUMBER_OF_CONC_CONNECTIONS;
+				id++) {
+				if (pm_conc_connection_list[id].in_use) {
+					con_mode =
+					    pm_conc_connection_list[id].mode;
+					con_chan =
+					    pm_conc_connection_list[id].chan;
+					if (((con_mode == PM_SAP_MODE) ||
+					     (con_mode == PM_P2P_GO_MODE)) &&
+					    (channel != con_chan)) {
+						policy_mgr_debug("Scc is supported, but first SAP and second SAP are not in same channel, So don't allow second SAP interface");
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		if (!policy_mgr_is_hw_dbs_capable(psoc)) {
+			policy_mgr_debug("DBS is not supported, mcc and scc are not supported too, don't allow second SAP interface");
+			return false;
+		}
+		/* If DBS is supported then allow second SAP/GO session only if
+		 * the freq band of the second SAP/GO interface is different
+		 * than the first SAP/GO interface.
+		 */
+		for (id = 0; id < MAX_NUMBER_OF_CONC_CONNECTIONS; id++) {
+			if (pm_conc_connection_list[id].in_use) {
+				con_mode = pm_conc_connection_list[id].mode;
+				con_chan = pm_conc_connection_list[id].chan;
+				if (((con_mode == PM_SAP_MODE) ||
+				     (con_mode == PM_P2P_GO_MODE)) &&
+				    (WLAN_REG_IS_SAME_BAND_CHANNELS(channel,
+					con_chan))) {
+					policy_mgr_debug("DBS is supported, but first SAP and second SAP are on same band, So don't allow second SAP interface");
+					return false;
+				}
+			}
+		}
+	}
+
+	/* Don't block the second interface */
+	return true;
+}
+
+bool policy_mgr_dual_beacon_on_single_mac_scc_capable(
+		struct wlan_objmgr_psoc *psoc)
+{
+	void *wmi_handle = NULL;
+
+	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	if (!wmi_handle) {
+		policy_mgr_debug("Invalid WMI handle");
+		return false;
+	}
+
+	if (wmi_service_enabled(
+			wmi_handle,
+			wmi_service_dual_beacon_on_single_mac_scc_support)) {
+		policy_mgr_debug("Support dual beacon on same channel on single MAC");
+		return true;
+	}
+	if (wmi_service_enabled(
+			wmi_handle,
+			wmi_service_dual_beacon_on_single_mac_mcc_support)) {
+		policy_mgr_debug("Support dual beacon on both different and same channel on single MAC");
+		return true;
+	}
+	policy_mgr_debug("Not support dual beacon on same channel on single MAC");
+	return false;
+}
+
+bool policy_mgr_dual_beacon_on_single_mac_mcc_capable(
+		struct wlan_objmgr_psoc *psoc)
+{
+	void *wmi_handle = NULL;
+
+	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	if (!wmi_handle) {
+		policy_mgr_debug("Invalid WMI handle");
+		return false;
+	}
+
+	if (wmi_service_enabled(
+			wmi_handle,
+			wmi_service_dual_beacon_on_single_mac_mcc_support)) {
+		policy_mgr_debug("Support dual beacon on different channel on single MAC");
+		return true;
+	}
+	policy_mgr_debug("Not support dual beacon on different channel on single MAC");
+	return false;
 }

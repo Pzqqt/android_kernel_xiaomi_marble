@@ -2297,4 +2297,39 @@ QDF_STATUS policy_mgr_register_mode_change_cb(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_deregister_mode_change_cb(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * policy_mgr_allow_sap_go_concurrency() - check whether multiple SAP/GO
+ * interfaces are allowed
+ * @psoc: pointer to soc
+ * @policy_mgr_con_mode: operating mode of the new interface
+ * @channel: operating channel of the new interface
+ * This function checks whether second SAP/GO interface is allowed on the same
+ * MAC.
+ *
+ * Return: true or false
+ */
+bool policy_mgr_allow_sap_go_concurrency(struct wlan_objmgr_psoc *psoc,
+					 enum policy_mgr_con_mode mode,
+					 uint8_t channel);
+
+/**
+ * policy_mgr_dual_beacon_on_single_mac_scc_capable() - get capability that
+ * whether support dual beacon on same channel on single MAC
+ * @psoc: pointer to soc
+ *
+ *  Return: bool: capable
+ */
+bool policy_mgr_dual_beacon_on_single_mac_scc_capable(
+	struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_dual_beacon_on_single_mac_mcc_capable() - get capability that
+ * whether support dual beacon on different channel on single MAC
+ * @psoc: pointer to soc
+ *
+ *  Return: bool: capable
+ */
+bool policy_mgr_dual_beacon_on_single_mac_mcc_capable(
+	struct wlan_objmgr_psoc *psoc);
+
 #endif /* __WLAN_POLICY_MGR_API_H */

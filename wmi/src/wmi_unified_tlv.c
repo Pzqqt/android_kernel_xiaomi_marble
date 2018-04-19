@@ -18019,6 +18019,12 @@ static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
 				soc->wmi_ext_service_bitmap,
 				service_id);
 
+	if (service_id >= WMI_MAX_SERVICE) {
+		WMI_LOGE("Service id %d but WMI ext service bitmap is NULL",
+			 service_id);
+		return false;
+	}
+
 	return WMI_SERVICE_IS_ENABLED(soc->wmi_service_bitmap,
 				service_id);
 }
@@ -23559,6 +23565,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 				WMI_SERVICE_BSS_COLOR_OFFLOAD;
 	wmi_service[wmi_service_gmac_offload_support] =
 				WMI_SERVICE_GMAC_OFFLOAD_SUPPORT;
+	wmi_service[wmi_service_dual_beacon_on_single_mac_scc_support] =
+			WMI_SERVICE_DUAL_BEACON_ON_SINGLE_MAC_SCC_SUPPORT;
+	wmi_service[wmi_service_dual_beacon_on_single_mac_mcc_support] =
+			WMI_SERVICE_DUAL_BEACON_ON_SINGLE_MAC_MCC_SUPPORT;
 
 }
 
