@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,41 @@
 #include <cdp_txrx_mob_def.h>
 #include "cdp_txrx_handle.h"
 
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
+
+/**
+ * cdp_hl_fc_register() - Register HL flow control callback.
+ * @soc - data path soc handle
+ * @flowcontrol - callback function pointer to stop/start OS netdev queues
+ * Register flow control callback.
+ * return 0 success
+ */
+static inline int
+cdp_hl_fc_register(ol_txrx_soc_handle soc, tx_pause_callback flowcontrol)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return -EINVAL;
+	}
+
+	if (!soc->ops->l_flowctl_ops ||
+	    !soc->ops->l_flowctl_ops->register_tx_flow_control)
+		return -EINVAL;
+
+	return soc->ops->l_flowctl_ops->register_tx_flow_control(soc,
+								 flowcontrol);
+}
+#else
+static inline int
+cdp_hl_fc_register(ol_txrx_soc_handle soc, tx_pause_callback flowcontrol)
+{
+	return 0;
+}
+#endif /* QCA_HL_NETDEV_FLOW_CONTROL */
+
+#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 /**
  * cdp_fc_register() - Register flow control callback function pointer
  * @soc - data path soc handle
@@ -58,7 +93,15 @@ cdp_fc_register(ol_txrx_soc_handle soc, uint8_t vdev_id,
 			vdev_id, flowControl, osif_fc_ctx,
 			flow_control_is_pause);
 }
-
+#else
+static inline int
+cdp_fc_register(ol_txrx_soc_handle soc, uint8_t vdev_id,
+		ol_txrx_tx_flow_control_fp flowcontrol, void *osif_fc_ctx,
+		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause)
+{
+	return 0;
+}
+#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 /**
  * cdp_fc_deregister() - remove flow control instance
  * @soc - data path soc handle

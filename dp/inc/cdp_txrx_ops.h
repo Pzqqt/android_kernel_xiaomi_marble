@@ -897,9 +897,14 @@ struct cdp_flowctl_ops {
  * @vdev_unpause:
  */
 struct cdp_lflowctl_ops {
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
+	int (*register_tx_flow_control)(struct cdp_soc_t *soc,
+					tx_pause_callback flowcontrol);
+#else
 	int (*register_tx_flow_control)(uint8_t vdev_id,
 		ol_txrx_tx_flow_control_fp flowControl, void *osif_fc_ctx,
 		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause);
+#endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 	int (*deregister_tx_flow_control_cb)(uint8_t vdev_id);
 	void (*flow_control_cb)(struct cdp_vdev *vdev, bool tx_resume);
 	bool (*get_tx_resource)(uint8_t sta_id,
