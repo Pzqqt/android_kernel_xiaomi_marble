@@ -4983,13 +4983,16 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 	/* Handle the command */
 	status = hdd_cfg80211_get_ibss_peer_info_all(adapter);
 	if (QDF_STATUS_SUCCESS == status) {
+		size_t user_size = qdf_min(WLAN_MAX_BUF_SIZE,
+					   priv_data->total_len);
+
 		/*
 		 * The variable extra needed to be allocated on the heap since
 		 * amount of memory required to copy the data for 32 devices
 		 * exceeds the size of 1024 bytes of default stack size. On
 		 * 64 bit devices, the default max stack size of 2048 bytes
 		 */
-		extra = qdf_mem_malloc(WLAN_MAX_BUF_SIZE);
+		extra = qdf_mem_malloc(user_size);
 
 		if (NULL == extra) {
 			hdd_err("memory allocation failed");
@@ -4998,7 +5001,7 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 		}
 
 		/* Copy number of stations */
-		length = scnprintf(extra, WLAN_MAX_BUF_SIZE, "%d ",
+		length = scnprintf(extra, user_size, "%d ",
 				   sta_ctx->ibss_peer_info.numPeers);
 		numOfBytestoPrint = length;
 		for (idx = 0; idx < sta_ctx->ibss_peer_info.numPeers;
@@ -5021,8 +5024,8 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 			rssi = sta_ctx->ibss_peer_info.peerInfoParams[idx].
 									rssi;
 
-			length += scnprintf((extra + length),
-				WLAN_MAX_BUF_SIZE - length,
+			length += scnprintf(extra + length,
+				user_size - length,
 				"%02x:%02x:%02x:%02x:%02x:%02x %d %d ",
 				mac_addr[0], mac_addr[1], mac_addr[2],
 				mac_addr[3], mac_addr[4], mac_addr[5],
