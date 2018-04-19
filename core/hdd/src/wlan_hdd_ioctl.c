@@ -5474,7 +5474,7 @@ static int drv_cmd_ccx_beacon_req(struct hdd_adapter *adapter,
 {
 	int ret;
 	uint8_t *value = command;
-	tCsrEseBeaconReq eseBcnReq;
+	tCsrEseBeaconReq eseBcnReq = {0};
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (QDF_STA_MODE != adapter->device_mode) {
@@ -5492,6 +5492,10 @@ static int drv_cmd_ccx_beacon_req(struct hdd_adapter *adapter,
 
 	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
 		hdd_debug("Not associated");
+
+		if (!eseBcnReq.numBcnReqIe)
+			return -EINVAL;
+
 		hdd_indicate_ese_bcn_report_no_results(adapter,
 			eseBcnReq.bcnReq[0].measurementToken,
 			0x02, /* BIT(1) set for measurement done */
