@@ -1748,7 +1748,7 @@ PLD_INC :=	-I$(WLAN_ROOT)/$(PLD_INC_DIR) \
 
 PLD_OBJS :=	$(PLD_SRC_DIR)/pld_common.o
 
-ifeq ($(CONFIG_HIF_PCI), 1)
+ifeq ($(CONFIG_HIF_PCI), y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_pcie.o
 endif
 ifeq ($(CONFIG_ICNSS), y)
