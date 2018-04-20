@@ -3197,4 +3197,32 @@ void hdd_set_disconnect_status(struct hdd_adapter *adapter, bool disconnecting);
 int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 			  uint32_t bandwidth);
 
+/**
+ * hdd_wlan_get_version() - Get version information
+ * @hdd_ctx: Global HDD context
+ * @version_len: length of the version buffer size
+ * @version: the buffer to the version string
+ *
+ * This function is used to get Wlan Driver, Firmware, Hardware Version
+ * & the Board related information.
+ *
+ * Return: the length of the version string
+ */
+uint32_t hdd_wlan_get_version(struct hdd_context *hdd_ctx,
+			      const size_t version_len, uint8_t *version);
+
+/**
+ * hdd_update_hw_sw_info() - API to update the HW/SW information
+ * @hdd_ctx: Global HDD context
+ *
+ * API to update the HW and SW information in the driver
+ *
+ * Note:
+ * All the version/revision information would only be retrieved after
+ * firmware download
+ *
+ * Return: None
+ */
+void hdd_update_hw_sw_info(struct hdd_context *hdd_ctx);
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
