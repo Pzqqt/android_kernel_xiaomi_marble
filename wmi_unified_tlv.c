@@ -3038,6 +3038,87 @@ static inline QDF_STATUS populate_tx_send_params(uint8_t *bufp,
 	return status;
 }
 
+#ifdef CONFIG_HL_SUPPORT
+/**
+ *  send_mgmt_cmd_tlv() - WMI scan start function
+ *  @wmi_handle      : handle to WMI.
+ *  @param    : pointer to hold mgmt cmd parameter
+ *
+ *  Return: 0  on success and -ve on failure.
+ */
+static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
+				struct wmi_mgmt_params *param)
+{
+	wmi_buf_t buf;
+	uint8_t *bufp;
+	int32_t cmd_len;
+	wmi_mgmt_tx_send_cmd_fixed_param *cmd;
+	int32_t bufp_len = (param->frm_len < mgmt_tx_dl_frm_len) ? param->frm_len :
+		mgmt_tx_dl_frm_len;
+
+	if (param->frm_len > mgmt_tx_dl_frm_len) {
+		WMI_LOGE("%s:mgmt frame len %u exceeds %u",
+			 __func__, param->frm_len, mgmt_tx_dl_frm_len);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cmd_len = sizeof(wmi_mgmt_tx_send_cmd_fixed_param) +
+		  WMI_TLV_HDR_SIZE +
+		  roundup(bufp_len, sizeof(uint32_t));
+
+	buf = wmi_buf_alloc(wmi_handle, sizeof(wmi_tx_send_params) + cmd_len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_mgmt_tx_send_cmd_fixed_param *)wmi_buf_data(buf);
+	bufp = (uint8_t *) cmd;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_mgmt_tx_send_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+		(wmi_mgmt_tx_send_cmd_fixed_param));
+
+	cmd->vdev_id = param->vdev_id;
+
+	cmd->desc_id = param->desc_id;
+	cmd->chanfreq = param->chanfreq;
+	bufp += sizeof(wmi_mgmt_tx_send_cmd_fixed_param);
+	WMITLV_SET_HDR(bufp, WMITLV_TAG_ARRAY_BYTE, roundup(bufp_len,
+							    sizeof(uint32_t)));
+	bufp += WMI_TLV_HDR_SIZE;
+	qdf_mem_copy(bufp, param->pdata, bufp_len);
+
+	cmd->frame_len = param->frm_len;
+	cmd->buf_len = bufp_len;
+	cmd->tx_params_valid = param->tx_params_valid;
+
+	wmi_mgmt_cmd_record(wmi_handle, WMI_MGMT_TX_SEND_CMDID,
+			bufp, cmd->vdev_id, cmd->chanfreq);
+
+	bufp += roundup(bufp_len, sizeof(uint32_t));
+	if (param->tx_params_valid) {
+		if (populate_tx_send_params(bufp, param->tx_param) !=
+		    QDF_STATUS_SUCCESS) {
+			WMI_LOGE("%s: Populate TX send params failed",
+				 __func__);
+			goto free_buf;
+		}
+		cmd_len += sizeof(wmi_tx_send_params);
+	}
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, cmd_len,
+				      WMI_MGMT_TX_SEND_CMDID)) {
+		WMI_LOGE("%s: Failed to send mgmt Tx", __func__);
+		goto free_buf;
+	}
+	return QDF_STATUS_SUCCESS;
+
+free_buf:
+	wmi_buf_free(buf);
+	return QDF_STATUS_E_FAILURE;
+}
+#else
 /**
  *  send_mgmt_cmd_tlv() - WMI scan start function
  *  @wmi_handle      : handle to WMI.
@@ -3129,6 +3210,7 @@ free_buf:
 	wmi_buf_free(buf);
 	return QDF_STATUS_E_FAILURE;
 }
+#endif /* CONFIG_HL_SUPPORT */
 
 /**
  *  send_offchan_data_tx_send_cmd_tlv() - Send off-chan tx data
