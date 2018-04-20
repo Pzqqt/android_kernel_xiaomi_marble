@@ -179,6 +179,54 @@ static inline void hal_tx_desc_set_buf_addr_generic(void *desc,
 		HAL_TX_SM(UNIFIED_TCL_DATA_CMD_2, BUF_OR_EXT_DESC_TYPE, type);
 }
 
+#if defined(CONFIG_MCL) && defined(QCA_WIFI_QCA6290_11AX)
+/**
+ * hal_rx_handle_other_tlvs() - handle special TLVs like MU_UL
+ * tlv_tag: Taf of the TLVs
+ * rx_tlv: the pointer to the TLVs
+ * @ppdu_info: pointer to ppdu_info
+ *
+ * Return: true if the tlv is handled, false if not
+ */
+static inline bool
+hal_rx_handle_other_tlvs(uint32_t tlv_tag, void *rx_tlv,
+			 struct hal_rx_ppdu_info *ppdu_info)
+{
+	uint32_t value;
+
+	switch (tlv_tag) {
+	case WIFIPHYRX_HE_SIG_A_MU_UL_E:
+	{
+		uint8_t *he_sig_a_mu_ul_info =
+			(uint8_t *)rx_tlv +
+			HAL_RX_OFFSET(PHYRX_HE_SIG_A_MU_UL_0,
+					  HE_SIG_A_MU_UL_INFO_PHYRX_HE_SIG_A_MU_UL_INFO_DETAILS);
+		ppdu_info->rx_status.he_flags = 1;
+
+		value = HAL_RX_GET(he_sig_a_mu_ul_info, HE_SIG_A_MU_UL_INFO_0,
+				   FORMAT_INDICATION);
+		if (value == 0) {
+			ppdu_info->rx_status.he_data1 =
+				QDF_MON_STATUS_HE_TRIG_FORMAT_TYPE;
+		} else {
+			 ppdu_info->rx_status.he_data1 =
+				QDF_MON_STATUS_HE_SU_FORMAT_TYPE;
+		}
+		return true;
+	}
+	default:
+		return false;
+	}
+}
+#else
+static inline bool
+hal_rx_handle_other_tlvs(uint32_t tlv_tag, void *rx_tlv,
+			 struct hal_rx_ppdu_info *ppdu_info)
+{
+	return false;
+}
+#endif /* CONFIG_MCL && QCA_WIFI_QCA6290_11AX */
+
 /**
  * hal_rx_status_get_tlv_info() - process receive info TLV
  * @rx_tlv_hdr: pointer to TLV header
@@ -1045,7 +1093,10 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		return HAL_TLV_STATUS_PPDU_DONE;
 
 	default:
-		unhandled = true;
+		if (hal_rx_handle_other_tlvs(tlv_tag, rx_tlv, ppdu_info))
+			unhandled = false;
+		else
+			unhandled = true;
 		break;
 	}
 
