@@ -1375,8 +1375,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	if (!adapter)
 		hdd_err("Failed to get adapter");
 
-	if (hdd_ctx->config->enable_dp_trace)
-		hdd_dp_trace_init(hdd_ctx->config);
+	hdd_dp_trace_init(hdd_ctx->config);
 
 	hdd_bus_bandwidth_init(hdd_ctx);
 

@@ -3060,17 +3060,7 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		break;
 
 	case QCSAP_IOCTL_DUMP_DP_TRACE_LEVEL:
-		hdd_debug("WE_DUMP_DP_TRACE: %d %d",
-		       value[1], value[2]);
-		if (value[1] == DUMP_DP_TRACE)
-			qdf_dp_trace_dump_all(value[2],
-				QDF_TRACE_DEFAULT_PDEV_ID);
-		else if (value[1] == ENABLE_DP_TRACE_LIVE_MODE)
-			qdf_dp_trace_enable_live_mode();
-		else if (value[1] == CLEAR_DP_TRACE_BUFFER)
-			qdf_dp_trace_clear_buffer();
-		else if (value[1] == DISABLE_DP_TRACE_LIVE_MODE)
-			qdf_dp_trace_disable_live_mode();
+		hdd_set_dump_dp_trace(value[1], value[2]);
 		break;
 
 	case QCSAP_ENABLE_FW_PROFILE:
@@ -5830,12 +5820,14 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3, 0, "setsapchannels"
 	}
 	,
+#ifdef CONFIG_DP_TRACE
 	/* handlers for sub-ioctl */
 	{
 		WE_SET_DP_TRACE,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3, 0, "set_dp_trace"
 	}
 	,
+#endif
 	/* handlers for main ioctl */
 	{
 		QCSAP_IOCTL_PRIV_SET_VAR_INT_GET_NONE,
@@ -5925,6 +5917,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		0,  "setRadarDbg"
 	}
 	,
+#ifdef CONFIG_DP_TRACE
 	/* dump dp trace - descriptor or dp trace records */
 	{
 		QCSAP_IOCTL_DUMP_DP_TRACE_LEVEL,
@@ -5932,6 +5925,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		0, "dump_dp_trace"
 	}
 	,
+#endif
 	{
 		QCSAP_ENABLE_FW_PROFILE,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,

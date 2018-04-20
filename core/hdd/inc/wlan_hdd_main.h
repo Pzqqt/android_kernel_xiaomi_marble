@@ -3068,7 +3068,13 @@ static inline void hdd_dev_setup_destructor(struct net_device *dev)
  *
  * Return: NONE
  */
+#ifdef CONFIG_DP_TRACE
 void hdd_dp_trace_init(struct hdd_config *config);
+#else
+static inline
+void hdd_dp_trace_init(struct hdd_config *config) {}
+#endif
+
 void hdd_set_rx_mode_rps(bool enable);
 
 /**

@@ -6258,7 +6258,6 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 	case WE_SET_DP_TRACE:
 		qdf_dp_trace_set_value(value[1], value[2], value[3]);
 		break;
-
 	/* value[3] the acs band is not required as start and end channels are
 	 * enough but this cmd is maintained under set three ints for historic
 	 * reasons.
@@ -9033,6 +9032,22 @@ int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)
 }
 #endif
 
+#ifdef CONFIG_DP_TRACE
+void hdd_set_dump_dp_trace(uint16_t cmd_type, uint16_t count)
+{
+	hdd_debug("WE_DUMP_DP_TRACE_LEVEL: %d %d",
+		  cmd_type, count);
+	if (cmd_type == DUMP_DP_TRACE)
+		qdf_dp_trace_dump_all(count, QDF_TRACE_DEFAULT_PDEV_ID);
+	else if (cmd_type == ENABLE_DP_TRACE_LIVE_MODE)
+		qdf_dp_trace_enable_live_mode();
+	else if (cmd_type == CLEAR_DP_TRACE_BUFFER)
+		qdf_dp_trace_clear_buffer();
+	else if (cmd_type == DISABLE_DP_TRACE_LIVE_MODE)
+		qdf_dp_trace_disable_live_mode();
+}
+#endif
+
 static int __iw_set_two_ints_getnone(struct net_device *dev,
 				     struct iw_request_info *info,
 				     union iwreq_data *wrqu, char *extra)
@@ -9112,17 +9127,7 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 			value[1], value[2]);
 		break;
 	case WE_DUMP_DP_TRACE_LEVEL:
-		hdd_debug("WE_DUMP_DP_TRACE_LEVEL: %d %d",
-		       value[1], value[2]);
-		if (value[1] == DUMP_DP_TRACE)
-			qdf_dp_trace_dump_all(value[2],
-					QDF_TRACE_DEFAULT_PDEV_ID);
-		else if (value[1] == ENABLE_DP_TRACE_LIVE_MODE)
-			qdf_dp_trace_enable_live_mode();
-		else if (value[1] == CLEAR_DP_TRACE_BUFFER)
-			qdf_dp_trace_clear_buffer();
-		else if (value[1] == DISABLE_DP_TRACE_LIVE_MODE)
-			qdf_dp_trace_disable_live_mode();
+		hdd_set_dump_dp_trace(value[1], value[2]);
 		break;
 	case WE_SET_MON_MODE_CHAN:
 		ret = wlan_hdd_set_mon_chan(adapter, value[1], value[2]);
@@ -9962,11 +9967,13 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "setwlandbg"},
 
+#ifdef CONFIG_DP_TRACE
 	/* handlers for sub-ioctl */
 	{WE_SET_DP_TRACE,
 	IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3,
 	0,
 	"set_dp_trace"},
+#endif
 
 	{WE_SET_SAP_CHANNELS,
 	IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3,
@@ -10345,10 +10352,12 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "set_fw_mode_cfg"}
 	,
+#ifdef CONFIG_DP_TRACE
 	{WE_DUMP_DP_TRACE_LEVEL,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "dump_dp_trace"}
 	,
+#endif
 	{WE_SET_MON_MODE_CHAN,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "setMonChan"}

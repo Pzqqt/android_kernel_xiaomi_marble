@@ -295,4 +295,11 @@ int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)
 }
 #endif
 
+#ifdef CONFIG_DP_TRACE
+void hdd_set_dump_dp_trace(uint16_t cmd_type, uint16_t count);
+#else
+static inline
+void hdd_set_dump_dp_trace(uint16_t cmd_type, uint16_t count) {}
+#endif
+
 #endif /* __WEXT_IW_H__ */

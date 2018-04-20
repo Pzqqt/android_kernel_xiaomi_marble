@@ -1253,6 +1253,7 @@ static void ol_txrx_tso_stats_clear(ol_txrx_pdev_handle pdev)
 }
 #endif /* defined(FEATURE_TSO) && defined(FEATURE_TSO_DEBUG) */
 
+#if defined(CONFIG_DP_TRACE) && defined(WLAN_DEBUGFS)
 /**
  * ol_txrx_read_dpt_buff_debugfs() - read dp trace buffer
  * @file: file to read
@@ -1328,6 +1329,21 @@ static int ol_txrx_debugfs_init(struct ol_txrx_pdev_t *pdev)
 	pdev->state = QDF_DPT_DEBUGFS_STATE_SHOW_STATE_INIT;
 	return 0;
 }
+
+static void ol_txrx_debugfs_exit(ol_txrx_pdev_handle pdev)
+{
+	qdf_debugfs_remove_dir_recursive(pdev->dpt_stats_log_dir);
+}
+#else
+static inline int ol_txrx_debugfs_init(struct ol_txrx_pdev_t *pdev)
+{
+	return 0;
+}
+
+static inline void ol_txrx_debugfs_exit(ol_txrx_pdev_handle pdev)
+{
+}
+#endif
 
 /**
  * ol_txrx_pdev_attach() - allocate txrx pdev
@@ -2148,11 +2164,6 @@ static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 #ifdef QCA_COMPUTE_TX_DELAY
 	qdf_spinlock_destroy(&pdev->tx_delay.mutex);
 #endif
-}
-
-static void ol_txrx_debugfs_exit(ol_txrx_pdev_handle pdev)
-{
-	qdf_debugfs_remove_dir_recursive(pdev->dpt_stats_log_dir);
 }
 
 /**

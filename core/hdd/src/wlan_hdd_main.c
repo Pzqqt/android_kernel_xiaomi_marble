@@ -10615,6 +10615,7 @@ static void wlan_init_bug_report_lock(void)
 	qdf_spinlock_create(&p_cds_context->bug_report_lock);
 }
 
+#ifdef CONFIG_DP_TRACE
 void hdd_dp_trace_init(struct hdd_config *config)
 {
 
@@ -10626,6 +10627,11 @@ void hdd_dp_trace_init(struct hdd_config *config)
 	uint8_t config_params[DP_TRACE_CONFIG_NUM_PARAMS];
 	uint8_t num_entries = 0;
 	uint32_t bw_compute_interval;
+
+	if (!config->enable_dp_trace) {
+		hdd_err("dp trace is disabled from ini");
+		return;
+	}
 
 	hdd_string_to_u8_array(config->dp_trace_config, config_params,
 				&num_entries, sizeof(config_params));
@@ -10663,6 +10669,8 @@ void hdd_dp_trace_init(struct hdd_config *config)
 			verbosity, proto_bitmap);
 
 }
+#endif
+
 /**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
@@ -10725,8 +10733,7 @@ int hdd_wlan_startup(struct device *dev)
 		goto err_stop_modules;
 	}
 
-	if (hdd_ctx->config->enable_dp_trace)
-		hdd_dp_trace_init(hdd_ctx->config);
+	hdd_dp_trace_init(hdd_ctx->config);
 
 	hdd_initialize_mac_address(hdd_ctx);
 

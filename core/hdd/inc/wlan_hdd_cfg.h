@@ -9750,6 +9750,7 @@ enum dot11p_mode {
 #define CFG_ENABLE_TX_SCHED_WRR_BK_NAME     "gEnableTxSchedWrrBK"
 #define CFG_ENABLE_TX_SCHED_WRR_BK_DEFAULT  ""
 
+#ifdef CONFIG_DP_TRACE
 /*
  * Enable/disable DPTRACE
  * Enabling this might have performace impact.
@@ -9820,6 +9821,7 @@ enum dot11p_mode {
  */
 #define CFG_ENABLE_DP_TRACE_CONFIG		"gDptraceConfig"
 #define CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT	"1, 8, 1, 126"
+#endif
 
 /*
  * This parameter will set the weight to calculate the average low pass
@@ -14910,8 +14912,10 @@ struct hdd_config {
 
 	bool enable_fatal_event;
 	bool bpf_enabled;
+#ifdef CONFIG_DP_TRACE
 	bool enable_dp_trace;
 	uint8_t dp_trace_config[DP_TRACE_CONFIG_STRING_LENGTH];
+#endif
 	bool adaptive_dwell_mode_enabled;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;

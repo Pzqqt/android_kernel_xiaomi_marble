@@ -4047,6 +4047,7 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_USER_ACS_DFS_LTE_DISABLE,
 		CFG_USER_ACS_DFS_LTE_ENABLE),
 
+#ifdef CONFIG_DP_TRACE
 	REG_VARIABLE(CFG_ENABLE_DP_TRACE, WLAN_PARAM_Integer,
 		struct hdd_config, enable_dp_trace,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4059,6 +4060,7 @@ struct reg_table_entry g_registry_table[] = {
 			struct hdd_config, dp_trace_config,
 			VAR_FLAGS_OPTIONAL,
 			(void *) CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT),
+#endif
 
 	REG_VARIABLE(CFG_ADAPTIVE_SCAN_DWELL_MODE_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, scan_adaptive_dwell_mode,
@@ -6340,6 +6342,23 @@ static void hdd_cfg_print_sae(struct hdd_context *hdd_ctx)
 }
 #endif
 
+
+#ifdef CONFIG_DP_TRACE
+static void hdd_cfg_print_dp_trace_params(struct hdd_context *hdd_ctx)
+{
+	hdd_info("Name = [%s] Value = [%u]",
+		 CFG_ENABLE_DP_TRACE,
+		 hdd_ctx->config->enable_dp_trace);
+	hdd_debug("Name = [%s] Value = [%s]",
+		  CFG_ENABLE_DP_TRACE_CONFIG,
+		  hdd_ctx->config->dp_trace_config);
+}
+#else
+static void hdd_cfg_print_dp_trace_params(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 /**
  * hdd_cgf_print_11k_offload_params() - Print 11k offload related parameters
  * @hdd_ctx: Pointer to HDD context
@@ -7023,12 +7042,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] Value = [%s]",
 		CFG_ENABLE_TX_SCHED_WRR_BE_NAME,
 		hdd_ctx->config->tx_sched_wrr_be);
-	hdd_info("Name = [%s] Value = [%u]",
-		CFG_ENABLE_DP_TRACE,
-		hdd_ctx->config->enable_dp_trace);
-	hdd_debug("Name = [%s] Value = [%s]",
-		CFG_ENABLE_DP_TRACE_CONFIG,
-		hdd_ctx->config->dp_trace_config);
+
+	hdd_cfg_print_dp_trace_params(hdd_ctx);
+
 	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_ADAPTIVE_SCAN_DWELL_MODE_NAME,
 		hdd_ctx->config->scan_adaptive_dwell_mode);
