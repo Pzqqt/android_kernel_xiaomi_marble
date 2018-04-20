@@ -158,6 +158,17 @@ int init_deinit_populate_dbr_ring_cap(struct wlan_objmgr_psoc *psoc,
 				struct tgt_info *info);
 
 /**
+ * init_deinit_dbr_ring_cap_free() - free dbr ring capability
+ * @tgt_psoc_info: target psoc info object
+ *
+ * API to free dbr ring capability
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS init_deinit_dbr_ring_cap_free(
+				struct target_psoc_info *tgt_psoc_info);
+
+/**
  * init_deinit_populate_phy_reg_cap() - populate phy reg capability
  * @psoc: PSOC object
  * @wmi_handle: WMI handle pointer

@@ -204,6 +204,9 @@ QDF_STATUS target_if_direct_buf_rx_pdev_destroy_handler(
 	for (mod_idx = 0; mod_idx < num_modules; mod_idx++)
 		target_if_deinit_dbr_ring(pdev, dbr_pdev_obj, mod_idx);
 
+	qdf_mem_free(dbr_pdev_obj->dbr_mod_param);
+	dbr_pdev_obj->dbr_mod_param = NULL;
+
 	status = wlan_objmgr_pdev_component_obj_detach(pdev,
 					WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
 					dbr_pdev_obj);
@@ -845,6 +848,7 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 			&dbr_rsp.dbr_entries[i]) != QDF_STATUS_SUCCESS) {
 			direct_buf_rx_err("Unable to extract DBR buf entry %d",
 					  i+1);
+			qdf_mem_free(dbr_rsp.dbr_entries);
 			wlan_objmgr_pdev_release_ref(pdev,
 						     WLAN_DIRECT_BUF_RX_ID);
 			return QDF_STATUS_E_FAILURE;
@@ -854,6 +858,7 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 
 		if (QDF_IS_STATUS_ERROR(status)) {
 			direct_buf_rx_err("DBR data get failed");
+			qdf_mem_free(dbr_rsp.dbr_entries);
 			wlan_objmgr_pdev_release_ref(pdev,
 						     WLAN_DIRECT_BUF_RX_ID);
 			return QDF_STATUS_E_FAILURE;
@@ -871,12 +876,14 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 						      dbr_data.vaddr, cookie);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			direct_buf_rx_err("dir buf rx ring replenish failed");
+			qdf_mem_free(dbr_rsp.dbr_entries);
 			wlan_objmgr_pdev_release_ref(pdev,
 						     WLAN_DIRECT_BUF_RX_ID);
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
 
+	qdf_mem_free(dbr_rsp.dbr_entries);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_DIRECT_BUF_RX_ID);
 
 	return ret;
@@ -960,7 +967,7 @@ static QDF_STATUS target_if_dbr_deinit_srng(
 	direct_buf_rx_info("dbr buf pool %pK", dbr_buf_pool);
 	target_if_dbr_deinit_ring(pdev, mod_param);
 	qdf_mem_free(dbr_buf_pool);
-	dbr_buf_pool = NULL;
+	mod_param->dbr_buf_pool = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -970,7 +977,6 @@ QDF_STATUS target_if_deinit_dbr_ring(struct wlan_objmgr_pdev *pdev,
 			enum DBR_MODULE mod_id)
 {
 	struct direct_buf_rx_module_param *mod_param;
-	struct direct_buf_rx_ring_cap *dbr_ring_cap;
 
 	direct_buf_rx_enter();
 	mod_param = &(dbr_pdev_obj->dbr_mod_param[mod_id]);
@@ -980,14 +986,12 @@ QDF_STATUS target_if_deinit_dbr_ring(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 	direct_buf_rx_info("mod_param %pK", mod_param);
-
-	dbr_ring_cap = mod_param->dbr_ring_cap;
-	direct_buf_rx_info("dbr_ring_cap %pK", dbr_ring_cap);
+	direct_buf_rx_info("dbr_ring_cap %pK", mod_param->dbr_ring_cap);
 	target_if_dbr_deinit_srng(pdev, mod_param);
-	qdf_mem_free(dbr_ring_cap);
-	dbr_ring_cap = NULL;
-	qdf_mem_free(mod_param);
-	mod_param = NULL;
+	qdf_mem_free(mod_param->dbr_ring_cap);
+	mod_param->dbr_ring_cap = NULL;
+	qdf_mem_free(mod_param->dbr_ring_cfg);
+	mod_param->dbr_ring_cfg = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }

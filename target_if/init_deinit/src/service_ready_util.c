@@ -287,6 +287,20 @@ free_and_return:
 	return qdf_status_to_os_return(status);
 }
 
+QDF_STATUS init_deinit_dbr_ring_cap_free(
+		struct target_psoc_info *tgt_psoc_info)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (tgt_psoc_info->info.dbr_ring_cap) {
+		qdf_mem_free(tgt_psoc_info->info.dbr_ring_cap);
+		tgt_psoc_info->info.dbr_ring_cap = NULL;
+	}
+
+	return status;
+}
+qdf_export_symbol(init_deinit_dbr_ring_cap_free);
+
 int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 				void *handle, uint8_t *event,
 				struct tgt_info *info, bool service_ready)
