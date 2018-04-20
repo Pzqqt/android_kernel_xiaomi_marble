@@ -405,7 +405,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 						| WLAN_CRYPTO_KEY_RECV);
 		}
 	} else {
-		if ((req_key->keyix > WLAN_CRYPTO_MAXKEYIDX)
+		if ((req_key->keyix >= WLAN_CRYPTO_MAXKEYIDX)
 			&& (!IS_MGMT_CIPHER(req_key->type))) {
 			return QDF_STATUS_E_INVAL;
 		}
@@ -528,7 +528,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 		}
 		if (IS_MGMT_CIPHER(req_key->type)) {
 			igtk_idx = req_key->keyix - WLAN_CRYPTO_MAXKEYIDX;
-			if (igtk_idx > WLAN_CRYPTO_MAXIGTKKEYIDX) {
+			if (igtk_idx >= WLAN_CRYPTO_MAXIGTKKEYIDX) {
 				qdf_print("%s[%d] igtk key invalid keyid %d \n",
 						  __func__, __LINE__, igtk_idx);
 				return QDF_STATUS_E_INVAL;
@@ -943,6 +943,13 @@ QDF_STATUS wlan_crypto_default_key(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t bssid_mac[WLAN_ALEN];
 
+	if (!vdev || !macaddr || (key_idx >= WLAN_CRYPTO_MAXKEYIDX)) {
+		qdf_print("%s[%d] Invalid params vdev %pK, macaddr %pK"
+				"keyidx %d\n", __func__, __LINE__,
+				vdev, macaddr, key_idx);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	wlan_vdev_obj_lock(vdev);
 	qdf_mem_copy(bssid_mac, wlan_vdev_mlme_get_macaddr(vdev), WLAN_ALEN);
 	psoc = wlan_vdev_get_psoc(vdev);
@@ -953,12 +960,6 @@ QDF_STATUS wlan_crypto_default_key(struct wlan_objmgr_vdev *vdev,
 	}
 	wlan_vdev_obj_unlock(vdev);
 
-	if (!vdev || !macaddr || (key_idx >= WLAN_CRYPTO_MAXKEYIDX)) {
-		qdf_print("%s[%d] Invalid params vdev %pK, macaddr %pK"
-				"keyidx %d\n", __func__, __LINE__,
-				vdev, macaddr, key_idx);
-		return QDF_STATUS_E_INVAL;
-	}
 	if (qdf_is_macaddr_broadcast((struct qdf_mac_addr *)macaddr)) {
 		crypto_params = wlan_crypto_vdev_get_comp_params(vdev,
 								&crypto_priv);
@@ -1464,7 +1465,7 @@ uint8_t *wlan_crypto_add_mmie(struct wlan_objmgr_vdev *vdev,
 	uint8_t mic[16];
 	struct wlan_crypto_comp_priv *crypto_priv;
 	struct wlan_crypto_params *crypto_params;
-	int32_t ret;
+	int32_t ret = -1;
 
 	if (!bfrm) {
 		qdf_print("%s[%d] frame is NULL\n", __func__, __LINE__);
@@ -1599,7 +1600,7 @@ bool wlan_crypto_is_mmie_valid(struct wlan_objmgr_vdev *vdev,
 	struct wlan_crypto_comp_priv *crypto_priv;
 	struct wlan_crypto_params *crypto_params;
 	uint8_t aad_len = 20;
-	int32_t ret;
+	int32_t ret = -1;
 
 	/* check if frame is illegal length */
 	if (!frm || !efrm || (efrm < frm)
@@ -1635,7 +1636,8 @@ bool wlan_crypto_is_mmie_valid(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (mmie->key_id >= (WLAN_CRYPTO_MAXKEYIDX +
-				WLAN_CRYPTO_MAXIGTKKEYIDX)) {
+				WLAN_CRYPTO_MAXIGTKKEYIDX) ||
+				(mmie->key_id < WLAN_CRYPTO_MAXKEYIDX)) {
 		qdf_print("%s[%d] keyid not valid\n", __func__, __LINE__);
 		return false;
 	}
