@@ -1574,6 +1574,7 @@ static QDF_STATUS send_crash_inject_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+#ifdef FEATURE_FW_LOG_PARSING
 /**
  *  send_dbglog_cmd_tlv() - set debug log level
  *  @param wmi_handle      : handle to WMI.
@@ -1635,6 +1636,7 @@ send_dbglog_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return status;
 }
+#endif
 
 #ifdef CONFIG_MCL
 static inline uint32_t convert_host_vdev_param_tlv(wmi_unified_t wmi_handle,
@@ -22598,7 +22600,9 @@ struct wmi_ops tlv_ops =  {
 	.send_set_ap_ps_param_cmd = send_set_ap_ps_param_cmd_tlv,
 	.send_set_sta_ps_param_cmd = send_set_sta_ps_param_cmd_tlv,
 	.send_crash_inject_cmd = send_crash_inject_cmd_tlv,
+#ifdef FEATURE_FW_LOG_PARSING
 	.send_dbglog_cmd = send_dbglog_cmd_tlv,
+#endif
 	.send_vdev_set_param_cmd = send_vdev_set_param_cmd_tlv,
 	.send_stats_request_cmd = send_stats_request_cmd_tlv,
 	.send_packet_log_enable_cmd = send_packet_log_enable_cmd_tlv,

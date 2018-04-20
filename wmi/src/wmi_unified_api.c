@@ -634,6 +634,7 @@ QDF_STATUS wmi_crash_inject(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef FEATURE_FW_LOG_PARSING
 /**
  *  wmi_unified_dbglog_cmd_send() - set debug log level
  *  @param wmi_handle      : handle to WMI.
@@ -654,6 +655,7 @@ wmi_unified_dbglog_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 qdf_export_symbol(wmi_unified_dbglog_cmd_send);
+#endif
 
 /**
  *  wmi_unified_vdev_set_param_send() - WMI vdev set parameter function
