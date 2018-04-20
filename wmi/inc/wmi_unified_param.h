@@ -38,7 +38,11 @@
 #define IEEE80211_ADDR_LEN  6  /* size of 802.11 address */
 #define WMI_MAC_MAX_SSID_LENGTH              32
 #define WMI_SCAN_MAX_NUM_SSID                0x0A
+#ifndef CONFIG_HL_SUPPORT
 #define mgmt_tx_dl_frm_len 64
+#else
+#define mgmt_tx_dl_frm_len 1532
+#endif
 #define WMI_SMPS_MASK_LOWER_16BITS 0xFF
 #define WMI_SMPS_MASK_UPPER_3BITS 0x7
 #define WMI_SMPS_PARAM_VALUE_S 29
