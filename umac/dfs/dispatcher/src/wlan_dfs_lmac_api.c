@@ -209,3 +209,20 @@ uint32_t lmac_get_phymode_info(struct wlan_objmgr_pdev *pdev,
 
 	return mode_info;
 }
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+bool lmac_is_host_dfs_check_support_enabled(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+	bool enabled = false;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
+
+	if (dfs_tx_ops->dfs_host_dfs_check_support)
+		dfs_tx_ops->dfs_host_dfs_check_support(pdev, &enabled);
+
+	return enabled;
+}
+#endif

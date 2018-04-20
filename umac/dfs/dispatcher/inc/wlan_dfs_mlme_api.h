@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -221,4 +221,38 @@ int dfs_mlme_get_cac_timeout(struct wlan_objmgr_pdev *pdev,
 		uint8_t dfs_ch_vhtop_ch_freq_seg2,
 		uint64_t dfs_ch_flags);
 
+/**
+ * dfs_mlme_rebuild_chan_list_with_non_dfs_channels() - Rebuild the channel list
+ * with only non DFS channels.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * return: On success return 1 or 0, else failure.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+int dfs_mlme_rebuild_chan_list_with_non_dfs_channels(
+		struct wlan_objmgr_pdev *pdev);
+#else
+static inline int dfs_mlme_rebuild_chan_list_with_non_dfs_channels(
+		struct wlan_objmgr_pdev *pdev)
+{
+	return 0;
+}
+#endif
+
+/**
+ * dfs_mlme_restart_vaps_with_non_dfs_chan() - Restart vaps with non DFS
+ * channels
+ * @pdev: Pointer to DFS pdev object.
+ * @no_chans_avail: Indicates if no channel is available.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+void dfs_mlme_restart_vaps_with_non_dfs_chan(struct wlan_objmgr_pdev *pdev,
+					     int no_chans_avail);
+#else
+static inline
+void dfs_mlme_restart_vaps_with_non_dfs_chan(struct wlan_objmgr_pdev *pdev,
+					     int no_chans_avail)
+{
+}
+#endif
 #endif /* _WLAN_DFS_MLME_API_H_ */

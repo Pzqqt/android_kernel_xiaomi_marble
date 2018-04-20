@@ -34,6 +34,10 @@
 #include <wlan_dfs_mlme_api.h>
 #include <wlan_dfs_utils_api.h>
 #include <wlan_reg_services_api.h>
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+#include "../dfs_process_radar_found_ind.h"
+#include "../dfs_partial_offload_radar.h"
+#endif
 
 /**
  * dfs_nol_timeout() - NOL timeout function.
@@ -585,3 +589,29 @@ void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 		WLAN_CHAN_CLR_HISTORY_RADAR(c);
 	}
 }
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+void dfs_remove_spoof_channel_from_nol(struct wlan_dfs *dfs)
+{
+	struct dfs_nolelem *nol;
+	uint8_t channels[NUM_CHANNELS_160MHZ];
+	int i, nchans = 0;
+
+	nchans = dfs_get_bonding_channels(&dfs->dfs_radar_found_chan, 0,
+					  channels);
+
+	WLAN_DFSNOL_LOCK(dfs);
+	for (i = 0; i < nchans && i < NUM_CHANNELS_160MHZ; i++) {
+		nol = dfs->dfs_nol;
+		while (nol) {
+			if (nol->nol_freq == (uint16_t)utils_dfs_chan_to_freq(
+				    channels[i])) {
+				OS_SET_TIMER(&nol->nol_timer, 0);
+				break;
+			}
+			nol = nol->nol_next;
+		}
+	}
+	WLAN_DFSNOL_UNLOCK(dfs);
+}
+#endif

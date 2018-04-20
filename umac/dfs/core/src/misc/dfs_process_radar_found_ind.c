@@ -366,9 +366,9 @@ static uint8_t dfs_find_radar_affected_subchans(struct wlan_dfs *dfs,
  *
  * Return: Number of channels.
  */
-static uint8_t dfs_get_bonding_channels(struct dfs_channel *curchan,
-					uint32_t segment_id,
-					uint8_t *channels)
+uint8_t dfs_get_bonding_channels(struct dfs_channel *curchan,
+				 uint32_t segment_id,
+				 uint8_t *channels)
 {
 	uint8_t center_chan;
 	uint8_t nchannels = 0;

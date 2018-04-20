@@ -132,3 +132,15 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
  */
 void dfs_radarfound_action_generic(struct wlan_dfs *dfs,
 				   uint8_t seg_id, int false_radar_found);
+
+/**
+ * dfs_get_bonding_channels() - Get bonding channels.
+ * @curchan: Pointer to dfs_channels to know width and primary channel.
+ * @segment_id: Segment id, useful for 80+80/160 MHz operating band.
+ * @channels: Pointer to save radar affected channels.
+ *
+ * Return: Number of channels.
+ */
+uint8_t dfs_get_bonding_channels(struct dfs_channel *curchan,
+				 uint32_t segment_id,
+				 uint8_t *channels);

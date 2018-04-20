@@ -30,6 +30,7 @@
 #include "../../core/src/dfs_zero_cac.h"
 #include "../../core/src/dfs_process_radar_found_ind.h"
 #include <qdf_module.h>
+#include "../../core/src/dfs_partial_offload_radar.h"
 
 struct wlan_lmac_if_dfs_tx_ops *
 wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc)
@@ -105,6 +106,21 @@ QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
 	return status;
 }
 qdf_export_symbol(tgt_dfs_radar_enable);
+
+void tgt_dfs_is_radar_enabled(struct wlan_objmgr_pdev *pdev, int *ignore_dfs)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return;
+	}
+
+	dfs_is_radar_enabled(dfs, ignore_dfs);
+}
+
+qdf_export_symbol(tgt_dfs_is_radar_enabled);
 
 QDF_STATUS tgt_dfs_process_phyerr(struct wlan_objmgr_pdev *pdev,
 				  void *buf,
@@ -485,4 +501,39 @@ tgt_dfs_send_avg_params_to_fw(struct wlan_objmgr_pdev *pdev,
 }
 
 qdf_export_symbol(tgt_dfs_send_avg_params_to_fw);
+
+QDF_STATUS tgt_dfs_action_on_status_from_fw(struct wlan_objmgr_pdev *pdev,
+					    uint32_t *status)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return  QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_action_on_fw_radar_status_check(dfs, status);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(tgt_dfs_action_on_status_from_fw);
+
+QDF_STATUS tgt_dfs_reset_spoof_test(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return  QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_reset_spoof_test(dfs);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(tgt_dfs_reset_spoof_test);
 #endif

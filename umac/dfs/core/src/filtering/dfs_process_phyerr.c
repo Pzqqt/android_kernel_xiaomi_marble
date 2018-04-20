@@ -981,3 +981,8 @@ void dfs_process_phyerr_filter_offload(struct wlan_dfs *dfs,
 	}
 }
 #endif
+
+void dfs_is_radar_enabled(struct wlan_dfs *dfs, int *ignore_dfs)
+{
+	*ignore_dfs = dfs->dfs_ignore_dfs;
+}

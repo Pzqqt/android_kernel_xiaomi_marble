@@ -295,3 +295,25 @@ int dfs_mlme_get_cac_timeout(struct wlan_objmgr_pdev *pdev,
 
 	return cac_timeout;
 }
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+int dfs_mlme_rebuild_chan_list_with_non_dfs_channels(
+		struct wlan_objmgr_pdev *pdev)
+{
+	if (!global_dfs_to_mlme.mlme_rebuild_chan_list_with_non_dfs_channels)
+		return 1;
+
+	return global_dfs_to_mlme.mlme_rebuild_chan_list_with_non_dfs_channels(
+			pdev);
+}
+
+void dfs_mlme_restart_vaps_with_non_dfs_chan(struct wlan_objmgr_pdev *pdev,
+					     int no_chans_avail)
+{
+	if (!global_dfs_to_mlme.mlme_restart_vaps_with_non_dfs_chan)
+		return;
+
+	global_dfs_to_mlme.mlme_restart_vaps_with_non_dfs_chan(pdev,
+							       no_chans_avail);
+}
+#endif

@@ -52,6 +52,9 @@
  * @mlme_nol_timeout_notification:     NOL timeout notification.
  * @mlme_clist_update:                 Updates the channel list.
  * @mlme_get_cac_timeout:              Gets the CAC timeout.
+ * @mlme_rebuild_chan_list_with_non_dfs_channel: Rebuild channels with non-dfs
+ *                                     channels.
+ * @mlme_restart_vaps_with_non_dfs_chan: Restart vaps with non-dfs channel.
  */
 struct dfs_to_mlme {
 	QDF_STATUS (*pdev_component_obj_attach)(struct wlan_objmgr_pdev *pdev,
@@ -128,6 +131,12 @@ struct dfs_to_mlme {
 			uint8_t c_vhtop_ch_freq_seg2,
 			uint64_t dfs_ch_flags,
 			int *cac_timeout);
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+	QDF_STATUS (*mlme_rebuild_chan_list_with_non_dfs_channels)
+			(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*mlme_restart_vaps_with_non_dfs_chan)
+			(struct wlan_objmgr_pdev *pdev, int no_chans_avail);
+#endif
 };
 
 extern struct dfs_to_mlme global_dfs_to_mlme;

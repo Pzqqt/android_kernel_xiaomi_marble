@@ -32,7 +32,7 @@
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_get_po_radars(struct wlan_dfs *dfs);
 #else
-static void dfs_get_po_radars(struct wlan_dfs *dfs)
+static inline void dfs_get_po_radars(struct wlan_dfs *dfs)
 {
 }
 #endif
@@ -120,6 +120,63 @@ void dfs_radarfound_action_fcc(struct wlan_dfs *dfs, uint8_t seg_id,
 static inline void dfs_radarfound_action_fcc(struct wlan_dfs *dfs,
 					     uint8_t seg_id,
 					     int false_radar_found)
+{
+}
+#endif
+
+/**
+ * dfs_host_wait_timer_reset() - Stop dfs host wait timer.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+void dfs_host_wait_timer_reset(struct wlan_dfs *dfs);
+#else
+static inline void dfs_host_wait_timer_reset(struct wlan_dfs *dfs)
+{
+}
+#endif
+
+/**
+ * dfs_remove_spoof_channel_from_nol() - Remove the spoofed radar hit channel
+ * from NOL.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+void dfs_remove_spoof_channel_from_nol(struct wlan_dfs *dfs);
+#else
+static inline void dfs_remove_spoof_channel_from_nol(struct wlan_dfs *dfs)
+{
+}
+#endif
+
+/**
+ * dfs_reset_spoof_test() - reset the spoof test variables.
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * Return: None.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+void dfs_reset_spoof_test(struct wlan_dfs *dfs);
+#else
+static inline void dfs_reset_spoof_test(struct wlan_dfs *dfs)
+{
+}
+#endif
+
+/**
+ * dfs_action_on_fw_radar_status_check() - The dfs action on host dfs
+ * confirmation by fw.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @status: pointer to host dfs status.
+ *
+ * Return: None
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+void dfs_action_on_fw_radar_status_check(struct wlan_dfs *dfs,
+					 uint32_t *status);
+#else
+static inline void dfs_action_on_fw_radar_status_check(struct wlan_dfs *dfs,
+						       uint32_t *status)
 {
 }
 #endif

@@ -1119,6 +1119,24 @@ enum {
 };
 
 /**
+ * enum host dfs spoof check status.
+ * @HOST_DFS_CHECK_PASSED: Host indicates RADAR detected and the FW
+ *                         confirms it to be spoof radar to host.
+ * @HOST_DFS_CHECK_FAILED: Host doesn't indicate RADAR detected or spoof
+ *                         radar parameters by
+ *                         WMI_HOST_DFS_RADAR_FOUND_CMDID doesn't match.
+ * @HOST_DFS_STATUS_CHECK_HW_RADAR: Host indicates RADAR detected and the
+ *                             FW confirms it to be real HW radar to host.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+enum {
+	HOST_DFS_STATUS_CHECK_PASSED = 0,
+	HOST_DFS_STATUS_CHECK_FAILED = 1,
+	HOST_DFS_STATUS_CHECK_HW_RADAR = 2
+};
+#endif
+
+/**
  * struct dfs_phy_err - DFS phy error.
  * @fulltsf:             64-bit TSF as read from MAC.
  * @is_pri:              Detected on primary channel.
@@ -1616,6 +1634,21 @@ void dfs_reset_ar(struct wlan_dfs *dfs);
  * @dfs: pointer to wlan_dfs structure.
  */
 void dfs_reset_arq(struct wlan_dfs *dfs);
+
+/**
+ * dfs_is_radar_enabled() - check if radar detection is enabled.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @ignore_dfs: if 1 then radar detection is disabled..
+ */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+void dfs_is_radar_enabled(struct wlan_dfs *dfs,
+			  int *ignore_dfs);
+#else
+static inline void dfs_is_radar_enabled(struct wlan_dfs *dfs,
+					int *ignore_dfs)
+{
+}
+#endif
 
 /**
  * dfs_process_phyerr_bb_tlv() - Parses the PHY error and populates the

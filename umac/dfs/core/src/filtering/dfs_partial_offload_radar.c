@@ -549,3 +549,101 @@ void dfs_radarfound_action_fcc(struct wlan_dfs *dfs, uint8_t seg_id,
 		       -1) ? HOST_DFS_STATUS_WAIT_TIMER_MS :
 		      dfs->dfs_status_timeout_override);
 }
+
+void dfs_host_wait_timer_reset(struct wlan_dfs *dfs)
+{
+	dfs->dfs_is_host_wait_running = 0;
+	qdf_timer_stop(&dfs->dfs_host_wait_timer);
+}
+
+/**
+ * dfs_action_on_spoof_success() - DFS action on spoof test pass
+ * @dfs: Pointer to DFS object
+ */
+static void dfs_action_on_spoof_success(struct wlan_dfs *dfs)
+{
+	dfs->dfs_spoof_test_done = 1;
+	if (dfs->dfs_radar_found_chan.dfs_ch_freq ==
+			dfs->dfs_curchan->dfs_ch_freq) {
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			 "cac timer started for channel %d",
+			 dfs->dfs_curchan->dfs_ch_ieee);
+		dfs_start_cac_timer(dfs);
+	} else{
+		dfs_remove_spoof_channel_from_nol(dfs);
+	}
+}
+
+void dfs_action_on_fw_radar_status_check(struct wlan_dfs *dfs,
+					 uint32_t *status)
+{
+	struct wlan_objmgr_pdev *dfs_pdev;
+	int no_chans_avail = 0;
+	int error_flag = 0;
+
+	dfs_host_wait_timer_reset(dfs);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "Host DFS status = %d",
+		 *status);
+
+	dfs_pdev = dfs->dfs_pdev_obj;
+	if (!dfs_pdev) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_pdev_obj is NULL");
+		return;
+	}
+
+	switch (*status) {
+	case HOST_DFS_STATUS_CHECK_PASSED:
+		if (dfs->dfs_average_params_sent)
+			dfs_action_on_spoof_success(dfs);
+		else
+			error_flag = 1;
+		break;
+	case HOST_DFS_STATUS_CHECK_FAILED:
+		dfs->dfs_spoof_check_failed = 1;
+		no_chans_avail =
+		    dfs_mlme_rebuild_chan_list_with_non_dfs_channels(dfs_pdev);
+		dfs_mlme_restart_vaps_with_non_dfs_chan(dfs_pdev,
+							no_chans_avail);
+		break;
+	case HOST_DFS_STATUS_CHECK_HW_RADAR:
+		if (dfs->dfs_average_params_sent) {
+			if (dfs->dfs_radar_found_chan.dfs_ch_freq ==
+			    dfs->dfs_curchan->dfs_ch_freq) {
+				dfs_radarfound_action_generic(
+						dfs,
+						dfs->dfs_seg_id,
+						dfs->dfs_false_radar_found);
+			} else {
+				/* Else of this case, no action is needed as
+				 * dfs_action would have been done at timer
+				 * expiry itself.
+				 */
+				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					 "DFS Action already taken");
+			}
+		} else {
+			error_flag = 1;
+		}
+		break;
+	default:
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			 "Status event mismatch:%d, Ignoring it",
+			 *status);
+	}
+
+	dfs->dfs_average_params_sent = 0;
+	qdf_mem_zero(&dfs->dfs_radar_found_chan, sizeof(struct dfs_channel));
+
+	if (error_flag == 1) {
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			 "Received imroper response %d. Discarding it",
+			 *status);
+	}
+}
+
+void dfs_reset_spoof_test(struct wlan_dfs *dfs)
+{
+	dfs->dfs_spoof_test_done = 0;
+	dfs->dfs_spoof_check_failed = 0;
+}
+#endif

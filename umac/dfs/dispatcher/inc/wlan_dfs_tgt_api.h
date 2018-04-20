@@ -298,4 +298,46 @@ tgt_dfs_send_avg_params_to_fw(struct wlan_objmgr_pdev *pdev,
 			      struct dfs_radar_found_params *params);
 #endif
 
+/**
+ * tgt_dfs_action_on_status_from_fw() - trigger the action to be taken based on
+ * host dfs status received from fw.
+ * @pdev: Pointer to pdev object.
+ * @status: Pointer to the host dfs status received from fw.
+ *
+ * Return: QDF_STATUS
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+QDF_STATUS tgt_dfs_action_on_status_from_fw(struct wlan_objmgr_pdev *pdev,
+					    uint32_t *status);
+#else
+static inline
+QDF_STATUS tgt_dfs_action_on_status_from_fw(struct wlan_objmgr_pdev *pdev,
+					    uint32_t *status)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * tgt_dfs_is_radar_enabled() - checks if radar detection is enabled.
+ * @pdev: Pointer to pdev object.
+ * @ignore_dfs: Pointer to check the value. If 1, radar detection is disabled.
+ */
+void tgt_dfs_is_radar_enabled(struct wlan_objmgr_pdev *pdev, int *ignore_dfs);
+
+/**
+ * tgt_dfs_reset_spoof_test() - reset the dfs spoof check variables
+ * @pdev: Pointer to pdev object.
+ *
+ * Return: QDF_STATUS
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+QDF_STATUS tgt_dfs_reset_spoof_test(struct wlan_objmgr_pdev *pdev);
+#else
+static inline
+QDF_STATUS tgt_dfs_reset_spoof_test(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif /* _WLAN_DFS_TGT_API_H_ */
