@@ -2051,7 +2051,10 @@ int __init rtac_init(void)
 		kzfree(rtac_asm_buffer);
 		kzfree(rtac_afe_buffer);
 		kzfree(rtac_voice_buffer);
+		goto nomem;
 	}
+
+	return 0;
 nomem:
 	return -ENOMEM;
 }
