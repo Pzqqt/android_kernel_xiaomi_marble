@@ -40,6 +40,8 @@
 #include  <qdf_status.h>
 #include  <qdf_nbuf.h>
 #include  <i_qdf_types.h>
+#include <qdf_debugfs.h>
+
 
 /* Type declarations */
 
@@ -381,6 +383,8 @@ struct s_qdf_dp_trace_data {
 	bool enable;
 	bool live_mode_config;
 	bool live_mode;
+	uint32_t curr_pos;
+	uint32_t saved_tail;
 	uint8_t print_pkt_cnt;
 	uint8_t high_tput_thresh;
 	uint16_t thresh_time_limit;
@@ -410,6 +414,20 @@ struct s_qdf_dp_trace_data {
 	u16 icmpv6_ra;
 };
 
+/**
+ * struct qdf_dpt_debugfs_state - state to control read to debugfs file
+ * @QDF_DPT_DEBUGFS_STATE_SHOW_STATE_INVALID: invalid state
+ * @QDF_DPT_DEBUGFS_STATE_SHOW_STATE_INIT: initial state
+ * @QDF_DPT_DEBUGFS_STATE_SHOW_IN_PROGRESS: read is in progress
+ * @QDF_DPT_DEBUGFS_STATE_SHOW_COMPLETE:  read complete
+ */
+
+enum qdf_dpt_debugfs_state {
+	QDF_DPT_DEBUGFS_STATE_SHOW_STATE_INVALID,
+	QDF_DPT_DEBUGFS_STATE_SHOW_STATE_INIT,
+	QDF_DPT_DEBUGFS_STATE_SHOW_IN_PROGRESS,
+	QDF_DPT_DEBUGFS_STATE_SHOW_COMPLETE,
+};
 
 /* Function declarations and documenation */
 
@@ -506,6 +524,37 @@ void qdf_dp_trace_set_track(qdf_nbuf_t nbuf, enum qdf_proto_dir dir);
 void qdf_dp_trace(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code, uint8_t pdev_id,
 			uint8_t *data, uint8_t size, enum qdf_proto_dir dir);
 void qdf_dp_trace_dump_all(uint32_t count, uint8_t pdev_id);
+
+/**
+ * qdf_dpt_get_curr_pos_debugfs() - get curr position to start read
+ * @file: debugfs file to read
+ * @state: state to control read to debugfs file
+ *
+ * Return: curr pos
+ */
+uint32_t qdf_dpt_get_curr_pos_debugfs(qdf_debugfs_file_t file,
+				enum qdf_dpt_debugfs_state state);
+/**
+ * qdf_dpt_dump_stats_debugfs() - dump DP Trace stats to debugfs file
+ * @file: debugfs file to read
+ * @curr_pos: curr position to start read
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS qdf_dpt_dump_stats_debugfs(qdf_debugfs_file_t file,
+				      uint32_t curr_pos);
+
+/**
+ * qdf_dpt_set_value_debugfs() - dump DP Trace stats to debugfs file
+ * @file: debugfs file to read
+ * @curr_pos: curr position to start read
+ *
+ * Return: none
+ */
+void qdf_dpt_set_value_debugfs(uint8_t proto_bitmap, uint8_t no_of_record,
+			    uint8_t verbosity);
+
+
 /**
  * qdf_dp_trace_dump_stats() - dump DP Trace stats
  *
@@ -567,8 +616,27 @@ void qdf_dp_trace_set_value(uint8_t proto_bitmap, uint8_t no_of_records,
 			 uint8_t verbosity)
 {
 }
+
 static inline
 void qdf_dp_trace_dump_all(uint32_t count, uint8_t pdev_id)
+{
+}
+
+static inline
+uint32_t qdf_dpt_get_curr_pos_debugfs(qdf_debugfs_file_t file,
+				      enum qdf_dpt_debugfs_state state)
+{
+}
+
+static inline
+QDF_STATUS qdf_dpt_dump_stats_debugfs(qdf_debugfs_file_t file,
+				      uint32_t curr_pos)
+{
+}
+
+static inline
+void qdf_dpt_set_value_debugfs(uint8_t proto_bitmap, uint8_t no_of_record,
+			    uint8_t verbosity)
 {
 }
 

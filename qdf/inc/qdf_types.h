@@ -635,6 +635,8 @@ void qdf_vtrace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 #define qdf_vprint    __qdf_vprint
 #define qdf_snprint   __qdf_snprint
 
+#define qdf_kstrtoint __qdf_kstrtoint
+
 #ifdef WLAN_OPEN_P2P_INTERFACE
 /* This should match with WLAN_MAX_INTERFACES */
 #define QDF_MAX_CONCURRENCY_PERSONA  (4)
