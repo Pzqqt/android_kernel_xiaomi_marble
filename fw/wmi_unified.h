@@ -15153,6 +15153,10 @@ typedef struct {
     wmi_mac_addr next_hop_mac_addr;
 } wmi_mhf_offload_routing_table_entry;
 
+enum {
+    WMI_DFS_RADAR_PULSE_FLAG_MASK_PSIDX_DIFF_VALID = 0x00000001,
+};
+
 typedef struct {
     /** tlv tag and len, tag equals
       * WMITLV_TAG_STRUC_wmi_dfs_radar_event */
@@ -15213,6 +15217,16 @@ typedef struct {
 
     /** Max pulse chirp velocity variance in delta bins */
     A_INT32 pulse_delta_diff;
+
+    /** the difference in the FFT peak index between short FFT and the first long FFT
+     * psidx_diff = (first_long_fft_psidx - 4*first_short_fft_psidx),
+     */
+    A_INT32 psidx_diff;
+
+    /** pulse_flags: see WMI_DFS_RADAR_PULSE_FLAG_MASK enum values
+     *  0x0001 - set if psidx_diff is valid
+     */
+    A_UINT32 pulse_flags;
 
 } wmi_dfs_radar_event_fixed_param;
 
