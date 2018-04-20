@@ -8,7 +8,7 @@ AUDIO_SELECT  := CONFIG_SND_SOC_SDM845=m
 endif
 
 ifeq ($(call is-board-platform,msmnile),true)
-AUDIO_SELECT  := CONFIG_SND_SOC_SDM855=m
+AUDIO_SELECT  := CONFIG_SND_SOC_SM8150=m
 endif
 
 ifeq ($(call is-board-platform-in-list,msm8953 sdm670 qcs605),true)
