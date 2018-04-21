@@ -149,4 +149,12 @@ ol_tx_delay_hist(struct cdp_pdev *ppdev,
  */
 void ol_txrx_flow_control_cb(struct cdp_vdev *vdev, bool tx_resume);
 
+#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || (defined(CONFIG_HL_SUPPORT) && \
+	 defined(CONFIG_PER_VDEV_TX_DESC_POOL))
+void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev);
+#else
+static inline void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
+{
+}
+#endif
 #endif /* _OL_TX_SEND__H_ */

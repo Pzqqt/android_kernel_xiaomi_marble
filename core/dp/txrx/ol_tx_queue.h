@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -227,10 +227,17 @@ ol_tx_queue_discard(
 }
 #endif /* defined(CONFIG_HL_SUPPORT) */
 
+#if (!defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)) && (!defined(CONFIG_HL_SUPPORT))
+static inline
+void ol_txrx_vdev_flush(struct cdp_vdev *data_vdev)
+{
+}
+#else
 void ol_txrx_vdev_flush(struct cdp_vdev *pvdev);
+#endif
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
-   (defined(QCA_LL_TX_FLOW_CONTROL_V2) && !defined(CONFIG_ICNSS)) || \
+   (defined(QCA_LL_TX_FLOW_CONTROL_V2)) || \
    defined(CONFIG_HL_SUPPORT)
 void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason);
 void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason);

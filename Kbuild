@@ -884,6 +884,10 @@ ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_flow_control.o
 endif
 
+ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_LEGACY), y)
+TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_legacy_flow_control.o
+endif
+
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_ipa.o
 endif

@@ -105,65 +105,8 @@ ol_tx_target_credit_incr_int(struct ol_txrx_pdev_t *pdev, int delta)
 }
 #endif
 
-#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)
-void ol_txrx_flow_control_cb(struct cdp_vdev *pvdev, bool tx_resume)
-{
-	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
-
-	qdf_spin_lock_bh(&vdev->flow_control_lock);
-	if ((vdev->osif_flow_control_cb) && (vdev->osif_fc_ctx))
-		vdev->osif_flow_control_cb(vdev->osif_fc_ctx, tx_resume);
-	qdf_spin_unlock_bh(&vdev->flow_control_lock);
-
-	return;
-}
-
-/**
- * ol_txrx_flow_control_is_pause() - is osif paused by flow control
- * @vdev: vdev handle
- *
- * Return: true if osif is paused by flow control
- */
-static bool ol_txrx_flow_control_is_pause(ol_txrx_vdev_handle vdev)
-{
-	bool is_pause = false;
-
-	if ((vdev->osif_flow_control_is_pause) && (vdev->osif_fc_ctx))
-		is_pause = vdev->osif_flow_control_is_pause(vdev->osif_fc_ctx);
-
-	return is_pause;
-}
-
-/**
- * ol_tx_flow_ct_unpause_os_q() - Unpause OS Q
- * @pdev: physical device object
- *
- *
- * Return: None
- */
-static void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
-{
-	struct ol_txrx_vdev_t *vdev;
-
-	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		if ((qdf_atomic_read(&vdev->os_q_paused) &&
-		    (vdev->tx_fl_hwm != 0)) ||
-		    ol_txrx_flow_control_is_pause(vdev)) {
-			qdf_spin_lock(&pdev->tx_mutex);
-			if (pdev->tx_desc.num_free > vdev->tx_fl_hwm) {
-				qdf_atomic_set(&vdev->os_q_paused, 0);
-				qdf_spin_unlock(&pdev->tx_mutex);
-				ol_txrx_flow_control_cb((struct cdp_vdev *)vdev,
-						true);
-			} else {
-				qdf_spin_unlock(&pdev->tx_mutex);
-			}
-		}
-	}
-}
-#elif defined(CONFIG_HL_SUPPORT) && defined(CONFIG_PER_VDEV_TX_DESC_POOL)
-
-static void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
+#if defined(CONFIG_HL_SUPPORT) && defined(CONFIG_PER_VDEV_TX_DESC_POOL)
+void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
 {
 	struct ol_txrx_vdev_t *vdev;
 
@@ -185,12 +128,7 @@ static void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
 		}
 	}
 }
-#else
-
-static inline void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
-{
-}
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
+#endif
 
 static inline uint16_t
 ol_tx_send_base(struct ol_txrx_pdev_t *pdev,

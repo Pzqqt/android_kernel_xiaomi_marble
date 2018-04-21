@@ -85,15 +85,6 @@
 				QDF_FILE_GRP_READ |	\
 				QDF_FILE_OTH_READ)
 
-#ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
-ol_txrx_peer_handle
-ol_txrx_peer_find_by_local_id(struct cdp_pdev *pdev,
-			      uint8_t local_peer_id);
-ol_txrx_peer_handle
-ol_txrx_peer_get_ref_by_local_id(struct cdp_pdev *ppdev,
-			      uint8_t local_peer_id,
-			      enum peer_debug_id_type dbg_id);
-#endif /* QCA_SUPPORT_TXRX_LOCAL_PEER_ID */
 QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *pdev,
 				     uint8_t *peer_mac,
 				     enum ol_txrx_peer_state state);
@@ -705,92 +696,6 @@ credit_update:
 	ol_txrx_update_group_credit(group, credit, absolute);
 	qdf_spin_unlock_bh(&pdev->tx_queue_spinlock);
 }
-#endif
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-/**
- * ol_tx_set_desc_global_pool_size() - set global pool size
- * @num_msdu_desc: total number of descriptors
- *
- * Return: none
- */
-static void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc)
-{
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (!pdev) {
-		qdf_print("%s: pdev is NULL\n", __func__);
-		return;
-	}
-	pdev->num_msdu_desc = num_msdu_desc;
-	if (!ol_tx_get_is_mgmt_over_wmi_enabled())
-		pdev->num_msdu_desc += TX_FLOW_MGMT_POOL_SIZE;
-	ol_txrx_info_high("Global pool size: %d\n",
-		pdev->num_msdu_desc);
-}
-
-/**
- * ol_tx_get_desc_global_pool_size() - get global pool size
- * @pdev: pdev handle
- *
- * Return: global pool size
- */
-static inline
-uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
-{
-	return pdev->num_msdu_desc;
-}
-
-/**
- * ol_tx_get_total_free_desc() - get total free descriptors
- * @pdev: pdev handle
- *
- * Return: total free descriptors
- */
-static inline
-uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
-{
-	struct ol_tx_flow_pool_t *pool = NULL;
-	uint32_t free_desc;
-
-	free_desc = pdev->tx_desc.num_free;
-	qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
-	TAILQ_FOREACH(pool, &pdev->tx_desc.flow_pool_list,
-					 flow_pool_list_elem) {
-		qdf_spin_lock_bh(&pool->flow_pool_lock);
-		free_desc += pool->avail_desc;
-		qdf_spin_unlock_bh(&pool->flow_pool_lock);
-	}
-	qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
-
-	return free_desc;
-}
-
-#else
-/**
- * ol_tx_get_desc_global_pool_size() - get global pool size
- * @pdev: pdev handle
- *
- * Return: global pool size
- */
-static inline
-uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
-{
-	return ol_cfg_target_tx_credit(pdev->ctrl_pdev);
-}
-
-/**
- * ol_tx_get_total_free_desc() - get total free descriptors
- * @pdev: pdev handle
- *
- * Return: total free descriptors
- */
-static inline
-uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
-{
-	return pdev->tx_desc.num_free;
-}
-
 #endif
 
 #if defined(CONFIG_HL_SUPPORT) && defined(CONFIG_PER_VDEV_TX_DESC_POOL)
@@ -4823,169 +4728,6 @@ static uint32_t ol_txrx_get_tx_ack_stats(uint8_t vdev_id)
 	return vdev->txrx_stats.txack_success;
 }
 
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-
-/**
- * ol_txrx_get_vdev_from_sta_id() - get vdev from sta_id
- * @sta_id: sta_id
- *
- * Return: vdev handle
- *            NULL if not found.
- */
-static ol_txrx_vdev_handle ol_txrx_get_vdev_from_sta_id(uint8_t sta_id)
-{
-	struct ol_txrx_peer_t *peer = NULL;
-	ol_txrx_pdev_handle pdev = NULL;
-
-	if (sta_id >= WLAN_MAX_STA_COUNT) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid sta id passed");
-		return NULL;
-	}
-
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "PDEV not found for sta_id [%d]", sta_id);
-		return NULL;
-	}
-
-	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev, sta_id);
-
-	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "PEER [%d] not found", sta_id);
-		return NULL;
-	}
-
-	return peer->vdev;
-}
-
-/**
- * ol_txrx_register_tx_flow_control() - register tx flow control callback
- * @vdev_id: vdev_id
- * @flowControl: flow control callback
- * @osif_fc_ctx: callback context
- * @flow_control_is_pause: is vdev paused by flow control
- *
- * Return: 0 for success or error code
- */
-static int ol_txrx_register_tx_flow_control(uint8_t vdev_id,
-	ol_txrx_tx_flow_control_fp flowControl, void *osif_fc_ctx,
-	ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause)
-{
-	struct ol_txrx_vdev_t *vdev =
-		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
-
-	if (NULL == vdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid vdev_id %d", __func__, vdev_id);
-		return -EINVAL;
-	}
-
-	qdf_spin_lock_bh(&vdev->flow_control_lock);
-	vdev->osif_flow_control_cb = flowControl;
-	vdev->osif_flow_control_is_pause = flow_control_is_pause;
-	vdev->osif_fc_ctx = osif_fc_ctx;
-	qdf_spin_unlock_bh(&vdev->flow_control_lock);
-	return 0;
-}
-
-/**
- * ol_txrx_de_register_tx_flow_control_cb() - deregister tx flow control
- *                                            callback
- * @vdev_id: vdev_id
- *
- * Return: 0 for success or error code
- */
-static int ol_txrx_deregister_tx_flow_control_cb(uint8_t vdev_id)
-{
-	struct ol_txrx_vdev_t *vdev =
-		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
-
-	if (NULL == vdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid vdev_id", __func__);
-		return -EINVAL;
-	}
-
-	qdf_spin_lock_bh(&vdev->flow_control_lock);
-	vdev->osif_flow_control_cb = NULL;
-	vdev->osif_flow_control_is_pause = NULL;
-	vdev->osif_fc_ctx = NULL;
-	qdf_spin_unlock_bh(&vdev->flow_control_lock);
-	return 0;
-}
-
-/**
- * ol_txrx_get_tx_resource() - if tx resource less than low_watermark
- * @sta_id: sta id
- * @low_watermark: low watermark
- * @high_watermark_offset: high watermark offset value
- *
- * Return: true/false
- */
-static bool
-ol_txrx_get_tx_resource(uint8_t sta_id,
-			unsigned int low_watermark,
-			unsigned int high_watermark_offset)
-{
-	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_sta_id(sta_id);
-
-	if (NULL == vdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Invalid sta_id %d", __func__, sta_id);
-		/* Return true so caller do not understand that resource
-		 * is less than low_watermark.
-		 * sta_id validation will be done in ol_tx_send_data_frame
-		 * and if sta_id is not registered then host will drop
-		 * packet.
-		 */
-		return true;
-	}
-
-	qdf_spin_lock_bh(&vdev->pdev->tx_mutex);
-
-	if (vdev->pdev->tx_desc.num_free < (uint16_t) low_watermark) {
-		vdev->tx_fl_lwm = (uint16_t) low_watermark;
-		vdev->tx_fl_hwm =
-			(uint16_t) (low_watermark + high_watermark_offset);
-		/* Not enough free resource, stop TX OS Q */
-		qdf_atomic_set(&vdev->os_q_paused, 1);
-		qdf_spin_unlock_bh(&vdev->pdev->tx_mutex);
-		return false;
-	}
-	qdf_spin_unlock_bh(&vdev->pdev->tx_mutex);
-	return true;
-}
-
-/**
- * ol_txrx_ll_set_tx_pause_q_depth() - set pause queue depth
- * @vdev_id: vdev id
- * @pause_q_depth: pause queue depth
- *
- * Return: 0 for success or error code
- */
-static int
-ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth)
-{
-	struct ol_txrx_vdev_t *vdev =
-		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
-
-	if (NULL == vdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid vdev_id %d", __func__, vdev_id);
-		return -EINVAL;
-	}
-
-	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
-	vdev->ll_pause.max_q_depth = pause_q_depth;
-	qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
-
-	return 0;
-}
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
-
 /**
  * ol_txrx_display_stats() - Display OL TXRX display stats
  * @value: Module id for which stats needs to be displayed
@@ -5489,27 +5231,6 @@ exit:
 	return rc;
 }
 
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-/**
- * ol_txrx_register_pause_cb() - register pause callback
- * @pause_cb: pause callback
- *
- * Return: QDF status
- */
-static QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
-	tx_pause_callback pause_cb)
-{
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (!pdev || !pause_cb) {
-		ol_txrx_err("pdev or pause_cb is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-	pdev->pause_cb = pause_cb;
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 #ifdef RECEIVE_OFFLOAD
 /**
  * ol_txrx_offld_flush_handler() - offld flush handler
@@ -5758,35 +5479,6 @@ ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len)
 	print_hex_dump(KERN_DEBUG, "Pkt:   ", DUMP_PREFIX_ADDRESS, 16, 4,
 		       qdf_nbuf_data(nbuf), len, true);
 }
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-bool
-ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev)
-{
-	struct ol_tx_flow_pool_t *pool;
-	bool enough_desc_flag;
-
-	if (!vdev)
-		return false;
-
-	pool = vdev->pool;
-
-	if (!pool)
-		return false;
-
-	qdf_spin_lock_bh(&pool->flow_pool_lock);
-	enough_desc_flag = (pool->avail_desc < (pool->stop_th +
-				OL_TX_NON_FWD_RESERVE))
-		? false : true;
-	qdf_spin_unlock_bh(&pool->flow_pool_lock);
-	return enough_desc_flag;
-}
-#else
-bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev)
-{
-	return true;
-}
-#endif
 
 /**
  * ol_txrx_get_vdev_from_vdev_id() - get vdev from vdev_id

@@ -100,6 +100,17 @@ void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
 	return NULL;
 }
 #endif
+
+#ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
+ol_txrx_peer_handle
+ol_txrx_peer_find_by_local_id(struct cdp_pdev *pdev,
+			      uint8_t local_peer_id);
+ol_txrx_peer_handle
+ol_txrx_peer_get_ref_by_local_id(struct cdp_pdev *ppdev,
+				 uint8_t local_peer_id,
+				 enum peer_debug_id_type dbg_id);
+#endif /* QCA_SUPPORT_TXRX_LOCAL_PEER_ID */
+
 /*
  * @nbuf: buffer which contains data to be displayed
  * @nbuf_paddr: physical address of the buffer
@@ -110,6 +121,43 @@ void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
 void
 ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
 
+struct cdp_vdev *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id);
+
+void *ol_txrx_find_peer_by_addr(struct cdp_pdev *pdev,
+				uint8_t *peer_addr,
+				uint8_t *peer_id);
+
+void htt_pkt_log_init(struct cdp_pdev *pdev_handle, void *scn);
+void peer_unmap_timer_work_function(void *);
+void peer_unmap_timer_handler(void *data);
+
+#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
+int ol_txrx_register_tx_flow_control(uint8_t vdev_id,
+				     ol_txrx_tx_flow_control_fp flow_control,
+				     void *osif_fc_ctx,
+				     ol_txrx_tx_flow_control_is_pause_fp
+				     flow_control_is_pause);
+
+int ol_txrx_deregister_tx_flow_control_cb(uint8_t vdev_id);
+
+bool ol_txrx_get_tx_resource(uint8_t sta_id,
+			     unsigned int low_watermark,
+			     unsigned int high_watermark_offset);
+
+int ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth);
+#endif
+
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc);
+uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev);
+static inline
+uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
+{
+	return pdev->num_msdu_desc;
+}
+
+QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
+				     tx_pause_callback pause_cb);
 /**
  * ol_txrx_fwd_desc_thresh_check() - check to forward packet to tx path
  * @vdev: which virtual device the frames were addressed to
@@ -130,15 +178,36 @@ ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
  *         false; not enough descriptors, drop the packet
  */
 bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev);
+#else
+/**
+ * ol_tx_get_desc_global_pool_size() - get global pool size
+ * @pdev: pdev handle
+ *
+ * Return: global pool size
+ */
+static inline
+uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
+{
+	return ol_cfg_target_tx_credit(pdev->ctrl_pdev);
+}
 
-struct cdp_vdev *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id);
+/**
+ * ol_tx_get_total_free_desc() - get total free descriptors
+ * @pdev: pdev handle
+ *
+ * Return: total free descriptors
+ */
+static inline
+uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
+{
+	return pdev->tx_desc.num_free;
+}
 
-void *ol_txrx_find_peer_by_addr(struct cdp_pdev *pdev,
-				uint8_t *peer_addr,
-				uint8_t *peer_id);
+static inline
+bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev)
+{
+	return true;
+}
 
-void htt_pkt_log_init(struct cdp_pdev *pdev_handle, void *scn);
-void peer_unmap_timer_work_function(void *);
-void peer_unmap_timer_handler(void *data);
-
+#endif
 #endif /* _OL_TXRX__H_ */
