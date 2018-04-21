@@ -898,6 +898,10 @@ else
 TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_ll_legacy.o
 endif
 
+ifeq ($(CONFIG_QCA_SUPPORT_TX_THROTTLE), y)
+TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_throttle.o
+endif
+
 ifeq ($(CONFIG_LITHIUM), y)
 ############ DP 3.0 ############
 DP_INC := -I$(WLAN_COMMON_ROOT)/dp/inc \

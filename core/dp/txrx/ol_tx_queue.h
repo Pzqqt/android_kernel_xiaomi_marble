@@ -445,6 +445,14 @@ void ol_tx_throttle_init_period(struct cdp_pdev *ppdev, int period,
 void ol_tx_throttle_init(struct ol_txrx_pdev_t *pdev);
 #else
 static inline void ol_tx_throttle_init(struct ol_txrx_pdev_t *pdev) {}
+
+static inline void ol_tx_throttle_set_level(struct cdp_pdev *ppdev, int level)
+{}
+
+static inline void ol_tx_throttle_init_period(struct cdp_pdev *ppdev,
+					      int period,
+					      uint8_t *dutycycle_level)
+{}
 #endif
 
 #ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
