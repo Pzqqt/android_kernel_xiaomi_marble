@@ -31,6 +31,12 @@
 #include <wlan_cp_stats_utils_api.h>
 #include "../../core/src/wlan_cp_stats_defs.h"
 
+void tgt_cp_stats_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	rx_ops->cp_stats_rx_ops.process_stats_event =
+					tgt_mc_cp_stats_process_stats_event;
+}
+
 static void tgt_mc_cp_stats_extract_tx_power(struct wlan_objmgr_psoc *psoc,
 					struct stats_event *ev,
 					bool is_station_stats)

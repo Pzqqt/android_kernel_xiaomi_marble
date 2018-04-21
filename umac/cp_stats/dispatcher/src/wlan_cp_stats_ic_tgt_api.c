@@ -23,4 +23,8 @@
  * from southbound interface
  */
 #include <wlan_cp_stats_ic_atf_defs.h>
+#include <wlan_cp_stats_tgt_api.h>
 
+void tgt_cp_stats_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}

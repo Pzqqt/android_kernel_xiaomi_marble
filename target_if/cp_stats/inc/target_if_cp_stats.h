@@ -64,24 +64,9 @@ target_if_cp_stats_get_tx_ops(struct wlan_objmgr_psoc *psoc)
  */
 QDF_STATUS
 target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
-
-/**
- * target_if_cp_stats_register_rx_ops() - define cp_stats lmac rx ops functions
- * @rx_ops: pointer to lmac rx ops
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
-QDF_STATUS
-target_if_cp_stats_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
 #else
 static inline QDF_STATUS
 target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS
-target_if_cp_stats_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	return QDF_STATUS_SUCCESS;
 }

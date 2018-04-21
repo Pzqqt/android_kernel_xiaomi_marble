@@ -73,7 +73,6 @@ struct scheduler_msg;
 #endif
 
 #ifdef QCA_SUPPORT_CP_STATS
-#include <wlan_cp_stats_tgt_api.h>
 #include <wlan_cp_stats_mc_defs.h>
 #endif /* QCA_SUPPORT_CP_STATS */
 

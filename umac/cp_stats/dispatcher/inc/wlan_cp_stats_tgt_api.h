@@ -23,9 +23,19 @@
  */
 #ifndef __WLAN_CP_STATS_TGT_API_H__
 #define __WLAN_CP_STATS_TGT_API_H__
-
-#ifdef QCA_SUPPORT_CP_STATS
+#include <wlan_lmac_if_def.h>
 #include <wlan_objmgr_cmn.h>
 
+#ifdef QCA_SUPPORT_CP_STATS
+/**
+ * tgt_cp_stats_register_rx_ops(): API to register rx ops with lmac
+ * @rx_ops: rx ops struct
+ *
+ * Return: none
+ */
+void tgt_cp_stats_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
+#else
+static inline void tgt_cp_stats_register_rx_ops(
+					struct wlan_lmac_if_rx_ops *rx_ops) {}
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_TGT_API_H__ */

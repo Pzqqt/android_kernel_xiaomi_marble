@@ -307,10 +307,3 @@ target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-target_if_cp_stats_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
-{
-	rx_ops->cp_stats_rx_ops.process_stats_event =
-					tgt_mc_cp_stats_process_stats_event;
-	return QDF_STATUS_SUCCESS;
-}

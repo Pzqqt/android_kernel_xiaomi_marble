@@ -65,7 +65,6 @@
 
 #ifdef QCA_SUPPORT_CP_STATS
 #include <wlan_cp_stats_tgt_api.h>
-#include <target_if_cp_stats.h>
 #endif /* QCA_SUPPORT_CP_STATS */
 
 /* Function pointer for OL/WMA specific UMAC tx_ops
@@ -87,7 +86,7 @@ qdf_export_symbol(wlan_lmac_if_umac_tx_ops_register);
 static void
 wlan_lmac_if_cp_stats_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 {
-	target_if_cp_stats_register_rx_ops(rx_ops);
+	tgt_cp_stats_register_rx_ops(rx_ops);
 }
 #else
 static void
