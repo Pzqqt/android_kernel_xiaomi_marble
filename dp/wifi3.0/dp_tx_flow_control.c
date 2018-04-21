@@ -259,9 +259,6 @@ static void dp_tx_flow_pool_vdev_unmap(struct dp_pdev *pdev,
 	}
 
 	vdev->pool = NULL;
-	qdf_spin_lock_bh(&pool->flow_pool_lock);
-	pool->flow_pool_id = INVALID_FLOW_ID;
-	qdf_spin_unlock_bh(&pool->flow_pool_lock);
 }
 
 /**
