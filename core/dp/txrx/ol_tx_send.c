@@ -105,28 +105,36 @@ ol_tx_target_credit_incr_int(struct ol_txrx_pdev_t *pdev, int delta)
 }
 #endif
 
-#if defined(CONFIG_HL_SUPPORT) && defined(CONFIG_PER_VDEV_TX_DESC_POOL)
+#if defined(CONFIG_HL_SUPPORT) && defined(QCA_HL_NETDEV_FLOW_CONTROL)
 void ol_tx_flow_ct_unpause_os_q(ol_txrx_pdev_handle pdev)
 {
 	struct ol_txrx_vdev_t *vdev;
 
+	qdf_spin_lock_bh(&pdev->tx_mutex);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		if (vdev->tx_desc_limit == 0)
+			continue;
+
+		/* un-pause high priority queue */
+		if (vdev->prio_q_paused &&
+		    (qdf_atomic_read(&vdev->tx_desc_count)
+		     < vdev->tx_desc_limit)) {
+			pdev->pause_cb(vdev->vdev_id,
+				       WLAN_NETIF_PRIORITY_QUEUE_ON,
+				       WLAN_DATA_FLOW_CONTROL_PRIORITY);
+			vdev->prio_q_paused = 0;
+		}
+		/* un-pause non priority queues */
 		if (qdf_atomic_read(&vdev->os_q_paused) &&
-		    (vdev->tx_fl_hwm != 0)) {
-			qdf_spin_lock(&pdev->tx_mutex);
-			if (((ol_tx_desc_pool_size_hl(
-					vdev->pdev->ctrl_pdev) >> 1)
-					- TXRX_HL_TX_FLOW_CTRL_MGMT_RESERVED)
-					- qdf_atomic_read(&vdev->tx_desc_count)
-					> vdev->tx_fl_hwm) {
-				qdf_atomic_set(&vdev->os_q_paused, 0);
-				qdf_spin_unlock(&pdev->tx_mutex);
-				vdev->osif_flow_control_cb(vdev, true);
-			} else {
-				qdf_spin_unlock(&pdev->tx_mutex);
-			}
+		    (qdf_atomic_read(&vdev->tx_desc_count)
+		    <= vdev->queue_restart_th)) {
+			pdev->pause_cb(vdev->vdev_id,
+				       WLAN_WAKE_NON_PRIORITY_QUEUE,
+				       WLAN_DATA_FLOW_CONTROL);
+			qdf_atomic_set(&vdev->os_q_paused, 0);
 		}
 	}
+	qdf_spin_unlock_bh(&pdev->tx_mutex);
 }
 #endif
 
