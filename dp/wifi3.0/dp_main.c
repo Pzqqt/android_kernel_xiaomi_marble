@@ -335,12 +335,13 @@ static int dp_peer_update_ast_wifi3(struct cdp_soc_t *soc_hdl,
 
 /*
  * dp_wds_reset_ast_wifi3() - Reset the is_active param for ast entry
- * @soc_handle:		Datapath SOC handle
- * @ast_entry_hdl:	AST Entry handle
+ * @soc_handle: Datapath SOC handle
+ * @wds_macaddr: MAC address of the WDS entry to be added
+ * @vdev_hdl: vdev handle
  * Return: None
  */
 static void dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
-						uint8_t *wds_macaddr)
+				    uint8_t *wds_macaddr, void *vdev_hdl)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_ast_entry *ast_entry = NULL;
@@ -356,11 +357,13 @@ static void dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 
 /*
  * dp_wds_reset_ast_table_wifi3() - Reset the is_active param for all ast entry
- * @soc:		Datapath SOC handle
+ * @soc: Datapath SOC handle
+ * @vdev_hdl: vdev handle
  *
  * Return: None
  */
-static void dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
+static void dp_wds_reset_ast_table_wifi3(struct cdp_soc_t *soc_hdl,
+					 void *vdev_hdl)
 {
 	struct dp_soc *soc = (struct dp_soc *) soc_hdl;
 	struct dp_pdev *pdev;

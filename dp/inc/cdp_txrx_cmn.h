@@ -354,7 +354,7 @@ static inline int cdp_peer_add_ast
 }
 
 static inline void cdp_peer_reset_ast
-	(ol_txrx_soc_handle soc, uint8_t *wds_macaddr)
+	(ol_txrx_soc_handle soc, uint8_t *wds_macaddr, void *vdev_hdl)
 {
 
 	if (!soc || !soc->ops) {
@@ -367,11 +367,11 @@ static inline void cdp_peer_reset_ast
 	    !soc->ops->cmn_drv_ops->txrx_peer_reset_ast)
 		return;
 
-	soc->ops->cmn_drv_ops->txrx_peer_reset_ast(soc, wds_macaddr);
+	soc->ops->cmn_drv_ops->txrx_peer_reset_ast(soc, wds_macaddr, vdev_hdl);
 }
 
 static inline void cdp_peer_reset_ast_table
-	(ol_txrx_soc_handle soc)
+	(ol_txrx_soc_handle soc, void *vdev_hdl)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -384,7 +384,7 @@ static inline void cdp_peer_reset_ast_table
 	    !soc->ops->cmn_drv_ops->txrx_peer_reset_ast_table)
 		return;
 
-	soc->ops->cmn_drv_ops->txrx_peer_reset_ast_table(soc);
+	soc->ops->cmn_drv_ops->txrx_peer_reset_ast_table(soc, vdev_hdl);
 }
 
 static inline void cdp_peer_flush_ast_table
