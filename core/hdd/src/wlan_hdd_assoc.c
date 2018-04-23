@@ -1601,6 +1601,31 @@ static void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 }
 
 /**
+ * hdd_wlan_get_ibss_mac_addr_from_staid() - Get IBSS MAC address
+ * @adapter: Adapter upon which the IBSS client is active
+ * @staIdx: Station index of the IBSS peer
+ *
+ * Return: a pointer to the MAC address of the IBSS peer if the peer is
+ *	   found, otherwise %NULL.
+ */
+static struct qdf_mac_addr *
+hdd_wlan_get_ibss_mac_addr_from_staid(struct hdd_adapter *adapter,
+				      uint8_t staIdx)
+{
+	uint8_t idx;
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	for (idx = 0; idx < MAX_PEERS; idx++) {
+		if (HDD_WLAN_INVALID_STA_ID !=
+				sta_ctx->conn_info.staId[idx] &&
+				staIdx == sta_ctx->conn_info.staId[idx]) {
+			return &sta_ctx->conn_info.peerMacAddress[idx];
+		}
+	}
+	return NULL;
+}
+
+/**
  * hdd_roam_deregister_sta() - deregister station
  * @adapter: pointer to adapter
  * @staId: station identifier
