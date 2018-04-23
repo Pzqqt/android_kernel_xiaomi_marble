@@ -4283,6 +4283,35 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_RX_AGGREGATION_SIZE_DEFAULT,
 		CFG_RX_AGGREGATION_SIZE_MIN,
 		CFG_RX_AGGREGATION_SIZE_MAX),
+
+	REG_VARIABLE(CFG_TX_AGGR_SW_RETRY_BE, WLAN_PARAM_Integer,
+		     struct hdd_config, tx_aggr_sw_retry_threshold_be,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TX_AGGR_SW_RETRY_BE_DEFAULT,
+		     CFG_TX_AGGR_SW_RETRY_BE_MIN,
+		     CFG_TX_AGGR_SW_RETRY_BE_MAX),
+
+	REG_VARIABLE(CFG_TX_AGGR_SW_RETRY_BK, WLAN_PARAM_Integer,
+		     struct hdd_config, tx_aggr_sw_retry_threshold_bk,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TX_AGGR_SW_RETRY_BK_DEFAULT,
+		     CFG_TX_AGGR_SW_RETRY_BK_MIN,
+		     CFG_TX_AGGR_SW_RETRY_BK_MAX),
+
+	REG_VARIABLE(CFG_TX_AGGR_SW_RETRY_VI, WLAN_PARAM_Integer,
+		     struct hdd_config, tx_aggr_sw_retry_threshold_vi,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TX_AGGR_SW_RETRY_VI_DEFAULT,
+		     CFG_TX_AGGR_SW_RETRY_VI_MIN,
+		     CFG_TX_AGGR_SW_RETRY_VI_MAX),
+
+	REG_VARIABLE(CFG_TX_AGGR_SW_RETRY_VO, WLAN_PARAM_Integer,
+		     struct hdd_config, tx_aggr_sw_retry_threshold_vo,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TX_AGGR_SW_RETRY_VO_DEFAULT,
+		     CFG_TX_AGGR_SW_RETRY_VO_MIN,
+		     CFG_TX_AGGR_SW_RETRY_VO_MAX),
+
 	REG_VARIABLE(CFG_SAP_MAX_INACTIVITY_OVERRIDE_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, sap_max_inactivity_override,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -8923,6 +8952,14 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->tx_aggregation_size_vo;
 	smeConfig->csrConfig.rx_aggregation_size =
 			hdd_ctx->config->rx_aggregation_size;
+	smeConfig->csrConfig.tx_aggr_sw_retry_threshold_be =
+			hdd_ctx->config->tx_aggr_sw_retry_threshold_be;
+	smeConfig->csrConfig.tx_aggr_sw_retry_threshold_bk =
+			hdd_ctx->config->tx_aggr_sw_retry_threshold_bk;
+	smeConfig->csrConfig.tx_aggr_sw_retry_threshold_vi =
+			hdd_ctx->config->tx_aggr_sw_retry_threshold_vi;
+	smeConfig->csrConfig.tx_aggr_sw_retry_threshold_vo =
+			hdd_ctx->config->tx_aggr_sw_retry_threshold_vo;
 	smeConfig->csrConfig.enable_bcast_probe_rsp =
 			hdd_ctx->config->enable_bcast_probe_rsp;
 	smeConfig->csrConfig.is_fils_enabled =
