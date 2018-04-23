@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
- *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -19,12 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * This file was originally distributed by Qualcomm Atheros, Inc.
- * under proprietary terms before Copyright ownership was assigned
- * to the Linux Foundation.
- */
-
 #ifndef HDD_IPA_H__
 #define HDD_IPA_H__
 
@@ -32,7 +23,6 @@
  * DOC: wlan_hdd_ipa.h
  *
  * WLAN IPA interface module headers
- * Originally written by Qualcomm Atheros, Inc
  */
 
 #include <qdf_nbuf.h>
