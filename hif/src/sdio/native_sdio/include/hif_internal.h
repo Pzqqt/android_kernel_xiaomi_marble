@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -18,6 +18,14 @@
 
 #ifndef _HIF_INTERNAL_H_
 #define _HIF_INTERNAL_H_
+
+#include <linux/mmc/card.h>
+#include <linux/mmc/mmc.h>
+#include <linux/mmc/host.h>
+#include <linux/mmc/sdio_func.h>
+#include <linux/mmc/sdio_ids.h>
+#include <linux/mmc/sdio.h>
+#include <linux/mmc/sd.h>
 
 #include "athdefs.h"
 #include "a_types.h"
@@ -414,5 +422,32 @@ static inline QDF_STATUS do_hif_read_write_scatter(struct hif_sdio_dev *device,
 #define cleanup_hif_scatter_resources(d) { }
 
 #endif /* HIF_LINUX_MMC_SCATTER_SUPPORT */
+
+#define SDIO_SET_CMD52_ARG(arg, rw, func, raw, address, writedata) \
+			((arg) = (((rw) & 1) << 31) | \
+			(((func) & 0x7) << 28) | \
+			(((raw) & 1) << 27) | \
+			(1 << 26) | \
+			(((address) & 0x1FFFF) << 9) | \
+			(1 << 8) | \
+			((writedata) & 0xFF))
+
+#define SDIO_SET_CMD52_READ_ARG(arg, func, address) \
+	SDIO_SET_CMD52_ARG(arg, 0, (func), 0, address, 0x00)
+#define SDIO_SET_CMD52_WRITE_ARG(arg, func, address, value) \
+	SDIO_SET_CMD52_ARG(arg, 1, (func), 0, address, value)
+
+void hif_sdio_quirk_force_drive_strength(struct sdio_func *func);
+void hif_sdio_quirk_write_cccr(struct sdio_func *func);
+int hif_sdio_quirk_mod_strength(struct sdio_func *func);
+int hif_sdio_quirk_async_intr(struct sdio_func *func);
+
+int func0_cmd52_write_byte(struct mmc_card *card,
+			   unsigned int address,
+			   unsigned char byte);
+
+int func0_cmd52_read_byte(struct mmc_card *card,
+			  unsigned int address,
+			  unsigned char *byte);
 
 #endif /* _HIF_INTERNAL_H_ */
