@@ -8245,7 +8245,8 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 		return -EINVAL;
 	}
 
-	if ((NULL == priv_data.pointer) || (0 == priv_data.length)) {
+	if ((NULL == priv_data.pointer) || (0 == priv_data.length) ||
+	   priv_data.length < sizeof(struct pkt_filter_cfg)) {
 		hdd_err("invalid priv data %pK or invalid priv data length %d",
 			priv_data.pointer, priv_data.length);
 		return -EINVAL;
