@@ -674,13 +674,6 @@ struct wlan_ipa_priv {
 
 #define BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
 
-#if defined(QCA_WIFI_3_0) && defined(CONFIG_IPA3)
-#define WLAN_IPA_CHECK_HW() ipa_uc_reg_rdyCB(NULL)
-#else
-/* Do nothing */
-#define WLAN_IPA_CHECK_HW() 0
-#endif /* IPA3 */
-
 #define WLAN_IPA_DBG_DUMP_RX_LEN 84
 #define WLAN_IPA_DBG_DUMP_TX_LEN 48
 
