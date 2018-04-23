@@ -30,7 +30,7 @@ static bool g_ipa_hw_support;
 bool ipa_check_hw_present(void)
 {
 	/* Check if ipa hw is enabled */
-	if (WLAN_IPA_CHECK_HW() != -EPERM) {
+	if (qdf_ipa_uc_reg_rdyCB(NULL) != -EPERM) {
 		g_ipa_hw_support = true;
 		return true;
 	} else {
