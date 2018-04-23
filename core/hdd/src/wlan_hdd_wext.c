@@ -4262,10 +4262,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 	int set_value = value[1];
 	int ret;
 	QDF_STATUS status;
-	void *soc = NULL;
-	struct cdp_pdev *pdev = NULL;
-	struct cdp_vdev *vdev = NULL;
-	struct cdp_txrx_stats_req req;
 
 	hdd_enter_dev(dev);
 
@@ -4953,23 +4949,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 		ret = wma_cli_set_command(adapter->session_id,
 					  WMA_VDEV_TXRX_FWSTATS_ENABLE_CMDID,
 					  set_value, VDEV_CMD);
-		break;
-	}
-
-	case WE_SET_TXRX_STATS:
-	{
-		hdd_debug("WE_SET_TXRX_STATS val %d", set_value);
-		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
-				       adapter->session_id);
-
-		if (ret != 0) {
-			hdd_err("Invalid handles");
-			break;
-		}
-
-		req.stats = set_value;
-		req.channel = adapter->session.station.conn_info.operationChannel;
-		ret = cdp_txrx_stats_request(soc, vdev, &req);
 		break;
 	}
 
@@ -9006,6 +8985,10 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	int sub_cmd = value[0];
 	int ret;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	void *soc = NULL;
+	struct cdp_pdev *pdev = NULL;
+	struct cdp_vdev *vdev = NULL;
+	struct cdp_txrx_stats_req req = {0};
 
 	hdd_enter_dev(dev);
 
@@ -9018,6 +9001,23 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 		return ret;
 
 	switch (sub_cmd) {
+	case WE_SET_TXRX_STATS:
+	{
+		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
+				       adapter->session_id);
+
+		if (ret != 0) {
+			hdd_err("Invalid handles");
+			break;
+		}
+
+		req.stats = value[1];
+		req.mac_id = value[2];
+		hdd_debug("WE_SET_TXRX_STATS stats cmd: %d mac_id: %d",
+			req.stats, req.mac_id);
+		ret = cdp_txrx_stats_request(soc, vdev, &req);
+		break;
+	}
 	case WE_SET_SMPS_PARAM:
 		hdd_debug("WE_SET_SMPS_PARAM val %d %d", value[1], value[2]);
 		ret = wma_cli_set_command(adapter->session_id,
@@ -9453,7 +9453,7 @@ static const struct iw_priv_args we_private_args[] = {
 	 "txrx_fw_stats"},
 
 	{WE_SET_TXRX_STATS,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0,
 	 "txrx_stats"},
 

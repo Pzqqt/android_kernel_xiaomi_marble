@@ -3021,6 +3021,10 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 	int *value = (int *)extra;
 	int sub_cmd = value[0];
 	struct hdd_context *hdd_ctx;
+	struct cdp_vdev *vdev = NULL;
+	struct cdp_pdev *pdev = NULL;
+	void *soc = NULL;
+	struct cdp_txrx_stats_req req = {0};
 
 	hdd_enter_dev(dev);
 
@@ -3034,6 +3038,23 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		return ret;
 
 	switch (sub_cmd) {
+	case QCSAP_PARAM_SET_TXRX_STATS:
+	{
+		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
+				 adapter->session_id);
+		if (ret != 0) {
+			hdd_err("Invalid Handles");
+			break;
+		}
+		req.stats = value[1];
+		req.mac_id = value[2];
+		hdd_info("QCSAP_PARAM_SET_TXRX_STATS stats_id: %d mac_id: %d",
+			req.stats, req.mac_id);
+		ret = cdp_txrx_stats_request(soc, vdev, &req);
+		break;
+	}
+
+	/* Firmware debug log */
 	case QCSAP_IOCTL_SET_FW_CRASH_INJECT:
 		ret = hdd_crash_inject(adapter, value[1], value[2]);
 		break;
@@ -3244,10 +3265,6 @@ static __iw_softap_setparam(struct net_device *dev,
 	QDF_STATUS status;
 	int ret = 0;
 	struct hdd_context *hdd_ctx;
-	struct cdp_vdev *vdev = NULL;
-	struct cdp_pdev *pdev = NULL;
-	void *soc = NULL;
-	struct cdp_txrx_stats_req req;
 
 	hdd_enter_dev(dev);
 
@@ -3387,21 +3404,6 @@ static __iw_softap_setparam(struct net_device *dev,
 		ret = wma_cli_set_command(adapter->session_id,
 					  WMA_VDEV_TXRX_FWSTATS_ENABLE_CMDID,
 					  set_value, VDEV_CMD);
-		break;
-	}
-
-	case QCSAP_PARAM_SET_TXRX_STATS:
-	{
-		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
-				 adapter->session_id);
-		if (ret != 0) {
-			hdd_err("Invalid Handles");
-			break;
-		}
-		req.stats = set_value;
-		req.channel = adapter->session.ap.operating_channel;
-		hdd_info("QCSAP_PARAM_SET_TXRX_STATS val %d", set_value);
-		ret = cdp_txrx_stats_request(soc, vdev, &req);
 		break;
 	}
 
@@ -5487,7 +5489,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		"txrx_fw_stats"
 	}, {
 		QCSAP_PARAM_SET_TXRX_STATS,
-		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2, 0,
 		"txrx_stats"
 	}, {
 		QCSAP_PARAM_SET_MCC_CHANNEL_LATENCY,
