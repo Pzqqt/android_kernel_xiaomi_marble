@@ -6282,7 +6282,7 @@ static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev = NULL;
 	uint32_t stats = req->stats;
-	uint8_t channel = req->channel;
+	uint8_t mac_id = req->mac_id;
 
 	if (!vdev) {
 		DP_TRACE(NONE, "VDEV not found");
@@ -6309,7 +6309,7 @@ static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
 
 	return dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,
 				req->param1, req->param2, req->param3,
-				0, 0, channel);
+				0, 0, mac_id);
 }
 
 /**
