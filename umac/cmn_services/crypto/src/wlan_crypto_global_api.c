@@ -647,6 +647,23 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 }
 
 /**
+ * wlan_crypto_get_keytype - get keytype
+ * @key: key
+ *
+ * This function gets keytype from key
+ *
+ * Return: keytype
+ */
+wlan_crypto_cipher_type wlan_crypto_get_key_type(
+						struct wlan_crypto_key *key){
+	if (key && key->cipher_table) {
+		return ((struct wlan_crypto_cipher *)
+						(key->cipher_table))->cipher;
+	}
+	return WLAN_CRYPTO_CIPHER_NONE;
+}
+qdf_export_symbol(wlan_crypto_get_key_type);
+/**
  * wlan_crypto_vdev_getkey - get key from vdev
  * @vdev: vdev
  * @keyix: keyix
@@ -659,6 +676,7 @@ struct wlan_crypto_key *wlan_crypto_vdev_getkey(struct wlan_objmgr_vdev *vdev,
 						uint16_t keyix){
 	struct wlan_crypto_comp_priv *crypto_priv;
 	struct wlan_crypto_params *crypto_params;
+	struct wlan_crypto_key *key = NULL;
 
 	crypto_params = wlan_crypto_vdev_get_comp_params(vdev, &crypto_priv);
 
@@ -668,10 +686,16 @@ struct wlan_crypto_key *wlan_crypto_vdev_getkey(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (keyix == WLAN_CRYPTO_KEYIX_NONE || keyix >= WLAN_CRYPTO_MAXKEYIDX)
-	       return crypto_priv->key[crypto_priv->def_tx_keyid];
+		key = crypto_priv->key[crypto_priv->def_tx_keyid];
 	else
-	       return crypto_priv->key[keyix];
+		key = crypto_priv->key[keyix];
+
+	if (key && key->valid)
+		return key;
+
+	return NULL;
 }
+qdf_export_symbol(wlan_crypto_vdev_getkey);
 
 /**
  * wlan_crypto_peer_getkey - get key from peer
@@ -686,6 +710,7 @@ struct wlan_crypto_key *wlan_crypto_peer_getkey(struct wlan_objmgr_peer *peer,
 						uint16_t keyix){
 	struct wlan_crypto_comp_priv *crypto_priv;
 	struct wlan_crypto_params *crypto_params;
+	struct wlan_crypto_key *key = NULL;
 
 	crypto_params = wlan_crypto_peer_get_comp_params(peer, &crypto_priv);
 
@@ -695,10 +720,16 @@ struct wlan_crypto_key *wlan_crypto_peer_getkey(struct wlan_objmgr_peer *peer,
 	}
 
 	if (keyix == WLAN_CRYPTO_KEYIX_NONE || keyix >= WLAN_CRYPTO_MAXKEYIDX)
-		return crypto_priv->key[crypto_priv->def_tx_keyid];
+		key = crypto_priv->key[crypto_priv->def_tx_keyid];
 	else
-		return crypto_priv->key[keyix];
+		key = crypto_priv->key[keyix];
+
+	if (key && key->valid)
+		return key;
+
+	return NULL;
 }
+qdf_export_symbol(wlan_crypto_peer_getkey);
 
 /**
  * wlan_crypto_getkey - called by ucfg to get key

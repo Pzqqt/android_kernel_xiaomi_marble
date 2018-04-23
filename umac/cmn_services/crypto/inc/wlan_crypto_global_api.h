@@ -482,6 +482,17 @@ bool wlan_crypto_peer_has_mcastcipher(struct wlan_objmgr_peer *peer,
 					wlan_crypto_cipher_type mcastcipher);
 
 /**
+ * wlan_crypto_get_keytype - get keytype
+ * @key: key
+ *
+ * This function gets keytype from key
+ *
+ * Return: keytype
+ */
+wlan_crypto_cipher_type wlan_crypto_get_key_type(
+						struct wlan_crypto_key *key);
+
+/**
  * wlan_crypto_vdev_getkey - get key from vdev
  * @vdev: vdev
  * @keyix: keyix
