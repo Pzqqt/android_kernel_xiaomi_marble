@@ -226,6 +226,10 @@ static inline void ol_tx_tso_update_stats(struct ol_txrx_pdev_t *pdev,
 }
 #endif
 
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
+bool ol_tx_desc_is_high_prio(qdf_nbuf_t msdu);
+#endif
+
 #if defined(HELIUMPLUS)
 void ol_txrx_dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc);
 #else

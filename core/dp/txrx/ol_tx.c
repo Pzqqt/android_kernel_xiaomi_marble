@@ -553,20 +553,90 @@ struct ol_tx_desc_t *ol_tx_hl_desc_alloc(struct ol_txrx_pdev_t *pdev,
 	}
 	return tx_desc;
 }
-#else
+#elif defined(CONFIG_HL_SUPPORT) && defined(QCA_HL_NETDEV_FLOW_CONTROL)
+bool ol_tx_desc_is_high_prio(qdf_nbuf_t msdu)
+{
+	enum qdf_proto_subtype proto_subtype;
+	bool high_prio = false;
+
+	if (qdf_nbuf_is_ipv4_pkt(msdu) == true) {
+		if ((QDF_NBUF_CB_GET_PACKET_TYPE(msdu) ==
+			QDF_NBUF_CB_PACKET_TYPE_DHCP) ||
+		    (QDF_NBUF_CB_GET_PACKET_TYPE(msdu) ==
+			QDF_NBUF_CB_PACKET_TYPE_EAPOL))
+			high_prio = true;
+	} else if (QDF_NBUF_CB_GET_PACKET_TYPE(msdu) ==
+			QDF_NBUF_CB_PACKET_TYPE_ARP) {
+		high_prio = true;
+	} else if ((QDF_NBUF_CB_GET_PACKET_TYPE(msdu) ==
+		   QDF_NBUF_CB_PACKET_TYPE_ICMPv6)) {
+		proto_subtype = qdf_nbuf_get_icmpv6_subtype(msdu);
+		switch (proto_subtype) {
+		case QDF_PROTO_ICMPV6_NA:
+		case QDF_PROTO_ICMPV6_NS:
+			high_prio = true;
+		default:
+			high_prio = false;
+		}
+	}
+	return high_prio;
+}
 
 static inline
 struct ol_tx_desc_t *ol_tx_hl_desc_alloc(struct ol_txrx_pdev_t *pdev,
-	struct ol_txrx_vdev_t *vdev,
-	qdf_nbuf_t msdu,
-	struct ol_txrx_msdu_info_t *msdu_info)
+					 struct ol_txrx_vdev_t *vdev,
+					 qdf_nbuf_t msdu,
+					 struct ol_txrx_msdu_info_t *msdu_info)
+{
+	struct ol_tx_desc_t *tx_desc =
+		ol_tx_desc_hl(pdev, vdev, msdu, msdu_info);
+
+	if (!tx_desc)
+		return NULL;
+
+	qdf_spin_lock_bh(&pdev->tx_mutex);
+	/* return if TX flow control disabled */
+	if (vdev->tx_desc_limit == 0) {
+		qdf_spin_unlock_bh(&pdev->tx_mutex);
+		return tx_desc;
+	}
+
+	if (!qdf_atomic_read(&vdev->os_q_paused) &&
+	    (qdf_atomic_read(&vdev->tx_desc_count) >= vdev->queue_stop_th)) {
+		/*
+		 * Pause normal priority
+		 * netdev queues if tx desc limit crosses
+		 */
+		pdev->pause_cb(vdev->vdev_id,
+			       WLAN_STOP_NON_PRIORITY_QUEUE,
+			       WLAN_DATA_FLOW_CONTROL);
+		qdf_atomic_set(&vdev->os_q_paused, 1);
+	} else if (ol_tx_desc_is_high_prio(msdu) && !vdev->prio_q_paused &&
+		   (qdf_atomic_read(&vdev->tx_desc_count)
+		    == vdev->tx_desc_limit)) {
+			/* Pause high priority queue */
+		pdev->pause_cb(vdev->vdev_id,
+			       WLAN_NETIF_PRIORITY_QUEUE_OFF,
+			       WLAN_DATA_FLOW_CONTROL_PRIORITY);
+		vdev->prio_q_paused = 1;
+	}
+	qdf_spin_unlock_bh(&pdev->tx_mutex);
+
+	return tx_desc;
+}
+#else
+static inline
+struct ol_tx_desc_t *ol_tx_hl_desc_alloc(struct ol_txrx_pdev_t *pdev,
+					 struct ol_txrx_vdev_t *vdev,
+					 qdf_nbuf_t msdu,
+					 struct ol_txrx_msdu_info_t *msdu_info)
 {
 	struct ol_tx_desc_t *tx_desc = NULL;
 
 	tx_desc = ol_tx_desc_hl(pdev, vdev, msdu, msdu_info);
 	return tx_desc;
 }
-#endif
+#endif /* CONFIG_HL_SUPPORT && QCA_HL_NETDEV_FLOW_CONTROL */
 
 #if defined(CONFIG_HL_SUPPORT)
 

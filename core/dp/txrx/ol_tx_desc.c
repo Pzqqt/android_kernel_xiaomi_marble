@@ -95,7 +95,7 @@ ol_tx_desc_vdev_update(struct ol_tx_desc_t *tx_desc,
 	tx_desc->vdev_id = vdev->vdev_id;
 }
 
-#ifdef CONFIG_PER_VDEV_TX_DESC_POOL
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
 
 /**
  * ol_tx_desc_count_inc() - tx desc count increment for desc allocation.
@@ -279,7 +279,7 @@ ol_tx_desc_alloc_hl(struct ol_txrx_pdev_t *pdev,
 	return tx_desc;
 }
 
-#if defined(CONFIG_PER_VDEV_TX_DESC_POOL) && defined(CONFIG_HL_SUPPORT)
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
 
 /**
  * ol_tx_desc_vdev_rm() - decrement the tx desc count for vdev.

@@ -1117,9 +1117,13 @@ struct ol_txrx_vdev_t {
 	bool hlTdlsFlag;
 #endif
 
-#if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
+#if defined(QCA_HL_NETDEV_FLOW_CONTROL)
 	qdf_atomic_t tx_desc_count;
-#endif
+	int tx_desc_limit;
+	int queue_restart_th;
+	int queue_stop_th;
+	int prio_q_paused;
+#endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 
 	uint16_t wait_on_peer_id;
 	union ol_txrx_align_mac_addr_t last_peer_mac_addr;

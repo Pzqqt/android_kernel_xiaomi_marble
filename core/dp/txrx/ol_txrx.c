@@ -2287,26 +2287,31 @@ static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 	qdf_mem_free(pdev);
 }
 
-#if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
+#if defined(QCA_HL_NETDEV_FLOW_CONTROL)
 
 /**
- * ol_txrx_vdev_tx_desc_cnt_init() - initialise tx descriptor count for vdev
+ * ol_txrx_vdev_per_vdev_tx_desc_init() - initialise per vdev tx desc count
+ * related variables.
  * @vdev: the virtual device object
  *
  * Return: None
  */
 static inline void
-ol_txrx_vdev_tx_desc_cnt_init(struct ol_txrx_vdev_t *vdev)
+ol_txrx_vdev_per_vdev_tx_desc_init(struct ol_txrx_vdev_t *vdev)
 {
 	qdf_atomic_init(&vdev->tx_desc_count);
+	vdev->tx_desc_limit = 0;
+	vdev->queue_restart_th = 0;
+	vdev->prio_q_paused = 0;
+	vdev->queue_stop_th = 0;
 }
 #else
 
 static inline void
-ol_txrx_vdev_tx_desc_cnt_init(struct ol_txrx_vdev_t *vdev)
+ol_txrx_vdev_per_vdev_tx_desc_init(struct ol_txrx_vdev_t *vdev)
 {
 }
-#endif
+#endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 
 /**
  * ol_txrx_vdev_attach - Allocate and initialize the data object
@@ -2349,7 +2354,7 @@ ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
 	vdev->fwd_tx_packets = 0;
 	vdev->fwd_rx_packets = 0;
 
-	ol_txrx_vdev_tx_desc_cnt_init(vdev);
+	ol_txrx_vdev_per_vdev_tx_desc_init(vdev);
 
 	qdf_mem_copy(&vdev->mac_addr.raw[0], vdev_mac_addr,
 		     OL_TXRX_MAC_ADDR_LEN);
