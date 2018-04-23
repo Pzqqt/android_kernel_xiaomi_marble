@@ -326,7 +326,6 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	unsigned long flags;
 	uint64_t ts;
 	int radio = 0;
-	bool log_overflow = false;
 
 #ifdef CONFIG_MCL
 	radio = cds_get_radio_index();
@@ -360,10 +359,9 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 
 	pfilled_length = &gwlan_logging.pcur_node->filled_length;
 
-	/* Check if we can accomodate more log into current node/buffer */
-	if ((MAX_LOGMSG_LENGTH <= (*pfilled_length + sizeof(tAniNlHdr))) ||
-		((MAX_LOGMSG_LENGTH - (*pfilled_length +
-			sizeof(tAniNlHdr))) < total_log_len)) {
+	/* Check if we can accommodate more log into current node/buffer */
+	if ((MAX_LOGMSG_LENGTH - (*pfilled_length +
+			sizeof(tAniNlHdr))) < total_log_len) {
 		wake_up_thread = true;
 		wlan_queue_logmsg_for_app();
 		pfilled_length = &gwlan_logging.pcur_node->filled_length;
@@ -371,30 +369,29 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 
 	ptr = &gwlan_logging.pcur_node->logbuf[sizeof(tAniHdr)];
 
-	/* Assumption here is that we receive logs which is always less than
-	 * MAX_LOGMSG_LENGTH, where we can accomodate the
-	 *   tAniNlHdr + [context][timestamp] + log
-	 *
-	 * Continue and copy logs to the available length and discard the rest.
-	 */
-	if (MAX_LOGMSG_LENGTH < (sizeof(tAniNlHdr) + total_log_len)) {
-		log_overflow = true;
-		total_log_len = MAX_LOGMSG_LENGTH - sizeof(tAniNlHdr) - 2;
+	if (unlikely(MAX_LOGMSG_LENGTH < (sizeof(tAniNlHdr) + total_log_len))) {
+		/*
+		 * Assumption here is that we receive logs which is less than
+		 * MAX_LOGMSG_LENGTH, where we can accommodate the
+		 * tAniNlHdr + [context][timestamp] + log
+		 * If log length is over MAX_LOGMSG_LENGTH,
+		 * the overflow part will be discarded.
+		 */
+		length = MAX_LOGMSG_LENGTH - sizeof(tAniNlHdr) - tlen - 2;
+		/*
+		 * QDF_ASSERT if complete log was not accommodated into
+		 * the available buffer.
+		 */
+		QDF_ASSERT(0);
 	}
 
 	memcpy(&ptr[*pfilled_length], tbuf, tlen);
-	memcpy(&ptr[*pfilled_length + tlen], to_be_sent,
-	       min(length, (total_log_len - tlen)));
-	*pfilled_length += tlen + min(length, total_log_len - tlen);
+	memcpy(&ptr[*pfilled_length + tlen], to_be_sent, length);
+	*pfilled_length += tlen + length;
 	ptr[*pfilled_length] = '\n';
 	*pfilled_length += 1;
 
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, flags);
-	/*
-	 * QDF_ASSERT if complete log was not accomodated into
-	 * the available buffer.
-	 */
-	QDF_ASSERT(!log_overflow);
 
 	/* Wakeup logger thread */
 	if ((true == wake_up_thread)) {
