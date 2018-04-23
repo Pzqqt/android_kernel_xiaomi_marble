@@ -210,6 +210,10 @@ struct hif_softc {
 static inline void *hif_get_hal_handle(void *hif_hdl)
 {
 	struct hif_softc *sc = (struct hif_softc *)hif_hdl;
+
+	if (!sc)
+		return NULL;
+
 	return sc->hal_soc;
 }
 
