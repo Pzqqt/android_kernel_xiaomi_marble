@@ -253,6 +253,16 @@ QDF_STATUS wma_set_tx_rx_aggregation_size
 	(struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size);
 
 /**
+ * wma_set_tx_rx_aggregation_size_per_ac() - set aggregation size per ac
+ * @tx_rx_aggregation_size: the parameter for aggregation size
+ *
+ *  This function try to set the aggregation size per AC.
+ *
+ *  Return: QDF_STATUS enumeration
+ */
+QDF_STATUS wma_set_tx_rx_aggregation_size_per_ac
+	(struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size);
+/**
  * wma_get_sar_limit() - get SAR limits from the target
  * @handle: wma handle
  * @callback: Callback function to invoke with the results

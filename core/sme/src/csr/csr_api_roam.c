@@ -3089,6 +3089,14 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 
 		pMac->roam.configParam.tx_aggregation_size =
 			pParam->tx_aggregation_size;
+		pMac->roam.configParam.tx_aggregation_size_be =
+			pParam->tx_aggregation_size_be;
+		pMac->roam.configParam.tx_aggregation_size_bk =
+			pParam->tx_aggregation_size_bk;
+		pMac->roam.configParam.tx_aggregation_size_vi =
+			pParam->tx_aggregation_size_vi;
+		pMac->roam.configParam.tx_aggregation_size_vo =
+			pParam->tx_aggregation_size_vo;
 		pMac->roam.configParam.rx_aggregation_size =
 			pParam->rx_aggregation_size;
 		pMac->roam.configParam.enable_bcast_probe_rsp =
@@ -3418,6 +3426,14 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.sta_roam_policy.skip_unsafe_channels;
 	pParam->tx_aggregation_size =
 		pMac->roam.configParam.tx_aggregation_size;
+	pParam->tx_aggregation_size_be =
+		pMac->roam.configParam.tx_aggregation_size_be;
+	pParam->tx_aggregation_size_bk =
+		pMac->roam.configParam.tx_aggregation_size_bk;
+	pParam->tx_aggregation_size_vi =
+		pMac->roam.configParam.tx_aggregation_size_vi;
+	pParam->tx_aggregation_size_vo =
+		pMac->roam.configParam.tx_aggregation_size_vo;
 	pParam->rx_aggregation_size =
 		pMac->roam.configParam.rx_aggregation_size;
 	pParam->enable_bcast_probe_rsp =
@@ -16723,6 +16739,14 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 	add_sta_self_req->nss_5g = nss_5g;
 	add_sta_self_req->tx_aggregation_size =
 			pMac->roam.configParam.tx_aggregation_size;
+	add_sta_self_req->tx_aggregation_size_be =
+			pMac->roam.configParam.tx_aggregation_size_be;
+	add_sta_self_req->tx_aggregation_size_bk =
+			pMac->roam.configParam.tx_aggregation_size_bk;
+	add_sta_self_req->tx_aggregation_size_vi =
+			pMac->roam.configParam.tx_aggregation_size_vi;
+	add_sta_self_req->tx_aggregation_size_vo =
+			pMac->roam.configParam.tx_aggregation_size_vo;
 	add_sta_self_req->rx_aggregation_size =
 			pMac->roam.configParam.rx_aggregation_size;
 	add_sta_self_req->enable_bcast_probe_rsp =
