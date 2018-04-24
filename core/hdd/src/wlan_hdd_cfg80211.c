@@ -3344,6 +3344,15 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 					  QCA_WLAN_VENDOR_FEATURE_OCE_STA_CFON);
 
+	/* Check the kernel version for upstream commit aced43ce780dc5 that
+	 * has support for processing user cell_base hints when wiphy is
+	 * self managed or check the backport flag for the same.
+	 */
+#if defined CFG80211_USER_HINT_CELL_BASE_SELF_MANAGED || \
+	    (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
+	wlan_hdd_cfg80211_set_feature(feature_flags,
+			QCA_WLAN_VENDOR_FEATURE_SELF_MANAGED_REGULATORY);
+#endif
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(feature_flags) +
 			NLMSG_HDRLEN);
 

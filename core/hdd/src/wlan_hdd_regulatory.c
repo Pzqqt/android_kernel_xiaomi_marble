@@ -31,6 +31,7 @@
 #include "cds_regdomain.h"
 #include "cds_utils.h"
 #include "pld_common.h"
+#include <net/cfg80211.h>
 
 #define REG_RULE_2412_2462    REG_RULE(2412-10, 2462+10, 40, 0, 20, 0)
 
@@ -1069,8 +1070,9 @@ static void fill_wiphy_channel(struct ieee80211_channel *wiphy_chan,
 		wiphy_chan->flags |= IEEE80211_CHAN_NO_80MHZ;
 	if (cur_chan->max_bw < 160)
 		wiphy_chan->flags |= IEEE80211_CHAN_NO_160MHZ;
-}
 
+	wiphy_chan->orig_flags = wiphy_chan->flags;
+}
 
 static void fill_wiphy_band_channels(struct wiphy *wiphy,
 				     struct regulatory_channel *cur_chan_list,
@@ -1190,6 +1192,91 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 }
 #endif
 
+#if defined CFG80211_USER_HINT_CELL_BASE_SELF_MANAGED || \
+	    (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
+static void map_nl_reg_rule_flags(uint16_t drv_reg_rule_flag,
+				  uint32_t *regd_rule_flag)
+{
+	if (drv_reg_rule_flag & REGULATORY_CHAN_NO_IR)
+		*regd_rule_flag |= NL80211_RRF_NO_IR;
+	if (drv_reg_rule_flag & REGULATORY_CHAN_RADAR)
+		*regd_rule_flag |= NL80211_RRF_DFS;
+	if (drv_reg_rule_flag & REGULATORY_CHAN_INDOOR_ONLY)
+		*regd_rule_flag |= NL80211_RRF_NO_OUTDOOR;
+	if (drv_reg_rule_flag & REGULATORY_CHAN_NO_OFDM)
+		*regd_rule_flag |= NL80211_RRF_NO_OFDM;
+}
+
+void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx)
+{
+	struct ieee80211_regdomain *regd;
+	struct ieee80211_reg_rule *regd_rules;
+	struct reg_rule_info *reg_rules;
+	uint8_t i;
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return;
+	}
+	reg_rules = ucfg_reg_get_regd_rules(hdd_ctx->hdd_pdev);
+	if (!reg_rules) {
+		hdd_err("reg_rules is NULL");
+		return;
+	}
+	if (!reg_rules->num_of_reg_rules) {
+		hdd_err("no reg rules %d", reg_rules->num_of_reg_rules);
+		return;
+	}
+	if (!reg_rules->reg_rules_ptr) {
+		hdd_err("reg_rules_ptr is NULL");
+		return;
+	}
+	regd = qdf_mem_malloc((reg_rules->num_of_reg_rules *
+				sizeof(*regd_rules) + sizeof(*regd)));
+	if (!regd) {
+		hdd_err("mem alloc failed for reg rules");
+		return;
+	}
+	regd->n_reg_rules = reg_rules->num_of_reg_rules;
+	qdf_mem_copy(regd->alpha2, reg_rules->alpha2, REG_ALPHA2_LEN + 1);
+	if ((reg_rules->dfs_region == DFS_CN_REG) ||
+	    (reg_rules->dfs_region == DFS_KR_REG) ||
+	    (reg_rules->dfs_region == DFS_UNDEF_REG))
+		regd->dfs_region = NL80211_DFS_UNSET;
+	else
+		regd->dfs_region = reg_rules->dfs_region;
+	regd_rules = regd->reg_rules;
+	hdd_debug("Regulatory Domain %s", regd->alpha2);
+	hdd_debug("start freq\tend freq\t@ max_bw\tant_gain\tpwr\tflags");
+	for (i = 0; i < reg_rules->num_of_reg_rules; i++) {
+		regd_rules[i].freq_range.start_freq_khz =
+			reg_rules->reg_rules_ptr[i].start_freq * 1000;
+		regd_rules[i].freq_range.end_freq_khz =
+			reg_rules->reg_rules_ptr[i].end_freq * 1000;
+		regd_rules[i].freq_range.max_bandwidth_khz =
+			reg_rules->reg_rules_ptr[i].max_bw * 1000;
+		regd_rules[i].power_rule.max_antenna_gain =
+			reg_rules->reg_rules_ptr[i].ant_gain * 100;
+		regd_rules[i].power_rule.max_eirp =
+			reg_rules->reg_rules_ptr[i].reg_power * 100;
+		map_nl_reg_rule_flags(reg_rules->reg_rules_ptr[i].flags,
+				      &regd_rules[i].flags);
+		hdd_debug("%d KHz\t%d KHz\t@ %d KHz\t%d\t\t%d\t%d",
+			  regd_rules[i].freq_range.start_freq_khz,
+			  regd_rules[i].freq_range.end_freq_khz,
+			  regd_rules[i].freq_range.max_bandwidth_khz,
+			  regd_rules[i].power_rule.max_antenna_gain,
+			  regd_rules[i].power_rule.max_eirp,
+			  regd_rules[i].flags);
+	}
+	rtnl_lock();
+	regulatory_set_wiphy_regd_sync_rtnl(hdd_ctx->wiphy, regd);
+	rtnl_unlock();
+	hdd_debug("regd sync event sent with reg rules info");
+	qdf_mem_free(regd);
+}
+#endif
+
 static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_objmgr_pdev *pdev,
 				   struct regulatory_channel *chan_list,
@@ -1215,8 +1302,18 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_copy(hdd_ctx->reg.alpha2, alpha2, REG_ALPHA2_LEN + 1);
 	sme_set_cc_src(hdd_ctx->hHal, cc_src);
 
+	/* Check the kernel version for upstream commit aced43ce780dc5 that
+	 * has support for processing user cell_base hints when wiphy is
+	 * self managed or check the backport flag for the same.
+	 */
+#if defined CFG80211_USER_HINT_CELL_BASE_SELF_MANAGED || \
+	    (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
+	if (wiphy->registered)
+		hdd_send_wiphy_regd_sync_event(hdd_ctx);
+#endif
 	sme_generic_change_country_code(hdd_ctx->hHal,
 					hdd_ctx->reg.alpha2);
+
 	if (avoid_freq_ind)
 		hdd_ch_avoid_ind(hdd_ctx, &avoid_freq_ind->chan_list,
 				&avoid_freq_ind->freq_list);
@@ -1231,15 +1328,24 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
 
 	reg_program_config_vars(hdd_ctx, &config_vars);
-	ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
-
 	ucfg_reg_register_chan_change_callback(hdd_ctx->hdd_psoc,
 					       hdd_regulatory_dyn_cbk,
 					       NULL);
 
+	ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
+
 	wiphy->regulatory_flags |= REGULATORY_WIPHY_SELF_MANAGED;
+	/* Check the kernel version for upstream commit aced43ce780dc5 that
+	 * has support for processing user cell_base hints when wiphy is
+	 * self managed or check the backport flag for the same.
+	 */
+#if defined CFG80211_USER_HINT_CELL_BASE_SELF_MANAGED || \
+	    (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
+	wiphy->features |= NL80211_FEATURE_CELL_BASE_REG_HINTS;
+#endif
 	wiphy->reg_notifier = hdd_reg_notifier;
 	offload_enabled = ucfg_reg_is_regdb_offloaded(hdd_ctx->hdd_psoc);
+	hdd_debug("regulatory offload_enabled %d", offload_enabled);
 	if (offload_enabled) {
 		hdd_ctx->reg_offload = true;
 		ucfg_reg_get_current_chan_list(hdd_ctx->hdd_pdev,
