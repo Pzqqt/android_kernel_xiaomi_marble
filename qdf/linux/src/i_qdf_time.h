@@ -36,7 +36,9 @@
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/ktime.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
 #include <linux/timekeeping.h>
+#endif
 #ifdef MSM_PLATFORM
 #include <asm/arch_timer.h>
 #endif
@@ -304,5 +306,29 @@ static inline uint64_t __qdf_get_log_timestamp(void)
 	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 }
 #endif /* QCA_WIFI_3_0_ADRASTEA */
+
+/**
+ * __qdf_get_bootbased_boottime_ns() - Get the bootbased time in nanoseconds
+ *
+ * __qdf_get_bootbased_boottime_ns() function returns the number of nanoseconds
+ * that have elapsed since the system was booted. It also includes the time when
+ * system was suspended.
+ *
+ * Return:
+ * The time since system booted in nanoseconds
+ */
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
+static inline uint64_t __qdf_get_bootbased_boottime_ns(void)
+{
+	return ktime_get_boot_ns();
+}
+
+#else
+static inline uint64_t __qdf_get_bootbased_boottime_ns(void)
+{
+	return ktime_to_ns(ktime_get_boottime());
+}
+#endif
 
 #endif

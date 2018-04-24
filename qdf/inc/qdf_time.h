@@ -168,18 +168,10 @@ static inline qdf_time_t qdf_get_system_uptime(void)
  * The time since system booted in nanoseconds
  */
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 10, 0))
-static inline s64 qdf_get_bootbased_boottime_ns(void)
+static inline uint64_t qdf_get_bootbased_boottime_ns(void)
 {
-	return ktime_get_boot_ns();
+	return __qdf_get_bootbased_boottime_ns();
 }
-
-#else
-static inline s64 qdf_get_bootbased_boottime_ns(void)
-{
-	return ktime_to_ns(ktime_get_boottime());
-}
-#endif
 
 /**
  * qdf_get_system_timestamp - Return current timestamp
