@@ -4425,25 +4425,25 @@ static int msm_get_pinctrl(struct platform_device *pdev)
 
 	/* get all the states handles from Device Tree */
 	pinctrl_info->mi2s_disable = pinctrl_lookup_state(pinctrl,
-						"quat-mi2s-sleep");
+						"quat_mi2s_disable");
 	if (IS_ERR(pinctrl_info->mi2s_disable)) {
 		pr_err("%s: could not get mi2s_disable pinstate\n", __func__);
 		goto err;
 	}
 	pinctrl_info->mi2s_active = pinctrl_lookup_state(pinctrl,
-						"quat-mi2s-active");
+						"quat_mi2s_enable");
 	if (IS_ERR(pinctrl_info->mi2s_active)) {
 		pr_err("%s: could not get mi2s_active pinstate\n", __func__);
 		goto err;
 	}
 	pinctrl_info->tdm_disable = pinctrl_lookup_state(pinctrl,
-						"quat-tdm-sleep");
+						"quat_tdm_disable");
 	if (IS_ERR(pinctrl_info->tdm_disable)) {
 		pr_err("%s: could not get tdm_disable pinstate\n", __func__);
 		goto err;
 	}
 	pinctrl_info->tdm_active = pinctrl_lookup_state(pinctrl,
-						"quat-tdm-active");
+						"quat_tdm_enable");
 	if (IS_ERR(pinctrl_info->tdm_active)) {
 		pr_err("%s: could not get tdm_active pinstate\n",
 			__func__);
