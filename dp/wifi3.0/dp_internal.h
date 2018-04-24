@@ -542,7 +542,7 @@ static inline int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	return 0;
 }
 static inline QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
-		uint32_t stats_type_upload_mask, uint8_t mac_id);
+		uint32_t stats_type_upload_mask, uint8_t mac_id)
 {
 	return 0;
 }

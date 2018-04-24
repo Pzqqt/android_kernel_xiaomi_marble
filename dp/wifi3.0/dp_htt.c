@@ -2663,7 +2663,7 @@ int htt_soc_attach_target(void *htt_soc)
  * @msg_word:    Pointer to payload
  * @htt_t2h_msg: HTT msg nbuf
  *
- * Return: None
+ * Return: True if buffer should be freed by caller.
  */
 static bool
 dp_ppdu_stats_ind_handler(struct htt_soc *soc,
@@ -2685,9 +2685,12 @@ dp_ppdu_stats_ind_handler(struct htt_soc *soc,
 	return free_buf;
 }
 #else
+static bool
 dp_ppdu_stats_ind_handler(struct htt_soc *soc,
+				uint32_t *msg_word,
 				qdf_nbuf_t htt_t2h_msg)
 {
+	return true;
 }
 #endif
 
