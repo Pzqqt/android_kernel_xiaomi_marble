@@ -2971,6 +2971,8 @@ enum qca_wlan_vendor_attr_nd_offload {
  *	QCA_WLAN_VENDOR_FEATURE_OCE_AP, the userspace shall assume that
  *	this Device may not support all OCE AP functionalities but can support
  *	only OCE STA-CFON functionalities.
+ * @QCA_WLAN_VENDOR_FEATURE_SELF_MANAGED_REGULATORY: Device supports self
+ *	managed regulatory.
  */
 enum qca_wlan_vendor_features {
 	QCA_WLAN_VENDOR_FEATURE_KEY_MGMT_OFFLOAD = 0,
@@ -2980,6 +2982,7 @@ enum qca_wlan_vendor_features {
 	QCA_WLAN_VENDOR_FEATURE_OCE_STA = 4,
 	QCA_WLAN_VENDOR_FEATURE_OCE_AP = 5,
 	QCA_WLAN_VENDOR_FEATURE_OCE_STA_CFON = 6,
+	QCA_WLAN_VENDOR_FEATURE_SELF_MANAGED_REGULATORY = 7,
 	/* Additional features need to be added above this */
 	NUM_QCA_WLAN_VENDOR_FEATURES
 };

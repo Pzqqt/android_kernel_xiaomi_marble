@@ -344,6 +344,22 @@ void reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 			       uint8_t *alpha2,
 			       enum dfs_reg dfs_region);
 
+/**
+ * reg_get_regd_rules() - provides the reg domain rules info
+ * @pdev: pdev pointer
+ *
+ * Return: reg_rule_info pointer
+ */
+struct reg_rule_info *reg_get_regd_rules(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_reset_reg_rules() - provides the reg domain rules info
+ * @reg_rules: reg rules pointer
+ *
+ * Return: None
+ */
+void reg_reset_reg_rules(struct reg_rule_info *reg_rules);
+
 QDF_STATUS reg_program_default_cc(struct wlan_objmgr_pdev *pdev,
 				  uint16_t regdmn);
 

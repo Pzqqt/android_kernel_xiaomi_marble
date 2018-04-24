@@ -736,6 +736,20 @@ struct cur_regulatory_info {
 };
 
 /**
+ * struct reg_rule_info
+ * @alpha2: alpha2 of reg rules
+ * @dfs_region: dfs region
+ * @num_of_reg_rules: number of reg rules
+ * @reg_rules_ptr: regulatory rules pointer
+ */
+struct reg_rule_info {
+	uint8_t alpha2[REG_ALPHA2_LEN + 1];
+	enum dfs_reg dfs_region;
+	uint8_t num_of_reg_rules;
+	struct cur_reg_rule *reg_rules_ptr;
+};
+
+/**
  * enum band_info
  * @BAND_ALL:all bands
  * @BAND_2G: 2G band
@@ -828,6 +842,7 @@ enum direction {
  * @def_country_code: default country code
  * @reg_dmn_pair: reg domain pair
  * @ctry_code: country code
+ * @reg_rules: regulatory rules
  */
 struct mas_chan_params {
 	enum dfs_reg dfs_region;
@@ -839,6 +854,7 @@ struct mas_chan_params {
 	uint16_t def_country_code;
 	uint16_t reg_dmn_pair;
 	uint16_t ctry_code;
+	struct reg_rule_info reg_rules;
 };
 
 /**

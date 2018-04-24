@@ -108,6 +108,7 @@ struct wlan_regulatory_pdev_priv_obj {
 	struct ch_avoid_ind_type freq_avoid_list;
 	bool force_ssc_disable_indoor_channel;
 	bool sap_state;
+	struct reg_rule_info reg_rules;
 };
 
 #endif

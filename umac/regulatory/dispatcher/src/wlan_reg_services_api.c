@@ -377,6 +377,8 @@ QDF_STATUS regulatory_psoc_open(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+	uint8_t i;
 
 	tx_ops = reg_get_psoc_tx_ops(psoc);
 	if (tx_ops->unregister_11d_new_cc_handler)
@@ -385,6 +387,15 @@ QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc)
 		tx_ops->unregister_master_handler(psoc, NULL);
 	if (tx_ops->unregister_ch_avoid_event_handler)
 		tx_ops->unregister_ch_avoid_event_handler(psoc, NULL);
+
+	soc_reg = reg_get_psoc_obj(psoc);
+
+	if (!soc_reg) {
+		reg_err("reg psoc private obj is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
+	for (i = 0; i < PSOC_MAX_PHY_REG_CAP; i++)
+		reg_reset_reg_rules(&soc_reg->mas_chan_params[i].reg_rules);
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -220,6 +220,14 @@ void ucfg_reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 				    enum dfs_reg dfs_region);
 
 /**
+ * ucfg_reg_get_regd_rules() - provides the reg domain rules info pointer
+ * @pdev: pdev ptr
+ *
+ * Return: reg_rule_info pointer
+ */
+struct reg_rule_info *ucfg_reg_get_regd_rules(struct wlan_objmgr_pdev *pdev);
+
+/**
  * ucfg_reg_register_chan_change_callback () - add chan change cbk
  * @psoc: psoc ptr
  * @cbk: callback

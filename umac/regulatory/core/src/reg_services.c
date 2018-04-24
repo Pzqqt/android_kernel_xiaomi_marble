@@ -2496,7 +2496,7 @@ skip_ch_avoid_ind:
 		qdf_spin_unlock_bh(&psoc_priv_obj->cbk_list_lock);
 		if (callback != NULL)
 			callback(psoc, pdev, cur_chan_list, avoid_freq_ind,
-					cbk_list[ctr].arg);
+				 cbk_list[ctr].arg);
 	}
 	qdf_mem_free(cur_chan_list);
 	if (avoid_freq_ind)
@@ -2745,6 +2745,44 @@ static QDF_STATUS reg_sched_11d_msg(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
+void reg_reset_reg_rules(struct reg_rule_info *reg_rules)
+{
+	if (reg_rules->reg_rules_ptr)
+		qdf_mem_free(reg_rules->reg_rules_ptr);
+	qdf_mem_zero(reg_rules, sizeof(*reg_rules));
+}
+
+static void reg_save_reg_rules_to_pdev(struct reg_rule_info *psoc_reg_rules,
+				       struct wlan_regulatory_pdev_priv_obj
+				       *pdev_priv_obj)
+{
+	uint32_t reg_rule_len;
+	struct reg_rule_info *pdev_reg_rules;
+
+	pdev_reg_rules = &pdev_priv_obj->reg_rules;
+	reg_reset_reg_rules(pdev_reg_rules);
+	pdev_reg_rules->num_of_reg_rules = psoc_reg_rules->num_of_reg_rules;
+	if (!pdev_reg_rules->num_of_reg_rules) {
+		reg_debug("no reg rules in psoc");
+		return;
+	}
+	reg_rule_len = pdev_reg_rules->num_of_reg_rules *
+		       sizeof(struct cur_reg_rule);
+	pdev_reg_rules->reg_rules_ptr = qdf_mem_malloc(reg_rule_len);
+	if (!pdev_reg_rules->reg_rules_ptr) {
+		reg_err("mem alloc failed for pdev reg rules");
+		return;
+	}
+	qdf_mem_copy(pdev_reg_rules->reg_rules_ptr,
+		     psoc_reg_rules->reg_rules_ptr,
+		     reg_rule_len);
+	qdf_mem_copy(pdev_reg_rules->alpha2, pdev_priv_obj->current_country,
+		     REG_ALPHA2_LEN + 1);
+	pdev_reg_rules->dfs_region = pdev_priv_obj->dfs_region;
+	reg_debug("num pdev reg rules saved %d",
+		  pdev_reg_rules->num_of_reg_rules);
+}
+
 static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 						void *object, void *arg)
 {
@@ -2754,6 +2792,7 @@ static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 	enum direction *dir = arg;
 	uint32_t pdev_id;
 	struct wlan_lmac_if_reg_tx_ops *reg_tx_ops;
+	struct reg_rule_info *psoc_reg_rules;
 
 	psoc_priv_obj = (struct wlan_regulatory_psoc_priv_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
@@ -2774,7 +2813,8 @@ static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	reg_init_pdev_mas_chan_list(pdev_priv_obj,
 		      &psoc_priv_obj->mas_chan_params[pdev_id]);
-
+	psoc_reg_rules = &psoc_priv_obj->mas_chan_params[pdev_id].reg_rules;
+	reg_save_reg_rules_to_pdev(psoc_reg_rules, pdev_priv_obj);
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
 	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
@@ -2832,6 +2872,7 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	uint8_t phy_id;
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+	struct reg_rule_info *reg_rules;
 
 	reg_debug("process reg master chan list");
 
@@ -2918,6 +2959,30 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	reg_update_max_bw_per_rule(num_5g_reg_rules,
 			       reg_rule_5g, max_bw_5g);
 
+	reg_rules = &soc_reg->mas_chan_params[phy_id].reg_rules;
+	reg_reset_reg_rules(reg_rules);
+
+	reg_rules->num_of_reg_rules = num_5g_reg_rules + num_2g_reg_rules;
+
+	if (reg_rules->num_of_reg_rules) {
+		reg_rules->reg_rules_ptr =
+			qdf_mem_malloc(reg_rules->num_of_reg_rules *
+					sizeof(struct cur_reg_rule));
+		if (!reg_rules->reg_rules_ptr) {
+			reg_err("mem alloc failed for reg_rules");
+		} else {
+			if (num_2g_reg_rules)
+				qdf_mem_copy(reg_rules->reg_rules_ptr,
+					     reg_rule_2g, num_2g_reg_rules *
+					     sizeof(struct cur_reg_rule));
+			if (num_5g_reg_rules)
+				qdf_mem_copy(reg_rules->reg_rules_ptr +
+					     num_2g_reg_rules, reg_rule_5g,
+					     num_5g_reg_rules *
+					     sizeof(struct cur_reg_rule));
+		}
+	}
+
 	if (num_5g_reg_rules != 0)
 		reg_do_auto_bw_correction(num_5g_reg_rules,
 				      reg_rule_5g, max_bw_5g);
@@ -2979,6 +3044,7 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	if (pdev != NULL) {
 		reg_propagate_mas_chan_list_to_pdev(psoc, pdev, &dir);
 		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
+		reg_reset_reg_rules(reg_rules);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -3277,6 +3343,7 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	uint32_t range_2g_low, range_2g_high;
 	uint32_t range_5g_low, range_5g_high;
 	QDF_STATUS status;
+	struct reg_rule_info *psoc_reg_rules;
 
 	pdev_priv_obj = qdf_mem_malloc(sizeof(*pdev_priv_obj));
 	if (NULL == pdev_priv_obj) {
@@ -3343,6 +3410,11 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
+	psoc_reg_rules = &psoc_priv_obj->mas_chan_params[pdev_id].reg_rules;
+	reg_save_reg_rules_to_pdev(psoc_reg_rules, pdev_priv_obj);
+
+	reg_reset_reg_rules(psoc_reg_rules);
+
 	status = wlan_objmgr_pdev_component_obj_attach(pdev,
 						     WLAN_UMAC_COMP_REGULATORY,
 						     pdev_priv_obj,
@@ -3377,6 +3449,7 @@ QDF_STATUS wlan_regulatory_pdev_obj_destroyed_notification(
 
 	reg_debug("reg pdev obj deleted with status %d", status);
 
+	reg_reset_reg_rules(&pdev_priv_obj->reg_rules);
 	qdf_mem_free(pdev_priv_obj);
 
 	return status;
@@ -3898,6 +3971,24 @@ QDF_STATUS reg_program_default_cc(struct wlan_objmgr_pdev *pdev,
 	qdf_mem_free(reg_info);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+struct reg_rule_info *reg_get_regd_rules(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	if (!pdev) {
+		reg_err("pdev is NULL");
+		return NULL;
+	}
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!pdev_priv_obj) {
+		reg_err("pdev priv obj is NULL");
+		return NULL;
+	}
+
+	return &pdev_priv_obj->reg_rules;
 }
 
 QDF_STATUS reg_program_chan_list(struct wlan_objmgr_pdev *pdev,
