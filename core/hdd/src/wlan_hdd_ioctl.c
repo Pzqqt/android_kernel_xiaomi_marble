@@ -5151,7 +5151,7 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	}
 
 	/* Success ! */
-	hdd_debug("%s", priv_data->buf);
+	hdd_debug("%s", extra);
 	ret = 0;
 
 exit:
