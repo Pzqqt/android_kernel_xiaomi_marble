@@ -38,17 +38,20 @@
 /**
  * enum wlan_cp_stats_cfg_state - State of Object configuration to
  * indicate whether object has to be attached/detached in cp stats
- * @WLAN_OBJ_DETACH:	Object has to be detached
- * @WLAN_OBJ_ATTACH:	Object has to be attached
+ * @WLAN_CP_STATS_OBJ_DETACH: Object has to be detached
+ * @WLAN_CP_STATS_OBJ_ATTACH: Object has to be attached
+ * @WLAN_CP_STATS_OBJ_INVALID: Object is invalid
  */
 enum wlan_cp_stats_cfg_state {
 	WLAN_CP_STATS_OBJ_DETACH = 0,
 	WLAN_CP_STATS_OBJ_ATTACH = 1,
+	WLAN_CP_STATS_OBJ_INVALID
 };
 
 /**
  * enum wlan_cp_stats_comp_id - component id for other umac components
- * @WLAN_CP_STATS_ATF:	ATF component specific id
+ * @WLAN_CP_STATS_ATF: ATF component specific id
+ * @WLAN_CP_STATS_MAX_COMPONENTS : Max id of cp stats components
  */
 enum wlan_cp_stats_comp_id {
 	WLAN_CP_STATS_ATF = 0,
@@ -122,7 +125,8 @@ QDF_STATUS wlan_cp_stats_enable(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS wlan_cp_stats_disable(struct wlan_objmgr_psoc *psoc);
 
 /**
- * wlan_cp_stats_comp_obj_configure() - public API to attach/deattach umac
+ * wlan_cp_stats_comp_obj_cfg() - public API to umac for
+ * attach/detach
  * component specific stat obj to cp stats obj
  * @obj_type: common object type
  * @cfg_state: config state either to attach of detach
@@ -132,7 +136,7 @@ QDF_STATUS wlan_cp_stats_disable(struct wlan_objmgr_psoc *psoc);
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
-QDF_STATUS wlan_cp_stats_comp_obj_configure(
+QDF_STATUS wlan_cp_stats_comp_obj_cfg(
 		enum wlan_objmgr_obj_type obj_type,
 		enum wlan_cp_stats_cfg_state cfg_state,
 		enum wlan_umac_comp_id comp_id,

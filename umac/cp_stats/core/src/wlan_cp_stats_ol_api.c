@@ -29,8 +29,6 @@
 #include "wlan_cp_stats_ol_api.h"
 #include "wlan_cp_stats_cmn_api_i.h"
 #include <wlan_cp_stats_ucfg_api.h>
-
-#include "wlan_cp_stats_ic_ucfg_handler.h"
 #include <wlan_cp_stats_utils_api.h>
 #include <target_if_cp_stats.h>
 

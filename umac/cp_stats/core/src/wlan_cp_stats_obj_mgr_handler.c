@@ -28,6 +28,7 @@
 #include "wlan_cp_stats_defs.h"
 #include "wlan_cp_stats_ol_api.h"
 #include "wlan_cp_stats_defs.h"
+#include <wlan_cp_stats_ucfg_api.h>
 #include "wlan_cp_stats_utils_api.h"
 
 QDF_STATUS
@@ -88,8 +89,9 @@ wlan_cp_stats_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 	}
 
 	status = wlan_objmgr_psoc_component_obj_attach(psoc,
-					WLAN_UMAC_COMP_CP_STATS, csc,
-					QDF_STATUS_SUCCESS);
+						       WLAN_UMAC_COMP_CP_STATS,
+						       csc,
+						       QDF_STATUS_SUCCESS);
 
 wlan_cp_stats_psoc_obj_create_handler_return:
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -125,14 +127,14 @@ wlan_cp_stats_psoc_obj_destroy_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 		return QDF_STATUS_E_NOMEM;
 	}
 	csc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
-				WLAN_UMAC_COMP_CP_STATS);
+						    WLAN_UMAC_COMP_CP_STATS);
 	if (!csc) {
 		cp_stats_err("cp_stats context is NULL!");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	wlan_objmgr_psoc_component_obj_detach(psoc,
-			WLAN_UMAC_COMP_CP_STATS, csc);
+					      WLAN_UMAC_COMP_CP_STATS, csc);
 	if (csc->cp_stats_psoc_obj_deinit)
 		csc->cp_stats_psoc_obj_deinit(csc->psoc_cs);
 	qdf_mem_free(csc->psoc_cs);
@@ -179,8 +181,9 @@ wlan_cp_stats_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 	}
 
 	status = wlan_objmgr_pdev_component_obj_attach(pdev,
-				WLAN_UMAC_COMP_CP_STATS, pdev_cs,
-				QDF_STATUS_SUCCESS);
+						       WLAN_UMAC_COMP_CP_STATS,
+						       pdev_cs,
+						       QDF_STATUS_SUCCESS);
 
 	cp_stats_debug("pdev cp stats object attached");
 wlan_cp_stats_pdev_obj_create_handler_return:
@@ -209,7 +212,7 @@ wlan_cp_stats_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 	}
 
 	pdev_cs = wlan_objmgr_pdev_get_comp_private_obj(pdev,
-					WLAN_UMAC_COMP_CP_STATS);
+						WLAN_UMAC_COMP_CP_STATS);
 	if (!pdev_cs) {
 		cp_stats_err("pdev is NULL");
 		return QDF_STATUS_E_INVAL;
@@ -224,7 +227,7 @@ wlan_cp_stats_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 		csc->cp_stats_pdev_obj_deinit(pdev_cs);
 
 	wlan_objmgr_pdev_component_obj_detach(pdev, WLAN_UMAC_COMP_CP_STATS,
-						pdev_cs);
+					      pdev_cs);
 
 	qdf_mem_free(pdev_cs);
 	cp_stats_debug("pdev cp stats object dettached");
@@ -266,8 +269,9 @@ wlan_cp_stats_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev, void *arg)
 	}
 
 	status = wlan_objmgr_vdev_component_obj_attach(vdev,
-				WLAN_UMAC_COMP_CP_STATS, vdev_cs,
-				QDF_STATUS_SUCCESS);
+						       WLAN_UMAC_COMP_CP_STATS,
+						       vdev_cs,
+						       QDF_STATUS_SUCCESS);
 
 wlan_cp_stats_vdev_obj_create_handler_return:
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -296,7 +300,7 @@ wlan_cp_stats_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev, void *arg)
 	}
 
 	vdev_cs = wlan_objmgr_vdev_get_comp_private_obj(vdev,
-					WLAN_UMAC_COMP_CP_STATS);
+						WLAN_UMAC_COMP_CP_STATS);
 	if (!vdev_cs) {
 		cp_stats_err("vdev is NULL");
 		return QDF_STATUS_E_INVAL;
@@ -311,7 +315,7 @@ wlan_cp_stats_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev, void *arg)
 		csc->cp_stats_vdev_obj_deinit(vdev_cs);
 
 	wlan_objmgr_vdev_component_obj_detach(vdev, WLAN_UMAC_COMP_CP_STATS,
-						vdev_cs);
+					      vdev_cs);
 
 	qdf_mem_free(vdev_cs);
 	cp_stats_debug("vdev cp stats object dettach");
@@ -353,8 +357,9 @@ wlan_cp_stats_peer_obj_create_handler(struct wlan_objmgr_peer *peer, void *arg)
 	}
 
 	status = wlan_objmgr_peer_component_obj_attach(peer,
-				WLAN_UMAC_COMP_CP_STATS, peer_cs,
-				QDF_STATUS_SUCCESS);
+						       WLAN_UMAC_COMP_CP_STATS,
+						       peer_cs,
+						       QDF_STATUS_SUCCESS);
 
 wlan_cp_stats_peer_obj_create_handler_return:
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -383,7 +388,7 @@ wlan_cp_stats_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg)
 	}
 
 	peer_cs = wlan_objmgr_peer_get_comp_private_obj(peer,
-					WLAN_UMAC_COMP_CP_STATS);
+						WLAN_UMAC_COMP_CP_STATS);
 	if (!peer_cs) {
 		cp_stats_err("peer is NULL");
 		return QDF_STATUS_E_INVAL;
@@ -398,7 +403,7 @@ wlan_cp_stats_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg)
 		csc->cp_stats_peer_obj_deinit(peer_cs);
 
 	wlan_objmgr_peer_component_obj_detach(peer, WLAN_UMAC_COMP_CP_STATS,
-						peer_cs);
+					      peer_cs);
 
 	qdf_mem_free(peer_cs);
 	cp_stats_debug("peer cp stats object dettached");

@@ -17,28 +17,17 @@
  */
 
 /**
- * DOC: wlan_cp_stats_ic_arpdbg_defs.h
+ * DOC: wlan_cp_stats_ic_ucfg_api.h
  *
- * This header file provide structure definitions for arp dbg stats
  */
 
-#ifndef __WLAN_CP_STATS_IC_ARPDBG_DEFS_H__
-#define __WLAN_CP_STATS_IC_ARPDBG_DEFS_H__
+#ifndef __WLAN_CP_STATS_IC_UCFG_API_H__
+#define __WLAN_CP_STATS_IC_UCFG_API_H__
+
 #ifdef QCA_SUPPORT_CP_STATS
-
-/**
- * struct arp_dbg_stats - defines arp debug stats
- * @tx_arp_req_count: tx arp req count
- * @tx_arp_resp_count: tx arp response count
- * @rx_arp_req_count: rx arp req count
- * @rx_arp_resp_count: rx arp response count
- */
-struct arp_dbg_stats {
-	uint32_t	tx_arp_req_count; /* tx arp request counters */
-	uint32_t	rx_arp_req_count; /* rx arp request counters  */
-	uint32_t	tx_arp_resp_count; /* tx arp response counters  */
-	uint32_t	rx_arp_resp_count; /* rx arp response counters  */
-};
+#include <wlan_objmgr_cmn.h>
+#include <wlan_cp_stats_ic_defs.h>
+#include "../../core/src/wlan_cp_stats_defs.h"
 
 #endif /* QCA_SUPPORT_CP_STATS */
-#endif /* __WLAN_CP_STATS_IC_ARPDBG_DEFS_H__ */
+#endif /* __WLAN_CP_STATS_IC_UCFG_API_H__ */

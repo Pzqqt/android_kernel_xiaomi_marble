@@ -17,28 +17,17 @@
  */
 
 /**
- * DOC: wlan_cp_stats_ic_ucfg_defs.h
+ * DOC: wlan_cp_stats_ic_utils_api.h
  *
  * This header file provide definitions and declarations required for northbound
  * specific to WIN
  */
 
-#ifndef __WLAN_CP_STATS_IC_UCFG_DEFS_H__
-#define __WLAN_CP_STATS_IC_UCFG_DEFS_H__
+#ifndef __WLAN_CP_STATS_IC_UTILS_API_H__
+#define __WLAN_CP_STATS_IC_UTILS_API_H__
 
 #ifdef QCA_SUPPORT_CP_STATS
-
-/**
- * enum wlan_ucfg_cp_stats_vendorcmd_handler_idx - cp stats commands
- * @CP_STATS_GET_ATF_HANDLER_IDX: get ATF stats id
- * @CP_STATS_GET_VOW_STATS_HANDLER_IDX: get vow ext stats id
- * @CP_STATS_VENDOR_CMD_HANDLER_MAX: max command id
- */
-enum wlan_ucfg_cp_stats_vendorcmd_handler_idx {
-	CP_STATS_GET_ATF_HANDLER_IDX,
-	CP_STATS_GET_VOW_STATS_HANDLER_IDX,
-	CP_STATS_VENDOR_CMD_HANDLER_MAX,
-};
+#include "wlan_cp_stats_ic_ucfg_api.h"
 
 #endif /* QCA_SUPPORT_CP_STATS */
-#endif /* __WLAN_CP_STATS_IC_UCFG_DEFS_H__ */
+#endif /* __WLAN_CP_STATS_IC_UTILS_API_H__ */

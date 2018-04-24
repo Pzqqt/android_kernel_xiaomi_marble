@@ -289,10 +289,10 @@ QDF_STATUS wlan_cp_stats_disable(struct wlan_objmgr_psoc *psoc)
 }
 
 QDF_STATUS
-wlan_cp_stats_comp_obj_configure(enum wlan_objmgr_obj_type obj_type,
-				enum wlan_cp_stats_cfg_state cfg_state,
-				enum wlan_umac_comp_id comp_id,
-				void *cmn_obj, void *data)
+wlan_cp_stats_comp_obj_cfg(enum wlan_objmgr_obj_type obj_type,
+			   enum wlan_cp_stats_cfg_state cfg_state,
+			   enum wlan_umac_comp_id comp_id,
+			   void *cmn_obj, void *data)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct cp_stats_context *csc;

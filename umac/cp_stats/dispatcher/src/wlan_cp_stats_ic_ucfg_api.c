@@ -17,14 +17,15 @@
  */
 
 /**
- * DOC:wlan_cp_stats_ic_ucfg_handler.c
+ * DOC:wlan_cp_stats_ic_ucfg_api.c
  *
  * This file provide APIs definition for registering cp stats cfg80211 command
  * handlers
  */
-#include "wlan_cp_stats_ic_ucfg_handler.h"
+#include "wlan_cp_stats_ic_ucfg_api.h"
 #include <wlan_cfg80211_ic_cp_stats.h>
-#include <wlan_cp_stats_ic_ucfg_defs.h>
+#include <wlan_cp_stats_ic_atf_defs.h>
+#include <wlan_cp_stats_ic_defs.h>
 #include "../../core/src/wlan_cp_stats_cmn_api_i.h"
 
 QDF_STATUS wlan_cp_stats_psoc_cs_init(struct psoc_cp_stats *psoc_cs)
@@ -39,72 +40,51 @@ QDF_STATUS wlan_cp_stats_psoc_cs_deinit(struct psoc_cp_stats *psoc_cs)
 
 QDF_STATUS wlan_cp_stats_pdev_cs_init(struct pdev_cp_stats *pdev_cs)
 {
-	wlan_cp_stats_register_pdev_ucfg_handlers(pdev_cs->pdev_obj);
+	pdev_cs->pdev_stats = qdf_mem_malloc(sizeof(struct pdev_ic_cp_stats));
+	if (!pdev_cs->pdev_stats) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_cp_stats_pdev_cs_deinit(struct pdev_cp_stats *pdev_cs)
 {
-	wlan_cp_stats_unregister_pdev_ucfg_handlers(pdev_cs->pdev_obj);
+	qdf_mem_free(pdev_cs->pdev_stats);
+	pdev_cs->pdev_stats = NULL;
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_cp_stats_vdev_cs_init(struct vdev_cp_stats *vdev_cs)
 {
-	wlan_cp_stats_register_vdev_ucfg_handlers(vdev_cs->vdev_obj);
+	vdev_cs->vdev_stats = qdf_mem_malloc(sizeof(struct vdev_ic_cp_stats));
+	if (!vdev_cs->vdev_stats) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_cp_stats_vdev_cs_deinit(struct vdev_cp_stats *vdev_cs)
 {
-	wlan_cp_stats_unregister_vdev_ucfg_handlers(vdev_cs->vdev_obj);
+	qdf_mem_free(vdev_cs->vdev_stats);
+	vdev_cs->vdev_stats = NULL;
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_cp_stats_peer_cs_init(struct peer_cp_stats *peer_cs)
 {
-	wlan_cp_stats_register_peer_ucfg_handlers(peer_cs->peer_obj);
+	peer_cs->peer_stats = qdf_mem_malloc(sizeof(struct peer_ic_cp_stats));
+	if (!peer_cs->peer_stats) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_cp_stats_peer_cs_deinit(struct peer_cp_stats *peer_cs)
 {
-	wlan_cp_stats_unregister_peer_ucfg_handlers(peer_cs->peer_obj);
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
-wlan_cp_stats_register_pdev_ucfg_handlers(struct wlan_objmgr_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
-wlan_cp_stats_unregister_pdev_ucfg_handlers(struct wlan_objmgr_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
-wlan_cp_stats_register_vdev_ucfg_handlers(struct wlan_objmgr_vdev *vdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
-wlan_cp_stats_unregister_vdev_ucfg_handlers(struct wlan_objmgr_vdev *vdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
-wlan_cp_stats_register_peer_ucfg_handlers(struct wlan_objmgr_peer *peer)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
-wlan_cp_stats_unregister_peer_ucfg_handlers(struct wlan_objmgr_peer *peer)
-{
+	qdf_mem_free(peer_cs->peer_stats);
+	peer_cs->peer_stats = NULL;
 	return QDF_STATUS_SUCCESS;
 }

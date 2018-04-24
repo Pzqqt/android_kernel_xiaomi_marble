@@ -21,6 +21,10 @@
  *
  * This file maintain definitions to APIs which handle attach/detach of other
  * UMAC component specific cp stat object to cp stats
+ *
+ * Components calling configure API should alloc data structure while attaching
+ * dealloc while detaching, where as address for which to be deallocated will
+ * be passed back to component for data
  */
 #include "wlan_cp_stats_comp_handler.h"
 #include "wlan_cp_stats_defs.h"
@@ -30,7 +34,7 @@
 static QDF_STATUS
 wlan_cp_stats_psoc_comp_obj_config
 (struct wlan_objmgr_psoc *psoc, enum wlan_cp_stats_comp_id comp_id,
-	enum wlan_cp_stats_cfg_state cfg_state, void *comp_priv_obj)
+	enum wlan_cp_stats_cfg_state cfg_state, void *data)
 {
 	struct psoc_cp_stats *psoc_cs;
 
@@ -46,13 +50,18 @@ wlan_cp_stats_psoc_comp_obj_config
 			wlan_cp_stats_psoc_obj_unlock(psoc_cs);
 			return QDF_STATUS_E_EXISTS;
 		}
-		psoc_cs->psoc_comp_priv_obj[comp_id] = comp_priv_obj;
+		psoc_cs->psoc_comp_priv_obj[comp_id] = data;
 	} else if (cfg_state == WLAN_CP_STATS_OBJ_DETACH) {
-		if (psoc_cs->psoc_comp_priv_obj[comp_id] != comp_priv_obj) {
+		if (psoc_cs->psoc_comp_priv_obj[comp_id] != data) {
 			wlan_cp_stats_psoc_obj_unlock(psoc_cs);
 			return QDF_STATUS_E_INVAL;
 		}
+		data = psoc_cs->psoc_comp_priv_obj[comp_id];
 		psoc_cs->psoc_comp_priv_obj[comp_id] = NULL;
+	} else if (cfg_state == WLAN_CP_STATS_OBJ_INVALID) {
+		cp_stats_err("Invalid cp stats cfg_state");
+		wlan_cp_stats_psoc_obj_unlock(psoc_cs);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	wlan_cp_stats_psoc_obj_unlock(psoc_cs);
@@ -62,7 +71,7 @@ wlan_cp_stats_psoc_comp_obj_config
 static QDF_STATUS
 wlan_cp_stats_pdev_comp_obj_config
 (struct wlan_objmgr_pdev *pdev, enum wlan_cp_stats_comp_id comp_id,
-	enum wlan_cp_stats_cfg_state cfg_state, void *comp_priv_obj)
+	enum wlan_cp_stats_cfg_state cfg_state, void *data)
 {
 	struct pdev_cp_stats *pdev_cs;
 
@@ -78,13 +87,18 @@ wlan_cp_stats_pdev_comp_obj_config
 			wlan_cp_stats_pdev_obj_unlock(pdev_cs);
 			return QDF_STATUS_E_EXISTS;
 		}
-		pdev_cs->pdev_comp_priv_obj[comp_id] = comp_priv_obj;
+		pdev_cs->pdev_comp_priv_obj[comp_id] = data;
 	} else if (cfg_state == WLAN_CP_STATS_OBJ_DETACH) {
-		if (pdev_cs->pdev_comp_priv_obj[comp_id] != comp_priv_obj) {
+		if (pdev_cs->pdev_comp_priv_obj[comp_id] != data) {
 			wlan_cp_stats_pdev_obj_unlock(pdev_cs);
 			return QDF_STATUS_E_INVAL;
 		}
+		data = pdev_cs->pdev_comp_priv_obj[comp_id];
 		pdev_cs->pdev_comp_priv_obj[comp_id] = NULL;
+	} else if (cfg_state == WLAN_CP_STATS_OBJ_INVALID) {
+		cp_stats_err("Invalid cp stats cfg_state");
+		wlan_cp_stats_pdev_obj_unlock(pdev_cs);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	wlan_cp_stats_pdev_obj_unlock(pdev_cs);
@@ -94,7 +108,7 @@ wlan_cp_stats_pdev_comp_obj_config
 static QDF_STATUS
 wlan_cp_stats_vdev_comp_obj_config
 (struct wlan_objmgr_vdev *vdev, enum wlan_cp_stats_comp_id comp_id,
-	enum wlan_cp_stats_cfg_state cfg_state, void *comp_priv_obj)
+	enum wlan_cp_stats_cfg_state cfg_state, void *data)
 {
 	struct vdev_cp_stats *vdev_cs;
 
@@ -110,13 +124,18 @@ wlan_cp_stats_vdev_comp_obj_config
 			wlan_cp_stats_vdev_obj_unlock(vdev_cs);
 			return QDF_STATUS_E_EXISTS;
 		}
-		vdev_cs->vdev_comp_priv_obj[comp_id] = comp_priv_obj;
+		vdev_cs->vdev_comp_priv_obj[comp_id] = data;
 	} else if (cfg_state == WLAN_CP_STATS_OBJ_DETACH) {
-		if (vdev_cs->vdev_comp_priv_obj[comp_id] != comp_priv_obj) {
+		if (vdev_cs->vdev_comp_priv_obj[comp_id] != data) {
 			wlan_cp_stats_vdev_obj_unlock(vdev_cs);
 			return QDF_STATUS_E_INVAL;
 		}
+		data = vdev_cs->vdev_comp_priv_obj[comp_id];
 		vdev_cs->vdev_comp_priv_obj[comp_id] = NULL;
+	} else if (cfg_state == WLAN_CP_STATS_OBJ_INVALID) {
+		cp_stats_err("Invalid cp stats cfg_state");
+		wlan_cp_stats_vdev_obj_unlock(vdev_cs);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	wlan_cp_stats_vdev_obj_unlock(vdev_cs);
@@ -126,7 +145,7 @@ wlan_cp_stats_vdev_comp_obj_config
 static QDF_STATUS
 wlan_cp_stats_peer_comp_obj_config
 (struct wlan_objmgr_peer *peer, enum wlan_cp_stats_comp_id comp_id,
-	enum wlan_cp_stats_cfg_state cfg_state, void *comp_priv_obj)
+	enum wlan_cp_stats_cfg_state cfg_state, void *data)
 {
 	struct peer_cp_stats *peer_cs;
 
@@ -142,13 +161,18 @@ wlan_cp_stats_peer_comp_obj_config
 			wlan_cp_stats_peer_obj_unlock(peer_cs);
 			return QDF_STATUS_E_EXISTS;
 		}
-		peer_cs->peer_comp_priv_obj[comp_id] = comp_priv_obj;
+		peer_cs->peer_comp_priv_obj[comp_id] = data;
 	} else if (cfg_state == WLAN_CP_STATS_OBJ_DETACH) {
-		if (peer_cs->peer_comp_priv_obj[comp_id] != comp_priv_obj) {
+		if (peer_cs->peer_comp_priv_obj[comp_id] != data) {
 			wlan_cp_stats_peer_obj_unlock(peer_cs);
 			return QDF_STATUS_E_INVAL;
 		}
+		data = peer_cs->peer_comp_priv_obj[comp_id];
 		peer_cs->peer_comp_priv_obj[comp_id] = NULL;
+	} else if (cfg_state == WLAN_CP_STATS_OBJ_INVALID) {
+		cp_stats_err("Invalid cp stats cfg_state");
+		wlan_cp_stats_peer_obj_unlock(peer_cs);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	wlan_cp_stats_peer_obj_unlock(peer_cs);
@@ -157,9 +181,9 @@ wlan_cp_stats_peer_comp_obj_config
 
 QDF_STATUS
 wlan_cp_stats_comp_obj_config(enum wlan_objmgr_obj_type obj_type,
-				enum wlan_cp_stats_cfg_state cfg_state,
-				enum wlan_cp_stats_comp_id comp_id,
-				void *cmn_obj, void *comp_priv_obj)
+			      enum wlan_cp_stats_cfg_state cfg_state,
+			      enum wlan_cp_stats_comp_id comp_id,
+			      void *cmn_obj, void *data)
 {
 	QDF_STATUS status;
 
@@ -179,25 +203,25 @@ wlan_cp_stats_comp_obj_config(enum wlan_objmgr_obj_type obj_type,
 		status =
 			wlan_cp_stats_psoc_comp_obj_config(
 					(struct wlan_objmgr_psoc *)cmn_obj,
-					comp_id, cfg_state, comp_priv_obj);
+					comp_id, cfg_state, data);
 		break;
 	case WLAN_PDEV_OP:
 		status =
 			wlan_cp_stats_pdev_comp_obj_config(
 					(struct wlan_objmgr_pdev *)cmn_obj,
-					comp_id, cfg_state, comp_priv_obj);
+					comp_id, cfg_state, data);
 		break;
 	case WLAN_VDEV_OP:
 		status =
 			wlan_cp_stats_vdev_comp_obj_config(
 					(struct wlan_objmgr_vdev *)cmn_obj,
-					comp_id, cfg_state, comp_priv_obj);
+					comp_id, cfg_state, data);
 		break;
 	case WLAN_PEER_OP:
 		status =
 			wlan_cp_stats_peer_comp_obj_config(
 					(struct wlan_objmgr_peer *)cmn_obj,
-					comp_id, cfg_state, comp_priv_obj);
+					comp_id, cfg_state, data);
 		break;
 	default:
 		cp_stats_err("Invalid common object");

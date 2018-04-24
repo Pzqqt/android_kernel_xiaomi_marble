@@ -22,17 +22,3 @@
  * This file provide definitions to cp stats supported cfg80211 cmd handlers
  */
 #include <wlan_cfg80211_ic_cp_stats.h>
-
-int wlan_cfg80211_cp_stats_get_atf_stats(struct wiphy *wiphy,
-						struct wlan_objmgr_pdev *pdev,
-						const void *data, int data_len)
-{
-	return 0;
-}
-
-int wlan_cfg80211_cp_stats_get_vow_ext_stats(struct wiphy *wiphy,
-						struct wlan_objmgr_pdev *pdev,
-						const void *data, int data_len)
-{
-	return 0;
-}
