@@ -1070,6 +1070,13 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 		}
 	}
 
+	if (WLAN_IPA_MAX_IFACE == ipa_ctx->num_iface) {
+		ipa_err("Max interface reached %d", WLAN_IPA_MAX_IFACE);
+		status = QDF_STATUS_E_NOMEM;
+		QDF_ASSERT(0);
+		goto end;
+	}
+
 	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 		if (ipa_ctx->iface_context[i].tl_context == NULL) {
 			iface_context = &(ipa_ctx->iface_context[i]);
@@ -1080,6 +1087,7 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 	if (iface_context == NULL) {
 		ipa_err("All the IPA interfaces are in use");
 		status = QDF_STATUS_E_NOMEM;
+		QDF_ASSERT(0);
 		goto end;
 	}
 
@@ -1337,6 +1345,19 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 					     &pending_event->node);
 
 			qdf_mutex_release(&ipa_ctx->ipa_lock);
+
+			/* Cleanup interface */
+			if (type == QDF_IPA_STA_DISCONNECT ||
+			    type == QDF_IPA_AP_DISCONNECT) {
+				for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
+					iface_ctx = &ipa_ctx->iface_context[i];
+
+					if (iface_ctx->dev == net_dev)
+						break;
+				}
+				if (iface_ctx)
+					wlan_ipa_cleanup_iface(iface_ctx);
+			}
 
 			return QDF_STATUS_SUCCESS;
 		}
