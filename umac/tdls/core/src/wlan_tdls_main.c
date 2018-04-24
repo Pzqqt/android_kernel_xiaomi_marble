@@ -150,12 +150,25 @@ QDF_STATUS tdls_vdev_obj_create_notification(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 	struct tdls_vdev_priv_obj *tdls_vdev_obj;
 	struct wlan_objmgr_pdev *pdev;
-	struct tdls_soc_priv_obj *tdls_soc;
+	struct tdls_soc_priv_obj *tdls_soc_obj;
+	uint32_t tdls_feature_flags;
 
 	tdls_notice("tdls vdev mode %d", wlan_vdev_mlme_get_opmode(vdev));
 	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE &&
 	    wlan_vdev_mlme_get_opmode(vdev) != QDF_P2P_CLIENT_MODE)
 		return QDF_STATUS_SUCCESS;
+
+	tdls_soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
+	if (!tdls_soc_obj) {
+		tdls_err("get soc by vdev failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	tdls_feature_flags = tdls_soc_obj->tdls_configs.tdls_feature_flags;
+	if (!TDLS_IS_ENABLED(tdls_feature_flags)) {
+		tdls_debug("disabled in ini");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
 
 	/* TODO: Add concurrency check */
 
@@ -171,33 +184,29 @@ QDF_STATUS tdls_vdev_obj_create_notification(struct wlan_objmgr_vdev *vdev,
 						       QDF_STATUS_SUCCESS);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("Failed to attach vdev tdls component");
-		qdf_mem_free(tdls_vdev_obj);
-		goto out;
+		goto err;
 	}
 	tdls_vdev_obj->vdev = vdev;
 	status = tdls_vdev_init(tdls_vdev_obj);
 	if (QDF_IS_STATUS_ERROR(status))
-		goto out;
-
-	tdls_soc = wlan_vdev_get_tdls_soc_obj(vdev);
-	if (!tdls_soc) {
-		tdls_err("get soc by vdev failed ");
-		return QDF_STATUS_E_NOMEM;
-	}
+		goto err;
 
 	pdev = wlan_vdev_get_pdev(vdev);
 
 	status = ucfg_scan_register_event_handler(pdev,
 				tdls_scan_complete_event_handler,
-				tdls_soc);
+				tdls_soc_obj);
 
 	if (QDF_STATUS_SUCCESS != status) {
 		tdls_err("scan event register failed ");
-		return QDF_STATUS_E_FAILURE;
+		tdls_vdev_deinit(tdls_vdev_obj);
+		goto err;
 	}
 
 	tdls_notice("tdls object attach to vdev successfully");
-out:
+	return status;
+err:
+	qdf_mem_free(tdls_vdev_obj);
 	return status;
 }
 
@@ -206,11 +215,25 @@ QDF_STATUS tdls_vdev_obj_destroy_notification(struct wlan_objmgr_vdev *vdev,
 {
 	QDF_STATUS status;
 	void *tdls_vdev_obj;
+	struct tdls_soc_priv_obj *tdls_soc_obj;
+	uint32_t tdls_feature_flags;
 
 	tdls_notice("tdls vdev mode %d", wlan_vdev_mlme_get_opmode(vdev));
 	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE &&
 	    wlan_vdev_mlme_get_opmode(vdev) != QDF_P2P_CLIENT_MODE)
 		return QDF_STATUS_SUCCESS;
+
+	tdls_soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
+	if (!tdls_soc_obj) {
+		tdls_err("get soc by vdev failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	tdls_feature_flags = tdls_soc_obj->tdls_configs.tdls_feature_flags;
+	if (!TDLS_IS_ENABLED(tdls_feature_flags)) {
+		tdls_debug("disabled in ini");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
 
 	tdls_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
 							WLAN_UMAC_COMP_TDLS);
