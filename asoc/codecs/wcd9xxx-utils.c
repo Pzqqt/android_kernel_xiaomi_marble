@@ -982,7 +982,7 @@ int wcd9xxx_core_res_init(
 	wcd9xxx_core_res->num_irq_regs = num_irq_regs;
 	wcd9xxx_core_res->wcd_core_regmap = wcd_regmap;
 
-	pr_info("%s: num_irqs = %d, num_irq_regs = %d\n",
+	pr_debug("%s: num_irqs = %d, num_irq_regs = %d\n",
 			__func__, wcd9xxx_core_res->num_irqs,
 			wcd9xxx_core_res->num_irq_regs);
 
