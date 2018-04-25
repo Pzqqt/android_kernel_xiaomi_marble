@@ -2704,6 +2704,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	tSirResultCodes timeout_reason = 0;
 	bool ok;
 	mac_handle_t mac_handle;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -3041,6 +3042,12 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 							pConnectedProfile->SSID.ssId,
 							roam_info->u.
 							pConnectedProfile->SSID.length);
+
+						cdp_hl_fc_set_td_limit(soc,
+						adapter->session_id,
+						sta_ctx->
+						conn_info.operationChannel);
+
 						hdd_send_roamed_ind(
 								dev,
 								roam_bss,
@@ -3085,6 +3092,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				} else if (!hddDisconInProgress) {
 					hdd_debug("ft_carrier_on is %d, sending connect indication",
 						 ft_carrier_on);
+					cdp_hl_fc_set_td_limit(soc,
+					adapter->session_id,
+					sta_ctx->conn_info.operationChannel);
 					hdd_connect_result(dev,
 							   roam_info->
 							   bssid.bytes,
@@ -3141,6 +3151,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 								   false,
 								   roam_info->statusCode);
 					}
+					cdp_hl_fc_set_td_limit(soc,
+					adapter->session_id,
+					sta_ctx->conn_info.operationChannel);
 				}
 			}
 			if (!hddDisconInProgress) {
@@ -3175,6 +3188,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						adapter->session_id,
 						&reqRsnLength, reqRsnIe);
 
+			cdp_hl_fc_set_td_limit(soc,
+				adapter->session_id,
+				sta_ctx->conn_info.operationChannel);
 			hdd_send_re_assoc_event(dev, adapter, roam_info,
 						reqRsnIe, reqRsnLength);
 			/* Reassoc successfully */

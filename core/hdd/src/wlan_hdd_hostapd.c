@@ -1718,6 +1718,16 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			ap_ctx->broadcast_sta_id =
 				pSapEvent->sapevt.sapStartBssCompleteEvent.staId;
 
+			cdp_hl_fc_set_td_limit(
+				cds_get_context(QDF_MODULE_ID_SOC),
+				adapter->session_id,
+				ap_ctx->operating_channel);
+
+			hdd_register_tx_flow_control(adapter,
+				hdd_softap_tx_resume_timer_expired_handler,
+				hdd_softap_tx_resume_cb,
+				hdd_tx_flow_control_is_pause);
+
 			/* @@@ need wep logic here to set privacy bit */
 			qdf_status =
 				hdd_softap_register_bc_sta(adapter,
@@ -2398,6 +2408,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			pSapEvent->sapevt.sap_ch_selected.pri_ch,
 			pSapEvent->sapevt.sap_ch_selected.ht_sec_ch,
 			&sap_ch_param);
+
+		cdp_hl_fc_set_td_limit(cds_get_context(QDF_MODULE_ID_SOC),
+				       adapter->session_id,
+				       ap_ctx->operating_channel);
 
 		phy_mode = wlan_sap_get_phymode(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));

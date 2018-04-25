@@ -112,6 +112,13 @@ ol_txrx_set_wmm_param(struct cdp_pdev *data_pdev,
 extern void ol_txrx_get_pn_info(void *ppeer, uint8_t **last_pn_valid,
 		    uint64_t **last_pn, uint32_t **rmf_pn_replays);
 
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
+static u16 ol_txrx_tx_desc_alloc_table[TXRX_FC_MAX] = {
+	[TXRX_FC_5GH_80M_2x2] = 2000,
+	[TXRX_FC_2GH_40M_2x2] = 800,
+};
+#endif /* QCA_HL_NETDEV_FLOW_CONTROL */
+
 /* thresh for peer's cached buf queue beyond which the elements are dropped */
 #define OL_TXRX_CACHED_BUFQ_THRESH 128
 
@@ -1586,7 +1593,6 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 	 */
 	if (pdev->cfg.is_high_latency) {
 		desc_pool_size = ol_tx_desc_pool_size_hl(pdev->ctrl_pdev);
-
 		qdf_atomic_init(&pdev->tx_queue.rsrc_cnt);
 		qdf_atomic_add(desc_pool_size, &pdev->tx_queue.rsrc_cnt);
 
@@ -5024,6 +5030,15 @@ static int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc,
 					    tx_pause_callback flowcontrol)
 {
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	u32 desc_pool_size = ol_tx_desc_pool_size_hl(pdev->ctrl_pdev);
+
+	/*
+	 * Assert if the tx descriptor pool size meets the requirements
+	 * Maximum 2 sessions are allowed on a band.
+	 */
+	QDF_ASSERT((2 * ol_txrx_tx_desc_alloc_table[TXRX_FC_5GH_80M_2x2] +
+		    ol_txrx_tx_desc_alloc_table[TXRX_FC_2GH_40M_2x2])
+		    <= desc_pool_size);
 
 	if (!pdev || !flowcontrol) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -5061,6 +5076,40 @@ static int ol_txrx_set_vdev_os_queue_status(u8 vdev_id,
 			  "%s: Invalid action %d", __func__, action);
 		return -EINVAL;
 	}
+	return 0;
+}
+
+/**
+ * ol_txrx_set_vdev_tx_desc_limit() - Set TX descriptor limits for a vdev
+ * @vdev_id: vdev id for the vdev under consideration.
+ * @chan: Channel on which the vdev has been started.
+ */
+static int ol_txrx_set_vdev_tx_desc_limit(u8 vdev_id, u8 chan)
+{
+	struct ol_txrx_vdev_t *vdev =
+	(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	enum ol_txrx_fc_limit_id fc_limit_id;
+	u32 td_limit;
+
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid vdev_id %d", __func__, vdev_id);
+		return -EINVAL;
+	}
+
+	/* TODO: Handle no of spatial streams and channel BW */
+	if (WLAN_REG_IS_5GHZ_CH(chan))
+		fc_limit_id = TXRX_FC_5GH_80M_2x2;
+	else
+		fc_limit_id = TXRX_FC_2GH_40M_2x2;
+
+	qdf_spin_lock_bh(&vdev->pdev->tx_mutex);
+	td_limit = ol_txrx_tx_desc_alloc_table[fc_limit_id];
+	vdev->tx_desc_limit = td_limit;
+	vdev->queue_stop_th = td_limit - TXRX_HL_TX_DESC_HI_PRIO_RESERVED;
+	vdev->queue_restart_th = td_limit - TXRX_HL_TX_DESC_QUEUE_RESTART_TH;
+	qdf_spin_unlock_bh(&vdev->pdev->tx_mutex);
+
 	return 0;
 }
 #endif /* QCA_HL_NETDEV_FLOW_CONTROL */
@@ -6069,7 +6118,8 @@ static struct cdp_lflowctl_ops ol_ops_l_flowctl = {
 	.vdev_flush = ol_txrx_vdev_flush,
 	.vdev_pause = ol_txrx_vdev_pause,
 	.vdev_unpause = ol_txrx_vdev_unpause,
-	.set_vdev_os_queue_status = ol_txrx_set_vdev_os_queue_status
+	.set_vdev_os_queue_status = ol_txrx_set_vdev_os_queue_status,
+	.set_vdev_tx_desc_limit = ol_txrx_set_vdev_tx_desc_limit
 };
 #else /* QCA_HL_NETDEV_FLOW_CONTROL */
 static struct cdp_lflowctl_ops ol_ops_l_flowctl = { };

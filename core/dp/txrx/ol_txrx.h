@@ -31,6 +31,34 @@
  */
 #define OL_TX_NON_FWD_RESERVE	100
 
+/**
+ * enum ol_txrx_fc_limit_id - Flow control identifier for
+ * vdev limits based on band, channel bw and number of spatial streams
+ * @TXRX_FC_5GH_80M_2x2: Limit for 5GHz, 80MHz BW, 2x2 NSS
+ * @TXRX_FC_5GH_40M_2x2:
+ * @TXRX_FC_5GH_20M_2x2:
+ * @TXRX_FC_5GH_80M_1x1:
+ * @TXRX_FC_5GH_40M_1x1:
+ * @TXRX_FC_5GH_20M_1x1:
+ * @TXRX_FC_2GH_40M_2x2:
+ * @TXRX_FC_2GH_20M_2x2:
+ * @TXRX_FC_2GH_40M_1x1:
+ * @TXRX_FC_2GH_20M_1x1:
+ */
+enum ol_txrx_fc_limit_id {
+	TXRX_FC_5GH_80M_2x2,
+	TXRX_FC_5GH_40M_2x2,
+	TXRX_FC_5GH_20M_2x2,
+	TXRX_FC_5GH_80M_1x1,
+	TXRX_FC_5GH_40M_1x1,
+	TXRX_FC_5GH_20M_1x1,
+	TXRX_FC_2GH_40M_2x2,
+	TXRX_FC_2GH_20M_2x2,
+	TXRX_FC_2GH_40M_1x1,
+	TXRX_FC_2GH_20M_1x1,
+	TXRX_FC_MAX
+};
+
 ol_txrx_peer_handle ol_txrx_peer_get_ref_by_addr(ol_txrx_pdev_handle pdev,
 						 u8 *peer_addr,
 						 u8 *peer_id,
@@ -67,9 +95,9 @@ ol_tx_desc_pool_size_hl(struct cdp_cfg *ctrl_pdev);
 #define TXRX_HL_TX_FLOW_CTRL_MGMT_RESERVED 100
 #endif
 
-#ifdef CONFIG_TX_DESC_HI_PRIO_RESERVE
 #define TXRX_HL_TX_DESC_HI_PRIO_RESERVED 20
-#endif
+#define TXRX_HL_TX_DESC_QUEUE_RESTART_TH \
+		(TXRX_HL_TX_DESC_HI_PRIO_RESERVED + 100)
 
 #if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
 
