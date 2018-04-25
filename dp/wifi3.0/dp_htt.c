@@ -151,7 +151,7 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 			((mcs < (MAX_MCS - 1)) && (preamble == DOT11_AX)));
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
-		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
+		soc->cdp_soc.ol_ops->update_dp_stats(pdev->ctrl_pdev,
 				&peer->stats, ppdu->peer_id,
 				UPDATE_PEER_STATS);
 
@@ -1648,7 +1648,7 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 		ppdu_desc->channel = freq;
 		if (soc && soc->cdp_soc.ol_ops->freq_to_channel)
 			pdev->operating_channel =
-		soc->cdp_soc.ol_ops->freq_to_channel(pdev->osif_pdev, freq);
+		soc->cdp_soc.ol_ops->freq_to_channel(pdev->ctrl_pdev, freq);
 	}
 
 	ppdu_desc->phy_mode = HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_GET(*tag_buf);
@@ -2518,6 +2518,8 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 				(uint32_t *)((uint8_t *)tlv_buf + tlv_length);
 			length -= (tlv_length);
 			continue;
+		} else {
+			pdev->mgmtctrl_frm_info.mgmt_buf = NULL;
 		}
 
 		ppdu_info = dp_get_ppdu_desc(pdev, ppdu_id, tlv_type);

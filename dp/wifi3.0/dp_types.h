@@ -969,7 +969,7 @@ struct ppdu_info {
 /* PDEV level structure for data path */
 struct dp_pdev {
 	/* PDEV handle from OSIF layer TBD: see if we really need osif_pdev */
-	void *osif_pdev;
+	struct cdp_ctrl_objmgr_pdev *ctrl_pdev;
 
 	/* PDEV Id */
 	int pdev_id;

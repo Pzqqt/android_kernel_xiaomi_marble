@@ -2429,7 +2429,8 @@ void dp_mark_peer_inact(void *peer_handle, bool inactive)
 		 * per inactivity timeout threshold)
 		 */
 		if (soc->cdp_soc.ol_ops->record_act_change) {
-			soc->cdp_soc.ol_ops->record_act_change(pdev->osif_pdev,
+			soc->cdp_soc.ol_ops->record_act_change(
+					(void *)pdev->ctrl_pdev,
 					peer->mac_addr.raw, !inactive);
 		}
 	}
@@ -2578,7 +2579,7 @@ static void dp_cleanup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
 * Return: DP PDEV handle on success, NULL on failure
 */
 static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
-	struct cdp_cfg *ctrl_pdev,
+	struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev, uint8_t pdev_id)
 {
 	int tx_ring_size;
@@ -2611,7 +2612,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 			(wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx) & (1 << pdev_id)));
 
 	pdev->soc = soc;
-	pdev->osif_pdev = ctrl_pdev;
+	pdev->ctrl_pdev = ctrl_pdev;
 	pdev->pdev_id = pdev_id;
 	soc->pdev_list[pdev_id] = pdev;
 	soc->pdev_count++;
@@ -3571,7 +3572,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		* take care of incrementing count
 		* */
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
-			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->osif_pdev,
+			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
 				vdev->vdev_id, peer->mac_addr.raw);
 		}
 
@@ -3709,7 +3710,7 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
 		/* TODO: Check the destination ring number to be passed to FW */
 		soc->cdp_soc.ol_ops->peer_set_default_routing(
-			pdev->osif_pdev, peer->mac_addr.raw,
+			pdev->ctrl_pdev, peer->mac_addr.raw,
 			 peer->vdev->vdev_id, hash_based, reo_dest);
 	}
 
@@ -4249,7 +4250,7 @@ void dp_peer_unref_delete(void *peer_handle)
 		}
 
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
-			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->osif_pdev,
+			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
 					vdev_id, peer->mac_addr.raw);
 		}
 
@@ -4905,7 +4906,7 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
 		DP_UPDATE_STATS(vdev, peer);
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats)
-		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->osif_pdev,
+		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->ctrl_pdev,
 			&vdev->stats, (uint16_t) vdev->vdev_id,
 			UPDATE_VDEV_STATS);
 
@@ -4978,7 +4979,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 	}
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	if (soc->cdp_soc.ol_ops->update_dp_stats)
-		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
+		soc->cdp_soc.ol_ops->update_dp_stats(pdev->ctrl_pdev,
 				&pdev->stats, pdev->pdev_id, UPDATE_PDEV_STATS);
 
 }
@@ -5494,7 +5495,7 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 
 		if (soc->cdp_soc.ol_ops->update_dp_stats) {
 			soc->cdp_soc.ol_ops->update_dp_stats(
-					vdev->pdev->osif_pdev,
+					vdev->pdev->ctrl_pdev,
 					&peer->stats,
 					peer->peer_ids[0],
 					UPDATE_PEER_STATS);
@@ -5503,7 +5504,7 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 	}
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats)
-		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->osif_pdev,
+		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->ctrl_pdev,
 				&vdev->stats, (uint16_t)vdev->vdev_id,
 				UPDATE_VDEV_STATS);
 }
@@ -6983,7 +6984,8 @@ static QDF_STATUS dp_config_for_nac_rssi(struct cdp_vdev *vdev_handle,
 
 	if (soc->cdp_soc.ol_ops->config_bssid_in_fw_for_nac_rssi)
 		soc->cdp_soc.ol_ops->config_bssid_in_fw_for_nac_rssi
-			(vdev->pdev->osif_pdev, vdev->vdev_id, cmd, bssid);
+			((void *)vdev->pdev->ctrl_pdev,
+			 vdev->vdev_id, cmd, bssid);
 
 	return QDF_STATUS_SUCCESS;
 }

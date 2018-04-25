@@ -761,7 +761,8 @@ out:
 	msg.nbuf = mpdu;
 	msg.vdev_id = vdev->vdev_id;
 	if (pdev->soc->cdp_soc.ol_ops->rx_invalid_peer)
-		pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(pdev->osif_pdev, &msg);
+		pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(pdev->ctrl_pdev,
+							&msg);
 
 free:
 	/* Drop and free packet */
@@ -1180,7 +1181,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	    hal_rx_attn_first_mpdu_get(rx_tlv_hdr)) {
 		if (soc->cdp_soc.ol_ops->update_dp_stats) {
 			soc->cdp_soc.ol_ops->update_dp_stats(
-					vdev->pdev->osif_pdev,
+					vdev->pdev->ctrl_pdev,
 					&peer->stats,
 					peer_id,
 					UPDATE_PEER_STATS);

@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,4 +33,8 @@ struct cdp_peer;
 struct cdp_raw_ast;
 struct cdp_soc;
 
+/**
+ * cdp_ctrl_objmgr_pdev - opaque handle for UMAC pdev object
+ */
+struct cdp_ctrl_objmgr_pdev;
 #endif

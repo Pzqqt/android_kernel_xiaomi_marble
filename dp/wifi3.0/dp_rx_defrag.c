@@ -840,7 +840,7 @@ static void dp_rx_defrag_err(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 
 	tops = pdev->soc->cdp_soc.ol_ops;
 	if (tops->rx_mic_error)
-		tops->rx_mic_error(pdev->osif_pdev, vdev->vdev_id, wh);
+		tops->rx_mic_error(pdev->ctrl_pdev, vdev->vdev_id, wh);
 }
 
 

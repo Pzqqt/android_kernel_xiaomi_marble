@@ -854,7 +854,7 @@ dp_rx_process_mic_error(struct dp_soc *soc,
 
 	tops = pdev->soc->cdp_soc.ol_ops;
 	if (tops->rx_mic_error)
-		tops->rx_mic_error(pdev->osif_pdev, vdev->vdev_id, wh);
+		tops->rx_mic_error(pdev->ctrl_pdev, vdev->vdev_id, wh);
 
 fail:
 	qdf_nbuf_free(nbuf);

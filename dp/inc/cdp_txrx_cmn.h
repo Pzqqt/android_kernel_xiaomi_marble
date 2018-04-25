@@ -199,7 +199,7 @@ cdp_pdev_attach_target(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 }
 
 static inline struct cdp_pdev *cdp_pdev_attach
-	(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
+	(ol_txrx_soc_handle soc, struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 	HTC_HANDLE htc_pdev, qdf_device_t osdev, uint8_t pdev_id)
 {
 	if (!soc || !soc->ops) {

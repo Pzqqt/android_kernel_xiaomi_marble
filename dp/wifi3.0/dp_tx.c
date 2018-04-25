@@ -2649,7 +2649,7 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 	DP_STATS_INCC(peer, tx.retries, 1, ts->transmit_cnt > 1);
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
-		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
+		soc->cdp_soc.ol_ops->update_dp_stats(pdev->ctrl_pdev,
 				&peer->stats, ts->peer_id,
 				UPDATE_PEER_STATS);
 	}

@@ -75,7 +75,7 @@ struct cdp_cmn_ops {
 		 void *cb_context);
 
 	struct cdp_pdev *(*txrx_pdev_attach)
-		(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
+		(ol_txrx_soc_handle soc, struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 		HTC_HANDLE htc_pdev, qdf_device_t osdev, uint8_t pdev_id);
 
 	int (*txrx_pdev_post_attach)(struct cdp_pdev *pdev);
@@ -734,7 +734,7 @@ struct ol_if_ops {
 			struct cdp_lro_hash_config *rx_offld_hash);
 	void (*update_dp_stats)(void *soc, void *stats, uint16_t id,
 			uint8_t type);
-	uint8_t (*rx_invalid_peer)(void *osif_pdev, void *msg);
+	uint8_t (*rx_invalid_peer)(void *ctrl_pdev, void *msg);
 
 	int  (*peer_map_event)(void *ol_soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
 			uint8_t vdev_id, uint8_t *peer_mac_addr,
@@ -758,7 +758,7 @@ struct ol_if_ops {
 	int (*config_bssid_in_fw_for_nac_rssi)(struct wlan_objmgr_pdev *pdev,
 		u_int8_t vdev_id, enum cdp_nac_param_cmd cmd, char *bssid);
 #endif
-	int (*peer_sta_kickout)(void *osif_pdev, uint8_t *peer_macaddr);
+	int (*peer_sta_kickout)(void *ctrl_pdev, uint8_t *peer_macaddr);
 
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };

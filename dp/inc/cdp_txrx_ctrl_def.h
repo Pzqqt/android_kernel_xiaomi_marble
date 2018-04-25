@@ -73,9 +73,9 @@ void ol_ll_pdev_tx_unlock(void *);
 
 #else
 #define OSIF_VAP_TX_LOCK(_y, _x)  cdp_vdev_tx_lock( \
-			_y, wlan_vdev_get_dp_handle((_x)->os_if_vdev))
+			_y, wlan_vdev_get_dp_handle((_x)->ctrl_vdev))
 #define OSIF_VAP_TX_UNLOCK(_y, _x) cdp_vdev_tx_unlock( \
-			_y, wlan_vdev_get_dp_handle((_x)->os_if_vdev))
+			_y, wlan_vdev_get_dp_handle((_x)->ctrl_vdev))
 
 #define OL_TX_FLOW_CTRL_LOCK(_x)
 #define OL_TX_FLOW_CTRL_UNLOCK(_x)

@@ -559,7 +559,7 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 			sa_peer->delete_in_progress = true;
 			if (soc->cdp_soc.ol_ops->peer_sta_kickout) {
 				soc->cdp_soc.ol_ops->peer_sta_kickout(
-						sa_peer->vdev->pdev->osif_pdev,
+						sa_peer->vdev->pdev->ctrl_pdev,
 						ast_entry->mac_addr.raw);
 			}
 			return 0;
@@ -1328,7 +1328,7 @@ try_desc_alloc:
 
 	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
 		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
-			vdev->pdev->osif_pdev,
+			vdev->pdev->ctrl_pdev,
 			peer->vdev->vdev_id, peer->mac_addr.raw,
 			rx_tid->hw_qdesc_paddr, tid, tid);
 
@@ -1581,7 +1581,7 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 	}
 #ifdef notyet /* See if FW can remove queues as part of peer cleanup */
 	if (soc->ol_ops->peer_rx_reorder_queue_remove) {
-		soc->ol_ops->peer_rx_reorder_queue_remove(vdev->pdev->osif_pdev,
+		soc->ol_ops->peer_rx_reorder_queue_remove(vdev->pdev->ctrl_pdev,
 			peer->vdev->vdev_id, peer->mac_addr.raw,
 			tid_delete_mask);
 	}

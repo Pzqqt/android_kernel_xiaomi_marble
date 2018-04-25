@@ -198,7 +198,7 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		DP_STATS_INC(peer, rx.wme_ac_type[ac], num_msdu);
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
-		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
+		soc->cdp_soc.ol_ops->update_dp_stats(pdev->ctrl_pdev,
 				&peer->stats, ppdu->peer_id,
 				UPDATE_PEER_STATS);
 
