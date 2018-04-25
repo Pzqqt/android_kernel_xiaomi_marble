@@ -130,10 +130,12 @@ wlan_cfg80211_ftm_rx_event(struct wlan_objmgr_pdev *pdev,
 	}
 
 	ftm_debug("Testmode response event generated");
-
+#ifdef CONFIG_NL80211_TESTMODE
 	skb = cfg80211_testmode_alloc_event_skb(pdev_ospriv->wiphy,
 						len, GFP_ATOMIC);
-
+#else
+	return QDF_STATUS_E_INVAL;
+#endif
 	if (!skb)
 		return QDF_STATUS_E_NOMEM;
 
@@ -142,9 +144,9 @@ wlan_cfg80211_ftm_rx_event(struct wlan_objmgr_pdev *pdev,
 		nla_put(skb, WLAN_CFG80211_FTM_ATTR_DATA, len, data)) {
 		goto nla_put_failure;
 	}
-
+#ifdef CONFIG_NL80211_TESTMODE
 	cfg80211_testmode_event(skb, GFP_ATOMIC);
-
+#endif
 	return QDF_STATUS_SUCCESS;
 
 nla_put_failure:
