@@ -900,6 +900,9 @@ struct cdp_lflowctl_ops {
 #ifdef QCA_HL_NETDEV_FLOW_CONTROL
 	int (*register_tx_flow_control)(struct cdp_soc_t *soc,
 					tx_pause_callback flowcontrol);
+	int (*set_vdev_tx_desc_limit)(u8 vdev_id, u8 chan);
+	int (*set_vdev_os_queue_status)(u8 vdev_id,
+					enum netif_action_type action);
 #else
 	int (*register_tx_flow_control)(uint8_t vdev_id,
 		ol_txrx_tx_flow_control_fp flowControl, void *osif_fc_ctx,
