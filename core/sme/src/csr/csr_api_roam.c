@@ -1122,7 +1122,6 @@ QDF_STATUS csr_start(tpAniSirGlobal pMac)
 			break;
 
 		pMac->roam.sPendingCommands = 0;
-		ucfg_scan_set_enable(pMac->psoc, true);
 		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
 			status = csr_neighbor_roam_init(pMac, i);
 		pMac->roam.tlStatsReqInfo.numClient = 0;
@@ -1136,6 +1135,7 @@ QDF_STATUS csr_start(tpAniSirGlobal pMac)
 		pMac->scan.requester_id = ucfg_scan_register_requester(
 						pMac->psoc,
 						"CSR", csr_scan_callback, pMac);
+		ucfg_scan_set_enable(pMac->psoc, true);
 	} while (0);
 	return status;
 }
@@ -1144,10 +1144,11 @@ QDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType)
 {
 	uint32_t sessionId;
 
+	ucfg_scan_set_enable(pMac->psoc, false);
+	ucfg_scan_unregister_requester(pMac->psoc, pMac->scan.requester_id);
+
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
 		csr_roam_close_session(pMac, sessionId, true);
-
-	ucfg_scan_set_enable(pMac->psoc, false);
 
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
 		csr_neighbor_roam_close(pMac, sessionId);
@@ -1163,7 +1164,6 @@ QDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType)
 		csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_NONE,
 					 sessionId);
 	}
-	ucfg_scan_unregister_requester(pMac->psoc, pMac->scan.requester_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -17117,11 +17117,11 @@ static void csr_init_session(tpAniSirGlobal pMac, uint32_t sessionId)
 	pSession->callback = NULL;
 	pSession->pContext = NULL;
 	pSession->connectState = eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
+	csr_saved_scan_cmd_free_fields(pMac, pSession);
 	csr_free_roam_profile(pMac, sessionId);
 	csr_roam_free_connect_profile(&pSession->connectedProfile);
 	csr_roam_free_connected_info(pMac, &pSession->connectedInfo);
 	csr_free_connect_bss_desc(pMac, sessionId);
-	ucfg_scan_set_enable(pMac->psoc, true);
 	qdf_mem_set(&pSession->selfMacAddr, sizeof(struct qdf_mac_addr), 0);
 	if (pSession->pWpaRsnReqIE) {
 		qdf_mem_free(pSession->pWpaRsnReqIE);
