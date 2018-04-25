@@ -309,8 +309,7 @@ bool wma_is_service_enabled(uint32_t service_type);
 #ifdef FEATURE_WLAN_D0WOW
 static inline bool wma_d0_wow_is_supported(void)
 {
-	return wma_is_service_enabled(WMI_SERVICE_D0WOW) &&
-	       (!wma_is_service_enabled(WMI_SERVICE_UNIFIED_WOW_CAPABILITY));
+	return true;
 }
 #else
 static inline bool wma_d0_wow_is_supported(void)

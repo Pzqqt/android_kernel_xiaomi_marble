@@ -140,7 +140,9 @@ QDF_STATUS pmo_tgt_psoc_send_wow_enable_req(struct wlan_objmgr_psoc *psoc,
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 
-	if (psoc_ctx->psoc_cfg.d0_wow_supported && !param->can_suspend_link) {
+	if (psoc_ctx->psoc_cfg.d0_wow_supported &&
+	    !psoc_ctx->caps.unified_wow &&
+	    !param->can_suspend_link) {
 		if (!pmo_tx_ops.psoc_send_d0wow_enable_req) {
 			pmo_err("psoc_send_d0wow_enable_req is null");
 			return QDF_STATUS_E_NULL_VALUE;
