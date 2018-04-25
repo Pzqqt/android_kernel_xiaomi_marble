@@ -203,14 +203,16 @@ tgt_mc_cp_stats_prepare_raw_peer_rssi(struct wlan_objmgr_psoc *psoc,
 		wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
 	}
 
-	get_peer_rssi_cb(&ev, last_req->cookie);
-	return;
 end:
+	if (ev.peer_stats)
+		get_peer_rssi_cb(&ev, last_req->cookie);
+	else
+		ucfg_mc_cp_stats_free_stats_resources(&ev);
+
 	if (vdev)
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
 	if (peer)
 		wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
-	ucfg_mc_cp_stats_free_stats_resources(&ev);
 }
 
 static QDF_STATUS
