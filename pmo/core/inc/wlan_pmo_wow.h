@@ -122,7 +122,7 @@ static inline uint8_t pmo_get_and_increment_wow_default_ptrn(
 {
 	uint8_t count;
 
-	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+	if (vdev_ctx->pmo_psoc_ctx->caps.unified_wow) {
 		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 		count = vdev_ctx->num_wow_default_patterns++;
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -146,7 +146,7 @@ static inline uint8_t pmo_get_and_increment_wow_default_ptrn(
 static inline void pmo_increment_wow_default_ptrn(
 		struct pmo_vdev_priv_obj *vdev_ctx)
 {
-	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+	if (vdev_ctx->pmo_psoc_ctx->caps.unified_wow) {
 		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 		vdev_ctx->num_wow_default_patterns++;
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -168,7 +168,7 @@ static inline void pmo_increment_wow_default_ptrn(
 static inline void pmo_decrement_wow_default_ptrn(
 		struct pmo_vdev_priv_obj *vdev_ctx)
 {
-	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+	if (vdev_ctx->pmo_psoc_ctx->caps.unified_wow) {
 		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 		vdev_ctx->num_wow_default_patterns--;
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -192,7 +192,7 @@ static inline uint8_t pmo_get_wow_default_ptrn(
 {
 	uint8_t count;
 
-	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+	if (vdev_ctx->pmo_psoc_ctx->caps.unified_wow) {
 		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 		count = vdev_ctx->num_wow_default_patterns;
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -216,7 +216,7 @@ static inline uint8_t pmo_get_wow_default_ptrn(
 static inline void pmo_set_wow_default_ptrn(
 		struct pmo_vdev_priv_obj *vdev_ctx, uint8_t value)
 {
-	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+	if (vdev_ctx->pmo_psoc_ctx->caps.unified_wow) {
 		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 		vdev_ctx->num_wow_default_patterns = value;
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -238,7 +238,7 @@ static inline void pmo_set_wow_default_ptrn(
 static inline void pmo_increment_wow_user_ptrn(
 		struct pmo_vdev_priv_obj *vdev_ctx)
 {
-	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+	if (vdev_ctx->pmo_psoc_ctx->caps.unified_wow) {
 		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 		vdev_ctx->num_wow_user_patterns++;
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -260,7 +260,7 @@ static inline void pmo_increment_wow_user_ptrn(
 static inline void pmo_decrement_wow_user_ptrn(
 		struct pmo_vdev_priv_obj *vdev_ctx)
 {
-	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+	if (vdev_ctx->pmo_psoc_ctx->caps.unified_wow) {
 		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 		vdev_ctx->num_wow_user_patterns--;
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
@@ -284,7 +284,7 @@ static inline uint8_t pmo_get_wow_user_ptrn(
 {
 	uint8_t count;
 
-	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+	if (vdev_ctx->pmo_psoc_ctx->caps.unified_wow) {
 		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 		count = vdev_ctx->num_wow_user_patterns;
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
