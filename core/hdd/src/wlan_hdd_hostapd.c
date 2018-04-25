@@ -5237,7 +5237,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	}
 	rc = wlan_hdd_get_linkspeed_for_peermac(adapter, &macAddress,
 						&link_speed);
-	if (!rc) {
+	if (rc) {
 		hdd_err("Unable to retrieve SME linkspeed");
 		return rc;
 	}
