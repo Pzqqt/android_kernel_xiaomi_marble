@@ -4257,6 +4257,7 @@ bool wma_is_csa_offload_enabled(void)
 	return wmi_service_enabled(wma->wmi_handle,
 				   wmi_service_csa_offload);
 }
+#ifdef FEATURE_FW_LOG_PARSING
 /**
  * wma_config_debug_module_cmd - set debug log config
  * @wmi_handle: wmi layer handle
@@ -4281,6 +4282,7 @@ wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
 
 	return wmi_unified_dbglog_cmd_send(wmi_handle, &dbg_param);
 }
+#endif
 
 /**
  * wma_is_p2p_lo_capable() - if driver is capable of p2p listen offload

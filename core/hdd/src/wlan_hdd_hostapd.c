@@ -5514,6 +5514,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
 		"setConcSysPref"
 	},
+#ifdef FEATURE_FW_LOG_PARSING
 	/* Sub-cmds DBGLOG specific commands */
 	{
 		QCSAP_DBGLOG_LOG_LEVEL,
@@ -5544,7 +5545,10 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		QCSAP_DBGLOG_REPORT_ENABLE,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		0, "dl_report"
-	}, {
+	},
+#endif /* FEATURE_FW_LOG_PARSING */
+	{
+
 		QCASAP_TXRX_FWSTATS_RESET,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		0, "txrx_fw_st_rst"

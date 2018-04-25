@@ -9433,6 +9433,7 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "txpow5g"},
 
+#ifdef FEATURE_FW_LOG_PARSING
 	/* Sub-cmds DBGLOG specific commands */
 	{WE_DBGLOG_LOG_LEVEL,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
@@ -9472,6 +9473,7 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
 	 "dl_report"},
+#endif /* FEATURE_FW_LOG_PARSING */
 
 	{WE_SET_TXRX_FWSTATS,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
