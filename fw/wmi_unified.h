@@ -243,6 +243,7 @@ typedef enum {
     WMI_GRP_WLM,            /* 0x3c WLAN Latency Manager */
     WMI_GRP_11K_OFFLOAD,    /* 0x3d */
     WMI_GRP_TWT,            /* 0x3e TWT (Target Wake Time) for STA and AP */
+    WMI_GRP_MOTION_DET,     /* 0x3f */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1132,6 +1133,12 @@ typedef enum {
     WMI_TWT_DEL_DIALOG_CMDID,
     WMI_TWT_PAUSE_DIALOG_CMDID,
     WMI_TWT_RESUME_DIALOG_CMDID,
+
+    /** WMI commands related to motion detection **/
+    WMI_MOTION_DET_CONFIG_PARAM_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_MOTION_DET),
+    WMI_MOTION_DET_BASE_LINE_CONFIG_PARAM_CMDID,
+    WMI_MOTION_DET_START_STOP_CMDID,
+    WMI_MOTION_DET_BASE_LINE_START_STOP_CMDID,
 } WMI_CMD_ID;
 
 typedef enum {
@@ -1689,6 +1696,10 @@ typedef enum {
     WMI_NDP_END_INDICATION_EVENTID,
     WMI_WLAN_COEX_BT_ACTIVITY_EVENTID,
     WMI_NDL_SCHEDULE_UPDATE_EVENTID,
+
+    /** WMI events related to motion detection */
+    WMI_MOTION_DET_HOST_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_MOTION_DET),
+    WMI_MOTION_DET_BASE_LINE_HOST_EVENTID,
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -11837,6 +11848,8 @@ typedef enum wake_reason_e {
     WOW_REASON_SAP_OBSS_DETECTION,
     WOW_REASON_BSS_COLOR_COLLISION_DETECT,
     WOW_REASON_TKIP_MIC_ERR_FRAME_RECVD_DETECT,
+    WOW_REASON_WLAN_MD, /* motion detected */
+    WOW_REASON_WLAN_BL, /* baselining done */
 
     WOW_REASON_DEBUG_TEST = 0xFF,
 } WOW_WAKE_REASON_TYPE;
@@ -21687,6 +21700,10 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_TID_CONFIGURATIONS_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_SET_CUSTOM_SW_RETRY_TH_CMDID);
         WMI_RETURN_STRING(WMI_GET_TPC_POWER_CMDID);
+        WMI_RETURN_STRING(WMI_MOTION_DET_CONFIG_PARAM_CMDID);
+        WMI_RETURN_STRING(WMI_MOTION_DET_BASE_LINE_CONFIG_PARAM_CMDID);
+        WMI_RETURN_STRING(WMI_MOTION_DET_START_STOP_CMDID);
+        WMI_RETURN_STRING(WMI_MOTION_DET_BASE_LINE_START_STOP_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -22754,6 +22771,117 @@ typedef struct {
     A_UINT32 request_id;    /* request ID set by the command */
     A_INT32  tx_power;      /* TX power for the specified HALPHY parameters in half dBm unit */
 } wmi_get_tpc_power_evt_fixed_param;
+
+/* below structures are related to Motion Detection. */
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_motion_det_config_params_cmd_fixed_param */
+    A_UINT32 tlv_header;         /** TLV Header */
+    A_UINT32 vdev_id;            /** Vdev ID */
+    A_UINT32 time_t1;            /** Time gap of successive bursts of
+                                  * measurement frames during coarse
+                                  * motion detection (in ms) */
+    A_UINT32 time_t2;            /** Time gap of successive bursts of
+                                  * measurement frames during fine
+                                  * motion detection (in ms) */
+    A_UINT32 n1;                 /** number of measurement frames in one
+                                  * burst, for coarse detection */
+    A_UINT32 n2;                 /** number of measurement frames in one
+                                  * burst, for fine detection */
+    A_UINT32 time_t1_gap;        /** gap between measurement frames in
+                                  * course detection (in ms) */
+    A_UINT32 time_t2_gap;        /** gap between measurement frames in
+                                  * fine detection (in ms) */
+    A_UINT32 coarse_K;           /** number of times motion detection has to
+                                  * be performed for coarse detection */
+    A_UINT32 fine_K;             /** number of times motion detection has to
+                                  * be performed for fine detection */
+    A_UINT32 coarse_Q;           /** number of times motion is expected
+                                  * to be detected for success case in
+                                  * coarse detection */
+    A_UINT32 fine_Q;             /** number of times motion is expected
+                                  * to be detected for success case in
+                                  * fine detection */
+    A_UINT32 md_coarse_thr_high; /** higher threshold value (in percent)
+                                  * from host to FW, which will be used in
+                                  * coarse detection phase of motion detection.
+                                  * This is the threshold for the correlation
+                                  * of the old RF local-scattering environment
+                                  * with the current RF local-scattering
+                                  * environment.  A value of 100(%) indicates
+                                  * that neither the transceiver nor any
+                                  * nearby objects have changed position. */
+    A_UINT32 md_fine_thr_high;   /** higher threshold value (in percent)
+                                  * from host to FW, which will be used in
+                                  * fine detection phase of motion detection.
+                                  * This is the threshold for correlation
+                                  * between the old and current RF environments,
+                                  * as explained above. */
+    A_UINT32 md_coarse_thr_low;  /** lower threshold value (in percent)
+                                  * for immediate detection of motion in
+                                  * coarse detection phase.
+                                  * This is the threshold for correlation
+                                  * between the old and current RF environments,
+                                  * as explained above. */
+    A_UINT32 md_fine_thr_low;    /** lower threshold value (in percent)
+                                  * for immediate detection of motion in
+                                  * fine detection phase.
+                                  * This is the threshold for correlation
+                                  * between the old and current RF environments,
+                                  * as explained above. */
+} wmi_motion_det_config_params_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_motion_det_base_line_config_params_cmd_fixed_param */
+    A_UINT32 tlv_header;    /** TLV Header */
+    A_UINT32 vdev_id;       /** Vdev ID */
+    A_UINT32 bl_time_t;     /** time T for baseline (in ms)
+                             * Every bl_time_t, bl_n packets are sent */
+    A_UINT32 bl_packet_gap; /** gap between measurement frames for baseline
+                             * (in ms) */
+    A_UINT32 bl_n;          /** number of measurement frames to be sent
+                             * during one baseline */
+    A_UINT32 bl_num_meas;   /** number of times the baseline measurement
+                             * to be done */
+} wmi_motion_det_base_line_config_params_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_motion_det_start_stop_cmd_fixed_param */
+    A_UINT32 tlv_header; /** TLV Header */
+    A_UINT32 vdev_id;    /** Vdev ID */
+    A_UINT32 enable;     /** start = 1, stop =0 */
+} wmi_motion_det_start_stop_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_motion_det_base_line_start_stop_cmd_fixed_param */
+    A_UINT32 tlv_header; /** TLV Header */
+    A_UINT32 vdev_id;    /** Vdev ID */
+    A_UINT32 enable;     /** start = 1, stop =0 */
+} wmi_motion_det_base_line_start_stop_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_motion_det_event */
+    A_UINT32 tlv_header; /** TLV Header */
+    A_UINT32 vdev_id;    /** Vdev ID */
+    A_UINT32 status;     /** status = 1 -> motion detected */
+} wmi_motion_det_event;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_motion_det_base_line_event */
+    A_UINT32 tlv_header;           /** TLV Header */
+    A_UINT32 vdev_id;              /** Vdev ID */
+    A_UINT32 bl_baseline_value;    /** baseline correlation value calculated
+                                    * during baselining phase (in %) */
+    A_UINT32 bl_max_corr_reserved; /** max corr value obtained during baselining
+                                    * phase (in %); reserved for future */
+    A_UINT32 bl_min_corr_reserved; /** min corr value obtained during baselining
+                                    * phase (in %); reserved for future */
+} wmi_motion_det_base_line_event;
 
 
 /* ADD NEW DEFS HERE */

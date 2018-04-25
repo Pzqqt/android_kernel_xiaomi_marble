@@ -916,6 +916,12 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_get_tpc_power_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_get_tpc_power_evt_fixed_param,
     WMITLV_TAG_STRUC_wmi_dma_buf_release_spectral_meta_data,
+    WMITLV_TAG_STRUC_wmi_motion_det_config_params_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_motion_det_base_line_config_params_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_motion_det_start_stop_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_motion_det_base_line_start_stop_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_motion_det_event,
+    WMITLV_TAG_STRUC_wmi_motion_det_base_line_event,
 } WMITLV_TAG_ID;
 
 /*
@@ -1289,6 +1295,10 @@ typedef enum {
     OP(WMI_PEER_TID_CONFIGURATIONS_CMDID) \
     OP(WMI_VDEV_SET_CUSTOM_SW_RETRY_TH_CMDID) \
     OP(WMI_GET_TPC_POWER_CMDID) \
+    OP(WMI_MOTION_DET_CONFIG_PARAM_CMDID) \
+    OP(WMI_MOTION_DET_BASE_LINE_CONFIG_PARAM_CMDID) \
+    OP(WMI_MOTION_DET_START_STOP_CMDID) \
+    OP(WMI_MOTION_DET_BASE_LINE_START_STOP_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1496,6 +1506,8 @@ typedef enum {
     OP(WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID) \
     OP(WMI_ROAM_SCAN_STATS_EVENTID) \
     OP(WMI_GET_TPC_POWER_EVENTID) \
+    OP(WMI_MOTION_DET_HOST_EVENTID) \
+    OP(WMI_MOTION_DET_BASE_LINE_HOST_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3649,6 +3661,23 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_BTM_CONFIG_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_wlm_config_cmd_fixed_param, wmi_wlm_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_WLM_CONFIG_CMDID);
 
+/* Motion detection cmd */
+#define WMITLV_TABLE_WMI_MOTION_DET_CONFIG_PARAM_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_motion_det_config_params_cmd_fixed_param, wmi_motion_det_config_params_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MOTION_DET_CONFIG_PARAM_CMDID);
+
+#define WMITLV_TABLE_WMI_MOTION_DET_BASE_LINE_CONFIG_PARAM_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_motion_det_base_line_config_params_cmd_fixed_param, wmi_motion_det_base_line_config_params_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MOTION_DET_BASE_LINE_CONFIG_PARAM_CMDID);
+
+#define WMITLV_TABLE_WMI_MOTION_DET_START_STOP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_motion_det_start_stop_cmd_fixed_param, wmi_motion_det_start_stop_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MOTION_DET_START_STOP_CMDID);
+
+#define WMITLV_TABLE_WMI_MOTION_DET_BASE_LINE_START_STOP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_motion_det_base_line_start_stop_cmd_fixed_param, wmi_motion_det_base_line_start_stop_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MOTION_DET_BASE_LINE_START_STOP_CMDID);
+
 /* Pdev Set AC TX Queue Optimized Cmd */
 #define WMITLV_TABLE_WMI_PDEV_SET_AC_TX_QUEUE_OPTIMIZED_CMDID(id,op,buf,len) \
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_ac_tx_queue_optimized_cmd_fixed_param, wmi_pdev_set_ac_tx_queue_optimized_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
@@ -3982,7 +4011,9 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SYNCH_FRAME_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_hb_ind_event_fixed_param, hb_indevt, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_GTK_OFFLOAD_STATUS_EVENT_fixed_param, wow_gtkigtk, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_oic_ping_handoff_event, wow_oic_ping_handoff, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dhcp_lease_renew_event, wow_dhcp_lease_renew, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dhcp_lease_renew_event, wow_dhcp_lease_renew, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_motion_det_event, md_indevt, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_motion_det_base_line_event, bl_indevt, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_WOW_WAKEUP_HOST_EVENTID);
 
 #define WMITLV_TABLE_WMI_WOW_INITIAL_WAKEUP_EVENTID(id,op,buf,len) \
@@ -4996,6 +5027,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID);
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, rssi, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SCAN_STATS_EVENTID);
 
+/* Motion detection events */
+#define WMITLV_TABLE_WMI_MOTION_DET_HOST_EVENTID(id,op,buf,len) \
+WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_motion_det_event, wmi_motion_det_event, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MOTION_DET_HOST_EVENTID);
+
+#define WMITLV_TABLE_WMI_MOTION_DET_BASE_LINE_HOST_EVENTID(id,op,buf,len) \
+WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_motion_det_base_line_event, wmi_motion_det_base_line_event, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MOTION_DET_BASE_LINE_HOST_EVENTID);
 
 #ifdef __cplusplus
 }
