@@ -210,7 +210,7 @@ end:
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
 	if (peer)
 		wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
-	ucfg_mc_cp_stats_free_stats_event(&ev);
+	ucfg_mc_cp_stats_free_stats_resources(&ev);
 }
 
 static QDF_STATUS

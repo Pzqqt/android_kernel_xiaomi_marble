@@ -176,5 +176,14 @@ QDF_STATUS ucfg_mc_cp_stats_get_pending_req(struct wlan_objmgr_psoc *psoc,
 					    enum stats_req_type type,
 					    struct request_info *info);
 
+/**
+ * ucfg_mc_cp_stats_free_stats_resources() - API to free buffers within stats_event
+ * structure
+ * @ev: strcture whose buffer are to freed
+ *
+ * Return: none
+ */
+void ucfg_mc_cp_stats_free_stats_resources(struct stats_event *ev);
+
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_MC_UCFG_API_H__ */

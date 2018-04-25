@@ -531,3 +531,11 @@ QDF_STATUS ucfg_mc_cp_stats_get_pending_req(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+void ucfg_mc_cp_stats_free_stats_resources(struct stats_event *ev)
+{
+	qdf_mem_free(ev->pdev_stats);
+	qdf_mem_free(ev->peer_stats);
+	qdf_mem_zero(ev, sizeof(*ev));
+}
+

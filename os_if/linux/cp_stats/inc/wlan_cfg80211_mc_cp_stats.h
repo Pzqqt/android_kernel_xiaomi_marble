@@ -68,11 +68,22 @@ int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
  * @macaddress: mac address
  * @rssi_info: stats structure within which rssi info will be populated
  *
+ * Call of this API must call wlan_cfg80211_mc_cp_stats_put_peer_rssi
+ * API when done with information provided by rssi_info.
  * Return: 0 on success, negative value on failure
  */
 int wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
 					    uint8_t *macaddress,
 					    struct stats_event *rssi_info);
+
+/**
+ * wlan_cfg80211_mc_cp_stats_put_peer_rssi() - API to free rssi_info after user
+ * or caller is done with the buffer/information
+ * @rssi_info: structure which needs to be freed
+ *
+ * Return: None
+ */
+void wlan_cfg80211_mc_cp_stats_put_peer_rssi(struct stats_event *rssi_info);
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CFG80211_MC_CP_STATS_H__ */

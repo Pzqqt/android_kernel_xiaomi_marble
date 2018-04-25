@@ -356,3 +356,8 @@ int wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
 
 	return ret;
 }
+
+void wlan_cfg80211_mc_cp_stats_put_peer_rssi(struct stats_event *rssi_info)
+{
+	ucfg_mc_cp_stats_free_stats_resources(rssi_info);
+}
