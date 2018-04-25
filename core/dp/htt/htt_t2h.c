@@ -247,6 +247,13 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 	{
 		uint16_t msdu_cnt;
 
+		if (!pdev->cfg.is_high_latency &&
+		    pdev->cfg.is_full_reorder_offload) {
+			qdf_print("HTT_T2H_MSG_TYPE_RX_OFFLOAD_DELIVER_IND not ");
+			qdf_print("supported when full reorder offload is ");
+			qdf_print("enabled in the configuration.\n");
+			break;
+		}
 		msdu_cnt =
 			HTT_RX_OFFLOAD_DELIVER_IND_MSDU_CNT_GET(*msg_word);
 		ol_rx_offload_deliver_ind_handler(pdev->txrx_pdev,
