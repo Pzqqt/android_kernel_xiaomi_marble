@@ -7365,6 +7365,15 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 
 		ret_val = wma_cli_set_command(adapter->session_id,
 				WMI_VDEV_PARAM_BA_MODE, set_val, VDEV_CMD);
+		if (ret_val) {
+			hdd_err("Set BA operating mode failed");
+			goto send_err;
+		}
+		if (!cfg_val) {
+			ret_val = wma_cli_set_command(adapter->session_id,
+				WMI_VDEV_PARAM_AMSDU_AGGREGATION_SIZE_OPTIMIZATION,
+				0, VDEV_CMD);
+		}
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_FRAGMENTATION]) {
