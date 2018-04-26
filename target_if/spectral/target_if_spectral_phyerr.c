@@ -1260,7 +1260,8 @@ target_if_consume_sscan_report_gen3(struct target_if_spectral *spectral,
 	struct spectral_sscan_report_gen3 *psscan_report;
 
 	psscan_report = (struct spectral_sscan_report_gen3 *)data;
-	rssi = get_bitfield(psscan_report->hdr_a, 10, 18);
+	/* RSSI is in 1/2 dBm steps, Covert it to dBm scale */
+	rssi = (get_bitfield(psscan_report->hdr_a, 10, 18)) >> 1;
 
 	return rssi;
 }
