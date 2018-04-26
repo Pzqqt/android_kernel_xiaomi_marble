@@ -3218,6 +3218,8 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 			msm_aux_pcm_rx_format_get, msm_aux_pcm_rx_format_put),
 	SOC_ENUM_EXT("QUIN_AUX_PCM_TX Format", aux_pcm_tx_format,
 			msm_aux_pcm_tx_format_get, msm_aux_pcm_tx_format_put),
+	SOC_SINGLE_MULTI_EXT("VAD CFG", SND_SOC_NOPM, 0, 1000, 0, 3, NULL,
+				msm_snd_vad_cfg_put),
 };
 
 static int msm_snd_enable_codec_ext_clk(struct snd_soc_codec *codec,
@@ -3464,6 +3466,29 @@ static int msm_slim_get_ch_from_beid(int32_t be_id)
 	}
 
 	return ch_id;
+}
+
+static int msm_vad_get_portid_from_beid(int32_t be_id, int *port_id)
+{
+	*port_id = 0xFFFF;
+
+	switch (be_id) {
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_0:
+		*port_id = AFE_PORT_ID_VA_CODEC_DMA_TX_0;
+		break;
+	case MSM_BACKEND_DAI_QUINARY_MI2S_TX:
+		*port_id = AFE_PORT_ID_QUINARY_MI2S_TX;
+		break;
+	case MSM_BACKEND_DAI_QUIN_TDM_TX_0:
+		*port_id = AFE_PORT_ID_QUINARY_TDM_TX;
+		break;
+	case MSM_BACKEND_DAI_QUIN_AUXPCM_TX:
+		*port_id = AFE_PORT_ID_QUINARY_PCM_TX;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
 }
 
 static int msm_cdc_dma_get_idx_from_beid(int32_t be_id)
@@ -6652,10 +6677,72 @@ static int msm_snd_card_tasha_late_probe(struct snd_soc_card *card)
 	return ret;
 }
 
+
+static int msm_snd_vad_cfg_put(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
+	int ret = 0;
+	int port_id;
+	uint32_t vad_enable = ucontrol->value.integer.value[0];
+	uint32_t preroll_config = ucontrol->value.integer.value[1];
+	uint32_t vad_intf = ucontrol->value.integer.value[2];
+
+	if ((preroll_config < 0) || (preroll_config > 1000) ||
+	    (vad_enable < 0) || (vad_enable > 1) ||
+	    (vad_intf > MSM_BACKEND_DAI_MAX)) {
+		pr_err("%s: Invalid arguments\n", __func__);
+		ret = -EINVAL;
+		goto done;
+	}
+
+	pr_debug("%s: vad_enable=%d preroll_config=%d vad_intf=%d\n", __func__,
+		 vad_enable, preroll_config, vad_intf);
+
+	ret = msm_vad_get_portid_from_beid(vad_intf, &port_id);
+	if (ret) {
+		pr_err("%s: Invalid vad interface\n", __func__);
+		goto done;
+	}
+
+	afe_set_vad_cfg(vad_enable, preroll_config, port_id);
+
+done:
+	return ret;
+}
+
+static int msm_snd_card_codec_late_probe(struct snd_soc_card *card)
+{
+	int ret = 0;
+	uint32_t tasha_codec = 0;
+
+	ret = afe_cal_init_hwdep(card);
+	if (ret) {
+		dev_err(card->dev, "afe cal hwdep init failed (%d)\n", ret);
+		ret = 0;
+	}
+
+	/* tasha late probe when it is present */
+	ret = of_property_read_u32(card->dev->of_node, "qcom,tasha-codec",
+				   &tasha_codec);
+	if (ret) {
+		dev_err(card->dev, "%s: No DT match tasha codec\n", __func__);
+		ret = 0;
+	} else {
+		if (tasha_codec) {
+			ret = msm_snd_card_tasha_late_probe(card);
+			if (ret)
+				dev_err(card->dev, "%s: tasha late probe err\n",
+					__func__);
+		}
+	}
+	return ret;
+}
+
 struct snd_soc_card snd_soc_card_qcs405_msm = {
 	.name		= "qcs405-snd-card",
 	.controls	= msm_snd_controls,
 	.num_controls	= ARRAY_SIZE(msm_snd_controls),
+	.late_probe	= msm_snd_card_codec_late_probe,
 };
 
 static int msm_populate_dai_link_component_of_node(
@@ -6892,8 +6979,6 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			if (tasha_codec) {
 				dev_dbg(dev, "%s(): Tasha codec is present\n",
 					__func__);
-				card->late_probe =
-				msm_snd_card_tasha_late_probe;
 				memcpy(msm_qcs405_dai_links + total_links,
 						msm_tasha_fe_dai_links,
 						sizeof(msm_tasha_fe_dai_links));
