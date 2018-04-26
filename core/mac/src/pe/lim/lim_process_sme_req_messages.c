@@ -2956,7 +2956,7 @@ __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		 */
 		pMac->lim.gLimIbssCoalescingHappened = false;
 	}
-	for (i = 1; i < pMac->lim.gLimAssocStaLimit; i++) {
+	for (i = 1; i <= pMac->lim.gLimAssocStaLimit; i++) {
 		pStaDs =
 			dph_get_hash_entry(pMac, i, &psessionEntry->dph.dphHashTable);
 		if (NULL == pStaDs)
