@@ -345,7 +345,7 @@ static long avtimer_ioctl(struct file *file, unsigned int ioctl_num,
 
 		pr_debug_ratelimited("%s: AV Timer tick: time %llx\n",
 		__func__, avtimer_tick);
-		if (copy_to_user((void *) ioctl_param, &avtimer_tick,
+		if (copy_to_user((void __user *)ioctl_param, &avtimer_tick,
 		    sizeof(avtimer_tick))) {
 			pr_err("%s: copy_to_user failed\n", __func__);
 			return -EFAULT;
