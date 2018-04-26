@@ -1770,6 +1770,9 @@ void hdd_disable_rx_ol_for_low_tput(struct hdd_context *hdd_ctx, bool disable)
 static bool hdd_can_handle_receive_offload(struct hdd_context *hdd_ctx,
 					   struct sk_buff *skb)
 {
+	if (!hdd_ctx->receive_offload_cb)
+		return false;
+
 	if (!QDF_NBUF_CB_RX_TCP_PROTO(skb) ||
 	    qdf_atomic_read(&hdd_ctx->disable_lro_in_concurrency) ||
 	    QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb) ||
@@ -1978,18 +1981,21 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 		hdd_tsf_timestamp_rx(hdd_ctx, skb, ktime_to_us(skb->tstamp));
 
-		if (hdd_can_handle_receive_offload(hdd_ctx, skb) &&
-		    hdd_ctx->receive_offload_cb)
+		if (hdd_can_handle_receive_offload(hdd_ctx, skb))
 			rx_ol_status = hdd_ctx->receive_offload_cb(adapter,
 								   skb);
 
 		if (rx_ol_status != QDF_STATUS_SUCCESS) {
+			/* we should optimize this per packet check, unlikely */
 			if (hdd_napi_enabled(HDD_NAPI_ANY) &&
-				!hdd_ctx->enable_rxthread &&
-				!QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb))
+			    !hdd_ctx->enable_rxthread &&
+			    !QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb)) {
 				rxstat = netif_receive_skb(skb);
-			else
-				rxstat = netif_rx_ni(skb);
+			} else {
+				local_bh_disable();
+				rxstat = netif_receive_skb(skb);
+				local_bh_enable();
+			}
 		}
 
 		if (!rxstat) {
