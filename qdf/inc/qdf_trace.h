@@ -484,11 +484,18 @@ bool qdf_trace_get_level(QDF_MODULE_ID module, QDF_TRACE_LEVEL level);
 
 typedef void (*tp_qdf_trace_cb)(void *p_mac, tp_qdf_trace_record, uint16_t);
 typedef void (*tp_qdf_state_info_cb) (char **buf, uint16_t *size);
+#ifdef WLAN_FEATURE_MEMDUMP_ENABLE
 void qdf_register_debugcb_init(void);
 void qdf_register_debug_callback(QDF_MODULE_ID module_id,
 					tp_qdf_state_info_cb qdf_state_infocb);
 QDF_STATUS qdf_state_info_dump_all(char *buf, uint16_t size,
 			uint16_t *driver_dump_size);
+#else /* WLAN_FEATURE_MEMDUMP_ENABLE */
+static inline void qdf_register_debugcb_init(void)
+{
+}
+#endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
+
 #ifdef TRACE_RECORD
 void qdf_trace_register(QDF_MODULE_ID, tp_qdf_trace_cb);
 void qdf_trace_init(void);

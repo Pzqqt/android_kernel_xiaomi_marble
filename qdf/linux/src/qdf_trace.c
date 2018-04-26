@@ -112,7 +112,10 @@ static t_qdf_trace_data g_qdf_trace_data;
 static tp_qdf_trace_cb qdf_trace_cb_table[QDF_MODULE_ID_MAX];
 static tp_qdf_trace_cb qdf_trace_restore_cb_table[QDF_MODULE_ID_MAX];
 #endif
+
+#ifdef WLAN_FEATURE_MEMDUMP_ENABLE
 static tp_qdf_state_info_cb qdf_state_info_table[QDF_MODULE_ID_MAX];
+#endif
 
 #ifdef CONFIG_DP_TRACE
 /* Static and Global variables */
@@ -672,6 +675,7 @@ void qdf_trace_dump_all(void *p_mac, uint8_t code, uint8_t session,
 qdf_export_symbol(qdf_trace_dump_all);
 #endif
 
+#ifdef WLAN_FEATURE_MEMDUMP_ENABLE
 /**
  * qdf_register_debugcb_init() - initializes debug callbacks
  * to NULL
@@ -735,6 +739,7 @@ QDF_STATUS qdf_state_info_dump_all(char *buf, uint16_t size,
 	return ret;
 }
 qdf_export_symbol(qdf_state_info_dump_all);
+#endif
 
 #ifdef CONFIG_DP_TRACE
 #define QDF_DP_TRACE_PREPEND_STR_SIZE 100
