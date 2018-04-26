@@ -8464,6 +8464,17 @@ typedef enum {
      */
     WMI_VDEV_PARAM_TX_RETRIES_BEFORE_RTS_PER_AC,           /* 0x82 */
 
+    /**
+     * Parameter to enable/disable AMSDU aggregation size auto-selection logic.
+     * We have logic where AMSDU aggregation size is dynamically decided
+     * based on MCS. That logic is enabled by default.
+     * For certain tests, we need a method to disable this optimization,
+     * and base AMSDU size only on the peer's capability rather than our logic.
+     * A value of 0 means disable internal optimization,
+     * 1 means enable internal optimzation.
+     */
+    WMI_VDEV_PARAM_AMSDU_AGGREGATION_SIZE_OPTIMIZATION,    /* 0x83 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
