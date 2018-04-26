@@ -41,7 +41,12 @@
 
 #define AFE_CLK_VERSION_V1    1
 #define AFE_CLK_VERSION_V2    2
+
 #define AFE_API_VERSION_SUPPORT_SPV3	2
+#define AFE_API_VERSION_V3		3
+/* for VAD and Island mode */
+#define AFE_API_VERSION_V4		4
+
 typedef int (*routing_cb)(int port);
 
 enum {
@@ -248,6 +253,16 @@ enum afe_cal_mode {
 	AFE_CAL_MODE_NONE,
 };
 
+enum afe_vad_cfg_type {
+	AFE_VAD_ENABLE = 0x00,
+	AFE_VAD_PREROLL,
+};
+
+struct vad_config {
+	u32 is_enable;
+	u32 pre_roll;
+};
+
 struct afe_audio_buffer {
 	dma_addr_t phys;
 	void       *data;
@@ -323,6 +338,9 @@ int afe_rt_proxy_port_write(phys_addr_t buf_addr_p,
 int afe_rt_proxy_port_read(phys_addr_t buf_addr_p,
 			u32 mem_map_handle, int bytes);
 void afe_set_cal_mode(u16 port_id, enum afe_cal_mode afe_cal_mode);
+void afe_set_vad_cfg(u32 vad_enable, u32 preroll_config,
+		     u32 port_id);
+void afe_set_island_mode_cfg(u16 port_id, u32 enable_flag);
 int afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	u32 rate);
 int afe_port_start_v2(u16 port_id, union afe_port_config *afe_config,
@@ -396,4 +414,6 @@ int afe_tdm_port_start(u16 port_id, struct afe_tdm_port_config *tdm_port,
 void afe_set_routing_callback(routing_cb cb);
 int afe_get_av_dev_drift(struct afe_param_id_dev_timing_stats *timing_stats,
 		u16 port);
+int afe_cal_init_hwdep(void *card);
+int afe_send_port_island_mode(u16 port_id);
 #endif /* __Q6AFE_V2_H__ */

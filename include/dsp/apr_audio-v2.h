@@ -3942,6 +3942,32 @@ struct avs_dec_depacketizer_id_param_t {
 };
 
 /* ID of the parameter used by #AFE_MODULE_AUDIO_DEV_INTERFACE to configure
+ * the island mode for a given AFE port.
+ */
+#define AFE_PARAM_ID_ISLAND_CONFIG	0x000102B4
+
+/* Version information used to handle future additions to codec DMA
+ * configuration (for backward compatibility).
+ */
+#define AFE_API_VERSION_ISLAND_CONFIG                                   0x1
+
+/* Payload of the AFE_PARAM_ID_ISLAND_CONFIG parameter used by
+ * AFE_MODULE_AUDIO_DEV_INTERFACE.
+ */
+struct afe_param_id_island_cfg_t {
+	uint32_t	island_cfg_minor_version;
+	/* Tracks the configuration of this parameter.
+	 * Supported values: #AFE_API_VERSION_ISLAND_CONFIG
+	 */
+
+	uint32_t	island_enable;
+	/* Specifies whether island mode should be enabled or disabled for the
+	 * use-case being setup.
+	 * Supported values: 0 - Disable, 1 - Enable
+	 */
+} __packed;
+
+/* ID of the parameter used by #AFE_MODULE_AUDIO_DEV_INTERFACE to configure
  * the Codec DMA interface.
  */
 
@@ -9814,6 +9840,7 @@ struct asm_aptx_dec_fmt_blk_v2 {
 
 #define AVCS_SERVICE_ID_ALL (0xFFFFFFFF)
 #define APRV2_IDS_SERVICE_ID_ADSP_CVP_V	(0xB)
+#define APRV2_IDS_SERVICE_ID_ADSP_AFE_V (0x4)
 
 struct avcs_get_fwk_version {
 	/*
@@ -11264,5 +11291,33 @@ struct admx_sec_primary_mic_ch {
 	uint16_t sec_primary_mic_ch;
 	uint16_t reserved1;
 } __packed;
+
+/** ID of the Voice Activity Detection (VAD) module, which is used to
+ *   configure AFE VAD.
+ */
+#define AFE_MODULE_VAD                                          0x000102B9
+
+/** ID of the parameter used by #AFE_MODULE_VAD to configure the VAD.
+ */
+#define AFE_PARAM_ID_VAD_CFG                                      0x000102BA
+
+#define AFE_API_VERSION_VAD_CFG                                     0x1
+
+/* Payload of the AFE_PARAM_ID_VAD_CONFIG parameter used by
+ * AFE_MODULE_VAD.
+ */
+struct afe_param_id_vad_cfg_t {
+	uint32_t                  vad_cfg_minor_version;
+	/** Tracks the configuration of this parameter.
+	 * Supported Values: #AFE_API_VERSION_VAD_CFG
+	 */
+
+	uint32_t                  pre_roll_in_ms;
+	/** Pre-roll period in ms.
+	 * Supported Values: 0x0 to 0x3E8
+	 */
+} __packed;
+
+#define AFE_PARAM_ID_VAD_CORE_CFG                              0x000102BB
 
 #endif /*_APR_AUDIO_V2_H_ */

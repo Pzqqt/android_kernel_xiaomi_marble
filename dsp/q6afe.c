@@ -28,6 +28,7 @@
 #include <dsp/msm-audio-event-notify.h>
 #include <ipc/apr_tal.h>
 #include "adsp_err.h"
+#include "q6afecal-hwdep.h"
 
 #define WAKELOCK_TIMEOUT	5000
 enum {
@@ -126,6 +127,10 @@ struct afe_ctl {
 	int dev_acdb_id[AFE_MAX_PORTS];
 	routing_cb rt_cb;
 	struct audio_uevent_data *uevent_data;
+	/* cal info for AFE */
+	struct afe_fw_info *fw_data;
+	u32 island_mode[AFE_MAX_PORTS];
+	struct vad_config vad_cfg[AFE_MAX_PORTS];
 };
 
 static atomic_t afe_ports_mad_type[SLIMBUS_PORT_LAST - SLIMBUS_0_RX];
@@ -1810,6 +1815,148 @@ done:
 
 }
 
+
+static int afe_get_island_mode(u16 port_id, u32 *island_mode)
+{
+	int ret = 0;
+	int index = 0;
+	*island_mode = 0;
+
+	index = q6audio_get_port_index(port_id);
+	if (index < 0 || index >= AFE_MAX_PORTS) {
+		pr_err("%s: AFE port index[%d] invalid!\n",
+				__func__, index);
+		return -EINVAL;
+	}
+
+	*island_mode = this_afe.island_mode[index];
+	return ret;
+}
+
+/*
+ * afe_send_port_island_mode -
+ *         for sending island mode to AFE
+ *
+ * @port_id: AFE port id number
+ *
+ * Returns 0 on success or error on failure.
+ */
+int afe_send_port_island_mode(u16 port_id)
+{
+	struct afe_param_id_island_cfg_t island_cfg;
+	struct param_hdr_v3 param_info;
+	u32 island_mode = 0;
+	int ret = 0;
+
+	memset(&island_cfg, 0, sizeof(island_cfg));
+	memset(&param_info, 0, sizeof(param_info));
+
+	ret = afe_get_island_mode(port_id, &island_mode);
+	if (ret) {
+		pr_err("%s: AFE port[%d] get island mode is invalid!\n",
+				__func__, port_id);
+		return ret;
+	}
+	param_info.module_id = AFE_MODULE_AUDIO_DEV_INTERFACE;
+	param_info.instance_id = INSTANCE_ID_0;
+	param_info.param_id = AFE_PARAM_ID_ISLAND_CONFIG;
+	param_info.param_size = sizeof(island_cfg);
+
+	island_cfg.island_cfg_minor_version = AFE_API_VERSION_ISLAND_CONFIG;
+	island_cfg.island_enable = island_mode;
+
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+					       q6audio_get_port_index(port_id),
+					       param_info, (u8 *) &island_cfg);
+	if (ret) {
+		pr_err("%s: AFE set island mode enable for port 0x%x failed %d\n",
+			__func__, port_id, ret);
+		return ret;
+	}
+	pr_debug("%s: AFE set island mode 0x%x  enable for port 0x%x ret %d\n",
+			__func__, island_mode, port_id, ret);
+	return ret;
+}
+EXPORT_SYMBOL(afe_send_port_island_mode);
+
+static int afe_get_vad_preroll_cfg(u16 port_id, u32 *preroll_cfg)
+{
+	int ret = 0;
+	int index = 0;
+	*preroll_cfg = 0;
+
+	index = q6audio_get_port_index(port_id);
+	if (index < 0 || index >= AFE_MAX_PORTS) {
+		pr_err("%s: AFE port index[%d] invalid!\n",
+				__func__, index);
+		return -EINVAL;
+	}
+
+	*preroll_cfg = this_afe.vad_cfg[index].pre_roll;
+	return ret;
+}
+
+static int afe_send_port_vad_cfg_params(u16 port_id)
+{
+	struct afe_param_id_vad_cfg_t vad_cfg;
+	struct param_hdr_v3 param_info;
+	u32 pre_roll_cfg = 0;
+	struct firmware_cal *hwdep_cal = NULL;
+	int ret = 0;
+
+	memset(&vad_cfg, 0, sizeof(vad_cfg));
+	memset(&param_info, 0, sizeof(param_info));
+
+	ret = afe_get_vad_preroll_cfg(port_id, &pre_roll_cfg);
+	if (ret) {
+		pr_err("%s: AFE port[%d] get preroll cfg is invalid!\n",
+				__func__, port_id);
+		return ret;
+	}
+	param_info.module_id = AFE_MODULE_VAD;
+	param_info.instance_id = INSTANCE_ID_0;
+	param_info.param_id = AFE_PARAM_ID_VAD_CFG;
+	param_info.param_size = sizeof(vad_cfg);
+
+	vad_cfg.vad_cfg_minor_version = AFE_API_VERSION_VAD_CFG;
+	vad_cfg.pre_roll_in_ms = pre_roll_cfg;
+
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+					       q6audio_get_port_index(port_id),
+					       param_info, (u8 *) &vad_cfg);
+	if (ret) {
+		pr_err("%s: AFE set vad cfg for port 0x%x failed %d\n",
+			__func__, port_id, ret);
+		return ret;
+	}
+
+	memset(&param_info, 0, sizeof(param_info));
+
+	hwdep_cal = q6afecal_get_fw_cal(this_afe.fw_data, Q6AFE_VAD_CORE_CAL);
+	if (!hwdep_cal) {
+		pr_err("%s: error in retrieving vad core calibration",
+			__func__);
+		return -EINVAL;
+	}
+
+	param_info.module_id = AFE_MODULE_VAD;
+	param_info.instance_id = INSTANCE_ID_0;
+	param_info.param_id = AFE_PARAM_ID_VAD_CORE_CFG;
+	param_info.param_size = hwdep_cal->size;
+
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+					q6audio_get_port_index(port_id),
+					param_info, (u8 *) hwdep_cal->data);
+	if (ret) {
+		pr_err("%s: AFE set vad cfg for port 0x%x failed %d\n",
+			__func__, port_id, ret);
+		return ret;
+	}
+	pr_debug("%s: AFE set preroll cfg %d vad core cfg  port 0x%x ret %d\n",
+			__func__, pre_roll_cfg, port_id, ret);
+	return ret;
+}
+
 static int remap_cal_data(struct cal_block_data *cal_block, int cal_index)
 {
 	int ret = 0;
@@ -2805,6 +2952,44 @@ void afe_set_cal_mode(u16 port_id, enum afe_cal_mode afe_cal_mode)
 EXPORT_SYMBOL(afe_set_cal_mode);
 
 /**
+ * afe_set_vad_cfg -
+ *         set configuration for VAD
+ *
+ * @port_id: AFE port id number
+ * @vad_enable: enable/disable vad
+ * @preroll_config: Preroll configuration
+ *
+ */
+void afe_set_vad_cfg(u32 vad_enable, u32 preroll_config,
+		     u32 port_id)
+{
+	uint16_t port_index;
+
+	port_index = afe_get_port_index(port_id);
+	this_afe.vad_cfg[port_index].is_enable = vad_enable;
+	this_afe.vad_cfg[port_index].pre_roll = preroll_config;
+}
+EXPORT_SYMBOL(afe_set_vad_cfg);
+
+/**
+ * afe_set_island_mode_cfg -
+ *         set island mode configuration
+ *
+ * @port_id: AFE port id number
+ * @enable_flag: Enable or Disable
+ *
+ */
+void afe_set_island_mode_cfg(u16 port_id, u32 enable_flag)
+{
+	uint16_t port_index;
+
+	port_index = afe_get_port_index(port_id);
+	this_afe.island_mode[port_index] = enable_flag;
+
+}
+EXPORT_SYMBOL(afe_set_island_mode_cfg);
+
+/**
  * afe_set_routing_callback -
  *         Update callback function for routing
  *
@@ -3245,8 +3430,21 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	}
 
 	mutex_lock(&this_afe.afe_cmd_lock);
-	/* Also send the topology id here: */
 	port_index = afe_get_port_index(port_id);
+
+	if (q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
+		/* send VAD configuration if is enabled */
+		if (this_afe.vad_cfg[port_index].is_enable) {
+			ret = afe_send_port_vad_cfg_params(port_id);
+			if (ret)
+				pr_err("%s: afe send VAD config failed %d\n",
+					__func__, ret);
+				goto fail_cmd;
+		}
+	}
+
+	/* Also send the topology id here: */
 	if (!(this_afe.afe_cal_mode[port_index] == AFE_CAL_MODE_NONE)) {
 		/* One time call: only for first time */
 		afe_send_custom_topology();
@@ -7354,6 +7552,9 @@ int __init afe_init(void)
 		this_afe.afe_cal_mode[i] = AFE_CAL_MODE_DEFAULT;
 		this_afe.afe_sample_rates[i] = 0;
 		this_afe.dev_acdb_id[i] = 0;
+		this_afe.island_mode[i] = 0;
+		this_afe.vad_cfg[i].is_enable = 0;
+		this_afe.vad_cfg[i].pre_roll = 0;
 		init_waitqueue_head(&this_afe.wait[i]);
 	}
 	wakeup_source_init(&wl.ws, "spkr-prot");
@@ -7394,3 +7595,29 @@ void afe_exit(void)
 	mutex_destroy(&this_afe.afe_cmd_lock);
 	wakeup_source_trash(&wl.ws);
 }
+
+/*
+ * afe_cal_init_hwdep -
+ *        Initiliaze AFE HW dependent Node
+ *
+ * @card: pointer to sound card
+ *
+ */
+int afe_cal_init_hwdep(void *card)
+{
+	int ret = 0;
+
+	this_afe.fw_data = kzalloc(sizeof(*(this_afe.fw_data)),
+				      GFP_KERNEL);
+	if (!this_afe.fw_data)
+		return -ENOMEM;
+
+	set_bit(Q6AFE_VAD_CORE_CAL, this_afe.fw_data->cal_bit);
+	ret = q6afe_cal_create_hwdep(this_afe.fw_data, Q6AFE_HWDEP_NODE, card);
+	if (ret < 0) {
+		pr_err("%s: couldn't create hwdep for AFE %d\n", __func__, ret);
+		return ret;
+	}
+	return ret;
+}
+EXPORT_SYMBOL(afe_cal_init_hwdep);

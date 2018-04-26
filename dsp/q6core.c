@@ -513,10 +513,9 @@ int q6core_get_service_version(uint32_t service_id,
 }
 EXPORT_SYMBOL(q6core_get_service_version);
 
-size_t q6core_get_fwk_version_size(uint32_t service_id)
+static int q6core_get_avcs_fwk_version(void)
 {
 	int ret = 0;
-	uint32_t num_services;
 
 	mutex_lock(&(q6core_lcl.ver_lock));
 	pr_debug("%s: q6core_avcs_ver_info.status(%d)\n", __func__,
@@ -547,7 +546,15 @@ size_t q6core_get_fwk_version_size(uint32_t service_id)
 		break;
 	}
 	mutex_unlock(&(q6core_lcl.ver_lock));
+	return ret;
+}
 
+size_t q6core_get_fwk_version_size(uint32_t service_id)
+{
+	int ret = 0;
+	uint32_t num_services;
+
+	ret = q6core_get_avcs_fwk_version();
 	if (ret)
 		goto done;
 
@@ -569,6 +576,42 @@ done:
 	return ret;
 }
 EXPORT_SYMBOL(q6core_get_fwk_version_size);
+
+/**
+ * q6core_get_avcs_version_per_service -
+ *       to get api version of a particular service
+ *
+ * @service_id: id of the service
+ *
+ * Returns valid version on success or error (negative value) on failure
+ */
+int q6core_get_avcs_api_version_per_service(uint32_t service_id)
+{
+	struct avcs_fwk_ver_info *cached_ver_info = NULL;
+	int i;
+	uint32_t num_services;
+	int ret = 0;
+
+	if (service_id == AVCS_SERVICE_ID_ALL)
+		return -EINVAL;
+
+	ret = q6core_get_avcs_fwk_version();
+	if (ret < 0) {
+		pr_err("%s: failure in getting AVCS version\n", __func__);
+		return ret;
+	}
+
+	cached_ver_info = q6core_lcl.q6core_avcs_ver_info.ver_info;
+	num_services = cached_ver_info->avcs_fwk_version.num_services;
+
+	for (i = 0; i < num_services; i++) {
+		if (cached_ver_info->services[i].service_id == service_id)
+			return cached_ver_info->services[i].api_version;
+	}
+	pr_err("%s: No service matching service ID %d\n", __func__, service_id);
+	return -EINVAL;
+}
+EXPORT_SYMBOL(q6core_get_avcs_api_version_per_service);
 
 /**
  * core_set_license -
