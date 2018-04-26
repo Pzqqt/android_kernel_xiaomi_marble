@@ -540,6 +540,9 @@ ifeq ($(CONFIG_LITHIUM), y)
 	CONFIG_FEATURE_UNIT_TEST_SUSPEND := y
 endif
 
+#Flag to enable hdd memory dump feature
+CONFIG_FEATURE_HDD_MEMDUMP_ENABLE := y
+
 #Flag to enable/disable WLAN D0-WOW
 ifeq ($(CONFIG_PCI_MSM), y)
 ifeq ($(CONFIG_HIF_PCI), y)
@@ -590,7 +593,6 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_hostapd.o \
 		$(HDD_SRC_DIR)/wlan_hdd_ioctl.o \
 		$(HDD_SRC_DIR)/wlan_hdd_main.o \
-		$(HDD_SRC_DIR)/wlan_hdd_memdump.o \
 		$(HDD_SRC_DIR)/wlan_hdd_object_manager.o \
 		$(HDD_SRC_DIR)/wlan_hdd_oemdata.o \
 		$(HDD_SRC_DIR)/wlan_hdd_p2p.o \
@@ -616,6 +618,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 HDD_OBJS+=	$(HDD_SRC_DIR)/wlan_hdd_ocb.o
+endif
+
+ifeq ($(CONFIG_FEATURE_HDD_MEMDUMP_ENABLE), y)
+HDD_OBJS+=	$(HDD_SRC_DIR)/wlan_hdd_memdump.o
 endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_FIPS), y)
@@ -2022,6 +2028,7 @@ cppflags-$(CONFIG_WLAN_FEATURE_P2P_DEBUG) += -DWLAN_FEATURE_P2P_DEBUG
 cppflags-$(CONFIG_WLAN_LOGGING_SOCK_SVC) += -DWLAN_LOGGING_SOCK_SVC_ENABLE
 cppflags-$(CONFIG_WLAN_FEATURE_FILS) += -DWLAN_FEATURE_FILS_SK
 cppflags-$(CONFIG_CP_STATS) += -DQCA_SUPPORT_CP_STATS
+cppflags-$(CONFIG_FEATURE_HDD_MEMDUMP_ENABLE) += -DWLAN_FEATURE_HDD_MEMDUMP_ENABLE
 
 ifeq ($(CONFIG_CNSS), y)
 ifeq ($(CONFIG_CNSS_SDIO), y)

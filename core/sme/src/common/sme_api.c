@@ -588,6 +588,7 @@ QDF_STATUS sme_ser_cmd_callback(void *buf,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_HDD_MEMDUMP_ENABLE
 /**
  * sme_get_sessionid_from_activelist() - gets session id
  * @mac: mac context
@@ -683,7 +684,11 @@ static void sme_register_debug_callback(void)
 {
 	qdf_register_debug_callback(QDF_MODULE_ID_SME, &sme_state_info_dump);
 }
-
+#else /* WLAN_FEATURE_HDD_MEMDUMP_ENABLE */
+static void sme_register_debug_callback(void)
+{
+}
+#endif /* WLAN_FEATURE_HDD_MEMDUMP_ENABLE */
 
 /* Global APIs */
 
