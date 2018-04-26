@@ -4148,6 +4148,62 @@ static int hdd_handle_pdev_reset(struct hdd_adapter *adapter, int value)
 	return ret;
 }
 
+static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
+{
+	int errno;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ePhyChanBondState bonding_state;
+	uint32_t bonding_mode;
+	tSmeConfigParams *sme_config;
+
+	if (!hdd_ctx->hHal)
+		return -EINVAL;
+
+	/* updating channel bonding only on 5Ghz */
+	hdd_debug("WMI_VDEV_PARAM_CHWIDTH val %d", ch_width);
+
+	switch (ch_width) {
+	case eHT_CHANNEL_WIDTH_20MHZ:
+		bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
+		break;
+
+	case eHT_CHANNEL_WIDTH_40MHZ:
+	case eHT_CHANNEL_WIDTH_80MHZ:
+		bonding_state = csr_convert_cb_ini_value_to_phy_cb_state(
+			hdd_ctx->config->nChannelBondingMode5GHz);
+
+		if (bonding_state == WNI_CFG_CHANNEL_BONDING_MODE_DISABLE)
+			return -EINVAL;
+
+		bonding_mode = hdd_ctx->config->nChannelBondingMode5GHz;
+		break;
+
+	default:
+		hdd_err("Invalid channel width 0->20 1->40 2->80");
+		return -EINVAL;
+	}
+
+	sme_config = qdf_mem_malloc(sizeof(*sme_config));
+	if (!sme_config) {
+		hdd_err("failed to allocate memory for sme_config");
+		return -ENOMEM;
+	}
+
+	errno = wma_cli_set_command(adapter->session_id, WMI_VDEV_PARAM_CHWIDTH,
+				    ch_width, VDEV_CMD);
+	if (errno)
+		goto free_config;
+
+	sme_get_config_param(hdd_ctx->hHal, sme_config);
+	sme_config->csrConfig.channelBondingMode5GHz = bonding_mode;
+	sme_update_config(hdd_ctx->hHal, sme_config);
+
+free_config:
+	qdf_mem_free(sme_config);
+
+	return errno;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4576,71 +4632,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 
 	case WE_SET_CHWIDTH:
-	{
-		bool chwidth = false;
-		struct hdd_context *phddctx = WLAN_HDD_GET_CTX(adapter);
-
-		if (!hHal)
-			return -EINVAL;
-
-		/*updating channel bonding only on 5Ghz */
-		hdd_debug("WMI_VDEV_PARAM_CHWIDTH val %d",
-		       set_value);
-		if (set_value > eHT_CHANNEL_WIDTH_80MHZ) {
-			hdd_err("Invalid channel width 0->20 1->40 2->80");
-			ret = -EINVAL;
-			goto free;
-		}
-
-		if ((WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
-		     csr_convert_cb_ini_value_to_phy_cb_state(phddctx->config->
-							      nChannelBondingMode5GHz)))
-			chwidth = true;
-
-		sme_get_config_param(hHal, sme_config);
-		switch (set_value) {
-		case eHT_CHANNEL_WIDTH_20MHZ:
-			sme_config->csrConfig.channelBondingMode5GHz =
-				WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-			break;
-		case eHT_CHANNEL_WIDTH_40MHZ:
-			if (chwidth) {
-				sme_config->csrConfig.
-				channelBondingMode5GHz =
-					phddctx->config->
-					nChannelBondingMode5GHz;
-			} else {
-				ret = -EINVAL;
-				goto free;
-			}
-
-			break;
-		case eHT_CHANNEL_WIDTH_80MHZ:
-			if (chwidth) {
-				sme_config->csrConfig.
-				channelBondingMode5GHz =
-					phddctx->config->
-					nChannelBondingMode5GHz;
-			} else {
-				ret = -EINVAL;
-				goto free;
-			}
-
-			break;
-
-		default:
-			ret = -EINVAL;
-			goto free;
-		}
-
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_CHWIDTH,
-					  set_value, VDEV_CMD);
-		if (!ret)
-			sme_update_config(hHal, sme_config);
-
+		ret = hdd_we_set_ch_width(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_ANI_EN_DIS:
 	{
