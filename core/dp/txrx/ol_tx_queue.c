@@ -161,6 +161,7 @@ ol_tx_queue_discard(
 		num = ol_tx_desc_pool_size_hl(pdev->ctrl_pdev) -
 			qdf_atomic_read(&pdev->tx_queue.rsrc_cnt);
 	else
+		/*TODO: Discard frames for a particular vdev only */
 		num = pdev->tx_queue.rsrc_threshold_hi -
 			pdev->tx_queue.rsrc_threshold_lo;
 
@@ -192,7 +193,7 @@ ol_tx_queue_discard(
 		ol_tx_queue_flush(pdev);
 }
 
-#ifdef CONFIG_PER_VDEV_TX_DESC_POOL
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
 
 /**
  * is_ol_tx_discard_frames_success() - check whether currently queued tx frames
@@ -202,16 +203,39 @@ ol_tx_queue_discard(
  *
  * Return: Success if available tx descriptors are too few
  */
-static bool
+static inline bool
 is_ol_tx_discard_frames_success(struct ol_txrx_pdev_t *pdev,
 				struct ol_tx_desc_t *tx_desc)
 {
 	ol_txrx_vdev_handle vdev;
+	bool discard_frames;
 
 	vdev = tx_desc->vdev;
-	return qdf_atomic_read(&vdev->tx_desc_count) >
-			((ol_tx_desc_pool_size_hl(pdev->ctrl_pdev) >> 1)
-			- TXRX_HL_TX_FLOW_CTRL_MGMT_RESERVED);
+
+	qdf_spin_lock_bh(&vdev->pdev->tx_mutex);
+	if (vdev->tx_desc_limit == 0) {
+		/* Flow control not enabled */
+		discard_frames = qdf_atomic_read(&pdev->tx_queue.rsrc_cnt) <=
+					pdev->tx_queue.rsrc_threshold_lo;
+	} else {
+	/*
+	 * Discard
+	 * if netbuf is normal priority and tx_desc_count greater than
+	 * queue stop threshold
+	 * AND
+	 * if netbuf is high priority and tx_desc_count greater than
+	 * tx desc limit.
+	 */
+		discard_frames = (!ol_tx_desc_is_high_prio(tx_desc->netbuf) &&
+				  qdf_atomic_read(&vdev->tx_desc_count) >
+				  vdev->queue_stop_th) ||
+				  (ol_tx_desc_is_high_prio(tx_desc->netbuf) &&
+				  qdf_atomic_read(&vdev->tx_desc_count) >
+				  vdev->tx_desc_limit);
+	}
+	qdf_spin_unlock_bh(&vdev->pdev->tx_mutex);
+
+	return discard_frames;
 }
 #else
 
@@ -222,7 +246,7 @@ is_ol_tx_discard_frames_success(struct ol_txrx_pdev_t *pdev,
 	return qdf_atomic_read(&pdev->tx_queue.rsrc_cnt) <=
 				pdev->tx_queue.rsrc_threshold_lo;
 }
-#endif
+#endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 
 void
 ol_tx_enqueue(
