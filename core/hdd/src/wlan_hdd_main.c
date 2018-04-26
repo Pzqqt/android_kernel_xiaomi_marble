@@ -7192,7 +7192,7 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 {
 	struct hdd_context *hdd_ctx = container_of(work, struct hdd_context,
 					bus_bw_work);
-	struct hdd_adapter *adapter = NULL;
+	struct hdd_adapter *adapter = NULL, *con_sap_adapter = NULL;
 	uint64_t tx_packets = 0, rx_packets = 0;
 	uint64_t fwd_tx_packets = 0, fwd_rx_packets = 0;
 	uint64_t fwd_tx_packets_diff = 0, fwd_rx_packets_diff = 0;
@@ -7253,6 +7253,9 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 			}
 		}
 
+		if (adapter->device_mode == QDF_SAP_MODE)
+			con_sap_adapter = adapter;
+
 		total_rx += adapter->stats.rx_packets;
 		total_tx += adapter->stats.tx_packets;
 
@@ -7279,6 +7282,11 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 				&ipa_rx_packets);
 		tx_packets += (uint64_t)ipa_tx_packets;
 		rx_packets += (uint64_t)ipa_rx_packets;
+
+		if (con_sap_adapter) {
+			con_sap_adapter->stats.tx_packets += ipa_tx_packets;
+			con_sap_adapter->stats.rx_packets += ipa_rx_packets;
+		}
 
 		ucfg_ipa_set_perf_level(hdd_ctx->hdd_pdev, tx_packets, rx_packets);
 		ucfg_ipa_uc_stat_request(hdd_ctx->hdd_pdev, 2);
