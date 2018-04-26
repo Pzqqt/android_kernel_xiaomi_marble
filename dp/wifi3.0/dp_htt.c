@@ -1394,6 +1394,10 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 		!= NULL) {
 		msg_word = (uint32_t *) qdf_nbuf_data(htt_msg);
 		cookie_val = *(msg_word + 1);
+		htt_stats->msg_len = HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_GET(
+					*(msg_word +
+					HTT_T2H_EXT_STATS_TLV_START_OFFSET));
+
 		if (cookie_val) {
 			if (dp_send_htt_stat_resp(htt_stats, soc, htt_msg)
 					== QDF_STATUS_SUCCESS) {
@@ -1408,10 +1412,6 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 		if (cookie_msb >> 2) {
 			copy_stats = true;
 		}
-
-		htt_stats->msg_len = HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_GET(
-					*(msg_word +
-					HTT_T2H_EXT_STATS_TLV_START_OFFSET));
 
 		/* read 5th word */
 		msg_word = msg_word + 4;
