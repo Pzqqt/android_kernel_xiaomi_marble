@@ -42,10 +42,12 @@
 qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb);
 #endif
 
+#ifdef CONFIG_LL_DP_SUPPORT
 struct ol_tx_desc_t *
 ol_tx_prepare_ll(ol_txrx_vdev_handle vdev,
 		 qdf_nbuf_t msdu,
 		 struct ol_txrx_msdu_info_t *msdu_info);
+#endif
 
 qdf_nbuf_t ol_tx_ll_wrapper(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
 #ifdef WLAN_FEATURE_FASTPATH
@@ -89,6 +91,27 @@ void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev)
 }
 #endif
 
+static inline
+int ol_txrx_tx_is_raw(enum ol_tx_spec tx_spec)
+{
+	return	tx_spec &
+		(OL_TX_SPEC_RAW | OL_TX_SPEC_NO_AGGR | OL_TX_SPEC_NO_ENCRYPT);
+}
+
+static inline
+uint8_t ol_txrx_tx_raw_subtype(enum ol_tx_spec tx_spec)
+{
+	uint8_t sub_type = 0x1; /* 802.11 MAC header present */
+
+	if (tx_spec & OL_TX_SPEC_NO_AGGR)
+		sub_type |= 0x1 << HTT_TX_MSDU_DESC_RAW_SUBTYPE_NO_AGGR_S;
+	if (tx_spec & OL_TX_SPEC_NO_ENCRYPT)
+		sub_type |= 0x1 << HTT_TX_MSDU_DESC_RAW_SUBTYPE_NO_ENCRYPT_S;
+	if (tx_spec & OL_TX_SPEC_NWIFI_NO_ENCRYPT)
+		sub_type |= 0x1 << HTT_TX_MSDU_DESC_RAW_SUBTYPE_NO_ENCRYPT_S;
+	return sub_type;
+}
+
 /**
  * ol_tx_hl() - transmit tx frames for a HL system.
  * @vdev: the virtual device transmit the data
@@ -120,9 +143,32 @@ ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
  *
  *  Return: null - success, skb - failure
  */
-qdf_nbuf_t
+#ifdef CONFIG_HL_SUPPORT
+qdf_nbuf_t ol_tx_non_std_hl(struct ol_txrx_vdev_t *vdev,
+			    enum ol_tx_spec tx_spec,
+			    qdf_nbuf_t msdu_list);
+
+static inline qdf_nbuf_t
 ol_tx_non_std(struct cdp_vdev *pvdev,
-	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
+	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
+{
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
+	return ol_tx_non_std_hl(vdev, tx_spec, msdu_list);
+}
+#else
+qdf_nbuf_t ol_tx_non_std_ll(struct ol_txrx_vdev_t *vdev,
+			    enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
+
+static inline qdf_nbuf_t
+ol_tx_non_std(struct cdp_vdev *pvdev,
+	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
+{
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
+	return ol_tx_non_std_ll(vdev, tx_spec, msdu_list);
+}
+#endif
 
 void ol_txrx_mgmt_tx_complete(void *ctxt, qdf_nbuf_t netbuf, int err);
 

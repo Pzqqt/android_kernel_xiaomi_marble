@@ -232,6 +232,12 @@ ifeq ($(CONFIG_SLUB_DEBUG), y)
 	CONFIG_WLAN_OBJMGR_DEBUG:= y
 endif
 
+ifeq (y,$(findstring y,$(CONFIG_QCA_WIFI_SDIO) $(CONFIG_HIF_USB)))
+CONFIG_HL_DP_SUPPORT := y
+else
+CONFIG_LL_DP_SUPPORT := y
+endif
+
 ifeq ($(CONFIG_HIF_PCI), y)
 ifneq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 ifneq ($(CONFIG_LITHIUM), y)

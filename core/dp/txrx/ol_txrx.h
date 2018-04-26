@@ -24,6 +24,8 @@
 #include "cds_sched.h"
 #include <cdp_txrx_handle.h>
 #include <ol_txrx_types.h>
+#include <ol_txrx_internal.h>
+
 /*
  * Pool of tx descriptors reserved for
  * high-priority traffic, such as ARP/EAPOL etc
@@ -170,15 +172,118 @@ bool ol_txrx_get_tx_resource(uint8_t sta_id,
 int ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth);
 #endif
 
+void ol_tx_init_pdev(ol_txrx_pdev_handle pdev);
+
+#ifdef CONFIG_HL_SUPPORT
+void ol_txrx_vdev_txqs_init(struct ol_txrx_vdev_t *vdev);
+void ol_txrx_vdev_tx_queue_free(struct ol_txrx_vdev_t *vdev);
+void ol_txrx_peer_txqs_init(struct ol_txrx_pdev_t *pdev,
+			    struct ol_txrx_peer_t *peer);
+void ol_txrx_peer_tx_queue_free(struct ol_txrx_pdev_t *pdev,
+				struct ol_txrx_peer_t *peer);
+#else
+static inline void
+ol_txrx_vdev_txqs_init(struct ol_txrx_vdev_t *vdev) {}
+
+static inline void
+ol_txrx_vdev_tx_queue_free(struct ol_txrx_vdev_t *vdev) {}
+
+static inline void
+ol_txrx_peer_txqs_init(struct ol_txrx_pdev_t *pdev,
+		       struct ol_txrx_peer_t *peer) {}
+
+static inline void
+ol_txrx_peer_tx_queue_free(struct ol_txrx_pdev_t *pdev,
+			   struct ol_txrx_peer_t *peer) {}
+#endif
+
+#if defined(CONFIG_HL_SUPPORT) && defined(DEBUG_HL_LOGGING)
+void ol_txrx_pdev_txq_log_init(struct ol_txrx_pdev_t *pdev);
+void ol_txrx_pdev_txq_log_destroy(struct ol_txrx_pdev_t *pdev);
+void ol_txrx_pdev_grp_stats_init(struct ol_txrx_pdev_t *pdev);
+void ol_txrx_pdev_grp_stat_destroy(struct ol_txrx_pdev_t *pdev);
+#else
+static inline void
+ol_txrx_pdev_txq_log_init(struct ol_txrx_pdev_t *pdev) {}
+
+static inline void
+ol_txrx_pdev_txq_log_destroy(struct ol_txrx_pdev_t *pdev) {}
+
+static inline void
+ol_txrx_pdev_grp_stats_init(struct ol_txrx_pdev_t *pdev) {}
+
+static inline void
+ol_txrx_pdev_grp_stat_destroy(struct ol_txrx_pdev_t *pdev) {}
+#endif
+
+#if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
+void ol_txrx_copy_mac_addr_raw(struct cdp_vdev *pvdev, uint8_t *bss_addr);
+void ol_txrx_add_last_real_peer(struct cdp_pdev *ppdev,
+				struct cdp_vdev *pvdev, uint8_t *peer_id);
+bool is_vdev_restore_last_peer(void *ppeer);
+void ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *ppeer,
+				   uint8_t *peer_id, bool restore_last_peer);
+#endif
+
+#if defined(FEATURE_TSO) && defined(FEATURE_TSO_DEBUG)
+void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev);
+void ol_txrx_tso_stats_init(ol_txrx_pdev_handle pdev);
+void ol_txrx_tso_stats_deinit(ol_txrx_pdev_handle pdev);
+void ol_txrx_tso_stats_clear(ol_txrx_pdev_handle pdev);
+#else
+static inline
+void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
+{
+	ol_txrx_err("TSO is not supported\n");
+}
+
+static inline
+void ol_txrx_tso_stats_init(ol_txrx_pdev_handle pdev) {}
+
+static inline
+void ol_txrx_tso_stats_deinit(ol_txrx_pdev_handle pdev) {}
+
+static inline
+void ol_txrx_tso_stats_clear(ol_txrx_pdev_handle pdev) {}
+#endif
+
+struct ol_tx_desc_t *
+ol_txrx_mgmt_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
+			   struct ol_txrx_vdev_t *vdev,
+			   qdf_nbuf_t tx_mgmt_frm,
+			   struct ol_txrx_msdu_info_t *tx_msdu_info);
+
+int ol_txrx_mgmt_send_frame(struct ol_txrx_vdev_t *vdev,
+			    struct ol_tx_desc_t *tx_desc,
+			    qdf_nbuf_t tx_mgmt_frm,
+			    struct ol_txrx_msdu_info_t *tx_msdu_info,
+			    uint16_t chanfreq);
+
+#ifdef CONFIG_HL_SUPPORT
+static inline
+uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
+{
+	return ol_tx_desc_pool_size_hl(pdev->ctrl_pdev);
+}
+#else
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
-void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc);
-uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev);
 static inline
 uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
 {
 	return pdev->num_msdu_desc;
 }
+#else
+static inline
+uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
+{
+	return ol_cfg_target_tx_credit(pdev->ctrl_pdev);
+}
+#endif
+#endif
 
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc);
+uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev);
 QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
 				     tx_pause_callback pause_cb);
 /**
@@ -202,18 +307,6 @@ QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
  */
 bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev);
 #else
-/**
- * ol_tx_get_desc_global_pool_size() - get global pool size
- * @pdev: pdev handle
- *
- * Return: global pool size
- */
-static inline
-uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
-{
-	return ol_cfg_target_tx_credit(pdev->ctrl_pdev);
-}
-
 /**
  * ol_tx_get_total_free_desc() - get total free descriptors
  * @pdev: pdev handle
@@ -259,4 +352,10 @@ struct ol_txrx_stats_req_internal
 	*ol_txrx_fw_stats_desc_get_req(struct ol_txrx_pdev_t *pdev,
 				       uint8_t desc_id);
 
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
+int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc,
+				     tx_pause_callback flowcontrol);
+int ol_txrx_set_vdev_os_queue_status(u8 vdev_id, enum netif_action_type action);
+int ol_txrx_set_vdev_tx_desc_limit(u8 vdev_id, u8 chan);
+#endif
 #endif /* _OL_TXRX__H_ */

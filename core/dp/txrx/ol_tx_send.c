@@ -1031,10 +1031,8 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 
 	tx_desc = ol_tx_desc_find_check(pdev, tx_desc_id);
 	if (tx_desc == NULL) {
-		ol_txrx_err(
-				"%s: invalid desc_id(%u), ignore it.\n",
-				__func__,
-				tx_desc_id);
+		ol_txrx_err("%s: invalid desc_id(%u), ignore it.\n",
+			    __func__, tx_desc_id);
 		return;
 	}
 
@@ -1297,7 +1295,6 @@ ol_tx_delay_hist(struct cdp_pdev *ppdev,
 }
 
 #ifdef QCA_COMPUTE_TX_DELAY_PER_TID
-
 static uint8_t
 ol_tx_delay_tid_from_l3_hdr(struct ol_txrx_pdev_t *pdev,
 			    qdf_nbuf_t msdu, struct ol_tx_desc_t *tx_desc)
@@ -1358,11 +1355,9 @@ ol_tx_delay_tid_from_l3_hdr(struct ol_txrx_pdev_t *pdev,
 		return QDF_NBUF_TX_EXT_TID_INVALID;
 	}
 }
-#endif
 
 static int ol_tx_delay_category(struct ol_txrx_pdev_t *pdev, uint16_t msdu_id)
 {
-#ifdef QCA_COMPUTE_TX_DELAY_PER_TID
 	struct ol_tx_desc_t *tx_desc = ol_tx_desc_find(pdev, msdu_id);
 	uint8_t tid;
 	qdf_nbuf_t msdu = tx_desc->netbuf;
@@ -1379,10 +1374,13 @@ static int ol_tx_delay_category(struct ol_txrx_pdev_t *pdev, uint16_t msdu_id)
 		}
 	}
 	return tid;
-#else
-	return 0;
-#endif
 }
+#else
+static int ol_tx_delay_category(struct ol_txrx_pdev_t *pdev, uint16_t msdu_id)
+{
+	return 0;
+}
+#endif
 
 static inline int
 ol_tx_delay_hist_bin(struct ol_txrx_pdev_t *pdev, uint32_t delay_ticks)

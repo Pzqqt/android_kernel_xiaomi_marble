@@ -943,20 +943,36 @@ TXRX_OBJS := $(TXRX_DIR)/ol_txrx.o \
                 $(TXRX_DIR)/ol_rx_reorder_timeout.o \
                 $(TXRX_DIR)/ol_rx_reorder.o \
                 $(TXRX_DIR)/ol_rx_pn.o \
-                $(TXRX_DIR)/ol_tx_queue.o \
                 $(TXRX_DIR)/ol_txrx_peer_find.o \
                 $(TXRX_DIR)/ol_txrx_encap.o \
-                $(TXRX_DIR)/ol_tx_send.o \
-                $(TXRX_DIR)/ol_tx_sched.o \
-                $(TXRX_DIR)/ol_tx_classify.o
+                $(TXRX_DIR)/ol_tx_send.o
 
 ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_event.o
 endif
 
+ifeq ($(CONFIG_LL_DP_SUPPORT), y)
+
+TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_ll.o
+
+ifeq ($(CONFIG_WLAN_FASTPATH), y)
+TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_ll_fastpath.o
+else
+TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_ll_legacy.o
+endif
+
 ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_flow_control.o
 endif
+
+endif #CONFIG_LL_DP_SUPPORT
+
+ifeq ($(CONFIG_HL_DP_SUPPORT), y)
+TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_hl.o
+TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_classify.o
+TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_sched.o
+TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_queue.o
+endif #CONFIG_HL_DP_SUPPORT
 
 ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_LEGACY), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_legacy_flow_control.o
@@ -964,12 +980,6 @@ endif
 
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_ipa.o
-endif
-
-ifeq ($(CONFIG_WLAN_FASTPATH), y)
-TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_ll_fastpath.o
-else
-TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_ll_legacy.o
 endif
 
 ifeq ($(CONFIG_QCA_SUPPORT_TX_THROTTLE), y)
@@ -1810,10 +1820,13 @@ cppflags-$(CONFIG_HIF_PCI) += -DHIF_PCI
 
 cppflags-$(CONFIG_HIF_SNOC) += -DHIF_SNOC
 
+cppflags-$(CONFIG_HL_DP_SUPPORT) += -DCONFIG_HL_SUPPORT
+
+cppflags-$(CONFIG_LL_DP_SUPPORT) += -DCONFIG_LL_DP_SUPPORT
+
 #Enable High Latency related Flags
 ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
-cppflags-y += -DCONFIG_HL_SUPPORT \
-            -DCONFIG_AR6320_SUPPORT \
+cppflags-y += -DCONFIG_AR6320_SUPPORT \
             -DSDIO_3_0 \
             -DHIF_SDIO \
             -DCONFIG_DISABLE_CDC_MAX_PERF_WAR=0 \
@@ -1845,8 +1858,7 @@ cppflags-$(CONFIG_FEATURE_SKB_PRE_ALLOC) += -DFEATURE_SKB_PRE_ALLOC
 #Enable USB specific APIS
 ifeq ($(CONFIG_HIF_USB), y)
 cppflags-y += -DHIF_USB \
-            -DDEBUG_HL_LOGGING \
-            -DCONFIG_HL_SUPPORT
+            -DDEBUG_HL_LOGGING
 endif
 
 #Enable Genoa specific features.

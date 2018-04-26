@@ -43,8 +43,6 @@
  * target-specific aliases.
  */
 
-#if defined(CONFIG_HL_SUPPORT)
-
 #define OL_TX_CLASSIFY_EXTENSION(vdev, tx_desc, netbuf, msdu_info, txq)
 #define OL_TX_CLASSIFY_MGMT_EXTENSION(vdev, tx_desc, netbuf, msdu_info, txq)
 
@@ -332,7 +330,7 @@ ol_tx_tid(
 	return tid;
 }
 
-#if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
+#if defined(FEATURE_WLAN_TDLS)
 static inline
 struct ol_txrx_peer_t *ol_tx_tdls_peer_find(struct ol_txrx_pdev_t *pdev,
 						struct ol_txrx_vdev_t *vdev,
@@ -371,8 +369,6 @@ static struct ol_txrx_peer_t *ol_tx_tdls_peer_find(struct ol_txrx_pdev_t *pdev,
 
 	return peer;
 }
-
-
 #endif
 
 struct ol_tx_frms_queue_t *
@@ -888,4 +884,3 @@ ol_tx_classify_mgmt_extension(
 	return QDF_STATUS_SUCCESS;
 }
 #endif
-#endif /* defined(CONFIG_HL_SUPPORT) */
