@@ -4257,7 +4257,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx;
-	tSmeConfigParams *sme_config;
 	int *value = (int *)extra;
 	int sub_cmd = value[0];
 	int set_value = value[1];
@@ -4278,13 +4277,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
-
-	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config) {
-		hdd_err("failed to allocate memory for sme_config");
-		return -ENOMEM;
-	}
-	qdf_mem_zero(sme_config, sizeof(*sme_config));
 
 	switch (sub_cmd) {
 	case WE_SET_11D_STATE:
@@ -4363,7 +4355,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_WOW_DATA_INACTIVITY_TO:
 		if (!hHal) {
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 
 		if ((set_value < CFG_WOW_DATA_INACTIVITY_TIMEOUT_MIN) ||
@@ -4397,7 +4389,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 			    set_value) != QDF_STATUS_SUCCESS) {
 			hdd_err("Setting tx power failed");
 			ret = -EIO;
-			goto free;
+			break;
 		}
 		break;
 	}
@@ -4418,7 +4410,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		    != QDF_STATUS_SUCCESS) {
 			hdd_err("Setting maximum tx power failed");
 			ret = -EIO;
-			goto free;
+			break;
 		}
 
 		break;
@@ -4431,7 +4423,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		    QDF_STATUS_SUCCESS) {
 			hdd_err("Setting max tx power failed for 2.4 GHz band");
 			ret = -EIO;
-			goto free;
+			break;
 		}
 
 		break;
@@ -4444,7 +4436,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		    QDF_STATUS_SUCCESS) {
 			hdd_err("Setting max tx power failed for 5.0 GHz band");
 			ret = -EIO;
-			goto free;
+			break;
 		}
 
 		break;
@@ -4631,7 +4623,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 			value = WNI_CFG_RTS_THRESHOLD_STAMAX;
 		} else {
 			ret = -EIO;
-			goto free;
+			break;
 		}
 
 		ret = wma_cli_set_command(adapter->session_id,
@@ -4643,7 +4635,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 				    QDF_STATUS_SUCCESS) {
 				hdd_err("FAILED TO SET RTSCTS");
 				ret = -EIO;
-				goto free;
+				break;
 			}
 		}
 
@@ -5029,7 +5021,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		if (adapter->device_mode != QDF_STA_MODE) {
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 
 		hdd_debug("WMI_VDEV_PPS_PAID_MATCH val %d ",
@@ -5044,7 +5036,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		if (adapter->device_mode != QDF_STA_MODE) {
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 		hdd_debug("WMI_VDEV_PPS_GID_MATCH val %d ",
 		       set_value);
@@ -5058,7 +5050,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		if (adapter->device_mode != QDF_STA_MODE) {
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 		hdd_debug(" WMI_VDEV_PPS_EARLY_TIM_CLEAR val %d ",
 		       set_value);
@@ -5072,7 +5064,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		if (adapter->device_mode != QDF_STA_MODE) {
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 		hdd_debug("WMI_VDEV_PPS_EARLY_DTIM_CLEAR val %d",
 		       set_value);
@@ -5086,7 +5078,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		if (adapter->device_mode != QDF_STA_MODE) {
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 		hdd_debug("WMI_VDEV_PPS_EOF_PAD_DELIM val %d ",
 		       set_value);
@@ -5100,7 +5092,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		if (adapter->device_mode != QDF_STA_MODE) {
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 		hdd_debug("WMI_VDEV_PPS_MACADDR_MISMATCH val %d ",
 		       set_value);
@@ -5114,7 +5106,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		if (adapter->device_mode != QDF_STA_MODE) {
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 		hdd_debug("WMI_VDEV_PPS_DELIM_CRC_FAIL val %d ",
 		       set_value);
@@ -5128,7 +5120,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		if (adapter->device_mode != QDF_STA_MODE) {
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 		hdd_debug("WMI_VDEV_PPS_GID_NSTS_ZERO val %d ",
 		       set_value);
@@ -5142,7 +5134,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		if (adapter->device_mode != QDF_STA_MODE) {
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 		hdd_debug("WMI_VDEV_PPS_RSSI_CHECK val %d ",
 		       set_value);
@@ -5156,7 +5148,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		if (adapter->device_mode != QDF_STA_MODE) {
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 
 		hdd_debug("WMI_VDEV_PPS_5G_EBT val %d", set_value);
@@ -5361,7 +5353,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 				(set_value <= CFG_CONC_SYSTEM_PREF_MAX))) {
 			hdd_err("Invalid system preference %d", set_value);
 			ret = -EINVAL;
-			goto free;
+			break;
 		}
 
 		/* hdd_ctx, hdd_ctx->config are already checked for null */
@@ -5418,9 +5410,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 		ret = -EINVAL;
 		break;
 	}
+
 	hdd_exit();
-free:
-	qdf_mem_free(sme_config);
+
 	return ret;
 }
 
