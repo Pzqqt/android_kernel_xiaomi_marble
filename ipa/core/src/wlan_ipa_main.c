@@ -459,7 +459,7 @@ QDF_STATUS ipa_uc_ol_init(struct wlan_objmgr_pdev *pdev,
 	struct wlan_ipa_priv *ipa_obj;
 
 	if (!ipa_config_is_enabled()) {
-		ipa_info("ipa is disabled");
+		ipa_debug("ipa is disabled");
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -542,7 +542,7 @@ bool ipa_is_fw_wdi_activated(struct wlan_objmgr_pdev *pdev)
 	struct wlan_ipa_priv *ipa_obj;
 
 	if (!ipa_config_is_enabled()) {
-		ipa_info("ipa is disabled");
+		ipa_debug("ipa is disabled");
 		return false;
 	}
 
