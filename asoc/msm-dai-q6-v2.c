@@ -24,6 +24,7 @@
 #include <sound/pcm_params.h>
 #include <dsp/apr_audio-v2.h>
 #include <dsp/q6afe-v2.h>
+#include <dsp/q6core.h>
 #include "msm-dai-q6-v2.h"
 #include "codecs/core.h"
 
@@ -43,6 +44,8 @@
 #define DAI_FORMATS_S16_S24_S32_LE (SNDRV_PCM_FMTBIT_S16_LE | \
 				    SNDRV_PCM_FMTBIT_S24_LE | \
 				    SNDRV_PCM_FMTBIT_S32_LE)
+
+static int msm_mi2s_get_port_id(u32 mi2s_id, int stream, u16 *port_id);
 
 enum {
 	ENC_FMT_NONE,
@@ -202,6 +205,7 @@ struct msm_dai_q6_dai_data {
 	u16 afe_in_bitformat;
 	struct afe_enc_config enc_config;
 	struct afe_dec_config dec_config;
+	u32 island_enable;
 	union afe_port_config port_config;
 	u16 vi_feed_mono;
 };
@@ -220,6 +224,7 @@ struct msm_dai_q6_mi2s_dai_config {
 };
 
 struct msm_dai_q6_mi2s_dai_data {
+	u32 is_island_dai;
 	struct msm_dai_q6_mi2s_dai_config tx_dai;
 	struct msm_dai_q6_mi2s_dai_config rx_dai;
 };
@@ -230,6 +235,7 @@ struct msm_dai_q6_cdc_dma_dai_data {
 	u32 rate;
 	u32 channels;
 	u32 bitwidth;
+	u32 is_island_dai;
 	union afe_port_config port_config;
 };
 
@@ -240,6 +246,7 @@ struct msm_dai_q6_auxpcm_dai_data {
 	u16 rx_pid; /* AUXPCM RX AFE port ID */
 	u16 tx_pid; /* AUXPCM TX AFE port ID */
 	u16 afe_clk_ver;
+	u32 is_island_dai;
 	struct afe_clk_cfg clk_cfg; /* hold LPASS clock configuration */
 	struct afe_clk_set clk_set; /* hold LPASS clock configuration */
 	struct msm_dai_q6_dai_data bdai_data; /* incoporate base DAI data */
@@ -251,6 +258,7 @@ struct msm_dai_q6_tdm_dai_data {
 	u32 channels;
 	u32 bitwidth;
 	u32 num_group_ports;
+	u32 is_island_dai;
 	struct afe_clk_set clk_set; /* hold LPASS clock config. */
 	union afe_port_group_config group_cfg; /* hold tdm group config */
 	struct afe_tdm_port_config port_cfg; /* hold tdm config */
@@ -1038,6 +1046,17 @@ static int msm_dai_q6_auxpcm_prepare(struct snd_pcm_substream *substream,
 	}
 
 	afe_open(aux_dai_data->rx_pid, &dai_data->port_config, dai_data->rate);
+	if (q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
+		/*
+		 * send island mode config
+		 * This should be the first configuration
+		 */
+		rc = afe_send_port_island_mode(aux_dai_data->tx_pid);
+		if (rc)
+			dev_err(dai->dev, "%s: afe send island mode failed %d\n",
+				__func__, rc);
+	}
 	afe_open(aux_dai_data->tx_pid, &dai_data->port_config, dai_data->rate);
 	goto exit;
 
@@ -1108,9 +1127,78 @@ static int msm_dai_q6_dai_auxpcm_remove(struct snd_soc_dai *dai)
 	return 0;
 }
 
+
+static int msm_dai_q6_island_mode_put(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+	int value = ucontrol->value.integer.value[0];
+	u16 port_id = ((struct soc_enum *) kcontrol->private_value)->reg;
+
+	dai_data->island_enable = value;
+	pr_debug("%s: island mode = %d\n", __func__, value);
+
+	afe_set_island_mode_cfg(port_id, dai_data->island_enable);
+	return 0;
+}
+
+static int msm_dai_q6_island_mode_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	ucontrol->value.integer.value[0] = dai_data->island_enable;
+	return 0;
+}
+
+static struct snd_kcontrol_new island_config_controls[] = {
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.name = "?",
+	.get = msm_dai_q6_island_mode_get,
+	.put = msm_dai_q6_island_mode_put,
+	.private_value = SOC_SINGLE_VALUE(0, 0, 1, 0, 0)
+	},
+};
+
+static int msm_dai_q6_add_island_mx_ctls(struct snd_card *card,
+				      const char *dai_name,
+				      int dai_id, void *dai_data)
+{
+	const char *mx_ctl_name = "TX island";
+	char *mixer_str = NULL;
+	int dai_str_len = 0, ctl_len = 0;
+	int rc = 0;
+
+	dai_str_len = strlen(dai_name) + 1;
+
+	/* Add island related mixer controls */
+	ctl_len = dai_str_len + strlen(mx_ctl_name) + 1;
+	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
+	if (!mixer_str)
+		return -ENOMEM;
+
+	snprintf(mixer_str, ctl_len + strlen(mx_ctl_name) + 1,
+		 "%s %s", dai_name, mx_ctl_name);
+	island_config_controls[0].name = mixer_str;
+	((struct soc_enum *) island_config_controls[0].private_value)->reg
+		= dai_id;
+	rc = snd_ctl_add(card,
+			 snd_ctl_new1(&island_config_controls[0],
+			 dai_data));
+	if (rc < 0)
+		pr_err("%s: err add config ctl, DAI = %s\n",
+			__func__, dai_name);
+	kfree(mixer_str);
+
+	return rc;
+}
+
+
 static int msm_dai_q6_aux_pcm_probe(struct snd_soc_dai *dai)
 {
 	int rc = 0;
+	struct msm_dai_q6_auxpcm_dai_data *dai_data = NULL;
 
 	if (!dai) {
 		pr_err("%s: Invalid params dai\n", __func__);
@@ -1125,6 +1213,14 @@ static int msm_dai_q6_aux_pcm_probe(struct snd_soc_dai *dai)
 		return -EINVAL;
 	}
 	dai->id = dai->driver->id;
+	dai_data = dev_get_drvdata(dai->dev);
+
+	if (dai_data->is_island_dai)
+		rc = msm_dai_q6_add_island_mx_ctls(
+						dai->component->card->snd_card,
+						dai->name, dai_data->tx_pid,
+						(void *)dai_data);
+
 	rc = msm_dai_q6_dai_add_route(dai);
 	return rc;
 }
@@ -1164,6 +1260,7 @@ static struct snd_soc_dai_driver msm_dai_q6_aux_pcm_dai[] = {
 			.rate_min = 8000,
 		},
 		.id = MSM_DAI_PRI_AUXPCM_DT_DEV_ID,
+		.name = "Pri AUX PCM",
 		.ops = &msm_dai_q6_auxpcm_ops,
 		.probe = msm_dai_q6_aux_pcm_probe,
 		.remove = msm_dai_q6_dai_auxpcm_remove,
@@ -1190,6 +1287,7 @@ static struct snd_soc_dai_driver msm_dai_q6_aux_pcm_dai[] = {
 			.rate_min = 8000,
 		},
 		.id = MSM_DAI_SEC_AUXPCM_DT_DEV_ID,
+		.name = "Sec AUX PCM",
 		.ops = &msm_dai_q6_auxpcm_ops,
 		.probe = msm_dai_q6_aux_pcm_probe,
 		.remove = msm_dai_q6_dai_auxpcm_remove,
@@ -1216,6 +1314,7 @@ static struct snd_soc_dai_driver msm_dai_q6_aux_pcm_dai[] = {
 			.rate_min = 8000,
 		},
 		.id = MSM_DAI_TERT_AUXPCM_DT_DEV_ID,
+		.name = "Tert AUX PCM",
 		.ops = &msm_dai_q6_auxpcm_ops,
 		.probe = msm_dai_q6_aux_pcm_probe,
 		.remove = msm_dai_q6_dai_auxpcm_remove,
@@ -1242,6 +1341,7 @@ static struct snd_soc_dai_driver msm_dai_q6_aux_pcm_dai[] = {
 			.rate_min = 8000,
 		},
 		.id = MSM_DAI_QUAT_AUXPCM_DT_DEV_ID,
+		.name = "Quat AUX PCM",
 		.ops = &msm_dai_q6_auxpcm_ops,
 		.probe = msm_dai_q6_aux_pcm_probe,
 		.remove = msm_dai_q6_dai_auxpcm_remove,
@@ -1268,6 +1368,7 @@ static struct snd_soc_dai_driver msm_dai_q6_aux_pcm_dai[] = {
 			.rate_min = 8000,
 		},
 		.id = MSM_DAI_QUIN_AUXPCM_DT_DEV_ID,
+		.name = "Quin AUX PCM",
 		.ops = &msm_dai_q6_auxpcm_ops,
 		.probe = msm_dai_q6_aux_pcm_probe,
 		.remove = msm_dai_q6_dai_auxpcm_remove,
@@ -3176,6 +3277,12 @@ static int msm_auxpcm_dev_probe(struct platform_device *pdev)
 	if (!dai_data)
 		return -ENOMEM;
 
+	rc = of_property_read_u32(pdev->dev.of_node,
+				    "qcom,msm-dai-is-island-supported",
+				    &dai_data->is_island_dai);
+	if (rc)
+		dev_dbg(&pdev->dev, "island supported entry not found\n");
+
 	auxpcm_pdata = kzalloc(sizeof(struct msm_dai_auxpcm_pdata),
 				GFP_KERNEL);
 
@@ -3870,6 +3977,7 @@ static int msm_dai_q6_dai_mi2s_probe(struct snd_soc_dai *dai)
 	int rc = 0;
 	const struct snd_kcontrol_new *ctrl = NULL;
 	const struct snd_kcontrol_new *vi_feed_ctrl = NULL;
+	u16 dai_id = 0;
 
 	dai->id = mi2s_pdata->intf_id;
 
@@ -3942,6 +4050,15 @@ static int msm_dai_q6_dai_mi2s_probe(struct snd_soc_dai *dai)
 		}
 	}
 
+	if (mi2s_dai_data->is_island_dai) {
+		msm_mi2s_get_port_id(dai->id, SNDRV_PCM_STREAM_CAPTURE,
+				     &dai_id);
+		rc = msm_dai_q6_add_island_mx_ctls(
+						dai->component->card->snd_card,
+						dai->name, dai_id,
+						(void *)mi2s_dai_data);
+	}
+
 	rc = msm_dai_q6_dai_add_route(dai);
 rtn:
 	return rc;
@@ -3980,7 +4097,6 @@ static int msm_dai_q6_mi2s_startup(struct snd_pcm_substream *substream,
 
 	return 0;
 }
-
 
 static int msm_mi2s_get_port_id(u32 mi2s_id, int stream, u16 *port_id)
 {
@@ -4115,6 +4231,18 @@ static int msm_dai_q6_mi2s_prepare(struct snd_pcm_substream *substream,
 		dai->id, port_id, dai_data->channels, dai_data->rate);
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
+		if (q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
+			/*
+			 * send island mode config.
+			 * This should be the first configuration
+			 */
+			rc = afe_send_port_island_mode(port_id);
+			if (rc)
+				dev_err(dai->dev, "%s: afe send island mode failed %d\n",
+					__func__, rc);
+		}
+
 		/* PORT START should be set if prepare called
 		 * in active state.
 		 */
@@ -4392,6 +4520,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     192000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "Primary MI2S",
 		.id = MSM_PRIM_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4422,6 +4551,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     192000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "Secondary MI2S",
 		.id = MSM_SEC_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4452,6 +4582,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     192000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "Tertiary MI2S",
 		.id = MSM_TERT_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4482,6 +4613,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     192000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "Quaternary MI2S",
 		.id = MSM_QUAT_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4507,6 +4639,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     48000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "Quinary MI2S",
 		.id = MSM_QUIN_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4534,6 +4667,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     48000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "Senary MI2S",
 		.id = MSM_SENARY_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4561,6 +4695,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     48000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "INT0 MI2S",
 		.id = MSM_INT0_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4587,6 +4722,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     48000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "INT1 MI2S",
 		.id = MSM_INT1_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4613,6 +4749,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     48000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "INT2 MI2S",
 		.id = MSM_INT2_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4639,6 +4776,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     48000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "INT3 MI2S",
 		.id = MSM_INT3_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4666,6 +4804,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     48000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "INT4 MI2S",
 		.id = MSM_INT4_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4692,6 +4831,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     48000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "INT5 MI2S",
 		.id = MSM_INT5_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4718,6 +4858,7 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.rate_max =     48000,
 		},
 		.ops = &msm_dai_q6_mi2s_ops,
+		.name = "INT6 MI2S",
 		.id = MSM_INT6_MI2S,
 		.probe = msm_dai_q6_dai_mi2s_probe,
 		.remove = msm_dai_q6_dai_mi2s_remove,
@@ -4932,6 +5073,12 @@ static int msm_dai_q6_mi2s_dev_probe(struct platform_device *pdev)
 		goto free_pdata;
 	} else
 		dev_set_drvdata(&pdev->dev, dai_data);
+
+	rc = of_property_read_u32(pdev->dev.of_node,
+				    "qcom,msm-dai-is-island-supported",
+				    &dai_data->is_island_dai);
+	if (rc)
+		dev_dbg(&pdev->dev, "island supported entry not found\n");
 
 	pdev->dev.platform_data = mi2s_pdata;
 
@@ -6551,6 +6698,12 @@ static int msm_dai_q6_dai_tdm_probe(struct snd_soc_dai *dai)
 		}
 	}
 
+	if (tdm_dai_data->is_island_dai)
+		rc = msm_dai_q6_add_island_mx_ctls(
+						dai->component->card->snd_card,
+						dai->name,
+						dai->id, (void *)tdm_dai_data);
+
 	rc = msm_dai_q6_dai_add_route(dai);
 
 rtn:
@@ -7099,6 +7252,19 @@ static int msm_dai_q6_tdm_prepare(struct snd_pcm_substream *substream,
 	group_ref = &tdm_group_ref[group_idx];
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
+		if (q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
+			/*
+			 * send island mode config.
+			 * This should be the first configuration
+			 */
+			rc = afe_send_port_island_mode(dai->id);
+			if (rc)
+				dev_err(dai->dev, "%s: afe send island mode failed %d\n",
+					__func__, rc);
+
+		}
+
 		/* PORT START should be set if prepare called
 		 * in active state.
 		 */
@@ -8866,6 +9032,12 @@ static int msm_dai_q6_tdm_dev_probe(struct platform_device *pdev)
 	}
 	memset(dai_data, 0, sizeof(*dai_data));
 
+	rc = of_property_read_u32(pdev->dev.of_node,
+				    "qcom,msm-dai-is-island-supported",
+				    &dai_data->is_island_dai);
+	if (rc)
+		dev_dbg(&pdev->dev, "island supported entry not found\n");
+
 	/* TDM CFG */
 	tdm_parent_node = of_get_parent(pdev->dev.of_node);
 	rc = of_property_read_u32(tdm_parent_node,
@@ -9124,6 +9296,13 @@ static int msm_dai_q6_dai_cdc_dma_probe(struct snd_soc_dai *dai)
 	if (rc < 0)
 		dev_err(dai->dev, "%s: err add config ctl, DAI = %s\n",
 			__func__, dai->name);
+
+	if (dai_data->is_island_dai)
+		rc = msm_dai_q6_add_island_mx_ctls(
+						dai->component->card->snd_card,
+						dai->name, dai->id,
+						(void *)dai_data);
+
 	rc = msm_dai_q6_dai_add_route(dai);
 	return rc;
 }
@@ -9151,6 +9330,7 @@ static int msm_dai_q6_cdc_dma_set_channel_map(struct snd_soc_dai *dai,
 			unsigned int rx_num_ch, unsigned int *rx_ch_mask)
 
 {
+	int rc = 0;
 	struct msm_dai_q6_cdc_dma_dai_data *dai_data =
 						dev_get_drvdata(dai->dev);
 	unsigned int ch_mask = 0, ch_num = 0;
@@ -9196,7 +9376,7 @@ static int msm_dai_q6_cdc_dma_set_channel_map(struct snd_soc_dai *dai,
 	dai_data->port_config.cdc_dma.active_channels_mask = ch_mask;
 	dev_dbg(dai->dev, "%s: CDC_DMA_%d_ch cnt[%d] ch mask[0x%x]\n", __func__,
 			dai->id, ch_num, ch_mask);
-	return 0;
+	return rc;
 }
 
 static int msm_dai_q6_cdc_dma_hw_params(
@@ -9247,6 +9427,17 @@ static int msm_dai_q6_cdc_dma_prepare(struct snd_pcm_substream *substream,
 	int rc = 0;
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
+		if (q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
+			/*
+			 * send island mode config.
+			 * This should be the first configuration
+			 */
+			rc = afe_send_port_island_mode(dai->id);
+			if (rc)
+				pr_err("%s: afe send island mode failed %d\n",
+					__func__, rc);
+		}
 		rc = afe_port_start(dai->id, &dai_data->port_config,
 						dai_data->rate);
 		if (rc < 0)
@@ -9311,6 +9502,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "WSA_CDC_DMA_RX_0",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_WSA_CODEC_DMA_RX_0,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -9336,6 +9528,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "WSA_CDC_DMA_TX_0",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_WSA_CODEC_DMA_TX_0,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -9361,6 +9554,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "WSA_CDC_DMA_RX_1",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_WSA_CODEC_DMA_RX_1,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -9386,6 +9580,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "WSA_CDC_DMA_TX_1",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_WSA_CODEC_DMA_TX_1,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -9411,6 +9606,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "WSA_CDC_DMA_TX_2",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_WSA_CODEC_DMA_TX_2,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -9435,6 +9631,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "VA_CDC_DMA_TX_0",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_VA_CODEC_DMA_TX_0,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -9459,6 +9656,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "VA_CDC_DMA_TX_1",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_VA_CODEC_DMA_TX_1,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -9499,6 +9697,12 @@ static int msm_dai_q6_cdc_dma_dev_probe(struct platform_device *pdev)
 
 	if (!dai_data)
 		return -ENOMEM;
+
+	rc = of_property_read_u32(pdev->dev.of_node,
+				    "qcom,msm-dai-is-island-supported",
+				    &dai_data->is_island_dai);
+	if (rc)
+		dev_dbg(&pdev->dev, "island supported entry not found\n");
 
 	dev_set_drvdata(&pdev->dev, dai_data);
 
