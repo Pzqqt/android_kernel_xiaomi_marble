@@ -114,6 +114,13 @@ static void wlan_ipa_uc_loaded_uc_cb(void *priv_ctxt)
 	}
 
 	ipa_ctx = priv_ctxt;
+	ipa_ctx->uc_loaded = true;
+
+	uc_op_work = &ipa_ctx->uc_op_work[WLAN_IPA_UC_OPCODE_UC_READY];
+	if (!list_empty(&uc_op_work->work.work.entry)) {
+		/* uc_op_work is not initialized yet */
+		return;
+	}
 
 	msg = qdf_mem_malloc(sizeof(*msg));
 	if (!msg) {
@@ -123,14 +130,13 @@ static void wlan_ipa_uc_loaded_uc_cb(void *priv_ctxt)
 
 	msg->op_code = WLAN_IPA_UC_OPCODE_UC_READY;
 
-	uc_op_work = &ipa_ctx->uc_op_work[msg->op_code];
-
 	/* When the same uC OPCODE is already pended, just return */
 	if (uc_op_work->msg)
 		goto done;
 
 	uc_op_work->msg = msg;
 	qdf_sched_work(0, &uc_op_work->work);
+
 	/* work handler will free the msg buffer */
 	return;
 
@@ -2348,8 +2354,6 @@ static void wlan_ipa_uc_loaded_handler(struct wlan_ipa_priv *ipa_ctx)
 		ipa_info("UC already loaded");
 		return;
 	}
-
-	ipa_ctx->uc_loaded = true;
 
 	/* Connect pipe */
 	status = wlan_ipa_wdi_setup(ipa_ctx, qdf_dev);
