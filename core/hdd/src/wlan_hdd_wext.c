@@ -4204,6 +4204,42 @@ free_config:
 	return errno;
 }
 
+static int hdd_we_set_11d_state(struct hdd_context *hdd_ctx, int state_11d)
+{
+	tSmeConfigParams *sme_config;
+	bool enable_11d;
+
+	if (!hdd_ctx->hHal)
+		return -EINVAL;
+
+	switch (state_11d) {
+	case ENABLE_11D:
+		enable_11d = true;
+		break;
+	case DISABLE_11D:
+		enable_11d = false;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	sme_config = qdf_mem_malloc(sizeof(*sme_config));
+	if (!sme_config) {
+		hdd_err("failed to allocate memory for sme_config");
+		return -ENOMEM;
+	}
+
+	sme_get_config_param(hdd_ctx->hHal, sme_config);
+	sme_config->csrConfig.Is11dSupportEnabled = enable_11d;
+	sme_update_config(hdd_ctx->hHal, sme_config);
+
+	qdf_mem_free(sme_config);
+
+	hdd_debug("11D state=%d", sme_config->csrConfig.Is11dSupportEnabled);
+
+	return 0;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4252,25 +4288,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	switch (sub_cmd) {
 	case WE_SET_11D_STATE:
-	{
-		if (((ENABLE_11D == set_value)
-		    || (DISABLE_11D == set_value)) && hHal) {
-
-			sme_get_config_param(hHal, sme_config);
-			sme_config->csrConfig.Is11dSupportEnabled =
-				(bool) set_value;
-
-			hdd_debug("11D state=%d!!",
-				  sme_config->csrConfig.
-				  Is11dSupportEnabled);
-
-			sme_update_config(hHal, sme_config);
-		} else {
-			ret = -EINVAL;
-			goto free;
-		}
+		ret = hdd_we_set_11d_state(hdd_ctx, set_value);
 		break;
-	}
 
 	case WE_SET_POWER:
 	{
