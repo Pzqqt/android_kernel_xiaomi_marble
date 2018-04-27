@@ -348,7 +348,8 @@ static void wlan_pno_scan_rand_attr(struct wlan_objmgr_vdev *vdev,
  *
  * Return: None
  */
-#if defined(CFG80211_REPORT_BETTER_BSS_IN_SCHED_SCAN)
+#if defined(CFG80211_REPORT_BETTER_BSS_IN_SCHED_SCAN) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
 static inline void wlan_hdd_sched_scan_update_relative_rssi(
 			struct pno_scan_req_params *pno_request,
 			struct cfg80211_sched_scan_request *request)
