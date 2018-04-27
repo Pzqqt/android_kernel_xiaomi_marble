@@ -283,8 +283,8 @@ static QDF_STATUS wlan_objmgr_vdev_obj_destroy(struct wlan_objmgr_vdev *vdev)
 	obj_mgr_info("Physically deleting vdev %d", vdev_id);
 
 	if (vdev->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
-		obj_mgr_err("vdev object delete is not invoked: vdev-id:%d",
-			wlan_vdev_get_id(vdev));
+		obj_mgr_err("VDEV object delete is not invoked vdevid:%d objstate:%d",
+			    wlan_vdev_get_id(vdev), vdev->obj_state);
 		WLAN_OBJMGR_BUG(0);
 	}
 

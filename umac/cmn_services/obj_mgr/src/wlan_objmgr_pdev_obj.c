@@ -197,8 +197,8 @@ static QDF_STATUS wlan_objmgr_pdev_obj_destroy(struct wlan_objmgr_pdev *pdev)
 	obj_mgr_info("Physically deleting pdev %d", pdev_id);
 
 	if (pdev->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
-		obj_mgr_err("pdev object delete is not invoked: pdev-id:%d",
-			pdev_id);
+		obj_mgr_err("PDEV object delete is not invoked pdevid:%d objstate:%d",
+			    pdev_id, pdev->obj_state);
 		WLAN_OBJMGR_BUG(0);
 	}
 

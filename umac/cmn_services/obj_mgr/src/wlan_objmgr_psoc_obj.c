@@ -203,7 +203,8 @@ static QDF_STATUS wlan_objmgr_psoc_obj_destroy(struct wlan_objmgr_psoc *psoc)
 	obj_mgr_info("Physically deleting psoc %d", psoc->soc_objmgr.psoc_id);
 
 	if (psoc->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
-		obj_mgr_err("psoc object delete is not invoked");
+		obj_mgr_err("PSOC object delete is not invoked obj_state:%d",
+			    psoc->obj_state);
 		WLAN_OBJMGR_BUG(0);
 	}
 
