@@ -1860,6 +1860,20 @@ __qdf_nbuf_get_timedelta_us(struct sk_buff *skb)
 {
 	return ktime_to_us(net_timedelta(skb->tstamp));
 }
+
+/**
+ * __qdf_nbuf_orphan() - orphan a nbuf
+ * @skb: sk buff
+ *
+ * If a buffer currently has an owner then we call the
+ * owner's destructor function
+ *
+ * Return: void
+ */
+static inline void __qdf_nbuf_orphan(struct sk_buff *skb)
+{
+	return skb_orphan(skb);
+}
 #ifdef CONFIG_WIN
 #include <i_qdf_nbuf_w.h>
 #else

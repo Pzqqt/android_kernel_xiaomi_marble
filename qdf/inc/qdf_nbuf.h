@@ -3007,6 +3007,21 @@ static inline void qdf_nbuf_mod_exit(void)
 {
 	return __qdf_nbuf_mod_exit();
 }
+
+/**
+ * qdf_nbuf_orphan() - orphan a nbuf
+ * @buf: Pointer to network buffer
+ *
+ * If a buffer currently has an owner then we call the
+ * owner's destructor function
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_orphan(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_orphan(buf);
+}
+
 #ifdef CONFIG_WIN
 #include <i_qdf_nbuf_api_w.h>
 #else
