@@ -8098,14 +8098,21 @@ struct wmi_host_ready_ev_param {
 	bool agile_capability;
 };
 
+enum bcn_offload_control_param {
+	BCN_OFFLD_CTRL_TX_DISABLE = 0,
+	BCN_OFFLD_CTRL_TX_ENABLE,
+	BCN_OFFLD_CTRL_SWBA_DISABLE,
+	BCN_OFFLD_CTRL_SWBA_ENABLE,
+};
+
 /**
  * struct bcn_offload_control - Beacon offload control params
  * @vdev_id: vdev identifer of VAP to control beacon tx
- * @bcn_tx_enable: Enable or Disable beacon TX in offload mode
+ * @bcn_ctrl_op: values from enum bcn_offload_control_param
  */
 struct bcn_offload_control {
 	uint32_t vdev_id;
-	bool bcn_tx_enable;
+	enum bcn_offload_control_param bcn_ctrl_op;
 };
 
 /**

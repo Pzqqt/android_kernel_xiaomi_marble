@@ -17161,12 +17161,26 @@ QDF_STATUS send_bcn_offload_control_cmd_tlv(wmi_unified_t wmi_handle,
 			WMITLV_GET_STRUCT_TLVLEN
 			(wmi_bcn_offload_ctrl_cmd_fixed_param));
 	cmd->vdev_id = bcn_ctrl_param->vdev_id;
-	if (bcn_ctrl_param->bcn_tx_enable)
-		cmd->bcn_ctrl_op = WMI_BEACON_CTRL_TX_ENABLE;
-	else
+	switch (bcn_ctrl_param->bcn_ctrl_op) {
+	case BCN_OFFLD_CTRL_TX_DISABLE:
 		cmd->bcn_ctrl_op = WMI_BEACON_CTRL_TX_DISABLE;
-
-
+		break;
+	case BCN_OFFLD_CTRL_TX_ENABLE:
+		cmd->bcn_ctrl_op = WMI_BEACON_CTRL_TX_ENABLE;
+		break;
+	case BCN_OFFLD_CTRL_SWBA_DISABLE:
+		cmd->bcn_ctrl_op = WMI_BEACON_CTRL_SWBA_EVENT_DISABLE;
+		break;
+	case BCN_OFFLD_CTRL_SWBA_ENABLE:
+		cmd->bcn_ctrl_op = WMI_BEACON_CTRL_SWBA_EVENT_ENABLE;
+		break;
+	default:
+		WMI_LOGE("WMI_BCN_OFFLOAD_CTRL_CMDID unknown CTRL Operation %d",
+			bcn_ctrl_param->bcn_ctrl_op);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+		break;
+	}
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_BCN_OFFLOAD_CTRL_CMDID);
 
