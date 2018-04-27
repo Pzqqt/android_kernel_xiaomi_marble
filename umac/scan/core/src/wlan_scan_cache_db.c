@@ -741,7 +741,7 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 	if (qdf_nbuf_len(bcn->buf) <=
 	   (sizeof(struct wlan_frame_hdr) +
 	   offsetof(struct wlan_bcn_frame, ie))) {
-		scm_err("invalid beacon/probe length");
+		scm_debug("invalid beacon/probe length");
 		status = QDF_STATUS_E_INVAL;
 		goto free_nbuf;
 	}
@@ -751,7 +751,7 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 			qdf_nbuf_len(bcn->buf), bcn->frm_type,
 			bcn->rx_data);
 	if (!scan_list || qdf_list_empty(scan_list)) {
-		scm_err("failed to unpack frame");
+		scm_debug("failed to unpack frame");
 		status = QDF_STATUS_E_INVAL;
 		goto free_nbuf;
 	}
@@ -760,7 +760,7 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 	for (i = 0; i < list_count; i++) {
 		status = qdf_list_remove_front(scan_list, &next_node);
 		if (QDF_IS_STATUS_ERROR(status) || next_node == NULL) {
-			scm_err("failed to unpack frame");
+			scm_debug("failed to unpack frame");
 			status = QDF_STATUS_E_INVAL;
 			goto free_nbuf;
 		}

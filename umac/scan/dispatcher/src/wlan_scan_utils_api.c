@@ -483,7 +483,7 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params)
 		}
 
 		if (ie_len < ie->ie_len) {
-			scm_err("Incomplete corrupted IE:%x",
+			scm_debug("Incomplete corrupted IE:%x",
 				ie->ie_id);
 			return QDF_STATUS_E_INVAL;
 		}
@@ -898,7 +898,7 @@ util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
 		frame, frame_len);
 	status = util_scan_populate_bcn_ie_list(scan_entry);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		scm_err("failed to parse beacon IE");
+		scm_debug("failed to parse beacon IE");
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);
 		qdf_mem_free(scan_list);
