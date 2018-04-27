@@ -659,6 +659,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	sap_ctx->pUsrContext = pUsrContext;
 	sap_ctx->enableOverLapCh = pConfig->enOverLapCh;
 	sap_ctx->acs_cfg = &pConfig->acs_cfg;
+	sap_ctx->secondary_ch = pConfig->sec_ch;
 	sap_ctx->dfs_cac_offload = pConfig->dfs_cac_offload;
 	sap_ctx->isCacEndNotified = false;
 	sap_ctx->is_chan_change_inprogress = false;
