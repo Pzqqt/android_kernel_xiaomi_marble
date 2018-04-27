@@ -1357,7 +1357,7 @@ policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
 	 * under 5G MCC scenario
 	 */
 	uint8_t channel = PM_24_GHZ_CHANNEL_6;
-	uint32_t i, pcl_len;
+	uint32_t i, pcl_len = 0;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
