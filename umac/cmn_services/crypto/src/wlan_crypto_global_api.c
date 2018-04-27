@@ -1051,7 +1051,10 @@ QDF_STATUS wlan_crypto_encap(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_peer *peer;
 	uint8_t bssid_mac[WLAN_ALEN];
 	uint8_t pdev_id;
+	uint8_t hdrlen;
+	enum QDF_OPMODE opmode;
 
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
 	wlan_vdev_obj_lock(vdev);
 	qdf_mem_copy(bssid_mac, wlan_vdev_mlme_get_macaddr(vdev), WLAN_ALEN);
 	psoc = wlan_vdev_get_psoc(vdev);
@@ -1117,10 +1120,16 @@ QDF_STATUS wlan_crypto_encap(struct wlan_objmgr_vdev *vdev,
 		if (!key)
 			return QDF_STATUS_E_INVAL;
 	}
+	if (opmode == QDF_MONITOR_MODE)
+		hdrlen = ieee80211_hdrsize((uint8_t *)qdf_nbuf_data(wbuf));
+	else
+		hdrlen = ieee80211_hdrspace(wlan_vdev_get_pdev(vdev),
+					    (uint8_t *)qdf_nbuf_data(wbuf));
+
 	/* if tkip, is counter measures enabled, then drop the frame */
 	cipher_table = (struct wlan_crypto_cipher *)key->cipher_table;
 	status = cipher_table->encap(key, wbuf, encapdone,
-			ieee80211_hdrsize((uint8_t *)qdf_nbuf_data(wbuf)));
+				     hdrlen);
 
 	return status;
 }
@@ -1151,7 +1160,10 @@ QDF_STATUS wlan_crypto_decap(struct wlan_objmgr_vdev *vdev,
 	uint8_t bssid_mac[WLAN_ALEN];
 	uint8_t keyid;
 	uint8_t pdev_id;
+	uint8_t hdrlen;
+	enum QDF_OPMODE opmode;
 
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
 	wlan_vdev_obj_lock(vdev);
 	qdf_mem_copy(bssid_mac, wlan_vdev_mlme_get_macaddr(vdev), WLAN_ALEN);
 	psoc = wlan_vdev_get_psoc(vdev);
@@ -1161,6 +1173,12 @@ QDF_STATUS wlan_crypto_decap(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 	wlan_vdev_obj_unlock(vdev);
+
+	if (opmode == QDF_MONITOR_MODE)
+		hdrlen = ieee80211_hdrsize((uint8_t *)qdf_nbuf_data(wbuf));
+	else
+		hdrlen = ieee80211_hdrspace(wlan_vdev_get_pdev(vdev),
+					    (uint8_t *)qdf_nbuf_data(wbuf));
 
 	keyid = wlan_crypto_get_keyid((uint8_t *)qdf_nbuf_data(wbuf));
 
@@ -1223,8 +1241,7 @@ QDF_STATUS wlan_crypto_decap(struct wlan_objmgr_vdev *vdev,
 	}
 	/* if tkip, is counter measures enabled, then drop the frame */
 	cipher_table = (struct wlan_crypto_cipher *)key->cipher_table;
-	status = cipher_table->decap(key, wbuf, tid,
-			ieee80211_hdrsize((uint8_t *)qdf_nbuf_data(wbuf)));
+	status = cipher_table->decap(key, wbuf, tid, hdrlen);
 
 	return status;
 }
@@ -1251,6 +1268,10 @@ QDF_STATUS wlan_crypto_enmic(struct wlan_objmgr_vdev *vdev,
 	struct wlan_crypto_cipher *cipher_table;
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t bssid_mac[WLAN_ALEN];
+	uint8_t hdrlen;
+	enum QDF_OPMODE opmode;
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
 
 
 	wlan_vdev_obj_lock(vdev);
@@ -1305,10 +1326,15 @@ QDF_STATUS wlan_crypto_enmic(struct wlan_objmgr_vdev *vdev,
 		if (!key)
 			return QDF_STATUS_E_INVAL;
 	}
+	if (opmode == QDF_MONITOR_MODE)
+		hdrlen = ieee80211_hdrsize((uint8_t *)qdf_nbuf_data(wbuf));
+	else
+		hdrlen = ieee80211_hdrspace(wlan_vdev_get_pdev(vdev),
+					    (uint8_t *)qdf_nbuf_data(wbuf));
+
 	/* if tkip, is counter measures enabled, then drop the frame */
 	cipher_table = (struct wlan_crypto_cipher *)key->cipher_table;
-	status = cipher_table->enmic(key, wbuf, encapdone,
-			ieee80211_hdrsize((uint8_t *)qdf_nbuf_data(wbuf)));
+	status = cipher_table->enmic(key, wbuf, encapdone, hdrlen);
 
 	return status;
 }
@@ -1336,7 +1362,16 @@ QDF_STATUS wlan_crypto_demic(struct wlan_objmgr_vdev *vdev,
 	struct wlan_crypto_cipher *cipher_table;
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t bssid_mac[WLAN_ALEN];
+	uint8_t hdrlen;
+	enum QDF_OPMODE opmode;
 
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+
+	if (opmode == QDF_MONITOR_MODE)
+		hdrlen = ieee80211_hdrsize((uint8_t *)qdf_nbuf_data(wbuf));
+	else
+		hdrlen = ieee80211_hdrspace(wlan_vdev_get_pdev(vdev),
+					    (uint8_t *)qdf_nbuf_data(wbuf));
 
 	wlan_vdev_obj_lock(vdev);
 	qdf_mem_copy(bssid_mac, wlan_vdev_mlme_get_macaddr(vdev), WLAN_ALEN);
@@ -1391,8 +1426,7 @@ QDF_STATUS wlan_crypto_demic(struct wlan_objmgr_vdev *vdev,
 	}
 	/* if tkip, is counter measures enabled, then drop the frame */
 	cipher_table = (struct wlan_crypto_cipher *)key->cipher_table;
-	status = cipher_table->demic(key, wbuf, tid,
-			ieee80211_hdrsize((uint8_t *)qdf_nbuf_data(wbuf)));
+	status = cipher_table->demic(key, wbuf, tid, hdrlen);
 
 	return status;
 }

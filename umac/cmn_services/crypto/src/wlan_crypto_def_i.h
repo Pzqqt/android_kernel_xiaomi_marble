@@ -482,10 +482,10 @@ static inline bool wlan_crypto_is_data_protected(const void *data)
  *
  * Return: header size of the frame
  */
-static inline int ieee80211_hdrsize(const void *data)
+static inline uint8_t ieee80211_hdrsize(const void *data)
 {
 	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
-	int16_t size = sizeof(struct ieee80211_hdr);
+	uint8_t size = sizeof(struct ieee80211_hdr);
 
 	if ((hdr->frame_control[1] & WLAN_FC1_DIR_MASK)
 				== (WLAN_FC1_DSTODS)) {
@@ -499,6 +499,28 @@ static inline int ieee80211_hdrsize(const void *data)
 		if (hdr->frame_control[1] & WLAN_FC1_ORDER)
 			size += (sizeof(uint8_t)*4);
 	}
+	return size;
+}
+
+/**
+ * ieee80211_hdrspace - calculate frame header size with padding
+ * @pdev: pdev
+ * @data: frame header
+ *
+ * This function returns the space occupied by the 802.11 header
+ * and any padding required by the driver. This works for a management
+ * or data frame.
+ *
+ * Return: header size of the frame with padding
+ */
+static inline uint8_t
+ieee80211_hdrspace(struct wlan_objmgr_pdev *pdev, const void *data)
+{
+	uint8_t size = ieee80211_hdrsize(data);
+
+	if (wlan_pdev_nif_feat_cap_get(pdev, WLAN_PDEV_F_DATAPAD))
+		size = roundup(size, sizeof(u_int32_t));
+
 	return size;
 }
 
