@@ -3252,9 +3252,9 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 	struct cdp_vdev *vdev;
 	void *peer;
 	uint8_t vdev_id, peer_id;
-	uint8_t *last_pn_valid;
-	uint64_t *last_pn, new_pn;
-	uint32_t *rmf_pn_replays;
+	uint8_t *last_pn_valid = NULL;
+	uint64_t *last_pn = NULL, new_pn;
+	uint32_t *rmf_pn_replays = NULL;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -3280,7 +3280,13 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 	}
 
 	new_pn = wma_extract_ccmp_pn(ccmp_ptr);
+
 	cdp_get_pn_info(soc, peer, &last_pn_valid, &last_pn, &rmf_pn_replays);
+
+	if (!last_pn_valid || !last_pn || !rmf_pn_replays) {
+		WMA_LOGE("%s: PN validation seems not supported", __func__);
+		return false;
+	}
 
 	if (*last_pn_valid) {
 		if (new_pn > *last_pn) {
