@@ -393,7 +393,7 @@ struct audio_cal_info_lsm {
 	int32_t		app_type;
 };
 
-#define VSS_NUM_CHANNELS_MAX	8
+#define VSS_NUM_CHANNELS_MAX	32
 
 struct audio_cal_info_voc_top {
 	int32_t		topology;
