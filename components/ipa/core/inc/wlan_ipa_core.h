@@ -223,6 +223,8 @@ int wlan_ipa_wdi_rm_inactivity_timer_destroy(
 	return qdf_ipa_rm_inactivity_timer_destroy(res_name);
 }
 
+bool wlan_ipa_is_rm_released(struct wlan_ipa_priv *ipa_ctx);
+
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
 
 static inline int wlan_ipa_wdi_rm_request_resource(
@@ -272,6 +274,12 @@ int wlan_ipa_wdi_rm_inactivity_timer_destroy(
 					qdf_ipa_rm_resource_name_t res_name)
 {
 	return 0;
+}
+
+static inline
+bool wlan_ipa_is_rm_released(struct wlan_ipa_priv *ipa_ctx)
+{
+	return true;
 }
 
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */

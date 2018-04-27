@@ -473,4 +473,18 @@ void wlan_ipa_wdi_destroy_rm(struct wlan_ipa_priv *ipa_ctx)
 	if (ret)
 		ipa_err("RM PROD resource delete failed %d", ret);
 }
+
+bool wlan_ipa_is_rm_released(struct wlan_ipa_priv *ipa_ctx)
+{
+	qdf_spin_lock_bh(&ipa_ctx->rm_lock);
+
+	if (ipa_ctx->rm_state != WLAN_IPA_RM_RELEASED) {
+		qdf_spin_unlock_bh(&ipa_ctx->rm_lock);
+		return false;
+	}
+
+	qdf_spin_unlock_bh(&ipa_ctx->rm_lock);
+
+	return true;
+}
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */
