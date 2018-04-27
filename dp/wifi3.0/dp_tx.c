@@ -230,8 +230,6 @@ static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	uint8_t *hdr = NULL;
 
-	HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 1);
-
 	/*
 	 * Metadata - HTT MSDU Extension header
 	 */
@@ -481,9 +479,7 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 				&msdu_info->meta_data[0],
 				sizeof(struct htt_tx_msdu_desc_ext2_t));
 		qdf_atomic_inc(&vdev->pdev->num_tx_exception);
-		HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 1);
-	} else
-		HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 0);
+	}
 
 	switch (msdu_info->frm_type) {
 	case dp_tx_frm_sg:
@@ -1211,7 +1207,6 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	uint16_t htt_tcl_metadata = 0;
 	uint8_t tid = msdu_info->tid;
 
-	HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 0);
 	/* Setup Tx descriptor for an MSDU, and MSDU extension descriptor */
 	tx_desc = dp_tx_prepare_desc_single(vdev, nbuf, tx_q->desc_pool_id,
 			msdu_info, tx_exc_metadata);
@@ -1251,6 +1246,11 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				peer_id);
 	} else
 		htt_tcl_metadata = vdev->htt_tcl_metadata;
+
+
+	if (msdu_info->exception_fw) {
+		HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 1);
+	}
 
 	/* Enqueue the Tx MSDU descriptor to HW for transmit */
 	status = dp_tx_hw_enqueue(soc, vdev, tx_desc, tid,
@@ -1302,6 +1302,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	struct dp_tx_desc_s *tx_desc;
 	bool is_cce_classified = false;
 	QDF_STATUS status;
+	uint16_t htt_tcl_metadata = 0;
 
 	struct dp_tx_queue *tx_q = &msdu_info->tx_queue;
 	void *hal_srng = soc->tcl_data_ring[tx_q->ring_id].hal_srng;
@@ -1357,11 +1358,16 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		if (is_cce_classified)
 			tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 
+		htt_tcl_metadata = vdev->htt_tcl_metadata;
+		if (msdu_info->exception_fw) {
+			HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 1);
+		}
+
 		/*
 		 * Enqueue the Tx MSDU descriptor to HW for transmit
 		 */
 		status = dp_tx_hw_enqueue(soc, vdev, tx_desc, msdu_info->tid,
-			vdev->htt_tcl_metadata, tx_q->ring_id, NULL);
+			htt_tcl_metadata, tx_q->ring_id, NULL);
 
 		if (status != QDF_STATUS_SUCCESS) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
