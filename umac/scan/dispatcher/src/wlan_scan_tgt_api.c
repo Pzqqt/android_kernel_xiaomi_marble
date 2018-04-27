@@ -77,7 +77,15 @@ QDF_STATUS tgt_scan_pno_start(struct wlan_objmgr_vdev *vdev,
 
 	psoc = wlan_vdev_get_psoc(vdev);
 
+	if (!psoc) {
+		scm_err("NULL PSOC");
+		return QDF_STATUS_E_FAILURE;
+	}
 	scan_ops = wlan_psoc_get_scan_txops(psoc);
+	if (!scan_ops) {
+		scm_err("NULL scan_ops");
+		return QDF_STATUS_E_FAILURE;
+	}
 	/* invoke wmi_unified_pno_start_cmd() */
 	QDF_ASSERT(scan_ops->pno_start);
 	if (scan_ops->pno_start)
