@@ -6441,7 +6441,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		int count = 0, check = 1;
 
 		tHalHandle hHal = NULL;
-		tpAniSirGlobal pMac = NULL;
 		struct hdd_station_ctx *sta_ctx = NULL;
 
 		struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -6495,19 +6494,9 @@ static int __iw_get_char_setnone(struct net_device *dev,
 
 			hHal = WLAN_HDD_GET_HAL_CTX(useAdapter);
 			if (!hHal) {
-				buf =
-					scnprintf(extra + len,
-						  WE_MAX_STR_LEN - len,
-						  "\n pMac is NULL");
-				len += buf;
-				break;
-			}
-			pMac = PMAC_STRUCT(hHal);
-			if (!pMac) {
-				buf =
-					scnprintf(extra + len,
-						  WE_MAX_STR_LEN - len,
-						  "\n pMac is NULL");
+				buf = scnprintf(extra + len,
+						WE_MAX_STR_LEN - len,
+						"\n hHal is NULL");
 				len += buf;
 				break;
 			}
