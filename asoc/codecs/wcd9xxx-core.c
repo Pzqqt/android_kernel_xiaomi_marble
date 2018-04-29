@@ -1248,7 +1248,7 @@ static int wcd9xxx_slim_probe(struct slim_device *slim)
 		goto err;
 	}
 	if (slim->dev.of_node) {
-		dev_info(&slim->dev, "Platform data from device tree\n");
+		dev_dbg(&slim->dev, "Platform data from device tree\n");
 		pdata = wcd9xxx_populate_dt_data(&slim->dev);
 		if (!pdata) {
 			dev_err(&slim->dev,
