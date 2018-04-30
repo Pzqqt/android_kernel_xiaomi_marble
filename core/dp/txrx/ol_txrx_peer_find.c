@@ -726,6 +726,14 @@ void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 			  save_peer_ids[i], save_peer_id_ref_cnt[i], i);
 	}
 
+	if (num_deleted_maps > qdf_atomic_read(&peer->ref_cnt)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  FL("num_deleted_maps %d ref_cnt %d"),
+			  num_deleted_maps, qdf_atomic_read(&peer->ref_cnt));
+		QDF_BUG(0);
+		return;
+	}
+
 	while (num_deleted_maps-- > 0)
 		ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 }
