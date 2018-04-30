@@ -347,7 +347,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	pe_debug("Populate HE IEs");
 	populate_dot11f_he_caps(mac_ctx, pesession, &pr.he_cap);
 
-	if (addn_ielen) {
+	if (addn_ielen && additional_ie) {
 		qdf_mem_zero((uint8_t *)&extracted_ext_cap,
 			sizeof(tDot11fIEExtCap));
 		sir_status = lim_strip_extcap_update_struct(mac_ctx,
