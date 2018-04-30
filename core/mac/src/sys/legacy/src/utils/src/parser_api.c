@@ -2330,6 +2330,7 @@ void update_fils_data(struct sir_fils_indication *fils_ind,
 		      tDot11fIEfils_indication *fils_indication)
 {
 	uint8_t *data;
+	uint8_t remaining_data = fils_indication->num_variable_data;
 
 	data = fils_indication->variable_data;
 	fils_ind->is_present = true;
@@ -2342,18 +2343,37 @@ void update_fils_data(struct sir_fils_indication *fils_ind,
 	fils_ind->is_pk_auth_supported =
 			fils_indication->is_pk_auth_supported;
 	if (fils_indication->is_cache_id_present) {
+		if (remaining_data < SIR_CACHE_IDENTIFIER_LEN) {
+			pe_err("Failed to copy Cache Identifier, Invalid remaining data %d",
+				remaining_data);
+			return;
+		}
 		fils_ind->cache_identifier.is_present = true;
 		qdf_mem_copy(fils_ind->cache_identifier.identifier,
 				data, SIR_CACHE_IDENTIFIER_LEN);
 		data = data + SIR_CACHE_IDENTIFIER_LEN;
+		remaining_data = remaining_data - SIR_CACHE_IDENTIFIER_LEN;
 	}
 	if (fils_indication->is_hessid_present) {
+		if (remaining_data < SIR_HESSID_LEN) {
+			pe_err("Failed to copy HESSID, Invalid remaining data %d",
+				remaining_data);
+			return;
+		}
 		fils_ind->hessid.is_present = true;
 		qdf_mem_copy(fils_ind->hessid.hessid,
 				data, SIR_HESSID_LEN);
 		data = data + SIR_HESSID_LEN;
+		remaining_data = remaining_data - SIR_HESSID_LEN;
 	}
 	if (fils_indication->realm_identifiers_cnt) {
+		if (remaining_data < (fils_indication->realm_identifiers_cnt *
+		    SIR_REALM_LEN)) {
+			pe_err("Failed to copy Realm Identifier, Invalid remaining data %d realm_cnt %d",
+				remaining_data,
+				fils_indication->realm_identifiers_cnt);
+			return;
+		}
 		fils_ind->realm_identifier.is_present = true;
 		fils_ind->realm_identifier.realm_cnt =
 			fils_indication->realm_identifiers_cnt;
