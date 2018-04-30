@@ -65,7 +65,7 @@ static QDF_STATUS wep_encap(struct wlan_crypto_key *key,
 			ivp + hdrlen
 			+ cipher_table->header + cipher_table->trailer,
 			(qdf_nbuf_len(wbuf) - hdrlen
-			- cipher_table->header + cipher_table->trailer));
+			- cipher_table->header - cipher_table->trailer));
 		ivp = (uint8_t *)qdf_nbuf_data(wbuf);
 	}
 

@@ -649,6 +649,16 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 	}
 	status = cipher->setkey(key);
 
+	if ((req_key->flags & WLAN_CRYPTO_KEY_DEFAULT) &&
+	    (req_key->keyix != WLAN_CRYPTO_KEYIX_NONE) &&
+	    (!IS_MGMT_CIPHER(req_key->type))) {
+		/* default xmit key */
+		wlan_crypto_default_key(vdev,
+					req_key->macaddr,
+					req_key->keyix,
+					!isbcast);
+		}
+
 	return status;
 }
 
@@ -1346,15 +1356,16 @@ QDF_STATUS wlan_crypto_enmic(struct wlan_objmgr_vdev *vdev,
  * @wbuf: wbuf
  * @macaddr: macaddr
  * @tid: tid of the frame
- *
+ * @keyid: keyid in the received frame
  * This function gets called from mgmt txrx to decap frame.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS wlan_crypto_demic(struct wlan_objmgr_vdev *vdev,
-				qdf_nbuf_t wbuf,
-				uint8_t *mac_addr,
-				uint8_t tid){
+			     qdf_nbuf_t wbuf,
+			     uint8_t *mac_addr,
+			     uint8_t tid,
+			     uint8_t keyid){
 	struct wlan_crypto_comp_priv *crypto_priv;
 	struct wlan_crypto_params *crypto_params;
 	struct wlan_crypto_key *key;
@@ -1392,7 +1403,7 @@ QDF_STATUS wlan_crypto_demic(struct wlan_objmgr_vdev *vdev,
 			return QDF_STATUS_E_INVAL;
 		}
 
-		key = crypto_priv->key[crypto_priv->def_tx_keyid];
+		key = crypto_priv->key[keyid];
 		if (!key)
 			return QDF_STATUS_E_INVAL;
 
@@ -1420,7 +1431,7 @@ QDF_STATUS wlan_crypto_demic(struct wlan_objmgr_vdev *vdev,
 			return QDF_STATUS_E_INVAL;
 		}
 
-		key = crypto_priv->key[crypto_priv->def_tx_keyid];
+		key = crypto_priv->key[keyid];
 		if (!key)
 			return QDF_STATUS_E_INVAL;
 	}
@@ -3201,3 +3212,127 @@ uint16_t wlan_crypto_get_keyid(uint8_t *data, int hdrlen)
 }
 
 qdf_export_symbol(wlan_crypto_get_keyid);
+
+/**
+ * crypto_plumb_peer_keys - called during radio reset
+ * @vdev: vdev
+ * @object: peer
+ * @arg: psoc
+ *
+ * Restore unicast and persta hardware keys
+ *
+ * Return: void
+ */
+static void crypto_plumb_peer_keys(struct wlan_objmgr_vdev *vdev,
+				   void *object, void *arg) {
+	struct wlan_objmgr_peer *peer = (struct wlan_objmgr_peer *)object;
+	struct wlan_objmgr_psoc *psoc = (struct wlan_objmgr_psoc *)arg;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_params;
+	struct wlan_crypto_key *key = NULL;
+	int i;
+
+	if ((NULL == peer) || (NULL == vdev) || (NULL == psoc)) {
+		QDF_TRACE(QDF_MODULE_ID_CRYPTO, QDF_TRACE_LEVEL_ERROR,
+			  "%s[%d] Peer or vdev or psoc objects are null!\n",
+			  __func__, __LINE__);
+		return;
+	}
+
+	crypto_params = wlan_crypto_peer_get_comp_params(peer,
+							 &crypto_priv);
+
+	if (!crypto_priv) {
+		QDF_TRACE(QDF_MODULE_ID_CRYPTO, QDF_TRACE_LEVEL_ERROR,
+			  "%s[%d] crypto_priv NULL\n",
+			  __func__, __LINE__);
+		return;
+	}
+
+	for (i = 0; i < WLAN_CRYPTO_MAXKEYIDX; i++) {
+		key = crypto_priv->key[i];
+		if (key && key->valid) {
+			if (WLAN_CRYPTO_TX_OPS_SETKEY(psoc)) {
+				WLAN_CRYPTO_TX_OPS_SETKEY(psoc)
+					(
+					 vdev,
+					 key,
+					 wlan_peer_get_macaddr(peer),
+					 wlan_crypto_get_key_type(key)
+					);
+			}
+		}
+	}
+}
+
+/**
+ * wlan_crypto_restore_keys - called during radio reset
+ * @vdev: vdev
+ *
+ * Clear and restore keycache, needed for some DA chipsets which put
+ * random values in keycache when phy reset is triggered
+ *
+ * Return: void
+ */
+void wlan_crypto_restore_keys(struct wlan_objmgr_vdev *vdev)
+{
+	int i;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_params;
+	struct wlan_crypto_key *key;
+	uint8_t macaddr[WLAN_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+	struct wlan_objmgr_pdev *pdev = NULL;
+	struct wlan_objmgr_psoc *psoc = NULL;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (NULL == pdev) {
+		QDF_TRACE(QDF_MODULE_ID_CRYPTO, QDF_TRACE_LEVEL_ERROR,
+			  "%s[%d] pdev is NULL\n",
+			  __func__, __LINE__);
+		return;
+	}
+	if (NULL == psoc) {
+		QDF_TRACE(QDF_MODULE_ID_CRYPTO, QDF_TRACE_LEVEL_ERROR,
+			  "%s[%d] psoc is NULL\n",
+			  __func__, __LINE__);
+		return;
+	}
+
+	/* TBD: QWRAP key restore*/
+	/* crypto is on */
+	if (wlan_vdev_mlme_feat_cap_get(vdev, WLAN_VDEV_F_PRIVACY)) {
+		/* restore static shared keys */
+		for (i = 0; i < WLAN_CRYPTO_MAXKEYIDX; i++) {
+			crypto_params = wlan_crypto_vdev_get_comp_params
+				(
+				 vdev,
+				 &crypto_priv
+				);
+			if (!crypto_priv) {
+				QDF_TRACE(QDF_MODULE_ID_CRYPTO,
+					  QDF_TRACE_LEVEL_ERROR,
+					  "%s[%d] crypto_priv is NULL\n",
+					  __func__, __LINE__);
+				return;
+			}
+			key = crypto_priv->key[i];
+			if (key && key->valid) {
+				if (WLAN_CRYPTO_TX_OPS_SETKEY(psoc)) {
+					WLAN_CRYPTO_TX_OPS_SETKEY(psoc)
+						(
+						 vdev,
+						 key,
+						 macaddr,
+						 wlan_crypto_get_key_type(key)
+						 );
+				}
+			}
+		}
+
+		wlan_objmgr_iterate_peerobj_list(vdev,
+						 crypto_plumb_peer_keys,
+						 psoc,
+						 WLAN_CRYPTO_ID);
+	}
+}

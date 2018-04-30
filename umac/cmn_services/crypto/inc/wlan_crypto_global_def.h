@@ -324,7 +324,7 @@ struct wlan_lmac_if_crypto_rx_ops {
 					uint8_t encapdone);
 	QDF_STATUS(*crypto_demic)(struct wlan_objmgr_vdev *vdev,
 					qdf_nbuf_t wbuf, uint8_t *macaddr,
-					uint8_t tid);
+					uint8_t tid, uint8_t keyid);
 	QDF_STATUS(*set_peer_wep_keys)(struct wlan_objmgr_vdev *vdev,
 					struct wlan_objmgr_peer *peer);
 };

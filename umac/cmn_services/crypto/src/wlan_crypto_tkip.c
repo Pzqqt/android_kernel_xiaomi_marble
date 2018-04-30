@@ -60,10 +60,17 @@ static QDF_STATUS tkip_encap(struct wlan_crypto_key *key,
 	if (encapdone) {
 		ivp = (uint8_t *)qdf_nbuf_data(wbuf);
 	} else {
-		ivp = qdf_nbuf_push_head(wbuf, cipher_table->header);
-		qdf_mem_move(ivp, (ivp + cipher_table->header), hdrlen);
+		uint8_t ivmictrailer_len = cipher_table->header +
+			cipher_table->miclen +
+			cipher_table->trailer;
+		ivp = qdf_nbuf_push_head(wbuf, ivmictrailer_len);
+		qdf_mem_move(ivp, (ivp + ivmictrailer_len), hdrlen);
+		qdf_mem_move((ivp + hdrlen + cipher_table->header),
+			     (ivp + ivmictrailer_len + hdrlen),
+			     (qdf_nbuf_len(wbuf) - hdrlen - ivmictrailer_len));
 	}
 
+	ivp += hdrlen;
 	key->keytsc++;         /* XXX wrap at 48 bits */
 
 	ivp[0] = key->keytsc >> 8;            /* TSC1 */
@@ -151,13 +158,17 @@ static QDF_STATUS tkip_demic(struct wlan_crypto_key *key,
 				qdf_nbuf_t wbuf,
 				uint8_t tid,
 				uint8_t hdrlen){
+	struct wlan_crypto_cipher *cipher_table;
+
+	cipher_table = key->cipher_table;
+	qdf_nbuf_trim_tail(wbuf, cipher_table->miclen);
 	return QDF_STATUS_SUCCESS;
 }
 
 const struct wlan_crypto_cipher tkip_cipher_table = {
 	"TKIP",
 	WLAN_CRYPTO_CIPHER_TKIP,
-	WLAN_CRYPTO_IV_LEN + WLAN_CRYPTO_KEYID_LEN,
+	WLAN_CRYPTO_IV_LEN + WLAN_CRYPTO_KEYID_LEN + WLAN_CRYPTO_EXT_IV_LEN,
 	WLAN_CRYPTO_CRC_LEN,
 	WLAN_CRYPTO_MIC_LEN,
 	256,
