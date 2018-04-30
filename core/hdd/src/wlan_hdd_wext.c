@@ -8054,6 +8054,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 			break;
 		case WLAN_OFFLOAD_ARP_AND_BC_FILTER_ENABLE:
 			hdd_debug("   BC Filtering enable");
+			/* fallthrough */
 		case WLAN_OFFLOAD_ENABLE:
 			hdd_debug("   ARP offload enable");
 			hdd_debug("   IP address: %d.%d.%d.%d",
