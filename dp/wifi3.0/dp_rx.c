@@ -258,6 +258,7 @@ dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list,
 		DP_RX_LIST_APPEND(deliver_list_head, deliver_list_tail, nbuf);
 
 		DP_STATS_INC(vdev->pdev, rx_raw_pkts, 1);
+		DP_STATS_INC_PKT(peer, rx.raw, 1, qdf_nbuf_len(nbuf));
 		/*
 		 * reset the chfrag_start and chfrag_end bits in nbuf cb
 		 * as this is a non-amsdu pkt and RAW mode simulation expects

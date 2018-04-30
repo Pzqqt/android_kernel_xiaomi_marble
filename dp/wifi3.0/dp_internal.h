@@ -277,6 +277,7 @@ while (0)
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.mcast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.bcast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.tx_success); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.nawds_mcast); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.tx_failed); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.ofdma); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.stbc); \
