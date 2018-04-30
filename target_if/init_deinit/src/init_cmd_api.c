@@ -65,6 +65,9 @@ static uint32_t init_deinit_alloc_host_mem_chunk(struct wlan_objmgr_psoc *psoc,
 		return 0;
 
 	qdf_dev = wlan_psoc_get_qdf_dev(psoc);
+	if (!qdf_dev)
+		return 0;
+
 	/*
 	 * We have skip smaller chunks memory allocation for TXBF_CV buffer
 	 * as Firmware is expecting continuous memory
