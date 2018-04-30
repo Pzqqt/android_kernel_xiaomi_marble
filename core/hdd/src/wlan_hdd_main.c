@@ -5019,6 +5019,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 							eUPDATE_IE_ALL);
 		ucfg_ipa_flush(hdd_ctx->hdd_pdev);
 		cds_flush_work(&hdd_ctx->sap_pre_cac_work);
+		/* fallthrough */
 
 	case QDF_P2P_GO_MODE:
 		if (QDF_SAP_MODE == adapter->device_mode) {
