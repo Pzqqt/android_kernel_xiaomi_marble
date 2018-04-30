@@ -552,11 +552,6 @@ static inline int __qdf_ipa_commit_hdr(void)
 	return ipa_commit_hdr();
 }
 
-static inline int __qdf_ipa_reset_hdr(void)
-{
-	return ipa_reset_hdr();
-}
-
 static inline int __qdf_ipa_get_hdr(struct ipa_ioc_get_hdr *lookup)
 {
 	return ipa_get_hdr(lookup);
