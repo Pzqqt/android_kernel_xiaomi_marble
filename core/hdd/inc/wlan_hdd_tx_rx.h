@@ -188,8 +188,10 @@ void wlan_hdd_classify_pkt(struct sk_buff *skb);
 
 #ifdef MSM_PLATFORM
 void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx);
+#define HDD_MSM_CFG(msm_cfg)	msm_cfg
 #else
 static inline void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx) {}
+#define HDD_MSM_CFG(msm_cfg)	0
 #endif
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

@@ -1620,6 +1620,8 @@ static void hdd_register_rx_ol(void)
 	if  (!hdd_ctx)
 		hdd_err("HDD context is NULL");
 
+	hdd_ctx->en_tcp_delack_no_lro = 0;
+
 	if (hdd_ctx->ol_enable == CFG_LRO_ENABLED) {
 		cdp_register_rx_offld_flush_cb(soc, hdd_qdf_lro_flush);
 		hdd_ctx->receive_offload_cb = hdd_lro_rx;
@@ -1633,6 +1635,8 @@ static void hdd_register_rx_ol(void)
 						       hdd_hif_napi_gro_flush);
 		hdd_ctx->receive_offload_cb = hdd_gro_rx;
 		hdd_debug("GRO is enabled");
+	} else if (HDD_MSM_CFG(hdd_ctx->config->enable_tcp_delack)) {
+		hdd_ctx->en_tcp_delack_no_lro = 1;
 	}
 }
 
@@ -1685,7 +1689,7 @@ void hdd_disable_rx_ol_in_concurrency(bool disable)
 	}
 
 	if (disable) {
-		if (hdd_ctx->en_tcp_delack_no_lro) {
+		if (HDD_MSM_CFG(hdd_ctx->config->enable_tcp_delack)) {
 			struct wlan_rx_tp_data rx_tp_data;
 
 			hdd_info("Enable TCP delack as LRO disabled in concurrency");
@@ -1699,7 +1703,7 @@ void hdd_disable_rx_ol_in_concurrency(bool disable)
 		}
 		qdf_atomic_set(&hdd_ctx->disable_lro_in_concurrency, 1);
 	} else {
-		if (hdd_ctx->en_tcp_delack_no_lro) {
+		if (HDD_MSM_CFG(hdd_ctx->config->enable_tcp_delack)) {
 			hdd_info("Disable TCP delack as LRO is enabled");
 			hdd_ctx->en_tcp_delack_no_lro = 0;
 			hdd_reset_tcp_delack(hdd_ctx);

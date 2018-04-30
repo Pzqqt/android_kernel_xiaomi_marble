@@ -142,7 +142,7 @@ hdd_lro_set_reset(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
 		adapter->dev->features &= ~NETIF_F_LRO;
 		hdd_debug("LRO Disabled");
 
-		if (hdd_ctx->en_tcp_delack_no_lro) {
+		if (hdd_ctx->config->enable_tcp_delack) {
 			struct wlan_rx_tp_data rx_tp_data;
 
 			hdd_debug("Enable TCP delack as LRO is disabled");
