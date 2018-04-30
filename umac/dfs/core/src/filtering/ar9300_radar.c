@@ -197,7 +197,8 @@ void dfs_get_radars_for_ar9300(struct wlan_dfs *dfs)
 
 		if (((regdmn == ETSI11_WORLD_REGDMN_PAIR_ID) ||
 		    (regdmn == ETSI12_WORLD_REGDMN_PAIR_ID) ||
-		    (regdmn == ETSI13_WORLD_REGDMN_PAIR_ID)) &&
+		    (regdmn == ETSI13_WORLD_REGDMN_PAIR_ID) ||
+		    (regdmn == ETSI14_WORLD_REGDMN_PAIR_ID)) &&
 		    DFS_CURCHAN_IS_58GHz(ch_freq)) {
 			rinfo.dfs_radars = ar9300_etsi_radars;
 			rinfo.numradars = QDF_ARRAY_SIZE(ar9300_etsi_radars);
