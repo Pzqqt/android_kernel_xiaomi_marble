@@ -4737,7 +4737,7 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 	uint8_t *frame_ptr;
 	tpSirMacMgmtHdr mgmt_hdr;
 	uint32_t num_bytes, payload_size, status;
-	void *pkt_ptr;
+	void *pkt_ptr = NULL;
 	QDF_STATUS qdf_status;
 	uint8_t tx_flag = 0;
 	uint8_t sme_sessionid = 0;
@@ -4820,7 +4820,7 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 	num_bytes = payload_size + sizeof(*mgmt_hdr);
 	qdf_status = cds_packet_alloc(num_bytes, (void **)&frame_ptr,
 				      (void **)&pkt_ptr);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status) || (!pkt_ptr)) {
 		pe_err("Failed to allocate %d bytes for a ADDBA response action frame",
 			num_bytes);
 		return QDF_STATUS_E_FAILURE;
