@@ -3736,6 +3736,19 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	rx_pkt->pkt_meta.timestamp = (uint32_t) jiffies;
 	rx_pkt->pkt_meta.mpdu_hdr_len = sizeof(struct ieee80211_frame);
 	rx_pkt->pkt_meta.mpdu_len = mgmt_rx_params->buf_len;
+
+	/*
+	 * The buf_len should be at least 802.11 header len
+	 */
+	if (mgmt_rx_params->buf_len < rx_pkt->pkt_meta.mpdu_hdr_len) {
+		WMA_LOGE("MPDU Len %d lesser than header len %d",
+			 mgmt_rx_params->buf_len,
+			 rx_pkt->pkt_meta.mpdu_hdr_len);
+		qdf_nbuf_free(buf);
+		qdf_mem_free(rx_pkt);
+		return -EINVAL;
+	}
+
 	rx_pkt->pkt_meta.mpdu_data_len = mgmt_rx_params->buf_len -
 					 rx_pkt->pkt_meta.mpdu_hdr_len;
 
