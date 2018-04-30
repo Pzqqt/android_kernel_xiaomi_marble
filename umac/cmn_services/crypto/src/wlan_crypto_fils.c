@@ -63,14 +63,14 @@ fils_parse_ie(qdf_nbuf_t wbuf, uint8_t hdrlen, uint8_t **cap_info,
 	struct ieee80211_hdr *hdr;
 	uint32_t pktlen_left = 0;
 	bool fils_found = 0;
-	uint16_t subtype = 0;
+	uint8_t subtype = 0;
 	uint8_t *frm = NULL;
 	uint8_t elem_id;
 	uint32_t len;
 
 	frm = (uint8_t *)qdf_nbuf_data(wbuf);
 	hdr = (struct ieee80211_hdr *)frm;
-	subtype = WLAN_FC_GET_STYPE(hdr->frame_control);
+	subtype = WLAN_FC0_GET_STYPE(hdr->frame_control[0]);
 
 	pktlen_left = qdf_nbuf_len(wbuf);
 
@@ -86,8 +86,8 @@ fils_parse_ie(qdf_nbuf_t wbuf, uint8_t hdrlen, uint8_t **cap_info,
 	/* pointer to the capability information field */
 	*cap_info = (uint8_t *)frm;
 
-	if (subtype == WLAN_FC_STYPE_ASSOC_RESP ||
-	    subtype == WLAN_FC_STYPE_REASSOC_RESP) {
+	if (subtype == WLAN_FC0_STYPE_ASSOC_RESP ||
+	    subtype == WLAN_FC0_STYPE_REASSOC_RESP) {
 		/* assoc resp frame - capability (2), status (2), associd (2) */
 		if (pktlen_left < ASSOC_RESP_FIXED_FIELDS_LEN) {
 			qdf_print(
@@ -98,7 +98,7 @@ fils_parse_ie(qdf_nbuf_t wbuf, uint8_t hdrlen, uint8_t **cap_info,
 
 		frm += ASSOC_RESP_FIXED_FIELDS_LEN;
 		pktlen_left -= ASSOC_RESP_FIXED_FIELDS_LEN;
-	} else if (subtype == WLAN_FC_STYPE_ASSOC_REQ) {
+	} else if (subtype == WLAN_FC0_STYPE_ASSOC_REQ) {
 		/* assoc req frame - capability(2), listen interval (2) */
 		if (pktlen_left < ASSOC_REQ_FIXED_FIELDS_LEN) {
 			qdf_print(
@@ -109,7 +109,7 @@ fils_parse_ie(qdf_nbuf_t wbuf, uint8_t hdrlen, uint8_t **cap_info,
 
 		frm += ASSOC_REQ_FIXED_FIELDS_LEN;
 		pktlen_left -= ASSOC_REQ_FIXED_FIELDS_LEN;
-	} else if (subtype == WLAN_FC_STYPE_REASSOC_REQ) {
+	} else if (subtype == WLAN_FC0_STYPE_REASSOC_REQ) {
 		/* assoc req frame - capability(2),
 		 * Listen interval(2),
 		 * Current AP address(6)
@@ -228,7 +228,7 @@ fils_aead_encap(struct wlan_crypto_key *key, qdf_nbuf_t wbuf,
 	struct wlan_crypto_fils_aad_key *fils_key = NULL;
 	uint8_t *buf = NULL;
 	uint32_t bufsize = 0;
-	uint16_t subtype = 0;
+	uint8_t subtype = 0;
 
 	if (!key) {
 		qdf_print(FL("Invalid Input\n"));
@@ -252,9 +252,9 @@ fils_aead_encap(struct wlan_crypto_key *key, qdf_nbuf_t wbuf,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	subtype = WLAN_FC_GET_STYPE(hdr->frame_control);
-	if ((subtype != WLAN_FC_STYPE_ASSOC_RESP) &&
-	    (subtype != WLAN_FC_STYPE_REASSOC_RESP))
+	subtype = WLAN_FC0_GET_STYPE(hdr->frame_control[0]);
+	if ((subtype != WLAN_FC0_STYPE_ASSOC_RESP) &&
+	    (subtype != WLAN_FC0_STYPE_REASSOC_RESP))
 		return QDF_STATUS_E_FAILURE;
 
 	if (fils_parse_ie(wbuf, hdrlen, &cap_info, &fils_session, &ie_start)

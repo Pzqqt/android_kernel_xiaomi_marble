@@ -1572,10 +1572,10 @@ uint8_t *wlan_crypto_add_mmie(struct wlan_objmgr_vdev *vdev,
 	/* generate BIP AAD: FC(masked) || A1 || A2 || A3 */
 
 	/* FC type/subtype */
-	aad[0] = hdr->frame_control & 0xff;
+	aad[0] = hdr->frame_control[0];
 	/* Mask FC Retry, PwrMgt, MoreData flags to zero */
-	aad[1] = (hdr->frame_control & ~(WLAN_FC_RETRY | WLAN_FC_PWRMGT
-						| WLAN_FC_MOREDATA)) >> 8;
+	aad[1] = (hdr->frame_control[1] & ~(WLAN_FC1_RETRY | WLAN_FC1_PWRMGT
+						| WLAN_FC1_MOREDATA));
 	/* A1 || A2 || A3 */
 	qdf_mem_copy(aad + 2, hdr->addr1, WLAN_ALEN);
 	qdf_mem_copy(aad + 8, hdr->addr2, WLAN_ALEN);
@@ -1705,10 +1705,10 @@ bool wlan_crypto_is_mmie_valid(struct wlan_objmgr_vdev *vdev,
 	/* generate BIP AAD: FC(masked) || A1 || A2 || A3 */
 
 	/* FC type/subtype */
-	aad[0] = hdr->frame_control & 0xff;
+	aad[0] = hdr->frame_control[0];
 	/* Mask FC Retry, PwrMgt, MoreData flags to zero */
-	aad[1] = (hdr->frame_control & ~(WLAN_FC_RETRY | WLAN_FC_PWRMGT
-						| WLAN_FC_MOREDATA)) >> 8;
+	aad[1] = (hdr->frame_control[1] & ~(WLAN_FC1_RETRY | WLAN_FC1_PWRMGT
+						| WLAN_FC1_MOREDATA));
 	/* A1 || A2 || A3 */
 	qdf_mem_copy(aad + 2, hdr->addr1, 3 * WLAN_ALEN);
 
@@ -3077,3 +3077,30 @@ wlan_crypto_set_peer_fils_aead(struct wlan_objmgr_peer *peer, uint8_t value)
 
 	crypto_priv->fils_aead_set = value;
 }
+
+/**
+ * wlan_crypto_get_keyid - get keyid from frame
+ * @data: frame
+ *
+ * This function parse frame and returns keyid
+ *
+ * Return: keyid
+ */
+uint16_t wlan_crypto_get_keyid(uint8_t *data, int hdrlen)
+{
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)data;
+	uint8_t *iv;
+
+	if (hdr->frame_control[1] & WLAN_FC1_ISWEP) {
+		iv = data + hdrlen;
+		/*
+		 * iv[3] is the Key ID octet in the CCMP/TKIP/WEP headers
+		 * Bits 6–7 of the Key ID octet are for the Key ID subfield
+		 */
+		return ((iv[3] >> 6) & 0x3);
+	} else {
+		return WLAN_CRYPTO_KEYIX_NONE;
+	}
+}
+
+qdf_export_symbol(wlan_crypto_get_keyid);

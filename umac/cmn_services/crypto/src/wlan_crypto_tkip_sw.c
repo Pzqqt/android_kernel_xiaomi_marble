@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  */
 /*
  * Temporal Key Integrity Protocol (CCMP)
@@ -246,18 +246,17 @@ static void michael_mic(const uint8_t *key, const uint8_t *hdr,
 static void michael_mic_hdr(const struct ieee80211_hdr *hdr11, uint8_t *hdr)
 {
 	int hdrlen = 24;
-	uint16_t fc = qdf_le16_to_cpu(hdr11->frame_control);
 
-	switch (fc & (WLAN_FC_FROMDS | WLAN_FC_TODS)) {
-	case WLAN_FC_TODS:
+	switch (hdr11->frame_control[1] & (WLAN_FC1_FROMDS | WLAN_FC1_TODS)) {
+	case WLAN_FC1_TODS:
 		qdf_mem_copy(hdr, hdr11->addr3, WLAN_ALEN); /* DA */
 		qdf_mem_copy(hdr + WLAN_ALEN, hdr11->addr2, WLAN_ALEN); /* SA */
 		break;
-	case WLAN_FC_FROMDS:
+	case WLAN_FC1_FROMDS:
 		qdf_mem_copy(hdr, hdr11->addr1, WLAN_ALEN); /* DA */
 		qdf_mem_copy(hdr + WLAN_ALEN, hdr11->addr3, WLAN_ALEN); /* SA */
 		break;
-	case WLAN_FC_FROMDS | WLAN_FC_TODS:
+	case WLAN_FC1_FROMDS | WLAN_FC1_TODS:
 		qdf_mem_copy(hdr, hdr11->addr3, WLAN_ALEN); /* DA */
 		qdf_mem_copy(hdr + WLAN_ALEN, hdr11 + 1, WLAN_ALEN); /* SA */
 		hdrlen += WLAN_ALEN;
@@ -268,8 +267,8 @@ static void michael_mic_hdr(const struct ieee80211_hdr *hdr11, uint8_t *hdr)
 		break;
 	}
 
-	if (WLAN_FC_GET_TYPE(fc) == WLAN_FC_TYPE_DATA &&
-	    (WLAN_FC_GET_STYPE(fc) & 0x08)) {
+	if (WLAN_FC0_GET_TYPE(hdr11->frame_control[0]) == WLAN_FC0_TYPE_DATA &&
+	    (WLAN_FC0_GET_STYPE(hdr11->frame_control[0]) & 0x08)) {
 		const uint8_t *qos = ((const uint8_t *) hdr11) + hdrlen;
 		hdr[12] = qos[0] & 0x0f; /* priority */
 	} else
@@ -292,7 +291,6 @@ uint8_t *wlan_crypto_tkip_decrypt(const uint8_t *tk,
 	const uint8_t *mic_key;
 	uint8_t michael_hdr[16];
 	uint8_t mic[8];
-	uint16_t fc = qdf_le16_to_cpu(hdr->frame_control);
 
 	if (data_len < 8 + 4)
 		return NULL;
@@ -333,7 +331,7 @@ uint8_t *wlan_crypto_tkip_decrypt(const uint8_t *tk,
 	}
 
 	michael_mic_hdr(hdr, michael_hdr);
-	mic_key = tk + ((fc & WLAN_FC_FROMDS) ? 16 : 24);
+	mic_key = tk + ((hdr->frame_control[1] & WLAN_FC1_FROMDS) ? 16 : 24);
 	michael_mic(mic_key, michael_hdr, plain, plain_len - 8, mic);
 	if (qdf_mem_cmp(mic, plain + plain_len - 8, 8) != 0) {
 		wpa_printf(MSG_INFO, "TKIP: Michael MIC mismatch in a frame "
@@ -364,7 +362,6 @@ uint8_t *wlan_crypto_tkip_encrypt(const uint8_t *tk, uint8_t *frame,
 	uint8_t michael_hdr[16];
 	uint8_t mic[8];
 	struct ieee80211_hdr *hdr;
-	uint16_t fc;
 	const uint8_t *mic_key;
 	uint8_t *pos;
 	uint16_t iv16;
@@ -375,10 +372,9 @@ uint8_t *wlan_crypto_tkip_encrypt(const uint8_t *tk, uint8_t *frame,
 	if (len < sizeof(*hdr) || len < hdrlen)
 		return NULL;
 	hdr = (struct ieee80211_hdr *) frame;
-	fc = qdf_le16_to_cpu(hdr->frame_control);
 
 	michael_mic_hdr(hdr, michael_hdr);
-	mic_key = tk + ((fc & WLAN_FC_FROMDS) ? 16 : 24);
+	mic_key = tk + ((hdr->frame_control[1] & WLAN_FC1_FROMDS) ? 16 : 24);
 	michael_mic(mic_key, michael_hdr, frame + hdrlen, len - hdrlen, mic);
 	wpa_hexdump(MSG_EXCESSIVE, "TKIP: MIC", mic, sizeof(mic));
 	pos = frame + hdrlen;

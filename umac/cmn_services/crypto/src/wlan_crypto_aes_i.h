@@ -154,43 +154,43 @@ static inline uint32_t rotr(uint32_t val, int bits)
 #define WLAN_ALEN               (6)
 
 struct ieee80211_hdr {
-	uint16_t frame_control;
-	uint16_t duration_id;
-	uint8_t  addr1[WLAN_ALEN];
-	uint8_t  addr2[WLAN_ALEN];
-	uint8_t  addr3[WLAN_ALEN];
-	uint16_t seq_ctrl;
+	uint8_t frame_control[2];
+	uint8_t duration_id[2];
+	uint8_t addr1[WLAN_ALEN];
+	uint8_t addr2[WLAN_ALEN];
+	uint8_t addr3[WLAN_ALEN];
+	uint8_t seq_ctrl[2];
 } __packed;
 
 struct ieee80211_hdr_addr4 {
-	uint16_t frame_control;
-	uint16_t duration_id;
-	uint8_t  addr1[WLAN_ALEN];
-	uint8_t  addr2[WLAN_ALEN];
-	uint8_t  addr3[WLAN_ALEN];
-	uint16_t seq_ctrl;
-	uint8_t  addr4[WLAN_ALEN];
+	uint8_t frame_control[2];
+	uint8_t duration_id[2];
+	uint8_t addr1[WLAN_ALEN];
+	uint8_t addr2[WLAN_ALEN];
+	uint8_t addr3[WLAN_ALEN];
+	uint8_t seq_ctrl[2];
+	uint8_t addr4[WLAN_ALEN];
 } __packed;
 
 struct ieee80211_hdr_qos {
-	uint16_t frame_control;
-	uint16_t duration_id;
-	uint8_t  addr1[WLAN_ALEN];
-	uint8_t  addr2[WLAN_ALEN];
-	uint8_t  addr3[WLAN_ALEN];
-	uint16_t seq_ctrl;
-	uint16_t qos;
+	uint8_t frame_control[2];
+	uint8_t duration_id[2];
+	uint8_t addr1[WLAN_ALEN];
+	uint8_t addr2[WLAN_ALEN];
+	uint8_t addr3[WLAN_ALEN];
+	uint8_t seq_ctrl[2];
+	uint8_t qos[2];
 } __packed;
 
 struct ieee80211_hdr_qos_addr4 {
-	uint16_t frame_control;
-	uint16_t duration_id;
-	uint8_t  addr1[WLAN_ALEN];
-	uint8_t  addr2[WLAN_ALEN];
-	uint8_t  addr3[WLAN_ALEN];
-	uint16_t seq_ctrl;
-	uint8_t  addr4[WLAN_ALEN];
-	uint16_t qos;
+	uint8_t frame_control[2];
+	uint8_t duration_id[2];
+	uint8_t addr1[WLAN_ALEN];
+	uint8_t addr2[WLAN_ALEN];
+	uint8_t addr3[WLAN_ALEN];
+	uint8_t seq_ctrl[2];
+	uint8_t addr4[WLAN_ALEN];
+	uint8_t qos[2];
 } __packed;
 
 int wlan_crypto_rijndaelKeySetupEnc(uint32_t rk[], const uint8_t cipherKey[],

@@ -535,4 +535,14 @@ uint8_t wlan_crypto_get_peer_fils_aead(struct wlan_objmgr_peer *peer);
  */
 void wlan_crypto_set_peer_fils_aead(
 			struct wlan_objmgr_peer *peer, uint8_t value);
+/**
+ * wlan_crypto_get_keyid - get keyid from frame
+ * @data: frame
+ * @hdrlen: 802.11 header length
+ *
+ * This function parse frame and returns keyid
+ *
+ * Return: keyid
+ */
+uint16_t wlan_crypto_get_keyid(uint8_t *data, int hdrlen);
 #endif /* end of _WLAN_CRYPTO_GLOBAL_API_H_ */

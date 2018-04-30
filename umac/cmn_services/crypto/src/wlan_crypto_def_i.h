@@ -25,68 +25,70 @@
 #include "wlan_crypto_aes_i.h"
 
 /* IEEE 802.11 defines */
-#define WLAN_FC_PVER      0x0003
-#define WLAN_FC_TODS      0x0100
-#define WLAN_FC_FROMDS    0x0200
-#define WLAN_FC_MOREFRAG  0x0400
-#define WLAN_FC_RETRY     0x0800
-#define WLAN_FC_PWRMGT    0x1000
-#define WLAN_FC_MOREDATA  0x2000
-#define WLAN_FC_ISWEP     0x4000
-#define WLAN_FC_ORDER     0x8000
+#define WLAN_FC0_PVER      0x0003
+#define WLAN_FC1_DIR_MASK  0x03
+#define WLAN_FC1_TODS      0x01
+#define WLAN_FC1_FROMDS    0x02
+#define WLAN_FC1_DSTODS    0x03
+#define WLAN_FC1_MOREFRAG  0x04
+#define WLAN_FC1_RETRY     0x08
+#define WLAN_FC1_PWRMGT    0x10
+#define WLAN_FC1_MOREDATA  0x20
+#define WLAN_FC1_ISWEP     0x40
+#define WLAN_FC1_ORDER     0x80
 
-#define WLAN_FC_GET_TYPE(fc)    (((fc) & 0x000c) >> 2)
-#define WLAN_FC_GET_STYPE(fc)   (((fc) & 0x00f0) >> 4)
+#define WLAN_FC0_GET_TYPE(fc)    (((fc) & 0x0c) >> 2)
+#define WLAN_FC0_GET_STYPE(fc)   (((fc) & 0xf0) >> 4)
 
 #define WLAN_INVALID_MGMT_SEQ   0xffff
 #define WLAN_SEQ_MASK           0x0fff
-#define WLAN_QOS_TID_MASK       0x00ff
+#define WLAN_QOS_TID_MASK       0x0f
 #define WLAN_GET_SEQ_FRAG(seq) ((seq) & (BIT(3) | BIT(2) | BIT(1) | BIT(0)))
 #define WLAN_GET_SEQ_SEQ(seq) \
 	(((seq) & (~(BIT(3) | BIT(2) | BIT(1) | BIT(0)))) >> 4)
 
-#define WLAN_FC_TYPE_MGMT        0
-#define WLAN_FC_TYPE_CTRL        1
-#define WLAN_FC_TYPE_DATA        2
+#define WLAN_FC0_TYPE_MGMT        0
+#define WLAN_FC0_TYPE_CTRL        1
+#define WLAN_FC0_TYPE_DATA        2
 
 /* management */
-#define WLAN_FC_STYPE_ASSOC_REQ      0
-#define WLAN_FC_STYPE_ASSOC_RESP     1
-#define WLAN_FC_STYPE_REASSOC_REQ    2
-#define WLAN_FC_STYPE_REASSOC_RESP   3
-#define WLAN_FC_STYPE_PROBE_REQ      4
-#define WLAN_FC_STYPE_PROBE_RESP     5
-#define WLAN_FC_STYPE_BEACON         8
-#define WLAN_FC_STYPE_ATIM           9
-#define WLAN_FC_STYPE_DISASSOC      10
-#define WLAN_FC_STYPE_AUTH          11
-#define WLAN_FC_STYPE_DEAUTH        12
-#define WLAN_FC_STYPE_ACTION        13
+#define WLAN_FC0_STYPE_ASSOC_REQ      0
+#define WLAN_FC0_STYPE_ASSOC_RESP     1
+#define WLAN_FC0_STYPE_REASSOC_REQ    2
+#define WLAN_FC0_STYPE_REASSOC_RESP   3
+#define WLAN_FC0_STYPE_PROBE_REQ      4
+#define WLAN_FC0_STYPE_PROBE_RESP     5
+#define WLAN_FC0_STYPE_BEACON         8
+#define WLAN_FC0_STYPE_ATIM           9
+#define WLAN_FC0_STYPE_DISASSOC      10
+#define WLAN_FC0_STYPE_AUTH          11
+#define WLAN_FC0_STYPE_DEAUTH        12
+#define WLAN_FC0_STYPE_ACTION        13
 
 /* control */
-#define WLAN_FC_STYPE_PSPOLL        10
-#define WLAN_FC_STYPE_RTS           11
-#define WLAN_FC_STYPE_CTS           12
-#define WLAN_FC_STYPE_ACK           13
-#define WLAN_FC_STYPE_CFEND         14
-#define WLAN_FC_STYPE_CFENDACK      15
+#define WLAN_FC0_STYPE_PSPOLL        10
+#define WLAN_FC0_STYPE_RTS           11
+#define WLAN_FC0_STYPE_CTS           12
+#define WLAN_FC0_STYPE_ACK           13
+#define WLAN_FC0_STYPE_CFEND         14
+#define WLAN_FC0_STYPE_CFENDACK      15
 
 /* data */
-#define WLAN_FC_STYPE_DATA                0
-#define WLAN_FC_STYPE_DATA_CFACK          1
-#define WLAN_FC_STYPE_DATA_CFPOLL         2
-#define WLAN_FC_STYPE_DATA_CFACKPOLL      3
-#define WLAN_FC_STYPE_NULLFUNC            4
-#define WLAN_FC_STYPE_CFACK               5
-#define WLAN_FC_STYPE_CFPOLL              6
-#define WLAN_FC_STYPE_CFACKPOLL           7
-#define WLAN_FC_STYPE_QOS_DATA            8
-#define WLAN_FC_STYPE_QOS_DATA_CFACK      9
-#define WLAN_FC_STYPE_QOS_DATA_CFPOLL    10
-#define WLAN_FC_STYPE_QOS_DATA_CFACKPOLL 11
-#define WLAN_FC_STYPE_QOS_NULL           12
-#define WLAN_FC_STYPE_QOS_CFPOLL         14
-#define WLAN_FC_STYPE_QOS_CFACKPOLL      15
+#define WLAN_FC0_STYPE_DATA                0
+#define WLAN_FC0_STYPE_DATA_CFACK          1
+#define WLAN_FC0_STYPE_DATA_CFPOLL         2
+#define WLAN_FC0_STYPE_DATA_CFACKPOLL      3
+#define WLAN_FC0_STYPE_NULLFUNC            4
+#define WLAN_FC0_STYPE_CFACK               5
+#define WLAN_FC0_STYPE_CFPOLL              6
+#define WLAN_FC0_STYPE_CFACKPOLL           7
+#define WLAN_FC0_STYPE_QOS_DATA            8
+#define WLAN_FC0_STYPE_QOS_DATA_CFACK      9
+#define WLAN_FC0_STYPE_QOS_DATA_CFPOLL    10
+#define WLAN_FC0_STYPE_QOS_DATA_CFACKPOLL 11
+#define WLAN_FC0_STYPE_QOS_NULL           12
+#define WLAN_FC0_STYPE_QOS_CFPOLL         14
+#define WLAN_FC0_STYPE_QOS_CFACKPOLL      15
 
 #define WLAN_TID_SIZE                    17
 #define WLAN_NONQOS_SEQ                  16
@@ -466,8 +468,7 @@ struct wlan_crypto_cipher {
 static inline bool wlan_crypto_is_data_protected(const void *data)
 {
 	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
-
-	if (hdr->frame_control & WLAN_FC_ISWEP)
+	if (hdr->frame_control[1] & WLAN_FC1_ISWEP)
 		return true;
 	else
 		return false;
@@ -486,39 +487,19 @@ static inline int ieee80211_hdrsize(const void *data)
 	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
 	int16_t size = sizeof(struct ieee80211_hdr);
 
-	if ((hdr->frame_control & (WLAN_FC_TODS | WLAN_FC_FROMDS))
-				== (WLAN_FC_TODS | WLAN_FC_FROMDS)) {
+	if ((hdr->frame_control[1] & WLAN_FC1_DIR_MASK)
+				== (WLAN_FC1_DSTODS)) {
 		size += WLAN_ALEN;
 	}
 
-	if (((WLAN_FC_GET_STYPE(hdr->frame_control)
-			== WLAN_FC_STYPE_QOS_DATA))) {
+	if (((WLAN_FC0_GET_STYPE(hdr->frame_control[0])
+			== WLAN_FC0_STYPE_QOS_DATA))) {
 		size += sizeof(uint16_t);
 		/* Qos frame with Order bit set indicates an HTC frame */
-		if (hdr->frame_control & WLAN_FC_ORDER)
+		if (hdr->frame_control[1] & WLAN_FC1_ORDER)
 			size += (sizeof(uint8_t)*4);
 	}
 	return size;
-}
-
-/**
- * wlan_crypto_get_keyid - get keyid from frame
- * @data: frame
- *
- * This function parse frame and returns keyid
- *
- * Return: keyid
- */
-static inline uint16_t wlan_crypto_get_keyid(uint8_t *data)
-{
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)data;
-
-	if (hdr->frame_control & WLAN_FC_ISWEP) {
-		uint8_t *iv;
-		iv = data + ieee80211_hdrsize(data);
-		return ((iv[3] >> 6) & 0x3);
-	} else
-		return WLAN_CRYPTO_KEYIX_NONE;
 }
 
 /**
@@ -533,14 +514,14 @@ static inline int wlan_get_tid(const void *data)
 {
 	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
 
-	if (((WLAN_FC_GET_STYPE(hdr->frame_control)
-				== WLAN_FC_STYPE_QOS_DATA))) {
-		if ((hdr->frame_control & (WLAN_FC_TODS | WLAN_FC_FROMDS))
-				== (WLAN_FC_TODS | WLAN_FC_FROMDS)) {
-			return ((struct ieee80211_hdr_qos_addr4 *)data)->qos
+	if (((WLAN_FC0_GET_STYPE(hdr->frame_control[0])
+				== WLAN_FC0_STYPE_QOS_DATA))) {
+		if ((hdr->frame_control[1] & WLAN_FC1_DIR_MASK)
+					== (WLAN_FC1_DSTODS)) {
+			return ((struct ieee80211_hdr_qos_addr4 *)data)->qos[0]
 							& WLAN_QOS_TID_MASK;
 		} else {
-			return ((struct ieee80211_hdr_qos *)data)->qos
+			return ((struct ieee80211_hdr_qos *)data)->qos[0]
 							& WLAN_QOS_TID_MASK;
 		}
 	} else

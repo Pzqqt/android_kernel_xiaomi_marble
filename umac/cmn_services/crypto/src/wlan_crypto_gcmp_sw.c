@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  */
 /*
  * GCM with GMAC Protocol (GCMP)
@@ -18,34 +18,33 @@
 static void gcmp_aad_nonce(const struct ieee80211_hdr *hdr, const uint8_t *data,
 			   uint8_t *aad, size_t *aad_len, uint8_t *nonce)
 {
-	uint16_t fc, stype, seq;
+	uint16_t seq;
+	uint8_t stype;
 	int qos = 0, addr4 = 0;
 	uint8_t *pos;
 
-	fc = qdf_le16_to_cpu(hdr->frame_control);
-	stype = WLAN_FC_GET_STYPE(fc);
-	if ((fc & (WLAN_FC_TODS | WLAN_FC_FROMDS)) ==
-	    (WLAN_FC_TODS | WLAN_FC_FROMDS))
+	stype = WLAN_FC0_GET_STYPE(hdr->frame_control[0]);
+	if ((hdr->frame_control[1] & WLAN_FC1_DIR_MASK) ==
+	    (WLAN_FC1_DSTODS))
 		addr4 = 1;
 
-	if (WLAN_FC_GET_TYPE(fc) == WLAN_FC_TYPE_DATA) {
-		fc &= ~0x0070; /* Mask subtype bits */
+	if (WLAN_FC0_GET_TYPE(hdr->frame_control[0]) == WLAN_FC0_TYPE_DATA) {
+		aad[0] &= ~0x0070; /* Mask subtype bits */
 		if (stype & 0x08) {
 			const uint8_t *qc;
 			qos = 1;
-			fc &= ~WLAN_FC_ORDER;
+			aad[1] &= ~WLAN_FC1_ORDER;
 			qc = (const uint8_t *) (hdr + 1);
 			if (addr4)
 				qc += WLAN_ALEN;
 		}
 	}
 
-	fc &= ~(WLAN_FC_RETRY | WLAN_FC_PWRMGT | WLAN_FC_MOREDATA);
-	wlan_crypto_put_le16(aad, fc);
+	aad[1] &= ~(WLAN_FC1_RETRY | WLAN_FC1_PWRMGT | WLAN_FC1_MOREDATA);
 	pos = aad + 2;
 	qdf_mem_copy(pos, hdr->addr1, 3 * WLAN_ALEN);
 	pos += 3 * WLAN_ALEN;
-	seq = qdf_le16_to_cpu(hdr->seq_ctrl);
+	seq = qdf_le16_to_cpu(*((uint16_t *)&hdr->seq_ctrl[0]));
 	seq &= ~0xfff0; /* Mask Seq#; do not modify Frag# */
 	wlan_crypto_put_le16(pos, seq);
 	pos += 2;
