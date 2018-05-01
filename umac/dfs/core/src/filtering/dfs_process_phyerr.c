@@ -137,9 +137,10 @@ int dfs_process_phyerr_owl(struct wlan_dfs *dfs,
 		dur = ((uint8_t *) cbuf)[0];
 
 	/* This is a spurious event; toss. */
-	if (rssi == 0 && dur == 0)
+	if (rssi == 0 && dur == 0) {
 		dfs->wlan_dfs_stats.datalen_discards++;
-	return 0;
+		return 0;
+	}
 
 	/* Fill out dfs_phy_err with the information we have at hand. */
 	qdf_mem_set(e, sizeof(*e), 0);
