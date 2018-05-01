@@ -80,19 +80,17 @@ void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
 				      struct csr_roam_profile *roam_profile,
 				      tSirBssDescription *bssdesc)
 {
-	struct csr_roam_session *roam_session = NULL;
-	tCsrRoamConnectedProfile *connect_profile = NULL;
+	struct csr_roam_session *roam_session;
+	tCsrRoamConnectedProfile *connect_profile;
 
 	roam_session = CSR_GET_SESSION(mac_ctx, session_id);
-	if (NULL == roam_session) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("session %d not found"), session_id);
+	if (!roam_session) {
+		sme_err("session %d not found", session_id);
 		return;
 	}
 
 	connect_profile = &roam_session->connectedProfile;
-	qdf_mem_set(&roam_session->connectedProfile,
-		sizeof(connect_profile), 0);
+	qdf_mem_zero(connect_profile, sizeof(*connect_profile));
 	connect_profile->AuthType = roam_profile->negotiatedAuthType;
 		connect_profile->AuthInfo = roam_profile->AuthType;
 	connect_profile->EncryptionType =
@@ -108,7 +106,7 @@ void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
 	connect_profile->operationChannel = bssdesc->channelId;
 	connect_profile->beaconInterval = 0;
 	qdf_mem_copy(&connect_profile->Keys, &roam_profile->Keys,
-		sizeof(roam_profile->Keys));
+		     sizeof(roam_profile->Keys));
 	csr_get_bss_id_bss_desc(mac_ctx, bssdesc, &connect_profile->bssid);
 	connect_profile->SSID.length = 0;
 	csr_free_connect_bss_desc(mac_ctx, session_id);
