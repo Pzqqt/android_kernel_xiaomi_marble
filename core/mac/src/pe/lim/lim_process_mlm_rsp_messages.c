@@ -54,7 +54,7 @@ void lim_process_mlm_reassoc_ind(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_set_keys_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_disassoc_ind(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_disassoc_cnf(tpAniSirGlobal, uint32_t *);
-void lim_process_mlm_deauth_ind(tpAniSirGlobal, uint32_t *);
+static void lim_process_mlm_deauth_ind(tpAniSirGlobal, tLimMlmDeauthInd *);
 void lim_process_mlm_deauth_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_purge_sta_ind(tpAniSirGlobal, uint32_t *);
 void lim_get_session_info(tpAniSirGlobal pMac, uint8_t *, uint8_t *,
@@ -120,7 +120,7 @@ lim_process_mlm_rsp_messages(tpAniSirGlobal pMac, uint32_t msgType,
 		lim_process_mlm_deauth_cnf(pMac, pMsgBuf);
 		break;
 	case LIM_MLM_DEAUTH_IND:
-		lim_process_mlm_deauth_ind(pMac, pMsgBuf);
+		lim_process_mlm_deauth_ind(pMac, (tLimMlmDeauthInd *)pMsgBuf);
 		break;
 	case LIM_MLM_SETKEYS_CNF:
 		lim_process_mlm_set_keys_cnf(pMac, pMsgBuf);
@@ -997,56 +997,43 @@ void lim_process_mlm_disassoc_cnf(tpAniSirGlobal mac_ctx,
 }
 
 /**
- * lim_process_mlm_deauth_ind()
+ * lim_process_mlm_deauth_ind() - processes MLM_DEAUTH_IND
+ * @mac_ctx: global mac structure
+ * @deauth_ind: deauth indication
  *
- ***FUNCTION:
  * This function is called to processes MLM_DEAUTH_IND
  * message from MLM State machine.
  *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param pMac       Pointer to Global MAC structure
- * @param pMsgBuf    A pointer to the MLM message buffer
- *
- * @return None
+ * Return: None
  */
-void lim_process_mlm_deauth_ind(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
+static void lim_process_mlm_deauth_ind(tpAniSirGlobal mac_ctx,
+				       tLimMlmDeauthInd *deauth_ind)
 {
-	tLimMlmDeauthInd *pMlmDeauthInd;
-	tpPESession psessionEntry;
-	uint8_t sessionId;
+	tpPESession session;
+	uint8_t session_id;
+	enum eLimSystemRole role;
 
-	pMlmDeauthInd = (tLimMlmDeauthInd *) pMsgBuf;
-	psessionEntry = pe_find_session_by_bssid(pMac,
-				pMlmDeauthInd->peerMacAddr, &sessionId);
-	if (psessionEntry == NULL) {
-		pe_err("session does not exist for Addr:" MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(pMlmDeauthInd->peerMacAddr));
+	if (!deauth_ind) {
+		pe_err("deauth_ind is null");
 		return;
 	}
-	switch (GET_LIM_SYSTEM_ROLE(psessionEntry)) {
-	case eLIM_STA_IN_IBSS_ROLE:
-		break;
-	case eLIM_STA_ROLE:
-		psessionEntry->limSmeState = eLIM_SME_WT_DEAUTH_STATE;
-		MTRACE(mac_trace
-			       (pMac, TRACE_CODE_SME_STATE, psessionEntry->peSessionId,
-			       psessionEntry->limSmeState));
-
-	default:        /* eLIM_AP_ROLE */
-	{
-		pe_debug("*** Received Deauthentication from staId=%d ***",
-			       pMlmDeauthInd->aid);
+	session = pe_find_session_by_bssid(mac_ctx,
+					   deauth_ind->peerMacAddr,
+					   &session_id);
+	if (!session) {
+		pe_err("session does not exist for Addr:" MAC_ADDRESS_STR,
+		       MAC_ADDR_ARRAY(deauth_ind->peerMacAddr));
+		return;
 	}
-		/* Send SME_DEAUTH_IND after Polaris cleanup */
-		/* (after receiving LIM_MLM_PURGE_STA_IND) */
-	break;
-	} /* end switch (GET_LIM_SYSTEM_ROLE(psessionEntry)) */
-} /*** end lim_process_mlm_deauth_ind() ***/
+	role = GET_LIM_SYSTEM_ROLE(session);
+	pe_debug("*** Received Deauthentication from staId=%d role=%d***",
+		 deauth_ind->aid, role);
+	if (role == eLIM_STA_ROLE) {
+		session->limSmeState = eLIM_SME_WT_DEAUTH_STATE;
+		MTRACE(mac_trace(mac_ctx, TRACE_CODE_SME_STATE,
+				 session->peSessionId, session->limSmeState));
+	}
+}
 
 /**
  * lim_process_mlm_deauth_cnf()
