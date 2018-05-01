@@ -3180,6 +3180,72 @@ struct afe_param_id_set_topology_cfg {
 	u32		topology_id;
 } __packed;
 
+#define MAX_ABR_LEVELS 5
+
+struct afe_bit_rate_level_map_t {
+	/*
+	 * Key value pair for link quality level to bitrate
+	 * mapping in AFE
+	 */
+	uint32_t link_quality_level;
+	uint32_t bitrate;
+} __packed;
+
+struct afe_quality_level_to_bitrate_info {
+	/*
+	 * Number of quality levels being mapped.
+	 * This will be equal to the size of mapping table.
+	 */
+	uint32_t num_levels;
+	/*
+	 * Quality level to bitrate mapping table
+	 */
+	struct afe_bit_rate_level_map_t bit_rate_level_map[MAX_ABR_LEVELS];
+} __packed;
+
+struct afe_imc_dec_enc_info {
+	/*
+	 * Decoder to encoder communication direction.
+	 * Transmit = 0 / Receive = 1
+	 */
+	uint32_t direction;
+	/*
+	 * Enable / disable IMC between decoder and encoder
+	 */
+	uint32_t enable;
+	/*
+	 * Purpose of IMC being set up between decoder and encoder.
+	 * Param ID defined for link quality feedback in LPASS will
+	 * be the default value sent as purpose.
+	 * Supported values:
+	 * AFE_ENCDEC_PURPOSE_ID_BT_INFO
+	 */
+	uint32_t purpose;
+	/*
+	 * Unique communication instance ID.
+	 * Data type a2dp_abr_instance used to set instance ID.
+	 * purpose and comm_instance together form the actual key
+	 * used in IMC registration, which must be the same for
+	 * encoder and decoder for which IMC is being set up.
+	 */
+	uint32_t comm_instance;
+} __packed;
+
+struct afe_abr_dec_cfg_t {
+	struct afe_imc_dec_enc_info imc_info;
+} __packed;
+
+struct afe_abr_enc_cfg_t {
+	/*
+	 * Link quality level to bitrate mapping info sent to DSP.
+	 */
+	struct afe_quality_level_to_bitrate_info mapping_info;
+	/*
+	 * Information to set up IMC between decoder and encoder.
+	 */
+	struct afe_imc_dec_enc_info imc_info;
+} __packed;
+
 #define AFE_PARAM_ID_APTX_SYNC_MODE  0x00013205
 
 struct afe_param_id_aptx_sync_mode {
@@ -3229,6 +3295,39 @@ struct afe_param_id_aptx_sync_mode {
  * This parameter cannot be set runtime.
  */
 #define AFE_ENCODER_PARAM_ID_ENABLE_SCRAMBLING         0x0001323C
+
+/*
+ * Link quality level to bitrate mapping info sent to AFE Encoder.
+ * This parameter may be set runtime.
+ */
+#define AFE_ENCODER_PARAM_ID_BIT_RATE_LEVEL_MAP        0x000132E1
+
+/*
+ * Parameter to set up Inter Module Communication (IMC) between
+ * AFE Decoder and Encoder.
+ * This parameter may be set runtime.
+ */
+#define AFE_ENCDEC_PARAM_ID_DEC_TO_ENC_COMMUNICATION        0x0001323D
+
+/*
+ * Purpose of IMC set up between encoder and decoder.
+ * Communication instance and purpose together form the
+ * actual key used for IMC registration.
+ */
+#define AFE_ENCDEC_PURPOSE_ID_BT_INFO        0x000132E2
+
+#define AFE_MODULE_ID_DECODER        0x00013231
+
+/*
+ * Macro for defining the depacketizer ID: COP.
+ */
+#define AFE_MODULE_ID_DEPACKETIZER_COP        0x00013233
+
+/*
+ * Depacketizer type parameter for the #AVS_MODULE_ID_DECODER module.
+ * This parameter cannot be set runtime.
+ */
+#define AFE_DECODER_PARAM_ID_DEPACKETIZER_ID        0x00013235
 
 /*
  * Data format to send compressed data
@@ -3531,6 +3630,7 @@ struct asm_ldac_specific_enc_cfg_t {
 struct asm_ldac_enc_cfg_t {
 	struct asm_custom_enc_cfg_t  custom_config;
 	struct asm_ldac_specific_enc_cfg_t  ldac_specific_config;
+	struct afe_abr_enc_cfg_t abr_config;
 } __packed;
 
 struct afe_enc_fmt_id_param_t {
@@ -3612,6 +3712,11 @@ struct afe_enc_config {
 	union afe_enc_config_data data;
 };
 
+struct afe_dec_config {
+	u32 format;
+	struct afe_abr_dec_cfg_t abr_dec_cfg;
+};
+
 struct afe_enc_cfg_blk_param_t {
 	uint32_t enc_cfg_blk_size;
 	/*
@@ -3644,6 +3749,39 @@ struct avs_enc_set_scrambler_param_t {
 	uint32_t enable_scrambler;
 };
 
+/*
+ * Payload of the AVS_ENCODER_PARAM_ID_BIT_RATE_LEVEL_MAP parameter.
+ */
+struct afe_enc_level_to_bitrate_map_param_t {
+	/*
+	 * Parameter for mapping link quality level to bitrate.
+	 */
+	struct afe_quality_level_to_bitrate_info mapping_table;
+};
+
+/*
+ * Payload of the AVS_ENCDEC_PARAM_ID_DEC_TO_ENC_COMMUNICATION parameter.
+ */
+struct afe_enc_dec_imc_info_param_t {
+	/*
+	 * Parameter to set up Inter Module Communication (IMC) between
+	 * AFE Decoder and Encoder.
+	 */
+	struct afe_imc_dec_enc_info imc_info;
+};
+
+/*
+ * Payload of the AVS_DECODER_PARAM_ID_DEPACKETIZER_ID parameter.
+ */
+struct avs_dec_depacketizer_id_param_t {
+	/*
+	 * Supported values:
+	 * #AVS_MODULE_ID_DEPACKETIZER_COP
+	 * Any OpenDSP supported values
+	 */
+	uint32_t dec_depacketizer_id;
+};
+
 union afe_port_config {
 	struct afe_param_id_pcm_cfg               pcm;
 	struct afe_param_id_i2s_cfg               i2s;
@@ -3663,6 +3801,9 @@ union afe_port_config {
 	struct afe_enc_cfg_blk_param_t            enc_blk_param;
 	struct avs_enc_packetizer_id_param_t      enc_pkt_id_param;
 	struct avs_enc_set_scrambler_param_t      enc_set_scrambler_param;
+	struct avs_dec_depacketizer_id_param_t    dec_depkt_id_param;
+	struct afe_enc_level_to_bitrate_map_param_t    map_param;
+	struct afe_enc_dec_imc_info_param_t       imc_info_param;
 } __packed;
 
 #define AFE_PORT_CMD_DEVICE_START 0x000100E5
