@@ -7475,6 +7475,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_NO_ACK]) {
+		int he_mcs_val;
 		if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_NO_ACK_AC]) {
 			ac = nla_get_u8(tb[
 			     QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_NO_ACK_AC]);
@@ -7488,6 +7489,21 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		hdd_debug("Set NO_ACK to %d for ac %d", cfg_val, ac);
 		ret_val = sme_set_no_ack_policy(hdd_ctx->hHal,
 				adapter->session_id, cfg_val, ac);
+		if (cfg_val) {
+			if (sme_config->csrConfig.enable2x2)
+				/*2x2 MCS 5 value*/
+				he_mcs_val = 0x45;
+			else
+				/*1x1 MCS 5 value*/
+				he_mcs_val = 0x25;
+
+			if (hdd_set_11ax_rate(adapter, he_mcs_val, NULL))
+				hdd_err("HE MCS set failed, MCS val %0x",
+						he_mcs_val);
+		} else {
+			if (hdd_set_11ax_rate(adapter, 0xFF, NULL))
+				hdd_err("disable fixed rate failed");
+		}
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_LTF]) {
