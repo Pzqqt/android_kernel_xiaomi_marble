@@ -582,6 +582,7 @@ wlan_hdd_allow_sap_add(struct hdd_context *hdd_ctx, const char *name,
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter->device_mode == QDF_SAP_MODE &&
 		    test_bit(NET_DEVICE_REGISTERED, &adapter->event_flags) &&
+		    adapter->dev &&
 		    !strncmp(adapter->dev->name, name, IFNAMSIZ)) {
 			struct hdd_beacon_data *beacon =
 						adapter->session.ap.beacon;
@@ -591,7 +592,7 @@ wlan_hdd_allow_sap_add(struct hdd_context *hdd_ctx, const char *name,
 				adapter->session.ap.beacon = NULL;
 				qdf_mem_free(beacon);
 			}
-			if (adapter->dev && adapter->dev->ieee80211_ptr) {
+			if (adapter->dev->ieee80211_ptr) {
 				*sap_dev = adapter->dev->ieee80211_ptr;
 				return false;
 			}
