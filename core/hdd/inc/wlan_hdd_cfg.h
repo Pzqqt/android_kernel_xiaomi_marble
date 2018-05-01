@@ -11802,8 +11802,8 @@ enum hdd_wext_control {
  * <ini>
  * g_sap_chanswitch_beacon_cnt - channel switch beacon count
  * @Min: 1
- * @Max: 5
- * @Default: 5
+ * @Max: 10
+ * @Default: 10
  *
  * This ini is used to configure channel switch beacon count
  *
@@ -11816,7 +11816,7 @@ enum hdd_wext_control {
 #define CFG_SAP_CH_SWITCH_BEACON_CNT         "g_sap_chanswitch_beacon_cnt"
 #define CFG_SAP_CH_SWITCH_BEACON_CNT_MIN     (1)
 #define CFG_SAP_CH_SWITCH_BEACON_CNT_MAX     (10)
-#define CFG_SAP_CH_SWITCH_BEACON_CNT_DEFAULT (5)
+#define CFG_SAP_CH_SWITCH_BEACON_CNT_DEFAULT (10)
 
 /*
  * <ini>
