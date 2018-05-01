@@ -454,13 +454,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_BMPS_MAXIMUM_LI_MIN,
 		     CFG_BMPS_MAXIMUM_LI_MAX),
 
-	REG_VARIABLE(CFG_BMPS_MODERATE_LI_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nBmpsModListenInterval,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BMPS_MODERATE_LI_DEFAULT,
-		     CFG_BMPS_MODERATE_LI_MIN,
-		     CFG_BMPS_MODERATE_LI_MAX),
-
 	REG_VARIABLE(CFG_DOT11_MODE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, dot11Mode,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
@@ -6180,8 +6173,6 @@ static void hdd_set_power_save_offload_config(struct hdd_context *hdd_ctx)
 		listenInterval = pConfig->nBmpsMinListenInterval;
 	else if (strcmp(pConfig->PowerUsageControl, "Max") == 0)
 		listenInterval = pConfig->nBmpsMaxListenInterval;
-	else if (strcmp(pConfig->PowerUsageControl, "Mod") == 0)
-		listenInterval = pConfig->nBmpsModListenInterval;
 
 	/*
 	 * Based on Mode Set the LI

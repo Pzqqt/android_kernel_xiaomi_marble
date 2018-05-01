@@ -10673,29 +10673,6 @@ enum hdd_wext_control {
 
 /*
  * <ini>
- * gBmpsModListenInterval - Set BMPS Moderate Listen Interval
- * @Min: 1
- * @Max: 65535
- * @Default: 1
- *
- * This ini is used to set BMPS Moderate Listen Interval. If gPowerUsage
- * is set "Mod", this INI need to be set.
- *
- * Related: gEnableBmps, gPowerUsage
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_BMPS_MODERATE_LI_NAME              "gBmpsModListenInterval"
-#define CFG_BMPS_MODERATE_LI_MIN               (1)
-#define CFG_BMPS_MODERATE_LI_MAX               (65535)
-#define CFG_BMPS_MODERATE_LI_DEFAULT           (1)
-
-/*
- * <ini>
  * gBmpsMaxListenInterval - Set BMPS Maximum Listen Interval
  * @Min: 1
  * @Max: 65535
@@ -14279,7 +14256,6 @@ struct hdd_config {
 	bool is_ps_enabled;
 	uint32_t auto_bmps_timer_val;
 	uint32_t icmp_disable_ps_val;
-	uint32_t nBmpsModListenInterval;
 	uint32_t nBmpsMaxListenInterval;
 	uint32_t nBmpsMinListenInterval;
 	enum hdd_dot11_mode dot11Mode;
