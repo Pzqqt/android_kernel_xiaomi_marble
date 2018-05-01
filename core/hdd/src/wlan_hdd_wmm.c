@@ -318,7 +318,13 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	hdd_wlan_wmm_status_e status;
 	QDF_STATUS qdf_status;
 	uint32_t currentTrafficCnt = 0;
-	sme_ac_enum_type acType = pQosContext->acType;
+	sme_ac_enum_type acType;
+
+	if (!pQosContext) {
+		hdd_err("invalid user data");
+		return;
+	}
+	acType = pQosContext->acType;
 
 	adapter = pQosContext->adapter;
 	if ((NULL == adapter) ||
@@ -452,6 +458,24 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext)
 
 	return qdf_status;
 }
+#else
+
+static void hdd_wmm_inactivity_timer_cb(void *user_data)
+{
+}
+
+static QDF_STATUS
+hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext,
+				uint32_t inactivity_time)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* FEATURE_WLAN_ESE */
 
 /**
@@ -576,6 +600,9 @@ static QDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 
 			hdd_wmm_notify_app(pQosContext);
 		}
+
+		/* disable the inactivity timer */
+		hdd_wmm_disable_inactivity_timer(pQosContext);
 
 		/* Setting up QoS Failed, QoS context can be released.
 		 * SME is releasing this flow information and if HDD
@@ -745,6 +772,9 @@ static QDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 				HDD_WLAN_WMM_STATUS_RELEASE_SUCCESS;
 			hdd_wmm_notify_app(pQosContext);
 		}
+		/* disable the inactivity timer */
+		hdd_wmm_disable_inactivity_timer(pQosContext);
+
 		/* we are done with this flow */
 		hdd_wmm_free_context(pQosContext);
 		break;
@@ -788,6 +818,9 @@ static QDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 			pQosContext->lastStatus = HDD_WLAN_WMM_STATUS_LOST;
 			hdd_wmm_notify_app(pQosContext);
 		}
+
+		/* disable the inactivity timer */
+		hdd_wmm_disable_inactivity_timer(pQosContext);
 
 		/* we are done with this flow */
 		hdd_wmm_free_context(pQosContext);
@@ -1189,6 +1222,9 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 		break;
 
 	case SME_QOS_STATUS_SETUP_FAILURE_RSP:
+		/* disable the inactivity timer */
+		hdd_wmm_disable_inactivity_timer(pQosContext);
+
 		/* we can't tell the difference between when a request
 		 * fails because AP rejected it versus when SME
 		 * encountered an internal error.  in either case SME
@@ -1352,9 +1388,9 @@ QDF_STATUS hdd_wmm_adapter_close(struct hdd_adapter *adapter)
 		pQosContext =
 			list_first_entry(&adapter->hdd_wmm_status.wmmContextList,
 					 struct hdd_wmm_qos_context, node);
-#ifdef FEATURE_WLAN_ESE
+
 		hdd_wmm_disable_inactivity_timer(pQosContext);
-#endif
+
 		if (pQosContext->handle == HDD_WMM_HANDLE_IMPLICIT
 			&& pQosContext->magic == HDD_WMM_CTX_MAGIC)
 			cds_flush_work(&pQosContext->wmmAcSetupImplicitQos);
@@ -2204,9 +2240,13 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 		status = HDD_WLAN_WMM_STATUS_SETUP_PENDING;
 		break;
 	case SME_QOS_STATUS_SETUP_INVALID_PARAMS_RSP:
+		/* disable the inactivity timer */
+		hdd_wmm_disable_inactivity_timer(pQosContext);
 		hdd_wmm_free_context(pQosContext);
 		return HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 	case SME_QOS_STATUS_SETUP_FAILURE_RSP:
+		/* disable the inactivity timer */
+		hdd_wmm_disable_inactivity_timer(pQosContext);
 		/* we can't tell the difference between when a request
 		 * fails because AP rejected it versus when SME
 		 * encounterd an internal error
@@ -2214,9 +2254,13 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 		hdd_wmm_free_context(pQosContext);
 		return HDD_WLAN_WMM_STATUS_SETUP_FAILED;
 	case SME_QOS_STATUS_SETUP_NOT_QOS_AP_RSP:
+		/* disable the inactivity timer */
+		hdd_wmm_disable_inactivity_timer(pQosContext);
 		hdd_wmm_free_context(pQosContext);
 		return HDD_WLAN_WMM_STATUS_SETUP_FAILED_NO_WMM;
 	default:
+		/* disable the inactivity timer */
+		hdd_wmm_disable_inactivity_timer(pQosContext);
 		/* we didn't get back one of the
 		 * SME_QOS_STATUS_SETUP_* status codes
 		 */
@@ -2301,10 +2345,9 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 		/* need to tell TL to stop trigger timer, etc */
 		hdd_wmm_disable_tl_uapsd(pQosContext);
 
-#ifdef FEATURE_WLAN_ESE
 		/* disable the inactivity timer */
 		hdd_wmm_disable_inactivity_timer(pQosContext);
-#endif
+
 		/* we are done with this context */
 		hdd_wmm_free_context(pQosContext);
 
