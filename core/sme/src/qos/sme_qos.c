@@ -3836,6 +3836,10 @@ static QDF_STATUS sme_qos_find_matching_tspec_lfr3(tpAniSirGlobal mac_ctx,
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("invoked on session %d"), sessionid);
 
+	if (ac == SME_QOS_EDCA_AC_MAX) {
+		sme_err("Invalid AC %d", ac);
+		return QDF_STATUS_E_FAILURE;
+	}
 	ric_data = ric_data_desc;
 	ric_len = ric_rsplen;
 	ac_info = &qos_session->ac_info[ac];
@@ -3849,10 +3853,10 @@ static QDF_STATUS sme_qos_find_matching_tspec_lfr3(tpAniSirGlobal mac_ctx,
 		do {
 			ac1 = sme_qos_up_to_ac(
 				ric_data->WMMTSPEC.user_priority);
-			if (ac == SME_QOS_EDCA_AC_MAX) {
+			if (ac1 == SME_QOS_EDCA_AC_MAX) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 				  QDF_TRACE_LEVEL_ERROR,
-				  FL("Invalid AC %d UP %d"), ac,
+				  FL("Invalid AC %d UP %d"), ac1,
 				  ric_data->WMMTSPEC.user_priority);
 				break;
 			}
