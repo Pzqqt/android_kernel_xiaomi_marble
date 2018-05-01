@@ -492,6 +492,11 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
+	if (mode >= PM_MAX_NUM_OF_MODE) {
+		policy_mgr_err("requested mode:%d is not supported", mode);
+		return status;
+	}
+
 	/* find the current connection state from pm_conc_connection_list*/
 	num_connections = policy_mgr_get_connection_count(psoc);
 	policy_mgr_debug("connections:%d pref:%d requested mode:%d",
