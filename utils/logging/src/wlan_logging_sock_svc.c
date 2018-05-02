@@ -706,7 +706,8 @@ static void send_flush_completion_to_user(uint8_t ring_id)
 
 	/* Error on purpose, so that it will get logged in the kmsg */
 	LOGGING_TRACE(QDF_TRACE_LEVEL_DEBUG,
-			"%s: Sending flush done to userspace", __func__);
+			"%s: Sending flush done to userspace reason code %d",
+			__func__, reason_code);
 
 	wlan_report_log_completion(is_fatal, indicator, reason_code, ring_id);
 
