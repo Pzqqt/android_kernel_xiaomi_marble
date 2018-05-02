@@ -417,6 +417,7 @@ QDF_STATUS tdls_process_mgmt_req(
 	case WLAN_SER_CMD_DENIED_UNSPECIFIED:
 		/* free the request */
 		qdf_mem_free(tdls_mgmt_req);
+		break;
 
 	default:
 		QDF_ASSERT(0);
