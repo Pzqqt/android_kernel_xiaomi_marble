@@ -1099,6 +1099,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	struct sir_set_tx_rx_aggregation_size aggr;
 
 	WMA_LOGD("wmihandle %pK", wma->wmi_handle);
+	qdf_mem_zero(&aggr, sizeof(aggr));
 
 	if (NULL == pMac) {
 		WMA_LOGE("%s: Failed to get pMac", __func__);
@@ -1179,6 +1180,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			 privcmd->param_value);
 
 		switch (privcmd->param_id) {
+		case GEN_VDEV_PARAM_AMSDU:
 		case GEN_VDEV_PARAM_AMPDU:
 			if (soc) {
 				ret = cdp_aggr_cfg(soc, vdev,
@@ -1194,6 +1196,13 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 					privcmd->param_value;
 				aggr.rx_aggregation_size =
 					privcmd->param_value;
+				if (privcmd->param_id == GEN_VDEV_PARAM_AMSDU)
+					aggr.aggr_type =
+						WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU;
+				else
+					aggr.aggr_type =
+						WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU;
+
 				ret = wma_set_tx_rx_aggregation_size(&aggr);
 				if (QDF_IS_STATUS_ERROR(ret)) {
 					WMA_LOGE("set_aggr_size failed ret %d",
@@ -1204,22 +1213,6 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 				WMA_LOGE("%s:SOC context is NULL", __func__);
 				return;
 			}
-			break;
-		case GEN_VDEV_PARAM_AMSDU:
-			/*
-			 * Firmware currently does not support set operation
-			 * for AMSDU. It may cause crash if the configuration
-			 * is sent to firmware.
-			 * Firmware enhancement will advertise a service bit
-			 * to enable AMSDU configuration through WMI. Then
-			 * add the WMI command to configure AMSDU parameter.
-			 * For the older chipset that does not advertise the
-			 * service bit, enable the following legacy code:
-			 *    ol_txrx_aggr_cfg(vdev, 0, privcmd->param_value);
-			 *    intr[privcmd->param_vdev_id].config.amsdu =
-			 *            privcmd->param_value;
-			 */
-			WMA_LOGE("SET GEN_VDEV_PARAM_AMSDU command is currently not supported");
 			break;
 		case GEN_PARAM_CRASH_INJECT:
 			if (QDF_GLOBAL_FTM_MODE  == cds_get_conparam())

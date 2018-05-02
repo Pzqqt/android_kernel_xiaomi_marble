@@ -2143,6 +2143,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	struct sir_set_tx_aggr_sw_retry_threshold tx_aggr_sw_retry_threshold;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
+	qdf_mem_zero(&tx_rx_aggregation_size, sizeof(tx_rx_aggregation_size));
 	WMA_LOGD("mac %pM, vdev_id %hu, type %d, sub_type %d, nss 2g %d, 5g %d",
 		self_sta_req->self_mac_addr, self_sta_req->session_id,
 		self_sta_req->type, self_sta_req->sub_type,
@@ -2236,6 +2237,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	tx_rx_aggregation_size.rx_aggregation_size =
 				self_sta_req->rx_aggregation_size;
 	tx_rx_aggregation_size.vdev_id = self_sta_req->session_id;
+	tx_rx_aggregation_size.aggr_type = WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU;
 
 	status = wma_set_tx_rx_aggregation_size(&tx_rx_aggregation_size);
 	if (status != QDF_STATUS_SUCCESS)

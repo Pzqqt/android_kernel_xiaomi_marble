@@ -16101,5 +16101,12 @@ bool sme_validate_channel_list(tHalHandle hal,
 
 		i++;
 	}
+
 	return true;
+}
+
+void sme_set_amsdu(tHalHandle hal, bool enable)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	mac_ctx->is_usr_cfg_amsdu_enabled = enable;
 }

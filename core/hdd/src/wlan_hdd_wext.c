@@ -4782,6 +4782,11 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_AMSDU:
 	{
 		hdd_debug("SET AMSDU val %d", set_value);
+		if (set_value > 1)
+			sme_set_amsdu(hdd_ctx->hHal, true);
+		else
+			sme_set_amsdu(hdd_ctx->hHal, false);
+
 		ret = wma_cli_set_command(adapter->session_id,
 					  GEN_VDEV_PARAM_AMSDU,
 					  set_value, GEN_CMD);

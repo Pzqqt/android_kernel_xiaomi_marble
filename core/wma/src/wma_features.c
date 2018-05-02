@@ -4604,6 +4604,7 @@ QDF_STATUS wma_set_tx_rx_aggregation_size(
 
 	buf_ptr = (u_int8_t *) wmi_buf_data(buf);
 	cmd = (wmi_vdev_set_custom_aggr_size_cmd_fixed_param *) buf_ptr;
+	qdf_mem_zero(cmd, sizeof(*cmd));
 
 	WMITLV_SET_HDR(&cmd->tlv_header,
 		WMITLV_TAG_STRUC_wmi_vdev_set_custom_aggr_size_cmd_fixed_param,
@@ -4613,9 +4614,14 @@ QDF_STATUS wma_set_tx_rx_aggregation_size(
 	cmd->vdev_id = tx_rx_aggregation_size->vdev_id;
 	cmd->tx_aggr_size = tx_rx_aggregation_size->tx_aggregation_size;
 	cmd->rx_aggr_size = tx_rx_aggregation_size->rx_aggregation_size;
+	/* bit 2 (aggr_type): TX Aggregation Type (0=A-MPDU, 1=A-MSDU) */
+	if (tx_rx_aggregation_size->aggr_type ==
+	    WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
+		cmd->enable_bitmap |= 0x04;
 
-	WMA_LOGD("tx aggr: %d rx aggr: %d vdev: %d",
-		cmd->tx_aggr_size, cmd->rx_aggr_size, cmd->vdev_id);
+	WMA_LOGD("tx aggr: %d rx aggr: %d vdev: %d enable_bitmap %d",
+		 cmd->tx_aggr_size, cmd->rx_aggr_size, cmd->vdev_id,
+		 cmd->enable_bitmap);
 
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 				WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID);
@@ -4672,6 +4678,7 @@ QDF_STATUS wma_set_tx_rx_aggregation_size_per_ac(
 
 		buf_ptr = (u_int8_t *)wmi_buf_data(buf);
 		cmd = (wmi_vdev_set_custom_aggr_size_cmd_fixed_param *)buf_ptr;
+		qdf_mem_zero(cmd, sizeof(*cmd));
 
 		WMITLV_SET_HDR(&cmd->tlv_header,
 			       WMITLV_TAG_STRUC_wmi_vdev_set_custom_aggr_size_cmd_fixed_param,
@@ -4685,10 +4692,15 @@ QDF_STATUS wma_set_tx_rx_aggregation_size_per_ac(
 		cmd->tx_aggr_size = tx_aggr_size[queue_num];
 		/* bit 5: tx_ac_enable, if set, ac bitmap is valid. */
 		cmd->enable_bitmap = 0x20 | queue_num;
+		/* bit 2 (aggr_type): TX Aggregation Type (0=A-MPDU, 1=A-MSDU) */
+		if (tx_rx_aggregation_size->aggr_type ==
+		    WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
+			cmd->enable_bitmap |= 0x04;
 
-		WMA_LOGD("queue_num: %d, tx aggr: %d rx aggr: %d vdev: %d",
+		WMA_LOGD("queue_num: %d, tx aggr: %d rx aggr: %d vdev: %d, bitmap: %d",
 			 queue_num, cmd->tx_aggr_size,
-			 cmd->rx_aggr_size, cmd->vdev_id);
+			 cmd->rx_aggr_size, cmd->vdev_id,
+			 cmd->enable_bitmap);
 
 		ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 					WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID);

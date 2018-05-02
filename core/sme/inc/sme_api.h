@@ -2208,5 +2208,13 @@ bool sme_is_sta_key_exchange_in_progress(tHalHandle hal, uint8_t session_id);
 bool sme_validate_channel_list(tHalHandle hal,
 				      uint8_t *chan_list,
 				      uint8_t num_channels);
+/**
+ * sme_set_amsdu() - set amsdu enable/disable based on user cfg
+ * @hal: Pointer to HAL
+ * @enable: enable or disable
+ *
+ * Return: None
+ */
+void sme_set_amsdu(tHalHandle hal, bool enable);
 
 #endif /* #if !defined( __SME_API_H ) */

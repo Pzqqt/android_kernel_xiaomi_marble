@@ -6706,6 +6706,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	uint16_t latency_level;
 
 	hdd_enter_dev(dev);
+	qdf_mem_zero(&request, sizeof(request));
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -6954,6 +6955,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		request.rx_aggregation_size = nla_get_u8(
 			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]);
 		request.vdev_id = adapter->session_id;
+		request.aggr_type = WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU;
 
 		if (request.tx_aggregation_size >=
 					CFG_TX_AGGREGATION_SIZE_MIN &&

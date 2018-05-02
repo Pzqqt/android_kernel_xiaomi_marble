@@ -6751,6 +6751,7 @@ struct sme_ndp_peer_ind {
 /**
  * struct sir_set_tx_rx_aggregation_size - sets tx rx aggregation size
  * @vdev_id: vdev id of the session
+ * @aggr_type: TX Aggregation Type (0=A-MPDU, 1=A-MSDU)
  * @tx_aggregation_size: Tx aggregation size
  * @tx_aggregation_size_be: Tx aggregation size for be queue
  * @tx_aggregation_size_bk: Tx aggregation size for bk queue
@@ -6760,6 +6761,7 @@ struct sme_ndp_peer_ind {
  */
 struct sir_set_tx_rx_aggregation_size {
 	uint8_t vdev_id;
+	wmi_vdev_custom_aggr_type_t aggr_type;
 	uint32_t tx_aggregation_size;
 	uint32_t tx_aggregation_size_be;
 	uint32_t tx_aggregation_size_bk;
