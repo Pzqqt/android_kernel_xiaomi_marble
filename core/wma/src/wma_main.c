@@ -2026,6 +2026,27 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
 }
 
 /**
+ * wma_cleanup_vdev_resp_and_hold_req() - cleaunup the vdev resp and hold req
+ * queue
+ * @msg :scheduler msg
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+wma_cleanup_vdev_resp_and_hold_req(struct scheduler_msg *msg)
+{
+	if (!msg || !msg->bodyptr) {
+		WMA_LOGE(FL("msg or body pointer is NULL"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wma_cleanup_vdev_resp_queue(msg->bodyptr);
+	wma_cleanup_hold_req(msg->bodyptr);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wma_shutdown_notifier_cb - Shutdown notifer call back
  * @priv : WMA handle
  *
@@ -2040,11 +2061,17 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
 static void wma_shutdown_notifier_cb(void *priv)
 {
 	tp_wma_handle wma_handle = priv;
+	struct scheduler_msg msg = { 0 };
+	QDF_STATUS status;
 
 	qdf_event_set(&wma_handle->wma_resume_event);
-	wma_cleanup_vdev_resp_queue(wma_handle);
-	wma_cleanup_hold_req(wma_handle);
 	pmo_ucfg_psoc_wakeup_host_event_received(wma_handle->psoc);
+
+	msg.bodyptr = priv;
+	msg.callback = wma_cleanup_vdev_resp_and_hold_req;
+	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE(FL("Failed to post SYS_MSG_ID_CLEAN_VDEV_RSP_QUEUE"));
 }
 
 struct wma_version_info g_wmi_version_info;
