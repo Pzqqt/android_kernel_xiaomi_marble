@@ -7203,6 +7203,7 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 	case SME_QOS_REASON_REQ_SUCCESS:
 		hdd_status = SME_QOS_STATUS_SETUP_MODIFIED_IND;
 		inform_hdd = true;
+	/* fallthrough */
 	default:
 		delete_entry = false;
 		break;
