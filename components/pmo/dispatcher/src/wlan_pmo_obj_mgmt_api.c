@@ -337,7 +337,7 @@ QDF_STATUS pmo_register_suspend_handler(
 		goto out;
 	}
 
-	if (id > WLAN_UMAC_MAX_COMPONENTS || id < 0) {
+	if (id < 0 || id >= WLAN_UMAC_MAX_COMPONENTS) {
 		pmo_err("component id: %d is %s then valid components id",
 			id, id < 0 ? "Less" : "More");
 		status = QDF_STATUS_E_FAILURE;
@@ -370,7 +370,7 @@ QDF_STATUS pmo_unregister_suspend_handler(
 		goto out;
 	}
 
-	if (id >= WLAN_UMAC_MAX_COMPONENTS || id < 0) {
+	if (id < 0 || id >= WLAN_UMAC_MAX_COMPONENTS) {
 		pmo_err("component id: %d is %s then valid components id",
 			id, id < 0 ? "Less" : "More");
 		status = QDF_STATUS_E_FAILURE;
@@ -409,7 +409,7 @@ QDF_STATUS pmo_register_resume_handler(
 		goto out;
 	}
 
-	if (id > WLAN_UMAC_MAX_COMPONENTS || id < 0) {
+	if (id < 0 || id >= WLAN_UMAC_MAX_COMPONENTS) {
 		pmo_err("component id: %d is %s then valid components id",
 			id, id < 0 ? "Less" : "More");
 		status = QDF_STATUS_E_FAILURE;
@@ -441,7 +441,7 @@ QDF_STATUS pmo_unregister_resume_handler(
 		goto out;
 	}
 
-	if (id > WLAN_UMAC_MAX_COMPONENTS || id < 0) {
+	if (id < 0 || id >= WLAN_UMAC_MAX_COMPONENTS) {
 		pmo_err("component id: %d is %s then valid components id",
 			id, id < 0 ? "Less" : "More");
 		status = QDF_STATUS_E_FAILURE;
@@ -470,7 +470,7 @@ QDF_STATUS pmo_suspend_all_components(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS resume_status;
 	struct wlan_pmo_ctx *pmo_ctx;
-	uint8_t i;
+	int i;
 	pmo_psoc_suspend_handler handler;
 	void *arg;
 
@@ -521,7 +521,7 @@ suspend_recovery:
 			pmo_fatal("Non-recoverable failure occurred!");
 			pmo_fatal("component %d failed to resume; status: %d",
 				  i, resume_status);
-			QDF_BUG(0);
+			QDF_DEBUG_PANIC();
 		}
 	}
 
