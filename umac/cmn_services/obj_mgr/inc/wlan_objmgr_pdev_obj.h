@@ -736,6 +736,19 @@ void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
 						wlan_objmgr_ref_dbgid id);
 
 /**
+ * wlan_objmgr_pdev_get_first_vdev() - Get first vdev of pdev
+ * @pdev: PDEV object
+ * @dbg_id:   Object Manager ref debug id
+ *
+ * API to get reference to first vdev of pdev.
+ *
+ * Return: reference to first vdev
+ */
+struct wlan_objmgr_vdev *wlan_objmgr_pdev_get_first_vdev(
+		struct wlan_objmgr_pdev *pdev,
+		wlan_objmgr_ref_dbgid dbg_id);
+
+/**
  * wlan_objmgr_pdev_get_pdev_id() - get pdev id
  * @pdev: PDEV object
  *
