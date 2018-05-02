@@ -1212,7 +1212,7 @@ uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
 		tpPESession session)
 {
 	uint32_t frame_len = 0;
-	uint32_t wrapped_data_len;
+	int32_t wrapped_data_len;
 
 	if (!session->fils_info)
 		return 0;
