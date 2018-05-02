@@ -2866,6 +2866,11 @@ static inline void qdf_nbuf_set_priority(qdf_nbuf_t buf, uint32_t p)
 	__qdf_nbuf_set_priority(buf, p);
 }
 
+static inline void qdf_nbuf_record_rx_queue(qdf_nbuf_t buf, uint32_t queue_id)
+{
+	__qdf_nbuf_record_rx_queue(buf, queue_id);
+}
+
 static inline uint16_t
 qdf_nbuf_get_queue_mapping(qdf_nbuf_t buf)
 {

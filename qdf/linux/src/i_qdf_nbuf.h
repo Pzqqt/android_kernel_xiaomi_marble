@@ -1810,6 +1810,20 @@ __qdf_nbuf_mark_wakeup_frame(__qdf_nbuf_t buf)
 }
 
 /**
+ * __qdf_nbuf_record_rx_queue() - set rx queue in skb
+ *
+ * @buf: sk buff
+ * @queue_id: Queue id
+ *
+ * Return: void
+ */
+static inline void
+__qdf_nbuf_record_rx_queue(struct sk_buff *skb, uint16_t queue_id)
+{
+	skb_record_rx_queue(skb, queue_id);
+}
+
+/**
  * __qdf_nbuf_get_queue_mapping() - get the queue mapping set by linux kernel
  *
  * @buf: sk buff
