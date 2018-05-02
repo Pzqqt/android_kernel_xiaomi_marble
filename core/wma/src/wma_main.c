@@ -2457,6 +2457,7 @@ static int wma_flush_complete_evt_handler(void *handle,
 
 	wmi_event = param_buf->fixed_param;
 	reason_code = wmi_event->reserved0;
+	WMA_LOGD("Received reason code %d from FW", reason_code);
 
 	buf_ptr = (uint8_t *)wmi_event;
 	buf_ptr = buf_ptr + sizeof(wmi_debug_mesg_flush_complete_fixed_param) +

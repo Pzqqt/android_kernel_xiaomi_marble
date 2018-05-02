@@ -2253,6 +2253,10 @@ QDF_STATUS cds_set_log_completion(uint32_t is_fatal,
 	p_cds_context->log_complete.recovery_needed = recovery_needed;
 	p_cds_context->log_complete.is_report_in_progress = true;
 	qdf_spinlock_release(&p_cds_context->bug_report_lock);
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: is_fatal %d ind %d reasn_code %d recovery needed %d",
+		  __func__, is_fatal, indicator, reason_code, recovery_needed);
+
 	return QDF_STATUS_SUCCESS;
 }
 
