@@ -7017,6 +7017,7 @@ static QDF_STATUS sme_qos_add_ts_failure_fnp(tpAniSirGlobal pMac, tListElem
 	case SME_QOS_REASON_MODIFY:
 		flow_info->reason = SME_QOS_REASON_REQ_SUCCESS;
 	case SME_QOS_REASON_REQ_SUCCESS:
+	/* fallthrough */
 	default:
 		inform_hdd = false;
 		break;
