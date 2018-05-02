@@ -672,22 +672,27 @@ static inline bool check_qwrap_multicast_loopback(struct dp_vdev *vdev,
 {
 	struct dp_vdev *psta_vdev;
 	struct dp_pdev *pdev = vdev->pdev;
+	struct dp_soc *soc = pdev->soc;
 	uint8_t *data = qdf_nbuf_data(nbuf);
+	uint8_t i;
 
-	if (qdf_unlikely(vdev->proxysta_vdev)) {
-		/* In qwrap isolation mode, allow loopback packets as all
-		 * packets go to RootAP and Loopback on the mpsta.
-		 */
-		if (vdev->isolation_vdev)
-			return false;
-		TAILQ_FOREACH(psta_vdev, &pdev->vdev_list, vdev_list_elem) {
-			if (qdf_unlikely(psta_vdev->proxysta_vdev &&
-				!qdf_mem_cmp(psta_vdev->mac_addr.raw,
-				&data[DP_MAC_ADDR_LEN], DP_MAC_ADDR_LEN))) {
-				/* Drop packet if source address is equal to
-				 * any of the vdev addresses.
-				 */
-				return true;
+	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
+		pdev = soc->pdev_list[i];
+		if (qdf_unlikely(vdev->proxysta_vdev)) {
+			/* In qwrap isolation mode, allow loopback packets as all
+			 * packets go to RootAP and Loopback on the mpsta.
+			 */
+			if (vdev->isolation_vdev)
+				return false;
+			TAILQ_FOREACH(psta_vdev, &pdev->vdev_list, vdev_list_elem) {
+				if (qdf_unlikely(psta_vdev->proxysta_vdev &&
+					!qdf_mem_cmp(psta_vdev->mac_addr.raw,
+					&data[DP_MAC_ADDR_LEN], DP_MAC_ADDR_LEN))) {
+					/* Drop packet if source address is equal to
+					 * any of the vdev addresses.
+					 */
+					return true;
+				}
 			}
 		}
 	}
