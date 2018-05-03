@@ -40,5 +40,15 @@
 int wlan_cfg80211_get_peer_cp_stats(struct wlan_objmgr_peer *peer_obj,
 				    struct peer_ic_cp_stats *peer_cp_stats);
 
+/**
+ * wlan_cfg80211_get_vdev_cp_stats() - API to get vdev stats object
+ * @vdev_obj: vdev object as input
+ * @vdev_cp_stats: vdev stats object to populate
+ *
+ * Return: 0 on success, negative value on failure
+ */
+int wlan_cfg80211_get_vdev_cp_stats(struct wlan_objmgr_vdev *vdev_obj,
+				    struct vdev_ic_cp_stats *vdev_cp_stats);
+
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CFG80211_IC_CP_STATS_H__ */
