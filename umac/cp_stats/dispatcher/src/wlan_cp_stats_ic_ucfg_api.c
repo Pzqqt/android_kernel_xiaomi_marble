@@ -88,3 +88,30 @@ QDF_STATUS wlan_cp_stats_peer_cs_deinit(struct peer_cp_stats *peer_cs)
 	peer_cs->peer_stats = NULL;
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS wlan_ucfg_get_peer_cp_stats(struct wlan_objmgr_peer *peer,
+				       struct peer_ic_cp_stats *peer_cps)
+{
+	struct peer_cp_stats *peer_cs;
+
+	if (!peer) {
+		cp_stats_err("Invalid input fields, peer obj is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!peer_cps) {
+		cp_stats_err("Invalid input fields, peer cp obj is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	peer_cs = wlan_cp_stats_get_peer_stats_obj(peer);
+	if (peer_cs && peer_cs->peer_stats) {
+		wlan_cp_stats_peer_obj_lock(peer_cs);
+		qdf_mem_copy(peer_cps, peer_cs->peer_stats,
+			     sizeof(struct peer_ic_cp_stats));
+		wlan_cp_stats_peer_obj_unlock(peer_cs);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}

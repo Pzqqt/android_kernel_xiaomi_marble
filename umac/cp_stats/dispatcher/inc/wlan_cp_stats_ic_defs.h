@@ -98,10 +98,58 @@ struct vdev_ic_cp_stats {
  * as interface structure with user space application
  * make sure to align this structure with ieee80211_nodestats always
  *
+ *  @cs_rx_mgmt_rssi: rx mgmt rssi
  *  @cs_rx_mgmt: rx mgmt
+ *  @cs_rx_noprivacy: rx no privacy
+ *  @cs_rx_wepfail: rx wep failures
+ *  @cs_rx_ccmpmic: rx ccmp mic failures
+ *  @cs_rx_wpimic: rx wpi mic failures
+ *  @cs_rx_tkipicv: rx tkip icv
+ *  @cs_tx_mgmt: tx mgmt
+ *  @cs_is_tx_not_ok: tx failures
+ *  @cs_ps_discard: ps discard
+ *  @cs_rx_mgmt_rate: rx mgmt rate
+ *  @cs_tx_bytes_rate: tx rate
+ *  @cs_tx_data_rate: tx data rate
+ *  @cs_rx_bytes_rate: rx rate
+ *  @cs_rx_data_rate: rx data rate
+ *  @cs_tx_bytes_success_last: tx success count in last 1 sec
+ *  @cs_tx_data_success_last: tx data success count in last 1 sec
+ *  @cs_rx_bytes_last: rx rate
+ *  @cs_rx_data_last: rx data rate
+ *  @cs_psq_drops: psq drops
+ *  @cs_tx_dropblock: tx dropblock
+ *  @cs_tx_assoc: tx assoc success
+ *  @cs_tx_assoc_fail: tx assoc failure
  */
 struct peer_ic_cp_stats {
+	int8_t   cs_rx_mgmt_rssi;
 	uint32_t cs_rx_mgmt;
+	uint32_t cs_rx_noprivacy;
+	uint32_t cs_rx_wepfail;
+	uint32_t cs_rx_ccmpmic;
+	uint32_t cs_rx_wpimic;
+	uint32_t cs_rx_tkipicv;
+	uint32_t cs_tx_mgmt;
+	uint32_t cs_is_tx_not_ok;
+	uint32_t cs_ps_discard;
+	uint32_t cs_rx_mgmt_rate;
+#ifdef WLAN_ATH_SUPPORT_EXT_STAT
+	uint32_t cs_tx_bytes_rate;
+	uint32_t cs_tx_data_rate;
+	uint32_t cs_rx_bytes_rate;
+	uint32_t cs_rx_data_rate;
+	uint32_t cs_tx_bytes_success_last;
+	uint32_t cs_tx_data_success_last;
+	uint32_t cs_rx_bytes_last;
+	uint32_t cs_rx_data_last;
+#endif
+	uint32_t cs_psq_drops;
+#ifdef ATH_SUPPORT_IQUE
+	uint32_t cs_tx_dropblock;
+#endif
+	uint32_t cs_tx_assoc;
+	uint32_t cs_tx_assoc_fail;
 };
 
 #endif /* QCA_SUPPORT_CP_STATS */
