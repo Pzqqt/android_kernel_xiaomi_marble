@@ -12701,7 +12701,7 @@ bool sme_neighbor_middle_of_roaming(tHalHandle hHal, uint8_t sessionId)
 	if (CSR_IS_SESSION_VALID(mac_ctx, sessionId))
 		val = csr_neighbor_middle_of_roaming(mac_ctx, sessionId);
 	else
-		sme_err("Invalid Session: %d", sessionId);
+		sme_debug("Invalid Session: %d", sessionId);
 
 	return val;
 }

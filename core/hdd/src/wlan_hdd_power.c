@@ -1095,7 +1095,8 @@ hdd_suspend_wlan(void)
 		}
 
 		/* stop all TX queues before suspend */
-		hdd_info("Disabling queues");
+		hdd_info("Disabling queues for dev mode %s",
+			 hdd_device_mode_to_string(adapter->device_mode));
 		wlan_hdd_netif_queue_control(adapter,
 					     WLAN_STOP_ALL_NETIF_QUEUE,
 					     WLAN_CONTROL_PATH);
@@ -1157,7 +1158,8 @@ static int hdd_resume_wlan(void)
 		hdd_disable_host_offloads(adapter, pmo_apps_resume);
 
 		/* wake the tx queues */
-		hdd_info("Enabling queues");
+		hdd_info("Enabling queues for dev mode %s",
+			 hdd_device_mode_to_string(adapter->device_mode));
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_WAKE_ALL_NETIF_QUEUE,
 					WLAN_CONTROL_PATH);
@@ -1693,7 +1695,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	 */
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (wlan_hdd_validate_session_id(adapter->session_id)) {
-			hdd_err("invalid session id: %d", adapter->session_id);
+			hdd_debug("invalid session id: %d", adapter->session_id);
 			continue;
 		}
 
