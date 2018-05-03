@@ -300,15 +300,20 @@ ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
 	struct pno_scan_req_params *req)
 {
 	struct scan_default_params *scan_def;
-	struct wlan_scan_obj *scan = wlan_vdev_get_scan_obj(vdev);
+	struct wlan_scan_obj *scan;
 	struct pno_def_config *pno_def;
 
-	if (!vdev | !req | !scan) {
-		scm_err("vdev: 0x%pK, req: 0x%pK scan_obj: 0x%pK",
-			vdev, req, scan);
+	if (!vdev || !req) {
+		scm_err("vdev: 0x%pK, req: 0x%pK",
+			vdev, req);
 		return QDF_STATUS_E_INVAL;
 	}
 
+	scan = wlan_vdev_get_scan_obj(vdev);
+	if (!scan) {
+		scm_err("scan is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 	scan_def = wlan_vdev_get_def_scan_params(vdev);
 	if (!scan_def) {
 		scm_err("wlan_vdev_get_def_scan_params returned NULL");
@@ -316,7 +321,6 @@ ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
 	}
 
 	pno_def = &scan->pno_cfg;
-
 	req->active_dwell_time = scan_def->active_dwell;
 	req->passive_dwell_time = scan_def->passive_dwell;
 
@@ -326,7 +330,6 @@ ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
 	 */
 	ucfg_scan_update_pno_dwell_time(vdev, req, scan_def);
 	req->adaptive_dwell_mode = pno_def->adaptive_dwell_mode;
-
 	req->pno_channel_prediction = pno_def->adaptive_dwell_mode;
 	req->top_k_num_of_channels = pno_def->top_k_num_of_channels;
 	req->stationary_thresh = pno_def->stationary_thresh;
