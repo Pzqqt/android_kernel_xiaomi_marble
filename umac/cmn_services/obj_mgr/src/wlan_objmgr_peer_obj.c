@@ -211,6 +211,8 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 		qdf_mem_free(peer);
 		return NULL;
 	}
+	wlan_peer_set_pdev_id(peer, wlan_objmgr_pdev_get_pdev_id(
+			wlan_vdev_get_pdev(vdev)));
 	/* Increment ref count for BSS peer, so that BSS peer deletes last*/
 	if ((type == WLAN_PEER_STA) || (type == WLAN_PEER_STA_TEMP)
 				    || (type == WLAN_PEER_P2P_CLI))

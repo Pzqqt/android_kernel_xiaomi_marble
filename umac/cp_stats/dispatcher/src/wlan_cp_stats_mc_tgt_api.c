@@ -178,7 +178,7 @@ tgt_mc_cp_stats_prepare_raw_peer_rssi(struct wlan_objmgr_psoc *psoc,
 						  peer_rssi_iterator, &ev,
 						  true, WLAN_CP_STATS_ID);
 	} else {
-		peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_CP_STATS_ID);
+		peer = wlan_objmgr_get_peer(psoc, last_req->pdev_id, mac_addr, WLAN_CP_STATS_ID);
 		if (!peer) {
 			cp_stats_err("peer[%pM] is null", mac_addr);
 			goto end;
@@ -229,7 +229,7 @@ tgt_mc_cp_stats_update_peer_stats(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 
 	peer_mac_addr = peer_stats->peer_macaddr;
-	peer = wlan_objmgr_get_peer(psoc, peer_mac_addr,
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac_addr,
 				    WLAN_CP_STATS_ID);
 	if (!peer) {
 		cp_stats_err("peer is null");

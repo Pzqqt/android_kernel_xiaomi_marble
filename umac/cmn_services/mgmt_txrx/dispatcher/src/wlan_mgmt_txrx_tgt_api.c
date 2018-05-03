@@ -875,10 +875,12 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	 * scenario.
 	 */
 	mac_addr = (uint8_t *)wh->i_addr2;
-	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_MGMT_SB_ID);
+	peer = wlan_objmgr_get_peer(psoc, mgmt_rx_params->pdev_id,
+				    mac_addr, WLAN_MGMT_SB_ID);
 	if (!peer) {
 		mac_addr = (uint8_t *)wh->i_addr1;
-		peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_MGMT_SB_ID);
+		peer = wlan_objmgr_get_peer(psoc, mgmt_rx_params->pdev_id,
+					    mac_addr, WLAN_MGMT_SB_ID);
 	}
 
 	/**

@@ -171,12 +171,14 @@ struct wlan_peer_activity {  /*TODO */
  * @obj_status[]:     status of each component object
  * @obj_state:        Status of Peer object
  * @dp_handle:        DP module handle
+ * @pdev_id:          Pdev ID
  * @peer_lock:        Lock for access/update peer contents
  */
 struct wlan_objmgr_peer {
 	qdf_list_node_t psoc_peer;
 	qdf_list_node_t vdev_peer;
 	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
+	uint8_t pdev_id;
 	struct wlan_objmgr_peer_mlme peer_mlme;
 	struct wlan_peer_activity peer_activity;
 	struct wlan_objmgr_peer_objmgr peer_objmgr;
@@ -870,6 +872,30 @@ static inline struct wlan_objmgr_psoc *wlan_peer_get_psoc(
 	psoc = wlan_vdev_get_psoc(vdev);
 
 	return psoc;
+}
+
+/*
+ * wlan_peer_get_pdev_id() - get pdev id
+ * @peer: peer object pointer
+ *
+ * Return: pdev id
+ */
+static inline uint8_t wlan_peer_get_pdev_id(struct wlan_objmgr_peer *peer)
+{
+	return peer->pdev_id;
+}
+
+/**
+ * wlan_peer_set_pdev_id() - set pdev id
+ * @peer: peer object pointer
+ * @pdev_id: pdev id
+ *
+ * Return: void
+ */
+static inline void wlan_peer_set_pdev_id(struct wlan_objmgr_peer *peer,
+					 uint8_t pdev_id)
+{
+	peer->pdev_id = pdev_id;
 }
 
 #endif /* _WLAN_OBJMGR_PEER_OBJ_H_*/
