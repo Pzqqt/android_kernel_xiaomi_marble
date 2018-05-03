@@ -1191,6 +1191,8 @@ struct dp_vdev {
 	/* Handle to the OS shim SW's virtual device */
 	ol_osif_vdev_handle osif_vdev;
 
+	/* Handle to the UMAC handle */
+	struct cdp_ctrl_objmgr_vdev *ctrl_vdev;
 	/* vdev_id - ID used to specify a particular vdev to the target */
 	uint8_t vdev_id;
 

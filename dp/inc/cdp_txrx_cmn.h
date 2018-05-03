@@ -597,7 +597,8 @@ cdp_set_monitor_filter(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
  *****************************************************************************/
 static inline void
 cdp_vdev_register(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
-	 void *osif_vdev, struct ol_txrx_ops *txrx_ops)
+	 void *osif_vdev, struct cdp_ctrl_objmgr_vdev *ctrl_vdev,
+	 struct ol_txrx_ops *txrx_ops)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -611,7 +612,7 @@ cdp_vdev_register(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 		return;
 
 	soc->ops->cmn_drv_ops->txrx_vdev_register(vdev,
-			osif_vdev, txrx_ops);
+			osif_vdev, ctrl_vdev, txrx_ops);
 }
 
 static inline int

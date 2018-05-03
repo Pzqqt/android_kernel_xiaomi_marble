@@ -3367,16 +3367,18 @@ fail0:
  * dp_vdev_register_wifi3() - Register VDEV operations from osif layer
  * @vdev: Datapath VDEV handle
  * @osif_vdev: OSIF vdev handle
+ * @ctrl_vdev: UMAC vdev handle
  * @txrx_ops: Tx and Rx operations
  *
  * Return: DP VDEV handle on success, NULL on failure
  */
 static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
-	void *osif_vdev,
+	void *osif_vdev, struct cdp_ctrl_objmgr_vdev *ctrl_vdev,
 	struct ol_txrx_ops *txrx_ops)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	vdev->osif_vdev = osif_vdev;
+	vdev->ctrl_vdev = ctrl_vdev;
 	vdev->osif_rx = txrx_ops->rx.rx;
 	vdev->osif_rsim_rx_decap = txrx_ops->rx.rsim_rx_decap;
 	vdev->osif_get_key = txrx_ops->get_key;

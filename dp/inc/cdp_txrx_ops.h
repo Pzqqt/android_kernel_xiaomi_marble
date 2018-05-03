@@ -159,7 +159,8 @@ struct cdp_cmn_ops {
 	 ********************************************************************/
 
 	void (*txrx_vdev_register)(struct cdp_vdev *vdev,
-			void *osif_vdev, struct ol_txrx_ops *txrx_ops);
+			void *osif_vdev, struct cdp_ctrl_objmgr_vdev *ctrl_vdev,
+			struct ol_txrx_ops *txrx_ops);
 
 	int (*txrx_mgmt_send)(struct cdp_vdev *vdev,
 			qdf_nbuf_t tx_mgmt_frm, uint8_t type);
