@@ -29,6 +29,129 @@
 #include <wlan_cp_stats_ic_defs.h>
 #include "../../core/src/wlan_cp_stats_defs.h"
 
+#define UCFG_VDEV_CP_STATS_SET_FUNCS(field) \
+	static inline void \
+	ucfg_vdev_cp_stats_##field##_inc(struct wlan_objmgr_vdev *_vdev, \
+					 uint64_t _val) \
+	{ \
+		struct vdev_cp_stats *_vdev_cs = \
+			wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		if (_vdev_cs) { \
+			struct vdev_ic_cp_stats *_vdev_ics = \
+						_vdev_cs->vdev_stats; \
+			if (_vdev_ics) { \
+				_vdev_ics->stats.cs_##field += _val;\
+			} \
+		} \
+	} \
+	static inline void \
+	ucfg_vdev_cp_stats_##field##_dec(struct wlan_objmgr_vdev *_vdev, \
+					 uint64_t _val) \
+	{ \
+		struct vdev_cp_stats *_vdev_cs = \
+			wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		if (_vdev_cs) { \
+			struct vdev_ic_cp_stats *_vdev_ics = \
+						_vdev_cs->vdev_stats; \
+			if (_vdev_ics) { \
+				_vdev_ics->stats.cs_##field -= _val;\
+			} \
+		} \
+	} \
+	static inline void \
+	ucfg_vdev_cp_stats_##field##_update(struct wlan_objmgr_vdev *_vdev, \
+					    uint64_t _val) \
+	{ \
+		struct vdev_cp_stats *_vdev_cs = \
+			wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		if (_vdev_cs) { \
+			struct vdev_ic_cp_stats *_vdev_ics = \
+						_vdev_cs->vdev_stats; \
+			if (_vdev_ics) { \
+				_vdev_ics->stats.cs_##field = _val;\
+			} \
+		} \
+	}
+
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_wrongbss);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_wrongdir);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_not_assoc);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_noprivacy);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_mgmt_discard);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_ctl);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_rs_too_big);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_elem_missing);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_elem_too_big);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_chan_err);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_node_alloc);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_ssid_mismatch);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_auth_unsupported);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_auth_fail);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_auth_countermeasures);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_assoc_bss);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_assoc_notauth);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_assoc_cap_mismatch);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_assoc_norate);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_assoc_wpaie_err);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_action);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_auth_err);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_nodefkey);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_noheadroom);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_acl);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_nowds);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_nobuf);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_nonode);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_cipher_err);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_not_ok);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_bcn_swba);
+UCFG_VDEV_CP_STATS_SET_FUNCS(node_timeout);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_nomem);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_tkip);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_tkipenmic);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_tkipcm);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_ccmp);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_wep);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_setkey_cipher);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_setkey_nokey);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_delkey);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_cipher_err);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_attach_fail);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_swfallback);
+UCFG_VDEV_CP_STATS_SET_FUNCS(crypto_keyfail);
+UCFG_VDEV_CP_STATS_SET_FUNCS(ibss_capmismatch);
+UCFG_VDEV_CP_STATS_SET_FUNCS(ps_unassoc);
+UCFG_VDEV_CP_STATS_SET_FUNCS(ps_aid_err);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_offchan_mgmt);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_offchan_data);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_offchan_fail);
+UCFG_VDEV_CP_STATS_SET_FUNCS(invalid_macaddr_nodealloc_fail);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_bcn_success);
+UCFG_VDEV_CP_STATS_SET_FUNCS(tx_bcn_outage);
+UCFG_VDEV_CP_STATS_SET_FUNCS(sta_xceed_rlim);
+UCFG_VDEV_CP_STATS_SET_FUNCS(sta_xceed_vlim);
+UCFG_VDEV_CP_STATS_SET_FUNCS(mlme_auth_attempt);
+UCFG_VDEV_CP_STATS_SET_FUNCS(mlme_auth_success);
+UCFG_VDEV_CP_STATS_SET_FUNCS(authorize_attempt);
+UCFG_VDEV_CP_STATS_SET_FUNCS(authorize_success);
+
+#define UCFG_VDEV_CP_STATS_GET_FUNCS(field) \
+	static inline uint64_t \
+	ucfg_vdev_cp_stats_##field##_get(struct wlan_objmgr_vdev *_vdev) { \
+		struct vdev_cp_stats *_vdev_cs = \
+				wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		struct vdev_ic_cp_stats *_vdev_ics; \
+		if (_vdev_cs) { \
+			_vdev_ics = _vdev_cs->vdev_stats; \
+			if (_vdev_ics) \
+				return _vdev_ics->stats.cs_##field; \
+		} \
+		return 0; \
+	}
+
+UCFG_VDEV_CP_STATS_GET_FUNCS(rx_wrongbss);
+UCFG_VDEV_CP_STATS_GET_FUNCS(rx_wrongdir);
+UCFG_VDEV_CP_STATS_GET_FUNCS(rx_ssid_mismatch);
+
 #define UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(field) \
 	static inline void \
 	ucfg_vdev_ucast_cp_stats_##field##_inc(struct wlan_objmgr_vdev *_vdev, \
@@ -137,7 +260,8 @@ UCFG_VDEV_UCAST_CP_STATS_GET_FUNCS(rx_wepfail);
 		} \
 	} \
 	static inline void ucfg_vdev_mcast_cp_stats_##field##_update( \
-			struct wlan_objmgr_vdev *_vdev, uint64_t _val) { \
+			struct wlan_objmgr_vdev *_vdev, uint64_t _val) \
+	{ \
 		struct vdev_cp_stats *_vdev_cs = \
 			wlan_cp_stats_get_vdev_stats_obj(_vdev); \
 		if (_vdev_cs) { \
@@ -158,11 +282,11 @@ UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_tkipformat);
 UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_ccmpmic);
 UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_ccmpreplay);
 UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_ccmpformat);
-UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_countermeasure);
 UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_wpimic);
 UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_wpireplay);
-UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(tx_mgmt);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_countermeasure);
 UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_mgmt);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(tx_mgmt);
 
 #define UCFG_VDEV_MCAST_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
@@ -174,7 +298,7 @@ UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_mgmt);
 		if (_vdev_cs) { \
 			_vdev_ics = _vdev_cs->vdev_stats; \
 			if (_vdev_ics) \
-				return _vdev_ics->mcast_stats.cs_##field; \
+				return  _vdev_ics->mcast_stats.cs_##field; \
 		} \
 			return 0; \
 	}
