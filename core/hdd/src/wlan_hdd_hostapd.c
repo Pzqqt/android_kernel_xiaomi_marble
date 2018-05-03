@@ -2148,17 +2148,21 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			&pSapEvent->sapevt.sapStationDisassocCompleteEvent;
 		memcpy(wrqu.addr.sa_data,
 		       &disassoc_comp->staMac, QDF_MAC_ADDR_SIZE);
-		hdd_info("disassociated " MAC_ADDRESS_STR,
-			 MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 
 		stainfo = hdd_get_stainfo(adapter->cache_sta_info,
 					  disassoc_comp->staMac);
-		if (stainfo) {
-			stainfo->rssi = disassoc_comp->rssi;
-			stainfo->tx_rate = disassoc_comp->tx_rate;
-			stainfo->rx_rate = disassoc_comp->rx_rate;
-			stainfo->reason_code = disassoc_comp->reason_code;
+		if (!stainfo) {
+			hdd_err("peer " MAC_ADDRESS_STR " not found",
+					MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+			return -EINVAL;
 		}
+		hdd_info(" disassociated " MAC_ADDRESS_STR,
+				MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+
+		stainfo->rssi = disassoc_comp->rssi;
+		stainfo->tx_rate = disassoc_comp->tx_rate;
+		stainfo->rx_rate = disassoc_comp->rx_rate;
+		stainfo->reason_code = disassoc_comp->reason_code;
 
 		qdf_status = qdf_event_set(&hostapd_state->qdf_sta_disassoc_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))

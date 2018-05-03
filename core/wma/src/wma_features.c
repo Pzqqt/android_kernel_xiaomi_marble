@@ -611,6 +611,11 @@ QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE handle,
 	int status = 0;
 	wmi_peer_set_param_cmd_fixed_param peer_set_param_fp = {0};
 
+	if (!wma_handle) {
+		WMA_LOGE("%s : wma_handle is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (!ta_dhcp_ind) {
 		WMA_LOGE("%s : DHCP indication is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
