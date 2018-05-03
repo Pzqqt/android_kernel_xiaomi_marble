@@ -13296,7 +13296,7 @@ QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
  * Sends the command to WMA to send WMI_PDEV_SET_PCL_CMDID to FW
  * Return: QDF_STATUS_SUCCESS on successful posting
  */
-QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list msg)
+QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac   = sme_get_mac_context();
@@ -13308,6 +13308,12 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list msg)
 		sme_err("mac is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (!msg) {
+		sme_err("msg is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	len = sizeof(*req_msg);
 
 	req_msg = qdf_mem_malloc(len);
@@ -13316,12 +13322,12 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list msg)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	for (i = 0; i < msg.pcl_len; i++) {
-		req_msg->pcl_list[i] =  msg.pcl_list[i];
-		req_msg->weight_list[i] =  msg.weight_list[i];
+	for (i = 0; i < msg->pcl_len; i++) {
+		req_msg->pcl_list[i] =  msg->pcl_list[i];
+		req_msg->weight_list[i] =  msg->weight_list[i];
 	}
 
-	req_msg->pcl_len = msg.pcl_len;
+	req_msg->pcl_len = msg->pcl_len;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (status != QDF_STATUS_SUCCESS) {
