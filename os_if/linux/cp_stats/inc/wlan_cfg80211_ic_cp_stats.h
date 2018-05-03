@@ -32,6 +32,7 @@
 #ifdef WLAN_ATF_ENABLE
 #include <wlan_cp_stats_ic_atf_defs.h>
 #endif
+#include <wlan_cp_stats_ic_dcs_defs.h>
 
 /**
  * wlan_cfg80211_get_peer_cp_stats() - API to get peer stats object
@@ -92,6 +93,17 @@ int wlan_cfg80211_get_atf_peer_cp_stats_from_mac(
 		uint8_t *mac,
 		struct atf_peer_cp_stats *atf_cp_stats);
 #endif /* WLAN_ATF_ENABLE */
+
+/**
+ * wlan_cfg80211_get_dcs_pdev_cp_stats() - API to get DCS chan stats
+ * @pdev_obj: pdev object as input
+ * @dcs_chan_stats: DCS pdev stats object to populate
+ *
+ * Return: 0 on success, negative value on failure
+ */
+int wlan_cfg80211_get_dcs_pdev_cp_stats(
+		struct wlan_objmgr_pdev *pdev_obj,
+		struct pdev_dcs_chan_stats *dcs_chan_stats);
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CFG80211_IC_CP_STATS_H__ */
