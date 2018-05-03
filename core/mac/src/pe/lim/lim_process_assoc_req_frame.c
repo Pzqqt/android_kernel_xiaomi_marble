@@ -874,7 +874,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
 						 */
 						status =
 						    lim_check_rx_rsn_ie_match(
-						      mac_ctx, dot11f_ie_rsn,
+						      mac_ctx, &dot11f_ie_rsn,
 						      session,
 						      assoc_req->HTCaps.present,
 						      pmf_connection);

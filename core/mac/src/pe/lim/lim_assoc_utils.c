@@ -332,7 +332,7 @@ static inline bool is_non_rsn_cipher(uint8_t cipher_suite)
  * lim_check_rx_rsn_ie_match()- validate received rsn ie with supported cipher
  *      suites.
  * @mac_ctx: pointer to global mac structure
- * @rx_rsn_ie: received rsn IE
+ * @rx_rsn_ie: received rsn IE pointer
  * @session_entry: pe session entry
  * @sta_is_ht: peer station HT capability
  * @pmf_connection: set to true if this is pmf connection
@@ -345,10 +345,10 @@ static inline bool is_non_rsn_cipher(uint8_t cipher_suite)
  *                  received rateset else failure status.
  */
 
-uint8_t
-lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx, tDot11fIERSN rx_rsn_ie,
-			  tpPESession session_entry, uint8_t sta_is_ht,
-			  bool *pmf_connection)
+uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
+				  tDot11fIERSN * const rx_rsn_ie,
+				  tpPESession session_entry, uint8_t sta_is_ht,
+				  bool *pmf_connection)
 {
 	tDot11fIERSN *rsn_ie;
 	uint8_t i, j, match, only_non_ht_cipher = 1;
@@ -362,10 +362,15 @@ lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx, tDot11fIERSN rx_rsn_ie,
 	/* RSN IE should be received from PE */
 	rsn_ie = &session_entry->gStartBssRSNIe;
 
+	if (!rx_rsn_ie) {
+		pe_debug("Rx RSN IE is NULL");
+		return eSIR_FAILURE;
+	}
+
 	/* Check groupwise cipher suite */
-	for (i = 0; i < sizeof(rx_rsn_ie.gp_cipher_suite); i++)
+	for (i = 0; i < sizeof(rx_rsn_ie->gp_cipher_suite); i++)
 		if (rsn_ie->gp_cipher_suite[i] !=
-				 rx_rsn_ie.gp_cipher_suite[i]) {
+				 rx_rsn_ie->gp_cipher_suite[i]) {
 			pe_debug("Invalid groupwise cipher suite");
 			return eSIR_MAC_INVALID_GROUP_CIPHER_STATUS;
 		}
@@ -375,11 +380,11 @@ lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx, tDot11fIERSN rx_rsn_ie,
 	 * received pairwise
 	 */
 	match = 0;
-	for (i = 0; i < rx_rsn_ie.pwise_cipher_suite_count; i++) {
+	for (i = 0; i < rx_rsn_ie->pwise_cipher_suite_count; i++) {
 		for (j = 0; j < rsn_ie->pwise_cipher_suite_count; j++) {
-			if (!qdf_mem_cmp(&rx_rsn_ie.pwise_cipher_suites[i],
-				&rsn_ie->pwise_cipher_suites[j],
-				sizeof(rsn_ie->pwise_cipher_suites[j]))) {
+			if (!qdf_mem_cmp(&rx_rsn_ie->pwise_cipher_suites[i],
+			    &rsn_ie->pwise_cipher_suites[j],
+			    sizeof(rsn_ie->pwise_cipher_suites[j]))) {
 				match = 1;
 				break;
 			}
@@ -388,10 +393,10 @@ lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx, tDot11fIERSN rx_rsn_ie,
 		if (sta_is_ht)
 #ifdef ANI_LITTLE_BYTE_ENDIAN
 			only_non_ht_cipher = is_non_rsn_cipher(
-				rx_rsn_ie.pwise_cipher_suites[i][3]);
+				rx_rsn_ie->pwise_cipher_suites[i][3]);
 #else
 			only_non_ht_cipher = is_non_rsn_cipher(
-				rx_rsn_ie.pwise_cipher_suites[i][0]);
+				rx_rsn_ie->pwise_cipher_suites[i][0]);
 #endif
 	}
 
@@ -403,7 +408,7 @@ lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx, tDot11fIERSN rx_rsn_ie,
 	 * Check RSN capabilities
 	 * Bit 0 of First Byte - PreAuthentication Capability
 	 */
-	if (((rx_rsn_ie.RSN_Cap[0] >> 0) & 0x1) == true) {
+	if (((rx_rsn_ie->RSN_Cap[0] >> 0) & 0x1) == true) {
 		/* this is supported by AP only */
 		pe_debug("Invalid RSN information element capabilities");
 		return eSIR_MAC_INVALID_RSN_IE_CAPABILITIES_STATUS;
@@ -414,8 +419,8 @@ lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx, tDot11fIERSN rx_rsn_ie,
 #ifdef WLAN_FEATURE_11W
 	we_are_pmf_capable = session_entry->pLimStartBssReq->pmfCapable;
 	we_require_pmf = session_entry->pLimStartBssReq->pmfRequired;
-	they_are_pmf_capable = (rx_rsn_ie.RSN_Cap[0] >> 7) & 0x1;
-	they_require_pmf = (rx_rsn_ie.RSN_Cap[0] >> 6) & 0x1;
+	they_are_pmf_capable = (rx_rsn_ie->RSN_Cap[0] >> 7) & 0x1;
+	they_require_pmf = (rx_rsn_ie->RSN_Cap[0] >> 6) & 0x1;
 
 	if ((they_require_pmf && they_are_pmf_capable && !we_are_pmf_capable) ||
 	    (we_require_pmf && !they_are_pmf_capable)) {

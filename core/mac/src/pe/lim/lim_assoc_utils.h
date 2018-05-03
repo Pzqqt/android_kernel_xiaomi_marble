@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -44,8 +44,10 @@ uint8_t lim_compare_capabilities(tpAniSirGlobal,
 				 tSirAssocReq *,
 				 tSirMacCapabilityInfo *, tpPESession);
 uint8_t lim_check_rx_basic_rates(tpAniSirGlobal, tSirMacRateSet, tpPESession);
-uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal, tDot11fIERSN, tpPESession, uint8_t,
-				  bool *);
+uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
+				  tDot11fIERSN * const rx_rsn_ie,
+				  tpPESession session_entry, uint8_t sta_is_ht,
+				  bool *pmf_connection);
 uint8_t lim_check_rx_wpa_ie_match(tpAniSirGlobal, tDot11fIEWPA, tpPESession,
 				  uint8_t);
 uint8_t lim_check_mcs_set(tpAniSirGlobal pMac, uint8_t *supportedMCSSet);
