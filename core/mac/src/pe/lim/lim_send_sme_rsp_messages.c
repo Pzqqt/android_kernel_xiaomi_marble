@@ -1942,7 +1942,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 	uint8_t session_id;
 	uint16_t aid = 0;
 	uint16_t chan_space = 0;
-	struct ch_params ch_params;
+	struct ch_params ch_params = {0};
 
 	tLimWiderBWChannelSwitchInfo *chnl_switch_info = NULL;
 	tLimChannelSwitchInfo *lim_ch_switch = NULL;
