@@ -24,7 +24,9 @@
  */
 #include <wlan_cp_stats_ic_ucfg_api.h>
 #include <wlan_cfg80211_ic_cp_stats.h>
+#ifdef WLAN_ATF_ENABLE
 #include <wlan_cp_stats_ic_atf_defs.h>
+#endif
 #include <wlan_cp_stats_ic_defs.h>
 #include "../../core/src/wlan_cp_stats_cmn_api_i.h"
 #include <qdf_module.h>
@@ -253,3 +255,86 @@ struct pdev_ic_cp_stats
 }
 
 qdf_export_symbol(wlan_get_pdev_cp_stats_ref);
+
+#ifdef WLAN_ATF_ENABLE
+QDF_STATUS
+wlan_ucfg_get_atf_peer_cp_stats(struct wlan_objmgr_peer *peer,
+				struct atf_peer_cp_stats *atf_cps)
+{
+	struct peer_cp_stats *peer_cs;
+
+	if (!peer) {
+		cp_stats_err("Invalid input, peer obj is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!atf_cps) {
+		cp_stats_err("Invalid input, ATF cp stats obj is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	peer_cs = wlan_cp_stats_get_peer_stats_obj(peer);
+	if (peer_cs) {
+		if (peer_cs->peer_comp_priv_obj[WLAN_CP_STATS_ATF]) {
+			wlan_cp_stats_peer_obj_lock(peer_cs);
+			qdf_mem_copy(atf_cps,
+				peer_cs->peer_comp_priv_obj[WLAN_CP_STATS_ATF],
+				sizeof(*atf_cps));
+			wlan_cp_stats_peer_obj_unlock(peer_cs);
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wlan_ucfg_get_atf_peer_cp_stats_from_mac(struct wlan_objmgr_vdev *vdev,
+					 uint8_t *mac,
+					 struct atf_peer_cp_stats *astats)
+{
+	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	QDF_STATUS status;
+
+	if (!vdev) {
+		cp_stats_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!mac) {
+		cp_stats_err("peer mac address is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!astats) {
+		cp_stats_err("atf peer stats obj is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		cp_stats_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		cp_stats_err("pdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	peer = wlan_objmgr_get_peer(psoc, wlan_objmgr_pdev_get_pdev_id(pdev),
+				    mac, WLAN_CP_STATS_ID);
+	if (!peer) {
+		cp_stats_err("peer is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wlan_ucfg_get_atf_peer_cp_stats(peer, astats);
+	wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
+
+	return status;
+}
+#endif

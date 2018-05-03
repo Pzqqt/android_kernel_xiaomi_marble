@@ -28,6 +28,9 @@
 #include <wlan_objmgr_cmn.h>
 #include <wlan_cp_stats_ic_defs.h>
 #include "../../core/src/wlan_cp_stats_defs.h"
+#ifdef WLAN_ATF_ENABLE
+#include <wlan_cp_stats_ic_atf_defs.h>
+#endif
 
 #define UCFG_PDEV_CP_STATS_SET_FUNCS(field) \
 	static inline void \
@@ -629,6 +632,33 @@ QDF_STATUS wlan_ucfg_get_pdev_hw_cp_stats(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS wlan_ucfg_set_pdev_hw_cp_stats(struct wlan_objmgr_pdev *pdev,
 					  struct pdev_hw_stats *hw_stats);
+
+#ifdef WLAN_ATF_ENABLE
+/**
+ * wlan_ucfg_get_atf_peer_cp_stats() - ucfg API to get ATF peer cp stats
+ * @peer_obj: pointer to peer object
+ * @atf_cps: pointer to atf peer cp stats object to populate
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS wlan_ucfg_get_atf_peer_cp_stats(struct wlan_objmgr_peer *peer,
+					   struct atf_peer_cp_stats *atf_cps);
+
+/**
+ * wlan_ucfg_get_atf_peer_cp_stats_from_mac() - ucfg API to get ATF
+ * peer cp stats from peer mac address
+ * @vdev_obj: pointer to vdev object
+ * @mac: pointer to peer mac address
+ * @atf_cps: pointer to atf peer cp stats object to populate
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS
+wlan_ucfg_get_atf_peer_cp_stats_from_mac(struct wlan_objmgr_vdev *vdev,
+					 uint8_t *mac,
+					 struct atf_peer_cp_stats *astats);
+
+#endif
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_IC_UCFG_API_H__ */
