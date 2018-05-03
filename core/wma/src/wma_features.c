@@ -1651,41 +1651,17 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
 }
 
 #ifdef QCA_SUPPORT_CP_STATS
-static void wma_inc_wow_stats(t_wma_handle *wma,
-			      WOW_EVENT_INFO_fixed_param *wake_info)
+static bool wma_wow_reason_has_stats(enum wake_reason_e reason)
 {
-	ucfg_mc_cp_stats_inc_wake_lock_stats(wma->psoc,
-					     wake_info->vdev_id,
-					     wake_info->wake_reason);
-}
-
-static void wma_wow_stats_display(struct wake_lock_stats *stats)
-{
-	WMA_LOGA("uc %d bc %d v4_mc %d v6_mc %d ra %d ns %d na %d pno_match %d pno_complete %d gscan %d low_rssi %d rssi_breach %d icmp %d icmpv6 %d oem %d",
-		stats->ucast_wake_up_count,
-		stats->bcast_wake_up_count,
-		stats->ipv4_mcast_wake_up_count,
-		stats->ipv6_mcast_wake_up_count,
-		stats->ipv6_mcast_ra_stats,
-		stats->ipv6_mcast_ns_stats,
-		stats->ipv6_mcast_na_stats,
-		stats->pno_match_wake_up_count,
-		stats->pno_complete_wake_up_count,
-		stats->gscan_wake_up_count,
-		stats->low_rssi_wake_up_count,
-		stats->rssi_breach_wake_up_count,
-		stats->icmpv4_count,
-		stats->icmpv6_count,
-		stats->oem_response_wake_up_count);
-}
-
-static void wma_print_wow_stats(t_wma_handle *wma,
-				WOW_EVENT_INFO_fixed_param *wake_info)
-{
-	struct wlan_objmgr_vdev *vdev;
-	struct wake_lock_stats stats = {0};
-
-	switch (wake_info->wake_reason) {
+	switch (reason) {
+	case WOW_REASON_ASSOC_REQ_RECV:
+	case WOW_REASON_DISASSOC_RECVD:
+	case WOW_REASON_ASSOC_RES_RECV:
+	case WOW_REASON_REASSOC_REQ_RECV:
+	case WOW_REASON_REASSOC_RES_RECV:
+	case WOW_REASON_AUTH_REQ_RECV:
+	case WOW_REASON_DEAUTH_RECVD:
+	case WOW_REASON_ACTION_FRAME_RECV:
 	case WOW_REASON_BPF_ALLOW:
 	case WOW_REASON_PATTERN_MATCH_FOUND:
 	case WOW_REASON_RA_MATCH:
@@ -1697,10 +1673,65 @@ static void wma_print_wow_stats(t_wma_handle *wma,
 	case WOW_REASON_OEM_RESPONSE_EVENT:
 	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
 	case WOW_REASON_11D_SCAN:
-		break;
+		return true;
 	default:
-		return;
+		return false;
 	}
+}
+
+static void wma_inc_wow_stats(t_wma_handle *wma,
+			      WOW_EVENT_INFO_fixed_param *wake_info)
+{
+	ucfg_mc_cp_stats_inc_wake_lock_stats(wma->psoc,
+					     wake_info->vdev_id,
+					     wake_info->wake_reason);
+}
+
+static void wma_wow_stats_display(struct wake_lock_stats *stats)
+{
+	WMA_LOGA("WLAN wake reason counters:");
+	WMA_LOGA("uc:%d bc:%d v4_mc:%d v6_mc:%d ra:%d ns:%d na:%d "
+		 "icmp:%d icmpv6:%d",
+		 stats->ucast_wake_up_count,
+		 stats->bcast_wake_up_count,
+		 stats->ipv4_mcast_wake_up_count,
+		 stats->ipv6_mcast_wake_up_count,
+		 stats->ipv6_mcast_ra_stats,
+		 stats->ipv6_mcast_ns_stats,
+		 stats->ipv6_mcast_na_stats,
+		 stats->icmpv4_count,
+		 stats->icmpv6_count);
+
+	WMA_LOGA("assoc:%d disassoc:%d assoc_resp:%d reassoc:%d "
+		 "reassoc_resp:%d auth:%d deauth:%d action:%d",
+		 stats->mgmt_assoc,
+		 stats->mgmt_disassoc,
+		 stats->mgmt_assoc_resp,
+		 stats->mgmt_reassoc,
+		 stats->mgmt_reassoc_resp,
+		 stats->mgmt_auth,
+		 stats->mgmt_deauth,
+		 stats->mgmt_action);
+
+	WMA_LOGA("pno_match:%d pno_complete:%d gscan:%d "
+		 "low_rssi:%d rssi_breach:%d oem:%d scan_11d:%d",
+		 stats->pno_match_wake_up_count,
+		 stats->pno_complete_wake_up_count,
+		 stats->gscan_wake_up_count,
+		 stats->low_rssi_wake_up_count,
+		 stats->rssi_breach_wake_up_count,
+		 stats->oem_response_wake_up_count,
+		 stats->scan_11d);
+}
+
+static void wma_print_wow_stats(t_wma_handle *wma,
+				WOW_EVENT_INFO_fixed_param *wake_info)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wake_lock_stats stats = {0};
+
+	if (!wma_wow_reason_has_stats(wake_info->wake_reason))
+		return;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
 						    wake_info->vdev_id,
