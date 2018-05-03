@@ -806,6 +806,8 @@ ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 			req->scan_req.repeat_probe_time = 0;
 		} else {
 			req->scan_req.scan_f_filter_prb_req = true;
+			if (!req->scan_req.num_ssids)
+				req->scan_req.scan_f_bcast_probe = true;
 
 			req->scan_req.dwell_time_active +=
 					P2P_SEARCH_DWELL_TIME_INC;
