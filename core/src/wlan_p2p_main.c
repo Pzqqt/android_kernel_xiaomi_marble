@@ -1164,6 +1164,7 @@ void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr)
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_peer *peer;
+	uint8_t pdev_id;
 
 	if (!vdev) {
 		p2p_err("vdev:%pK", vdev);
@@ -1174,7 +1175,8 @@ void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr)
 		p2p_err("psoc:%pK", psoc);
 		return;
 	}
-	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_P2P_ID);
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
+	peer = wlan_objmgr_get_peer(psoc, pdev_id,  mac_addr, WLAN_P2P_ID);
 	if (!peer) {
 		p2p_debug("peer info not found");
 		return;
