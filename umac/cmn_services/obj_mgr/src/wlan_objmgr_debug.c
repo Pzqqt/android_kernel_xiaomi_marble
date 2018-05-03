@@ -282,12 +282,16 @@ static void wlan_objmgr_iterate_log_del_obj_handler(void *timer_arg)
 			break;
 		}
 		if (!macaddr) {
+			qdf_spin_unlock_bh(&debug_info->list_lock);
 			obj_mgr_err("macaddr is null");
-			return;
+			QDF_BUG(0);
+			goto modify_timer;
 		}
 		if (!obj_name) {
+			qdf_spin_unlock_bh(&debug_info->list_lock);
 			obj_mgr_err("obj_name is null");
-			return;
+			QDF_BUG(0);
+			goto modify_timer;
 		}
 
 		obj_mgr_alert("#%s in L-state,MAC: " QDF_MAC_ADDR_STR,
@@ -299,6 +303,7 @@ static void wlan_objmgr_iterate_log_del_obj_handler(void *timer_arg)
 
 	qdf_spin_unlock_bh(&debug_info->list_lock);
 
+modify_timer:
 	/* modify timer timeout value */
 	qdf_timer_mod(&debug_info->obj_timer, LOG_DEL_OBJ_TIMEOUT_VALUE_MSEC);
 }
