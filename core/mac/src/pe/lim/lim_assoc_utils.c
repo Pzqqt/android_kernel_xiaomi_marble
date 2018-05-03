@@ -1591,30 +1591,12 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 		if (sirIsArate(temp_rate_set.rate[min] & 0x7f))
 			is_arate = 1;
 
-		/*
-		 * HAL needs to know whether the rate is basic rate or
-		 * not, as it needs to update the response rate table
-		 * accordingly. e.g. if one of the 11a rates is
-		 * basic rate, then that rate can be used for sending
-		 * control frames.
-		 * HAL updates the response rate table whenever basic
-		 * rate set is changed.
-		 */
-		if (basic_only && temp_rate_set.rate[min] & 0x80) {
-			if (is_arate)
-				rates->llaRates[a_rate_index++] =
-					temp_rate_set.rate[min];
-			else
-				rates->llbRates[b_rate_index++] =
-					temp_rate_set.rate[min];
-		} else {
-			if (is_arate)
-				rates->llaRates[a_rate_index++] =
-					temp_rate_set.rate[min];
-			else
-				rates->llbRates[b_rate_index++] =
-					temp_rate_set.rate[min];
-		}
+		if (is_arate)
+			rates->llaRates[a_rate_index++] =
+						temp_rate_set.rate[min];
+		else
+			rates->llbRates[b_rate_index++] =
+						temp_rate_set.rate[min];
 		temp_rate_set.rate[min] = 0xff;
 	}
 
