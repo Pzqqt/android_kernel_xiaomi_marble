@@ -1199,7 +1199,7 @@ void policy_mgr_pdev_set_pcl(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	status = pm_ctx->sme_cbacks.sme_pdev_set_pcl(pcl);
+	status = pm_ctx->sme_cbacks.sme_pdev_set_pcl(&pcl);
 	if (status != QDF_STATUS_SUCCESS)
 		policy_mgr_err("Send soc set PCL to SME failed");
 	else
