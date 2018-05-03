@@ -115,3 +115,31 @@ QDF_STATUS wlan_ucfg_get_peer_cp_stats(struct wlan_objmgr_peer *peer,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS
+wlan_ucfg_get_vdev_cp_stats(struct wlan_objmgr_vdev *vdev,
+			    struct vdev_ic_cp_stats *vdev_cps)
+{
+	struct vdev_cp_stats *vdev_cs;
+
+	if (!vdev) {
+		cp_stats_err("Invalid input, vdev obj is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!vdev_cps) {
+		cp_stats_err("Invalid input, vdev cp obj is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_cs = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (vdev_cs && vdev_cs->vdev_stats) {
+		wlan_cp_stats_vdev_obj_lock(vdev_cs);
+		qdf_mem_copy(vdev_cps, vdev_cs->vdev_stats,
+			     sizeof(*vdev_cps));
+		wlan_cp_stats_vdev_obj_unlock(vdev_cs);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}

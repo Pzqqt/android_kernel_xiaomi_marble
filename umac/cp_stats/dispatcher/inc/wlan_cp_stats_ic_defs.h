@@ -73,9 +73,37 @@ struct vdev_80211_stats {
  * used as interface structure with user space application
  * make sure to align this structure with ieee80211_mac_stats
  *
+ * @cs_rx_badkeyid: rx bad keyid
+ * @cs_rx_decryptok: rx decrypt success
+ * @cs_rx_wepfail: rx wep failures
+ * @cs_rx_tkipreplay: rx tkip replays
+ * @cs_rx_tkipformat: rx tkip format
+ * @cs_rx_tkipicv: rx tkip icv
+ * @cs_rx_ccmpreplay: rx ccmp replay
+ * @cs_rx_ccmpformat: rx ccmp format
+ * @cs_rx_ccmpmic: rx ccmp mic failures
+ * @cs_rx_wpireplay: rx wpi replay
+ * @cs_rx_wpimic: rx wpi mic failures
+ * @cs_rx_countermeasure: rx counter measures count
+ * @cs_retries: rx retries
+ * @cs_tx_mgmt: tx mgmt
  * @cs_rx_mgmt: rx mgmt
  */
 struct vdev_80211_mac_stats {
+	uint64_t cs_rx_badkeyid;
+	uint64_t cs_rx_decryptok;
+	uint64_t cs_rx_wepfail;
+	uint64_t cs_rx_tkipreplay;
+	uint64_t cs_rx_tkipformat;
+	uint64_t cs_rx_tkipicv;
+	uint64_t cs_rx_ccmpreplay;
+	uint64_t cs_rx_ccmpformat;
+	uint64_t cs_rx_ccmpmic;
+	uint64_t cs_rx_wpireplay;
+	uint64_t cs_rx_wpimic;
+	uint64_t cs_rx_countermeasure;
+	uint64_t cs_retries;
+	uint64_t cs_tx_mgmt;
 	uint64_t cs_rx_mgmt;
 };
 

@@ -29,6 +29,161 @@
 #include <wlan_cp_stats_ic_defs.h>
 #include "../../core/src/wlan_cp_stats_defs.h"
 
+#define UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(field) \
+	static inline void \
+	ucfg_vdev_ucast_cp_stats_##field##_inc(struct wlan_objmgr_vdev *_vdev, \
+					       uint64_t _val) \
+	{ \
+		struct vdev_cp_stats *_vdev_cs = \
+			wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		if (_vdev_cs) { \
+			struct vdev_ic_cp_stats *_vdev_ics = \
+						_vdev_cs->vdev_stats; \
+			if (_vdev_ics) { \
+				_vdev_ics->ucast_stats.cs_##field += _val;\
+			} \
+		} \
+	} \
+	static inline void \
+	ucfg_vdev_ucast_cp_stats_##field##_dec(struct wlan_objmgr_vdev *_vdev, \
+					       uint64_t _val) \
+	{ \
+		struct vdev_cp_stats *_vdev_cs = \
+			wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		if (_vdev_cs) { \
+			struct vdev_ic_cp_stats *_vdev_ics = \
+						_vdev_cs->vdev_stats; \
+			if (_vdev_ics) { \
+				_vdev_ics->ucast_stats.cs_##field -= _val;\
+			} \
+		} \
+	} \
+	static inline void ucfg_vdev_ucast_cp_stats_##field##_update( \
+			struct wlan_objmgr_vdev *_vdev, uint64_t _val) \
+	{ \
+		struct vdev_cp_stats *_vdev_cs = \
+			wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		if (_vdev_cs) { \
+			struct vdev_ic_cp_stats *_vdev_ics = \
+						_vdev_cs->vdev_stats; \
+			if (_vdev_ics) { \
+				_vdev_ics->ucast_stats.cs_##field = _val;\
+			} \
+		} \
+	}
+
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_badkeyid);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_decryptok);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_wepfail);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_tkipicv);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_tkipreplay);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_tkipformat);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_ccmpmic);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_ccmpreplay);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_ccmpformat);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_wpimic);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_wpireplay);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_countermeasure);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_mgmt);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(tx_mgmt);
+
+#define UCFG_VDEV_UCAST_CP_STATS_GET_FUNCS(field) \
+	static inline uint64_t \
+	ucfg_vdev_ucast_cp_stats_##field##_get(struct wlan_objmgr_vdev *_vdev) \
+	{ \
+		struct vdev_cp_stats *_vdev_cs = \
+				wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		struct vdev_ic_cp_stats *_vdev_ics; \
+		if (_vdev_cs) { \
+			_vdev_ics = _vdev_cs->vdev_stats; \
+			if (_vdev_ics) \
+				return  _vdev_ics->ucast_stats.cs_##field; \
+		} \
+			return 0; \
+	}
+
+UCFG_VDEV_UCAST_CP_STATS_GET_FUNCS(rx_decryptok);
+UCFG_VDEV_UCAST_CP_STATS_GET_FUNCS(rx_ccmpmic);
+UCFG_VDEV_UCAST_CP_STATS_GET_FUNCS(rx_ccmpreplay);
+UCFG_VDEV_UCAST_CP_STATS_GET_FUNCS(rx_wepfail);
+
+#define UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(field) \
+	static inline void \
+	ucfg_vdev_mcast_cp_stats_##field##_inc(struct wlan_objmgr_vdev *_vdev, \
+					       uint64_t _val) \
+	{ \
+		struct vdev_cp_stats *_vdev_cs = \
+			wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		if (_vdev_cs) { \
+			struct vdev_ic_cp_stats *_vdev_ics = \
+						_vdev_cs->vdev_stats; \
+			if (_vdev_ics) { \
+				_vdev_ics->mcast_stats.cs_##field += _val;\
+			} \
+		} \
+	} \
+	static inline void \
+	ucfg_vdev_mcast_cp_stats_##field##_dec(struct wlan_objmgr_vdev *_vdev, \
+					       uint64_t _val) \
+	{ \
+		struct vdev_cp_stats *_vdev_cs = \
+			wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		if (_vdev_cs) { \
+			struct vdev_ic_cp_stats *_vdev_ics = \
+						_vdev_cs->vdev_stats; \
+			if (_vdev_ics) { \
+				_vdev_ics->mcast_stats.cs_##field -= _val;\
+			} \
+		} \
+	} \
+	static inline void ucfg_vdev_mcast_cp_stats_##field##_update( \
+			struct wlan_objmgr_vdev *_vdev, uint64_t _val) { \
+		struct vdev_cp_stats *_vdev_cs = \
+			wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		if (_vdev_cs) { \
+			struct vdev_ic_cp_stats *_vdev_ics = \
+						_vdev_cs->vdev_stats; \
+			if (_vdev_ics) { \
+				_vdev_ics->mcast_stats.cs_##field = _val;\
+			} \
+		} \
+	}
+
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_badkeyid);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_decryptok);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_wepfail);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_tkipicv);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_tkipreplay);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_tkipformat);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_ccmpmic);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_ccmpreplay);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_ccmpformat);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_countermeasure);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_wpimic);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_wpireplay);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(tx_mgmt);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_mgmt);
+
+#define UCFG_VDEV_MCAST_CP_STATS_GET_FUNCS(field) \
+	static inline uint64_t \
+	ucfg_vdev_mcast_cp_stats_##field##_get(struct wlan_objmgr_vdev *_vdev) \
+	{ \
+		struct vdev_cp_stats *_vdev_cs = \
+				wlan_cp_stats_get_vdev_stats_obj(_vdev); \
+		struct vdev_ic_cp_stats *_vdev_ics; \
+		if (_vdev_cs) { \
+			_vdev_ics = _vdev_cs->vdev_stats; \
+			if (_vdev_ics) \
+				return _vdev_ics->mcast_stats.cs_##field; \
+		} \
+			return 0; \
+	}
+
+UCFG_VDEV_MCAST_CP_STATS_GET_FUNCS(rx_decryptok);
+UCFG_VDEV_MCAST_CP_STATS_GET_FUNCS(rx_ccmpmic);
+UCFG_VDEV_MCAST_CP_STATS_GET_FUNCS(rx_ccmpreplay);
+UCFG_VDEV_MCAST_CP_STATS_GET_FUNCS(rx_wepfail);
+
 #define UCFG_PEER_CP_STATS_SET_FUNCS(field) \
 	static inline void \
 	ucfg_peer_cp_stats_##field##_inc(struct wlan_objmgr_peer *_peer, \
@@ -169,6 +324,16 @@ UCFG_PEER_CP_STATS_GET_FUNCS(tx_dropblock);
  */
 QDF_STATUS wlan_ucfg_get_peer_cp_stats(struct wlan_objmgr_peer *peer,
 				       struct peer_ic_cp_stats *peer_cps);
+
+/**
+ * wlan_ucfg_get_vdev_cp_stats() - ucfg API to get vdev cp stats
+ * @vdev_obj: pointer to vdev object
+ * @vdev_cps: pointer to vdev cp stats object to populate
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS wlan_ucfg_get_vdev_cp_stats(struct wlan_objmgr_vdev *vdev,
+				       struct vdev_ic_cp_stats *vdev_cps);
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_IC_UCFG_API_H__ */
