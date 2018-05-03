@@ -1200,11 +1200,18 @@ QDF_STATUS sap_set_session_param(tHalHandle hal, struct sap_context *sapctx,
 				uint32_t session_id)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	int i;
 
 	sapctx->sessionId = session_id;
 	sapctx->is_pre_cac_on = false;
 	sapctx->pre_cac_complete = false;
 	sapctx->chan_before_pre_cac = 0;
+
+	/* When SSR, SAP will restart, clear the old context,sessionId */
+	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
+		if (mac_ctx->sap.sapCtxList[i].pSapContext == sapctx)
+			mac_ctx->sap.sapCtxList[i].pSapContext = NULL;
+	}
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sessionID =
 				sapctx->sessionId;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].pSapContext = sapctx;
