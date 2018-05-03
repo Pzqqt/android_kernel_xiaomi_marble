@@ -10203,7 +10203,7 @@ enum dot11p_mode {
  * fw_timeout_crash - Enable/Disable BUG ON
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to Trigger host crash when firmware fails to send the
  * response to host
@@ -10221,7 +10221,7 @@ enum dot11p_mode {
 #define CFG_CRASH_FW_TIMEOUT_NAME       "fw_timeout_crash"
 #define CFG_CRASH_FW_TIMEOUT_DISABLE    (0)
 #define CFG_CRASH_FW_TIMEOUT_ENABLE     (1)
-#define CFG_CRASH_FW_TIMEOUT_DEFAULT    (0)
+#define CFG_CRASH_FW_TIMEOUT_DEFAULT    (1)
 
 /*
  * <ini>
