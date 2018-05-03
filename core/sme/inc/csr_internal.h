@@ -836,6 +836,7 @@ struct csr_roam_session {
 	csr_roam_completeCallback callback;
 	void *pContext;
 	eCsrConnectState connectState;
+	struct rsn_caps rsn_caps;
 	tCsrRoamConnectedProfile connectedProfile;
 	struct csr_roam_connectedinfo connectedInfo;
 	struct csr_roam_profile *pCurRoamProfile;

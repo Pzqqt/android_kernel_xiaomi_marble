@@ -166,16 +166,6 @@ typedef struct tagCsrRSNAuthIe {
 	} qdf_packed AuthOui[1];
 } qdf_packed tCsrRSNAuthIe;
 
-typedef struct tagCsrRSNCapabilities {
-	uint16_t PreAuthSupported:1;
-	uint16_t NoPairwise:1;
-	uint16_t PTKSAReplayCounter:2;
-	uint16_t GTKSAReplayCounter:2;
-	uint16_t MFPRequired:1;
-	uint16_t MFPCapable:1;
-	uint16_t Reserved:8;
-} qdf_packed tCsrRSNCapabilities;
-
 typedef struct tagCsrRSNPMKIe {
 	uint16_t cPMKIDs;
 	struct {
