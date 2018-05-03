@@ -792,7 +792,7 @@ struct policy_mgr_sme_cbacks {
 	QDF_STATUS (*sme_soc_set_dual_mac_config)(
 		struct policy_mgr_dual_mac_config msg);
 	QDF_STATUS (*sme_pdev_set_hw_mode)(struct policy_mgr_hw_mode msg);
-	QDF_STATUS (*sme_pdev_set_pcl)(struct policy_mgr_pcl_list msg);
+	QDF_STATUS (*sme_pdev_set_pcl)(struct policy_mgr_pcl_list *msg);
 	QDF_STATUS (*sme_nss_update_request)(uint32_t vdev_id,
 		uint8_t  new_nss, policy_mgr_nss_update_cback cback,
 		uint8_t next_action, struct wlan_objmgr_psoc *psoc,
