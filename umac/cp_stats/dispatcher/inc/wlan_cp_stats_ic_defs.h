@@ -28,6 +28,32 @@
 #ifdef QCA_SUPPORT_CP_STATS
 
 /**
+ * struct pdev_rx_rssi - rx rssi information
+ *
+ * @rx_rssi_pri20: primary 20 rssi
+ * @rx_rssi_sec20: secondary 20 rssi
+ * @rx_rssi_sec40: secondary 40 rssi
+ * @rx_rssi_sec80: secondary 80 rssi
+ */
+struct pdev_rx_rssi {
+	uint8_t     rx_rssi_pri20;
+	uint8_t     rx_rssi_sec20;
+	uint8_t     rx_rssi_sec40;
+	uint8_t     rx_rssi_sec80;
+};
+
+/**
+ * struct pdev_hw_stats - pdev hw stats
+ *
+ * @tx_hw_retries: tx hw retries
+ * @rx_hw_retries: rx hw retries
+ */
+struct pdev_hw_stats {
+	uint64_t tx_hw_retries;
+	uint64_t tx_hw_failures;
+};
+
+/**
  * struct pdev_80211_stats - control plane stats at pdev
  *
  * the same statistics were earlier maintained with a reference to
@@ -35,12 +61,127 @@
  * used as interface structure with user space application
  * make sure to align this structure with ieee80211_mac_stats
  *
- * @cs_tx_hw_retries:
- * @cs_tx_hw_failures:
+ * @cs_tx_beacon: tx beacon
+ * @cs_be_nobuf: no skbuff available for beacon
+ * @cs_tx_buf_count: tx buf count
+ * @cs_tx_packets: tx packets
+ * @cs_rx_packets: rx packets
+ * @cs_tx_mgmt: tx mgmt
+ * @cs_tx_num_data: tx data
+ * @cs_rx_num_data: rx data
+ * @cs_rx_mgmt: rx mgmt
+ * @cs_rx_num_mgmt: rx num mgmt
+ * @cs_rx_num_ctl: rx num ctrl
+ * @cs_rx_ctrl: rx ctrl
+ * @cs_tx_ctrl: tx ctrl
+ * @cs_tx_rssi: tx rssi
+ * @cs_tx_mcs[]: tx mcs
+ * @cs_rx_mcs[]: rx mcs
+ * @cs_rx_rssi_comb: rx rssi comb
+ * @cs_rx_bytes: rx bytes
+ * @cs_tx_bytes: tx bytes
+ * @cs_tx_compaggr: tx comp aggr
+ * @cs_rx_aggr: rx aggr
+ * @cs_tx_bawadv: tx bad adv frames
+ * @cs_tx_compunaggr: tx comp unaggr frames
+ * @cs_rx_overrun: rx over run frames
+ * @cs_rx_crypt_err: rx crypt error count
+ * @cs_rx_mic_err: rx mic error count
+ * @cs_rx_crc_err: rx crc error count
+ * @cs_rx_phy_err: rx phy error count
+ * @cs_rx_ack_err: rx ack error count
+ * @cs_rx_rts_err: rx rts error count
+ * @cs_rx_rts_success: rx rts success count
+ * @cs_rx_fcs_err: rx fcs error count
+ * @cs_no_beacons: rx beacon
+ * @cs_mib_int_count: mib int count
+ * @cs_rx_looplimit_start: rx loop limit start
+ * @cs_rx_looplimit_end: rx loop limit end
+ * @cs_ap_stats_tx_cal_enable: ap stats tx cal enable status
+ * @cs_tgt_asserts: tgt assert count
+ * @cs_chan_nf: channel noise floor
+ * @cs_rx_last_msdu_unset_cnt: rx last msdu unset count
+ * @cs_chan_nf_sec80: channel noise floor secondary 80
+ * @cs_wmi_tx_mgmt: wmi tx mgmt
+ * @cs_wmi_tx_mgmt_completions: wmi tx mgmt complete
+ * @cs_wmi_tx_mgmt_completion_err: wmi tx mgmt error
+ * @cs_peer_delete_req: peer del request
+ * @cs_peer_delete_resp: peer del response
+ * @cs_rx_mgmt_rssi_drop: rx mgmt rssi drop
+ * @cs_tx_retries: tx retries
+ * @cs_rx_data_bytes: rx data bytes
+ * @cs_tx_frame_count: tx frame count
+ * @cs_rx_frame_count: rx frame count
+ * @cs_rx_clear_count: rx clear count
+ * @cs_cycle_count: cycle count
+ * @cs_phy_err_count: phy error count
+ * @cs_chan_tx_pwr: channel tx power
  */
 struct pdev_80211_stats {
-	uint64_t cs_tx_hw_retries;
-	uint64_t cs_tx_hw_failures;
+	uint64_t cs_tx_beacon;
+	uint32_t cs_be_nobuf;
+	uint32_t cs_tx_buf_count;
+	uint32_t cs_tx_packets;
+	uint32_t cs_rx_packets;
+	uint32_t cs_tx_mgmt;
+	uint32_t cs_tx_num_data;
+	uint32_t cs_rx_num_data;
+	uint32_t cs_rx_mgmt;
+	uint32_t cs_rx_num_mgmt;
+	uint32_t cs_rx_num_ctl;
+	uint64_t cs_rx_ctrl;
+	uint64_t cs_tx_ctrl;
+	uint32_t cs_tx_rssi;
+	uint32_t cs_tx_mcs[10];
+	uint32_t cs_rx_mcs[10];
+	uint32_t cs_rx_rssi_comb;
+	struct pdev_rx_rssi cs_rx_rssi_chain0;
+	struct pdev_rx_rssi cs_rx_rssi_chain1;
+	struct pdev_rx_rssi cs_rx_rssi_chain2;
+	struct pdev_rx_rssi cs_rx_rssi_chain3;
+	uint64_t cs_rx_bytes;
+	uint64_t cs_tx_bytes;
+	uint32_t cs_tx_compaggr;
+	uint32_t cs_rx_aggr;
+	uint32_t cs_tx_bawadv;
+	uint32_t cs_tx_compunaggr;
+	uint32_t cs_rx_overrun;
+	uint32_t cs_rx_crypt_err;
+	uint32_t cs_rx_mic_err;
+	uint32_t cs_rx_crc_err;
+	uint32_t cs_rx_phy_err;
+	uint32_t cs_rx_ack_err;
+	uint32_t cs_rx_rts_err;
+	uint32_t cs_rx_rts_success;
+	uint32_t cs_rx_fcs_err;
+	uint32_t cs_no_beacons;
+	uint32_t cs_mib_int_count;
+	uint32_t cs_rx_looplimit_start;
+	uint32_t cs_rx_looplimit_end;
+	uint8_t  cs_ap_stats_tx_cal_enable;
+	uint8_t  cs_self_bss_util;
+	uint8_t  cs_obss_util;
+	uint32_t cs_tgt_asserts;
+	int16_t  cs_chan_nf;
+	uint32_t cs_rx_last_msdu_unset_cnt;
+	int16_t  cs_chan_nf_sec80;
+	uint64_t cs_wmi_tx_mgmt;
+	uint64_t cs_wmi_tx_mgmt_completions;
+	uint32_t cs_wmi_tx_mgmt_completion_err;
+	uint32_t cs_peer_delete_req;
+	uint32_t cs_peer_delete_resp;
+	uint32_t cs_rx_mgmt_rssi_drop;
+	uint32_t cs_tx_retries;
+	uint32_t cs_rx_data_bytes;
+	uint32_t cs_tx_frame_count;
+	uint32_t cs_rx_frame_count;
+	uint32_t cs_rx_clear_count;
+	uint32_t cs_cycle_count;
+	uint32_t cs_phy_err_count;
+	uint32_t cs_chan_tx_pwr;
+
+	/* at places of copying required for scn-stats, copy till here only */
+	struct pdev_hw_stats hw_stats;
 };
 
 /**

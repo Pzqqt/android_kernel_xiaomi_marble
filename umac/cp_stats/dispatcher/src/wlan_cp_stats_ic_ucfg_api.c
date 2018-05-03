@@ -22,11 +22,12 @@
  * This file provide APIs definition for registering cp stats cfg80211 command
  * handlers
  */
-#include "wlan_cp_stats_ic_ucfg_api.h"
+#include <wlan_cp_stats_ic_ucfg_api.h>
 #include <wlan_cfg80211_ic_cp_stats.h>
 #include <wlan_cp_stats_ic_atf_defs.h>
 #include <wlan_cp_stats_ic_defs.h>
 #include "../../core/src/wlan_cp_stats_cmn_api_i.h"
+#include <qdf_module.h>
 
 QDF_STATUS wlan_cp_stats_psoc_cs_init(struct psoc_cp_stats *psoc_cs)
 {
@@ -116,9 +117,8 @@ QDF_STATUS wlan_ucfg_get_peer_cp_stats(struct wlan_objmgr_peer *peer,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS
-wlan_ucfg_get_vdev_cp_stats(struct wlan_objmgr_vdev *vdev,
-			    struct vdev_ic_cp_stats *vdev_cps)
+QDF_STATUS wlan_ucfg_get_vdev_cp_stats(struct wlan_objmgr_vdev *vdev,
+				       struct vdev_ic_cp_stats *vdev_cps)
 {
 	struct vdev_cp_stats *vdev_cs;
 
@@ -143,3 +143,113 @@ wlan_ucfg_get_vdev_cp_stats(struct wlan_objmgr_vdev *vdev,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wlan_ucfg_get_pdev_cp_stats(struct wlan_objmgr_pdev *pdev,
+				       struct pdev_ic_cp_stats *pdev_cps)
+{
+	struct pdev_cp_stats *pdev_cs;
+
+	if (!pdev) {
+		cp_stats_err("Invalid input, pdev obj is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!pdev_cps) {
+		cp_stats_err("Invalid input, pdev cp obj is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev_cs = wlan_cp_stats_get_pdev_stats_obj(pdev);
+	if (pdev_cs && pdev_cs->pdev_stats) {
+		wlan_cp_stats_pdev_obj_lock(pdev_cs);
+		qdf_mem_copy(pdev_cps, pdev_cs->pdev_stats,
+			     sizeof(*pdev_cps));
+		wlan_cp_stats_pdev_obj_unlock(pdev_cs);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wlan_ucfg_get_pdev_hw_cp_stats(struct wlan_objmgr_pdev *pdev,
+					  struct pdev_hw_stats *hw_stats)
+{
+	struct pdev_cp_stats *pdev_cs;
+	struct pdev_ic_cp_stats *pdev_cps;
+
+	if (!pdev) {
+		cp_stats_err("Invalid input, pdev obj is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!hw_stats) {
+		cp_stats_err("Invalid input, pdev hw_stats is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev_cs = wlan_cp_stats_get_pdev_stats_obj(pdev);
+	if (pdev_cs && pdev_cs->pdev_stats) {
+		pdev_cps = pdev_cs->pdev_stats;
+		wlan_cp_stats_pdev_obj_lock(pdev_cs);
+		qdf_mem_copy(hw_stats, &pdev_cps->stats.hw_stats,
+			     sizeof(*hw_stats));
+		wlan_cp_stats_pdev_obj_unlock(pdev_cs);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wlan_ucfg_set_pdev_hw_cp_stats(struct wlan_objmgr_pdev *pdev,
+					  struct pdev_hw_stats *hw_stats)
+{
+	struct pdev_cp_stats *pdev_cs;
+	struct pdev_ic_cp_stats *pdev_cps;
+
+	if (!pdev) {
+		cp_stats_err("Invalid input, pdev obj is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!hw_stats) {
+		cp_stats_err("Invalid input, pdev hw_stats is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev_cs = wlan_cp_stats_get_pdev_stats_obj(pdev);
+	if (pdev_cs && pdev_cs->pdev_stats) {
+		pdev_cps = pdev_cs->pdev_stats;
+		wlan_cp_stats_pdev_obj_lock(pdev_cs);
+		qdf_mem_copy(&pdev_cps->stats.hw_stats, hw_stats,
+			     sizeof(*hw_stats));
+		wlan_cp_stats_pdev_obj_unlock(pdev_cs);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+struct pdev_ic_cp_stats
+*wlan_ucfg_get_pdev_cp_stats_ref(struct wlan_objmgr_pdev *pdev)
+{
+	struct pdev_cp_stats *pdev_cs = NULL;
+
+	if (!pdev) {
+		cp_stats_err("pdev is null");
+		return NULL;
+	}
+
+	pdev_cs = wlan_cp_stats_get_pdev_stats_obj(pdev);
+	if (pdev_cs && pdev_cs->pdev_stats)
+		return pdev_cs->pdev_stats;
+
+	return NULL;
+}
+
+struct pdev_ic_cp_stats
+*wlan_get_pdev_cp_stats_ref(struct  wlan_objmgr_pdev *pdev)
+{
+	return wlan_ucfg_get_pdev_cp_stats_ref(pdev);
+}
+
+qdf_export_symbol(wlan_get_pdev_cp_stats_ref);

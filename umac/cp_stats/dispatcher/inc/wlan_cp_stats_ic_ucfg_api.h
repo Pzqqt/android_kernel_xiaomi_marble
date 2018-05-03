@@ -29,6 +29,138 @@
 #include <wlan_cp_stats_ic_defs.h>
 #include "../../core/src/wlan_cp_stats_defs.h"
 
+#define UCFG_PDEV_CP_STATS_SET_FUNCS(field) \
+	static inline void \
+	ucfg_pdev_cp_stats_##field##_inc(struct wlan_objmgr_pdev *_pdev, \
+					 uint64_t _val) \
+	{ \
+		struct pdev_cp_stats *_pdev_cs = \
+			wlan_cp_stats_get_pdev_stats_obj(_pdev); \
+		if (_pdev_cs) { \
+			struct pdev_ic_cp_stats *_pdev_ics = \
+						_pdev_cs->pdev_stats; \
+			if (_pdev_ics) { \
+				_pdev_ics->stats.cs_##field += _val;\
+			} \
+		} \
+	} \
+	static inline void \
+	ucfg_pdev_cp_stats_##field##_dec(struct wlan_objmgr_pdev *_pdev, \
+					 uint64_t _val) \
+	{ \
+		struct pdev_cp_stats *_pdev_cs = \
+			wlan_cp_stats_get_pdev_stats_obj(_pdev); \
+		if (_pdev_cs) { \
+			struct pdev_ic_cp_stats *_pdev_ics = \
+						_pdev_cs->pdev_stats; \
+			if (_pdev_ics) { \
+				_pdev_ics->stats.cs_##field -= _val;\
+			} \
+		} \
+	} \
+	static inline void \
+	ucfg_pdev_cp_stats_##field##_update(struct wlan_objmgr_pdev *_pdev, \
+					    uint64_t _val) \
+	{ \
+		struct pdev_cp_stats *_pdev_cs = \
+				wlan_cp_stats_get_pdev_stats_obj(_pdev); \
+		if (_pdev_cs) { \
+			struct pdev_ic_cp_stats *_pdev_ics = \
+						_pdev_cs->pdev_stats; \
+			if (_pdev_ics) { \
+				_pdev_ics->stats.cs_##field = _val;\
+			} \
+		} \
+	}
+
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_beacon);
+UCFG_PDEV_CP_STATS_SET_FUNCS(be_nobuf);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_buf_count);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_packets);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_packets);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_mgmt);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_num_data);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_num_data);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_mgmt);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_num_mgmt);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_num_ctl);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_ctrl);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_ctrl);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_rssi);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_rssi_comb);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_bytes);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_bytes);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_compaggr);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_aggr);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_bawadv);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_compunaggr);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_overrun);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_crypt_err);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_mic_err);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_crc_err);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_phy_err);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_ack_err);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_rts_err);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_rts_success);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_fcs_err);
+UCFG_PDEV_CP_STATS_SET_FUNCS(no_beacons);
+UCFG_PDEV_CP_STATS_SET_FUNCS(mib_int_count);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_looplimit_start);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_looplimit_end);
+UCFG_PDEV_CP_STATS_SET_FUNCS(ap_stats_tx_cal_enable);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tgt_asserts);
+UCFG_PDEV_CP_STATS_SET_FUNCS(chan_nf);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_last_msdu_unset_cnt);
+UCFG_PDEV_CP_STATS_SET_FUNCS(chan_nf_sec80);
+UCFG_PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt);
+UCFG_PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt_completions);
+UCFG_PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt_completion_err);
+UCFG_PDEV_CP_STATS_SET_FUNCS(peer_delete_req);
+UCFG_PDEV_CP_STATS_SET_FUNCS(peer_delete_resp);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_mgmt_rssi_drop);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_retries);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_data_bytes);
+UCFG_PDEV_CP_STATS_SET_FUNCS(tx_frame_count);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_frame_count);
+UCFG_PDEV_CP_STATS_SET_FUNCS(rx_clear_count);
+UCFG_PDEV_CP_STATS_SET_FUNCS(cycle_count);
+UCFG_PDEV_CP_STATS_SET_FUNCS(phy_err_count);
+UCFG_PDEV_CP_STATS_SET_FUNCS(chan_tx_pwr);
+UCFG_PDEV_CP_STATS_SET_FUNCS(self_bss_util);
+UCFG_PDEV_CP_STATS_SET_FUNCS(obss_util);
+
+#define UCFG_PDEV_CP_STATS_GET_FUNCS(field) \
+	static inline uint64_t \
+	ucfg_pdev_cp_stats_##field##_get(struct wlan_objmgr_pdev *_pdev) \
+	{ \
+		struct pdev_cp_stats *_pdev_cs = \
+				wlan_cp_stats_get_pdev_stats_obj(_pdev); \
+		struct pdev_ic_cp_stats *_pdev_ics; \
+		if (_pdev_cs) { \
+			_pdev_ics = _pdev_cs->pdev_stats; \
+			if (_pdev_ics) \
+				return _pdev_ics->stats.cs_##field; \
+		} \
+		return 0; \
+	}
+
+UCFG_PDEV_CP_STATS_GET_FUNCS(ap_stats_tx_cal_enable);
+UCFG_PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt);
+UCFG_PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt_completions);
+UCFG_PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt_completion_err);
+UCFG_PDEV_CP_STATS_GET_FUNCS(tgt_asserts);
+
+static inline void ucfg_pdev_cp_stats_reset(struct wlan_objmgr_pdev *_pdev)
+{
+	struct pdev_cp_stats *pdev_cps = NULL;
+
+	pdev_cps = wlan_cp_stats_get_pdev_stats_obj(_pdev);
+	if (!pdev_cps)
+		return;
+
+	qdf_mem_zero(pdev_cps->pdev_stats, sizeof(struct pdev_ic_cp_stats));
+}
+
 #define UCFG_VDEV_CP_STATS_SET_FUNCS(field) \
 	static inline void \
 	ucfg_vdev_cp_stats_##field##_inc(struct wlan_objmgr_vdev *_vdev, \
@@ -458,6 +590,45 @@ QDF_STATUS wlan_ucfg_get_peer_cp_stats(struct wlan_objmgr_peer *peer,
  */
 QDF_STATUS wlan_ucfg_get_vdev_cp_stats(struct wlan_objmgr_vdev *vdev,
 				       struct vdev_ic_cp_stats *vdev_cps);
+
+/**
+ * wlan_ucfg_get_pdev_cp_stats_ref() - API to get reference to pdev cp stats
+ * @pdev_obj: pointer to pdev object
+ *
+ * Return: pdev_ic_cp_stats or NULL
+ */
+struct pdev_ic_cp_stats
+*wlan_ucfg_get_pdev_cp_stats_ref(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_ucfg_get_pdev_cp_stats() - ucfg API to get pdev cp stats
+ * @pdev_obj: pointer to pdev object
+ * @pdev_cps: pointer to pdev cp stats object to populate
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS wlan_ucfg_get_pdev_cp_stats(struct wlan_objmgr_pdev *pdev,
+				       struct pdev_ic_cp_stats *pdev_cps);
+
+/**
+ * wlan_ucfg_get_pdev_cp_stats() - ucfg API to get pdev hw stats
+ * @pdev_obj: pointer to pdev object
+ * @hw_stats: pointer to pdev hw cp stats to populate
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS wlan_ucfg_get_pdev_hw_cp_stats(struct wlan_objmgr_pdev *pdev,
+					  struct pdev_hw_stats *hw_stats);
+
+/**
+ * wlan_ucfg_set_pdev_cp_stats() - ucfg API to set pdev hw stats
+ * @pdev_obj: pointer to pdev object
+ * @hw_stats: pointer to pdev hw cp stats
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS wlan_ucfg_set_pdev_hw_cp_stats(struct wlan_objmgr_pdev *pdev,
+					  struct pdev_hw_stats *hw_stats);
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_IC_UCFG_API_H__ */
