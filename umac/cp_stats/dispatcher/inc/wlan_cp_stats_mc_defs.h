@@ -73,6 +73,14 @@ enum stats_req_type {
  * @oem_response_wake_up_count: oem response wakeup count
  * @pwr_save_fail_detected:     pwr save fail detected wakeup count
  * @scan_11d                    11d scan wakeup count
+ * @mgmt_assoc: association request management frame
+ * @mgmt_disassoc: disassociation management frame
+ * @mgmt_assoc_resp: association response management frame
+ * @mgmt_reassoc: reassociate request management frame
+ * @mgmt_reassoc_resp: reassociate response management frame
+ * @mgmt_auth: authentication managament frame
+ * @mgmt_deauth: deauthentication management frame
+ * @mgmt_action: action managament frame
  */
 struct wake_lock_stats {
 	uint32_t ucast_wake_up_count;
@@ -92,6 +100,14 @@ struct wake_lock_stats {
 	uint32_t oem_response_wake_up_count;
 	uint32_t pwr_save_fail_detected;
 	uint32_t scan_11d;
+	uint32_t mgmt_assoc;
+	uint32_t mgmt_disassoc;
+	uint32_t mgmt_assoc_resp;
+	uint32_t mgmt_reassoc;
+	uint32_t mgmt_reassoc_resp;
+	uint32_t mgmt_auth;
+	uint32_t mgmt_deauth;
+	uint32_t mgmt_action;
 };
 
 struct stats_event;
