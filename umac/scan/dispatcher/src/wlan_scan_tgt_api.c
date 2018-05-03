@@ -128,8 +128,17 @@ tgt_scan_start(struct scan_start_request *req)
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_vdev *vdev = req->vdev;
 
+	if (!vdev) {
+		scm_err("vdev is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
 	psoc = wlan_vdev_get_psoc(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
+	if (!psoc || !pdev) {
+		scm_err("psoc: 0x%pK or pdev: 0x%pK is NULL", psoc, pdev);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 
 	scan_ops = wlan_psoc_get_scan_txops(psoc);
 	/* invoke wmi_unified_scan_start_cmd_send() */
