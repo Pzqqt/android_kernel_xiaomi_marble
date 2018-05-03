@@ -899,6 +899,61 @@ fail_cmd:
 	return ret;
 }
 
+static int q6afe_set_aanc_level(void)
+{
+	struct param_hdr_v3 param_hdr;
+	struct afe_param_id_aanc_noise_reduction aanc_noise_level;
+	int ret = 0;
+	uint16_t tx_port = 0;
+
+	if (!this_afe.aanc_info.aanc_active)
+		return -EINVAL;
+
+	pr_debug("%s: level: %d\n", __func__, this_afe.aanc_info.level);
+	memset(&aanc_noise_level, 0, sizeof(aanc_noise_level));
+	aanc_noise_level.minor_version = 1;
+	aanc_noise_level.ad_beta = this_afe.aanc_info.level;
+
+	memset(&param_hdr, 0, sizeof(param_hdr));
+	param_hdr.module_id = AFE_MODULE_AANC;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AFE_PARAM_ID_AANC_NOISE_REDUCTION;
+	param_hdr.param_size = sizeof(struct afe_param_id_aanc_noise_reduction);
+
+	tx_port = this_afe.aanc_info.aanc_tx_port;
+	ret = q6afe_pack_and_set_param_in_band(tx_port,
+					       q6audio_get_port_index(tx_port),
+					       param_hdr,
+					       (u8 *) &aanc_noise_level);
+	if (ret)
+		pr_err("%s: AANC noise level enable failed for tx_port 0x%x ret %d\n",
+			__func__, tx_port, ret);
+	return ret;
+}
+
+/**
+ * afe_set_aanc_noise_level - controls aanc noise reduction strength
+ *
+ * @level: Noise level to be controlled
+ *
+ * Returns 0 on success or error on failure.
+ */
+int afe_set_aanc_noise_level(int level)
+{
+	int ret = 0;
+
+	if (this_afe.aanc_info.level == level)
+		return ret;
+
+	mutex_lock(&this_afe.afe_cmd_lock);
+	this_afe.aanc_info.level = level;
+	ret = q6afe_set_aanc_level();
+	mutex_unlock(&this_afe.afe_cmd_lock);
+
+	return ret;
+}
+EXPORT_SYMBOL(afe_set_aanc_noise_level);
+
 /* This function shouldn't be called directly. Instead call q6afe_get_param. */
 static int q6afe_get_params_v2(u16 port_id, int index,
 			       struct mem_mapping_hdr *mem_hdr,
@@ -2336,6 +2391,8 @@ static int afe_aanc_port_cfg(void *apr, uint16_t tx_port, uint16_t rx_port)
 	if (ret)
 		pr_err("%s: AFE AANC port config failed for tx_port 0x%x, rx_port 0x%x ret %d\n",
 		       __func__, tx_port, rx_port, ret);
+	else
+		q6afe_set_aanc_level();
 
 	return ret;
 }

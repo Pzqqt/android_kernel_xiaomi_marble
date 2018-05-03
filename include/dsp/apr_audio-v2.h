@@ -10027,6 +10027,17 @@ struct afe_param_id_cdc_aanc_version {
 	uint32_t aanc_hw_version;
 } __packed;
 
+#define AFE_PARAM_ID_AANC_NOISE_REDUCTION    0x000102AB
+struct afe_param_id_aanc_noise_reduction {
+	/* Minor version used for tracking the version of the module's
+	 * hw version
+	 */
+	uint32_t minor_version;
+
+	/* Target noise level */
+	int32_t ad_beta;
+} __packed;
+
 struct afe_param_id_clip_bank_sel {
 	/* Minor version used for tracking the version of the module's
 	 * hw version
