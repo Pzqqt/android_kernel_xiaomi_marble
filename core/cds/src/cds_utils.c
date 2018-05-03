@@ -580,7 +580,8 @@ bool cds_is_gmac_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm,
 {
 	struct ieee80211_mmie_16 *mmie;
 	struct ieee80211_frame *wh;
-	uint8_t rx_ipn[6], aad[AAD_LEN], mic[IEEE80211_MMIE_GMAC_MICLEN];
+	uint8_t rx_ipn[6], aad[AAD_LEN];
+	uint8_t mic[IEEE80211_MMIE_GMAC_MICLEN] = {0};
 	uint16_t data_len;
 	uint8_t gmac_nonce[GMAC_NONCE_LEN];
 	uint8_t iv[AES_BLOCK_SIZE] = {0};
