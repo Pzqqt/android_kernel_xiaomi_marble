@@ -5701,9 +5701,6 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 					      1].surplus_bw_allowance;
 		log_ptr->suspension_interval =
 			pACInfo->curr_QoSInfo[tspec_pending -
-					      1].surplus_bw_allowance;
-		log_ptr->suspension_interval =
-			pACInfo->curr_QoSInfo[tspec_pending -
 					      1].suspension_interval;
 		log_ptr->svc_start_time =
 			pACInfo->curr_QoSInfo[tspec_pending - 1].svc_start_time;
