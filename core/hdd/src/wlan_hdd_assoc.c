@@ -2913,10 +2913,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		hdd_debug("check for SAP restart");
-		policy_mgr_check_concurrent_intf_and_restart_sap(
-			hdd_ctx->hdd_psoc);
-
 		DPTRACE(qdf_dp_trace_mgmt_pkt(QDF_DP_TRACE_MGMT_PACKET_RECORD,
 			adapter->session_id,
 			QDF_TRACE_DEFAULT_PDEV_ID,
@@ -3286,6 +3282,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		qdf_mem_zero(&adapter->hdd_stats.hdd_pmf_stats,
 			     sizeof(adapter->hdd_stats.hdd_pmf_stats));
 #endif
+		hdd_debug("check for SAP restart");
+		policy_mgr_check_concurrent_intf_and_restart_sap(
+			hdd_ctx->hdd_psoc);
 	} else {
 		bool connect_timeout = false;
 
