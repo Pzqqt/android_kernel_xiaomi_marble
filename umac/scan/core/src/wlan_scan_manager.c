@@ -818,6 +818,7 @@ QDF_STATUS scm_scan_start_flush_callback(struct scheduler_msg *msg)
 	}
 
 	req = msg->bodyptr;
+	scm_post_internal_scan_complete_event(req, SCAN_REASON_CANCELLED);
 	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
 	scm_scan_free_scan_request_mem(req);
 
