@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -41,6 +41,8 @@ struct msm_dai_q6_hdmi_dai_data {
 	DECLARE_BITMAP(status_mask, STATUS_MAX);
 	u32 rate;
 	u32 channels;
+	u32 stream_idx;
+	u32 ctl_idx;
 	struct msm_ext_disp_ca ca;
 	union afe_port_config port_config;
 };
@@ -76,6 +78,42 @@ static int msm_dai_q6_ext_disp_format_get(struct snd_kcontrol *kcontrol,
 		dai_data->port_config.hdmi_multi_ch.datatype;
 	pr_debug("%s: value = %ld\n",
 		 __func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int msm_dai_q6_ext_disp_device_idx_put(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_hdmi_dai_data *dai_data = kcontrol->private_data;
+
+	if (!dai_data) {
+		pr_err("%s: dai_data is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	dai_data->ctl_idx = ucontrol->value.integer.value[0];
+	dai_data->stream_idx = ucontrol->value.integer.value[1];
+	pr_debug("%s: DP ctl id %d stream id %d\n", __func__,
+		 dai_data->ctl_idx, dai_data->stream_idx);
+
+	return 0;
+}
+
+static int msm_dai_q6_ext_disp_device_idx_get(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_hdmi_dai_data *dai_data = kcontrol->private_data;
+
+	if (!dai_data) {
+		pr_err("%s: dai_data is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	ucontrol->value.integer.value[0] = dai_data->ctl_idx;
+	ucontrol->value.integer.value[1] = dai_data->stream_idx;
+	pr_debug("%s: DP ctl id %d stream id %d\n", __func__,
+		 dai_data->ctl_idx, dai_data->stream_idx);
 
 	return 0;
 }
@@ -188,6 +226,10 @@ static const struct snd_kcontrol_new display_port_config_controls[] = {
 				 HDMI_RX_CA_MAX, 0, 1,
 				 msm_dai_q6_ext_disp_ca_get,
 				 msm_dai_q6_ext_disp_ca_put),
+	SOC_SINGLE_MULTI_EXT("Display Port RX DEVICE IDX", SND_SOC_NOPM, 0,
+				 1, 0, 1,
+				 msm_dai_q6_ext_disp_device_idx_get,
+				 msm_dai_q6_ext_disp_device_idx_put),
 	{
 		.access = SNDRV_CTL_ELEM_ACCESS_READ,
 		.iface	= SNDRV_CTL_ELEM_IFACE_PCM,
@@ -297,6 +339,18 @@ static int msm_dai_q6_hdmi_prepare(struct snd_pcm_substream *substream,
 							      dai_data->ca.ca;
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
+
+		rc = afe_set_display_stream(dai->id, dai_data->stream_idx,
+						dai_data->ctl_idx);
+		if (rc < 0) {
+			dev_err(dai->dev, "fail to set AFE ctl, stream ID params %x\n",
+				dai->id);
+			if (rc != -EOPNOTSUPP) {
+				dev_err(dai->dev, "not starting AFE port\n");
+				goto err;
+			}
+		}
+
 		rc = afe_port_start(dai->id, &dai_data->port_config,
 				    dai_data->rate);
 		if (rc < 0)
@@ -307,6 +361,7 @@ static int msm_dai_q6_hdmi_prepare(struct snd_pcm_substream *substream,
 				dai_data->status_mask);
 	}
 
+err:
 	return rc;
 }
 
@@ -365,6 +420,10 @@ static int msm_dai_q6_hdmi_dai_probe(struct snd_soc_dai *dai)
 				 snd_ctl_new1(kcontrol, dai_data));
 
 		kcontrol = &display_port_config_controls[2];
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(kcontrol, dai_data));
+
+		kcontrol = &display_port_config_controls[3];
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				snd_ctl_new1(kcontrol, dai));
 	} else {
