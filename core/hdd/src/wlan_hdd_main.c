@@ -13811,11 +13811,21 @@ void hdd_pld_ipa_uc_shutdown_pipes(void)
 void hdd_set_rx_mode_rps(bool enable)
 {
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
 
-	if (adapter && hdd_ctx &&
-	    !hdd_ctx->rps && cds_cfg->uc_offload_enabled) {
+	if (!cds_cfg)
+		return;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx)
+		return;
+
+	adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
+	if (!adapter)
+		return;
+
+	if (!hdd_ctx->rps && cds_cfg->uc_offload_enabled) {
 		if (enable && !cds_cfg->rps_enabled)
 			hdd_send_rps_ind(adapter);
 		else if (!enable && cds_cfg->rps_enabled)
