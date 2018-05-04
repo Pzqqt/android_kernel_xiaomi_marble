@@ -114,6 +114,8 @@ QDF_STATUS ucfg_p2p_roc_req(struct wlan_objmgr_psoc *soc,
 	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct p2p_roc_context *roc_ctx;
+	QDF_STATUS status;
+	int32_t id;
 
 	p2p_debug("soc:%pK, vdev_id:%d, chan:%d, phy_mode:%d, duration:%d",
 		soc, roc_req->vdev_id, roc_req->chan,
@@ -137,7 +139,14 @@ QDF_STATUS ucfg_p2p_roc_req(struct wlan_objmgr_psoc *soc,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	*cookie = (uintptr_t)roc_ctx;
+	status = qdf_idr_alloc(&p2p_soc_obj->p2p_idr, roc_ctx, &id);
+	if (status != QDF_STATUS_SUCCESS) {
+		qdf_mem_free(roc_ctx);
+		p2p_err("failed to alloc idr, status %d", status);
+		return status;
+	}
+
+	*cookie = (uint64_t)id;
 	roc_ctx->p2p_soc_obj = p2p_soc_obj;
 	roc_ctx->vdev_id = roc_req->vdev_id;
 	roc_ctx->chan = roc_req->chan;
@@ -145,10 +154,12 @@ QDF_STATUS ucfg_p2p_roc_req(struct wlan_objmgr_psoc *soc,
 	roc_ctx->duration = roc_req->duration;
 	roc_ctx->roc_state = ROC_STATE_IDLE;
 	roc_ctx->roc_type = USER_REQUESTED;
+	roc_ctx->id = id;
 	msg.type = P2P_ROC_REQ;
 	msg.bodyptr = roc_ctx;
 	msg.callback = p2p_process_cmd;
 	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	p2p_debug("cookie = 0x%llx", *cookie);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -159,6 +170,7 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct cancel_roc_context *cancel_roc;
+	void *roc_ctx = NULL;
 
 	p2p_debug("soc:%pK, cookie:0x%llx", soc, cookie);
 
@@ -174,6 +186,12 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (QDF_STATUS_SUCCESS != qdf_idr_find(&p2p_soc_obj->p2p_idr,
+					       cookie, &roc_ctx)) {
+		p2p_err("invalid id");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	cancel_roc = qdf_mem_malloc(sizeof(*cancel_roc));
 	if (!cancel_roc) {
 		p2p_err("failed to allocate cancel p2p roc");
@@ -181,7 +199,7 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	}
 
 	cancel_roc->p2p_soc_obj = p2p_soc_obj;
-	cancel_roc->cookie = cookie;
+	cancel_roc->cookie = (uintptr_t)roc_ctx;
 	msg.type = P2P_CANCEL_ROC_REQ;
 	msg.bodyptr = cancel_roc;
 	msg.callback = p2p_process_cmd;
@@ -226,6 +244,8 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct  tx_action_context *tx_action;
+	QDF_STATUS status;
+	int32_t id;
 
 	p2p_debug("soc:%pK, vdev_id:%d, chan:%d, wait:%d, buf_len:%d, cck:%d, no ack:%d, off chan:%d",
 		soc, mgmt_frm->vdev_id, mgmt_frm->chan,
@@ -253,9 +273,17 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	/* return cookie just for ota ack frames */
 	if (mgmt_frm->dont_wait_for_ack)
 		*cookie = 0;
-	else
-		*cookie = (uintptr_t)tx_action;
+	else {
+		status = qdf_idr_alloc(&p2p_soc_obj->p2p_idr,
+				       tx_action, &id);
+		if (status != QDF_STATUS_SUCCESS) {
+			qdf_mem_free(tx_action);
+			p2p_err("failed to alloc idr, status :%d", status);
+			return status;
+		}
+	}
 
+	*cookie = (uint64_t)id;
 	tx_action->p2p_soc_obj = p2p_soc_obj;
 	tx_action->vdev_id = mgmt_frm->vdev_id;
 	tx_action->chan = mgmt_frm->chan;
@@ -273,6 +301,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	}
 	qdf_mem_copy(tx_action->buf, mgmt_frm->buf, tx_action->buf_len);
 	tx_action->nbuf = NULL;
+	tx_action->id = id;
 	msg.type = P2P_MGMT_TX;
 	msg.bodyptr = tx_action;
 	msg.callback = p2p_process_cmd;
@@ -287,6 +316,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct cancel_roc_context *cancel_tx;
+	void *tx_ctx;
 
 	p2p_debug("soc:%pK, cookie:0x%llx", soc, cookie);
 
@@ -302,6 +332,12 @@ QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (QDF_STATUS_SUCCESS != qdf_idr_find(&p2p_soc_obj->p2p_idr,
+					       cookie, &tx_ctx)) {
+		p2p_err("invalid id");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	cancel_tx = qdf_mem_malloc(sizeof(*cancel_tx));
 	if (!cancel_tx) {
 		p2p_err("Failed to allocate cancel p2p roc");
@@ -309,7 +345,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 	}
 
 	cancel_tx->p2p_soc_obj = p2p_soc_obj;
-	cancel_tx->cookie = cookie;
+	cancel_tx->cookie = (uintptr_t)tx_ctx;
 	msg.type = P2P_MGMT_TX_CANCEL;
 	msg.bodyptr = cancel_tx;
 	msg.callback = p2p_process_cmd;
