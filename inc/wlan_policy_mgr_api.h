@@ -1135,6 +1135,14 @@ QDF_STATUS policy_mgr_set_connection_update(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS policy_mgr_set_opportunistic_update(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * policy_mgr_stop_opportunistic_timer() - Stops opportunistic timer
+ * @psoc: PSOC object information
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_stop_opportunistic_timer(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_restart_opportunistic_timer() - Restarts opportunistic timer
  * @psoc: PSOC object information
  * @check_state: check timer state if this flag is set, else restart

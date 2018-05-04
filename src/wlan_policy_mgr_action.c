@@ -1117,6 +1117,24 @@ QDF_STATUS policy_mgr_set_opportunistic_update(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS policy_mgr_stop_opportunistic_timer(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *policy_mgr_ctx;
+
+	policy_mgr_ctx = policy_mgr_get_context(psoc);
+	if (!policy_mgr_ctx) {
+		policy_mgr_err("Invalid context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (policy_mgr_ctx->dbs_opportunistic_timer.state !=
+	    QDF_TIMER_STATE_RUNNING)
+		return QDF_STATUS_SUCCESS;
+
+	qdf_mc_timer_stop(&policy_mgr_ctx->dbs_opportunistic_timer);
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS policy_mgr_restart_opportunistic_timer(
 		struct wlan_objmgr_psoc *psoc, bool check_state)
 {
