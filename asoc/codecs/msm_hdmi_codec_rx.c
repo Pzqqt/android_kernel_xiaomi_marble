@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -24,18 +24,49 @@
 #define AUD_EXT_DISP_ACK_CONNECT    (AUDIO_ACK_CONNECT)
 #define AUD_EXT_DISP_ACK_ENABLE     (AUDIO_ACK_SET_ENABLE | AUDIO_ACK_ENABLE)
 
+#define SOC_EXT_DISP_AUDIO_TYPE(index) \
+	static SOC_ENUM_SINGLE_DECL(ext_disp_audio_type##index, SND_SOC_NOPM, \
+				    index, ext_disp_audio_type_text)
+#define SOC_EXT_DISP_AUDIO_ACK_STATE(index) \
+	static SOC_ENUM_SINGLE_DECL(ext_disp_audio_ack_state##index, \
+			    SND_SOC_NOPM, index, ext_disp_audio_ack_text)
+
+#define SWITCH_DP_CODEC(codec_info, codec_data, dai_id) \
+	codec_info.type = EXT_DISPLAY_TYPE_DP; \
+	codec_info.ctrl_id = codec_data->ctl[dai_id]; \
+	codec_info.stream_id = codec_data->stream[dai_id]; \
+	msm_ext_disp_select_audio_codec(codec_data->ext_disp_core_pdev, \
+				&codec_info)
+
+enum {
+	DP_STREAM0 = 0,
+	DP_STREAM1,
+	DP_STREAM_MAX,
+};
+
+enum {
+	DP_DAI1 = 0,
+	DP_DAI2,
+	HDMI_DAI,
+	DP_DAI_MAX,
+};
+
 static const char *const ext_disp_audio_type_text[] = {"None", "HDMI", "DP"};
 static const char *const ext_disp_audio_ack_text[] = {"Disconnect",  "Connect",
 						      "Ack_Enable"};
 
-static SOC_ENUM_SINGLE_EXT_DECL(ext_disp_audio_type, ext_disp_audio_type_text);
-static SOC_ENUM_SINGLE_EXT_DECL(ext_disp_audio_ack_state,
-				ext_disp_audio_ack_text);
+SOC_EXT_DISP_AUDIO_TYPE(0);
+SOC_EXT_DISP_AUDIO_ACK_STATE(0);
+SOC_EXT_DISP_AUDIO_TYPE(1);
+SOC_EXT_DISP_AUDIO_ACK_STATE(1);
 
 struct msm_ext_disp_audio_codec_rx_data {
 	struct platform_device *ext_disp_core_pdev;
 	struct msm_ext_disp_audio_codec_ops ext_disp_ops;
 	int cable_status;
+	struct mutex dp_ops_lock;
+	int stream[DP_DAI_MAX];
+	int ctl[DP_DAI_MAX];
 };
 
 static int msm_ext_disp_edid_ctl_info(struct snd_kcontrol *kcontrol,
@@ -44,7 +75,9 @@ static int msm_ext_disp_edid_ctl_info(struct snd_kcontrol *kcontrol,
 	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
 	struct msm_ext_disp_audio_codec_rx_data *codec_data;
 	struct msm_ext_disp_audio_edid_blk edid_blk;
-	int rc;
+	int rc = 0;
+	struct msm_ext_disp_codec_id codec_info;
+	int dai_id = kcontrol->private_value;
 
 	codec_data = snd_soc_codec_get_drvdata(codec);
 
@@ -61,8 +94,14 @@ static int msm_ext_disp_edid_ctl_info(struct snd_kcontrol *kcontrol,
 		return 0;
 	}
 
+	dev_dbg(codec->dev, "%s: DP ctl id %d Stream id %d\n", __func__,
+		codec_data->ctl[dai_id], codec_data->stream[dai_id]);
+
+	mutex_lock(&codec_data->dp_ops_lock);
+	SWITCH_DP_CODEC(codec_info, codec_data, dai_id);
 	rc = codec_data->ext_disp_ops.get_audio_edid_blk(
 				codec_data->ext_disp_core_pdev, &edid_blk);
+	mutex_unlock(&codec_data->dp_ops_lock);
 	if (rc >= 0) {
 		uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
 		uinfo->count = edid_blk.audio_data_blk_size +
@@ -79,7 +118,9 @@ static int msm_ext_disp_edid_get(struct snd_kcontrol *kcontrol,
 	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
 	struct msm_ext_disp_audio_codec_rx_data *codec_data;
 	struct msm_ext_disp_audio_edid_blk edid_blk;
-	int rc;
+	struct msm_ext_disp_codec_id codec_info;
+	int rc = 0;
+	int dai_id = kcontrol->private_value;
 
 	codec_data = snd_soc_codec_get_drvdata(codec);
 	if (!codec_data || !codec_data->ext_disp_ops.get_audio_edid_blk) {
@@ -88,8 +129,14 @@ static int msm_ext_disp_edid_get(struct snd_kcontrol *kcontrol,
 		return -EINVAL;
 	}
 
+	dev_dbg(codec->dev, "%s: DP ctl id %d Stream id %d\n", __func__,
+		codec_data->ctl[dai_id], codec_data->stream[dai_id]);
+
+	mutex_lock(&codec_data->dp_ops_lock);
+	SWITCH_DP_CODEC(codec_info, codec_data, dai_id);
 	rc = codec_data->ext_disp_ops.get_audio_edid_blk(
 			codec_data->ext_disp_core_pdev, &edid_blk);
+	mutex_unlock(&codec_data->dp_ops_lock);
 	if (rc >= 0) {
 		if (sizeof(ucontrol->value.bytes.data) <
 			  (edid_blk.audio_data_blk_size +
@@ -123,7 +170,9 @@ static int msm_ext_disp_audio_type_get(struct snd_kcontrol *kcontrol,
 	struct msm_ext_disp_audio_codec_rx_data *codec_data;
 	enum msm_ext_disp_cable_state cable_state;
 	enum msm_ext_disp_type disp_type;
-	int rc;
+	struct msm_ext_disp_codec_id codec_info;
+	int rc = 0;
+	int dai_id = ((struct soc_enum *) kcontrol->private_value)->shift_l;
 
 	codec_data = snd_soc_codec_get_drvdata(codec);
 	if (!codec_data ||
@@ -134,13 +183,18 @@ static int msm_ext_disp_audio_type_get(struct snd_kcontrol *kcontrol,
 		return -EINVAL;
 	}
 
+	dev_dbg(codec->dev, "%s: DP ctl id %d Stream id %d\n", __func__,
+		codec_data->ctl[dai_id], codec_data->stream[dai_id]);
+
+	mutex_lock(&codec_data->dp_ops_lock);
+	SWITCH_DP_CODEC(codec_info, codec_data, dai_id);
 	cable_state = codec_data->ext_disp_ops.cable_status(
 				   codec_data->ext_disp_core_pdev, 1);
 	if (cable_state < 0) {
 		dev_err(codec->dev, "%s: Error retrieving cable state from ext_disp, err:%d\n",
 			__func__, cable_state);
 		rc = cable_state;
-		goto done;
+		goto cable_err;
 	}
 
 	codec_data->cable_status = cable_state;
@@ -149,11 +203,12 @@ static int msm_ext_disp_audio_type_get(struct snd_kcontrol *kcontrol,
 			__func__);
 		ucontrol->value.integer.value[0] = 0;
 		rc = 0;
-		goto done;
+		goto cable_err;
 	}
 
 	disp_type = codec_data->ext_disp_ops.get_intf_id(
 						codec_data->ext_disp_core_pdev);
+	mutex_unlock(&codec_data->dp_ops_lock);
 	if (disp_type >= 0) {
 		switch (disp_type) {
 		case EXT_DISPLAY_TYPE_DP:
@@ -177,7 +232,10 @@ static int msm_ext_disp_audio_type_get(struct snd_kcontrol *kcontrol,
 			__func__, disp_type);
 		rc = disp_type;
 	}
+	return rc;
 
+cable_err:
+	mutex_unlock(&codec_data->dp_ops_lock);
 done:
 	return rc;
 }
@@ -188,7 +246,9 @@ static int msm_ext_disp_audio_ack_set(struct snd_kcontrol *kcontrol,
 	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
 	struct msm_ext_disp_audio_codec_rx_data *codec_data;
 	u32 ack_state = 0;
-	int rc;
+	struct msm_ext_disp_codec_id codec_info;
+	int rc = 0;
+	int dai_id = ((struct soc_enum *) kcontrol->private_value)->shift_l;
 
 	codec_data = snd_soc_codec_get_drvdata(codec);
 	if (!codec_data ||
@@ -199,6 +259,9 @@ static int msm_ext_disp_audio_ack_set(struct snd_kcontrol *kcontrol,
 		rc = -EINVAL;
 		goto done;
 	}
+
+	dev_dbg(codec->dev, "%s: DP ctl id %d Stream id %d\n", __func__,
+		codec_data->ctl[dai_id], codec_data->stream[dai_id]);
 
 	switch (ucontrol->value.enumerated.item[0]) {
 	case 0:
@@ -220,12 +283,41 @@ static int msm_ext_disp_audio_ack_set(struct snd_kcontrol *kcontrol,
 	dev_dbg(codec->dev, "%s: control %d, ack set value 0x%x\n",
 		__func__, ucontrol->value.enumerated.item[0], ack_state);
 
+	mutex_lock(&codec_data->dp_ops_lock);
+	SWITCH_DP_CODEC(codec_info, codec_data, dai_id);
 	rc = codec_data->ext_disp_ops.acknowledge(
 			 codec_data->ext_disp_core_pdev, ack_state);
+	mutex_unlock(&codec_data->dp_ops_lock);
 	if (rc < 0) {
 		dev_err(codec->dev, "%s: error from acknowledge(), err:%d\n",
 			__func__, rc);
 	}
+
+done:
+	return rc;
+}
+
+static int msm_ext_disp_audio_device_set(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct msm_ext_disp_audio_codec_rx_data *codec_data;
+	int rc = 0;
+	int dai_id = ((struct soc_enum *) kcontrol->private_value)->shift_l;
+
+	codec_data = snd_soc_codec_get_drvdata(codec);
+	if (!codec_data) {
+		dev_err(codec->dev,
+			"%s: codec_data or ops acknowledge() is NULL\n",
+			__func__);
+		rc = -EINVAL;
+		goto done;
+	}
+
+	mutex_lock(&codec_data->dp_ops_lock);
+	codec_data->ctl[dai_id] = ucontrol->value.enumerated.item[0];
+	codec_data->stream[dai_id] = ucontrol->value.enumerated.item[1];
+	mutex_unlock(&codec_data->dp_ops_lock);
 
 done:
 	return rc;
@@ -239,6 +331,7 @@ static const struct snd_kcontrol_new msm_ext_disp_codec_rx_controls[] = {
 		.name   = "HDMI EDID",
 		.info   = msm_ext_disp_edid_ctl_info,
 		.get    = msm_ext_disp_edid_get,
+		.private_value = HDMI_DAI,
 	},
 	{
 		.access = SNDRV_CTL_ELEM_ACCESS_READ |
@@ -247,11 +340,36 @@ static const struct snd_kcontrol_new msm_ext_disp_codec_rx_controls[] = {
 		.name   = "Display Port EDID",
 		.info   = msm_ext_disp_edid_ctl_info,
 		.get    = msm_ext_disp_edid_get,
+		.private_value = DP_DAI1,
 	},
-	SOC_ENUM_EXT("External Display Type", ext_disp_audio_type,
+	{
+		.access = SNDRV_CTL_ELEM_ACCESS_READ |
+			  SNDRV_CTL_ELEM_ACCESS_VOLATILE,
+		.iface  = SNDRV_CTL_ELEM_IFACE_PCM,
+		.name   = "Display Port1 EDID",
+		.info   = msm_ext_disp_edid_ctl_info,
+		.get    = msm_ext_disp_edid_get,
+		.private_value = DP_DAI2,
+	},
+	SOC_ENUM_EXT("External Display Type",
+		     ext_disp_audio_type0,
 		     msm_ext_disp_audio_type_get, NULL),
-	SOC_ENUM_EXT("External Display Audio Ack", ext_disp_audio_ack_state,
+	SOC_ENUM_EXT("External Display1 Type",
+		     ext_disp_audio_type1,
+		     msm_ext_disp_audio_type_get, NULL),
+	SOC_ENUM_EXT("External Display Audio Ack",
+		     ext_disp_audio_ack_state0,
 		     NULL, msm_ext_disp_audio_ack_set),
+	SOC_ENUM_EXT("External Display1 Audio Ack",
+		     ext_disp_audio_ack_state1,
+		     NULL, msm_ext_disp_audio_ack_set),
+
+	SOC_SINGLE_EXT("External Display Audio Device",
+		       SND_SOC_NOPM, DP_DAI1, DP_STREAM_MAX, 0,
+		       NULL, msm_ext_disp_audio_device_set),
+	SOC_SINGLE_EXT("External Display1 Audio Device",
+		       SND_SOC_NOPM, DP_DAI2, DP_STREAM_MAX, 0,
+		       NULL, msm_ext_disp_audio_device_set),
 };
 
 static int msm_ext_disp_audio_codec_rx_dai_startup(
@@ -259,6 +377,7 @@ static int msm_ext_disp_audio_codec_rx_dai_startup(
 		struct snd_soc_dai *dai)
 {
 	int ret = 0;
+	struct msm_ext_disp_codec_id codec_info;
 	struct msm_ext_disp_audio_codec_rx_data *codec_data =
 			dev_get_drvdata(dai->codec->dev);
 
@@ -268,9 +387,15 @@ static int msm_ext_disp_audio_codec_rx_dai_startup(
 		return -EINVAL;
 	}
 
+	dev_dbg(dai->codec->dev, "%s: DP ctl id %d Stream id %d\n", __func__,
+		codec_data->ctl[dai->id], codec_data->stream[dai->id]);
+
+	mutex_lock(&codec_data->dp_ops_lock);
+	SWITCH_DP_CODEC(codec_info, codec_data, dai->id);
 	codec_data->cable_status =
 		codec_data->ext_disp_ops.cable_status(
 		codec_data->ext_disp_core_pdev, 1);
+	mutex_unlock(&codec_data->dp_ops_lock);
 	if (codec_data->cable_status < 0) {
 		dev_err(dai->dev,
 			"%s() ext disp core is not ready (ret val = %d)\n",
@@ -295,6 +420,7 @@ static int msm_ext_disp_audio_codec_rx_dai_hw_params(
 	u32 level_shift  = 0; /* 0dB */
 	bool down_mix = 0;
 	u32 num_channels = params_channels(params);
+	struct msm_ext_disp_codec_id codec_info;
 	int rc = 0;
 	struct msm_ext_disp_audio_setup_params audio_setup_params = {0};
 
@@ -306,6 +432,9 @@ static int msm_ext_disp_audio_codec_rx_dai_hw_params(
 			__func__);
 		return -EINVAL;
 	}
+
+	dev_dbg(dai->codec->dev, "%s: DP ctl id %d Stream id %d\n", __func__,
+		codec_data->ctl[dai->id], codec_data->stream[dai->id]);
 
 	if (codec_data->cable_status < 0) {
 		dev_err_ratelimited(dai->dev,
@@ -364,8 +493,11 @@ static int msm_ext_disp_audio_codec_rx_dai_hw_params(
 	audio_setup_params.level_shift = level_shift;
 	audio_setup_params.down_mix = down_mix;
 
+	mutex_lock(&codec_data->dp_ops_lock);
+	SWITCH_DP_CODEC(codec_info, codec_data, dai->id);
 	rc = codec_data->ext_disp_ops.audio_info_setup(
 			codec_data->ext_disp_core_pdev, &audio_setup_params);
+	mutex_unlock(&codec_data->dp_ops_lock);
 	if (rc < 0) {
 		dev_err_ratelimited(dai->dev,
 			"%s() ext disp core is not ready, rc: %d\n",
@@ -379,7 +511,8 @@ static void msm_ext_disp_audio_codec_rx_dai_shutdown(
 		struct snd_pcm_substream *substream,
 		struct snd_soc_dai *dai)
 {
-	int rc;
+	int rc = 0;
+	struct msm_ext_disp_codec_id codec_info;
 
 	struct msm_ext_disp_audio_codec_rx_data *codec_data =
 			dev_get_drvdata(dai->codec->dev);
@@ -391,6 +524,11 @@ static void msm_ext_disp_audio_codec_rx_dai_shutdown(
 		return;
 	}
 
+	dev_dbg(dai->codec->dev, "%s: DP ctl id %d Stream id %d\n", __func__,
+		codec_data->ctl[dai->id], codec_data->stream[dai->id]);
+
+	mutex_lock(&codec_data->dp_ops_lock);
+	SWITCH_DP_CODEC(codec_info, codec_data, dai->id);
 	rc = codec_data->ext_disp_ops.cable_status(
 			codec_data->ext_disp_core_pdev, 0);
 	if (rc < 0) {
@@ -401,6 +539,7 @@ static void msm_ext_disp_audio_codec_rx_dai_shutdown(
 
 	codec_data->ext_disp_ops.teardown_done(
 		codec_data->ext_disp_core_pdev);
+	mutex_unlock(&codec_data->dp_ops_lock);
 }
 
 static int msm_ext_disp_audio_codec_rx_probe(struct snd_soc_codec *codec)
@@ -440,6 +579,7 @@ static int msm_ext_disp_audio_codec_rx_probe(struct snd_soc_codec *codec)
 		return -ENODEV;
 	}
 
+	mutex_init(&codec_data->dp_ops_lock);
 	dev_set_drvdata(codec->dev, codec_data);
 
 	dev_dbg(codec->dev, "%s(): registered %s with ext disp core\n",
@@ -453,6 +593,7 @@ static int msm_ext_disp_audio_codec_rx_remove(struct snd_soc_codec *codec)
 	struct msm_ext_disp_audio_codec_rx_data *codec_data;
 
 	codec_data = dev_get_drvdata(codec->dev);
+	mutex_destroy(&codec_data->dp_ops_lock);
 	kfree(codec_data);
 
 	return 0;
@@ -467,6 +608,7 @@ static struct snd_soc_dai_ops msm_ext_disp_audio_codec_rx_dai_ops = {
 static struct snd_soc_dai_driver msm_ext_disp_audio_codec_rx_dais[] = {
 	{
 		.name = "msm_hdmi_audio_codec_rx_dai",
+		.id = HDMI_DAI,
 		.playback = {
 			.stream_name = "HDMI Playback",
 			.channels_min = 1,
@@ -480,6 +622,7 @@ static struct snd_soc_dai_driver msm_ext_disp_audio_codec_rx_dais[] = {
 	},
 	{
 		.name = "msm_dp_audio_codec_rx_dai",
+		.id = DP_DAI1,
 		.playback = {
 			.stream_name = "Display Port Playback",
 			.channels_min = 1,
@@ -487,10 +630,27 @@ static struct snd_soc_dai_driver msm_ext_disp_audio_codec_rx_dais[] = {
 			.rate_min = 48000,
 			.rate_max = 192000,
 			.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_96000 |
-				 SNDRV_PCM_RATE_192000,
+				SNDRV_PCM_RATE_192000,
 			.formats = SNDRV_PCM_FMTBIT_S16_LE |
-				   SNDRV_PCM_FMTBIT_S24_LE |
-				   SNDRV_PCM_FMTBIT_S24_3LE,
+				SNDRV_PCM_FMTBIT_S24_LE |
+				SNDRV_PCM_FMTBIT_S24_3LE,
+		},
+		.ops = &msm_ext_disp_audio_codec_rx_dai_ops,
+	},
+	{
+		.name = "msm_dp_audio_codec_rx1_dai",
+		.id = DP_DAI2,
+		.playback = {
+			.stream_name = "Display Port1 Playback",
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 48000,
+			.rate_max = 192000,
+			.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_96000 |
+				SNDRV_PCM_RATE_192000,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				SNDRV_PCM_FMTBIT_S24_LE |
+				SNDRV_PCM_FMTBIT_S24_3LE,
 		},
 		.ops = &msm_ext_disp_audio_codec_rx_dai_ops,
 	},
@@ -541,7 +701,7 @@ static struct platform_driver msm_ext_disp_audio_codec_rx_driver = {
 
 static int __init msm_ext_disp_audio_codec_rx_init(void)
 {
-	int rc;
+	int rc = 0;
 
 	rc = platform_driver_register(&msm_ext_disp_audio_codec_rx_driver);
 	if (rc) {
