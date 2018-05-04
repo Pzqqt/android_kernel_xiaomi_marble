@@ -5674,6 +5674,85 @@ done:
 	return ret;
 }
 
+/**
+ * afe_set_display_stream - command to update AFE dp port params
+ *
+ * @rx_port_id: AFE port id
+ * @stream_idx: dp controller stream index
+ * @ctl_idx: dp controller index
+ *
+ * Returns 0 on success, appropriate error code otherwise
+ */
+int afe_set_display_stream(u16 rx_port_id, u32 stream_idx, u32 ctl_idx)
+{
+	int ret;
+	struct param_hdr_v3 param_hdr;
+	u32 packed_param_size = 0;
+	u8 *packed_param_data = NULL;
+	struct afe_display_stream_idx stream_data;
+	struct afe_display_ctl_idx ctl_data;
+	u32 single_param_size = 0;
+
+	memset(&param_hdr, 0, sizeof(param_hdr));
+	memset(&stream_data, 0, sizeof(stream_data));
+	memset(&ctl_data, 0, sizeof(ctl_data));
+
+	packed_param_size =
+		sizeof(param_hdr) * 2 + sizeof(stream_data) + sizeof(ctl_data);
+	packed_param_data = kzalloc(packed_param_size, GFP_KERNEL);
+	if (!packed_param_data)
+		return -ENOMEM;
+	packed_param_size = 0;
+
+	/* Set stream index */
+	param_hdr.module_id = AFE_MODULE_AUDIO_DEV_INTERFACE;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AFE_PARAM_ID_HDMI_DP_MST_VID_IDX_CFG;
+	param_hdr.param_size = sizeof(struct afe_display_stream_idx);
+	stream_data.minor_version = 1;
+	stream_data.stream_idx = stream_idx;
+	ret = q6common_pack_pp_params(packed_param_data, &param_hdr,
+				      (u8 *) &stream_data, &single_param_size);
+	if (ret) {
+		pr_err("%s: Failed to pack param data, error %d\n", __func__,
+		       ret);
+		goto done;
+	}
+	packed_param_size += single_param_size;
+
+	/* Set controller dptx index */
+	param_hdr.module_id = AFE_MODULE_AUDIO_DEV_INTERFACE;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AFE_PARAM_ID_HDMI_DPTX_IDX_CFG;
+	param_hdr.param_size = sizeof(struct afe_display_ctl_idx);
+	ctl_data.minor_version = 1;
+	ctl_data.ctl_idx = ctl_idx;
+	ret = q6common_pack_pp_params(packed_param_data + packed_param_size,
+				      &param_hdr, (u8 *) &ctl_data,
+				      &single_param_size);
+	if (ret) {
+		pr_err("%s: Failed to pack param data, error %d\n", __func__,
+		       ret);
+		goto done;
+	}
+	packed_param_size += single_param_size;
+
+	pr_debug("%s: rx(0x%x) stream(%d) controller(%d)\n",
+		 __func__, rx_port_id, stream_idx, ctl_idx);
+
+	ret = q6afe_set_params(rx_port_id, q6audio_get_port_index(rx_port_id),
+			       NULL, packed_param_data, packed_param_size);
+	if (ret)
+		pr_err("%s: AFE display stream send failed for rx_port:%d ret:%d\n",
+			__func__, rx_port_id, ret);
+
+done:
+	kfree(packed_param_data);
+	return ret;
+
+}
+EXPORT_SYMBOL(afe_set_display_stream);
+
 int afe_validate_port(u16 port_id)
 {
 	int ret;

@@ -1726,6 +1726,16 @@ struct afe_loopback_sidetone_gain {
 	u16                  gain;
 } __packed;
 
+struct afe_display_stream_idx {
+	u32                  minor_version;
+	u32                  stream_idx;
+} __packed;
+
+struct afe_display_ctl_idx {
+	u32                  minor_version;
+	u32                  ctl_idx;
+} __packed;
+
 struct loopback_cfg_data {
 	u32                  loopback_cfg_minor_version;
 /* Minor version used for tracking the version of the RMC module
@@ -2477,7 +2487,9 @@ struct afe_param_id_digi_mic_cfg {
 } __packed;
 
 /* This param id is used to configure HDMI interface */
-#define AFE_PARAM_ID_HDMI_CONFIG     0x00010210
+#define AFE_PARAM_ID_HDMI_CONFIG                 0x00010210
+#define AFE_PARAM_ID_HDMI_DP_MST_VID_IDX_CFG     0x000102b5
+#define AFE_PARAM_ID_HDMI_DPTX_IDX_CFG           0x000102b6
 
 /* This version information is used to handle the new
  * additions to the config interface in future in backward

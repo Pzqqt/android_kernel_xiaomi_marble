@@ -286,6 +286,7 @@ int afe_open(u16 port_id, union afe_port_config *afe_config, int rate);
 int afe_close(int port_id);
 int afe_loopback(u16 enable, u16 rx_port, u16 tx_port);
 int afe_sidetone_enable(u16 tx_port_id, u16 rx_port_id, bool enable);
+int afe_set_display_stream(u16 rx_port_id, u32 stream_idx, u32 ctl_idx);
 int afe_loopback_gain(u16 port_id, u16 volume);
 int afe_validate_port(u16 port_id);
 int afe_get_port_index(u16 port_id);
