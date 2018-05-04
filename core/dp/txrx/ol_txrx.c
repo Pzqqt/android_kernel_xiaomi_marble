@@ -2447,6 +2447,7 @@ ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
  *
  * @txrx_vdev: the virtual device's data object
  * @osif_vdev: the virtual device's OS shim object
+ * @ctrl_vdev: UMAC vdev objmgr handle
  * @txrx_ops: (pointers to)functions used for tx and rx data xfer
  *
  *  The data object for a virtual device is created by the
@@ -2460,9 +2461,9 @@ ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
  *  vdev objects, so the data SW can use the OS shim vdev handle
  *  when passing rx data received by a vdev up to the OS shim.
  */
-static void ol_txrx_vdev_register(struct cdp_vdev *pvdev,
-				void *osif_vdev,
-				struct ol_txrx_ops *txrx_ops)
+static void ol_txrx_vdev_register(struct cdp_vdev *pvdev, void *osif_vdev,
+				  struct cdp_ctrl_objmgr_vdev *ctrl_vdev,
+				  struct ol_txrx_ops *txrx_ops)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 
@@ -2473,6 +2474,7 @@ static void ol_txrx_vdev_register(struct cdp_vdev *pvdev,
 	}
 
 	vdev->osif_dev = osif_vdev;
+	vdev->ctrl_vdev = ctrl_vdev;
 	vdev->rx = txrx_ops->rx.rx;
 	vdev->stats_rx = txrx_ops->rx.stats_rx;
 	vdev->tx_comp = txrx_ops->tx.tx_comp;

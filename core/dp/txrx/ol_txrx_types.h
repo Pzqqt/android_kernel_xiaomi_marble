@@ -1048,6 +1048,9 @@ struct ol_txrx_vdev_t {
 				      * to the target
 				      */
 	void *osif_dev;
+
+	void *ctrl_vdev; /* vdev objmgr handle */
+
 	union ol_txrx_align_mac_addr_t mac_addr; /* MAC address */
 	/* tx paused - NO LONGER NEEDED? */
 	TAILQ_ENTRY(ol_txrx_vdev_t) vdev_list_elem; /* node in the pdev's list

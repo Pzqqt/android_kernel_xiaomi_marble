@@ -2409,7 +2409,8 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
 		(struct cdp_pdev *)pdev, adapter->session_id),
-		adapter, &txrx_ops);
+		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->hdd_vdev,
+		&txrx_ops);
 	/* peer is created wma_vdev_attach->wma_create_peer */
 	qdf_status = cdp_peer_register(soc,
 			(struct cdp_pdev *)pdev, &sta_desc);
