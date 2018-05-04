@@ -7,6 +7,7 @@
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/msm-bus.h>
+#include <linux/pm_runtime.h>
 #include "dsi_clk.h"
 
 struct dsi_core_clks {
@@ -554,10 +555,9 @@ static int dsi_display_core_clk_enable(struct dsi_core_clks *clks,
 	 */
 
 	m_clks = &clks[master_ndx];
-	rc = sde_power_resource_enable(m_clks->clks.phandle,
-			m_clks->clks.dsi_core_client, true);
 
-	if (rc) {
+	rc = pm_runtime_get_sync(m_clks->clks.drm->dev);
+	if (rc < 0) {
 		pr_err("Power resource enable failed, rc=%d\n", rc);
 		goto error;
 	}
@@ -574,9 +574,8 @@ static int dsi_display_core_clk_enable(struct dsi_core_clks *clks,
 		if (!clk || (clk == m_clks))
 			continue;
 
-		rc = sde_power_resource_enable(clk->clks.phandle,
-				clk->clks.dsi_core_client, true);
-		if (rc) {
+		rc = pm_runtime_get_sync(m_clks->clks.drm->dev);
+		if (rc < 0) {
 			pr_err("Power resource enable failed, rc=%d\n", rc);
 			goto error_disable_master;
 		}
@@ -584,8 +583,7 @@ static int dsi_display_core_clk_enable(struct dsi_core_clks *clks,
 		rc = dsi_core_clk_start(clk);
 		if (rc) {
 			pr_err("failed to turn on clocks, rc=%d\n", rc);
-			(void)sde_power_resource_enable(clk->clks.phandle,
-					clk->clks.dsi_core_client, false);
+			pm_runtime_put_sync(m_clks->clks.drm->dev);
 			goto error_disable_master;
 		}
 	}
@@ -594,8 +592,7 @@ error_disable_master:
 	(void)dsi_core_clk_stop(m_clks);
 
 error_disable_master_resource:
-	(void)sde_power_resource_enable(m_clks->clks.phandle,
-				m_clks->clks.dsi_core_client, false);
+	pm_runtime_put_sync(m_clks->clks.drm->dev);
 error:
 	return rc;
 }
@@ -697,12 +694,7 @@ static int dsi_display_core_clk_disable(struct dsi_core_clks *clks,
 			goto error;
 		}
 
-		rc = sde_power_resource_enable(clk->clks.phandle,
-				clk->clks.dsi_core_client, false);
-		if (rc) {
-			pr_err("Power resource disable failed: %d\n", rc);
-			goto error;
-		}
+		pm_runtime_put_sync(m_clks->clks.drm->dev);
 	}
 
 	rc = dsi_core_clk_stop(m_clks);
@@ -711,10 +703,7 @@ static int dsi_display_core_clk_disable(struct dsi_core_clks *clks,
 		goto error;
 	}
 
-	rc = sde_power_resource_enable(m_clks->clks.phandle,
-				m_clks->clks.dsi_core_client, false);
-	if (rc)
-		pr_err("Power resource disable failed: %d\n", rc);
+	pm_runtime_put_sync(m_clks->clks.drm->dev);
 error:
 	return rc;
 }

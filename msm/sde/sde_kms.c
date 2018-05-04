@@ -398,14 +398,11 @@ end:
 static int _sde_kms_sui_misr_ctrl(struct sde_kms *sde_kms,
 		struct drm_crtc *crtc, bool enable)
 {
-	struct drm_device *dev = sde_kms->dev;
-	struct msm_drm_private *priv = dev->dev_private;
 	int ret;
 
 	if (enable) {
-		ret = sde_power_resource_enable(&priv->phandle,
-					sde_kms->core_client, true);
-		if (ret) {
+		ret = pm_runtime_get_sync(sde_kms->dev->dev);
+		if (ret < 0) {
 			SDE_ERROR("failed to enable resource, ret:%d\n", ret);
 			return ret;
 		}
@@ -414,16 +411,14 @@ static int _sde_kms_sui_misr_ctrl(struct sde_kms *sde_kms,
 
 		ret = _sde_kms_secure_ctrl_xin_clients(sde_kms, crtc, true);
 		if (ret) {
-			sde_power_resource_enable(&priv->phandle,
-					sde_kms->core_client, false);
+			pm_runtime_put_sync(sde_kms->dev->dev);
 			return ret;
 		}
 
 	} else {
 		_sde_kms_secure_ctrl_xin_clients(sde_kms, crtc, false);
 		sde_crtc_misr_setup(crtc, false, 0);
-		sde_power_resource_enable(&priv->phandle,
-					sde_kms->core_client, false);
+		pm_runtime_put_sync(sde_kms->dev->dev);
 	}
 
 	return 0;
@@ -783,7 +778,7 @@ static void sde_kms_prepare_commit(struct msm_kms *kms,
 	struct drm_encoder *encoder;
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *crtc_state;
-	int i, rc = 0;
+	int i, rc;
 
 	if (!kms)
 		return;
@@ -795,17 +790,15 @@ static void sde_kms_prepare_commit(struct msm_kms *kms,
 	priv = dev->dev_private;
 
 	SDE_ATRACE_BEGIN("prepare_commit");
-	rc = sde_power_resource_enable(&priv->phandle, sde_kms->core_client,
-			true);
-	if (rc) {
-		SDE_ERROR("failed to enable power resource %d\n", rc);
+	rc = pm_runtime_get_sync(sde_kms->dev->dev);
+	if (rc < 0) {
+		SDE_ERROR("failed to enable power resources %d\n", rc);
 		SDE_EVT32(rc, SDE_EVTLOG_ERROR);
 		goto end;
 	}
 
 	if (sde_kms->first_kickoff) {
-		sde_power_scale_reg_bus(&priv->phandle, sde_kms->core_client,
-			VOTE_INDEX_HIGH, false);
+		sde_power_scale_reg_bus(&priv->phandle, VOTE_INDEX_HIGH, false);
 		sde_kms->first_kickoff = false;
 	}
 
@@ -894,20 +887,16 @@ static void _sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 		SDE_DEBUG("cont_splash handoff done for dpy:%d remaining:%d\n",
 				i, sde_kms->splash_data.num_splash_displays);
 		memset(splash_display, 0x0, sizeof(struct sde_splash_display));
-
 	}
 
 	/* remove the votes if all displays are done with splash */
 	if (!sde_kms->splash_data.num_splash_displays) {
 		for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
-			sde_power_data_bus_set_quota(&priv->phandle,
-					sde_kms->core_client,
-					SDE_POWER_HANDLE_DATA_BUS_CLIENT_RT, i,
-					SDE_POWER_HANDLE_ENABLE_BUS_AB_QUOTA,
-					SDE_POWER_HANDLE_ENABLE_BUS_IB_QUOTA);
+			sde_power_data_bus_set_quota(&priv->phandle, i,
+				SDE_POWER_HANDLE_ENABLE_BUS_AB_QUOTA,
+				SDE_POWER_HANDLE_ENABLE_BUS_IB_QUOTA);
 
-		sde_power_resource_enable(&priv->phandle,
-				sde_kms->core_client, false);
+		pm_runtime_put_sync(sde_kms->dev->dev);
 	}
 }
 
@@ -930,7 +919,7 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 		return;
 	priv = sde_kms->dev->dev_private;
 
-	if (!sde_kms_power_resource_is_enabled(sde_kms->dev)) {
+	if (sde_kms_power_resource_is_enabled(sde_kms->dev) < 0) {
 		SDE_ERROR("power resource is not enabled\n");
 		return;
 	}
@@ -959,7 +948,7 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 		}
 	}
 
-	sde_power_resource_enable(&priv->phandle, sde_kms->core_client, false);
+	pm_runtime_put_sync(sde_kms->dev->dev);
 
 	for_each_old_crtc_in_state(old_state, crtc, old_crtc_state, i)
 		_sde_kms_release_splash_resource(sde_kms, crtc);
@@ -1661,10 +1650,6 @@ static void _sde_kms_hw_destroy(struct sde_kms *sde_kms,
 	if (sde_kms->catalog)
 		sde_hw_catalog_deinit(sde_kms->catalog);
 	sde_kms->catalog = NULL;
-
-	if (sde_kms->core_client)
-		sde_power_client_destroy(&priv->phandle, sde_kms->core_client);
-	sde_kms->core_client = NULL;
 
 	if (sde_kms->sid)
 		msm_iounmap(pdev, sde_kms->sid);
@@ -2898,23 +2883,15 @@ static void sde_kms_handle_power_event(u32 event_type, void *usr)
 static int sde_kms_pd_enable(struct generic_pm_domain *genpd)
 {
 	struct sde_kms *sde_kms = genpd_to_sde_kms(genpd);
-	struct drm_device *dev;
-	struct msm_drm_private *priv;
-	int rc;
+	int rc = -EINVAL;
 
 	SDE_DEBUG("\n");
 
-	dev = sde_kms->dev;
-	if (!dev)
-		return -EINVAL;
+	rc = pm_runtime_get_sync(sde_kms->dev->dev);
+	if (rc > 0)
+		rc = 0;
 
-	priv = dev->dev_private;
-	if (!priv)
-		return -EINVAL;
-
-	SDE_EVT32(genpd->device_count);
-
-	rc = sde_power_resource_enable(&priv->phandle, priv->pclient, true);
+	SDE_EVT32(rc, genpd->device_count);
 
 	return rc;
 }
@@ -2922,25 +2899,14 @@ static int sde_kms_pd_enable(struct generic_pm_domain *genpd)
 static int sde_kms_pd_disable(struct generic_pm_domain *genpd)
 {
 	struct sde_kms *sde_kms = genpd_to_sde_kms(genpd);
-	struct drm_device *dev;
-	struct msm_drm_private *priv;
-	int rc;
 
 	SDE_DEBUG("\n");
 
-	dev = sde_kms->dev;
-	if (!dev)
-		return -EINVAL;
-
-	priv = dev->dev_private;
-	if (!priv)
-		return -EINVAL;
+	pm_runtime_put_sync(sde_kms->dev->dev);
 
 	SDE_EVT32(genpd->device_count);
 
-	rc = sde_power_resource_enable(&priv->phandle, priv->pclient, false);
-
-	return rc;
+	return 0;
 }
 
 static int _sde_kms_get_splash_data(struct sde_splash_data *data)
@@ -3155,9 +3121,7 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 	int i, rc = -EINVAL;
 
 	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
-		sde_power_data_bus_set_quota(&priv->phandle,
-			sde_kms->core_client,
-			SDE_POWER_HANDLE_DATA_BUS_CLIENT_RT, i,
+		sde_power_data_bus_set_quota(&priv->phandle, i,
 			SDE_POWER_HANDLE_CONT_SPLASH_BUS_AB_QUOTA,
 			SDE_POWER_HANDLE_CONT_SPLASH_BUS_IB_QUOTA);
 
@@ -3281,7 +3245,7 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 	}
 
 	rc = sde_core_perf_init(&sde_kms->perf, dev, sde_kms->catalog,
-			&priv->phandle, priv->pclient, "core_clk");
+			&priv->phandle, "core_clk");
 	if (rc) {
 		SDE_ERROR("failed to init perf %d\n", rc);
 		goto perf_err;
@@ -3339,23 +3303,12 @@ static int sde_kms_hw_init(struct msm_kms *kms)
 	if (rc)
 		goto error;
 
-	sde_kms->core_client = sde_power_client_create(&priv->phandle, "core");
-	if (IS_ERR_OR_NULL(sde_kms->core_client)) {
-		rc = PTR_ERR(sde_kms->core_client);
-		if (!sde_kms->core_client)
-			rc = -EINVAL;
-		SDE_ERROR("sde power client create failed: %d\n", rc);
-		sde_kms->core_client = NULL;
-		goto error;
-	}
-
 	rc = _sde_kms_get_splash_data(&sde_kms->splash_data);
 	if (rc)
 		SDE_DEBUG("sde splash data fetch failed: %d\n", rc);
 
-	rc = sde_power_resource_enable(&priv->phandle, sde_kms->core_client,
-		true);
-	if (rc) {
+	rc = pm_runtime_get_sync(sde_kms->dev->dev);
+	if (rc < 0) {
 		SDE_ERROR("resource enable failed: %d\n", rc);
 		goto error;
 	}
@@ -3391,19 +3344,16 @@ static int sde_kms_hw_init(struct msm_kms *kms)
 		SDE_DEBUG("Skipping MDP Resources disable\n");
 	} else {
 		for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
-			sde_power_data_bus_set_quota(&priv->phandle,
-				sde_kms->core_client,
-				SDE_POWER_HANDLE_DATA_BUS_CLIENT_RT, i,
+			sde_power_data_bus_set_quota(&priv->phandle, i,
 				SDE_POWER_HANDLE_ENABLE_BUS_AB_QUOTA,
 				SDE_POWER_HANDLE_ENABLE_BUS_IB_QUOTA);
 
-		sde_power_resource_enable(&priv->phandle,
-						sde_kms->core_client, false);
+		pm_runtime_put_sync(sde_kms->dev->dev);
 	}
 	return 0;
 
 hw_init_err:
-	sde_power_resource_enable(&priv->phandle, sde_kms->core_client, false);
+	pm_runtime_put_sync(sde_kms->dev->dev);
 error:
 	_sde_kms_hw_destroy(sde_kms, platformdev);
 end:

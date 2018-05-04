@@ -550,30 +550,20 @@ void sde_plane_set_revalidate(struct drm_plane *plane, bool enable)
 int sde_plane_danger_signal_ctrl(struct drm_plane *plane, bool enable)
 {
 	struct sde_plane *psde;
-	struct msm_drm_private *priv;
-	struct sde_kms *sde_kms;
 	int rc;
 
-	if (!plane || !plane->dev) {
+	if (!plane) {
 		SDE_ERROR("invalid arguments\n");
 		return -EINVAL;
 	}
 
-	priv = plane->dev->dev_private;
-	if (!priv || !priv->kms) {
-		SDE_ERROR("invalid KMS reference\n");
-		return -EINVAL;
-	}
-
-	sde_kms = to_sde_kms(priv->kms);
 	psde = to_sde_plane(plane);
 
 	if (!psde->is_rt_pipe)
 		goto end;
 
-	rc = sde_power_resource_enable(&priv->phandle, sde_kms->core_client,
-			true);
-	if (rc) {
+	rc = pm_runtime_get_sync(plane->dev->dev);
+	if (rc < 0) {
 		SDE_ERROR("failed to enable power resource %d\n", rc);
 		SDE_EVT32(rc, SDE_EVTLOG_ERROR);
 		return rc;
@@ -581,7 +571,7 @@ int sde_plane_danger_signal_ctrl(struct drm_plane *plane, bool enable)
 
 	_sde_plane_set_qos_ctrl(plane, enable, SDE_PLANE_QOS_PANIC_CTRL);
 
-	sde_power_resource_enable(&priv->phandle, sde_kms->core_client, false);
+	pm_runtime_put_sync(plane->dev->dev);
 
 end:
 	return 0;
@@ -2103,28 +2093,6 @@ static int _sde_plane_fetch_halt(struct drm_plane *plane)
 }
 
 
-static inline int _sde_plane_power_enable(struct drm_plane *plane, bool enable)
-{
-	struct msm_drm_private *priv;
-	struct sde_kms *sde_kms;
-
-	if (!plane->dev || !plane->dev->dev_private) {
-		SDE_ERROR("invalid drm device\n");
-		return -EINVAL;
-	}
-
-	priv = plane->dev->dev_private;
-	if (!priv->kms) {
-		SDE_ERROR("invalid kms\n");
-		return -EINVAL;
-	}
-
-	sde_kms = to_sde_kms(priv->kms);
-
-	return sde_power_resource_enable(&priv->phandle, sde_kms->core_client,
-									enable);
-}
-
 static void sde_plane_cleanup_fb(struct drm_plane *plane,
 		struct drm_plane_state *old_state)
 {
@@ -2149,10 +2117,10 @@ static void sde_plane_cleanup_fb(struct drm_plane *plane,
 			       psde->pipe - SSPP_VIG0);
 
 		/* halt this plane now */
-		ret = _sde_plane_power_enable(plane, true);
-		if (ret) {
+		ret = pm_runtime_get_sync(plane->dev->dev);
+		if (ret < 0) {
 			SDE_ERROR("power resource enable failed with %d", ret);
-			SDE_EVT32(ret);
+			SDE_EVT32(ret, SDE_EVTLOG_ERROR);
 			return;
 		}
 
@@ -2164,7 +2132,7 @@ static void sde_plane_cleanup_fb(struct drm_plane *plane,
 			SDE_EVT32(DRMID(plane), psde->pipe - SSPP_VIG0,
 				       ret, SDE_EVTLOG_ERROR);
 		}
-		_sde_plane_power_enable(plane, false);
+		pm_runtime_put_sync(plane->dev->dev);
 	}
 
 	msm_framebuffer_cleanup(old_state->fb, old_pstate->aspace);

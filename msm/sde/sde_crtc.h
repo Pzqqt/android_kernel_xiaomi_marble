@@ -595,7 +595,7 @@ enum sde_intf_mode sde_crtc_get_intf_mode(struct drm_crtc *crtc);
 u32 sde_crtc_get_fps_mode(struct drm_crtc *crtc);
 
 /**
- * sde_crtc_get_client_type - check the crtc type- rt, nrt, rsc, etc.
+ * sde_crtc_get_client_type - check the crtc type- rt, rsc_rt, etc.
  * @crtc: Pointer to crtc
  */
 static inline enum sde_crtc_client_type sde_crtc_get_client_type(
@@ -605,10 +605,9 @@ static inline enum sde_crtc_client_type sde_crtc_get_client_type(
 			crtc ? to_sde_crtc_state(crtc->state) : NULL;
 
 	if (!cstate)
-		return NRT_CLIENT;
+		return RT_CLIENT;
 
-	return sde_crtc_get_intf_mode(crtc) == INTF_MODE_WB_LINE ? NRT_CLIENT :
-			(cstate->rsc_client ? RT_RSC_CLIENT : RT_CLIENT);
+	return cstate->rsc_client ? RT_RSC_CLIENT : RT_CLIENT;
 }
 
 /**

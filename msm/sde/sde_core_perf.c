@@ -638,17 +638,8 @@ static void _sde_core_perf_crtc_update_bus(struct sde_kms *kms,
 
 	client_vote = _get_sde_client_type(curr_client_type, &kms->perf);
 	switch (client_vote) {
-	case NRT_CLIENT:
-		sde_power_data_bus_set_quota(&priv->phandle, kms->core_client,
-				SDE_POWER_HANDLE_DATA_BUS_CLIENT_NRT,
-				bus_id, bus_ab_quota, bus_ib_quota);
-		SDE_DEBUG("client:%s bus_id=%d ab=%llu ib=%llu\n", "nrt",
-				bus_id, bus_ab_quota, bus_ib_quota);
-		break;
-
 	case RT_CLIENT:
-		sde_power_data_bus_set_quota(&priv->phandle, kms->core_client,
-				SDE_POWER_HANDLE_DATA_BUS_CLIENT_RT,
+		sde_power_data_bus_set_quota(&priv->phandle,
 				bus_id, bus_ab_quota, bus_ib_quota);
 		SDE_DEBUG("client:%s bus_id=%d ab=%llu ib=%llu\n", "rt",
 				bus_id, bus_ab_quota, bus_ib_quota);
@@ -671,12 +662,6 @@ static void _sde_core_perf_crtc_update_bus(struct sde_kms *kms,
 		switch (kms->perf.bw_vote_mode) {
 		case DISP_RSC_MODE:
 			sde_power_data_bus_set_quota(&priv->phandle,
-				kms->core_client,
-				SDE_POWER_HANDLE_DATA_BUS_CLIENT_NRT,
-				bus_id, 0, 0);
-			sde_power_data_bus_set_quota(&priv->phandle,
-				kms->core_client,
-				SDE_POWER_HANDLE_DATA_BUS_CLIENT_RT,
 				bus_id, 0, 0);
 			kms->perf.bw_vote_mode_updated = false;
 			break;
@@ -1212,10 +1197,9 @@ int sde_core_perf_init(struct sde_core_perf *perf,
 		struct drm_device *dev,
 		struct sde_mdss_cfg *catalog,
 		struct sde_power_handle *phandle,
-		struct sde_power_client *pclient,
 		char *clk_name)
 {
-	if (!perf || !dev || !catalog || !phandle || !pclient || !clk_name) {
+	if (!perf || !dev || !catalog || !phandle || !clk_name) {
 		SDE_ERROR("invalid parameters\n");
 		return -EINVAL;
 	}
@@ -1223,7 +1207,6 @@ int sde_core_perf_init(struct sde_core_perf *perf,
 	perf->dev = dev;
 	perf->catalog = catalog;
 	perf->phandle = phandle;
-	perf->pclient = pclient;
 	perf->clk_name = clk_name;
 	perf->sde_rsc_available = is_sde_rsc_available(SDE_RSC_INDEX);
 	/* set default mode */

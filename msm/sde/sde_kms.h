@@ -238,8 +238,6 @@ struct sde_kms {
 	bool genpd_init;
 
 	struct msm_gem_address_space *aspace[MSM_SMMU_DOMAIN_MAX];
-	struct sde_power_client *core_client;
-
 	struct sde_power_event *power_event;
 
 	/* directory entry for debugfs */
@@ -312,14 +310,10 @@ bool sde_is_custom_client(void);
  */
 static inline bool sde_kms_power_resource_is_enabled(struct drm_device *dev)
 {
-	struct msm_drm_private *priv;
-
-	if (!dev || !dev->dev_private)
+	if (!dev)
 		return false;
 
-	priv = dev->dev_private;
-
-	return sde_power_resource_is_enabled(&priv->phandle);
+	return pm_runtime_enabled(dev->dev);
 }
 
 /**
