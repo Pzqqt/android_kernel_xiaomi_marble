@@ -167,7 +167,7 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 
 	qdf_nbuf_free(buf);
 	tx_cnf->vdev_id = tx_ctx->vdev_id;
-	tx_cnf->action_cookie = (uintptr_t)tx_ctx;
+	tx_cnf->action_cookie = (uint64_t)tx_ctx->id;
 	tx_cnf->buf = tx_ctx->buf;
 	tx_cnf->buf_len = tx_ctx->buf_len;
 	tx_cnf->status = status;

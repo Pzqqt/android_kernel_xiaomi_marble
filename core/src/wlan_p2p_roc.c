@@ -199,7 +199,7 @@ static QDF_STATUS p2p_send_roc_event(
 
 	p2p_evt.vdev_id = roc_ctx->vdev_id;
 	p2p_evt.roc_event = evt;
-	p2p_evt.cookie = (uintptr_t)roc_ctx;
+	p2p_evt.cookie = (uint64_t)roc_ctx->id;
 	p2p_evt.chan = roc_ctx->chan;
 	p2p_evt.duration = roc_ctx->duration;
 
@@ -244,6 +244,7 @@ static QDF_STATUS p2p_destroy_roc_ctx(struct p2p_roc_context *roc_ctx,
 			p2p_err("Failed to remove roc req, status %d", status);
 	}
 
+	qdf_idr_remove(&p2p_soc_obj->p2p_idr, roc_ctx->id);
 	qdf_mem_free(roc_ctx);
 
 	return status;

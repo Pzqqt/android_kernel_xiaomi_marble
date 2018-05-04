@@ -841,7 +841,7 @@ static QDF_STATUS p2p_send_tx_conf(struct tx_action_context *tx_ctx,
 	if (tx_ctx->no_ack)
 		tx_cnf.action_cookie = 0;
 	else
-		tx_cnf.action_cookie = (uintptr_t)tx_ctx;
+		tx_cnf.action_cookie = (uint64_t)tx_ctx->id;
 
 	tx_cnf.vdev_id = tx_ctx->vdev_id;
 	tx_cnf.buf = tx_ctx->buf;
@@ -1242,6 +1242,7 @@ static QDF_STATUS p2p_remove_tx_context(
 	}
 
 end:
+	qdf_idr_remove(&p2p_soc_obj->p2p_idr, tx_ctx->id);
 	qdf_mem_free(tx_ctx->buf);
 	qdf_mem_free(tx_ctx);
 

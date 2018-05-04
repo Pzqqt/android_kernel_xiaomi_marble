@@ -84,6 +84,7 @@ enum roc_state {
  * @roc_type:    RoC type  User requested or internal
  * @roc_timer:   RoC timer
  * @roc_state:   Roc state
+ * @id:          identifier of roc
  */
 struct p2p_roc_context {
 	qdf_list_node_t node;
@@ -97,6 +98,7 @@ struct p2p_roc_context {
 	enum roc_type roc_type;
 	qdf_mc_timer_t roc_timer;
 	enum roc_state roc_state;
+	int32_t id;
 };
 
 /**
