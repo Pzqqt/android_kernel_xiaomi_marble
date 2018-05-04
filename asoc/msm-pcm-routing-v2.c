@@ -83,6 +83,7 @@ static int msm_route_ext_ec_ref;
 static bool is_custom_stereo_on;
 static bool is_ds2_on;
 static bool swap_ch;
+static int aanc_level;
 
 #define WEIGHT_0_DB 0x4000
 /* all the FEs which can support channel mixer */
@@ -14622,6 +14623,34 @@ static const struct snd_kcontrol_new aanc_slim_0_rx_mux[] = {
 		msm_routing_slim_0_rx_aanc_mux_put)
 };
 
+static int msm_routing_aanc_noise_level_get(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = aanc_level;
+
+	return 0;
+}
+
+static int msm_routing_aanc_noise_level_put(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	int ret = 0;
+
+	mutex_lock(&routing_lock);
+	aanc_level = ucontrol->value.integer.value[0];
+	pr_debug("%s: value: %ld\n",
+		 __func__, ucontrol->value.integer.value[0]);
+	ret = afe_set_aanc_noise_level(aanc_level);
+	mutex_unlock(&routing_lock);
+
+	return ret;
+}
+
+static const struct snd_kcontrol_new aanc_noise_level[] = {
+	SOC_SINGLE_EXT("AANC Noise Level", SND_SOC_NOPM, 0, 255,
+	0, msm_routing_aanc_noise_level_get, msm_routing_aanc_noise_level_put)
+};
+
 static int msm_routing_get_stereo_to_custom_stereo_control(
 					struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
@@ -20566,6 +20595,9 @@ static int msm_routing_probe(struct snd_soc_platform *platform)
 
 	snd_soc_add_platform_controls(platform, aanc_slim_0_rx_mux,
 				      ARRAY_SIZE(aanc_slim_0_rx_mux));
+
+	snd_soc_add_platform_controls(platform, aanc_noise_level,
+				      ARRAY_SIZE(aanc_noise_level));
 
 	snd_soc_add_platform_controls(platform, msm_voc_session_controls,
 				      ARRAY_SIZE(msm_voc_session_controls));
