@@ -1063,7 +1063,7 @@ struct wma_txrx_node {
 	uint8_t llbCoexist;
 	uint8_t shortSlotTimeSupported;
 	uint8_t dtimPeriod;
-	WLAN_PHY_MODE chanmode;
+	WMI_HOST_WLAN_PHY_MODE chanmode;
 	uint8_t vht_capable;
 	uint8_t ht_capable;
 	A_UINT32 mhz;

@@ -551,7 +551,7 @@ static QDF_STATUS wma_fill_vht80_mcast_rate(uint32_t shortgi,
  */
 static QDF_STATUS wma_fill_ht_mcast_rate(uint32_t shortgi,
 					 uint32_t chwidth, int32_t mbpsx10_rate,
-					 uint8_t nss, WLAN_PHY_MODE chanmode,
+					 uint8_t nss, WMI_HOST_WLAN_PHY_MODE chanmode,
 					 uint8_t *rate,
 					 int32_t *streaming_rate)
 {
@@ -586,7 +586,7 @@ static QDF_STATUS wma_fill_ht_mcast_rate(uint32_t shortgi,
 static QDF_STATUS wma_fill_vht_mcast_rate(uint32_t shortgi,
 					  uint32_t chwidth,
 					  int32_t mbpsx10_rate, uint8_t nss,
-					  WLAN_PHY_MODE chanmode,
+					  WMI_HOST_WLAN_PHY_MODE chanmode,
 					  uint8_t *rate,
 					  int32_t *streaming_rate)
 {
@@ -622,9 +622,9 @@ static QDF_STATUS wma_fill_vht_mcast_rate(uint32_t shortgi,
  * Return: QDF status
  */
 static QDF_STATUS wma_encode_mc_rate(uint32_t shortgi, uint32_t chwidth,
-				     WLAN_PHY_MODE chanmode, A_UINT32 mhz,
-				     int32_t mbpsx10_rate, uint8_t nss,
-				     uint8_t *rate)
+			     WMI_HOST_WLAN_PHY_MODE chanmode, A_UINT32 mhz,
+			     int32_t mbpsx10_rate, uint8_t nss,
+			     uint8_t *rate)
 {
 	int32_t ret = 0;
 
