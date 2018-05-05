@@ -958,8 +958,13 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.sgi = he_gi;
 		value = he_gi << QDF_MON_STATUS_GI_SHIFT;
 		ppdu_info->rx_status.he_data5 |= value;
-		value = he_ltf << QDF_MON_STATUS_HE_LTF_SHIFT;
+		value = he_ltf << QDF_MON_STATUS_HE_LTF_SIZE_SHIFT;
 		ppdu_info->rx_status.he_data5 |= value;
+
+		value = HAL_RX_GET(he_sig_a_su_info, HE_SIG_A_SU_INFO_0, NSTS);
+		value = (value << QDF_MON_STATUS_HE_LTF_SYM_SHIFT);
+		ppdu_info->rx_status.he_data5 |= value;
+
 		value = HAL_RX_GET(he_sig_a_su_info, HE_SIG_A_SU_INFO_1,
 							PACKET_EXTENSION_A_FACTOR);
 		value = value << QDF_MON_STATUS_PRE_FEC_PAD_SHIFT;
@@ -1078,7 +1083,12 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info)
 		value = he_gi << QDF_MON_STATUS_GI_SHIFT;
 		ppdu_info->rx_status.he_data5 |= value;
 
-		value = he_ltf << QDF_MON_STATUS_HE_LTF_SHIFT;
+		value = he_ltf << QDF_MON_STATUS_HE_LTF_SIZE_SHIFT;
+		ppdu_info->rx_status.he_data5 |= value;
+
+		value = HAL_RX_GET(he_sig_a_mu_dl_info,
+				   HE_SIG_A_MU_DL_INFO_1, NUM_LTF_SYMBOLS);
+		value = (value << QDF_MON_STATUS_HE_LTF_SYM_SHIFT);
 		ppdu_info->rx_status.he_data5 |= value;
 
 		value = HAL_RX_GET(he_sig_a_mu_dl_info, HE_SIG_A_MU_DL_INFO_1,
