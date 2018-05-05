@@ -170,7 +170,7 @@ static void os_if_wifi_pos_callback(const void *data, int data_len,
 		return;
 	}
 
-	wlan_objmgr_psoc_get_ref(psoc, WLAN_WIFI_POS_ID);
+	wlan_objmgr_psoc_get_ref(psoc, WLAN_WIFI_POS_OSIF_ID);
 	err = wifi_pos_parse_req(data, data_len, pid, &req);
 	if (err) {
 		os_if_wifi_pos_send_rsp(wifi_pos_get_app_pid(psoc),
@@ -185,7 +185,7 @@ static void os_if_wifi_pos_callback(const void *data, int data_len,
 				status);
 
 release_psoc_ref:
-	wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_ID);
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_OSIF_ID);
 }
 #else
 static int os_if_wifi_pos_callback(struct sk_buff *skb)
@@ -201,7 +201,7 @@ static int os_if_wifi_pos_callback(struct sk_buff *skb)
 		return -EINVAL;
 	}
 
-	wlan_objmgr_psoc_get_ref(psoc, WLAN_WIFI_POS_ID);
+	wlan_objmgr_psoc_get_ref(psoc, WLAN_WIFI_POS_OSIF_ID);
 	err = wifi_pos_parse_req(skb, &req);
 	if (err) {
 		os_if_wifi_pos_send_rsp(wifi_pos_get_app_pid(psoc),
@@ -216,7 +216,7 @@ static int os_if_wifi_pos_callback(struct sk_buff *skb)
 				status);
 
 release_psoc_ref:
-	wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_ID);
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_OSIF_ID);
 
 	return qdf_status_to_os_return(status);
 }

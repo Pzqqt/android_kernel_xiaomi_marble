@@ -310,6 +310,22 @@ struct wifi_pos_psoc_priv_obj *wifi_pos_get_psoc_priv_obj(
 		struct wlan_objmgr_psoc *psoc);
 
 /**
+ * wifi_pos_lock_init: API to init lock used protect use of psoc global pointer
+ * variable
+ *
+ * Return: none.
+ */
+void wifi_pos_lock_init(void);
+
+/**
+ * wifi_pos_lock_deinit: API to deinit lock used protect use of psoc global
+ * pointer variable
+ *
+ * Return: none.
+ */
+void wifi_pos_lock_deinit(void);
+
+/**
  * wifi_pos_set_psoc: API to set global PSOC object
  * @psoc: pointer to psoc object
  *

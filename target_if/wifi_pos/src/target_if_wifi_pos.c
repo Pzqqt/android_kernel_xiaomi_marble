@@ -164,18 +164,18 @@ static int target_if_wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
-	wlan_objmgr_psoc_get_ref(psoc, WLAN_WIFI_POS_ID);
+	wlan_objmgr_psoc_get_ref(psoc, WLAN_WIFI_POS_TGT_IF_ID);
 
 	priv_obj = wifi_pos_get_psoc_priv_obj(psoc);
 	if (!priv_obj) {
 		target_if_err("priv_obj is null");
-		wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_ID);
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_TGT_IF_ID);
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	wifi_pos_rx_ops = target_if_wifi_pos_get_rxops(psoc);
 	if (!wifi_pos_rx_ops || !wifi_pos_rx_ops->oem_rsp_event_rx) {
-		wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_ID);
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_TGT_IF_ID);
 		target_if_err("lmac callbacks not registered");
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
@@ -193,7 +193,7 @@ static int target_if_wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 						      &oem_rsp, &cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("get indirect data failed status: %d", status);
-		wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_ID);
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_TGT_IF_ID);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -207,7 +207,7 @@ static int target_if_wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 		ret = QDF_STATUS_E_FAILURE;
 	}
 
-	wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_ID);
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_TGT_IF_ID);
 
 	return ret;
 }

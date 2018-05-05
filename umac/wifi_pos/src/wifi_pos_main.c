@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -200,7 +200,7 @@ static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 			req->pid, req->buf_len);
 
 	/* get first pdev since we need that only for freq and dfs state */
-	pdev = wlan_objmgr_get_pdev_by_id(psoc, 0, WLAN_WIFI_POS_ID);
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, 0, WLAN_WIFI_POS_CORE_ID);
 	if (!pdev) {
 		wifi_pos_err("pdev get API failed");
 		return QDF_STATUS_E_INVAL;
@@ -210,7 +210,7 @@ static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 	buf = qdf_mem_malloc(len);
 	if (!buf) {
 		wifi_pos_alert("malloc failed");
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_WIFI_POS_ID);
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_WIFI_POS_CORE_ID);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -235,7 +235,7 @@ static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 					ANI_MSG_CHANNEL_INFO_RSP,
 					len, buf);
 	qdf_mem_free(buf);
-	wlan_objmgr_pdev_release_ref(pdev, WLAN_WIFI_POS_ID);
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_WIFI_POS_CORE_ID);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -284,7 +284,7 @@ static QDF_STATUS wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 	vdev_idx = 0;
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
 				     wifi_pos_vdev_iterator,
-				     vdevs_info, true, WLAN_WIFI_POS_ID);
+				     vdevs_info, true, WLAN_WIFI_POS_CORE_ID);
 	rsp_len = (sizeof(struct app_reg_rsp_vdev_info) * vdev_idx)
 			+ sizeof(uint8_t);
 	app_reg_rsp = qdf_mem_malloc(rsp_len);
@@ -531,7 +531,7 @@ static void wifi_pos_get_ch_info(struct wlan_objmgr_psoc *psoc,
 
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
 				     wifi_pos_pdev_iterator,
-				     ch_lst, true, WLAN_WIFI_POS_ID);
+				     ch_lst, true, WLAN_WIFI_POS_CORE_ID);
 
 	for (i = 0; i < NUM_CHANNELS && num_ch < OEM_CAP_MAX_NUM_CHANNELS;
 	     i++) {

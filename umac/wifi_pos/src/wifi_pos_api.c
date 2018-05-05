@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,6 +32,8 @@
 QDF_STATUS wifi_pos_init(void)
 {
 	QDF_STATUS status;
+
+	wifi_pos_lock_init();
 
 	/* register psoc create handler functions. */
 	status = wlan_objmgr_register_psoc_create_handler(
@@ -81,6 +83,9 @@ QDF_STATUS wifi_pos_deinit(void)
 		wifi_pos_err("unregister_psoc_destroy_handler failed, status: %d",
 			     status);
 	}
+
+	wifi_pos_lock_deinit();
+
 	return QDF_STATUS_SUCCESS;
 }
 

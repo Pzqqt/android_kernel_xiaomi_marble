@@ -191,7 +191,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_PMO_ID:                power manager offload (PMO) ID
  * @WLAN_LEGACY_SME_ID:         Legacy SME operations
  * @WLAN_SCAN_ID:               scan operations
- * @WLAN_WIFI_POS_ID:           wifi positioning
+ * @WLAN_WIFI_POS_CORE_ID:      wifi positioning (CORE)
  * @WLAN_DFS_ID:                DFS operations
  * @WLAN_P2P_ID:                P2P operations
  * @WLAN_TDLS_SB_ID:            TDLS Southbound operations
@@ -217,6 +217,8 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_IPA_ID:                IPA operations
  * @WLAN_CP_STATS_ID:           Control Plane Statistics Module
  * @WLAN_GREEN_AP_ID:           Green AP operations
+ * @WLAN_WIFI_POS_OSIF_ID:      wifi positioning (OSID)
+ * @WLAN_WIFI_POS_TGT_IF_ID:    wifi positioning (Target IF)
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -236,7 +238,7 @@ typedef enum {
 	WLAN_PMO_ID           = 10,
 	WLAN_LEGACY_SME_ID    = 11,
 	WLAN_SCAN_ID          = 12,
-	WLAN_WIFI_POS_ID      = 13,
+	WLAN_WIFI_POS_CORE_ID = 13,
 	WLAN_DFS_ID           = 14,
 	WLAN_P2P_ID           = 15,
 	WLAN_TDLS_SB_ID       = 16,
@@ -263,6 +265,8 @@ typedef enum {
 	WLAN_IPA_ID           = 37,
 	WLAN_CP_STATS_ID      = 38,
 	WLAN_GREEN_AP_ID      = 39,
+	WLAN_WIFI_POS_OSIF_ID = 40,
+	WLAN_WIFI_POS_TGT_IF_ID = 41,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -289,7 +293,7 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_PMO_ID",
 					"WLAN_LEGACY_SME_ID",
 					"WLAN_SCAN_ID",
-					"WLAN_WIFI_POS_ID",
+					"WLAN_WIFI_POS_CORE_ID",
 					"WLAN_DFS_ID",
 					"WLAN_P2P_ID",
 					"WLAN_TDLS_SB_ID",
@@ -316,7 +320,9 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_IPA_ID",
 					"WLAN_CP_STATS_ID",
 					"WLAN_GREEN_AP_ID",
-					"WLAN_REF_ID_MAX" };
+					"WLAN_WIFI_POS_OSIF_ID",
+					"WLAN_WIFI_POS_TGT_IF_ID",
+					"WLAN_REF_ID_MAX"};
 
 	return (char *)strings[id];
 }
