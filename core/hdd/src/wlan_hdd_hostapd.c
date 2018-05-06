@@ -8073,7 +8073,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	if (!hdd_set_connection_in_progress(true)) {
-		hdd_err("Can't start BSS: set connnection in progress failed");
+		hdd_err("Can't start BSS: set connection in progress failed");
 		ret = -EINVAL;
 		goto error;
 	}
