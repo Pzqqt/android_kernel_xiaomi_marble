@@ -4732,7 +4732,7 @@ tLimPreAuthNode *lim_acquire_free_pre_auth_node(tpAniSirGlobal pMac,
 
 /** -------------------------------------------------------------
    \fn lim_get_pre_auth_node_from_index
-   \brief Depending on the Index this retrives the pre auth node.
+   \brief Depending on the Index this retrieves the pre auth node.
    \param     tpAniSirGlobal    pMac
    \param     tpLimPreAuthTable pAuthTable
    \param     uint32_t authNodeIdx

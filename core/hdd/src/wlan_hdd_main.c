@@ -3516,7 +3516,7 @@ void hdd_set_station_ops(struct net_device *dev)
  * @name: User-visible name of the interface
  *
  * hdd adapter pointer would point to the netdev->priv space, this function
- * would retrive the pointer, and setup the hdd adapter configuration.
+ * would retrieve the pointer, and setup the hdd adapter configuration.
  *
  * Return: the pointer to hdd adapter, otherwise NULL
  */

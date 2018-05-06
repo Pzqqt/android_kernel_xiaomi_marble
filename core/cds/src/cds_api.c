@@ -1266,7 +1266,7 @@ QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
 /**
  * cds_get_context() - get context data area
  *
- * @moduleId: ID of the module who's context data is being retrived.
+ * @moduleId: ID of the module who's context data is being retrieved.
  *
  * Each module in the system has a context / data area that is allocated
  * and managed by CDS.  This API allows any user to get a pointer to its
