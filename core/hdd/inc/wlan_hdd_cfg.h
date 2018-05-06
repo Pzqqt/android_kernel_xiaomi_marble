@@ -447,7 +447,7 @@ enum hdd_dot11_mode {
  * This ini is used to set opportunistic threshold diff.
  * This parameter is the RSSI diff above neighbor lookup
  * threshold, when opportunistic scan should be triggered.
- * MAX value is choosen so that this type of scan can be
+ * MAX value is chosen so that this type of scan can be
  * always enabled by user.
  * MIN value will cause opportunistic scan to be triggered
  * in neighbor lookup RSSI range.

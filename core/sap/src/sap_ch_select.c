@@ -2699,7 +2699,7 @@ uint8_t sap_select_channel(tHalHandle hal, struct sap_context *sap_ctx,
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 			/*
 			 * Weight of the channels(device's AP is operating)
-			 * increased to MAX+1 so that they will be choosen only
+			 * increased to MAX+1 so that they will be chosen only
 			 * when there is no other best channel to choose
 			 */
 			if (sap_check_in_avoid_ch_list(sap_ctx, best_ch_num)) {
