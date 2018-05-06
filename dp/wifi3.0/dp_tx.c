@@ -3332,7 +3332,7 @@ static void dp_tx_me_mem_free(struct dp_pdev *pdev,
 }
 
 /**
- * dp_tx_me_send_convert_ucast(): fuction to convert multicast to unicast
+ * dp_tx_me_send_convert_ucast(): function to convert multicast to unicast
  * @vdev: DP VDEV handle
  * @nbuf: Multicast nbuf
  * @newmac: Table of the clients to which packets have to be sent
