@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,44 +24,16 @@
  *
  * Linux HDD P2P include file
  */
-#define ACTION_FRAME_TX_TIMEOUT 2000
-#define WAIT_CANCEL_REM_CHAN    1000
-#define WAIT_REM_CHAN_READY     1000
-#define WAIT_CHANGE_CHANNEL_FOR_OFFCHANNEL_TX 3000
-#define COMPLETE_EVENT_PROPOGATE_TIME 10
-
-#ifdef QCA_WIFI_3_0_EMU
-#define ACTION_FRAME_DEFAULT_WAIT 500
-#else
-#define ACTION_FRAME_DEFAULT_WAIT 200
-#endif
 
 #define WLAN_HDD_GET_TYPE_FRM_FC(__fc__)         (((__fc__) & 0x0F) >> 2)
 #define WLAN_HDD_GET_SUBTYPE_FRM_FC(__fc__)      (((__fc__) & 0xF0) >> 4)
 #define WLAN_HDD_80211_FRM_DA_OFFSET             4
-#define P2P_WILDCARD_SSID_LEN                    7
-#define P2P_WILDCARD_SSID                        "DIRECT-"
 #define WLAN_HDD_80211_PEER_ADDR_OFFSET (WLAN_HDD_80211_FRM_DA_OFFSET + \
 					 MAC_ADDR_LEN)
-
-
-#ifdef QCA_WIFI_3_0_EMU
-#define P2P_ROC_DURATION_MULTIPLIER_GO_PRESENT   2
-#define P2P_ROC_DURATION_MULTIPLIER_GO_ABSENT    3
-#else
-#define P2P_ROC_DURATION_MULTIPLIER_GO_PRESENT   2
-#define P2P_ROC_DURATION_MULTIPLIER_GO_ABSENT    5
-#endif
-
-#define HDD_P2P_MAX_ROC_DURATION 1000
-#define MAX_ROC_REQ_QUEUE_ENTRY 10
 
 #define P2P_POWER_SAVE_TYPE_OPPORTUNISTIC        (1 << 0)
 #define P2P_POWER_SAVE_TYPE_PERIODIC_NOA         (1 << 1)
 #define P2P_POWER_SAVE_TYPE_SINGLE_NOA           (1 << 2)
-
-#define ACTION_FRAME_RSP_WAIT 500
-#define ACTION_FRAME_ACK_WAIT 300
 
 struct p2p_app_set_ps {
 	uint8_t opp_ps;

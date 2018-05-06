@@ -71,9 +71,6 @@
 /* max number of legacy bssid we can store during scan on one channel */
 #define MAX_NUM_LEGACY_BSSID_PER_CHANNEL    10
 
-#define P2P_WILDCARD_SSID "DIRECT-"     /* TODO Put it in proper place; */
-#define P2P_WILDCARD_SSID_LEN 7
-
 #ifdef WLAN_FEATURE_CONCURRENT_P2P
 #define MAX_NO_OF_P2P_SESSIONS  5
 #endif /* WLAN_FEATURE_CONCURRENT_P2P */
