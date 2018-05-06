@@ -1726,7 +1726,7 @@ struct wmi_soc {
 	struct wmi_ops *ops;
 	const uint32_t *svc_ids;
 	uint32_t wmi_events[wmi_events_max];
-	/* WMI service bitmap recieved from target */
+	/* WMI service bitmap received from target */
 	uint32_t *wmi_service_bitmap;
 	uint32_t *wmi_ext_service_bitmap;
 #ifndef CONFIG_MCL
