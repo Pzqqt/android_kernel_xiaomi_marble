@@ -94,7 +94,7 @@ typedef union {
  *      for the priv_cb_w since it must be at same offset for both
  *      TX and RX union
  *
- * @paddr   : physical addressed retrived by dma_map of nbuf->data
+ * @paddr   : physical addressed retrieved by dma_map of nbuf->data
  *
  * @rx.dev.priv_cb_w.ext_cb_ptr: extended cb pointer
  * @rx.dev.priv_cb_w.fctx      : ctx to handle special pkts defined by ftype
