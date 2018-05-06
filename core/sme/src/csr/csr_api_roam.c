@@ -620,7 +620,7 @@ static int8_t csr_find_channel_pwr(struct channel_power *
 			return pdefaultPowerTable[i].tx_power;
 	}
 	/* could not find the channel list in default list */
-	/* this should not have occured */
+	/* this should not have occurred */
 	QDF_ASSERT(0);
 	return 0;
 }
@@ -10739,7 +10739,7 @@ QDF_STATUS csr_roam_issue_set_context_req(tpAniSirGlobal pMac,
  * @is_key_valid:    indicates if key is valid
  *
  * This function will validate the key length, adjust if too long. It will
- * update is_key_valid flag to false if some error has occured key are local.
+ * update is_key_valid flag to false if some error has occurred key are local.
  *
  * Return: status of operation
  */
@@ -10964,7 +10964,7 @@ tpAniSirGlobal mac_ctx, uint32_t session_id,
 	 * following function will validate the key length, Adjust if too long.
 	 * for static WEP the keys are not set thru' SetContextReq
 	 *
-	 * it will update bool is_key_valid, to false if some error has occured
+	 * it will update bool is_key_valid, to false if some error has occurred
 	 * key are local. enqueue sme command only if is_key_valid is true
 	 * status is indication of success or failure and will be returned to
 	 * called of current function if command is not enqueued due to key req

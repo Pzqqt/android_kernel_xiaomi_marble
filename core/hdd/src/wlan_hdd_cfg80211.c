@@ -21928,7 +21928,7 @@ int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
 	switch (status) {
 	case QDF_STATUS_E_FAILURE:
 		/*
-		 * QDF_STATUS_E_FAILURE indicates that some error has occured
+		 * QDF_STATUS_E_FAILURE indicates that some error has occurred
 		 * while changing the hw mode
 		 */
 		hdd_err("ERROR: connections update failed!!");
