@@ -7417,7 +7417,7 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 	}
 
 	update_mac_from_string(hdd_ctx, &macTable[0], i);
-	hdd_debug("Populating remaining %d Mac addreses",
+	hdd_debug("Populating remaining %d Mac addresses",
 		   max_mac_addr - i);
 	hdd_populate_random_mac_addr(hdd_ctx, max_mac_addr - i);
 
