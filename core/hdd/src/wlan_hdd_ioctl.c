@@ -2866,7 +2866,7 @@ static int drv_cmd_p2p_dev_addr(struct hdd_adapter *adapter,
  * @command_len: Length of @command
  * @priv_data: Pointer to ioctl private data structure
  *
- * This is a trivial command hander function which simply forwards the
+ * This is a trivial command handler function which simply forwards the
  * command to the actual command processor within the P2P module.
  *
  * Return: 0 on success, non-zero on failure
@@ -2888,7 +2888,7 @@ static int drv_cmd_p2p_set_noa(struct hdd_adapter *adapter,
  * @command_len: Length of @command
  * @priv_data: Pointer to ioctl private data structure
  *
- * This is a trivial command hander function which simply forwards the
+ * This is a trivial command handler function which simply forwards the
  * command to the actual command processor within the P2P module.
  *
  * Return: 0 on success, non-zero on failure
