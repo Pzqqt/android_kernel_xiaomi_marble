@@ -1743,7 +1743,7 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 	 * enabled in TX polling mode. If this is not the case, more
 	 * bottom halve spin lock changes are needed. Due to data path
 	 * performance concern, after internal discussion we've decided
-	 * to make minimum change, i.e., only address the issue occured
+	 * to make minimum change, i.e., only address the issue occurred
 	 * in this function. The possible negative effect of this minimum
 	 * change is that, in the future, if some other function will also
 	 * be opened to let the user context to use, those cases need to be
