@@ -269,7 +269,7 @@ static inline bool
 hdd_conn_get_connection_state(struct hdd_station_ctx *sta_ctx,
 			      eConnectionState *pConnState)
 {
-	bool fConnected = false;
+	bool connected = false;
 	eConnectionState connState;
 
 	/* get the connection state. */
@@ -278,13 +278,13 @@ hdd_conn_get_connection_state(struct hdd_station_ctx *sta_ctx,
 	if (eConnectionState_Associated == connState ||
 	    eConnectionState_IbssConnected == connState ||
 	    eConnectionState_IbssDisconnected == connState) {
-		fConnected = true;
+		connected = true;
 	}
 
 	if (pConnState)
 		*pConnState = connState;
 
-	return fConnected;
+	return connected;
 }
 
 /**
@@ -343,14 +343,14 @@ static inline bool
 hdd_conn_get_connected_cipher_algo(struct hdd_station_ctx *sta_ctx,
 				   eCsrEncryptionType *pConnectedCipherAlgo)
 {
-	bool fConnected = false;
+	bool connected = false;
 
-	fConnected = hdd_conn_get_connection_state(sta_ctx, NULL);
+	connected = hdd_conn_get_connection_state(sta_ctx, NULL);
 
 	if (pConnectedCipherAlgo)
 		*pConnectedCipherAlgo = sta_ctx->conn_info.ucEncryptionType;
 
-	return fConnected;
+	return connected;
 }
 
 struct hdd_adapter *hdd_get_sta_connection_in_progress(
@@ -2641,7 +2641,7 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 				  eCsrRoamResult roamResult)
 {
 	eCsrEncryptionType connectedCipherAlgo;
-	bool fConnected = false;
+	bool connected = false;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	hdd_enter();
@@ -2660,9 +2660,9 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 		  MAC_ADDRESS_STR, roamStatus, roamResult,
 		  MAC_ADDR_ARRAY(roam_info->peerMac.bytes));
 
-	fConnected = hdd_conn_get_connected_cipher_algo(sta_ctx,
+	connected = hdd_conn_get_connected_cipher_algo(sta_ctx,
 						   &connectedCipherAlgo);
-	if (fConnected) {
+	if (connected) {
 		hdd_change_peer_state_after_set_key(adapter, roam_info,
 						    roamResult);
 	}
