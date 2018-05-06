@@ -106,7 +106,7 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 
 	ol_pdev_cfg_param_update(cfg_ctx);
 
-	/* temporarily diabled PN check for Riva/Pronto */
+	/* temporarily disabled PN check for Riva/Pronto */
 	cfg_ctx->rx_pn_check = 1;
 	cfg_ctx->defrag_timeout_check = ol_defrag_timeout_check();
 	cfg_ctx->max_peer_id = 511;

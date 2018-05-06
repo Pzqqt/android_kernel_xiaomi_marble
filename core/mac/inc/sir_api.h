@@ -5383,7 +5383,7 @@ struct sir_rx_threshold {
  *     threshold is not set in the bitmap, global threshold will take
  *     effect.
  * @global: whether clobal threshold is enabled.
- *     When both global and dedicated threshold are diabled, MAC counter
+ *     When both global and dedicated threshold are disabled, MAC counter
  *     will indicate stats periodically.
  * @global_threshold: global threshold value
  * @cca_bitmap: bitmap for CCA.

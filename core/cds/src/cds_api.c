@@ -2929,7 +2929,7 @@ QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present)
 				cds_err("SMMU mismatch: IPA: enable, WLAN: disable");
 				return QDF_STATUS_E_FAILURE;
 			} else {
-				cds_info("SMMU diabled from both IPA and WLAN side");
+				cds_info("SMMU disabled from both IPA and WLAN side");
 			}
 		}
 	}

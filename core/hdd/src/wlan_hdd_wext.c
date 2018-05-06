@@ -127,7 +127,7 @@
 #define WE_SET_MAX_ASSOC     4
 /*
  * <ioctl>
- * scan_diable - Disable scan
+ * scan_disable - Disable scan
  *
  * @INPUT: set_value
  *
