@@ -12650,7 +12650,7 @@ void hdd_clean_up_pre_cac_interface(struct hdd_context *hdd_ctx)
 
 	precac_adapter = hdd_get_adapter_by_vdev(hdd_ctx, session_id);
 	if (!precac_adapter) {
-		hdd_err("invalid pre cac adapater");
+		hdd_err("invalid pre cac adapter");
 		return;
 	}
 

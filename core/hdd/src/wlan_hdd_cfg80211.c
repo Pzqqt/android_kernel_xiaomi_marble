@@ -1816,7 +1816,7 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 	int status;
 
 	if (!adapter) {
-		hdd_err("adapater is NULL");
+		hdd_err("adapter is NULL");
 		return -EINVAL;
 	}
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -10102,7 +10102,7 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
  * wlan_hdd_request_pre_cac() - Start pre CAC in the driver
  * @channel: Channel option provided by userspace
  *
- * Sets the driver to the required hardware mode and start an adapater for
+ * Sets the driver to the required hardware mode and start an adapter for
  * pre CAC which will mimic an AP.
  *
  * Return: Zero on success, non-zero value on error

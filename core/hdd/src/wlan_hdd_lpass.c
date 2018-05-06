@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -72,7 +72,7 @@ static void wlan_hdd_get_channel_info(struct hdd_context *hdd_ctx,
  * @adapter: Adapter whose status is to being packaged
  * @sta_ctx: Station-specific context of @adapter
  * @is_on: Is wlan driver loaded?
- * @is_connected: Is @adapater connected to an AP?
+ * @is_connected: Is @adapter connected to an AP?
  *
  * Generate a wlan vdev status package. The status info includes wlan
  * on/off status, vdev ID, vdev mode, supported channels, etc.
@@ -191,7 +191,7 @@ static int wlan_hdd_gen_wlan_version_pack(struct wlan_version_data *data,
  * @adapter: Adapter whose status is to be sent to lpass
  * @sta_ctx: Station-specific context of @adapter
  * @is_on: Is @adapter enabled
- * @is_connected: Is @adapater connected
+ * @is_connected: Is @adapter connected
  *
  * Generate wlan vdev status pacakge and send it to a user space
  * daemon through netlink.
