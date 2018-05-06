@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -429,7 +429,7 @@ static int ol_tx_move_desc_n(struct ol_tx_flow_pool_t *src_pool,
  * Distribute all descriptors of source pool to all
  * deficient pools as per flow_pool_list.
  *
- * Return: 0 for sucess
+ * Return: 0 for success
  */
 static int
 ol_tx_distribute_descs_to_deficient_pools(struct ol_tx_flow_pool_t *src_pool)

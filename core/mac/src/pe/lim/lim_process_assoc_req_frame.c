@@ -2109,7 +2109,7 @@ sendIndToSme:
 		goto error;
 	}
 
-	/* AddSta is sucess here */
+	/* AddSta is success here */
 	if (LIM_IS_AP_ROLE(session) && IS_DOT11_MODE_HT(session->dot11mode) &&
 		assoc_req->HTCaps.present && assoc_req->wmeInfoPresent) {
 		/*

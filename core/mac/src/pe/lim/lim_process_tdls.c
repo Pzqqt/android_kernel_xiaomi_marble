@@ -474,7 +474,7 @@ static uint32_t lim_prepare_tdls_frame_header(tpAniSirGlobal pMac, uint8_t *pFra
  * lim_mgmt_tdls_tx_complete - callback to indicate Tx completion
  * @context: pointer to mac structure
  * @buf: buffer
- * @tx_complete: indicates tx sucess/failure
+ * @tx_complete: indicates tx success/failure
  * @params: tx completion params
  *
  * function will be invoked on receiving tx completion indication

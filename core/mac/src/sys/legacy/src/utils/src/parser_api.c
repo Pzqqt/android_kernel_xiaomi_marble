@@ -396,7 +396,7 @@ populate_dot11f_country(tpAniSirGlobal pMac,
  * This routine will populate DS param in management frame like
  * beacon, probe response, and etc.
  *
- * Return: Overall sucess
+ * Return: Overall success
  */
 tSirRetStatus
 populate_dot11f_ds_params(tpAniSirGlobal mac_ctx,

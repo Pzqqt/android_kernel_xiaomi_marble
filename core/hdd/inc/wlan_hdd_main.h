@@ -2912,7 +2912,7 @@ static inline void hdd_send_peer_status_ind_to_app(
  *
  * Send P2P quota value to FW
  *
- * Return: 0 sucess else failure
+ * Return: 0 success else failure
  */
 int wlan_hdd_send_p2p_quota(struct hdd_adapter *adapter, int sval);
 
@@ -2923,7 +2923,7 @@ int wlan_hdd_send_p2p_quota(struct hdd_adapter *adapter, int sval);
  *
  * Send MCC latency value to FW
  *
- * Return: 0 sucess else failure
+ * Return: 0 success else failure
  */
 int wlan_hdd_send_mcc_latency(struct hdd_adapter *adapter, int sval);
 

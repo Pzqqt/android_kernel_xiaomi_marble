@@ -987,7 +987,7 @@ int wma_peer_state_change_event_handler(void *handle,
  *
  * This function enable/disable mcc adaptive scheduler in fw.
  *
- * Return: QDF_STATUS_SUCCESS for sucess or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
 QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 							 mcc_adaptive_scheduler)

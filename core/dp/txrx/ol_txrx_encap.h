@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,7 +42,7 @@
  * @param msdu - qdf_nbuf_t
  * @param msdu_info - informations from tx classification.
  * @return
- *     A_OK: encap operation sucessful
+ *     A_OK: encap operation successful
  *     other: operation failed,the msdu need be dropped.
  */
 A_STATUS
@@ -69,7 +69,7 @@ struct ol_rx_decap_info_t {
  * @param msdu - qdf_nbuf_t
  * @param info - ol_rx_decap_info_t: context info for decap
  * @return
- *     A_OK: decap operation sucessful
+ *     A_OK: decap operation successful
  *     other: operation failed,the msdu need be dropped.
  */
 A_STATUS

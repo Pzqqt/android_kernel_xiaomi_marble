@@ -4820,7 +4820,7 @@ static ol_txrx_vdev_handle ol_txrx_get_vdev_from_sta_id(uint8_t sta_id)
  * @osif_fc_ctx: callback context
  * @flow_control_is_pause: is vdev paused by flow control
  *
- * Return: 0 for sucess or error code
+ * Return: 0 for success or error code
  */
 static int ol_txrx_register_tx_flow_control(uint8_t vdev_id,
 	ol_txrx_tx_flow_control_fp flowControl, void *osif_fc_ctx,
