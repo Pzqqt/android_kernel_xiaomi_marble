@@ -43,7 +43,7 @@
 #define WLAN_PDEV_F_USEPROT                 0x00000040
   /* STATUS: use barker preamble*/
 #define WLAN_PDEV_F_USEBARKER               0x00000080
-  /* CONF: DISABLE 2040 coexistance */
+  /* CONF: DISABLE 2040 coexistence */
 #define WLAN_PDEV_F_COEXT_DISABLE           0x00000100
   /* STATE: scan pending */
 #define WLAN_PDEV_F_SCAN_PENDING            0x00000200
