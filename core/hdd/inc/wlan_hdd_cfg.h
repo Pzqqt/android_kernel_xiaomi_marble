@@ -8684,7 +8684,7 @@ enum hdd_link_speed_rpt_type {
  *
  * If active mode offload(gActiveModeOffload=1) is enabled then all applicable
  * data offload/filtering is enabled immediately in FW once config is available
- * in WLAN driver and FW caches this configuration accross suspend/resume
+ * in WLAN driver and FW caches this configuration across suspend/resume
  *
  * If active mode offload is disabled(gActiveModeOffload=0) then all applicable
  * data offload/filtering is enabled during cfg80211 suspend and disabled
