@@ -196,7 +196,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 			ptrn += 2;      /* skip to next byte */
 		}
 
-		/* Skip over the ':' seperator after the pattern */
+		/* Skip over the ':' separator after the pattern */
 		ptrn++;
 
 		/* Extract the pattern Mask */
