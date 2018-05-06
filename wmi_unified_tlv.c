@@ -1271,7 +1271,7 @@ static QDF_STATUS send_suspend_cmd_tlv(wmi_unified_t wmi_handle,
 	int32_t ret;
 
 	/*
-	 * send the comand to Target to ignore the
+	 * send the command to Target to ignore the
 	 * PCIE reset so as to ensure that Host and target
 	 * states are in sync
 	 */

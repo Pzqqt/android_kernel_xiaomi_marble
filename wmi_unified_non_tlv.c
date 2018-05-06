@@ -1041,7 +1041,7 @@ static QDF_STATUS send_suspend_cmd_non_tlv(wmi_unified_t wmi_handle,
 	wmi_buf_t wmibuf;
 	uint32_t len = sizeof(wmi_pdev_suspend_cmd);
 
-	/*send the comand to Target to ignore the
+	/*send the command to Target to ignore the
 	* PCIE reset so as to ensure that Host and target
 	* states are in sync*/
 	wmibuf = wmi_buf_alloc(wmi_handle, len);
