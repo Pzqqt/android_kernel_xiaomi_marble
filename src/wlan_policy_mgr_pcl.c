@@ -184,7 +184,7 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 			avoid_freq_ind->chan_list.ch_list,
 			pm_ctx->unsafe_channel_count *
 			sizeof(pm_ctx->unsafe_channel_list[0]));
-	policy_mgr_debug("Channel list update, recieved %d avoided channels",
+	policy_mgr_debug("Channel list update, received %d avoided channels",
 		pm_ctx->unsafe_channel_count);
 }
 
