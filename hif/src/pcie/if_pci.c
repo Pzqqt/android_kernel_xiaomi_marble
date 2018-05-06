@@ -4198,7 +4198,7 @@ static int __hif_pm_runtime_allow_suspend(struct hif_pci_softc *hif_sc,
  * hif_pm_runtime_lock_timeout_fn() - callback the runtime lock timeout
  * @data: calback data that is the pci context
  *
- * if runtime locks are aquired with a timeout, this function releases
+ * if runtime locks are acquired with a timeout, this function releases
  * the locks when the last runtime lock expires.
  *
  * dummy implementation until lock acquisition is implemented.
