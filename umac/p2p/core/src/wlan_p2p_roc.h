@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,7 +27,7 @@
 #include <qdf_mc_timer.h>
 #include <qdf_list.h>
 
-#define P2P_EVENT_PROPOGATE_TIME 10
+#define P2P_EVENT_PROPAGATE_TIME 10
 #define P2P_WAIT_CANCEL_ROC      1000
 
 #ifdef QCA_WIFI_3_0_EMU
