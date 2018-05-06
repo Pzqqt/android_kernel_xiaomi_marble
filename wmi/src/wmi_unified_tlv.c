@@ -13363,7 +13363,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
  * @wmi_handle: pointer to wmi handle
  * @buf_ptr: pointer to current position in init command buffer
- * @len: pointer to length. This will be updated with current lenght of cmd
+ * @len: pointer to length. This will be updated with current length of cmd
  * @param: point host parameters for init command
  *
  * Return: Updated pointer of buf_ptr.

@@ -1849,7 +1849,7 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
  * @nbytes: number of bytes in the message
  * @pipe_info: used for the pipe_number info
  *
- * Checks the packet length, configures the lenght in the netbuff,
+ * Checks the packet length, configures the length in the netbuff,
  * and calls the upper layer callback.
  *
  * return: None

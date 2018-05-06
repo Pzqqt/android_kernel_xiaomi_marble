@@ -4044,7 +4044,7 @@ struct remove_beacon_filter_params {
 /**
  * struct mgmt_params - Mgmt params
  * @vdev_id: vdev id
- * @buf_len: lenght of frame buffer
+ * @buf_len: length of frame buffer
  * @wbuf: frame buffer
  */
 struct mgmt_params {
@@ -4461,7 +4461,7 @@ struct proxy_ast_reserve_params {
  * @key: pointer to key
  * @key_len: length of key
  * @data: pointer data buf
- * @data_len: lenght of data buf
+ * @data_len: length of data buf
  * @mode: mode
  * @op: operation
  * @pdev_id: pdev_id for identifying the MAC
@@ -7875,7 +7875,7 @@ struct wmi_host_dcs_interference_param {
  * struct wmi_host_fips_event_param: FIPS event param
  * @pdev_id: pdev id
  * @error_status: Error status: 0 (no err), 1, or OPER_TIMEOUR
- * @data_len: FIPS data lenght
+ * @data_len: FIPS data length
  * @data: pointer to data
  */
 struct wmi_host_fips_event_param {

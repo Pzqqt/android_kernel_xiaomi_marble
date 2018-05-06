@@ -1750,7 +1750,7 @@ static inline bool __qdf_nbuf_tso_tcp_v6(struct sk_buff *skb)
 }
 
 /**
- * __qdf_nbuf_l2l3l4_hdr_len() - return the l2+l3+l4 hdr lenght of the skb
+ * __qdf_nbuf_l2l3l4_hdr_len() - return the l2+l3+l4 hdr length of the skb
  * @skb: sk buff
  *
  * Return: size of l2+l3+l4 header length

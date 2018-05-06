@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -176,7 +176,7 @@ int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
  * @status_code: status to be incuded in the frame
  * @peer_capability: peer capability information
  * @buf: additional IEs to be included
- * @len: lenght of additional Ies
+ * @len: length of additional Ies
  * @oper: cfg80211 TDLS operation
  *
  * Return: 0 on success; negative errno otherwise
