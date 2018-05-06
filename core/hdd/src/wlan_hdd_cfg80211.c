@@ -16705,7 +16705,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 		/* in case of IBSS as there was no information
 		 * available about WEP keys during IBSS join, group
-		 * key intialized with NULL key, so re-initialize
+		 * key initialized with NULL key, so re-initialize
 		 * group key with correct value
 		 */
 		if ((eCSR_BSS_TYPE_START_IBSS == roam_profile->BSSType) &&
