@@ -2121,7 +2121,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				 * After Kernel 4.0, it's no longer need to set
 				 * STATION_INFO_ASSOC_REQ_IES flag, as it
 				 * changed to use assoc_req_ies_len length to
-				 * check the existance of request IE.
+				 * check the existence of request IE.
 				 */
 				sta_info->filled |= STATION_INFO_ASSOC_REQ_IES;
 #endif
