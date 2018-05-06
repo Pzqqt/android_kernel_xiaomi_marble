@@ -80,7 +80,7 @@
  * MP filtering (when enabled) is performed ALWAYS on both unicast and
  * broadcast data frames.
  *
- * Mangement frames are not subjected to WoWL filtering and are
+ * Management frames are not subjected to WoWL filtering and are
  * discarded when WoWL is enabled.
  *
  * Whenever a patern match succeeds, RX path is restored and packets

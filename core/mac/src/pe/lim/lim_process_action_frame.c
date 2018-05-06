@@ -606,7 +606,7 @@ static void __lim_process_gid_management_action_frame(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	/* Unpack Gid Mangement Action frame */
+	/* Unpack Gid Management Action frame */
 	status = dot11f_unpack_vht_gid_management_action_frame(mac_ctx,
 			body_ptr, frame_len, gid_mgmt_frame, false);
 	if (DOT11F_FAILED(status)) {

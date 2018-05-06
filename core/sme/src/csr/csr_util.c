@@ -5006,7 +5006,7 @@ static bool csr_validate_open_none(tSirBssDescription *bss_desc,
  * @auth_type:         Authentication type
  * @mc_enc_type:       Multicast encryption type
  * @mfp_enabled:       Management frame protection feature
- * @mfp_required:      Mangement frame protection mandatory
+ * @mfp_required:      Management frame protection mandatory
  * @mfp_capable:       Device capable of MFP
  * @ies_ptr:           Pointer to the IE fields
  * @neg_auth_type:     Negotiated Auth type with the AP
@@ -5102,7 +5102,7 @@ static bool csr_validate_any_default(tHalHandle hal, tCsrAuthList *auth_type,
  * @uc_enc_type:       Unicast Encryption type
  * @mc_enc_type:       Multicast encryption type
  * @mfp_enabled:       Management frame protection feature
- * @mfp_required:      Mangement frame protection mandatory
+ * @mfp_required:      Management frame protection mandatory
  * @mfp_capable:       Device capable of MFP
  * @bss_desc:          BSS Descriptor
  * @ies_ptr:           Pointer to the IE fields
