@@ -1687,7 +1687,7 @@ hal_rx_mpdu_get_fr_ds(uint8_t *buf)
  *
  * @buf: pointer to the start of RX PKT TLV headera
  * @mac_addr: pointer to mac address
- * Return: sucess/failure
+ * Return: success/failure
  */
 static inline
 QDF_STATUS hal_rx_mpdu_get_addr1(uint8_t *buf, uint8_t *mac_addr)
@@ -1722,7 +1722,7 @@ QDF_STATUS hal_rx_mpdu_get_addr1(uint8_t *buf, uint8_t *mac_addr)
  *
  * @buf: pointer to the start of RX PKT TLV header
  * @mac_addr: pointer to mac address
- * Return: sucess/failure
+ * Return: success/failure
  */
 static inline
 QDF_STATUS hal_rx_mpdu_get_addr2(uint8_t *buf, uint8_t *mac_addr)
@@ -1757,7 +1757,7 @@ QDF_STATUS hal_rx_mpdu_get_addr2(uint8_t *buf, uint8_t *mac_addr)
  *
  * @buf: pointer to the start of RX PKT TLV header
  * @mac_addr: pointer to mac address
- * Return: sucess/failure
+ * Return: success/failure
  */
 static inline
 QDF_STATUS hal_rx_mpdu_get_addr3(uint8_t *buf, uint8_t *mac_addr)
@@ -1792,7 +1792,7 @@ QDF_STATUS hal_rx_mpdu_get_addr3(uint8_t *buf, uint8_t *mac_addr)
  *
  * @buf: pointer to the start of RX PKT TLV header
  * @mac_addr: pointer to mac address
- * Return: sucess/failure
+ * Return: success/failure
  */
 static inline
 QDF_STATUS hal_rx_mpdu_get_addr4(uint8_t *buf, uint8_t *mac_addr)

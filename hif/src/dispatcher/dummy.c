@@ -163,7 +163,7 @@ void hif_dummy_nointrs(struct hif_softc *hif_sc)
  * hif_dummy_bus_configure - dummy call
  * hif_ctx: hif context
  *
- * Return: 0 for sucess
+ * Return: 0 for success
  */
 int hif_dummy_bus_configure(struct hif_softc *hif_sc)
 {
@@ -177,7 +177,7 @@ int hif_dummy_bus_configure(struct hif_softc *hif_sc)
  * @config: configuration value to set
  * @config_len: configuration length
  *
- * Return: 0 for sucess
+ * Return: 0 for success
  */
 QDF_STATUS
 hif_dummy_get_config_item(struct hif_softc *hif_sc,

@@ -1266,7 +1266,7 @@ QDF_STATUS wmi_extract_dcc_stats(struct wmi_unified *wmi_hdl,
  *
  * This function enable/disable mcc adaptive scheduler in fw.
  *
- * Return: QDF_STATUS_SUCCESS for sucess or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
 QDF_STATUS wmi_unified_set_enable_disable_mcc_adaptive_scheduler_cmd(
 		void *wmi_hdl, uint32_t mcc_adaptive_scheduler,
