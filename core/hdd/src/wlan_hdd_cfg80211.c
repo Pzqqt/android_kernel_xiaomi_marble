@@ -2942,7 +2942,7 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 	 * TODO: Delayed operation is used since SME-PMAC strut is global. Thus
 	 * when Primary AP ACS is complete and secondary AP ACS is started here
 	 * immediately, Primary AP start_bss may come inbetween ACS operation
-	 * and overwrite Sec AP ACS paramters. Thus Sec AP ACS is executed with
+	 * and overwrite Sec AP ACS parameters. Thus Sec AP ACS is executed with
 	 * delay. This path and below constraint will be removed on sessionizing
 	 * SAP acs parameters and decoupling SAP from PMAC (WIP).
 	 * As per design constraint user space control application must take
@@ -19965,7 +19965,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 
 	if (params->privacy) {
 		/* Security enabled IBSS, At this time there is no information
-		 * available about the security paramters, so initialise the
+		 * available about the security parameters, so initialise the
 		 * encryption type to eCSR_ENCRYPT_TYPE_WEP40_STATICKEY.
 		 * The correct security parameters will be updated later in
 		 * wlan_hdd_cfg80211_add_key Hal expects encryption type to be

@@ -7130,7 +7130,7 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
  * @hdd_ctx: HDD context
  * @adapter: Adapter pointer
  *
- * This function get ACS related INI paramters and populated
+ * This function get ACS related INI parameters and populated
  * sap config and smeConfig for ACS needed configurations.
  *
  * Return: The QDF_STATUS code associated with performing the operation.

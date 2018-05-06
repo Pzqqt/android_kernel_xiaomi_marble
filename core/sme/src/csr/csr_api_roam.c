@@ -1996,7 +1996,7 @@ QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 /**
  * csr_fetch_ch_lst_from_received_list() - fetch channel list from received list
  * and update req msg
- * paramters
+ * parameters
  * @mac_ctx:            global mac ctx
  * @roam_info:          roam info struct
  * @curr_ch_lst_info:   current channel list info
@@ -17815,7 +17815,7 @@ QDF_STATUS csr_roam_set_key_mgmt_offload(tpAniSirGlobal mac_ctx,
 
 /**
  * csr_update_roam_scan_offload_request() - updates req msg with roam offload
- * paramters
+ * parameters
  * @pMac:          mac global context
  * @req_buf:       out param, roam offload scan request packet
  * @session:       roam session
@@ -17868,7 +17868,7 @@ csr_update_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * csr_check_band_channel_match() - check if passed band and channel match
- * paramters
+ * parameters
  * @band:       band to match with channel
  * @channel:    channel to match with band
  *
@@ -17891,7 +17891,7 @@ csr_check_band_channel_match(enum band_info band, uint8_t channel)
 
 /**
  * csr_fetch_ch_lst_from_ini() - fetch channel list from ini and update req msg
- * paramters
+ * parameters
  * @mac_ctx:      global mac ctx
  * @roam_info:    roam info struct
  * @req_buf:      out param, roam offload scan request packet
@@ -17981,7 +17981,7 @@ csr_fetch_ch_lst_from_ini(tpAniSirGlobal mac_ctx,
 /**
  * csr_fetch_ch_lst_from_occupied_lst() - fetch channel list from occupied list
  * and update req msg
- * paramters
+ * parameters
  * @mac_ctx:      global mac ctx
  * @session_id:   session id
  * @reason:       reason to roam
@@ -18082,7 +18082,7 @@ csr_fetch_ch_lst_from_occupied_lst(tpAniSirGlobal mac_ctx,
 /**
  * csr_fetch_valid_ch_lst() - fetch channel list from valid channel list and
  * update req msg
- * paramters
+ * parameters
  * @mac_ctx:            global mac ctx
  * @req_buf:            out param, roam offload scan request packet
  *
@@ -18189,7 +18189,7 @@ csr_fetch_valid_ch_lst(tpAniSirGlobal mac_ctx,
 /**
  * csr_create_roam_scan_offload_request() - init roam offload scan request
  *
- * paramters
+ * parameters
  * @mac_ctx:      global mac ctx
  * @command:      roam scan offload command input
  * @session_id:   session id
@@ -19313,7 +19313,7 @@ uint8_t csr_get_roam_enabled_sta_sessionid(tpAniSirGlobal mac_ctx)
  * csr_roam_offload_scan() - populates roam offload scan request and sends to
  * WMA
  *
- * paramters
+ * parameters
  * @mac_ctx:      global mac ctx
  * @session_id:   session id
  * @command:      roam scan offload command input

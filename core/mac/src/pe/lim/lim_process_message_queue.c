@@ -735,7 +735,7 @@ __lim_handle_beacon(tpAniSirGlobal pMac, struct scheduler_msg *pMsg,
  * @scan_entry: pointer to the scan cache entry of the beacon
  * @rx_pkt: pointer to the cds pkt allocated
  *
- * This API fills only the essential paramters in the Rx Pkt Meta which are
+ * This API fills only the essential parameters in the Rx Pkt Meta which are
  * required while converting the beacon frame to struct and while handling
  * the beacon for implementation of SAP protection mechanisms.
  *
