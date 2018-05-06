@@ -55,9 +55,9 @@
 
 /**
  * htt_rx_frag_set_last_msdu() - set last msdu bit in rx descriptor
- *				 for recieved frames
+ *				 for received frames
  * @pdev: Handle (pointer) to HTT pdev.
- * @msg: htt recieved msg
+ * @msg: htt received msg
  *
  * Return: None
  */

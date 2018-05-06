@@ -1910,7 +1910,7 @@ struct ieee80211_ie_ext_cap {
 #define IEEE80211_EXTCAPIE_OP_MODE_NOTIFY   0x40000000  /* bit-62 Operating Mode notification */
 
 /*
- * These caps are populated when we recieve beacon/probe response
+ * These caps are populated when we receive beacon/probe response
  * This is used to maintain local TDLS cap bit masks
  */
 

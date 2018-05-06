@@ -1119,7 +1119,7 @@ struct ol_txrx_vdev_t {
 	} tso_pool_t;
 #endif
 
-	/* last channel change event recieved */
+	/* last channel change event received */
 	struct {
 		bool is_valid;  /* whether the rest of the members are valid */
 		uint16_t mhz;

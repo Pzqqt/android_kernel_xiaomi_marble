@@ -545,7 +545,7 @@ void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal mac_ctx)
 	}
 
 	/*
-	 * To handle the race condition where we recieve preauth rsp after
+	 * To handle the race condition where we receive preauth rsp after
 	 * timer has expired.
 	 */
 	if (true ==

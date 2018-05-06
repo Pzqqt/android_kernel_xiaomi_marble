@@ -399,7 +399,7 @@ static int wlan_hdd_update_scan_ies(struct hdd_adapter *adapter,
  * @source: scan request source(NL/Vendor scan)
  *
  * This API responds to scan trigger and update cfg80211 scan database
- * later, scan dump command can be used to recieve scan results
+ * later, scan dump command can be used to receive scan results
  *
  * Return: 0 for success, non zero for failure
  */
@@ -638,7 +638,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
  * @request: Pointer to scan request
  *
  * This API responds to scan trigger and update cfg80211 scan database
- * later, scan dump command can be used to recieve scan results
+ * later, scan dump command can be used to receive scan results
  *
  * Return: 0 for success, non zero for failure
  */
@@ -661,7 +661,7 @@ int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
  * @source: scan request source(NL/Vendor scan)
  *
  * This API responds to scan trigger and update cfg80211 scan database
- * later, scan dump command can be used to recieve scan results. This
+ * later, scan dump command can be used to receive scan results. This
  * function gets called when tdls module queues the scan request.
  *
  * Return: 0 for success, non zero for failure.

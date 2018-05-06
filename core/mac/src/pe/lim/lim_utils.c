@@ -6944,7 +6944,7 @@ void lim_update_obss_scanparams(tpPESession session,
 			tDot11fIEOBSSScanParameters *scan_params)
 {
 	/*
-	 * If the recieved value is not in the range specified
+	 * If the received value is not in the range specified
 	 * by the Specification then it will be the default value
 	 * configured through cfg
 	 */

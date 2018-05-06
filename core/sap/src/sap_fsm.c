@@ -2713,7 +2713,7 @@ static QDF_STATUS sap_fsm_state_disconnecting(struct sap_context *sap_ctx,
 			qdf_status = sap_goto_disconnecting(sap_ctx);
 	} else if ((msg == eSAP_HDD_STOP_INFRA_BSS) &&
 			(sap_ctx->is_chan_change_inprogress)) {
-		/* stop bss is recieved while processing channel change */
+		/* stop bss is received while processing channel change */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL("in state %s, event msg %d result %d"),
 			  "eSAP_DISCONNECTING ", msg, sap_event->u2);

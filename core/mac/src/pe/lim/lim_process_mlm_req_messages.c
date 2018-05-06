@@ -815,7 +815,7 @@ failure:
  *
  * This function does following:
  *   Check for suspend state.
- *   If success, proceed with setting link state to recieve the
+ *   If success, proceed with setting link state to receive the
  *   probe response/beacon from intended AP.
  *   Switch to the APs channel.
  *   On an error case, send the MLM_JOIN_CNF with error status.
