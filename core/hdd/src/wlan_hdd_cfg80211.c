@@ -13886,7 +13886,7 @@ static int wlan_hdd_fill_btm_resp(struct sk_buff *reply_skb,
  * @data : Pointer to the data received
  * @data_len : Length of the data received
  *
- * This fuction is used to fetch transition status for candidate bss. The
+ * This function is used to fetch transition status for candidate bss. The
  * transition status is either accept or reason for reject.
  *
  * Return : 0 on success and errno on failure
@@ -14055,7 +14055,7 @@ static int __wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
  * @data : Pointer to the data received
  * @data_len : Length of the data received
  *
- * This fuction is used to fetch transition status for candidate bss. The
+ * This function is used to fetch transition status for candidate bss. The
  * transition status is either accept or reason for reject.
  *
  * Return : 0 on success and errno on failure
