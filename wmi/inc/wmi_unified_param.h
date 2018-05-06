@@ -605,7 +605,7 @@ struct vdev_delete_params {
 };
 
 /**
- * struct channel_param - Channel paramters with all
+ * struct channel_param - Channel parameters with all
  *			info required by target.
  * @chan_id: channel id
  * @pwr: channel power
@@ -1468,7 +1468,7 @@ struct tx_send_params {
 };
 
 /**
- * struct wmi_mgmt_params - wmi mgmt cmd paramters
+ * struct wmi_mgmt_params - wmi mgmt cmd parameters
  * @tx_frame: management tx frame
  * @frm_len: frame length
  * @vdev_id: vdev id
@@ -1499,7 +1499,7 @@ struct wmi_mgmt_params {
 };
 
 /**
- * struct wmi_offchan_data_tx_params - wmi offchan data tx cmd paramters
+ * struct wmi_offchan_data_tx_params - wmi offchan data tx cmd parameters
  * @tx_frame: management tx frame
  * @frm_len: frame length
  * @vdev_id: vdev id
@@ -1802,7 +1802,7 @@ struct rssi_monitor_param {
 };
 
 /**
- * struct scan_mac_oui - oui paramters
+ * struct scan_mac_oui - oui parameters
  * @oui: oui parameters
  * @vdev_id: interface id
  * @enb_probe_req_sno_randomization: control probe req sequence no randomization
