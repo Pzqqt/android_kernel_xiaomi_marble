@@ -34,7 +34,7 @@
 
 /**
  * Common SRNG register access macros:
- * The SRNG registers are distributed accross various UMAC and LMAC HW blocks,
+ * The SRNG registers are distributed across various UMAC and LMAC HW blocks,
  * but the register group and format is exactly same for all rings, with some
  * difference between producer rings (these are 'producer rings' with respect
  * to HW and refered as 'destination rings' in SW) and consumer rings (these
