@@ -3233,7 +3233,7 @@ static void hdd_close_cesium_nl_sock(void)
  * @addr:	Pointer to the sockaddr.
  *
  * This function sets the user specified mac address using
- * the command ifconfig wlanX hw ether <mac adress>.
+ * the command ifconfig wlanX hw ether <mac address>.
  *
  * Return: 0 for success, non zero for failure
  */
@@ -3297,7 +3297,7 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
  * @addr: Pointer to the sockaddr
  *
  * This function sets the user specified mac address using
- * the command ifconfig wlanX hw ether <mac adress>.
+ * the command ifconfig wlanX hw ether <mac address>.
  *
  * Return: 0 for success.
  */
