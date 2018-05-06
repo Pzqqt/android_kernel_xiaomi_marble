@@ -1306,7 +1306,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	peer = dp_peer_find_by_id(soc, peer_id);
 
 	if (!peer) {
-		/* We should not recieve anything from unknown peer
+		/* We should not receive anything from unknown peer
 		 * however, that might happen while we are in the monitor mode.
 		 * We don't need to handle that here
 		 */

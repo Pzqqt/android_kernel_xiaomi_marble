@@ -2899,7 +2899,7 @@ enum packet_filter_comp_type {
 };
 
 /**
- * struct rcv_pkt_filter_params - recieve packet filter parameters
+ * struct rcv_pkt_filter_params - receive packet filter parameters
  * @protocolLayer - protocol layer
  * @cmpFlag - comparison flag
  * @dataLength - data length
@@ -2919,7 +2919,7 @@ struct rcv_pkt_filter_params {
 };
 
 /**
- * struct rcv_pkt_filter_config - recieve packet filter info
+ * struct rcv_pkt_filter_config - receive packet filter info
  * @filterId - filter id
  * @filterType - filter type
  * @numFieldParams - no of fields

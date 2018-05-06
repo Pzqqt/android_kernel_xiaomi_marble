@@ -2825,7 +2825,7 @@ int hif_pci_bus_resume(struct hif_softc *scn)
  * hif_pci_bus_suspend_noirq() - ensure there are no pending transactions
  * @scn: hif context
  *
- * Ensure that if we recieved the wakeup message before the irq
+ * Ensure that if we received the wakeup message before the irq
  * was disabled that the message is pocessed before suspending.
  *
  * Return: -EBUSY if we fail to flush the tasklets.
@@ -2848,7 +2848,7 @@ int hif_pci_bus_suspend_noirq(struct hif_softc *scn)
  * hif_pci_bus_resume_noirq() - ensure there are no pending transactions
  * @scn: hif context
  *
- * Ensure that if we recieved the wakeup message before the irq
+ * Ensure that if we received the wakeup message before the irq
  * was disabled that the message is pocessed before suspending.
  *
  * Return: -EBUSY if we fail to flush the tasklets.

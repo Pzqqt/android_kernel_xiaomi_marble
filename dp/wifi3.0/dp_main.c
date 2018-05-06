@@ -4771,7 +4771,7 @@ void dp_peer_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
 
 /*
  * dp_aggregate_pdev_ctrl_frames_stats()- function to agreegate peer stats
- * Current scope is bar recieved count
+ * Current scope is bar received count
  *
  * @pdev_handle: DP_PDEV handle
  *
