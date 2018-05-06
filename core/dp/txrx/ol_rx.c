@@ -1629,7 +1629,7 @@ ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 	/*
 	 * Currently, this does not check each MSDU to see whether it requires
 	 * special handling. MSDUs that need special handling (example: IGMP
-	 * frames) should be sent via a seperate HTT message. Also, this does
+	 * frames) should be sent via a separate HTT message. Also, this does
 	 * not do rx->tx forwarding or filtering.
 	 */
 

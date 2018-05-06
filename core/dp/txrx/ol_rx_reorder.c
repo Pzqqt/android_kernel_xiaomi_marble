@@ -633,7 +633,7 @@ ol_rx_flush_handler(ol_txrx_pdev_handle pdev,
 			ol_rx_reorder_flush_frag(htt_pdev, peer, tid,
 						 idx_start);
 			/*
-			 * Assuming flush message sent seperately for frags
+			 * Assuming flush message sent separately for frags
 			 * and for normal frames
 			 */
 			OL_RX_REORDER_TIMEOUT_MUTEX_UNLOCK(pdev);

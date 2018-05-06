@@ -4157,7 +4157,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			else
 				mode = 0;
 
-			/* VHT80 rate has seperate rate table */
+			/* VHT80 rate has separate rate table */
 			if (rate_flags &
 			    (eHAL_TX_RATE_VHT20 | eHAL_TX_RATE_VHT40 |
 			     eHAL_TX_RATE_VHT80)) {

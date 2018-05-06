@@ -2469,7 +2469,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	/* ***Note*** Donot set SME config related to ACS operation here because
 	 * ACS operation is not synchronouse and ACS for Second AP may come when
 	 * ACS operation for first AP is going on. So only do_acs is split to
-	 * seperate start_acs routine. Also SME-PMAC struct that is used to
+	 * separate start_acs routine. Also SME-PMAC struct that is used to
 	 * pass paremeters from HDD to SAP is global. Thus All ACS related SME
 	 * config shall be set only from start_acs.
 	 */
@@ -17858,7 +17858,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			qdf_mem_copy((void *)(roam_profile->BSSIDs.bssid),
 				     bssid, QDF_MAC_ADDR_SIZE);
 			/*
-			 * Save BSSID in seperate variable as
+			 * Save BSSID in separate variable as
 			 * roam_profile's BSSID is getting zeroed out in the
 			 * association process. In case of join failure
 			 * we should send valid BSSID to supplicant

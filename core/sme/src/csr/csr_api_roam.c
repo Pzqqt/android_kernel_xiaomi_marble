@@ -753,7 +753,7 @@ static void csr_roam_sort_channel_for_early_stop(tpAniSirGlobal mac_ctx,
 	num_fixed_greedy_chan = sizeof(fixed_greedy_chan_list)/sizeof(uint8_t);
 	/*
 	 * Browse through the chan_list and put all the non-greedy channels
-	 * into a seperate list by name chan_list_non_greedy
+	 * into a separate list by name chan_list_non_greedy
 	 */
 	for (i = 0; i < num_channel; i++) {
 		for (j = 0; j < num_fixed_greedy_chan; j++) {
@@ -775,7 +775,7 @@ static void csr_roam_sort_channel_for_early_stop(tpAniSirGlobal mac_ctx,
 	}
 	/*
 	 * Browse through the fixed_greedy_chan_list and put all the greedy
-	 * channels in the chan_list into a seperate list by name
+	 * channels in the chan_list into a separate list by name
 	 * chan_list_greedy
 	 */
 	for (i = 0; i < num_fixed_greedy_chan; i++) {

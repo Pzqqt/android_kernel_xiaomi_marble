@@ -848,7 +848,7 @@ ol_txrx_rsrc_threshold_lo(int desc_pool_size)
 	/*
 	 * 5% margin of unallocated desc is too much for per
 	 * vdev mechanism.
-	 * Define the value seperately.
+	 * Define the value separately.
 	 */
 	threshold_low = TXRX_HL_TX_FLOW_CTRL_MGMT_RESERVED;
 
