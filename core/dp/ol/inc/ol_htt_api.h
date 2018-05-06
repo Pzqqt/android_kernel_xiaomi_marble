@@ -162,7 +162,7 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
  * @brief Get the fields from HTT T2H stats upload message's stats info header
  * @details
  *  Parse the a HTT T2H message's stats info tag-length-value header,
- *  to obtain the stats type, status, data lenght, and data address.
+ *  to obtain the stats type, status, data length, and data address.
  *
  * @param stats_info_list - address of stats record's header
  * @param[out] type - which type of FW stats are contained in the record

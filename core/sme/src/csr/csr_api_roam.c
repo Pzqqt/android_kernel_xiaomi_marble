@@ -15174,7 +15174,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		 * So, take the size of the tSirSmeJoinReq, subtract  size of
 		 * bssDescription, add the number of bytes indicated by the
 		 * length field of the bssDescription, add the size of length
-		 * field  because it not included in the lenghth field.
+		 * field because it not included in the length field.
 		 */
 		msgLen = sizeof(tSirSmeJoinReq) - sizeof(*pBssDescription) +
 				pBssDescription->length +

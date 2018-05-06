@@ -411,7 +411,7 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		int msg_len = qdf_nbuf_len(htt_t2h_msg);
 		if (msg_len < (sizeof(struct htt_mgmt_tx_compl_ind) + sizeof(*msg_word))) {
 			QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
-				  "Invalid msg_word lenght in HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND");
+				  "Invalid msg_word length in HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND");
 			WARN_ON(1);
 			break;
 		}
@@ -572,7 +572,7 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 
 		if (msg_len < sizeof(struct htt_flow_pool_unmap_t)) {
 			QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
-				  "Invalid msg_word lenght in HTT_T2H_MSG_TYPE_FLOW_POOL_UNMAP");
+				  "Invalid msg_word length in HTT_T2H_MSG_TYPE_FLOW_POOL_UNMAP");
 			WARN_ON(1);
 			break;
 		}

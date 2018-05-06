@@ -82,7 +82,7 @@ static tSirRetStatus sch_get_p2p_ie_offset(uint8_t *pExtraIe,
  * @max_bcn_size:  max beacon size
  * @num_bytes:     final size
  * @addn_ie:       pointer to additional IE
- * @addn_ielen:    lenght of additional IE
+ * @addn_ielen:    length of additional IE
  *
  * Return: status of operation
  */

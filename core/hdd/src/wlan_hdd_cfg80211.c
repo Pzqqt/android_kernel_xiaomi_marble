@@ -17044,7 +17044,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 				 * encryption. In this canse the key
 				 * length is 5 but the encryption type
 				 * is 104 hence checking the key
-				 * lenght(5) and encryption type(104)
+				 * length(5) and encryption type(104)
 				 * and switching encryption type to 40
 				 */
 				roam_profile->EncryptionType.

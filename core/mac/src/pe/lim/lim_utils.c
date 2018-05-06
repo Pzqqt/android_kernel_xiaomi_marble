@@ -6546,7 +6546,7 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
  * @addn_ie: Additional IE buffer
  * @addn_ielen: Length of additional IE
  * @eid: EID of IE to strip
- * @size_of_len_field: lenght of IE length field
+ * @size_of_len_field: length of IE length field
  * @oui: if present matches OUI also
  * @oui_length: if previous present, this is length of oui
  * @extracted_ie: if not NULL, copy the stripped IE to this buffer
