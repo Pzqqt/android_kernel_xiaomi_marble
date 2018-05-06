@@ -3689,7 +3689,7 @@ int hdd_assemble_rate_code(uint8_t preamble, uint8_t nss, uint8_t rate)
 }
 
 int hdd_set_11ax_rate(struct hdd_adapter *adapter, int set_value,
-		      struct sap_Config *sap_config)
+		      struct sap_config *sap_config)
 {
 	uint8_t preamble = 0, nss = 0, rix = 0;
 	int ret;

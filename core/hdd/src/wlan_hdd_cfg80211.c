@@ -1521,7 +1521,7 @@ static int is_driver_dfs_capable(struct wiphy *wiphy,
 int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 {
 	struct hdd_adapter *con_sap_adapter;
-	tsap_Config_t *sap_config, *con_sap_config;
+	tsap_config_t *sap_config, *con_sap_config;
 	int con_ch;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -1603,7 +1603,7 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
  * Return: 0 if success else error code
  */
 static int wlan_hdd_reset_force_acs_chan_range(struct hdd_context *hdd_ctx,
-						tsap_Config_t *sap_config)
+						tsap_config_t *sap_config)
 {
 	bool is_dfs_mode_enabled = false;
 	uint32_t i, num_channels = 0;
@@ -1719,7 +1719,7 @@ static int wlan_hdd_reset_force_acs_chan_range(struct hdd_context *hdd_ctx,
  * Return: 0 if success; -EINVAL if ACS channel list is NULL
  */
 static int wlan_hdd_set_acs_ch_range(
-	tsap_Config_t *sap_cfg, enum qca_wlan_vendor_acs_hw_mode hw_mode,
+	tsap_config_t *sap_cfg, enum qca_wlan_vendor_acs_hw_mode hw_mode,
 	bool ht_enabled, bool vht_enabled)
 {
 	int i;
@@ -1771,7 +1771,7 @@ static int wlan_hdd_set_acs_ch_range(
 static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work);
 
 
-static void hdd_update_acs_channel_list(tsap_Config_t *sap_config,
+static void hdd_update_acs_channel_list(tsap_config_t *sap_config,
 					enum band_info band)
 {
 	int i, temp_count = 0;
@@ -1811,7 +1811,7 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 {
 
 	struct hdd_context *hdd_ctx;
-	tsap_Config_t *sap_config;
+	tsap_config_t *sap_config;
 	tpWLAN_SAPEventCB acs_event_callback;
 	int status;
 
@@ -1909,7 +1909,7 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
  */
 static void hdd_update_vendor_pcl_list(struct hdd_context *hdd_ctx,
 		struct hdd_vendor_acs_chan_params *acs_chan_params,
-		tsap_Config_t *sap_config)
+		tsap_config_t *sap_config)
 {
 	int i, j;
 	/*
@@ -1952,7 +1952,7 @@ static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 	struct ch_params ch_params = {0};
 	uint8_t bw_offset = 0, chan = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	tsap_Config_t *sap_config = &adapter->session.ap.sap_config;
+	tsap_config_t *sap_config = &adapter->session.ap.sap_config;
 
 	/* memory allocation */
 	sap_config->channel_info = qdf_mem_malloc(
@@ -2050,7 +2050,7 @@ static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
  */
 static int32_t
 hdd_cfg80211_update_channel_info(struct sk_buff *skb,
-			   tsap_Config_t *sap_config, int idx)
+			   tsap_config_t *sap_config, int idx)
 {
 	struct nlattr *nla_attr, *channel;
 	struct hdd_channel_info *icv;
@@ -2157,7 +2157,7 @@ fail:
 }
 
 static void hdd_get_scan_band(struct hdd_context *hdd_ctx,
-			      tsap_Config_t *sap_config,
+			      tsap_config_t *sap_config,
 			      enum band_info *band)
 {
 	/* Get scan band */
@@ -2193,7 +2193,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 				   uint8_t reason)
 {
 	struct sk_buff *skb;
-	tsap_Config_t *sap_config;
+	tsap_config_t *sap_config;
 	uint32_t channel_count = 0, status = -EINVAL;
 	uint8_t channel_list[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t freq_list[QDF_MAX_NUM_CHAN] = {0};
@@ -2457,7 +2457,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	struct net_device *ndev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	tsap_Config_t *sap_config;
+	tsap_config_t *sap_config;
 	struct sk_buff *temp_skbuff;
 	int ret, i;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ACS_MAX + 1];
@@ -2844,7 +2844,7 @@ static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work)
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	tsap_Config_t *sap_cfg = &(WLAN_HDD_GET_AP_CTX_PTR(adapter))->sap_config;
+	tsap_config_t *sap_cfg = &(WLAN_HDD_GET_AP_CTX_PTR(adapter))->sap_config;
 	struct sk_buff *vendor_event;
 	int ret_val;
 	struct hdd_adapter *con_sap_adapter;
@@ -9975,7 +9975,7 @@ int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 				       uint8_t *channel_list,
 				       enum band_info band)
 {
-	tsap_Config_t *sap_config;
+	tsap_config_t *sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t tmp_chan_list[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t chan_count;
@@ -11373,7 +11373,7 @@ static QDF_STATUS wlan_hdd_validate_acs_channel(struct hdd_adapter *adapter,
 }
 
 static void hdd_update_acs_sap_config(struct hdd_context *hdd_ctx,
-				     tsap_Config_t *sap_config,
+				     tsap_config_t *sap_config,
 				     struct hdd_vendor_chan_info *channel_list)
 {
 	sap_config->channel = channel_list->pri_ch;
@@ -11407,7 +11407,7 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 				  uint8_t channel_cnt,
 				  struct hdd_vendor_chan_info *channel_list)
 {
-	tsap_Config_t *sap_config;
+	tsap_config_t *sap_config;
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -21403,7 +21403,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 	int i;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_hostapd_state *hostapd_state;
-	tsap_Config_t *pConfig;
+	tsap_config_t *pConfig;
 	struct hdd_context *hdd_ctx;
 	int status;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;

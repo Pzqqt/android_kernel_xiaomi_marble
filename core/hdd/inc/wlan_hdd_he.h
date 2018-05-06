@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,7 +29,7 @@
 struct hdd_context;
 struct wma_tgt_cfg;
 struct hdd_beacon_data;
-struct sap_Config;
+struct sap_config;
 
 #ifdef WLAN_FEATURE_11AX
 /**
@@ -91,7 +91,7 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
  * Return: None
  */
 void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
-				 struct sap_Config *config);
+				 struct sap_config *config);
 
 /**
  * hdd_he_print_ini_config()- Print 11AX(HE) specific INI configuration
@@ -150,7 +150,7 @@ static inline void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 }
 
 static inline void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
-					       struct sap_Config *config)
+					       struct sap_config *config)
 {
 }
 

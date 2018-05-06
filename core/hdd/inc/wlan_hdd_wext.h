@@ -28,7 +28,7 @@
 #include "qdf_event.h"
 
 struct hdd_context;
-struct sap_Config;
+struct sap_config;
 
 /*
  * order of parameters in addTs private ioctl
@@ -248,7 +248,7 @@ int hdd_assemble_rate_code(uint8_t preamble, uint8_t nss, uint8_t rate);
  * Return: 0 on success, negative errno on failure
  */
 int hdd_set_11ax_rate(struct hdd_adapter *adapter, int value,
-		      struct sap_Config *sap_config);
+		      struct sap_config *sap_config);
 
 int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			    int new_phymode, struct hdd_context *phddctx);

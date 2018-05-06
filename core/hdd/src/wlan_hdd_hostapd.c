@@ -1897,7 +1897,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	case eSAP_DFS_RADAR_DETECT:
 	{
 		int i;
-		tsap_Config_t *sap_config =
+		tsap_config_t *sap_config =
 				&adapter->session.ap.sap_config;
 
 		hdd_dfs_indicate_radar(hdd_ctx);
@@ -3507,7 +3507,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_SET_11N_RATE:
 	{
 		uint8_t preamble = 0, nss = 0, rix = 0;
-		tsap_Config_t *pConfig =
+		tsap_config_t *pConfig =
 			&adapter->session.ap.sap_config;
 
 		hdd_debug("SET_HT_RATE val %d", set_value);
@@ -3570,7 +3570,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_SET_VHT_RATE:
 	{
 		uint8_t preamble = 0, nss = 0, rix = 0;
-		tsap_Config_t *pConfig =
+		tsap_config_t *pConfig =
 			&adapter->session.ap.sap_config;
 
 		if (pConfig->SapHw_mode != eCSR_DOT11_MODE_11ac &&
@@ -6407,7 +6407,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 	int status;
 
 	tSmeConfigParams *sme_config;
-	tsap_Config_t *sap_config;
+	tsap_config_t *sap_config;
 
 	hdd_enter();
 
@@ -6933,7 +6933,7 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	uint8_t *genie;
 	uint16_t total_ielen = 0;
 	int ret = 0;
-	tsap_Config_t *pConfig;
+	tsap_config_t *pConfig;
 	tSirUpdateIE updateIE;
 	struct hdd_beacon_data *beacon = NULL;
 	uint16_t proberesp_ies_len;
@@ -7074,7 +7074,7 @@ done:
  */
 static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
 {
-	tsap_Config_t *pConfig = &adapter->session.ap.sap_config;
+	tsap_config_t *pConfig = &adapter->session.ap.sap_config;
 	struct hdd_beacon_data *pBeacon = adapter->session.ap.beacon;
 	struct ieee80211_mgmt *pMgmt_frame =
 		(struct ieee80211_mgmt *)pBeacon->head;
@@ -7137,7 +7137,7 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
  */
 QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 {
-	tsap_Config_t *sap_config;
+	tsap_config_t *sap_config;
 	struct hdd_config *ini_config;
 	tHalHandle hal;
 
@@ -7152,7 +7152,7 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx, struct hdd_adapter *
 						hdd_ctx->skip_acs_scan_status);
 	if (hdd_ctx->skip_acs_scan_status == eSAP_SKIP_ACS_SCAN) {
 		struct hdd_adapter *con_sap_adapter;
-		tsap_Config_t *con_sap_config = NULL;
+		tsap_config_t *con_sap_config = NULL;
 
 		con_sap_adapter = hdd_get_con_sap_adapter(adapter, false);
 
@@ -7268,7 +7268,7 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx, struct hdd_adapter *
  */
 static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 {
-	tsap_Config_t *sap_cfg = &ap_adapter->session.ap.sap_config;
+	tsap_config_t *sap_cfg = &ap_adapter->session.ap.sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 
 	/* Fixed channel 11AC override:
@@ -7343,7 +7343,7 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
  */
 static int wlan_hdd_setup_acs_overrides(struct hdd_adapter *ap_adapter)
 {
-	tsap_Config_t *sap_cfg = &ap_adapter->session.ap.sap_config;
+	tsap_config_t *sap_cfg = &ap_adapter->session.ap.sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 
 	hdd_debug("** Driver force ACS override **");
@@ -7472,7 +7472,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				       enum nl80211_hidden_ssid hidden_ssid,
 				       bool check_for_concurrency)
 {
-	tsap_Config_t *pConfig;
+	tsap_config_t *pConfig;
 	struct hdd_beacon_data *pBeacon = NULL;
 	struct ieee80211_mgmt *pMgmt_frame;
 	const uint8_t *pIe = NULL;
@@ -8559,7 +8559,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if (cds_is_sub_20_mhz_enabled()) {
 		enum channel_state ch_state;
 		enum phy_ch_width sub_20_ch_width = CH_WIDTH_INVALID;
-		tsap_Config_t *sap_cfg = &adapter->session.ap.sap_config;
+		tsap_config_t *sap_cfg = &adapter->session.ap.sap_config;
 
 		/* Avoid ACS/DFS, and overwrite ch wd to 20 */
 		if (channel == 0) {
@@ -8641,7 +8641,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	    ) {
 		struct hdd_beacon_data *old, *new;
 		enum nl80211_channel_type channel_type;
-		tsap_Config_t *sap_config =
+		tsap_config_t *sap_config =
 			&((WLAN_HDD_GET_AP_CTX_PTR(adapter))->sap_config);
 
 		old = adapter->session.ap.beacon;

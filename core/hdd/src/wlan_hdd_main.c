@@ -4896,7 +4896,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	union iwreq_data wrqu;
 	tSirUpdateIE updateIE;
 	unsigned long rc;
-	tsap_Config_t *sap_config;
+	tsap_config_t *sap_config;
 
 	hdd_enter();
 
@@ -11613,7 +11613,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 	struct hdd_hostapd_state *hostapd_state;
 	QDF_STATUS qdf_status;
 	struct hdd_context *hdd_ctx;
-	tsap_Config_t *sap_config;
+	tsap_config_t *sap_config;
 
 	if (NULL == ap_adapter) {
 		hdd_err("ap_adapter is NULL here");
@@ -13392,7 +13392,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 	struct hdd_hostapd_state *hostapd_state;
 	QDF_STATUS qdf_status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
-	tsap_Config_t *sap_config;
+	tsap_config_t *sap_config;
 	void *sap_ctx;
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);

@@ -2801,7 +2801,7 @@ QDF_STATUS sap_fsm(struct sap_context *sap_ctx, ptWLAN_SAPEvent sap_event)
 }
 
 eSapStatus
-sapconvert_to_csr_profile(tsap_Config_t *pconfig_params, eCsrRoamBssType bssType,
+sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType,
 			  struct csr_roam_profile *profile)
 {
 	/* Create Roam profile for SoftAP to connect */

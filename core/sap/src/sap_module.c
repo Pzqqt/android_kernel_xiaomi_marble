@@ -469,7 +469,7 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
   *                                         performing the operation
   */
 static QDF_STATUS
-wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
+wlansap_set_scan_acs_channel_params(tsap_config_t *pconfig,
 				struct sap_context *psap_ctx,
 				void *pusr_context)
 {
@@ -622,7 +622,7 @@ static inline bool wlan_sap_validate_channel_switch(tHalHandle hal,
 #endif
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     tpWLAN_SAPEventCB pSapEventCallback,
-			     tsap_Config_t *pConfig, void *pUsrContext)
+			     tsap_config_t *pConfig, void *pUsrContext)
 {
 	tWLAN_SAPEvent sapEvent;        /* State machine event */
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -759,7 +759,7 @@ fail:
 } /* wlansap_start_bss */
 
 QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
-			       tsap_Config_t *pConfig)
+			       tsap_config_t *pConfig)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
@@ -2119,7 +2119,7 @@ QDF_STATUS wlansap_set_dfs_target_chnl(tHalHandle hHal, uint8_t target_channel)
 }
 
 QDF_STATUS
-wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
+wlansap_update_sap_config_add_ie(tsap_config_t *pConfig,
 				 const uint8_t *pAdditionIEBuffer,
 				 uint16_t additionIELength,
 				 eUpdateIEsType updateType)
@@ -2205,7 +2205,7 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 }
 
 QDF_STATUS
-wlansap_reset_sap_config_add_ie(tsap_Config_t *pConfig, eUpdateIEsType updateType)
+wlansap_reset_sap_config_add_ie(tsap_config_t *pConfig, eUpdateIEsType updateType)
 {
 	if (NULL == pConfig) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -2436,7 +2436,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 
 QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 				tpWLAN_SAPEventCB pacs_event_callback,
-				tsap_Config_t *pconfig,
+				tsap_config_t *pconfig,
 				void *pusr_context)
 {
 	tHalHandle h_hal = NULL;

@@ -543,7 +543,7 @@ enum  sap_acs_dfs_mode {
 	ACS_DFS_MODE_DEPRIORITIZE
 };
 
-typedef struct sap_Config {
+typedef struct sap_config {
 	tSap_SSIDInfo_t SSIDinfo;
 	eCsrPhyMode SapHw_mode;         /* Wireless Mode */
 	eSapMacAddrACL SapMacaddr_acl;
@@ -623,7 +623,7 @@ typedef struct sap_Config {
 	bool chan_switch_hostapd_rate_enabled;
 	bool dfs_beacon_tx_enhanced;
 	uint16_t reduced_beacon_interval;
-} tsap_Config_t;
+} tsap_config_t;
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 typedef enum {
@@ -912,7 +912,7 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
  */
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     tpWLAN_SAPEventCB pSapEventCallback,
-			     tsap_Config_t *pConfig, void *pUsrContext);
+			     tsap_config_t *pConfig, void *pUsrContext);
 
 /**
  * wlansap_stop_bss() - stop BSS.
@@ -1006,7 +1006,7 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx);
  *         QDF_STATUS_SUCCESS: Success
  */
 QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
-			       tsap_Config_t *pConfig);
+			       tsap_config_t *pConfig);
 
 /**
  * wlansap_disassoc_sta() - initiate disassociation of station.
@@ -1296,12 +1296,12 @@ uint32_t wlan_sap_get_vht_ch_width(struct sap_context *sap_ctx);
 void wlan_sap_set_vht_ch_width(struct sap_context *sap_ctx,
 			       uint32_t vht_channel_width);
 
-QDF_STATUS wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
+QDF_STATUS wlansap_update_sap_config_add_ie(tsap_config_t *pConfig,
 		const uint8_t *
 		pAdditionIEBuffer,
 		uint16_t additionIELength,
 		eUpdateIEsType updateType);
-QDF_STATUS wlansap_reset_sap_config_add_ie(tsap_Config_t *pConfig,
+QDF_STATUS wlansap_reset_sap_config_add_ie(tsap_config_t *pConfig,
 			eUpdateIEsType updateType);
 void wlansap_extend_to_acs_range(tHalHandle hal, uint8_t *startChannelNum,
 		uint8_t *endChannelNum, uint8_t *bandStartChannel,
@@ -1357,7 +1357,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
  */
 QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 				tpWLAN_SAPEventCB pacs_event_callback,
-				tsap_Config_t *pconfig,
+				tsap_config_t *pconfig,
 				void *pusr_context);
 
 /**

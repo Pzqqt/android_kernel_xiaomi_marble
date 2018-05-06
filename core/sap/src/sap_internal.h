@@ -326,7 +326,7 @@ sap_signal_hdd_event(struct sap_context *sapContext,
 QDF_STATUS sap_fsm(struct sap_context *sapContext, ptWLAN_SAPEvent sapEvent);
 
 eSapStatus
-sapconvert_to_csr_profile(tsap_Config_t *pconfig_params,
+sapconvert_to_csr_profile(tsap_config_t *pconfig_params,
 		       eCsrRoamBssType bssType,
 		       struct csr_roam_profile *profile);
 
