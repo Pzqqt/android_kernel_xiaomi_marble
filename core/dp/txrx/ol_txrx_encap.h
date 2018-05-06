@@ -36,7 +36,7 @@
  *     For native wifi format, the function will add Qos control field
  *  based on peer's QOS capbabilities .
  *     For 802.3 format, the function will transform to 802.11 format
- *  with or without QOS control field based on peer's QOS capabilites.
+ *  with or without QOS control field based on peer's QOS capabilities.
  * @param vdev - handle to vdev object
  * @param tx_desc - tx desc struct,some fields will be updated.
  * @param msdu - qdf_nbuf_t

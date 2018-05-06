@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -158,7 +158,7 @@ enum oem_capability_mask {
 };
 
 /**
- * struct oem_get_capability_rsp - capabilites set by userspace and target.
+ * struct oem_get_capability_rsp - capabilities set by userspace and target.
  * @target_cap: target capabilities
  * @client_capabilities: capabilities set by userspace via set request
  */

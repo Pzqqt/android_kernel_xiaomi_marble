@@ -563,7 +563,7 @@ typedef struct sSirHtConfig {
 } qdf_packed tSirHTConfig, *tpSirHTConfig;
 
 /**
- * struct sir_vht_config - VHT capabilites
+ * struct sir_vht_config - VHT capabilities
  * @max_mpdu_len: MPDU length
  * @supported_channel_widthset: channel width set
  * @ldpc_coding: LDPC coding capability

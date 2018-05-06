@@ -6773,7 +6773,7 @@ tSirRetStatus lim_strip_extcap_update_struct(tpAniSirGlobal mac_ctx,
  * lim_merge_extcap_struct() - merge extended capabilities info
  * @dst: destination extended capabilities
  * @src: source extended capabilities
- * @add: true if add the capabilites, false if strip the capabilites.
+ * @add: true if add the capabilities, false if strip the capabilities.
  *
  * This function is used to take @src info and add/strip it to/from
  * @dst extended capabilities info.
@@ -6792,11 +6792,11 @@ void lim_merge_extcap_struct(tDot11fIEExtCap *dst,
 	if (!src->present)
 		return;
 
-	/* Return if strip the capabilites from @dst which not present */
+	/* Return if strip the capabilities from @dst which not present */
 	if (!dst->present && !add)
 		return;
 
-	/* Merge the capabilites info in other cases */
+	/* Merge the capabilities info in other cases */
 	while (tempdst && tempsrc && structlen--) {
 		if (add)
 			*tempdst |= *tempsrc;

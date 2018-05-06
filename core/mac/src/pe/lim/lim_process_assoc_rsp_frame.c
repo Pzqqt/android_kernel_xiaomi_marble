@@ -157,7 +157,7 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 	sta_ds->shortPreambleEnabled =
 		(uint8_t) assoc_rsp->capabilityInfo.shortPreamble;
 
-	/* Update HT Capabilites only when the self mode supports HT */
+	/* Update HT Capabilities only when the self mode supports HT */
 	if (IS_DOT11_MODE_HT(session_entry->dot11mode))
 		lim_update_stads_htcap(mac_ctx, sta_ds, assoc_rsp,
 				       session_entry);
