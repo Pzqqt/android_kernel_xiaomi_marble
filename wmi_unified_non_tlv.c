@@ -36,7 +36,7 @@
 #include <htc_services.h>
 
 /* pdev_id is used to distinguish the radio for which event
- * is recieved. Since non-tlv target has only one radio, setting
+ * is received. Since non-tlv target has only one radio, setting
  * default pdev_id to one to keep rest of the code using WMI APIs unfiorm.
  */
 #define WMI_NON_TLV_DEFAULT_PDEV_ID WMI_HOST_PDEV_ID_0
@@ -5741,7 +5741,7 @@ static QDF_STATUS extract_service_ready_non_tlv(wmi_unified_t wmi_handle,
 	cap->max_bcn_ie_size = ev->max_bcn_ie_size;
 	cap->fw_version = ev->sw_version;
 	cap->fw_version_1 = ev->sw_version_1;
-	/* Following caps not recieved in older fw/hw
+	/* Following caps not received in older fw/hw
 	 * Initialize it as zero(default). */
 	cap->max_num_scan_channels = 0;
 	cap->max_supported_macs = 0;
@@ -6983,7 +6983,7 @@ static QDF_STATUS extract_rtt_hdr_non_tlv(wmi_unified_t wmi_handle, void *evt_bu
 /**
  * copy_rtt_report_cfr
  * @ev: pointer to destination event pointer
- * @report_type: report type recieved in event
+ * @report_type: report type received in event
  * @p: pointer to event data
  * @hdump: pointer to destination buffer
  * @hdump_len: length of dest buffer
