@@ -343,7 +343,7 @@ int wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
  *
  ***FUNCTION:
  * This function is called from hdd_hostapd_ioctl function when Driver
- * get P2P_SET_NOA comand from wpa_supplicant using private ioctl
+ * get P2P_SET_NOA command from wpa_supplicant using private ioctl
  *
  ***LOGIC:
  * Fill noa Struct According to P2P Power save Option and Pass it to SME layer
@@ -420,7 +420,7 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
  *
  ***FUNCTION:
  * This function is called from hdd_hostapd_ioctl function when Driver
- * get P2P_SET_PS comand from wpa_supplicant using private ioctl
+ * get P2P_SET_PS command from wpa_supplicant using private ioctl
  *
  ***LOGIC:
  * Fill noa Struct According to P2P Power save Option and Pass it to SME layer

@@ -6146,7 +6146,7 @@ static int hdd_set_rx_filter(struct hdd_adapter *adapter, bool action,
 }
 
 /**
- * hdd_driver_rxfilter_comand_handler() - RXFILTER driver command handler
+ * hdd_driver_rxfilter_command_handler() - RXFILTER driver command handler
  * @command: Pointer to input string driver command
  * @adapter: Pointer to adapter
  * @action: Action to enable/disable filtering
@@ -6171,7 +6171,7 @@ static int hdd_set_rx_filter(struct hdd_adapter *adapter, bool action,
  *
  * Return: 0 for success, non-zero for failure
  */
-static int hdd_driver_rxfilter_comand_handler(uint8_t *command,
+static int hdd_driver_rxfilter_command_handler(uint8_t *command,
 						struct hdd_adapter *adapter,
 						bool action)
 {
@@ -6218,7 +6218,7 @@ static int drv_cmd_rx_filter_remove(struct hdd_adapter *adapter,
 				uint8_t command_len,
 				struct hdd_priv_data *priv_data)
 {
-	return hdd_driver_rxfilter_comand_handler(command, adapter, false);
+	return hdd_driver_rxfilter_command_handler(command, adapter, false);
 }
 
 /**
@@ -6235,7 +6235,7 @@ static int drv_cmd_rx_filter_add(struct hdd_adapter *adapter,
 				uint8_t command_len,
 				struct hdd_priv_data *priv_data)
 {
-	return hdd_driver_rxfilter_comand_handler(command, adapter, true);
+	return hdd_driver_rxfilter_command_handler(command, adapter, true);
 }
 
 /**
