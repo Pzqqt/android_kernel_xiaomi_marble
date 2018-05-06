@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -104,7 +104,7 @@ uint32_t tx_timer_activate(TX_TIMER *timer_ptr)
 {
 	QDF_STATUS status;
 
-	/* Uncomment the asserts, if the intention is to debug the occurence of the */
+	/* Uncomment the asserts, if the intention is to debug the occurrence of the */
 	/* following anomalous cnditions. */
 
 	/* Assert that the timer structure pointer passed, is not NULL */

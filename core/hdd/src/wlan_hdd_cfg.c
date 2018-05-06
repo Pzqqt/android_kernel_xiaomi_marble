@@ -5436,7 +5436,7 @@ struct reg_table_entry g_registry_table[] = {
  * get_next_line() - find and locate the new line pointer
  * @str: pointer to string
  *
- * This function returns a pointer to the character after the occurence
+ * This function returns a pointer to the character after the occurrence
  * of a new line character. It also modifies the original string by replacing
  * the '\n' character with the null character.
  *
