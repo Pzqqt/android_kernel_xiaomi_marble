@@ -6200,7 +6200,7 @@ enum tQDF_ADAPTER_MODE hdd_get_device_mode(uint32_t session_id)
  * hdd_get_operating_channel() - return operating channel of the device mode
  * @hdd_ctx:	Pointer to the HDD context.
  * @mode:	Device mode for which operating channel is required.
- *              Suported modes:
+ *              Supported modes:
  *			QDF_STA_MODE,
  *			QDF_P2P_CLIENT_MODE,
  *			QDF_SAP_MODE,
