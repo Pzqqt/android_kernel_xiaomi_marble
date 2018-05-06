@@ -23,14 +23,6 @@
  * QCSAP ioctls.
  */
 
-/*
- * Max size of optional information elements.  We artificially
- * constrain this; it's limited only by the max frame size (and
- * the max parameter size of the wireless extensions).
- */
-#define QCSAP_MAX_OPT_IE        256
-#define QCSAP_MAX_WSC_IE        256
-#define QCSAP_MAX_GET_STA_INFO  512
 #define QCSAP_ADDR_LEN  6
 
 typedef uint8_t qcmacaddr[QCSAP_ADDR_LEN];
@@ -38,22 +30,6 @@ typedef uint8_t qcmacaddr[QCSAP_ADDR_LEN];
 struct qc_mac_acl_entry {
 	qcmacaddr addr;
 	int vlan_id;
-};
-
-/*
- * Retrieve the WPA/RSN information element for an associated station.
- */
-struct sQcSapreq_wpaie {
-	uint8_t wpa_ie[QCSAP_MAX_OPT_IE];
-	uint8_t wpa_macaddr[QCSAP_ADDR_LEN];
-};
-
-/*
- * Retrieve the WSC information element for an associated station.
- */
-struct sQcSapreq_wscie {
-	uint8_t wsc_macaddr[QCSAP_ADDR_LEN];
-	uint8_t wsc_ie[QCSAP_MAX_WSC_IE];
 };
 
 /*
