@@ -3653,7 +3653,7 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 		pdev->pdev_id, hash_based);
 
 	/*
-	 * Below line of code will ensure the proper reo_dest ring is choosen
+	 * Below line of code will ensure the proper reo_dest ring is chosen
 	 * for cases where toeplitz hash cannot be generated (ex: non TCP/UDP)
 	 */
 	reo_dest = pdev->reo_dest;
