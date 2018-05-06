@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,7 +168,7 @@ uint32_t ucfg_nan_get_ndi_delete_rsp_status(struct wlan_objmgr_vdev *vdev);
  * @psoc: pointer to psoc object
  * @cb_obj: callback struct to populate
  *
- * Return: callback struct on sucess, NULL otherwise
+ * Return: callback struct on success, NULL otherwise
  */
 QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 				  struct nan_callbacks *cb_obj);
@@ -230,7 +230,7 @@ int ucfg_nan_register_lim_callbacks(struct wlan_objmgr_psoc *psoc,
  * @psoc: pointer to psoc object
  * @cb_obj: callback struct to populate
  *
- * Return: callback struct on sucess, NULL otherwise
+ * Return: callback struct on success, NULL otherwise
  */
 QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 				  struct nan_callbacks *cb_obj);
