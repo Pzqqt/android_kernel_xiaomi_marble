@@ -348,7 +348,7 @@ enum element_ie {
 
 /**
  * enum extn_element_ie :- extended management information element
- * @WLAN_EXTN_ELEMID_HECAP: HE capabilites IE
+ * @WLAN_EXTN_ELEMID_HECAP: HE capabilities IE
  * @WLAN_EXTN_ELEMID_HEOP:  HE Operation IE
  * @WLAN_EXTN_ELEMID_SRP:   spatial reuse parameter IE
  */

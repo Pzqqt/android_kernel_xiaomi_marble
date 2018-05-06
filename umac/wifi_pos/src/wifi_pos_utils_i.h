@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -181,7 +181,7 @@ struct wifi_pos_user_defined_caps {
 };
 
 /**
- * struct wifi_pos_oem_get_cap_rsp - capabilites set by userspace and target.
+ * struct wifi_pos_oem_get_cap_rsp - capabilities set by userspace and target.
  * @driver_cap: target capabilities
  * @user_defined_cap: capabilities set by userspace via set request
  */
@@ -348,7 +348,7 @@ void wifi_pos_clear_psoc(void);
 /**
  * wifi_pos_populate_caps: API to get OEM caps
  * @psoc: psoc object
- * @caps: capabilites buffer to populate
+ * @caps: capabilities buffer to populate
  *
  * Return: status of operation.
  */
