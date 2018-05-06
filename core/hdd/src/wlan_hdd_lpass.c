@@ -193,7 +193,7 @@ static int wlan_hdd_gen_wlan_version_pack(struct wlan_version_data *data,
  * @is_on: Is @adapter enabled
  * @is_connected: Is @adapter connected
  *
- * Generate wlan vdev status pacakge and send it to a user space
+ * Generate wlan vdev status package and send it to a user space
  * daemon through netlink.
  *
  * Return: none
