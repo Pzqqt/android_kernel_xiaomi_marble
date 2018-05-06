@@ -10192,7 +10192,7 @@ enum dot11p_mode {
 #define CFG_SIFS_BURST_DURATION_MAX      (12)
 #define CFG_SIFS_BURST_DURATION_DEFAULT  (8)
 
-/* Optimize channel avoidance indication comming from firmware */
+/* Optimize channel avoidance indication coming from firmware */
 #define CFG_OPTIMIZE_CA_EVENT_NAME       "goptimize_chan_avoid_event"
 #define CFG_OPTIMIZE_CA_EVENT_DISABLE    (0)
 #define CFG_OPTIMIZE_CA_EVENT_ENABLE     (1)
