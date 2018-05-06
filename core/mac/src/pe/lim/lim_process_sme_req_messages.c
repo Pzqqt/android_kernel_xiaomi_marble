@@ -1154,7 +1154,7 @@ void lim_get_random_bssid(tpAniSirGlobal pMac, uint8_t *data)
  * __lim_process_clear_dfs_channel_list()
  *
  ***FUNCTION:
- ***Clear DFS channel list  when country is changed/aquired.
+ ***Clear DFS channel list  when country is changed/acquired.
    .*This message is sent from SME.
  *
  ***LOGIC:
