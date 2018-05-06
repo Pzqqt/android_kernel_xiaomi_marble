@@ -113,7 +113,7 @@ static int wlan_hdd_qcmbr_command(struct hdd_adapter *adapter,
 #ifdef CONFIG_COMPAT
 
 /**
- * wlan_hdd_qcmbr_ioctl() - Compatability-mode QCMBR ioctl handler
+ * wlan_hdd_qcmbr_ioctl() - Compatibility-mode QCMBR ioctl handler
  * @adapter: adapter upon which the ioctl was received
  * @ifr: the ioctl request
  *
