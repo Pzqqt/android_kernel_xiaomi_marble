@@ -176,7 +176,7 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
 	 * 2) two main types of commands to process
 	 *    a) SCAN
 	 *    b) NON-SCAN
-	 * 3) for each command there are seperate command queues per pdev
+	 * 3) for each command there are separate command queues per pdev
 	 * 4) pull pdev from vdev structure and get the command queue associated
 	 *    with that pdev and try to enqueue on those queue
 	 * 5) Thumb rule:

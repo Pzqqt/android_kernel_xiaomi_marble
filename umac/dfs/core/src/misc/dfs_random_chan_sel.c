@@ -1121,7 +1121,7 @@ static uint8_t dfs_find_ch_with_fallback(
 		/*
 		 * Only 2 blocks for 160Mhz bandwidth i.e 36-64 & 100-128
 		 * and all the channels in these blocks are continuous
-		 * and seperated by 4Mhz.
+		 * and separated by 4Mhz.
 		 */
 		for (i = 1; ((i < final_cnt)); i++) {
 			if ((final_lst[i] - final_lst[i-1]) ==

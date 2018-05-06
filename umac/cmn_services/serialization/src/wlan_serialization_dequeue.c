@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -130,7 +130,7 @@ wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
 		/*
 		 * active queue can't be removed directly, requester needs to
 		 * wait for active command response and send remove request for
-		 * active command seperately
+		 * active command separately
 		 */
 		if (is_active_queue) {
 			if (!psoc || !cmd_list) {
@@ -391,7 +391,7 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 	 * 2) two main types of commands to process
 	 *    a) SCAN
 	 *    b) NON-SCAN
-	 * 3) for each command there are seperate command queues per pdev
+	 * 3) for each command there are separate command queues per pdev
 	 * 4) iterate through every pdev object and find the command and remove
 	 */
 
