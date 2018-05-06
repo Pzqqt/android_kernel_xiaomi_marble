@@ -461,7 +461,7 @@ static QDF_STATUS send_setup_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @peer_addr: peer mac address
  * @param: pointer to hold peer flush tid parameter
  *
- * Return: 0 for sucess or error code
+ * Return: 0 for success or error code
  */
 static QDF_STATUS send_peer_flush_tids_cmd_non_tlv(wmi_unified_t wmi_handle,
 					 uint8_t peer_addr[IEEE80211_ADDR_LEN],

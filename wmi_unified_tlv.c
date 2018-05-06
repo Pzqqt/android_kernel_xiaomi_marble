@@ -515,7 +515,7 @@ static QDF_STATUS send_hidden_ssid_vdev_restart_cmd_tlv(wmi_unified_t wmi_handle
  * @peer_addr: peer mac address
  * @param: pointer to hold peer flush tid parameter
  *
- * Return: 0 for sucess or error code
+ * Return: 0 for success or error code
  */
 static QDF_STATUS send_peer_flush_tids_cmd_tlv(wmi_unified_t wmi,
 					 uint8_t peer_addr[IEEE80211_ADDR_LEN],
@@ -4546,7 +4546,7 @@ static QDF_STATUS extract_ocb_dcc_stats_tlv(wmi_unified_t wmi_handle,
  *
  * This function enable/disable mcc adaptive scheduler in fw.
  *
- * Return: QDF_STATUS_SUCCESS for sucess or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv(
 		wmi_unified_t wmi_handle, uint32_t mcc_adaptive_scheduler,
@@ -10761,7 +10761,7 @@ static QDF_STATUS send_set_tdls_offchan_mode_cmd_tlv(wmi_unified_t wmi_handle,
  * @wmi_handle: wmi handle
  * @pwmaTdlsparams: TDLS params
  *
- * Return: 0 for sucess or error code
+ * Return: 0 for success or error code
  */
 static QDF_STATUS send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
 					 void *tdls_param, uint8_t tdls_state)

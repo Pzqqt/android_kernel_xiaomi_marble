@@ -463,7 +463,7 @@ static QDF_STATUS fake_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
  *
  * This function enable/disable mcc adaptive scheduler in fw.
  *
- * Return: QDF_STATUS_SUCCESS for sucess or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS fake_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv(
 		wmi_unified_t wmi_handle, uint32_t mcc_adaptive_scheduler,
