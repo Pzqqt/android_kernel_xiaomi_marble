@@ -357,12 +357,11 @@ QDF_STATUS policy_mgr_update_and_wait_for_connection_update(
  *
  * Return: true if dbs is allowed for STA+STA or STA+P2P else false
  */
-static bool policy_mgr_is_dbs_allowed_for_concurrency(
-		struct wlan_objmgr_psoc *psoc, uint32_t session_id)
+bool policy_mgr_is_dbs_allowed_for_concurrency(
+		struct wlan_objmgr_psoc *psoc, enum QDF_OPMODE new_conn_mode)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t count, dbs_for_sta_sta, dbs_for_sta_p2p;
-	enum QDF_OPMODE new_conn_mode = QDF_MAX_NO_OF_MODE;
 	bool ret = true;
 
 	pm_ctx = policy_mgr_get_context(psoc);
@@ -372,9 +371,6 @@ static bool policy_mgr_is_dbs_allowed_for_concurrency(
 	}
 
 	count = policy_mgr_get_connection_count(psoc);
-	if (pm_ctx->hdd_cbacks.hdd_get_device_mode)
-		new_conn_mode = pm_ctx->hdd_cbacks.
-					hdd_get_device_mode(session_id);
 
 	if (count != 1 || new_conn_mode == QDF_MAX_NO_OF_MODE)
 		return ret;
@@ -430,6 +426,8 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 	enum policy_mgr_two_connection_mode third_index = 0;
 	enum policy_mgr_band band;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	enum QDF_OPMODE new_conn_mode = QDF_MAX_NO_OF_MODE;
 
 	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
 		policy_mgr_err("driver isn't dbs capable, no further action needed");
@@ -483,6 +481,16 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 		break;
 	}
 
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		goto done;
+	}
+
+	if (pm_ctx->hdd_cbacks.hdd_get_device_mode)
+		new_conn_mode = pm_ctx->hdd_cbacks.
+					hdd_get_device_mode(session_id);
+
 	/*
 	 * Based on channel_select_logic_conc ini, hw mode is set
 	 * when second connection is about to come up that results
@@ -493,10 +501,10 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 	 *  mode change is not required.
 	 */
 	if (policy_mgr_is_current_hwmode_dbs(psoc) &&
-		!policy_mgr_is_dbs_allowed_for_concurrency(psoc, session_id))
+		!policy_mgr_is_dbs_allowed_for_concurrency(psoc, new_conn_mode))
 		next_action = PM_SINGLE_MAC;
 	else if (!policy_mgr_is_current_hwmode_dbs(psoc) &&
-		!policy_mgr_is_dbs_allowed_for_concurrency(psoc, session_id))
+		!policy_mgr_is_dbs_allowed_for_concurrency(psoc, new_conn_mode))
 		next_action = PM_NOP;
 
 	if (PM_NOP != next_action)

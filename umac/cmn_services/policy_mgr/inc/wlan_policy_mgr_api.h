@@ -509,6 +509,19 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_conn_update_reason);
 
 /**
+ * policy_mgr_is_dbs_allowed_for_concurrency() - If dbs is allowed for current
+ * concurreny
+ * @new_conn_mode: new connection mode
+ *
+ * When a new connection is about to come up, check if dbs is allowed for
+ * STA+STA or STA+P2P
+ *
+ * Return: true if dbs is allowed for STA+STA or STA+P2P else false
+ */
+bool policy_mgr_is_dbs_allowed_for_concurrency(
+		struct wlan_objmgr_psoc *psoc, enum QDF_OPMODE new_conn_mode);
+
+/**
  * policy_mgr_is_ibss_conn_exist() - to check if IBSS connection already present
  * @psoc: PSOC object information
  * @ibss_channel: pointer to ibss channel which needs to be filled
@@ -676,6 +689,20 @@ static inline QDF_STATUS policy_mgr_decr_connection_count_utfw(
  */
 enum policy_mgr_con_mode policy_mgr_convert_device_mode_to_qdf_type(
 		enum QDF_OPMODE device_mode);
+
+/**
+ * policy_mgr_get_qdf_mode_from_pm - provides the
+ * type translation from policy manager type
+ * to generic connection mode type
+ * @device_mode: policy manager mode type
+ *
+ *
+ * This function provides the type translation
+ *
+ * Return: QDF_OPMODE enum
+ */
+enum QDF_OPMODE policy_mgr_get_qdf_mode_from_pm(
+			enum policy_mgr_con_mode device_mode);
 
 /**
  * policy_mgr_pdev_set_hw_mode() - Set HW mode command to FW

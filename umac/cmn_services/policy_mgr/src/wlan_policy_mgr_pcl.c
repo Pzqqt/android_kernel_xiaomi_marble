@@ -476,7 +476,7 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 	enum policy_mgr_pcl_type pcl = PM_NONE;
 	enum policy_mgr_conc_priority_mode conc_system_pref = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
+	enum QDF_OPMODE qdf_mode;
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("context is NULL");
@@ -522,7 +522,13 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 			policy_mgr_err("couldn't find index for 2nd connection pcl table");
 			return status;
 		}
-		if (policy_mgr_is_hw_dbs_capable(psoc) == true) {
+		qdf_mode = policy_mgr_get_qdf_mode_from_pm(mode);
+		if (qdf_mode == QDF_MAX_NO_OF_MODE)
+			return status;
+
+		if (policy_mgr_is_hw_dbs_capable(psoc) == true &&
+		    policy_mgr_is_dbs_allowed_for_concurrency(
+							psoc, qdf_mode)) {
 			pcl = (*second_connection_pcl_dbs_table)
 				[second_index][mode][conc_system_pref];
 		} else {
