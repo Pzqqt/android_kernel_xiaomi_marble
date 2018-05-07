@@ -646,6 +646,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		goto err_wma_close;
 	}
 
+	wlan_psoc_set_dp_handle(psoc, gp_cds_context->dp_soc);
 	pmo_ucfg_psoc_update_dp_handle(psoc, gp_cds_context->dp_soc);
 	ucfg_ocb_update_dp_handle(psoc, gp_cds_context->dp_soc);
 
@@ -694,6 +695,7 @@ err_wma_close:
 	wma_close();
 	wma_wmi_service_close();
 	pmo_ucfg_psoc_update_dp_handle(psoc, NULL);
+	wlan_psoc_set_dp_handle(psoc, NULL);
 
 err_htc_close:
 	if (gp_cds_context->htc_ctx) {
@@ -1201,6 +1203,7 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 
 	cdp_soc_detach(gp_cds_context->dp_soc);
 	pmo_ucfg_psoc_update_dp_handle(psoc, NULL);
+	wlan_psoc_set_dp_handle(psoc, NULL);
 
 	cds_shutdown_notifier_purge();
 
