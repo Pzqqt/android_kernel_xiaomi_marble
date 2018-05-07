@@ -3584,6 +3584,7 @@ err_scn_context:
 	OS_FREE(wmi_handle);
 
 err_wma_handle:
+	target_if_close();
 	target_if_free_psoc_tgt_info(psoc);
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_EXTSCAN
