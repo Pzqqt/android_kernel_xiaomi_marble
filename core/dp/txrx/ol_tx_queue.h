@@ -581,4 +581,24 @@ ol_tx_set_peer_group_ptr(
 }
 #endif
 
+#if defined(FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL) && \
+	defined(FEATURE_HL_DBS_GROUP_CREDIT_SHARING)
+/**
+ * @brief: Update group frame count
+ * @details: This function is used to maintain the count of frames
+ * enqueued in a particular group.
+ *
+ * @param: txq - The txq to which the frame is getting enqueued.
+ * @param: num_frms - Number of frames to be added/removed from the group.
+ */
+void ol_tx_update_grp_frm_count(struct ol_tx_frms_queue_t *txq, int num_frms);
+#else
+static inline void ol_tx_update_grp_frm_count(struct ol_tx_frms_queue_t *txq,
+					      int num_frms)
+{}
+#endif /*
+	* FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL &&
+	*  FEATURE_HL_DBS_GROUP_CREDIT_SHARING
+	*/
+
 #endif /* _OL_TX_QUEUE__H_ */

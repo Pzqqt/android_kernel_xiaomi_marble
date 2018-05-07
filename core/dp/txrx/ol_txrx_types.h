@@ -417,6 +417,7 @@ enum throttle_phase {
 struct ol_tx_queue_group_t {
 	qdf_atomic_t credit;
 	u_int32_t membership;
+	int frm_count;
 };
 #define OL_TX_MAX_TXQ_GROUPS 2
 

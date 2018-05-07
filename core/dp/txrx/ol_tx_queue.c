@@ -256,6 +256,7 @@ ol_tx_enqueue(
 	bytes = qdf_nbuf_len(tx_desc->netbuf);
 	txq->frms++;
 	txq->bytes += bytes;
+	ol_tx_update_grp_frm_count(txq, 1);
 	ol_tx_queue_log_enqueue(pdev, tx_msdu_info, 1, bytes);
 
 	if (txq->flag != ol_tx_queue_paused) {
@@ -313,6 +314,8 @@ ol_tx_dequeue(
 	}
 	txq->frms -= num_frames;
 	txq->bytes -= bytes_sum;
+	ol_tx_update_grp_frm_count(txq, -credit_sum);
+
 	/* a paused queue remains paused, regardless of whether it has frames */
 	if (txq->frms == 0 && txq->flag == ol_tx_queue_active)
 		txq->flag = ol_tx_queue_empty;
@@ -358,7 +361,7 @@ ol_tx_queue_free(
 	txq->flag = ol_tx_queue_empty;
 	/* txq->head gets reset during the TAILQ_CONCAT call */
 	TAILQ_CONCAT(&tx_tmp_list, &txq->head, tx_desc_list_elem);
-
+	ol_tx_update_grp_frm_count(txq, -frms);
 	qdf_spin_unlock_bh(&pdev->tx_queue_spinlock);
 	/* free tx frames without holding tx_queue_spinlock */
 	qdf_atomic_add(frms, &pdev->tx_queue.rsrc_cnt);
@@ -1877,5 +1880,25 @@ u_int32_t ol_tx_get_max_tx_groups_supported(struct ol_txrx_pdev_t *pdev)
 #endif
 }
 #endif /* FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL */
+
+#if defined(FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL) && \
+	defined(FEATURE_HL_DBS_GROUP_CREDIT_SHARING)
+void ol_tx_update_grp_frm_count(struct ol_tx_frms_queue_t *txq, int num_frms)
+{
+	int i;
+
+	if (!num_frms || !txq) {
+		ol_txrx_dbg("Invalid params\n");
+		return;
+	}
+
+	for (i = 0; i < OL_TX_MAX_GROUPS_PER_QUEUE; i++) {
+		if (txq->group_ptrs[i]) {
+			txq->group_ptrs[i]->frm_count += num_frms;
+			qdf_assert(txq->group_ptrs[i]->frm_count >= 0);
+		}
+	}
+}
+#endif
 
 /*--- End of LL tx throttle queue code ---------------------------------------*/
