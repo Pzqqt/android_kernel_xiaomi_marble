@@ -369,12 +369,18 @@ target_if_cp_stats_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 	return target_if_cp_stats_register_tx_ops(tx_ops);
 }
 
+#ifdef QCA_WIFI_FTM
 static
 void target_if_ftm_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	target_if_ftm_register_tx_ops(tx_ops);
 }
-
+#else
+static
+void target_if_ftm_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif
 static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {

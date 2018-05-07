@@ -415,6 +415,7 @@ wlan_lmac_if_umac_green_ap_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif
 
+#ifdef QCA_WIFI_FTM
 static QDF_STATUS
 wlan_lmac_if_umac_ftm_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 {
@@ -426,7 +427,13 @@ wlan_lmac_if_umac_ftm_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	return QDF_STATUS_SUCCESS;
 }
-
+#else
+static QDF_STATUS
+wlan_lmac_if_umac_ftm_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /**
  * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
  * @rx_ops: Pointer to rx_ops structure to be populated

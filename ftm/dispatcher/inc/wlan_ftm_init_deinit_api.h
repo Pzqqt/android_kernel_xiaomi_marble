@@ -27,6 +27,7 @@
 #include <qdf_status.h>
 #include <wlan_objmgr_cmn.h>
 
+#ifdef QCA_WIFI_FTM
 /**
  * dispatcher_ftm_init() - FTM testmode initialization API
  *
@@ -56,4 +57,28 @@ QDF_STATUS dispatcher_ftm_psoc_open(struct wlan_objmgr_psoc *psoc);
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS dispatcher_ftm_psoc_close(struct wlan_objmgr_psoc *psoc);
+
+#else
+static inline QDF_STATUS dispatcher_ftm_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS dispatcher_ftm_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+dispatcher_ftm_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+dispatcher_ftm_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif /* _WLAN_FTM_UCFG_API_H_ */

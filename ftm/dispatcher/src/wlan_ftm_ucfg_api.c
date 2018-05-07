@@ -46,32 +46,6 @@ QDF_STATUS ucfg_wlan_ftm_testmode_cmd(struct wlan_objmgr_pdev *pdev,
 	return wlan_ftm_cmd_send(pdev, data, len, pdev_id);
 }
 
-QDF_STATUS ucfg_wlan_ftm_testmode_rsp(struct wlan_objmgr_pdev *pdev,
-					uint8_t *data)
-{
-	struct wifi_ftm_pdev_priv_obj *ftm_pdev_obj;
-	uint32_t *len;
-
-	ftm_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
-							WLAN_UMAC_COMP_FTM);
-	if (!ftm_pdev_obj) {
-		ftm_err("Failed to get ftm pdev component");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (ftm_pdev_obj->length) {
-		len = (uint32_t *)data;
-		*len = ftm_pdev_obj->length;
-		qdf_mem_copy((data + 4), ftm_pdev_obj->data,
-					ftm_pdev_obj->length);
-
-		ftm_pdev_obj->length = 0;
-		return QDF_STATUS_SUCCESS;
-	}
-
-	return QDF_STATUS_E_FAILURE;
-}
-
 QDF_STATUS
 wlan_ftm_process_utf_event(struct wlan_objmgr_pdev *pdev,
 			    uint8_t *event_buf, uint32_t len)
@@ -137,3 +111,32 @@ wlan_ftm_process_utf_event(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef QCA_WIFI_FTM_IOCTL
+QDF_STATUS ucfg_wlan_ftm_testmode_rsp(struct wlan_objmgr_pdev *pdev,
+				      uint8_t *data)
+{
+	struct wifi_ftm_pdev_priv_obj *ftm_pdev_obj;
+	uint32_t *len;
+
+	ftm_pdev_obj =
+		wlan_objmgr_pdev_get_comp_private_obj(pdev,
+						      WLAN_UMAC_COMP_FTM);
+	if (!ftm_pdev_obj) {
+		ftm_err("Failed to get ftm pdev component");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (ftm_pdev_obj->length) {
+		len = (uint32_t *)data;
+		*len = ftm_pdev_obj->length;
+		qdf_mem_copy((data + 4), ftm_pdev_obj->data,
+			     ftm_pdev_obj->length);
+
+		ftm_pdev_obj->length = 0;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
