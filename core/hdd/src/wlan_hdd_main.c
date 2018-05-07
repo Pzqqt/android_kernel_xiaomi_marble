@@ -131,6 +131,7 @@
 #include "wlan_hdd_nud_tracking.h"
 #include "wlan_hdd_apf.h"
 #include "wlan_hdd_twt.h"
+#include "qc_sap_ioctl.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -2536,6 +2537,58 @@ uint32_t hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 			 hdd_ctx->hw_bd_info.board_data_rev);
 
 	return size;
+}
+
+int hdd_set_11ax_rate(struct hdd_adapter *adapter, int set_value,
+		      struct sap_config *sap_config)
+{
+	uint8_t preamble = 0, nss = 0, rix = 0;
+	int ret;
+	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
+
+	if (!sap_config) {
+		if (!sme_is_feature_supported_by_fw(DOT11AX)) {
+			hdd_err("Target does not support 11ax");
+			return -EIO;
+		}
+	} else if (sap_config->SapHw_mode != eCSR_DOT11_MODE_11ax &&
+		   sap_config->SapHw_mode != eCSR_DOT11_MODE_11ax_ONLY) {
+		hdd_err("Invalid hw mode, SAP hw_mode= 0x%x, ch = %d",
+			sap_config->SapHw_mode, sap_config->channel);
+		return -EIO;
+	}
+
+	if (set_value != 0xff) {
+		rix = RC_2_RATE_IDX_11AX(set_value);
+		preamble = WMI_RATE_PREAMBLE_HE;
+		nss = HT_RC_2_STREAMS_11AX(set_value);
+
+		set_value = hdd_assemble_rate_code(preamble, nss, rix);
+	} else {
+		ret = sme_set_auto_rate_he_ltf(mac_handle, adapter->session_id,
+					       QCA_WLAN_HE_LTF_AUTO);
+	}
+
+	hdd_info("SET_11AX_RATE val %d rix %d preamble %x nss %d",
+		 set_value, rix, preamble, nss);
+
+	ret = wma_cli_set_command(adapter->session_id,
+				  WMI_VDEV_PARAM_FIXED_RATE,
+				  set_value, VDEV_CMD);
+
+	return ret;
+}
+
+int hdd_assemble_rate_code(uint8_t preamble, uint8_t nss, uint8_t rate)
+{
+	int set_value;
+
+	if (sme_is_feature_supported_by_fw(DOT11AX))
+		set_value = WMI_ASSEMBLE_RATECODE_V1(rate, nss, preamble);
+	else
+		set_value = (preamble << 6) | (nss << 4) | rate;
+
+	return set_value;
 }
 
 #ifdef IPA_OFFLOAD

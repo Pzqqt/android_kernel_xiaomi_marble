@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -232,12 +232,25 @@ enum qca_wlan_vendor_attr_dcc_update_ndl {
 
 struct hdd_context;
 
-#ifdef WLAN_FEATURE_DSRC
-void hdd_set_dot11p_config(struct hdd_context *hdd_ctx);
+#ifdef WLAN_WEXT_SUPPORT_ENABLE
 
+#ifdef WLAN_FEATURE_DSRC
 int iw_set_dot11p_channel_sched(struct net_device *dev,
 				struct iw_request_info *info,
 				union iwreq_data *wrqu, char *extra);
+#else
+static inline
+int iw_set_dot11p_channel_sched(struct net_device *dev,
+				struct iw_request_info *info,
+				union iwreq_data *wrqu, char *extra)
+{
+	return 0;
+}
+#endif
+#endif
+
+#ifdef WLAN_FEATURE_DSRC
+void hdd_set_dot11p_config(struct hdd_context *hdd_ctx);
 
 int wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 				     struct wireless_dev *wdev,
@@ -285,13 +298,6 @@ void wlan_hdd_dcc_stats_event(void *context_ptr, void *response_ptr);
 #else
 static inline void hdd_set_dot11p_config(struct hdd_context *hdd_ctx)
 {
-}
-
-static inline int iw_set_dot11p_channel_sched(struct net_device *dev,
-		struct iw_request_info *info,
-		union iwreq_data *wrqu, char *extra)
-{
-	return 0;
 }
 
 static inline int wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,

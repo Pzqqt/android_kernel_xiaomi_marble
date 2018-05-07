@@ -177,6 +177,7 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
 #define HDD_FWTEST_MU_DEFAULT_VALUE 40
 #define HDD_FWTEST_MAX_VALUE 500
 
+#ifdef WLAN_WEXT_SUPPORT_ENABLE
 /**
  * hdd_unregister_wext() - unregister wext context
  * @dev: net device handle
@@ -298,5 +299,15 @@ void hdd_set_dump_dp_trace(uint16_t cmd_type, uint16_t count);
 static inline
 void hdd_set_dump_dp_trace(uint16_t cmd_type, uint16_t count) {}
 #endif
+#else /* WLAN_WEXT_SUPPORT_ENABLE */
+
+static inline void hdd_unregister_wext(struct net_device *dev)
+{
+}
+
+static inline void hdd_register_wext(struct net_device *dev)
+{
+}
+#endif /* WLAN_WEXT_SUPPORT_ENABLE */
 
 #endif /* __WEXT_IW_H__ */

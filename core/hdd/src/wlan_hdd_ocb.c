@@ -451,6 +451,7 @@ end:
 	return rc;
 }
 
+#ifdef WLAN_WEXT_SUPPORT_ENABLE
 /**
  * __iw_set_dot11p_channel_sched() - Handler for WLAN_SET_DOT11P_CHANNEL_SCHED
  *				     ioctl
@@ -611,6 +612,7 @@ int iw_set_dot11p_channel_sched(struct net_device *dev,
 
 	return ret;
 }
+#endif /* WLAN_WEXT_SUPPORT_ENABLE */
 
 static const struct nla_policy qca_wlan_vendor_ocb_set_config_policy[
 		QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_MAX + 1] = {

@@ -507,6 +507,9 @@ CONFIG_FEATURE_ROAM_DEBUG := y
 #Flag to enable DFS Master feature
 CONFIG_WLAN_DFS_MASTER_ENABLE := y
 
+#Flag to enable WEXT support for STA/AP/P2P interfaces
+CONFIG_WLAN_WEXT_SUPPORT_ENABLE := y
+
 #Flag to enable nud tracking feature
 CONFIG_WLAN_NUD_TRACKING := y
 

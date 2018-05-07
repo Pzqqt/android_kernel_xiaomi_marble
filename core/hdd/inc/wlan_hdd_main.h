@@ -3273,6 +3273,30 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
  */
 uint32_t hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 			      const size_t version_len, uint8_t *version);
+/**
+ * hdd_assemble_rate_code() - assemble rate code to be sent to FW
+ * @preamble: rate preamble
+ * @nss: number of streams
+ * @rate: rate index
+ *
+ * Rate code assembling is different for targets which are 11ax capable.
+ * Check for the target support and assemble the rate code accordingly.
+ *
+ * Return: assembled rate code
+ */
+int hdd_assemble_rate_code(uint8_t preamble, uint8_t nss, uint8_t rate);
+
+/**
+ * hdd_set_11ax_rate() - set 11ax rate
+ * @adapter: adapter being modified
+ * @value: new 11ax rate code
+ * @sap_config: pointer to SAP config to check HW mode
+ *		this will be NULL for call from STA persona
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_11ax_rate(struct hdd_adapter *adapter, int value,
+		      struct sap_config *sap_config);
 
 /**
  * hdd_update_hw_sw_info() - API to update the HW/SW information
