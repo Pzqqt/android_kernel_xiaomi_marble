@@ -1329,7 +1329,7 @@ static QDF_STATUS send_set_ps_mode_cmd_non_tlv(wmi_unified_t wmi_handle,
 /**
  * send_crash_inject_cmd_non_tlv() - inject fw crash
  * @param wmi_handle	  : handle to WMI.
- * @param: ponirt to crash inject paramter structure
+ * @param: ponirt to crash inject parameter structure
  *
  * Return: 0 for success or return error
  */

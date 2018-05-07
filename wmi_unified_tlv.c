@@ -1545,7 +1545,7 @@ static QDF_STATUS send_set_sta_ps_param_cmd_tlv(wmi_unified_t wmi_handle,
 /**
  * send_crash_inject_cmd_tlv() - inject fw crash
  * @wmi_handle: wmi handle
- * @param: ponirt to crash inject paramter structure
+ * @param: ponirt to crash inject parameter structure
  *
  * Return: QDF_STATUS_SUCCESS for success or return error
  */
