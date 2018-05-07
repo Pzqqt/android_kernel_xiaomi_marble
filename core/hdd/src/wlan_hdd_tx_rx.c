@@ -991,7 +991,7 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 		bool isDefaultAc = false;
 		/*
 		 * ADDTS request for this AC is sent, for now
-		 * send this packet through next avaiable lower
+		 * send this packet through next available lower
 		 * Access category until ADDTS negotiation completes.
 		 */
 		while (!likely
