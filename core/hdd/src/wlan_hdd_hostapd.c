@@ -8113,7 +8113,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		ret = -EINVAL;
 		goto error;
 	}
-	/* Succesfully started Bss update the state bit. */
+	/* Successfully started Bss update the state bit. */
 	set_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
 	/* Initialize WMM configuation */
 	hdd_wmm_init(adapter);
