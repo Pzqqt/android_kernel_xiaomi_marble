@@ -225,5 +225,6 @@ struct cdp_pdev_mon_stats {
 	uint32_t status_ppdu_done;
 	uint32_t dest_ppdu_done;
 	uint32_t dest_mpdu_done;
+	uint32_t dest_mpdu_drop;
 };
 #endif
