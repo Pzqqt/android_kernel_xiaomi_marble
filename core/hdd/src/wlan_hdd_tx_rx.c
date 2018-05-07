@@ -1228,7 +1228,7 @@ static void __hdd_tx_timeout(struct net_device *dev)
 		 */
 		adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
-			  "Reset continous tx timeout stat");
+			  "Reset continuous tx timeout stat");
 	}
 
 	adapter->hdd_stats.tx_rx_stats.jiffies_last_txtimeout = jiffies;

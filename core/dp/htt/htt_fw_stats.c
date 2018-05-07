@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -322,9 +322,9 @@ htt_t2h_stats_pdev_stats_print(struct wlan_dbg_stats *wlan_pdev_stats,
 	qdf_debug("ampdu retry failed:\t%d", tx->sw_retry_failure);
 	/* ilegal phy rate errirs */
 	qdf_debug("illegal rate errs :\t%d", tx->illgl_rate_phy_err);
-	/* pdev continous excessive retries  */
+	/* pdev continuous excessive retries  */
 	qdf_debug("pdev cont xretry  :\t%d", tx->pdev_cont_xretry);
-	/* pdev continous excessive retries  */
+	/* pdev continuous excessive retries  */
 	qdf_debug("pdev tx timeout   :\t%d", tx->pdev_tx_timeout);
 	/* pdev resets  */
 	qdf_debug("pdev resets       :\t%d", tx->pdev_resets);
