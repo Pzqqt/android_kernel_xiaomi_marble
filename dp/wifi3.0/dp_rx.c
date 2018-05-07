@@ -1144,8 +1144,6 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	/* Save tid to skb->priority */
 	DP_RX_TID_SAVE(nbuf, tid);
 
-	DP_STATS_INC(vdev->pdev, rx.bw[bw], 1);
-	DP_STATS_INC(vdev->pdev, rx.reception_type[reception_type], 1);
 	DP_STATS_INC(peer, rx.nss[nss], 1);
 	DP_STATS_INC(peer, rx.sgi_count[sgi], 1);
 	DP_STATS_INCC(peer, rx.err.mic_err, 1,
