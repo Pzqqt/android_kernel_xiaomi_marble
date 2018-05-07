@@ -510,9 +510,9 @@ struct cdp_htt_tx_pdev_stats_cmn_tlv {
     uint32_t mpdu_dropped_xretry;
     /* illegal rate phy errors  */
     uint32_t illgl_rate_phy_err;
-    /* wal pdev continous xretry */
+    /* wal pdev continuous xretry */
     uint32_t cont_xretry;
-    /* wal pdev continous xretry */
+    /* wal pdev continuous xretry */
     uint32_t tx_timeout;
     /* wal pdev resets  */
     uint32_t pdev_resets;

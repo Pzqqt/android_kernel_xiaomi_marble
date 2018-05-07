@@ -4953,8 +4953,8 @@ typedef struct {
  * @self_triggers: Scheduler self triggers
  * @sw_retry_failure: frames dropped due to excessive sw retries
  * @illgl_rate_phy_err: illegal rate phy errors
- * @pdev_cont_xretry: wal pdev continous xretry
- * @pdev_tx_timeout: wal pdev continous xretry
+ * @pdev_cont_xretry: wal pdev continuous xretry
+ * @pdev_tx_timeout: wal pdev continuous xretry
  * @pdev_resets: wal pdev resets
  * @stateless_tid_alloc_failure: frames dropped due to non-availability of
  *                               stateless TIDs
