@@ -54,7 +54,7 @@
  * hdd_set_dot11p_config() - Set 802.11p config flag
  * @hdd_ctx: HDD Context pointer
  *
- * TODO-OCB: This has been temporarily added to ensure this paramter
+ * TODO-OCB: This has been temporarily added to ensure this parameter
  * is set in CSR when we init the channel list. This should be removed
  * once the 5.9 GHz channels are added to the regulatory domain.
  */

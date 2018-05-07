@@ -3583,7 +3583,7 @@ static void lim_update_vht_oper_assoc_resp(tpAniSirGlobal mac_ctx,
  * JOIN REQ parameters are saved in pMac->lim.gLimMlmJoinReq
  * ADD BSS parameters can be obtained from two sources:
  * 1) pMac->lim.gLimMlmJoinReq
- * 2) beaconStruct, passed as paramter
+ * 2) beaconStruct, passed as parameter
  * So, if a reqd parameter is found in bssDescriptions
  * then it is given preference over beaconStruct
  *

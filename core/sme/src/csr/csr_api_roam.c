@@ -2890,7 +2890,7 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->scan.fFirstScanOnly2GChnl = pParam->fFirstScanOnly2GChnl;
 		pMac->scan.max_scan_count = pParam->max_scan_count;
 		/* This parameter is not available in cfg and not passed from
-		 * upper layers. Instead it is initialized here This paramtere
+		 * upper layers. Instead it is initialized here This parametere
 		 * is used in concurrency to determine if there are concurrent
 		 * active sessions. Is used as a temporary fix to disconnect
 		 * all active sessions when BMPS enabled so the active session

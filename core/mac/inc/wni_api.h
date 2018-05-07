@@ -291,7 +291,7 @@ enum ewni_tdls_connection_tracker_notification {
 #define ANI_CFG_CLEAR_STAT_RSP         (WNI_CFG_MSG_TYPES_BEGIN | 0x0b)
 
 /*---------------------------------------------------------------------*/
-/* CFG to HDD message paramter indices                                 */
+/* CFG to HDD message parameter indices                                 */
 
 /*   The followings are word indices starting from the message body    */
 
@@ -382,7 +382,7 @@ enum ewni_tdls_connection_tracker_notification {
 /* Shall be removed after stats integration */
 
 /*---------------------------------------------------------------------*/
-/* HDD to CFG message paramter indices                                 */
+/* HDD to CFG message parameter indices                                 */
 /*                                                                     */
 /*   The followings are word indices starting from the message body    */
 /*                                                                     */
