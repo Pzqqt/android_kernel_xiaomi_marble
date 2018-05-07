@@ -4388,7 +4388,7 @@ int hif_pm_runtime_prevent_suspend_timeout(struct hif_opaque_softc *ol_sc,
  * hif_runtime_lock_init() - API to initialize Runtime PM context
  * @name: Context name
  *
- * This API initalizes the Runtime PM context of the caller and
+ * This API initializes the Runtime PM context of the caller and
  * return the pointer.
  *
  * Return: None
