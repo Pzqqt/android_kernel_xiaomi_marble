@@ -4521,7 +4521,7 @@ static void lim_process_sme_update_access_policy_vendor_ie(
 bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 				  struct scheduler_msg *pMsg)
 {
-	bool bufConsumed = true;        /* Set this flag to false within case block of any following message, that doesnt want pMsgBuf to be freed. */
+	bool bufConsumed = true;        /* Set this flag to false within case block of any following message, that doesn't want pMsgBuf to be freed. */
 	uint32_t *pMsgBuf = pMsg->bodyptr;
 
 	pe_debug("LIM Received SME Message %s(%d) Global LimSmeState:%s(%d) Global LimMlmState: %s(%d)",

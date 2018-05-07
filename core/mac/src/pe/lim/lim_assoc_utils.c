@@ -153,7 +153,7 @@ lim_compare_capabilities(tpAniSirGlobal pMac,
 		if (val) {
 			if (pAssocReq->capabilityInfo.shortSlotTime !=
 			    pLocalCapabs->shortSlotTime) {
-				pe_err("AP rejects association as station doesnt support shortslot time");
+				pe_err("AP rejects association as station doesn't support shortslot time");
 				return false;
 			}
 			return false;

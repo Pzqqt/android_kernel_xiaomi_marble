@@ -501,7 +501,7 @@ static void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
 
 	/* This function ibss_bss_add (and hence the below code) is only called during ibss coalescing. We need to
 	 * adapt to peer's capability with respect to short slot time. Changes have been made to lim_apply_configuration()
-	 * so that the IBSS doesnt blindly start with short slot = 1. If IBSS start is part of coalescing then it will adapt
+	 * so that the IBSS doesn't blindly start with short slot = 1. If IBSS start is part of coalescing then it will adapt
 	 * to peer's short slot using code below.
 	 */
 	/* If cfg is already set to current peer's capability then no need to set it again */

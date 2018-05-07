@@ -5010,7 +5010,7 @@ __lim_fill_tx_control_params(tpAniSirGlobal pMac, tpTxControlParams pTxCtrlMsg,
 		break;
 
 	case eLIM_TX_BSS_BUT_BEACON:
-		/** Stops/resumes transmission on a particular BSS. Stopping BSS, doesnt
+		/** Stops/resumes transmission on a particular BSS. Stopping BSS, doesn't
 		 *  stop beacon transmission.
 		 */
 		pTxCtrlMsg->ctrlBss = 1;

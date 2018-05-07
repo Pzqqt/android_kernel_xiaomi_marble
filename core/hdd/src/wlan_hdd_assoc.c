@@ -5371,7 +5371,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 
 		hdd_debug("MFPEnabled %d", roam_profile->MFPEnabled);
 		/*
-		 * Reset MFPEnabled if testmode RSNE passed doesnt have MFPR
+		 * Reset MFPEnabled if testmode RSNE passed doesn't have MFPR
 		 * or MFPC bit set
 		 */
 		if (roam_profile->MFPEnabled &&

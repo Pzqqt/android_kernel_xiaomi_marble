@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -114,7 +114,7 @@ uint16_t lim_assign_peer_idx(tpAniSirGlobal pMac, tpPESession pSessionEntry)
 	uint16_t peerId;
 
 	/* make sure we haven't exceeded the configurable limit on associations */
-	/* This count is global to ensure that it doesnt exceed the hardware limits. */
+	/* This count is global to ensure that it doesn't exceed the hardware limits. */
 	if (pe_get_current_stas_count(pMac) >= pMac->lim.gLimAssocStaLimit) {
 		/* too many associations already active */
 		return 0;

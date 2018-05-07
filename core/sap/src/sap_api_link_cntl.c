@@ -600,7 +600,7 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 	 * for that sapctx. If there is only one SAP interface then process
 	 * immediately. If Dual BAND SAP is enabled then also process
 	 * immediately, as in this case the both SAP will be in different band
-	 * and channel change on one SAP doesnt mean channel change on
+	 * and channel change on one SAP doesn't mean channel change on
 	 * other interface.
 	 *
 	 * For example,

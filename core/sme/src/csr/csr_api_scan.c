@@ -217,7 +217,7 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 
 	for (index = 0; index < src_req->ChannelInfo.numOfChannels; index++) {
 		/* Allow scan on valid channels only.
-		 * If it is p2p scan and valid channel list doesnt contain
+		 * If it is p2p scan and valid channel list doesn't contain
 		 * social channels, enforce scan on social channels because
 		 * that is the only way to find p2p peers.
 		 * This can happen only if band is set to 5Ghz mode.

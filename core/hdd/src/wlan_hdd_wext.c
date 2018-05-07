@@ -3896,7 +3896,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			return -EIO;
 		}
 		break;
-	/* UMAC doesnt have option to set MODE_11NA/MODE_11NG as phymode
+	/* UMAC doesn't have option to set MODE_11NA/MODE_11NG as phymode
 	 * so setting phymode as eCSR_DOT11_MODE_11n and updating the band
 	 * and channel bonding in configuration to reflect MODE_11NA/MODE_11NG
 	 */

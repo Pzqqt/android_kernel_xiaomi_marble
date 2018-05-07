@@ -464,7 +464,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	if (NULL == result_handle) {
 		/*
 		 * no scan results
-		 * Spec. doesnt say anything about such condition
+		 * Spec. doesn't say anything about such condition
 		 * Since section 7.4.6.2 (IEEE802.11k-2008) says-rrm report
 		 * frame should contain one or more report IEs. It probably
 		 * means dont send any respose if no matching BSS found.

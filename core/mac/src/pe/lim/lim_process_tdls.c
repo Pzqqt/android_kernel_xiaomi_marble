@@ -1326,7 +1326,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 	}
 
 	/* Copy the additional IE. */
-	/* TODO : addIe is added at the end of the frame. This means it doesnt */
+	/* TODO : addIe is added at the end of the frame. This means it doesn't */
 	/* follow the order. This should be ok, but we should consider changing this */
 	/* if there is any IOT issue. */
 	if (addIeLen != 0) {
@@ -1780,7 +1780,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 	}
 
 	/* Copy the additional IE. */
-	/* TODO : addIe is added at the end of the frame. This means it doesnt */
+	/* TODO : addIe is added at the end of the frame. This means it doesn't */
 	/* follow the order. This should be ok, but we should consider changing this */
 	/* if there is any IOT issue. */
 	if (addIeLen != 0) {
@@ -1966,7 +1966,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 	}
 
 	/* Copy the additional IE. */
-	/* TODO : addIe is added at the end of the frame. This means it doesnt */
+	/* TODO : addIe is added at the end of the frame. This means it doesn't */
 	/* follow the order. This should be ok, but we should consider changing this */
 	/* if there is any IOT issue. */
 	if (addIeLen != 0) {
