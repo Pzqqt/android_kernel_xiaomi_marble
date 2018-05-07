@@ -1342,6 +1342,14 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 		return -EINVAL;
 	}
 
+	if (wma->interfaces[vdev_id].roaming_in_progress ||
+		wma->interfaces[vdev_id].roam_synch_in_progress) {
+		WMA_LOGE("Roaming in progress for vdev %d, ignore csa_offload_event",
+				vdev_id);
+		qdf_mem_free(csa_offload_event);
+		return -EINVAL;
+	}
+
 	qdf_mem_zero(csa_offload_event, sizeof(*csa_offload_event));
 	qdf_mem_copy(csa_offload_event->bssId, &bssid, IEEE80211_ADDR_LEN);
 

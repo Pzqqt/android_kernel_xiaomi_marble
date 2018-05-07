@@ -2246,6 +2246,14 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		return status;
 	}
 
+	/*
+	 * This flag is set during ROAM_START and once this event is being
+	 * executed which is a run to completion, no other event can interrupt
+	 * this in MC thread context. So, it is OK to reset the flag here as
+	 * soon as we receive this event.
+	 */
+	wma->interfaces[synch_event->vdev_id].roaming_in_progress = false;
+
 	if (synch_event->bcn_probe_rsp_len >
 	    param_buf->num_bcn_probe_rsp_frame ||
 	    synch_event->reassoc_req_len >
@@ -5510,6 +5518,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		WMA_LOGE("LFR3:Hand-Off Failed for vdevid %x",
 			 wmi_event->vdev_id);
 		wma_roam_ho_fail_handler(wma_handle, wmi_event->vdev_id);
+		wma_handle->interfaces[wmi_event->vdev_id].
+			roaming_in_progress = false;
 		break;
 #endif
 	case WMI_ROAM_REASON_INVALID:
@@ -5518,10 +5528,16 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 			WMA_LOGE("Memory unavailable for roam synch data");
 			return -ENOMEM;
 		}
-		if (wmi_event->notif == WMI_ROAM_NOTIF_ROAM_START)
+		if (wmi_event->notif == WMI_ROAM_NOTIF_ROAM_START) {
 			op_code = SIR_ROAMING_START;
-		if (wmi_event->notif == WMI_ROAM_NOTIF_ROAM_ABORT)
+			wma_handle->interfaces[wmi_event->vdev_id].
+				roaming_in_progress = true;
+		}
+		if (wmi_event->notif == WMI_ROAM_NOTIF_ROAM_ABORT) {
 			op_code = SIR_ROAMING_ABORT;
+			wma_handle->interfaces[wmi_event->vdev_id].
+				roaming_in_progress = false;
+		}
 		roam_synch_data->roamedVdevId = wmi_event->vdev_id;
 		wma_handle->pe_roam_synch_cb(
 				(tpAniSirGlobal)wma_handle->mac_context,
