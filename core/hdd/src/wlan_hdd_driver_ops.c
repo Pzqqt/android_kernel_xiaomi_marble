@@ -578,7 +578,7 @@ static void wlan_hdd_shutdown(void)
 /**
  * wlan_hdd_crash_shutdown() - wlan_hdd_crash_shutdown
  *
- * HDD crash shutdown funtion: This function is called by
+ * HDD crash shutdown function: This function is called by
  * platform driver's crash shutdown routine
  *
  * Return: void
