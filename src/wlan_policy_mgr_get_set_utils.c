@@ -2079,6 +2079,34 @@ enum policy_mgr_con_mode policy_mgr_convert_device_mode_to_qdf_type(
 	return mode;
 }
 
+enum QDF_OPMODE policy_mgr_get_qdf_mode_from_pm(
+			enum policy_mgr_con_mode device_mode)
+{
+	enum QDF_OPMODE mode = QDF_MAX_NO_OF_MODE;
+
+	switch (device_mode) {
+	case PM_STA_MODE:
+		mode = QDF_STA_MODE;
+		break;
+	case PM_SAP_MODE:
+		mode = QDF_SAP_MODE;
+		break;
+	case PM_P2P_CLIENT_MODE:
+		mode = QDF_P2P_CLIENT_MODE;
+		break;
+	case PM_P2P_GO_MODE:
+		mode = QDF_P2P_GO_MODE;
+		break;
+	case PM_IBSS_MODE:
+		mode = QDF_IBSS_MODE;
+		break;
+	default:
+		policy_mgr_err("Unsupported policy mgr mode (%d)",
+			       device_mode);
+	}
+	return mode;
+}
+
 QDF_STATUS policy_mgr_mode_specific_num_open_sessions(
 		struct wlan_objmgr_psoc *psoc, enum QDF_OPMODE mode,
 		uint8_t *num_sessions)
@@ -2265,27 +2293,9 @@ QDF_STATUS policy_mgr_get_nss_for_vdev(struct wlan_objmgr_psoc *psoc,
 	enum QDF_OPMODE dev_mode;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
-	switch (mode) {
-	case PM_STA_MODE:
-		dev_mode = QDF_STA_MODE;
-		break;
-	case PM_SAP_MODE:
-		dev_mode = QDF_SAP_MODE;
-		break;
-	case PM_P2P_CLIENT_MODE:
-		dev_mode = QDF_P2P_CLIENT_MODE;
-		break;
-	case PM_P2P_GO_MODE:
-		dev_mode = QDF_P2P_GO_MODE;
-		break;
-	case PM_IBSS_MODE:
-		dev_mode = QDF_IBSS_MODE;
-		break;
-	default:
-		policy_mgr_err("Invalid mode to get allowed NSS value");
-		return QDF_STATUS_E_FAILURE;
-	};
-
+	dev_mode = policy_mgr_get_qdf_mode_from_pm(mode);
+	if (dev_mode == QDF_MAX_NO_OF_MODE)
+		return  QDF_STATUS_E_FAILURE;
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");

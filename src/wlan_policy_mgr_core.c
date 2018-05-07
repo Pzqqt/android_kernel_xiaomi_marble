@@ -1206,7 +1206,6 @@ void policy_mgr_pdev_set_pcl(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_debug("Set PCL to FW for mode:%d", mode);
 }
 
-
 /**
  * policy_mgr_set_pcl_for_existing_combo() - Set PCL for existing connection
  * @mode: Connection mode of type 'policy_mgr_con_mode'
@@ -1230,26 +1229,9 @@ void policy_mgr_set_pcl_for_existing_combo(
 		return;
 	}
 
-	switch (mode) {
-	case PM_STA_MODE:
-		pcl_mode = QDF_STA_MODE;
-		break;
-	case PM_SAP_MODE:
-		pcl_mode = QDF_SAP_MODE;
-		break;
-	case PM_P2P_CLIENT_MODE:
-		pcl_mode = QDF_P2P_CLIENT_MODE;
-		break;
-	case PM_P2P_GO_MODE:
-		pcl_mode = QDF_P2P_GO_MODE;
-		break;
-	case PM_IBSS_MODE:
-		pcl_mode = QDF_IBSS_MODE;
-		break;
-	default:
-		policy_mgr_err("Invalid mode to set PCL");
+	pcl_mode = policy_mgr_get_qdf_mode_from_pm(mode);
+	if (pcl_mode == QDF_MAX_NO_OF_MODE)
 		return;
-	};
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (policy_mgr_mode_specific_connection_count(psoc, mode, NULL) > 0) {
 		/* Check, store and temp delete the mode's parameter */
