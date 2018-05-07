@@ -4466,7 +4466,7 @@ static void lim_process_sme_update_access_policy_vendor_ie(
 {
 	struct sme_update_access_policy_vendor_ie *update_vendor_ie;
 	struct sPESession *pe_session_entry;
-	uint8_t num_bytes;
+	uint16_t num_bytes;
 
 	if (!msg) {
 		pe_err("Buffer is Pointing to NULL");
