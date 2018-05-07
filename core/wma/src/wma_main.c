@@ -2092,6 +2092,8 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 
 		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
 						vdev_id, WLAN_LEGACY_WMA_ID);
+		if (vdev == NULL)
+			continue;
 		ucfg_mc_cp_stats_get_vdev_wake_lock_stats(vdev, &stats);
 		len += qdf_scnprintf(buf + len, *size - len,
 			"\n"
@@ -2166,6 +2168,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			iface->chain_mask,
 			iface->nss_2g,
 			iface->nss_5g);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	}
 
 	*size -= len;
