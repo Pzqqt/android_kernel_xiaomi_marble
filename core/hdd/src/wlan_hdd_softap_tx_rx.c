@@ -1030,7 +1030,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		hdd_softap_deregister_sta(adapter, staId);
 	}
 
-	/* Get the Station ID from the one saved during the assocation. */
+	/* Get the Station ID from the one saved during the association. */
 	staDesc.sta_id = staId;
 
 	/* Save the adapter Pointer for this staId */
