@@ -10654,12 +10654,16 @@ void hdd_dp_trace_init(struct hdd_config *config)
 	switch (num_entries) {
 	case 4:
 		proto_bitmap = config_params[3];
+		/* fall through */
 	case 3:
 		verbosity = config_params[2];
+		/* fall through */
 	case 2:
 		thresh = config_params[1];
+		/* fall through */
 	case 1:
 		live_mode = config_params[0];
+		/* fall through */
 	default:
 		hdd_debug("live_mode %u thresh %u time_limit %u verbosity %u bitmap 0x%x",
 			live_mode, thresh, thresh_time_limit,
