@@ -2706,7 +2706,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 			goto deinit_config;
 		}
 
-		/* initalize components configurations  after psoc open */
+		/* initialize components configurations  after psoc open */
 		ret = hdd_update_components_config(hdd_ctx);
 		if (ret) {
 			hdd_err("Failed to update component configs; errno: %d",
