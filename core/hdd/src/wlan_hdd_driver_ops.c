@@ -359,7 +359,7 @@ static int check_for_probe_defer(int ret)
  * @bus_type: underlying bus type
  * @reinit: true if we are reinitiallizing the driver after a subsystem restart
  *
- * Return: 0 on successfull probe
+ * Return: 0 on successful probe
  */
 static int wlan_hdd_probe(struct device *dev, void *bdev,
 			  const struct hif_bus_id *bid,
