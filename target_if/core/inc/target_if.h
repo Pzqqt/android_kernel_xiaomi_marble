@@ -106,6 +106,7 @@ struct host_fw_ver {
 	uint32_t abi_ver;
 };
 
+struct common_dbglog_handle;
 
 /**
  * struct comp_hdls - Non-umac/lower layer components handles, it is a sub
@@ -114,12 +115,14 @@ struct host_fw_ver {
  * @htc_hdl: HTC handle
  * @wmi_hdl: WMI handle
  * @accelerator_hdl: NSS offload/IPA handle
+ * @dbglog_hdl: Debug log handle
  */
 struct comp_hdls {
 	void *hif_hdl;
 	void *htc_hdl;
 	void *wmi_hdl;
 	void *accelerator_hdl;
+	struct common_dbglog_handle *dbglog_hdl;
 };
 
 /**
@@ -1102,6 +1105,42 @@ static inline uint32_t target_psoc_get_target_rev
 		(struct target_psoc_info *psoc_info)
 {
 	return psoc_info->info.version.target_rev;
+}
+
+/**
+ * target_psoc_set_dbglog_hdl - set dbglog_hdl
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @dbglog_hdl:    dbglog handle
+ *
+ * API to set dbglog_hdl
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_dbglog_hdl
+		(struct target_psoc_info *psoc_info,
+		 struct common_dbglog_handle *dbglog_hdl)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->hdls.dbglog_hdl = dbglog_hdl;
+}
+
+/**
+ * target_psoc_get_dbglog_hdl() - get dbglog_hdl
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get dbglog_hdl
+ *
+ * Return: dbglog_hdl
+ */
+static inline struct common_dbglog_handle *target_psoc_get_dbglog_hdl
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return psoc_info->hdls.dbglog_hdl;
 }
 
 /**
