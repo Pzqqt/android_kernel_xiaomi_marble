@@ -1847,6 +1847,7 @@ static void wma_inc_wow_stats(t_wma_handle *wma,
 		break;
 	case WOW_REASON_OEM_RESPONSE_EVENT:
 		stats->oem_response++;
+		break;
 	case WOW_REASON_11D_SCAN:
 		stats->scan_11d++;
 		break;
