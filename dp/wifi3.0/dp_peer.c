@@ -396,7 +396,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
  * @mac_addr: MAC address of ast node
  * @is_self: Is this base AST entry with peer mac address
  *
- * This API is used by WDS source port learning funtion to
+ * This API is used by WDS source port learning function to
  * add a new AST entry into peer AST list
  *
  * Return: 0 if new entry is allocated,

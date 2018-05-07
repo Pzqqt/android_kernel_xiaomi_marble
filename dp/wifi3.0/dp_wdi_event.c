@@ -63,7 +63,7 @@ dp_wdi_event_del_subs(wdi_event_subscribe *wdi_sub, int event_index)
 
 /*
  * dp_wdi_event_iter_sub() - Iterate through all WDI event in the list
- * and pass WDI event to callback funtion
+ * and pass WDI event to callback function
  * @pdev: DP pdev handle
  * @event_index: Event index in list
  * @wdi_event: WDI event handle
