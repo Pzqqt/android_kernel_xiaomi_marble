@@ -1239,7 +1239,7 @@ struct peer_assoc_params {
 /**
  * struct sta_ps_params - sta ps cmd parameter
  * @vdev_id: vdev id
- * @param: sta ps paramter
+ * @param: sta ps parameter
  * @value: sta ps parameter value
  */
 struct sta_ps_params {
@@ -1251,8 +1251,8 @@ struct sta_ps_params {
 /**
  * struct ap_ps_params - ap ps cmd parameter
  * @vdev_id: vdev id
- * @param: ap ps paramter
- * @value: ap ps paramter value
+ * @param: ap ps parameter
+ * @value: ap ps parameter value
  */
 struct ap_ps_params {
 	uint32_t vdev_id;

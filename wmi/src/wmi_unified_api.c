@@ -626,7 +626,7 @@ QDF_STATUS wmi_unified_sta_ps_cmd_send(void *wmi_hdl,
 /**
  * wmi_crash_inject() - inject fw crash
  * @wma_handle: wma handle
- * @param: ponirt to crash inject paramter structure
+ * @param: ponirt to crash inject parameter structure
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
@@ -1106,7 +1106,7 @@ QDF_STATUS wmi_unified_get_temperature(void *wmi_hdl)
 /**
  * wmi_unified_set_sta_uapsd_auto_trig_cmd() - set uapsd auto trigger command
  * @wmi_hdl: wmi handle
- * @end_set_sta_ps_mode_cmd: cmd paramter strcture
+ * @end_set_sta_ps_mode_cmd: cmd parameter strcture
  *
  * This function sets the trigger
  * uapsd params such as service interval, delay interval
