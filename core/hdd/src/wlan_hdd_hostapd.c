@@ -3037,6 +3037,7 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 	case QCSAP_IOCTL_SET_FW_CRASH_INJECT:
 		ret = hdd_crash_inject(adapter, value[1], value[2]);
 		break;
+
 	case QCSAP_IOCTL_DUMP_DP_TRACE_LEVEL:
 		hdd_debug("WE_DUMP_DP_TRACE: %d %d",
 		       value[1], value[2]);
@@ -3050,6 +3051,7 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		else if (value[1] == DISABLE_DP_TRACE_LIVE_MODE)
 			qdf_dp_trace_disable_live_mode();
 		break;
+
 	case QCSAP_ENABLE_FW_PROFILE:
 		hdd_debug("QCSAP_ENABLE_FW_PROFILE: %d %d",
 		       value[1], value[2]);
@@ -3057,20 +3059,25 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 				 WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
 					value[1], value[2], DBG_CMD);
 		break;
+
 	case QCSAP_SET_FW_PROFILE_HIST_INTVL:
 		hdd_debug("QCSAP_SET_FW_PROFILE_HIST_INTVL: %d %d",
 		       value[1], value[2]);
 		ret = wma_cli_set2_command(adapter->session_id,
 					WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
 					value[1], value[2], DBG_CMD);
+		break;
+
 	case QCSAP_SET_WLAN_SUSPEND:
 		hdd_info("SAP unit-test suspend(%d, %d)", value[1], value[2]);
 		ret = hdd_wlan_fake_apps_suspend(hdd_ctx->wiphy, dev,
 						 value[1], value[2]);
 		break;
+
 	case QCSAP_SET_WLAN_RESUME:
 		ret = hdd_wlan_fake_apps_resume(hdd_ctx->wiphy, dev);
 		break;
+
 	default:
 		hdd_err("Invalid IOCTL command: %d", sub_cmd);
 		break;
