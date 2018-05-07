@@ -8033,7 +8033,7 @@ static QDF_STATUS extract_chan_stats_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
 		uint32_t index, wmi_host_chan_stats *chan_stats)
 {
-	/* Non-TLV doesnt have num_chan_stats */
+	/* Non-TLV doesn't have num_chan_stats */
 	return QDF_STATUS_SUCCESS;
 }
 

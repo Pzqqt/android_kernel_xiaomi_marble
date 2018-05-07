@@ -19702,7 +19702,7 @@ static QDF_STATUS extract_chan_stats_tlv(wmi_unified_t wmi_handle,
 			(index * sizeof(wmi_chan_stats)));
 
 
-		/* Non-TLV doesnt have num_chan_stats */
+		/* Non-TLV doesn't have num_chan_stats */
 		chan_stats->chan_mhz = ev->chan_mhz;
 		chan_stats->sampling_period_us = ev->sampling_period_us;
 		chan_stats->rx_clear_count = ev->rx_clear_count;
