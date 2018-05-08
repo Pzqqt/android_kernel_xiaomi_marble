@@ -207,6 +207,36 @@ static inline int qdf_ipa_wdi_set_perf_profile(
 	return __qdf_ipa_wdi_set_perf_profile(profile);
 }
 
+/**
+ * qdf_ipa_wdi_create_smmu_mapping() - Client should call this function to
+ *		create smmu mapping
+ *
+ * @num_buffers: [in] number of buffers
+ * @info: [in] wdi buffer info
+ *
+ * Returns: 0 on success, negative on failure
+ */
+static inline int qdf_ipa_wdi_create_smmu_mapping(uint32_t num_buffers,
+		qdf_ipa_wdi_buffer_info_t *info)
+{
+	return __qdf_ipa_wdi_create_smmu_mapping(num_buffers, info);
+}
+
+/**
+ * qdf_ipa_wdi_release_smmu_mapping() - Client should call this function to
+ *		release smmu mapping
+ *
+ * @num_buffers: [in] number of buffers
+ * @info: [in] wdi buffer info
+ *
+ * Returns: 0 on success, negative on failure
+ */
+static inline int qdf_ipa_wdi_release_smmu_mapping(uint32_t num_buffers,
+		qdf_ipa_wdi_buffer_info_t *info)
+{
+	return __qdf_ipa_wdi_release_smmu_mapping(num_buffers, info);
+}
+
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
 
 #include <i_qdf_ipa_wdi3.h>
