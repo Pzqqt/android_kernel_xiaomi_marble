@@ -505,19 +505,9 @@ static int htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 	struct htt_host_rx_desc_base *rx_desc;
 	int filled = 0;
 	int debt_served = 0;
-	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
-	int num_alloc = 0;
+	qdf_mem_info_t mem_map_table = {0};
 
 	idx = *(pdev->rx_ring.alloc_idx.vaddr);
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
-		mem_map_table = qdf_mem_map_table_alloc(num);
-		if (!mem_map_table) {
-			qdf_print("%s: Failed to allocate memory for mem map table\n",
-				  __func__);
-			goto update_alloc_idx;
-		}
-		mem_info = mem_map_table;
-	}
 
 moretofill:
 	while (num > 0) {
@@ -544,7 +534,7 @@ moretofill:
 			qdf_timer_start(
 				&pdev->rx_ring.refill_retry_timer,
 				HTT_RX_RING_REFILL_RETRY_TIME_MS);
-			goto free_mem_map_table;
+			goto update_alloc_idx;
 		}
 
 		/* Clear rx_desc attention word before posting to Rx ring */
@@ -581,8 +571,9 @@ moretofill:
 #endif
 		if (status != QDF_STATUS_SUCCESS) {
 			qdf_nbuf_free(rx_netbuf);
-			goto free_mem_map_table;
+			goto update_alloc_idx;
 		}
+
 		paddr = qdf_nbuf_get_frag_paddr(rx_netbuf, 0);
 		paddr_marked = htt_rx_paddr_mark_high_bits(paddr);
 		if (pdev->cfg.is_full_reorder_offload) {
@@ -599,7 +590,7 @@ moretofill:
 					       QDF_DMA_FROM_DEVICE);
 #endif
 				qdf_nbuf_free(rx_netbuf);
-				goto free_mem_map_table;
+				goto update_alloc_idx;
 			}
 			htt_rx_dbg_rxbuf_set(pdev, paddr_marked, rx_netbuf);
 		} else {
@@ -608,10 +599,9 @@ moretofill:
 
 		if (qdf_mem_smmu_s1_enabled(pdev->osdev) &&
 					pdev->is_ipa_uc_enabled) {
-			qdf_update_mem_map_table(pdev->osdev, mem_info,
+			qdf_update_mem_map_table(pdev->osdev, &mem_map_table,
 						 paddr, HTT_RX_BUF_SIZE);
-			mem_info++;
-			num_alloc++;
+			cds_smmu_map_unmap(true, 1, &mem_map_table);
 		}
 
 		pdev->rx_ring.buf.paddrs_ring[idx] = paddr_marked;
@@ -623,34 +613,10 @@ moretofill:
 		idx &= pdev->rx_ring.size_mask;
 	}
 
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
-		cds_smmu_map_unmap(true, num_alloc, mem_map_table);
-		qdf_mem_free(mem_map_table);
-	}
-
-	num_alloc = 0;
 	if (debt_served <  qdf_atomic_read(&pdev->rx_ring.refill_debt)) {
 		num = qdf_atomic_read(&pdev->rx_ring.refill_debt);
 		debt_served += num;
-		if (qdf_mem_smmu_s1_enabled(pdev->osdev) &&
-				pdev->is_ipa_uc_enabled) {
-			mem_map_table = qdf_mem_map_table_alloc(num);
-			if (!mem_map_table) {
-				qdf_print("%s: Failed to allocate memory for mem map table\n",
-					  __func__);
-				goto update_alloc_idx;
-			}
-			mem_info = mem_map_table;
-		}
 		goto moretofill;
-	}
-
-	goto update_alloc_idx;
-
-free_mem_map_table:
-	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->is_ipa_uc_enabled) {
-		cds_smmu_map_unmap(true, num_alloc, mem_map_table);
-		qdf_mem_free(mem_map_table);
 	}
 
 update_alloc_idx:
