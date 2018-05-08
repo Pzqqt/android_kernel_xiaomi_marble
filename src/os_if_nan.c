@@ -79,8 +79,8 @@ vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 						.len = sizeof(uint32_t)
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE] = {
-						.type = NLA_U16,
-						.len = sizeof(uint16_t)
+						.type = NLA_U32,
+						.len = sizeof(uint32_t)
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR] = {
 						.type = NLA_BINARY,
