@@ -84,12 +84,12 @@
 #include <ol_txrx_ipa.h>
 #include "wlan_roam_debug.h"
 
-#ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 #define DPT_DEBUGFS_PERMS	(QDF_FILE_USR_READ |	\
 				QDF_FILE_USR_WRITE |	\
 				QDF_FILE_GRP_READ |	\
 				QDF_FILE_OTH_READ)
 
+#ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 ol_txrx_peer_handle
 ol_txrx_peer_find_by_local_id(struct cdp_pdev *pdev,
 			      uint8_t local_peer_id);
