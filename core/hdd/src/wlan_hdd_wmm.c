@@ -460,17 +460,6 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext)
 }
 #else
 
-static void hdd_wmm_inactivity_timer_cb(void *user_data)
-{
-}
-
-static QDF_STATUS
-hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext,
-				uint32_t inactivity_time)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 static QDF_STATUS
 hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext)
 {
