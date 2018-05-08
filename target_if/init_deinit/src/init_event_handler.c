@@ -355,7 +355,7 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 		/* FW allocated number of peers is different than host
 		 * requested. Update host max with FW reported value.
 		 */
-		target_if_info("Host Requested %d peers. FW Supports %d peers",
+		target_if_err("Host Requested %d peers. FW Supports %d peers",
 			       info->wlan_res_cfg.num_peers,
 			       ready_ev.num_total_peer);
 		info->wlan_res_cfg.num_peers = ready_ev.num_total_peer;

@@ -2690,17 +2690,17 @@ void qdf_trace_msg_cmn(unsigned int idx,
 	 */
 	if (print_ctrl_obj[idx].cat_info[category].category_verbose_mask &
 	    QDF_TRACE_LEVEL_TO_MODULE_BITMASK(verbose)) {
-		/*
-		 * The verbose strings are in an array. These are ordered in
-		 * the same order as the verbose levels are defined in the enum
-		 * (see QDF_TRACE_LEVEL) so we can index into this array with
-		 * the level and get the right string. The qdf verbose
-		 * are... Off, Fatal, Error, Warning, Info, Info_high,
-		 * Info_med, Info_low, Debug
-		 */
-		static const char * const VERBOSE_STR[] = { "  ", "F", "E", "W",
-							"I", "IH", "IM", "IL",
-							"D" };
+		static const char * const VERBOSE_STR[] = {
+			[QDF_TRACE_LEVEL_NONE] = "",
+			[QDF_TRACE_LEVEL_FATAL] = "F",
+			[QDF_TRACE_LEVEL_ERROR] = "E",
+			[QDF_TRACE_LEVEL_WARN] = "W",
+			[QDF_TRACE_LEVEL_INFO] = "I",
+			[QDF_TRACE_LEVEL_INFO_HIGH] = "IH",
+			[QDF_TRACE_LEVEL_INFO_MED] = "IM",
+			[QDF_TRACE_LEVEL_INFO_LOW] = "IL",
+			[QDF_TRACE_LEVEL_DEBUG] = "D",
+			[QDF_TRACE_LEVEL_ALL] = "" };
 
 		/* print the prefix string into the string buffer... */
 		n = scnprintf(str_buffer, QDF_TRACE_BUFFER_SIZE,
