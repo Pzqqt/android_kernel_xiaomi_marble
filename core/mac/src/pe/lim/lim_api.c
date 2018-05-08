@@ -1374,6 +1374,26 @@ static bool pe_filter_bcn_probe_frame(tpAniSirGlobal mac_ctx,
 	return false;
 }
 
+static QDF_STATUS pe_handle_probe_req_frames(tpAniSirGlobal mac_ctx,
+					cds_pkt_t *pkt)
+{
+	QDF_STATUS status;
+	struct scheduler_msg msg = {0};
+
+	/* Forward to MAC via mesg = SIR_BB_XPORT_MGMT_MSG */
+	msg.type = SIR_BB_XPORT_MGMT_MSG;
+	msg.bodyptr = pkt;
+	msg.bodyval = 0;
+	msg.callback = pe_mc_process_handler;
+
+	status = scheduler_post_msg(QDF_MODULE_ID_SCAN, &msg);
+
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		pe_err_rl("Failed to post probe req frame to Scan Queue");
+
+	return status;
+}
+
 /* --------------------------------------------------------------------------- */
 /**
  * pe_handle_mgmt_frame() - Process the Management frames from TXRX
@@ -1447,6 +1467,18 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 		cds_pkt_return_packet(pVosPkt);
 		pVosPkt = NULL;
 		return QDF_STATUS_SUCCESS;
+	}
+
+	/*
+	 * Post Probe Req frames to Scan queue and return
+	 */
+	if (mHdr->fc.subType == SIR_MAC_MGMT_PROBE_REQ) {
+		qdf_status = pe_handle_probe_req_frames(pMac, pVosPkt);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			cds_pkt_return_packet(pVosPkt);
+			pVosPkt = NULL;
+		}
+		return qdf_status;
 	}
 
 	if (QDF_STATUS_SUCCESS !=
