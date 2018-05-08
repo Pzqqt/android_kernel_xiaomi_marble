@@ -11426,6 +11426,54 @@ enum hdd_wext_control {
 #define CFG_HE_STA_OBSSPD_DEFAULT (0x15b8c2ae)
 
 #endif /* WLAN_FEATURE_11AX */
+#ifdef WLAN_FEATURE_TWT
+/*
+ * <ini>
+ * enable_twt - Enable Target Wake Time support.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable or disable TWT support.
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_TWT_NAME    "enable_twt"
+#define CFG_ENABLE_TWT_MIN     (0)
+#define CFG_ENABLE_TWT_MAX     (1)
+#define CFG_ENABLE_TWT_DEFAULT (1)
+
+/*
+ * <ini>
+ * twt_congestion_timeout - Target wake time congestion timeout.
+ * @Min: 10
+ * @Max: 10000
+ * @Default: 100
+ *
+ * STA uses this timer to continuously monitor channel congestion levels to
+ * decide whether to start or stop TWT. This ini is used to configure the
+ * target wake time congestion timeout value in the units of milliseconds.
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_TWT_CONGESTION_TIMEOUT_NAME    "twt_congestion_timeout"
+#define CFG_TWT_CONGESTION_TIMEOUT_MIN     (10)
+#define CFG_TWT_CONGESTION_TIMEOUT_MAX     (10000)
+#define CFG_TWT_CONGESTION_TIMEOUT_DEFAULT (100)
+
+#endif /* WLAN_FEATURE_TWT */
 
 /*
  * <ini>
@@ -14964,6 +15012,10 @@ struct hdd_config {
 	bool enable_ul_mimo;
 	bool enable_ul_ofdma;
 	uint32_t he_sta_obsspd;
+#endif
+#ifdef WLAN_FEATURE_TWT
+	bool enable_twt;
+	uint32_t twt_congestion_timeout;
 #endif
 	uint32_t arp_ac_category;
 	bool ani_enabled;

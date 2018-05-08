@@ -41,6 +41,7 @@
 #include "wifi_pos_api.h"
 #include "wlan_hdd_green_ap.h"
 #include "wlan_hdd_green_ap_cfg.h"
+#include "wlan_hdd_twt.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(struct hdd_context *hdd_ctx, unsigned long notifyId)
@@ -4453,6 +4454,21 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_HE_STA_OBSSPD_MIN,
 		     CFG_HE_STA_OBSSPD_MAX),
 #endif
+#ifdef WLAN_FEATURE_TWT
+	REG_VARIABLE(CFG_ENABLE_TWT_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_twt,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_TWT_DEFAULT,
+		     CFG_ENABLE_TWT_MIN,
+		     CFG_ENABLE_TWT_MAX),
+
+	REG_VARIABLE(CFG_TWT_CONGESTION_TIMEOUT_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, twt_congestion_timeout,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TWT_CONGESTION_TIMEOUT_DEFAULT,
+		     CFG_TWT_CONGESTION_TIMEOUT_MIN,
+		     CFG_TWT_CONGESTION_TIMEOUT_MAX),
+#endif
 
 	REG_VARIABLE(CFG_ARP_AC_CATEGORY, WLAN_PARAM_Integer,
 		struct hdd_config, arp_ac_category,
@@ -7110,6 +7126,7 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 
 	hdd_per_roam_print_ini_config(hdd_ctx);
 	hdd_he_print_ini_config(hdd_ctx);
+	hdd_twt_print_ini_config(hdd_ctx);
 	hdd_debug("Name = [%s] Value = [%d]",
 		CFG_ARP_AC_CATEGORY,
 		hdd_ctx->config->arp_ac_category);
