@@ -440,6 +440,19 @@ static void wlan_ipa_pm_flush(void *data)
 		ipa_ctx->stats.num_max_pm_queue = dequeued;
 }
 
+int wlan_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
+{
+	if (!num_buf) {
+		ipa_info("No buffers to map/unmap");
+		return 0;
+	}
+
+	if (map)
+		return qdf_ipa_wdi_create_smmu_mapping(num_buf, buf_arr);
+	else
+		return qdf_ipa_wdi_release_smmu_mapping(num_buf, buf_arr);
+}
+
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
 
 static inline void wlan_ipa_wdi_get_wdi_version(struct wlan_ipa_priv *ipa_ctx)
@@ -548,6 +561,19 @@ static void wlan_ipa_pm_flush(void *data)
 	ipa_ctx->stats.num_tx_dequeued += dequeued;
 	if (dequeued > ipa_ctx->stats.num_max_pm_queue)
 		ipa_ctx->stats.num_max_pm_queue = dequeued;
+}
+
+int wlan_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
+{
+	if (!num_buf) {
+		ipa_info("No buffers to map/unmap");
+		return 0;
+	}
+
+	if (map)
+		return qdf_ipa_create_wdi_mapping(num_buf, buf_arr);
+	else
+		return qdf_ipa_release_wdi_mapping(num_buf, buf_arr);
 }
 
 #endif /* CONFIG_IPA_WDI_UNIFIED_API */
@@ -2684,21 +2710,6 @@ QDF_STATUS wlan_ipa_uc_ol_deinit(struct wlan_ipa_priv *ipa_ctx)
 
 	ipa_debug("exit: ret=%d", status);
 	return status;
-}
-
-int wlan_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
-{
-	ipa_debug("Map: %d Num_buf: %d", map, num_buf);
-
-	if (!num_buf) {
-		ipa_info("No buffers to map/unmap");
-		return 0;
-	}
-
-	if (map)
-		return qdf_ipa_create_wdi_mapping(num_buf, buf_arr);
-	else
-		return qdf_ipa_release_wdi_mapping(num_buf, buf_arr);
 }
 
 /**
