@@ -1594,117 +1594,6 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 }
 
 /**
- * wlan_hdd_reset_force_acs_chan_range: Set acs channel ranges as per force ACS
- * configuration.
- * @hdd_ctx: pointer to hdd context
- * @sap_config: pointer to SAP config struct
- *
- * Return: 0 if success else error code
- */
-static int wlan_hdd_reset_force_acs_chan_range(struct hdd_context *hdd_ctx,
-						tsap_config_t *sap_config)
-{
-	bool is_dfs_mode_enabled = false;
-	uint32_t i, num_channels = 0;
-	uint8_t channels[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
-	eCsrPhyMode hw_mode;
-	tSirMacHTChannelWidth ch_width;
-
-	if (hdd_ctx->config->force_sap_acs_st_ch >
-			hdd_ctx->config->force_sap_acs_end_ch) {
-		hdd_err("invalid configuration for start and end channel");
-		return -EINVAL;
-	}
-	if (hdd_ctx->config->enableDFSMasterCap)
-		is_dfs_mode_enabled = true;
-
-	sap_config->acs_cfg.start_ch =
-			hdd_ctx->config->force_sap_acs_st_ch;
-	sap_config->acs_cfg.end_ch =
-			hdd_ctx->config->force_sap_acs_end_ch;
-
-	for (i = sap_config->acs_cfg.start_ch;
-			i <= sap_config->acs_cfg.end_ch; i++) {
-		if ((CHANNEL_STATE_ENABLE ==
-		     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev, i)) ||
-		    (is_dfs_mode_enabled &&
-		     CHANNEL_STATE_DFS ==
-		     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev, i))) {
-			channels[num_channels] = i;
-			num_channels++;
-		}
-	}
-	if (sap_config->acs_cfg.ch_list)
-		qdf_mem_free(sap_config->acs_cfg.ch_list);
-
-	sap_config->acs_cfg.ch_list = qdf_mem_malloc(num_channels);
-	if (!sap_config->acs_cfg.ch_list) {
-		hdd_err("ACS config alloc fail");
-		return -ENOMEM;
-	}
-	qdf_mem_copy(sap_config->acs_cfg.ch_list, channels, num_channels);
-	sap_config->acs_cfg.ch_list_count = num_channels;
-
-	/* Derive ACS HW mode */
-	hw_mode = hdd_cfg_xlate_to_csr_phy_mode(hdd_ctx->config->dot11Mode);
-	if (hw_mode == eCSR_DOT11_MODE_AUTO) {
-		if (sme_is_feature_supported_by_fw(DOT11AX))
-			hw_mode = eCSR_DOT11_MODE_11ax;
-		else
-			hw_mode = eCSR_DOT11_MODE_11ac;
-	}
-
-	if (hdd_ctx->config->sap_force_11n_for_11ac) {
-		if (hw_mode == eCSR_DOT11_MODE_11ac ||
-		    hw_mode == eCSR_DOT11_MODE_11ac_ONLY)
-			hw_mode = eCSR_DOT11_MODE_11n;
-	}
-
-	if ((hw_mode == eCSR_DOT11_MODE_11b ||
-	     hw_mode == eCSR_DOT11_MODE_11g ||
-	     hw_mode == eCSR_DOT11_MODE_11g_ONLY) &&
-			sap_config->acs_cfg.start_ch > 14) {
-		hdd_err("Invalid ACS HW Mode %d + CH range <%d - %d>",
-			hw_mode, sap_config->acs_cfg.start_ch,
-			sap_config->acs_cfg.end_ch);
-		return -EINVAL;
-	}
-	sap_config->acs_cfg.hw_mode = hw_mode;
-
-	/* Derive ACS BW */
-	ch_width = eHT_CHANNEL_WIDTH_20MHZ;
-	if (hw_mode == eCSR_DOT11_MODE_11ac ||
-	    hw_mode == eCSR_DOT11_MODE_11ac_ONLY ||
-	    hw_mode == eCSR_DOT11_MODE_11ax ||
-	    hw_mode == eCSR_DOT11_MODE_11ax_ONLY) {
-		ch_width = hdd_ctx->config->vhtChannelWidth;
-		/* VHT in 2.4G depends on gChannelBondingMode24GHz INI param */
-		if (sap_config->acs_cfg.end_ch <= 14)
-			ch_width =
-				hdd_ctx->config->nChannelBondingMode24GHz ?
-				eHT_CHANNEL_WIDTH_40MHZ :
-				eHT_CHANNEL_WIDTH_20MHZ;
-	}
-
-	if (hw_mode == eCSR_DOT11_MODE_11n ||
-	    hw_mode == eCSR_DOT11_MODE_11n_ONLY) {
-		if (sap_config->acs_cfg.end_ch <= 14)
-			ch_width =
-				hdd_ctx->config->nChannelBondingMode24GHz ?
-				eHT_CHANNEL_WIDTH_40MHZ :
-				eHT_CHANNEL_WIDTH_20MHZ;
-		else
-			ch_width =
-				hdd_ctx->config->nChannelBondingMode5GHz ?
-				eHT_CHANNEL_WIDTH_40MHZ :
-				eHT_CHANNEL_WIDTH_20MHZ;
-	}
-	sap_config->acs_cfg.ch_width = ch_width;
-
-	return 0;
-}
-
-/**
  * wlan_hdd_set_acs_ch_range : Populate ACS hw mode and channel range values
  * @sap_cfg: pointer to SAP config struct
  * @hw_mode: hw mode retrieved from vendor command buffer
@@ -2480,12 +2369,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	if (hdd_ctx->config->force_sap_acs &&
-	    !hdd_ctx->config->vendor_acs_support) {
-		hdd_err("Hostapd ACS rejected as Driver ACS enabled");
-		return -EPERM;
-	}
-
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
 		return ret;
@@ -2667,16 +2550,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		policy_mgr_trim_acs_channel_list(hdd_ctx->hdd_psoc,
 			sap_config->acs_cfg.ch_list,
 			&sap_config->acs_cfg.ch_list_count);
-
-	if (hdd_ctx->config->force_sap_acs) {
-		hdd_debug("forcing SAP acs start and end channel");
-		ret = wlan_hdd_reset_force_acs_chan_range(hdd_ctx,
-						sap_config);
-		if (ret) {
-			hdd_err("reset force acs channel range failed");
-			goto out;
-		}
-	}
 
 	sap_config->acs_cfg.band = hw_mode;
 	ret = wlan_hdd_set_acs_ch_range(sap_config, hw_mode,

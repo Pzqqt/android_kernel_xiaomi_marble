@@ -606,30 +606,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_VC_MODE_BITMAP_MIN,
 		CFG_VC_MODE_BITMAP_MAX),
 
-	REG_VARIABLE(CFG_FORCE_SAP_ACS, WLAN_PARAM_Integer,
-		     struct hdd_config, force_sap_acs,
-		     VAR_FLAGS_DYNAMIC_CFG |
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_FORCE_SAP_ACS_DEFAULT,
-		     CFG_FORCE_SAP_ACS_MIN,
-		     CFG_FORCE_SAP_ACS_MAX),
-
-	REG_VARIABLE(CFG_FORCE_SAP_ACS_START_CH, WLAN_PARAM_Integer,
-		     struct hdd_config, force_sap_acs_st_ch,
-		     VAR_FLAGS_DYNAMIC_CFG |
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_FORCE_SAP_ACS_START_CH_DEFAULT,
-		     CFG_FORCE_SAP_ACS_START_CH_MIN,
-		     CFG_FORCE_SAP_ACS_START_CH_MAX),
-
-	REG_VARIABLE(CFG_FORCE_SAP_ACS_END_CH, WLAN_PARAM_Integer,
-		     struct hdd_config, force_sap_acs_end_ch,
-		     VAR_FLAGS_DYNAMIC_CFG |
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_FORCE_SAP_ACS_END_CH_DEFAULT,
-		     CFG_FORCE_SAP_ACS_END_CH_MIN,
-		     CFG_FORCE_SAP_ACS_END_CH_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_SAP_MANDATORY_CHAN_LIST, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_sap_mandatory_chan_list,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6441,12 +6417,6 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->apProtection);
 	hdd_debug("Name = [gEnableApOBSSProt] value = [%u]",
 		  hdd_ctx->config->apOBSSProtEnabled);
-	hdd_debug("Name = [%s] value = [%u]", CFG_FORCE_SAP_ACS,
-		hdd_ctx->config->force_sap_acs);
-	hdd_debug("Name = [%s] value = [%u]", CFG_FORCE_SAP_ACS_START_CH,
-		hdd_ctx->config->force_sap_acs_st_ch);
-	hdd_debug("Name = [%s] value = [%u]", CFG_FORCE_SAP_ACS_END_CH,
-		hdd_ctx->config->force_sap_acs_end_ch);
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	hdd_debug("Name = [sap_channel_avoidance] value = [%u]",
 		  hdd_ctx->config->sap_channel_avoidance);

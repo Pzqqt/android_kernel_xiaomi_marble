@@ -5784,82 +5784,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gApAutoChannelSelection - Force ACS from ini
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set to enable force acs from driver.
- * If enabled, channel/ hw config from hostapd is ignored.
- * Driver uses INI params dot11Mode, channel bonding mode and vht chan width
- * to derive ACS HW mode and operating BW.
- *
- * Non android platforms shall not use force ACS method and rely on hostapd
- * driven ACS method for concurrent SAP ACS configuration, OBSS etc.
- *
- * Related: Only applicable if gCoalesingInIBSS is 0
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_FORCE_SAP_ACS                  "gApAutoChannelSelection"
-#define CFG_FORCE_SAP_ACS_MIN              (0)
-#define CFG_FORCE_SAP_ACS_MAX              (1)
-#define CFG_FORCE_SAP_ACS_DEFAULT          (0)
-
-/*
- * <ini>
- * gAPChannelSelectStartChannel - start channel for ACS
- * @Min: 0
- * @Max: 0xFF
- * @Default: 1
- *
- * This ini is used to set start channel for ACS.
- * ACS scan will choose channel between force_sap_acs_st_ch
- * and force_sap_acs_end_ch
- *
- * Related: Only applicable gAPChannelSelectEndChannel is set
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_FORCE_SAP_ACS_START_CH         "gAPChannelSelectStartChannel"
-#define CFG_FORCE_SAP_ACS_START_CH_MIN     (0)
-#define CFG_FORCE_SAP_ACS_START_CH_MAX     (0xFF)
-#define CFG_FORCE_SAP_ACS_START_CH_DEFAULT (1)
-
-/*
- * <ini>
- * gAPChannelSelectEndChannel - end channel for ACS
- * @Min: 0
- * @Max: 0xFF
- * @Default: 11
- *
- * This ini is used to set end channel for ACS.
- * ACS scan will choose channel between force_sap_acs_st_ch
- * and force_sap_acs_end_ch
- *
- * Related: Only applicable if gAPChannelSelectStartChannel is set
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_FORCE_SAP_ACS_END_CH           "gAPChannelSelectEndChannel"
-#define CFG_FORCE_SAP_ACS_END_CH_MIN       (0)
-#define CFG_FORCE_SAP_ACS_END_CH_MAX       (0xFF)
-#define CFG_FORCE_SAP_ACS_END_CH_DEFAULT   (11)
-
-/*
- * <ini>
  * gEnableSAPManadatoryChanList - Enable SAP Mandatory channel list
  * Options.
  * @Min: 0
@@ -14743,9 +14667,6 @@ struct hdd_config {
 
 	/* Flag to indicate crash inject enabled or not */
 	bool crash_inject_enabled;
-	uint8_t force_sap_acs;
-	uint8_t force_sap_acs_st_ch;
-	uint8_t force_sap_acs_end_ch;
 
 	bool enable_sap_mandatory_chan_list;
 
