@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -58,7 +58,7 @@ static inline int hif_exec_event(struct hif_opaque_softc     *hif,
 		   enum  qca_napi_event event,
 		   void                *data)
 {
-	return -EPERM;
+	return 0;
 }
 #endif
 #endif
