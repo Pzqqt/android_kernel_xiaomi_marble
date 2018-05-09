@@ -1776,12 +1776,12 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	if ((eConnectionState_Disconnecting ==
 	    sta_ctx->conn_info.connState) ||
 	    (eConnectionState_NotConnected ==
+	    sta_ctx->conn_info.connState) ||
+	    (eConnectionState_Connecting ==
 	    sta_ctx->conn_info.connState)) {
 		hdd_debug("HDD has initiated a disconnect, no need to send disconnect indication to kernel");
 		sendDisconInd = false;
-	}
-
-	if (sta_ctx->conn_info.connState != eConnectionState_Disconnecting) {
+	} else {
 		INIT_COMPLETION(adapter->disconnect_comp_var);
 		hdd_conn_set_connection_state(adapter,
 					      eConnectionState_Disconnecting);
@@ -1894,7 +1894,14 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	}
 	/* Clear saved connection information in HDD */
 	hdd_conn_remove_connect_info(sta_ctx);
-	hdd_conn_set_connection_state(adapter, eConnectionState_NotConnected);
+	/*
+	* eConnectionState_Connecting state mean that connection is in
+	* progress so no need to set state to eConnectionState_NotConnected
+	*/
+	if ((eConnectionState_Connecting != sta_ctx->conn_info.connState)) {
+		 hdd_conn_set_connection_state(adapter,
+					       eConnectionState_NotConnected);
+	}
 	pmo_ucfg_flush_gtk_offload_req(adapter->hdd_vdev);
 
 	if ((QDF_STA_MODE == adapter->device_mode) ||
