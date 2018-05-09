@@ -23,6 +23,9 @@
 
 #define RX_BUFFER_SIZE_PKTLOG_LITE 1024
 
+/* Macro For NYSM value received in VHT TLV */
+#define VHT_SGI_NYSM 3
+
 #if DP_PRINT_ENABLE
 #include <stdarg.h>       /* va_list */
 #include <qdf_types.h> /* qdf_vprint */
