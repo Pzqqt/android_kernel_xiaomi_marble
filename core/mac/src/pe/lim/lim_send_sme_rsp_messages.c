@@ -1489,7 +1489,7 @@ lim_send_sme_set_context_rsp(tpAniSirGlobal pMac,
 			      psessionEntry, (uint16_t) resultCode, 0);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
+	pMac->lim.sme_msg_callback(pMac, &mmhMsg);
 } /*** end lim_send_sme_set_context_rsp() ***/
 
 /** -----------------------------------------------------------------
