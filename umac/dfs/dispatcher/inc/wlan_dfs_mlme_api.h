@@ -29,18 +29,6 @@
 extern struct dfs_to_mlme global_dfs_to_mlme;
 
 /**
- * dfs_mlme_channel_mark_radar() - mark the channel as radar.
- * @pdev: Pointer to DFS pdev object.
- * @freq: Channel frequency
- * @vhtop_ch_freq_seg2: VHT80 Cfreq2
- * @flags: channel flags.
- */
-void dfs_mlme_channel_mark_radar(struct wlan_objmgr_pdev *pdev,
-		uint16_t freq,
-		uint8_t vhtop_ch_freq_seg2,
-		uint64_t flags);
-
-/**
  * dfs_mlme_start_rcsa() - Send RCSA to RootAP.
  * @pdev: Pointer to DFS pdev object.
  * @wait_for_csa: Wait for CSA from RootAP.

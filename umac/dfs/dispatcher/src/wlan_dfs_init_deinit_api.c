@@ -58,7 +58,6 @@ void register_dfs_callbacks(void)
 	tmp_dfs_to_mlme->pdev_get_comp_private_obj =
 		wlan_pdev_get_dfs_obj;
 
-	tmp_dfs_to_mlme->dfs_channel_mark_radar = mlme_dfs_channel_mark_radar;
 	tmp_dfs_to_mlme->dfs_start_rcsa = mlme_dfs_start_rcsa;
 	tmp_dfs_to_mlme->mlme_mark_dfs = mlme_dfs_mark_dfs;
 	tmp_dfs_to_mlme->mlme_start_csa = mlme_dfs_start_csa;

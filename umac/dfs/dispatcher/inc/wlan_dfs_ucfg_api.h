@@ -33,7 +33,6 @@
  * @pdev_component_obj_attach:         Attach DFS object to PDEV.
  * @pdev_component_obj_detach:         Detach DFS object from PDEV.
  * @pdev_get_comp_private_obj:         Get DFS object from PDEV.
- * @dfs_channel_mark_radar:            Mark the channel as RADAR.
  * @dfs_start_rcsa:                    Send RCSA to RootAP.
  * @mlme_mark_dfs:                     Calls dfs_action function.
  * @mlme_start_csa:                    Sends CSA.
@@ -66,10 +65,6 @@ struct dfs_to_mlme {
 			void *comp_priv_obj);
 	struct wlan_dfs *(*pdev_get_comp_private_obj)(
 			struct wlan_objmgr_pdev *pdev);
-	QDF_STATUS (*dfs_channel_mark_radar)(struct wlan_objmgr_pdev *pdev,
-			uint16_t freq,
-			uint8_t vhtop_ch_freq_seg2,
-			uint64_t flags);
 	QDF_STATUS (*dfs_start_rcsa)(struct wlan_objmgr_pdev *pdev,
 			bool *wait_for_csa);
 	QDF_STATUS (*mlme_mark_dfs)(struct wlan_objmgr_pdev *pdev,

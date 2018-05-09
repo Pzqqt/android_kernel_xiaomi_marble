@@ -30,18 +30,6 @@
 #include "wni_api.h"
 #endif
 
-void dfs_mlme_channel_mark_radar(struct wlan_objmgr_pdev *pdev,
-		uint16_t freq,
-		uint8_t vhtop_ch_freq_seg2,
-		uint64_t flags)
-{
-	if (global_dfs_to_mlme.dfs_channel_mark_radar != NULL)
-		global_dfs_to_mlme.dfs_channel_mark_radar(pdev,
-				freq,
-				vhtop_ch_freq_seg2,
-				flags);
-}
-
 void dfs_mlme_start_rcsa(struct wlan_objmgr_pdev *pdev,
 		bool *wait_for_csa)
 {
