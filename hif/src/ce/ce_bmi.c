@@ -115,6 +115,9 @@ void hif_bmi_recv_data(struct CE_handle *copyeng, void *ce_context,
 }
 #endif
 
+/* Timeout for BMI message exchange */
+#define HIF_EXCHANGE_BMI_MSG_TIMEOUT 6000
+
 QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 				qdf_dma_addr_t bmi_cmd_da,
 				qdf_dma_addr_t bmi_rsp_da,
@@ -216,9 +219,13 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 	/* Always just wait for BMI request here if
 	 * BMI_RSP_POLLING is defined
 	 */
-	while (qdf_semaphore_acquire
-		       (&transaction->bmi_transaction_sem)) {
-		/*need some break out condition(time out?) */
+	if (qdf_semaphore_acquire_timeout
+		       (&transaction->bmi_transaction_sem,
+			HIF_EXCHANGE_BMI_MSG_TIMEOUT)) {
+		HIF_ERROR("%s: Fatal error, BMI transaction timeout. Please check the HW interface!!",
+			  __func__);
+		qdf_mem_free(transaction);
+		return QDF_STATUS_E_TIMEOUT;
 	}
 
 	if (bmi_response) {
