@@ -10210,6 +10210,43 @@ static inline QDF_STATUS hdd_register_bcn_cb(struct hdd_context *hdd_ctx)
 }
 
 /**
+ * hdd_v2_flow_pool_map() - Flow pool create callback when vdev is active
+ * @vdev_id: vdev_id, corresponds to flow_pool
+ *
+ * Return: none.
+ */
+static void hdd_v2_flow_pool_map(int vdev_id)
+{
+	QDF_STATUS status;
+
+	status = cdp_flow_pool_map(cds_get_context(QDF_MODULE_ID_SOC),
+				   cds_get_context(QDF_MODULE_ID_TXRX),
+				   vdev_id);
+	/*
+	 * For Adrastea flow control v2 is based on FW MAP events,
+	 * so this above callback is not implemented.
+	 * Hence this is not actual failure. Dont return failure
+	 */
+	if ((status != QDF_STATUS_SUCCESS) &&
+	    (status != QDF_STATUS_E_INVAL)) {
+		hdd_err("vdev_id: %d, failed to create flow pool status %d",
+			vdev_id, status);
+	}
+}
+
+/**
+ * hdd_v2_flow_pool_unmap() - Flow pool create callback when vdev is not active
+ * @vdev_id: vdev_id, corresponds to flow_pool
+ *
+ * Return: none.
+ */
+static void hdd_v2_flow_pool_unmap(int vdev_id)
+{
+	cdp_flow_pool_unmap(cds_get_context(QDF_MODULE_ID_SOC),
+			    cds_get_context(QDF_MODULE_ID_TXRX), vdev_id);
+}
+
+/**
  * hdd_configure_cds() - Configure cds modules
  * @hdd_ctx:	HDD context
  * @adapter:	Primary adapter context
@@ -10317,6 +10354,8 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 				hdd_disable_rx_ol_in_concurrency;
 	dp_cbs.hdd_set_rx_mode_rps_cb = hdd_set_rx_mode_rps;
 	dp_cbs.hdd_ipa_set_mcc_mode_cb = hdd_ipa_set_mcc_mode;
+	dp_cbs.hdd_v2_flow_pool_map = hdd_v2_flow_pool_map;
+	dp_cbs.hdd_v2_flow_pool_unmap = hdd_v2_flow_pool_unmap;
 	status = policy_mgr_register_dp_cb(hdd_ctx->hdd_psoc, &dp_cbs);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_debug("Failed to register DP cb with Policy Manager");
