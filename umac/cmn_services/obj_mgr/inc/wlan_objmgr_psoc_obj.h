@@ -527,7 +527,7 @@ QDF_STATUS wlan_objmgr_trigger_psoc_comp_priv_object_deletion(
 		enum wlan_umac_comp_id id);
 
 /**
- * wlan_objmgr_get_peer() - find peer from psoc's peer list
+ * wlan_objmgr_get_peer_by_mac() - find peer from psoc's peer list
  * @psoc: PSOC object
  * @macaddr: MAC address
  * @dbg_id: id of the caller
@@ -541,13 +541,34 @@ QDF_STATUS wlan_objmgr_trigger_psoc_comp_priv_object_deletion(
  * Return: peer pointer
  *         NULL on FAILURE
  */
+struct wlan_objmgr_peer *wlan_objmgr_get_peer_by_mac(
+		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
+		wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_objmgr_get_peer() - find peer from psoc's peer list
+ * @psoc: PSOC object
+ * @pdev_id: Pdev id
+ * @macaddr: MAC address
+ * @dbg_id: id of the caller
+ *
+ * API to find peer object pointer by MAC addr and pdev id
+ *
+ * This API increments the ref count of the peer object internally, the
+ * caller has to invoke the wlan_objmgr_peer_release_ref() to decrement
+ * ref count
+ *
+ * Return: peer pointer
+ *         NULL on FAILURE
+ */
 struct wlan_objmgr_peer *wlan_objmgr_get_peer(
-			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
-			wlan_objmgr_ref_dbgid dbg_id);
+			struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+			uint8_t *macaddr, wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_get_peer_nolock() - find peer from psoc's peer list (lock free)
  * @psoc: PSOC object
+ * @pdev_id: Pdev id
  * @macaddr: MAC address
  * @dbg_id: id of the caller
  *
@@ -561,8 +582,8 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer(
  *         NULL on FAILURE
  */
 struct wlan_objmgr_peer *wlan_objmgr_get_peer_nolock(
-			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
-			wlan_objmgr_ref_dbgid dbg_id);
+			struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+			uint8_t *macaddr, wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_get_peer_logically_deleted() - find peer
@@ -587,10 +608,12 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_logically_deleted(
 /**
  * wlan_objmgr_get_peer_no_state() - find peer from psoc's peer list
  * @psoc: PSOC object
+ * @pdev_id: Pdev id
  * @macaddr: MAC address
  * @dbg_id: id of the caller
  *
- * API to find peer object pointer by MAC addr, ignores the state check
+ * API to find peer object pointer by MAC addr and pdev id,
+ * ignores the state check
  *
  * This API increments the ref count of the peer object internally, the
  * caller has to invoke the wlan_objmgr_peer_release_ref() to decrement
@@ -600,8 +623,8 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_logically_deleted(
  *         NULL on FAILURE
  */
 struct wlan_objmgr_peer *wlan_objmgr_get_peer_no_state(
-			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
-			wlan_objmgr_ref_dbgid dbg_id);
+			struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+			uint8_t *macaddr, wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_populate_logically_deleted_peerlist_by_mac_n_vdev() - get peer from
@@ -609,12 +632,13 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_no_state(
  *                                                mac and vdev
  *                                                self mac
  * @psoc: PSOC object
- * @macaddr: MAC address
+ * @pdev_id: Pdev id
  * @bssid: BSSID address
+ * @macaddr: MAC address
  * @dbg_id: id of the caller
  *
- * API to find peer object pointer by MAC addr and vdev self mac
- * address for a node that is logically in deleted state
+ * API to find peer object pointer by MAC addr, vdev self mac
+ * address and pdev id for a node that is logically in deleted state
  *
  * This API increments the ref count of the peer object internally, the
  * caller has to invoke the wlan_objmgr_peer_release_ref() to decrement
@@ -624,18 +648,21 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_no_state(
  *         NULL on FAILURE
  */
 qdf_list_t *wlan_objmgr_populate_logically_deleted_peerlist_by_mac_n_vdev(
-			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
-			uint8_t *bssid, wlan_objmgr_ref_dbgid dbg_id);
+			struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+			uint8_t *bssid, uint8_t *macaddr,
+			wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_get_peer_by_mac_n_vdev() - find peer from psoc's peer list
  *                                          using mac address and bssid
  * @psoc: PSOC object
- * @macaddr: MAC address
+ * @pdev_id: Pdev id
  * @bssid: MAC address of AP its associated
+ * @macaddr: MAC address
  * @dbg_id: id of the caller
  *
  * API to find peer object pointer by MAC addr and vdev self mac address
+ * and pdev id
  *
  * This API increments the ref count of the peer object internally, the
  * caller has to invoke the wlan_objmgr_peer_release_ref() to decrement
@@ -645,19 +672,21 @@ qdf_list_t *wlan_objmgr_populate_logically_deleted_peerlist_by_mac_n_vdev(
  *         NULL on FAILURE
  */
 struct wlan_objmgr_peer *wlan_objmgr_get_peer_by_mac_n_vdev(
-			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
-			uint8_t *bssid, wlan_objmgr_ref_dbgid dbg_id);
+			struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+			uint8_t *bssid, uint8_t *macaddr,
+			wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_get_peer_by_mac_n_vdev_no_state() - find peer from psoc's peer
  *                                          list using mac address and bssid
  * @psoc: PSOC object
- * @macaddr: MAC address
+ * @pdev_id: Pdev id
  * @bssid: MAC address of AP its associated
+ * @macaddr: MAC address
  * @dbg_id: id of the caller
  *
- * API to find peer object pointer by MAC addr and vdev self mac address,
- * ignores the state
+ * API to find peer object pointer by MAC addr, vdev self mac address,
+ * and pdev id ,ignores the state
  *
  * This API increments the ref count of the peer object internally, the
  * caller has to invoke the wlan_objmgr_peer_release_ref() to decrement
@@ -667,8 +696,9 @@ struct wlan_objmgr_peer *wlan_objmgr_get_peer_by_mac_n_vdev(
  *         NULL on FAILURE
  */
 struct wlan_objmgr_peer *wlan_objmgr_get_peer_by_mac_n_vdev_no_state(
-			struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
-			uint8_t *bssid, wlan_objmgr_ref_dbgid dbg_id);
+			struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+			uint8_t *bssid,  uint8_t *macaddr,
+			wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_get_pdev_by_id() - retrieve pdev by id
@@ -808,10 +838,11 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc_no_state(
 /**
  * wlan_objmgr_get_vdev_by_macaddr_from_psoc() - retrieve vdev by macaddr
  * @psoc: PSOC object
+ * @pdev_id: Pdev id
  * @macaddr: macaddr
  * @dbg_id: id of the caller
  *
- * API to find vdev object pointer by vdev macaddr from psoc
+ * API to find vdev object pointer by vdev macaddr from pdev
  *
  * This API increments the ref count of the vdev object internally, the
  * caller has to invoke the wlan_objmgr_vdev_release_ref() to decrement
@@ -821,13 +852,14 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc_no_state(
  *         NULL on FAILURE
  */
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_psoc(
-		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
-		wlan_objmgr_ref_dbgid dbg_id);
+		struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+		uint8_t *macaddr, wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_objmgr_get_vdev_by_macaddr_from_psoc_no_state() - retrieve vdev by
  *                                                           macaddr
  * @psoc: PSOC object
+ * @pdev_id: Pdev id
  * @macaddr: macaddr
  * @dbg_id: id of the caller
  *
@@ -842,8 +874,8 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_psoc(
  *         NULL on FAILURE
  */
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_psoc_no_state(
-		struct wlan_objmgr_psoc *psoc, uint8_t *macaddr,
-		wlan_objmgr_ref_dbgid dbg_id);
+		struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+		uint8_t *macaddr, wlan_objmgr_ref_dbgid dbg_id);
 
 /**
  * wlan_psoc_obj_lock() - Acquire PSOC spinlock
