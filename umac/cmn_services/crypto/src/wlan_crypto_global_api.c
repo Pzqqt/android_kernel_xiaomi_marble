@@ -793,8 +793,8 @@ QDF_STATUS wlan_crypto_getkey(struct wlan_objmgr_vdev *vdev,
 				"%s[%d] peer NULL\n", __func__, __LINE__);
 			return QDF_STATUS_E_NOENT;
 		}
-		wlan_objmgr_peer_release_ref(peer, WLAN_CRYPTO_ID);
 		key = wlan_crypto_peer_getkey(peer, req_key->keyix);
+		wlan_objmgr_peer_release_ref(peer, WLAN_CRYPTO_ID);
 		if (!key)
 			return QDF_STATUS_E_INVAL;
 	}
