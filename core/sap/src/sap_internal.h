@@ -434,6 +434,7 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
 void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 			struct scan_event *event, void *arg);
 
+#ifdef DFS_COMPONENT_ENABLE
 /**
  * sap_indicate_radar() - Process radar indication
  * @sap_ctx: pointer to sap context
@@ -443,6 +444,12 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
  * Return: channel to which sap wishes to switch.
  */
 uint8_t sap_indicate_radar(struct sap_context *sap_ctx);
+#else
+static inline uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
+{
+	return 0;
+}
+#endif
 
 /**
  * sap_select_default_oper_chan() - Select AP mode default operating channel
