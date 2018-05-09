@@ -1368,7 +1368,8 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 		if (copy_from_user(&userarg32, arg, sizeof(userarg32))) {
 			dev_err(rtd->dev, "%s: err copyuser ioctl %s\n",
 				__func__, "SNDRV_LSM_EVENT_STATUS_V3_32");
-			return -EFAULT;
+			err = -EINVAL;
+			goto done;
 		}
 
 		if (userarg32.payload_size >
@@ -1376,7 +1377,8 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			pr_err("%s: payload_size %d is invalid, max allowed = %d\n",
 				__func__, userarg32.payload_size,
 				LISTEN_MAX_STATUS_PAYLOAD_SIZE);
-			return -EINVAL;
+			err = -EINVAL;
+			goto done;
 		}
 
 		size = sizeof(*user) + userarg32.payload_size;
@@ -1385,7 +1387,8 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 			dev_err(rtd->dev,
 				"%s: Allocation failed event status size %d\n",
 				__func__, size);
-			return -EFAULT;
+			err = -ENOMEM;
+			goto done;
 		}
 		cmd = SNDRV_LSM_EVENT_STATUS_V3;
 		user->payload_size = userarg32.payload_size;
