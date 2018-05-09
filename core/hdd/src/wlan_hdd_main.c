@@ -56,6 +56,7 @@
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_misc.h>
 #include <cdp_txrx_stats.h>
+#include "cdp_txrx_flow_ctrl_legacy.h"
 
 #include <net/addrconf.h>
 #include <linux/wireless.h>
@@ -2053,12 +2054,14 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 
 		if ((QDF_SAP_MODE == adapter->device_mode ||
 		    QDF_P2P_GO_MODE == adapter->device_mode) &&
-		    (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
+		    (wlan_reg_is_passive_or_disable_ch(hdd_ctx->hdd_pdev,
 		     ap_ctx->operating_channel))) {
 			WLAN_HDD_GET_AP_CTX_PTR(adapter)->dfs_cac_block_tx =
 				true;
 			hdd_info("tx blocked for session: %d",
 				adapter->session_id);
+			cdp_fc_vdev_flush(cds_get_context(QDF_MODULE_ID_SOC),
+					adapter->txrx_vdev);
 		}
 	}
 
