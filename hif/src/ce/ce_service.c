@@ -2889,7 +2889,7 @@ ssize_t hif_dump_desc_event(struct hif_softc *scn, char *buf)
 	qdf_log_timestamp_to_secs(event->time, &secs, &usecs);
 
 	len += snprintf(buf, PAGE_SIZE - len,
-			"\nTime:%lld.%06lld, CE:%d, EventType: %s, EventIndex: %d\nDataAddr=%p",
+			"\nTime:%lld.%06lld, CE:%d, EventType: %s, EventIndex: %d\nDataAddr=%pK",
 			secs, usecs, ce_hist->hist_id,
 			ce_event_type_to_str(event->type),
 			event->index, event->memory);
