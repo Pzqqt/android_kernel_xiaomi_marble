@@ -1455,6 +1455,13 @@ hdd_parse_set_roam_scan_channels_v1(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
+	if (!sme_validate_channel_list(hdd_ctx->hHal,
+	    channel_list, num_chan)) {
+		hdd_err("List contains invalid channel(s)");
+		ret = -EINVAL;
+		goto exit;
+	}
+
 	status =
 		sme_change_roam_scan_channel_list(hdd_ctx->hHal,
 						  adapter->session_id,
@@ -1524,6 +1531,14 @@ hdd_parse_set_roam_scan_channels_v2(struct hdd_adapter *adapter,
 		}
 		channel_list[i] = channel;
 	}
+
+	if (!sme_validate_channel_list(hdd_ctx->hHal,
+	    channel_list, num_chan)) {
+		hdd_err("List contains invalid channel(s)");
+		ret = -EINVAL;
+		goto exit;
+	}
+
 	status =
 		sme_change_roam_scan_channel_list(hdd_ctx->hHal,
 						  adapter->session_id,
@@ -5287,6 +5302,14 @@ static int drv_cmd_set_ccx_roam_scan_channels(struct hdd_adapter *adapter,
 		ret = -EINVAL;
 		goto exit;
 	}
+
+	if (!sme_validate_channel_list(hdd_ctx->hHal,
+	    ChannelList, numChannels)) {
+		hdd_err("List contains invalid channel(s)");
+		ret = -EINVAL;
+		goto exit;
+	}
+
 	status = sme_set_ese_roam_scan_channel_list(hdd_ctx->hHal,
 						    adapter->session_id,
 						    ChannelList,
