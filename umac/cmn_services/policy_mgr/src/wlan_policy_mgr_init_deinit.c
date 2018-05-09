@@ -642,6 +642,10 @@ QDF_STATUS policy_mgr_register_dp_cb(struct wlan_objmgr_psoc *psoc,
 		dp_cbacks->hdd_set_rx_mode_rps_cb;
 	pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb =
 		dp_cbacks->hdd_ipa_set_mcc_mode_cb;
+	pm_ctx->dp_cbacks.hdd_v2_flow_pool_map =
+		dp_cbacks->hdd_v2_flow_pool_map;
+	pm_ctx->dp_cbacks.hdd_v2_flow_pool_unmap =
+		dp_cbacks->hdd_v2_flow_pool_unmap;
 
 	return QDF_STATUS_SUCCESS;
 }

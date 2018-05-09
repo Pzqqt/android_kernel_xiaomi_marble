@@ -121,16 +121,17 @@ struct dp_tx_desc_pool_s *dp_tx_create_flow_pool(struct dp_soc *soc,
 	uint32_t stop_threshold;
 	uint32_t start_threshold;
 
-	if (!soc) {
+	if (flow_pool_id >= MAX_TXDESC_POOLS) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		   "%s: soc is NULL\n", __func__);
+		   "%s: invalid flow_pool_id %d", __func__, flow_pool_id);
 		return NULL;
 	}
 	pool = &soc->tx_desc[flow_pool_id];
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
-	if (pool->status == FLOW_POOL_INVALID) {
+	if ((pool->status != FLOW_POOL_INACTIVE) || pool->pool_create_cnt) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		   "%s: flow pool already allocated\n", __func__);
+			"%s: flow pool already allocated, attached %d times\n",
+			__func__, pool->pool_create_cnt);
 		if (pool->avail_desc > pool->start_th)
 			pool->status = FLOW_POOL_ACTIVE_UNPAUSED;
 		else
@@ -155,6 +156,7 @@ struct dp_tx_desc_pool_s *dp_tx_create_flow_pool(struct dp_soc *soc,
 	/* INI is in percentage so divide by 100 */
 	pool->start_th = (start_threshold * flow_pool_size)/100;
 	pool->stop_th = (stop_threshold * flow_pool_size)/100;
+	pool->pool_create_cnt++;
 
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
 
@@ -185,10 +187,25 @@ int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
 	}
 
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
+	if (!pool->pool_create_cnt) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "flow pool either not created or alread deleted");
+		qdf_spin_unlock_bh(&pool->flow_pool_lock);
+		return -ENOENT;
+	}
+	pool->pool_create_cnt--;
+	if (pool->pool_create_cnt) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: pool is still attached, pending detach %d\n",
+			  __func__, pool->pool_create_cnt);
+		qdf_spin_unlock_bh(&pool->flow_pool_lock);
+		return -EAGAIN;
+	}
+
 	if (pool->avail_desc < pool->pool_size) {
 		pool->status = FLOW_POOL_INVALID;
 		qdf_spin_unlock_bh(&pool->flow_pool_lock);
-		return EAGAIN;
+		return -EAGAIN;
 	}
 
 	/* We have all the descriptors for the pool, we can delete the pool */

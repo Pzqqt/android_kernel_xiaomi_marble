@@ -1122,6 +1122,8 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 		break;
 	}
 
+	if (pm_ctx->dp_cbacks.hdd_v2_flow_pool_map)
+		pm_ctx->dp_cbacks.hdd_v2_flow_pool_map(session_id);
 
 	policy_mgr_debug("No.# of active sessions for mode %d = %d",
 		mode, pm_ctx->no_of_active_sessions[mode]);
@@ -1211,6 +1213,9 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 	default:
 		break;
 	}
+
+	if (pm_ctx->dp_cbacks.hdd_v2_flow_pool_unmap)
+		pm_ctx->dp_cbacks.hdd_v2_flow_pool_unmap(session_id);
 
 	policy_mgr_debug("No.# of active sessions for mode %d = %d",
 		mode, pm_ctx->no_of_active_sessions[mode]);

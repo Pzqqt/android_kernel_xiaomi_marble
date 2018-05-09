@@ -372,6 +372,7 @@ struct dp_tx_desc_pool_s {
 	uint16_t start_th;
 	uint16_t pkt_drop_no_desc;
 	qdf_spinlock_t flow_pool_lock;
+	uint8_t pool_create_cnt;
 	void *pool_owner_ctx;
 #else
 	uint16_t elem_count;
