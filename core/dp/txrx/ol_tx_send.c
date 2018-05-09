@@ -833,6 +833,11 @@ void ol_tx_desc_update_group_credit(ol_txrx_pdev_handle pdev,
 	uint16_t vdev_id_mask;
 	struct ol_tx_desc_t *tx_desc;
 
+	if (tx_desc_id >= pdev->tx_desc.pool_size) {
+		qdf_print("%s: Invalid desc id", __func__);
+		return;
+	}
+
 	tx_desc = ol_tx_desc_find(pdev, tx_desc_id);
 	for (i = 0; i < OL_TX_MAX_TXQ_GROUPS; i++) {
 		vdev_id_mask =
