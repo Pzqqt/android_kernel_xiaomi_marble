@@ -2560,14 +2560,16 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	}
 
 	/* ACS override for android */
-	if (hdd_ctx->config->sap_p2p_11ac_override && ht_enabled &&
+	if (ht_enabled &&
 	    sap_config->acs_cfg.end_ch >= WLAN_REG_CH_NUM(CHAN_ENUM_36) &&
-	    !(((adapter->device_mode == QDF_SAP_MODE) &&
-	      (hdd_ctx->config->sap_force_11n_for_11ac)) ||
-	      ((adapter->device_mode == QDF_P2P_GO_MODE) &&
-	      (hdd_ctx->config->go_force_11n_for_11ac)))) {
-		hdd_debug("ACS Config override for 11AC vhtChannelWidth %d",
-			hdd_ctx->config->vhtChannelWidth);
+	    ((adapter->device_mode == QDF_SAP_MODE &&
+	      !hdd_ctx->config->sap_force_11n_for_11ac &&
+	      hdd_ctx->config->sap_11ac_override) ||
+	      (adapter->device_mode == QDF_P2P_GO_MODE &&
+	      !hdd_ctx->config->go_force_11n_for_11ac &&
+	      hdd_ctx->config->go_11ac_override))) {
+		hdd_debug("ACS Config override for 11AC, vhtChannelWidth %d",
+			  hdd_ctx->config->vhtChannelWidth);
 		vht_enabled = 1;
 		sap_config->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;
 		sap_config->acs_cfg.ch_width =
@@ -15528,7 +15530,8 @@ void wlan_hdd_update_11n_mode(struct hdd_config *cfg)
 		if ((cfg->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY) ||
 		    (cfg->dot11Mode == eHDD_DOT11_MODE_11ac)) {
 			cfg->dot11Mode = eHDD_DOT11_MODE_11n;
-			cfg->sap_p2p_11ac_override = 0;
+			cfg->sap_11ac_override = 0;
+			cfg->go_11ac_override = 0;
 		}
 	}
 }

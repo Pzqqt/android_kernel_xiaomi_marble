@@ -3354,13 +3354,21 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_SAP_MCC_CHANNEL_AVOIDANCE_MAX),
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-	REG_VARIABLE(CFG_SAP_P2P_11AC_OVERRIDE_NAME, WLAN_PARAM_Integer,
-			struct hdd_config, sap_p2p_11ac_override,
-			VAR_FLAGS_OPTIONAL |
-					VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			CFG_SAP_P2P_11AC_OVERRIDE_DEFAULT,
-			CFG_SAP_P2P_11AC_OVERRIDE_MIN,
-			CFG_SAP_P2P_11AC_OVERRIDE_MAX),
+	REG_VARIABLE(CFG_SAP_11AC_OVERRIDE_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, sap_11ac_override,
+		     VAR_FLAGS_OPTIONAL |
+				VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_SAP_11AC_OVERRIDE_DEFAULT,
+		     CFG_SAP_11AC_OVERRIDE_MIN,
+		     CFG_SAP_11AC_OVERRIDE_MAX),
+
+	REG_VARIABLE(CFG_GO_11AC_OVERRIDE_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, go_11ac_override,
+		     VAR_FLAGS_OPTIONAL |
+				VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_GO_11AC_OVERRIDE_DEFAULT,
+		     CFG_GO_11AC_OVERRIDE_MIN,
+		     CFG_GO_11AC_OVERRIDE_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_RAMDUMP_COLLECTION, WLAN_PARAM_Integer,
 		     struct hdd_config, is_ramdump_enabled,
@@ -6400,8 +6408,10 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [sap_channel_avoidance] value = [%u]",
 		  hdd_ctx->config->sap_channel_avoidance);
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-	hdd_debug("Name = [%s] value = [%u]", CFG_SAP_P2P_11AC_OVERRIDE_NAME,
-				hdd_ctx->config->sap_p2p_11ac_override);
+	hdd_debug("Name = [%s] value = [%u]", CFG_SAP_11AC_OVERRIDE_NAME,
+		  hdd_ctx->config->sap_11ac_override);
+	hdd_debug("Name = [%s] value = [%u]", CFG_GO_11AC_OVERRIDE_NAME,
+		  hdd_ctx->config->go_11ac_override);
 	hdd_debug("Name = [ChannelBondingMode] Value = [%u]",
 		  hdd_ctx->config->nChannelBondingMode24GHz);
 	hdd_debug("Name = [%s] Value = [%u] ",
