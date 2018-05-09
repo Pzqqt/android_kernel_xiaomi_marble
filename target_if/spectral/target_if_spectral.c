@@ -790,6 +790,10 @@ target_if_spectral_info_write(
 		}
 
 		info->osps_cache.osc_spectral_active = *pval;
+
+		/* The cache is now valid */
+		info->osps_cache.osc_is_valid = 1;
+
 		qdf_spin_unlock(&info->osps_lock);
 		break;
 
@@ -816,6 +820,10 @@ target_if_spectral_info_write(
 		}
 
 		info->osps_cache.osc_spectral_enabled = *pval;
+
+		/* The cache is now valid */
+		info->osps_cache.osc_is_valid = 1;
+
 		qdf_spin_unlock(&info->osps_lock);
 		break;
 
@@ -843,6 +851,10 @@ target_if_spectral_info_write(
 
 		qdf_mem_copy(&info->osps_cache.osc_params,
 			     param, sizeof(info->osps_cache.osc_params));
+
+		/* The cache is now valid */
+		info->osps_cache.osc_is_valid = 1;
+
 		qdf_spin_unlock(&info->osps_lock);
 		break;
 
