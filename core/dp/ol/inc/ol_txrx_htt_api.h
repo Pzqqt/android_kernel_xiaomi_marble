@@ -364,10 +364,19 @@ void ol_tx_target_credit_update(struct ol_txrx_pdev_t *pdev, int credit_delta);
  * @param num_mpdu_ranges - how many ranges of MPDUs does the message describe.
  *      Each MPDU within the range has the same rx status.
  */
+#ifdef WLAN_PARTIAL_REORDER_OFFLOAD
 void
 ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 			 qdf_nbuf_t rx_ind_msg,
 			 uint16_t peer_id, uint8_t tid, int num_mpdu_ranges);
+#else
+static inline void
+ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
+			 qdf_nbuf_t rx_ind_msg,
+			 uint16_t peer_id, uint8_t tid, int num_mpdu_ranges)
+{
+}
+#endif
 
 /**
  * @brief Process an rx fragment indication message sent by the target.
@@ -663,11 +672,21 @@ ol_txrx_peer_qoscapable_get(struct ol_txrx_pdev_t *txrx_pdev, uint16_t peer_id);
  * @param tid - what (extended) traffic type the rx data is
  * @param is_offload - is this an offload indication?
  */
+#ifdef WLAN_FULL_REORDER_OFFLOAD
 void
 ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 				  qdf_nbuf_t rx_ind_msg,
 				  uint16_t peer_id,
 				  uint8_t tid, uint8_t is_offload);
+#else
+static inline void
+ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
+				  qdf_nbuf_t rx_ind_msg,
+				  uint16_t peer_id,
+				  uint8_t tid, uint8_t is_offload)
+{
+}
+#endif
 
 #ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
 

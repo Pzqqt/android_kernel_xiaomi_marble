@@ -804,7 +804,15 @@ void htt_rx_msdu_buff_replenish(htt_pdev_handle pdev);
  *
  * Return: number of buffers actually replenished
  */
+#ifndef CONFIG_HL_SUPPORT
 int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num);
+#else
+static inline
+int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num)
+{
+	return 0;
+}
+#endif
 
 /**
  * @brief Links list of MSDUs into an single MPDU. Updates RX stats
@@ -856,6 +864,7 @@ htt_rx_frag_ind_flush_seq_num_range(htt_pdev_handle pdev,
 				    qdf_nbuf_t rx_frag_ind_msg,
 				    uint16_t *seq_num_start, uint16_t *seq_num_end);
 
+#ifdef CONFIG_HL_SUPPORT
 /**
  * htt_rx_msdu_rx_desc_size_hl() - Return the HL rx desc size
  * @pdev: the HTT instance the rx data was received on.
@@ -864,6 +873,13 @@ htt_rx_frag_ind_flush_seq_num_range(htt_pdev_handle pdev,
  * Return: HL rx desc size
  */
 uint16_t htt_rx_msdu_rx_desc_size_hl(htt_pdev_handle pdev, void *msdu_desc);
+#else
+static inline
+uint16_t htt_rx_msdu_rx_desc_size_hl(htt_pdev_handle pdev, void *msdu_desc)
+{
+	return 0;
+}
+#endif
 
 /**
  * @brief populates vowext stats by processing RX desc.

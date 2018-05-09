@@ -260,6 +260,8 @@ void ol_rx_update_histogram_stats(uint32_t msdu_count, uint8_t frag_ind,
 
 }
 
+#ifdef WLAN_PARTIAL_REORDER_OFFLOAD
+
 #ifdef WDI_EVENT_ENABLE
 static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 				   void *rx_mpdu_desc, qdf_nbuf_t msdu)
@@ -764,6 +766,7 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 	if (pdev->rx.flags.defrag_timeout_check)
 		ol_rx_defrag_waitlist_flush(pdev);
 }
+#endif
 
 void
 ol_rx_sec_ind_handler(ol_txrx_pdev_handle pdev,
@@ -892,6 +895,7 @@ void ol_rx_notify(struct cdp_cfg *cfg_pdev,
 	 */
 }
 
+#ifdef WLAN_PARTIAL_REORDER_OFFLOAD
 /**
  * @brief Look into a rx MSDU to see what kind of special handling it requires
  * @details
@@ -939,6 +943,7 @@ ol_rx_inspect(struct ol_txrx_vdev_t *vdev,
 		}
 	}
 }
+#endif
 
 void
 ol_rx_offload_deliver_ind_handler(ol_txrx_pdev_handle pdev,
@@ -1024,6 +1029,7 @@ ol_rx_mic_error_handler(
 	}
 }
 
+#ifdef WLAN_PARTIAL_REORDER_OFFLOAD
 /**
  * @brief Check the first msdu to decide whether the a-msdu should be accepted.
  */
@@ -1155,6 +1161,7 @@ ol_rx_filter(struct ol_txrx_vdev_t *vdev,
 	}
 	return FILTER_STATUS_REJECT;
 }
+#endif
 
 #ifdef WLAN_FEATURE_TSF_PLUS
 static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
@@ -1180,6 +1187,7 @@ static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
 }
 #endif
 
+#ifdef WLAN_PARTIAL_REORDER_OFFLOAD
 void
 ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
 	      struct ol_txrx_peer_t *peer, unsigned int tid,
@@ -1209,9 +1217,10 @@ ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
 
 		rx_desc = htt_rx_msdu_desc_retrieve(pdev->htt_pdev, msdu);
 		/* for HL, point to payload right now*/
-		if (pdev->cfg.is_high_latency)
+		if (pdev->cfg.is_high_latency) {
 			qdf_nbuf_pull_head(msdu,
 				htt_rx_msdu_rx_desc_size_hl(htt_pdev, rx_desc));
+		}
 
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 		info.is_msdu_cmpl_mpdu =
@@ -1384,6 +1393,7 @@ DONE:
 
 	ol_rx_data_process(peer, deliver_list_head);
 }
+#endif
 
 void
 ol_rx_discard(struct ol_txrx_vdev_t *vdev,
@@ -1460,6 +1470,7 @@ void ol_rx_frames_free(htt_pdev_handle htt_pdev, qdf_nbuf_t frames)
 	}
 }
 
+#ifdef WLAN_FULL_REORDER_OFFLOAD
 void
 ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 				  qdf_nbuf_t rx_ind_msg,
@@ -1565,6 +1576,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 
 	peer->rx_opt_proc(vdev, peer, tid, head_msdu);
 }
+#endif
 
 #ifndef REMOVE_PKT_LOG
 /**
@@ -1610,6 +1622,7 @@ void ol_rx_pkt_dump_call(
 }
 #endif
 
+#ifdef WLAN_FULL_REORDER_OFFLOAD
 /* the msdu_list passed here must be NULL terminated */
 void
 ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
@@ -1650,6 +1663,7 @@ ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 
 	ol_rx_data_process(peer, msdu_list);
 }
+#endif
 
 #ifndef CONFIG_HL_SUPPORT
 void

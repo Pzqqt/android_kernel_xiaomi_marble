@@ -23,10 +23,19 @@
 #include <ol_htt_api.h>         /* htt_pdev_handle */
 #include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t */
 
+#ifdef WLAN_PARTIAL_REORDER_OFFLOAD
 void
 ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
 	      struct ol_txrx_peer_t *peer, unsigned int tid,
 	      qdf_nbuf_t head_msdu);
+#else
+static inline void
+ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
+	      struct ol_txrx_peer_t *peer, unsigned int tid,
+	      qdf_nbuf_t head_msdu)
+{
+}
+#endif
 
 void
 ol_rx_discard(struct ol_txrx_vdev_t *vdev,
@@ -53,11 +62,19 @@ void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
 }
 #endif
 
-
+#ifdef WLAN_FULL_REORDER_OFFLOAD
 void
 ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 		       struct ol_txrx_peer_t *peer,
 		       unsigned int tid, qdf_nbuf_t head_msdu);
+#else
+static inline void
+ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
+		       struct ol_txrx_peer_t *peer,
+		       unsigned int tid, qdf_nbuf_t head_msdu)
+{
+}
+#endif
 
 void ol_rx_log_packet(htt_pdev_handle htt_pdev,
 		 uint8_t peer_id, qdf_nbuf_t msdu);
@@ -75,5 +92,7 @@ ol_rx_mic_error_handler(
 	u_int16_t peer_id,
 	void *msdu_desc,
 	qdf_nbuf_t msdu);
+
+void htt_rx_fill_ring_count(htt_pdev_handle pdev);
 
 #endif /* _OL_RX__H_ */

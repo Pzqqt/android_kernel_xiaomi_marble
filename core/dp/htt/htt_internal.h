@@ -548,7 +548,12 @@ htt_htc_misc_pkt_list_add(struct htt_pdev_t *pdev, struct htt_htc_pkt *pkt);
 void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev);
 #endif
 
-#ifdef CONFIG_HL_SUPPORT
+#ifdef WLAN_FULL_REORDER_OFFLOAD
+int
+htt_rx_hash_list_insert(struct htt_pdev_t *pdev,
+			qdf_dma_addr_t paddr,
+			qdf_nbuf_t netbuf);
+#else
 static inline int
 htt_rx_hash_list_insert(struct htt_pdev_t *pdev,
 			qdf_dma_addr_t paddr,
@@ -556,11 +561,6 @@ htt_rx_hash_list_insert(struct htt_pdev_t *pdev,
 {
 	return 0;
 }
-#else
-int
-htt_rx_hash_list_insert(struct htt_pdev_t *pdev,
-			qdf_dma_addr_t paddr,
-			qdf_nbuf_t netbuf);
 #endif
 
 qdf_nbuf_t
@@ -897,7 +897,20 @@ void htt_rx_dbg_rxbuf_deinit(struct htt_pdev_t *pdev)
 }
 #endif
 
-#ifndef CONFIG_HL_SUPPORT
+#ifndef HTT_RX_RING_SIZE_MIN
+#define HTT_RX_RING_SIZE_MIN 128        /* slightly > than one large A-MPDU */
+#endif
+
+#ifndef HTT_RX_RING_SIZE_MAX
+#define HTT_RX_RING_SIZE_MAX 2048       /* ~20 ms @ 1 Gbps of 1500B MSDUs */
+#endif
+
+#ifndef HTT_RX_AVG_FRM_BYTES
+#define HTT_RX_AVG_FRM_BYTES 1000
+#endif
+
+#define HTT_FCS_LEN (4)
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 #ifdef HTT_DEBUG_DATA
 #define HTT_PKT_DUMP(x) x
@@ -935,6 +948,7 @@ static inline qdf_dma_addr_t htt_paddr_trim_to_37(qdf_dma_addr_t paddr)
 }
 #endif /* HTT_PADDR64 */
 
+#ifdef WLAN_FULL_REORDER_OFFLOAD
 #ifdef ENABLE_DEBUG_ADDRESS_MARKING
 static inline qdf_dma_addr_t
 htt_rx_paddr_unmark_high_bits(qdf_dma_addr_t paddr)
@@ -1005,6 +1019,14 @@ qdf_dma_addr_t htt_rx_in_ord_paddr_get(uint32_t *u32p)
 #endif
 #endif /* ENABLE_DEBUG_ADDRESS_MARKING */
 
+static inline
+unsigned int htt_rx_in_order_ring_elems(struct htt_pdev_t *pdev)
+{
+	return (*pdev->rx_ring.alloc_idx.vaddr -
+		*pdev->rx_ring.target_idx.vaddr) &
+		pdev->rx_ring.size_mask;
+}
+
 static inline qdf_nbuf_t
 htt_rx_in_order_netbuf_pop(htt_pdev_handle pdev, qdf_dma_addr_t paddr)
 {
@@ -1014,7 +1036,21 @@ htt_rx_in_order_netbuf_pop(htt_pdev_handle pdev, qdf_dma_addr_t paddr)
 	return htt_rx_hash_list_lookup(pdev, paddr);
 }
 
-#ifdef FEATURE_MONITOR_MODE_SUPPORT
+#else
+static inline
+qdf_dma_addr_t htt_rx_in_ord_paddr_get(uint32_t *u32p)
+{
+	return 0;
+}
+
+static inline qdf_nbuf_t
+htt_rx_in_order_netbuf_pop(htt_pdev_handle pdev, qdf_dma_addr_t paddr)
+{
+	return NULL;
+}
+#endif
+
+#if defined(FEATURE_MONITOR_MODE_SUPPORT) && defined(WLAN_FULL_REORDER_OFFLOAD)
 int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 					qdf_nbuf_t rx_ind_msg,
 					qdf_nbuf_t *head_msdu,
@@ -1030,7 +1066,6 @@ int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 {
 	return 0;
 }
-#endif
 #endif
 
 #endif /* _HTT_INTERNAL__H_ */

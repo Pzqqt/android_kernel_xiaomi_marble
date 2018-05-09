@@ -1061,6 +1061,14 @@ ifeq ($(CONFIG_FEATURE_MONITOR_MODE_SUPPORT), y)
 HTT_OBJS += $(HTT_DIR)/htt_monitor_rx.o
 endif
 
+ifeq ($(CONFIG_LL_DP_SUPPORT), y)
+HTT_OBJS += $(HTT_DIR)/htt_rx_ll.o
+endif
+
+ifeq ($(CONFIG_HL_DP_SUPPORT), y)
+HTT_OBJS += $(HTT_DIR)/htt_rx_hl.o
+endif
+
 ############## INIT-DEINIT ###########
 INIT_DEINIT_DIR := init_deinit/dispatcher
 INIT_DEINIT_INC_DIR := $(INIT_DEINIT_DIR)/inc
@@ -1821,8 +1829,9 @@ cppflags-$(CONFIG_HIF_PCI) += -DHIF_PCI
 cppflags-$(CONFIG_HIF_SNOC) += -DHIF_SNOC
 
 cppflags-$(CONFIG_HL_DP_SUPPORT) += -DCONFIG_HL_SUPPORT
-
+cppflags-$(CONFIG_HL_DP_SUPPORT) += -DWLAN_PARTIAL_REORDER_OFFLOAD
 cppflags-$(CONFIG_LL_DP_SUPPORT) += -DCONFIG_LL_DP_SUPPORT
+cppflags-$(CONFIG_LL_DP_SUPPORT) += -DWLAN_FULL_REORDER_OFFLOAD
 
 #Enable High Latency related Flags
 ifeq ($(CONFIG_QCA_WIFI_SDIO), y)

@@ -500,11 +500,9 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		len = HTT_WDI_IPA_OP_RESPONSE_RSP_LEN_GET(*(msg_word + 1));
 
 		if (sizeof(struct htt_wdi_ipa_op_response_t) + len > msg_len) {
-			qdf_print("Invalid buffer length,"
-				"sizeof(struct htt_wdi_ipa_op_response_t) %lu"
-				"len %d, msg_len %d",
-				sizeof(struct htt_wdi_ipa_op_response_t),
-				len, msg_len);
+			qdf_print("Invalid buf len size %zu len %d, msg_len %d",
+				  sizeof(struct htt_wdi_ipa_op_response_t),
+				  len, msg_len);
 			WARN_ON(1);
 			break;
 		}
