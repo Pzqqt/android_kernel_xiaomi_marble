@@ -3503,27 +3503,43 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 {
 	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
 	int ret;
+	QDF_STATUS status;
+	uint32_t cfg_value;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_config *config = hdd_ctx->config;
+	union {
+		uint16_t cfg_value16;
+		tSirMacHTCapabilityInfo ht_cap_info;
+	} u;
 
 	hdd_debug("%d", value);
 	if (value) {
 		/* make sure HT capabilities allow this */
-		QDF_STATUS status;
-		uint32_t cfg_value;
-		union {
-			uint16_t cfg_value16;
-			tSirMacHTCapabilityInfo ht_cap_info;
-		} u;
-
-		status = sme_cfg_get_int(hal, WNI_CFG_HT_CAP_INFO, &cfg_value);
-		if (QDF_STATUS_SUCCESS != status) {
-			hdd_err("Failed to get HT capability info");
-			return -EIO;
-		}
-		u.cfg_value16 = cfg_value & 0xFFFF;
-		if (!u.ht_cap_info.advCodingCap) {
+		if (!config->enable_rx_ldpc) {
 			hdd_err("LDCP not supported");
 			return -EINVAL;
 		}
+	} else if (!config->enable_rx_ldpc) {
+			hdd_err("LDCP is already disabled");
+			return 0;
+	}
+	status = sme_cfg_get_int(hal, WNI_CFG_HT_CAP_INFO, &cfg_value);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Failed to get HT capability info");
+		return -EIO;
+	}
+	u.cfg_value16 = cfg_value & 0xFFFF;
+
+	u.ht_cap_info.advCodingCap = value;
+	status = sme_cfg_set_int(hal, WNI_CFG_HT_CAP_INFO, u.cfg_value16);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Failed to set HT capability info");
+		return -EIO;
+	}
+	status = sme_cfg_set_int(hal, WNI_CFG_VHT_LDPC_CODING_CAP, value);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Failed to set VHT LDPC capability info");
+		return -EIO;
 	}
 
 	ret = sme_update_ht_config(hal, adapter->session_id,
@@ -3531,6 +3547,9 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 				   value);
 	if (ret)
 		hdd_err("Failed to set LDPC value");
+	ret = sme_update_he_ldpc_supp(hal, adapter->session_id, value);
+	if (ret)
+		hdd_err("Failed to set HE LDPC value");
 
 	return ret;
 }

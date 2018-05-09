@@ -9698,6 +9698,7 @@ int sme_update_ht_config(tHalHandle hHal, uint8_t sessionId, uint16_t htCapab,
 	switch (htCapab) {
 	case WNI_CFG_HT_CAP_INFO_ADVANCE_CODING:
 		pSession->htConfig.ht_rx_ldpc = value;
+		pMac->roam.configParam.rx_ldpc_enable = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_TX_STBC:
 		pSession->htConfig.ht_tx_stbc = value;
@@ -13077,6 +13078,12 @@ int sme_update_he_frag_supp(tHalHandle hal, uint8_t session_id,
 {
 	return sme_update_he_cap(hal, session_id,
 			 WNI_CFG_HE_FRAGMENTATION, he_frag);
+}
+
+int sme_update_he_ldpc_supp(tHalHandle hal, uint8_t session_id,
+			    uint16_t he_ldpc)
+{
+	return sme_update_he_cap(hal, session_id, WNI_CFG_HE_LDPC, he_ldpc);
 }
 #endif
 
