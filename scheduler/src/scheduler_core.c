@@ -433,9 +433,16 @@ void scheduler_cleanup_queues(struct scheduler_ctx *sch_ctx, int idx)
 	while ((msg_wrapper =
 			scheduler_mq_get(&sch_ctx->queue_ctx.sch_msg_q[idx]))) {
 		if (msg_wrapper->msg_buf) {
-			sched_info("Freeing MC WMA MSG message type %d",
-				   msg_wrapper->msg_buf->type);
-
+			if ((QDF_MODULE_ID_SYS ==
+				sch_ctx->queue_ctx.sch_msg_q[idx].qid) &&
+			    (SYS_MSG_ID_MC_TIMER ==
+				msg_wrapper->msg_buf->type)) {
+				sched_debug("Timer is freed by each module, not here");
+				continue;
+			}
+			sched_info("Freeing MC MSG message type %d, module id:%d",
+				   msg_wrapper->msg_buf->type,
+				   sch_ctx->queue_ctx.sch_msg_q[idx].qid);
 			if (msg_wrapper->msg_buf->flush_callback) {
 				sched_debug("Flush callback called for type-%x",
 					    msg_wrapper->msg_buf->type);
