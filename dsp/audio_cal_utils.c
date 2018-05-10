@@ -63,6 +63,7 @@ size_t get_cal_info_size(int32_t cal_type)
 		break;
 	case ADM_AUDPROC_CAL_TYPE:
 	case ADM_LSM_AUDPROC_CAL_TYPE:
+	case ADM_LSM_AUDPROC_PERSISTENT_CAL_TYPE:
 		size = sizeof(struct audio_cal_info_audproc);
 		break;
 	case ADM_AUDVOL_CAL_TYPE:
@@ -213,6 +214,7 @@ size_t get_user_cal_type_size(int32_t cal_type)
 		break;
 	case ADM_AUDPROC_CAL_TYPE:
 	case ADM_LSM_AUDPROC_CAL_TYPE:
+	case ADM_LSM_AUDPROC_PERSISTENT_CAL_TYPE:
 		size = sizeof(struct audio_cal_type_audproc);
 		break;
 	case ADM_AUDVOL_CAL_TYPE:
