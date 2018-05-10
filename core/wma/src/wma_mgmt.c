@@ -3431,6 +3431,19 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 			cds_pkt_return_packet(rx_pkt);
 			return -EINVAL;
 		}
+	if (iface->ucast_key_cipher == WMI_CIPHER_AES_GCM) {
+		hdr_len = WLAN_IEEE80211_GCMP_HEADERLEN;
+		mic_len = WLAN_IEEE80211_GCMP_MICLEN;
+	} else {
+		hdr_len = IEEE80211_CCMP_HEADERLEN;
+		mic_len = IEEE80211_CCMP_MICLEN;
+	}
+	if (qdf_nbuf_len(wbuf) < (sizeof(*wh) + hdr_len + mic_len)) {
+		WMA_LOGE("Buffer length less than expected %d",
+					(int)qdf_nbuf_len(wbuf));
+		cds_pkt_return_packet(rx_pkt);
+		return -EINVAL;
+	}
 
 		orig_hdr = (uint8_t *) qdf_nbuf_data(wbuf);
 		/* Pointer to head of CCMP header */
@@ -3442,13 +3455,6 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 			return -EINVAL;
 		}
 
-		if (iface->ucast_key_cipher == WMI_CIPHER_AES_GCM) {
-			hdr_len = WLAN_IEEE80211_GCMP_HEADERLEN;
-			mic_len = WLAN_IEEE80211_GCMP_MICLEN;
-		} else {
-			hdr_len = IEEE80211_CCMP_HEADERLEN;
-			mic_len = IEEE80211_CCMP_MICLEN;
-		}
 		/* Strip privacy headers (and trailer)
 		 * for a received frame
 		 */
