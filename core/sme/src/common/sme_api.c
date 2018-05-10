@@ -8769,6 +8769,9 @@ QDF_STATUS sme_set_wlm_latency_level(tHalHandle hal, uint16_t session_id,
 	struct wlm_latency_level_param params;
 	void *wma = cds_get_context(QDF_MODULE_ID_WMA);
 
+	if (!wma)
+		return QDF_STATUS_E_FAILURE;
+
 	if (!mac_ctx->roam.configParam.wlm_latency_enable) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: WLM latency level setting is disabled",
