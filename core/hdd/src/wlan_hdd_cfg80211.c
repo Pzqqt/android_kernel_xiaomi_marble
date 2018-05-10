@@ -15689,6 +15689,8 @@ int wlan_hdd_cfg80211_register_frames(struct hdd_adapter *adapter)
 		goto dereg_wnm_bss_action_frm;
 	}
 
+	return 0;
+
 dereg_wnm_bss_action_frm:
 	sme_deregister_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
 			(uint8_t *) WNM_BSS_ACTION_FRAME,
