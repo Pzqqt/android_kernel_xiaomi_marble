@@ -1074,9 +1074,6 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		return;
 	}
 
-	if (bcn.ssidPresent)
-		bcn.ssId.ssId[bcn.ssId.length] = 0;
-
 	/*
 	 * Now process the beacon in the context of the BSS which is
 	 * transmitting the beacons, if one is found
