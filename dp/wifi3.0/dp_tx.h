@@ -207,7 +207,7 @@ void  dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 #endif
 
 #ifdef ATH_TX_PRI_OVERRIDE
-#define DP_TX_TID_OVERRIDE((_msdu_info), _nbuf) \
+#define DP_TX_TID_OVERRIDE(_msdu_info, _nbuf) \
 	((_msdu_info)->tid = qdf_nbuf_get_priority(_nbuf))
 #else
 #define DP_TX_TID_OVERRIDE(_msdu_info, _nbuf)
