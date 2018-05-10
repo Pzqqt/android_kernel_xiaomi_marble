@@ -4271,8 +4271,8 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 			 * the reasonCode will be passed to supplicant by
 			 * cfg80211_disconnected. Based on the document,
 			 * the reason code passed to supplicant needs to set
-			 * to 0 if unknow. eSIR_BEACON_MISSED reason code is not
-			 * recognizable so that we set to 0 instead.
+			 * to 0 if unknown. eSIR_BEACON_MISSED reason code is
+			 * not recognizable so that we set to 0 instead.
 			 */
 			roam_info->reasonCode =
 				(roam_info->reasonCode == eSIR_BEACON_MISSED) ?

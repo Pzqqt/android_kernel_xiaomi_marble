@@ -3574,7 +3574,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 	if (!peer) {
 		if (IEEE80211_FC0_SUBTYPE_ASSOC_REQ != subtype) {
 			WMA_LOGI(
-			   FL("Received mgmt frame: %0x from unknow peer: %pM"),
+			   FL("Received mgmt frame: %0x from unknown peer: %pM"),
 			   subtype, peer_addr);
 			should_drop = true;
 		}
