@@ -19457,7 +19457,7 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 	/*
 	 * For CTX INT cmd if rssi disallow bssid list have any member
 	 * fill it and send it to firmware so that firmware does not
-	 * try to roam to these BSS untill RSSI OR time condition are
+	 * try to roam to these BSS until RSSI OR time condition are
 	 * matched.
 	 */
 	if (reason == REASON_CTX_INIT)
