@@ -473,7 +473,7 @@ int htt_tx_credit_update(struct htt_pdev_t *pdev)
 /**
  * htt_tx_get_paddr() - get physical address for htt desc
  *
- * Get HTT descriptor physical address from virtaul address
+ * Get HTT descriptor physical address from virtual address
  * Find page first and find offset
  * Not required for HL systems
  *
