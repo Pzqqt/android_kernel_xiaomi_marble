@@ -5973,7 +5973,7 @@ static QDF_STATUS ol_txrx_wrapper_peer_state_update(struct cdp_pdev *pdev,
 /**
  * ol_txrx_wrapper_find_peer_by_addr() - find peer instance by address
  * @pdev: pdev handle
- * @peer_addr: peer address wnat to find
+ * @peer_addr: peer address want to find
  * @peer_id: peer id
  *
  * Return: peer instance pointer
