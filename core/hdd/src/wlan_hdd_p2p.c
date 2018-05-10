@@ -144,7 +144,8 @@ static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 
 	status = wlan_cfg80211_roc(adapter->hdd_vdev, chan,
 				duration, cookie);
-	hdd_debug("remain on channel request, status:%d", status);
+	hdd_debug("remain on channel request, status:%d, cookie:0x%llx",
+			status, *cookie);
 
 	return qdf_status_to_os_return(status);
 }
@@ -264,7 +265,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	status = wlan_cfg80211_mgmt_tx(adapter->hdd_vdev, chan,
 			offchan, wait, buf, len, no_cck,
 			dont_wait_for_ack, cookie);
-	hdd_debug("mgmt tx, status:%d", status);
+	hdd_debug("mgmt tx, status:%d, cookie:0x%llx", status, *cookie);
 
 	return 0;
 }
