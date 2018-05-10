@@ -7338,7 +7338,7 @@ struct sir_rssi_disallow_lst {
 
 /**
  * struct chain_rssi_result - chain rssi result
- * num_chains_valid: vaild chain num
+ * num_chains_valid: valid chain num
  * @chain_rssi: chain rssi result as dBm unit
  * @ant_id: antenna id
  */
