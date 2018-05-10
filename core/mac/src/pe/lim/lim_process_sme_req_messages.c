@@ -797,6 +797,8 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		pe_debug("persona - %d, nss - %d",
 				session->pePersona, session->vdev_nss);
 		session->nss = session->vdev_nss;
+		if (!mac_ctx->roam.configParam.enable2x2)
+			session->nss = 1;
 		/*
 		 * Allocate memory for the array of
 		 * parsed (Re)Assoc request structure
@@ -1434,6 +1436,8 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		else
 			session->vdev_nss = vdev_type_nss->sta;
 		session->nss = session->vdev_nss;
+		if (!mac_ctx->roam.configParam.enable2x2)
+			session->nss = 1;
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
 		if (session->vhtCapability) {
