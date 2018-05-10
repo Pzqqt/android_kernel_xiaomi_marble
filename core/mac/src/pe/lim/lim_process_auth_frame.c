@@ -1203,7 +1203,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		/*
 		 * On STA in infrastructure BSS, Authentication frames received
 		 * with WEP bit set in the FC must be rejected with challenge
-		 * failure status code (wierd thing in the spec - this should've
+		 * failure status code (weird thing in the spec - this should've
 		 * been rejected with unspecified failure/unexpected assertion
 		 * of wep bit (this status code does not exist though) or
 		 * Out-of-sequence-Authentication-Frame status code.
