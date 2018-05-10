@@ -1049,7 +1049,6 @@ struct wma_txrx_node {
 	struct beacon_info *beacon;
 	vdev_restart_params_t vdev_restart_params;
 	vdev_cli_config_t config;
-	struct scan_param scan_info;
 	uint32_t type;
 	uint32_t sub_type;
 #ifdef FEATURE_WLAN_ESE
