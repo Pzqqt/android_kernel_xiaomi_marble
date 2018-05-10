@@ -982,6 +982,8 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 			jack_type = SND_JACK_HEADSET;
 			break;
 		case MBHC_PLUG_TYPE_HIGH_HPH:
+			if (mbhc->mbhc_detection_logic == WCD_DETECTION_ADC)
+			    WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_ELECT_ISRC_EN, 0);
 			mbhc->is_extn_cable = false;
 			jack_type = SND_JACK_LINEOUT;
 			break;
