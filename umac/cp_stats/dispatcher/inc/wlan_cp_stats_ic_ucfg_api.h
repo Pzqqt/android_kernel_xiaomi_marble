@@ -27,6 +27,7 @@
 #ifdef QCA_SUPPORT_CP_STATS
 #include <wlan_objmgr_cmn.h>
 #include <wlan_cp_stats_ic_defs.h>
+#include <wlan_cp_stats_ic_dcs_defs.h>
 #include "../../core/src/wlan_cp_stats_defs.h"
 #ifdef WLAN_ATF_ENABLE
 #include <wlan_cp_stats_ic_atf_defs.h>
@@ -659,6 +660,17 @@ wlan_ucfg_get_atf_peer_cp_stats_from_mac(struct wlan_objmgr_vdev *vdev,
 					 struct atf_peer_cp_stats *astats);
 
 #endif
+
+/**
+ * wlan_ucfg_get_dcs_chan_stats() - ucfg API to set dcs chan stats
+ * @pdev_obj: pointer to pdev object
+ * @dcs_chan_stats: pointer to dcs chan stats structure
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS
+wlan_ucfg_get_dcs_chan_stats(struct wlan_objmgr_pdev *pdev,
+			     struct pdev_dcs_chan_stats *dcs_chan_stats);
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_IC_UCFG_API_H__ */

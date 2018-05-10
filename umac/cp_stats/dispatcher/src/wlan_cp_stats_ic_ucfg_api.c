@@ -28,6 +28,7 @@
 #include <wlan_cp_stats_ic_atf_defs.h>
 #endif
 #include <wlan_cp_stats_ic_defs.h>
+#include <wlan_cp_stats_ic_dcs_defs.h>
 #include "../../core/src/wlan_cp_stats_cmn_api_i.h"
 #include <qdf_module.h>
 
@@ -338,3 +339,10 @@ wlan_ucfg_get_atf_peer_cp_stats_from_mac(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 #endif
+
+QDF_STATUS
+wlan_ucfg_get_dcs_chan_stats(struct wlan_objmgr_pdev *pdev,
+			     struct pdev_dcs_chan_stats *dcs_chan_stats)
+{
+	return QDF_STATUS_E_INVAL;
+}
