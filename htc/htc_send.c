@@ -230,9 +230,13 @@ void free_htc_bundle_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
 
 	/* restore queue */
 	pQueueSave = (HTC_PACKET_QUEUE *) pPacket->pContext;
-	AR_DEBUG_ASSERT(pQueueSave);
-
-	INIT_HTC_PACKET_QUEUE(pQueueSave);
+	if (qdf_unlikely(!pQueueSave)) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+				("\n%s: Invalid pQueueSave in HTC Packet\n",
+				__func__));
+		AR_DEBUG_ASSERT(pQueueSave);
+	} else
+		INIT_HTC_PACKET_QUEUE(pQueueSave);
 
 	LOCK_HTC_TX(target);
 	if (target->pBundleFreeList == NULL) {
