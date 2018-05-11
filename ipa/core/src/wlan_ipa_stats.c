@@ -530,7 +530,7 @@ static void wlan_ipa_print_session_info(struct wlan_ipa_priv *ipa_ctx)
 						       session_id]);
 	}
 
-	for (i = 0; i < IPA_WLAN_EVENT_MAX; i++)
+	for (i = 0; i < QDF_IPA_WLAN_EVENT_MAX; i++)
 		ipa_info("\nEVENT[%d]=%d",
 			 i, ipa_ctx->stats.event[i]);
 
