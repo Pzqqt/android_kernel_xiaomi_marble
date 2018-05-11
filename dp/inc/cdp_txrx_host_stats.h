@@ -405,7 +405,8 @@ static inline void cdp_get_dp_htt_stats(ol_txrx_soc_handle soc,
 					struct cdp_pdev *pdev,
 					void *data, uint32_t data_len)
 {
-	if (soc->ops->host_stats_ops->get_htt_stats)
+	if (soc && soc->ops && soc->ops->host_stats_ops &&
+		soc->ops->host_stats_ops->get_htt_stats)
 		return soc->ops->host_stats_ops->get_htt_stats
 			(pdev, data, data_len);
 	return;
