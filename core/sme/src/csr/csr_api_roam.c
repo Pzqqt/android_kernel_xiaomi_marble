@@ -7549,7 +7549,7 @@ static inline void csr_process_fils_join_rsp(tpAniSirGlobal mac_ctx,
  * @cmd:              Command to be processed
  * @context:          Additional data in context of the cmd
  *
- * Process the join results which are obtained in a succesful join
+ * Process the join results which are obtained in a successful join
  *
  * Return: None
  */
@@ -9634,7 +9634,7 @@ static void csr_roam_join_rsp_processor(tpAniSirGlobal pMac,
 			 * gets enqueued and an associated timer for the SME
 			 * command timeout is started which is currently 120
 			 * seconds. This command would be dequeued only upon
-			 * succesfull connections. In case of join failures, if
+			 * successful connections. In case of join failures, if
 			 * there are too many BSS in the cache, and if we fail
 			 * Join requests with all of them, there is a chance of
 			 * timing out the above timer.

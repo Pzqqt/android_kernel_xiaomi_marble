@@ -1143,7 +1143,7 @@ static QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
  * list that need to be applied to the scan results to form the
  * probable candidates for roaming.
  *
- * Return: Return success upon succesfully passing the
+ * Return: Return success upon successfully passing the
  *         parameters to the firmware, otherwise failure.
  */
 static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,

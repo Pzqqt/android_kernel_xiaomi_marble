@@ -4846,7 +4846,7 @@ typedef struct {
 	uint32_t txMpdu;
 	/* number of received unicast mpdus */
 	uint32_t rxMpdu;
-	/* number of succesfully transmitted multicast data packets */
+	/* number of successfully transmitted multicast data packets */
 	/* STA case: implies ACK received from AP for the unicast */
 	/* packet in which mcast pkt was sent */
 	uint32_t txMcast;

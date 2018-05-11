@@ -696,7 +696,7 @@ enum sme_qos_statustype sme_qos_setup_req(tHalHandle hHal, uint32_t sessionId,
  *             been successful already
  *
  * This function should be called after a link has been established,
- * i.e. STA is associated with an AP etc. & a QoS setup has been succesful for
+ * i.e. STA is associated with an AP etc. & a QoS setup has been successful for
  * that flow. If the request involves admission control on the requested AC,
  * HDD needs to provide the necessary Traffic Specification (TSPEC) parameters &
  * SME might start the renegotiation process through ADDTS.

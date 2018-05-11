@@ -785,7 +785,7 @@ void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 
 	case SIR_SCAN_EVENT_COMPLETED:
 		/*
-		 * Scan either completed succesfully or or got terminated
+		 * Scan either completed successfully or or got terminated
 		 * after successful auth, or timed out. Either way, STA
 		 * is back to home channel. Data traffic can continue.
 		 */
