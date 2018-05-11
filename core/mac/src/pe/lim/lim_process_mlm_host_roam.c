@@ -216,7 +216,7 @@ static void lim_handle_sme_reaasoc_result(tpAniSirGlobal pMac,
 		}
 	}
 error:
-	/* Delete teh session if REASSOC failure occurred. */
+	/* Delete the session if REASSOC failure occurred. */
 	if (resultCode != eSIR_SME_SUCCESS) {
 		if (NULL != psessionEntry) {
 			pe_delete_session(pMac, psessionEntry);
