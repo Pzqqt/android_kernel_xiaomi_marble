@@ -215,7 +215,8 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 
 	/* Initialize peer list */
 	qdf_list_create(&vdev->vdev_objmgr.wlan_peer_list,
-			vdev->vdev_objmgr.max_peer_count);
+			vdev->vdev_objmgr.max_peer_count +
+			WLAN_MAX_PDEV_TEMP_PEERS);
 	/* TODO init other parameters */
 
 	/* Invoke registered create handlers */
@@ -646,21 +647,35 @@ QDF_STATUS wlan_objmgr_vdev_peer_attach(struct wlan_objmgr_vdev *vdev,
 
 	wlan_vdev_obj_lock(vdev);
 	pdev = wlan_vdev_get_pdev(vdev);
-	/* If Max peer count exceeds, return failure */
-	if (objmgr->wlan_peer_count >= objmgr->max_peer_count) {
-		wlan_vdev_obj_unlock(vdev);
-		return QDF_STATUS_E_FAILURE;
+	/* If Max VDEV peer count exceeds, return failure */
+	if (peer->peer_mlme.peer_type != WLAN_PEER_STA_TEMP) {
+		if (objmgr->wlan_peer_count >= objmgr->max_peer_count) {
+			wlan_vdev_obj_unlock(vdev);
+			return QDF_STATUS_E_FAILURE;
+		}
 	}
 	wlan_vdev_obj_unlock(vdev);
 
+	/* If Max PDEV peer count exceeds, return failure */
 	wlan_pdev_obj_lock(pdev);
-	if (wlan_pdev_get_peer_count(pdev) >=
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP) {
+		if (wlan_pdev_get_temp_peer_count(pdev) >=
+			WLAN_MAX_PDEV_TEMP_PEERS) {
+			wlan_pdev_obj_unlock(pdev);
+			return QDF_STATUS_E_FAILURE;
+		}
+	} else {
+		if (wlan_pdev_get_peer_count(pdev) >=
 			wlan_pdev_get_max_peer_count(pdev)) {
-		wlan_pdev_obj_unlock(pdev);
-		return QDF_STATUS_E_FAILURE;
+			wlan_pdev_obj_unlock(pdev);
+			return QDF_STATUS_E_FAILURE;
+		}
 	}
 
-	wlan_pdev_incr_peer_count(wlan_vdev_get_pdev(vdev));
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP)
+		wlan_pdev_incr_temp_peer_count(wlan_vdev_get_pdev(vdev));
+	else
+		wlan_pdev_incr_peer_count(wlan_vdev_get_pdev(vdev));
 	wlan_pdev_obj_unlock(pdev);
 
 	wlan_vdev_obj_lock(vdev);
@@ -744,7 +759,10 @@ QDF_STATUS wlan_objmgr_vdev_peer_detach(struct wlan_objmgr_vdev *vdev,
 	wlan_vdev_obj_unlock(vdev);
 
 	wlan_pdev_obj_lock(pdev);
-	wlan_pdev_decr_peer_count(pdev);
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP)
+		wlan_pdev_decr_temp_peer_count(pdev);
+	else
+		wlan_pdev_decr_peer_count(pdev);
 	wlan_pdev_obj_unlock(pdev);
 
 	/* decrement vdev ref count after peer released its reference */

@@ -77,7 +77,8 @@ static void wlan_objmgr_psoc_peer_list_init(struct wlan_peer_list *peer_list)
 	qdf_spinlock_create(&peer_list->peer_list_lock);
 	for (i = 0; i < WLAN_PEER_HASHSIZE; i++)
 		qdf_list_create(&peer_list->peer_hash[i],
-				WLAN_UMAC_PSOC_MAX_PEERS);
+			WLAN_UMAC_PSOC_MAX_PEERS +
+			WLAN_MAX_PSOC_TEMP_PEERS);
 }
 
 static void wlan_objmgr_psoc_peer_list_deinit(struct wlan_peer_list *peer_list)
@@ -129,6 +130,7 @@ struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
 	objmgr->wlan_vdev_count = 0;
 	objmgr->max_vdev_count = WLAN_UMAC_PSOC_MAX_VDEVS;
 	objmgr->wlan_peer_count = 0;
+	objmgr->temp_peer_count = 0;
 	objmgr->max_peer_count = WLAN_UMAC_PSOC_MAX_PEERS;
 	qdf_atomic_init(&objmgr->ref_cnt);
 	objmgr->print_cnt = 0;
@@ -1494,11 +1496,21 @@ QDF_STATUS wlan_objmgr_psoc_peer_attach(struct wlan_objmgr_psoc *psoc,
 
 	wlan_psoc_obj_lock(psoc);
 	objmgr = &psoc->soc_objmgr;
-	/* Max peer limit is reached, return failure */
-	if (objmgr->wlan_peer_count >= wlan_psoc_get_max_peer_count(psoc)) {
-		wlan_psoc_obj_unlock(psoc);
-		return QDF_STATUS_E_FAILURE;
+	/* Max temporary peer limit is reached, return failure */
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP) {
+		if (objmgr->temp_peer_count >= WLAN_MAX_PSOC_TEMP_PEERS) {
+			wlan_psoc_obj_unlock(psoc);
+			return QDF_STATUS_E_FAILURE;
+		}
+	} else {
+		/* Max peer limit is reached, return failure */
+		if (objmgr->wlan_peer_count
+			>= wlan_psoc_get_max_peer_count(psoc)) {
+			wlan_psoc_obj_unlock(psoc);
+			return QDF_STATUS_E_FAILURE;
+		}
 	}
+
 	/* Derive hash index from mac address */
 	hash_index = WLAN_PEER_HASH(peer->macaddr);
 	peer_list = &objmgr->peer_list;
@@ -1510,7 +1522,11 @@ QDF_STATUS wlan_objmgr_psoc_peer_attach(struct wlan_objmgr_psoc *psoc,
 							peer);
 	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
 	/* Increment peer count */
-	objmgr->wlan_peer_count++;
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP)
+		objmgr->temp_peer_count++;
+	else
+		objmgr->wlan_peer_count++;
+
 	wlan_psoc_obj_unlock(psoc);
 
 	return QDF_STATUS_SUCCESS;
@@ -1547,7 +1563,10 @@ QDF_STATUS wlan_objmgr_psoc_peer_detach(struct wlan_objmgr_psoc *psoc,
 	}
 	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
 	/* Decrement peer count */
-	objmgr->wlan_peer_count--;
+	if (peer->peer_mlme.peer_type == WLAN_PEER_STA_TEMP)
+		objmgr->temp_peer_count--;
+	else
+		objmgr->wlan_peer_count--;
 	wlan_psoc_obj_unlock(psoc);
 
 	return QDF_STATUS_SUCCESS;

@@ -130,6 +130,7 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 	pdev->pdev_objmgr.wlan_vdev_count = 0;
 	pdev->pdev_objmgr.max_vdev_count = WLAN_UMAC_PDEV_MAX_VDEVS;
 	pdev->pdev_objmgr.wlan_peer_count = 0;
+	pdev->pdev_objmgr.temp_peer_count = 0;
 	pdev->pdev_objmgr.max_peer_count = wlan_psoc_get_max_peer_count(psoc);
 	/* Save HDD/OSIF pointer */
 	pdev->pdev_nif.pdev_ospriv = osdev_priv;
