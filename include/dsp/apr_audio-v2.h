@@ -2586,6 +2586,17 @@ struct afe_param_id_internal_bt_fm_cfg {
  * shared channel approach.
  */
 
+/* ID of the parameter used to set the latency mode of the
+ * USB audio device.
+ */
+#define AFE_PARAM_ID_PORT_LATENCY_MODE_CONFIG  0x000102B3
+
+/* Minor version used for tracking USB audio latency mode */
+#define AFE_API_MINOR_VERSION_USB_AUDIO_LATENCY_MODE 0x1
+
+/* Supported AFE port latency modes */
+#define AFE_PORT_DEFAULT_LATENCY_MODE     0x0
+#define AFE_PORT_LOW_LATENCY_MODE         0x1
 
 #define AFE_PARAM_ID_SLIMBUS_CONFIG    0x00010212
 
@@ -2679,14 +2690,14 @@ struct afe_param_id_slimbus_cfg {
 #define AFE_PARAM_ID_USB_AUDIO_DEV_LPCM_FMT 0x000102AA
 
 /* Minor version used for tracking USB audio  configuration */
-#define AFE_API_MINIOR_VERSION_USB_AUDIO_CONFIG 0x1
+#define AFE_API_MINOR_VERSION_USB_AUDIO_CONFIG 0x1
 
 /* Payload of the AFE_PARAM_ID_USB_AUDIO_DEV_PARAMS parameter used by
  * AFE_MODULE_AUDIO_DEV_INTERFACE.
  */
 struct afe_param_id_usb_audio_dev_params {
 /* Minor version used for tracking USB audio device parameter.
- * Supported values: AFE_API_MINIOR_VERSION_USB_AUDIO_CONFIG
+ * Supported values: AFE_API_MINOR_VERSION_USB_AUDIO_CONFIG
  */
 	u32                  cfg_minor_version;
 /* Token of actual end USB aduio device */
@@ -2695,11 +2706,31 @@ struct afe_param_id_usb_audio_dev_params {
 
 struct afe_param_id_usb_audio_dev_lpcm_fmt {
 /* Minor version used for tracking USB audio device parameter.
- * Supported values: AFE_API_MINIOR_VERSION_USB_AUDIO_CONFIG
+ * Supported values: AFE_API_MINOR_VERSION_USB_AUDIO_CONFIG
  */
 	u32                  cfg_minor_version;
 /* Endianness of actual end USB audio device */
 	u32                  endian;
+} __packed;
+
+struct afe_param_id_usb_audio_dev_latency_mode {
+/* Minor version used for tracking USB audio device parameter.
+ * Supported values: AFE_API_MINOR_VERSION_USB_AUDIO_LATENCY_MODE
+ */
+	u32                  minor_version;
+/* latency mode for the USB audio device */
+	u32                  mode;
+} __packed;
+
+#define AFE_PARAM_ID_USB_AUDIO_SVC_INTERVAL     0x000102B7
+
+struct afe_param_id_usb_audio_svc_interval {
+/* Minor version used for tracking USB audio device parameter.
+ * Supported values: AFE_API_MINOR_VERSION_USB_AUDIO_CONFIG
+ */
+	u32                  cfg_minor_version;
+/* Endianness of actual end USB audio device */
+	u32                  svc_interval;
 } __packed;
 
 /* ID of the parameter used by AFE_PARAM_ID_USB_AUDIO_CONFIG to configure
@@ -2712,7 +2743,7 @@ struct afe_param_id_usb_audio_dev_lpcm_fmt {
  */
 struct afe_param_id_usb_audio_cfg {
 /* Minor version used for tracking USB audio device configuration.
- * Supported values: AFE_API_MINIOR_VERSION_USB_AUDIO_CONFIG
+ * Supported values: AFE_API_MINOR_VERSION_USB_AUDIO_CONFIG
  */
 	u32                  cfg_minor_version;
 /* Sampling rate of the port.
@@ -2748,6 +2779,8 @@ struct afe_param_id_usb_audio_cfg {
 	u32                  dev_token;
 /* endianness of this interface */
 	u32                   endian;
+/* service interval */
+	u32                  service_interval;
 } __packed;
 
 /* This param id is used to configure Real Time Proxy interface. */

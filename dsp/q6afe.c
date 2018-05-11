@@ -2858,8 +2858,9 @@ int afe_port_send_usb_dev_param(u16 port_id, union afe_port_config *afe_config)
 {
 	struct afe_param_id_usb_audio_dev_params usb_dev;
 	struct afe_param_id_usb_audio_dev_lpcm_fmt lpcm_fmt;
+	struct afe_param_id_usb_audio_svc_interval svc_int;
 	struct param_hdr_v3 param_hdr;
-	int ret = 0;
+	int ret = 0, index = 0;
 
 	if (!afe_config) {
 		pr_err("%s: Error, no configuration data\n", __func__);
@@ -2867,6 +2868,13 @@ int afe_port_send_usb_dev_param(u16 port_id, union afe_port_config *afe_config)
 		goto exit;
 	}
 
+	index = q6audio_get_port_index(port_id);
+
+	if (index < 0 || index >= AFE_MAX_PORTS) {
+		pr_err("%s: AFE port index[%d] invalid!\n",
+				__func__, index);
+		return -EINVAL;
+	}
 	memset(&usb_dev, 0, sizeof(usb_dev));
 	memset(&lpcm_fmt, 0, sizeof(lpcm_fmt));
 	memset(&param_hdr, 0, sizeof(param_hdr));
@@ -2875,7 +2883,7 @@ int afe_port_send_usb_dev_param(u16 port_id, union afe_port_config *afe_config)
 
 	param_hdr.param_id = AFE_PARAM_ID_USB_AUDIO_DEV_PARAMS;
 	param_hdr.param_size = sizeof(usb_dev);
-	usb_dev.cfg_minor_version = AFE_API_MINIOR_VERSION_USB_AUDIO_CONFIG;
+	usb_dev.cfg_minor_version = AFE_API_MINOR_VERSION_USB_AUDIO_CONFIG;
 	usb_dev.dev_token = afe_config->usb_audio.dev_token;
 
 	ret = q6afe_pack_and_set_param_in_band(port_id,
@@ -2889,7 +2897,7 @@ int afe_port_send_usb_dev_param(u16 port_id, union afe_port_config *afe_config)
 
 	param_hdr.param_id = AFE_PARAM_ID_USB_AUDIO_DEV_LPCM_FMT;
 	param_hdr.param_size = sizeof(lpcm_fmt);
-	lpcm_fmt.cfg_minor_version = AFE_API_MINIOR_VERSION_USB_AUDIO_CONFIG;
+	lpcm_fmt.cfg_minor_version = AFE_API_MINOR_VERSION_USB_AUDIO_CONFIG;
 	lpcm_fmt.endian = afe_config->usb_audio.endian;
 
 	ret = q6afe_pack_and_set_param_in_band(port_id,
@@ -2900,7 +2908,25 @@ int afe_port_send_usb_dev_param(u16 port_id, union afe_port_config *afe_config)
 			__func__, ret);
 		goto exit;
 	}
+	param_hdr.param_id = AFE_PARAM_ID_USB_AUDIO_SVC_INTERVAL;
+	param_hdr.param_size = sizeof(svc_int);
+	svc_int.cfg_minor_version =
+		AFE_API_MINOR_VERSION_USB_AUDIO_CONFIG;
+	svc_int.svc_interval = afe_config->usb_audio.service_interval;
 
+	pr_debug("%s: AFE device param cmd sending SVC_INTERVAL %d\n",
+			__func__, svc_int.svc_interval);
+
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+					       q6audio_get_port_index(port_id),
+					       param_hdr, (u8 *) &svc_int);
+
+	if (ret) {
+		pr_err("%s: AFE device param cmd svc_interval failed %d\n",
+			__func__, ret);
+		ret = -EINVAL;
+		goto exit;
+	}
 exit:
 	return ret;
 }
