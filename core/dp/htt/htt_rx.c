@@ -398,6 +398,14 @@ static int htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 
 	idx = *(pdev->rx_ring.alloc_idx.vaddr);
 
+	if ((idx < 0) || (idx > pdev->rx_ring.size_mask) ||
+	    (num > pdev->rx_ring.size))  {
+		QDF_TRACE(QDF_MODULE_ID_HTT,
+			  QDF_TRACE_LEVEL_ERROR,
+			  "%s:rx refill failed!", __func__);
+		return filled;
+	}
+
 moretofill:
 	while (num > 0) {
 		qdf_dma_addr_t paddr, paddr_marked;
