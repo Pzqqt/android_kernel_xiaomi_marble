@@ -592,7 +592,16 @@ void sap_dfs_set_current_channel(void *ctx)
 			ic_flagext, ic_ieee, vht_seg0, vht_seg1);
 
 	if (wlan_reg_is_dfs_ch(pdev, sap_ctx->channel)) {
-		tgt_dfs_get_radars(pdev);
+		if (policy_mgr_concurrent_beaconing_sessions_running(
+		    mac_ctx->psoc)) {
+			uint16_t con_ch;
+
+			con_ch = sme_get_concurrent_operation_channel(hal);
+			if (!con_ch || !wlan_reg_is_dfs_ch(pdev, con_ch))
+				tgt_dfs_get_radars(pdev);
+		} else {
+			tgt_dfs_get_radars(pdev);
+		}
 		tgt_dfs_set_phyerr_filter_offload(pdev);
 		if (sap_ctx->csr_roamProfile.disableDFSChSwitch)
 			tgt_dfs_control(pdev, DFS_SET_USENOL, &use_nol,
