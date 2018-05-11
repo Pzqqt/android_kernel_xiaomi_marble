@@ -1362,8 +1362,10 @@ static qdf_list_t
 					qdf_mem_malloc(
 					sizeof(struct wlan_logically_del_peer));
 					if (peer_list == NULL) {
+						wlan_objmgr_peer_release_ref(peer, dbg_id);
 						/* Lock is already released */
-						obj_mgr_err("Mem alloc failed");
+						obj_mgr_alert("Mem alloc failed");
+						WLAN_OBJMGR_BUG(0);
 						break;
 					}
 
