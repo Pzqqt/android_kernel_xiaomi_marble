@@ -5396,6 +5396,15 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_SECONDARY_RATE_DEFAULT,
 		     CFG_ENABLE_SECONDARY_RATE_MIN,
 		     CFG_ENABLE_SECONDARY_RATE_MAX),
+
+	REG_VARIABLE(CFG_ROAM_FORCE_RSSI_TRIGGER_NAME,
+		     WLAN_PARAM_Integer, struct hdd_config,
+		     roam_force_rssi_trigger,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ROAM_FORCE_RSSI_TRIGGER_DEFAULT,
+		     CFG_ROAM_FORCE_RSSI_TRIGGER_MIN,
+		     CFG_ROAM_FORCE_RSSI_TRIGGER_MAX),
+
 };
 
 
@@ -7297,6 +7306,10 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] value = [0x%x]",
 		  CFG_ENABLE_SECONDARY_RATE_NAME,
 		  hdd_ctx->config->enable_secondary_rate);
+	hdd_debug("Name = [%s] Value = [%u]",
+		  CFG_ROAM_FORCE_RSSI_TRIGGER_NAME,
+		  hdd_ctx->config->roam_force_rssi_trigger);
+
 }
 
 
@@ -8906,6 +8919,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->roamscan_adaptive_dwell_mode;
 	smeConfig->csrConfig.enable_ftopen =
 			hdd_ctx->config->enable_ftopen;
+	smeConfig->csrConfig.roam_force_rssi_trigger =
+			hdd_ctx->config->roam_force_rssi_trigger;
 
 	hdd_update_per_config_to_sme(hdd_ctx, smeConfig);
 

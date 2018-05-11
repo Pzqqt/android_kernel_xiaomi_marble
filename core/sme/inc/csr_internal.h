@@ -611,6 +611,7 @@ struct csr_config {
 	bool wep_tkip_in_he;
 	struct csr_neighbor_report_offload_params neighbor_report_offload;
 	bool enable_ftopen;
+	bool roam_force_rssi_trigger;
 };
 
 struct csr_channel_powerinfo {
