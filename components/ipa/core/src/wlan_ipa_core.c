@@ -154,6 +154,7 @@ done:
  */
 static QDF_STATUS wlan_ipa_uc_send_wdi_control_msg(bool ctrl)
 {
+	struct wlan_ipa_priv *ipa_ctx = gp_ipa;
 	qdf_ipa_msg_meta_t meta;
 	qdf_ipa_wlan_msg_t *ipa_msg;
 	int ret = 0;
@@ -166,10 +167,13 @@ static QDF_STATUS wlan_ipa_uc_send_wdi_control_msg(bool ctrl)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	if (ctrl)
+	if (ctrl) {
 		QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_WDI_ENABLE);
-	else
+		ipa_ctx->stats.event[QDF_WDI_ENABLE]++;
+	} else {
 		QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_WDI_DISABLE);
+		ipa_ctx->stats.event[QDF_WDI_DISABLE]++;
+	}
 
 	ipa_debug("ipa_send_msg(Evt:%d)", QDF_IPA_MSG_META_MSG_TYPE(&meta));
 	ret = qdf_ipa_send_msg(&meta, ipa_msg, wlan_ipa_msg_free_fn);
@@ -2098,10 +2102,14 @@ QDF_STATUS wlan_ipa_send_mcc_scc_msg(struct wlan_ipa_priv *ipa_ctx,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	if (mcc_mode)
+	if (mcc_mode) {
 		QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_SWITCH_TO_MCC);
-	else
+		ipa_ctx->stats.event[QDF_SWITCH_TO_MCC]++;
+	} else {
 		QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_SWITCH_TO_SCC);
+		ipa_ctx->stats.event[QDF_SWITCH_TO_SCC]++;
+	}
+
 	WLAN_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
 		    "ipa_send_msg(Evt:%d)",
 		    QDF_IPA_MSG_META_MSG_TYPE(&meta));

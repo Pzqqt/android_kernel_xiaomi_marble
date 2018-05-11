@@ -332,7 +332,7 @@ struct wlan_ipa_iface_context {
  * @num_tx_fwd_err: Number of TX forward packet failures
  */
 struct wlan_ipa_stats {
-	uint32_t event[IPA_WLAN_EVENT_MAX];
+	uint32_t event[QDF_IPA_WLAN_EVENT_MAX];
 	uint64_t num_send_msg;
 	uint64_t num_free_msg;
 	uint64_t num_rm_grant;
