@@ -284,12 +284,14 @@ static const char *ol_tx_flow_pool_status_to_str
 
 /**
  * ol_tx_dump_flow_pool_info() - dump global_pool and flow_pool info
+ * @ctx: cdp_soc context, required only in lithium_dp flow control.
+ *	 Remove void * while cleaning up cds_get_context.
  *
  * Return: none
  */
 void ol_tx_dump_flow_pool_info(void *ctx)
 {
-	struct ol_txrx_pdev_t *pdev = ctx;
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_tx_flow_pool_t *pool = NULL, *pool_prev = NULL;
 	struct ol_tx_flow_pool_t tmp_pool;
 
