@@ -2875,7 +2875,7 @@ lim_assoc_sta_end:
  *
  * LOGIC: on AP, disassoc all STA associated thru TKIP,
  * we don't do the proper STA disassoc sequence since the
- * BSS will be stoped anyway
+ * BSS will be stopped anyway
  *
  ***ASSUMPTIONS:
  *
