@@ -1371,7 +1371,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->enable_bcast_probe_rsp =
 				sme_join_req->enable_bcast_probe_rsp;
 
-		/* Store vendor specfic IE for CISCO AP */
+		/* Store vendor specific IE for CISCO AP */
 		ie_len = (bss_desc->length + sizeof(bss_desc->length) -
 			 GET_FIELD_OFFSET(tSirBssDescription, ieFields));
 

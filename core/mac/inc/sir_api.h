@@ -791,7 +791,7 @@ typedef struct sSirSmeStartBssRsp {
 	tSirResultCodes statusCode;
 	tSirBssType bssType;    /* Add new type for WDS mode */
 	uint16_t beaconInterval;        /* Beacon Interval for both type */
-	uint32_t staId;         /* Staion ID for Self */
+	uint32_t staId;         /* Station ID for Self */
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	tSirSmeHTProfile HTProfile;
 #endif

@@ -1949,7 +1949,7 @@ void populate_dot11f_wmm_info_ap(tpAniSirGlobal pMac, tDot11fIEWMMInfoAp *pInfo,
 	pInfo->version = SIR_MAC_OUI_VERSION_1;
 
 	/* WMM Specification 3.1.3, 3.2.3
-	 * An IBSS staion shall always use its default WMM parameters.
+	 * An IBSS station shall always use its default WMM parameters.
 	 */
 	if (LIM_IS_IBSS_ROLE(psessionEntry)) {
 		pInfo->param_set_count = 0;

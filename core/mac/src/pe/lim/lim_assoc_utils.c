@@ -3758,7 +3758,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			pAssocRsp->vendor_vht_ie.VHTCaps.present){
 		pAddBssParams->vhtCapable =
 			pAssocRsp->vendor_vht_ie.VHTCaps.present;
-		pe_debug("VHT Caps and Operation are present in vendor Specfic IE");
+		pe_debug("VHT Caps and Operation are present in vendor Specific IE");
 		vht_caps = &pAssocRsp->vendor_vht_ie.VHTCaps;
 		vht_oper = &pAssocRsp->vendor_vht_ie.VHTOperation;
 	} else {
@@ -3851,7 +3851,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				vht_caps = &pAssocRsp->VHTCaps;
 			else if (pAssocRsp->vendor_vht_ie.VHTCaps.present) {
 				vht_caps = &pAssocRsp->vendor_vht_ie.VHTCaps;
-				pe_debug("VHT Caps are in vendor Specfic IE");
+				pe_debug("VHT Caps are in vendor Specific IE");
 				is_vht_cap_in_vendor_ie = true;
 			}
 
@@ -3890,7 +3890,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			else if (pAssocRsp->vendor_vht_ie.VHTCaps.present) {
 				vht_oper = &pAssocRsp->
 						vendor_vht_ie.VHTOperation;
-				pe_debug("VHT Op IE is in vendor Specfic IE");
+				pe_debug("VHT Op IE is in vendor Specific IE");
 			}
 			/*
 			 * in limExtractApCapability function intersection of FW
@@ -3972,7 +3972,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				vht_caps = &pAssocRsp->VHTCaps;
 			else if (pAssocRsp->vendor_vht_ie.VHTCaps.present) {
 				vht_caps = &pAssocRsp->vendor_vht_ie.VHTCaps;
-				pe_debug("VHT Caps is in vendor Specfic IE");
+				pe_debug("VHT Caps is in vendor Specific IE");
 			}
 			if (vht_caps != NULL &&
 				(psessionEntry->txLdpcIniFeatureEnabled & 0x2)) {
@@ -4314,7 +4314,7 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 			vht_oper = &pBeaconStruct->VHTOperation;
 		else if (pBeaconStruct->vendor_vht_ie.VHTOperation.present) {
 			vht_oper = &pBeaconStruct->vendor_vht_ie.VHTOperation;
-			pe_debug("VHT Operation is present in vendor Specfic IE");
+			pe_debug("VHT Operation is present in vendor Specific IE");
 		}
 
 
@@ -4488,7 +4488,7 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 			else if (pBeaconStruct->vendor_vht_ie.VHTCaps.present) {
 				vht_caps =
 					&pBeaconStruct->vendor_vht_ie.VHTCaps;
-				pe_debug("VHT Caps are in vendor Specfic IE");
+				pe_debug("VHT Caps are in vendor Specific IE");
 			}
 			if (vht_caps != NULL &&
 				(psessionEntry->txLdpcIniFeatureEnabled & 0x2))
