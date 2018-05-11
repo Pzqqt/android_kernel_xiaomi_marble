@@ -8537,6 +8537,7 @@ QDF_STATUS csr_roam_issue_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	pCommand = csr_get_command_buffer(pMac);
 	if (NULL == pCommand) {
+		csr_scan_result_purge(pMac, hBSSList);
 		sme_err(" fail to get command buffer");
 		status = QDF_STATUS_E_RESOURCES;
 	} else {
@@ -8900,7 +8901,6 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sme_err("CSR failed to issue connect cmd with status: 0x%08X",
 				status);
-			csr_scan_result_purge(pMac, hBSSList);
 			fCallCallback = true;
 		}
 	} else if (NULL != pProfile) {
@@ -9080,7 +9080,6 @@ static QDF_STATUS csr_roam_join_last_profile(tpAniSirGlobal pMac,
 					pProfile, hBSSList, eCsrHddIssued,
 					roamId, false, false);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				csr_scan_result_purge(pMac, hBSSList);
 				goto end;
 			}
 		} else {
@@ -21027,6 +21026,10 @@ QDF_STATUS csr_issue_stored_joinreq(tpAniSirGlobal mac_ctx,
 			new_roam_id,
 			sta_session->stored_roam_profile.imediate_flag,
 			sta_session->stored_roam_profile.clear_flag);
+
+	sta_session->stored_roam_profile.bsslist_handle =
+					CSR_INVALID_SCANRESULT_HANDLE;
+
 	if (QDF_STATUS_SUCCESS != status) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL

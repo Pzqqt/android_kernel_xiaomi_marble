@@ -963,6 +963,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac_ctx,
 						hBSSList, eCsrHddIssued,
 						session->scan_info.roam_id,
 						true, true);
+		hBSSList = CSR_INVALID_SCANRESULT_HANDLE;
 	} while (0);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
