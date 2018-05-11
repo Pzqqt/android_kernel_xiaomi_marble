@@ -1424,7 +1424,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		 * RADAR detection and chosen channel may not be a DFS channels.
 		 * So dont return error here. Just discard the event.
 		 */
-		if (wlan_ipa_get_iface(ipa_ctx, QDF_SAP_MODE)) {
+		if (ipa_ctx->vdev_to_iface[session_id] !=
+				WLAN_IPA_MAX_SESSION) {
 			qdf_mutex_release(&ipa_ctx->event_lock);
 			return 0;
 		}
