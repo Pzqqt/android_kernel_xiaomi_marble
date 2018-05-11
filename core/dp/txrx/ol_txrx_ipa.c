@@ -114,7 +114,7 @@ struct ol_txrx_ipa_uc_tx_hdr ipa_uc_tx_hdr = {
  * ol_txrx_ipa_uc_get_resource() - Client request resource information
  * @pdev: handle to the HTT instance
  *
- *  OL client will reuqest IPA UC related resource information
+ *  OL client will request IPA UC related resource information
  *  Resource information will be distributted to IPA module
  *  All of the required resources should be pre-allocated
  *
