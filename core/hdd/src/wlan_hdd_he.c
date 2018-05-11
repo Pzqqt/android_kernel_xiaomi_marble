@@ -31,7 +31,7 @@
 /**
  * hdd_he_set_wni_cfg() - Update WNI CFG
  * @hdd_ctx: HDD context
- * @cfg_id: CFG to be udpated
+ * @cfg_id: CFG to be updated
  * @new_value: Value to be updated
  *
  * Update WNI CFG with the value passed.

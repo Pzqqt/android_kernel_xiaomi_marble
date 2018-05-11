@@ -10275,7 +10275,7 @@ QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_val)
  *   API to request channel avoidance update from FW.
  *
  * hHal - The handle returned by mac_open
- * update_type - The udpate_type parameter of this request call
+ * update_type - The update_type parameter of this request call
  * Return Configuration message posting status, SUCCESS or Fail
  */
 QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
