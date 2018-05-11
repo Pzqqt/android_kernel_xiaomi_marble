@@ -1383,7 +1383,7 @@ void *cds_get_context(QDF_MODULE_ID moduleId)
  * module context data area.
  *
  * Return: pointer to the CDS global context, NULL if the function is
- *	   unable to retreive the CDS context.
+ *	   unable to retrieve the CDS context.
  */
 void *cds_get_global_context(void)
 {

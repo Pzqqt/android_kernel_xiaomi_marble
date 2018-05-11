@@ -5789,7 +5789,7 @@ tSirRetStatus populate_dot11f_assoc_res_wsc_ie(tpAniSirGlobal pMac,
 	wscIe = limGetWscIEPtr(pMac, pRcvdAssocReq->addIE.addIEdata,
 			       pRcvdAssocReq->addIE.length);
 	if (wscIe != NULL) {
-		/* retreive WSC IE from given AssocReq */
+		/* retrieve WSC IE from given AssocReq */
 		ret = dot11f_unpack_ie_wsc_assoc_req(pMac,
 						     /* EID, length, OUI */
 						     (uint8_t *)wscIe + 2 + 4,
