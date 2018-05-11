@@ -267,7 +267,7 @@ ibss_sta_caps_update(tpAniSirGlobal pMac,
 	}
 	/* peer is 11e capable but is not 11e enabled yet */
 	/* some STA's when joining Airgo IBSS, assert qos capability even when */
-	/* they don't suport qos. however, they do not include the edca parameter */
+	/* they don't support qos. however, they do not include the edca parameter */
 	/* set. so let's check for edcaParam in addition to the qos capability */
 	if (pPeerNode->capabilityInfo.qos && (psessionEntry->limQosEnabled)
 	    && pPeerNode->edcaPresent) {

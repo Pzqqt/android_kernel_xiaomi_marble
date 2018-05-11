@@ -567,7 +567,7 @@ static bool lim_check_11ax_basic_mcs(tpAniSirGlobal mac_ctx,
 			lim_send_assoc_rsp_mgmt_frame(mac_ctx,
 				eSIR_MAC_CAPABILITIES_NOT_SUPPORTED_STATUS,
 				1, hdr->sa, sub_type, 0, session);
-			pe_err("STA did not suport basic MCS required by SAP");
+			pe_err("STA did not support basic MCS required by SAP");
 			return false;
 		}
 	}
