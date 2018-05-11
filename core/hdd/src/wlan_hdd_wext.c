@@ -10396,7 +10396,7 @@ void hdd_register_wext(struct net_device *dev)
 {
 	hdd_enter_dev(dev);
 
-	dev->wireless_handlers = (struct iw_handler_def *)&we_handler_def;
+	dev->wireless_handlers = &we_handler_def;
 
 	hdd_exit();
 }

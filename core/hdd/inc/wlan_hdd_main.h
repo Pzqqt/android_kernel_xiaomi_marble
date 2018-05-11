@@ -2611,11 +2611,9 @@ int hdd_register_cb(struct hdd_context *hdd_ctx);
 void hdd_deregister_cb(struct hdd_context *hdd_ctx);
 int hdd_start_station_adapter(struct hdd_adapter *adapter);
 int hdd_start_ap_adapter(struct hdd_adapter *adapter);
-int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter);
+int hdd_configure_cds(struct hdd_context *hdd_ctx);
 int hdd_set_fw_params(struct hdd_adapter *adapter);
-int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
-			   struct hdd_adapter *adapter,
-			   bool reinit);
+int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit);
 int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode);
 int hdd_start_adapter(struct hdd_adapter *adapter);
 void hdd_populate_random_mac_addr(struct hdd_context *hdd_ctx, uint32_t num);

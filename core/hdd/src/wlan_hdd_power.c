@@ -1381,7 +1381,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	hdd_bus_bandwidth_init(hdd_ctx);
 
 
-	ret = hdd_wlan_start_modules(hdd_ctx, adapter, true);
+	ret = hdd_wlan_start_modules(hdd_ctx, true);
 	if (ret) {
 		hdd_err("Failed to start wlan after error");
 		goto err_re_init;

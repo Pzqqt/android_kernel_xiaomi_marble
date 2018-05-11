@@ -16159,7 +16159,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	hdd_debug("Device_mode = %d, IFTYPE = 0x%x",
 	       adapter->device_mode, type);
 
-	status = hdd_wlan_start_modules(hdd_ctx, adapter, false);
+	status = hdd_wlan_start_modules(hdd_ctx, false);
 	if (status) {
 		hdd_err("Failed to start modules");
 		return -EINVAL;

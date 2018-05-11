@@ -716,7 +716,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	 * check the statemachine for modules state and if they are closed
 	 * open the modules.
 	 */
-	ret = hdd_wlan_start_modules(hdd_ctx, adapter, false);
+	ret = hdd_wlan_start_modules(hdd_ctx, false);
 	if (ret) {
 		hdd_err("Failed to start the wlan_modules");
 		goto close_adapter;
@@ -868,7 +868,7 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 		return status;
 
 	/* check state machine state and kickstart modules if they are closed */
-	status = hdd_wlan_start_modules(hdd_ctx, pVirtAdapter, false);
+	status = hdd_wlan_start_modules(hdd_ctx, false);
 	if (status)
 		return status;
 
