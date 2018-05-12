@@ -7264,7 +7264,7 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 	csr_roam_save_connected_bss_desc(mac_ctx, session_id, bss_desc);
 	csr_roam_free_connect_profile(&session->connectedProfile);
 	csr_roam_free_connected_info(mac_ctx, &session->connectedInfo);
-	csr_roam_save_connected_infomation(mac_ctx, session_id,
+	csr_roam_save_connected_information(mac_ctx, session_id,
 			profile, bss_desc, ies_ptr);
 	qdf_mem_copy(&roam_info.bssid, &bss_desc->bssId,
 			sizeof(struct qdf_mac_addr));
@@ -7652,7 +7652,7 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 	}
 	if (bss_desc) {
 		roam_info.staId = STA_INVALID_IDX;
-		csr_roam_save_connected_infomation(mac_ctx, session_id,
+		csr_roam_save_connected_information(mac_ctx, session_id,
 			profile, bss_desc, ies_ptr);
 		/* Save WPA/RSN IE */
 		csr_roam_save_security_rsp_ie(mac_ctx, session_id,
@@ -9363,7 +9363,7 @@ QDF_STATUS csr_roam_disconnect(tpAniSirGlobal pMac, uint32_t sessionId,
 	return csr_roam_disconnect_internal(pMac, sessionId, reason);
 }
 
-QDF_STATUS csr_roam_save_connected_infomation(tpAniSirGlobal pMac,
+QDF_STATUS csr_roam_save_connected_information(tpAniSirGlobal pMac,
 					      uint32_t sessionId,
 					      struct csr_roam_profile *pProfile,
 					      tSirBssDescription *pSirBssDesc,
@@ -21477,7 +21477,7 @@ static QDF_STATUS csr_process_roam_sync_callback(tpAniSirGlobal mac_ctx,
 
 	qdf_mem_copy(&roam_info->bssid.bytes, &bss_desc->bssId,
 			sizeof(struct qdf_mac_addr));
-	csr_roam_save_connected_infomation(mac_ctx, session_id,
+	csr_roam_save_connected_information(mac_ctx, session_id,
 			session->pCurRoamProfile,
 			bss_desc,
 			ies_local);

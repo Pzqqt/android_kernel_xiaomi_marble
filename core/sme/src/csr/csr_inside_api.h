@@ -301,7 +301,7 @@ QDF_STATUS csr_roam_issue_set_context_req(tpAniSirGlobal pMac,
 QDF_STATUS csr_roam_process_disassoc_deauth(tpAniSirGlobal pMac,
 						tSmeCmd *pCommand,
 					    bool fDisassoc, bool fMICFailure);
-QDF_STATUS csr_roam_save_connected_infomation(tpAniSirGlobal pMac,
+QDF_STATUS csr_roam_save_connected_information(tpAniSirGlobal pMac,
 					      uint32_t sessionId,
 					      struct csr_roam_profile *pProfile,
 					      tSirBssDescription *pSirBssDesc,
