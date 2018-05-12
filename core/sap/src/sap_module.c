@@ -1171,7 +1171,7 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
 }
 
 /**
- * wlansap_update_csa_channel_params() - fucntion to populate channel width and
+ * wlansap_update_csa_channel_params() - function to populate channel width and
  *                                        bonding modes.
  * @sap_context: sap adapter context
  * @channel: target channel
@@ -2490,7 +2490,7 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 	 *
 	 * 2. Set third parameter to TRUE to indicate the
 	 * channel selection function to register a
-	 * different scan callback fucntion to process
+	 * different scan callback function to process
 	 * the results pre start BSS.
 	 */
 	qdf_status = sap_goto_channel_sel(sap_context, &sapEvent, true, false);

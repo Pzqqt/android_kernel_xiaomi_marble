@@ -194,7 +194,7 @@ typedef enum {
 typedef enum {
 	eSAP_STATUS_SUCCESS,            /* Success.  */
 	eSAP_STATUS_FAILURE,            /* General Failure.  */
-	/* Channel not selected during intial scan.  */
+	/* Channel not selected during initial scan.  */
 	eSAP_START_BSS_CHANNEL_NOT_SELECTED,
 	eSAP_ERROR_MAC_START_FAIL,     /* Failed to start Infra BSS */
 } eSapStatus;

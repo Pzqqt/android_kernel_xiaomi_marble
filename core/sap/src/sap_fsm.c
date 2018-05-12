@@ -498,7 +498,7 @@ static void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 
 	if (*dfs_region != DFS_ETSI_REG) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			 FL("sapdfs: defult cac duration"));
+			 FL("sapdfs: default cac duration"));
 		return;
 	}
 
@@ -1060,7 +1060,7 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 				/*
 				* In case of ACS req before start Bss,
 				* return failure so that the calling
-				* fucntion can use the default channel.
+				* function can use the default channel.
 				*/
 				return QDF_STATUS_E_FAILURE;
 			} else {

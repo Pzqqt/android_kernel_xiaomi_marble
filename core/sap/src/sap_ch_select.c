@@ -562,7 +562,7 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
    FUNCTION    sap_chan_sel_init
 
    DESCRIPTION
-    Function sap_chan_sel_init allocates the memory, intializes the
+    Function sap_chan_sel_init allocates the memory, initializes the
     structures used by the channel selection algorithm
 
    DEPENDENCIES
@@ -1737,7 +1737,7 @@ static void sap_chan_sel_exit(tSapChSelSpectInfo *pSpectInfoParams)
    FUNCTION    sap_sort_chl_weight
 
    DESCRIPTION
-    Funtion to sort the channels with the least weight first for 20MHz channels
+    Function to sort the channels with the least weight first for 20MHz channels
 
    DEPENDENCIES
     NA.
@@ -1784,7 +1784,7 @@ static void sap_sort_chl_weight(tSapChSelSpectInfo *pSpectInfoParams)
 }
 
 /**
- * set_ht80_chl_bit() - to set availabe channel to ht80 channel bitmap
+ * set_ht80_chl_bit() - to set available channel to ht80 channel bitmap
  * @channel_bitmap: Pointer to the chan_bonding_bitmap structure
  * @spect_info_params: Pointer to the tSapChSelSpectInfo structure
  *
@@ -1830,7 +1830,7 @@ static void set_ht80_chl_bit(chan_bonding_bitmap *channel_bitmap,
  * sap_sort_chl_weight_ht80() - to sort the channels with the least weight
  * @pSpectInfoParams: Pointer to the tSapChSelSpectInfo structure
  *
- * Funtion to sort the channels with the least weight first for HT80 channels
+ * Function to sort the channels with the least weight first for HT80 channels
  *
  * Return: none
  */
@@ -1962,7 +1962,7 @@ static void sap_sort_chl_weight_ht80(tSapChSelSpectInfo *pSpectInfoParams)
  * sap_sort_chl_weight_vht160() - to sort the channels with the least weight
  * @pSpectInfoParams: Pointer to the tSapChSelSpectInfo structure
  *
- * Funtion to sort the channels with the least weight first for VHT160 channels
+ * Function to sort the channels with the least weight first for VHT160 channels
  *
  * Return: none
  */
@@ -2157,7 +2157,7 @@ static void sap_allocate_max_weight_ht40_5_g(
  * sap_sort_chl_weight_ht40_24_g() - to sort channel with the least weight
  * @pSpectInfoParams: Pointer to the tSapChSelSpectInfo structure
  *
- * Funtion to sort the channels with the least weight first for HT40 channels
+ * Function to sort the channels with the least weight first for HT40 channels
  *
  * Return: none
  */
@@ -2295,7 +2295,7 @@ static void sap_sort_chl_weight_ht40_24_g(tSapChSelSpectInfo *pSpectInfoParams,
    FUNCTION    sap_sort_chl_weight_ht40_5_g
 
    DESCRIPTION
-    Funtion to sort the channels with the least weight first for HT40 channels
+    Function to sort the channels with the least weight first for HT40 channels
 
    DEPENDENCIES
     NA.
@@ -2393,7 +2393,7 @@ static void sap_sort_chl_weight_ht40_5_g(tSapChSelSpectInfo *pSpectInfoParams)
    FUNCTION    sap_sort_chl_weight_all
 
    DESCRIPTION
-    Funtion to sort the channels with the least weight first
+    Function to sort the channels with the least weight first
 
    DEPENDENCIES
     NA.
