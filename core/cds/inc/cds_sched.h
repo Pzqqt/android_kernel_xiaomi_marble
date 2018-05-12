@@ -390,7 +390,7 @@ static inline int cds_sched_handle_throughput_req(
    is ready to be used.
 
    QDF_STATUS_E_RESOURCES - System resources (other than memory)
-   are unavailable to initilize the scheduler
+   are unavailable to initialize the scheduler
 
    QDF_STATUS_E_NOMEM - insufficient memory exists to initialize
    the scheduler
