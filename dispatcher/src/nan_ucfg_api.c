@@ -339,7 +339,7 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	msg.callback = nan_scheduled_msg_handler;
 	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		nan_err("faild to post msg to NAN component, status: %d",
+		nan_err("failed to post msg to NAN component, status: %d",
 			status);
 	}
 
