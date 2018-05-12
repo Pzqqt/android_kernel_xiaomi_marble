@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,7 +60,7 @@ void tdls_implicit_enable(struct tdls_vdev_priv_obj *tdls_vdev);
  * @mac_addr: mac address of the data
  *
  * Increase the rx packet count, if the sender is not bssid and the packet is
- * not broadcast and muticast packet
+ * not broadcast and multicast packet
  *
  * This sampling information will be used in TDLS connection tracker
  *
@@ -78,7 +78,7 @@ void tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
  * @mac_addr: mac address of the data
  *
  * Increase the tx packet count, if the sender is not bssid and the packet is
- * not broadcast and muticast packet
+ * not broadcast and multicast packet
  *
  * This sampling information will be used in TDLS connection tracker
  *
