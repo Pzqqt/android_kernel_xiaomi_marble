@@ -827,11 +827,11 @@ wmitlv_check_and_pad_tlvs(void *os_handle, void *param_struc_ptr,
 					/* Incoming structure size is greater than expected size
 					 * then this needs shrinking for each element in the array */
 
-					/* Find amount of bytes to be shrinked for one element */
+					/* Find amount of bytes to be shrunk for one element */
 					num_padding_bytes = tlv_size_diff * -1;
 
 					/* Move subsequent elements of array up by number of bytes
-					 * to be shrinked for one element */
+					 * to be shrunk for one element */
 					tlv_buf_ptr = buf_ptr;
 					for (i = 0; i < (num_of_elems - 1); i++) {
 						src_addr =
@@ -852,7 +852,7 @@ wmitlv_check_and_pad_tlvs(void *os_handle, void *param_struc_ptr,
 							tag_struct_size;
 					}
 
-					/* Move subsequent TLVs by number of bytes to be shrinked
+					/* Move subsequent TLVs by number of bytes to be shrunk
 					 * for all elements */
 					if (param_buf_len >
 					    (buf_idx + curr_tlv_len)) {
@@ -872,7 +872,7 @@ wmitlv_check_and_pad_tlvs(void *os_handle, void *param_struc_ptr,
 					}
 
 					/* Update the number of padding bytes to total number of
-					 * bytes shrinked for all elements in the array */
+					 * bytes shrunk for all elements in the array */
 					num_padding_bytes =
 						num_padding_bytes * num_of_elems;
 

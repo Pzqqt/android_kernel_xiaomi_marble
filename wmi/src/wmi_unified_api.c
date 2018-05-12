@@ -5396,7 +5396,7 @@ QDF_STATUS wmi_extract_ext_tbttoffset_num_vdevs(void *wmi_hdl, void *evt_buf,
  * wmi_extract_tbttoffset_update_params() - extract tbtt offset update param
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param idx: Index refering to a vdev
+ * @param idx: Index referring to a vdev
  * @param tbtt_param: Pointer to tbttoffset event param
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
@@ -5417,7 +5417,7 @@ QDF_STATUS wmi_extract_tbttoffset_update_params(void *wmi_hdl, void *evt_buf,
  * wmi_extract_ext_tbttoffset_update_params() - extract tbtt offset update param
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param idx: Index refering to a vdev
+ * @param idx: Index referring to a vdev
  * @param tbtt_param: Pointer to tbttoffset event param
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure

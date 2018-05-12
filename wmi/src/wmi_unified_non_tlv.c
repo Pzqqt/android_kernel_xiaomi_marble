@@ -840,7 +840,7 @@ send_pdev_utf_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 	while (param->len) {
 		if (param->len > MAX_WMI_UTF_LEN)
-			chunkLen = MAX_WMI_UTF_LEN; /* MAX messsage.. */
+			chunkLen = MAX_WMI_UTF_LEN; /* MAX message.. */
 		else
 			chunkLen = param->len;
 
@@ -939,7 +939,7 @@ send_pdev_qvit_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 	while (param->len) {
 		if (param->len > MAX_WMI_QVIT_LEN)
-			chunkLen = MAX_WMI_QVIT_LEN; /* MAX messsage.. */
+			chunkLen = MAX_WMI_QVIT_LEN; /* MAX message.. */
 		else
 			chunkLen = param->len;
 
@@ -4283,7 +4283,7 @@ send_pdev_fips_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 			int c;
 
-			/* Checking if kmalloc is succesful to allocate space */
+			/* Checking if kmalloc is successful to allocate space */
 			if (key_unaligned == NULL)
 				return QDF_STATUS_SUCCESS;
 			/* Checking if space is aligned */
@@ -4306,7 +4306,7 @@ send_pdev_fips_cmd_non_tlv(wmi_unified_t wmi_handle,
 			    DUMP_PREFIX_NONE,
 				16, 1, key_aligned, param->key_len, true);
 
-			/* Checking if kmalloc is succesful to allocate space */
+			/* Checking if kmalloc is successful to allocate space */
 			if (data_unaligned == NULL)
 				return QDF_STATUS_SUCCESS;
 			/* Checking of space is aligned */
@@ -6149,7 +6149,7 @@ static QDF_STATUS extract_fips_event_data_non_tlv(wmi_unified_t wmi_handle,
 		u_int8_t *data_aligned = NULL;
 		int c;
 
-		/* Checking if kmalloc does succesful allocation */
+		/* Checking if kmalloc does successful allocation */
 		if (data_unaligned == NULL)
 			return QDF_STATUS_E_FAILURE;
 
@@ -6240,7 +6240,7 @@ static QDF_STATUS extract_tbttoffset_num_vdevs_non_tlv(void *wmi_hdl,
  * extract_tbttoffset_update_params_non_tlv() - extract tbtt offset update param
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param idx: Index refering to a vdev
+ * @param idx: Index referring to a vdev
  * @param tbtt_param: Pointer to tbttoffset event param
  *
  * Return: 0 for success or error code

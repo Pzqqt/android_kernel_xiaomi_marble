@@ -1122,7 +1122,7 @@ send_pdev_utf_cmd_tlv(wmi_unified_t wmi_handle,
 
 	while (param->len) {
 		if (param->len > MAX_WMI_UTF_LEN)
-			chunk_len = MAX_WMI_UTF_LEN;    /* MAX messsage */
+			chunk_len = MAX_WMI_UTF_LEN;    /* MAX message */
 		else
 			chunk_len = param->len;
 
@@ -6853,7 +6853,7 @@ static QDF_STATUS send_dbs_scan_sel_params_cmd_tlv(wmi_unified_t wmi_handle,
  * list that need to be applied to the scan results to form the
  * probable candidates for roaming.
  *
- * Return: Return success upon succesfully passing the
+ * Return: Return success upon successfully passing the
  *         parameters to the firmware, otherwise failure.
  */
 static QDF_STATUS send_roam_scan_filter_cmd_tlv(wmi_unified_t wmi_handle,
@@ -13087,7 +13087,7 @@ send_pdev_qvit_cmd_tlv(wmi_unified_t wmi_handle,
 
 	while (param->len) {
 		if (param->len > MAX_WMI_QVIT_LEN)
-			chunk_len = MAX_WMI_QVIT_LEN;    /* MAX messsage */
+			chunk_len = MAX_WMI_QVIT_LEN;    /* MAX message */
 		else
 			chunk_len = param->len;
 
@@ -14025,7 +14025,7 @@ static QDF_STATUS fips_align_data_be(wmi_unified_t wmi_handle,
 	data_unaligned = qdf_mem_malloc(
 		sizeof(u_int8_t)*param->data_len + FIPS_ALIGN);
 
-	/* Checking if kmalloc is succesful to allocate space */
+	/* Checking if kmalloc is successful to allocate space */
 	if (key_unaligned == NULL)
 		return QDF_STATUS_SUCCESS;
 	/* Checking if space is aligned */
@@ -14048,7 +14048,7 @@ static QDF_STATUS fips_align_data_be(wmi_unified_t wmi_handle,
 		DUMP_PREFIX_NONE,
 		16, 1, key_aligned, param->key_len, true);
 
-	/* Checking if kmalloc is succesful to allocate space */
+	/* Checking if kmalloc is successful to allocate space */
 	if (data_unaligned == NULL)
 		return QDF_STATUS_SUCCESS;
 	/* Checking of space is aligned */
@@ -18450,7 +18450,7 @@ static QDF_STATUS extract_ext_tbttoffset_num_vdevs_tlv(void *wmi_hdl,
  * extract_tbttoffset_update_params_tlv() - extract tbtt offset param
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param idx: Index refering to a vdev
+ * @param idx: Index referring to a vdev
  * @param tbtt_param: Pointer to tbttoffset event param
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
@@ -18484,7 +18484,7 @@ static QDF_STATUS extract_tbttoffset_update_params_tlv(void *wmi_hdl,
  * extract_ext_tbttoffset_update_params_tlv() - extract ext tbtt offset param
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param idx: Index refering to a vdev
+ * @param idx: Index referring to a vdev
  * @param tbtt_param: Pointer to tbttoffset event param
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
@@ -20422,7 +20422,7 @@ static QDF_STATUS fips_conv_data_be(uint32_t data_len, uint8_t *data)
 	data_unaligned = qdf_mem_malloc(((sizeof(uint8_t) * data_len) +
 					FIPS_ALIGN));
 	/* Assigning unaligned space to copy the data */
-	/* Checking if kmalloc does succesful allocation */
+	/* Checking if kmalloc does successful allocation */
 	if (data_unaligned == NULL)
 		return QDF_STATUS_E_FAILURE;
 

@@ -151,7 +151,7 @@ enum WMI_HOST_TWT_COMMAND {
  *                wake_dura_us must be divided evenly by 256,
  *                i.e., wake_dura_us % 256 == 0
  * @sp_offset_us: this long time after TWT setup the 1st SP will start.
- * @twt_cmd: cmd from enum WMI_HOST_TWT_COMAND
+ * @twt_cmd: cmd from enum WMI_HOST_TWT_COMMAND
  * @flag_bcast: 0 means Individual TWT,
  *              1 means Broadcast TWT
  * @flag_trigger: 0 means non-Trigger-enabled TWT,
