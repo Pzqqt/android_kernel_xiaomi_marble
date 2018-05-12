@@ -98,7 +98,7 @@ struct spectral_legacy_cbacks {
 int16_t spectral_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev);
 
 /**
- * spectral_vdev_get_sec20chan_freq_mhz - Get vdev secondary channel frequncy
+ * spectral_vdev_get_sec20chan_freq_mhz - Get vdev secondary channel frequency
  * @vdev:   vdev object
  * @sec20chan_freq: secondary channel frequency
  *
