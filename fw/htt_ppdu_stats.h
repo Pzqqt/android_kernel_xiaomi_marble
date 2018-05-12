@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1477,7 +1477,7 @@ typedef struct {
          ((_var) |= ((_val) << HTT_PPDU_STATS_FLUSH_TLV_NUM_MPDU_S)); \
      } while (0)
 
-#define HTT_PPDU_STATS_FLUSH_TLV_NUM_MSDU_M     0x01fe0000
+#define HTT_PPDU_STATS_FLUSH_TLV_NUM_MSDU_M     0x7ffe0000
 #define HTT_PPDU_STATS_FLUSH_TLV_NUM_MSDU_S             17
 
 #define HTT_PPDU_STATS_FLUSH_TLV_NUM_MSDU_GET(_var) \
