@@ -1734,7 +1734,7 @@ void wmi_unified_register_module(enum wmi_target_type target_type,
 void wmi_tlv_init(void);
 void wmi_non_tlv_init(void);
 #ifdef WMI_NON_TLV_SUPPORT
-/* ONLY_NON_TLV_TARGET:TLV attach dummy function defintion for case when
+/* ONLY_NON_TLV_TARGET:TLV attach dummy function definition for case when
  * driver supports only NON-TLV target (WIN mainline) */
 #define wmi_tlv_attach(x) qdf_print("TLV Unavailable\n")
 #else
