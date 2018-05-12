@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -101,7 +101,7 @@
 
 /* LOG_BASE_C is what was used before expanding the use of the equipment ID.
  * TODO: Once all targets are using the "core" diag system, this should be
- * ommitted. */
+ * omitted. */
 #define LOG_BASE_C LOG_1X_BASE_C
 
 /* -------------------------------------------------------------------------

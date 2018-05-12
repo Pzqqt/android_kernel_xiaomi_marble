@@ -162,7 +162,7 @@ char *pktlog_getbuf(struct pktlog_dev_t *pl_dev,
 #endif
 	if (flags & PHFLAGS_INTERRUPT_CONTEXT) {
 		/*
-		 * We are already in interupt context, no need to make it
+		 * We are already in interrupt context, no need to make it
 		 * intsafe. call the function directly.
 		 */
 		pktlog_getbuf_intsafe(&plarg);
