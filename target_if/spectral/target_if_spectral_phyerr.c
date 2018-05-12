@@ -1210,7 +1210,7 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 		       fft_bin_len);
 	if ((spectral->params.ss_rpt_mode == 2) &&
 			spectral->inband_fftbin_size_adj) {
-		spectral_debug("FW fftbins actually transfered (in-band report mode) "
+		spectral_debug("FW fftbins actually transferred (in-band report mode) "
 					"%d(0x%x)",
 					fft_bin_len_inband_tfer, fft_bin_len_inband_tfer);
 	}
