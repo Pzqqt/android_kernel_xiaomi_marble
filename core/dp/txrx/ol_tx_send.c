@@ -689,7 +689,7 @@ static void ol_tx_update_arp_stats(struct ol_tx_desc_t *tx_desc,
 }
 
 /**
- * WARNING: ol_tx_inspect_handler()'s bahavior is similar to that of
+ * WARNING: ol_tx_inspect_handler()'s behavior is similar to that of
  * ol_tx_completion_handler().
  * any change in ol_tx_completion_handler() must be mirrored in
  * ol_tx_inspect_handler().
@@ -1023,7 +1023,7 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 }
 
 /**
- * WARNING: ol_tx_inspect_handler()'s bahavior is similar to that of
+ * WARNING: ol_tx_inspect_handler()'s behavior is similar to that of
  * ol_tx_completion_handler().
  * any change in ol_tx_completion_handler() must be mirrored here.
  */

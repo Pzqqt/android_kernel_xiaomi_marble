@@ -1515,7 +1515,7 @@ struct ol_tx_desc_t *ol_tx_hl_desc_alloc(struct ol_txrx_pdev_t *pdev,
  *				 for management frame
  * @pdev: the data physical device sending the data
  * @vdev: the virtual device sending the data
- * @tx_mgmt_frm: the tx managment frame
+ * @tx_mgmt_frm: the tx management frame
  * @tx_msdu_info: the tx meta data
  *
  * Return: the tx decriptor

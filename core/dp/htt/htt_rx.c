@@ -2315,7 +2315,7 @@ static int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		htt_rx_mon_get_rx_status(pdev, rx_desc, &rx_status);
 		/*
 		 * For certain platform, 350 bytes of headroom is already
-		 * appended to accomodate radiotap header but
+		 * appended to accommodate radiotap header but
 		 * qdf_nbuf_update_radiotap() API again will try to create
 		 * a room for radiotap header. To make our design simple
 		 * let qdf_nbuf_update_radiotap() API create a room for radiotap

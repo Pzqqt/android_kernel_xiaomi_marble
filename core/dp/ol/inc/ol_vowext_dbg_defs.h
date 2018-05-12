@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,16 +32,16 @@ struct vow_extstats {
 	uint8_t rx_rssi_ctl0;   /* control channel chain0 rssi */
 	uint8_t rx_rssi_ctl1;   /* control channel chain1 rssi */
 	uint8_t rx_rssi_ctl2;   /* control channel chain2 rssi */
-	uint8_t rx_rssi_ext0;   /* extention channel chain0 rssi */
-	uint8_t rx_rssi_ext1;   /* extention channel chain1 rssi */
-	uint8_t rx_rssi_ext2;   /* extention channel chain2 rssi */
+	uint8_t rx_rssi_ext0;   /* extension channel chain0 rssi */
+	uint8_t rx_rssi_ext1;   /* extension channel chain1 rssi */
+	uint8_t rx_rssi_ext2;   /* extension channel chain2 rssi */
 	uint8_t rx_rssi_comb;   /* combined RSSI value */
 	uint8_t rx_bw;          /* Band width 0-20, 1-40, 2-80 */
 	uint8_t rx_sgi;         /* Guard interval, 0-Long GI, 1-Short GI */
 	uint8_t rx_nss;         /* Number of spatial streams */
 	uint8_t rx_mcs;         /* Rate MCS value */
 	uint8_t rx_ratecode;    /* Hardware rate code */
-	uint8_t rx_rs_flags;    /* Recieve misc flags */
+	uint8_t rx_rs_flags;    /* Receive misc flags */
 	uint8_t rx_moreaggr;    /* 0 - non aggr frame */
 	uint32_t rx_macTs;      /* Time stamp */
 	uint16_t rx_seqno;      /* rx sequence number */

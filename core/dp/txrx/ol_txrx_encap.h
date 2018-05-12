@@ -40,7 +40,7 @@
  * @param vdev - handle to vdev object
  * @param tx_desc - tx desc struct,some fields will be updated.
  * @param msdu - qdf_nbuf_t
- * @param msdu_info - informations from tx classification.
+ * @param msdu_info - information from tx classification.
  * @return
  *     A_OK: encap operation successful
  *     other: operation failed,the msdu need be dropped.

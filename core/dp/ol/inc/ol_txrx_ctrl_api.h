@@ -63,7 +63,7 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *pdev);
 /**
  * @brief Parameter type to be input to ol_txrx_peer_update
  * @details
- *  This struct is union,to be used to specify various informations to update
+ *  This struct is union,to be used to specify various information to update
  *   txrx peer object.
  */
 union ol_txrx_peer_update_param_t {

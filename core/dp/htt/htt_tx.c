@@ -44,7 +44,7 @@
 
 #include <cds_utils.h>
 
-/* IPA Micro controler TX data packet HTT Header Preset
+/* IPA Micro controller TX data packet HTT Header Preset
  * 31 | 30  29 | 28 | 27 | 26  22  | 21   16 | 15  13   | 12  8      | 7 0
  ***----------------------------------------------------------------------------
  * R  | CS  OL | R  | PP | ext TID | vdev ID | pkt type | pkt subtyp | msg type
@@ -838,7 +838,7 @@ htt_tx_resume_handler(void *context) { }
 qdf_nbuf_t
 htt_tx_send_batch(htt_pdev_handle pdev, qdf_nbuf_t head_msdu, int num_msdus)
 {
-	qdf_print("*** %s curently only applies for HL systems\n", __func__);
+	qdf_print("*** %s currently only applies for HL systems\n", __func__);
 	qdf_assert(0);
 	return head_msdu;
 

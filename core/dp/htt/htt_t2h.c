@@ -169,7 +169,7 @@ static void htt_ipa_op_response(struct htt_pdev_t *pdev, uint32_t *msg_word)
 				(struct htt_wdi_ipa_op_response_t) +
 				len);
 	if (!op_msg_buffer) {
-		qdf_print("OPCODE messsage buffer alloc fail");
+		qdf_print("OPCODE message buffer alloc fail");
 		return;
 	}
 	qdf_mem_copy(op_msg_buffer,

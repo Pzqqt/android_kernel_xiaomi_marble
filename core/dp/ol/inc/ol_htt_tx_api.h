@@ -513,7 +513,7 @@ extern const uint32_t htt_to_ce_pkt_type[];
 
 /**
  * Provide a constant to specify the offset of the HTT portion of the
- * HTT tx descriptor, to avoid having to export the descriptor defintion.
+ * HTT tx descriptor, to avoid having to export the descriptor definition.
  * The htt module checks internally that this exported offset is consistent
  * with the private tx descriptor definition.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -118,7 +118,7 @@ ol_tx_packet_count(struct cdp_pdev *ppdev,
  * @ppdev: physical device instance
  * @queue_delay_microsec: tx packet delay within queue, usec
  * @tx_delay_microsec: tx packet delay, usec
- * @category: packet catagory
+ * @category: packet category
  *
  * Return: NONE
  */
@@ -131,7 +131,7 @@ ol_tx_delay(struct cdp_pdev *ppdev,
  * ol_tx_delay_hist() - get tx packet delay histogram
  * @ppdev: physical device instance
  * @report_bin_values: bin
- * @category: packet catagory
+ * @category: packet category
  *
  * Return: NONE
  */

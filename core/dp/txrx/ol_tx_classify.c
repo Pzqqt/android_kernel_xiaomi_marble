@@ -877,7 +877,7 @@ ol_tx_classify_mgmt_extension(
 	 *     htt.info.ethertype
 	 *     htt.action.do_encrypt
 	 *         (This will be filled in by other SW, which knows whether
-	 *         the peer has robust-managment-frames enabled.)
+	 *         the peer has robust-management-frames enabled.)
 	 */
 	wh = (struct ieee80211_frame *)qdf_nbuf_data(tx_msdu);
 	msdu_info->htt.info.frame_subtype =

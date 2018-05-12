@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -124,7 +124,7 @@ void ol_txrx_mgmt_tx_complete(void *ctxt, qdf_nbuf_t netbuf, int err);
  * has been delivered to its recipient, it will check if the tx frame
  * is a management frame.  If so, the txrx SW will check the management
  * frame type specified when the frame was submitted for transmission.
- * If there is a callback function registered for the type of managment
+ * If there is a callback function registered for the type of management
  * frame in question, the txrx code will invoke the callback to inform
  * the management + control SW that the mgmt frame was delivered.
  * This function is used by the control SW to store a callback pointer
@@ -139,7 +139,7 @@ ol_txrx_mgmt_tx_cb_set(struct cdp_pdev *ppdev, uint8_t type,
  * ol_txrx_mgmt_send_ext() - Transmit a management frame
  * @pvdev: virtual device transmitting the frame
  * @tx_mgmt_frm: management frame to transmit
- * @type: the type of managment frame (determines what callback to use)
+ * @type: the type of management frame (determines what callback to use)
  * @use_6mbps: specify whether management frame to transmit should
  *	use 6 Mbps rather than 1 Mbps min rate(for 5GHz band or P2P)
  * @chanfreq: channel to transmit the frame on

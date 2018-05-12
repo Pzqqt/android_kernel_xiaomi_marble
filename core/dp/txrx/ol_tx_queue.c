@@ -2203,7 +2203,7 @@ ol_tx_vdev_has_tx_queue_group(
 /**
  * ol_tx_ac_has_tx_queue_group() - check for ac having txq groups
  * @group: pointer to tx queue grpup
- * @ac: acess category
+ * @ac: access category
  *
  * Return: true if vedv has txq groups
  */

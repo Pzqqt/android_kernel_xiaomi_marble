@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -89,7 +89,7 @@ ol_tx_desc_hl(
 
 
 /**
- * @brief Use a tx descriptor ID to find the corresponding desriptor object.
+ * @brief Use a tx descriptor ID to find the corresponding descriptor object.
  *
  * @param pdev - the data physical device sending the data
  * @param tx_desc_id - the ID of the descriptor in question
@@ -107,7 +107,7 @@ static inline struct ol_tx_desc_t *ol_tx_desc_find(
 }
 
 /**
- * @brief Use a tx descriptor ID to find the corresponding desriptor object
+ * @brief Use a tx descriptor ID to find the corresponding descriptor object
  *    and add sanity check.
  *
  * @param pdev - the data physical device sending the data
@@ -159,7 +159,7 @@ ol_tx_desc_find_check(struct ol_txrx_pdev_t *pdev, u_int16_t tx_desc_id)
  *  Free a batch of "standard" tx descriptors and their tx frames.
  *  Free each tx descriptor, by returning it to the freelist.
  *  Unmap each netbuf, and free the netbufs as a batch.
- *  Irregular tx frames like TSO or managment frames that require
+ *  Irregular tx frames like TSO or management frames that require
  *  special handling are processed by the ol_tx_desc_frame_free_nonstd
  *  function rather than this function.
  *

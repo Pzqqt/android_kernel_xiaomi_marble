@@ -578,7 +578,7 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 				 * needs to be set in the netbuf to locate the
 				 * corresponding rx descriptor.)
 				 *
-				 * It is neccessary to call htt_rx_amsdu_pop
+				 * It is necessary to call htt_rx_amsdu_pop
 				 * before htt_rx_mpdu_desc_list_next, because
 				 * the (MPDU) rx descriptor has DMA unmapping
 				 * done during the htt_rx_amsdu_pop call.
