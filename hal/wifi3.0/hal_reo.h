@@ -243,7 +243,7 @@ struct hal_reo_cmd_flush_timeout_list_params {
  * @update_bar: Update BAR received bit
  * @update_rty: Update retry bit
  * @update_chk_2k_mode: Update chk_2k_mode setting
- * @update_oor_mode: Update OOR mode settting
+ * @update_oor_mode: Update OOR mode setting
  * @update_ba_window_size: Update BA window size
  * @update_pn_check_needed: Update pn_check_needed
  * @update_pn_even: Update pn_even

@@ -114,7 +114,7 @@ static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 #include "hif_io32.h"
 
 /**
- * hal_attach - Initalize HAL layer
+ * hal_attach - Initialize HAL layer
  * @hif_handle: Opaque HIF handle
  * @qdf_dev: QDF device
  *
@@ -294,7 +294,7 @@ extern void hal_get_shadow_config(void *hal_soc,
 				  struct pld_shadow_reg_v2_cfg **shadow_config,
 				  int *num_shadow_registers_configured);
 /**
- * hal_srng_setup - Initalize HW SRNG ring.
+ * hal_srng_setup - Initialize HW SRNG ring.
  *
  * @hal_soc: Opaque HAL SOC handle
  * @ring_type: one of the types from hal_ring_type
@@ -1131,7 +1131,7 @@ static inline qdf_dma_addr_t hal_srng_get_tp_addr(void *hal_soc, void *hal_ring)
 }
 
 /**
- * hal_get_srng_params - Retreive SRNG parameters for a given ring from HAL
+ * hal_get_srng_params - Retrieve SRNG parameters for a given ring from HAL
  *
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring: Ring pointer (Source or Destination ring)
@@ -1141,7 +1141,7 @@ extern void hal_get_srng_params(void *hal_soc, void *hal_ring,
 	struct hal_srng_params *ring_params);
 
 /**
- * hal_mem_info - Retreive hal memory base address
+ * hal_mem_info - Retrieve hal memory base address
  *
  * @hal_soc: Opaque HAL SOC handle
  * @mem: pointer to structure to be updated with hal mem info

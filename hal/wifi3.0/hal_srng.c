@@ -37,8 +37,8 @@
  * The SRNG registers are distributed across various UMAC and LMAC HW blocks,
  * but the register group and format is exactly same for all rings, with some
  * difference between producer rings (these are 'producer rings' with respect
- * to HW and refered as 'destination rings' in SW) and consumer rings (these
- * are 'consumer rings' with respect to HW and refered as 'source rings' in SW).
+ * to HW and referred as 'destination rings' in SW) and consumer rings (these
+ * are 'consumer rings' with respect to HW and referred as 'source rings' in SW).
  * The following macros provide uniform access to all SRNG rings.
  */
 
@@ -715,7 +715,7 @@ static void hal_target_based_configure(struct hal_soc *hal)
 }
 
 /**
- * hal_attach - Initalize HAL layer
+ * hal_attach - Initialize HAL layer
  * @hif_handle: Opaque HIF handle
  * @qdf_dev: QDF device
  *
@@ -786,7 +786,7 @@ fail0:
 qdf_export_symbol(hal_attach);
 
 /**
- * hal_mem_info - Retreive hal memory base address
+ * hal_mem_info - Retrieve hal memory base address
  *
  * @hal_soc: Opaque HAL SOC handle
  * @mem: pointer to structure to be updated with hal mem info
@@ -910,7 +910,7 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 
 	/* As per HW team, TP_ADDR and HP_ADDR for Idle link ring should
 	 * remain 0 to avoid some WBM stability issues. Remote head/tail
-	 * pointers are not required since this ring is completly managed
+	 * pointers are not required since this ring is completely managed
 	 * by WBM HW */
 	if (srng->ring_id != HAL_SRNG_WBM_IDLE_LINK) {
 		tp_addr = (uint64_t)(hal->shadow_rdptr_mem_paddr +
@@ -1126,7 +1126,7 @@ static inline void hal_srng_hw_init(struct hal_soc *hal,
 #endif
 
 /**
- * hal_srng_setup - Initalize HW SRNG ring.
+ * hal_srng_setup - Initialize HW SRNG ring.
  * @hal_soc: Opaque HAL SOC handle
  * @ring_type: one of the types from hal_ring_type
  * @ring_num: Ring number if there are multiple rings of same type (staring
@@ -1362,7 +1362,7 @@ void hal_srng_dump(struct hal_srng *srng)
 }
 
 /**
- * hal_get_srng_params - Retreive SRNG parameters for a given ring from HAL
+ * hal_get_srng_params - Retrieve SRNG parameters for a given ring from HAL
  *
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring: Ring pointer (Source or Destination ring)
