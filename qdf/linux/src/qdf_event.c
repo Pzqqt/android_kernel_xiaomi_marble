@@ -21,7 +21,7 @@
  *
  * This source file contains linux specific definitions for QDF event APIs
  * The APIs mentioned in this file are used for initializing, setting,
- * resetting, destroying an event and waiting on an occurance of an event
+ * resetting, destroying an event and waiting on an occurrence of an event
  * among multiple events.
  */
 

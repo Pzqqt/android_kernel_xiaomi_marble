@@ -39,7 +39,7 @@
 #include <qdf_nbuf.h>
 
 /*
- * Use socket buffer as the underlying implentation as skbuf .
+ * Use socket buffer as the underlying implementation as skbuf .
  * Linux use sk_buff to represent both packet and data,
  * so we use sk_buffer to represent both skbuf .
  */

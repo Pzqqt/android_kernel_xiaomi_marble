@@ -386,7 +386,7 @@ qdf_export_symbol(qdf_wake_lock_destroy);
 /**
  * qdf_runtime_pm_get() - do a get opperation on the device
  *
- * A get opperation will prevent a runtime suspend untill a
+ * A get opperation will prevent a runtime suspend until a
  * corresponding put is done.  This api should be used when sending
  * data.
  *

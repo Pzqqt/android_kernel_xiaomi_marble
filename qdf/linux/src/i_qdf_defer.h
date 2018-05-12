@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -81,7 +81,7 @@ typedef void (*__qdf_bh_fn_t)(unsigned long arg);
 static inline QDF_STATUS
 __qdf_init_work(__qdf_work_t *work, qdf_defer_fn_t func, void *arg)
 {
-	/*Initilize func and argument in work struct */
+	/*Initialize func and argument in work struct */
 	INIT_WORK(&work->work, __qdf_defer_func);
 	return QDF_STATUS_SUCCESS;
 }
@@ -208,7 +208,7 @@ static inline uint32_t __qdf_init_delayed_work(__qdf_delayed_work_t *work,
 					       qdf_defer_fn_t func,
 					       void *arg)
 {
-	/*Initilize func and argument in work struct */
+	/*Initialize func and argument in work struct */
 	work->fn = func;
 	work->arg = arg;
 	INIT_DELAYED_WORK(&work->dwork, __qdf_defer_delayed_func);

@@ -84,15 +84,15 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 
 /**
  * QDF_MAX - get maximum of two values
- * @_x: 1st arguement
- * @_y: 2nd arguement
+ * @_x: 1st argument
+ * @_y: 2nd argument
  */
 #define QDF_MAX(_x, _y) (((_x) > (_y)) ? (_x) : (_y))
 
 /**
  * QDF_MIN - get minimum of two values
- * @_x: 1st arguement
- * @_y: 2nd arguement
+ * @_x: 1st argument
+ * @_y: 2nd argument
  */
 #define QDF_MIN(_x, _y) (((_x) < (_y)) ? (_x) : (_y))
 

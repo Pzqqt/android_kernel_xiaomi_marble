@@ -45,7 +45,7 @@ typedef void (*__qdf_dummy_timer_func_t)(unsigned long arg);
  * @hdl: OS handle
  * @timer: Pointer to timer object
  * @func: Function pointer
- * @arg: Arguement
+ * @arg: Argument
  * @type: deferrable or non deferrable timer type
  *
  * Timer type QDF_TIMER_TYPE_SW means its a deferrable sw timer which will

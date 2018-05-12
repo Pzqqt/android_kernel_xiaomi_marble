@@ -2857,7 +2857,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	struct qdf_tso_num_seg_elem_t *total_num_seg;
 	struct skb_frag_struct *frag = NULL;
 	uint32_t tso_frag_len = 0; /* tso segment's fragment length*/
-	uint32_t skb_frag_len = 0; /* skb's fragment length (continous memory)*/
+	uint32_t skb_frag_len = 0; /* skb's fragment length (contiguous memory)*/
 	uint32_t skb_proc = skb->len; /* bytes of skb pending processing */
 	uint32_t tso_seg_size = skb_shinfo(skb)->gso_size;
 	int j = 0; /* skb fragment index */

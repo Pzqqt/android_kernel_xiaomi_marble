@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,7 +35,7 @@ typedef __qdf_timer_t qdf_timer_t;
  * @hdl: OS handle
  * @timer: Timer object pointer
  * @func: Timer function
- * @arg: Arguement of timer function
+ * @arg: Argument of timer function
  * @type: deferrable or non deferrable timer type
  *
  * Timer type QDF_TIMER_TYPE_SW means its a deferrable sw timer which will
