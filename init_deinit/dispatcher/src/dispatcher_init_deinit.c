@@ -88,7 +88,7 @@
 
 /* All new components needs to replace their dummy init/deinit
  * psoc_open, psco_close, psoc_enable and psoc_disable APIs once
- * thier actual handlers are ready
+ * their actual handlers are ready
  */
 
 spectral_pdev_open_handler dispatcher_spectral_pdev_open_handler_cb;
