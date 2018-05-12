@@ -48,13 +48,13 @@
 /* 20 Mhz freq_offset upper */
 #define DFS_20MZ_OFFSET_UPPER     (10)
 /* 40/80 Mhz freq_offset first lower */
-#define DFS_OFFET_FIRST_LOWER    (-20)
+#define DFS_OFFSET_FIRST_LOWER    (-20)
 /* 40/80 Mhz freq_offset second lower */
-#define DFS_OFFET_SECOND_LOWER   (-40)
+#define DFS_OFFSET_SECOND_LOWER   (-40)
 /* 40/80 Mhz freq_offset first upper */
-#define DFS_OFFET_FIRST_UPPER     (20)
+#define DFS_OFFSET_FIRST_UPPER     (20)
 /* 40/80 Mhz freq_offset second upper */
-#define DFS_OFFET_SECOND_UPPER    (40)
+#define DFS_OFFSET_SECOND_UPPER    (40)
 
 /* Frequency offset to sidx */
 #define DFS_FREQ_OFFSET_TO_SIDX(_f)  ((32 * (_f)) / 10)

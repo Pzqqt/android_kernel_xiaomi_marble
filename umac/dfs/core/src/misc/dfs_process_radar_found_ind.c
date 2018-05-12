@@ -189,26 +189,26 @@ static void dfs_radar_chan_for_80(struct freqs_offsets *freq_offset,
 	int i;
 
 	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++) {
-		if (freq_offset->offset[i] < DFS_OFFET_SECOND_LOWER)
+		if (freq_offset->offset[i] < DFS_OFFSET_SECOND_LOWER)
 			freq_offset->freq[i] =
 				DFS_THIRD_LOWER_CHANNEL(center_freq);
-		else if ((freq_offset->offset[i] > DFS_OFFET_SECOND_LOWER) &&
-			 (freq_offset->offset[i] < DFS_OFFET_FIRST_LOWER))
+		else if ((freq_offset->offset[i] > DFS_OFFSET_SECOND_LOWER) &&
+			 (freq_offset->offset[i] < DFS_OFFSET_FIRST_LOWER))
 			freq_offset->freq[i] =
 				DFS_SECOND_LOWER_CHANNEL(center_freq);
-		else if ((freq_offset->offset[i] > DFS_OFFET_FIRST_LOWER) &&
+		else if ((freq_offset->offset[i] > DFS_OFFSET_FIRST_LOWER) &&
 			 (freq_offset->offset[i] < 0))
 			freq_offset->freq[i] =
 				DFS_FIRST_LOWER_CHANNEL(center_freq);
 		else if ((freq_offset->offset[i] > 0) &&
-			  (freq_offset->offset[i] < DFS_OFFET_FIRST_UPPER))
+			  (freq_offset->offset[i] < DFS_OFFSET_FIRST_UPPER))
 			freq_offset->freq[i] =
 				DFS_FIRST_UPPER_CHANNEL(center_freq);
-		else if ((freq_offset->offset[i] > DFS_OFFET_FIRST_UPPER) &&
-			 (freq_offset->offset[i] < DFS_OFFET_SECOND_UPPER))
+		else if ((freq_offset->offset[i] > DFS_OFFSET_FIRST_UPPER) &&
+			 (freq_offset->offset[i] < DFS_OFFSET_SECOND_UPPER))
 			freq_offset->freq[i] =
 				DFS_SECOND_UPPER_CHANNEL(center_freq);
-		else if (freq_offset->offset[i] > DFS_OFFET_SECOND_UPPER)
+		else if (freq_offset->offset[i] > DFS_OFFSET_SECOND_UPPER)
 			freq_offset->freq[i] =
 				DFS_THIRD_UPPER_CHANNEL(center_freq);
 	}
@@ -229,18 +229,18 @@ static void dfs_radar_chan_for_40(struct freqs_offsets *freq_offset,
 	int i;
 
 	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++) {
-		if (freq_offset->offset[i] < DFS_OFFET_FIRST_LOWER)
+		if (freq_offset->offset[i] < DFS_OFFSET_FIRST_LOWER)
 			freq_offset->freq[i] =
 				DFS_SECOND_LOWER_CHANNEL(center_freq);
-		else if ((freq_offset->offset[i] > DFS_OFFET_FIRST_LOWER) &&
+		else if ((freq_offset->offset[i] > DFS_OFFSET_FIRST_LOWER) &&
 			 (freq_offset->offset[i] < 0))
 			freq_offset->freq[i] =
 				DFS_FIRST_LOWER_CHANNEL(center_freq);
 		else if ((freq_offset->offset[i] > 0) &&
-			 (freq_offset->offset[i] < DFS_OFFET_FIRST_UPPER))
+			 (freq_offset->offset[i] < DFS_OFFSET_FIRST_UPPER))
 			freq_offset->freq[i] =
 				DFS_FIRST_UPPER_CHANNEL(center_freq);
-		else if (freq_offset->offset[i] > DFS_OFFET_FIRST_UPPER)
+		else if (freq_offset->offset[i] > DFS_OFFSET_FIRST_UPPER)
 			freq_offset->freq[i] =
 				DFS_SECOND_UPPER_CHANNEL(center_freq);
 	}
