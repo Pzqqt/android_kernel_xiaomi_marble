@@ -396,13 +396,26 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 	uint32_t flags = IEEE80211_NODE_F_WDS_HM;
 	uint32_t ret = 0;
 	uint8_t wds_src_mac[IEEE80211_ADDR_LEN];
+	struct dp_peer *sa_peer;
 	struct dp_ast_entry *ast;
 	uint16_t sa_idx;
 
-	/* Do wds source port learning only if it is a 4-address mpdu */
-	if (!(qdf_nbuf_is_rx_chfrag_start(nbuf) &&
-		hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr)))
+	if (qdf_unlikely(!ta_peer))
 		return;
+
+	/* For AP mode : Do wds source port learning only if it is a
+	 * 4-address mpdu
+	 *
+	 * For STA mode : Frames from RootAP backend will be in 3-address mode,
+	 * till RootAP does the WDS source port learning; Hence in repeater/STA
+	 * mode, we enable learning even in 3-address mode , to avoid RootAP
+	 * backbone getting wrongly learnt as MEC on repeater
+	 */
+	if (ta_peer->vdev->opmode != wlan_op_mode_sta) {
+		if (!(qdf_nbuf_is_rx_chfrag_start(nbuf) &&
+		      hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr)))
+			return;
+	}
 
 	memcpy(wds_src_mac, (qdf_nbuf_data(nbuf) + IEEE80211_ADDR_LEN),
 		IEEE80211_ADDR_LEN);
@@ -439,12 +452,42 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 	if (ast->ast_idx == sa_idx)
 		ast->is_active = TRUE;
 
-	/* Handle client roaming */
-	if (sa_sw_peer_id != ta_peer->peer_ids[0])
-		dp_peer_update_ast(soc, ta_peer, ast, flags);
+	if (sa_sw_peer_id != ta_peer->peer_ids[0]) {
+		sa_peer = ast->peer;
+
+		/*
+		 * Do not kickout STA if it belongs to a different radio.
+		 * For DBDC repeater, it is possible to arrive here
+		 * for multicast loopback frames originated from connected
+		 * clients and looped back (intrabss) by Root AP
+		 */
+		if (ast->pdev_id != ta_peer->vdev->pdev->pdev_id) {
+			qdf_spin_unlock_bh(&soc->ast_lock);
+			return;
+		}
+
+		if ((ast->type != CDP_TXRX_AST_TYPE_STATIC) &&
+		    (ast->type != CDP_TXRX_AST_TYPE_SELF)) {
+			dp_peer_update_ast(soc, ta_peer, ast, flags);
+			qdf_spin_unlock_bh(&soc->ast_lock);
+			return;
+		}
+
+		/*
+		 * Kickout, when direct associated peer(SA) roams
+		 * to another AP and reachable via TA peer
+		 */
+		if (!sa_peer->delete_in_progress) {
+			sa_peer->delete_in_progress = true;
+			if (soc->cdp_soc.ol_ops->peer_sta_kickout) {
+				soc->cdp_soc.ol_ops->peer_sta_kickout(
+						sa_peer->vdev->pdev->ctrl_pdev,
+						wds_src_mac);
+			}
+		}
+	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
-
 	return;
 }
 #else

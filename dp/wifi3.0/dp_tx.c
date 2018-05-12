@@ -2469,6 +2469,10 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 	if (!vdev->wds_enabled)
 		return;
 
+	/* MEC required only in STA mode */
+	if (vdev->opmode != wlan_op_mode_sta)
+		return;
+
 	soc = vdev->pdev->soc;
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	peer = TAILQ_FIRST(&vdev->peer_list);

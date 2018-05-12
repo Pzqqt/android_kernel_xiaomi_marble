@@ -357,15 +357,6 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	struct dp_peer *da_peer;
 	struct dp_ast_entry *ast_entry;
 	qdf_nbuf_t nbuf_copy;
-	struct dp_vdev *vdev = sa_peer->vdev;
-
-	/*
-	 * intrabss forwarding is not applicable if
-	 * vap is nawds enabled or ap_bridge is false.
-	 */
-	if (vdev->nawds_enabled)
-		return false;
-
 
 	/* check if the destination peer is available in peer table
 	 * and also check if the source peer and destination peer
@@ -1665,7 +1656,8 @@ done:
 
 		if (qdf_likely(vdev->rx_decap_type ==
 					htt_cmn_pkt_type_ethernet) &&
-				(qdf_likely(!vdev->mesh_vdev))) {
+				(qdf_likely(!vdev->mesh_vdev)) &&
+				(vdev->wds_enabled)) {
 			/* WDS Source Port Learning */
 			dp_rx_wds_srcport_learn(soc,
 						rx_tlv_hdr,

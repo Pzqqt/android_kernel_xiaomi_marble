@@ -461,6 +461,10 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		peer->self_ast_entry = ast_entry;
 		ast_entry->type = CDP_TXRX_AST_TYPE_STATIC;
 		break;
+	case CDP_TXRX_AST_TYPE_SELF:
+		peer->self_ast_entry = ast_entry;
+		ast_entry->type = CDP_TXRX_AST_TYPE_SELF;
+		break;
 	case CDP_TXRX_AST_TYPE_WDS:
 		ast_entry->next_hop = 1;
 		ast_entry->type = CDP_TXRX_AST_TYPE_WDS;
@@ -489,7 +493,8 @@ int dp_peer_add_ast(struct dp_soc *soc,
 	else
 		qdf_mem_copy(next_node_mac, peer->mac_addr.raw, 6);
 
-	if (ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) {
+	if ((ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) &&
+	    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF)) {
 		if (QDF_STATUS_SUCCESS ==
 				soc->cdp_soc.ol_ops->peer_add_wds_entry(
 				peer->vdev->osif_vdev,
@@ -547,25 +552,10 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 {
 	int ret = -1;
 	struct dp_peer *old_peer;
-	struct dp_peer *sa_peer;
 
-	if (ast_entry->type == CDP_TXRX_AST_TYPE_STATIC) {
-		sa_peer = ast_entry->peer;
-
-		/*
-		 * Kickout, when direct associated peer(SA) roams
-		 * to another AP and reachable via TA peer
-		 */
-		if (!sa_peer->delete_in_progress) {
-			sa_peer->delete_in_progress = true;
-			if (soc->cdp_soc.ol_ops->peer_sta_kickout) {
-				soc->cdp_soc.ol_ops->peer_sta_kickout(
-						sa_peer->vdev->pdev->ctrl_pdev,
-						ast_entry->mac_addr.raw);
-			}
-			return 0;
-		}
-	}
+	if ((ast_entry->type == CDP_TXRX_AST_TYPE_STATIC) ||
+	    (ast_entry->type == CDP_TXRX_AST_TYPE_SELF))
+		return 0;
 
 	old_peer = ast_entry->peer;
 	TAILQ_REMOVE(&old_peer->ast_entry_list, ast_entry, ase_list_elem);
@@ -578,7 +568,7 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	TAILQ_INSERT_TAIL(&peer->ast_entry_list, ast_entry, ase_list_elem);
 
 	ret = soc->cdp_soc.ol_ops->peer_update_wds_entry(
-			peer->vdev->osif_vdev,
+				peer->vdev->osif_vdev,
 				ast_entry->mac_addr.raw,
 				peer->mac_addr.raw,
 				flags);

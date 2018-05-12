@@ -304,6 +304,7 @@ enum ol_txrx_peer_state {
 enum cdp_txrx_ast_entry_type {
 	CDP_TXRX_AST_TYPE_NONE,	/* static ast entry for connected peer */
 	CDP_TXRX_AST_TYPE_STATIC, /* static ast entry for connected peer */
+	CDP_TXRX_AST_TYPE_SELF, /* static ast entry for self peer (STA mode) */
 	CDP_TXRX_AST_TYPE_WDS,	/* WDS peer ast entry type*/
 	CDP_TXRX_AST_TYPE_MEC,	/* Multicast echo ast entry type */
 	CDP_TXRX_AST_TYPE_WDS_HM, /* HM WDS entry */

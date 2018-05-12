@@ -484,13 +484,12 @@ static int dp_peer_update_ast_wifi3(struct cdp_soc_t *soc_hdl,
 
 /*
  * dp_wds_reset_ast_wifi3() - Reset the is_active param for ast entry
- * @soc_handle: Datapath SOC handle
- * @wds_macaddr: MAC address of the WDS entry to be added
- * @vdev_hdl: vdev handle
+ * @soc_handle:		Datapath SOC handle
+ * @wds_macaddr:	WDS entry MAC Address
  * Return: None
  */
 static void dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
-				    uint8_t *wds_macaddr, void *vdev_hdl)
+				   uint8_t *wds_macaddr, void *vdev_handle)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_ast_entry *ast_entry = NULL;
@@ -499,8 +498,10 @@ static void dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 	ast_entry = dp_peer_ast_hash_find(soc, wds_macaddr);
 
 	if (ast_entry) {
-		if (ast_entry->type != CDP_TXRX_AST_TYPE_STATIC)
+		if ((ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) &&
+		    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF)) {
 			ast_entry->is_active = TRUE;
+		}
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
@@ -508,12 +509,11 @@ static void dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 
 /*
  * dp_wds_reset_ast_table_wifi3() - Reset the is_active param for all ast entry
- * @soc: Datapath SOC handle
- * @vdev_hdl: vdev handle
+ * @soc:		Datapath SOC handle
  *
  * Return: None
  */
-static void dp_wds_reset_ast_table_wifi3(struct cdp_soc_t *soc_hdl,
+static void dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl,
 					 void *vdev_hdl)
 {
 	struct dp_soc *soc = (struct dp_soc *) soc_hdl;
@@ -615,7 +615,12 @@ static void dp_peer_ast_set_type_wifi3(
 				type);
 }
 
-
+static enum cdp_txrx_ast_entry_type dp_peer_ast_get_type_wifi3(
+					struct cdp_soc_t *soc_hdl,
+					void *ast_entry_hdl)
+{
+	return ((struct dp_ast_entry *)ast_entry_hdl)->type;
+}
 
 /**
  * dp_srng_find_ring_in_mask() - find which ext_group a ring belongs
@@ -787,7 +792,8 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 	struct dp_pdev *pdev;
 	struct dp_peer *peer;
 	struct dp_ast_entry *ase, *tmp_ase;
-	char type[5][10] = {"NONE", "STATIC", "WDS", "MEC", "HMWDS"};
+	char type[CDP_TXRX_AST_TYPE_MAX][10] = {
+			"NONE", "STATIC", "SELF", "WDS", "MEC", "HMWDS"};
 
 	DP_PRINT_STATS("AST Stats:");
 	DP_PRINT_STATS("	Entries Added   = %d", soc->stats.ast.added);
@@ -3756,6 +3762,42 @@ static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
 }
 #endif
 
+#if ATH_SUPPORT_WRAP
+static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
+						uint8_t *peer_mac_addr)
+{
+	struct dp_peer *peer;
+
+	peer = dp_peer_find_hash_find(vdev->pdev->soc, peer_mac_addr,
+				      0, vdev->vdev_id);
+	if (!peer)
+		return NULL;
+
+	if (peer->bss_peer)
+		return peer;
+
+	qdf_atomic_dec(&peer->ref_cnt);
+	return NULL;
+}
+#else
+static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
+						uint8_t *peer_mac_addr)
+{
+	struct dp_peer *peer;
+
+	peer = dp_peer_find_hash_find(vdev->pdev->soc, peer_mac_addr,
+				      0, vdev->vdev_id);
+	if (!peer)
+		return NULL;
+
+	if (peer->bss_peer && (peer->vdev->vdev_id == vdev->vdev_id))
+		return peer;
+
+	qdf_atomic_dec(&peer->ref_cnt);
+	return NULL;
+}
+#endif
+
 /*
  * dp_peer_create_wifi3() - attach txrx peer
  * @txrx_vdev: Datapath VDEV handle
@@ -3772,6 +3814,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	struct dp_pdev *pdev;
 	struct dp_soc *soc;
 	struct dp_ast_entry *ast_entry;
+	enum cdp_txrx_ast_entry_type ast_type = CDP_TXRX_AST_TYPE_STATIC;
 
 	/* preconditions */
 	qdf_assert(vdev);
@@ -3780,19 +3823,32 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	pdev = vdev->pdev;
 	soc = pdev->soc;
 
-	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr,
-					0, vdev->vdev_id);
+	/*
+	 * If a peer entry with given MAC address already exists,
+	 * reuse the peer and reset the state of peer.
+	 */
+	peer = dp_peer_can_reuse(vdev, peer_mac_addr);
 
 	if (peer) {
 		peer->delete_in_progress = false;
 
 		dp_peer_delete_ast_entries(soc, peer);
 
+		if ((vdev->opmode == wlan_op_mode_sta) &&
+		    !qdf_mem_cmp(peer_mac_addr, &vdev->mac_addr.raw[0],
+		     DP_MAC_ADDR_LEN)) {
+			ast_type = CDP_TXRX_AST_TYPE_SELF;
+		}
+
+		dp_peer_add_ast(soc, peer, peer_mac_addr, ast_type, 0);
+
 		/*
-		* on peer create, peer ref count decrements, sice new peer is not
-		* getting created earlier reference is reused, peer_unref_delete will
-		* take care of incrementing count
-		* */
+		* Control path maintains a node count which is incremented
+		* for every new peer create command. Since new peer is not being
+		* created and earlier reference is reused here,
+		* peer_unref_delete event is sent to control path to
+		* increment the count back.
+		*/
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
 			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
 				vdev->vdev_id, peer->mac_addr.raw);
@@ -3801,12 +3857,15 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 		dp_local_peer_id_alloc(pdev, peer);
 		DP_STATS_INIT(peer);
+
 		return (void *)peer;
 	} else {
 		/*
 		 * When a STA roams from RPTR AP to ROOT AP and vice versa, we
 		 * need to remove the AST entry which was earlier added as a WDS
 		 * entry.
+		 * If an AST entry exists, but no peer entry exists with a given
+		 * MAC addresses, we could deduce it as a WDS entry
 		 */
 		ast_entry = dp_peer_ast_hash_find(soc, peer_mac_addr);
 		if (ast_entry)
@@ -3831,7 +3890,13 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	peer->vdev = vdev;
 	peer->ctrl_peer = ctrl_peer;
 
-	dp_peer_add_ast(soc, peer, peer_mac_addr, CDP_TXRX_AST_TYPE_STATIC, 0);
+	if ((vdev->opmode == wlan_op_mode_sta) &&
+	    !qdf_mem_cmp(peer_mac_addr, &vdev->mac_addr.raw[0],
+			 DP_MAC_ADDR_LEN)) {
+		ast_type = CDP_TXRX_AST_TYPE_SELF;
+	}
+
+	dp_peer_add_ast(soc, peer, peer_mac_addr, ast_type, 0);
 
 	qdf_spinlock_create(&peer->peer_info_lock);
 
@@ -6545,6 +6610,9 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	switch (param) {
 	case CDP_ENABLE_WDS:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "wds_enable %d for vdev(%p) id(%d)\n",
+			  val, vdev, vdev->vdev_id);
 		vdev->wds_enabled = val;
 		break;
 	case CDP_ENABLE_NAWDS:
@@ -7327,6 +7395,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_peer_ast_get_pdev_id = dp_peer_ast_get_pdev_id_wifi3,
 	.txrx_peer_ast_get_next_hop = dp_peer_ast_get_next_hop_wifi3,
 	.txrx_peer_ast_set_type = dp_peer_ast_set_type_wifi3,
+	.txrx_peer_ast_get_type = dp_peer_ast_get_type_wifi3,
 	.txrx_peer_delete = dp_peer_delete_wifi3,
 	.txrx_vdev_register = dp_vdev_register_wifi3,
 	.txrx_soc_detach = dp_soc_detach_wifi3,

@@ -472,6 +472,31 @@ static inline uint8_t cdp_peer_ast_get_next_hop
 								ast_handle);
 }
 
+/**
+ * cdp_peer_ast_get_type() - Return type (Static, WDS, MEC) of AST entry
+ * @soc: DP SoC handle
+ * @ast_handle: Opaque handle to AST entry
+ *
+ * Return: AST entry type (Static/WDS/MEC)
+ */
+static inline enum cdp_txrx_ast_entry_type cdp_peer_ast_get_type
+	(ol_txrx_soc_handle soc, void *ast_handle)
+
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_ast_get_type)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->txrx_peer_ast_get_type(soc, ast_handle);
+}
+
 static inline void cdp_peer_ast_set_type
 	(ol_txrx_soc_handle soc, void *ast_handle,
 	 enum cdp_txrx_ast_entry_type type)

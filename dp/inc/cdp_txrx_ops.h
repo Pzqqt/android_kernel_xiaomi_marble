@@ -120,6 +120,9 @@ struct cdp_cmn_ops {
 		(ol_txrx_soc_handle soc, void *ast_hdl,
 		enum cdp_txrx_ast_entry_type type);
 
+	enum cdp_txrx_ast_entry_type (*txrx_peer_ast_get_type)
+		(ol_txrx_soc_handle soc, void *ast_hdl);
+
 	void (*txrx_peer_delete)(void *peer, uint32_t bitmap);
 
 	int (*txrx_set_monitor_mode)(struct cdp_vdev *vdev,
