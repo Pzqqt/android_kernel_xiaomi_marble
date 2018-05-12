@@ -140,7 +140,7 @@ QDF_STATUS scheduler_deregister_module(QDF_MODULE_ID qid);
 /**
  * scheduler_post_msg_by_priority() - post messages by priority
  * @qid: queue id to to post message
- * @msg: mesage pointer
+ * @msg: message pointer
  * @is_high_priority: set to true for high priority message else false
  *
  * Return: QDF status
@@ -151,7 +151,7 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 /**
  * scheduler_post_msg() - post normal messages(no priority)
  * @qid: queue id to to post message
- * @msg: mesage pointer
+ * @msg: message pointer
  *
  * Return: QDF status
  */
