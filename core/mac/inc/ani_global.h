@@ -820,7 +820,7 @@ typedef struct sRrmContext {
 } tRrmContext, *tpRrmContext;
 
 typedef struct sHalMacStartParameters {
-	/* parametes for the Firmware */
+	/* parameters for the Firmware */
 	enum qdf_driver_type driverType;
 
 } tHalMacStartParameters;

@@ -352,7 +352,7 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
 	tpDphHashNode pStaDs = NULL;
 	/*
 	 *  This handles two cases:
-	 *  -- Infra STA receving beacons from AP
+	 *  -- Infra STA receiving beacons from AP
 	 */
 
 	/**
@@ -757,9 +757,9 @@ static void get_local_power_constraint_beacon(
  * @session:        pe session pointer
  *
  * Following scenarios exist when Session exists
- *   IBSS STA receving beacons from IBSS Peers, who are part of IBSS.
+ *   IBSS STA receiving beacons from IBSS Peers, who are part of IBSS.
  *     - call lim_handle_ibs_scoalescing with that session context.
- *   Infra STA receving beacons from AP to which it is connected
+ *   Infra STA receiving beacons from AP to which it is connected
  *     - call sch_beacon_processFromAP with that session's context.
  *     - call sch_beacon_processFromAP with that session's context.
  *     (here need to make sure BTAP creates session entry for BT STA)

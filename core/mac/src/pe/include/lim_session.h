@@ -478,7 +478,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	tComebackTimerInfo pmfComebackTimerInfo;
 #endif /* WLAN_FEATURE_11W */
 	uint8_t  is_key_installed;
-	/* timer for reseting protection fileds at regular intervals */
+	/* timer for resetting protection fileds at regular intervals */
 	qdf_mc_timer_t protection_fields_reset_timer;
 	void *mac_ctx;
 	/*

@@ -202,7 +202,7 @@ static void __lim_init_vars(tpAniSirGlobal pMac)
 	/* Place holder for Measurement Req/Rsp/Ind related info */
 
 
-	/* Deferred Queue Paramters */
+	/* Deferred Queue Parameters */
 	qdf_mem_set(&pMac->lim.gLimDeferredMsgQ, sizeof(tSirAddtsReq), 0);
 
 	/* addts request if any - only one can be outstanding at any time */

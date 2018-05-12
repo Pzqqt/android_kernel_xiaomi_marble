@@ -208,7 +208,7 @@
 #define SIR_MAC_DLP_RSP             1
 #define SIR_MAC_DLP_TEARDOWN        2
 
-/* block acknowledgement action frame types */
+/* block acknowledgment action frame types */
 #define SIR_MAC_ACTION_VENDOR_SPECIFIC 9
 #define SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY     0x7F
 #define SIR_MAC_ACTION_P2P_SUBTYPE_PRESENCE_RSP     2

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,7 +48,7 @@ static inline void lim_copy_u16(uint8_t *ptr, uint16_t u16Val)
 	*ptr++ = (uint8_t) (u16Val & 0xff);
 	*ptr = (uint8_t) ((u16Val >> 8) & 0xff);
 #else
-#error "Unknown combination of OS Type and endianess"
+#error "Unknown combination of OS Type and endianness"
 #endif
 }
 
@@ -58,7 +58,7 @@ static inline uint16_t lim_get_u16(uint8_t *ptr)
 	(defined(ANI_OS_TYPE_ANDROID) && defined(ANI_LITTLE_BYTE_ENDIAN)))
 	return ((uint16_t) (*(ptr + 1) << 8)) | ((uint16_t) (*ptr));
 #else
-#error "Unknown combination of OS Type and endianess"
+#error "Unknown combination of OS Type and endianness"
 #endif
 }
 
@@ -71,7 +71,7 @@ static inline void lim_copy_u32(uint8_t *ptr, uint32_t u32Val)
 	*ptr++ = (uint8_t) ((u32Val >> 16) & 0xff);
 	*ptr = (uint8_t) ((u32Val >> 24) & 0xff);
 #else
-#error "Unknown combination of OS Type and endianess"
+#error "Unknown combination of OS Type and endianness"
 #endif
 }
 
@@ -82,7 +82,7 @@ static inline uint32_t lim_get_u32(uint8_t *ptr)
 	return ((*(ptr + 3) << 24) |
 		(*(ptr + 2) << 16) | (*(ptr + 1) << 8) | (*(ptr)));
 #else
-#error "Unknown combination of OS Type and endianess"
+#error "Unknown combination of OS Type and endianness"
 #endif
 }
 

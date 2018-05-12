@@ -239,7 +239,7 @@ lim_change_channel_with_callback(tpAniSirGlobal mac_ctx, uint8_t new_chan,
  * This function is called to get the list,
  * change the channel type and set again.
  * NOTE: If a channel is ACTIVE, this function will make it as PASSIVE
- *       If a channel is PASSIVE, this fucntion will make it as ACTIVE
+ *       If a channel is PASSIVE, this function will make it as ACTIVE
  *
  * Return: None
  */

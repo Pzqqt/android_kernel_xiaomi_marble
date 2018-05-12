@@ -303,7 +303,7 @@ void lim_add_pre_auth_node(tpAniSirGlobal pMac, struct tLimPreAuthNode *pAuthNod
  * lim_release_pre_auth_node
  *
  ***FUNCTION:
- * This function is called to realease the accquired
+ * This function is called to realease the acquired
  * pre auth node from list.
  *
  ***LOGIC:

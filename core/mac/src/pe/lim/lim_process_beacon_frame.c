@@ -97,7 +97,7 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	/*
 	 * during scanning, when any session is active, and
 	 * beacon/Pr belongs to one of the session, fill up the
-	 * following, TBD - HB couter
+	 * following, TBD - HB counter
 	 */
 	if (sir_compare_mac_addr(session->bssId,
 				bcn_ptr->bssid)) {

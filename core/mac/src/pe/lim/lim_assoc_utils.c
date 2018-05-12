@@ -3247,7 +3247,7 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 
 		/*
 		 * If MAX Noa exceeds 3 secs we will consider only 3 secs to
-		 * avoid arbitary values in noa duration field
+		 * avoid arbitrary values in noa duration field
 		 */
 		noa = noa > MAX_NOA_PERIOD_IN_MICROSECS ?
 				MAX_NOA_PERIOD_IN_MICROSECS : noa;

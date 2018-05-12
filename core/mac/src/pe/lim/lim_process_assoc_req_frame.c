@@ -671,7 +671,7 @@ lim_process_for_spectrum_mgmt(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 
 			/*
 			 * TODO: presently, this is not handled. In the current
-			 * implemetation, the AP would allow the station to
+			 * implementation, the AP would allow the station to
 			 * associate even if it doesn't support spectrum
 			 * management.
 			 */

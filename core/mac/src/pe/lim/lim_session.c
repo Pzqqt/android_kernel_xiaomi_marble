@@ -584,7 +584,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	if (bssType == eSIR_MONITOR_MODE)
 		sir_copy_mac_addr(pMac->lim.gpSession[i].selfMacAddr, bssid);
 	session_ptr->valid = true;
-	/* Intialize the SME and MLM states to IDLE */
+	/* Initialize the SME and MLM states to IDLE */
 	session_ptr->limMlmState = eLIM_MLM_IDLE_STATE;
 	session_ptr->limSmeState = eLIM_SME_IDLE_STATE;
 	session_ptr->limCurrentAuthType = eSIR_OPEN_SYSTEM;

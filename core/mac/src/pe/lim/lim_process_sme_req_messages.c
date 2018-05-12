@@ -2155,7 +2155,7 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 			break;
 
 		case eLIM_SME_WT_DISASSOC_STATE:
-			/* PE Recieved a Disassoc frame. Normally it gets DISASSOC_CNF but it
+			/* PE Received a Disassoc frame. Normally it gets DISASSOC_CNF but it
 			 * received DISASSOC_REQ. Which means host is also trying to disconnect.
 			 * PE can continue processing DISASSOC_REQ and send the response instead
 			 * of failing the request. SME will anyway ignore DEAUTH_IND that was sent
@@ -2503,7 +2503,7 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 		case eLIM_SME_WT_DEAUTH_STATE:
 		case eLIM_SME_WT_DISASSOC_STATE:
 			/*
-			 * PE Recieved a Deauth/Disassoc frame. Normally it get
+			 * PE Received a Deauth/Disassoc frame. Normally it get
 			 * DEAUTH_CNF/DISASSOC_CNF but it received DEAUTH_REQ.
 			 * Which means host is also trying to disconnect.
 			 * PE can continue processing DEAUTH_REQ and send
@@ -3984,7 +3984,7 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
 				qdf_mem_free(pHtOpMode);
 				return;
 			}
-			pe_debug("Notifed FW about OP mode: %d for staId=%d",
+			pe_debug("Notified FW about OP mode: %d for staId=%d",
 				pHtOpMode->opMode, staId);
 
 		} else

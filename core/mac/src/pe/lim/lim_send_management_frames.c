@@ -1712,7 +1712,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			extr_ext_flag = (extr_ext_cap.num_bytes > 0);
 		}
 	} else {
-		pe_debug("No addn IE or peer dosen't support addnIE for Assoc Req");
+		pe_debug("No addn IE or peer doesn't support addnIE for Assoc Req");
 		extr_ext_flag = false;
 	}
 
@@ -4601,7 +4601,7 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 					       tpPESession psessionEntry)
 {
 
-	tDot11fSaQueryRsp frm;  /* SA query reponse action frame */
+	tDot11fSaQueryRsp frm;  /* SA query response action frame */
 	uint8_t *pFrame;
 	tSirRetStatus nSirStatus;
 	tpSirMacMgmtHdr pMacHdr;

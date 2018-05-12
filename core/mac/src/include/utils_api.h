@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -615,7 +615,7 @@ static inline int32_t hal_round_s32(int32_t p)
 	return k;
 }
 
-/* New functions for endianess conversion */
+/* New functions for endianness conversion */
 #ifdef ANI_LITTLE_BYTE_ENDIAN
 #define ani_cpu_to_be16(x) sir_swap_u16((x))
 #define ani_cpu_to_le16(x) (x)

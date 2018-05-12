@@ -1115,7 +1115,7 @@ typedef struct sSirSmeJoinReq {
 	 */
 } tSirSmeJoinReq, *tpSirSmeJoinReq;
 
-/* / Definition for reponse message to previously issued join request */
+/* / Definition for response message to previously issued join request */
 /* / MAC ---> */
 typedef struct sSirSmeJoinRsp {
 	uint16_t messageType;   /* eWNI_SME_JOIN_RSP */

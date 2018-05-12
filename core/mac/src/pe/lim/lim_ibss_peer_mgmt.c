@@ -851,7 +851,7 @@ lim_ibss_decide_protection(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 		if ((phyMode == WNI_CFG_PHY_MODE_11G)
 		    || (psessionEntry->htCapability)) {
 			/* As we found in the past, it is possible that a 11n STA sends
-			 * Beacon with HT IE but not ERP IE.  So the absense of ERP IE
+			 * Beacon with HT IE but not ERP IE.  So the absence of ERP IE
 			 * in the Beacon is not enough to conclude that STA is 11b.
 			 */
 			if ((pStaDs->erpEnabled == eHAL_CLEAR) &&

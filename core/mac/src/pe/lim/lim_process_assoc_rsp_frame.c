@@ -565,7 +565,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		eLIM_MLM_WT_FT_REASSOC_RSP_STATE)
 		))) {
 		/* Received unexpected Re/Association Response frame */
-		pe_debug("Recieved Re/Assoc rsp in unexpected state: %d on session: %d",
+		pe_debug("Received Re/Assoc rsp in unexpected state: %d on session: %d",
 			session_entry->limMlmState, session_entry->peSessionId);
 		if (!hdr->fc.retry) {
 			if (!(mac_ctx->lim.retry_packet_cnt & 0xf)) {

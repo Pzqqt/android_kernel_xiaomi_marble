@@ -100,7 +100,7 @@ void lim_stop_tx_and_switch_channel(tpAniSirGlobal pMac, uint8_t sessionId)
 	}
 
 	pMac->lim.limTimers.gLimChannelSwitchTimer.sessionId = sessionId;
-	/* change the channel immediatly only if
+	/* change the channel immediately only if
 	 * the channel switch count is 0
 	 */
 	if (psessionEntry->gLimChannelSwitch.switchCount == 0) {
@@ -744,7 +744,7 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
 	}
 
 	/*
-	 * for successful addts reponse, try to add the classifier.
+	 * for successful addts response, try to add the classifier.
 	 * if this fails for any reason, we should send a delts request to the
 	 * ap for now, its ok not to send a delts since we are going to add
 	 * support for multiple tclas soon and until then we won't send any
@@ -1559,7 +1559,7 @@ static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal pMac,
 	if (DPH_SA_QUERY_IN_PROGRESS != pSta->pmfSaQueryState)
 		return;
 
-	/* Extract 11w trsansId from SA query reponse action frame
+	/* Extract 11w trsansId from SA query response action frame
 	   In SA query response action frame:
 	   Category       : 1 byte
 	   Action         : 1 byte
@@ -1586,7 +1586,7 @@ static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal pMac,
  *
  ***FUNCTION:
  * This function checks if an Action frame should be dropped since it is
- * a Robust Managment Frame, it is unprotected, and it is received on a
+ * a Robust Management Frame, it is unprotected, and it is received on a
  * connection where PMF is enabled.
  *
  ***LOGIC:

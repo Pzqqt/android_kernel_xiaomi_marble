@@ -327,7 +327,7 @@ void mac_trace_msg_tx_new(tpAniSirGlobal pMac, uint8_t module, uint8_t session,
 }
 
 /*
- * bit31: Rx message defferred or not
+ * bit31: Rx message deferred or not
  * bit 0-15: message ID:
  */
 void mac_trace_msg_rx(tpAniSirGlobal pMac, uint8_t session, uint32_t data)
@@ -355,7 +355,7 @@ void mac_trace_msg_rx(tpAniSirGlobal pMac, uint8_t session, uint32_t data)
 }
 
 /*
- * bit31: Rx message defferred or not
+ * bit31: Rx message deferred or not
  * bit 0-15: message ID:
  */
 void mac_trace_msg_rx_new(tpAniSirGlobal pMac, uint8_t module, uint8_t session,

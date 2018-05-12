@@ -437,7 +437,7 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, struct scheduler_msg *limMs
 
 /* this function should not changed */
 	if (pMac->lim.gLimSmeState == eLIM_SME_OFFLINE_STATE) {
-		/* Defer processsing this message */
+		/* Defer processing this message */
 		if (lim_defer_msg(pMac, limMsg) != TX_SUCCESS) {
 			QDF_TRACE(QDF_MODULE_ID_PE, LOGE,
 					FL("Unable to Defer Msg"));
@@ -501,7 +501,7 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, struct scheduler_msg *limMs
 			(mgmt_pkt_defer)) {
 			pe_debug("Defer the current message %s , gLimProcessDefdMsgs is false and system is not in scan/learn mode",
 				       lim_msg_str(limMsg->type));
-			/* Defer processsing this message */
+			/* Defer processing this message */
 			if (lim_defer_msg(pMac, limMsg) != TX_SUCCESS) {
 				QDF_TRACE(QDF_MODULE_ID_PE, LOGE,
 					FL("Unable to Defer Msg"));
@@ -1534,7 +1534,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 			break;
 		}
 		/* System is in DFS (Learn) mode.
-		 * Defer processsing this message
+		 * Defer processing this message
 		 */
 		if (lim_defer_msg(mac_ctx, msg) != TX_SUCCESS) {
 			if (!(mac_ctx->lim.deferredMsgCnt & 0xF))
@@ -2180,7 +2180,7 @@ static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
 		(lim_is_system_in_scan_state(mac_ctx))) && defer_msg) {
 		/*
 		 * System is in DFS (Learn) mode or awaiting addts response or
-		 * if radar is detected, Defer processsing this message
+		 * if radar is detected, Defer processing this message
 		 */
 		if (lim_defer_msg(mac_ctx, msg) != TX_SUCCESS) {
 #ifdef WLAN_DEBUG

@@ -780,7 +780,7 @@ struct sir_mgmt_msg {
 
 /* ****************************************** *
 *                                            *
-*         EVENT TYPE Defintions              *
+*         EVENT TYPE Definitions              *
 *                                            *
 * ****************************************** */
 

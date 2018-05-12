@@ -56,7 +56,7 @@ struct peer_nan_datapath_map;
  * @ht_mimo_ps_state: MIMO power state
  * @ht_ampdu_density: AMPDU density
  * @ht_max_rxampdu_factor: receieve AMPDU factor
- * @ht_max_amsdu_len: Max AMSDU lengh supported
+ * @ht_max_amsdu_len: Max AMSDU length supported
  * @ht_supp_chan_widthset: Supported channel widthset
  * @ht_ldpc_capable: LDPC capable
  * @heartbeat_failure: heart beat failure indication flag

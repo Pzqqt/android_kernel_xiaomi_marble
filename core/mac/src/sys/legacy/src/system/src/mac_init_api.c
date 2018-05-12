@@ -106,8 +106,8 @@ tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 
 	/*
 	 * Set various global fields of p_mac here
-	 * (Could be platform dependant as some variables in p_mac are platform
-	 * dependant)
+	 * (Could be platform dependent as some variables in p_mac are platform
+	 * dependent)
 	 */
 	p_mac->hHdd = hHdd;
 

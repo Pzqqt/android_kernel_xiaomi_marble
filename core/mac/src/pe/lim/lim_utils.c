@@ -873,7 +873,7 @@ uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx,
 	if (SIR_BB_XPORT_MGMT_MSG == lim_msg->type) {
 		lim_util_get_type_subtype(lim_msg->bodyptr,
 					&type, &subtype);
-		pe_debug(" Deferred managment type %d subtype %d ",
+		pe_debug(" Deferred management type %d subtype %d ",
 			type, subtype);
 	}
 
@@ -2935,7 +2935,7 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
  * @bcn_prms:   beacon parameters
  * @pe_session: pe session entry
  *
- * This fucntion updates protection params for enable 11a protection request
+ * This function updates protection params for enable 11a protection request
  *
  * @Return: void
  */
@@ -2996,7 +2996,7 @@ lim_enable_11a_protection(tpAniSirGlobal mac_ctx,
  * @bcn_prms:   beacon parameters
  * @pe_session: pe session entry
  *
- * This fucntion updates protection params for disable 11a protection request
+ * This function updates protection params for disable 11a protection request
  *
  * @Return: void
  */
@@ -8171,7 +8171,7 @@ QDF_STATUS lim_util_get_type_subtype(void *pkt, uint8_t *type,
 		*type = hdr->fc.type;
 		*subtype = hdr->fc.subType;
 	} else {
-		pe_err("Not a managment packet type %d", hdr->fc.type);
+		pe_err("Not a management packet type %d", hdr->fc.type);
 		return QDF_STATUS_E_INVAL;
 	}
 	return QDF_STATUS_SUCCESS;
