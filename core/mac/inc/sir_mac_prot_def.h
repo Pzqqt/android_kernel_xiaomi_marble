@@ -684,7 +684,7 @@ typedef enum eSirMacStatusCodes {
 	/* element is unacceptable */
 	eSIR_MAC_SPRTD_CHANNELS_BAD_STATUS = 24,        /* Association request rejected because the information in the Supported Channels */
 	/* element is unacceptable */
-	eSIR_MAC_SHORT_SLOT_NOT_SUPORTED_STATUS = 25,   /* Association denied due to requesting station not supporting the Short Slot Time */
+	eSIR_MAC_SHORT_SLOT_NOT_SUPPORTED_STATUS = 25,   /* Association denied due to requesting station not supporting the Short Slot Time */
 	/* option */
 	eSIR_MAC_DSSS_OFDM_NOT_SUPPORTED_STATUS = 26,   /* Association denied due to requesting station not supporting the DSSS-OFDM option */
 	/* reserved                                     27-29 */
