@@ -62,7 +62,7 @@ static inline void ol_sdio_disable_sleep(struct ol_context *ol_ctx)
 #endif
 
 /**
- * ol_usb_extra_initialization() - USB extra initilization
+ * ol_usb_extra_initialization() - USB extra initialization
  * @ol_ctx: pointer to ol_context
  *
  * USB specific initialization after firmware download
