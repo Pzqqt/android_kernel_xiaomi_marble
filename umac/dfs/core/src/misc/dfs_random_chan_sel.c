@@ -1028,7 +1028,7 @@ static void dfs_random_channel_sel_set_bitmap(
 		if (channel >= start_chan && channel <= start_chan + 12) {
 			bitmap->chan_bonding_set[i].chan_map |=
 			(1 << ((channel - start_chan) /
-			DFS_80_NUM_SUB_CHANNNEL));
+			DFS_80_NUM_SUB_CHANNEL));
 			return;
 		}
 	}
@@ -1142,26 +1142,26 @@ static uint8_t dfs_find_ch_with_fallback(
 		rand_byte = (rand_byte + qdf_mc_timer_get_system_ticks())
 			% DFS_MAX_20M_SUB_CH;
 		target_channel = new_160_start_ch + (rand_byte *
-				DFS_80_NUM_SUB_CHANNNEL);
+				DFS_80_NUM_SUB_CHANNEL);
 	} else if (*ch_wd == DFS_CH_WIDTH_80P80MHZ) {
 		get_random_bytes((uint8_t *)&rand_byte, 1);
 		index = (rand_byte + qdf_mc_timer_get_system_ticks()) %
 			final_cnt;
 		target_channel = final_lst[index];
-		index -= (index % DFS_80_NUM_SUB_CHANNNEL);
+		index -= (index % DFS_80_NUM_SUB_CHANNEL);
 		primary_seg_start_ch = final_lst[index];
 
 		/* reset channels associate with primary 80Mhz */
-		for (i = 0; i < DFS_80_NUM_SUB_CHANNNEL; i++)
+		for (i = 0; i < DFS_80_NUM_SUB_CHANNEL; i++)
 			final_lst[i + index] = 0;
 		/* select and calculate center freq for secondary segement */
-		for (i = 0; i < final_cnt / DFS_80_NUM_SUB_CHANNNEL; i++) {
-			if (final_lst[i * DFS_80_NUM_SUB_CHANNNEL] &&
+		for (i = 0; i < final_cnt / DFS_80_NUM_SUB_CHANNEL; i++) {
+			if (final_lst[i * DFS_80_NUM_SUB_CHANNEL] &&
 			    (abs(primary_seg_start_ch -
-			     final_lst[i * DFS_80_NUM_SUB_CHANNNEL]) >
+			     final_lst[i * DFS_80_NUM_SUB_CHANNEL]) >
 			     (DFS_MAX_20M_SUB_CH * 2))) {
 				sec_seg_ch =
-					final_lst[i * DFS_80_NUM_SUB_CHANNNEL] +
+					final_lst[i * DFS_80_NUM_SUB_CHANNEL] +
 					DFS_80MHZ_START_CENTER_CH_DIFF;
 				break;
 			}

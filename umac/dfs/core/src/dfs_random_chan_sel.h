@@ -67,7 +67,7 @@
 #define DFS_CH_WIDTH_MAX        8
 
 /* Next 5GHz channel number */
-#define DFS_80_NUM_SUB_CHANNNEL                 4
+#define DFS_80_NUM_SUB_CHANNEL                 4
 
 /* Next 5GHz channel number */
 #define DFS_NEXT_5GHZ_CHANNEL                   4
