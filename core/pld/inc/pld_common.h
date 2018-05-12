@@ -57,7 +57,7 @@ enum pld_bus_type {
 #define PLD_MAX_FIRMWARE_SIZE (1 * 1024 * 1024)
 
 /**
- * enum pld_bus_width_type - bus bandwith
+ * enum pld_bus_width_type - bus bandwidth
  * @PLD_BUS_WIDTH_NONE: don't vote for bus bandwidth
  * @PLD_BUS_WIDTH_LOW: vote for low bus bandwidth
  * @PLD_BUS_WIDTH_MEDIUM: vote for medium bus bandwidth
