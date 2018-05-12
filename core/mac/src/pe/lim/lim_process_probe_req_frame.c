@@ -51,7 +51,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 /**
  * lim_get_wpspbc_sessions() - to get wps pbs sessions
  * @mac_ctx: Pointer to Global MAC structure
- * @addr: probe request source MAC addresss
+ * @addr: probe request source MAC address
  * @uuid_e: A pointer to UUIDE element of WPS IE in WPS PBC probe request
  * @session: A pointer to station PE session
  *
@@ -174,7 +174,7 @@ void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr remove_mac,
  ***NOTE:
  *
  * @param  pMac   Pointer to Global MAC structure
- * @param  addr   A pointer to probe request source MAC addresss
+ * @param  addr   A pointer to probe request source MAC address
  * @param  uuid_e A pointer to UUIDE element of WPS IE
  * @param  psessionEntry   A pointer to station PE session
  *

@@ -6243,7 +6243,7 @@ void lim_set_vht_caps(tpAniSirGlobal p_mac, tpPESession p_session_entry,
  * @a1: received frame's a1 address which is nothing but our self address
  * @session: PE session pointer
  *
- * This routine will validate, A1 addres of the received frame
+ * This routine will validate, A1 address of the received frame
  *
  * Return: true or false
  */
