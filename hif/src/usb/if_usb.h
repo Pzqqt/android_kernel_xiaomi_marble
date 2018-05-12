@@ -24,7 +24,7 @@
 /*
  * There may be some pending tx frames during platform suspend.
  * Suspend operation should be delayed until those tx frames are
- * transfered from the host to target. This macro specifies how
+ * transferred from the host to target. This macro specifies how
  * long suspend thread has to sleep before checking pending tx
  * frame count.
  */

@@ -78,7 +78,7 @@ int hif_dummy_bus_resume(struct hif_softc *hif_ctx)
  * hif_dummy_suspend_noirq() - suspend the bus
  * @hif_ctx: hif context
  *
- * dummy for busses that don't need to syncronize
+ * dummy for busses that don't need to synchronize
  * with interrupt disable.
  *
  * Return: 0 for success and non-zero for failure
@@ -92,7 +92,7 @@ int hif_dummy_bus_suspend_noirq(struct hif_softc *hif_ctx)
  * hif_dummy_resume_noirq() - resume the bus
  * @hif_ctx: hif context
  *
- * dummy for busses that don't need to syncronize
+ * dummy for busses that don't need to synchronize
  * with interrupt disable.
  *
  * Return: 0 for success and non-zero for failure

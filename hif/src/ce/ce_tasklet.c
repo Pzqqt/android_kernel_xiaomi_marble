@@ -229,7 +229,7 @@ void ce_tasklet_kill(struct hif_softc *scn)
 
 #define HIF_CE_DRAIN_WAIT_CNT          20
 /**
- * hif_drain_tasklets(): wait untill no tasklet is pending
+ * hif_drain_tasklets(): wait until no tasklet is pending
  * @scn: hif context
  *
  * Let running tasklets clear pending trafic.

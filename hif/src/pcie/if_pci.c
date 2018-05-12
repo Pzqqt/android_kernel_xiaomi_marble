@@ -466,7 +466,7 @@ static void hif_pci_device_reset(struct hif_pci_softc *sc)
 /* CPU warm reset function
  * Steps:
  * 1. Disable all pending interrupts - so no pending interrupts on WARM reset
- * 2. Clear the FW_INDICATOR_ADDRESS -so Traget CPU intializes FW
+ * 2. Clear the FW_INDICATOR_ADDRESS -so Traget CPU initializes FW
  *    correctly on WARM reset
  * 3. Clear TARGET CPU LF timer interrupt
  * 4. Reset all CEs to clear any pending CE tarnsactions
@@ -2657,7 +2657,7 @@ void hif_pci_disable_bus(struct hif_softc *scn)
 
 #ifdef FEATURE_RUNTIME_PM
 /**
- * hif_runtime_prevent_linkdown() - prevent or allow a runtime pm from occuring
+ * hif_runtime_prevent_linkdown() - prevent or allow a runtime pm from occurring
  * @scn: hif context
  * @flag: prevent linkdown if true otherwise allow
  *
@@ -2936,7 +2936,7 @@ static void hif_log_runtime_suspend_failure(void *hif_ctx)
 /**
  * hif_log_runtime_resume_success() - log a successful runtime resume
  *
- * log a successfull runtime resume
+ * log a successful runtime resume
  * mark last busy to prevent immediate runtime suspend
  */
 static void hif_log_runtime_resume_success(void *hif_ctx)
@@ -3721,7 +3721,7 @@ end:
 
 /**
  * hif_target_sync() : ensure the target is ready
- * @scn: hif controll structure
+ * @scn: hif control structure
  *
  * Informs fw that we plan to use legacy interupts so that
  * it can begin booting. Ensures that the fw finishes booting
@@ -3956,7 +3956,7 @@ void hif_pci_irq_enable(struct hif_softc *scn, int ce_id)
 void hif_pci_irq_disable(struct hif_softc *scn, int ce_id)
 {
 	/* For Rome only need to wake up target */
-	/* target access is maintained untill interrupts are re-enabled */
+	/* target access is maintained until interrupts are re-enabled */
 	Q_TARGET_ACCESS_BEGIN(scn);
 }
 
@@ -3976,7 +3976,7 @@ void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx)
 /**
  * hif_pm_runtime_get() - do a get opperation on the device
  *
- * A get opperation will prevent a runtime suspend untill a
+ * A get opperation will prevent a runtime suspend until a
  * corresponding put is done.  This api should be used when sending
  * data.
  *

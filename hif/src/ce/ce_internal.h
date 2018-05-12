@@ -393,7 +393,7 @@ union ce_desc {
  * @FAST_TX_WRITE_INDEX_UPDATE: event recorded before updating the write index
  *	of the TX ring in fastpath
  * @FAST_TX_WRITE_INDEX_SOFTWARE_UPDATE: recored when dropping a write to
- *	the wirte index in fastpath
+ *	the write index in fastpath
  * @FAST_TX_SOFTWARE_INDEX_UPDATE: event recorded before updating the software
  *	index of the RX ring in fastpath
  * @HIF_IRQ_EVENT: event recorded in the irq before scheduling the bh

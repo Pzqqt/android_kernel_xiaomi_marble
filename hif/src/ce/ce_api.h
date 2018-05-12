@@ -194,7 +194,7 @@ int ce_sendlist_buf_add(struct ce_sendlist *sendlist,
  *   transfer_id     - arbitrary ID; reflected to destination
  * Returns 0 on success; otherwise an error status.
  *
- * Implemenation note: Pushes multiple buffers with Gather to Source ring.
+ * Implementation note: Pushes multiple buffers with Gather to Source ring.
  */
 int ce_sendlist_send(struct CE_handle *copyeng,
 		void *per_transfer_send_context,
@@ -211,7 +211,7 @@ int ce_sendlist_send(struct CE_handle *copyeng,
  *   buffer                     - address of buffer in CE space
  * Returns 0 on success; otherwise an error status.
  *
- * Implemenation note: Pushes a buffer to Dest ring.
+ * Implementation note: Pushes a buffer to Dest ring.
  */
 int ce_recv_buf_enqueue(struct CE_handle *copyeng,
 			void *per_transfer_recv_context,
@@ -308,7 +308,7 @@ unsigned int ce_recv_entries_done(struct CE_handle *copyeng);
  *    in a recv_cb function when processing buf_lists
  *    in a recv_cb function in order to mitigate recv_cb's.
  *
- * Implemenation note: Pops buffer from Dest ring.
+ * Implementation note: Pops buffer from Dest ring.
  */
 int ce_completed_recv_next(struct CE_handle *copyeng,
 			   void **per_CE_contextp,
@@ -394,7 +394,7 @@ bool ce_get_rx_pending(struct hif_softc *scn);
 #define CE_ATTR_DIAG                 0x20 /* Diag CE */
 
 /**
- * stuct CE_attr - Attributes of an instance of a Copy Engine
+ * struct CE_attr - Attributes of an instance of a Copy Engine
  * @flags:         CE_ATTR_* values
  * @priority:      TBD
  * @src_nentries:  #entries in source ring - Must be a power of 2

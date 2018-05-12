@@ -145,7 +145,7 @@ static QDF_STATUS hif_send_internal(struct HIF_DEVICE_USB *hif_usb_device,
 	} else if ((frag_count - 1) <= QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS) {
 		/*
 		 * means have extra fragment buf in skb
-		 * header data length should be total sending length substract
+		 * header data length should be total sending length subtract
 		 * internal data length of netbuf
 		 * | hif_usb_send_context | fragments except internal buffer |
 		 * netbuf->data

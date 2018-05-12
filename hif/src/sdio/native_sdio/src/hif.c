@@ -1984,7 +1984,7 @@ static QDF_STATUS hif_disable_func(struct hif_sdio_dev *device,
 		 * driver to re-enumerate the slot
 		 */
 		AR_DEBUG_PRINTF(ATH_DEBUG_WARN,
-				("%s: reseting SDIO card",
+				("%s: resetting SDIO card",
 				__func__));
 
 		/* sdio_f0_writeb() cannot be used here, this allows access

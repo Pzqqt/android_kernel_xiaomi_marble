@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -160,7 +160,7 @@ int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset);
 /*
  * There may be some pending tx frames during platform suspend.
  * Suspend operation should be delayed until those tx frames are
- * transfered from the host to target. This macro specifies how
+ * transferred from the host to target. This macro specifies how
  * long suspend thread has to sleep before checking pending tx
  * frame count.
  */

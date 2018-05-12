@@ -34,11 +34,11 @@
 #include "qdf_module.h"
 
 /**
- * hif_intialize_default_ops() - intializes default operations values
+ * hif_initialize_default_ops() - initializes default operations values
  *
  * bus specific features should assign their dummy implementations here.
  */
-static void hif_intialize_default_ops(struct hif_softc *hif_sc)
+static void hif_initialize_default_ops(struct hif_softc *hif_sc)
 {
 	struct hif_bus_ops *bus_ops = &hif_sc->bus_ops;
 
@@ -121,7 +121,7 @@ QDF_STATUS hif_bus_open(struct hif_softc *hif_sc,
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
-	hif_intialize_default_ops(hif_sc);
+	hif_initialize_default_ops(hif_sc);
 
 	switch (bus_type) {
 	case QDF_BUS_TYPE_PCI:

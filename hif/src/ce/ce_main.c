@@ -996,7 +996,7 @@ int hif_ce_bus_late_resume(struct hif_softc *scn)
  * ce_oom_recovery() - try to recover rx ce from oom condition
  * @context: CE_state of the CE with oom rx ring
  *
- * the executing work Will continue to be rescheduled untill
+ * the executing work Will continue to be rescheduled until
  * at least 1 descriptor is successfully posted to the rx ring.
  *
  * return: none
@@ -1459,7 +1459,7 @@ void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int id)
  * the TX CE has been processed completely.
  *
  * This is called while dismantling CE structures. No other thread
- * should be using these structures while dismantling is occuring
+ * should be using these structures while dismantling is occurring
  * therfore no locking is needed.
  *
  * Return: none
