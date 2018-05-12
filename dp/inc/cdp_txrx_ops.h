@@ -189,7 +189,7 @@ struct cdp_cmn_ops {
 			ol_txrx_data_tx_cb callback, void *ctxt);
 
 	/*******************************************************************
-	 * Statistics and Debugging Interface (C Inteface)
+	 * Statistics and Debugging Interface (C Interface)
 	 ********************************************************************/
 
 	int (*txrx_aggr_cfg)(struct cdp_vdev *vdev, int max_subfrms_ampdu,

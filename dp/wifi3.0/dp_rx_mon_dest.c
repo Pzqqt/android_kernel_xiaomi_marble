@@ -92,7 +92,7 @@ done:
  *				fragmented buffer
  *
  * @total_len: pointer to remaining data length.
- * @frag_len: poiter to data length in this fragment.
+ * @frag_len: pointer to data length in this fragment.
 */
 static inline void dp_mon_adjust_frag_len(uint32_t *total_len,
 uint32_t *frag_len)

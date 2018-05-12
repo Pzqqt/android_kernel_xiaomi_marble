@@ -3094,7 +3094,7 @@ static inline void hal_rx_dump_pkt_tlvs(uint8_t *buf, uint8_t dbg_level)
 }
 
 /**
- * hal_srng_ring_id_get: API to retreive ring id from hal ring
+ * hal_srng_ring_id_get: API to retrieve ring id from hal ring
  *                       structure
  * @hal_ring: pointer to hal_srng structure
  *
@@ -3301,7 +3301,7 @@ uint8_t hal_rx_get_mpdu_frame_control_valid(uint8_t *buf)
  * hal_rx_get_mpdu_mac_ad4_valid(): Retrieves if mpdu 4th addr is valid
  *
  * @nbuf: Network buffer
- * Returns: value of mpdu 4th address vaild field
+ * Returns: value of mpdu 4th address valid field
  */
 static inline
 bool hal_rx_get_mpdu_mac_ad4_valid(uint8_t *buf)
@@ -3439,7 +3439,7 @@ int hal_rx_chain_msdu_links(qdf_nbuf_t msdu,
  * @mpdu_des_info: saved mpdu desc info
  * @msdu_link_ptr: saved msdu link ptr
  *
- * API used explicitely for rx defrag to update ring desc with
+ * API used explicitly for rx defrag to update ring desc with
  * mpdu desc info and msdu link ptr before reinjecting the
  * packet back to REO
  *

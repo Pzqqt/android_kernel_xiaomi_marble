@@ -18,7 +18,7 @@
 
 /**
  * @file cdp_txrx_misc.h
- * @brief Define the host data path miscelleneous API functions
+ * @brief Define the host data path miscellaneous API functions
  * called by the host control SW and the OS interface module
  */
 #ifndef _CDP_TXRX_MISC_H_

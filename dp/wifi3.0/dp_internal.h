@@ -500,7 +500,7 @@ static inline void dp_hif_update_pipe_callback(void *soc, void *cb_context,
 
 	/* TODO: Temporary change to bypass HTC connection for this new
 	 * HIF pipe, which will be used for packet log and other high-
-	 * priority HTT messsages. Proper HTC connection to be added
+	 * priority HTT messages. Proper HTC connection to be added
 	 * later once required FW changes are available
 	 */
 	hif_pipe_callbacks.rxCompletionHandler = callback;

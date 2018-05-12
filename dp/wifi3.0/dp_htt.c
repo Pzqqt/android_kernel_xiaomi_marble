@@ -306,7 +306,7 @@ htt_htc_misc_pkt_pool_free(struct htt_soc *soc)
 }
 
 /*
- * htt_t2h_mac_addr_deswizzle() - Swap MAC addr bytes if FW endianess differ
+ * htt_t2h_mac_addr_deswizzle() - Swap MAC addr bytes if FW endianness differ
  * @tgt_mac_addr:	Target MAC
  * @buffer:		Output buffer
  */
@@ -2913,7 +2913,7 @@ dp_htt_h2t_full(void *context, HTC_PACKET *pkt)
  * Return: QDF_STATUS
  *
  * TODO: Temporary change to bypass HTC connection for this new HIF pipe, which
- * will be used for packet log and other high-priority HTT messsages. Proper
+ * will be used for packet log and other high-priority HTT messages. Proper
  * HTC connection to be added later once required FW changes are available
  */
 static QDF_STATUS
@@ -3016,7 +3016,7 @@ htt_soc_attach(void *dp_soc, void *ctrl_psoc, HTC_HANDLE htc_soc,
 	soc->htc_soc = htc_soc;
 	soc->hal_soc = hal_soc;
 
-	/* TODO: See if any NSS related context is requred in htt_soc */
+	/* TODO: See if any NSS related context is required in htt_soc */
 
 	soc->htt_htc_pkt_freelist = NULL;
 

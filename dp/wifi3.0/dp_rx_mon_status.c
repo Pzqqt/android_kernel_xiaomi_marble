@@ -705,7 +705,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 				rxdma_srng, sync_hw_ptr);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] no of availble entries in rxdma ring: %d\n",
+		"[%s][%d] no of available entries in rxdma ring: %d\n",
 		  __func__, __LINE__, num_entries_avail);
 
 	if (num_entries_avail < num_req_buffers) {

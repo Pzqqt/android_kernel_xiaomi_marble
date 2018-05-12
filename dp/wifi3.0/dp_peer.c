@@ -1645,8 +1645,8 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 * @tid: TID number
 * @dialogtoken: output dialogtoken
 * @statuscode: output dialogtoken
-* @buffersize: Ouput BA window sizze
-* @batimeout: Ouput BA timeout
+* @buffersize: Output BA window size
+* @batimeout: Output BA timeout
 */
 void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
 	uint8_t *dialogtoken, uint16_t *statuscode,
@@ -2059,11 +2059,11 @@ QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 }
 
 /**
- * dp_get_vdevid() - Get virtaul interface id which peer registered
+ * dp_get_vdevid() - Get virtual interface id which peer registered
  * @peer - peer instance
- * @vdev_id - virtaul interface id which peer registered
+ * @vdev_id - virtual interface id which peer registered
  *
- * Get virtaul interface id which peer registered
+ * Get virtual interface id which peer registered
  *
  * Return: QDF_STATUS_SUCCESS registration success
  */

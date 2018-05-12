@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,7 +30,7 @@
  * @pdev: physical device instance
  * @queue_delay_microsec: tx packet delay within queue, usec
  * @tx_delay_microsec: tx packet delay, usec
- * @category: packet catagory
+ * @category: packet category
  *
  * Return: NONE
  */
@@ -56,7 +56,7 @@ cdp_tx_delay(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
  * @soc: data path soc handle
  * @pdev: physical device instance
  * @bin_values: bin
- * @category: packet catagory
+ * @category: packet category
  *
  * Return: NONE
  */
@@ -81,7 +81,7 @@ cdp_tx_delay_hist(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
  * @soc: data path soc handle
  * @pdev: physical device instance
  * @out_packet_loss_count: packet loss count
- * @category: packet catagory
+ * @category: packet category
  *
  * Return: NONE
  */

@@ -78,7 +78,7 @@ dp_tx_me_init(struct dp_pdev *pdev)
 		p->next = NULL;
 		qdf_spin_unlock_bh(&pdev->tx_mutex);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"ME Pool succesfully initialized vaddr - %x \
+				"ME Pool successfully initialized vaddr - %x \
 				paddr - %x\n num_elems = %d buf_size - %d"
 				"pool_size = %d",
 				pdev->me_buf.vaddr,

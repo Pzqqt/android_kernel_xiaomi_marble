@@ -712,7 +712,7 @@ cdp_data_tx_cb_set(ol_txrx_soc_handle soc, struct cdp_vdev *data_vdev,
 }
 
 /******************************************************************************
- * Statistics and Debugging Interface (C Inteface)
+ * Statistics and Debugging Interface (C Interface)
  *****************************************************************************/
 /**
  * External Device physical address types

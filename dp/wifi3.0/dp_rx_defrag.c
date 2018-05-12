@@ -499,11 +499,11 @@ static uint16_t dp_rx_defrag_hdrsize(qdf_nbuf_t nbuf)
 }
 
 /*
- * dp_rx_defrag_michdr(): Calculate a psuedo MIC header
+ * dp_rx_defrag_michdr(): Calculate a pseudo MIC header
  * @wh0: Pointer to the wireless header of the fragment
- * @hdr: Array to hold the psuedo header
+ * @hdr: Array to hold the pseudo header
  *
- * Calculate a psuedo MIC header
+ * Calculate a pseudo MIC header
  *
  * Returns: None
  */
@@ -557,10 +557,10 @@ static void dp_rx_defrag_michdr(const struct ieee80211_frame *wh0,
  * @key: Pointer to the key
  * @wbuf: fragment buffer
  * @off: Offset
- * @data_len: Data lengh
+ * @data_len: Data length
  * @mic: Array to hold MIC
  *
- * Calculate a psuedo MIC header
+ * Calculate a pseudo MIC header
  *
  * Returns: QDF_STATUS
  */

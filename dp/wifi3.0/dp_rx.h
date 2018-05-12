@@ -497,7 +497,7 @@ static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
 			return QDF_STATUS_SUCCESS;
 		else {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-					"phy addr %pK exceded 0x50000000 trying again\n",
+					"phy addr %pK exceeded 0x50000000 trying again\n",
 					paddr);
 
 			nbuf_retry++;
@@ -722,7 +722,7 @@ static inline bool check_qwrap_multicast_loopback(struct dp_vdev *vdev,
  * @soc: core txrx main context
  * @mac_id: mac_id which is one of 3 mac_ids
  * @dp_rxdma_srng: dp rxdma circular ring
- * @rx_desc_pool: Poiter to free Rx descriptor pool
+ * @rx_desc_pool: Pointer to free Rx descriptor pool
  * @num_req_buffers: number of buffer to be replenished
  * @desc_list: list of descs if called from dp_rx_process
  *	       or NULL during dp rx initialization or out of buffer

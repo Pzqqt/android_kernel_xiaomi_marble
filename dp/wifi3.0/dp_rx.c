@@ -62,7 +62,7 @@ static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
  * @soc: core txrx main context
  * @mac_id: mac_id which is one of 3 mac_ids
  * @dp_rxdma_srng: dp rxdma circular ring
- * @rx_desc_pool: Poiter to free Rx descriptor pool
+ * @rx_desc_pool: Pointer to free Rx descriptor pool
  * @num_req_buffers: number of buffer to be replenished
  * @desc_list: list of descs if called from dp_rx_process
  *	       or NULL during dp rx initialization or out of buffer
@@ -109,7 +109,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 						   sync_hw_ptr);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"no of availble entries in rxdma ring: %d",
+		"no of available entries in rxdma ring: %d",
 		num_entries_avail);
 
 	if (!(*desc_list) && (num_entries_avail >
@@ -1027,7 +1027,7 @@ static inline void dp_rx_deliver_to_stack(struct dp_vdev *vdev,
 						qdf_nbuf_t nbuf_tail)
 {
 	/*
-	 * highly unlikely to have a vdev without a registerd rx
+	 * highly unlikely to have a vdev without a registered rx
 	 * callback function. if so let us free the nbuf_list.
 	 */
 	if (qdf_unlikely(!vdev->osif_rx)) {
