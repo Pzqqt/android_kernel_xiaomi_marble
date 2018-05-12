@@ -3916,7 +3916,7 @@ static void csr_roam_remove_duplicate_pending_cmd_from_list(
 		if ((command && (command->sessionId == dup_cmd->sessionId) &&
 			((command->command == dup_cmd->command) &&
 			/*
-			 * This peermac check is requried for Softap/GO
+			 * This peermac check is required for Softap/GO
 			 * scenarios. for STA scenario below OR check will
 			 * suffice as command will always be NULL for
 			 * STA scenarios
