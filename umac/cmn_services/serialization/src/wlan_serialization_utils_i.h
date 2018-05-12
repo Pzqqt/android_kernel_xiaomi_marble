@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -240,7 +240,7 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
  * @psoc: pointer to psoc
  * @cmd: pointer to actual command
  *
- * find the timer associated with command, stop it and destory it
+ * find the timer associated with command, stop it and destroy it
  *
  * Return: QDF_STATUS
  */

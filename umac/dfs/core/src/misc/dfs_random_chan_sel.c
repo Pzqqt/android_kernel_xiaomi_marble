@@ -1154,7 +1154,7 @@ static uint8_t dfs_find_ch_with_fallback(
 		/* reset channels associate with primary 80Mhz */
 		for (i = 0; i < DFS_80_NUM_SUB_CHANNEL; i++)
 			final_lst[i + index] = 0;
-		/* select and calculate center freq for secondary segement */
+		/* select and calculate center freq for secondary segment */
 		for (i = 0; i < final_cnt / DFS_80_NUM_SUB_CHANNEL; i++) {
 			if (final_lst[i * DFS_80_NUM_SUB_CHANNEL] &&
 			    (abs(primary_seg_start_ch -
@@ -1241,7 +1241,7 @@ static bool dfs_freq_is_in_nol(struct wlan_dfs *dfs, uint32_t freq)
  * dfs_apply_rules()- prepare channel list based on flags
  * @dfs: dfs handler
  * @flags: channel flags
- * @random_chan_list: ouput channel list
+ * @random_chan_list: output channel list
  * @random_chan_cnt: output channel count
  * @ch_list: input channel list
  * @ch_cnt: input channel count

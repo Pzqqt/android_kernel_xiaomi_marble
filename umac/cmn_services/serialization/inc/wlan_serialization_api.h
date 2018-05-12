@@ -114,7 +114,7 @@ typedef void (*wlan_serialization_comp_info_cb)(struct wlan_objmgr_vdev *vdev,
  * The rules are applied using this callback and decided whether to
  * allow or deny the command
  *
- * Return: true, if rules are successfull and cmd can be queued
+ * Return: true, if rules are successful and cmd can be queued
  *         false, if rules failed and cmd should not be queued
  */
 typedef bool (*wlan_serialization_apply_rules_cb)(

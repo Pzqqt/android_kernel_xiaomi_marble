@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
  /**
-  * DOC: This file provides the common defintions for object manager
+  * DOC: This file provides the common definitions for object manager
   */
 
 #ifndef _WLAN_OBJMGR_CMN_H_

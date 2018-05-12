@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -463,7 +463,7 @@ QDF_STATUS wlan_serialization_deinit(void)
 			wlan_serialization_pdev_obj_destroy_notification,
 			NULL);
 	if (status != QDF_STATUS_SUCCESS) {
-		serialization_err("unreg fail for pdev ser destory notf:%d",
+		serialization_err("unreg fail for pdev ser destroy notf:%d",
 				status);
 		ret_status = QDF_STATUS_E_FAILURE;
 	}

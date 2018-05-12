@@ -118,7 +118,7 @@ struct mgmt_rx_handler {
 /**
  * struct txrx_stats - txrx stats for mgmt frames
  * @pkts_success:       no. of packets successfully txed/rcvd
- * @pkts_fail:          no. of packets unsuccessfullt txed/rcvd
+ * @pkts_fail:          no. of packets unsuccessfully txed/rcvd
  * @bytes_success:      no. of bytes successfully txed/rcvd
  * @bytes_fail:         no. of bytes successfully txed/rcvd
  * @assoc_req_rcvd:     no. of assoc requests rcvd

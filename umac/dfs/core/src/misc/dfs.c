@@ -121,7 +121,7 @@ int dfs_attach(struct wlan_dfs *dfs)
 
 	/*
 	 * Init of timer ,dfs_testtimer_task is required by both partial
-	 * and full offload, indicating test mode timer initilization for both.
+	 * and full offload, indicating test mode timer initialization for both.
 	 */
 	dfs_main_task_testtimer_init(dfs);
 	return 0;

@@ -1007,7 +1007,7 @@ struct tdls_get_all_peers {
  * @cmd_buf: cmd buffer
  * @len: length of the frame
  * @use_default_ac: access category
- * @tdls_mgmt: tdls managment
+ * @tdls_mgmt: tdls management
  */
 struct tdls_action_frame_request {
 	struct wlan_objmgr_vdev *vdev;

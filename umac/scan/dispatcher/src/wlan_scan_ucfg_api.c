@@ -1114,7 +1114,7 @@ ucfg_scan_cancel_sync(struct scan_cancel_request *req)
 
 	/*
 	 * If cancel req is to cancel all scan of pdev or vdev
-	 * wait untill all scan of pdev or vdev get cancelled
+	 * wait until all scan of pdev or vdev get cancelled
 	 */
 	qdf_event_create(&cancel_scan_event);
 	qdf_event_reset(&cancel_scan_event);

@@ -501,7 +501,7 @@ QDF_STATUS ucfg_scan_update_roam_params(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS ucfg_scan_init(void);
 
 /**
- * ucfg_scan_deinit() - Scan module deinitilization API
+ * ucfg_scan_deinit() - Scan module deinitialization API
  *
  * Return: QDF_STATUS
  */
