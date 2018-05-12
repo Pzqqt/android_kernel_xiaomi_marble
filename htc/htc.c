@@ -447,7 +447,7 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 		 * FW mboxping app directly sits on HTC and it simply drops
 		 * or loops back TX packets. For rx perf, FW mboxping app
 		 * generates packets and passes packets to HTC to send to host.
-		 * There is no WMI mesage exchanges between host and target
+		 * There is no WMI message exchanges between host and target
 		 * in endpoint ping case.
 		 * In host side, the endpoint ping driver is a Ethernet driver
 		 * and it directly sits on HTC. Only HIF, HTC, QDF, ADF are

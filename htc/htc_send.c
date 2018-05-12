@@ -660,7 +660,7 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 
 #ifdef FEATURE_RUNTIME_PM
 /**
- * extract_htc_pm_packtes(): move pm packets from endpoint into queue
+ * extract_htc_pm_packets(): move pm packets from endpoint into queue
  * @endpoint: which enpoint to extract packets from
  * @queue: a queue to store extracted packets in.
  *
@@ -2000,7 +2000,7 @@ void htc_tx_resource_avail_handler(void *context, uint8_t pipeID)
  * htc_kick_queues(): resumes tx transactions of suspended endpoints
  * @context: pointer to the htc target context
  *
- * Iterates throught the enpoints and provides a context to empty queues
+ * Iterates through the enpoints and provides a context to empty queues
  * int the hif layer when they are stalled due to runtime suspend.
  *
  * Return: none
