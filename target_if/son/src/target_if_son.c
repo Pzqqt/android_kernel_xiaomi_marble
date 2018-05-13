@@ -104,7 +104,7 @@ QDF_STATUS son_ol_send_null(struct wlan_objmgr_pdev *pdev,
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
-	if( !psoc)
+	if (!psoc)
 		return QDF_STATUS_E_FAILURE;
 
 	param.vdev_id = wlan_vdev_get_id(vdev);
