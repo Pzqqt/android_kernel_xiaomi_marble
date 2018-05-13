@@ -1509,7 +1509,7 @@ void wma_update_cfg_params(tp_wma_handle wma, struct scheduler_msg *cfgParam)
 	uint32_t param_id;
 	uint32_t cfg_val;
 	QDF_STATUS ret;
-	/* get mac to acess CFG data base */
+	/* get mac to access CFG data base */
 	struct sAniSirGlobal *pmac;
 
 	switch (cfgParam->bodyval) {
@@ -2524,7 +2524,7 @@ static QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 		tim_ie = (struct beacon_tim_ie *)
 				(&bcn_payload[bcn->tim_ie_offset]);
 		/*
-		 * Intial Value of bcn->dtim_count will be 0.
+		 * Initial Value of bcn->dtim_count will be 0.
 		 * But if the beacon gets updated then current dtim
 		 * count will be restored
 		 */

@@ -351,7 +351,7 @@ enum ds_mode {
 #define WMA_P2P_WFA_VER 0x09    /* ver 1.0 */
 #define WMA_WSC_OUI { 0x00, 0x50, 0xF2 } /* Microsoft WSC OUI byte */
 
-/* P2P Sub element defintions (according to table 5 of Wifi's P2P spec) */
+/* P2P Sub element definitions (according to table 5 of Wifi's P2P spec) */
 #define WMA_P2P_SUB_ELEMENT_STATUS                    0
 #define WMA_P2P_SUB_ELEMENT_MINOR_REASON              1
 #define WMA_P2P_SUB_ELEMENT_CAPABILITY                2
@@ -1761,7 +1761,7 @@ enum wma_cfg_cmd_id {
 
 /**
  * struct wma_trigger_uapsd_params - trigger uapsd parameters
- * @wmm_ac: wmm access catagory
+ * @wmm_ac: wmm access category
  * @user_priority: user priority
  * @service_interval: service interval
  * @suspend_interval: suspend interval

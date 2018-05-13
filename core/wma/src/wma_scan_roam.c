@@ -1038,7 +1038,7 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 		    && roam_req->ChannelCacheType != CHANNEL_LIST_STATIC) {
 			/* Roaming on DFS channels is supported and it is not
 			 * app channel list. It is ok to override homeAwayTime
-			 * to accomodate DFS dwell time in burst
+			 * to accommodate DFS dwell time in burst
 			 * duration.
 			 */
 			scan_params->burst_duration =

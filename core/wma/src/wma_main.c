@@ -4130,7 +4130,7 @@ static void wma_send_time_stamp_sync_cmd(void *data)
 
 /**
  * wma_start() - wma start function.
- *               Intialize event handlers and timers.
+ *               Initialize event handlers and timers.
  *
  * Return: 0 on success, QDF Error on failure
  */

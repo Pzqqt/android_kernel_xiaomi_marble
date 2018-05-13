@@ -243,7 +243,7 @@ QDF_STATUS wma_send_snr_request(tp_wma_handle wma_handle,
 {
 	tAniGetRssiReq *pRssiBkUp = NULL;
 
-	/* command is in progess */
+	/* command is in progress */
 	if (NULL != wma_handle->pGetRssiReq)
 		return QDF_STATUS_SUCCESS;
 
@@ -295,7 +295,7 @@ QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req)
 	}
 
 	intr = &wma_handle->interfaces[psnr_req->sessionId];
-	/* command is in progess */
+	/* command is in progress */
 	if (NULL != intr->psnr_req) {
 		WMA_LOGE("%s : previous snr request is pending", __func__);
 		return QDF_STATUS_SUCCESS;
@@ -3104,7 +3104,7 @@ void wma_aggr_qos_req(tp_wma_handle wma,
 {
 	wmi_unified_aggr_qos_cmd(wma->wmi_handle,
 			   (struct aggr_add_ts_param *)pAggrQosRspMsg);
-	/* send reponse to upper layers from here only. */
+	/* send response to upper layers from here only. */
 	wma_send_msg_high_priority(wma, WMA_AGGR_QOS_RSP, pAggrQosRspMsg, 0);
 }
 

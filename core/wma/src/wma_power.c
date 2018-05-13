@@ -554,7 +554,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 {
 	QDF_STATUS ret;
 	uint32_t cfg_data_val = 0;
-	/* get mac to acess CFG data base */
+	/* get mac to access CFG data base */
 	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t rx_wake_policy;
 	uint32_t tx_wake_threshold;
@@ -1778,7 +1778,7 @@ static void wma_set_vdev_suspend_dtim(tp_wma_handle wma, uint8_t vdev_id)
 		uint32_t max_mod_dtim;
 		uint32_t beacon_interval_mod;
 
-		/* get mac to acess CFG data base */
+		/* get mac to access CFG data base */
 		struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 		if (!mac) {
@@ -1945,7 +1945,7 @@ static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 	    (iface->restore_dtim_setting)) {
 		QDF_STATUS ret;
 		uint32_t cfg_data_val = 0;
-		/* get mac to acess CFG data base */
+		/* get mac to access CFG data base */
 		struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 		if (!mac) {

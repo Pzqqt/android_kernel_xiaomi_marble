@@ -1019,10 +1019,10 @@ typedef tSirRetStatus (*tHalMsgCallback)(tpAniSirGlobal pMac, uint32_t mesgId,
 /**
  * struct tEdcaParams - EDCA parameters
  * @bssIdx: BSSID index
- * @acbe: best effort access catagory
- * @acbk: Background access catagory
- * @acvi: video access catagory
- * @acvo: voice access catagory
+ * @acbe: best effort access category
+ * @acbk: Background access category
+ * @acvi: video access category
+ * @acvo: voice access category
  * @mu_edca_params: flag to indicate MU EDCA
  */
 typedef struct {
@@ -1421,7 +1421,7 @@ typedef struct sBeaconFilterMsg {
  * @offset: offset
  * @value: value
  * @bitMask: BIT mask
- * @ref: refrence
+ * @ref: reference
  */
 typedef struct sEidByteInfo {
 	uint8_t offset;

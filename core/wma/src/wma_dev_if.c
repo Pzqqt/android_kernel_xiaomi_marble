@@ -4760,7 +4760,7 @@ send_rsp:
 #endif
 
 /**
- * wma_send_bss_color_change_enable() - send bss color chnage enable cmd.
+ * wma_send_bss_color_change_enable() - send bss color change enable cmd.
  * @wma: wma handle
  * @params: add sta params
  *
@@ -5076,7 +5076,7 @@ out:
 }
 
 /**
- * wma_delete_sta_req_ap_mode() - proces delete sta request from UMAC in AP mode
+ * wma_delete_sta_req_ap_mode() - process delete sta request from UMAC in AP mode
  * @wma: wma handle
  * @del_sta: delete sta params
  *
@@ -5145,7 +5145,7 @@ send_del_rsp:
 
 #ifdef FEATURE_WLAN_TDLS
 /**
- * wma_del_tdls_sta() - proces delete sta request from UMAC in TDLS
+ * wma_del_tdls_sta() - process delete sta request from UMAC in TDLS
  * @wma: wma handle
  * @del_sta: delete sta params
  *
@@ -5225,7 +5225,7 @@ send_del_rsp:
 #endif
 
 /**
- * wma_delete_sta_req_sta_mode() - proces delete sta request from UMAC
+ * wma_delete_sta_req_sta_mode() - process delete sta request from UMAC
  * @wma: wma handle
  * @params: delete sta params
  *
@@ -5403,7 +5403,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
  * Delete BSS in case of ROAM_HO_FAIL processing is handled separately in
  * this routine. It needs to be done without sending any commands to firmware
  * because firmware has already stopped and deleted peer and vdev is down.
- * Relevent logic is aggregated from other routines. It changes the host
+ * Relevant logic is aggregated from other routines. It changes the host
  * data structures without sending VDEV_STOP, PEER_FLUSH_TIDS, PEER_DELETE
  * and VDEV_DOWN commands to firmware.
  *
