@@ -979,9 +979,9 @@ bool sme_neighbor_middle_of_roaming(tHalHandle hHal,
 						uint8_t sessionId);
 
 /**
- * sme_enable_uapsd_for_ac() - enable uapsd for access catagory request to WMA
+ * sme_enable_uapsd_for_ac() - enable uapsd for access category request to WMA
  * @sta_id: station id
- * @ac: access catagory
+ * @ac: access category
  * @tid: tid value
  * @pri: user priority
  * @srvc_int: service interval
@@ -1002,9 +1002,9 @@ QDF_STATUS sme_enable_uapsd_for_ac(uint8_t sta_id,
 				      uint32_t delay_interval);
 
 /**
- * sme_disable_uapsd_for_ac() - disable uapsd access catagory request to WMA
+ * sme_disable_uapsd_for_ac() - disable uapsd access category request to WMA
  * @sta_id: station id
- * @ac: access catagory
+ * @ac: access category
  * @sessionId: session id
  *
  * Return: QDF status

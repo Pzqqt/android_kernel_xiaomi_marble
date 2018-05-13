@@ -5112,7 +5112,7 @@ QDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
 
 /*
  * sme_RegisterMgtFrame() -
- * To register managment frame of specified type and subtype.
+ * To register management frame of specified type and subtype.
  *
  * frameType - type of the frame that needs to be passed to HDD.
  * matchData - data which needs to be matched before passing frame
@@ -5170,7 +5170,7 @@ QDF_STATUS sme_register_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 
 /*
  * sme_DeregisterMgtFrame() -
- * To De-register managment frame of specified type and subtype.
+ * To De-register management frame of specified type and subtype.
  *
  * frameType - type of the frame that needs to be passed to HDD.
  * matchData - data which needs to be matched before passing frame
@@ -8439,7 +8439,7 @@ void sme_update_enable_ssr(tHalHandle hHal, bool enableSSR)
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		sme_debug("SSR level is changed %d", enableSSR);
-		/* not serializing this messsage, as this is only going
+		/* not serializing this message, as this is only going
 		 * to set a variable in WMA/WDI
 		 */
 		WMA_SetEnableSSR(enableSSR);
@@ -9560,7 +9560,7 @@ QDF_STATUS sme_notify_ht2040_mode(tHalHandle hHal, uint16_t staId,
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: Notifed FW about OP mode: %d for staId=%d",
+		  "%s: Notified FW about OP mode: %d for staId=%d",
 		  __func__, pHtOpMode->opMode, staId);
 
 	return QDF_STATUS_SUCCESS;
@@ -13892,7 +13892,7 @@ QDF_STATUS sme_ht40_stop_obss_scan(tHalHandle hal, uint32_t vdev_id)
  * to FW
  *
  * Return: QDF_STATUS if SME update mimo power save
- * configuration sucsess else failue status
+ * configuration success else failure status
  */
 QDF_STATUS sme_update_mimo_power_save(tHalHandle hal,
 				      uint8_t is_ht_smps_enabled,
@@ -14242,7 +14242,7 @@ void sme_set_chan_info_callback(tHalHandle hal_handle,
  * @params: adaptive_dwelltime_params config
  *
  * Return: QDF_STATUS if adaptive dwell time update
- * configuration sucsess else failure status
+ * configuration success else failure status
  */
 QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
 			struct adaptive_dwelltime_params *params)

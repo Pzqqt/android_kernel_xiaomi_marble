@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -116,7 +116,7 @@ bool sme_get_ft_pre_auth_state(tHalHandle hHal, uint32_t sessionId)
  * @ft_ies_length: length of FT IEs
  *
  * Each time the supplicant sends down the FT IEs to the driver. This function
- * is called in SME. This fucntion packages and sends the FT IEs to PE.
+ * is called in SME. This function packages and sends the FT IEs to PE.
  *
  * Return: none
  */

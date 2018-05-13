@@ -639,7 +639,7 @@ typedef enum {
 	eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING,
 	/* NAN Data interface not started */
 	eCSR_CONNECT_STATE_TYPE_NDI_NOT_STARTED,
-	/* NAN Data inteface started */
+	/* NAN Data interface started */
 	eCSR_CONNECT_STATE_TYPE_NDI_STARTED,
 
 } eCsrConnectState;

@@ -7438,10 +7438,10 @@ void sme_qos_cleanup_ctrl_blk_for_handoff(tpAniSirGlobal pMac,
  * @sessionId: sessionId returned by sme_open_session.
  *
  * The SME QoS API exposed to HDD to check if TS info ack policy field can be
- * set to "HT-immediate block acknowledgement"
+ * set to "HT-immediate block acknowledgment"
  *
  * Return: true - Current Association is HT association and so TS info ack
- *                 policy can be set to "HT-immediate block acknowledgement"
+ *                 policy can be set to "HT-immediate block acknowledgment"
  */
 bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
 					 struct sme_qos_wmmtspecinfo *pQoSInfo,

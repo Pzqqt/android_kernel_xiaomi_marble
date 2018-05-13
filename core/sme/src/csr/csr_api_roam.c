@@ -81,7 +81,7 @@
 /* packet dump timer duration of 60 secs */
 #define PKT_DUMP_TIMER_DURATION 60
 
-/* Choose the largest possible value that can be accomodates in 8 bit signed */
+/* Choose the largest possible value that can be accommodated in 8 bit signed */
 /* variable. */
 #define SNR_HACK_BMPS                         (127)
 
@@ -10534,7 +10534,7 @@ void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 						(tSirSmeStartBssRsp *) pSmeRsp);
 		break;
 	/* In case CSR issues STOP_BSS, we need to tell HDD about peer departed
-	 * becasue PE is removing them
+	 * because PE is removing them
 	 */
 	case eWNI_SME_IBSS_PEER_DEPARTED_IND:
 		pIbssPeerInd = (tSmeIbssPeerInd *) pSmeRsp;
@@ -15538,7 +15538,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		/* A profile can not be both ESE and 11R. But an 802.11R AP
 		 * may be advertising support for ESE as well. So if we are
 		 * associating Open or explicitly ESE then we will get ESE.
-		 * If we are associating explictly 11R only then we will get
+		 * If we are associating explicitly 11R only then we will get
 		 * 11R.
 		 */
 		if ((csr_is_profile_ese(pProfile) ||

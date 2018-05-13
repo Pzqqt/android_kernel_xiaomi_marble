@@ -3311,7 +3311,7 @@ static void csr_check_sae_auth(tpAniSirGlobal mac_ctx,
 #endif
 
 /**
- * csr_get_rsn_information() - to get RSN infomation
+ * csr_get_rsn_information() - to get RSN information
  * @hal: pointer to HAL
  * @auth_type: auth type
  * @encr_type: encryption type
@@ -4049,7 +4049,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 
 #ifdef FEATURE_WLAN_WAPI
 /**
- * csr_get_wapi_information() - to get WAPI infomation
+ * csr_get_wapi_information() - to get WAPI information
  * @hal: pointer to HAL
  * @auth_type: auth type
  * @encr_type: encryption type
