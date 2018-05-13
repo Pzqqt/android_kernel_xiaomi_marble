@@ -168,6 +168,7 @@ const struct wlan_crypto_cipher tkip_cipher_table = {
 	tkip_demic,
 };
 
-const struct wlan_crypto_cipher *tkip_register(void){
+const struct wlan_crypto_cipher *tkip_register(void)
+{
 	return &tkip_cipher_table;
 }

@@ -155,7 +155,8 @@ const struct wlan_crypto_cipher wep_cipher_table = {
 	wep_demic,
 };
 
-const struct wlan_crypto_cipher *wep_register(void){
+const struct wlan_crypto_cipher *wep_register(void)
+{
 	return &wep_cipher_table;
 }
 

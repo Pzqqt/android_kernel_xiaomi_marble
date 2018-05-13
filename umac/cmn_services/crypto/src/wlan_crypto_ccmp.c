@@ -298,18 +298,22 @@ const struct wlan_crypto_cipher gcmp256_cipher_table = {
 	ccmp_demic,
 };
 
-const struct wlan_crypto_cipher *ccmp_register(void){
+const struct wlan_crypto_cipher *ccmp_register(void)
+{
 	return &ccmp_cipher_table;
 }
 
-const struct wlan_crypto_cipher *ccmp256_register(void){
+const struct wlan_crypto_cipher *ccmp256_register(void)
+{
 	return &ccmp256_cipher_table;
 }
 
-const struct wlan_crypto_cipher *gcmp_register(void){
+const struct wlan_crypto_cipher *gcmp_register(void)
+{
 	return &gcmp_cipher_table;
 }
 
-const struct wlan_crypto_cipher *gcmp256_register(void){
+const struct wlan_crypto_cipher *gcmp256_register(void)
+{
 	return &gcmp256_cipher_table;
 }

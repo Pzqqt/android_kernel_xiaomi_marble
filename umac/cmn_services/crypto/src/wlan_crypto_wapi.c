@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -78,6 +78,7 @@ const struct wlan_crypto_cipher wapi_cipher_table = {
 	wapi_demic,
 };
 
-const struct wlan_crypto_cipher *wapi_register(void){
+const struct wlan_crypto_cipher *wapi_register(void)
+{
 	return &wapi_cipher_table;
 }

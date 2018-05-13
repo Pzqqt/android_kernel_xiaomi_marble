@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -77,6 +77,7 @@ const struct wlan_crypto_cipher none_cipher_table = {
 	none_demic,
 };
 
-const struct wlan_crypto_cipher *none_register(void){
+const struct wlan_crypto_cipher *none_register(void)
+{
 	return &none_cipher_table;
 }
