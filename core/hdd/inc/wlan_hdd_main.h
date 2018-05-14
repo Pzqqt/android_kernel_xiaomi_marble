@@ -3151,10 +3151,10 @@ void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc);
  */
 void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc);
 
-#ifdef WLAN_FEATURE_HDD_MEMDUMP_ENABLE
+#ifdef WLAN_FEATURE_MEMDUMP_ENABLE
 int hdd_driver_memdump_init(void);
 void hdd_driver_memdump_deinit(void);
-#else /* WLAN_FEATURE_HDD_MEMDUMP_ENABLE */
+#else /* WLAN_FEATURE_MEMDUMP_ENABLE */
 static inline int hdd_driver_memdump_init(void)
 {
 	return 0;
@@ -3162,7 +3162,7 @@ static inline int hdd_driver_memdump_init(void)
 static inline void hdd_driver_memdump_deinit(void)
 {
 }
-#endif /* WLAN_FEATURE_HDD_MEMDUMP_ENABLE */
+#endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
 /**
  * hdd_is_cli_iface_up() - check if there is any cli iface up
  * @hdd_ctx: HDD context

@@ -2056,7 +2056,7 @@ static void wma_shutdown_notifier_cb(void *priv)
 
 struct wma_version_info g_wmi_version_info;
 
-#ifdef WLAN_FEATURE_HDD_MEMDUMP_ENABLE
+#ifdef WLAN_FEATURE_MEMDUMP_ENABLE
 /**
  * wma_state_info_dump() - prints state information of wma layer
  * @buf: buffer pointer
@@ -2286,11 +2286,11 @@ static void wma_register_debug_callback(void)
 {
 	qdf_register_debug_callback(QDF_MODULE_ID_WMA, &wma_state_info_dump);
 }
-#else /* WLAN_FEATURE_HDD_MEMDUMP_ENABLE */
+#else /* WLAN_FEATURE_MEMDUMP_ENABLE */
 static void wma_register_debug_callback(void)
 {
 }
-#endif /* WLAN_FEATURE_HDD_MEMDUMP_ENABLE */
+#endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
 /**
  * wma_register_tx_ops_handler() - register tx_ops of southbound
  * @tx_ops:  tx_ops pointer in southbound

@@ -682,7 +682,7 @@ void lim_cleanup(tpAniSirGlobal pMac)
 	ucfg_scan_unregister_requester(pMac->psoc, pMac->lim.req_id);
 } /*** end lim_cleanup() ***/
 
-#ifdef WLAN_FEATURE_HDD_MEMDUMP_ENABLE
+#ifdef WLAN_FEATURE_MEMDUMP_ENABLE
 /**
  * lim_state_info_dump() - print state information of lim layer
  * @buf: buffer pointer
@@ -737,11 +737,11 @@ static void lim_register_debug_callback(void)
 {
 	qdf_register_debug_callback(QDF_MODULE_ID_PE, &lim_state_info_dump);
 }
-#else /* WLAN_FEATURE_HDD_MEMDUMP_ENABLE */
+#else /* WLAN_FEATURE_MEMDUMP_ENABLE */
 static void lim_register_debug_callback(void)
 {
 }
-#endif /* WLAN_FEATURE_HDD_MEMDUMP_ENABLE */
+#endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
 static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
 {
 	struct nan_callbacks cb_obj = {0};

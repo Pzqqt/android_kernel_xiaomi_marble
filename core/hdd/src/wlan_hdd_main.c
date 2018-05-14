@@ -10483,7 +10483,7 @@ done:
 }
 
 
-#ifdef WLAN_FEATURE_HDD_MEMDUMP_ENABLE
+#ifdef WLAN_FEATURE_MEMDUMP_ENABLE
 /**
  * hdd_state_info_dump() - prints state information of hdd layer
  * @buf: buffer pointer
@@ -10549,11 +10549,11 @@ static void hdd_register_debug_callback(void)
 {
 	qdf_register_debug_callback(QDF_MODULE_ID_HDD, &hdd_state_info_dump);
 }
-#else /* WLAN_FEATURE_HDD_MEMDUMP_ENABLE */
+#else /* WLAN_FEATURE_MEMDUMP_ENABLE */
 static void hdd_register_debug_callback(void)
 {
 }
-#endif /* WLAN_FEATURE_HDD_MEMDUMP_ENABLE */
+#endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
 
 /*
  * wlan_init_bug_report_lock() - Initialize bug report lock
