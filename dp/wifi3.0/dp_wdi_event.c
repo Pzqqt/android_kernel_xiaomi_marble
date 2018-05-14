@@ -300,9 +300,7 @@ dp_wdi_event_detach(struct dp_pdev *txrx_pdev)
 		/* Delete all the subscribers */
 		dp_wdi_event_del_subs(wdi_sub, i);
 	}
-	if (txrx_pdev->wdi_event_list) {
-		qdf_mem_free(txrx_pdev->wdi_event_list);
-	}
+	qdf_mem_free(txrx_pdev->wdi_event_list);
 	return 0;
 }
 #endif /* CONFIG_WIN */
