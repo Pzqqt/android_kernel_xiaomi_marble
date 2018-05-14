@@ -543,10 +543,6 @@ typedef void (*tdls_evt_callback) (void *data,
 				   enum tdls_event_type ev_type,
 				   struct tdls_osif_indication *event);
 
-/* prototype of callback registered by hdd to receive the ack cnf */
-typedef int (*tdls_tx_ack_cnf_callback)(void *user_data,
-					struct tdls_tx_cnf *tx_ack_cnf_cb_data);
-
 /* This callback is used to register TDLS peer with the datapath */
 typedef QDF_STATUS (*tdls_register_peer_callback)(void *userdata,
 						  uint32_t vdev_id,
@@ -577,8 +573,6 @@ typedef QDF_STATUS
  * @tdls_update_dp_vdev_flags: pass CDP_UPDATE_TDLS_FLAGS
  * @tdls_event_cb: tdls event callback
  * @tdls_evt_cb_data: tdls event data
- * @ack_cnf_cb: tdls tx ack callback to indicate the tx status
- * @tx_ack_cnf_cb_data: tdls tx ack user data
  * @tdls_peer_context: userdata for register/deregister TDLS peer
  * @tdls_reg_peer: register tdls peer with datapath
  * @tdls_dereg_peer: deregister tdls peer from datapath
@@ -598,8 +592,6 @@ struct tdls_start_params {
 	void *tdls_wmm_cb_data;
 	tdls_evt_callback tdls_event_cb;
 	void *tdls_evt_cb_data;
-	tdls_tx_ack_cnf_callback ack_cnf_cb;
-	void *tx_ack_cnf_cb_data;
 	void *tdls_peer_context;
 	tdls_register_peer_callback tdls_reg_peer;
 	tdls_deregister_peer_callback tdls_dereg_peer;

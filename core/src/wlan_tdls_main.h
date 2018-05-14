@@ -165,9 +165,7 @@ struct tdls_set_state_info {
  * @tdls_nss_teardown_complete: tdls tear down complete
  * @tdls_nss_transition_mode: tdls nss transition mode
  * @tdls_teardown_peers_cnt: tdls tear down peer count
- * @tdls_tx_cnf_cb: callback registered by hdd to receive the ack cnf
  * @set_state_info: set tdls state info
- * @tx_ack_cnf_cb_data: user data to tdls_tx_cnf_cb
  * @tdls_event_cb: tdls event callback
  * @tdls_evt_cb_data: tdls event user data
  * @tdls_peer_context: userdata for register/deregister TDLS peer
@@ -209,8 +207,6 @@ struct tdls_soc_priv_obj {
 	void *tdls_rx_cb_data;
 	tdls_wmm_check tdls_wmm_cb;
 	void *tdls_wmm_cb_data;
-	tdls_tx_ack_cnf_callback tdls_tx_cnf_cb;
-	void *tx_ack_cnf_cb_data;
 	tdls_evt_callback tdls_event_cb;
 	void *tdls_evt_cb_data;
 	void *tdls_peer_context;
