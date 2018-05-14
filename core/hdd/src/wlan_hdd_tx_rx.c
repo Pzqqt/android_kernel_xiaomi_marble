@@ -115,23 +115,42 @@ void hdd_deregister_hl_netdev_fc_timer(struct hdd_adapter *adapter)
  * hdd_tx_resume_timer_expired_handler() - TX Q resume timer handler
  * @adapter_context: pointer to vdev adapter
  *
- * If Blocked OS Q is not resumed during timeout period, to prevent
- * permanent stall, resume OS Q forcefully.
- *
  * Return: None
  */
 void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 {
 	struct hdd_adapter *adapter = (struct hdd_adapter *)adapter_context;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	u32 p_qpaused;
+	u32 np_qpaused;
 
 	if (!adapter) {
-		/* INVALID ARG */
+		hdd_err("invalid adapter context");
 		return;
 	}
 
 	hdd_debug("Enabling queues");
-	wlan_hdd_netif_queue_control(adapter, WLAN_WAKE_NON_PRIORITY_QUEUE,
-				     WLAN_DATA_FLOW_CONTROL);
+	spin_lock_bh(&adapter->pause_map_lock);
+	p_qpaused = adapter->pause_map & BIT(WLAN_DATA_FLOW_CONTROL_PRIORITY);
+	np_qpaused = adapter->pause_map & BIT(WLAN_DATA_FLOW_CONTROL);
+	spin_unlock_bh(&adapter->pause_map_lock);
+
+	if (p_qpaused) {
+		wlan_hdd_netif_queue_control(adapter,
+					     WLAN_NETIF_PRIORITY_QUEUE_ON,
+					     WLAN_DATA_FLOW_CONTROL_PRIORITY);
+		cdp_hl_fc_set_os_queue_status(soc,
+					      adapter->session_id,
+					      WLAN_NETIF_PRIORITY_QUEUE_ON);
+	}
+	if (np_qpaused) {
+		wlan_hdd_netif_queue_control(adapter,
+					     WLAN_WAKE_NON_PRIORITY_QUEUE,
+					     WLAN_DATA_FLOW_CONTROL);
+		cdp_hl_fc_set_os_queue_status(soc,
+					      adapter->session_id,
+					      WLAN_WAKE_NON_PRIORITY_QUEUE);
+	}
 }
 
 #endif /* QCA_HL_NETDEV_FLOW_CONTROL */

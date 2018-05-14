@@ -5034,6 +5034,35 @@ static int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc,
 	pdev->pause_cb = flowcontrol;
 	return 0;
 }
+
+static int ol_txrx_set_vdev_os_queue_status(u8 vdev_id,
+					    enum netif_action_type action)
+{
+	struct ol_txrx_vdev_t *vdev =
+	(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid vdev_id %d", __func__, vdev_id);
+		return -EINVAL;
+	}
+
+	switch (action) {
+	case WLAN_NETIF_PRIORITY_QUEUE_ON:
+		qdf_spin_lock_bh(&vdev->pdev->tx_mutex);
+		vdev->prio_q_paused = 0;
+		qdf_spin_unlock_bh(&vdev->pdev->tx_mutex);
+		break;
+	case WLAN_WAKE_NON_PRIORITY_QUEUE:
+		qdf_atomic_set(&vdev->os_q_paused, 0);
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid action %d", __func__, action);
+		return -EINVAL;
+	}
+	return 0;
+}
 #endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 
 /**
@@ -6039,7 +6068,8 @@ static struct cdp_lflowctl_ops ol_ops_l_flowctl = {
 	.register_tx_flow_control = ol_txrx_register_hl_flow_control,
 	.vdev_flush = ol_txrx_vdev_flush,
 	.vdev_pause = ol_txrx_vdev_pause,
-	.vdev_unpause = ol_txrx_vdev_unpause
+	.vdev_unpause = ol_txrx_vdev_unpause,
+	.set_vdev_os_queue_status = ol_txrx_set_vdev_os_queue_status
 };
 #else /* QCA_HL_NETDEV_FLOW_CONTROL */
 static struct cdp_lflowctl_ops ol_ops_l_flowctl = { };
