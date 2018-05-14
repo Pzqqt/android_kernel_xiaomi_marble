@@ -6959,7 +6959,7 @@ void lim_update_obss_scanparams(tpPESession session,
 		WNI_CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_STAMIN) &&
 		(scan_params->obssScanPassiveDwell <
 		WNI_CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_STAMAX))
-		session->obss_ht40_scanparam.obss_active_dwelltime =
+		session->obss_ht40_scanparam.obss_passive_dwelltime =
 			scan_params->obssScanPassiveDwell;
 
 	if ((scan_params->bssWidthChannelTransitionDelayFactor >
