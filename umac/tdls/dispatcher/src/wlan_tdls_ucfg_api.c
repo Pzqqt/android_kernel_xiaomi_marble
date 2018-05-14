@@ -204,9 +204,6 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 	soc_obj->tdls_event_cb = req->tdls_event_cb;
 	soc_obj->tdls_evt_cb_data = req->tdls_evt_cb_data;
 
-	soc_obj->tdls_tx_cnf_cb = req->ack_cnf_cb;
-	soc_obj->tx_ack_cnf_cb_data = req->tx_ack_cnf_cb_data;
-
 	/* Save callbacks to register/deregister TDLS sta with datapath */
 	soc_obj->tdls_reg_peer = req->tdls_reg_peer;
 	soc_obj->tdls_dereg_peer = req->tdls_dereg_peer;
@@ -306,9 +303,6 @@ QDF_STATUS ucfg_tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
 
 	soc_obj->tdls_event_cb = NULL;
 	soc_obj->tdls_evt_cb_data = NULL;
-
-	soc_obj->tdls_tx_cnf_cb = NULL;
-	soc_obj->tx_ack_cnf_cb_data = NULL;
 
 	return status;
 }
