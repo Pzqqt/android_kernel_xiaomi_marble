@@ -1229,7 +1229,7 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 		msdu = frag_list_head;
 		if (soc->cdp_soc.ol_ops->rx_frag_tkip_demic) {
 			status = soc->cdp_soc.ol_ops->rx_frag_tkip_demic(
-				peer->ol_peer, msdu, hdr_space);
+				(void *)peer->ctrl_peer, msdu, hdr_space);
 		} else {
 			qdf_mem_copy(key,
 				     &peer->security[index].michael_key[0],

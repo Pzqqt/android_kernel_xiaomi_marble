@@ -1357,6 +1357,8 @@ struct dp_peer {
 	/* VDEV to which this peer is associated */
 	struct dp_vdev *vdev;
 
+	struct cdp_ctrl_objmgr_peer *ctrl_peer;
+
 	struct dp_ast_entry *self_ast_entry;
 
 	qdf_atomic_t ref_cnt;
@@ -1423,9 +1425,6 @@ struct dp_peer {
 	dp_ecm_policy wds_ecm;
 #endif
 	bool delete_in_progress;
-
-	/* Opaque handle to node */
-	void *ol_peer;
 };
 
 #ifdef CONFIG_WIN

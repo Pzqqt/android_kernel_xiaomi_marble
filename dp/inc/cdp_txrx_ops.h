@@ -86,7 +86,7 @@ struct cdp_cmn_ops {
 
 	void *(*txrx_peer_create)
 		(struct cdp_vdev *vdev, uint8_t *peer_mac_addr,
-		 void *ol_peer);
+		 struct cdp_ctrl_objmgr_peer *ctrl_peer);
 
 	void (*txrx_peer_setup)
 		(struct cdp_vdev *vdev_hdl, void *peer_hdl);
@@ -754,7 +754,8 @@ struct ol_if_ops {
 
 	void (*rx_mic_error)(void *ol_soc_handle,
 			 uint16_t vdev_id, void *wh);
-	bool (*rx_frag_tkip_demic)(void *ol_peer, qdf_nbuf_t nbuf,
+	bool (*rx_frag_tkip_demic)(struct wlan_objmgr_peer *ctrl_peer,
+				   qdf_nbuf_t nbuf,
 				   uint16_t hdr_space);
 	uint8_t (*freq_to_channel)(void *ol_soc_handle,  uint16_t vdev_id);
 

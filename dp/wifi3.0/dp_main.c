@@ -62,7 +62,8 @@ static void dp_pkt_log_con_service(struct cdp_pdev *ppdev, void *scn);
 #endif
 static void dp_pktlogmod_exit(struct dp_pdev *handle);
 static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
-				uint8_t *peer_mac_addr, void *ol_peer);
+				uint8_t *peer_mac_addr,
+				struct cdp_ctrl_objmgr_peer *ctrl_peer);
 static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap);
 
 #define DP_INTR_POLL_TIMER_MS	10
@@ -3359,7 +3360,8 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 
 	if (wlan_op_mode_sta == vdev->opmode)
 		dp_peer_create_wifi3((struct cdp_vdev *)vdev,
-						vdev->mac_addr.raw, NULL);
+							vdev->mac_addr.raw,
+							NULL);
 
 	return (struct cdp_vdev *)vdev;
 
@@ -3548,7 +3550,7 @@ static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
  * Return: DP peeer handle on success, NULL on failure
  */
 static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
-		uint8_t *peer_mac_addr, void *ol_peer)
+		uint8_t *peer_mac_addr, struct cdp_ctrl_objmgr_peer *ctrl_peer)
 {
 	struct dp_peer *peer;
 	int i;
@@ -3581,6 +3583,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
 				vdev->vdev_id, peer->mac_addr.raw);
 		}
+		peer->ctrl_peer = ctrl_peer;
 
 		dp_local_peer_id_alloc(pdev, peer);
 		DP_STATS_INIT(peer);
@@ -3612,6 +3615,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 	/* store provided params */
 	peer->vdev = vdev;
+	peer->ctrl_peer = ctrl_peer;
 
 	dp_peer_add_ast(soc, peer, peer_mac_addr, CDP_TXRX_AST_TYPE_STATIC, 0);
 
@@ -3665,7 +3669,6 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 	dp_local_peer_id_alloc(pdev, peer);
 	DP_STATS_INIT(peer);
-	peer->ol_peer = ol_peer;
 	return (void *)peer;
 }
 
@@ -4294,6 +4297,7 @@ static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap)
 	 */
 
 	peer->rx_opt_proc = dp_rx_discard;
+	peer->ctrl_peer = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 		FL("peer %pK (%pM)"),  peer, peer->mac_addr.raw);
