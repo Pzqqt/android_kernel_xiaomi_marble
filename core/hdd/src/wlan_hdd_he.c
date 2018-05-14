@@ -154,20 +154,35 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DCM_TX, he_cap->dcm_enc_tx);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DCM_RX, he_cap->dcm_enc_rx);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MU_PPDU, he_cap->ul_he_mu);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_SU_BEAMFORMER,
-			   he_cap->su_beamformer);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_SU_BEAMFORMEE,
-			   he_cap->su_beamformee);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MU_BEAMFORMER,
-			   he_cap->mu_beamformer);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_BFEE_STS_LT80,
-			   he_cap->bfee_sts_lt_80);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_BFEE_STS_GT80,
-			   he_cap->bfee_sts_gt_80);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NUM_SOUND_LT80,
-			   he_cap->num_sounding_lt_80);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NUM_SOUND_GT80,
-			   he_cap->num_sounding_gt_80);
+
+	if (config->enable_su_tx_bformer) {
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_SU_BEAMFORMER,
+				he_cap->su_beamformer);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NUM_SOUND_LT80,
+				he_cap->num_sounding_lt_80);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NUM_SOUND_GT80,
+				he_cap->num_sounding_gt_80);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MU_BEAMFORMER,
+				he_cap->mu_beamformer);
+	} else {
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_SU_BEAMFORMER, 0);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NUM_SOUND_LT80, 0);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NUM_SOUND_GT80, 0);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MU_BEAMFORMER, 0);
+	}
+
+	if (config->enableTxBF) {
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_SU_BEAMFORMEE,
+				he_cap->su_beamformee);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_BFEE_STS_LT80,
+				he_cap->bfee_sts_lt_80);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_BFEE_STS_GT80,
+				he_cap->bfee_sts_gt_80);
+	} else {
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_SU_BEAMFORMEE, 0);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_BFEE_STS_LT80, 0);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_BFEE_STS_GT80, 0);
+	}
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_SU_FEED_TONE16,
 			   he_cap->su_feedback_tone16);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MU_FEED_TONE16,
