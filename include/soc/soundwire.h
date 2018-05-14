@@ -334,4 +334,7 @@ extern int swr_slvdev_datapath_control(struct swr_device *swr_dev, u8 dev_num,
 extern int swr_remove_from_group(struct swr_device *dev, u8 dev_num);
 
 extern void swr_remove_device(struct swr_device *swr_dev);
+
+extern struct swr_device *get_matching_swr_slave_device(struct device_node *np);
+
 #endif /* _LINUX_SOUNDWIRE_H */
