@@ -116,6 +116,19 @@ int hdd_objmgr_release_and_destroy_psoc(struct hdd_context *hdd_ctx)
 	return qdf_status_to_os_return(status);
 }
 
+void hdd_objmgr_update_tgt_max_vdev_psoc(struct hdd_context *hdd_ctx,
+					 uint8_t max_vdev)
+{
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+
+	if (!psoc) {
+		hdd_err("Psoc NULL");
+		return;
+	}
+
+	wlan_psoc_set_max_vdev_count(psoc, max_vdev);
+}
+
 int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;

@@ -79,6 +79,17 @@ int hdd_objmgr_create_and_store_psoc(struct hdd_context *hdd_ctx,
 int hdd_objmgr_release_and_destroy_psoc(struct hdd_context *hdd_ctx);
 
 /**
+ * hdd_objmgr_update_tgt_max_vdev_psoc() - Update target max vdev number
+ * @hdd_ctx: Hdd context
+ *
+ * This API update target max vdev number to psoc object
+ *
+ * Return: None
+ */
+void hdd_objmgr_update_tgt_max_vdev_psoc(struct hdd_context *hdd_ctx,
+					 uint8_t max_vdev);
+
+/**
  * hdd_objmgr_create_and_store_pdev() - Create pdev and store in hdd context
  * @hdd_ctx: Hdd context
  *

@@ -1874,6 +1874,8 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		}
 	}
 
+	hdd_objmgr_update_tgt_max_vdev_psoc(hdd_ctx, cfg->max_intf_count);
+
 	ret = hdd_green_ap_update_config(hdd_ctx);
 
 	ucfg_ipa_set_dp_handle(hdd_ctx->hdd_psoc,
