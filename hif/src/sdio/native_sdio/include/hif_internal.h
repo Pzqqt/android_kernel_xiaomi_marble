@@ -218,7 +218,6 @@ struct hif_sdio_dev {
 	const struct sdio_device_id *id;
 	struct mmc_host *host;
 	void *htc_context;
-	bool swap_mailbox;
 };
 
 struct HIF_DEVICE_OS_DEVICE_INFO {

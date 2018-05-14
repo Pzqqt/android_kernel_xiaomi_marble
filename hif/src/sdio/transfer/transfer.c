@@ -90,7 +90,7 @@ QDF_STATUS hif_dev_send_buffer(struct hif_sdio_device *pdev, uint32_t xfer_id,
 	QDF_STATUS status;
 	unsigned char *pData;
 	struct hif_sendContext *sctx;
-	uint32_t request = HIF_WR_ASYNC_BLOCK_INC;
+	uint32_t request = hif_get_send_buffer_flags(pdev);
 	uint32_t padded_length, addr = 0;
 	int frag_count = 0, i, count, head_len;
 

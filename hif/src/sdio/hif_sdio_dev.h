@@ -64,5 +64,9 @@ QDF_STATUS hif_dev_get_mbox_address(struct hif_sdio_dev *pdev,
 				    uint32_t config_len);
 
 void hif_dev_get_mbox_block_size(void *config);
+
+void hif_dev_set_mailbox_swap(struct hif_sdio_dev *pdev);
+
+bool hif_dev_get_mailbox_swap(struct hif_sdio_dev *pdev);
 #endif
 #endif /* HIF_SDIO_DEV_H_ */

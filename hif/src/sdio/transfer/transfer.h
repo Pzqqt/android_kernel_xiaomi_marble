@@ -41,6 +41,12 @@
 #include <a_debug.h>
 #include "hif_sdio_internal.h"
 
+#if defined(CONFIG_SDIO_TRANSFER_MAILBOX) && defined(CONFIG_SDIO_TRANSFER_ADMA)
+#error "-----------------------------------------------"
+#error "Error - Both transfer methods cannot be enabled"
+#error "-----------------------------------------------"
+#endif
+
 #define NBUF_ALLOC_FAIL_WAIT_TIME 100
 /* high nibble */
 #define BUNDLE_COUNT_HIGH(f) (((f) & 0x0C) << 2)
@@ -84,4 +90,18 @@ QDF_STATUS hif_dev_process_recv_header(struct hif_sdio_device *pdev,
 				       HTC_PACKET *packet,
 				       uint32_t *next_look_aheads,
 				       int *num_look_aheads);
+#ifdef CONFIG_SDIO_TRANSFER_MAILBOX
+static inline uint32_t hif_get_send_buffer_flags(struct hif_sdio_device *pdev)
+{
+	if (pdev)
+		return (uint32_t)HIF_WR_ASYNC_BLOCK_INC;
+
+	HIF_ERROR("%s: hif obj is null. Not populating xfer flags", __func__);
+
+	return 0;
+}
+#elif defined(CONFIG_SDIO_TRANSFER_ADMA)
+#error "Error - Not implemented yet"
+#endif
+
 #endif /* __TRANSFER_H__ */

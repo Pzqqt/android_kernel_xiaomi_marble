@@ -225,7 +225,7 @@ QDF_STATUS hif_dev_map_service_to_pipe(struct hif_sdio_dev *pdev, uint16_t svc,
 
 	switch (svc) {
 	case HTT_DATA_MSG_SVC:
-		if (pdev->swap_mailbox) {
+		if (hif_dev_get_mailbox_swap(pdev)) {
 			*ul_pipe = 1;
 			*dl_pipe = 0;
 		} else {
@@ -249,7 +249,7 @@ QDF_STATUS hif_dev_map_service_to_pipe(struct hif_sdio_dev *pdev, uint16_t svc,
 		break;
 
 	case WMI_CONTROL_SVC:
-		if (pdev->swap_mailbox) {
+		if (hif_dev_get_mailbox_swap(pdev)) {
 			*ul_pipe = 3;
 			*dl_pipe = 2;
 		} else {
@@ -279,16 +279,16 @@ void hif_dev_mask_interrupts(struct hif_sdio_device *pdev)
 	HIF_ENTER();
 	/* Disable all interrupts */
 	LOCK_HIF_DEV(pdev);
-	pdev->IrqEnableRegisters.int_status_enable = 0;
-	pdev->IrqEnableRegisters.cpu_int_status_enable = 0;
-	pdev->IrqEnableRegisters.error_status_enable = 0;
-	pdev->IrqEnableRegisters.counter_int_status_enable = 0;
+	mboxEnaRegs(pdev).int_status_enable = 0;
+	mboxEnaRegs(pdev).cpu_int_status_enable = 0;
+	mboxEnaRegs(pdev).error_status_enable = 0;
+	mboxEnaRegs(pdev).counter_int_status_enable = 0;
 	UNLOCK_HIF_DEV(pdev);
 
 	/* always synchronous */
 	status = hif_read_write(pdev->HIFDevice,
 				INT_STATUS_ENABLE_ADDRESS,
-				(char *)&pdev->IrqEnableRegisters,
+				(char *)&mboxEnaRegs(pdev),
 				sizeof(struct MBOX_IRQ_ENABLE_REGISTERS),
 				HIF_WR_SYNC_BYTE_INC, NULL);
 
@@ -310,13 +310,13 @@ void hif_dev_unmask_interrupts(struct hif_sdio_device *pdev)
 	/* Enable all the interrupts except for the internal
 	 * AR6000 CPU interrupt
 	 */
-	pdev->IrqEnableRegisters.int_status_enable =
+	mboxEnaRegs(pdev).int_status_enable =
 		INT_STATUS_ENABLE_ERROR_SET(0x01) |
 		INT_STATUS_ENABLE_CPU_SET(0x01)
 		| INT_STATUS_ENABLE_COUNTER_SET(0x01);
 
 	/* enable 2 mboxs INT */
-	pdev->IrqEnableRegisters.int_status_enable |=
+	mboxEnaRegs(pdev).int_status_enable |=
 		INT_STATUS_ENABLE_MBOX_DATA_SET(0x01) |
 		INT_STATUS_ENABLE_MBOX_DATA_SET(0x02);
 
@@ -325,17 +325,17 @@ void hif_dev_unmask_interrupts(struct hif_sdio_device *pdev)
 	 * #0 is used for report assertion from target
 	 * #1 is used for inform host that credit arrived
 	 */
-	pdev->IrqEnableRegisters.cpu_int_status_enable = 0x03;
+	mboxEnaRegs(pdev).cpu_int_status_enable = 0x03;
 
 	/* Set up the Error Interrupt Status Register */
-	pdev->IrqEnableRegisters.error_status_enable =
+	mboxEnaRegs(pdev).error_status_enable =
 		(ERROR_STATUS_ENABLE_RX_UNDERFLOW_SET(0x01)
 		 | ERROR_STATUS_ENABLE_TX_OVERFLOW_SET(0x01)) >> 16;
 
 	/* Set up the Counter Interrupt Status Register
 	 * (only for debug interrupt to catch fatal errors)
 	 */
-	pdev->IrqEnableRegisters.counter_int_status_enable =
+	mboxEnaRegs(pdev).counter_int_status_enable =
 	(COUNTER_INT_STATUS_ENABLE_BIT_SET(AR6K_TARGET_DEBUG_INTR_MASK)) >> 24;
 
 	UNLOCK_HIF_DEV(pdev);
@@ -343,7 +343,7 @@ void hif_dev_unmask_interrupts(struct hif_sdio_device *pdev)
 	/* always synchronous */
 	status = hif_read_write(pdev->HIFDevice,
 				INT_STATUS_ENABLE_ADDRESS,
-				(char *)&pdev->IrqEnableRegisters,
+				(char *)&mboxEnaRegs(pdev),
 				sizeof(struct MBOX_IRQ_ENABLE_REGISTERS),
 				HIF_WR_SYNC_BYTE_INC,
 				NULL);
@@ -895,13 +895,13 @@ static QDF_STATUS hif_dev_service_cpu_interrupt(struct hif_sdio_device *pdev)
 	uint8_t reg_buffer[4];
 	uint8_t cpu_int_status;
 
-	cpu_int_status = pdev->IrqProcRegisters.cpu_int_status &
-			 pdev->IrqEnableRegisters.cpu_int_status_enable;
+	cpu_int_status = mboxProcRegs(pdev).cpu_int_status &
+			 mboxEnaRegs(pdev).cpu_int_status_enable;
 
 	HIF_ERROR("%s: 0x%x", __func__, (uint32_t)cpu_int_status);
 
 	/* Clear the interrupt */
-	pdev->IrqProcRegisters.cpu_int_status &= ~cpu_int_status;
+	mboxProcRegs(pdev).cpu_int_status &= ~cpu_int_status;
 
 	/*set up the register transfer buffer to hit the register
 	 * 4 times , this is done to make the access 4-byte aligned
@@ -954,7 +954,7 @@ static QDF_STATUS hif_dev_service_error_interrupt(struct hif_sdio_device *pdev)
 	uint8_t reg_buffer[4];
 	uint8_t error_int_status = 0;
 
-	error_int_status = pdev->IrqProcRegisters.error_int_status & 0x0F;
+	error_int_status = mboxProcRegs(pdev).error_int_status & 0x0F;
 	HIF_ERROR("%s: 0x%x", __func__, error_int_status);
 
 	if (ERROR_INT_STATUS_WAKEUP_GET(error_int_status))
@@ -967,7 +967,7 @@ static QDF_STATUS hif_dev_service_error_interrupt(struct hif_sdio_device *pdev)
 		HIF_ERROR("%s: Error : Tx Overflow", __func__);
 
 	/* Clear the interrupt */
-	pdev->IrqProcRegisters.error_int_status &= ~error_int_status;
+	mboxProcRegs(pdev).error_int_status &= ~error_int_status;
 
 	/* set up the register transfer buffer to hit the register
 	 * 4 times , this is done to make the access 4-byte
@@ -1033,8 +1033,8 @@ QDF_STATUS hif_dev_service_counter_interrupt(struct hif_sdio_device *pdev)
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_IRQ, ("Counter Interrupt\n"));
 
-	counter_int_status = pdev->IrqProcRegisters.counter_int_status &
-			     pdev->IrqEnableRegisters.counter_int_status_enable;
+	counter_int_status = mboxProcRegs(pdev).counter_int_status &
+			     mboxEnaRegs(pdev).counter_int_status_enable;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_IRQ,
 			("Valid interrupt source in COUNTER_INT_STATUS: 0x%x\n",
@@ -1051,6 +1051,8 @@ QDF_STATUS hif_dev_service_counter_interrupt(struct hif_sdio_device *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+#define RX_LOOAHEAD_GET(pdev, i) \
+	mboxProcRegs(pdev).rx_lookahead[MAILBOX_LOOKAHEAD_SIZE_IN_WORD * i]
 /**
  * hif_dev_process_pending_irqs() - process pending interrupts
  * @pDev: hif sdio device context
@@ -1065,10 +1067,10 @@ QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t host_int_status = 0;
-	uint32_t look_ahead[MAILBOX_USED_COUNT];
+	uint32_t l_ahead[MAILBOX_USED_COUNT];
 	int i;
 
-	qdf_mem_zero(&look_ahead, sizeof(look_ahead));
+	qdf_mem_zero(&l_ahead, sizeof(l_ahead));
 	AR_DEBUG_PRINTF(ATH_DEBUG_IRQ,
 			("+ProcessPendingIRQs: (dev: 0x%lX)\n",
 			 (unsigned long)pdev));
@@ -1080,7 +1082,7 @@ QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 	 * This is a fully schedulable context.
 	 */
 	do {
-		if (pdev->IrqEnableRegisters.int_status_enable == 0) {
+		if (mboxEnaRegs(pdev).int_status_enable == 0) {
 			/* interrupt enables have been cleared, do not try
 			 * to process any pending interrupts that
 			 * may result in more bus transactions.
@@ -1090,8 +1092,8 @@ QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 		}
 		status = hif_read_write(pdev->HIFDevice,
 					HOST_INT_STATUS_ADDRESS,
-					(uint8_t *)&pdev->IrqProcRegisters,
-					sizeof(pdev->IrqProcRegisters),
+					(uint8_t *)&mboxProcRegs(pdev),
+					sizeof(mboxProcRegs(pdev)),
 					HIF_RD_SYNC_BYTE_INC, NULL);
 
 		if (QDF_IS_STATUS_ERROR(status))
@@ -1099,37 +1101,33 @@ QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 
 		if (AR_DEBUG_LVL_CHECK(ATH_DEBUG_IRQ)) {
 			hif_dev_dump_registers(pdev,
-					       &pdev->IrqProcRegisters,
-					       &pdev->IrqEnableRegisters,
-					       &pdev->MailBoxCounterRegisters);
+					       &mboxProcRegs(pdev),
+					       &mboxEnaRegs(pdev),
+					       &mboxCountRegs(pdev));
 		}
 
 		/* Update only those registers that are enabled */
-		host_int_status = pdev->IrqProcRegisters.host_int_status
-				  & pdev->IrqEnableRegisters.int_status_enable;
+		host_int_status = mboxProcRegs(pdev).host_int_status
+				  & mboxEnaRegs(pdev).int_status_enable;
 
 		/* only look at mailbox status if the HIF layer did not
 		 * provide this function, on some HIF interfaces reading
 		 * the RX lookahead is not valid to do
 		 */
 		for (i = 0; i < MAILBOX_USED_COUNT; i++) {
-			look_ahead[i] = 0;
+			l_ahead[i] = 0;
 			if (host_int_status & (1 << i)) {
 				/* mask out pending mailbox value, we use
 				 * "lookAhead" as the real flag for
 				 * mailbox processing below
 				 */
 				host_int_status &= ~(1 << i);
-				if (pdev->IrqProcRegisters.
+				if (mboxProcRegs(pdev).
 				    rx_lookahead_valid & (1 << i)) {
 					/* mailbox has a message and the
 					 * look ahead is valid
 					 */
-					look_ahead[i] =
-						pdev->
-						IrqProcRegisters.rx_lookahead[
-						MAILBOX_LOOKAHEAD_SIZE_IN_WORD *
-						i];
+					l_ahead[i] = RX_LOOAHEAD_GET(pdev, i);
 				}
 			}
 		} /*end of for loop */
@@ -1142,7 +1140,7 @@ QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 			break;
 
 		for (i = 0; i < MAILBOX_USED_COUNT; i++) {
-			if (look_ahead[i] != 0) {
+			if (l_ahead[i] != 0) {
 				bLookAheadValid = true;
 				break;
 			}
@@ -1160,11 +1158,11 @@ QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 			for (i = 0; i < MAILBOX_USED_COUNT; i++) {
 				int fetched = 0;
 
-				if (look_ahead[i] == 0)
+				if (l_ahead[i] == 0)
 					continue;
 				AR_DEBUG_PRINTF(ATH_DEBUG_IRQ,
 						("mbox[%d],lookahead:0x%X\n",
-						i, look_ahead[i]));
+						i, l_ahead[i]));
 				/* Mailbox Interrupt, the HTC layer may issue
 				 * async requests to empty the mailbox...
 				 * When emptying the recv mailbox we use the
@@ -1176,7 +1174,7 @@ QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 				 */
 				status = hif_dev_recv_message_pending_handler(
 							pdev, i,
-							&look_ahead
+							&l_ahead
 							[i], 1,
 							async_processing,
 							&fetched);

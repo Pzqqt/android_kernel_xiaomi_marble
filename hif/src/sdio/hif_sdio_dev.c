@@ -40,7 +40,6 @@
 #include "if_sdio.h"
 #include "regtable_sdio.h"
 
-
 /**
  * hif_dev_alloc_rx_buffer() - allocate rx buffer.
  * @pDev: sdio device context
@@ -291,6 +290,40 @@ QDF_STATUS hif_dev_dsr_handler(void *context)
 
 	HIF_EXIT();
 	return status;
+}
+
+/** hif_dev_set_mailbox_swap() - Set the mailbox swap from firmware
+ * @pdev : The HIF layer object
+ *
+ * Return: none
+ */
+void hif_dev_set_mailbox_swap(struct hif_sdio_dev *pdev)
+{
+	struct hif_sdio_device *hif_device = hif_dev_from_hif(pdev);
+
+	HIF_ENTER();
+
+	hif_device->swap_mailbox = true;
+
+	HIF_EXIT();
+}
+
+/** hif_dev_get_mailbox_swap() - Get the mailbox swap setting
+ * @pdev : The HIF layer object
+ *
+ * Return: none
+ */
+bool hif_dev_get_mailbox_swap(struct hif_sdio_dev *pdev)
+{
+	struct hif_sdio_device *hif_device;
+
+	HIF_ENTER();
+
+	hif_device = hif_dev_from_hif(pdev);
+
+	HIF_EXIT();
+
+	return hif_device->swap_mailbox;
 }
 
 /**

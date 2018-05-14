@@ -43,12 +43,12 @@
 #include "pld_sdio.h"
 #include "targaddrs.h"
 #include "sdio_api.h"
+#include <hif_sdio_dev.h>
 #ifndef REMOVE_PKT_LOG
 #include "ol_txrx_types.h"
 #include "pktlog_ac_api.h"
 #include "pktlog_ac.h"
 #endif
-
 #ifndef ATH_BUS_PM
 #ifdef CONFIG_PM
 #define ATH_BUS_PM
@@ -500,7 +500,7 @@ void hif_sdio_set_mailbox_swap(struct hif_softc *hif_sc)
 	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_sc);
 	struct hif_sdio_dev *hif_device = scn->hif_handle;
 
-	hif_device->swap_mailbox = true;
+	hif_dev_set_mailbox_swap(hif_device);
 }
 
 /**

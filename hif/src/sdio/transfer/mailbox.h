@@ -88,5 +88,4 @@ struct devRegisters {
 #define DEV_REGISTERS_SIZE	(sizeof(struct MBOX_IRQ_PROC_REGISTERS) + \
 				 sizeof(struct MBOX_IRQ_ENABLE_REGISTERS) + \
 				 sizeof(struct MBOX_COUNTER_REGISTERS))
-
 #endif /* _MAILBOX_H_ */
