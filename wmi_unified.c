@@ -2193,6 +2193,10 @@ void *wmi_unified_attach(void *scn_handle,
 				param->rx_ops->wma_process_fw_event_handler_cbk;
 	wmi_handle->target_type = param->target_type;
 	soc->target_type = param->target_type;
+
+	if (param->target_type >= WMI_MAX_TARGET_TYPE)
+		goto error;
+
 	if (wmi_attach_register[param->target_type]) {
 		wmi_attach_register[param->target_type](wmi_handle);
 	} else {
