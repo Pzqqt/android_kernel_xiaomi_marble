@@ -24,18 +24,6 @@
 #include "qdf_trace.h"
 #include "qdf_util.h"
 
-void qdf_flex_mem_init(struct qdf_flex_mem_pool *pool)
-{
-	qdf_spinlock_create(&pool->lock);
-}
-qdf_export_symbol(qdf_flex_mem_init);
-
-void qdf_flex_mem_deinit(struct qdf_flex_mem_pool *pool)
-{
-	qdf_spinlock_destroy(&pool->lock);
-}
-qdf_export_symbol(qdf_flex_mem_deinit);
-
 static struct qdf_flex_mem_segment *
 qdf_flex_mem_seg_alloc(struct qdf_flex_mem_pool *pool)
 {
@@ -49,9 +37,31 @@ qdf_flex_mem_seg_alloc(struct qdf_flex_mem_pool *pool)
 
 	seg->dynamic = true;
 	seg->bytes = (uint8_t *)(seg + 1);
+	seg->used_bitmap = 0;
+	qdf_list_insert_back(&pool->seg_list, &seg->node);
 
 	return seg;
 }
+
+void qdf_flex_mem_init(struct qdf_flex_mem_pool *pool)
+{
+	int i;
+
+	qdf_spinlock_create(&pool->lock);
+
+	for (i = 0; i < pool->reduction_limit; i++)
+		qdf_flex_mem_seg_alloc(pool);
+}
+qdf_export_symbol(qdf_flex_mem_init);
+
+void qdf_flex_mem_deinit(struct qdf_flex_mem_pool *pool)
+{
+	qdf_flex_mem_release(pool);
+	QDF_BUG(!qdf_list_size(&pool->seg_list));
+
+	qdf_spinlock_destroy(&pool->lock);
+}
+qdf_export_symbol(qdf_flex_mem_deinit);
 
 static void *__qdf_flex_mem_alloc(struct qdf_flex_mem_pool *pool)
 {
@@ -79,7 +89,6 @@ static void *__qdf_flex_mem_alloc(struct qdf_flex_mem_pool *pool)
 		return NULL;
 
 	seg->used_bitmap = 1;
-	qdf_list_insert_back(&pool->seg_list, &seg->node);
 
 	return seg->bytes;
 }
