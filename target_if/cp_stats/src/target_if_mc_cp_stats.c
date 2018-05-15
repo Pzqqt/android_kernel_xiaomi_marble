@@ -54,6 +54,8 @@ static void target_if_cp_stats_free_stats_event(struct stats_event *ev)
 	ev->pdev_stats = NULL;
 	qdf_mem_free(ev->peer_stats);
 	ev->peer_stats = NULL;
+	qdf_mem_free(ev->cca_stats);
+	ev->cca_stats = NULL;
 }
 
 static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
@@ -130,6 +132,33 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS target_if_cp_stats_extract_cca_stats(
+					struct wmi_unified *wmi_hdl,
+					wmi_host_stats_event *stats_param,
+					struct stats_event *ev, uint8_t *data)
+{
+	QDF_STATUS status;
+	struct wmi_host_congestion_stats stats = {0};
+
+	status = wmi_extract_cca_stats(wmi_hdl, data, &stats);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_debug("no congestion stats");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	ev->cca_stats = qdf_mem_malloc(sizeof(*ev->cca_stats));
+	if (!ev->cca_stats) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+
+	ev->cca_stats->vdev_id = stats.vdev_id;
+	ev->cca_stats->congestion = stats.congestion;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 						   struct stats_event *ev,
 						   uint8_t *data)
@@ -153,6 +182,11 @@ static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 
 	status = target_if_cp_stats_extract_peer_stats(wmi_hdl, &stats_param,
 						       ev, data);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = target_if_cp_stats_extract_cca_stats(wmi_hdl, &stats_param,
+						      ev, data);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
@@ -216,34 +250,77 @@ static void target_if_cp_stats_inc_wake_lock_stats(uint32_t reason,
 	case WOW_REASON_UNSPECIFIED:
 		(*unspecified_wake_count)++;
 		break;
+
+	case WOW_REASON_ASSOC_REQ_RECV:
+		stats->mgmt_assoc++;
+		break;
+
+	case WOW_REASON_DISASSOC_RECVD:
+		stats->mgmt_disassoc++;
+		break;
+
+	case WOW_REASON_ASSOC_RES_RECV:
+		stats->mgmt_assoc_resp++;
+		break;
+
+	case WOW_REASON_REASSOC_REQ_RECV:
+		stats->mgmt_reassoc++;
+		break;
+
+	case WOW_REASON_REASSOC_RES_RECV:
+		stats->mgmt_reassoc_resp++;
+		break;
+
+	case WOW_REASON_AUTH_REQ_RECV:
+		stats->mgmt_auth++;
+		break;
+
+	case WOW_REASON_DEAUTH_RECVD:
+		stats->mgmt_deauth++;
+		break;
+
+	case WOW_REASON_ACTION_FRAME_RECV:
+		stats->mgmt_action++;
+		break;
+
 	case WOW_REASON_RA_MATCH:
 		stats->ipv6_mcast_wake_up_count++;
 		stats->ipv6_mcast_ra_stats++;
 		stats->icmpv6_count++;
 		break;
+
 	case WOW_REASON_NLOD:
 		stats->pno_match_wake_up_count++;
 		break;
+
 	case WOW_REASON_NLO_SCAN_COMPLETE:
 		stats->pno_complete_wake_up_count++;
 		break;
+
 	case WOW_REASON_LOW_RSSI:
 		stats->low_rssi_wake_up_count++;
 		break;
+
 	case WOW_REASON_EXTSCAN:
 		stats->gscan_wake_up_count++;
 		break;
+
 	case WOW_REASON_RSSI_BREACH_EVENT:
 		stats->rssi_breach_wake_up_count++;
 		break;
+
 	case WOW_REASON_OEM_RESPONSE_EVENT:
 		stats->oem_response_wake_up_count++;
+		break;
+
 	case WOW_REASON_11D_SCAN:
 		stats->scan_11d++;
 		break;
+
 	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
 		stats->pwr_save_fail_detected++;
 		break;
+
 	default:
 		break;
 	}

@@ -280,10 +280,9 @@ static QDF_STATUS wlan_objmgr_peer_obj_destroy(struct wlan_objmgr_peer *peer)
 		      QDF_MAC_ADDR_ARRAY(macaddr));
 
 	if (peer->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
-		obj_mgr_err(
-		"peer(%02x:%02x:%02x:%02x:%02x:%02x) object del is not invoked",
-			macaddr[0], macaddr[1], macaddr[2],
-			macaddr[3], macaddr[4], macaddr[5]);
+		obj_mgr_err("PEER object del is not invoked obj_state:%d peer "
+			    QDF_MAC_ADDR_STR, peer->obj_state,
+			    QDF_MAC_ADDR_ARRAY(macaddr));
 		WLAN_OBJMGR_BUG(0);
 	}
 

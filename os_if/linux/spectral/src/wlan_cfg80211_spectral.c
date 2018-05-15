@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -549,7 +549,7 @@ int wlan_cfg80211_spectral_scan_get_cap(struct wiphy *wiphy,
 
 	wlan_spectral_get_cap(pdev, &spectral_cap);
 
-	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, 4 * sizeof(u32) +
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, 5 * sizeof(u32) +
 		NLA_HDRLEN + NLMSG_HDRLEN);
 	if (!skb) {
 		qdf_print(" reply skb alloc failed");
@@ -578,7 +578,14 @@ int wlan_cfg80211_spectral_scan_get_cap(struct wiphy *wiphy,
 		skb,
 		QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_ADVANCED_SPECTRAL))
 			goto fail;
+
+	if (nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_HW_GEN,
+			spectral_cap.hw_gen))
+		goto fail;
+
 	cfg80211_vendor_cmd_reply(skb);
+
 	return 0;
 
 fail:

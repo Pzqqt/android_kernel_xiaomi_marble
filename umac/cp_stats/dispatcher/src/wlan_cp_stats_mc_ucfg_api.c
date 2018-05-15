@@ -532,10 +532,28 @@ QDF_STATUS ucfg_mc_cp_stats_get_pending_req(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS ucfg_mc_cp_stats_cca_stats_get(struct wlan_objmgr_vdev *vdev,
+					  struct cca_stats *cca_stats)
+{
+	struct vdev_cp_stats *vdev_cp_stats_priv;
+	struct vdev_mc_cp_stats *vdev_mc_stats;
+
+	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (!vdev_cp_stats_priv) {
+		cp_stats_err("vdev cp stats object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
+	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
+	cca_stats->congestion = vdev_mc_stats->cca.congestion;
+	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+	return QDF_STATUS_SUCCESS;
+}
+
 void ucfg_mc_cp_stats_free_stats_resources(struct stats_event *ev)
 {
 	qdf_mem_free(ev->pdev_stats);
 	qdf_mem_free(ev->peer_stats);
 	qdf_mem_zero(ev, sizeof(*ev));
 }
-

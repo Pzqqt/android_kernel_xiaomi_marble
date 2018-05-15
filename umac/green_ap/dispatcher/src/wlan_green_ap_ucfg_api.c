@@ -216,11 +216,12 @@ QDF_STATUS ucfg_green_ap_config(struct wlan_objmgr_pdev *pdev, uint8_t val)
 	}
 
 	if (val) {
-	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+		struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+
 		wlan_objmgr_pdev_iterate_obj_list(pdev,
 					WLAN_VDEV_OP,
 					wlan_green_ap_check_mode,
-					&flag, 0, WLAN_OBJMGR_ID);
+					&flag, 0, WLAN_GREEN_AP_ID);
 		if (flag == 1) {
 			green_ap_err("Radio not in AP mode."
 					"Feature not supported");
@@ -237,7 +238,8 @@ QDF_STATUS ucfg_green_ap_config(struct wlan_objmgr_pdev *pdev, uint8_t val)
 
 		ucfg_green_ap_set_ps_config(pdev, val);
 
-		if (wlan_util_is_vap_active(pdev) == QDF_STATUS_SUCCESS)
+		if (wlan_util_is_vap_active(pdev, WLAN_GREEN_AP_ID) ==
+					    QDF_STATUS_SUCCESS)
 			wlan_green_ap_start(pdev);
 	} else {
 		wlan_green_ap_stop(pdev);

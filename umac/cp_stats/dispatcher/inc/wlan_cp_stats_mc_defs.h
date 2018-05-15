@@ -73,6 +73,14 @@ enum stats_req_type {
  * @oem_response_wake_up_count: oem response wakeup count
  * @pwr_save_fail_detected:     pwr save fail detected wakeup count
  * @scan_11d                    11d scan wakeup count
+ * @mgmt_assoc: association request management frame
+ * @mgmt_disassoc: disassociation management frame
+ * @mgmt_assoc_resp: association response management frame
+ * @mgmt_reassoc: reassociate request management frame
+ * @mgmt_reassoc_resp: reassociate response management frame
+ * @mgmt_auth: authentication managament frame
+ * @mgmt_deauth: deauthentication management frame
+ * @mgmt_action: action managament frame
  */
 struct wake_lock_stats {
 	uint32_t ucast_wake_up_count;
@@ -92,6 +100,14 @@ struct wake_lock_stats {
 	uint32_t oem_response_wake_up_count;
 	uint32_t pwr_save_fail_detected;
 	uint32_t scan_11d;
+	uint32_t mgmt_assoc;
+	uint32_t mgmt_disassoc;
+	uint32_t mgmt_assoc_resp;
+	uint32_t mgmt_reassoc;
+	uint32_t mgmt_reassoc_resp;
+	uint32_t mgmt_auth;
+	uint32_t mgmt_deauth;
+	uint32_t mgmt_action;
 };
 
 struct stats_event;
@@ -126,6 +142,16 @@ struct pending_stats_requests {
 };
 
 /**
+ * struct cca_stats - cca stats
+ * @congestion: the congestion percentage = (busy_time/total_time)*100
+ *    for the interval from when the vdev was started to the current time
+ *    (or the time at which the vdev was stopped).
+ */
+struct cca_stats {
+	uint32_t congestion;
+};
+
+/**
  * struct psoc_mc_cp_stats: psoc specific stats
  * @pending: details of pending requests
  * @wow_unspecified_wake_up_count: number of non-wow related wake ups
@@ -144,11 +170,13 @@ struct pdev_mc_cp_stats {
 };
 
 /**
- * struct vdev_mc_cp_stats -    vdev specific stats
- * @wow_stats:                  wake_lock stats for vdev
+ * struct vdev_mc_cp_stats - vdev specific stats
+ * @wow_stats: wake_lock stats for vdev
+ * @cca: cca stats
  */
 struct vdev_mc_cp_stats {
 	struct wake_lock_stats wow_stats;
+	struct cca_stats cca;
 };
 
 /**
@@ -166,17 +194,29 @@ struct peer_mc_cp_stats {
 };
 
 /**
+ * struct congestion_stats_event: congestion stats event param
+ * @vdev_id: vdev_id of the event
+ * @congestion: the congestion percentage
+ */
+struct congestion_stats_event {
+	uint8_t vdev_id;
+	uint32_t congestion;
+};
+
+/**
  * struct stats_event - parameters populated by stats event
  * @num_pdev_stats: num pdev stats
  * @pdev_stats: if populated array indicating pdev stats (index = pdev_id)
  * @num_peer_stats: num peer stats
  * @peer_stats: if populated array indicating peer stats
+ * @cca_stats: if populated indicates congestion stats
  */
 struct stats_event {
 	uint32_t num_pdev_stats;
 	struct pdev_mc_cp_stats *pdev_stats;
 	uint32_t num_peer_stats;
 	struct peer_mc_cp_stats *peer_stats;
+	struct congestion_stats_event *cca_stats;
 };
 
 #endif /* CONFIG_MCL */

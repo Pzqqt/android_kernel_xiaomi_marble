@@ -332,8 +332,10 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t *rx_tlv_start;
 	uint32_t tlv_status = HAL_TLV_STATUS_BUF_DONE;
 	QDF_STATUS m_copy_status = QDF_STATUS_SUCCESS;
+	struct cdp_pdev_mon_stats *rx_mon_stats;
 
 	ppdu_info = &pdev->ppdu_info;
+	rx_mon_stats = &pdev->rx_mon_stats;
 
 	if (pdev->mon_ppdu_status != DP_PPDU_STATUS_START)
 		return;
@@ -356,6 +358,10 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 			do {
 				tlv_status = hal_rx_status_get_tlv_info(rx_tlv,
 						ppdu_info);
+
+				dp_rx_mon_update_dbg_ppdu_stats(ppdu_info,
+								rx_mon_stats);
+
 				rx_tlv = hal_rx_status_get_next_tlv(rx_tlv);
 
 				if ((rx_tlv - rx_tlv_start) >= RX_BUFFER_SIZE)
@@ -374,6 +380,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 		}
 
 		if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
+			rx_mon_stats->status_ppdu_done++;
 			if (pdev->enhanced_stats_en ||
 					pdev->mcopy_mode)
 				dp_rx_handle_ppdu_stats(soc, pdev, ppdu_info);
@@ -831,8 +838,15 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
 
 	pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 	pdev->ppdu_info.com_info.last_ppdu_id = 0;
+
 	qdf_mem_zero(&(pdev->ppdu_info.rx_status),
 		sizeof(pdev->ppdu_info.rx_status));
+
+	qdf_mem_zero(&pdev->rx_mon_stats,
+		     sizeof(pdev->rx_mon_stats));
+
+	dp_rx_mon_init_dbg_ppdu_stats(&pdev->ppdu_info,
+				      &pdev->rx_mon_stats);
 
 	return QDF_STATUS_SUCCESS;
 }

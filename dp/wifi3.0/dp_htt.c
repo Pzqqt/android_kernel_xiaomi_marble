@@ -3065,31 +3065,6 @@ htt_soc_detach(void *htt_soc)
 	qdf_mem_free(soc);
 }
 
-/*
- * dp_get_pdev_mask_for_channel_id() - Retrieve pdev_id mask based on channel
- * information
- * @pdev - DP PDEV Handle
- * @channel - frequency
- *
- * Return - Pdev_id mask
- */
-static inline
-uint8_t dp_get_pdev_mask_for_channel_id(struct dp_pdev *pdev, uint8_t channel)
-{
-	uint8_t pdev_mask = 0;
-
-	if (!channel)
-		return 1 << (pdev->pdev_id + 1);
-
-	else if (channel && WLAN_CHAN_IS_5GHZ(channel))
-		pdev_mask = 0;
-
-	else if (channel && WLAN_CHAN_IS_2GHZ(channel))
-		pdev_mask = 1;
-
-	return 1 << (pdev_mask + 1);
-}
-
 /**
  * dp_h2t_ext_stats_msg_send(): function to contruct HTT message to pass to FW
  * @pdev: DP PDEV handle
@@ -3098,6 +3073,7 @@ uint8_t dp_get_pdev_mask_for_channel_id(struct dp_pdev *pdev, uint8_t channel)
  * @config_param_1: extra configuration parameters
  * @config_param_2: extra configuration parameters
  * @config_param_3: extra configuration parameters
+ * @mac_id: mac number
  *
  * return: QDF STATUS
  */
@@ -3105,7 +3081,7 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 		uint32_t stats_type_upload_mask, uint32_t config_param_0,
 		uint32_t config_param_1, uint32_t config_param_2,
 		uint32_t config_param_3, int cookie_val, int cookie_msb,
-		uint8_t channel)
+		uint8_t mac_id)
 {
 	struct htt_soc *soc = pdev->soc->htt_handle;
 	struct dp_htt_htc_pkt *pkt;
@@ -3127,8 +3103,9 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 	 * Bit 2: Pdev stats for pdev id 1
 	 * Bit 3: Pdev stats for pdev id 2
 	 */
-	pdev_mask = dp_get_pdev_mask_for_channel_id(pdev, channel);
+	mac_id = dp_get_mac_id_for_pdev(mac_id, pdev->pdev_id);
 
+	pdev_mask = 1 << DP_SW2HW_MACID(mac_id);
 	/*
 	 * Set the length of the message.
 	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added

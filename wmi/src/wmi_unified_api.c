@@ -7482,3 +7482,15 @@ wmi_host_channel_width wmi_get_ch_width_from_phy_mode(void *wmi_hdl,
 	else
 		return WMI_HOST_CHAN_WIDTH_20;
 }
+
+#ifdef QCA_SUPPORT_CP_STATS
+QDF_STATUS wmi_extract_cca_stats(wmi_unified_t wmi_handle, void *evt_buf,
+				 struct wmi_host_congestion_stats *stats)
+{
+	if (wmi_handle->ops->extract_cca_stats)
+		return wmi_handle->ops->extract_cca_stats(wmi_handle, evt_buf,
+							  stats);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* QCA_SUPPORT_CP_STATS */

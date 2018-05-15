@@ -185,5 +185,15 @@ QDF_STATUS ucfg_mc_cp_stats_get_pending_req(struct wlan_objmgr_psoc *psoc,
  */
 void ucfg_mc_cp_stats_free_stats_resources(struct stats_event *ev);
 
+/**
+ * ucfg_mc_cp_stats_cca_stats_get() - API to fetch cca stats
+ * @vdev: pointer to vdev object
+ * @cca_stats: pointer to cca info
+ *
+ * Return - status of operation
+ */
+QDF_STATUS ucfg_mc_cp_stats_cca_stats_get(struct wlan_objmgr_vdev *vdev,
+					  struct cca_stats *cca_stats);
+
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_MC_UCFG_API_H__ */

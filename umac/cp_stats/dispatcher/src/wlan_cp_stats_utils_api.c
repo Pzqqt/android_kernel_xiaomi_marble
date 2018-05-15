@@ -233,6 +233,25 @@ QDF_STATUS wlan_cp_stats_open(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS wlan_cp_stats_close(struct wlan_objmgr_psoc *psoc)
 {
+	struct cp_stats_context *csc;
+
+	if (!psoc) {
+		cp_stats_err("PSOC is null!");
+		return QDF_STATUS_E_INVAL;
+	}
+	csc =
+	wlan_objmgr_psoc_get_comp_private_obj(psoc, WLAN_UMAC_COMP_CP_STATS);
+	if (csc && csc->cp_stats_close) {
+		csc->cp_stats_close(psoc);
+		qdf_spinlock_destroy(&csc->csc_lock);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/* WMI registrations stage */
+QDF_STATUS wlan_cp_stats_enable(struct wlan_objmgr_psoc *psoc)
+{
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct cp_stats_context *csc;
 
@@ -247,30 +266,6 @@ QDF_STATUS wlan_cp_stats_close(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (csc->cp_stats_close)
-		status = csc->cp_stats_close(psoc);
-
-	qdf_spinlock_destroy(&csc->csc_lock);
-	return status;
-}
-
-/* WMI registrations stage */
-QDF_STATUS wlan_cp_stats_enable(struct wlan_objmgr_psoc *psoc)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct cp_stats_context *csc;
-
-	if (!psoc) {
-		cp_stats_err("PSOC is null!\n");
-		return QDF_STATUS_E_INVAL;
-	}
-	csc =
-	wlan_objmgr_psoc_get_comp_private_obj(psoc, WLAN_UMAC_COMP_CP_STATS);
-	if (!csc) {
-		cp_stats_err("cp_stats_context is null!\n");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	if (csc->cp_stats_enable)
 		status = csc->cp_stats_enable(psoc);
 
@@ -279,7 +274,6 @@ QDF_STATUS wlan_cp_stats_enable(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS wlan_cp_stats_disable(struct wlan_objmgr_psoc *psoc)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct cp_stats_context *csc;
 
 	if (!psoc) {
@@ -288,15 +282,10 @@ QDF_STATUS wlan_cp_stats_disable(struct wlan_objmgr_psoc *psoc)
 	}
 	csc =
 	wlan_objmgr_psoc_get_comp_private_obj(psoc, WLAN_UMAC_COMP_CP_STATS);
-	if (!csc) {
-		cp_stats_err("cp_stats_context is null!\n");
-		return QDF_STATUS_E_FAILURE;
-	}
+	if (csc && csc->cp_stats_disable)
+		csc->cp_stats_disable(psoc);
 
-	if (csc->cp_stats_disable)
-		status = csc->cp_stats_disable(psoc);
-
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS

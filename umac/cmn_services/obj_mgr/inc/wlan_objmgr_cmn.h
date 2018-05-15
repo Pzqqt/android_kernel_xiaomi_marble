@@ -216,6 +216,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_INIT_DEINIT_ID:        Init deinit module
  * @WLAN_IPA_ID:                IPA operations
  * @WLAN_CP_STATS_ID:           Control Plane Statistics Module
+ * @WLAN_GREEN_AP_ID:           Green AP operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -261,6 +262,7 @@ typedef enum {
 	WLAN_INIT_DEINIT_ID   = 36,
 	WLAN_IPA_ID           = 37,
 	WLAN_CP_STATS_ID      = 38,
+	WLAN_GREEN_AP_ID      = 39,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -313,6 +315,7 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_INIT_DEINIT_ID",
 					"WLAN_IPA_ID",
 					"WLAN_CP_STATS_ID",
+					"WLAN_GREEN_AP_ID",
 					"WLAN_REF_ID_MAX" };
 
 	return (char *)strings[id];

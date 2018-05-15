@@ -947,7 +947,9 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t mcc_to_scc_switch;
-	uint8_t operating_channel, vdev_id;
+	uint8_t operating_channel[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
+	uint32_t cc_count = 0;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -955,11 +957,13 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 		return;
 	}
 
-	if (policy_mgr_get_mode_specific_conn_info(psoc, &operating_channel,
-						&vdev_id, PM_STA_MODE)) {
-		policy_mgr_debug("STA operating Channel: %u",
-				operating_channel);
-	} else {
+	/*
+	 * force SCC with STA+STA+SAP will need some additional logic
+	 */
+	cc_count = policy_mgr_get_mode_specific_conn_info(psoc,
+					&operating_channel[cc_count],
+					&vdev_id[cc_count], PM_STA_MODE);
+	if (!cc_count) {
 		policy_mgr_err("Could not get STA operating channel&vdevid");
 		return;
 	}
@@ -967,7 +971,7 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 	mcc_to_scc_switch =
 		policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(psoc);
 	policy_mgr_info("MCC to SCC switch: %d chan: %d",
-			mcc_to_scc_switch, operating_channel);
+			mcc_to_scc_switch, operating_channel[0]);
 
 	if (!policy_mgr_is_restart_sap_allowed(psoc, mcc_to_scc_switch)) {
 		policy_mgr_debug(
@@ -976,7 +980,7 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 	}
 
 	if ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
-		policy_mgr_valid_sta_channel_check(psoc, operating_channel)
+		policy_mgr_valid_sta_channel_check(psoc, operating_channel[0])
 		&& !pm_ctx->sta_ap_intf_check_work_info) {
 		struct sta_ap_intf_check_work_ctx *work_info;
 		work_info = qdf_mem_malloc(

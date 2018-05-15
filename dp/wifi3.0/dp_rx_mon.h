@@ -50,4 +50,101 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 
 uint32_t dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t quota);
+
+#ifndef REMOVE_MON_DBG_STATS
+/*
+ * dp_rx_mon_update_dbg_ppdu_stats() - Update status ring TLV count
+ * @ppdu_info: HAL RX PPDU info retrieved from status ring TLV
+ * @rx_mon_stats: monitor mode status/destination ring PPDU and MPDU count
+ *
+ * Update status ring PPDU start and end count. Keep track TLV state on
+ * PPDU start and end to find out if start and end is matching. Keep
+ * track missing PPDU start and end count. Keep track matching PPDU
+ * start and end count.
+ *
+ * Return: None
+ */
+static inline void
+dp_rx_mon_update_dbg_ppdu_stats(struct hal_rx_ppdu_info *ppdu_info,
+				struct cdp_pdev_mon_stats *rx_mon_stats)
+{
+	if (ppdu_info->rx_state ==
+		HAL_RX_MON_PPDU_START) {
+		rx_mon_stats->status_ppdu_start++;
+		if (rx_mon_stats->status_ppdu_state
+			!= CDP_MON_PPDU_END)
+			rx_mon_stats->status_ppdu_end_mis++;
+		rx_mon_stats->status_ppdu_state
+			= CDP_MON_PPDU_START;
+	} else if (ppdu_info->rx_state ==
+		HAL_RX_MON_PPDU_END) {
+		rx_mon_stats->status_ppdu_end++;
+		if (rx_mon_stats->status_ppdu_state
+			!= CDP_MON_PPDU_START)
+			rx_mon_stats->status_ppdu_start_mis++;
+		else
+			rx_mon_stats->status_ppdu_compl++;
+		rx_mon_stats->status_ppdu_state
+			= CDP_MON_PPDU_END;
+	}
+}
+
+/*
+ * dp_rx_mon_init_dbg_ppdu_stats() - initialization for monitor mode stats
+ * @ppdu_info: HAL RX PPDU info retrieved from status ring TLV
+ * @rx_mon_stats: monitor mode status/destination ring PPDU and MPDU count
+ *
+ * Return: None
+ */
+static inline void
+dp_rx_mon_init_dbg_ppdu_stats(struct hal_rx_ppdu_info *ppdu_info,
+			      struct cdp_pdev_mon_stats *rx_mon_stats)
+{
+	ppdu_info->rx_state = HAL_RX_MON_PPDU_END;
+	rx_mon_stats->status_ppdu_state
+		= CDP_MON_PPDU_END;
+}
+
+/*
+ * dp_rx_mon_dbg_dbg_ppdu_stats() - Print monitor mode status ring stats
+ * @ppdu_info: HAL RX PPDU info retrieved from status ring TLV
+ * @rx_mon_stats: monitor mode status/destination ring PPDU and MPDU count
+ *
+ * Print monitor mode PPDU start and end TLV count
+ * Return: None
+ */
+static inline void
+dp_rx_mon_print_dbg_ppdu_stats(struct cdp_pdev_mon_stats *rx_mon_stats)
+{
+	DP_PRINT_STATS("status_ppdu_compl_cnt = %d",
+		       rx_mon_stats->status_ppdu_compl);
+	DP_PRINT_STATS("status_ppdu_start_cnt = %d",
+		       rx_mon_stats->status_ppdu_start);
+	DP_PRINT_STATS("status_ppdu_end_cnt = %d",
+		       rx_mon_stats->status_ppdu_end);
+	DP_PRINT_STATS("status_ppdu_start_mis_cnt = %d",
+		       rx_mon_stats->status_ppdu_start_mis);
+	DP_PRINT_STATS("status_ppdu_end_mis_cnt = %d",
+		       rx_mon_stats->status_ppdu_end_mis);
+}
+
+#else
+static inline void
+dp_rx_mon_update_dbg_ppdu_stats(struct hal_rx_ppdu_info *ppdu_info,
+				struct cdp_pdev_mon_stats *rx_mon_stats)
+{
+}
+
+static inline void
+dp_rx_mon_init_dbg_ppdu_stats(struct hal_rx_ppdu_info *ppdu_info,
+			      struct cdp_pdev_mon_stats *rx_mon_stats)
+{
+}
+
+static inline void
+dp_rx_mon_print_dbg_ppdu_stats(struct hal_rx_ppdu_info *ppdu_info,
+			       struct cdp_pdev_mon_stats *rx_mon_stats)
+{
+}
+#endif
 #endif

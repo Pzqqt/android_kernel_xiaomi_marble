@@ -35,6 +35,12 @@ int dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
 	 * More parameters are to be added later indicating
 	 * seg id, chirp and sidx values to be sent to fw.
 	 */
+	if (!(WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(dfs->dfs_curchan))) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Ignore bangradar on a NON-DFS channel");
+		return -EINVAL;
+	}
+
 	dfs_unit_test->num_args = DFS_UNIT_TEST_NUM_ARGS;
 	dfs_unit_test->args[IDX_CMD_ID] =
 			DFS_PHYERR_OFFLOAD_TEST_SET_RADAR;

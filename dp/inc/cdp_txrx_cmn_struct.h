@@ -184,6 +184,7 @@ enum htt_cmn_dbg_stats_type {
  * @TXRX_RX_HOST_STATS: Print host Rx stats
  * @TXRX_CLEAR_STATS: clear all host stats
  * @TXRX_SRNG_PTR_STATS: Print SRNG pointer stats
+ * @TXRX_RX_MON_STATS: Print monitor mode stats
 */
 enum cdp_host_txrx_stats {
 	TXRX_HOST_STATS_INVALID  = -1,
@@ -194,6 +195,7 @@ enum cdp_host_txrx_stats {
 	TXRX_RX_HOST_STATS  = 4,
 	TXRX_AST_STATS = 5,
 	TXRX_SRNG_PTR_STATS	= 6,
+	TXRX_RX_MON_STATS   = 7,
 	TXRX_HOST_STATS_MAX,
 };
 
@@ -1179,7 +1181,7 @@ struct cdp_config_params {
  * @param1: opaque argument 1 to be passed to htt
  * @param2: opaque argument 2 to be passed to htt
  * @param3: opaque argument 3 to be passed to htt
- * @channel_param: Channel Information
+ * @mac id: mac_id
  */
 struct cdp_txrx_stats_req {
 	enum cdp_stats	stats;
@@ -1188,7 +1190,7 @@ struct cdp_txrx_stats_req {
 	uint32_t	param2;
 	uint32_t	param3;
 	uint32_t	cookie_val;
-	uint8_t		channel;
+	uint8_t		mac_id;
 };
 
 /**

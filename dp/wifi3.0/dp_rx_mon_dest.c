@@ -742,6 +742,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	uint32_t ppdu_id;
 	uint32_t rx_bufs_used;
 	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
+	struct cdp_pdev_mon_stats *rx_mon_stats;
 
 	mon_dst_srng = pdev->rxdma_mon_dst_ring[mac_for_pdev].hal_srng;
 
@@ -771,6 +772,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 	ppdu_id = pdev->ppdu_info.com_info.ppdu_id;
 	rx_bufs_used = 0;
+	rx_mon_stats = &pdev->rx_mon_stats;
 
 	while (qdf_likely(rxdma_dst_ring_desc =
 		hal_srng_dst_peek(hal_soc, mon_dst_srng))) {
@@ -804,6 +806,8 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 			__func__, __LINE__);
 			break;
 		}
+
+		rx_mon_stats->dest_mpdu_done++;
 		dp_rx_mon_deliver(soc, mac_id, head_msdu, tail_msdu);
 
 		rxdma_dst_ring_desc = hal_srng_dst_get_next(hal_soc,
@@ -814,6 +818,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	qdf_spin_unlock_bh(&pdev->mon_lock);
 
 	if (rx_bufs_used) {
+		rx_mon_stats->dest_ppdu_done++;
 		dp_rx_buffers_replenish(soc, mac_id,
 			&pdev->rxdma_mon_buf_ring[mac_for_pdev],
 			&soc->rx_desc_mon[mac_id], rx_bufs_used, &head, &tail);

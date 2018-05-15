@@ -57,7 +57,7 @@ spectral_get_vdev(struct wlan_objmgr_pdev *pdev)
 
 	qdf_assert_always(pdev);
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, 0, WLAN_SPECTRAL_ID);
+	vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_SPECTRAL_ID);
 
 	if (!vdev) {
 		spectral_warn("Unable to get first vdev of pdev");

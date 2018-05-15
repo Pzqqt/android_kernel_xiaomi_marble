@@ -59,7 +59,7 @@ vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 						.len = sizeof(uint32_t)
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR] = {
-						.type = NLA_BINARY,
+						.type = NLA_UNSPEC,
 						.len = QDF_MAC_ADDR_SIZE
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_SECURITY] = {
@@ -67,8 +67,8 @@ vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 						.len = sizeof(uint16_t)
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS] = {
-						.type = NLA_BINARY,
-						.len = NDP_QOS_INFO_LEN
+						.type = NLA_U32,
+						.len = sizeof(uint32_t)
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO] = {
 						.type = NLA_BINARY,
@@ -79,8 +79,8 @@ vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 						.len = sizeof(uint32_t)
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE] = {
-						.type = NLA_U16,
-						.len = sizeof(uint16_t)
+						.type = NLA_U32,
+						.len = sizeof(uint32_t)
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR] = {
 						.type = NLA_BINARY,
@@ -94,7 +94,7 @@ vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 						.type = NLA_U32,
 						.len = sizeof(uint32_t)
 	},
-	[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE] = {
+	[QCA_WLAN_VENDOR_ATTR_NDP_CSID] = {
 						.type = NLA_U32,
 						.len = sizeof(uint32_t)
 	},
@@ -252,9 +252,9 @@ static int os_if_nan_parse_security_params(struct nlattr **tb,
 		return -EINVAL;
 	}
 
-	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]) {
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_CSID]) {
 		*ncs_sk_type =
-			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE]);
+			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_CSID]);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
@@ -309,7 +309,7 @@ static int os_if_nan_parse_security_params(struct nlattr **tb,
  * QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_PMK - optional
- * QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_CSID - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME - optional
  *
@@ -441,7 +441,7 @@ initiator_req_failed:
  * QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_PMK - optional
- * QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE - optional
+ * QCA_WLAN_VENDOR_ATTR_NDP_CSID - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE - optional
  * QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME - optional
  *
@@ -866,7 +866,7 @@ static inline uint32_t osif_ndp_get_ndp_req_ind_len(
 	data_len += nla_total_size(vendor_attr_policy[
 			QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS].len);
 	data_len += nla_total_size(vendor_attr_policy[
-			QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE].len);
+			QCA_WLAN_VENDOR_ATTR_NDP_CSID].len);
 	/* allocate space including NULL terminator */
 	data_len += nla_total_size(vendor_attr_policy[
 			QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR].len + 1);
@@ -897,7 +897,7 @@ static inline uint32_t osif_ndp_get_ndp_req_ind_len(
  * QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID (4 bytes)
  * QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO (ndp_app_info_len size)
  * QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS (4 bytes)
- * QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE(4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_CSID(4 bytes)
  * QCA_WLAN_VENDOR_ATTR_NDP_SCID(scid_len in size)
  *
  * Return: none
@@ -997,7 +997,7 @@ static void os_if_ndp_indication_handler(struct wlan_objmgr_vdev *vdev,
 
 	if (event->scid.scid_len) {
 		if (nla_put_u32(vendor_event,
-				QCA_WLAN_VENDOR_ATTR_NDP_NCS_SK_TYPE,
+				QCA_WLAN_VENDOR_ATTR_NDP_CSID,
 				event->ncs_sk_type))
 			goto ndp_indication_nla_failed;
 
