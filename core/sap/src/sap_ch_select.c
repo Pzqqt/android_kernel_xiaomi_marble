@@ -157,6 +157,8 @@ sapSafeChannelType safe_channels[NUM_CHANNELS] = {
 	{157, true},
 	{161, true},
 	{165, true},
+	{169, true},
+	{173, true},
 };
 #endif
 
@@ -689,7 +691,11 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 		}
 
 		/* Skip DSRC channels */
-		if (WLAN_REG_IS_11P_CH(*pChans))
+		if (wlan_reg_is_dsrc_chan(pMac->pdev, *pChans))
+			continue;
+
+		if (!pMac->sap.enable_etsi13_srd_chan_support &&
+		    wlan_reg_is_etsi13_srd_chan(pMac->pdev, *pChans))
 			continue;
 
 		if (true == chSafe) {
@@ -2112,7 +2118,7 @@ static void sap_sort_chl_weight_vht160(tSapChSelSpectInfo *pSpectInfoParams)
 
 	/*
 	 * Assign max weight(SAP_ACS_WEIGHT_MAX * 8) to 2.4 Ghz channels
-	 * and channel 132-165 as they cannot be part of a 160Mhz channel
+	 * and channel 132-173 as they cannot be part of a 160Mhz channel
 	 * bonding.
 	 */
 	pSpectInfo = pSpectInfoParams->pSpectCh;
@@ -2120,7 +2126,7 @@ static void sap_sort_chl_weight_vht160(tSapChSelSpectInfo *pSpectInfoParams)
 		if ((pSpectInfo[j].chNum >= WLAN_REG_CH_NUM(CHAN_ENUM_1) &&
 		     pSpectInfo[j].chNum <= WLAN_REG_CH_NUM(CHAN_ENUM_14)) ||
 		    (pSpectInfo[j].chNum >= WLAN_REG_CH_NUM(CHAN_ENUM_132) &&
-		     pSpectInfo[j].chNum <= WLAN_REG_CH_NUM(CHAN_ENUM_165)))
+		     pSpectInfo[j].chNum <= WLAN_REG_CH_NUM(CHAN_ENUM_173)))
 			pSpectInfo[j].weight = SAP_ACS_WEIGHT_MAX * 8;
 	}
 
@@ -2181,7 +2187,7 @@ static void sap_allocate_max_weight_ht40_5_g(
 	spect_info = spect_info_params->pSpectCh;
 	for (j = 0; j < spect_info_params->numSpectChans; j++) {
 		if ((spect_info[j].chNum >= WLAN_REG_CH_NUM(CHAN_ENUM_36) &&
-		     spect_info[j].chNum <= WLAN_REG_CH_NUM(CHAN_ENUM_165)))
+		     spect_info[j].chNum <= WLAN_REG_CH_NUM(CHAN_ENUM_173)))
 			spect_info[j].weight = SAP_ACS_WEIGHT_MAX * 2;
 	}
 }

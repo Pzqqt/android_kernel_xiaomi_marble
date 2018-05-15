@@ -3510,6 +3510,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DOT11P_MODE_MIN,
 		     CFG_DOT11P_MODE_MAX),
 
+	REG_VARIABLE(CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE, WLAN_PARAM_Integer,
+		     struct hdd_config, etsi13_srd_chan_in_master_mode,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_DEF,
+		     CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_MIN,
+		     CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_MAX),
+
 #ifdef FEATURE_WLAN_EXTSCAN
 	REG_VARIABLE(CFG_EXTSCAN_ALLOWED_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, extscan_enabled,

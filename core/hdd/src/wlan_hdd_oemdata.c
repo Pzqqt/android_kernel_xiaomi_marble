@@ -403,8 +403,8 @@ void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
 			cds_chan_to_freq(ch_params.center_freq_seg0);
 
 	if (ch_params.ch_width < CH_WIDTH_INVALID)
-		phy_mode = wma_chan_phy_mode(chan,
-				ch_params.ch_width, wni_dot11_mode);
+		phy_mode = wma_chan_phy_mode(chan, ch_params.ch_width,
+					     wni_dot11_mode);
 	else
 		/*
 		 * If channel width is CH_WIDTH_INVALID, It mean channel is

@@ -3350,10 +3350,14 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 		 * - DFS scan disable but chan in CHANNEL_STATE_ENABLE
 		 */
 		if (!(((true == mac_ctx->scan.fEnableDFSChnlScan) &&
-		      wlan_reg_get_channel_state(mac_ctx->pdev, loop_count)) ||
+		      wlan_reg_get_channel_state(mac_ctx->pdev,
+						 WLAN_REG_CH_NUM(loop_count)))
+		      ||
 		    ((false == mac_ctx->scan.fEnableDFSChnlScan) &&
 		     (CHANNEL_STATE_ENABLE ==
-		      wlan_reg_get_channel_state(mac_ctx->pdev, loop_count)))))
+		      wlan_reg_get_channel_state(mac_ctx->pdev,
+						 WLAN_REG_CH_NUM(loop_count)))
+		     )))
 			continue;
 
 		/*
@@ -3375,6 +3379,14 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 		    WLAN_REG_CH_NUM(loop_count)))
 			continue;
 
+		/* Dont scan ETSI13 SRD channels if the ETSI13 SRD channels
+		 * are not enabled in master mode
+		 */
+		if (!wlan_reg_is_etsi13_srd_chan_allowed_master_mode(mac_ctx->
+								     pdev) &&
+		    wlan_reg_is_etsi13_srd_chan(mac_ctx->pdev,
+						WLAN_REG_CH_NUM(loop_count)))
+			continue;
 		/*
 		 * If we have any 5Ghz channel in the channel list
 		 * and bw is 40/80/160 Mhz then we don't want SAP to

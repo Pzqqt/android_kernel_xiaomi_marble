@@ -2268,7 +2268,7 @@ QDF_STATUS wma_get_cca_stats(tp_wma_handle wma_handle,
 
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);
 WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
-	u8 dot11_mode);
+				u8 dot11_mode);
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,

@@ -219,6 +219,8 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 	config_vars->band_capability = hdd_ctx->config->nBandCapability;
 	config_vars->restart_beaconing = hdd_ctx->config->
 		restart_beaconing_on_chan_avoid_event;
+	config_vars->enable_srd_chan_in_master_mode =
+		hdd_ctx->config->etsi13_srd_chan_in_master_mode;
 }
 
 

@@ -666,6 +666,7 @@ WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 {
 	WLAN_PHY_MODE phymode = MODE_UNKNOWN;
 	uint16_t bw_val = wlan_reg_get_bw_value(chan_width);
+	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (WLAN_REG_IS_24GHZ_CH(chan)) {
 		if (((CH_WIDTH_5MHZ == chan_width) ||
@@ -717,7 +718,7 @@ WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 				break;
 			}
 		}
-	} else if (WLAN_REG_IS_11P_CH(chan))
+	} else if (wlan_reg_is_dsrc_chan(wma->pdev, chan))
 		phymode = MODE_11A;
 	else {
 		if (((CH_WIDTH_5MHZ == chan_width) ||

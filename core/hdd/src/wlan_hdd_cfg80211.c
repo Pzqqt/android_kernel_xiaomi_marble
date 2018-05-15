@@ -250,6 +250,7 @@ static const struct ieee80211_channel hdd_channels_5_ghz[] = {
 	HDD5GHZCHAN(5825, 165, 0),
 };
 
+#ifdef WLAN_FEATURE_DSRC
 static const struct ieee80211_channel hdd_channels_dot11p[] = {
 	HDD5GHZCHAN(5852, 170, 0),
 	HDD5GHZCHAN(5855, 171, 0),
@@ -267,6 +268,12 @@ static const struct ieee80211_channel hdd_channels_dot11p[] = {
 	HDD5GHZCHAN(5915, 183, 0),
 	HDD5GHZCHAN(5920, 184, 0),
 };
+#else
+static const struct ieee80211_channel hdd_etsi13_srd_ch[] = {
+	HDD5GHZCHAN(5845, 169, 0),
+	HDD5GHZCHAN(5865, 173, 0),
+};
+#endif
 
 static struct ieee80211_rate g_mode_rates[] = {
 	HDD_G_MODE_RATETAB(10, 0x1, 0),
@@ -1631,11 +1638,11 @@ static int wlan_hdd_set_acs_ch_range(
 	} else if (hw_mode == QCA_ACS_MODE_IEEE80211A) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11a;
 		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_36);
-		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_165);
+		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_173);
 	} else if (hw_mode == QCA_ACS_MODE_IEEE80211ANY) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_abg;
 		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_1);
-		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_165);
+		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_173);
 	}
 
 	if (ht_enabled)
@@ -2356,7 +2363,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	tsap_config_t *sap_config;
 	struct sk_buff *temp_skbuff;
-	int ret, i;
+	int ret, i, ch_cnt = 0;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ACS_MAX + 1];
 	bool ht_enabled, ht40_enabled, vht_enabled;
 	uint8_t ch_width;
@@ -2364,6 +2371,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	QDF_STATUS qdf_status;
 	uint8_t conc_channel;
 	mac_handle_t mac_handle;
+	bool skip_etsi13_srd_chan = false;
 
 	/* ***Note*** Donot set SME config related to ACS operation here because
 	 * ACS operation is not synchronouse and ACS for Second AP may come when
@@ -2536,6 +2544,22 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		goto out;
 	}
 
+	skip_etsi13_srd_chan =
+		!hdd_ctx->config->etsi13_srd_chan_in_master_mode &&
+		wlan_reg_is_etsi13_regdmn(hdd_ctx->hdd_pdev);
+
+	if (skip_etsi13_srd_chan) {
+		for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++) {
+			if (wlan_reg_is_etsi13_srd_chan(hdd_ctx->hdd_pdev,
+							sap_config->acs_cfg.
+							ch_list[i]))
+				sap_config->acs_cfg.ch_list[i] = 0;
+			else
+				sap_config->acs_cfg.ch_list[ch_cnt++] =
+						sap_config->acs_cfg.ch_list[i];
+		}
+		sap_config->acs_cfg.ch_list_count = ch_cnt;
+	}
 	hdd_debug("get pcl for DO_ACS vendor command");
 
 	/* consult policy manager to get PCL */
@@ -14972,6 +14996,60 @@ static void wlan_hdd_cfg80211_set_dfs_offload_feature(struct wiphy *wiphy)
 }
 #endif
 
+#ifdef WLAN_FEATURE_DSRC
+static void wlan_hdd_get_num_dsrc_ch_and_len(struct hdd_config *hdd_cfg,
+					     int *num_ch, int *ch_len)
+{
+	*num_ch = QDF_ARRAY_SIZE(hdd_channels_dot11p);
+	*ch_len = sizeof(hdd_channels_dot11p);
+}
+
+static void wlan_hdd_copy_dsrc_ch(char *ch_ptr, int ch_arr_len)
+{
+	if (!ch_arr_len)
+		return;
+	qdf_mem_copy(ch_ptr, &hdd_channels_dot11p[0], ch_arr_len);
+}
+
+static void wlan_hdd_get_num_srd_ch_and_len(struct hdd_config *hdd_cfg,
+					    int *num_ch, int *ch_len)
+{
+	*num_ch = 0;
+	*ch_len = 0;
+}
+
+static void wlan_hdd_copy_srd_ch(char *ch_ptr, int ch_arr_len)
+{
+}
+
+#else
+
+static void wlan_hdd_get_num_dsrc_ch_and_len(struct hdd_config *hdd_cfg,
+					     int *num_ch, int *ch_len)
+{
+	*num_ch = 0;
+	*ch_len = 0;
+}
+
+static void wlan_hdd_copy_dsrc_ch(char *ch_ptr, int ch_arr_len)
+{
+}
+
+static void wlan_hdd_get_num_srd_ch_and_len(struct hdd_config *hdd_cfg,
+					    int *num_ch, int *ch_len)
+{
+	*num_ch = QDF_ARRAY_SIZE(hdd_etsi13_srd_ch);
+	*ch_len = sizeof(hdd_etsi13_srd_ch);
+}
+
+static void wlan_hdd_copy_srd_ch(char *ch_ptr, int ch_arr_len)
+{
+	if (!ch_arr_len)
+		return;
+	qdf_mem_copy(ch_ptr, &hdd_etsi13_srd_ch[0], ch_arr_len);
+}
+#endif
+
 /*
  * FUNCTION: wlan_hdd_cfg80211_init
  * This function is called by hdd_wlan_startup()
@@ -14983,7 +15061,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 {
 	int i, j;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	int len = 0;
+	int len_5g_ch = 0, num_ch, ch_arr_size;
+	int num_dsrc_ch, len_dsrc_ch, num_srd_ch, len_srd_ch;
 	uint32_t *cipher_suites;
 
 	hdd_enter();
@@ -15107,41 +15186,30 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 		 (eHDD_DOT11_MODE_11b_ONLY != pCfg->dot11Mode) &&
 		 (eHDD_DOT11_MODE_11g_ONLY != pCfg->dot11Mode))) {
 		wiphy->bands[HDD_NL80211_BAND_5GHZ] = &wlan_hdd_band_5_ghz;
+		wlan_hdd_get_num_dsrc_ch_and_len(pCfg, &num_dsrc_ch,
+						 &len_dsrc_ch);
+		wlan_hdd_get_num_srd_ch_and_len(pCfg, &num_srd_ch, &len_srd_ch);
+		num_ch = QDF_ARRAY_SIZE(hdd_channels_5_ghz) + num_dsrc_ch +
+			 num_srd_ch;
+		len_5g_ch = sizeof(hdd_channels_5_ghz);
+		ch_arr_size = len_5g_ch + len_dsrc_ch + len_srd_ch;
 
-		if (pCfg->dot11p_mode) {
-			wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels =
-				qdf_mem_malloc(sizeof(hdd_channels_5_ghz) +
-						sizeof(hdd_channels_dot11p));
-			if (wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels ==
-								NULL) {
-				goto mem_fail;
-			}
-			wiphy->bands[HDD_NL80211_BAND_5GHZ]->n_channels =
-					QDF_ARRAY_SIZE(hdd_channels_5_ghz) +
-					QDF_ARRAY_SIZE(hdd_channels_dot11p);
+		wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels =
+			qdf_mem_malloc(ch_arr_size);
+		if (!wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels)
+			goto mem_fail;
+		wiphy->bands[HDD_NL80211_BAND_5GHZ]->n_channels = num_ch;
 
-			qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_5GHZ]->
-					channels, &hdd_channels_5_ghz[0],
-					sizeof(hdd_channels_5_ghz));
-			len = sizeof(hdd_channels_5_ghz);
-			qdf_mem_copy((char *)wiphy->
-					bands[HDD_NL80211_BAND_5GHZ]->channels
-						+ len,
-						&hdd_channels_dot11p[0],
-					sizeof(hdd_channels_dot11p));
-
-		} else {
-			wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels =
-			qdf_mem_malloc(sizeof(hdd_channels_5_ghz));
-			if (wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels ==
-								NULL) {
-				goto mem_fail;
-			}
-			qdf_mem_copy(wiphy->
-				bands[HDD_NL80211_BAND_5GHZ]->channels,
-				&hdd_channels_5_ghz[0],
-				sizeof(hdd_channels_5_ghz));
-		}
+		qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels,
+			     &hdd_channels_5_ghz[0], len_5g_ch);
+		if (num_dsrc_ch)
+			wlan_hdd_copy_dsrc_ch((char *)wiphy->bands[
+					      HDD_NL80211_BAND_5GHZ]->channels +
+					      len_5g_ch, len_dsrc_ch);
+		if (num_srd_ch)
+			wlan_hdd_copy_srd_ch((char *)wiphy->bands[
+					     HDD_NL80211_BAND_5GHZ]->channels +
+					     len_5g_ch, len_srd_ch);
 	}
 
 	for (i = 0; i < HDD_NUM_NL80211_BANDS; i++) {
@@ -15644,7 +15712,7 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 
 	if (hdd_pConfig_ini->sapAllowAllChannel) {
 		/* Validate the channel */
-		for (count = CHAN_ENUM_1; count <= CHAN_ENUM_165; count++) {
+		for (count = CHAN_ENUM_1; count <= CHAN_ENUM_173; count++) {
 			if (channel == WLAN_REG_CH_NUM(count)) {
 				fValidChannel = true;
 				break;
@@ -22347,8 +22415,8 @@ void wlan_hdd_init_chan_info(struct hdd_context *hdd_ctx)
 
 	num_5g = QDF_ARRAY_SIZE(hdd_channels_5_ghz);
 	for (; (index - num_2g) < num_5g; index++) {
-		if (WLAN_REG_IS_11P_CH(
-			    hdd_channels_5_ghz[index - num_2g].hw_value))
+		if (wlan_reg_is_dsrc_chan(hdd_ctx->hdd_pdev,
+		    hdd_channels_5_ghz[index - num_2g].hw_value))
 			continue;
 		hdd_ctx->chan_info[index].freq =
 			hdd_channels_5_ghz[index - num_2g].center_freq;

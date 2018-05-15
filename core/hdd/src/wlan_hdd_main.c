@@ -10256,15 +10256,19 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	struct sme_5g_band_pref_params band_pref_params;
 	int ret;
 	mac_handle_t mac_handle;
+	struct hdd_config *cfg;
 
 	hdd_enter();
 
+	cfg = hdd_ctx->config;
 	/* FW capabilities received, Set the Dot11 mode */
 	mac_handle = hdd_ctx->mac_handle;
 	sme_setdef_dot11mode(mac_handle);
 	sme_set_prefer_80MHz_over_160MHz(mac_handle,
 			hdd_ctx->config->sta_prefer_80MHz_over_160MHz);
-
+	sme_set_etsi13_srd_ch_in_master_mode(mac_handle,
+					     cfg->
+					     etsi13_srd_chan_in_master_mode);
 
 	if (hdd_ctx->config->fIsImpsEnabled)
 		hdd_set_idle_ps_config(hdd_ctx, true);

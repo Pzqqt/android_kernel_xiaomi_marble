@@ -2381,8 +2381,10 @@ static void hdd_remove_dsrc_channels(struct hdd_context *hdd_ctx,
 	int i;
 
 	for (i = 0; i < *num_channels; i++) {
-		if (!WLAN_REG_IS_11P_CH(wlan_reg_freq_to_chan(hdd_ctx->hdd_pdev,
-							      chan_list[i]))) {
+		if (!wlan_reg_is_dsrc_chan(hdd_ctx->hdd_pdev,
+					   wlan_reg_freq_to_chan(
+					   hdd_ctx->hdd_pdev,
+					   chan_list[i]))) {
 			chan_list[num_chan_temp] = chan_list[i];
 			num_chan_temp++;
 		}

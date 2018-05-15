@@ -736,6 +736,7 @@ typedef struct tagSapStruct {
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	bool acs_with_more_param;
 	bool enable_dfs_phy_error_logs;
+	bool enable_etsi13_srd_chan_support;
 } tSapStruct, *tpSapStruct;
 
 typedef struct sap_SoftapStats_s {

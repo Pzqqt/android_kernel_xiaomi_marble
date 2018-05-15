@@ -9373,6 +9373,16 @@ QDF_STATUS sme_deregister_for_dcc_stats_event(tHalHandle h_hal)
 
 	return status;
 }
+#else
+void sme_set_etsi13_srd_ch_in_master_mode(tHalHandle hal,
+					  bool etsi13_srd_chan_support)
+{
+	tpAniSirGlobal mac;
+
+	mac = PMAC_STRUCT(hal);
+	mac->sap.enable_etsi13_srd_chan_support = etsi13_srd_chan_support;
+	sme_debug("srd_ch_support %d", mac->sap.enable_etsi13_srd_chan_support);
+}
 #endif
 
 void sme_get_recovery_stats(tHalHandle hHal)

@@ -1035,8 +1035,8 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 			continue;
 
 		/* Scan is not performed on DSRC channels*/
-		if (pScan->base_channels.channelList[i] >=
-		    WLAN_REG_MIN_11P_CH_NUM)
+		if (wlan_reg_is_dsrc_chan(pMac->pdev,
+					  pScan->base_channels.channelList[i]))
 			continue;
 
 		channel = pScan->base_channels.channelList[i];
@@ -13561,7 +13561,7 @@ QDF_STATUS csr_get_cfg_valid_channels(tpAniSirGlobal pMac, uint8_t *pChannels,
 		return QDF_STATUS_E_FAILURE;
 
 	for (i = 0; i < *pNumChan; i++) {
-		if (!WLAN_REG_IS_11P_CH(pChannels[i])) {
+		if (!wlan_reg_is_dsrc_chan(pMac->pdev, pChannels[i])) {
 			pChannels[num_chan_temp] = pChannels[i];
 			num_chan_temp++;
 		}

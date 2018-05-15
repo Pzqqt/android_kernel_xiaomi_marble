@@ -251,7 +251,7 @@ static void populate_dot11f_tdls_offchannel_params(
 				validChan[i], nss_5g, nss_2g);
 			continue;
 		} else {
-			if (WLAN_REG_IS_11P_CH(validChan[i])) {
+			if (wlan_reg_is_dsrc_chan(pMac->pdev, validChan[i])) {
 				pe_debug("skipping channel: %d from the valid channel list",
 					validChan[i]);
 				continue;

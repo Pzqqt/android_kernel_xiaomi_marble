@@ -1197,6 +1197,11 @@ QDF_STATUS sme_register_for_dcc_stats_event(tHalHandle hHal, void *context,
 					    ocb_callback callback);
 QDF_STATUS sme_deregister_for_dcc_stats_event(tHalHandle hHal);
 
+static inline void
+sme_set_etsi13_srd_ch_in_master_mode(tHalHandle hal,
+				     bool etsi13_srd_chan_support)
+{
+}
 #else
 static inline void sme_set_dot11p_config(tHalHandle hal, bool enable_dot11p)
 {
@@ -1271,7 +1276,20 @@ static inline QDF_STATUS sme_deregister_for_dcc_stats_event(tHalHandle hHal)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * sme_set_etsi13_srd_ch_in_master_mode() - master mode UNI-III band ch support
+ * @hal: HAL pointer
+ * @srd_chan_support: ETSI SRD channel support
+ *
+ * This function set master ETSI SRD channel support
+ *
+ * Return: None
+ */
+void sme_set_etsi13_srd_ch_in_master_mode(tHalHandle hal,
+					  bool etsi13_srd_chan_support);
 #endif
+
 void sme_add_set_thermal_level_callback(tHalHandle hal,
 		sme_set_thermal_level_callback callback);
 

@@ -2323,18 +2323,22 @@ void wlansap_extend_to_acs_range(tHalHandle hal, uint8_t *startChannelNum,
 				 (*endChannelNum + ACS_2G_EXTEND) : 14;
 	} else if (*startChannelNum >= 36 && *endChannelNum >= 36) {
 		*bandStartChannel = CHAN_ENUM_36;
-		*bandEndChannel = CHAN_ENUM_165;
+		*bandEndChannel = CHAN_ENUM_173;
 		tmp_startChannelNum = (*startChannelNum - ACS_5G_EXTEND) > 36 ?
 				   (*startChannelNum - ACS_5G_EXTEND) : 36;
-		tmp_endChannelNum = (*endChannelNum + ACS_5G_EXTEND) <= 165 ?
-				 (*endChannelNum + ACS_5G_EXTEND) : 165;
+		tmp_endChannelNum = (*endChannelNum + ACS_5G_EXTEND) <=
+				     WNI_CFG_CURRENT_CHANNEL_STAMAX ?
+				     (*endChannelNum + ACS_5G_EXTEND) :
+				     WNI_CFG_CURRENT_CHANNEL_STAMAX;
 	} else {
 		*bandStartChannel = CHAN_ENUM_1;
-		*bandEndChannel = CHAN_ENUM_165;
+		*bandEndChannel = CHAN_ENUM_173;
 		tmp_startChannelNum = *startChannelNum > 5 ?
 			(*startChannelNum - ACS_2G_EXTEND) : 1;
-		tmp_endChannelNum = (*endChannelNum + ACS_5G_EXTEND) <= 165 ?
-			(*endChannelNum + ACS_5G_EXTEND) : 165;
+		tmp_endChannelNum = (*endChannelNum + ACS_5G_EXTEND) <=
+				     WNI_CFG_CURRENT_CHANNEL_STAMAX ?
+				     (*endChannelNum + ACS_5G_EXTEND) :
+				     WNI_CFG_CURRENT_CHANNEL_STAMAX;
 	}
 
 	/* Note if the ACS range include only DFS channels, do not cross range
