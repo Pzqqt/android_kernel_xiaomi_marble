@@ -7860,7 +7860,18 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	hdd_debug("ChanSwitchHostapdRateEnabled = %d",
 		pConfig->chan_switch_hostapd_rate_enabled);
 
+	mutex_lock(&hdd_ctx->sap_lock);
+	if (cds_is_driver_unloading()) {
+		mutex_unlock(&hdd_ctx->sap_lock);
+
+		hdd_err("The driver is unloading, ignore the bss starting");
+		ret = -EINVAL;
+		goto error;
+	}
+
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+		mutex_unlock(&hdd_ctx->sap_lock);
+
 		wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
 		/* Bss already started. just return. */
 		/* TODO Probably it should update some beacon params. */
@@ -7875,6 +7886,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				policy_mgr_convert_device_mode_to_qdf_type(
 					adapter->device_mode),
 					pConfig->channel, HW_MODE_20_MHZ)) {
+			mutex_unlock(&hdd_ctx->sap_lock);
+
 			hdd_err("This concurrency combination is not allowed");
 			ret = -EINVAL;
 			goto error;
@@ -7882,6 +7895,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	if (!hdd_set_connection_in_progress(true)) {
+		mutex_unlock(&hdd_ctx->sap_lock);
+
 		hdd_err("Can't start BSS: set connection in progress failed");
 		ret = -EINVAL;
 		goto error;
@@ -7899,6 +7914,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 		pSapEventCallback, pConfig, adapter->dev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		mutex_unlock(&hdd_ctx->sap_lock);
+
 		wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
 		hdd_set_connection_in_progress(false);
 		hdd_err("SAP Start Bss fail");
@@ -7914,6 +7931,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		mutex_unlock(&hdd_ctx->sap_lock);
+
 		hdd_err("qdf wait for single_event failed!!");
 		hdd_set_connection_in_progress(false);
 		sme_get_command_q_status(hHal);
@@ -7924,6 +7943,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 	/* Successfully started Bss update the state bit. */
 	set_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
+
+	mutex_unlock(&hdd_ctx->sap_lock);
+
 	/* Initialize WMM configuation */
 	hdd_wmm_init(adapter);
 	if (hostapd_state->bss_state == BSS_START) {
