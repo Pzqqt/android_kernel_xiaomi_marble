@@ -1778,6 +1778,11 @@ static void cds_trigger_recovery_work(void *param)
 	qdf_runtime_lock_t rtl;
 	qdf_device_t qdf;
 
+	if (cds_is_driver_unloading()) {
+		cds_err("Unloading in progress; ignoring recovery trigger");
+		return;
+	}
+
 	if (cds_is_driver_recovering()) {
 		cds_err("Recovery in progress; ignoring recovery trigger");
 		return;
