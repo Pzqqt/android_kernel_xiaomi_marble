@@ -40,8 +40,14 @@
 #define REG_MAX_24GHZ_CH_NUM channel_map[MAX_24GHZ_CHANNEL].chan_num
 #define REG_MIN_5GHZ_CH_NUM channel_map[MIN_5GHZ_CHANNEL].chan_num
 #define REG_MAX_5GHZ_CH_NUM channel_map[MAX_5GHZ_CHANNEL].chan_num
-#define REG_MIN_11P_CH_NUM channel_map[MIN_11P_CHANNEL].chan_num
-#define REG_MAX_11P_CH_NUM channel_map[MAX_11P_CHANNEL].chan_num
+
+#ifdef WLAN_FEATURE_DSRC
+#define REG_DSRC_START_FREQ channel_map[MIN_DSRC_CHANNEL].center_freq
+#define REG_DSRC_END_FREQ   channel_map[MAX_DSRC_CHANNEL].center_freq
+#endif
+
+#define REG_ETSI13_SRD_START_FREQ 5745
+#define REG_ETSI13_SRD_END_FREQ   5865
 
 #define REG_IS_24GHZ_CH(chan_num) \
 	((chan_num >= REG_MIN_24GHZ_CH_NUM) &&	\
@@ -66,10 +72,6 @@
 #define REG_IS_5GHZ_CH(chan_num) \
 	((chan_num >= REG_MIN_5GHZ_CH_NUM) &&	\
 	 (chan_num <= REG_MAX_5GHZ_CH_NUM))
-
-#define REG_IS_11P_CH(chan_num) \
-	((chan_num >= REG_MIN_11P_CH_NUM) &&	\
-	 (chan_num <= REG_MAX_11P_CH_NUM))
 
 #define REG_IS_5GHZ_FREQ(freq) \
 	((freq >= channel_map[MIN_5GHZ_CHANNEL].center_freq) &&	\
@@ -307,6 +309,67 @@ void reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
  * Return: true or false
  */
 bool reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+
+#ifdef WLAN_FEATURE_DSRC
+/**
+ * reg_is_dsrc_chan () - Checks the channel for DSRC or not
+ * @chan: channel
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+
+static inline bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev,
+					  uint32_t chan)
+{
+	return false;
+}
+
+static inline bool reg_is_etsi13_regdmn(struct wlan_objmgr_pdev *pdev)
+{
+	return false;
+}
+
+static inline bool
+reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev *pdev)
+{
+	return true;
+}
+#else
+/**
+ * reg_is_etsi13_regdmn () - Checks if the current reg domain is ETSI13 or not
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+bool reg_is_etsi13_regdmn(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_is_etsi13_srd_chan () - Checks the channel for ETSI13 srd ch or not
+ * @chan: channel
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev, uint32_t chan);
+
+/**
+ * reg_is_etsi13_srd_chan_allowed_master_mode() - Checks if regdmn is ETSI13
+ * and SRD channels are allowed in master mode or not.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+bool reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev *pdev);
+
+static inline bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev,
+				    uint32_t chan)
+{
+	return false;
+}
+#endif
 
 bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
 				  uint32_t chan);

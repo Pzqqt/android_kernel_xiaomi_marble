@@ -44,15 +44,6 @@ uint32_t wlan_chan_to_freq(uint8_t chan)
 		return WLAN_5_GHZ_BASE_FREQ + chan * WLAN_CHAN_SPACING_5MHZ;
 }
 
-bool wlan_is_dsrc_channel(uint16_t center_freq)
-{
-	if (center_freq >= 5852 &&
-	    center_freq <= 5920)
-		return true;
-
-	return false;
-}
-
 uint8_t wlan_freq_to_chan(uint32_t freq)
 {
 	uint8_t chan;

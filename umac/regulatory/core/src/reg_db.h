@@ -156,4 +156,11 @@ QDF_STATUS reg_get_num_reg_dmn_pairs(int *num_reg_dmn);
 
 QDF_STATUS reg_get_default_country(uint16_t *default_country);
 
+/**
+ * reg_etsi13_regdmn () - Checks if the reg domain is ETSI13 or not
+ * @reg_dmn: reg domain
+ *
+ * Return: true or false
+ */
+bool reg_etsi13_regdmn(uint8_t reg_dmn);
 #endif

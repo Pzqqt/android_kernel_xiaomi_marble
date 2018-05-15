@@ -121,8 +121,10 @@ static const struct chan_map channel_map_old[NUM_CHANNELS] = {
 	[CHAN_ENUM_157] = {5785, 157, 2, 160},
 	[CHAN_ENUM_161] = {5805, 161, 2, 160},
 	[CHAN_ENUM_165] = {5825, 165, 2, 160},
+#ifndef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_169] = {5845, 169, 2, 20},
-
+	[CHAN_ENUM_173] = {5865, 173, 2, 20},
+#else
 	[CHAN_ENUM_170] = {5852, 170, 2, 20},
 	[CHAN_ENUM_171] = {5855, 171, 2, 20},
 	[CHAN_ENUM_172] = {5860, 172, 2, 20},
@@ -138,6 +140,7 @@ static const struct chan_map channel_map_old[NUM_CHANNELS] = {
 	[CHAN_ENUM_182] = {5910, 182, 2, 20},
 	[CHAN_ENUM_183] = {5915, 183, 2, 20},
 	[CHAN_ENUM_184] = {5920, 184, 2, 20},
+#endif
 };
 
 #else
@@ -1707,6 +1710,91 @@ bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
 		(ch_state == CHANNEL_STATE_DISABLE);
 }
 
+#ifdef WLAN_FEATURE_DSRC
+bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev, uint32_t chan)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	uint32_t freq = 0;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		return false;
+	}
+
+	if (!REG_IS_5GHZ_CH(chan))
+		return false;
+
+	freq = reg_chan_to_freq(pdev, chan);
+
+	if (!(freq >= REG_DSRC_START_FREQ && freq <= REG_DSRC_END_FREQ))
+		return false;
+
+	return true;
+}
+
+#else
+
+bool reg_is_etsi13_regdmn(struct wlan_objmgr_pdev *pdev)
+{
+	struct cur_regdmn_info cur_reg_dmn;
+	QDF_STATUS status;
+
+	status = reg_get_curr_regdomain(pdev, &cur_reg_dmn);
+	if (QDF_STATUS_SUCCESS != status) {
+		reg_err("Failed to get reg domain");
+		return false;
+	}
+
+	return reg_etsi13_regdmn(cur_reg_dmn.dmn_id_5g);
+}
+
+bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev, uint32_t chan)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	uint32_t freq = 0;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		return false;
+	}
+
+	if (!REG_IS_5GHZ_CH(chan))
+		return false;
+
+	freq = reg_chan_to_freq(pdev, chan);
+
+	if (!(freq >= REG_ETSI13_SRD_START_FREQ &&
+	      freq <= REG_ETSI13_SRD_END_FREQ))
+		return false;
+
+	return reg_is_etsi13_regdmn(pdev);
+}
+
+bool reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	if (!pdev) {
+		reg_alert("pdev is NULL");
+		return true;
+	}
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_alert("psoc reg component is NULL");
+		return true;
+	}
+
+	return psoc_priv_obj->enable_srd_chan_in_master_mode &&
+	       reg_is_etsi13_regdmn(pdev);
+}
+#endif
 
 uint32_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
 			  uint32_t freq)
@@ -3086,6 +3174,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	soc_reg_obj->master_vdev_cnt = 0;
 	soc_reg_obj->vdev_cnt_11d = 0;
 	soc_reg_obj->restart_beaconing = CH_AVOID_RULE_RESTART;
+	soc_reg_obj->enable_srd_chan_in_master_mode = false;
 
 	for (i = 0; i < MAX_STA_VDEV_CNT; i++)
 		soc_reg_obj->vdev_ids_11d[i] = INVALID_VDEV_ID;
@@ -3722,6 +3811,8 @@ QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 		config_vars.force_ssc_disable_indoor_channel;
 	psoc_priv_obj->band_capability = config_vars.band_capability;
 	psoc_priv_obj->restart_beaconing = config_vars.restart_beaconing;
+	psoc_priv_obj->enable_srd_chan_in_master_mode =
+		config_vars.enable_srd_chan_in_master_mode;
 
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_REGULATORY_SB_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {

@@ -146,8 +146,10 @@ enum channel_enum {
 	CHAN_ENUM_157,
 	CHAN_ENUM_161,
 	CHAN_ENUM_165,
+#ifndef WLAN_FEATURE_DSRC
 	CHAN_ENUM_169,
-
+	CHAN_ENUM_173,
+#else
 	CHAN_ENUM_170,
 	CHAN_ENUM_171,
 	CHAN_ENUM_172,
@@ -163,6 +165,7 @@ enum channel_enum {
 	CHAN_ENUM_182,
 	CHAN_ENUM_183,
 	CHAN_ENUM_184,
+#endif
 
 	NUM_CHANNELS,
 
@@ -175,12 +178,18 @@ enum channel_enum {
 	NUM_49GHZ_CHANNELS = MAX_49GHZ_CHANNEL - MIN_49GHZ_CHANNEL + 1,
 
 	MIN_5GHZ_CHANNEL = CHAN_ENUM_36,
+#ifndef WLAN_FEATURE_DSRC
+	MAX_5GHZ_CHANNEL = CHAN_ENUM_173,
+#else
 	MAX_5GHZ_CHANNEL = CHAN_ENUM_184,
+#endif
 	NUM_5GHZ_CHANNELS = (MAX_5GHZ_CHANNEL - MIN_5GHZ_CHANNEL + 1),
 
-	MIN_11P_CHANNEL = CHAN_ENUM_170,
-	MAX_11P_CHANNEL = CHAN_ENUM_184,
-	NUM_11P_CHANNELS = (MAX_11P_CHANNEL - MIN_11P_CHANNEL + 1),
+#ifdef WLAN_FEATURE_DSRC
+	MIN_DSRC_CHANNEL = CHAN_ENUM_170,
+	MAX_DSRC_CHANNEL = CHAN_ENUM_184,
+	NUM_DSRC_CHANNELS = (MAX_DSRC_CHANNEL - MIN_DSRC_CHANNEL + 1),
+#endif
 
 	INVALID_CHANNEL = 0xBAD,
 };
@@ -402,9 +411,9 @@ enum channel_enum {
 	MAX_5GHZ_CHANNEL = CHAN_ENUM_5920,
 	NUM_5GHZ_CHANNELS = (MAX_5GHZ_CHANNEL - MIN_5GHZ_CHANNEL + 1),
 
-	MIN_11P_CHANNEL = CHAN_ENUM_5850,
-	MAX_11P_CHANNEL = CHAN_ENUM_5920,
-	NUM_11P_CHANNELS = (MAX_11P_CHANNEL - MIN_11P_CHANNEL + 1),
+	MIN_DSRC_CHANNEL = CHAN_ENUM_5850,
+	MAX_DSRC_CHANNEL = CHAN_ENUM_5920,
+	NUM_DSRC_CHANNELS = (MAX_DSRC_CHANNEL - MIN_DSRC_CHANNEL + 1),
 
 	INVALID_CHANNEL = 0xBAD,
 };
@@ -789,6 +798,7 @@ enum restart_beaconing_on_ch_avoid_rule {
  * @force_ssc_disable_indoor_channel: Disable indoor channel on sap start
  * @restart_beaconing: control the beaconing entity to move
  * away from active LTE channels
+ * @enable_srd_chan_in_master_mode: SRD channel support in master mode
  */
 struct reg_config_vars {
 	uint32_t enable_11d_support;
@@ -799,6 +809,7 @@ struct reg_config_vars {
 	uint32_t indoor_chan_enabled;
 	uint32_t force_ssc_disable_indoor_channel;
 	enum restart_beaconing_on_ch_avoid_rule restart_beaconing;
+	bool enable_srd_chan_in_master_mode;
 };
 
 /**

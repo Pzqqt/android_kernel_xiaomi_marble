@@ -1391,13 +1391,14 @@ policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
 }
 
 static void policy_mgr_remove_dsrc_channels(uint8_t *chan_list,
-				uint32_t *num_channels)
+					    uint32_t *num_channels,
+					    struct wlan_objmgr_pdev *pdev)
 {
 	uint32_t num_chan_temp = 0;
 	int i;
 
 	for (i = 0; i < *num_channels; i++) {
-		if (!wlan_is_dsrc_channel(wlan_chan_to_freq(chan_list[i]))) {
+		if (!wlan_reg_is_dsrc_chan(pdev, chan_list[i])) {
 			chan_list[num_chan_temp] = chan_list[i];
 			num_chan_temp++;
 		}
@@ -1434,7 +1435,7 @@ QDF_STATUS policy_mgr_get_valid_chans(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
-	policy_mgr_remove_dsrc_channels(chan_list, list_len);
+	policy_mgr_remove_dsrc_channels(chan_list, list_len, pm_ctx->pdev);
 
 	return QDF_STATUS_SUCCESS;
 }

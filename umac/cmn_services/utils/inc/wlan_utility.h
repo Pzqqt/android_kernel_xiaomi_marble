@@ -46,14 +46,6 @@ struct wlan_find_vdev_filter {
  */
 uint32_t wlan_chan_to_freq(uint8_t chan);
 
-/*
- * wlan_is_dsrc_channel() - is the channel DSRC
- * @center_freq: center freq of the channel
- *
- * Return: true if DSRC channel or false otherwise
- */
-bool wlan_is_dsrc_channel(uint16_t center_freq);
-
 /**
  * wlan_freq_to_chan() - converts frequency to channel
  * @freq: frequency

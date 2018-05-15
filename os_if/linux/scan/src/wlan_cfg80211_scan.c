@@ -444,7 +444,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 
 		for (i = 0; i < request->n_channels; i++) {
 			channel = request->channels[i]->hw_value;
-			if (wlan_is_dsrc_channel(wlan_chan_to_freq(channel)))
+			if (wlan_reg_is_dsrc_chan(pdev, channel))
 				continue;
 
 			if (ap_or_go_present) {
@@ -1317,7 +1317,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		for (i = 0; i < request->n_channels; i++) {
 			channel = request->channels[i]->hw_value;
 			c_freq = wlan_reg_chan_to_freq(pdev, channel);
-			if (wlan_is_dsrc_channel(c_freq))
+			if (wlan_reg_is_dsrc_chan(pdev, channel))
 				continue;
 #ifdef WLAN_POLICY_MGR_ENABLE
 			if (ap_or_go_present) {

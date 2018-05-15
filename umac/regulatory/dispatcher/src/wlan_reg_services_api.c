@@ -508,6 +508,28 @@ bool wlan_reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc)
 	return reg_11d_enabled_on_host(psoc);
 }
 
+bool wlan_reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan_num)
+{
+	return reg_is_dsrc_chan(pdev, chan_num);
+}
+
+bool wlan_reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev,
+				 uint8_t chan_num)
+{
+	return reg_is_etsi13_srd_chan(pdev, chan_num);
+}
+
+bool wlan_reg_is_etsi13_regdmn(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_is_etsi13_regdmn(pdev);
+}
+
+bool wlan_reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev
+						     *pdev)
+{
+	return reg_is_etsi13_srd_chan_allowed_master_mode(pdev);
+}
+
 QDF_STATUS wlan_reg_get_chip_mode(struct wlan_objmgr_pdev *pdev,
 		uint32_t *chip_mode)
 {

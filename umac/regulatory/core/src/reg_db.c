@@ -1148,3 +1148,8 @@ QDF_STATUS reg_get_default_country(uint16_t *default_country)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+bool reg_etsi13_regdmn(uint8_t reg_dmn)
+{
+	return reg_dmn == ETSI13;
+}
