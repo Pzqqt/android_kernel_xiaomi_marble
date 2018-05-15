@@ -34,6 +34,10 @@ int msm_qti_pp_send_stereo_to_custom_stereo_cmd(int port_id, int copp_idx,
 						uint16_t op_FR_ip_FL_weight,
 						uint16_t op_FR_ip_FR_weight);
 void msm_qti_pp_add_controls(struct snd_soc_platform *platform);
+int msm_qti_pp_send_chmix_cfg_cmd(int port_id, int copp_idx,
+				  unsigned int session_id, int ip_channel_count,
+				  int out_channel_cnt, int *ch_wght_coeff,
+				  int session_type, int stream_type);
 #else /* CONFIG_QTI_PP */
 static inline int msm_adsp_inform_mixer_ctl(struct snd_soc_pcm_runtime *rtd,
 			uint32_t *payload)
@@ -71,6 +75,13 @@ static inline int msm_adsp_stream_callback_info(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+int msm_qti_pp_send_chmix_cfg_cmd(int port_id, int copp_idx,
+				  unsigned int session_id, int ip_channel_count,
+				  int out_channel_cnt, int *ch_wght_coeff,
+				  int session_type, int stream_type)
+{
+	return 0;
+}
 #define msm_qti_pp_send_eq_values(fedai_id) do {} while (0)
 #define msm_qti_pp_send_stereo_to_custom_stereo_cmd(port_id, copp_idx, \
 			session_id, op_FL_ip_FL_weight, op_FL_ip_FR_weight, \

@@ -575,6 +575,29 @@ struct adm_cmd_set_pspd_mtmx_strtr_params_v5 {
 	u16		reserved;
 } __packed;
 
+/* set customized mixing on matrix mixer.
+ * Updated to account for both LSM as well as ASM path.
+ */
+#define ADM_CMD_SET_PSPD_MTMX_STRTR_PARAMS_V6                        0x00010364
+struct adm_cmd_set_pspd_mtmx_strtr_params_v6 {
+	struct apr_hdr hdr;
+	/* LSW of parameter data payload address.*/
+	u32		payload_addr_lsw;
+	/* MSW of parameter data payload address.*/
+	u32		payload_addr_msw;
+	/* Memory map handle returned by ADM_CMD_SHARED_MEM_MAP_REGIONS */
+	/* command. If mem_map_handle is zero implies the message is in */
+	/* the payload */
+	u32		mem_map_handle;
+	/* Size in bytes of the variable payload accompanying this */
+	/* message or in shared memory. This is used for parsing the */
+	/* parameter payload. */
+	u32		payload_size;
+	u16		direction;
+	u16		sessionid;
+	u16		deviceid;
+	u16		stream_type;
+} __packed;
 /* Returns the status and COPP ID to an #ADM_CMD_DEVICE_OPEN_V5 command.
  */
 #define ADM_CMDRSP_DEVICE_OPEN_V5                      0x00010329
@@ -4683,6 +4706,7 @@ struct asm_softvolume_params {
 #define PCM_CHANNEL_RRC  16
 
 #define PCM_FORMAT_MAX_NUM_CHANNEL  8
+#define PCM_FORMAT_MAX_CHANNELS_9   9
 
 #define ASM_MEDIA_FMT_MULTI_CHANNEL_PCM_V2 0x00010DA5
 
