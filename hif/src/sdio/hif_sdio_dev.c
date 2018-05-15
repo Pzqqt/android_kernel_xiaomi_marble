@@ -87,6 +87,7 @@ struct hif_sdio_device *hif_dev_create(struct hif_sdio_dev *hif_device,
 	QDF_STATUS status;
 	struct hif_sdio_device *pdev;
 
+	HIF_ENTER();
 	pdev = qdf_mem_malloc(sizeof(struct hif_sdio_device));
 	if (!pdev) {
 		A_ASSERT(false);
@@ -107,6 +108,7 @@ struct hif_sdio_device *hif_dev_create(struct hif_sdio_dev *hif_device,
 
 	A_MEMCPY(&pdev->hif_callbacks, callbacks, sizeof(*callbacks));
 
+	HIF_EXIT();
 	return pdev;
 }
 
@@ -336,31 +338,19 @@ bool hif_dev_get_mailbox_swap(struct hif_sdio_dev *pdev)
 QDF_STATUS hif_dev_setup(struct hif_sdio_device *pdev)
 {
 	QDF_STATUS status;
-	uint32_t blocksizes[MAILBOX_COUNT];
 	struct htc_callbacks htc_cbs;
 	struct hif_sdio_dev *hif_device = pdev->HIFDevice;
 
 	HIF_ENTER();
 
-	status = hif_configure_device(hif_device,
-				      HIF_DEVICE_GET_MBOX_ADDR,
-				      &pdev->MailBoxInfo,
-				      sizeof(pdev->MailBoxInfo));
+	status = hif_dev_setup_device(pdev);
 
-	if (status != QDF_STATUS_SUCCESS)
-		HIF_ERROR("%s: HIF_DEVICE_GET_MBOX_ADDR failed", __func__);
 
-	status = hif_configure_device(hif_device,
-				      HIF_DEVICE_GET_MBOX_BLOCK_SIZE,
-				      blocksizes, sizeof(blocksizes));
 	if (status != QDF_STATUS_SUCCESS) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-			("(%s)HIF_DEVICE_GET_MBOX_BLOCK_SIZE failed!!!\n",
-				 __func__));
-		A_ASSERT(false);
+		HIF_ERROR("%s: device specific setup failed", __func__);
+		return QDF_STATUS_E_INVAL;
 	}
 
-	pdev->BlockSize = blocksizes[MAILBOX_FOR_BLOCK_SIZE];
 	pdev->BlockMask = pdev->BlockSize - 1;
 	A_ASSERT((pdev->BlockSize & pdev->BlockMask) == 0);
 

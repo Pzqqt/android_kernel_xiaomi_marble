@@ -39,6 +39,7 @@
 #include "regtable_sdio.h"
 #include "wma_api.h"
 #include "hif_internal.h"
+#include <transfer/transfer.h>
 
 /* QUIRK PARAMETERS */
 unsigned int writecccr1;

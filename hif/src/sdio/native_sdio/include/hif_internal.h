@@ -50,12 +50,6 @@
 #define FLAGS_CARD_ENAB                    0x02
 #define FLAGS_CARD_IRQ_UNMSK               0x04
 
-#define HIF_MBOX_BLOCK_SIZE                HIF_DEFAULT_IO_BLOCK_SIZE
-#define HIF_MBOX0_BLOCK_SIZE               1
-#define HIF_MBOX1_BLOCK_SIZE               HIF_MBOX_BLOCK_SIZE
-#define HIF_MBOX2_BLOCK_SIZE               HIF_MBOX_BLOCK_SIZE
-#define HIF_MBOX3_BLOCK_SIZE               HIF_MBOX_BLOCK_SIZE
-
 /*
  * direction - Direction of transfer (HIF_SDIO_READ/HIF_SDIO_WRITE).
  */
@@ -112,17 +106,6 @@
 #define HIF_INCREMENTAL_ADDRESS		0x00000200
 #define HIF_AMODE_MASK				(HIF_FIXED_ADDRESS | \
 							HIF_INCREMENTAL_ADDRESS)
-
-/*
- * data written into the dummy space will not put into the final mbox FIFO
- */
-#define HIF_DUMMY_SPACE_MASK			0xFFFF0000
-
-/*
- * data written into the dummy space will not put into the final mbox FIFO
- */
-#define HIF_DUMMY_SPACE_MASK			0xFFFF0000
-
 
 #define HIF_WR_ASYNC_BYTE_FIX   \
 		(HIF_SDIO_WRITE | HIF_ASYNCHRONOUS | HIF_EXTENDED_IO | \

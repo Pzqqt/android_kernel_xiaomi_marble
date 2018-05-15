@@ -171,13 +171,13 @@ static void set_extended_mbox_window_info(uint16_t manf_id,
 }
 
 /**
- * hif_dev_get_mbox_address() - get the mbox addresses for dma
+ * hif_dev_get_fifo_address() - get the fifo addresses for dma
  * @pdev:  SDIO HIF object
  * @config: mbox address config pointer
  *
  * Return : 0 for success, non-zero for error
  */
-QDF_STATUS hif_dev_get_mbox_address(struct hif_sdio_dev *pdev,
+QDF_STATUS hif_dev_get_fifo_address(struct hif_sdio_dev *pdev,
 				    struct hif_device_mbox_info *config,
 				    uint32_t config_len)
 {
@@ -196,12 +196,12 @@ QDF_STATUS hif_dev_get_mbox_address(struct hif_sdio_dev *pdev,
 }
 
 /**
- * hif_dev_get_mbox_size() - get the mbox block size for dma
+ * hif_dev_get_block_size() - get the mbox block size for dma
  * @config : mbox size config pointer
  *
  * Return : NONE
  */
-void hif_dev_get_mbox_block_size(void *config)
+void hif_dev_get_block_size(void *config)
 {
 	((uint32_t *)config)[0] = HIF_MBOX0_BLOCK_SIZE;
 	((uint32_t *)config)[1] = HIF_MBOX1_BLOCK_SIZE;
@@ -264,6 +264,35 @@ QDF_STATUS hif_dev_map_service_to_pipe(struct hif_sdio_dev *pdev, uint16_t svc,
 		status = QDF_STATUS_E_INVAL;
 		break;
 	}
+	return status;
+}
+
+/** hif_dev_setup_device() - Setup device specific stuff here required for hif
+ * @pdev : HIF layer object
+ *
+ * return 0 on success, error otherwise
+ */
+int hif_dev_setup_device(struct hif_sdio_device *pdev)
+{
+	int status = 0;
+	uint32_t blocksizes[MAILBOX_COUNT];
+
+	status = hif_configure_device(pdev->HIFDevice,
+				      HIF_DEVICE_GET_FIFO_ADDR,
+				      &pdev->MailBoxInfo,
+				      sizeof(pdev->MailBoxInfo));
+
+	if (status != QDF_STATUS_SUCCESS)
+		HIF_ERROR("%s: HIF_DEVICE_GET_MBOX_ADDR failed", __func__);
+
+	status = hif_configure_device(pdev->HIFDevice,
+				      HIF_DEVICE_GET_BLOCK_SIZE,
+				      blocksizes, sizeof(blocksizes));
+	if (status != QDF_STATUS_SUCCESS)
+		HIF_ERROR("%s: HIF_DEVICE_GET_MBOX_BLOCK_SIZE fail", __func__);
+
+	pdev->BlockSize = blocksizes[MAILBOX_FOR_BLOCK_SIZE];
+
 	return status;
 }
 
@@ -477,6 +506,53 @@ int hif_get_send_address(struct hif_sdio_device *pdev,
 }
 
 /**
+ * hif_fixup_write_param() - Tweak the address and length parameters
+ * @pdev: The pointer to the hif device object
+ * @length: The length pointer
+ * @addr: The addr pointer
+ *
+ * Return: None
+ */
+void hif_fixup_write_param(struct hif_sdio_dev *pdev, uint32_t req,
+			   uint32_t *length, uint32_t *addr)
+{
+	struct hif_device_mbox_info mboxinfo;
+	uint32_t taddr = *addr, mboxlen = 0;
+
+	hif_configure_device(pdev, HIF_DEVICE_GET_FIFO_ADDR,
+			     &mboxinfo, sizeof(mboxinfo));
+
+	if (taddr >= 0x800 && taddr < 0xC00) {
+		/* Host control register and CIS Window */
+		mboxlen = 0;
+	} else if (taddr == mboxinfo.mbox_addresses[0] ||
+		   taddr == mboxinfo.mbox_addresses[1] ||
+		   taddr == mboxinfo.mbox_addresses[2] ||
+		   taddr == mboxinfo.mbox_addresses[3]) {
+		mboxlen = HIF_MBOX_WIDTH;
+	} else if (taddr == mboxinfo.mbox_prop[0].extended_address) {
+		mboxlen = mboxinfo.mbox_prop[0].extended_size;
+	} else if (taddr == mboxinfo.mbox_prop[1].extended_address) {
+		mboxlen = mboxinfo.mbox_prop[1].extended_size;
+	} else {
+		HIF_ERROR("%s: Invalid write addr: 0x%08x\n", __func__, taddr);
+		return;
+	}
+
+	if (mboxlen != 0) {
+		if (*length > mboxlen) {
+			HIF_ERROR("%s: Error (%u > %u)",
+				  __func__, *length, mboxlen);
+			return;
+		}
+
+		taddr = taddr + (mboxlen - *length);
+		taddr = taddr + ((req & HIF_DUMMY_SPACE_MASK) >> 16);
+		*addr = taddr;
+	}
+}
+
+/**
  * hif_dev_recv_packet() - Receieve HTC packet/packet information from device
  * @pdev : HIF device object
  * @packet : The HTC packet pointer
@@ -589,7 +665,7 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle
 			DEV_CALC_RECV_PADDED_LEN(pdev, packet->ActualLength);
 		if (packet->PktInfo.AsRx.HTCRxFlags &
 				HTC_RX_PKT_LAST_BUNDLED_PKT_HAS_ADDTIONAL_BLOCK)
-			padded_length += HIF_MBOX_BLOCK_SIZE;
+			padded_length += HIF_BLOCK_SIZE;
 		if ((bundleSpaceRemaining - padded_length) < 0) {
 			/* exceeds what we can transfer, put the packet back */
 			HTC_PACKET_ENQUEUE_TO_HEAD(recv_pkt_queue, packet);
@@ -637,7 +713,7 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle
 				if (packet->PktInfo.AsRx.HTCRxFlags &
 				HTC_RX_PKT_LAST_BUNDLED_PKT_HAS_ADDTIONAL_BLOCK)
 					padded_length +=
-						HIF_MBOX_BLOCK_SIZE;
+						HIF_BLOCK_SIZE;
 				A_MEMCPY(packet->pBuffer,
 					 buffer, padded_length);
 				buffer += padded_length;

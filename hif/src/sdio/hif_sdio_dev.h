@@ -58,15 +58,15 @@ QDF_STATUS hif_dev_map_service_to_pipe(struct hif_sdio_dev *pdev,
 
 void hif_dev_unmask_interrupts(struct hif_sdio_device *pdev);
 
-#ifdef CONFIG_SDIO_TRANSFER_MAILBOX
-QDF_STATUS hif_dev_get_mbox_address(struct hif_sdio_dev *pdev,
+int hif_dev_setup_device(struct hif_sdio_device *pdev);
+
+QDF_STATUS hif_dev_get_fifo_address(struct hif_sdio_dev *pdev,
 				    struct hif_device_mbox_info *config,
 				    uint32_t config_len);
 
-void hif_dev_get_mbox_block_size(void *config);
+void hif_dev_get_block_size(void *config);
 
 void hif_dev_set_mailbox_swap(struct hif_sdio_dev *pdev);
 
 bool hif_dev_get_mailbox_swap(struct hif_sdio_dev *pdev);
-#endif
 #endif /* HIF_SDIO_DEV_H_ */

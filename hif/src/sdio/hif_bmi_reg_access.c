@@ -50,7 +50,7 @@ hif_bmi_buffer_send(struct hif_sdio_dev *device, char *buffer, uint32_t length)
 	uint32_t address;
 	uint32_t mbox_address[HTC_MAILBOX_NUM_MAX];
 
-	hif_configure_device(device, HIF_DEVICE_GET_MBOX_ADDR,
+	hif_configure_device(device, HIF_DEVICE_GET_FIFO_ADDR,
 			     &mbox_address[0], sizeof(mbox_address));
 
 	*p_bmi_cmd_credits = 0;
@@ -176,7 +176,7 @@ hif_bmi_buffer_receive(struct hif_sdio_dev *device,
 		pending_events_func_check = true;
 	}
 
-	hif_configure_device(device, HIF_DEVICE_GET_MBOX_ADDR,
+	hif_configure_device(device, HIF_DEVICE_GET_FIFO_ADDR,
 			     &mbox_address[0], sizeof(mbox_address));
 
 	/*
@@ -298,7 +298,7 @@ hif_reg_based_get_target_info(struct hif_opaque_softc *hif_ctx,
 	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_ctx);
 	struct hif_sdio_dev *device = scn->hif_handle;
 
-	AR_DEBUG_PRINTF(ATH_DEBUG_BMI,
+	AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 			("BMI Get Target Info: Enter (device: 0x%pK)\n",
 			device));
 	cid = BMI_GET_TARGET_INFO;
@@ -367,7 +367,7 @@ hif_reg_based_get_target_info(struct hif_opaque_softc *hif_ctx,
 		targ_info->target_type = TARGET_TYPE_AR6001;
 	}
 
-	AR_DEBUG_PRINTF(ATH_DEBUG_BMI,
+	AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 			("BMI Get Target Info: Exit (ver: 0x%x type: 0x%x)\n",
 			 targ_info->target_ver,
 			 targ_info->target_type));

@@ -90,6 +90,9 @@ QDF_STATUS hif_dev_process_recv_header(struct hif_sdio_device *pdev,
 				       HTC_PACKET *packet,
 				       uint32_t *next_look_aheads,
 				       int *num_look_aheads);
+void hif_fixup_write_param(struct hif_sdio_dev *pdev, uint32_t req,
+			   uint32_t *length, uint32_t *addr);
+
 #ifdef CONFIG_SDIO_TRANSFER_MAILBOX
 static inline uint32_t hif_get_send_buffer_flags(struct hif_sdio_device *pdev)
 {

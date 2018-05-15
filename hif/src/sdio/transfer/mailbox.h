@@ -49,6 +49,108 @@
 #endif
 #define AR6K_TARGET_DEBUG_INTR_MASK     0x01
 
+/* Mailbox address in SDIO address space */
+#if defined(SDIO_3_0)
+#define HIF_MBOX_BASE_ADDR                 0x1000
+#define HIF_MBOX_DUMMY_WIDTH               0x800
+#else
+#define HIF_MBOX_BASE_ADDR                 0x800
+#define HIF_MBOX_DUMMY_WIDTH               0
+#endif
+
+#define HIF_MBOX_WIDTH                     0x800
+
+#define HIF_MBOX_START_ADDR(mbox)               \
+	(HIF_MBOX_BASE_ADDR + mbox * (HIF_MBOX_WIDTH + HIF_MBOX_DUMMY_WIDTH))
+
+#define HIF_MBOX_END_ADDR(mbox)                 \
+	(HIF_MBOX_START_ADDR(mbox) + HIF_MBOX_WIDTH - 1)
+
+/* extended MBOX address for larger MBOX writes to MBOX 0*/
+#if defined(SDIO_3_0)
+#define HIF_MBOX0_EXTENDED_BASE_ADDR       0x5000
+#else
+#define HIF_MBOX0_EXTENDED_BASE_ADDR       0x2800
+#endif
+#define HIF_MBOX0_EXTENDED_WIDTH_AR6002    (6 * 1024)
+#define HIF_MBOX0_EXTENDED_WIDTH_AR6003    (18 * 1024)
+
+/* version 1 of the chip has only a 12K extended mbox range */
+#define HIF_MBOX0_EXTENDED_BASE_ADDR_AR6003_V1  0x4000
+#define HIF_MBOX0_EXTENDED_WIDTH_AR6003_V1      (12 * 1024)
+
+#define HIF_MBOX0_EXTENDED_BASE_ADDR_AR6004     0x2800
+#define HIF_MBOX0_EXTENDED_WIDTH_AR6004         (18 * 1024)
+
+#if defined(SDIO_3_0)
+#define HIF_MBOX0_EXTENDED_BASE_ADDR_AR6320     0x5000
+#define HIF_MBOX0_EXTENDED_WIDTH_AR6320             (36 * 1024)
+#define HIF_MBOX0_EXTENDED_WIDTH_AR6320_ROME_2_0    (56 * 1024)
+#define HIF_MBOX1_EXTENDED_WIDTH_AR6320             (36 * 1024)
+#define HIF_MBOX_DUMMY_SPACE_SIZE_AR6320        (2 * 1024)
+#else
+#define HIF_MBOX0_EXTENDED_BASE_ADDR_AR6320     0x2800
+#define HIF_MBOX0_EXTENDED_WIDTH_AR6320             (24 * 1024)
+#define HIF_MBOX1_EXTENDED_WIDTH_AR6320             (24 * 1024)
+#define HIF_MBOX_DUMMY_SPACE_SIZE_AR6320        0
+#endif
+
+/* GMBOX addresses */
+#define HIF_GMBOX_BASE_ADDR                0x7000
+#define HIF_GMBOX_WIDTH                    0x4000
+
+/* for SDIO we recommend a 128-byte block size */
+#if defined(WITH_BACKPORTS)
+#define HIF_DEFAULT_IO_BLOCK_SIZE          128
+#else
+#define HIF_DEFAULT_IO_BLOCK_SIZE          256
+#endif
+
+#define FIFO_TIMEOUT_AND_CHIP_CONTROL 0x00000868
+#define FIFO_TIMEOUT_AND_CHIP_CONTROL_DISABLE_SLEEP_OFF 0xFFFEFFFF
+#define FIFO_TIMEOUT_AND_CHIP_CONTROL_DISABLE_SLEEP_ON 0x10000
+/* In SDIO 2.0, asynchronous interrupt is not in SPEC
+ * requirement, but AR6003 support it, so the register
+ * is placed in vendor specific field 0xF0(bit0)
+ * In SDIO 3.0, the register is defined in SPEC, and its
+ * address is 0x16(bit1)
+ */
+/* interrupt mode register of AR6003 */
+#define CCCR_SDIO_IRQ_MODE_REG_AR6003         0xF0
+/* mode to enable special 4-bit interrupt assertion without clock */
+#define SDIO_IRQ_MODE_ASYNC_4BIT_IRQ_AR6003   (1 << 0)
+/* interrupt mode register of AR6320 */
+#define CCCR_SDIO_IRQ_MODE_REG_AR6320           0x16
+/* mode to enable special 4-bit interrupt assertion without clock */
+#define SDIO_IRQ_MODE_ASYNC_4BIT_IRQ_AR6320     (1 << 1)
+
+#define CCCR_SDIO_ASYNC_INT_DELAY_ADDRESS       0xF0
+#define CCCR_SDIO_ASYNC_INT_DELAY_LSB           0x06
+#define CCCR_SDIO_ASYNC_INT_DELAY_MASK          0xC0
+
+/* Vendor Specific Driver Strength Settings */
+#define CCCR_SDIO_DRIVER_STRENGTH_ENABLE_ADDR   0xf2
+#define CCCR_SDIO_DRIVER_STRENGTH_ENABLE_MASK   0x0e
+#define CCCR_SDIO_DRIVER_STRENGTH_ENABLE_A      0x02
+#define CCCR_SDIO_DRIVER_STRENGTH_ENABLE_C      0x04
+#define CCCR_SDIO_DRIVER_STRENGTH_ENABLE_D      0x08
+
+#define HIF_BLOCK_SIZE                HIF_DEFAULT_IO_BLOCK_SIZE
+#define HIF_MBOX0_BLOCK_SIZE          1
+#define HIF_MBOX1_BLOCK_SIZE          HIF_BLOCK_SIZE
+#define HIF_MBOX2_BLOCK_SIZE          HIF_BLOCK_SIZE
+#define HIF_MBOX3_BLOCK_SIZE          HIF_BLOCK_SIZE
+
+/*
+ * data written into the dummy space will not put into the final mbox FIFO
+ */
+#define HIF_DUMMY_SPACE_MASK                   0xFFFF0000
+
+/*
+ * data written into the dummy space will not put into the final mbox FIFO
+ */
+#define HIF_DUMMY_SPACE_MASK                   0xFFFF0000
+
 PREPACK struct MBOX_IRQ_PROC_REGISTERS {
 	uint8_t host_int_status;
 	uint8_t cpu_int_status;

@@ -36,6 +36,7 @@
 #include "regtable_sdio.h"
 #include "wma_api.h"
 #include "hif_internal.h"
+#include <transfer/transfer.h>
 
 /* by default setup a bounce buffer for the data packets,
  * if the underlying host controller driver
@@ -261,8 +262,7 @@ QDF_STATUS hif_init(struct osdrv_callbacks *callbacks)
  */
 static QDF_STATUS
 __hif_read_write(struct hif_sdio_dev *device,
-		 uint32_t address,
-		 char *buffer,
+		 uint32_t address, char *buffer,
 		 uint32_t length, uint32_t request, void *context)
 {
 	uint8_t opcode;
@@ -271,22 +271,26 @@ __hif_read_write(struct hif_sdio_dev *device,
 	uint8_t *tbuffer;
 	bool bounced = false;
 
-	AR_DEBUG_ASSERT(device != NULL);
-	AR_DEBUG_ASSERT(device->func != NULL);
-	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-			("__hif_read_write, addr:0X%06X, len:%08d, %s, %s\n",
-			 address, length,
-			 request & HIF_SDIO_READ ? "Read " : "Write",
-			 request & HIF_ASYNCHRONOUS ? "Async" : "Sync "));
+	if (device == NULL) {
+		HIF_ERROR("%s: device null!", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (device->func == NULL) {
+		HIF_ERROR("%s: func null!", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	HIF_INFO("%s: addr:0X%06X, len:%08d, %s, %s", __func__, address, length,
+		 request & HIF_SDIO_READ ? "Read " : "Write",
+		 request & HIF_ASYNCHRONOUS ? "Async" : "Sync ");
 
 	do {
 		if (request & HIF_EXTENDED_IO) {
-			AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-				("%s: Command type: CMD53\n", __func__));
+			HIF_INFO_HI("%s: Command type: CMD53\n", __func__);
 		} else {
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-				("%s: Invalid command type: 0x%08x\n",
-				__func__, request));
+			HIF_ERROR("%s: Invalid command type: 0x%08x\n",
+				  __func__, request);
 			status = QDF_STATUS_E_INVAL;
 			break;
 		}
@@ -294,89 +298,39 @@ __hif_read_write(struct hif_sdio_dev *device,
 		if (request & HIF_BLOCK_BASIS) {
 			/* round to whole block length size */
 			length =
-				(length / HIF_MBOX_BLOCK_SIZE) *
-				HIF_MBOX_BLOCK_SIZE;
-			AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-					("%s: Block mode (BlockLen: %d)\n",
-					 __func__, length));
+				(length / HIF_BLOCK_SIZE) *
+				HIF_BLOCK_SIZE;
+			HIF_INFO_HI("%s: Block mode (BlockLen: %d)\n",
+				    __func__, length);
 		} else if (request & HIF_BYTE_BASIS) {
-			AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-					("%s: Byte mode (BlockLen: %d)\n",
-					 __func__, length));
+			HIF_INFO_HI("%s: Byte mode (BlockLen: %d)\n",
+				    __func__, length);
 		} else {
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-					("%s: Invalid data mode: 0x%08x\n",
-					 __func__, request));
+			HIF_ERROR("%s: Invalid data mode: 0x%08x\n",
+				  __func__, request);
 			status = QDF_STATUS_E_INVAL;
 			break;
 		}
 		if (request & HIF_SDIO_WRITE) {
-			struct hif_device_mbox_info MailBoxInfo;
-			unsigned int mboxLength = 0;
+			hif_fixup_write_param(device, request,
+					      &length, &address);
 
-			hif_configure_device(device,
-					     HIF_DEVICE_GET_MBOX_ADDR,
-					     &MailBoxInfo, sizeof(MailBoxInfo));
-			if (address >= 0x800 && address < 0xC00) {
-				/* Host control register and CIS Window */
-				mboxLength = 0;
-			} else if (address == MailBoxInfo.mbox_addresses[0]
-				   || address == MailBoxInfo.mbox_addresses[1]
-				   || address == MailBoxInfo.mbox_addresses[2]
-				   || address ==
-						MailBoxInfo.mbox_addresses[3]) {
-				mboxLength = HIF_MBOX_WIDTH;
-			} else if (address ==
-				   MailBoxInfo.mbox_prop[0].extended_address) {
-				mboxLength =
-					MailBoxInfo.mbox_prop[0].extended_size;
-			} else if (address ==
-				   MailBoxInfo.mbox_prop[1].extended_address) {
-				mboxLength =
-					MailBoxInfo.mbox_prop[1].extended_size;
-			} else {
-				AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-					("Invalid written address: 0x%08x\n",
-					address));
-				break;
-			}
-			AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-				("address:%08X, Length:0x%08X, Dummy:0x%04X, Final:0x%08X\n",
-				 address, length,
-				 (request & HIF_DUMMY_SPACE_MASK) >> 16,
-				 mboxLength ==
-				 0 ? address : address + (mboxLength -
-				 length)));
-			if (mboxLength != 0) {
-				if (length > mboxLength) {
-					AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-					("%s: written length(0x%08X) larger than mbox len(0x%08x)\n",
-						 __func__, length, mboxLength));
-					break;
-				}
-				address += (mboxLength - length);
-				/*
-				 * plus dummy byte count
-				 */
-				address += ((request &
-						HIF_DUMMY_SPACE_MASK) >> 16);
-			}
+			HIF_INFO_HI("addr:%08X, len:0x%08X, dummy:0x%04X\n",
+				    address, length,
+				    (request & HIF_DUMMY_SPACE_MASK) >> 16);
 		}
 
 		if (request & HIF_FIXED_ADDRESS) {
 			opcode = CMD53_FIXED_ADDRESS;
-			AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-					("%s: Address mode: Fixed 0x%X\n",
-					 __func__, address));
+			HIF_INFO_HI("%s: Addr mode: fixed 0x%X\n",
+				    __func__, address);
 		} else if (request & HIF_INCREMENTAL_ADDRESS) {
 			opcode = CMD53_INCR_ADDRESS;
-			AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-				("%s: Address mode: Incremental 0x%X\n",
-				 __func__, address));
+			HIF_INFO_HI("%s: Address mode: Incremental 0x%X\n",
+				    __func__, address);
 		} else {
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-				("%s: Invalid address mode: 0x%08x\n",
-				 __func__, request));
+			HIF_ERROR("%s: Invalid address mode: 0x%08x\n",
+				  __func__, request);
 			status = QDF_STATUS_E_INVAL;
 			break;
 		}
@@ -389,9 +343,8 @@ __hif_read_write(struct hif_sdio_dev *device,
 				/* copy the write data to the dma buffer */
 				AR_DEBUG_ASSERT(length <= HIF_DMA_BUFFER_SIZE);
 				if (length > HIF_DMA_BUFFER_SIZE) {
-					AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-						("%s: Invalid write length: %d\n",
-						__func__, length));
+					HIF_ERROR("%s: Invalid write len: %d\n",
+						  __func__, length);
 					status = QDF_STATUS_E_INVAL;
 					break;
 				}
@@ -404,22 +357,17 @@ __hif_read_write(struct hif_sdio_dev *device,
 			tbuffer = buffer;
 #endif
 			if (opcode == CMD53_FIXED_ADDRESS  && tbuffer != NULL) {
-				ret =
-					sdio_writesb(device->func, address,
-						tbuffer,
-						length);
-				AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-					("%s: writesb ret=%d address: 0x%X, len: %d, 0x%X\n",
-					 __func__, ret, address, length,
-					 *(int *)tbuffer));
+				ret = sdio_writesb(device->func, address,
+						   tbuffer, length);
+				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					    __func__, ret, address, length,
+					    *(int *)tbuffer);
 			} else if (tbuffer) {
-				ret =
-					sdio_memcpy_toio(device->func, address,
-							 tbuffer, length);
-				AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-					("%s: writeio ret=%d address: 0x%X, len: %d, 0x%X\n",
-					 __func__, ret, address, length,
-					 *(int *)tbuffer));
+				ret = sdio_memcpy_toio(device->func, address,
+						       tbuffer, length);
+				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					    __func__, ret, address, length,
+					    *(int *)tbuffer);
 			}
 		} else if (request & HIF_SDIO_READ) {
 #if HIF_USE_DMA_BOUNCE_BUFFER
@@ -442,46 +390,37 @@ __hif_read_write(struct hif_sdio_dev *device,
 			tbuffer = buffer;
 #endif
 			if (opcode == CMD53_FIXED_ADDRESS && tbuffer != NULL) {
-				ret =
-					sdio_readsb(device->func, tbuffer,
-						    address,
-						    length);
-				AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-					("%s: readsb ret=%d address: 0x%X, len: %d, 0x%X\n",
-					 __func__, ret, address, length,
-					 *(int *)tbuffer));
+				ret = sdio_readsb(device->func, tbuffer,
+						  address, length);
+				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					    __func__, ret, address, length,
+					    *(int *)tbuffer);
 			} else if (tbuffer) {
-				ret =
-					sdio_memcpy_fromio(device->func,
-							   tbuffer,
-							   address, length);
-				AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-					("%s: readio ret=%d address: 0x%X, len: %d, 0x%X\n",
-					 __func__, ret, address, length,
-					 *(int *)tbuffer));
+				ret = sdio_memcpy_fromio(device->func,
+							 tbuffer, address,
+							 length);
+				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					    __func__, ret, address, length,
+					    *(int *)tbuffer);
 			}
 #if HIF_USE_DMA_BOUNCE_BUFFER
 			if (bounced && tbuffer)
 				memcpy(buffer, tbuffer, length);
 #endif
 		} else {
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-					("%s: Invalid direction: 0x%08x\n",
-					 __func__, request));
+			HIF_ERROR("%s: Invalid dir: 0x%08x", __func__, request);
 			status = QDF_STATUS_E_INVAL;
 			return status;
 		}
 
 		if (ret) {
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-					("%s: SDIO bus operation failed! MMC stack returned : %d\n",
-					 __func__, ret));
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-				("__hif_read_write, addr:0X%06X, len:%08d, %s, %s\n",
-				 address, length,
-				 request & HIF_SDIO_READ ? "Read " : "Write",
-				 request & HIF_ASYNCHRONOUS ? "Async" :
-					 "Sync "));
+			HIF_ERROR("%s: SDIO bus operation failed!", __func__);
+			HIF_ERROR("%s: MMC stack returned : %d", __func__, ret);
+			HIF_ERROR("%s: addr:0X%06X, len:%08d, %s, %s",
+				  __func__, address, length,
+				  request & HIF_SDIO_READ ? "Read " : "Write",
+				  request & HIF_ASYNCHRONOUS ?
+				  "Async" : "Sync");
 			status = QDF_STATUS_E_FAILURE;
 		}
 	} while (false);
@@ -1036,15 +975,14 @@ hif_configure_device(struct hif_sdio_dev *device,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	switch (opcode) {
-#ifdef CONFIG_SDIO_TRANSFER_MAILBOX
-	case HIF_DEVICE_GET_MBOX_BLOCK_SIZE:
-		hif_dev_get_mbox_block_size(config);
+	case HIF_DEVICE_GET_BLOCK_SIZE:
+		hif_dev_get_block_size(config);
 		break;
 
-	case HIF_DEVICE_GET_MBOX_ADDR:
-		hif_dev_get_mbox_address(device, config, config_len);
+	case HIF_DEVICE_GET_FIFO_ADDR:
+		hif_dev_get_fifo_address(device, config, config_len);
 		break;
-#endif
+
 	case HIF_DEVICE_GET_PENDING_EVENTS_FUNC:
 		HIF_WARN("%s: opcode %d",  __func__, opcode);
 		status = QDF_STATUS_E_FAILURE;
@@ -1729,10 +1667,10 @@ static QDF_STATUS hif_enable_func(struct hif_sdio_dev *device,
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		ret = sdio_set_block_size(func, HIF_MBOX_BLOCK_SIZE);
+		ret = sdio_set_block_size(func, HIF_BLOCK_SIZE);
 		if (ret) {
 			HIF_ERROR("%s: Unable to set block size 0x%X : %d\n",
-				  __func__, HIF_MBOX_BLOCK_SIZE, ret);
+				  __func__, HIF_BLOCK_SIZE, ret);
 			sdio_release_host(func);
 			return QDF_STATUS_E_FAILURE;
 		}

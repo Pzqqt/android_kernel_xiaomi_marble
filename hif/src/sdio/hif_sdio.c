@@ -172,11 +172,15 @@ void hif_post_init(struct hif_opaque_softc *hif_ctx, void *target,
 	struct hif_sdio_dev *hif_device = scn->hif_handle;
 	struct hif_sdio_device *htc_sdio_device = hif_dev_from_hif(hif_device);
 
+	HIF_ENTER();
+
 	if (htc_sdio_device == NULL)
 		htc_sdio_device = hif_dev_create(hif_device, callbacks, target);
 
 	if (htc_sdio_device)
 		hif_dev_setup(htc_sdio_device);
+
+	HIF_EXIT();
 }
 
 /**

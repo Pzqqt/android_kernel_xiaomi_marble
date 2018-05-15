@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +27,7 @@
 #include "dl_list.h"
 #define ATH_MODULE_NAME hif
 #include "a_debug.h"
+#include <transfer/transfer.h>
 
 #ifdef HIF_LINUX_MMC_SCATTER_SUPPORT
 
@@ -123,8 +124,8 @@ QDF_STATUS do_hif_read_write_scatter(struct hif_sdio_dev *device,
 	memset(&cmd, 0, sizeof(struct mmc_command));
 	memset(&data, 0, sizeof(struct mmc_data));
 
-	data.blksz = HIF_MBOX_BLOCK_SIZE;
-	data.blocks = req->total_length / HIF_MBOX_BLOCK_SIZE;
+	data.blksz = HIF_BLOCK_SIZE;
+	data.blocks = req->total_length / HIF_BLOCK_SIZE;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_SCATTER,
 			("HIF-SCATTER: (%s) Address: 0x%X, (BlockLen: %d, BlockCount: %d), (tot:%d,sg:%d)\n",
