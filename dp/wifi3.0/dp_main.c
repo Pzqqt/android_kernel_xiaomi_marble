@@ -3509,6 +3509,33 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 }
 
 /*
+ * dp_peer_delete_ast_entries(): Delete all AST entries for a peer
+ * @soc - datapath soc handle
+ * @peer - datapath peer handle
+ *
+ * Delete the AST entries belonging to a peer
+ */
+#ifdef FEATURE_AST
+static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
+					      struct dp_peer *peer)
+{
+	struct dp_ast_entry *ast_entry, *temp_ast_entry;
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry)
+		dp_peer_del_ast(soc, ast_entry);
+
+	TAILQ_INIT(&peer->ast_entry_list);
+	qdf_spin_unlock_bh(&soc->ast_lock);
+}
+#else
+static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
+					      struct dp_peer *peer)
+{
+}
+#endif
+
+/*
  * dp_peer_create_wifi3() - attach txrx peer
  * @txrx_vdev: Datapath VDEV handle
  * @peer_mac_addr: Peer MAC address
@@ -3523,6 +3550,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev;
 	struct dp_soc *soc;
+	struct dp_ast_entry *ast_entry;
 
 	/* preconditions */
 	qdf_assert(vdev);
@@ -3537,9 +3565,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	if (peer) {
 		peer->delete_in_progress = false;
 
-		qdf_spin_lock_bh(&soc->ast_lock);
-		TAILQ_INIT(&peer->ast_entry_list);
-		qdf_spin_unlock_bh(&soc->ast_lock);
+		dp_peer_delete_ast_entries(soc, peer);
 
 		/*
 		* on peer create, peer ref count decrements, sice new peer is not
@@ -3556,6 +3582,15 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 #endif
 		DP_STATS_INIT(peer);
 		return (void *)peer;
+	} else {
+		/*
+		 * When a STA roams from RPTR AP to ROOT AP and vice versa, we
+		 * need to remove the AST entry which was earlier added as a WDS
+		 * entry.
+		 */
+		ast_entry = dp_peer_ast_hash_find(soc, peer_mac_addr);
+		if (ast_entry)
+			dp_peer_del_ast(soc, ast_entry);
 	}
 
 #ifdef notyet
@@ -6825,32 +6860,6 @@ static struct cdp_wds_ops dp_ops_wds = {
 	.txrx_wds_peer_tx_policy_update = dp_txrx_peer_wds_tx_policy_update,
 #endif
 };
-
-/*
- * dp_peer_delete_ast_entries(): Delete all AST entries for a peer
- * @soc - datapath soc handle
- * @peer - datapath peer handle
- *
- * Delete the AST entries belonging to a peer
- */
-#ifdef FEATURE_AST
-static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
-		struct dp_peer *peer)
-{
-	struct dp_ast_entry *ast_entry, *temp_ast_entry;
-
-	qdf_spin_lock_bh(&soc->ast_lock);
-	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry)
-		dp_peer_del_ast(soc, ast_entry);
-
-	qdf_spin_unlock_bh(&soc->ast_lock);
-}
-#else
-static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
-		struct dp_peer *peer)
-{
-}
-#endif
 
 /*
  * dp_txrx_data_tx_cb_set(): set the callback for non standard tx
