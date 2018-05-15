@@ -515,7 +515,7 @@ void tdls_extract_peer_state_param(struct tdls_peer_update_state *peer_param,
 
 		if (CHANNEL_STATE_INVALID != ch_state &&
 		    CHANNEL_STATE_DFS != ch_state &&
-		    !wlan_is_dsrc_channel(wlan_is_dsrc_channel(chan_id))) {
+		    !wlan_reg_is_dsrc_chan(pdev, chan_id)) {
 			peer_param->peer_cap.peer_chan[num].chan_id = chan_id;
 			peer_param->peer_cap.peer_chan[num].pwr =
 				wlan_reg_get_channel_reg_power(pdev, chan_id);
