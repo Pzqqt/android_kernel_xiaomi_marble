@@ -568,20 +568,6 @@ static inline int __qdf_ipa_copy_hdr(struct ipa_ioc_copy_hdr *copy)
 }
 
 /*
- * Header Processing Context
- */
-static inline int __qdf_ipa_add_hdr_proc_ctx(
-				struct ipa_ioc_add_hdr_proc_ctx *proc_ctxs)
-{
-	return ipa_add_hdr_proc_ctx(proc_ctxs);
-}
-
-static inline int __qdf_ipa_del_hdr_proc_ctx(struct ipa_ioc_del_hdr_proc_ctx *hdls)
-{
-	return ipa_del_hdr_proc_ctx(hdls);
-}
-
-/*
  * Messaging
  */
 static inline int __qdf_ipa_send_msg(struct ipa_msg_meta *meta, void *buff,

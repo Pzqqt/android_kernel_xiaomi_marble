@@ -300,20 +300,6 @@ static inline int qdf_ipa_copy_hdr(qdf_ipa_ioc_copy_hdr_t *copy)
 }
 
 /*
- * Header Processing Context
- */
-static inline int qdf_ipa_add_hdr_proc_ctx(
-				qdf_ipa_ioc_add_hdr_proc_ctx_t *proc_ctxs)
-{
-	return __qdf_ipa_add_hdr_proc_ctx(proc_ctxs);
-}
-
-static inline int qdf_ipa_del_hdr_proc_ctx(qdf_ipa_ioc_del_hdr_proc_ctx_t *hdls)
-{
-	return __qdf_ipa_del_hdr_proc_ctx(hdls);
-}
-
-/*
  * Messaging
  */
 static inline int qdf_ipa_send_msg(qdf_ipa_msg_meta_t *meta, void *buff,
