@@ -361,7 +361,7 @@ void qdf_trace_hex_dump(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 		return;
 
 	while (buf_len > 0) {
-		unsigned char linebuf[BUFFER_SIZE];
+		unsigned char linebuf[BUFFER_SIZE] = {0};
 		int linelen = min(buf_len, ROW_SIZE);
 
 		buf_len -= ROW_SIZE;
