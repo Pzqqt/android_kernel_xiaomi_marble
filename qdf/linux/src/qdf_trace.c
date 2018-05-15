@@ -2212,9 +2212,14 @@ static void qdf_dpt_display_record_debugfs(qdf_debugfs_file_t file,
 {
 	int loc;
 	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_data_buf *buf =
+		(struct qdf_dp_trace_data_buf *)record->data;
 
 	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
 					 index, 0, record);
+	if (loc < sizeof(prepend_str))
+		loc += snprintf(&prepend_str[loc], sizeof(prepend_str) - loc,
+				"[%d]", buf->msdu_id);
 	qdf_dpt_dump_hex_trace_debugfs(file, prepend_str,
 				       record->data, record->size);
 }
