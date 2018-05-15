@@ -3494,10 +3494,14 @@ irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
 			/*
 			 * Probable Target failure before we're prepared
 			 * to handle it.  Generally unexpected.
+			 * fw_indicator used as bitmap, and defined as below:
+			 *     FW_IND_EVENT_PENDING    0x1
+			 *     FW_IND_INITIALIZED      0x2
+			 *     FW_IND_NEEDRECOVER      0x4
 			 */
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("%s: Early firmware event indicated\n",
-				 __func__));
+				("%s: Early firmware event indicated 0x%x\n",
+				 __func__, fw_indicator));
 		}
 	} else {
 		if (Q_TARGET_ACCESS_END(scn) < 0)
