@@ -44,10 +44,23 @@ void lim_send_sme_start_bss_rsp(tpAniSirGlobal, uint16_t, tSirResultCodes,
 				tpPESession, uint8_t, uint16_t);
 void lim_send_sme_join_reassoc_rsp(tpAniSirGlobal, uint16_t, tSirResultCodes,
 				   uint16_t, tpPESession, uint8_t, uint16_t);
-void lim_send_disconnect_done_ind(tpAniSirGlobal mac_ctx,
-				  tpPESession session_entry, uint8_t session_id,
-				  tSirResultCodes reason_code,
-				  tSirMacAddr peer_mac_addr);
+
+/*
+ * lim_prepare_disconnect_done_ind() - Prepares the disconnect done ind message
+ * @mac_ctx: Global mac_ctx
+ * @session_id: PE session id
+ * @reason_code: Disconnect indication reason code
+ * @peer_mac_addr: MAC address of the peer
+ *
+ * Prepares the disconnect done indication message to be sent to the upper layer
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS lim_prepare_disconnect_done_ind(tpAniSirGlobal mac_ctx,
+					   uint32_t **msg,
+					   uint8_t session_id,
+					   tSirResultCodes reason_code,
+					   uint8_t *peer_mac_addr);
 void lim_send_sme_disassoc_ntf(tpAniSirGlobal, tSirMacAddr, tSirResultCodes,
 			       uint16_t, uint16_t, uint8_t, uint16_t, tpPESession);
 void lim_send_sme_deauth_ntf(tpAniSirGlobal, tSirMacAddr, tSirResultCodes, uint16_t,

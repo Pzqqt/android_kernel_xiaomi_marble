@@ -2282,6 +2282,8 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 	tpDphHashNode pStaDs;
 	tpPESession psessionEntry;
 	uint8_t sessionId;
+	uint32_t *msg = NULL;
+	QDF_STATUS status;
 
 	qdf_mem_copy(&smeDisassocCnf, pMsgBuf,
 			sizeof(struct sSirSmeDisassocCnf));
@@ -2291,16 +2293,26 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 				&sessionId);
 	if (psessionEntry == NULL) {
 		pe_err("session does not exist for given bssId");
-		lim_send_disconnect_done_ind(pMac, NULL, CSR_SESSION_ID_INVALID,
-					     eSIR_SME_INVALID_SESSION, NULL);
+		status = lim_prepare_disconnect_done_ind(pMac, &msg,
+						CSR_SESSION_ID_INVALID,
+						eSIR_SME_INVALID_SESSION,
+						NULL);
+		if (QDF_IS_STATUS_SUCCESS(status))
+			lim_send_sme_disassoc_deauth_ntf(pMac,
+							 QDF_STATUS_SUCCESS,
+							 (uint32_t *)msg);
 		return;
 	}
 
 	if (!lim_is_sme_disassoc_cnf_valid(pMac, &smeDisassocCnf, psessionEntry)) {
 		pe_err("received invalid SME_DISASSOC_CNF message");
-		lim_send_disconnect_done_ind(pMac, psessionEntry, sessionId,
-					     eSIR_SME_INVALID_PARAMETERS,
-					     smeDisassocCnf.bssid.bytes);
+		status = lim_prepare_disconnect_done_ind(pMac, &msg, sessionId,
+						eSIR_SME_INVALID_PARAMETERS,
+						&smeDisassocCnf.bssid.bytes[0]);
+		if (QDF_IS_STATUS_SUCCESS(status))
+			lim_send_sme_disassoc_deauth_ntf(pMac,
+							 QDF_STATUS_SUCCESS,
+							 (uint32_t *)msg);
 		return;
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -2324,11 +2336,15 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 				psessionEntry->limSmeState);
 			lim_print_sme_state(pMac, LOGE,
 					    psessionEntry->limSmeState);
-			lim_send_disconnect_done_ind(pMac, psessionEntry,
-						     sessionId,
-						     eSIR_SME_INVALID_STATE,
-						     smeDisassocCnf.bssid.
-						     bytes);
+			status = lim_prepare_disconnect_done_ind(pMac, &msg,
+							sessionId,
+							eSIR_SME_INVALID_STATE,
+							&smeDisassocCnf.bssid.
+							bytes[0]);
+			if (QDF_IS_STATUS_SUCCESS(status))
+				lim_send_sme_disassoc_deauth_ntf(pMac,
+							QDF_STATUS_SUCCESS,
+							(uint32_t *)msg);
 			return;
 		}
 		break;
@@ -2341,9 +2357,13 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 	default:                /* eLIM_UNKNOWN_ROLE */
 		pe_err("received unexpected SME_DISASSOC_CNF role %d",
 			GET_LIM_SYSTEM_ROLE(psessionEntry));
-		lim_send_disconnect_done_ind(pMac, psessionEntry, sessionId,
-					     eSIR_SME_INVALID_STATE,
-					     smeDisassocCnf.bssid.bytes);
+		status = lim_prepare_disconnect_done_ind(pMac, &msg, sessionId,
+						eSIR_SME_INVALID_STATE,
+						&smeDisassocCnf.bssid.bytes[0]);
+		if (QDF_IS_STATUS_SUCCESS(status))
+			lim_send_sme_disassoc_deauth_ntf(pMac,
+							 QDF_STATUS_SUCCESS,
+							 (uint32_t *)msg);
 		return;
 	}
 
@@ -2357,10 +2377,14 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 			pe_err("DISASSOC_CNF for a STA with no context, addr= "
 				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(smeDisassocCnf.peer_macaddr.bytes));
-			lim_send_disconnect_done_ind(pMac, psessionEntry,
+			status = lim_prepare_disconnect_done_ind(pMac, &msg,
 						sessionId,
 						eSIR_SME_INVALID_PARAMETERS,
-						smeDisassocCnf.bssid.bytes);
+						&smeDisassocCnf.bssid.bytes[0]);
+			if (QDF_IS_STATUS_SUCCESS(status))
+				lim_send_sme_disassoc_deauth_ntf(pMac,
+							QDF_STATUS_SUCCESS,
+							(uint32_t *)msg);
 			return;
 		}
 
@@ -2371,9 +2395,14 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 			pe_err("No need of cleanup for addr:" MAC_ADDRESS_STR "as MLM state is %d",
 				MAC_ADDR_ARRAY(smeDisassocCnf.peer_macaddr.bytes),
 				pStaDs->mlmStaContext.mlmState);
-			lim_send_disconnect_done_ind(pMac, NULL,
-						     CSR_SESSION_ID_INVALID,
-						     eSIR_SME_SUCCESS, NULL);
+			status = lim_prepare_disconnect_done_ind(pMac, &msg,
+							CSR_SESSION_ID_INVALID,
+							eSIR_SME_SUCCESS,
+							NULL);
+			if (QDF_IS_STATUS_SUCCESS(status))
+				lim_send_sme_disassoc_deauth_ntf(pMac,
+							QDF_STATUS_SUCCESS,
+							(uint32_t *)msg);
 			return;
 		}
 
