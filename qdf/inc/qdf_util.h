@@ -129,6 +129,17 @@ static inline int qdf_status_to_os_return(QDF_STATUS status)
 }
 
 /**
+ * qdf_status_from_os_return() - map OS specific return code to a QDF_STATUS
+ * @rc: the input return code to map
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS qdf_status_from_os_return(int rc)
+{
+	return __qdf_status_from_os_return(rc);
+}
+
+/**
  * qdf_set_bit() - set bit in address
  * @nr: bit number to be set
  * @addr: address buffer pointer
