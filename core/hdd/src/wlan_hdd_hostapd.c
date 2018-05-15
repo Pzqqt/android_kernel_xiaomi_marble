@@ -1680,11 +1680,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			ap_ctx->broadcast_sta_id =
 				pSapEvent->sapevt.sapStartBssCompleteEvent.staId;
 
-			hdd_register_tx_flow_control(adapter,
-				hdd_softap_tx_resume_timer_expired_handler,
-				hdd_softap_tx_resume_cb,
-				hdd_tx_flow_control_is_pause);
-
 			/* @@@ need wep logic here to set privacy bit */
 			qdf_status =
 				hdd_softap_register_bc_sta(adapter,
