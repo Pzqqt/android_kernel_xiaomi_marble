@@ -12934,6 +12934,20 @@ void sme_update_user_configured_nss(tHalHandle hal, uint8_t nss)
 	mac_ctx->user_configured_nss = nss;
 }
 
+int sme_update_tx_bfee_supp(tHalHandle hal, uint8_t session_id,
+			    uint8_t cfg_val)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	status = sme_cfg_set_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
+				 cfg_val);
+	if (status != QDF_STATUS_SUCCESS) {
+		sme_err("Failed to set SU BFEE CFG");
+		return -EFAULT;
+	}
+
+	return sme_update_he_tx_bfee_supp(hal, session_id, cfg_val);
+}
 #ifdef WLAN_FEATURE_11AX
 void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 		uint8_t nss)
@@ -13041,6 +13055,13 @@ static int sme_update_he_cap(tHalHandle hal, uint8_t session_id,
 	csr_update_session_he_cap(mac_ctx, session);
 
 	return 0;
+}
+
+int sme_update_he_tx_bfee_supp(tHalHandle hal, uint8_t session_id,
+			       uint8_t cfg_val)
+{
+	return sme_update_he_cap(hal, session_id, WNI_CFG_HE_SU_BEAMFORMEE,
+				 cfg_val);
 }
 
 int sme_update_he_tx_stbc_cap(tHalHandle hal, uint8_t session_id, int value)

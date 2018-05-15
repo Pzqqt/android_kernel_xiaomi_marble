@@ -1058,6 +1058,17 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 	uint32_t notify_id,
 	int32_t val);
 
+/**
+ * sme_update_tx_bfee_supp() - sets the Tx Bfee support
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @cfg_val: Tx Bfee config value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_tx_bfee_supp(tHalHandle hal, uint8_t session_id,
+		uint8_t cfg_val);
+
 void wlan_sap_enable_phy_error_logs(tHalHandle hal, uint32_t enable_log);
 #ifdef WLAN_FEATURE_DSRC
 void sme_set_dot11p_config(tHalHandle hal, bool enable_dot11p);
@@ -2119,6 +2130,16 @@ void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 		uint8_t nss);
 
 /**
+ * sme_update_he_tx_bfee_supp() - sets the HE Tx Bfee support
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @cfg_val: Tx Bfee config value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_he_tx_bfee_supp(tHalHandle hal, uint8_t session_id,
+		uint8_t cfg_val);
+/**
  * sme_update_he_mcs() - sets the HE MCS based on user request
  * @hal: Pointer to HAL
  * @session_id: SME session id
@@ -2194,8 +2215,15 @@ static inline int sme_update_he_frag_supp(tHalHandle hal, uint8_t session_id,
 {
 	return 0;
 }
+
 static inline int sme_update_he_ldpc_supp(tHalHandle hal, uint8_t session_id,
 					  uint16_t he_ldpc)
+{
+	return 0;
+}
+
+static inline int sme_update_he_tx_bfee_supp(tHalHandle hal, uint8_t session_id,
+		uint8_t cfg_val)
 {
 	return 0;
 }

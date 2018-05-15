@@ -6206,6 +6206,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_LTF] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_TX_BEAMFORMEE] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -7398,6 +7400,18 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 					      cfg_val, VDEV_CMD);
 		if (ret_val)
 			goto send_err;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_TX_BEAMFORMEE]) {
+		cfg_val = nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_TX_BEAMFORMEE]);
+		hdd_debug("Set Tx beamformee to %d", cfg_val);
+		ret_val = sme_update_tx_bfee_supp(hdd_ctx->hHal,
+						  adapter->session_id,
+						  cfg_val);
+		if (ret_val)
+			sme_err("Failed to set Tx beamformee cap");
+
 	}
 
 	if (update_sme_cfg)

@@ -2502,20 +2502,31 @@ void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 	he_cap->dcm_enc_rx = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MU_PPDU, &value);
 	he_cap->ul_he_mu = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_SU_BEAMFORMER, &value);
-	he_cap->su_beamformer = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_SU_BEAMFORMEE, &value);
 	he_cap->su_beamformee = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MU_BEAMFORMER, &value);
-	he_cap->mu_beamformer = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BFEE_STS_LT80, &value);
-	he_cap->bfee_sts_lt_80 = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BFEE_STS_GT80, &value);
-	he_cap->bfee_sts_gt_80 = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NUM_SOUND_LT80, &value);
-	he_cap->num_sounding_lt_80 = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NUM_SOUND_GT80, &value);
-	he_cap->num_sounding_gt_80 = value;
+	if (he_cap->su_beamformee) {
+		sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BFEE_STS_LT80, &value);
+		he_cap->bfee_sts_lt_80 = value;
+		sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BFEE_STS_GT80, &value);
+		he_cap->bfee_sts_gt_80 = value;
+	} else {
+		he_cap->bfee_sts_lt_80 = 0;
+		he_cap->bfee_sts_gt_80 = 0;
+	}
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_SU_BEAMFORMER, &value);
+	he_cap->su_beamformer = value;
+	if (he_cap->su_beamformer) {
+		sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MU_BEAMFORMER, &value);
+		he_cap->mu_beamformer = value;
+		sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NUM_SOUND_LT80, &value);
+		he_cap->num_sounding_lt_80 = value;
+		sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NUM_SOUND_GT80, &value);
+		he_cap->num_sounding_gt_80 = value;
+	} else {
+		he_cap->mu_beamformer = 0;
+		he_cap->num_sounding_lt_80 = 0;
+		he_cap->num_sounding_gt_80 = 0;
+	}
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_SU_FEED_TONE16, &value);
 	he_cap->su_feedback_tone16 = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MU_FEED_TONE16, &value);
