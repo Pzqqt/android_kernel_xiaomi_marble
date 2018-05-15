@@ -143,8 +143,10 @@ void dfs_reset(struct wlan_dfs *dfs)
 
 	dfs_cac_timer_reset(dfs);
 	dfs_zero_cac_reset(dfs);
-	if (!dfs->dfs_is_offload_enabled)
+	if (!dfs->dfs_is_offload_enabled) {
 		dfs_main_timer_reset(dfs);
+		dfs->dfs_event_log_count = 0;
+	}
 }
 
 void dfs_detach(struct wlan_dfs *dfs)
