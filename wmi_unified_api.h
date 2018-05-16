@@ -2260,4 +2260,31 @@ QDF_STATUS wmi_extract_cca_stats(wmi_unified_t wmi_handle, void *evt_buf,
 				 struct wmi_host_congestion_stats *stats);
 #endif /* QCA_SUPPORT_CP_STATS */
 
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+/**
+ * wmi_unified_dfs_send_avg_params_cmd() - send average radar parameters cmd.
+ * @wmi_hdl: wmi handle
+ * @params: radar found params
+ *
+ * This function passes the average radar parameters to fw
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_dfs_send_avg_params_cmd(void *wmi_hdl,
+				    struct dfs_radar_found_params *params);
+
+/**
+ * wmi_extract_dfs_status_from_fw() - extract host dfs status from fw.
+ * @wmi_hdl: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @dfs_status_check: pointer to the host dfs status
+ *
+ * This function extracts the result of host dfs from fw
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_dfs_status_from_fw(void *wmi_hdl, void *evt_buf,
+					  uint32_t  *dfs_status_check);
+#endif
 #endif /* _WMI_UNIFIED_API_H_ */
