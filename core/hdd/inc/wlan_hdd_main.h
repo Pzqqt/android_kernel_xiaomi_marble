@@ -2490,7 +2490,8 @@ wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
 void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter);
 void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit);
 
-void wlan_hdd_soc_set_antenna_mode_cb(enum set_antenna_mode_status status);
+void wlan_hdd_soc_set_antenna_mode_cb(enum set_antenna_mode_status status,
+				      void *context);
 
 #ifdef QCA_CONFIG_SMP
 int wlan_hdd_get_cpu(void);

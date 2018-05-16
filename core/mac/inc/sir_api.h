@@ -444,13 +444,14 @@ struct sir_set_dual_mac_cfg {
  * struct sir_antenna_mode_param - antenna mode param
  * @num_tx_chains: Number of TX chains
  * @num_rx_chains: Number of RX chains
- * @reason: Reason for setting antenna mode
  * @set_antenna_mode_resp: callback to set antenna mode command
+ * @set_antenna_mode_ctx: callback context to set antenna mode command
  */
 struct sir_antenna_mode_param {
 	uint32_t num_tx_chains;
 	uint32_t num_rx_chains;
 	void *set_antenna_mode_resp;
+	void *set_antenna_mode_ctx;
 };
 
 /**
@@ -5564,7 +5565,7 @@ typedef void (*hw_mode_transition_cb)(uint32_t old_hw_mode_index,
 		uint32_t new_hw_mode_index,
 		uint32_t num_vdev_mac_entries,
 		struct policy_mgr_vdev_mac_map *vdev_mac_map);
-typedef void (*antenna_mode_cb)(uint32_t status);
+typedef void (*antenna_mode_cb)(uint32_t status, void *context);
 
 /**
  * struct sir_nss_update_request

@@ -6534,6 +6534,11 @@ int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 	struct sir_antenna_mode_param params;
 	QDF_STATUS status;
 	int ret = 0;
+	struct osif_request *request = NULL;
+	static const struct osif_request_params request_params = {
+		.priv_size = 0,
+		.timeout_ms = WLAN_WAIT_TIME_ANTENNA_MODE_REQ,
+	};
 
 	if (hdd_ctx->current_antenna_mode == mode) {
 		hdd_err("System already in the requested mode");
@@ -6576,36 +6581,40 @@ int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 			goto exit;
 	}
 
-	params.set_antenna_mode_resp =
-	    (void *)wlan_hdd_soc_set_antenna_mode_cb;
+	request = osif_request_alloc(&request_params);
+	if (!request) {
+		hdd_err("Request Allocation Failure");
+		ret = -ENOMEM;
+		goto exit;
+	}
+
+	params.set_antenna_mode_ctx = osif_request_cookie(request);
+	params.set_antenna_mode_resp = (void *)wlan_hdd_soc_set_antenna_mode_cb;
 	hdd_debug("Set antenna mode rx chains: %d tx chains: %d",
 		 params.num_rx_chains,
 		 params.num_tx_chains);
 
-
-	INIT_COMPLETION(hdd_ctx->set_antenna_mode_cmpl);
 	status = sme_soc_set_antenna_mode(hdd_ctx->mac_handle, &params);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("set antenna mode failed status : %d", status);
 		ret = -EFAULT;
-		goto exit;
+		goto request_put;
 	}
 
-	ret = wait_for_completion_timeout(
-		&hdd_ctx->set_antenna_mode_cmpl,
-		msecs_to_jiffies(WLAN_WAIT_TIME_ANTENNA_MODE_REQ));
-	if (!ret) {
+	ret = osif_request_wait_for_response(request);
+	if (ret) {
 		hdd_err("send set antenna mode timed out");
-		ret = -EFAULT;
-		goto exit;
+		goto request_put;
 	}
 
 	status = hdd_update_smps_antenna_mode(hdd_ctx, mode);
 	if (QDF_STATUS_SUCCESS != status) {
 		ret = -EFAULT;
-		goto exit;
+		goto request_put;
 	}
 	ret = 0;
+request_put:
+	osif_request_put(request);
 exit:
 	hdd_debug("Set antenna status: %d current mode: %d",
 		 ret, hdd_ctx->current_antenna_mode);
