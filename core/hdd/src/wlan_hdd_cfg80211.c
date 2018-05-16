@@ -5805,6 +5805,12 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 		count++;
 	}
 
+	if (tb_vendor[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_RADIO_INDEX]) {
+		hdd_debug("Rcvd req for Radio index");
+		skb_len += sizeof(uint32_t);
+		count++;
+	}
+
 	if (count == 0) {
 		hdd_err("unknown attribute in get_wifi_info request");
 		return -EINVAL;
