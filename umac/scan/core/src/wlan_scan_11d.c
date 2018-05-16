@@ -326,10 +326,8 @@ void scm_11d_decide_country_code(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
-	if (!wlan_reg_11d_enabled_on_host(psoc)) {
-		scm_err("11d is not enabled");
+	if (!wlan_reg_11d_enabled_on_host(psoc))
 		return;
-	}
 
 	if (SOURCE_UNKNOWN == ucfg_reg_get_cc_and_src(psoc, current_cc)) {
 		scm_err("fail to get current country code");
