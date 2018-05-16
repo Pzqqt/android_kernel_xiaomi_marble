@@ -157,6 +157,10 @@ ifeq ($(CONFIG_LITHIUM), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_rx_monitor.o
 endif
 
+ifeq ($(CONFIG_LITHIUM), y)
+CONFIG_WLAN_FEATURE_DP_RX_THREADS := y
+endif
+
 ifeq ($(CONFIG_WLAN_NUD_TRACKING), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nud_tracking.o
 endif
@@ -1077,6 +1081,11 @@ ifeq ($(CONFIG_QCA_SUPPORT_TX_THROTTLE), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_tx_throttle.o
 endif
 
+############ TXRX 3.0 ############
+TXRX3.0_DIR :=     core/dp/txrx3.0
+TXRX3.0_INC :=     -I$(WLAN_ROOT)/$(TXRX3.0_DIR)
+TXRX3.0_OBJS := $(TXRX3.0_DIR)/dp_txrx.o \
+		$(TXRX3.0_DIR)/dp_rx_thread.o
 ifeq ($(CONFIG_LITHIUM), y)
 ############ DP 3.0 ############
 DP_INC := -I$(WLAN_COMMON_INC)/dp/inc \
@@ -1553,7 +1562,8 @@ INCS +=		$(WMA_INC) \
 		$(REGULATORY_INC) \
 		$(HTC_INC) \
 		$(DFS_INC) \
-		$(WCFG_INC)
+		$(WCFG_INC) \
+		$(TXRX3.0_INC)
 
 INCS +=		$(HIF_INC) \
 		$(BMI_INC)
@@ -1721,6 +1731,10 @@ ifeq ($(CONFIG_LITHIUM), y)
 OBJS +=		$(DP_OBJS)
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_DP_RX_THREADS), y)
+OBJS += $(TXRX3.0_OBJS)
+endif
+
 ccflags-y += $(INCS)
 
 cppflags-y +=	-DANI_OS_TYPE_ANDROID=6 \
@@ -1773,6 +1787,7 @@ cppflags-$(CONFIG_FEATURE_FW_LOG_PARSING) += -DFEATURE_FW_LOG_PARSING
 cppflags-$(CONFIG_PLD_SDIO_CNSS_FLAG) += -DCONFIG_PLD_SDIO_CNSS
 cppflags-$(CONFIG_PLD_PCIE_CNSS_FLAG) += -DCONFIG_PLD_PCIE_CNSS
 cppflags-$(CONFIG_PLD_PCIE_INIT_FLAG) += -DCONFIG_PLD_PCIE_INIT
+cppflags-$(CONFIG_WLAN_FEATURE_DP_RX_THREADS) += -DFEATURE_WLAN_DP_RX_THREADS
 
 #Enable NL80211 test mode
 cppflags-$(CONFIG_NL80211_TESTMODE) += -DWLAN_NL80211_TESTMODE

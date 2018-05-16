@@ -125,6 +125,7 @@
 #include "sme_power_save_api.h"
 #include "enet.h"
 #include <cdp_txrx_cmn_struct.h>
+#include <dp_txrx.h>
 #include "wlan_hdd_sysfs.h"
 #include "wlan_disa_ucfg_api.h"
 #include "wlan_disa_obj_mgmt_api.h"
@@ -7355,11 +7356,10 @@ static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
  *
  * Returns: None
  */
-static inline
-void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
-				bool data_in_interval)
+static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
+				       bool data_in_interval)
 {
-	static u32 counter;
+	static uint32_t counter;
 	static bool data_in_time_period;
 	ol_txrx_pdev_handle pdev;
 
@@ -7379,6 +7379,11 @@ void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 	if (counter * hdd_ctx->config->busBandwidthComputeInterval >=
 		hdd_ctx->config->periodic_stats_disp_time * 1000) {
 		if (data_in_time_period) {
+			wlan_hdd_display_txrx_stats(hdd_ctx);
+			dp_txrx_dump_stats(cds_get_context(QDF_MODULE_ID_SOC));
+			cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC),
+					  CDP_RX_RING_STATS,
+					  QDF_STATS_VERBOSITY_LEVEL_LOW);
 			cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC),
 					  CDP_TXRX_PATH_STATS,
 					  QDF_STATS_VERBOSITY_LEVEL_LOW);
@@ -9350,6 +9355,9 @@ static inline void hdd_txrx_populate_cds_config(struct cds_config_info
 		hdd_ctx->config->TxFlowStopQueueThreshold;
 	cds_cfg->tx_flow_start_queue_offset =
 		hdd_ctx->config->TxFlowStartQueueOffset;
+	/* configuration for DP RX Threads */
+	cds_cfg->enable_dp_rx_threads = hdd_ctx->enable_dp_rx_threads;
+	cds_cfg->num_dp_rx_threads = hdd_ctx->config->num_dp_rx_threads;
 }
 #else
 static inline void hdd_txrx_populate_cds_config(struct cds_config_info

@@ -1876,6 +1876,8 @@ struct hdd_context {
 	bool rps;
 	bool dynamic_rps;
 	bool enable_rxthread;
+	/* support for DP RX threads */
+	bool enable_dp_rx_threads;
 	bool napi_enable;
 	bool stop_modules_in_progress;
 	bool start_modules_in_progress;
@@ -2548,6 +2550,7 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value);
 void wlan_hdd_deinit_tx_rx_histogram(struct hdd_context *hdd_ctx);
 void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx);
 void wlan_hdd_clear_tx_rx_histogram(struct hdd_context *hdd_ctx);
+
 void
 wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 				     enum qdf_stats_verbosity_level verb_lvl);

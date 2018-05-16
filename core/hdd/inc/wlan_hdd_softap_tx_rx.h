@@ -98,7 +98,7 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
 
 /**
  * hdd_softap_rx_packet_cbk() - Receive packet handler
- * @context: pointer to HDD context
+ * @adapter_context: pointer to HDD adapter
  * @rx_buf: pointer to rx qdf_nbuf chain
  *
  * Receive callback registered with the Data Path.  The Data Path will
@@ -108,7 +108,7 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
  * Return: QDF_STATUS_E_FAILURE if any errors encountered,
  *	   QDF_STATUS_SUCCESS otherwise
  */
-QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rx_buf);
+QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf);
 
 /**
  * hdd_softap_deregister_sta() - Deregister a STA with the Data Path

@@ -74,16 +74,19 @@
 #include "cds_utils.h"
 #include "wlan_hdd_packet_filter_api.h"
 #include "wlan_cfg80211_scan.h"
+#include <dp_txrx.h>
 #include "wlan_ipa_ucfg_api.h"
 #include <wlan_cfg80211_mc_cp_stats.h>
 #include "wlan_p2p_ucfg_api.h"
-
 /* Preprocessor definitions and constants */
 #ifdef QCA_WIFI_NAPIER_EMULATION
 #define HDD_SSR_BRING_UP_TIME 3000000
 #else
 #define HDD_SSR_BRING_UP_TIME 30000
 #endif
+
+/* timeout in msec to wait for RX_THREAD to suspend */
+#define HDD_RXTHREAD_SUSPEND_TIMEOUT 200
 
 /* Type declarations */
 
@@ -1232,12 +1235,11 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		hdd_ctx->is_scheduler_suspended = false;
 		hdd_ctx->is_wiphy_suspended = false;
 	}
-#ifdef QCA_CONFIG_SMP
+
 	if (true == hdd_ctx->is_ol_rx_thread_suspended) {
 		complete(&cds_sched_context->ol_resume_rx_event);
 		hdd_ctx->is_ol_rx_thread_suspended = false;
 	}
-#endif
 
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
@@ -1538,13 +1540,16 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 		scheduler_resume();
 		hdd_ctx->is_scheduler_suspended = false;
 	}
-#ifdef QCA_CONFIG_SMP
+
 	/* Resume tlshim Rx thread */
-	if (hdd_ctx->is_ol_rx_thread_suspended) {
+	if (hdd_ctx->enable_rxthread && hdd_ctx->is_ol_rx_thread_suspended) {
 		complete(&cds_sched_context->ol_resume_rx_event);
 		hdd_ctx->is_ol_rx_thread_suspended = false;
 	}
-#endif
+
+	if (hdd_ctx->enable_dp_rx_threads)
+		dp_txrx_resume(cds_get_context(QDF_MODULE_ID_SOC));
+
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_RESUME_WLAN,
@@ -1595,9 +1600,6 @@ static void hdd_suspend_cb(void)
 static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				     struct cfg80211_wowlan *wow)
 {
-#ifdef QCA_CONFIG_SMP
-#define RX_TLSHIM_SUSPEND_TIMEOUT 200   /* msecs */
-#endif
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
 	struct hdd_adapter *adapter;
@@ -1722,22 +1724,27 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	}
 	hdd_ctx->is_scheduler_suspended = true;
 
-#ifdef QCA_CONFIG_SMP
-	/* Suspend tlshim rx thread */
-	set_bit(RX_SUSPEND_EVENT, &cds_sched_context->ol_rx_event_flag);
-	wake_up_interruptible(&cds_sched_context->ol_rx_wait_queue);
-	rc = wait_for_completion_timeout(&cds_sched_context->
-					 ol_suspend_rx_event,
-					 msecs_to_jiffies
-						 (RX_TLSHIM_SUSPEND_TIMEOUT));
-	if (!rc) {
-		clear_bit(RX_SUSPEND_EVENT,
-			  &cds_sched_context->ol_rx_event_flag);
-		hdd_err("Failed to stop tl_shim rx thread");
-		goto resume_all;
+	if (hdd_ctx->enable_rxthread) {
+		/* Suspend tlshim rx thread */
+		set_bit(RX_SUSPEND_EVENT, &cds_sched_context->ol_rx_event_flag);
+		wake_up_interruptible(&cds_sched_context->ol_rx_wait_queue);
+		rc = wait_for_completion_timeout(&cds_sched_context->
+						 ol_suspend_rx_event,
+						 msecs_to_jiffies
+						 (HDD_RXTHREAD_SUSPEND_TIMEOUT)
+						);
+		if (!rc) {
+			clear_bit(RX_SUSPEND_EVENT,
+				  &cds_sched_context->ol_rx_event_flag);
+			hdd_err("Failed to stop tl_shim rx thread");
+			goto resume_all;
+		}
+		hdd_ctx->is_ol_rx_thread_suspended = true;
 	}
-	hdd_ctx->is_ol_rx_thread_suspended = true;
-#endif
+
+	if (hdd_ctx->enable_dp_rx_threads)
+		dp_txrx_suspend(cds_get_context(QDF_MODULE_ID_SOC));
+
 	if (hdd_suspend_wlan() < 0)
 		goto resume_all;
 
@@ -1751,15 +1758,10 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	hdd_exit();
 	return 0;
 
-#ifdef QCA_CONFIG_SMP
 resume_all:
-
 	scheduler_resume();
 	hdd_ctx->is_scheduler_suspended = false;
-#endif
-
 resume_tx:
-
 	hdd_resume_wlan();
 	return -ETIME;
 

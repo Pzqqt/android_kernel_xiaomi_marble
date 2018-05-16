@@ -462,4 +462,14 @@ int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature);
  * Return: QDF_STATUS_SUCCESS if adapter's statistics were updated
  */
 int wlan_hdd_request_station_stats(struct hdd_adapter *adapter);
+
+/**
+ * wlan_hdd_display_txrx_stats() - display HDD txrx stats summary
+ * @hdd_ctx: hdd context
+ *
+ * Display TXRX Stats for all adapters
+ *
+ * Return: none
+ */
+void wlan_hdd_display_txrx_stats(struct hdd_context *hdd_ctx);
 #endif /* end #if !defined(WLAN_HDD_STATS_H) */

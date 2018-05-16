@@ -33,6 +33,27 @@
 
 struct hdd_context;
 
+#define hdd_dp_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_HDD_DATA, params)
+#define hdd_dp_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_HDD_DATA, params)
+#define hdd_dp_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_HDD_DATA, params)
+#define hdd_dp_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_HDD_DATA, params)
+#define hdd_dp_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_HDD_DATA, params)
+
+#define hdd_dp_alert_rl(params...) \
+			QDF_TRACE_FATAL_RL(QDF_MODULE_ID_HDD_DATA, params)
+#define hdd_dp_err_rl(params...) \
+			QDF_TRACE_ERROR_RL(QDF_MODULE_ID_HDD_DATA, params)
+#define hdd_dp_warn_rl(params...) \
+			QDF_TRACE_WARN_RL(QDF_MODULE_ID_HDD_DATA, params)
+#define hdd_dp_info_rl(params...) \
+			QDF_TRACE_INFO_RL(QDF_MODULE_ID_HDD_DATA, params)
+#define hdd_dp_debug_rl(params...) \
+			QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_HDD_DATA, params)
+
+#define hdd_dp_enter() hdd_dp_debug("enter")
+#define hdd_dp_enter_dev(dev) hdd_dp_debug("enter(%s)", (dev)->name)
+#define hdd_dp_exit() hdd_dp_debug("exit")
+
 #define HDD_ETHERTYPE_802_1_X              0x888E
 #define HDD_ETHERTYPE_802_1_X_FRAME_OFFSET 12
 #ifdef FEATURE_WLAN_WAPI
@@ -55,7 +76,33 @@ void hdd_tx_timeout(struct net_device *dev);
 
 QDF_STATUS hdd_init_tx_rx(struct hdd_adapter *adapter);
 QDF_STATUS hdd_deinit_tx_rx(struct hdd_adapter *adapter);
-QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf);
+
+/**
+ * hdd_rx_packet_cbk() - Receive packet handler
+ * @adapter_context: pointer to HDD adapter context
+ * @rxBuf: pointer to rx qdf_nbuf
+ *
+ * Receive callback registered with data path.  DP will call this to notify
+ * the HDD when one or more packets were received for a registered
+ * STA.
+ *
+ * Return: QDF_STATUS_E_FAILURE if any errors encountered,
+ *	   QDF_STATUS_SUCCESS otherwise
+ */
+QDF_STATUS hdd_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rxBuf);
+
+/**
+ * hdd_rx_pkt_thread_enqueue_cbk() - receive pkt handler to enqueue into thread
+ * @adapter: pointer to HDD adapter
+ * @rxBuf: pointer to rx qdf_nbuf
+ *
+ * Receive callback registered with DP layer which enqueues packets into dp rx
+ * thread
+ * Return: QDF_STATUS_E_FAILURE if any errors encountered,
+ *	   QDF_STATUS_SUCCESS otherwise
+ */
+QDF_STATUS hdd_rx_pkt_thread_enqueue_cbk(void *adapter_context,
+					 qdf_nbuf_t nbuf_list);
 
 /**
  * hdd_rx_ol_init() - Initialize Rx mode(LRO or GRO) method

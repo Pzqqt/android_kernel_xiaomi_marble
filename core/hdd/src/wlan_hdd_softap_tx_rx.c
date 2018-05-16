@@ -825,7 +825,7 @@ static void hdd_softap_notify_tx_compl_cbk(struct sk_buff *skb,
 	}
 }
 
-QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rx_buf)
+QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 {
 	struct hdd_adapter *adapter = NULL;
 	int rxstat;
@@ -837,13 +837,13 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rx_buf)
 	uint8_t staid;
 
 	/* Sanity check on inputs */
-	if (unlikely((NULL == context) || (NULL == rx_buf))) {
+	if (unlikely((!adapter_context) || (!rx_buf))) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	adapter = (struct hdd_adapter *)context;
+	adapter = (struct hdd_adapter *)adapter_context;
 	if (unlikely(WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "Magic cookie(%x) for adapter sanity verification is invalid",
@@ -1036,8 +1036,17 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
-	txrx_ops.rx.rx = hdd_softap_rx_packet_cbk;
+
 	txrx_ops.tx.tx_comp = hdd_softap_notify_tx_compl_cbk;
+
+	if (adapter->hdd_ctx->enable_dp_rx_threads) {
+		txrx_ops.rx.rx = hdd_rx_pkt_thread_enqueue_cbk;
+		txrx_ops.rx.rx_stack = hdd_softap_rx_packet_cbk;
+	} else {
+		txrx_ops.rx.rx = hdd_softap_rx_packet_cbk;
+		txrx_ops.rx.rx_stack = NULL;
+	}
+
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
 		(struct cdp_pdev *)pdev, adapter->session_id),

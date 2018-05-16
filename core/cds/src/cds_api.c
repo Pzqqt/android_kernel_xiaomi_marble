@@ -58,7 +58,7 @@
 #include "target_type.h"
 #include "wlan_ocb_ucfg_api.h"
 #include "wlan_ipa_ucfg_api.h"
-
+#include "dp_txrx.h"
 #ifdef ENABLE_SMMU_S1_TRANSLATION
 #include "pld_common.h"
 #include <asm/dma-iommu.h>
@@ -728,6 +728,9 @@ err_wma_complete_event:
 
 QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_STATUS qdf_status;
+	struct dp_txrx_config dp_config;
+
 	if (cdp_txrx_intr_attach(gp_cds_context->dp_soc)
 				!= QDF_STATUS_SUCCESS) {
 		cds_alert("Failed to attach interrupts");
@@ -746,6 +749,16 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 		goto intr_close;
 	}
 
+	dp_config.num_rx_threads = gp_cds_context->cds_cfg->num_dp_rx_threads;
+	dp_config.enable_rx_threads =
+		gp_cds_context->cds_cfg->enable_dp_rx_threads;
+	qdf_status = dp_txrx_init(cds_get_context(QDF_MODULE_ID_SOC),
+				  cds_get_context(QDF_MODULE_ID_TXRX),
+				  &dp_config);
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		goto pdev_detach;
+
 	pmo_ucfg_psoc_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
 	ucfg_ocb_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
 
@@ -753,6 +766,9 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 
 	return 0;
 
+pdev_detach:
+	cdp_pdev_detach(gp_cds_context->dp_soc,
+			cds_get_context(QDF_MODULE_ID_TXRX), false);
 intr_close:
 	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
 close:
@@ -1176,10 +1192,13 @@ QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
 	void *ctx;
 
 	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
-
 	ctx = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	dp_txrx_deinit(cds_get_context(QDF_MODULE_ID_SOC));
+
 	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC),
 		       (struct cdp_pdev *)ctx, 1);
+
 	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
 	pmo_ucfg_psoc_set_txrx_handle(psoc, NULL);
 

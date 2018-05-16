@@ -91,6 +91,8 @@ enum active_apf_mode {
  * @max_scan: Maximum number of parallel scans
  * @tx_flow_stop_queue_th: Threshold to stop queue in percentage
  * @tx_flow_start_queue_offset: Start queue offset in percentage
+ * @num_dp_rx_threads: number of dp rx threads to be configured
+ * @enable_dp_rx_threads: enable dp rx threads
  * @is_lpass_enabled: Indicate whether LPASS is enabled or not
  * @bool apf_packet_filter_enable; Indicate apf filter enabled or not
  * @tx_chain_mask_cck: Tx chain mask enabled or not
@@ -146,6 +148,8 @@ struct cds_config_info {
 	uint32_t tx_flow_stop_queue_th;
 	uint32_t tx_flow_start_queue_offset;
 #endif
+	uint8_t num_dp_rx_threads;
+	uint8_t enable_dp_rx_threads;
 #ifdef WLAN_FEATURE_LPSS
 	bool is_lpass_enabled;
 #endif

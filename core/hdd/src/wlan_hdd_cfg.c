@@ -3887,6 +3887,13 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_RX_MODE_MIN,
 		CFG_RX_MODE_MAX),
 
+	REG_VARIABLE(CFG_NUM_DP_RX_THREADS_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, num_dp_rx_threads,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_NUM_DP_RX_THREADS_DEFAULT,
+		     CFG_NUM_DP_RX_THREADS_MIN,
+		     CFG_NUM_DP_RX_THREADS_MAX),
+
 	REG_VARIABLE(CFG_CE_SERVICE_MAX_YIELD_TIME_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, ce_service_max_yield_time,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -7383,6 +7390,8 @@ static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
 
 	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RX_THREAD)
 		hdd_ctx->enable_rxthread = true;
+	else if (hdd_ctx->config->rx_mode & CFG_ENABLE_DP_RX_THREADS)
+		hdd_ctx->enable_dp_rx_threads = true;
 
 	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RPS)
 		hdd_ctx->rps = true;
@@ -7392,6 +7401,11 @@ static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
 
 	if (hdd_ctx->config->rx_mode & CFG_ENABLE_DYNAMIC_RPS)
 		hdd_ctx->dynamic_rps = true;
+
+	hdd_info("rx_mode:%u dp_rx_threads:%u rx_thread:%u napi:%u rps:%u dynamic rps %u",
+		 hdd_ctx->config->rx_mode, hdd_ctx->enable_dp_rx_threads,
+		 hdd_ctx->enable_rxthread, hdd_ctx->napi_enable,
+		 hdd_ctx->rps, hdd_ctx->dynamic_rps);
 }
 
 /**

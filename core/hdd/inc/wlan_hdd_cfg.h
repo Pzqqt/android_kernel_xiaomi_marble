@@ -45,10 +45,11 @@ struct hdd_context;
 #define FW_MODULE_LOG_LEVEL_STRING_LENGTH  (512)
 #define TX_SCHED_WRR_PARAM_STRING_LENGTH   (50)
 #define TX_SCHED_WRR_PARAMS_NUM            (5)
-#define CFG_ENABLE_RX_THREAD		(1 << 0)
-#define CFG_ENABLE_RPS			(1 << 1)
-#define CFG_ENABLE_NAPI			(1 << 2)
-#define CFG_ENABLE_DYNAMIC_RPS		(1 << 3)
+#define CFG_ENABLE_RX_THREAD		BIT(0)
+#define CFG_ENABLE_RPS			BIT(1)
+#define CFG_ENABLE_NAPI			BIT(2)
+#define CFG_ENABLE_DYNAMIC_RPS		BIT(3)
+#define CFG_ENABLE_DP_RX_THREADS	BIT(4)
 
 #ifdef DHCP_SERVER_OFFLOAD
 #define IPADDR_NUM_ENTRIES     (4)
@@ -9143,18 +9144,18 @@ enum dot11p_mode {
 
 /*
  * <ini>
- * rx_mode - Control to decide rx mode
+ * rx_mode - Control to decide rx mode for packet procesing
  *
  * @Min: 0
  * @Max: (CFG_ENABLE_RX_THREAD | CFG_ENABLE_RPS | CFG_ENABLE_NAPI | \
- *        CFG_ENABLE_DYNAMIC_RPS)
- * @Default: MDM_PLATFORM   -  0
- *           HELIUMPLUS     -  CFG_ENABLE_NAPI
- *           Other cases    -  (CFG_ENABLE_RX_THREAD | CFG_ENABLE_NAPI)
- *
- * This ini is used to decide mode for the rx path
- *
- * Supported Feature: NAPI
+ *	 CFG_ENABLE_DYNAMIC_RPS)
+ * Some possible configurations:
+ * rx_mode=0 - Uses tasklets for bottom half
+ * CFG_ENABLE_NAPI (rx_mode=4) - Uses NAPI for bottom half
+ * CFG_ENABLE_RX_THREAD | CFG_ENABLE_NAPI (rx_mode=5) - NAPI for bottom half,
+ * rx_thread for stack. Single threaded.
+ * CFG_ENABLE_DP_RX_THREAD | CFG_ENABLE_NAPI (rx_mode=10) - NAPI for bottom
+ * half, dp_rx_thread for stack processing. Supports multiple rx threads.
  *
  * Usage: Internal
  *
@@ -9163,14 +9164,34 @@ enum dot11p_mode {
 #define CFG_RX_MODE_NAME     "rx_mode"
 #define CFG_RX_MODE_MIN      (0)
 #define CFG_RX_MODE_MAX      (CFG_ENABLE_RX_THREAD | CFG_ENABLE_RPS | \
-				 CFG_ENABLE_NAPI | CFG_ENABLE_DYNAMIC_RPS)
+				 CFG_ENABLE_NAPI | CFG_ENABLE_DYNAMIC_RPS | \
+				 CFG_ENABLE_DP_RX_THREADS)
 #ifdef MDM_PLATFORM
 #define CFG_RX_MODE_DEFAULT  (0)
 #elif defined(HELIUMPLUS)
 #define CFG_RX_MODE_DEFAULT  CFG_ENABLE_NAPI
+#elif defined(QCA_WIFI_QCA6290_11AX)
+#define CFG_RX_MODE_DEFAULT  (CFG_ENABLE_DP_RX_THREADS | CFG_ENABLE_NAPI)
 #else
 #define CFG_RX_MODE_DEFAULT  (CFG_ENABLE_RX_THREAD | CFG_ENABLE_NAPI)
 #endif
+
+/*
+ * <ini>
+ * num_dp_rx_threads - Control to set the number of dp rx threads
+ *
+ * @Min: 1
+ * @Max: 4
+ * @Default: 1
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_NUM_DP_RX_THREADS_NAME     "num_dp_rx_threads"
+#define CFG_NUM_DP_RX_THREADS_MIN      (1)
+#define CFG_NUM_DP_RX_THREADS_MAX      (4)
+#define CFG_NUM_DP_RX_THREADS_DEFAULT  (1)
 
 /*
  * <ini>
@@ -14458,6 +14479,7 @@ struct hdd_config {
 	uint8_t dot11p_mode;
 	bool etsi13_srd_chan_in_master_mode;
 	uint8_t rx_mode;
+	uint8_t num_dp_rx_threads;
 	uint32_t ce_service_max_yield_time;
 	uint8_t ce_service_max_rx_ind_flush;
 	uint32_t napi_cpu_affinity_mask;

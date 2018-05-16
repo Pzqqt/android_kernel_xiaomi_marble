@@ -59,6 +59,7 @@
 #include "wma_api.h"
 
 #include "wlan_hdd_nud_tracking.h"
+#include "dp_txrx.h"
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /*
@@ -1818,19 +1819,17 @@ static inline void hdd_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
 }
 #endif
 
-/**
- * hdd_rx_packet_cbk() - Receive packet handler
- * @context: pointer to HDD context
- * @rxBuf: pointer to rx qdf_nbuf
- *
- * Receive callback registered with TL.  TL will call this to notify
- * the HDD when one or more packets were received for a registered
- * STA.
- *
- * Return: QDF_STATUS_E_FAILURE if any errors encountered,
- *	   QDF_STATUS_SUCCESS otherwise
- */
-QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
+QDF_STATUS hdd_rx_pkt_thread_enqueue_cbk(void *adapter,
+					 qdf_nbuf_t nbuf_list) {
+	if (unlikely((!adapter) || (!nbuf_list))) {
+		hdd_err("Null params being passed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	return dp_rx_enqueue_pkt(cds_get_context(QDF_MODULE_ID_SOC), nbuf_list);
+}
+
+QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
+			     qdf_nbuf_t rxBuf)
 {
 	struct hdd_adapter *adapter = NULL;
 	struct hdd_context *hdd_ctx = NULL;
@@ -1846,13 +1845,13 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	bool track_arp = false;
 
 	/* Sanity check on inputs */
-	if (unlikely((NULL == context) || (NULL == rxBuf))) {
+	if (unlikely((!adapter_context) || (!rxBuf))) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	adapter = (struct hdd_adapter *)context;
+	adapter = (struct hdd_adapter *)adapter_context;
 	if (unlikely(WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "Magic cookie(%x) for adapter sanity verification is invalid",
