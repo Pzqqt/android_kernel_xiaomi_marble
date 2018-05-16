@@ -20828,7 +20828,8 @@ extract_nfcal_power_ev_param_tlv(wmi_unified_t wmi_handle,
 		ch_freqnum++;
 	}
 
-	param->pdev_id = event->pdev_id;
+	param->pdev_id = wmi_handle->ops->
+		convert_pdev_id_target_to_host(event->pdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
