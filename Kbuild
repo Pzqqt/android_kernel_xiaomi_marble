@@ -1954,6 +1954,10 @@ ifdef CONFIG_CFG_PMO_WOW_FILTERS_MAX
 ccflags-y += -DPMO_WOW_FILTERS_MAX=$(CONFIG_CFG_PMO_WOW_FILTERS_MAX)
 endif
 
+ifdef CONFIG_CFG_NUM_OF_ADDITIONAL_FW_PEERS
+ccflags-y += -DNUM_OF_ADDITIONAL_FW_PEERS=$(CONFIG_CFG_NUM_OF_ADDITIONAL_FW_PEERS)
+endif
+
 KBUILD_CPPFLAGS += $(cppflags-y)
 
 # Currently, for versions of gcc which support it, the kernel Makefile

@@ -177,28 +177,8 @@ struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma)
  */
 static uint8_t wma_get_number_of_peers_supported(tp_wma_handle wma)
 {
-	struct hif_target_info *tgt_info;
 	struct wma_ini_config *cfg = wma_get_ini_handle(wma);
 	uint8_t max_no_of_peers = cfg ? cfg->max_no_of_peers : MIN_NO_OF_PEERS;
-	struct hif_opaque_softc *scn = cds_get_context(QDF_MODULE_ID_HIF);
-
-	if (!scn) {
-		WMA_LOGE("%s: Invalid wma handle", __func__);
-		return 0;
-	}
-
-	tgt_info = hif_get_target_info_handle(scn);
-
-	switch (tgt_info->target_version) {
-	case AR6320_REV1_1_VERSION:
-		if (max_no_of_peers > MAX_SUPPORTED_PEERS_REV1_1)
-			max_no_of_peers = MAX_SUPPORTED_PEERS_REV1_1;
-		break;
-	default:
-		if (max_no_of_peers > MAX_SUPPORTED_PEERS_REV1_3)
-			max_no_of_peers = MAX_SUPPORTED_PEERS_REV1_3;
-		break;
-	}
 
 	return max_no_of_peers;
 }
@@ -210,14 +190,16 @@ static uint8_t wma_get_number_of_peers_supported(tp_wma_handle wma)
  * Return: Max number of tids supported
  */
 #if defined(CONFIG_HL_SUPPORT)
-static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported)
+static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported,
+						 uint8_t num_vdevs)
 {
 	return 4 * no_of_peers_supported;
 }
 #else
-static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported)
+static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported,
+						 uint8_t num_vdevs)
 {
-	return 2 * (no_of_peers_supported + CFG_TGT_NUM_VDEV + 2);
+	return 2 * (no_of_peers_supported + num_vdevs + 2);
 }
 #endif
 
@@ -236,6 +218,10 @@ static void wma_reset_rx_decap_mode(target_resource_config *tgt_cfg)
 }
 
 #endif
+
+#ifndef NUM_OF_ADDITIONAL_FW_PEERS
+#define NUM_OF_ADDITIONAL_FW_PEERS	2
+#endif
 /**
  * wma_set_default_tgt_config() - set default tgt config
  * @wma_handle: wma handle
@@ -244,17 +230,27 @@ static void wma_reset_rx_decap_mode(target_resource_config *tgt_cfg)
  * Return: none
  */
 static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
-				       target_resource_config *tgt_cfg)
+				       target_resource_config *tgt_cfg,
+				       struct cds_config_info *cds_cfg)
 {
 	uint8_t no_of_peers_supported;
 
+	no_of_peers_supported = wma_get_number_of_peers_supported(wma_handle);
+
 	qdf_mem_zero(tgt_cfg, sizeof(target_resource_config));
-	tgt_cfg->num_vdevs = CFG_TGT_NUM_VDEV;
-	tgt_cfg->num_peers = CFG_TGT_NUM_PEERS + CFG_TGT_NUM_VDEV + 2;
-	tgt_cfg->num_offload_peers = CFG_TGT_NUM_OFFLOAD_PEERS;
-	tgt_cfg->num_offload_reorder_buffs = CFG_TGT_NUM_OFFLOAD_REORDER_BUFFS;
+	tgt_cfg->num_vdevs = cds_cfg->num_vdevs;
+	tgt_cfg->num_peers = no_of_peers_supported +
+				cds_cfg->num_vdevs +
+				NUM_OF_ADDITIONAL_FW_PEERS;
+	/* The current firmware implementation requires the number of
+	 * offload peers should be (number of vdevs + 1).
+	 */
+	tgt_cfg->num_offload_peers = cds_cfg->ap_maxoffload_peers + 1;
+	tgt_cfg->num_offload_reorder_buffs =
+				cds_cfg->ap_maxoffload_reorderbuffs + 1;
 	tgt_cfg->num_peer_keys = CFG_TGT_NUM_PEER_KEYS;
-	tgt_cfg->num_tids = CFG_TGT_NUM_TIDS;
+	tgt_cfg->num_tids = wma_get_number_of_tids_supported(
+				no_of_peers_supported, cds_cfg->num_vdevs);
 	tgt_cfg->ast_skid_limit = CFG_TGT_AST_SKID_LIMIT;
 	tgt_cfg->tx_chain_mask = CFG_TGT_DEFAULT_TX_CHAIN_MASK;
 	tgt_cfg->rx_chain_mask = CFG_TGT_DEFAULT_RX_CHAIN_MASK;
@@ -263,7 +259,7 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 	tgt_cfg->rx_timeout_pri[2] = CFG_TGT_RX_TIMEOUT_LO_PRI;
 	tgt_cfg->rx_timeout_pri[3] = CFG_TGT_RX_TIMEOUT_HI_PRI;
 	tgt_cfg->rx_decap_mode = CFG_TGT_RX_DECAP_MODE;
-	tgt_cfg->scan_max_pending_req = CFG_TGT_DEFAULT_SCAN_MAX_REQS;
+	tgt_cfg->scan_max_pending_req = wma_handle->max_scan;
 	tgt_cfg->bmiss_offload_max_vdev =
 			CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV;
 	tgt_cfg->roam_offload_max_vdev = CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_VDEV;
@@ -290,7 +286,7 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 	tgt_cfg->num_multicast_filter_entries =
 		CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES;
 	tgt_cfg->num_wow_filters = 0;
-	tgt_cfg->num_keep_alive_pattern = 0;
+	tgt_cfg->num_keep_alive_pattern = WMA_MAXNUM_PERIODIC_TX_PTRNS;
 	tgt_cfg->keep_alive_pattern_size = 0;
 	tgt_cfg->max_tdls_concurrent_sleep_sta =
 		CFG_TGT_NUM_TDLS_CONC_SLEEP_STAS;
@@ -301,11 +297,6 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 	tgt_cfg->num_ocb_channels = CFG_TGT_NUM_OCB_CHANNELS;
 	tgt_cfg->num_ocb_schedules = CFG_TGT_NUM_OCB_SCHEDULES;
 
-	no_of_peers_supported = wma_get_number_of_peers_supported(wma_handle);
-	tgt_cfg->num_peers = no_of_peers_supported + CFG_TGT_NUM_VDEV + 2;
-	tgt_cfg->num_tids = wma_get_number_of_tids_supported(
-						no_of_peers_supported);
-	tgt_cfg->scan_max_pending_req = wma_handle->max_scan;
 
 	tgt_cfg->mgmt_comp_evt_bundle_support = true;
 	tgt_cfg->tx_msdu_new_partition_id_support = true;
@@ -1931,17 +1922,25 @@ static void wma_set_nan_enable(tp_wma_handle wma_handle,
  *
  * Return: void
  */
-static void wma_init_max_no_of_peers(tp_wma_handle wma_handle,
+static uint8_t wma_init_max_no_of_peers(tp_wma_handle wma_handle,
 				     uint16_t max_peers)
 {
 	struct wma_ini_config *cfg = wma_get_ini_handle(wma_handle);
+	struct hif_opaque_softc *scn = cds_get_context(QDF_MODULE_ID_HIF);
+	uint32_t tgt_version = hif_get_target_info_handle(scn)->target_version;
+	uint8_t max_no_of_peers;
+	uint8_t max_supported_peers = (tgt_version == AR6320_REV1_1_VERSION) ?
+			MAX_SUPPORTED_PEERS_REV1_1 : MAX_SUPPORTED_PEERS_REV1_3;
 
 	if (cfg == NULL) {
 		WMA_LOGE("%s: NULL WMA ini handle", __func__);
-		return;
+		return 0;
 	}
 
-	cfg->max_no_of_peers = max_peers;
+	max_no_of_peers = (max_peers > max_supported_peers) ?
+				max_supported_peers : max_peers;
+	cfg->max_no_of_peers = max_no_of_peers;
+	return max_no_of_peers;
 }
 
 /**
@@ -3186,11 +3185,8 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	init_deinit_register_tgt_psoc_ev_handlers(psoc);
 
 	/* Initialize max_no_of_peers for wma_get_number_of_peers_supported() */
-	wma_init_max_no_of_peers(wma_handle, cds_cfg->max_station);
-	/* Cap maxStation based on the target version */
-	cds_cfg->max_station = wma_get_number_of_peers_supported(wma_handle);
-	/* Reinitialize max_no_of_peers based on the capped maxStation value */
-	wma_init_max_no_of_peers(wma_handle, cds_cfg->max_station);
+	cds_cfg->max_station = wma_init_max_no_of_peers(wma_handle,
+							cds_cfg->max_station);
 
 	/* initialize default target config */
 	wlan_res_cfg = target_psoc_get_wlan_res_cfg(tgt_psoc_info);
@@ -3200,25 +3196,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		goto err_wma_handle;
 	}
 
-	wma_set_default_tgt_config(wma_handle, wlan_res_cfg);
+	wma_set_default_tgt_config(wma_handle, wlan_res_cfg, cds_cfg);
 
 	wma_handle->tx_chain_mask_cck = cds_cfg->tx_chain_mask_cck;
 	wma_handle->self_gen_frm_pwr = cds_cfg->self_gen_frm_pwr;
-	wma_init_max_no_of_peers(wma_handle, cds_cfg->max_station);
-	cds_cfg->max_station = wma_get_number_of_peers_supported(wma_handle);
 
 	cds_cfg->max_bssid = WMA_MAX_SUPPORTED_BSS;
-
-	wlan_res_cfg->num_keep_alive_pattern = WMA_MAXNUM_PERIODIC_TX_PTRNS;
-
-	/* The current firmware implementation requires the number of
-	 * offload peers should be (number of vdevs + 1).
-	 */
-	wlan_res_cfg->num_offload_peers =
-		cds_cfg->ap_maxoffload_peers + 1;
-
-	wlan_res_cfg->num_offload_reorder_buffs =
-		cds_cfg->ap_maxoffload_reorderbuffs + 1;
 
 	wma_handle->max_station = cds_cfg->max_station;
 	wma_handle->max_bssid = cds_cfg->max_bssid;

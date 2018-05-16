@@ -178,4 +178,6 @@ endif
 # WoW filter configs
 CONFIG_CFG_PMO_WOW_FILTERS_MAX := 16
 
+# Additional peers sent to firmware
+CONFIG_CFG_NUM_OF_ADDITIONAL_FW_PEERS := 0
 ###################################

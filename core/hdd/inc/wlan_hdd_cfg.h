@@ -14187,6 +14187,23 @@ enum hdd_external_acs_policy {
 #define CFG_ENABLE_SECONDARY_RATE_DEFAULT       (0x17)
 
 /*
+ * <ini>
+ * gNumVdevs - max number of VDEVs supported
+ *
+ * @Min: 0x1
+ * @Max: 0x4
+ * @Default: CFG_TGT_NUM_VDEV
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_NUM_VDEV_ENABLE_NAME      "gNumVdevs"
+#define CFG_NUM_VDEV_ENABLE_MIN       (0x1)
+#define CFG_NUM_VDEV_ENABLE_MAX       (0x4)
+#define CFG_NUM_VDEV_ENABLE_DEFAULT   (CFG_TGT_NUM_VDEV)
+
+/*
  * Type declarations
  */
 
@@ -15049,11 +15066,13 @@ struct hdd_config {
 #ifdef WLAN_FEATURE_SAE
 	bool is_sae_enabled;
 #endif
+	bool enable_dtim_selection_diversity;
+	bool gcmp_enabled;
+	bool is_11k_offload_supported;
 	uint32_t btm_solicited_timeout;
 	uint32_t btm_max_attempt_cnt;
 	uint32_t btm_sticky_time;
-	bool gcmp_enabled;
-	bool is_11k_offload_supported;
+	uint32_t num_vdevs;
 	uint32_t offload_11k_enable_bitmask;
 	uint32_t neighbor_report_offload_params_bitmask;
 	uint32_t neighbor_report_offload_time_offset;
@@ -15062,9 +15081,8 @@ struct hdd_config {
 	uint32_t neighbor_report_offload_per_threshold_offset;
 	uint32_t neighbor_report_offload_cache_timeout;
 	uint32_t neighbor_report_offload_max_req_cap;
-	uint16_t wmi_wq_watchdog_timeout;
-	bool enable_dtim_selection_diversity;
 	uint32_t channel_select_logic_conc;
+	uint16_t wmi_wq_watchdog_timeout;
 	bool enable_bt_chain_separation;
 	uint8_t enable_tx_sch_delay;
 	uint32_t enable_secondary_rate;

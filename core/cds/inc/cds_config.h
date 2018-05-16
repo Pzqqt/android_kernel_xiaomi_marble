@@ -110,6 +110,7 @@ enum active_bpf_mode {
  * @rps_enabled: RPS enabled in SAP mode
  * @delay_before_vdev_stop: wait time for tx complete before vdev stop
  * Structure for holding cds ini parameters.
+ * @num_vdevs: Configured max number of VDEVs can be supported in the stack.
  */
 
 struct cds_config_info {
@@ -169,6 +170,7 @@ struct cds_config_info {
 	uint8_t bandcapability;
 	bool rps_enabled;
 	uint8_t delay_before_vdev_stop;
+	uint32_t num_vdevs;
 };
 
 #ifdef WLAN_FEATURE_FILS_SK
