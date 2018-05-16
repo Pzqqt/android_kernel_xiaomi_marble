@@ -622,17 +622,13 @@ void wlan_ipa_print_fw_wdi_stats(struct wlan_ipa_priv *ipa_ctx,
 				 struct ipa_uc_fw_stats *uc_fw_stat)
 {
 	ipa_info("\n==== WLAN FW WDI TX STATS ====\n"
-		"COMP RING BASE: 0x%x\n"
 		"COMP RING SIZE: %d\n"
-		"COMP RING DBELL : 0x%x\n"
 		"COMP RING DBELL IND VAL : %d\n"
 		"COMP RING DBELL CACHED VAL : %d\n"
 		"PKTS ENQ : %d\n"
 		"PKTS COMP : %d\n"
 		"IS SUSPEND : %d\n",
-		uc_fw_stat->tx_comp_ring_base,
 		uc_fw_stat->tx_comp_ring_size,
-		uc_fw_stat->tx_comp_ring_dbell_addr,
 		uc_fw_stat->tx_comp_ring_dbell_ind_val,
 		uc_fw_stat->tx_comp_ring_dbell_cached_val,
 		uc_fw_stat->tx_pkts_enqueued,
@@ -640,12 +636,9 @@ void wlan_ipa_print_fw_wdi_stats(struct wlan_ipa_priv *ipa_ctx,
 		uc_fw_stat->tx_is_suspend);
 
 	ipa_info("\n==== WLAN FW WDI RX STATS ====\n"
-		"IND RING BASE: 0x%x\n"
 		"IND RING SIZE: %d\n"
-		"IND RING DBELL : 0x%x\n"
 		"IND RING DBELL IND VAL : %d\n"
 		"IND RING DBELL CACHED VAL : %d\n"
-		"RDY IND ADDR : 0x%x\n"
 		"RDY IND CACHE VAL : %d\n"
 		"RFIL IND : %d\n"
 		"NUM PKT INDICAT : %d\n"
@@ -653,12 +646,9 @@ void wlan_ipa_print_fw_wdi_stats(struct wlan_ipa_priv *ipa_ctx,
 		"NUM DROP NO SPC : %d\n"
 		"NUM DROP NO BUF : %d\n"
 		"IS SUSPND : %d\n",
-		uc_fw_stat->rx_ind_ring_base,
 		uc_fw_stat->rx_ind_ring_size,
-		uc_fw_stat->rx_ind_ring_dbell_addr,
 		uc_fw_stat->rx_ind_ring_dbell_ind_val,
 		uc_fw_stat->rx_ind_ring_dbell_ind_cached_val,
-		uc_fw_stat->rx_ind_ring_rdidx_addr,
 		uc_fw_stat->rx_ind_ring_rd_idx_cached_val,
 		uc_fw_stat->rx_refill_idx,
 		uc_fw_stat->rx_num_pkts_indicated,
