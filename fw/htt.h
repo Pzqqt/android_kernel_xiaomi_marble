@@ -165,9 +165,10 @@
  *      HTT_T2H_MSG_TYPE_PKTLOG
  * 3.49 Add HTT_T2H_MSG_TYPE_MONITOR_MAC_HEADER_IND def
  * 3.50 Add learning_frame flag to htt_tx_msdu_desc_ext2_t
+ * 3.51 Add SW peer ID and TID num to HTT TX WBM COMPLETION
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 50
+#define HTT_CURRENT_VERSION_MINOR 51
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -2331,7 +2332,14 @@ PREPACK struct htt_tx_wbm_transmit_status {
                               * Units: dB w.r.t noise floor
                               */
    A_UINT32
-       reserved0:       32;
+       sw_peer_id:      16,
+       tid_num:          5,
+       valid:            1,  /* If this "valid" flag is set, the sw_peer_id
+                              * and tid_num fields contain valid data.
+                              * If this "valid" flag is not set, the
+                              * sw_peer_id and tid_num fields must be ignored.
+                              */
+       reserved0:       10;
    A_UINT32
        reserved1:       32;
 } POSTPACK;
@@ -2341,6 +2349,14 @@ PREPACK struct htt_tx_wbm_transmit_status {
 #define HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_S          0
 #define HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_M      0xff000000
 #define HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_S      24
+
+/* DWORD 5 */
+#define HTT_TX_WBM_COMPLETION_V2_SW_PEER_ID_M          0x0000ffff
+#define HTT_TX_WBM_COMPLETION_V2_SW_PEER_ID_S          0
+#define HTT_TX_WBM_COMPLETION_V2_TID_NUM_M             0x001f0000
+#define HTT_TX_WBM_COMPLETION_V2_TID_NUM_S             16
+#define HTT_TX_WBM_COMPLETION_V2_VALID_M               0x00200000
+#define HTT_TX_WBM_COMPLETION_V2_VALID_S               21
 
 /* DWORD 4 */
 #define HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_GET(_var) \
@@ -2361,6 +2377,37 @@ PREPACK struct htt_tx_wbm_transmit_status {
      do { \
          HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI, _val); \
          ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_S)); \
+     } while (0)
+
+/* DWORD 5 */
+#define HTT_TX_WBM_COMPLETION_V2_SW_PEER_ID_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V2_SW_PEER_ID_M) >> \
+    HTT_TX_WBM_COMPLETION_V2_SW_PEER_ID_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_SW_PEER_ID_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_SW_PEER_ID, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_SW_PEER_ID_S)); \
+     } while (0)
+
+#define HTT_TX_WBM_COMPLETION_V2_TID_NUM_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V2_TID_NUM_M) >> \
+    HTT_TX_WBM_COMPLETION_V2_TID_NUM_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_TID_NUM_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_TID_NUM, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_TID_NUM_S)); \
+     } while (0)
+
+#define HTT_TX_WBM_COMPLETION_V2_VALID_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V2_VALID_M) >> \
+    HTT_TX_WBM_COMPLETION_V2_VALID_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_VALID_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_VALID, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_VALID_S)); \
      } while (0)
 
 /**
