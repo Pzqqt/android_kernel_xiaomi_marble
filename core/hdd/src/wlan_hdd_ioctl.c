@@ -83,6 +83,16 @@
  */
 #define NUM_OF_STA_DATA_TO_PRINT 16
 
+#ifdef WLAN_FEATURE_EXTWOW_SUPPORT
+/**
+ * struct enable_ext_wow_priv - Private data structure for ext wow
+ * @ext_wow_should_suspend: Suspend status of ext wow
+ */
+struct enable_ext_wow_priv {
+	bool ext_wow_should_suspend;
+};
+#endif
+
 /*
  * Android DRIVER command structures
  */
@@ -1892,16 +1902,28 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 #endif
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
-static void wlan_hdd_ready_to_extwow(void *callbackContext, bool is_success)
+/**
+ * wlan_hdd_ready_to_extwow() - Callback function for enable ext wow
+ * @cookie: callback context
+ * @is_success: suspend status of ext wow
+ *
+ * Return: none
+ */
+static void wlan_hdd_ready_to_extwow(void *cookie, bool is_success)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *) callbackContext;
-	int rc;
+	struct osif_request *request = NULL;
+	struct enable_ext_wow_priv *priv = NULL;
 
-	rc = wlan_hdd_validate_context(hdd_ctx);
-	if (rc)
+	request = osif_request_get(cookie);
+	if (!request) {
+		hdd_err("Obselete request");
 		return;
-	hdd_ctx->ext_wow_should_suspend = is_success;
-	complete(&hdd_ctx->ready_to_extwow);
+	}
+	priv = osif_request_priv(request);
+	priv->ext_wow_should_suspend = is_success;
+
+	osif_request_complete(request);
+	osif_request_put(request);
 }
 
 static int hdd_enable_ext_wow(struct hdd_adapter *adapter,
@@ -1911,30 +1933,45 @@ static int hdd_enable_ext_wow(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int rc;
+	struct enable_ext_wow_priv *priv = NULL;
+	struct osif_request *request = NULL;
+	void *cookie = NULL;
+	struct osif_request_params hdd_params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_READY_TO_EXTWOW,
+	};
 
 	qdf_mem_copy(&params, arg_params, sizeof(params));
 
-	INIT_COMPLETION(hdd_ctx->ready_to_extwow);
+	request = osif_request_alloc(&hdd_params);
+	if (!request) {
+		hdd_err("Request Allocation Failure");
+		return -ENOMEM;
+	}
+	cookie = osif_request_cookie(request);
 
 	status = sme_configure_ext_wow(hdd_ctx->mac_handle, &params,
 				       &wlan_hdd_ready_to_extwow,
-				       hdd_ctx);
+				       cookie);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("sme_configure_ext_wow returned failure %d",
 			 status);
-		return -EPERM;
+		rc = -EPERM;
+		goto exit;
 	}
 
-	rc = wait_for_completion_timeout(&hdd_ctx->ready_to_extwow,
-			msecs_to_jiffies(WLAN_WAIT_TIME_READY_TO_EXTWOW));
-	if (!rc) {
+	rc = osif_request_wait_for_response(request);
+	if (rc) {
 		hdd_err("Failed to get ready to extwow");
-		return -EPERM;
+		rc = -EPERM;
+		goto exit;
 	}
 
-	if (!hdd_ctx->ext_wow_should_suspend) {
+	priv = osif_request_priv(request);
+	if (!priv->ext_wow_should_suspend) {
 		hdd_err("Received ready to ExtWoW failure");
-		return -EPERM;
+		rc = -EPERM;
+		goto exit;
 	}
 
 	if (hdd_ctx->config->extWowGotoSuspend) {
@@ -1944,18 +1981,19 @@ static int hdd_enable_ext_wow(struct hdd_adapter *adapter,
 		if (rc < 0) {
 			hdd_err("wlan_hdd_cfg80211_suspend_wlan failed, error = %d",
 				rc);
-			return rc;
+			goto exit;
 		}
 		rc = wlan_hdd_bus_suspend();
 		if (rc) {
 			hdd_err("wlan_hdd_bus_suspend failed, status = %d",
 				rc);
 			wlan_hdd_cfg80211_resume_wlan(hdd_ctx->wiphy);
-			return rc;
+			goto exit;
 		}
 	}
-
-	return 0;
+exit:
+	osif_request_put(request);
+	return rc;
 }
 
 static int hdd_enable_ext_wow_parser(struct hdd_adapter *adapter, int vdev_id,

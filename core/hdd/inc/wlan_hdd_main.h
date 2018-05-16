@@ -1803,8 +1803,6 @@ struct hdd_context {
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 	bool is_extwow_app_type1_param_set;
 	bool is_extwow_app_type2_param_set;
-	bool ext_wow_should_suspend;
-	struct completion ready_to_extwow;
 #endif
 
 	/* Time since boot up to extscan start (in micro seconds) */
