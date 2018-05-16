@@ -7507,3 +7507,30 @@ QDF_STATUS wmi_extract_cca_stats(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif /* QCA_SUPPORT_CP_STATS */
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+QDF_STATUS
+wmi_unified_dfs_send_avg_params_cmd(void *wmi_hdl,
+				    struct dfs_radar_found_params *params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_dfs_average_radar_params_cmd)
+		return wmi_handle->ops->send_dfs_average_radar_params_cmd(
+			wmi_handle, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_dfs_status_from_fw(void *wmi_hdl, void *evt_buf,
+					  uint32_t *dfs_status_check)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_dfs_status_from_fw)
+		return wmi_handle->ops->extract_dfs_status_from_fw(wmi_handle,
+				evt_buf, dfs_status_check);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif

@@ -432,6 +432,7 @@ typedef enum {
 typedef enum {
 	WMI_HOST_VDEV_START_OK = 0,
 	WMI_HOST_VDEV_START_CHAN_INVALID,
+	WMI_HOST_VDEV_START_CHAN_BLOCKED,
 } WMI_HOST_VDEV_START_STATUS;
 
 /*
@@ -5519,6 +5520,9 @@ typedef enum {
 	wmi_host_swfda_event_id,
 	wmi_sar_get_limits_event_id,
 	wmi_pdev_div_rssi_antid_event_id,
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+	wmi_host_dfs_status_check_event_id,
+#endif
 
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -5944,6 +5948,7 @@ typedef enum {
 	wmi_service_ap_obss_detection_offload,
 	wmi_service_bss_color_offload,
 	wmi_service_gmac_offload_support,
+	wmi_service_host_dfs_check_support,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
