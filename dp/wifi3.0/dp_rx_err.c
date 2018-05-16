@@ -531,8 +531,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 		bool mpdu_done = false;
 		struct dp_pdev *pdev = soc->pdev_list[pool_id];
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		FL("peer is NULL"));
+		QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_DP, "peer is NULL");
 
 		mpdu_done = dp_rx_chain_msdus(soc, nbuf, rx_tlv_hdr, pool_id);
 		/* Trigger invalid peer handler wrapper */
@@ -1149,8 +1148,7 @@ done:
 				 */
 				case HAL_REO_ERR_QUEUE_DESC_ADDR_0:
 					pool_id = wbm_err_info.pool_id;
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_WARN,
+					QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_DP,
 						"Got pkt with REO ERROR: %d",
 						wbm_err_info.reo_err_code);
 					dp_rx_null_q_desc_handle(soc,
