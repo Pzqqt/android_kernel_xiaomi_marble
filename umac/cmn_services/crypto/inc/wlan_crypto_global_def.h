@@ -165,6 +165,12 @@ typedef enum wlan_crypto_key_mgmt {
 	WLAN_CRYPTO_KEY_MGMT_OSEN                  = 15,
 	WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B     = 16,
 	WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192 = 17,
+	WLAN_CRYPTO_KEY_MGMT_FILS_SHA256           = 18,
+	WLAN_CRYPTO_KEY_MGMT_FILS_SHA384           = 19,
+	WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256        = 20,
+	WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384        = 21,
+	WLAN_CRYPTO_KEY_MGMT_OWE                   = 22,
+	WLAN_CRYPTO_KEY_MGMT_DPP                   = 23,
 } wlan_crypto_key_mgmt;
 
 /**
