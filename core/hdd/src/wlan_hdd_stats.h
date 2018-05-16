@@ -80,29 +80,6 @@ struct index_data_rate_type {
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 
 /**
- * struct hdd_ll_stats_context - hdd link layer stats context
- *
- * @request_id: userspace-assigned link layer stats request id
- * @request_bitmap: userspace-assigned link layer stats request bitmap
- * @response_event: LL stats request wait event
- */
-struct hdd_ll_stats_context {
-	uint32_t request_id;
-	uint32_t request_bitmap;
-	struct completion response_event;
-	spinlock_t context_lock;
-};
-
-/*
- * Used to allocate the size of 4096 for the link layer stats.
- * The size of 4096 is considered assuming that all data per
- * respective event fit with in the limit.Please take a call
- * on the limit based on the data requirements on link layer
- * statistics.
- */
-#define LL_STATS_EVENT_BUF_SIZE 4096
-
-/**
  * wlan_hdd_cfg80211_ll_stats_set() - set link layer stats
  * @wiphy: Pointer to wiphy
  * @wdev: Pointer to wdev
@@ -146,8 +123,6 @@ int wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 				     int data_len);
 
 void wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter);
-
-void hdd_init_ll_stats_ctx(void);
 
 static inline bool hdd_link_layer_stats_supported(void)
 {
@@ -193,6 +168,7 @@ int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
  * @hdd_handle: Handle to HDD context
  * @indication_type: Indication type
  * @results: Pointer to results
+ * @cookie: Callback context
  *
  * After receiving Link Layer indications from FW.This callback converts the
  * firmware data to the NL data and send the same to the kernel/upper layers.
@@ -201,7 +177,8 @@ int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
  */
 void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
 						 int indication_type,
-						 tSirLLStatsResults *results);
+						 tSirLLStatsResults *results,
+						 void *cookie);
 
 /**
  * wlan_hdd_cfg80211_link_layer_stats_ext_callback() - Callback for LL ext
@@ -229,10 +206,6 @@ void hdd_lost_link_info_cb(hdd_handle_t hdd_handle,
 			   struct sir_lost_link_info *lost_link_info);
 
 #else /* WLAN_FEATURE_LINK_LAYER_STATS */
-
-static inline void hdd_init_ll_stats_ctx(void)
-{
-}
 
 static inline bool hdd_link_layer_stats_supported(void)
 {
@@ -263,7 +236,8 @@ wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter)
 static inline void
 wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
 					    int indication_type,
-					    tSirLLStatsResults *results)
+					    tSirLLStatsResults *results,
+					    void *cookie)
 {
 }
 

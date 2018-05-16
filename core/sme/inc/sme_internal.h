@@ -143,7 +143,8 @@ typedef struct sSelfRecoveryStats {
 
 typedef void (*link_layer_stats_cb)(hdd_handle_t hdd_handle,
 				    int indication_type,
-				    tSirLLStatsResults *results);
+				    tSirLLStatsResults *results,
+				    void *cookie);
 
 typedef void (*ext_scan_ind_cb)(hdd_handle_t hdd_handle,
 				const uint16_t, void *);
@@ -271,6 +272,7 @@ typedef struct tagSmeStruct {
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type eventPayload;
 #endif
+	void *ll_stats_context;
 	link_layer_stats_cb link_layer_stats_cb;
 	void (*link_layer_stats_ext_cb)(hdd_handle_t callback_ctx,
 					tSirLLStatsResults *rsp);

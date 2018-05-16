@@ -161,7 +161,25 @@ static int rssi_mcs_tbl[][10] = {
 
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
-static struct hdd_ll_stats_context ll_stats_context;
+
+/**
+ * struct hdd_ll_stats_priv - hdd link layer stats private
+ * @request_id: userspace-assigned link layer stats request id
+ * @request_bitmap: userspace-assigned link layer stats request bitmap
+ */
+struct hdd_ll_stats_priv {
+	uint32_t request_id;
+	uint32_t request_bitmap;
+};
+
+/*
+ * Used to allocate the size of 4096 for the link layer stats.
+ * The size of 4096 is considered assuming that all data per
+ * respective event fit with in the limit.Please take a call
+ * on the limit based on the data requirements on link layer
+ * statistics.
+ */
+#define LL_STATS_EVENT_BUF_SIZE 4096
 
 /**
  * put_wifi_rate_stat() - put wifi rate stats
@@ -1063,12 +1081,14 @@ static void hdd_ll_process_peer_stats(struct hdd_adapter *adapter,
 
 void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
 						 int indication_type,
-						 tSirLLStatsResults *results)
+						 tSirLLStatsResults *results,
+						 void *cookie)
 {
 	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
-	struct hdd_ll_stats_context *context;
+	struct hdd_ll_stats_priv *priv;
 	struct hdd_adapter *adapter = NULL;
 	int status;
+	struct osif_request *request;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status)
@@ -1077,7 +1097,7 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx,
 					   results->ifaceId);
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("vdev_id %d does not exist with host",
 			results->ifaceId);
 		return;
@@ -1096,18 +1116,23 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
 			results->num_radio,
 			results->results);
 
-		context = &ll_stats_context;
-		spin_lock(&context->context_lock);
-		/* validate response received from target */
-		if ((context->request_id != results->rspId) ||
-		    !(context->request_bitmap & results->paramId)) {
-			spin_unlock(&context->context_lock);
-			hdd_err("Error : Request id %d response id %d request bitmap 0x%x response bitmap 0x%x",
-			context->request_id, results->rspId,
-			context->request_bitmap, results->paramId);
+		request = osif_request_get(cookie);
+		if (!request) {
+			hdd_err("Obsolete request");
 			return;
 		}
-		spin_unlock(&context->context_lock);
+
+		priv = osif_request_priv(request);
+
+		/* validate response received from target */
+		if ((priv->request_id != results->rspId) ||
+		    !(priv->request_bitmap & results->paramId)) {
+			hdd_err("Request id %d response id %d request bitmap 0x%x response bitmap 0x%x",
+				priv->request_id, results->rspId,
+				priv->request_bitmap, results->paramId);
+			osif_request_put(request);
+			return;
+		}
 
 		if (results->paramId & WMI_LINK_STATS_RADIO) {
 			hdd_ll_process_radio_stats(adapter,
@@ -1116,10 +1141,8 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
 				results->num_radio,
 				results->rspId);
 
-			spin_lock(&context->context_lock);
 			if (!results->moreResultToFollow)
-				context->request_bitmap &= ~(WMI_LINK_STATS_RADIO);
-			spin_unlock(&context->context_lock);
+				priv->request_bitmap &= ~(WMI_LINK_STATS_RADIO);
 
 		} else if (results->paramId &
 				WMI_LINK_STATS_IFACE) {
@@ -1128,17 +1151,15 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
 				results->num_peers,
 				results->rspId);
 
-			spin_lock(&context->context_lock);
 			/* Firmware doesn't send peerstats event if no peers are
 			 * connected. HDD should not wait for any peerstats in
 			 * this case and return the status to middleware after
 			 * receiving iface stats
 			 */
 			if (!results->num_peers)
-				context->request_bitmap &=
+				priv->request_bitmap &=
 					~(WMI_LINK_STATS_ALL_PEER);
-			context->request_bitmap &= ~(WMI_LINK_STATS_IFACE);
-			spin_unlock(&context->context_lock);
+			priv->request_bitmap &= ~(WMI_LINK_STATS_IFACE);
 
 		} else if (results->
 			   paramId & WMI_LINK_STATS_ALL_PEER) {
@@ -1147,21 +1168,19 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
 				results->results,
 				results->rspId);
 
-			spin_lock(&context->context_lock);
 			if (!results->moreResultToFollow)
-				context->request_bitmap &= ~(WMI_LINK_STATS_ALL_PEER);
-			spin_unlock(&context->context_lock);
+				priv->request_bitmap &=
+						~(WMI_LINK_STATS_ALL_PEER);
 
 		} else {
 			hdd_err("INVALID LL_STATS_NOTIFY RESPONSE");
 		}
 
-		spin_lock(&context->context_lock);
 		/* complete response event if all requests are completed */
-		if (0 == context->request_bitmap)
-			complete(&context->response_event);
-		spin_unlock(&context->context_lock);
+		if (!priv->request_bitmap)
+			osif_request_complete(request);
 
+		osif_request_put(request);
 		break;
 	}
 	default:
@@ -1341,31 +1360,50 @@ nla_policy
 static int wlan_hdd_send_ll_stats_req(struct hdd_context *hdd_ctx,
 				      tSirLLStatsGetReq *req)
 {
-	unsigned long rc;
-	struct hdd_ll_stats_context *context;
+	int ret;
+	struct hdd_ll_stats_priv *priv;
+	struct osif_request *request;
+	void *cookie;
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_LL_STATS,
+	};
 
-	context = &ll_stats_context;
-	spin_lock(&context->context_lock);
-	context->request_id = req->reqId;
-	context->request_bitmap = req->paramIdMask;
-	INIT_COMPLETION(context->response_event);
-	spin_unlock(&context->context_lock);
+	hdd_enter();
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request Allocation Failure");
+		return -ENOMEM;
+	}
+
+	cookie = osif_request_cookie(request);
+
+	priv = osif_request_priv(request);
+
+	priv->request_id = req->reqId;
+	priv->request_bitmap = req->paramIdMask;
 
 	if (QDF_STATUS_SUCCESS !=
-			sme_ll_stats_get_req(hdd_ctx->mac_handle, req)) {
+			sme_ll_stats_get_req(hdd_ctx->mac_handle, req,
+					     cookie)) {
 		hdd_err("sme_ll_stats_get_req Failed");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto exit;
 	}
 
-	rc = wait_for_completion_timeout(&context->response_event,
-			msecs_to_jiffies(WLAN_WAIT_TIME_LL_STATS));
-	if (!rc) {
+	ret = osif_request_wait_for_response(request);
+	if (ret) {
 		hdd_err("Target response timed out request id %d request bitmap 0x%x",
-			context->request_id, context->request_bitmap);
-		return -ETIMEDOUT;
+			priv->request_id, priv->request_bitmap);
+		ret = -ETIMEDOUT;
+		goto exit;
 	}
+	hdd_exit();
 
-	return 0;
+exit:
+	osif_request_put(request);
+	return ret;
 }
 
 int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
@@ -2823,18 +2861,6 @@ int wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
 	cds_ssr_unprotect(__func__);
 
 	return ret;
-}
-
-/**
- * hdd_init_ll_stats_ctx() - initialize link layer stats context
- *
- * Return: none
- */
-inline void hdd_init_ll_stats_ctx(void)
-{
-	spin_lock_init(&ll_stats_context.context_lock);
-	init_completion(&ll_stats_context.response_event);
-	ll_stats_context.request_bitmap = 0;
 }
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 

@@ -11717,57 +11717,40 @@ QDF_STATUS sme_ll_stats_set_req(tHalHandle hHal, tSirLLStatsSetReq
 	return status;
 }
 
-/*
- * sme_ll_stats_get_req() -
- * SME API to get the Link Layer Statistics
- *
- * hHal
- * pgetStatsReq: Link Layer get stats request params structure
- * Return QDF_STATUS
- */
-QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal, tSirLLStatsGetReq
-				*pgetStatsReq)
+QDF_STATUS sme_ll_stats_get_req(mac_handle_t mac_handle,
+				tSirLLStatsGetReq *get_stats_req,
+				void *context)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
-	tSirLLStatsGetReq *get_stats_req;
+	tSirLLStatsGetReq *ll_stats_get_req;
 
-	get_stats_req = qdf_mem_malloc(sizeof(*get_stats_req));
+	ll_stats_get_req = qdf_mem_malloc(sizeof(*ll_stats_get_req));
 
-	if (!get_stats_req) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for WMA_LL_STATS_GET_REQ",
-			  __func__);
+	if (!ll_stats_get_req) {
+		sme_err("Unable to allocate memory for WMA_LL_STATS_GET_REQ");
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	*get_stats_req = *pgetStatsReq;
+	*ll_stats_get_req = *get_stats_req;
 
-	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&pMac->sme)) {
+	mac->sme.ll_stats_context = context;
+	if (sme_acquire_global_lock(&mac->sme) == QDF_STATUS_SUCCESS) {
 		/* Serialize the req through MC thread */
-		message.bodyptr = get_stats_req;
+		message.bodyptr = ll_stats_get_req;
 		message.type = WMA_LINK_LAYER_STATS_GET_REQ;
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, message.type));
-		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
-						 &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: not able to post WMA_LL_STATS_GET_REQ",
-				  __func__);
-
-			qdf_mem_free(get_stats_req);
-			status = QDF_STATUS_E_FAILURE;
-
+		qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			  NO_SESSION, message.type);
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			sme_err("Not able to post WMA_LL_STATS_GET_REQ");
+			qdf_mem_free(ll_stats_get_req);
 		}
-		sme_release_global_lock(&pMac->sme);
+		sme_release_global_lock(&mac->sme);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: sme_acquire_global_lock error", __func__);
-		qdf_mem_free(get_stats_req);
-		status = QDF_STATUS_E_FAILURE;
+		sme_err("sme_acquire_global_lock error");
+		qdf_mem_free(ll_stats_get_req);
 	}
 
 	return status;

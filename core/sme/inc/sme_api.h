@@ -1022,14 +1022,24 @@ QDF_STATUS sme_ll_stats_clear_req(tHalHandle hHal,
 		tSirLLStatsClearReq * pclearStatsReq);
 QDF_STATUS sme_ll_stats_set_req(tHalHandle hHal,
 		tSirLLStatsSetReq *psetStatsReq);
-QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal,
-		tSirLLStatsGetReq *pgetStatsReq);
+
+/**
+ * sme_ll_stats_get_req() - SME API to get the Link Layer Statistics
+ * @mac_handle: Global MAC handle
+ * @get_stats_req: Link Layer get stats request params structure
+ * @context: Callback context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_ll_stats_get_req(mac_handle_t mac_handle,
+				tSirLLStatsGetReq *get_stats_req,
+				void *context);
 
 /**
  * sme_set_link_layer_stats_ind_cb() -
  * SME API to trigger the stats are available after get request
  * @mac_handle: MAC handle
- * @callback_routine - HDD callback which needs to be invoked after
+ * @callback: HDD callback which needs to be invoked after
  *    getting status notification from FW
  *
  * Return: QDF_STATUS

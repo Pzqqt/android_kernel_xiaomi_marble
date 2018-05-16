@@ -1246,14 +1246,14 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	bool excess_data = false;
 	uint32_t buf_len = 0;
 
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!pMac) {
-		WMA_LOGD("%s: NULL pMac ptr. Exiting", __func__);
+	if (!mac) {
+		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
 		return -EINVAL;
 	}
 
-	if (!pMac->sme.link_layer_stats_cb) {
+	if (!mac->sme.link_layer_stats_cb) {
 		WMA_LOGD("%s: HDD callback is null", __func__);
 		return -EINVAL;
 	}
@@ -1375,9 +1375,10 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	 * vdev_id/ifacId in link_stats_results will be
 	 * used to retrieve the correct HDD context
 	 */
-	pMac->sme.link_layer_stats_cb(pMac->hdd_handle,
-					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
-					     link_stats_results);
+	mac->sme.link_layer_stats_cb(mac->hdd_handle,
+				     WMA_LINK_LAYER_STATS_RESULTS_RSP,
+				     link_stats_results,
+				     mac->sme.ll_stats_context);
 	qdf_mem_free(link_stats_results);
 
 	return 0;
@@ -1573,7 +1574,8 @@ post_stats:
 	 */
 	mac->sme.link_layer_stats_cb(mac->hdd_handle,
 		WMA_LINK_LAYER_STATS_RESULTS_RSP,
-		link_stats_results);
+		link_stats_results,
+		mac->sme.ll_stats_context);
 	wma_unified_radio_tx_mem_free(handle);
 
 	return 0;
@@ -1604,14 +1606,14 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	tSirWifiRadioStat *rs_results;
 	tSirWifiChannelStats *chn_results;
 
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!pMac) {
-		WMA_LOGD("%s: NULL pMac ptr. Exiting", __func__);
+	if (!mac) {
+		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
 		return -EINVAL;
 	}
 
-	if (!pMac->sme.link_layer_stats_cb) {
+	if (!mac->sme.link_layer_stats_cb) {
 		WMA_LOGD("%s: HDD callback is null", __func__);
 		return -EINVAL;
 	}
@@ -1779,9 +1781,10 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		return 0;
 	}
 
-	pMac->sme.link_layer_stats_cb(pMac->hdd_handle,
-					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
-					     link_stats_results);
+	mac->sme.link_layer_stats_cb(mac->hdd_handle,
+				     WMA_LINK_LAYER_STATS_RESULTS_RSP,
+				     link_stats_results,
+				     mac->sme.ll_stats_context);
 	wma_unified_radio_tx_mem_free(handle);
 
 	return 0;
@@ -2065,14 +2068,14 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	size_t link_stats_results_size, offload_stats_size;
 	size_t total_ac_size, total_offload_size;
 
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!pMac) {
-		WMA_LOGD("%s: NULL pMac ptr. Exiting", __func__);
+	if (!mac) {
+		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
 		return -EINVAL;
 	}
 
-	if (!pMac->sme.link_layer_stats_cb) {
+	if (!mac->sme.link_layer_stats_cb) {
 		WMA_LOGD("%s: HDD callback is null", __func__);
 		return -EINVAL;
 	}
@@ -2181,9 +2184,10 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	 * vdev_id/ifacId in link_stats_results will be
 	 * used to retrieve the correct HDD context
 	 */
-	pMac->sme.link_layer_stats_cb(pMac->hdd_handle,
-					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
-					     link_stats_results);
+	mac->sme.link_layer_stats_cb(mac->hdd_handle,
+				     WMA_LINK_LAYER_STATS_RESULTS_RSP,
+				     link_stats_results,
+				     mac->sme.ll_stats_context);
 	qdf_mem_free(link_stats_results);
 
 	return 0;
