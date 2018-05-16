@@ -132,6 +132,26 @@ struct wma_dfs_radar_ind {
 };
 
 /**
+ * struct board_info - Structure for board related information
+ * @bdf_version: board file version
+ * @ref_design_id: reference design id
+ * @customer_id: customer id
+ * @project_id: project id
+ * @board_data_rev: board data revision
+ *
+ * This board information will be stored in board file during the
+ * calibration and customization.
+ *
+ */
+struct board_info {
+	uint32_t bdf_version;
+	uint32_t ref_design_id;
+	uint32_t customer_id;
+	uint32_t project_id;
+	uint32_t board_data_rev;
+};
+
+/**
  * struct wma_tgt_cfg - target config
  * @target_fw_version: target fw version
  * @target_fw_vers_ext: target fw extended sub version
@@ -189,5 +209,7 @@ struct wma_tgt_cfg {
 	bool rcpi_enabled;
 	bool obss_detection_offloaded;
 	bool obss_color_collision_offloaded;
+	uint32_t hw_bd_id;
+	struct board_info hw_bd_info;
 };
 #endif /* WMA_TGT_CFG_H */

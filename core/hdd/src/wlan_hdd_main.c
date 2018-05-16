@@ -1952,6 +1952,10 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_ctx->target_fw_version = cfg->target_fw_version;
 	hdd_ctx->target_fw_vers_ext = cfg->target_fw_vers_ext;
 
+	hdd_ctx->hw_bd_id = cfg->hw_bd_id;
+	qdf_mem_copy(&hdd_ctx->hw_bd_info, &cfg->hw_bd_info,
+		     sizeof(cfg->hw_bd_info));
+
 	hdd_ctx->max_intf_count = cfg->max_intf_count;
 
 	hdd_lpass_target_config(hdd_ctx, cfg);
@@ -2484,10 +2488,15 @@ uint32_t hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 	sub_id = (hdd_ctx->target_fw_vers_ext & 0xf0000000) >> 28;
 
 	size = scnprintf(version, version_len,
-			 "Host SW:%s, FW:%d.%d.%d.%d.%d, HW:%s",
+			 "Host SW:%s, FW:%d.%d.%d.%d.%d, HW:%s, Board ver: %x Ref design id: %x, Customer id: %x, Project id: %x, Board Data Rev: %x",
 			 QWLAN_VERSIONSTR,
 			 msp_id, mspid, siid, crmid, sub_id,
-			 hdd_ctx->target_hw_name);
+			 hdd_ctx->target_hw_name,
+			 hdd_ctx->hw_bd_info.bdf_version,
+			 hdd_ctx->hw_bd_info.ref_design_id,
+			 hdd_ctx->hw_bd_info.customer_id,
+			 hdd_ctx->hw_bd_info.project_id,
+			 hdd_ctx->hw_bd_info.board_data_rev);
 
 	return size;
 }

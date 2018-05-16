@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -69,7 +69,6 @@ static ssize_t __show_fw_version(struct kobject *kobj,
 				 struct kobj_attribute *attr,
 				 char *buf)
 {
-	const char *hw_version;
 	uint32_t major_spid = 0, minor_spid = 0, siid = 0, crmid = 0;
 	uint32_t sub_id = 0;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -85,12 +84,16 @@ static ssize_t __show_fw_version(struct kobject *kobj,
 	hdd_get_fw_version(hdd_ctx, &major_spid, &minor_spid, &siid,
 			   &crmid);
 	sub_id = (hdd_ctx->target_fw_vers_ext & 0xf0000000) >> 28;
-	hw_version = hdd_ctx->target_hw_name;
 
 	return scnprintf(buf, PAGE_SIZE,
-			 "FW:%d.%d.%d.%d.%d HW:%s", major_spid,
-			 minor_spid, siid, crmid, sub_id,
-			 hw_version);
+			 "FW:%d.%d.%d.%d.%d HW:%s Board version: %x Ref design id: %x Customer id: %x Project id: %x Board Data Rev: %x\n",
+			 major_spid, minor_spid, siid, crmid, sub_id,
+			 hdd_ctx->target_hw_name,
+			 hdd_ctx->hw_bd_info.bdf_version,
+			 hdd_ctx->hw_bd_info.ref_design_id,
+			 hdd_ctx->hw_bd_info.customer_id,
+			 hdd_ctx->hw_bd_info.project_id,
+			 hdd_ctx->hw_bd_info.board_data_rev);
 }
 
 static ssize_t show_fw_version(struct kobject *kobj,

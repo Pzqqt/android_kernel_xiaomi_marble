@@ -1899,6 +1899,10 @@ struct hdd_context {
 	bool lte_coex_ant_share;
 	int sscan_pid;
 	uint32_t track_arp_ip;
+
+	/* defining the board related information */
+	uint32_t hw_bd_id;
+	struct board_info hw_bd_info;
 };
 
 /**

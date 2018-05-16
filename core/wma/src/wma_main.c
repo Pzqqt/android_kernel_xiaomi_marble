@@ -5482,6 +5482,15 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 		tgt_cfg.target_fw_vers_ext =
 				service_ext_param->fw_build_vers_ext;
 
+	tgt_cfg.hw_bd_id = wma_handle->hw_bd_id;
+	tgt_cfg.hw_bd_info.bdf_version = wma_handle->hw_bd_info[BDF_VERSION];
+	tgt_cfg.hw_bd_info.ref_design_id =
+		wma_handle->hw_bd_info[REF_DESIGN_ID];
+	tgt_cfg.hw_bd_info.customer_id = wma_handle->hw_bd_info[CUSTOMER_ID];
+	tgt_cfg.hw_bd_info.project_id = wma_handle->hw_bd_info[PROJECT_ID];
+	tgt_cfg.hw_bd_info.board_data_rev =
+		wma_handle->hw_bd_info[BOARD_DATA_REV];
+
 #ifdef WLAN_FEATURE_LPSS
 	tgt_cfg.lpss_support = wma_handle->lpss_support;
 #endif /* WLAN_FEATURE_LPSS */
@@ -5723,20 +5732,26 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	WMA_LOGD("FW fine time meas cap: 0x%x",
 		 tgt_cap_info->wmi_fw_sub_feat_caps);
 
-	if (ev->hw_bd_id) {
-		wma_handle->hw_bd_id = ev->hw_bd_id;
-		qdf_mem_copy(wma_handle->hw_bd_info,
-			     ev->hw_bd_info, sizeof(ev->hw_bd_info));
+	wma_handle->hw_bd_id = ev->hw_bd_id;
 
-		WMA_LOGI("%s: Board version: %x.%x",
-			 __func__,
-			 wma_handle->hw_bd_info[0], wma_handle->hw_bd_info[1]);
-	} else {
-		wma_handle->hw_bd_id = 0;
-		qdf_mem_zero(wma_handle->hw_bd_info,
-			     sizeof(wma_handle->hw_bd_info));
-		WMA_LOGW("%s: Board version is unknown!", __func__);
-	}
+	wma_handle->hw_bd_info[BDF_VERSION] =
+		WMI_GET_BDF_VERSION(ev->hw_bd_info);
+	wma_handle->hw_bd_info[REF_DESIGN_ID] =
+		WMI_GET_REF_DESIGN(ev->hw_bd_info);
+	wma_handle->hw_bd_info[CUSTOMER_ID] =
+		WMI_GET_CUSTOMER_ID(ev->hw_bd_info);
+	wma_handle->hw_bd_info[PROJECT_ID] =
+		WMI_GET_PROJECT_ID(ev->hw_bd_info);
+	wma_handle->hw_bd_info[BOARD_DATA_REV] =
+		WMI_GET_BOARD_DATA_REV(ev->hw_bd_info);
+
+	WMA_LOGI("%s: Board id: %x, Board version: %x %x %x %x %x",
+		 __func__, wma_handle->hw_bd_id,
+		 wma_handle->hw_bd_info[BDF_VERSION],
+		 wma_handle->hw_bd_info[REF_DESIGN_ID],
+		 wma_handle->hw_bd_info[CUSTOMER_ID],
+		 wma_handle->hw_bd_info[PROJECT_ID],
+		 wma_handle->hw_bd_info[BOARD_DATA_REV]);
 
 	/* wmi service is ready */
 	qdf_mem_copy(wma_handle->wmi_service_bitmap,
