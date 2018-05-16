@@ -635,6 +635,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 						key, macaddr, req_key->type);
 			}
 		}
+		wlan_crypto_set_mgmtcipher(crypto_params, req_key->type);
 		status = wlan_crypto_set_igtk_key(key);
 		return status;
 	} else if (IS_FILS_CIPHER(req_key->type)) {
@@ -2392,26 +2393,23 @@ uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
 
 	WLAN_CRYPTO_ADDSHORT(frm, crypto_params->rsn_caps);
 	/* optional capabilities */
-	if (crypto_params->rsn_caps != 0 &&
-		crypto_params->rsn_caps != WLAN_CRYPTO_RSN_CAP_PREAUTH){
-
+	if (crypto_params->rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED) {
+		/* PMK list */
+		WLAN_CRYPTO_ADDSHORT(frm, 0);
 		if (HAS_MGMT_CIPHER(crypto_params,
 						WLAN_CRYPTO_CIPHER_AES_CMAC)) {
-			selcnt[0]++;
 			WLAN_CRYPTO_ADDSELECTOR(frm,
 				 wlan_crypto_rsn_cipher_to_suite(
 						WLAN_CRYPTO_CIPHER_AES_CMAC));
 		}
 		if (HAS_MGMT_CIPHER(crypto_params,
 						WLAN_CRYPTO_CIPHER_AES_GMAC)) {
-			selcnt[0]++;
 			WLAN_CRYPTO_ADDSELECTOR(frm,
 				 wlan_crypto_rsn_cipher_to_suite(
 						WLAN_CRYPTO_CIPHER_AES_GMAC));
 		}
 		if (HAS_MGMT_CIPHER(crypto_params,
 					 WLAN_CRYPTO_CIPHER_AES_CMAC_256)) {
-			selcnt[0]++;
 			WLAN_CRYPTO_ADDSELECTOR(frm,
 				 wlan_crypto_rsn_cipher_to_suite(
 					WLAN_CRYPTO_CIPHER_AES_CMAC_256));
@@ -2419,7 +2417,6 @@ uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
 
 		if (HAS_MGMT_CIPHER(crypto_params,
 					WLAN_CRYPTO_CIPHER_AES_GMAC_256)) {
-			selcnt[0]++;
 			WLAN_CRYPTO_ADDSELECTOR(frm,
 				 wlan_crypto_rsn_cipher_to_suite(
 					WLAN_CRYPTO_CIPHER_AES_GMAC_256));

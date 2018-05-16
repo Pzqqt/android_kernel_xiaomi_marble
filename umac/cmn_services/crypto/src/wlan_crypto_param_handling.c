@@ -187,14 +187,8 @@ QDF_STATUS wlan_crypto_set_mgmtcipher(
 				struct wlan_crypto_params *crypto_params,
 				uint32_t value)
 {
-
-	if (HAS_CIPHER_CAP(crypto_params, WLAN_CRYPTO_CAP_PMF) ||
-		HAS_CIPHER_CAP(crypto_params, WLAN_CRYPTO_CAP_PMF_OFFLOAD)) {
-		SET_MGMT_CIPHER(crypto_params, value);
-		return QDF_STATUS_SUCCESS;
-	}
-
-	return QDF_STATUS_E_INVAL;
+	SET_MGMT_CIPHER(crypto_params, value);
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

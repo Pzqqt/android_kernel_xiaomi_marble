@@ -135,10 +135,9 @@ typedef enum wlan_crypto_cap {
 	WLAN_CRYPTO_CAP_WAPI_SMS4        = 11,
 	WLAN_CRYPTO_CAP_WAPI_GCM4        = 12,
 	WLAN_CRYPTO_CAP_KEY_MGMT_OFFLOAD = 13,
-	WLAN_CRYPTO_CAP_PMF              = 14,
-	WLAN_CRYPTO_CAP_PMF_OFFLOAD      = 15,
-	WLAN_CRYPTO_CAP_PN_TID_BASED     = 16,
-	WLAN_CRYPTO_CAP_FILS_AEAD        = 17,
+	WLAN_CRYPTO_CAP_PMF_OFFLOAD      = 14,
+	WLAN_CRYPTO_CAP_PN_TID_BASED     = 15,
+	WLAN_CRYPTO_CAP_FILS_AEAD        = 16,
 } wlan_crypto_cap;
 
 typedef enum wlan_crypto_rsn_cap {
