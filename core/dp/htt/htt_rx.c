@@ -1770,7 +1770,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		/* calling callback function for packet logging */
 		if (pdev->rx_pkt_dump_cb) {
 			if (qdf_unlikely(RX_DESC_MIC_ERR_IS_SET &&
-						!RX_DESC_DISCARD_IS_SET))
+					 !RX_DESC_DISCARD_IS_SET))
 				status = RX_PKT_FATE_FW_DROP_INVALID;
 			pdev->rx_pkt_dump_cb(msdu, peer_id, status);
 		}
@@ -2904,6 +2904,7 @@ int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 }
 #endif /* IPA_OFFLOAD */
 
+#ifndef REMOVE_PKT_LOG
 /**
  * htt_register_rx_pkt_dump_callback() - registers callback to
  *   get rx pkt status and call callback to do rx packet dump
@@ -2954,4 +2955,4 @@ void htt_deregister_rx_pkt_dump_callback(struct htt_pdev_t *pdev)
 	}
 	pdev->rx_pkt_dump_cb = NULL;
 }
-
+#endif

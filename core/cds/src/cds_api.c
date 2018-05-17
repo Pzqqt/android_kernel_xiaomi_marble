@@ -1668,6 +1668,7 @@ void cds_flush_delayed_work(void *dwork)
 	cancel_delayed_work_sync(dwork);
 }
 
+#ifndef REMOVE_PKT_LOG
 /**
  * cds_is_packet_log_enabled() - check if packet log is enabled
  *
@@ -1684,6 +1685,7 @@ bool cds_is_packet_log_enabled(void)
 	}
 	return hdd_ctx->config->enablePacketLog;
 }
+#endif
 
 static int cds_force_assert_target_via_pld(qdf_device_t qdf)
 {

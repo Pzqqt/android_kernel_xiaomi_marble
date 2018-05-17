@@ -439,7 +439,15 @@ QDF_STATUS cds_get_vdev_types(enum QDF_OPMODE mode, uint32_t *type,
 void cds_flush_work(void *work);
 void cds_flush_delayed_work(void *dwork);
 
+#ifdef REMOVE_PKT_LOG
+static inline
+bool cds_is_packet_log_enabled(void)
+{
+	return false;
+}
+#else
 bool cds_is_packet_log_enabled(void);
+#endif
 
 uint64_t cds_get_monotonic_boottime(void);
 

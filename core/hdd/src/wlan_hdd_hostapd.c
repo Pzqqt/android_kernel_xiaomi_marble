@@ -4435,6 +4435,7 @@ static iw_softap_set_max_tx_power(struct net_device *dev,
 	return ret;
 }
 
+#ifndef REMOVE_PKT_LOG
 int
 static __iw_softap_set_pktlog(struct net_device *dev,
 				    struct iw_request_info *info,
@@ -4473,7 +4474,15 @@ static iw_softap_set_pktlog(struct net_device *dev,
 
 	return ret;
 }
-
+#else
+int
+static iw_softap_set_pktlog(struct net_device *dev,
+				  struct iw_request_info *info,
+				  union iwreq_data *wrqu, char *extra)
+{
+	return -EINVAL;
+}
+#endif
 
 int
 static __iw_softap_set_tx_power(struct net_device *dev,

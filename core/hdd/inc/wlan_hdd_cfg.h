@@ -5570,6 +5570,7 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_CCK_TX_FIR_OVERRIDE_MAX      (1)
 #define CFG_ENABLE_CCK_TX_FIR_OVERRIDE_DEFAULT  (0)
 
+#ifndef REMOVE_PKT_LOG
 #define CFG_ENABLE_PACKET_LOG            "gEnablePacketLog"
 #define CFG_ENABLE_PACKET_LOG_MIN        (0)
 #define CFG_ENABLE_PACKET_LOG_MAX        (1)
@@ -5578,7 +5579,7 @@ enum hdd_link_speed_rpt_type {
 #else
 #define CFG_ENABLE_PACKET_LOG_DEFAULT    (0)
 #endif
-
+#endif
 
 
 /* gFwDebugLogType takes values from enum dbglog_process_t,
@@ -14612,7 +14613,10 @@ struct hdd_config {
 
 	bool debugP2pRemainOnChannel;
 
+#ifndef REMOVE_PKT_LOG
 	bool enablePacketLog;
+#endif
+
 #ifdef MSM_PLATFORM
 	uint32_t busBandwidthHighThreshold;
 	uint32_t busBandwidthMediumThreshold;

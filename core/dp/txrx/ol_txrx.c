@@ -5872,6 +5872,11 @@ static void ol_txrx_soc_detach(void *soc)
  *
  * Return: noe
  */
+#ifdef REMOVE_PKT_LOG
+static void ol_txrx_pkt_log_con_service(struct cdp_pdev *ppdev, void *scn)
+{
+}
+#else
 static void ol_txrx_pkt_log_con_service(struct cdp_pdev *ppdev, void *scn)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
@@ -5879,6 +5884,7 @@ static void ol_txrx_pkt_log_con_service(struct cdp_pdev *ppdev, void *scn)
 	htt_pkt_log_init((struct cdp_pdev *)pdev, scn);
 	pktlog_htc_attach();
 }
+#endif
 
 /* OL wrapper functions for CDP abstraction */
 /**

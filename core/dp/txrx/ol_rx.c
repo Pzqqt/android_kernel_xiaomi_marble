@@ -120,6 +120,7 @@ void ol_rx_ind_record_event(uint32_t value, enum ol_rx_ind_record_type type)
 void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 			qdf_nbuf_t rx_buf_list);
 
+#ifdef WDI_EVENT_ENABLE
 /**
  * ol_rx_send_pktlog_event() - send rx packetlog event
  * @pdev: pdev handle
@@ -176,6 +177,7 @@ void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
 			  &data);
 }
 #endif
+#endif /* WDI_EVENT_ENABLE */
 
 #ifdef HTT_RX_RESTORE
 
@@ -257,6 +259,7 @@ void ol_rx_update_histogram_stats(uint32_t msdu_count, uint8_t frag_ind,
 
 }
 
+#ifdef WDI_EVENT_ENABLE
 static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 				   void *rx_mpdu_desc, qdf_nbuf_t msdu)
 {
@@ -293,11 +296,16 @@ static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 	msg.wh = wh;
 	msg.msdu = msdu;
 	msg.vdev_id = vdev->vdev_id;
-#ifdef WDI_EVENT_ENABLE
 	wdi_event_handler(WDI_EVENT_RX_PEER_INVALID, (struct cdp_pdev *)pdev,
 			  &msg);
-#endif
 }
+#else
+static inline
+void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
+			    void *rx_mpdu_desc, qdf_nbuf_t msdu)
+{
+}
+#endif
 
 #ifdef QCA_SUPPORT_PEER_DATA_RX_RSSI
 static inline int16_t
@@ -624,9 +632,8 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 				}
 
 				/* Pktlog */
-#ifdef WDI_EVENT_ENABLE
-		ol_rx_send_pktlog_event(pdev, peer, head_msdu, 1);
-#endif
+				ol_rx_send_pktlog_event(pdev, peer,
+							head_msdu, 1);
 
 				if (msdu_chaining) {
 					/*
@@ -702,19 +709,20 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 							  key_id);
 					}
 				}
-#ifdef WDI_EVENT_ENABLE
+
 				if (status != htt_rx_status_ctrl_mgmt_null) {
 					/* Pktlog */
 					ol_rx_send_pktlog_event(pdev,
 						 peer, msdu, 1);
 				}
-#endif
+
 				if (status == htt_rx_status_err_inv_peer) {
 					/* once per mpdu */
 					ol_rx_process_inv_peer(pdev,
 							       rx_mpdu_desc,
 							       msdu);
 				}
+
 				while (1) {
 					/* Free the nbuf */
 					qdf_nbuf_t next;
@@ -970,24 +978,6 @@ ol_rx_offload_deliver_ind_handler(ol_txrx_pdev_handle pdev,
 	htt_rx_msdu_buff_replenish(htt_pdev);
 }
 
-#ifdef WDI_EVENT_ENABLE
-static inline
-void ol_rx_mic_error_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
-	struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, uint8_t pktlog_bit)
-{
-	ol_rx_send_pktlog_event(pdev, peer, msdu, pktlog_bit);
-}
-
-#else
-static inline
-void ol_rx_mic_error_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
-	struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, uint8_t pktlog_bit)
-{
-}
-
-#endif
-
-
 void
 ol_rx_mic_error_handler(
 	ol_txrx_pdev_handle pdev,
@@ -1023,7 +1013,7 @@ ol_rx_mic_error_handler(
 			}
 		}
 		/* Pktlog */
-		ol_rx_mic_error_send_pktlog_event(pdev, peer, msdu, 1);
+		ol_rx_send_pktlog_event(pdev, peer, msdu, 1);
 	}
 }
 
@@ -1477,10 +1467,9 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	uint8_t *rx_ind_data;
 	uint32_t *msg_word;
 	uint32_t msdu_count;
-#ifdef WDI_EVENT_ENABLE
 	uint8_t pktlog_bit;
-#endif
 	uint32_t filled = 0;
+
 	if (tid >= OL_TXRX_NUM_EXT_TIDS) {
 		ol_txrx_err("%s:  invalid tid, %u\n", __FUNCTION__, tid);
 		WARN_ON(1);
@@ -1504,10 +1493,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 		  __func__, __LINE__, rx_ind_msg, peer_id, tid, is_offload);
 #endif
 
-#ifdef WDI_EVENT_ENABLE
 	pktlog_bit = (htt_rx_amsdu_rx_in_order_get_pktlog(rx_ind_msg) == 0x01);
-#endif
-
 	rx_ind_data = qdf_nbuf_data(rx_ind_msg);
 	msg_word = (uint32_t *)rx_ind_data;
 	/* Get the total number of MSDUs */
@@ -1547,9 +1533,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	qdf_nbuf_set_next(tail_msdu, NULL);
 
 	/* Pktlog */
-#ifdef WDI_EVENT_ENABLE
 	ol_rx_send_pktlog_event(pdev, peer, head_msdu, pktlog_bit);
-#endif
 
 	/*
 	 * if this is an offload indication, peer id is carried in the
@@ -1575,6 +1559,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	peer->rx_opt_proc(vdev, peer, tid, head_msdu);
 }
 
+#ifndef REMOVE_PKT_LOG
 /**
  * ol_rx_pkt_dump_call() - updates status and
  * calls packetdump callback to log rx packet
@@ -1616,6 +1601,7 @@ void ol_rx_pkt_dump_call(
 	if (packetdump_cb)
 		packetdump_cb(msdu, status, peer->vdev->vdev_id, RX_DATA_PKT);
 }
+#endif
 
 /* the msdu_list passed here must be NULL terminated */
 void

@@ -86,6 +86,7 @@ ol_txrx_hl_tdls_flag_reset(struct cdp_vdev *vdev, bool flag)
 #ifdef WDI_EVENT_ENABLE
 void *ol_get_pldev(struct cdp_pdev *txrx_pdev);
 #else
+static inline
 void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
 {
 	return NULL;

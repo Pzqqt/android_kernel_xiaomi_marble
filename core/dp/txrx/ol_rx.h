@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,8 +40,18 @@ void ol_rx_peer_init(struct ol_txrx_pdev_t *pdev, struct ol_txrx_peer_t *peer);
 void
 ol_rx_peer_cleanup(struct ol_txrx_vdev_t *vdev, struct ol_txrx_peer_t *peer);
 
+#ifdef WDI_EVENT_ENABLE
 void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
-	struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, uint8_t pktlog_bit);
+			     struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu,
+			     uint8_t pktlog_bit);
+#else
+static inline
+void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
+			     struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu,
+			     uint8_t pktlog_bit)
+{
+}
+#endif
 
 
 void

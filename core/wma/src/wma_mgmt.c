@@ -47,6 +47,8 @@
 
 #if !defined(REMOVE_PKT_LOG)
 #include "pktlog_ac.h"
+#else
+#include "pktlog_ac_fmt.h"
 #endif /* REMOVE_PKT_LOG */
 
 #include "dbglog_host.h"

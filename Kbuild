@@ -866,11 +866,14 @@ TXRX_OBJS := $(TXRX_DIR)/ol_txrx.o \
                 $(TXRX_DIR)/ol_rx_pn.o \
                 $(TXRX_DIR)/ol_tx_queue.o \
                 $(TXRX_DIR)/ol_txrx_peer_find.o \
-                $(TXRX_DIR)/ol_txrx_event.o \
                 $(TXRX_DIR)/ol_txrx_encap.o \
                 $(TXRX_DIR)/ol_tx_send.o \
                 $(TXRX_DIR)/ol_tx_sched.o \
                 $(TXRX_DIR)/ol_tx_classify.o
+
+ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
+TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_event.o
+endif
 
 ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_flow_control.o

@@ -18,8 +18,6 @@
 
 #include "ol_txrx_types.h"
 
-#ifdef WDI_EVENT_ENABLE
-
 static inline wdi_event_subscribe *wdi_event_next_sub(wdi_event_subscribe *
 						      wdi_sub)
 {
@@ -233,5 +231,3 @@ A_STATUS wdi_event_detach(struct ol_txrx_pdev_t *txrx_pdev)
 	txrx_pdev->wdi_event_list = NULL;
 	return A_OK;
 }
-
-#endif /* WDI_EVENT_ENABLE */

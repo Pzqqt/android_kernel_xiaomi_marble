@@ -7271,7 +7271,6 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			return ret;
 		break;
 	}
-
 	case WE_MAC_PWR_DEBUG_CMD:
 	{
 		struct sir_mac_pwr_dbg_cmd mac_pwr_dbg_args;
@@ -9078,10 +9077,12 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "setTxMaxPower5G"},
 
+#ifndef REMOVE_PKT_LOG
 	{WE_SET_PKTLOG,
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
 	 "pktlog"},
+#endif
 
 	/* SAP has TxMax whereas STA has MaxTx, adding TxMax for STA
 	 * as well to keep same syntax as in SAP. Now onwards, STA
