@@ -620,6 +620,20 @@ static inline bool wlan_sap_validate_channel_switch(tHalHandle hal,
 	return true;
 }
 #endif
+
+void wlan_sap_set_sap_ctx_acs_cfg(struct sap_context *sap_ctx,
+				  tsap_config_t *sap_config)
+{
+	if (!sap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "%s: Invalid SAP pointer",
+			  __func__);
+		return;
+	}
+
+	sap_ctx->acs_cfg = &sap_config->acs_cfg;
+}
+
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     tpWLAN_SAPEventCB pSapEventCallback,
 			     tsap_config_t *pConfig, void *pUsrContext)

@@ -389,8 +389,6 @@ QDF_STATUS sap_goto_channel_sel(
 	bool sap_do_acs_pre_start_bss,
 	bool check_for_connection_update);
 
-void sap_config_acs_result(tHalHandle hal, struct sap_context *sap_ctx,
-							uint32_t sec_ch);
 /**
  * sap_check_in_avoid_ch_list() - checks if given channel present is channel
  * avoidance list

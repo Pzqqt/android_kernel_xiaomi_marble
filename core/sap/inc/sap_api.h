@@ -1296,6 +1296,21 @@ uint32_t wlan_sap_get_vht_ch_width(struct sap_context *sap_ctx);
 void wlan_sap_set_vht_ch_width(struct sap_context *sap_ctx,
 			       uint32_t vht_channel_width);
 
+/**
+ * wlan_sap_set_sap_ctx_acs_cfg() - Sets acs cfg
+ * @sap_ctx:  Pointer to Sap Context
+ * @sap_config:  Pointer to sap config
+ *
+ * This function sets the acs cfg in sap context.
+ *
+ * Return: None
+ */
+void wlan_sap_set_sap_ctx_acs_cfg(struct sap_context *sap_ctx,
+				  tsap_config_t *sap_config);
+
+void sap_config_acs_result(tHalHandle hal, struct sap_context *sap_ctx,
+			   uint32_t sec_ch);
+
 QDF_STATUS wlansap_update_sap_config_add_ie(tsap_config_t *pConfig,
 		const uint8_t *
 		pAdditionIEBuffer,
