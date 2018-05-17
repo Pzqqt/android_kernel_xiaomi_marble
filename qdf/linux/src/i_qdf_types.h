@@ -270,7 +270,7 @@ typedef uint32_t ath_dma_addr_t;
 /**
  * typedef __qdf_segment_t - segment of memory
  * @daddr: dma address
- * @len: lenght of segment
+ * @len: length of segment
  */
 typedef struct __qdf_segment {
 	dma_addr_t  daddr;

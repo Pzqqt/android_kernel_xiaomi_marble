@@ -120,7 +120,7 @@ void *qdf_flex_mem_alloc(struct qdf_flex_mem_pool *pool);
 /**
  * qdf_flex_mem_free() - logically frees @ptr from the pool
  * @pool: the pool to return the memory to
- * @ptr: a pointer recieved via a call to qdf_flex_mem_alloc()
+ * @ptr: a pointer received via a call to qdf_flex_mem_alloc()
  *
  * This function marks the item corresponding to @ptr as unused. If that item
  * was the last used item in the segment it belongs to, and the segment was

@@ -247,8 +247,16 @@ void *dp_rx_cookie_2_va_rxdma_buf(struct dp_soc *soc, uint32_t cookie)
 {
 	uint8_t pool_id = DP_RX_DESC_COOKIE_POOL_ID_GET(cookie);
 	uint16_t index = DP_RX_DESC_COOKIE_INDEX_GET(cookie);
-	/* TODO */
-	/* Add sanity for pool_id & index */
+	struct rx_desc_pool *rx_desc_pool;
+
+	if (qdf_unlikely(pool_id >= MAX_RXDESC_POOLS))
+		return NULL;
+
+	rx_desc_pool = &soc->rx_desc_buf[pool_id];
+
+	if (qdf_unlikely(index >= rx_desc_pool->pool_size))
+		return NULL;
+
 	return &(soc->rx_desc_buf[pool_id].array[index].rx_desc);
 }
 

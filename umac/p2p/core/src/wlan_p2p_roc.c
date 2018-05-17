@@ -472,7 +472,7 @@ static QDF_STATUS p2p_process_ready_on_channel_evt(
 		roc_ctx->roc_type, roc_ctx->roc_state);
 
 	status = qdf_mc_timer_start(&roc_ctx->roc_timer,
-		(roc_ctx->duration + P2P_EVENT_PROPOGATE_TIME));
+		(roc_ctx->duration + P2P_EVENT_PROPAGATE_TIME));
 	if (status != QDF_STATUS_SUCCESS)
 		p2p_err("Remain on Channel timer start failed");
 	if (roc_ctx->roc_type == USER_REQUESTED) {

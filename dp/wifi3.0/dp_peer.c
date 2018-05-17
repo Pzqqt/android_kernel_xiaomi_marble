@@ -396,7 +396,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
  * @mac_addr: MAC address of ast node
  * @is_self: Is this base AST entry with peer mac address
  *
- * This API is used by WDS source port learning funtion to
+ * This API is used by WDS source port learning function to
  * add a new AST entry into peer AST list
  *
  * Return: 0 if new entry is allocated,
@@ -1656,7 +1656,7 @@ void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
 	rx_tid->num_of_addba_resp++;
-	/* setup ADDBA response paramters */
+	/* setup ADDBA response parameters */
 	*dialogtoken = rx_tid->dialogtoken;
 	*statuscode = rx_tid->statuscode;
 	*buffersize = rx_tid->ba_win_size;

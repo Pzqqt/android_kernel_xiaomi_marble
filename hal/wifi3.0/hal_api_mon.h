@@ -477,7 +477,7 @@ hal_rx_status_get_next_tlv(uint8_t *rx_tlv) {
 	tlv_len = HAL_RX_GET_USER_TLV32_LEN(rx_tlv);
 	tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(rx_tlv);
 
-	/* The actual length of PPDU_END is the combined lenght of many PHY
+	/* The actual length of PPDU_END is the combined length of many PHY
 	 * TLVs that follow. Skip the TLV header and
 	 * rx_rxpcu_classification_overview that follows the header to get to
 	 * next TLV.

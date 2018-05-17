@@ -56,6 +56,10 @@ static void target_if_cp_stats_free_stats_event(struct stats_event *ev)
 	ev->peer_stats = NULL;
 	qdf_mem_free(ev->cca_stats);
 	ev->cca_stats = NULL;
+	qdf_mem_free(ev->vdev_summary_stats);
+	ev->vdev_summary_stats = NULL;
+	qdf_mem_free(ev->vdev_chain_rssi);
+	ev->vdev_chain_rssi = NULL;
 }
 
 static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
@@ -159,6 +163,136 @@ static QDF_STATUS target_if_cp_stats_extract_cca_stats(
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
+					struct wmi_unified *wmi_hdl,
+					wmi_host_stats_event *stats_param,
+					struct stats_event *ev, uint8_t *data)
+{
+	uint32_t i, j;
+	QDF_STATUS status;
+	int32_t bcn_snr, dat_snr;
+	wmi_host_vdev_stats vdev_stats;
+
+	ev->num_summary_stats = stats_param->num_vdev_stats;
+	if (!ev->num_summary_stats)
+		return QDF_STATUS_SUCCESS;
+
+	ev->vdev_summary_stats = qdf_mem_malloc(sizeof(*ev->vdev_summary_stats)
+					* ev->num_summary_stats);
+
+	if (!ev->vdev_summary_stats) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	for (i = 0; i < ev->num_summary_stats; i++) {
+		status = wmi_extract_vdev_stats(wmi_hdl, data, i, &vdev_stats);
+		if (QDF_IS_STATUS_ERROR(status))
+			continue;
+
+		bcn_snr = vdev_stats.vdev_snr.bcn_snr;
+		dat_snr = vdev_stats.vdev_snr.dat_snr;
+		ev->vdev_summary_stats[i].vdev_id = vdev_stats.vdev_id;
+
+		for (j = 0; j < 4; j++) {
+			ev->vdev_summary_stats[i].stats.tx_frm_cnt[j]
+					= vdev_stats.tx_frm_cnt[j];
+			ev->vdev_summary_stats[i].stats.fail_cnt[j]
+					= vdev_stats.fail_cnt[j];
+			ev->vdev_summary_stats[i].stats.multiple_retry_cnt[j]
+					= vdev_stats.multiple_retry_cnt[j];
+		}
+
+		ev->vdev_summary_stats[i].stats.rx_frm_cnt =
+						vdev_stats.rx_frm_cnt;
+		ev->vdev_summary_stats[i].stats.rx_error_cnt =
+						vdev_stats.rx_err_cnt;
+		ev->vdev_summary_stats[i].stats.rx_discard_cnt =
+						vdev_stats.rx_discard_cnt;
+		ev->vdev_summary_stats[i].stats.ack_fail_cnt =
+						vdev_stats.ack_fail_cnt;
+		ev->vdev_summary_stats[i].stats.rts_succ_cnt =
+						vdev_stats.rts_succ_cnt;
+		ev->vdev_summary_stats[i].stats.rts_fail_cnt =
+						vdev_stats.rts_fail_cnt;
+		/* Update SNR and RSSI in SummaryStats */
+		if (TGT_IS_VALID_SNR(bcn_snr)) {
+			ev->vdev_summary_stats[i].stats.snr = bcn_snr;
+			ev->vdev_summary_stats[i].stats.rssi =
+						bcn_snr + TGT_NOISE_FLOOR_DBM;
+		} else if (TGT_IS_VALID_SNR(dat_snr)) {
+			ev->vdev_summary_stats[i].stats.snr = dat_snr;
+			ev->vdev_summary_stats[i].stats.rssi =
+						dat_snr + TGT_NOISE_FLOOR_DBM;
+		} else {
+			ev->vdev_summary_stats[i].stats.snr = TGT_INVALID_SNR;
+			ev->vdev_summary_stats[i].stats.rssi = 0;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+static QDF_STATUS target_if_cp_stats_extract_vdev_chain_rssi_stats(
+					struct wmi_unified *wmi_hdl,
+					wmi_host_stats_event *stats_param,
+					struct stats_event *ev, uint8_t *data)
+{
+	uint32_t i;
+	QDF_STATUS status;
+	int32_t bcn_snr, dat_snr;
+	struct wmi_host_per_chain_rssi_stats rssi_stats;
+
+	ev->num_chain_rssi_stats = stats_param->num_rssi_stats;
+	if (!ev->num_chain_rssi_stats)
+		return QDF_STATUS_SUCCESS;
+
+	ev->vdev_chain_rssi = qdf_mem_malloc(sizeof(*ev->vdev_chain_rssi) *
+						ev->num_chain_rssi_stats);
+	if (!ev->vdev_chain_rssi) {
+		cp_stats_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	for (i = 0; i < ev->num_chain_rssi_stats; i++) {
+		status = wmi_extract_per_chain_rssi_stats(wmi_hdl, data, i,
+							  &rssi_stats);
+		if (QDF_IS_STATUS_ERROR(status))
+			continue;
+
+		for (i = 0; i < MAX_NUM_CHAINS; i++) {
+			dat_snr = rssi_stats.rssi_avg_data[i];
+			bcn_snr = rssi_stats.rssi_avg_beacon[i];
+			cp_stats_err("Chain %d SNR bcn: %d data: %d", i,
+				     bcn_snr, dat_snr);
+			if (TGT_IS_VALID_SNR(bcn_snr))
+				ev->vdev_chain_rssi[i].chain_rssi[i] = bcn_snr;
+			else if (TGT_IS_VALID_SNR(dat_snr))
+				ev->vdev_chain_rssi[i].chain_rssi[i] = dat_snr;
+			else
+				/*
+				 * Firmware sends invalid snr till it sees
+				 * Beacon/Data after connection since after
+				 * vdev up fw resets the snr to invalid. In this
+				 * duartion Host will return an invalid rssi
+				 * value.
+				 */
+				ev->vdev_chain_rssi[i].chain_rssi[i] =
+							TGT_INVALID_SNR;
+			/*
+			 * Get the absolute rssi value from the current rssi
+			 * value the snr value is hardcoded into 0 in the
+			 * qcacld-new/CORE stack
+			 */
+			ev->vdev_chain_rssi[i].chain_rssi[i] +=
+							TGT_NOISE_FLOOR_DBM;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 						   struct stats_event *ev,
 						   uint8_t *data)
@@ -168,7 +302,7 @@ static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 
 	status = wmi_extract_stats_param(wmi_hdl, data, &stats_param);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cp_stats_debug("stats param extract failed: %d", status);
+		cp_stats_err("stats param extract failed: %d", status);
 		return status;
 	}
 	cp_stats_debug("num: pdev: %d, vdev: %d, peer: %d, rssi: %d",
@@ -187,6 +321,18 @@ static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 
 	status = target_if_cp_stats_extract_cca_stats(wmi_hdl, &stats_param,
 						      ev, data);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = target_if_cp_stats_extract_vdev_summary_stats(wmi_hdl,
+							       &stats_param,
+							       ev, data);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = target_if_cp_stats_extract_vdev_chain_rssi_stats(wmi_hdl,
+								  &stats_param,
+								  ev, data);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
@@ -373,6 +519,12 @@ static uint32_t get_stats_id(enum stats_req_type type)
 		return WMI_REQUEST_PDEV_STAT;
 	case TYPE_PEER_STATS:
 		return WMI_REQUEST_PEER_STAT;
+	case TYPE_STATION_STATS:
+		return (WMI_REQUEST_AP_STAT   |
+			WMI_REQUEST_PEER_STAT |
+			WMI_REQUEST_VDEV_STAT |
+			WMI_REQUEST_PDEV_STAT |
+			WMI_REQUEST_RSSI_PER_CHAIN_STAT);
 	}
 	return 0;
 }

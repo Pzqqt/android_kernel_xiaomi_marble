@@ -94,7 +94,7 @@
  * The max allowed size for tx comp ring is 8191.
  * This is limitted by h/w ring max size.
  * As this is not a power of 2 it does not work with nss offload so the
- * nearest available size which is power of 2 is 4096 choosen for nss
+ * nearest available size which is power of 2 is 4096 chosen for nss
  */
 #define NSS_TX_COMP_RING_SIZE (4 << 10)
 

@@ -321,7 +321,7 @@ bool hif_ce_service_should_yield(struct hif_softc *scn,
  * chooses what to send (buffer address, length). The destination
  * side keeps a supply of "anonymous receive buffers" available and
  * it handles incoming data as it arrives (when the destination
- * recieves an interrupt).
+ * receives an interrupt).
  *
  * The sender may send a simple buffer (address/length) or it may
  * send a small list of buffers.  When a small list is sent, hardware
@@ -1712,10 +1712,10 @@ ce_completed_send_next(struct CE_handle *copyeng,
 #ifdef ATH_11AC_TXCOMPACT
 /* CE engine descriptor reap
  * Similar to ce_per_engine_service , Only difference is ce_per_engine_service
- * does recieve and reaping of completed descriptor ,
+ * does receive and reaping of completed descriptor ,
  * This function only handles reaping of Tx complete descriptor.
  * The Function is called from threshold reap  poll routine
- * hif_send_complete_check so should not countain recieve functionality
+ * hif_send_complete_check so should not countain receive functionality
  * within it .
  */
 
@@ -1743,7 +1743,7 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 	 * enabled in TX polling mode. If this is not the case, more
 	 * bottom halve spin lock changes are needed. Due to data path
 	 * performance concern, after internal discussion we've decided
-	 * to make minimum change, i.e., only address the issue occured
+	 * to make minimum change, i.e., only address the issue occurred
 	 * in this function. The possible negative effect of this minimum
 	 * change is that, in the future, if some other function will also
 	 * be opened to let the user context to use, those cases need to be

@@ -643,7 +643,7 @@ struct wlan_lmac_if_target_tx_ops {
 /**
  * struct wlan_lmac_if_offchan_txrx_ops - Function pointers to check target
  *                                     capabilities related to offchan txrx.
- * @offchan_data_tid_support: To check if target supports seperate tid for
+ * @offchan_data_tid_support: To check if target supports separate tid for
  *                                     offchan data tx.
  */
 struct wlan_lmac_if_offchan_txrx_ops {

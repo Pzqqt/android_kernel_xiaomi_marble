@@ -1164,6 +1164,7 @@ int hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu, uint32_t
 }
 qdf_export_symbol(hif_send_single);
 
+#ifdef WLAN_FEATURE_FASTPATH
 /**
  * hif_send_fast() - API to access hif specific function
  * ce_send_fast.
@@ -1184,6 +1185,7 @@ int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t nbuf,
 			transfer_id, download_len);
 }
 qdf_export_symbol(hif_send_fast);
+#endif
 #endif
 
 /**

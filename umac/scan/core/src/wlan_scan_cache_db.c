@@ -648,7 +648,7 @@ static QDF_STATUS scm_add_update_entry(struct wlan_objmgr_psoc *psoc,
 	if (scan_params->frm_subtype ==
 	   MGMT_SUBTYPE_PROBE_RESP &&
 	   !scan_params->ie_list.ssid)
-		scm_info("Probe resp doesnt contain SSID");
+		scm_info("Probe resp doesn't contain SSID");
 
 
 	if (scan_params->ie_list.csa ||

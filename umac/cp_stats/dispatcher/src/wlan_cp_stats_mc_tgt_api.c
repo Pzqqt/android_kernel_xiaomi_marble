@@ -358,6 +358,265 @@ end:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
 }
 
+static void tgt_mc_cp_stats_extract_vdev_summary_stats(
+					struct wlan_objmgr_psoc *psoc,
+					struct stats_event *ev)
+{
+	uint8_t i;
+	QDF_STATUS status;
+	struct wlan_objmgr_peer *peer;
+	struct request_info last_req = {0};
+	struct wlan_objmgr_vdev *vdev;
+	struct peer_mc_cp_stats *peer_mc_stats;
+	struct vdev_mc_cp_stats *vdev_mc_stats;
+	struct peer_cp_stats *peer_cp_stats_priv;
+	struct vdev_cp_stats *vdev_cp_stats_priv;
+
+	if (!ev->vdev_summary_stats) {
+		cp_stats_err("no summary stats");
+		return;
+	}
+
+	status = ucfg_mc_cp_stats_get_pending_req(psoc,
+						 TYPE_STATION_STATS,
+						 &last_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("ucfg_mc_cp_stats_get_pending_req failed");
+		return;
+	}
+
+	for (i = 0; i < ev->num_summary_stats; i++) {
+		if (ev->vdev_summary_stats[i].vdev_id == last_req.vdev_id)
+			break;
+	}
+
+	if (i == ev->num_summary_stats) {
+		cp_stats_err("vdev_id %d not found", last_req.vdev_id);
+		return;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, last_req.vdev_id,
+						    WLAN_CP_STATS_ID);
+	if (!vdev) {
+		cp_stats_err("vdev is null");
+		return;
+	}
+
+	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (!vdev_cp_stats_priv) {
+		cp_stats_err("vdev cp stats object is null");
+		goto end;
+	}
+
+	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
+	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
+	qdf_mem_copy(&vdev_mc_stats->vdev_summary_stats,
+		     &ev->vdev_summary_stats[i].stats,
+		     sizeof(vdev_mc_stats->vdev_summary_stats));
+	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+
+	peer = wlan_vdev_get_bsspeer(vdev);
+	if (!peer) {
+		cp_stats_err("bsspeer is null");
+		goto end;
+	}
+
+	peer_cp_stats_priv = wlan_cp_stats_get_peer_stats_obj(peer);
+	if (!peer_cp_stats_priv) {
+		cp_stats_err("peer cp stats object is null");
+		goto end;
+	}
+
+	wlan_cp_stats_peer_obj_lock(peer_cp_stats_priv);
+	peer_mc_stats = peer_cp_stats_priv->peer_stats;
+	peer_mc_stats->peer_rssi = ev->vdev_summary_stats[i].stats.rssi;
+	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+}
+
+static void tgt_mc_cp_stats_extract_vdev_chain_rssi_stats(
+					struct wlan_objmgr_psoc *psoc,
+					struct stats_event *ev)
+{
+	uint8_t i, j;
+	QDF_STATUS status;
+	struct request_info last_req = {0};
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_mc_cp_stats *vdev_mc_stats;
+	struct vdev_cp_stats *vdev_cp_stats_priv;
+
+	if (!ev->vdev_chain_rssi) {
+		cp_stats_err("no vdev chain rssi stats");
+		return;
+	}
+
+	status = ucfg_mc_cp_stats_get_pending_req(psoc,
+						  TYPE_STATION_STATS,
+						  &last_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("ucfg_mc_cp_stats_get_pending_req failed");
+		return;
+	}
+
+	for (i = 0; i < ev->num_chain_rssi_stats; i++) {
+		if (ev->vdev_chain_rssi[i].vdev_id == last_req.vdev_id)
+			break;
+	}
+
+	if (i == ev->num_chain_rssi_stats) {
+		cp_stats_err("vdev_id %d not found", last_req.vdev_id);
+		return;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, last_req.vdev_id,
+						    WLAN_CP_STATS_ID);
+	if (!vdev) {
+		cp_stats_err("vdev is null");
+		return;
+	}
+
+	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (!vdev_cp_stats_priv) {
+		cp_stats_err("vdev cp stats object is null");
+		goto end;
+	}
+
+	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
+	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
+	for (j = 0; j < MAX_NUM_CHAINS; j++) {
+		vdev_mc_stats->chain_rssi[j] =
+					ev->vdev_chain_rssi[i].chain_rssi[j];
+	}
+	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+}
+
+static void
+tgt_mc_cp_stats_prepare_n_send_raw_station_stats(struct wlan_objmgr_psoc *psoc,
+						 struct request_info *last_req)
+{
+	/* station_stats to be given to userspace thread */
+	struct stats_event info = {0};
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_peer *peer;
+	struct peer_mc_cp_stats *peer_mc_stats;
+	struct vdev_mc_cp_stats *vdev_mc_stats;
+	struct peer_cp_stats *peer_cp_stats_priv;
+	struct vdev_cp_stats *vdev_cp_stats_priv;
+	void (*get_station_stats_cb)(struct stats_event *info, void *cookie);
+
+	get_station_stats_cb = last_req->u.get_station_stats_cb;
+	if (!get_station_stats_cb) {
+		cp_stats_err("callback is null");
+		return;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, last_req->vdev_id,
+						    WLAN_CP_STATS_ID);
+	if (!vdev) {
+		cp_stats_err("vdev object is null");
+		return;
+	}
+
+	peer = wlan_objmgr_get_peer(psoc, last_req->peer_mac_addr,
+				    WLAN_CP_STATS_ID);
+	if (!peer) {
+		cp_stats_err("peer object is null");
+		goto end;
+	}
+
+	vdev_cp_stats_priv = wlan_cp_stats_get_vdev_stats_obj(vdev);
+	if (!vdev_cp_stats_priv) {
+		cp_stats_err("vdev cp stats object is null");
+		goto end;
+	}
+
+	peer_cp_stats_priv = wlan_cp_stats_get_peer_stats_obj(peer);
+	if (!peer_cp_stats_priv) {
+		cp_stats_err("peer cp stats object is null");
+		goto end;
+	}
+
+	info.num_summary_stats = 1;
+	info.vdev_summary_stats = qdf_mem_malloc(
+					sizeof(*info.vdev_summary_stats));
+	if (!info.vdev_summary_stats)
+		goto end;
+
+	info.num_chain_rssi_stats = 1;
+	info.vdev_chain_rssi = qdf_mem_malloc(sizeof(*info.vdev_chain_rssi));;
+	if (!info.vdev_chain_rssi)
+		goto end;
+
+	wlan_cp_stats_vdev_obj_lock(vdev_cp_stats_priv);
+	vdev_mc_stats = vdev_cp_stats_priv->vdev_stats;
+	info.vdev_summary_stats[0].vdev_id = last_req->vdev_id;
+	info.vdev_summary_stats[0].stats = vdev_mc_stats->vdev_summary_stats;
+	info.vdev_chain_rssi[0].vdev_id = last_req->vdev_id;
+	qdf_mem_copy(info.vdev_chain_rssi[0].chain_rssi,
+		     vdev_mc_stats->chain_rssi,
+		     sizeof(vdev_mc_stats->chain_rssi));
+	info.tx_rate_flags = vdev_mc_stats->tx_rate_flags;
+	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
+
+	wlan_cp_stats_peer_obj_lock(peer_cp_stats_priv);
+	peer_mc_stats = peer_cp_stats_priv->peer_stats;
+	/*
+	 * The linkspeed returned by fw is in kbps so convert
+	 * it in units of 500kbps which is expected by UMAC
+	 */
+	info.tx_rate = peer_mc_stats->tx_rate / 500;
+	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
+
+end:
+	if (info.vdev_summary_stats && info.vdev_chain_rssi)
+		get_station_stats_cb(&info, last_req->cookie);
+	else
+		ucfg_mc_cp_stats_free_stats_resources(&info);
+
+	if (peer)
+		wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+}
+
+static void tgt_mc_cp_stats_extract_station_stats(
+				struct wlan_objmgr_psoc *psoc,
+				struct stats_event *ev)
+{
+	QDF_STATUS status;
+	bool is_peer_stats;
+	struct request_info last_req = {0};
+
+	is_peer_stats = (ev->peer_stats != NULL);
+	status = ucfg_mc_cp_stats_get_pending_req(psoc,
+						  TYPE_STATION_STATS,
+						  &last_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("ucfg_mc_cp_stats_get_pending_req failed");
+		return;
+	}
+
+	tgt_mc_cp_stats_extract_tx_power(psoc, ev, true);
+	tgt_mc_cp_stats_extract_peer_stats(psoc, ev, true);
+	tgt_mc_cp_stats_extract_vdev_summary_stats(psoc, ev);
+	tgt_mc_cp_stats_extract_vdev_chain_rssi_stats(psoc, ev);
+
+	/*
+	 * PEER stats are the last stats sent for get_station statistics.
+	 * reset type_map bit for station stats .
+	 */
+	if (is_peer_stats) {
+		tgt_mc_cp_stats_prepare_n_send_raw_station_stats(psoc,
+								 &last_req);
+		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_STATION_STATS);
+	}
+}
+
 QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
 					       struct stats_event *ev)
 {
@@ -366,6 +625,9 @@ QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
 
 	if (ucfg_mc_cp_stats_is_req_pending(psoc, TYPE_PEER_STATS))
 		tgt_mc_cp_stats_extract_peer_stats(psoc, ev, false);
+
+	if (ucfg_mc_cp_stats_is_req_pending(psoc, TYPE_STATION_STATS))
+		tgt_mc_cp_stats_extract_station_stats(psoc, ev);
 
 	tgt_mc_cp_stats_extract_cca_stats(psoc, ev);
 

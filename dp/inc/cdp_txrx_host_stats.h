@@ -167,7 +167,7 @@ cdp_disable_enhanced_stats(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
  * @brief Get the desired stats from the message.
  *
  * @param pdev - the physical device object
- * @param stats_base - stats buffer recieved from FW
+ * @param stats_base - stats buffer received from FW
  * @param type - stats type.
  * @return - pointer to requested stat identified by type
  */
@@ -416,7 +416,7 @@ static inline void cdp_get_dp_htt_stats(ol_txrx_soc_handle soc,
  * @brief Parse the stats header and get the payload from the message.
  *
  * @param pdev - the physical device object
- * @param msg_word - stats buffer recieved from FW
+ * @param msg_word - stats buffer received from FW
  * @param msg_len - length of the message
  * @param type - place holder for parsed message type
  * @param status - place holder for parsed message status

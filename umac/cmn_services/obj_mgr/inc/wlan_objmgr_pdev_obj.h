@@ -43,7 +43,7 @@
 #define WLAN_PDEV_F_USEPROT                 0x00000040
   /* STATUS: use barker preamble*/
 #define WLAN_PDEV_F_USEBARKER               0x00000080
-  /* CONF: DISABLE 2040 coexistance */
+  /* CONF: DISABLE 2040 coexistence */
 #define WLAN_PDEV_F_COEXT_DISABLE           0x00000100
   /* STATE: scan pending */
 #define WLAN_PDEV_F_SCAN_PENDING            0x00000200
@@ -149,6 +149,7 @@ struct wlan_objmgr_pdev_mlme {
  * @wlan_vdev_list:    List maintains the VDEVs created on this PDEV
  * @wlan_peer_count:   Peer count
  * @max_peer_count:    Max Peer count
+ * @temp_peer_count:   Temporary peer count
  * @wlan_psoc:         back pointer to PSOC, its attached to
  * @ref_cnt:           Ref count
  * @ref_id_dbg:        Array to track Ref count
@@ -161,6 +162,7 @@ struct wlan_objmgr_pdev_objmgr {
 	qdf_list_t wlan_vdev_list;
 	uint16_t wlan_peer_count;
 	uint16_t max_peer_count;
+	uint16_t temp_peer_count;
 	struct wlan_objmgr_psoc *wlan_psoc;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
@@ -842,6 +844,20 @@ static inline uint16_t wlan_pdev_get_peer_count(struct wlan_objmgr_pdev *pdev)
 }
 
 /**
+ * wlan_pdev_get_temp_peer_count() - get pdev temporary peer count
+ * @pdev: PDEV object
+ *
+ * API to get temporary peer count from PDEV
+ *
+ * Return: temp_peer_count - pdev's temporary peer count
+ */
+static inline uint16_t wlan_pdev_get_temp_peer_count(struct wlan_objmgr_pdev *pdev)
+{
+	return pdev->pdev_objmgr.temp_peer_count;
+}
+
+
+/**
  * wlan_pdev_incr_peer_count() - increment pdev peer count
  * @pdev: PDEV object
  *
@@ -865,6 +881,32 @@ static inline void wlan_pdev_incr_peer_count(struct wlan_objmgr_pdev *pdev)
 static inline void wlan_pdev_decr_peer_count(struct wlan_objmgr_pdev *pdev)
 {
 	pdev->pdev_objmgr.wlan_peer_count--;
+}
+
+/**
+ * wlan_pdev_incr_temp_peer_count() - increment temporary pdev peer count
+ * @pdev: PDEV object
+ *
+ * API to increment temporary  peer count of PDEV by 1
+ *
+ * Return: void
+ */
+static inline void wlan_pdev_incr_temp_peer_count(struct wlan_objmgr_pdev *pdev)
+{
+	pdev->pdev_objmgr.temp_peer_count++;
+}
+
+/**
+ * wlan_pdev_decr_temp_peer_count() - decrement pdev temporary peer count
+ * @pdev: PDEV object
+ *
+ * API to decrement temporary peer count of PDEV by 1
+ *
+ * Return: void
+ */
+static inline void wlan_pdev_decr_temp_peer_count(struct wlan_objmgr_pdev *pdev)
+{
+	pdev->pdev_objmgr.temp_peer_count--;
 }
 
 /**

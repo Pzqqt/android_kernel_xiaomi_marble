@@ -23,6 +23,9 @@
 
 #define RX_BUFFER_SIZE_PKTLOG_LITE 1024
 
+/* Macro For NYSM value received in VHT TLV */
+#define VHT_SGI_NYSM 3
+
 #if DP_PRINT_ENABLE
 #include <stdarg.h>       /* va_list */
 #include <qdf_types.h> /* qdf_vprint */
@@ -277,6 +280,7 @@ while (0)
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.mcast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.bcast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.tx_success); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.nawds_mcast); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.tx_failed); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.ofdma); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.stbc); \

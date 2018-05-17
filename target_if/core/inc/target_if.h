@@ -372,7 +372,7 @@ wmi_legacy_service_ready_callback
  * target_if_register_legacy_service_ready_cb() - get legacy
  *                                       service ready handler from scn handle
  *
- * @service_ready_cb: funtion pointer to service ready callback
+ * @service_ready_cb: function pointer to service ready callback
  *
  * Return: QDF Status
  */

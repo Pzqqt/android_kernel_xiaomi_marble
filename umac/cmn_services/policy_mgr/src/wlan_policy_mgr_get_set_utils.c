@@ -375,7 +375,7 @@ void policy_mgr_init_dbs_config(struct wlan_objmgr_psoc *psoc,
 	if (DISABLE_DBS_CXN_AND_SCAN ==
 			wlan_objmgr_psoc_get_dual_mac_disable(psoc)) {
 		policy_mgr_err("Disabling dual mac capabilities");
-		/* All capabilites are initialized to 0. We can return */
+		/* All capabilities are initialized to 0. We can return */
 		goto done;
 	}
 

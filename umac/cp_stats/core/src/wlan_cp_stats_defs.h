@@ -36,6 +36,9 @@
 #include "wlan_cp_stats_cmn_defs.h"
 #include <wlan_cp_stats_utils_api.h>
 
+/* noise floor */
+#define CP_STATS_TGT_NOISE_FLOOR_DBM (-96)
+
 /**
  * struct psoc_cp_stats - defines cp stats at psoc object
  * @psoc_obj: pointer to psoc

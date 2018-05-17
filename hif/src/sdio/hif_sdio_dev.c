@@ -54,7 +54,7 @@
  * mempool, for example, data using Interface Memory,
  * desc and other using DRAM, they need different SDIO
  * mbox channels.
- * b) currently, tx mempool in LL case is seperated from
+ * b) currently, tx mempool in LL case is separated from
  * main mempool, the structure (descs at the beginning
  * of every pool buffer) is different, because they only
  * need store tx desc from host. To align with LL case,

@@ -60,7 +60,11 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	cdp_rx_ppdu->other_msdu_count = ppdu_info->rx_status.other_msdu_count;
 	cdp_rx_ppdu->u.nss = ppdu_info->rx_status.nss;
 	cdp_rx_ppdu->u.mcs = ppdu_info->rx_status.mcs;
-	cdp_rx_ppdu->u.gi = ppdu_info->rx_status.sgi;
+	if ((ppdu_info->rx_status.sgi == VHT_SGI_NYSM) &&
+		(ppdu_info->rx_status.preamble_type == HAL_RX_PKT_TYPE_11AC))
+		cdp_rx_ppdu->u.gi = CDP_SGI_0_4_US;
+	else
+		cdp_rx_ppdu->u.gi = ppdu_info->rx_status.sgi;
 	cdp_rx_ppdu->u.ldpc = ppdu_info->rx_status.ldpc;
 	cdp_rx_ppdu->u.preamble = ppdu_info->rx_status.preamble_type;
 	cdp_rx_ppdu->u.ppdu_type = ppdu_info->rx_status.reception_type;

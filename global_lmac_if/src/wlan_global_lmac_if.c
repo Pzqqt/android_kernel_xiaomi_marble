@@ -43,7 +43,7 @@ qdf_export_symbol(wlan_lmac_if_sptrl_set_rx_ops_register_cb);
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 /*
- * spectral scan is built as seperate .ko for WIN where
+ * spectral scan is built as separate .ko for WIN where
  * MCL it is part of wlan.ko so the registration of
 .* rx ops to global lmac if layer is different between WIN
  * and MCL

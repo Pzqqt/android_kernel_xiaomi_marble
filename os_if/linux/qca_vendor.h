@@ -1036,7 +1036,7 @@ enum qca_wlan_vendor_attr_tdls_state {
 		QCA_WLAN_VENDOR_ATTR_TDLS_STATE_AFTER_LAST - 1,
 };
 
-/* enum's to provide TDLS capabilites */
+/* enum's to provide TDLS capabilities */
 enum qca_wlan_vendor_attr_get_tdls_capabilities {
 	QCA_WLAN_VENDOR_ATTR_TDLS_GET_CAPS_INVALID = 0,
 	QCA_WLAN_VENDOR_ATTR_TDLS_GET_CAPS_MAX_CONC_SESSIONS = 1,

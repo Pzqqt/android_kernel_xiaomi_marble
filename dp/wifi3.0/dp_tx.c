@@ -2542,12 +2542,11 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 
 	if (peer->bss_peer) {
 		DP_STATS_INC_PKT(peer, tx.mcast, 1, length);
-		DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
 	} else {
 		if (ts->status == HAL_TX_TQM_RR_FRAME_ACKED) {
-			DP_STATS_INC_PKT(peer, tx.ucast, 1, length);
 			DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
 		}
+		DP_STATS_INC_PKT(peer, tx.ucast, 1, length);
 	}
 
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
@@ -3333,7 +3332,7 @@ static void dp_tx_me_mem_free(struct dp_pdev *pdev,
 }
 
 /**
- * dp_tx_me_send_convert_ucast(): fuction to convert multicast to unicast
+ * dp_tx_me_send_convert_ucast(): function to convert multicast to unicast
  * @vdev: DP VDEV handle
  * @nbuf: Multicast nbuf
  * @newmac: Table of the clients to which packets have to be sent

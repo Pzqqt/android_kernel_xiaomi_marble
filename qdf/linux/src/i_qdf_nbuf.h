@@ -94,7 +94,7 @@ typedef union {
  *      for the priv_cb_w since it must be at same offset for both
  *      TX and RX union
  *
- * @paddr   : physical addressed retrived by dma_map of nbuf->data
+ * @paddr   : physical addressed retrieved by dma_map of nbuf->data
  *
  * @rx.dev.priv_cb_w.ext_cb_ptr: extended cb pointer
  * @rx.dev.priv_cb_w.fctx      : ctx to handle special pkts defined by ftype
@@ -1750,7 +1750,7 @@ static inline bool __qdf_nbuf_tso_tcp_v6(struct sk_buff *skb)
 }
 
 /**
- * __qdf_nbuf_l2l3l4_hdr_len() - return the l2+l3+l4 hdr lenght of the skb
+ * __qdf_nbuf_l2l3l4_hdr_len() - return the l2+l3+l4 hdr length of the skb
  * @skb: sk buff
  *
  * Return: size of l2+l3+l4 header length

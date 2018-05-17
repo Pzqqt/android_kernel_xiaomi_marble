@@ -2856,7 +2856,7 @@ static inline void __qdf_nbuf_fill_tso_cmn_seg_info(
 uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 		struct qdf_tso_info_t *tso_info)
 {
-	/* common accross all segments */
+	/* common across all segments */
 	struct qdf_tso_cmn_seg_info_t tso_cmn_info;
 	/* segment specific */
 	void *tso_frag_vaddr;

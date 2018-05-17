@@ -611,7 +611,7 @@ struct cdp_host_stats_ops {
 	 * @brief Get the desired stats from the message.
 	 *
 	 * @param pdev - the physical device object
-	 * @param stats_base - stats buffer recieved from FW
+	 * @param stats_base - stats buffer received from FW
 	 * @param type - stats type.
 	 * @return - pointer to requested stat identified by type
 	 */

@@ -615,7 +615,7 @@ mpdu_stitch_done:
 	/* Check if this buffer contains the PPDU end status for TSF */
 	/* Need revist this code to see where we can get tsf timestamp */
 #if 0
-	/* PPDU end TLV will be retrived from monitor status ring */
+	/* PPDU end TLV will be retrieved from monitor status ring */
 	last_mpdu =
 		(*(((u_int32_t *)&rx_desc->attention)) &
 		RX_ATTENTION_0_LAST_MPDU_MASK) >>

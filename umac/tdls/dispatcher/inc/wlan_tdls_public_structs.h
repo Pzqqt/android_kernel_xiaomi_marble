@@ -186,7 +186,7 @@ enum tdls_feature_mode {
  * @TDLS_CMD_SESSION_INCREMENT: notify session increment
  * @TDLS_CMD_SESSION_DECREMENT: notify session decrement
  * @TDLS_CMD_TEARDOWN_LINKS: notify teardown
- * @TDLS_NOTIFY_RESET_ADAPTERS: notify adapater reset
+ * @TDLS_NOTIFY_RESET_ADAPTERS: notify adapter reset
  * @TDLS_CMD_GET_ALL_PEERS: get all the tdls peers from the list
  * @TDLS_CMD_ANTENNA_SWITCH: dynamic tdls antenna switch
  */

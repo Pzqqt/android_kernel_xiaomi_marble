@@ -34,6 +34,11 @@
 #define WLAN_UMAC_PDEV_MAX_VDEVS 17
 /* Max no. of Peers, a device can support */
 #define WLAN_UMAC_PSOC_MAX_PEERS (1024 + WLAN_UMAC_PSOC_MAX_VDEVS)
+/* Max no. of Temporary Peers, a pdev can support */
+#define WLAN_MAX_PDEV_TEMP_PEERS 128
+/* Max no. of Temporary Peers, a psoc can support */
+#define WLAN_MAX_PSOC_TEMP_PEERS \
+		(WLAN_MAX_PDEV_TEMP_PEERS * WLAN_UMAC_MAX_PDEVS)
 
 /* Max length of a SSID */
 #define WLAN_SSID_MAX_LEN 32

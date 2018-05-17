@@ -2825,7 +2825,7 @@ int hif_pci_bus_resume(struct hif_softc *scn)
  * hif_pci_bus_suspend_noirq() - ensure there are no pending transactions
  * @scn: hif context
  *
- * Ensure that if we recieved the wakeup message before the irq
+ * Ensure that if we received the wakeup message before the irq
  * was disabled that the message is pocessed before suspending.
  *
  * Return: -EBUSY if we fail to flush the tasklets.
@@ -2848,7 +2848,7 @@ int hif_pci_bus_suspend_noirq(struct hif_softc *scn)
  * hif_pci_bus_resume_noirq() - ensure there are no pending transactions
  * @scn: hif context
  *
- * Ensure that if we recieved the wakeup message before the irq
+ * Ensure that if we received the wakeup message before the irq
  * was disabled that the message is pocessed before suspending.
  *
  * Return: -EBUSY if we fail to flush the tasklets.
@@ -4198,7 +4198,7 @@ static int __hif_pm_runtime_allow_suspend(struct hif_pci_softc *hif_sc,
  * hif_pm_runtime_lock_timeout_fn() - callback the runtime lock timeout
  * @data: calback data that is the pci context
  *
- * if runtime locks are aquired with a timeout, this function releases
+ * if runtime locks are acquired with a timeout, this function releases
  * the locks when the last runtime lock expires.
  *
  * dummy implementation until lock acquisition is implemented.
@@ -4388,7 +4388,7 @@ int hif_pm_runtime_prevent_suspend_timeout(struct hif_opaque_softc *ol_sc,
  * hif_runtime_lock_init() - API to initialize Runtime PM context
  * @name: Context name
  *
- * This API initalizes the Runtime PM context of the caller and
+ * This API initializes the Runtime PM context of the caller and
  * return the pointer.
  *
  * Return: None

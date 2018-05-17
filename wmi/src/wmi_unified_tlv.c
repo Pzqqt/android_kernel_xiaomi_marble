@@ -515,7 +515,7 @@ static QDF_STATUS send_hidden_ssid_vdev_restart_cmd_tlv(wmi_unified_t wmi_handle
  * @peer_addr: peer mac address
  * @param: pointer to hold peer flush tid parameter
  *
- * Return: 0 for sucess or error code
+ * Return: 0 for success or error code
  */
 static QDF_STATUS send_peer_flush_tids_cmd_tlv(wmi_unified_t wmi,
 					 uint8_t peer_addr[IEEE80211_ADDR_LEN],
@@ -1271,7 +1271,7 @@ static QDF_STATUS send_suspend_cmd_tlv(wmi_unified_t wmi_handle,
 	int32_t ret;
 
 	/*
-	 * send the comand to Target to ignore the
+	 * send the command to Target to ignore the
 	 * PCIE reset so as to ensure that Host and target
 	 * states are in sync
 	 */
@@ -1545,7 +1545,7 @@ static QDF_STATUS send_set_sta_ps_param_cmd_tlv(wmi_unified_t wmi_handle,
 /**
  * send_crash_inject_cmd_tlv() - inject fw crash
  * @wmi_handle: wmi handle
- * @param: ponirt to crash inject paramter structure
+ * @param: ponirt to crash inject parameter structure
  *
  * Return: QDF_STATUS_SUCCESS for success or return error
  */
@@ -3347,6 +3347,7 @@ static QDF_STATUS send_set_mimops_cmd_tlv(wmi_unified_t wmi_handle,
 		break;
 	default:
 		WMI_LOGE("%s:INVALID Mimo PS CONFIG", __func__);
+		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -4545,7 +4546,7 @@ static QDF_STATUS extract_ocb_dcc_stats_tlv(wmi_unified_t wmi_handle,
  *
  * This function enable/disable mcc adaptive scheduler in fw.
  *
- * Return: QDF_STATUS_SUCCESS for sucess or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv(
 		wmi_unified_t wmi_handle, uint32_t mcc_adaptive_scheduler,
@@ -10760,7 +10761,7 @@ static QDF_STATUS send_set_tdls_offchan_mode_cmd_tlv(wmi_unified_t wmi_handle,
  * @wmi_handle: wmi handle
  * @pwmaTdlsparams: TDLS params
  *
- * Return: 0 for sucess or error code
+ * Return: 0 for success or error code
  */
 static QDF_STATUS send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
 					 void *tdls_param, uint8_t tdls_state)
@@ -13362,7 +13363,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
  * @wmi_handle: pointer to wmi handle
  * @buf_ptr: pointer to current position in init command buffer
- * @len: pointer to length. This will be updated with current lenght of cmd
+ * @len: pointer to length. This will be updated with current length of cmd
  * @param: point host parameters for init command
  *
  * Return: Updated pointer of buf_ptr.
@@ -17646,7 +17647,7 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 
 	event = (WMI_NDP_CONFIRM_EVENTID_param_tlvs *) data;
 	fixed_params = (wmi_ndp_confirm_event_fixed_param *)event->fixed_param;
-	WMI_LOGD("WMI_NDP_CONFIRM_EVENTID(0x%X) recieved. vdev %d, ndp_instance %d, rsp_code %d, reason_code: %d, num_active_ndps_on_peer: %d",
+	WMI_LOGD("WMI_NDP_CONFIRM_EVENTID(0x%X) received. vdev %d, ndp_instance %d, rsp_code %d, reason_code: %d, num_active_ndps_on_peer: %d",
 		 WMI_NDP_CONFIRM_EVENTID, fixed_params->vdev_id,
 		 fixed_params->ndp_instance_id, fixed_params->rsp_code,
 		 fixed_params->reason_code,
@@ -17735,7 +17736,7 @@ static QDF_STATUS extract_ndp_end_rsp_tlv(wmi_unified_t wmi_handle,
 
 	event = (WMI_NDP_END_RSP_EVENTID_param_tlvs *) data;
 	fixed_params = (wmi_ndp_end_rsp_event_fixed_param *)event->fixed_param;
-	WMI_LOGD("WMI_NDP_END_RSP_EVENTID(0x%X) recieved. transaction_id: %d, rsp_status: %d, reason_code: %d",
+	WMI_LOGD("WMI_NDP_END_RSP_EVENTID(0x%X) received. transaction_id: %d, rsp_status: %d, reason_code: %d",
 		 WMI_NDP_END_RSP_EVENTID, fixed_params->transaction_id,
 		 fixed_params->rsp_status, fixed_params->reason_code);
 
@@ -19516,6 +19517,57 @@ static QDF_STATUS extract_vdev_stats_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_per_chain_rssi_stats_tlv() - api to extract rssi stats from event
+ * buffer
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @index: Index into vdev stats
+ * @rssi_stats: Pointer to hold rssi stats
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_per_chain_rssi_stats_tlv(wmi_unified_t wmi_handle,
+			void *evt_buf, uint32_t index,
+			struct wmi_host_per_chain_rssi_stats *rssi_stats)
+{
+	uint8_t *data;
+	wmi_rssi_stats *fw_rssi_stats;
+	wmi_per_chain_rssi_stats *rssi_event;
+	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
+
+	if (!evt_buf) {
+		WMI_LOGE("evt_buf is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *) evt_buf;
+	rssi_event = param_buf->chain_stats;
+
+	if (index >= rssi_event->num_per_chain_rssi_stats) {
+		WMI_LOGE("invalid index");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	data = ((uint8_t *)(&rssi_event[1])) + WMI_TLV_HDR_SIZE;
+	fw_rssi_stats = &((wmi_rssi_stats *)data)[index];
+
+	rssi_stats->vdev_id = fw_rssi_stats->vdev_id;
+	qdf_mem_copy(rssi_stats->rssi_avg_beacon,
+		     fw_rssi_stats->rssi_avg_beacon,
+		     sizeof(fw_rssi_stats->rssi_avg_beacon));
+	qdf_mem_copy(rssi_stats->rssi_avg_data,
+		     fw_rssi_stats->rssi_avg_data,
+		     sizeof(fw_rssi_stats->rssi_avg_data));
+	qdf_mem_copy(&rssi_stats->peer_macaddr,
+		     &fw_rssi_stats->peer_macaddr,
+		     sizeof(fw_rssi_stats->peer_macaddr));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+
+/**
  * extract_bcn_stats_tlv() - extract bcn stats from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -19650,7 +19702,7 @@ static QDF_STATUS extract_chan_stats_tlv(wmi_unified_t wmi_handle,
 			(index * sizeof(wmi_chan_stats)));
 
 
-		/* Non-TLV doesnt have num_chan_stats */
+		/* Non-TLV doesn't have num_chan_stats */
 		chan_stats->chan_mhz = ev->chan_mhz;
 		chan_stats->sampling_period_us = ev->sampling_period_us;
 		chan_stats->rx_clear_count = ev->rx_clear_count;
@@ -22804,6 +22856,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_unit_test = extract_unit_test_tlv,
 	.extract_pdev_ext_stats = extract_pdev_ext_stats_tlv,
 	.extract_vdev_stats = extract_vdev_stats_tlv,
+	.extract_per_chain_rssi_stats = extract_per_chain_rssi_stats_tlv,
 	.extract_peer_stats = extract_peer_stats_tlv,
 	.extract_bcn_stats = extract_bcn_stats_tlv,
 	.extract_bcnflt_stats = extract_bcnflt_stats_tlv,

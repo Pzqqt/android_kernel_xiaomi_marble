@@ -247,6 +247,7 @@ struct wlan_objmgr_psoc_nif {
  * @print_cnt:            Count to throttle Logical delete prints
  * @wlan_peer_count:      PEER count
  * @max_peer_count:       Max no. of peers supported by this PSOC
+ * @temp_peer_count:      Temporary peer count
  * @wlan_pdev_list[]:     PDEV list
  * @wlan_vdev_list[]:     VDEV list
  * @wlan_vdev_id_map[]:   VDEV id map, to allocate free ids
@@ -264,6 +265,7 @@ struct wlan_objmgr_psoc_objmgr {
 	uint8_t print_cnt;
 	uint16_t wlan_peer_count;
 	uint16_t max_peer_count;
+	uint16_t temp_peer_count;
 	struct wlan_objmgr_pdev *wlan_pdev_list[WLAN_UMAC_MAX_PDEVS];
 	struct wlan_objmgr_vdev *wlan_vdev_list[WLAN_UMAC_PSOC_MAX_VDEVS];
 	uint32_t wlan_vdev_id_map[2];

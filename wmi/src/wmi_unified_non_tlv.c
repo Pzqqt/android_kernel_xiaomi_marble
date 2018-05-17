@@ -36,7 +36,7 @@
 #include <htc_services.h>
 
 /* pdev_id is used to distinguish the radio for which event
- * is recieved. Since non-tlv target has only one radio, setting
+ * is received. Since non-tlv target has only one radio, setting
  * default pdev_id to one to keep rest of the code using WMI APIs unfiorm.
  */
 #define WMI_NON_TLV_DEFAULT_PDEV_ID WMI_HOST_PDEV_ID_0
@@ -461,7 +461,7 @@ static QDF_STATUS send_setup_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
  * @peer_addr: peer mac address
  * @param: pointer to hold peer flush tid parameter
  *
- * Return: 0 for sucess or error code
+ * Return: 0 for success or error code
  */
 static QDF_STATUS send_peer_flush_tids_cmd_non_tlv(wmi_unified_t wmi_handle,
 					 uint8_t peer_addr[IEEE80211_ADDR_LEN],
@@ -1041,7 +1041,7 @@ static QDF_STATUS send_suspend_cmd_non_tlv(wmi_unified_t wmi_handle,
 	wmi_buf_t wmibuf;
 	uint32_t len = sizeof(wmi_pdev_suspend_cmd);
 
-	/*send the comand to Target to ignore the
+	/*send the command to Target to ignore the
 	* PCIE reset so as to ensure that Host and target
 	* states are in sync*/
 	wmibuf = wmi_buf_alloc(wmi_handle, len);
@@ -1329,7 +1329,7 @@ static QDF_STATUS send_set_ps_mode_cmd_non_tlv(wmi_unified_t wmi_handle,
 /**
  * send_crash_inject_cmd_non_tlv() - inject fw crash
  * @param wmi_handle	  : handle to WMI.
- * @param: ponirt to crash inject paramter structure
+ * @param: ponirt to crash inject parameter structure
  *
  * Return: 0 for success or return error
  */
@@ -5741,7 +5741,7 @@ static QDF_STATUS extract_service_ready_non_tlv(wmi_unified_t wmi_handle,
 	cap->max_bcn_ie_size = ev->max_bcn_ie_size;
 	cap->fw_version = ev->sw_version;
 	cap->fw_version_1 = ev->sw_version_1;
-	/* Following caps not recieved in older fw/hw
+	/* Following caps not received in older fw/hw
 	 * Initialize it as zero(default). */
 	cap->max_num_scan_channels = 0;
 	cap->max_supported_macs = 0;
@@ -6983,7 +6983,7 @@ static QDF_STATUS extract_rtt_hdr_non_tlv(wmi_unified_t wmi_handle, void *evt_bu
 /**
  * copy_rtt_report_cfr
  * @ev: pointer to destination event pointer
- * @report_type: report type recieved in event
+ * @report_type: report type received in event
  * @p: pointer to event data
  * @hdump: pointer to destination buffer
  * @hdump_len: length of dest buffer
@@ -8033,7 +8033,7 @@ static QDF_STATUS extract_chan_stats_non_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf,
 		uint32_t index, wmi_host_chan_stats *chan_stats)
 {
-	/* Non-TLV doesnt have num_chan_stats */
+	/* Non-TLV doesn't have num_chan_stats */
 	return QDF_STATUS_SUCCESS;
 }
 

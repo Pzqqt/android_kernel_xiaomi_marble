@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -88,7 +88,7 @@ QDF_STATUS wmi_unified_set_user_country_code_cmd_send(void *wmi_hdl,
  * @wmi_hdl: wmi handle.
  * @evt_buf: event buffer
  * @ch_avoid_ind: buffer pointer to save the event processed data
- * @len: lenght of buffer
+ * @len: length of buffer
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
