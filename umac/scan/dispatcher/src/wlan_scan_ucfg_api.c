@@ -33,7 +33,7 @@
 #include "../../core/src/wlan_scan_main.h"
 #include "../../core/src/wlan_scan_manager.h"
 #include "../../core/src/wlan_scan_cache_db.h"
-#ifdef WLAN_PMO_ENABLE
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 #include <wlan_pmo_obj_mgmt_api.h>
 #endif
 #ifdef WLAN_POLICY_MGR_ENABLE
@@ -1889,6 +1889,7 @@ QDF_STATUS ucfg_scan_update_roam_params(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 static QDF_STATUS
 ucfg_scan_cancel_pdev_scan(struct wlan_objmgr_pdev *pdev)
 {
@@ -1919,8 +1920,6 @@ ucfg_scan_cancel_pdev_scan(struct wlan_objmgr_pdev *pdev)
 
 	return status;
 }
-
-#ifdef WLAN_PMO_ENABLE
 
 static QDF_STATUS
 ucfg_scan_suspend_handler(struct wlan_objmgr_psoc *psoc, void *arg)

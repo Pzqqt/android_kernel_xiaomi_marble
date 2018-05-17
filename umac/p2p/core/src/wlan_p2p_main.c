@@ -34,7 +34,7 @@
 #include "wlan_p2p_roc.h"
 #include "wlan_p2p_off_chan_tx.h"
 
-#ifdef WLAN_PMO_ENABLE
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 #include <wlan_pmo_obj_mgmt_api.h>
 #endif
 
@@ -537,7 +537,7 @@ static void wlan_p2p_init_connection_status(
 }
 #endif /* WLAN_FEATURE_P2P_DEBUG */
 
-#ifdef WLAN_PMO_ENABLE
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 
 /**
  * p2p_suspend_handler() - suspend handler of P2P
@@ -655,12 +655,14 @@ static inline QDF_STATUS p2p_unregister_pmo_handler(void)
 #else
 static inline QDF_STATUS p2p_register_pmo_handler(void)
 {
+	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS p2p_unregister_pmo_handler(void)
 {
+	return QDF_STATUS_SUCCESS;
 }
-#endif /* End of WLAN_PMO_ENABLE */
+#endif /* End of WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 QDF_STATUS p2p_component_init(void)
 {
