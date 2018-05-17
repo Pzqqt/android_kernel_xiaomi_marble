@@ -371,4 +371,15 @@ QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE wma_handle,
  */
 void wma_wmi_stop(void);
 
+/**
+ * wma_get_mcs_idx() - get mcs index
+ * @max_rate: max rate
+ * @rate_flags: rate flags
+ * @nss: nss
+ * @mcs_rate_flag: mcs rate flags
+ *
+ *  Return: mcs index
+ */
+uint8_t wma_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
+			uint8_t nss, uint8_t *mcs_rate_flag);
 #endif

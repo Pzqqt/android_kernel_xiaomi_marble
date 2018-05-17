@@ -75,6 +75,7 @@
 #include <cdp_txrx_handle.h>
 #include <wlan_pmo_ucfg_api.h>
 #include "wlan_lmac_if_api.h"
+#include <wlan_cp_stats_mc_ucfg_api.h>
 
 struct wma_search_rate {
 	int32_t rate;
@@ -727,6 +728,35 @@ ht_vht_done:
 	return ret;
 }
 
+#ifdef QCA_SUPPORT_CP_STATS
+/**
+ * wma_cp_stats_set_rate_flag() - set rate flags within cp_stats priv object
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+static void wma_cp_stats_set_rate_flag(tp_wma_handle wma, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_psoc *psoc = wma->psoc;
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_LEGACY_WMA_ID);
+	if (!vdev) {
+		WMA_LOGE("%s, vdev not found for id: %d", __func__,
+			 vdev_id);
+		return;
+	}
+
+	ucfg_mc_cp_stats_set_rate_flags(vdev, iface->rate_flags);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+}
+#else
+static void wma_cp_stats_set_rate_flag(tp_wma_handle wma, uint8_t vdev_id) {}
+#endif
+
 /**
  * wma_set_bss_rate_flags() - set rate flags based on BSS capability
  * @iface: txrx_node ctx
@@ -734,11 +764,12 @@ ht_vht_done:
  *
  * Return: none
  */
-void wma_set_bss_rate_flags(struct wma_txrx_node *iface,
-				   tpAddBssParams add_bss)
+void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
+			    tpAddBssParams add_bss)
 {
-	iface->rate_flags = 0;
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 
+	iface->rate_flags = 0;
 	if (add_bss->vhtCapable) {
 		if (add_bss->ch_width == CH_WIDTH_80P80MHZ)
 			iface->rate_flags |= TX_RATE_VHT80;
@@ -765,6 +796,8 @@ void wma_set_bss_rate_flags(struct wma_txrx_node *iface,
 
 	if (!add_bss->htCapable && !add_bss->vhtCapable)
 		iface->rate_flags = TX_RATE_LEGACY;
+
+	wma_cp_stats_set_rate_flag(wma, vdev_id);
 }
 
 /**

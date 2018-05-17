@@ -1640,6 +1640,7 @@ lim_send_sme_delts_ind(tpAniSirGlobal pMac, tpSirDeltsReqInfo delts, uint16_t ai
 	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 }
 
+#ifndef QCA_SUPPORT_CP_STATS
 /**
  * lim_send_sme_pe_statistics_rsp()
  *
@@ -1697,6 +1698,7 @@ lim_send_sme_pe_statistics_rsp(tpAniSirGlobal pMac, uint16_t msgType, void *stat
 	return;
 
 } /*** end lim_send_sme_pe_statistics_rsp() ***/
+#endif
 
 #ifdef FEATURE_WLAN_ESE
 /**

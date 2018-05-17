@@ -183,17 +183,8 @@ static inline uint16_t wma_mcs_rate_match(uint16_t match_rate, bool *is_sgi,
 		return 0;
 }
 
-/**
- * wma_get_mcs_idx() - get mcs index
- * @maxRate: max rate
- * @rate_flags: rate flags
- * @nss: number of nss
- * @mcsRateFlag: mcs rate flag
- *
- * Return: return mcs index
- */
-static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
-			       uint8_t nss, uint8_t *mcsRateFlag)
+uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
+			uint8_t nss, uint8_t *mcsRateFlag)
 {
 	uint8_t  index = 0;
 	uint16_t match_rate = 0;
@@ -287,6 +278,7 @@ rate_found:
 	return match_rate ? index : INVALID_MCS_IDX;
 }
 
+#ifndef QCA_SUPPORT_CP_STATS
 /**
  * wma_peek_vdev_req() - peek what request message is queued for response.
  *			 the function does not delete the node after found
@@ -332,6 +324,7 @@ static struct wma_target_req *wma_peek_vdev_req(tp_wma_handle wma,
 		 vdev_id, type, req_msg->msg_type);
 	return req_msg;
 }
+#endif /* QCA_SUPPORT_CP_STATS */
 
 void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 					int32_t rssi)
@@ -2377,6 +2370,7 @@ void wma_config_stats_ext_threshold(tp_wma_handle wma,
 
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
+#ifndef QCA_SUPPORT_CP_STATS
 /**
  * wma_update_pdev_stats() - update pdev stats
  * @wma: wma handle
@@ -2678,6 +2672,7 @@ static void wma_update_peer_stats(tp_wma_handle wma,
 		}
 	}
 }
+#endif /* WMA_GET_STATISTICS_RSP */
 
 /**
  * wma_post_link_status() - post link status to SME
@@ -2704,6 +2699,7 @@ void wma_post_link_status(tAniGetLinkStatus *pGetLinkStatus,
 	}
 }
 
+#ifndef QCA_SUPPORT_CP_STATS
 /**
  * wma_update_per_chain_rssi_stats() - to store per chain rssi stats
  * @wma: wma handle
@@ -2803,7 +2799,7 @@ static void wma_update_rssi_stats(tp_wma_handle wma,
 		}
 	}
 }
-
+#endif /* QCA_SUPPORT_CP_STATS */
 
 /**
  * wma_link_status_event_handler() - link status event handler
@@ -2910,6 +2906,7 @@ int wma_rso_cmd_status_event_handler(wmi_roam_event_fixed_param *wmi_event)
 	return 0;
 }
 
+#ifndef QCA_SUPPORT_CP_STATS
 /**
  * wma_handle_sta_peer_info() - handle peer information in
  * peer stats
@@ -3199,6 +3196,7 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 
 	return 0;
 }
+#endif /* QCA_SUPPORT_CP_STATS */
 
 /**
  * wma_fill_peer_info() - fill SIR peer info from WMI peer info struct
@@ -3836,6 +3834,7 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 	return 0;
 }
 
+#ifndef QCA_SUPPORT_CP_STATS
 /**
  * wma_get_stats_rsp_buf() - fill get stats response buffer
  * @get_stats_param: get stats parameters
@@ -3957,6 +3956,7 @@ end:
 	qdf_mem_free(get_stats_param);
 	WMA_LOGD("%s: Exit", __func__);
 }
+#endif /* QCA_SUPPORT_CP_STATS */
 
 /**
  * wma_get_cca_stats() - send request to fw to get CCA

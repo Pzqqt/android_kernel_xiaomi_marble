@@ -3775,7 +3775,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	if (SAP_WPS_DISABLED == add_bss->wps_state)
 		pmo_ucfg_disable_wakeup_event(wma->psoc, vdev_id,
 			(1 << WOW_PROBE_REQ_WPS_IE_EVENT));
-	wma_set_bss_rate_flags(&wma->interfaces[vdev_id], add_bss);
+	wma_set_bss_rate_flags(wma, vdev_id, add_bss);
 	status = wma_create_peer(wma, pdev, vdev, add_bss->bssId,
 				 WMI_PEER_TYPE_DEFAULT, vdev_id, false);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -3903,7 +3903,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		goto send_fail_resp;
 	}
-	wma_set_bss_rate_flags(&wma->interfaces[vdev_id], add_bss);
+	wma_set_bss_rate_flags(wma, vdev_id, add_bss);
 
 	/* create ibss bss peer */
 	status = wma_create_peer(wma, pdev, vdev, add_bss->selfMacAddr,
@@ -4063,7 +4063,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	vdev_id = add_bss->staContext.smesessionId;
 	iface = &wma->interfaces[vdev_id];
 
-	wma_set_bss_rate_flags(iface, add_bss);
+	wma_set_bss_rate_flags(wma, vdev_id, add_bss);
 	if (add_bss->operMode) {
 		/* Save parameters later needed by WMA_ADD_STA_REQ */
 		if (iface->addBssStaContext)

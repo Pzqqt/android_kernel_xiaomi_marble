@@ -409,9 +409,9 @@ QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *adapter);
  * wlan_hdd_get_station_stats() - Get station statistics
  * @adapter: adapter for which statistics are desired
  *
- * Return: QDF_STATUS_SUCCESS if adapter's statistics were updated
+ * Return: status of operation
  */
-QDF_STATUS wlan_hdd_get_station_stats(struct hdd_adapter *adapter);
+int wlan_hdd_get_station_stats(struct hdd_adapter *adapter);
 
 /**
  * wlan_hdd_get_temperature() - get current device temperature
@@ -424,4 +424,11 @@ QDF_STATUS wlan_hdd_get_station_stats(struct hdd_adapter *adapter);
  */
 int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature);
 
+/**
+ * wlan_hdd_request_station_stats() - Get station statistics
+ * @adapter: adapter for which statistics are desired
+ *
+ * Return: QDF_STATUS_SUCCESS if adapter's statistics were updated
+ */
+int wlan_hdd_request_station_stats(struct hdd_adapter *adapter);
 #endif /* end #if !defined(WLAN_HDD_STATS_H) */

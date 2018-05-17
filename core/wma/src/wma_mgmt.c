@@ -1016,6 +1016,148 @@ static void wma_mask_tx_ht_rate(tp_wma_handle wma, uint8_t *mcs_set)
 	}
 }
 
+#if SUPPORT_11AX
+/**
+ * wma_fw_to_host_phymode_11ac() - convert fw to host phymode for 11ax phymodes
+ * @wma:     wma handle
+ * @phymode: phymode to convert
+ *
+ * Return: None
+ */
+static enum wlan_phymode wma_fw_to_host_phymode_11ac(WLAN_PHY_MODE phymode)
+{
+	switch (phymode) {
+	default:
+		return WLAN_PHYMODE_AUTO;
+	case MODE_11AX_HE20:
+		return WLAN_PHYMODE_11AC_VHT20;
+	case MODE_11AX_HE40:
+		return WLAN_PHYMODE_11AC_VHT40;
+	case MODE_11AX_HE80:
+		return WLAN_PHYMODE_11AC_VHT80;
+	case MODE_11AX_HE80_80:
+		return WLAN_PHYMODE_11AC_VHT80_80;
+	case MODE_11AX_HE160:
+		return WLAN_PHYMODE_11AC_VHT160;
+	case MODE_11AX_HE20_2G:
+		return WLAN_PHYMODE_11AC_VHT20;
+	case MODE_11AX_HE40_2G:
+		return WLAN_PHYMODE_11AC_VHT40;
+	case MODE_11AX_HE80_2G:
+		return WLAN_PHYMODE_11AC_VHT80;
+	}
+	return WLAN_PHYMODE_AUTO;
+}
+#else
+static enum wlan_phymode wma_fw_to_host_phymode_11ac(WLAN_PHY_MODE phymode)
+{
+	return WLAN_PHYMODE_AUTO;
+}
+#endif
+
+#ifdef CONFIG_160MHZ_SUPPORT
+/**
+ * wma_fw_to_host_phymode_160() - convert fw to host phymode for 160 mhz
+ * phymodes
+ * @wma:     wma handle
+ * @phymode: phymode to convert
+ *
+ * Return: None
+ */
+static enum wlan_phymode wma_fw_to_host_phymode_160(WLAN_PHY_MODE phymode)
+{
+	switch (phymode) {
+	default:
+		return WLAN_PHYMODE_AUTO;
+	case MODE_11AC_VHT80_80:
+		return WLAN_PHYMODE_11AC_VHT80_80;
+	case MODE_11AC_VHT160:
+		return WLAN_PHYMODE_11AC_VHT160;
+	}
+}
+#else
+static enum wlan_phymode wma_fw_to_host_phymode_160(WLAN_PHY_MODE phymode)
+{
+	return WLAN_PHYMODE_AUTO;
+}
+#endif
+/**
+ * wma_fw_to_host_phymode() - convert fw to host phymode
+ * @wma:     wma handle
+ * @phymode: phymode to convert
+ *
+ * Return: None
+ */
+static enum wlan_phymode wma_fw_to_host_phymode(WLAN_PHY_MODE phymode)
+{
+	enum wlan_phymode host_phymode;
+	switch (phymode) {
+	default:
+		host_phymode = wma_fw_to_host_phymode_160(phymode);
+		if (host_phymode != WLAN_PHYMODE_AUTO)
+			return host_phymode;
+		return wma_fw_to_host_phymode_11ac(phymode);
+	case MODE_11A:
+		return WLAN_PHYMODE_11A;
+	case MODE_11G:
+		return WLAN_PHYMODE_11G;
+	case MODE_11B:
+		return WLAN_PHYMODE_11B;
+	case MODE_11GONLY:
+		return WLAN_PHYMODE_11G;
+	case MODE_11NA_HT20:
+		return WLAN_PHYMODE_11NA_HT20;
+	case MODE_11NG_HT20:
+		return WLAN_PHYMODE_11NG_HT20;
+	case MODE_11NA_HT40:
+		return WLAN_PHYMODE_11NA_HT40;
+	case MODE_11NG_HT40:
+		return WLAN_PHYMODE_11NG_HT40;
+	case MODE_11AC_VHT20:
+		return WLAN_PHYMODE_11AC_VHT20;
+	case MODE_11AC_VHT40:
+		return WLAN_PHYMODE_11AC_VHT40;
+	case MODE_11AC_VHT80:
+		return WLAN_PHYMODE_11AC_VHT80;
+	case MODE_11AC_VHT20_2G:
+		return WLAN_PHYMODE_11AC_VHT20;
+	case MODE_11AC_VHT40_2G:
+		return WLAN_PHYMODE_11AC_VHT40;
+	case MODE_11AC_VHT80_2G:
+		return WLAN_PHYMODE_11AC_VHT80;
+	}
+}
+
+/**
+ * wma_objmgr_set_peer_mlme_phymode() - set phymode to peer object
+ * @wma:      wma handle
+ * @mac_addr: mac addr of peer
+ * @phymode:  phymode value to set
+ *
+ * Return: None
+ */
+static void wma_objmgr_set_peer_mlme_phymode(tp_wma_handle wma,
+					     uint8_t *mac_addr,
+					     WLAN_PHY_MODE phymode)
+{
+	uint8_t pdev_id;
+	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_psoc *psoc = wma->psoc;
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(wma->pdev);
+	peer = wlan_objmgr_get_peer(psoc, pdev_id, mac_addr,
+				    WLAN_LEGACY_WMA_ID);
+	if (!peer) {
+		WMA_LOGE(FL("peer object null"));
+		return;
+	}
+
+	wlan_peer_obj_lock(peer);
+	wlan_peer_set_phymode(peer, wma_fw_to_host_phymode(phymode));
+	wlan_peer_obj_unlock(peer);
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+}
+
 /**
  * wmi_unified_send_peer_assoc() - send peer assoc command to fw
  * @wma: wma handle
@@ -1071,6 +1213,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	phymode = wma_peer_phymode(nw_type, params->staType,
 				   params->htCapable, params->ch_width,
 				   params->vhtCapable, is_he);
+
+	wma_objmgr_set_peer_mlme_phymode(wma, params->staMac, phymode);
 
 	if (wlan_cfg_get_int(wma->mac_context,
 			     WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA,

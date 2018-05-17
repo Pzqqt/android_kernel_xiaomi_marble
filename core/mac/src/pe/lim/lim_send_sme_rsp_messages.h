@@ -90,8 +90,14 @@ void lim_send_sme_delts_ind(tpAniSirGlobal pMac, tpSirDeltsReqInfo delts,
 			    uint16_t aid, tpPESession);
 void lim_send_sme_stats_rsp(tpAniSirGlobal pMac, uint16_t msgtype, void *stats);
 
+#ifdef QCA_SUPPORT_CP_STATS
+static inline void lim_send_sme_pe_statistics_rsp(tpAniSirGlobal pMac,
+					uint16_t msgtype, void *stats) {}
+#else
 void lim_send_sme_pe_statistics_rsp(tpAniSirGlobal pMac, uint16_t msgtype,
 				    void *stats);
+#endif /* QCA_SUPPORT_CP_STATS */
+
 #ifdef FEATURE_WLAN_ESE
 void lim_send_sme_pe_ese_tsm_rsp(tpAniSirGlobal pMac, tAniGetTsmStatsRsp *pStats);
 #endif

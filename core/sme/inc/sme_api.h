@@ -416,10 +416,12 @@ QDF_STATUS sme_roam_get_pmkid_cache(tHalHandle hHal, uint8_t sessionId,
 		uint32_t *pNum,
 		tPmkidCacheInfo *pPmkidCache);
 QDF_STATUS sme_get_config_param(tHalHandle hHal, tSmeConfigParams *pParam);
+#ifndef QCA_SUPPORT_CP_STATS
 QDF_STATUS sme_get_statistics(tHalHandle hHal,
 		eCsrStatsRequesterType requesterId,
 		uint32_t statsMask, tCsrStatsCallback callback,
 		uint8_t staId, void *pContext, uint8_t sessionId);
+#endif
 QDF_STATUS sme_get_rssi(tHalHandle hHal,
 		tCsrRssiCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, int8_t lastRSSI,
@@ -2232,5 +2234,17 @@ bool sme_validate_channel_list(tHalHandle hal,
  * Return: None
  */
 void sme_set_amsdu(tHalHandle hal, bool enable);
+
+/**
+ * sme_get_mcs_idx() - gets mcs index
+ * @max_rate: max rate
+ * @rate_flags: rate flags
+ * @nss: number of nss
+ * @mcs_rate_flags: mcs rate flag
+ *
+ * Return: return mcs index
+ */
+uint8_t sme_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
+			uint8_t nss, uint8_t *mcs_rate_flags);
 
 #endif /* #if !defined( __SME_API_H ) */

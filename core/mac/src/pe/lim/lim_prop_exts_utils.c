@@ -323,6 +323,23 @@ static void lim_check_he_ldpc_cap(tpPESession session,
 		tSirProbeRespBeacon *beacon_struct)
 {}
 #endif
+
+static void lim_objmgr_update_vdev_nss(struct wlan_objmgr_psoc *psoc,
+				       uint8_t vdev_id, uint8_t nss)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		pe_err("vdev not found for id: %d", vdev_id);
+		return;
+	}
+	wlan_vdev_obj_lock(vdev);
+	wlan_vdev_mlme_set_nss(vdev, nss);
+	wlan_vdev_obj_unlock(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+}
 /**
  * lim_extract_ap_capability() - extract AP's HCF/WME/WSM capability
  * @mac_ctx: Pointer to Global MAC structure
@@ -597,6 +614,9 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 				&beacon_struct->hs20vendor_ie.hs_id,
 				sizeof(beacon_struct->hs20vendor_ie.hs_id));
 	}
+
+	lim_objmgr_update_vdev_nss(mac_ctx->psoc, session->smeSessionId,
+				   session->nss);
 	qdf_mem_free(beacon_struct);
 	return;
 } /****** end lim_extract_ap_capability() ******/

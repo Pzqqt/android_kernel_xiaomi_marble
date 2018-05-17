@@ -705,9 +705,8 @@ void wma_set_resume_dtim(tp_wma_handle wma);
  * wma_data.c functions declarations
  */
 
-
-void wma_set_bss_rate_flags(struct wma_txrx_node *iface,
-				   tpAddBssParams add_bss);
+void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
+			    tpAddBssParams add_bss);
 
 int32_t wmi_unified_send_txbf(tp_wma_handle wma, tpAddStaParams params);
 
@@ -861,9 +860,13 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 				    uint8_t vdev_id, uint32_t value);
 
+#ifdef QCA_SUPPORT_CP_STATS
+static inline void wma_get_stats_req(WMA_HANDLE handle,
+				struct sAniGetPEStatsReq *get_stats_param) {}
+#else
 void wma_get_stats_req(WMA_HANDLE handle,
-		       tAniGetPEStatsReq *get_stats_param);
-
+		       struct sAniGetPEStatsReq *get_stats_param);
+#endif
 /*
  * wma_features.c functions declarations
  */

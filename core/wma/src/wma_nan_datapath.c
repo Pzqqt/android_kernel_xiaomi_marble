@@ -65,7 +65,7 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		goto send_fail_resp;
 	}
 
-	wma_set_bss_rate_flags(&wma->interfaces[vdev_id], add_bss);
+	wma_set_bss_rate_flags(wma, vdev_id, add_bss);
 
 	peer = cdp_peer_find_by_addr(soc,
 			pdev,

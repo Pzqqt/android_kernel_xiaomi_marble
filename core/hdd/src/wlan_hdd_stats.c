@@ -3039,12 +3039,12 @@ static void wlan_hdd_fill_summary_stats(tCsrSummaryStatsInfo *stats,
 static int
 wlan_hdd_get_sap_stats(struct hdd_adapter *adapter, struct station_info *info)
 {
-	QDF_STATUS status;
+	int ret;
 
-	status = wlan_hdd_get_station_stats(adapter);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to get SAP stats; status:%d", status);
-		return qdf_status_to_os_return(status);
+	ret = wlan_hdd_get_station_stats(adapter);
+	if (ret) {
+		hdd_err("Failed to get SAP stats; status:%d", ret);
+		return ret;
 	}
 
 	wlan_hdd_fill_summary_stats(&adapter->hdd_stats.summary_stat, info);
@@ -5711,6 +5711,73 @@ return_cached_results:
 }
 #endif
 
+#ifdef QCA_SUPPORT_CP_STATS
+int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
+{
+	int ret;
+	uint8_t mcs_rate_flags;
+	struct stats_event stats = {0};
+
+	ret =  wlan_cfg80211_mc_cp_stats_get_station_stats(adapter->hdd_vdev,
+							   &stats);
+
+	if (!stats.vdev_summary_stats || !stats.vdev_chain_rssi) {
+		hdd_err("summary_stats: %pK, chain_rssi: %pK",
+			stats.vdev_summary_stats, stats.vdev_chain_rssi);
+		return -EINVAL;
+	}
+
+	/* save summary stats to legacy location */
+	qdf_mem_copy(adapter->hdd_stats.summary_stat.retry_cnt,
+		stats.vdev_summary_stats[0].stats.retry_cnt,
+		sizeof(adapter->hdd_stats.summary_stat.retry_cnt));
+	qdf_mem_copy(adapter->hdd_stats.summary_stat.multiple_retry_cnt,
+		stats.vdev_summary_stats[0].stats.multiple_retry_cnt,
+		sizeof(adapter->hdd_stats.summary_stat.multiple_retry_cnt));
+	qdf_mem_copy(adapter->hdd_stats.summary_stat.tx_frm_cnt,
+		stats.vdev_summary_stats[0].stats.tx_frm_cnt,
+		sizeof(adapter->hdd_stats.summary_stat.tx_frm_cnt));
+	qdf_mem_copy(adapter->hdd_stats.summary_stat.fail_cnt,
+		stats.vdev_summary_stats[0].stats.fail_cnt,
+		sizeof(adapter->hdd_stats.summary_stat.fail_cnt));
+	adapter->hdd_stats.summary_stat.snr =
+		stats.vdev_summary_stats[0].stats.snr;
+	adapter->hdd_stats.summary_stat.rssi =
+		stats.vdev_summary_stats[0].stats.rssi;
+	adapter->hdd_stats.summary_stat.rx_frm_cnt =
+		stats.vdev_summary_stats[0].stats.rx_frm_cnt;
+	adapter->hdd_stats.summary_stat.frm_dup_cnt =
+		stats.vdev_summary_stats[0].stats.frm_dup_cnt;
+	adapter->hdd_stats.summary_stat.rts_fail_cnt =
+		stats.vdev_summary_stats[0].stats.rts_fail_cnt;
+	adapter->hdd_stats.summary_stat.ack_fail_cnt =
+		stats.vdev_summary_stats[0].stats.ack_fail_cnt;
+	adapter->hdd_stats.summary_stat.rts_succ_cnt =
+		stats.vdev_summary_stats[0].stats.rts_succ_cnt;
+	adapter->hdd_stats.summary_stat.rx_discard_cnt =
+		stats.vdev_summary_stats[0].stats.rx_discard_cnt;
+	adapter->hdd_stats.summary_stat.rx_error_cnt =
+		stats.vdev_summary_stats[0].stats.rx_error_cnt;
+
+	/* save class a stats to legacy location */
+	adapter->hdd_stats.class_a_stat.nss =
+		wlan_vdev_mlme_get_nss(adapter->hdd_vdev);
+	adapter->hdd_stats.class_a_stat.tx_rate = stats.tx_rate;
+	adapter->hdd_stats.class_a_stat.tx_rate_flags = stats.tx_rate_flags;
+	adapter->hdd_stats.class_a_stat.mcs_index =
+		sme_get_mcs_idx(stats.tx_rate * 5, stats.tx_rate_flags,
+			adapter->hdd_stats.class_a_stat.nss, &mcs_rate_flags);
+	adapter->hdd_stats.class_a_stat.mcs_rate_flags = mcs_rate_flags;
+
+	/* save per chain rssi to legacy location */
+	qdf_mem_copy(adapter->hdd_stats.per_chain_rssi_stats.rssi,
+		     stats.vdev_chain_rssi[0].chain_rssi,
+		     sizeof(stats.vdev_chain_rssi[0].chain_rssi));
+
+	wlan_cfg80211_mc_cp_stats_put_station_stats(&stats);
+	return ret;
+}
+#else /* QCA_SUPPORT_CP_STATS */
 struct station_stats {
 	tCsrSummaryStatsInfo summary_stats;
 	tCsrGlobalClassAStatsInfo class_a_stats;
@@ -5760,7 +5827,7 @@ static void hdd_get_station_statistics_cb(void *stats, void *context)
 	hdd_request_put(request);
 }
 
-QDF_STATUS wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
+int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	QDF_STATUS status;
@@ -5775,13 +5842,13 @@ QDF_STATUS wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 
 	if (NULL == adapter) {
 		hdd_err("adapter is NULL");
-		return QDF_STATUS_SUCCESS;
+		return 0;
 	}
 
 	request = hdd_request_alloc(&params);
 	if (!request) {
 		hdd_err("Request allocation failure");
-		return QDF_STATUS_E_NOMEM;
+		return -ENOMEM;
 	}
 	cookie = hdd_request_cookie(request);
 
@@ -5822,8 +5889,9 @@ put_request:
 	hdd_request_put(request);
 
 	/* either callback updated adapter stats or it has cached data */
-	return QDF_STATUS_SUCCESS;
+	return 0;
 }
+#endif /* QCA_SUPPORT_CP_STATS */
 
 struct temperature_priv {
 	int temperature;

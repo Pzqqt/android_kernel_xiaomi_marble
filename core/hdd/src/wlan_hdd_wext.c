@@ -8343,6 +8343,12 @@ static int iw_set_packet_filter_params(struct net_device *dev,
 }
 #endif
 
+#ifdef QCA_SUPPORT_CP_STATS
+static int hdd_get_wlan_stats(struct hdd_adapter *adapter)
+{
+	return wlan_hdd_get_station_stats(adapter);
+}
+#else /* QCA_SUPPORT_CP_STATS */
 struct hdd_statistics_priv {
 	tCsrSummaryStatsInfo summary_stats;
 	tCsrGlobalClassAStatsInfo class_a_stats;
@@ -8386,56 +8392,28 @@ static void hdd_statistics_cb(void *stats, void *context)
 	hdd_request_put(request);
 }
 
-static int __iw_get_statistics(struct net_device *dev,
-			       struct iw_request_info *info,
-			       union iwreq_data *wrqu, char *extra)
+static int hdd_get_wlan_stats(struct hdd_adapter *adapter)
 {
-
-	QDF_STATUS status;
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_station_ctx *sta_ctx;
-	char *p;
-	int tlen;
-	tCsrSummaryStatsInfo *summary_stats =
-		&(adapter->hdd_stats.summary_stat);
-	tCsrGlobalClassAStatsInfo *class_a_stats =
-		&(adapter->hdd_stats.class_a_stat);
-	tCsrGlobalClassDStatsInfo *class_d_stats =
-		&(adapter->hdd_stats.class_d_stat);
-	int ret;
+	int ret = 0;
 	void *cookie;
+	QDF_STATUS status;
 	struct hdd_request *request;
+	struct hdd_station_ctx *sta_ctx;
 	struct hdd_statistics_priv *priv;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	static const struct hdd_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
 
-	hdd_enter_dev(dev);
-
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_private_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
-		wrqu->data.length = 0;
-		return 0;
-	}
-
 	request = hdd_request_alloc(&params);
 	if (!request) {
 		hdd_warn("request allocation failed");
-		goto return_cached_stats;
+		return -EINVAL;
 	}
 
 	cookie = hdd_request_cookie(request);
-
 	status = sme_get_statistics(hdd_ctx->hHal, eCSR_HDD,
 				    SME_SUMMARY_STATS |
 				    SME_GLOBAL_CLASSA_STATS |
@@ -8458,9 +8436,9 @@ static int __iw_get_statistics(struct net_device *dev,
 
 	/* update the adapter cache with the fresh results */
 	priv = hdd_request_priv(request);
-	*summary_stats = priv->summary_stats;
-	*class_a_stats = priv->class_a_stats;
-	*class_d_stats = priv->class_d_stats;
+	adapter->hdd_stats.summary_stat = priv->summary_stats;
+	adapter->hdd_stats.class_a_stat = priv->class_a_stats;
+	adapter->hdd_stats.class_d_stat = priv->class_d_stats;
 
 put_request:
 	/*
@@ -8469,8 +8447,46 @@ put_request:
 	 * regardless we are done with the request.
 	 */
 	hdd_request_put(request);
+	return ret;
+}
+#endif /* QCA_SUPPORT_CP_STATS */
 
-return_cached_stats:
+static int __iw_get_statistics(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
+{
+	int ret;
+	char *p;
+	int tlen;
+	struct hdd_station_ctx *sta_ctx;
+	tCsrSummaryStatsInfo *summary_stats;
+	tCsrGlobalClassAStatsInfo *class_a_stats;
+	tCsrGlobalClassDStatsInfo *class_d_stats;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_enter_dev(dev);
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+		wrqu->data.length = 0;
+		return 0;
+	}
+
+	hdd_get_wlan_stats(adapter);
+
+	summary_stats = &(adapter->hdd_stats.summary_stat);
+	class_a_stats = &(adapter->hdd_stats.class_a_stat);
+	class_d_stats = &(adapter->hdd_stats.class_d_stat);
+
 	p = extra;
 	tlen = 0;
 

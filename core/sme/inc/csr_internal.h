@@ -720,6 +720,7 @@ struct csr_linkquality_indinfo {
 	void *context;
 };
 
+#ifndef QCA_SUPPORT_CP_STATS
 struct csr_pestats_reqinfo {
 	tListElem link;         /* list links */
 	uint32_t statsMask;
@@ -747,6 +748,7 @@ struct csr_statsclient_reqinfo {
 struct csr_tlstats_reqinfo {
 	uint8_t numClient;
 };
+#endif /* QCA_SUPPORT_CP_STATS */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 enum csr_roamoffload_authstatus {
@@ -967,6 +969,7 @@ struct csr_roamstruct {
 	uint32_t numValidChannels;       /* total number of channels in CFG */
 	int32_t sPendingCommands;
 	qdf_mc_timer_t hTimerWaitForKey; /* support timeout for WaitForKey */
+#ifndef QCA_SUPPORT_CP_STATS
 	tCsrSummaryStatsInfo summaryStatsInfo;
 	tCsrGlobalClassAStatsInfo classAStatsInfo;
 	tCsrGlobalClassDStatsInfo classDStatsInfo;
@@ -974,6 +977,7 @@ struct csr_roamstruct {
 	tDblLinkList statsClientReqList;
 	tDblLinkList peStatsReqList;
 	struct csr_tlstats_reqinfo tlStatsReqInfo;
+#endif
 	eCsrRoamLinkQualityInd vccLinkQuality;
 	struct csr_linkquality_indinfo linkQualityIndInfo;
 	tCsrTimerInfo WaitForKeyTimerInfo;

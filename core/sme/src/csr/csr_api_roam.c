@@ -402,19 +402,13 @@ static QDF_STATUS csr_send_mb_set_context_req_msg(tpAniSirGlobal pMac,
 					   uint8_t *pKeyRsc);
 static void csr_roam_link_up(tpAniSirGlobal pMac, struct qdf_mac_addr bssid);
 static void csr_roam_link_down(tpAniSirGlobal pMac, uint32_t sessionId);
+#ifndef QCA_SUPPORT_CP_STATS
 static QDF_STATUS csr_send_mb_stats_req_msg(tpAniSirGlobal pMac,
 					uint32_t statsMask, uint8_t staId,
 					uint8_t sessionId);
 /* pStaEntry is no longer invalid upon the return of this function. */
 static void csr_roam_remove_stat_list_entry(tpAniSirGlobal pMac,
 							tListElem *pEntry);
-static enum csr_cfgdot11mode
-csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal pMac,
-				   struct csr_roam_profile *pProfile,
-				   uint8_t operationChn,
-				   enum band_info *pBand);
-static QDF_STATUS csr_roam_get_qos_info_from_bss(
-tpAniSirGlobal pMac, tSirBssDescription *pBssDesc);
 struct csr_statsclient_reqinfo *csr_roam_insert_entry_into_list(
 			tpAniSirGlobal pMac, tDblLinkList *pStaList,
 				struct csr_statsclient_reqinfo *
@@ -430,6 +424,19 @@ tListElem *csr_roam_find_in_pe_stats_req_list(
 	tpAniSirGlobal pMac,
 						uint32_t statsMask);
 static QDF_STATUS csr_roam_dereg_statistics_req(tpAniSirGlobal pMac);
+#else
+static QDF_STATUS csr_roam_dereg_statistics_req(tpAniSirGlobal pMac)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+static enum csr_cfgdot11mode
+csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal pMac,
+				   struct csr_roam_profile *pProfile,
+				   uint8_t operationChn,
+				   enum band_info *pBand);
+static QDF_STATUS csr_roam_get_qos_info_from_bss(
+tpAniSirGlobal pMac, tSirBssDescription *pBssDesc);
 static uint32_t csr_find_ibss_session(tpAniSirGlobal pMac);
 static uint32_t csr_find_session_by_type(tpAniSirGlobal,
 					enum QDF_OPMODE);
@@ -486,6 +493,32 @@ static void csr_roam_de_init_globals(tpAniSirGlobal pMac)
 	}
 }
 
+#ifdef QCA_SUPPORT_CP_STATS
+static QDF_STATUS csr_open_stats_ll(struct sAniSirGlobal *mac_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static void csr_close_stats_ll(struct sAniSirGlobal *mac_ctx) {}
+#else
+static QDF_STATUS csr_open_stats_ll(struct sAniSirGlobal *mac_ctx)
+{
+	QDF_STATUS status;
+
+	status = csr_ll_open(mac_ctx->hHdd, &mac_ctx->roam.statsClientReqList);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	return csr_ll_open(mac_ctx->hHdd, &mac_ctx->roam.peStatsReqList);
+}
+
+static void csr_close_stats_ll(struct sAniSirGlobal *mac_ctx)
+{
+	csr_ll_close(&mac_ctx->roam.statsClientReqList);
+	csr_ll_close(&mac_ctx->roam.peStatsReqList);
+}
+#endif
+
 QDF_STATUS csr_open(tpAniSirGlobal pMac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -505,13 +538,8 @@ QDF_STATUS csr_open(tpAniSirGlobal pMac)
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
 		pMac->roam.nextRoamId = 1;      /* Must not be 0 */
-		if (!QDF_IS_STATUS_SUCCESS
-			    (csr_ll_open(pMac->hHdd,
-					 &pMac->roam.statsClientReqList)))
-			break;
-		if (!QDF_IS_STATUS_SUCCESS
-			    (csr_ll_open(pMac->hHdd,
-					 &pMac->roam.peStatsReqList)))
+		status = csr_open_stats_ll(pMac);
+		if (QDF_IS_STATUS_ERROR(status))
 			break;
 		qdf_list_create(&pMac->roam.rssi_disallow_bssid,
 			MAX_RSSI_AVOID_BSSID_LIST);
@@ -601,8 +629,7 @@ QDF_STATUS csr_close(tpAniSirGlobal pMac)
 	csr_assoc_rej_free_rssi_disallow_list(
 		&pMac->roam.rssi_disallow_bssid);
 	csr_scan_close(pMac);
-	csr_ll_close(&pMac->roam.statsClientReqList);
-	csr_ll_close(&pMac->roam.peStatsReqList);
+	csr_close_stats_ll(pMac);
 	/* DeInit Globals */
 	csr_roam_de_init_globals(pMac);
 	return status;
@@ -1108,6 +1135,15 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef QCA_SUPPORT_CP_STATS
+static void csr_init_tl_stats(struct sAniSirGlobal *mac_ctx) {}
+#else
+static void csr_init_tl_stats(struct sAniSirGlobal *mac_ctx)
+{
+	mac_ctx->roam.tlStatsReqInfo.numClient = 0;
+}
+#endif /* QCA_SUPPORT_CP_STATS */
+
 QDF_STATUS csr_start(tpAniSirGlobal pMac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1124,7 +1160,7 @@ QDF_STATUS csr_start(tpAniSirGlobal pMac)
 		pMac->roam.sPendingCommands = 0;
 		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
 			status = csr_neighbor_roam_init(pMac, i);
-		pMac->roam.tlStatsReqInfo.numClient = 0;
+		csr_init_tl_stats(pMac);
 		/* init the link quality indication also */
 		pMac->roam.vccLinkQuality = eCSR_ROAM_LINK_QUAL_MIN_IND;
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -17291,6 +17327,7 @@ static void csr_roam_link_down(tpAniSirGlobal pMac, uint32_t sessionId)
 
 }
 
+#ifndef QCA_SUPPORT_CP_STATS
 QDF_STATUS csr_send_mb_stats_req_msg(tpAniSirGlobal pMac, uint32_t statsMask,
 				     uint8_t staId, uint8_t sessionId)
 {
@@ -17574,6 +17611,7 @@ struct csr_statsclient_reqinfo *csr_roam_insert_entry_into_list(
 	}
 	return pNewStaEntry;
 }
+#endif /* QCA_SUPPORT_CP_STATS */
 
 QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac,
 			tCsrRssiCallback callback,
@@ -17664,6 +17702,7 @@ QDF_STATUS csr_get_snr(tpAniSirGlobal pMac,
 	return status;
 }
 
+#ifndef QCA_SUPPORT_CP_STATS
 /**
  * csr_deregister_client_request() - deregisters a get stats request
  * @mac_ctx:       mac global context
@@ -17796,6 +17835,7 @@ QDF_STATUS csr_get_statistics(tpAniSirGlobal pMac,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif /* QCA_SUPPORT_CP_STATS */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
@@ -19630,6 +19670,7 @@ QDF_STATUS csr_roam_offload_scan_rsp_hdlr(tpAniSirGlobal pMac,
 }
 #endif
 
+#ifndef QCA_SUPPORT_CP_STATS
 /* pStaEntry is no longer invalid upon the return of this function. */
 static void csr_roam_remove_stat_list_entry(tpAniSirGlobal pMac,
 						tListElem *pEntry)
@@ -19809,6 +19850,7 @@ static QDF_STATUS csr_roam_dereg_statistics_req(
 	return status;
 
 }
+#endif /* QCA_SUPPORT_CP_STATS */
 
 tSmeCmd *csr_get_command_buffer(tpAniSirGlobal pMac)
 {

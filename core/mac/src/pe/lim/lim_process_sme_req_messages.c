@@ -3522,6 +3522,7 @@ void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal pMac, uint32_t param)
 			       psessionEntry->transactionId);
 }
 
+#ifndef QCA_SUPPORT_CP_STATS
 /**
  * __lim_process_sme_get_statistics_request()
  *
@@ -3558,6 +3559,10 @@ __lim_process_sme_get_statistics_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 
 	return;
 }
+#else
+static void __lim_process_sme_get_statistics_request(
+			struct sAniSirGlobal *mac_ctx, uint32_t *pMsgBuf) {}
+#endif
 
 #ifdef FEATURE_WLAN_ESE
 /**
