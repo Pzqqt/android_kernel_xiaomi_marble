@@ -4237,17 +4237,15 @@ static void cnss_diag_cmd_handler(const void *data, int data_len,
 	return;
 }
 
-/**
- * cnss_diag_activate_service() - API to register CNSS diag cmd handler
- *
- * API to register the CNSS diag command handler using new genl infra.
- * Return type is zero to match with legacy prototype
- *
- * Return: 0
- */
 int cnss_diag_activate_service(void)
 {
 	register_cld_cmd_cb(WLAN_NL_MSG_CNSS_DIAG, cnss_diag_cmd_handler, NULL);
+	return 0;
+}
+
+int cnss_diag_deactivate_service(void)
+{
+	deregister_cld_cmd_cb(WLAN_NL_MSG_CNSS_DIAG);
 	return 0;
 }
 
@@ -4282,29 +4280,33 @@ static int cnss_diag_msg_callback(struct sk_buff *skb)
 	return 0;
 }
 
-/**
- *  brief cnss_diag_activate_service() - Activate cnss_diag message handler
- *
- *  This function registers a handler to receive netlink message from
- *  an cnss-diag application process.
- *
- *  param -
- *     - None
- *
- *  return - 0 for success, non zero for failure
- */
 int cnss_diag_activate_service(void)
 {
-	int ret = 0;
+	int ret;
 
 	/* Register the msg handler for msgs addressed to WLAN_NL_MSG_OEM */
 	ret = nl_srv_register(WLAN_NL_MSG_CNSS_DIAG, cnss_diag_msg_callback);
-	if (ret) {
+	if (ret)
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 				("CNSS-DIAG Registration failed"));
-		return ret;
-	}
-	return 0;
+
+	return ret;
+}
+
+int cnss_diag_deactivate_service(void)
+{
+	int ret;
+
+	/*
+	 * Deregister the msg handler for msgs addressed to
+	 * WLAN_NL_MSG_CNSS_DIAG
+	 */
+	ret = nl_srv_unregister(WLAN_NL_MSG_CNSS_DIAG, cnss_diag_msg_callback);
+	if (ret)
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+				("CNSS-DIAG Registration failed"));
+
+	return ret;
 }
 #endif
 

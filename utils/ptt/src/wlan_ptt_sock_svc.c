@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -316,52 +316,30 @@ static void ptt_cmd_handler(const void *data, int data_len, void *ctx, int pid)
 	}
 }
 
-/**
- * ptt_sock_activate_svc() - API to register PTT/PUMAC command handler
- *
- * API to register the PTT/PUMAC command handlers. Argument @pAdapter
- * is sent for prototype compatibility between new genl and legacy
- * implementation
- *
- * Return: 0
- */
-int ptt_sock_activate_svc(void)
+void ptt_sock_activate_svc(void)
 {
 	register_cld_cmd_cb(ANI_NL_MSG_PUMAC, ptt_cmd_handler, NULL);
 	register_cld_cmd_cb(ANI_NL_MSG_PTT, ptt_cmd_handler, NULL);
-	return 0;
 }
 
-/**
- * ptt_sock_deactivate_svc() - Dummy API to deactivate PTT service
- *
- * Return: Void
- */
 void ptt_sock_deactivate_svc(void)
 {
+	deregister_cld_cmd_cb(ANI_NL_MSG_PTT);
+	deregister_cld_cmd_cb(ANI_NL_MSG_PUMAC);
 }
 #else
 
-/**
- * ptt_sock_activate_svc() - activate PTT service
- *
- * Return: 0
- */
-int ptt_sock_activate_svc(void)
+void ptt_sock_activate_svc(void)
 {
 	ptt_pid = INVALID_PID;
 	nl_srv_register(ANI_NL_MSG_PUMAC, ptt_sock_rx_nlink_msg);
 	nl_srv_register(ANI_NL_MSG_PTT, ptt_sock_rx_nlink_msg);
-	return 0;
 }
 
-/**
- * ptt_sock_deactivate_svc() - deactivate PTT service
- *
- * Return: Void
- */
 void ptt_sock_deactivate_svc(void)
 {
+	nl_srv_unregister(ANI_NL_MSG_PTT, ptt_sock_rx_nlink_msg);
+	nl_srv_unregister(ANI_NL_MSG_PUMAC, ptt_sock_rx_nlink_msg);
 	ptt_pid = INVALID_PID;
 }
 #endif
