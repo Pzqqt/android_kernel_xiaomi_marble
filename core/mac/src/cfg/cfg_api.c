@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -257,9 +257,10 @@ tSirRetStatus cfg_set_int(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t value)
 
 	if ((pMac->cfg.gCfgIBufMin[index] > value) ||
 			(pMac->cfg.gCfgIBufMax[index] < value)) {
-		pe_warn("Value: %d out of range: [%d,%d] cfg id: %d", value,
-			       pMac->cfg.gCfgIBufMin[index],
-			       pMac->cfg.gCfgIBufMax[index], cfgId);
+		pe_warn("Value: %d out of range: [%d,%d] cfg id: %d, %s",
+				value, pMac->cfg.gCfgIBufMin[index],
+				pMac->cfg.gCfgIBufMax[index], cfgId,
+				cfg_get_string(cfgId));
 		return eSIR_CFG_INVALID_ID;
 	} else {
 		/* Write integer value */
