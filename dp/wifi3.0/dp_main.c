@@ -3716,8 +3716,8 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
 		/* TODO: Check the destination ring number to be passed to FW */
 		soc->cdp_soc.ol_ops->peer_set_default_routing(
-			pdev->ctrl_pdev, peer->mac_addr.raw,
-			 peer->vdev->vdev_id, hash_based, reo_dest);
+				pdev->ctrl_pdev, peer->mac_addr.raw,
+				peer->vdev->vdev_id, hash_based, reo_dest);
 	}
 
 	dp_peer_rx_init(pdev, peer);

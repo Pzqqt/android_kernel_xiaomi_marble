@@ -714,15 +714,19 @@ struct cdp_lro_hash_config {
 };
 
 struct ol_if_ops {
-	void (*peer_set_default_routing)(void *scn_handle,
-			uint8_t *peer_macaddr, uint8_t vdev_id,
-			bool hash_based, uint8_t ring_num);
-	int (*peer_rx_reorder_queue_setup)(void *scn_handle,
-			uint8_t vdev_id, uint8_t *peer_mac,
-			qdf_dma_addr_t hw_qdesc, int tid, uint16_t queue_num);
-	int (*peer_rx_reorder_queue_remove)(void *scn_handle,
-			uint8_t vdev_id, uint8_t *peer_macaddr,
-			uint32_t tid_mask);
+	void
+	(*peer_set_default_routing)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
+				    uint8_t *peer_macaddr, uint8_t vdev_id,
+				    bool hash_based, uint8_t ring_num);
+	QDF_STATUS
+	(*peer_rx_reorder_queue_setup)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
+				       uint8_t vdev_id, uint8_t *peer_mac,
+				       qdf_dma_addr_t hw_qdesc, int tid,
+				       uint16_t queue_num);
+	QDF_STATUS
+	(*peer_rx_reorder_queue_remove)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
+					uint8_t vdev_id, uint8_t *peer_macaddr,
+					uint32_t tid_mask);
 	int (*peer_unref_delete)(void *scn_handle, uint8_t vdev_id,
 			uint8_t *peer_macaddr);
 	bool (*is_hw_dbs_2x2_capable)(struct wlan_objmgr_psoc *psoc);
@@ -734,8 +738,9 @@ struct ol_if_ops {
 			uint32_t flags);
 	void (*peer_del_wds_entry)(void *ol_soc_handle,
 			uint8_t *wds_macaddr);
-	QDF_STATUS (*lro_hash_config)(void *scn_handle,
-			struct cdp_lro_hash_config *rx_offld_hash);
+	QDF_STATUS
+	(*lro_hash_config)(struct wlan_objmgr_psoc *ctrl_psoc,
+			   struct cdp_lro_hash_config *rx_offld_hash);
 	void (*update_dp_stats)(void *soc, void *stats, uint16_t id,
 			uint8_t type);
 	uint8_t (*rx_invalid_peer)(void *ctrl_pdev, void *msg);
