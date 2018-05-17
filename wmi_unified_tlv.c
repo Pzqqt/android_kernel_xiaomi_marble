@@ -21673,7 +21673,9 @@ struct wmi_ops tlv_ops =  {
 	.send_bcn_buf_ll_cmd = send_bcn_buf_ll_cmd_tlv,
 	.send_roam_scan_offload_mode_cmd =
 			send_roam_scan_offload_mode_cmd_tlv,
+#ifndef REMOVE_PKT_LOG
 	.send_pktlog_wmi_send_cmd = send_pktlog_wmi_send_cmd_tlv,
+#endif
 	.send_roam_scan_offload_ap_profile_cmd =
 			send_roam_scan_offload_ap_profile_cmd_tlv,
 #endif
