@@ -22,6 +22,7 @@
 
 #include <wmi_unified_api.h>
 #include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
 #include <scheduler_api.h>
 #include "wlan_p2p_public_struct.h"
 #include "wlan_p2p_ucfg_api.h"

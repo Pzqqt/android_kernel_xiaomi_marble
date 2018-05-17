@@ -23,6 +23,7 @@
 #include <wmi_unified_api.h>
 #include <wlan_mgmt_txrx_utils_api.h>
 #include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_peer_obj.h>
 #include <wlan_utility.h>
 #include "wlan_p2p_public_struct.h"
 #include "wlan_p2p_tgt_api.h"
