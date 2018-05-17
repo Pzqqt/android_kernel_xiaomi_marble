@@ -21,9 +21,11 @@
  * in target if internally.
  */
 
+#include "target_if.h"
 #include "target_if_disa.h"
 #include "wlan_disa_tgt_api.h"
 #include "wlan_disa_public_struct.h"
+#include <wmi_unified_api.h>
 
 int
 target_if_encrypt_decrypt_event_handler(ol_scn_t scn_handle, uint8_t *data,

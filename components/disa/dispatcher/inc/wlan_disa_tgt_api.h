@@ -22,8 +22,11 @@
 #ifndef _WLAN_DISA_TGT_API_H_
 #define _WLAN_DISA_TGT_API_H_
 
-#include "wlan_disa_obj_mgmt_public_struct.h"
-#include "wlan_disa_public_struct.h"
+#include <qdf_types.h>
+
+struct wlan_objmgr_psoc;
+struct disa_encrypt_decrypt_req_params;
+struct disa_encrypt_decrypt_resp_params;
 
 #define GET_DISA_TX_OPS_FROM_VDEV(vedv) \
 	(&disa_psoc_get_priv(psoc)->disa_tx_ops)

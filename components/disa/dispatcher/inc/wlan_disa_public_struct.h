@@ -26,8 +26,7 @@
 #ifndef _WLAN_DISA_PUBLIC_STRUCT_H_
 #define _WLAN_DISA_PUBLIC_STRUCT_H_
 
-#include <wlan_cmn.h>
-#include <qdf_status.h>
+#include <qdf_types.h>
 
 #define MAC_MAX_KEY_LENGTH 32
 #define MAC_PN_LENGTH 8

@@ -23,10 +23,7 @@
 #ifndef _WLAN_DISA_OBJMGR_H
 #define _WLAN_DISA_OBJMGR_H
 
-#include "wlan_cmn.h"
-#include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_vdev_obj.h"
-#include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_disa_obj_mgmt_public_struct.h"
 

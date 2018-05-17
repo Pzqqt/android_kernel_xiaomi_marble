@@ -25,9 +25,9 @@
 #ifndef _WLAN_DISA_OBJ_MGMT_PUBLIC_STRUCT_H_
 #define _WLAN_DISA_OBJ_MGMT_PUBLIC_STRUCT_H_
 
-#include "wlan_disa_public_struct.h"
-#include "wlan_objmgr_cmn.h"
-#include "wlan_objmgr_psoc_obj.h"
+struct wlan_objmgr_psoc;
+struct disa_encrypt_decrypt_req_params;
+struct disa_encrypt_decrypt_resp_params;
 
 /**
  * struct wlan_disa_tx_ops - structure of tx operation function

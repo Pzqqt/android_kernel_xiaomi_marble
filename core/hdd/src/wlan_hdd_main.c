@@ -126,6 +126,7 @@
 #include <cdp_txrx_cmn_struct.h>
 #include "wlan_hdd_sysfs.h"
 #include "wlan_disa_ucfg_api.h"
+#include "wlan_disa_obj_mgmt_api.h"
 #include "wlan_ipa_ucfg_api.h"
 #include <target_if.h>
 #include "wlan_hdd_nud_tracking.h"

@@ -24,6 +24,7 @@
 #include "wlan_disa_main.h"
 #include "target_if_disa.h"
 #include "wlan_disa_tgt_api.h"
+#include "wlan_objmgr_global_obj.h"
 
 /**
  * disa_init() - register disa notification handlers.

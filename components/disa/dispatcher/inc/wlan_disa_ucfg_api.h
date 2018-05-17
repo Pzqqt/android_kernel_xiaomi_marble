@@ -23,7 +23,9 @@
 #define _WLAN_DISA_UCFG_API_H_
 
 #include "wlan_disa_public_struct.h"
-#include "wlan_disa_obj_mgmt_api.h"
+struct wlan_objmgr_psoc;
+struct disa_encrypt_decrypt_req_params;
+
 
 /**
  * ucfg_disa_encrypt_decrypt_req() - Send encrypt/decrypt request to the DISA

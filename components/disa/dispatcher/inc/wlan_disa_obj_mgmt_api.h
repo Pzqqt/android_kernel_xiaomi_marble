@@ -23,7 +23,9 @@
 #ifndef _WLAN_DISA_OBJ_MGMT_API_H_
 #define _WLAN_DISA_OBJ_MGMT_API_H_
 
-#include "wlan_disa_obj_mgmt_public_struct.h"
+#include <qdf_types.h>
+
+struct wlan_objmgr_psoc;
 
 /**
  * disa_init() - register disa notification handlers.
