@@ -1304,6 +1304,7 @@ QDF_STATUS hdd_deinit_tx_rx(struct hdd_adapter *adapter)
 	return status;
 }
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 /**
  * hdd_mon_rx_packet_cbk() - Receive callback registered with OL layer.
  * @context: [in] pointer to qdf context
@@ -1379,6 +1380,7 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 /**
  * hdd_get_peer_idx() - Get the idx for given address in peer table
@@ -2338,6 +2340,7 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 		adapter->history_index = 0;
 }
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 /**
  * hdd_set_mon_rx_cb() - Set Monitor mode Rx callback
  * @dev:        Pointer to net_device structure
@@ -2381,6 +2384,7 @@ exit:
 	ret = qdf_status_to_os_return(qdf_status);
 	return ret;
 }
+#endif
 
 /**
  * hdd_send_rps_ind() - send rps indication to daemon

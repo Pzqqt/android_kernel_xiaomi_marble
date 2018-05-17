@@ -17541,6 +17541,64 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 }
 #endif
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
+static
+void hdd_mon_select_cbmode(struct hdd_adapter *adapter,
+			   uint8_t operationChannel,
+			   struct ch_params *ch_params)
+{
+	struct hdd_station_ctx *station_ctx =
+			 WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_mon_set_ch_info *ch_info = &station_ctx->ch_info;
+	enum hdd_dot11_mode hdd_dot11_mode;
+	uint8_t ini_dot11_mode =
+			(WLAN_HDD_GET_CTX(adapter))->config->dot11Mode;
+
+	hdd_debug("Dot11Mode is %u", ini_dot11_mode);
+	switch (ini_dot11_mode) {
+	case eHDD_DOT11_MODE_AUTO:
+	case eHDD_DOT11_MODE_11ax:
+	case eHDD_DOT11_MODE_11ax_ONLY:
+		if (sme_is_feature_supported_by_fw(DOT11AX))
+			hdd_dot11_mode = eHDD_DOT11_MODE_11ax;
+		else if (sme_is_feature_supported_by_fw(DOT11AC))
+			hdd_dot11_mode = eHDD_DOT11_MODE_11ac;
+		else
+			hdd_dot11_mode = eHDD_DOT11_MODE_11n;
+		break;
+	case eHDD_DOT11_MODE_11ac:
+	case eHDD_DOT11_MODE_11ac_ONLY:
+		if (sme_is_feature_supported_by_fw(DOT11AC))
+			hdd_dot11_mode = eHDD_DOT11_MODE_11ac;
+		else
+			hdd_dot11_mode = eHDD_DOT11_MODE_11n;
+		break;
+	case eHDD_DOT11_MODE_11n:
+	case eHDD_DOT11_MODE_11n_ONLY:
+		hdd_dot11_mode = eHDD_DOT11_MODE_11n;
+		break;
+	default:
+		hdd_dot11_mode = ini_dot11_mode;
+		break;
+	}
+	ch_info->channel_width = ch_params->ch_width;
+	ch_info->phy_mode =
+		hdd_cfg_xlate_to_csr_phy_mode(hdd_dot11_mode);
+	ch_info->channel = operationChannel;
+	ch_info->cb_mode = ch_params->ch_width;
+	hdd_debug("ch_info width %d, phymode %d channel %d",
+		  ch_info->channel_width, ch_info->phy_mode,
+		  ch_info->channel);
+}
+#else
+static
+void hdd_mon_select_cbmode(struct hdd_adapter *adapter,
+			   uint8_t operationChannel,
+			   struct ch_params *ch_params)
+{
+}
+#endif
+
 /**
  * hdd_select_cbmode() - select channel bonding mode
  * @adapter: Pointer to adapter
@@ -17552,8 +17610,6 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t operationChannel,
 			struct ch_params *ch_params)
 {
-	struct hdd_station_ctx *station_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct hdd_mon_set_ch_info *ch_info = &station_ctx->ch_info;
 	uint8_t sec_ch = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -17573,47 +17629,8 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t operationChannel,
 	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, operationChannel,
 			sec_ch, ch_params);
 
-	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam()) {
-		enum hdd_dot11_mode hdd_dot11_mode;
-		uint8_t iniDot11Mode =
-			(WLAN_HDD_GET_CTX(adapter))->config->dot11Mode;
-
-		hdd_debug("Dot11Mode is %u", iniDot11Mode);
-		switch (iniDot11Mode) {
-		case eHDD_DOT11_MODE_AUTO:
-		case eHDD_DOT11_MODE_11ax:
-		case eHDD_DOT11_MODE_11ax_ONLY:
-			if (sme_is_feature_supported_by_fw(DOT11AX))
-				hdd_dot11_mode = eHDD_DOT11_MODE_11ax;
-			else if (sme_is_feature_supported_by_fw(DOT11AC))
-				hdd_dot11_mode = eHDD_DOT11_MODE_11ac;
-			else
-				hdd_dot11_mode = eHDD_DOT11_MODE_11n;
-			break;
-		case eHDD_DOT11_MODE_11ac:
-		case eHDD_DOT11_MODE_11ac_ONLY:
-			if (sme_is_feature_supported_by_fw(DOT11AC))
-				hdd_dot11_mode = eHDD_DOT11_MODE_11ac;
-			else
-				hdd_dot11_mode = eHDD_DOT11_MODE_11n;
-			break;
-		case eHDD_DOT11_MODE_11n:
-		case eHDD_DOT11_MODE_11n_ONLY:
-			hdd_dot11_mode = eHDD_DOT11_MODE_11n;
-			break;
-		default:
-			hdd_dot11_mode = iniDot11Mode;
-			break;
-		}
-		ch_info->channel_width = ch_params->ch_width;
-		ch_info->phy_mode =
-			hdd_cfg_xlate_to_csr_phy_mode(hdd_dot11_mode);
-		ch_info->channel = operationChannel;
-		ch_info->cb_mode = ch_params->ch_width;
-		hdd_debug("ch_info width %d, phymode %d channel %d",
-			 ch_info->channel_width, ch_info->phy_mode,
-			 ch_info->channel);
-	}
+	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+		hdd_mon_select_cbmode(adapter, operationChannel, ch_params);
 }
 
 /**
@@ -22013,6 +22030,7 @@ int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
 	return 0;
 }
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 /**
  * wlan_hdd_cfg80211_set_mon_ch() - Set monitor mode capture channel
  * @wiphy: Handle to struct wiphy to get handle to module context.
@@ -22117,6 +22135,7 @@ static int wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	cds_ssr_unprotect(__func__);
 	return ret;
 }
+#endif
 
 /**
  * wlan_hdd_clear_link_layer_stats() - clear link layer stats
@@ -22677,7 +22696,9 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 #ifdef CHANNEL_SWITCH_SUPPORTED
 	.channel_switch = wlan_hdd_cfg80211_channel_switch,
 #endif
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 	.set_monitor_channel = wlan_hdd_cfg80211_set_mon_ch,
+#endif
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)) || \
 	defined(CFG80211_ABORT_SCAN)
 	.abort_scan = wlan_hdd_cfg80211_abort_scan,

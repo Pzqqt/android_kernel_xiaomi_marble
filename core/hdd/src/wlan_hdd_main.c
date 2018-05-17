@@ -2133,6 +2133,7 @@ static void hdd_mon_mode_ether_setup(struct net_device *dev)
 	memset(dev->broadcast, 0xFF, ETH_ALEN);
 }
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 /**
  * __hdd__mon_open() - HDD Open function
  * @dev: Pointer to net_device structure
@@ -2201,6 +2202,7 @@ static int hdd_mon_open(struct net_device *dev)
 
 	return ret;
 }
+#endif
 
 static QDF_STATUS
 wlan_hdd_update_dbs_scan_and_fw_mode_config(void)
@@ -3525,6 +3527,7 @@ static const struct net_device_ops wlan_drv_ops = {
 #endif
 };
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 /* Monitor mode net_device_ops, doesnot Tx and most of operations. */
 static const struct net_device_ops wlan_mon_drv_ops = {
 	.ndo_open = hdd_mon_open,
@@ -3544,6 +3547,12 @@ void hdd_set_station_ops(struct net_device *dev)
 	else
 		dev->netdev_ops = &wlan_drv_ops;
 }
+#else
+void hdd_set_station_ops(struct net_device *dev)
+{
+	dev->netdev_ops = &wlan_drv_ops;
+}
+#endif
 
 /**
  * hdd_alloc_station_adapter() - allocate the station hdd adapter
@@ -5875,6 +5884,7 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 }
 #endif
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 				 uint32_t bandwidth)
 {
@@ -5952,6 +5962,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 	adapter->mon_bandwidth = bandwidth;
 	return qdf_status_to_os_return(status);
 }
+#endif
 
 #ifdef MSM_PLATFORM
 /**
@@ -12447,6 +12458,32 @@ static int fwpath_changed_handler(const char *kmessage,
 	return param_set_copystring(kmessage, kp);
 }
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
+static bool is_monitor_mode_supported(void)
+{
+	return true;
+}
+#else
+static bool is_monitor_mode_supported(void)
+{
+	pr_err("Monitor mode not supported!");
+	return false;
+}
+#endif
+
+#ifdef WLAN_FEATURE_EPPING
+static bool is_epping_mode_supported(void)
+{
+	return true;
+}
+#else
+static bool is_epping_mode_supported(void)
+{
+	pr_err("Epping mode not supported!");
+	return false;
+}
+#endif
+
 /**
  * is_con_mode_valid() check con mode is valid or not
  * @mode: global con mode
@@ -12457,8 +12494,10 @@ static bool is_con_mode_valid(enum QDF_GLOBAL_MODE mode)
 {
 	switch (mode) {
 	case QDF_GLOBAL_MONITOR_MODE:
-	case QDF_GLOBAL_FTM_MODE:
+		return is_monitor_mode_supported();
 	case QDF_GLOBAL_EPPING_MODE:
+		return is_epping_mode_supported();
+	case QDF_GLOBAL_FTM_MODE:
 	case QDF_GLOBAL_MISSION_MODE:
 		return true;
 	default:
@@ -12752,6 +12791,7 @@ static int con_mode_handler_ftm(const char *kmessage,
 	return ret;
 }
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 static int con_mode_handler_monitor(const char *kmessage,
 				    const struct kernel_param *kp)
 {
@@ -12769,6 +12809,7 @@ static int con_mode_handler_monitor(const char *kmessage,
 
 	return ret;
 }
+#endif
 
 /**
  * hdd_get_conparam() - driver exit point
@@ -14026,10 +14067,12 @@ static const struct kernel_param_ops con_mode_ftm_ops = {
 	.get = param_get_int,
 };
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 static const struct kernel_param_ops con_mode_monitor_ops = {
 	.set = con_mode_handler_monitor,
 	.get = param_get_int,
 };
+#endif
 
 static const struct kernel_param_ops fwpath_ops = {
 	.set = fwpath_changed_handler,
@@ -14042,8 +14085,10 @@ module_param_cb(con_mode, &con_mode_ops, &con_mode,
 module_param_cb(con_mode_ftm, &con_mode_ftm_ops, &con_mode_ftm,
 		S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 module_param_cb(con_mode_monitor, &con_mode_monitor_ops, &con_mode_monitor,
 		S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+#endif
 
 module_param_cb(fwpath, &fwpath_ops, &fwpath,
 		S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);

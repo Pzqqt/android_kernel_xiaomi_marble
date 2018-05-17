@@ -10126,11 +10126,12 @@ static const struct iw_priv_args we_private_args[] = {
 	 0, "dump_dp_trace"}
 	,
 #endif
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 	{WE_SET_MON_MODE_CHAN,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "setMonChan"}
 	,
-
+#endif
 	{WE_GET_ROAM_SYNCH_DELAY,
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,

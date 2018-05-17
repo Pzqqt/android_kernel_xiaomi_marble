@@ -3176,6 +3176,7 @@ bool hdd_is_cli_iface_up(struct hdd_context *hdd_ctx);
  */
 void hdd_set_disconnect_status(struct hdd_adapter *adapter, bool disconnecting);
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 /**
  * wlan_hdd_set_mon_chan() - Set capture channel on the monitor mode interface.
  * @adapter: Handle to adapter
@@ -3186,6 +3187,14 @@ void hdd_set_disconnect_status(struct hdd_adapter *adapter, bool disconnecting);
  */
 int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 			  uint32_t bandwidth);
+#else
+static inline
+int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
+			  uint32_t bandwidth)
+{
+	return 0;
+}
+#endif
 
 /**
  * hdd_wlan_get_version() - Get version information

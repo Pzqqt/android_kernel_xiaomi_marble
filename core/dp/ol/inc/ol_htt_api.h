@@ -360,9 +360,17 @@ static inline void htt_ipa_uc_detach(struct htt_pdev_t *pdev)
 }
 #endif /* IPA_OFFLOAD */
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 void htt_rx_mon_note_capture_channel(htt_pdev_handle pdev, int mon_ch);
 
 void ol_htt_mon_note_chan(struct cdp_pdev *ppdev, int mon_ch);
+#else
+static inline
+void htt_rx_mon_note_capture_channel(htt_pdev_handle pdev, int mon_ch) {}
+
+static inline
+void ol_htt_mon_note_chan(struct cdp_pdev *ppdev, int mon_ch) {}
+#endif
 
 #if defined(DEBUG_HL_LOGGING) && defined(CONFIG_HL_SUPPORT)
 

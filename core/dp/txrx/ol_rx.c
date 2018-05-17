@@ -1718,6 +1718,7 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 }
 #endif
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 /**
  * ol_htt_mon_note_chan() - Update monitor channel information
  * @pdev:  handle to the physical device
@@ -1731,6 +1732,7 @@ void ol_htt_mon_note_chan(struct cdp_pdev *ppdev, int mon_ch)
 
 	htt_rx_mon_note_capture_channel(pdev->htt_pdev, mon_ch);
 }
+#endif
 
 #ifdef NEVERDEFINED
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -824,11 +824,22 @@ int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num);
  *      list, else operates on a cloned nbuf
  * @return network buffer handle to the MPDU
  */
+#if !defined(QCA6290_HEADERS_DEF) && defined(FEATURE_MONITOR_MODE_SUPPORT)
 qdf_nbuf_t
 htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 				qdf_nbuf_t head_msdu,
 				struct ieee80211_rx_status *rx_status,
 				unsigned clone_not_reqd);
+#else
+static inline qdf_nbuf_t
+htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
+				qdf_nbuf_t head_msdu,
+				struct ieee80211_rx_status *rx_status,
+				unsigned clone_not_reqd)
+{
+	return NULL;
+}
+#endif
 
 /**
  * @brief Return the sequence number of MPDUs to flush.

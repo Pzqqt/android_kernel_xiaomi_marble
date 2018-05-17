@@ -181,7 +181,17 @@ const char *hdd_reason_type_to_string(enum netif_reason_type reason);
 const char *hdd_action_type_to_string(enum netif_action_type action);
 void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 		enum netif_action_type action, enum netif_reason_type reason);
+
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
 int hdd_set_mon_rx_cb(struct net_device *dev);
+#else
+static inline
+int hdd_set_mon_rx_cb(struct net_device *dev)
+{
+	return 0;
+}
+#endif
+
 void hdd_send_rps_ind(struct hdd_adapter *adapter);
 void hdd_send_rps_disable_ind(struct hdd_adapter *adapter);
 void wlan_hdd_classify_pkt(struct sk_buff *skb);

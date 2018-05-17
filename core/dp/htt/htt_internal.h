@@ -896,4 +896,141 @@ void htt_rx_dbg_rxbuf_deinit(struct htt_pdev_t *pdev)
 	return;
 }
 #endif
+
+#ifndef CONFIG_HL_SUPPORT
+
+#ifdef HTT_DEBUG_DATA
+#define HTT_PKT_DUMP(x) x
+#else
+#define HTT_PKT_DUMP(x) /* no-op */
+#endif
+
+#ifdef RX_HASH_DEBUG
+#define HTT_RX_CHECK_MSDU_COUNT(msdu_count) HTT_ASSERT_ALWAYS(msdu_count)
+#else
+#define HTT_RX_CHECK_MSDU_COUNT(msdu_count)     /* no-op */
+#endif
+
+#if HTT_PADDR64
+#define NEXT_FIELD_OFFSET_IN32 2
+#else /* ! HTT_PADDR64 */
+#define NEXT_FIELD_OFFSET_IN32 1
+#endif /* HTT_PADDR64 */
+
+#define RX_PADDR_MAGIC_PATTERN 0xDEAD0000
+
+#if HTT_PADDR64
+static inline qdf_dma_addr_t htt_paddr_trim_to_37(qdf_dma_addr_t paddr)
+{
+	qdf_dma_addr_t ret = paddr;
+
+	if (sizeof(paddr) > 4)
+		ret &= 0x1fffffffff;
+	return ret;
+}
+#else /* not 64 bits */
+static inline qdf_dma_addr_t htt_paddr_trim_to_37(qdf_dma_addr_t paddr)
+{
+	return paddr;
+}
+#endif /* HTT_PADDR64 */
+
+#ifdef ENABLE_DEBUG_ADDRESS_MARKING
+static inline qdf_dma_addr_t
+htt_rx_paddr_unmark_high_bits(qdf_dma_addr_t paddr)
+{
+	uint32_t markings;
+
+	if (sizeof(qdf_dma_addr_t) > 4) {
+		markings = (uint32_t)((paddr >> 16) >> 16);
+		/*
+		 * check if it is marked correctly:
+		 * See the mark_high_bits function above for the expected
+		 * pattern.
+		 * the LS 5 bits are the high bits of physical address
+		 * padded (with 0b0) to 8 bits
+		 */
+		if ((markings & 0xFFFF0000) != RX_PADDR_MAGIC_PATTERN) {
+			qdf_print("%s: paddr not marked correctly: 0x%pK!\n",
+				  __func__, (void *)paddr);
+			HTT_ASSERT_ALWAYS(0);
+		}
+
+		/* clear markings  for further use */
+		paddr = htt_paddr_trim_to_37(paddr);
+	}
+	return paddr;
+}
+
+static inline
+qdf_dma_addr_t htt_rx_in_ord_paddr_get(uint32_t *u32p)
+{
+	qdf_dma_addr_t paddr = 0;
+
+	paddr = (qdf_dma_addr_t)HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p);
+	if (sizeof(qdf_dma_addr_t) > 4) {
+		u32p++;
+		/* 32 bit architectures dont like <<32 */
+		paddr |= (((qdf_dma_addr_t)
+			  HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p))
+			  << 16 << 16);
+	}
+	paddr = htt_rx_paddr_unmark_high_bits(paddr);
+
+	return paddr;
+}
+#else
+#if HTT_PADDR64
+static inline
+qdf_dma_addr_t htt_rx_in_ord_paddr_get(uint32_t *u32p)
+{
+	qdf_dma_addr_t paddr = 0;
+
+	paddr = (qdf_dma_addr_t)HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p);
+	if (sizeof(qdf_dma_addr_t) > 4) {
+		u32p++;
+		/* 32 bit architectures dont like <<32 */
+		paddr |= (((qdf_dma_addr_t)
+			  HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p))
+			  << 16 << 16);
+	}
+	return paddr;
+}
+#else
+static inline
+qdf_dma_addr_t htt_rx_in_ord_paddr_get(uint32_t *u32p)
+{
+	return HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p);
+}
+#endif
+#endif /* ENABLE_DEBUG_ADDRESS_MARKING */
+
+static inline qdf_nbuf_t
+htt_rx_in_order_netbuf_pop(htt_pdev_handle pdev, qdf_dma_addr_t paddr)
+{
+	HTT_ASSERT1(htt_rx_in_order_ring_elems(pdev) != 0);
+	pdev->rx_ring.fill_cnt--;
+	paddr = htt_paddr_trim_to_37(paddr);
+	return htt_rx_hash_list_lookup(pdev, paddr);
+}
+
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
+int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
+					qdf_nbuf_t rx_ind_msg,
+					qdf_nbuf_t *head_msdu,
+					qdf_nbuf_t *tail_msdu,
+					uint32_t *replenish_cnt);
+#else
+static inline
+int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
+					qdf_nbuf_t rx_ind_msg,
+					qdf_nbuf_t *head_msdu,
+					qdf_nbuf_t *tail_msdu,
+					uint32_t *replenish_cnt)
+{
+	return 0;
+}
+#endif
+#endif
+
 #endif /* _HTT_INTERNAL__H_ */
