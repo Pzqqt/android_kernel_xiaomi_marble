@@ -13369,6 +13369,7 @@ enum hdd_external_acs_policy {
 #define CFG_MBO_CAND_RSSI_BTC_THRESHOLD_MIN     (-120)
 #define CFG_MBO_CAND_RSSI_BTC_THRESHOLD_MAX     (0)
 
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 /*
  * <ini>
  * g_enable_packet_filter_bitmap - Enable Packet filters before going into
@@ -13406,7 +13407,7 @@ enum hdd_external_acs_policy {
 #define CFG_ENABLE_PACKET_FILTERS_DEFAULT  (0)
 #define CFG_ENABLE_PACKET_FILTERS_MIN      (0)
 #define CFG_ENABLE_PACKET_FILTERS_MAX      (63)
-
+#endif /* WLAN_FEATURE_PACKET_FILTERING */
 
 /*
  * <ini>
@@ -15047,7 +15048,9 @@ struct hdd_config {
 	int8_t mbo_current_rssi_thres;
 	int8_t mbo_current_rssi_mcc_thres;
 	int8_t mbo_candidate_rssi_btc_thres;
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 	uint8_t packet_filters_bitmap;
+#endif
 	uint8_t enable_phy_reg_retention;
 	uint8_t dfs_beacon_tx_enhanced;
 	uint16_t reduced_beacon_interval;

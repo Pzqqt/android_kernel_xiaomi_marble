@@ -51,7 +51,6 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_object_manager.o \
 		$(HDD_SRC_DIR)/wlan_hdd_oemdata.o \
 		$(HDD_SRC_DIR)/wlan_hdd_p2p.o \
-		$(HDD_SRC_DIR)/wlan_hdd_packet_filter.o \
 		$(HDD_SRC_DIR)/wlan_hdd_power.o \
 		$(HDD_SRC_DIR)/wlan_hdd_regulatory.o \
 		$(HDD_SRC_DIR)/wlan_hdd_request_manager.o \
@@ -148,6 +147,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_NUD_TRACKING), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nud_tracking.o
+endif
+
+ifeq ($(CONFIG_WLAN_FEATURE_PACKET_FILTERING), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_packet_filter.o
 endif
 
 ########### HOST DIAG LOG ###########

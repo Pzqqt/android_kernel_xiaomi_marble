@@ -6227,6 +6227,7 @@ static int drv_cmd_get_linkspeed(struct hdd_adapter *adapter,
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 /**
  * hdd_set_rx_filter() - set RX filter
  * @adapter: Pointer to adapter
@@ -6407,6 +6408,7 @@ static int drv_cmd_rx_filter_add(struct hdd_adapter *adapter,
 {
 	return hdd_driver_rxfilter_command_handler(command, adapter, true);
 }
+#endif /* WLAN_FEATURE_PACKET_FILTERING */
 
 /**
  * hdd_parse_setantennamode_command() - HDD Parse SETANTENNAMODE
@@ -6997,8 +6999,10 @@ static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 #endif
 	{"RSSI",                      drv_cmd_get_rssi, false},
 	{"LINKSPEED",                 drv_cmd_get_linkspeed, false},
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 	{"RXFILTER-REMOVE",           drv_cmd_rx_filter_remove, true},
 	{"RXFILTER-ADD",              drv_cmd_rx_filter_add, true},
+#endif
 	{"SET_FCC_CHANNEL",           drv_cmd_set_fcc_channel, true},
 	{"CHANNEL_SWITCH",            drv_cmd_set_channel_switch, true},
 	{"SETANTENNAMODE",            drv_cmd_set_antenna_mode, true},

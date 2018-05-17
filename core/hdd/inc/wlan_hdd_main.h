@@ -1880,7 +1880,9 @@ struct hdd_context {
 	uint8_t bt_vo_active:1;
 	enum band_info curr_band;
 	bool imps_enabled;
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 	int user_configured_pkt_filter_rules;
+#endif
 	bool is_fils_roaming_supported;
 	QDF_STATUS (*receive_offload_cb)(struct hdd_adapter *,
 					 struct sk_buff *);
