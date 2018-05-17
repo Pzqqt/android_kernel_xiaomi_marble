@@ -74,11 +74,6 @@ enum tx_status {
 	tx_status_peer_del,
 };
 
-#ifdef CONFIG_MCL
-static uint8_t gtx_count;
-static uint8_t grx_count;
-#endif
-
 #define LOGGING_TRACE(level, args ...) \
 	QDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
 
@@ -399,6 +394,28 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 }
 
 /**
+ * nl_srv_bcast_host_logs() - Wrapper to send bcast msgs to host logs mcast grp
+ * @skb: sk buffer pointer
+ *
+ * Sends the bcast message to host logs multicast group with generic nl socket
+ * if CNSS_GENL is enabled. Else, use the legacy netlink socket to send.
+ *
+ * Return: zero on success, error code otherwise
+ */
+#ifdef CNSS_GENL
+static int nl_srv_bcast_host_logs(struct sk_buff *skb)
+{
+	return nl_srv_bcast(skb, CLD80211_MCGRP_HOST_LOGS, ANI_NL_MSG_LOG);
+}
+#else
+static int nl_srv_bcast_host_logs(struct sk_buff *skb)
+{
+	return nl_srv_bcast(skb);
+}
+#endif
+
+#ifndef REMOVE_PKT_LOG
+/**
  * pkt_stats_fill_headers() - This function adds headers to skb
  * @skb: skb to which headers need to be added
  *
@@ -485,24 +502,6 @@ static int nl_srv_bcast_diag(struct sk_buff *skb)
 }
 
 /**
- * nl_srv_bcast_host_logs() - Wrapper to send bcast msgs to host logs mcast grp
- * @skb: sk buffer pointer
- *
- * Sends the bcast message to host logs multicast group with generic nl socket
- * if CNSS_GENL is enabled. Else, use the legacy netlink socket to send.
- *
- * Return: zero on success, error code otherwise
- */
-static int nl_srv_bcast_host_logs(struct sk_buff *skb)
-{
-#ifdef CNSS_GENL
-	return nl_srv_bcast(skb, CLD80211_MCGRP_HOST_LOGS, ANI_NL_MSG_LOG);
-#else
-	return nl_srv_bcast(skb);
-#endif
-}
-
-/**
  * pktlog_send_per_pkt_stats_to_user() - This function is used to send the per
  * packet statistics to the user
  *
@@ -510,7 +509,7 @@ static int nl_srv_bcast_host_logs(struct sk_buff *skb)
  *
  * Return: Success if the message is posted to user
  */
-int pktlog_send_per_pkt_stats_to_user(void)
+static int pktlog_send_per_pkt_stats_to_user(void)
 {
 	int ret = -1;
 	struct pkt_stats_msg *pstats_msg;
@@ -573,6 +572,13 @@ err:
 	return ret;
 
 }
+#else
+static inline
+int pktlog_send_per_pkt_stats_to_user(void)
+{
+	return 0;
+}
+#endif
 
 static int send_filled_buffers_to_user(void)
 {
@@ -1029,6 +1035,12 @@ void wlan_flush_host_logs_for_fatal(void)
 #endif
 }
 
+#ifdef CONFIG_MCL
+#ifndef REMOVE_PKT_LOG
+
+static uint8_t gtx_count;
+static uint8_t grx_count;
+
 /**
  * wlan_get_pkt_stats_free_node() - Get the free node for pkt stats
  *
@@ -1060,9 +1072,7 @@ static int wlan_get_pkt_stats_free_node(void)
 		++gwlan_logging.pkt_stat_drop_cnt;
 		/* print every 64th drop count */
 		if (
-#ifdef CONFIG_MCL
 			cds_is_multicast_logging() &&
-#endif
 			(!(gwlan_logging.pkt_stat_drop_cnt % 0x40))) {
 			pr_err("%s: drop_count = %u\n",
 				__func__, gwlan_logging.pkt_stat_drop_cnt);
@@ -1089,7 +1099,6 @@ static int wlan_get_pkt_stats_free_node(void)
  */
 void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 {
-#ifdef CONFIG_MCL
 	struct ath_pktlog_hdr *pktlog_hdr;
 	struct packet_dump *pkt_stats_dump;
 	int total_stats_len = 0;
@@ -1156,10 +1165,8 @@ void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 		set_bit(HOST_LOG_PER_PKT_STATS, &gwlan_logging.eventFlag);
 		wake_up_interruptible(&gwlan_logging.wait_queue);
 	}
-#endif
 }
 
-#ifdef CONFIG_MCL
 /**
  * driver_hal_status_map() - maps driver to hal
  * status
@@ -1190,7 +1197,6 @@ static void driver_hal_status_map(uint8_t *status)
 		break;
 	}
 }
-
 
 /*
  * send_packetdump() - send packet dump
@@ -1398,5 +1404,6 @@ void wlan_register_txrx_packetdump(void)
 	gtx_count = 0;
 	grx_count = 0;
 }
-#endif
+#endif /* REMOVE_PKT_LOG */
+#endif /* CONFIG_MCL */
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */

@@ -39,17 +39,21 @@ void wlan_logging_set_fw_flush_complete(void);
 void wlan_flush_host_logs_for_fatal(void);
 void wlan_logging_set_active(bool active);
 void wlan_logging_set_log_to_console(bool log_to_console);
-void wlan_deregister_txrx_packetdump(void);
-void wlan_register_txrx_packetdump(void);
 #else
 static inline void wlan_flush_host_logs_for_fatal(void) {}
 static inline void wlan_logging_set_per_pkt_stats(void) {}
 static inline void wlan_logging_set_fw_flush_complete(void) {}
 static inline void wlan_logging_set_active(bool active) {}
 static inline void wlan_logging_set_log_to_console(bool log_to_console) {}
+#endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
+
+#if defined(WLAN_LOGGING_SOCK_SVC_ENABLE) && !defined(REMOVE_PKT_LOG)
+void wlan_deregister_txrx_packetdump(void);
+void wlan_register_txrx_packetdump(void);
+#else
 static inline void wlan_deregister_txrx_packetdump(void) {}
 static inline void wlan_register_txrx_packetdump(void) {}
-#endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
+#endif
 
 #if defined(WLAN_LOGGING_SOCK_SVC_ENABLE) && defined(FEATURE_WLAN_DIAG_SUPPORT)
 void wlan_report_log_completion(uint32_t is_fatal,
@@ -67,7 +71,14 @@ static inline void wlan_report_log_completion(uint32_t is_fatal,
 
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
+#if defined(CONFIG_MCL) && !defined(REMOVE_PKT_LOG)
 void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data);
+#else
+static inline
+void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
+{
+}
+#endif
 
 
 #endif /* WLAN_LOGGING_SOCK_SVC_H */

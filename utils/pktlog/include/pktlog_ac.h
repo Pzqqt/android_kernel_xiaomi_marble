@@ -19,13 +19,13 @@
 #ifndef _PKTLOG_AC_H_
 #define _PKTLOG_AC_H_
 
+#include "hif.h"
 #ifndef REMOVE_PKT_LOG
 #include "ol_if_athvar.h"
 #include "osdep.h"
 #include <wmi_unified.h>
 #include <wmi_unified_api.h>
 #include <wdi_event_api.h>
-#include "hif.h"
 #include <ol_defines.h>
 #include <pktlog_ac_api.h>
 #include <pktlog_ac_fmt.h>
@@ -60,7 +60,6 @@ extern void pktlog_release_buf(struct hif_opaque_softc *scn);
 
 ssize_t pktlog_read_proc_entry(char *buf, size_t nbytes, loff_t *ppos,
 		struct ath_pktlog_info *pl_info, bool *read_complete);
-int pktlog_send_per_pkt_stats_to_user(void);
 A_STATUS wdi_pktlog_unsubscribe(struct cdp_pdev *txrx_pdev, uint32_t log_state);
 
 struct ol_pl_arch_dep_funcs {
@@ -162,27 +161,36 @@ static inline void pktlog_init(struct hif_opaque_softc *scn)
 {
 	return;
 }
-static int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
-			 bool ini, uint8_t user, uint32_t is_iwpriv_command)
+
+static inline int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
+				bool ini, uint8_t user,
+				uint32_t is_iwpriv_command)
 {
 	return 0;
 }
-static int pktlog_setsize(struct hif_opaque_softc *scn, int32_t log_state)
+
+static inline int pktlog_setsize(struct hif_opaque_softc *scn,
+				 int32_t log_state)
 {
 	return 0;
 }
-static int pktlog_clearbuff(struct hif_opaque_softc *scn, bool clear_buff)
+
+static inline int pktlog_clearbuff(struct hif_opaque_softc *scn,
+				   bool clear_buff)
 {
 	return 0;
 }
-static int pktlog_disable(struct hif_opaque_softc *scn)
+
+static inline int pktlog_disable(struct hif_opaque_softc *scn)
 {
 	return 0;
 }
+
 static inline int pktlog_htc_attach(void)
 {
 	return 0;
 }
+
 static inline void pktlog_process_fw_msg(uint32_t *msg_word, uint32_t msg_len)
 { }
 #endif /* REMOVE_PKT_LOG */
