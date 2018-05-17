@@ -283,7 +283,8 @@ static void __wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 {
 	struct hdd_adapter *adapter;
 	struct cfg80211_scan_request *request;
-	struct hdd_context *hdd_ctx;
+	struct scan_req *blocked_scan_req;
+	qdf_list_node_t *node = NULL;
 
 	adapter = container_of(work, struct hdd_adapter, scan_block_work);
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
@@ -291,28 +292,27 @@ static void __wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 		return;
 	}
 
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (0 != wlan_hdd_validate_context(hdd_ctx))
-		return;
+	qdf_mutex_acquire(&adapter->blocked_scan_request_q_lock);
 
-	request = adapter->request;
-	if (request) {
+	while (!qdf_list_empty(&adapter->blocked_scan_request_q)) {
+		qdf_list_remove_front(&adapter->blocked_scan_request_q,
+				      &node);
+		blocked_scan_req = qdf_container_of(node, struct scan_req,
+						    node);
+		request = blocked_scan_req->scan_request;
 		request->n_ssids = 0;
 		request->n_channels = 0;
-
-		hdd_err("##In DFS Master mode. Scan aborted. Null result sent");
-		hdd_cfg80211_scan_done(adapter, request, true);
-		adapter->request = NULL;
+		if (blocked_scan_req->source == NL_SCAN) {
+			hdd_err("Scan aborted. Null result sent");
+			hdd_cfg80211_scan_done(adapter, request, true);
+		} else {
+			hdd_err("Vendor scan aborted. Null result sent");
+			hdd_vendor_scan_callback(adapter, request, true);
+		}
+		qdf_mem_free(blocked_scan_req);
 	}
-	request = adapter->vendor_request;
-	if (request) {
-		request->n_ssids = 0;
-		request->n_channels = 0;
 
-		hdd_err("In DFS Master mode. Scan aborted. Null result sent");
-		hdd_vendor_scan_callback(adapter, request, true);
-		adapter->vendor_request = NULL;
-	}
+	qdf_mutex_release(&adapter->blocked_scan_request_q_lock);
 }
 
 void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
@@ -387,6 +387,43 @@ static int wlan_hdd_update_scan_ies(struct hdd_adapter *adapter,
 	return 0;
 }
 
+static int
+wlan_hdd_enqueue_blocked_scan_request(struct net_device *dev,
+				      struct cfg80211_scan_request *request,
+				      uint8_t source)
+{
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct scan_req *blocked_scan_req =
+		qdf_mem_malloc(sizeof(*blocked_scan_req));
+	int ret = 0;
+
+	if (!blocked_scan_req) {
+		hdd_err("Failed to allocate scan_req");
+		return -EINVAL;
+	}
+
+	blocked_scan_req->dev = dev;
+	blocked_scan_req->scan_request = request;
+	blocked_scan_req->source = source;
+	blocked_scan_req->scan_id = 0;
+
+	qdf_mutex_acquire(&adapter->blocked_scan_request_q_lock);
+	if (qdf_list_size(&adapter->blocked_scan_request_q) <
+		WLAN_MAX_SCAN_COUNT)
+		qdf_list_insert_back(&adapter->blocked_scan_request_q,
+				     &blocked_scan_req->node);
+	else
+		ret = -EINVAL;
+	qdf_mutex_release(&adapter->blocked_scan_request_q_lock);
+
+	if (ret) {
+		hdd_err("Maximum number of block scan request reached!");
+		qdf_mem_free(blocked_scan_req);
+	}
+
+	return ret;
+}
+
 /* Define short name to use in cds_trigger_recovery */
 #define SCAN_FAILURE QDF_SCAN_ATTEMPT_FAILURES
 
@@ -452,10 +489,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 						conn_info.connState) &&
 	    (!hdd_ctx->config->enable_connected_scan)) {
 		hdd_info("enable_connected_scan is false, Aborting scan");
-		if (NL_SCAN == source)
-			adapter->request = request;
-		else
-			adapter->vendor_request = request;
+		if (wlan_hdd_enqueue_blocked_scan_request(dev, request, source))
+			return -EAGAIN;
 		schedule_work(&adapter->scan_block_work);
 		return 0;
 	}
@@ -505,11 +540,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			 * startup.
 			 */
 			hdd_err("##In DFS Master mode. Scan aborted");
-			if (NL_SCAN == source)
-				adapter->request = request;
-			else
-				adapter->vendor_request = request;
-
+			if (wlan_hdd_enqueue_blocked_scan_request(dev, request,
+								  source))
+				return -EAGAIN;
 			schedule_work(&adapter->scan_block_work);
 			return 0;
 		}
@@ -563,10 +596,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if (adapter->device_mode == QDF_SAP_MODE &&
 	   wlan_hdd_sap_skip_scan_check(hdd_ctx, request)) {
 		hdd_debug("sap scan skipped");
-		if (NL_SCAN == source)
-			adapter->request = request;
-		else
-			adapter->vendor_request = request;
+		if (wlan_hdd_enqueue_blocked_scan_request(dev, request, source))
+			return -EAGAIN;
 		schedule_work(&adapter->scan_block_work);
 		return 0;
 	}
