@@ -8294,7 +8294,7 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal mac_ctx, uint8_t frame_type,
 	}
 
 	if (qdf_is_macaddr_broadcast(
-		(struct qdf_mac_addr *) sme_mgmt_frame->frameBuf + 4) &&
+		(struct qdf_mac_addr *)(frame + 4)) &&
 		!session_id) {
 		pe_debug("Broadcast action frame");
 		session_id = SME_SESSION_ID_BROADCAST;
