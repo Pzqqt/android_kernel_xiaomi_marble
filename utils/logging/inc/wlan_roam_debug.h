@@ -99,6 +99,8 @@ enum peer_debug_op {
 #define DEBUG_INVALID_PEER_ID 0xffff
 #define DEBUG_INVALID_VDEV_ID 0xff
 
+#ifdef FEATURE_ROAM_DEBUG
+
 /**
  * wlan_roam_debug_log() - Add a debug log entry to wlan roam debug records
  * @vdev_id: vdev identifier
@@ -122,4 +124,19 @@ void wlan_roam_debug_log(uint8_t vdev_id, uint8_t op,
  * Return: none
  */
 void wlan_roam_debug_dump_table(void);
+
+#else /* FEATURE_ROAM_DEBUG */
+
+static inline void
+wlan_roam_debug_log(uint8_t vdev_id, uint8_t op,
+		    uint16_t peer_id, void *mac_addr,
+		    void *peer_obj, uint32_t arg1, uint32_t arg2)
+{
+}
+
+static inline void wlan_roam_debug_dump_table(void)
+{
+}
+
+#endif /* FEATURE_ROAM_DEBUG */
 #endif /* _WLAN_ROAM_DEBUG_H_ */

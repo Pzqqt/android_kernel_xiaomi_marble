@@ -29,6 +29,7 @@
 #include <wlan_cmn.h>
 #include "wlan_roam_debug.h"
 
+#ifdef FEATURE_ROAM_DEBUG
 /*
  * wlan roam debug log is stored in this global structure. It can be accessed
  * without requiring any psoc or vdev context. It will be accessible in
@@ -206,5 +207,5 @@ void wlan_roam_debug_dump_table(void)
 }
 qdf_export_symbol(global_wlan_roam_debug_table);
 
-
+#endif /* FEATURE_ROAM_DEBUG */
 
