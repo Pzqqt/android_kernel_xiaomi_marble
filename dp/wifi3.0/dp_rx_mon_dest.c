@@ -304,7 +304,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 #endif
 			QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_DEBUG,
-					  "%s: rx_pkt_offset=%d, l2_hdr_offset=%d, msdu_len=%d, addr=%p skb->len %lu",
+					  "%s: rx_pkt_offset=%d, l2_hdr_offset=%d, msdu_len=%d, addr=%pK skb->len %lu",
 					  __func__, rx_pkt_offset, l2_hdr_offset,
 					  msdu_list.msdu_info[i].msdu_len,
 					  qdf_nbuf_data(msdu), qdf_nbuf_len(msdu));
