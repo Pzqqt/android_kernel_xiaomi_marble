@@ -26,6 +26,7 @@
 #ifndef _WLAN_DISA_PRIV_STRUCT_H_
 #define _WLAN_DISA_PRIV_STRUCT_H_
 
+#include <qdf_lock.h>
 #include "wlan_disa_public_struct.h"
 
 /**

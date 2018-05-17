@@ -24,11 +24,8 @@
 #ifndef _TARGET_IF_DISA_H_
 #define _TARGET_IF_DISA_H_
 
-#include "target_if.h"
-#include <wmi_unified_api.h>
-#include <wmi_unified_priv.h>
+#include <wlan_objmgr_psoc_obj.h>
 #include <wmi_unified_param.h>
-#include "wlan_disa_tgt_api.h"
 #include "wlan_disa_obj_mgmt_public_struct.h"
 
 /**
