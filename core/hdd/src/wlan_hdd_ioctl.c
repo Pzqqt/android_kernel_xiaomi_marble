@@ -311,7 +311,7 @@ static int hdd_parse_setrmcactionperiod_command(uint8_t *pValue,
 /* Function header is left blank intentionally */
 static int hdd_parse_setrmcrate_command(uint8_t *pValue,
 					uint32_t *pRate,
-					tTxrateinfoflags *pTxFlags)
+					enum tx_rate_info *pTxFlags)
 {
 	uint8_t *inPtr = pValue;
 	int tempInt;
@@ -354,15 +354,15 @@ static int hdd_parse_setrmcrate_command(uint8_t *pValue,
 	case 36:
 	case 48:
 	case 54:
-		*pTxFlags = eHAL_TX_RATE_LEGACY;
+		*pTxFlags = TX_RATE_LEGACY;
 		*pRate = tempInt * 10;
 		break;
 	case 65:
-		*pTxFlags = eHAL_TX_RATE_HT20;
+		*pTxFlags = TX_RATE_HT20;
 		*pRate = tempInt * 10;
 		break;
 	case 72:
-		*pTxFlags = eHAL_TX_RATE_HT20 | eHAL_TX_RATE_SGI;
+		*pTxFlags = TX_RATE_HT20 | TX_RATE_SGI;
 		*pRate = 722;
 		break;
 	}
@@ -5182,7 +5182,7 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 	int ret = 0;
 	uint8_t *value = command;
 	uint32_t uRate = 0;
-	tTxrateinfoflags txFlags = 0;
+	enum tx_rate_info txFlags = 0;
 	tSirRateUpdateInd rateUpdateParams = {0};
 	int status;
 	struct hdd_config *pConfig = hdd_ctx->config;

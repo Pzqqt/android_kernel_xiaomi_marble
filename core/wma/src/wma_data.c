@@ -741,30 +741,30 @@ void wma_set_bss_rate_flags(struct wma_txrx_node *iface,
 
 	if (add_bss->vhtCapable) {
 		if (add_bss->ch_width == CH_WIDTH_80P80MHZ)
-			iface->rate_flags |= eHAL_TX_RATE_VHT80;
+			iface->rate_flags |= TX_RATE_VHT80;
 		if (add_bss->ch_width == CH_WIDTH_160MHZ)
-			iface->rate_flags |= eHAL_TX_RATE_VHT80;
+			iface->rate_flags |= TX_RATE_VHT80;
 		if (add_bss->ch_width == CH_WIDTH_80MHZ)
-			iface->rate_flags |= eHAL_TX_RATE_VHT80;
+			iface->rate_flags |= TX_RATE_VHT80;
 		else if (add_bss->ch_width)
-			iface->rate_flags |= eHAL_TX_RATE_VHT40;
+			iface->rate_flags |= TX_RATE_VHT40;
 		else
-			iface->rate_flags |= eHAL_TX_RATE_VHT20;
+			iface->rate_flags |= TX_RATE_VHT20;
 	}
 	/* avoid to conflict with htCapable flag */
 	else if (add_bss->htCapable) {
 		if (add_bss->ch_width)
-			iface->rate_flags |= eHAL_TX_RATE_HT40;
+			iface->rate_flags |= TX_RATE_HT40;
 		else
-			iface->rate_flags |= eHAL_TX_RATE_HT20;
+			iface->rate_flags |= TX_RATE_HT20;
 	}
 
 	if (add_bss->staContext.fShortGI20Mhz ||
 	    add_bss->staContext.fShortGI40Mhz)
-		iface->rate_flags |= eHAL_TX_RATE_SGI;
+		iface->rate_flags |= TX_RATE_SGI;
 
 	if (!add_bss->htCapable && !add_bss->vhtCapable)
-		iface->rate_flags = eHAL_TX_RATE_LEGACY;
+		iface->rate_flags = TX_RATE_LEGACY;
 }
 
 /**
@@ -1276,7 +1276,7 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 	}
 	short_gi = intr[vdev_id].config.shortgi;
 	if (short_gi == 0)
-		short_gi = (intr[vdev_id].rate_flags & eHAL_TX_RATE_SGI) ?
+		short_gi = (intr[vdev_id].rate_flags & TX_RATE_SGI) ?
 								 true : false;
 	/* first check if reliable TX mcast rate is used. If not check the bcast
 	 * Then is mcast. Mcast rate is saved in mcastDataRate24GHz
@@ -1285,7 +1285,7 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 		mbpsx10_rate = pRateUpdateParams->reliableMcastDataRate;
 		paramId = WMI_VDEV_PARAM_MCAST_DATA_RATE;
 		if (pRateUpdateParams->
-		    reliableMcastDataRateTxFlag & eHAL_TX_RATE_SGI)
+		    reliableMcastDataRateTxFlag & TX_RATE_SGI)
 			short_gi = 1;   /* upper layer specified short GI */
 	} else if (pRateUpdateParams->bcastDataRate > -1) {
 		mbpsx10_rate = pRateUpdateParams->bcastDataRate;
@@ -1294,7 +1294,7 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 		mbpsx10_rate = pRateUpdateParams->mcastDataRate24GHz;
 		paramId = WMI_VDEV_PARAM_MCAST_DATA_RATE;
 		if (pRateUpdateParams->
-		    mcastDataRate24GHzTxFlag & eHAL_TX_RATE_SGI)
+		    mcastDataRate24GHzTxFlag & TX_RATE_SGI)
 			short_gi = 1;   /* upper layer specified short GI */
 	}
 	WMA_LOGE("%s: dev_id = %d, dev_type = %d, dev_mode = %d,",

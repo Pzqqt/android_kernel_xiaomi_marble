@@ -9947,11 +9947,11 @@ QDF_STATUS sme_send_rate_update_ind(tHalHandle hHal,
 
 	if (rate_upd->mcastDataRate24GHz == HT20_SHORT_GI_MCS7_RATE)
 		rate_upd->mcastDataRate24GHzTxFlag =
-			eHAL_TX_RATE_HT20 | eHAL_TX_RATE_SGI;
+			TX_RATE_HT20 | TX_RATE_SGI;
 	else if (rate_upd->reliableMcastDataRate ==
 		 HT20_SHORT_GI_MCS7_RATE)
 		rate_upd->reliableMcastDataRateTxFlag =
-			eHAL_TX_RATE_HT20 | eHAL_TX_RATE_SGI;
+			TX_RATE_HT20 | TX_RATE_SGI;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {

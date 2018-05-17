@@ -203,9 +203,9 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 		 __func__, maxRate, rate_flags, nss);
 
 	*mcsRateFlag = rate_flags;
-	*mcsRateFlag &= ~eHAL_TX_RATE_SGI;
+	*mcsRateFlag &= ~TX_RATE_SGI;
 	for (index = 0; index < MAX_VHT_MCS_IDX; index++) {
-		if (rate_flags & eHAL_TX_RATE_VHT80) {
+		if (rate_flags & TX_RATE_VHT80) {
 			/* check for vht80 nss1/2 rate set */
 			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
 					vht_mcs_nss1[index].ht80_rate[0],
@@ -215,8 +215,8 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 			if (match_rate)
 				goto rate_found;
 		}
-		if ((rate_flags & eHAL_TX_RATE_VHT40) |
-		    (rate_flags & eHAL_TX_RATE_VHT80)) {
+		if ((rate_flags & TX_RATE_VHT40) |
+		    (rate_flags & TX_RATE_VHT80)) {
 			/* check for vht40 nss1/2 rate set */
 			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
 					vht_mcs_nss1[index].ht40_rate[0],
@@ -224,13 +224,13 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 					vht_mcs_nss2[index].ht40_rate[0],
 					vht_mcs_nss2[index].ht40_rate[1]);
 			if (match_rate) {
-				*mcsRateFlag &= ~eHAL_TX_RATE_VHT80;
+				*mcsRateFlag &= ~TX_RATE_VHT80;
 				goto rate_found;
 			}
 		}
-		if ((rate_flags & eHAL_TX_RATE_VHT20) |
-		    (rate_flags & eHAL_TX_RATE_VHT40) |
-		    (rate_flags & eHAL_TX_RATE_VHT80)) {
+		if ((rate_flags & TX_RATE_VHT20) |
+		    (rate_flags & TX_RATE_VHT40) |
+		    (rate_flags & TX_RATE_VHT80)) {
 			/* check for vht20 nss1/2 rate set */
 			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
 					vht_mcs_nss1[index].ht20_rate[0],
@@ -238,14 +238,14 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 					vht_mcs_nss2[index].ht20_rate[0],
 					vht_mcs_nss2[index].ht20_rate[1]);
 			if (match_rate) {
-				*mcsRateFlag &= ~(eHAL_TX_RATE_VHT80 |
-						eHAL_TX_RATE_VHT40);
+				*mcsRateFlag &= ~(TX_RATE_VHT80 |
+						TX_RATE_VHT40);
 				goto rate_found;
 			}
 		}
 	}
 	for (index = 0; index < MAX_HT_MCS_IDX; index++) {
-		if (rate_flags & eHAL_TX_RATE_HT40) {
+		if (rate_flags & TX_RATE_HT40) {
 			/* check for ht40 nss1/2 rate set */
 			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
 					mcs_nss1[index].ht40_rate[0],
@@ -253,14 +253,14 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 					mcs_nss2[index].ht40_rate[0],
 					mcs_nss2[index].ht40_rate[1]);
 			if (match_rate) {
-				*mcsRateFlag = eHAL_TX_RATE_HT40;
+				*mcsRateFlag = TX_RATE_HT40;
 				if (nss == 2)
 					index += MAX_HT_MCS_IDX;
 				goto rate_found;
 			}
 		}
-		if ((rate_flags & eHAL_TX_RATE_HT20) ||
-			(rate_flags & eHAL_TX_RATE_HT40)) {
+		if ((rate_flags & TX_RATE_HT20) ||
+			(rate_flags & TX_RATE_HT40)) {
 			/* check for ht20 nss1/2 rate set */
 			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
 					mcs_nss1[index].ht20_rate[0],
@@ -268,7 +268,7 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 					mcs_nss2[index].ht20_rate[0],
 					mcs_nss2[index].ht20_rate[1]);
 			if (match_rate) {
-				*mcsRateFlag = eHAL_TX_RATE_HT20;
+				*mcsRateFlag = TX_RATE_HT20;
 				if (nss == 2)
 					index += MAX_HT_MCS_IDX;
 				goto rate_found;
@@ -279,7 +279,7 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 rate_found:
 	/* set SGI flag only if this is SGI rate */
 	if (match_rate && is_sgi == true)
-		*mcsRateFlag |= eHAL_TX_RATE_SGI;
+		*mcsRateFlag |= TX_RATE_SGI;
 
 	WMA_LOGD("%s - match_rate: %d index: %d rate_flag: 0x%x is_sgi: %d",
 		 __func__, match_rate, index, *mcsRateFlag, is_sgi);
@@ -2661,7 +2661,7 @@ static void wma_update_peer_stats(tp_wma_handle wma,
 			}
 
 			classa_stats->tx_rate_flags = node->rate_flags;
-			if (!(node->rate_flags & eHAL_TX_RATE_LEGACY)) {
+			if (!(node->rate_flags & TX_RATE_LEGACY)) {
 				classa_stats->mcs_index =
 					wma_get_mcs_idx(
 						(peer_stats->peer_tx_rate /
@@ -2863,8 +2863,8 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 				link_status |= LINK_SUPPORT_MIMO;
 
 			if (intr[ht_info->vdevid].rate_flags &
-				(eHAL_TX_RATE_VHT20 | eHAL_TX_RATE_VHT40 |
-				eHAL_TX_RATE_VHT80))
+				(TX_RATE_VHT20 | TX_RATE_VHT40 |
+				TX_RATE_VHT80))
 				link_status |= LINK_SUPPORT_VHT;
 
 			wma_post_link_status(

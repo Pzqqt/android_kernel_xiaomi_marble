@@ -1893,17 +1893,29 @@ typedef struct sAniTXFailMonitorInd {
 	void *txFailIndCallback;
 } tAniTXFailMonitorInd, *tpAniTXFailMonitorInd;
 
-typedef enum eTxRateInfo {
-	eHAL_TX_RATE_LEGACY = 0x1,      /* Legacy rates */
-	eHAL_TX_RATE_HT20 = 0x2,        /* HT20 rates */
-	eHAL_TX_RATE_HT40 = 0x4,        /* HT40 rates */
-	eHAL_TX_RATE_SGI = 0x8, /* Rate with Short guard interval */
-	eHAL_TX_RATE_LGI = 0x10,        /* Rate with Long guard interval */
-	eHAL_TX_RATE_VHT20 = 0x20,      /* VHT 20 rates */
-	eHAL_TX_RATE_VHT40 = 0x40,      /* VHT 40 rates */
-	eHAL_TX_RATE_VHT80 = 0x80       /* VHT 80 rates */
-} tTxrateinfoflags;
-
+#ifndef QCA_SUPPORT_CP_STATS
+/**
+ * enum tx_rate_info - tx_rate flags
+ * @TX_RATE_LEGACY: Legacy rates
+ * @TX_RATE_HT20: HT20 rates
+ * @TX_RATE_HT40: HT40 rates
+ * @TX_RATE_SGI: Rate with Short guard interval
+ * @TX_RATE_LGI: Rate with Long guard interval
+ * @TX_RATE_VHT20: VHT 20 rates
+ * @TX_RATE_VHT40: VHT 40 rates
+ * @TX_RATE_VHT80: VHT 80 rates
+ */
+enum tx_rate_info {
+	TX_RATE_LEGACY = 0x1,
+	TX_RATE_HT20 = 0x2,
+	TX_RATE_HT40 = 0x4,
+	TX_RATE_SGI = 0x8,
+	TX_RATE_LGI = 0x10,
+	TX_RATE_VHT20 = 0x20,
+	TX_RATE_VHT40 = 0x40,
+	TX_RATE_VHT80 = 0x80
+};
+#endif
 /**********************PE Statistics end*************************/
 
 typedef struct sSirP2PNoaStart {
@@ -3606,7 +3618,7 @@ typedef struct sSirRateUpdateInd {
 	int32_t ucastDataRate;
 
 	/* TX flag to differentiate between HT20, HT40 etc */
-	tTxrateinfoflags ucastDataRateTxFlag;
+	enum tx_rate_info ucastDataRateTxFlag;
 
 	/*
 	 * 0 implies MCAST RA, positive value implies fixed rate,
@@ -3615,7 +3627,7 @@ typedef struct sSirRateUpdateInd {
 	int32_t reliableMcastDataRate;  /* unit Mbpsx10 */
 
 	/* TX flag to differentiate between HT20, HT40 etc */
-	tTxrateinfoflags reliableMcastDataRateTxFlag;
+	enum tx_rate_info reliableMcastDataRateTxFlag;
 
 	/*
 	 * MCAST(or BCAST) fixed data rate in 2.4 GHz, unit Mbpsx10,
@@ -3624,7 +3636,7 @@ typedef struct sSirRateUpdateInd {
 	uint32_t mcastDataRate24GHz;
 
 	/* TX flag to differentiate between HT20, HT40 etc */
-	tTxrateinfoflags mcastDataRate24GHzTxFlag;
+	enum tx_rate_info mcastDataRate24GHzTxFlag;
 
 	/*
 	 * MCAST(or BCAST) fixed data rate in 5 GHz,
@@ -3633,7 +3645,7 @@ typedef struct sSirRateUpdateInd {
 	uint32_t mcastDataRate5GHz;
 
 	/* TX flag to differentiate between HT20, HT40 etc */
-	tTxrateinfoflags mcastDataRate5GHzTxFlag;
+	enum tx_rate_info mcastDataRate5GHzTxFlag;
 
 } tSirRateUpdateInd, *tpSirRateUpdateInd;
 

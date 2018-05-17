@@ -3119,14 +3119,14 @@ static void hdd_get_max_rate_ht(struct hdd_station_info *stainfo,
 	int mode;
 	int i;
 
-	if (rate_flags & eHAL_TX_RATE_HT40)
+	if (rate_flags & TX_RATE_HT40)
 		mode = 1;
 	else
 		mode = 0;
 
-	if (rate_flags & eHAL_TX_RATE_HT40)
+	if (rate_flags & TX_RATE_HT40)
 		flag |= 1;
-	if (rate_flags & eHAL_TX_RATE_SGI)
+	if (rate_flags & TX_RATE_SGI)
 		flag |= 2;
 
 	supported_mcs_rate = (struct index_data_rate_type *)
@@ -3195,19 +3195,19 @@ static void hdd_get_max_rate_vht(struct hdd_station_info *stainfo,
 		 &supported_vht_mcs_rate_nss1 :
 		 &supported_vht_mcs_rate_nss2);
 
-	if (rate_flags & eHAL_TX_RATE_VHT80)
+	if (rate_flags & TX_RATE_VHT80)
 		mode = 2;
-	else if (rate_flags & eHAL_TX_RATE_VHT40)
+	else if (rate_flags & TX_RATE_VHT40)
 		mode = 1;
 	else
 		mode = 0;
 
 	if (rate_flags &
-	    (eHAL_TX_RATE_VHT20 | eHAL_TX_RATE_VHT40 | eHAL_TX_RATE_VHT80)) {
+	    (TX_RATE_VHT20 | TX_RATE_VHT40 | TX_RATE_VHT80)) {
 		vht_max_mcs =
 			(enum data_rate_11ac_max_mcs)
 			(stainfo->tx_mcs_map & DATA_RATE_11AC_MCS_MASK);
-		if (rate_flags & eHAL_TX_RATE_SGI)
+		if (rate_flags & TX_RATE_SGI)
 			flag |= 1;
 
 		if (vht_max_mcs == DATA_RATE_11AC_MAX_MCS_7) {
@@ -3220,7 +3220,7 @@ static void hdd_get_max_rate_vht(struct hdd_station_info *stainfo,
 			 * - MCS9 is valid for VHT20 when Nss = 3 or Nss = 6
 			 * - MCS9 is not valid for VHT20 when Nss = 1,2,4,5,7,8
 			 */
-			if ((rate_flags & eHAL_TX_RATE_VHT20) &&
+			if ((rate_flags & TX_RATE_VHT20) &&
 			    (nss != 3 && nss != 6))
 				mcsidx = 8;
 			else
@@ -3242,13 +3242,13 @@ static void hdd_get_max_rate_vht(struct hdd_station_info *stainfo,
 				mcsidx = stats->tx_rate.mcs;
 		}
 
-		if (rate_flags & eHAL_TX_RATE_VHT80)
+		if (rate_flags & TX_RATE_VHT80)
 			tmprate =
 		    supported_vht_mcs_rate[mcsidx].supported_VHT80_rate[flag];
-		else if (rate_flags & eHAL_TX_RATE_VHT40)
+		else if (rate_flags & TX_RATE_VHT40)
 			tmprate =
 		    supported_vht_mcs_rate[mcsidx].supported_VHT40_rate[flag];
-		else if (rate_flags & eHAL_TX_RATE_VHT20)
+		else if (rate_flags & TX_RATE_VHT20)
 			tmprate =
 		    supported_vht_mcs_rate[mcsidx].supported_VHT20_rate[flag];
 	}
@@ -3282,17 +3282,17 @@ static void hdd_fill_bw_mcs(struct station_info *sinfo,
 		sinfo->txrate.nss = nss;
 		sinfo->txrate.mcs = mcsidx;
 		sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
-		if (rate_flags & eHAL_TX_RATE_VHT80)
+		if (rate_flags & TX_RATE_VHT80)
 			sinfo->txrate.bw = RATE_INFO_BW_80;
-		else if (rate_flags & eHAL_TX_RATE_VHT40)
+		else if (rate_flags & TX_RATE_VHT40)
 			sinfo->txrate.bw = RATE_INFO_BW_40;
-		else if (rate_flags & eHAL_TX_RATE_VHT20)
+		else if (rate_flags & TX_RATE_VHT20)
 			sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 	} else {
 		sinfo->txrate.mcs = (nss - 1) << 3;
 		sinfo->txrate.mcs |= mcsidx;
 		sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
-		if (rate_flags & eHAL_TX_RATE_HT40)
+		if (rate_flags & TX_RATE_HT40)
 			sinfo->txrate.bw = RATE_INFO_BW_40;
 	}
 }
@@ -3319,17 +3319,17 @@ static void hdd_fill_bw_mcs(struct station_info *sinfo,
 		sinfo->txrate.nss = nss;
 		sinfo->txrate.mcs = mcsidx;
 		sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
-		if (rate_flags & eHAL_TX_RATE_VHT80)
+		if (rate_flags & TX_RATE_VHT80)
 			sinfo->txrate.flags |= RATE_INFO_FLAGS_80_MHZ_WIDTH;
-		else if (rate_flags & eHAL_TX_RATE_VHT40)
+		else if (rate_flags & TX_RATE_VHT40)
 			sinfo->txrate.flags |= RATE_INFO_FLAGS_40_MHZ_WIDTH;
-		else if (rate_flags & eHAL_TX_RATE_VHT20)
+		else if (rate_flags & TX_RATE_VHT20)
 			sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 	} else {
 		sinfo->txrate.mcs = (nss - 1) << 3;
 		sinfo->txrate.mcs |= mcsidx;
 		sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
-		if (rate_flags & eHAL_TX_RATE_HT40)
+		if (rate_flags & TX_RATE_HT40)
 			sinfo->txrate.flags |= RATE_INFO_FLAGS_40_MHZ_WIDTH;
 	}
 }
@@ -3372,21 +3372,21 @@ static void hdd_fill_sinfo_rate_info(struct station_info *sinfo,
 				     uint8_t nss,
 				     uint32_t maxrate)
 {
-	if (rate_flags & eHAL_TX_RATE_LEGACY) {
+	if (rate_flags & TX_RATE_LEGACY) {
 		/* provide to the UI in units of 100kbps */
 		sinfo->txrate.legacy = maxrate;
 	} else {
 		/* must be MCS */
 		if (rate_flags &
-				(eHAL_TX_RATE_VHT80 |
-				 eHAL_TX_RATE_VHT40 |
-				 eHAL_TX_RATE_VHT20))
+				(TX_RATE_VHT80 |
+				 TX_RATE_VHT40 |
+				 TX_RATE_VHT20))
 			hdd_fill_bw_mcs_vht(sinfo, rate_flags, mcsidx, nss);
 
-		if (rate_flags & (eHAL_TX_RATE_HT20 | eHAL_TX_RATE_HT40))
+		if (rate_flags & (TX_RATE_HT20 | TX_RATE_HT40))
 			hdd_fill_bw_mcs(sinfo, rate_flags, mcsidx, nss, false);
 
-		if (rate_flags & eHAL_TX_RATE_SGI) {
+		if (rate_flags & TX_RATE_SGI) {
 			if (!(sinfo->txrate.flags & RATE_INFO_FLAGS_VHT_MCS))
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
 			sinfo->txrate.flags |= RATE_INFO_FLAGS_SHORT_GI;
@@ -3451,7 +3451,7 @@ static void hdd_fill_rate_info(struct station_info *sinfo,
 	/* convert to 100kbps expected in rate table */
 	myrate = stats->tx_rate.rate / 100;
 	rate_flags = stainfo->rate_flags;
-	if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
+	if (!(rate_flags & TX_RATE_LEGACY)) {
 		nss = stainfo->nss;
 		if (eHDD_LINK_SPEED_REPORT_ACTUAL == cfg->reportMaxLinkSpeed) {
 			/* Get current rate flags if report actual */
@@ -3462,7 +3462,7 @@ static void hdd_fill_rate_info(struct station_info *sinfo,
 		}
 
 		if (stats->tx_rate.mcs == INVALID_MCS_IDX)
-			rate_flags = eHAL_TX_RATE_LEGACY;
+			rate_flags = TX_RATE_LEGACY;
 	}
 
 	if (eHDD_LINK_SPEED_REPORT_ACTUAL != cfg->reportMaxLinkSpeed) {
@@ -3503,7 +3503,7 @@ static void hdd_fill_rate_info(struct station_info *sinfo,
 		 * reporting actual speed
 		 */
 		if ((rssidx != 3) &&
-		    !(rate_flags & eHAL_TX_RATE_LEGACY)) {
+		    !(rate_flags & TX_RATE_LEGACY)) {
 			hdd_get_max_rate_vht(stainfo,
 					     stats,
 					     rate_flags,
@@ -3528,7 +3528,7 @@ static void hdd_fill_rate_info(struct station_info *sinfo,
 			if (maxrate < tmprate &&
 			    mcsidx != INVALID_MCS_IDX)
 				maxrate = tmprate;
-		} else if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
+		} else if (!(rate_flags & TX_RATE_LEGACY)) {
 			maxrate = myrate;
 			mcsidx = stats->tx_rate.mcs;
 		}
@@ -3539,7 +3539,7 @@ static void hdd_fill_rate_info(struct station_info *sinfo,
 		 */
 		if ((maxrate < myrate) || (maxrate == 0)) {
 			maxrate = myrate;
-			if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
+			if (!(rate_flags & TX_RATE_LEGACY)) {
 				mcsidx = stats->tx_rate.mcs;
 				/*
 				 * 'IEEE_P802.11ac_2013.pdf' page 325, 326
@@ -3548,7 +3548,7 @@ static void hdd_fill_rate_info(struct station_info *sinfo,
 				 * - MCS9 is not valid for VHT20 when
 				 *   Nss = 1,2,4,5,7,8
 				 */
-				if ((rate_flags & eHAL_TX_RATE_VHT20) &&
+				if ((rate_flags & TX_RATE_VHT20) &&
 				    (mcsidx > 8) &&
 				    (nss != 3 && nss != 6))
 					mcsidx = 8;
@@ -3557,7 +3557,7 @@ static void hdd_fill_rate_info(struct station_info *sinfo,
 	} else {
 		/* report current rate instead of max rate */
 		maxrate = myrate;
-		if (!(rate_flags & eHAL_TX_RATE_LEGACY))
+		if (!(rate_flags & TX_RATE_LEGACY))
 			mcsidx = stats->tx_rate.mcs;
 	}
 
@@ -3640,15 +3640,15 @@ static uint8_t hdd_get_rate_flags_ht(uint32_t rate,
 		 &supported_mcs_rate_nss2);
 
 	if (rate == mcs_rate[mcs].supported_rate[0]) {
-		flags |= eHAL_TX_RATE_HT20;
+		flags |= TX_RATE_HT20;
 	} else if (rate == mcs_rate[mcs].supported_rate[1]) {
-		flags |= eHAL_TX_RATE_HT40;
+		flags |= TX_RATE_HT40;
 	} else if (rate == mcs_rate[mcs].supported_rate[2]) {
-		flags |= eHAL_TX_RATE_HT20;
-		flags |= eHAL_TX_RATE_SGI;
+		flags |= TX_RATE_HT20;
+		flags |= TX_RATE_SGI;
 	} else if (rate == mcs_rate[mcs].supported_rate[3]) {
-		flags |= eHAL_TX_RATE_HT40;
-		flags |= eHAL_TX_RATE_SGI;
+		flags |= TX_RATE_HT40;
+		flags |= TX_RATE_SGI;
 	} else {
 		hdd_err("invalid params rate %d nss %d mcs %d",
 			rate, nss, mcs);
@@ -3680,20 +3680,20 @@ static uint8_t hdd_get_rate_flags_vht(uint32_t rate,
 		 &supported_vht_mcs_rate_nss2);
 
 	if (rate == mcs_rate[mcs].supported_VHT80_rate[0]) {
-		flags |= eHAL_TX_RATE_VHT80;
+		flags |= TX_RATE_VHT80;
 	} else if (rate == mcs_rate[mcs].supported_VHT80_rate[1]) {
-		flags |= eHAL_TX_RATE_VHT80;
-		flags |= eHAL_TX_RATE_SGI;
+		flags |= TX_RATE_VHT80;
+		flags |= TX_RATE_SGI;
 	} else if (rate == mcs_rate[mcs].supported_VHT40_rate[0]) {
-		flags |= eHAL_TX_RATE_VHT40;
+		flags |= TX_RATE_VHT40;
 	} else if (rate == mcs_rate[mcs].supported_VHT40_rate[1]) {
-		flags |= eHAL_TX_RATE_VHT40;
-		flags |= eHAL_TX_RATE_SGI;
+		flags |= TX_RATE_VHT40;
+		flags |= TX_RATE_SGI;
 	} else if (rate == mcs_rate[mcs].supported_VHT20_rate[0]) {
-		flags |= eHAL_TX_RATE_VHT20;
+		flags |= TX_RATE_VHT20;
 	} else if (rate == mcs_rate[mcs].supported_VHT20_rate[1]) {
-		flags |= eHAL_TX_RATE_VHT20;
-		flags |= eHAL_TX_RATE_SGI;
+		flags |= TX_RATE_VHT20;
+		flags |= TX_RATE_SGI;
 	} else {
 		hdd_err("invalid params rate %d nss %d mcs %d",
 			rate, nss, mcs);
@@ -3997,7 +3997,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 
 	/* convert to the UI units of 100kbps */
 	myRate = adapter->hdd_stats.class_a_stat.tx_rate * 5;
-	if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
+	if (!(rate_flags & TX_RATE_LEGACY)) {
 		nss = adapter->hdd_stats.class_a_stat.nss;
 		if ((nss > 1) &&
 		    policy_mgr_is_current_hwmode_dbs(hdd_ctx->hdd_psoc) &&
@@ -4010,7 +4010,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 			/* Get current rate flags if report actual */
 			/* WMA fails to find mcs_index for legacy tx rates */
 			if (mcs_index == INVALID_MCS_IDX && myRate)
-				rate_flags = eHAL_TX_RATE_LEGACY;
+				rate_flags = TX_RATE_LEGACY;
 			else
 				rate_flags =
 				 adapter->hdd_stats.class_a_stat.mcs_rate_flags;
@@ -4116,7 +4116,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 		 * Only if we are connected in non legacy mode and not
 		 * reporting actual speed
 		 */
-		if ((3 != rssidx) && !(rate_flags & eHAL_TX_RATE_LEGACY)) {
+		if ((3 != rssidx) && !(rate_flags & TX_RATE_LEGACY)) {
 			if (0 !=
 			    sme_cfg_get_str(WLAN_HDD_GET_HAL_CTX(adapter),
 					    WNI_CFG_CURRENT_MCS_SET, MCSRates,
@@ -4132,24 +4132,24 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 				  1) ? &supported_vht_mcs_rate_nss1 :
 				 &supported_vht_mcs_rate_nss2);
 
-			if (rate_flags & eHAL_TX_RATE_VHT80)
+			if (rate_flags & TX_RATE_VHT80)
 				mode = 2;
-			else if ((rate_flags & eHAL_TX_RATE_VHT40) ||
-				 (rate_flags & eHAL_TX_RATE_HT40))
+			else if ((rate_flags & TX_RATE_VHT40) ||
+				 (rate_flags & TX_RATE_HT40))
 				mode = 1;
 			else
 				mode = 0;
 
 			/* VHT80 rate has separate rate table */
 			if (rate_flags &
-			    (eHAL_TX_RATE_VHT20 | eHAL_TX_RATE_VHT40 |
-			     eHAL_TX_RATE_VHT80)) {
+			    (TX_RATE_VHT20 | TX_RATE_VHT40 |
+			     TX_RATE_VHT80)) {
 				sme_cfg_get_int(WLAN_HDD_GET_HAL_CTX(adapter),
 						WNI_CFG_VHT_TX_MCS_MAP,
 						&vht_mcs_map);
 				vht_max_mcs = (enum data_rate_11ac_max_mcs)
 					(vht_mcs_map & DATA_RATE_11AC_MCS_MASK);
-				if (rate_flags & eHAL_TX_RATE_SGI)
+				if (rate_flags & TX_RATE_SGI)
 					rateFlag |= 1;
 
 				if (DATA_RATE_11AC_MAX_MCS_7 == vht_max_mcs)
@@ -4169,21 +4169,21 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 					}
 				}
 
-				if (rate_flags & eHAL_TX_RATE_VHT80) {
+				if (rate_flags & TX_RATE_VHT80) {
 					currentRate =
 					  supported_vht_mcs_rate[mcs_index].
 					  supported_VHT80_rate[rateFlag];
 					maxRate =
 					  supported_vht_mcs_rate[maxMCSIdx].
 						supported_VHT80_rate[rateFlag];
-				} else if (rate_flags & eHAL_TX_RATE_VHT40) {
+				} else if (rate_flags & TX_RATE_VHT40) {
 					currentRate =
 					  supported_vht_mcs_rate[mcs_index].
 					  supported_VHT40_rate[rateFlag];
 					maxRate =
 					  supported_vht_mcs_rate[maxMCSIdx].
 						supported_VHT40_rate[rateFlag];
-				} else if (rate_flags & eHAL_TX_RATE_VHT20) {
+				} else if (rate_flags & TX_RATE_VHT20) {
 					currentRate =
 					  supported_vht_mcs_rate[mcs_index].
 					  supported_VHT20_rate[rateFlag];
@@ -4197,9 +4197,9 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 					maxRate = currentRate;
 
 			} else {
-				if (rate_flags & eHAL_TX_RATE_HT40)
+				if (rate_flags & TX_RATE_HT40)
 					rateFlag |= 1;
-				if (rate_flags & eHAL_TX_RATE_SGI)
+				if (rate_flags & TX_RATE_SGI)
 					rateFlag |= 2;
 
 				supported_mcs_rate =
@@ -4246,7 +4246,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 			}
 		}
 
-		else if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
+		else if (!(rate_flags & TX_RATE_LEGACY)) {
 			maxRate = myRate;
 			maxSpeedMCS = 1;
 			maxMCSIdx = mcs_index;
@@ -4254,7 +4254,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 		/* report a value at least as big as current rate */
 		if ((maxRate < myRate) || (0 == maxRate)) {
 			maxRate = myRate;
-			if (rate_flags & eHAL_TX_RATE_LEGACY) {
+			if (rate_flags & TX_RATE_LEGACY) {
 				maxSpeedMCS = 0;
 			} else {
 				maxSpeedMCS = 1;
@@ -4262,7 +4262,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 			}
 		}
 
-		if (rate_flags & eHAL_TX_RATE_LEGACY) {
+		if (rate_flags & TX_RATE_LEGACY) {
 			sinfo->txrate.legacy = maxRate;
 			linkspeed_dbg("Reporting legacy rate %d\n",
 				      sinfo->txrate.legacy);
@@ -4270,22 +4270,22 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 			sinfo->txrate.mcs = maxMCSIdx;
 			sinfo->txrate.nss = nss;
 
-			if (rate_flags & eHAL_TX_RATE_VHT80)
+			if (rate_flags & TX_RATE_VHT80)
 				hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_80);
-			else if (rate_flags & eHAL_TX_RATE_VHT40)
+			else if (rate_flags & TX_RATE_VHT40)
 				hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_40);
 
 			if (rate_flags &
-			    (eHAL_TX_RATE_HT20 | eHAL_TX_RATE_HT40)) {
+			    (TX_RATE_HT20 | TX_RATE_HT40)) {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
-				if (rate_flags & eHAL_TX_RATE_HT40)
+				if (rate_flags & TX_RATE_HT40)
 					hdd_set_rate_bw(&sinfo->txrate,
 							HDD_RATE_BW_40);
 			} else {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 			}
 
-			if (rate_flags & eHAL_TX_RATE_SGI) {
+			if (rate_flags & TX_RATE_SGI) {
 				if (!
 				    (sinfo->txrate.
 				     flags & RATE_INFO_FLAGS_VHT_MCS))
@@ -4299,7 +4299,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 	} else {
 		/* report current rate instead of max rate */
 
-		if (rate_flags & eHAL_TX_RATE_LEGACY) {
+		if (rate_flags & TX_RATE_LEGACY) {
 			/* provide to the UI in units of 100kbps */
 			sinfo->txrate.legacy = myRate;
 			linkspeed_dbg("Reporting actual legacy rate %d\n",
@@ -4309,22 +4309,22 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 			sinfo->txrate.mcs = mcs_index;
 			sinfo->txrate.nss = nss;
 
-			if (rate_flags & eHAL_TX_RATE_VHT80)
+			if (rate_flags & TX_RATE_VHT80)
 				hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_80);
-			else if (rate_flags & eHAL_TX_RATE_VHT40)
+			else if (rate_flags & TX_RATE_VHT40)
 				hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_40);
 
 			if (rate_flags &
-			    (eHAL_TX_RATE_HT20 | eHAL_TX_RATE_HT40)) {
+			    (TX_RATE_HT20 | TX_RATE_HT40)) {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
-				if (rate_flags & eHAL_TX_RATE_HT40)
+				if (rate_flags & TX_RATE_HT40)
 					hdd_set_rate_bw(&sinfo->txrate,
 							HDD_RATE_BW_40);
 			} else {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 			}
 
-			if (rate_flags & eHAL_TX_RATE_SGI) {
+			if (rate_flags & TX_RATE_SGI) {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_SHORT_GI;
 			}
@@ -4349,7 +4349,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 			 HDD_INFO_RX_BYTES   |
 			 HDD_INFO_RX_PACKETS;
 
-	if (rate_flags & eHAL_TX_RATE_LEGACY)
+	if (rate_flags & TX_RATE_LEGACY)
 		hdd_debug("Reporting legacy rate %d pkt cnt tx %d rx %d",
 			sinfo->txrate.legacy, sinfo->tx_packets,
 			sinfo->rx_packets);

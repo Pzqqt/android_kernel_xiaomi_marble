@@ -188,29 +188,29 @@ uint32_t lim_get_max_rate_flags(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds)
 
 	if (!sta_ds->mlmStaContext.htCapability &&
 	    !sta_ds->mlmStaContext.vhtCapability) {
-		rate_flags |= eHAL_TX_RATE_LEGACY;
+		rate_flags |= TX_RATE_LEGACY;
 	} else {
 		if (sta_ds->mlmStaContext.vhtCapability) {
 			if (WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ ==
 				sta_ds->vhtSupportedChannelWidthSet) {
-				rate_flags |= eHAL_TX_RATE_VHT80;
+				rate_flags |= TX_RATE_VHT80;
 			} else if (WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ ==
 					sta_ds->vhtSupportedChannelWidthSet) {
 				if (sta_ds->htSupportedChannelWidthSet)
-					rate_flags |= eHAL_TX_RATE_VHT40;
+					rate_flags |= TX_RATE_VHT40;
 				else
-					rate_flags |= eHAL_TX_RATE_VHT20;
+					rate_flags |= TX_RATE_VHT20;
 			}
 		} else if (sta_ds->mlmStaContext.htCapability) {
 			if (sta_ds->htSupportedChannelWidthSet)
-				rate_flags |= eHAL_TX_RATE_HT40;
+				rate_flags |= TX_RATE_HT40;
 			else
-				rate_flags |= eHAL_TX_RATE_HT20;
+				rate_flags |= TX_RATE_HT20;
 		}
 	}
 
 	if (sta_ds->htShortGI20Mhz || sta_ds->htShortGI40Mhz)
-		rate_flags |= eHAL_TX_RATE_SGI;
+		rate_flags |= TX_RATE_SGI;
 
 	return rate_flags;
 }
