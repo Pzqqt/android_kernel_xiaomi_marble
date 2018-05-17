@@ -1182,7 +1182,12 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 		switch (privcmd->param_id) {
 		case GEN_VDEV_PARAM_AMSDU:
 		case GEN_VDEV_PARAM_AMPDU:
-			if (soc) {
+			if (!soc) {
+				WMA_LOGE("%s:SOC context is NULL", __func__);
+				return;
+			}
+
+			if (privcmd->param_id == GEN_VDEV_PARAM_AMPDU) {
 				ret = cdp_aggr_cfg(soc, vdev,
 						privcmd->param_value, 0);
 				if (ret)
@@ -1191,26 +1196,21 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 				else
 					intr[privcmd->param_vdev_id].config.
 						ampdu = privcmd->param_value;
-				aggr.vdev_id = vid;
-				aggr.tx_aggregation_size =
-					privcmd->param_value;
-				aggr.rx_aggregation_size =
-					privcmd->param_value;
-				if (privcmd->param_id == GEN_VDEV_PARAM_AMSDU)
-					aggr.aggr_type =
-						WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU;
-				else
-					aggr.aggr_type =
-						WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU;
 
-				ret = wma_set_tx_rx_aggregation_size(&aggr);
-				if (QDF_IS_STATUS_ERROR(ret)) {
-					WMA_LOGE("set_aggr_size failed ret %d",
-							ret);
-					return;
-				}
+				aggr.aggr_type =
+					WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU;
 			} else {
-				WMA_LOGE("%s:SOC context is NULL", __func__);
+				aggr.aggr_type =
+					WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU;
+			}
+
+			aggr.vdev_id = vid;
+			aggr.tx_aggregation_size = privcmd->param_value;
+			aggr.rx_aggregation_size = privcmd->param_value;
+
+			ret = wma_set_tx_rx_aggregation_size(&aggr);
+			if (QDF_IS_STATUS_ERROR(ret)) {
+				WMA_LOGE("set_aggr_size failed ret %d", ret);
 				return;
 			}
 			break;
