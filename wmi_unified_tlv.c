@@ -28,7 +28,7 @@
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_public_struct.h"
 #endif
-#ifdef WLAN_PMO_ENABLE
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 #include "wlan_pmo_hw_filter_public_struct.h"
 #endif
 #include <wlan_utility.h>
@@ -13303,7 +13303,7 @@ send_pdev_fips_cmd_tlv(wmi_unified_t wmi_handle,
 	return retval;
 }
 
-#ifdef WLAN_PMO_ENABLE
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 /**
  * send_add_wow_wakeup_event_cmd_tlv() -  Configures wow wakeup events.
  * @wmi_handle: wmi handle
@@ -14685,7 +14685,7 @@ static QDF_STATUS send_config_packet_filter_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* End of WLAN_PMO_ENABLE */
+#endif /* End of WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 /**
  * send_set_ssid_hotlist_cmd_tlv() - Handle an SSID hotlist set request
@@ -21638,7 +21638,7 @@ struct wmi_ops tlv_ops =  {
 	.send_snr_request_cmd = send_snr_request_cmd_tlv,
 	.send_snr_cmd = send_snr_cmd_tlv,
 	.send_link_status_req_cmd = send_link_status_req_cmd_tlv,
-#ifdef WLAN_PMO_ENABLE
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 	.send_add_wow_wakeup_event_cmd = send_add_wow_wakeup_event_cmd_tlv,
 	.send_wow_patterns_to_fw_cmd = send_wow_patterns_to_fw_cmd_tlv,
 	.send_enable_arp_ns_offload_cmd = send_enable_arp_ns_offload_cmd_tlv,
@@ -21666,7 +21666,7 @@ struct wmi_ops tlv_ops =  {
 	.send_enable_disable_packet_filter_cmd =
 		send_enable_disable_packet_filter_cmd_tlv,
 	.send_config_packet_filter_cmd = send_config_packet_filter_cmd_tlv,
-#endif /* End of WLAN_PMO_ENABLE */
+#endif /* End of WLAN_POWER_MANAGEMENT_OFFLOAD */
 #ifdef CONFIG_MCL
 	.send_process_dhcp_ind_cmd = send_process_dhcp_ind_cmd_tlv,
 	.send_get_link_speed_cmd = send_get_link_speed_cmd_tlv,
