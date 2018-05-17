@@ -9002,8 +9002,10 @@ static int tavil_dig_core_power_collapse(struct tavil_priv *tavil,
 		goto unlock_mutex;
 
 	if (tavil->power_active_ref < 0) {
-		dev_dbg(tavil->dev, "%s: power_active_ref is negative\n",
+		dev_dbg(tavil->dev,
+			"%s: power_active_ref is negative, reset it\n",
 			__func__);
+		tavil->power_active_ref = 0;
 		goto unlock_mutex;
 	}
 
