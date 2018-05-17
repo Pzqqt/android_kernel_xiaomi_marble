@@ -1197,6 +1197,39 @@ static bool route_check_fe_id_adm_support(int fe_id)
 	return rc;
 }
 
+/*
+ * msm_pcm_routing_get_pp_ch_cnt:
+ *	Read the processed channel count
+ *
+ * @fe_id: Front end ID
+ * @session_type: Inidicates RX or TX session type
+ */
+int msm_pcm_routing_get_pp_ch_cnt(int fe_id, int session_type)
+{
+	struct msm_pcm_stream_app_type_cfg cfg_data;
+	int be_id = 0, app_type_idx = 0, app_type = 0;
+	int ret;
+
+	memset(&cfg_data, 0, sizeof(cfg_data));
+
+	if (!is_mm_lsm_fe_id(fe_id)) {
+		pr_err("%s: bad MM ID\n", __func__);
+		return -EINVAL;
+	}
+
+	ret = msm_pcm_routing_get_stream_app_type_cfg(fe_id, session_type,
+						      &be_id, &cfg_data);
+	if (ret) {
+		pr_err("%s: cannot get stream app type cfg\n");
+		return ret;
+	}
+
+	app_type = cfg_data.app_type;
+	app_type_idx = msm_pcm_routing_get_lsm_app_type_idx(app_type);
+	return lsm_app_type_cfg[app_type_idx].num_out_channels;
+}
+EXPORT_SYMBOL(msm_pcm_routing_get_pp_ch_cnt);
+
 int msm_pcm_routing_reg_phy_compr_stream(int fe_id, int perf_mode,
 					  int dspst_id, int stream_type,
 					  uint32_t passthr_mode)

@@ -549,4 +549,5 @@ int msm_pcm_routing_get_stream_app_type_cfg(
 int msm_pcm_routing_send_chmix_cfg(int fe_id, int ip_channel_cnt,
 	int op_channel_cnt, int *ch_wght_coeff,
 	int session_type, int stream_type);
+int msm_pcm_routing_get_pp_ch_cnt(int fe_id, int session_type);
 #endif /*_MSM_PCM_H*/
