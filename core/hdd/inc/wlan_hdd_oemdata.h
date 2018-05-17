@@ -177,7 +177,26 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 int iw_get_oem_data_cap(struct net_device *dev, struct iw_request_info *info,
 			union iwreq_data *wrqu, char *extra);
 
+/**
+ * oem_activate_service() - API to register the oem command handler
+ * @hdd_ctx: Pointer to HDD Context
+ *
+ * This API is used to register the handler to receive netlink message
+ * from an OEM application process
+ *
+ * Return: 0 on success and errno on failure
+ */
 int oem_activate_service(struct hdd_context *hdd_ctx);
+
+/**
+ * oem_deactivate_service() - API to unregister the oem command handler
+ *
+ * This API is used to deregister the handler to receive netlink message
+ * from an OEM application process
+ *
+ * Return: 0 on success and errno on failure
+ */
+int oem_deactivate_service(void);
 
 void hdd_send_oem_data_rsp_msg(struct oem_data_rsp *oem_rsp);
 void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
@@ -185,6 +204,11 @@ void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
 				void *hdd_chan_info);
 #else
 static inline int oem_activate_service(struct hdd_context *hdd_ctx)
+{
+	return 0;
+}
+
+static inline int oem_deactivate_service(void)
 {
 	return 0;
 }

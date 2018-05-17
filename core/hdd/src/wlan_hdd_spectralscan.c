@@ -463,20 +463,14 @@ static void spectral_scan_msg_handler(const void *data, int data_len,
 	cds_ssr_unprotect(__func__);
 }
 
-/**
- * spectral_scan_activate_service() - API to register spectral
- * scan cmd handler
- *
- * API to register the spectral scan command handler using new
- * genl infra. Return type is zero to match with legacy
- * prototype
- *
- * Return: 0
- */
-int spectral_scan_activate_service(void)
+void spectral_scan_activate_service(void)
 {
 	register_cld_cmd_cb(WLAN_NL_MSG_SPECTRAL_SCAN,
-				spectral_scan_msg_handler, NULL);
-	return 0;
+			    spectral_scan_msg_handler, NULL);
+}
+
+void spectral_scan_deactivate_service(void)
+{
+	deregister_cld_cmd_cb(WLAN_NL_MSG_SPECTRAL_SCAN);
 }
 #endif

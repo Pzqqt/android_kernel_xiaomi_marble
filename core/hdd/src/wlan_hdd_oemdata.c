@@ -1035,19 +1035,16 @@ static void oem_cmd_handler(const void *data, int data_len, void *ctx, int pid)
 	oem_request_dispatcher(msg_hdr, pid);
 }
 
-/**
- * oem_activate_service() - API to register the oem command handler
- * @hdd_ctx: Pointer to HDD Context
- *
- * This API is used to register the oem app command handler. Argument
- * @adapter is given for prototype compatibility with legacy code.
- *
- * Return: 0
- */
 int oem_activate_service(struct hdd_context *hdd_ctx)
 {
 	p_hdd_ctx = hdd_ctx;
 	register_cld_cmd_cb(WLAN_NL_MSG_OEM, oem_cmd_handler, NULL);
+	return 0;
+}
+
+int oem_deactivate_service(void)
+{
+	deregister_cld_cmd_cb(WLAN_NL_MSG_OEM);
 	return 0;
 }
 #else
@@ -1116,16 +1113,6 @@ static int __oem_msg_callback(struct sk_buff *skb)
 	return ret;
 }
 
-/**
- * oem_activate_service() - Activate oem message handler
- * @hdd_ctx:   pointer to global HDD context
- *
- * This function registers a handler to receive netlink message from
- * an OEM application process.
- *
- * Return: zero on success
- *         On error, error number will be returned.
- */
 int oem_activate_service(struct hdd_context *hdd_ctx)
 {
 	p_hdd_ctx = hdd_ctx;
@@ -1133,5 +1120,12 @@ int oem_activate_service(struct hdd_context *hdd_ctx)
 	/* Register the msg handler for msgs addressed to WLAN_NL_MSG_OEM */
 	return nl_srv_register(WLAN_NL_MSG_OEM, __oem_msg_callback);
 }
+
+int oem_deactivate_service(void)
+{
+	/* Deregister the msg handler for msgs addressed to WLAN_NL_MSG_OEM */
+	return nl_srv_unregister(WLAN_NL_MSG_OEM, __oem_msg_callback);
+}
+
 #endif
 #endif

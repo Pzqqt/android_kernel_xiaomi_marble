@@ -2962,7 +2962,7 @@ static int hdd_activate_wifi_pos(struct hdd_context *hdd_ctx)
 
 static int hdd_deactivate_wifi_pos(void)
 {
-	return 0;
+	return oem_deactivate_service();
 }
 
 static void hdd_populate_wifi_pos_cfg(struct hdd_context *hdd_ctx)
@@ -6640,9 +6640,11 @@ void hdd_unregister_notifiers(struct hdd_context *hdd_ctx)
  */
 static void hdd_exit_netlink_services(struct hdd_context *hdd_ctx)
 {
+	spectral_scan_deactivate_service();
+	cnss_diag_deactivate_service();
 	hdd_close_cesium_nl_sock();
-	hdd_deactivate_wifi_pos();
 	ptt_sock_deactivate_svc();
+	hdd_deactivate_wifi_pos();
 
 	nl_srv_exit();
 }
@@ -6673,11 +6675,7 @@ static int hdd_init_netlink_services(struct hdd_context *hdd_ctx)
 		goto err_nl_srv;
 	}
 
-	ret = ptt_sock_activate_svc();
-	if (ret) {
-		hdd_err("ptt_sock_activate_svc failed: %d", ret);
-		goto err_nl_srv;
-	}
+	ptt_sock_activate_svc();
 
 	ret = hdd_open_cesium_nl_sock();
 	if (ret)
@@ -6689,17 +6687,14 @@ static int hdd_init_netlink_services(struct hdd_context *hdd_ctx)
 		goto err_close_cesium;
 	}
 
-	ret = spectral_scan_activate_service();
-	if (ret) {
-		hdd_err("spectral service initialization failed: %d", ret);
-		goto err_close_cesium;
-	}
+	spectral_scan_activate_service();
 
 	return 0;
 
 err_close_cesium:
 	hdd_close_cesium_nl_sock();
 	ptt_sock_deactivate_svc();
+	hdd_deactivate_wifi_pos();
 err_nl_srv:
 	nl_srv_exit();
 out:
