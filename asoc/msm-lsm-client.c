@@ -2263,6 +2263,77 @@ static int msm_lsm_open(struct snd_pcm_substream *substream)
 	return 0;
 }
 
+static int msm_lsm_send_ch_mix_config(struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct lsm_priv *prtd = runtime->private_data;
+	struct snd_soc_pcm_runtime *rtd;
+	struct lsm_hw_params *in_params;
+	int pp_ch_cnt;
+	int *ch_wght_coeff;
+	int ret = 0, i, idx;
+
+	/*
+	 * The output channels from channel mixer is the input to LSM (stream)
+	 * side and is read from in_params->num_chs.
+	 *
+	 * The input channels to channel mixer are the output channels from
+	 * the device side (routing) and is obtained by reading the
+	 * pp_ch_cnt.
+	 *
+	 * For LSM to be functional, only unity channel mixing is allowed.
+	 */
+
+	in_params = &prtd->lsm_client->in_hw_params;
+	rtd = prtd->substream->private_data;
+	pp_ch_cnt = msm_pcm_routing_get_pp_ch_cnt(rtd->dai_link->id,
+						  SESSION_TYPE_TX);
+	if (pp_ch_cnt < 0 ||
+	    pp_ch_cnt > LSM_V3P0_MAX_NUM_CHANNELS ||
+	     in_params->num_chs > LSM_V3P0_MAX_NUM_CHANNELS) {
+		dev_err(rtd->dev,
+			"%s: invalid ch cnt, pp_ch_cnt %d in_ch_cnt %d\n",
+			__func__, pp_ch_cnt, in_params->num_chs);
+		return -EINVAL;
+	}
+
+	if (!pp_ch_cnt ||
+	    (pp_ch_cnt == in_params->num_chs)) {
+		dev_dbg(rtd->dev,
+			"%s: Skip ch mixing, pp_ch_cnt %d in_ch_cnt %d\n",
+			__func__, pp_ch_cnt, in_params->num_chs);
+		return 0;
+	}
+
+	ch_wght_coeff = kzalloc(in_params->num_chs * pp_ch_cnt * sizeof(int),
+				GFP_KERNEL);
+	if (!ch_wght_coeff)
+		return -ENOMEM;
+
+	/*
+	 * channel weight co-efficients is a m X n array, where
+	 * m = number of input channels to ch mixer (pp_ch_cnt)
+	 * n = number of output channels from ch mixer (in_params->num_chs)
+	 */
+	for (i = 0; i < in_params->num_chs; i++) {
+		idx = (i * pp_ch_cnt) + i;
+		ch_wght_coeff[idx] = 1;
+	}
+
+	ret = msm_pcm_routing_send_chmix_cfg(rtd->dai_link->id,
+					     pp_ch_cnt, in_params->num_chs,
+					     ch_wght_coeff,
+					     SESSION_TYPE_TX, STREAM_TYPE_LSM);
+	if (ret)
+		dev_err(rtd->dev,
+			"%s: Failed to configure channel mixer err %d\n",
+			__func__, ret);
+
+	kfree(ch_wght_coeff);
+
+	return ret;
+}
+
 static int msm_lsm_prepare(struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
@@ -2298,6 +2369,13 @@ static int msm_lsm_prepare(struct snd_pcm_substream *substream)
 			dev_err(rtd->dev,
 				"%s: register phy compr stream failed %d\n",
 					__func__, ret);
+			return ret;
+		}
+
+		ret = msm_lsm_send_ch_mix_config(substream);
+		if (ret) {
+			msm_pcm_routing_dereg_phy_stream(rtd->dai_link->id,
+					SNDRV_PCM_STREAM_CAPTURE);
 			return ret;
 		}
 	}
