@@ -56,6 +56,8 @@
 #define TX_DESC_LOCK_DESTROY(lock)
 #define TX_DESC_LOCK_LOCK(lock)
 #define TX_DESC_LOCK_UNLOCK(lock)
+#define IS_TX_DESC_POOL_STATUS_INACTIVE(pool) \
+	((pool)->status == FLOW_POOL_INACTIVE)
 #define TX_DESC_POOL_MEMBER_CLEAN(_tx_desc_pool)       \
 do {                                                   \
 	(_tx_desc_pool)->elem_size = 0;                \
@@ -71,6 +73,7 @@ do {                                                   \
 #define TX_DESC_LOCK_DESTROY(lock) qdf_spinlock_destroy(lock)
 #define TX_DESC_LOCK_LOCK(lock)    qdf_spin_lock_bh(lock)
 #define TX_DESC_LOCK_UNLOCK(lock)  qdf_spin_unlock_bh(lock)
+#define IS_TX_DESC_POOL_STATUS_INACTIVE(pool) (false)
 #define TX_DESC_POOL_MEMBER_CLEAN(_tx_desc_pool)       \
 do {                                                   \
 	(_tx_desc_pool)->elem_size = 0;                \
@@ -370,6 +373,94 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
 }
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
+
+#ifdef QCA_DP_TX_DESC_ID_CHECK
+/**
+ * dp_tx_is_desc_id_valid() - check is the tx desc id valid
+ *
+ * @soc Handle to DP SoC structure
+ * @tx_desc_id
+ *
+ * Return: true or false
+ */
+static inline bool
+dp_tx_is_desc_id_valid(struct dp_soc *soc, uint32_t tx_desc_id)
+{
+	uint8_t pool_id;
+	uint16_t page_id, offset;
+	struct dp_tx_desc_pool_s *pool;
+
+	pool_id = (tx_desc_id & DP_TX_DESC_ID_POOL_MASK) >>
+			DP_TX_DESC_ID_POOL_OS;
+	/* Pool ID is out of limit */
+	if (pool_id > wlan_cfg_get_num_tx_desc_pool(
+				soc->wlan_cfg_ctx)) {
+		QDF_TRACE(QDF_MODULE_ID_DP,
+			  QDF_TRACE_LEVEL_FATAL,
+			  "%s:Tx Comp pool id %d not valid",
+			  __func__,
+			  pool_id);
+		goto warn_exit;
+	}
+
+	pool = &soc->tx_desc[pool_id];
+	/* the pool is freed */
+	if (IS_TX_DESC_POOL_STATUS_INACTIVE(pool)) {
+		QDF_TRACE(QDF_MODULE_ID_DP,
+			  QDF_TRACE_LEVEL_FATAL,
+			  "%s:the pool %d has been freed",
+			  __func__,
+			  pool_id);
+		goto warn_exit;
+	}
+
+	page_id = (tx_desc_id & DP_TX_DESC_ID_PAGE_MASK) >>
+				DP_TX_DESC_ID_PAGE_OS;
+	/* the page id is out of limit */
+	if (page_id >= pool->desc_pages.num_pages) {
+		QDF_TRACE(QDF_MODULE_ID_DP,
+			  QDF_TRACE_LEVEL_FATAL,
+			  "%s:the page id %d invalid, pool id %d, num_page %d",
+			  __func__,
+			  page_id,
+			  pool_id,
+			  pool->desc_pages.num_pages);
+		goto warn_exit;
+	}
+
+	offset = (tx_desc_id & DP_TX_DESC_ID_OFFSET_MASK) >>
+				DP_TX_DESC_ID_OFFSET_OS;
+	/* the offset is out of limit */
+	if (offset >= pool->desc_pages.num_element_per_page) {
+		QDF_TRACE(QDF_MODULE_ID_DP,
+			  QDF_TRACE_LEVEL_FATAL,
+			  "%s:offset %d invalid, pool%d,num_elem_per_page %d",
+			  __func__,
+			  offset,
+			  pool_id,
+			  pool->desc_pages.num_element_per_page);
+		goto warn_exit;
+	}
+
+	return true;
+
+warn_exit:
+	QDF_TRACE(QDF_MODULE_ID_DP,
+		  QDF_TRACE_LEVEL_FATAL,
+		  "%s:Tx desc id 0x%x not valid",
+		  __func__,
+		  tx_desc_id);
+	qdf_assert_always(0);
+	return false;
+}
+
+#else
+static inline bool
+dp_tx_is_desc_id_valid(struct dp_soc *soc, uint32_t tx_desc_id)
+{
+	return true;
+}
+#endif /* QCA_DP_TX_DESC_ID_CHECK */
 
 /**
  * dp_tx_desc_find() - find dp tx descriptor from cokie

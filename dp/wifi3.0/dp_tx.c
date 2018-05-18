@@ -839,6 +839,10 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_fw_metadata(hal_tx_desc_cached, fw_metadata);
 	hal_tx_desc_set_buf_addr(hal_tx_desc_cached,
 			dma_addr , bm_id, tx_desc->id, type);
+
+	if (!dp_tx_is_desc_id_valid(soc, tx_desc->id))
+		return QDF_STATUS_E_RESOURCES;
+
 	hal_tx_desc_set_buf_length(hal_tx_desc_cached, length);
 	hal_tx_desc_set_buf_offset(hal_tx_desc_cached, tx_desc->pkt_offset);
 	hal_tx_desc_set_encap_type(hal_tx_desc_cached, tx_desc->tx_encap_type);
@@ -2815,16 +2819,8 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 		pool_id = (tx_desc_id & DP_TX_DESC_ID_POOL_MASK) >>
 			DP_TX_DESC_ID_POOL_OS;
 
-		/* Pool ID is out of limit. Error */
-		if (pool_id > wlan_cfg_get_num_tx_desc_pool(
-					soc->wlan_cfg_ctx)) {
-			QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_FATAL,
-					"Tx Comp pool id %d not valid",
-					pool_id);
-
-			qdf_assert_always(0);
-		}
+		if (!dp_tx_is_desc_id_valid(soc, tx_desc_id))
+			continue;
 
 		/* Find Tx descriptor */
 		tx_desc = dp_tx_desc_find(soc, pool_id,
