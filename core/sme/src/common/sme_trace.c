@@ -174,7 +174,6 @@ static uint8_t *sme_trace_get_command_string(uint32_t command)
 		CASE_RETURN_STRING(eSmeCommandEnterUapsd);
 		CASE_RETURN_STRING(eSmeCommandExitUapsd);
 		CASE_RETURN_STRING(eSmeCommandExitWowl);
-		CASE_RETURN_STRING(eSmeCommandEnterStandby);
 		CASE_RETURN_STRING(eSmeQosCommandMask);
 		CASE_RETURN_STRING(eSmeCommandAddTs);
 		CASE_RETURN_STRING(eSmeCommandDelTs);

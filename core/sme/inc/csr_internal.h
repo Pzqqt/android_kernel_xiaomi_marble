@@ -126,7 +126,6 @@ enum csr_roam_reason {
 	eCsrForcedDisassocMICFailure,
 	eCsrHddIssuedReassocToSameAP,
 	eCsrSmeIssuedReassocToSameAP,
-	eCsrSmeIssuedReassocToDiffAP,
 	/* roaming because someone asked us to deauth and stay disassociated. */
 	eCsrForcedDeauth,
 	/* will be issued by Handoff logic to disconect from current AP */

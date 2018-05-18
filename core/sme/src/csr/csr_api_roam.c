@@ -19984,9 +19984,6 @@ static enum wlan_serialization_cmd_type csr_get_roam_cmd_type(
 	case eCsrSmeIssuedReassocToSameAP:
 		cmd_type = WLAN_SER_CMD_SME_ISSUE_REASSOC_SAME_AP;
 		break;
-	case eCsrSmeIssuedReassocToDiffAP:
-		cmd_type = WLAN_SER_CMD_SME_ISSUE_REASSOC_DIFF_AP;
-		break;
 	case eCsrForcedDeauth:
 		cmd_type = WLAN_SER_CMD_FORCE_DEAUTH;
 		break;
@@ -20036,9 +20033,6 @@ enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd)
 		break;
 	case eSmeCommandWmStatusChange:
 		cmd_type = WLAN_SER_CMD_WM_STATUS_CHANGE;
-		break;
-	case eSmeCommandEnterStandby:
-		cmd_type = WLAN_SER_CMD_ENTER_STANDBY;
 		break;
 	case eSmeCommandAddTs:
 		cmd_type = WLAN_SER_CMD_ADDTS;

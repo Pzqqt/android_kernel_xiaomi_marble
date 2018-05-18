@@ -67,7 +67,6 @@ typedef enum eSmeCommandType {
 	eSmeCommandEnterUapsd,
 	eSmeCommandExitUapsd,
 	eSmeCommandExitWowl,
-	eSmeCommandEnterStandby,
 	/* QOS */
 	eSmeQosCommandMask = 0x40000,   /* To identify Qos commands */
 	eSmeCommandAddTs,
