@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,6 +37,29 @@ do {                                                                 \
 #define DP_TX_DESC_SIZE(a) a
 #define DP_TX_DESC_PAGE_DIVIDER(soc, num_desc_per_page, pool_id) {}
 #endif /* DESC_PARTITION */
+
+/**
+ * dp_tx_desc_pool_counter_initialize() - Initialize counters
+ * @tx_desc_pool Handle to DP tx_desc_pool structure
+ * @num_elem Number of descriptor elements per pool
+ *
+ * Return: None
+ */
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+static void
+dp_tx_desc_pool_counter_initialize(struct dp_tx_desc_pool_s *tx_desc_pool,
+				  uint16_t num_elem)
+{
+}
+#else
+static void
+dp_tx_desc_pool_counter_initialize(struct dp_tx_desc_pool_s *tx_desc_pool,
+				  uint16_t num_elem)
+{
+	tx_desc_pool->num_free = num_elem;
+	tx_desc_pool->num_allocated = 0;
+}
+#endif
 
 /**
  * dp_tx_desc_pool_alloc() - Allocate Tx Descriptor pool(s)
@@ -115,6 +138,7 @@ QDF_STATUS dp_tx_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 		count++;
 	}
 
+	dp_tx_desc_pool_counter_initialize(tx_desc_pool, num_elem);
 	TX_DESC_LOCK_CREATE(&tx_desc_pool->lock);
 	return QDF_STATUS_SUCCESS;
 
