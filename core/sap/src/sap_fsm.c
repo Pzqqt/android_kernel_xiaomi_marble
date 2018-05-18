@@ -923,8 +923,10 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 
 	if ((policy_mgr_get_concurrency_mode(mac_ctx->psoc) ==
 		(QDF_STA_MASK | QDF_SAP_MASK)) ||
-	    (policy_mgr_get_concurrency_mode(mac_ctx->psoc) ==
-		(QDF_STA_MASK | QDF_P2P_GO_MASK))) {
+		((sap_context->cc_switch_mode ==
+		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) &&
+		(policy_mgr_get_concurrency_mode(mac_ctx->psoc) ==
+		(QDF_STA_MASK | QDF_P2P_GO_MASK)))) {
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
 		if (sap_context->channel == AUTO_CHANNEL_SELECT)
 			sap_context->dfs_ch_disable = true;
