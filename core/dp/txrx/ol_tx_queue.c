@@ -1788,7 +1788,8 @@ void ol_txrx_vdev_flush(struct cdp_vdev *pvdev)
 		qdf_nbuf_t next =
 			qdf_nbuf_next(vdev->ll_pause.txq.head);
 		qdf_nbuf_set_next(vdev->ll_pause.txq.head, NULL);
-		if (QDF_NBUF_CB_PADDR(vdev->ll_pause.txq.head)) {
+		if (QDF_NBUF_CB_PADDR(vdev->ll_pause.txq.head) &&
+			!qdf_nbuf_ipa_owned_get(vdev->ll_pause.txq.head)) {
 			qdf_nbuf_unmap(vdev->pdev->osdev,
 				       vdev->ll_pause.txq.head,
 				       QDF_DMA_TO_DEVICE);
