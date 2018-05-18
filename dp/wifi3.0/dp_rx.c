@@ -960,6 +960,7 @@ qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 	uint16_t mpdu_len;
 	bool last_nbuf;
 
+	mpdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
 	/*
 	 * this is a case where the complete msdu fits in one single nbuf.
 	 * in this case HW sets both start and end bit and we only need to
@@ -967,8 +968,8 @@ qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 	 */
 	if (qdf_nbuf_is_rx_chfrag_start(nbuf) &&
 					qdf_nbuf_is_rx_chfrag_end(nbuf)) {
-		qdf_nbuf_set_rx_chfrag_start(nbuf, 0);
-		qdf_nbuf_set_rx_chfrag_end(nbuf, 0);
+		qdf_nbuf_set_pktlen(nbuf, mpdu_len + RX_PKT_TLVS_LEN);
+		qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
 		return nbuf;
 	}
 
@@ -991,7 +992,6 @@ qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 	 * nbufs will form the frag_list of the parent nbuf.
 	 */
 	qdf_nbuf_set_rx_chfrag_start(parent, 1);
-	mpdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
 	last_nbuf = dp_rx_adjust_nbuf_len(parent, &mpdu_len);
 
 	/*
@@ -1303,11 +1303,11 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	union dp_rx_desc_list_elem_t *tail[MAX_PDEV_CNT] = { NULL };
 	uint32_t rx_bufs_used = 0, rx_buf_cookie;
 	uint32_t l2_hdr_offset = 0;
-	uint16_t msdu_len;
+	uint16_t msdu_len = 0;
 	uint16_t peer_id;
 	struct dp_peer *peer = NULL;
 	struct dp_vdev *vdev = NULL;
-	uint32_t pkt_len;
+	uint32_t pkt_len = 0;
 	struct hal_rx_mpdu_desc_info mpdu_desc_info = { 0 };
 	struct hal_rx_msdu_desc_info msdu_desc_info = { 0 };
 	enum hal_reo_error_status error;
@@ -1355,8 +1355,28 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	 * them in per vdev queue.
 	 * Process the received pkts in a different per vdev loop.
 	 */
-	while (qdf_likely(quota && (ring_desc =
-				hal_srng_dst_get_next(hal_soc, hal_ring)))) {
+	while (qdf_likely(quota)) {
+		ring_desc = hal_srng_dst_get_next(hal_soc, hal_ring);
+
+		/*
+		 * in case HW has updated hp after we cached the hp
+		 * ring_desc can be NULL even there are entries
+		 * available in the ring. Update the cached_hp
+		 * and reap the buffers available to read complete
+		 * mpdu in one reap
+		 *
+		 * This is needed for RAW mode we have to read all
+		 * msdus corresponding to amsdu in one reap to create
+		 * SG list properly but due to mismatch in cached_hp
+		 * and actual hp sometimes we are unable to read
+		 * complete mpdu in one reap.
+		 */
+		if (qdf_unlikely(!ring_desc)) {
+			hal_srng_access_start_unlocked(hal_soc, hal_ring);
+			ring_desc = hal_srng_dst_get_next(hal_soc, hal_ring);
+			if (!ring_desc)
+				break;
+		}
 
 		error = HAL_RX_ERROR_STATUS_GET(ring_desc);
 		ring_id = hal_srng_ring_id_get(hal_ring);
@@ -1505,6 +1525,11 @@ done:
 
 		DP_HIST_PACKET_COUNT_INC(vdev->pdev->pdev_id);
 		/*
+		 * First IF condition:
+		 * 802.11 Fragmented pkts are reinjected to REO
+		 * HW block as SG pkts and for these pkts we only
+		 * need to pull the RX TLVS header length.
+		 * Second IF condition:
 		 * The below condition happens when an MSDU is spread
 		 * across multiple buffers. This can happen in two cases
 		 * 1. The nbuf size is smaller then the received msdu.
@@ -1520,15 +1545,33 @@ done:
 		 *
 		 * for these scenarios let us create a skb frag_list and
 		 * append these buffers till the last MSDU of the AMSDU
+		 * Third condition:
+		 * This is the most likely case, we receive 802.3 pkts
+		 * decapsulated by HW, here we need to set the pkt length.
 		 */
-		if (qdf_unlikely(vdev->rx_decap_type ==
+		if (qdf_unlikely(qdf_nbuf_get_ext_list(nbuf)))
+			qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
+		else if (qdf_unlikely(vdev->rx_decap_type ==
 				htt_cmn_pkt_type_raw)) {
+			msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
+			nbuf = dp_rx_sg_create(nbuf, rx_tlv_hdr);
 
 			DP_STATS_INC(vdev->pdev, rx_raw_pkts, 1);
-			DP_STATS_INC_PKT(peer, rx.raw, 1, qdf_nbuf_len(nbuf));
+			DP_STATS_INC_PKT(peer, rx.raw, 1,
+					 msdu_len);
 
-			nbuf = dp_rx_sg_create(nbuf, rx_tlv_hdr);
 			next = nbuf->next;
+		} else {
+			l2_hdr_offset =
+				hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
+
+			msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
+			pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
+
+			qdf_nbuf_set_pktlen(nbuf, pkt_len);
+			qdf_nbuf_pull_head(nbuf,
+					   RX_PKT_TLVS_LEN +
+					   l2_hdr_offset);
 		}
 
 		if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer,
@@ -1578,25 +1621,6 @@ done:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			FL("rxhash: flow id toeplitz: 0x%x\n"),
 			hal_rx_msdu_start_toeplitz_get(rx_tlv_hdr));
-
-		/*L2 header offset will not be set in raw mode*/
-		if (qdf_likely(vdev->rx_decap_type !=
-				htt_cmn_pkt_type_raw)) {
-			l2_hdr_offset =
-				hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
-		}
-
-		msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
-		pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
-
-		if (unlikely(qdf_nbuf_get_ext_list(nbuf)))
-			qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
-		else {
-			qdf_nbuf_set_pktlen(nbuf, pkt_len);
-			qdf_nbuf_pull_head(nbuf,
-					RX_PKT_TLVS_LEN +
-					l2_hdr_offset);
-		}
 
 		dp_rx_msdu_stats_update(soc, nbuf, rx_tlv_hdr, peer, ring_id);
 
