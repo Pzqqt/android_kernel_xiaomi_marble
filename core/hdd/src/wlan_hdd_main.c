@@ -134,7 +134,7 @@
 #include "wlan_hdd_apf.h"
 #include "wlan_hdd_twt.h"
 #include "qc_sap_ioctl.h"
-
+#include "wlan_mlme_main.h"
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
 #endif
@@ -12334,6 +12334,7 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
  */
 static void component_init(void)
 {
+	mlme_init();
 	pmo_init();
 	disa_init();
 	ucfg_ocb_init();
@@ -12351,6 +12352,7 @@ static void component_deinit(void)
 	ucfg_ocb_deinit();
 	pmo_deinit();
 	disa_deinit();
+	mlme_deinit();
 }
 
 void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc)

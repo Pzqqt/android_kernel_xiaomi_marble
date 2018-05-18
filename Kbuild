@@ -726,6 +726,14 @@ IPA_OBJS :=	$(IPA_DIR)/dispatcher/src/wlan_ipa_ucfg_api.o \
 		$(IPA_DIR)/core/src/wlan_ipa_rm.o
 endif
 
+
+######## MLME ##############
+MLME_DIR := components/mlme
+MLME_INC := -I$(WLAN_ROOT)/$(MLME_DIR)/core/inc \
+		-I$(WLAN_ROOT)/$(MLME_DIR)/dispatcher/inc
+
+MLME_OBJS :=	$(MLME_DIR)/core/src/wlan_mlme_main.o
+
 ########## CLD TARGET_IF #######
 CLD_TARGET_IF_DIR := components/target_if
 
@@ -1433,6 +1441,7 @@ INCS +=		$(PLD_INC)
 INCS +=		$(OCB_INC)
 
 INCS +=		$(IPA_INC)
+INCS +=		$(MLME_INC)
 
 ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
 INCS +=		$(PKTLOG_INC)
@@ -1509,6 +1518,7 @@ OBJS +=		$(NLINK_OBJS)
 OBJS +=		$(PTT_OBJS)
 OBJS +=		$(UMAC_SER_OBJS)
 OBJS +=		$(PLD_OBJS)
+OBJS +=		$(MLME_OBJS)
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 OBJS +=		$(OCB_OBJS)
