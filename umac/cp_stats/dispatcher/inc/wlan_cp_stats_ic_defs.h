@@ -185,11 +185,79 @@ struct pdev_80211_stats {
 };
 
 /**
+ * struct lmac_pdev_80211_stats - control plane stats at pdev
+ *
+ * the same statistics were earlier maintained with a reference to
+ * ath_stats structure, now the same structure will be
+ * used as interface structure with user space application
+ *
+ * @cs_ast_reset_on_error: resets on error
+ * @cs_ast_hardware: fatal hardware error interrupts
+ * @cs_ast_halresets: HAL resets
+ * @cs_ast_bmiss: beacon miss interrupts
+ * @cs_ast_brssi: beacon rssi threshold interrupts
+ * @cs_ast_tx_fifoerr: management frames transmitted
+ * @cs_ast_tx_filtered: tx failed 'cuz xmit filtered
+ * @cs_ast_tx_noack: tx frames with no ack marked
+ * @cs_ast_tx_shortpre: tx frames with short preamble
+ * @cs_ast_tx_altrate: tx frames with alternate rate
+ * @cs_ast_tx_protect: tx frames with protection
+ * @cs_ast_rx_nobuf: rx setup failed 'cuz no skbuff
+ * @cs_ast_rx_hal_in_progress: rx hal in progress
+ * @cs_ast_rx_num_unknown: rx num unknown
+ * @cs_ast_per_cal: periodic calibration calls
+ * @cs_ast_per_calfai: periodic calibration failed
+ * @cs_ast_per_rfgain: periodic calibration rfgain reset
+ * @cs_ast_ant_defswitch: rx/default antenna switches
+ * @cs_ast_bb_hang: BB hang detected
+ * @cs_ast_mac_hang: MAC hang detected
+ * @cs_ast_wow_wakeups: count of hibernate and standby wakeups
+ * @cs_ast_wow_wakeupsok: count of wakeups thru WoW
+ * @cs_ast_cfend_sched: count of CF-END frames scheduled
+ * @cs_ast_cfend_sent: count of CF-END frames sent
+ * @cs_ast_noise_floor: noise floor
+ */
+
+struct lmac_pdev_80211_stats {
+	uint32_t cs_ast_reset_on_error;
+	uint32_t cs_ast_hardware;
+	uint32_t cs_ast_halresets;
+	uint32_t cs_ast_bmiss;
+	uint32_t cs_ast_brssi;
+	uint32_t cs_ast_tx_fifoerr;
+	uint32_t cs_ast_tx_filtered;
+	uint32_t cs_ast_tx_noack;
+	uint32_t cs_ast_tx_shortpre;
+	uint32_t cs_ast_tx_altrate;
+	uint32_t cs_ast_tx_protect;
+	uint32_t cs_ast_rx_nobuf;
+	uint32_t cs_ast_rx_hal_in_progress;
+	uint32_t cs_ast_rx_num_unknown;
+	uint32_t cs_ast_per_cal;
+	uint32_t cs_ast_per_calfail;
+	uint32_t cs_ast_per_rfgain;
+	uint32_t cs_ast_ant_defswitch;
+	uint32_t cs_ast_bb_hang;
+	uint32_t cs_ast_mac_hang;
+#ifdef ATH_WOW
+	uint32_t cs_ast_wow_wakeups;
+	uint32_t cs_ast_wow_wakeupsok;
+#endif
+#ifdef ATH_SUPPORT_CFEND
+	uint32_t cs_ast_cfend_sched;
+	uint32_t cs_ast_cfend_sent;
+#endif
+	int16_t  cs_ast_noise_floor;
+};
+
+/**
  * struct pdev_ic_cp_stats - control plane stats specific to WIN at pdev
  * @stats: 80211 stats
+ * @lmac_stats: lmac 80211 stats
  */
 struct pdev_ic_cp_stats {
 	struct pdev_80211_stats stats;
+	struct lmac_pdev_80211_stats lmac_stats;
 };
 
 /**

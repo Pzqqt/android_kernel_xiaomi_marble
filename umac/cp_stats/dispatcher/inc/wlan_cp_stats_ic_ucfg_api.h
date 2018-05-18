@@ -148,6 +148,8 @@ UCFG_PDEV_CP_STATS_SET_FUNCS(obss_util);
 		return 0; \
 	}
 
+UCFG_PDEV_CP_STATS_GET_FUNCS(tx_mgmt);
+UCFG_PDEV_CP_STATS_GET_FUNCS(rx_num_mgmt);
 UCFG_PDEV_CP_STATS_GET_FUNCS(ap_stats_tx_cal_enable);
 UCFG_PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt);
 UCFG_PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt_completions);
@@ -164,6 +166,104 @@ static inline void ucfg_pdev_cp_stats_reset(struct wlan_objmgr_pdev *_pdev)
 
 	qdf_mem_zero(pdev_cps->pdev_stats, sizeof(struct pdev_ic_cp_stats));
 }
+
+#define UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(field) \
+	static inline void \
+	ucfg_pdev_lmac_cp_stats_##field##_inc(struct wlan_objmgr_pdev *_pdev, \
+					      uint64_t _val) \
+	{ \
+		struct pdev_cp_stats *_pdev_cs = \
+			wlan_cp_stats_get_pdev_stats_obj(_pdev); \
+		if (_pdev_cs) { \
+			struct pdev_ic_cp_stats *_pdev_ics = \
+						 _pdev_cs->pdev_stats; \
+			if (_pdev_ics) { \
+				_pdev_ics->lmac_stats.cs_##field += _val;\
+			} \
+		} \
+	} \
+	static inline void \
+	ucfg_pdev_lmac_cp_stats_##field##_dec(struct wlan_objmgr_pdev *_pdev, \
+					      uint64_t _val) \
+	{ \
+		struct pdev_cp_stats *_pdev_cs = \
+			wlan_cp_stats_get_pdev_stats_obj(_pdev); \
+		if (_pdev_cs) { \
+			struct pdev_ic_cp_stats *_pdev_ics = \
+						 _pdev_cs->pdev_stats; \
+			if (_pdev_ics) { \
+				_pdev_ics->lmac_stats.cs_##field -= _val;\
+			} \
+		} \
+	} \
+	static inline void \
+	ucfg_pdev_lmac_cp_stats_##field##_update( \
+			struct wlan_objmgr_pdev *_pdev, uint64_t _val) \
+	{ \
+		struct pdev_cp_stats *_pdev_cs = \
+			wlan_cp_stats_get_pdev_stats_obj(_pdev); \
+		if (_pdev_cs) { \
+			struct pdev_ic_cp_stats *_pdev_ics = \
+						 _pdev_cs->pdev_stats; \
+			if (_pdev_ics) { \
+				_pdev_ics->lmac_stats.cs_##field = _val;\
+			} \
+		} \
+	}
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_reset_on_error);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_hardware);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_halresets);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_bmiss);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_brssi);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_tx_fifoerr);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_tx_filtered);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_tx_noack);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_tx_shortpre);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_tx_altrate);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_tx_protect);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_rx_nobuf);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_rx_hal_in_progress);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_rx_num_unknown);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_per_cal);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_per_calfail);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_per_rfgain);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_ant_defswitch);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_bb_hang);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_mac_hang);
+#ifdef ATH_WOW
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_wow_wakeups);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_wow_wakeupsok);
+#endif
+#ifdef ATH_SUPPORT_CFEND
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_cfend_sched);
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_cfend_sent);
+#endif
+UCFG_PDEV_LMAC_CP_STATS_SET_FUNCS(ast_noise_floor);
+
+#define UCFG_PDEV_LMAC_CP_STATS_GET_FUNCS(field) \
+	static inline uint64_t \
+	ucfg_pdev_lmac_cp_stats_##field##_get(struct wlan_objmgr_pdev *_pdev) \
+	{ \
+		struct pdev_cp_stats *_pdev_cs = \
+			wlan_cp_stats_get_pdev_stats_obj(_pdev); \
+		struct pdev_ic_cp_stats *_pdev_ics; \
+		uint64_t stat = 0; \
+		if (_pdev_cs) { \
+			wlan_cp_stats_pdev_obj_lock(_pdev_cs); \
+			_pdev_ics = _pdev_cs->pdev_stats; \
+			if (_pdev_ics) { \
+				stat = _pdev_ics->lmac_stats.cs_##field; \
+			} \
+			wlan_cp_stats_pdev_obj_unlock(_pdev_cs); \
+			return stat; \
+		} \
+		else \
+			return 0; \
+	}
+
+UCFG_PDEV_LMAC_CP_STATS_GET_FUNCS(ast_tx_fifoerr);
+UCFG_PDEV_LMAC_CP_STATS_GET_FUNCS(ast_tx_filtered);
+UCFG_PDEV_LMAC_CP_STATS_GET_FUNCS(ast_noise_floor);
 
 #define UCFG_VDEV_CP_STATS_SET_FUNCS(field) \
 	static inline void \
