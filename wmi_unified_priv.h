@@ -1753,6 +1753,14 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle);
 #endif
 void wmi_non_tlv_attach(wmi_unified_t wmi_handle);
 
+#ifdef FEATURE_WLAN_EXTSCAN
+void wmi_extscan_attach_tlv(struct wmi_unified *wmi_handle);
+#else
+static inline void wmi_extscan_attach_tlv(struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
 /**
  * wmi_align() - provides word aligned parameter
  * @param: parameter to be aligned

@@ -58,6 +58,10 @@
 #include "wmi_unified_twt_api.h"
 #endif
 
+#ifdef FEATURE_WLAN_EXTSCAN
+#include "wmi_unified_extscan_api.h"
+#endif
+
 #ifdef IPA_OFFLOAD
 #include "wlan_ipa_public_struct.h"
 #endif
@@ -804,12 +808,6 @@ QDF_STATUS wmi_unified_set_rssi_monitoring_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_scan_probe_setoui_cmd(void *wmi_hdl,
 			  struct scan_mac_oui *psetoui);
 
-QDF_STATUS wmi_unified_reset_passpoint_network_list_cmd(void *wmi_hdl,
-					struct wifi_passpoint_req_param *req);
-
-QDF_STATUS wmi_unified_set_passpoint_network_list_cmd(void *wmi_hdl,
-					struct wifi_passpoint_req_param *req);
-
 #ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(void *wmi_hdl,
 				wmi_start_scan_cmd_fixed_param *scan_cmd_fp,
@@ -835,37 +833,10 @@ QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_roam_scan_filter_cmd(void *wmi_hdl,
 				struct roam_scan_filter_params *roam_req);
 
-QDF_STATUS wmi_unified_set_epno_network_list_cmd(void *wmi_hdl,
-		struct wifi_enhanched_pno_params *req);
-
 #ifdef IPA_OFFLOAD
 QDF_STATUS  wmi_unified_ipa_offload_control_cmd(void *wmi_hdl,
 		struct ipa_uc_offload_control_params *ipa_offload);
 #endif
-
-QDF_STATUS wmi_unified_extscan_get_capabilities_cmd(void *wmi_hdl,
-			  struct extscan_capabilities_params *pgetcapab);
-
-QDF_STATUS wmi_unified_extscan_get_cached_results_cmd(void *wmi_hdl,
-			  struct extscan_cached_result_params *pcached_results);
-
-
-QDF_STATUS wmi_unified_extscan_stop_change_monitor_cmd(void *wmi_hdl,
-			  struct extscan_capabilities_reset_params *reset_req);
-
-
-QDF_STATUS wmi_unified_extscan_start_change_monitor_cmd(void *wmi_hdl,
-				   struct extscan_set_sig_changereq_params *
-					   psigchange);
-
-QDF_STATUS wmi_unified_extscan_stop_hotlist_monitor_cmd(void *wmi_hdl,
-		  struct extscan_bssid_hotlist_reset_params *photlist_reset);
-
-QDF_STATUS wmi_unified_stop_extscan_cmd(void *wmi_hdl,
-			  struct extscan_stop_req_params *pstopcmd);
-
-QDF_STATUS wmi_unified_start_extscan_cmd(void *wmi_hdl,
-			  struct wifi_scan_cmd_req_params *pstart);
 
 QDF_STATUS wmi_unified_plm_stop_cmd(void *wmi_hdl,
 			  const struct plm_req_params *plm);
@@ -1124,10 +1095,6 @@ QDF_STATUS wmi_unified_roam_scan_offload_rssi_change_cmd(void *wmi_hdl,
  */
 QDF_STATUS wmi_unified_set_per_roam_config(void *wmi_hdl,
 		struct wmi_per_roam_config_req *req_buf);
-
-QDF_STATUS wmi_unified_get_buf_extscan_hotlist_cmd(void *wmi_hdl,
-				   struct ext_scan_setbssi_hotlist_params *
-				   photlist, int *buf_len);
 
 /**
  * wmi_unified_set_active_bpf_mode_cmd() - config active BPF mode in FW
