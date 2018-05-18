@@ -2109,16 +2109,14 @@ QDF_STATUS wlan_crypto_rsnie_check(struct wlan_crypto_params *crypto_params,
 	int32_t w;
 	int n;
 
-	/*
-	 * Check the length once for fixed parts: OUI, type,
-	 * version, mcast cipher, and 2 selector counts.
-	 * Other, variable-length data, must be checked separately.
-	 */
-	RESET_AUTHMODE(crypto_params);
-	SET_AUTHMODE(crypto_params, WLAN_CRYPTO_AUTH_RSNA);
-
-	if (len < 14)
+	/* Check the length once for fixed parts: OUI, type & version */
+	if (len < 2)
 		return QDF_STATUS_E_INVAL;
+
+	/* initialize crypto params */
+	qdf_mem_zero(crypto_params, sizeof(struct wlan_crypto_params));
+
+	SET_AUTHMODE(crypto_params, WLAN_CRYPTO_AUTH_RSNA);
 
 	frm += 2;
 	/* NB: iswapoui already validated the OUI and type */
@@ -2128,52 +2126,128 @@ QDF_STATUS wlan_crypto_rsnie_check(struct wlan_crypto_params *crypto_params,
 
 	frm += 2, len -= 2;
 
+	if (!len) {
+		/* set defaults */
+		/* default group cipher CCMP-128 */
+		SET_MCAST_CIPHER(crypto_params, WLAN_CRYPTO_CIPHER_AES_CCM);
+		/* default ucast cipher CCMP-128 */
+		SET_UCAST_CIPHER(crypto_params, WLAN_CRYPTO_CIPHER_AES_CCM);
+		/* default key mgmt 8021x */
+		SET_KEY_MGMT(crypto_params, WLAN_CRYPTO_KEY_MGMT_IEEE8021X);
+		return QDF_STATUS_SUCCESS;
+	} else if (len < 4) {
+		return QDF_STATUS_E_INVAL;
+	}
+
 	/* multicast/group cipher */
-	RESET_MCAST_CIPHERS(crypto_params);
 	w = wlan_crypto_rsn_suite_to_cipher(frm);
 	if (w < 0)
 		return QDF_STATUS_E_INVAL;
-	SET_MCAST_CIPHER(crypto_params, w);
-	frm += 4, len -= 4;
+	else {
+		SET_MCAST_CIPHER(crypto_params, w);
+		frm += 4, len -= 4;
+	}
+
+	if (crypto_params->mcastcipherset == 0)
+		return QDF_STATUS_E_INVAL;
+
+	if (!len) {
+		/* default ucast cipher CCMP-128 */
+		SET_UCAST_CIPHER(crypto_params, WLAN_CRYPTO_CIPHER_AES_CCM);
+		/* default key mgmt 8021x */
+		SET_KEY_MGMT(crypto_params, WLAN_CRYPTO_KEY_MGMT_IEEE8021X);
+		return QDF_STATUS_SUCCESS;
+	} else if (len < 2) {
+		return QDF_STATUS_E_INVAL;
+	}
 
 	/* unicast ciphers */
 	n = LE_READ_2(frm);
 	frm += 2, len -= 2;
-	if (len < n*4+2)
-		return QDF_STATUS_E_INVAL;
-
-	RESET_UCAST_CIPHERS(crypto_params);
-	for (; n > 0; n--) {
-		w = wlan_crypto_rsn_suite_to_cipher(frm);
-		if (w < 0)
+	if (n) {
+		if (len < n * 4)
 			return QDF_STATUS_E_INVAL;
-		SET_UCAST_CIPHER(crypto_params, w);
-		frm += 4, len -= 4;
+
+		for (; n > 0; n--) {
+			w = wlan_crypto_rsn_suite_to_cipher(frm);
+			if (w < 0)
+				return QDF_STATUS_E_INVAL;
+			SET_UCAST_CIPHER(crypto_params, w);
+			frm += 4, len -= 4;
+		}
+	} else {
+		/* default ucast cipher CCMP-128 */
+		SET_UCAST_CIPHER(crypto_params, WLAN_CRYPTO_CIPHER_AES_CCM);
 	}
 
 	if (crypto_params->ucastcipherset == 0)
 		return QDF_STATUS_E_INVAL;
 
+	if (!len) {
+		/* default key mgmt 8021x */
+		SET_KEY_MGMT(crypto_params, WLAN_CRYPTO_KEY_MGMT_IEEE8021X);
+		return QDF_STATUS_SUCCESS;
+	} else if (len < 2) {
+		return QDF_STATUS_E_INVAL;
+	}
+
 	/* key management algorithms */
 	n = LE_READ_2(frm);
 	frm += 2, len -= 2;
-	if (len < n*4)
-		return QDF_STATUS_E_INVAL;
-	w = 0;
 
-	RESET_KEY_MGMT(crypto_params);
-	for (; n > 0; n--) {
-		w = wlan_crypto_rsn_suite_to_keymgmt(frm);
-		if (w < 0)
+	if (n) {
+		if (len < n * 4)
 			return QDF_STATUS_E_INVAL;
-		SET_KEY_MGMT(crypto_params, (1 << w));
-		frm += 4, len -= 4;
+
+		for (; n > 0; n--) {
+			w = wlan_crypto_rsn_suite_to_keymgmt(frm);
+			if (w < 0)
+				return QDF_STATUS_E_INVAL;
+			SET_KEY_MGMT(crypto_params, w);
+			frm += 4, len -= 4;
+		}
+	} else {
+		/* default key mgmt 8021x */
+		SET_KEY_MGMT(crypto_params, WLAN_CRYPTO_KEY_MGMT_IEEE8021X);
 	}
+
+	if (crypto_params->key_mgmt == 0)
+		return QDF_STATUS_E_INVAL;
 
 	/* optional capabilities */
 	if (len >= 2) {
 		crypto_params->rsn_caps = LE_READ_2(frm);
 		frm += 2, len -= 2;
+	} else if (len && len < 2) {
+		return QDF_STATUS_E_INVAL;
+	}
+
+
+	/* PMKID */
+	if (len >= 2) {
+		n = LE_READ_2(frm);
+		frm += 2, len -= 2;
+		if (n && len) {
+			if (len >= n * PMKID_LEN)
+				frm += (n * PMKID_LEN), len -= (n * PMKID_LEN);
+			else
+				return QDF_STATUS_E_INVAL;
+		} else if (n && !len) {
+			return QDF_STATUS_E_INVAL;
+		}
+		/*TODO: Save pmkid in params for further reference */
+	}
+
+	/* BIP */
+	if (!len &&
+	    (crypto_params->rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)) {
+		/* when no BIP mentioned and MFP capable use CMAC as default*/
+		SET_MGMT_CIPHER(crypto_params, WLAN_CRYPTO_CIPHER_AES_CMAC);
+		return QDF_STATUS_SUCCESS;
+	} else if (len >= 4) {
+		w = wlan_crypto_rsn_suite_to_cipher(frm);
+		frm += 4, len -= 4;
+		SET_MGMT_CIPHER(crypto_params, w);
 	}
 
 	return QDF_STATUS_SUCCESS;
