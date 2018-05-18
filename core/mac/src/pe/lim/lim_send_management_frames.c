@@ -3739,6 +3739,8 @@ static QDF_STATUS lim_oper_chan_change_confirm_tx_complete_cnf(
 			void *params)
 {
 	pe_debug("tx_complete: %d", tx_complete);
+	if (buf)
+		qdf_nbuf_free(buf);
 	return QDF_STATUS_SUCCESS;
 }
 
