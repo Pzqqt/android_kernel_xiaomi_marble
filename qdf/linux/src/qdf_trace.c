@@ -555,10 +555,10 @@ qdf_export_symbol(qdf_trace_spin_lock_init);
  *
  * Return: None
  */
-void qdf_trace_register(QDF_MODULE_ID module_iD,
+void qdf_trace_register(QDF_MODULE_ID module_id,
 			tp_qdf_trace_cb qdf_trace_callback)
 {
-	qdf_trace_cb_table[module_iD] = qdf_trace_callback;
+	qdf_trace_cb_table[module_id] = qdf_trace_callback;
 }
 qdf_export_symbol(qdf_trace_register);
 
