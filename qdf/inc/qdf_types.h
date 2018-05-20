@@ -538,9 +538,6 @@ enum QDF_OPMODE {
 	QDF_MAX_NO_OF_MODE
 };
 
-/* for backward compatibility with the legacy definition */
-#define tQDF_ADAPTER_MODE QDF_OPMODE
-
 /**
  * enum QDF_GLOBAL_MODE - global mode when driver is loaded.
  *
@@ -563,11 +560,7 @@ enum QDF_GLOBAL_MODE {
 	QDF_GLOBAL_MAX_MODE
 };
 
-/* for backward compatibility with the legacy definition */
-#define tQDF_GLOBAL_CON_MODE QDF_GLOBAL_MODE
-
 #define  QDF_IS_EPPING_ENABLED(mode) (mode == QDF_GLOBAL_EPPING_MODE)
-
 
 /**
  * qdf_trace_msg()- logging API
