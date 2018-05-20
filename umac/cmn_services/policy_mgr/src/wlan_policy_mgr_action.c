@@ -362,7 +362,7 @@ static bool policy_mgr_is_dbs_allowed_for_concurrency(
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t count, dbs_for_sta_sta, dbs_for_sta_p2p;
-	enum tQDF_ADAPTER_MODE new_conn_mode = QDF_MAX_NO_OF_MODE;
+	enum QDF_OPMODE new_conn_mode = QDF_MAX_NO_OF_MODE;
 	bool ret = true;
 
 	pm_ctx = policy_mgr_get_context(psoc);
