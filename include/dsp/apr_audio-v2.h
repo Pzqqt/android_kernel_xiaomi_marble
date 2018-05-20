@@ -1341,6 +1341,7 @@ struct adm_cmd_connect_afe_port_v5 {
 #define INT_FM_TX 0x3005
 #define RT_PROXY_PORT_001_RX	0x2000
 #define RT_PROXY_PORT_001_TX	0x2001
+#define AFE_LOOPBACK_TX	0x6001
 #define DISPLAY_PORT_RX	0x6020
 
 #define AFE_PORT_INVALID 0xFFFF
