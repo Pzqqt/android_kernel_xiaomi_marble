@@ -6235,7 +6235,7 @@ struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
 	return NULL;
 }
 
-enum tQDF_ADAPTER_MODE hdd_get_device_mode(uint32_t session_id)
+enum QDF_OPMODE hdd_get_device_mode(uint32_t session_id)
 {
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter;

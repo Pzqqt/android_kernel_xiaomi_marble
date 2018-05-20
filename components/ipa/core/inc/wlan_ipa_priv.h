@@ -303,7 +303,7 @@ struct wlan_ipa_iface_context {
 
 	uint8_t iface_id;       /* This iface ID */
 	qdf_netdev_t dev;
-	enum tQDF_ADAPTER_MODE device_mode;
+	enum QDF_OPMODE device_mode;
 	uint8_t sta_id;         /* This iface station ID */
 	uint8_t session_id;
 	qdf_spinlock_t interface_lock;
