@@ -10632,7 +10632,7 @@ __wlan_hdd_cfg80211_avoid_freq(struct wiphy *wiphy,
 	uint16_t *local_unsafe_list;
 	uint16_t unsafe_channel_index, local_unsafe_list_count;
 	struct ch_avoid_ind_type *channel_list;
-	enum tQDF_GLOBAL_CON_MODE curr_mode;
+	enum QDF_GLOBAL_MODE curr_mode;
 
 	hdd_enter_dev(wdev->netdev);
 
