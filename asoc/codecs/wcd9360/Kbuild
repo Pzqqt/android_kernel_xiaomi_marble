@@ -21,7 +21,7 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sm8150autoconf.h
 	endif
-	ifeq ($(CONFIG_ARCH_SDM640), y)
+	ifeq ($(CONFIG_ARCH_SM6150), y)
 		include $(AUDIO_ROOT)/config/sm8150auto.conf
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sm8150autoconf.h
