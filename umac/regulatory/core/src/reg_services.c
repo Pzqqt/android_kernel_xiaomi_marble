@@ -4111,8 +4111,7 @@ static QDF_STATUS reg_process_ch_avoid_freq(struct wlan_objmgr_psoc *psoc,
 		psoc_priv_obj->unsafe_chan_list.ch_cnt);
 
 	if (!psoc_priv_obj->unsafe_chan_list.ch_cnt) {
-		reg_warn("No valid ch are present in avoid freq event");
-		psoc_priv_obj->ch_avoid_ind = false;
+		reg_debug("No valid ch are present in avoid freq event");
 		return QDF_STATUS_SUCCESS;
 	}
 
