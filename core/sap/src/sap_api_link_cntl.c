@@ -317,7 +317,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
 	* Now do
 	* 1. Get scan results
 	* 2. Run channel selection algorithm
-	* select channel and store in pSapContext->Channel
+	* select channel and store in sap_context->Channel
 	*/
 	scan_get_result_status = sme_scan_get_result(hal_handle,
 					sap_ctx->sessionId,
@@ -660,29 +660,29 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 
 	/* Issue channel change req for each sapctx */
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-		struct sap_context *pSapContext;
+		struct sap_context *sap_context;
 
 		if (!((QDF_SAP_MODE == mac_ctx->sap.sapCtxList[intf].sapPersona)
-		    && (mac_ctx->sap.sapCtxList[intf].pSapContext != NULL)))
+		    && (mac_ctx->sap.sapCtxList[intf].sap_context != NULL)))
 			continue;
-		pSapContext = mac_ctx->sap.sapCtxList[intf].pSapContext;
+		sap_context = mac_ctx->sap.sapCtxList[intf].sap_context;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 			  FL("sapdfs:issue chnl change for sapctx[%pK]"),
-			  pSapContext);
+			  sap_context);
 		/* Send channel switch request */
 		sap_event.event = eWNI_SME_CHANNEL_CHANGE_REQ;
 		sap_event.params = 0;
 		sap_event.u1 = 0;
 		sap_event.u2 = 0;
 		/* Handle event */
-		qdf_status = sap_fsm(pSapContext, &sap_event);
+		qdf_status = sap_fsm(sap_context, &sap_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  FL("post chnl chng req failed, sap[%pK]"),
 				  sap_ctx);
 			*ret_status = QDF_STATUS_E_FAILURE;
 		} else {
-			pSapContext->is_sap_ready_for_chnl_chng = false;
+			sap_context->is_sap_ready_for_chnl_chng = false;
 		}
 	}
 	return;
@@ -871,21 +871,21 @@ static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
 
 	/* Issue stopbss for each sapctx */
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-		struct sap_context *pSapContext;
+		struct sap_context *sap_context;
 
 		if (((QDF_SAP_MODE ==
 		    mac_ctx->sap.sapCtxList[intf].sapPersona) ||
 		    (QDF_P2P_GO_MODE ==
 		    mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
-		    mac_ctx->sap.sapCtxList[intf].pSapContext !=
+		    mac_ctx->sap.sapCtxList[intf].sap_context !=
 		    NULL) {
-			pSapContext =
-			    mac_ctx->sap.sapCtxList[intf].pSapContext;
+			sap_context =
+			    mac_ctx->sap.sapCtxList[intf].sap_context;
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				  QDF_TRACE_LEVEL_ERROR,
 				  FL("sapdfs: no available channel for sapctx[%pK], StopBss"),
-				  pSapContext);
-			wlansap_stop_bss(pSapContext);
+				  sap_context);
+			wlansap_stop_bss(sap_context);
 		}
 	}
 }
@@ -1055,18 +1055,18 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 		}
 		/* Issue stopbss for each sapctx */
 		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-			struct sap_context *pSapContext;
+			struct sap_context *sap_context;
 			struct csr_roam_profile *profile;
 
 			if (((QDF_SAP_MODE ==
 			    mac_ctx->sap.sapCtxList[intf].sapPersona) ||
 			    (QDF_P2P_GO_MODE ==
 			    mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
-			    mac_ctx->sap.sapCtxList[intf].pSapContext !=
+			    mac_ctx->sap.sapCtxList[intf].sap_context !=
 			    NULL) {
-				pSapContext =
-				    mac_ctx->sap.sapCtxList[intf].pSapContext;
-				profile = &pSapContext->csr_roamProfile;
+				sap_context =
+				    mac_ctx->sap.sapCtxList[intf].sap_context;
+				profile = &sap_context->csr_roamProfile;
 				if (!wlan_reg_is_passive_or_disable_ch(
 						mac_ctx->pdev,
 						profile->operationChannel))
@@ -1074,8 +1074,8 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("sapdfs: no available channel for sapctx[%pK], StopBss"),
-					  pSapContext);
-				sap_signal_hdd_event(pSapContext, NULL,
+					  sap_context);
+				sap_signal_hdd_event(sap_context, NULL,
 					eSAP_STOP_BSS_DUE_TO_NO_CHNL,
 					(void *) eSAP_STATUS_SUCCESS);
 			}

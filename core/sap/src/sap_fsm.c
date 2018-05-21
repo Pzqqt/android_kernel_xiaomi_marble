@@ -1169,8 +1169,8 @@ static struct sap_context *sap_find_valid_concurrent_session(tHalHandle hal)
 				mac_ctx->sap.sapCtxList[intf].sapPersona) ||
 		     (QDF_P2P_GO_MODE ==
 				mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
-		    mac_ctx->sap.sapCtxList[intf].pSapContext != NULL) {
-			sap_ctx = mac_ctx->sap.sapCtxList[intf].pSapContext;
+		    mac_ctx->sap.sapCtxList[intf].sap_context != NULL) {
+			sap_ctx = mac_ctx->sap.sapCtxList[intf].sap_context;
 			if (sap_ctx->sapsMachine != eSAP_DISCONNECTED)
 				return sap_ctx;
 		}
@@ -1220,12 +1220,12 @@ QDF_STATUS sap_set_session_param(tHalHandle hal, struct sap_context *sapctx,
 
 	/* When SSR, SAP will restart, clear the old context,sessionId */
 	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
-		if (mac_ctx->sap.sapCtxList[i].pSapContext == sapctx)
-			mac_ctx->sap.sapCtxList[i].pSapContext = NULL;
+		if (mac_ctx->sap.sapCtxList[i].sap_context == sapctx)
+			mac_ctx->sap.sapCtxList[i].sap_context = NULL;
 	}
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sessionID =
 				sapctx->sessionId;
-	mac_ctx->sap.sapCtxList[sapctx->sessionId].pSapContext = sapctx;
+	mac_ctx->sap.sapCtxList[sapctx->sessionId].sap_context = sapctx;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
 				sapctx->csr_roamProfile.csrPersona;
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
@@ -1245,7 +1245,7 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
 
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sessionID =
 		CSR_SESSION_ID_INVALID;
-	mac_ctx->sap.sapCtxList[sapctx->sessionId].pSapContext = NULL;
+	mac_ctx->sap.sapCtxList[sapctx->sessionId].sap_context = NULL;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
 		QDF_MAX_NO_OF_MODE;
 	sap_clear_global_dfs_param(hal);
@@ -1857,7 +1857,7 @@ static struct sap_context *sap_find_cac_wait_session(tHalHandle handle)
 			"%s", __func__);
 
 	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
-		sapContext = mac->sap.sapCtxList[i].pSapContext;
+		sapContext = mac->sap.sapCtxList[i].sap_context;
 		if (((QDF_SAP_MODE == mac->sap.sapCtxList[i].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[i].sapPersona)) &&
@@ -1897,14 +1897,14 @@ void sap_cac_reset_notify(tHalHandle hHal)
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-		struct sap_context *pSapContext =
-			pMac->sap.sapCtxList[intf].pSapContext;
+		struct sap_context *sap_context =
+			pMac->sap.sapCtxList[intf].sap_context;
 		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
-		    && pMac->sap.sapCtxList[intf].pSapContext != NULL) {
-			pSapContext->isCacStartNotified = false;
-			pSapContext->isCacEndNotified = false;
+		    && pMac->sap.sapCtxList[intf].sap_context != NULL) {
+			sap_context->isCacStartNotified = false;
+			sap_context->isCacEndNotified = false;
 		}
 	}
 }
@@ -1929,25 +1929,25 @@ static QDF_STATUS sap_cac_start_notify(tHalHandle hHal)
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-		struct sap_context *pSapContext =
-			pMac->sap.sapCtxList[intf].pSapContext;
+		struct sap_context *sap_context =
+			pMac->sap.sapCtxList[intf].sap_context;
 		struct csr_roam_profile *profile;
 
 		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
-		    && pMac->sap.sapCtxList[intf].pSapContext != NULL &&
-		    (false == pSapContext->isCacStartNotified)) {
+		    && pMac->sap.sapCtxList[intf].sap_context != NULL &&
+		    (false == sap_context->isCacStartNotified)) {
 			/* Don't start CAC for non-dfs channel, its violation */
-			profile = &pSapContext->csr_roamProfile;
+			profile = &sap_context->csr_roamProfile;
 			if (!wlan_reg_is_dfs_ch(pMac->pdev,
 						profile->operationChannel))
 				continue;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 				  "sapdfs: Signaling eSAP_DFS_CAC_START to HDD for sapctx[%pK]",
-				  pSapContext);
+				  sap_context);
 
-			qdf_status = sap_signal_hdd_event(pSapContext, NULL,
+			qdf_status = sap_signal_hdd_event(sap_context, NULL,
 							  eSAP_DFS_CAC_START,
 							  (void *)
 							  eSAP_STATUS_SUCCESS);
@@ -1958,7 +1958,7 @@ static QDF_STATUS sap_cac_start_notify(tHalHandle hHal)
 					  __func__, intf);
 				return qdf_status;
 			}
-			pSapContext->isCacStartNotified = true;
+			sap_context->isCacStartNotified = true;
 		}
 	}
 	return qdf_status;
@@ -2029,19 +2029,19 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
 	 * sap_radar_found_status is set to 0
 	 */
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-		struct sap_context *pSapContext =
-			pMac->sap.sapCtxList[intf].pSapContext;
+		struct sap_context *sap_context =
+			pMac->sap.sapCtxList[intf].sap_context;
 		struct csr_roam_profile *profile;
 
 		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
-		    && pMac->sap.sapCtxList[intf].pSapContext != NULL &&
-		    (false == pSapContext->isCacEndNotified) &&
-		    (pSapContext->sapsMachine == eSAP_DFS_CAC_WAIT)) {
-			pSapContext = pMac->sap.sapCtxList[intf].pSapContext;
+		    && pMac->sap.sapCtxList[intf].sap_context != NULL &&
+		    (false == sap_context->isCacEndNotified) &&
+		    (sap_context->sapsMachine == eSAP_DFS_CAC_WAIT)) {
+			sap_context = pMac->sap.sapCtxList[intf].sap_context;
 			/* Don't check CAC for non-dfs channel */
-			profile = &pSapContext->csr_roamProfile;
+			profile = &sap_context->csr_roamProfile;
 			if (!wlan_reg_is_dfs_ch(pMac->pdev,
 						profile->operationChannel))
 				continue;
@@ -2051,9 +2051,9 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
 			 * temporary interface created for pre cac and switch
 			 * the original SAP to the pre CAC channel.
 			 */
-			if (pSapContext->is_pre_cac_on) {
+			if (sap_context->is_pre_cac_on) {
 				qdf_status = wlansap_update_pre_cac_end(
-						pSapContext, pMac, intf);
+						sap_context, pMac, intf);
 				if (QDF_IS_STATUS_ERROR(qdf_status))
 					return qdf_status;
 				/* pre CAC is not allowed with any concurrency.
@@ -2062,7 +2062,7 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
 				break;
 			}
 
-			qdf_status = sap_signal_hdd_event(pSapContext, NULL,
+			qdf_status = sap_signal_hdd_event(sap_context, NULL,
 							  eSAP_DFS_CAC_END,
 							  (void *)
 							  eSAP_STATUS_SUCCESS);
@@ -2073,27 +2073,27 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
 					  __func__, intf);
 				return qdf_status;
 			}
-			pSapContext->isCacEndNotified = true;
+			sap_context->isCacEndNotified = true;
 			pMac->sap.SapDfsInfo.sap_radar_found_status = false;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 				  "sapdfs: Start beacon request on sapctx[%pK]",
-				  pSapContext);
+				  sap_context);
 
 			/* Start beaconing on the new channel */
-			wlansap_start_beacon_req(pSapContext);
+			wlansap_start_beacon_req(sap_context);
 
 			/* Transition from eSAP_STARTING to eSAP_STARTED
 			 * (both without substates)
 			 */
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 				  "sapdfs: channel[%d] from state %s => %s",
-				  pSapContext->channel, "eSAP_STARTING",
+				  sap_context->channel, "eSAP_STARTING",
 				  "eSAP_STARTED");
 
-			pSapContext->sapsMachine = eSAP_STARTED;
+			sap_context->sapsMachine = eSAP_STARTED;
 
 			/*Action code for transition */
-			qdf_status = sap_signal_hdd_event(pSapContext, roamInfo,
+			qdf_status = sap_signal_hdd_event(sap_context, roamInfo,
 							  eSAP_START_BSS_EVENT,
 							  (void *)
 							  eSAP_STATUS_SUCCESS);
@@ -2394,7 +2394,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 			struct sap_context *t_sap_ctx;
 			struct csr_roam_profile *profile;
 
-			t_sap_ctx = mac_ctx->sap.sapCtxList[intf].pSapContext;
+			t_sap_ctx = mac_ctx->sap.sapCtxList[intf].sap_context;
 			if (((QDF_SAP_MODE ==
 				 mac_ctx->sap.sapCtxList[intf].sapPersona) ||
 			     (QDF_P2P_GO_MODE ==
@@ -2627,9 +2627,9 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 				mac_ctx->sap.sapCtxList[intf].sapPersona) ||
 			    (QDF_P2P_GO_MODE ==
 				mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
-			    mac_ctx->sap.sapCtxList[intf].pSapContext != NULL) {
+			    mac_ctx->sap.sapCtxList[intf].sap_context != NULL) {
 				temp_sap_ctx =
-				    mac_ctx->sap.sapCtxList[intf].pSapContext;
+				    mac_ctx->sap.sapCtxList[intf].sap_context;
 				/*
 				 * Radar won't come on non-dfs channel, so
 				 * no need to move them
@@ -3683,7 +3683,7 @@ uint8_t sap_get_total_number_sap_intf(tHalHandle hHal)
 		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
-		    && pMac->sap.sapCtxList[intf].pSapContext != NULL) {
+		    && pMac->sap.sapCtxList[intf].sap_context != NULL) {
 			intf_count++;
 		}
 	}
@@ -3706,17 +3706,17 @@ bool is_concurrent_sap_ready_for_channel_change(tHalHandle hHal,
 						struct sap_context *sapContext)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct sap_context *pSapContext;
+	struct sap_context *sap_context;
 	uint8_t intf = 0;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
-		    && pMac->sap.sapCtxList[intf].pSapContext != NULL) {
-			pSapContext =
-				pMac->sap.sapCtxList[intf].pSapContext;
-			if (pSapContext == sapContext) {
+		    && pMac->sap.sapCtxList[intf].sap_context != NULL) {
+			sap_context =
+				pMac->sap.sapCtxList[intf].sap_context;
+			if (sap_context == sapContext) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("sapCtx matched [%pK]"),
@@ -3727,8 +3727,8 @@ bool is_concurrent_sap_ready_for_channel_change(tHalHandle hHal,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL
 						  ("concurrent sapCtx[%pK] didn't matche with [%pK]"),
-					  pSapContext, sapContext);
-				return pSapContext->is_sap_ready_for_chnl_chng;
+					  sap_context, sapContext);
+				return sap_context->is_sap_ready_for_chnl_chng;
 			}
 		}
 	}
@@ -3768,9 +3768,9 @@ bool sap_is_conc_sap_doing_scc_dfs(tHalHandle hal,
 		if ((QDF_SAP_MODE != mac->sap.sapCtxList[intf].sapPersona) &&
 		    (QDF_P2P_GO_MODE != mac->sap.sapCtxList[intf].sapPersona))
 			continue;
-		if (!mac->sap.sapCtxList[intf].pSapContext)
+		if (!mac->sap.sapCtxList[intf].sap_context)
 			continue;
-		sap_ctx = mac->sap.sapCtxList[intf].pSapContext;
+		sap_ctx = mac->sap.sapCtxList[intf].sap_context;
 		/* if same SAP contexts then skip to next context */
 		if (sap_ctx == given_sapctx)
 			continue;
