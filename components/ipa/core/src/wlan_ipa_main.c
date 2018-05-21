@@ -81,12 +81,12 @@ void ipa_config_update(struct wlan_ipa_config *config)
 
 bool ipa_config_is_enabled(void)
 {
-	return wlan_ipa_is_enabled(g_ipa_config);
+	return g_ipa_config ? wlan_ipa_is_enabled(g_ipa_config) : 0;
 }
 
 bool ipa_config_is_uc_enabled(void)
 {
-	return wlan_ipa_uc_is_enabled(g_ipa_config);
+	return g_ipa_config ? wlan_ipa_uc_is_enabled(g_ipa_config) : 0;
 }
 
 QDF_STATUS ipa_obj_setup(struct wlan_ipa_priv *ipa_ctx)
