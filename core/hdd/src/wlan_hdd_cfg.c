@@ -3107,13 +3107,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_IGNORE_CAC_MIN,
 		     CFG_IGNORE_CAC_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_SAP_DFS_CH_SIFS_BURST_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, IsSapDfsChSifsBurstEnabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_SAP_DFS_CH_SIFS_BURST_DEFAULT,
-		     CFG_ENABLE_SAP_DFS_CH_SIFS_BURST_MIN,
-		     CFG_ENABLE_SAP_DFS_CH_SIFS_BURST_MAX),
-
 	REG_VARIABLE(CFG_DFS_RADAR_PRI_MULTIPLIER_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, dfsRadarPriMultiplier,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -3171,13 +3164,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DISABLE,
 		     CFG_WLAN_LOGGING_CONSOLE_SUPPORT_ENABLE),
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
-
-	REG_VARIABLE(CFG_ENABLE_SIFS_BURST, WLAN_PARAM_Integer,
-		     struct hdd_config, enableSifsBurst,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_SIFS_BURST_DEFAULT,
-		     CFG_ENABLE_SIFS_BURST_MIN,
-		     CFG_ENABLE_SIFS_BURST_MAX),
 
 #ifdef WLAN_FEATURE_LPSS
 	REG_VARIABLE(CFG_ENABLE_LPASS_SUPPORT, WLAN_PARAM_Integer,
@@ -4202,13 +4188,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_FILTER_MULTICAST_REPLAY_DEFAULT,
 		CFG_FILTER_MULTICAST_REPLAY_MIN,
 		CFG_FILTER_MULTICAST_REPLAY_MAX),
-
-	REG_VARIABLE(CFG_SIFS_BURST_DURATION_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, sifs_burst_duration,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SIFS_BURST_DURATION_DEFAULT,
-		     CFG_SIFS_BURST_DURATION_MIN,
-		     CFG_SIFS_BURST_DURATION_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_PHY_REG, WLAN_PARAM_HexInteger,
 		     struct hdd_config, enable_phy_reg_retention,
@@ -6763,8 +6742,6 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [isRoamOffloadEnabled] Value = [%u]",
 		  hdd_ctx->config->isRoamOffloadEnabled);
 #endif
-	hdd_debug("Name = [gEnableSifsBurst] Value = [%u]",
-		  hdd_ctx->config->enableSifsBurst);
 
 #ifdef WLAN_FEATURE_LPSS
 	hdd_debug("Name = [gEnableLpassSupport] Value = [%u] ",

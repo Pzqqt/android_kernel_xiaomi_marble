@@ -446,7 +446,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 
 	ret_val = wma_cli_set_command((int)adapter->session_id,
 			(int)WMI_PDEV_PARAM_BURST_ENABLE,
-			(int)hdd_ctx->config->enableSifsBurst,
+			(int)HDD_ENABLE_SIFS_BURST_DEFAULT,
 			PDEV_CMD);
 	if (0 != ret_val)
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d", ret_val);

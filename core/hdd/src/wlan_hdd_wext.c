@@ -621,44 +621,6 @@
 #define WE_SET_QPOWER_MAX_TX_BEFORE_WAKE          57
 #define WE_SET_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL   58
 #define WE_SET_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL 59
-/*
- * <ioctl>
- * burst_enable - Enables or disables the burst feature
- *
- * @INPUT: 0-Disable, 1-Enable
- *
- * @OUTPUT: None
- *
- * This IOCTL enables or disables the burst feature.
- *
- * @E.g: iwpriv wlan0 burst_enable 0
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ioctl>
- */
-#define WE_SET_BURST_ENABLE             60
-/*
- * <ioctl>
- * burst_dur - Enables or disables the burst feature
- *
- * @INPUT: int 1…..int 8191 in microseconds
- *
- * @OUTPUT: None
- *
- * This IOCTL sets the burst duration.
- *
- * @E.g: iwpriv wlan0 burst_dur <value>
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ioctl>
- */
-#define WE_SET_BURST_DUR                61
 /* GTX Commands */
 /*
  * <ioctl>
@@ -1598,47 +1560,6 @@
 #define WE_GET_QPOWER_MAX_TX_BEFORE_WAKE          42
 #define WE_GET_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL   43
 #define WE_GET_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL 44
-/*
- * <ioctl>
- * get_burst_en - Enables or disables the burst feature
- *
- * @INPUT: None
- *
- * @OUTPUT: Enable/disable of burst feature
- *  wlan0     get_burst_en:1
- *
- * This IOCTL enables or disables the burst feature
- *
- * @E.g: iwpriv wlan0 get_burst_en
- *
- * Supported Feature:STA
- *
- * Usage: Internal/External
- *
- * </ioctl>
- */
-#define WE_GET_BURST_ENABLE             45
-/*
- * <ioctl>
- * get_burst_dur - Get the burst duration
- *
- * @INPUT: None
- *
- * @OUTPUT: Duration in microseconds
- *  wlan0     get_burst_dur:8160
- *
- * This IOCTL gets the burst duration
- * This command is useful if setting burst enable
- *
- * @E.g: iwpriv wlan0 get_burst_dur
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ioctl>
- */
-#define WE_GET_BURST_DUR                46
 /* GTX Commands */
 /*
  * <ioctl>
@@ -4732,29 +4653,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 	}
 
-	case WE_SET_BURST_ENABLE:
-	{
-		hdd_debug("SET Burst enable val %d", set_value);
-		if ((set_value == 0) || (set_value == 1) || (set_value == 3)) {
-			ret = wma_cli_set_command(adapter->session_id,
-						  WMI_PDEV_PARAM_BURST_ENABLE,
-						  set_value, PDEV_CMD);
-		} else
-			ret = -EINVAL;
-		break;
-	}
-	case WE_SET_BURST_DUR:
-	{
-		hdd_debug("SET Burst duration val %d", set_value);
-		if ((set_value > 0) && (set_value <= 102400))
-			ret = wma_cli_set_command(adapter->session_id,
-						  WMI_PDEV_PARAM_BURST_DUR,
-						  set_value,  PDEV_CMD);
-		else
-			ret = -EINVAL;
-		break;
-	}
-
 	case WE_SET_TX_CHAINMASK:
 	{
 		hdd_debug("WMI_PDEV_PARAM_TX_CHAIN_MASK val %d",
@@ -5850,23 +5748,6 @@ static int __iw_setnone_getint(struct net_device *dev,
 		*value = wma_cli_get_command(adapter->session_id,
 					     GEN_VDEV_ROAM_SYNCH_DELAY,
 					     GEN_CMD);
-		break;
-	}
-
-	case WE_GET_BURST_ENABLE:
-	{
-		hdd_debug("GET Burst enable value");
-		*value = wma_cli_get_command(adapter->session_id,
-					     WMI_PDEV_PARAM_BURST_ENABLE,
-					     PDEV_CMD);
-		break;
-	}
-	case WE_GET_BURST_DUR:
-	{
-		hdd_debug("GET Burst Duration value");
-		*value = wma_cli_get_command(adapter->session_id,
-					     WMI_PDEV_PARAM_BURST_DUR,
-					     PDEV_CMD);
 		break;
 	}
 
@@ -9361,16 +9242,6 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "amsdu"},
 
-	{WE_SET_BURST_ENABLE,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 0,
-	 "burst_enable"},
-
-	{WE_SET_BURST_DUR,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 0,
-	 "burst_dur"},
-
 	{WE_SET_TXPOW_2G,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
@@ -9731,16 +9602,6 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 "get_amsdu"},
-
-	{WE_GET_BURST_ENABLE,
-	 0,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 "get_burst_en"},
-
-	{WE_GET_BURST_DUR,
-	 0,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 "get_burst_dur"},
 
 	{WE_GET_TXPOW_2G,
 	 0,

@@ -393,7 +393,6 @@ enum ds_mode {
 
 #define WMA_DEFAULT_QPOWER_MAX_PSPOLL_BEFORE_WAKE 1
 #define WMA_DEFAULT_QPOWER_TX_WAKE_THRESHOLD 2
-#define WMA_DEFAULT_SIFS_BURST_DURATION      8160
 
 #define WMA_VHT_PPS_PAID_MATCH 1
 #define WMA_VHT_PPS_GID_MATCH 2
@@ -791,8 +790,6 @@ typedef struct {
  * @rxchainmask: rx chain mask
  * @txpow2g: tx power limit for 2GHz
  * @txpow5g: tx power limit for 5GHz
- * @burst_enable: is burst enable/disable
- * @burst_dur: burst duration
  *
  * This structure stores pdev parameters.
  * Some of these parameters are set in fw and some
@@ -810,8 +807,6 @@ typedef struct {
 	uint32_t rxchainmask;
 	uint32_t txpow2g;
 	uint32_t txpow5g;
-	uint32_t burst_enable;
-	uint32_t burst_dur;
 } pdev_cli_config_t;
 
 /**

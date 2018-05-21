@@ -354,9 +354,7 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
 #define HDD_MIN_TX_POWER (-100) /* minimum tx power */
 #define HDD_MAX_TX_POWER (+100) /* maximum tx power */
 
-/* FW expects burst duration in 1020*ms */
-#define SIFS_BURST_DUR_MULTIPLIER 1020
-#define SIFS_BURST_DUR_MAX        12240
+#define HDD_ENABLE_SIFS_BURST_DEFAULT	(0)
 
 /* If IPA UC data path is enabled, target should reserve extra tx descriptors
  * for IPA data path.

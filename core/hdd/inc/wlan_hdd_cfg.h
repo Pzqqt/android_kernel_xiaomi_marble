@@ -8116,11 +8116,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_IGNORE_CAC_MAX                         (1)
 #define CFG_IGNORE_CAC_DEFAULT                     (0)
 
-#define CFG_ENABLE_SAP_DFS_CH_SIFS_BURST_NAME      "gEnableSAPDfsChSifsBurst"
-#define CFG_ENABLE_SAP_DFS_CH_SIFS_BURST_MIN       (0)
-#define CFG_ENABLE_SAP_DFS_CH_SIFS_BURST_MAX       (1)
-#define CFG_ENABLE_SAP_DFS_CH_SIFS_BURST_DEFAULT   (1)
-
 #define CFG_DFS_RADAR_PRI_MULTIPLIER_NAME          "gDFSradarMappingPriMultiplier"
 #define CFG_DFS_RADAR_PRI_MULTIPLIER_DEFAULT       (4)
 #define CFG_DFS_RADAR_PRI_MULTIPLIER_MIN           (0)
@@ -8184,32 +8179,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DISABLE (0)
 #define CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DEFAULT (1)
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
-
-/*
- * <ini>
- * gEnableSifsBurst - Enables Sifs Burst
- * @Min: 0
- * @Max: 3
- * @Default: 0
- *
- * Sifs burst mode configuration
- *     0) disabled
- *     1) enabled, but disabled for legacy mode
- *     3) enabled
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_SIFS_BURST                      "gEnableSifsBurst"
-#define CFG_ENABLE_SIFS_BURST_MIN                  (0)
-#define CFG_ENABLE_SIFS_BURST_MAX                  (3)
-#define CFG_ENABLE_SIFS_BURST_DEFAULT              (0)
 
 #ifdef WLAN_FEATURE_LPSS
 #define CFG_ENABLE_LPASS_SUPPORT                          "gEnableLpassSupport"
@@ -10110,15 +10079,6 @@ enum dot11p_mode {
 #define CFG_FILTER_MULTICAST_REPLAY_MIN      (0)
 #define CFG_FILTER_MULTICAST_REPLAY_MAX      (1)
 #define CFG_FILTER_MULTICAST_REPLAY_DEFAULT  (1)
-
-/*
- * This parameter will control SIFS burst duration in FW from 0 to 12 ms.
- * Default value is set to 8ms.
- */
-#define CFG_SIFS_BURST_DURATION_NAME     "g_sifs_burst_duration"
-#define CFG_SIFS_BURST_DURATION_MIN      (0)
-#define CFG_SIFS_BURST_DURATION_MAX      (12)
-#define CFG_SIFS_BURST_DURATION_DEFAULT  (8)
 
 /* Optimize channel avoidance indication coming from firmware */
 #define CFG_OPTIMIZE_CA_EVENT_NAME       "goptimize_chan_avoid_event"
@@ -14663,7 +14623,6 @@ struct hdd_config {
 	uint8_t gMaxConcurrentActiveSessions;
 
 	uint8_t ignoreCAC;
-	bool IsSapDfsChSifsBurstEnabled;
 
 	/* Flag to indicate crash inject enabled or not */
 	bool crash_inject_enabled;
@@ -14686,8 +14645,6 @@ struct hdd_config {
 	bool wlan_logging_enable;
 	bool wlan_logging_to_console;
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
-
-	uint8_t enableSifsBurst;
 
 #ifdef WLAN_FEATURE_LPSS
 	bool enable_lpass_support;
@@ -14867,8 +14824,6 @@ struct hdd_config {
 	bool go_force_11n_for_11ac;
 	uint16_t sap_tx_leakage_threshold;
 	bool multicast_replay_filter;
-	/* parameter for indicating sifs burst duration to fw */
-	uint8_t sifs_burst_duration;
 	bool goptimize_chan_avoid_event;
 	bool enable_go_cts2self_for_sta;
 	uint32_t tx_aggregation_size;
