@@ -342,6 +342,7 @@ int8_t policy_mgr_get_matching_hw_mode_index(
 		enum hw_mode_bandwidth mac0_bw,
 		uint32_t mac1_tx_ss, uint32_t mac1_rx_ss,
 		enum hw_mode_bandwidth mac1_bw,
+		enum hw_mode_mac_band_cap mac0_band_cap,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum hw_mode_sbs_capab sbs);
@@ -351,13 +352,10 @@ int8_t policy_mgr_get_hw_mode_idx_from_dbs_hw_list(
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
 		enum hw_mode_bandwidth mac1_bw,
+		enum hw_mode_mac_band_cap mac0_band_cap,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum hw_mode_sbs_capab sbs);
-QDF_STATUS policy_mgr_get_hw_mode_from_idx(
-		struct wlan_objmgr_psoc *psoc,
-		uint32_t idx,
-		struct policy_mgr_hw_mode_params *hw_mode);
 QDF_STATUS policy_mgr_get_old_and_new_hw_index(
 		struct wlan_objmgr_psoc *psoc,
 		uint32_t *old_hw_mode_index,

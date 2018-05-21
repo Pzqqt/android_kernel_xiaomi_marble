@@ -300,11 +300,18 @@ void policy_mgr_get_tx_rx_ss_from_config(enum hw_mode_ss_config mac_ss,
  * @mac1_tx_ss: Number of tx spatial streams of MAC1
  * @mac1_rx_ss: Number of rx spatial streams of MAC1
  * @mac1_bw: Bandwidth of MAC1 of type 'hw_mode_bandwidth'
+ * @mac0_band_cap: mac0 band capability requirement
+ *     (0: Don't care, 1: 2.4G, 2: 5G)
  * @dbs: DBS capability of type 'hw_mode_dbs_capab'
  * @dfs: Agile DFS capability of type 'hw_mode_agile_dfs_capab'
  * @sbs: SBS capability of type 'hw_mode_sbs_capab'
  *
- * Fetches the HW mode index corresponding to the HW mode provided
+ * Fetches the HW mode index corresponding to the HW mode provided.
+ * In Genoa two DBS HW modes (2x2 5G + 1x1 2G, 2x2 2G + 1x1 5G),
+ * the "ss" number and "bw" value are not enough to specify the expected
+ * HW mode. But in both HW mode, the mac0 can support either 5G or 2G.
+ * So, the Parameter "mac0_band_cap" will specify the expected band support
+ * requirement on mac 0 to find the expected HW mode.
  *
  * Return: Positive hw mode index in case a match is found or a negative
  * value, otherwise
@@ -315,6 +322,7 @@ int8_t policy_mgr_get_matching_hw_mode_index(
 		enum hw_mode_bandwidth mac0_bw,
 		uint32_t mac1_tx_ss, uint32_t mac1_rx_ss,
 		enum hw_mode_bandwidth mac1_bw,
+		enum hw_mode_mac_band_cap mac0_band_cap,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum hw_mode_sbs_capab sbs)
@@ -323,6 +331,7 @@ int8_t policy_mgr_get_matching_hw_mode_index(
 	uint32_t t_mac0_tx_ss, t_mac0_rx_ss, t_mac0_bw;
 	uint32_t t_mac1_tx_ss, t_mac1_rx_ss, t_mac1_bw;
 	uint32_t dbs_mode, agile_dfs_mode, sbs_mode;
+	uint32_t t_mac0_band_cap;
 	int8_t found = -EINVAL;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
@@ -383,8 +392,16 @@ int8_t policy_mgr_get_matching_hw_mode_index(
 		if (sbs_mode != sbs)
 			continue;
 
-		found = i;
-		policy_mgr_debug("hw_mode index %d found", i);
+		t_mac0_band_cap = POLICY_MGR_HW_MODE_MAC0_BAND_GET(
+				pm_ctx->hw_mode.hw_mode_list[i]);
+		if (mac0_band_cap && t_mac0_band_cap != mac0_band_cap)
+			continue;
+
+		found = POLICY_MGR_HW_MODE_ID_GET(
+				pm_ctx->hw_mode.hw_mode_list[i]);
+
+		policy_mgr_debug("hw_mode id %d found at %d", found, i);
+
 		break;
 	}
 	return found;
@@ -396,12 +413,20 @@ int8_t policy_mgr_get_matching_hw_mode_index(
  * @mac0_bw: MAC0 bandwidth configuration
  * @mac1_ss: MAC1 spatial stream configuration
  * @mac1_bw: MAC1 bandwidth configuration
+ * @mac0_band_cap: mac0 band capability requirement
+ *     (0: Don't care, 1: 2.4G, 2: 5G)
  * @dbs: HW DBS capability
  * @dfs: HW Agile DFS capability
  * @sbs: HW SBS capability
  *
  * Get the HW mode index corresponding to the HW modes spatial stream,
  * bandwidth, DBS, Agile DFS and SBS capability
+ *
+ * In Genoa two DBS HW modes (2x2 5G + 1x1 2G, 2x2 2G + 1x1 5G),
+ * the "ss" number and "bw" value are not enough to specify the expected
+ * HW mode. But in both HW mode, the mac0 can support either 5G or 2G.
+ * So, the Parameter "mac0_band_cap" will specify the expected band support
+ * requirement on mac 0 to find the expected HW mode.
  *
  * Return: Index number if a match is found or -negative value if not found
  */
@@ -411,6 +436,7 @@ int8_t policy_mgr_get_hw_mode_idx_from_dbs_hw_list(
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
 		enum hw_mode_bandwidth mac1_bw,
+		enum hw_mode_mac_band_cap mac0_band_cap,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum hw_mode_sbs_capab sbs)
@@ -421,24 +447,26 @@ int8_t policy_mgr_get_hw_mode_idx_from_dbs_hw_list(
 	policy_mgr_get_tx_rx_ss_from_config(mac0_ss, &mac0_tx_ss, &mac0_rx_ss);
 	policy_mgr_get_tx_rx_ss_from_config(mac1_ss, &mac1_tx_ss, &mac1_rx_ss);
 
-	policy_mgr_debug("MAC0: TxSS=%d, RxSS=%d, BW=%d",
-		mac0_tx_ss, mac0_rx_ss, mac0_bw);
+	policy_mgr_debug("MAC0: TxSS=%d, RxSS=%d, BW=%d band=%d",
+			 mac0_tx_ss, mac0_rx_ss, mac0_bw, mac0_band_cap);
 	policy_mgr_debug("MAC1: TxSS=%d, RxSS=%d, BW=%d",
-		mac1_tx_ss, mac1_rx_ss, mac1_bw);
+			 mac1_tx_ss, mac1_rx_ss, mac1_bw);
 	policy_mgr_debug("DBS=%d, Agile DFS=%d, SBS=%d",
-		dbs, dfs, sbs);
+			 dbs, dfs, sbs);
 
 	return policy_mgr_get_matching_hw_mode_index(psoc, mac0_tx_ss,
 						mac0_rx_ss,
 						mac0_bw,
 						mac1_tx_ss, mac1_rx_ss,
 						mac1_bw,
+						mac0_band_cap,
 						dbs, dfs, sbs);
 }
 
 /**
  * policy_mgr_get_hw_mode_from_idx() - Get HW mode based on index
- * @idx: HW mode index
+ * @psoc: psoc object
+ * @idx: HW mode id
  * @hw_mode: HW mode params
  *
  * Fetches the HW mode parameters
@@ -452,24 +480,29 @@ QDF_STATUS policy_mgr_get_hw_mode_from_idx(
 {
 	uint32_t param;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t i, hw_mode_id;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	if (idx > pm_ctx->num_dbs_hw_modes) {
-		policy_mgr_err("Invalid index");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	if (!pm_ctx->num_dbs_hw_modes) {
 		policy_mgr_err("No dbs hw modes available");
 		return QDF_STATUS_E_FAILURE;
 	}
+	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
+		param = pm_ctx->hw_mode.hw_mode_list[i];
+		hw_mode_id = POLICY_MGR_HW_MODE_ID_GET(param);
+		if (hw_mode_id == idx)
+			break;
+	}
+	if (i >= pm_ctx->num_dbs_hw_modes) {
+		policy_mgr_err("hw mode id %d not found", idx);
+		return QDF_STATUS_E_FAILURE;
+	}
 
-	param = pm_ctx->hw_mode.hw_mode_list[idx];
+	param = pm_ctx->hw_mode.hw_mode_list[i];
 
 	hw_mode->mac0_tx_ss = POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_GET(param);
 	hw_mode->mac0_rx_ss = POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_GET(param);
