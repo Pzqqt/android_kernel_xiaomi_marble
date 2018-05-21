@@ -103,7 +103,7 @@ QDF_STATUS ol_sdio_extra_initialization(struct ol_context *ol_ctx)
 
 	/* get the block sizes */
 	status = hif_get_config_item(scn,
-				HIF_DEVICE_GET_MBOX_BLOCK_SIZE,
+				HIF_DEVICE_GET_BLOCK_SIZE,
 				blocksizes, sizeof(blocksizes));
 	if (status != EOK) {
 		BMI_ERR("Failed to get block size info from HIF layer");
