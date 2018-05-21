@@ -1970,7 +1970,8 @@ void qdf_dp_trace(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code, uint8_t pdev_id,
 	if (qdf_dp_enable_check(nbuf, code, dir) == false)
 		return;
 
-	qdf_dp_add_record(code, pdev_id, qdf_nbuf_data(nbuf), size, NULL, 0,
+	qdf_dp_add_record(code, pdev_id, nbuf ? qdf_nbuf_data(nbuf) : NULL,
+			  size, NULL, 0,
 			  (nbuf) ? QDF_NBUF_CB_DP_TRACE_PRINT(nbuf) : false);
 }
 qdf_export_symbol(qdf_dp_trace);
