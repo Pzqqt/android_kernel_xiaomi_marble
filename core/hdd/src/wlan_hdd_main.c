@@ -130,6 +130,7 @@
 #include "wlan_ipa_ucfg_api.h"
 #include <target_if.h>
 #include "wlan_hdd_nud_tracking.h"
+#include "wlan_hdd_apf.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>

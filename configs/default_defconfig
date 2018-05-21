@@ -80,6 +80,9 @@ endif
 
 CONFIG_QCACLD_FEATURE_GREEN_AP := y
 
+#Flag to enable Android Packet Filtering
+CONFIG_QCACLD_FEATURE_APF := y
+
 ifeq ($(CONFIG_ARCH_MSM8998), y)
 CONFIG_QCACLD_FEATURE_METERING := y
 endif
