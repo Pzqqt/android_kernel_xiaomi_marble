@@ -931,6 +931,9 @@ static bool dp_cce_classify(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 					sizeof(struct ether_header));
 	} else {
 		qos_wh = (qdf_dot3_qosframe_t *) nbuf->data;
+		/* For encrypted packets don't do any classification */
+		if (qdf_unlikely(qos_wh->i_fc[1] & IEEE80211_FC1_WEP))
+			return false;
 
 		if (qdf_unlikely(qos_wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS)) {
 			if (qdf_unlikely(
