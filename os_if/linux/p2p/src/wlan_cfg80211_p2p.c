@@ -286,6 +286,11 @@ static void wlan_p2p_event_callback(void *user_data,
 
 	chan = ieee80211_get_channel(wdev->wiphy,
 				     wlan_chan_to_freq(p2p_event->chan));
+	if (!chan) {
+		cfg80211_err("channel conversion failed");
+		goto fail;
+	}
+
 	if (p2p_event->roc_event == ROC_EVENT_READY_ON_CHAN) {
 		cfg80211_ready_on_channel(wdev,
 			p2p_event->cookie, chan,
