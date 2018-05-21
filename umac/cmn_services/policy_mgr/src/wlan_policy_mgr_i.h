@@ -57,6 +57,8 @@
 #define POLICY_MGR_HW_MODE_DBS_MODE_BITPOS         (7)
 #define POLICY_MGR_HW_MODE_AGILE_DFS_MODE_BITPOS   (6)
 #define POLICY_MGR_HW_MODE_SBS_MODE_BITPOS         (5)
+#define POLICY_MGR_HW_MODE_MAC0_BAND_BITPOS        (3)
+#define POLICY_MGR_HW_MODE_ID_BITPOS               (0)
 
 #define POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_MASK    \
 	(0xf << POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_BITPOS)
@@ -76,6 +78,10 @@
 	(0x1 << POLICY_MGR_HW_MODE_AGILE_DFS_MODE_BITPOS)
 #define POLICY_MGR_HW_MODE_SBS_MODE_MASK           \
 	(0x1 << POLICY_MGR_HW_MODE_SBS_MODE_BITPOS)
+#define POLICY_MGR_HW_MODE_MAC0_BAND_MASK           \
+			(0x3 << POLICY_MGR_HW_MODE_MAC0_BAND_BITPOS)
+#define POLICY_MGR_HW_MODE_ID_MASK           \
+			(0x7 << POLICY_MGR_HW_MODE_ID_BITPOS)
 
 #define POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_SET(hw_mode, value) \
 	WMI_SET_BITS(hw_mode, POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_BITPOS,\
@@ -104,34 +110,46 @@
 #define POLICY_MGR_HW_MODE_SBS_MODE_SET(hw_mode, value)        \
 	WMI_SET_BITS(hw_mode, POLICY_MGR_HW_MODE_SBS_MODE_BITPOS,\
 	1, value)
+#define POLICY_MGR_HW_MODE_MAC0_BAND_SET(hw_mode, value)        \
+	WMI_SET_BITS(hw_mode, POLICY_MGR_HW_MODE_MAC0_BAND_BITPOS,\
+	2, value)
+#define POLICY_MGR_HW_MODE_ID_SET(hw_mode, value)        \
+	WMI_SET_BITS(hw_mode, POLICY_MGR_HW_MODE_ID_BITPOS,\
+	3, value)
 
 #define POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_GET(hw_mode)                \
-		((hw_mode & POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_MASK) >>        \
+		(((hw_mode) & POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_MASK) >>    \
 		POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_BITPOS)
 #define POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_GET(hw_mode)                \
-		((hw_mode & POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_MASK) >>        \
+		(((hw_mode) & POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_MASK) >>    \
 		POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_BITPOS)
 #define POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_GET(hw_mode)                \
-		((hw_mode & POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_MASK) >>        \
+		(((hw_mode) & POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_MASK) >>    \
 		POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_BITPOS)
 #define POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_GET(hw_mode)                \
-		((hw_mode & POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_MASK) >>        \
+		(((hw_mode) & POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_MASK) >>    \
 		POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_BITPOS)
 #define POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_GET(hw_mode)                 \
-		((hw_mode & POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_MASK) >>         \
+		(((hw_mode) & POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_MASK) >>     \
 		POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_BITPOS)
 #define POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_GET(hw_mode)                 \
-		((hw_mode & POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_MASK) >>         \
+		(((hw_mode) & POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_MASK) >>     \
 		POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_BITPOS)
 #define POLICY_MGR_HW_MODE_DBS_MODE_GET(hw_mode)                       \
-		((hw_mode & POLICY_MGR_HW_MODE_DBS_MODE_MASK) >>               \
+		(((hw_mode) & POLICY_MGR_HW_MODE_DBS_MODE_MASK) >>           \
 		POLICY_MGR_HW_MODE_DBS_MODE_BITPOS)
 #define POLICY_MGR_HW_MODE_AGILE_DFS_GET(hw_mode)                      \
-		((hw_mode & POLICY_MGR_HW_MODE_AGILE_DFS_MODE_MASK) >>         \
+		(((hw_mode) & POLICY_MGR_HW_MODE_AGILE_DFS_MODE_MASK) >>     \
 		POLICY_MGR_HW_MODE_AGILE_DFS_MODE_BITPOS)
 #define POLICY_MGR_HW_MODE_SBS_MODE_GET(hw_mode)                       \
-		((hw_mode & POLICY_MGR_HW_MODE_SBS_MODE_MASK) >>               \
+		(((hw_mode) & POLICY_MGR_HW_MODE_SBS_MODE_MASK) >>           \
 		POLICY_MGR_HW_MODE_SBS_MODE_BITPOS)
+#define POLICY_MGR_HW_MODE_MAC0_BAND_GET(hw_mode)                       \
+		(((hw_mode) & POLICY_MGR_HW_MODE_MAC0_BAND_MASK) >> \
+		POLICY_MGR_HW_MODE_MAC0_BAND_BITPOS)
+#define POLICY_MGR_HW_MODE_ID_GET(hw_mode)                       \
+		(((hw_mode) & POLICY_MGR_HW_MODE_ID_MASK) >> \
+		POLICY_MGR_HW_MODE_ID_BITPOS)
 
 #define POLICY_MGR_DEFAULT_HW_MODE_INDEX 0xFFFF
 
@@ -273,14 +291,17 @@ struct policy_mgr_psoc_priv_obj {
 
 /**
  * struct policy_mgr_mac_ss_bw_info - hw_mode_list PHY/MAC params for each MAC
- * @mac_tx_stream: Max TX stream
- * @mac_rx_stream: Max RX stream
- * @mac_bw: Max bandwidth
+ * @mac_tx_stream: Max TX stream number supported on MAC
+ * @mac_rx_stream: Max RX stream number supported on MAC
+ * @mac_bw: Max bandwidth(wmi_channel_width enum type)
+ * @mac_band_cap: supported Band bit map(WLAN_2G_CAPABILITY = 0x1,
+ *                            WLAN_5G_CAPABILITY = 0x2)
  */
 struct policy_mgr_mac_ss_bw_info {
 	uint32_t mac_tx_stream;
 	uint32_t mac_rx_stream;
 	uint32_t mac_bw;
+	uint32_t mac_band_cap;
 };
 
 struct policy_mgr_psoc_priv_obj *policy_mgr_get_context(
