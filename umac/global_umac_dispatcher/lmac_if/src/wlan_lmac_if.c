@@ -312,6 +312,7 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	dfs_rx_ops->dfs_process_phyerr = tgt_dfs_process_phyerr;
 	dfs_rx_ops->dfs_destroy_object = tgt_dfs_destroy_object;
 	dfs_rx_ops->dfs_radar_enable = tgt_dfs_radar_enable;
+	dfs_rx_ops->dfs_is_radar_enabled = tgt_dfs_is_radar_enabled;
 	dfs_rx_ops->dfs_control = tgt_dfs_control;
 	dfs_rx_ops->dfs_is_precac_timer_running =
 		tgt_dfs_is_precac_timer_running;
@@ -332,6 +333,13 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 		tgt_dfs_process_phyerr_filter_offload;
 	dfs_rx_ops->dfs_is_phyerr_filter_offload =
 		tgt_dfs_is_phyerr_filter_offload;
+	dfs_rx_ops->dfs_action_on_status = tgt_dfs_action_on_status_from_fw;
+	dfs_rx_ops->dfs_override_status_timeout =
+		ucfg_dfs_set_override_status_timeout;
+	dfs_rx_ops->dfs_get_override_status_timeout =
+		ucfg_dfs_get_override_status_timeout;
+	dfs_rx_ops->dfs_reset_spoof_test =
+		tgt_dfs_reset_spoof_test;
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -100,4 +100,22 @@ struct radar_event_info {
 struct dfs_user_config {
 	bool dfs_is_phyerr_filter_offload;
 };
+
+/**
+ * struct dfs_radar_found_params - radar found parameters.
+ * @pri_min: Minimum PRI of detected radar pulse.
+ * @pri_max: Max PRI of detected radar pulse.
+ * @duration_min: Min duration of detected pulse in us.
+ * @duration_max: Max duration of detected pulse in us.
+ * @sidx_min: Min softare index of detected radar pulse.
+ * @sidx_max: Max software index of detected radar pulse.
+ */
+struct dfs_radar_found_params {
+	u_int32_t pri_min;
+	u_int32_t pri_max;
+	u_int32_t duration_min;
+	u_int32_t duration_max;
+	u_int32_t sidx_min;
+	u_int32_t sidx_max;
+};
 #endif

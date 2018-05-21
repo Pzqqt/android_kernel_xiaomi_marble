@@ -889,3 +889,23 @@ uint16_t utils_dfs_get_cur_rd(struct wlan_objmgr_pdev *pdev)
 
 	return cur_regdmn.regdmn_pair_id;
 }
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+QDF_STATUS utils_dfs_is_spoof_check_failed(struct wlan_objmgr_pdev *pdev,
+					   bool *is_spoof_check_failed)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null dfs");
+		return  QDF_STATUS_E_FAILURE;
+	}
+
+	*is_spoof_check_failed = dfs->dfs_spoof_check_failed;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(utils_dfs_is_spoof_check_failed);
+#endif

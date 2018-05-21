@@ -116,4 +116,20 @@ uint32_t lmac_get_target_type(struct wlan_objmgr_pdev *pdev);
 uint32_t lmac_get_phymode_info(struct wlan_objmgr_pdev *pdev,
 		uint32_t chan_mode);
 
+/**
+ * lmac_is_host_dfs_check_support_enabled() - Check if Host DFS confirmation
+ * feature is supported.
+ * @pdev: Pointer to PDEV structure.
+ *
+ * Return: true, host dfs check supported, else false.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+bool lmac_is_host_dfs_check_support_enabled(struct wlan_objmgr_pdev *pdev);
+#else
+static inline bool lmac_is_host_dfs_check_support_enabled(
+		struct wlan_objmgr_pdev *pdev)
+{
+	return false;
+}
+#endif
 #endif /* _WLAN_DFS_LMAC_API_H_ */

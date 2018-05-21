@@ -28,6 +28,7 @@
 #include "wlan_dfs_tgt_api.h"
 #include "../dfs_internal.h"
 #include "../dfs_filter_init.h"
+#include "../dfs_partial_offload_radar.h"
 
 /*
  * Channel switch announcement (CSA)
@@ -102,6 +103,8 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 
 	/*Verify : Passing NULL to qdf_timer_init().*/
 	dfs_main_task_timer_init(dfs);
+
+	dfs_host_wait_timer_init(dfs);
 
 	WLAN_DFSQ_LOCK_CREATE(dfs);
 	STAILQ_INIT(&dfs->dfs_radarq);

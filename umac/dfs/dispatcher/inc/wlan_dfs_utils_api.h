@@ -452,4 +452,22 @@ int utils_get_dfsdomain(struct wlan_objmgr_pdev *pdev);
  */
 uint16_t utils_dfs_get_cur_rd(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * utils_dfs_is_spoof_check_failed() - get spoof check status.
+ * @pdev: pdev ptr
+ * @is_spoof_check_failed: pointer containing the status.
+ *
+ * Return: QDF_STATUS.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+QDF_STATUS utils_dfs_is_spoof_check_failed(struct wlan_objmgr_pdev *pdev,
+					   bool *is_spoof_check_failed);
+#else
+static inline
+QDF_STATUS utils_dfs_is_spoof_check_failed(struct wlan_objmgr_pdev *pdev,
+					   bool *is_spoof_check_failed)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif /* _WLAN_DFS_UTILS_API_H_ */

@@ -29,7 +29,7 @@
 #include "../dfs_internal.h"
 #include "../dfs_filter_init.h"
 #include "../dfs_full_offload.h"
-
+#include "wlan_dfs_utils_api.h"
 
 /**
  * dfs_testtimer_task() - Sends CSA in the current channel.
@@ -289,6 +289,10 @@ int dfs_control(struct wlan_dfs *dfs,
 				"debug level now = 0x%x", dfs->dfs_debug_mask);
 		if (dfs->dfs_debug_mask & WLAN_DEBUG_DFS3) {
 			/* Enable debug Radar Event */
+			dfs->dfs_event_log_on = 1;
+		} else if ((utils_get_dfsdomain(dfs->dfs_pdev_obj) ==
+		    DFS_FCC_DOMAIN) &&
+		    lmac_is_host_dfs_check_support_enabled(dfs->dfs_pdev_obj)) {
 			dfs->dfs_event_log_on = 1;
 		} else {
 			dfs->dfs_event_log_on = 0;

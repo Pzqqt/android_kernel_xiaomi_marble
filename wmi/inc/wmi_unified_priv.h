@@ -1616,6 +1616,16 @@ QDF_STATUS (*extract_twt_resume_dialog_comp_event)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_cca_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 				struct wmi_host_congestion_stats *stats);
 #endif /* QCA_SUPPORT_CP_STATS */
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+QDF_STATUS (*send_dfs_average_radar_params_cmd)(
+		wmi_unified_t wmi_handle,
+		struct dfs_radar_found_params *params);
+
+QDF_STATUS (*extract_dfs_status_from_fw)(wmi_unified_t wmi_handle,
+					 void *evt_buf,
+					 uint32_t *dfs_status_check);
+#endif
 };
 
 /* Forward declartion for psoc*/

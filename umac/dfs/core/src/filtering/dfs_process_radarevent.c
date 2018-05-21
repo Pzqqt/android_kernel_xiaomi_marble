@@ -26,6 +26,9 @@
 #include "../dfs_channel.h"
 #include "../dfs_internal.h"
 #include "../dfs_process_radar_found_ind.h"
+#include "wlan_dfs_utils_api.h"
+#include "wlan_dfs_lmac_api.h"
+#include "../dfs_partial_offload_radar.h"
 
 #define FREQ_5500_MHZ  5500
 #define FREQ_5500_MHZ       5500
@@ -441,6 +444,53 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 }
 
 /**
+ * dfs_cal_average_radar_parameters() - Calculate the average radar parameters.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+static void dfs_cal_average_radar_parameters(struct wlan_dfs *dfs)
+{
+	int i, count = 0;
+	u_int32_t total_pri = 0;
+	u_int32_t total_duration = 0;
+	u_int32_t total_sidx = 0;
+
+	/* Calculating average PRI, Duration, SIDX from
+	 * the 2nd pulse, ignoring the 1st pulse (radar_log[0]).
+	 * This is because for the first pulse, the diff_ts will be
+	 * (0 - current_ts) which will be a huge value.
+	 * Average PRI computation will be wrong. FW returns a
+	 * failure test result as PRI does not match their expected
+	 * value.
+	 */
+
+	for (i = 1; (i < DFS_EVENT_LOG_SIZE) && (i < dfs->dfs_event_log_count);
+			i++) {
+		total_pri +=  dfs->radar_log[i].diff_ts;
+		total_duration += dfs->radar_log[i].dur;
+		total_sidx +=  dfs->radar_log[i].sidx;
+		count++;
+	}
+
+	if (count > 0) {
+		dfs->dfs_average_pri = total_pri / count;
+		dfs->dfs_average_duration = total_duration / count;
+		dfs->dfs_average_sidx = total_sidx / count;
+
+		dfs_info(dfs, WLAN_DEBUG_DFS2,
+			 "Avg.PRI =%u, Avg.duration =%u Avg.sidx =%u",
+			 dfs->dfs_average_pri,
+			 dfs->dfs_average_duration,
+			 dfs->dfs_average_sidx);
+	}
+}
+#else
+static void dfs_cal_average_radar_parameters(struct wlan_dfs *dfs)
+{
+}
+#endif
+
+/**
  * dfs_radarfound_reset_vars() - Reset dfs variables after radar found
  * @dfs: Pointer to wlan_dfs structure.
  * @rs: Pointer to dfs_state.
@@ -473,8 +523,10 @@ static inline void dfs_radarfound_reset_vars(
 	 * filter match. This can be used to collect information
 	 * on false radar detection.
 	 */
-	if (dfs->dfs_event_log_on)
+	if (dfs->dfs_event_log_on) {
+		dfs_cal_average_radar_parameters(dfs);
 		dfs_print_radar_events(dfs);
+	}
 
 	dfs_reset_radarq(dfs);
 	dfs_reset_alldelaylines(dfs);
@@ -1196,6 +1248,30 @@ static inline void dfs_false_radarfound_reset_vars(
 	dfs->dfs_phyerr_w53_counter  = 0;
 }
 
+void dfs_radarfound_action_generic(struct wlan_dfs *dfs,
+		uint8_t seg_id, int false_radar_found)
+{
+	struct radar_found_info *radar_found;
+
+	radar_found = qdf_mem_malloc(sizeof(*radar_found));
+	if (!radar_found) {
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "radar_found allocation failed");
+		return;
+	}
+
+	qdf_mem_zero(radar_found, sizeof(*radar_found));
+	radar_found->segment_id = seg_id;
+	radar_found->pdev_id =
+		wlan_objmgr_pdev_get_pdev_id(dfs->dfs_pdev_obj);
+
+	dfs_process_radar_ind(dfs, radar_found);
+	qdf_mem_free(radar_found);
+
+	if (false_radar_found)
+		dfs_false_radarfound_reset_vars(dfs);
+}
+
 void dfs_process_radarevent(
 	struct wlan_dfs *dfs,
 	struct dfs_channel *chan)
@@ -1222,26 +1298,21 @@ void dfs_process_radarevent(
 
 dfsfound:
 	if (retval) {
-		struct radar_found_info *radar_found;
-
 		dfs_radarfound_reset_vars(dfs, rs, chan, seg_id);
-
-		radar_found = qdf_mem_malloc(sizeof(*radar_found));
-		if (!radar_found) {
-			dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
-					"radar_found allocation failed");
-			return;
+		/* If Host DFS confirmation is supported, save the curchan as
+		 * radar found chan, send radar found indication along with
+		 * average radar parameters to FW and start the host status
+		 * wait timer.
+		 */
+		if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_FCC_DOMAIN &&
+		    lmac_is_host_dfs_check_support_enabled(
+				dfs->dfs_pdev_obj)) {
+			dfs_radarfound_action_fcc(dfs, seg_id,
+				false_radar_found);
+		} else {
+			dfs_radarfound_action_generic(dfs, seg_id,
+				false_radar_found);
 		}
-
-		qdf_mem_zero(radar_found, sizeof(*radar_found));
-		radar_found->segment_id = seg_id;
-		radar_found->pdev_id =
-			wlan_objmgr_pdev_get_pdev_id(dfs->dfs_pdev_obj);
-
-		dfs_process_radar_ind(dfs, radar_found);
-		qdf_mem_free(radar_found);
 	}
 
-	if (false_radar_found)
-		dfs_false_radarfound_reset_vars(dfs);
 }

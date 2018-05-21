@@ -1239,6 +1239,9 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_PAPI_ENABLE = 364,
 	OL_ATH_PARAM_ISOLATION = 365,
 	OL_ATH_PARAM_MAX_CLIENTS_PER_RADIO = 366,
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+	OL_ATH_PARAM_DFS_HOST_WAIT_TIMEOUT = 367,
+#endif
 };
 
 /* Enumeration of PDEV Configuration parameter */
