@@ -878,6 +878,11 @@ int wlan_hdd_validate_context(struct hdd_context *hdd_ctx)
 		return -EAGAIN;
 	}
 
+	if (qdf_atomic_read(&hdd_ctx->con_mode_flag)) {
+		hdd_debug("con_mode_handler is in progress Ignore!!!");
+		return -EAGAIN;
+	}
+
 	return 0;
 }
 
@@ -12542,7 +12547,6 @@ static int __con_mode_handler(const char *kmessage,
 		return ret;
 
 	qdf_atomic_set(&hdd_ctx->con_mode_flag, 1);
-	cds_set_load_in_progress(true);
 
 	ret = kstrtoint(kmessage, 0, &new_con_mode);
 	if (ret) {
@@ -12626,7 +12630,6 @@ static int __con_mode_handler(const char *kmessage,
 
 reset_flags:
 	mutex_unlock(&hdd_init_deinit_lock);
-	cds_set_load_in_progress(false);
 	qdf_atomic_set(&hdd_ctx->con_mode_flag, 0);
 	return ret;
 }
