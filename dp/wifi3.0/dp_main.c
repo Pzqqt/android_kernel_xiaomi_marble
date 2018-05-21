@@ -5112,8 +5112,8 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 	DP_PRINT_STATS("Reinjected:");
 	DP_PRINT_STATS("	Packets = %d",
 			pdev->stats.tx_i.reinject_pkts.num);
-	DP_PRINT_STATS("Bytes = %llu\n",
-				pdev->stats.tx_i.reinject_pkts.bytes);
+	DP_PRINT_STATS("	Bytes = %llu\n",
+			pdev->stats.tx_i.reinject_pkts.bytes);
 	DP_PRINT_STATS("Inspected:");
 	DP_PRINT_STATS("	Packets = %d",
 			pdev->stats.tx_i.inspect_pkts.num);
@@ -5193,9 +5193,9 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 			pdev->stats.replenish.rxdma_err);
 	DP_PRINT_STATS("	Desc Alloc Failed: = %d",
 			pdev->stats.err.desc_alloc_fail);
-	DP_PRINT_STATS("IP checksum error = %d",
+	DP_PRINT_STATS("	IP checksum error = %d",
 		       pdev->stats.err.ip_csum_err);
-	DP_PRINT_STATS("TCP/UDP checksum error = %d",
+	DP_PRINT_STATS("	TCP/UDP checksum error = %d",
 		       pdev->stats.err.tcp_udp_csum_err);
 
 	/* Get bar_recv_cnt */
