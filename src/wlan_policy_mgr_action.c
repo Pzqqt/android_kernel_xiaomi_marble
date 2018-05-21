@@ -99,6 +99,7 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
 		enum hw_mode_bandwidth mac1_bw,
+		enum hw_mode_mac_band_cap mac0_band_cap,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum hw_mode_sbs_capab sbs,
@@ -130,7 +131,8 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 	}
 
 	hw_mode_index = policy_mgr_get_hw_mode_idx_from_dbs_hw_list(psoc,
-			mac0_ss, mac0_bw, mac1_ss, mac1_bw, dbs, dfs, sbs);
+			mac0_ss, mac0_bw, mac1_ss, mac1_bw, mac0_band_cap,
+			dbs, dfs, sbs);
 	if (hw_mode_index < 0) {
 		policy_mgr_err("Invalid HW mode index obtained");
 		return QDF_STATUS_E_FAILURE;
@@ -657,6 +659,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 						     HW_MODE_80_MHZ,
 						     nss_dbs.mac1_ss,
 						     HW_MODE_40_MHZ,
+						     HW_MODE_MAC_BAND_NONE,
 						     HW_MODE_DBS,
 						     HW_MODE_AGILE_DFS_NONE,
 						     HW_MODE_SBS_NONE,
@@ -670,6 +673,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 						HW_MODE_SS_2x2,
 						HW_MODE_80_MHZ,
 						HW_MODE_SS_0x0, HW_MODE_BW_NONE,
+						HW_MODE_MAC_BAND_NONE,
 						HW_MODE_DBS_NONE,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
@@ -680,6 +684,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 						HW_MODE_SS_2x2,
 						HW_MODE_80_MHZ,
 						HW_MODE_SS_0x0, HW_MODE_BW_NONE,
+						HW_MODE_MAC_BAND_NONE,
 						HW_MODE_DBS_NONE,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
@@ -690,6 +695,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 						HW_MODE_SS_2x2,
 						HW_MODE_80_MHZ,
 						HW_MODE_SS_2x2, HW_MODE_80_MHZ,
+						HW_MODE_MAC_BAND_NONE,
 						HW_MODE_DBS,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
@@ -704,6 +710,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 						HW_MODE_SS_1x1,
 						HW_MODE_80_MHZ,
 						HW_MODE_SS_1x1, HW_MODE_80_MHZ,
+						HW_MODE_MAC_BAND_NONE,
 						HW_MODE_DBS,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS,
@@ -1541,9 +1548,10 @@ enum policy_mgr_hw_mode_change policy_mgr_get_hw_mode_change_from_hw_mode_index(
 	struct wlan_objmgr_psoc *psoc, uint32_t hw_mode_index)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	uint32_t param = 0;
+	struct policy_mgr_hw_mode_params hw_mode;
 	enum policy_mgr_hw_mode_change value
 		= POLICY_MGR_HW_MODE_NOT_IN_PROGRESS;
+	QDF_STATUS status;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -1551,16 +1559,20 @@ enum policy_mgr_hw_mode_change policy_mgr_get_hw_mode_change_from_hw_mode_index(
 		return value;
 	}
 
-	policy_mgr_info("HW param: %x", param);
-	param = pm_ctx->hw_mode.hw_mode_list[hw_mode_index];
-	if (POLICY_MGR_HW_MODE_DBS_MODE_GET(param)) {
+	status = policy_mgr_get_hw_mode_from_idx(psoc, hw_mode_index, &hw_mode);
+	if (status != QDF_STATUS_SUCCESS) {
+		policy_mgr_err("Failed to get HW mode index");
+		return value;
+	}
+
+	if (hw_mode.dbs_cap) {
 		policy_mgr_info("DBS is requested with HW (%d)",
 		hw_mode_index);
 		value = POLICY_MGR_DBS_IN_PROGRESS;
 		goto ret_value;
 	}
 
-	if (POLICY_MGR_HW_MODE_SBS_MODE_GET(param)) {
+	if (hw_mode.sbs_cap) {
 		policy_mgr_info("SBS is requested with HW (%d)",
 		hw_mode_index);
 		value = POLICY_MGR_SBS_IN_PROGRESS;

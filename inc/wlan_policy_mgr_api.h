@@ -712,6 +712,8 @@ enum QDF_OPMODE policy_mgr_get_qdf_mode_from_pm(
  * @mac0_bw: MAC0 bandwidth configuration
  * @mac1_ss: MAC1 spatial stream configuration
  * @mac1_bw: MAC1 bandwidth configuration
+ * @mac0_band_cap: mac0 band capability requirement
+ *     (0: Don't care, 1: 2.4G, 2: 5G)
  * @dbs: HW DBS capability
  * @dfs: HW Agile DFS capability
  * @sbs: HW SBS capability
@@ -724,17 +726,32 @@ enum QDF_OPMODE policy_mgr_get_qdf_mode_from_pm(
  * e.g.: To configure 2x2_80
  *       mac0_ss = HW_MODE_SS_2x2, mac0_bw = HW_MODE_80_MHZ
  *       mac1_ss = HW_MODE_SS_0x0, mac1_bw = HW_MODE_BW_NONE
+ *       mac0_band_cap = HW_MODE_MAC_BAND_NONE,
  *       dbs = HW_MODE_DBS_NONE, dfs = HW_MODE_AGILE_DFS_NONE,
  *       sbs = HW_MODE_SBS_NONE
  * e.g.: To configure 1x1_80_1x1_40 (DBS)
  *       mac0_ss = HW_MODE_SS_1x1, mac0_bw = HW_MODE_80_MHZ
  *       mac1_ss = HW_MODE_SS_1x1, mac1_bw = HW_MODE_40_MHZ
+ *       mac0_band_cap = HW_MODE_MAC_BAND_NONE,
  *       dbs = HW_MODE_DBS, dfs = HW_MODE_AGILE_DFS_NONE,
  *       sbs = HW_MODE_SBS_NONE
  * e.g.: To configure 1x1_80_1x1_40 (Agile DFS)
  *       mac0_ss = HW_MODE_SS_1x1, mac0_bw = HW_MODE_80_MHZ
  *       mac1_ss = HW_MODE_SS_1x1, mac1_bw = HW_MODE_40_MHZ
+ *       mac0_band_cap = HW_MODE_MAC_BAND_NONE,
  *       dbs = HW_MODE_DBS, dfs = HW_MODE_AGILE_DFS,
+ *       sbs = HW_MODE_SBS_NONE
+ * e.g.: To configure 2x2_5g_80+1x1_2g_40
+ *       mac0_ss = HW_MODE_SS_2x2, mac0_bw = HW_MODE_80_MHZ
+ *       mac1_ss = HW_MODE_SS_1x1, mac1_bw = HW_MODE_40_MHZ
+ *       mac0_band_cap = HW_MODE_MAC_BAND_5G
+ *       dbs = HW_MODE_DBS, dfs = HW_MODE_AGILE_DFS_NONE,
+ *       sbs = HW_MODE_SBS_NONE
+ * e.g.: To configure 2x2_2g_40+1x1_5g_40
+ *       mac0_ss = HW_MODE_SS_2x2, mac0_bw = HW_MODE_40_MHZ
+ *       mac1_ss = HW_MODE_SS_1x1, mac1_bw = HW_MODE_40_MHZ
+ *       mac0_band_cap = HW_MODE_MAC_BAND_2G
+ *       dbs = HW_MODE_DBS, dfs = HW_MODE_AGILE_DFS_NONE,
  *       sbs = HW_MODE_SBS_NONE
  *
  * Return: Success if the message made it down to the next layer
@@ -745,6 +762,7 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
 		enum hw_mode_bandwidth mac1_bw,
+		enum hw_mode_mac_band_cap mac0_band_cap,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum hw_mode_sbs_capab sbs,
@@ -2463,4 +2481,18 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
  */
 bool policy_mgr_is_sta_sap_scc(struct wlan_objmgr_psoc *psoc, uint8_t sap_ch);
 
+/**
+ * policy_mgr_get_hw_mode_from_idx() - Get HW mode based on index
+ * @psoc: psoc object
+ * @idx: HW mode id
+ * @hw_mode: HW mode params
+ *
+ * Fetches the HW mode parameters
+ *
+ * Return: Success if hw mode is obtained and the hw mode params
+ */
+QDF_STATUS policy_mgr_get_hw_mode_from_idx(
+		struct wlan_objmgr_psoc *psoc,
+		uint32_t idx,
+		struct policy_mgr_hw_mode_params *hw_mode);
 #endif /* __WLAN_POLICY_MGR_API_H */

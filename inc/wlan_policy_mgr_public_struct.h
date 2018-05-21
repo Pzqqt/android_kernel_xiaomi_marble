@@ -115,6 +115,26 @@ enum hw_mode_sbs_capab {
 };
 
 /**
+ * enum hw_mode_mac_band_cap - mac band capability
+ * @HW_MODE_MAC_BAND_NONE: No band requirement.
+ * @HW_MODE_MAC_BAND_2G: 2G band supported.
+ * @HW_MODE_MAC_BAND_5G: 5G band supported.
+ *
+ * To add HW_MODE_MAC_BAND_NONE value to help to
+ * match the HW DBS mode in hw mode list.
+ * Other enum values should match with WMI header:
+ * typedef enum {
+ *   WLAN_2G_CAPABILITY = 0x1,
+ *   WLAN_5G_CAPABILITY = 0x2,
+ * } WLAN_BAND_CAPABILITY;
+ */
+enum hw_mode_mac_band_cap {
+	HW_MODE_MAC_BAND_NONE = 0,
+	HW_MODE_MAC_BAND_2G = WLAN_2G_CAPABILITY,
+	HW_MODE_MAC_BAND_5G = WLAN_5G_CAPABILITY,
+};
+
+/**
  * enum policy_mgr_pcl_group_id - Identifies the pcl groups to be used
  * @POLICY_MGR_PCL_GROUP_ID1_ID2: Use weights of group1 and group2
  * @POLICY_MGR_PCL_GROUP_ID2_ID3: Use weights of group2 and group3
