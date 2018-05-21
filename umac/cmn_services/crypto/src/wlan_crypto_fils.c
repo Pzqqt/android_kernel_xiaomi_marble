@@ -432,6 +432,7 @@ void wlan_crypto_fils_delkey(struct wlan_objmgr_peer *peer)
 	if (key) {
 		qdf_mem_free(key->private);
 		key->private = NULL;
+		key->valid = 0;
 	}
 }
 #else
