@@ -53,6 +53,44 @@
 
 #define WMI_UNIFIED_MAX_EVENT 0x100
 
+#ifdef WMI_EXT_DBG
+
+#define WMI_EXT_DBG_DIR			"WMI_EXT_DBG"
+#define WMI_EXT_DBG_FILE		"wmi_log"
+#define WMI_EXT_DBG_FILE_PERM		(QDF_FILE_USR_READ | \
+					 QDF_FILE_GRP_READ | \
+					 QDF_FILE_OTH_READ)
+#define WMI_EXT_DBG_QUEUE_SIZE		1024
+#define WMI_EXT_DBG_DUMP_ROW_SIZE	16
+#define WMI_EXT_DBG_DUMP_GROUP_SIZE	1
+
+/**
+ * enum WMI_MSG_TYPE - WMI message types
+ * @ WMI_MSG_TYPE_CMD - Message is of type WMI command
+ * @ WMI_MSG_TYPE_EVENT - Message is of type WMI event
+ */
+enum WMI_MSG_TYPE {
+	WMI_MSG_TYPE_CMD = 0,
+	WMI_MSG_TYPE_EVENT,
+};
+
+/**
+ * struct wmi_ext_dbg_msg - WMI command/event msg details
+ * @ node - qdf list node of wmi messages
+ * @ len - command/event message length
+ * @ ts - Time of WMI command/event handling
+ * @ WMI_MSG_TYPE - message type
+ * @ bug - command/event buffer
+ */
+struct wmi_ext_dbg_msg {
+	qdf_list_node_t node;
+	uint32_t len;
+	uint64_t ts;
+	enum WMI_MSG_TYPE type;
+	uint8_t buf[0];
+};
+#endif /*WMI_EXT_DBG */
+
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 
 #ifndef WMI_EVENT_DEBUG_MAX_ENTRY
@@ -1796,6 +1834,12 @@ struct wmi_unified {
 	struct wmi_soc *soc;
 	uint16_t wmi_max_cmds;
 	struct dentry *debugfs_de[NUM_DEBUG_INFOS];
+#ifdef WMI_EXT_DBG
+	int wmi_ext_dbg_msg_queue_size;
+	qdf_list_t wmi_ext_dbg_msg_queue;
+	qdf_spinlock_t wmi_ext_dbg_msg_queue_lock;
+	qdf_dentry_t wmi_ext_dbg_dentry;
+#endif /*WMI_EXT_DBG*/
 };
 
 #define WMI_MAX_RADIOS 3
@@ -1907,4 +1951,59 @@ static inline uint32_t wmi_vdev_map_to_num_vdevs(uint32_t vdev_map)
 
 	return num_vdevs;
 }
+
+#ifdef WMI_EXT_DBG
+
+/**
+ * wmi_ext_dbg_msg_get() - Allocate memory for wmi debug msg
+ *
+ * @buflen: Length of WMI message buffer
+ *
+ * Return: Allocated msg buffer else NULL on failure.
+ */
+static inline struct wmi_ext_dbg_msg *wmi_ext_dbg_msg_get(uint32_t buflen)
+{
+	return qdf_mem_malloc(sizeof(struct wmi_ext_dbg_msg) + buflen);
+}
+
+/**
+ * wmi_ext_dbg_msg_put() - Free wmi debug msg buffer
+ *
+ * @msg: wmi message buffer to be freed
+ *
+ * Return: none
+ */
+static inline void wmi_ext_dbg_msg_put(struct wmi_ext_dbg_msg *msg)
+{
+	qdf_mem_free(msg);
+}
+
+#else
+
+static inline QDF_STATUS wmi_ext_dbg_msg_cmd_record(struct wmi_unified
+						    *wmi_handle,
+						    uint8_t *buf, uint32_t len)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS wmi_ext_dbg_msg_event_record(struct wmi_unified
+						      *wmi_handle,
+						      uint8_t *buf,
+						      uint32_t len)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS wmi_ext_dbgfs_init(struct wmi_unified *wmi_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS wmi_ext_dbgfs_deinit(struct wmi_unified *wmi_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif /*WMI_EXT_DBG */
 #endif
