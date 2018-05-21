@@ -51,10 +51,10 @@ struct wifi_pos_req_msg;
 	wifi_pos_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
 #define OEM_APP_SIGNATURE_LEN      16
-#define OEM_APP_SIGNATURE_STR      "QTI-OEM-APP"
+#define OEM_APP_SIGNATURE_STR      "QUALCOMM-OEM-APP"
 
 #define OEM_TARGET_SIGNATURE_LEN   8
-#define OEM_TARGET_SIGNATURE       "QTI"
+#define OEM_TARGET_SIGNATURE       "QUALCOMM"
 
 #define OEM_CAP_MAX_NUM_CHANNELS   128
 
@@ -130,7 +130,7 @@ struct qdf_packed wifi_pos_driver_version {
 
 /**
  * struct wifi_pos_driver_caps - OEM Data Capabilities
- * @oem_target_signature: Signature of chipset vendor, e.g. QTI
+ * @oem_target_signature: Signature of chipset vendor, e.g. QUALCOMM
  * @oem_target_type: Chip type
  * @oem_fw_version: Firmware version
  * @driver_version: Host software version
@@ -157,8 +157,8 @@ struct qdf_packed wifi_pos_driver_caps {
 };
 
 /**
- * struct wifi_pos_user_defined_caps - OEM capability to be exchanged between host
- * and userspace
+ * struct wifi_pos_user_defined_caps - OEM capability to be exchanged between
+ * host and userspace
  * @ftm_rr: FTM range report capability bit
  * @lci_capability: LCI capability bit
  * @reserved1: reserved
