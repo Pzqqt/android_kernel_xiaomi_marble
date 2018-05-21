@@ -154,6 +154,7 @@ static void policy_mgr_get_hw_mode_params(
 	info->mac_bw = policy_mgr_map_wmi_channel_width_to_hw_mode_bw(
 		QDF_MAX(caps->max_bw_supported_2G,
 		caps->max_bw_supported_5G));
+	info->mac_band_cap = caps->supported_bands;
 }
 
 /**
@@ -162,7 +163,8 @@ static void policy_mgr_get_hw_mode_params(
  * @wma_handle: pointer to wma global structure
  * @mac0_ss_bw_info: TX-RX streams, BW for MAC0
  * @mac1_ss_bw_info: TX-RX streams, BW for MAC1
- * @pos: refers to hw_mode_index
+ * @pos: refers to hw_mode_list array index
+ * @hw_mode_id: hw mode id value used by firmware
  * @dbs_mode: dbs_mode for the dbs_hw_mode
  * @sbs_mode: sbs_mode for the sbs_hw_mode
  *
@@ -174,7 +176,7 @@ static void policy_mgr_get_hw_mode_params(
 static void policy_mgr_set_hw_mode_params(struct wlan_objmgr_psoc *psoc,
 			struct policy_mgr_mac_ss_bw_info mac0_ss_bw_info,
 			struct policy_mgr_mac_ss_bw_info mac1_ss_bw_info,
-			uint32_t pos, uint32_t dbs_mode,
+			uint32_t pos, uint32_t hw_mode_id, uint32_t dbs_mode,
 			uint32_t sbs_mode)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -212,6 +214,12 @@ static void policy_mgr_set_hw_mode_params(struct wlan_objmgr_psoc *psoc,
 	POLICY_MGR_HW_MODE_SBS_MODE_SET(
 		pm_ctx->hw_mode.hw_mode_list[pos],
 		sbs_mode);
+	POLICY_MGR_HW_MODE_MAC0_BAND_SET(
+		pm_ctx->hw_mode.hw_mode_list[pos],
+		mac0_ss_bw_info.mac_band_cap);
+	POLICY_MGR_HW_MODE_ID_SET(
+		pm_ctx->hw_mode.hw_mode_list[pos],
+		hw_mode_id);
 }
 
 QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
@@ -287,7 +295,8 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 
 		/* Updating HW mode list */
 		policy_mgr_set_hw_mode_params(psoc, mac0_ss_bw_info,
-			mac1_ss_bw_info, i, dbs_mode, sbs_mode);
+			mac1_ss_bw_info, i, tmp->hw_mode_id, dbs_mode,
+			sbs_mode);
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -331,19 +340,21 @@ void policy_mgr_dump_dbs_hw_mode(struct wlan_objmgr_psoc *psoc)
 
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
-		policy_mgr_debug("[%d]-MAC0: tx_ss:%d rx_ss:%d bw_idx:%d",
-			i,
-			POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_GET(param),
-			POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_GET(param),
-			POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_GET(param));
+		policy_mgr_debug("[%d]-MAC0: tx_ss:%d rx_ss:%d bw_idx:%d band_cap:%d",
+				 i,
+				 POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_GET(param),
+				 POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_GET(param),
+				 POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_GET(param),
+				 POLICY_MGR_HW_MODE_MAC0_BAND_GET(param));
 		policy_mgr_debug("[%d]-MAC1: tx_ss:%d rx_ss:%d bw_idx:%d",
-			i,
-			POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_GET(param),
-			POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_GET(param),
-			POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_GET(param));
-		policy_mgr_debug("[%d] DBS:%d SBS:%d", i,
-			POLICY_MGR_HW_MODE_DBS_MODE_GET(param),
-			POLICY_MGR_HW_MODE_SBS_MODE_GET(param));
+				 i,
+				 POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_GET(param),
+				 POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_GET(param),
+				 POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_GET(param));
+		policy_mgr_debug("[%d] DBS:%d SBS:%d hw_mode_id:%d", i,
+				 POLICY_MGR_HW_MODE_DBS_MODE_GET(param),
+				 POLICY_MGR_HW_MODE_SBS_MODE_GET(param),
+				 POLICY_MGR_HW_MODE_ID_GET(param));
 	}
 }
 

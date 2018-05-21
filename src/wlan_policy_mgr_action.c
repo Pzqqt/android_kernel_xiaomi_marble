@@ -72,12 +72,15 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 		return;
 	}
 
-	policy_mgr_debug("MAC0: TxSS:%d, RxSS:%d, Bw:%d",
-		hw_mode.mac0_tx_ss, hw_mode.mac0_rx_ss, hw_mode.mac0_bw);
+	policy_mgr_debug("MAC0: TxSS:%d, RxSS:%d, Bw:%d band_cap:%d",
+			 hw_mode.mac0_tx_ss, hw_mode.mac0_rx_ss,
+			 hw_mode.mac0_bw, hw_mode.mac0_band_cap);
 	policy_mgr_debug("MAC1: TxSS:%d, RxSS:%d, Bw:%d",
-		hw_mode.mac1_tx_ss, hw_mode.mac1_rx_ss, hw_mode.mac1_bw);
+			 hw_mode.mac1_tx_ss, hw_mode.mac1_rx_ss,
+			 hw_mode.mac1_bw);
 	policy_mgr_debug("DBS:%d, Agile DFS:%d, SBS:%d",
-		hw_mode.dbs_cap, hw_mode.agile_dfs_cap, hw_mode.sbs_cap);
+			 hw_mode.dbs_cap, hw_mode.agile_dfs_cap,
+			 hw_mode.sbs_cap);
 
 	/* update pm_conc_connection_list */
 	policy_mgr_update_hw_mode_conn_info(context, num_vdev_mac_entries,

@@ -855,8 +855,9 @@ struct policy_mgr_conc_connection_info {
  * @mac1_rx_ss: MAC1 Rx spatial stream
  * @mac0_bw: MAC0 bandwidth
  * @mac1_bw: MAC1 bandwidth
- * @dbs_cap: DBS capabality
- * @agile_dfs_cap: Agile DFS capabality
+ * @mac0_band_cap: mac0 band (5g/2g) capability
+ * @dbs_cap: DBS capability
+ * @agile_dfs_cap: Agile DFS capability
  */
 struct policy_mgr_hw_mode_params {
 	uint8_t mac0_tx_ss;
@@ -865,6 +866,7 @@ struct policy_mgr_hw_mode_params {
 	uint8_t mac1_rx_ss;
 	uint8_t mac0_bw;
 	uint8_t mac1_bw;
+	uint8_t mac0_band_cap;
 	uint8_t dbs_cap;
 	uint8_t agile_dfs_cap;
 	uint8_t sbs_cap;

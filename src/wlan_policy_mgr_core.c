@@ -477,6 +477,7 @@ QDF_STATUS policy_mgr_get_hw_mode_from_idx(
 	hw_mode->mac1_tx_ss = POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_GET(param);
 	hw_mode->mac1_rx_ss = POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_GET(param);
 	hw_mode->mac1_bw = POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_GET(param);
+	hw_mode->mac0_band_cap = POLICY_MGR_HW_MODE_MAC0_BAND_GET(param);
 	hw_mode->dbs_cap = POLICY_MGR_HW_MODE_DBS_MODE_GET(param);
 	hw_mode->agile_dfs_cap = POLICY_MGR_HW_MODE_AGILE_DFS_GET(param);
 	hw_mode->sbs_cap = POLICY_MGR_HW_MODE_SBS_MODE_GET(param);
@@ -815,12 +816,15 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 		return;
 	}
 
-	policy_mgr_debug("MAC0: TxSS:%d, RxSS:%d, Bw:%d",
-		hw_mode.mac0_tx_ss, hw_mode.mac0_rx_ss, hw_mode.mac0_bw);
+	policy_mgr_debug("MAC0: TxSS:%d, RxSS:%d, Bw:%d, band_cap %d",
+			 hw_mode.mac0_tx_ss, hw_mode.mac0_rx_ss,
+			 hw_mode.mac0_bw, hw_mode.mac0_band_cap);
 	policy_mgr_debug("MAC1: TxSS:%d, RxSS:%d, Bw:%d",
-		hw_mode.mac1_tx_ss, hw_mode.mac1_rx_ss, hw_mode.mac1_bw);
+			 hw_mode.mac1_tx_ss, hw_mode.mac1_rx_ss,
+			 hw_mode.mac1_bw);
 	policy_mgr_debug("DBS:%d, Agile DFS:%d, SBS:%d",
-		hw_mode.dbs_cap, hw_mode.agile_dfs_cap, hw_mode.sbs_cap);
+			 hw_mode.dbs_cap, hw_mode.agile_dfs_cap,
+			 hw_mode.sbs_cap);
 
 	/* update pm_conc_connection_list */
 	policy_mgr_update_hw_mode_conn_info(context, num_vdev_mac_entries,
