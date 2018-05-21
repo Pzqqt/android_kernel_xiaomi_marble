@@ -833,6 +833,11 @@ ifeq ($(CONFIG_WLAN_DFS_MASTER_ENABLE), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_dfs_api.o
 endif
 
+ifeq ($(CONFIG_FEATURE_WLAN_EXTSCAN), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_extscan_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_extscan_tlv.o
+endif
+
 ########### FWLOG ###########
 FWLOG_DIR := $(WLAN_COMMON_ROOT)/utils/fwlog
 
