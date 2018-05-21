@@ -5633,6 +5633,29 @@ static void hdd_reset_scan_operation(struct hdd_context *hdd_ctx,
 	}
 }
 
+#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
+/**
+ * hdd_adapter_abort_tx_flow() - Abort the tx flow control
+ * @pAdapter: pointer to hdd_adapter_t
+ *
+ * Resume tx and stop the tx flow control timer if the tx is paused
+ * and the flow control timer is running. This function is called by
+ * SSR to avoid the inconsistency of tx status before and after SSR.
+ *
+ * Return: void
+ */
+static void hdd_adapter_abort_tx_flow(struct hdd_adapter *adapter)
+{
+	if (adapter->hdd_stats.tx_rx_stats.is_txflow_paused &&
+		QDF_TIMER_STATE_RUNNING ==
+		qdf_mc_timer_get_current_state(
+			&adapter->tx_flow_control_timer)) {
+		hdd_tx_resume_timer_expired_handler(adapter);
+		qdf_mc_timer_stop(&adapter->tx_flow_control_timer);
+	}
+}
+#endif
+
 QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
@@ -5650,6 +5673,10 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		hdd_info("[SSR] reset adapter with device mode %s(%d)",
 			 qdf_opmode_str(adapter->device_mode),
 			 adapter->device_mode);
+
+#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
+		hdd_adapter_abort_tx_flow(adapter);
+#endif
 
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
