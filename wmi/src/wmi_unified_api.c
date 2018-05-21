@@ -1860,6 +1860,7 @@ QDF_STATUS wmi_unified_set_ric_req_cmd(void *wmi_hdl, void *msg,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 /**
  * wmi_unified_process_ll_stats_clear_cmd() - clear link layer stats
  * @wmi_hdl: wmi handle
@@ -1900,6 +1901,7 @@ QDF_STATUS wmi_unified_process_ll_stats_get_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 /**
  * wmi_unified_congestion_request_cmd() - send request to fw to get CCA
@@ -1920,6 +1922,7 @@ QDF_STATUS wmi_unified_congestion_request_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 /**
  * wmi_unified_process_ll_stats_set_cmd() - link layer stats set request
  * @wmi_handle:       wmi handle
@@ -1938,6 +1941,7 @@ QDF_STATUS wmi_unified_process_ll_stats_set_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 /**
  * wmi_unified_snr_request_cmd() - send request to fw to get RSSI stats

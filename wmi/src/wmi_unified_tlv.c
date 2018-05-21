@@ -7718,6 +7718,7 @@ static QDF_STATUS send_set_ric_req_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 /**
  * send_process_ll_stats_clear_cmd_tlv() - clear link layer stats
  * @wmi_handle: wmi handle
@@ -7888,7 +7889,7 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
-
+#endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 /**
  * send_congestion_cmd_tlv() - send request to fw to get CCA
@@ -21707,9 +21708,11 @@ struct wmi_ops tlv_ops =  {
 	.send_pno_start_cmd = send_pno_start_cmd_tlv,
 	.send_nlo_mawc_cmd = send_nlo_mawc_cmd_tlv,
 	.send_set_ric_req_cmd = send_set_ric_req_cmd_tlv,
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	.send_process_ll_stats_clear_cmd = send_process_ll_stats_clear_cmd_tlv,
 	.send_process_ll_stats_set_cmd = send_process_ll_stats_set_cmd_tlv,
 	.send_process_ll_stats_get_cmd = send_process_ll_stats_get_cmd_tlv,
+#endif /* WLAN_FEATURE_LINK_LAYER_STATS*/
 	.send_congestion_cmd = send_congestion_cmd_tlv,
 	.send_snr_request_cmd = send_snr_request_cmd_tlv,
 	.send_snr_cmd = send_snr_cmd_tlv,
