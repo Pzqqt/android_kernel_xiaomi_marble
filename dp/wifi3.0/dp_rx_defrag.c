@@ -572,9 +572,16 @@ static void dp_rx_defrag_michdr(const struct ieee80211_frame *wh0,
 	 * a mgt type frame. It comes into picture for MFP.
 	 */
 	if (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS) {
-		const struct ieee80211_qosframe *qwh =
-			(const struct ieee80211_qosframe *)wh;
-		hdr[12] = qwh->i_qos[0] & IEEE80211_QOS_TID;
+		if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
+				IEEE80211_FC1_DIR_DSTODS) {
+			const struct ieee80211_qosframe_addr4 *qwh =
+				(const struct ieee80211_qosframe_addr4 *)wh;
+			hdr[12] = qwh->i_qos[0] & IEEE80211_QOS_TID;
+		} else {
+			const struct ieee80211_qosframe *qwh =
+				(const struct ieee80211_qosframe *)wh;
+			hdr[12] = qwh->i_qos[0] & IEEE80211_QOS_TID;
+		}
 	} else {
 		hdr[12] = 0;
 	}
