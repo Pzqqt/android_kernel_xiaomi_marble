@@ -111,6 +111,22 @@ void init_tasklet_workers(struct hif_opaque_softc *scn)
 	work_initialized = true;
 }
 
+/**
+ * deinit_tasklet_workers() - deinit_tasklet_workers
+ * @scn: HIF Context
+ *
+ * Return: N/A
+ */
+void deinit_tasklet_workers(struct hif_opaque_softc *scn)
+{
+	u32 id;
+
+	for (id = 0; id < CE_ID_MAX; id++)
+		cancel_work_sync(&tasklet_workers[id].work);
+
+	work_initialized = false;
+}
+
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON
 /**
  * ce_schedule_tasklet() - schedule ce tasklet

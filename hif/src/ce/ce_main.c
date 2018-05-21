@@ -2681,6 +2681,7 @@ void hif_unconfig_ce(struct hif_softc *hif_sc)
 	int pipe_num;
 	struct HIF_CE_pipe_info *pipe_info;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(hif_sc);
 
 	for (pipe_num = 0; pipe_num < hif_sc->ce_count; pipe_num++) {
 		pipe_info = &hif_state->pipe_info[pipe_num];
@@ -2692,6 +2693,7 @@ void hif_unconfig_ce(struct hif_softc *hif_sc)
 			qdf_spinlock_destroy(&pipe_info->recv_bufs_needed_lock);
 		}
 	}
+	deinit_tasklet_workers(hif_hdl);
 	if (hif_sc->athdiag_procfs_inited) {
 		athdiag_procfs_remove();
 		hif_sc->athdiag_procfs_inited = false;
