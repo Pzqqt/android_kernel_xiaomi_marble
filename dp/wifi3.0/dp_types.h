@@ -915,6 +915,9 @@ struct dp_soc {
 #endif
 	/* Device ID coming from Bus sub-system */
 	uint32_t device_id;
+
+	/* Smart monitor capability for HKv2 */
+	uint8_t hw_nac_monitor_support;
 };
 
 #ifdef IPA_OFFLOAD
@@ -1128,6 +1131,7 @@ struct dp_pdev {
 	uint16_t mo_mgmt_filter;
 	uint16_t mo_ctrl_filter;
 	uint16_t mo_data_filter;
+	uint16_t md_data_filter;
 
 	qdf_atomic_t num_tx_outstanding;
 

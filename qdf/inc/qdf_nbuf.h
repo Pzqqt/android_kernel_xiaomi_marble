@@ -289,6 +289,7 @@ struct mon_rx_status {
 	uint32_t ppdu_id;
 	uint32_t device_id;
 	int16_t chan_noise_floor;
+	uint8_t monitor_direct_used;
 };
 
 /**

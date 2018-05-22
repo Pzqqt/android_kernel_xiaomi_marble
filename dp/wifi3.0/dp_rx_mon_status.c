@@ -296,6 +296,57 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 }
 #endif
 
+/**
+ * dp_rx_handle_smart_mesh_mode() - Deliver header for smart mesh
+ * @soc: Datapath SOC handle
+ * @pdev: Datapath PDEV handle
+ * @ppdu_info: Structure for rx ppdu info
+ * @nbuf: Qdf nbuf abstraction for linux skb
+ *
+ * Return: 0 on success, 1 on failure
+ */
+static inline int
+dp_rx_handle_smart_mesh_mode(struct dp_soc *soc, struct dp_pdev *pdev,
+			      struct hal_rx_ppdu_info *ppdu_info,
+			      qdf_nbuf_t nbuf)
+{
+	uint8_t size = 0;
+
+	if (!pdev->monitor_vdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "[%s]:[%d] Monitor vdev is NULL !!",
+			  __func__, __LINE__);
+		return 1;
+	}
+	if (ppdu_info->msdu_info.first_msdu_payload == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "[%s]:[%d] First msdu payload not present",
+			  __func__, __LINE__);
+		return 1;
+	}
+
+	/* Include 2 bytes of reserved space appended to the msdu payload */
+	size = (ppdu_info->msdu_info.first_msdu_payload -
+		qdf_nbuf_data(nbuf)) + 2;
+	ppdu_info->msdu_info.first_msdu_payload = NULL;
+
+	if (qdf_nbuf_pull_head(nbuf, size) == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "[%s]:[%d] No header present",
+			__func__, __LINE__);
+		return 1;
+	}
+
+	/* only retain RX MSDU payload in the skb */
+	qdf_nbuf_trim_tail(nbuf, qdf_nbuf_len(nbuf) -
+			   ppdu_info->msdu_info.payload_len);
+	qdf_nbuf_update_radiotap(&(pdev->ppdu_info.rx_status),
+				 nbuf, sizeof(struct rx_pkt_tlvs));
+	pdev->monitor_vdev->osif_rx_mon(pdev->monitor_vdev->osif_vdev,
+					nbuf, NULL);
+
+	return 0;
+}
 
 /**
 * dp_rx_handle_ppdu_stats() - Allocate and deliver ppdu stats to cdp layer
@@ -400,6 +451,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t tlv_status = HAL_TLV_STATUS_BUF_DONE;
 	QDF_STATUS m_copy_status = QDF_STATUS_SUCCESS;
 	struct cdp_pdev_mon_stats *rx_mon_stats;
+	int smart_mesh_status;
 
 	ppdu_info = &pdev->ppdu_info;
 	rx_mon_stats = &pdev->rx_mon_stats;
@@ -437,21 +489,28 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 			} while (tlv_status == HAL_TLV_STATUS_PPDU_NOT_DONE);
 		}
 
+		if (ppdu_info->rx_status.monitor_direct_used && pdev->neighbour_peers_added
+		    && pdev->monitor_vdev) {
+			smart_mesh_status = dp_rx_handle_smart_mesh_mode(soc,
+						pdev, ppdu_info, status_nbuf);
+			if (smart_mesh_status)
+				qdf_nbuf_free(status_nbuf);
+		}
 		if (pdev->mcopy_mode) {
 			m_copy_status = dp_rx_handle_mcopy_mode(soc,
 						pdev, ppdu_info, status_nbuf);
 			if (m_copy_status == QDF_STATUS_SUCCESS)
 				qdf_nbuf_free(status_nbuf);
-		} else {
-			qdf_nbuf_free(status_nbuf);
 		}
+		if (!pdev->neighbour_peers_added && !pdev->mcopy_mode)
+			qdf_nbuf_free(status_nbuf);
 
 		if (tlv_status == HAL_TLV_STATUS_PPDU_NON_STD_DONE) {
 			dp_rx_mon_deliver_non_std(soc, mac_id);
 		} else if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
 			rx_mon_stats->status_ppdu_done++;
 			if (pdev->enhanced_stats_en ||
-					pdev->mcopy_mode)
+			    pdev->mcopy_mode || pdev->neighbour_peers_added)
 				dp_rx_handle_ppdu_stats(soc, pdev, ppdu_info);
 
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;

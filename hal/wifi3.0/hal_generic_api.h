@@ -997,6 +997,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 					RX_MPDU_INFO_RX_MPDU_INFO_DETAILS);
 		uint32_t ppdu_id = HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0,
 					      PHY_PPDU_ID);
+		uint8_t filter_category = 0;
 
 		ppdu_info->nac_info.fc_valid =
 			HAL_RX_GET(rx_mpdu_start,
@@ -1033,6 +1034,11 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 				HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_13,
 				MPDU_LENGTH);
 		}
+
+		filter_category = HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0,
+							RXPCU_MPDU_FILTER_IN_CATEGORY);
+		if (filter_category == 1)
+			ppdu_info->rx_status.monitor_direct_used = 1;
 		break;
 	}
 	case 0:
