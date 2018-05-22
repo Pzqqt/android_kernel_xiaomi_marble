@@ -25,6 +25,12 @@ enum {
 	MAX_MACRO
 };
 
+enum mclk_mux {
+	MCLK_MUX0,
+	MCLK_MUX1,
+	MCLK_MUX_MAX
+};
+
 struct macro_ops {
 	int (*init)(struct snd_soc_codec *codec);
 	int (*exit)(struct snd_soc_codec *codec);
@@ -40,6 +46,9 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 			  struct macro_ops *ops);
 void bolero_unregister_macro(struct device *dev, u16 macro_id);
 struct device *bolero_get_device_ptr(struct device *dev, u16 macro_id);
+int bolero_request_clock(struct device *dev, u16 macro_id,
+			 enum mclk_mux mclk_mux_id,
+			 bool enable);
 #else
 static inline int bolero_register_macro(struct device *dev,
 					u16 macro_id,
@@ -53,9 +62,15 @@ static inline void bolero_unregister_macro(struct device *dev, u16 macro_id)
 }
 
 static inline struct device *bolero_get_device_ptr(struct device *dev,
-						u16 macro_id)
+						   u16 macro_id)
 {
 	return NULL;
+}
+static inline int bolero_request_clock(struct device *dev, u16 macro_id,
+				       enum mclk_mux mclk_mux_id,
+				       bool enable)
+{
+	return 0;
 }
 #endif /* CONFIG_SND_SOC_BOLERO */
 #endif /* BOLERO_CDC_H */

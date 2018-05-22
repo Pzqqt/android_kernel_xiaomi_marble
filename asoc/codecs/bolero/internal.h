@@ -27,6 +27,7 @@ struct bolero_priv {
 	struct snd_soc_codec *codec;
 	struct regmap *regmap;
 	struct mutex io_lock;
+	struct mutex clk_lock;
 	bool va_without_decimation;
 	bool macros_supported[MAX_MACRO];
 	struct macro_ops macro_params[MAX_MACRO];
@@ -34,6 +35,7 @@ struct bolero_priv {
 	u16 num_dais;
 	u16 num_macros_registered;
 	u16 child_num;
+	u16 current_mclk_mux_macro[MAX_MACRO];
 	struct platform_device *pdev_child_devices[MAX_MACRO];
 
 	struct work_struct bolero_add_child_devices_work;
