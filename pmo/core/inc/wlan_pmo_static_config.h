@@ -76,14 +76,14 @@ void pmo_update_target_service(struct wlan_objmgr_psoc *psoc,
 	WMI_SERVICE service, bool value);
 
 /**
- * pmo_update_ra_limit() - update ra limit based on bpf filter
+ * pmo_update_ra_limit() - update ra limit based on apf filter
  *  enabled or not
  * @psoc: objmgr psoc
- * @bpf_enabled: true when bpf service is enabled else false
+ * @apf_enabled: true when apf service is enabled else false
  *
  * Return: none
  */
-void pmo_update_ra_limit(struct wlan_objmgr_psoc *psoc, bool bpf_enabled);
+void pmo_update_ra_limit(struct wlan_objmgr_psoc *psoc, bool apf_enabled);
 
 /**
  * pmo_set_wow_event_bitmap() - Assign bitmask with wow event
