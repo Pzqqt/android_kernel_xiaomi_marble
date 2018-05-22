@@ -24,19 +24,19 @@
 #include "wmi_unified_param.h"
 
 /**
- * send_set_active_bpf_mode_cmd_tlv() - configure active BPF mode in FW
+ * send_set_active_apf_mode_cmd_tlv() - configure active APF mode in FW
  * @wmi_handle: the WMI handle
  * @vdev_id: the Id of the vdev to apply the configuration to
- * @ucast_mode: the active BPF mode to configure for unicast packets
- * @mcast_bcast_mode: the active BPF mode to configure for multicast/broadcast
+ * @ucast_mode: the active APF mode to configure for unicast packets
+ * @mcast_bcast_mode: the active APF mode to configure for multicast/broadcast
  *	packets
  *
  * Return: QDF status
  */
 QDF_STATUS
-send_set_active_bpf_mode_cmd_tlv(wmi_unified_t wmi_handle,
+send_set_active_apf_mode_cmd_tlv(wmi_unified_t wmi_handle,
 				 uint8_t vdev_id,
-				 enum wmi_host_active_bpf_mode ucast_mode,
-				 enum wmi_host_active_bpf_mode
+				 enum wmi_host_active_apf_mode ucast_mode,
+				 enum wmi_host_active_apf_mode
 							mcast_bcast_mode);
 #endif /* _WMI_UNIFIED_APF_TLV_H_ */

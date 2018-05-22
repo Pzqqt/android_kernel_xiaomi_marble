@@ -811,10 +811,10 @@ QDF_STATUS (*send_get_buf_extscan_hotlist_cmd)(wmi_unified_t wmi_handle,
 				   struct ext_scan_setbssi_hotlist_params *
 				   photlist, int *buf_len);
 
-QDF_STATUS (*send_set_active_bpf_mode_cmd)(wmi_unified_t wmi_handle,
-				uint8_t vdev_id,
-				enum wmi_host_active_bpf_mode ucast_mode,
-				enum wmi_host_active_bpf_mode mcast_bcast_mode);
+QDF_STATUS
+(*send_set_active_apf_mode_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id,
+				enum wmi_host_active_apf_mode ucast_mode,
+				enum wmi_host_active_apf_mode mcast_bcast_mode);
 
 QDF_STATUS (*send_pdev_get_tpc_config_cmd)(wmi_unified_t wmi_handle,
 		uint32_t param);
