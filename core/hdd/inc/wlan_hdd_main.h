@@ -209,7 +209,7 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
 #define WLAN_WAIT_TIME_ANTENNA_MODE_REQ 3000
 #define WLAN_WAIT_TIME_SET_DUAL_MAC_CFG 1500
 
-#define WLAN_WAIT_TIME_BPF     1000
+#define WLAN_WAIT_TIME_APF     1000
 
 /* Maximum time(ms) to wait for RSO CMD status event */
 #define WAIT_TIME_RSO_CMD_STATUS 2000
@@ -1823,7 +1823,7 @@ struct hdd_context {
 	struct completion set_antenna_mode_cmpl;
 	/* Current number of TX X RX chains being used */
 	enum antenna_mode current_antenna_mode;
-	bool bpf_enabled;
+	bool apf_enabled;
 
 	/* the radio index assigned by cnss_logger */
 	int radio_index;

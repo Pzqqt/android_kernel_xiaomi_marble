@@ -352,7 +352,7 @@ pmo_intersect_arp_ns_offload(struct pmo_psoc_priv_obj *psoc_ctx)
 
 /**
  * pmo_intersect_apf() - intersect config and firmware capability for
- *	the BPF feature
+ *	the APF feature
  * @psoc_ctx: A PMO psoc context
  *
  * Note: The caller is expected to grab the PMO context lock.
@@ -366,7 +366,7 @@ static inline bool pmo_intersect_apf(struct pmo_psoc_priv_obj *psoc_ctx)
 
 /**
  * pmo_intersect_packet_filter() - intersect config and firmware capability for
- *	the BPF feature
+ *	the APF feature
  * @psoc_ctx: A PMO psoc context
  *
  * Note: The caller is expected to grab the PMO context lock.

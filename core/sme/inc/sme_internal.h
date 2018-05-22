@@ -124,14 +124,14 @@ typedef void (*sme_send_oem_data_rsp_msg)(struct oem_data_rsp *);
 #endif
 
 /**
- * typedef bpf_get_offload_cb - BPF offload callback signature
+ * typedef apf_get_offload_cb - APF offload callback signature
  * @context: Opaque context that the client can use to associate the
  *    callback with the request
- * @caps: BPF offload capabilities as reported by firmware
+ * @caps: APF offload capabilities as reported by firmware
  */
-struct sir_bpf_get_offload;
-typedef void (*bpf_get_offload_cb)(void *context,
-				   struct sir_bpf_get_offload *caps);
+struct sir_apf_get_offload;
+typedef void (*apf_get_offload_cb)(void *context,
+				   struct sir_apf_get_offload *caps);
 
 /**
  * typedef sme_encrypt_decrypt_callback - encrypt/decrypt callback
@@ -227,8 +227,8 @@ typedef struct tagSmeStruct {
 	void *dcc_stats_event_context;
 	ocb_callback dcc_stats_event_callback;
 	sme_set_thermal_level_callback set_thermal_level_cb;
-	void *bpf_get_offload_context;
-	bpf_get_offload_cb bpf_get_offload_cb;
+	void *apf_get_offload_context;
+	apf_get_offload_cb apf_get_offload_cb;
 	p2p_lo_callback p2p_lo_event_callback;
 	void *p2p_lo_event_context;
 #ifdef FEATURE_OEM_DATA_SUPPORT

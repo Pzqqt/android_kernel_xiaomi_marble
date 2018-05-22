@@ -10597,14 +10597,14 @@ static int wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 	return ret;
 }
 
-#undef BPF_INVALID
-#undef BPF_SET_RESET
-#undef BPF_VERSION
-#undef BPF_ID
-#undef BPF_PACKET_SIZE
-#undef BPF_CURRENT_OFFSET
-#undef BPF_PROGRAM
-#undef BPF_MAX
+#undef APF_INVALID
+#undef APF_SET_RESET
+#undef APF_VERSION
+#undef APF_ID
+#undef APF_PACKET_SIZE
+#undef APF_CURRENT_OFFSET
+#undef APF_PROGRAM
+#undef APF_MAX
 
 #ifndef QCA_SUPPORT_CP_STATS
 /**
@@ -14418,7 +14418,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_bpf_offload
+		.doit = wlan_hdd_cfg80211_apf_offload
 	},
 #endif /* FEATURE_WLAN_APF */
 	{

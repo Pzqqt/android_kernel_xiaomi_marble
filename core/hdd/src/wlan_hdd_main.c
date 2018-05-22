@@ -2021,8 +2021,8 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	hdd_debug("Init current antenna mode: %d",
 		  hdd_ctx->current_antenna_mode);
 
-	hdd_ctx->bpf_enabled = (cfg->bpf_enabled &&
-				hdd_ctx->config->bpf_packet_filter_enable);
+	hdd_ctx->apf_enabled = (cfg->apf_enabled &&
+				hdd_ctx->config->apf_packet_filter_enable);
 	hdd_ctx->rcpi_enabled = cfg->rcpi_enabled;
 	hdd_update_ra_rate_limit(hdd_ctx, cfg);
 
@@ -2039,8 +2039,8 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		hdd_err("fw update WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED to CFG fails");
 
 
-	hdd_debug("Target BPF %d Host BPF %d 8ss fw support %d txBFCsnValue %d",
-		  cfg->bpf_enabled, hdd_ctx->config->bpf_packet_filter_enable,
+	hdd_debug("Target APF %d Host APF %d 8ss fw support %d txBFCsnValue %d",
+		  cfg->apf_enabled, hdd_ctx->config->apf_packet_filter_enable,
 		  cfg->tx_bfee_8ss_enabled, hdd_ctx->config->txBFCsnValue);
 
 	/*
@@ -9287,8 +9287,8 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->enable_rxthread = hdd_ctx->enable_rxthread;
 	cds_cfg->ce_classify_enabled =
 		hdd_ctx->config->ce_classify_enabled;
-	cds_cfg->bpf_packet_filter_enable =
-		hdd_ctx->config->bpf_packet_filter_enable;
+	cds_cfg->apf_packet_filter_enable =
+		hdd_ctx->config->apf_packet_filter_enable;
 	cds_cfg->tx_chain_mask_cck = hdd_ctx->config->tx_chain_mask_cck;
 	cds_cfg->self_gen_frm_pwr = hdd_ctx->config->self_gen_frm_pwr;
 	cds_cfg->max_station = hdd_ctx->config->maxNumberOfPeers;
@@ -9298,8 +9298,8 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->max_msdus_per_rxinorderind;
 	cds_cfg->self_recovery_enabled = hdd_ctx->config->enableSelfRecovery;
 	cds_cfg->fw_timeout_crash = hdd_ctx->config->fw_timeout_crash;
-	cds_cfg->active_uc_bpf_mode = hdd_ctx->config->active_uc_bpf_mode;
-	cds_cfg->active_mc_bc_bpf_mode = hdd_ctx->config->active_mc_bc_bpf_mode;
+	cds_cfg->active_uc_apf_mode = hdd_ctx->config->active_uc_apf_mode;
+	cds_cfg->active_mc_bc_apf_mode = hdd_ctx->config->active_mc_bc_apf_mode;
 	cds_cfg->auto_power_save_fail_mode =
 		hdd_ctx->config->auto_pwr_save_fail_mode;
 
@@ -13052,7 +13052,7 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 		(hdd_ctx->config->wowEnable & 0x01) ? true : false;
 	psoc_cfg.ptrn_match_enable_all_vdev =
 		(hdd_ctx->config->wowEnable & 0x02) ? true : false;
-	psoc_cfg.apf_enable = hdd_ctx->config->bpf_packet_filter_enable;
+	psoc_cfg.apf_enable = hdd_ctx->config->apf_packet_filter_enable;
 	psoc_cfg.arp_offload_enable = hdd_ctx->config->fhostArpOffload;
 	psoc_cfg.hw_filter_mode = hdd_ctx->config->hw_filter_mode;
 	psoc_cfg.ns_offload_enable_dynamic = hdd_ctx->config->fhostNSOffload;

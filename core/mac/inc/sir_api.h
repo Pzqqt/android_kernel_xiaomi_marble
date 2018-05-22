@@ -6163,17 +6163,17 @@ struct obss_scanparam {
 };
 
 /**
- * struct sir_bpf_set_offload - set bpf filter instructions
+ * struct sir_apf_set_offload - set apf filter instructions
  * @session_id: session identifier
- * @version: host bpf version
- * @filter_id: Filter ID for BPF filter
+ * @version: host apf version
+ * @filter_id: Filter ID for APF filter
  * @total_length: The total length of the full instruction
  *                total_length equal to 0 means reset
  * @current_offset: current offset, 0 means start a new setting
  * @current_length: Length of current @program
- * @program: BPF instructions
+ * @program: APF instructions
  */
-struct sir_bpf_set_offload {
+struct sir_apf_set_offload {
 	uint8_t  session_id;
 	uint32_t version;
 	uint32_t filter_id;
@@ -6184,18 +6184,18 @@ struct sir_bpf_set_offload {
 };
 
 /**
- * struct sir_bpf_offload_capabilities - get bpf Capabilities
- * @bpf_version: fw's implement version
- * @max_bpf_filters: max filters that fw supports
- * @max_bytes_for_bpf_inst: the max bytes that can be used as bpf instructions
- * @remaining_bytes_for_bpf_inst: remaining bytes for bpf instructions
+ * struct sir_apf_offload_capabilities - get apf Capabilities
+ * @apf_version: fw's implement version
+ * @max_apf_filters: max filters that fw supports
+ * @max_bytes_for_apf_inst: the max bytes that can be used as apf instructions
+ * @remaining_bytes_for_apf_inst: remaining bytes for apf instructions
  *
  */
-struct sir_bpf_get_offload {
-	uint32_t bpf_version;
-	uint32_t max_bpf_filters;
-	uint32_t max_bytes_for_bpf_inst;
-	uint32_t remaining_bytes_for_bpf_inst;
+struct sir_apf_get_offload {
+	uint32_t apf_version;
+	uint32_t max_apf_filters;
+	uint32_t max_bytes_for_apf_inst;
+	uint32_t remaining_bytes_for_apf_inst;
 };
 
 #ifndef QCA_SUPPORT_CP_STATS

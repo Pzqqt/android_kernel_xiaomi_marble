@@ -3208,10 +3208,10 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_handle->driver_type = cds_cfg->driver_type;
 	wma_handle->ssdp = cds_cfg->ssdp;
 	wma_handle->enable_mc_list = cds_cfg->enable_mc_list;
-	wma_handle->bpf_packet_filter_enable =
-		cds_cfg->bpf_packet_filter_enable;
-	wma_handle->active_uc_bpf_mode = cds_cfg->active_uc_bpf_mode;
-	wma_handle->active_mc_bc_bpf_mode = cds_cfg->active_mc_bc_bpf_mode;
+	wma_handle->apf_packet_filter_enable =
+		cds_cfg->apf_packet_filter_enable;
+	wma_handle->active_uc_apf_mode = cds_cfg->active_uc_apf_mode;
+	wma_handle->active_mc_bc_apf_mode = cds_cfg->active_mc_bc_apf_mode;
 	wma_handle->link_stats_results = NULL;
 #ifdef FEATURE_WLAN_RA_FILTERING
 	wma_handle->IsRArateLimitEnabled = cds_cfg->is_ra_ratelimit_enabled;
@@ -3492,8 +3492,8 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wma_peer_delete_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   wmi_bpf_capability_info_event_id,
-					   wma_get_bpf_caps_event_handler,
+					   wmi_apf_capability_info_event_id,
+					   wma_get_apf_caps_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_chan_info_event_id,
@@ -4756,7 +4756,7 @@ static void wma_update_fw_config(struct wlan_objmgr_psoc *psoc,
 	target_if_set_max_frag_entry(tgt_hdl, cfg->max_frag_entries);
 
 	cfg->num_wow_filters = ucfg_pmo_get_num_wow_filters(psoc);
-	cfg->bpf_instruction_size = ucfg_pmo_get_apf_instruction_size(psoc);
+	cfg->apf_instruction_size = ucfg_pmo_get_apf_instruction_size(psoc);
 	cfg->num_packet_filters = ucfg_pmo_get_num_packet_filters(psoc);
 }
 
@@ -5505,7 +5505,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.lpss_support = wma_handle->lpss_support;
 #endif /* WLAN_FEATURE_LPSS */
 	tgt_cfg.ap_arpns_support = wma_handle->ap_arpns_support;
-	tgt_cfg.bpf_enabled = wma_handle->bpf_enabled;
+	tgt_cfg.apf_enabled = wma_handle->apf_enabled;
 	tgt_cfg.dfs_cac_offload = wma_handle->is_dfs_offloaded;
 	tgt_cfg.rcpi_enabled = wma_handle->rcpi_enabled;
 	wma_update_ra_rate_limit(wma_handle, &tgt_cfg);
@@ -5589,7 +5589,7 @@ static void wma_init_scan_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * wma_update_ra_limit() - update ra limit based on bpf filter
+ * wma_update_ra_limit() - update ra limit based on apf filter
  *  enabled or not
  * @handle: wma handle
  *
@@ -5598,7 +5598,7 @@ static void wma_init_scan_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 #ifdef FEATURE_WLAN_RA_FILTERING
 static void wma_update_ra_limit(tp_wma_handle wma_handle)
 {
-	if (wma_handle->bpf_enabled)
+	if (wma_handle->apf_enabled)
 		wma_handle->IsRArateLimitEnabled = false;
 }
 #else
@@ -5615,7 +5615,7 @@ static void wma_set_pmo_caps(struct wlan_objmgr_psoc *psoc)
 	caps.arp_ns_offload =
 		wma_is_service_enabled(wmi_service_arpns_offload);
 	caps.apf =
-		wma_is_service_enabled(wmi_service_bpf_offload);
+		wma_is_service_enabled(wmi_service_apf_offload);
 	caps.packet_filter =
 		wma_is_service_enabled(wmi_service_packet_filter_offload);
 	caps.unified_wow =
@@ -5819,8 +5819,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	wma_handle->ap_arpns_support =
 		wmi_service_enabled(wmi_handle, wmi_service_ap_arpns_offload);
 
-	wma_handle->bpf_enabled = (wma_handle->bpf_packet_filter_enable &&
-		wmi_service_enabled(wmi_handle, wmi_service_bpf_offload));
+	wma_handle->apf_enabled = (wma_handle->apf_packet_filter_enable &&
+		wmi_service_enabled(wmi_handle, wmi_service_apf_offload));
 	wma_update_ra_limit(wma_handle);
 
 	if (wmi_service_enabled(wmi_handle, wmi_service_csa_offload)) {
@@ -8419,11 +8419,11 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_remove_beacon_filter(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-	case WDA_BPF_GET_CAPABILITIES_REQ:
-		wma_get_bpf_capabilities(wma_handle);
+	case WDA_APF_GET_CAPABILITIES_REQ:
+		wma_get_apf_capabilities(wma_handle);
 		break;
-	case WDA_BPF_SET_INSTRUCTIONS_REQ:
-		wma_set_bpf_instructions(wma_handle, msg->bodyptr);
+	case WDA_APF_SET_INSTRUCTIONS_REQ:
+		wma_set_apf_instructions(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case SIR_HAL_POWER_DBG_CMD:

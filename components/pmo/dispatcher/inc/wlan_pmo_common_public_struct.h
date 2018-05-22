@@ -260,7 +260,7 @@ enum pmo_auto_pwr_detect_failure_mode {
 /**
  * struct pmo_psoc_cfg - user configuration required for pmo
  * @ptrn_match_enable_all_vdev: true when pattern match is enable for all vdev
- * @apf_enable: true if psoc supports bpf else false
+ * @apf_enable: true if psoc supports apf else false
  * @arp_offload_enable: true if arp offload is supported for psoc else false
  * @hw_filter_mode: which mode the hardware filter should use during DTIM
  * @ns_offload_enable_static: true if psoc supports ns offload in ini else false

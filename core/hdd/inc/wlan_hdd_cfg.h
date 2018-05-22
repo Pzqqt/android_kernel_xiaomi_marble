@@ -8640,13 +8640,13 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ACTIVE_MODE_OFFLOAD_DEFAULT    (1)
 
 /*
- * 0: Disable BPF packet filter
- * 1: Enable BPF packet filter
+ * 0: Disable APF packet filter
+ * 1: Enable APF packet filter
  */
-#define CFG_BPF_PACKET_FILTER_OFFLOAD           "gBpfFilterEnable"
-#define CFG_BPF_PACKET_FILTER_OFFLOAD_MIN       (0)
-#define CFG_BPF_PACKET_FILTER_OFFLOAD_MAX       (1)
-#define CFG_BPF_PACKET_FILTER_OFFLOAD_DEFAULT   (1)
+#define CFG_APF_PACKET_FILTER_OFFLOAD           "gBpfFilterEnable"
+#define CFG_APF_PACKET_FILTER_OFFLOAD_MIN       (0)
+#define CFG_APF_PACKET_FILTER_OFFLOAD_MAX       (1)
+#define CFG_APF_PACKET_FILTER_OFFLOAD_DEFAULT   (1)
 
 /*
  * <ini>
@@ -11205,51 +11205,51 @@ enum hdd_wext_control {
 
 /*
  * <ini>
- * gActiveUcBpfMode - Control UC active BPF mode
+ * gActiveUcBpfMode - Control UC active APF mode
  * @Min: 0 (disabled)
  * @Max: 2 (adaptive)
  * @Default: 0 (disabled)
  *
- * This config item controls UC BPF in active mode. There are 3 modes:
- *	0) disabled - BPF is disabled in active mode
- *	1) enabled - BPF is enabled for all packets in active mode
- *	2) adaptive - BPF is enabled for packets up to some throughput threshold
+ * This config item controls UC APF in active mode. There are 3 modes:
+ *	0) disabled - APF is disabled in active mode
+ *	1) enabled - APF is enabled for all packets in active mode
+ *	2) adaptive - APF is enabled for packets up to some throughput threshold
  *
  * Related: gActiveMcBcBpfMode
  *
- * Supported Feature: Active Mode BPF
+ * Supported Feature: Active Mode APF
  *
  * Usage: Internal/External
  * </ini>
  */
-#define CFG_ACTIVE_UC_BPF_MODE_NAME    "gActiveUcBpfMode"
-#define CFG_ACTIVE_UC_BPF_MODE_MIN     (ACTIVE_BPF_DISABLED)
-#define CFG_ACTIVE_UC_BPF_MODE_MAX     (ACTIVE_BPF_MODE_COUNT - 1)
-#define CFG_ACTIVE_UC_BPF_MODE_DEFAULT (ACTIVE_BPF_DISABLED)
+#define CFG_ACTIVE_UC_APF_MODE_NAME    "gActiveUcBpfMode"
+#define CFG_ACTIVE_UC_APF_MODE_MIN     (ACTIVE_APF_DISABLED)
+#define CFG_ACTIVE_UC_APF_MODE_MAX     (ACTIVE_APF_MODE_COUNT - 1)
+#define CFG_ACTIVE_UC_APF_MODE_DEFAULT (ACTIVE_APF_DISABLED)
 
 /*
  * <ini>
- * gActiveMcBcBpfMode - Control MC/BC active BPF mode
+ * gActiveMcBcBpfMode - Control MC/BC active APF mode
  * @Min: 0 (disabled)
  * @Max: 1 (enabled)
  * @Default: 0 (disabled)
  *
- * This config item controls MC/BC BPF in active mode. There are 3 modes:
- *	0) disabled - BPF is disabled in active mode
- *	1) enabled - BPF is enabled for all packets in active mode
- *	2) adaptive - BPF is enabled for packets up to some throughput threshold
+ * This config item controls MC/BC APF in active mode. There are 3 modes:
+ *	0) disabled - APF is disabled in active mode
+ *	1) enabled - APF is enabled for all packets in active mode
+ *	2) adaptive - APF is enabled for packets up to some throughput threshold
  *
  * Related: gActiveUcBpfMode
  *
- * Supported Feature: Active Mode BPF
+ * Supported Feature: Active Mode APF
  *
  * Usage: Internal/External
  * </ini>
  */
-#define CFG_ACTIVE_MC_BC_BPF_MODE_NAME    "gActiveMcBcBpfMode"
-#define CFG_ACTIVE_MC_BC_BPF_MODE_MIN     (ACTIVE_BPF_DISABLED)
-#define CFG_ACTIVE_MC_BC_BPF_MODE_MAX     (ACTIVE_BPF_ENABLED)
-#define CFG_ACTIVE_MC_BC_BPF_MODE_DEFAULT (ACTIVE_BPF_DISABLED)
+#define CFG_ACTIVE_MC_BC_APF_MODE_NAME    "gActiveMcBcBpfMode"
+#define CFG_ACTIVE_MC_BC_APF_MODE_MIN     (ACTIVE_APF_DISABLED)
+#define CFG_ACTIVE_MC_BC_APF_MODE_MAX     (ACTIVE_APF_ENABLED)
+#define CFG_ACTIVE_MC_BC_APF_MODE_DEFAULT (ACTIVE_APF_DISABLED)
 
 /*
  * <ini>
@@ -14770,7 +14770,7 @@ struct hdd_config {
 	bool flow_steering_enable;
 	uint8_t max_msdus_per_rxinorderind;
 	bool active_mode_offload;
-	bool bpf_packet_filter_enable;
+	bool apf_packet_filter_enable;
 	/* parameter for defer timer for enabling TDLS on p2p listen */
 	uint16_t tdls_enable_defer_time;
 	uint32_t fine_time_meas_cap;
@@ -14858,7 +14858,7 @@ struct hdd_config {
 	uint8_t  tx_sched_wrr_bk[TX_SCHED_WRR_PARAM_STRING_LENGTH];
 
 	bool enable_fatal_event;
-	bool bpf_enabled;
+	bool apf_enabled;
 #ifdef CONFIG_DP_TRACE
 	bool enable_dp_trace;
 	uint8_t dp_trace_config[DP_TRACE_CONFIG_STRING_LENGTH];
@@ -14931,8 +14931,8 @@ struct hdd_config {
 	uint32_t per_roam_rest_time;
 	uint32_t per_roam_mon_time;
 	uint32_t min_candidate_rssi;
-	enum active_bpf_mode active_uc_bpf_mode;
-	enum active_bpf_mode active_mc_bc_bpf_mode;
+	enum active_apf_mode active_uc_apf_mode;
+	enum active_apf_mode active_mc_bc_apf_mode;
 	bool enable_bcast_probe_rsp;
 	uint8_t he_dynamic_frag_support;
 #ifdef WLAN_FEATURE_11AX

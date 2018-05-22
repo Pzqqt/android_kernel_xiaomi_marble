@@ -43,17 +43,17 @@ enum cfg_sub_20_channel_width {
 };
 
 /**
- * enum active_bpf_mode - the modes active BPF can operate in
- * @ACTIVE_BPF_DISABLED: BPF is disabled in active mode
- * @ACTIVE_BPF_ENABLED: BPF is enabled for all packets
- * @ACTIVE_BPF_ADAPTIVE: BPF is enabled for packets up to some threshold
- * @ACTIVE_BPF_MODE_COUNT: The number of active BPF modes
+ * enum active_apf_mode - the modes active APF can operate in
+ * @ACTIVE_APF_DISABLED: APF is disabled in active mode
+ * @ACTIVE_APF_ENABLED: APF is enabled for all packets
+ * @ACTIVE_APF_ADAPTIVE: APF is enabled for packets up to some threshold
+ * @ACTIVE_APF_MODE_COUNT: The number of active APF modes
  */
-enum active_bpf_mode {
-	ACTIVE_BPF_DISABLED = 0,
-	ACTIVE_BPF_ENABLED,
-	ACTIVE_BPF_ADAPTIVE,
-	ACTIVE_BPF_MODE_COUNT
+enum active_apf_mode {
+	ACTIVE_APF_DISABLED = 0,
+	ACTIVE_APF_ENABLED,
+	ACTIVE_APF_ADAPTIVE,
+	ACTIVE_APF_MODE_COUNT
 };
 
 /**
@@ -93,15 +93,15 @@ enum active_bpf_mode {
  * @tx_flow_start_queue_offset: Start queue offset in percentage
  * @is_lpass_enabled: Indicate whether LPASS is enabled or not
  * @is_nan_enabled: Indicate whether NAN is enabled or not
- * @bool bpf_packet_filter_enable; Indicate bpf filter enabled or not
+ * @bool apf_packet_filter_enable; Indicate apf filter enabled or not
  * @tx_chain_mask_cck: Tx chain mask enabled or not
  * @self_gen_frm_pwr: Self gen from power
  * @sub_20_channel_width: Sub 20 MHz ch width, ini intersected with fw cap
  * @flow_steering_enabled: Receive flow steering.
  * @is_fw_timeout: Indicate whether crash host when fw timesout or not
- * @active_uc_bpf_mode: Setting that determines how BPF is applied in active
+ * @active_uc_apf_mode: Setting that determines how APF is applied in active
  *	mode for uc packets
- * @active_mc_bc_bpf_mode: Setting that determines how BPF is applied in
+ * @active_mc_bc_apf_mode: Setting that determines how APF is applied in
  *	active mode for MC/BC packets
  * @auto_power_save_fail_mode: auto detect power save failure mode
  * @ito_repeat_count: Indicates ito repeated count
@@ -153,7 +153,7 @@ struct cds_config_info {
 #ifdef WLAN_FEATURE_NAN
 	bool is_nan_enabled;
 #endif
-	bool bpf_packet_filter_enable;
+	bool apf_packet_filter_enable;
 	bool tx_chain_mask_cck;
 	uint16_t self_gen_frm_pwr;
 	enum cfg_sub_20_channel_width sub_20_channel_width;
@@ -162,8 +162,8 @@ struct cds_config_info {
 	bool self_recovery_enabled;
 	bool fw_timeout_crash;
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
-	enum active_bpf_mode active_uc_bpf_mode;
-	enum active_bpf_mode active_mc_bc_bpf_mode;
+	enum active_apf_mode active_uc_apf_mode;
+	enum active_apf_mode active_mc_bc_apf_mode;
 	enum pmo_auto_pwr_detect_failure_mode auto_power_save_fail_mode;
 	uint8_t ito_repeat_count;
 	bool force_target_assert_enabled;

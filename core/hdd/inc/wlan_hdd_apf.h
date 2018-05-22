@@ -35,7 +35,7 @@
 #include "wlan_hdd_main.h"
 
 /**
- * wlan_hdd_cfg80211_bpf_offload() - SSR Wrapper to BPF Offload
+ * wlan_hdd_cfg80211_apf_offload() - SSR Wrapper to APF Offload
  * @wiphy:    wiphy structure pointer
  * @wdev:     Wireless device structure pointer
  * @data:     Pointer to the data received
@@ -44,7 +44,7 @@
  * Return: 0 on success; errno on failure
  */
 
-int wlan_hdd_cfg80211_bpf_offload(struct wiphy *wiphy,
+int wlan_hdd_cfg80211_apf_offload(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
 				  const void *data, int data_len);
 #endif /* WLAN_HDD_APF_H */

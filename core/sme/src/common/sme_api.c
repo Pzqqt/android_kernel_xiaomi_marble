@@ -14125,8 +14125,8 @@ void sme_send_disassoc_req_frame(tHalHandle hal, uint8_t session_id,
 			FL("cds_send_mb_message Failed"));
 }
 
-QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal,
-					    bpf_get_offload_cb callback,
+QDF_STATUS sme_get_apf_offload_capabilities(tHalHandle hal,
+					    apf_get_offload_cb callback,
 					    void *context)
 {
 	QDF_STATUS          status     = QDF_STATUS_SUCCESS;
@@ -14138,14 +14138,14 @@ QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal,
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_STATUS_SUCCESS == status) {
 		/* Serialize the req through MC thread */
-		mac_ctx->sme.bpf_get_offload_cb = callback;
-		mac_ctx->sme.bpf_get_offload_context = context;
+		mac_ctx->sme.apf_get_offload_cb = callback;
+		mac_ctx->sme.apf_get_offload_context = context;
 		cds_msg.bodyptr = NULL;
-		cds_msg.type = WDA_BPF_GET_CAPABILITIES_REQ;
+		cds_msg.type = WDA_APF_GET_CAPABILITIES_REQ;
 		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &cds_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-					FL("Post bpf get offload msg fail"));
+					FL("Post apf get offload msg fail"));
 			status = QDF_STATUS_E_FAILURE;
 		}
 		sme_release_global_lock(&mac_ctx->sme);
@@ -14159,19 +14159,19 @@ QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal,
 
 
 /**
- * sme_set_bpf_instructions() - Set BPF bpf filter instructions.
+ * sme_set_apf_instructions() - Set APF apf filter instructions.
  * @hal: HAL handle
- * @bpf_set_offload: struct to set bpf filter instructions.
+ * @apf_set_offload: struct to set apf filter instructions.
  *
  * Return: QDF_STATUS enumeration.
  */
-QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
-				    struct sir_bpf_set_offload *req)
+QDF_STATUS sme_set_apf_instructions(tHalHandle hal,
+				    struct sir_apf_set_offload *req)
 {
 	QDF_STATUS          status     = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal      mac_ctx    = PMAC_STRUCT(hal);
 	struct scheduler_msg           cds_msg = {0};
-	struct sir_bpf_set_offload *set_offload;
+	struct sir_apf_set_offload *set_offload;
 
 	set_offload = qdf_mem_malloc(sizeof(*set_offload) +
 					req->current_length);
@@ -14197,12 +14197,12 @@ QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
 	if (QDF_STATUS_SUCCESS == status) {
 		/* Serialize the req through MC thread */
 		cds_msg.bodyptr = set_offload;
-		cds_msg.type = WDA_BPF_SET_INSTRUCTIONS_REQ;
+		cds_msg.type = WDA_APF_SET_INSTRUCTIONS_REQ;
 		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &cds_msg);
 
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				FL("Post BPF set offload msg fail"));
+				FL("Post APF set offload msg fail"));
 			status = QDF_STATUS_E_FAILURE;
 			qdf_mem_free(set_offload);
 		}

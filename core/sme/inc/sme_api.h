@@ -1300,7 +1300,7 @@ QDF_STATUS sme_add_beacon_filter(tHalHandle hal,
 QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id);
 
 /**
- * sme_get_bpf_offload_capabilities() - Get BPF offload capabilities
+ * sme_get_apf_offload_capabilities() - Get APF offload capabilities
  * @hal: Global HAL handle
  * @callback: Callback function to be called with the result
  * @context: Opaque context to be used by the caller to associate the
@@ -1311,12 +1311,12 @@ QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id);
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS sme_get_bpf_offload_capabilities(tHalHandle hal,
-					    bpf_get_offload_cb callback,
+QDF_STATUS sme_get_apf_offload_capabilities(tHalHandle hal,
+					    apf_get_offload_cb callback,
 					    void *context);
 
-QDF_STATUS sme_set_bpf_instructions(tHalHandle hal,
-				struct sir_bpf_set_offload *);
+QDF_STATUS sme_set_apf_instructions(tHalHandle hal,
+				    struct sir_apf_set_offload *);
 uint32_t sme_get_wni_dot11_mode(tHalHandle hal);
 QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, uint8_t *bssid);
 QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,

@@ -3436,12 +3436,12 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_GRO_ENABLED_MIN,
 		     CFG_GRO_ENABLED_MAX),
 
-	REG_VARIABLE(CFG_BPF_PACKET_FILTER_OFFLOAD, WLAN_PARAM_Integer,
-		     struct hdd_config, bpf_packet_filter_enable,
+	REG_VARIABLE(CFG_APF_PACKET_FILTER_OFFLOAD, WLAN_PARAM_Integer,
+		     struct hdd_config, apf_packet_filter_enable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BPF_PACKET_FILTER_OFFLOAD_DEFAULT,
-		     CFG_BPF_PACKET_FILTER_OFFLOAD_MIN,
-		     CFG_BPF_PACKET_FILTER_OFFLOAD_MAX),
+		     CFG_APF_PACKET_FILTER_OFFLOAD_DEFAULT,
+		     CFG_APF_PACKET_FILTER_OFFLOAD_MIN,
+		     CFG_APF_PACKET_FILTER_OFFLOAD_MAX),
 
 	REG_VARIABLE(CFG_TDLS_ENABLE_DEFER_TIMER, WLAN_PARAM_Integer,
 		     struct hdd_config, tdls_enable_defer_time,
@@ -4397,19 +4397,19 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_PER_ROAM_MIN_CANDIDATE_RSSI_MIN,
 		CFG_PER_ROAM_MIN_CANDIDATE_RSSI_MAX),
 
-	REG_VARIABLE(CFG_ACTIVE_UC_BPF_MODE_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, active_uc_bpf_mode,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ACTIVE_UC_BPF_MODE_DEFAULT,
-		CFG_ACTIVE_UC_BPF_MODE_MIN,
-		CFG_ACTIVE_UC_BPF_MODE_MAX),
+	REG_VARIABLE(CFG_ACTIVE_UC_APF_MODE_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, active_uc_apf_mode,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ACTIVE_UC_APF_MODE_DEFAULT,
+		     CFG_ACTIVE_UC_APF_MODE_MIN,
+		     CFG_ACTIVE_UC_APF_MODE_MAX),
 
-	REG_VARIABLE(CFG_ACTIVE_MC_BC_BPF_MODE_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, active_mc_bc_bpf_mode,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ACTIVE_MC_BC_BPF_MODE_DEFAULT,
-		CFG_ACTIVE_MC_BC_BPF_MODE_MIN,
-		CFG_ACTIVE_MC_BC_BPF_MODE_MAX),
+	REG_VARIABLE(CFG_ACTIVE_MC_BC_APF_MODE_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, active_mc_bc_apf_mode,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ACTIVE_MC_BC_APF_MODE_DEFAULT,
+		     CFG_ACTIVE_MC_BC_APF_MODE_MIN,
+		     CFG_ACTIVE_MC_BC_APF_MODE_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_BCAST_PROBE_RESP_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, enable_bcast_probe_rsp,
@@ -7065,8 +7065,8 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		CFG_GO_FORCE_11N_FOR_11AC_NAME,
 		hdd_ctx->config->go_force_11n_for_11ac);
 	hdd_debug("Name = [%s] Value = [%d]",
-		CFG_BPF_PACKET_FILTER_OFFLOAD,
-		hdd_ctx->config->bpf_packet_filter_enable);
+		CFG_APF_PACKET_FILTER_OFFLOAD,
+		hdd_ctx->config->apf_packet_filter_enable);
 	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_TDLS_ENABLE_DEFER_TIMER,
 		hdd_ctx->config->tdls_enable_defer_time);
@@ -7080,11 +7080,11 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		CFG_CRASH_FW_TIMEOUT_NAME,
 		hdd_ctx->config->fw_timeout_crash);
 	hdd_debug("Name = [%s] Value = [%u]",
-		CFG_ACTIVE_UC_BPF_MODE_NAME,
-		hdd_ctx->config->active_uc_bpf_mode);
+		CFG_ACTIVE_UC_APF_MODE_NAME,
+		hdd_ctx->config->active_uc_apf_mode);
 	hdd_debug("Name = [%s] Value = [%u]",
-		CFG_ACTIVE_MC_BC_BPF_MODE_NAME,
-		hdd_ctx->config->active_mc_bc_bpf_mode);
+		CFG_ACTIVE_MC_BC_APF_MODE_NAME,
+		hdd_ctx->config->active_mc_bc_apf_mode);
 	hdd_debug("Name = [%s] Value = [%d]",
 		CFG_SAP_INTERNAL_RESTART_NAME,
 		hdd_ctx->config->sap_internal_restart);
