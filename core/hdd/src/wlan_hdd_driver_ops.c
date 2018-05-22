@@ -1503,7 +1503,6 @@ static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 
 	switch (uevent->uevent) {
 	case PLD_RECOVERY:
-		cds_set_target_ready(false);
 		hdd_pld_ipa_uc_shutdown_pipes();
 		break;
 	case PLD_FW_DOWN:
