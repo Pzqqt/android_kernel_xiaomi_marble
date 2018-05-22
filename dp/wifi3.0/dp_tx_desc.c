@@ -166,6 +166,7 @@ QDF_STATUS dp_tx_desc_pool_free(struct dp_soc *soc, uint8_t pool_id)
 	qdf_mem_multi_pages_free(soc->osdev,
 		&tx_desc_pool->desc_pages, 0, true);
 	TX_DESC_LOCK_DESTROY(&tx_desc_pool->lock);
+	TX_DESC_POOL_MEMBER_CLEAN(tx_desc_pool);
 	return QDF_STATUS_SUCCESS;
 }
 

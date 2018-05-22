@@ -56,11 +56,29 @@
 #define TX_DESC_LOCK_DESTROY(lock)
 #define TX_DESC_LOCK_LOCK(lock)
 #define TX_DESC_LOCK_UNLOCK(lock)
+#define TX_DESC_POOL_MEMBER_CLEAN(_tx_desc_pool)       \
+do {                                                   \
+	(_tx_desc_pool)->elem_size = 0;                \
+	(_tx_desc_pool)->freelist = NULL;              \
+	(_tx_desc_pool)->pool_size = 0;                \
+	(_tx_desc_pool)->avail_desc = 0;               \
+	(_tx_desc_pool)->start_th = 0;                 \
+	(_tx_desc_pool)->stop_th = 0;                  \
+	(_tx_desc_pool)->status = FLOW_POOL_INACTIVE;  \
+} while (0)
 #else /* !QCA_LL_TX_FLOW_CONTROL_V2 */
 #define TX_DESC_LOCK_CREATE(lock)  qdf_spinlock_create(lock)
 #define TX_DESC_LOCK_DESTROY(lock) qdf_spinlock_destroy(lock)
 #define TX_DESC_LOCK_LOCK(lock)    qdf_spin_lock_bh(lock)
 #define TX_DESC_LOCK_UNLOCK(lock)  qdf_spin_unlock_bh(lock)
+#define TX_DESC_POOL_MEMBER_CLEAN(_tx_desc_pool)       \
+do {                                                   \
+	(_tx_desc_pool)->elem_size = 0;                \
+	(_tx_desc_pool)->num_allocated = 0;            \
+	(_tx_desc_pool)->freelist = NULL;              \
+	(_tx_desc_pool)->elem_count = 0;               \
+	(_tx_desc_pool)->num_free = 0;                 \
+} while (0)
 #endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
 #define MAX_POOL_BUFF_COUNT 10000
 
@@ -149,7 +167,8 @@ dp_tx_desc_alloc(struct dp_soc *soc, uint8_t desc_pool_id)
 
 	if (pool) {
 		qdf_spin_lock_bh(&pool->flow_pool_lock);
-		if (pool->avail_desc) {
+		if (pool->status <= FLOW_POOL_ACTIVE_PAUSED &&
+		    pool->avail_desc) {
 			tx_desc = dp_tx_get_desc_flow_pool(pool);
 			tx_desc->pool_id = desc_pool_id;
 			tx_desc->flags = DP_TX_DESC_FLAG_ALLOCATED;
@@ -205,7 +224,6 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	case FLOW_POOL_INVALID:
 		if (pool->avail_desc == pool->pool_size) {
 			dp_tx_desc_pool_free(soc, desc_pool_id);
-			pool->status = FLOW_POOL_INACTIVE;
 			qdf_spin_unlock_bh(&pool->flow_pool_lock);
 			qdf_print("%s %d pool is freed!!\n",
 				 __func__, __LINE__);
