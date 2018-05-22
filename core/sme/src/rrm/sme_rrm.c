@@ -417,6 +417,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	tpRrmSMEContext rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 	uint32_t session_id;
 	struct csr_roam_info *roam_info;
+	tSirScanType scan_type;
 
 	qdf_mem_zero(&filter, sizeof(filter));
 	qdf_mem_zero(scanresults_arr,
@@ -513,11 +514,41 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 		goto rrm_send_scan_results_done;
 	}
 
+	if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource ||
+	    eRRM_MSG_SOURCE_LEGACY_ESE == rrm_ctx->msgSource)
+		scan_type = rrm_ctx->measMode[rrm_ctx->currentIndex];
+	else
+		scan_type = rrm_ctx->measMode[0];
+
 	while (scan_results) {
+		/*
+		 * In passive scan, sta listens beacon. Connected AP beacon
+		 * is offloaded to firmware. Firmware will discard
+		 * connected AP beacon except that special IE exists.
+		 * Connected AP beacon will not be sent to host. Hence, timer
+		 * of connected AP in scan results is not updated and can
+		 * not meet "pScanResult->timer >= RRM_scan_timer".
+		 */
+		struct csr_roam_session *session;
+		uint8_t is_conn_bss_found = false;
+
+		if (scan_type == eSIR_PASSIVE_SCAN) {
+			session = CSR_GET_SESSION(mac_ctx, session_id);
+			if (csr_is_conn_state_connected_infra(
+			    mac_ctx, session_id) &&
+			    (NULL != session->pConnectBssDesc) &&
+			    (csr_is_duplicate_bss_description(mac_ctx,
+			     &scan_results->BssDescriptor,
+			     session->pConnectBssDesc, NULL, false))) {
+				is_conn_bss_found = true;
+				sme_debug("Connected BSS in scan results");
+			}
+		}
 		next_result = sme_scan_result_get_next(mac_ctx, result_handle);
 		sme_debug("Scan res timer:%lu, rrm scan timer:%llu",
 				scan_results->timer, rrm_scan_timer);
-		if (scan_results->timer >= rrm_scan_timer) {
+		if ((scan_results->timer >= rrm_scan_timer) ||
+		    (is_conn_bss_found == true)) {
 			roam_info->pBssDesc = &scan_results->BssDescriptor;
 			csr_roam_call_callback(mac_ctx, session_id, roam_info,
 						0, eCSR_ROAM_UPDATE_SCAN_RESULT,
