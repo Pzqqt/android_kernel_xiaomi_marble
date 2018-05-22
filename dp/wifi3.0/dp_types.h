@@ -755,6 +755,7 @@ struct dp_soc {
 		struct {
 			TAILQ_HEAD(, dp_rx_tid) waitlist;
 			uint32_t timeout_ms;
+			qdf_spinlock_t defrag_lock;
 		} defrag;
 		struct {
 			int defrag_timeout_check;

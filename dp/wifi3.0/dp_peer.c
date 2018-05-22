@@ -22,6 +22,7 @@
 #include "dp_types.h"
 #include "dp_internal.h"
 #include "dp_peer.h"
+#include "dp_rx_defrag.h"
 #include <hal_api.h>
 #include <hal_reo.h>
 #ifdef CONFIG_MCL
@@ -1570,6 +1571,11 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		if (peer->rx_tid[tid].hw_qdesc_vaddr_unaligned != NULL) {
 			dp_rx_tid_delete_wifi3(peer, tid);
+
+			/* Cleanup defrag related resource */
+			dp_rx_defrag_waitlist_remove(peer, tid);
+			dp_rx_reorder_flush_frag(peer, tid);
+
 			tid_delete_mask |= (1 << tid);
 		}
 	}

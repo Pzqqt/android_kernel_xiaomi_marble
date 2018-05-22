@@ -2253,6 +2253,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		wlan_cfg_get_rx_defrag_min_timeout(soc->wlan_cfg_ctx);
 	soc->rx.flags.defrag_timeout_check =
 		wlan_cfg_get_defrag_timeout_check(soc->wlan_cfg_ctx);
+	qdf_spinlock_create(&soc->rx.defrag.defrag_lock);
 
 out:
 	/*
@@ -3047,6 +3048,8 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	qdf_spinlock_destroy(&soc->htt_stats.lock);
 
 	htt_soc_detach(soc->htt_handle);
+
+	qdf_spinlock_destroy(&soc->rx.defrag.defrag_lock);
 
 	dp_reo_cmdlist_destroy(soc);
 	qdf_spinlock_destroy(&soc->rx.reo_cmd_lock);
