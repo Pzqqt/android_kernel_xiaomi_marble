@@ -3157,19 +3157,20 @@ QDF_STATUS wmi_unified_roam_send_hlp_cmd(void *wmi_hdl,
 }
 #endif
 
-QDF_STATUS wmi_unified_set_active_bpf_mode_cmd(void *wmi_hdl,
-				uint8_t vdev_id,
-				enum wmi_host_active_bpf_mode ucast_mode,
-				enum wmi_host_active_bpf_mode mcast_bcast_mode)
+QDF_STATUS
+wmi_unified_set_active_apf_mode_cmd(void *wmi_hdl, uint8_t vdev_id,
+				    enum wmi_host_active_apf_mode ucast_mode,
+				    enum wmi_host_active_apf_mode
+							       mcast_bcast_mode)
 {
 	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
 
-	if (!wmi->ops->send_set_active_bpf_mode_cmd) {
-		WMI_LOGD("send_set_active_bpf_mode_cmd op is NULL");
+	if (!wmi->ops->send_set_active_apf_mode_cmd) {
+		WMI_LOGD("send_set_active_apf_mode_cmd op is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return wmi->ops->send_set_active_bpf_mode_cmd(wmi, vdev_id,
+	return wmi->ops->send_set_active_apf_mode_cmd(wmi, vdev_id,
 						      ucast_mode,
 						      mcast_bcast_mode);
 }

@@ -8894,7 +8894,7 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_unified_wow_capability] =
 				WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_enterprise_mesh] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_bpf_offload] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_apf_offload] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_sync_delete_cmds] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_ratectrl_limit_max_min_rates] =
 				WMI_SERVICE_UNAVAILABLE;
