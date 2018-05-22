@@ -18,11 +18,11 @@
 
 #include "wmi_unified_apf_tlv.h"
 
-QDF_STATUS send_set_active_bpf_mode_cmd_tlv(wmi_unified_t wmi_handle,
+QDF_STATUS send_set_active_apf_mode_cmd_tlv(wmi_unified_t wmi_handle,
 					    uint8_t vdev_id,
-					    enum wmi_host_active_bpf_mode
+					    enum wmi_host_active_apf_mode
 								     ucast_mode,
-					    enum wmi_host_active_bpf_mode
+					    enum wmi_host_active_apf_mode
 							       mcast_bcast_mode)
 {
 	const WMITLV_TAG_ID tag_id =
@@ -33,7 +33,7 @@ QDF_STATUS send_set_active_bpf_mode_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_bpf_set_vdev_active_mode_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 
-	WMI_LOGD("Sending WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID(%u, %d, %d)",
+	WMI_LOGD("Sending WMI_APF_SET_VDEV_ACTIVE_MODE_CMDID(%u, %d, %d)",
 		 vdev_id, ucast_mode, mcast_bcast_mode);
 
 	/* allocate command buffer */
@@ -56,13 +56,13 @@ QDF_STATUS send_set_active_bpf_mode_cmd_tlv(wmi_unified_t wmi_handle,
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 				      WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMI_LOGE("Failed to send WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID:%d",
+		WMI_LOGE("Failed to send WMI_APF_SET_VDEV_ACTIVE_MODE_CMDID:%d",
 			 status);
 		wmi_buf_free(buf);
 		return status;
 	}
 
-	WMI_LOGD("Sent WMI_BPF_SET_VDEV_ACTIVE_MODE_CMDID successfully");
+	WMI_LOGD("Sent WMI_APF_SET_VDEV_ACTIVE_MODE_CMDID successfully");
 
 	return QDF_STATUS_SUCCESS;
 }

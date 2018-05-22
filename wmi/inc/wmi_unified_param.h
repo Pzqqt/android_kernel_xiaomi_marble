@@ -5503,7 +5503,7 @@ typedef enum {
 	wmi_ap_ps_egap_info_event_id,
 	wmi_peer_assoc_conf_event_id,
 	wmi_vdev_delete_resp_event_id,
-	wmi_bpf_capability_info_event_id,
+	wmi_apf_capability_info_event_id,
 	wmi_vdev_encrypt_decrypt_data_rsp_event_id,
 	wmi_report_rx_aggr_failure_event_id,
 	wmi_pdev_chip_pwr_save_failure_detect_event_id,
@@ -5908,7 +5908,7 @@ typedef enum {
 	wmi_service_sta_pmf_offload,
 	wmi_service_unified_wow_capability,
 	wmi_service_enterprise_mesh,
-	wmi_service_bpf_offload,
+	wmi_service_apf_offload,
 	wmi_service_sync_delete_cmds,
 	wmi_service_ratectrl_limit_max_min_rates,
 	wmi_service_nan_data,
@@ -6065,7 +6065,7 @@ struct wmi_host_fw_abi_ver {
  * @num_packet_filters: maximum number of packet filter rules to support
  * @num_max_sta_vdevs: maximum number of concurrent station vdevs to support
  * @num_ns_ext_tuples_cfg:
- * @bpf_instruction_size:
+ * @apf_instruction_size:
  * @max_bssid_rx_filters:
  * @use_pdev_id:
  * @max_num_dbs_scan_duty_cycle: max dbs can duty cycle value
@@ -6140,7 +6140,7 @@ typedef struct {
 	uint32_t num_packet_filters;
 	uint32_t num_max_sta_vdevs;
 	uint32_t num_ns_ext_tuples_cfg;
-	uint32_t bpf_instruction_size;
+	uint32_t apf_instruction_size;
 	uint32_t max_bssid_rx_filters;
 	uint32_t use_pdev_id;
 	uint32_t max_num_dbs_scan_duty_cycle;
@@ -7943,16 +7943,16 @@ struct pdev_csa_switch_count_status {
 };
 
 /**
- * enum wmi_host_active-bpf_mode - FW_ACTIVE_BPF_MODE, replicated from FW header
- * @WMI_HOST_ACTIVE_BPF_DISABLED: BPF is disabled for all packets in active mode
- * @WMI_HOST_ACTIVE_BPF_ENABLED: BPF is enabled for all packets in active mode
- * @WMI_HOST_ACTIVE_BPF_ADAPTIVE: BPF is enabled for packets up to some
+ * enum wmi_host_active-apf_mode - FW_ACTIVE_APF_MODE, replicated from FW header
+ * @WMI_HOST_ACTIVE_APF_DISABLED: APF is disabled for all packets in active mode
+ * @WMI_HOST_ACTIVE_APF_ENABLED: APF is enabled for all packets in active mode
+ * @WMI_HOST_ACTIVE_APF_ADAPTIVE: APF is enabled for packets up to some
  *	threshold in active mode
  */
-enum wmi_host_active_bpf_mode {
-	WMI_HOST_ACTIVE_BPF_DISABLED =	(1 << 1),
-	WMI_HOST_ACTIVE_BPF_ENABLED =	(1 << 2),
-	WMI_HOST_ACTIVE_BPF_ADAPTIVE =	(1 << 3)
+enum wmi_host_active_apf_mode {
+	WMI_HOST_ACTIVE_APF_DISABLED =	(1 << 1),
+	WMI_HOST_ACTIVE_APF_ENABLED =	(1 << 2),
+	WMI_HOST_ACTIVE_APF_ADAPTIVE =	(1 << 3)
 };
 
 /**

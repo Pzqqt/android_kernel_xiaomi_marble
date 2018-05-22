@@ -12423,7 +12423,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 			tgt_res_cfg->num_ocb_channels;
 	resource_cfg->num_ocb_schedules =
 			tgt_res_cfg->num_ocb_schedules;
-	resource_cfg->bpf_instruction_size = tgt_res_cfg->bpf_instruction_size;
+	resource_cfg->bpf_instruction_size = tgt_res_cfg->apf_instruction_size;
 	resource_cfg->max_bssid_rx_filters = tgt_res_cfg->max_bssid_rx_filters;
 	resource_cfg->use_pdev_id = tgt_res_cfg->use_pdev_id;
 	resource_cfg->max_num_dbs_scan_duty_cycle =
@@ -21741,7 +21741,7 @@ struct wmi_ops tlv_ops =  {
 		 send_roam_scan_offload_chan_list_cmd_tlv,
 	.send_roam_scan_offload_rssi_change_cmd =
 		 send_roam_scan_offload_rssi_change_cmd_tlv,
-	.send_set_active_bpf_mode_cmd = send_set_active_bpf_mode_cmd_tlv,
+	.send_set_active_apf_mode_cmd = send_set_active_apf_mode_cmd_tlv,
 	.send_adapt_dwelltime_params_cmd =
 		send_adapt_dwelltime_params_cmd_tlv,
 	.send_dbs_scan_sel_params_cmd =
@@ -22233,7 +22233,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_ap_ps_egap_info_event_id] = WMI_AP_PS_EGAP_INFO_EVENTID;
 	event_ids[wmi_peer_assoc_conf_event_id] = WMI_PEER_ASSOC_CONF_EVENTID;
 	event_ids[wmi_vdev_delete_resp_event_id] = WMI_VDEV_DELETE_RESP_EVENTID;
-	event_ids[wmi_bpf_capability_info_event_id] =
+	event_ids[wmi_apf_capability_info_event_id] =
 		WMI_BPF_CAPABILIY_INFO_EVENTID;
 	event_ids[wmi_vdev_encrypt_decrypt_data_rsp_event_id] =
 		WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID;
@@ -22413,7 +22413,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_unified_wow_capability] =
 				WMI_SERVICE_UNIFIED_WOW_CAPABILITY;
 	wmi_service[wmi_service_enterprise_mesh] = WMI_SERVICE_ENTERPRISE_MESH;
-	wmi_service[wmi_service_bpf_offload] = WMI_SERVICE_BPF_OFFLOAD;
+	wmi_service[wmi_service_apf_offload] = WMI_SERVICE_BPF_OFFLOAD;
 	wmi_service[wmi_service_sync_delete_cmds] =
 				WMI_SERVICE_SYNC_DELETE_CMDS;
 	wmi_service[wmi_service_ratectrl_limit_max_min_rates] =

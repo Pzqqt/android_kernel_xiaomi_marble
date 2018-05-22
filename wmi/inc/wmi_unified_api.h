@@ -1097,17 +1097,18 @@ QDF_STATUS wmi_unified_set_per_roam_config(void *wmi_hdl,
 		struct wmi_per_roam_config_req *req_buf);
 
 /**
- * wmi_unified_set_active_bpf_mode_cmd() - config active BPF mode in FW
+ * wmi_unified_set_active_apf_mode_cmd() - config active APF mode in FW
  * @wmi_hdl: the WMI handle
  * @vdev_id: the Id of the vdev to apply the configuration to
- * @ucast_mode: the active BPF mode to configure for unicast packets
- * @mcast_bcast_mode: the active BPF mode to configure for multicast/broadcast
+ * @ucast_mode: the active APF mode to configure for unicast packets
+ * @mcast_bcast_mode: the active APF mode to configure for multicast/broadcast
  *	packets
  */
-QDF_STATUS wmi_unified_set_active_bpf_mode_cmd(void *wmi_hdl,
-				uint8_t vdev_id,
-				enum wmi_host_active_bpf_mode ucast_mode,
-				enum wmi_host_active_bpf_mode mcast_bcast_mode);
+QDF_STATUS
+wmi_unified_set_active_apf_mode_cmd(void *wmi_hdl, uint8_t vdev_id,
+				    enum wmi_host_active_apf_mode ucast_mode,
+				    enum wmi_host_active_apf_mode
+							      mcast_bcast_mode);
 
 QDF_STATUS wmi_unified_stats_request_send(void *wmi_hdl,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
