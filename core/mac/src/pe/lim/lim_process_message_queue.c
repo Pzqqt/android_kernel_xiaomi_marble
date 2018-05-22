@@ -1486,16 +1486,18 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	tSirTdlsInd *tdls_ind = NULL;
 	tpDphHashNode sta_ds = NULL;
 #endif
-	if (ANI_DRIVER_TYPE(mac_ctx) == QDF_DRIVER_TYPE_MFG) {
-		qdf_mem_free(msg->bodyptr);
-		msg->bodyptr = NULL;
-		return;
-	}
 	if (msg == NULL) {
 		pe_err("Message pointer is Null");
 		QDF_ASSERT(0);
 		return;
 	}
+
+	if (ANI_DRIVER_TYPE(mac_ctx) == QDF_DRIVER_TYPE_MFG) {
+		qdf_mem_free(msg->bodyptr);
+		msg->bodyptr = NULL;
+		return;
+	}
+
 #ifdef WLAN_DEBUG
 	mac_ctx->lim.numTot++;
 #endif
