@@ -8108,8 +8108,7 @@ void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	hdd_ap_ctx->sap_config.channel = channel;
-	hdd_ap_ctx->sap_config.ch_params.ch_width =
-		hdd_ap_ctx->sap_config.ch_width_orig;
+	hdd_ap_ctx->sap_config.ch_params.ch_width = CH_WIDTH_MAX;
 
 	hdd_debug("chan:%d width:%d",
 		channel, hdd_ap_ctx->sap_config.ch_width_orig);
