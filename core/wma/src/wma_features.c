@@ -1635,7 +1635,7 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
 	case WOW_REASON_ACTION_FRAME_RECV:
 		return "ACTION_FRAME_RECV";
 	case WOW_REASON_BPF_ALLOW:
-		return "APF_ALLOW";
+		return "BPF_ALLOW";
 	case WOW_REASON_NAN_DATA:
 		return "NAN_DATA";
 	case WOW_REASON_OEM_RESPONSE_EVENT:
@@ -4381,6 +4381,7 @@ QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 	return ret;
 }
 
+#ifdef FEATURE_WLAN_APF
 /**
  *  wma_get_apf_caps_event_handler() - Event handler for get apf capability
  *  @handle: WMA global handle
@@ -4431,12 +4432,6 @@ int wma_get_apf_caps_event_handler(void *handle, u_int8_t *cmd_param_info,
 	return 0;
 }
 
-/**
- * wma_get_apf_capabilities - Send get apf capability to firmware
- * @wma_handle: wma handle
- *
- * Return: QDF_STATUS enumeration.
- */
 QDF_STATUS wma_get_apf_capabilities(tp_wma_handle wma)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -4478,13 +4473,6 @@ QDF_STATUS wma_get_apf_capabilities(tp_wma_handle wma)
 	return status;
 }
 
-/**
- *  wma_set_apf_instructions - Set apf instructions to firmware
- *  @wma: wma handle
- *  @apf_set_offload: apf offload information to set to firmware
- *
- *  Return: QDF_STATUS enumeration
- */
 QDF_STATUS wma_set_apf_instructions(tp_wma_handle wma,
 				    struct sir_apf_set_offload *apf_set_offload)
 {
@@ -4567,6 +4555,141 @@ QDF_STATUS wma_set_apf_instructions(tp_wma_handle wma,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS wma_send_apf_enable_cmd(WMA_HANDLE handle, uint8_t vdev_id,
+				   bool apf_enable)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE(FL("WMA is closed, can not issue get APF capab"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+		WMI_SERVICE_BPF_OFFLOAD)) {
+		WMA_LOGE(FL("APF cababilities feature bit not enabled"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wmi_unified_send_apf_enable_cmd(wma->wmi_handle, vdev_id,
+						 apf_enable);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("Failed to send apf enable/disable cmd");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (apf_enable)
+		WMA_LOGD("Sent APF Enable on vdevid: %d", vdev_id);
+	else
+		WMA_LOGD("Sent APF Disable on vdevid: %d", vdev_id);
+
+	return status;
+}
+
+QDF_STATUS
+wma_send_apf_write_work_memory_cmd(WMA_HANDLE handle,
+				   struct wmi_apf_write_memory_params
+								*write_params)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE(FL("WMA is closed, can not issue write APF mem"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+		WMI_SERVICE_BPF_OFFLOAD)) {
+		WMA_LOGE(FL("APF cababilities feature bit not enabled"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (wmi_unified_send_apf_write_work_memory_cmd(wma->wmi_handle,
+						       write_params)) {
+		WMA_LOGE(FL("Failed to send APF write mem command"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	WMA_LOGD("Sent APF wite mem on vdevid: %d", write_params->vdev_id);
+	return status;
+}
+
+int wma_apf_read_work_memory_event_handler(void *handle, uint8_t *evt_buf,
+					   uint32_t len)
+{
+	tp_wma_handle wma_handle;
+	wmi_unified_t wmi_handle;
+	struct wmi_apf_read_memory_resp_event_params evt_params = {0};
+	QDF_STATUS status;
+	tpAniSirGlobal pmac = cds_get_context(QDF_MODULE_ID_PE);
+
+	WMA_LOGI(FL("handle:%pK event:%pK len:%u"), handle, evt_buf, len);
+
+	wma_handle = handle;
+	if (!wma_handle) {
+		WMA_LOGE(FL("NULL wma_handle"));
+		return -EINVAL;
+	}
+
+	wmi_handle = wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		WMA_LOGE(FL("NULL wmi_handle"));
+		return -EINVAL;
+	}
+
+	if (!pmac) {
+		WMA_LOGE(FL("Invalid pmac"));
+		return -EINVAL;
+	}
+
+	if (!pmac->sme.apf_read_mem_cb) {
+		WMA_LOGE(FL("Callback not registered"));
+		return -EINVAL;
+	}
+
+	status = wmi_extract_apf_read_memory_resp_event(wmi_handle,
+						evt_buf, &evt_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE(FL("Event extract failure: %d"), status);
+		return -EINVAL;
+	}
+
+	pmac->sme.apf_read_mem_cb(pmac->hHdd, &evt_params);
+
+	return 0;
+}
+
+QDF_STATUS wma_send_apf_read_work_memory_cmd(WMA_HANDLE handle,
+					     struct wmi_apf_read_memory_params
+								  *read_params)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE(FL("WMA is closed, can not issue read APF memory"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+		WMI_SERVICE_BPF_OFFLOAD)) {
+		WMA_LOGE(FL("APF cababilities feature bit not enabled"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (wmi_unified_send_apf_read_work_memory_cmd(wma->wmi_handle,
+						      read_params)) {
+		WMA_LOGE(FL("Failed to send APF read memory command"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	WMA_LOGD("Sent APF read memory on vdevid: %d", read_params->vdev_id);
+	return status;
+}
+#endif /* FEATURE_WLAN_APF */
 
 /**
  * wma_set_tx_rx_aggregation_size() - sets tx rx aggregation sizes

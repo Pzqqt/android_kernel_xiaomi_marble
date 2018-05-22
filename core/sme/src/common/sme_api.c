@@ -14115,9 +14115,10 @@ void sme_send_disassoc_req_frame(tHalHandle hal, uint8_t session_id,
 			FL("cds_send_mb_message Failed"));
 }
 
-QDF_STATUS sme_get_apf_offload_capabilities(tHalHandle hal,
-					    apf_get_offload_cb callback,
-					    void *context)
+#ifdef FEATURE_WLAN_APF
+QDF_STATUS sme_get_apf_capabilities(tHalHandle hal,
+				    apf_get_offload_cb callback,
+				    void *context)
 {
 	QDF_STATUS          status     = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal      mac_ctx      = PMAC_STRUCT(hal);
@@ -14147,14 +14148,6 @@ QDF_STATUS sme_get_apf_offload_capabilities(tHalHandle hal,
 	return status;
 }
 
-
-/**
- * sme_set_apf_instructions() - Set APF apf filter instructions.
- * @hal: HAL handle
- * @apf_set_offload: struct to set apf filter instructions.
- *
- * Return: QDF_STATUS enumeration.
- */
 QDF_STATUS sme_set_apf_instructions(tHalHandle hal,
 				    struct sir_apf_set_offload *req)
 {
@@ -14204,6 +14197,66 @@ QDF_STATUS sme_set_apf_instructions(tHalHandle hal,
 	}
 	return status;
 }
+
+QDF_STATUS sme_set_apf_enable_disable(tHalHandle hal, uint8_t vdev_id,
+				      bool apf_enable)
+{
+	void *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wma_send_apf_enable_cmd(wma_handle, vdev_id, apf_enable);
+}
+
+QDF_STATUS
+sme_apf_write_work_memory(tHalHandle hal,
+			struct wmi_apf_write_memory_params *write_params)
+{
+	void *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wma_send_apf_write_work_memory_cmd(wma_handle, write_params);
+}
+
+QDF_STATUS
+sme_apf_read_work_memory(tHalHandle hal,
+			 struct wmi_apf_read_memory_params *read_params,
+			 apf_read_mem_cb callback)
+{
+	QDF_STATUS status   = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
+	void *wma_handle;
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.apf_read_mem_cb = callback;
+		sme_release_global_lock(&mac->sme);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			FL("sme_acquire_global_lock failed"));
+	}
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wma_send_apf_read_work_memory_cmd(wma_handle, read_params);
+}
+#endif /* FEATURE_WLAN_APF */
 
 /**
  * sme_get_wni_dot11_mode() - return configured wni dot11mode

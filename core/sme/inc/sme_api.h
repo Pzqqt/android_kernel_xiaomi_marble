@@ -1297,8 +1297,9 @@ QDF_STATUS sme_add_beacon_filter(tHalHandle hal,
 				uint32_t session_id, uint32_t *ie_map);
 QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id);
 
+#ifdef FEATURE_WLAN_APF
 /**
- * sme_get_apf_offload_capabilities() - Get APF offload capabilities
+ * sme_get_apf_capabilities() - Get APF capabilities
  * @hal: Global HAL handle
  * @callback: Callback function to be called with the result
  * @context: Opaque context to be used by the caller to associate the
@@ -1309,12 +1310,66 @@ QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id);
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS sme_get_apf_offload_capabilities(tHalHandle hal,
-					    apf_get_offload_cb callback,
-					    void *context);
+QDF_STATUS sme_get_apf_capabilities(tHalHandle hal,
+				    apf_get_offload_cb callback,
+				    void *context);
 
+/**
+ * sme_set_apf_instructions() - Set APF apf filter instructions.
+ * @hal: HAL handle
+ * @apf_set_offload: struct to set apf filter instructions.
+ *
+ * APFv2 (Legacy APF) API to set the APF packet filter.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
 QDF_STATUS sme_set_apf_instructions(tHalHandle hal,
-				    struct sir_apf_set_offload *);
+				    struct sir_apf_set_offload
+							*apf_set_offload);
+
+/**
+ * sme_set_apf_enable_disable - Send apf enable/disable cmd
+ * @hal: global hal handle
+ * @vdev_id: vdev id
+ * @apf_enable: true: Enable APF Int., false: Disable APF Int.
+ *
+ * API to either enable or disable the APF interpreter.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS sme_set_apf_enable_disable(tHalHandle hal, uint8_t vdev_id,
+				      bool apf_enable);
+
+/**
+ * sme_apf_write_work_memory - Write into the apf work memory
+ * @hal: global hal handle
+ * @write_params: APF parameters for the write operation
+ *
+ * API for writing into the APF work memory.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS sme_apf_write_work_memory(tHalHandle hal,
+				    struct wmi_apf_write_memory_params
+								*write_params);
+
+/**
+ * sme_apf_read_work_memory - Read part of apf work memory
+ * @hal: global hal handle
+ * @read_params: APF parameters for the get operation
+ * @callback: callback to handle the the read response
+ *
+ * API for issuing a APF read memory request.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS
+sme_apf_read_work_memory(tHalHandle hal,
+			 struct wmi_apf_read_memory_params *read_params,
+			 apf_read_mem_cb callback);
+
+#endif /* FEATURE_WLAN_APF */
+
 uint32_t sme_get_wni_dot11_mode(tHalHandle hal);
 QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, uint8_t *bssid);
 QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,

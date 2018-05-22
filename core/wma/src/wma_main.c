@@ -3033,6 +3033,30 @@ static void wma_register_stats_events(wmi_unified_t wmi_handle)
 }
 #endif
 
+#ifdef FEATURE_WLAN_APF
+static void wma_register_apf_events(tp_wma_handle wma_handle)
+{
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
+			  "wma_handle is NULL\n");
+		return;
+	}
+
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   wmi_apf_capability_info_event_id,
+					   wma_get_apf_caps_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+				wmi_apf_get_vdev_work_memory_resp_event_id,
+				wma_apf_read_work_memory_event_handler,
+				WMA_RX_SERIALIZER_CTX);
+}
+#else /* FEATURE_WLAN_APF */
+static void wma_register_apf_events(tp_wma_handle wma_handle)
+{
+}
+#endif /* FEATURE_WLAN_APF */
+
 /**
  * wma_open() - Allocate wma context and initialize it.
  * @cds_context:  cds context
@@ -3493,10 +3517,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wma_peer_delete_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   wmi_apf_capability_info_event_id,
-					   wma_get_apf_caps_event_handler,
-					   WMA_RX_SERIALIZER_CTX);
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_chan_info_event_id,
 					   wma_chan_info_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
@@ -3571,6 +3591,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   WMA_RX_SERIALIZER_CTX);
 #endif
 
+	wma_register_apf_events(wma_handle);
 
 	return QDF_STATUS_SUCCESS;
 

@@ -123,6 +123,7 @@ typedef void (*p2p_lo_callback)(void *context, void *event);
 typedef void (*sme_send_oem_data_rsp_msg)(struct oem_data_rsp *);
 #endif
 
+#ifdef FEATURE_WLAN_APF
 /**
  * typedef apf_get_offload_cb - APF offload callback signature
  * @context: Opaque context that the client can use to associate the
@@ -132,6 +133,17 @@ typedef void (*sme_send_oem_data_rsp_msg)(struct oem_data_rsp *);
 struct sir_apf_get_offload;
 typedef void (*apf_get_offload_cb)(void *context,
 				   struct sir_apf_get_offload *caps);
+
+/**
+ * typedef apf_read_mem_cb - APF read memory response callback
+ * @context: Opaque context that the client can use to associate the
+ *    callback with the request
+ * @evt: APF read memory response event parameters
+ */
+typedef void (*apf_read_mem_cb)(void *context,
+				struct wmi_apf_read_memory_resp_event_params
+									  *evt);
+#endif /* FEATURE_WLAN_APF */
 
 /**
  * typedef sme_encrypt_decrypt_callback - encrypt/decrypt callback
@@ -228,7 +240,6 @@ typedef struct tagSmeStruct {
 	ocb_callback dcc_stats_event_callback;
 	sme_set_thermal_level_callback set_thermal_level_cb;
 	void *apf_get_offload_context;
-	apf_get_offload_cb apf_get_offload_cb;
 	p2p_lo_callback p2p_lo_event_callback;
 	void *p2p_lo_event_context;
 #ifdef FEATURE_OEM_DATA_SUPPORT
@@ -259,6 +270,10 @@ typedef struct tagSmeStruct {
 	void (*twt_enable_cb)(void *hdd_ctx,
 			struct wmi_twt_enable_complete_event_param *params);
 	void (*twt_disable_cb)(void *hdd_ctx);
+#ifdef FEATURE_WLAN_APF
+	apf_get_offload_cb apf_get_offload_cb;
+	apf_read_mem_cb apf_read_mem_cb;
+#endif
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

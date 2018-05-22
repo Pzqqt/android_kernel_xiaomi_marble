@@ -2148,14 +2148,103 @@ void wma_process_fw_test_cmd(WMA_HANDLE handle,
 QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 	struct obss_ht40_scanind *req);
 
+uint32_t wma_get_num_of_setbits_from_bitmask(uint32_t mask);
+
+#ifdef FEATURE_WLAN_APF
+/**
+ *  wma_get_apf_caps_event_handler() - Event handler for get apf capability
+ *  @handle: WMA global handle
+ *  @cmd_param_info: command event data
+ *  @len: Length of @cmd_param_info
+ *
+ *  Return: 0 on Success or Errno on failure
+ */
 int wma_get_apf_caps_event_handler(void *handle,
 				   u_int8_t *cmd_param_info,
 				   u_int32_t len);
-uint32_t wma_get_num_of_setbits_from_bitmask(uint32_t mask);
+
+/**
+ * wma_get_apf_capabilities - Send get apf capability to firmware
+ * @wma_handle: wma handle
+ *
+ * Return: QDF_STATUS enumeration.
+ */
 QDF_STATUS wma_get_apf_capabilities(tp_wma_handle wma);
+
+/**
+ *  wma_set_apf_instructions - Set apf instructions to firmware
+ *  @wma: wma handle
+ *  @apf_set_offload: APF offload information to set to firmware
+ *
+ *  Return: QDF_STATUS enumeration
+ */
 QDF_STATUS
 wma_set_apf_instructions(tp_wma_handle wma,
 			 struct sir_apf_set_offload *apf_set_offload);
+
+/**
+ * wma_send_apf_enable_cmd - Send apf enable/disable cmd
+ * @wma_handle: wma handle
+ * @vdev_id: vdev id
+ * @apf_enable: true: Enable APF Int., false: Disable APF Int.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS wma_send_apf_enable_cmd(WMA_HANDLE handle, uint8_t vdev_id,
+				   bool apf_enable);
+
+/**
+ * wma_send_apf_write_work_memory_cmd - Command to write into the apf work
+ * memory
+ * @wma_handle: wma handle
+ * @write_params: APF parameters for the write operation
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS
+wma_send_apf_write_work_memory_cmd(WMA_HANDLE handle,
+				   struct wmi_apf_write_memory_params
+								*write_params);
+
+/**
+ * wma_send_apf_read_work_memory_cmd - Command to get part of apf work memory
+ * @wma_handle: wma handle
+ * @callback: HDD callback to receive apf get mem event
+ * @context: Context for the HDD callback
+ * @read_params: APF parameters for the get operation
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS
+wma_send_apf_read_work_memory_cmd(WMA_HANDLE handle,
+				  struct wmi_apf_read_memory_params
+								*read_params);
+
+/**
+ * wma_apf_read_work_memory_event_handler - Event handler for get apf mem
+ * operation
+ * @handle: wma handle
+ * @evt_buf: Buffer pointer to the event
+ * @len: Length of the event buffer
+ *
+ * Return: status.
+ */
+int wma_apf_read_work_memory_event_handler(void *handle, uint8_t *evt_buf,
+					   uint32_t len);
+#else /* FEATURE_WLAN_APF */
+static inline QDF_STATUS wma_get_apf_capabilities(tp_wma_handle wma)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+wma_set_apf_instructions(tp_wma_handle wma,
+			 struct sir_apf_set_offload *apf_set_offload)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_WLAN_APF */
+
 void wma_process_set_pdev_ie_req(tp_wma_handle wma,
 		struct set_ie_param *ie_params);
 void wma_process_set_pdev_ht_ie_req(tp_wma_handle wma,

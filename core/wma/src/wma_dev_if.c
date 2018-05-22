@@ -1807,6 +1807,7 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 	return ret_value;
 }
 
+#ifdef FEATURE_WLAN_APF
 /*
  * get_fw_active_apf_mode() - convert HDD APF mode to FW configurable APF
  * mode
@@ -1850,6 +1851,12 @@ static QDF_STATUS wma_config_active_apf_mode(t_wma_handle *wma, uint8_t vdev_id)
 	return wmi_unified_set_active_apf_mode_cmd(wma->wmi_handle, vdev_id,
 						   uc_mode, mcbc_mode);
 }
+#else /* FEATURE_WLAN_APF */
+static QDF_STATUS wma_config_active_apf_mode(t_wma_handle *wma, uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_WLAN_APF */
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 /**

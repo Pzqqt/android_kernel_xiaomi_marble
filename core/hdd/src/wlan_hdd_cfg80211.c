@@ -92,7 +92,9 @@
 #include "wlan_hdd_disa.h"
 #include "wlan_hdd_request_manager.h"
 #include "wlan_hdd_he.h"
+#ifdef FEATURE_WLAN_APF
 #include "wlan_hdd_apf.h"
+#endif
 
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
