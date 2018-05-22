@@ -568,7 +568,7 @@
  */
 #define WE_SET_MAX_TX_POWER_5_0   43
 #define WE_SET_PKTLOG                   44
-/* Private ioctl for packet powe save */
+/* Private ioctl for packet power save */
 #define  WE_PPS_PAID_MATCH              45
 #define  WE_PPS_GID_MATCH               46
 #define  WE_PPS_EARLY_TIM_CLEAR         47
@@ -579,7 +579,7 @@
 #define  WE_PPS_GID_NSTS_ZERO           52
 /*
  * <ioctl>
- * rssi_chk - Chek the rssi
+ * rssi_chk - Check the rssi
  *
  * @INPUT: One argument as input
  *
@@ -6858,10 +6858,10 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 	{
 		hdd_debug("<iwpriv wlan0 pm_clist> is called");
 		if ((apps_args[0] < 0) || (apps_args[1] < 0) ||
-			(apps_args[2] < 0) || (apps_args[3] < 0) ||
-			(apps_args[4] < 0) || (apps_args[5] < 0) ||
-			(apps_args[6] < 0) || (apps_args[7] < 0)) {
-			hdd_err("Invalid input params recieved for the IOCTL");
+		    (apps_args[2] < 0) || (apps_args[3] < 0) ||
+		    (apps_args[4] < 0) || (apps_args[5] < 0) ||
+		    (apps_args[6] < 0) || (apps_args[7] < 0)) {
+			hdd_err("Invalid input params received for the IOCTL");
 			return 0;
 		}
 		policy_mgr_incr_connection_count_utfw(hdd_ctx->hdd_psoc,
@@ -6874,7 +6874,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 	{
 		hdd_debug("<iwpriv wlan0 pm_dlist> is called");
 		if ((apps_args[0] < 0) || (apps_args[1] < 0)) {
-			hdd_err("Invalid input param recieved for the IOCTL");
+			hdd_err("Invalid input params received for the IOCTL");
 			return 0;
 		}
 		policy_mgr_decr_connection_count_utfw(hdd_ctx->hdd_psoc,
@@ -6886,10 +6886,10 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 	{
 		hdd_debug("<iwpriv wlan0 pm_ulist> is called");
 		if ((apps_args[0] < 0) || (apps_args[1] < 0) ||
-			(apps_args[2] < 0) || (apps_args[3] < 0) ||
-			(apps_args[4] < 0) || (apps_args[5] < 0) ||
-			(apps_args[6] < 0) || (apps_args[7] < 0)) {
-			hdd_err("Invalid input params recieved for the IOCTL");
+		    (apps_args[2] < 0) || (apps_args[3] < 0) ||
+		    (apps_args[4] < 0) || (apps_args[5] < 0) ||
+		    (apps_args[6] < 0) || (apps_args[7] < 0)) {
+			hdd_err("Invalid input params received for the IOCTL");
 			return 0;
 		}
 		policy_mgr_update_connection_info_utfw(hdd_ctx->hdd_psoc,
@@ -6923,7 +6923,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		hdd_debug("<iwpriv wlan0 pm_pcl> is called");
 
 		if (apps_args[0] < 0) {
-			hdd_err("Invalid input param recieved for the IOCTL");
+			hdd_err("Invalid input param received for the IOCTL");
 			return 0;
 		}
 		policy_mgr_get_pcl(hdd_ctx->hdd_psoc, apps_args[0],
@@ -6968,7 +6968,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 	{
 		hdd_debug("<iwpriv wlan0 pm_query_action> is called");
 		if (apps_args[0] < 0) {
-			hdd_err("Invalid input params recieved for the IOCTL");
+			hdd_err("Invalid input params received for the IOCTL");
 			return 0;
 		}
 		policy_mgr_current_connections_update(
@@ -6984,8 +6984,8 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 
 		hdd_debug("<iwpriv wlan0 pm_query_allow> is called");
 		if ((apps_args[0] < 0) || (apps_args[1] < 0) ||
-			(apps_args[2] < 0)) {
-			hdd_err("Invalid input params recieved for the IOCTL");
+		    (apps_args[2] < 0)) {
+			hdd_err("Invalid input params received for the IOCTL");
 			return 0;
 		}
 		allow = policy_mgr_allow_concurrency(hdd_ctx->hdd_psoc,
