@@ -27,6 +27,7 @@
 #define WLAN_HDD_TWT_H
 
 struct hdd_context;
+struct wma_tgt_cfg;
 
 #ifdef WLAN_FEATURE_TWT
 /**
@@ -37,8 +38,23 @@ struct hdd_context;
  */
 void hdd_twt_print_ini_config(struct hdd_context *hdd_ctx);
 
+/**
+ * hdd_update_tgt_twt_cap() - Update TWT target capabilities
+ * @hdd_ctx: HDD Context
+ * @cfg: Pointer to target configuration
+ *
+ * Return: None
+ */
+void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
+			    struct wma_tgt_cfg *cfg);
+
 #else
 static inline void hdd_twt_print_ini_config(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
+					  struct wma_tgt_cfg *cfg)
 {
 }
 

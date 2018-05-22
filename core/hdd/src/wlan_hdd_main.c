@@ -131,6 +131,7 @@
 #include <target_if.h>
 #include "wlan_hdd_nud_tracking.h"
 #include "wlan_hdd_apf.h"
+#include "wlan_hdd_twt.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -2005,6 +2006,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		hdd_info("11AX: 11ax is enabled - update HDD config");
 		hdd_update_tgt_he_cap(hdd_ctx, cfg);
 	}
+	hdd_update_tgt_twt_cap(hdd_ctx, cfg);
 
 	hdd_update_vdev_nss(hdd_ctx);
 
