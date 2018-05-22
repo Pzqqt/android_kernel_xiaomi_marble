@@ -3037,7 +3037,29 @@ static inline int drv_cmd_country(struct hdd_adapter *adapter,
 				  uint8_t command_len,
 				  struct hdd_priv_data *priv_data)
 {
-	return hdd_reg_set_country(hdd_ctx, command + command_len + 1);
+	char *country_code;
+
+	country_code = strnchr(command, strlen(command), ' ');
+	/* no argument after the command */
+	if (!country_code)
+		return -EINVAL;
+
+	/* no space after the command */
+	if (*country_code != SPACE_ASCII_VALUE)
+		return -EINVAL;
+
+	country_code++;
+
+	/* removing empty spaces */
+	while ((*country_code == SPACE_ASCII_VALUE) &&
+	       (*country_code != '\0'))
+		country_code++;
+
+	/* no or less than 2  arguments followed by spaces */
+	if (*country_code == '\0' || *(country_code + 1) == '\0')
+		return -EINVAL;
+
+	return hdd_reg_set_country(hdd_ctx, country_code);
 }
 
 static int drv_cmd_set_roam_trigger(struct hdd_adapter *adapter,
