@@ -5317,7 +5317,8 @@ int wma_get_arp_stats_handler(void *handle, uint8_t *data,
 			connect_stats_event->icmpv4_rsp_recvd);
 	}
 
-	mac->sme.get_arp_stats_cb(mac->hHdd, &rsp);
+	mac->sme.get_arp_stats_cb(mac->hHdd, &rsp,
+				  mac->sme.get_arp_stats_context);
 
 	return 0;
 }

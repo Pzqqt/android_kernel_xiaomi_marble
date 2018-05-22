@@ -8535,7 +8535,6 @@ static int hdd_context_init(struct hdd_context *hdd_ctx)
 	hdd_ctx->max_intf_count = CSR_ROAM_SESSION_MAX;
 
 	hdd_init_ll_stats_ctx();
-	hdd_init_nud_stats_ctx(hdd_ctx);
 
 	init_completion(&hdd_ctx->mc_sus_event_var);
 	init_completion(&hdd_ctx->ready_to_suspend);
@@ -10902,23 +10901,12 @@ void hdd_wlan_update_target_info(struct hdd_context *hdd_ctx, void *context)
 	hdd_ctx->target_type = tgt_info->target_type;
 }
 
-/**
- * hdd_get_nud_stats_cb() - callback api to update the stats
- *	received from the firmware
- * @data: pointer to adapter.
- * @rsp: pointer to data received from FW.
- *
- * This is called when wlan driver received response event for
- *	get arp stats to firmware.
- *
- * Return: None
- */
-static void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp)
+void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp, void *context)
 {
 	struct hdd_context *hdd_ctx = (struct hdd_context *)data;
-	struct hdd_nud_stats_context *context;
 	int status;
 	struct hdd_adapter *adapter = NULL;
+	struct hdd_request *request = NULL;
 
 	hdd_enter();
 
@@ -10928,12 +10916,19 @@ static void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp)
 	}
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status)
+	if (status != 0)
 		return;
+
+	request = hdd_request_get(context);
+	if (!request) {
+		hdd_err("obselete request");
+		return;
+	}
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, rsp->vdev_id);
 	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
+		hdd_request_put(request);
 		return;
 	}
 
@@ -10961,10 +10956,8 @@ static void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp)
 							rsp->icmpv4_rsp_recvd;
 	}
 
-	spin_lock(&hdd_context_lock);
-	context = &hdd_ctx->nud_stats_context;
-	complete(&context->response_event);
-	spin_unlock(&hdd_context_lock);
+	hdd_request_complete(request);
+	hdd_request_put(request);
 
 	hdd_exit();
 }
@@ -11004,8 +10997,6 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 
 	sme_set_rssi_threshold_breached_cb(hdd_ctx->hHal,
 				hdd_rssi_threshold_breached);
-
-	sme_set_nud_debug_stats_cb(hdd_ctx->hHal, hdd_get_nud_stats_cb);
 
 	sme_set_link_layer_stats_ind_cb(hdd_ctx->hHal,
 				wlan_hdd_cfg80211_link_layer_stats_callback);

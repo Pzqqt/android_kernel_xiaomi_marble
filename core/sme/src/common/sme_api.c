@@ -13108,13 +13108,15 @@ int sme_update_he_ldpc_supp(tHalHandle hal, uint8_t session_id,
  * sme_set_nud_debug_stats_cb() - set nud debug stats callback
  * @hal: global hal handle
  * @cb: callback function pointer
+ * @context: callback context
  *
  * This function stores nud debug stats callback function.
  *
  * Return: QDF_STATUS enumeration.
  */
 QDF_STATUS sme_set_nud_debug_stats_cb(tHalHandle hal,
-				void (*cb)(void *, struct rsp_stats *))
+				void (*cb)(void *, struct rsp_stats *, void *),
+				void *context)
 {
 	QDF_STATUS status  = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac;
@@ -13135,6 +13137,7 @@ QDF_STATUS sme_set_nud_debug_stats_cb(tHalHandle hal,
 	}
 
 	mac->sme.get_arp_stats_cb = cb;
+	mac->sme.get_arp_stats_context = context;
 	sme_release_global_lock(&mac->sme);
 	return status;
 }
@@ -13143,6 +13146,7 @@ QDF_STATUS sme_set_nud_debug_stats_cb(tHalHandle hal,
  * sme_set_rssi_threshold_breached_cb() - set rssi threshold breached callback
  * @h_hal: global hal handle
  * @cb: callback function pointer
+ * @context: callback context
  *
  * This function stores the rssi threshold breached callback function.
  *

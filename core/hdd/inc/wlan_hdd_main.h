@@ -1583,14 +1583,6 @@ enum hdd_sta_smps_param {
 };
 
 /**
- * struct hdd_nud_stats_context - hdd NUD stats context
- * @response_event: NUD stats request wait event
- */
-struct hdd_nud_stats_context {
-	struct completion response_event;
-};
-
-/**
  * tos - Type of service requested by the application
  * TOS_BK: Back ground traffic
  * TOS_BE: Best effort traffic
@@ -1881,7 +1873,6 @@ struct hdd_context {
 #endif
 	uint8_t bt_a2dp_active:1;
 	uint8_t bt_vo_active:1;
-	struct hdd_nud_stats_context nud_stats_context;
 	enum band_info curr_band;
 	bool imps_enabled;
 	int user_configured_pkt_filter_rules;
@@ -2424,17 +2415,6 @@ wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
 
 void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter);
 void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit);
-
-/**
- * hdd_init_nud_stats_ctx() - initialize NUD stats context
- * @hdd_ctx: Pointer to hdd context
- *
- * Return: none
- */
-static inline void hdd_init_nud_stats_ctx(struct hdd_context *hdd_ctx)
-{
-	init_completion(&hdd_ctx->nud_stats_context.response_event);
-}
 
 void wlan_hdd_soc_set_antenna_mode_cb(enum set_antenna_mode_status status);
 
@@ -3226,5 +3206,18 @@ uint32_t hdd_wlan_get_version(struct hdd_context *hdd_ctx,
  * Return: None
  */
 void hdd_update_hw_sw_info(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_get_nud_stats_cb() - callback api to update the stats received from FW
+ * @data: pointer to hdd context.
+ * @rsp: pointer to data received from FW.
+ * @context: callback context
+ *
+ * This is called when wlan driver received response event for
+ * get arp stats to firmware.
+ *
+ * Return: None
+ */
+void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp, void *context);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

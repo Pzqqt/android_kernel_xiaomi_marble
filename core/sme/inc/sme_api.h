@@ -1469,7 +1469,8 @@ QDF_STATUS sme_get_nud_debug_stats(tHalHandle hal,
 				   struct get_arp_stats_params
 				   *get_stats_param);
 QDF_STATUS sme_set_nud_debug_stats_cb(tHalHandle hal,
-				      void (*cb)(void *, struct rsp_stats *));
+			void (*cb)(void *, struct rsp_stats *, void *context),
+			void *context);
 
 /**
  * sme_set_chan_info_callback() - Register chan info callback
