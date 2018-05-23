@@ -29,10 +29,14 @@
 #define LSM_DEREG_SND_MODEL (5)
 #define LSM_CUSTOM_PARAMS (6)
 #define LSM_POLLING_ENABLE (7)
-#define LSM_PARAMS_MAX (LSM_POLLING_ENABLE + 1)
+#define LSM_DET_EVENT_TYPE (8)
+#define LSM_PARAMS_MAX (LSM_DET_EVENT_TYPE + 1)
 
 #define LSM_EVENT_NON_TIME_STAMP_MODE (0)
 #define LSM_EVENT_TIME_STAMP_MODE (1)
+
+#define LSM_DET_EVENT_TYPE_LEGACY (0)
+#define LSM_DET_EVENT_TYPE_GENERIC (1)
 
 enum lsm_app_id {
 	LSM_VOICE_WAKEUP_APP_ID = 1,
@@ -87,6 +91,15 @@ struct snd_lsm_poll_enable {
 	bool poll_en;
 };
 
+/*
+ * Data for LSM_DET_EVENT_TYPE param_type
+ * @event_type: LSM_DET_EVENT_TYPE_LEGACY or LSM_DET_EVENT_TYPE_GENERIC
+ * @mode: Type of information in detection event payload
+ */
+struct snd_lsm_det_event_type {
+	__u32 event_type;
+	__u32 mode;
+};
 
 struct snd_lsm_sound_model_v2 {
 	__u8 __user *data;
@@ -196,5 +209,6 @@ struct snd_lsm_output_format_cfg {
 #define SNDRV_LSM_SET_FWK_MODE_CONFIG	_IOW('U', 0x0E, uint32_t)
 #define SNDRV_LSM_EVENT_STATUS_V3	_IOW('U', 0x0F, \
 					struct snd_lsm_event_status_v3)
+#define SNDRV_LSM_GENERIC_DET_EVENT	_IOW('U', 0x10, struct snd_lsm_event_status)
 
 #endif
