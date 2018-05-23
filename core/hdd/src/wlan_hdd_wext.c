@@ -4100,7 +4100,7 @@ static int hdd_we_set_11d_state(struct hdd_context *hdd_ctx, int state_11d)
 
 	qdf_mem_free(sme_config);
 
-	hdd_debug("11D state=%d", sme_config->csrConfig.Is11dSupportEnabled);
+	hdd_debug("11D state=%d", enable_11d);
 
 	return 0;
 }
