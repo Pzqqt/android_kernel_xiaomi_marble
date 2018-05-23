@@ -5629,18 +5629,19 @@ typedef struct {
 } wmi_pdev_set_wmm_params_cmd_fixed_param;
 
 typedef enum {
-    WMI_REQUEST_PEER_STAT      = 0x01,
-    WMI_REQUEST_AP_STAT        = 0x02,
-    WMI_REQUEST_PDEV_STAT      = 0x04,
-    WMI_REQUEST_VDEV_STAT      = 0x08,
-    WMI_REQUEST_BCNFLT_STAT    = 0x10,
-    WMI_REQUEST_VDEV_RATE_STAT = 0x20,
-    WMI_REQUEST_INST_STAT      = 0x40,
-    WMI_REQUEST_MIB_STAT       = 0x80,
-    WMI_REQUEST_RSSI_PER_CHAIN_STAT = 0x100,
-    WMI_REQUEST_CONGESTION_STAT = 0x200,
-    WMI_REQUEST_PEER_EXTD_STAT = 0x400,
-    WMI_REQUEST_BCN_STAT       = 0x800,
+    WMI_REQUEST_PEER_STAT           = 0x0001,
+    WMI_REQUEST_AP_STAT             = 0x0002,
+    WMI_REQUEST_PDEV_STAT           = 0x0004,
+    WMI_REQUEST_VDEV_STAT           = 0x0008,
+    WMI_REQUEST_BCNFLT_STAT         = 0x0010,
+    WMI_REQUEST_VDEV_RATE_STAT      = 0x0020,
+    WMI_REQUEST_INST_STAT           = 0x0040,
+    WMI_REQUEST_MIB_STAT            = 0x0080,
+    WMI_REQUEST_RSSI_PER_CHAIN_STAT = 0x0100,
+    WMI_REQUEST_CONGESTION_STAT     = 0x0200,
+    WMI_REQUEST_PEER_EXTD_STAT      = 0x0400,
+    WMI_REQUEST_BCN_STAT            = 0x0800,
+    WMI_REQUEST_BCN_STAT_RESET      = 0x1000,
 } wmi_stats_id;
 
 /*
