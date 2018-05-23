@@ -607,7 +607,7 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params)
 		case WLAN_ELEMID_OP_MODE_NOTIFY:
 			if (ie->ie_len != WLAN_OPMODE_IE_MAX_LEN)
 				return QDF_STATUS_E_INVAL;
-				scan_params->ie_list.opmode = (uint8_t *)ie;
+			scan_params->ie_list.opmode = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_MOBILITY_DOMAIN:
 			if (ie->ie_len != WLAN_MOBILITY_DOMAIN_IE_MAX_LEN)
