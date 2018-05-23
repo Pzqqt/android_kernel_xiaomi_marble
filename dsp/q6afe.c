@@ -24,6 +24,7 @@
 #include <dsp/q6afe-v2.h>
 #include <dsp/q6audio-v2.h>
 #include <dsp/q6common.h>
+#include <dsp/q6core.h>
 #include <dsp/msm-audio-event-notify.h>
 #include <ipc/apr_tal.h>
 #include "adsp_err.h"
@@ -124,6 +125,7 @@ struct afe_ctl {
 	int set_custom_topology;
 	int dev_acdb_id[AFE_MAX_PORTS];
 	routing_cb rt_cb;
+	struct audio_uevent_data *uevent_data;
 };
 
 static atomic_t afe_ports_mad_type[SLIMBUS_PORT_LAST - SLIMBUS_0_RX];
@@ -329,7 +331,14 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
 
 static void afe_notify_dc_presence(void)
 {
+	int ret = 0;
+	char event[] = "DC_PRESENCE=TRUE";
+
 	msm_aud_evt_notifier_call_chain(MSM_AUD_DC_EVENT, NULL);
+
+	ret = q6core_send_uevent(this_afe.uevent_data, event);
+	if (ret)
+		pr_err("%s: Send UEvent %s failed :%d\n", __func__, event, ret);
 }
 
 static int32_t afe_callback(struct apr_client_data *data, void *priv)
@@ -7456,6 +7465,14 @@ done:
 	return result;
 }
 
+static void afe_release_uevent_data(struct kobject *kobj)
+{
+	struct audio_uevent_data *data = container_of(kobj,
+		struct audio_uevent_data, kobj);
+
+	kfree(data);
+}
+
 int __init afe_init(void)
 {
 	int i = 0, ret;
@@ -7484,6 +7501,18 @@ int __init afe_init(void)
 		pr_err("%s: could not init cal data! %d\n", __func__, ret);
 
 	config_debug_fs_init();
+
+	this_afe.uevent_data = kzalloc(sizeof(*(this_afe.uevent_data)), GFP_KERNEL);
+	if (!this_afe.uevent_data)
+		return -ENOMEM;
+
+	/*
+	 * Set release function to cleanup memory related to kobject
+	 * before initializing the kobject.
+	 */
+	this_afe.uevent_data->ktype.release = afe_release_uevent_data;
+	q6core_init_uevent_data(this_afe.uevent_data, "q6afe_uevent");
+
 	return 0;
 }
 
@@ -7495,6 +7524,9 @@ void afe_exit(void)
 		this_afe.apr = NULL;
 		rtac_set_afe_handle(this_afe.apr);
 	}
+
+	q6core_destroy_uevent_data(this_afe.uevent_data);
+
 	afe_delete_cal_data();
 
 	config_debug_fs_exit();
