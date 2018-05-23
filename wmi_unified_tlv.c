@@ -12209,7 +12209,8 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 	vdev_param[wmi_vdev_param_ul_ldpc] = WMI_VDEV_PARAM_UL_LDPC;
 	vdev_param[wmi_vdev_param_ul_stbc] = WMI_VDEV_PARAM_UL_STBC;
 	vdev_param[wmi_vdev_param_ul_fixed_rate] = WMI_VDEV_PARAM_UL_FIXED_RATE;
-
+	vdev_param[wmi_vdev_param_rawmode_open_war] =
+					WMI_VDEV_PARAM_RAW_IS_ENCRYPTED;
 }
 #endif
 
