@@ -2643,8 +2643,12 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	params.chan_freq = cds_chan_to_freq(req->chan);
 	params.chan_mode = chan_mode;
 
+	/* For Rome, only supports LFR2, not LFR3, for reassoc, need send vdev
+	 * start cmd to F/W while vdev started first, then send reassoc frame
+	 */
 	if (!isRestart &&
-	    qdf_atomic_read(&iface->bss_status) == WMA_BSS_STATUS_STARTED) {
+	    qdf_atomic_read(&iface->bss_status) == WMA_BSS_STATUS_STARTED &&
+	    wmi_service_enabled(wma->wmi_handle, wmi_service_roam_ho_offload)) {
 		req_msg = wma_find_vdev_req(wma, req->vdev_id,
 					    WMA_TARGET_REQ_TYPE_VDEV_STOP,
 					    false);
