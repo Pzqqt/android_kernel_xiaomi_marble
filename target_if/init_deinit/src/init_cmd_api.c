@@ -288,6 +288,11 @@ QDF_STATUS init_deinit_free_num_units(struct wlan_objmgr_psoc *psoc,
 		status = tgt_hdl->tif_ops->mem_mgr_free_chunks(psoc, tgt_hdl);
 	} else {
 		qdf_dev = wlan_psoc_get_qdf_dev(psoc);
+		if (!qdf_dev) {
+			target_if_err("qdf_dev is null");
+			QDF_BUG(0);
+			return QDF_STATUS_E_INVAL;
+		}
 		info = (&tgt_hdl->info);
 		for (idx = 0; idx < info->num_mem_chunks; idx++) {
 			qdf_mem_free_consistent(
