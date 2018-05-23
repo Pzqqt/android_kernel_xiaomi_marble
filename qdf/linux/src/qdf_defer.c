@@ -22,7 +22,6 @@
  */
 
 #include <linux/kernel.h>
-#include <linux/version.h>
 #include <linux/module.h>
 #include <linux/workqueue.h>
 
@@ -48,19 +47,12 @@ void __qdf_defer_func(struct work_struct *work)
 }
 qdf_export_symbol(__qdf_defer_func);
 
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 19)
 /**
  * __qdf_defer_delayed_func() - defer work handler
  * @dwork: Pointer to defer work
  *
  * Return: none
  */
-void
-__qdf_defer_delayed_func(struct work_struct *dwork)
-{
-	return;
-}
-#else
 void
 __qdf_defer_delayed_func(struct work_struct *dwork)
 {
@@ -73,5 +65,4 @@ __qdf_defer_delayed_func(struct work_struct *dwork)
 	}
 	ctx->fn(ctx->arg);
 }
-#endif
 qdf_export_symbol(__qdf_defer_delayed_func);

@@ -24,7 +24,6 @@
 #ifndef _I_QDF_DEFER_H
 #define _I_QDF_DEFER_H
 
-#include <linux/version.h>
 #include <linux/workqueue.h>
 #include <linux/interrupt.h>
 #include <qdf_types.h>
@@ -34,11 +33,6 @@
 typedef struct tasklet_struct __qdf_bh_t;
 typedef struct workqueue_struct __qdf_workqueue_t;
 
-#if LINUX_VERSION_CODE  <= KERNEL_VERSION(2, 6, 19)
-typedef struct work_struct      __qdf_work_t;
-typedef struct work_struct      __qdf_delayed_work_t;
-#else
-
 /**
  * __qdf_work_t - wrapper around the real task func
  * @work: Instance of work
@@ -46,9 +40,9 @@ typedef struct work_struct      __qdf_delayed_work_t;
  * @arg: pointer to argument
  */
 typedef struct {
-	struct work_struct   work;
-	qdf_defer_fn_t    fn;
-	void                 *arg;
+	struct work_struct work;
+	qdf_defer_fn_t fn;
+	void *arg;
 } __qdf_work_t;
 
 /**
@@ -58,18 +52,16 @@ typedef struct {
  * @arg: pointer to argument
  */
 typedef struct {
-	struct delayed_work  dwork;
-	qdf_defer_fn_t    fn;
-	void                 *arg;
+	struct delayed_work dwork;
+	qdf_defer_fn_t fn;
+	void *arg;
 } __qdf_delayed_work_t;
 
 extern void __qdf_defer_func(struct work_struct *work);
 extern void __qdf_defer_delayed_func(struct work_struct *work);
-#endif
 
 typedef void (*__qdf_bh_fn_t)(unsigned long arg);
 
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 19)
 /**
  * __qdf_init_work - Initialize a work/task queue, This runs in non-interrupt
  * context, so can be preempted by H/W & S/W intr
@@ -81,7 +73,8 @@ typedef void (*__qdf_bh_fn_t)(unsigned long arg);
 static inline QDF_STATUS
 __qdf_init_work(__qdf_work_t *work, qdf_defer_fn_t func, void *arg)
 {
-	/*Initialize func and argument in work struct */
+	work->fn = func;
+	work->arg = arg;
 	INIT_WORK(&work->work, __qdf_defer_func);
 	return QDF_STATUS_SUCCESS;
 }
@@ -98,7 +91,10 @@ static inline uint32_t __qdf_init_delayed_work(__qdf_delayed_work_t *work,
 					       qdf_defer_fn_t func,
 					       void *arg)
 {
-	INIT_WORK(work, func, arg);
+	/*Initialize func and argument in work struct */
+	work->fn = func;
+	work->arg = arg;
+	INIT_DELAYED_WORK(&work->dwork, __qdf_defer_delayed_func);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -111,7 +107,7 @@ static inline uint32_t __qdf_init_delayed_work(__qdf_delayed_work_t *work,
 static inline void
 __qdf_queue_work(__qdf_workqueue_t *wqueue, __qdf_work_t *work)
 {
-	queue_work(wqueue, work);
+	queue_work(wqueue, &work->work);
 }
 
 /**
@@ -125,7 +121,7 @@ static inline void __qdf_queue_delayed_work(__qdf_workqueue_t *wqueue,
 					    __qdf_delayed_work_t *work,
 					    uint32_t delay)
 {
-	queue_delayed_work(wqueue, work, msecs_to_jiffies(delay));
+	queue_delayed_work(wqueue, &work->dwork, msecs_to_jiffies(delay));
 }
 
 /**
@@ -135,7 +131,7 @@ static inline void __qdf_queue_delayed_work(__qdf_workqueue_t *wqueue,
  */
 static inline QDF_STATUS __qdf_sched_work(__qdf_work_t *work)
 {
-	schedule_work(work);
+	schedule_work(&work->work);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -148,7 +144,7 @@ static inline QDF_STATUS __qdf_sched_work(__qdf_work_t *work)
 static inline QDF_STATUS
 __qdf_sched_delayed_work(__qdf_delayed_work_t *work, uint32_t delay)
 {
-	schedule_delayed_work(work, msecs_to_jiffies(delay));
+	schedule_delayed_work(&work->dwork, msecs_to_jiffies(delay));
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -159,7 +155,7 @@ __qdf_sched_delayed_work(__qdf_delayed_work_t *work, uint32_t delay)
  */
 static inline bool __qdf_cancel_work(__qdf_work_t *work)
 {
-	return cancel_work_sync(work);
+	return cancel_work_sync(&work->work);
 }
 
 /**
@@ -169,7 +165,7 @@ static inline bool __qdf_cancel_work(__qdf_work_t *work)
  */
 static inline bool __qdf_cancel_delayed_work(__qdf_delayed_work_t *work)
 {
-	return cancel_delayed_work_sync(work);
+	return cancel_delayed_work_sync(&work->dwork);
 }
 
 /**
@@ -179,7 +175,7 @@ static inline bool __qdf_cancel_delayed_work(__qdf_delayed_work_t *work)
  */
 static inline uint32_t __qdf_flush_work(__qdf_work_t *work)
 {
-	flush_work(work);
+	flush_work(&work->work);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -190,80 +186,9 @@ static inline uint32_t __qdf_flush_work(__qdf_work_t *work)
  */
 static inline uint32_t __qdf_flush_delayed_work(__qdf_delayed_work_t *work)
 {
-	flush_delayed_work(work);
-	return QDF_STATUS_SUCCESS;
-}
-
-#else
-static inline QDF_STATUS
-__qdf_init_work(__qdf_work_t *work, qdf_defer_fn_t func, void *arg)
-{
-	work->fn = func;
-	work->arg = arg;
-	INIT_WORK(&work->work, __qdf_defer_func);
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline uint32_t __qdf_init_delayed_work(__qdf_delayed_work_t *work,
-					       qdf_defer_fn_t func,
-					       void *arg)
-{
-	/*Initialize func and argument in work struct */
-	work->fn = func;
-	work->arg = arg;
-	INIT_DELAYED_WORK(&work->dwork, __qdf_defer_delayed_func);
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline void
-__qdf_queue_work(__qdf_workqueue_t *wqueue, __qdf_work_t *work)
-{
-	queue_work(wqueue, &work->work);
-}
-
-static inline void __qdf_queue_delayed_work(__qdf_workqueue_t *wqueue,
-					    __qdf_delayed_work_t *work,
-					    uint32_t delay)
-{
-	queue_delayed_work(wqueue, &work->dwork, msecs_to_jiffies(delay));
-}
-
-static inline QDF_STATUS __qdf_sched_work(__qdf_work_t *work)
-{
-	schedule_work(&work->work);
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS
-__qdf_sched_delayed_work(__qdf_delayed_work_t *work, uint32_t delay)
-{
-	schedule_delayed_work(&work->dwork, msecs_to_jiffies(delay));
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline bool __qdf_cancel_work(__qdf_work_t *work)
-{
-	return cancel_work_sync(&work->work);
-}
-
-static inline bool __qdf_cancel_delayed_work(__qdf_delayed_work_t *work)
-{
-	return cancel_delayed_work_sync(&work->dwork);
-}
-
-static inline uint32_t __qdf_flush_work(__qdf_work_t *work)
-{
-	flush_work(&work->work);
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline uint32_t __qdf_flush_delayed_work(__qdf_delayed_work_t *work)
-{
 	flush_delayed_work(&work->dwork);
 	return QDF_STATUS_SUCCESS;
 }
-
-#endif
 
 /**
  * __qdf_create_workqueue - create a workqueue, This runs in non-interrupt
@@ -324,10 +249,6 @@ __qdf_init_bh(struct tasklet_struct *bh, qdf_defer_fn_t func, void *arg)
 	tasklet_init(bh, (__qdf_bh_fn_t) func, (unsigned long)arg);
 	return QDF_STATUS_SUCCESS;
 }
-
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 19)
-#else
-#endif
 
 /**
  * __qdf_sched_bh - schedule a bottom half (DPC)
