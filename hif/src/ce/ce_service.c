@@ -1980,8 +1980,7 @@ more_data:
 		goto more_data;
 	}
 
-	hif_update_napi_max_poll_time(ce_state, scn->napi_data.napis[ce_id],
-				      qdf_get_cpu());
+	hif_update_napi_max_poll_time(ce_state, ce_id, qdf_get_cpu());
 
 	qdf_atomic_set(&ce_state->rx_pending, 0);
 	if (TARGET_REGISTER_ACCESS_ALLOWED(scn)) {

@@ -185,6 +185,19 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 #define HNC_ACT_DISPERSE (-1)
 
 /**
+ * hif_update_napi_max_poll_time() - updates NAPI max poll time
+ * @ce_state: ce state
+ * @ce_id: Copy engine ID
+ * @cpu_id: cpu id
+ *
+ * This API updates NAPI max poll time per CE per SPU.
+ *
+ * Return: void
+ */
+void hif_update_napi_max_poll_time(struct CE_state *ce_state,
+				   int ce_id,
+				   int cpu_id);
+/**
  * Local interface to HIF implemented functions of NAPI CPU affinity management.
  * Note:
  * 1- The symbols in this file are NOT supposed to be used by any
@@ -241,6 +254,20 @@ static inline int hif_napi_schedule(struct hif_opaque_softc *hif, int ce_id)
 static inline int hif_napi_poll(struct napi_struct *napi, int budget)
 { return -EPERM; }
 
+/**
+ * hif_update_napi_max_poll_time() - updates NAPI max poll time
+ * @ce_state: ce state
+ * @ce_id: Copy engine ID
+ * @cpu_id: cpu id
+ *
+ * This API updates NAPI max poll time per CE per SPU.
+ *
+ * Return: void
+ */
+static inline void hif_update_napi_max_poll_time(struct CE_state *ce_state,
+						 int ce_id,
+						 int cpu_id)
+{ return; }
 #endif /* FEATURE_NAPI */
 
 #if defined(HIF_IRQ_AFFINITY) && defined(FEATURE_NAPI)
@@ -286,17 +313,4 @@ static inline int hif_napi_cpu_blacklist(struct qca_napi_data *napid,
 { return 0; }
 #endif /* HIF_IRQ_AFFINITY */
 
-/**
- * hif_update_napi_max_poll_time() - updates NAPI max poll time
- * @ce_state: ce state
- * @napi_info: pointer to napi info structure
- * @cpu_id: cpu id
- *
- * This API updates NAPI max poll time per CE per SPU.
- *
- * Return: void
- */
-void hif_update_napi_max_poll_time(struct CE_state *ce_state,
-				   struct qca_napi_info *napi_info,
-				   int cpu_id);
 #endif /* __HIF_NAPI_H__ */
