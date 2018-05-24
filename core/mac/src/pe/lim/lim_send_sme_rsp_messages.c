@@ -1189,8 +1189,8 @@ QDF_STATUS lim_prepare_disconnect_done_ind(tpAniSirGlobal mac_ctx,
 	sir_sme_dis_ind->length = sizeof(*sir_sme_dis_ind);
 	sir_sme_dis_ind->session_id = session_id;
 	if (peer_mac_addr)
-		qdf_mem_copy(&sir_sme_dis_ind->peer_mac,
-			     &peer_mac_addr, ETH_ALEN);
+		qdf_mem_copy(sir_sme_dis_ind->peer_mac,
+			     peer_mac_addr, ETH_ALEN);
 
 	/*
 	 * Instead of sending deauth reason code as 505 which is

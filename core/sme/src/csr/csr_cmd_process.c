@@ -76,7 +76,9 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 		 * due to failure or finding the condition meets both
 		 * SAP and infra/IBSS requirement.
 		 */
-		if (eWNI_SME_SETCONTEXT_RSP == sme_rsp->messageType) {
+		if (eWNI_SME_SETCONTEXT_RSP == sme_rsp->messageType ||
+		    eWNI_SME_DISCONNECT_DONE_IND ==
+		    sme_rsp->messageType) {
 			sme_warn("handling msg 0x%X CSR state is %d",
 				sme_rsp->messageType, cur_state);
 			csr_roam_check_for_link_status_change(mac_ctx,
