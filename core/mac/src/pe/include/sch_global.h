@@ -57,6 +57,9 @@ struct schMisc {
 
 	uint16_t p2pIeOffset;
 
+	/* CSA and ECSA Switch Count Offsets to be sent to FW */
+	uint32_t csa_count_offset;
+	uint32_t ecsa_count_offset;
 };
 
 /* ****************** MISC defs ********************************* */

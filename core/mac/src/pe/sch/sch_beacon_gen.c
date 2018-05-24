@@ -43,6 +43,9 @@
 #include "parser_api.h"
 #include "wlan_utility.h"
 
+/* Offset of Channel Switch count field in CSA/ECSA IE */
+#define SCH_CSA_SWITCH_COUNT_OFFSET 2
+#define SCH_ECSA_SWITCH_COUNT_OFFSET 3
 
 const uint8_t p2p_oui[] = { 0x50, 0x6F, 0x9A, 0x9 };
 
@@ -153,6 +156,53 @@ sch_append_addn_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 }
 
 /**
+ * sch_get_csa_ecsa_count_offset() - get the offset of Switch count field
+ * @ie: pointer to the beggining of IEs in the beacon frame buffer
+ * @ie_len: length of the IEs in the buffer
+ * @csa_count_offset: pointer to the csa_count_offset variable in the caller
+ * @ecsa_count_offset: pointer to the ecsa_count_offset variable in the caller
+ *
+ * Gets the offset of the switch count field in the CSA/ECSA IEs from the start
+ * of the IEs buffer.
+ *
+ * Return: None
+ */
+static void sch_get_csa_ecsa_count_offset(uint8_t *ie, uint32_t ie_len,
+					  uint32_t *csa_count_offset,
+					  uint32_t *ecsa_count_offset)
+{
+	uint8_t *ptr = ie;
+	uint8_t elem_id;
+	uint16_t elem_len;
+	uint32_t offset = 0;
+
+	/* IE is not present */
+	if (!ie_len)
+		return;
+
+	while (ie_len >= 2) {
+		elem_id = ptr[0];
+		elem_len = ptr[1];
+		ie_len -= 2;
+		offset += 2;
+
+		if (elem_id == DOT11F_EID_CHANSWITCHANN &&
+		    elem_len == 3)
+			*csa_count_offset = offset +
+					SCH_CSA_SWITCH_COUNT_OFFSET;
+
+		if (elem_id == DOT11F_EID_EXT_CHAN_SWITCH_ANN &&
+		    elem_len == 4)
+			*ecsa_count_offset = offset +
+					SCH_ECSA_SWITCH_COUNT_OFFSET;
+
+		ie_len -= elem_len;
+		offset += elem_len;
+		ptr += (elem_len + 2);
+	}
+}
+
+/**
  * sch_set_fixed_beacon_fields() - sets the fixed params in beacon frame
  * @mac_ctx:       mac global context
  * @session:       pe session entry
@@ -179,6 +229,8 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 	uint32_t extra_ie_len = 0;
 	uint16_t extra_ie_offset = 0;
 	uint16_t p2p_ie_offset = 0;
+	uint32_t csa_count_offset = 0;
+	uint32_t ecsa_count_offset = 0;
 	tSirRetStatus status = eSIR_SUCCESS;
 	bool is_vht_enabled = false;
 	uint16_t addn_ielen = 0;
@@ -537,6 +589,26 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		pe_err("Warnings while packing a tDot11fBeacon2(0x%08x)",
 			n_status);
 	}
+
+	/* Fill the CSA/ECSA count offsets if the IEs are present */
+	if (session->dfsIncludeChanSwIe)
+		sch_get_csa_ecsa_count_offset(session->pSchBeaconFrameEnd,
+					      n_bytes,
+					      &csa_count_offset,
+					      &ecsa_count_offset);
+
+	if (csa_count_offset)
+		mac_ctx->sch.schObject.csa_count_offset =
+				session->schBeaconOffsetBegin + TIM_IE_SIZE +
+				csa_count_offset;
+	if (ecsa_count_offset)
+		mac_ctx->sch.schObject.ecsa_count_offset =
+				session->schBeaconOffsetBegin + TIM_IE_SIZE +
+				ecsa_count_offset;
+
+	pe_debug("csa_count_offset %d ecsa_count_offset %d",
+		 mac_ctx->sch.schObject.csa_count_offset,
+		 mac_ctx->sch.schObject.ecsa_count_offset);
 
 	extra_ie = session->pSchBeaconFrameEnd + n_bytes;
 	extra_ie_offset = n_bytes;

@@ -713,6 +713,8 @@ typedef struct sBeaconGenParams {
  * @beaconLength: beacon length of template
  * @timIeOffset: TIM IE offset
  * @p2pIeOffset: P2P IE offset
+ * @csa_count_offset: Offset of Switch count field in CSA IE
+ * @ecsa_count_offset: Offset of Switch count field in ECSA IE
  */
 typedef struct {
 	tSirMacAddr bssId;
@@ -720,6 +722,8 @@ typedef struct {
 	uint32_t beaconLength;
 	uint32_t timIeOffset;
 	uint16_t p2pIeOffset;
+	uint32_t csa_count_offset;
+	uint32_t ecsa_count_offset;
 } tSendbeaconParams, *tpSendbeaconParams;
 
 /**
