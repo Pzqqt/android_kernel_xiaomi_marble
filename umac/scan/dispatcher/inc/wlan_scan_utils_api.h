@@ -1333,6 +1333,20 @@ util_scan_entry_heop(struct scan_cache_entry *scan_entry)
 }
 
 /**
+ * util_scan_entry_muedca() - function to read MU-EDCA IE
+ * @scan_entry: scan entry
+ *
+ * API, function to read MU-EDCA IE
+ *
+ * Return, MUEDCA IE or NULL if IE is not present
+ */
+static inline uint8_t*
+util_scan_entry_muedca(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.muedca;
+}
+
+/**
  * util_scan_entry_spatial_reuse_parameter() - function to read spatial reuse
  *                                             parameter ie
  * @scan_entry: scan entry

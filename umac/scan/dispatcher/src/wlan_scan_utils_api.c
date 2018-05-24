@@ -369,6 +369,9 @@ util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 	case WLAN_EXTN_ELEMID_ESP:
 		scan_params->ie_list.esp = (uint8_t *)ie;
 		break;
+	case WLAN_EXTN_ELEMID_MUEDCA:
+		scan_params->ie_list.muedca = (uint8_t *)ie;
+		break;
 	default:
 		break;
 	}

@@ -348,13 +348,15 @@ enum element_ie {
 
 /**
  * enum extn_element_ie :- extended management information element
- * @WLAN_EXTN_ELEMID_HECAP: HE capabilities IE
- * @WLAN_EXTN_ELEMID_HEOP:  HE Operation IE
- * @WLAN_EXTN_ELEMID_SRP:   spatial reuse parameter IE
+ * @WLAN_EXTN_ELEMID_HECAP:  HE capabilities IE
+ * @WLAN_EXTN_ELEMID_HEOP:   HE Operation IE
+ * @WLAN_EXTN_ELEMID_MUEDCA: MU-EDCA IE
+ * @WLAN_EXTN_ELEMID_SRP:    spatial reuse parameter IE
  */
 enum extn_element_ie {
 	WLAN_EXTN_ELEMID_HECAP       = 35,
 	WLAN_EXTN_ELEMID_HEOP        = 36,
+	WLAN_EXTN_ELEMID_MUEDCA      = 38,
 	WLAN_EXTN_ELEMID_SRP         = 39,
 	WLAN_EXTN_ELEMID_ESP         = 11,
 };

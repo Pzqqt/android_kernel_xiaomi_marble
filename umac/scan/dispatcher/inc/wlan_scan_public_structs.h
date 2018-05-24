@@ -196,6 +196,7 @@ struct ie_list {
 	uint8_t *fils_indication;
 	uint8_t *esp;
 	uint8_t *mbo_oce;
+	uint8_t *muedca;
 };
 
 enum scan_entry_connection_state {
