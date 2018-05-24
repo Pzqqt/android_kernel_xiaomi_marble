@@ -23,6 +23,10 @@ ifeq ($(CONFIG_ARCH_SM6150), y)
         TARGET_KERNEL_VERSION := 4.14
 endif
 
+ifeq ($(CONFIG_ARCH_QCS405), y)
+        TARGET_KERNEL_VERSION := 4.14
+endif
+
 ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 	TARGET_KERNEL_VERSION := 4.14
 endif
@@ -58,6 +62,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		include $(AUDIO_ROOT)/config/sm8150auto.conf
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sm8150autoconf.h
+	endif
+	ifeq ($(CONFIG_ARCH_QCS405), y)
+		include $(AUDIO_ROOT)/config/qcs405auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/qcs405autoconf.h
 	endif
 	ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 		include $(AUDIO_ROOT)/config/sm8150auto.conf

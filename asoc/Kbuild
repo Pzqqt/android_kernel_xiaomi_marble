@@ -45,6 +45,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sm8150autoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_QCS405), y)
+		include $(AUDIO_ROOT)/config/qcs405auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/qcs405autoconf.h
+	endif
 endif
 
 # As per target team, build is done as follows:
@@ -98,6 +103,11 @@ endif
 # for SM8150 sound card driver
 ifdef CONFIG_SND_SOC_SM8150
 	MACHINE_OBJS += sm8150.o
+endif
+
+# for qcs405 sound card driver
+ifdef CONFIG_SND_SOC_QCS405
+	MACHINE_OBJS += qcs405.o
 endif
 
 ifdef CONFIG_SND_SOC_CPE
@@ -189,6 +199,9 @@ obj-$(CONFIG_SND_SOC_MACHINE_SDM845) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_SM8150) += machine_dlkm.o
+machine_dlkm-y := $(MACHINE_OBJS)
+
+obj-$(CONFIG_SND_SOC_QCS405) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_EXT_CODEC) += machine_dlkm.o

@@ -44,6 +44,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sm8150autoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_QCS405), y)
+		include $(AUDIO_ROOT)/config/qcs405auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/qcs405autoconf.h
+	endif
 endif
 
 # As per target team, build is done as follows:
