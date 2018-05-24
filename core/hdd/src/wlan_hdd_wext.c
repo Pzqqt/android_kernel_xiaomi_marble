@@ -953,7 +953,6 @@
  */
 #define WE_SET_CHANNEL                        88
 #define WE_SET_CONC_SYSTEM_PREF               89
-#define WE_SET_TXRX_STATS                     90
 
 /*
  * <ioctl>
@@ -2476,6 +2475,25 @@
  */
 #define WE_SET_DUAL_MAC_FW_MODE_CONFIG 22
 #define WE_SET_MON_MODE_CHAN 23
+/*
+ * <ioctl>
+ * txrx_stats - TXRX statistics query
+ *
+ * @INPUT: query category, mac id (default mac id is 0)
+ *
+ * @OUTPUT: TXRX statistics result
+ *
+ * This IOCTL is used to get TXRX statistics counters.
+ *
+ * @E.g: iwpriv wlan0 txrx_stats 21 0
+ * iwpriv wlan0 txrx_stats 21 1
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_SET_TXRX_STATS    24
+
 
 #ifdef FEATURE_WLAN_TDLS
 #undef  MAX_VAR_ARGS
@@ -7113,6 +7131,10 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	int *apps_args = (int *) extra;
 	struct hdd_context *hdd_ctx;
 	int ret, num_args;
+	void *soc = NULL;
+	struct cdp_pdev *pdev = NULL;
+	struct cdp_vdev *vdev = NULL;
+	struct cdp_txrx_stats_req req = {0};
 
 	hdd_enter_dev(dev);
 
@@ -7329,6 +7351,25 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		hdd_ch_avoid_unit_cmd(hdd_ctx, num_args, apps_args);
 	}
 	break;
+	case WE_SET_TXRX_STATS:
+	{
+		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
+					       adapter->session_id);
+
+		if (ret != 0) {
+			hdd_err("Invalid handles");
+			break;
+		}
+
+		req.stats = apps_args[0];
+		/* default value of secondary parameter is 0(mac_id) */
+		req.mac_id = apps_args[1];
+
+		hdd_debug("WE_SET_TXRX_STATS stats cmd: %d mac_id: %d",
+			  req.stats, req.mac_id);
+		ret = cdp_txrx_stats_request(soc, vdev, &req);
+		break;
+	}
 	default:
 	{
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
@@ -8853,10 +8894,6 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	int sub_cmd = value[0];
 	int ret;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	void *soc = NULL;
-	struct cdp_pdev *pdev = NULL;
-	struct cdp_vdev *vdev = NULL;
-	struct cdp_txrx_stats_req req = {0};
 
 	hdd_enter_dev(dev);
 
@@ -8869,23 +8906,6 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 		return ret;
 
 	switch (sub_cmd) {
-	case WE_SET_TXRX_STATS:
-	{
-		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
-				       adapter->session_id);
-
-		if (ret != 0) {
-			hdd_err("Invalid handles");
-			break;
-		}
-
-		req.stats = value[1];
-		req.mac_id = value[2];
-		hdd_debug("WE_SET_TXRX_STATS stats cmd: %d mac_id: %d",
-			req.stats, req.mac_id);
-		ret = cdp_txrx_stats_request(soc, vdev, &req);
-		break;
-	}
 	case WE_SET_SMPS_PARAM:
 		hdd_debug("WE_SET_SMPS_PARAM val %d %d", value[1], value[2]);
 		ret = wma_cli_set_command(adapter->session_id,
@@ -9301,7 +9321,7 @@ static const struct iw_priv_args we_private_args[] = {
 	 "txrx_fw_stats"},
 
 	{WE_SET_TXRX_STATS,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
 	 "txrx_stats"},
 
