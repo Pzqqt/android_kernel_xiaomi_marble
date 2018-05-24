@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,6 +34,9 @@
 #define QDF_NBUF_CB_RX_LRO_CTX(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_m.lro_ctx)
 
+#define QDF_NBUF_CB_RX_PEER_LOCAL_ID(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_m.peer_local_id)
+
 #define QDF_NBUF_CB_TX_IPA_OWNED(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.priv_cb_m.ipa.owned)
 #define QDF_NBUF_CB_TX_IPA_PRIV(skb) \
@@ -58,7 +61,18 @@
 #define __qdf_nbuf_ipa_priv_set(skb, priv) \
 	(QDF_NBUF_CB_TX_IPA_PRIV(skb) = (priv))
 
-
+/**
+ * qdf_nbuf_cb_update_peer_local_id() - update peer local id in skb cb
+ * @skb: skb pointer whose cb is updated with peer local id information
+ * @peer_local_id: peer local id to be update in cb
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_cb_update_peer_local_id(struct sk_buff *skb,
+						    uint32_t peer_local_id)
+{
+	QDF_NBUF_CB_RX_PEER_LOCAL_ID(skb) = peer_local_id;
+}
 
 void __qdf_nbuf_init_replenish_timer(void);
 void __qdf_nbuf_deinit_replenish_timer(void);

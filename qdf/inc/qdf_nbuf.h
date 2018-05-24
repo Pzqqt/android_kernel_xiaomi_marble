@@ -608,6 +608,11 @@ enum qdf_proto_subtype {
 typedef __qdf_nbuf_t qdf_nbuf_t;
 
 /**
+ * typedef qdf_nbuf_queue_head_t - Platform indepedent nbuf queue head
+ */
+typedef __qdf_nbuf_queue_head_t qdf_nbuf_queue_head_t;
+
+/**
  * @qdf_dma_map_cb_t - Dma map callback prototype
  */
 typedef void (*qdf_dma_map_cb_t)(void *arg, qdf_nbuf_t buf,
@@ -786,6 +791,68 @@ qdf_nbuf_unmap_nbytes_single(
 	return __qdf_nbuf_unmap_nbytes_single(osdev, buf, dir, nbytes);
 }
 #endif /* NBUF_MEMORY_DEBUG */
+
+/**
+ * qdf_nbuf_queue_head_dequeue() - dequeue nbuf from the head of queue
+ * @nbuf_queue_head: pointer to nbuf queue head
+ *
+ * Return: pointer to network buffer dequeued
+ */
+static inline
+qdf_nbuf_t qdf_nbuf_queue_head_dequeue(qdf_nbuf_queue_head_t *nbuf_queue_head)
+{
+	return __qdf_nbuf_queue_head_dequeue(nbuf_queue_head);
+}
+
+/**
+ * qdf_nbuf_queue_head_qlen() - length of the queue
+ * @nbuf_queue_head: pointer to nbuf queue head
+ *
+ * Return: length of queue (number of nbufs) pointed by qdf_nbuf_queue_head_t
+ */
+static inline
+uint32_t qdf_nbuf_queue_head_qlen(qdf_nbuf_queue_head_t *nbuf_queue_head)
+{
+	return __qdf_nbuf_queue_head_qlen(nbuf_queue_head);
+}
+
+/**
+ * qdf_nbuf_queue_head_enqueue_tail() - enqueue nbuf into queue tail
+ * @nbuf_queue_head: pointer to nbuf queue head
+ * @nbuf: nbuf to be enqueued
+ *
+ * Return: None
+ */
+static inline
+void qdf_nbuf_queue_head_enqueue_tail(qdf_nbuf_queue_head_t *nbuf_queue_head,
+				      qdf_nbuf_t nbuf)
+{
+	return __qdf_nbuf_queue_head_enqueue_tail(nbuf_queue_head, nbuf);
+}
+
+/**
+ * qdf_nbuf_queue_head_init() - initialize qdf_nbuf_queue_head_t
+ * @nbuf_queue_head: pointer to nbuf queue head to be initialized
+ *
+ * Return: None
+ */
+static inline
+void qdf_nbuf_queue_head_init(qdf_nbuf_queue_head_t *nbuf_queue_head)
+{
+	return __qdf_nbuf_queue_head_init(nbuf_queue_head);
+}
+
+/**
+ * qdf_nbuf_queue_head_purge() - purge qdf_nbuf_queue_head_t
+ * @nbuf_queue_head: pointer to nbuf queue head to be purged
+ *
+ * Return: None
+ */
+static inline
+void qdf_nbuf_queue_head_purge(qdf_nbuf_queue_head_t *nbuf_queue_head)
+{
+	return __qdf_nbuf_queue_head_purge(nbuf_queue_head);
+}
 
 static inline void
 qdf_nbuf_sync_for_cpu(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
@@ -1305,14 +1372,25 @@ static inline qdf_nbuf_t qdf_nbuf_copy(qdf_nbuf_t buf)
 void qdf_nbuf_init_fast(qdf_nbuf_t nbuf);
 #endif /* WLAN_FEATURE_FASTPATH */
 
-static inline void qdf_nbuf_tx_free(qdf_nbuf_t buf_list, int tx_err)
+/**
+ * @qdf_nbuf_list_free() - free a list of nbufs
+ * @buf_list: A list of nbufs to be freed
+ *
+ * Return: none
+ */
+
+static inline void qdf_nbuf_list_free(qdf_nbuf_t buf_list)
 {
 	while (buf_list) {
 		qdf_nbuf_t next = qdf_nbuf_next(buf_list);
-
 		qdf_nbuf_free(buf_list);
 		buf_list = next;
 	}
+}
+
+static inline void qdf_nbuf_tx_free(qdf_nbuf_t buf_list, int tx_err)
+{
+	qdf_nbuf_list_free(buf_list);
 }
 
 static inline void qdf_nbuf_ref(qdf_nbuf_t buf)

@@ -437,6 +437,19 @@ uint32_t dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx
 }
 #endif
 
+/**
+ * dp_get_dp_vdev_from_cdp_vdev() - get dp_vdev from cdp_vdev by type-casting
+ * @cdp_opaque_vdev: pointer to cdp_vdev
+ *
+ * Return: pointer to dp_vdev
+ */
+static
+struct dp_vdev * dp_get_dp_vdev_from_cdp_vdev(struct cdp_vdev *cdp_opaque_vdev)
+{
+	return (struct dp_vdev *)cdp_opaque_vdev;
+}
+
+
 static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
 					struct cdp_peer *peer_hdl,
 					uint8_t *mac_addr,
@@ -1088,6 +1101,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 			if (rx_mask & (1 << ring)) {
 				work_done = dp_rx_process(int_ctx,
 					    soc->reo_dest_ring[ring].hal_srng,
+					    ring,
 					    remaining_quota);
 
 				QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -3620,6 +3634,7 @@ static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
 	vdev->osif_vdev = osif_vdev;
 	vdev->ctrl_vdev = ctrl_vdev;
 	vdev->osif_rx = txrx_ops->rx.rx;
+	vdev->osif_rx_stack = txrx_ops->rx.rx_stack;
 	vdev->osif_rsim_rx_decap = txrx_ops->rx.rsim_rx_decap;
 	vdev->osif_get_key = txrx_ops->get_key;
 	vdev->osif_rx_mon = txrx_ops->rx.mon;
@@ -4697,6 +4712,18 @@ static int dp_get_opmode(struct cdp_vdev *vdev_handle)
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 
 	return vdev->opmode;
+}
+
+static
+void dp_get_os_rx_handles_from_vdev_wifi3(struct cdp_vdev *pvdev,
+					  ol_txrx_rx_fp *stack_fn_p,
+					  ol_osif_vdev_handle *osif_vdev_p)
+{
+	struct dp_vdev *vdev = dp_get_dp_vdev_from_cdp_vdev(pvdev);
+
+	qdf_assert(vdev);
+	*stack_fn_p = vdev->osif_rx_stack;
+	*osif_vdev_p = vdev->osif_vdev;
 }
 
 static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(struct cdp_vdev *pvdev)
@@ -7592,6 +7619,8 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_peer_flush_ast_table = dp_wds_flush_ast_table_wifi3,
 	.txrx_peer_map_attach = dp_peer_map_attach_wifi3,
 	.txrx_pdev_set_ctrl_pdev = dp_pdev_set_ctrl_pdev,
+	.txrx_get_os_rx_handles_from_vdev =
+					dp_get_os_rx_handles_from_vdev_wifi3,
 	.delba_tx_completion = dp_delba_tx_completion_wifi3,
 };
 

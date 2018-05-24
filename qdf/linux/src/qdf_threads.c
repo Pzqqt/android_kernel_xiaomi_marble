@@ -106,6 +106,19 @@ void qdf_busy_wait(uint32_t us_interval)
 }
 qdf_export_symbol(qdf_busy_wait);
 
+#ifdef MSM_PLATFORM
+void qdf_set_wake_up_idle(bool idle)
+{
+	set_wake_up_idle(idle);
+}
+#else
+void qdf_set_wake_up_idle(bool idle)
+{
+}
+#endif /* MSM_PLATFORM */
+
+qdf_export_symbol(qdf_set_wake_up_idle);
+
 void qdf_set_user_nice(qdf_thread_t *thread, long nice)
 {
 	set_user_nice(thread, nice);
@@ -115,7 +128,14 @@ qdf_export_symbol(qdf_set_user_nice);
 qdf_thread_t *qdf_create_thread(int (*thread_handler)(void *data), void *data,
 				const char thread_name[])
 {
-	return kthread_create(thread_handler, data, thread_name);
+	struct task_struct *task;
+
+	task = kthread_create(thread_handler, data, thread_name);
+
+	if (IS_ERR(task))
+		return NULL;
+
+	return task;
 }
 qdf_export_symbol(qdf_create_thread);
 
@@ -196,3 +216,15 @@ qdf_thread_t *qdf_get_current_task(void)
 	return current;
 }
 qdf_export_symbol(qdf_get_current_task);
+
+int qdf_get_current_pid(void)
+{
+	return current->pid;
+}
+qdf_export_symbol(qdf_get_current_pid);
+
+const char *qdf_get_current_comm(void)
+{
+	return current->comm;
+}
+qdf_export_symbol(qdf_get_current_comm);

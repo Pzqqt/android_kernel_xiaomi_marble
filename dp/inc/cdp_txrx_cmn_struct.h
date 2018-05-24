@@ -573,7 +573,7 @@ typedef void (*ol_txrx_stats_callback)(void *ctxt,
  * OSIF which is called from txrx to
  * indicate whether the transmit OS
  * queues should be paused/resumed
- * @rx.std - the OS shim rx function to deliver rx data
+ * @rx.rx - the OS shim rx function to deliver rx data
  * frames to. This can have different values for
  * different virtual devices, e.g. so one virtual
  * device's OS shim directly hands rx frames to the OS,
@@ -581,7 +581,11 @@ typedef void (*ol_txrx_stats_callback)(void *ctxt,
  * messages before sending the rx frames to the OS. The
  * netbufs delivered to the osif_rx function are in the
  * format specified by the OS to use for tx and rx
- * frames (either 802.3 or native WiFi)
+ * frames (either 802.3 or native WiFi). In case RX Threads are enabled, pkts
+ * are given to the thread, instead of the stack via this pointer.
+ * @rx.stack - function to give packets to the stack. Differs from @rx.rx.
+ * In case RX Threads are enabled, this pointer holds the callback to give
+ * packets to the stack.
  * @rx.wai_check - the tx function pointer for WAPI frames
  * @rx.mon - the OS shim rx monitor function to deliver
  * monitor data to Though in practice, it is probable
@@ -613,6 +617,7 @@ struct ol_txrx_ops {
 	/* rx function pointers - specified by OS shim, stored by txrx */
 	struct {
 		ol_txrx_rx_fp           rx;
+		ol_txrx_rx_fp           rx_stack;
 		ol_txrx_rx_check_wai_fp wai_check;
 		ol_txrx_rx_mon_fp       mon;
 		ol_txrx_stats_rx_fp           stats_rx;

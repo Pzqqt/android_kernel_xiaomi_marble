@@ -2312,7 +2312,7 @@ struct cdp_vdev *dp_get_vdev_for_peer(void *peer_handle)
 {
 	struct dp_peer *peer = peer_handle;
 
-	DP_TRACE(INFO, "peer %pK vdev %pK", peer, peer->vdev);
+	DP_TRACE(DEBUG, "peer %pK vdev %pK", peer, peer->vdev);
 	return (struct cdp_vdev *)peer->vdev;
 }
 

@@ -16,7 +16,6 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
 /**
  * @file cdp_txrx_ops.h
  * @brief Define the host data path converged API functions
@@ -334,6 +333,18 @@ struct cdp_cmn_ops {
 					struct cdp_ctrl_objmgr_pdev *ctrl_pdev);
 
 	ol_txrx_tx_fp tx_send;
+
+	/**
+	 * txrx_get_os_rx_handles_from_vdev() - Return function, osif vdev
+	 *					to deliver pkt to stack.
+	 * @vdev: vdev handle
+	 * @stack_fn: pointer to - function pointer to deliver RX pkt to stack
+	 * @osif_vdev: pointer to - osif vdev to deliver RX packet to.
+	 */
+	void (*txrx_get_os_rx_handles_from_vdev)
+					(struct cdp_vdev *vdev,
+					 ol_txrx_rx_fp *stack_fn,
+					 ol_osif_vdev_handle *osif_vdev);
 };
 
 struct cdp_ctrl_ops {

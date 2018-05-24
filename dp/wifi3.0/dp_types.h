@@ -1261,8 +1261,10 @@ struct dp_vdev {
 	/* dp_peer list */
 	TAILQ_HEAD(, dp_peer) peer_list;
 
-	/* callback to hand rx frames to the OS shim */
+	/* default RX call back function called by dp */
 	ol_txrx_rx_fp osif_rx;
+	/* callback to deliver rx frames to the OS */
+	ol_txrx_rx_fp osif_rx_stack;
 	ol_txrx_rsim_rx_decap_fp osif_rsim_rx_decap;
 	ol_txrx_get_key_fp osif_get_key;
 	ol_txrx_tx_free_ext_fp osif_tx_free_ext;

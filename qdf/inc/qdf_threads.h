@@ -39,11 +39,19 @@ void qdf_sleep_us(uint32_t us_interval);
 void qdf_busy_wait(uint32_t us_interval);
 
 /**
+ * qdf_set_wake_up_idle() - set wakeup idle value
+ * @idle: true/false value for wake up idle
+ *
+ * Return: none
+ */
+void qdf_set_wake_up_idle(bool idle);
+
+/**
  * qdf_set_user_nice() - set thread's nice value
  * @thread: pointer to thread
  * @nice: nice value
  *
- * Return: none
+ * Return: void
  */
 void qdf_set_user_nice(qdf_thread_t *thread, long nice);
 
@@ -52,7 +60,7 @@ void qdf_set_user_nice(qdf_thread_t *thread, long nice);
  * @thread: pointer to thread
  * @nice: nice value
  *
- * Return: pointer to created kernel thread
+ * Return: pointer to created kernel thread on success else NULL
  */
 qdf_thread_t *qdf_create_thread(int (*thread_handler)(void *data), void *data,
 				const char thread_name[]);
@@ -111,4 +119,19 @@ void qdf_print_thread_trace(qdf_thread_t *thread);
  * Return: pointer to task struct
  */
 qdf_thread_t *qdf_get_current_task(void);
+
+/**
+ * qdf_get_current_pid() - get current task's process id
+ *
+ * Return: current task's process id (int)
+ */
+int qdf_get_current_pid(void);
+
+/**
+ * qdf_get_current_comm() - get current task's command name
+ *
+ * Return: current task's command name(char *)
+ */
+const char *qdf_get_current_comm(void);
+
 #endif /* __QDF_THREADS_H */

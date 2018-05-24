@@ -44,6 +44,13 @@
  */
 typedef struct sk_buff *__qdf_nbuf_t;
 
+/**
+ * typedef __qdf_nbuf_queue_head_t - abstraction for sk_buff_head linux struct
+ *
+ * This is used for skb queue management via linux skb buff head APIs
+ */
+typedef struct sk_buff_head __qdf_nbuf_queue_head_t;
+
 #define QDF_NBUF_CB_TX_MAX_OS_FRAGS 1
 
 /* QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS -
@@ -95,7 +102,7 @@ typedef union {
  * @rx.dev.priv_cb_m.tcp_ack_num: TCP ACK number
  * @rx.dev.priv_cb_m.lro_ctx: LRO context
  * @rx.dev.priv_cb_m.map_index:
- * @rx.dev.priv_cb_m.reserved: reserved
+ * @rx.dev.priv_cb_m.peer_local_id: peer_local_id for RX pkt
  *
  * @rx.lro_eligible: flag to indicate whether the MSDU is LRO eligible
  * @rx.peer_cached_buf_frm: peer cached buffer
@@ -105,6 +112,8 @@ typedef union {
  * @rx.ip_offset: offset to IP header
  * @rx.tcp_offset: offset to TCP header
  * @rx_ctx_id: Rx context id
+ * @flush_ind: flush indication
+ * @num_elements_in_list: number of elements in the nbuf list
  *
  * @rx.tcp_udp_chksum: L4 payload checksum
  * @rx.tcp_wim: TCP window size
@@ -187,7 +196,7 @@ struct qdf_nbuf_cb {
 					uint32_t tcp_ack_num;
 					unsigned char *lro_ctx;
 					uint32_t map_index;
-					uint32_t reserved;
+					uint32_t peer_local_id;
 				} priv_cb_m;
 			} dev;
 			uint32_t lro_eligible:1,
@@ -197,9 +206,11 @@ struct qdf_nbuf_cb {
 				ipv6_proto:1,
 				ip_offset:7,
 				tcp_offset:7,
-				rx_ctx_id:4;
+				rx_ctx_id:4,
+				flush_ind:1,
+				num_elements_in_list:8;
 			uint32_t tcp_udp_chksum:16,
-				tcp_win:16;
+				 tcp_win:16;
 			uint32_t flow_id;
 			uint8_t flag_chfrag_start:1,
 				flag_chfrag_cont:1,
@@ -297,6 +308,10 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.tcp_offset)
 #define QDF_NBUF_CB_RX_CTX_ID(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.rx_ctx_id)
+#define QDF_NBUF_CB_RX_FLUSH_IND(skb) \
+		(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.flush_ind)
+#define QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(skb) \
+		(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.num_elements_in_list)
 
 #define QDF_NBUF_CB_RX_TCP_CHKSUM(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.tcp_udp_chksum)
@@ -1837,6 +1852,38 @@ static inline void __qdf_nbuf_orphan(struct sk_buff *skb)
 {
 	return skb_orphan(skb);
 }
+
+static inline struct sk_buff *
+__qdf_nbuf_queue_head_dequeue(struct sk_buff_head *skb_queue_head)
+{
+	return skb_dequeue(skb_queue_head);
+}
+
+static inline
+uint32_t __qdf_nbuf_queue_head_qlen(struct sk_buff_head *skb_queue_head)
+{
+	return skb_queue_head->qlen;
+}
+
+static inline
+void __qdf_nbuf_queue_head_enqueue_tail(struct sk_buff_head *skb_queue_head,
+					struct sk_buff *skb)
+{
+	return skb_queue_tail(skb_queue_head, skb);
+}
+
+static inline
+void __qdf_nbuf_queue_head_init(struct sk_buff_head *skb_queue_head)
+{
+	return skb_queue_head_init(skb_queue_head);
+}
+
+static inline
+void __qdf_nbuf_queue_head_purge(struct sk_buff_head *skb_queue_head)
+{
+	return skb_queue_purge(skb_queue_head);
+}
+
 #ifdef CONFIG_WIN
 #include <i_qdf_nbuf_w.h>
 #else

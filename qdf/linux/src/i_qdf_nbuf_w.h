@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -66,7 +66,18 @@
 #define __qdf_nbuf_get_tx_fctx(skb) \
 		 QDF_NBUF_CB_TX_FCTX((skb))
 
-
+/**
+ * qdf_nbuf_cb_update_peer_local_id() - update peer local id in skb cb
+ * @skb: skb pointer whose cb is updated with peer local id information
+ * @peer_local_id: peer local id to be update in cb
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_cb_update_peer_local_id(struct sk_buff *skb,
+						    uint32_t peer_local_id)
+{
+	/* Does not apply to WIN */
+}
 
 /**
  * __qdf_nbuf_push_head() - Push data in the front

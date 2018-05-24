@@ -1238,6 +1238,7 @@ int dp_wds_rx_policy_check(
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
  * @soc: core txrx main context
  * @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
+ * @reo_ring_num: ring number (0, 1, 2 or 3) of the reo ring.
  * @quota: No. of units (packets) that can be serviced in one shot.
  *
  * This function implements the core of Rx functionality. This is
@@ -1245,8 +1246,8 @@ int dp_wds_rx_policy_check(
  *
  * Return: uint32_t: No. of elements processed
  */
-uint32_t
-dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
+uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
+		       uint8_t reo_ring_num, uint32_t quota)
 {
 	void *hal_soc;
 	void *ring_desc;
@@ -1383,6 +1384,7 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_LAST_MSDU_IN_MPDU)
 			qdf_nbuf_set_rx_chfrag_end(rx_desc->nbuf, 1);
 
+		QDF_NBUF_CB_RX_CTX_ID(rx_desc->nbuf) = reo_ring_num;
 		DP_RX_LIST_APPEND(nbuf_head, nbuf_tail, rx_desc->nbuf);
 
 		/*
@@ -1400,6 +1402,9 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	}
 done:
 	hal_srng_access_end(hal_soc, hal_ring);
+
+	if (nbuf_tail)
+		QDF_NBUF_CB_RX_FLUSH_IND(nbuf_tail) = 1;
 
 	/* Update histogram statistics by looping through pdev's */
 	DP_RX_HIST_STATS_PER_PDEV();
@@ -1473,6 +1478,8 @@ done:
 		if (qdf_likely(peer != NULL)) {
 			vdev = peer->vdev;
 		} else {
+			DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
+					 qdf_nbuf_len(nbuf));
 			qdf_nbuf_free(nbuf);
 			nbuf = next;
 			continue;
@@ -1635,11 +1642,10 @@ done:
 		}
 
 		dp_rx_lro(rx_tlv_hdr, peer, nbuf, int_ctx->lro_ctx);
-
+		qdf_nbuf_cb_update_peer_local_id(nbuf, peer->local_id);
 		DP_RX_LIST_APPEND(deliver_list_head,
-					deliver_list_tail,
-					nbuf);
-
+				  deliver_list_tail,
+				  nbuf);
 		DP_STATS_INC_PKT(peer, rx.to_stack, 1,
 				qdf_nbuf_len(nbuf));
 
@@ -1648,7 +1654,7 @@ done:
 
 	if (deliver_list_head)
 		dp_rx_deliver_to_stack(vdev, peer, deliver_list_head,
-				deliver_list_tail);
+				       deliver_list_tail);
 
 	return rx_bufs_used; /* Assume no scale factor for now */
 }

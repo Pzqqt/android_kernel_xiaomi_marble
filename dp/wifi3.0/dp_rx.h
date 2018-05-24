@@ -315,7 +315,8 @@ void dp_rx_pdev_detach(struct dp_pdev *pdev);
 
 
 uint32_t
-dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota);
+dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint8_t reo_ring_num,
+	      uint32_t quota);
 
 uint32_t dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
 
@@ -512,14 +513,16 @@ void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
 void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr);
 
 #define DP_RX_LIST_APPEND(head, tail, elem) \
-	do {                                                \
-		if (!(head)) {                              \
-			(head) = (elem);                    \
-		} else {                                    \
-			qdf_nbuf_set_next((tail), (elem));  \
-		}                                           \
-		(tail) = (elem);                            \
-		qdf_nbuf_set_next((tail), NULL);            \
+	do {                                                          \
+		if (!(head)) {                                        \
+			(head) = (elem);                              \
+			QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(head) = 1;\
+		} else {                                              \
+			qdf_nbuf_set_next((tail), (elem));            \
+			QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(head)++;  \
+		}                                                     \
+		(tail) = (elem);                                      \
+		qdf_nbuf_set_next((tail), NULL);                      \
 	} while (0)
 
 #ifndef BUILD_X86

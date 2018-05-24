@@ -34,6 +34,11 @@
  * Common Data Path Header File
  *
  *****************************************************************************/
+#define dp_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP, params)
+#define dp_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP, params)
+#define dp_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP, params)
+#define dp_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_DP, params)
+#define dp_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP, params)
 
 static inline int
 cdp_soc_attach_target(ol_txrx_soc_handle soc)
@@ -914,6 +919,37 @@ static inline struct cdp_pdev *cdp_get_pdev_from_vdev
 		return NULL;
 
 	return soc->ops->cmn_drv_ops->txrx_get_pdev_from_vdev(vdev);
+}
+
+/**
+ * cdp_get_os_rx_handles_from_vdev() - Return os rx handles for a vdev
+ * @soc: ol_txrx_soc_handle handle
+ * @vdev: vdev for which os rx handles are needed
+ * @stack_fn_p: pointer to stack function pointer
+ * @osif_handle_p: pointer to ol_osif_vdev_handle
+ *
+ * Return: void
+ */
+static inline
+void cdp_get_os_rx_handles_from_vdev(ol_txrx_soc_handle soc,
+				     struct cdp_vdev *vdev,
+				     ol_txrx_rx_fp *stack_fn_p,
+				     ol_osif_vdev_handle *osif_handle_p)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_get_os_rx_handles_from_vdev)
+		return;
+
+	soc->ops->cmn_drv_ops->txrx_get_os_rx_handles_from_vdev(vdev,
+								stack_fn_p,
+								osif_handle_p);
 }
 
 /**
