@@ -2385,6 +2385,35 @@ static inline bool wma_vdev_is_device_in_low_pwr_mode(uint8_t vdev_id)
 }
 
 /**
+ * wma_vdev_get_cfg_int - Get cfg integer value
+ * @cfg_id: cfg item number
+ * @value: fill the out value
+ *
+ * Note caller must verify return status before using value
+ *
+ * Return: QDF_STATUS_SUCCESS when got item from cfg else QDF_STATUS_E_FAILURE
+ */
+static inline
+QDF_STATUS wma_vdev_get_cfg_int(int cfg_id, int *value)
+{
+	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+	/* set value to zero */
+	*value = 0;
+
+	if (!mac) {
+		WMA_LOGE("%s: Failed to get mac context!", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (wlan_cfg_get_int(mac, cfg_id, value) != eSIR_SUCCESS) {
+		WMA_LOGE("%s: Can't get cfg_id :%d", __func__, cfg_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wma_vdev_set_pause_bit() - Set a bit in vdev pause bitmap
  * @vdev_id: the Id of the vdev to configure
  * @bit_pos: set bit position in pause bitmap

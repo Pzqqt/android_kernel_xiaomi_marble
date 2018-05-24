@@ -3534,6 +3534,8 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		wma_vdev_get_pause_bitmap);
 	pmo_register_is_device_in_low_pwr_mode(wma_handle->psoc,
 		wma_vdev_is_device_in_low_pwr_mode);
+	pmo_register_get_cfg_int_callback(wma_handle->psoc,
+					  wma_vdev_get_cfg_int);
 	wma_cbacks.wma_get_connection_info = wma_get_connection_info;
 	qdf_status = policy_mgr_register_wma_cb(wma_handle->psoc, &wma_cbacks);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -4711,12 +4713,10 @@ QDF_STATUS wma_close(void)
 		wma_handle->pdev = NULL;
 	}
 
-	pmo_unregister_pause_bitmap_notifier(wma_handle->psoc,
-		wma_vdev_update_pause_bitmap);
-	pmo_unregister_get_pause_bitmap(wma_handle->psoc,
-		wma_vdev_get_pause_bitmap);
-	pmo_unregister_is_device_in_low_pwr_mode(wma_handle->psoc,
-		wma_vdev_is_device_in_low_pwr_mode);
+	pmo_unregister_get_cfg_int_callback(wma_handle->psoc);
+	pmo_unregister_is_device_in_low_pwr_mode(wma_handle->psoc);
+	pmo_unregister_get_pause_bitmap(wma_handle->psoc);
+	pmo_unregister_pause_bitmap_notifier(wma_handle->psoc);
 
 	target_if_free_psoc_tgt_info(wma_handle->psoc);
 
@@ -5622,6 +5622,33 @@ static void wma_set_component_caps(struct wlan_objmgr_psoc *psoc)
 	wma_set_pmo_caps(psoc);
 }
 
+#if defined(WLAN_FEATURE_GTK_OFFLOAD) && defined(WLAN_POWER_MANAGEMENT_OFFLOAD)
+static QDF_STATUS wma_register_gtk_offload_event(tp_wma_handle wma_handle)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (!wma_handle) {
+		WMA_LOGE("%s: wma_handle passed is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_gtk_offload)) {
+		status = wmi_unified_register_event_handler(
+					wma_handle->wmi_handle,
+					wmi_gtk_offload_status_event_id,
+					target_if_pmo_gtk_offload_status_event,
+					WMA_RX_WORK_CTX);
+	}
+	return status;
+}
+#else
+static QDF_STATUS wma_register_gtk_offload_event(tp_wma_handle wma_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_GTK_OFFLOAD && WLAN_POWER_MANAGEMENT_OFFLOAD */
+
 /**
  * wma_rx_service_ready_event() - event handler to process
  *                                wmi rx sevice ready event.
@@ -5830,19 +5857,11 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		WMA_LOGE("FW doesnot support WMI_SERVICE_MGMT_TX_WMI, Use HTT interface for Management Tx");
 	}
 
-#ifdef WLAN_FEATURE_GTK_OFFLOAD
-	if (wmi_service_enabled(wmi_handle, wmi_service_gtk_offload)) {
-		status = wmi_unified_register_event_handler(
-					wma_handle->wmi_handle,
-					wmi_gtk_offload_status_event_id,
-					target_if_pmo_gtk_offload_status_event,
-					WMA_RX_WORK_CTX);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			WMA_LOGE("Failed to register GTK offload event cb");
-			goto free_hw_mode_list;
-		}
+	status = wma_register_gtk_offload_event(wma_handle);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("Failed to register GTK offload event cb");
+		goto free_hw_mode_list;
 	}
-#endif /* WLAN_FEATURE_GTK_OFFLOAD */
 
 	status = wmi_unified_register_event_handler(wmi_handle,
 				wmi_tbttoffset_update_event_id,
