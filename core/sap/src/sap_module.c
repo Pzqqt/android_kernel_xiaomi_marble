@@ -367,6 +367,12 @@ QDF_STATUS sap_deinit_ctx(struct sap_context *sap_ctx)
 		sap_clear_session_param(hal, sap_ctx, sap_ctx->sessionId);
 	}
 
+	if (sap_ctx->channelList) {
+		qdf_mem_free(sap_ctx->channelList);
+		sap_ctx->channelList = NULL;
+		sap_ctx->num_of_channel = 0;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -49,6 +49,7 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include "wlan_reg_services_api.h"
+#include <wlan_scan_utils_api.h>
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -1365,6 +1366,7 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 {
 	uint32_t scan_id;
 	uint8_t session_id;
+	bool success = false;
 	eCsrScanStatus scan_status = eCSR_SCAN_FAILURE;
 	tHalHandle hal_handle;
 	struct sap_context *sap_ctx = arg;
@@ -1378,16 +1380,11 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
-		((event->reason == SCAN_REASON_CANCELLED) ||
-		(event->reason == SCAN_REASON_TIMEDOUT) ||
-		(event->reason == SCAN_REASON_INTERNAL_FAILURE)))
-		scan_status = eCSR_SCAN_FAILURE;
-	else if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
-			(event->reason == SCAN_REASON_COMPLETED))
-		scan_status = eCSR_SCAN_SUCCESS;
-	else
+	if (!util_is_scan_completed(event, &success))
 		return;
+
+	if (success)
+		scan_status = eCSR_SCAN_SUCCESS;
 
 	if (!sap_ctx->sap_acs_pre_start_bss)
 		wlansap_scan_callback(hal_handle, arg, session_id, scan_id,

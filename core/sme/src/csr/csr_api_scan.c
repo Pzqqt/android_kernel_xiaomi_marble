@@ -1274,18 +1274,15 @@ void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 	struct csr_roam_session *session;
 	uint32_t session_id = 0;
 	uint8_t chan = 0;
+	bool success = false;
 
 	mac_ctx = (tpAniSirGlobal)arg;
-	if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
-			((event->reason == SCAN_REASON_CANCELLED) ||
-			(event->reason == SCAN_REASON_TIMEDOUT) ||
-			(event->reason == SCAN_REASON_INTERNAL_FAILURE)))
-		scan_status = eCSR_SCAN_FAILURE;
-	else if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
-			(event->reason == SCAN_REASON_COMPLETED))
-		scan_status = eCSR_SCAN_SUCCESS;
-	else
+
+	if (!util_is_scan_completed(event, &success))
 		return;
+
+	if (success)
+		scan_status = eCSR_SCAN_SUCCESS;
 
 	session_id = wlan_vdev_get_id(vdev);
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {

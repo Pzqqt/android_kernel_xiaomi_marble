@@ -37,6 +37,7 @@
 
 #include "rrm_global.h"
 #include <wlan_scan_ucfg_api.h>
+#include <wlan_scan_utils_api.h>
 #include <wlan_utility.h>
 
 /* Roam score for a neighbor AP will be calculated based on the below
@@ -631,7 +632,7 @@ static void sme_rrm_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	uint8_t session_id;
 	eCsrScanStatus scan_status = eCSR_SCAN_FAILURE;
 	tHalHandle hal_handle;
-
+	bool success = false;
 	session_id = wlan_vdev_get_id(vdev);
 	scan_id = event->scan_id;
 	hal_handle = cds_get_context(QDF_MODULE_ID_SME);
@@ -640,21 +641,12 @@ static void sme_rrm_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 			  FL("invalid h_hal"));
 		return;
 	}
-	if ((event->type != SCAN_EVENT_TYPE_COMPLETED) &&
-	    (event->type != SCAN_EVENT_TYPE_DEQUEUED) &&
-	    (event->type != SCAN_EVENT_TYPE_START_FAILED))
+
+	if (!util_is_scan_completed(event, &success))
 		return;
 
-	if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
-		((event->reason == SCAN_REASON_CANCELLED) ||
-		(event->reason == SCAN_REASON_TIMEDOUT) ||
-		(event->reason == SCAN_REASON_INTERNAL_FAILURE)))
-		scan_status = eCSR_SCAN_FAILURE;
-	else if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
-			(event->reason == SCAN_REASON_COMPLETED))
+	if (success)
 		scan_status = eCSR_SCAN_SUCCESS;
-	else
-		return;
 
 	sme_rrm_scan_request_callback(hal_handle, session_id,
 					scan_id, scan_status);
