@@ -2004,3 +2004,53 @@ QDF_STATUS wlan_objmgr_psoc_set_user_config(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+void wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_objmgr_psoc_objmgr *_psoc;
+	int vdev_id;
+	int ref_id;
+
+	QDF_BUG(psoc);
+	if (!psoc)
+		return;
+
+	wlan_psoc_obj_lock(psoc);
+	_psoc = &psoc->soc_objmgr;
+	if (!_psoc->wlan_vdev_count) {
+		wlan_psoc_obj_unlock(psoc);
+		return;
+	}
+
+	obj_mgr_err("objmgr vdev leaks detected for psoc %u!", _psoc->psoc_id);
+	obj_mgr_err("--------------------------------------------------------");
+	obj_mgr_err("Vdev Id   Refs   Module");
+	obj_mgr_err("--------------------------------------------------------");
+
+	for (vdev_id = 0; vdev_id < _psoc->max_vdev_count; vdev_id++) {
+		struct wlan_objmgr_vdev *vdev = _psoc->wlan_vdev_list[vdev_id];
+		qdf_atomic_t *ref_id_dbg;
+
+		if (!vdev)
+			continue;
+
+		wlan_vdev_obj_lock(vdev);
+		ref_id_dbg = vdev->vdev_objmgr.ref_id_dbg;
+		for (ref_id = 0; ref_id < WLAN_REF_ID_MAX; ref_id++) {
+			int32_t refs = qdf_atomic_read(&ref_id_dbg[ref_id]);
+
+			if (refs <= 0)
+				continue;
+
+			obj_mgr_err("%7u   %4u x %s",
+				    vdev_id, refs, string_from_dbgid(ref_id));
+		}
+		wlan_vdev_obj_unlock(vdev);
+	}
+
+	wlan_psoc_obj_unlock(psoc);
+
+	QDF_DEBUG_PANIC();
+}
+qdf_export_symbol(wlan_objmgr_psoc_check_for_vdev_leaks);
+
