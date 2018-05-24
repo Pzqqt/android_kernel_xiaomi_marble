@@ -12568,23 +12568,17 @@ static int __con_mode_handler(const char *kmessage,
 	/* ensure adapters are stopped */
 	hdd_stop_present_mode(hdd_ctx, curr_mode);
 
-	/* Cleanup present mode before switching to new mode */
-	hdd_cleanup_present_mode(hdd_ctx, curr_mode);
-
 	ret = hdd_wlan_stop_modules(hdd_ctx, true);
 	if (ret) {
 		hdd_err("Stop wlan modules failed");
 		goto reset_flags;
 	}
 
+	/* Cleanup present mode before switching to new mode */
+	hdd_cleanup_present_mode(hdd_ctx, curr_mode);
 
 	hdd_set_conparam(new_con_mode);
 
-	/*
-	 * Set ACTIVE domain before adapters created, otherwise check domain
-	 * match will fail when cleanup adapters.
-	 */
-	hdd_debug_domain_set(QDF_DEBUG_DOMAIN_ACTIVE);
 	/* Register for new con_mode & then kick_start modules again */
 	ret = hdd_register_req_mode(hdd_ctx, new_con_mode);
 	if (ret) {
