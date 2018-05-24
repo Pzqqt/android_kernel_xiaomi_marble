@@ -16,20 +16,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 /**
- * DOC: define utility API related to the mlme component
- * called by other components
+ * DOC: define internal APIs related to the mlme component
  */
 
 #include "wlan_mlme_main.h"
+#include "cfg_ucfg_api.h"
 
-/**
- * wlan_psoc_get_mlme_obj() - private API to get mlme object from psoc
- * @psoc: psoc object
- *
- * Return: mlme object
- */
-static inline struct wlan_mlme_psoc_obj *
-wlan_psoc_get_mlme_obj(struct wlan_objmgr_psoc *psoc)
+struct wlan_mlme_psoc_obj *mlme_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -116,7 +109,7 @@ QDF_STATUS mlme_psoc_object_destroyed_notification(
 	struct wlan_mlme_psoc_obj *mlme_obj = NULL;
 	QDF_STATUS status;
 
-	mlme_obj = wlan_psoc_get_mlme_obj(psoc);
+	mlme_obj = mlme_get_psoc_obj(psoc);
 
 	status = wlan_objmgr_psoc_component_obj_detach(psoc,
 						       WLAN_UMAC_COMP_MLME,
@@ -130,6 +123,46 @@ QDF_STATUS mlme_psoc_object_destroyed_notification(
 	qdf_mem_free(mlme_obj);
 
 out:
+	return status;
+}
+
+static void mlme_update_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
+				      struct mlme_ht_capabilities_info
+				      *ht_cap_info)
+{
+	union {
+		uint16_t val_16;
+		struct mlme_ht_capabilities_info default_ht_cap_info;
+	} u;
+
+	u.val_16 = (uint16_t)cfg_default(CFG_HT_CAP_INFO);
+
+	u.default_ht_cap_info.advCodingCap = cfg_get(psoc, CFG_RX_LDPC_ENABLE);
+	u.default_ht_cap_info.rxSTBC = cfg_get(psoc, CFG_RX_STBC_ENABLE);
+	u.default_ht_cap_info.txSTBC = cfg_get(psoc, CFG_TX_STBC_ENABLE);
+	u.default_ht_cap_info.shortGI20MHz =
+				cfg_get(psoc, CFG_SHORT_GI_20MHZ);
+	u.default_ht_cap_info.shortGI40MHz =
+				cfg_get(psoc, CFG_SHORT_GI_40MHZ);
+
+	*ht_cap_info = u.default_ht_cap_info;
+}
+
+QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+	struct wlan_mlme_cfg *mlme_cfg;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_cfg = &mlme_obj->cfg;
+	mlme_update_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps.ht_cap_info);
+
 	return status;
 }
 

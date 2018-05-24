@@ -16,32 +16,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "cfg_define.h"
-#include "cfg_converged.h"
-#include "cfg_mlme.h"
+/**
+ * DOC: This file contains centralized definitions of converged configuration.
+ */
 
-#ifdef CONVERGED_P2P_ENABLE
-#include "wlan_p2p_cfg.h"
-#else
-#define CFG_P2P_ALL
-#endif
+#ifndef __CFG_MLME_VHT_CAPS_H
+#define __CFG_MLME_VHT_CAPS_H
 
-#ifdef CONVERGED_TDLS_ENABLE
-#include "wlan_tdls_cfg.h"
-#else
-#define CFG_TDLS_ALL
-#endif
+#define CFG_VHT_CAPS_ALL
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
-#include "cfg_nan.h"
-#else
-#define CFG_NAN_ALL
-#endif
-
-/* Maintain Alphabetic order here while adding components */
-#define CFG_ALL \
-	CFG_CONVERGED_ALL \
-	CFG_MLME_ALL \
-	CFG_NAN_ALL \
-	CFG_P2P_ALL \
-	CFG_TDLS_ALL
+#endif /* __CFG_MLME_HT_CAPS_H */
