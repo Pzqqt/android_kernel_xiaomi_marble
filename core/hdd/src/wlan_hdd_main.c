@@ -128,6 +128,7 @@
 #include "wlan_hdd_sysfs.h"
 #include "wlan_disa_ucfg_api.h"
 #include "wlan_disa_obj_mgmt_api.h"
+#include "wlan_action_oui_ucfg_api.h"
 #include "wlan_ipa_ucfg_api.h"
 #include <target_if.h>
 #include "wlan_hdd_nud_tracking.h"
@@ -292,6 +293,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_GREEN_AP] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_OCB] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_IPA] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_ACTION_OUI] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_CONFIG] = {QDF_TRACE_LEVEL_ALL},
 };
 
@@ -8721,6 +8723,12 @@ static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 			  hdd_ctx->config->enable_bcast_probe_rsp);
 		hdd_ctx->config->oce_sta_enabled = 0;
 	}
+
+	if (hdd_ctx->config->action_oui_enable && !ucfg_action_oui_enabled()) {
+		hdd_ctx->config->action_oui_enable = 0;
+		hdd_err("Ignore ini: %s, since no action_oui component",
+			CFG_ENABLE_ACTION_OUI);
+	}
 }
 
 /**
@@ -10489,6 +10497,56 @@ static void hdd_v2_flow_pool_unmap(int vdev_id)
 }
 
 /**
+ * hdd_action_oui_config() - Configure action_oui strings
+ * @hdd_ctx: pointer to hdd context
+ *
+ * This is a HDD wrapper function which invokes ucfg api
+ * of action_oui component to parse action oui strings.
+ *
+ * Return: None
+ */
+static void hdd_action_oui_config(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+	uint32_t id;
+	uint8_t *str;
+
+	if (!hdd_ctx->config->action_oui_enable)
+		return;
+
+	for (id = 0; id < ACTION_OUI_MAXIMUM_ID; id++) {
+		str = hdd_ctx->config->action_oui_str[id];
+		if (!qdf_str_len(str))
+			continue;
+
+		status = ucfg_action_oui_parse(hdd_ctx->hdd_psoc, str, id);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("Failed to parse action_oui str: %u", id);
+	}
+}
+
+/**
+ * hdd_action_oui_send() - Send action_oui extensions to firmware
+ * @hdd_ctx: pointer to hdd context
+ *
+ * This is a HDD wrapper function which invokes ucfg api
+ * of action_oui component to send action oui extensions to firmware.
+ *
+ * Return: None
+ */
+static void hdd_action_oui_send(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	if (!hdd_ctx->config->action_oui_enable)
+		return;
+
+	status = ucfg_action_oui_send(hdd_ctx->hdd_psoc);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Failed to send one or all action_ouis");
+}
+
+/**
  * hdd_configure_cds() - Configure cds modules
  * @hdd_ctx:	HDD context
  * @adapter:	Primary adapter context
@@ -10509,6 +10567,9 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	struct policy_mgr_dp_cbacks dp_cbs = {0};
 
 	mac_handle = hdd_ctx->mac_handle;
+
+	hdd_action_oui_send(hdd_ctx);
+
 	if (hdd_ctx->config->is_force_1x1)
 		sme_cli_set_command(0, (int)WMI_PDEV_PARAM_SET_IOT_PATTERN,
 				1, PDEV_CMD);
@@ -11058,6 +11119,8 @@ int hdd_wlan_startup(struct device *dev)
 		QDF_BUG(0);
 		goto err_hdd_free_context;
 	}
+
+	hdd_action_oui_config(hdd_ctx);
 
 	qdf_nbuf_init_replenish_timer();
 #ifdef FEATURE_WLAN_CH_AVOID
@@ -12360,6 +12423,7 @@ static void component_init(void)
 	disa_init();
 	ucfg_ocb_init();
 	ipa_init();
+	ucfg_action_oui_init();
 }
 
 /**
@@ -12369,6 +12433,7 @@ static void component_init(void)
  */
 static void component_deinit(void)
 {
+	ucfg_action_oui_deinit();
 	ipa_deinit();
 	ucfg_ocb_deinit();
 	pmo_deinit();
