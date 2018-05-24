@@ -131,12 +131,10 @@ struct dfs_to_mlme {
 			uint8_t c_vhtop_ch_freq_seg2,
 			uint64_t dfs_ch_flags,
 			int *cac_timeout);
-#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
 	QDF_STATUS (*mlme_rebuild_chan_list_with_non_dfs_channels)
 			(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_restart_vaps_with_non_dfs_chan)
 			(struct wlan_objmgr_pdev *pdev, int no_chans_avail);
-#endif
 };
 
 extern struct dfs_to_mlme global_dfs_to_mlme;
