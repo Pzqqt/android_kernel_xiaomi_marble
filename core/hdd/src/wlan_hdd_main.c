@@ -5319,6 +5319,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			hdd_objmgr_remove_peer_object(adapter->hdd_vdev,
 						      peerMacAddr.bytes);
 		} else if (adapter->device_mode == QDF_P2P_GO_MODE) {
+			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
 			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
 				if (adapter->sta_info[sta_id].in_use) {
 					hdd_debug("[SSR] deregister STA with ID %d",
