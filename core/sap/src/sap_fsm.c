@@ -1450,7 +1450,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		void *context)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tSap_Event sap_ap_event;       /* This now encodes ALL event types */
+	tSap_Event sap_ap_event = {0};
 	tHalHandle hal = CDS_GET_HAL_CB();
 	tpAniSirGlobal mac_ctx;
 	tSirSmeChanInfo *chaninfo;
