@@ -22342,9 +22342,6 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_enable_cmd_fixed_param  */
     /** pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. In non-DBDC case host should set it to 0
-     * The host should never set this pdev_id to WMI_PDEV_ID_SOC,
-     * because the configuration parameters herein will be different
-     * for each MAC instance.
      */
     A_UINT32 pdev_id;
     A_UINT32 sta_cong_timer_ms;     /* STA TWT congestion timer TO value in terms of ms */
@@ -22439,11 +22436,8 @@ typedef enum _WMI_TWT_COMMAND_T {
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_add_dialog_cmd_fixed_param  */
     A_UINT32 vdev_id;       /* VDEV identifier */
-    wmi_mac_addr peer_macaddr;      /* peer MAC address when vdev is AP VDEV */
-    /* diaglog_id (TWT dialog ID)
-     * This dialog ID must be unique within its vdev.
-     */
-    A_UINT32 dialog_id;
+    wmi_mac_addr peer_macaddr;      /* peer MAC address */
+    A_UINT32 dialog_id; /* TWT dialog_id is per peer */
 
     /* 1. wake_intvl_mantis must be <= 0xFFFF
      * 2. wake_intvl_us must be divided evenly by wake_intvl_mantis,
@@ -22478,6 +22472,7 @@ typedef enum _WMI_ADD_TWT_STATUS_T {
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_add_dialog_complete_event_fixed_param */
     A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 status;        /* refer to WMI_ADD_TWT_STATUS_T */
 } wmi_twt_add_dialog_complete_event_fixed_param;
@@ -22485,6 +22480,7 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_del_dialog_cmd_fixed_param  */
     A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
     A_UINT32 dialog_id;     /* TWT dialog ID */
 } wmi_twt_del_dialog_cmd_fixed_param;
 
@@ -22502,6 +22498,7 @@ typedef enum _WMI_DEL_TWT_STATUS_T {
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_del_dialog_complete_event_fixed_param */
     A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 status;        /* refer to WMI_DEL_TWT_STATUS_T */
 } wmi_twt_del_dialog_complete_event_fixed_param;
@@ -22509,6 +22506,7 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_pause_dialog_cmd_fixed_param  */
     A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
     A_UINT32 dialog_id;     /* TWT dialog ID */
 } wmi_twt_pause_dialog_cmd_fixed_param;
 
@@ -22526,6 +22524,7 @@ typedef enum _WMI_PAUSE_TWT_STATUS_T {
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_pause_dialog_complete_event_fixed_param */
     A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 status;        /* refer to WMI_PAUSE_TWT_STATUS_T */
 } wmi_twt_pause_dialog_complete_event_fixed_param;
@@ -22533,6 +22532,7 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_resume_dialog_cmd_fixed_param  */
     A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 sp_offset_us;  /* this long time after TWT resumed the 1st SP will start */
     A_UINT32 next_twt_size; /* Next TWT subfield Size, refer to IEEE 802.11ax sectin "9.4.1.60 TWT Information field" */
@@ -22553,6 +22553,7 @@ typedef enum _WMI_RESUME_TWT_STATUS_T {
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_resume_dialog_complete_event_fixed_param */
     A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 status;        /* refer to WMI_RESUME_TWT_STATUS_T */
 } wmi_twt_resume_dialog_complete_event_fixed_param;
