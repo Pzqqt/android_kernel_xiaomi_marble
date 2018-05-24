@@ -2602,6 +2602,7 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 #ifdef CONFIG_LEAK_DETECTION
 /**
  * hdd_check_for_leaks() - Perform runtime memory leak checks
+ * @hdd_ctx: the global HDD context
  *
  * This API triggers runtime memory leak detection. This feature enforces the
  * policy that any memory allocated at runtime must also be released at runtime.
@@ -2613,10 +2614,11 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_check_for_leaks(void)
+static void hdd_check_for_leaks(struct hdd_context *hdd_ctx)
 {
 	/* DO NOT REMOVE these checks; for false positives, read above first */
 
+	wlan_objmgr_psoc_check_for_vdev_leaks(hdd_ctx->hdd_psoc);
 	qdf_mc_timer_check_for_leaks();
 	qdf_nbuf_map_check_for_leaks();
 	qdf_mem_check_for_leaks();
@@ -2624,7 +2626,7 @@ static void hdd_check_for_leaks(void)
 
 #define hdd_debug_domain_set(domain) qdf_debug_domain_set(domain)
 #else
-static inline void hdd_check_for_leaks(void) {}
+static inline void hdd_check_for_leaks(struct hdd_context *hdd_ctx) { }
 
 #define hdd_debug_domain_set(domain)
 #endif /* CONFIG_LEAK_DETECTION */
@@ -2875,7 +2877,7 @@ release_lock:
 	}
 	/* many adapter resources are not freed by design in SSR case */
 	if (!reinit)
-		hdd_check_for_leaks();
+		hdd_check_for_leaks(hdd_ctx);
 	hdd_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
 
 	hdd_exit();
@@ -10633,7 +10635,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 	/* many adapter resources are not freed by design in SSR case */
 	if (!is_recovery_stop)
-		hdd_check_for_leaks();
+		hdd_check_for_leaks(hdd_ctx);
 	hdd_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
 
 	/* Once the firmware sequence is completed reset this flag */
