@@ -668,6 +668,8 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	{
 		unsigned int num_mpdu_ranges;
 		unsigned int num_msdu_bytes;
+		unsigned int calculated_msg_len;
+		unsigned int rx_mpdu_range_offset_bytes;
 		uint16_t peer_id;
 		uint8_t tid;
 		int msg_len = qdf_nbuf_len(htt_t2h_msg);
@@ -699,18 +701,50 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		 * 1 word for every 4 MSDU bytes (round up),
 		 * 1 word for the MPDU range header
 		 */
-		pdev->rx_mpdu_range_offset_words =
-			(HTT_RX_IND_HDR_BYTES + num_msdu_bytes + 3) >> 2;
-		num_mpdu_ranges =
-			HTT_RX_IND_NUM_MPDU_RANGES_GET(*(msg_word + 1));
-		pdev->rx_ind_msdu_byte_idx = 0;
-		if (qdf_unlikely(pdev->rx_mpdu_range_offset_words + (num_mpdu_ranges * 4) > msg_len)) {
-			qdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid mpdu_ranges %d\n",
-				num_mpdu_ranges);
+		rx_mpdu_range_offset_bytes =
+			(HTT_RX_IND_HDR_BYTES + num_msdu_bytes + 3);
+		if (qdf_unlikely(num_msdu_bytes >
+				 rx_mpdu_range_offset_bytes)) {
+			qdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid %s %u\n",
+				  "num_msdu_bytes",
+				  num_msdu_bytes);
 			WARN_ON(1);
 			break;
 		}
-
+		pdev->rx_mpdu_range_offset_words =
+			rx_mpdu_range_offset_bytes >> 2;
+		num_mpdu_ranges =
+			HTT_RX_IND_NUM_MPDU_RANGES_GET(*(msg_word + 1));
+		pdev->rx_ind_msdu_byte_idx = 0;
+		if (qdf_unlikely(rx_mpdu_range_offset_bytes >
+		    msg_len)) {
+			qdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid %s %d\n",
+				  "rx_mpdu_range_offset_words",
+				  pdev->rx_mpdu_range_offset_words);
+			WARN_ON(1);
+			break;
+		}
+		calculated_msg_len = rx_mpdu_range_offset_bytes +
+			(num_mpdu_ranges * (int)sizeof(uint32_t));
+		/*
+		 * Check that the addition and multiplication
+		 * do not cause integer overflow
+		 */
+		if (qdf_unlikely(calculated_msg_len <
+		    rx_mpdu_range_offset_bytes)) {
+			qdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid %s %u\n",
+				  "num_mpdu_ranges",
+				  (num_mpdu_ranges * (int)sizeof(uint32_t)));
+			WARN_ON(1);
+			break;
+		}
+		if (qdf_unlikely(calculated_msg_len > msg_len)) {
+			qdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid %s %u\n",
+				  "offset_words + mpdu_ranges",
+				  calculated_msg_len);
+			WARN_ON(1);
+			break;
+		}
 		ol_rx_indication_handler(pdev->txrx_pdev,
 					 htt_t2h_msg, peer_id,
 					 tid, num_mpdu_ranges);
@@ -980,6 +1014,7 @@ void htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 			unsigned int num_mpdu_ranges;
 			unsigned int num_msdu_bytes;
 			unsigned int calculated_msg_len;
+			unsigned int rx_mpdu_range_offset_bytes;
 			u_int16_t peer_id;
 			u_int8_t tid;
 			msg_len = qdf_nbuf_len(htt_t2h_msg);
@@ -1004,21 +1039,31 @@ void htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 			 * 1 word for every 4 MSDU bytes (round up),
 			 * 1 word for the MPDU range header
 			 */
+			rx_mpdu_range_offset_bytes =
+				(HTT_RX_IND_HDR_BYTES + num_msdu_bytes + 3);
+			if (qdf_unlikely(num_msdu_bytes >
+					 rx_mpdu_range_offset_bytes)) {
+				qdf_print("HTT_T2H_MSG_TYPE_RX_IND, %s %u\n",
+					  "invalid num_msdu_bytes",
+					  num_msdu_bytes);
+				WARN_ON(1);
+				break;
+			}
 			pdev->rx_mpdu_range_offset_words =
-				(HTT_RX_IND_HDR_BYTES + num_msdu_bytes + 3) >>
-				2;
+				rx_mpdu_range_offset_bytes >> 2;
 			num_mpdu_ranges =
 				HTT_RX_IND_NUM_MPDU_RANGES_GET(*(msg_word
 								 + 1));
 			pdev->rx_ind_msdu_byte_idx = 0;
-			if (qdf_unlikely(pdev->rx_mpdu_range_offset_words >
+			if (qdf_unlikely(rx_mpdu_range_offset_bytes >
 					 msg_len)) {
-				qdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid rx_mpdu_range_offset_words %d\n",
+				qdf_print("HTT_T2H_MSG_TYPE_RX_IND, %s %d\n",
+					  "invalid rx_mpdu_range_offset_words",
 					  pdev->rx_mpdu_range_offset_words);
 				WARN_ON(1);
 				break;
 			}
-			calculated_msg_len = pdev->rx_mpdu_range_offset_words +
+			calculated_msg_len = rx_mpdu_range_offset_bytes +
 					     (num_mpdu_ranges *
 					     (int)sizeof(uint32_t));
 			/*
@@ -1026,15 +1071,17 @@ void htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 			 * do not cause integer overflow
 			 */
 			if (qdf_unlikely(calculated_msg_len <
-					 pdev->rx_mpdu_range_offset_words)) {
-				qdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid mpdu_ranges %u\n",
+					 rx_mpdu_range_offset_bytes)) {
+				qdf_print("HTT_T2H_MSG_TYPE_RX_IND, %s %u\n",
+					  "invalid num_mpdu_ranges",
 					  (num_mpdu_ranges *
 					   (int)sizeof(uint32_t)));
 				WARN_ON(1);
 				break;
 			}
 			if (qdf_unlikely(calculated_msg_len > msg_len)) {
-				qdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid offset_words + mpdu_ranges %u\n",
+				qdf_print("HTT_T2H_MSG_TYPE_RX_IND, %s %u\n",
+					  "invalid offset_words + mpdu_ranges",
 					  calculated_msg_len);
 				WARN_ON(1);
 				break;
