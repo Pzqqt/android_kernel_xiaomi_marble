@@ -46,7 +46,8 @@ do {                                                             \
 		htt_htc_misc_pkt_list_add(soc, pkt);             \
 } while (0)
 
-#define HTT_MGMT_CTRL_TLV_RESERVERD_LEN 12
+#define HTT_MGMT_CTRL_TLV_HDR_RESERVERD_LEN 16
+
 /**
  * Bitmap of HTT PPDU TLV types for Default mode
  */
@@ -2169,27 +2170,34 @@ static void dp_process_ppdu_stats_user_compltn_flush_tlv(struct dp_pdev *pdev,
  * @tag_buf: buffer containing the htt_ppdu_stats_tx_mgmtctrl_payload_tlv
  * @length: tlv_length
  *
- * return:void
+ * return:QDF_STATUS_SUCCESS if nbuf as to be freed in caller
  */
-static void
+static QDF_STATUS
 dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 					      qdf_nbuf_t tag_buf,
-					      uint32_t length,
 					      uint32_t ppdu_id)
 {
 	uint32_t *nbuf_ptr;
+	uint8_t trim_size;
 
 	if ((!pdev->tx_sniffer_enable) && (!pdev->mcopy_mode) &&
 	    (!pdev->bpr_enable))
-		return;
+		return QDF_STATUS_SUCCESS;
 
-	if (qdf_nbuf_pull_head(tag_buf, HTT_MGMT_CTRL_TLV_RESERVERD_LEN + 4)
-			       == NULL)
-		return;
+	trim_size = ((pdev->mgmtctrl_frm_info.mgmt_buf +
+		      HTT_MGMT_CTRL_TLV_HDR_RESERVERD_LEN) -
+		      qdf_nbuf_data(tag_buf));
+
+	if (!qdf_nbuf_pull_head(tag_buf, trim_size))
+		return QDF_STATUS_SUCCESS;
+
+	qdf_nbuf_trim_tail(tag_buf, qdf_nbuf_len(tag_buf) -
+			    pdev->mgmtctrl_frm_info.mgmt_buf_len);
 
 	nbuf_ptr = (uint32_t *)qdf_nbuf_push_head(
 				tag_buf, sizeof(ppdu_id));
 	*nbuf_ptr = ppdu_id;
+
 	if (pdev->bpr_enable) {
 		dp_wdi_event_handler(WDI_EVENT_TX_BEACON, pdev->soc,
 				     tag_buf, HTT_INVALID_PEER,
@@ -2200,6 +2208,12 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 				     tag_buf, HTT_INVALID_PEER,
 				     WDI_NO_VAL, pdev->pdev_id);
 	}
+
+	pdev->mgmtctrl_frm_info.mgmt_buf = NULL;
+	pdev->mgmtctrl_frm_info.mgmt_buf_len = 0;
+	pdev->mgmtctrl_frm_info.ppdu_id = 0;
+
+	return QDF_STATUS_E_ALREADY;
 }
 
 /**
@@ -2461,7 +2475,7 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
  */
 
 static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
-		qdf_nbuf_t htt_t2h_msg, bool *free_buf)
+		qdf_nbuf_t htt_t2h_msg)
 {
 	uint32_t length;
 	uint32_t ppdu_id;
@@ -2497,13 +2511,13 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 		 * doesn't contain any ppdu information
 		 */
 		if (tlv_type == HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV) {
-			dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(pdev,
-					htt_t2h_msg, tlv_length, ppdu_id);
+			pdev->mgmtctrl_frm_info.mgmt_buf = tlv_buf;
+			pdev->mgmtctrl_frm_info.mgmt_buf_len = tlv_length;
+			pdev->mgmtctrl_frm_info.ppdu_id = ppdu_id;
 			msg_word =
 				(uint32_t *)((uint8_t *)tlv_buf + tlv_length);
 			length -= (tlv_length);
-			*free_buf = false;
-			return NULL;
+			continue;
 		}
 
 		ppdu_info = dp_get_ppdu_desc(pdev, ppdu_id, tlv_type);
@@ -2520,7 +2534,6 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 		 */
 		pdev->tlv_count++;
 		ppdu_info->last_tlv_cnt = pdev->tlv_count;
-
 		msg_word = (uint32_t *)((uint8_t *)tlv_buf + tlv_length);
 		length -= (tlv_length);
 	}
@@ -2569,7 +2582,15 @@ static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 			!pdev->mcopy_mode)
 		return free_buf;
 
-	ppdu_info = dp_htt_process_tlv(pdev, htt_t2h_msg, &free_buf);
+	ppdu_info = dp_htt_process_tlv(pdev, htt_t2h_msg);
+
+	if (pdev->mgmtctrl_frm_info.mgmt_buf) {
+		if (dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv
+		    (pdev, htt_t2h_msg, pdev->mgmtctrl_frm_info.ppdu_id) !=
+		    QDF_STATUS_SUCCESS)
+			free_buf = false;
+	}
+
 	if (ppdu_info)
 		dp_ppdu_desc_deliver(pdev, ppdu_info);
 

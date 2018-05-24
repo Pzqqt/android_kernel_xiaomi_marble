@@ -1172,6 +1172,11 @@ struct dp_pdev {
 	uint32_t list_depth;
 	uint32_t ppdu_id;
 	bool first_nbuf;
+	struct {
+		uint8_t *mgmt_buf; /* Ptr to mgmt. payload in HTT ppdu stats */
+		uint32_t mgmt_buf_len; /* Len of mgmt. payload in ppdu stats */
+		uint32_t ppdu_id;
+	} mgmtctrl_frm_info;
 };
 
 struct dp_peer;
