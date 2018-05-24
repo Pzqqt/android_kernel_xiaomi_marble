@@ -43,7 +43,7 @@
 #include "lim_process_fils.h"
 #include "wlan_utility.h"
 #include "wifi_pos_api.h"
-
+#include "wlan_mlme_public_struct.h"
 
 #define RSN_OUI_SIZE 4
 /* ////////////////////////////////////////////////////////////////////// */
@@ -607,42 +607,33 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 	uint8_t disable_high_ht_mcs_2x2 = 0;
 	union {
 		uint16_t nCfgValue16;
-		tSirMacHTCapabilityInfo htCapInfo;
 		tSirMacExtendedHTCapabilityInfo extHtCapInfo;
 	} uHTCapabilityInfo;
 
 	tSirMacTxBFCapabilityInfo *pTxBFCapabilityInfo;
 	tSirMacASCapabilityInfo *pASCapabilityInfo;
+	struct mlme_ht_capabilities_info *ht_cap_info;
 
-	CFG_GET_INT(nSirStatus, pMac, WNI_CFG_HT_CAP_INFO, nCfgValue);
+	ht_cap_info = &pMac->mlme_cfg->ht_caps.ht_cap_info;
 
-	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
-
-	pDot11f->mimoPowerSave = uHTCapabilityInfo.htCapInfo.mimoPowerSave;
-	pDot11f->greenField = uHTCapabilityInfo.htCapInfo.greenField;
-	pDot11f->delayedBA = uHTCapabilityInfo.htCapInfo.delayedBA;
-	pDot11f->maximalAMSDUsize =
-		uHTCapabilityInfo.htCapInfo.maximalAMSDUsize;
-	pDot11f->dsssCckMode40MHz =
-		uHTCapabilityInfo.htCapInfo.dsssCckMode40MHz;
-	pDot11f->psmp = uHTCapabilityInfo.htCapInfo.psmp;
-	pDot11f->stbcControlFrame =
-		uHTCapabilityInfo.htCapInfo.stbcControlFrame;
-	pDot11f->lsigTXOPProtection =
-		uHTCapabilityInfo.htCapInfo.lsigTXOPProtection;
+	pDot11f->mimoPowerSave = ht_cap_info->mimoPowerSave;
+	pDot11f->greenField = ht_cap_info->greenField;
+	pDot11f->delayedBA = ht_cap_info->delayedBA;
+	pDot11f->maximalAMSDUsize = ht_cap_info->maximalAMSDUsize;
+	pDot11f->dsssCckMode40MHz = ht_cap_info->dsssCckMode40MHz;
+	pDot11f->psmp = ht_cap_info->psmp;
+	pDot11f->stbcControlFrame = ht_cap_info->stbcControlFrame;
+	pDot11f->lsigTXOPProtection = ht_cap_info->lsigTXOPProtection;
 
 	/* All sessionized entries will need the check below */
 	if (psessionEntry == NULL) {     /* Only in case of NO session */
 		pDot11f->supportedChannelWidthSet =
-			uHTCapabilityInfo.htCapInfo.supportedChannelWidthSet;
-		pDot11f->advCodingCap =
-			uHTCapabilityInfo.htCapInfo.advCodingCap;
-		pDot11f->txSTBC = uHTCapabilityInfo.htCapInfo.txSTBC;
-		pDot11f->rxSTBC = uHTCapabilityInfo.htCapInfo.rxSTBC;
-		pDot11f->shortGI20MHz =
-			uHTCapabilityInfo.htCapInfo.shortGI20MHz;
-		pDot11f->shortGI40MHz =
-			uHTCapabilityInfo.htCapInfo.shortGI40MHz;
+			ht_cap_info->supportedChannelWidthSet;
+		pDot11f->advCodingCap = ht_cap_info->advCodingCap;
+		pDot11f->txSTBC = ht_cap_info->txSTBC;
+		pDot11f->rxSTBC = ht_cap_info->rxSTBC;
+		pDot11f->shortGI20MHz = ht_cap_info->shortGI20MHz;
+		pDot11f->shortGI40MHz = ht_cap_info->shortGI40MHz;
 	} else {
 		pDot11f->advCodingCap = psessionEntry->htConfig.ht_rx_ldpc;
 		pDot11f->supportedChannelWidthSet =

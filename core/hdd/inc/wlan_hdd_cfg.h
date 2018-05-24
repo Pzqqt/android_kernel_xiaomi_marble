@@ -347,29 +347,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gShortGI20Mhz - Short Guard Interval for HT20
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to set default short interval for HT20
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_SHORT_GI_20MHZ_NAME                "gShortGI20Mhz"
-#define CFG_SHORT_GI_20MHZ_MIN                 WNI_CFG_SHORT_GI_20MHZ_STAMIN
-#define CFG_SHORT_GI_20MHZ_MAX                 WNI_CFG_SHORT_GI_20MHZ_STAMAX
-#define CFG_SHORT_GI_20MHZ_DEFAULT             WNI_CFG_SHORT_GI_20MHZ_STADEF
-
-/*
- * <ini>
  * gScanResultAgeCount - Set scan result age count
  * @Min: 1
  * @Max: 100
@@ -5771,7 +5748,6 @@ enum hdd_link_speed_rpt_type {
  *
  * </ini>
  */
-
 #define CFG_SHORT_GI_40MHZ_NAME                "gShortGI40Mhz"
 #define CFG_SHORT_GI_40MHZ_MIN                 0
 #define CFG_SHORT_GI_40MHZ_MAX                 1
@@ -13969,7 +13945,6 @@ struct hdd_config {
 	bool override_ht20_40_24g;
 	uint32_t nChannelBondingMode5GHz;
 	uint32_t MaxRxAmpduFactor;
-	uint32_t ShortGI20MhzEnable;
 	uint32_t ScanResultAgeCount;
 	uint8_t nRssiCatGap;
 	bool fIsShortPreamble;

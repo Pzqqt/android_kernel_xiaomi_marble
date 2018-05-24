@@ -34,6 +34,7 @@
 #include "sir_types.h"
 #include "sys_entry_func.h"
 #include "mac_init_api.h"
+#include "wlan_mlme_main.h"
 
 #ifdef TRACE_RECORD
 #include "mac_trace.h"
@@ -112,6 +113,7 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 {
 	tpAniSirGlobal p_mac;
 	QDF_STATUS status;
+	struct wlan_mlme_psoc_obj *mlme_obj;
 
 	if (pHalHandle == NULL)
 		return QDF_STATUS_E_FAILURE;
@@ -139,6 +141,13 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	}
 
 	p_mac->psoc = psoc;
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		pe_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+	p_mac->mlme_cfg = &mlme_obj->cfg;
+
 	*pHalHandle = (tHalHandle) p_mac;
 
 	{
@@ -199,6 +208,7 @@ QDF_STATUS mac_close(tHalHandle hHal)
 		pMac->pdev = NULL;
 	}
 	wlan_objmgr_psoc_release_ref(pMac->psoc, WLAN_LEGACY_MAC_ID);
+	pMac->mlme_cfg = NULL;
 	pMac->psoc = NULL;
 	mac_free_context_buffer();
 

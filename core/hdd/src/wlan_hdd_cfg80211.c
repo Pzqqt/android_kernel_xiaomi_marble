@@ -117,6 +117,8 @@
 #include <wlan_hdd_active_tos.h>
 #include <wlan_hdd_sar_limits.h>
 #include <wlan_hdd_ota_test.h>
+#include "wlan_mlme_ucfg_api.h"
+#include "wlan_mlme_public_struct.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -12066,18 +12068,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 		wiphy->iface_combinations = wlan_hdd_iface_combination;
 	}
 
-	/* Before registering we need to update the ht capabilitied based
-	 * on ini values
-	 */
-	if (!pCfg->ShortGI20MhzEnable) {
-		wlan_hdd_band_2_4_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_20;
-		wlan_hdd_band_5_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_20;
-	}
-
-	if (!pCfg->ShortGI40MhzEnable)
-		wlan_hdd_band_5_ghz.ht_cap.cap &=
-			~IEEE80211_HT_CAP_SGI_40;
-
 	if (!pCfg->nChannelBondingMode5GHz)
 		wlan_hdd_band_5_ghz.ht_cap.cap &=
 			~IEEE80211_HT_CAP_SUP_WIDTH_20_40;
@@ -12277,23 +12267,16 @@ void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy)
  *
  * Return: void
  */
-static void wlan_hdd_update_band_cap(struct hdd_context *hdd_ctx)
+static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 {
-	uint32_t val32;
-	uint16_t val16;
-	tSirMacHTCapabilityInfo *ht_cap_info;
+	struct mlme_ht_capabilities_info ht_cap_info = {0};
 	QDF_STATUS status;
-	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_HT_CAP_INFO, &val32);
-	if (QDF_STATUS_SUCCESS != status) {
+	status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc, &ht_cap_info);
+	if (QDF_STATUS_SUCCESS != status)
 		hdd_err("could not get HT capability info");
-		val32 = 0;
-	}
-	val16 = (uint16_t)val32;
-	ht_cap_info = (tSirMacHTCapabilityInfo *)&val16;
 
-	if (ht_cap_info->txSTBC == true) {
+	if (ht_cap_info.txSTBC) {
 		if (NULL != hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ])
 			hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ]->ht_cap.cap |=
 						IEEE80211_HT_CAP_TX_STBC;
@@ -12310,6 +12293,14 @@ static void wlan_hdd_update_band_cap(struct hdd_context *hdd_ctx)
 						vht_cap.vht_supported = 0;
 		hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ]->vht_cap.cap = 0;
 	}
+
+	if (!ht_cap_info.shortGI20MHz) {
+		wlan_hdd_band_2_4_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_20;
+		wlan_hdd_band_5_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_20;
+	}
+
+	if (!ht_cap_info.shortGI40MHz)
+		wlan_hdd_band_5_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_40;
 }
 
 /*
@@ -12322,7 +12313,7 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 {
 	hdd_ctx->wiphy->max_ap_assoc_sta = hdd_ctx->config->maxNumberOfPeers;
 
-	wlan_hdd_update_band_cap(hdd_ctx);
+	wlan_hdd_update_ht_cap(hdd_ctx);
 }
 
 /**

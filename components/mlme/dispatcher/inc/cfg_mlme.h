@@ -16,32 +16,19 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef __CFG_MLME_H
+#define __CFG_MLME_H
+
 #include "cfg_define.h"
 #include "cfg_converged.h"
-#include "cfg_mlme.h"
+#include "qdf_types.h"
 
-#ifdef CONVERGED_P2P_ENABLE
-#include "wlan_p2p_cfg.h"
-#else
-#define CFG_P2P_ALL
-#endif
+#include "cfg_mlme_ht_caps.h"
+#include "cfg_mlme_vht_caps.h"
 
-#ifdef CONVERGED_TDLS_ENABLE
-#include "wlan_tdls_cfg.h"
-#else
-#define CFG_TDLS_ALL
-#endif
+#define CFG_MLME_ALL \
+	CFG_HT_CAPS_ALL \
+	CFG_VHT_CAPS_ALL
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
-#include "cfg_nan.h"
-#else
-#define CFG_NAN_ALL
-#endif
+#endif /* __CFG_MLME_H */
 
-/* Maintain Alphabetic order here while adding components */
-#define CFG_ALL \
-	CFG_CONVERGED_ALL \
-	CFG_MLME_ALL \
-	CFG_NAN_ALL \
-	CFG_P2P_ALL \
-	CFG_TDLS_ALL

@@ -3218,6 +3218,28 @@ struct hdd_station_info *hdd_get_stainfo(struct hdd_station_info *astainfo,
 					 struct qdf_mac_addr mac_addr);
 
 /**
+ * hdd_component_psoc_open() - Open the legacy components
+ * @psoc: Pointer to psoc object
+ *
+ * This function opens the legacy components and initializes the
+ * component's private objects.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * hdd_component_psoc_close() - Close the legacy components
+ * @psoc: Pointer to psoc object
+ *
+ * This function closes the legacy components and resets the
+ * component's private objects.
+ *
+ * Return: None
+ */
+void hdd_component_psoc_close(struct wlan_objmgr_psoc *psoc);
+
+/**
  * hdd_component_psoc_enable() - Trigger psoc enable for CLD Components
  *
  * Return: None

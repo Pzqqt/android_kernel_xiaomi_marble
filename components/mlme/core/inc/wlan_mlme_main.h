@@ -16,8 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 /**
- * DOC: declare utility API related to the pmo component
- * called by other components
+ * DOC: declare internal API related to the mlme component
  */
 
 #ifndef _WLAN_MLME_MAIN_H_
@@ -70,20 +69,41 @@ QDF_STATUS mlme_deinit(void);
  *
  * Register this api with objmgr to detect psoc is created
  *
- * Return QDF_STATUS status in case of success else return error
+ * Return: QDF_STATUS status in case of success else return error
  */
 QDF_STATUS mlme_psoc_object_created_notification(
 		struct wlan_objmgr_psoc *psoc, void *arg);
 
 /**
- *  mlme_psoc_object_destroyed_notification(): mlme psoc delete handler
+ * mlme_psoc_object_destroyed_notification(): mlme psoc delete handler
  * @psoc: psoc which is going to delete by objmgr
  * @arg: argument for vdev delete handler
  *
  * Register this api with objmgr to detect psoc is deleted
  *
- * Return QDF_STATUS status in case of success else return error
+ * Return: QDF_STATUS status in case of success else return error
  */
 QDF_STATUS mlme_psoc_object_destroyed_notification(
 		struct wlan_objmgr_psoc *psoc, void *arg);
+
+/**
+ * mlme_cfg_on_psoc_enable() - Populate MLME structure from CFG and INI
+ * @psoc: pointer to the psoc object
+ *
+ * Populate the MLME CFG structure from CFG and INI values using CFG APIs
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * mlme_get_psoc_obj() - Get MLME object from psoc
+ * @psoc: pointer to the psoc object
+ *
+ * Get the MLME object pointer from the psoc
+ *
+ * Return: pointer to MLME object
+ */
+struct wlan_mlme_psoc_obj *mlme_get_psoc_obj(struct wlan_objmgr_psoc *psoc);
+
 #endif

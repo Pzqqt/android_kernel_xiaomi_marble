@@ -59,7 +59,7 @@
 #include "lim_security_utils.h"
 #include "cds_ieee80211_common.h"
 #include <wlan_scan_ucfg_api.h>
-
+#include "wlan_mlme_public_struct.h"
 
 void lim_log_session_states(tpAniSirGlobal pMac);
 static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
@@ -2232,7 +2232,7 @@ void
 handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 				tpPESession psessionEntry)
 {
-	tSirMacHTCapabilityInfo macHTCapabilityInfo;
+	struct mlme_ht_capabilities_info *ht_cap_info;
 	tSirMacHTParametersInfo macHTParametersInfo;
 	tSirMacHTInfoField1 macHTInfoField1;
 	tSirMacHTInfoField2 macHTInfoField2;
@@ -2240,25 +2240,19 @@ handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 	uint32_t cfgValue;
 	uint8_t *ptr;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO, &cfgValue) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve WNI_CFG_HT_CAP_INFO value");
-		return;
-	}
-	ptr = (uint8_t *) &macHTCapabilityInfo;
-	*((uint16_t *) ptr) = (uint16_t) (cfgValue & 0xffff);
+	ht_cap_info = &pMac->mlme_cfg->ht_caps.ht_cap_info;
 	pMac->lim.gHTLsigTXOPProtection =
-		(uint8_t) macHTCapabilityInfo.lsigTXOPProtection;
+		(uint8_t)ht_cap_info->lsigTXOPProtection;
 	pMac->lim.gHTMIMOPSState =
-		(tSirMacHTMIMOPowerSaveState) macHTCapabilityInfo.mimoPowerSave;
-	pMac->lim.gHTGreenfield = (uint8_t) macHTCapabilityInfo.greenField;
+		(tSirMacHTMIMOPowerSaveState) ht_cap_info->mimoPowerSave;
+	pMac->lim.gHTGreenfield = (uint8_t)ht_cap_info->greenField;
 	pMac->lim.gHTMaxAmsduLength =
-		(uint8_t) macHTCapabilityInfo.maximalAMSDUsize;
-	pMac->lim.gHTShortGI20Mhz = (uint8_t) macHTCapabilityInfo.shortGI20MHz;
-	pMac->lim.gHTShortGI40Mhz = (uint8_t) macHTCapabilityInfo.shortGI40MHz;
-	pMac->lim.gHTPSMPSupport = (uint8_t) macHTCapabilityInfo.psmp;
+		(uint8_t)ht_cap_info->maximalAMSDUsize;
+	pMac->lim.gHTShortGI20Mhz = (uint8_t)ht_cap_info->shortGI20MHz;
+	pMac->lim.gHTShortGI40Mhz = (uint8_t)ht_cap_info->shortGI40MHz;
+	pMac->lim.gHTPSMPSupport = (uint8_t)ht_cap_info->psmp;
 	pMac->lim.gHTDsssCckRate40MHzSupport =
-		(uint8_t) macHTCapabilityInfo.dsssCckMode40MHz;
+		(uint8_t)ht_cap_info->dsssCckMode40MHz;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &cfgValue) !=
 	    QDF_STATUS_SUCCESS) {

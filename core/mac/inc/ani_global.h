@@ -42,6 +42,7 @@
 
 #include <lim_ft_defs.h>
 #include "wlan_objmgr_psoc_obj.h"
+#include "wlan_mlme_public_struct.h"
 
 /**
  * MAC_CONTEXT() - Convert an opaque mac handle into a mac context
@@ -847,6 +848,7 @@ typedef struct sAniSirGlobal {
 	enum qdf_driver_type gDriverType;
 
 	tAniSirCfg cfg;
+	struct wlan_mlme_cfg *mlme_cfg;
 	tAniSirLim lim;
 	tAniSirSch sch;
 	tAniSirSys sys;

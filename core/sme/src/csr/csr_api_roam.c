@@ -55,6 +55,7 @@
 #include <wlan_action_oui_public_struct.h>
 #include <wlan_action_oui_ucfg_api.h>
 #include <wlan_utility.h>
+#include "wlan_mlme_public_struct.h"
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -17379,10 +17380,7 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 {
 	QDF_STATUS status;
 	uint32_t existing_session_id;
-	union {
-		uint16_t nCfgValue16;
-		tSirMacHTCapabilityInfo htCapInfo;
-	} uHTCapabilityInfo;
+	struct mlme_ht_capabilities_info *ht_cap_info;
 	uint32_t nCfgValue;
 	struct csr_roam_session *session;
 
@@ -17443,19 +17441,12 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 		return status;
 	}
 
-	/* get the HT capability info */
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_HT_CAP_INFO, &nCfgValue) !=
-	    QDF_STATUS_SUCCESS) {
-		sme_err("could not get HT capability info");
-		return QDF_STATUS_SUCCESS;
-	}
-
-	uHTCapabilityInfo.nCfgValue16 = 0xFFFF & nCfgValue;
-	session->htConfig.ht_rx_ldpc = uHTCapabilityInfo.htCapInfo.advCodingCap;
-	session->htConfig.ht_tx_stbc = uHTCapabilityInfo.htCapInfo.txSTBC;
-	session->htConfig.ht_rx_stbc = uHTCapabilityInfo.htCapInfo.rxSTBC;
-	session->htConfig.ht_sgi20 = uHTCapabilityInfo.htCapInfo.shortGI20MHz;
-	session->htConfig.ht_sgi40 = uHTCapabilityInfo.htCapInfo.shortGI40MHz;
+	ht_cap_info = &mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
+	session->htConfig.ht_rx_ldpc = ht_cap_info->advCodingCap;
+	session->htConfig.ht_tx_stbc = ht_cap_info->txSTBC;
+	session->htConfig.ht_rx_stbc = ht_cap_info->rxSTBC;
+	session->htConfig.ht_sgi20 = ht_cap_info->shortGI20MHz;
+	session->htConfig.ht_sgi40 = ht_cap_info->shortGI40MHz;
 
 #ifdef FEATURE_WLAN_BTAMP_UT_RF
 	status = qdf_mc_timer_init(&session->hTimerJoinRetry, QDF_TIMER_TYPE_SW,

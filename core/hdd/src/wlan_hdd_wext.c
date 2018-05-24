@@ -98,6 +98,8 @@
 #include "wlan_reg_ucfg_api.h"
 #include "wlan_hdd_packet_filter_api.h"
 #include "wlan_cp_stats_mc_ucfg_api.h"
+#include "wlan_mlme_ucfg_api.h"
+#include "wlan_mlme_public_struct.h"
 
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
@@ -3389,13 +3391,9 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
 	int ret;
 	QDF_STATUS status;
-	uint32_t cfg_value;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_config *config = hdd_ctx->config;
-	union {
-		uint16_t cfg_value16;
-		tSirMacHTCapabilityInfo ht_cap_info;
-	} u;
+	struct mlme_ht_capabilities_info ht_cap_info;
 
 	hdd_debug("%d", value);
 	if (value) {
@@ -3408,16 +3406,14 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 			hdd_err("LDCP is already disabled");
 			return 0;
 	}
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_HT_CAP_INFO, &cfg_value);
+	status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc, &ht_cap_info);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to get HT capability info");
 		return -EIO;
 	}
-	u.cfg_value16 = cfg_value & 0xFFFF;
 
-	u.ht_cap_info.advCodingCap = value;
-	status = sme_cfg_set_int(mac_handle, WNI_CFG_HT_CAP_INFO,
-				 u.cfg_value16);
+	ht_cap_info.advCodingCap = value;
+	status = ucfg_mlme_set_ht_cap_info(hdd_ctx->hdd_psoc, ht_cap_info);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to set HT capability info");
 		return -EIO;
@@ -3476,26 +3472,21 @@ int hdd_get_tx_stbc(struct hdd_adapter *adapter, int *value)
 int hdd_set_tx_stbc(struct hdd_adapter *adapter, int value)
 {
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
+	QDF_STATUS status;
+	struct mlme_ht_capabilities_info ht_cap_info;
 
 	hdd_debug("%d", value);
 	if (value) {
 		/* make sure HT capabilities allow this */
-		QDF_STATUS status;
-		uint32_t cfg_value;
-		union {
-			uint16_t cfg_value16;
-			tSirMacHTCapabilityInfo ht_cap_info;
-		} u;
-
-		status = sme_cfg_get_int(mac_handle, WNI_CFG_HT_CAP_INFO,
-					 &cfg_value);
+		status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc,
+						   &ht_cap_info);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("Failed to get HT capability info");
 			return -EIO;
 		}
-		u.cfg_value16 = cfg_value & 0xFFFF;
-		if (!u.ht_cap_info.txSTBC) {
+		if (!ht_cap_info.txSTBC) {
 			hdd_err("TX STBC not supported");
 			return -EINVAL;
 		}
@@ -3547,26 +3538,21 @@ int hdd_get_rx_stbc(struct hdd_adapter *adapter, int *value)
 int hdd_set_rx_stbc(struct hdd_adapter *adapter, int value)
 {
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
+	QDF_STATUS status;
+	struct mlme_ht_capabilities_info ht_cap_info;
 
 	hdd_debug("%d", value);
 	if (value) {
 		/* make sure HT capabilities allow this */
-		QDF_STATUS status;
-		uint32_t cfg_value;
-		union {
-			uint16_t cfg_value16;
-			tSirMacHTCapabilityInfo ht_cap_info;
-		} u;
-
-		status = sme_cfg_get_int(mac_handle, WNI_CFG_HT_CAP_INFO,
-					 &cfg_value);
+		status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc,
+						   &ht_cap_info);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("Failed to get HT capability info");
 			return -EIO;
 		}
-		u.cfg_value16 = cfg_value & 0xFFFF;
-		if (!u.ht_cap_info.rxSTBC) {
+		if (!ht_cap_info.rxSTBC) {
 			hdd_warn("RX STBC not supported");
 			return -EINVAL;
 		}

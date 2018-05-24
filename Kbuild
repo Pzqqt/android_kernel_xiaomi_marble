@@ -820,7 +820,8 @@ MLME_DIR := components/mlme
 MLME_INC := -I$(WLAN_ROOT)/$(MLME_DIR)/core/inc \
 		-I$(WLAN_ROOT)/$(MLME_DIR)/dispatcher/inc
 
-MLME_OBJS :=	$(MLME_DIR)/core/src/wlan_mlme_main.o
+MLME_OBJS :=	$(MLME_DIR)/core/src/wlan_mlme_main.o \
+		$(MLME_DIR)/dispatcher/src/wlan_mlme_ucfg_api.o
 
 ########## ACTION OUI ##########
 

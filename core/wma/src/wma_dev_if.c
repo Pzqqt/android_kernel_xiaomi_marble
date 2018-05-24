@@ -74,6 +74,7 @@
 #include "wlan_ocb_ucfg_api.h"
 #include "init_deinit_lmac.h"
 #include <target_if.h>
+#include "wlan_mlme_public_struct.h"
 
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
@@ -2191,9 +2192,8 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t cfg_val;
-	uint16_t val16;
 	QDF_STATUS ret;
-	tSirMacHTCapabilityInfo *phtCapInfo;
+	struct mlme_ht_capabilities_info *ht_cap_info;
 	struct scheduler_msg sme_msg = { 0 };
 	struct vdev_create_params params = { 0 };
 	u_int8_t vdev_id;
@@ -2436,20 +2436,14 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		WMA_LOGE("Failed to get value for WNI_CFG_FRAGMENTATION_THRESHOLD, leaving unchanged");
 	}
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_HT_CAP_INFO, &cfg_val) ==
-	    QDF_STATUS_SUCCESS) {
-		val16 = (uint16_t) cfg_val;
-		phtCapInfo = (tSirMacHTCapabilityInfo *) &cfg_val;
+	ht_cap_info = &mac->mlme_cfg->ht_caps.ht_cap_info;
 
-		ret = wma_vdev_set_param(wma_handle->wmi_handle,
-						      self_sta_req->session_id,
-						      WMI_VDEV_PARAM_TX_STBC,
-						      phtCapInfo->txSTBC);
-		if (QDF_IS_STATUS_ERROR(ret))
-			WMA_LOGE("Failed to set WMI_VDEV_PARAM_TX_STBC");
-	} else {
-		WMA_LOGE("Failed to get value of HT_CAP, TX STBC unchanged");
-	}
+	ret = wma_vdev_set_param(wma_handle->wmi_handle,
+				 self_sta_req->session_id,
+				 WMI_VDEV_PARAM_TX_STBC,
+				 ht_cap_info->txSTBC);
+	if (QDF_IS_STATUS_ERROR(ret))
+		WMA_LOGE("Failed to set WMI_VDEV_PARAM_TX_STBC");
 
 	wma_set_vdev_mgmt_rate(wma_handle, self_sta_req->session_id);
 

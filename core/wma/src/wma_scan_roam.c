@@ -60,6 +60,7 @@
 #include "wlan_tgt_def_config.h"
 #include "wlan_reg_services_api.h"
 #include "wlan_roam_debug.h"
+#include "wlan_mlme_public_struct.h"
 
 /* This is temporary, should be removed */
 #include "ol_htt_api.h"
@@ -2653,7 +2654,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	tSirMacQosInfoStation macQosInfoSta;
 	union {
 		uint16_t nCfgValue16;
-		tSirMacHTCapabilityInfo htCapInfo;
+		struct mlme_ht_capabilities_info htCapInfo;
 		tSirMacExtendedHTCapabilityInfo extHtCapInfo;
 	} uHTCapabilityInfo;
 
@@ -2749,12 +2750,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	roam_offload_params->capability <<= RSN_CAPS_SHIFT;
 	roam_offload_params->capability |= ((*pCfgValue16) & 0xFFFF);
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO, &nCfgValue) !=
-	    QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_HT_CAP_INFO");
-		return QDF_STATUS_E_FAILURE;
-	}
+	nCfgValue = *(uint32_t *)&pMac->mlme_cfg->ht_caps.ht_cap_info;
 	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
 	roam_offload_params->ht_caps_info =
 		uHTCapabilityInfo.nCfgValue16 & 0xFFFF;

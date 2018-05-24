@@ -71,6 +71,7 @@
 #include "cds_utils.h"
 #include "wlan_reg_services_api.h"
 #include "wlan_tdls_tgt_api.h"
+#include "wlan_mlme_public_struct.h"
 
 /* define NO_PAD_TDLS_MIN_8023_SIZE to NOT padding: See CR#447630
    There was IOT issue with cisco 1252 open mode, where it pads
@@ -2035,7 +2036,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 	tSirMacHTParametersInfo *pHTParametersInfo;
 	union {
 		uint16_t nCfgValue16;
-		tSirMacHTCapabilityInfo htCapInfo;
+		struct mlme_ht_capabilities_info htCapInfo;
 		tSirMacExtendedHTCapabilityInfo extHtCapInfo;
 	} uHTCapabilityInfo;
 

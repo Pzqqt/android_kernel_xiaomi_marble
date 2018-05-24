@@ -1760,41 +1760,6 @@ typedef enum eHTCapability {
 	eHT_PCO_PHASE
 } tHTCapability;
 
-/* HT Capabilities Info */
-typedef struct sSirMacHTCapabilityInfo {
-#ifndef ANI_LITTLE_BIT_ENDIAN
-	uint16_t lsigTXOPProtection:1;  /* Dynamic state */
-	uint16_t stbcControlFrame:1;    /* Static via CFG */
-	uint16_t psmp:1;        /* Static via CFG */
-	uint16_t dsssCckMode40MHz:1;    /* Static via CFG */
-	uint16_t maximalAMSDUsize:1;    /* Static via CFG */
-	uint16_t delayedBA:1;   /* Static via CFG */
-	uint16_t rxSTBC:2;      /* Static via CFG */
-	uint16_t txSTBC:1;      /* Static via CFG */
-	uint16_t shortGI40MHz:1;        /* Static via CFG */
-	uint16_t shortGI20MHz:1;        /* Static via CFG */
-	uint16_t greenField:1;  /* Static via CFG */
-	uint16_t mimoPowerSave:2;       /* Dynamic state */
-	uint16_t supportedChannelWidthSet:1;    /* Static via CFG */
-	uint16_t advCodingCap:1;        /* Static via CFG */
-#else
-	uint16_t advCodingCap:1;
-	uint16_t supportedChannelWidthSet:1;
-	uint16_t mimoPowerSave:2;
-	uint16_t greenField:1;
-	uint16_t shortGI20MHz:1;
-	uint16_t shortGI40MHz:1;
-	uint16_t txSTBC:1;
-	uint16_t rxSTBC:2;
-	uint16_t delayedBA:1;
-	uint16_t maximalAMSDUsize:1;
-	uint16_t dsssCckMode40MHz:1;
-	uint16_t psmp:1;
-	uint16_t stbcControlFrame:1;
-	uint16_t lsigTXOPProtection:1;
-#endif
-} qdf_packed tSirMacHTCapabilityInfo;
-
 /* HT Parameters Info */
 typedef struct sSirMacHTParametersInfo {
 #ifndef ANI_LITTLE_BIT_ENDIAN

@@ -71,6 +71,8 @@
 #include <wlan_p2p_ucfg_api.h>
 #include "wlan_utility.h"
 #include <wlan_tdls_cfg_api.h>
+#include "cfg_ucfg_api.h"
+#include "wlan_mlme_public_struct.h"
 
 static void __lim_init_scan_vars(tpAniSirGlobal pMac)
 {
@@ -267,8 +269,8 @@ static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 	uint16_t val16;
 	uint8_t val8;
 	bool valb;
+	struct mlme_ht_capabilities_info *ht_cap_info;
 	QDF_STATUS status;
-	tSirMacHTCapabilityInfo *pHTCapabilityInfo;
 	tSirMacHTInfoField1 *pHTInfoField1;
 	tSirMacHTParametersInfo *pAmpduParamInfo;
 
@@ -285,30 +287,19 @@ static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 
 	pMac->lim.gLimAssocStaLimit = val1;
 	pMac->lim.gLimIbssStaLimit = val1;
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO, &val1) != QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve HT Cap CFG");
-		return QDF_STATUS_E_FAILURE;
-	}
+	ht_cap_info = &pMac->mlme_cfg->ht_caps.ht_cap_info;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_CHANNEL_BONDING_MODE, &val2) !=
 	    QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve Channel Bonding CFG");
 		return QDF_STATUS_E_FAILURE;
 	}
-	val16 = (uint16_t) val1;
-	pHTCapabilityInfo = (tSirMacHTCapabilityInfo *) &val16;
 
 	/* channel bonding mode could be set to anything from 0 to 4(Titan had these */
 	/* modes But for Taurus we have only two modes: enable(>0) or disable(=0) */
-	pHTCapabilityInfo->supportedChannelWidthSet = val2 ?
-						      WNI_CFG_CHANNEL_BONDING_MODE_ENABLE :
-						      WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-	if (cfg_set_int
-		    (pMac, WNI_CFG_HT_CAP_INFO, *(uint16_t *) pHTCapabilityInfo)
-	    != QDF_STATUS_SUCCESS) {
-		pe_err("could not update HT Cap Info CFG");
-		return QDF_STATUS_E_FAILURE;
-	}
+	ht_cap_info->supportedChannelWidthSet = val2 ?
+				      WNI_CFG_CHANNEL_BONDING_MODE_ENABLE :
+				      WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_INFO_FIELD1, &val1) != QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve HT INFO Field1 CFG");
@@ -318,7 +309,7 @@ static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 	val8 = (uint8_t) val1;
 	pHTInfoField1 = (tSirMacHTInfoField1 *) &val8;
 	pHTInfoField1->recommendedTxWidthSet =
-		(uint8_t) pHTCapabilityInfo->supportedChannelWidthSet;
+				ht_cap_info->supportedChannelWidthSet;
 	if (cfg_set_int(pMac, WNI_CFG_HT_INFO_FIELD1, *(uint8_t *) pHTInfoField1)
 	    != QDF_STATUS_SUCCESS) {
 		pe_err("could not update HT Info Field");

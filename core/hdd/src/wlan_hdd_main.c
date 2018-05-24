@@ -139,7 +139,8 @@
 #include "wlan_p2p_cfg_api.h"
 #include "wlan_tdls_cfg_api.h"
 #include <wlan_hdd_rssi_monitor.h>
-
+#include "wlan_mlme_ucfg_api.h"
+#include "wlan_mlme_public_struct.h"
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
 #endif
@@ -299,6 +300,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_IPA] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_ACTION_OUI] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_CONFIG] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_MLME] = {QDF_TRACE_LEVEL_ALL},
 };
 
 struct notifier_block hdd_netdev_notifier;
@@ -1333,19 +1335,11 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 				  struct wma_tgt_ht_cap *cfg)
 {
 	QDF_STATUS status;
-	uint32_t value, val32;
-	uint16_t val16;
+	uint32_t value;
 	struct hdd_config *pconfig = hdd_ctx->config;
-	tSirMacHTCapabilityInfo *phtCapInfo;
+	struct mlme_ht_capabilities_info ht_cap_info;
 	uint8_t mcs_set[SIZE_OF_SUPPORTED_MCS_SET];
-	uint8_t enable_tx_stbc;
-	mac_handle_t mac_handle;
-
-	/* check and update RX STBC */
-	if (pconfig->enableRxSTBC && !cfg->ht_rx_stbc)
-		pconfig->enableRxSTBC = cfg->ht_rx_stbc;
-
-	mac_handle = hdd_ctx->mac_handle;
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 
 	/* get the MPDU density */
 	status = sme_cfg_get_int(mac_handle, WNI_CFG_MPDU_DENSITY, &value);
@@ -1369,33 +1363,33 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 	}
 
 	/* get the HT capability info */
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_HT_CAP_INFO, &val32);
+	status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc, &ht_cap_info);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("could not get HT capability info");
 		return;
 	}
-	val16 = (uint16_t) val32;
-	phtCapInfo = (tSirMacHTCapabilityInfo *) &val16;
+
+	/* check and update RX STBC */
+	if (ht_cap_info.rxSTBC && !cfg->ht_rx_stbc)
+		ht_cap_info.rxSTBC = cfg->ht_rx_stbc;
 
 	/* Set the LDPC capability */
-	phtCapInfo->advCodingCap = cfg->ht_rx_ldpc;
+	ht_cap_info.advCodingCap = cfg->ht_rx_ldpc;
 
-	if (pconfig->ShortGI20MhzEnable && !cfg->ht_sgi_20)
-		pconfig->ShortGI20MhzEnable = cfg->ht_sgi_20;
+	if (ht_cap_info.shortGI20MHz && !cfg->ht_sgi_20)
+		ht_cap_info.shortGI20MHz = cfg->ht_sgi_20;
 
-	if (pconfig->ShortGI40MhzEnable && !cfg->ht_sgi_40)
-		pconfig->ShortGI40MhzEnable = cfg->ht_sgi_40;
+	if (ht_cap_info.shortGI40MHz && !cfg->ht_sgi_40)
+		ht_cap_info.shortGI40MHz = cfg->ht_sgi_40;
 
 	hdd_ctx->num_rf_chains = cfg->num_rf_chains;
 	hdd_ctx->ht_tx_stbc_supported = cfg->ht_tx_stbc;
-
-	enable_tx_stbc = pconfig->enableTxSTBC;
 
 	if (pconfig->enable2x2 && (cfg->num_rf_chains == 2)) {
 		pconfig->enable2x2 = 1;
 	} else {
 		pconfig->enable2x2 = 0;
-		enable_tx_stbc = 0;
+		ht_cap_info.txSTBC = 0;
 
 		/* 1x1 */
 		/* Update Rx Highest Long GI data Rate */
@@ -1416,11 +1410,9 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 		}
 	}
 	if (!(cfg->ht_tx_stbc && pconfig->enable2x2))
-		enable_tx_stbc = 0;
-	phtCapInfo->txSTBC = enable_tx_stbc;
+		ht_cap_info.txSTBC = 0;
 
-	val32 = val16;
-	status = sme_cfg_set_int(mac_handle, WNI_CFG_HT_CAP_INFO, val32);
+	status = ucfg_mlme_set_ht_cap_info(hdd_ctx->hdd_psoc, ht_cap_info);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("could not set HT capability to CCM");
 #define WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES 0xff
@@ -2896,11 +2888,19 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 
 		hdd_update_cds_ac_specs_params(hdd_ctx);
 
+		status = hdd_component_psoc_open(hdd_ctx->hdd_psoc);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Failed to Open legacy components; status: %d",
+				status);
+			ret = qdf_status_to_os_return(status);
+			goto deinit_config;
+		}
+
 		status = cds_open(hdd_ctx->hdd_psoc);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("Failed to Open CDS; status: %d", status);
 			ret = qdf_status_to_os_return(status);
-			goto deinit_config;
+			goto hdd_psoc_close;
 		}
 
 		if (hdd_ctx->config->rx_thread_affinity_mask)
@@ -3012,6 +3012,9 @@ close:
 	hdd_info("Wlan transition aborted (now CLOSED)");
 
 	cds_close(hdd_ctx->hdd_psoc);
+
+hdd_psoc_close:
+	hdd_component_psoc_close(hdd_ctx->hdd_psoc);
 
 deinit_config:
 	cds_deinit_ini_config();
@@ -8818,6 +8821,7 @@ static void hdd_set_trace_level_for_each(struct hdd_context *hdd_ctx)
 				hdd_ctx->config->qdf_trace_enable_regulatory);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_CP_STATS,
 				hdd_ctx->config->qdf_trace_enable_cp_stats);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_MLME, 0xffff);
 
 	hdd_cfg_print(hdd_ctx);
 }
@@ -10938,6 +10942,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		QDF_ASSERT(0);
 	}
 
+	hdd_component_psoc_close(hdd_ctx->hdd_psoc);
 	dispatcher_pdev_close(hdd_ctx->hdd_pdev);
 	ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
 	if (ret) {
@@ -11169,6 +11174,7 @@ int hdd_wlan_startup(struct device *dev)
 {
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
+	struct wlan_objmgr_psoc *psoc;
 	int ret;
 	bool rtnl_held;
 	mac_handle_t mac_handle;
@@ -11189,6 +11195,7 @@ int hdd_wlan_startup(struct device *dev)
 	}
 
 	hdd_action_oui_config(hdd_ctx);
+	psoc = hdd_ctx->hdd_psoc;
 
 	qdf_nbuf_init_replenish_timer();
 
@@ -12484,6 +12491,16 @@ static void component_deinit(void)
 	pmo_deinit();
 	disa_deinit();
 	mlme_deinit();
+}
+
+QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return mlme_psoc_open(psoc);
+}
+
+void hdd_component_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	mlme_psoc_close(psoc);
 }
 
 void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc)

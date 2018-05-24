@@ -42,6 +42,8 @@
 #include "wlan_hdd_green_ap.h"
 #include "wlan_hdd_green_ap_cfg.h"
 #include "wlan_hdd_twt.h"
+#include "wlan_mlme_ucfg_api.h"
+#include "wlan_mlme_public_struct.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(struct hdd_context *hdd_ctx,
@@ -519,13 +521,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_HT_MPDU_DENSITY_DEFAULT,
 		     CFG_HT_MPDU_DENSITY_MIN,
 		     CFG_HT_MPDU_DENSITY_MAX),
-
-	REG_VARIABLE(CFG_SHORT_GI_20MHZ_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, ShortGI20MhzEnable,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SHORT_GI_20MHZ_DEFAULT,
-		     CFG_SHORT_GI_20MHZ_MIN,
-		     CFG_SHORT_GI_20MHZ_MAX),
 
 	REG_VARIABLE(CFG_SCAN_RESULT_AGE_COUNT_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, ScanResultAgeCount,
@@ -7738,45 +7733,6 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str,
 }
 
 /**
- * hdd_update_ht_cap_in_cfg() - to update HT cap in global CFG
- * @hdd_ctx: pointer to hdd context
- *
- * This API will update the HT config in CFG after taking intersection
- * of INI and firmware capabilities provided reading CFG
- *
- * Return: true or false
- */
-static bool hdd_update_ht_cap_in_cfg(struct hdd_context *hdd_ctx)
-{
-	uint32_t val32;
-	uint16_t val16;
-	bool status = true;
-	tSirMacHTCapabilityInfo *ht_cap_info;
-
-	if (sme_cfg_get_int(hdd_ctx->mac_handle, WNI_CFG_HT_CAP_INFO,
-				&val32) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Could not get WNI_CFG_HT_CAP_INFO");
-	}
-	val16 = (uint16_t) val32;
-	ht_cap_info = (tSirMacHTCapabilityInfo *) &val16;
-	ht_cap_info->advCodingCap &= hdd_ctx->config->enable_rx_ldpc;
-	ht_cap_info->rxSTBC = QDF_MIN(ht_cap_info->rxSTBC,
-			hdd_ctx->config->enableRxSTBC);
-	ht_cap_info->txSTBC &= hdd_ctx->config->enableTxSTBC;
-	ht_cap_info->shortGI20MHz &= hdd_ctx->config->ShortGI20MhzEnable;
-	ht_cap_info->shortGI40MHz &= hdd_ctx->config->ShortGI40MhzEnable;
-	val32 = val16;
-	if (sme_cfg_set_int(hdd_ctx->mac_handle, WNI_CFG_HT_CAP_INFO, val32) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Could not set WNI_CFG_HT_CAP_INFO");
-	}
-	return status;
-}
-
-/**
  * hdd_update_vht_cap_in_cfg() - to update VHT cap in global CFG
  * @hdd_ctx: pointer to hdd context
  *
@@ -7929,10 +7885,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 	 * During the initialization both 2G and 5G capabilities should be same.
 	 * So read 5G HT capablity and update 2G and 5G capablities.
 	 */
-	if (!hdd_update_ht_cap_in_cfg(hdd_ctx)) {
-		status = false;
-		hdd_err("Couldn't set HT CAP in cfg");
-	}
 
 	if (!hdd_update_vht_cap_in_cfg(hdd_ctx)) {
 		status = false;
@@ -9055,11 +9007,11 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	uint32_t temp = 0;
 	uint32_t rx_supp_data_rate, tx_supp_data_rate;
 	bool status = true;
-	tSirMacHTCapabilityInfo *ht_cap_info;
+	QDF_STATUS qdf_status;
+	struct mlme_ht_capabilities_info ht_cap_info;
 	uint8_t mcs_set[SIZE_OF_SUPPORTED_MCS_SET] = {0};
 	uint8_t mcs_set_temp[SIZE_OF_SUPPORTED_MCS_SET];
 	uint32_t val, val32;
-	uint16_t val16;
 	uint8_t enable2x2;
 	mac_handle_t mac_handle;
 
@@ -9109,21 +9061,24 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 		hdd_err("Could not pass on WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE to CFG");
 	}
 
-	sme_cfg_get_int(mac_handle, WNI_CFG_HT_CAP_INFO, &temp);
-	val16 = (uint16_t)temp;
-	ht_cap_info = (tSirMacHTCapabilityInfo *)&val16;
+	qdf_status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc, &ht_cap_info);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Failed to get HT Cap info");
+		status = false;
+	}
+
 	if (!(hdd_ctx->ht_tx_stbc_supported && hdd_config->enable2x2)) {
-		ht_cap_info->txSTBC = 0;
+		ht_cap_info.txSTBC = 0;
 	} else {
 		sme_cfg_get_int(mac_handle, WNI_CFG_VHT_TXSTBC, &val32);
 		hdd_debug("STBC %d", val32);
-		ht_cap_info->txSTBC = val32;
+		ht_cap_info.txSTBC = val32;
 	}
-	temp = val16;
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_HT_CAP_INFO,
-			    temp) == QDF_STATUS_E_FAILURE) {
+
+	qdf_status = ucfg_mlme_set_ht_cap_info(hdd_ctx->hdd_psoc, ht_cap_info);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		status = false;
-		hdd_err("Could not pass on WNI_CFG_HT_CAP_INFO to CFG");
+		hdd_err("Could not pass on HT_CAP_INFO to CFG");
 	}
 
 	sme_cfg_get_int(mac_handle, WNI_CFG_VHT_BASIC_MCS_SET, &temp);

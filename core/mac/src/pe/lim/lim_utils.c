@@ -52,6 +52,7 @@
 #include "wma.h"
 #include "wlan_reg_services_api.h"
 #include "wlan_policy_mgr_api.h"
+#include "wlan_mlme_public_struct.h"
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 #include "wma_he.h"
 #endif
@@ -2731,7 +2732,7 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 	uint8_t retVal = 0;
 	uint8_t *ptr;
 	uint32_t cfgValue;
-	tSirMacHTCapabilityInfo macHTCapabilityInfo = { 0 };
+	struct mlme_ht_capabilities_info ht_cap_info = { 0 };
 	tSirMacExtendedHTCapabilityInfo macExtHTCapabilityInfo = { 0 };
 	tSirMacTxBFCapabilityInfo macTxBFCapabilityInfo = { 0 };
 	tSirMacASCapabilityInfo macASCapabilityInfo = { 0 };
@@ -2771,12 +2772,10 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 			} else {
 				if (htCap < eHT_MAX_RX_AMPDU_FACTOR) {
 					/* Get HT Capabilities */
-					if (QDF_STATUS_SUCCESS !=
-					    wlan_cfg_get_int(pMac,
-							     WNI_CFG_HT_CAP_INFO,
-							     &cfgValue))
-						cfgValue = 0;
-					ptr = (uint8_t *) &macHTCapabilityInfo;
+					cfgValue = *(uint32_t *)
+						&pMac->mlme_cfg->ht_caps.
+						ht_cap_info;
+					ptr = (uint8_t *)&ht_cap_info;
 					/* CR 265282 MDM SoftAP 2.4PL: SoftAP boot up crash in 2.4 PL builds while same WLAN SU is working on 2.1 PL */
 					*ptr++ = cfgValue & 0xff;
 					*ptr = (cfgValue >> 8) & 0xff;
@@ -2791,7 +2790,7 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 		break;
 
 	case eHT_STBC_CONTROL_FRAME:
-		retVal = (uint8_t) macHTCapabilityInfo.stbcControlFrame;
+		retVal = (uint8_t)ht_cap_info.stbcControlFrame;
 		break;
 
 	case eHT_PSMP:
@@ -2803,7 +2802,7 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 		break;
 
 	case eHT_MAX_AMSDU_LENGTH:
-		retVal = (uint8_t) macHTCapabilityInfo.maximalAMSDUsize;
+		retVal = (uint8_t)ht_cap_info.maximalAMSDUsize;
 		break;
 
 	case eHT_MAX_AMSDU_NUM:
@@ -2820,16 +2819,16 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 
 	case eHT_SHORT_GI_40MHZ:
 		retVal = (uint8_t) (psessionEntry->htConfig.ht_sgi40) ?
-			 macHTCapabilityInfo.shortGI40MHz : 0;
+			 ht_cap_info.shortGI40MHz : 0;
 		break;
 
 	case eHT_SHORT_GI_20MHZ:
 		retVal = (uint8_t) (psessionEntry->htConfig.ht_sgi20) ?
-			 macHTCapabilityInfo.shortGI20MHz : 0;
+			 ht_cap_info.shortGI20MHz : 0;
 		break;
 
 	case eHT_GREENFIELD:
-		retVal = (uint8_t) macHTCapabilityInfo.greenField;
+		retVal = (uint8_t)ht_cap_info.greenField;
 		break;
 
 	case eHT_MIMO_POWER_SAVE:

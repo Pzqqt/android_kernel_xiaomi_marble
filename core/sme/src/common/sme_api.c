@@ -57,6 +57,7 @@
 #include "net/cfg80211.h"
 #include <qca_vendor.h>
 #include <wlan_spectral_utils_api.h>
+#include "wlan_mlme_public_struct.h"
 
 static tSelfRecoveryStats g_self_recovery_stats;
 
@@ -12626,11 +12627,8 @@ QDF_STATUS sme_update_nss(tHalHandle h_hal, uint8_t nss)
 {
 	QDF_STATUS status;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(h_hal);
-	uint32_t i, value = 0;
-	union {
-		uint16_t cfg_value16;
-		tSirMacHTCapabilityInfo ht_cap_info;
-	} uHTCapabilityInfo;
+	uint32_t i;
+	struct mlme_ht_capabilities_info *ht_cap_info;
 	struct csr_roam_session *csr_session;
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
@@ -12639,14 +12637,13 @@ QDF_STATUS sme_update_nss(tHalHandle h_hal, uint8_t nss)
 		mac_ctx->roam.configParam.enable2x2 = (nss == 1) ? 0 : 1;
 
 		/* get the HT capability info*/
-		sme_cfg_get_int(h_hal, WNI_CFG_HT_CAP_INFO, &value);
-		uHTCapabilityInfo.cfg_value16 = (0xFFFF & value);
+		ht_cap_info = &mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
 
 		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 			if (CSR_IS_SESSION_VALID(mac_ctx, i)) {
 				csr_session = &mac_ctx->roam.roamSession[i];
 				csr_session->htConfig.ht_tx_stbc =
-					uHTCapabilityInfo.ht_cap_info.txSTBC;
+					ht_cap_info->txSTBC;
 			}
 		}
 

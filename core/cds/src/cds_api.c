@@ -680,7 +680,13 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 
 	cds_register_all_modules();
 
-	return dispatcher_psoc_open(psoc);
+	status = dispatcher_psoc_open(psoc);
+
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return status;
+
+	cds_alert("Failed to open PSOC Components");
+	QDF_ASSERT(0);
 
 err_mac_close:
 	mac_close(mac_handle);
