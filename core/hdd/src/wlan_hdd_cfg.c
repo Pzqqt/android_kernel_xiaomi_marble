@@ -5724,11 +5724,7 @@ static QDF_STATUS hdd_apply_cfg_ini(struct hdd_context *hdd_ctx,
 	int i;
 	int rv;
 
-	if (MAX_CFG_INI_ITEMS < cRegTableEntries) {
-		hdd_err("MAX_CFG_INI_ITEMS too small, must be at least %ld",
-		       cRegTableEntries);
-		WARN_ON(1);
-	}
+	BUILD_BUG_ON(MAX_CFG_INI_ITEMS < cRegTableEntries);
 
 	for (idx = 0; idx < cRegTableEntries; idx++, pRegEntry++) {
 		/* Calculate the address of the destination field in the structure. */
