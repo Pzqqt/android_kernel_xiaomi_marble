@@ -606,19 +606,13 @@ QDF_STATUS pmo_register_pause_bitmap_notifier(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS pmo_unregister_pause_bitmap_notifier(struct wlan_objmgr_psoc *psoc,
-		pmo_notify_pause_bitmap handler)
+QDF_STATUS pmo_unregister_pause_bitmap_notifier(struct wlan_objmgr_psoc *psoc)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	QDF_STATUS status;
 
 	if (!psoc) {
 		pmo_err("psoc is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	if (!handler) {
-		pmo_err("pmo_notify_vdev_pause_bitmap is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -629,8 +623,7 @@ QDF_STATUS pmo_unregister_pause_bitmap_notifier(struct wlan_objmgr_psoc *psoc,
 	}
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
-		if (psoc_ctx->pause_bitmap_notifier == handler)
-			psoc_ctx->pause_bitmap_notifier = NULL;
+		psoc_ctx->pause_bitmap_notifier = NULL;
 	}
 
 	pmo_psoc_put_ref(psoc);
@@ -669,19 +662,13 @@ QDF_STATUS pmo_register_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS pmo_unregister_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
-		pmo_get_pause_bitmap handler)
+QDF_STATUS pmo_unregister_get_pause_bitmap(struct wlan_objmgr_psoc *psoc)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	QDF_STATUS status;
 
 	if (!psoc) {
 		pmo_err("psoc is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	if (!handler) {
-		pmo_err("pmo_get_pause_bitmap is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -692,8 +679,7 @@ QDF_STATUS pmo_unregister_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
 	}
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
-		if (psoc_ctx->get_pause_bitmap == handler)
-			psoc_ctx->get_pause_bitmap = NULL;
+		psoc_ctx->get_pause_bitmap = NULL;
 	}
 
 	pmo_psoc_put_ref(psoc);
@@ -732,20 +718,14 @@ QDF_STATUS pmo_register_is_device_in_low_pwr_mode(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS pmo_unregister_is_device_in_low_pwr_mode(
-			struct wlan_objmgr_psoc *psoc,
-			pmo_is_device_in_low_pwr_mode handler)
+QDF_STATUS
+pmo_unregister_is_device_in_low_pwr_mode(struct wlan_objmgr_psoc *psoc)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	QDF_STATUS status;
 
 	if (!psoc) {
 		pmo_err("psoc is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	if (!handler) {
-		pmo_err("pmo_get_pause_bitmap is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -757,6 +737,62 @@ QDF_STATUS pmo_unregister_is_device_in_low_pwr_mode(
 
 	pmo_psoc_with_ctx(psoc, psoc_ctx) {
 		psoc_ctx->is_device_in_low_pwr_mode = NULL;
+	}
+
+	pmo_psoc_put_ref(psoc);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS pmo_register_get_cfg_int_callback(struct wlan_objmgr_psoc *psoc,
+					     pmo_get_cfg_int handler)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	QDF_STATUS status;
+
+	if (!psoc) {
+		pmo_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!handler) {
+		pmo_err("pmo_get_cfg_int is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	status = pmo_psoc_get_ref(psoc);
+	if (status != QDF_STATUS_SUCCESS) {
+		pmo_err("pmo cannot get the reference out of psoc");
+		return status;
+	}
+
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		psoc_ctx->get_cfg_int = handler;
+	}
+
+	pmo_psoc_put_ref(psoc);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS pmo_unregister_get_cfg_int_callback(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	QDF_STATUS status;
+
+	if (!psoc) {
+		pmo_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	status = pmo_psoc_get_ref(psoc);
+	if (status != QDF_STATUS_SUCCESS) {
+		pmo_err("pmo cannot get the reference out of psoc");
+		return status;
+	}
+
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		psoc_ctx->get_cfg_int = NULL;
 	}
 
 	pmo_psoc_put_ref(psoc);
