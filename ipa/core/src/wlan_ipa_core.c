@@ -428,8 +428,19 @@ static void wlan_ipa_pm_flush(void *data)
 		pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
 		dequeued++;
 
-		wlan_ipa_send_pkt_to_tl(pm_tx_cb->iface_context,
-					pm_tx_cb->ipa_tx_desc);
+		if (pm_tx_cb->exception) {
+			if (ipa_ctx->softap_xmit &&
+			    pm_tx_cb->iface_context->dev) {
+				ipa_ctx->softap_xmit(skb,
+						pm_tx_cb->iface_context->dev);
+				ipa_ctx->stats.num_tx_fwd_ok++;
+			} else {
+				dev_kfree_skb_any(skb);
+			}
+		} else {
+			wlan_ipa_send_pkt_to_tl(pm_tx_cb->iface_context,
+						pm_tx_cb->ipa_tx_desc);
+		}
 
 		qdf_spin_lock_bh(&ipa_ctx->pm_lock);
 	}
@@ -549,8 +560,19 @@ static void wlan_ipa_pm_flush(void *data)
 		pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
 		dequeued++;
 
-		wlan_ipa_send_pkt_to_tl(pm_tx_cb->iface_context,
-					pm_tx_cb->ipa_tx_desc);
+		if (pm_tx_cb->exception) {
+			if (ipa_ctx->softap_xmit &&
+			    pm_tx_cb->iface_context->dev) {
+				ipa_ctx->softap_xmit(skb,
+						pm_tx_cb->iface_context->dev);
+				ipa_ctx->stats.num_tx_fwd_ok++;
+			} else {
+				dev_kfree_skb_any(skb);
+			}
+		} else {
+			wlan_ipa_send_pkt_to_tl(pm_tx_cb->iface_context,
+						pm_tx_cb->ipa_tx_desc);
+		}
 
 		qdf_spin_lock_bh(&ipa_ctx->pm_lock);
 	}
@@ -658,8 +680,7 @@ static void wlan_ipa_forward(struct wlan_ipa_priv *ipa_ctx,
 				ipa_ctx->stats.num_tx_fwd_ok++;
 			}
 		} else {
-			pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
-			ipa_free_skb(pm_tx_cb->ipa_tx_desc);
+			dev_kfree_skb_any(skb);
 		}
 	}
 }
@@ -695,7 +716,7 @@ static enum wlan_ipa_forward_type wlan_ipa_intrabss_forward(
 						iface_ctx->session_id))) {
 			/* Drop the packet*/
 			ipa_ctx->stats.num_tx_fwd_err++;
-			kfree_skb(skb);
+			dev_kfree_skb_any(skb);
 			ret = WLAN_IPA_FORWARD_PKT_DISCARD;
 			return ret;
 		}
@@ -764,7 +785,7 @@ static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 			ipa_err("IPA_RECEIVE: Invalid iface_id: %u",
 				iface_id);
 			ipa_ctx->ipa_rx_internal_drop_count++;
-			qdf_nbuf_free(skb);
+			dev_kfree_skb_any(skb);
 			return;
 		}
 
@@ -772,7 +793,7 @@ static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 		if (!iface_context->tl_context) {
 			ipa_err("IPA_RECEIVE: TL context is NULL");
 			ipa_ctx->ipa_rx_internal_drop_count++;
-			qdf_nbuf_free(skb);
+			dev_kfree_skb_any(skb);
 			return;
 		}
 
@@ -2324,8 +2345,13 @@ void wlan_ipa_flush(struct wlan_ipa_priv *ipa_ctx)
 		qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
 
 		pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
-		if (pm_tx_cb->ipa_tx_desc)
-			ipa_free_skb(pm_tx_cb->ipa_tx_desc);
+
+		if (pm_tx_cb->exception) {
+			dev_kfree_skb_any(skb);
+		} else {
+			if (pm_tx_cb->ipa_tx_desc)
+				ipa_free_skb(pm_tx_cb->ipa_tx_desc);
+		}
 
 		qdf_spin_lock_bh(&ipa_ctx->pm_lock);
 	}
