@@ -769,122 +769,89 @@ close:
  */
 QDF_STATUS cds_pre_enable(void)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
+	int errno;
 	void *scn;
 	void *soc;
 
-	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_DEBUG, "cds prestart");
+	cds_enter();
 
 	if (!gp_cds_context) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: NULL CDS context", __func__);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (gp_cds_context->pMACContext == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: MAC NULL context", __func__);
-		QDF_ASSERT(0);
+		cds_err("cds context is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (gp_cds_context->pWMAContext == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: WMA NULL context", __func__);
-		QDF_ASSERT(0);
+		cds_err("wma context is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!scn) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: scn is null!", __func__);
-		return QDF_STATUS_E_FAILURE;
+		cds_err("hif context is null");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	soc = cds_get_context(QDF_MODULE_ID_SOC);
 	if (!soc) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: soc is null!", __func__);
-		return QDF_STATUS_E_FAILURE;
+		cds_err("soc context is null");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	/* call Packetlog connect service */
 	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam() &&
 	    QDF_GLOBAL_EPPING_MODE != cds_get_conparam())
-		cdp_pkt_log_con_service(soc,
-			gp_cds_context->pdev_txrx_ctx,
-			scn);
+		cdp_pkt_log_con_service(soc, gp_cds_context->pdev_txrx_ctx,
+					scn);
 
 	/* Reset wma wait event */
 	qdf_event_reset(&gp_cds_context->wmaCompleteEvent);
 
 	/*call WMA pre start */
-	qdf_status = wma_pre_start();
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_FATAL,
-			  "Failed to WMA prestart");
-		QDF_ASSERT(0);
+	status = wma_pre_start();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Failed to WMA prestart");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Need to update time out of complete */
-	qdf_status = qdf_wait_for_event_completion(
+	status = qdf_wait_for_event_completion(
 					&gp_cds_context->wmaCompleteEvent,
 					CDS_WMA_TIMEOUT);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
-		if (qdf_status == QDF_STATUS_E_TIMEOUT) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Timeout occurred before WMA complete",
-				  __func__);
-		} else {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "%s: wma_pre_start reporting other error",
-				  __func__);
-		}
-
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Failed to wait for WMA complete; status:%u", status);
 		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
-
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
+		goto exit_with_status;
 	}
 
-	qdf_status = htc_start(gp_cds_context->htc_ctx);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_FATAL,
-			  "Failed to Start HTC");
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-	qdf_status = wma_wait_for_ready_event(gp_cds_context->pWMAContext);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "Failed to get ready event from target firmware");
-
-		/*
-		 * Panic when the failure is not because the FW is down,
-		 * fail gracefully if FW is down allowing re-probing from
-		 * from the platform driver
-		 */
-		if ((!cds_is_fw_down()) && (!cds_is_self_recovery_enabled()))
-			QDF_BUG(0);
-
-		wma_wmi_stop();
-		htc_stop(gp_cds_context->htc_ctx);
-		return QDF_STATUS_E_FAILURE;
+	status = htc_start(gp_cds_context->htc_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Failed to Start HTC");
+		goto exit_with_status;
 	}
 
-	if (cdp_pdev_post_attach(soc, gp_cds_context->pdev_txrx_ctx)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			"Failed to attach pdev");
-		wma_wmi_stop();
-		htc_stop(gp_cds_context->htc_ctx);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
+	status = wma_wait_for_ready_event(gp_cds_context->pWMAContext);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Failed to wait for ready event; status: %u", status);
+		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
+		goto stop_wmi;
+	}
+
+	errno = cdp_pdev_post_attach(soc, gp_cds_context->pdev_txrx_ctx);
+	if (errno) {
+		cds_err("Failed to attach pdev");
+		status = qdf_status_from_os_return(errno);
+		goto stop_wmi;
 	}
 
 	return QDF_STATUS_SUCCESS;
+
+stop_wmi:
+	wma_wmi_stop();
+	htc_stop(gp_cds_context->htc_ctx);
+
+exit_with_status:
+	return status;
 }
 
 /**
