@@ -24,8 +24,9 @@
 #include <qdf_module.h>
 #include <wlan_defs.h>
 #include <htc_services.h>
+#ifdef FEATURE_WLAN_APF
 #include "wmi_unified_apf_tlv.h"
-
+#endif
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_public_struct.h"
 #endif
@@ -21828,7 +21829,16 @@ struct wmi_ops tlv_ops =  {
 		 send_roam_scan_offload_chan_list_cmd_tlv,
 	.send_roam_scan_offload_rssi_change_cmd =
 		 send_roam_scan_offload_rssi_change_cmd_tlv,
-	.send_set_active_apf_mode_cmd = send_set_active_apf_mode_cmd_tlv,
+#ifdef FEATURE_WLAN_APF
+	.send_set_active_apf_mode_cmd = wmi_send_set_active_apf_mode_cmd_tlv,
+	.send_apf_enable_cmd = wmi_send_apf_enable_cmd_tlv,
+	.send_apf_write_work_memory_cmd =
+				wmi_send_apf_write_work_memory_cmd_tlv,
+	.send_apf_read_work_memory_cmd =
+				wmi_send_apf_read_work_memory_cmd_tlv,
+	.extract_apf_read_memory_resp_event =
+				wmi_extract_apf_read_memory_resp_event_tlv,
+#endif /* FEATURE_WLAN_APF */
 	.send_adapt_dwelltime_params_cmd =
 		send_adapt_dwelltime_params_cmd_tlv,
 	.send_dbs_scan_sel_params_cmd =
@@ -22354,6 +22364,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 		WMI_PDEV_DIV_RSSI_ANTID_EVENTID;
 	event_ids[wmi_twt_enable_complete_event_id] =
 		WMI_TWT_ENABLE_COMPLETE_EVENTID;
+	event_ids[wmi_apf_get_vdev_work_memory_resp_event_id] =
+		WMI_BPF_GET_VDEV_WORK_MEMORY_RESP_EVENTID;
 }
 
 /**
