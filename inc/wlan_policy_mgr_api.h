@@ -1150,16 +1150,30 @@ struct policy_mgr_wma_cbacks {
 };
 
 /**
- * policy_mgr_need_opportunistic_upgrade() - Tells us if we really
- * need an upgrade to 2x2
- * @psoc: PSOC object information
- * This function returns if updrade to 2x2 is needed
- *
- * Return: PM_NOP = upgrade is not needed, otherwise upgrade is
- * needed
- */
+* policy_mgr_need_opportunistic_upgrade - check whether needs to change current
+* HW mode to single mac 2x2 or the other DBS mode(for Dual DBS HW only).
+* @psoc: PSOC object information
+* @reason: enum policy_mgr_conn_update_reason
+*
+*  This function is to check whether needs to change to single Mac mode.
+*  when opportunistic timer fired.  But a special case for Dual DBS HW, this
+*  function will check DBS to DBS change is required or not:
+*  1. For Dual DBS HW, if user set vdev priority list, we may need to do
+*	 DBS to DBS switching.
+*	 eg. P2P GO (2g) < SAP (5G) < STA (2g) in DBS2.
+*	 If STA down, we need to switch to DBS1: P2P GO (2g) < SAP (5g).
+*	 So, for opportunistic checking, we need to add DBS ->DBS checking
+*            as well.
+*  2. Reason code :
+*	   DBS -> Single MAC : POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC
+*	   DBS -> DBS : POLICY_MGR_UPDATE_REASON_PRI_VDEV_CHANGE
+*
+*  return: PM_NOP, upgrade is not needed, otherwise new action type
+*             and reason code be returned.
+*/
 enum policy_mgr_conc_next_action policy_mgr_need_opportunistic_upgrade(
-		struct wlan_objmgr_psoc *psoc);
+		struct wlan_objmgr_psoc *psoc,
+		enum policy_mgr_conn_update_reason *reason);
 
 /**
  * policy_mgr_next_actions() - initiates actions needed on current
