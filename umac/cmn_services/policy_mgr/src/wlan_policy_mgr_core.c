@@ -480,6 +480,8 @@ QDF_STATUS policy_mgr_get_hw_mode_from_idx(
 {
 	uint32_t param;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t mac0_min_ss;
+	uint8_t mac1_min_ss;
 	uint32_t i, hw_mode_id;
 
 	pm_ctx = policy_mgr_get_context(psoc);
@@ -514,7 +516,20 @@ QDF_STATUS policy_mgr_get_hw_mode_from_idx(
 	hw_mode->dbs_cap = POLICY_MGR_HW_MODE_DBS_MODE_GET(param);
 	hw_mode->agile_dfs_cap = POLICY_MGR_HW_MODE_AGILE_DFS_GET(param);
 	hw_mode->sbs_cap = POLICY_MGR_HW_MODE_SBS_MODE_GET(param);
-
+	if (hw_mode->dbs_cap) {
+		mac0_min_ss = QDF_MIN(hw_mode->mac0_tx_ss, hw_mode->mac0_rx_ss);
+		mac1_min_ss = QDF_MIN(hw_mode->mac1_tx_ss, hw_mode->mac1_rx_ss);
+		if (hw_mode->mac0_band_cap == WLAN_5G_CAPABILITY &&
+		    mac0_min_ss && mac1_min_ss &&
+		    mac0_min_ss > mac1_min_ss)
+			hw_mode->action_type = PM_DBS1;
+		else if (hw_mode->mac0_band_cap == WLAN_2G_CAPABILITY &&
+			 mac0_min_ss && mac1_min_ss &&
+			 mac0_min_ss > mac1_min_ss)
+			hw_mode->action_type = PM_DBS2;
+		else
+			hw_mode->action_type = PM_DBS;
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2613,6 +2628,7 @@ QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
 				uint32_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	enum policy_mgr_band downgrade_band;
 
 	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
 		policy_mgr_err("driver isn't dbs capable, no further action needed");
@@ -2624,8 +2640,15 @@ QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
 	 * protection. So, not taking any lock inside
 	 * policy_mgr_complete_action() during pm_conc_connection_list access.
 	 */
+	if (next_action == PM_DBS1)
+		downgrade_band = POLICY_MGR_BAND_24;
+	else if (next_action == PM_DBS2)
+		downgrade_band = POLICY_MGR_BAND_5;
+	else
+		downgrade_band = POLICY_MGR_ANY;
+
 	status = policy_mgr_nss_update(psoc, new_nss, next_action,
-				       POLICY_MGR_ANY, reason);
+				       downgrade_band, reason);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		status = policy_mgr_next_actions(psoc, session_id,
 						next_action, reason);

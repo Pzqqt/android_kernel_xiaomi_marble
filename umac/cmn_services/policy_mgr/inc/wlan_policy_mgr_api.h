@@ -1730,10 +1730,50 @@ bool policy_mgr_is_current_hwmode_dbs(struct wlan_objmgr_psoc *psoc);
  * DBS and there is no need for downgrading while entering DBS.
  *    true: DBS 2x2 can always be supported
  *    false: hw_modes support DBS 1x1 as well
+ * Genoa DBS 2x2 + 1x1 will not be included.
  *
  * Return: true - DBS2x2, false - DBS1x1
  */
 bool policy_mgr_is_hw_dbs_2x2_capable(struct wlan_objmgr_psoc *psoc);
+
+/*
+ * policy_mgr_is_2x2_1x1_dbs_capable() - check 2x2+1x1 DBS supported or not
+ * @psoc: PSOC object data
+ *
+ * This routine is called to check 2x2 5G + 1x1 2G (DBS1) or
+ * 2x2 2G + 1x1 5G (DBS2) support or not.
+ * Either DBS1 or DBS2 supported
+ *
+ * Return: true/false
+ */
+bool policy_mgr_is_2x2_1x1_dbs_capable(struct wlan_objmgr_psoc *psoc);
+
+/*
+ * policy_mgr_is_2x2_5G_1x1_2G_dbs_capable() - check Genoa DBS1 enabled or not
+ * @psoc: PSOC object data
+ *
+ * This routine is called to check support DBS1 or not.
+ * Notes: DBS1: 2x2 5G + 1x1 2G.
+ * This function will call policy_mgr_get_hw_mode_idx_from_dbs_hw_list to match
+ * the HW mode from hw mode list. The parameters will also be matched to
+ * 2x2 5G +2x2 2G HW mode. But firmware will not report 2x2 5G + 2x2 2G alone
+ * with 2x2 5G + 1x1 2G at same time. So, it is safe to find DBS1 with
+ * policy_mgr_get_hw_mode_idx_from_dbs_hw_list.
+ *
+ * Return: true/false
+ */
+bool policy_mgr_is_2x2_5G_1x1_2G_dbs_capable(struct wlan_objmgr_psoc *psoc);
+
+/*
+ * policy_mgr_is_2x2_2G_1x1_5G_dbs_capable() - check Genoa DBS2 enabled or not
+ * @psoc: PSOC object data
+ *
+ * This routine is called to check support DBS2 or not.
+ * Notes: DBS2: 2x2 2G + 1x1 5G
+ *
+ * Return: true/false
+ */
+bool policy_mgr_is_2x2_2G_1x1_5G_dbs_capable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_init() - Policy Manager component initialization
