@@ -513,6 +513,242 @@ bool policy_mgr_is_hwmode_set_for_given_chnl(struct wlan_objmgr_psoc *psoc,
 	return true;
 }
 
+/**
+ * policy_mgr_pri_id_to_con_mode() - convert policy_mgr_pri_id to
+ * policy_mgr_con_mode
+ * @pri_id: policy_mgr_pri_id
+ *
+ * The help function converts policy_mgr_pri_id type to  policy_mgr_con_mode
+ * type.
+ *
+ * Return: policy_mgr_con_mode type.
+ */
+static
+enum policy_mgr_con_mode policy_mgr_pri_id_to_con_mode(
+	enum policy_mgr_pri_id pri_id)
+{
+	switch (pri_id) {
+	case PM_STA_PRI_ID:
+		return PM_STA_MODE;
+	case PM_SAP_PRI_ID:
+		return PM_SAP_MODE;
+	case PM_P2P_GO_PRI_ID:
+		return PM_P2P_GO_MODE;
+	case PM_P2P_CLI_PRI_ID:
+		return PM_P2P_CLIENT_MODE;
+	default:
+		return PM_MAX_NUM_OF_MODE;
+	}
+}
+
+enum policy_mgr_conc_next_action
+policy_mgr_get_preferred_dbs_action_table(
+	struct wlan_objmgr_psoc *psoc,
+	uint32_t vdev_id,
+	uint8_t channel,
+	enum policy_mgr_conn_update_reason reason)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	enum policy_mgr_con_mode pri_conn_mode = PM_MAX_NUM_OF_MODE;
+	enum policy_mgr_con_mode new_conn_mode = PM_MAX_NUM_OF_MODE;
+	enum QDF_OPMODE new_conn_op_mode = QDF_MAX_NO_OF_MODE;
+	bool band_pref_5g = true;
+	bool vdev_priority_enabled = false;
+	bool dbs_2x2_5g_1x1_2g_supported;
+	bool dbs_2x2_2g_1x1_5g_supported;
+	uint32_t vdev_pri_list, vdev_pri_id;
+	uint8_t chan_list[MAX_NUMBER_OF_CONC_CONNECTIONS + 1];
+	uint8_t vdev_list[MAX_NUMBER_OF_CONC_CONNECTIONS + 1];
+	uint32_t vdev_count = 0;
+	uint32_t i;
+	bool found;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return PM_NOP;
+	}
+	dbs_2x2_5g_1x1_2g_supported =
+		policy_mgr_is_2x2_5G_1x1_2G_dbs_capable(psoc);
+	dbs_2x2_2g_1x1_5g_supported =
+		policy_mgr_is_2x2_2G_1x1_5G_dbs_capable(psoc);
+	policy_mgr_debug("target support DBS1 %d DBS2 %d",
+			 dbs_2x2_5g_1x1_2g_supported,
+			 dbs_2x2_2g_1x1_5g_supported);
+	/*
+	 * If both DBS1 and DBS2 not supported, this should be Legacy Single
+	 * DBS mode HW. The policy_mgr_psoc_enable has setup the correct
+	 * action tables.
+	 */
+	if (!dbs_2x2_5g_1x1_2g_supported && !dbs_2x2_2g_1x1_5g_supported)
+		return PM_NOP;
+	if (!dbs_2x2_5g_1x1_2g_supported) {
+		band_pref_5g = false;
+		policy_mgr_debug("target only supports DBS2!");
+		goto DONE;
+	}
+	if (!dbs_2x2_2g_1x1_5g_supported) {
+		policy_mgr_debug("target only supports DBS1!");
+		goto DONE;
+	}
+	if (PM_GET_BAND_PREFERRED(pm_ctx->user_cfg.dbs_selection_policy) == 1)
+		band_pref_5g = false;
+
+	if (PM_GET_VDEV_PRIORITY_ENABLED(
+	    pm_ctx->user_cfg.dbs_selection_policy) == 1 &&
+	    pm_ctx->user_cfg.vdev_priority_list)
+		vdev_priority_enabled = true;
+
+	if (!vdev_priority_enabled)
+		goto DONE;
+
+	if (vdev_id != INVALID_VDEV_ID && channel) {
+		if (pm_ctx->hdd_cbacks.hdd_get_device_mode)
+			new_conn_op_mode = pm_ctx->hdd_cbacks.
+					hdd_get_device_mode(vdev_id);
+
+		new_conn_mode = policy_mgr_convert_device_mode_to_qdf_type(
+			new_conn_op_mode);
+		if (new_conn_mode == PM_MAX_NUM_OF_MODE)
+			policy_mgr_debug("new vdev %d op_mode %d chan %d reason %d: not prioritized",
+					 vdev_id, new_conn_op_mode,
+					 channel, reason);
+		else
+			policy_mgr_debug("new vdev %d op_mode %d chan %d : reason %d",
+					 vdev_id, new_conn_op_mode, channel,
+					 reason);
+	}
+	vdev_pri_list = pm_ctx->user_cfg.vdev_priority_list;
+	while (vdev_pri_list) {
+		vdev_pri_id = vdev_pri_list & 0xF;
+		pri_conn_mode = policy_mgr_pri_id_to_con_mode(vdev_pri_id);
+		if (pri_conn_mode == PM_MAX_NUM_OF_MODE) {
+			policy_mgr_debug("vdev_pri_id %d prioritization not supported",
+					 vdev_pri_id);
+			goto NEXT;
+		}
+		vdev_count = policy_mgr_get_mode_specific_conn_info(
+				psoc, chan_list, vdev_list, pri_conn_mode);
+		/**
+		 * Take care of duplication case, the vdev id may
+		 * exist in the conn list already with old chan.
+		 * Replace with new chan before make decision.
+		 */
+		found = false;
+		for (i = 0; i < vdev_count; i++) {
+			policy_mgr_debug("[%d] vdev %d chan %d conn_mode %d",
+					 i, vdev_list[i], chan_list[i],
+					 pri_conn_mode);
+
+			if (new_conn_mode == pri_conn_mode &&
+			    vdev_list[i] == vdev_id) {
+				chan_list[i] = channel;
+				found = true;
+			}
+		}
+		/**
+		 * The new coming vdev should be added to the list to
+		 * make decision if it is prioritized.
+		 */
+		if (!found && new_conn_mode == pri_conn_mode) {
+			chan_list[vdev_count] = channel;
+			vdev_list[vdev_count++] = vdev_id;
+		}
+		/**
+		 * if more than one vdev has same priority, keep "band_pref_5g"
+		 * value as default band preference setting.
+		 */
+		if (vdev_count > 1)
+			break;
+		/**
+		 * select the only active vdev (or new coming vdev) chan as
+		 * preferred band.
+		 */
+		if (vdev_count > 0) {
+			band_pref_5g = WLAN_REG_IS_5GHZ_CH(chan_list[0]);
+			break;
+		}
+NEXT:
+		vdev_pri_list >>= 4;
+	}
+DONE:
+	policy_mgr_debug("band_pref_5g %d", band_pref_5g);
+	if (band_pref_5g)
+		return PM_DBS1;
+	else
+		return PM_DBS2;
+}
+
+/**
+ * policy_mgr_get_second_conn_action_table() - get second conn action table
+ * @psoc: Pointer to psoc
+ * @vdev_id: vdev Id
+ * @channel: channel of vdev.
+ * @reason: reason of request
+ *
+ * Get the action table based on current HW Caps and INI user preference.
+ * This function will be called by policy_mgr_current_connections_update during
+ * DBS action decision.
+ *
+ * return : action table address
+ */
+static policy_mgr_next_action_two_connection_table_type *
+policy_mgr_get_second_conn_action_table(
+	struct wlan_objmgr_psoc *psoc,
+	uint32_t vdev_id,
+	uint8_t channel,
+	enum policy_mgr_conn_update_reason reason)
+{
+	enum policy_mgr_conc_next_action preferred_action;
+
+	if (!policy_mgr_is_2x2_1x1_dbs_capable(psoc))
+		return next_action_two_connection_table;
+
+	preferred_action = policy_mgr_get_preferred_dbs_action_table(
+				psoc, vdev_id, channel, reason);
+	switch (preferred_action) {
+	case PM_DBS2:
+		return next_action_two_connection_2x2_2g_1x1_5g_table;
+	default:
+		return next_action_two_connection_table;
+	}
+}
+
+/**
+ * policy_mgr_get_third_conn_action_table() - get third connection action table
+ * @psoc: Pointer to psoc
+ * @vdev_id: vdev Id
+ * @channel: channel of vdev.
+ * @reason: reason of request
+ *
+ * Get the action table based on current HW Caps and INI user preference.
+ * This function will be called by policy_mgr_current_connections_update during
+ * DBS action decision.
+ *
+ * return : action table address
+ */
+static policy_mgr_next_action_three_connection_table_type *
+policy_mgr_get_third_conn_action_table(
+	struct wlan_objmgr_psoc *psoc,
+	uint32_t vdev_id,
+	uint8_t channel,
+	enum policy_mgr_conn_update_reason reason)
+{
+	enum policy_mgr_conc_next_action preferred_action;
+
+	if (!policy_mgr_is_2x2_1x1_dbs_capable(psoc))
+		return next_action_three_connection_table;
+
+	preferred_action = policy_mgr_get_preferred_dbs_action_table(
+				psoc, vdev_id, channel, reason);
+	switch (preferred_action) {
+	case PM_DBS2:
+		return next_action_three_connection_2x2_2g_1x1_5g_table;
+	default:
+		return next_action_three_connection_table;
+	}
+}
+
 QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 		uint32_t session_id,
 		uint8_t channel,
@@ -522,6 +758,8 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 	uint32_t num_connections = 0;
 	enum policy_mgr_one_connection_mode second_index = 0;
 	enum policy_mgr_two_connection_mode third_index = 0;
+	policy_mgr_next_action_two_connection_table_type *second_conn_table;
+	policy_mgr_next_action_three_connection_table_type *third_conn_table;
 	enum policy_mgr_band band;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -559,8 +797,9 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 			"couldn't find index for 2nd connection next action table");
 			goto done;
 		}
-		next_action =
-			(*next_action_two_connection_table)[second_index][band];
+		second_conn_table = policy_mgr_get_second_conn_action_table(
+			psoc, session_id, channel, reason);
+		next_action = (*second_conn_table)[second_index][band];
 		break;
 	case 2:
 		third_index =
@@ -570,8 +809,9 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 			"couldn't find index for 3rd connection next action table");
 			goto done;
 		}
-		next_action = (*next_action_three_connection_table)
-							[third_index][band];
+		third_conn_table = policy_mgr_get_third_conn_action_table(
+			psoc, session_id, channel, reason);
+		next_action = (*third_conn_table)[third_index][band];
 		break;
 	default:
 		policy_mgr_err("unexpected num_connections value %d",

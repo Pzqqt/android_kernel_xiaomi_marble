@@ -195,6 +195,11 @@ extern policy_mgr_next_action_two_connection_table_type
 		*next_action_two_connection_table;
 extern policy_mgr_next_action_three_connection_table_type
 		*next_action_three_connection_table;
+extern policy_mgr_next_action_two_connection_table_type
+		*next_action_two_connection_2x2_2g_1x1_5g_table;
+extern policy_mgr_next_action_three_connection_table_type
+		*next_action_three_connection_2x2_2g_1x1_5g_table;
+
 extern enum policy_mgr_conc_next_action
 	(*policy_mgr_get_current_pref_hw_mode_ptr)
 	(struct wlan_objmgr_psoc *psoc);

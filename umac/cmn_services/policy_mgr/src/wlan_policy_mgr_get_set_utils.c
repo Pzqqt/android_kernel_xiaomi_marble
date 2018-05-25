@@ -1984,7 +1984,10 @@ QDF_STATUS policy_mgr_set_user_cfg(struct wlan_objmgr_psoc *psoc,
 	}
 
 	pm_ctx->user_cfg = *user_cfg;
-
+	policy_mgr_debug("dbs_selection_policy 0x%x",
+			 user_cfg->dbs_selection_policy);
+	policy_mgr_debug("vdev_priority_list 0x%x",
+			 user_cfg->vdev_priority_list);
 	pm_ctx->cur_conc_system_pref = pm_ctx->user_cfg.conc_system_pref;
 
 	return QDF_STATUS_SUCCESS;
