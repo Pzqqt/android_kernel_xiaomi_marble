@@ -769,9 +769,86 @@ bool policy_mgr_is_dbs_enable(struct wlan_objmgr_psoc *psoc)
 bool policy_mgr_is_hw_dbs_2x2_capable(struct wlan_objmgr_psoc *psoc)
 {
 	struct dbs_nss nss_dbs;
+	uint32_t nss;
 
-	return ((policy_mgr_get_hw_dbs_nss(psoc, &nss_dbs)) >= HW_MODE_SS_2x2)
-		? true : false;
+	nss = policy_mgr_get_hw_dbs_nss(psoc, &nss_dbs);
+	if (nss >= HW_MODE_SS_2x2 && (nss_dbs.mac0_ss == nss_dbs.mac1_ss))
+		return true;
+	else
+		return false;
+}
+
+/*
+ * policy_mgr_is_2x2_1x1_dbs_capable() - check 2x2+1x1 DBS supported or not
+ * @psoc: PSOC object data
+ *
+ * This routine is called to check 2x2 5G + 1x1 2G (DBS1) or
+ * 2x2 2G + 1x1 5G (DBS2) support or not.
+ * Either DBS1 or DBS2 supported
+ *
+ * Return: true/false
+ */
+bool policy_mgr_is_2x2_1x1_dbs_capable(struct wlan_objmgr_psoc *psoc)
+{
+	struct dbs_nss nss_dbs;
+	uint32_t nss;
+
+	nss = policy_mgr_get_hw_dbs_nss(psoc, &nss_dbs);
+	if (nss >= HW_MODE_SS_2x2 && (nss_dbs.mac0_ss > nss_dbs.mac1_ss))
+		return true;
+	else
+		return false;
+}
+
+/*
+ * policy_mgr_is_2x2_5G_1x1_2G_dbs_capable() - check Genoa DBS1 enabled or not
+ * @psoc: PSOC object data
+ *
+ * This routine is called to check support DBS1 or not.
+ * Notes: DBS1: 2x2 5G + 1x1 2G.
+ * This function will call policy_mgr_get_hw_mode_idx_from_dbs_hw_list to match
+ * the HW mode from hw mode list. The parameters will also be matched to
+ * 2x2 5G +2x2 2G HW mode. But firmware will not report 2x2 5G + 2x2 2G alone
+ * with 2x2 5G + 1x1 2G at same time. So, it is safe to find DBS1 with
+ * policy_mgr_get_hw_mode_idx_from_dbs_hw_list.
+ *
+ * Return: true/false
+ */
+bool policy_mgr_is_2x2_5G_1x1_2G_dbs_capable(struct wlan_objmgr_psoc *psoc)
+{
+	return policy_mgr_is_2x2_1x1_dbs_capable(psoc) &&
+		(policy_mgr_get_hw_mode_idx_from_dbs_hw_list(
+					psoc,
+					HW_MODE_SS_2x2,
+					HW_MODE_80_MHZ,
+					HW_MODE_SS_1x1, HW_MODE_40_MHZ,
+					HW_MODE_MAC_BAND_5G,
+					HW_MODE_DBS,
+					HW_MODE_AGILE_DFS_NONE,
+					HW_MODE_SBS_NONE) >= 0);
+}
+
+/*
+ * policy_mgr_is_2x2_2G_1x1_5G_dbs_capable() - check Genoa DBS2 enabled or not
+ * @psoc: PSOC object data
+ *
+ * This routine is called to check support DBS2 or not.
+ * Notes: DBS2: 2x2 2G + 1x1 5G
+ *
+ * Return: true/false
+ */
+bool policy_mgr_is_2x2_2G_1x1_5G_dbs_capable(struct wlan_objmgr_psoc *psoc)
+{
+	return policy_mgr_is_2x2_1x1_dbs_capable(psoc) &&
+		(policy_mgr_get_hw_mode_idx_from_dbs_hw_list(
+					psoc,
+					HW_MODE_SS_2x2,
+					HW_MODE_40_MHZ,
+					HW_MODE_SS_1x1, HW_MODE_40_MHZ,
+					HW_MODE_MAC_BAND_2G,
+					HW_MODE_DBS,
+					HW_MODE_AGILE_DFS_NONE,
+					HW_MODE_SBS_NONE) >= 0);
 }
 
 uint32_t policy_mgr_get_connection_count(struct wlan_objmgr_psoc *psoc)

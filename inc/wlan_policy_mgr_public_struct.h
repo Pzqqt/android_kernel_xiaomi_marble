@@ -689,6 +689,12 @@ enum policy_mgr_two_connection_mode {
  * @PM_SBS_DOWNGRADE: switch to SBS mode & downgrade to 1x1
  * @PM_DOWNGRADE: downgrade to 1x1
  * @PM_UPGRADE: upgrade to 2x2
+ * @PM_DBS1: switch to DBS 1
+ * @PM_DBS1_DOWNGRADE: downgrade 2G beaconing entity to 1x1 and switch to DBS1.
+ * @PM_DBS2: switch to DBS 2
+ * @PM_DBS2_DOWNGRADE: downgrade 5G beaconing entity to 1x1 and switch to DBS2.
+ * @PM_UPGRADE_5G: upgrade 5g beaconing entity to 2x2.
+ * @PM_UPGRADE_2G: upgrade 2g beaconing entity to 2x2.
  * @PM_MAX_CONC_PRIORITY_MODE: Max place holder
  *
  * These are generic IDs that identify the various roles
@@ -705,6 +711,12 @@ enum policy_mgr_conc_next_action {
 	PM_SBS_DOWNGRADE,
 	PM_DOWNGRADE,
 	PM_UPGRADE,
+	PM_DBS1,
+	PM_DBS1_DOWNGRADE,
+	PM_DBS2,
+	PM_DBS2_DOWNGRADE,
+	PM_UPGRADE_5G,
+	PM_UPGRADE_2G,
 
 	PM_MAX_CONC_NEXT_ACTION
 };
@@ -882,8 +894,10 @@ struct policy_mgr_conc_connection_info {
  * @mac0_bw: MAC0 bandwidth
  * @mac1_bw: MAC1 bandwidth
  * @mac0_band_cap: mac0 band (5g/2g) capability
- * @dbs_cap: DBS capability
- * @agile_dfs_cap: Agile DFS capability
+ * @dbs_cap: DBS capabality
+ * @agile_dfs_cap: Agile DFS capabality
+ * @action_type: for dbs mode, the field indicates the "Action type" to be
+ * used to switch to the mode. To help the hw mode validation.
  */
 struct policy_mgr_hw_mode_params {
 	uint8_t mac0_tx_ss;
@@ -896,6 +910,7 @@ struct policy_mgr_hw_mode_params {
 	uint8_t dbs_cap;
 	uint8_t agile_dfs_cap;
 	uint8_t sbs_cap;
+	enum policy_mgr_conc_next_action action_type;
 };
 
 /**

@@ -620,14 +620,108 @@ done:
 	return status;
 }
 
-QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
+/**
+ * policy_mgr_validate_dbs_switch() - Check DBS action valid or not
+ * @psoc: Pointer to psoc
+ * @session_id: vdev id
+ * @action: action requested
+ * @reason: reason of hw mode change
+ *
+ * This routine will check the current hw mode with requested action.
+ * If we are already in the mode, the caller will do nothing.
+ * This will be called by policy_mgr_next_actions to check the action needed
+ * or not.
+ *
+ * return : QDF_STATUS_SUCCESS, action is allowed.
+ *          QDF_STATUS_E_ALREADY, action is not needed.
+ *          QDF_STATUS_E_FAILURE, error happens.
+ *          QDF_STATUS_E_NOSUPPORT, the requested mode not supported.
+ */
+static
+QDF_STATUS policy_mgr_validate_dbs_switch(
+		struct wlan_objmgr_psoc *psoc,
+		uint32_t session_id,
+		enum policy_mgr_conc_next_action action,
+		enum policy_mgr_conn_update_reason reason)
+{
+	QDF_STATUS status;
+	struct policy_mgr_hw_mode_params hw_mode;
+
+	/* check for the current HW index to see if really need any action */
+	status = policy_mgr_get_current_hw_mode(psoc, &hw_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		policy_mgr_err("policy_mgr_get_current_hw_mode failed");
+		return status;
+	}
+
+	if (hw_mode.sbs_cap) {
+		if ((action == PM_SBS) || (action == PM_SBS_DOWNGRADE)) {
+			if (!policy_mgr_is_hw_sbs_capable(psoc)) {
+				/* No action */
+				policy_mgr_notice("firmware is not sbs capable");
+				return QDF_STATUS_E_NOSUPPORT;
+			}
+			/* current mode is already SBS nothing to be
+			 * done
+			 */
+			 policy_mgr_notice("current mode is already SBS");
+			return QDF_STATUS_E_ALREADY;
+		} else {
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+
+	if (!hw_mode.dbs_cap) {
+		if (action == PM_SINGLE_MAC ||
+		    action == PM_SINGLE_MAC_UPGRADE) {
+			policy_mgr_notice("current mode is already single MAC");
+			return QDF_STATUS_E_ALREADY;
+		} else {
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	/**
+	 * If already in DBS, no need to request DBS again (HL, Napier).
+	 * For dual DBS HW, in case DBS1 -> DBS2 or DBS2 -> DBS1
+	 * switching, we need to check the current DBS mode is same as
+	 * requested or not.
+	 */
+	if (policy_mgr_is_2x2_5G_1x1_2G_dbs_capable(psoc) ||
+	    policy_mgr_is_2x2_2G_1x1_5G_dbs_capable(psoc)) {
+		policy_mgr_info("curr dbs action %d new action %d",
+				hw_mode.action_type, action);
+		if (hw_mode.action_type == PM_DBS1 &&
+		    ((action == PM_DBS1 ||
+		    action == PM_DBS1_DOWNGRADE))) {
+			policy_mgr_err("driver is already in DBS_5G_2x2_24G_1x1 (%d), no further action %d needed",
+				       hw_mode.action_type, action);
+			return QDF_STATUS_E_ALREADY;
+		} else if (hw_mode.action_type == PM_DBS2 &&
+			   ((action == PM_DBS2 ||
+			   action == PM_DBS2_DOWNGRADE))) {
+			policy_mgr_err("driver is already in DBS_24G_2x2_5G_1x1 (%d), no further action %d needed",
+				       hw_mode.action_type, action);
+			return QDF_STATUS_E_ALREADY;
+		}
+	} else if ((action == PM_DBS_DOWNGRADE) || (action == PM_DBS) ||
+		   (action == PM_DBS_UPGRADE)) {
+		policy_mgr_err("driver is already in %s mode, no further action needed",
+			       (hw_mode.dbs_cap) ? "dbs" : "non dbs");
+		return QDF_STATUS_E_ALREADY;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS policy_mgr_next_actions(
+		struct wlan_objmgr_psoc *psoc,
 		uint32_t session_id,
 		enum policy_mgr_conc_next_action action,
 		enum policy_mgr_conn_update_reason reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct policy_mgr_hw_mode_params hw_mode;
 	struct dbs_nss nss_dbs = {0};
+	struct policy_mgr_hw_mode_params hw_mode;
+	enum policy_mgr_conc_next_action next_action;
 
 	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
 		policy_mgr_err("driver isn't dbs capable, no further action needed");
@@ -640,28 +734,14 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("policy_mgr_get_current_hw_mode failed");
 		return status;
 	}
-	/**
-	 *  if already in DBS no need to request DBS. Might be needed
-	 *  to extend the logic when multiple dbs HW mode is available
-	 */
-	if ((((PM_DBS_DOWNGRADE == action) || (PM_DBS == action) ||
-		(PM_DBS_UPGRADE == action))
-		&& hw_mode.dbs_cap)) {
-		policy_mgr_err("driver is already in %s mode, no further action needed",
-				(hw_mode.dbs_cap) ? "dbs" : "non dbs");
-		return QDF_STATUS_E_ALREADY;
-	}
 
-	if ((PM_SBS == action) || (action == PM_SBS_DOWNGRADE)) {
-		if (!policy_mgr_is_hw_sbs_capable(psoc)) {
-			/* No action */
-			policy_mgr_notice("firmware is not sbs capable");
-			return QDF_STATUS_E_NOSUPPORT;
-		}
-		/* check if current mode is already SBS nothing to be
-		 * done
-		 */
-
+	/* check for the current HW index to see if really need any action */
+	status = policy_mgr_validate_dbs_switch(psoc, session_id, action,
+						reason);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		policy_mgr_err(" not take action %d reason %d session %d status %d",
+			       action, reason, session_id, status);
+		return status;
 	}
 
 	switch (action) {
@@ -754,6 +834,70 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 		 */
 		status = policy_mgr_nss_update(psoc, POLICY_MGR_RX_NSS_2,
 					PM_NOP, POLICY_MGR_ANY, reason);
+		break;
+	case PM_DBS1_DOWNGRADE:
+		status = policy_mgr_complete_action(psoc, POLICY_MGR_RX_NSS_1,
+						    PM_DBS1, reason,
+						    session_id);
+		break;
+	case PM_DBS2_DOWNGRADE:
+		status = policy_mgr_complete_action(psoc, POLICY_MGR_RX_NSS_1,
+						    PM_DBS2, reason,
+						    session_id);
+		break;
+	case PM_DBS1:
+		/*
+		 * PM_DBS1 (2x2 5G + 1x1 2G) will support 5G 2x2. If previous
+		 * mode is DBS, that should be 2x2 2G + 1x1 5G mode and
+		 * the 5G band was downgraded to 1x1. So, we need to
+		 * upgrade 5G vdevs after hw mode change.
+		 */
+		if (hw_mode.dbs_cap)
+			next_action = PM_UPGRADE_5G;
+		else
+			next_action = PM_NOP;
+		status = policy_mgr_pdev_set_hw_mode(
+					psoc, session_id,
+					HW_MODE_SS_2x2,
+					HW_MODE_80_MHZ,
+					HW_MODE_SS_1x1, HW_MODE_40_MHZ,
+					HW_MODE_MAC_BAND_5G,
+					HW_MODE_DBS,
+					HW_MODE_AGILE_DFS_NONE,
+					HW_MODE_SBS_NONE,
+					reason, next_action);
+		break;
+	case PM_DBS2:
+		/*
+		 * PM_DBS2 (2x2 2G + 1x1 5G) will support 2G 2x2. If previous
+		 * mode is DBS, that should be 2x2 5G + 1x1 2G mode and
+		 * the 2G band was downgraded to 1x1. So, we need to
+		 * upgrade 5G vdevs after hw mode change.
+		 */
+		if (hw_mode.dbs_cap)
+			next_action = PM_UPGRADE_2G;
+		else
+			next_action = PM_NOP;
+		status = policy_mgr_pdev_set_hw_mode(
+						psoc, session_id,
+						HW_MODE_SS_2x2,
+						HW_MODE_40_MHZ,
+						HW_MODE_SS_1x1, HW_MODE_40_MHZ,
+						HW_MODE_MAC_BAND_2G,
+						HW_MODE_DBS,
+						HW_MODE_AGILE_DFS_NONE,
+						HW_MODE_SBS_NONE,
+						reason, next_action);
+		break;
+	case PM_UPGRADE_5G:
+		status = policy_mgr_nss_update(
+					psoc, POLICY_MGR_RX_NSS_2,
+					PM_NOP, POLICY_MGR_BAND_5, reason);
+		break;
+	case PM_UPGRADE_2G:
+		status = policy_mgr_nss_update(
+					psoc, POLICY_MGR_RX_NSS_2,
+					PM_NOP, POLICY_MGR_BAND_24, reason);
 		break;
 	default:
 		policy_mgr_err("unexpected action value %d", action);
