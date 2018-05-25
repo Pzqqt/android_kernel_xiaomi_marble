@@ -811,10 +811,25 @@ QDF_STATUS (*send_get_buf_extscan_hotlist_cmd)(wmi_unified_t wmi_handle,
 				   struct ext_scan_setbssi_hotlist_params *
 				   photlist, int *buf_len);
 
+#ifdef FEATURE_WLAN_APF
 QDF_STATUS
 (*send_set_active_apf_mode_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id,
 				enum wmi_host_active_apf_mode ucast_mode,
 				enum wmi_host_active_apf_mode mcast_bcast_mode);
+
+QDF_STATUS (*send_apf_enable_cmd)(wmi_unified_t wmi_handle, uint32_t vdev_id,
+				  bool enable);
+
+QDF_STATUS (*send_apf_write_work_memory_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_apf_write_memory_params *apf_write_params);
+
+QDF_STATUS (*send_apf_read_work_memory_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_apf_read_memory_params *apf_read_params);
+
+QDF_STATUS (*extract_apf_read_memory_resp_event)(wmi_unified_t wmi_handle,
+			void *evt_buf,
+			struct wmi_apf_read_memory_resp_event_params *resp);
+#endif /* FEATURE_WLAN_APF */
 
 QDF_STATUS (*send_pdev_get_tpc_config_cmd)(wmi_unified_t wmi_handle,
 		uint32_t param);

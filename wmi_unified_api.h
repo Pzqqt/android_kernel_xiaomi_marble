@@ -1096,19 +1096,75 @@ QDF_STATUS wmi_unified_roam_scan_offload_rssi_change_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_set_per_roam_config(void *wmi_hdl,
 		struct wmi_per_roam_config_req *req_buf);
 
+#ifdef FEATURE_WLAN_APF
 /**
  * wmi_unified_set_active_apf_mode_cmd() - config active APF mode in FW
- * @wmi_hdl: the WMI handle
+ * @wmi: the WMI handle
  * @vdev_id: the Id of the vdev to apply the configuration to
  * @ucast_mode: the active APF mode to configure for unicast packets
  * @mcast_bcast_mode: the active APF mode to configure for multicast/broadcast
  *	packets
  */
 QDF_STATUS
-wmi_unified_set_active_apf_mode_cmd(void *wmi_hdl, uint8_t vdev_id,
+wmi_unified_set_active_apf_mode_cmd(wmi_unified_t wmi, uint8_t vdev_id,
 				    enum wmi_host_active_apf_mode ucast_mode,
 				    enum wmi_host_active_apf_mode
 							      mcast_bcast_mode);
+
+/**
+ * wmi_unified_send_apf_enable_cmd() - send apf enable/disable cmd
+ * @wmi: wmi handle
+ * @vdev_id: VDEV id
+ * @enable: true: enable, false: disable
+ *
+ * This function passes the apf enable command to fw
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_send_apf_enable_cmd(wmi_unified_t wmi,
+					   uint32_t vdev_id, bool enable);
+
+/**
+ * wmi_unified_send_apf_write_work_memory_cmd() - send cmd to write into the APF
+ *	work memory.
+ * @wmi: wmi handle
+ * @write_params: parameters and buffer pointer for the write
+ *
+ * This function passes the write apf work mem command to fw
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_send_apf_write_work_memory_cmd(wmi_unified_t wmi,
+			struct wmi_apf_write_memory_params *write_params);
+
+/**
+ * wmi_unified_send_apf_read_work_memory_cmd() - send cmd to read part of APF
+ *	work memory
+ * @wmi: wmi handle
+ * @read_params: contains relative address and length to read from
+ *
+ * This function passes the read apf work mem command to fw
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_send_apf_read_work_memory_cmd(wmi_unified_t wmi,
+				struct wmi_apf_read_memory_params *read_params);
+
+/**
+ * wmi_extract_apf_read_memory_resp_event() - exctract read mem resp event
+ * @wmi: wmi handle
+ * @evt_buf: Pointer to the event buffer
+ * @resp: pointer to memory to extract event parameters into
+ *
+ * This function exctracts read mem response event into the given structure ptr
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_apf_read_memory_resp_event(wmi_unified_t wmi, void *evt_buf,
+				struct wmi_apf_read_memory_resp_event_params
+								*read_mem_evt);
+#endif /* FEATURE_WLAN_APF */
 
 QDF_STATUS wmi_unified_stats_request_send(void *wmi_hdl,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
