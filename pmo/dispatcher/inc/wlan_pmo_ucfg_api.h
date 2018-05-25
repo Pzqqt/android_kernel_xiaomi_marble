@@ -122,23 +122,25 @@ QDF_STATUS ucfg_pmo_psoc_set_caps(struct wlan_objmgr_psoc *psoc,
  * pmo_ucfg_enable_wakeup_event() -  enable wow wakeup events
  * @psoc: objmgr psoc
  * @vdev_id: vdev id
- * @bitmap: Event bitmap
+ * @wow_event: wow event to enable
  *
  * Return: none
  */
 void pmo_ucfg_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
-	uint32_t vdev_id, uint32_t *bitmap);
+				  uint32_t vdev_id,
+				  WOW_WAKE_EVENT_TYPE wow_event);
 
 /**
  * pmo_ucfg_disable_wakeup_event() -  disable wow wakeup events
  * @psoc: objmgr psoc
  * @vdev_id: vdev id
- * @bitmap: Event bitmap
+ * @wow_event: wow event to disable
  *
  * Return: none
  */
 void pmo_ucfg_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
-	uint32_t vdev_id, uint32_t bitmap);
+				   uint32_t vdev_id,
+				   WOW_WAKE_EVENT_TYPE wow_event);
 
 /**
  * pmo_ucfg_cache_arp_offload_req(): API to cache arp req in pmo vdev priv ctx

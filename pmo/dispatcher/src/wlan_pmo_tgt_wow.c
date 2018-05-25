@@ -32,10 +32,12 @@ QDF_STATUS pmo_tgt_enable_wow_wakeup_event(
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
+	int vdev_id;
 
 	pmo_enter();
 
 	psoc = pmo_vdev_get_psoc(vdev);
+	vdev_id = pmo_vdev_get_id(vdev);
 
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_enable_wow_wakeup_event_req) {
@@ -43,6 +45,10 @@ QDF_STATUS pmo_tgt_enable_wow_wakeup_event(
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto out;
 	}
+
+	pmo_debug("Enable wakeup events 0x%x%x%x%x for vdev_id %d",
+		  bitmap[3], bitmap[2], bitmap[1], bitmap[0], vdev_id);
+
 	status = pmo_tx_ops.send_enable_wow_wakeup_event_req(vdev, bitmap);
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to enable wow wakeup event");
@@ -59,10 +65,12 @@ QDF_STATUS pmo_tgt_disable_wow_wakeup_event(
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
+	int vdev_id;
 
 	pmo_enter();
 
 	psoc = pmo_vdev_get_psoc(vdev);
+	vdev_id = pmo_vdev_get_id(vdev);
 
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_disable_wow_wakeup_event_req) {
@@ -70,6 +78,10 @@ QDF_STATUS pmo_tgt_disable_wow_wakeup_event(
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto out;
 	}
+
+	pmo_debug("Disable wakeup events 0x%x%x%x%x for vdev_id %d",
+		  bitmap[3], bitmap[2], bitmap[1], bitmap[0], vdev_id);
+
 	status = pmo_tx_ops.send_disable_wow_wakeup_event_req(vdev, bitmap);
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to disable wow wakeup event");

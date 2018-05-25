@@ -102,10 +102,6 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 		return;
 	}
 
-	pmo_info("Selected %s wake event mask 0x%x%x%x%x, vdev %d",
-		 iface_type, event_bitmap[0], event_bitmap[1],
-		 event_bitmap[2], event_bitmap[3], vdev_id);
-
 	pmo_tgt_enable_wow_wakeup_event(vdev, event_bitmap);
 }
 

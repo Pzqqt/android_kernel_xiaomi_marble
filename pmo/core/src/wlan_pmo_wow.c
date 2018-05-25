@@ -27,6 +27,21 @@
 #include "wlan_pmo_static_config.h"
 #include "wlan_reg_services_api.h"
 
+void pmo_set_wow_event_bitmap(WOW_WAKE_EVENT_TYPE event,
+			      uint32_t wow_bitmap_size,
+			      uint32_t *bitmask)
+{
+	uint32_t bit_idx = 0, idx = 0;
+
+	if (!bitmask || wow_bitmap_size < PMO_WOW_MAX_EVENT_BM_LEN) {
+		pmo_err("wow bitmask length shorter than %d",
+			PMO_WOW_MAX_EVENT_BM_LEN);
+		return;
+	}
+	pmo_get_event_bitmap_idx(event, wow_bitmap_size, &bit_idx, &idx);
+	bitmask[idx] |= 1 << bit_idx;
+}
+
 QDF_STATUS pmo_core_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 		struct pmo_wow_add_pattern *ptrn)
 {
@@ -128,10 +143,12 @@ out:
 }
 
 void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
-				  uint32_t vdev_id, uint32_t *bitmap)
+				  uint32_t vdev_id,
+				  WOW_WAKE_EVENT_TYPE wow_event)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
+	uint32_t bitmap[PMO_WOW_MAX_EVENT_BM_LEN] = {0};
 
 	pmo_enter();
 
@@ -150,8 +167,8 @@ void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	if (QDF_IS_STATUS_ERROR(status))
 		goto out;
 
-	pmo_info("enable wakeup event vdev_id %d wake up event 0x%x%x%x%x",
-		 vdev_id, bitmap[0], bitmap[1], bitmap[2], bitmap[3]);
+	pmo_set_wow_event_bitmap(wow_event, PMO_WOW_MAX_EVENT_BM_LEN, bitmap);
+
 	pmo_tgt_enable_wow_wakeup_event(vdev, bitmap);
 
 	pmo_vdev_put_ref(vdev);
@@ -161,10 +178,12 @@ out:
 }
 
 void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
-	uint32_t vdev_id, uint32_t *bitmap)
+				   uint32_t vdev_id,
+				   WOW_WAKE_EVENT_TYPE wow_event)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
+	uint32_t bitmap[PMO_WOW_MAX_EVENT_BM_LEN] = {0};
 
 	pmo_enter();
 	if (!psoc) {
@@ -182,8 +201,8 @@ void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	if (QDF_IS_STATUS_ERROR(status))
 		goto out;
 
-	pmo_info("Disable wakeup event vdev_id %d wake up event 0x%x%x%x%x",
-		 vdev_id, bitmap[0], bitmap[1], bitmap[2], bitmap[3]);
+	pmo_set_wow_event_bitmap(wow_event, PMO_WOW_MAX_EVENT_BM_LEN, bitmap);
+
 	pmo_tgt_disable_wow_wakeup_event(vdev, bitmap);
 
 	pmo_vdev_put_ref(vdev);
@@ -315,24 +334,6 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 		  "and pno/extscan is not in progress, skipping wow");
 
 	return false;
-}
-
-void pmo_set_wow_event_bitmap(WOW_WAKE_EVENT_TYPE event,
-			      uint32_t wow_bitmap_size,
-			      uint32_t *bitmask)
-{
-	uint32_t bit_idx = 0, idx = 0;
-
-	if (!bitmask || wow_bitmap_size < PMO_WOW_MAX_EVENT_BM_LEN) {
-		pmo_err("wow bitmask length shorter than %d",
-			PMO_WOW_MAX_EVENT_BM_LEN);
-		return;
-	}
-	pmo_get_event_bitmap_idx(event, wow_bitmap_size, &bit_idx, &idx);
-	bitmask[idx] |= 1 << bit_idx;
-
-	pmo_debug("%s: bitmask updated %x%x%x%x",
-		  __func__, bitmask[0], bitmask[1], bitmask[2], bitmask[3]);
 }
 
 void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
