@@ -547,6 +547,33 @@ bool policy_mgr_is_dbs_allowed_for_concurrency(
 		struct wlan_objmgr_psoc *psoc, enum QDF_OPMODE new_conn_mode);
 
 /**
+ * policy_mgr_get_preferred_dbs_action_table() - get dbs action table type
+ * @psoc: Pointer to psoc
+ * @vdev_id: vdev Id
+ * @channel: channel of vdev.
+ * @reason: reason of request
+ *
+ * 1. Based on band preferred and vdev priority setting to choose the preferred
+ * dbs action.
+ * 2. This routine will be used to get DBS switching action tables.
+ * In Genoa, two action tables for DBS1 (2x2 5G + 1x1 2G), DBS2
+ *  (2x2 2G + 1x1 5G).
+ * 3. It can be used in mode change case in CSA channel switching or Roaming,
+ * opportunistic upgrade. If needs switch to DBS, we needs to query this
+ * function to get preferred DBS mode.
+ * 4. This is mainly used for dual dbs mode HW. For Legacy HW, there is
+ * only single DBS mode. This function will return PM_NOP.
+ *
+ * return : PM_NOP, PM_DBS1, PM_DBS2
+ */
+enum policy_mgr_conc_next_action
+policy_mgr_get_preferred_dbs_action_table(
+	struct wlan_objmgr_psoc *psoc,
+	uint32_t vdev_id,
+	uint8_t channel,
+	enum policy_mgr_conn_update_reason reason);
+
+/**
  * policy_mgr_is_ibss_conn_exist() - to check if IBSS connection already present
  * @psoc: PSOC object information
  * @ibss_channel: pointer to ibss channel which needs to be filled
