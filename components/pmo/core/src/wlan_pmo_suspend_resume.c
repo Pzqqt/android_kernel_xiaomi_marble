@@ -250,7 +250,7 @@ void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc)
 							 BM_LEN,
 							 disable_mask);
 				disable_configured = true;
-		}
+			}
 		}
 
 		adapter_type = pmo_get_vdev_opmode(vdev);
@@ -258,26 +258,22 @@ void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc)
 		psoc_ctx = pmo_psoc_get_priv(psoc);
 
 		if (psoc_ctx->psoc_cfg.auto_power_save_fail_mode ==
-		     PMO_FW_TO_SEND_WOW_IND_ON_PWR_FAILURE &&
+		    PMO_FW_TO_SEND_WOW_IND_ON_PWR_FAILURE &&
 		    (adapter_type == QDF_STA_MODE ||
-		     adapter_type == QDF_P2P_CLIENT_MODE)
-		   ) {
+		     adapter_type == QDF_P2P_CLIENT_MODE)) {
 			if (psoc_ctx->is_device_in_low_pwr_mode &&
-				psoc_ctx->is_device_in_low_pwr_mode(vdev_id))
+			    psoc_ctx->is_device_in_low_pwr_mode(vdev_id)) {
 				pmo_set_wow_event_bitmap(EV_PWR,
-						 BM_LEN,
-						 enable_mask);
-			pmo_core_enable_wakeup_event(psoc, vdev_id,
-				enable_mask);
+							 BM_LEN,
+							 enable_mask);
 				enable_configured = true;
+			}
 		}
-		if (enable_configured)
-			pmo_core_enable_wakeup_event(psoc, vdev_id,
-				enable_mask);
 
+		if (enable_configured)
+			pmo_tgt_enable_wow_wakeup_event(vdev, enable_mask);
 		if (disable_configured)
-			pmo_core_disable_wakeup_event(psoc, vdev_id,
-					disable_mask);
+			pmo_tgt_disable_wow_wakeup_event(vdev, disable_mask);
 	}
 
 }
