@@ -5529,6 +5529,7 @@ typedef enum {
 	wmi_host_dfs_status_check_event_id,
 #endif
 	wmi_twt_enable_complete_event_id,
+	wmi_apf_get_vdev_work_memory_resp_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -8434,4 +8435,55 @@ struct wmi_host_congestion_stats {
 	uint32_t congestion;
 };
 #endif
+
+#ifdef FEATURE_WLAN_APF
+/**
+ * struct wmi_apf_write_memory_params - Android Packet Filter write memory
+ * params
+ * @vdev_id: VDEV on which APF memory is to be written
+ * @apf_version: APF version number
+ * @program_len: Length reserved for program in the APF work memory
+ * @addr_offset: Relative address in APF work memory to start writing
+ * @length: Size of the write
+ * @buf: Pointer to the buffer
+ */
+struct wmi_apf_write_memory_params {
+	uint8_t vdev_id;
+	uint32_t apf_version;
+	uint32_t program_len;
+	uint32_t addr_offset;
+	uint32_t length;
+	uint8_t *buf;
+};
+
+/**
+ * struct wmi_apf_read_memory_params - Android Packet Filter read memory params
+ * @vdev_id: vdev id
+ * @addr_offset: Relative address in APF work memory to read from
+ * @length: Size of the memory fetch
+ */
+struct wmi_apf_read_memory_params {
+	uint8_t vdev_id;
+	uint32_t addr_offset;
+	uint32_t length;
+};
+
+/**
+ * struct wmi_apf_read_memory_resp_event_params - Event containing read Android
+ *	Packet Filter memory response
+ * @vdev_id: vdev id
+ * @offset: Read memory offset
+ * @length: Read memory length
+ * @more_data: Indicates more data to come
+ * @data: Pointer to the data
+ */
+struct wmi_apf_read_memory_resp_event_params {
+	uint32_t vdev_id;
+	uint32_t offset;
+	uint32_t length;
+	bool more_data;
+	uint8_t *data;
+};
+#endif /* FEATURE_WLAN_APF */
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */
