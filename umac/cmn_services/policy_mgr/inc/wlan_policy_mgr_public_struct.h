@@ -714,6 +714,7 @@ enum policy_mgr_conc_next_action {
  *
  * @POLICY_MGR_BAND_24: 2.4 Ghz band
  * @POLICY_MGR_BAND_5: 5 Ghz band
+ * @POLICY_MGR_ANY: to specify all band
  * @POLICY_MGR_MAX_BAND: Max place holder
  *
  * These are generic IDs that identify the various roles
@@ -722,7 +723,8 @@ enum policy_mgr_conc_next_action {
 enum policy_mgr_band {
 	POLICY_MGR_BAND_24 = 0,
 	POLICY_MGR_BAND_5,
-	POLICY_MGR_MAX_BAND
+	POLICY_MGR_ANY,
+	POLICY_MGR_MAX_BAND = POLICY_MGR_ANY,
 };
 
 /**

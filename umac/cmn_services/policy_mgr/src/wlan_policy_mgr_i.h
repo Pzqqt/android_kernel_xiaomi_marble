@@ -457,7 +457,21 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 		struct avoid_freq_ind_data *avoid_freq_ind,
 		void *arg);
 
+/**
+ * policy_mgr_nss_update() - update nss for AP vdev
+ * @psoc: PSOC object information
+ * @new_nss: new NSS value
+ * @next_action: Next action after nss update
+ * @band: update AP vdev on the Band.
+ * @reason: action reason
+ *
+ * The function will update AP vdevs on specific band.
+ *  eg. band = POLICY_MGR_ANY will request to update all band (2g and 5g)
+ *
+ * Return: QDF_STATUS_SUCCESS, update requested successfully.
+ */
 QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 		uint8_t  new_nss, uint8_t next_action,
+		enum policy_mgr_band band,
 		enum policy_mgr_conn_update_reason reason);
 #endif
