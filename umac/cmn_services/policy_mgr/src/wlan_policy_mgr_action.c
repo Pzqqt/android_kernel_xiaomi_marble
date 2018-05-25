@@ -105,7 +105,7 @@ QDF_STATUS policy_mgr_check_n_start_opportunistic_timer(
 		policy_mgr_err("PM ctx not valid. Oppurtunistic timer cannot start");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (policy_mgr_need_opportunistic_upgrade(psoc)) {
+	if (policy_mgr_need_opportunistic_upgrade(psoc, NULL)) {
 	/* let's start the timer */
 	qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
 	status = qdf_mc_timer_start(
@@ -182,10 +182,12 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 }
 
 enum policy_mgr_conc_next_action policy_mgr_need_opportunistic_upgrade(
-		struct wlan_objmgr_psoc *psoc)
+		struct wlan_objmgr_psoc *psoc,
+		enum policy_mgr_conn_update_reason *reason)
 {
 	uint32_t conn_index;
 	enum policy_mgr_conc_next_action upgrade = PM_NOP;
+	enum policy_mgr_conc_next_action preferred_dbs_action;
 	uint8_t mac = 0;
 	struct policy_mgr_hw_mode_params hw_mode;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -194,22 +196,22 @@ enum policy_mgr_conc_next_action policy_mgr_need_opportunistic_upgrade(
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
-		goto done;
+		goto exit;
 	}
 
 	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
 		policy_mgr_err("driver isn't dbs capable, no further action needed");
-		goto done;
+		goto exit;
 	}
 
 	status = policy_mgr_get_current_hw_mode(psoc, &hw_mode);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		policy_mgr_err("policy_mgr_get_current_hw_mode failed");
-		goto done;
+		goto exit;
 	}
 	if (!hw_mode.dbs_cap) {
 		policy_mgr_debug("current HW mode is non-DBS capable");
-		goto done;
+		goto exit;
 	}
 
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
@@ -248,6 +250,8 @@ enum policy_mgr_conc_next_action policy_mgr_need_opportunistic_upgrade(
 	}
 	/* Let's request for single MAC mode */
 	upgrade = PM_SINGLE_MAC;
+	if (reason)
+		*reason = POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC;
 	/* Is there any connection had an initial connection with 2x2 */
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
 		conn_index++) {
@@ -261,6 +265,26 @@ enum policy_mgr_conc_next_action policy_mgr_need_opportunistic_upgrade(
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 done:
+	if (upgrade == PM_NOP && hw_mode.dbs_cap &&
+	    policy_mgr_is_2x2_1x1_dbs_capable(psoc)) {
+		preferred_dbs_action =
+			policy_mgr_get_preferred_dbs_action_table(
+					psoc, INVALID_VDEV_ID, 0, 0);
+		if (hw_mode.action_type == PM_DBS1 &&
+		    preferred_dbs_action == PM_DBS2) {
+			upgrade = PM_DBS2_DOWNGRADE;
+			if (reason)
+				*reason =
+				POLICY_MGR_UPDATE_REASON_PRI_VDEV_CHANGE;
+		} else if (hw_mode.action_type == PM_DBS2 &&
+		    preferred_dbs_action == PM_DBS1) {
+			upgrade = PM_DBS1_DOWNGRADE;
+			if (reason)
+				*reason =
+				POLICY_MGR_UPDATE_REASON_PRI_VDEV_CHANGE;
+		}
+	}
+exit:
 	return upgrade;
 }
 
@@ -1908,6 +1932,7 @@ void policy_mgr_check_and_stop_opportunistic_timer(
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	enum policy_mgr_conc_next_action action = PM_NOP;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	enum policy_mgr_conn_update_reason reason;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -1917,11 +1942,11 @@ void policy_mgr_check_and_stop_opportunistic_timer(
 	if (QDF_TIMER_STATE_RUNNING ==
 		pm_ctx->dbs_opportunistic_timer.state) {
 		qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
-		action = policy_mgr_need_opportunistic_upgrade(psoc);
+		action = policy_mgr_need_opportunistic_upgrade(psoc, &reason);
 		if (action) {
 			qdf_event_reset(&pm_ctx->opportunistic_update_done_evt);
 			status = policy_mgr_next_actions(psoc, id, action,
-				POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC);
+							 reason);
 			if (status != QDF_STATUS_SUCCESS) {
 				policy_mgr_err("Failed in policy_mgr_next_actions");
 				return;

@@ -1394,6 +1394,7 @@ void pm_dbs_opportunistic_timer_handler(void *data)
 	enum policy_mgr_conc_next_action action = PM_NOP;
 	uint32_t session_id;
 	struct wlan_objmgr_psoc *psoc = (struct wlan_objmgr_psoc *)data;
+	enum policy_mgr_conn_update_reason reason;
 
 	if (!psoc) {
 		policy_mgr_err("Invalid Context");
@@ -1401,13 +1402,13 @@ void pm_dbs_opportunistic_timer_handler(void *data)
 	}
 
 	/* if we still need it */
-	action = policy_mgr_need_opportunistic_upgrade(psoc);
+	action = policy_mgr_need_opportunistic_upgrade(psoc, &reason);
 	policy_mgr_debug("action:%d", action);
 	if (!action)
 		return;
 	session_id = pm_get_vdev_id_of_first_conn_idx(psoc);
 	policy_mgr_next_actions(psoc, session_id, action,
-				POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC);
+				reason);
 }
 
 /**

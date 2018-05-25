@@ -751,6 +751,10 @@ enum policy_mgr_band {
  * @POLICY_MGR_UPDATE_REASON_NSS_UPDATE: NSS update
  * @POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH: Channel switch
  * @POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA: Channel switch for STA
+ * @POLICY_MGR_UPDATE_REASON_PRI_VDEV_CHANGE: In Dual DBS HW, if the vdev based
+ *        2x2 preference enabled, the vdev down may cause prioritized active
+ *        vdev change, then DBS hw mode may needs to change from one DBS mode
+ *        to the other DBS mode. This reason code indicates such condition.
  */
 enum policy_mgr_conn_update_reason {
 	POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN,
@@ -764,6 +768,7 @@ enum policy_mgr_conn_update_reason {
 	POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH,
 	POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA,
 	POLICY_MGR_UPDATE_REASON_PRE_CAC,
+	POLICY_MGR_UPDATE_REASON_PRI_VDEV_CHANGE,
 };
 
 /**
