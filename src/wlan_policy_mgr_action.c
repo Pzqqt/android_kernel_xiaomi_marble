@@ -722,7 +722,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 		 * intially. If yes, update the beacon template & notify FW.
 		 */
 		status = policy_mgr_nss_update(psoc, POLICY_MGR_RX_NSS_1,
-					PM_NOP, reason);
+					PM_NOP, POLICY_MGR_ANY, reason);
 		break;
 	case PM_UPGRADE:
 		/*
@@ -730,7 +730,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 		 * intially. If yes, update the beacon template & notify FW.
 		 */
 		status = policy_mgr_nss_update(psoc, POLICY_MGR_RX_NSS_2,
-					PM_NOP, reason);
+					PM_NOP, POLICY_MGR_ANY, reason);
 		break;
 	default:
 		policy_mgr_err("unexpected action value %d", action);

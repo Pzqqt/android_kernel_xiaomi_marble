@@ -2501,6 +2501,7 @@ static void policy_mgr_nss_update_cb(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 		uint8_t  new_nss, uint8_t next_action,
+		enum policy_mgr_band band,
 		enum policy_mgr_conn_update_reason reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -2510,6 +2511,7 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 	uint32_t vdev_id;
 	uint32_t original_nss;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t chan;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2524,6 +2526,7 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 		vdev_id = pm_conc_connection_list[list[index]].vdev_id;
 		original_nss =
 		pm_conc_connection_list[list[index]].original_nss;
+		chan = pm_conc_connection_list[list[index]].chan;
 		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 		conn_index = policy_mgr_get_connection_for_vdev_id(
 			psoc, vdev_id);
@@ -2533,7 +2536,12 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 			continue;
 		}
 
-		if (2 == original_nss) {
+		if (original_nss == 2 &&
+		    (band == POLICY_MGR_ANY ||
+		    (band == POLICY_MGR_BAND_24 &&
+		    WLAN_REG_IS_24GHZ_CH(chan)) ||
+		    (band == POLICY_MGR_BAND_5 &&
+		    WLAN_REG_IS_5GHZ_CH(chan)))) {
 			status = pm_ctx->sme_cbacks.sme_nss_update_request(
 					vdev_id, new_nss,
 					policy_mgr_nss_update_cb,
@@ -2552,6 +2560,7 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 		vdev_id = pm_conc_connection_list[list[index]].vdev_id;
 		original_nss =
 		pm_conc_connection_list[list[index]].original_nss;
+		chan = pm_conc_connection_list[list[index]].chan;
 		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 		conn_index = policy_mgr_get_connection_for_vdev_id(
 			psoc, vdev_id);
@@ -2560,7 +2569,12 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 				vdev_id);
 			continue;
 		}
-		if (2 == original_nss) {
+		if (original_nss == 2 &&
+		    (band == POLICY_MGR_ANY ||
+		    (band == POLICY_MGR_BAND_24 &&
+		    WLAN_REG_IS_24GHZ_CH(chan)) ||
+		    (band == POLICY_MGR_BAND_5 &&
+		    WLAN_REG_IS_5GHZ_CH(chan)))) {
 			status = pm_ctx->sme_cbacks.sme_nss_update_request(
 					vdev_id, new_nss,
 					policy_mgr_nss_update_cb,
@@ -2608,7 +2622,8 @@ QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
 	 * protection. So, not taking any lock inside
 	 * policy_mgr_complete_action() during pm_conc_connection_list access.
 	 */
-	status = policy_mgr_nss_update(psoc, new_nss, next_action, reason);
+	status = policy_mgr_nss_update(psoc, new_nss, next_action,
+				       POLICY_MGR_ANY, reason);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		status = policy_mgr_next_actions(psoc, session_id,
 						next_action, reason);
