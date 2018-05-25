@@ -3095,7 +3095,7 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 	} while (0);
 
 	if (excess_data ||
-		(sizeof(*event) > WMI_SVC_MSG_MAX_SIZE - buf_len)) {
+		(buf_len > WMI_SVC_MSG_MAX_SIZE - sizeof(*event))) {
 		WMA_LOGE("excess wmi buffer: stats pdev %d vdev %d peer %d",
 			 event->num_pdev_stats, event->num_vdev_stats,
 			 event->num_peer_stats);
