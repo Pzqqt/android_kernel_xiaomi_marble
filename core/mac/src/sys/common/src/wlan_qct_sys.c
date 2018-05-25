@@ -172,15 +172,6 @@ static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 			((sys_rsp_cb) pMsg->callback)(pMsg->bodyptr);
 			qdf_status = QDF_STATUS_SUCCESS;
 			break;
-		case SYS_MSG_ID_MC_THR_PROBE:
-			/*
-			 * Process MC thread probe.  Just callback to the
-			 * function that is in the message.
-			 */
-			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-				"Rx SYS_MSG_ID_MC_THR_PROBE msgType=%d[0x%08x]",
-				pMsg->type, pMsg->type);
-			break;
 
 		case SYS_MSG_ID_DATA_STALL_MSG:
 			data_stall_detect_callback = pMsg->callback;
@@ -306,19 +297,3 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 
 }
 
-/**
- * wlan_sys_probe() - API to post MC thread probe
- *
- * This API will be used send probe message
- *
- * Return: none
- */
-void wlan_sys_probe(void)
-{
-	struct scheduler_msg message = {0};
-
-	message.reserved = SYS_MSG_COOKIE;
-	message.type = SYS_MSG_ID_MC_THR_PROBE;
-	message.bodyptr = NULL;
-	scheduler_post_msg(QDF_MODULE_ID_SYS, &message);
-}

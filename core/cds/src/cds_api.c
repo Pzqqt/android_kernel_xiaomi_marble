@@ -843,10 +843,8 @@ QDF_STATUS cds_pre_enable(void)
 				  "%s: wma_pre_start reporting other error",
 				  __func__);
 		}
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Test MC thread by posting a probe message to SYS",
-			  __func__);
-		wlan_sys_probe();
+
+		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;

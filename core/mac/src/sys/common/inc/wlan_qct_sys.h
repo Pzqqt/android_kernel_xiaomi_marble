@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -98,7 +98,5 @@ QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId,
 QDF_STATUS umac_stop(void);
 
 QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg);
-
-void wlan_sys_probe(void);
 
 #endif /* WLAN_QCT_SYS_H__ */
