@@ -489,6 +489,20 @@ enum policy_mgr_conc_next_action
 enum policy_mgr_conc_next_action
 		policy_mgr_get_current_pref_hw_mode_dbs_1x1(
 		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_get_current_pref_hw_mode_dual_dbs() - Get the
+ * current preferred hw mode
+ *
+ * Get the preferred hw mode based on the current connection combinations
+ *
+ * Return: No change (PM_NOP), (PM_SINGLE_MAC_UPGRADE),
+ *         DBS (PM_DBS1_DOWNGRADE or PM_DBS2_DOWNGRADE)
+ */
+enum policy_mgr_conc_next_action
+		policy_mgr_get_current_pref_hw_mode_dual_dbs(
+		struct wlan_objmgr_psoc *psoc);
+
 QDF_STATUS policy_mgr_reset_sap_mandatory_channels(
 		struct policy_mgr_psoc_priv_obj *pm_ctx);
 

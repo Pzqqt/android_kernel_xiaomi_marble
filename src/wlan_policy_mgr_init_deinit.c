@@ -423,6 +423,9 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	if (policy_mgr_is_hw_dbs_2x2_capable(psoc))
 		policy_mgr_get_current_pref_hw_mode_ptr =
 		policy_mgr_get_current_pref_hw_mode_dbs_2x2;
+	else if (policy_mgr_is_2x2_1x1_dbs_capable(psoc))
+		policy_mgr_get_current_pref_hw_mode_ptr =
+		policy_mgr_get_current_pref_hw_mode_dual_dbs;
 	else
 		policy_mgr_get_current_pref_hw_mode_ptr =
 		policy_mgr_get_current_pref_hw_mode_dbs_1x1;
