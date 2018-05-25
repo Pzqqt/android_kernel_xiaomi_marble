@@ -1855,7 +1855,9 @@ QDF_STATUS policy_mgr_set_hw_mode_on_channel_switch(
 
 	action = (*policy_mgr_get_current_pref_hw_mode_ptr)(psoc);
 	if ((action != PM_DBS_DOWNGRADE) &&
-	    (action != PM_SINGLE_MAC_UPGRADE)) {
+	    (action != PM_SINGLE_MAC_UPGRADE) &&
+	    (action != PM_DBS1_DOWNGRADE) &&
+	    (action != PM_DBS2_DOWNGRADE)) {
 		policy_mgr_err("Invalid action: %d", action);
 		status = QDF_STATUS_SUCCESS;
 		goto done;

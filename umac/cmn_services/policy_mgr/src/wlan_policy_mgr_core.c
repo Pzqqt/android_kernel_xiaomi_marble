@@ -2955,6 +2955,39 @@ enum policy_mgr_conc_next_action
 	return next_action;
 }
 
+enum policy_mgr_conc_next_action
+policy_mgr_get_current_pref_hw_mode_dual_dbs(
+	struct wlan_objmgr_psoc *psoc)
+{
+	enum policy_mgr_conc_next_action next_action;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	enum policy_mgr_conc_next_action preferred_dbs;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return PM_NOP;
+	}
+
+	next_action = policy_mgr_get_current_pref_hw_mode_dbs_1x1(psoc);
+	policy_mgr_info("next_action %d", next_action);
+	if (next_action != PM_DBS_DOWNGRADE)
+		return next_action;
+
+	preferred_dbs = policy_mgr_get_preferred_dbs_action_table(
+				psoc, INVALID_VDEV_ID, 0, 0);
+	if (preferred_dbs == PM_DBS1) {
+		next_action = PM_DBS1_DOWNGRADE;
+	} else if (preferred_dbs == PM_DBS2) {
+		next_action = PM_DBS2_DOWNGRADE;
+	} else {
+		policy_mgr_err("DBS1 and DBS2 hw mode not supported");
+		return PM_NOP;
+	}
+	policy_mgr_info("preferred_dbs %d", next_action);
+	return next_action;
+}
+
 /**
  * policy_mgr_reset_sap_mandatory_channels() - Reset the SAP mandatory channels
  *
