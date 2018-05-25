@@ -15768,6 +15768,28 @@ typedef enum {
     WMI_NDP_FORCE_CHANNEL_SETUP = 2/* NDP must start on the provided channel */
 } wmi_ndp_channel_cfg_PROTOTYPE;
 
+/*
+ * The WMI_NDP_IPV6_INTF_ADDR_LEN macro cannot be changed without breaking
+ * WMI compatibility.
+ */
+#define WMI_NDP_IPV6_INTF_ADDR_LEN    16
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ndp_transport_ip_param */
+    /* Presence of ipv6_intf_addr */
+    A_UINT32 ipv6_addr_present;
+    /* Presence of transport Port */
+    A_UINT32 trans_port_present;
+    /* Presence of  transport Protocol */
+    A_UINT32 trans_proto_present;
+    /* ipv6 Interface address */
+    A_UINT8  ipv6_intf_addr[WMI_NDP_IPV6_INTF_ADDR_LEN];
+    /* Transport Port */
+    A_UINT32 transport_port;
+    /* Transport Protocol */
+    A_UINT32 transport_protocol;
+} wmi_ndp_transport_ip_param;
+
 #define wmi_ndp_channel_cfg wmi_ndp_channel_cfg_PROTOTYPE
 
 /**
@@ -15807,6 +15829,7 @@ typedef struct {
      * A_UINT8 ndp_pmk[];
      * A_INT8 ndp_passphrase[];
      * A_INT8 nan_servicename[];
+     * wmi_ndp_transport_ip_param ndp_transport_ip_param;
      */
 } wmi_ndp_initiator_req_fixed_param_PROTOTYPE;
 
@@ -15850,6 +15873,7 @@ typedef struct {
      * A_UINT8 ndp_pmk[];
      * A_INT8 ndp_passphrase[];
      * A_INT8 nan_servicename[];
+     * wmi_ndp_transport_ip_param ndp_transport_ip_param;
      */
 } wmi_ndp_responder_req_fixed_param_PROTOTYPE;
 
@@ -16099,6 +16123,7 @@ typedef struct {
      * A_UINT8 ndp_cfg[];
      * A_UINT8 ndp_app_info[];
      * A_UINT8 nan_scid[];
+     * wmi_ndp_transport_ip_param ndp_transport_ip_param;
      */
 } wmi_ndp_indication_event_fixed_param_PROTOTYPE;
 
@@ -16140,6 +16165,7 @@ typedef struct {
      * wmi_channel ndp_channel_list[];
      * A_UINT32 nss_list[]; // Nss indexing should match with channel indexing,
      *                      // since Nss is associated with the channel
+     * wmi_ndp_transport_ip_param ndp_transport_ip_param;
      */
 } wmi_ndp_confirm_event_fixed_param_PROTOTYPE;
 
