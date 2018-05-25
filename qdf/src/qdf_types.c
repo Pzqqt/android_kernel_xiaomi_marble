@@ -512,8 +512,8 @@ QDF_STATUS qdf_ipv6_parse(const char *ipv6_str, struct qdf_ipv6_addr *out_addr)
 	/* shift lower hextets if zero compressed */
 	if (zero_comp >= 0) {
 		uint8_t shift = QDF_IPV6_ADDR_HEXTET_COUNT - hextets_found;
-		void *to = &addr.bytes[((zero_comp - 1) + shift) *2];
-		void *from = &addr.bytes[(zero_comp - 1) *2];
+		void *to = &addr.bytes[(zero_comp + shift) * 2];
+		void *from = &addr.bytes[zero_comp * 2];
 
 		qdf_mem_move(to, from, (hextets_found - zero_comp) * 2);
 		qdf_mem_set(from, shift * 2, 0);
