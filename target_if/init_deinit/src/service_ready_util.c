@@ -310,7 +310,7 @@ int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_psoc_hal_reg_capability cap;
 	struct wlan_psoc_host_hal_reg_capabilities_ext
-				reg_cap[PSOC_MAX_PHY_REG_CAP];
+				reg_cap[PSOC_MAX_PHY_REG_CAP] = {{0} };
 
 	if (service_ready) {
 		status = wmi_extract_hal_reg_cap(handle, event, &cap);
