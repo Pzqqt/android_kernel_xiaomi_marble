@@ -3904,6 +3904,9 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	peer = dp_peer_can_reuse(vdev, peer_mac_addr);
 
 	if (peer) {
+		qdf_atomic_init(&peer->is_default_route_set);
+		dp_peer_cleanup(vdev, peer);
+
 		peer->delete_in_progress = false;
 
 		dp_peer_delete_ast_entries(soc, peer);
@@ -4068,12 +4071,24 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	 */
 	reo_dest = pdev->reo_dest;
 
+	/*
+	 * There are corner cases where the AD1 = AD2 = "VAPs address"
+	 * i.e both the devices have same MAC address. In these
+	 * cases we want such pkts to be processed in NULL Q handler
+	 * which is REO2TCL ring. for this reason we should
+	 * not setup reo_queues and default route for bss_peer.
+	 */
+	if (peer->bss_peer && vdev->opmode == wlan_op_mode_ap)
+		return;
+
 	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
 		/* TODO: Check the destination ring number to be passed to FW */
 		soc->cdp_soc.ol_ops->peer_set_default_routing(
 				pdev->ctrl_pdev, peer->mac_addr.raw,
 				peer->vdev->vdev_id, hash_based, reo_dest);
 	}
+
+	qdf_atomic_set(&peer->is_default_route_set, 1);
 
 	dp_peer_rx_init(pdev, peer);
 	return;

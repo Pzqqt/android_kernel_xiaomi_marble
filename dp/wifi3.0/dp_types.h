@@ -1546,6 +1546,7 @@ struct dp_peer {
 	 * should be terminated.
 	 */
 	uint8_t kill_256_sessions;
+	qdf_atomic_t is_default_route_set;
 };
 
 #ifdef CONFIG_WIN

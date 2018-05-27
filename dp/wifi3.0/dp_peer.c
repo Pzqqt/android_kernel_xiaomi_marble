@@ -1489,7 +1489,8 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	void *hw_qdesc_vaddr;
 	uint32_t alloc_tries = 0;
 
-	if (peer->delete_in_progress)
+	if (peer->delete_in_progress ||
+	    !qdf_atomic_read(&peer->is_default_route_set))
 		return QDF_STATUS_E_FAILURE;
 
 	rx_tid->ba_win_size = ba_window_size;
@@ -1992,6 +1993,14 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Rx Tid- %d hw qdesc is not in IN_PROGRESS",
 			__func__, tid);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!qdf_atomic_read(&peer->is_default_route_set)) {
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: default route is not set for peer: %pM",
+			  __func__, peer->mac_addr.raw);
 		return QDF_STATUS_E_FAILURE;
 	}
 
