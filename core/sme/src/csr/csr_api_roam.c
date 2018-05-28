@@ -21316,7 +21316,7 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 	if ((POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC ==
 		command->u.set_hw_mode_cmd.reason) &&
 		(!command->u.set_hw_mode_cmd.hw_mode_index &&
-		!policy_mgr_need_opportunistic_upgrade(mac->psoc))) {
+		!policy_mgr_need_opportunistic_upgrade(mac->psoc, NULL))) {
 		sme_err("Set HW mode to SMM not needed anymore");
 		goto fail;
 	}
