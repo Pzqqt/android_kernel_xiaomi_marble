@@ -660,9 +660,24 @@ struct cdp_soc_t {
  * cdp_pdev_param_type: different types of parameters
  *			to set values in pdev
  * @CDP_CONFIG_DEBUG_SNIFFER: Enable debug sniffer feature
+ * @CDP_CONFIG_BPR_ENABLE: Enable bcast probe feature
  */
 enum cdp_pdev_param_type {
 	CDP_CONFIG_DEBUG_SNIFFER,
+	CDP_CONFIG_BPR_ENABLE,
+};
+
+/*
+ * enum cdp_pdev_bpr_param - different types of parameters
+ *			     to set value in pdev
+ * @CDP_BPR_DISABLE: Set bpr to disable state
+ * @CDP_BPR_ENABLE: set bpr to enable state
+ *
+ * Enum indicating bpr state to enable/disable.
+ */
+enum cdp_pdev_bpr_param {
+	CDP_BPR_DISABLE,
+	CDP_BPR_ENABLE,
 };
 
 /*

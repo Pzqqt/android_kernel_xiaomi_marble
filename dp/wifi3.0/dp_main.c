@@ -96,6 +96,15 @@ qdf_declare_param(rx_hash, bool);
 #define DP_PPDU_STATS_CFG_ENH_STATS 0xE67
 /* PPDU stats mask sent to FW to support debug sniffer feature */
 #define DP_PPDU_STATS_CFG_SNIFFER 0x2FFF
+/* PPDU stats mask sent to FW to support BPR feature*/
+#define DP_PPDU_STATS_CFG_BPR 0x2000
+/* PPDU stats mask sent to FW to support BPR and enhanced stats feature */
+#define DP_PPDU_STATS_CFG_BPR_ENH (DP_PPDU_STATS_CFG_BPR | \
+				   DP_PPDU_STATS_CFG_ENH_STATS)
+/* PPDU stats mask sent to FW to support BPR and pcktlog stats feature */
+#define DP_PPDU_STATS_CFG_BPR_PKTLOG (DP_PPDU_STATS_CFG_BPR | \
+				      DP_PPDU_TXLITE_STATS_BITMASK_CFG)
+
 /**
  * default_dscp_tid_map - Default DSCP-TID mapping
  *
@@ -5967,6 +5976,56 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 }
 
 /*
+ *dp_set_bpr_enable() - API to enable/disable bpr feature
+ *@pdev_handle: DP_PDEV handle.
+ *@val: Provided value.
+ *
+ *Return: void
+ */
+static void
+dp_set_bpr_enable(struct cdp_pdev *pdev_handle, int val)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	switch (val) {
+	case CDP_BPR_DISABLE:
+		pdev->bpr_enable = CDP_BPR_DISABLE;
+		if (!pdev->pktlog_ppdu_stats && !pdev->enhanced_stats_en &&
+		    !pdev->tx_sniffer_enable && !pdev->mcopy_mode) {
+			dp_h2t_cfg_stats_msg_send(pdev, 0, pdev->pdev_id);
+		} else if (pdev->enhanced_stats_en &&
+			   !pdev->tx_sniffer_enable && !pdev->mcopy_mode &&
+			   !pdev->pktlog_ppdu_stats) {
+			dp_h2t_cfg_stats_msg_send(pdev,
+						  DP_PPDU_STATS_CFG_ENH_STATS,
+						  pdev->pdev_id);
+		}
+		break;
+	case CDP_BPR_ENABLE:
+		pdev->bpr_enable = CDP_BPR_ENABLE;
+		if (!pdev->enhanced_stats_en && !pdev->tx_sniffer_enable &&
+		    !pdev->mcopy_mode && !pdev->pktlog_ppdu_stats) {
+			dp_h2t_cfg_stats_msg_send(pdev,
+						  DP_PPDU_STATS_CFG_BPR,
+						  pdev->pdev_id);
+		} else if (pdev->enhanced_stats_en &&
+			   !pdev->tx_sniffer_enable && !pdev->mcopy_mode &&
+			   !pdev->pktlog_ppdu_stats) {
+			dp_h2t_cfg_stats_msg_send(pdev,
+						  DP_PPDU_STATS_CFG_BPR_ENH,
+						  pdev->pdev_id);
+		} else if (pdev->pktlog_ppdu_stats) {
+			dp_h2t_cfg_stats_msg_send(pdev,
+						  DP_PPDU_STATS_CFG_BPR_PKTLOG,
+						  pdev->pdev_id);
+		}
+		break;
+	default:
+		break;
+	}
+}
+
+/*
  * dp_config_debug_sniffer()- API to enable/disable debug sniffer
  * @pdev_handle: DP_PDEV handle
  * @val: user provided value
@@ -6132,6 +6191,7 @@ dp_get_htt_stats(struct cdp_pdev *pdev_handle, void *data, uint32_t data_len)
 				req->config_param2, req->config_param3,
 				req->cookie, 0, 0);
 }
+
 /*
  * dp_set_pdev_param: function to set parameters in pdev
  * @pdev_handle: DP pdev handle
@@ -6146,6 +6206,9 @@ static void dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 	switch (param) {
 	case CDP_CONFIG_DEBUG_SNIFFER:
 		dp_config_debug_sniffer(pdev_handle, val);
+		break;
+	case CDP_CONFIG_BPR_ENABLE:
+		dp_set_bpr_enable(pdev_handle, val);
 		break;
 	default:
 		break;

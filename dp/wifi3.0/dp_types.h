@@ -1151,7 +1151,7 @@ struct dp_pdev {
 	bool tx_sniffer_enable;
 	/* mirror copy mode */
 	bool mcopy_mode;
-
+	bool bpr_enable;
 	struct {
 		uint16_t tx_ppdu_id;
 		uint16_t tx_peer_id;

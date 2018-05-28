@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -140,6 +140,18 @@ static inline void qdf_atomic_set(qdf_atomic_t *v, int i)
 static inline int32_t qdf_atomic_inc_return(qdf_atomic_t *v)
 {
 	return __qdf_atomic_inc_return(v);
+}
+
+/**
+ * qdf_atomic_dec_return() - return the decremented value of an atomic
+ * variable
+ * @v: A pointer to an opaque atomic variable
+ *
+ * Return: The current value of the variable
+ */
+static inline int32_t qdf_atomic_dec_return(qdf_atomic_t *v)
+{
+	return __qdf_atomic_dec_return(v);
 }
 
 /**

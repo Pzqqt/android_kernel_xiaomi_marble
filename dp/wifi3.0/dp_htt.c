@@ -2179,7 +2179,8 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 {
 	uint32_t *nbuf_ptr;
 
-	if ((!pdev->tx_sniffer_enable) && (!pdev->mcopy_mode))
+	if ((!pdev->tx_sniffer_enable) && (!pdev->mcopy_mode) &&
+	    (!pdev->bpr_enable))
 		return;
 
 	if (qdf_nbuf_pull_head(tag_buf, HTT_MGMT_CTRL_TLV_RESERVERD_LEN + 4)
@@ -2189,10 +2190,16 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 	nbuf_ptr = (uint32_t *)qdf_nbuf_push_head(
 				tag_buf, sizeof(ppdu_id));
 	*nbuf_ptr = ppdu_id;
-
-	dp_wdi_event_handler(WDI_EVENT_TX_MGMT_CTRL, pdev->soc,
-		tag_buf, HTT_INVALID_PEER,
-		WDI_NO_VAL, pdev->pdev_id);
+	if (pdev->bpr_enable) {
+		dp_wdi_event_handler(WDI_EVENT_TX_BEACON, pdev->soc,
+				     tag_buf, HTT_INVALID_PEER,
+				     WDI_NO_VAL, pdev->pdev_id);
+	}
+	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
+		dp_wdi_event_handler(WDI_EVENT_TX_MGMT_CTRL, pdev->soc,
+				     tag_buf, HTT_INVALID_PEER,
+				     WDI_NO_VAL, pdev->pdev_id);
+	}
 }
 
 /**
