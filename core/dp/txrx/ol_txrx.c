@@ -2824,7 +2824,7 @@ static void ol_txrx_dump_peer_access_list(ol_txrx_peer_handle peer)
  */
 static void *
 ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
-		    void *ol_peer)
+		    struct cdp_ctrl_objmgr_peer *ctrl_peer)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	struct ol_txrx_peer_t *peer;
@@ -2918,6 +2918,7 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
 
 	/* store provided params */
 	peer->vdev = vdev;
+	peer->ctrl_peer = peer->ctrl_peer;
 	qdf_mem_copy(&peer->mac_addr.raw[0], peer_mac_addr,
 		     OL_TXRX_MAC_ADDR_LEN);
 

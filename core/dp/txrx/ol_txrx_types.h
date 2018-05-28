@@ -1244,6 +1244,9 @@ struct ol_txrx_cached_bufq_t {
 struct ol_txrx_peer_t {
 	struct ol_txrx_vdev_t *vdev;
 
+	/* UMAC peer objmgr handle */
+	struct cdp_ctrl_objmgr_peer *ctrl_peer;
+
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t access_list[PEER_DEBUG_ID_MAX];
 	qdf_atomic_t delete_in_progress;
