@@ -1018,132 +1018,6 @@ power_state_change_notify(struct hif_sdio_dev *device,
 	return status;
 }
 
-#ifdef SDIO_3_0
-/**
- * set_extended_mbox_size() - set extended MBOX size
- * @pinfo: sdio mailbox info
- *
- * Return: none.
- */
-static void set_extended_mbox_size(struct hif_device_mbox_info *pinfo)
-{
-	pinfo->mbox_prop[0].extended_size =
-		HIF_MBOX0_EXTENDED_WIDTH_AR6320_ROME_2_0;
-	pinfo->mbox_prop[1].extended_size =
-		HIF_MBOX1_EXTENDED_WIDTH_AR6320;
-}
-
-/**
- * set_extended_mbox_address() - set extended MBOX address
- * @pinfo: sdio mailbox info
- *
- * Return: none.
- */
-static void set_extended_mbox_address(struct hif_device_mbox_info *pinfo)
-{
-	pinfo->mbox_prop[1].extended_address =
-		pinfo->mbox_prop[0].extended_address +
-		pinfo->mbox_prop[0].extended_size +
-		HIF_MBOX_DUMMY_SPACE_SIZE_AR6320;
-}
-#else
-static void set_extended_mbox_size(struct hif_device_mbox_info *pinfo)
-{
-	pinfo->mbox_prop[0].extended_size =
-		HIF_MBOX0_EXTENDED_WIDTH_AR6320;
-}
-static inline void
-set_extended_mbox_address(struct hif_device_mbox_info *pinfo)
-{
-
-}
-#endif
-
-/**
- * set_extended_mbox_window_info() - set extended MBOX window
- * information for SDIO interconnects
- * @manf_id: manufacturer id
- * @pinfo: sdio mailbox info
- *
- * Return: none.
- */
-static void set_extended_mbox_window_info(uint16_t manf_id,
-			 struct hif_device_mbox_info *pinfo)
-{
-	switch (manf_id & MANUFACTURER_ID_AR6K_BASE_MASK) {
-	case MANUFACTURER_ID_AR6002_BASE:
-		/* MBOX 0 has an extended range */
-
-		pinfo->mbox_prop[0].extended_address =
-			HIF_MBOX0_EXTENDED_BASE_ADDR_AR6003_V1;
-		pinfo->mbox_prop[0].extended_size =
-			HIF_MBOX0_EXTENDED_WIDTH_AR6003_V1;
-
-		pinfo->mbox_prop[0].extended_address =
-			HIF_MBOX0_EXTENDED_BASE_ADDR_AR6003_V1;
-		pinfo->mbox_prop[0].extended_size =
-			HIF_MBOX0_EXTENDED_WIDTH_AR6003_V1;
-
-		pinfo->mbox_prop[0].extended_address =
-			HIF_MBOX0_EXTENDED_BASE_ADDR_AR6004;
-		pinfo->mbox_prop[0].extended_size =
-			HIF_MBOX0_EXTENDED_WIDTH_AR6004;
-
-		break;
-	case MANUFACTURER_ID_AR6003_BASE:
-		/* MBOX 0 has an extended range */
-		pinfo->mbox_prop[0].extended_address =
-			HIF_MBOX0_EXTENDED_BASE_ADDR_AR6003_V1;
-		pinfo->mbox_prop[0].extended_size =
-			HIF_MBOX0_EXTENDED_WIDTH_AR6003_V1;
-		pinfo->gmbox_address = HIF_GMBOX_BASE_ADDR;
-		pinfo->gmbox_size = HIF_GMBOX_WIDTH;
-		break;
-	case MANUFACTURER_ID_AR6004_BASE:
-		pinfo->mbox_prop[0].extended_address =
-			HIF_MBOX0_EXTENDED_BASE_ADDR_AR6004;
-		pinfo->mbox_prop[0].extended_size =
-			HIF_MBOX0_EXTENDED_WIDTH_AR6004;
-		pinfo->gmbox_address = HIF_GMBOX_BASE_ADDR;
-		pinfo->gmbox_size = HIF_GMBOX_WIDTH;
-		break;
-	case MANUFACTURER_ID_AR6320_BASE: {
-		uint16_t ManuRevID =
-			manf_id & MANUFACTURER_ID_AR6K_REV_MASK;
-		pinfo->mbox_prop[0].extended_address =
-			HIF_MBOX0_EXTENDED_BASE_ADDR_AR6320;
-		if (ManuRevID < 4) {
-			pinfo->mbox_prop[0].extended_size =
-				HIF_MBOX0_EXTENDED_WIDTH_AR6320;
-		} else {
-		/* from rome 2.0(0x504), the width has been extended to 56K */
-			set_extended_mbox_size(pinfo);
-		}
-		set_extended_mbox_address(pinfo);
-		pinfo->gmbox_address = HIF_GMBOX_BASE_ADDR;
-		pinfo->gmbox_size = HIF_GMBOX_WIDTH;
-		break;
-	}
-	case MANUFACTURER_ID_QCA9377_BASE:
-	case MANUFACTURER_ID_QCA9379_BASE:
-		pinfo->mbox_prop[0].extended_address =
-			HIF_MBOX0_EXTENDED_BASE_ADDR_AR6320;
-		pinfo->mbox_prop[0].extended_size =
-			HIF_MBOX0_EXTENDED_WIDTH_AR6320_ROME_2_0;
-		pinfo->mbox_prop[1].extended_address =
-			pinfo->mbox_prop[0].extended_address +
-			pinfo->mbox_prop[0].extended_size +
-			HIF_MBOX_DUMMY_SPACE_SIZE_AR6320;
-		pinfo->mbox_prop[1].extended_size =
-			HIF_MBOX1_EXTENDED_WIDTH_AR6320;
-		pinfo->gmbox_address = HIF_GMBOX_BASE_ADDR;
-		pinfo->gmbox_size = HIF_GMBOX_WIDTH;
-		break;
-	default:
-		A_ASSERT(false);
-		break;
-	}
-}
 
 /**
  * hif_configure_device() - configure sdio device
@@ -1159,35 +1033,20 @@ hif_configure_device(struct hif_sdio_dev *device,
 		     enum hif_device_config_opcode opcode,
 		     void *config, uint32_t config_len)
 {
-	uint32_t count;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	switch (opcode) {
+#ifdef CONFIG_SDIO_TRANSFER_MAILBOX
 	case HIF_DEVICE_GET_MBOX_BLOCK_SIZE:
-		((uint32_t *) config)[0] = HIF_MBOX0_BLOCK_SIZE;
-		((uint32_t *) config)[1] = HIF_MBOX1_BLOCK_SIZE;
-		((uint32_t *) config)[2] = HIF_MBOX2_BLOCK_SIZE;
-		((uint32_t *) config)[3] = HIF_MBOX3_BLOCK_SIZE;
+		hif_dev_get_mbox_block_size(config);
 		break;
 
 	case HIF_DEVICE_GET_MBOX_ADDR:
-		for (count = 0; count < 4; count++) {
-			((uint32_t *) config)[count] =
-				HIF_MBOX_START_ADDR(count);
-		}
-
-		if (config_len >= sizeof(struct hif_device_mbox_info)) {
-			set_extended_mbox_window_info((uint16_t) device->func->
-					      device,
-					      (struct hif_device_mbox_info *)
-					      config);
-		}
-
+		hif_dev_get_mbox_address(device, config, config_len);
 		break;
+#endif
 	case HIF_DEVICE_GET_PENDING_EVENTS_FUNC:
-		AR_DEBUG_PRINTF(ATH_DEBUG_WARN,
-				("%s: configuration opcode %d\n",
-				 __func__, opcode));
+		HIF_WARN("%s: opcode %d",  __func__, opcode);
 		status = QDF_STATUS_E_FAILURE;
 		break;
 	case HIF_DEVICE_GET_IRQ_PROC_MODE:
@@ -1195,9 +1054,7 @@ hif_configure_device(struct hif_sdio_dev *device,
 			HIF_DEVICE_IRQ_SYNC_ONLY;
 		break;
 	case HIF_DEVICE_GET_RECV_EVENT_MASK_UNMASK_FUNC:
-		AR_DEBUG_PRINTF(ATH_DEBUG_WARN,
-				("%s: configuration opcode %d\n",
-				 __func__, opcode));
+		HIF_WARN("%s: opcode %d", __func__, opcode);
 		status = QDF_STATUS_E_FAILURE;
 		break;
 	case HIF_CONFIGURE_QUERY_SCATTER_REQUEST_SUPPORT:
@@ -1222,9 +1079,7 @@ hif_configure_device(struct hif_sdio_dev *device,
 					   config);
 		break;
 	case HIF_DEVICE_GET_IRQ_YIELD_PARAMS:
-		AR_DEBUG_PRINTF(ATH_DEBUG_WARN,
-			("%s: configuration opcode %d\n",
-				 __func__, opcode));
+		HIF_WARN("%s: opcode %d", __func__, opcode);
 		status = QDF_STATUS_E_FAILURE;
 		break;
 	case HIF_DEVICE_SET_HTC_CONTEXT:
@@ -1232,23 +1087,16 @@ hif_configure_device(struct hif_sdio_dev *device,
 		break;
 	case HIF_DEVICE_GET_HTC_CONTEXT:
 		if (config == NULL) {
-			AR_DEBUG_PRINTF(ATH_DEBUG_WARN,
-				("%s: htc context is NULL\n",
-				__func__));
+			HIF_ERROR("%s: htc context is NULL", __func__);
 			return QDF_STATUS_E_FAILURE;
 		}
 		*(void **)config = device->htc_context;
 		break;
 	case HIF_BMI_DONE:
-	{
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-			("%s: BMI_DONE\n", __func__));
+		HIF_ERROR("%s: BMI_DONE", __func__);
 		break;
-	}
 	default:
-		AR_DEBUG_PRINTF(ATH_DEBUG_WARN,
-			("%s: Unsupported configuration opcode: %d\n",
-			 __func__, opcode));
+		HIF_ERROR("%s: Unsupported  opcode: %d", __func__, opcode);
 		status = QDF_STATUS_E_FAILURE;
 	}
 
@@ -1856,8 +1704,6 @@ static QDF_STATUS hif_enable_func(struct hif_sdio_dev *device,
 
 	HIF_ENTER();
 
-	device = get_hif_device(func);
-
 	if (!device) {
 		HIF_ERROR("%s: HIF device is NULL", __func__);
 		return QDF_STATUS_E_INVAL;
@@ -2354,9 +2200,8 @@ int func0_cmd52_write_byte(struct mmc_card *card,
 	status = mmc_wait_for_cmd(card->host, &io_cmd, 0);
 
 	if (status)
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-				("%s: mmc_wait_for_cmd returned %d\n",
-				 __func__, status));
+		HIF_ERROR("%s: mmc_wait_for_cmd returned %d",
+			  __func__, status);
 
 	return status;
 }
@@ -2381,50 +2226,50 @@ int func0_cmd52_read_byte(struct mmc_card *card,
 		*byte = io_cmd.resp[0] & 0xFF;
 
 	if (err)
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-				("%s: mmc_wait_for_cmd returned %d\n",
-				 __func__, err));
+		HIF_ERROR("%s: mmc_wait_for_cmd returned %d",
+			  __func__, err);
 
 	return err;
 }
 
 void hif_dump_cccr(struct hif_sdio_dev *hif_device)
 {
-	int i;
+	unsigned int i;
 	uint8_t cccr_val;
 	uint32_t err;
 
+	HIF_ERROR("%s: Enter", __func__);
+
 	if (!hif_device || !hif_device->func ||
 				!hif_device->func->card) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-			("hif_dump_cccr incorrect input arguments\n"));
+		HIF_ERROR("%s: incorrect input", __func__);
 		return;
 	}
 
-	AR_DEBUG_PRINTF(ATH_DEBUG_ERROR, ("hif_dump_cccr "));
 	for (i = 0; i <= 0x16; i++) {
 		err = func0_cmd52_read_byte(hif_device->func->card,
 						i, &cccr_val);
-		if (err) {
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-				("Reading CCCR 0x%02X failed: %d\n",
-			       (unsigned int)i, (unsigned int)err));
-		} else {
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-				("%X(%X) ", (unsigned int)i,
-			       (unsigned int)cccr_val));
-		}
+		if (err)
+			HIF_ERROR("%s:Reading CCCR 0x%02X failed: %d",
+				  __func__, i, (unsigned int)err);
+		else
+			HIF_ERROR("%X(%X) ", i, (unsigned int)cccr_val);
 	}
 
-	AR_DEBUG_PRINTF(ATH_DEBUG_ERROR, ("\n"));
+	HIF_ERROR("%s: Exit", __func__);
 }
 
 int hif_sdio_device_inserted(struct device *dev,
 					const struct sdio_device_id *id)
 {
 	struct sdio_func *func = dev_to_sdio_func(dev);
+	int status = 0;
 
-	return hif_device_inserted(func, id);
+	HIF_ERROR("%s: Enter", __func__);
+	status = hif_device_inserted(func, id);
+	HIF_ERROR("%s: Exit", __func__);
+
+	return status;
 }
 
 void hif_sdio_device_removed(struct sdio_func *func)

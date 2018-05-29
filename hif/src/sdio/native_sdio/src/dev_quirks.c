@@ -229,6 +229,19 @@ int hif_sdio_quirk_mod_strength(struct sdio_func *func)
 	struct hif_sdio_dev *device = sdio_get_drvdata(func);
 	uint16_t  manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
 
+	if (!modstrength) /* TODO: Dont set this : scn is not popolated yet */
+		return 0;
+
+	if (!scn) {
+		HIF_ERROR("%s: scn is null", __func__);
+		return -1;
+	}
+
+	if (!scn->hostdef) {
+		HIF_ERROR("%s: scn->hostdef is null", __func__);
+		return -1;
+	}
+
 	switch (manfid) {
 	case MANUFACTURER_ID_QCN7605_BASE:
 		break;
@@ -241,7 +254,7 @@ int hif_sdio_quirk_mod_strength(struct sdio_func *func)
 				  __func__, addr, value, ret);
 			break;
 		}
-		HIF_INFO("%s addr:0x%x val:0x%x\n", __func__, addr, value);
+		HIF_INFO("%s: addr 0x%x val 0x%x", __func__, addr, value);
 
 		addr = WINDOW_WRITE_ADDR_ADDRESS;
 		value = 0x50F8;
@@ -251,7 +264,7 @@ int hif_sdio_quirk_mod_strength(struct sdio_func *func)
 				  __func__, addr, value, ret);
 			break;
 		}
-		HIF_INFO("%s addr: 0x%x val:0x%x\n", __func__, addr, value);
+		HIF_INFO("%s: addr 0x%x val 0x%x\n", __func__, addr, value);
 		break;
 	}
 

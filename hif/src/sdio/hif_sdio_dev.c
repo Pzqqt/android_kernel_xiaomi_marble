@@ -40,129 +40,6 @@
 #include "if_sdio.h"
 #include "regtable_sdio.h"
 
-/* under HL SDIO, with Interface Memory support, we have
- * the following reasons to support 2 mboxs:
- * a) we need place different buffers in different
- * mempool, for example, data using Interface Memory,
- * desc and other using DRAM, they need different SDIO
- * mbox channels.
- * b) currently, tx mempool in LL case is separated from
- * main mempool, the structure (descs at the beginning
- * of every pool buffer) is different, because they only
- * need store tx desc from host. To align with LL case,
- * we also need 2 mbox support just as PCIe LL cases.
- */
-
-/**
- * hif_dev_map_pipe_to_mail_box() - maps pipe id to mailbox.
- * @pdev: sdio device context
- * @pipeid: pipe index
- *
- *
- * Return: mailbox index
- */
-uint8_t hif_dev_map_pipe_to_mail_box(struct hif_sdio_device *pdev,
-			uint8_t pipeid)
-{
-	/* TODO: temp version, should not hardcoded here, will be
-	 * updated after HIF design
-	 */
-	if (2 == pipeid || 3 == pipeid)
-		return 1;
-	else if (0 == pipeid || 1 == pipeid)
-		return 0;
-	AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("%s: pipeid=%d,should not happen\n",
-					__func__, pipeid));
-	qdf_assert(0);
-	return INVALID_MAILBOX_NUMBER;
-}
-
-/**
- * hif_dev_map_mail_box_to_pipe() - map sdio mailbox to htc pipe.
- * @pdev: sdio device
- * @mboxIndex: mailbox index
- * @upload: boolean to decide mailbox index
- *
- * Disable hif device interrupts and destroy hif context
- *
- * Return: none
- */
-uint8_t hif_dev_map_mail_box_to_pipe(struct hif_sdio_device *pdev,
-			uint8_t mbox_index,
-				     bool upload)
-{
-	/* TODO: temp version, should not hardcoded here, will be
-	 * updated after HIF design
-	 */
-	if (mbox_index == 0)
-		return upload ? 1 : 0;
-	else if (mbox_index == 1)
-		return upload ? 3 : 2;
-	AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-			("%s:-----mboxIndex=%d,upload=%d, should not happen\n",
-			__func__, mbox_index, upload));
-	qdf_assert(0);
-	return 0xff;
-}
-
-/**
- * hif_dev_map_service_to_pipe() - maps ul/dl pipe to service id.
- * @pDev: sdio device context
- * @ServiceId: sevice index
- * @ULPipe: uplink pipe id
- * @DLPipe: down-linklink pipe id
- * @SwapMapping: mailbox swap mapping
- *
- * Return: int
- */
-QDF_STATUS hif_dev_map_service_to_pipe(struct hif_sdio_device *pdev,
-				     uint16_t service_id,
-				     uint8_t *ul_pipe, uint8_t *dl_pipe,
-				     bool swap_mapping)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	switch (service_id) {
-	case HTT_DATA_MSG_SVC:
-		if (swap_mapping) {
-			*ul_pipe = 1;
-			*dl_pipe = 0;
-		} else {
-			*ul_pipe = 3;
-			*dl_pipe = 2;
-		}
-		break;
-
-	case HTC_CTRL_RSVD_SVC:
-	case HTC_RAW_STREAMS_SVC:
-		*ul_pipe = 1;
-		*dl_pipe = 0;
-		break;
-
-	case WMI_DATA_BE_SVC:
-	case WMI_DATA_BK_SVC:
-	case WMI_DATA_VI_SVC:
-	case WMI_DATA_VO_SVC:
-		*ul_pipe = 1;
-		*dl_pipe = 0;
-		break;
-
-	case WMI_CONTROL_SVC:
-		if (swap_mapping) {
-			*ul_pipe = 3;
-			*dl_pipe = 2;
-		} else {
-			*ul_pipe = 1;
-			*dl_pipe = 0;
-		}
-		break;
-
-	default:
-		status = !QDF_STATUS_SUCCESS;
-		break;
-	}
-	return status;
-}
 
 /**
  * hif_dev_alloc_rx_buffer() - allocate rx buffer.
@@ -226,11 +103,8 @@ struct hif_sdio_device *hif_dev_create(struct hif_sdio_dev *hif_device,
 	status = hif_configure_device(hif_device,
 				      HIF_DEVICE_SET_HTC_CONTEXT,
 				      (void *)pdev, sizeof(pdev));
-	if (status != QDF_STATUS_SUCCESS) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("(%s)HIF_DEVICE_SET_HTC_CONTEXT failed!!!\n",
-				 __func__));
-	}
+	if (status != QDF_STATUS_SUCCESS)
+		HIF_ERROR("%s: set context failed", __func__);
 
 	A_MEMCPY(&pdev->hif_callbacks, callbacks, sizeof(*callbacks));
 
@@ -251,11 +125,9 @@ void hif_dev_destroy(struct hif_sdio_device *pdev)
 	status = hif_configure_device(pdev->HIFDevice,
 				      HIF_DEVICE_SET_HTC_CONTEXT,
 				      (void *)NULL, 0);
-	if (status != QDF_STATUS_SUCCESS) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("(%s)HIF_DEVICE_SET_HTC_CONTEXT failed!!!\n",
-				 __func__));
-	}
+	if (status != QDF_STATUS_SUCCESS)
+		HIF_ERROR("%s: set context failed", __func__);
+
 	qdf_mem_free(pdev);
 }
 
@@ -274,11 +146,9 @@ struct hif_sdio_device *hif_dev_from_hif(struct hif_sdio_dev *hif_device)
 	status = hif_configure_device(hif_device,
 				HIF_DEVICE_GET_HTC_CONTEXT,
 				(void **)&pdev, sizeof(struct hif_sdio_device));
-	if (status != QDF_STATUS_SUCCESS) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("(%s)HTC_SDIO_CONTEXT is NULL!!!\n",
-				 __func__));
-	}
+	if (status != QDF_STATUS_SUCCESS)
+		HIF_ERROR("%s: set context failed", __func__);
+
 	return pdev;
 }
 
@@ -291,39 +161,15 @@ struct hif_sdio_device *hif_dev_from_hif(struct hif_sdio_dev *hif_device)
  */
 QDF_STATUS hif_dev_disable_interrupts(struct hif_sdio_device *pdev)
 {
-	struct MBOX_IRQ_ENABLE_REGISTERS regs;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	HIF_ENTER();
 
-	LOCK_HIF_DEV(pdev);
-	/* Disable all interrupts */
-	pdev->IrqEnableRegisters.int_status_enable = 0;
-	pdev->IrqEnableRegisters.cpu_int_status_enable = 0;
-	pdev->IrqEnableRegisters.error_status_enable = 0;
-	pdev->IrqEnableRegisters.counter_int_status_enable = 0;
-	/* copy into our temp area */
-	A_MEMCPY(&regs,
-		 &pdev->IrqEnableRegisters, sizeof(pdev->IrqEnableRegisters));
-
-	UNLOCK_HIF_DEV(pdev);
-
-	/* always synchronous */
-	status = hif_read_write(pdev->HIFDevice,
-				INT_STATUS_ENABLE_ADDRESS,
-				(char *) &regs,
-				sizeof(struct MBOX_IRQ_ENABLE_REGISTERS),
-				HIF_WR_SYNC_BYTE_INC, NULL);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		/* Can't write it for some reason */
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-			("Failed to update interrupt control registers err: %d",
-			 status));
-	}
+	hif_dev_mask_interrupts(pdev);
 
 	/* To Do mask the host controller interrupts */
 	hif_mask_interrupt(pdev->HIFDevice);
+
 	HIF_EXIT("status :%d", status);
 	return status;
 }
@@ -338,7 +184,6 @@ QDF_STATUS hif_dev_disable_interrupts(struct hif_sdio_device *pdev)
 QDF_STATUS hif_dev_enable_interrupts(struct hif_sdio_device *pdev)
 {
 	QDF_STATUS status;
-	struct MBOX_IRQ_ENABLE_REGISTERS regs;
 
 	HIF_ENTER();
 
@@ -348,69 +193,102 @@ QDF_STATUS hif_dev_enable_interrupts(struct hif_sdio_device *pdev)
 	 * (where we clear the interrupts the first time)
 	 * and when HTC is finally ready to handle interrupts,
 	 * other software can perform target "soft" resets.
-	 * The AR6K interrupt enables reset back to an "enabled"
-	 * state when this happens.
 	 */
-	hif_dev_disable_interrupts(pdev);
+	status = hif_dev_disable_interrupts(pdev);
 
 	/* Unmask the host controller interrupts */
 	hif_un_mask_interrupt(pdev->HIFDevice);
 
-	LOCK_HIF_DEV(pdev);
+	hif_dev_unmask_interrupts(pdev);
 
-	/* Enable all the interrupts except for the internal
-	 * AR6000 CPU interrupt
+	HIF_EXIT();
+
+	return status;
+}
+
+#define DEV_CHECK_RECV_YIELD(pdev) \
+	((pdev)->CurrentDSRRecvCount >= \
+	 (pdev)->HifIRQYieldParams.recv_packet_yield_count)
+
+/**
+ * hif_dev_dsr_handler() - Synchronous interrupt handler
+ *
+ * @context: hif send context
+ *
+ * Return: 0 for success and non-zero for failure
+ */
+QDF_STATUS hif_dev_dsr_handler(void *context)
+{
+	struct hif_sdio_device *pdev = (struct hif_sdio_device *)context;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	bool done = false;
+	bool async_proc = false;
+
+	HIF_ENTER();
+
+	/* reset the recv counter that tracks when we need
+	 * to yield from the DSR
 	 */
-	pdev->IrqEnableRegisters.int_status_enable =
-		INT_STATUS_ENABLE_ERROR_SET(0x01) |
-			INT_STATUS_ENABLE_CPU_SET(0x01)
-		| INT_STATUS_ENABLE_COUNTER_SET(0x01);
-
-		/* enable 2 mboxs INT */
-	pdev->IrqEnableRegisters.int_status_enable |=
-			INT_STATUS_ENABLE_MBOX_DATA_SET(0x01) |
-			INT_STATUS_ENABLE_MBOX_DATA_SET(0x02);
-
-	/* Set up the CPU Interrupt Status Register, enable
-	 * CPU sourced interrupt #0, #1.
-	 * #0 is used for report assertion from target
-	 * #1 is used for inform host that credit arrived
+	pdev->CurrentDSRRecvCount = 0;
+	/* reset counter used to flag a re-scan of IRQ
+	 * status registers on the target
 	 */
-	pdev->IrqEnableRegisters.cpu_int_status_enable = 0x03;
+	pdev->RecheckIRQStatusCnt = 0;
 
-	/* Set up the Error Interrupt Status Register */
-	pdev->IrqEnableRegisters.error_status_enable =
-		(ERROR_STATUS_ENABLE_RX_UNDERFLOW_SET(0x01)
-		 | ERROR_STATUS_ENABLE_TX_OVERFLOW_SET(0x01)) >> 16;
+	while (!done) {
+		status = hif_dev_process_pending_irqs(pdev, &done, &async_proc);
+		if (QDF_IS_STATUS_ERROR(status))
+			break;
 
-	/* Set up the Counter Interrupt Status Register
-	 * (only for debug interrupt to catch fatal errors)
-	 */
-	pdev->IrqEnableRegisters.counter_int_status_enable =
-	   (COUNTER_INT_STATUS_ENABLE_BIT_SET(AR6K_TARGET_DEBUG_INTR_MASK)) >>
-		24;
+		if (pdev->HifIRQProcessingMode == HIF_DEVICE_IRQ_SYNC_ONLY) {
+			/* the HIF layer does not allow async IRQ processing,
+			 * override the asyncProc flag
+			 */
+			async_proc = false;
+			/* this will cause us to re-enter ProcessPendingIRQ()
+			 * and re-read interrupt status registers.
+			 * This has a nice side effect of blocking us until all
+			 * async read requests are completed. This behavior is
+			 * required as we  do not allow ASYNC processing
+			 * in interrupt handlers (like Windows CE)
+			 */
 
-	/* copy into our temp area */
-	A_MEMCPY(&regs,
-		 &pdev->IrqEnableRegisters,
-		 sizeof(struct MBOX_IRQ_ENABLE_REGISTERS));
+			if (pdev->DSRCanYield && DEV_CHECK_RECV_YIELD(pdev))
+				/* ProcessPendingIRQs() pulled enough recv
+				 * messages to satisfy the yield count, stop
+				 * checking for more messages and return
+				 */
+				break;
+		}
 
-	UNLOCK_HIF_DEV(pdev);
-
-	/* always synchronous */
-	status = hif_read_write(pdev->HIFDevice,
-				INT_STATUS_ENABLE_ADDRESS,
-				(char *) &regs,
-				sizeof(struct MBOX_IRQ_ENABLE_REGISTERS),
-				HIF_WR_SYNC_BYTE_INC, NULL);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		/* Can't write it for some reason */
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-		  ("Failed to update interrupt control registers err: %d\n",
-				 status));
-
+		if (async_proc) {
+			/* the function does some async I/O for performance,
+			 * we need to exit the ISR immediately, the check below
+			 * will prevent the interrupt from being
+			 * Ack'd while we handle it asynchronously
+			 */
+			break;
+		}
 	}
+
+	if (QDF_IS_STATUS_SUCCESS(status) && !async_proc) {
+		/* Ack the interrupt only if :
+		 *  1. we did not get any errors in processing interrupts
+		 *  2. there are no outstanding async processing requests
+		 */
+		if (pdev->DSRCanYield) {
+			/* if the DSR can yield do not ACK the interrupt, there
+			 * could be more pending messages. The HIF layer
+			 * must ACK the interrupt on behalf of HTC
+			 */
+			HIF_INFO("%s:  Yield (RX count: %d)",
+				 __func__, pdev->CurrentDSRRecvCount);
+		} else {
+			HIF_INFO("%s: Ack interrupt", __func__);
+			hif_ack_interrupt(pdev->HIFDevice);
+		}
+	}
+
 	HIF_EXIT();
 	return status;
 }
@@ -436,12 +314,8 @@ QDF_STATUS hif_dev_setup(struct hif_sdio_device *pdev)
 				      &pdev->MailBoxInfo,
 				      sizeof(pdev->MailBoxInfo));
 
-	if (status != QDF_STATUS_SUCCESS) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("(%s)HIF_DEVICE_GET_MBOX_ADDR failed!!!\n",
-				 __func__));
-		A_ASSERT(false);
-	}
+	if (status != QDF_STATUS_SUCCESS)
+		HIF_ERROR("%s: HIF_DEVICE_GET_MBOX_ADDR failed", __func__);
 
 	status = hif_configure_device(hif_device,
 				      HIF_DEVICE_GET_MBOX_BLOCK_SIZE,

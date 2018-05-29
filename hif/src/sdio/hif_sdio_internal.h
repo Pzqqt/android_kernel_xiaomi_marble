@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -135,12 +135,6 @@ struct hif_sdio_device {
 
 /* hif_sdio_dev.c */
 HTC_PACKET *hif_dev_alloc_rx_buffer(struct hif_sdio_device *pDev);
-
-uint8_t hif_dev_map_pipe_to_mail_box(struct hif_sdio_device *pDev,
-			uint8_t pipeid);
-uint8_t hif_dev_map_mail_box_to_pipe(struct hif_sdio_device *pDev,
-			uint8_t mboxIndex,
-				     bool upload);
 
 /* hif_sdio_recv.c */
 QDF_STATUS hif_dev_rw_completion_handler(void *context, QDF_STATUS status);

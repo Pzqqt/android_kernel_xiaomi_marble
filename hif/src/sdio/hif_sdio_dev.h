@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,10 +45,24 @@ QDF_STATUS hif_dev_send_buffer(struct hif_sdio_device *htc_sdio_device,
 			     unsigned int transfer_id, uint8_t pipe,
 			     unsigned int nbytes, qdf_nbuf_t buf);
 
-QDF_STATUS hif_dev_map_service_to_pipe(struct hif_sdio_device *pdev,
+QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
+					bool *done,
+					      bool *async_processing);
+
+void hif_dev_mask_interrupts(struct hif_sdio_device *pdev);
+
+QDF_STATUS hif_dev_map_service_to_pipe(struct hif_sdio_dev *pdev,
 				       uint16_t service_id,
 				       uint8_t *ul_pipe,
-				       uint8_t *dl_pipe,
-				       bool swap_mapping);
+				       uint8_t *dl_pipe);
 
+void hif_dev_unmask_interrupts(struct hif_sdio_device *pdev);
+
+#ifdef CONFIG_SDIO_TRANSFER_MAILBOX
+QDF_STATUS hif_dev_get_mbox_address(struct hif_sdio_dev *pdev,
+				    struct hif_device_mbox_info *config,
+				    uint32_t config_len);
+
+void hif_dev_get_mbox_block_size(void *config);
+#endif
 #endif /* HIF_SDIO_DEV_H_ */
