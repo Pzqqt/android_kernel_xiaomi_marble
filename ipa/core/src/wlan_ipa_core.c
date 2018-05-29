@@ -1367,7 +1367,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		/* Wait until completion of the long/unloading */
 		status = qdf_wait_for_event_completion(
 				&ipa_ctx->ipa_resource_comp,
-				msecs_to_jiffies(IPA_RESOURCE_COMP_WAIT_TIME));
+				IPA_RESOURCE_COMP_WAIT_TIME);
 		if (status != QDF_STATUS_SUCCESS) {
 			/*
 			 * If timed out, store the events separately and
