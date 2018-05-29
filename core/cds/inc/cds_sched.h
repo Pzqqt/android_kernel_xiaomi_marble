@@ -171,7 +171,7 @@ struct cds_context {
 	cds_sched_context qdf_sched;
 
 	/* HDD Module Context  */
-	void *pHDDContext;
+	void *hdd_context;
 
 	/* MAC Module Context  */
 	void *pMACContext;

@@ -488,7 +488,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		return status;
 	}
 
-	hdd_ctx = (struct hdd_context *)(gp_cds_context->pHDDContext);
+	hdd_ctx = (struct hdd_context *)(gp_cds_context->hdd_context);
 	if (!hdd_ctx || !hdd_ctx->config) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_err("Hdd Context is Null");
@@ -649,7 +649,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	/* Now proceed to open the MAC */
 	sirStatus =
 		mac_open(psoc, &(gp_cds_context->pMACContext),
-			gp_cds_context->pHDDContext, cds_cfg);
+			gp_cds_context->hdd_context, cds_cfg);
 
 	if (eSIR_SUCCESS != sirStatus) {
 		/* Critical Error ...  Cannot proceed further */
@@ -1234,7 +1234,7 @@ void *cds_get_context(QDF_MODULE_ID moduleId)
 	switch (moduleId) {
 	case QDF_MODULE_ID_HDD:
 	{
-		pModContext = gp_cds_context->pHDDContext;
+		pModContext = gp_cds_context->hdd_context;
 		break;
 	}
 
@@ -1545,7 +1545,7 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
 
 	switch (module_id) {
 	case QDF_MODULE_ID_HDD:
-		p_cds_context->pHDDContext = context;
+		p_cds_context->hdd_context = context;
 		break;
 	case QDF_MODULE_ID_TXRX:
 		p_cds_context->pdev_txrx_ctx = context;
@@ -1745,7 +1745,7 @@ bool cds_is_packet_log_enabled(void)
 {
 	struct hdd_context *hdd_ctx;
 
-	hdd_ctx = (struct hdd_context *) (gp_cds_context->pHDDContext);
+	hdd_ctx = gp_cds_context->hdd_context;
 	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Hdd Context is Null", __func__);
@@ -2280,7 +2280,7 @@ bool cds_is_ptp_rx_opt_enabled(void)
 		return false;
 	}
 
-	hdd_ctx = (struct hdd_context *)(p_cds_context->pHDDContext);
+	hdd_ctx = (struct hdd_context *)(p_cds_context->hdd_context);
 	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Hdd Context is Null", __func__);
@@ -2302,7 +2302,7 @@ bool cds_is_ptp_tx_opt_enabled(void)
 		return false;
 	}
 
-	hdd_ctx = (struct hdd_context *)(p_cds_context->pHDDContext);
+	hdd_ctx = (struct hdd_context *)(p_cds_context->hdd_context);
 	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Hdd Context is Null", __func__);
@@ -2771,7 +2771,7 @@ void cds_incr_arp_stats_tx_tgt_delivered(void)
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter = NULL;
 
-	hdd_ctx = (struct hdd_context *) (gp_cds_context->pHDDContext);
+	hdd_ctx = gp_cds_context->hdd_context;
 	if (!hdd_ctx) {
 		cds_err("Hdd Context is Null");
 		return;
@@ -2796,7 +2796,7 @@ void cds_incr_arp_stats_tx_tgt_acked(void)
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter = NULL;
 
-	hdd_ctx = (struct hdd_context *) (gp_cds_context->pHDDContext);
+	hdd_ctx = gp_cds_context->hdd_context;
 	if (!hdd_ctx) {
 		cds_err("Hdd Context is Null");
 		return;
