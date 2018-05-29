@@ -209,7 +209,7 @@ int epping_enable(struct device *parent_dev)
 {
 	int ret = 0;
 	epping_context_t *pEpping_ctx = NULL;
-	cds_context_type *p_cds_context = NULL;
+	struct cds_context *p_cds_context = NULL;
 	qdf_device_t qdf_ctx;
 	struct htc_init_info htcInfo;
 	struct hif_opaque_softc *scn;
