@@ -72,8 +72,8 @@
 /* Preprocessor Definitions and Constants */
 
 /* Data definitions */
-static cds_context_type g_cds_context;
-static p_cds_contextType gp_cds_context;
+static struct cds_context g_cds_context;
+static struct cds_context *gp_cds_context;
 static struct __qdf_device g_qdf_ctx;
 
 static uint8_t cds_multicast_logging;
@@ -418,7 +418,7 @@ static void
 cds_set_ac_specs_params(struct cds_config_info *cds_cfg)
 {
 	int i;
-	cds_context_type *cds_ctx;
+	struct cds_context *cds_ctx;
 
 	if (NULL == cds_cfg)
 		return;
@@ -461,7 +461,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	struct hif_opaque_softc *scn;
 	void *HTCHandle;
 	struct hdd_context *hdd_ctx;
-	cds_context_type *cds_ctx;
+	struct cds_context *cds_ctx;
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Opening CDS", __func__);
@@ -1535,7 +1535,7 @@ QDF_STATUS cds_alloc_context(QDF_MODULE_ID moduleID,
  */
 QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
 {
-	p_cds_contextType p_cds_context = cds_get_global_context();
+	struct cds_context *p_cds_context = cds_get_global_context();
 
 	if (!p_cds_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -1972,7 +1972,7 @@ uint64_t cds_get_monotonic_boottime(void)
  */
 void cds_set_wakelock_logging(bool value)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -1993,7 +1993,7 @@ void cds_set_wakelock_logging(bool value)
  */
 bool cds_is_wakelock_enabled(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2016,7 +2016,7 @@ bool cds_is_wakelock_enabled(void)
  */
 void cds_set_ring_log_level(uint32_t ring_id, uint32_t log_level)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 	uint32_t log_val;
 
 	p_cds_context = cds_get_global_context();
@@ -2070,7 +2070,7 @@ void cds_set_ring_log_level(uint32_t ring_id, uint32_t log_level)
  */
 enum wifi_driver_log_level cds_get_ring_log_level(uint32_t ring_id)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2132,7 +2132,7 @@ uint8_t cds_is_multicast_logging(void)
  */
 void cds_init_log_completion(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2164,7 +2164,7 @@ QDF_STATUS cds_set_log_completion(uint32_t is_fatal,
 		uint32_t reason_code,
 		bool recovery_needed)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2203,7 +2203,7 @@ void cds_get_and_reset_log_completion(uint32_t *is_fatal,
 		uint32_t *reason_code,
 		bool *recovery_needed)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2236,7 +2236,7 @@ void cds_get_and_reset_log_completion(uint32_t *is_fatal,
  */
 bool cds_is_log_report_in_progress(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2254,7 +2254,7 @@ bool cds_is_log_report_in_progress(void)
  */
 bool cds_is_fatal_event_enabled(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2271,7 +2271,7 @@ bool cds_is_fatal_event_enabled(void)
 bool cds_is_ptp_rx_opt_enabled(void)
 {
 	struct hdd_context *hdd_ctx;
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2293,7 +2293,7 @@ bool cds_is_ptp_rx_opt_enabled(void)
 bool cds_is_ptp_tx_opt_enabled(void)
 {
 	struct hdd_context *hdd_ctx;
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2322,7 +2322,7 @@ bool cds_is_ptp_tx_opt_enabled(void)
  */
 uint32_t cds_get_log_indicator(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 	uint32_t indicator;
 
 	p_cds_context = cds_get_global_context();
@@ -2380,7 +2380,7 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 	uint32_t ret;
 	QDF_STATUS status;
 
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2460,7 +2460,7 @@ void cds_logging_set_fw_flush_complete(void)
  */
 void cds_set_fatal_event(bool value)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2478,7 +2478,7 @@ void cds_set_fatal_event(bool value)
  */
 int cds_get_radio_index(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2501,7 +2501,7 @@ int cds_get_radio_index(void)
  */
 QDF_STATUS cds_set_radio_index(int radio_index)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -2523,7 +2523,7 @@ QDF_STATUS cds_set_radio_index(int radio_index)
 
 void cds_init_ini_config(struct cds_config_info *cfg)
 {
-	cds_context_type *cds_ctx;
+	struct cds_context *cds_ctx;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
@@ -2541,7 +2541,7 @@ void cds_init_ini_config(struct cds_config_info *cfg)
  */
 void cds_deinit_ini_config(void)
 {
-	cds_context_type *cds_ctx;
+	struct cds_context *cds_ctx;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
@@ -2562,7 +2562,7 @@ void cds_deinit_ini_config(void)
  */
 struct cds_config_info *cds_get_ini_config(void)
 {
-	cds_context_type *cds_ctx;
+	struct cds_context *cds_ctx;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
@@ -2580,7 +2580,7 @@ struct cds_config_info *cds_get_ini_config(void)
  */
 bool cds_is_5_mhz_enabled(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!p_cds_context) {
@@ -2602,7 +2602,7 @@ bool cds_is_5_mhz_enabled(void)
  */
 bool cds_is_10_mhz_enabled(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!p_cds_context) {
@@ -2624,7 +2624,7 @@ bool cds_is_10_mhz_enabled(void)
  */
 bool cds_is_sub_20_mhz_enabled(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!p_cds_context) {
@@ -2645,7 +2645,7 @@ bool cds_is_sub_20_mhz_enabled(void)
  */
 bool cds_is_self_recovery_enabled(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!p_cds_context) {

@@ -225,9 +225,6 @@ struct cds_context {
 	enum qdf_hang_reason recovery_reason;
 };
 
-/* legacy typedefs required until all references are updated */
-typedef struct cds_context cds_context_type, *p_cds_contextType;
-
 /*---------------------------------------------------------------------------
    Function declarations and documenation
    ---------------------------------------------------------------------------*/

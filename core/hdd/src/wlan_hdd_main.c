@@ -2412,7 +2412,7 @@ hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 	uint8_t tx_sched_wrr_param[TX_SCHED_WRR_PARAMS_NUM];
 	uint8_t *tx_sched_wrr_ac;
 	int i;
-	cds_context_type *cds_ctx;
+	struct cds_context *cds_ctx;
 
 	if (NULL == hdd_ctx)
 		return;
@@ -6730,7 +6730,7 @@ static void hdd_context_destroy(struct hdd_context *hdd_ctx)
  */
 static void wlan_destroy_bug_report_lock(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -10679,7 +10679,7 @@ static void hdd_register_debug_callback(void)
  */
 static void wlan_init_bug_report_lock(void)
 {
-	p_cds_contextType p_cds_context;
+	struct cds_context *p_cds_context;
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
@@ -13588,7 +13588,7 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 {
 	struct hdd_adapter *ap_adapter;
 	struct hdd_context *hdd_ctx;
-	cds_context_type *cds_ctx;
+	struct cds_context *cds_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {

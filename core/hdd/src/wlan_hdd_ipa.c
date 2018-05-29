@@ -42,7 +42,7 @@ void hdd_ipa_set_tx_flow_info(void)
 	uint8_t staChannel = 0, p2pChannel = 0, apChannel = 0;
 	const char *p2pMode = "DEV";
 	struct hdd_context *hdd_ctx;
-	cds_context_type *cds_ctx;
+	struct cds_context *cds_ctx;
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	uint8_t targetChannel = 0;
 	uint8_t preAdapterChannel = 0;

@@ -1435,8 +1435,8 @@ wma_mgmt_tx_dload_comp_hldr(void *wma_context, qdf_nbuf_t netbuf,
 QDF_STATUS wma_tx_attach(tp_wma_handle wma_handle)
 {
 	/* Get the Vos Context */
-	p_cds_contextType cds_handle =
-		(p_cds_contextType) (wma_handle->cds_context);
+	struct cds_context *cds_handle =
+		(struct cds_context *) (wma_handle->cds_context);
 
 	/* Get the txRx Pdev handle */
 	struct cdp_pdev *txrx_pdev = cds_handle->pdev_txrx_ctx;
@@ -1466,8 +1466,8 @@ QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/* Get the Vos Context */
-	p_cds_contextType cds_handle =
-		(p_cds_contextType) (wma_handle->cds_context);
+	struct cds_context *cds_handle =
+		(struct cds_context *) (wma_handle->cds_context);
 
 	/* Get the txRx Pdev handle */
 	struct cdp_pdev *txrx_pdev = cds_handle->pdev_txrx_ctx;
