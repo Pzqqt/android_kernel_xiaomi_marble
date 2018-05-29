@@ -30,10 +30,6 @@
 #include "qdf_mc_timer.h"
 #include <qdf_module.h>
 
-#ifdef CONFIG_MCL
-static qdf_self_recovery_callback self_recovery_cb;
-#endif
-
 struct qdf_evt_node {
 	qdf_list_node_t node;
 	qdf_event_t *pevent;
@@ -450,20 +446,3 @@ QDF_STATUS qdf_exit_thread(QDF_STATUS status)
 	return QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(qdf_exit_thread);
-
-#ifdef CONFIG_MCL
-void qdf_register_self_recovery_callback(qdf_self_recovery_callback callback)
-{
-	self_recovery_cb = callback;
-}
-
-void qdf_trigger_self_recovery(void)
-{
-	if (!self_recovery_cb) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-			  "No self recovery callback registered %s", __func__);
-		return;
-	}
-	self_recovery_cb(QDF_REASON_UNSPECIFIED);
-}
-#endif

@@ -20,12 +20,21 @@
 #include "qdf_trace.h"
 #include "qdf_platform.h"
 
-static qdf_is_fw_down_callback is_fw_down_cb;
+/**
+ * The following callbacks should be defined static to make sure they are
+ * initialized to NULL
+ */
+static qdf_self_recovery_callback           self_recovery_cb;
+static qdf_ssr_callback                     ssr_protect_cb;
+static qdf_ssr_callback                     ssr_unprotect_cb;
+static qdf_is_module_state_transitioning_cb module_state_transitioning_cb;
+static qdf_is_fw_down_callback		    is_fw_down_cb;
 
 void qdf_register_fw_down_callback(qdf_is_fw_down_callback is_fw_down)
 {
 	is_fw_down_cb = is_fw_down;
 }
+
 qdf_export_symbol(qdf_register_fw_down_callback);
 
 bool qdf_is_fw_down(void)
@@ -38,4 +47,62 @@ bool qdf_is_fw_down(void)
 
 	return is_fw_down_cb();
 }
+
 qdf_export_symbol(qdf_is_fw_down);
+
+void qdf_register_self_recovery_callback(qdf_self_recovery_callback callback)
+{
+	self_recovery_cb = callback;
+}
+
+qdf_export_symbol(qdf_register_self_recovery_callback);
+
+void qdf_trigger_self_recovery(void)
+{
+	if (self_recovery_cb)
+		self_recovery_cb(QDF_REASON_UNSPECIFIED);
+}
+
+qdf_export_symbol(qdf_trigger_self_recovery);
+
+void qdf_register_ssr_protect_callbacks(qdf_ssr_callback protect,
+					qdf_ssr_callback unprotect)
+{
+	ssr_protect_cb   = protect;
+	ssr_unprotect_cb = unprotect;
+}
+
+qdf_export_symbol(qdf_register_ssr_protect_callbacks);
+
+void qdf_ssr_protect(const char *caller)
+{
+	if (ssr_protect_cb)
+		ssr_protect_cb(caller);
+}
+
+qdf_export_symbol(qdf_ssr_protect);
+
+void qdf_ssr_unprotect(const char *caller)
+{
+	if (ssr_unprotect_cb)
+		ssr_unprotect_cb(caller);
+}
+
+qdf_export_symbol(qdf_ssr_unprotect);
+
+void qdf_register_module_state_query_callback(
+			qdf_is_module_state_transitioning_cb query)
+{
+	module_state_transitioning_cb = query;
+}
+
+qdf_export_symbol(qdf_register_module_state_query_callback);
+
+bool qdf_is_module_state_transitioning(void)
+{
+	if (module_state_transitioning_cb)
+		return module_state_transitioning_cb();
+	return false;
+}
+
+qdf_export_symbol(qdf_is_module_state_transitioning);

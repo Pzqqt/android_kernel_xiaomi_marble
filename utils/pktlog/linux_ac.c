@@ -551,7 +551,7 @@ static int __pktlog_open(struct inode *i, struct file *f)
 		return -EBUSY;
 	}
 
-	if (cds_is_module_state_transitioning()) {
+	if (qdf_is_module_state_transitioning()) {
 		pr_info("%s: module transition in progress", __func__);
 		return -EAGAIN;
 	}
@@ -595,9 +595,9 @@ static int pktlog_open(struct inode *i, struct file *f)
 {
 	int ret;
 
-	cds_ssr_protect(__func__);
+	qdf_ssr_protect(__func__);
 	ret = __pktlog_open(i, f);
-	cds_ssr_unprotect(__func__);
+	qdf_ssr_unprotect(__func__);
 
 	return ret;
 }
@@ -617,7 +617,7 @@ static int __pktlog_release(struct inode *i, struct file *f)
 	if (!pl_info)
 		return -EINVAL;
 
-	if (cds_is_module_state_transitioning()) {
+	if (qdf_is_module_state_transitioning()) {
 		pr_info("%s: module transition in progress", __func__);
 		return -EAGAIN;
 	}
@@ -662,9 +662,9 @@ static int pktlog_release(struct inode *i, struct file *f)
 {
 	int ret;
 
-	cds_ssr_protect(__func__);
+	qdf_ssr_protect(__func__);
 	ret = __pktlog_release(i, f);
-	cds_ssr_unprotect(__func__);
+	qdf_ssr_unprotect(__func__);
 
 	return ret;
 }
@@ -839,7 +839,7 @@ __pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 	struct ath_pktlog_info *pl_info;
 	struct ath_pktlog_buf *log_buf;
 
-	if (cds_is_module_state_transitioning()) {
+	if (qdf_is_module_state_transitioning()) {
 		pr_info("%s: module transition in progress", __func__);
 		return -EAGAIN;
 	}
@@ -996,11 +996,11 @@ pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 	if (!pl_info)
 		return 0;
 
-	cds_ssr_protect(__func__);
+	qdf_ssr_protect(__func__);
 	mutex_lock(&pl_info->pktlog_mutex);
 	ret = __pktlog_read(file, buf, nbytes, ppos);
 	mutex_unlock(&pl_info->pktlog_mutex);
-	cds_ssr_unprotect(__func__);
+	qdf_ssr_unprotect(__func__);
 	return ret;
 }
 
