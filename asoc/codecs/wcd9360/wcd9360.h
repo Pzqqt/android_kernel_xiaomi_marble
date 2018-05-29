@@ -127,6 +127,7 @@ struct pahu_reg_mask_val {
 	u8 val;
 };
 
+#if IS_ENABLED(CONFIG_SND_SOC_WCD9360)
 extern void *pahu_get_afe_config(struct snd_soc_codec *codec,
 				  enum afe_config_type config_type);
 extern int pahu_cdc_mclk_enable(struct snd_soc_codec *codec, bool enable);
@@ -138,4 +139,42 @@ extern int wcd9360_get_micb_vout_ctl_val(u32 micb_mv);
 extern int pahu_codec_info_create_codec_entry(
 				struct snd_info_entry *codec_root,
 				struct snd_soc_codec *codec);
+#else
+extern void *pahu_get_afe_config(struct snd_soc_codec *codec,
+				  enum afe_config_type config_type)
+{
+	return NULL;
+}
+extern int pahu_cdc_mclk_enable(struct snd_soc_codec *codec, bool enable)
+{
+	return 0;
+}
+extern int pahu_cdc_mclk_tx_enable(struct snd_soc_codec *codec, bool enable)
+{
+	return 0;
+}
+extern int pahu_set_spkr_mode(struct snd_soc_codec *codec, int mode)
+{
+	return 0;
+}
+extern int pahu_set_spkr_gain_offset(struct snd_soc_codec *codec, int offset)
+{
+	return 0;
+}
+extern void *pahu_get_wcd_dsp_cntl(struct device *dev)
+{
+	return NULL;
+}
+extern int wcd9360_get_micb_vout_ctl_val(u32 micb_mv)
+{
+	return 0;
+}
+extern int pahu_codec_info_create_codec_entry(
+				struct snd_info_entry *codec_root,
+				struct snd_soc_codec *codec)
+{
+	return 0;
+}
+#endif
+
 #endif

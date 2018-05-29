@@ -7122,7 +7122,7 @@ static void pahu_cdc_vote_svs(struct snd_soc_codec *codec, bool vote)
 	return pahu_vote_svs(pahu, vote);
 }
 
-struct wcd_dsp_cdc_cb cdc_cb = {
+static struct wcd_dsp_cdc_cb cdc_cb = {
 	.cdc_clk_en = pahu_codec_internal_rco_ctrl,
 	.cdc_vote_svs = pahu_cdc_vote_svs,
 };
