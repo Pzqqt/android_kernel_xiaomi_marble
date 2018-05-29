@@ -480,10 +480,10 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	/* Initialize bug reporting structure */
 	cds_init_log_completion();
 
-	status = qdf_event_create(&gp_cds_context->wmaCompleteEvent);
+	status = qdf_event_create(&gp_cds_context->wma_complete_event);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Unable to init wmaCompleteEvent", __func__);
+			  "%s: Unable to init wma_complete_event", __func__);
 		QDF_ASSERT(0);
 		return status;
 	}
@@ -708,7 +708,7 @@ err_dispatcher_disable:
 		cds_err("Failed to disable dispatcher");
 
 err_wma_complete_event:
-	qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
+	qdf_event_destroy(&gp_cds_context->wma_complete_event);
 
 	return status;
 } /* cds_open() */
@@ -792,7 +792,7 @@ QDF_STATUS cds_pre_enable(void)
 					scn);
 
 	/* Reset wma wait event */
-	qdf_event_reset(&gp_cds_context->wmaCompleteEvent);
+	qdf_event_reset(&gp_cds_context->wma_complete_event);
 
 	/*call WMA pre start */
 	status = wma_pre_start();
@@ -803,7 +803,7 @@ QDF_STATUS cds_pre_enable(void)
 
 	/* Need to update time out of complete */
 	status = qdf_wait_for_event_completion(
-					&gp_cds_context->wmaCompleteEvent,
+					&gp_cds_context->wma_complete_event,
 					CDS_WMA_TIMEOUT);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cds_err("Failed to wait for WMA complete; status:%u", status);
@@ -950,7 +950,7 @@ err_mac_stop:
 	mac_stop(gp_cds_context->mac_context, HAL_STOP_TYPE_SYS_RESET);
 
 err_wma_stop:
-	qdf_event_reset(&(gp_cds_context->wmaCompleteEvent));
+	qdf_event_reset(&gp_cds_context->wma_complete_event);
 	qdf_status = wma_stop(HAL_STOP_TYPE_RF_KILL);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -960,7 +960,7 @@ err_wma_stop:
 	} else {
 		qdf_status =
 			qdf_wait_for_event_completion(
-					&gp_cds_context->wmaCompleteEvent,
+					&gp_cds_context->wma_complete_event,
 					CDS_WMA_TIMEOUT);
 		if (qdf_status != QDF_STATUS_SUCCESS) {
 			if (qdf_status == QDF_STATUS_E_TIMEOUT) {
@@ -1178,10 +1178,10 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
-	qdf_status = qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
+	qdf_status = qdf_event_destroy(&gp_cds_context->wma_complete_event);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to destroy wmaCompleteEvent", __func__);
+			  "%s: failed to destroy wma_complete_event", __func__);
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
@@ -1651,7 +1651,7 @@ void cds_wma_complete_cback(void)
 		return;
 	}
 
-	if (qdf_event_set(&gp_cds_context->wmaCompleteEvent) !=
+	if (qdf_event_set(&gp_cds_context->wma_complete_event) !=
 	    QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: qdf_event_set failed", __func__);
