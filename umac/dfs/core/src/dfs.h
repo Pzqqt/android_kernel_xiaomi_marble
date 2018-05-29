@@ -898,6 +898,9 @@ struct dfs_event_log {
  * @dfs_precac_primary_freq:         Primary freq.
  * @dfs_precac_timer_running:        Precac timer running.
  * @dfs_defer_precac_channel_change: Defer precac channel change.
+ * @dfs_precac_preferred_chan:       Channel to change after precac.
+ * @dfs_precac_inter_chan:           Intermediate non-DFS channel used while
+ *                                   doing precac.
  * @dfs_pre_cac_timeout_channel_change: Channel change due to precac timeout.
  * @wlan_dfs_task_timer:             Dfs wait timer.
  * @dur_multiplier:                  Duration multiplier.
@@ -1017,6 +1020,10 @@ struct wlan_dfs {
 	uint8_t        dfs_precac_primary_freq;
 	uint8_t        dfs_precac_timer_running;
 	uint8_t        dfs_defer_precac_channel_change;
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+	uint8_t        dfs_precac_preferred_chan;
+	uint8_t        dfs_precac_inter_chan;
+#endif
 	uint8_t        dfs_pre_cac_timeout_channel_change:1;
 	os_timer_t     wlan_dfs_task_timer;
 	int            dur_multiplier;
@@ -2044,6 +2051,18 @@ void dfs_stacac_stop(struct wlan_dfs *dfs);
  */
 void dfs_find_precac_secondary_vht80_chan(struct wlan_dfs *dfs,
 		struct dfs_channel *chan);
+
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+/**
+ * dfs_precac_csa() - Automatically switch the channel to the DFS channel
+ *			on which PreCAC was completed without finding a RADAR.
+ *			Use CSA with TBTT_COUNT to switch the channel.
+ * @dfs: Pointer to dfs handler.
+ *
+ * Return: Void
+ */
+void dfs_precac_csa(struct wlan_dfs *dfs);
+#endif
 
 /**
  * dfs_phyerr_param_copy() - Function to copy src buf to dest buf.

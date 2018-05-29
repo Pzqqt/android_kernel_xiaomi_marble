@@ -154,6 +154,62 @@ QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev,
 }
 qdf_export_symbol(ucfg_dfs_get_precac_enable);
 
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+QDF_STATUS ucfg_dfs_set_precac_intermediate_chan(struct wlan_objmgr_pdev *pdev,
+						 uint32_t value)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null dfs");
+		return  QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_set_precac_intermediate_chan(dfs, value);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_dfs_get_precac_intermediate_chan(struct wlan_objmgr_pdev *pdev,
+						 int *buff)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null dfs");
+		return  QDF_STATUS_E_FAILURE;
+	}
+
+	*buff = dfs_get_precac_intermediate_chan(dfs);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+enum precac_chan_state
+ucfg_dfs_get_precac_chan_state(struct wlan_objmgr_pdev *pdev,
+			       uint8_t precac_chan)
+{
+	struct wlan_dfs *dfs;
+	enum precac_chan_state retval = PRECAC_ERR;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null dfs");
+		return PRECAC_ERR;
+	}
+
+	retval = dfs_get_precac_chan_state(dfs, precac_chan);
+	if (PRECAC_ERR == retval) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Could not find precac channel state");
+	}
+
+	return retval;
+}
+#endif
+
 #ifdef QCA_MCL_DFS_SUPPORT
 QDF_STATUS ucfg_dfs_update_config(struct wlan_objmgr_psoc *psoc,
 		struct dfs_user_config *req)

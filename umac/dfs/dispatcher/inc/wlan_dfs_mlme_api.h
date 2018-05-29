@@ -135,17 +135,22 @@ int dfs_mlme_ieee2mhz(struct wlan_objmgr_pdev *pdev,
  * @dfs_ch_vhtop_ch_freq_seg1:  Channel Center frequency.
  * @dfs_ch_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
  *                          mode of operation.
+ *
+ * Return:
+ * * QDF_STATUS_SUCCESS  : Channel found.
+ * * QDF_STATUS_E_FAILURE: Channel not found.
  */
-void dfs_mlme_find_dot11_channel(struct wlan_objmgr_pdev *pdev,
-		uint8_t ieee,
-		uint8_t des_cfreq2,
-		int mode,
-		uint16_t *dfs_ch_freq,
-		uint64_t *dfs_ch_flags,
-		uint16_t *dfs_ch_flagext,
-		uint8_t *dfs_ch_ieee,
-		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
-		uint8_t *dfs_ch_vhtop_ch_freq_seg2);
+QDF_STATUS
+dfs_mlme_find_dot11_channel(struct wlan_objmgr_pdev *pdev,
+			    uint8_t ieee,
+			    uint8_t des_cfreq2,
+			    int mode,
+			    uint16_t *dfs_ch_freq,
+			    uint64_t *dfs_ch_flags,
+			    uint16_t *dfs_ch_flagext,
+			    uint8_t *dfs_ch_ieee,
+			    uint8_t *dfs_ch_vhtop_ch_freq_seg1,
+			    uint8_t *dfs_ch_vhtop_ch_freq_seg2);
 
 /**
  * dfs_mlme_get_dfs_ch_channels() - Get channel from channel list.
@@ -160,13 +165,13 @@ void dfs_mlme_find_dot11_channel(struct wlan_objmgr_pdev *pdev,
  * @index: Index into channel list.
  */
 void dfs_mlme_get_dfs_ch_channels(struct wlan_objmgr_pdev *pdev,
-		uint16_t *dfs_ch_freq,
-		uint64_t *dfs_ch_flags,
-		uint16_t *dfs_ch_flagext,
-		uint8_t *dfs_ch_ieee,
-		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
-		uint8_t *dfs_ch_vhtop_ch_freq_seg2,
-		int index);
+				  uint16_t *dfs_ch_freq,
+				  uint64_t *dfs_ch_flags,
+				  uint16_t *dfs_ch_flagext,
+				  uint8_t *dfs_ch_ieee,
+				  uint8_t *dfs_ch_vhtop_ch_freq_seg1,
+				  uint8_t *dfs_ch_vhtop_ch_freq_seg2,
+				  int index);
 
 /**
  * dfs_mlme_dfs_ch_flags_ext() - Get extension channel flags.

@@ -137,6 +137,19 @@ static inline QDF_STATUS utils_dfs_reset_etsi_precaclists(
 QDF_STATUS utils_dfs_cancel_precac_timer(struct wlan_objmgr_pdev *pdev);
 
 /**
+ * utils_dfs_start_precac_timer() - Start the precac timer.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Wrapper function for dfs_start_precac_timer(). This function called from
+ * outside of dfs component.
+ *
+ * Return:
+ * * QDF_STATUS_E_FAILURE: Failed to start timer.
+ * * QDF_STATUS_SUCCESS: Timer started successfully.
+ */
+QDF_STATUS utils_dfs_start_precac_timer(struct wlan_objmgr_pdev *pdev);
+
+/**
  * utils_dfs_is_precac_done() - Is precac done.
  * @pdev: Pointer to DFS pdev object.
  *
@@ -145,6 +158,23 @@ QDF_STATUS utils_dfs_cancel_precac_timer(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
 		bool *is_precac_done);
+
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+/**
+ * utils_dfs_precac_decide_pref_chan() - Choose preferred channel
+ * @pdev: Pointer to DFS pdev object.
+ * @ch_ieee: Pointer to channel number
+
+ * Wrapper function for dfs_decide_precac_preferred_chan(). This
+ * function called from outside of dfs component.
+ *
+ * Return:
+ * * QDF_STATUS_E_FAILURE: Failed to decide preferred channel.
+ * * QDF_STATUS_SUCCESS: Set preferred channel successfully.
+ */
+QDF_STATUS utils_dfs_precac_decide_pref_chan(struct wlan_objmgr_pdev *pdev,
+					     uint8_t *ch_ieee);
+#endif
 
 /**
  * utils_dfs_is_esti_precac_done() - Is ETSI precac done.

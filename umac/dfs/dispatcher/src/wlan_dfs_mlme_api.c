@@ -188,28 +188,30 @@ int dfs_mlme_ieee2mhz(struct wlan_objmgr_pdev *pdev, int ieee, uint64_t flag)
 	return freq;
 }
 
-void dfs_mlme_find_dot11_channel(struct wlan_objmgr_pdev *pdev,
-		uint8_t ieee,
-		uint8_t des_cfreq2,
-		int mode,
-		uint16_t *dfs_ch_freq,
-		uint64_t *dfs_ch_flags,
-		uint16_t *dfs_ch_flagext,
-		uint8_t *dfs_ch_ieee,
-		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
-		uint8_t *dfs_ch_vhtop_ch_freq_seg2)
+QDF_STATUS
+dfs_mlme_find_dot11_channel(struct wlan_objmgr_pdev *pdev,
+			    uint8_t ieee,
+			    uint8_t des_cfreq2,
+			    int mode,
+			    uint16_t *dfs_ch_freq,
+			    uint64_t *dfs_ch_flags,
+			    uint16_t *dfs_ch_flagext,
+			    uint8_t *dfs_ch_ieee,
+			    uint8_t *dfs_ch_vhtop_ch_freq_seg1,
+			    uint8_t *dfs_ch_vhtop_ch_freq_seg2)
 {
 	if (global_dfs_to_mlme.mlme_find_dot11_channel != NULL)
-		global_dfs_to_mlme.mlme_find_dot11_channel(pdev,
-				ieee,
-				des_cfreq2,
-				mode,
-				dfs_ch_freq,
-				dfs_ch_flags,
-				dfs_ch_flagext,
-				dfs_ch_ieee,
-				dfs_ch_vhtop_ch_freq_seg1,
-				dfs_ch_vhtop_ch_freq_seg2);
+		return global_dfs_to_mlme.mlme_find_dot11_channel(pdev,
+								  ieee,
+								  des_cfreq2,
+								  mode,
+								  dfs_ch_freq,
+								  dfs_ch_flags,
+								  dfs_ch_flagext,
+								  dfs_ch_ieee,
+								  dfs_ch_vhtop_ch_freq_seg1,
+								  dfs_ch_vhtop_ch_freq_seg2);
+	return QDF_STATUS_E_FAILURE;
 }
 
 void dfs_mlme_get_dfs_ch_channels(struct wlan_objmgr_pdev *pdev,

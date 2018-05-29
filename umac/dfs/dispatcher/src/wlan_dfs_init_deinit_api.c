@@ -47,6 +47,23 @@ struct wlan_dfs *wlan_pdev_get_dfs_obj(struct wlan_objmgr_pdev *pdev)
 }
 
 #ifndef QCA_MCL_DFS_SUPPORT
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+static inline void
+register_dfs_precac_auto_chan_callbacks(struct dfs_to_mlme *mlme_callback)
+{
+	if (!mlme_callback)
+		return;
+
+	mlme_callback->mlme_precac_chan_change_csa =
+		mlme_dfs_precac_chan_change_csa;
+}
+#else
+static inline void
+register_dfs_precac_auto_chan_callbacks(struct dfs_to_mlme *mlme_callback)
+{
+}
+#endif
+
 void register_dfs_callbacks(void)
 {
 	struct dfs_to_mlme *tmp_dfs_to_mlme = &global_dfs_to_mlme;
@@ -85,6 +102,11 @@ void register_dfs_callbacks(void)
 		mlme_dfs_restart_vaps_with_non_dfs_chan;
 	tmp_dfs_to_mlme->mlme_check_allowed_prim_chanlist =
 		mlme_dfs_check_allowed_prim_chanlist;
+
+	/*
+	 * Register precac auto channel switch feature related callbacks
+	 */
+	register_dfs_precac_auto_chan_callbacks(tmp_dfs_to_mlme);
 }
 #else
 void register_dfs_callbacks(void)

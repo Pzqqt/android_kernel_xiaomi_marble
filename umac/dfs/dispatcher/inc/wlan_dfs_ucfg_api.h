@@ -48,6 +48,8 @@
  * @mlme_get_dfs_ch_channels:          Get the channel list.
  * @mlme_dfs_ch_flags_ext:             Gets channel extension flag.
  * @mlme_channel_change_by_precac:     Channel change triggered by PreCAC.
+ * @mlme_precac_chan_change_csa:       Channel change triggered by PrCAC using
+ *                                     Channel Switch Announcement.
  * @mlme_nol_timeout_notification:     NOL timeout notification.
  * @mlme_clist_update:                 Updates the channel list.
  * @mlme_get_cac_timeout:              Gets the CAC timeout.
@@ -119,6 +121,10 @@ struct dfs_to_mlme {
 			uint16_t *flag_ext);
 	QDF_STATUS (*mlme_channel_change_by_precac)(
 			struct wlan_objmgr_pdev *pdev);
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+	QDF_STATUS (*mlme_precac_chan_change_csa)(struct wlan_objmgr_pdev *pdev,
+						  uint8_t ch_ieee);
+#endif
 	QDF_STATUS (*mlme_nol_timeout_notification)(
 			struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_clist_update)(struct wlan_objmgr_pdev *pdev,
@@ -227,7 +233,7 @@ QDF_STATUS ucfg_dfs_override_precac_timeout(struct wlan_objmgr_pdev *pdev,
  * This function called from outside of dfs component.
  */
 QDF_STATUS ucfg_dfs_set_precac_enable(struct wlan_objmgr_pdev *pdev,
-		uint32_t value);
+				      uint32_t value);
 
 /**
  * ucfg_dfs_get_precac_enable() - Get precac enable flag.
@@ -238,6 +244,52 @@ QDF_STATUS ucfg_dfs_set_precac_enable(struct wlan_objmgr_pdev *pdev,
  * This function called from outside of dfs component.
  */
 QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev, int *buff);
+
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+/**
+ * ucfg_dfs_set_precac_intermediate_chan() - Set intermediate channel
+ *                                           for preCAC.
+ * @pdev: Pointer to DFS pdev object.
+ * @value: Channel number of intermediate channel
+ *
+ * Wrapper function for dfs_set_precac_intermediate_chan().
+ * This function is called from outside of dfs component.
+ *
+ * Return:
+ * * QDF_STATUS_SUCCESS  : Successfully set intermediate channel.
+ * * QDF_STATUS_E_FAILURE: Failed to set intermediate channel.
+ */
+QDF_STATUS ucfg_dfs_set_precac_intermediate_chan(struct wlan_objmgr_pdev *pdev,
+						 uint32_t value);
+
+/**
+ * ucfg_dfs_get_precac_intermediate_chan() - Get intermediate channel
+ *						for preCAC.
+ * @pdev: Pointer to DFS pdev object.
+ * @buff: Pointer to Channel number of intermediate channel.
+ *
+ * Wrapper function for dfs_get_precac_intermediate_chan().
+ * This function is called from outside of dfs component.
+ *
+ * Return: Configured intermediate precac channel.
+ */
+QDF_STATUS ucfg_dfs_get_precac_intermediate_chan(struct wlan_objmgr_pdev *pdev,
+						 int *buff);
+
+/**
+ * ucfg_dfs_get_precac_chan_state() - Get precac status for the given channel.
+ * @pdev: Pointer to DFS pdev object.
+ * @precac_chan: Channel number for which precac state needs to be determined.
+ *
+ * Wrapper function for dfs_get_precac_chan_state().
+ * This function called from outside of dfs component.
+ *
+ * Return: Precac state of the given channel.
+ */
+enum precac_chan_state
+ucfg_dfs_get_precac_chan_state(struct wlan_objmgr_pdev *pdev,
+			       uint8_t precac_chan);
+#endif
 
 #ifdef QCA_MCL_DFS_SUPPORT
 /**

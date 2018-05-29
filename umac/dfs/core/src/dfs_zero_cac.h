@@ -50,6 +50,22 @@ struct dfs_precac_entry {
 };
 
 /**
+ * enum precac_chan_state - Enum for PreCAC state of a channel.
+ * @PRECAC_ERR:            Invalid preCAC state.
+ * @PRECAC_REQUIRED:       preCAC need to be done on the channel.
+ * @PRECAC_NOW:            preCAC is running on the channel.
+ * @PRECAC_DONE:           preCAC is done and channel is clear.
+ * @PRECAC_NOL:            preCAC is done and radar is detected.
+ */
+enum precac_chan_state {
+	PRECAC_ERR      = -1,
+	PRECAC_REQUIRED,
+	PRECAC_NOW,
+	PRECAC_DONE,
+	PRECAC_NOL,
+};
+
+/**
  * dfs_zero_cac_timer_init() - Initialize zero-cac timers
  * @dfs: Pointer to DFS structure.
  */
@@ -164,13 +180,39 @@ static inline void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 /**
  * dfs_is_precac_done() - Is precac done.
  * @dfs: Pointer to wlan_dfs structure.
+ * @chan: Pointer to dfs_channel for which preCAC done is checked.
+ *
+ * Return:
+ * * True:  If precac is done on channel.
+ * * False: If precac is not done on channel.
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD)
-bool dfs_is_precac_done(struct wlan_dfs *dfs);
+bool dfs_is_precac_done(struct wlan_dfs *dfs, struct dfs_channel *chan);
 #else
-static inline bool dfs_is_precac_done(struct wlan_dfs *dfs)
+static inline bool dfs_is_precac_done(struct wlan_dfs *dfs,
+				      struct dfs_channel *chan)
 {
 	return false;
+}
+#endif
+
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+/**
+ * dfs_decide_precac_preferred_chan() - Choose operating channel among
+ *                                      configured DFS channel and
+ *                                      intermediate channel based on
+ *                                      precac status of configured
+ *                                      DFS channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @pref_chan: Congigired DFS channel.
+ *
+ * Return: void.
+ */
+void dfs_decide_precac_preferred_chan(struct wlan_dfs *dfs, uint8_t *pref_chan);
+#else
+static inline void dfs_decide_precac_preferred_chan(struct wlan_dfs *dfs,
+						    uint8_t *pref_chan)
+{
 }
 #endif
 
@@ -301,6 +343,67 @@ static inline uint32_t dfs_get_precac_enable(struct wlan_dfs *dfs)
 }
 #endif
 
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+/**
+ * dfs_set_precac_intermediate_chan() - Set intermediate chan to be used while
+ *                                      doing precac.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @value: input value for dfs_precac_enable flag.
+ *
+ * Return:
+ * * 0       - Successfully set intermediate channel.
+ * * -EINVAL - Invalid channel.
+ */
+int32_t dfs_set_precac_intermediate_chan(struct wlan_dfs *dfs,
+					 uint32_t value);
+#else
+static inline int32_t dfs_set_precac_intermediate_chan(struct wlan_dfs *dfs,
+						       uint32_t value)
+{
+	return 0;
+}
+#endif
+
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+/**
+ * dfs_get_precac_intermediate_chan() - Get configured precac
+ *					intermediate channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * Return: Configured intermediate channel number.
+ */
+uint32_t dfs_get_precac_intermediate_chan(struct wlan_dfs *dfs);
+#else
+static inline uint32_t dfs_get_intermediate_chan(struct wlan_dfs *dfs)
+{
+	return 0;
+}
+#endif
+
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+/**
+ * dfs_get_precac_chan_state() - Get precac status of a given channel.
+ * @dfs:         Pointer to wlan_dfs structure.
+ * @precac_chan: Channel number for which precac state need to be checked.
+ *
+ * Return:
+ * * PRECAC_REQUIRED: Precac has not done on precac_chan.
+ * * PRECAC_NOW     : Precac is running on precac_chan.
+ * * PRECAC_DONE    : precac_chan is in precac done list.
+ * * PRECAC_NOL     : precac_chan is in precac NOL list.
+ * * PRECAC_ERR     : Invalid precac state.
+ */
+enum precac_chan_state
+dfs_get_precac_chan_state(struct wlan_dfs *dfs, uint8_t precac_chan);
+#else
+static inline enum precac_chan_state
+dfs_get_precac_chan_state(struct wlan_dfs *dfs,
+			  uint8_t precac_chan)
+{
+	return PRECAC_REQUIRED;
+}
+#endif
+
 /**
  * dfs_zero_cac_reset() - Reset Zero cac DFS variables.
  * @dfs: Pointer to wlan_dfs structure.
@@ -311,15 +414,27 @@ void dfs_zero_cac_reset(struct wlan_dfs *dfs);
  * dfs_is_ht20_40_80_chan_in_precac_done_list() - Is precac done on a
  *                                                VHT20/40/80 channel.
  *@dfs: Pointer to wlan_dfs structure.
+ *@chan: Pointer to dfs_channel for which preCAC done is checked.
+ *
+ * Return:
+ * * True:  If channel is present in precac-done list.
+ * * False: If channel is not present in precac-done list.
  */
-bool dfs_is_ht20_40_80_chan_in_precac_done_list(struct wlan_dfs *dfs);
+bool dfs_is_ht20_40_80_chan_in_precac_done_list(struct wlan_dfs *dfs,
+						struct dfs_channel *chan);
 
 /**
  * dfs_is_ht80_80_chan_in_precac_done_list() - Is precac done on a VHT80+80
  *                                             channel.
  *@dfs: Pointer to wlan_dfs structure.
+ *@chan: Pointer to dfs_channel for which preCAC done is checked.
+ *
+ * Return:
+ * * True:  If channel is present in precac-done list.
+ * * False: If channel is not present in precac-done list.
  */
-bool dfs_is_ht80_80_chan_in_precac_done_list(struct wlan_dfs *dfs);
+bool dfs_is_ht80_80_chan_in_precac_done_list(struct wlan_dfs *dfs,
+					     struct dfs_channel *chan);
 
 /**
  * dfs_mark_precac_dfs() - Mark the precac channel as radar.

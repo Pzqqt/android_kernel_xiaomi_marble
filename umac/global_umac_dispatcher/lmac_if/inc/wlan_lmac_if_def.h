@@ -1037,6 +1037,12 @@ struct wlan_lmac_if_nan_rx_ops {
  * @dfs_override_precac_timeout:      Override the default precac timeout.
  * @dfs_set_precac_enable:            Set precac enable flag.
  * @dfs_get_precac_enable:            Get precac enable flag.
+ * @dfs_set_precac_intermediate_chan: Set intermediate channel for precac.
+ * @dfs_get_precac_intermediate_chan: Get intermediate channel for precac.
+ * @dfs_precac_preferred_chan:        Configure preferred channel during
+ *                                    precac.
+ * dfs_get_precac_chan_state:         Get precac status for given channel.
+ * dfs_start_precac_timer:            Start precac timer.
  * @dfs_get_override_precac_timeout:  Get precac timeout.
  * @dfs_set_current_channel:          Set DFS current channel.
  * @dfs_process_radar_ind:            Process radar found indication.
@@ -1086,6 +1092,7 @@ struct wlan_lmac_if_dfs_rx_ops {
 					      uint32_t *phy_mode,
 					      bool *dfs_set_cfreq2,
 					      bool *set_agile);
+	QDF_STATUS (*dfs_start_precac_timer)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_cancel_precac_timer)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_override_precac_timeout)(
 			struct wlan_objmgr_pdev *pdev,
@@ -1094,6 +1101,16 @@ struct wlan_lmac_if_dfs_rx_ops {
 			uint32_t value);
 	QDF_STATUS (*dfs_get_precac_enable)(struct wlan_objmgr_pdev *pdev,
 			int *buff);
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+	QDF_STATUS (*dfs_set_precac_intermediate_chan)(struct wlan_objmgr_pdev *pdev,
+						       uint32_t value);
+	QDF_STATUS (*dfs_get_precac_intermediate_chan)(struct wlan_objmgr_pdev *pdev,
+						       int *buff);
+	QDF_STATUS (*dfs_decide_precac_preferred_chan)(struct wlan_objmgr_pdev *pdev,
+						       uint8_t *pref_chan);
+	enum precac_chan_state (*dfs_get_precac_chan_state)(struct wlan_objmgr_pdev *pdev,
+							    uint8_t precac_chan);
+#endif
 	QDF_STATUS (*dfs_get_override_precac_timeout)(
 			struct wlan_objmgr_pdev *pdev,
 			int *precac_timeout);
