@@ -168,7 +168,7 @@ struct cds_log_complete {
 
 /* forward-declare hdd_context_s as it is used ina function type */
 struct hdd_context_s;
-typedef struct _cds_context_type {
+struct cds_context {
 	/* Scheduler Context */
 	cds_sched_context qdf_sched;
 
@@ -223,7 +223,10 @@ typedef struct _cds_context_type {
 	qdf_work_t cds_recovery_work;
 	qdf_workqueue_t *cds_recovery_wq;
 	enum qdf_hang_reason recovery_reason;
-} cds_context_type, *p_cds_contextType;
+};
+
+/* legacy typedefs required until all references are updated */
+typedef struct cds_context cds_context_type, *p_cds_contextType;
 
 /*---------------------------------------------------------------------------
    Function declarations and documenation
