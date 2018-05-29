@@ -151,7 +151,7 @@ static void scm_scan_post_event(struct wlan_objmgr_vdev *vdev,
 		event->vdev_id, event->type, event->reason, event->chan_freq,
 		event->requester, event->scan_id);
 
-	listeners = qdf_mem_malloc(sizeof(*listeners));
+	listeners = qdf_mem_malloc_atomic(sizeof(*listeners));
 	if (!listeners) {
 		scm_warn("couldn't allocate listeners list");
 		return;

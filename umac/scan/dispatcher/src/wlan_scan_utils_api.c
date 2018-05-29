@@ -831,21 +831,21 @@ util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
 	qdf_list_t *scan_list;
 	struct scan_cache_node *scan_node;
 
-	scan_list = qdf_mem_malloc(sizeof(*scan_list));
+	scan_list = qdf_mem_malloc_atomic(sizeof(*scan_list));
 	if (!scan_list) {
 		scm_err("failed to allocate scan_list");
 		return NULL;
 	}
 	qdf_list_create(scan_list, MAX_SCAN_CACHE_SIZE);
 
-	scan_entry = qdf_mem_malloc(sizeof(*scan_entry));
+	scan_entry = qdf_mem_malloc_atomic(sizeof(*scan_entry));
 	if (!scan_entry) {
 		scm_err("failed to allocate memory for scan_entry");
 		qdf_mem_free(scan_list);
 		return NULL;
 	}
 	scan_entry->raw_frame.ptr =
-			qdf_mem_malloc(frame_len);
+			qdf_mem_malloc_atomic(frame_len);
 	if (!scan_entry->raw_frame.ptr) {
 		scm_err("failed to allocate memory for frame");
 		qdf_mem_free(scan_entry);
@@ -960,7 +960,7 @@ util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
 	if (qbss_load)
 		scan_entry->qbss_chan_load = qbss_load->qbss_chan_load;
 
-	scan_node = qdf_mem_malloc(sizeof(*scan_node));
+	scan_node = qdf_mem_malloc_atomic(sizeof(*scan_node));
 	if (!scan_node) {
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);

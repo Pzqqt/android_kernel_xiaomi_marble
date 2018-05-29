@@ -1061,7 +1061,7 @@ static void qdf_mem_debug_exit(void)
 }
 
 void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
-			   void *caller)
+			   void *caller, uint32_t flag)
 {
 	QDF_STATUS status;
 	enum qdf_debug_domain current_domain = qdf_debug_domain_get();
@@ -1079,8 +1079,11 @@ void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
 	if (ptr)
 		return ptr;
 
+	if (!flag)
+		flag = qdf_mem_malloc_flags();
+
 	start = qdf_mc_timer_get_system_time();
-	header = kzalloc(size + QDF_MEM_DEBUG_SIZE, qdf_mem_malloc_flags());
+	header = kzalloc(size + QDF_MEM_DEBUG_SIZE, flag);
 	duration = qdf_mc_timer_get_system_time() - start;
 
 	if (duration > QDF_MEM_WARN_THRESHOLD)
@@ -1192,6 +1195,37 @@ void *qdf_mem_malloc(size_t size)
 	return ptr;
 }
 qdf_export_symbol(qdf_mem_malloc);
+
+/**
+ * qdf_mem_malloc_atomic() - allocation QDF memory atomically
+ * @size: Number of bytes of memory to allocate.
+ *
+ * This function will dynamicallly allocate the specified number of bytes of
+ * memory.
+ *
+ * Return:
+ * Upon successful allocate, returns a non-NULL pointer to the allocated
+ * memory.  If this function is unable to allocate the amount of memory
+ * specified (for any reason) it returns NULL.
+ */
+void *qdf_mem_malloc_atomic(size_t size)
+{
+	void *ptr;
+
+	ptr = qdf_mem_prealloc_get(size);
+	if (ptr)
+		return ptr;
+
+	ptr = kzalloc(size, GFP_ATOMIC);
+	if (!ptr)
+		return NULL;
+
+	qdf_mem_kmalloc_inc(ksize(ptr));
+
+	return ptr;
+}
+
+qdf_export_symbol(qdf_mem_malloc_atomic);
 
 /**
  * qdf_mem_free() - free QDF memory

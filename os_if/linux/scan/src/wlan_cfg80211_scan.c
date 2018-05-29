@@ -831,7 +831,7 @@ static void wlan_vendor_scan_callback(struct cfg80211_scan_request *req,
 	skb = cfg80211_vendor_event_alloc(req->wdev->wiphy, req->wdev,
 			SCAN_DONE_EVENT_BUF_SIZE + 4 + NLMSG_HDRLEN,
 			QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE_INDEX,
-			GFP_KERNEL);
+			GFP_ATOMIC);
 
 	if (!skb) {
 		cfg80211_err("skb alloc failed");
@@ -877,7 +877,7 @@ static void wlan_vendor_scan_callback(struct cfg80211_scan_request *req,
 	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_SCAN_STATUS, scan_status))
 		goto nla_put_failure;
 
-	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cfg80211_vendor_event(skb, GFP_ATOMIC);
 	qdf_mem_free(req);
 
 	return;
@@ -1737,7 +1737,7 @@ wlan_cfg80211_inform_bss_frame_data(struct wiphy *wiphy,
 	data.boottime_ns = bss->boottime_ns;
 	data.signal = bss->rssi;
 	return cfg80211_inform_bss_frame_data(wiphy, &data, bss->mgmt,
-					      bss->frame_len, GFP_KERNEL);
+					      bss->frame_len, GFP_ATOMIC);
 }
 #else
 struct cfg80211_bss *
@@ -1747,7 +1747,7 @@ wlan_cfg80211_inform_bss_frame_data(struct wiphy *wiphy,
 {
 	return cfg80211_inform_bss_frame(wiphy, bss->chan, bss->mgmt,
 					 bss->frame_len,
-					 bss->rssi, GFP_KERNEL);
+					 bss->rssi, GFP_ATOMIC);
 }
 #endif
 
@@ -1781,7 +1781,7 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	wiphy = pdev_ospriv->wiphy;
 
 	bss_data.frame_len = wlan_get_frame_len(scan_params);
-	bss_data.mgmt = qdf_mem_malloc(bss_data.frame_len);
+	bss_data.mgmt = qdf_mem_malloc_atomic(bss_data.frame_len);
 	if (!bss_data.mgmt) {
 		cfg80211_err("mem alloc failed");
 		return;

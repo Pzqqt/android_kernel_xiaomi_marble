@@ -93,6 +93,7 @@ void qdf_mem_exit(void);
  * @file: File name of the call site
  * @line: Line number of the call site
  * @caller: Address of the caller function
+ * @flag: GFP flag
  *
  * This function will dynamicallly allocate the specified number of bytes of
  * memory and add it to the qdf tracking list to check for memory leaks and
@@ -101,11 +102,13 @@ void qdf_mem_exit(void);
  * Return: A valid memory location on success, or NULL on failure
  */
 void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
-			   void *caller);
+			   void *caller, uint32_t flag);
 
 #define qdf_mem_malloc(size) \
-	qdf_mem_malloc_debug(size, __FILE__, __LINE__, QDF_RET_IP)
+	qdf_mem_malloc_debug(size, __FILE__, __LINE__, QDF_RET_IP, 0)
 
+#define qdf_mem_malloc_atomic(size) \
+	qdf_mem_malloc_debug(size, __FILE__, __LINE__, QDF_RET_IP, GFP_ATOMIC)
 /**
  * qdf_mem_free_debug() - debug version of qdf_mem_free
  * @ptr: Pointer to the starting address of the memory to be freed.
@@ -196,6 +199,7 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
 				  __FILE__, __LINE__)
 #else
 void *qdf_mem_malloc(qdf_size_t size);
+void *qdf_mem_malloc_atomic(qdf_size_t size);
 
 /**
  * qdf_mem_free() - free QDF memory

@@ -442,7 +442,8 @@ static void scm_update_alt_wcn_ie(struct scan_cache_entry *from,
 
 	if (!dst->alt_wcn_ie.ptr) {
 		/* allocate this additional buffer for alternate WCN IE */
-		dst->alt_wcn_ie.ptr = qdf_mem_malloc(WLAN_MAX_IE_LEN + 2);
+		dst->alt_wcn_ie.ptr =
+			qdf_mem_malloc_atomic(WLAN_MAX_IE_LEN + 2);
 		if (!dst->alt_wcn_ie.ptr) {
 			scm_err("failed to allocate memory");
 			return;
@@ -927,7 +928,7 @@ scm_scan_apply_filter_get_entry(struct wlan_objmgr_psoc *psoc,
 	if (!match)
 		return QDF_STATUS_SUCCESS;
 
-	scan_node = qdf_mem_malloc(sizeof(*scan_node));
+	scan_node = qdf_mem_malloc_atomic(sizeof(*scan_node));
 	if (!scan_node)
 		return QDF_STATUS_E_NOMEM;
 
@@ -1042,7 +1043,7 @@ qdf_list_t *scm_get_scan_result(struct wlan_objmgr_pdev *pdev,
 		return NULL;
 	}
 
-	tmp_list = qdf_mem_malloc(sizeof(*tmp_list));
+	tmp_list = qdf_mem_malloc_atomic(sizeof(*tmp_list));
 	if (!tmp_list) {
 		scm_err("failed tp allocate scan_result");
 		return NULL;

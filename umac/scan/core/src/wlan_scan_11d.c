@@ -236,7 +236,7 @@ QDF_STATUS scm_11d_cc_db_init(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	cc_db = (struct scan_country_code_db *)qdf_mem_malloc(
+	cc_db = (struct scan_country_code_db *)qdf_mem_malloc_atomic(
 		   sizeof(struct scan_country_code_db) * WLAN_UMAC_MAX_PDEVS);
 	if (!cc_db) {
 		scm_err("alloc country code db error");

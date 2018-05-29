@@ -596,7 +596,7 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	struct ie_list *ie_lst;
 
 	new_entry->raw_frame.ptr =
-		qdf_mem_malloc(scan_entry->raw_frame.len);
+		qdf_mem_malloc_atomic(scan_entry->raw_frame.len);
 	if (!new_entry->raw_frame.ptr)
 		return QDF_STATUS_E_NOMEM;
 
@@ -677,7 +677,7 @@ util_scan_copy_cache_entry(struct scan_cache_entry *scan_entry)
 		return NULL;
 
 	new_entry =
-	   qdf_mem_malloc(sizeof(*scan_entry));
+	   qdf_mem_malloc_atomic(sizeof(*scan_entry));
 	if (!new_entry)
 		return NULL;
 
@@ -686,7 +686,7 @@ util_scan_copy_cache_entry(struct scan_cache_entry *scan_entry)
 
 	if (scan_entry->alt_wcn_ie.ptr) {
 		new_entry->alt_wcn_ie.ptr =
-		    qdf_mem_malloc(scan_entry->alt_wcn_ie.len);
+		    qdf_mem_malloc_atomic(scan_entry->alt_wcn_ie.len);
 		if (!new_entry->alt_wcn_ie.ptr) {
 			qdf_mem_free(new_entry);
 			return NULL;
