@@ -88,7 +88,6 @@ static struct ol_if_ops  dp_ol_if_ops = {
     /* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
-void cds_sys_probe_thread_cback(void *pUserData);
 static void cds_trigger_recovery_work(void *param);
 
 /**
@@ -481,21 +480,12 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	/* Initialize bug reporting structure */
 	cds_init_log_completion();
 
-	/* Initialize the probe event */
-	status = qdf_event_create(&gp_cds_context->ProbeEvent);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Unable to init probeEvent", __func__);
-		QDF_ASSERT(0);
-		return status;
-	}
-
 	status = qdf_event_create(&gp_cds_context->wmaCompleteEvent);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Unable to init wmaCompleteEvent", __func__);
 		QDF_ASSERT(0);
-		goto err_probe_event;
+		return status;
 	}
 
 	hdd_ctx = (struct hdd_context *)(gp_cds_context->pHDDContext);
@@ -719,9 +709,6 @@ err_dispatcher_disable:
 
 err_wma_complete_event:
 	qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
-
-err_probe_event:
-	qdf_event_destroy(&gp_cds_context->ProbeEvent);
 
 	return status;
 } /* cds_open() */
@@ -1198,13 +1185,6 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
-	qdf_status = qdf_event_destroy(&gp_cds_context->ProbeEvent);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to destroy ProbeEvent", __func__);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-
 	cds_deinit_ini_config();
 	qdf_timer_module_deinit();
 
@@ -1657,27 +1637,6 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID moduleID, void *pModuleContext)
 
 	return QDF_STATUS_SUCCESS;
 } /* cds_free_context() */
-
-/**
- * cds_sys_probe_thread_cback() -  probe mc thread callback
- * @pUserData: pointer to user data
- *
- * Return: none
- */
-void cds_sys_probe_thread_cback(void *pUserData)
-{
-	if (gp_cds_context != pUserData) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: gp_cds_context != pUserData", __func__);
-		return;
-	}
-
-	if (qdf_event_set(&gp_cds_context->ProbeEvent) != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: qdf_event_set failed", __func__);
-		return;
-	}
-} /* cds_sys_probe_thread_cback() */
 
 /**
  * cds_wma_complete_cback() - wma complete callback

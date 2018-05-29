@@ -178,8 +178,6 @@ typedef struct _cds_context_type {
 	/* MAC Module Context  */
 	void *pMACContext;
 
-	qdf_event_t ProbeEvent;
-
 	uint32_t driver_state;
 	unsigned long fw_state;
 
