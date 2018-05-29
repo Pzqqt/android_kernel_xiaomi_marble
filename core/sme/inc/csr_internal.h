@@ -140,6 +140,8 @@ enum csr_roam_reason {
 	eCsrForcedDisassocSta,
 	eCsrForcedDeauthSta,
 	eCsrPerformPreauth,
+	/* Roaming disabled from driver during connect/start BSS */
+	ecsr_driver_disabled,
 };
 
 enum csr_roam_substate {

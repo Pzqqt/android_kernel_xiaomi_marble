@@ -11255,84 +11255,56 @@ QDF_STATUS hdd_issta_p2p_clientconnected(struct hdd_context *hdd_ctx)
 	return sme_is_sta_p2p_client_connected(hdd_ctx->hHal);
 }
 
-/**
- * wlan_hdd_disable_roaming() - disable roaming on all STAs except the input one
- * @adapter:	HDD adapter pointer
- *
- * This function loop through each adapter and disable roaming on each STA
- * device mode except the input adapter.
- *
- * Note: On the input adapter roaming is not enabled yet hence no need to
- *       disable.
- *
- * Return: None
- */
-void wlan_hdd_disable_roaming(struct hdd_adapter *adapter)
+void wlan_hdd_disable_roaming(struct hdd_adapter *cur_adapter)
 {
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_adapter *adapterIdx = NULL;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(cur_adapter);
+	struct hdd_adapter *adapter = NULL;
+	struct csr_roam_profile *roam_profile;
+	struct hdd_station_ctx *sta_ctx;
 
-	if (hdd_ctx->config->isFastRoamIniFeatureEnabled &&
-		hdd_ctx->config->isRoamOffloadScanEnabled &&
-		QDF_STA_MODE == adapter->device_mode &&
-		policy_mgr_is_sta_active_connection_exists(
-		hdd_ctx->hdd_psoc)) {
-		hdd_debug("Connect received on STA session Id(%d)",
-		       adapter->session_id);
-		/*
-		 * Loop through adapter and disable roaming for each STA device
-		 * mode except the input adapter.
-		 */
-		hdd_for_each_adapter(hdd_ctx, adapterIdx) {
-			if (QDF_STA_MODE == adapterIdx->device_mode &&
-			    adapter->session_id != adapterIdx->session_id) {
-				hdd_debug("Disable Roaming on session Id(%d)",
-				       adapterIdx->session_id);
-				sme_stop_roaming(WLAN_HDD_GET_HAL_CTX
-							 (adapterIdx),
-						 adapterIdx->session_id, 0);
-			}
+	if (!policy_mgr_is_sta_active_connection_exists(hdd_ctx->hdd_psoc)) {
+		hdd_debug("No active sta session");
+		return;
+	}
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		roam_profile = hdd_roam_profile(adapter);
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+		if (cur_adapter->session_id != adapter->session_id &&
+		    adapter->device_mode == QDF_STA_MODE &&
+		    hdd_conn_is_connected(sta_ctx)) {
+			hdd_debug("%d Disable roaming", adapter->session_id);
+			sme_stop_roaming(WLAN_HDD_GET_HAL_CTX(adapter),
+					 adapter->session_id,
+					 ecsr_driver_disabled);
 		}
 	}
 }
 
-/**
- * wlan_hdd_enable_roaming() - enable roaming on all STAs except the input one
- * @adapter:	HDD adapter pointer
- *
- * This function loop through each adapter and enable roaming on each STA
- * device mode except the input adapter.
- * Note: On the input adapter no need to enable roaming because link got
- *       disconnected on this.
- *
- * Return: None
- */
-void wlan_hdd_enable_roaming(struct hdd_adapter *adapter)
+void wlan_hdd_enable_roaming(struct hdd_adapter *cur_adapter)
 {
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_adapter *adapterIdx = NULL;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(cur_adapter);
+	struct hdd_adapter *adapter = NULL;
+	struct csr_roam_profile *roam_profile;
+	struct hdd_station_ctx *sta_ctx;
 
-	if (hdd_ctx->config->isFastRoamIniFeatureEnabled &&
-		hdd_ctx->config->isRoamOffloadScanEnabled &&
-		QDF_STA_MODE == adapter->device_mode &&
-		policy_mgr_is_sta_active_connection_exists(
-		hdd_ctx->hdd_psoc)) {
-		hdd_debug("Disconnect received on STA session Id(%d)",
-		       adapter->session_id);
-		/*
-		 * Loop through adapter and enable roaming for each STA device
-		 * mode except the input adapter.
-		 */
-		hdd_for_each_adapter(hdd_ctx, adapterIdx) {
-			if (QDF_STA_MODE == adapterIdx->device_mode &&
-			    adapter->session_id != adapterIdx->session_id) {
-				hdd_debug("Enabling Roaming on session Id(%d)",
-				       adapterIdx->session_id);
-				sme_start_roaming(WLAN_HDD_GET_HAL_CTX
-							  (adapterIdx),
-						  adapterIdx->session_id,
-						  REASON_CONNECT);
-			}
+	if (!policy_mgr_is_sta_active_connection_exists(hdd_ctx->hdd_psoc)) {
+		hdd_debug("No active sta session");
+		return;
+	}
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		roam_profile = hdd_roam_profile(adapter);
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+		if (cur_adapter->session_id != adapter->session_id &&
+		    adapter->device_mode == QDF_STA_MODE &&
+		    hdd_conn_is_connected(sta_ctx)) {
+			hdd_debug("%d Enable roaming", adapter->session_id);
+			sme_start_roaming(WLAN_HDD_GET_HAL_CTX(adapter),
+					  adapter->session_id,
+					  REASON_DRIVER_ENABLED);
 		}
 	}
 }
@@ -13450,28 +13422,16 @@ void hdd_set_roaming_in_progress(bool value)
 	hdd_debug("Roaming in Progress set to %d", value);
 }
 
-/**
- * hdd_is_roaming_in_progress() - check if roaming is in progress
- * @adapter - HDD adapter
- *
- * Return: true if roaming is in progress for STA type, else false
- */
-bool hdd_is_roaming_in_progress(struct hdd_adapter *adapter)
+bool hdd_is_roaming_in_progress(struct hdd_context *hdd_ctx)
 {
-	struct hdd_context *hdd_ctx;
-	bool ret_status = false;
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
-		return ret_status;
+		return false;
 	}
-	hdd_debug("dev mode = %d, roaming_in_progress = %d",
-			adapter->device_mode, hdd_ctx->roaming_in_progress);
-	ret_status = ((adapter->device_mode == QDF_STA_MODE) &&
-			hdd_ctx->roaming_in_progress);
 
-	return ret_status;
+	hdd_debug("roaming_in_progress = %d", hdd_ctx->roaming_in_progress);
+
+	return hdd_ctx->roaming_in_progress;
 }
 
 /**
@@ -13526,7 +13486,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 		     sme_neighbor_middle_of_roaming(
 			     WLAN_HDD_GET_HAL_CTX(adapter),
 			     adapter->session_id)) ||
-		    hdd_is_roaming_in_progress(adapter)) {
+		    hdd_is_roaming_in_progress(hdd_ctx)) {
 			hdd_debug("%pK(%d) Reassociation in progress",
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
 				adapter->session_id);

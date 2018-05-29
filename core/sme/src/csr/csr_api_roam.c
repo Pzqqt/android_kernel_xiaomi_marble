@@ -19454,6 +19454,21 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (command == ROAM_SCAN_OFFLOAD_START &&
+	    (session->pCurRoamProfile &&
+	    session->pCurRoamProfile->driver_disabled_roaming)) {
+		if (reason == REASON_DRIVER_ENABLED) {
+			session->pCurRoamProfile->driver_disabled_roaming =
+									false;
+			sme_debug("driver_disabled_roaming reset for session %d",
+				  session_id);
+		} else {
+			sme_debug("Roam start received for session %d on which driver has disabled roaming",
+				  session_id);
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
 	if (0 == csr_roam_is_roam_offload_scan_enabled(mac_ctx)) {
 		sme_err("isRoamOffloadScanEnabled not set");
 		return QDF_STATUS_E_FAILURE;

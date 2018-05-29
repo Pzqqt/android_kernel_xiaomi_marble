@@ -2413,8 +2413,28 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 
 void hdd_update_macaddr(struct hdd_config *config,
 			struct qdf_mac_addr hw_macaddr);
-void wlan_hdd_disable_roaming(struct hdd_adapter *adapter);
-void wlan_hdd_enable_roaming(struct hdd_adapter *adapter);
+
+/**
+ * wlan_hdd_disable_roaming() - disable roaming on all STAs except the input one
+ * @cur_adapter: Current HDD adapter passed from caller
+ *
+ * This function loops through all adapters and disables roaming on each STA
+ * mode adapter except the current adapter passed from the caller
+ *
+ * Return: None
+ */
+void wlan_hdd_disable_roaming(struct hdd_adapter *cur_adapter);
+
+/**
+ * wlan_hdd_enable_roaming() - enable roaming on all STAs except the input one
+ * @cur_adapter: Current HDD adapter passed from caller
+ *
+ * This function loops through all adapters and enables roaming on each STA
+ * mode adapter except the current adapter passed from the caller
+ *
+ * Return: None
+ */
+void wlan_hdd_enable_roaming(struct hdd_adapter *cur_adapter);
 
 QDF_STATUS hdd_post_cds_enable_config(struct hdd_context *hdd_ctx);
 
@@ -2785,7 +2805,15 @@ tSirAddie *hdd_assoc_additional_ie(struct hdd_adapter *adapter)
 	return &sta_ctx->assoc_additional_ie;
 }
 
-bool hdd_is_roaming_in_progress(struct hdd_adapter *adapter);
+/**
+ * hdd_is_roaming_in_progress() - check if roaming is in progress
+ * @hdd_ctx - Global HDD context
+ *
+ * Checks if roaming is in progress on any of the adapters
+ *
+ * Return: true if roaming is in progress else false
+ */
+bool hdd_is_roaming_in_progress(struct hdd_context *hdd_ctx);
 void hdd_set_roaming_in_progress(bool value);
 bool hdd_is_connection_in_progress(uint8_t *session_id,
 	enum scan_reject_states *reason);

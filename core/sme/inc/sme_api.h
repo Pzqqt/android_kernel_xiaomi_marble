@@ -1033,6 +1033,16 @@ QDF_STATUS sme_wifi_start_logger(tHalHandle hal,
 bool sme_neighbor_middle_of_roaming(tHalHandle hHal,
 						uint8_t sessionId);
 
+/*
+ * sme_is_any_session_in_middle_of_roaming() - check if roaming is in progress
+ * @hal: MAC Handle
+ *
+ * Checks if any SME session is in middle of roaming
+ *
+ * Return : true if roaming is in progress else false
+ */
+bool sme_is_any_session_in_middle_of_roaming(mac_handle_t hal);
+
 /**
  * sme_enable_uapsd_for_ac() - enable uapsd for access category request to WMA
  * @sta_id: station id

@@ -17871,6 +17871,9 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		goto ret_status;
 	}
 
+	/* Disable roaming on all other adapters before connect start */
+	wlan_hdd_disable_roaming(adapter);
+
 	hdd_notify_teardown_tdls_links(adapter->hdd_vdev);
 
 	qdf_mem_zero(&hdd_sta_ctx->conn_info.conn_flag,
@@ -18177,6 +18180,13 @@ conn_failure:
 	hdd_set_connection_in_progress(false);
 
 ret_status:
+	/*
+	 * Enable roaming on other STA adapter for failure case.
+	 * For success case, it is enabled in assoc completion handler
+	 */
+	if (status)
+		wlan_hdd_enable_roaming(adapter);
+
 	hdd_exit();
 	return status;
 }
@@ -19281,7 +19291,9 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 	int status, result = 0;
 	tHalHandle hal;
 	uint32_t wait_time = WLAN_WAIT_TIME_DISCONNECT;
+	struct hdd_context *hdd_ctx;
 
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hal = WLAN_HDD_GET_HAL_CTX(adapter);
 	if (adapter->device_mode ==  QDF_STA_MODE) {
@@ -19295,7 +19307,7 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 		 *
 		 */
 		INIT_COMPLETION(adapter->roaming_comp_var);
-		if (hdd_is_roaming_in_progress(adapter)) {
+		if (hdd_is_roaming_in_progress(hdd_ctx)) {
 			rc = wait_for_completion_timeout(
 				&adapter->roaming_comp_var,
 				msecs_to_jiffies(WLAN_WAIT_TIME_STOP_ROAM));
@@ -19696,7 +19708,7 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 		 *
 		 */
 		INIT_COMPLETION(adapter->roaming_comp_var);
-		if (hdd_is_roaming_in_progress(adapter)) {
+		if (hdd_is_roaming_in_progress(hdd_ctx)) {
 			rc = wait_for_completion_timeout(
 				&adapter->roaming_comp_var,
 				msecs_to_jiffies(WLAN_WAIT_TIME_STOP_ROAM));

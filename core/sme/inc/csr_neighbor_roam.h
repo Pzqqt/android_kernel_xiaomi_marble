@@ -324,6 +324,7 @@ void csr_roam_reset_roam_params(tpAniSirGlobal mac_ptr);
 #define REASON_CTX_INIT                             40
 #define REASON_FILS_PARAMS_CHANGED                  41
 #define REASON_SME_ISSUED                           42
+#define REASON_DRIVER_ENABLED                       43
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan(tpAniSirGlobal pMac, uint8_t sessionId,

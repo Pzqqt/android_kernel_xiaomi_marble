@@ -7382,10 +7382,25 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		wlan_hdd_disconnect(sta_adapter, eCSR_DISCONNECT_REASON_DEAUTH);
 	}
 
+	/*
+	 * Reject start bss if reassoc in progress on any adapter.
+	 * sme_is_any_session_in_middle_of_roaming is for LFR2 and
+	 * hdd_is_roaming_in_progress is for LFR3
+	 */
+	if (sme_is_any_session_in_middle_of_roaming(hdd_ctx->hHal) ||
+	    hdd_is_roaming_in_progress(hdd_ctx)) {
+		hdd_info("Reassociation in progress");
+		return -EINVAL;
+	}
+
+	/* Disable Roaming on all adapters before starting bss */
+	wlan_hdd_disable_roaming(adapter);
+
 	sme_config = qdf_mem_malloc(sizeof(*sme_config));
 	if (!sme_config) {
 		hdd_err("failed to allocate memory");
-		return -ENOMEM;
+		ret = -ENOMEM;
+		goto free;
 	}
 
 	iniConfig = hdd_ctx->config;
@@ -7401,8 +7416,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		    sme_update_channel_list(hdd_ctx->hHal))) {
 			hdd_update_indoor_channel(hdd_ctx, false);
 			hdd_err("Can't start BSS: update channel list failed");
-			qdf_mem_free(sme_config);
-			return -EINVAL;
+			ret = -EINVAL;
+			goto free;
 		}
 	}
 
@@ -8015,7 +8030,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	hdd_unsafe_channel_restart_sap(hdd_ctx);
 
 	hdd_set_connection_in_progress(false);
-	hdd_exit();
 
 	ret = 0;
 	goto free;
@@ -8031,6 +8045,8 @@ error:
 	wlan_hdd_undo_acs(adapter);
 
 free:
+	/* Enable Roaming after start bss in case of failure/success */
+	wlan_hdd_enable_roaming(adapter);
 	qdf_mem_free(sme_config);
 	return ret;
 }
