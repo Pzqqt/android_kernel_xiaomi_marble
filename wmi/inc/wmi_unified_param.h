@@ -951,6 +951,7 @@ typedef enum {
 	WMI_HOST_REQUEST_VDEV_EXTD_STAT =  0x100,
 	WMI_HOST_REQUEST_NAC_RSSI =  0x200,
 	WMI_HOST_REQUEST_BCN_STAT =  0x800,
+	WMI_HOST_REQUEST_BCN_STAT_RESET =  0x1000,
 } wmi_host_stats_id;
 
 typedef struct {
