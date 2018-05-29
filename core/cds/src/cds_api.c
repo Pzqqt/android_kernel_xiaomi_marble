@@ -22,7 +22,6 @@
  * Connectivity driver services APIs
  */
 
-#include "cds_sched.h"
 #include <cds_api.h>
 #include "sir_types.h"
 #include "sir_api.h"
@@ -39,7 +38,6 @@
 
 #include "pld_common.h"
 #include "sap_api.h"
-#include "qdf_trace.h"
 #include "bmi.h"
 #include "ol_fw.h"
 #include "ol_if_athvar.h"
@@ -56,10 +54,8 @@
 #include <cdp_txrx_misc.h>
 #include <dispatcher_init_deinit.h>
 #include <cdp_txrx_handle.h>
-#include "qdf_cpuhp.h"
 #include "target_type.h"
 #include "wlan_ocb_ucfg_api.h"
-#include "qdf_platform.h"
 #include "wlan_ipa_ucfg_api.h"
 
 #ifdef ENABLE_SMMU_S1_TRANSLATION
@@ -171,6 +167,10 @@ QDF_STATUS cds_init(void)
 	qdf_cpuhp_init();
 	qdf_register_self_recovery_callback(cds_trigger_recovery);
 	qdf_register_fw_down_callback(cds_is_fw_down);
+	qdf_register_ssr_protect_callbacks(cds_ssr_protect,
+					   cds_ssr_unprotect);
+	qdf_register_module_state_query_callback(
+				cds_is_module_state_transitioning);
 
 	gp_cds_context = &g_cds_context;
 
