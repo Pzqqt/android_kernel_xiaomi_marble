@@ -622,12 +622,12 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 
 	if (TARGET_TYPE_QCA6290 == hdd_ctx->target_type)
 		gp_cds_context->dp_soc = cdp_soc_attach(LITHIUM_DP,
-			gp_cds_context->pHIFContext, psoc,
+			gp_cds_context->hif_context, psoc,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
 			&dp_ol_if_ops);
 	else
 		gp_cds_context->dp_soc = cdp_soc_attach(MOB_DRV_LEGACY_DP,
-			gp_cds_context->pHIFContext, psoc,
+			gp_cds_context->hif_context, psoc,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
 			&dp_ol_if_ops);
 
@@ -1262,7 +1262,7 @@ void *cds_get_context(QDF_MODULE_ID moduleId)
 
 	case QDF_MODULE_ID_HIF:
 	{
-		pModContext = gp_cds_context->pHIFContext;
+		pModContext = gp_cds_context->hif_context;
 		break;
 	}
 
@@ -1482,7 +1482,7 @@ QDF_STATUS cds_alloc_context(QDF_MODULE_ID moduleID,
 		break;
 
 	case QDF_MODULE_ID_HIF:
-		pGpModContext = &(gp_cds_context->pHIFContext);
+		pGpModContext = &gp_cds_context->hif_context;
 		break;
 
 	case QDF_MODULE_ID_BMI:
@@ -1551,7 +1551,7 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
 		p_cds_context->pdev_txrx_ctx = context;
 		break;
 	case QDF_MODULE_ID_HIF:
-		p_cds_context->pHIFContext = context;
+		p_cds_context->hif_context = context;
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -1597,7 +1597,7 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID moduleID, void *pModuleContext)
 		break;
 
 	case QDF_MODULE_ID_HIF:
-		pGpModContext = &(gp_cds_context->pHIFContext);
+		pGpModContext = &gp_cds_context->hif_context;
 		break;
 
 	case QDF_MODULE_ID_TXRX:

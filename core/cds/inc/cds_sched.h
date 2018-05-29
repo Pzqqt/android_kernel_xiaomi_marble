@@ -184,7 +184,7 @@ struct cds_context {
 	/* WMA Context */
 	void *wma_context;
 
-	void *pHIFContext;
+	void *hif_context;
 
 	void *htc_ctx;
 
