@@ -444,7 +444,6 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 		return QDF_STATUS_E_INVAL;
 	}
 	qdf_mem_zero(pSchedContext, sizeof(cds_sched_context));
-	pSchedContext->pVContext = p_cds_context;
 #ifdef QCA_CONFIG_SMP
 	spin_lock_init(&pSchedContext->ol_rx_thread_lock);
 	init_waitqueue_head(&pSchedContext->ol_rx_wait_queue);

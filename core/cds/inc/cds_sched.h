@@ -94,8 +94,6 @@ struct cds_ol_rx_pkt {
 **
 */
 typedef struct _cds_sched_context {
-	/* Place holder to the CDS Context */
-	void *pVContext;
 #ifdef QCA_CONFIG_SMP
 	spinlock_t ol_rx_thread_lock;
 
