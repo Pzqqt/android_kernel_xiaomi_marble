@@ -885,7 +885,7 @@ void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
 			QDF_IPA_GET_WDI_SAP_STATS_RESET_STATS(wdi_sap_stats));
 		status = qdf_wait_for_event_completion(
 			&ipa_ctx->ipa_uc_sharing_stats_comp,
-			msecs_to_jiffies(IPA_UC_SHARING_STATES_WAIT_TIME));
+			IPA_UC_SHARING_STATES_WAIT_TIME);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			ipa_err("IPA uC share stats request timed out");
 			QDF_IPA_GET_WDI_SAP_STATS_STATS_VALID(wdi_sap_stats)
@@ -925,7 +925,7 @@ void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
 
 		status = qdf_wait_for_event_completion(
 				&ipa_ctx->ipa_uc_set_quota_comp,
-				msecs_to_jiffies(IPA_UC_SET_QUOTA_WAIT_TIME));
+				IPA_UC_SET_QUOTA_WAIT_TIME);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			ipa_err("IPA uC set quota request timed out");
 			QDF_IPA_SET_WIFI_QUOTA_SET_VALID(ipa_set_quota)	= 0;
