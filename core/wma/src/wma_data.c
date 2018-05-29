@@ -1448,7 +1448,7 @@ QDF_STATUS wma_tx_attach(tp_wma_handle wma_handle)
 			wma_mgmt_tx_ack_comp_hdlr, wma_handle);
 
 	/* Store the Mac Context */
-	wma_handle->mac_context = cds_handle->pMACContext;
+	wma_handle->mac_context = cds_handle->mac_context;
 
 	return QDF_STATUS_SUCCESS;
 }

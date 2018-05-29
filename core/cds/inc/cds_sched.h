@@ -174,7 +174,7 @@ struct cds_context {
 	void *hdd_context;
 
 	/* MAC Module Context  */
-	void *pMACContext;
+	void *mac_context;
 
 	uint32_t driver_state;
 	unsigned long fw_state;

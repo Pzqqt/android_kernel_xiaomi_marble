@@ -648,7 +648,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 
 	/* Now proceed to open the MAC */
 	sirStatus =
-		mac_open(psoc, &(gp_cds_context->pMACContext),
+		mac_open(psoc, &(gp_cds_context->mac_context),
 			gp_cds_context->hdd_context, cds_cfg);
 
 	if (eSIR_SUCCESS != sirStatus) {
@@ -662,7 +662,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	}
 
 	/* Now proceed to open the SME */
-	status = sme_open(gp_cds_context->pMACContext);
+	status = sme_open(gp_cds_context->mac_context);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		/* Critical Error ...  Cannot proceed further */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -676,7 +676,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	return dispatcher_psoc_open(psoc);
 
 err_mac_close:
-	mac_close(gp_cds_context->pMACContext);
+	mac_close(gp_cds_context->mac_context);
 
 err_soc_detach:
 	/* todo: add propper error handling */
@@ -862,7 +862,7 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 	}
 
 	if ((gp_cds_context->pWMAContext == NULL) ||
-	    (gp_cds_context->pMACContext == NULL)) {
+	    (gp_cds_context->mac_context == NULL)) {
 		if (gp_cds_context->pWMAContext == NULL)
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				  "%s: WMA NULL context", __func__);
@@ -889,7 +889,7 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 
 	/* Start the MAC */
 	sirStatus =
-		mac_start(gp_cds_context->pMACContext, &halStartParams);
+		mac_start(gp_cds_context->mac_context, &halStartParams);
 
 	if (eSIR_SUCCESS != sirStatus) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -901,7 +901,7 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 		  "%s: MAC correctly started", __func__);
 
 	/* START SME */
-	qdf_status = sme_start(gp_cds_context->pMACContext);
+	qdf_status = sme_start(gp_cds_context->mac_context);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -944,10 +944,10 @@ err_soc_target_detach:
 	/* NOOP */
 
 err_sme_stop:
-	sme_stop(gp_cds_context->pMACContext, HAL_STOP_TYPE_SYS_RESET);
+	sme_stop(gp_cds_context->mac_context, HAL_STOP_TYPE_SYS_RESET);
 
 err_mac_stop:
-	mac_stop(gp_cds_context->pMACContext, HAL_STOP_TYPE_SYS_RESET);
+	mac_stop(gp_cds_context->mac_context, HAL_STOP_TYPE_SYS_RESET);
 
 err_wma_stop:
 	qdf_event_reset(&(gp_cds_context->wmaCompleteEvent));
@@ -1137,21 +1137,21 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 		gp_cds_context->htc_ctx = NULL;
 	}
 
-	qdf_status = sme_close(gp_cds_context->pMACContext);
+	qdf_status = sme_close(gp_cds_context->mac_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to close SME", __func__);
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
-	qdf_status = mac_close(gp_cds_context->pMACContext);
+	qdf_status = mac_close(gp_cds_context->mac_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to close MAC", __func__);
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
-	gp_cds_context->pMACContext = NULL;
+	gp_cds_context->mac_context = NULL;
 
 	cdp_soc_detach(gp_cds_context->dp_soc);
 	pmo_ucfg_psoc_update_dp_handle(psoc, NULL);
@@ -1242,7 +1242,7 @@ void *cds_get_context(QDF_MODULE_ID moduleId)
 	case QDF_MODULE_ID_PE:
 	{
 		/* In all these cases, we just return the MAC Context */
-		pModContext = gp_cds_context->pMACContext;
+		pModContext = gp_cds_context->mac_context;
 		break;
 	}
 
@@ -2420,14 +2420,14 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 			__func__, is_fatal, indicator, reason_code);
 
 	if (dump_mac_trace)
-		qdf_trace_dump_all(p_cds_context->pMACContext, 0, 0, 500, 0);
+		qdf_trace_dump_all(p_cds_context->mac_context, 0, 0, 500, 0);
 
 	if (WLAN_LOG_INDICATOR_HOST_ONLY == indicator) {
 		cds_wlan_flush_host_logs_for_fatal();
 		return QDF_STATUS_SUCCESS;
 	}
 
-	ret = sme_send_flush_logs_cmd_to_fw(p_cds_context->pMACContext);
+	ret = sme_send_flush_logs_cmd_to_fw(p_cds_context->mac_context);
 	if (0 != ret) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				"%s: Failed to send flush FW log", __func__);
