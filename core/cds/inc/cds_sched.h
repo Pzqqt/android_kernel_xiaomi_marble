@@ -182,7 +182,7 @@ struct cds_context {
 	qdf_event_t wmaCompleteEvent;
 
 	/* WMA Context */
-	void *pWMAContext;
+	void *wma_context;
 
 	void *pHIFContext;
 

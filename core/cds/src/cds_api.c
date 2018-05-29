@@ -768,7 +768,7 @@ QDF_STATUS cds_pre_enable(void)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (gp_cds_context->pWMAContext == NULL) {
+	if (!gp_cds_context->wma_context) {
 		cds_err("wma context is null");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -817,7 +817,7 @@ QDF_STATUS cds_pre_enable(void)
 		goto exit_with_status;
 	}
 
-	status = wma_wait_for_ready_event(gp_cds_context->pWMAContext);
+	status = wma_wait_for_ready_event(gp_cds_context->wma_context);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cds_err("Failed to wait for ready event; status: %u", status);
 		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
@@ -861,9 +861,9 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if ((gp_cds_context->pWMAContext == NULL) ||
+	if ((!gp_cds_context->wma_context) ||
 	    (gp_cds_context->mac_context == NULL)) {
-		if (gp_cds_context->pWMAContext == NULL)
+		if (!gp_cds_context->wma_context)
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				  "%s: WMA NULL context", __func__);
 		else
@@ -1249,7 +1249,7 @@ void *cds_get_context(QDF_MODULE_ID moduleId)
 	case QDF_MODULE_ID_WMA:
 	{
 		/* For wma module */
-		pModContext = gp_cds_context->pWMAContext;
+		pModContext = gp_cds_context->wma_context;
 		break;
 	}
 
@@ -1478,7 +1478,7 @@ QDF_STATUS cds_alloc_context(QDF_MODULE_ID moduleID,
 
 	switch (moduleID) {
 	case QDF_MODULE_ID_WMA:
-		pGpModContext = &(gp_cds_context->pWMAContext);
+		pGpModContext = &gp_cds_context->wma_context;
 		break;
 
 	case QDF_MODULE_ID_HIF:
@@ -1593,7 +1593,7 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID moduleID, void *pModuleContext)
 
 	switch (moduleID) {
 	case QDF_MODULE_ID_WMA:
-		pGpModContext = &(gp_cds_context->pWMAContext);
+		pGpModContext = &gp_cds_context->wma_context;
 		break;
 
 	case QDF_MODULE_ID_HIF:
