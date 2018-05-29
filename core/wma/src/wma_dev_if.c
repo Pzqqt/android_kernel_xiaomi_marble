@@ -1404,6 +1404,8 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 	struct peer_flush_params param = {0};
 	uint8_t *peer_mac_addr;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	void *vdev;
 	QDF_STATUS qdf_status;
 	uint32_t bitmap = 1 << CDP_PEER_DELETE_NO_SPECIAL;
 
@@ -1465,12 +1467,16 @@ peer_detach:
 	WMA_LOGE("%s: Remove peer %pK with peer_addr %pM vdevid %d peer_count %d",
 		 __func__, peer, bssid, vdev_id,
 		 wma->interfaces[vdev_id].peer_count);
-
+	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
 	if (peer) {
-		if (roam_synch_in_progress)
+		if (roam_synch_in_progress) {
 			cdp_peer_detach_force_delete(soc, peer);
-		else
+		} else {
 			cdp_peer_delete(soc, peer, bitmap);
+			WMA_LOGD("%s: vdev %p has detached peer:%p peer_addr %pM to vdev_id %d, peer_count - %d",
+				 __func__, vdev, peer, peer_mac_addr, vdev_id,
+				 wma->interfaces[vdev_id].peer_count);
+		}
 	}
 
 	wma->interfaces[vdev_id].peer_count--;
@@ -1580,6 +1586,9 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		WMA_LOGE("%s : Unable to attach peer %pM", __func__, peer_addr);
 		goto err;
 	}
+	WMA_LOGD("%s: vdev %p has attached peer:%p peer_addr %pM to vdev_id %d, peer_count - %d",
+		 __func__, vdev, peer, peer_addr, vdev_id,
+		 wma->interfaces[vdev_id].peer_count);
 
 	if (roam_synch_in_progress) {
 		WMA_LOGI("%s: LFR3: Created peer %pK with peer_addr %pM vdev_id %d, peer_count - %d",
@@ -1595,6 +1604,9 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		WMA_LOGE("%s : Unable to create peer in Target", __func__);
 		cdp_peer_delete(dp_soc, peer,
 				1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER);
+		WMA_LOGD("%s: vdev %p has detached peer:%p peer_addr %pM to vdev_id %d, peer_count - %d",
+			 __func__, vdev, peer, peer_addr, vdev_id,
+			 wma->interfaces[vdev_id].peer_count);
 		goto err;
 	} else {
 		qdf_atomic_inc(&wma->interfaces[vdev_id].fw_peer_count);
@@ -5491,6 +5503,9 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 	if (peer)
 		cdp_peer_delete(soc, peer, 1 << CDP_PEER_DELETE_NO_SPECIAL);
 	iface->peer_count--;
+	WMA_LOGD("%s: vdev %p has detached peer:%p peer_addr %pM to vdev_id %d, peer_count - %d",
+		 __func__, txrx_vdev, peer, params->bssid, params->smesessionId,
+		iface->peer_count);
 	WMA_LOGI("%s: Removed peer %pK with peer_addr %pM vdevid %d peer_count %d",
 		 __func__, peer, params->bssid,  params->smesessionId,
 		 iface->peer_count);
