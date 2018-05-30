@@ -2447,6 +2447,10 @@ static void wlan_ipa_uc_loaded_handler(struct wlan_ipa_priv *ipa_ctx)
 		return;
 	}
 
+	if (!qdf_dev) {
+		ipa_err("qdf_dev is null");
+		return;
+	}
 	/* Connect pipe */
 	status = wlan_ipa_wdi_setup(ipa_ctx, qdf_dev);
 	if (status) {
