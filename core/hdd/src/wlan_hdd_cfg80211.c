@@ -4607,24 +4607,34 @@ static int32_t hdd_add_tx_bitrate(struct sk_buff *skb,
 	uint32_t bitrate, bitrate_compat;
 
 	nla_attr = nla_nest_start(skb, idx);
-	if (!nla_attr)
+	if (!nla_attr) {
+		hdd_err("nla_nest_start failed");
 		goto fail;
+	}
+
 	/* cfg80211_calculate_bitrate will return 0 for mcs >= 32 */
 	bitrate = cfg80211_calculate_bitrate(&hdd_sta_ctx->
 						cache_conn_info.txrate);
 
 	/* report 16-bit bitrate only if we can */
 	bitrate_compat = bitrate < (1UL << 16) ? bitrate : 0;
+
 	if (bitrate > 0 &&
 	    nla_put_u32(skb, NL80211_RATE_INFO_BITRATE32, bitrate)) {
-		hdd_err("put fail");
+		hdd_err("put fail bitrate: %u", bitrate);
 		goto fail;
+	} else {
+		hdd_err("Invalid bitrate: %u", bitrate);
 	}
+
 	if (bitrate_compat > 0 &&
 	    nla_put_u16(skb, NL80211_RATE_INFO_BITRATE, bitrate_compat)) {
 		hdd_err("put fail");
 		goto fail;
+	} else {
+		hdd_err("Invalid bitrate_compat: %u", bitrate_compat);
 	}
+
 	if (nla_put_u8(skb, NL80211_RATE_INFO_VHT_NSS,
 		       hdd_sta_ctx->cache_conn_info.txrate.nss)) {
 		hdd_err("put fail");
@@ -4650,15 +4660,21 @@ static int32_t hdd_add_sta_info(struct sk_buff *skb,
 	struct nlattr *nla_attr;
 
 	nla_attr = nla_nest_start(skb, idx);
-	if (!nla_attr)
+	if (!nla_attr) {
+		hdd_err("nla_nest_start failed");
 		goto fail;
+	}
+
 	if (nla_put_u8(skb, NL80211_STA_INFO_SIGNAL,
 		       (hdd_sta_ctx->cache_conn_info.signal + 100))) {
 		hdd_err("put fail");
 		goto fail;
 	}
-	if (hdd_add_tx_bitrate(skb, hdd_sta_ctx, NL80211_STA_INFO_TX_BITRATE))
+	if (hdd_add_tx_bitrate(skb, hdd_sta_ctx, NL80211_STA_INFO_TX_BITRATE)) {
+		hdd_err("hdd_add_tx_bitrate failed");
 		goto fail;
+	}
+
 	nla_nest_end(skb, nla_attr);
 	return 0;
 fail:
@@ -4710,8 +4726,11 @@ hdd_add_link_standard_info(struct sk_buff *skb,
 	struct nlattr *nla_attr;
 
 	nla_attr = nla_nest_start(skb, idx);
-	if (!nla_attr)
+	if (!nla_attr) {
+		hdd_err("nla_nest_start failed");
 		goto fail;
+	}
+
 	if (nla_put(skb,
 		    NL80211_ATTR_SSID,
 		    hdd_sta_ctx->cache_conn_info.last_ssid.SSID.length,
@@ -4721,12 +4740,18 @@ hdd_add_link_standard_info(struct sk_buff *skb,
 	}
 	if (nla_put(skb, NL80211_ATTR_MAC, QDF_MAC_ADDR_SIZE,
 		    hdd_sta_ctx->cache_conn_info.bssId.bytes)) {
+		hdd_err("put bssid failed");
 		goto fail;
 	}
-	if (hdd_add_survey_info(skb, hdd_sta_ctx, NL80211_ATTR_SURVEY_INFO))
+	if (hdd_add_survey_info(skb, hdd_sta_ctx, NL80211_ATTR_SURVEY_INFO)) {
+		hdd_err("hdd_add_survey_info failed");
 		goto fail;
-	if (hdd_add_sta_info(skb, hdd_sta_ctx, NL80211_ATTR_STA_INFO))
+	}
+
+	if (hdd_add_sta_info(skb, hdd_sta_ctx, NL80211_ATTR_STA_INFO)) {
+		hdd_err("hdd_add_sta_info failed");
 		goto fail;
+	}
 	nla_nest_end(skb, nla_attr);
 	return 0;
 fail:
