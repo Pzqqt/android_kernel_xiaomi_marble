@@ -2290,13 +2290,6 @@ void wma_register_packetdump_callback(
 void wma_deregister_packetdump_callback(void);
 void wma_update_sta_inactivity_timeout(tp_wma_handle wma,
 		struct sme_sta_inactivity_timeout  *sta_inactivity_timer);
-void wma_peer_set_default_routing(void *scn_handle, uint8_t *peer_macaddr,
-	uint8_t vdev_id, bool hash_based, uint8_t ring_num);
-int wma_peer_rx_reorder_queue_setup(void *scn_handle,
-	uint8_t vdev_id, uint8_t *peer_macaddr, qdf_dma_addr_t hw_qdesc,
-	int tid, uint16_t queue_no);
-int wma_peer_rx_reorder_queue_remove(void *scn_handle,
-	uint8_t vdev_id, uint8_t *peer_macaddr, uint32_t peer_tid_bitmap);
 
 /**
  * wma_form_rx_packet() - form rx cds packet

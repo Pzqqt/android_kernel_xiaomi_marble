@@ -64,6 +64,11 @@
 #include <asm/dma-iommu.h>
 #include <linux/iommu.h>
 #endif
+
+#ifdef QCA_WIFI_QCA8074
+#include <target_if_dp.h>
+#endif
+
 /* Preprocessor Definitions and Constants */
 
 /* Preprocessor Definitions and Constants */
@@ -75,15 +80,19 @@ static struct __qdf_device g_qdf_ctx;
 
 static uint8_t cds_multicast_logging;
 
+#ifdef QCA_WIFI_QCA8074
 static struct ol_if_ops  dp_ol_if_ops = {
-	.peer_set_default_routing = wma_peer_set_default_routing,
-	.peer_rx_reorder_queue_setup = wma_peer_rx_reorder_queue_setup,
-	.peer_rx_reorder_queue_remove = wma_peer_rx_reorder_queue_remove,
+	.peer_set_default_routing = target_if_peer_set_default_routing,
+	.peer_rx_reorder_queue_setup = target_if_peer_rx_reorder_queue_setup,
+	.peer_rx_reorder_queue_remove = target_if_peer_rx_reorder_queue_remove,
 	.is_hw_dbs_2x2_capable = policy_mgr_is_hw_dbs_2x2_capable,
-	.lro_hash_config = wma_lro_config_cmd,
+	.lro_hash_config = target_if_lro_hash_config,
 	.rx_mic_error = wma_rx_mic_error_ind
     /* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
+#else
+static struct ol_if_ops  dp_ol_if_ops;
+#endif
 
 static void cds_trigger_recovery_work(void *param);
 

@@ -8840,69 +8840,6 @@ int wma_lro_init(struct cdp_lro_hash_config *lro_config)
 }
 #endif
 
-void wma_peer_set_default_routing(void *scn_handle, uint8_t *peer_macaddr,
-	uint8_t vdev_id, bool hash_based, uint8_t ring_num)
-{
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	struct peer_set_params param;
-
-	if (!wma) {
-		WMA_LOGE("%s:wma_handle is NULL", __func__);
-		return;
-	}
-
-	/* TODO: Need bit definitions for ring number and hash based routing
-	 * fields in common wmi header file
-	 */
-	param.param_id = WMI_HOST_PEER_SET_DEFAULT_ROUTING;
-	param.vdev_id = vdev_id;
-	param.param_value = ((hash_based) ? 1 : 0) | (ring_num << 1);
-	WMA_LOGD("%s: param_value 0x%x", __func__, param.param_value);
-	wmi_set_peer_param_send(wma->wmi_handle, peer_macaddr, &param);
-}
-
-int wma_peer_rx_reorder_queue_setup(void *scn_handle,
-	uint8_t vdev_id, uint8_t *peer_macaddr, qdf_dma_addr_t hw_qdesc,
-	int tid, uint16_t queue_no)
-{
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	struct rx_reorder_queue_setup_params param;
-
-	if (!wma) {
-		WMA_LOGE("%s:wma_handle is NULL", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	param.tid = tid;
-	param.vdev_id = vdev_id;
-	param.peer_macaddr = peer_macaddr;
-	param.hw_qdesc_paddr_lo = hw_qdesc & 0xffffffff;
-	param.hw_qdesc_paddr_hi = (uint64_t)hw_qdesc >> 32;
-	param.queue_no = queue_no;
-
-	return wmi_unified_peer_rx_reorder_queue_setup_send(wma->wmi_handle,
-		&param);
-}
-
-int wma_peer_rx_reorder_queue_remove(void *scn_handle,
-	uint8_t vdev_id, uint8_t *peer_macaddr, uint32_t peer_tid_bitmap)
-{
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	struct rx_reorder_queue_remove_params param;
-
-	if (!wma) {
-		WMA_LOGE("%s:wma_handle is NULL", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	param.vdev_id = vdev_id;
-	param.peer_macaddr = peer_macaddr;
-	param.peer_tid_bitmap = peer_tid_bitmap;
-
-	return wmi_unified_peer_rx_reorder_queue_remove_send(wma->wmi_handle,
-		&param);
-}
-
 QDF_STATUS wma_configure_smps_params(uint32_t vdev_id, uint32_t param_id,
 							uint32_t param_val)
 {

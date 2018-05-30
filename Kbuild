@@ -941,8 +941,10 @@ endif
 
 ifeq ($(CONFIG_LITHIUM), y)
 ############ DP 3.0 ############
+DP_TARGET_INC_DIR := $(WLAN_COMMON_ROOT)/target_if/dp/inc
 DP_INC := -I$(WLAN_COMMON_ROOT)/dp/inc \
-	-I$(WLAN_COMMON_ROOT)/dp/wifi3.0
+	-I$(WLAN_COMMON_ROOT)/dp/wifi3.0 \
+	-I$(WLAN_ROOT)/$(DP_TARGET_INC_DIR)
 
 DP_SRC := $(WLAN_COMMON_ROOT)/dp/wifi3.0
 DP_OBJS := $(DP_SRC)/dp_main.o \
@@ -957,7 +959,8 @@ DP_OBJS := $(DP_SRC)/dp_main.o \
 		$(DP_SRC)/dp_rx_mon_dest.o \
 		$(DP_SRC)/dp_rx_mon_status.o \
 		$(DP_SRC)/dp_rx_defrag.o \
-		$(DP_SRC)/dp_stats.o
+		$(DP_SRC)/dp_stats.o \
+		$(WLAN_COMMON_ROOT)/target_if/dp/src/target_if_dp.o
 ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 DP_OBJS += $(DP_SRC)/dp_tx_flow_control.o
 endif
