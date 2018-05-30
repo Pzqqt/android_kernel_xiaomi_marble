@@ -3114,7 +3114,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	qdf_status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_WMA_ID);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		WMA_LOGE("%s: PSOC get_ref fails", __func__);
-		goto err_wma_handle;
+		goto err_get_psoc_ref;
 	}
 	wma_handle->psoc = psoc;
 
@@ -3585,6 +3585,8 @@ err_scn_context:
 
 err_wma_handle:
 	target_if_close();
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_LEGACY_WMA_ID);
+err_get_psoc_ref:
 	target_if_free_psoc_tgt_info(psoc);
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_EXTSCAN
