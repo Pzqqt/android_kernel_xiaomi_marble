@@ -2411,6 +2411,8 @@
  *
  * @INPUT: hw_mode
  *     0:single mac     1:dual mac
+ *     2: 2x2 5g + 1x1 2g dbs mode
+ *     3: 2x2 2g + 1x1 5g dbs mode
  *
  * @OUTPUT: None
  *
@@ -7008,6 +7010,65 @@ static int iw_setnone_getnone(struct net_device *dev,
 }
 
 #ifdef MPC_UT_FRAMEWORK
+static void
+hdd_policy_mgr_set_hw_mode_ut(struct hdd_context *hdd_ctx,
+			      struct hdd_adapter *adapter, int cmd)
+{
+	enum hw_mode_ss_config mac0_ss;
+	enum hw_mode_bandwidth mac0_bw;
+	enum hw_mode_ss_config mac1_ss;
+	enum hw_mode_bandwidth mac1_bw;
+	enum hw_mode_mac_band_cap mac0_band_cap;
+	enum hw_mode_dbs_capab dbs;
+
+	switch (cmd) {
+	case 0:
+		hdd_debug("set hw mode for single mac");
+		mac0_ss = HW_MODE_SS_2x2;
+		mac0_bw = HW_MODE_80_MHZ;
+		mac1_ss = HW_MODE_SS_0x0;
+		mac1_bw = HW_MODE_BW_NONE;
+		mac0_band_cap = HW_MODE_MAC_BAND_NONE;
+		dbs = HW_MODE_DBS_NONE;
+		break;
+	case 1:
+		hdd_debug("set hw mode for dual mac");
+		mac0_ss = HW_MODE_SS_1x1;
+		mac0_bw = HW_MODE_80_MHZ;
+		mac1_ss = HW_MODE_SS_1x1;
+		mac1_bw = HW_MODE_40_MHZ;
+		mac0_band_cap = HW_MODE_MAC_BAND_NONE;
+		dbs = HW_MODE_DBS;
+		break;
+	case 2:
+		hdd_debug("set hw mode for 2x2 5g + 1x1 2g");
+		mac0_ss = HW_MODE_SS_2x2;
+		mac0_bw = HW_MODE_80_MHZ;
+		mac1_ss = HW_MODE_SS_1x1;
+		mac1_bw = HW_MODE_40_MHZ;
+		mac0_band_cap = HW_MODE_MAC_BAND_5G;
+		dbs = HW_MODE_DBS;
+		break;
+	case 3:
+		hdd_debug("set hw mode for 2x2 2g + 1x1 5g");
+		mac0_ss = HW_MODE_SS_2x2;
+		mac0_bw = HW_MODE_40_MHZ;
+		mac1_ss = HW_MODE_SS_1x1;
+		mac1_bw = HW_MODE_40_MHZ;
+		mac0_band_cap = HW_MODE_MAC_BAND_2G;
+		dbs = HW_MODE_DBS;
+		break;
+	default:
+		hdd_err("unknown cmd %d", cmd);
+		return;
+	}
+	policy_mgr_pdev_set_hw_mode(hdd_ctx->psoc, adapter->session_id,
+				    mac0_ss, mac0_bw, mac1_ss, mac1_bw,
+				    mac0_band_cap, dbs, HW_MODE_AGILE_DFS_NONE,
+				    HW_MODE_SBS_NONE,
+				    POLICY_MGR_UPDATE_REASON_UT, PM_NOP);
+}
+
 static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 			struct hdd_adapter *adapter, int sub_cmd, int *apps_args)
 {
@@ -7066,7 +7127,8 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 
 		if (apps_args[1] >= PM_THROUGHPUT &&
 			apps_args[1] <= PM_LATENCY) {
-			pr_info("setting system pref to [%d]\n", apps_args[1]);
+			hdd_debug("setting system pref to [%d]\n",
+				  apps_args[1]);
 			ucfg_policy_mgr_set_sys_pref(hdd_ctx->psoc,
 						     apps_args[1]);
 		}
@@ -7088,40 +7150,17 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		policy_mgr_get_pcl(hdd_ctx->psoc, apps_args[0],
 				pcl, &pcl_len,
 				weight_list, QDF_ARRAY_SIZE(weight_list));
-		pr_info("PCL list for role[%d] is {", apps_args[0]);
+		hdd_debug("PCL list for role[%d] is {", apps_args[0]);
 		for (i = 0 ; i < pcl_len; i++)
-			pr_info(" %d, ", pcl[i]);
-		pr_info("}--------->\n");
+			hdd_debug(" %d, ", pcl[i]);
+		hdd_debug("}--------->\n");
 	}
 	break;
 
 	case WE_POLICY_SET_HW_MODE_CMD:
 	{
-		if (apps_args[0] == 0) {
-			hdd_err("set hw mode for single mac");
-			policy_mgr_pdev_set_hw_mode(hdd_ctx->psoc,
-					adapter->session_id,
-					HW_MODE_SS_2x2,
-					HW_MODE_80_MHZ,
-					HW_MODE_SS_0x0, HW_MODE_BW_NONE,
-					HW_MODE_MAC_BAND_NONE,
-					HW_MODE_DBS_NONE,
-					HW_MODE_AGILE_DFS_NONE,
-					HW_MODE_SBS_NONE,
-					POLICY_MGR_UPDATE_REASON_UT, PM_NOP);
-		} else if (apps_args[0] == 1) {
-			hdd_err("set hw mode for dual mac");
-			policy_mgr_pdev_set_hw_mode(hdd_ctx->psoc,
-					adapter->session_id,
-					HW_MODE_SS_1x1,
-					HW_MODE_80_MHZ,
-					HW_MODE_SS_1x1, HW_MODE_40_MHZ,
-					HW_MODE_MAC_BAND_NONE,
-					HW_MODE_DBS,
-					HW_MODE_AGILE_DFS_NONE,
-					HW_MODE_SBS_NONE,
-					POLICY_MGR_UPDATE_REASON_UT, PM_NOP);
-		}
+		hdd_debug("pm_set_hw_mode cmd %d", apps_args[0]);
+		hdd_policy_mgr_set_hw_mode_ut(hdd_ctx, adapter, apps_args[0]);
 	}
 	break;
 
@@ -7151,7 +7190,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		}
 		allow = policy_mgr_allow_concurrency(hdd_ctx->psoc,
 				apps_args[0], apps_args[1], apps_args[2]);
-		pr_info("allow %d {0 = don't allow, 1 = allow}", allow);
+		hdd_debug("allow %d {0 = don't allow, 1 = allow}", allow);
 	}
 	break;
 
