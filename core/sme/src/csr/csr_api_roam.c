@@ -15281,7 +15281,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	int8_t pwrLimit = 0;
 	struct ps_global_info *ps_global_info = &pMac->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[sessionId];
-	uint8_t ese_config = 0;
+	uint8_t ese_config = 0, channel_id;
 	tpCsrNeighborRoamControlInfo neigh_roam_info;
 	uint32_t value = 0, value1 = 0;
 	QDF_STATUS packetdump_timer_status;
@@ -15310,6 +15310,25 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		pSession->disable_hi_rssi = false;
 	}
 
+	/*
+	 * When STA's join req times out on current BSS, SME issues next BSS
+	 * internally without checking HW mode for new channel.
+	 *
+	 * For example, STA tries to connect SSID="abc",
+	 * BSSID="a1:a2:a3:a4:a5:a6", channel=36 and lets say it fails. It
+	 * should try few more times to same BSSID and after that it will try
+	 * next bss. Lets say next BSS it found has, SSID="abc",
+	 * BSSID="b1:b2:b3:b4:b5:b6", channel=1 then it needs to check whether
+	 * hardware mode change is required for channel=1. If driver fails in
+	 * checking hardware mode then following check will prevent the bad
+	 * situation.
+	 */
+	channel_id = pBssDescription->channelId;
+	if (!policy_mgr_is_hwmode_set_for_given_chnl(pMac->psoc, channel_id)) {
+		sme_err("HW mode is not properly set for channel %d",
+			channel_id);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	do {
 		pSession->joinFailStatusCode.statusCode = eSIR_SME_SUCCESS;
