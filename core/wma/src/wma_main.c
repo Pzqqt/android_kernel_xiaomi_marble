@@ -4897,6 +4897,11 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 	if (wmi_service_enabled(wmi_handle,
 				wmi_service_11k_neighbour_report_support))
 		cfg->is_11k_offload_supported = true;
+
+	if (wmi_service_enabled(wmi_handle, wmi_service_twt_requestor))
+		cfg->twt_requestor = true;
+	if (wmi_service_enabled(wmi_handle, wmi_service_twt_responder))
+		cfg->twt_responder = true;
 }
 
 /**
