@@ -5953,6 +5953,8 @@ typedef enum {
 	wmi_service_host_dfs_check_support,
 	wmi_service_dual_beacon_on_single_mac_scc_support,
 	wmi_service_dual_beacon_on_single_mac_mcc_support,
+	wmi_service_twt_requestor,
+	wmi_service_twt_responder,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
