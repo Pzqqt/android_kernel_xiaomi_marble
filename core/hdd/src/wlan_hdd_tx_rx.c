@@ -1987,6 +1987,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 		if (rx_ol_status != QDF_STATUS_SUCCESS) {
 			/* we should optimize this per packet check, unlikely */
+			/* Account for GRO/LRO ineligible packets, mostly UDP */
+			hdd_ctx->no_rx_offload_pkt_cnt++;
 			if (hdd_napi_enabled(HDD_NAPI_ANY) &&
 			    !hdd_ctx->enable_rxthread &&
 			    !QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb)) {

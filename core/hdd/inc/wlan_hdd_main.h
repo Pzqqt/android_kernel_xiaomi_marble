@@ -1712,7 +1712,8 @@ struct hdd_context {
 	int cur_vote_level;
 	spinlock_t bus_bw_lock;
 	int cur_rx_level;
-	uint64_t prev_rx;
+	uint64_t prev_no_rx_offload_pkts;
+	uint64_t prev_rx_offload_pkts;
 	int cur_tx_level;
 	uint64_t prev_tx;
 #endif
@@ -1815,6 +1816,8 @@ struct hdd_context {
 	 */
 	uint32_t fine_time_meas_cap_target;
 	uint32_t rx_high_ind_cnt;
+	/* For Rx thread non GRO/LRO packet accounting */
+	uint64_t no_rx_offload_pkt_cnt;
 	/* completion variable to indicate set antenna mode complete*/
 	struct completion set_antenna_mode_cmpl;
 	/* Current number of TX X RX chains being used */

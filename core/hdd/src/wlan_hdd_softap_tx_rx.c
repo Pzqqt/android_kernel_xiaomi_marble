@@ -999,6 +999,9 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 			rxstat = netif_receive_skb(skb);
 		else
 			rxstat = netif_rx_ni(skb);
+
+		hdd_ctx->no_rx_offload_pkt_cnt++;
+
 		if (NET_RX_SUCCESS == rxstat)
 			++adapter->hdd_stats.tx_rx_stats.rx_delivered[cpu_index];
 		else

@@ -7264,8 +7264,9 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 					  const uint64_t rx_packets)
 {
 	u64 total_pkts = tx_packets + rx_packets;
-	uint64_t temp_rx = 0;
-	uint64_t temp_tx = 0;
+	uint64_t temp_tx = 0, avg_rx = 0;
+	uint64_t no_rx_offload_pkts = 0, avg_no_rx_offload_pkts = 0;
+	uint64_t rx_offload_pkts = 0, avg_rx_offload_pkts = 0;
 	enum pld_bus_width_type next_vote_level = PLD_BUS_WIDTH_NONE;
 	static enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
@@ -7274,6 +7275,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	bool vote_level_change = false;
 	bool rx_level_change = false;
 	bool tx_level_change = false;
+	bool rxthread_high_tput_req = false;
 
 	if (total_pkts > hdd_ctx->config->busBandwidthHighThreshold)
 		next_vote_level = PLD_BUS_WIDTH_HIGH;
@@ -7296,9 +7298,6 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 				pld_remove_pm_qos(hdd_ctx->parent_dev);
 				hdd_ctx->hbw_requested = false;
 			}
-			if (cds_sched_handle_throughput_req(false))
-				hdd_warn("low bandwidth set rx affinity fail");
-
 			if (hdd_ctx->dynamic_rps)
 				hdd_clear_rps_cpu_mask(hdd_ctx);
 		} else {
@@ -7306,33 +7305,60 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 				pld_request_pm_qos(hdd_ctx->parent_dev, 1);
 				hdd_ctx->hbw_requested = true;
 			}
-
-			if (cds_sched_handle_throughput_req(true))
-				hdd_warn("high bandwidth set rx affinity fail");
-
 			if (hdd_ctx->dynamic_rps)
 				hdd_set_rps_cpu_mask(hdd_ctx);
 		}
+
 		if (hdd_ctx->config->napi_cpu_affinity_mask)
 			hdd_napi_apply_throughput_policy(hdd_ctx,
 							 tx_packets,
 							 rx_packets);
+
+		if (rx_packets < hdd_ctx->config->busBandwidthLowThreshold)
+			hdd_disable_rx_ol_for_low_tput(hdd_ctx, true);
+		else
+			hdd_disable_rx_ol_for_low_tput(hdd_ctx, false);
+
 	}
 
 	qdf_dp_trace_throttle_live_mode(
 		(next_vote_level > PLD_BUS_WIDTH_NONE) ? true : false);
 
-	/* fine-tuning parameters for RX Flows */
-	temp_rx = (rx_packets + hdd_ctx->prev_rx) / 2;
+	/*
+	 * Includes tcp+udp, if perf core is required for tcp, then
+	 * perf core is also required for udp.
+	 */
+	no_rx_offload_pkts = hdd_ctx->no_rx_offload_pkt_cnt;
+	hdd_ctx->no_rx_offload_pkt_cnt = 0;
+	rx_offload_pkts = rx_packets - no_rx_offload_pkts;
 
-	hdd_ctx->prev_rx = rx_packets;
+	avg_no_rx_offload_pkts = (no_rx_offload_pkts +
+				  hdd_ctx->prev_no_rx_offload_pkts) / 2;
+	hdd_ctx->prev_no_rx_offload_pkts = no_rx_offload_pkts;
 
-	if (temp_rx < hdd_ctx->config->busBandwidthLowThreshold)
-		hdd_disable_rx_ol_for_low_tput(hdd_ctx, true);
+	avg_rx_offload_pkts = (rx_offload_pkts +
+			       hdd_ctx->prev_rx_offload_pkts) / 2;
+	hdd_ctx->prev_rx_offload_pkts = rx_offload_pkts;
+
+	avg_rx = avg_no_rx_offload_pkts + avg_rx_offload_pkts;
+	/*
+	 * Takes care to set Rx_thread affinity for below case
+	 * 1)LRO/GRO not supported ROME case
+	 * 2)when rx_ol is disabled in cases like concurrency etc
+	 * 3)For UDP cases
+	 */
+	if (avg_no_rx_offload_pkts >
+			hdd_ctx->config->busBandwidthHighThreshold)
+		rxthread_high_tput_req = true;
 	else
-		hdd_disable_rx_ol_for_low_tput(hdd_ctx, false);
+		rxthread_high_tput_req = false;
 
-	if (temp_rx > hdd_ctx->config->tcpDelackThresholdHigh) {
+	if (cds_sched_handle_throughput_req(rxthread_high_tput_req))
+		hdd_warn("Rx thread high_tput(%d) affinity request failed",
+			 rxthread_high_tput_req);
+
+	/* fine-tuning parameters for RX Flows */
+	if (avg_rx > hdd_ctx->config->tcpDelackThresholdHigh) {
 		if ((hdd_ctx->cur_rx_level != WLAN_SVC_TP_HIGH) &&
 		   (++hdd_ctx->rx_high_ind_cnt == delack_timer_cnt)) {
 			next_rx_level = WLAN_SVC_TP_HIGH;
@@ -7346,7 +7372,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		struct wlan_rx_tp_data rx_tp_data = {0};
 
 		hdd_debug("TCP DELACK trigger level %d, average_rx: %llu",
-		       next_rx_level, temp_rx);
+		          next_rx_level, avg_rx);
 		hdd_ctx->cur_rx_level = next_rx_level;
 		rx_level_change = true;
 		/* Send throughput indication only if it is enabled.
