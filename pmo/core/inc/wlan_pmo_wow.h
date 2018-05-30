@@ -22,6 +22,8 @@
 #ifndef _WLAN_PMO_WOW_H_
 #define _WLAN_PMO_WOW_H_
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
+
 #include "wlan_pmo_main.h"
 #include "wlan_pmo_wow_public_struct.h"
 #include "wlan_pmo_tgt_api.h"
@@ -695,4 +697,7 @@ static inline void pmo_get_event_bitmap_idx(WOW_WAKE_EVENT_TYPE event,
  * Return: number of WoW filters supported
  */
 uint8_t pmo_get_num_wow_filters(struct wlan_objmgr_psoc *psoc);
+
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
+
 #endif /* end  of _WLAN_PMO_WOW_H_ */

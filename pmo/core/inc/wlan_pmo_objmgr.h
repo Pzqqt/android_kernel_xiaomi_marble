@@ -23,6 +23,8 @@
 #ifndef _WLAN_PMO_OBJMGR_H
 #define _WLAN_PMO_OBJMGR_H
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
+
 #include "wlan_cmn.h"
 #include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_peer_obj.h"
@@ -212,5 +214,7 @@ pmo_vdev_get_psoc_priv(struct wlan_objmgr_vdev *vdev)
 {
 	return pmo_psoc_get_priv(pmo_pdev_get_psoc(pmo_vdev_get_pdev(vdev)));
 }
+
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* _WLAN_PMO_OBJMGR_H */

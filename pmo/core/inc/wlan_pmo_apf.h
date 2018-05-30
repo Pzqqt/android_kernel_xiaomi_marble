@@ -23,6 +23,8 @@
 #ifndef __WLAN_PMO_APF_H
 #define __WLAN_PMO_APF_H
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
+
 #include "qdf_types.h"
 #include "wlan_objmgr_psoc_obj.h"
 
@@ -33,5 +35,7 @@
  * Return: APF instruction size
  */
 uint32_t pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc);
+
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* __WLAN_PMO_APF_H */
