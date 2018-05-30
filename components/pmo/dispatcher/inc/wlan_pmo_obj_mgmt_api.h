@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,7 @@
 #include "wlan_pmo_common_public_struct.h"
 #include "wlan_pmo_obj_mgmt_public_struct.h"
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 /**
  * pmo_init() - initialize pmo_ctx context.
  *
@@ -237,5 +238,148 @@ QDF_STATUS pmo_register_is_device_in_low_pwr_mode(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS pmo_unregister_is_device_in_low_pwr_mode(
 			struct wlan_objmgr_psoc *psoc,
 			pmo_is_device_in_low_pwr_mode handler);
+#else
+static inline QDF_STATUS pmo_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS pmo_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_psoc_object_created_notification(
+		struct wlan_objmgr_psoc *psoc, void *arg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_psoc_object_destroyed_notification(
+		struct wlan_objmgr_psoc *psoc, void *arg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_vdev_object_created_notification(
+		struct wlan_objmgr_vdev *vdev, void *arg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_vdev_ready(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_vdev_object_destroyed_notification(
+		struct wlan_objmgr_vdev *vdev, void *arg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_register_suspend_handler(
+		enum wlan_umac_comp_id id,
+		pmo_psoc_suspend_handler handler,
+		void *arg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_unregister_suspend_handler(
+		enum wlan_umac_comp_id id,
+		pmo_psoc_suspend_handler handler)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_register_resume_handler(
+		enum wlan_umac_comp_id id,
+		pmo_psoc_resume_handler handler,
+		void *arg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_unregister_resume_handler(
+		enum wlan_umac_comp_id id,
+		pmo_psoc_resume_handler handler)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_suspend_all_components(
+		struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type suspend_type)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_resume_all_components(
+		struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type suspend_type)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_register_pause_bitmap_notifier(
+		struct wlan_objmgr_psoc *psoc,
+		pmo_notify_pause_bitmap handler)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_unregister_pause_bitmap_notifier(
+		struct wlan_objmgr_psoc *psoc,
+		pmo_notify_pause_bitmap handler)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_register_get_pause_bitmap(
+		struct wlan_objmgr_psoc *psoc,
+		pmo_get_pause_bitmap handler)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_unregister_get_pause_bitmap(
+		struct wlan_objmgr_psoc *psoc,
+		pmo_get_pause_bitmap handler)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_register_is_device_in_low_pwr_mode(
+		struct wlan_objmgr_psoc *psoc,
+		pmo_is_device_in_low_pwr_mode handler)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_unregister_is_device_in_low_pwr_mode(
+		struct wlan_objmgr_psoc *psoc,
+		pmo_is_device_in_low_pwr_mode handler)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_OBJ_MGMT_API_H_ */

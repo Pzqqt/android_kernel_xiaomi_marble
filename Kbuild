@@ -703,6 +703,7 @@ CLD_TARGET_IF_DIR := components/target_if
 CLD_TARGET_IF_INC := -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/pmo/inc \
 	 -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/pmo/src
 
+ifeq ($(CONFIG_POWER_MANAGEMENT_OFFLOAD), y)
 CLD_TARGET_IF_OBJ := $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_arp.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_gtk.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_hw_filter.o \
@@ -714,6 +715,7 @@ CLD_TARGET_IF_OBJ := $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_arp.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_suspend_resume.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_wow.o
+endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 CLD_TARGET_IF_INC += -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/ocb/inc
@@ -824,8 +826,11 @@ WMI_OBJS := $(WMI_OBJ_DIR)/wmi_unified.o \
 	    $(WMI_OBJ_DIR)/wmi_tlv_helper.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_tlv.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_api.o \
-	    $(WMI_OBJ_DIR)/wmi_unified_pmo_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_reg_api.o
+
+ifeq ($(CONFIG_POWER_MANAGEMENT_OFFLOAD), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_pmo_api.o
+endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 ifeq ($(CONFIG_OCB_UT_FRAMEWORK), y)

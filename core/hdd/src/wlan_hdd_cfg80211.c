@@ -21372,6 +21372,7 @@ out:
 
 }
 
+#ifdef WLAN_FEATURE_GTK_OFFLOAD
 /**
  * wlan_hdd_copy_gtk_kek - Copy the KEK from GTK rekey data to GTK request
  * @gtk_req: Pointer to GTK request
@@ -21494,6 +21495,7 @@ int wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 
 	return ret;
 }
+#endif /* WLAN_FEATURE_GTK_OFFLOAD */
 
 /**
  * __wlan_hdd_cfg80211_set_mac_acl() - set access control policy

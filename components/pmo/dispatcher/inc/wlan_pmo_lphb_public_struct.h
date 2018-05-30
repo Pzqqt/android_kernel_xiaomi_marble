@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,7 +28,6 @@
 
 #include "wlan_pmo_common_public_struct.h"
 
-#ifdef FEATURE_WLAN_LPHB
 #define PMO_SIR_LPHB_FILTER_LEN   64
 
 /**
@@ -164,7 +163,6 @@ struct pmo_lphb_rsp {
 	uint8_t protocol_type;   /*TCP or UDP */
 	uint8_t event_reason;
 };
-#endif /* FEATURE_WLAN_LPHB */
 
 /*
  * Define typedef for lphb callback when fwr send response
