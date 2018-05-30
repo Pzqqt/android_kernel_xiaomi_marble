@@ -618,8 +618,11 @@ static int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 					__func__);
 				return -EINVAL;
 			}
+		} else {
+			qdf_print("Unable to subscribe %d to the WDI %s\n",
+				  log_state, __func__);
+			return -EINVAL;
 		}
-		pl_dev->is_pktlog_cb_subscribed = true;
 		/* WMI command to enable pktlog on the firmware */
 		if (pktlog_enable_tgt(scn, log_state, ini_triggered,
 				user_triggered)) {
@@ -627,6 +630,7 @@ static int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 			qdf_print("Device cannot be enabled, %s\n", __func__);
 			return -EINVAL;
 		}
+		pl_dev->is_pktlog_cb_subscribed = true;
 
 		if (is_iwpriv_command == 0)
 			pl_dev->vendor_cmd_send = true;
