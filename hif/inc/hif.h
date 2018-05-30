@@ -239,6 +239,7 @@ struct qca_napi_cpu {
  * @state: state variable used in the napi stat machine
  * @ce_map: bit map indicating which ce's have napis running
  * @exec_map: bit map of instanciated exec contexts
+ * @user_cpu_affin_map: CPU affinity map from INI config.
  * @napi_cpu: cpu info for irq affinty
  * @lilcl_head:
  * @bigcl_head:
@@ -255,6 +256,7 @@ struct qca_napi_data {
 	 */
 	uint32_t             ce_map;
 	uint32_t             exec_map;
+	uint32_t             user_cpu_affin_mask;
 	struct qca_napi_info *napis[CE_COUNT_MAX];
 	struct qca_napi_cpu  napi_cpu[NR_CPUS];
 	int                  lilcl_head, bigcl_head;

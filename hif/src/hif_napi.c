@@ -1110,7 +1110,7 @@ static void hnc_dump_cpus(struct qca_napi_data *napid) { /* no-op */ };
  *         !0: error (at least one of lil/big clusters could not be found)
  */
 #define HNC_MIN_CLUSTER 0
-#define HNC_MAX_CLUSTER 31
+#define HNC_MAX_CLUSTER 1
 static int hnc_link_clusters(struct qca_napi_data *napid)
 {
 	int rc = 0;
@@ -1521,13 +1521,17 @@ retry_disperse:
 			}
 			i = napid->napi_cpu[i].cluster_nxt;
 		}
-		destidx = smallidx;
-		if ((destidx < 0) && (head == napid->bigcl_head)) {
+		/* Check if matches with user sepecified CPU mask */
+		smallidx = ((1 << smallidx) & napid->user_cpu_affin_mask) ?
+								smallidx : -1;
+
+		if ((smallidx < 0) && (head == napid->bigcl_head)) {
 			NAPI_DEBUG("%s: DISPERSE: no bigcl dest, try lilcl",
 				__func__);
 			head = i = napid->lilcl_head;
 			goto retry_disperse;
 		}
+		destidx = smallidx;
 	}
 	NAPI_DEBUG("<--%s[dest=%d]", __func__, destidx);
 	return destidx;
