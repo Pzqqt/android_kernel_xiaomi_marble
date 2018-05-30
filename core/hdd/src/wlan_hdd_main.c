@@ -7309,7 +7309,10 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			if (hdd_ctx->dynamic_rps)
 				hdd_set_rps_cpu_mask(hdd_ctx);
 		}
-		hdd_napi_apply_throughput_policy(hdd_ctx, tx_packets, rx_packets);
+		if (hdd_ctx->config->napi_cpu_affinity_mask)
+			hdd_napi_apply_throughput_policy(hdd_ctx,
+							 tx_packets,
+							 rx_packets);
 	}
 
 	qdf_dp_trace_throttle_live_mode(

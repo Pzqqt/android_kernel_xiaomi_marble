@@ -98,6 +98,7 @@ int hdd_napi_create(void)
 	int     rc = 0;
 	struct hdd_context *hdd_ctx;
 	uint8_t feature_flags = 0;
+	struct qca_napi_data *napid = hdd_napi_get_all();
 
 	NAPI_DEBUG("-->");
 
@@ -127,6 +128,8 @@ int hdd_napi_create(void)
 			} else {
 				rc = hdd_napi_event(NAPI_EVT_INI_FILE,
 					(void *)hdd_ctx->napi_enable);
+				napid->user_cpu_affin_mask =
+					hdd_ctx->config->napi_cpu_affinity_mask;
 			}
 		}
 
