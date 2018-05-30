@@ -471,12 +471,16 @@ static void wlan_hdd_remove(struct device *dev)
 	if (!cds_wait_for_external_threads_completion(__func__))
 		hdd_warn("External threads are still active attempting driver unload anyway");
 
+	mutex_lock(&hdd_init_deinit_lock);
+	hdd_start_driver_ops_timer(eHDD_DRV_OP_REMOVE);
 	if (QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		epping_disable();
 		epping_close();
 	} else {
 		__hdd_wlan_exit();
 	}
+	hdd_stop_driver_ops_timer();
+	mutex_unlock(&hdd_init_deinit_lock);
 
 	cds_set_driver_in_bad_state(false);
 	cds_set_unload_in_progress(false);
@@ -1267,13 +1271,9 @@ static void wlan_hdd_pld_remove(struct device *dev,
 		     enum pld_bus_type bus_type)
 {
 	hdd_enter();
-	mutex_lock(&hdd_init_deinit_lock);
-	hdd_start_driver_ops_timer(eHDD_DRV_OP_REMOVE);
 
 	wlan_hdd_remove(dev);
 
-	hdd_stop_driver_ops_timer();
-	mutex_unlock(&hdd_init_deinit_lock);
 	hdd_exit();
 }
 
