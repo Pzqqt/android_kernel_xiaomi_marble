@@ -187,6 +187,8 @@ static void htc_cleanup(HTC_TARGET *target)
 	}
 #endif
 
+	htc_flush_endpoint_txlookupQ(target, ENDPOINT_0);
+
 	qdf_spinlock_destroy(&target->HTCLock);
 	qdf_spinlock_destroy(&target->HTCRxLock);
 	qdf_spinlock_destroy(&target->HTCTxLock);

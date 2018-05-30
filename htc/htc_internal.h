@@ -296,6 +296,9 @@ void free_htc_packet_container(HTC_TARGET *target, HTC_PACKET *pPacket);
 void htc_flush_rx_hold_queue(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint);
 void htc_flush_endpoint_tx(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint,
 			   HTC_TX_TAG Tag);
+void htc_flush_endpoint_txlookupQ(HTC_TARGET *target,
+				  HTC_ENDPOINT_ID endpoint_id);
+
 void htc_recv_init(HTC_TARGET *target);
 QDF_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target);
 void htc_free_control_tx_packet(HTC_TARGET *target, HTC_PACKET *pPacket);
