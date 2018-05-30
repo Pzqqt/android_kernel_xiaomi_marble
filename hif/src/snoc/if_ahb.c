@@ -300,6 +300,7 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 		irq = platform_get_irq_byname(pdev, irq_name);
 
 		ic_irqnum[hif_ext_group->irq[j]] = irq;
+		irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY);
 		ret = request_irq(irq, hif_ext_group_interrupt_handler,
 				  IRQF_TRIGGER_RISING,
 				  ic_irqname[hif_ext_group->irq[j]],
@@ -322,6 +323,7 @@ void hif_ahb_deconfigure_grp_irq(struct hif_softc *scn)
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	struct hif_exec_context *hif_ext_group;
 	int i, j;
+	int irq = 0;
 
 	/* configure external interrupts */
 	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
@@ -329,8 +331,10 @@ void hif_ahb_deconfigure_grp_irq(struct hif_softc *scn)
 		if (hif_ext_group->irq_requested == true) {
 			hif_ext_group->irq_requested = false;
 			for (j = 0; j < hif_ext_group->numirq; j++) {
-				free_irq(hif_ext_group->os_irq[j],
-						hif_ext_group);
+				irq = hif_ext_group->os_irq[j];
+				irq_clear_status_flags(irq,
+						       IRQ_DISABLE_UNLAZY);
+				free_irq(irq, hif_ext_group);
 			}
 		}
 	}
