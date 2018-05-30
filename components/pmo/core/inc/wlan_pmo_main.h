@@ -23,6 +23,8 @@
 #ifndef _WLAN_PMO_MAIN_H_
 #define _WLAN_PMO_MAIN_H_
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
+
 #include "wlan_pmo_common_public_struct.h"
 #include "wlan_pmo_obj_mgmt_public_struct.h"
 #include "wlan_pmo_priv.h"
@@ -392,5 +394,7 @@ pmo_intersect_packet_filter(struct pmo_psoc_priv_obj *psoc_ctx)
 	return psoc_ctx->psoc_cfg.packet_filter_enabled &&
 		psoc_ctx->caps.packet_filter;
 }
+
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_MAIN_H_ */

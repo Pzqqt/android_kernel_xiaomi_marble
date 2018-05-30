@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,6 +21,8 @@
 
 #ifndef _WLAN_PMO_MC_ADDR_FILTERING_H_
 #define _WLAN_PMO_MC_ADDR_FILTERING_H_
+
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 
 #include "wlan_pmo_common_public_struct.h"
 #include "wlan_pmo_mc_addr_filtering_public_struct.h"
@@ -141,5 +143,7 @@ int pmo_core_get_mc_addr_list_count(struct wlan_objmgr_psoc *psoc,
  * Return: max supported mc addresses
  */
 uint8_t pmo_core_max_mc_addr_supported(struct wlan_objmgr_psoc *psoc);
+
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_MC_ADDR_FILTERING_H_ */

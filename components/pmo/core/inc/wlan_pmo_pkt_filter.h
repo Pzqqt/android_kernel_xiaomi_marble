@@ -22,6 +22,8 @@
 #ifndef _WLAN_PMO_PKT_FILTER_H_
 #define _WLAN_PMO_PKT_FILTER_H_
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
+
 #include "wlan_pmo_pkt_filter_public_struct.h"
 
 struct wlan_objmgr_psoc;
@@ -60,6 +62,8 @@ QDF_STATUS pmo_core_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS pmo_core_clear_pkt_filter(struct wlan_objmgr_psoc *psoc,
 		struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_req,
 		uint8_t vdev_id);
+
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* _WLAN_PMO_PKT_FILTER_H_ */
 

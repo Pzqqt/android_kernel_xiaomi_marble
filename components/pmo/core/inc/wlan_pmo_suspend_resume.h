@@ -22,6 +22,8 @@
 #ifndef _WLAN_PMO_SUSPEND_RESUME_H_
 #define _WLAN_PMO_SUSPEND_RESUME_H_
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
+
 #include "wlan_pmo_common_public_struct.h"
 #include "wlan_pmo_wow.h"
 
@@ -429,5 +431,7 @@ void pmo_core_psoc_target_suspend_acknowledge(void *context, bool wow_nack);
  * Return: None
  */
 void pmo_core_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc);
+
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_SUSPEND_RESUME_H_ */

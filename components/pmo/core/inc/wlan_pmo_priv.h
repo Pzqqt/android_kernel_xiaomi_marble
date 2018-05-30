@@ -25,6 +25,8 @@
 #ifndef _WLAN_PMO_PRIV_STRUCT_H_
 #define _WLAN_PMO_PRIV_STRUCT_H_
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
+
 #include "wlan_pmo_common_public_struct.h"
 #include "wlan_pmo_arp_public_struct.h"
 #include "wlan_pmo_ns_public_struct.h"
@@ -128,5 +130,7 @@ struct pmo_vdev_priv_obj {
 	void *vdev_dp_hdl;
 	qdf_spinlock_t pmo_vdev_lock;
 };
+
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_PRIV_STRUCT_H_ */

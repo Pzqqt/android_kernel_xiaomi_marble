@@ -22,6 +22,8 @@
 #ifndef _WLAN_PMO_STATIC_CONFIG_H_
 #define _WLAN_PMO_STATIC_CONFIG_H_
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
+
 #include "wlan_pmo_common_public_struct.h"
 #include "wlan_pmo_wow.h"
 
@@ -112,5 +114,7 @@ void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmask_size);
  * Return: none
  */
 void pmo_set_sap_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmask_size);
+
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_STATIC_CONFIG_H_ */
