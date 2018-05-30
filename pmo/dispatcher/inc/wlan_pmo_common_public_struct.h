@@ -26,8 +26,6 @@
 #ifndef _WLAN_PMO_COMMONP_PUBLIC_STRUCT_H_
 #define _WLAN_PMO_COMMONP_PUBLIC_STRUCT_H_
 
-#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
-
 #include "wlan_cmn.h"
 #include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_global_obj.h"
@@ -331,7 +329,5 @@ struct pmo_device_caps {
 	bool packet_filter;
 	bool unified_wow;
 };
-
-#endif /* end of WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_COMMONP_STRUCT_H_ */

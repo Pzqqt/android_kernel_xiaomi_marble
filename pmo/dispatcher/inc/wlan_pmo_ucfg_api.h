@@ -33,6 +33,7 @@
 #include "wlan_pmo_pkt_filter_public_struct.h"
 #include "wlan_pmo_hw_filter_public_struct.h"
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 /**
  * ucfg_pmo_get_apf_instruction_size() - get the current APF instruction size
  * @psoc: the psoc to query
@@ -626,5 +627,433 @@ void pmo_ucfg_psoc_target_suspend_acknowledge(void *context, bool wow_nack);
  * Return: None
  */
 void pmo_ucfg_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc);
+#else
+static inline uint32_t
+ucfg_pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint32_t
+ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint8_t
+ucfg_pmo_get_num_wow_filters(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline QDF_STATUS
+ucfg_pmo_get_psoc_config(
+		struct wlan_objmgr_psoc *psoc,
+		struct pmo_psoc_cfg *psoc_cfg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_pmo_update_psoc_config(
+		struct wlan_objmgr_psoc *psoc,
+		struct pmo_psoc_cfg *psoc_cfg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_pmo_psoc_set_caps(
+		struct wlan_objmgr_psoc *psoc,
+		struct pmo_device_caps *caps)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool
+ucfg_pmo_is_ap_mode_supports_arp_ns(
+		struct wlan_objmgr_psoc *psoc,
+		enum QDF_OPMODE vdev_opmode)
+{
+	return true;
+}
+
+static inline bool
+ucfg_pmo_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
+{
+	return true;
+}
+
+static inline bool
+ucfg_pmo_is_vdev_supports_offload(struct wlan_objmgr_vdev *vdev)
+{
+	return true;
+}
+
+static inline void
+pmo_ucfg_enable_wakeup_event(
+		struct wlan_objmgr_psoc *psoc,
+		uint32_t vdev_id, uint32_t *bitmap)
+{
+}
+
+static inline void
+pmo_ucfg_disable_wakeup_event(
+		struct wlan_objmgr_psoc *psoc,
+		uint32_t vdev_id, uint32_t bitmap)
+{
+}
+
+static inline QDF_STATUS
+pmo_ucfg_cache_arp_offload_req(struct pmo_arp_req *arp_req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_flush_arp_offload_req(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_enable_arp_offload_in_fwr(
+		struct wlan_objmgr_vdev *vdev,
+		enum pmo_offload_trigger trigger)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_disable_arp_offload_in_fwr(
+		struct wlan_objmgr_vdev *vdev,
+		enum pmo_offload_trigger trigger)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_cache_ns_offload_req(struct pmo_ns_req *ns_req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_flush_ns_offload_req(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_enable_ns_offload_in_fwr(
+		struct wlan_objmgr_vdev *vdev,
+		enum pmo_offload_trigger trigger)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_disable_ns_offload_in_fwr(
+		struct wlan_objmgr_vdev *vdev,
+		enum pmo_offload_trigger trigger)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_cache_mc_addr_list(
+		struct pmo_mc_addr_list_params *mc_list_config)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_flush_mc_addr_list(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_enable_mc_addr_filtering_in_fwr(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id,
+		enum pmo_offload_trigger trigger)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_disable_mc_addr_filtering_in_fwr(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id,
+		enum pmo_offload_trigger trigger)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline uint8_t
+pmo_ucfg_max_mc_addr_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_cache_gtk_offload_req(
+		struct wlan_objmgr_vdev *vdev,
+		struct pmo_gtk_req *gtk_req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_set_pkt_filter(
+		struct wlan_objmgr_psoc *psoc,
+		struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req,
+		uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_clear_pkt_filter(
+		struct wlan_objmgr_psoc *psoc,
+		struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param,
+		uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_get_gtk_rsp(
+		struct wlan_objmgr_vdev *vdev,
+		struct pmo_gtk_rsp_req *gtk_rsp_req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+pmo_ucfg_update_extscan_in_progress(
+		struct wlan_objmgr_vdev *vdev,
+		bool value)
+{
+}
+
+static inline void
+pmo_ucfg_update_p2plo_in_progress(
+		struct wlan_objmgr_vdev *vdev,
+		bool value)
+{
+}
+
+static inline QDF_STATUS
+pmo_ucfg_lphb_config_req(
+		struct wlan_objmgr_psoc *psoc,
+		struct pmo_lphb_req *lphb_req, void *lphb_cb_ctx,
+		pmo_lphb_callback callback)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+pmo_ucfg_update_alt_modulated_dtim_enable(
+		struct wlan_objmgr_vdev *vdev,
+		bool value)
+{
+}
+
+static inline void
+pmo_ucfg_psoc_update_power_save_mode(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t value)
+{
+}
+
+static inline void
+pmo_ucfg_psoc_update_dp_handle(
+		struct wlan_objmgr_psoc *psoc,
+		void *dp_handle)
+{
+}
+
+static inline void
+pmo_ucfg_vdev_update_dp_handle(
+		struct wlan_objmgr_vdev *vdev,
+		void *dp_handle)
+{
+}
+
+static inline void
+pmo_ucfg_psoc_update_htc_handle(
+		struct wlan_objmgr_psoc *psoc,
+		void *htc_handle)
+{
+}
+
+static inline void
+pmo_ucfg_psoc_set_hif_handle(
+		struct wlan_objmgr_psoc *psoc,
+		void *hif_handle)
+{
+}
+
+static inline void
+pmo_ucfg_psoc_set_txrx_handle(
+		struct wlan_objmgr_psoc *psoc,
+		void *txrx_handle)
+{
+}
+
+static inline void
+pmo_ucfg_psoc_handle_initial_wake_up(void *cb_ctx)
+{
+}
+
+static inline QDF_STATUS
+pmo_ucfg_psoc_user_space_suspend_req(
+		struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type type)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_psoc_user_space_resume_req(
+		struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type type)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_psoc_bus_suspend_req(
+		struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type type,
+		struct pmo_wow_enable_params *wow_params)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#ifdef FEATURE_RUNTIME_PM
+static inline QDF_STATUS
+pmo_ucfg_psoc_bus_runtime_suspend(
+		struct wlan_objmgr_psoc *psoc,
+		pmo_pld_auto_suspend_cb pld_cb)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_psoc_bus_runtime_resume(
+		struct wlan_objmgr_psoc *psoc,
+		pmo_pld_auto_suspend_cb pld_cb)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+static inline QDF_STATUS
+pmo_ucfg_psoc_suspend_target(
+		struct wlan_objmgr_psoc *psoc,
+		int disable_target_intr)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_add_wow_user_pattern(
+		struct wlan_objmgr_vdev *vdev,
+		struct pmo_wow_add_pattern *ptrn)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_del_wow_user_pattern(
+		struct wlan_objmgr_vdev *vdev,
+		uint8_t pattern_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_psoc_bus_resume_req(
+		struct wlan_objmgr_psoc *psoc,
+		enum qdf_suspend_type type)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool
+pmo_ucfg_get_wow_bus_suspend(struct wlan_objmgr_psoc *psoc)
+{
+	return true;
+}
+
+static inline int
+pmo_ucfg_psoc_is_target_wake_up_received(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline int
+pmo_ucfg_psoc_clear_target_wake_up(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline void
+pmo_ucfg_psoc_target_suspend_acknowledge(void *context, bool wow_nack)
+{
+}
+
+static inline void
+pmo_ucfg_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc)
+{
+}
+
+static inline QDF_STATUS
+pmo_ucfg_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_UCFG_API_H_ */
