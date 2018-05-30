@@ -22491,6 +22491,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_DUAL_BEACON_ON_SINGLE_MAC_SCC_SUPPORT;
 	wmi_service[wmi_service_dual_beacon_on_single_mac_mcc_support] =
 			WMI_SERVICE_DUAL_BEACON_ON_SINGLE_MAC_MCC_SUPPORT;
+	wmi_service[wmi_service_twt_requestor] = WMI_SERVICE_STA_TWT;
+	wmi_service[wmi_service_twt_responder] = WMI_SERVICE_AP_TWT;
 
 }
 
