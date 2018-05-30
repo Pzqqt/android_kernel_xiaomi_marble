@@ -7690,6 +7690,71 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
+ * dbs_selection_policy - Configure dbs selection policy.
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ *  set band preference or Vdev preference.
+ *      bit[0] = 0: 5G 2x2 preferred to select 2x2 5G + 1x1 2G DBS mode.
+ *      bit[0] = 1: 2G 2x2 preferred to select 2x2 2G + 1x1 5G DBS mode.
+ *      bit[1] = 1: vdev priority enabled. The INI "vdev_priority_list" will
+ * specify the vdev priority.
+ *      bit[1] = 0: vdev priority disabled.
+ * This INI only take effect for Genoa dual DBS hw.
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_DBS_SELECTION_POLICY               "dbs_selection_policy"
+#define CFG_DBS_SELECTION_POLICY_MIN           (0)
+#define CFG_DBS_SELECTION_POLICY_MAX           (0x3)
+#define CFG_DBS_SELECTION_POLICY_DEFAULT       (0)
+
+/*
+ * <ini>
+ * vdev_priority_list - Configure vdev priority list.
+ * @Min: 0
+ * @Max: 0x4444
+ * @Default: 0x4321
+ *
+ * @vdev_priority_list: vdev priority list
+ *      bit[0-3]: pri_id (policy_mgr_pri_id) of highest priority
+ *      bit[4-7]: pri_id (policy_mgr_pri_id) of second priority
+ *      bit[8-11]: pri_id (policy_mgr_pri_id) of third priority
+ *      bit[12-15]: pri_id (policy_mgr_pri_id) of fourth priority
+ *      example: 0x4321 - CLI < GO < SAP < STA
+ *      vdev priority id mapping:
+ *        PM_STA_PRI_ID = 1,
+ *        PM_SAP_PRI_ID = 2,
+ *        PM_P2P_GO_PRI_ID = 3,
+ *        PM_P2P_CLI_PRI_ID = 4,
+ * When the previous INI "dbs_selection_policy" bit[1]=1, which means
+ * the vdev 2x2 prioritization enabled. Then this INI will be used to
+ * specify the vdev type priority list. For example :
+ * dbs_selection_policy=0x2
+ * vdev_priority_list=0x4312
+ * means: default preference 2x2 band is 5G, vdev 2x2 prioritization enabled.
+ * And the priority list is CLI < GO < STA < SAP
+ *
+ * This INI only take effect for Genoa dual DBS hw.
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_VDEV_PRIORITY_LIST               "vdev_priority_list"
+#define CFG_VDEV_PRIORITY_LIST_MIN           (0)
+#define CFG_VDEV_PRIORITY_LIST_MAX           (0x4444)
+#define CFG_VDEV_PRIORITY_LIST_DEFAULT       (0x4321)
+
+/*
+ * <ini>
  * TSOEnable - Control to enable tso feature
  *
  * @Min: 0
@@ -14390,6 +14455,8 @@ struct hdd_config {
 	bool ignore_peer_erp_info;
 	uint8_t multicast_host_fw_msgs;
 	uint8_t conc_system_pref;
+	uint32_t dbs_selection_policy;
+	uint32_t vdev_priority_list;
 	bool send_deauth_before_con;
 	bool tso_enable;
 	bool lro_enable;
