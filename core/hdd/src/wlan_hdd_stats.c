@@ -5799,7 +5799,7 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	adapter->hdd_stats.class_a_stat.tx_rate_flags = stats.tx_rate_flags;
 	adapter->hdd_stats.class_a_stat.mcs_index =
 		sme_get_mcs_idx(stats.tx_rate * 5, stats.tx_rate_flags,
-			adapter->hdd_stats.class_a_stat.nss, &mcs_rate_flags);
+			&adapter->hdd_stats.class_a_stat.nss, &mcs_rate_flags);
 	adapter->hdd_stats.class_a_stat.mcs_rate_flags = mcs_rate_flags;
 
 	/* save per chain rssi to legacy location */

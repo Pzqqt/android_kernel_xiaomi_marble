@@ -1525,7 +1525,7 @@ typedef struct tagCsrSummaryStatsInfo {
 } tCsrSummaryStatsInfo;
 
 typedef struct tagCsrGlobalClassAStatsInfo {
-	uint32_t nss;
+	uint8_t nss;
 	uint32_t max_pwr;
 	uint32_t tx_rate;
 	/* mcs index for HT20 and HT40 rates */

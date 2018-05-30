@@ -16130,7 +16130,7 @@ void sme_set_amsdu(tHalHandle hal, bool enable)
 }
 
 uint8_t sme_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
-			uint8_t nss, uint8_t *mcs_rate_flags)
+			uint8_t *nss, uint8_t *mcs_rate_flags)
 {
 	return wma_get_mcs_idx(max_rate, rate_flags, nss, mcs_rate_flags);
 }

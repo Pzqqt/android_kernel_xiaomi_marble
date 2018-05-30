@@ -160,7 +160,7 @@ void wma_swap_bytes(void *pv, uint32_t n)
  * Return: the found rate or 0 otherwise
  */
 static inline uint16_t wma_mcs_rate_match(uint16_t match_rate, bool *is_sgi,
-					  uint8_t nss, uint16_t nss1_rate,
+					  uint8_t *nss, uint16_t nss1_rate,
 					  uint16_t nss1_srate,
 					  uint16_t nss2_rate,
 					  uint16_t nss2_srate)
@@ -170,13 +170,15 @@ static inline uint16_t wma_mcs_rate_match(uint16_t match_rate, bool *is_sgi,
 		nss2_srate);
 
 	if (match_rate == nss1_rate) {
+		*nss = 1;
 		return nss1_rate;
 	} else if (match_rate == nss1_srate) {
 		*is_sgi = true;
+		*nss = 1;
 		return nss1_srate;
-	} else if (nss == 2 && match_rate == nss2_rate)
+	} else if (*nss == 2 && match_rate == nss2_rate)
 		return nss2_rate;
-	else if (nss == 2 && match_rate == nss2_srate) {
+	else if (*nss == 2 && match_rate == nss2_srate) {
 		*is_sgi = true;
 		return nss2_srate;
 	} else
@@ -184,14 +186,14 @@ static inline uint16_t wma_mcs_rate_match(uint16_t match_rate, bool *is_sgi,
 }
 
 uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
-			uint8_t nss, uint8_t *mcsRateFlag)
+			uint8_t *nss, uint8_t *mcsRateFlag)
 {
 	uint8_t  index = 0;
 	uint16_t match_rate = 0;
 	bool is_sgi = false;
 
 	WMA_LOGD("%s rate:%d rate_flgs: 0x%x, nss: %d",
-		 __func__, maxRate, rate_flags, nss);
+		 __func__, maxRate, rate_flags, *nss);
 
 	*mcsRateFlag = rate_flags;
 	*mcsRateFlag &= ~TX_RATE_SGI;
@@ -245,7 +247,7 @@ uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 					mcs_nss2[index].ht40_rate[1]);
 			if (match_rate) {
 				*mcsRateFlag = TX_RATE_HT40;
-				if (nss == 2)
+				if (*nss == 2)
 					index += MAX_HT_MCS_IDX;
 				goto rate_found;
 			}
@@ -260,7 +262,7 @@ uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 					mcs_nss2[index].ht20_rate[1]);
 			if (match_rate) {
 				*mcsRateFlag = TX_RATE_HT20;
-				if (nss == 2)
+				if (*nss == 2)
 					index += MAX_HT_MCS_IDX;
 				goto rate_found;
 			}
@@ -2628,6 +2630,7 @@ static void wma_update_peer_stats(tp_wma_handle wma,
 	struct wma_txrx_node *node;
 	uint8_t *stats_buf, vdev_id, macaddr[IEEE80211_ADDR_LEN], mcsRateFlags;
 	uint32_t temp_mask;
+	uint8_t nss;
 
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&peer_stats->peer_macaddr, &macaddr[0]);
 	if (!wma_find_vdev_by_bssid(wma, macaddr, &vdev_id))
@@ -2656,12 +2659,13 @@ static void wma_update_peer_stats(tp_wma_handle wma,
 
 			classa_stats->tx_rate_flags = node->rate_flags;
 			if (!(node->rate_flags & TX_RATE_LEGACY)) {
+				nss = node->nss;
 				classa_stats->mcs_index =
 					wma_get_mcs_idx(
 						(peer_stats->peer_tx_rate /
 						100), node->rate_flags,
-						node->nss, &mcsRateFlags);
-				classa_stats->nss = node->nss;
+						&nss, &mcsRateFlags);
+				classa_stats->nss = nss;
 				classa_stats->mcs_rate_flags = mcsRateFlags;
 			}
 			/* FW returns tx power in intervals of 0.5 dBm
