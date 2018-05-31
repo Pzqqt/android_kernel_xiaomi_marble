@@ -544,7 +544,14 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 
 			pHtcHdr = (HTC_FRAME_HDR *)
 				qdf_nbuf_get_frag_vaddr(netbuf, 0);
-			AR_DEBUG_ASSERT(pHtcHdr);
+			if (qdf_unlikely(!pHtcHdr)) {
+				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+						("%s Invalid pHtcHdr\n",
+						 __func__));
+				AR_DEBUG_ASSERT(pHtcHdr);
+				status = QDF_STATUS_E_FAILURE;
+				break;
+			}
 
 			HTC_WRITE32(pHtcHdr,
 					SM(payloadLen,
