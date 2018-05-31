@@ -278,9 +278,9 @@ void mac_trace_msg_tx(tpAniSirGlobal pMac, uint8_t session, uint32_t data)
 {
 
 	uint16_t msgId = (uint16_t) MAC_TRACE_GET_MSG_ID(data);
-	uint8_t moduleId = (uint8_t) MAC_TRACE_GET_MODULE_ID(data);
+	uint8_t module_id = (uint8_t) MAC_TRACE_GET_MODULE_ID(data);
 
-	switch (moduleId) {
+	switch (module_id) {
 	case SIR_LIM_MODULE_ID:
 		if (msgId >= SIR_LIM_ITC_MSG_TYPES_BEGIN)
 			mac_trace(pMac, TRACE_CODE_TX_LIM_MSG, session, data);
@@ -294,7 +294,7 @@ void mac_trace_msg_tx(tpAniSirGlobal pMac, uint8_t session, uint32_t data)
 		mac_trace(pMac, TRACE_CODE_TX_CFG_MSG, session, data);
 		break;
 	default:
-		mac_trace(pMac, moduleId, session, data);
+		mac_trace(pMac, module_id, session, data);
 		break;
 	}
 }
@@ -303,9 +303,9 @@ void mac_trace_msg_tx_new(tpAniSirGlobal pMac, uint8_t module, uint8_t session,
 			  uint32_t data)
 {
 	uint16_t msgId = (uint16_t) MAC_TRACE_GET_MSG_ID(data);
-	uint8_t moduleId = (uint8_t) MAC_TRACE_GET_MODULE_ID(data);
+	uint8_t module_id = (uint8_t) MAC_TRACE_GET_MODULE_ID(data);
 
-	switch (moduleId) {
+	switch (module_id) {
 	case SIR_LIM_MODULE_ID:
 		if (msgId >= SIR_LIM_ITC_MSG_TYPES_BEGIN)
 			mac_trace_new(pMac, module, TRACE_CODE_TX_LIM_MSG,
@@ -321,7 +321,7 @@ void mac_trace_msg_tx_new(tpAniSirGlobal pMac, uint8_t module, uint8_t session,
 		mac_trace_new(pMac, module, TRACE_CODE_TX_CFG_MSG, session, data);
 		break;
 	default:
-		mac_trace(pMac, moduleId, session, data);
+		mac_trace(pMac, module_id, session, data);
 		break;
 	}
 }
@@ -333,9 +333,9 @@ void mac_trace_msg_tx_new(tpAniSirGlobal pMac, uint8_t module, uint8_t session,
 void mac_trace_msg_rx(tpAniSirGlobal pMac, uint8_t session, uint32_t data)
 {
 	uint16_t msgId = (uint16_t) MAC_TRACE_GET_MSG_ID(data);
-	uint8_t moduleId = (uint8_t) MAC_TRACE_GET_MODULE_ID(data);
+	uint8_t module_id = (uint8_t) MAC_TRACE_GET_MODULE_ID(data);
 
-	switch (moduleId) {
+	switch (module_id) {
 	case SIR_LIM_MODULE_ID:
 		if (msgId >= SIR_LIM_ITC_MSG_TYPES_BEGIN)
 			mac_trace(pMac, TRACE_CODE_RX_LIM_MSG, session, data);
@@ -349,7 +349,7 @@ void mac_trace_msg_rx(tpAniSirGlobal pMac, uint8_t session, uint32_t data)
 		mac_trace(pMac, TRACE_CODE_RX_CFG_MSG, session, data);
 		break;
 	default:
-		mac_trace(pMac, moduleId, session, data);
+		mac_trace(pMac, module_id, session, data);
 		break;
 	}
 }
@@ -362,9 +362,9 @@ void mac_trace_msg_rx_new(tpAniSirGlobal pMac, uint8_t module, uint8_t session,
 			  uint32_t data)
 {
 	uint16_t msgId = (uint16_t) MAC_TRACE_GET_MSG_ID(data);
-	uint8_t moduleId = (uint8_t) MAC_TRACE_GET_MODULE_ID(data);
+	uint8_t module_id = (uint8_t) MAC_TRACE_GET_MODULE_ID(data);
 
-	switch (moduleId) {
+	switch (module_id) {
 	case SIR_LIM_MODULE_ID:
 		if (msgId >= SIR_LIM_ITC_MSG_TYPES_BEGIN)
 			mac_trace_new(pMac, module, TRACE_CODE_RX_LIM_MSG,
@@ -380,7 +380,7 @@ void mac_trace_msg_rx_new(tpAniSirGlobal pMac, uint8_t module, uint8_t session,
 		mac_trace_new(pMac, module, TRACE_CODE_RX_CFG_MSG, session, data);
 		break;
 	default:
-		mac_trace(pMac, moduleId, session, data);
+		mac_trace(pMac, module_id, session, data);
 		break;
 	}
 }

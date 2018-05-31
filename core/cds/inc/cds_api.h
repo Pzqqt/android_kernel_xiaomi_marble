@@ -420,16 +420,16 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc);
 
-void *cds_get_context(QDF_MODULE_ID moduleId);
+void *cds_get_context(QDF_MODULE_ID module_id);
 
 uint8_t cds_get_datapath_handles(void **soc, struct cdp_pdev **pdev,
 			 struct cdp_vdev **vdev, uint8_t sessionId);
 void *cds_get_global_context(void);
 
-QDF_STATUS cds_alloc_context(QDF_MODULE_ID moduleID, void **ppModuleContext,
+QDF_STATUS cds_alloc_context(QDF_MODULE_ID module_id, void **ppModuleContext,
 			     uint32_t size);
 
-QDF_STATUS cds_free_context(QDF_MODULE_ID moduleID, void *pModuleContext);
+QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *pModuleContext);
 
 QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context);
 
