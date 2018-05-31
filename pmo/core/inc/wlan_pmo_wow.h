@@ -107,7 +107,6 @@
 
 #define PMO_WOW_FILTERS_ARP_NS		2
 #define PMO_WOW_FILTERS_PKT_OR_APF	5
-#define PMO_WOW_FILTERS_MAX		22
 
 /**
  * pmo_get_and_increment_wow_default_ptrn() -Get and increment wow default ptrn
