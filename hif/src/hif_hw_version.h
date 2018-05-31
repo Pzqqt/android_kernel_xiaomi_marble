@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,6 +34,7 @@
 #define WCN3990_v1                      0x40000000
 #define WCN3990_v2                      0x40010000
 #define WCN3990_v2_1                    0x40010002
+#define WCN3998                         0x40030001
 
 struct qwlan_hw {
 	u32 id;
