@@ -15098,7 +15098,7 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 			roaminvoke->frame_len);
 
 	WMI_LOGD(FL("bcn/prb_rsp frame, length: %d"), roaminvoke->frame_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			buf_ptr + WMI_TLV_HDR_SIZE,
 			roaminvoke->frame_len);
 	WMI_LOGD(FL("flag:%d, MODE scn:%d, ap:%d, dly:%d, n_ch:%d, n_bssid:%d"),
@@ -16212,6 +16212,7 @@ static QDF_STATUS nan_ndp_initiator_req_tlv(wmi_unified_t wmi_handle,
 	wmi_ndp_initiator_req_fixed_param *cmd;
 	uint32_t passphrase_len, service_name_len;
 	uint32_t ndp_cfg_len, ndp_app_info_len, pmk_len;
+	wmi_ndp_transport_ip_param *tcp_ip_param;
 
 	/*
 	 * WMI command expects 4 byte alligned len:
@@ -16227,6 +16228,9 @@ static QDF_STATUS nan_ndp_initiator_req_tlv(wmi_unified_t wmi_handle,
 	len = sizeof(*cmd) + sizeof(*ch_tlv) + (5 * WMI_TLV_HDR_SIZE)
 		+ ndp_cfg_len + ndp_app_info_len + pmk_len
 		+ passphrase_len + service_name_len;
+
+	if (ndp_req->is_ipv6_addr_present)
+		len += sizeof(*tcp_ip_param);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -16285,6 +16289,19 @@ static QDF_STATUS nan_ndp_initiator_req_tlv(wmi_unified_t wmi_handle,
 		     cmd->nan_servicename_len);
 	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + service_name_len;
 
+	if (ndp_req->is_ipv6_addr_present) {
+		tcp_ip_param = (wmi_ndp_transport_ip_param *)tlv_ptr;
+		WMITLV_SET_HDR(tcp_ip_param,
+			       WMITLV_TAG_STRUC_wmi_ndp_transport_ip_param,
+			       WMITLV_GET_STRUCT_TLVLEN(
+						wmi_ndp_transport_ip_param));
+		tcp_ip_param->ipv6_addr_present = true;
+		qdf_mem_copy(tcp_ip_param->ipv6_intf_addr,
+			     ndp_req->ipv6_addr, WMI_NDP_IPV6_INTF_ADDR_LEN);
+	}
+	WMI_LOGD(FL("IPv6 addr present: %d, addr: %pI6"),
+		 ndp_req->is_ipv6_addr_present, ndp_req->ipv6_addr);
+
 	WMI_LOGD("vdev_id = %d, transaction_id: %d, service_instance_id: %d, ch: %d, ch_cfg: %d, csid: %d",
 		 cmd->vdev_id, cmd->transaction_id, cmd->service_instance_id,
 		 ch_tlv->mhz, cmd->ndp_channel_cfg, cmd->nan_csid);
@@ -16293,26 +16310,26 @@ static QDF_STATUS nan_ndp_initiator_req_tlv(wmi_unified_t wmi_handle,
 		 cmd->peer_discovery_mac_addr.mac_addr47to32);
 
 	WMI_LOGD("ndp_config len: %d", cmd->ndp_cfg_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   ndp_req->ndp_config.ndp_cfg,
 			   ndp_req->ndp_config.ndp_cfg_len);
 
 	WMI_LOGD("ndp_app_info len: %d", cmd->ndp_app_info_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   ndp_req->ndp_info.ndp_app_info,
 			   ndp_req->ndp_info.ndp_app_info_len);
 
 	WMI_LOGD("pmk len: %d", cmd->nan_pmk_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   ndp_req->pmk.pmk, cmd->nan_pmk_len);
 
 	WMI_LOGD("pass phrase len: %d", cmd->nan_passphrase_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   ndp_req->passphrase.passphrase,
 			   cmd->nan_passphrase_len);
 
 	WMI_LOGD("service name len: %d", cmd->nan_servicename_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   ndp_req->service_name.service_name,
 			   cmd->nan_servicename_len);
 
@@ -16337,6 +16354,7 @@ static QDF_STATUS nan_ndp_responder_req_tlv(wmi_unified_t wmi_handle,
 	uint8_t *tlv_ptr;
 	QDF_STATUS status;
 	wmi_ndp_responder_req_fixed_param *cmd;
+	wmi_ndp_transport_ip_param *tcp_ip_param;
 	uint32_t passphrase_len, service_name_len;
 	uint32_t vdev_id = 0, ndp_cfg_len, ndp_app_info_len, pmk_len;
 
@@ -16361,6 +16379,10 @@ static QDF_STATUS nan_ndp_responder_req_tlv(wmi_unified_t wmi_handle,
 	/* allocated memory for fixed params as well as variable size data */
 	len = sizeof(*cmd) + 5*WMI_TLV_HDR_SIZE + ndp_cfg_len + ndp_app_info_len
 		+ pmk_len + passphrase_len + service_name_len;
+
+	if (req->is_ipv6_addr_present || req->is_port_present ||
+	    req->is_protocol_present)
+		len += sizeof(*tcp_ip_param);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -16413,32 +16435,55 @@ static QDF_STATUS nan_ndp_responder_req_tlv(wmi_unified_t wmi_handle,
 
 	tlv_ptr = tlv_ptr + WMI_TLV_HDR_SIZE + service_name_len;
 
+	if (req->is_ipv6_addr_present || req->is_port_present ||
+	    req->is_protocol_present) {
+		tcp_ip_param = (wmi_ndp_transport_ip_param *)tlv_ptr;
+		WMITLV_SET_HDR(tcp_ip_param,
+			       WMITLV_TAG_STRUC_wmi_ndp_transport_ip_param,
+			       WMITLV_GET_STRUCT_TLVLEN(
+						wmi_ndp_transport_ip_param));
+		tcp_ip_param->ipv6_addr_present = req->is_ipv6_addr_present;
+		qdf_mem_copy(tcp_ip_param->ipv6_intf_addr,
+			     req->ipv6_addr, WMI_NDP_IPV6_INTF_ADDR_LEN);
+
+		tcp_ip_param->trans_port_present = req->is_port_present;
+		tcp_ip_param->transport_port = req->port;
+
+		tcp_ip_param->trans_proto_present = req->is_protocol_present;
+		tcp_ip_param->transport_protocol = req->protocol;
+	}
+	WMI_LOGD(FL("IPv6 addr present: %d, addr: %pI6"),
+		 req->is_ipv6_addr_present, req->ipv6_addr);
+	WMI_LOGD(FL("port: %d present: %d"), req->is_port_present, req->port);
+	WMI_LOGD(FL("protocol: %d present: %d"),
+		 req->is_protocol_present, req->protocol);
+
 	WMI_LOGD("vdev_id = %d, transaction_id: %d, csid: %d",
 		 cmd->vdev_id, cmd->transaction_id, cmd->nan_csid);
 
 	WMI_LOGD("ndp_config len: %d",
 		 req->ndp_config.ndp_cfg_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			req->ndp_config.ndp_cfg,
 			req->ndp_config.ndp_cfg_len);
 
 	WMI_LOGD("ndp_app_info len: %d",
 		 req->ndp_info.ndp_app_info_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   req->ndp_info.ndp_app_info,
 			   req->ndp_info.ndp_app_info_len);
 
 	WMI_LOGD("pmk len: %d", cmd->nan_pmk_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   req->pmk.pmk, cmd->nan_pmk_len);
 
 	WMI_LOGD("pass phrase len: %d", cmd->nan_passphrase_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   req->passphrase.passphrase,
 			   cmd->nan_passphrase_len);
 
 	WMI_LOGD("service name len: %d", cmd->nan_servicename_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   req->service_name.service_name,
 			   cmd->nan_servicename_len);
 
@@ -16610,12 +16655,12 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 		 rsp->peer_discovery_mac_addr.bytes);
 
 	WMI_LOGD("ndp_cfg - %d bytes", fixed_params->ndp_cfg_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   &event->ndp_cfg, fixed_params->ndp_cfg_len);
 
 	WMI_LOGD("ndp_app_info - %d bytes",
 			fixed_params->ndp_app_info_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			&event->ndp_app_info, fixed_params->ndp_app_info_len);
 
 	rsp->ndp_config.ndp_cfg_len = fixed_params->ndp_cfg_len;
@@ -16627,8 +16672,21 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 	qdf_mem_copy(rsp->ndp_info.ndp_app_info, event->ndp_app_info,
 		     rsp->ndp_info.ndp_app_info_len);
 	qdf_mem_copy(rsp->scid.scid, event->ndp_scid, rsp->scid.scid_len);
+
+	if (event->ndp_transport_ip_param &&
+	    event->num_ndp_transport_ip_param) {
+		if (event->ndp_transport_ip_param->ipv6_addr_present) {
+			rsp->is_ipv6_addr_present = true;
+			qdf_mem_copy(rsp->ipv6_addr,
+				event->ndp_transport_ip_param->ipv6_intf_addr,
+				WMI_NDP_IPV6_INTF_ADDR_LEN);
+		}
+	}
+	WMI_LOGD(FL("IPv6 addr present: %d, addr: %pI6"),
+		 rsp->is_ipv6_addr_present, rsp->ipv6_addr);
+
 	WMI_LOGD("scid hex dump:");
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 			   rsp->scid.scid, rsp->scid.scid_len);
 
 	return QDF_STATUS_SUCCESS;
@@ -16659,7 +16717,7 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 	}
 
 	WMI_LOGD("ndp_cfg - %d bytes", fixed_params->ndp_cfg_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 		&event->ndp_cfg, fixed_params->ndp_cfg_len);
 
 	if (fixed_params->ndp_app_info_len > event->num_ndp_app_info) {
@@ -16671,7 +16729,7 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 
 	WMI_LOGD("ndp_app_info - %d bytes",
 			fixed_params->ndp_app_info_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 		&event->ndp_app_info, fixed_params->ndp_app_info_len);
 
 	if (fixed_params->ndp_cfg_len >
@@ -16726,6 +16784,33 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 			 rsp->ch[i].ch_width,
 			 rsp->ch[i].nss);
 	}
+
+	if (event->ndp_transport_ip_param &&
+	    event->num_ndp_transport_ip_param) {
+		if (event->ndp_transport_ip_param->ipv6_addr_present) {
+			rsp->is_ipv6_addr_present = true;
+			qdf_mem_copy(rsp->ipv6_addr,
+				event->ndp_transport_ip_param->ipv6_intf_addr,
+				WMI_NDP_IPV6_INTF_ADDR_LEN);
+		}
+
+		if (event->ndp_transport_ip_param->trans_port_present) {
+			rsp->is_port_present = true;
+			rsp->port =
+			    event->ndp_transport_ip_param->transport_port;
+		}
+
+		if (event->ndp_transport_ip_param->trans_proto_present) {
+			rsp->is_protocol_present = true;
+			rsp->protocol =
+			    event->ndp_transport_ip_param->transport_protocol;
+		}
+	}
+	WMI_LOGD(FL("IPv6 addr present: %d, addr: %pI6"),
+		 rsp->is_ipv6_addr_present, rsp->ipv6_addr);
+	WMI_LOGD(FL("port: %d present: %d"), rsp->port, rsp->is_port_present);
+	WMI_LOGD(FL("protocol: %d present: %d"),
+		 rsp->protocol, rsp->is_protocol_present);
 
 	return QDF_STATUS_SUCCESS;
 }
