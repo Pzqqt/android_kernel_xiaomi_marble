@@ -16637,6 +16637,8 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 			uint8_t *data, struct nan_datapath_confirm_event *rsp)
 {
+	uint8_t i;
+	WMI_HOST_WLAN_PHY_MODE ch_mode;
 	WMI_NDP_CONFIRM_EVENTID_param_tlvs *event;
 	wmi_ndp_confirm_event_fixed_param *fixed_params;
 	size_t total_array_len;
@@ -16648,6 +16650,7 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 		 fixed_params->ndp_instance_id, fixed_params->rsp_code,
 		 fixed_params->reason_code,
 		 fixed_params->num_active_ndps_on_peer);
+	WMI_LOGE("num_ch: %d", fixed_params->num_ndp_channels);
 
 	if (fixed_params->ndp_cfg_len > event->num_ndp_cfg) {
 		WMI_LOGE("FW message ndp cfg length %d larger than TLV hdr %d",
@@ -16700,11 +16703,29 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 	rsp->rsp_code = fixed_params->rsp_code;
 	rsp->reason_code = fixed_params->reason_code;
 	rsp->num_active_ndps_on_peer = fixed_params->num_active_ndps_on_peer;
+	rsp->num_channels = fixed_params->num_ndp_channels;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_ndi_mac_addr,
 				   rsp->peer_ndi_mac_addr.bytes);
 	rsp->ndp_info.ndp_app_info_len = fixed_params->ndp_app_info_len;
 	qdf_mem_copy(rsp->ndp_info.ndp_app_info, event->ndp_app_info,
 		     rsp->ndp_info.ndp_app_info_len);
+
+	if (rsp->num_channels > NAN_CH_INFO_MAX_CHANNELS) {
+		WMI_LOGE(FL("too many channels"));
+		rsp->num_channels = NAN_CH_INFO_MAX_CHANNELS;
+	}
+
+	for (i = 0; i < rsp->num_channels; i++) {
+		rsp->ch[i].channel = event->ndp_channel_list[i].mhz;
+		rsp->ch[i].nss = event->nss_list[i];
+		ch_mode = WMI_GET_CHANNEL_MODE(&event->ndp_channel_list[i]);
+		rsp->ch[i].ch_width = wmi_get_ch_width_from_phy_mode(wmi_handle,
+								     ch_mode);
+		WMI_LOGD(FL("ch: %d, ch_mode: %d, nss: %d"),
+			 rsp->ch[i].channel,
+			 rsp->ch[i].ch_width,
+			 rsp->ch[i].nss);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
