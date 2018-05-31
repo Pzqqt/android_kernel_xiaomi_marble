@@ -363,6 +363,23 @@ irqreturn_t hif_ahb_interrupt_handler(int irq, void *context)
  */
 int hif_target_sync_ahb(struct hif_softc *scn)
 {
+	int val = 0;
+	int limit = 0;
+
+	while (limit < 50) {
+		hif_write32_mb(scn->mem +
+			(SOC_CORE_BASE_ADDRESS | PCIE_INTR_ENABLE_ADDRESS),
+			PCIE_INTR_FIRMWARE_MASK | PCIE_INTR_CE_MASK_ALL);
+		qdf_mdelay(10);
+		val = hif_read32_mb(scn->mem +
+			(SOC_CORE_BASE_ADDRESS | PCIE_INTR_ENABLE_ADDRESS));
+		if (val == 0)
+			break;
+		limit++;
+	}
+	hif_write32_mb(scn->mem +
+		(SOC_CORE_BASE_ADDRESS | PCIE_INTR_ENABLE_ADDRESS),
+		PCIE_INTR_FIRMWARE_MASK | PCIE_INTR_CE_MASK_ALL);
 	hif_write32_mb(scn->mem + FW_INDICATOR_ADDRESS, FW_IND_HOST_READY);
 	if (HAS_FW_INDICATOR) {
 		int wait_limit = 500;
