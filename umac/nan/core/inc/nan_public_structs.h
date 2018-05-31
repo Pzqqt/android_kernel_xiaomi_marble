@@ -366,6 +366,8 @@ struct nan_datapath_inf_delete_rsp {
  * @pmk: pairwise master key
  * @passphrase: passphrase
  * @service_name: service name
+ * @is_ipv6_addr_present: indicates if following ipv6 address is valid
+ * @ipv6_addr: ipv6 address address used by ndp
  */
 struct nan_datapath_initiator_req {
 	struct wlan_objmgr_vdev *vdev;
@@ -381,6 +383,8 @@ struct nan_datapath_initiator_req {
 	struct nan_datapath_pmk pmk;
 	struct ndp_passphrase passphrase;
 	struct ndp_service_name service_name;
+	bool is_ipv6_addr_present;
+	uint8_t ipv6_addr[QDF_IPV6_ADDR_SIZE];
 };
 
 /**
@@ -413,6 +417,12 @@ struct nan_datapath_initiator_rsp {
  * @ncs_sk_type: indicates NCS_SK_128 or NCS_SK_256
  * @passphrase: passphrase
  * @service_name: service name
+ * @is_ipv6_addr_present: indicates if following ipv6 address is valid
+ * @ipv6_addr: ipv6 address address used by ndp
+ * @is_port_present: indicates if following port is valid
+ * @port: port specified by for this NDP
+ * @is_protocol_present: indicates if following protocol is valid
+ * @protocol: protocol used by this NDP
  *
  */
 struct nan_datapath_responder_req {
@@ -426,6 +436,12 @@ struct nan_datapath_responder_req {
 	uint32_t ncs_sk_type;
 	struct ndp_passphrase passphrase;
 	struct ndp_service_name service_name;
+	bool is_ipv6_addr_present;
+	uint8_t ipv6_addr[QDF_IPV6_ADDR_SIZE];
+	bool is_port_present;
+	uint16_t port;
+	bool is_protocol_present;
+	uint8_t protocol;
 };
 
 /**
@@ -501,6 +517,12 @@ struct nan_datapath_end_indication_event {
  * @num_channels: num channels
  * @ch: channel info struct array
  * @ndp_info: ndp application info
+ * @is_ipv6_addr_present: indicates if following ipv6 address is valid
+ * @ipv6_addr: ipv6 address address used by ndp
+ * @is_port_present: indicates if following port is valid
+ * @port: port specified by for this NDP
+ * @is_protocol_present: indicates if following protocol is valid
+ * @protocol: protocol used by this NDP
  *
  */
 struct nan_datapath_confirm_event {
@@ -513,6 +535,12 @@ struct nan_datapath_confirm_event {
 	uint32_t num_channels;
 	struct nan_datapath_channel_info ch[NAN_CH_INFO_MAX_CHANNELS];
 	struct nan_datapath_app_info ndp_info;
+	bool is_ipv6_addr_present;
+	uint8_t ipv6_addr[QDF_IPV6_ADDR_SIZE];
+	bool is_port_present;
+	uint16_t port;
+	bool is_protocol_present;
+	uint8_t protocol;
 };
 
 /**
@@ -529,6 +557,8 @@ struct nan_datapath_confirm_event {
  * @ndp_info: ndp application info
  * @ncs_sk_type: indicates NCS_SK_128 or NCS_SK_256
  * @scid: security context identifier
+ * @is_ipv6_addr_present: indicates if following ipv6 address is valid
+ * @ipv6_addr: ipv6 address address used by ndp
  *
  */
 struct nan_datapath_indication_event {
@@ -543,6 +573,8 @@ struct nan_datapath_indication_event {
 	struct nan_datapath_app_info ndp_info;
 	uint32_t ncs_sk_type;
 	struct nan_datapath_scid scid;
+	bool is_ipv6_addr_present;
+	uint8_t ipv6_addr[QDF_IPV6_ADDR_SIZE];
 };
 
 /**
