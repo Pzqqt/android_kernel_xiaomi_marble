@@ -67,6 +67,7 @@
 
 #define cds_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_QDF, params)
 #define cds_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_QDF, params)
+#define cds_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_QDF, params)
 #define cds_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_QDF, params)
 #define cds_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_QDF, params)
 
