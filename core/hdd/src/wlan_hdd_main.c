@@ -3755,7 +3755,7 @@ QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id)
 
 	adapter = hdd_get_adapter_by_sme_session_id(hdd_ctx, session_id);
 	if (NULL == adapter) {
-		hdd_err("NULL adapter");
+		hdd_err("NULL adapter for %d", session_id);
 		return QDF_STATUS_E_INVAL;
 	}
 	set_bit(SME_SESSION_OPENED, &adapter->event_flags);
@@ -4719,13 +4719,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
-
-		/* Initialize NAN Data Interface */
-		if (QDF_NDI_MODE == session_type) {
-			status = hdd_init_nan_data_mode(adapter);
-			if (QDF_STATUS_SUCCESS != status)
-				goto err_free_netdev;
-		}
 
 		hdd_nud_init_tracking(adapter);
 

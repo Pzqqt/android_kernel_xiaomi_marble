@@ -92,8 +92,8 @@ static inline void hdd_ndp_session_end_handler(struct hdd_adapter *adapter)
 enum nan_datapath_state;
 struct nan_datapath_inf_create_rsp;
 
-struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name);
-int hdd_ndi_start(uint8_t vdev_id);
+int hdd_ndi_open(char *iface_name);
+int hdd_ndi_start(char *iface_name, uint16_t transaction_id);
 int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id);
 void hdd_ndi_close(uint8_t vdev_id);
 void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,

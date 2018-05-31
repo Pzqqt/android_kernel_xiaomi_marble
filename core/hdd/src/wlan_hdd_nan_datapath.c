@@ -472,7 +472,7 @@ error_init_txrx:
 	return ret_val;
 }
 
-struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
+int hdd_ndi_open(char *iface_name)
 {
 	struct hdd_adapter *adapter;
 	struct qdf_mac_addr random_ndi_mac;
@@ -480,23 +480,22 @@ struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
 	uint8_t *ndi_mac_addr;
 
 	hdd_enter();
-
 	if (!hdd_ctx) {
 		hdd_err("hdd_ctx null");
-		return NULL;
+		return -EINVAL;
 	}
 
 	if (hdd_ctx->config->is_ndi_mac_randomized) {
 		if (hdd_get_random_nan_mac_addr(hdd_ctx, &random_ndi_mac)) {
 			hdd_err("get random mac address failed");
-			return NULL;
+			return -EFAULT;
 		}
 		ndi_mac_addr = &random_ndi_mac.bytes[0];
 	} else {
 		ndi_mac_addr = wlan_hdd_get_intf_addr(hdd_ctx);
 		if (!ndi_mac_addr) {
 			hdd_err("get intf address failed");
-			return NULL;
+			return -EFAULT;
 		}
 	}
 
@@ -504,32 +503,50 @@ struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
 				   ndi_mac_addr, NET_NAME_UNKNOWN, true);
 	if (!adapter) {
 		hdd_err("hdd_open_adapter failed");
-		return NULL;
+		return -EINVAL;
 	}
 
 	hdd_exit();
-	return adapter->hdd_vdev;
+	return 0;
 }
 
-int hdd_ndi_start(uint8_t vdev_id)
+int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 {
+	int ret;
 	uint8_t op_channel;
+	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	hdd_enter();
-
 	if (!hdd_ctx) {
 		hdd_err("hdd_ctx is null");
 		return -EINVAL;
 	}
 
 	op_channel = hdd_ctx->config->nan_datapath_ndi_channel;
-	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	adapter = hdd_get_adapter_by_iface_name(hdd_ctx, iface_name);
 	if (!adapter) {
 		hdd_err("adapter is null");
 		return -EINVAL;
 	}
+
+	/* create nan vdev */
+	status = hdd_init_nan_data_mode(adapter);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("failed to init nan data intf, status :%d", status);
+		ret = -EFAULT;
+		goto err_handler;
+	}
+
+	/*
+	 * Create transaction id is required to be saved since the firmware
+	 * does not honor the transaction id for create request
+	 */
+	ucfg_nan_set_ndp_create_transaction_id(adapter->hdd_vdev,
+					       transaction_id);
+	ucfg_nan_set_ndi_state(adapter->hdd_vdev,
+			       NAN_DATA_NDI_CREATING_STATE);
 
 	/*
 	 * The NAN data interface has been created at this point.
@@ -544,16 +561,21 @@ int hdd_ndi_start(uint8_t vdev_id)
 		/* start NDI on the default 2.4 GHz social channel */
 		op_channel = NAN_SOCIAL_CHANNEL_2_4GHZ;
 	}
+
 	if (hdd_ndi_start_bss(adapter, op_channel)) {
 		hdd_err("NDI start bss failed");
-		/* Start BSS failed, delete the interface */
-		hdd_close_ndi(adapter);
-		hdd_exit();
-		return -EINVAL;
+		ret = -EFAULT;
+		goto err_handler;
 	}
 
 	hdd_exit();
 	return 0;
+
+err_handler:
+
+	/* Start BSS failed, delete the interface */
+	hdd_close_ndi(adapter);
+	return ret;
 }
 
 int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
