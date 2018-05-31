@@ -124,23 +124,19 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 	int i;
 #endif
 
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: num possible cpu %d",
-		 __func__, num_possible_cpus());
+	cds_debug("num possible cpu %d", num_possible_cpus());
 
 	online_perf_cpu = qdf_mem_malloc(
 		num_possible_cpus() * sizeof(unsigned long));
 	if (!online_perf_cpu) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"%s: perf cpu cache alloc fail", __func__);
+		cds_err("perf cpu cache alloc fail");
 		return 1;
 	}
 
 	online_litl_cpu = qdf_mem_malloc(
 		num_possible_cpus() * sizeof(unsigned long));
 	if (!online_litl_cpu) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"%s: lttl cpu cache alloc fail", __func__);
+		cds_err("lttl cpu cache alloc fail");
 		qdf_mem_free(online_perf_cpu);
 		return 1;
 	}
@@ -150,9 +146,8 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
 	for_each_online_cpu(cpus) {
 		if (topology_physical_package_id(cpus) > CDS_MAX_CPU_CLUSTERS) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				"%s: can handle max %d clusters, returning...",
-				__func__, CDS_MAX_CPU_CLUSTERS);
+			cds_err("can handle max %d clusters, returning...",
+				CDS_MAX_CPU_CLUSTERS);
 			goto err;
 		}
 
@@ -170,14 +165,12 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 
 	/* Single cluster system, not need to handle this */
 	if (CDS_CPU_CLUSTER_TYPE_LITTLE == cds_max_cluster_id) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_LOW,
-		"%s: single cluster system. returning", __func__);
+		cds_debug("single cluster system. returning");
 		goto success;
 	}
 
 	if ((!litl_core_count) && (!perf_core_count)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"%s: Both Cluster off, do nothing", __func__);
+		cds_err("Both Cluster off, do nothing");
 		goto success;
 	}
 #if defined(WLAN_OPEN_SOURCE) && \
@@ -206,9 +199,8 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 						CDS_CPU_CLUSTER_TYPE_LITTLE;
 	}
 #endif
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-		  "%s: NUM PERF CORE %d, HIGH TPUT REQ %d, RX THRE CLUS %d",
-		 __func__, perf_core_count,
+	cds_info("NUM PERF CORE %d, HIGH TPUT REQ %d, RX THRE CLUS %d",
+		 perf_core_count,
 		 (int)pSchedContext->high_throughput_required,
 		 (int)pSchedContext->rx_thread_cpu_cluster);
 
@@ -237,8 +229,7 @@ int cds_sched_handle_cpu_hot_plug(void)
 	p_cds_sched_context pSchedContext = get_cds_sched_ctxt();
 
 	if (!pSchedContext) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"%s: invalid context", __func__);
+		cds_err("invalid context");
 		return 1;
 	}
 
@@ -248,8 +239,7 @@ int cds_sched_handle_cpu_hot_plug(void)
 	mutex_lock(&pSchedContext->affinity_lock);
 	if (cds_sched_find_attach_cpu(pSchedContext,
 		pSchedContext->high_throughput_required)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"%s: handle hot plug fail", __func__);
+		cds_err("handle hot plug fail");
 		mutex_unlock(&pSchedContext->affinity_lock);
 		return 1;
 	}
@@ -272,22 +262,19 @@ int cds_sched_handle_throughput_req(bool high_tput_required)
 	p_cds_sched_context pSchedContext = get_cds_sched_ctxt();
 
 	if (!pSchedContext) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"%s: invalid context", __func__);
+		cds_err("invalid context");
 		return 1;
 	}
 
 	if (cds_is_load_or_unload_in_progress()) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"%s: load or unload in progress", __func__);
+		cds_err("load or unload in progress");
 		return 0;
 	}
 
 	mutex_lock(&pSchedContext->affinity_lock);
 	pSchedContext->high_throughput_required = high_tput_required;
 	if (cds_sched_find_attach_cpu(pSchedContext, high_tput_required)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"%s: handle throughput req fail", __func__);
+		cds_err("handle throughput req fail");
 		mutex_unlock(&pSchedContext->affinity_lock);
 		return 1;
 	}
@@ -429,18 +416,14 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 		p_cds_sched_context pSchedContext,
 		uint32_t SchedCtxSize)
 {
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: Opening the CDS Scheduler", __func__);
+	cds_debug("Opening the CDS Scheduler");
 	/* Sanity checks */
 	if ((p_cds_context == NULL) || (pSchedContext == NULL)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Null params being passed", __func__);
+		cds_err("Null params being passed");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (sizeof(cds_sched_context) != SchedCtxSize) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Incorrect CDS Sched Context size passed",
-			  __func__);
+		cds_debug("Incorrect CDS Sched Context size passed");
 		return QDF_STATUS_E_INVAL;
 	}
 	qdf_mem_zero(pSchedContext, sizeof(cds_sched_context));
@@ -475,22 +458,17 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 						       "cds_ol_rx_thread");
 	if (IS_ERR(pSchedContext->ol_rx_thread)) {
 
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Could not Create CDS OL RX Thread",
-			  __func__);
+		cds_alert("Could not Create CDS OL RX Thread");
 		goto OL_RX_THREAD_START_FAILURE;
 
 	}
 	wake_up_process(pSchedContext->ol_rx_thread);
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  ("CDS OL RX thread Created"));
+	cds_debug("CDS OL RX thread Created");
 	wait_for_completion_interruptible(&pSchedContext->ol_rx_start_event);
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: CDS OL Rx Thread has started", __func__);
+	cds_debug("CDS OL Rx Thread has started");
 #endif
 	/* We're good now: Let's get the ball rolling!!! */
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: CDS Scheduler successfully Opened", __func__);
+	cds_debug("CDS Scheduler successfully Opened");
 	return QDF_STATUS_SUCCESS;
 
 #ifdef QCA_CONFIG_SMP
@@ -551,9 +529,7 @@ static QDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext)
 	for (i = 0; i < CDS_MAX_OL_RX_PKT; i++) {
 		pkt = qdf_mem_malloc(sizeof(*pkt));
 		if (!pkt) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "%s Vos packet allocation for ol rx thread failed",
-				  __func__);
+			cds_err("Vos packet allocation for ol rx thread failed");
 			goto free;
 		}
 		spin_lock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
@@ -745,8 +721,7 @@ static int cds_ol_rx_thread(void *arg)
 		affine_cpu = pref_cpu;
 
 	if (!arg) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Bad Args passed", __func__);
+		cds_err("Bad Args passed");
 		return 0;
 	}
 
@@ -775,10 +750,7 @@ static int cds_ol_rx_thread(void *arg)
 					complete
 						(&pSchedContext->ol_suspend_rx_event);
 				}
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					  QDF_TRACE_LEVEL_INFO,
-					  "%s: Shutting down OL RX Thread",
-					  __func__);
+				cds_info("Shutting down OL RX Thread");
 				shutdown = true;
 				break;
 			}
@@ -800,8 +772,7 @@ static int cds_ol_rx_thread(void *arg)
 		}
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: Exiting CDS OL rx thread", __func__);
+	cds_debug("Exiting CDS OL rx thread");
 	complete_and_exit(&pSchedContext->ol_rx_shutdown, 0);
 
 	return 0;
@@ -821,12 +792,10 @@ static int cds_ol_rx_thread(void *arg)
  */
 QDF_STATUS cds_sched_close(void)
 {
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: invoked", __func__);
+	cds_debug("invoked");
 
 	if (gp_cds_sched_context == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: gp_cds_sched_context == NULL", __func__);
+		cds_err("gp_cds_sched_context == NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -857,8 +826,7 @@ p_cds_sched_context get_cds_sched_ctxt(void)
 {
 	/* Make sure that Vos Scheduler context has been initialized */
 	if (gp_cds_sched_context == NULL)
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: gp_cds_sched_context == NULL", __func__);
+		cds_err("gp_cds_sched_context == NULL");
 
 	return gp_cds_sched_context;
 }
@@ -900,10 +868,9 @@ void cds_print_external_threads(void)
 
 	while (i < MAX_SSR_PROTECT_LOG) {
 		if (!ssr_protect_log[i].free) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "PID %d is executing %s",
-				  ssr_protect_log[i].pid,
-				  ssr_protect_log[i].func);
+			cds_err("PID %d is executing %s",
+				ssr_protect_log[i].pid,
+				ssr_protect_log[i].func);
 		}
 		i++;
 	}
@@ -950,15 +917,13 @@ void cds_ssr_protect(const char *caller_func)
 	 * logs while telling us which calls are taking a long time to finish.
 	 */
 	if (count >= MAX_SSR_PROTECT_LOG && count % MAX_SSR_PROTECT_LOG == 0) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "Protect Log overflow; Dumping contents:");
+		cds_err("Protect Log overflow; Dumping contents:");
 		cds_print_external_threads();
 	}
 
 	if (!status)
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s can not be protected; PID:%d, entry_count:%d",
-			  caller_func, current->pid, count);
+		cds_err("%s can not be protected; PID:%d, entry_count:%d",
+			caller_func, current->pid, count);
 }
 
 /**
@@ -995,9 +960,8 @@ void cds_ssr_unprotect(const char *caller_func)
 	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
 
 	if (!status)
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s was not protected; PID:%d, entry_count:%d",
-			  caller_func, current->pid, count);
+		cds_err("%s was not protected; PID:%d, entry_count:%d",
+			caller_func, current->pid, count);
 }
 
 /**
@@ -1128,15 +1092,11 @@ bool cds_wait_for_external_threads_completion(const char *caller_func)
 			break;
 
 		if (--count) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Waiting for %d active entry points to exit",
-				  __func__, r);
+			cds_err("Waiting for %d active entry points to exit",
+				r);
 			msleep(SSR_WAIT_SLEEP_TIME);
 			if (count & 0x1) {
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					QDF_TRACE_LEVEL_ERROR,
-					"%s: in middle of waiting for active entry points:",
-					__func__);
+				cds_err("in middle of waiting for active entry points:");
 				cds_print_external_threads();
 			}
 		}
@@ -1144,14 +1104,12 @@ bool cds_wait_for_external_threads_completion(const char *caller_func)
 
 	/* at least one external thread is executing */
 	if (!count) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "Timed-out waiting for active entry points:");
+		cds_err("Timed-out waiting for active entry points:");
 		cds_print_external_threads();
 		return false;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-		  "Allowing SSR/Driver unload for %s", caller_func);
+	cds_info("Allowing SSR/Driver unload for %s", caller_func);
 
 	return true;
 }

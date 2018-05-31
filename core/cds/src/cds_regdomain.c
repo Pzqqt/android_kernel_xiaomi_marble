@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2013-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -468,8 +468,7 @@ static bool is_reg_dmn_valid(uint16_t reg_dmn)
 				return true;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-		  "invalid regulatory domain/country code 0x%x", reg_dmn);
+	cds_err("invalid regulatory domain/country code 0x%x", reg_dmn);
 
 	return false;
 }
@@ -637,8 +636,7 @@ int32_t cds_fill_some_regulatory_info(struct regulatory *reg)
 	if (country_code != CTRY_DEFAULT) {
 		country = find_country(country_code);
 		if (!country) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "not a valid country code");
+			cds_err("not a valid country code");
 			return -EINVAL;
 		}
 
@@ -647,8 +645,7 @@ int32_t cds_fill_some_regulatory_info(struct regulatory *reg)
 
 	reg->regpair = get_reg_dmn_pair(reg_dmn);
 	if (!reg->regpair) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "no regpair is found, can not proceeed");
+		cds_err("no regpair is found, can not proceeed");
 		return -EINVAL;
 	}
 
@@ -683,28 +680,24 @@ void cds_fill_and_send_ctl_to_fw(struct regulatory *reg)
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "unable to get WMA handle");
+		cds_err("unable to get WMA handle");
 		return;
 	}
 
 	if (!reg->regpair) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  FL("no regpair is found, can not proceed"));
+		cds_err(FL("no regpair is found, can not proceed"));
 		return;
 	}
 	regpair = reg->regpair;
 	reg_dmn_2g = get_reg_dmn(regpair->reg_dmn_2ghz);
 	if (!reg_dmn_2g) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "failed to get regdmn 2G");
+		cds_err("failed to get regdmn 2G");
 		return;
 	}
 
 	reg_dmn_5g = get_reg_dmn(regpair->reg_dmn_5ghz);
 	if (!reg_dmn_5g) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "failed to get regdmn 5G");
+		cds_err("failed to get regdmn 5G");
 		return;
 	}
 

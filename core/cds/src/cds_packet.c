@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,6 +36,7 @@
 #include <wlan_hdd_main.h>
 #include "qdf_nbuf.h"
 #include "qdf_mem.h"
+#include "cds_utils.h"
 
 #define TX_PKT_MIN_HEADROOM          (64)
 
@@ -90,8 +91,7 @@ cds_pkt_get_packet_length(cds_pkt_t *pPacket, uint16_t *pPacketSize)
 	/* Validate the parameter pointers */
 	if (unlikely((pPacket == NULL) || (pPacketSize == NULL)) ||
 	    (pPacket->pkt_buf == NULL)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "VPKT [%d]: NULL pointer", __LINE__);
+		cds_alert("NULL pointer");
 		return QDF_STATUS_E_INVAL;
 	}
 	/* return the requested information */

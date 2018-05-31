@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +28,7 @@
 #include "cds_reg_service.h"
 #include "cds_ieee80211_common_i.h"
 #include "cds_config.h"
+#include "cds_utils.h"
 
 uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 		uint32_t chan, uint16_t bandwidth,
@@ -134,8 +135,7 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 			flags |= IEEE80211_CHAN_QUARTER;
 		break;
 	default:
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-				"invalid channel width value %d", bandwidth);
+		cds_info("invalid channel width value %d", bandwidth);
 	}
 
 	return flags;
