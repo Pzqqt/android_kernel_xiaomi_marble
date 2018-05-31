@@ -78,18 +78,18 @@ enum wifi_frm_type {
  */
 enum mgmt_frm_subtype {
 	ASSOC_REQ = 0x00,
-	ASSOC_RESP = 0x10,
-	REASSOC_REQ = 0x20,
-	REASSOC_RESP = 0x30,
-	PROBE_REQ = 0x40,
-	PROBE_RESP = 0x50,
-	BEACON = 0x80,
-	ATIM = 0x90,
-	DISASSOC = 0xa0,
-	AUTH = 0xb0,
-	DEAUTH = 0xc0,
-	ACTION = 0xd0,
-	ACTION_NO_ACK = 0xe0,
+	ASSOC_RESP = 0x01,
+	REASSOC_REQ = 0x02,
+	REASSOC_RESP = 0x03,
+	PROBE_REQ = 0x04,
+	PROBE_RESP = 0x05,
+	BEACON = 0x08,
+	ATIM = 0x09,
+	DISASSOC = 0x0a,
+	AUTH = 0x0b,
+	DEAUTH = 0x0c,
+	ACTION = 0x0d,
+	ACTION_NO_ACK = 0x0e,
 };
 
 /**
