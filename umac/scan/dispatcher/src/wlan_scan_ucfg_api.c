@@ -330,7 +330,7 @@ ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
 	 */
 	ucfg_scan_update_pno_dwell_time(vdev, req, scan_def);
 	req->adaptive_dwell_mode = pno_def->adaptive_dwell_mode;
-	req->pno_channel_prediction = pno_def->adaptive_dwell_mode;
+	req->pno_channel_prediction = pno_def->channel_prediction;
 	req->top_k_num_of_channels = pno_def->top_k_num_of_channels;
 	req->stationary_thresh = pno_def->stationary_thresh;
 	req->channel_prediction_full_scan =
