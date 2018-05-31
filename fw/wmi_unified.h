@@ -3165,6 +3165,8 @@ typedef struct {
     A_UINT32 num_vendor_oui;
     /** Scan control flags extended **/
     A_UINT32 scan_ctrl_flags_ext;
+    /** dwell time in msec on active 2G channels, if it's not zero */
+    A_UINT32 dwell_time_active_2g;
 
 /**
  * TLV (tag length value) parameters follow the scan_cmd
