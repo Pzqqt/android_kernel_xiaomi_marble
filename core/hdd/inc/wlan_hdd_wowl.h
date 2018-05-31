@@ -94,7 +94,7 @@
  */
 
 #include <qdf_types.h>
-#include "wlan_pmo_wow.h"
+#include "wlan_pmo_wow_public_struct.h"
 
 #define WOWL_PTRN_MAX_SIZE	146
 #define WOWL_PTRN_MASK_MAX_SIZE	19
