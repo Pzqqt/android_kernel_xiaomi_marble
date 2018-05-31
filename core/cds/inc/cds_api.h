@@ -426,10 +426,10 @@ uint8_t cds_get_datapath_handles(void **soc, struct cdp_pdev **pdev,
 			 struct cdp_vdev **vdev, uint8_t sessionId);
 void *cds_get_global_context(void);
 
-QDF_STATUS cds_alloc_context(QDF_MODULE_ID module_id, void **ppModuleContext,
+QDF_STATUS cds_alloc_context(QDF_MODULE_ID module_id, void **module_context,
 			     uint32_t size);
 
-QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *pModuleContext);
+QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *module_context);
 
 QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context);
 

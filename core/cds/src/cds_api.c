@@ -1447,7 +1447,7 @@ void cds_clear_fw_state(enum cds_fw_state state)
 /**
  * cds_alloc_context() - allocate a context within the CDS global Context
  * @module_id: module ID who's context area is being allocated.
- * @ppModuleContext: pointer to location where the pointer to the
+ * @module_context: pointer to location where the pointer to the
  *	allocated context is returned. Note this output pointer
  *	is valid only if the API returns QDF_STATUS_SUCCESS
  * @param size: size of the context area to be allocated.
@@ -1458,7 +1458,7 @@ void cds_clear_fw_state(enum cds_fw_state state)
  * Return: QDF status
  */
 QDF_STATUS cds_alloc_context(QDF_MODULE_ID module_id,
-			     void **ppModuleContext, uint32_t size)
+			     void **module_context, uint32_t size)
 {
 	void **cds_mod_context = NULL;
 
@@ -1468,7 +1468,7 @@ QDF_STATUS cds_alloc_context(QDF_MODULE_ID module_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!ppModuleContext) {
+	if (!module_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: null param passed",
 			  __func__);
@@ -1508,9 +1508,9 @@ QDF_STATUS cds_alloc_context(QDF_MODULE_ID module_id,
 
 	/* Dynamically allocate the context for module */
 
-	*ppModuleContext = qdf_mem_malloc(size);
+	*module_context = qdf_mem_malloc(size);
 
-	if (!*ppModuleContext) {
+	if (!*module_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to allocate Context for module ID %i",
 			  __func__, module_id);
@@ -1518,7 +1518,7 @@ QDF_STATUS cds_alloc_context(QDF_MODULE_ID module_id,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	*cds_mod_context = *ppModuleContext;
+	*cds_mod_context = *module_context;
 
 	return QDF_STATUS_SUCCESS;
 } /* cds_alloc_context() */
@@ -1567,14 +1567,14 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
  * cds_free_context() - free an allocated context within the
  *			CDS global Context
  * @module_id: module ID who's context area is being free
- * @pModuleContext: pointer to module context area to be free'd.
+ * @module_context: pointer to module context area to be free'd.
  *
  *  This API allows a user to free the user context area within the
  *  CDS Global Context.
  *
  * Return: QDF status
  */
-QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *pModuleContext)
+QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *module_context)
 {
 	void **cds_mod_context = NULL;
 
@@ -1584,7 +1584,7 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *pModuleContext)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!pModuleContext) {
+	if (!module_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Null param", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -1624,13 +1624,13 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *pModuleContext)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (*cds_mod_context != pModuleContext) {
+	if (*cds_mod_context != module_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: cds_mod_context != pModuleContext", __func__);
+			  "%s: cds_mod_context != module_context", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_free(pModuleContext);
+	qdf_mem_free(module_context);
 
 	*cds_mod_context = NULL;
 
