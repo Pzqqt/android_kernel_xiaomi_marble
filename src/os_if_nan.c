@@ -130,6 +130,18 @@ vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 						.type = NLA_U32,
 						.len = sizeof(uint32_t)
 	},
+	[QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR] = {
+						.type = NLA_UNSPEC,
+						.len = QDF_IPV6_ADDR_SIZE
+	},
+	[QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PORT] = {
+						.type = NLA_U16,
+						.len = sizeof(uint16_t)
+	},
+	[QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PROTOCOL] = {
+						.type = NLA_U8,
+						.len = sizeof(uint8_t)
+	},
 };
 
 static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
@@ -411,6 +423,15 @@ static int os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS]);
 	}
 
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR]) {
+		req.is_ipv6_addr_present = true;
+		qdf_mem_copy(req.ipv6_addr,
+			     nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR]),
+			     QDF_IPV6_ADDR_SIZE);
+	}
+	cfg80211_debug("ipv6 addr present: %d, addr: %pI6",
+		       req.is_ipv6_addr_present, req.ipv6_addr);
+
 	if (os_if_nan_parse_security_params(tb, &req.ncs_sk_type, &req.pmk,
 			&req.passphrase, &req.service_name)) {
 		cfg80211_err("inconsistent security params in request.");
@@ -490,7 +511,6 @@ static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 			goto responder_req_failed;
 		}
 	} else {
-
 		/*
 		 * If the data indication is rejected, the userspace
 		 * may not send the iface name. Use the first NDI
@@ -550,6 +570,28 @@ static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 	} else {
 		cfg80211_debug("NDP config data is unavailable");
 	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR]) {
+		req.is_ipv6_addr_present = true;
+		qdf_mem_copy(req.ipv6_addr,
+			     nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR]),
+			     QDF_IPV6_ADDR_SIZE);
+	}
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PORT]) {
+		req.is_port_present = true;
+		req.port = nla_get_u16(
+			tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PORT]);
+	}
+	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PROTOCOL]) {
+		req.is_protocol_present = true;
+		req.protocol = nla_get_u8(
+			tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PROTOCOL]);
+	}
+	cfg80211_debug("ipv6 addr present: %d, addr: %pI6",
+		       req.is_ipv6_addr_present, req.ipv6_addr);
+	cfg80211_debug("port %d,  present: %d", req.port, req.is_port_present);
+	cfg80211_debug("protocol %d,  present: %d",
+		       req.protocol, req.is_protocol_present);
 
 	if (os_if_nan_parse_security_params(tb, &req.ncs_sk_type, &req.pmk,
 			&req.passphrase, &req.service_name)) {
@@ -881,6 +923,9 @@ static inline uint32_t osif_ndp_get_ndp_req_ind_len(
 			QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR].len);
 	data_len += nla_total_size(vendor_attr_policy[
 			QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR].len);
+	if (event->is_ipv6_addr_present)
+		data_len += nla_total_size(vendor_attr_policy[
+				QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR].len);
 	if (event->scid.scid_len)
 		data_len += nla_total_size(event->scid.scid_len);
 	if (event->ndp_info.ndp_app_info_len)
@@ -906,6 +951,7 @@ static inline uint32_t osif_ndp_get_ndp_req_ind_len(
  * QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS (4 bytes)
  * QCA_WLAN_VENDOR_ATTR_NDP_CSID(4 bytes)
  * QCA_WLAN_VENDOR_ATTR_NDP_SCID(scid_len in size)
+ * QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR (16 bytes)
  *
  * Return: none
  */
@@ -1020,6 +1066,14 @@ static void os_if_ndp_indication_handler(struct wlan_objmgr_vdev *vdev,
 				   event->scid.scid, event->scid.scid_len);
 	}
 
+	if (event->is_ipv6_addr_present) {
+		if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR,
+			    QDF_IPV6_ADDR_SIZE, event->ipv6_addr))
+			goto ndp_indication_nla_failed;
+	}
+	cfg80211_debug("ipv6 addr present: %d, addr: %pI6",
+		       event->is_ipv6_addr_present, event->ipv6_addr);
+
 	cfg80211_vendor_event(vendor_event, GFP_ATOMIC);
 	return;
 ndp_indication_nla_failed:
@@ -1049,6 +1103,16 @@ static inline uint32_t osif_ndp_get_ndp_confirm_ind_len(
 	if (ndp_confirm->ndp_info.ndp_app_info_len)
 		data_len +=
 			nla_total_size(ndp_confirm->ndp_info.ndp_app_info_len);
+
+	if (ndp_confirm->is_ipv6_addr_present)
+		data_len += nla_total_size(vendor_attr_policy[
+			QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR].len);
+	if (ndp_confirm->is_port_present)
+		data_len += nla_total_size(vendor_attr_policy[
+			QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PORT].len);
+	if (ndp_confirm->is_protocol_present)
+		data_len += nla_total_size(vendor_attr_policy[
+			QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PROTOCOL].len);
 
 	/* ch_info is a nested array of following attributes */
 	ch_info_len += nla_total_size(
@@ -1120,6 +1184,9 @@ static QDF_STATUS os_if_ndp_confirm_pack_ch_info(struct sk_buff *event,
  * QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO (ndp_app_info_len size)
  * QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE (4 bytes)
  * QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE (4 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR (16 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PORT (2 bytes)
+ * QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PROTOCOL (1 byte)
  *
  * Return: none
  */
@@ -1224,6 +1291,29 @@ os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 	status = os_if_ndp_confirm_pack_ch_info(vendor_event, ndp_confirm);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto ndp_confirm_nla_failed;
+
+	if (ndp_confirm->is_ipv6_addr_present) {
+		if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR,
+			    QDF_IPV6_ADDR_SIZE, ndp_confirm->ipv6_addr))
+			goto ndp_confirm_nla_failed;
+	}
+	if (ndp_confirm->is_port_present)
+		if (nla_put_u16(vendor_event,
+				QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PORT,
+				ndp_confirm->port))
+			goto ndp_confirm_nla_failed;
+	if (ndp_confirm->is_protocol_present)
+		if (nla_put_u8(vendor_event,
+			       QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PROTOCOL,
+			       ndp_confirm->protocol))
+			goto ndp_confirm_nla_failed;
+	cfg80211_debug("ipv6 addr present: %d, addr: %pI6",
+		       ndp_confirm->is_ipv6_addr_present,
+		       ndp_confirm->ipv6_addr);
+	cfg80211_debug("port %d,  present: %d",
+		       ndp_confirm->port, ndp_confirm->is_port_present);
+	cfg80211_debug("protocol %d,  present: %d",
+		       ndp_confirm->protocol, ndp_confirm->is_protocol_present);
 
 	cfg80211_vendor_event(vendor_event, GFP_ATOMIC);
 	cfg80211_debug("NDP confim sent, ndp instance id: %d, peer addr: %pM rsp_code: %d, reason_code: %d",
