@@ -187,7 +187,6 @@ static QDF_STATUS nan_serialized_cb(void *cmd,
 
 QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg)
 {
-	QDF_STATUS ref_status;
 	enum wlan_serialization_status status = 0;
 	struct wlan_serialization_command cmd = {0};
 
@@ -218,14 +217,6 @@ QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg)
 		nan_err("wrong request type: %d", msg->type);
 		return QDF_STATUS_E_INVAL;
 	}
-
-	/* try get ref now, if failure, then vdev may have been deleted */
-	ref_status = wlan_objmgr_vdev_try_get_ref(cmd.vdev, WLAN_NAN_ID);
-	if (QDF_IS_STATUS_ERROR(ref_status)) {
-		nan_alert("couldn't get ref. vdev maybe deleted");
-		return QDF_STATUS_E_INVAL;
-	}
-	/* reference will be released when ser command finishes */
 
 	/* TBD - support more than one req of same type or avoid */
 	cmd.cmd_id = 0;

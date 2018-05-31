@@ -341,7 +341,8 @@ static int os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 
 	if (nan_vdev->vdev_mlme.vdev_opmode != QDF_NDI_MODE) {
 		cfg80211_err("Interface found is not NDI");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto initiator_req_failed;
 	}
 
 	state = ucfg_nan_get_ndi_state(nan_vdev);
@@ -422,10 +423,12 @@ static int os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 		req.service_instance_id, req.ndp_info.ndp_app_info_len,
 		req.ncs_sk_type, req.peer_discovery_mac_addr.bytes);
 
+	req.vdev = nan_vdev;
 	status = ucfg_nan_req_processor(nan_vdev, &req, NDP_INITIATOR_REQ);
 	ret = qdf_status_to_os_return(status);
 initiator_req_failed:
-	wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
+	if (ret)
+		wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
 
 	return ret;
 }
@@ -461,8 +464,7 @@ static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE]) {
 		cfg80211_err("ndp_rsp is unavailable");
-		ret = -EINVAL;
-		goto responder_req_failed;
+		return -EINVAL;
 	}
 	req.ndp_rsp = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE]);
 
@@ -484,7 +486,8 @@ static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 
 		if (nan_vdev->vdev_mlme.vdev_opmode != QDF_NDI_MODE) {
 			cfg80211_err("Interface found is not NDI");
-			return -ENODEV;
+			ret = -ENODEV;
+			goto responder_req_failed;
 		}
 	} else {
 
@@ -512,8 +515,6 @@ static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 		ret = -EAGAIN;
 		goto responder_req_failed;
 	}
-
-	req.vdev = nan_vdev;
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]) {
 		cfg80211_err("Transaction ID is unavailable");
@@ -562,11 +563,13 @@ static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 		req.ndp_instance_id, req.ndp_info.ndp_app_info_len,
 		req.ncs_sk_type);
 
+	req.vdev = nan_vdev;
 	status = ucfg_nan_req_processor(nan_vdev, &req, NDP_RESPONDER_REQ);
 	ret = qdf_status_to_os_return(status);
 
 responder_req_failed:
-	wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
+	if (ret)
+		wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
 
 	return ret;
 
@@ -623,9 +626,11 @@ static int os_if_nan_process_ndp_end_req(struct wlan_objmgr_psoc *psoc,
 		return -EINVAL;
 	}
 
+	req.vdev = nan_vdev;
 	status = ucfg_nan_req_processor(nan_vdev, &req, NDP_END_REQ);
 	ret = qdf_status_to_os_return(status);
-	wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
+	if (ret)
+		wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
 
 	return ret;
 }
