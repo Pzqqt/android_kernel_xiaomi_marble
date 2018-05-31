@@ -2002,6 +2002,16 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	/* vdev in stopped state, no more waiting for key */
 	iface->is_waiting_for_key = false;
 
+	/*
+	 * Reset the rmfEnabled as there might be MGMT action frames
+	 * sent on this vdev before the next session is established.
+	 */
+	if (iface->rmfEnabled) {
+		iface->rmfEnabled = 0;
+		WMA_LOGD(FL("Reset rmfEnabled for vdev %d"),
+			 resp_event->vdev_id);
+	}
+
 	wma_release_wakelock(&iface->vdev_stop_wakelock);
 
 	req_msg = wma_find_vdev_req(wma, resp_event->vdev_id,
