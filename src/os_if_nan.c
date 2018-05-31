@@ -135,6 +135,7 @@ vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 					struct nlattr **tb)
 {
+	int ret;
 	char *iface_name;
 	QDF_STATUS status;
 	uint16_t transaction_id;
@@ -169,21 +170,14 @@ static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 		return -EINVAL;
 	}
 
-	nan_vdev = cb_obj.ndi_open(iface_name);
-
-	if (!nan_vdev) {
+	ret = cb_obj.ndi_open(iface_name);
+	if (ret) {
 		cfg80211_err("ndi_open failed");
-		return -EINVAL;
+		return ret;
 	}
 
-	/*
-	 * Create transaction id is required to be saved since the firmware
-	 * does not honor the transaction id for create request
-	 */
-	ucfg_nan_set_ndp_create_transaction_id(nan_vdev, transaction_id);
-	ucfg_nan_set_ndi_state(nan_vdev, NAN_DATA_NDI_CREATING_STATE);
 
-	return cb_obj.ndi_start(wlan_vdev_get_id(nan_vdev));
+	return cb_obj.ndi_start(iface_name, transaction_id);
 }
 
 static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
