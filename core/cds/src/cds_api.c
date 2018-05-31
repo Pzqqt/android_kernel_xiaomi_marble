@@ -1223,7 +1223,7 @@ QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
  */
 void *cds_get_context(QDF_MODULE_ID module_id)
 {
-	void *pModContext = NULL;
+	void *context = NULL;
 
 	if (gp_cds_context == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -1234,7 +1234,7 @@ void *cds_get_context(QDF_MODULE_ID module_id)
 	switch (module_id) {
 	case QDF_MODULE_ID_HDD:
 	{
-		pModContext = gp_cds_context->hdd_context;
+		context = gp_cds_context->hdd_context;
 		break;
 	}
 
@@ -1242,63 +1242,63 @@ void *cds_get_context(QDF_MODULE_ID module_id)
 	case QDF_MODULE_ID_PE:
 	{
 		/* In all these cases, we just return the MAC Context */
-		pModContext = gp_cds_context->mac_context;
+		context = gp_cds_context->mac_context;
 		break;
 	}
 
 	case QDF_MODULE_ID_WMA:
 	{
 		/* For wma module */
-		pModContext = gp_cds_context->wma_context;
+		context = gp_cds_context->wma_context;
 		break;
 	}
 
 	case QDF_MODULE_ID_QDF:
 	{
 		/* For SYS this is CDS itself */
-		pModContext = gp_cds_context;
+		context = gp_cds_context;
 		break;
 	}
 
 	case QDF_MODULE_ID_HIF:
 	{
-		pModContext = gp_cds_context->hif_context;
+		context = gp_cds_context->hif_context;
 		break;
 	}
 
 	case QDF_MODULE_ID_HTC:
 	{
-		pModContext = gp_cds_context->htc_ctx;
+		context = gp_cds_context->htc_ctx;
 		break;
 	}
 
 	case QDF_MODULE_ID_QDF_DEVICE:
 	{
-		pModContext = gp_cds_context->qdf_ctx;
+		context = gp_cds_context->qdf_ctx;
 		break;
 	}
 
 	case QDF_MODULE_ID_BMI:
 	{
-		pModContext = gp_cds_context->g_ol_context;
+		context = gp_cds_context->g_ol_context;
 		break;
 	}
 
 	case QDF_MODULE_ID_TXRX:
 	{
-		pModContext = (void *)gp_cds_context->pdev_txrx_ctx;
+		context = (void *)gp_cds_context->pdev_txrx_ctx;
 		break;
 	}
 
 	case QDF_MODULE_ID_CFG:
 	{
-		pModContext = gp_cds_context->cfg_ctx;
+		context = gp_cds_context->cfg_ctx;
 		break;
 	}
 
 	case QDF_MODULE_ID_SOC:
 	{
-		pModContext = gp_cds_context->dp_soc;
+		context = gp_cds_context->dp_soc;
 		break;
 	}
 
@@ -1312,13 +1312,12 @@ void *cds_get_context(QDF_MODULE_ID module_id)
 	}
 	}
 
-	if (pModContext == NULL) {
+	if (!context)
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Module ID %i context is Null", __func__,
 			  module_id);
-	}
 
-	return pModContext;
+	return context;
 } /* cds_get_context() */
 
 /**
@@ -1461,7 +1460,7 @@ void cds_clear_fw_state(enum cds_fw_state state)
 QDF_STATUS cds_alloc_context(QDF_MODULE_ID module_id,
 			     void **ppModuleContext, uint32_t size)
 {
-	void **pGpModContext = NULL;
+	void **cds_mod_context = NULL;
 
 	if (!gp_cds_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -1478,15 +1477,15 @@ QDF_STATUS cds_alloc_context(QDF_MODULE_ID module_id,
 
 	switch (module_id) {
 	case QDF_MODULE_ID_WMA:
-		pGpModContext = &gp_cds_context->wma_context;
+		cds_mod_context = &gp_cds_context->wma_context;
 		break;
 
 	case QDF_MODULE_ID_HIF:
-		pGpModContext = &gp_cds_context->hif_context;
+		cds_mod_context = &gp_cds_context->hif_context;
 		break;
 
 	case QDF_MODULE_ID_BMI:
-		pGpModContext = &(gp_cds_context->g_ol_context);
+		cds_mod_context = &gp_cds_context->g_ol_context;
 		break;
 
 	default:
@@ -1497,7 +1496,7 @@ QDF_STATUS cds_alloc_context(QDF_MODULE_ID module_id,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (*pGpModContext) {
+	if (*cds_mod_context) {
 		/* Context has already been allocated!
 		 * Prevent double allocation
 		 */
@@ -1519,7 +1518,7 @@ QDF_STATUS cds_alloc_context(QDF_MODULE_ID module_id,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	*pGpModContext = *ppModuleContext;
+	*cds_mod_context = *ppModuleContext;
 
 	return QDF_STATUS_SUCCESS;
 } /* cds_alloc_context() */
@@ -1577,7 +1576,7 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
  */
 QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *pModuleContext)
 {
-	void **pGpModContext = NULL;
+	void **cds_mod_context = NULL;
 
 	if (!gp_cds_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -1593,19 +1592,19 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *pModuleContext)
 
 	switch (module_id) {
 	case QDF_MODULE_ID_WMA:
-		pGpModContext = &gp_cds_context->wma_context;
+		cds_mod_context = &gp_cds_context->wma_context;
 		break;
 
 	case QDF_MODULE_ID_HIF:
-		pGpModContext = &gp_cds_context->hif_context;
+		cds_mod_context = &gp_cds_context->hif_context;
 		break;
 
 	case QDF_MODULE_ID_TXRX:
-		pGpModContext = (void **)&(gp_cds_context->pdev_txrx_ctx);
+		cds_mod_context = (void **)&gp_cds_context->pdev_txrx_ctx;
 		break;
 
 	case QDF_MODULE_ID_BMI:
-		pGpModContext = &(gp_cds_context->g_ol_context);
+		cds_mod_context = &gp_cds_context->g_ol_context;
 		break;
 
 	default:
@@ -1617,7 +1616,7 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *pModuleContext)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (NULL == *pGpModContext) {
+	if (!*cds_mod_context) {
 		/* Context has not been allocated or freed already! */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Module ID %i context has not been allocated or freed already",
@@ -1625,15 +1624,15 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *pModuleContext)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (*pGpModContext != pModuleContext) {
+	if (*cds_mod_context != pModuleContext) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: pGpModContext != pModuleContext", __func__);
+			  "%s: cds_mod_context != pModuleContext", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	qdf_mem_free(pModuleContext);
 
-	*pGpModContext = NULL;
+	*cds_mod_context = NULL;
 
 	return QDF_STATUS_SUCCESS;
 } /* cds_free_context() */
