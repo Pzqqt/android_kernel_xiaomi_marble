@@ -4822,8 +4822,10 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 					       wmi_service_early_rx);
 #ifdef FEATURE_WLAN_SCAN_PNO
 	/* PNO offload */
-	if (wmi_service_enabled(wmi_handle, wmi_service_nlo))
+	if (wmi_service_enabled(wmi_handle, wmi_service_nlo)) {
 		cfg->pno_offload = true;
+		g_fw_wlan_feat_caps |= (1 << PNO);
+	}
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
 #ifdef FEATURE_WLAN_EXTSCAN
