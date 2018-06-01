@@ -65,11 +65,8 @@ void wifi_pos_set_psoc(struct wlan_objmgr_psoc *psoc)
 
 	qdf_spin_lock_bh(&psoc_ptr_lock);
 	tmp = wifi_pos_psoc_obj;
-	if (!wifi_pos_psoc_obj) {
+	if (!wifi_pos_psoc_obj)
 		wifi_pos_psoc_obj = psoc;
-		wlan_objmgr_psoc_get_ref(wifi_pos_psoc_obj,
-					 WLAN_WIFI_POS_CORE_ID);
-	}
 	qdf_spin_unlock_bh(&psoc_ptr_lock);
 
 	if (tmp)
@@ -82,11 +79,8 @@ void wifi_pos_clear_psoc(void)
 
 	qdf_spin_lock_bh(&psoc_ptr_lock);
 	tmp = wifi_pos_psoc_obj;
-	if (wifi_pos_psoc_obj) {
-		wlan_objmgr_psoc_release_ref(wifi_pos_psoc_obj,
-					     WLAN_WIFI_POS_CORE_ID);
+	if (wifi_pos_psoc_obj)
 		wifi_pos_psoc_obj = NULL;
-	}
 	qdf_spin_unlock_bh(&psoc_ptr_lock);
 
 	if (!tmp)
