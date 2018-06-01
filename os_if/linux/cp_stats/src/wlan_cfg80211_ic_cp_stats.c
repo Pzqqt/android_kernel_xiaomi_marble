@@ -19,7 +19,7 @@
 /**
  * DOC: wlan_cfg80211_ic_cp_stats.c
  *
- * This file provide definitions to cp stats supported cfg80211 cmd handlers
+ * This file provide definitions to os_if cp_stats APIs
  */
 #include <wlan_cfg80211_ic_cp_stats.h>
 #include <wlan_cp_stats_ic_ucfg_api.h>
@@ -73,3 +73,29 @@ int wlan_cfg80211_get_vdev_cp_stats(struct wlan_objmgr_vdev *vdev_obj,
 
 	return qdf_status_to_os_return(status);
 }
+
+int wlan_cfg80211_get_pdev_cp_stats(struct wlan_objmgr_pdev *pdev_obj,
+				    struct pdev_ic_cp_stats *pdev_cp_stats)
+{
+	QDF_STATUS status;
+
+	if (!pdev_obj) {
+		cfg80211_err("Invalid input, pdev obj is NULL");
+		return -EINVAL;
+	}
+
+	if (!pdev_cp_stats) {
+		cfg80211_err("Invalid input, pdev cp obj is NULL");
+		return -EINVAL;
+	}
+
+	status = wlan_ucfg_get_pdev_cp_stats(pdev_obj, pdev_cp_stats);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("wlan_cfg80211_get_pdev_cp_stats status: %d",
+			     status);
+	}
+
+	return qdf_status_to_os_return(status);
+}
+
+qdf_export_symbol(wlan_cfg80211_get_pdev_cp_stats);
