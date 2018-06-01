@@ -4655,7 +4655,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 		return status;
 
 	if (hdd_ctx->chan_info == NULL) {
-		hdd_err("chan_info is NULL");
+		hdd_debug("chan_info is NULL");
 		return -EINVAL;
 	}
 

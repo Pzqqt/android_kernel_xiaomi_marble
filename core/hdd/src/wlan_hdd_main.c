@@ -13405,7 +13405,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 	}
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		hdd_info("Adapter with device mode %s(%d) exists",
+		hdd_debug("Adapter with device mode %s(%d) exists",
 			hdd_device_mode_to_string(adapter->device_mode),
 			adapter->device_mode);
 		if (((QDF_STA_MODE == adapter->device_mode)
