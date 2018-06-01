@@ -698,10 +698,6 @@ QDF_STATUS wma_notify_modem_power_state(void *wma_ptr,
 QDF_STATUS wma_set_smps_params(tp_wma_handle wma, uint8_t vdev_id,
 				      int value);
 
-void wma_set_suspend_dtim(tp_wma_handle wma);
-
-void wma_set_resume_dtim(tp_wma_handle wma);
-
 /*
  * wma_data.c functions declarations
  */

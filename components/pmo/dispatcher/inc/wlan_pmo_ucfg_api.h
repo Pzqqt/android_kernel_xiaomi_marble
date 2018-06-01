@@ -426,16 +426,6 @@ QDF_STATUS pmo_ucfg_lphb_config_req(struct wlan_objmgr_psoc *psoc,
 		pmo_lphb_callback callback);
 
 /**
- * pmo_ucfg_update_alt_modulated_dtim_enable() - update alt modulatate dtim
- * @vdev: objmgr vdev handle
- * @value: true for alt_modulated_dtim enable else false
- *
- * Return: QDF status
- */
-void pmo_ucfg_update_alt_modulated_dtim_enable(struct wlan_objmgr_vdev *vdev,
-	bool value);
-
-/**
  * pmo_ucfg_psoc_update_power_save_mode() - update power save mode
  * @vdev: objmgr vdev handle
  * @value:vdev power save mode
@@ -619,6 +609,30 @@ void pmo_ucfg_psoc_target_suspend_acknowledge(void *context, bool wow_nack);
  * Return: None
  */
 void pmo_ucfg_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * pmo_ucfg_config_listen_interval() - function to configure listen interval
+ * @vdev: objmgr vdev
+ * @listen_interval: new listen interval passed by user
+ *
+ * This function allows user to configure listen interval dynamically
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS pmo_ucfg_config_listen_interval(struct wlan_objmgr_vdev *vdev,
+					     uint32_t listen_interval);
+
+/**
+ * pmo_ucfg_config_modulated_dtim() - function to configure modulated dtim
+ * @vdev: objmgr vdev handle
+ * @param_value: New modulated dtim value passed by user
+ *
+ * This function configures the modulated dtim in firmware
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS pmo_ucfg_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
+				       uint32_t mod_dtim);
 #else
 static inline uint32_t
 ucfg_pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc)
@@ -867,13 +881,6 @@ pmo_ucfg_lphb_config_req(
 }
 
 static inline void
-pmo_ucfg_update_alt_modulated_dtim_enable(
-		struct wlan_objmgr_vdev *vdev,
-		bool value)
-{
-}
-
-static inline void
 pmo_ucfg_psoc_update_power_save_mode(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t value)
@@ -1043,6 +1050,20 @@ pmo_ucfg_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
 
 static inline QDF_STATUS
 pmo_ucfg_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_config_listen_interval(struct wlan_objmgr_vdev *vdev,
+				uint32_t listen_interval)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
+			       uint32_t mod_dtim)
 {
 	return QDF_STATUS_SUCCESS;
 }

@@ -6707,10 +6707,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		modulated_dtim = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM]);
 
-		status = sme_configure_modulated_dtim(hdd_ctx->hHal,
-						      adapter->session_id,
-						      modulated_dtim);
-
+		status = pmo_ucfg_config_modulated_dtim(adapter->hdd_vdev,
+							modulated_dtim);
 		if (QDF_STATUS_SUCCESS != status)
 			ret_val = -EPERM;
 	}
@@ -6719,10 +6717,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		override_li = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL]);
 
-		status = sme_override_listen_interval(hdd_ctx->hHal,
-						      adapter->session_id,
-						      override_li);
-
+		status = pmo_ucfg_config_listen_interval(adapter->hdd_vdev,
+							 override_li);
 		if (status != QDF_STATUS_SUCCESS)
 			ret_val = -EPERM;
 	}

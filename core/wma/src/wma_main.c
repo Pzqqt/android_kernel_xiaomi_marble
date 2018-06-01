@@ -946,123 +946,6 @@ static void wma_set_dtim_period(tp_wma_handle wma,
 	iface->dtimPeriod = dtim_params->dtim_period;
 
 }
-/**
- * wma_set_modulated_dtim() - function to configure modulated dtim
- * @wma: wma handle
- * @privcmd: structure containing parameters
- *
- * This function configures the modulated dtim in firmware
- *
- * Return: none
- */
-static void wma_set_modulated_dtim(tp_wma_handle wma,
-				   wma_cli_set_cmd_t *privcmd)
-{
-	uint8_t vdev_id = privcmd->param_vdev_id;
-	struct wma_txrx_node *iface =
-		&wma->interfaces[vdev_id];
-	bool prev_dtim_enabled;
-	uint32_t listen_interval;
-	QDF_STATUS ret;
-
-	iface->alt_modulated_dtim = privcmd->param_value;
-
-	prev_dtim_enabled = iface->alt_modulated_dtim_enabled;
-
-	if (1 != privcmd->param_value)
-		iface->alt_modulated_dtim_enabled = true;
-	else
-		iface->alt_modulated_dtim_enabled = false;
-
-	if ((true == iface->alt_modulated_dtim_enabled) ||
-	    (true == prev_dtim_enabled)) {
-
-		listen_interval = iface->alt_modulated_dtim
-			* iface->dtimPeriod;
-
-		ret = wma_vdev_set_param(wma->wmi_handle,
-						privcmd->param_vdev_id,
-						WMI_VDEV_PARAM_LISTEN_INTERVAL,
-						listen_interval);
-		if (QDF_IS_STATUS_ERROR(ret))
-			/* Even if it fails, continue */
-			WMA_LOGW("Failed to set listen interval %d",
-				 listen_interval);
-
-		ret = wma_vdev_set_param(wma->wmi_handle,
-						privcmd->param_vdev_id,
-						WMI_VDEV_PARAM_DTIM_POLICY,
-						NORMAL_DTIM);
-		if (QDF_IS_STATUS_ERROR(ret))
-			WMA_LOGE("Failed to Set to Normal DTIM policy");
-	}
-}
-
-/**
- * wma_override_listen_interval() - function to override static/ini based LI
- * @wma: wma handle
- * @privcmd: structure containing parameters
- *
- * This function override static/ini based LI in firmware
- *
- * Return: none
- */
-static void wma_override_listen_interval(tp_wma_handle wma,
-				   wma_cli_set_cmd_t *privcmd)
-{
-	uint8_t vdev_id = privcmd->param_vdev_id;
-	struct wma_txrx_node *iface =
-		&wma->interfaces[vdev_id];
-	u32 old_override_li, new_override_li, listen_interval;
-	struct sAniSirGlobal *mac;
-	QDF_STATUS ret;
-
-	mac = cds_get_context(QDF_MODULE_ID_PE);
-	if (!mac) {
-		WMA_LOGE(FL("Failed to get mac context"));
-		return;
-	}
-
-	old_override_li = iface->override_li;
-	new_override_li = privcmd->param_value;
-	iface->override_li = new_override_li;
-
-	if (new_override_li &&
-	    (new_override_li != old_override_li)) {
-		listen_interval = new_override_li;
-	} else if (!new_override_li &&
-		   (new_override_li != old_override_li)) {
-		/* Configure default LI as we do on resume */
-		ret = wlan_cfg_get_int(mac, WNI_CFG_LISTEN_INTERVAL,
-				       &listen_interval);
-		if (ret != QDF_STATUS_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-				  "Failed to get value for listen interval");
-			listen_interval = POWERSAVE_DEFAULT_LISTEN_INTERVAL;
-		}
-	} else {
-		return;
-	}
-
-	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
-			WMI_VDEV_PARAM_LISTEN_INTERVAL,
-			listen_interval);
-	if (QDF_IS_STATUS_ERROR(ret)) {
-		/* Even it fails continue Fw will take default LI */
-		WMA_LOGE("Failed to Set Listen Interval vdevId %d",
-			 vdev_id);
-	}
-	WMA_LOGD("%s: Set Listen Interval vdevId %d Listen Intv %d",
-			__func__, vdev_id, listen_interval);
-	ret = wma_vdev_set_param(wma->wmi_handle,
-			privcmd->param_vdev_id,
-			WMI_VDEV_PARAM_DTIM_POLICY,
-			NORMAL_DTIM);
-	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE("Failed to Set to Normal DTIM policy");
-
-}
-
 
 /**
  * wma_process_cli_set_cmd() - set parameters to fw
@@ -1213,12 +1096,6 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			break;
 		case GEN_PARAM_RESET_TSF_GPIO:
 			ret = wma_reset_tsf_gpio(wma, privcmd->param_value);
-			break;
-		case GEN_PARAM_MODULATED_DTIM:
-			wma_set_modulated_dtim(wma, privcmd);
-			break;
-		case GEN_PARAM_LISTEN_INTERVAL:
-			wma_override_listen_interval(wma, privcmd);
 			break;
 		default:
 			WMA_LOGE("Invalid param id 0x%x",
@@ -5654,6 +5531,9 @@ static void wma_set_pmo_caps(struct wlan_objmgr_psoc *psoc)
 		wma_is_service_enabled(wmi_service_packet_filter_offload);
 	caps.unified_wow =
 		wma_is_service_enabled(wmi_service_unified_wow_capability);
+	caps.li_offload =
+		wma_is_service_enabled(
+				wmi_service_listen_interval_offload_support);
 
 	status = ucfg_pmo_psoc_set_caps(psoc, &caps);
 	if (QDF_IS_STATUS_ERROR(status))
