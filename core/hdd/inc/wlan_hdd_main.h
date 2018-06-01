@@ -346,6 +346,9 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
 #define HDD_MOD_EXIT_SSR_MAX_RETRIES 75
 #endif
 
+#define HDD_CFG_REQUEST_FIRMWARE_RETRIES (3)
+#define HDD_CFG_REQUEST_FIRMWARE_DELAY (20)
+
 #define MAX_USER_COMMAND_SIZE 4096
 #define DNS_DOMAIN_NAME_MAX_LEN 255
 #define ICMPv6_ADDR_LEN 16

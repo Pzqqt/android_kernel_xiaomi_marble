@@ -7520,7 +7520,9 @@ static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
  */
 QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 {
-	int status, i = 0;
+	int status = 0;
+	int i = 0;
+	int retry = 0;
 	/** Pointer for firmware image data */
 	const struct firmware *fw = NULL;
 	char *buffer, *line, *pTemp = NULL;
@@ -7532,7 +7534,16 @@ QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 
 	memset(cfgIniTable, 0, sizeof(cfgIniTable));
 
-	status = request_firmware(&fw, WLAN_INI_FILE, hdd_ctx->parent_dev);
+	do {
+		if (status == -EAGAIN)
+			msleep(HDD_CFG_REQUEST_FIRMWARE_DELAY);
+
+		status = request_firmware(&fw, WLAN_INI_FILE,
+					  hdd_ctx->parent_dev);
+
+		retry++;
+	} while ((retry < HDD_CFG_REQUEST_FIRMWARE_RETRIES) &&
+		 (status == -EAGAIN));
 
 	if (status) {
 		hdd_alert("request_firmware failed %d", status);
