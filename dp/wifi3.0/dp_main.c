@@ -4588,7 +4588,7 @@ void dp_peer_unref_delete(void *peer_handle)
 		qdf_mempool_free(soc->osdev, soc->mempool_ol_ath_peer, peer);
 #else
 		bss_peer = vdev->vap_bss_peer;
-		DP_UPDATE_STATS(bss_peer, peer);
+		DP_UPDATE_STATS(vdev, peer);
 
 free_peer:
 		qdf_mem_free(peer);
@@ -5221,16 +5221,16 @@ void dp_rx_bar_stats_cb(struct dp_soc *soc, void *cb_ctxt,
  *
  * return: void
  */
-void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
+void dp_aggregate_vdev_stats(struct dp_vdev *vdev,
+			     struct cdp_vdev_stats *vdev_stats)
 {
 	struct dp_peer *peer = NULL;
 	struct dp_soc *soc = vdev->pdev->soc;
 
-	qdf_mem_set(&(vdev->stats.tx), sizeof(vdev->stats.tx), 0x0);
-	qdf_mem_set(&(vdev->stats.rx), sizeof(vdev->stats.rx), 0x0);
+	qdf_mem_copy(vdev_stats, &vdev->stats, sizeof(vdev->stats));
 
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem)
-		DP_UPDATE_STATS(vdev, peer);
+		dp_update_vdev_stats(vdev_stats, peer);
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats)
 		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->ctrl_pdev,
@@ -5249,6 +5249,14 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 {
 	struct dp_vdev *vdev = NULL;
 	struct dp_soc *soc = pdev->soc;
+	struct cdp_vdev_stats *vdev_stats =
+			qdf_mem_malloc(sizeof(struct cdp_vdev_stats));
+
+	if (!vdev_stats) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "DP alloc failure - unable to get alloc vdev stats");
+		return;
+	}
 
 	qdf_mem_set(&(pdev->stats.tx), sizeof(pdev->stats.tx), 0x0);
 	qdf_mem_set(&(pdev->stats.rx), sizeof(pdev->stats.rx), 0x0);
@@ -5257,8 +5265,8 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 
-		dp_aggregate_vdev_stats(vdev);
-		DP_UPDATE_STATS(pdev, vdev);
+		dp_aggregate_vdev_stats(vdev, vdev_stats);
+		dp_update_pdev_stats(pdev, vdev_stats);
 
 		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.nawds_mcast);
 
@@ -5305,6 +5313,8 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 			vdev->stats.tx_i.tso.num_seg;
 	}
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+	qdf_mem_free(vdev_stats);
+
 	if (soc->cdp_soc.ol_ops->update_dp_stats)
 		soc->cdp_soc.ol_ops->update_dp_stats(pdev->ctrl_pdev,
 				&pdev->stats, pdev->pdev_id, UPDATE_PDEV_STATS);
@@ -5322,8 +5332,31 @@ static void dp_vdev_getstats(void *vdev_handle,
 		struct cdp_dev_stats *stats)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct cdp_vdev_stats *vdev_stats =
+			qdf_mem_malloc(sizeof(struct cdp_vdev_stats));
 
-	dp_aggregate_vdev_stats(vdev);
+	if (!vdev_stats) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "DP alloc failure - unable to get alloc vdev stats");
+		return;
+	}
+
+	dp_aggregate_vdev_stats(vdev, vdev_stats);
+
+	stats->tx_packets = vdev_stats->tx_i.rcvd.num;
+	stats->tx_bytes = vdev_stats->tx_i.rcvd.bytes;
+
+	stats->tx_errors = vdev_stats->tx.tx_failed +
+		vdev_stats->tx_i.dropped.dropped_pkt.num;
+	stats->tx_dropped = stats->tx_errors;
+
+	stats->rx_packets = vdev_stats->rx.unicast.num +
+		vdev_stats->rx.multicast.num +
+		vdev_stats->rx.bcast.num;
+	stats->rx_bytes = vdev_stats->rx.unicast.bytes +
+		vdev_stats->rx.multicast.bytes +
+		vdev_stats->rx.bcast.bytes;
+
 }
 
 
@@ -6713,6 +6746,55 @@ static void dp_set_vdev_dscp_tid_map_wifi3(struct cdp_vdev *vdev_handle,
 	return;
 }
 
+/* dp_txrx_get_peer_stats - will return cdp_peer_stats
+ * @peer_handle: DP_PEER handle
+ *
+ * return : cdp_peer_stats pointer
+ */
+static struct cdp_peer_stats*
+		dp_txrx_get_peer_stats(struct cdp_peer *peer_handle)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+
+	qdf_assert(peer);
+
+	return &peer->stats;
+}
+
+/* dp_txrx_reset_peer_stats - reset cdp_peer_stats for particular peer
+ * @peer_handle: DP_PEER handle
+ *
+ * return : void
+ */
+static void dp_txrx_reset_peer_stats(struct cdp_peer *peer_handle)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+
+	qdf_assert(peer);
+
+	qdf_mem_set(&peer->stats, sizeof(peer->stats), 0);
+}
+
+/* dp_txrx_get_vdev_stats - Update buffer with cdp_vdev_stats
+ * @vdev_handle: DP_VDEV handle
+ * @buf: buffer for vdev stats
+ *
+ * return : int
+ */
+static int  dp_txrx_get_vdev_stats(struct cdp_vdev *vdev_handle, void *buf,
+				   bool is_aggregate)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct cdp_vdev_stats *vdev_stats = (struct cdp_vdev_stats *)buf;
+
+	if (is_aggregate)
+		dp_aggregate_vdev_stats(vdev, buf);
+	else
+		qdf_mem_copy(vdev_stats, &vdev->stats, sizeof(vdev->stats));
+
+	return 0;
+}
+
 /*
  * dp_txrx_stats_publish(): publish pdev stats into a buffer
  * @pdev_handle: DP_PDEV handle
@@ -7562,6 +7644,9 @@ static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_enable_enhanced_stats = dp_enable_enhanced_stats,
 	.txrx_disable_enhanced_stats = dp_disable_enhanced_stats,
 	.txrx_stats_publish = dp_txrx_stats_publish,
+	.txrx_get_vdev_stats  = dp_txrx_get_vdev_stats,
+	.txrx_get_peer_stats = dp_txrx_get_peer_stats,
+	.txrx_reset_peer_stats = dp_txrx_reset_peer_stats,
 	/* TODO */
 };
 
