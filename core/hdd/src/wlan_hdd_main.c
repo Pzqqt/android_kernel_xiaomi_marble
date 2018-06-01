@@ -12876,6 +12876,19 @@ static bool is_epping_mode_supported(void)
 }
 #endif
 
+#ifdef QCA_WIFI_FTM
+static bool is_ftm_mode_supported(void)
+{
+	return true;
+}
+#else
+static bool is_ftm_mode_supported(void)
+{
+	pr_err("FTM mode not supported!");
+	return false;
+}
+#endif
+
 /**
  * is_con_mode_valid() check con mode is valid or not
  * @mode: global con mode
@@ -12890,6 +12903,7 @@ static bool is_con_mode_valid(enum QDF_GLOBAL_MODE mode)
 	case QDF_GLOBAL_EPPING_MODE:
 		return is_epping_mode_supported();
 	case QDF_GLOBAL_FTM_MODE:
+		return is_ftm_mode_supported();
 	case QDF_GLOBAL_MISSION_MODE:
 		return true;
 	default:

@@ -682,14 +682,20 @@ FTM_INC := -I$(FTM_DISP_INC)	\
 	   -I$(OS_IF_FTM_INC)	\
 	   -I$(TARGET_IF_FTM_INC)
 
+ifeq ($(CONFIG_QCA_WIFI_FTM), y)
 FTM_OBJS := $(FTM_DISP_SRC)/wlan_ftm_init_deinit.o \
 	    $(FTM_DISP_SRC)/wlan_ftm_ucfg_api.o \
 	    $(FTM_CORE_SRC)/wlan_ftm_svc.o \
-	    $(OS_IF_FTM_SRC)/wlan_cfg80211_ftm.o \
 	    $(TARGET_IF_FTM_SRC)/target_if_ftm.o
+
+ifeq ($(QCA_WIFI_FTM_NL80211), y)
+FTM_OBJS += $(OS_IF_FTM_SRC)/wlan_cfg80211_ftm.o
+endif
 
 ifeq ($(CONFIG_LINUX_QCMBR), y)
 FTM_OBJS += $(OS_IF_FTM_SRC)/wlan_ioctl_ftm.o
+endif
+
 endif
 
 ############# UMAC_CMN_SERVICES ############
@@ -2031,6 +2037,8 @@ cppflags-$(CONFIG_TX_CREDIT_RECLAIM_SUPPORT) += -DTX_CREDIT_RECLAIM_SUPPORT
 
 #Enable FTM support
 cppflags-$(CONFIG_QCA_WIFI_FTM) += -DQCA_WIFI_FTM
+cppflags-$(CONFIG_NL80211_TESTMODE) += -DQCA_WIFI_FTM_NL80211
+cppflags-$(CONFIG_LINUX_QCMBR) += -DLINUX_QCMBR -DQCA_WIFI_FTM_IOCTL
 
 #Enable Checksum Offload support
 cppflags-$(CONFIG_CHECKSUM_OFFLOAD) += -DCHECKSUM_OFFLOAD

@@ -448,6 +448,21 @@ CONFIG_TX_CREDIT_RECLAIM_SUPPORT := n
 #Enable FTM support
 CONFIG_QCA_WIFI_FTM := y
 
+ifeq ($(CONFIG_QCA_WIFI_FTM), y)
+
+ifeq ($(CONFIG_NL80211_TESTMODE), y)
+	QCA_WIFI_FTM_NL80211 :=y
+else
+	QCA_WIFI_FTM_NL80211 :=n
+endif
+	CONFIG_LINUX_QCMBR :=y
+
+else
+	QCA_WIFI_FTM_NL80211 :=n
+	CONFIG_LINUX_QCMBR :=n
+endif
+
+
 #Enable Checksum Offload
 CONFIG_CHECKSUM_OFFLOAD := y
 
