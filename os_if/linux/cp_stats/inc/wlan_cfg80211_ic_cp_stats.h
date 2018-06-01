@@ -29,6 +29,9 @@
 #ifdef QCA_SUPPORT_CP_STATS
 #include <wlan_objmgr_cmn.h>
 #include <wlan_cp_stats_ic_defs.h>
+#ifdef WLAN_ATF_ENABLE
+#include <wlan_cp_stats_ic_atf_defs.h>
+#endif
 
 /**
  * wlan_cfg80211_get_peer_cp_stats() - API to get peer stats object
@@ -59,6 +62,36 @@ int wlan_cfg80211_get_vdev_cp_stats(struct wlan_objmgr_vdev *vdev_obj,
  */
 int wlan_cfg80211_get_pdev_cp_stats(struct wlan_objmgr_pdev *pdev_obj,
 				    struct pdev_ic_cp_stats *pdev_cp_stats);
+
+#ifdef WLAN_ATF_ENABLE
+/**
+ * wlan_cfg80211_get_peer_atf_cp_stats() - API to get ATF peer stats object
+ * @peer_obj: peer object as input
+ * @atf_cp_stats: atf peer cp stats object to populate
+ *
+ * Return: 0 on success, negative value on failure
+ */
+int
+wlan_cfg80211_get_atf_peer_cp_stats(struct wlan_objmgr_peer *peer_obj,
+				    struct atf_peer_cp_stats *atf_cp_stats);
+
+/**
+ * wlan_cfg80211_get_peer_atf_cp_stats_from_mac() - API to get ATF peer
+ * stats object from peer mac address
+ * @vdev_obj: vdev object as input
+ * @mac: peer mac address as input
+ * @atf_cp_stats: atf peer cp stats object to populate
+ *
+ * API used from ucfg layer to get ATF peer cp stats object when only peer
+ * mac address is available
+ *
+ * Return: 0 on success, negative value on failure
+ */
+int wlan_cfg80211_get_atf_peer_cp_stats_from_mac(
+		struct wlan_objmgr_vdev *vdev_obj,
+		uint8_t *mac,
+		struct atf_peer_cp_stats *atf_cp_stats);
+#endif /* WLAN_ATF_ENABLE */
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CFG80211_IC_CP_STATS_H__ */
