@@ -149,6 +149,7 @@ struct s_nss_update_cmd {
 typedef struct tagSmeCmd {
 	tListElem Link;
 	eSmeCommandType command;
+	uint32_t cmd_id;
 	uint32_t sessionId;
 	union {
 		struct roam_cmd roamCmd;

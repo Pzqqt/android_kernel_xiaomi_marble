@@ -896,6 +896,7 @@ typedef struct sAniSirGlobal {
 	uint8_t hw_dbs_capable;
 	uint32_t sta_sap_scc_on_dfs_chan;
 	sir_mgmt_frame_ind_callback mgmt_frame_ind_cb;
+	qdf_atomic_t global_cmd_id;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	void (*chan_info_cb)(struct scan_chan_info *chan_info);

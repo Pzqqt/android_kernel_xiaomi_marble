@@ -20055,8 +20055,8 @@ void csr_release_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 	qdf_mem_zero(&cmd_info,
 			sizeof(struct wlan_serialization_queued_cmd_info));
 
-	sme_debug("filled cmd_id = 0");
-	cmd_info.cmd_id = 0;
+	sme_debug("filled cmd_id = %d", sme_cmd->cmd_id);
+	cmd_info.cmd_id = sme_cmd->cmd_id;
 	cmd_info.req_type = WLAN_SER_CANCEL_NON_SCAN_CMD;
 	cmd_info.cmd_type = csr_get_cmd_type(sme_cmd);
 	cmd_info.vdev = vdev;
@@ -20215,6 +20215,18 @@ enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd)
 	return cmd_type;
 }
 
+static uint32_t csr_get_monotonous_number(tpAniSirGlobal mac_ctx)
+{
+	uint32_t cmd_id;
+	uint32_t mask = 0x00FFFFFF, prefix = 0x0D000000;
+
+	cmd_id = qdf_atomic_inc_return(&mac_ctx->global_cmd_id);
+	cmd_id = (cmd_id & mask);
+	cmd_id = (cmd_id | prefix);
+
+	return cmd_id;
+}
+
 QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
 		tSmeCmd *sme_cmd, struct wlan_serialization_command *cmd,
 		uint8_t high_priority)
@@ -20234,8 +20246,9 @@ QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
 	 * no need to fill command id for non-scan as they will be
 	 * zero always
 	 */
-	sme_debug("cmd_id = 0");
-	cmd->cmd_id = 0;
+	sme_cmd->cmd_id = csr_get_monotonous_number(mac_ctx);
+	cmd->cmd_id = sme_cmd->cmd_id;
+	sme_debug("cmd_id = %d", cmd->cmd_id);
 
 	cmd->cmd_type = csr_get_cmd_type(sme_cmd);
 	sme_debug("filled cmd_type[%d] cmd_id[%d]",
