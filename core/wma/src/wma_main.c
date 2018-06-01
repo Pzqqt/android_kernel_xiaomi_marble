@@ -5841,6 +5841,9 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	wma_handle->is_dfs_offloaded =
 		wmi_service_enabled(wmi_handle,
 			wmi_service_dfs_phyerr_offload);
+	if (wma_handle->is_dfs_offloaded)
+		wmi_unified_dfs_phyerr_offload_en_cmd(wmi_handle, 0);
+
 	wma_handle->nan_datapath_enabled =
 		wmi_service_enabled(wma_handle->wmi_handle,
 			wmi_service_nan_data);
