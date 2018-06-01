@@ -141,25 +141,6 @@ QDF_STATUS pmo_core_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type);
 
 /**
- * pmo_core_update_alt_modulated_dtim_enable() - update alt modulatate dtim
- * @vdev: objmgr vdev handle
- * @value: true when alt modulated dtim enable else false
- *
- * Return: None
- */
-static inline
-void pmo_core_update_alt_modulated_dtim_enable(struct wlan_objmgr_vdev *vdev,
-	bool value)
-{
-	struct pmo_vdev_priv_obj *vdev_ctx;
-
-	vdev_ctx = pmo_vdev_get_priv(vdev);
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	vdev_ctx->alt_modulated_dtim_enable = value;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-}
-
-/**
  * pmo_core_vdev_set_dtim_policy() - Set vdev beacon dtim policy
  * @vdev: objmgr vdev handle
  * @value: carry vdev dtim policy
@@ -388,6 +369,30 @@ void pmo_core_psoc_target_suspend_acknowledge(void *context, bool wow_nack);
  */
 void pmo_core_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * pmo_core_config_listen_interval() - function to dynamically configure
+ * listen interval
+ * @vdev: objmgr vdev
+ * @listen_interval: new listen interval passed by user
+ *
+ * This function allows user to configure listen interval dynamically
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS pmo_core_config_listen_interval(struct wlan_objmgr_vdev *vdev,
+					   uint32_t listen_interval);
+
+/**
+ * pmo_core_config_modulated_dtim() - function to configure modulated dtim
+ * @vdev: objmgr vdev handle
+ * @mod_dtim: New modulated dtim value passed by user
+ *
+ * This function configures the modulated dtim in firmware
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS pmo_core_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
+					  uint32_t mod_dtim);
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_SUSPEND_RESUME_H_ */

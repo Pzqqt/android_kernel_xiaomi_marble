@@ -255,12 +255,6 @@ QDF_STATUS pmo_ucfg_lphb_config_req(struct wlan_objmgr_psoc *psoc,
 	return pmo_core_lphb_config_req(psoc, lphb_req, lphb_cb_ctx, callback);
 }
 
-void pmo_ucfg_update_alt_modulated_dtim_enable(struct wlan_objmgr_vdev *vdev,
-	bool value)
-{
-	pmo_core_update_alt_modulated_dtim_enable(vdev, value);
-}
-
 void pmo_ucfg_psoc_update_power_save_mode(struct wlan_objmgr_psoc *psoc,
 	uint8_t value)
 {
@@ -389,4 +383,15 @@ QDF_STATUS pmo_ucfg_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 	return pmo_core_disable_hw_filter_in_fwr(vdev);
 }
 
+QDF_STATUS pmo_ucfg_config_listen_interval(struct wlan_objmgr_vdev *vdev,
+					     uint32_t listen_interval)
+{
+	return pmo_core_config_listen_interval(vdev, listen_interval);
+}
+
+QDF_STATUS pmo_ucfg_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
+				       uint32_t mod_dtim)
+{
+	return pmo_core_config_modulated_dtim(vdev, mod_dtim);
+}
 

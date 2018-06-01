@@ -322,12 +322,14 @@ struct pmo_psoc_cfg {
  * @unified_wow: Firmware supports "interface pause" flag in WoW command.
  *	This allows both D0-WoW (bus up) and Non-D0-WoW (bus down) to use one
  *	unified command
+ * @li_offload: Firmware has listen interval offload support
  */
 struct pmo_device_caps {
 	bool apf;
 	bool arp_ns_offload;
 	bool packet_filter;
 	bool unified_wow;
+	bool li_offload;
 };
 
 #endif /* end  of _WLAN_PMO_COMMONP_STRUCT_H_ */

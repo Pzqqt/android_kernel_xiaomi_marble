@@ -109,8 +109,10 @@ struct wlan_pmo_ctx {
  * @p2plo_in_progress: true when p2plo_in_progress in progress else false
  * @dtim_period: dtim period for vdev
  * @beacon_interval: vdev beacon interval
- * @alt_modulated_dtim_enabled:dynamic modulated dtim enabled
+ * @dyn_modulated_dtim: dynamically configured modulated dtim value
+ * @dyn_modulated_dtim_enabled: if dynamically modulated dtim is set or not
  * @dtim_policy: tells vdev beacon dtim policy
+ * @dyn_listen_interval: dynamically user configured listen interval
  * @pmo_vdev_lock: spin lock for pmo vdev priv ctx
  */
 struct pmo_vdev_priv_obj {
@@ -131,8 +133,10 @@ struct pmo_vdev_priv_obj {
 	bool p2plo_in_progress;
 	uint8_t dtim_period;
 	uint8_t beacon_interval;
-	bool alt_modulated_dtim_enable;
+	uint32_t dyn_modulated_dtim;
+	bool dyn_modulated_dtim_enabled;
 	uint32_t dtim_policy;
+	uint32_t dyn_listen_interval;
 	qdf_spinlock_t pmo_vdev_lock;
 };
 

@@ -214,6 +214,26 @@ static void pmo_core_set_vdev_suspend_dtim(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+/*
+ * pmo_is_listen_interval_user_set() - Check if listen interval is configured
+ * by user or not
+ * @vdev_ctx: PMO vdev private object
+ *
+ * Return: true if listen interval is user configured else false
+ */
+static inline
+bool pmo_is_listen_interval_user_set(struct pmo_vdev_priv_obj *vdev_ctx)
+{
+	bool retval;
+
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	retval = vdev_ctx->dyn_modulated_dtim_enabled
+		 || vdev_ctx->dyn_listen_interval;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return retval;
+}
+
 /**
  * pmo_core_set_suspend_dtim() - set suspend dtim
  * @psoc: objmgr psoc handle
@@ -225,8 +245,16 @@ static void pmo_core_set_suspend_dtim(struct wlan_objmgr_psoc *psoc)
 	uint8_t vdev_id;
 	struct wlan_objmgr_vdev *vdev;
 	struct pmo_vdev_priv_obj *vdev_ctx;
-	bool alt_mdtim_enabled;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	bool li_offload_support = false;
 	QDF_STATUS status;
+
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		li_offload_support = psoc_ctx->caps.li_offload;
+	}
+
+	if (li_offload_support)
+		pmo_debug("listen interval offload support is enabled");
 
 	/* Iterate through VDEV list */
 	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
@@ -239,11 +267,8 @@ static void pmo_core_set_suspend_dtim(struct wlan_objmgr_psoc *psoc)
 			continue;
 
 		vdev_ctx = pmo_vdev_get_priv(vdev);
-		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-		alt_mdtim_enabled = vdev_ctx->alt_modulated_dtim_enable;
-		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-
-		if (!alt_mdtim_enabled)
+		if (!pmo_is_listen_interval_user_set(vdev_ctx)
+		    && !li_offload_support)
 			pmo_core_set_vdev_suspend_dtim(psoc, vdev, vdev_ctx);
 
 		pmo_vdev_put_ref(vdev);
@@ -482,8 +507,16 @@ static void pmo_core_set_resume_dtim(struct wlan_objmgr_psoc *psoc)
 	uint8_t vdev_id;
 	struct wlan_objmgr_vdev *vdev;
 	struct pmo_vdev_priv_obj *vdev_ctx;
-	bool alt_mdtim_enabled;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	bool li_offload_support = false;
 	QDF_STATUS status;
+
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		li_offload_support = psoc_ctx->caps.li_offload;
+	}
+
+	if (li_offload_support)
+		pmo_debug("listen interval offload support is enabled");
 
 	/* Iterate through VDEV list */
 	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
@@ -496,13 +529,9 @@ static void pmo_core_set_resume_dtim(struct wlan_objmgr_psoc *psoc)
 			continue;
 
 		vdev_ctx = pmo_vdev_get_priv(vdev);
-		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-		alt_mdtim_enabled = vdev_ctx->alt_modulated_dtim_enable;
-		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-
-		if (!alt_mdtim_enabled)
+		if (!pmo_is_listen_interval_user_set(vdev_ctx)
+		    && !li_offload_support)
 			pmo_core_set_vdev_resume_dtim(psoc, vdev, vdev_ctx);
-
 		pmo_vdev_put_ref(vdev);
 	}
 }
@@ -1270,3 +1299,132 @@ out:
 	pmo_exit();
 }
 
+QDF_STATUS pmo_core_config_listen_interval(struct wlan_objmgr_vdev *vdev,
+					   uint32_t new_li)
+{
+	uint32_t listen_interval;
+	QDF_STATUS status;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	uint8_t vdev_id;
+
+	pmo_enter();
+
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto out;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	vdev_id =  pmo_vdev_get_id(vdev);
+
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	if (vdev_ctx->dyn_listen_interval == new_li) {
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+		status = QDF_STATUS_SUCCESS;
+		pmo_debug("Listen Interval(%d) already set for vdev id %d",
+			new_li, vdev_id);
+		goto dec_ref;
+	}
+
+	vdev_ctx->dyn_listen_interval = new_li;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	listen_interval = new_li ? new_li : PMO_DEFAULT_LISTEN_INTERVAL;
+
+	if (!new_li) {
+		/* Configure default LI as we do on resume */
+		pmo_psoc_with_ctx(pmo_vdev_get_psoc(vdev), psoc_ctx) {
+			if (psoc_ctx->get_cfg_int &&
+			   (QDF_STATUS_SUCCESS != psoc_ctx->get_cfg_int(
+							PMO_CFG_LISTEN_INTERVAL,
+							&listen_interval))) {
+				pmo_err("Failed to get listen interval");
+			}
+		}
+	}
+
+	pmo_debug("Set Listen Interval %d for vdevId %d", listen_interval,
+			vdev_id);
+	status = pmo_tgt_vdev_update_param_req(vdev,
+					       pmo_vdev_param_listen_interval,
+					       listen_interval);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		/* even it fails continue fwr will take default LI */
+		pmo_err("Failed to Set Listen Interval");
+	}
+
+	/* Set it to Normal DTIM */
+	status = pmo_tgt_vdev_update_param_req(vdev,
+					       pmo_vdev_param_dtim_policy,
+					       pmo_normal_dtim);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pmo_err("Failed to set Normal DTIM for vdev id %d", vdev_id);
+	} else {
+		pmo_debug("Set DTIM Policy to Normal for vdev id %d", vdev_id);
+		pmo_core_vdev_set_dtim_policy(vdev, pmo_normal_dtim);
+	}
+
+dec_ref:
+	pmo_vdev_put_ref(vdev);
+out:
+	pmo_exit();
+
+	return status;
+}
+
+QDF_STATUS pmo_core_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
+					  uint32_t mod_dtim)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+	bool prev_dtim_enabled;
+	uint32_t listen_interval;
+	QDF_STATUS status;
+	uint8_t vdev_id;
+
+	pmo_enter();
+
+	status = pmo_vdev_get_ref(vdev);
+	if (status != QDF_STATUS_SUCCESS)
+		goto out;
+
+	vdev_id = pmo_vdev_get_id(vdev);
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->dyn_modulated_dtim = mod_dtim;
+	prev_dtim_enabled = vdev_ctx->dyn_modulated_dtim_enabled;
+	vdev_ctx->dyn_modulated_dtim_enabled = mod_dtim != 1;
+	listen_interval = vdev_ctx->dyn_modulated_dtim  *
+		pmo_core_get_vdev_dtim_period(vdev);
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	if (prev_dtim_enabled || mod_dtim != 1) {
+		status = pmo_tgt_vdev_update_param_req(vdev,
+					pmo_vdev_param_listen_interval,
+					listen_interval);
+		if (QDF_IS_STATUS_ERROR(status))
+			/* even it fails continue fwr will take default LI */
+			pmo_err("Failed to set Listen Interval for vdev id %d",
+				vdev_id);
+		else
+			pmo_debug("Set Listen Interval %d for  vdev id %d",
+				  listen_interval, vdev_id);
+
+		status = pmo_tgt_vdev_update_param_req(vdev,
+				pmo_vdev_param_dtim_policy,
+				pmo_normal_dtim);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			pmo_err("Failed to set Normal DTIM for vdev id %d",
+				vdev_id);
+		} else {
+			pmo_debug("Set DTIM Policy to Normal for vdev id %d",
+				  vdev_id);
+			pmo_core_vdev_set_dtim_policy(vdev, pmo_normal_dtim);
+		}
+	}
+
+	pmo_vdev_put_ref(vdev);
+out:
+	pmo_exit();
+	return status;
+}
