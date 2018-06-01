@@ -502,7 +502,15 @@ QDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 					   uint8_t *pCountry);
 
 
-QDF_STATUS sme_update_channel_list(tpAniSirGlobal mac_ctx);
+/**
+ * sme_update_channel_list() - Update configured channel list to fwr
+ * This is a synchronous API.
+ * @hal: HAL handle returned by mac_open.
+ *
+ * Return: QDF_STATUS  SUCCESS.
+ * FAILURE or RESOURCES  The API finished and failed.
+ */
+QDF_STATUS sme_update_channel_list(tHalHandle hal);
 
 QDF_STATUS sme_tx_fail_monitor_start_stop_ind(tHalHandle hHal,
 		uint8_t tx_fail_count,

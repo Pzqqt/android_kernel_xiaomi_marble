@@ -5750,19 +5750,10 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * sme_update_channel_list() - Update configured channel list to fwr
- * This is a synchronous API.
- *
- * @mac_ctx - The handle returned by mac_open.
- *
- * Return QDF_STATUS  SUCCESS.
- * FAILURE or RESOURCES  The API finished and failed.
- */
-QDF_STATUS
-sme_update_channel_list(tpAniSirGlobal mac_ctx)
+QDF_STATUS sme_update_channel_list(tHalHandle hal)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	QDF_STATUS status;
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
