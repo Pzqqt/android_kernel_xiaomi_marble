@@ -4344,7 +4344,7 @@ enum station_keepalive_method {
  * MAWCEnabled - Enable/Disable Motion Aided Wireless Connectivity Global
  * @Min: 0 - Disabled
  * @Max: 1 - Enabled
- * @Default: 1
+ * @Default: 0
  *
  * This ini is used to controls the MAWC feature globally.
  * MAWC is Motion Aided Wireless Connectivity.
@@ -4360,14 +4360,14 @@ enum station_keepalive_method {
 #define CFG_LFR_MAWC_FEATURE_ENABLED_NAME                   "MAWCEnabled"
 #define CFG_LFR_MAWC_FEATURE_ENABLED_MIN                    (0)
 #define CFG_LFR_MAWC_FEATURE_ENABLED_MAX                    (1)
-#define CFG_LFR_MAWC_FEATURE_ENABLED_DEFAULT                (1)
+#define CFG_LFR_MAWC_FEATURE_ENABLED_DEFAULT                (0)
 
 /*
  * <ini>
  * mawc_roam_enabled - Enable/Disable MAWC during roaming
  * @Min: 0 - Disabled
  * @Max: 1 - Enabled
- * @Default: 1
+ * @Default: 0
  *
  * This ini is used to control MAWC during roaming.
  *
@@ -4382,7 +4382,7 @@ enum station_keepalive_method {
 #define CFG_MAWC_ROAM_ENABLED_NAME            "mawc_roam_enabled"
 #define CFG_MAWC_ROAM_ENABLED_MIN             (0)
 #define CFG_MAWC_ROAM_ENABLED_MAX             (1)
-#define CFG_MAWC_ROAM_ENABLED_DEFAULT         (1)
+#define CFG_MAWC_ROAM_ENABLED_DEFAULT         (0)
 
 /*
  * <ini>
