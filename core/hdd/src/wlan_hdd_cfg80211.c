@@ -15814,10 +15814,11 @@ void wlan_hdd_cfg80211_deregister_frames(struct hdd_adapter *adapter)
 }
 
 #ifdef FEATURE_WLAN_WAPI
-void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
-				    uint8_t key_index,
-				    const uint8_t *mac_addr, const uint8_t *key,
-				    int key_Len)
+static void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
+					   uint8_t key_index,
+					   const uint8_t *mac_addr,
+					   const uint8_t *key,
+					   int key_Len)
 {
 	tCsrRoamSetKey setKey;
 	bool isConnected = true;
