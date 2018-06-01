@@ -3461,16 +3461,13 @@ static inline void ol_txrx_peer_free_tids(ol_txrx_peer_handle peer)
 	}
 }
 
-bool ol_txrx_is_peer_eligible_for_deletion(ol_txrx_peer_handle peer)
+bool ol_txrx_is_peer_eligible_for_deletion(ol_txrx_peer_handle peer,
+					   struct ol_txrx_pdev_t *pdev)
 {
-	struct ol_txrx_vdev_t *vdev;
-	struct ol_txrx_pdev_t *pdev;
 	bool peerdel = true;
 	u_int16_t peer_id;
 	int i;
 
-	vdev = peer->vdev;
-	pdev = vdev->pdev;
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
 		peer_id = peer->peer_ids[i];
 
@@ -3689,7 +3686,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 		ol_txrx_dump_peer_access_list(peer);
 
 		qdf_spin_lock_bh(&pdev->peer_map_unmap_lock);
-		if (ol_txrx_is_peer_eligible_for_deletion(peer)) {
+		if (ol_txrx_is_peer_eligible_for_deletion(peer, pdev)) {
 			qdf_mem_free(peer);
 		} else {
 			/*

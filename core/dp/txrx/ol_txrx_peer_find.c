@@ -637,7 +637,7 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 							del_peer_id_ref_cnt);
 
 		peer = pdev->peer_id_to_obj_map[peer_id].peer_ref;
-		if (peer && ol_txrx_is_peer_eligible_for_deletion(peer)) {
+		if (peer && ol_txrx_is_peer_eligible_for_deletion(peer, pdev)) {
 			TAILQ_FOREACH_SAFE(stale_peer,
 					   &pdev->roam_stale_peer_list,
 					   next_stale_entry,
