@@ -607,8 +607,7 @@ struct wlan_lmac_if_dfs_tx_ops {
 			uint32_t chan_mode,
 			uint32_t *mode_info,
 			bool is_2gvht_en);
-	QDF_STATUS (*dfs_reg_ev_handler)(struct wlan_objmgr_psoc *psoc,
-			bool dfs_offload);
+	QDF_STATUS (*dfs_reg_ev_handler)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*dfs_process_emulate_bang_radar_cmd)(
 			struct wlan_objmgr_pdev *pdev,
 			struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
@@ -617,8 +616,7 @@ struct wlan_lmac_if_dfs_tx_ops {
 	QDF_STATUS (*dfs_set_phyerr_filter_offload)(
 			struct wlan_objmgr_pdev *pdev,
 			bool dfs_phyerr_filter_offload);
-	QDF_STATUS (*dfs_is_tgt_offload)(struct wlan_objmgr_psoc *psoc,
-			bool *is_tgt_offload);
+	bool (*dfs_is_tgt_offload)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*dfs_send_offload_enable_cmd)(
 			struct wlan_objmgr_pdev *pdev,
 			bool enable);

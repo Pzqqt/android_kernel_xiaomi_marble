@@ -84,14 +84,6 @@ bool lmac_is_mode_offload(struct wlan_objmgr_pdev *pdev);
 uint16_t lmac_get_ah_devid(struct wlan_objmgr_pdev *pdev);
 
 /**
- * lmac_is_mode_dfs_offload() - Check the DFS offload is enabled.
- * @psoc: Pointer to PSOC structure.
- *
- * returns true if DFS offload is enabled, otherwise returns false
- */
-bool lmac_is_mode_dfs_offload(struct wlan_objmgr_psoc *psoc);
-
-/**
  * lmac_get_ext_busy() - Get ext_busy.
  * @pdev: Pointer to PDEV structure.
  */

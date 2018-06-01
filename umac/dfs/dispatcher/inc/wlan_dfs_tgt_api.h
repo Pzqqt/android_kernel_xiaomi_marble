@@ -298,14 +298,12 @@ QDF_STATUS tgt_dfs_cac_complete(struct wlan_objmgr_pdev *pdev,
 /**
  * tgt_dfs_reg_ev_handler() - Register dfs events.
  * @psoc: Pointer to psoc.
- * @dfs_offload: phy err processing offloaded to firmware.
  *
  * Register dfs events.
  *
  * Return: QDF_STATUS.
  */
-QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
-		bool dfs_offload);
+QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc);
 
 /**
  * tgt_dfs_stop() - Clear dfs timers.

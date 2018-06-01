@@ -26,41 +26,6 @@
 #define _INIT_DEINIT_LMAC_H_
 
 /**
- * lmac_get_service_param() - get service param
- * @psoc: pointer to psoc
- *
- * API to get service parameters
- *
- * Return: service parameter array pointer
- */
-uint32_t *lmac_get_service_param(struct wlan_objmgr_psoc *psoc);
-
-/**
- * lmac_is_service_param_bit_enabled() - check service param bit enabled
- * @service_param: Service bitmap array
- * @bit_idx: Service bit index to be checked
- *
- * API to check service param bitmap
- *
- * Return: true, if service is enabled
- *         false, if service is not enabled
- */
-bool lmac_is_service_param_bit_enabled(uint32_t *service_param,
-					uint16_t bit_idx);
-
-/**
- * lmac_get_dfs_offload() - get dfs offload
- * @psoc: pointer to psoc
- * @is_tgt_offload: boolean flag for offload enabled/disabled
- *
- * API to get dfs offload
- *
- * Return: SUCCESS, if API is invoked without any failures
- */
-QDF_STATUS lmac_get_dfs_offload(struct wlan_objmgr_psoc *psoc,
-			bool *is_tgt_offload);
-
-/**
  * lmac_get_tgt_res_cfg() - get target resource config
  * @psoc: pointer to psoc
  *

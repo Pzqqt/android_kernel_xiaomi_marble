@@ -367,8 +367,7 @@ QDF_STATUS tgt_dfs_cac_complete(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
 #endif
 qdf_export_symbol(tgt_dfs_cac_complete);
 
-QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
-				  bool dfs_offload)
+QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 
@@ -384,7 +383,7 @@ QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if (dfs_tx_ops->dfs_reg_ev_handler)
-		return dfs_tx_ops->dfs_reg_ev_handler(psoc, dfs_offload);
+		return dfs_tx_ops->dfs_reg_ev_handler(psoc);
 
 	return QDF_STATUS_E_FAILURE;
 }

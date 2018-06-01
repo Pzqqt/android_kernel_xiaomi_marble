@@ -29,24 +29,6 @@
 #include <init_deinit_lmac.h>
 #include <qdf_module.h>
 
-uint32_t *lmac_get_service_param(struct wlan_objmgr_psoc *psoc)
-{
-	struct target_psoc_info *tgt_hdl;
-
-	if (!psoc) {
-		target_if_err("psoc is null");
-		return NULL;
-	}
-
-	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
-	if (!tgt_hdl) {
-		target_if_err("target_psoc_info is null");
-		return NULL;
-	}
-
-	return target_psoc_get_service_bitmap(tgt_hdl);
-}
-
 struct wlan_psoc_target_capability_info *lmac_get_target_cap(
 				struct wlan_objmgr_psoc *psoc)
 {
@@ -64,45 +46,6 @@ struct wlan_psoc_target_capability_info *lmac_get_target_cap(
 	}
 
 	return target_psoc_get_target_caps(tgt_hdl);
-}
-
-bool lmac_is_service_param_bit_enabled(uint32_t *service_param,
-					uint16_t bit_idx)
-{
-	bool retval = false;
-
-	if (((service_param)[(bit_idx) / (sizeof(uint32_t))] &
-			(1 << ((bit_idx) % (sizeof(uint32_t))))) != 0)
-		retval = true;
-
-	return retval;
-}
-
-/* dfs offload service bit */
-#define DFS_SERVICE_PHYERR_OFFLOAD 113
-
-QDF_STATUS lmac_get_dfs_offload(struct wlan_objmgr_psoc *psoc,
-			bool *is_tgt_offload)
-{
-	uint32_t *service_bitmap;
-
-	*is_tgt_offload = false;
-
-	if (!psoc) {
-		target_if_err("psoc is null");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	service_bitmap = lmac_get_service_param(psoc);
-	if (!service_bitmap) {
-		target_if_err("pdev is null");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	*is_tgt_offload = lmac_is_service_param_bit_enabled(service_bitmap,
-				DFS_SERVICE_PHYERR_OFFLOAD);
-
-	return QDF_STATUS_SUCCESS;
 }
 
 target_resource_config *lmac_get_tgt_res_cfg(struct wlan_objmgr_psoc *psoc)

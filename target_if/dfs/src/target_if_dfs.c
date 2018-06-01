@@ -195,9 +195,14 @@ static QDF_STATUS target_if_reg_phyerr_events_dfs2(
 }
 #endif
 
+static bool target_if_dfs_offload(struct wlan_objmgr_psoc *psoc)
+{
+	return wmi_service_enabled(get_wmi_unified_hdl_from_psoc(psoc),
+				   wmi_service_dfs_phyerr_offload);
+}
+
 static QDF_STATUS target_if_dfs_register_event_handler(
-		struct wlan_objmgr_psoc *psoc,
-		bool dfs_offload)
+		struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_psoc_info;
 
@@ -206,7 +211,7 @@ static QDF_STATUS target_if_dfs_register_event_handler(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!dfs_offload) {
+	if (!target_if_dfs_offload(psoc)) {
 		tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
 		if (!tgt_psoc_info) {
 			target_if_err("null tgt_psoc_info");
@@ -359,6 +364,7 @@ QDF_STATUS target_if_register_dfs_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	dfs_tx_ops->dfs_get_caps = &target_if_dfs_get_caps;
 	dfs_tx_ops->dfs_send_avg_radar_params_to_fw =
 		&target_if_dfs_send_avg_params_to_fw;
+	dfs_tx_ops->dfs_is_tgt_offload = &target_if_dfs_offload;
 
 	return QDF_STATUS_SUCCESS;
 }
