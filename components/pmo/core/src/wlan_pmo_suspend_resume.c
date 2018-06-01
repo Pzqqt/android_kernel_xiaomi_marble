@@ -37,6 +37,63 @@
 #include "wlan_pmo_static_config.h"
 
 /**
+ * pmo_core_get_vdev_dtim_period() - Get vdev dtim period
+ * @vdev: objmgr vdev handle
+ *
+ * Return: Vdev dtim period
+ */
+static uint8_t pmo_core_get_vdev_dtim_period(struct wlan_objmgr_vdev *vdev)
+{
+	uint8_t dtim_period = 0;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
+
+	psoc = pmo_vdev_get_psoc(vdev);
+
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		if (psoc_ctx->get_dtim_period)
+			ret = psoc_ctx->get_dtim_period(pmo_vdev_get_id(vdev),
+							&dtim_period);
+	}
+
+	if (QDF_IS_STATUS_ERROR(ret))
+		pmo_err("Failed to get to dtim period for vdevId %d",
+				pmo_vdev_get_id(vdev));
+
+	return dtim_period;
+}
+
+/**
+ * pmo_core_get_vdev_beacon_interval() - Get vdev beacon interval
+ * @vdev: objmgr vdev handle
+ *
+ * Return: Vdev beacon interval
+ */
+static uint16_t pmo_core_get_vdev_beacon_interval(struct wlan_objmgr_vdev *vdev)
+{
+	uint16_t beacon_interval = 0;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
+
+	psoc = pmo_vdev_get_psoc(vdev);
+
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		if (psoc_ctx->get_beacon_interval)
+			ret = psoc_ctx->get_beacon_interval(
+							pmo_vdev_get_id(vdev),
+							&beacon_interval);
+	}
+
+	if (QDF_IS_STATUS_ERROR(ret))
+		pmo_err("Failed to get beacon interval for vdev id %d",
+			pmo_vdev_get_id(vdev));
+
+	return beacon_interval;
+}
+
+/**
  * pmo_core_calculate_listen_interval() - Calculate vdev listen interval
  * @vdev: objmgr vdev handle
  * @vdev_ctx: pmo vdev priv ctx
@@ -107,7 +164,7 @@ static void pmo_core_set_vdev_suspend_dtim(struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_vdev *vdev,
 		struct pmo_vdev_priv_obj *vdev_ctx)
 {
-	uint32_t listen_interval;
+	uint32_t listen_interval = PMO_DEFAULT_LISTEN_INTERVAL;
 	QDF_STATUS ret;
 	uint8_t vdev_id;
 	enum pmo_power_save_qpower_mode qpower_config;

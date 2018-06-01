@@ -207,6 +207,48 @@ QDF_STATUS pmo_register_get_pause_bitmap(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS pmo_unregister_get_pause_bitmap(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * pmo_register_get_dtim_period_callback(): API to register callback that gets
+ * dtim period from mlme
+ * @psoc: objmgr psoc handle
+ * @handler: pointer to the callback function
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success else error
+ */
+QDF_STATUS pmo_register_get_dtim_period_callback(struct wlan_objmgr_psoc *psoc,
+						 pmo_get_dtim_period handler);
+
+/**
+ * pmo_unregister_get_dtim_period_callback(): API to unregister callback that
+ * gets dtim period from mlme
+ * @psoc: objmgr psoc handle
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success else error
+ */
+QDF_STATUS
+pmo_unregister_get_dtim_period_callback(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * pmo_register_get_beacon_interval_callback(): API to register callback that
+ * gets beacon interval from mlme
+ * @psoc: objmgr psoc handle
+ * @handler: pointer to the callback function
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success else error
+ */
+QDF_STATUS
+pmo_register_get_beacon_interval_callback(struct wlan_objmgr_psoc *psoc,
+					  pmo_get_beacon_interval handler);
+
+/**
+ * pmo_unregister_get_beacon_interval_callback(): API to unregister callback
+ * that gets beacon interval from mlme
+ * @psoc: objmgr psoc handle
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success else error
+ */
+QDF_STATUS
+pmo_unregister_get_beacon_interval_callback(struct wlan_objmgr_psoc *psoc);
 
 /**
  * pmo_register_is_device_in_low_pwr_mode(): API to get register device  power
@@ -386,6 +428,33 @@ pmo_unregister_get_cfg_int_callback(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline QDF_STATUS
+pmo_register_get_dtim_period_callback(struct wlan_objmgr_psoc *psoc,
+				      pmo_get_dtim_period handler)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_unregister_get_dtim_period_callback(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_register_get_beacon_interval_callback(struct wlan_objmgr_psoc *psoc,
+					  pmo_get_beacon_interval handler)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_unregister_get_beacon_interval_callback(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_OBJ_MGMT_API_H_ */

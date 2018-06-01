@@ -47,6 +47,8 @@
  * @pause_bitmap_notifier: registered callback to update pause bitmap value
  * @pmo_get_pause_bitmap: registered callback to get pause bitmap value
  * @get_cfg_int: register callback to get integer from cfg
+ * @get_dtim_period: register callback to get dtim period from mlme
+ * @get_beacon_interval: register callback to get beacon interval from mlme
  * @lock: spin lock for pmo psoc
  */
 struct pmo_psoc_priv_obj {
@@ -62,6 +64,8 @@ struct pmo_psoc_priv_obj {
 	pmo_get_pause_bitmap get_pause_bitmap;
 	pmo_is_device_in_low_pwr_mode is_device_in_low_pwr_mode;
 	pmo_get_cfg_int get_cfg_int;
+	pmo_get_dtim_period get_dtim_period;
+	pmo_get_beacon_interval get_beacon_interval;
 	qdf_spinlock_t lock;
 };
 

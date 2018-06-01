@@ -109,6 +109,8 @@
 
 #define PMO_WOW_FILTERS_ARP_NS		2
 #define PMO_WOW_FILTERS_PKT_OR_APF	5
+/* Default Listen Interval */
+#define PMO_DEFAULT_LISTEN_INTERVAL 1
 
 /**
  * pmo_get_and_increment_wow_default_ptrn() -Get and increment wow default ptrn

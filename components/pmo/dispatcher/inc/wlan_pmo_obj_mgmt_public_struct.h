@@ -41,9 +41,19 @@
 typedef void (*pmo_notify_pause_bitmap)(uint8_t vdev_id, uint16_t value);
 
 /**
- * typedef for getting cfg integer from mlme
+ * typedef for function that gets cfg integer from mlme
  */
 typedef QDF_STATUS (*pmo_get_cfg_int)(int cfg_id, int *value);
+
+/**
+ * typedef for function that gets dtim period from mlme
+ */
+typedef QDF_STATUS (*pmo_get_dtim_period)(uint8_t vdev_id, uint8_t *value);
+
+/**
+ * typedef for function that gets  beacon interval from mlme
+ */
+typedef QDF_STATUS (*pmo_get_beacon_interval)(uint8_t vdev_id, uint16_t *value);
 
 /**
  * typedef for getting vdev pause bitmap

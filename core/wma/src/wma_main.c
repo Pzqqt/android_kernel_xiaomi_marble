@@ -3536,6 +3536,10 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		wma_vdev_is_device_in_low_pwr_mode);
 	pmo_register_get_cfg_int_callback(wma_handle->psoc,
 					  wma_vdev_get_cfg_int);
+	pmo_register_get_dtim_period_callback(wma_handle->psoc,
+					      wma_vdev_get_dtim_period);
+	pmo_register_get_beacon_interval_callback(wma_handle->psoc,
+						  wma_vdev_get_beacon_interval);
 	wma_cbacks.wma_get_connection_info = wma_get_connection_info;
 	qdf_status = policy_mgr_register_wma_cb(wma_handle->psoc, &wma_cbacks);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -4713,6 +4717,8 @@ QDF_STATUS wma_close(void)
 		wma_handle->pdev = NULL;
 	}
 
+	pmo_unregister_get_beacon_interval_callback(wma_handle->psoc);
+	pmo_unregister_get_dtim_period_callback(wma_handle->psoc);
 	pmo_unregister_get_cfg_int_callback(wma_handle->psoc);
 	pmo_unregister_is_device_in_low_pwr_mode(wma_handle->psoc);
 	pmo_unregister_get_pause_bitmap(wma_handle->psoc);

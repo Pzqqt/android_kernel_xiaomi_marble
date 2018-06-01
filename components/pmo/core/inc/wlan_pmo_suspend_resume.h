@@ -141,50 +141,6 @@ QDF_STATUS pmo_core_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type);
 
 /**
- * pmo_core_get_vdev_dtim_period() - Get vdev dtim period
- * @vdev: objmgr vdev handle
- *
- * Return: Vdev dtim period
- */
-static inline
-uint8_t pmo_core_get_vdev_dtim_period(struct wlan_objmgr_vdev *vdev)
-{
-	uint8_t dtim_period = 0;
-
-	if (!vdev) {
-		pmo_err("vdev is null");
-		QDF_ASSERT(0);
-		return 0;
-	}
-	/* TODO */
-	/* dtim_period = wlan_vdev_mlme_get_dtim_period(vdev); */
-
-	return dtim_period;
-}
-
-/**
- * pmo_core_get_vdev_beacon_interval() - Get vdev beacon interval
- * @vdev: objmgr vdev handle
- *
- * Return: Vdev beacon interval
- */
-static inline
-uint16_t pmo_core_get_vdev_beacon_interval(struct wlan_objmgr_vdev *vdev)
-{
-	uint16_t beacon_interval = 0;
-
-	if (!vdev) {
-		pmo_err("vdev is null");
-		QDF_ASSERT(0);
-		return 0;
-	}
-	/* TODO */
-	/* beacon_interval = wlan_vdev_mlme_get_beacon_interval(vdev); */
-
-	return beacon_interval;
-}
-
-/**
  * pmo_core_update_alt_modulated_dtim_enable() - update alt modulatate dtim
  * @vdev: objmgr vdev handle
  * @value: true when alt modulated dtim enable else false
