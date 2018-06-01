@@ -4831,8 +4831,8 @@ QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
 	/* cleanup adapter */
 	policy_mgr_clear_concurrency_mode(hdd_ctx->hdd_psoc,
 					  adapter->device_mode);
-	hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
 	hdd_remove_adapter(hdd_ctx, adapter);
+	hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
 
 	/* conditionally restart the bw timer */
 	hdd_bus_bw_compute_timer_try_start(hdd_ctx);
@@ -4927,6 +4927,13 @@ void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter)
 
 QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			    struct hdd_adapter *adapter)
+{
+	return hdd_stop_adapter_ext(hdd_ctx, adapter, 0);
+}
+
+QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				enum hdd_adapter_stop_flag_t flag)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	struct csr_roam_profile *roam_profile;
@@ -5058,7 +5065,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			wlansap_reset_sap_config_add_ie(sap_config,
 							eUPDATE_IE_ALL);
 		ucfg_ipa_flush(hdd_ctx->hdd_pdev);
-		cds_flush_work(&hdd_ctx->sap_pre_cac_work);
+		if (!(flag & HDD_IN_CAC_WORK_TH_CONTEXT))
+			cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 		/* fallthrough */
 
 	case QDF_P2P_GO_MODE:

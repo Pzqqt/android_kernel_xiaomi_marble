@@ -2057,6 +2057,15 @@ void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
 			bool rtnl_held);
 QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			    struct hdd_adapter *adapter);
+
+enum hdd_adapter_stop_flag_t {
+	HDD_IN_CAC_WORK_TH_CONTEXT = 0x00000001,
+};
+
+QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				enum hdd_adapter_stop_flag_t flag);
+
 void hdd_set_station_ops(struct net_device *dev);
 uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *hdd_ctx);
 void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,

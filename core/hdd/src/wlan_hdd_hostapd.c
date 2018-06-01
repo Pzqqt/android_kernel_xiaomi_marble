@@ -1031,6 +1031,32 @@ static int wlan_hdd_set_pre_cac_complete_status(struct hdd_adapter *ap_adapter,
 }
 
 /**
+ * hdd_check_adapter() - check adapter existing or not
+ * @adapter: adapter
+ *
+ * Check adapter in the hdd global list or not
+ *
+ * Return: true if adapter exists.
+ */
+static bool hdd_check_adapter(struct hdd_adapter *adapter)
+{
+	struct hdd_adapter *temp;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is null");
+		return false;
+	}
+	hdd_for_each_adapter(hdd_ctx, temp) {
+		if (temp == adapter)
+			return true;
+	}
+
+	return false;
+}
+
+/**
  * __wlan_hdd_sap_pre_cac_failure() - Process the pre cac failure
  * @data: AP adapter
  *
@@ -1046,7 +1072,7 @@ static void __wlan_hdd_sap_pre_cac_failure(void *data)
 	hdd_enter();
 
 	adapter = (struct hdd_adapter *) data;
-	if (!adapter ||
+	if (!adapter || !hdd_check_adapter(adapter) ||
 	    adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
 		hdd_err("SAP Pre CAC adapter invalid");
 		return;
@@ -1060,7 +1086,7 @@ static void __wlan_hdd_sap_pre_cac_failure(void *data)
 
 	wlan_hdd_release_intf_addr(hdd_ctx,
 				   adapter->mac_addr.bytes);
-	hdd_stop_adapter(hdd_ctx, adapter);
+	hdd_stop_adapter_ext(hdd_ctx, adapter, HDD_IN_CAC_WORK_TH_CONTEXT);
 	hdd_close_adapter(hdd_ctx, adapter, false);
 }
 
@@ -1097,8 +1123,9 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 	hdd_enter();
 
 	adapter = (struct hdd_adapter *) data;
-	if (!adapter) {
-		hdd_err("AP adapter is NULL");
+	if (!adapter || !hdd_check_adapter(adapter) ||
+	    adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
+		hdd_err("SAP Pre CAC adapter invalid");
 		return;
 	}
 
@@ -1111,7 +1138,7 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 	cds_ssr_protect(__func__);
 	wlan_hdd_release_intf_addr(hdd_ctx,
 				   adapter->mac_addr.bytes);
-	hdd_stop_adapter(hdd_ctx, adapter);
+	hdd_stop_adapter_ext(hdd_ctx, adapter, HDD_IN_CAC_WORK_TH_CONTEXT);
 	hdd_close_adapter(hdd_ctx, adapter, false);
 	cds_ssr_unprotect(__func__);
 
