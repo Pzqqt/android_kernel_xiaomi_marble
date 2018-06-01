@@ -499,6 +499,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	/* flag to indicate country code in beacon */
 	uint8_t country_info_present;
 	uint8_t nss;
+	bool nss_forced_1x1;
 	bool add_bss_failed;
 	/* To hold OBSS Scan IE Parameters */
 	struct obss_scanparam obss_ht40_scanparam;

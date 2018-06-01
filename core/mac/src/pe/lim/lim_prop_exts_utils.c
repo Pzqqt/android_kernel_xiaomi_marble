@@ -101,168 +101,6 @@ static inline void get_ese_version_ie_probe_response(tpAniSirGlobal mac_ctx,
 }
 #endif
 
-/**
- * lim_get_nss_supported_by_beacon() - finds out nss from beacom
- * @bcn: beacon structure pointer
- * @session: pointer to pe session
- *
- * Return: number of nss advertised by beacon
- */
-static uint8_t lim_get_nss_supported_by_beacon(tpSchBeaconStruct bcn,
-						tpPESession session)
-{
-	if (session->vhtCapability && bcn->VHTCaps.present) {
-		if ((bcn->VHTCaps.rxMCSMap & 0xC0) != 0xC0)
-			return 4;
-
-		if ((bcn->VHTCaps.rxMCSMap & 0x30) != 0x30)
-			return 3;
-
-		if ((bcn->VHTCaps.rxMCSMap & 0x0C) != 0x0C)
-			return 2;
-	} else if (session->htCapability && bcn->HTCaps.present) {
-		if (bcn->HTCaps.supportedMCSSet[3])
-			return 4;
-
-		if (bcn->HTCaps.supportedMCSSet[2])
-			return 3;
-
-		if (bcn->HTCaps.supportedMCSSet[1])
-			return 2;
-	}
-
-	return 1;
-}
-
-/**
- * lim_dump_vendor_ies() - Dumps all the vendor IEs
- * @ie:         ie buffer
- * @ie_len:     length of ie buffer
- *
- * This function dumps the vendor IEs present in the AP's IE buffer
- *
- * Return: none
- */
-static
-void lim_dump_vendor_ies(uint8_t *ie, uint16_t ie_len)
-{
-	int32_t left = ie_len;
-	uint8_t *ptr = ie;
-	uint8_t elem_id, elem_len;
-
-	while (left >= 2) {
-		elem_id  = ptr[0];
-		elem_len = ptr[1];
-		left -= 2;
-		if (elem_len > left) {
-			pe_err("Invalid IEs eid: %d elem_len: %d left: %d",
-					elem_id, elem_len, left);
-			return;
-		}
-		if (SIR_MAC_EID_VENDOR == elem_id) {
-			pe_debug("Dumping Vendor IE of len %d", elem_len);
-			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
-					   QDF_TRACE_LEVEL_DEBUG,
-					   &ptr[2], elem_len);
-		}
-
-		left -= elem_len;
-		ptr += (elem_len + 2);
-	}
-}
-
-/**
- * lim_check_vendor_ap_present() - checks if the Vendor OUIs are present
- * in the IE buffer
- *
- * @ie:            ie buffer
- * @ie_len:        length of ie buffer
- * @beacon_struct: pointer to beacon structure
- * @session:       pointer to pe session
- *
- * This function parses the IE buffer and finds if any of the vendor OUI
- * is present in it.
- *
- * Return: true if the vendor OUI is present, else false
- */
-static bool
-lim_check_vendor_ap_present(uint8_t *ie, uint16_t ie_len,
-			    tpSchBeaconStruct beacon_struct,
-			    tpPESession session)
-{
-	uint8_t nss;
-	const uint8_t *ptr = NULL;
-	uint8_t elem_len;
-	uint8_t elem_data[SIR_MAC_VENDOR_AP_2_DATA_LEN];
-
-	nss = lim_get_nss_supported_by_beacon(beacon_struct, session);
-	lim_dump_vendor_ies(ie, ie_len);
-	/*
-	 * for SIR_MAC_VENDOR_AP_1_OUI, check for Vendor OUI and if it is 2x2
-	 */
-	if ((wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_1_OUI,
-	    SIR_MAC_VENDOR_AP_1_OUI_LEN, ie, ie_len)) &&
-	    (nss == 2)) {
-		pe_debug("In lim_check_vendor_ap_present match Vendor AP 1");
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-				SIR_MAC_VENDOR_AP_1_OUI,
-				SIR_MAC_VENDOR_AP_1_OUI_LEN);
-		return true;
-	}
-
-	/*
-	 * for SIR_MAC_VENDOR_AP_2_OUI check for Vendor OUI, Vendor IE Data
-	 * and if it is 2x2
-	 */
-	ptr = wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_2_OUI,
-					      SIR_MAC_VENDOR_AP_2_OUI_LEN,
-					      ie, ie_len);
-	if (!ptr)
-		goto vendor3;
-
-	elem_len = ptr[1];
-	qdf_mem_copy(&elem_data, &ptr[2 + SIR_MAC_VENDOR_AP_2_OUI_LEN],
-			SIR_MAC_VENDOR_AP_2_DATA_LEN);
-	/*
-	 * Byte 2 of Vendor IE data might change dynamically, masking it
-	 */
-	elem_data[1] |= 0xFF;
-
-	if ((nss == 2) && (elem_len == (SIR_MAC_VENDOR_AP_2_OUI_LEN +
-	     SIR_MAC_VENDOR_AP_2_DATA_LEN)) &&
-	     ((qdf_mem_cmp(&elem_data, SIR_MAC_VENDOR_AP_2_DATA,
-	     SIR_MAC_VENDOR_AP_2_DATA_LEN) == 0) ||
-	     (qdf_mem_cmp(&elem_data, SIR_MAC_VENDOR_AP_2_DATA_2,
-	     SIR_MAC_VENDOR_AP_2_DATA_LEN) == 0))) {
-		pe_debug("In lim_check_vendor_ap_present match Vendor AP 2");
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-				SIR_MAC_VENDOR_AP_2_OUI,
-				SIR_MAC_VENDOR_AP_2_OUI_LEN);
-		pe_debug("Verifying vendor IE Data "MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(&ptr[2 + SIR_MAC_VENDOR_AP_2_OUI_LEN]));
-		return true;
-	}
-
-vendor3:
-	/*
-	 * for SIR_MAC_VENDOR_AP_3_OUI, check if VENDOR AP 3 IE is present and
-	 * if Vendor AP 4 IE is not present and if it is 4x4 11ac
-	 */
-	if (beacon_struct->VHTCaps.present &&
-	    (nss == 4 || nss == 3) &&
-	    (wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_3_OUI,
-	    SIR_MAC_VENDOR_AP_3_OUI_LEN, ie, ie_len)) &&
-	    !(wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_4_OUI,
-	    SIR_MAC_VENDOR_AP_4_OUI_LEN, ie, ie_len))) {
-		pe_debug("In lim_check_vendor_ap_present match Vendor AP 3");
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-					SIR_MAC_VENDOR_AP_3_OUI,
-					SIR_MAC_VENDOR_AP_3_OUI_LEN);
-		return true;
-	}
-
-	return false;
-}
 #ifdef WLAN_FEATURE_11AX
 static void lim_extract_he_op(tpPESession session,
 		tSirProbeRespBeacon *beacon_struct)
@@ -366,7 +204,6 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	QDF_STATUS cfg_get_status = QDF_STATUS_E_FAILURE;
 	uint8_t ap_bcon_ch_width;
 	bool new_ch_width_dfn = false;
-	bool is_vendor_ap_present;
 	tDot11fIEVHTOperation *vht_op;
 	uint8_t fw_vht_ch_wd;
 	uint8_t vht_ch_wd;
@@ -391,31 +228,6 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		qdf_mem_free(beacon_struct);
 		return;
 	}
-
-	is_vendor_ap_present = lim_check_vendor_ap_present(p_ie,
-							   ie_len,
-							   beacon_struct,
-							   session);
-
-	if (mac_ctx->roam.configParam.is_force_1x1 &&
-	    is_vendor_ap_present &&
-	    mac_ctx->lteCoexAntShare &&
-	    IS_24G_CH(session->currentOperChannel)) {
-		session->supported_nss_1x1 = true;
-		session->vdev_nss = 1;
-		session->nss = 1;
-		pe_debug("For special ap, NSS: %d", session->nss);
-	}
-
-	if (session->nss > lim_get_nss_supported_by_beacon(beacon_struct,
-	    session)) {
-		session->nss = lim_get_nss_supported_by_beacon(beacon_struct,
-							       session);
-		session->vdev_nss = session->nss;
-	}
-
-	if (session->nss == 1)
-		session->supported_nss_1x1 = true;
 
 	if (beacon_struct->wmeInfoPresent ||
 	    beacon_struct->wmeEdcaPresent ||

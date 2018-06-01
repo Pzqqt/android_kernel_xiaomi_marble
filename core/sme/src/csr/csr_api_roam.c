@@ -52,6 +52,8 @@
 #include <wlan_tdls_tgt_api.h>
 #include <wlan_cfg80211_scan.h>
 #include <wlan_scan_public_structs.h>
+#include <wlan_action_oui_public_struct.h>
+#include <wlan_action_oui_ucfg_api.h>
 #include <wlan_utility.h>
 
 #define MAX_PWR_FCC_CHAN_12 8
@@ -15372,6 +15374,114 @@ static void csr_update_sae_config(tSirSmeJoinReq *csr_join_req,
 #endif
 
 /**
+ * csr_get_nss_supported_by_sta_and_ap() - finds out nss from session
+ * and beacon from AP
+ * @vht_caps: VHT capabilities
+ * @ht_caps: HT capabilities
+ * @dot11_mode: dot11 mode
+ *
+ * Return: number of nss advertised by beacon
+ */
+static uint8_t csr_get_nss_supported_by_sta_and_ap(tDot11fIEVHTCaps *vht_caps,
+						   tDot11fIEHTCaps *ht_caps,
+						   uint32_t dot11_mode)
+{
+	bool vht_capability, ht_capability;
+
+	vht_capability = IS_DOT11_MODE_VHT(dot11_mode);
+	ht_capability = IS_DOT11_MODE_HT(dot11_mode);
+
+	if (vht_capability && vht_caps->present) {
+		if ((vht_caps->rxMCSMap & 0xC0) != 0xC0)
+			return 4;
+
+		if ((vht_caps->rxMCSMap & 0x30) != 0x30)
+			return 3;
+
+		if ((vht_caps->rxMCSMap & 0x0C) != 0x0C)
+			return 2;
+	} else if (ht_capability && ht_caps->present) {
+		if (ht_caps->supportedMCSSet[3])
+			return 4;
+
+		if (ht_caps->supportedMCSSet[2])
+			return 3;
+
+		if (ht_caps->supportedMCSSet[1])
+			return 2;
+	}
+
+	return 1;
+}
+
+/**
+ * csr_dump_vendor_ies() - Dumps all the vendor IEs
+ * @ie:         ie buffer
+ * @ie_len:     length of ie buffer
+ *
+ * This function dumps the vendor IEs present in the AP's IE buffer
+ *
+ * Return: none
+ */
+static
+void csr_dump_vendor_ies(uint8_t *ie, uint16_t ie_len)
+{
+	int32_t left = ie_len;
+	uint8_t *ptr = ie;
+	uint8_t elem_id, elem_len;
+
+	while (left >= 2) {
+		elem_id  = ptr[0];
+		elem_len = ptr[1];
+		left -= 2;
+		if (elem_len > left) {
+			pe_err("Invalid IEs eid: %d elem_len: %d left: %d",
+			       elem_id, elem_len, left);
+			return;
+		}
+		if (elem_id == SIR_MAC_EID_VENDOR) {
+			pe_debug("Dumping Vendor IE of len %d", elem_len);
+			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
+					   QDF_TRACE_LEVEL_DEBUG,
+					   &ptr[2], elem_len);
+		}
+
+		left -= elem_len;
+		ptr += (elem_len + 2);
+	}
+}
+
+/**
+ * csr_check_vendor_ap_3_present() - Check if Vendor AP 3 is present
+ * @mac_ctx: Pointer to Global MAC structure
+ * @ie: Pointer to starting IE in Beacon/Probe Response
+ * @ie_len: Length of all IEs combined
+ *
+ * For Vendor AP 3, the condition is that Vendor AP 3 IE should be present
+ * and Vendor AP 4 IE should not be present.
+ * If Vendor AP 3 IE is present and Vendor AP 4 IE is also present,
+ * return false, else return true.
+ *
+ * Return: true or false
+ */
+static bool
+csr_check_vendor_ap_3_present(tpAniSirGlobal mac_ctx, uint8_t *ie,
+			      uint16_t ie_len)
+{
+	bool ret = true;
+
+	if ((wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_3_OUI,
+	    SIR_MAC_VENDOR_AP_3_OUI_LEN, ie, ie_len)) &&
+	    (wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_4_OUI,
+	    SIR_MAC_VENDOR_AP_4_OUI_LEN, ie, ie_len))) {
+		pe_debug("Vendor OUI 3 and Vendor OUI 4 found");
+		ret = false;
+	}
+
+	return ret;
+}
+
+/**
  * The communication between HDD and LIM is thru mailbox (MB).
  * Both sides will access the data structure "tSirSmeJoinReq".
  * The rule is, while the components of "tSirSmeJoinReq" can be accessed in the
@@ -15406,6 +15516,9 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	tpCsrNeighborRoamControlInfo neigh_roam_info;
 	uint32_t value = 0, value1 = 0;
 	QDF_STATUS packetdump_timer_status;
+	bool is_vendor_ap_present;
+	struct vdev_type_nss *vdev_type_nss;
+	struct action_oui_search_attr vendor_ap_search_attr;
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -15522,10 +15635,116 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			/* Need to disable VHT operation in 2.4 GHz band */
 			ucDot11Mode = WNI_CFG_DOT11_MODE_11N;
 		}
+
+		if (IS_5G_CH(pBssDescription->channelId))
+			vdev_type_nss = &pMac->vdev_type_nss_5g;
+		else
+			vdev_type_nss = &pMac->vdev_type_nss_2g;
+		if (pSession->pCurRoamProfile->csrPersona ==
+		    QDF_P2P_CLIENT_MODE)
+			pSession->vdev_nss = vdev_type_nss->p2p_cli;
+		else
+			pSession->vdev_nss = vdev_type_nss->sta;
+		pSession->nss = pSession->vdev_nss;
+
+		if (pSession->nss > csr_get_nss_supported_by_sta_and_ap(
+						&pIes->VHTCaps,
+						&pIes->HTCaps, ucDot11Mode)) {
+			pSession->nss = csr_get_nss_supported_by_sta_and_ap(
+						&pIes->VHTCaps, &pIes->HTCaps,
+						ucDot11Mode);
+			pSession->vdev_nss = pSession->nss;
+		}
+
+		if (!pMac->roam.configParam.enable2x2)
+			pSession->nss = 1;
+
+		if (pSession->nss == 1)
+			pSession->supported_nss_1x1 = true;
+
+		ieLen = csr_get_ielen_from_bss_description(pBssDescription);
+
+		/* Dump the Vendor Specific IEs*/
+		csr_dump_vendor_ies((uint8_t *)&pBssDescription->ieFields[0],
+				    ieLen);
+
+		/* Fill the Vendor AP search params */
+		vendor_ap_search_attr.ie_data =
+				(uint8_t *)&pBssDescription->ieFields[0];
+		vendor_ap_search_attr.ie_length = ieLen;
+		vendor_ap_search_attr.mac_addr = &pBssDescription->bssId[0];
+		vendor_ap_search_attr.nss = csr_get_nss_supported_by_sta_and_ap(
+						&pIes->VHTCaps, &pIes->HTCaps,
+						ucDot11Mode);
+		vendor_ap_search_attr.ht_cap = pIes->HTCaps.present;
+		vendor_ap_search_attr.vht_cap = pIes->VHTCaps.present;
+		vendor_ap_search_attr.enable_2g =
+					IS_24G_CH(pBssDescription->channelId);
+		vendor_ap_search_attr.enable_5g =
+					IS_5G_CH(pBssDescription->channelId);
+
+		is_vendor_ap_present =
+				ucfg_action_oui_search(pMac->psoc,
+						       &vendor_ap_search_attr,
+						       ACTION_OUI_CONNECT_1X1);
+
+		if (is_vendor_ap_present) {
+			is_vendor_ap_present = csr_check_vendor_ap_3_present(
+						pMac, (uint8_t *)pIes, ieLen);
+		}
+
+		if (pMac->roam.configParam.is_force_1x1 &&
+		    pMac->lteCoexAntShare &&
+		    is_vendor_ap_present) {
+			pSession->supported_nss_1x1 = true;
+			pSession->vdev_nss = 1;
+			pSession->nss = 1;
+			pSession->nss_forced_1x1 = true;
+			sme_debug("For special ap, NSS: %d", pSession->nss);
+		}
+
+		/*
+		 * If CCK WAR is set for current AP, update to firmware via
+		 * WMI_VDEV_PARAM_ABG_MODE_TX_CHAIN_NUM
+		 */
+		is_vendor_ap_present =
+				ucfg_action_oui_search(pMac->psoc,
+						       &vendor_ap_search_attr,
+						       ACTION_OUI_CCKM_1X1);
+		if (is_vendor_ap_present) {
+			pe_debug("vdev: %d WMI_VDEV_PARAM_ABG_MODE_TX_CHAIN_NUM 1",
+				 pSession->sessionId);
+			wma_cli_set_command(
+				pSession->sessionId,
+				(int)WMI_VDEV_PARAM_ABG_MODE_TX_CHAIN_NUM, 1,
+				VDEV_CMD);
+		}
+
+		/*
+		 * If Switch to 11N WAR is set for current AP, change dot11
+		 * mode to 11N.
+		 */
+		is_vendor_ap_present =
+			ucfg_action_oui_search(pMac->psoc,
+					       &vendor_ap_search_attr,
+					       ACTION_OUI_SWITCH_TO_11N_MODE);
+		if (pMac->roam.configParam.is_force_1x1 &&
+		    pMac->lteCoexAntShare &&
+		    is_vendor_ap_present &&
+		    (ucDot11Mode == WNI_CFG_DOT11_MODE_ALL ||
+		     ucDot11Mode == WNI_CFG_DOT11_MODE_11AC ||
+		     ucDot11Mode == WNI_CFG_DOT11_MODE_11AC_ONLY))
+			ucDot11Mode = WNI_CFG_DOT11_MODE_11N;
+
+		csr_join_req->supported_nss_1x1 = pSession->supported_nss_1x1;
+		csr_join_req->vdev_nss = pSession->vdev_nss;
+		csr_join_req->nss = pSession->nss;
+		csr_join_req->nss_forced_1x1 = pSession->nss_forced_1x1;
 		csr_join_req->dot11mode = (uint8_t) ucDot11Mode;
-		sme_debug("dot11mode=%d, uCfgDot11Mode=%d",
-			csr_join_req->dot11mode,
-			pSession->bssParams.uCfgDot11Mode);
+		sme_debug("dot11mode=%d, uCfgDot11Mode=%d nss=%d",
+			  csr_join_req->dot11mode,
+			  pSession->bssParams.uCfgDot11Mode,
+			  csr_join_req->nss);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		csr_join_req->cc_switch_mode =
 			pMac->roam.configParam.cc_switch_mode;

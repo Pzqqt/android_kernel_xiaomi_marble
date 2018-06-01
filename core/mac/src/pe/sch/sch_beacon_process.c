@@ -475,6 +475,10 @@ static void update_nss(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 		       tpSirMacMgmtHdr mgmt_hdr)
 {
 	if (sta_ds->vhtSupportedRxNss != (beacon->OperatingMode.rxNSS + 1)) {
+		if (session_entry->nss_forced_1x1) {
+			pe_debug("Not Updating NSS for special AP");
+			return;
+		}
 		sta_ds->vhtSupportedRxNss =
 			beacon->OperatingMode.rxNSS + 1;
 		lim_set_nss_change(mac_ctx, session_entry,
