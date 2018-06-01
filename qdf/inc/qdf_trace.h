@@ -86,8 +86,11 @@ typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
 /* Preprocessor definitions and constants */
 #define ASSERT_BUFFER_SIZE (512)
 
-#define QDF_TRACE_DEFAULT_PDEV_ID 0xff
+#ifndef MAX_QDF_TRACE_RECORDS
 #define MAX_QDF_TRACE_RECORDS 4000
+#endif
+
+#define QDF_TRACE_DEFAULT_PDEV_ID 0xff
 #define INVALID_QDF_TRACE_ADDR 0xffffffff
 #define DEFAULT_QDF_TRACE_DUMP_COUNT 0
 
@@ -154,8 +157,10 @@ typedef struct s_qdf_trace_data {
 
 #define CASE_RETURN_STRING(str) case ((str)): return (uint8_t *)(# str);
 
-
+#ifndef MAX_QDF_DP_TRACE_RECORDS
 #define MAX_QDF_DP_TRACE_RECORDS       2000
+#endif
+
 #define QDF_DP_TRACE_RECORD_SIZE       40
 #define INVALID_QDF_DP_TRACE_ADDR      0xffffffff
 #define QDF_DP_TRACE_VERBOSITY_HIGH    3

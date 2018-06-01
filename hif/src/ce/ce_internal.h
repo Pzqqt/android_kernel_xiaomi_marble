@@ -516,7 +516,10 @@ int hif_get_wake_ce_id(struct hif_softc *scn, uint8_t *ce_id);
  * for defined here
  */
 #if HIF_CE_DEBUG_DATA_BUF
+
+#ifndef HIF_CE_HISTORY_MAX
 #define HIF_CE_HISTORY_MAX 512
+#endif
 
 #define CE_DEBUG_MAX_DATA_BUF_SIZE 64
 /**

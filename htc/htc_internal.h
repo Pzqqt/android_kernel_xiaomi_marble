@@ -78,7 +78,9 @@ extern "C" {
 
 #define HTC_SERVICE_TX_PACKET_TAG  HTC_TX_PACKET_TAG_INTERNAL
 
+#ifndef HTC_CREDIT_HISTORY_MAX
 #define HTC_CREDIT_HISTORY_MAX              1024
+#endif
 
 #define HTC_IS_EPPING_ENABLED(_x)           ((_x) == QDF_GLOBAL_EPPING_MODE)
 
