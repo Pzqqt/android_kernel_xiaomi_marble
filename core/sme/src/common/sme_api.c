@@ -3648,73 +3648,43 @@ QDF_STATUS sme_roam_set_psk_pmk(tHalHandle hHal, uint8_t sessionId,
 	return status;
 }
 #endif
-/*
- * sme_roam_get_security_req_ie() -
- * A wrapper function to request CSR to return the WPA or RSN or WAPI IE CSR
- * passes to PE to JOIN request or START_BSS request
- * This is a synchronous call.
- *
- * pLen - caller allocated memory that has the length of pBuf as input.
- *		  Upon returned, *pLen has the needed or IE length in pBuf.
- * pBuf - Caller allocated memory that contain the IE field, if any,
- *		  upon return
- * secType - Specifies whether looking for WPA/WPA2/WAPI IE
- * Return QDF_STATUS - when fail, it usually means the buffer allocated is not
- *			 big enough
- */
-QDF_STATUS sme_roam_get_security_req_ie(tHalHandle hHal, uint8_t sessionId,
-					uint32_t *pLen, uint8_t *pBuf,
-					eCsrSecurityType secType)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
-	status = sme_acquire_global_lock(&pMac->sme);
+QDF_STATUS sme_roam_get_wpa_rsn_req_ie(tHalHandle hal, uint8_t session_id,
+				       uint32_t *len, uint8_t *buf)
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(pMac, sessionId))
-			status = csr_roam_get_wpa_rsn_req_ie(hHal, sessionId,
-								pLen, pBuf);
+		if (CSR_IS_SESSION_VALID(mac, session_id))
+			status = csr_roam_get_wpa_rsn_req_ie(mac, session_id,
+							     len, buf);
 		else
 			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&pMac->sme);
+		sme_release_global_lock(&mac->sme);
 	}
 
 	return status;
 }
 
-/*
- * sme_roam_get_security_rsp_ie() -
- * A wrapper function to request CSR to return the WPA or RSN or
- * WAPI IE from the beacon or probe rsp if connected
- * This is a synchronous call.
- *
- * pLen - caller allocated memory that has the length of pBuf as input.
- *		  Upon returned, *pLen has the needed or IE length in pBuf.
- * pBuf - Caller allocated memory that contain the IE field, if any,
- *		  upon return
- * secType - Specifies whether looking for WPA/WPA2/WAPI IE
- * Return QDF_STATUS - when fail, it usually means the buffer allocated is not
- *			 big enough
- */
-QDF_STATUS sme_roam_get_security_rsp_ie(tHalHandle hHal, uint8_t sessionId,
-					uint32_t *pLen, uint8_t *pBuf,
-					eCsrSecurityType secType)
+QDF_STATUS sme_roam_get_wpa_rsn_rsp_ie(tHalHandle hal, uint8_t session_id,
+				       uint32_t *len, uint8_t *buf)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	QDF_STATUS status;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
 
-	status = sme_acquire_global_lock(&pMac->sme);
+	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(pMac, sessionId))
-			status = csr_roam_get_wpa_rsn_rsp_ie(pMac, sessionId,
-							pLen, pBuf);
+		if (CSR_IS_SESSION_VALID(mac, session_id))
+			status = csr_roam_get_wpa_rsn_rsp_ie(mac, session_id,
+							     len, buf);
 		else
 			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&pMac->sme);
+		sme_release_global_lock(&mac->sme);
 	}
 
 	return status;
-
 }
 
 /*

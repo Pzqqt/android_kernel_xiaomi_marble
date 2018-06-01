@@ -417,12 +417,45 @@ void sme_get_pmk_info(tHalHandle hal, uint8_t session_id,
 QDF_STATUS sme_roam_set_psk_pmk(tHalHandle hHal, uint8_t sessionId,
 		uint8_t *pPSK_PMK, size_t pmk_len);
 #endif
-QDF_STATUS sme_roam_get_security_req_ie(tHalHandle hHal, uint8_t sessionId,
-		uint32_t *pLen, uint8_t *pBuf,
-		eCsrSecurityType secType);
-QDF_STATUS sme_roam_get_security_rsp_ie(tHalHandle hHal, uint8_t sessionId,
-		uint32_t *pLen, uint8_t *pBuf,
-		eCsrSecurityType secType);
+
+/**
+ * sme_roam_get_wpa_rsn_req_ie() - Retrieve WPA/RSN Request IE
+ * @hal: HAL handle
+ * @session_id: ID of the specific session
+ * @len: Caller allocated memory that has the length of @buf as input.
+ *	Upon returned, @len has the length of the IE store in @buf
+ * @buf: Caller allocated memory that contain the IE field, if any,
+ *	upon return
+ *
+ * A wrapper function to request CSR to return the WPA or RSN IE CSR
+ * passes to PE to JOIN request or START_BSS request
+ * This is a synchronous call.
+ *
+ * Return: QDF_STATUS - when fail, it usually means the buffer allocated is not
+ *			 big enough
+ */
+QDF_STATUS sme_roam_get_wpa_rsn_req_ie(tHalHandle hal, uint8_t session_id,
+				       uint32_t *len, uint8_t *buf);
+
+/**
+ * sme_roam_get_wpa_rsn_rsp_ie() - Retrieve WPA/RSN Response IE
+ * @hal: HAL handle
+ * @session_id: ID of the specific session
+ * @len: Caller allocated memory that has the length of @buf as input.
+ *	Upon returned, @len has the length of the IE store in @buf
+ * @buf: Caller allocated memory that contain the IE field, if any,
+ *	upon return
+ *
+ * A wrapper function to request CSR to return the WPA or RSN IE CSR
+ * passes to PE to JOIN request or START_BSS request
+ * This is a synchronous call.
+ *
+ * Return: QDF_STATUS - when fail, it usually means the buffer allocated is not
+ *			 big enough
+ */
+QDF_STATUS sme_roam_get_wpa_rsn_rsp_ie(tHalHandle hal, uint8_t session_id,
+				       uint32_t *len, uint8_t *buf);
+
 uint32_t sme_roam_get_num_pmkid_cache(tHalHandle hHal, uint8_t sessionId);
 QDF_STATUS sme_roam_get_pmkid_cache(tHalHandle hHal, uint8_t sessionId,
 		uint32_t *pNum,

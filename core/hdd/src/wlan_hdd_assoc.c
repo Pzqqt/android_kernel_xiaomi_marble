@@ -3151,13 +3151,13 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				 * wpa supplicant expecting WPA/RSN IE in
 				 * connect result.
 				 */
-				csr_roam_get_wpa_rsn_req_ie(WLAN_HDD_GET_HAL_CTX
+				sme_roam_get_wpa_rsn_req_ie(WLAN_HDD_GET_HAL_CTX
 								    (adapter),
 							    adapter->session_id,
 							    &reqRsnLength,
 							    reqRsnIe);
 
-				csr_roam_get_wpa_rsn_rsp_ie(WLAN_HDD_GET_HAL_CTX
+				sme_roam_get_wpa_rsn_rsp_ie(WLAN_HDD_GET_HAL_CTX
 								    (adapter),
 							    adapter->session_id,
 							    &rspRsnLength,
@@ -3220,7 +3220,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			 * in case of reassociation also need to indicate it to
 			 * supplicant.
 			 */
-			csr_roam_get_wpa_rsn_req_ie(
+			sme_roam_get_wpa_rsn_req_ie(
 						WLAN_HDD_GET_HAL_CTX(adapter),
 						adapter->session_id,
 						&reqRsnLength, reqRsnIe);
