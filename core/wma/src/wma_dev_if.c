@@ -779,8 +779,8 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
 	struct wma_target_req *req_msg;
 
-	if (!iface->handle) {
-		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed",
+	if (!iface->handle || !cds_is_target_ready()) {
+		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed or target is not ready",
 			 vdev_id);
 		goto send_rsp;
 	}
