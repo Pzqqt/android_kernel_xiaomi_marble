@@ -1338,7 +1338,7 @@ void tdls_scan_done_callback(struct tdls_soc_priv_obj *tdls_soc)
 	if (TDLS_SUPPORT_IMP_MODE == tdls_soc->tdls_last_mode ||
 	    TDLS_SUPPORT_EXT_CONTROL == tdls_soc->tdls_last_mode ||
 	    TDLS_SUPPORT_EXP_TRIG_ONLY == tdls_soc->tdls_last_mode) {
-		tdls_notice("revert tdls mode %d",
+		tdls_debug("revert tdls mode %d",
 			   tdls_soc->tdls_last_mode);
 
 		tdls_set_current_mode(tdls_soc, tdls_soc->tdls_last_mode,
