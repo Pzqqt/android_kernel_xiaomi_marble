@@ -18280,6 +18280,14 @@ static bool wlan_hdd_fils_data_in_limits(struct cfg80211_connect_params *req)
 		return false;
 	}
 
+	if (!req->fils_erp_rrk || !req->fils_erp_realm ||
+	    !req->fils_erp_username) {
+		hdd_err("buffer incorrect, user=%pK rrk=%pK realm=%pK",
+			req->fils_erp_username, req->fils_erp_rrk,
+			req->fils_erp_realm);
+		return false;
+	}
+
 	return true;
 }
 
