@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -134,6 +134,7 @@ struct tavil_reg_mask_val {
 	u8 val;
 };
 
+#if IS_ENABLED(CONFIG_SND_SOC_WCD934X)
 extern void *tavil_get_afe_config(struct snd_soc_codec *codec,
 				  enum afe_config_type config_type);
 extern int tavil_cdc_mclk_enable(struct snd_soc_codec *codec, bool enable);
@@ -156,4 +157,69 @@ extern struct tavil_dsd_config *tavil_get_dsd_config(
 extern int tavil_codec_info_create_codec_entry(
 				struct snd_info_entry *codec_root,
 				struct snd_soc_codec *codec);
+#else
+extern void *tavil_get_afe_config(struct snd_soc_codec *codec,
+				  enum afe_config_type config_type)
+{
+	return NULL;
+}
+extern int tavil_cdc_mclk_enable(struct snd_soc_codec *codec, bool enable)
+{
+	return 0;
+}
+extern int tavil_cdc_mclk_tx_enable(struct snd_soc_codec *codec, bool enable)
+{
+	return 0;
+}
+extern int tavil_set_spkr_mode(struct snd_soc_codec *codec, int mode)
+{
+	return 0;
+}
+extern int tavil_set_spkr_gain_offset(struct snd_soc_codec *codec, int offset)
+{
+	return 0;
+}
+extern struct wcd_dsp_cntl *tavil_get_wcd_dsp_cntl(struct device *dev)
+{
+	return NULL;
+}
+extern int wcd934x_get_micb_vout_ctl_val(u32 micb_mv)
+{
+	return 0;
+}
+extern int tavil_micbias_control(struct snd_soc_codec *codec,
+				 int micb_num,
+				 int req, bool is_dapm)
+{
+	return 0;
+}
+extern int tavil_mbhc_micb_adjust_voltage(struct snd_soc_codec *codec,
+					  int req_volt,
+					  int micb_num)
+{
+	return 0;
+}
+extern struct wcd934x_mbhc *tavil_soc_get_mbhc(struct snd_soc_codec *codec)
+{
+	return NULL;
+}
+extern int tavil_codec_enable_interp_clk(struct snd_soc_codec *codec,
+					 int event, int intp_idx)
+{
+	return 0;
+}
+extern struct tavil_dsd_config *tavil_get_dsd_config(
+				struct snd_soc_codec *codec)
+{
+	return NULL;
+}
+extern int tavil_codec_info_create_codec_entry(
+				struct snd_info_entry *codec_root,
+				struct snd_soc_codec *codec)
+{
+	return 0;
+}
+
+#endif
+
 #endif

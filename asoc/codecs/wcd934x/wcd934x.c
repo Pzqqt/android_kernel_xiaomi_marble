@@ -9885,7 +9885,7 @@ static void tavil_cdc_vote_svs(struct snd_soc_codec *codec, bool vote)
 	return tavil_vote_svs(tavil, vote);
 }
 
-struct wcd_dsp_cdc_cb cdc_cb = {
+static struct wcd_dsp_cdc_cb cdc_cb = {
 	.cdc_clk_en = tavil_codec_internal_rco_ctrl,
 	.cdc_vote_svs = tavil_cdc_vote_svs,
 };
