@@ -2056,6 +2056,23 @@
 #define WE_GET_SNR           14
 #define WE_LIST_FW_PROFILE      15
 
+/*
+ * <ioctl>
+ *
+ * get_ba_timeout - to get timeout for each AC
+ *
+ * @INPUT: None
+ *
+ * @OUTPUT: displays timeout value for each access class
+ *
+ * @E.g.: iwpriv wlan0 get_ba_timeout
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_GET_BA_AGEING_TIMEOUT 16
+
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_NONE   (SIOCIWFIRSTPRIV + 6)
 
@@ -2754,6 +2771,26 @@
  * </ioctl>
  */
 #define WE_LOG_BUFFER			8
+
+/*
+ * <ioctl>
+ * set_ba_timeout - sets Block ACK aging timeout value for each Access class
+ *
+ * @INPUT: Access Class [0:BK, 1:BE, 2:VI, 3:VO], Timeout value
+ *
+ * @OUTPUT: None
+ *
+ * @E.g.:
+ * # to set duration of 2 seconds for BE
+ *	iwpriv wlan0 set_ba_timeout 1 2
+ * # to set duration of 3 seconds for VO
+ *	iwpriv wlan0 set_ba_timeout 3 3
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_SET_BA_AGEING_TIMEOUT		9
 
 enum host_target_comm_log {
 	HTC_CREDIT_HISTORY_LOG = 0,
@@ -6433,6 +6470,36 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		wrqu->data.length = strlen(extra) + 1;
 		break;
 	}
+
+	case WE_GET_BA_AGEING_TIMEOUT:
+	{
+		uint8_t ac_cat = 4;
+		uint32_t duration[ac_cat], i;
+		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+		if (!soc) {
+			hdd_err("Invalid SOC handle");
+			break;
+		}
+
+		for (i = 0; i < ac_cat; i++)
+			cdp_get_ba_timeout(soc, i, &duration[i]);
+
+		snprintf(extra, WE_MAX_STR_LEN,
+			 "\n|------------------------------|\n"
+			 "|AC | BA aging timeout duration |\n"
+			 "|--------------------------------|\n"
+			 "|VO |  %d        |\n"
+			 "|VI |  %d        |\n"
+			 "|BE |  %d        |\n"
+			 "|BK |  %d        |\n"
+			 "|--------------------------------|\n",
+			duration[3], duration[2], duration[1], duration[0]);
+
+		wrqu->data.length = strlen(extra) + 1;
+		break;
+	}
+
 	case WE_GET_CHANNEL_LIST:
 	{
 		QDF_STATUS status;
@@ -8991,6 +9058,17 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 
 		break;
 	}
+	case WE_SET_BA_AGEING_TIMEOUT:
+	{
+		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+		if (!soc) {
+			hdd_err("Invalid handles");
+			break;
+		}
+		cdp_set_ba_timeout(soc, value[1], value[2]);
+		break;
+	}
 	default:
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
 		break;
@@ -9905,6 +9983,11 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getSNR"},
 
+	{WE_GET_BA_AGEING_TIMEOUT,
+	 0,
+	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+	 "get_ba_timeout"},
+
 	/* handlers for main ioctl */
 	{WLAN_PRIV_SET_NONE_GET_NONE,
 	 0,
@@ -10154,6 +10237,10 @@ static const struct iw_priv_args we_private_args[] = {
 	 0, "log_buffer"}
 	,
 #endif
+	{WE_SET_BA_AGEING_TIMEOUT,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+	 0, "set_ba_timeout"}
+	,
 #ifdef WLAN_SUSPEND_RESUME_TEST
 	{WE_SET_WLAN_SUSPEND,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,

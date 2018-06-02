@@ -278,6 +278,22 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		ret = hdd_wlan_fake_apps_resume(hdd_ctx->wiphy, dev);
 		break;
 
+	case QCSAP_SET_BA_AGEING_TIMEOUT:
+		hdd_info("QCSAP_SET_BA_AGEING_TIMEOUT: AC[%d] timeout[%d]",
+			 value[1], value[2]);
+		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
+					       adapter->session_id);
+		if (ret != 0) {
+			hdd_err("Invalid Handles");
+			break;
+		}
+		/*
+		 *  value[1] : suppose to be access class, value between[0-3]
+		 *  value[2]: suppose to be duration in seconds
+		 */
+		cdp_set_ba_timeout(soc, value[1], value[2]);
+		break;
+
 	default:
 		hdd_err("Invalid IOCTL command: %d", sub_cmd);
 		break;
@@ -2290,6 +2306,68 @@ static int iw_softap_get_sta_info(struct net_device *dev,
 	return ret;
 }
 
+static int __iw_softap_get_ba_timeout(struct net_device *dev,
+				      struct iw_request_info *info,
+				      union iwreq_data *wrqu, char *extra)
+{
+	int errno;
+	uint8_t ac_cat = 4;
+	uint32_t duration[ac_cat], i;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct hdd_adapter *adapter;
+	struct hdd_context *hdd_ctx;
+
+	hdd_enter_dev(dev);
+
+	adapter = netdev_priv(dev);
+	errno = hdd_validate_adapter(adapter);
+	if (errno)
+		return errno;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
+
+	if (!soc) {
+		hdd_err("Invalid handle");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < ac_cat; i++)
+		cdp_get_ba_timeout(soc, i, &duration[i]);
+
+	snprintf(extra, WE_SAP_MAX_STA_INFO,
+		 "\n|------------------------------|\n"
+		 "|AC | BA aging timeout duration |\n"
+		 "|--------------------------------|\n"
+		 "|VO |  %d        |\n"
+		 "|VI |  %d        |\n"
+		 "|BE |  %d        |\n"
+		 "|BK |  %d        |\n"
+		 "|--------------------------------|\n",
+		duration[3], duration[2], duration[1], duration[0]);
+
+	wrqu->data.length = strlen(extra) + 1;
+	hdd_exit();
+
+	return 0;
+}
+
+static int iw_softap_get_ba_timeout(struct net_device *dev,
+				    struct iw_request_info *info,
+				    union iwreq_data *wrqu,
+				    char *extra)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __iw_softap_get_ba_timeout(dev, info, wrqu, extra);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 static
 int __iw_get_softap_linkspeed(struct net_device *dev,
 			      struct iw_request_info *info,
@@ -2892,8 +2970,10 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	}, {
 		QCSAP_IOCTL_GET_CHANNEL, 0,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getchannel"
-	}
-	, {
+	}, {
+		QCSAP_IOCTL_GET_BA_AGEING_TIMEOUT, 0,
+		IW_PRIV_TYPE_CHAR | WE_SAP_MAX_STA_INFO, "get_ba_timeout"
+	}, {
 		QCSAP_IOCTL_DISASSOC_STA,
 		IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 6, 0,
 		"disassoc_sta"
@@ -3066,6 +3146,12 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	,
 #endif
 	{
+		QCSAP_SET_BA_AGEING_TIMEOUT,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+		0, "set_ba_timeout"
+	}
+	,
+	{
 		QCASAP_SET_11AX_RATE,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		0, "set_11ax_rate"
@@ -3134,6 +3220,8 @@ static const iw_handler hostapd_private[] = {
 		iw_get_channel_list,
 	[QCSAP_IOCTL_GET_STA_INFO - SIOCIWFIRSTPRIV] =
 		iw_softap_get_sta_info,
+	[QCSAP_IOCTL_GET_BA_AGEING_TIMEOUT - SIOCIWFIRSTPRIV] =
+		iw_softap_get_ba_timeout,
 	[QCSAP_IOCTL_PRIV_GET_SOFTAP_LINK_SPEED -
 	 SIOCIWFIRSTPRIV] =
 		iw_get_softap_linkspeed,
