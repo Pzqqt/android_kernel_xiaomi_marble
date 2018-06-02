@@ -7968,7 +7968,7 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
 	struct sir_pcl_list pcl;
 	QDF_STATUS status;
 	uint32_t i, j;
-	tHalHandle *hal_handle;
+	tHalHandle hal_handle;
 	struct hdd_context *hdd_ctx;
 	bool found = false;
 	int ret;
@@ -8072,7 +8072,7 @@ void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel,
 			    bool forced)
 {
 	struct hdd_ap_ctx *hdd_ap_ctx;
-	tHalHandle *hal_handle;
+	tHalHandle hal_handle;
 	struct hdd_context *hdd_ctx;
 
 	if (!adapter) {

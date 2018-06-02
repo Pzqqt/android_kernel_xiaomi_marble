@@ -2764,7 +2764,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				uint8_t vdev_id, uint8_t *channel,
 				uint8_t *sec_ch)
 {
-	tHalHandle *hal_handle;
+	tHalHandle hal_handle;
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	uint8_t intf_ch = 0;
 	struct hdd_context *hdd_ctx;
