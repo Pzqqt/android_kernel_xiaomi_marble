@@ -18303,7 +18303,7 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_SUCCESS;
 
 	if (WMITLV_GET_STRUCT_TLVLEN(wmi_per_chain_rssi_stats) !=
-	    WMITLV_GET_TLVTAG(rssi_event->tlv_header))
+	    WMITLV_GET_TLVLEN(rssi_event->tlv_header))
 		return QDF_STATUS_SUCCESS;
 
 	stats_param->num_rssi_stats = rssi_event->num_per_chain_rssi_stats;

@@ -230,7 +230,7 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_chain_rssi_stats(
 					wmi_host_stats_event *stats_param,
 					struct stats_event *ev, uint8_t *data)
 {
-	uint32_t i;
+	uint32_t i, j;
 	QDF_STATUS status;
 	int32_t bcn_snr, dat_snr;
 	struct wmi_host_per_chain_rssi_stats rssi_stats;
@@ -252,15 +252,15 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_chain_rssi_stats(
 		if (QDF_IS_STATUS_ERROR(status))
 			continue;
 
-		for (i = 0; i < MAX_NUM_CHAINS; i++) {
-			dat_snr = rssi_stats.rssi_avg_data[i];
-			bcn_snr = rssi_stats.rssi_avg_beacon[i];
-			cp_stats_err("Chain %d SNR bcn: %d data: %d", i,
+		for (j = 0; j < MAX_NUM_CHAINS; j++) {
+			dat_snr = rssi_stats.rssi_avg_data[j];
+			bcn_snr = rssi_stats.rssi_avg_beacon[j];
+			cp_stats_err("Chain %d SNR bcn: %d data: %d", j,
 				     bcn_snr, dat_snr);
 			if (TGT_IS_VALID_SNR(bcn_snr))
-				ev->vdev_chain_rssi[i].chain_rssi[i] = bcn_snr;
+				ev->vdev_chain_rssi[i].chain_rssi[j] = bcn_snr;
 			else if (TGT_IS_VALID_SNR(dat_snr))
-				ev->vdev_chain_rssi[i].chain_rssi[i] = dat_snr;
+				ev->vdev_chain_rssi[i].chain_rssi[j] = dat_snr;
 			else
 				/*
 				 * Firmware sends invalid snr till it sees
@@ -269,14 +269,14 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_chain_rssi_stats(
 				 * duartion Host will return an invalid rssi
 				 * value.
 				 */
-				ev->vdev_chain_rssi[i].chain_rssi[i] =
+				ev->vdev_chain_rssi[i].chain_rssi[j] =
 							TGT_INVALID_SNR;
 			/*
 			 * Get the absolute rssi value from the current rssi
 			 * value the snr value is hardcoded into 0 in the
 			 * qcacld-new/CORE stack
 			 */
-			ev->vdev_chain_rssi[i].chain_rssi[i] +=
+			ev->vdev_chain_rssi[i].chain_rssi[j] +=
 							TGT_NOISE_FLOOR_DBM;
 		}
 	}
