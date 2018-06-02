@@ -1202,7 +1202,7 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 	if (mac_ctx == NULL)
 		return QDF_STATUS_E_FAILURE;
 
-	status = pe_process_messages((tHalHandle)mac_ctx, msg);
+	status = pe_process_messages(mac_ctx, msg);
 	if (status == eSIR_SUCCESS)
 		return QDF_STATUS_SUCCESS;
 
