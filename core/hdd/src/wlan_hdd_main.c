@@ -9768,7 +9768,6 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 {
 	int ret;
 	QDF_STATUS status;
-	tSirRetStatus hal_status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	cdp_register_pause_cb(soc, wlan_hdd_txrx_pause_cb);
@@ -9848,13 +9847,12 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 	 * Set the MAC Address Currently this is used by HAL to add self sta.
 	 * Remove this once self sta is added as part of session open.
 	 */
-	hal_status = cfg_set_str(hdd_ctx->hHal, WNI_CFG_STA_ID,
-				     hdd_ctx->config->intfMacAddr[0].bytes,
-				     sizeof(hdd_ctx->config->intfMacAddr[0]));
+	status = sme_cfg_set_str(hdd_ctx->hHal, WNI_CFG_STA_ID,
+				 hdd_ctx->config->intfMacAddr[0].bytes,
+				 sizeof(hdd_ctx->config->intfMacAddr[0]));
 
-	if (!IS_SIR_STATUS_SUCCESS(hal_status)) {
-		hdd_err("Failed to set MAC Address. HALStatus is %08d [x%08x]",
-			hal_status, hal_status);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to set MAC Address, status %d", status);
 		ret = -EINVAL;
 		goto out;
 	}
