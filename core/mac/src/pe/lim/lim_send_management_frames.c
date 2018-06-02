@@ -2115,6 +2115,77 @@ end:
 }
 
 /**
+ * lim_addba_rsp_tx_complete_cnf() - Confirmation for add BA response OTA
+ * @context: pointer to global mac
+ * @buf: buffer which is nothing but entire ADD BA frame
+ * @tx_complete : Sent status
+ * @params; tx completion params
+ *
+ * Return: This returns QDF_STATUS
+ */
+static QDF_STATUS lim_addba_rsp_tx_complete_cnf(void *context,
+						qdf_nbuf_t buf,
+						uint32_t tx_complete,
+						void *params)
+{
+	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
+	tSirMacMgmtHdr *mac_hdr;
+	tDot11faddba_rsp rsp;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	uint8_t peer_id;
+	void *peer;
+	uint32_t frame_len;
+	QDF_STATUS status;
+	uint8_t *data;
+
+	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK)
+		pe_debug("Add ba response successfully sent");
+	else
+		pe_debug("Fail to send add ba response");
+
+	if (!buf) {
+		pe_err("Addba response frame buffer is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	data = qdf_nbuf_data(buf);
+
+	if (!data) {
+		pe_err("Addba response frame is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mac_hdr = (tSirMacMgmtHdr *)data;
+	qdf_mem_zero((void *)&rsp, sizeof(tDot11faddba_rsp));
+	frame_len = sizeof(rsp);
+	status = dot11f_unpack_addba_rsp(mac_ctx, (uint8_t *)data +
+					 sizeof(*mac_hdr), frame_len,
+					 &rsp, false);
+
+	if (DOT11F_FAILED(status)) {
+		pe_err("Failed to unpack and parse (0x%08x, %d bytes)",
+			status, frame_len);
+		goto error;
+	}
+
+	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->da, &peer_id,
+					PEER_DEBUG_ID_WMA_ADDBA_REQ);
+	if (!peer) {
+		pe_debug("no PEER found for mac_addr:%pM", mac_hdr->da);
+		goto error;
+	}
+	cdp_addba_resp_tx_completion(soc, peer, rsp.addba_param_set.tid,
+				     tx_complete);
+	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_WMA_ADDBA_REQ);
+error:
+	if (buf)
+		qdf_nbuf_free(buf);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * lim_auth_tx_complete_cnf()- Confirmation for auth sent over the air
  * @context: pointer to global mac
  * @buf: buffer
@@ -4860,10 +4931,14 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 session->peSessionId, mgmt_hdr->fc.subType));
-	qdf_status = wma_tx_frame(mac_ctx, pkt_ptr, (uint16_t) num_bytes,
-			TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
-			lim_tx_complete, frame_ptr, tx_flag, sme_sessionid, 0,
-			RATEID_DEFAULT);
+	qdf_status = wma_tx_frameWithTxComplete(mac_ctx, pkt_ptr,
+						(uint16_t)num_bytes,
+						TXRX_FRM_802_11_MGMT,
+						ANI_TXDIR_TODS, 7,
+						NULL, frame_ptr,
+						lim_addba_rsp_tx_complete_cnf,
+						tx_flag, sme_sessionid,
+						false, 0, RATEID_DEFAULT);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 			 session->peSessionId, qdf_status));
 	if (QDF_STATUS_SUCCESS != qdf_status) {
