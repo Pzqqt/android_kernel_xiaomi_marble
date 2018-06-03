@@ -527,18 +527,10 @@ uint32_t csr_get_dot11_mode(tHalHandle hal, uint32_t session_id,
 	return dot11mode;
 }
 
-/**
- * csr_roam_issue_ft_preauth_req() - Initiate Preauthentication request
- * @hal: Global Handle
- * @session_id: SME Session ID
- * @bss_desc: BSS descriptor
- *
- * Return: Success or Failure
- */
-QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hal, uint32_t session_id,
-			      tpSirBssDescription bss_desc)
+QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
+					 uint32_t session_id,
+					 tpSirBssDescription bss_desc)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	tpSirFTPreAuthReq preauth_req;
 	uint16_t auth_req_len = 0;
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
@@ -570,8 +562,8 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hal, uint32_t session_id,
 	preauth_req->messageType = eWNI_SME_FT_PRE_AUTH_REQ;
 
 	preauth_req->preAuthchannelNum = bss_desc->channelId;
-	preauth_req->dot11mode =
-				csr_get_dot11_mode(hal, session_id, bss_desc);
+	preauth_req->dot11mode = csr_get_dot11_mode(mac_ctx, session_id,
+						    bss_desc);
 	if (!preauth_req->dot11mode) {
 		sme_err("preauth_req->dot11mode is zero");
 		qdf_mem_free(preauth_req);

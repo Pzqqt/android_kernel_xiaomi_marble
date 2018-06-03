@@ -1723,12 +1723,24 @@ typedef void (*tCsrTsmStatsCallback)(tAniTrafStrmMetrics tsmMetrics,
 				     uint32_t staId, void *pContext);
 #endif /* FEATURE_WLAN_ESE */
 typedef void (*tCsrSnrCallback)(int8_t snr, uint32_t staId, void *pContext);
+
+/**
+ * csr_roam_issue_ft_preauth_req() - Initiate Preauthentication request
+ * @max_ctx: Global MAC context
+ * @session_id: SME Session ID
+ * @bss_desc: BSS descriptor
+ *
+ * Return: Success or Failure
+ */
 #ifdef WLAN_FEATURE_HOST_ROAM
-QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hHal, uint32_t sessionId,
-		tpSirBssDescription pBssDescription);
+QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
+					 uint32_t session_id,
+					 tpSirBssDescription bss_desc);
 #else
-static inline QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hHal,
-		uint32_t sessionId, tpSirBssDescription pBssDescription)
+static inline
+QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
+					 uint32_t session_id,
+					 tpSirBssDescription bss_desc)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
