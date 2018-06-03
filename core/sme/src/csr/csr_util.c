@@ -5332,7 +5332,7 @@ bool csr_is_ssid_in_list(tSirMacSSid *pSsid, tCsrSSIDs *pSsidList)
 	return fMatch;
 }
 
-bool csr_is_bssid_match(tHalHandle hHal, struct qdf_mac_addr *pProfBssid,
+bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 			struct qdf_mac_addr *BssBssid)
 {
 	bool fMatch = false;

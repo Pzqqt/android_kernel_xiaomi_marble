@@ -4408,7 +4408,7 @@ static QDF_STATUS sme_qos_process_assoc_complete_ev(tpAniSirGlobal pMac, uint8_t
 		}
 		if ((pSession->assocInfo.pBssDesc) &&
 		    (csr_is_bssid_match
-			     (pMac, (struct qdf_mac_addr *)
+			     ((struct qdf_mac_addr *)
 					&pSession->assocInfo.pBssDesc->bssId,
 			     (struct qdf_mac_addr *) &(((sme_QosAssocInfo *)
 					pEvent_info)->pBssDesc->bssId)))) {

@@ -297,8 +297,8 @@ bool csr_is_security_match(tHalHandle hHal, tCsrAuthList *authType,
 		eCsrEncryptionType *negotiatedMCCipher);
 bool csr_is_bss_type_match(eCsrRoamBssType bssType1, eCsrRoamBssType bssType2);
 bool csr_is_bss_type_ibss(eCsrRoamBssType bssType);
-bool csr_is_bssid_match(tHalHandle hHal, struct qdf_mac_addr *pProfBssid,
-		struct qdf_mac_addr *BssBssid);
+bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
+			struct qdf_mac_addr *BssBssid);
 void csr_add_rate_bitmap(uint8_t rate, uint16_t *pRateBitmap);
 bool csr_check_rate_bitmap(uint8_t rate, uint16_t RateBitmap);
 bool csr_rates_is_dot11_rate_supported(tHalHandle hHal, uint8_t rate);
