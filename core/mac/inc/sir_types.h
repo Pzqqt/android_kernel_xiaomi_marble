@@ -51,7 +51,13 @@ typedef void *tHalHandle;
  * The HDD must be able to derive it's internal instance structure
  * pointer through this handle.
  */
-typedef void *hdd_handle_t;
+/*
+ * NOTE WELL: struct opaque_hdd_handle is not defined anywhere. This
+ * reference is used to help ensure that a hdd_handle_t is never used
+ * where a different handle type is expected
+ */
+struct opaque_hdd_handle;
+typedef struct opaque_hdd_handle *hdd_handle_t;
 
 /* ********************************************** *
 *                                                *
