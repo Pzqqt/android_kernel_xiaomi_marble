@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -203,7 +203,7 @@ bool csr_ll_find_entry(tDblLinkList *pList, tListElem *pEntryToFind)
 	return fFound;
 }
 
-QDF_STATUS csr_ll_open(tHddHandle hHdd, tDblLinkList *pList)
+QDF_STATUS csr_ll_open(hdd_handle_t hHdd, tDblLinkList *pList)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status;

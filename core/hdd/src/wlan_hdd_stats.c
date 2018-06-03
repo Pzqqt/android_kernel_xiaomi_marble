@@ -2245,7 +2245,7 @@ put_attr_fail:
  *
  * Return: None
  */
-void wlan_hdd_cfg80211_link_layer_stats_ext_callback(tHddHandle ctx,
+void wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
 						     tSirLLStatsResults *rsp)
 {
 	struct hdd_context *hdd_ctx;

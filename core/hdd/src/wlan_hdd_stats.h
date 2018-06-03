@@ -302,7 +302,7 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
  *
  * Return: None.
  */
-void wlan_hdd_cfg80211_link_layer_stats_ext_callback(tHddHandle ctx,
+void wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
 						     tSirLLStatsResults *rsp);
 
 /**

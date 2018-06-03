@@ -40,20 +40,18 @@
     ------------------------------------------------------------------------- */
 typedef void *tHalHandle;
 
-/** ------------------------------------------------------------------------ *
-
-    \typedef tHddHandle
-
-    \brief Handle to the HDD.  The HDD handle is given to the HAL from
-    the HDD on halOpen.  The HDD handle is an input to all HDD/PAL function
-    calls and represents an opaque handle to the HDD instance that is tied
-    to the HAL instance, opened through halOpen.
-
-    The HDD must be able to derive it's internal instance structure pointer
-    through this handle.  hint hint...
-
-    ------------------------------------------------------------------------- */
-typedef void *tHddHandle;
+/**
+ * typedef hdd_handle_t - HDD Handle
+ *
+ * Handle to the HDD.  The HDD handle is given to the UMAC from the
+ * HDD on Open.  The HDD handle is an input to all HDD/PAL function
+ * calls and represents an opaque handle to the HDD instance that is
+ * tied to the UMAC instance
+ *
+ * The HDD must be able to derive it's internal instance structure
+ * pointer through this handle.
+ */
+typedef void *hdd_handle_t;
 
 /* ********************************************** *
 *                                                *

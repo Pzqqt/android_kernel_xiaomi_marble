@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,7 +35,7 @@
 tSirRetStatus mac_start(tHalHandle hHal, void *pHalMacStartParams);
 QDF_STATUS mac_stop(tHalHandle hHal, tHalStopType stopType);
 tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
-			tHddHandle hHdd, struct cds_config_info *cds_cfg);
+			hdd_handle_t hHdd, struct cds_config_info *cds_cfg);
 QDF_STATUS mac_close(tHalHandle hHal);
 
 #endif /* __MAC_INIT_API_H */
