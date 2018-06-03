@@ -8784,8 +8784,9 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 	csr_roam_remove_duplicate_command(pMac, sessionId, NULL, eCsrHddIssued);
 	/* Check whether ssid changes */
 	if (csr_is_conn_state_connected(pMac, sessionId) &&
-			pProfile->SSIDs.numOfSSIDs && !csr_is_ssid_in_list(pMac,
-			&pSession->connectedProfile.SSID, &pProfile->SSIDs))
+	    pProfile->SSIDs.numOfSSIDs &&
+	    !csr_is_ssid_in_list(&pSession->connectedProfile.SSID,
+				 &pProfile->SSIDs))
 		csr_roam_issue_disassociate_cmd(pMac, sessionId,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED);
 	/*
@@ -8991,8 +8992,7 @@ csr_roam_reassoc(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	if (csr_is_conn_state_connected(mac_ctx, session_id)) {
 		if (profile) {
 			if (profile->SSIDs.numOfSSIDs &&
-			    csr_is_ssid_in_list(mac_ctx,
-						&session->connectedProfile.SSID,
+			    csr_is_ssid_in_list(&session->connectedProfile.SSID,
 						&profile->SSIDs)) {
 				fCallCallback = false;
 			} else {

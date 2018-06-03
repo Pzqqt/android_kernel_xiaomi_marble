@@ -256,8 +256,7 @@ bool csr_is_ssid_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
 		tSirBssDescription *pSirBssDesc2,
 		tDot11fBeaconIEs *pIes2);
 /* Null ssid means match */
-bool csr_is_ssid_in_list(tHalHandle hHal, tSirMacSSid *pSsid,
-		tCsrSSIDs *pSsidList);
+bool csr_is_ssid_in_list(tSirMacSSid *pSsid, tCsrSSIDs *pSsidList);
 bool csr_is_profile_wpa(struct csr_roam_profile *pProfile);
 bool csr_is_profile_rsn(struct csr_roam_profile *pProfile);
 /*

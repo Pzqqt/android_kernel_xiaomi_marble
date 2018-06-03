@@ -5307,8 +5307,7 @@ bool csr_is_ssid_match(tpAniSirGlobal pMac, uint8_t *ssid1, uint8_t ssid1Len,
 }
 
 /* Null ssid means match */
-bool csr_is_ssid_in_list(tHalHandle hHal, tSirMacSSid *pSsid,
-			 tCsrSSIDs *pSsidList)
+bool csr_is_ssid_in_list(tSirMacSSid *pSsid, tCsrSSIDs *pSsidList)
 {
 	bool fMatch = false;
 	uint32_t i;
