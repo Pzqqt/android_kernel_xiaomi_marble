@@ -4869,7 +4869,7 @@ sir_convert_qos_map_configure_frame2_struct(tpAniSirGlobal pMac,
 			   status, nFrame);
 	}
 	pQosMapSet->present = mapConfigure.QosMapSet.present;
-	convert_qos_mapset_frame(pMac->hHdd, pQosMapSet, &mapConfigure.QosMapSet);
+	convert_qos_mapset_frame(pMac, pQosMapSet, &mapConfigure.QosMapSet);
 	lim_log_qos_map_set(pMac, pQosMapSet);
 	return eSIR_SUCCESS;
 }
