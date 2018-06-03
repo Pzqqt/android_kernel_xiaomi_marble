@@ -599,7 +599,7 @@ bool csr_get_bss_id_bss_desc(tSirBssDescription *pSirBssDesc,
 	return true;
 }
 
-bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
+bool csr_is_bss_id_equal(tSirBssDescription *pSirBssDesc1,
 			 tSirBssDescription *pSirBssDesc2)
 {
 	bool fEqual = false;

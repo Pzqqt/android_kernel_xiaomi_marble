@@ -5743,8 +5743,8 @@ static enum csr_join_state csr_roam_join(tpAniSirGlobal pMac,
 		 */
 
 		if (csr_is_conn_state_connected_infra(pMac, sessionId) &&
-			csr_is_bss_id_equal(pMac,
-				pBssDesc, pSession->pConnectBssDesc) &&
+			csr_is_bss_id_equal(pBssDesc,
+					    pSession->pConnectBssDesc) &&
 			csr_is_ssid_equal(pMac, pSession->pConnectBssDesc,
 				pBssDesc, pIesLocal)) {
 			/*

@@ -214,8 +214,8 @@ typedef struct tagRoamingTimerInfo {
 
 bool csr_get_bss_id_bss_desc(tSirBssDescription *pSirBssDesc,
 			     struct qdf_mac_addr *pBssId);
-bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
-		tSirBssDescription *pSirBssDesc2);
+bool csr_is_bss_id_equal(tSirBssDescription *pSirBssDesc1,
+			 tSirBssDescription *pSirBssDesc2);
 eCsrMediaAccessType csr_get_qo_s_from_bss_desc(tHalHandle hHal,
 		tSirBssDescription *pSirBssDesc,
 		tDot11fBeaconIEs *pIes);
