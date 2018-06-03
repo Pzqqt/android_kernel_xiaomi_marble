@@ -607,8 +607,8 @@ typedef QDF_STATUS (*wma_tx_ota_comp_callback)(void *context, qdf_nbuf_t buf,
 
 typedef void (*wma_txFailIndCallback)(uint8_t *, uint8_t);
 
-/* generic callback for updating parameters from target to UMAC */
-typedef void (*wma_tgt_cfg_cb)(void *context, void *param);
+/* generic callback for updating parameters from target to HDD */
+typedef void (*wma_tgt_cfg_cb)(hdd_handle_t handle, struct wma_tgt_cfg *cfg);
 
 /**
  * struct wma_cli_set_cmd_t - set command parameters
