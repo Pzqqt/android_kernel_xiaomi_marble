@@ -603,17 +603,9 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hal, uint32_t session_id,
 	return umac_send_mb_message_to_mac(preauth_req);
 }
 
-/**
- * csr_roam_ft_pre_auth_rsp_processor() - Handle the preauth response
- * @hal: Global Handle
- * preauth_rsp: Received preauthentication response
- *
- * Return: None
- */
-void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hal,
+void csr_roam_ft_pre_auth_rsp_processor(tpAniSirGlobal mac_ctx,
 					tpSirFTPreAuthRsp preauth_rsp)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_info roam_info;
 	eCsrAuthType conn_Auth_type;

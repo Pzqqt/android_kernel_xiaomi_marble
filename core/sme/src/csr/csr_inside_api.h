@@ -953,12 +953,20 @@ QDF_STATUS csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac,
 QDF_STATUS
 csr_send_chng_mcc_beacon_interval(tpAniSirGlobal pMac, uint32_t sessionId);
 
+/**
+ * csr_roam_ft_pre_auth_rsp_processor() - Handle the preauth response
+ * @mac_ctx: Global MAC context
+ * @preauth_rsp: Received preauthentication response
+ *
+ * Return: None
+ */
 #ifdef WLAN_FEATURE_HOST_ROAM
-void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
-		tpSirFTPreAuthRsp pFTPreAuthRsp);
+void csr_roam_ft_pre_auth_rsp_processor(tpAniSirGlobal mac_ctx,
+					tpSirFTPreAuthRsp pFTPreAuthRsp);
 #else
-static inline void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
-		tpSirFTPreAuthRsp pFTPreAuthRsp)
+static inline
+void csr_roam_ft_pre_auth_rsp_processor(tpAniSirGlobal mac_ctx,
+					tpSirFTPreAuthRsp pFTPreAuthRsp)
 {}
 #endif
 
