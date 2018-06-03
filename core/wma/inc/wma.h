@@ -1014,7 +1014,6 @@ struct roam_synch_frame_ind {
  * @nwType: network type (802.11a/b/g/n/ac)
  * @staKeyParams: sta key parameters
  * @ps_enabled: is powersave enable/disable
- * @restore_dtim_setting: DTIM settings restore flag
  * @peer_count: peer count
  * @roam_synch_in_progress: flag is in progress or not
  * @plink_status_req: link status request
@@ -1084,7 +1083,6 @@ struct wma_txrx_node {
 	int8_t max_tx_power;
 	uint32_t nwType;
 	void *staKeyParams;
-	bool restore_dtim_setting;
 	uint32_t peer_count;
 	qdf_atomic_t fw_peer_count;
 	qdf_event_t fw_peer_delete_completion;

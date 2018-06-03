@@ -109,6 +109,7 @@ static QDF_STATUS pmo_core_calculate_listen_interval(
 	uint32_t max_mod_dtim;
 	uint32_t beacon_interval_mod;
 	struct pmo_psoc_cfg *psoc_cfg = &vdev_ctx->pmo_psoc_ctx->psoc_cfg;
+	struct pmo_psoc_priv_obj *psoc_priv = pmo_vdev_get_psoc_priv(vdev);
 
 	if (psoc_cfg->sta_dynamic_dtim) {
 		*listen_interval = psoc_cfg->sta_dynamic_dtim;
@@ -147,7 +148,15 @@ static QDF_STATUS pmo_core_calculate_listen_interval(
 				pmo_core_get_vdev_dtim_period(vdev));
 		}
 	} else {
-		return QDF_STATUS_E_FAULT;
+		int cfg_value = 0;
+		/* Get Listen Interval */
+		if ((psoc_priv->get_cfg_int) &&
+			(psoc_priv->get_cfg_int(PMO_CFG_LISTEN_INTERVAL,
+				&cfg_value) != QDF_STATUS_SUCCESS)) {
+			pmo_err("Failed to get value for listen interval");
+			cfg_value = PMO_DEFAULT_LISTEN_INTERVAL;
+		}
+		*listen_interval = cfg_value;
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -167,10 +176,8 @@ static void pmo_core_set_vdev_suspend_dtim(struct wlan_objmgr_psoc *psoc,
 	uint32_t listen_interval = PMO_DEFAULT_LISTEN_INTERVAL;
 	QDF_STATUS ret;
 	uint8_t vdev_id;
-	enum pmo_power_save_qpower_mode qpower_config;
 	enum QDF_OPMODE opmode = pmo_core_get_vdev_op_mode(vdev);
 
-	qpower_config = pmo_core_psoc_get_qpower_config(psoc);
 	vdev_id = pmo_vdev_get_id(vdev);
 	if (PMO_VDEV_IN_STA_MODE(opmode) &&
 	    pmo_core_get_vdev_dtim_period(vdev) != 0) {
@@ -181,36 +188,18 @@ static void pmo_core_set_vdev_suspend_dtim(struct wlan_objmgr_psoc *psoc,
 			/* even it fails continue fwr will take default LI */
 			pmo_debug("Fail to calculate listen interval");
 		}
-
 		ret = pmo_tgt_vdev_update_param_req(vdev,
-				pmo_vdev_param_listen_interval,
-				listen_interval);
+					pmo_vdev_param_listen_interval,
+					listen_interval);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			/* even it fails continue fwr will take default LI */
 			pmo_debug("Failed to Set Listen Interval vdevId %d",
 				 vdev_id);
 		}
 		pmo_debug("Set Listen Interval vdevId %d Listen Intv %d",
-			 vdev_id, listen_interval);
+			  vdev_id, listen_interval);
 
-		if (qpower_config) {
-			pmo_debug("disable Qpower in suspend mode!");
-			ret = pmo_tgt_send_vdev_sta_ps_param(vdev,
-					pmo_sta_ps_enable_qpower, 0);
-			if (QDF_IS_STATUS_ERROR(ret))
-				pmo_debug("Failed to disable Qpower in suspend mode!");
-		}
-
-		ret = pmo_tgt_vdev_update_param_req(vdev,
-				pmo_vdev_param_dtim_policy,
-				pmo_normal_dtim);
-		if (QDF_IS_STATUS_ERROR(ret))
-			pmo_debug("Failed to Set to Normal DTIM vdevId %d",
-				vdev_id);
-
-		/* Set it to Normal DTIM */
-		pmo_core_vdev_set_dtim_policy(vdev, pmo_normal_dtim);
-		pmo_debug("Set DTIM Policy to Normal Dtim vdevId %d", vdev_id);
+		pmo_core_vdev_set_restore_dtim(vdev, true);
 	}
 }
 
@@ -270,7 +259,6 @@ static void pmo_core_set_suspend_dtim(struct wlan_objmgr_psoc *psoc)
 		if (!pmo_is_listen_interval_user_set(vdev_ctx)
 		    && !li_offload_support)
 			pmo_core_set_vdev_suspend_dtim(psoc, vdev, vdev_ctx);
-
 		pmo_vdev_put_ref(vdev);
 	}
 }
@@ -443,28 +431,23 @@ static void pmo_core_set_vdev_resume_dtim(struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_vdev *vdev,
 		struct pmo_vdev_priv_obj *vdev_ctx)
 {
-	enum pmo_power_save_qpower_mode qpower_config;
 	QDF_STATUS ret;
 	uint8_t vdev_id;
 	enum QDF_OPMODE opmode = pmo_core_get_vdev_op_mode(vdev);
-	uint32_t cfg_data_val = 0;
+	int32_t cfg_data_val = 0;
+	struct pmo_psoc_priv_obj *psoc_priv = pmo_vdev_get_psoc_priv(vdev);
 
-	qpower_config = pmo_core_psoc_get_qpower_config(psoc);
 	vdev_id = pmo_vdev_get_id(vdev);
 	if ((PMO_VDEV_IN_STA_MODE(opmode)) &&
-	    (pmo_core_vdev_get_dtim_policy(vdev) == pmo_normal_dtim)) {
-/*
-		if (!mac) {
-			WMA_LOGE(FL("Failed to get mac context"));
-			return;
-		}
-		if ((wlan_cfg_get_int(mac, WNI_CFG_LISTEN_INTERVAL,
-				      &cfg_data_val) != QDF_STATUS_SUCCESS)) {
+	    (pmo_core_vdev_get_restore_dtim(vdev))) {
+		/* Get Listen Interval */
+		if ((psoc_priv->get_cfg_int) &&
+			(psoc_priv->get_cfg_int(PMO_CFG_LISTEN_INTERVAL,
+				&cfg_data_val) != QDF_STATUS_SUCCESS)) {
 			pmo_err("Failed to get value for listen interval");
-			cfg_data_val = POWERSAVE_DEFAULT_LISTEN_INTERVAL;
+			cfg_data_val = PMO_DEFAULT_LISTEN_INTERVAL;
 		}
-*/
-		cfg_data_val = 1;
+
 		ret = pmo_tgt_vdev_update_param_req(vdev,
 				pmo_vdev_param_listen_interval, cfg_data_val);
 		if (QDF_IS_STATUS_ERROR(ret)) {
@@ -473,26 +456,8 @@ static void pmo_core_set_vdev_resume_dtim(struct wlan_objmgr_psoc *psoc,
 				 vdev_id);
 		}
 		pmo_debug("Set Listen Interval vdevId %d Listen Intv %d",
-			 vdev_id, cfg_data_val);
-
-		ret = pmo_tgt_vdev_update_param_req(vdev,
-				pmo_vdev_param_dtim_policy,
-				pmo_stick_dtim);
-		if (QDF_IS_STATUS_ERROR(ret)) {
-			/* Set it back to Stick DTIM */
-			pmo_err("Failed to Set to Stick DTIM vdevId %d",
-				 vdev_id);
-		}
-		pmo_core_vdev_set_dtim_policy(vdev, pmo_stick_dtim);
-		pmo_debug("Set DTIM Policy to Stick Dtim vdevId %d", vdev_id);
-
-		if (qpower_config) {
-			pmo_debug("enable Qpower in resume mode!");
-			ret = pmo_tgt_send_vdev_sta_ps_param(vdev,
-				pmo_sta_ps_enable_qpower, qpower_config);
-			if (QDF_IS_STATUS_ERROR(ret))
-				pmo_err("Failed to enable Qpower in resume");
-		}
+			  vdev_id, cfg_data_val);
+		pmo_core_vdev_set_restore_dtim(vdev, false);
 	}
 }
 
@@ -1361,7 +1326,7 @@ QDF_STATUS pmo_core_config_listen_interval(struct wlan_objmgr_vdev *vdev,
 		pmo_err("Failed to set Normal DTIM for vdev id %d", vdev_id);
 	} else {
 		pmo_debug("Set DTIM Policy to Normal for vdev id %d", vdev_id);
-		pmo_core_vdev_set_dtim_policy(vdev, pmo_normal_dtim);
+		pmo_core_vdev_set_restore_dtim(vdev, true);
 	}
 
 dec_ref:
@@ -1419,7 +1384,7 @@ QDF_STATUS pmo_core_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
 		} else {
 			pmo_debug("Set DTIM Policy to Normal for vdev id %d",
 				  vdev_id);
-			pmo_core_vdev_set_dtim_policy(vdev, pmo_normal_dtim);
+			pmo_core_vdev_set_restore_dtim(vdev, true);
 		}
 	}
 
