@@ -216,9 +216,9 @@ bool csr_get_bss_id_bss_desc(tSirBssDescription *pSirBssDesc,
 			     struct qdf_mac_addr *pBssId);
 bool csr_is_bss_id_equal(tSirBssDescription *pSirBssDesc1,
 			 tSirBssDescription *pSirBssDesc2);
-eCsrMediaAccessType csr_get_qo_s_from_bss_desc(tHalHandle hHal,
-		tSirBssDescription *pSirBssDesc,
-		tDot11fBeaconIEs *pIes);
+eCsrMediaAccessType csr_get_qos_from_bss_desc(tpAniSirGlobal mac_ctx,
+					      tSirBssDescription *pSirBssDesc,
+					      tDot11fBeaconIEs *pIes);
 bool csr_is_nullssid(uint8_t *pBssSsid, uint8_t len);
 bool csr_is_infra_bss_desc(tSirBssDescription *pSirBssDesc);
 bool csr_is_ibss_bss_desc(tSirBssDescription *pSirBssDesc);

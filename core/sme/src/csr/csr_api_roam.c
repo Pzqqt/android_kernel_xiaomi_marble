@@ -4713,7 +4713,7 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 	qdf_mem_copy(&pBssConfig->BssCap, &pBssDesc->capabilityInfo,
 		     sizeof(tSirMacCapabilityInfo));
 	/* get qos */
-	pBssConfig->qosType = csr_get_qo_s_from_bss_desc(pMac, pBssDesc, pIes);
+	pBssConfig->qosType = csr_get_qos_from_bss_desc(pMac, pBssDesc, pIes);
 	/* Take SSID always from profile */
 	qdf_mem_copy(&pBssConfig->SSID.ssId,
 		     pProfile->SSIDs.SSIDList->SSID.ssId,

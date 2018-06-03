@@ -1570,9 +1570,9 @@ static bool csr_is_bss_description_wme(tHalHandle hHal,
 	return fWme;
 }
 
-eCsrMediaAccessType csr_get_qo_s_from_bss_desc(tHalHandle hHal,
-					       tSirBssDescription *pSirBssDesc,
-					       tDot11fBeaconIEs *pIes)
+eCsrMediaAccessType csr_get_qos_from_bss_desc(tpAniSirGlobal mac_ctx,
+					      tSirBssDescription *pSirBssDesc,
+					      tDot11fBeaconIEs *pIes)
 {
 	eCsrMediaAccessType qosType = eCSR_MEDIUM_ACCESS_DCF;
 
@@ -1585,7 +1585,7 @@ eCsrMediaAccessType csr_get_qo_s_from_bss_desc(tHalHandle hHal,
 		/* If we find WMM in the Bss Description, then we let this
 		 * override and use WMM.
 		 */
-		if (csr_is_bss_description_wme(hHal, pSirBssDesc, pIes))
+		if (csr_is_bss_description_wme(mac_ctx, pSirBssDesc, pIes))
 			qosType = eCSR_MEDIUM_ACCESS_WMM_eDCF_DSCP;
 		else {
 			/* If the QoS bit is on, then the AP is
@@ -1600,7 +1600,7 @@ eCsrMediaAccessType csr_get_qo_s_from_bss_desc(tHalHandle hHal,
 			 * for the adapter.
 			 */
 			if (eCSR_MEDIUM_ACCESS_11e_eDCF == qosType
-			    && !csr_is11e_supported(hHal))
+			    && !csr_is11e_supported(mac_ctx))
 				qosType = eCSR_MEDIUM_ACCESS_DCF;
 		}
 
