@@ -141,39 +141,39 @@ QDF_STATUS pmo_core_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type);
 
 /**
- * pmo_core_vdev_set_dtim_policy() - Set vdev beacon dtim policy
+ * pmo_core_vdev_set_restore_dtim() - vdev dtim restore setting value
  * @vdev: objmgr vdev handle
- * @value: carry vdev dtim policy
+ * @value: dtim restore policy value
  *
  * Return: None
  */
 static inline
-void pmo_core_vdev_set_dtim_policy(struct wlan_objmgr_vdev *vdev,
-	uint32_t value)
+void pmo_core_vdev_set_restore_dtim(struct wlan_objmgr_vdev *vdev,
+				    bool value)
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	vdev_ctx->dtim_policy = value;
+	vdev_ctx->restore_dtim_setting = value;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 }
 
 /**
- * pmo_core_vdev_get_dtim_policy() - Get vdev beacon dtim policy
+ * pmo_core_vdev_get_restore_dtim() - Get vdev restore dtim setting
  * @vdev: objmgr vdev handle
  *
- * Return: vdev dtim policy
+ * Return: dtim restore policy
  */
 static inline
-uint32_t pmo_core_vdev_get_dtim_policy(struct wlan_objmgr_vdev *vdev)
+bool pmo_core_vdev_get_restore_dtim(struct wlan_objmgr_vdev *vdev)
 {
-	uint32_t value;
+	bool value;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	value = vdev_ctx->dtim_policy;
+	value = vdev_ctx->restore_dtim_setting;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
 	return value;
