@@ -317,7 +317,6 @@ QDF_STATUS csr_parse_bss_description_ies(tHalHandle hHal,
 QDF_STATUS csr_get_parsed_bss_description_ies(tHalHandle hHal,
 		tSirBssDescription *pBssDesc, tDot11fBeaconIEs **ppIEStruct);
 
-bool csrValidateCountryString(tHalHandle hHal, uint8_t *pCountryString);
 tSirScanType csr_get_scan_type(tpAniSirGlobal pMac, uint8_t chnId);
 uint8_t csr_to_upper(uint8_t ch);
 QDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal pMac,
