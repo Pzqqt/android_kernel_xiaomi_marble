@@ -591,7 +591,7 @@ tListElem *csr_nonscan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
 	return &sme_cmd->Link;
 }
 
-bool csr_get_bss_id_bss_desc(tHalHandle hHal, tSirBssDescription *pSirBssDesc,
+bool csr_get_bss_id_bss_desc(tSirBssDescription *pSirBssDesc,
 			     struct qdf_mac_addr *pBssId)
 {
 	qdf_mem_copy(pBssId, &pSirBssDesc->bssId[0],
@@ -602,7 +602,6 @@ bool csr_get_bss_id_bss_desc(tHalHandle hHal, tSirBssDescription *pSirBssDesc,
 bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
 			 tSirBssDescription *pSirBssDesc2)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	bool fEqual = false;
 	struct qdf_mac_addr bssId1;
 	struct qdf_mac_addr bssId2;
@@ -613,9 +612,9 @@ bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
 		if (!pSirBssDesc2)
 			break;
 
-		if (!csr_get_bss_id_bss_desc(pMac, pSirBssDesc1, &bssId1))
+		if (!csr_get_bss_id_bss_desc(pSirBssDesc1, &bssId1))
 			break;
-		if (!csr_get_bss_id_bss_desc(pMac, pSirBssDesc2, &bssId2))
+		if (!csr_get_bss_id_bss_desc(pSirBssDesc2, &bssId2))
 			break;
 
 		fEqual = qdf_is_macaddr_equal(&bssId1, &bssId2);

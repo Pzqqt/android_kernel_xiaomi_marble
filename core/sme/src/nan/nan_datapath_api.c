@@ -107,7 +107,7 @@ void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
 	connect_profile->beaconInterval = 0;
 	qdf_mem_copy(&connect_profile->Keys, &roam_profile->Keys,
 		     sizeof(roam_profile->Keys));
-	csr_get_bss_id_bss_desc(mac_ctx, bssdesc, &connect_profile->bssid);
+	csr_get_bss_id_bss_desc(bssdesc, &connect_profile->bssid);
 	connect_profile->SSID.length = 0;
 	csr_free_connect_bss_desc(mac_ctx, session_id);
 	connect_profile->qap = false;

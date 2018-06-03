@@ -9486,7 +9486,7 @@ QDF_STATUS csr_roam_save_connected_information(tpAniSirGlobal pMac,
 	pConnectProfile->beaconInterval = pSirBssDesc->beaconInterval;
 	if (!pConnectProfile->beaconInterval)
 		sme_err("ERROR: Beacon interval is ZERO");
-	csr_get_bss_id_bss_desc(pMac, pSirBssDesc, &pConnectProfile->bssid);
+	csr_get_bss_id_bss_desc(pSirBssDesc, &pConnectProfile->bssid);
 	if (pSirBssDesc->mdiePresent) {
 		pConnectProfile->MDID.mdiePresent = 1;
 		pConnectProfile->MDID.mobilityDomain =
