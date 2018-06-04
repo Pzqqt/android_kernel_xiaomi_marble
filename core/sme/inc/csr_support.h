@@ -291,7 +291,7 @@ tAniEdType csr_translate_encrypt_type_to_ed_type(
  * pIes shall contain IEs from pSirBssDesc.
  * It shall be returned from function csr_get_parsed_bss_description_ies
  */
-bool csr_is_security_match(tHalHandle hHal, tCsrAuthList *authType,
+bool csr_is_security_match(tpAniSirGlobal mac_ctx, tCsrAuthList *authType,
 		tCsrEncryptionList *pUCEncryptionType,
 		tCsrEncryptionList *pMCEncryptionType, bool *pMFPEnabled,
 		uint8_t *pMFPRequired, uint8_t *pMFPCapable,

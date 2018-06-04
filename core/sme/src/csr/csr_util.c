@@ -5127,7 +5127,7 @@ static bool csr_validate_any_default(tHalHandle hal, tCsrAuthList *auth_type,
 
 /**
  * csr_is_security_match() - Check if the security is matching
- * @hal:               Global HAL handle
+ * @mac_ctx:           Global MAC context
  * @auth_type:         Authentication type
  * @uc_enc_type:       Unicast Encryption type
  * @mc_enc_type:       Multicast encryption type
@@ -5142,7 +5142,7 @@ static bool csr_validate_any_default(tHalHandle hal, tCsrAuthList *auth_type,
  *
  * Return: Boolean value to tell if matched or not.
  */
-bool csr_is_security_match(tHalHandle hal, tCsrAuthList *auth_type,
+bool csr_is_security_match(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
 	tCsrEncryptionList *uc_enc_type,
 	tCsrEncryptionList *mc_enc_type, bool *mfp_enabled,
 	uint8_t *mfp_required, uint8_t *mfp_capable,
@@ -5151,7 +5151,6 @@ bool csr_is_security_match(tHalHandle hal, tCsrAuthList *auth_type,
 	eCsrEncryptionType *neg_uc_cipher,
 	eCsrEncryptionType *neg_mc_cipher)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	bool match = false;
 	uint8_t i;
 	eCsrEncryptionType mc_cipher = eCSR_ENCRYPT_TYPE_UNKNOWN;
@@ -5224,7 +5223,7 @@ bool csr_is_security_match(tHalHandle hal, tCsrAuthList *auth_type,
 #ifdef FEATURE_WLAN_WAPI
 		case eCSR_ENCRYPT_TYPE_WPI:     /* WAPI */
 			if (ies_ptr)
-				match = csr_is_wapi_match(hal, auth_type,
+				match = csr_is_wapi_match(mac_ctx, auth_type,
 						uc_cipher, mc_enc_type, ies_ptr,
 						&local_neg_auth_type,
 						&mc_cipher);
@@ -5234,7 +5233,7 @@ bool csr_is_security_match(tHalHandle hal, tCsrAuthList *auth_type,
 #endif /* FEATURE_WLAN_WAPI */
 		case eCSR_ENCRYPT_TYPE_ANY:
 		default:
-			match  = csr_validate_any_default(hal, auth_type,
+			match  = csr_validate_any_default(mac_ctx, auth_type,
 					mc_enc_type, mfp_enabled, mfp_required,
 					mfp_capable, ies_ptr,
 					&local_neg_auth_type, bss_desc,
