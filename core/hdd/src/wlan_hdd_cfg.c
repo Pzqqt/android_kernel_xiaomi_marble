@@ -4155,6 +4155,13 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_NAPI_CE_CPU_MASK_MIN,
 		CFG_NAPI_CE_CPU_MASK_MAX),
 
+	REG_VARIABLE(CFG_RX_THREAD_CPU_MASK_NAME, WLAN_PARAM_HexInteger,
+		struct hdd_config, rx_thread_affinity_mask,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_RX_THREAD_CPU_MASK_DEFAULT,
+		CFG_RX_THREAD_CPU_MASK_MIN,
+		CFG_RX_THREAD_CPU_MASK_MAX),
+
 	REG_VARIABLE_STRING(CFG_RPS_RX_QUEUE_CPU_MAP_LIST_NAME,
 				 WLAN_PARAM_String,
 				 struct hdd_config, cpu_map_list,

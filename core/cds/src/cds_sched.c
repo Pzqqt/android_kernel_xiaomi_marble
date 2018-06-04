@@ -97,15 +97,65 @@ int cds_set_cpus_allowed_ptr(struct task_struct *task, unsigned long cpu)
 }
 
 
+void cds_set_rx_thread_cpu_mask(uint8_t cpu_affinity_mask)
+{
+	p_cds_sched_context sched_context = get_cds_sched_ctxt();
+
+	if (!sched_context) {
+		qdf_err("invalid context");
+		return;
+	}
+	sched_context->conf_rx_thread_cpu_mask = cpu_affinity_mask;
+}
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+/**
+ * cds_rx_thread_log_cpu_affinity_change - Log Rx thread affinity change
+ * @core_affine_cnt: Available cores
+ * @tput_req: Throughput request
+ * @old_mask: Old affinity mask
+ * @new_mask: New affinity mask
+ *
+ * Return: NONE
+ */
+static void cds_rx_thread_log_cpu_affinity_change(unsigned char core_affine_cnt,
+						  int tput_req,
+						  struct cpumask *old_mask,
+						  struct cpumask *new_mask)
+{
+	char new_mask_str[10];
+	char old_mask_str[10];
+
+	qdf_mem_set(new_mask_str, sizeof(new_mask_str), 0);
+	qdf_mem_set(new_mask_str, sizeof(old_mask_str), 0);
+
+	cpumap_print_to_pagebuf(false, old_mask_str, old_mask);
+	cpumap_print_to_pagebuf(false, new_mask_str, new_mask);
+
+	qdf_err("num online perf cores %d, high tput req %d, old aff mask %s new aff mask %s",
+		core_affine_cnt, tput_req, old_mask_str, new_mask_str);
+}
+#else
+static void cds_rx_thread_log_cpu_affinity_change(unsigned char core_affine_cnt,
+						  int tput_req,
+						  struct cpumask *old_mask,
+						  struct cpumask *new_mask)
+{
+}
+#endif
+
 /**
  * cds_sched_find_attach_cpu - find available cores and attach to required core
  * @pSchedContext:	wlan scheduler context
  * @high_throughput:	high throughput is required or not
  *
  * Find current online cores.
- * high troughput required and PERF core online, then attach any PERF core
- * low throughput required or only little cores online, then attach any little
- * core
+ * During high TPUT,
+ * 1) If user INI configured cores, affine to those cores
+ * 2) Otherwise perf cores.
+ * 3) Otherwise to all cores.
+ *
+ * During low TPUT, set affinity to any core, let system decide.
  *
  * Return: 0 success
  *         1 fail
@@ -113,105 +163,52 @@ int cds_set_cpus_allowed_ptr(struct task_struct *task, unsigned long cpu)
 static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 	bool high_throughput)
 {
-	unsigned long *online_perf_cpu = NULL;
-	unsigned long *online_litl_cpu = NULL;
-	unsigned char perf_core_count = 0;
-	unsigned char litl_core_count = 0;
-	int cds_max_cluster_id = CDS_CPU_CLUSTER_TYPE_LITTLE;
-#ifdef WLAN_OPEN_SOURCE
-	struct cpumask cpu_mask;
+	unsigned char core_affine_count = 0;
+	struct cpumask new_mask;
 	unsigned long cpus;
-	int i;
-#endif
 
 	cds_debug("num possible cpu %d", num_possible_cpus());
 
-	online_perf_cpu = qdf_mem_malloc(
-		num_possible_cpus() * sizeof(unsigned long));
-	if (!online_perf_cpu) {
-		cds_err("perf cpu cache alloc fail");
-		return 1;
-	}
+	cpumask_clear(&new_mask);
 
-	online_litl_cpu = qdf_mem_malloc(
-		num_possible_cpus() * sizeof(unsigned long));
-	if (!online_litl_cpu) {
-		cds_err("lttl cpu cache alloc fail");
-		qdf_mem_free(online_perf_cpu);
-		return 1;
-	}
+	if (high_throughput) {
+		/* Get Online perf/pwr CPU count */
+		for_each_online_cpu(cpus) {
+			if (topology_physical_package_id(cpus) >
+							CDS_MAX_CPU_CLUSTERS) {
+				cds_err("can handle max %d clusters, returning...",
+					CDS_MAX_CPU_CLUSTERS);
+				goto err;
+			}
 
-	/* Get Online perf CPU count */
-#if defined(WLAN_OPEN_SOURCE) && \
-	(LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
-	for_each_online_cpu(cpus) {
-		if (topology_physical_package_id(cpus) > CDS_MAX_CPU_CLUSTERS) {
-			cds_err("can handle max %d clusters, returning...",
-				CDS_MAX_CPU_CLUSTERS);
-			goto err;
+			if (pSchedContext->conf_rx_thread_cpu_mask) {
+				if (pSchedContext->conf_rx_thread_cpu_mask &
+								(1 << cpus))
+					cpumask_set_cpu(cpus, &new_mask);
+			} else if (topology_physical_package_id(cpus) ==
+						 CDS_CPU_CLUSTER_TYPE_PERF) {
+				cpumask_set_cpu(cpus, &new_mask);
+			}
+
+			core_affine_count++;
 		}
-
-		if (topology_physical_package_id(cpus) ==
-					 CDS_CPU_CLUSTER_TYPE_PERF) {
-			online_perf_cpu[perf_core_count] = cpus;
-			perf_core_count++;
-			cds_max_cluster_id = CDS_CPU_CLUSTER_TYPE_PERF;
-		} else {
-			online_litl_cpu[litl_core_count] = cpus;
-			litl_core_count++;
-		}
-	}
-#endif
-
-	/* Single cluster system, not need to handle this */
-	if (CDS_CPU_CLUSTER_TYPE_LITTLE == cds_max_cluster_id) {
-		cds_debug("single cluster system. returning");
-		goto success;
-	}
-
-	if ((!litl_core_count) && (!perf_core_count)) {
-		cds_err("Both Cluster off, do nothing");
-		goto success;
-	}
-#if defined(WLAN_OPEN_SOURCE) && \
-	(LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
-	if ((high_throughput && perf_core_count) || (!litl_core_count)) {
-		/* Attach to any perf core
-		 * Final decision should made by scheduler */
-
-		cpumask_clear(&cpu_mask);
-		for (i = 0; i < perf_core_count; i++)
-			cpumask_set_cpu(online_perf_cpu[i], &cpu_mask);
-
-		set_cpus_allowed_ptr(pSchedContext->ol_rx_thread, &cpu_mask);
-		pSchedContext->rx_thread_cpu_cluster =
-						CDS_CPU_CLUSTER_TYPE_PERF;
 	} else {
-		/* Attach to any little core
-		 * Final decision should made by scheduler */
-
-		cpumask_clear(&cpu_mask);
-		for (i = 0; i < litl_core_count; i++)
-			cpumask_set_cpu(online_litl_cpu[i], &cpu_mask);
-
-		set_cpus_allowed_ptr(pSchedContext->ol_rx_thread, &cpu_mask);
-		pSchedContext->rx_thread_cpu_cluster =
-						CDS_CPU_CLUSTER_TYPE_LITTLE;
+		/* Attach to all cores, let scheduler decide */
+		cpumask_setall(&new_mask);
 	}
-#endif
-	cds_info("NUM PERF CORE %d, HIGH TPUT REQ %d, RX THRE CLUS %d",
-		 perf_core_count,
-		 (int)pSchedContext->high_throughput_required,
-		 (int)pSchedContext->rx_thread_cpu_cluster);
 
-success:
-	qdf_mem_free(online_perf_cpu);
-	qdf_mem_free(online_litl_cpu);
+	cds_rx_thread_log_cpu_affinity_change(core_affine_count,
+				(int)pSchedContext->high_throughput_required,
+				&pSchedContext->rx_thread_cpu_mask,
+				&new_mask);
+
+	if (!cpumask_equal(&pSchedContext->rx_thread_cpu_mask, &new_mask)) {
+		cpumask_copy(&pSchedContext->rx_thread_cpu_mask, &new_mask);
+		set_cpus_allowed_ptr(pSchedContext->ol_rx_thread, &new_mask);
+	}
+
 	return 0;
-
 err:
-	qdf_mem_free(online_perf_cpu);
-	qdf_mem_free(online_litl_cpu);
 	return 1;
 }
 
@@ -272,17 +269,18 @@ int cds_sched_handle_throughput_req(bool high_tput_required)
 	}
 
 	mutex_lock(&pSchedContext->affinity_lock);
-	pSchedContext->high_throughput_required = high_tput_required;
-	if (cds_sched_find_attach_cpu(pSchedContext, high_tput_required)) {
-		cds_err("handle throughput req fail");
-		mutex_unlock(&pSchedContext->affinity_lock);
-		return 1;
+	if (pSchedContext->high_throughput_required != high_tput_required) {
+		pSchedContext->high_throughput_required = high_tput_required;
+		if (cds_sched_find_attach_cpu(pSchedContext,
+					      high_tput_required)) {
+			mutex_unlock(&pSchedContext->affinity_lock);
+			return 1;
+		}
 	}
 	mutex_unlock(&pSchedContext->affinity_lock);
 	return 0;
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 /**
  * cds_cpu_hotplug_multi_cluster() - calls the multi-cluster hotplug handler,
  *	when on a multi-cluster platform
@@ -306,12 +304,6 @@ static QDF_STATUS cds_cpu_hotplug_multi_cluster(void)
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-static QDF_STATUS cds_cpu_hotplug_multi_cluster(void)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-#endif /* KERNEL_VERSION(3, 10, 0) */
 
 /**
  * __cds_cpu_hotplug_notify() - CPU hotplug event handler
@@ -696,34 +688,13 @@ static void cds_rx_from_queue(p_cds_sched_context pSchedContext)
 static int cds_ol_rx_thread(void *arg)
 {
 	p_cds_sched_context pSchedContext = (p_cds_sched_context) arg;
-	unsigned long pref_cpu = 0;
 	bool shutdown = false;
-	int status, i;
+	int status;
 
 	set_user_nice(current, -1);
 #ifdef MSM_PLATFORM
 	set_wake_up_idle(true);
 #endif
-
-	/* Find the available cpu core other than cpu 0 and
-	 * bind the thread
-	 */
-	/* Find the available cpu core other than cpu 0 and
-	 * bind the thread */
-	for_each_online_cpu(i) {
-		if (i == 0)
-			continue;
-		pref_cpu = i;
-			break;
-	}
-
-	if (pref_cpu != 0 && (!cds_set_cpus_allowed_ptr(current, pref_cpu)))
-		affine_cpu = pref_cpu;
-
-	if (!arg) {
-		cds_err("Bad Args passed");
-		return 0;
-	}
 
 	complete(&pSchedContext->ol_rx_start_event);
 

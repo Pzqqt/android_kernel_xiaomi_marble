@@ -138,8 +138,11 @@ typedef struct _cds_sched_context {
 	/* affinity lock */
 	struct mutex affinity_lock;
 
-	/* rx thread affinity cpu cluster */
-	uint8_t rx_thread_cpu_cluster;
+	/* Saved rx thread CPU affinity */
+	struct cpumask rx_thread_cpu_mask;
+
+	/* CPU affinity bitmask */
+	uint8_t conf_rx_thread_cpu_mask;
 
 	/* high throughput required */
 	bool high_throughput_required;
@@ -229,6 +232,14 @@ struct cds_context {
 #ifdef QCA_CONFIG_SMP
 int cds_sched_handle_cpu_hot_plug(void);
 int cds_sched_handle_throughput_req(bool high_tput_required);
+
+/**
+ * cds_set_rx_thread_cpu_mask() - Rx_thread affinity from INI
+ * @cpu_affinity_mask: CPU affinity bitmap
+ *
+ * Return:None
+ */
+void cds_set_rx_thread_cpu_mask(uint8_t cpu_affinity_mask);
 
 /*---------------------------------------------------------------------------
    \brief cds_drop_rxpkt_by_staid() - API to drop pending Rx packets for a sta

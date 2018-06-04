@@ -2780,7 +2780,11 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			goto deinit_config;
 		}
 
-		/* initialize components configurations  after psoc open */
+		if (hdd_ctx->config->rx_thread_affinity_mask)
+			cds_set_rx_thread_cpu_mask(
+				hdd_ctx->config->rx_thread_affinity_mask);
+
+		/* initialize components configurations after psoc open */
 		ret = hdd_update_components_config(hdd_ctx);
 		if (ret) {
 			hdd_err("Failed to update component configs; errno: %d",

@@ -9971,6 +9971,26 @@ enum dot11p_mode {
 #define CFG_NAPI_CE_CPU_MASK_MAX	(0xFF)
 #define CFG_NAPI_CE_CPU_MASK_DEFAULT	(0)
 
+/*
+ * <ini>
+ * RX_THREAD_CPU_AFFINITY_MASK - CPU mask to affine Rx_thread
+ *
+ * @Min: 0
+ * @Max: 0xFF
+ * @Default: 0
+ *
+ * This ini is used to set Rx_thread CPU affinity
+ *
+ * Supported Feature: Rx_thread
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_RX_THREAD_CPU_MASK_NAME	"NAPI_CPU_AFFINITY_MASK"
+#define CFG_RX_THREAD_CPU_MASK_MIN	(0)
+#define CFG_RX_THREAD_CPU_MASK_MAX	(0xFF)
+#define CFG_RX_THREAD_CPU_MASK_DEFAULT	(0)
 
 /* List of RPS CPU maps for different rx queues registered by WLAN driver
  * Ref - Kernel/Documentation/networking/scaling.txt
@@ -14829,6 +14849,8 @@ struct hdd_config {
 	uint32_t ce_service_max_yield_time;
 	uint8_t ce_service_max_rx_ind_flush;
 	uint32_t napi_cpu_affinity_mask;
+	/* CPU affinity mask for rx_thread */
+	uint32_t rx_thread_affinity_mask;
 	uint8_t cpu_map_list[CFG_RPS_RX_QUEUE_CPU_MAP_LIST_LEN];
 #ifdef FEATURE_WLAN_EXTSCAN
 	bool     extscan_enabled;
