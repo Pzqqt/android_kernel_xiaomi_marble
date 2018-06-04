@@ -4720,12 +4720,11 @@ uint8_t csr_retrieve_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
  * one from the BSS Caller allocated memory for pWapiIe and guarrantee
  * it can contain a max length WAPI IE
  */
-uint8_t csr_retrieve_wapi_ie(tHalHandle hHal, uint32_t sessionId,
+uint8_t csr_retrieve_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	uint8_t cbWapiIe = 0;
 
 	do {

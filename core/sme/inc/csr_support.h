@@ -278,10 +278,10 @@ uint8_t csr_retrieve_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
  * Or else construct one from the BSS. Caller allocated memory for pWapiIe and
  * guarrantee it can contain a max length WAPI IE
  */
-uint8_t csr_retrieve_wapi_ie(tHalHandle hHal, uint32_t sessionId,
-		struct csr_roam_profile *pProfile,
-		tSirBssDescription *pSirBssDesc,
-		tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
+uint8_t csr_retrieve_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
+			     struct csr_roam_profile *pProfile,
+			     tSirBssDescription *pSirBssDesc,
+			     tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
 #endif /* FEATURE_WLAN_WAPI */
 bool csr_rates_is_dot11_rate11b_supported_rate(uint8_t dot11Rate);
 bool csr_rates_is_dot11_rate11a_supported_rate(uint8_t dot11Rate);
