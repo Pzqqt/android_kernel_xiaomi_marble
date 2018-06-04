@@ -1698,11 +1698,9 @@ bool csr_is_nullssid(uint8_t *pBssSsid, uint8_t len)
 	return fNullSsid;
 }
 
-uint32_t csr_get_frag_thresh(tHalHandle hHal)
+uint32_t csr_get_frag_thresh(tpAniSirGlobal mac_ctx)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	return pMac->roam.configParam.FragmentationThreshold;
+	return mac_ctx->roam.configParam.FragmentationThreshold;
 }
 
 uint32_t csr_get_rts_thresh(tHalHandle hHal)

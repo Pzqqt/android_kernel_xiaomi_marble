@@ -226,7 +226,7 @@ bool csr_is_privacy(tSirBssDescription *pSirBssDesc);
 tSirResultCodes csr_get_disassoc_rsp_status_code(tSirSmeDisassocRsp *
 		pSmeDisassocRsp);
 tSirResultCodes csr_get_de_auth_rsp_status_code(tSirSmeDeauthRsp *pSmeRsp);
-uint32_t csr_get_frag_thresh(tHalHandle hHal);
+uint32_t csr_get_frag_thresh(tpAniSirGlobal mac_ctx);
 uint32_t csr_get_rts_thresh(tHalHandle hHal);
 eCsrPhyMode csr_get_phy_mode_from_bssDesc(tSirBssDescription *pSirBssDesc);
 uint32_t csr_get11h_power_constraint(tHalHandle hHal,
