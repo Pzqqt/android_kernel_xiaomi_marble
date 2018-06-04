@@ -1342,8 +1342,13 @@ static QDF_STATUS wma_roam_scan_btm_offload(tp_wma_handle wma_handle,
 	params->btm_solicited_timeout = roam_req->btm_solicited_timeout;
 	params->btm_max_attempt_cnt = roam_req->btm_max_attempt_cnt;
 	params->btm_sticky_time = roam_req->btm_sticky_time;
+
+	WMA_LOGD("%s: Sending BTM offload to FW for vdev %u btm_offload_config %u",
+		 __func__, params->vdev_id, params->btm_offload_config);
+
 	status = wmi_unified_send_btm_config(wma_handle->wmi_handle, params);
 	qdf_mem_free(params);
+
 
 	return status;
 }
@@ -1590,6 +1595,13 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 					 qdf_status);
 				break;
 			}
+		}
+
+		/* Send BTM config as disabled during RSO Stop */
+		qdf_status = wma_roam_scan_btm_offload(wma_handle, roam_req);
+		if (qdf_status != QDF_STATUS_SUCCESS) {
+			WMA_LOGE(FL("Sending BTM config to fw failed"));
+			break;
 		}
 
 		wma_handle->suitable_ap_hb_failure = false;

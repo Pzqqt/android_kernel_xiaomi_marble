@@ -18518,8 +18518,14 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		mac_ctx->roam.configParam.rssi_channel_penalization;
 	req_buf->lca_config_params.num_disallowed_aps =
 		mac_ctx->roam.configParam.num_disallowed_aps;
-	req_buf->btm_offload_config =
-		mac_ctx->roam.configParam.btm_offload_config;
+
+	/* For RSO Stop, we need to notify FW to deinit BTM */
+	if (command == ROAM_SCAN_OFFLOAD_STOP)
+		req_buf->btm_offload_config = 0;
+	else
+		req_buf->btm_offload_config =
+			mac_ctx->roam.configParam.btm_offload_config;
+
 	req_buf->btm_solicited_timeout =
 		mac_ctx->roam.configParam.btm_solicited_timeout;
 	req_buf->btm_max_attempt_cnt =
