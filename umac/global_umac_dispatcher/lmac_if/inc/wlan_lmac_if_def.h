@@ -568,7 +568,6 @@ struct wlan_lmac_if_reg_tx_ops {
  * @dfs_get_ext_busy:                   Get ext_busy.
  * @dfs_get_target_type:                Get target type.
  * @dfs_is_countryCode_KOREA_ROC3:      Check is county code Korea.
- * @dfs_is_mode_offload:                Check the radio for offload.
  * @dfs_get_ah_devid:                   Get ah devid.
  * @dfs_get_phymode_info:               Get phymode info.
  * @dfs_reg_ev_handler:                 Register dfs event handler.
@@ -599,8 +598,6 @@ struct wlan_lmac_if_dfs_tx_ops {
 			int *dfs_ext_chan_busy);
 	QDF_STATUS (*dfs_get_target_type)(struct wlan_objmgr_pdev *pdev,
 			uint32_t *target_type);
-	QDF_STATUS (*dfs_is_mode_offload)(struct wlan_objmgr_pdev *pdev,
-			bool *is_offload);
 	QDF_STATUS (*dfs_get_ah_devid)(struct wlan_objmgr_pdev *pdev,
 			uint16_t *devid);
 	QDF_STATUS (*dfs_get_phymode_info)(struct wlan_objmgr_pdev *pdev,

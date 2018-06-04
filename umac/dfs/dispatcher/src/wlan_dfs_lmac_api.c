@@ -101,22 +101,6 @@ void lmac_dfs_get_thresholds(struct wlan_objmgr_pdev *pdev,
 		dfs_tx_ops->dfs_get_thresholds(pdev, param);
 }
 
-bool lmac_is_mode_offload(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
-	bool is_offload = false;
-
-	psoc = wlan_pdev_get_psoc(pdev);
-
-	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
-
-	if (dfs_tx_ops->dfs_is_mode_offload)
-		dfs_tx_ops->dfs_is_mode_offload(pdev, &is_offload);
-
-	return is_offload;
-}
-
 uint16_t lmac_get_ah_devid(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
