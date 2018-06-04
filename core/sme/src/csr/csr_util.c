@@ -2215,18 +2215,17 @@ enum csr_cfgdot11mode csr_find_best_phy_mode(tpAniSirGlobal pMac,
 	return cfgDot11ModeToUse;
 }
 
-uint32_t csr_get11h_power_constraint(tHalHandle hHal,
-				    tDot11fIEPowerConstraints *pPowerConstraint)
+uint32_t csr_get11h_power_constraint(tpAniSirGlobal mac_ctx,
+				     tDot11fIEPowerConstraints *constraints)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	uint32_t localPowerConstraint = 0;
 
 	/* check if .11h support is enabled, if not,
 	 * the power constraint is 0.
 	 */
-	if (pMac->roam.configParam.Is11hSupportEnabled
-	    && pPowerConstraint->present) {
-		localPowerConstraint = pPowerConstraint->localPowerConstraints;
+	if (mac_ctx->roam.configParam.Is11hSupportEnabled &&
+	    constraints->present) {
+		localPowerConstraint = constraints->localPowerConstraints;
 	}
 
 	return localPowerConstraint;

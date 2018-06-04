@@ -229,8 +229,8 @@ tSirResultCodes csr_get_de_auth_rsp_status_code(tSirSmeDeauthRsp *pSmeRsp);
 uint32_t csr_get_frag_thresh(tpAniSirGlobal mac_ctx);
 uint32_t csr_get_rts_thresh(tpAniSirGlobal mac_ctx);
 eCsrPhyMode csr_get_phy_mode_from_bssDesc(tSirBssDescription *pSirBssDesc);
-uint32_t csr_get11h_power_constraint(tHalHandle hHal,
-		tDot11fIEPowerConstraints *pPowerConstraint);
+uint32_t csr_get11h_power_constraint(tpAniSirGlobal mac_ctx,
+				     tDot11fIEPowerConstraints *constraints);
 uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 		struct csr_roam_profile *pProfile,
 		tSirBssDescription *pSirBssDesc,
