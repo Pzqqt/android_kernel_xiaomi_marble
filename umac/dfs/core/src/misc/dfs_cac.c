@@ -148,7 +148,7 @@ static os_timer_func(dfs_cac_timeout)
 	dfs_mlme_proc_cac(dfs->dfs_pdev_obj, 0);
 
 	/* Send a CAC timeout, VAP up event to user space */
-	dfs_mlme_deliver_event_up_afrer_cac(dfs->dfs_pdev_obj);
+	dfs_mlme_deliver_event_up_after_cac(dfs->dfs_pdev_obj);
 
 	if (dfs->dfs_defer_precac_channel_change == 1) {
 		dfs_mlme_channel_change_by_precac(dfs->dfs_pdev_obj);

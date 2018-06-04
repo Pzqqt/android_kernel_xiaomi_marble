@@ -62,8 +62,8 @@ void register_dfs_callbacks(void)
 	tmp_dfs_to_mlme->mlme_mark_dfs = mlme_dfs_mark_dfs;
 	tmp_dfs_to_mlme->mlme_start_csa = mlme_dfs_start_csa;
 	tmp_dfs_to_mlme->mlme_proc_cac = mlme_dfs_proc_cac;
-	tmp_dfs_to_mlme->mlme_deliver_event_up_afrer_cac =
-		mlme_dfs_deliver_event_up_afrer_cac;
+	tmp_dfs_to_mlme->mlme_deliver_event_up_after_cac =
+		mlme_dfs_deliver_event_up_after_cac;
 	tmp_dfs_to_mlme->mlme_get_dfs_ch_nchans = mlme_dfs_get_dfs_ch_nchans;
 	tmp_dfs_to_mlme->mlme_get_extchan = mlme_dfs_get_extchan;
 	tmp_dfs_to_mlme->mlme_set_no_chans_available =

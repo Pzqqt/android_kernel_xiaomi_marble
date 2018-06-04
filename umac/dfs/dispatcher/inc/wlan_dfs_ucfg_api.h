@@ -37,7 +37,7 @@
  * @mlme_mark_dfs:                     Calls dfs_action function.
  * @mlme_start_csa:                    Sends CSA.
  * @mlme_proc_cac:                     Process the CAC completion event.
- * @mlme_deliver_event_up_afrer_cac:   Send a CAC timeout, VAP up event to user
+ * @mlme_deliver_event_up_after_cac:   Send a CAC timeout, VAP up event to user
  *                                     space
  * @mlme_get_dfs_ch_nchans:            Get number of channels in the channel
  *                                     list.
@@ -76,7 +76,7 @@ struct dfs_to_mlme {
 			uint8_t ieee_chan, uint16_t freq,
 			uint8_t cfreq2, uint64_t flags);
 	QDF_STATUS (*mlme_proc_cac)(struct wlan_objmgr_pdev *pdev);
-	QDF_STATUS (*mlme_deliver_event_up_afrer_cac)(
+	QDF_STATUS (*mlme_deliver_event_up_after_cac)(
 			struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_get_dfs_ch_nchans)(struct wlan_objmgr_pdev *pdev,
 			int *nchans);

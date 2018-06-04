@@ -131,10 +131,10 @@ void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
 }
 #endif
 
-void dfs_mlme_deliver_event_up_afrer_cac(struct wlan_objmgr_pdev *pdev)
+void dfs_mlme_deliver_event_up_after_cac(struct wlan_objmgr_pdev *pdev)
 {
-	if (global_dfs_to_mlme.mlme_deliver_event_up_afrer_cac != NULL)
-		global_dfs_to_mlme.mlme_deliver_event_up_afrer_cac(
+	if (global_dfs_to_mlme.mlme_deliver_event_up_after_cac)
+		global_dfs_to_mlme.mlme_deliver_event_up_after_cac(
 				pdev);
 }
 

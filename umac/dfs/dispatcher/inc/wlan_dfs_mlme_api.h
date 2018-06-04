@@ -72,11 +72,11 @@ void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
 void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id);
 
 /**
- * dfs_mlme_deliver_event_up_afrer_cac() - Send a CAC timeout, VAP up event to
+ * dfs_mlme_deliver_event_up_after_cac() - Send a CAC timeout, VAP up event to
  * userspace.
  * @pdev: Pointer to DFS pdev object.
  */
-void dfs_mlme_deliver_event_up_afrer_cac(struct wlan_objmgr_pdev *pdev);
+void dfs_mlme_deliver_event_up_after_cac(struct wlan_objmgr_pdev *pdev);
 
 /**
  * dfs_mlme_get_dfs_ch_nchans() - Get number of channels in the channel list
