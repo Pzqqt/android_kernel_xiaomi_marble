@@ -4630,11 +4630,11 @@ uint8_t csr_construct_wpa_ie(tpAniSirGlobal pMac,
  * one from the BSS Caller allocated memory for pWpaIe and guarrantee
  * it can contain a max length WPA IE
  */
-uint8_t csr_retrieve_wpa_ie(tHalHandle hHal, struct csr_roam_profile *pProfile,
+uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal pMac,
+			    struct csr_roam_profile *pProfile,
 			    tSirBssDescription *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	uint8_t cbWpaIe = 0;
 
 	do {

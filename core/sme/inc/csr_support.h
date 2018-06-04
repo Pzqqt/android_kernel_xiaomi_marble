@@ -249,7 +249,8 @@ bool csr_is_profile_wapi(struct csr_roam_profile *pProfile);
  * Or else construct one from the BSS Caller allocated memory for pWpaIe and
  * guarrantee it can contain a max length WPA IE
  */
-uint8_t csr_retrieve_wpa_ie(tHalHandle hHal, struct csr_roam_profile *pProfile,
+uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal pMac,
+			    struct csr_roam_profile *pProfile,
 			    tSirBssDescription *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
 
