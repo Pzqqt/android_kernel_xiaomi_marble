@@ -1034,7 +1034,6 @@ ifeq ($(CONFIG_CP_STATS), y)
 CP_STATS_OBJS := $(CP_STATS_TGT_SRC)/target_if_mc_cp_stats.o                 \
 		 $(CP_STATS_CORE_SRC)/wlan_cp_stats_comp_handler.o           \
 		 $(CP_STATS_CORE_SRC)/wlan_cp_stats_obj_mgr_handler.o        \
-		 $(CP_STATS_CORE_SRC)/wlan_cp_stats_da_api.o                 \
 		 $(CP_STATS_CORE_SRC)/wlan_cp_stats_ol_api.o                 \
 		 $(CP_STATS_OS_IF_SRC)/wlan_cfg80211_mc_cp_stats.o           \
 		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_utils_api.o        \
