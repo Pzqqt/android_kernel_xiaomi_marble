@@ -266,12 +266,12 @@ bool csr_is_profile_rsn(struct csr_roam_profile *pProfile);
 /*
  * If a RSNIE exists in the profile, just use it. Or
  * else construct one from the BSS Caller allocated memory for pWpaIe and
- * guarrantee it can contain a max length WPA IE
+ * guarantee it can contain a max length WPA IE
  */
-uint8_t csr_retrieve_rsn_ie(tHalHandle hHal, uint32_t sessionId,
-		struct csr_roam_profile *pProfile,
-		tSirBssDescription *pSirBssDesc,
-		tDot11fBeaconIEs *pIes, tCsrRSNIe *pRsnIe);
+uint8_t csr_retrieve_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
+			    struct csr_roam_profile *pProfile,
+			    tSirBssDescription *pSirBssDesc,
+			    tDot11fBeaconIEs *pIes, tCsrRSNIe *pRsnIe);
 #ifdef FEATURE_WLAN_WAPI
 /*
  * If a WAPI IE exists in the profile, just use it.
