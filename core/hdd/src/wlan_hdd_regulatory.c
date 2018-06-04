@@ -900,6 +900,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	char country[REG_ALPHA2_LEN + 1] = {0};
 
 	hdd_debug("country: %c%c, initiator %d, dfs_region: %d",
 		  request->alpha2[0],
@@ -909,8 +910,9 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 
 	switch (request->initiator) {
 	case NL80211_REGDOM_SET_BY_USER:
-		status = ucfg_reg_set_country(hdd_ctx->hdd_pdev,
-					      request->alpha2);
+		qdf_mem_copy(country, request->alpha2, QDF_MIN(
+			     sizeof(request->alpha2), sizeof(country)));
+		status = ucfg_reg_set_country(hdd_ctx->hdd_pdev, country);
 		break;
 	case NL80211_REGDOM_SET_BY_CORE:
 	case NL80211_REGDOM_SET_BY_COUNTRY_IE:
