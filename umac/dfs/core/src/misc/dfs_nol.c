@@ -39,6 +39,16 @@
 #include "../dfs_partial_offload_radar.h"
 #endif
 
+void dfs_set_update_nol_flag(struct wlan_dfs *dfs, bool val)
+{
+	dfs->update_nol = val;
+}
+
+bool dfs_get_update_nol_flag(struct wlan_dfs *dfs)
+{
+	return dfs->update_nol;
+}
+
 /**
  * dfs_nol_timeout() - NOL timeout function.
  *

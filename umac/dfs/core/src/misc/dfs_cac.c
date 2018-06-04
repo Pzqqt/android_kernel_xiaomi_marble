@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2007-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -76,16 +76,6 @@ void dfs_cac_valid_reset(struct wlan_dfs *dfs,
 			dfs->dfs_cac_valid = 0;
 		}
 	}
-}
-
-void dfs_set_update_nol_flag(struct wlan_dfs *dfs, bool val)
-{
-	dfs->update_nol = val;
-}
-
-bool dfs_get_update_nol_flag(struct wlan_dfs *dfs)
-{
-	return dfs->update_nol;
 }
 
 /**
