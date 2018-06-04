@@ -236,7 +236,8 @@ uint8_t csr_construct_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe);
 
-uint8_t csr_construct_wpa_ie(tHalHandle hHal, struct csr_roam_profile *pProfile,
+uint8_t csr_construct_wpa_ie(tpAniSirGlobal pMac,
+			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
 

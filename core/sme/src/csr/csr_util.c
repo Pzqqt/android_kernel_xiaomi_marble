@@ -4544,11 +4544,11 @@ static bool csr_is_wpa_encryption_match(tpAniSirGlobal pMac,
 	return fWpaMatch;
 }
 
-uint8_t csr_construct_wpa_ie(tHalHandle hHal, struct csr_roam_profile *pProfile,
+uint8_t csr_construct_wpa_ie(tpAniSirGlobal pMac,
+			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	bool fWpaMatch;
 	uint8_t cbWpaIe = 0;
 	uint8_t UnicastCypher[CSR_WPA_OUI_SIZE];
@@ -4571,7 +4571,7 @@ uint8_t csr_construct_wpa_ie(tHalHandle hHal, struct csr_roam_profile *pProfile,
 		 * settings in the profile.
 		 */
 		fWpaMatch =
-			csr_get_wpa_cyphers(hHal, &pProfile->AuthType,
+			csr_get_wpa_cyphers(pMac, &pProfile->AuthType,
 					   pProfile->negotiatedUCEncryptionType,
 					    &pProfile->mcEncryptionType,
 					    &pIesLocal->WPA, UnicastCypher,
