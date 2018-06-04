@@ -254,9 +254,11 @@ uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal pMac,
 			    tSirBssDescription *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
 
-bool csr_is_ssid_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
-		tSirBssDescription *pSirBssDesc2,
-		tDot11fBeaconIEs *pIes2);
+bool csr_is_ssid_equal(tpAniSirGlobal pMac,
+		       tSirBssDescription *pSirBssDesc1,
+		       tSirBssDescription *pSirBssDesc2,
+		       tDot11fBeaconIEs *pIes2);
+
 /* Null ssid means match */
 bool csr_is_ssid_in_list(tSirMacSSid *pSsid, tCsrSSIDs *pSsidList);
 bool csr_is_profile_wpa(struct csr_roam_profile *pProfile);

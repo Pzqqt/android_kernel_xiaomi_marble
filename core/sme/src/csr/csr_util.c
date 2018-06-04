@@ -1488,12 +1488,13 @@ bool csr_is_wmm_supported(tpAniSirGlobal pMac)
 }
 
 /* pIes is the IEs for pSirBssDesc2 */
-bool csr_is_ssid_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
-		      tSirBssDescription *pSirBssDesc2, tDot11fBeaconIEs *pIes2)
+bool csr_is_ssid_equal(tpAniSirGlobal pMac,
+		       tSirBssDescription *pSirBssDesc1,
+		       tSirBssDescription *pSirBssDesc2,
+		       tDot11fBeaconIEs *pIes2)
 {
 	bool fEqual = false;
 	tSirMacSSid Ssid1, Ssid2;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tDot11fBeaconIEs *pIes1 = NULL;
 	tDot11fBeaconIEs *pIesLocal = pIes2;
 
