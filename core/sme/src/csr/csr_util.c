@@ -5634,12 +5634,11 @@ bool csr_check_rate_bitmap(uint8_t rate, uint16_t rateBitmap)
 	return !!rateBitmap;
 }
 
-bool csr_rates_is_dot11_rate_supported(tHalHandle hHal, uint8_t rate)
+bool csr_rates_is_dot11_rate_supported(tpAniSirGlobal mac_ctx, uint8_t rate)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	uint16_t n = BITS_OFF(rate, CSR_DOT11_BASIC_RATE_MASK);
 
-	return csr_is_aggregate_rate_supported(pMac, n);
+	return csr_is_aggregate_rate_supported(mac_ctx, n);
 }
 
 static uint16_t csr_rates_mac_prop_to_dot11(uint16_t Rate)
