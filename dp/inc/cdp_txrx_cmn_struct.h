@@ -437,6 +437,14 @@ typedef qdf_nbuf_t (*ol_txrx_tx_exc_fp)(void *data_vdev,
 						*tx_exc_metadata);
 
 /**
+ * ol_txrx_completion_fp - top-level transmit function
+ * for tx completion
+ * @skb: skb data
+ * @osif_dev: the virtual device's OS shim object
+ */
+typedef void (*ol_txrx_completion_fp)(qdf_nbuf_t skb,
+				      void *osif_dev);
+/**
  * ol_txrx_tx_flow_control_fp - tx flow control notification
  * function from txrx to OS shim
  * @osif_dev - the virtual device's OS shim object
@@ -593,6 +601,7 @@ struct ol_txrx_ops {
 		ol_txrx_tx_fp         tx;
 		ol_txrx_tx_exc_fp     tx_exception;
 		ol_txrx_tx_free_ext_fp tx_free_ext;
+		ol_txrx_completion_fp tx_comp;
 	} tx;
 
 	/* rx function pointers - specified by OS shim, stored by txrx */

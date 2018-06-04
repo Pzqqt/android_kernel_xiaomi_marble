@@ -1847,8 +1847,9 @@ qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
 	if (nbuf_clone) {
 		if (!dp_tx_send(vap_dev, nbuf_clone)) {
 			DP_STATS_INC(vdev, tx_i.mesh.exception_fw, 1);
-		} else
+		} else {
 			qdf_nbuf_free(nbuf_clone);
+		}
 	}
 
 	if (no_enc_frame)
@@ -2624,6 +2625,91 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 	}
 }
 
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+/**
+ * dp_tx_flow_pool_lock() - take flow pool lock
+ * @soc: core txrx main context
+ * @tx_desc: tx desc
+ *
+ * Return: None
+ */
+static inline
+void dp_tx_flow_pool_lock(struct dp_soc *soc,
+			  struct dp_tx_desc_s *tx_desc)
+{
+	struct dp_tx_desc_pool_s *pool;
+	uint8_t desc_pool_id;
+
+	desc_pool_id = tx_desc->pool_id;
+	pool = &soc->tx_desc[desc_pool_id];
+
+	qdf_spin_lock_bh(&pool->flow_pool_lock);
+}
+
+/**
+ * dp_tx_flow_pool_unlock() - release flow pool lock
+ * @soc: core txrx main context
+ * @tx_desc: tx desc
+ *
+ * Return: None
+ */
+static inline
+void dp_tx_flow_pool_unlock(struct dp_soc *soc,
+			    struct dp_tx_desc_s *tx_desc)
+{
+	struct dp_tx_desc_pool_s *pool;
+	uint8_t desc_pool_id;
+
+	desc_pool_id = tx_desc->pool_id;
+	pool = &soc->tx_desc[desc_pool_id];
+
+	qdf_spin_unlock_bh(&pool->flow_pool_lock);
+}
+#else
+static inline
+void dp_tx_flow_pool_lock(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc)
+{
+}
+
+static inline
+void dp_tx_flow_pool_unlock(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc)
+{
+}
+#endif
+
+/**
+ * dp_tx_notify_completion() - Notify tx completion for this desc
+ * @soc: core txrx main context
+ * @tx_desc: tx desc
+ * @netbuf:  buffer
+ *
+ * Return: none
+ */
+static inline void dp_tx_notify_completion(struct dp_soc *soc,
+					   struct dp_tx_desc_s *tx_desc,
+					   qdf_nbuf_t netbuf)
+{
+	void *osif_dev;
+	ol_txrx_completion_fp tx_compl_cbk = NULL;
+
+	qdf_assert(tx_desc);
+
+	dp_tx_flow_pool_lock(soc, tx_desc);
+
+	if (!tx_desc->vdev ||
+	    !tx_desc->vdev->osif_vdev) {
+		dp_tx_flow_pool_unlock(soc, tx_desc);
+		return;
+	}
+
+	osif_dev = tx_desc->vdev->osif_vdev;
+	tx_compl_cbk = tx_desc->vdev->tx_comp;
+	dp_tx_flow_pool_unlock(soc, tx_desc);
+
+	if (tx_compl_cbk)
+		tx_compl_cbk(netbuf, osif_dev);
+}
+
 /**
  * dp_tx_comp_process_tx_status() - Parse and Dump Tx completion status info
  * @tx_desc: software descriptor head pointer
@@ -2736,6 +2822,10 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 		hal_tx_comp_get_status(&desc->comp, &ts);
 		peer = dp_peer_find_by_id(soc, ts.peer_id);
 		length = qdf_nbuf_len(desc->nbuf);
+
+		/* check tx completion notification */
+		if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(desc->nbuf))
+			dp_tx_notify_completion(soc, desc, desc->nbuf);
 
 		dp_tx_comp_process_tx_status(desc, length);
 

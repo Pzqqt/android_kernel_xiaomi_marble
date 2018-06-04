@@ -1216,6 +1216,10 @@ struct dp_vdev {
 	ol_txrx_rx_mon_fp osif_rx_mon;
 
 	ol_txrx_mcast_me_fp me_convert;
+
+	/* completion function used by this vdev*/
+	ol_txrx_completion_fp tx_comp;
+
 	/* deferred vdev deletion state */
 	struct {
 		/* VDEV delete pending */
