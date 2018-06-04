@@ -1611,19 +1611,18 @@ eCsrMediaAccessType csr_get_qos_from_bss_desc(tpAniSirGlobal mac_ctx,
 }
 
 /* Caller allocates memory for pIEStruct */
-QDF_STATUS csr_parse_bss_description_ies(tHalHandle hHal,
-					  tSirBssDescription *pBssDesc,
-					  tDot11fBeaconIEs *pIEStruct)
+QDF_STATUS csr_parse_bss_description_ies(tpAniSirGlobal mac_ctx,
+					 tSirBssDescription *pBssDesc,
+					 tDot11fBeaconIEs *pIEStruct)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	int ieLen =
 		(int)(pBssDesc->length + sizeof(pBssDesc->length) -
 		      GET_FIELD_OFFSET(tSirBssDescription, ieFields));
 
 	if (ieLen > 0 && pIEStruct) {
 		if (!DOT11F_FAILED(dot11f_unpack_beacon_i_es
-				    (pMac, (uint8_t *) pBssDesc->ieFields,
+				    (mac_ctx, (uint8_t *) pBssDesc->ieFields,
 				    ieLen, pIEStruct, false)))
 		status = QDF_STATUS_SUCCESS;
 	}

@@ -310,8 +310,9 @@ uint16_t csr_rates_find_best_rate(tSirMacRateSet *pSuppRates,
 		tSirMacRateSet *pExtRates, tSirMacPropRateSet *pPropRates);
 tSirBssType csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype);
 /* Caller allocates memory for pIEStruct */
-QDF_STATUS csr_parse_bss_description_ies(tHalHandle hHal,
-		tSirBssDescription *pBssDesc, tDot11fBeaconIEs *pIEStruct);
+QDF_STATUS csr_parse_bss_description_ies(tpAniSirGlobal mac_ctx,
+					 tSirBssDescription *pBssDesc,
+					 tDot11fBeaconIEs *pIEStruct);
 /*
  * This function will allocate memory for the parsed IEs to the caller.
  * Caller must free the memory. after it is done with the data only if
