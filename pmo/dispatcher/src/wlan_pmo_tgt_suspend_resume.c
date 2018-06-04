@@ -140,14 +140,11 @@ QDF_STATUS pmo_tgt_psoc_send_wow_enable_req(struct wlan_objmgr_psoc *psoc,
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 
-	if (psoc_ctx->psoc_cfg.d0_wow_supported &&
-	    !psoc_ctx->caps.unified_wow &&
-	    !param->can_suspend_link) {
+	if (psoc_ctx->wow.wow_state == pmo_wow_state_legacy_d0) {
 		if (!pmo_tx_ops.psoc_send_d0wow_enable_req) {
 			pmo_err("psoc_send_d0wow_enable_req is null");
 			return QDF_STATUS_E_NULL_VALUE;
 		}
-		psoc_ctx->wow.wow_state = pmo_wow_state_legacy_d0;
 		pmo_debug("Sending D0WOW enable command...");
 		return pmo_tx_ops.psoc_send_d0wow_enable_req(psoc);
 	}
@@ -156,8 +153,6 @@ QDF_STATUS pmo_tgt_psoc_send_wow_enable_req(struct wlan_objmgr_psoc *psoc,
 		pmo_err("psoc_send_wow_enable_req is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-	psoc_ctx->wow.wow_state = param->can_suspend_link ?
-		pmo_wow_state_unified_d3 : pmo_wow_state_unified_d0;
 	return pmo_tx_ops.psoc_send_wow_enable_req(psoc, param);
 }
 
