@@ -15566,8 +15566,10 @@ QDF_STATUS sme_set_reorder_timeout(tHalHandle hal,
 	struct sir_set_rx_reorder_timeout_val *req)
 {
 	QDF_STATUS status;
+	tp_wma_handle wma_handle;
 
-	status = wma_set_rx_reorder_timeout_val(hal, req);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	status = wma_set_rx_reorder_timeout_val(wma_handle, req);
 
 	return status;
 }
@@ -15576,8 +15578,10 @@ QDF_STATUS sme_set_rx_set_blocksize(tHalHandle hal,
 	struct sir_peer_set_rx_blocksize *req)
 {
 	QDF_STATUS status;
+	tp_wma_handle wma_handle;
 
-	status = wma_set_rx_blocksize(hal, req);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	status = wma_set_rx_blocksize(wma_handle, req);
 
 	return status;
 }
@@ -15612,6 +15616,7 @@ QDF_STATUS sme_get_chain_rssi(tHalHandle hal,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tp_wma_handle wma_handle;
 
 	SME_ENTER();
 
@@ -15622,7 +15627,8 @@ QDF_STATUS sme_get_chain_rssi(tHalHandle hal,
 
 	mac_ctx->sme.get_chain_rssi_cb = callback;
 	mac_ctx->sme.get_chain_rssi_context = context;
-	wma_get_chain_rssi(hal, input);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	wma_get_chain_rssi(wma_handle, input);
 
 	SME_EXIT();
 	return status;
