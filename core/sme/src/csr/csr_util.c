@@ -3888,13 +3888,12 @@ static inline void csr_update_pmksa_to_profile(struct csr_roam_profile *profile,
 }
 #endif
 
-uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
+uint8_t csr_construct_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe)
 {
 	uint32_t ret;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	bool fRSNMatch;
 	uint8_t cbRSNIe = 0;
 	uint8_t UnicastCypher[CSR_RSN_OUI_SIZE];
@@ -3950,7 +3949,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 		/* See if the cyphers in the Bss description match with the
 		 * settings in the profile.
 		 */
-		fRSNMatch = csr_get_rsn_information(hHal, &pProfile->AuthType,
+		fRSNMatch = csr_get_rsn_information(pMac, &pProfile->AuthType,
 					pProfile->negotiatedUCEncryptionType,
 					&pProfile->mcEncryptionType,
 					&pIesLocal->RSN, UnicastCypher,

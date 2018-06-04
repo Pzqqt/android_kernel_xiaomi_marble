@@ -231,10 +231,10 @@ uint32_t csr_get_rts_thresh(tpAniSirGlobal mac_ctx);
 eCsrPhyMode csr_get_phy_mode_from_bssDesc(tSirBssDescription *pSirBssDesc);
 uint32_t csr_get11h_power_constraint(tpAniSirGlobal mac_ctx,
 				     tDot11fIEPowerConstraints *constraints);
-uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
-		struct csr_roam_profile *pProfile,
-		tSirBssDescription *pSirBssDesc,
-		tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe);
+uint8_t csr_construct_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
+			     struct csr_roam_profile *pProfile,
+			     tSirBssDescription *pSirBssDesc,
+			     tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe);
 
 uint8_t csr_construct_wpa_ie(tHalHandle hHal, struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
