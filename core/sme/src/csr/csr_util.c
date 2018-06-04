@@ -1634,17 +1634,17 @@ QDF_STATUS csr_parse_bss_description_ies(tpAniSirGlobal mac_ctx,
  * Caller must free the memory after it is done with the data only if
  * this function succeeds
  */
-QDF_STATUS csr_get_parsed_bss_description_ies(tHalHandle hHal,
-					       tSirBssDescription *pBssDesc,
-					       tDot11fBeaconIEs **ppIEStruct)
+QDF_STATUS csr_get_parsed_bss_description_ies(tpAniSirGlobal mac_ctx,
+					      tSirBssDescription *pBssDesc,
+					      tDot11fBeaconIEs **ppIEStruct)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
 	if (pBssDesc && ppIEStruct) {
 		*ppIEStruct = qdf_mem_malloc(sizeof(tDot11fBeaconIEs));
 		if ((*ppIEStruct) != NULL) {
-			status =
-				csr_parse_bss_description_ies(hHal, pBssDesc,
+			status = csr_parse_bss_description_ies(mac_ctx,
+							       pBssDesc,
 							       *ppIEStruct);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				qdf_mem_free(*ppIEStruct);

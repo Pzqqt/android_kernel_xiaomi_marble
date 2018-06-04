@@ -318,8 +318,9 @@ QDF_STATUS csr_parse_bss_description_ies(tpAniSirGlobal mac_ctx,
  * Caller must free the memory. after it is done with the data only if
  * this function succeeds
  */
-QDF_STATUS csr_get_parsed_bss_description_ies(tHalHandle hHal,
-		tSirBssDescription *pBssDesc, tDot11fBeaconIEs **ppIEStruct);
+QDF_STATUS csr_get_parsed_bss_description_ies(tpAniSirGlobal mac_ctx,
+					      tSirBssDescription *pBssDesc,
+					      tDot11fBeaconIEs **ppIEStruct);
 
 tSirScanType csr_get_scan_type(tpAniSirGlobal pMac, uint8_t chnId);
 uint8_t csr_to_upper(uint8_t ch);
