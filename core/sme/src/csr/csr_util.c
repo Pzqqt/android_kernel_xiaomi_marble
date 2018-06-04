@@ -1703,11 +1703,9 @@ uint32_t csr_get_frag_thresh(tpAniSirGlobal mac_ctx)
 	return mac_ctx->roam.configParam.FragmentationThreshold;
 }
 
-uint32_t csr_get_rts_thresh(tHalHandle hHal)
+uint32_t csr_get_rts_thresh(tpAniSirGlobal mac_ctx)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	return pMac->roam.configParam.RTSThreshold;
+	return mac_ctx->roam.configParam.RTSThreshold;
 }
 
 static eCsrPhyMode csr_translate_to_phy_mode_from_bss_desc(
