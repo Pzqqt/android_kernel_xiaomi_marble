@@ -5959,6 +5959,7 @@ typedef enum {
 	wmi_service_dual_beacon_on_single_mac_mcc_support,
 	wmi_service_twt_requestor,
 	wmi_service_twt_responder,
+	wmi_service_listen_interval_offload_support,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
