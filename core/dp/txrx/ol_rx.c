@@ -538,6 +538,12 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 			 */
 			ol_rx_reorder_peer_cleanup(vdev, peer);
 		} else {
+			if (tid >= OL_TXRX_NUM_EXT_TIDS) {
+				ol_txrx_err("%s:  invalid tid, %u\n",
+					    __func__, tid);
+				WARN_ON(1);
+				return;
+			}
 			ol_rx_reorder_flush(vdev, peer, tid, seq_num_start,
 					    seq_num_end, htt_rx_flush_release);
 		}
