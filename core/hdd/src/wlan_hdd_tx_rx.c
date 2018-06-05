@@ -1091,7 +1091,7 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 	}
 
 	if (adapter->tx_fn(adapter->txrx_vdev,
-		 (qdf_nbuf_t) skb) != NULL) {
+		 (qdf_nbuf_t)skb) != NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Failed to send packet to txrx for staid: %d",
 			  __func__, STAId);

@@ -611,6 +611,37 @@ static void ol_tx_update_ack_count(struct ol_tx_desc_t *tx_desc,
 	else
 		++tx_desc->vdev->txrx_stats.txack_failed;
 }
+
+/**
+ * ol_tx_notify_completion() - Notify tx completion for this desc
+ * @tx_desc: tx desc
+ * @netbuf:  buffer
+ *
+ * Return: none
+ */
+static void ol_tx_notify_completion(struct ol_tx_desc_t *tx_desc,
+				    qdf_nbuf_t netbuf)
+{
+	void *osif_dev;
+	ol_txrx_completion_fp tx_compl_cbk = NULL;
+
+	qdf_assert(tx_desc);
+
+	ol_tx_flow_pool_lock(tx_desc);
+
+	if (!tx_desc->vdev ||
+	    !tx_desc->vdev->osif_dev) {
+		ol_tx_flow_pool_unlock(tx_desc);
+		return;
+	}
+	osif_dev = tx_desc->vdev->osif_dev;
+	tx_compl_cbk = tx_desc->vdev->tx_comp;
+	ol_tx_flow_pool_unlock(tx_desc);
+
+	if (tx_compl_cbk)
+		tx_compl_cbk(netbuf, osif_dev);
+}
+
 /**
  * ol_tx_update_connectivity_stats() - update connectivity stats
  * @tx_desc: tx desc
@@ -749,6 +780,10 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 			if (qdf_nbuf_data_is_arp_req(netbuf))
 				ol_tx_update_arp_stats(tx_desc, netbuf, status);
 		}
+
+		/* check tx completion notification */
+		if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(netbuf))
+			ol_tx_notify_completion(tx_desc, netbuf);
 
 		/* track connectivity stats */
 		ol_tx_update_connectivity_stats(tx_desc, netbuf,

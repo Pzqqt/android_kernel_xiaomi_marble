@@ -58,6 +58,8 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
 QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
 				       uint8_t sta_id);
 
+void hdd_softap_notify_tx_compl_cbk(struct sk_buff *skb, void *context);
+
 QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBufChain);
 #ifdef IPA_OFFLOAD
 QDF_STATUS hdd_softap_rx_mul_packet_cbk(void *cds_context,
@@ -122,6 +124,16 @@ int hdd_post_dhcp_ind(struct hdd_adapter *adapter,
 			     uint8_t sta_id, uint16_t type);
 
 /**
+ * hdd_softap_notify_dhcp_ind() - Notify SAP for DHCP indication for tx desc
+ * @context: pointer to HDD context
+ * @netbuf: pointer to OS packet (sk_buff)
+ *
+ * Return: None
+ */
+void hdd_softap_notify_dhcp_ind(void *context,
+				struct sk_buff *netbuf);
+
+/**
  * hdd_inspect_dhcp_packet() -  Inspect DHCP packet
  * @adapter: pointer to hdd adapter
  * @sta_id: peer station ID
@@ -131,8 +143,8 @@ int hdd_post_dhcp_ind(struct hdd_adapter *adapter,
  * Return: error number
  */
 int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
-			 uint8_t sta_id,
-			 struct sk_buff *skb,
-			 enum qdf_proto_dir dir);
+			    uint8_t sta_id,
+			    struct sk_buff *skb,
+			    enum qdf_proto_dir dir);
 
 #endif /* end #if !defined(WLAN_HDD_SOFTAP_TX_RX_H) */

@@ -1047,6 +1047,9 @@ struct ol_txrx_vdev_t {
 		uint32_t txack_failed;
 	} txrx_stats;
 
+	/* completion function used by this vdev*/
+	ol_txrx_completion_fp tx_comp;
+
 	struct {
 		/*
 		 * If the vdev object couldn't be deleted immediately because
