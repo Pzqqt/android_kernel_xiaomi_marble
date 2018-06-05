@@ -587,7 +587,7 @@ tdls_ct_process_idle_handler(
 						   &tdls_soc_obj))
 		return;
 
-	if (!tdls_info->sta_id) {
+	if (INVALID_TDLS_PEER_ID == tdls_info->sta_id) {
 		tdls_err("peer (staidx %u) doesn't exists", tdls_info->sta_id);
 		return;
 	}
@@ -1252,7 +1252,8 @@ void tdls_disable_offchan_and_teardown_links(
 
 	for (staidx = 0; staidx < tdls_soc->max_num_tdls_sta;
 							staidx++) {
-		if (!tdls_soc->tdls_conn_info[staidx].sta_id)
+		if (tdls_soc->tdls_conn_info[staidx].sta_id
+						== INVALID_TDLS_PEER_ID)
 			continue;
 
 		curr_peer = tdls_find_all_peer(tdls_soc,
@@ -1280,7 +1281,7 @@ void tdls_disable_offchan_and_teardown_links(
 					wlan_vdev_get_id(vdev),
 					curr_peer->sta_id);
 		tdls_decrement_peer_count(tdls_soc);
-		tdls_soc->tdls_conn_info[staidx].sta_id = 0;
+		tdls_soc->tdls_conn_info[staidx].sta_id = INVALID_TDLS_PEER_ID;
 		tdls_soc->tdls_conn_info[staidx].session_id = 255;
 
 		qdf_mem_zero(&tdls_soc->tdls_conn_info[staidx].peer_mac,

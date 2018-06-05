@@ -74,8 +74,9 @@
 #define TDLS_TEARDOWN_PEER_UNREACHABLE   25
 #define TDLS_TEARDOWN_PEER_UNSPEC_REASON 26
 
+#define INVALID_TDLS_PEER_ID 0xFF
 #define TDLS_STA_INDEX_CHECK(sta_id) \
-	(((sta_id) >= 1) && ((sta_id) < 0xFF))
+	(((sta_id) >= 0) && ((sta_id) < 0xFF))
 /**
  * enum tdls_conc_cap - tdls concurrency support
  * @TDLS_SUPPORTED_ONLY_ON_STA: only support sta tdls
