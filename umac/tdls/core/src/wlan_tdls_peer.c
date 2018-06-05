@@ -756,7 +756,7 @@ QDF_STATUS tdls_reset_peer(struct tdls_vdev_priv_obj *vdev_obj,
 
 	tdls_set_peer_link_status(curr_peer, TDLS_LINK_IDLE,
 				  TDLS_LINK_UNSPECIFIED);
-	curr_peer->sta_id = 0;
+	curr_peer->sta_id = INVALID_TDLS_PEER_ID;
 
 	return QDF_STATUS_SUCCESS;
 }

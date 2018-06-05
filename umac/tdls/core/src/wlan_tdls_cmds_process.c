@@ -1398,7 +1398,7 @@ static QDF_STATUS tdls_add_peer_rsp(struct tdls_add_sta_rsp *rsp)
 		conn_rec = soc_obj->tdls_conn_info;
 		for (sta_idx = 0; sta_idx < soc_obj->max_num_tdls_sta;
 		     sta_idx++) {
-			if (0 == conn_rec[sta_idx].sta_id) {
+			if (INVALID_TDLS_PEER_ID == conn_rec[sta_idx].sta_id) {
 				conn_rec[sta_idx].session_id = rsp->session_id;
 				conn_rec[sta_idx].sta_id = rsp->sta_id;
 				qdf_copy_macaddr(&conn_rec[sta_idx].peer_mac,
@@ -1510,7 +1510,7 @@ QDF_STATUS tdls_process_del_peer_rsp(struct tdls_del_sta_rsp *rsp)
 			}
 		}
 		tdls_reset_peer(vdev_obj, macaddr);
-		conn_rec[sta_idx].sta_id = 0;
+		conn_rec[sta_idx].sta_id = INVALID_TDLS_PEER_ID;
 		conn_rec[sta_idx].session_id = 0xff;
 		qdf_mem_zero(&conn_rec[sta_idx].peer_mac,
 			     QDF_MAC_ADDR_SIZE);
@@ -2190,7 +2190,7 @@ static int tdls_teardown_links(struct tdls_soc_priv_obj *soc_obj, uint32_t mode)
 
 	conn_rec = soc_obj->tdls_conn_info;
 	for (staidx = 0; staidx < soc_obj->max_num_tdls_sta; staidx++) {
-		if (conn_rec[staidx].sta_id == 0)
+		if (conn_rec[staidx].sta_id == INVALID_TDLS_PEER_ID)
 			continue;
 
 		curr_peer = tdls_find_all_peer(soc_obj,
