@@ -4243,7 +4243,6 @@ qdf_export_symbol(qdf_nbuf_init_fast);
 
 
 #ifdef QDF_NBUF_GLOBAL_COUNT
-#ifdef WLAN_DEBUGFS
 /**
  * __qdf_nbuf_mod_init() - Intialization routine for qdf_nuf
  *
@@ -4252,30 +4251,15 @@ qdf_export_symbol(qdf_nbuf_init_fast);
 void __qdf_nbuf_mod_init(void)
 {
 	qdf_atomic_init(&nbuf_count);
-	qdf_debugfs_init();
 	qdf_debugfs_create_atomic(NBUF_DEBUGFS_NAME, S_IRUSR, NULL, &nbuf_count);
 }
 
 /**
- * __qdf_nbuf_mod_init() - Unintialization routine for qdf_nuf
+ * __qdf_nbuf_mod_exit() - Unintialization routine for qdf_nuf
  *
  * Return void
  */
 void __qdf_nbuf_mod_exit(void)
 {
-	qdf_debugfs_exit();
 }
-
-#else
-
-void __qdf_nbuf_mod_init(void)
-{
-	qdf_atomic_init(&nbuf_count);
-}
-
-void __qdf_nbuf_mod_exit(void)
-{
-}
-
-#endif
 #endif
