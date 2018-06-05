@@ -514,7 +514,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		addbss_param->rateSet.numRates = SIR_MAC_RATESET_EID_MAX;
 	}
 	qdf_mem_copy(addbss_param->rateSet.rate, mlm_start_req->rateSet.rate,
-		     mlm_start_req->rateSet.numRates);
+		     addbss_param->rateSet.numRates);
 
 	addbss_param->nwType = mlm_start_req->nwType;
 	addbss_param->htCapable = mlm_start_req->htCapable;
