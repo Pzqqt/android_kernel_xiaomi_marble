@@ -1630,6 +1630,23 @@ IE BeaconReportFrmBody (EID_BCN_REPORT_FRAME_BODY)
      reportedFields[0..224];
 }
 
+const EID_BCN_REPORT_FRAME_BODY_FRAGMENT_ID = 2;
+IE beacon_report_frm_body_fragment_id (EID_BCN_REPORT_FRAME_BODY_FRAGMENT_ID)
+{
+    // Data
+    {
+        beacon_report_id:    8;
+        fragment_id_number:  7;
+        more_fragments:      1;
+    }
+}
+
+const EID_BCN_REPORT_LAST_BEACON_REPORT_INDICATION = 164;
+IE last_beacon_report_indication (EID_BCN_REPORT_LAST_BEACON_REPORT_INDICATION)
+{
+    last_fragment, 1;
+}
+
 IE MeasurementReport (EID_MEAS_REPORT)    // 7.3.2.22
 {
     token, 1;
@@ -1696,6 +1713,8 @@ IE MeasurementReport (EID_MEAS_REPORT)    // 7.3.2.22
            antenna_id,               1;
            parent_TSF,              4;
            OPTIE BeaconReportFrmBody;
+           OPTIE beacon_report_frm_body_fragment_id;
+           OPTIE last_beacon_report_indication;
            //IE vendor_specific
      }
     };
@@ -2787,6 +2806,7 @@ IE MeasurementRequest (EID_MEAS_REQUEST)  // 7.3.2.21
           OPTIE BcnReportingDetail;
           OPTIE RequestedInfo;
           OPTIE APChannelReport[0..2];
+          OPTIE last_beacon_report_indication;
           //OPTIONAL vendor_specific[1..239];
        }
        lci (measurement_type IS 8)

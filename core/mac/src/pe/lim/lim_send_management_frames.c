@@ -4259,34 +4259,15 @@ returnAfterError:
 	return statusCode;
 } /* End lim_send_link_report_action_frame. */
 
-/**
- * \brief Send a Beacon Report Action frame
- *
- *
- * \param pMac Pointer to the global MAC structure
- *
- * \param dialog_token dialog token to be used in the action frame.
- *
- * \param num_report number of reports in pRRMReport.
- *
- * \param pRRMReport Address of a tSirMacRadioMeasureReport.
- *
- * \param peer mac address of peer station.
- *
- * \param psessionEntry address of session entry.
- *
- * \return eSIR_SUCCESS on success, eSIR_FAILURE else
- *
- *
- */
-
 tSirRetStatus
 lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
-					   uint8_t dialog_token,
-					   uint8_t num_report,
-					   tpSirMacRadioMeasureReport pRRMReport,
-					   tSirMacAddr peer,
-					   tpPESession psessionEntry)
+				uint8_t dialog_token,
+				uint8_t num_report,
+				struct rrm_beacon_report_last_beacon_params
+				*last_beacon_report_params,
+				tpSirMacRadioMeasureReport pRRMReport,
+				tSirMacAddr peer,
+				tpPESession psessionEntry)
 {
 	tSirRetStatus statusCode = eSIR_SUCCESS;
 	uint8_t *pFrame;
@@ -4332,9 +4313,10 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 		switch (pRRMReport[i].type) {
 		case SIR_MAC_RRM_BEACON_TYPE:
 			populate_dot11f_beacon_report(pMac,
-						      &frm->MeasurementReport[i],
-						      &pRRMReport[i].report.
-						      beaconReport);
+						     &frm->MeasurementReport[i],
+						     &pRRMReport[i].report.
+						     beaconReport,
+						     last_beacon_report_params);
 			frm->MeasurementReport[i].incapable =
 				pRRMReport[i].incapable;
 			frm->MeasurementReport[i].refused =

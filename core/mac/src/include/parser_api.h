@@ -733,10 +733,21 @@ populate_dot11f_ext_supp_rates(tpAniSirGlobal pMac,
 			uint8_t nChannelNum, tDot11fIEExtSuppRates *pDot11f,
 			tpPESession psessionEntry);
 
+/**
+ * populate_dot11f_beacon_report() - Populate the Beacon Report IE
+ * @pMac: Pointer to the global MAC context
+ * @pDot11f: Pointer to the measurement report structure
+ * @pBeaconReport: Pointer to the Beacon Report structure
+ * @last_beacon_report_params: Last Beacon Report indication params
+ *
+ * Return: Ret Status
+ */
 tSirRetStatus
 populate_dot11f_beacon_report(tpAniSirGlobal pMac,
 			tDot11fIEMeasurementReport *pDot11f,
-			tSirMacBeaconReport *pBeaconReport);
+			tSirMacBeaconReport *pBeaconReport,
+			struct rrm_beacon_report_last_beacon_params
+			*last_beacon_report_params);
 
 /**
  * \brief Populate a tDot11fIEExtSuppRates
