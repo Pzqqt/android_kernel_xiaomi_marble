@@ -15769,7 +15769,7 @@ QDF_STATUS sme_send_limit_off_channel_params(tHalHandle hal, uint8_t vdev_id,
  * Return : true if candidate is rejected and reject reason is filled
  * @info->status. Otherwise returns false.
  */
-static bool sme_get_status_for_candidate(tHalHandle *hal,
+static bool sme_get_status_for_candidate(tHalHandle hal,
 					tSirBssDescription *conn_bss_desc,
 					tSirBssDescription *bss_desc,
 					struct bss_candidate_info *info,
