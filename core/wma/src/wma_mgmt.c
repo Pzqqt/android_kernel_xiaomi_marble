@@ -4112,6 +4112,10 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	qdf_nbuf_put_tail(wbuf, mgmt_rx_params->buf_len);
 	qdf_nbuf_set_protocol(wbuf, ETH_P_CONTROL);
 
+	qdf_mem_zero(((uint8_t *)qdf_nbuf_data(wbuf) + mgmt_rx_params->buf_len),
+		     (roundup(mgmt_rx_params->buf_len + RESERVE_BYTES, 4) -
+		     mgmt_rx_params->buf_len));
+
 	wma_mem_endianness_based_copy(qdf_nbuf_data(wbuf),
 			bufp, mgmt_rx_params->buf_len);
 
