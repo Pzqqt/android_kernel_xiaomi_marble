@@ -222,11 +222,6 @@ void dfs_main_timer_reset(struct wlan_dfs *dfs)
 		qdf_timer_stop(&dfs->wlan_dfs_task_timer);
 		dfs->wlan_radar_tasksched = 0;
 	}
-
-	if (dfs->wlan_dfstest) {
-		qdf_timer_stop(&dfs->wlan_dfstesttimer);
-		dfs->wlan_dfstest = 0;
-	}
 }
 
 void dfs_main_detach(struct wlan_dfs *dfs)
