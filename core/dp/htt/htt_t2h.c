@@ -563,6 +563,25 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		break;
 	}
 
+	case HTT_T2H_MSG_TYPE_FLOW_POOL_RESIZE:
+	{
+		struct htt_flow_pool_resize_t *msg;
+		int msg_len = qdf_nbuf_len(htt_t2h_msg);
+
+		if (msg_len < sizeof(struct htt_flow_pool_resize_t)) {
+			QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+				  "Invalid msg_word length in HTT_T2H_MSG_TYPE_FLOW_POOL_RESIZE");
+			WARN_ON(1);
+			break;
+		}
+
+		msg = (struct htt_flow_pool_resize_t *)msg_word;
+		ol_tx_flow_pool_resize_handler(msg->flow_pool_id,
+					       msg->flow_pool_new_size);
+
+		break;
+	}
+
 	case HTT_T2H_MSG_TYPE_RX_OFLD_PKT_ERR:
 	{
 		switch (HTT_RX_OFLD_PKT_ERR_MSG_SUB_TYPE_GET(*msg_word)) {
