@@ -518,7 +518,10 @@ A_STATUS htc_add_receive_pkt_multiple(HTC_HANDLE HTCHandle,
 		return A_EINVAL;
 	}
 
-	AR_DEBUG_ASSERT(pFirstPacket->Endpoint < ENDPOINT_MAX);
+	if (pFirstPacket->Endpoint >= ENDPOINT_MAX) {
+		A_ASSERT(false);
+		return A_EINVAL;
+	}
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_RECV,
 			("+- htc_add_receive_pkt_multiple : endPointId: %d, cnt:%d, length: %d\n",
