@@ -28,7 +28,9 @@
 
 #define _WLAN_PMO_WOW_PUBLIC_STRUCT_H_
 
+#ifndef PMO_WOW_FILTERS_MAX
 #define PMO_WOW_FILTERS_MAX             22
+#endif
 
 #define PMO_WOWL_PTRN_MAX_SIZE          146
 #define PMO_WOWL_PTRN_MASK_MAX_SIZE      19
