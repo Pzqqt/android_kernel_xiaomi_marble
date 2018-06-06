@@ -41,7 +41,6 @@
 static struct apr_q6 q6;
 static struct apr_client client[APR_DEST_MAX][APR_CLIENT_MAX];
 static void *apr_pkt_ctx;
-static wait_queue_head_t dsp_wait;
 static wait_queue_head_t modem_wait;
 static bool is_modem_up;
 /* Subsystem restart: QDSP6 data, functions */
@@ -281,12 +280,6 @@ int apr_set_q6_state(enum apr_subsys_state state)
 }
 EXPORT_SYMBOL(apr_set_q6_state);
 
-enum apr_subsys_state apr_cmpxchg_q6_state(enum apr_subsys_state prev,
-					   enum apr_subsys_state new)
-{
-	return atomic_cmpxchg(&q6.q6_state, prev, new);
-}
-
 static void apr_adsp_down(unsigned long opcode)
 {
 	pr_info("%s: Q6 is Down\n", __func__);
@@ -308,32 +301,12 @@ static void apr_add_child_devices(struct work_struct *work)
 static void apr_adsp_up(void)
 {
 	pr_info("%s: Q6 is Up\n", __func__);
-	if (apr_cmpxchg_q6_state(APR_SUBSYS_DOWN, APR_SUBSYS_LOADED) ==
-							APR_SUBSYS_DOWN)
-		wake_up(&dsp_wait);
+	apr_set_q6_state(APR_SUBSYS_LOADED);
 
 	spin_lock(&apr_priv->apr_lock);
 	if (apr_priv->is_initial_boot)
 		schedule_work(&apr_priv->add_chld_dev_work);
 	spin_unlock(&apr_priv->apr_lock);
-}
-
-int apr_wait_for_device_up(int dest_id)
-{
-	int rc = -1;
-
-	if (dest_id == APR_DEST_MODEM)
-		rc = wait_event_interruptible_timeout(modem_wait,
-				    (apr_get_modem_state() == APR_SUBSYS_UP),
-				    (1 * HZ));
-	else if (dest_id == APR_DEST_QDSP6)
-		rc = wait_event_interruptible_timeout(dsp_wait,
-				    (apr_get_q6_state() == APR_SUBSYS_UP),
-				    (1 * HZ));
-	else
-		pr_err("%s: unknown dest_id %d\n", __func__, dest_id);
-	/* returns left time */
-	return rc;
 }
 
 int apr_load_adsp_image(void)
@@ -534,7 +507,9 @@ struct apr_svc *apr_register(char *dest, char *svc_name, apr_fn svc_fn,
 				return NULL;
 			}
 			pr_debug("%s: Wait for modem to bootup\n", __func__);
-			rc = apr_wait_for_device_up(APR_DEST_MODEM);
+			rc = wait_event_interruptible_timeout(modem_wait,
+						(apr_get_modem_state() == APR_SUBSYS_UP),
+						(1 * HZ));
 			if (rc == 0) {
 				pr_err("%s: Modem is not Up\n", __func__);
 				return NULL;
@@ -1154,7 +1129,6 @@ static int apr_probe(struct platform_device *pdev)
 {
 	int i, j, k;
 
-	init_waitqueue_head(&dsp_wait);
 	init_waitqueue_head(&modem_wait);
 
 	apr_priv = devm_kzalloc(&pdev->dev, sizeof(*apr_priv), GFP_KERNEL);
