@@ -55,8 +55,9 @@
 #include <cdp_txrx_handle.h>
 #include <pld_common.h>
 
-
+#ifndef OL_RX_INDICATION_MAX_RECORDS
 #define OL_RX_INDICATION_MAX_RECORDS 2048
+#endif
 
 /**
  * enum ol_rx_ind_record_type - OL rx indication events
