@@ -652,7 +652,6 @@ static int msm_audio_smmu_init(struct device *dev)
 		goto fail_attach;
 	}
 
-	msm_audio_ion_data.cb_dev = dev;
 	msm_audio_ion_data.mapping = mapping;
 	INIT_LIST_HEAD(&msm_audio_ion_data.alloc_list);
 	mutex_init(&(msm_audio_ion_data.list_mutex));
@@ -758,6 +757,8 @@ static int msm_audio_ion_probe(struct platform_device *pdev)
 exit:
 	if (!rc)
 		msm_audio_ion_data.device_status |= MSM_AUDIO_ION_PROBED;
+
+	msm_audio_ion_data.cb_dev = dev;
 
 	return rc;
 }
