@@ -740,6 +740,7 @@ QDF_STATUS cds_pre_enable(void)
 	int errno;
 	void *scn;
 	void *soc;
+	void *hif_ctx;
 
 	cds_enter();
 
@@ -814,7 +815,17 @@ QDF_STATUS cds_pre_enable(void)
 	return QDF_STATUS_SUCCESS;
 
 stop_wmi:
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!hif_ctx)
+		cds_err("%s: Failed to get hif_handle!", __func__);
+
 	wma_wmi_stop();
+
+	if (hif_ctx) {
+		cds_err("%s: Disable the isr & reset the soc!", __func__);
+		hif_disable_isr(hif_ctx);
+		hif_reset_soc(hif_ctx);
+	}
 	htc_stop(gp_cds_context->htc_ctx);
 
 exit_with_status:
