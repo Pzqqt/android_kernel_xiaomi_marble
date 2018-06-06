@@ -613,6 +613,8 @@ typedef enum {
  * @nss_2g: NSS for 2G
  * @nss_5g: NSS for 5G
  * @pdev_id: pdev id on pdev for this vdev
+ * @mbssid-flags: MBSS IE flags indicating vdev type
+ * @vdevid_trans: id of transmitting vdev for MBSS IE
  */
 struct vdev_create_params {
 	uint8_t if_id;
@@ -621,6 +623,8 @@ struct vdev_create_params {
 	uint8_t nss_2g;
 	uint8_t nss_5g;
 	uint32_t pdev_id;
+	uint32_t mbssid_flags;
+	uint8_t vdevid_trans;
 };
 
 /**
@@ -689,10 +693,18 @@ struct vdev_stop_params {
  * struct vdev_up_params - vdev up cmd parameter
  * @vdev_id: vdev id
  * @assoc_id: association id
+ * @profile_idx: profile index of the connected non-trans ap (mbssid case).
+ *		0  means invalid.
+ * @profile_num: the total profile numbers of non-trans aps (mbssid case).
+ *		0 means non-MBSS AP.
+ * @trans_bssid: bssid of transmitted AP (MBSS IE case)
  */
 struct vdev_up_params {
 	uint8_t vdev_id;
 	uint16_t assoc_id;
+	uint32_t profile_idx;
+	uint32_t profile_num;
+	uint8_t trans_bssid[IEEE80211_ADDR_LEN];
 };
 
 /**
@@ -1046,6 +1058,7 @@ struct pdev_params {
  * struct beacon_tmpl_params - beacon template cmd parameter
  * @vdev_id: vdev id
  * @tim_ie_offset: tim ie offset
+ * @mbssid_ie_offset: mbssid ie offset
  * @tmpl_len: beacon template length
  * @tmpl_len_aligned: beacon template alignment
  * @csa_switch_count_offset: CSA swith count offset in beacon frame
@@ -1056,6 +1069,7 @@ struct pdev_params {
 struct beacon_tmpl_params {
 	uint8_t vdev_id;
 	uint32_t tim_ie_offset;
+	uint32_t mbssid_ie_offset;
 	uint32_t tmpl_len;
 	uint32_t tmpl_len_aligned;
 	uint32_t csa_switch_count_offset;
@@ -6041,6 +6055,7 @@ typedef enum {
 #ifdef OL_ATH_SMART_LOGGING
 	wmi_service_smart_logging_support,
 #endif
+	wmi_service_infra_mbssid,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -6158,6 +6173,7 @@ struct wmi_host_fw_abi_ver {
  * @twt_ap_pdev_count: Number of MAC on which AP TWT feature is supported
  * @twt_ap_sta_count: Max no of STA with which TWT sessions can be formed
  *                    by the AP
+ * @max_bssid_indicator: max number of MBSS VAPs
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -6232,6 +6248,7 @@ typedef struct {
 	bool cce_disable;
 	uint32_t twt_ap_pdev_count;
 	uint32_t twt_ap_sta_count;
+	uint32_t max_bssid_indicator;
 } target_resource_config;
 
 /**
@@ -8721,5 +8738,10 @@ struct wmi_apf_read_memory_resp_event_params {
 	uint8_t *data;
 };
 #endif /* FEATURE_WLAN_APF */
+
+/* vdev control flags (per bits) */
+#define WMI_HOST_VDEV_FLAGS_NON_MBSSID_AP      0x00000001
+#define WMI_HOST_VDEV_FLAGS_TRANSMIT_AP        0x00000002
+#define WMI_HOST_VDEV_FLAGS_NON_TRANSMIT_AP    0x00000004
 
 #endif /* _WMI_UNIFIED_PARAM_H_ */

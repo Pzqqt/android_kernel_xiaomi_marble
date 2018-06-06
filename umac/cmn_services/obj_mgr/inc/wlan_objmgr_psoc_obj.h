@@ -177,6 +177,8 @@
 #define WLAN_SOC_F_BTCOEX_SUPPORT      0x00200000
 	/* HOST 80211 enable*/
 #define WLAN_SOC_F_HOST_80211_ENABLE   0x00400000
+	/* MBSS IE enable */
+#define WLAN_SOC_F_MBSS_IE_ENABLE      0x00800000
 
 /* PSOC op flags */
 

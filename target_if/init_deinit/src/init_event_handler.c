@@ -254,6 +254,8 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	info->wlan_res_cfg.beacon_tx_offload_max_vdev =
 				(target_psoc_get_num_radios(tgt_hdl) *
 				info->wlan_res_cfg.beacon_tx_offload_max_vdev);
+	info->wlan_res_cfg.max_bssid_indicator =
+				info->service_ext_param.max_bssid_indicator;
 
 	info->wmi_service_ready = TRUE;
 
