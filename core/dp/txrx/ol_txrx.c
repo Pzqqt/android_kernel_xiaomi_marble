@@ -3685,10 +3685,10 @@ static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
 {
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	QDF_STATUS status;
 
 	if (!pdev) {
-		ol_txrx_err("%s: Unable to find pdev!",
-			   __func__);
+		ol_txrx_err("Unable to find pdev!");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3697,7 +3697,8 @@ static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev, sta_id);
+	peer = ol_txrx_peer_get_ref_by_local_id(ppdev, sta_id,
+						PEER_DEBUG_ID_OL_INTERNAL);
 
 	/* Return success, if the peer is already cleared by
 	 * data path via peer detach function.
@@ -3705,8 +3706,12 @@ static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
 	if (!peer)
 		return QDF_STATUS_SUCCESS;
 
-	return ol_txrx_clear_peer_internal(peer);
+	ol_txrx_dbg("Clear peer rx frames: " QDF_MAC_ADDR_STR,
+		    QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw));
+	ol_txrx_clear_peer_internal(peer);
+	status = ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 
+	return status;
 }
 
 void peer_unmap_timer_work_function(void *param)
