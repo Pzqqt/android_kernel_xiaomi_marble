@@ -776,8 +776,6 @@ static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 		if (wlan_ipa_uc_is_enabled(ipa_ctx->config)) {
 			session_id = (uint8_t)skb->cb[0];
 			iface_id = ipa_ctx->vdev_to_iface[session_id];
-			ipa_debug("IPA_RECEIVE: session_id=%u, iface_id=%u",
-				  session_id, iface_id);
 		} else {
 			iface_id = WLAN_IPA_GET_IFACE_ID(skb->data);
 		}
