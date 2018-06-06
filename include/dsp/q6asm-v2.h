@@ -57,10 +57,13 @@
 #define FORMAT_GEN_COMPR    0x001f
 #define FORMAT_TRUEHD       0x0020
 #define FORMAT_IEC61937     0x0021
+#define FORMAT_BESPOKE      0x0022
 
 #define ENCDEC_SBCBITRATE   0x0001
 #define ENCDEC_IMMEDIATE_DECODE 0x0002
 #define ENCDEC_CFG_BLK          0x0003
+
+#define ENC_CFG_ID_NONE    0x0000
 
 #define CMD_PAUSE          0x0001
 #define CMD_FLUSH          0x0002
@@ -290,7 +293,8 @@ int q6asm_open_read_v3(struct audio_client *ac, uint32_t format,
 		       uint16_t bits_per_sample);
 
 int q6asm_open_read_v4(struct audio_client *ac, uint32_t format,
-		       uint16_t bits_per_sample, bool ts_mode);
+		       uint16_t bits_per_sample, bool ts_mode,
+			   uint32_t enc_cfg_id);
 
 int q6asm_open_write(struct audio_client *ac, uint32_t format
 		/*, uint16_t bits_per_sample*/);
@@ -453,6 +457,10 @@ int q6asm_enc_cfg_blk_pcm_format_support_v4(struct audio_client *ac,
 					    uint16_t sample_word_size,
 					    uint16_t endianness,
 					    uint16_t mode);
+
+int q6asm_enc_cfg_blk_custom(struct audio_client *ac,
+			uint32_t sample_rate, uint32_t channels,
+			uint32_t format, void *cfg);
 
 int q6asm_set_encdec_chan_map(struct audio_client *ac,
 		uint32_t num_channels);

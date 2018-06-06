@@ -4743,6 +4743,22 @@ struct asm_enc_cfg_blk_param_v2 {
 
 } __packed;
 
+struct asm_custom_enc_cfg_t_v2 {
+	struct apr_hdr hdr;
+	struct asm_stream_cmd_set_encdec_param encdec;
+	struct asm_enc_cfg_blk_param_v2 encblk;
+	uint32_t sample_rate;
+
+	uint16_t num_channels;
+	uint16_t reserved;
+	/* num_ch == 1, then PCM_CHANNEL_C,
+	 * num_ch == 2, then {PCM_CHANNEL_L, PCM_CHANNEL_R}
+	 */
+	uint8_t  channel_mapping[8];
+	uint32_t  custom_size;
+	uint8_t  custom_data[15];
+} __packed;
+
 /* @brief Dolby Digital Plus end point configuration structure
  */
 struct asm_dec_ddp_endp_param_v2 {
