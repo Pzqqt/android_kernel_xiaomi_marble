@@ -9972,11 +9972,35 @@ static int tavil_device_down(struct wcd9xxx *wcd9xxx)
 	struct snd_soc_codec *codec;
 	struct tavil_priv *priv;
 	int count;
+	int decimator;
+	int ret;
 
 	codec = (struct snd_soc_codec *)(wcd9xxx->ssr_priv);
 	priv = snd_soc_codec_get_drvdata(codec);
 	for (count = 0; count < NUM_CODEC_DAIS; count++)
 		priv->dai[count].bus_down_in_recovery = true;
+
+	if (delayed_work_pending(&priv->spk_anc_dwork.dwork))
+		cancel_delayed_work(&priv->spk_anc_dwork.dwork);
+	for (decimator = 0; decimator < WCD934X_NUM_DECIMATORS; decimator++) {
+		if (delayed_work_pending
+				(&priv->tx_mute_dwork[decimator].dwork))
+			cancel_delayed_work
+				(&priv->tx_mute_dwork[decimator].dwork);
+		if (delayed_work_pending
+				(&priv->tx_hpf_work[decimator].dwork))
+			cancel_delayed_work
+				(&priv->tx_hpf_work[decimator].dwork);
+	}
+	if (delayed_work_pending(&priv->power_gate_work))
+		cancel_delayed_work_sync(&priv->power_gate_work);
+	if (delayed_work_pending(&priv->mbhc->wcd_mbhc.mbhc_btn_dwork)) {
+		ret = cancel_delayed_work(&priv->mbhc->wcd_mbhc.mbhc_btn_dwork);
+		if (ret)
+			priv->mbhc->wcd_mbhc.mbhc_cb->lock_sleep
+					(&priv->mbhc->wcd_mbhc, false);
+	}
+
 	if (priv->swr.ctrl_data)
 		swrm_wcd_notify(priv->swr.ctrl_data[0].swr_pdev,
 				SWR_DEVICE_DOWN, NULL);
