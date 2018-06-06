@@ -9730,7 +9730,7 @@ enum dot11p_mode {
  * Param 2: DP Trace live mode high bandwidth thresh.(uint8_t)
  *         (packets/second) beyond which DP Trace is disabled. Decimal Val.
  *          MGMT, DHCP, EAPOL, ARP pkts are not counted. ICMP and Data are.
- * Param 3: Default Verbosity (0-3)
+ * Param 3: Default Verbosity (0-4)
  * Param 4: Proto Bitmap (uint8_t). Decimal Value.
  *          (decimal 62 = 0x3e)
  * e.g., to disable live mode, use the following param in the ini file.
@@ -9740,7 +9740,7 @@ enum dot11p_mode {
  * gDptraceConfig = 1, 4
  */
 #define CFG_ENABLE_DP_TRACE_CONFIG		"gDptraceConfig"
-#define CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT	"1, 8, 1, 126"
+#define CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT	"1, 4, 1, 126"
 #endif
 
 /*

@@ -7319,10 +7319,8 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		else
 			hdd_disable_rx_ol_for_low_tput(hdd_ctx, false);
 
+		qdf_dp_trace_apply_tput_policy(next_vote_level);
 	}
-
-	qdf_dp_trace_throttle_live_mode(
-		(next_vote_level > PLD_BUS_WIDTH_NONE) ? true : false);
 
 	/*
 	 * Includes tcp+udp, if perf core is required for tcp, then
