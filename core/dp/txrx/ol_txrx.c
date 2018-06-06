@@ -85,6 +85,20 @@
 				QDF_FILE_GRP_READ |	\
 				QDF_FILE_OTH_READ)
 
+#define DPT_DEBUGFS_NUMBER_BASE	10
+/**
+ * enum dpt_set_param_debugfs - dpt set params
+ * @DPT_SET_PARAM_PROTO_BITMAP : set proto bitmap
+ * @DPT_SET_PARAM_NR_RECORDS: set num of records
+ * @DPT_SET_PARAM_VERBOSITY: set verbosity
+ */
+enum dpt_set_param_debugfs {
+	DPT_SET_PARAM_PROTO_BITMAP = 1,
+	DPT_SET_PARAM_NR_RECORDS = 2,
+	DPT_SET_PARAM_VERBOSITY = 3,
+	DPT_SET_PARAM_MAX,
+};
+
 QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *pdev,
 				     uint8_t *peer_mac,
 				     enum ol_txrx_peer_state state);
@@ -1207,6 +1221,88 @@ static QDF_STATUS ol_txrx_read_dpt_buff_debugfs(qdf_debugfs_file_t file,
 }
 
 /**
+ * ol_txrx_conv_str_to_int_debugfs() - convert string to int
+ * @buf: buffer containing string
+ * @len: buffer len
+ * @proto_bitmap: defines the protocol to be tracked
+ * @nr_records: defines the nth packet which is traced
+ * @verbosity: defines the verbosity level
+ *
+ * This function expects char buffer to be null terminated.
+ * Otherwise results could be unexpected values.
+ *
+ * Return: 0 on success
+ */
+static int ol_txrx_conv_str_to_int_debugfs(char *buf, qdf_size_t len,
+					   int *proto_bitmap,
+					   int *nr_records,
+					   int *verbosity)
+{
+	int num_value = DPT_SET_PARAM_PROTO_BITMAP;
+	int ret, param_value = 0;
+	char *buf_param = buf;
+	int i;
+
+	for (i = 1; i < DPT_SET_PARAM_MAX; i++) {
+		/* Loop till you reach space as kstrtoint operates till
+		 * null character. Replace space with null character
+		 * to read each value.
+		 * terminate the loop either at null terminated char or
+		 * len is 0.
+		 */
+		while (*buf && len) {
+			if (*buf == ' ') {
+				*buf = '\0';
+				buf++;
+				len--;
+				break;
+			}
+			buf++;
+			len--;
+		}
+		/* get the parameter */
+		ret = qdf_kstrtoint(buf_param,
+				    DPT_DEBUGFS_NUMBER_BASE,
+				    &param_value);
+		if (ret) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX,
+				  QDF_TRACE_LEVEL_ERROR,
+				  "%s: Error while parsing buffer. ret %d",
+				  __func__, ret);
+			return ret;
+		}
+		switch (num_value) {
+		case DPT_SET_PARAM_PROTO_BITMAP:
+			*proto_bitmap = param_value;
+			break;
+		case DPT_SET_PARAM_NR_RECORDS:
+			*nr_records = param_value;
+			break;
+		case DPT_SET_PARAM_VERBOSITY:
+			*verbosity = param_value;
+			break;
+		default:
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				  "%s %d: :Set command needs exactly 3 arguments in format <proto_bitmap> <number of record> <Verbosity>.",
+				__func__, __LINE__);
+			break;
+		}
+		num_value++;
+		/*buf_param should now point to the next param value. */
+		buf_param = buf;
+	}
+
+	/* buf is not yet NULL implies more than 3 params are passed. */
+	if (*buf) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s %d: :Set command needs exactly 3 arguments in format <proto_bitmap> <number of record> <Verbosity>.",
+			__func__, __LINE__);
+		return -EINVAL;
+	}
+	return 0;
+}
+
+/**
  * ol_txrx_write_dpt_buff_debugfs() - set dp trace parameters
  * @priv: pdev object
  * @buf: buff to get value for dpt parameters
@@ -1218,6 +1314,36 @@ static QDF_STATUS ol_txrx_write_dpt_buff_debugfs(void *priv,
 					      const char *buf,
 					      qdf_size_t len)
 {
+	int ret;
+	int proto_bitmap = 0;
+	int nr_records = 0;
+	int verbosity = 0;
+	char *buf1 = NULL;
+
+	if (!buf || !len) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: null buffer or len. len %u",
+				__func__, (uint8_t)len);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	buf1 = (char *)qdf_mem_malloc(len);
+	if (!buf1) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: qdf_mem_malloc failure",
+				__func__);
+		return QDF_STATUS_E_FAULT;
+	}
+	qdf_mem_copy(buf1, buf, len);
+	ret = ol_txrx_conv_str_to_int_debugfs(buf1, len, &proto_bitmap,
+					      &nr_records, &verbosity);
+	if (ret) {
+		qdf_mem_free(buf1);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_dpt_set_value_debugfs(proto_bitmap, nr_records, verbosity);
+	qdf_mem_free(buf1);
 	return QDF_STATUS_SUCCESS;
 }
 
