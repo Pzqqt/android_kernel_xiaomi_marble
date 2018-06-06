@@ -198,6 +198,7 @@ enum country_code {
 	CTRY_YEMEN = 887,
 	CTRY_ZIMBABWE = 716,
 	CTRY_JAPAN = 392,
+	CTRY_JAPAN15 = 4015,
 	CTRY_XA = 4100,
 };
 
@@ -444,6 +445,7 @@ const struct country_code_to_reg_domain g_all_countries[] = {
 	{CTRY_YEMEN, NULL1_WORLD, "YE", 40, 0, 0},
 	{CTRY_ZIMBABWE, ETSI1_WORLD, "ZW", 40, 160, 0},
 	{CTRY_JAPAN, MKK5_MKKC, "JP", 40, 160, 0},
+	{CTRY_JAPAN15, MKK5_MKKC, "JP", 40, 160, 0},
 };
 #else
 const struct country_code_to_reg_domain g_all_countries[] = {
