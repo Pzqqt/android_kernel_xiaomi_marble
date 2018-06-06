@@ -24,6 +24,14 @@
 
 static struct snd_soc_codec_driver bolero;
 
+/* MCLK_MUX table for all macros */
+static u16 bolero_mclk_mux_tbl[MAX_MACRO][MCLK_MUX_MAX] = {
+	{TX_MACRO, VA_MACRO},
+	{TX_MACRO, RX_MACRO},
+	{TX_MACRO, WSA_MACRO},
+	{TX_MACRO, VA_MACRO},
+};
+
 static void bolero_ahb_write_device(char __iomem *io_base,
 				    u16 reg, u8 value)
 {
@@ -45,24 +53,31 @@ static int __bolero_reg_read(struct bolero_priv *priv,
 			     u16 macro_id, u16 reg, u8 *val)
 {
 	int ret = -EINVAL;
+	u16 current_mclk_mux_macro;
 
-	if (!priv->macro_params[macro_id].mclk_fn) {
+	mutex_lock(&priv->clk_lock);
+	current_mclk_mux_macro =
+		priv->current_mclk_mux_macro[macro_id];
+	if (!priv->macro_params[current_mclk_mux_macro].mclk_fn) {
 		dev_dbg_ratelimited(priv->dev,
-			"%s: mclk_fn not init for macro-id-%d\n",
-			__func__, macro_id);
-		return ret;
+			"%s: mclk_fn not init for macro-id:%d, current_mclk_mux_macro:%d\n",
+			__func__, macro_id, current_mclk_mux_macro);
+		goto err;
 	}
-	ret = priv->macro_params[macro_id].mclk_fn(
-			priv->macro_params[macro_id].dev, true);
+	ret = priv->macro_params[current_mclk_mux_macro].mclk_fn(
+			priv->macro_params[current_mclk_mux_macro].dev, true);
 	if (ret) {
 		dev_dbg_ratelimited(priv->dev,
-				"%s: clock enable failed\n", __func__);
-		return ret;
+			"%s: clock enable failed for macro-id:%d, current_mclk_mux_macro:%d\n",
+			__func__, macro_id, current_mclk_mux_macro);
+		goto err;
 	}
 	bolero_ahb_read_device(
 		priv->macro_params[macro_id].io_base, reg, val);
-	priv->macro_params[macro_id].mclk_fn(
-			priv->macro_params[macro_id].dev, false);
+	priv->macro_params[current_mclk_mux_macro].mclk_fn(
+			priv->macro_params[current_mclk_mux_macro].dev, false);
+err:
+	mutex_unlock(&priv->clk_lock);
 	return ret;
 }
 
@@ -70,24 +85,31 @@ static int __bolero_reg_write(struct bolero_priv *priv,
 			      u16 macro_id, u16 reg, u8 val)
 {
 	int ret = -EINVAL;
+	u16 current_mclk_mux_macro;
 
-	if (!priv->macro_params[macro_id].mclk_fn) {
+	mutex_lock(&priv->clk_lock);
+	current_mclk_mux_macro =
+		priv->current_mclk_mux_macro[macro_id];
+	if (!priv->macro_params[current_mclk_mux_macro].mclk_fn) {
 		dev_dbg_ratelimited(priv->dev,
-			"%s: mclk_fn not init for macro-id-%d\n",
-			__func__, macro_id);
-		return ret;
+			"%s: mclk_fn not init for macro-id:%d, current_mclk_mux_macro:%d\n",
+			__func__, macro_id, current_mclk_mux_macro);
+		goto err;
 	}
-	ret = priv->macro_params[macro_id].mclk_fn(
-			priv->macro_params[macro_id].dev, true);
+	ret = priv->macro_params[current_mclk_mux_macro].mclk_fn(
+			priv->macro_params[current_mclk_mux_macro].dev, true);
 	if (ret) {
 		dev_dbg_ratelimited(priv->dev,
-				"%s: clock enable failed\n", __func__);
-		return ret;
+			"%s: clock enable failed for macro-id:%d, current_mclk_mux_macro:%d\n",
+			__func__, macro_id, current_mclk_mux_macro);
+		goto err;
 	}
 	bolero_ahb_write_device(
 		priv->macro_params[macro_id].io_base, reg, val);
-	priv->macro_params[macro_id].mclk_fn(
-			priv->macro_params[macro_id].dev, false);
+	priv->macro_params[current_mclk_mux_macro].mclk_fn(
+			priv->macro_params[current_mclk_mux_macro].dev, false);
+err:
+	mutex_unlock(&priv->clk_lock);
 	return ret;
 }
 
@@ -204,6 +226,8 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 	priv->macro_params[macro_id].dai_ptr = ops->dai_ptr;
 	priv->macro_params[macro_id].mclk_fn = ops->mclk_fn;
 	priv->macro_params[macro_id].dev = dev;
+	priv->current_mclk_mux_macro[macro_id] =
+				bolero_mclk_mux_tbl[macro_id][MCLK_MUX0];
 	priv->num_dais += ops->num_dais;
 	priv->num_macros_registered++;
 	priv->macros_supported[macro_id] = true;
@@ -213,6 +237,12 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 		if (ret < 0) {
 			dev_err(dev, "%s: copy_dais failed\n", __func__);
 			return ret;
+		}
+		if (priv->macros_supported[TX_MACRO] == false) {
+			bolero_mclk_mux_tbl[WSA_MACRO][MCLK_MUX0] = WSA_MACRO;
+			priv->current_mclk_mux_macro[WSA_MACRO] = WSA_MACRO;
+			bolero_mclk_mux_tbl[VA_MACRO][MCLK_MUX0] = VA_MACRO;
+			priv->current_mclk_mux_macro[VA_MACRO] = VA_MACRO;
 		}
 		ret = snd_soc_register_codec(dev->parent, &bolero,
 				priv->bolero_dais, priv->num_dais);
@@ -264,6 +294,100 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 		snd_soc_unregister_codec(dev->parent);
 }
 EXPORT_SYMBOL(bolero_unregister_macro);
+
+/**
+ * bolero_request_clock - request for clock enable/disable
+ *
+ * @dev: macro device ptr.
+ * @macro_id: ID of macro calling this API.
+ * @mclk_mux_id: MCLK_MUX ID.
+ * @enable: enable or disable clock flag
+ *
+ * Returns 0 on success or -EINVAL on error.
+ */
+int bolero_request_clock(struct device *dev, u16 macro_id,
+			 enum mclk_mux mclk_mux_id,
+			 bool enable)
+{
+	struct bolero_priv *priv;
+	u16 mclk_mux0_macro, mclk_mux1_macro;
+	int ret = 0;
+
+	if (!dev) {
+		pr_err("%s: dev is null\n", __func__);
+		return -EINVAL;
+	}
+	if (!bolero_is_valid_macro_dev(dev)) {
+		dev_err(dev, "%s: macro:%d not in valid registered macro-list\n",
+			__func__, macro_id);
+		return -EINVAL;
+	}
+	priv = dev_get_drvdata(dev->parent);
+	if (!priv || (macro_id >= MAX_MACRO)) {
+		dev_err(dev, "%s: priv is null or invalid macro\n", __func__);
+		return -EINVAL;
+	}
+	mclk_mux0_macro =  bolero_mclk_mux_tbl[macro_id][MCLK_MUX0];
+	mutex_lock(&priv->clk_lock);
+	switch (mclk_mux_id) {
+	case MCLK_MUX0:
+		ret = priv->macro_params[mclk_mux0_macro].mclk_fn(
+			priv->macro_params[mclk_mux0_macro].dev, enable);
+		if (ret < 0) {
+			dev_err(dev,
+				"%s: MCLK_MUX0 %s failed for macro:%d, mclk_mux0_macro:%d\n",
+				__func__,
+				enable ? "enable" : "disable",
+				macro_id, mclk_mux0_macro);
+			goto err;
+		}
+		break;
+	case MCLK_MUX1:
+		mclk_mux1_macro =  bolero_mclk_mux_tbl[macro_id][MCLK_MUX1];
+		ret = priv->macro_params[mclk_mux0_macro].mclk_fn(
+			priv->macro_params[mclk_mux0_macro].dev,
+			true);
+		if (ret < 0) {
+			dev_err(dev,
+				"%s: MCLK_MUX0 en failed for macro:%d mclk_mux0_macro:%d\n",
+				__func__, macro_id, mclk_mux0_macro);
+			goto err;
+		}
+		ret = priv->macro_params[mclk_mux1_macro].mclk_fn(
+			priv->macro_params[mclk_mux1_macro].dev, enable);
+		if (ret < 0) {
+			dev_err(dev,
+				"%s: MCLK_MUX1 %s failed for macro:%d, mclk_mux1_macro:%d\n",
+				__func__,
+				enable ? "enable" : "disable",
+				macro_id, mclk_mux1_macro);
+			priv->macro_params[mclk_mux0_macro].mclk_fn(
+				priv->macro_params[mclk_mux0_macro].dev,
+				false);
+			goto err;
+		}
+		priv->macro_params[mclk_mux0_macro].mclk_fn(
+			priv->macro_params[mclk_mux0_macro].dev,
+			false);
+		break;
+	case MCLK_MUX_MAX:
+	default:
+		dev_err(dev, "%s: invalid mclk_mux_id: %d\n",
+			__func__, mclk_mux_id);
+		ret = -EINVAL;
+		goto err;
+	}
+	if (enable)
+		priv->current_mclk_mux_macro[macro_id] =
+				bolero_mclk_mux_tbl[macro_id][mclk_mux_id];
+	else
+		priv->current_mclk_mux_macro[macro_id] =
+				bolero_mclk_mux_tbl[macro_id][MCLK_MUX0];
+err:
+	mutex_unlock(&priv->clk_lock);
+	return ret;
+}
+EXPORT_SYMBOL(bolero_request_clock);
 
 static int bolero_soc_codec_probe(struct snd_soc_codec *codec)
 {
@@ -359,8 +483,6 @@ static void bolero_add_child_devices(struct work_struct *work)
 fail_pdev_add:
 	for (i = cnt; i > 0; i--)
 		platform_device_put(priv->pdev_child_devices[i - 1]);
-err:
-	return;
 }
 
 static int bolero_probe(struct platform_device *pdev)
@@ -405,6 +527,7 @@ static int bolero_probe(struct platform_device *pdev)
 
 	dev_set_drvdata(&pdev->dev, priv);
 	mutex_init(&priv->io_lock);
+	mutex_init(&priv->clk_lock);
 	INIT_WORK(&priv->bolero_add_child_devices_work,
 		  bolero_add_child_devices);
 	schedule_work(&priv->bolero_add_child_devices_work);
@@ -420,6 +543,7 @@ static int bolero_remove(struct platform_device *pdev)
 	for (i = priv->child_num; i > 0; i--)
 		platform_device_unregister(priv->pdev_child_devices[i - 1]);
 	mutex_destroy(&priv->io_lock);
+	mutex_destroy(&priv->clk_lock);
 	return 0;
 }
 
