@@ -2024,6 +2024,11 @@ void *dp_peer_find_by_local_id(struct cdp_pdev *pdev_handle, uint8_t local_id)
 	struct dp_peer *peer;
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
+	if (local_id >= OL_TXRX_NUM_LOCAL_PEER_IDS) {
+		DP_TRACE(DEBUG, "Incorrect local id %d", local_id);
+		QDF_BUG(0);
+		return NULL;
+	}
 	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
 	peer = pdev->local_peer_ids.map[local_id];
 	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
