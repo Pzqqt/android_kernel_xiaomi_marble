@@ -163,10 +163,11 @@ typedef struct s_qdf_trace_data {
 
 #define QDF_DP_TRACE_RECORD_SIZE       40
 #define INVALID_QDF_DP_TRACE_ADDR      0xffffffff
-#define QDF_DP_TRACE_VERBOSITY_HIGH    3
-#define QDF_DP_TRACE_VERBOSITY_MEDIUM  2
-#define QDF_DP_TRACE_VERBOSITY_LOW     1
-#define QDF_DP_TRACE_VERBOSITY_BASE    0
+#define QDF_DP_TRACE_VERBOSITY_HIGH		4
+#define QDF_DP_TRACE_VERBOSITY_MEDIUM		3
+#define QDF_DP_TRACE_VERBOSITY_LOW		2
+#define QDF_DP_TRACE_VERBOSITY_ULTRA_LOW	1
+#define QDF_DP_TRACE_VERBOSITY_BASE		0
 
 /**
  * enum QDF_DP_TRACE_ID - Generic ID to identify various events in data path
@@ -176,28 +177,29 @@ typedef struct s_qdf_trace_data {
  * @QDF_DP_TRACE_DHCP_PACKET_RECORD - record DHCP packet
  * @QDF_DP_TRACE_ARP_PACKET_RECORD - record ARP packet
  * @QDF_DP_TRACE_MGMT_PACKET_RECORD - record MGMT pacekt
- * QDF_DP_TRACE_EVENT_RECORD - record events
+ * @QDF_DP_TRACE_EVENT_RECORD - record events
  * @QDF_DP_TRACE_BASE_VERBOSITY - below this are part of base verbosity
  * @QDF_DP_TRACE_ICMP_PACKET_RECORD - record ICMP packet
  * @QDF_DP_TRACE_ICMPv6_PACKET_RECORD - record ICMPv6 packet
- * @QDF_DP_TRACE_HDD_TX_PACKET_RECORD - record 32 bytes of tx pkt at HDD
- * @QDF_DP_TRACE_HDD_RX_PACKET_RECORD - record 32 bytes of rx pkt at HDD
- * @QDF_DP_TRACE_TX_PACKET_RECORD - record 32 bytes of tx pkt at any layer
- * @QDF_DP_TRACE_RX_PACKET_RECORD - record 32 bytes of rx pkt at any layer
  * @QDF_DP_TRACE_HDD_TX_TIMEOUT - HDD tx timeout
  * @QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT- SOFTAP HDD tx timeout
+ * @QDF_DP_TRACE_ULTRA_LOW_VERBOSITY - Below this is not logged for >4PPS
+ * @QDF_DP_TRACE_TX_PACKET_RECORD - record 32 bytes of tx pkt at any layer
+ * @QDF_DP_TRACE_RX_PACKET_RECORD - record 32 bytes of rx pkt at any layer
+ * @QDF_DP_TRACE_HDD_TX_PACKET_RECORD - record 32 bytes of tx pkt at HDD
+ * @QDF_DP_TRACE_HDD_RX_PACKET_RECORD - record 32 bytes of rx pkt at HDD
  * @QDF_DP_TRACE_FREE_PACKET_PTR_RECORD - tx completion ptr record
  * @QDF_DP_TRACE_LOW_VERBOSITY - below this are part of low verbosity
  * @QDF_DP_TRACE_HDD_TX_PACKET_PTR_RECORD - HDD layer ptr record
  * @QDF_DP_TRACE_LI_DP_TX_PACKET_PTR_RECORD - Lithium DP layer ptr record
+ * @QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD - HDD RX record
  * @QDF_DP_TRACE_CE_PACKET_PTR_RECORD - CE layer ptr record
  * @QDF_DP_TRACE_CE_FAST_PACKET_PTR_RECORD- CE fastpath ptr record
  * @QDF_DP_TRACE_CE_FAST_PACKET_ERR_RECORD- CE fastpath error record
  * @QDF_DP_TRACE_RX_HTT_PACKET_PTR_RECORD - HTT RX record
  * @QDF_DP_TRACE_RX_OFFLOAD_HTT_PACKET_PTR_RECORD- HTT RX offload record
- * @QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD - HDD RX record
  * @QDF_DP_TRACE_RX_LI_DP_PACKET_PTR_RECORD - Lithium DP RX record
-  * @QDF_DP_TRACE_MED_VERBOSITY - below this are part of med verbosity
+ * @QDF_DP_TRACE_MED_VERBOSITY - below this are part of med verbosity
  * @QDF_DP_TRACE_TXRX_QUEUE_PACKET_PTR_RECORD -tx queue ptr record
  * @QDF_DP_TRACE_TXRX_PACKET_PTR_RECORD - txrx packet ptr record
  * @QDF_DP_TRACE_TXRX_FAST_PACKET_PTR_RECORD - txrx fast path record
@@ -222,12 +224,13 @@ enum  QDF_DP_TRACE_ID {
 	QDF_DP_TRACE_BASE_VERBOSITY,
 	QDF_DP_TRACE_ICMP_PACKET_RECORD,
 	QDF_DP_TRACE_ICMPv6_PACKET_RECORD,
-	QDF_DP_TRACE_HDD_TX_PACKET_RECORD,
-	QDF_DP_TRACE_HDD_RX_PACKET_RECORD,
-	QDF_DP_TRACE_TX_PACKET_RECORD,
-	QDF_DP_TRACE_RX_PACKET_RECORD,
 	QDF_DP_TRACE_HDD_TX_TIMEOUT,
 	QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT,
+	QDF_DP_TRACE_ULTRA_LOW_VERBOSITY,
+	QDF_DP_TRACE_TX_PACKET_RECORD,
+	QDF_DP_TRACE_RX_PACKET_RECORD,
+	QDF_DP_TRACE_HDD_TX_PACKET_RECORD,
+	QDF_DP_TRACE_HDD_RX_PACKET_RECORD,
 	QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_LOW_VERBOSITY,
 	QDF_DP_TRACE_HDD_TX_PACKET_PTR_RECORD,
@@ -353,6 +356,7 @@ struct qdf_dp_trace_record_s {
  * @proto_bitmap: defines which protocol to be traced
  * @no_of_record: defines every nth packet to be traced
  * @verbosity : defines verbosity level
+ * @ini_conf_verbosity: Configured verbosity from INI
  * @enable: enable/disable DP trace
  * @count: current packet number
  * @live_mode_config: configuration as received during initialization
@@ -361,6 +365,7 @@ struct qdf_dp_trace_record_s {
  * @force_live_mode: flag to enable live mode all the time for all packets.
  *                  This can be set/unset from userspace and overrides other
  *                  live mode flags.
+ * @dynamic_verbosity_modify: Dynamic user configured verbosity overrides all
  * @print_pkt_cnt: count of number of packets printed in live mode
  * @high_tput_thresh: thresh beyond which live mode is turned off
  * @thresh_time_limit: max time, in terms of BW timer intervals to wait,
@@ -394,12 +399,14 @@ struct s_qdf_dp_trace_data {
 	uint8_t proto_bitmap;
 	uint8_t no_of_record;
 	uint8_t verbosity;
+	uint8_t ini_conf_verbosity;
 	bool enable;
 	bool live_mode_config;
 	bool live_mode;
 	uint32_t curr_pos;
 	uint32_t saved_tail;
 	bool force_live_mode;
+	bool dynamic_verbosity_modify;
 	uint8_t print_pkt_cnt;
 	uint8_t high_tput_thresh;
 	uint16_t thresh_time_limit;
@@ -644,6 +651,14 @@ void qdf_dp_trace_ptr(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 		      uint8_t pdev_id, uint8_t *data, uint8_t size,
 		      uint16_t msdu_id, uint16_t status);
 void qdf_dp_trace_throttle_live_mode(bool high_bw_request);
+
+/**
+ * qdf_dp_trace_tput_policy() - Change verbosity based on the TPUT
+ * @is_data_traffic: Is traffic more than low TPUT threashould
+ *
+ * Return: None
+ */
+void qdf_dp_trace_apply_tput_policy(bool is_data_traffic);
 
 /**
  * qdf_dp_trace_data_pkt() - trace data packet

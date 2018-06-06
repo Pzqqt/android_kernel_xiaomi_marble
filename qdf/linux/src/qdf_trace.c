@@ -776,6 +776,7 @@ void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
 	g_qdf_dp_trace_data.thresh_time_limit = time_limit;
 	g_qdf_dp_trace_data.proto_bitmap = proto_bitmap;
 	g_qdf_dp_trace_data.verbosity = verbosity;
+	g_qdf_dp_trace_data.ini_conf_verbosity = verbosity;
 
 	for (i = 0; i < ARRAY_SIZE(qdf_dp_trace_cb_table); i++)
 		qdf_dp_trace_cb_table[i] = qdf_dp_display_record;
@@ -820,6 +821,7 @@ void qdf_dp_trace_set_value(uint8_t proto_bitmap, uint8_t no_of_record,
 	g_qdf_dp_trace_data.proto_bitmap = proto_bitmap;
 	g_qdf_dp_trace_data.no_of_record = no_of_record;
 	g_qdf_dp_trace_data.verbosity    = verbosity;
+	g_qdf_dp_trace_data.dynamic_verbosity_modify = true;
 }
 qdf_export_symbol(qdf_dp_trace_set_value);
 
@@ -909,6 +911,11 @@ static bool qdf_dp_trace_enable_track(enum QDF_DP_TRACE_ID code)
 		if (code <= QDF_DP_TRACE_LOW_VERBOSITY)
 			return true;
 		return false;
+	case QDF_DP_TRACE_VERBOSITY_ULTRA_LOW:
+		if (code <= QDF_DP_TRACE_ULTRA_LOW_VERBOSITY)
+			return true;
+		return false;
+
 	case QDF_DP_TRACE_VERBOSITY_BASE:
 		if (code <= QDF_DP_TRACE_BASE_VERBOSITY)
 			return true;
@@ -1339,6 +1346,20 @@ static void qdf_dp_add_record(enum QDF_DP_TRACE_ID code, uint8_t pdev_id,
 
 	spin_lock_bh(&l_dp_trace_lock);
 
+	if (print || g_qdf_dp_trace_data.force_live_mode) {
+		print_this_record = true;
+	} else if (g_qdf_dp_trace_data.live_mode == 1) {
+		print_this_record = true;
+		g_qdf_dp_trace_data.print_pkt_cnt++;
+		if (g_qdf_dp_trace_data.print_pkt_cnt >
+				g_qdf_dp_trace_data.high_tput_thresh) {
+			g_qdf_dp_trace_data.live_mode = 0;
+			g_qdf_dp_trace_data.verbosity =
+					QDF_DP_TRACE_ULTRA_LOW_VERBOSITY;
+			info |= QDF_DP_TRACE_RECORD_INFO_THROTTLED;
+		}
+	}
+
 	g_qdf_dp_trace_data.num++;
 
 	if (g_qdf_dp_trace_data.num > MAX_QDF_DP_TRACE_RECORDS)
@@ -1380,17 +1401,6 @@ static void qdf_dp_add_record(enum QDF_DP_TRACE_ID code, uint8_t pdev_id,
 		return;
 	}
 
-	if (print || g_qdf_dp_trace_data.force_live_mode) {
-		print_this_record = true;
-	} else if (g_qdf_dp_trace_data.live_mode == 1) {
-		print_this_record = true;
-		g_qdf_dp_trace_data.print_pkt_cnt++;
-		if (g_qdf_dp_trace_data.print_pkt_cnt >
-				g_qdf_dp_trace_data.high_tput_thresh) {
-			g_qdf_dp_trace_data.live_mode = 0;
-			info |= QDF_DP_TRACE_RECORD_INFO_THROTTLED;
-		}
-	}
 	spin_unlock_bh(&l_dp_trace_lock);
 
 	info |= QDF_DP_TRACE_RECORD_INFO_LIVE;
@@ -2536,11 +2546,28 @@ void qdf_dp_trace_throttle_live_mode(bool high_bw_request)
 				g_qdf_dp_trace_data.live_mode = 1;
 
 		g_qdf_dp_trace_data.print_pkt_cnt = 0;
+		g_qdf_dp_trace_data.verbosity =
+					g_qdf_dp_trace_data.ini_conf_verbosity;
 		spin_unlock_bh(&l_dp_trace_lock);
 	}
-
 }
 qdf_export_symbol(qdf_dp_trace_throttle_live_mode);
+
+void qdf_dp_trace_apply_tput_policy(bool is_data_traffic)
+{
+	if (g_qdf_dp_trace_data.dynamic_verbosity_modify)
+		return;
+
+	if (is_data_traffic) {
+		g_qdf_dp_trace_data.verbosity =
+					QDF_DP_TRACE_ULTRA_LOW_VERBOSITY;
+		qdf_dp_trace_throttle_live_mode(true);
+	} else {
+		g_qdf_dp_trace_data.verbosity =
+					g_qdf_dp_trace_data.ini_conf_verbosity;
+		qdf_dp_trace_throttle_live_mode(false);
+	}
+}
 #endif
 
 struct qdf_print_ctrl print_ctrl_obj[MAX_PRINT_CONFIG_SUPPORTED];
