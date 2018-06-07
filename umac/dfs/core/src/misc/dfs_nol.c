@@ -613,5 +613,8 @@ void dfs_remove_spoof_channel_from_nol(struct wlan_dfs *dfs)
 		}
 	}
 	WLAN_DFSNOL_UNLOCK(dfs);
+
+	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
+				    channels, nchans, DFS_NOL_RESET);
 }
 #endif

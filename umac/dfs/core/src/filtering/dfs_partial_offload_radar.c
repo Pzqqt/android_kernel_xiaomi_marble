@@ -553,7 +553,7 @@ void dfs_radarfound_action_fcc(struct wlan_dfs *dfs, uint8_t seg_id,
 void dfs_host_wait_timer_reset(struct wlan_dfs *dfs)
 {
 	dfs->dfs_is_host_wait_running = 0;
-	qdf_timer_stop(&dfs->dfs_host_wait_timer);
+	qdf_timer_sync_cancel(&dfs->dfs_host_wait_timer);
 }
 
 /**

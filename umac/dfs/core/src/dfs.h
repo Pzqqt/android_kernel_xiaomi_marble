@@ -362,7 +362,7 @@
  * wait timer with this timeout.
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
-#define HOST_DFS_STATUS_WAIT_TIMER_MS 100
+#define HOST_DFS_STATUS_WAIT_TIMER_MS 200
 #endif
 
 /**
@@ -2200,6 +2200,18 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 		uint64_t this_ts,
 		int *found,
 		int *false_radar_found);
+
+/**
+ * dfs_radar_found_action() - Radar found action
+ * @dfs: Pointer to wlan_dfs structure.
+ * @bangradar: true if radar is due to bangradar command.
+ * @seg_id: Segment id.
+ * @false_radar_found: value is 1 if false radar is found.
+ */
+void dfs_radar_found_action(struct wlan_dfs *dfs,
+			    bool bangradar,
+			    uint8_t seg_id,
+			    int false_radar_found);
 
 /**
  * bin5_rules_check_internal() - This is a extension of dfs_bin5_check().

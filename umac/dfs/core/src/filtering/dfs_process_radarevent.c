@@ -1293,6 +1293,25 @@ void dfs_radarfound_action_generic(struct wlan_dfs *dfs,
 		dfs_false_radarfound_reset_vars(dfs);
 }
 
+void dfs_radar_found_action(struct wlan_dfs *dfs,
+			    bool bangradar,
+			    uint8_t seg_id,
+			    int false_radar_found)
+{
+	/* If Host DFS confirmation is supported, save the curchan as
+	 * radar found chan, send radar found indication along with
+	 * average radar parameters to FW and start the host status
+	 * wait timer.
+	 */
+	if (!bangradar &&
+	    (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_FCC_DOMAIN) &&
+	    lmac_is_host_dfs_check_support_enabled(dfs->dfs_pdev_obj)) {
+		dfs_radarfound_action_fcc(dfs, seg_id, false_radar_found);
+	} else {
+		dfs_radarfound_action_generic(dfs, seg_id, false_radar_found);
+	}
+}
+
 void dfs_process_radarevent(
 	struct wlan_dfs *dfs,
 	struct dfs_channel *chan)
@@ -1301,6 +1320,7 @@ void dfs_process_radarevent(
 	uint8_t   seg_id = 0;
 	int retval = 0;
 	int false_radar_found = 0;
+	bool bangradar = false;
 
 	if (!dfs_radarevent_basic_sanity(dfs, chan))
 		return;
@@ -1308,8 +1328,11 @@ void dfs_process_radarevent(
 	 * TEST : Simulate radar bang, make sure we add the channel to NOL
 	 * (bug 29968)
 	 */
-	if (dfs_handle_bangradar(dfs, chan, &rs, &seg_id, &retval))
+	if (dfs_handle_bangradar(dfs, chan, &rs, &seg_id, &retval)) {
+		if (retval)
+			bangradar = true;
 		goto dfsfound;
+	}
 
 	if (!dfs_handle_missing_pulses(dfs, chan))
 		return;
@@ -1320,20 +1343,8 @@ void dfs_process_radarevent(
 dfsfound:
 	if (retval) {
 		dfs_radarfound_reset_vars(dfs, rs, chan, seg_id);
-		/* If Host DFS confirmation is supported, save the curchan as
-		 * radar found chan, send radar found indication along with
-		 * average radar parameters to FW and start the host status
-		 * wait timer.
-		 */
-		if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_FCC_DOMAIN &&
-		    lmac_is_host_dfs_check_support_enabled(
-				dfs->dfs_pdev_obj)) {
-			dfs_radarfound_action_fcc(dfs, seg_id,
-				false_radar_found);
-		} else {
-			dfs_radarfound_action_generic(dfs, seg_id,
-				false_radar_found);
-		}
+		dfs_radar_found_action(dfs, bangradar, seg_id,
+				       false_radar_found);
 	}
 
 }
