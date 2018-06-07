@@ -1377,11 +1377,9 @@ QDF_STATUS wma_send_offload_11k_params(WMA_HANDLE handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!WMI_SERVICE_EXT_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				wma_handle->wmi_service_ext_bitmap,
-				WMI_SERVICE_11K_NEIGHBOUR_REPORT_SUPPORT)) {
-		WMA_LOGE("%s: FW doesn't support 11k offload",
-			 __func__);
+	if (!wmi_service_enabled(wma_handle->wmi_handle,
+	    wmi_service_11k_neighbour_report_support)) {
+		WMA_LOGE(FL("FW doesn't support 11k offload"));
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
