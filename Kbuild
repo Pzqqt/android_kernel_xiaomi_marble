@@ -1903,6 +1903,8 @@ cppflags-y += -DATH_SUPPORT_WRAP=0
 cppflags-y += -DQCA_HOST2FW_RXBUF_RING
 #endof dummy flags
 
+ccflags-$(CONFIG_ENABLE_SIZE_OPTIMIZE) += -Os
+
 # DFS component
 cppflags-$(CONFIG_WLAN_DFS_MASTER_ENABLE) += -DQCA_MCL_DFS_SUPPORT
 ifeq ($(CONFIG_WLAN_FEATURE_DFS_OFFLOAD), y)
