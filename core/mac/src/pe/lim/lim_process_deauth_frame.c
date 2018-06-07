@@ -75,6 +75,11 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 	frame_rssi = (int32_t)WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo);
+	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
+	if (frameLen < sizeof(reasonCode)) {
+		pe_err("Deauth Frame length invalid %d", frameLen);
+		return ;
+	}
 
 	if (LIM_IS_STA_ROLE(psessionEntry) &&
 	    ((eLIM_SME_WT_DISASSOC_STATE == psessionEntry->limSmeState) ||
@@ -126,7 +131,6 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 		/* If the frame received is unprotected, forward it to the supplicant to initiate */
 		/* an SA query */
-		frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 
 		/* send the unprotected frame indication to SME */
 		lim_send_sme_unprotected_mgmt_frame_ind(pMac, pHdr->fc.subType,
