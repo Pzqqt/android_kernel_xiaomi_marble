@@ -43,9 +43,40 @@
 #include <lim_ft_defs.h>
 #include "wlan_objmgr_psoc_obj.h"
 
-/* Check if this definition can actually move here from halInternal.h even for Volans. In that case */
-/* this featurization can be removed. */
-#define PMAC_STRUCT(_hHal)  ((tpAniSirGlobal)_hHal)
+/**
+ * MAC_CONTEXT() - Convert an opaque mac handle into a mac context
+ * @handle: MAC handle to be converted
+ *
+ * Given an opaque mac handle this function will return the mac
+ * context that is associated with that handle.
+ *
+ * This is the inverse function of MAC_HANDLE()
+ *
+ * Return: mac context for @handle
+ */
+static inline tpAniSirGlobal MAC_CONTEXT(mac_handle_t handle)
+{
+	return (tpAniSirGlobal)handle;
+}
+
+/* legacy definition */
+#define PMAC_STRUCT(handle)  MAC_CONTEXT(handle)
+
+/**
+ * MAC_HANDLE() - Convert a mac context into an opaque mac handle
+ * @mac: MAC context to be converted
+ *
+ * Given a mac context this function will return the opaque mac handle
+ * that is associated with that handle.
+ *
+ * This is the inverse function of PMAC_STRUCT()
+ *
+ * Return: opaque handle for @mac
+ */
+static inline mac_handle_t MAC_HANDLE(tpAniSirGlobal mac)
+{
+	return (mac_handle_t)mac;
+}
 
 #define ANI_DRIVER_TYPE(pMac)     (((tpAniSirGlobal)(pMac))->gDriverType)
 

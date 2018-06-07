@@ -30,15 +30,25 @@
 #include <qdf_types.h>
 
 
-/** ------------------------------------------------------------------------ *
+/**
+ * typedef mac_handle_t - MAC Handle
+ *
+ * Handle to the MAC.  The MAC handle is returned to the HDD from the
+ * UMAC on Open.  The MAC handle is an input to all UMAC function
+ * calls and represents an opaque handle to the UMAC instance that is
+ * tied to the HDD instance
+ *
+ * The UMAC must be able to derive it's internal instance structure
+ * pointer through this handle.
+ */
+/*
+ * NOTE WELL: an upcoming change will replace the void * with an
+ * opaque pointer just as is currently done with hdd_handle_t
+ */
+typedef void *mac_handle_t;
 
-    \typedef tHalHandle
-
-    \brief Handle to the HAL.  The HAL handle is returned by the HAL after it
-    is opened (by calling halOpen).
-
-    ------------------------------------------------------------------------- */
-typedef void *tHalHandle;
+/* retain legacy name until all instances have been replaced */
+typedef mac_handle_t tHalHandle;
 
 /**
  * typedef hdd_handle_t - HDD Handle
