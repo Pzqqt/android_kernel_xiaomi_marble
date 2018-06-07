@@ -473,24 +473,24 @@ static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 	req.ndp_rsp = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_RESPONSE_CODE]);
 
 	if (req.ndp_rsp == NAN_DATAPATH_RESPONSE_ACCEPT) {
-		if (tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]) {
-			iface_name =
-				nla_data(
-					tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]);
+		if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]) {
+			cfg80211_err("Interface not provided");
+			return -ENODEV;
+		}
+		iface_name = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR]);
 
-			/* Check for an existing NAN interface */
-			nan_vdev = wlan_util_get_vdev_by_ifname(psoc,
-					iface_name, WLAN_NAN_ID);
-			if (!nan_vdev) {
-				cfg80211_err("NAN data iface %s not available",
-					iface_name);
-				return -ENODEV;
-			}
+		/* Check for an existing NAN interface */
+		nan_vdev = wlan_util_get_vdev_by_ifname(psoc, iface_name,
+							WLAN_NAN_ID);
+		if (!nan_vdev) {
+			cfg80211_err("NAN data iface %s not available",
+				     iface_name);
+			return -ENODEV;
+		}
 
-			if (nan_vdev->vdev_mlme.vdev_opmode != QDF_NDI_MODE) {
-				cfg80211_err("Interface found is not NDI");
-				return -ENODEV;
-			}
+		if (nan_vdev->vdev_mlme.vdev_opmode != QDF_NDI_MODE) {
+			cfg80211_err("Interface found is not NDI");
+			return -ENODEV;
 		}
 	} else {
 
