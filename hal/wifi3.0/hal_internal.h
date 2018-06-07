@@ -86,10 +86,6 @@
 #include "phyrx_other_receive_info_ru_details.h"
 #endif /* QCA_WIFI_QCA6290_11AX */
 
-#ifdef FEATURE_PERPKT_INFO
-#include "rx_header.h"
-#endif /* FEATURE_PERPKT_INFO */
-
 /* TBD: This should be movded to shared HW header file */
 enum hal_srng_ring_id {
 	/* UMAC rings */
