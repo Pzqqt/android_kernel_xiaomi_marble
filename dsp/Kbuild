@@ -75,6 +75,7 @@ COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 ############ QDSP6V2 ############
 
 ifdef CONFIG_SND_SOC_MSM_QDSP6V2_INTF
+	Q6_OBJS += msm-audio-event-notify.o
 	Q6_OBJS += audio_calibration.o
 	Q6_OBJS += audio_cal_utils.o
 	Q6_OBJS += q6adm.o
