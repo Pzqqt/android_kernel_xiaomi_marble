@@ -10,6 +10,9 @@ endif
 
 ifeq ($(CONFIG_CLD_HL_SDIO_CORE), y)
 	CONFIG_QCA_WIFI_SDIO := y
+ifndef CONFIG_SDIO_TRANSFER
+	CONFIG_SDIO_TRANSFER = mailbox
+endif
 endif
 
 ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
