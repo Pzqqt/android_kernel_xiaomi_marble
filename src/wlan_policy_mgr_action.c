@@ -865,6 +865,7 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 	uint8_t channel = *con_ch;
 	uint8_t temp_channel = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool sta_sap_scc_on_dfs_chan;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -893,6 +894,9 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 	else if (!channel)
 		channel = sap_ch;
 
+	sta_sap_scc_on_dfs_chan =
+		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
+
 	if (policy_mgr_valid_sta_channel_check(psoc, channel)) {
 		if (wlan_reg_is_dfs_ch(pm_ctx->pdev, channel) ||
 		    wlan_reg_is_passive_or_disable_ch(
@@ -920,6 +924,11 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 					return QDF_STATUS_E_FAILURE;
 				}
 			} else {
+				if (wlan_reg_is_dfs_ch(pm_ctx->pdev, channel) &&
+				    sta_sap_scc_on_dfs_chan) {
+					policy_mgr_debug("STA SAP SCC is allowed on DFS channel");
+					goto update_chan;
+				}
 				policy_mgr_warn("Can't have concurrency on %d",
 					channel);
 				return QDF_STATUS_E_FAILURE;
@@ -927,6 +936,7 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 		}
 	}
 
+update_chan:
 	if (channel != sap_ch)
 		*con_ch = channel;
 
