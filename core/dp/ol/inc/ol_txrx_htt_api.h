@@ -596,7 +596,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
  */
 void
 ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
-			 uint64_t cookie, uint8_t *stats_info_list);
+			 uint8_t cookie, uint8_t *stats_info_list);
 
 /**
  * @brief Process a tx inspect message sent by the target.

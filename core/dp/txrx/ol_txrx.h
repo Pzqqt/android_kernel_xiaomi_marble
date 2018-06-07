@@ -89,6 +89,9 @@ ol_tx_desc_pool_size_hl(struct cdp_cfg *ctrl_pdev);
 #define OL_TX_DESC_POOL_SIZE_MAX_HL 5000
 #endif
 
+#ifndef FW_STATS_DESC_POOL_SIZE
+#define FW_STATS_DESC_POOL_SIZE 10
+#endif
 
 #ifdef CONFIG_PER_VDEV_TX_DESC_POOL
 #define TXRX_HL_TX_FLOW_CTRL_VDEV_LOW_WATER_MARK 400
@@ -246,5 +249,14 @@ static inline void
 ol_txrx_init_txq_group_limit_lend(struct ol_txrx_pdev_t *pdev)
 {}
 #endif
+
+int ol_txrx_fw_stats_desc_pool_init(struct ol_txrx_pdev_t *pdev,
+				    uint8_t pool_size);
+void ol_txrx_fw_stats_desc_pool_deinit(struct ol_txrx_pdev_t *pdev);
+struct ol_txrx_fw_stats_desc_t
+	*ol_txrx_fw_stats_desc_alloc(struct ol_txrx_pdev_t *pdev);
+struct ol_txrx_stats_req_internal
+	*ol_txrx_fw_stats_desc_get_req(struct ol_txrx_pdev_t *pdev,
+				       uint8_t desc_id);
 
 #endif /* _OL_TXRX__H_ */

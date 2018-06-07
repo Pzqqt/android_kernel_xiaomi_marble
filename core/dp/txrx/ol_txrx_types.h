@@ -535,6 +535,15 @@ struct ol_txrx_stats_req_internal {
     int offset;
 };
 
+struct ol_txrx_fw_stats_desc_t {
+	struct ol_txrx_stats_req_internal *req;
+	unsigned char desc_id;
+};
+
+struct ol_txrx_fw_stats_desc_elem_t {
+	struct ol_txrx_fw_stats_desc_elem_t *next;
+	struct ol_txrx_fw_stats_desc_t desc;
+};
 
 /*
  * As depicted in the diagram below, the pdev contains an array of
@@ -648,6 +657,14 @@ struct ol_txrx_pdev_t {
 	 */
 	qdf_atomic_t target_tx_credit;
 	qdf_atomic_t orig_target_tx_credit;
+
+	struct {
+		uint16_t pool_size;
+		struct ol_txrx_fw_stats_desc_elem_t *pool;
+		struct ol_txrx_fw_stats_desc_elem_t *freelist;
+		qdf_spinlock_t pool_lock;
+		qdf_atomic_t initialized;
+	} ol_txrx_fw_stats_desc_pool;
 
 	/* Peer mac address to staid mapping */
 	struct ol_mac_addr mac_to_staid[WLAN_MAX_STA_COUNT + 3];

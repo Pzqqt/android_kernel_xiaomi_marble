@@ -429,11 +429,10 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 	}
 	case HTT_T2H_MSG_TYPE_STATS_CONF:
 	{
-		uint64_t cookie;
+		uint8_t cookie;
 		uint8_t *stats_info_list;
 
 		cookie = *(msg_word + 1);
-		cookie |= ((uint64_t) (*(msg_word + 2))) << 32;
 
 		stats_info_list = (uint8_t *) (msg_word + 3);
 		htc_pm_runtime_put(pdev->htc_pdev);

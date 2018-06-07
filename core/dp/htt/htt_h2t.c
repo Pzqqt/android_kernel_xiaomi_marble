@@ -758,7 +758,7 @@ int
 htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 		      uint32_t stats_type_upload_mask,
 		      uint32_t stats_type_reset_mask,
-		      uint8_t cfg_stat_type, uint32_t cfg_val, uint64_t cookie)
+		      uint8_t cfg_stat_type, uint32_t cfg_val, uint8_t cookie)
 {
 	struct htt_htc_pkt *pkt;
 	qdf_nbuf_t msg;
@@ -822,11 +822,11 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 
 	/* cookie LSBs */
 	msg_word++;
-	*msg_word = cookie & 0xffffffff;
+	*msg_word = cookie;
 
 	/* cookie MSBs */
 	msg_word++;
-	*msg_word = cookie >> 32;
+	*msg_word = 0;
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
