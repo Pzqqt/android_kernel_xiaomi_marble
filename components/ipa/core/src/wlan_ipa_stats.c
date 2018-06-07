@@ -868,8 +868,6 @@ void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
 	iface_ctx = wlan_ipa_get_iface(ipa_ctx, QDF_STA_MODE);
 	if (!iface_ctx) {
 		ipa_err("IPA uC share stats failed - no iface");
-		QDF_IPA_GET_WDI_SAP_STATS_STATS_VALID(wdi_sap_stats) =
-			0;
 		return;
 	}
 
