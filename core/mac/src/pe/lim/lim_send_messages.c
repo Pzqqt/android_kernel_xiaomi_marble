@@ -726,7 +726,7 @@ tSirRetStatus lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
 tSirRetStatus lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
 						struct sPESession *session)
 {
-	enum eSirRetStatus ret = eSIR_SUCCESS;
+	tSirRetStatus ret = eSIR_SUCCESS;
 	struct obss_ht40_scanind *ht40_obss_scanind;
 	uint32_t channelnum;
 	struct scheduler_msg msg = {0};
