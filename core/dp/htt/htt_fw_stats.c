@@ -968,7 +968,7 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 			p8 = (uint8_t *) record;
 			calculated_p8 = p8 + sizeof(struct ol_fw_tx_dbg_ppdu_base);
 			if (calculated_p8 < p8) {
-				qdf_err("Overflow due to record %p", p8);
+				qdf_err("Overflow due to record %pK", p8);
 				continue;
 			}
 			p8 = calculated_p8;
