@@ -721,3 +721,5 @@ put_store:
 	return status;
 }
 
+qdf_export_symbol(cfg_psoc_parse);
+
