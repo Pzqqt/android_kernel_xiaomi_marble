@@ -3736,46 +3736,37 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 	switch (subtype) {
 	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
 		ptr = cdp_peer_last_assoc_received(soc, peer);
-		if (ptr == NULL) {
+		if (!ptr) {
 			WMA_LOGE(FL("cdp_peer_last_assoc_received Failed"));
 			should_drop = true;
 			goto end;
-		} else if (*ptr > 0) {
-			if ((qdf_get_system_timestamp() - *ptr) <
-				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
-				    WMA_LOGI(FL("Dropping Assoc Req received"));
-				    should_drop = true;
-			}
+		} else if (*ptr > 0 &&
+			   qdf_system_time_before(qdf_get_system_timestamp(),
+				    *ptr + WMA_MGMT_FRAME_DETECT_DOS_TIMER)) {
+			WMA_LOGD(FL("Dropping Assoc Req as it is received after %d ms of last frame. Allow it only after %d ms"),
+				 (int)(qdf_get_system_timestamp() - *ptr),
+				  WMA_MGMT_FRAME_DETECT_DOS_TIMER);
+			should_drop = true;
+			break;
 		}
 		*ptr = qdf_get_system_timestamp();
 		break;
 	case IEEE80211_FC0_SUBTYPE_DISASSOC:
+	case IEEE80211_FC0_SUBTYPE_DEAUTH:
 		ptr = cdp_peer_last_disassoc_received(soc, peer);
-		if (ptr == NULL) {
+		if (!ptr) {
 			WMA_LOGE(FL("cdp_peer_last_disassoc_received Failed"));
 			should_drop = true;
 			goto end;
-		} else if (*ptr > 0) {
-			if ((qdf_get_system_timestamp() - *ptr) <
-				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
-				    WMA_LOGI(FL("Dropping DisAssoc received"));
-				    should_drop = true;
-			}
-		}
-		*ptr = qdf_get_system_timestamp();
-		break;
-	case IEEE80211_FC0_SUBTYPE_DEAUTH:
-		ptr = cdp_peer_last_deauth_received(soc, peer);
-		if (ptr == NULL) {
-			WMA_LOGE(FL("cdp_peer_last_deauth_received Failed"));
+		} else if (*ptr > 0  &&
+			   qdf_system_time_before(qdf_get_system_timestamp(),
+				    *ptr + WMA_MGMT_FRAME_DETECT_DOS_TIMER)) {
+			WMA_LOGD(FL("Dropping subtype %x frame as it is received after %d ms of last frame. Allow it only after %d ms"),
+				 subtype, (int)
+				 (qdf_get_system_timestamp() - *ptr),
+				 WMA_MGMT_FRAME_DETECT_DOS_TIMER);
 			should_drop = true;
-			goto end;
-		} else if (*ptr > 0) {
-			if ((qdf_get_system_timestamp() - *ptr) <
-				WMA_MGMT_FRAME_DETECT_DOS_TIMER) {
-				    WMA_LOGI(FL("Dropping Deauth received"));
-				    should_drop = true;
-			}
+			break;
 		}
 		*ptr = qdf_get_system_timestamp();
 		break;
