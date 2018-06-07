@@ -608,6 +608,8 @@ struct ol_txrx_pdev_t {
 		int host_addba;
 		int ll_pause_txq_limit;
 		int default_tx_comp_req;
+		u8 credit_update_enabled;
+		u8 request_tx_comp;
 	} cfg;
 
 	/* WDI subscriber's event list */

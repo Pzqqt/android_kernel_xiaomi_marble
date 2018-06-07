@@ -811,7 +811,14 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 			qdf_nbuf_data_addr(netbuf),
 			sizeof(qdf_nbuf_data(netbuf)), tx_desc->id, status));
 		htc_pm_runtime_put(pdev->htt_pdev->htc_pdev);
-		ol_tx_desc_update_group_credit(pdev, tx_desc_id, 1, 0, status);
+		/*
+		 * If credits are reported through credit_update_ind then do not
+		 * update group credits on tx_complete_ind.
+		 */
+		if (!pdev->cfg.credit_update_enabled)
+			ol_tx_desc_update_group_credit(pdev,
+						       tx_desc_id,
+						       1, 0, status);
 		/* Per SDU update of byte count */
 		byte_cnt += qdf_nbuf_len(netbuf);
 		if (OL_TX_DESC_NO_REFS(tx_desc)) {

@@ -89,7 +89,13 @@ struct txrx_pdev_cfg_t {
 	uint32_t tx_flow_start_queue_offset;
 #endif
 	bool flow_steering_enabled;
-
+	/*
+	 * To track if credit reporting through
+	 * HTT_T2H_MSG_TYPE_TX_CREDIT_UPDATE_IND is enabled/disabled.
+	 * In Genoa(QCN7605) credits are reported through
+	 * HTT_T2H_MSG_TYPE_TX_CREDIT_UPDATE_IND only.
+	 */
+	u8 credit_update_enabled;
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
 };
 
@@ -136,6 +142,17 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param);
  * @return 1 -> high-latency -OR- 0 -> low-latency
  */
 int ol_cfg_is_high_latency(struct cdp_cfg *cfg_pdev);
+
+/**
+ * @brief Specify whether credit reporting through
+ * HTT_T2H_MSG_TYPE_TX_CREDIT_UPDATE_IND is enabled by default.
+ * In Genoa credits are reported only through
+ * HTT_T2H_MSG_TYPE_TX_CREDIT_UPDATE_IND
+ * @details
+ * @param pdev - handle to the physical device
+ * @return 1 -> enabled -OR- 0 -> disabled
+ */
+int ol_cfg_is_credit_update_enabled(struct cdp_cfg *cfg_pdev);
 
 /**
  * @brief Specify the range of peer IDs.

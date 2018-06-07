@@ -1421,6 +1421,17 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
 
 	/* init LL/HL cfg here */
 	pdev->cfg.is_high_latency = ol_cfg_is_high_latency(ctrl_pdev);
+	/*
+	 * Credit reporting through HTT_T2H_MSG_TYPE_TX_CREDIT_UPDATE_IND
+	 * enabled or not.
+	 */
+	pdev->cfg.credit_update_enabled =
+		ol_cfg_is_credit_update_enabled(ctrl_pdev);
+
+	/* Explicitly request TX Completions from FW */
+	pdev->cfg.request_tx_comp = cds_is_ptp_rx_opt_enabled() ||
+		cds_is_packet_log_enabled();
+
 	pdev->cfg.default_tx_comp_req = !ol_cfg_tx_free_at_download(ctrl_pdev);
 
 	/* store provided params */

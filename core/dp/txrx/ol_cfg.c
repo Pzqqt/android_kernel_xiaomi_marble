@@ -45,6 +45,22 @@ void ol_tx_set_flow_control_parameters(struct cdp_cfg *cfg_pdev,
 
 #ifdef CONFIG_HL_SUPPORT
 
+#ifdef CONFIG_CREDIT_REP_THROUGH_CREDIT_UPDATE
+static inline
+void ol_pdev_cfg_credit_update(struct txrx_pdev_cfg_t *cfg_ctx)
+{
+	cfg_ctx->tx_free_at_download = 1;
+	cfg_ctx->credit_update_enabled = 1;
+}
+#else
+static inline
+void ol_pdev_cfg_credit_update(struct txrx_pdev_cfg_t *cfg_ctx)
+{
+	cfg_ctx->tx_free_at_download = 0;
+	cfg_ctx->credit_update_enabled = 0;
+}
+#endif /* CONFIG_CREDIT_REP_THROUGH_CREDIT_UPDATE */
+
 /**
  * ol_pdev_cfg_param_update() - assign download size of tx frame for txrx
  *				    pdev that will be used across datapath
@@ -58,7 +74,7 @@ void ol_pdev_cfg_param_update(struct txrx_pdev_cfg_t *cfg_ctx)
 	cfg_ctx->is_high_latency = 1;
 	/* 802.1Q and SNAP / LLC headers are accounted for elsewhere */
 	cfg_ctx->tx_download_size = 1500;
-	cfg_ctx->tx_free_at_download = 0;
+	ol_pdev_cfg_credit_update(cfg_ctx);
 }
 #else
 
@@ -163,6 +179,13 @@ int ol_cfg_is_high_latency(struct cdp_cfg *cfg_pdev)
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
 
 	return cfg->is_high_latency;
+}
+
+int ol_cfg_is_credit_update_enabled(struct cdp_cfg *cfg_pdev)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
+
+	return cfg->credit_update_enabled;
 }
 
 int ol_cfg_max_peer_id(struct cdp_cfg *cfg_pdev)

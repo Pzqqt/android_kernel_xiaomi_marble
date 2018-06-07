@@ -817,7 +817,8 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			}
 		}
 
-		if (pdev->cfg.is_high_latency) {
+		if (pdev->cfg.is_high_latency &&
+		    !pdev->cfg.credit_update_enabled) {
 			old_credit = qdf_atomic_read(
 						&pdev->htt_tx_credit.target_delta);
 			if (((old_credit + num_msdus) > MAX_TARGET_TX_CREDIT) ||

@@ -1018,7 +1018,8 @@ qdf_nbuf_t
 ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
-	int tx_comp_req = pdev->cfg.default_tx_comp_req;
+	int tx_comp_req = pdev->cfg.default_tx_comp_req ||
+		pdev->cfg.request_tx_comp;
 
 	return ol_tx_hl_base(vdev, OL_TX_SPEC_STD, msdu_list, tx_comp_req);
 }
@@ -1029,7 +1030,8 @@ ol_tx_non_std_hl(struct ol_txrx_vdev_t *vdev,
 		 qdf_nbuf_t msdu_list)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
-	int tx_comp_req = pdev->cfg.default_tx_comp_req;
+	int tx_comp_req = pdev->cfg.default_tx_comp_req ||
+		pdev->cfg.request_tx_comp;
 
 	if (!tx_comp_req) {
 		if ((tx_spec == OL_TX_SPEC_NO_FREE) &&

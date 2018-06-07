@@ -422,6 +422,16 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 
 	/* for efficiency, store a local copy of the is_high_latency flag */
 	pdev->cfg.is_high_latency = ol_cfg_is_high_latency(pdev->ctrl_pdev);
+	/*
+	 * Credit reporting through HTT_T2H_MSG_TYPE_TX_CREDIT_UPDATE_IND
+	 * enabled or not.
+	 */
+	pdev->cfg.credit_update_enabled =
+		ol_cfg_is_credit_update_enabled(pdev->ctrl_pdev);
+
+	pdev->cfg.request_tx_comp = cds_is_ptp_rx_opt_enabled() ||
+		cds_is_packet_log_enabled();
+
 	pdev->cfg.default_tx_comp_req =
 			!ol_cfg_tx_free_at_download(pdev->ctrl_pdev);
 
@@ -522,7 +532,8 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 		 */
 		pdev->download_len = 5000;
 
-		if (ol_cfg_tx_free_at_download(pdev->ctrl_pdev))
+		if (ol_cfg_tx_free_at_download(pdev->ctrl_pdev) &&
+		    !pdev->cfg.request_tx_comp)
 			pdev->tx_send_complete_part2 =
 						ol_tx_download_done_hl_free;
 		else
