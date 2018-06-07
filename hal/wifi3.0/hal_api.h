@@ -38,7 +38,11 @@
 #include "rx_reo_queue_ext.h"
 
 #define MAX_UNWINDOWED_ADDRESS 0x80000
+#ifdef TARGET_TYPE_QCA6390
+#define WINDOW_ENABLE_BIT 0x40000000
+#else
 #define WINDOW_ENABLE_BIT 0x80000000
+#endif
 #define WINDOW_REG_ADDRESS 0x310C
 #define WINDOW_SHIFT 19
 #define WINDOW_VALUE_MASK 0x3F
