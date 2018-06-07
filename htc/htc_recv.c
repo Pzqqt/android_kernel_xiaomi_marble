@@ -558,14 +558,6 @@ A_STATUS htc_add_receive_pkt_multiple(HTC_HANDLE HTCHandle,
 	return status;
 }
 
-A_STATUS htc_add_receive_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket)
-{
-	HTC_PACKET_QUEUE queue;
-
-	INIT_HTC_PACKET_QUEUE_AND_ADD(&queue, pPacket);
-	return htc_add_receive_pkt_multiple(HTCHandle, &queue);
-}
-
 void htc_flush_rx_hold_queue(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint)
 {
 	HTC_PACKET *pPacket;
