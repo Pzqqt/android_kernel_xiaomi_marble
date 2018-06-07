@@ -27,8 +27,8 @@
 #ifndef __SIR_TYPES_H
 #define __SIR_TYPES_H
 
+#include <qdf_status.h>
 #include <qdf_types.h>
-
 
 /**
  * typedef mac_handle_t - MAC Handle
@@ -69,28 +69,25 @@ typedef mac_handle_t tHalHandle;
 struct opaque_hdd_handle;
 typedef struct opaque_hdd_handle *hdd_handle_t;
 
-/* ********************************************** *
-*                                                *
-*     SIRIUS ERROR Codes / Return Codes          *
-*                                                *
-* ********************************************** */
+/*
+ * map legacy definitions to current definitions
+ * these will be removed when all legacy references are converted
+ */
+typedef QDF_STATUS tSirRetStatus;
+#define eSIR_SUCCESS QDF_STATUS_SUCCESS
+#define eSIR_FAILURE QDF_STATUS_E_FAILURE
+#define eSIR_MEM_ALLOC_FAILED QDF_STATUS_E_NOMEM
+#define eSIR_HAL_STA_DOES_NOT_EXIST QDF_STATUS_E_NOENT
+#define eSIR_HAL_INPUT_INVALID QDF_STATUS_E_INVAL
+#define eSIR_LIM_IGNORE_BEACON QDF_STATUS_E_INVAL
+#define eSIR_LIM_INVALID_STA QDF_STATUS_E_NOENT
+#define eSIR_LIM_MAX_STA_REACHED_ERROR QDF_STATUS_E_NOSPC
+#define eSIR_CFG_INVALID_ID QDF_STATUS_E_INVAL
+#define eSIR_CFG_INVALID_LEN QDF_STATUS_E_INVAL
+#define eSIR_IGNORE_IE QDF_STATUS_E_INVAL
 
-/* / Return status type */
-typedef enum eSirRetStatus {
-	eSIR_SUCCESS,
-	eSIR_FAILURE,
-	eSIR_MEM_ALLOC_FAILED,
-	eSIR_HAL_STA_DOES_NOT_EXIST,
-	eSIR_HAL_INPUT_INVALID,
-	eSIR_LIM_IGNORE_BEACON,
-	eSIR_LIM_INVALID_STA,
-	eSIR_LIM_MAX_STA_REACHED_ERROR,
-	eSIR_CFG_INVALID_ID,
-	eSIR_CFG_INVALID_LEN,
-	eSIR_IGNORE_IE,
-} tSirRetStatus;
+#define IS_SIR_STATUS_SUCCESS(status) QDF_IS_STATUS_SUCCESS(status)
 
-#define IS_SIR_STATUS_SUCCESS(status) (eSIR_SUCCESS == status)
 typedef enum {
 	HAL_STOP_TYPE_SYS_RESET,
 	HAL_STOP_TYPE_SYS_DEEP_SLEEP,
