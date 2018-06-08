@@ -8337,6 +8337,13 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_RATE_FOR_TX_MGMT_5G to CCM");
 	}
 
+	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_ASSOC_STA_LIMIT,
+				config->maxNumberOfPeers) ==
+				QDF_STATUS_E_FAILURE) {
+		status = false;
+		hdd_err("Couldn't pass on WNI_CFG_ASSOC_STA_LIMIT to CFG");
+	}
+
 	return status;
 }
 
