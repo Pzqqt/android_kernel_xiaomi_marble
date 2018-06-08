@@ -449,7 +449,6 @@ cds_set_ac_specs_params(struct cds_config_info *cds_cfg)
 QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
-	tSirRetStatus sirStatus = eSIR_SUCCESS;
 	struct cds_config_info *cds_cfg;
 	qdf_device_t qdf_ctx;
 	struct htc_init_info htcInfo;
@@ -632,16 +631,13 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	bmi_target_ready(scn, gp_cds_context->cfg_ctx);
 
 	/* Now proceed to open the MAC */
-	sirStatus =
-		mac_open(psoc, &(gp_cds_context->mac_context),
-			gp_cds_context->hdd_context, cds_cfg);
+	status = mac_open(psoc, &(gp_cds_context->mac_context),
+			  gp_cds_context->hdd_context, cds_cfg);
 
-	if (eSIR_SUCCESS != sirStatus) {
+	if (QDF_STATUS_SUCCESS != status) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_alert("Failed to open MAC");
 		QDF_ASSERT(0);
-
-		status = QDF_STATUS_E_FAILURE;
 		goto err_soc_detach;
 	}
 
@@ -842,7 +838,6 @@ exit_with_status:
 QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tSirRetStatus sirStatus = eSIR_SUCCESS;
 	tHalMacStartParameters halStartParams;
 
 	/* We support only one instance for now ... */
@@ -874,10 +869,9 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 		     sizeof(tHalMacStartParameters));
 
 	/* Start the MAC */
-	sirStatus =
-		mac_start(gp_cds_context->mac_context, &halStartParams);
+	qdf_status = mac_start(gp_cds_context->mac_context, &halStartParams);
 
-	if (eSIR_SUCCESS != sirStatus) {
+	if (QDF_STATUS_SUCCESS != qdf_status) {
 		cds_alert("Failed to start MAC");
 		goto err_wma_stop;
 	}
