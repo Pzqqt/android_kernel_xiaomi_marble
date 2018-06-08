@@ -434,7 +434,7 @@ static void pmo_core_set_vdev_resume_dtim(struct wlan_objmgr_psoc *psoc,
 			return;
 		}
 		if ((wlan_cfg_get_int(mac, WNI_CFG_LISTEN_INTERVAL,
-				      &cfg_data_val) != eSIR_SUCCESS)) {
+				      &cfg_data_val) != QDF_STATUS_SUCCESS)) {
 			pmo_err("Failed to get value for listen interval");
 			cfg_data_val = POWERSAVE_DEFAULT_LISTEN_INTERVAL;
 		}
