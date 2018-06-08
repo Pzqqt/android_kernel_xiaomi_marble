@@ -3104,3 +3104,37 @@ bool policy_mgr_sta_sap_scc_on_lte_coex_chan(
 	}
 	return pm_ctx->user_cfg.sta_sap_scc_on_lte_coex_chan;
 }
+
+bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
+					    uint8_t channel)
+{
+	uint32_t sta_sap_scc_on_dfs_chan;
+	uint32_t sap_count;
+	enum channel_state state;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	sta_sap_scc_on_dfs_chan =
+			policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
+	sap_count = policy_mgr_mode_specific_connection_count(psoc,
+							      PM_SAP_MODE,
+							      NULL);
+	state = reg_get_channel_state(pm_ctx->pdev, channel);
+
+	policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, sap_count %u, channel %u, state %u",
+			 sta_sap_scc_on_dfs_chan, sap_count, channel, state);
+
+	if ((state == CHANNEL_STATE_ENABLE) || (sap_count == 0) ||
+	    ((state == CHANNEL_STATE_DFS) && sta_sap_scc_on_dfs_chan)) {
+		policy_mgr_debug("Valid channel for channel switch");
+		return true;
+	}
+
+	policy_mgr_debug("Invalid channel for channel switch");
+	return false;
+}
