@@ -1576,7 +1576,7 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		if ((sir_parse_beacon_ie
 		     (pMac, pBeaconStruct, (uint8_t *)
 		      (pScanResult->BssDescriptor.ieFields),
-		      ieLen)) == eSIR_SUCCESS)
+		      ieLen)) == QDF_STATUS_SUCCESS)
 			sap_upd_chan_spec_params(
 				pBeaconStruct,
 				&channelWidth,
