@@ -60,8 +60,8 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 
 #endif /* WLAN_NS_OFFLOAD */
 /* / Post a message to PE module */
-tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx,
-				  struct scheduler_msg *pMsg);
+QDF_STATUS sme_post_pe_message(tpAniSirGlobal mac_ctx,
+			       struct scheduler_msg *pMsg);
 
 /**
  * sme_ps_enable_auto_ps_timer(): Enable power-save auto timer with timeout

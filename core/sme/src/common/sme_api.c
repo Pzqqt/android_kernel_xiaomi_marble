@@ -1170,16 +1170,14 @@ QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal)
 		msg->csr_roam_synch_cb = csr_roam_synch_callback;
 		msg->sme_msg_cb = sme_process_msg_callback;
 
-		if (eSIR_FAILURE != u_mac_post_ctrl_msg(hHal, (tSirMbMsg *)
-							msg)) {
-			status = QDF_STATUS_SUCCESS;
-		} else {
+		status = u_mac_post_ctrl_msg(hHal, (tSirMbMsg *)msg);
+		if (QDF_IS_STATUS_ERROR(status)) {
 			sme_err("u_mac_post_ctrl_msg failed to send eWNI_SME_SYS_READY_IND");
 			break;
 		}
 
 		status = csr_ready(pMac);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			sme_err("csr_ready failed with status: %d", status);
 			break;
 		}
@@ -1193,7 +1191,6 @@ QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal)
 QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len)
 {
 	tpAniSirGlobal mac_ctx = sme_get_mac_context();
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -1201,11 +1198,8 @@ QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (eSIR_SUCCESS != wlan_cfg_get_str(mac_ctx,
-			WNI_CFG_VALID_CHANNEL_LIST, chan_list, list_len))
-		status = QDF_STATUS_E_INVAL;
-
-	return status;
+	return wlan_cfg_get_str(mac_ctx, WNI_CFG_VALID_CHANNEL_LIST,
+				chan_list, list_len);
 }
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
@@ -3800,7 +3794,7 @@ QDF_STATUS sme_cfg_set_int(tHalHandle hal, uint16_t cfg_id, uint32_t value)
 	tpAniSirGlobal pmac = PMAC_STRUCT(hal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (eSIR_SUCCESS != cfg_set_int(pmac, cfg_id, value))
+	if (QDF_STATUS_SUCCESS != cfg_set_int(pmac, cfg_id, value))
 		status = QDF_STATUS_E_FAILURE;
 
 	return status;
@@ -3823,7 +3817,7 @@ QDF_STATUS sme_cfg_set_str(tHalHandle hal, uint16_t cfg_id, uint8_t *str,
 	tpAniSirGlobal pmac = PMAC_STRUCT(hal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (eSIR_SUCCESS != cfg_set_str(pmac, cfg_id, str, length))
+	if (QDF_STATUS_SUCCESS != cfg_set_str(pmac, cfg_id, str, length))
 		status = QDF_STATUS_E_FAILURE;
 
 	return status;
@@ -3845,7 +3839,7 @@ QDF_STATUS sme_cfg_get_int(tHalHandle hal, uint16_t cfg_id, uint32_t *cfg_value)
 	tpAniSirGlobal pmac = PMAC_STRUCT(hal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (eSIR_SUCCESS != wlan_cfg_get_int(pmac, cfg_id, cfg_value))
+	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pmac, cfg_id, cfg_value))
 		status = QDF_STATUS_E_FAILURE;
 
 	return status;
@@ -3868,7 +3862,7 @@ QDF_STATUS sme_cfg_get_str(tHalHandle hal, uint16_t cfg_id, uint8_t *str,
 	tpAniSirGlobal pmac = PMAC_STRUCT(hal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (eSIR_SUCCESS != wlan_cfg_get_str(pmac, cfg_id, str, length))
+	if (QDF_STATUS_SUCCESS != wlan_cfg_get_str(pmac, cfg_id, str, length))
 		status = QDF_STATUS_E_INVAL;
 
 	return status;
@@ -6955,7 +6949,7 @@ QDF_STATUS sme_update_is_mawc_ini_feature_enabled(tHalHandle hHal,
 QDF_STATUS sme_stop_roaming(tHalHandle hal, uint8_t session_id, uint8_t reason)
 {
 	struct scheduler_msg wma_msg = {0};
-	tSirRetStatus status;
+	QDF_STATUS status;
 	tSirRoamOffloadScanReq *req;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	tpCsrNeighborRoamControlInfo roam_info;
@@ -7005,7 +6999,7 @@ QDF_STATUS sme_stop_roaming(tHalHandle hal, uint8_t session_id, uint8_t reason)
 	wma_msg.bodyptr = req;
 
 	status = wma_post_ctrl_msg(mac_ctx, &wma_msg);
-	if (eSIR_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("WMA_ROAM_SCAN_OFFLOAD_REQ failed, session_id: %d",
 			session_id);
 		qdf_mem_free(req);

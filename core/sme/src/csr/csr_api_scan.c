@@ -1724,14 +1724,14 @@ static void csr_set_cfg_country_code(tpAniSirGlobal pMac, uint8_t *countryCode)
 QDF_STATUS csr_get_country_code(tpAniSirGlobal pMac, uint8_t *pBuf,
 				uint8_t *pbLen)
 {
-	tSirRetStatus status;
+	QDF_STATUS status;
 	uint32_t len;
 
 	if (pBuf && pbLen && (*pbLen >= WNI_CFG_COUNTRY_CODE_LEN)) {
 		len = *pbLen;
 		status = wlan_cfg_get_str(pMac, WNI_CFG_COUNTRY_CODE, pBuf,
 					&len);
-		if (status == eSIR_SUCCESS) {
+		if (status == QDF_STATUS_SUCCESS) {
 			*pbLen = (uint8_t) len;
 			return QDF_STATUS_SUCCESS;
 		}
@@ -1750,7 +1750,7 @@ void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
 
 	pControlList = qdf_mem_malloc(WNI_CFG_SCAN_CONTROL_LIST_LEN);
 	if (pControlList != NULL) {
-		if (IS_SIR_STATUS_SUCCESS(wlan_cfg_get_str(pMac,
+		if (QDF_IS_STATUS_SUCCESS(wlan_cfg_get_str(pMac,
 					WNI_CFG_SCAN_CONTROL_LIST,
 					pControlList, &len))) {
 			for (i = 0; i < pChannelList->numChannels; i++) {

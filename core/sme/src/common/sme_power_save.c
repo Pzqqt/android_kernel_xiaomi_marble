@@ -714,8 +714,8 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
  * @return None
  */
 
-tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx,
-				  struct scheduler_msg *msg)
+QDF_STATUS sme_post_pe_message(tpAniSirGlobal mac_ctx,
+			       struct scheduler_msg *msg)
 {
 	QDF_STATUS qdf_status;
 
@@ -724,10 +724,10 @@ tSirRetStatus sme_post_pe_message(tpAniSirGlobal mac_ctx,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		sme_err("scheduler_post_msg failed with status: %d",
 			qdf_status);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS sme_ps_enable_auto_ps_timer(tHalHandle hal_ctx,

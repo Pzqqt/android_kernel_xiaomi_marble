@@ -270,7 +270,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 	uint8_t msrmnt_status, uint8_t bss_count)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tSirRetStatus fill_ie_status;
+	QDF_STATUS fill_ie_status;
 	tpSirBssDescription bss_desc = NULL;
 	uint32_t ie_len = 0;
 	uint32_t out_ie_len = 0;
@@ -348,7 +348,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 						&(bcn_report->bcnRepBssInfo[j].
 						pBuf),
 						&out_ie_len);
-			if (eSIR_FAILURE == fill_ie_status)
+			if (QDF_STATUS_E_FAILURE == fill_ie_status)
 				continue;
 			bcn_report->bcnRepBssInfo[j].ieLen = out_ie_len;
 

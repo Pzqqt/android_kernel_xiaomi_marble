@@ -3018,7 +3018,7 @@ sme_qos_ese_save_tspec_response(tpAniSirGlobal pMac, uint8_t sessionId,
 
 	pAddtsRsp->messageType = eWNI_SME_ADDTS_RSP;
 	pAddtsRsp->length = sizeof(tSirAddtsRsp);
-	pAddtsRsp->rc = eSIR_SUCCESS;
+	pAddtsRsp->rc = QDF_STATUS_SUCCESS;
 	pAddtsRsp->sessionId = sessionId;
 	pAddtsRsp->rsp.dialogToken = 0;
 	pAddtsRsp->rsp.status = eSIR_MAC_SUCCESS_STATUS;
