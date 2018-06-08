@@ -3551,6 +3551,9 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 				vdev->vdev_id, peer->mac_addr.raw);
 		}
 
+#ifndef CONFIG_WIN
+		dp_local_peer_id_alloc(pdev, peer);
+#endif
 		DP_STATS_INIT(peer);
 		return (void *)peer;
 	}
