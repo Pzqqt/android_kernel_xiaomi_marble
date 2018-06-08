@@ -2391,4 +2391,17 @@ bool policy_mgr_dual_beacon_on_single_mac_mcc_capable(
 bool policy_mgr_sta_sap_scc_on_lte_coex_chan(
 	struct wlan_objmgr_psoc *psoc);
 
+/**
+ * policy_mgr_valid_channel_for_channel_switch() - check for valid channel for
+ * channel switch.
+ * @psoc: poniter to psoc
+ * @channel: channel to be validated.
+ * This function validates whether the given channel is valid for channel
+ * switch.
+ *
+ * Return: true or false
+ */
+bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
+					    uint8_t channel);
+
 #endif /* __WLAN_POLICY_MGR_API_H */
