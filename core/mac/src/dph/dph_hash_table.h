@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -74,9 +74,9 @@ extern tpDphHashNode dph_add_hash_entry(tpAniSirGlobal pMac,
 					dphHashTableClass *pDphHashTable);
 
 /* Delete an entry from the hash table */
-extern tSirRetStatus dph_delete_hash_entry(tpAniSirGlobal pMac,
-					   tSirMacAddr staAddr, uint16_t staId,
-					   dphHashTableClass *pDphHashTable);
+QDF_STATUS dph_delete_hash_entry(tpAniSirGlobal pMac,
+				 tSirMacAddr staAddr, uint16_t staId,
+				 dphHashTableClass *pDphHashTable);
 
 void dph_hash_table_class_init(tpAniSirGlobal pMac,
 			       dphHashTableClass *pDphHashTable);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -259,7 +259,7 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 
 	/* Initialize fragmentation threshold */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_FRAGMENTATION_THRESHOLD, &val) !=
-	    eSIR_SUCCESS)
+	    QDF_STATUS_SUCCESS)
 		pe_warn("could not retrieve fragmentation threshold");
 	else
 		pStaDs->fragSize = (uint16_t) val;
@@ -362,13 +362,13 @@ tpDphHashNode dph_add_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
  *
  * @param staAddr MAC address of the station
  * @param staId Station ID assigned to the station
- * @return eSIR_SUCCESS if successful,\n
- *         eSIR_FAILURE otherwise
+ * @return QDF_STATUS_SUCCESS if successful,
+ *         QDF_STATUS_E_FAILURE otherwise
  */
 
-tSirRetStatus dph_delete_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
-				    uint16_t assocId,
-				    dphHashTableClass *pDphHashTable)
+QDF_STATUS dph_delete_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
+				 uint16_t assocId,
+				 dphHashTableClass *pDphHashTable)
 {
 	tpDphHashNode ptr, prev;
 	uint16_t index = hash_function(pMac, staAddr, pDphHashTable->size);
@@ -378,12 +378,12 @@ tSirRetStatus dph_delete_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 
 	if (assocId >= pDphHashTable->size) {
 		pe_err("invalid STA id %d", assocId);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (pDphHashTable->pDphNodeArray[assocId].added == 0) {
 		pe_err("STA %d never added", assocId);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	for (prev = 0, ptr = pDphHashTable->pHashTable[index];
@@ -392,7 +392,7 @@ tSirRetStatus dph_delete_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 			break;
 		if (prev == ptr) {
 			pe_err("Infinite Loop");
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 	}
 
@@ -414,10 +414,10 @@ tSirRetStatus dph_delete_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 	} else {
 		pe_err("Entry not present STA addr");
 		pe_err(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(staAddr));
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 
