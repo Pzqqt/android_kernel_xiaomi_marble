@@ -37,8 +37,8 @@ typedef enum eBssSystemRole {
 	eSYSTEM_MULTI_BSS_ROLE = eSYSTEM_LAST_ROLE
 } tBssSystemRole;
 
-extern tSirRetStatus cfg_init(tpAniSirGlobal);
-extern void cfg_de_init(tpAniSirGlobal);
+QDF_STATUS cfg_init(tpAniSirGlobal);
+void cfg_de_init(tpAniSirGlobal);
 
 /**
  * sir_swap_u16()

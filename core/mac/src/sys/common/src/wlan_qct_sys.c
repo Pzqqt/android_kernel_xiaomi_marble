@@ -18,7 +18,7 @@
 
 #include <wlan_qct_sys.h>
 #include <cds_api.h>
-#include <sir_types.h>           /* needed for tSirRetStatus */
+#include <sir_types.h>
 #include <sir_params.h>          /* needed for tSirMbMsg */
 #include <sir_api.h>             /* needed for SIR_... message types */
 #include <wni_api.h>             /* needed for WNI_... message types */

@@ -41,17 +41,14 @@
 
 static tAniSirGlobal global_mac_context;
 
-extern tSirRetStatus halDoCfgInit(tpAniSirGlobal pMac);
-extern tSirRetStatus halProcessStartEvent(tpAniSirGlobal pMac);
-
-tSirRetStatus mac_start(tHalHandle hHal, void *pHalMacStartParams)
+QDF_STATUS mac_start(tHalHandle hHal, void *pHalMacStartParams)
 {
-	tSirRetStatus status = eSIR_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) hHal;
 
 	if (NULL == pMac) {
 		QDF_ASSERT(0);
-		status = eSIR_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 		return status;
 	}
 
@@ -71,7 +68,7 @@ tSirRetStatus mac_start(tHalHandle hHal, void *pHalMacStartParams)
  \       memory with global context will only be initialized not freed here.
    \param   tHalHandle hHal
    \param tHalStopType
-   \return tSirRetStatus
+   \return QDF_STATUS
    -------------------------------------------------------------*/
 
 QDF_STATUS mac_stop(tHalHandle hHal, tHalStopType stopType)
@@ -91,18 +88,17 @@ QDF_STATUS mac_stop(tHalHandle hHal, tHalStopType stopType)
    \param   tHalHandle pHalHandle
    \param   hdd_handle_t hHdd
    \param   tHalOpenParameters* pHalOpenParams
-   \return tSirRetStatus
+   \return QDF_STATUS
    -------------------------------------------------------------*/
 
-tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
-			hdd_handle_t hHdd, struct cds_config_info *cds_cfg)
+QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
+		    hdd_handle_t hHdd, struct cds_config_info *cds_cfg)
 {
 	tpAniSirGlobal p_mac = &global_mac_context;
-	tSirRetStatus status = eSIR_SUCCESS;
-	QDF_STATUS qdf_status;
+	QDF_STATUS status;
 
 	if (pHalHandle == NULL)
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	/*
 	 * Set various global fields of p_mac here
@@ -111,10 +107,10 @@ tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	 */
 	p_mac->hHdd = hHdd;
 
-	qdf_status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_MAC_ID);
-	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_MAC_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("PSOC get ref failure");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	p_mac->psoc = psoc;
@@ -128,8 +124,8 @@ tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 			p_mac->gDriverType = QDF_DRIVER_TYPE_MFG;
 
 		/* Call routine to initialize CFG data structures */
-		if (eSIR_SUCCESS != cfg_init(p_mac))
-			return eSIR_FAILURE;
+		if (QDF_STATUS_SUCCESS != cfg_init(p_mac))
+			return QDF_STATUS_E_FAILURE;
 
 		sys_init_globals(p_mac);
 	}
@@ -141,7 +137,7 @@ tSirRetStatus mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	p_mac->is_usr_cfg_amsdu_enabled = true;
 
 	status =  pe_open(p_mac, cds_cfg);
-	if (eSIR_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		pe_err("pe_open() failure");
 		cfg_de_init(p_mac);
 	}

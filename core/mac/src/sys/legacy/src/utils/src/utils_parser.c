@@ -77,8 +77,8 @@ void convert_qos_caps_station(tpAniSirGlobal pMac,
 	pOld->qosInfo.acvo_uapsd = pNew->acvo_uapsd;
 }
 
-tSirRetStatus convert_wpa(tpAniSirGlobal pMac,
-			  tSirMacWpaInfo *pOld, tDot11fIEWPA *pNew)
+QDF_STATUS convert_wpa(tpAniSirGlobal pMac,
+		       tSirMacWpaInfo *pOld, tDot11fIEWPA *pNew)
 {
 	/* This is awful, I know, but the old code just rammed the IE into an */
 	/* array... */
@@ -88,17 +88,17 @@ tSirRetStatus convert_wpa(tpAniSirGlobal pMac,
 	status = dot11f_pack_ie_wpa(pMac, pNew, buffer, nbuffer, &written);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to re-pack the WPA IE (0x%0x8)", status);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pOld->length = (uint8_t) written - 2;
 	qdf_mem_copy(pOld->info, buffer + 2, pOld->length);
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-tSirRetStatus convert_wpa_opaque(tpAniSirGlobal pMac,
-				 tSirMacWpaInfo *pOld, tDot11fIEWPAOpaque *pNew)
+QDF_STATUS convert_wpa_opaque(tpAniSirGlobal pMac,
+			      tSirMacWpaInfo *pOld, tDot11fIEWPAOpaque *pNew)
 {
 	/* This is awful, I know, but the old code just rammed the IE into */
 	/* an opaque array.  Note that we need to explicitly add the OUI! */
@@ -109,25 +109,25 @@ tSirRetStatus convert_wpa_opaque(tpAniSirGlobal pMac,
 	pOld->info[3] = 0x01;
 	qdf_mem_copy(pOld->info + 4, pNew->data, pNew->num_data);
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef FEATURE_WLAN_WAPI
-tSirRetStatus convert_wapi_opaque(tpAniSirGlobal pMac,
-				  tSirMacWapiInfo *pOld,
-				  tDot11fIEWAPIOpaque *pNew)
+QDF_STATUS convert_wapi_opaque(tpAniSirGlobal pMac,
+			       tSirMacWapiInfo *pOld,
+			       tDot11fIEWAPIOpaque *pNew)
 {
 	/* This is awful, I know, but the old code just rammed the IE into */
 	/* an opaque array.  Note that we need to explicitly add the OUI! */
 	pOld->length = pNew->num_data;
 	qdf_mem_copy(pOld->info, pNew->data, pNew->num_data);
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
-tSirRetStatus convert_wsc_opaque(tpAniSirGlobal pMac,
-				 tSirAddie *pOld, tDot11fIEWscIEOpaque *pNew)
+QDF_STATUS convert_wsc_opaque(tpAniSirGlobal pMac,
+			      tSirAddie *pOld, tDot11fIEWscIEOpaque *pNew)
 {
 	/* This is awful, I know, but the old code just rammed the IE into */
 	/* an opaque array.  Note that we need to explicitly add the vendorIE and OUI ! */
@@ -142,11 +142,11 @@ tSirRetStatus convert_wsc_opaque(tpAniSirGlobal pMac,
 	pOld->addIEdata[curAddIELen++] = 0x04;
 	qdf_mem_copy(pOld->addIEdata + curAddIELen, pNew->data, pNew->num_data);
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-tSirRetStatus convert_p2p_opaque(tpAniSirGlobal pMac,
-				  tSirAddie *pOld, tDot11fIEP2PIEOpaque *pNew)
+QDF_STATUS convert_p2p_opaque(tpAniSirGlobal pMac,
+			      tSirAddie *pOld, tDot11fIEP2PIEOpaque *pNew)
 {
 	/* This is awful, I know, but the old code just rammed the IE into */
 	/* an opaque array.  Note that we need to explicitly add the vendorIE and OUI ! */
@@ -161,12 +161,12 @@ tSirRetStatus convert_p2p_opaque(tpAniSirGlobal pMac,
 	pOld->addIEdata[curAddIELen++] = 0x09;
 	qdf_mem_copy(pOld->addIEdata + curAddIELen, pNew->data, pNew->num_data);
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef WLAN_FEATURE_WFD
-tSirRetStatus convert_wfd_opaque(tpAniSirGlobal pMac,
-				 tSirAddie *pOld, tDot11fIEWFDIEOpaque *pNew)
+QDF_STATUS convert_wfd_opaque(tpAniSirGlobal pMac,
+			      tSirAddie *pOld, tDot11fIEWFDIEOpaque *pNew)
 {
 	/* This is awful, I know, but the old code just rammed the IE into */
 	/* an opaque array.  Note that we need to explicitly add the vendorIE and OUI ! */
@@ -181,12 +181,12 @@ tSirRetStatus convert_wfd_opaque(tpAniSirGlobal pMac,
 	pOld->addIEdata[curAddIELen++] = 0x0a;
 	qdf_mem_copy(pOld->addIEdata + curAddIELen, pNew->data, pNew->num_data);
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
-tSirRetStatus convert_rsn(tpAniSirGlobal pMac,
-			  tSirMacRsnInfo *pOld, tDot11fIERSN *pNew)
+QDF_STATUS convert_rsn(tpAniSirGlobal pMac,
+		       tSirMacRsnInfo *pOld, tDot11fIERSN *pNew)
 {
 	uint8_t buffer[257];
 	uint32_t status, written = 0, nbuffer = 257;
@@ -194,24 +194,24 @@ tSirRetStatus convert_rsn(tpAniSirGlobal pMac,
 	status = dot11f_pack_ie_rsn(pMac, pNew, buffer, nbuffer, &written);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to re-pack the RSN IE (0x%0x8)", status);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pOld->length = (uint8_t) written - 2;
 	qdf_mem_copy(pOld->info, buffer + 2, pOld->length);
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-tSirRetStatus convert_rsn_opaque(tpAniSirGlobal pMac,
-				 tSirMacRsnInfo *pOld, tDot11fIERSNOpaque *pNew)
+QDF_STATUS convert_rsn_opaque(tpAniSirGlobal pMac,
+			      tSirMacRsnInfo *pOld, tDot11fIERSNOpaque *pNew)
 {
 	/* This is awful, I know, but the old code just rammed the IE into */
 	/* an opaque array. */
 	pOld->length = pNew->num_data;
 	qdf_mem_copy(pOld->info, pNew->data, pOld->length);
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 void convert_power_caps(tpAniSirGlobal pMac,
@@ -432,13 +432,13 @@ void convert_tspec(tpAniSirGlobal pMac,
 	pOld->mediumTime = pNew->medium_time;
 }
 
-tSirRetStatus convert_tclas(tpAniSirGlobal pMac,
-			    tSirTclasInfo *pOld, tDot11fIETCLAS *pNew)
+QDF_STATUS convert_tclas(tpAniSirGlobal pMac,
+			 tSirTclasInfo *pOld, tDot11fIETCLAS *pNew)
 {
 	uint32_t length = 0;
 
 	if (DOT11F_FAILED(dot11f_get_packed_ietclas(pMac, pNew, &length))) {
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pOld->tclas.type = DOT11F_EID_TCLAS;
@@ -494,7 +494,7 @@ tSirRetStatus convert_tclas(tpAniSirGlobal pMac,
 				     (uint8_t *) pNew->info.IpParams.params.
 				     IpV6Params.flow_label, 3);
 		} else {
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		break;
 	case 2:
@@ -502,10 +502,10 @@ tSirRetStatus convert_tclas(tpAniSirGlobal pMac,
 			pNew->info.Params8021dq.tag_type;
 		break;
 	default:
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 void convert_wmmtspec(tpAniSirGlobal pMac,
@@ -536,13 +536,13 @@ void convert_wmmtspec(tpAniSirGlobal pMac,
 	pOld->mediumTime = pNew->medium_time;
 }
 
-tSirRetStatus convert_wmmtclas(tpAniSirGlobal pMac,
-			       tSirTclasInfo *pOld, tDot11fIEWMMTCLAS *pNew)
+QDF_STATUS convert_wmmtclas(tpAniSirGlobal pMac,
+			    tSirTclasInfo *pOld, tDot11fIEWMMTCLAS *pNew)
 {
 	uint32_t length = 0;
 
 	if (DOT11F_FAILED(dot11f_get_packed_iewmmtclas(pMac, pNew, &length))) {
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pOld->tclas.type = DOT11F_EID_WMMTCLAS;
@@ -598,7 +598,7 @@ tSirRetStatus convert_wmmtclas(tpAniSirGlobal pMac,
 				     (uint8_t *) pNew->info.IpParams.params.
 				     IpV6Params.flow_label, 3);
 		} else {
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		break;
 	case 2:
@@ -606,10 +606,10 @@ tSirRetStatus convert_wmmtclas(tpAniSirGlobal pMac,
 			pNew->info.Params8021dq.tag_type;
 		break;
 	default:
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 void convert_ts_delay(tpAniSirGlobal pMac,

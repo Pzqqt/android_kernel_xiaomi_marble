@@ -45,14 +45,14 @@ void convert_qos_caps(tpAniSirGlobal, tSirMacQosCapabilityIE *,
 		      tDot11fIEQOSCapsAp *);
 void convert_qos_caps_station(tpAniSirGlobal, tSirMacQosCapabilityStaIE *,
 			      tDot11fIEQOSCapsStation *);
-tSirRetStatus convert_wpa(tpAniSirGlobal, tSirMacWpaInfo *, tDot11fIEWPA *);
-tSirRetStatus convert_wpa_opaque(tpAniSirGlobal, tSirMacWpaInfo *,
-				 tDot11fIEWPAOpaque *);
-tSirRetStatus convert_wapi_opaque(tpAniSirGlobal, tSirMacWapiInfo *,
-				  tDot11fIEWAPIOpaque *);
-tSirRetStatus convert_rsn(tpAniSirGlobal, tSirMacRsnInfo *, tDot11fIERSN *);
-tSirRetStatus convert_rsn_opaque(tpAniSirGlobal, tSirMacRsnInfo *,
-				 tDot11fIERSNOpaque *);
+QDF_STATUS convert_wpa(tpAniSirGlobal, tSirMacWpaInfo *, tDot11fIEWPA *);
+QDF_STATUS convert_wpa_opaque(tpAniSirGlobal, tSirMacWpaInfo *,
+			      tDot11fIEWPAOpaque *);
+QDF_STATUS convert_wapi_opaque(tpAniSirGlobal, tSirMacWapiInfo *,
+			       tDot11fIEWAPIOpaque *);
+QDF_STATUS convert_rsn(tpAniSirGlobal, tSirMacRsnInfo *, tDot11fIERSN *);
+QDF_STATUS convert_rsn_opaque(tpAniSirGlobal, tSirMacRsnInfo *,
+			      tDot11fIERSNOpaque *);
 void convert_power_caps(tpAniSirGlobal, tSirMacPowerCapabilityIE *,
 			tDot11fIEPowerCaps *);
 void convert_supp_channels(tpAniSirGlobal, tSirMacSupportedChannelIE *,
@@ -70,21 +70,21 @@ void convert_mu_edca_param(tpAniSirGlobal mac_ctx,
 			tSirMacEdcaParamSetIE *mu_edca,
 			tDot11fIEmu_edca_param_set *ie);
 void convert_tspec(tpAniSirGlobal, tSirMacTspecIE *, tDot11fIETSPEC *);
-tSirRetStatus convert_tclas(tpAniSirGlobal, tSirTclasInfo *, tDot11fIETCLAS *);
+QDF_STATUS convert_tclas(tpAniSirGlobal, tSirTclasInfo *, tDot11fIETCLAS *);
 void convert_wmmtspec(tpAniSirGlobal, tSirMacTspecIE *, tDot11fIEWMMTSPEC *);
-tSirRetStatus convert_wmmtclas(tpAniSirGlobal, tSirTclasInfo *,
-			       tDot11fIEWMMTCLAS *);
+QDF_STATUS convert_wmmtclas(tpAniSirGlobal, tSirTclasInfo *,
+			    tDot11fIEWMMTCLAS *);
 void convert_ts_delay(tpAniSirGlobal, tSirMacTsDelayIE *, tDot11fIETSDelay *);
 void convert_schedule(tpAniSirGlobal, tSirMacScheduleIE *, tDot11fIESchedule *);
 void convert_wmm_schedule(tpAniSirGlobal, tSirMacScheduleIE *,
 			  tDot11fIEWMMSchedule *);
-tSirRetStatus convert_wsc_opaque(tpAniSirGlobal, tSirAddie *,
-				 tDot11fIEWscIEOpaque *);
-tSirRetStatus convert_p2p_opaque(tpAniSirGlobal, tSirAddie *,
-				  tDot11fIEP2PIEOpaque *);
+QDF_STATUS convert_wsc_opaque(tpAniSirGlobal, tSirAddie *,
+			      tDot11fIEWscIEOpaque *);
+QDF_STATUS convert_p2p_opaque(tpAniSirGlobal, tSirAddie *,
+			      tDot11fIEP2PIEOpaque *);
 #ifdef WLAN_FEATURE_WFD
-tSirRetStatus convert_wfd_opaque(tpAniSirGlobal, tSirAddie *,
-				 tDot11fIEWFDIEOpaque *);
+QDF_STATUS convert_wfd_opaque(tpAniSirGlobal, tSirAddie *,
+			      tDot11fIEWFDIEOpaque *);
 #endif
 void convert_qos_mapset_frame(tpAniSirGlobal, tSirQosMapSet *,
 			      tDot11fIEQosMapSet *);

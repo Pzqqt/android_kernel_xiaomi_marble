@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014, 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,9 +37,9 @@
 
 /* Function */
 
-extern void sysMACCleanup(void *);
-extern tSirRetStatus sys_bbt_process_message_core(struct sAniSirGlobal *,
-						  struct scheduler_msg *,
-						  uint32_t, uint32_t);
+void sysMACCleanup(void *);
+QDF_STATUS sys_bbt_process_message_core(struct sAniSirGlobal *,
+					struct scheduler_msg *,
+					uint32_t, uint32_t);
 
 #endif /* __SYSSTARTUP_H */

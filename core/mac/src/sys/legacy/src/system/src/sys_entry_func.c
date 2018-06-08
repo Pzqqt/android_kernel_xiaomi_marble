@@ -41,9 +41,6 @@
 #include "sys_startup.h"
 #include "lim_trace.h"
 #include "wma_types.h"
-
-tSirRetStatus postPTTMsgApi(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
-
 #include "qdf_types.h"
 #include "cds_packet.h"
 
@@ -65,14 +62,14 @@ tSirRetStatus postPTTMsgApi(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
  * @return None
  */
 
-tSirRetStatus sys_init_globals(tpAniSirGlobal pMac)
+QDF_STATUS sys_init_globals(tpAniSirGlobal pMac)
 {
 
 	qdf_mem_set((uint8_t *) &pMac->sys, sizeof(pMac->sys), 0);
 
 	pMac->sys.gSysEnableLinkMonitorMode = 0;
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -86,12 +83,12 @@ tSirRetStatus sys_init_globals(tpAniSirGlobal pMac)
  *
  * Return: None
  */
-tSirRetStatus
+QDF_STATUS
 sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 		uint32_t type, uint32_t subtype)
 {
 	uint32_t framecount;
-	tSirRetStatus ret;
+	QDF_STATUS ret;
 	void *bd_ptr;
 	tMgmtFrmDropReason dropreason;
 	cds_pkt_t *vos_pkt = (cds_pkt_t *) msg->bodyptr;
@@ -155,8 +152,8 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 		}
 
 		/* Post the message to PE Queue */
-		ret = (tSirRetStatus) lim_post_msg_api(mac_ctx, msg);
-		if (ret != eSIR_SUCCESS) {
+		ret = (QDF_STATUS) lim_post_msg_api(mac_ctx, msg);
+		if (ret != QDF_STATUS_SUCCESS) {
 			pe_err("posting to LIM2 failed, ret %d\n", ret);
 			goto fail;
 		}
@@ -165,8 +162,8 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 	} else if (type == SIR_MAC_DATA_FRAME) {
 		pe_debug("IAPP Frame...");
 		/* Post the message to PE Queue */
-		ret = (tSirRetStatus) lim_post_msg_api(mac_ctx, msg);
-		if (ret != eSIR_SUCCESS) {
+		ret = (QDF_STATUS) lim_post_msg_api(mac_ctx, msg);
+		if (ret != QDF_STATUS_SUCCESS) {
 			pe_err("posting to LIM2 failed, ret: %d", ret);
 			goto fail;
 		}
@@ -178,9 +175,9 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 			lim_get_sme_state(mac_ctx));
 		goto fail;
 	}
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 fail:
 	mac_ctx->sys.gSysBbtDropped++;
-	return eSIR_FAILURE;
+	return QDF_STATUS_E_FAILURE;
 }
 
