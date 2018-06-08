@@ -1916,7 +1916,7 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 		pe_debug("set str id: %d len: %d", paramId, paramLen);
 
 		if (cfg_set_str(pMac, (uint16_t) paramId, pStr, paramLen) !=
-		    eSIR_SUCCESS) {
+		    QDF_STATUS_SUCCESS) {
 			pe_warn("setting str default param %d len %d",
 				       paramId, paramLen);
 			retVal = WNI_CFG_INVALID_LEN;
@@ -1945,7 +1945,7 @@ end:
 	mmhMsg.bodyval = 0;
 
 	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, mmhMsg.type));
-	if (wma_post_ctrl_msg(pMac, &mmhMsg) != eSIR_SUCCESS) {
+	if (wma_post_ctrl_msg(pMac, &mmhMsg) != QDF_STATUS_SUCCESS) {
 		pe_err("WMAPostMsgApi failed!");
 	}
 
@@ -2009,7 +2009,7 @@ static void proc_get_req(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
 						result =
 							(wlan_cfg_get_int(pMac, cfgId, &value)
 							 ==
-							 eSIR_SUCCESS ? WNI_CFG_SUCCESS :
+							 QDF_STATUS_SUCCESS ? WNI_CFG_SUCCESS :
 							 WNI_CFG_OTHER_ERROR);
 						pValue = &value;
 						valueLen = sizeof(uint32_t);
@@ -2020,7 +2020,7 @@ static void proc_get_req(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
 							(wlan_cfg_get_str
 								 (pMac, cfgId, pMac->cfg.gSBuffer,
 								 &valueLen)
-							 == eSIR_SUCCESS ? WNI_CFG_SUCCESS :
+							 == QDF_STATUS_SUCCESS ? WNI_CFG_SUCCESS :
 							 WNI_CFG_OTHER_ERROR);
 						pValue =
 							(uint32_t *) pMac->cfg.gSBuffer;
