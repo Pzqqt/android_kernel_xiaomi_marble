@@ -11,7 +11,7 @@
  */
 
 #include <linux/regmap.h>
-#include "bolero_cdc.h"
+#include "bolero-cdc.h"
 #include "internal.h"
 
 static const struct reg_default bolero_defaults[] = {

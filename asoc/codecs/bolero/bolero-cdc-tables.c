@@ -12,7 +12,7 @@
  */
 
 #include <linux/types.h>
-#include "bolero_cdc.h"
+#include "bolero-cdc.h"
 #include "internal.h"
 
 u8 bolero_tx_reg_access[BOLERO_CDC_TX_MACRO_MAX] = {

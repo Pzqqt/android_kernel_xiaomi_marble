@@ -19,7 +19,7 @@
 #include <linux/delay.h>
 #include <linux/kernel.h>
 
-#include "bolero_cdc.h"
+#include "bolero-cdc.h"
 #include "internal.h"
 
 static struct snd_soc_codec_driver bolero;
@@ -441,9 +441,7 @@ static struct snd_soc_codec_driver bolero = {
 static void bolero_add_child_devices(struct work_struct *work)
 {
 	struct bolero_priv *priv;
-	struct platform_device *pdev;
-	struct device_node *node;
-	int ret, i, cnt = 0;
+	int rc;
 
 	priv = container_of(work, struct bolero_priv,
 			    bolero_add_child_devices_work);
@@ -452,37 +450,17 @@ static void bolero_add_child_devices(struct work_struct *work)
 			__func__);
 		return;
 	}
-	if (!priv->dev->of_node) {
+	if (!priv->dev || !priv->dev->of_node) {
 		dev_err(priv->dev, "%s: DT node for bolero does not exist\n",
 			__func__);
 		return;
 	}
-
-	for_each_child_of_node(priv->dev->of_node, node) {
-		pdev = platform_device_alloc(node->name, -1);
-		if (!pdev) {
-			dev_err(priv->dev, "%s: pdev memory alloc failed\n",
-				__func__);
-			ret = -ENOMEM;
-			goto fail_pdev_add;
-		}
-		pdev->dev.parent = priv->dev;
-		pdev->dev.of_node = node;
-
-		ret = platform_device_add(pdev);
-		if (ret) {
-			dev_err(priv->dev,
-				"%s: Cannot add platform device\n",
-				__func__);
-			goto fail_pdev_add;
-		}
-		priv->pdev_child_devices[cnt] = pdev;
-		cnt++;
-	}
-	return;
-fail_pdev_add:
-	for (i = cnt; i > 0; i--)
-		platform_device_put(priv->pdev_child_devices[i - 1]);
+	rc = of_platform_populate(priv->dev->of_node, NULL, NULL, priv->dev);
+	if (rc)
+		dev_err(priv->dev, "%s: failed to add child nodes, rc=%d\n",
+			__func__, rc);
+	else
+		dev_dbg(priv->dev, "%s: added child node\n", __func__);
 }
 
 static int bolero_probe(struct platform_device *pdev)
@@ -538,10 +516,11 @@ static int bolero_probe(struct platform_device *pdev)
 static int bolero_remove(struct platform_device *pdev)
 {
 	struct bolero_priv *priv = dev_get_drvdata(&pdev->dev);
-	u16 i;
 
-	for (i = priv->child_num; i > 0; i--)
-		platform_device_unregister(priv->pdev_child_devices[i - 1]);
+	if (!priv)
+		return -EINVAL;
+
+	of_platform_depopulate(&pdev->dev);
 	mutex_destroy(&priv->io_lock);
 	mutex_destroy(&priv->clk_lock);
 	return 0;

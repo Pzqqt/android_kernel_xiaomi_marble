@@ -12,7 +12,7 @@
 
 #include <linux/kernel.h>
 #include <linux/regmap.h>
-#include "bolero_cdc.h"
+#include "bolero-cdc.h"
 #include "internal.h"
 
 #define REG_BYTES 2

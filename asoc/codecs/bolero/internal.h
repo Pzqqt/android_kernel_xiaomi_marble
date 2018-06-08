@@ -13,7 +13,7 @@
 #ifndef _BOLERO_INTERNAL_H
 #define _BOLERO_INTERNAL_H
 
-#include "bolero_cdc_registers.h"
+#include "bolero-cdc-registers.h"
 
 enum {
 	REG_NO_ACCESS,
@@ -36,8 +36,6 @@ struct bolero_priv {
 	u16 num_macros_registered;
 	u16 child_num;
 	u16 current_mclk_mux_macro[MAX_MACRO];
-	struct platform_device *pdev_child_devices[MAX_MACRO];
-
 	struct work_struct bolero_add_child_devices_work;
 
 	int (*read_dev)(struct bolero_priv *priv,
