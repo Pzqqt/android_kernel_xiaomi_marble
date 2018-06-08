@@ -15,6 +15,7 @@ INCS += -Iinclude/nbuf -Iinclude/net -Iinclude/os
 INCS += -Inbuf/linux -Inet/linux -Ios/linux
 INCS += -I$(WLAN_TOP)/../../include
 INCS += -I$(WLAN_TOP)/cmn_dev/qdf/inc
+INCS += -I$(WLAN_TOP)/cmn_dev/qal/inc
 INCS += -I$(WLAN_TOP)/cmn_dev/qdf/linux/src
 INCS += -I$(obj)/$(HOST_CMN_CONVG_PTT)/inc \
         -I$(obj)/$(HOST_CMN_CONVG_NLINK)/inc \
@@ -34,22 +35,27 @@ endif
 
 qdf-objs :=                     \
 linux/src/qdf_defer.o  \
+linux/src/qdf_dev.o    \
 linux/src/qdf_event.o   \
+linux/src/qdf_file.o   \
 linux/src/qdf_list.o      \
 linux/src/qdf_lock.o       \
 linux/src/qdf_mc_timer.o    \
 linux/src/qdf_mem.o      \
 linux/src/qdf_module.o    \
+linux/src/qdf_net_if.o   \
 linux/src/qdf_nbuf.o       \
 linux/src/qdf_perf.o        \
 linux/src/qdf_threads.o     \
 linux/src/qdf_trace.o \
-linux/src/qdf_file.o \
+linux/src/qdf_vfs.o \
 src/qdf_flex_mem.o \
 src/qdf_parse.o \
 src/qdf_str.o \
 src/qdf_types.o \
-$(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o
+$(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o \
+$(HOST_CMN_CONVG_SRC)/qal/linux/src/qal_devcfg.o \
+$(HOST_CMN_CONVG_SRC)/qal/linux/src/qal_vbus_dev.o \
 #linux/src/qdf_net.o \
 #linux/src/qdf_net_event.o \
 #linux/src/qdf_net_ioctl.o
