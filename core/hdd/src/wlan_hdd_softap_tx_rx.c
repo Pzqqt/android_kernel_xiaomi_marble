@@ -341,8 +341,6 @@ int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
 	struct hdd_station_info *hdd_sta_info;
 	int errno = 0;
 
-	hdd_debug("sta_id=%d, dir=%d", sta_id, dir);
-
 	if ((adapter->device_mode == QDF_SAP_MODE) &&
 	    ((dir == QDF_TX && QDF_NBUF_CB_PACKET_TYPE_DHCP ==
 				QDF_NBUF_CB_GET_PACKET_TYPE(skb)) ||
