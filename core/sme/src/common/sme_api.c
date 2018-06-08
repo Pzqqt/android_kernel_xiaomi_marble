@@ -2478,18 +2478,6 @@ static QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-/* No need to hold the global lock here because this function can only be
- * called after sme_stop.
- */
-void sme_free_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
-{
-	if (pMsg) {
-		if (pMsg->bodyptr)
-			qdf_mem_free(pMsg->bodyptr);
-	}
-
-}
-
 /*
  * sme_stop() - Stop all SME modules and put them at idle state
  *
