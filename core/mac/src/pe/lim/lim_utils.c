@@ -4948,7 +4948,7 @@ bool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal pMac, uint8_t channe
 	uint8_t index;
 	uint32_t validChannelListLen = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 	tSirMacChanNum validChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-	bool ok;
+	bool ok = false;
 
 	if (policy_mgr_is_chan_ok_for_dnbs(pMac->psoc, channel, &ok)) {
 		pe_err("policy_mgr_is_chan_ok_for_dnbs() returned error");
@@ -4969,8 +4969,12 @@ bool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal pMac, uint8_t channe
 	}
 
 	for (index = 0; index < validChannelListLen; index++) {
-		if (validChannelList[index] == channel)
-			return true;
+		if (validChannelList[index] != channel)
+			continue;
+
+		ok = policy_mgr_is_valid_for_channel_switch(pMac->psoc,
+							    channel);
+		return ok;
 	}
 
 	/* channel does not belong to list of valid channels */
