@@ -45,13 +45,13 @@
  * Return: Success or Failure
  */
 
-tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+QDF_STATUS wma_post_ctrl_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	if (QDF_STATUS_SUCCESS !=
 	    scheduler_post_msg(QDF_MODULE_ID_WMA,  pMsg))
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	else
-		return eSIR_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -62,10 +62,10 @@ tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
  * Return: Success or Failure
  */
 
-static tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac,
-				      struct scheduler_msg *pMsg)
+static QDF_STATUS wma_post_cfg_msg(tpAniSirGlobal pMac,
+				   struct scheduler_msg *pMsg)
 {
-	tSirRetStatus rc = eSIR_SUCCESS;
+	QDF_STATUS rc = QDF_STATUS_SUCCESS;
 
 	do {
 		/*
@@ -74,7 +74,7 @@ static tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac,
 		 */
 
 		cfg_process_mb_msg(pMac, (tSirMbMsg *) pMsg->bodyptr);
-		rc = eSIR_SUCCESS;
+		rc = QDF_STATUS_SUCCESS;
 	} while (0);
 
 	return rc;
@@ -97,10 +97,10 @@ static tSirRetStatus wma_post_cfg_msg(tpAniSirGlobal pMac,
  * Return: success/error code
  */
 
-tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
+QDF_STATUS u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 {
 	struct scheduler_msg msg = {0};
-	tSirRetStatus status = eSIR_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pSirGlobal;
 
 	msg.type = pMb->type;
@@ -127,38 +127,25 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 	default:
 		WMA_LOGD("Unknown message type = 0x%X\n", msg.type);
 		qdf_mem_free(msg.bodyptr);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (status != eSIR_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS)
 		qdf_mem_free(msg.bodyptr);
 
 	return status;
 
 } /* u_mac_post_ctrl_msg() */
 
-/**
- * umac_send_mb_message_to_mac() - post a message to a message queue
- * @pBuf: Pointer to buffer allocated by caller
- *
- * Return: qdf status
- */
-QDF_STATUS umac_send_mb_message_to_mac(void *pBuf)
+QDF_STATUS umac_send_mb_message_to_mac(void *msg)
 {
-	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
-	tSirRetStatus sirStatus;
-	void *hHal;
+	void *mac_handle = cds_get_context(QDF_MODULE_ID_SME);
 
-	hHal = cds_get_context(QDF_MODULE_ID_SME);
-	if (NULL == hHal) {
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-			  "%s: invalid hHal", __func__);
-		qdf_mem_free(pBuf);
-	} else {
-		sirStatus = u_mac_post_ctrl_msg(hHal, pBuf);
-		if (eSIR_SUCCESS == sirStatus)
-			qdf_ret_status = QDF_STATUS_SUCCESS;
+	if (!mac_handle) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SYS, "Invalid MAC handle");
+		qdf_mem_free(msg);
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return qdf_ret_status;
+	return u_mac_post_ctrl_msg(mac_handle, msg);
 }

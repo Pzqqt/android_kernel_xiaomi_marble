@@ -2429,16 +2429,13 @@ static inline
 QDF_STATUS wma_vdev_get_cfg_int(int cfg_id, int *value)
 {
 	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
-	/* set value to zero */
+
 	*value = 0;
 
 	if (!mac)
 		return QDF_STATUS_E_FAILURE;
 
-	if (wlan_cfg_get_int(mac, cfg_id, value) != eSIR_SUCCESS)
-		return QDF_STATUS_E_FAILURE;
-
-	return QDF_STATUS_SUCCESS;
+	return wlan_cfg_get_int(mac, cfg_id, value);
 }
 
 /**

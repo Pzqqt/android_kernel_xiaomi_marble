@@ -1090,7 +1090,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency(tp_wma_handle wma,
 	}
 	/* Confirm MCC adaptive scheduler feature is disabled */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
-				 &cfg_val) == eSIR_SUCCESS) {
+			     &cfg_val) == QDF_STATUS_SUCCESS) {
 		if (cfg_val == WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED_STAMAX) {
 			WMA_LOGD("%s: Can't set channel latency while MCC ADAPTIVE SCHED is enabled. Exit",
 				__func__);
@@ -1154,7 +1154,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 
 	/* Confirm MCC adaptive scheduler feature is disabled */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
-				 &cfg_val) == eSIR_SUCCESS) {
+			     &cfg_val) == QDF_STATUS_SUCCESS) {
 		if (cfg_val == WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED_STAMAX) {
 			WMA_LOGD("%s: Can't set channel quota while MCC_ADAPTIVE_SCHED is enabled. Exit",
 				 __func__);

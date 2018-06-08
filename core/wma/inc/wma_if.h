@@ -1017,8 +1017,8 @@ typedef struct {
 } tAggrAddTsParams, *tpAggrAddTsParams;
 
 
-typedef tSirRetStatus (*tHalMsgCallback)(tpAniSirGlobal pMac, uint32_t mesgId,
-					 void *mesgParam);
+typedef QDF_STATUS (*tHalMsgCallback)(tpAniSirGlobal pMac, uint32_t mesgId,
+				      void *mesgParam);
 
 /**
  * struct tEdcaParams - EDCA parameters

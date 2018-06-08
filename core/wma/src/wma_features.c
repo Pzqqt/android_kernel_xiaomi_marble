@@ -3244,7 +3244,7 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 		return QDF_STATUS_E_NOMEM;
 	}
 	pTsmRspParams->staId = pStats->staId;
-	pTsmRspParams->rc = eSIR_FAILURE;
+	pTsmRspParams->rc = QDF_STATUS_E_FAILURE;
 	pTsmRspParams->tsmStatsReq = pStats;
 	pTsmMetric = &pTsmRspParams->tsmMetrics;
 	/* populate pTsmMetric */
@@ -3599,7 +3599,7 @@ QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
 			       (wmi_rmc_set_action_period_cmd_fixed_param));
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY,
-			     &periodicity_msec) != eSIR_SUCCESS) {
+			     &periodicity_msec) != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to get value for RMC action period using default");
 		periodicity_msec = WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STADEF;
 	}

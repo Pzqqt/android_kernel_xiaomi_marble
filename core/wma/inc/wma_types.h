@@ -672,10 +672,9 @@ enum rateid {
 	RATEID_DEFAULT
 };
 
-tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac,
-				struct scheduler_msg *pMsg);
+QDF_STATUS wma_post_ctrl_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
 
-tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
+QDF_STATUS u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
 
 QDF_STATUS wma_set_idle_ps_config(void *wma_ptr, uint32_t idle_ps);
 QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req);

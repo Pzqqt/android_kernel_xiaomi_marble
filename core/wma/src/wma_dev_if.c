@@ -2241,19 +2241,19 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		wma_handle->ptrn_match_enable_all_vdev ? true : false;
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_WOWLAN_DEAUTH_ENABLE, &cfg_val)
-	    != eSIR_SUCCESS)
+	    != QDF_STATUS_SUCCESS)
 		wma_handle->wow.deauth_enable = true;
 	else
 		wma_handle->wow.deauth_enable = cfg_val ? true : false;
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_WOWLAN_DISASSOC_ENABLE, &cfg_val)
-	    != eSIR_SUCCESS)
+	    != QDF_STATUS_SUCCESS)
 		wma_handle->wow.disassoc_enable = true;
 	else
 		wma_handle->wow.disassoc_enable = cfg_val ? true : false;
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_WOWLAN_MAX_MISSED_BEACON, &cfg_val)
-	    != eSIR_SUCCESS)
+	    != QDF_STATUS_SUCCESS)
 		wma_handle->wow.bmiss_enable = true;
 	else
 		wma_handle->wow.bmiss_enable = cfg_val ? true : false;
@@ -2303,7 +2303,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 				 status);
 
 		if (wlan_cfg_get_int(mac, WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD,
-				     &cfg_val) != eSIR_SUCCESS) {
+				     &cfg_val) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("Failed to get value for WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD");
 			cfg_val = DEFAULT_INFRA_STA_KEEP_ALIVE_PERIOD;
 		}
@@ -2384,7 +2384,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		WMA_LOGE("Failed to set WMI VDEV MCC_BROADCAST_PROBE_ENABLE");
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_RTS_THRESHOLD,
-			     &cfg_val) == eSIR_SUCCESS) {
+			     &cfg_val) == QDF_STATUS_SUCCESS) {
 		ret = wma_vdev_set_param(wma_handle->wmi_handle,
 					self_sta_req->session_id,
 					WMI_VDEV_PARAM_RTS_THRESHOLD,
@@ -2396,7 +2396,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	}
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_FRAGMENTATION_THRESHOLD,
-			     &cfg_val) == eSIR_SUCCESS) {
+			     &cfg_val) == QDF_STATUS_SUCCESS) {
 		ret = wma_vdev_set_param(wma_handle->wmi_handle,
 					self_sta_req->session_id,
 					WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
@@ -2408,7 +2408,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	}
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_HT_CAP_INFO, &cfg_val) ==
-								 eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		val16 = (uint16_t) cfg_val;
 		phtCapInfo = (tSirMacHTCapabilityInfo *) &cfg_val;
 
@@ -2493,7 +2493,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		self_sta_req->session_id);
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
-			     &cfg_val) == eSIR_SUCCESS) {
+			     &cfg_val) == QDF_STATUS_SUCCESS) {
 		WMA_LOGD("%s: setting ini value for WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED: %d",
 			__func__, cfg_val);
 		ret = wma_set_enable_disable_mcc_adaptive_scheduler(cfg_val);
@@ -2688,7 +2688,8 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		CFG_TGT_DEFAULT_GTX_VHT_MASK;
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_TGT_GTX_USR_CFG,
-	    &intr[params.vdev_id].config.gtx_info.gtxUsrcfg) != eSIR_SUCCESS) {
+			     &intr[params.vdev_id].config.gtx_info.gtxUsrcfg)
+	    != QDF_STATUS_SUCCESS) {
 		intr[params.vdev_id].config.gtx_info.gtxUsrcfg =
 						WNI_CFG_TGT_GTX_USR_CFG_STADEF;
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_WARN,
@@ -4479,7 +4480,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 #define CFG_DATA_MASK              0x00FF
 
 	if (wlan_cfg_get_int(wma->mac_context, WNI_CFG_SAP_MAX_MCS_DATA,
-				&mcs_limit) != eSIR_SUCCESS) {
+			     &mcs_limit) != QDF_STATUS_SUCCESS) {
 		mcs_limit = WNI_CFG_SAP_MAX_MCS_DATA_STADEF;
 	}
 

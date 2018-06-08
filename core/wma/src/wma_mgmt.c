@@ -566,6 +566,7 @@ static inline void wma_get_link_probe_timeout(struct sAniSirGlobal *mac,
 {
 	uint32_t keep_alive;
 	uint16_t lm_id, ka_id;
+	QDF_STATUS status;
 
 	switch (sub_type) {
 	case WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO:
@@ -578,13 +579,15 @@ static inline void wma_get_link_probe_timeout(struct sAniSirGlobal *mac,
 		ka_id = WNI_CFG_AP_KEEP_ALIVE_TIMEOUT;
 	}
 
-	if (wlan_cfg_get_int(mac, lm_id, max_inactive_time) != eSIR_SUCCESS) {
+	status = wlan_cfg_get_int(mac, lm_id, max_inactive_time);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Failed to read link monitor for subtype %d",
 			 sub_type);
 		*max_inactive_time = WMA_LINK_MONITOR_DEFAULT_TIME_SECS;
 	}
 
-	if (wlan_cfg_get_int(mac, ka_id, &keep_alive) != eSIR_SUCCESS) {
+	status = wlan_cfg_get_int(mac, ka_id, &keep_alive);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Failed to read keep alive for subtype %d", sub_type);
 		keep_alive = WMA_KEEP_ALIVE_DEFAULT_TIME_SECS;
 	}
@@ -656,7 +659,7 @@ void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id)
 	}
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_RATE_FOR_TX_MGMT,
-			     &cfg_val) == eSIR_SUCCESS) {
+			     &cfg_val) == QDF_STATUS_SUCCESS) {
 		band = CDS_BAND_ALL;
 		if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_STADEF) ||
 		    !wma_verify_rate_code(cfg_val, band)) {
@@ -677,7 +680,7 @@ void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id)
 	}
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_RATE_FOR_TX_MGMT_2G,
-			     &cfg_val) == eSIR_SUCCESS) {
+			     &cfg_val) == QDF_STATUS_SUCCESS) {
 		band = CDS_BAND_2GHZ;
 		if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_2G_STADEF) ||
 		    !wma_verify_rate_code(cfg_val, band)) {
@@ -695,7 +698,7 @@ void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id)
 	}
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_RATE_FOR_TX_MGMT_5G,
-			     &cfg_val) == eSIR_SUCCESS) {
+			     &cfg_val) == QDF_STATUS_SUCCESS) {
 		band = CDS_BAND_5GHZ;
 		if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_5G_STADEF) ||
 		    !wma_verify_rate_code(cfg_val, band)) {
@@ -792,13 +795,13 @@ void wma_set_sta_sa_query_param(tp_wma_handle wma,
 	}
 	if (wlan_cfg_get_int
 		    (mac, WNI_CFG_PMF_SA_QUERY_MAX_RETRIES,
-		    &max_retries) != eSIR_SUCCESS) {
+		    &max_retries) != QDF_STATUS_SUCCESS) {
 		max_retries = DEFAULT_STA_SA_QUERY_MAX_RETRIES_COUNT;
 		WMA_LOGE(FL("Failed to get value for WNI_CFG_PMF_SA_QUERY_MAX_RETRIES"));
 	}
 	if (wlan_cfg_get_int
 		    (mac, WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL,
-		    &retry_interval) != eSIR_SUCCESS) {
+		    &retry_interval) != QDF_STATUS_SUCCESS) {
 		retry_interval = DEFAULT_STA_SA_QUERY_RETRY_INTERVAL;
 		WMA_LOGE(FL("Failed to get value for WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL"));
 	}
@@ -988,7 +991,7 @@ static void wma_mask_tx_ht_rate(tp_wma_handle wma, uint8_t *mcs_set)
 	 * MCS value.
 	 */
 	if (wlan_cfg_get_int(wma->mac_context, WNI_CFG_MAX_HT_MCS_TX_DATA,
-			   &mcs_limit) != eSIR_SUCCESS) {
+			   &mcs_limit) != QDF_STATUS_SUCCESS) {
 		mcs_limit = WNI_CFG_MAX_HT_MCS_TX_DATA_STADEF;
 	}
 
@@ -1220,7 +1223,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 
 	if (wlan_cfg_get_int(wma->mac_context,
 			     WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA,
-			     &disable_abg_rate) != eSIR_SUCCESS)
+			     &disable_abg_rate) != QDF_STATUS_SUCCESS)
 		disable_abg_rate = WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA_STADEF;
 
 	if (!disable_abg_rate) {
@@ -1678,7 +1681,7 @@ void wma_update_cfg_params(tp_wma_handle wma, struct scheduler_msg *cfgParam)
 	}
 
 	if (wlan_cfg_get_int(pmac, (uint16_t) cfgParam->bodyval,
-			     &cfg_val) != eSIR_SUCCESS) {
+			     &cfg_val) != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to get value for CFG PARAMS %d. returning without updating",
 			cfgParam->bodyval);
 		return;
@@ -1712,7 +1715,7 @@ static void wma_read_cfg_wepkey(tp_wma_handle wma_handle,
 				tSirKeys *key_info, uint32_t *def_key_idx,
 				uint8_t *num_keys)
 {
-	tSirRetStatus status;
+	QDF_STATUS status;
 	uint32_t val = SIR_MAC_KEY_LENGTH;
 	uint8_t i, j;
 
@@ -1720,14 +1723,14 @@ static void wma_read_cfg_wepkey(tp_wma_handle wma_handle,
 	/* NOTE:def_key_idx is initialized to 0 by the caller */
 	status = wlan_cfg_get_int(wma_handle->mac_context,
 				  WNI_CFG_WEP_DEFAULT_KEYID, def_key_idx);
-	if (status != eSIR_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS)
 		WMA_LOGE("Unable to read default id, defaulting to 0");
 
 	for (i = 0, j = 0; i < SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS; i++) {
 		status = wlan_cfg_get_str(wma_handle->mac_context,
 					  (uint16_t) WNI_CFG_WEP_DEFAULT_KEY_1 +
 					  i, key_info[j].key, &val);
-		if (status != eSIR_SUCCESS) {
+		if (status != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("WEP key is not configured at :%d", i);
 		} else {
 			key_info[j].keyId = i;
