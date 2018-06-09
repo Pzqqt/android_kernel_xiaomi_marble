@@ -1540,6 +1540,7 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	QDF_STATUS ret;
 	struct policy_mgr_pcl_list pcl;
+	bool sta_sap_scc_on_dfs_chan;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -1594,7 +1595,13 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 			channel, list, PM_SAP_MODE))
 			goto done;
 
-		if ((PM_P2P_GO_MODE == mode) || (PM_SAP_MODE == mode)) {
+		sta_sap_scc_on_dfs_chan =
+			policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
+		policy_mgr_debug("sta_sap_scc_on_dfs_chan %u",
+				 sta_sap_scc_on_dfs_chan);
+
+		if (!sta_sap_scc_on_dfs_chan && ((mode == PM_P2P_GO_MODE) ||
+		    (mode == PM_SAP_MODE))) {
 			if (wlan_reg_is_dfs_ch(pm_ctx->pdev, channel))
 				match = policy_mgr_disallow_mcc(psoc, channel);
 		}
