@@ -1733,7 +1733,7 @@ void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
 {
 	uint8_t i;
 	uint32_t orig_channel_count = 0;
-	bool mcc_to_scc_mode;
+	bool sta_sap_scc_on_dfs_chan;
 	uint32_t sap_count;
 	enum channel_state channel_state;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -1744,13 +1744,14 @@ void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
 		return;
 	}
 
-	mcc_to_scc_mode = policy_mgr_is_force_scc(psoc);
+	sta_sap_scc_on_dfs_chan =
+		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
 	sap_count = policy_mgr_mode_specific_connection_count(psoc,
 			PM_SAP_MODE, NULL);
-	policy_mgr_debug("mcc_to_scc_mode %u, sap_count %u", mcc_to_scc_mode,
-			sap_count);
+	policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, sap_count %u",
+			 sta_sap_scc_on_dfs_chan, sap_count);
 
-	if (!mcc_to_scc_mode || !sap_count)
+	if (!sta_sap_scc_on_dfs_chan || !sap_count)
 		return;
 
 	if (len)
@@ -1810,6 +1811,7 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	bool skip_dfs_channel = false;
 	uint32_t i = 0, j = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool sta_sap_scc_on_dfs_chan;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -1844,9 +1846,13 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	 * if you have atleast one STA connection then don't fill DFS channels
 	 * in the preferred channel list
 	 */
-	if (((mode == PM_SAP_MODE) || (mode == PM_P2P_GO_MODE)) &&
+	sta_sap_scc_on_dfs_chan =
+		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
+	policy_mgr_debug("sta_sap_scc_on_dfs_chan %u", sta_sap_scc_on_dfs_chan);
+	if ((((mode == PM_SAP_MODE) || (mode == PM_P2P_GO_MODE)) &&
 	    (policy_mgr_mode_specific_connection_count(
-		psoc, PM_STA_MODE, NULL) > 0)) {
+		psoc, PM_STA_MODE, NULL) > 0)) ||
+		!sta_sap_scc_on_dfs_chan) {
 		policy_mgr_debug("STA present, skip DFS channels from pcl for SAP/Go");
 		skip_dfs_channel = true;
 	}
