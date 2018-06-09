@@ -7360,6 +7360,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	uint16_t prev_rsn_length = 0;
 	enum dfs_mode mode;
 	struct hdd_adapter *sta_adapter;
+	uint8_t ignore_cac = 0;
 
 	hdd_enter();
 
@@ -7551,7 +7552,14 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				goto error;
 			}
 		}
-		wlansap_set_dfs_ignore_cac(mac_handle, iniConfig->ignoreCAC);
+
+		if (iniConfig->ignoreCAC ||
+		    ((iniConfig->WlanMccToSccSwitchMode !=
+		    QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
+		    iniConfig->sta_sap_scc_on_dfs_chan))
+			ignore_cac = 1;
+
+		wlansap_set_dfs_ignore_cac(mac_handle, ignore_cac);
 		wlansap_set_dfs_restrict_japan_w53(mac_handle,
 			iniConfig->gDisableDfsJapanW53);
 		wlansap_set_dfs_preferred_channel_location(mac_handle,
@@ -8425,6 +8433,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	int status;
 	struct sme_sta_inactivity_timeout  *sta_inactivity_timer;
 	uint8_t channel;
+	bool sta_sap_scc_on_dfs_chan;
+	uint16_t sta_cnt;
 
 	hdd_enter();
 
@@ -8472,6 +8482,25 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				cds_freq_to_chan(params->chandef.center_freq1);
 	adapter->session.ap.sap_config.ch_params.center_freq_seg1 =
 				cds_freq_to_chan(params->chandef.center_freq2);
+
+	sta_sap_scc_on_dfs_chan =
+		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
+							hdd_ctx->hdd_psoc);
+	sta_cnt =
+		policy_mgr_mode_specific_connection_count(
+					hdd_ctx->hdd_psoc, PM_STA_MODE, NULL);
+
+	hdd_debug("sta_sap_scc_on_dfs_chan %u, sta_cnt %u",
+		  sta_sap_scc_on_dfs_chan, sta_cnt);
+
+	/* if sta_sap_scc_on_dfs_chan ini is set, DFS master capability is
+	 * assumed disabled in the driver.
+	 */
+	if (channel && (reg_get_channel_state(hdd_ctx->hdd_pdev, channel) ==
+		CHANNEL_STATE_DFS) && sta_sap_scc_on_dfs_chan && !sta_cnt) {
+		hdd_err("SAP not allowed on DFS channel!!");
+		return -EINVAL;
+	}
 
 	if (cds_is_sub_20_mhz_enabled()) {
 		enum channel_state ch_state;

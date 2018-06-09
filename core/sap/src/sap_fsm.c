@@ -844,6 +844,8 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t i;
 	uint8_t pdev_id;
+	bool is_dfs;
+	bool is_safe;
 
 #ifdef SOFTAP_CHANNEL_RANGE
 	uint8_t *channel_list = NULL;
@@ -853,6 +855,7 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 	uint8_t con_ch;
 	uint8_t vdev_id;
 	uint32_t scan_id;
+	bool sta_sap_scc_on_dfs_chan;
 
 	h_hal = cds_get_context(QDF_MODULE_ID_SME);
 	if (NULL == h_hal) {
@@ -906,10 +909,21 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 					sap_context->channel,
 					sap_context->csr_roamProfile.phyMode,
 					sap_context->cc_switch_mode);
-			if (con_ch && !(wlan_reg_is_dfs_ch(mac_ctx->pdev,
-						con_ch) &&
-			sap_context->cc_switch_mode ==
-	QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)) {
+
+			sta_sap_scc_on_dfs_chan =
+				policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
+								mac_ctx->psoc);
+
+			if (sap_context->cc_switch_mode ==
+		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
+				sta_sap_scc_on_dfs_chan = false;
+
+			is_dfs = wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch);
+			is_safe = policy_mgr_is_safe_channel(
+							mac_ctx->psoc, con_ch);
+
+			if (con_ch && is_safe &&
+			    (!is_dfs || (is_dfs && sta_sap_scc_on_dfs_chan))) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					QDF_TRACE_LEVEL_ERROR,
 					"%s: Override ch %d to %d due to CC Intf",
@@ -2508,6 +2522,12 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 				eSAP_START_BSS_EVENT,
 				(void *) eSAP_STATUS_SUCCESS);
 
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("ap_ctx->ch_params.ch_width %d, channel %d"),
+			     sap_ctx->ch_params.ch_width,
+			     reg_get_channel_state(mac_ctx->pdev,
+						   sap_ctx->channel));
+
 		/*
 		 * The upper layers have been informed that AP is up and
 		 * running, however, the AP is still not beaconing, until
@@ -2531,12 +2551,18 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 				is_dfs = true;
 		}
 
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("is_dfs %d"), is_dfs);
 		if (is_dfs) {
 			sap_dfs_info = &mac_ctx->sap.SapDfsInfo;
 			if ((false == sap_dfs_info->ignore_cac) &&
 			    (eSAP_DFS_DO_NOT_SKIP_CAC ==
-					sap_dfs_info->cac_state) &&
+			    sap_dfs_info->cac_state) &&
 			    !sap_ctx->pre_cac_complete) {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					  QDF_TRACE_LEVEL_INFO_HIGH,
+					  FL("start cac timer"));
+
 				/* Move the device in CAC_WAIT_STATE */
 				sap_ctx->sapsMachine = eSAP_DFS_CAC_WAIT;
 
@@ -2552,6 +2578,9 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 				qdf_status = sap_cac_start_notify(hal);
 
 			} else {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					  QDF_TRACE_LEVEL_INFO_HIGH,
+					FL("skip cac timer"));
 				wlansap_start_beacon_req(sap_ctx);
 			}
 		}

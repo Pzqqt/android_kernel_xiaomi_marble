@@ -1292,6 +1292,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 	void *hHal = NULL;
 	bool valid;
 	QDF_STATUS status;
+	bool sta_sap_scc_on_dfs_chan;
 
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1319,6 +1320,8 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 		policy_mgr_is_any_mode_active_on_band_along_with_session(
 			pMac->psoc, sapContext->sessionId, POLICY_MGR_BAND_5));
 
+	sta_sap_scc_on_dfs_chan =
+		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(pMac->psoc);
 	/*
 	 * Now, validate if the passed channel is valid in the
 	 * current regulatory domain.
@@ -1328,9 +1331,10 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 			CHANNEL_STATE_ENABLE) ||
 		(wlan_reg_get_channel_state(pMac->pdev, targetChannel) ==
 			CHANNEL_STATE_DFS &&
-		!policy_mgr_is_any_mode_active_on_band_along_with_session(
+		(!policy_mgr_is_any_mode_active_on_band_along_with_session(
 			pMac->psoc, sapContext->sessionId,
-			POLICY_MGR_BAND_5)))) {
+			POLICY_MGR_BAND_5) ||
+			sta_sap_scc_on_dfs_chan)))) {
 		/*
 		 * validate target channel switch w.r.t various concurrency
 		 * rules set.

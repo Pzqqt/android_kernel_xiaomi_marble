@@ -932,6 +932,7 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 	tHalHandle hal;
 	tpAniSirGlobal mac_ctx = NULL;
 	uint8_t intf;
+	bool sta_sap_scc_on_dfs_chan;
 
 	if (QDF_IS_STATUS_ERROR(wlansap_context_get(ctx)))
 		return QDF_STATUS_E_FAILURE;
@@ -950,6 +951,8 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 			FL("roam_status = %d, roam_result = %d"),
 			roam_status, roam_result);
 
+	sta_sap_scc_on_dfs_chan =
+		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(mac_ctx->psoc);
 
 	switch (roam_status) {
 	case eCSR_ROAM_INFRA_IND:
@@ -1031,6 +1034,14 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 	case eCSR_ROAM_DFS_RADAR_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Received Radar Indication"));
+
+		if (sta_sap_scc_on_dfs_chan) {
+			QDF_TRACE(QDF_MODULE_ID_SAP,
+				  QDF_TRACE_LEVEL_INFO_HIGH,
+				  FL("Ignore the Radar indication"));
+			break;
+		}
+
 		if (sap_ctx->sapsMachine != eSAP_STARTED &&
 		    sap_ctx->sapsMachine != eSAP_DFS_CAC_WAIT) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1316,6 +1327,8 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 
 		break;
 	case eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND:
+		if (sta_sap_scc_on_dfs_chan)
+			break;
 		wlansap_roam_process_dfs_radar_found(mac_ctx, sap_ctx,
 						&qdf_ret_status);
 		break;
