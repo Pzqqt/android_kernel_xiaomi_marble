@@ -24,6 +24,7 @@
 #ifndef _I_QDF_TIME_H
 #define _I_QDF_TIME_H
 
+#include <linux/version.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/ktime.h>
@@ -38,7 +39,6 @@
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
-#include <linux/version.h>
 
 typedef unsigned long __qdf_time_t;
 typedef ktime_t  __qdf_ktime_t;
