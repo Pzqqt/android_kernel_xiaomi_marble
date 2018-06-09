@@ -12,6 +12,8 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/of_device.h>
 #include <linux/string.h>
 #include <linux/types.h>
 #include <linux/spinlock.h>
@@ -20,6 +22,7 @@
 #include <linux/slab.h>
 #include <linux/sysfs.h>
 #include <linux/kobject.h>
+#include <linux/delay.h>
 #include <dsp/q6core.h>
 #include <dsp/audio_cal_utils.h>
 #include <dsp/apr_audio-v2.h>
@@ -33,6 +36,8 @@
  * is sufficient to make sure the Q6 will be ready.
  */
 #define Q6_READY_TIMEOUT_MS 100
+
+#define ADSP_STATE_READY_TIMEOUT_MS 3000
 
 enum {
 	META_CAL,
@@ -1201,6 +1206,69 @@ err:
 	return ret;
 }
 
+static int q6core_probe(struct platform_device *pdev)
+{
+	unsigned long timeout;
+	int adsp_ready = 0, rc;
+
+	timeout = jiffies +
+		msecs_to_jiffies(ADSP_STATE_READY_TIMEOUT_MS);
+
+	do {
+		if (!adsp_ready) {
+			adsp_ready = q6core_is_adsp_ready();
+			dev_dbg(&pdev->dev, "%s: ADSP Audio is %s\n", __func__,
+				adsp_ready ? "ready" : "not ready");
+		}
+		if (adsp_ready)
+			break;
+
+		/*
+		 * ADSP will be coming up after loading (PD up event) and
+		 * it might not be fully up when the control reaches
+		 * here. So, wait for 50msec before checking ADSP state
+		 */
+		msleep(50);
+	} while (time_after(timeout, jiffies));
+
+	if (!adsp_ready) {
+		dev_err(&pdev->dev, "%s: Timeout. ADSP Audio is %s\n",
+		       __func__,
+		       adsp_ready ? "ready" : "not ready");
+		return -ETIMEDOUT;
+	}
+	rc = of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);
+	if (rc) {
+		dev_err(&pdev->dev, "%s: failed to add child nodes, rc=%d\n",
+			__func__, rc);
+		return -EINVAL;
+	}
+	dev_dbg(&pdev->dev, "%s: added child node\n", __func__);
+
+	return 0;
+}
+
+static int q6core_remove(struct platform_device *pdev)
+{
+	of_platform_depopulate(&pdev->dev);
+	return 0;
+}
+
+static const struct of_device_id q6core_of_match[]  = {
+	{ .compatible = "qcom,q6core-audio", },
+	{},
+};
+
+static struct platform_driver q6core_driver = {
+	.probe = q6core_probe,
+	.remove = q6core_remove,
+	.driver = {
+		.name = "q6core_audio",
+		.owner = THIS_MODULE,
+		.of_match_table = q6core_of_match,
+	}
+};
+
 int __init core_init(void)
 {
 	memset(&q6core_lcl, 0, sizeof(struct q6core_str));
@@ -1214,7 +1282,7 @@ int __init core_init(void)
 	q6core_init_cal_data();
 	q6core_init_uevent_kset();
 
-	return 0;
+	return platform_driver_register(&q6core_driver);
 }
 
 void core_exit(void)
@@ -1223,6 +1291,7 @@ void core_exit(void)
 	mutex_destroy(&q6core_lcl.ver_lock);
 	q6core_delete_cal_data();
 	q6core_destroy_uevent_kset();
+	platform_driver_unregister(&q6core_driver);
 }
 MODULE_DESCRIPTION("ADSP core driver");
 MODULE_LICENSE("GPL v2");
