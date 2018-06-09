@@ -1175,10 +1175,16 @@ HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o
 
 ifeq ($(CONFIG_LITHIUM), y)
-HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca6290def.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service_srng.o
+ifeq ($(CONFIG_CNSS_QCA6290), y)
+HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca6290def.o
 endif
 
+ifeq ($(CONFIG_CNSS_QCA6390), y)
+HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca6390def.o
+endif
+
+HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service_srng.o
+endif
 
 HIF_USB_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/usbdrv.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/hif_usb.o \
@@ -1316,6 +1322,9 @@ endif
 
 ifeq ($(CONFIG_QCA6290_11AX), y)
 TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/11ax/v2 \
+		-I$(WLAN_ROOT)/../fw-api/fw
+else ifeq ($(CONFIG_QCA6390_11AX), y)
+TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6390/v1 \
 		-I$(WLAN_ROOT)/../fw-api/fw
 else
 TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/v2 \
@@ -1922,6 +1931,8 @@ cppflags-$(CONFIG_QCA_WIFI_NAPIER_EMULATION) += -DQCA_WIFI_NAPIER_EMULATION
 cppflags-$(CONFIG_SHADOW_V2) += -DCONFIG_SHADOW_V2
 cppflags-$(CONFIG_QCA6290_HEADERS_DEF) += -DQCA6290_HEADERS_DEF
 cppflags-$(CONFIG_QCA_WIFI_QCA6290) += -DQCA_WIFI_QCA6290
+cppflags-$(CONFIG_QCA6390_HEADERS_DEF) += -DQCA6390_HEADERS_DEF
+cppflags-$(CONFIG_QCA_WIFI_QCA6390) += -DQCA_WIFI_QCA6390
 cppflags-$(CONFIG_QCA_WIFI_QCA8074) += -DQCA_WIFI_QCA8074
 cppflags-$(CONFIG_QCA_WIFI_QCA8074_VP) += -DQCA_WIFI_QCA8074_VP
 cppflags-$(CONFIG_DP_INTR_POLL_BASED) += -DDP_INTR_POLL_BASED
@@ -1937,6 +1948,7 @@ ccflags-$(CONFIG_QCA_LL_TX_FLOW_CONTROL_RESIZE) += -DQCA_LL_TX_FLOW_CONTROL_RESI
 ifeq ($(CONFIG_QCA6290_11AX), y)
 cppflags-y += -DQCA_WIFI_QCA6290_11AX
 endif
+
 
 cppflags-$(CONFIG_WLAN_FEATURE_11AX) += -DWLAN_FEATURE_11AX
 cppflags-$(CONFIG_WLAN_FEATURE_11AX) += -DWLAN_FEATURE_11AX_BSS_COLOR

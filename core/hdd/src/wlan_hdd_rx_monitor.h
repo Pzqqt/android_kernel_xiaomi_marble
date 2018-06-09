@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,7 +21,7 @@
 
 struct ol_txrx_ops;
 
-#if defined(QCA_WIFI_QCA6290)
+#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
 void hdd_monitor_set_rx_monitor_cb(struct ol_txrx_ops *txrx,
 				ol_txrx_rx_mon_fp rx_monitor_cb);
 
