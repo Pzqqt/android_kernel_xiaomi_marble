@@ -1572,16 +1572,16 @@ send_plm_start:
 
 /**
  * sme_tsm_ie_ind() - sme tsm ie indication
- * @hHal: HAL handle
+ * @mac: Global mac context
  * @pSmeTsmIeInd: Pointer to tsm ie indication
  *
  * Handle the tsm ie indication from  LIM and forward it to HDD.
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS sme_tsm_ie_ind(tHalHandle hHal, tSirSmeTsmIEInd *pSmeTsmIeInd)
+static QDF_STATUS sme_tsm_ie_ind(tpAniSirGlobal mac,
+				 tSirSmeTsmIEInd *pSmeTsmIeInd)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_info roam_info = { 0 };
 	uint32_t SessionId = pSmeTsmIeInd->sessionId;
@@ -1590,7 +1590,7 @@ static QDF_STATUS sme_tsm_ie_ind(tHalHandle hHal, tSirSmeTsmIEInd *pSmeTsmIeInd)
 	roam_info.tsmIe.state = pSmeTsmIeInd->tsmIe.state;
 	roam_info.tsmIe.msmt_interval = pSmeTsmIeInd->tsmIe.msmt_interval;
 	/* forward the tsm ie information to HDD */
-	csr_roam_call_callback(pMac, SessionId, &roam_info, 0,
+	csr_roam_call_callback(mac, SessionId, &roam_info, 0,
 			       eCSR_ROAM_TSM_IE_IND, 0);
 	return status;
 }
