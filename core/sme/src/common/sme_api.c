@@ -916,7 +916,7 @@ QDF_STATUS sme_update_config(tHalHandle hHal, tpSmeConfigParams
 		sme_err("csr_change_default_config_param failed status: %d",
 			status);
 
-	status = rrm_change_default_config_param(hHal, &pSmeConfigParams->
+	status = rrm_change_default_config_param(pMac, &pSmeConfigParams->
 						rrmConfig);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
