@@ -1228,7 +1228,8 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 				pACInfo->curr_QoSInfo[SME_QOS_TSPEC_INDEX_0] =
 					Tspec_Info;
 				if (buffered_cmd && !pentry->hoRenewal) {
-					QoSCallback(pMac, HDDcontext,
+					QoSCallback(MAC_HANDLE(pMac),
+						    HDDcontext,
 						    &pACInfo->
 						    curr_QoSInfo
 						    [SME_QOS_TSPEC_INDEX_0],
@@ -1256,7 +1257,7 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 				  __func__, __LINE__, sessionId, status);
 			new_state = pACInfo->curr_state;
 			if (buffered_cmd && hoRenewal)
-				QoSCallback(pMac, HDDcontext,
+				QoSCallback(MAC_HANDLE(pMac), HDDcontext,
 					    &pACInfo->
 					    curr_QoSInfo[SME_QOS_TSPEC_INDEX_0],
 					    SME_QOS_STATUS_RELEASE_QOS_LOST_IND,
@@ -1571,7 +1572,8 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 					pACInfo->
 				requested_QoSInfo[SME_QOS_TSPEC_INDEX_0];
 				if (buffered_cmd && !pentry->hoRenewal) {
-					QoSCallback(pMac, HDDcontext,
+					QoSCallback(MAC_HANDLE(pMac),
+						    HDDcontext,
 						    &pACInfo->
 						    curr_QoSInfo
 						    [SME_QOS_TSPEC_INDEX_0],
@@ -1944,7 +1946,7 @@ static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 							SME_QOS_STATUS_MODIFY_SETUP_SUCCESS_NO_ACM_NO_APSD_RSP;
 				}
 				if (buffered_cmd) {
-					flow_info->QoSCallback(pMac,
+					flow_info->QoSCallback(MAC_HANDLE(pMac),
 							       flow_info->
 							       HDDcontext,
 							       &pACInfo->
@@ -2388,7 +2390,7 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 					status =
 					SME_QOS_STATUS_RELEASE_SUCCESS_RSP;
 					if (buffered_cmd) {
-						flow_info->QoSCallback(pMac,
+						flow_info->QoSCallback(MAC_HANDLE(pMac),
 								     flow_info->
 								     HDDcontext,
 								     &pACInfo->
@@ -2427,7 +2429,7 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 							    pEntry, true);
 					pDeletedFlow = flow_info;
 					if (buffered_cmd) {
-						flow_info->QoSCallback(pMac,
+						flow_info->QoSCallback(MAC_HANDLE(pMac),
 								     flow_info->
 								     HDDcontext,
 								      &pACInfo->
@@ -2451,7 +2453,7 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 				pSession->readyForPowerSave = true;
 				new_state = SME_QOS_LINK_UP;
 				if (buffered_cmd) {
-					flow_info->QoSCallback(pMac,
+					flow_info->QoSCallback(MAC_HANDLE(pMac),
 							       flow_info->
 							       HDDcontext,
 							       &pACInfo->
@@ -2605,7 +2607,7 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 			}
 
 			if (SME_QOS_RELEASE_BY_AP == pACInfo->relTrig) {
-				flow_info->QoSCallback(pMac,
+				flow_info->QoSCallback(MAC_HANDLE(pMac),
 						       flow_info->HDDcontext,
 						       &pACInfo->
 						       curr_QoSInfo[flow_info->
@@ -2620,7 +2622,7 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 					  __func__, __LINE__, flow_info,
 					  flow_info->QosFlowID);
 			} else if (buffered_cmd) {
-				flow_info->QoSCallback(pMac,
+				flow_info->QoSCallback(MAC_HANDLE(pMac),
 						       flow_info->HDDcontext,
 						       NULL, status,
 						       flow_info->QosFlowID);
@@ -6393,7 +6395,7 @@ static QDF_STATUS sme_qos_delete_existing_flows(tpAniSirGlobal pMac,
 			    (SME_QOS_REASON_SETUP == flow_info->reason) ||
 			    (SME_QOS_REASON_RELEASE == flow_info->reason) ||
 			    (SME_QOS_REASON_MODIFY == flow_info->reason)) {
-				flow_info->QoSCallback(pMac,
+				flow_info->QoSCallback(MAC_HANDLE(pMac),
 						       flow_info->HDDcontext,
 						       NULL,
 					SME_QOS_STATUS_RELEASE_QOS_LOST_IND,
@@ -6687,7 +6689,8 @@ static QDF_STATUS sme_qos_setup_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 	pACInfo = &pSession->ac_info[ac];
 	if (SME_QOS_REASON_REQ_SUCCESS == flow_info->reason) {
 		/* notify HDD, only the other Flows running on the AC */
-		flow_info->QoSCallback(pMac, flow_info->HDDcontext,
+		flow_info->QoSCallback(MAC_HANDLE(pMac),
+				       flow_info->HDDcontext,
 				       &pACInfo->curr_QoSInfo[flow_info->
 							      tspec_mask - 1],
 				       hdd_status, flow_info->QosFlowID);
@@ -6727,7 +6730,8 @@ static QDF_STATUS sme_qos_modification_notify_fnp(tpAniSirGlobal pMac, tListElem
 	pACInfo = &pSession->ac_info[ac];
 	if (SME_QOS_REASON_REQ_SUCCESS == flow_info->reason) {
 		/* notify HDD, only the other Flows running on the AC */
-		flow_info->QoSCallback(pMac, flow_info->HDDcontext,
+		flow_info->QoSCallback(MAC_HANDLE(pMac),
+				       flow_info->HDDcontext,
 				       &pACInfo->curr_QoSInfo[flow_info->
 							      tspec_mask - 1],
 				       hdd_status, flow_info->QosFlowID);
@@ -6948,9 +6952,11 @@ sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
 	}
 	if (!delete_entry) {
 		if (!flow_info->hoRenewal) {
-			flow_info->QoSCallback(mac_ctx, flow_info->HDDcontext,
-				&ac_info->curr_QoSInfo[SME_QOS_TSPEC_INDEX_0],
-				hdd_status, flow_info->QosFlowID);
+			flow_info->QoSCallback(MAC_HANDLE(mac_ctx),
+					       flow_info->HDDcontext,
+					       &ac_info->curr_QoSInfo[SME_QOS_TSPEC_INDEX_0],
+					       hdd_status,
+					       flow_info->QosFlowID);
 		} else
 			flow_info->hoRenewal = false;
 	} else {
@@ -7026,14 +7032,16 @@ static QDF_STATUS sme_qos_add_ts_failure_fnp(tpAniSirGlobal pMac, tListElem
 		 * the AC stay intact
 		 */
 		if (!flow_info->hoRenewal) {
-			flow_info->QoSCallback(pMac, flow_info->HDDcontext,
+			flow_info->QoSCallback(MAC_HANDLE(pMac),
+					       flow_info->HDDcontext,
 					       &pACInfo->curr_QoSInfo[pACInfo->
 								   tspec_pending
 								      - 1],
 					       hdd_status,
 					       flow_info->QosFlowID);
 		} else {
-			flow_info->QoSCallback(pMac, flow_info->HDDcontext,
+			flow_info->QoSCallback(MAC_HANDLE(pMac),
+					       flow_info->HDDcontext,
 					       &pACInfo->curr_QoSInfo[pACInfo->
 								   tspec_pending
 								      - 1],
@@ -7214,10 +7222,11 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 	}
 	if (inform_hdd) {
 		if (!flow_info->hoRenewal) {
-			flow_info->QoSCallback(mac_ctx, flow_info->HDDcontext,
-			&ac_info->curr_QoSInfo[tspec_index],
-			hdd_status,
-			flow_info->QosFlowID);
+			flow_info->QoSCallback(MAC_HANDLE(mac_ctx),
+					       flow_info->HDDcontext,
+					       &ac_info->curr_QoSInfo[tspec_index],
+					       hdd_status,
+					       flow_info->QosFlowID);
 		} else
 			flow_info->hoRenewal = false;
 	}
@@ -7350,7 +7359,8 @@ QDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(tpAniSirGlobal pMac,
 		    (flow_info->QoSInfo.max_service_interval ||
 		     flow_info->QoSInfo.min_service_interval) &&
 		    (SME_QOS_REASON_REQ_SUCCESS == flow_info->reason)) {
-			flow_info->QoSCallback(pMac, flow_info->HDDcontext,
+			flow_info->QoSCallback(MAC_HANDLE(pMac),
+					       flow_info->HDDcontext,
 					       &pSession->ac_info[flow_info->
 							ac_type].curr_QoSInfo
 					       [flow_info->tspec_mask - 1],
@@ -7388,7 +7398,8 @@ QDF_STATUS sme_offload_qos_process_into_uapsd_mode(tpAniSirGlobal pMac,
 		    (flow_info->QoSInfo.max_service_interval ||
 		     flow_info->QoSInfo.min_service_interval) &&
 		    (SME_QOS_REASON_REQ_SUCCESS == flow_info->reason)) {
-			flow_info->QoSCallback(pMac, flow_info->HDDcontext,
+			flow_info->QoSCallback(MAC_HANDLE(pMac),
+					       flow_info->HDDcontext,
 					       &pSession->ac_info[flow_info->
 							ac_type].curr_QoSInfo
 					       [flow_info->tspec_mask - 1],
