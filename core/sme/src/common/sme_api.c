@@ -1070,32 +1070,31 @@ QDF_STATUS sme_update_roam_params(tHalHandle hal,
 	return 0;
 }
 
-/*
+/**
  * sme_process_ready_to_suspend() -
+ * @mac: Global MAC context
+ * @pReadyToSuspend: Parameter received along with ready to suspend
+ *			    indication from WMA.
+ *
  * On getting ready to suspend indication, this function calls
  * callback registered (HDD callbacks) with SME to inform ready
  * to suspend indication.
  *
- * hHal - Handle returned by mac_open.
- * pReadyToSuspend - Parameter received along with ready to suspend
- *			    indication from WMA.
  * Return: None
  */
-static void sme_process_ready_to_suspend(tHalHandle hHal,
+static void sme_process_ready_to_suspend(tpAniSirGlobal mac,
 					 tpSirReadyToSuspendInd pReadyToSuspend)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	if (NULL == pMac) {
+	if (NULL == mac) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
-			  "%s: pMac is null", __func__);
+			  "%s: mac is null", __func__);
 		return;
 	}
 
-	if (NULL != pMac->readyToSuspendCallback) {
-		pMac->readyToSuspendCallback(pMac->readyToSuspendContext,
-					     pReadyToSuspend->suspended);
-		pMac->readyToSuspendCallback = NULL;
+	if (NULL != mac->readyToSuspendCallback) {
+		mac->readyToSuspendCallback(mac->readyToSuspendContext,
+					    pReadyToSuspend->suspended);
+		mac->readyToSuspendCallback = NULL;
 	}
 }
 
