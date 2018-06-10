@@ -3339,7 +3339,7 @@ static void csr_check_sae_auth(tpAniSirGlobal mac_ctx,
 
 /**
  * csr_get_rsn_information() - to get RSN information
- * @hal: pointer to HAL
+ * @mac_ctx: pointer to global MAC context
  * @auth_type: auth type
  * @encr_type: encryption type
  * @mc_encryption: multicast encryption type
@@ -3357,7 +3357,8 @@ static void csr_check_sae_auth(tpAniSirGlobal mac_ctx,
  *
  * Return: bool
  */
-static bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
+static bool csr_get_rsn_information(tpAniSirGlobal mac_ctx,
+				    tCsrAuthList *auth_type,
 				    eCsrEncryptionType encr_type,
 				    tCsrEncryptionList *mc_encryption,
 				    tDot11fIERSN *rsn_ie, uint8_t *ucast_cipher,
@@ -3368,7 +3369,6 @@ static bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 				    uint8_t *gp_mgmt_cipher,
 				    tAniEdType *mgmt_encryption_type)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	bool acceptable_cipher = false;
 	bool group_mgmt_acceptable_cipher = false;
 	uint8_t c_ucast_cipher = 0;
