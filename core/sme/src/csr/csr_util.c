@@ -3603,7 +3603,7 @@ end:
 #ifdef WLAN_FEATURE_11W
 /**
  * csr_is_pmf_capabilities_in_rsn_match() - check for PMF capability
- * @hHal:                  Global HAL handle
+ * @mac:                   Global MAC Context
  * @pFilterMFPEnabled:     given by supplicant to us to specify what kind
  *                         of connection supplicant is expecting to make
  *                         if it is enabled then make PMF connection.
@@ -3627,7 +3627,7 @@ end:
  *           to make connection with it. Else we will return false
  **/
 static bool
-csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
+csr_is_pmf_capabilities_in_rsn_match(tpAniSirGlobal mac,
 				     bool *pFilterMFPEnabled,
 				     uint8_t *pFilterMFPRequired,
 				     uint8_t *pFilterMFPCapable,
