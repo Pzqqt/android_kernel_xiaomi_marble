@@ -40,17 +40,6 @@ static QDF_STATUS csr_neighbor_roam_add_preauth_fail(tpAniSirGlobal mac_ctx,
 			uint8_t session_id, tSirMacAddr bssid);
 
 /**
- * csr_get_dot11_mode() - Derives dot11mode
- * @hal: Global Handle
- * @session_id: SME Session ID
- * @bss_desc: BSS descriptor
- *
- * Return: dot11mode
- */
-static uint32_t csr_get_dot11_mode(tHalHandle hal, uint32_t session_id,
-			      tpSirBssDescription bss_desc);
-
-/**
  * csr_neighbor_roam_state_preauth_done() - Check if state is preauth done
  * @mac_ctx: Global MAC context
  * @session_id: SME session ID
@@ -468,10 +457,18 @@ bool csr_neighbor_roam_is_preauth_candidate(tpAniSirGlobal pMac,
 	return true;
 }
 
-uint32_t csr_get_dot11_mode(tHalHandle hal, uint32_t session_id,
-			      tpSirBssDescription bss_desc)
+/**
+ * csr_get_dot11_mode() - Derives dot11mode
+ * @mac_ctx: Global MAC context
+ * @session_id: SME Session ID
+ * @bss_desc: BSS descriptor
+ *
+ * Return: dot11mode
+ */
+static uint32_t csr_get_dot11_mode(tpAniSirGlobal mac_ctx,
+				   uint32_t session_id,
+				   tpSirBssDescription bss_desc)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
 				session_id);
 	enum csr_cfgdot11mode ucfg_dot11_mode, cfg_dot11_mode;
