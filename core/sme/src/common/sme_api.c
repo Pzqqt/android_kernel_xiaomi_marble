@@ -15786,7 +15786,7 @@ static bool sme_get_status_for_candidate(tHalHandle hal,
 		if ((conn_bss_desc->rssi >
 		    mac_ctx->roam.configParam.mbo_thresholds.
 		    mbo_current_rssi_mcc_thres) &&
-		    csr_is_mcc_channel(hal, bss_desc->channelId)) {
+		    csr_is_mcc_channel(mac_ctx, bss_desc->channelId)) {
 			sme_err("Candidate BSS "MAC_ADDRESS_STR" causes MCC, hence reject",
 				MAC_ADDR_ARRAY(bss_desc->bssId));
 			info->status =

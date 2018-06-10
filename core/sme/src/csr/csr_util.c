@@ -6333,9 +6333,8 @@ bool csr_is_ndi_started(tpAniSirGlobal mac_ctx, uint32_t session_id)
 	return eCSR_CONNECT_STATE_TYPE_NDI_STARTED == session->connectState;
 }
 
-bool csr_is_mcc_channel(tHalHandle hal, uint8_t channel)
+bool csr_is_mcc_channel(tpAniSirGlobal mac_ctx, uint8_t channel)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct csr_roam_session *session;
 	enum QDF_OPMODE oper_mode;
 	uint8_t oper_channel = 0;

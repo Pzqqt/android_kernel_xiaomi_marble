@@ -1442,11 +1442,11 @@ QDF_STATUS csr_roam_update_config(
 
 /**
  * csr_is_mcc_channel() - check if using the channel results into MCC
- * @hal: pointer to HAL
+ * @mac_ctx: pointer to global MAC context
  * @channel : channel number to check for MCC scenario
  *
  * Return : true if channel causes MCC, else false
  */
-bool csr_is_mcc_channel(tHalHandle hal, uint8_t channel);
+bool csr_is_mcc_channel(tpAniSirGlobal mac_ctx, uint8_t channel);
 
 #endif
