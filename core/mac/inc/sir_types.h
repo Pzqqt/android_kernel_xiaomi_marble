@@ -42,10 +42,12 @@
  * pointer through this handle.
  */
 /*
- * NOTE WELL: an upcoming change will replace the void * with an
- * opaque pointer just as is currently done with hdd_handle_t
+ * NOTE WELL: struct opaque_mac_handle is not defined anywhere. This
+ * reference is used to help ensure that a mac_handle_t is never used
+ * where a different handle type is expected
  */
-typedef void *mac_handle_t;
+struct opaque_mac_handle;
+typedef struct opaque_mac_handle *mac_handle_t;
 
 /* retain legacy name until all instances have been replaced */
 typedef mac_handle_t tHalHandle;
