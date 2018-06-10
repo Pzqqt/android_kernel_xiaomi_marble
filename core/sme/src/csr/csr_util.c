@@ -5032,7 +5032,7 @@ static bool csr_validate_open_none(tSirBssDescription *bss_desc,
 
 /**
  * csr_validate_any_default() - Check if the security is matching
- * @hal:               Global HAL handle
+ * @mac_ctx:           Global MAC context
  * @auth_type:         Authentication type
  * @mc_enc_type:       Multicast encryption type
  * @mfp_enabled:       Management frame protection feature
@@ -5046,16 +5046,20 @@ static bool csr_validate_open_none(tSirBssDescription *bss_desc,
  *
  * Return: Boolean value to tell if matched or not.
  */
-static bool csr_validate_any_default(tHalHandle hal, tCsrAuthList *auth_type,
-	tCsrEncryptionList *mc_enc_type, bool *mfp_enabled,
-	uint8_t *mfp_required, uint8_t *mfp_capable,
-	tDot11fBeaconIEs *ies_ptr, eCsrAuthType *neg_auth_type,
-	tSirBssDescription *bss_desc, eCsrEncryptionType *uc_cipher,
-	eCsrEncryptionType *mc_cipher)
+static bool csr_validate_any_default(tpAniSirGlobal mac_ctx,
+				     tCsrAuthList *auth_type,
+				     tCsrEncryptionList *mc_enc_type,
+				     bool *mfp_enabled,
+				     uint8_t *mfp_required,
+				     uint8_t *mfp_capable,
+				     tDot11fBeaconIEs *ies_ptr,
+				     eCsrAuthType *neg_auth_type,
+				     tSirBssDescription *bss_desc,
+				     eCsrEncryptionType *uc_cipher,
+				     eCsrEncryptionType *mc_cipher)
 {
 	bool match_any = false;
 	bool match = true;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	/* It is allowed to match anything. Try the more secured ones first. */
 	if (ies_ptr) {
 		/* Check GCMP-256 first */
