@@ -4208,7 +4208,7 @@ end:
 	return acceptable_cipher;
 }
 
-static bool csr_is_wapi_match(tHalHandle hHal, tCsrAuthList *pAuthType,
+static bool csr_is_wapi_match(tpAniSirGlobal mac_ctx, tCsrAuthList *pAuthType,
 			      eCsrEncryptionType enType,
 			      tCsrEncryptionList *pEnMcType,
 			      tDot11fBeaconIEs *pIes,
@@ -4221,7 +4221,7 @@ static bool csr_is_wapi_match(tHalHandle hHal, tCsrAuthList *pAuthType,
 	 * settings in the profile.
 	 */
 	fWapiMatch =
-		csr_get_wapi_information(hHal, pAuthType, enType, pEnMcType,
+		csr_get_wapi_information(mac_ctx, pAuthType, enType, pEnMcType,
 					 &pIes->WAPI, NULL, NULL, NULL,
 					 pNegotiatedAuthType,
 					 pNegotiatedMCCipher);
@@ -5089,7 +5089,7 @@ static bool csr_validate_any_default(tHalHandle hal, tCsrAuthList *auth_type,
 		if (!match_any) {
 			/* Check WAPI */
 			*uc_cipher = eCSR_ENCRYPT_TYPE_WPI;
-			match_any = csr_is_wapi_match(hal, auth_type,
+			match_any = csr_is_wapi_match(mac_ctx, auth_type,
 					*uc_cipher, mc_enc_type, ies_ptr,
 					neg_auth_type, mc_cipher);
 		}
