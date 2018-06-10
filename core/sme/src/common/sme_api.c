@@ -69,11 +69,6 @@ static QDF_STATUS sme_handle_generic_change_country_code(tpAniSirGlobal pMac,
 
 static QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg);
 
-#ifdef WLAN_FEATURE_11W
-QDF_STATUS sme_unprotected_mgmt_frm_ind(tHalHandle hHal,
-					tpSirSmeUnprotMgmtFrameInd pSmeMgmtFrm);
-#endif
-
 /* Channel Change Response Indication Handler */
 static QDF_STATUS sme_process_channel_change_resp(tpAniSirGlobal pMac,
 					   uint16_t msg_type, void *pMsgBuf);
@@ -1340,10 +1335,10 @@ static QDF_STATUS dfs_msg_processor(tpAniSirGlobal mac,
  * Handle the unprotected management frame indication from LIM and
  * forward it to HDD.
  */
-QDF_STATUS sme_unprotected_mgmt_frm_ind(tHalHandle hHal,
-					tpSirSmeUnprotMgmtFrameInd pSmeMgmtFrm)
+static QDF_STATUS
+sme_unprotected_mgmt_frm_ind(tpAniSirGlobal mac,
+			     tpSirSmeUnprotMgmtFrameInd pSmeMgmtFrm)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_info roam_info = { 0 };
 	uint32_t SessionId = pSmeMgmtFrm->sessionId;
@@ -1353,7 +1348,7 @@ QDF_STATUS sme_unprotected_mgmt_frm_ind(tHalHandle hHal,
 	roam_info.frameType = pSmeMgmtFrm->frameType;
 
 	/* forward the mgmt frame to HDD */
-	csr_roam_call_callback(pMac, SessionId, &roam_info, 0,
+	csr_roam_call_callback(mac, SessionId, &roam_info, 0,
 			       eCSR_ROAM_UNPROT_MGMT_FRAME_IND, 0);
 
 	return status;
