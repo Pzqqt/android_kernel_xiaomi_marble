@@ -340,7 +340,21 @@ QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal);
  */
 QDF_STATUS sme_ser_cmd_callback(void *buf,
 				enum wlan_serialization_cb_reason reason);
-QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg);
+
+/*
+ * sme_process_msg() - The main message processor for SME.
+ * @mac: The global mac context
+ * @msg: The message to be processed.
+ *
+ * This function is called by a message dispatcher when to process a message
+ * targeted for SME.
+ * This is a synchronous call
+ *
+ * Return: QDF_STATUS_SUCCESS - SME successfully processed the message.
+ * Other status means SME failed to process the message to HAL.
+ */
+QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
+
 QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg);
 QDF_STATUS sme_scan_get_result(tHalHandle hHal, uint8_t sessionId,
 		tCsrScanResultFilter *pFilter,
@@ -1945,15 +1959,15 @@ void sme_display_disconnect_stats(tHalHandle hal, uint8_t session_id);
 
 /**
  * sme_process_msg_callback() - process callback message from LIM
- * @hal: global hal handle
+ * @mac: global mac context
  * @msg: scheduler message
  *
  * This function process the callback messages from LIM.
  *
  * Return: QDF_STATUS enumeration.
  */
-QDF_STATUS sme_process_msg_callback(tHalHandle hal,
-				struct scheduler_msg *msg);
+QDF_STATUS sme_process_msg_callback(tpAniSirGlobal mac,
+				    struct scheduler_msg *msg);
 
 /**
  * sme_set_bmiss_bcnt() - set bmiss config parameters

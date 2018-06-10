@@ -412,7 +412,8 @@ typedef struct sSirSmeReadyReq {
 	uint16_t transactionId;
 	void *csr_roam_synch_cb;
 	void *pe_roam_synch_cb;
-	void *sme_msg_cb;
+	QDF_STATUS (*sme_msg_cb)(tpAniSirGlobal mac,
+				 struct scheduler_msg *msg);
 } tSirSmeReadyReq, *tpSirSmeReadyReq;
 
 /**

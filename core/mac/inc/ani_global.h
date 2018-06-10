@@ -759,7 +759,7 @@ typedef struct sAniSirLim {
 	uint8_t gLimDfsChanSwTxCount;
 	uint8_t gLimDfsTargetChanNum;
 	QDF_STATUS(*sme_msg_callback)
-		(tHalHandle hal, struct scheduler_msg *msg);
+		(tpAniSirGlobal mac, struct scheduler_msg *msg);
 	uint8_t retry_packet_cnt;
 	uint8_t beacon_probe_rsp_cnt_per_scan;
 	wlan_scan_requester req_id;

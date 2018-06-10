@@ -1952,21 +1952,9 @@ static QDF_STATUS sme_process_antenna_mode_resp(tpAniSirGlobal mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-/*
- * sme_process_msg() - The main message processor for SME.
- *  The function is called by a message dispatcher when to process a message
- *  targeted for SME.
- *  This is a synchronous call
- *
- * hHal - The handle returned by mac_open.
- * pMsg - A pointer to a caller allocated object of tSirMsgQ.
- * Return QDF_STATUS_SUCCESS - SME successfully process the message.
- * Other status means SME failed to process the message to HAL.
- */
-QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
+QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct sir_peer_info *peer_stats;
 	struct sir_peer_info_resp *peer_info_rsp;
 
@@ -2179,7 +2167,7 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_WMA_MSG,
 				 NO_SESSION, pMsg->type));
 		if (pMsg->bodyptr) {
-			sme_nan_event(hHal, pMsg->bodyptr);
+			sme_nan_event(MAC_HANDLE(pMac), pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
 		}
 		break;
@@ -2403,7 +2391,7 @@ QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return sme_process_msg((tHalHandle)mac_ctx, msg);
+	return sme_process_msg(mac_ctx, msg);
 }
 
 /**
@@ -15636,8 +15624,8 @@ QDF_STATUS sme_get_chain_rssi(tHalHandle hal,
 	return status;
 }
 
-QDF_STATUS sme_process_msg_callback(tHalHandle hal,
-				struct scheduler_msg *msg)
+QDF_STATUS sme_process_msg_callback(tpAniSirGlobal mac,
+				    struct scheduler_msg *msg)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
@@ -15645,7 +15633,7 @@ QDF_STATUS sme_process_msg_callback(tHalHandle hal,
 		sme_err("Empty message for SME Msg callback");
 		return status;
 	}
-	status = sme_process_msg(hal, msg);
+	status = sme_process_msg(mac, msg);
 	return status;
 }
 
