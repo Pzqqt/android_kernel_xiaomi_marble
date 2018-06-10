@@ -12269,7 +12269,7 @@ csr_roam_chk_lnk_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
 		if (eCSR_ROAMING_STATE_JOINED ==
-			sme_get_current_roam_state(mac_ctx, sessionId)
+		    sme_get_current_roam_state(MAC_HANDLE(mac_ctx), sessionId)
 		    && ((eCSR_ROAM_SUBSTATE_JOINED_REALTIME_TRAFFIC
 			== mac_ctx->roam.curSubState[sessionId])
 		    || (eCSR_ROAM_SUBSTATE_NONE ==
