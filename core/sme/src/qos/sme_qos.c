@@ -2064,6 +2064,7 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 	bool uplinkFlowsPresent = false;
 	bool downlinkFlowsPresent = false;
 	tListElem *pResult = NULL;
+	mac_handle_t mac_hdl = MAC_HANDLE(pMac);
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: invoked for flow %d", __func__, __LINE__, QosFlowID);
@@ -2505,7 +2506,8 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 							 * when PMC stops it)
 							 */
 							sme_ps_uapsd_disable(
-							      pMac, sessionId);
+							      mac_hdl,
+							      sessionId);
 					}
 				}
 				if (SME_QOS_RELEASE_DEFAULT ==
@@ -2566,7 +2568,7 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 						 * care when PMC stops it)
 						 */
 						sme_ps_uapsd_disable(
-							pMac, sessionId);
+							mac_hdl, sessionId);
 				}
 				hstatus = sme_qos_request_reassoc(pMac,
 								sessionId,
@@ -4947,7 +4949,7 @@ static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal pMac,
 	/* this session no longer needs UAPSD */
 	pSession->apsdMask = 0;
 	/* do any sessions still require UAPSD? */
-	sme_ps_uapsd_disable(pMac, sessionId);
+	sme_ps_uapsd_disable(MAC_HANDLE(pMac), sessionId);
 	pSession->uapsdAlreadyRequested = false;
 	return QDF_STATUS_SUCCESS;
 }
@@ -5121,7 +5123,7 @@ static QDF_STATUS sme_qos_process_disconnect_ev(tpAniSirGlobal pMac, uint8_t
 	/* this session doesn't require UAPSD */
 	pSession->apsdMask = 0;
 
-	sme_ps_uapsd_disable(pMac, sessionId);
+	sme_ps_uapsd_disable(MAC_HANDLE(pMac), sessionId);
 
 	pSession->uapsdAlreadyRequested = false;
 	pSession->handoffRequested = false;
@@ -7198,7 +7200,7 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 				flow_info->sessionId,
 				&profile_fields);
 			if (!qos_session->apsdMask)
-				sme_ps_uapsd_disable(mac_ctx,
+				sme_ps_uapsd_disable(MAC_HANDLE(mac_ctx),
 					flow_info->sessionId);
 		}
 		break;
