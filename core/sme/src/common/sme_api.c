@@ -2559,7 +2559,7 @@ QDF_STATUS sme_close(tHalHandle hHal)
 		fail_status = status;
 	}
 
-	status = rrm_close(hHal);
+	status = rrm_close(pMac);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("RRM close failed with status: %d", status);
 		fail_status = status;
