@@ -4078,7 +4078,7 @@ uint8_t csr_construct_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 #ifdef FEATURE_WLAN_WAPI
 /**
  * csr_get_wapi_information() - to get WAPI information
- * @hal: pointer to HAL
+ * @mac_ctx: pointer to global MAC context
  * @auth_type: auth type
  * @encr_type: encryption type
  * @mc_encryption: multicast encryption type
@@ -4093,7 +4093,8 @@ uint8_t csr_construct_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
  *
  * Return: bool
  */
-static bool csr_get_wapi_information(tHalHandle hal, tCsrAuthList *auth_type,
+static bool csr_get_wapi_information(tpAniSirGlobal mac_ctx,
+				     tCsrAuthList *auth_type,
 				     eCsrEncryptionType encr_type,
 				     tCsrEncryptionList *mc_encryption,
 				     tDot11fIEWAPI *wapi_ie,
@@ -4102,7 +4103,6 @@ static bool csr_get_wapi_information(tHalHandle hal, tCsrAuthList *auth_type,
 				     eCsrAuthType *negotiated_authtype,
 				     eCsrEncryptionType *negotiated_mccipher)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	bool acceptable_cipher = false;
 	uint8_t c_ucast_cipher = 0;
 	uint8_t c_mcast_cipher = 0;
