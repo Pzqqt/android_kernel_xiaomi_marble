@@ -842,7 +842,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 	 * clear the roaming parameters that are per connection.
 	 * For a new connection, they have to be programmed again.
 	 */
-	if (!csr_neighbor_middle_of_roaming((tHalHandle)pMac, sessionId))
+	if (!csr_neighbor_middle_of_roaming(pMac, sessionId))
 		csr_roam_reset_roam_params(pMac);
 	if (NULL != pSession) {
 		roam_session = &pMac->roam.roamSession[sessionId];

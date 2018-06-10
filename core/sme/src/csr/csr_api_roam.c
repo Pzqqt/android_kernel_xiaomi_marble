@@ -18414,8 +18414,8 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		 * clear the roaming parameters that are per connection.
 		 * For a new connection, they have to be programmed again.
 		 */
-		if (csr_neighbor_middle_of_roaming((tHalHandle)mac_ctx,
-				session_id))
+		if (csr_neighbor_middle_of_roaming(mac_ctx,
+						   session_id))
 			req_buf->middle_of_roaming = 1;
 		else
 			csr_roam_reset_roam_params(mac_ctx);
