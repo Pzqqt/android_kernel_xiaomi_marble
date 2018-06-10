@@ -1536,11 +1536,10 @@ bool csr_is_ssid_equal(tpAniSirGlobal pMac,
 }
 
 /* pIes can be passed in as NULL if the caller doesn't have one prepared */
-static bool csr_is_bss_description_wme(tHalHandle hHal,
+static bool csr_is_bss_description_wme(tpAniSirGlobal pMac,
 				       tSirBssDescription *pSirBssDesc,
 				       tDot11fBeaconIEs *pIes)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	/* Assume that WME is found... */
 	bool fWme = true;
 	tDot11fBeaconIEs *pIesTemp = pIes;
