@@ -906,7 +906,6 @@ QDF_STATUS sme_send_unit_test_cmd(uint32_t vdev_id, uint32_t module_id,
 void sme_stats_ext_deregister_callback(tHalHandle hhal);
 QDF_STATUS sme_stats_ext_request(uint8_t session_id,
 		tpStatsExtRequestReq input);
-QDF_STATUS sme_stats_ext_event(tHalHandle hHal, void *pMsg);
 #endif
 QDF_STATUS sme_update_dfs_scan_mode(tHalHandle hHal,
 		uint8_t sessionId,

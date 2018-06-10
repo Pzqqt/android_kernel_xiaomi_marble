@@ -78,6 +78,9 @@ QDF_STATUS sme_unprotected_mgmt_frm_ind(tHalHandle hHal,
 static QDF_STATUS sme_process_channel_change_resp(tpAniSirGlobal pMac,
 					   uint16_t msg_type, void *pMsgBuf);
 
+static QDF_STATUS sme_stats_ext_event(tpAniSirGlobal mac,
+				      tpStatsExtEvent msg);
+
 /* Internal SME APIs */
 QDF_STATUS sme_acquire_global_lock(tSmeStruct *psSme)
 {
@@ -2136,16 +2139,10 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
-#ifdef WLAN_FEATURE_STATS_EXT
 	case eWNI_SME_STATS_EXT_EVENT:
-		if (pMsg->bodyptr) {
-			status = sme_stats_ext_event(hHal, pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
+		status = sme_stats_ext_event(pMac, pMsg->bodyptr);
+		qdf_mem_free(pMsg->bodyptr);
 		break;
-#endif
 	case eWNI_SME_GET_PEER_INFO_IND:
 		if (pMac->sme.pget_peer_info_ind_cb)
 			pMac->sme.pget_peer_info_ind_cb(pMsg->bodyptr,
@@ -10823,30 +10820,36 @@ QDF_STATUS sme_stats_ext_request(uint8_t session_id, tpStatsExtRequestReq input)
 	return QDF_STATUS_SUCCESS;
 }
 
-/*
- * sme_stats_ext_event() -
- * This callback function called when SME received eWNI_SME_STATS_EXT_EVENT
- *  response from WMA
- *
- * hHal - HAL handle for device
- * pMsg - Message body passed from WMA; includes NAN header
- * Return QDF_STATUS
- */
-QDF_STATUS sme_stats_ext_event(tHalHandle hHal, void *pMsg)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+/**
+ * sme_stats_ext_event() - eWNI_SME_STATS_EXT_EVENT processor
+ * @mac: Global MAC context
+ * @msg: "stats ext" message
 
-	if (NULL == pMsg) {
-		sme_err("pMsg is NULL in sme_stats_ext_event");
-		status = QDF_STATUS_E_FAILURE;
-	} else {
-		if (pMac->sme.StatsExtCallback)
-			pMac->sme.StatsExtCallback(pMac->hHdd,
-						   (tpStatsExtEvent) pMsg);
+ * This callback function called when SME received eWNI_SME_STATS_EXT_EVENT
+ * response from WMA
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS sme_stats_ext_event(tpAniSirGlobal mac,
+				      tpStatsExtEvent msg)
+{
+	if (!msg) {
+		sme_err("Null msg");
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return status;
+	if (mac->sme.StatsExtCallback)
+		mac->sme.StatsExtCallback(mac->hHdd, msg);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#else
+
+static QDF_STATUS sme_stats_ext_event(tpAniSirGlobal mac,
+				      tpStatsExtEvent msg)
+{
+	return QDF_STATUS_SUCCESS;
 }
 
 #endif
