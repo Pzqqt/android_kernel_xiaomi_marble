@@ -6883,7 +6883,7 @@ sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
 			/* this is the first flow to detect we need
 			 * PMC in UAPSD mode
 			 */
-			pmc_status = sme_ps_start_uapsd(mac_ctx,
+			pmc_status = sme_ps_start_uapsd(MAC_HANDLE(mac_ctx),
 					flow_info->sessionId,
 				sme_qos_pmc_offload_start_uapsd_callback,
 					qos_session);
@@ -6921,7 +6921,7 @@ sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
 			/* this is the first flow to detect we need
 			 * PMC in UAPSD mode
 			 */
-			pmc_status = sme_ps_start_uapsd(mac_ctx,
+			pmc_status = sme_ps_start_uapsd(MAC_HANDLE(mac_ctx),
 					 flow_info->sessionId,
 				sme_qos_pmc_offload_start_uapsd_callback,
 					 qos_session);
@@ -7118,7 +7118,7 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 			/* this is the first flow to detect we need
 			 * PMC in UAPSD mode
 			 */
-			pmc_status = sme_ps_start_uapsd(mac_ctx,
+			pmc_status = sme_ps_start_uapsd(MAC_HANDLE(mac_ctx),
 				flow_info->sessionId,
 				sme_qos_pmc_offload_start_uapsd_callback,
 				qos_session);
@@ -7162,7 +7162,7 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 			 * we need PMC in UAPSD mode
 			 */
 			pmc_status =
-				sme_ps_start_uapsd(mac_ctx,
+				sme_ps_start_uapsd(MAC_HANDLE(mac_ctx),
 					flow_info->sessionId,
 				sme_qos_pmc_offload_start_uapsd_callback,
 					qos_session);
