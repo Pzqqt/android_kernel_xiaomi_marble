@@ -226,7 +226,7 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 
 /**
  * sme_ft_send_update_key_ind() - To send key update indication for FT session
- * @hal: pointer to HAL
+ * @mac: pointer to MAC context
  * @session_id: sme session id
  * @ftkey_info: FT key information
  *
@@ -235,7 +235,7 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
  * Return: QDF_STATUS
  */
 static
-QDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
+QDF_STATUS sme_ft_send_update_key_ind(tpAniSirGlobal mac, uint32_t session_id,
 				      tCsrRoamSetKey *ftkey_info)
 {
 	tSirFTUpdateKeyInfo *msg;
