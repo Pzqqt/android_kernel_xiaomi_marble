@@ -1800,12 +1800,10 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(tHalHandle hHal,
 #endif /* FEATURE_WLAN_ESE */
 
 static
-QDF_STATUS sme_ibss_peer_info_response_handler(tHalHandle hHal,
+QDF_STATUS sme_ibss_peer_info_response_handler(tpAniSirGlobal pMac,
 					       tpSirIbssGetPeerInfoRspParams
 					       pIbssPeerInfoParams)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
 	if (NULL == pMac) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: pMac is null", __func__);
