@@ -3670,7 +3670,7 @@ csr_is_pmf_capabilities_in_rsn_match(tpAniSirGlobal mac,
 }
 #endif
 
-static bool csr_is_rsn_match(tHalHandle hHal, tCsrAuthList *pAuthType,
+static bool csr_is_rsn_match(tpAniSirGlobal mac_ctx, tCsrAuthList *pAuthType,
 			     eCsrEncryptionType enType,
 			     tCsrEncryptionList *pEnMcType,
 			     bool *pMFPEnabled, uint8_t *pMFPRequired,
@@ -3684,7 +3684,7 @@ static bool csr_is_rsn_match(tHalHandle hHal, tCsrAuthList *pAuthType,
 	/* See if the cyphers in the Bss description match with the
 	 * settings in the profile.
 	 */
-	fRSNMatch = csr_get_rsn_information(hHal, pAuthType, enType,
+	fRSNMatch = csr_get_rsn_information(mac_ctx, pAuthType, enType,
 					pEnMcType, &pIes->RSN,
 					NULL, NULL, NULL, NULL,
 					pNegotiatedAuthType,
@@ -3692,7 +3692,7 @@ static bool csr_is_rsn_match(tHalHandle hHal, tCsrAuthList *pAuthType,
 #ifdef WLAN_FEATURE_11W
 	/* If all the filter matches then finally checks for PMF capabilities */
 	if (fRSNMatch)
-		fRSNMatch = csr_is_pmf_capabilities_in_rsn_match(hHal,
+		fRSNMatch = csr_is_pmf_capabilities_in_rsn_match(mac_ctx,
 								pMFPEnabled,
 								 pMFPRequired,
 								 pMFPCapable,
@@ -5060,26 +5060,27 @@ static bool csr_validate_any_default(tHalHandle hal, tCsrAuthList *auth_type,
 	if (ies_ptr) {
 		/* Check GCMP-256 first */
 		*uc_cipher = eCSR_ENCRYPT_TYPE_AES_GCMP_256;
-		match_any = csr_is_rsn_match(hal, auth_type,
+		match_any = csr_is_rsn_match(mac_ctx, auth_type,
 				*uc_cipher, mc_enc_type, mfp_enabled,
 				mfp_required, mfp_capable, ies_ptr,
 				neg_auth_type, mc_cipher);
 		/* Check GCMP second */
 		*uc_cipher = eCSR_ENCRYPT_TYPE_AES_GCMP;
-		match_any = csr_is_rsn_match(hal, auth_type,
+		match_any = csr_is_rsn_match(mac_ctx, auth_type,
 				*uc_cipher, mc_enc_type, mfp_enabled,
 				mfp_required, mfp_capable, ies_ptr,
 				neg_auth_type, mc_cipher);
 		/* Check AES third */
 		*uc_cipher = eCSR_ENCRYPT_TYPE_AES;
-		match_any = csr_is_rsn_match(hal, auth_type,
+		match_any = csr_is_rsn_match(mac_ctx, auth_type,
 				*uc_cipher, mc_enc_type, mfp_enabled,
 				mfp_required, mfp_capable, ies_ptr,
 				neg_auth_type, mc_cipher);
 		if (!match_any) {
 			/* Check TKIP */
 			*uc_cipher = eCSR_ENCRYPT_TYPE_TKIP;
-			match_any = csr_is_rsn_match(hal, auth_type, *uc_cipher,
+			match_any = csr_is_rsn_match(mac_ctx, auth_type,
+					*uc_cipher,
 					mc_enc_type, mfp_enabled, mfp_required,
 					mfp_capable, ies_ptr, neg_auth_type,
 					mc_cipher);
