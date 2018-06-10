@@ -435,7 +435,7 @@ void lim_util_count_sta_del(tpAniSirGlobal pMac, tpDphHashNode pSta,
 		tpPESession psessionEntry);
 
 uint8_t lim_get_ht_capability(tpAniSirGlobal, uint32_t, tpPESession);
-QDF_STATUS lim_tx_complete(tHalHandle hHal, qdf_nbuf_t buf, bool free);
+QDF_STATUS lim_tx_complete(void *context, qdf_nbuf_t buf, bool free);
 
 /**
  * This function will be registered with HAL for callback when TSPEC inactivity

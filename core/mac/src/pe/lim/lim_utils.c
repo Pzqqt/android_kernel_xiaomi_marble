@@ -4224,7 +4224,7 @@ lim_enable_short_preamble(tpAniSirGlobal pMac, uint8_t enable,
  *
  * @return QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS lim_tx_complete(tHalHandle hHal, qdf_nbuf_t buf, bool free)
+QDF_STATUS lim_tx_complete(void *context, qdf_nbuf_t buf, bool free)
 {
 	if (free)
 		cds_packet_free((void *)buf);
