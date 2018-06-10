@@ -2385,7 +2385,7 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 		    && (pMsg->type <= eWNI_SME_MSG_TYPES_END)) {
 			/* CSR */
 			if (pMsg->bodyptr) {
-				status = csr_msg_processor(hHal, pMsg->bodyptr);
+				status = csr_msg_processor(pMac, pMsg->bodyptr);
 				qdf_mem_free(pMsg->bodyptr);
 			} else
 				sme_err("Empty message for: %d", pMsg->type);
