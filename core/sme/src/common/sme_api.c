@@ -2880,7 +2880,7 @@ QDF_STATUS sme_scan_flush_result(tHalHandle hHal)
 			 0, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_scan_flush_result(hHal);
+		status = csr_scan_flush_result(pMac);
 		sme_release_global_lock(&pMac->sme);
 	}
 
