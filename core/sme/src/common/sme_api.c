@@ -2923,7 +2923,7 @@ QDF_STATUS sme_scan_flush_p2p_result(tHalHandle hHal, uint8_t sessionId)
 			 sessionId, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_scan_flush_selective_result(hHal, true);
+		status = csr_scan_flush_selective_result(pMac, true);
 		sme_release_global_lock(&pMac->sme);
 	}
 
