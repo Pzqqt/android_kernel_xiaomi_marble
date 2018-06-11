@@ -1654,8 +1654,8 @@ QDF_STATUS p2p_cleanup_tx_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 	struct tx_action_context *curr_tx_ctx;
 	qdf_list_node_t *p_node;
 
-	p2p_info("clean up tx queue wait for roc, size:%d",
-		qdf_list_size(&p2p_soc_obj->tx_q_roc));
+	p2p_debug("clean up tx queue wait for roc, size:%d",
+		  qdf_list_size(&p2p_soc_obj->tx_q_roc));
 
 	while (qdf_list_remove_front(&p2p_soc_obj->tx_q_roc, &p_node) ==
 		QDF_STATUS_SUCCESS) {
@@ -1666,8 +1666,8 @@ QDF_STATUS p2p_cleanup_tx_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 		qdf_mem_free(curr_tx_ctx);
 	}
 
-	p2p_info("clean up tx queue wait for ack, size:%d",
-		qdf_list_size(&p2p_soc_obj->tx_q_ack));
+	p2p_debug("clean up tx queue wait for ack, size:%d",
+		  qdf_list_size(&p2p_soc_obj->tx_q_ack));
 	while (qdf_list_remove_front(&p2p_soc_obj->tx_q_ack, &p_node) ==
 		QDF_STATUS_SUCCESS) {
 		curr_tx_ctx = qdf_container_of(p_node,
