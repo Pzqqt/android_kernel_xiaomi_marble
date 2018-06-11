@@ -102,8 +102,10 @@ static QDF_STATUS pmo_core_flush_arp_from_vdev_priv(
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS pmo_core_do_enable_arp_offload(struct wlan_objmgr_vdev *vdev,
-		uint8_t vdev_id, enum pmo_offload_trigger trigger)
+static QDF_STATUS
+pmo_core_do_enable_arp_offload(struct wlan_objmgr_vdev *vdev,
+			       uint8_t vdev_id,
+			       enum pmo_offload_trigger trigger)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pmo_psoc_priv_obj *psoc_ctx;
@@ -123,8 +125,8 @@ static QDF_STATUS pmo_core_do_enable_arp_offload(struct wlan_objmgr_vdev *vdev,
 	switch (trigger) {
 	case pmo_ipv4_change_notify:
 		if (!psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_debug("active offload is disabled, skip in mode:%d",
-				trigger);
+			pmo_debug("active offload is disabled, skip in mode %d",
+				  trigger);
 			status = QDF_STATUS_E_INVAL;
 			goto out;
 		}
@@ -133,8 +135,8 @@ static QDF_STATUS pmo_core_do_enable_arp_offload(struct wlan_objmgr_vdev *vdev,
 		break;
 	case pmo_apps_suspend:
 		if (psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_debug("active offload is enabled, skip in mode: %d",
-				trigger);
+			pmo_debug("active offload is enabled, skip in mode %d",
+				  trigger);
 			status = QDF_STATUS_E_INVAL;
 			goto out;
 		}
@@ -316,14 +318,15 @@ QDF_STATUS pmo_core_enable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 
 	status = pmo_core_arp_offload_sanity(vdev);
 	if (status != QDF_STATUS_SUCCESS)
-		goto def_ref;
+		goto put_ref;
 
 	vdev_id = pmo_vdev_get_id(vdev);
 	pmo_debug("Enable arp offload in fwr vdev id: %d vdev: %pK",
 		vdev_id, vdev);
 
 	status = pmo_core_do_enable_arp_offload(vdev, vdev_id, trigger);
-def_ref:
+
+put_ref:
 	pmo_vdev_put_ref(vdev);
 out:
 	pmo_exit();
