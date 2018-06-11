@@ -133,14 +133,6 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	 */
 	pBssDescr->channelId = lim_get_channel_from_beacon(pMac, pBPR);
 
-	if (pBssDescr->channelId == 0) {
-		/* If the channel Id is not retrieved from Beacon, extract the channel from BD */
-		if (!rxChannel) {
-			rxChannel = pMac->lim.gLimCurrentScanChannelId;
-		}
-		pBssDescr->channelId = rxChannel;
-	}
-
 	pBssDescr->channelIdSelf = pBssDescr->channelId;
 	pBssDescr->rx_channel = rxChannel;
 

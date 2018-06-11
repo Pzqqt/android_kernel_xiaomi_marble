@@ -221,32 +221,12 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 uint32_t lim_create_timers(tpAniSirGlobal pMac)
 {
 	uint32_t cfgValue, i = 0;
-	uint32_t cfgValue1;
 
 	pe_debug("Creating Timers used by LIM module in Role: %d",
 	       pMac->lim.gLimSystemRole);
 	/* Create timers required for host roaming feature */
 	if (TX_SUCCESS != lim_create_timers_host_roam(pMac))
 		return TX_TIMER_ERROR;
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_ACTIVE_MINIMUM_CHANNEL_TIME,
-			     &cfgValue) != eSIR_SUCCESS) {
-		pe_err("could not retrieve MinChannelTimeout value");
-	}
-	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	/* Periodic probe request timer value is half of the Min channel
-	 * timer. Probe request sends periodically till min/max channel
-	 * timer expires
-	 */
-	cfgValue1 = cfgValue / 2;
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_ACTIVE_MAXIMUM_CHANNEL_TIME,
-			     &cfgValue) != eSIR_SUCCESS)
-		pe_err("could not retrieve MAXChannelTimeout value");
-
-	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	/* Limiting max numm of probe req for each channel scan */
-	pMac->lim.maxProbe = (cfgValue / cfgValue1);
 
 	if (pMac->lim.gLimSystemRole != eLIM_AP_ROLE)
 		if (false == lim_create_non_ap_timers(pMac))

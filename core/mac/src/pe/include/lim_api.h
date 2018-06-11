@@ -268,7 +268,6 @@ void lim_mon_init_session(tpAniSirGlobal mac_ptr,
 #define limGetWmeMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->limWmeEnabled)
 #define limGetWsmMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->limWsmEnabled)
 #define limGet11dMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->lim11dEnabled)
-#define limGetAckPolicy(pMac, pVal)         (*(pVal) = pMac->lim.ackPolicy)
 /* ----------------------------------------------------------------------- */
 static inline void lim_get_phy_mode(tpAniSirGlobal pMac, uint32_t *phyMode,
 				    tpPESession psessionEntry)

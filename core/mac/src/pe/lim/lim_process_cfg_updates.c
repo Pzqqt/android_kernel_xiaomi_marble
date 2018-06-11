@@ -240,15 +240,6 @@ void lim_handle_cf_gparam_update(tpAniSirGlobal pMac, uint32_t cfgId)
 		}
 		break;
 
-	case WNI_CFG_SCAN_IN_POWERSAVE:
-		if (wlan_cfg_get_int(pMac, WNI_CFG_SCAN_IN_POWERSAVE, &val1) !=
-		    eSIR_SUCCESS) {
-			pe_err("Unable to get WNI_CFG_SCAN_IN_POWERSAVE");
-			break;
-		}
-		pMac->lim.gScanInPowersave = (uint8_t) val1;
-		break;
-
 	case WNI_CFG_ASSOC_STA_LIMIT:
 		if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOC_STA_LIMIT, &val1) !=
 		    eSIR_SUCCESS) {
@@ -317,11 +308,6 @@ void lim_apply_configuration(tpAniSirGlobal pMac, tpPESession psessionEntry)
 		pe_err("could not retrieve WNI_CFG_SCAN_IN_POWERSAVE");
 		return;
 	}
-
-	pe_debug("pMac->lim.gScanInPowersave = %hu",
-		       pMac->lim.gScanInPowersave);
-	pMac->lim.gScanInPowersave = (uint8_t) val;
-
 } /*** end lim_apply_configuration() ***/
 
 /**
@@ -344,8 +330,6 @@ void lim_apply_configuration(tpAniSirGlobal pMac, tpPESession psessionEntry)
 static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	uint32_t val;
-
-	sir_copy_mac_addr(pMac->lim.gLimMyMacAddr, psessionEntry->selfMacAddr);
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val) != eSIR_SUCCESS)
 		pe_err("cfg get short preamble failed");

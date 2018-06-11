@@ -368,60 +368,9 @@ typedef struct sAniSirLim {
 
 	/* ////////////////////////////////////     TIMER RELATED END /////////////////////////////////////////// */
 
-	/* ////////////////////////////////////     SCAN/LEARN RELATED START /////////////////////////////////////////// */
-	/**
-	 * This flag when set, will use scan mode instead of
-	 * Learn mode on BP/AP. By default this flag is set
-	 * to true until HIF getting stuck in 0x800 state is
-	 * debugged.
-	 */
-	uint32_t gLimUseScanModeForLearnMode;
-
-	/**
-	 * This is useful for modules other than LIM
-	 * to see if system is in scan/learn mode or not
-	 */
-	uint32_t gLimSystemInScanLearnMode;
-
-	/* Scan related globals on STA */
-	uint8_t gLimReturnAfterFirstMatch;
-	uint8_t gLim24Band11dScanDone;
-	uint8_t gLim50Band11dScanDone;
-	uint8_t gLimReturnUniqueResults;
-
-	/* / Place holder for current channel ID */
-	/* / being scanned */
-	uint32_t gLimCurrentScanChannelId;
-
-	/* Hold onto SCAN criteria */
-	/* The below is used in P2P GO case when we need to defer processing SME Req
-	 * to LIM and insert NOA first and process SME req once SNOA is started
-	 */
-	uint16_t gDeferMsgTypeForNOA;
-	uint32_t *gpDefdSmeMsgForNOA;
-
-	/* Used to store the list of legacy bss sta detected during scan on one channel */
-	uint16_t gLimRestoreCBNumScanInterval;
-	uint16_t gLimRestoreCBCount;
-	tSirMacAddr gLimLegacyBssidList[MAX_NUM_LEGACY_BSSID_PER_CHANNEL];
-
-	/* abort scan is used to abort an on-going scan */
-	uint8_t abortScan;
-	tLimScanChnInfo scanChnInfo;
-
 	struct lim_scan_channel_status scan_channel_status;
 
-	/* ////////////////////////////////////     SCAN/LEARN RELATED START /////////////////////////////////////////// */
-	tSirMacAddr gSelfMacAddr;       /* added for BT-AMP Support */
-
-	/* ////////////////////////////////////////     BSS RELATED END /////////////////////////////////////////// */
-	/* Place holder for StartBssReq message */
-	/* received by SME state machine */
-
 	uint8_t gLimCurrentBssUapsd;
-
-	/* This is used for testing sta legacy bss detect feature */
-	uint8_t gLimForceNoPropIE;
 
 	/* */
 	/* Store the BSS Index returned by HAL during */
@@ -520,13 +469,6 @@ typedef struct sAniSirLim {
 
 #endif
 
-	/* Time stamp of the last beacon received from the BSS to which STA is connected. */
-	uint64_t gLastBeaconTimeStamp;
-	/* RX Beacon count for the current BSS to which STA is connected. */
-	uint32_t gCurrentBssBeaconCnt;
-	uint8_t gLastBeaconDtimCount;
-	uint8_t gLastBeaconDtimPeriod;
-
 	/* ////////////////////////////////////////     STATS/COUNTER RELATED END /////////////////////////////////////////// */
 
 	/* ////////////////////////////////////////     STATES RELATED START /////////////////////////////////////////// */
@@ -576,11 +518,6 @@ typedef struct sAniSirLim {
 	/* ---------------- DPH ----------------------- */
 	/* these used to live in DPH but are now moved here (where they belong) */
 	uint32_t gLimPhyMode;
-	uint32_t propRateAdjustPeriod;
-	uint32_t scanStartTime; /* used to measure scan time */
-
-	uint8_t gLimMyMacAddr[6];
-	uint8_t ackPolicy;
 
 	uint8_t gLimQosEnabled:1;       /* 11E */
 	uint8_t gLimWmeEnabled:1;       /* WME */
@@ -713,9 +650,6 @@ typedef struct sAniSirLim {
 	/* MIMO Power Save */
 	tSirMacHTMIMOPowerSaveState gHTMIMOPSState;
 
-	/* Scan In Power Save */
-	uint8_t gScanInPowersave;
-
 	/* */
 	/* A-MPDU Density */
 	/* 000 - No restriction */
@@ -805,7 +739,6 @@ typedef struct sAniSirLim {
 	 * there is no session context in PE, e.g. Scan related messages.
 	 **/
 	uint8_t gSmeSessionId;
-	uint16_t gTransactionId;
 
 	tSirRemainOnChnReq *gpLimRemainOnChanReq;       /* hold remain on chan request in this buf */
 	qdf_mutex_t lim_frame_register_lock;
@@ -825,12 +758,9 @@ typedef struct sAniSirLim {
 	/* Number of channel switch IEs sent so far */
 	uint8_t gLimDfsChanSwTxCount;
 	uint8_t gLimDfsTargetChanNum;
-	uint8_t probeCounter;
-	uint8_t maxProbe;
 	QDF_STATUS(*sme_msg_callback)
 		(tHalHandle hal, struct scheduler_msg *msg);
 	uint8_t retry_packet_cnt;
-	uint8_t scan_disabled;
 	uint8_t beacon_probe_rsp_cnt_per_scan;
 	wlan_scan_requester req_id;
 	bool global_obss_offload_enabled;

@@ -180,23 +180,6 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
 	} /* switch (msg->type) */
 }
 
-/* WLAN_SUSPEND_LINK Related */
-
-/**
- * lim_is_link_suspended()- check if link is suspended
- * @mac_ctx: global MAC context
- *
- * This function returns is link is suspended or not.
- * Since Suspend link uses init scan, it just returns
- * gLimSystemInScanLearnMode flag.
- *
- * Return: uint8_t(gLimSystemInScanLearnMode flag)
- */
-uint8_t lim_is_link_suspended(tpAniSirGlobal mac_ctx)
-{
-	return mac_ctx->lim.gLimSystemInScanLearnMode;
-}
-
 /**
  * lim_change_channel_with_callback() - change channel and register callback
  * @mac_ctx: global MAC context
@@ -337,27 +320,6 @@ void lim_set_dfs_channel_list(tpAniSirGlobal mac_ctx, uint8_t chan_num,
 	}
 
 	return;
-}
-
-/**
- * lim_restore_pre_scan_state() - restore HW state prior to scan
- *
- * @mac_ctx: global MAC context
- *
- * This function is called by lim_continue_channel_scan()
- * to restore HW state prior to entering 'scan state'
- *
- * Return: None
- */
-void lim_restore_pre_scan_state(tpAniSirGlobal mac_ctx)
-{
-	/* Deactivate MIN/MAX channel timers if running */
-	lim_deactivate_and_change_timer(mac_ctx, eLIM_MIN_CHANNEL_TIMER);
-	lim_deactivate_and_change_timer(mac_ctx, eLIM_MAX_CHANNEL_TIMER);
-
-	mac_ctx->lim.gLimSystemInScanLearnMode = 0;
-	pe_debug("Scan ended, took %llu tu",
-		(tx_time_get() - mac_ctx->lim.scanStartTime));
 }
 
 /**
@@ -939,11 +901,6 @@ static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 			/* suspend link */
 			pe_debug("Suspend link, sessionid %d is off channel",
 				sessionid);
-			if (lim_is_link_suspended(mac_ctx)) {
-				pe_err("link is already suspended, session %d",
-					sessionid);
-				goto error;
-			}
 			lim_process_mlm_post_join_suspend_link(mac_ctx,
 				QDF_STATUS_SUCCESS, (uint32_t *)session);
 		} else {

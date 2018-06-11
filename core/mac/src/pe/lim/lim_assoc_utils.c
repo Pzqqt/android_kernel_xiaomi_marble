@@ -616,8 +616,6 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 		/* Deactivating probe after heart beat timer */
 		lim_deactivate_and_change_timer(pMac, eLIM_PROBE_AFTER_HB_TIMER);
 		lim_deactivate_and_change_timer(pMac, eLIM_JOIN_FAIL_TIMER);
-		pMac->lim.gLastBeaconDtimCount = 0;
-		pMac->lim.gLastBeaconDtimPeriod = 0;
 	}
 #ifdef WLAN_DEBUG
 	/* increment a debug count */

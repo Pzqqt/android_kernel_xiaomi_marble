@@ -429,35 +429,38 @@ static void lim_process_hw_mode_trans_ind(tpAniSirGlobal mac, void *body)
    \return none
    -------------------------------------------------------------*/
 
-uint8_t static def_msg_decision(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
+static uint8_t def_msg_decision(tpAniSirGlobal mac_ctx,
+				struct scheduler_msg *lim_msg)
 {
 	uint8_t type, subtype;
 	QDF_STATUS status;
 	bool mgmt_pkt_defer = true;
 
-/* this function should not changed */
-	if (pMac->lim.gLimSmeState == eLIM_SME_OFFLINE_STATE) {
+	/* this function should not changed */
+	if (mac_ctx->lim.gLimSmeState == eLIM_SME_OFFLINE_STATE) {
 		/* Defer processing this message */
-		if (lim_defer_msg(pMac, limMsg) != TX_SUCCESS) {
+		if (lim_defer_msg(mac_ctx, lim_msg) != TX_SUCCESS) {
 			QDF_TRACE(QDF_MODULE_ID_PE, LOGE,
 					FL("Unable to Defer Msg"));
-			lim_log_session_states(pMac);
-			lim_handle_defer_msg_error(pMac, limMsg);
+			lim_log_session_states(mac_ctx);
+			lim_handle_defer_msg_error(mac_ctx, lim_msg);
 		}
 		return true;
 	}
-	/* When defer is requested then defer all the messages except HAL responses. */
-	if ((!lim_is_system_in_scan_state(pMac))
-	    && (true != GET_LIM_PROCESS_DEFD_MESGS(pMac))
-	    && !pMac->lim.gLimSystemInScanLearnMode) {
 
-		if (limMsg->type == SIR_BB_XPORT_MGMT_MSG) {
+	/*
+	 * When defer is requested then defer all the messages except
+	 * HAL responses.
+	 */
+	if (!lim_is_system_in_scan_state(mac_ctx) &&
+	    !GET_LIM_PROCESS_DEFD_MESGS(mac_ctx)) {
+		if (lim_msg->type == SIR_BB_XPORT_MGMT_MSG) {
 			/*
 			 * Dont defer beacon and probe response
 			 * because it will fill the differ queue quickly
 			 */
-			status = lim_util_get_type_subtype(limMsg->bodyptr,
-				&type, &subtype);
+			status = lim_util_get_type_subtype(lim_msg->bodyptr,
+							   &type, &subtype);
 			if (QDF_IS_STATUS_SUCCESS(status) &&
 				(type == SIR_MAC_MGMT_FRAME) &&
 				((subtype == SIR_MAC_MGMT_BEACON) ||
@@ -465,19 +468,19 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, struct scheduler_msg *limMs
 				mgmt_pkt_defer = false;
 		}
 
-		if ((limMsg->type != WMA_ADD_BSS_RSP)
-		    && (limMsg->type != WMA_DELETE_BSS_RSP)
-		    && (limMsg->type != WMA_DELETE_BSS_HO_FAIL_RSP)
-		    && (limMsg->type != WMA_ADD_STA_RSP)
-		    && (limMsg->type != WMA_DELETE_STA_RSP)
-		    && (limMsg->type != WMA_SET_BSSKEY_RSP)
-		    && (limMsg->type != WMA_SET_STAKEY_RSP)
-		    && (limMsg->type != WMA_SET_STA_BCASTKEY_RSP)
-		    && (limMsg->type != WMA_AGGR_QOS_RSP)
-		    && (limMsg->type != WMA_SET_MIMOPS_RSP)
-		    && (limMsg->type != WMA_SWITCH_CHANNEL_RSP)
-		    && (limMsg->type != WMA_P2P_NOA_ATTR_IND)
-		    && (limMsg->type != WMA_ADD_TS_RSP) &&
+		if ((lim_msg->type != WMA_ADD_BSS_RSP) &&
+		    (lim_msg->type != WMA_DELETE_BSS_RSP) &&
+		    (lim_msg->type != WMA_DELETE_BSS_HO_FAIL_RSP) &&
+		    (lim_msg->type != WMA_ADD_STA_RSP) &&
+		    (lim_msg->type != WMA_DELETE_STA_RSP) &&
+		    (lim_msg->type != WMA_SET_BSSKEY_RSP) &&
+		    (lim_msg->type != WMA_SET_STAKEY_RSP) &&
+		    (lim_msg->type != WMA_SET_STA_BCASTKEY_RSP) &&
+		    (lim_msg->type != WMA_AGGR_QOS_RSP) &&
+		    (lim_msg->type != WMA_SET_MIMOPS_RSP) &&
+		    (lim_msg->type != WMA_SWITCH_CHANNEL_RSP) &&
+		    (lim_msg->type != WMA_P2P_NOA_ATTR_IND) &&
+		    (lim_msg->type != WMA_ADD_TS_RSP) &&
 		    /*
 		     * LIM won't process any defer queue commands if gLimAddtsSent is
 		     * set to TRUE. gLimAddtsSent will be set TRUE to while sending
@@ -490,24 +493,23 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, struct scheduler_msg *limMs
 		     * enabled, so that this will be processed immediately and sets
 		     * gLimAddtsSent to FALSE.
 		     */
-		    (limMsg->type != SIR_LIM_ADDTS_RSP_TIMEOUT) &&
+		    (lim_msg->type != SIR_LIM_ADDTS_RSP_TIMEOUT) &&
 		    /* Allow processing of RX frames while awaiting reception
 		     * of ADD TS response over the air. This logic particularly
 		     * handles the case when host sends ADD BA request to FW
 		     * after ADD TS request is sent over the air and
 		     * ADD TS response received over the air */
-		    !(limMsg->type == SIR_BB_XPORT_MGMT_MSG &&
-			pMac->lim.gLimAddtsSent) &&
-			(mgmt_pkt_defer)) {
+		    !(lim_msg->type == SIR_BB_XPORT_MGMT_MSG &&
+		    mac_ctx->lim.gLimAddtsSent) &&
+		    (mgmt_pkt_defer)) {
 			pe_debug("Defer the current message %s , gLimProcessDefdMsgs is false and system is not in scan/learn mode",
-				       lim_msg_str(limMsg->type));
+				 lim_msg_str(lim_msg->type));
 			/* Defer processing this message */
-			if (lim_defer_msg(pMac, limMsg) != TX_SUCCESS) {
+			if (lim_defer_msg(mac_ctx, lim_msg) != TX_SUCCESS) {
 				QDF_TRACE(QDF_MODULE_ID_PE, LOGE,
-					FL("Unable to Defer Msg"));
-				lim_log_session_states(pMac);
-				lim_handle_defer_msg_error(pMac, limMsg);
-
+					  FL("Unable to Defer Msg"));
+				lim_log_session_states(mac_ctx);
+				lim_handle_defer_msg_error(mac_ctx, lim_msg);
 			}
 			return true;
 		}
@@ -2104,7 +2106,6 @@ static void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
 
 			if ((lim_is_system_in_scan_state(pMac))
 			    || (true != GET_LIM_PROCESS_DEFD_MESGS(pMac))
-			    || (pMac->lim.gLimSystemInScanLearnMode)
 			    ||  pMac->lim.gLimAddtsSent)
 				break;
 		}

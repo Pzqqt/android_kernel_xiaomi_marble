@@ -485,7 +485,6 @@ tSirRetStatus lim_post_sm_state_update(tpAniSirGlobal pMac,
 
 void lim_delete_sta_context(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
 void lim_delete_dialogue_token_list(tpAniSirGlobal pMac);
-void lim_resset_scan_channel_info(tpAniSirGlobal pMac);
 
 /**
  * lim_add_channel_status_info() - store

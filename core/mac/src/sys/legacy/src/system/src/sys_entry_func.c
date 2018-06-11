@@ -115,8 +115,7 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 		 */
 		if ((subtype == SIR_MAC_MGMT_BEACON) &&
 			(!lim_is_system_in_scan_state(mac_ctx)) &&
-			(GET_LIM_PROCESS_DEFD_MESGS(mac_ctx) != true) &&
-			!mac_ctx->lim.gLimSystemInScanLearnMode) {
+			(GET_LIM_PROCESS_DEFD_MESGS(mac_ctx) != true)) {
 			pe_debug("dropping received beacon in deffered state");
 			goto fail;
 		}

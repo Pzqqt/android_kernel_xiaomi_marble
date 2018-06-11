@@ -760,9 +760,6 @@ void lim_covert_channel_scan_type(tpAniSirGlobal pMac, uint8_t channelNum,
 void lim_set_dfs_channel_list(tpAniSirGlobal pMac, uint8_t channelNum,
 			      tSirDFSChannelList *dfsChannelList);
 void limContinueChannelLearn(tpAniSirGlobal);
-/* WLAN_SUSPEND_LINK Related */
-uint8_t lim_is_link_suspended(tpAniSirGlobal pMac);
-/* end WLAN_SUSPEND_LINK Related */
 
 #ifdef WLAN_FEATURE_11W
 /* 11w send SA query request action frame */

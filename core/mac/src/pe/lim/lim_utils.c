@@ -4872,11 +4872,6 @@ lim_get_b_dfrom_rx_packet(tpAniSirGlobal pMac, void *body, uint32_t **pRxPacketI
 	*pRxPacketInfo = (uint32_t *) body;
 } /*** end lim_get_b_dfrom_rx_packet() ***/
 
-void lim_resset_scan_channel_info(tpAniSirGlobal pMac)
-{
-	qdf_mem_set(&pMac->lim.scanChnInfo, sizeof(tLimScanChnInfo), 0);
-}
-
 void lim_add_channel_status_info(tpAniSirGlobal p_mac,
 				 struct lim_channel_status *channel_stat,
 				 uint8_t channel_id)

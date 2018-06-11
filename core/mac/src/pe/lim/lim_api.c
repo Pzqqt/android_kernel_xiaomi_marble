@@ -73,31 +73,6 @@
 
 static void __lim_init_scan_vars(tpAniSirGlobal pMac)
 {
-	pMac->lim.gLimUseScanModeForLearnMode = 1;
-
-	pMac->lim.gLimSystemInScanLearnMode = 0;
-
-	/* Scan related globals on STA */
-	pMac->lim.gLimReturnAfterFirstMatch = 0;
-	pMac->lim.gLim24Band11dScanDone = 0;
-	pMac->lim.gLim50Band11dScanDone = 0;
-	pMac->lim.gLimReturnUniqueResults = 0;
-
-	pMac->lim.gLimCurrentScanChannelId = 0;
-	pMac->lim.gDeferMsgTypeForNOA = 0;
-	pMac->lim.gpDefdSmeMsgForNOA = NULL;
-
-	pMac->lim.gLimRestoreCBNumScanInterval =
-		LIM_RESTORE_CB_NUM_SCAN_INTERVAL_DEFAULT;
-	pMac->lim.gLimRestoreCBCount = 0;
-	qdf_mem_set(pMac->lim.gLimLegacyBssidList,
-		    sizeof(pMac->lim.gLimLegacyBssidList), 0);
-
-	/* Fill in default values */
-
-	/* abort scan is used to abort an on-going scan */
-	pMac->lim.abortScan = 0;
-	qdf_mem_set(&pMac->lim.scanChnInfo, sizeof(tLimScanChnInfo), 0);
 	qdf_mem_set(&pMac->lim.dfschannelList, sizeof(tSirDFSChannelList), 0);
 }
 
@@ -107,7 +82,6 @@ static void __lim_init_bss_vars(tpAniSirGlobal pMac)
 		    sizeof(*pMac->lim.gpSession) * pMac->lim.maxBssId, 0);
 
 	/* This is for testing purposes only, be default should always be off */
-	pMac->lim.gLimForceNoPropIE = 0;
 	pMac->lim.gpLimMlmSetKeysReq = NULL;
 }
 
@@ -188,12 +162,6 @@ static void __lim_init_states(tpAniSirGlobal pMac)
 		    sizeof(tLimNoShortSlotParams), 0);
 
 	pMac->lim.gLimPhyMode = 0;
-	pMac->lim.scanStartTime = 0;    /* used to measure scan time */
-
-	qdf_mem_set(pMac->lim.gLimMyMacAddr, sizeof(pMac->lim.gLimMyMacAddr),
-		    0);
-	pMac->lim.ackPolicy = 0;
-
 	pMac->lim.gLimProbeRespDisableFlag = 0; /* control over probe resp */
 }
 
@@ -231,14 +199,6 @@ static void __lim_init_vars(tpAniSirGlobal pMac)
 
 	/* admission control policy information */
 	qdf_mem_set(&pMac->lim.admitPolicyInfo, sizeof(tLimAdmitPolicyInfo), 0);
-
-	pMac->lim.gLastBeaconDtimCount = 0;
-	pMac->lim.gLastBeaconDtimPeriod = 0;
-
-	/* Scan in Power Save Flag */
-	pMac->lim.gScanInPowersave = 0;
-	pMac->lim.probeCounter = 0;
-	pMac->lim.maxProbe = 0;
 }
 
 static void __lim_init_assoc_vars(tpAniSirGlobal pMac)
@@ -489,17 +449,11 @@ tSirRetStatus lim_start(tpAniSirGlobal pMac)
 			       (pMac, TRACE_CODE_SME_STATE, NO_SESSION,
 			       pMac->lim.gLimSmeState));
 
-		/* By default do not return after first scan match */
-		pMac->lim.gLimReturnAfterFirstMatch = 0;
-
 		/* Initialize MLM state machine */
 		if (eSIR_SUCCESS != lim_init_mlm(pMac)) {
 			pe_err("Init MLM failed");
 			return eSIR_FAILURE;
 		}
-
-		/* By default return unique scan results */
-		pMac->lim.gLimReturnUniqueResults = true;
 	} else {
 		/**
 		 * Should not have received eWNI_SME_START_REQ in states
@@ -657,11 +611,6 @@ void lim_cleanup(tpAniSirGlobal pMac)
 		pMac->lim.gpLimMlmAuthReq = NULL;
 	}
 
-	if (pMac->lim.gpDefdSmeMsgForNOA != NULL) {
-		qdf_mem_free(pMac->lim.gpDefdSmeMsgForNOA);
-		pMac->lim.gpDefdSmeMsgForNOA = NULL;
-	}
-
 	if (pMac->lim.limDisassocDeauthCnfReq.pMlmDisassocReq) {
 		qdf_mem_free(pMac->lim.limDisassocDeauthCnfReq.pMlmDisassocReq);
 		pMac->lim.limDisassocDeauthCnfReq.pMlmDisassocReq = NULL;
@@ -717,9 +666,6 @@ static void lim_state_info_dump(char **buf_ptr, uint16_t *size)
 		"\n MlmState: %d", mac->lim.gLimMlmState);
 	len += qdf_scnprintf(buf + len, *size - len,
 		"\n PrevMlmState: %d", mac->lim.gLimPrevMlmState);
-	len += qdf_scnprintf(buf + len, *size - len,
-		"\n SystemInScanLearnMode: %d",
-		mac->lim.gLimSystemInScanLearnMode);
 	len += qdf_scnprintf(buf + len, *size - len,
 		"\n ProcessDefdMsgs: %d", mac->lim.gLimProcessDefdMsgs);
 

@@ -2146,11 +2146,6 @@ typedef struct sSmeGetScanChnRsp {
 	tLimScanChn scanChn[1];
 } tSmeGetScanChnRsp, *tpSmeGetScanChnRsp;
 
-typedef struct sLimScanChnInfo {
-	uint8_t numChnInfo;     /* number of channels in scanChn */
-	tLimScanChn scanChn[SIR_MAX_SUPPORTED_CHANNEL_LIST];
-} tLimScanChnInfo;
-
 typedef struct sSirSmeGetAssocSTAsReq {
 	uint16_t messageType;   /* eWNI_SME_GET_ASSOC_STAS_REQ */
 	uint16_t length;
