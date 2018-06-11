@@ -369,8 +369,8 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 
 #define RESET_KEY_MGMT(_param)   ((_param)->key_mgmt = \
 					(1 << WLAN_CRYPTO_KEY_MGMT_NONE))
-#define SET_KEY_MGMT(_param, _c)  ((_param)->key_mgmt |= (1 << (_c + 1)))
-#define HAS_KEY_MGMT(_param, _c)  ((_param)->key_mgmt & (1 << (_c + 1)))
+#define SET_KEY_MGMT(_param, _c)  ((_param)->key_mgmt |= (1 << (_c)))
+#define HAS_KEY_MGMT(_param, _c)  ((_param)->key_mgmt & (1 << (_c)))
 
 #define UCAST_CIPHER_MATCH(_param1, _param2)    \
 	(((_param1)->ucastcipherset & (_param2)->ucastcipherset) != 0)

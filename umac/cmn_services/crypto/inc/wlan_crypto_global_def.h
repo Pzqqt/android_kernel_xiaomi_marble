@@ -191,8 +191,8 @@ struct wlan_crypto_params {
 	uint32_t mcastcipherset;
 	uint32_t mgmtcipherset;
 	uint32_t cipher_caps;
+	uint32_t key_mgmt;
 	uint16_t rsn_caps;
-	uint16_t key_mgmt;
 };
 
 typedef enum wlan_crypto_param_type {
