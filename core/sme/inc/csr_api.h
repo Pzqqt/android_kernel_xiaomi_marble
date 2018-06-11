@@ -1706,7 +1706,7 @@ typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 #define CSR_IS_AUTH_TYPE_SAE(auth_type) (false)
 #endif
 
-QDF_STATUS csr_set_channels(tHalHandle hHal, tCsrConfigParam *pParam);
+QDF_STATUS csr_set_channels(tpAniSirGlobal pMac, tCsrConfigParam *pParam);
 
 /* enum to string conversion for debug output */
 const char *get_e_roam_cmd_status_str(eRoamCmdStatus val);

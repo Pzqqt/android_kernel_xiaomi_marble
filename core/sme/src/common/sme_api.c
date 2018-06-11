@@ -775,8 +775,9 @@ QDF_STATUS sme_init_chan_list(tHalHandle hal, uint8_t *alpha2,
  *  Other status means SME is failed to update the config parameters.
  */
 
-QDF_STATUS sme_set11dinfo(tHalHandle hHal, tpSmeConfigParams pSmeConfigParams)
+QDF_STATUS sme_set11dinfo(tHalHandle hal, tpSmeConfigParams pSmeConfigParams)
 {
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(hal);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
@@ -786,7 +787,7 @@ QDF_STATUS sme_set11dinfo(tHalHandle hHal, tpSmeConfigParams pSmeConfigParams)
 		return status;
 	}
 
-	status = csr_set_channels(hHal, &pSmeConfigParams->csrConfig);
+	status = csr_set_channels(mac_ctx, &pSmeConfigParams->csrConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		sme_err("csr_set_channels failed with status: %d", status);
 

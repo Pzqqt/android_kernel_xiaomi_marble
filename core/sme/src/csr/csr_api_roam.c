@@ -608,10 +608,9 @@ QDF_STATUS csr_init_chan_list(tpAniSirGlobal mac, uint8_t *alpha2)
 	return status;
 }
 
-QDF_STATUS csr_set_channels(tHalHandle hHal, tCsrConfigParam *pParam)
+QDF_STATUS csr_set_channels(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	uint8_t index = 0;
 
 	qdf_mem_copy(pParam->Csr11dinfo.countryCode,
