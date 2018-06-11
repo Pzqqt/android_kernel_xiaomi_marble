@@ -30,6 +30,7 @@
 #include "../dfs_filter_init.h"
 #include "../dfs_full_offload.h"
 #include "wlan_dfs_utils_api.h"
+#include "../dfs_etsi_precac.h"
 
 /**
  * dfs_testtimer_task() - Sends CSA in the current channel.
@@ -117,6 +118,7 @@ int dfs_attach(struct wlan_dfs *dfs)
 	}
 	dfs_cac_attach(dfs);
 	dfs_zero_cac_attach(dfs);
+	dfs_etsi_precac_attach(dfs);
 	dfs_nol_attach(dfs);
 
 	/*
@@ -153,6 +155,7 @@ void dfs_detach(struct wlan_dfs *dfs)
 {
 	if (!dfs->dfs_is_offload_enabled)
 		dfs_main_detach(dfs);
+	dfs_etsi_precac_detach(dfs);
 	dfs_zero_cac_detach(dfs);
 	dfs_nol_detach(dfs);
 }
@@ -472,9 +475,11 @@ int dfs_control(struct wlan_dfs *dfs,
 		break;
 	case DFS_SHOW_PRECAC_LISTS:
 		dfs_print_precaclists(dfs);
+		dfs_print_etsi_precaclists(dfs);
 		break;
 	case DFS_RESET_PRECAC_LISTS:
 		dfs_reset_precac_lists(dfs);
+		dfs_reset_etsi_precac_lists(dfs);
 		break;
 	case DFS_SECOND_SEGMENT_BANGRADAR:
 		if (dfs->dfs_is_offload_enabled) {

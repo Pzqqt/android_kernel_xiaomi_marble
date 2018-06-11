@@ -24,6 +24,7 @@
 #include "wlan_dfs_utils_api.h"
 #include "../../core/src/dfs.h"
 #include "../../core/src/dfs_zero_cac.h"
+#include "../../core/src/dfs_etsi_precac.h"
 #include <wlan_reg_services_api.h>
 #include "../../core/src/dfs_random_chan_sel.h"
 #ifdef QCA_DFS_USE_POLICY_MANAGER
@@ -50,6 +51,7 @@ QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev)
 	dfs_reset(dfs);
 	dfs_nol_update(dfs);
 	dfs_reset_precaclists(dfs);
+	dfs_reset_etsiprecaclists(dfs);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -84,6 +86,23 @@ QDF_STATUS utils_dfs_reset_precaclists(struct wlan_objmgr_pdev *pdev)
 }
 qdf_export_symbol(utils_dfs_reset_precaclists);
 
+#ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
+QDF_STATUS utils_dfs_reset_etsi_precaclists(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return  QDF_STATUS_E_FAILURE;
+
+	dfs_reset_etsiprecaclists(dfs);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(utils_dfs_reset_etsi_precaclists);
+#endif
+
 QDF_STATUS utils_dfs_cancel_precac_timer(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
@@ -112,6 +131,24 @@ QDF_STATUS utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(utils_dfs_is_precac_done);
+
+#ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
+QDF_STATUS utils_dfs_is_etsi_precac_done(struct wlan_objmgr_pdev *pdev,
+					 bool *is_etsi_precac_done)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return  QDF_STATUS_E_FAILURE;
+
+	*is_etsi_precac_done = dfs_is_etsi_precac_done(dfs);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(utils_dfs_is_etsi_precac_done);
+#endif
 
 QDF_STATUS utils_dfs_cancel_cac_timer(struct wlan_objmgr_pdev *pdev)
 {

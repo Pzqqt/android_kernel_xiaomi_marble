@@ -1059,6 +1059,11 @@ struct wlan_dfs {
 	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_done_list;
 	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_nol_list;
 
+#ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
+	TAILQ_HEAD(, dfs_etsi_precac_entry) dfs_etsiprecac_required_list;
+	TAILQ_HEAD(, dfs_etsi_precac_entry) dfs_etsiprecac_done_list;
+#endif
+
 	struct dfs_channel *dfs_curchan;
 	struct wlan_objmgr_pdev *dfs_pdev_obj;
 	bool           dfs_is_offload_enabled;

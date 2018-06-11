@@ -30,6 +30,7 @@
 
 #include "../dfs_channel.h"
 #include "../dfs_zero_cac.h"
+#include "../dfs_etsi_precac.h"
 #include "wlan_dfs_utils_api.h"
 #include "wlan_dfs_mlme_api.h"
 #include "../dfs_internal.h"
@@ -106,6 +107,11 @@ static os_timer_func(dfs_cac_timeout)
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "cac expired, chan %d curr time %d",
 		dfs->dfs_curchan->dfs_ch_freq,
 		(qdf_system_ticks_to_msecs(qdf_system_ticks()) / 1000));
+
+	/* Once CAC is done, add channel to ETSI precacdone list*/
+	if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_DOMAIN)
+		dfs_add_to_etsi_precac_done_list(dfs);
+
 	/*
 	 * When radar is detected during a CAC we are woken up prematurely to
 	 * switch to a new channel. Check the channel to decide how to act.

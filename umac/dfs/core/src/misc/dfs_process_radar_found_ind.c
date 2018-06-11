@@ -23,11 +23,12 @@
 
 #include "../dfs.h"
 #include "../dfs_zero_cac.h"
+#include "../dfs_etsi_precac.h"
 #include "../dfs_process_radar_found_ind.h"
 #include <wlan_reg_services_api.h>
 #include <wlan_dfs_utils_api.h>
 #include "wlan_dfs_mlme_api.h"
-
+#include "../dfs_internal.h"
 /**
  * TODO: The code is not according to the following description needs
  * modification and correction. Code always adds left and right channels to
@@ -157,7 +158,8 @@ static QDF_STATUS dfs_radar_add_channel_list_to_nol(struct wlan_dfs *dfs,
 				(uint16_t)utils_dfs_chan_to_freq(channels[i]),
 				dfs->wlan_dfs_nol_timeout);
 		nollist[num_ch++] = last_chan;
-		dfs_info(dfs, WLAN_DEBUG_DFS, "ch=%d Added to NOL", last_chan);
+		dfs_info(dfs, WLAN_DEBUG_DFS_NOL, "ch=%d Added to NOL",
+			 last_chan);
 	}
 
 	if (!num_ch) {
@@ -358,14 +360,6 @@ static uint8_t dfs_find_radar_affected_subchans(struct wlan_dfs *dfs,
 	return i;
 }
 
-/**
- * dfs_get_bonding_channels() - Get bonding channels.
- * @curchan: Pointer to dfs_channels to know width and primary channel.
- * @segment_id: Segment id, useful for 80+80/160 MHz operating band.
- * @channels: Pointer to save radar affected channels.
- *
- * Return: Number of channels.
- */
 uint8_t dfs_get_bonding_channels(struct dfs_channel *curchan,
 				 uint32_t segment_id,
 				 uint8_t *channels)
@@ -519,6 +513,14 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 */
 	if (dfs->dfs_precac_enable)
 		dfs_mark_precac_dfs(dfs, dfs->is_radar_found_on_secondary_seg);
+
+	if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_DOMAIN) {
+		/* Remove chan from ETSI Pre-CAC Cleared List*/
+		dfs_info(dfs, WLAN_DEBUG_DFS_NOL,
+			 "%s : %d remove channel from ETSI PreCAC List\n",
+			 __func__, __LINE__);
+		dfs_mark_etsi_precac_dfs(dfs, channels, num_channels);
+	}
 
 	if (!dfs->dfs_is_offload_enabled &&
 	    dfs->is_radar_found_on_secondary_seg) {

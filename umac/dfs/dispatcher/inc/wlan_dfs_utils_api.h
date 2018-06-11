@@ -108,6 +108,26 @@ QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS utils_dfs_reset_precaclists(struct wlan_objmgr_pdev *pdev);
 
 /**
+ * utils_dfs_reset_etsi_precaclists() - Clears and initializes etsi
+ *                                      precac_required_list,
+ *                                      etsi precac_done_list and
+ *                                      etsi precac_nol_list.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Wrapper function for dfs_reset_etsiprecaclists(). This function called from
+ * outside of DFS component.
+ */
+#ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
+QDF_STATUS utils_dfs_reset_etsi_precaclists(struct wlan_objmgr_pdev *pdev);
+#else
+static inline QDF_STATUS utils_dfs_reset_etsi_precaclists(
+		struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
  * utils_dfs_cancel_precac_timer() - Cancel the precac timer.
  * @pdev: Pointer to DFS pdev object.
  *
@@ -125,6 +145,25 @@ QDF_STATUS utils_dfs_cancel_precac_timer(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
 		bool *is_precac_done);
+
+/**
+ * utils_dfs_is_esti_precac_done() - Is ETSI precac done.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * wrapper function for dfs_is_etsi_precac_done(). This
+ * function called from outside of dfs component.
+ */
+#ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
+QDF_STATUS utils_dfs_is_etsi_precac_done(struct wlan_objmgr_pdev *pdev,
+					 bool *is_etsi_precac_done);
+#else
+static inline QDF_STATUS utils_dfs_is_etsi_precac_done(
+		struct wlan_objmgr_pdev *pdev,
+		bool *is_etsi_precac_done)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * utils_dfs_cancel_cac_timer() - Cancels the CAC timer.
