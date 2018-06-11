@@ -526,7 +526,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 				con_sap_adapter->session.ap.operating_channel;
 
 		if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->hdd_psoc) &&
-			wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, con_dfs_ch)) {
+			wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, con_dfs_ch) &&
+			!policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
+			hdd_ctx->hdd_psoc)) {
 			/* Provide empty scan result during DFS operation since
 			 * scanning not supported during DFS. Reason is
 			 * following case:
