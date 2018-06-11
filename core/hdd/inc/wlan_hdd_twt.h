@@ -33,7 +33,7 @@ struct hdd_context;
 struct wma_tgt_cfg;
 struct wmi_twt_enable_complete_event_param;
 
-#ifdef WLAN_FEATURE_TWT
+#ifdef WLAN_SUPPORT_TWT
 /**
  * enum twt_status - TWT target state
  * @TWT_INIT: Init State

@@ -4454,7 +4454,7 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_HE_STA_OBSSPD_MIN,
 		     CFG_HE_STA_OBSSPD_MAX),
 #endif
-#ifdef WLAN_FEATURE_TWT
+#ifdef WLAN_SUPPORT_TWT
 	REG_VARIABLE(CFG_ENABLE_TWT_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_twt,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,

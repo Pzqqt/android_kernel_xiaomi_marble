@@ -21,7 +21,7 @@
 
 #include "wma.h"
 
-#ifdef WLAN_FEATURE_TWT
+#ifdef WLAN_SUPPORT_TWT
 /**
  * wma_send_twt_enable_cmd() - Send TWT Enable command to firmware
  * @pdev_id: pdev id
@@ -34,7 +34,7 @@ void wma_send_twt_enable_cmd(uint32_t pdev_id, uint32_t congestion_timeout);
 static inline void wma_send_twt_enable_cmd(uint32_t pdev_id,
 					   uint32_t congestion_timeout)
 {
-	WMA_LOGD(FL("TWT not supported as WLAN_FEATURE_TWT is disabled"));
+	WMA_LOGD(FL("TWT not supported as WLAN_SUPPORT_TWT is disabled"));
 }
 #endif
 

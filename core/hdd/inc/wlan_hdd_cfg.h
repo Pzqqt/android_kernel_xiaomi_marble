@@ -11426,7 +11426,7 @@ enum hdd_wext_control {
 #define CFG_HE_STA_OBSSPD_DEFAULT (0x15b8c2ae)
 
 #endif /* WLAN_FEATURE_11AX */
-#ifdef WLAN_FEATURE_TWT
+#ifdef WLAN_SUPPORT_TWT
 /*
  * <ini>
  * enable_twt - Enable Target Wake Time support.
@@ -11473,7 +11473,7 @@ enum hdd_wext_control {
 #define CFG_TWT_CONGESTION_TIMEOUT_MAX     (10000)
 #define CFG_TWT_CONGESTION_TIMEOUT_DEFAULT (100)
 
-#endif /* WLAN_FEATURE_TWT */
+#endif /* WLAN_SUPPORT_TWT */
 
 /*
  * <ini>
@@ -15013,7 +15013,7 @@ struct hdd_config {
 	bool enable_ul_ofdma;
 	uint32_t he_sta_obsspd;
 #endif
-#ifdef WLAN_FEATURE_TWT
+#ifdef WLAN_SUPPORT_TWT
 	bool enable_twt;
 	uint32_t twt_congestion_timeout;
 #endif

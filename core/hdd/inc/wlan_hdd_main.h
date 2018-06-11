@@ -1909,7 +1909,7 @@ struct hdd_context {
 	/* defining the board related information */
 	uint32_t hw_bd_id;
 	struct board_info hw_bd_info;
-#ifdef WLAN_FEATURE_TWT
+#ifdef WLAN_SUPPORT_TWT
 	enum twt_status twt_state;
 #endif
 };

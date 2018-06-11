@@ -15536,7 +15536,7 @@ QDF_STATUS sme_deregister_tx_queue_cb(tHalHandle hal)
 	return sme_register_tx_queue_cb(hal, NULL);
 }
 
-#ifdef WLAN_FEATURE_TWT
+#ifdef WLAN_SUPPORT_TWT
 QDF_STATUS sme_register_twt_enable_complete_cb(tHalHandle hal,
 		void (*twt_enable_cb)(void *hdd_ctx,
 		struct wmi_twt_enable_complete_event_param *params))

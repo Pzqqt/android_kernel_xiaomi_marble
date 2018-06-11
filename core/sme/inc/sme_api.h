@@ -2336,7 +2336,7 @@ void sme_set_amsdu(tHalHandle hal, bool enable);
 uint8_t sme_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
 			uint8_t nss, uint8_t *mcs_rate_flags);
 
-#ifdef WLAN_FEATURE_TWT
+#ifdef WLAN_SUPPORT_TWT
 /**
  * sme_register_twt_enable_complete_cb() - TWT enable registrar
  * @hal: HAL handle

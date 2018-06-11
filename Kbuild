@@ -145,6 +145,10 @@ ifeq ($(CONFIG_WLAN_FEATURE_11AX), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_he.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_TWT), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_twt.o
+endif
+
 ifeq ($(CONFIG_LITHIUM), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_rx_monitor.o
 endif
@@ -853,6 +857,11 @@ ifeq ($(CONFIG_WLAN_DFS_MASTER_ENABLE), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_dfs_api.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_TWT), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_twt_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_twt_tlv.o
+endif
+
 ifeq ($(CONFIG_FEATURE_WLAN_EXTSCAN), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_extscan_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_extscan_tlv.o
@@ -1277,7 +1286,9 @@ endif
 ifeq ($(CONFIG_WLAN_FEATURE_11AX), y)
 WMA_OBJS+=	$(WMA_SRC_DIR)/wma_he.o
 endif
-
+ifeq ($(CONFIG_WLAN_FEATURE_TWT), y)
+WMA_OBJS +=	$(WMA_SRC_DIR)/wma_twt.o
+endif
 ############## PLD ##########
 PLD_DIR := core/pld
 PLD_INC_DIR := $(PLD_DIR)/inc
@@ -1527,6 +1538,7 @@ cppflags-$(CONFIG_CONVERGED_TDLS_ENABLE) += -DCONVERGED_TDLS_ENABLE
 cppflags-$(CONFIG_WLAN_CONV_SPECTRAL_ENABLE) += -DWLAN_CONV_SPECTRAL_ENABLE
 cppflags-$(CONFIG_WMI_CMD_STRINGS) += -DWMI_CMD_STRINGS
 cppflags-$(CONFIG_FEATURE_MONITOR_MODE_SUPPORT) += -DFEATURE_MONITOR_MODE_SUPPORT
+cppflags-$(CONFIG_WLAN_FEATURE_TWT) += -DWLAN_SUPPORT_TWT
 
 cppflags-$(CONFIG_WLAN_DISABLE_EXPORT_SYMBOL) += -DWLAN_DISABLE_EXPORT_SYMBOL
 cppflags-$(CONFIG_WIFI_POS_CONVERGED) += -DWIFI_POS_CONVERGED
