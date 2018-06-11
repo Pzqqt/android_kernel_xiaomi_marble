@@ -56,7 +56,6 @@
 #define QDF_MEM_MAX_MALLOC (4096 * 1024) /* 4 Mega Bytes */
 #define QDF_MEM_WARN_THRESHOLD 300 /* ms */
 #define QDF_DEBUG_STRING_SIZE 512
-#define QDF_MEM_FILE_NAME_SIZE 48
 
 static qdf_list_t qdf_mem_domains[QDF_DEBUG_DOMAIN_COUNT];
 static qdf_spinlock_t qdf_mem_list_lock;

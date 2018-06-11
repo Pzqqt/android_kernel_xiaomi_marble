@@ -41,6 +41,7 @@
 #include <qdf_atomic.h>
 #include <pld_common.h>
 #include <qdf_module.h>
+#include "qdf_str.h"
 
 #if defined(FEATURE_TSO)
 #include <net/ipv6.h>
@@ -543,7 +544,7 @@ enum qdf_nbuf_event_type {
 
 struct qdf_nbuf_event {
 	qdf_nbuf_t nbuf;
-	const char *file;
+	char file[QDF_MEM_FILE_NAME_SIZE];
 	uint32_t line;
 	enum qdf_nbuf_event_type type;
 	uint64_t timestamp;
@@ -572,7 +573,7 @@ qdf_nbuf_history_add(qdf_nbuf_t nbuf, const char *file, uint32_t line,
 	struct qdf_nbuf_event *event = &qdf_nbuf_history[idx];
 
 	event->nbuf = nbuf;
-	event->file = file;
+	qdf_str_lcopy(event->file, kbasename(file), QDF_MEM_FILE_NAME_SIZE);
 	event->line = line;
 	event->type = type;
 	event->timestamp = qdf_get_log_timestamp();
@@ -581,7 +582,7 @@ qdf_nbuf_history_add(qdf_nbuf_t nbuf, const char *file, uint32_t line,
 struct qdf_nbuf_map_metadata {
 	struct hlist_node node;
 	qdf_nbuf_t nbuf;
-	const char *file;
+	char file[QDF_MEM_FILE_NAME_SIZE];
 	uint32_t line;
 };
 
@@ -627,7 +628,7 @@ void qdf_nbuf_map_check_for_leaks(void)
 	hash_for_each(qdf_nbuf_map_ht, bucket, meta, node) {
 		count++;
 		qdf_err("0x%pk @ %s:%u",
-			meta->nbuf, kbasename(meta->file), meta->line);
+			meta->nbuf, meta->file, meta->line);
 	}
 	qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
 
@@ -678,7 +679,7 @@ qdf_nbuf_track_map(qdf_nbuf_t nbuf, const char *file, uint32_t line)
 	}
 
 	meta->nbuf = nbuf;
-	meta->file = file;
+	qdf_str_lcopy(meta->file, kbasename(file), QDF_MEM_FILE_NAME_SIZE);
 	meta->line = line;
 
 	qdf_spin_lock_irqsave(&qdf_nbuf_map_lock);
@@ -2078,7 +2079,7 @@ qdf_export_symbol(__qdf_nbuf_is_bcast_pkt);
 struct qdf_nbuf_track_t {
 	struct qdf_nbuf_track_t *p_next;
 	qdf_nbuf_t net_buf;
-	uint8_t *file_name;
+	char file_name[QDF_MEM_FILE_NAME_SIZE];
 	uint32_t line_num;
 	size_t size;
 };
@@ -2464,13 +2465,14 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 	if (p_node) {
 		qdf_print("Double allocation of skb ! Already allocated from %pK %s %d current alloc from %pK %s %d",
 			  p_node->net_buf, p_node->file_name, p_node->line_num,
-			  net_buf, file_name, line_num);
+			  net_buf, kbasename(file_name), line_num);
 		qdf_nbuf_track_free(new_node);
 	} else {
 		p_node = new_node;
 		if (p_node) {
 			p_node->net_buf = net_buf;
-			p_node->file_name = file_name;
+			qdf_str_lcopy(p_node->file_name, kbasename(file_name),
+				      QDF_MEM_FILE_NAME_SIZE);
 			p_node->line_num = line_num;
 			p_node->size = size;
 			qdf_mem_skb_inc(size);
@@ -2479,7 +2481,7 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 		} else
 			qdf_print(
 				  "Mem alloc failed ! Could not track skb from %s %d of size %zu",
-				  file_name, line_num, size);
+				  kbasename(file_name), line_num, size);
 	}
 
 	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);

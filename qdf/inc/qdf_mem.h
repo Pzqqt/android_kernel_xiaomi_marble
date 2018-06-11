@@ -86,6 +86,8 @@ void qdf_mem_init(void);
  */
 void qdf_mem_exit(void);
 
+#define QDF_MEM_FILE_NAME_SIZE 48
+
 #ifdef MEMORY_DEBUG
 /**
  * qdf_mem_malloc_debug() - debug version of QDF memory allocation API
