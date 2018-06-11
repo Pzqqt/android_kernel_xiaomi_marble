@@ -1012,6 +1012,7 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 		vdev_id = wlan_vdev_get_id(vdev);
 		req->scan_req.vdev_id = vdev_id;
 		req->scan_req.scan_req_id = sap_context->req_id;
+		req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
 		sap_get_channel_list(sap_context, &channel_list,
 				  &num_of_channels);
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
