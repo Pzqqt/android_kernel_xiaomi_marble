@@ -348,6 +348,7 @@ struct common_wmi_handle *lmac_get_pdev_wmi_handle(
 
 	return target_pdev_get_wmi_handle(tgt_hdl);
 }
+qdf_export_symbol(lmac_get_pdev_wmi_handle);
 
 wmi_unified_t
 lmac_get_pdev_wmi_unified_handle(struct wlan_objmgr_pdev *pdev)
