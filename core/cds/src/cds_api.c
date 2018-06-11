@@ -457,6 +457,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	void *HTCHandle;
 	struct hdd_context *hdd_ctx;
 	struct cds_context *cds_ctx;
+	mac_handle_t mac_handle;
 
 	cds_debug("Opening CDS");
 
@@ -631,7 +632,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	bmi_target_ready(scn, gp_cds_context->cfg_ctx);
 
 	/* Now proceed to open the MAC */
-	status = mac_open(psoc, &(gp_cds_context->mac_context),
+	status = mac_open(psoc, &mac_handle,
 			  gp_cds_context->hdd_context, cds_cfg);
 
 	if (QDF_STATUS_SUCCESS != status) {
@@ -640,9 +641,10 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		QDF_ASSERT(0);
 		goto err_soc_detach;
 	}
+	gp_cds_context->mac_context = mac_handle;
 
 	/* Now proceed to open the SME */
-	status = sme_open(gp_cds_context->mac_context);
+	status = sme_open(mac_handle);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_alert("Failed to open SME");
@@ -655,7 +657,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	return dispatcher_psoc_open(psoc);
 
 err_mac_close:
-	mac_close(gp_cds_context->mac_context);
+	mac_close(mac_handle);
 
 err_soc_detach:
 	/* todo: add propper error handling */
