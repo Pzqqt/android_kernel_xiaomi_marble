@@ -295,7 +295,7 @@ static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc)
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 
 	if (pmo_core_is_wow_applicable(psoc)) {
-		pmo_info("WOW Suspend");
+		pmo_debug("WOW Suspend");
 		pmo_core_apply_lphb(psoc);
 
 		pmo_core_configure_dynamic_wake_events(psoc);
@@ -719,7 +719,7 @@ QDF_STATUS pmo_core_psoc_bus_suspend_req(struct wlan_objmgr_psoc *psoc,
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 
 	wow_mode_selected = pmo_core_is_wow_enabled(psoc_ctx);
-	pmo_info("wow mode selected %d", wow_mode_selected);
+	pmo_debug("wow mode selected %d", wow_mode_selected);
 
 	if (wow_mode_selected)
 		status = pmo_core_enable_wow_in_fw(psoc, psoc_ctx, wow_params);
@@ -1047,7 +1047,7 @@ QDF_STATUS pmo_core_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
 
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 	wow_mode = pmo_core_is_wow_enabled(psoc_ctx);
-	pmo_info("wow mode %d", wow_mode);
+	pmo_debug("wow mode %d", wow_mode);
 
 	pmo_core_update_wow_initial_wake_up(psoc_ctx, false);
 

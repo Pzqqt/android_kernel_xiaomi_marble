@@ -454,8 +454,8 @@ static QDF_STATUS pmo_core_handle_enable_mc_list_trigger(
 	switch (trigger) {
 	case pmo_mc_list_change_notify:
 		if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_info("active offload is disabled, skip in mode: %d",
-				 trigger);
+			pmo_debug("active offload is disabled, skip in mode %d",
+				  trigger);
 			status = QDF_STATUS_E_INVAL;
 			goto free_req;
 		}
@@ -464,8 +464,8 @@ static QDF_STATUS pmo_core_handle_enable_mc_list_trigger(
 		break;
 	case pmo_apps_suspend:
 		if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_info("active offload is enabled, skip in mode: %d",
-				trigger);
+			pmo_debug("active offload is enabled, skip in mode %d",
+				  trigger);
 			status = QDF_STATUS_E_INVAL;
 			goto free_req;
 		}
@@ -516,7 +516,7 @@ QDF_STATUS pmo_core_enable_mc_addr_filtering_in_fwr(
 	if (status != QDF_STATUS_SUCCESS)
 		goto put_vdev;
 
-	pmo_info("enable mclist trigger: %d", trigger);
+	pmo_debug("enable mclist trigger: %d", trigger);
 	status = pmo_core_handle_enable_mc_list_trigger(vdev, trigger);
 
 put_vdev:
@@ -535,16 +535,16 @@ static QDF_STATUS pmo_core_handle_disable_mc_list_trigger(
 			struct wlan_objmgr_vdev *vdev,
 			enum pmo_offload_trigger trigger)
 {
-	struct pmo_vdev_priv_obj *vdev_ctx;
 	QDF_STATUS status;
-	struct pmo_mc_addr_list *op_mc_list_req = NULL;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+	struct pmo_mc_addr_list *op_mc_list_req;
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	op_mc_list_req = qdf_mem_malloc(sizeof(*op_mc_list_req));
 	if (!op_mc_list_req) {
-		pmo_err("op_mc_list_req is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
+		pmo_err("out of memory");
+		status = QDF_STATUS_E_NOMEM;
 		goto out;
 	}
 
@@ -552,20 +552,20 @@ static QDF_STATUS pmo_core_handle_disable_mc_list_trigger(
 	case pmo_peer_disconnect:
 	case pmo_mc_list_change_notify:
 		if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_info("active offload is disabled, skip in mode: %d",
-				trigger);
+			pmo_debug("active offload is disabled, skip in mode %d",
+				  trigger);
 			status = QDF_STATUS_E_INVAL;
-			goto out;
+			goto free_req;
 		}
 		status = pmo_core_do_disable_mc_addr_list(vdev, vdev_ctx,
 				op_mc_list_req);
 		break;
 	case pmo_apps_resume:
 		if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_info("active offload is enabled, skip in mode: %d",
-				trigger);
+			pmo_debug("active offload is enabled, skip in mode %d",
+				  trigger);
 			status = QDF_STATUS_E_INVAL;
-			goto out;
+			goto free_req;
 		}
 		status = pmo_core_do_disable_mc_addr_list(vdev, vdev_ctx,
 				op_mc_list_req);
@@ -575,10 +575,11 @@ static QDF_STATUS pmo_core_handle_disable_mc_list_trigger(
 		pmo_err("invalid pmo trigger for disable mc list");
 		break;
 	}
-out:
-	if (op_mc_list_req)
-		qdf_mem_free(op_mc_list_req);
 
+free_req:
+	qdf_mem_free(op_mc_list_req);
+
+out:
 	return status;
 }
 
@@ -610,12 +611,15 @@ QDF_STATUS pmo_core_disable_mc_addr_filtering_in_fwr(
 
 	status = pmo_core_mc_addr_flitering_sanity(vdev);
 	if (status != QDF_STATUS_SUCCESS)
-		goto dec_ref;
+		goto put_ref;
 
-	pmo_info("disable mclist trigger: %d", trigger);
+	pmo_debug("disable mclist trigger: %d", trigger);
+
 	status = pmo_core_handle_disable_mc_list_trigger(vdev, trigger);
-dec_ref:
+
+put_ref:
 	pmo_vdev_put_ref(vdev);
+
 out:
 	pmo_exit();
 
