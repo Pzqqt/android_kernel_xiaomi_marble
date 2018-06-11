@@ -4630,7 +4630,7 @@ QDF_STATUS sme_neighbor_report_request(tHalHandle hHal, uint8_t sessionId,
 
 	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&pMac->sme)) {
 		status =
-			sme_rrm_neighbor_report_request(hHal, sessionId,
+			sme_rrm_neighbor_report_request(pMac, sessionId,
 						pRrmNeighborReq, callbackInfo);
 		sme_release_global_lock(&pMac->sme);
 	}
