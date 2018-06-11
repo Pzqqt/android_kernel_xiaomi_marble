@@ -68,13 +68,12 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	uint16_t aid, reasonCode;
 	tpSirMacMgmtHdr pHdr;
 	tpDphHashNode pStaDs;
-#ifdef WLAN_FEATURE_11W
-	uint32_t frameLen;
-#endif
+	uint32_t frame_len;
 	int32_t frame_rssi;
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
+	frame_len = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 
 	frame_rssi = (int32_t)WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo);
 
@@ -128,17 +127,21 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 		/* If the frame received is unprotected, forward it to the supplicant to initiate */
 		/* an SA query */
-		frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 		/* send the unprotected frame indication to SME */
 		lim_send_sme_unprotected_mgmt_frame_ind(pMac, pHdr->fc.subType,
 							(uint8_t *) pHdr,
-							(frameLen +
+							(frame_len +
 							 sizeof(tSirMacMgmtHdr)),
 							psessionEntry->smeSessionId,
 							psessionEntry);
 		return;
 	}
 #endif
+
+	if (frame_len < 2) {
+		pe_err("frame len less than 2");
+		return;
+	}
 
 	/* Get reasonCode from Disassociation frame body */
 	reasonCode = sir_read_u16(pBody);
