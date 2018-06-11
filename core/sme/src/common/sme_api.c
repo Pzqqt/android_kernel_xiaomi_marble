@@ -2613,7 +2613,7 @@ QDF_STATUS sme_scan_get_result_for_bssid(tHalHandle hal_handle,
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_scan_get_result_for_bssid(hal_handle, bssid, res);
+		status = csr_scan_get_result_for_bssid(mac_ctx, bssid, res);
 		sme_release_global_lock(&mac_ctx->sme);
 	}
 
