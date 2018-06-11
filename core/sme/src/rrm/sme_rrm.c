@@ -409,6 +409,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 					   uint8_t *chan_list,
 					   uint8_t measurementdone)
 {
+	mac_handle_t mac_handle = MAC_HANDLE(mac_ctx);
 	tCsrScanResultFilter filter;
 	tScanResultHandle result_handle;
 	tCsrScanResultInfo *scan_results, *next_result;
@@ -456,8 +457,8 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 		sme_debug("BSSID mismatch, using current session_id");
 		session_id = mac_ctx->roam.roamSession->sessionId;
 	}
-	status = sme_scan_get_result(mac_ctx, (uint8_t) session_id,
-					&filter, &result_handle);
+	status = sme_scan_get_result(mac_handle, (uint8_t)session_id,
+				     &filter, &result_handle);
 
 	if (filter.SSIDs.SSIDList)
 		qdf_mem_free(filter.SSIDs.SSIDList);
@@ -490,7 +491,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 					NULL, measurementdone, 0);
 		return status;
 	}
-	scan_results = sme_scan_result_get_first(mac_ctx, result_handle);
+	scan_results = sme_scan_result_get_first(mac_handle, result_handle);
 	if (NULL == scan_results && measurementdone) {
 #ifdef FEATURE_WLAN_ESE
 		if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource) {
@@ -509,13 +510,14 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (NULL == roam_info) {
-		sme_err("vos_mem_malloc failed");
+		sme_err("malloc failed");
 		status = QDF_STATUS_E_NOMEM;
 		goto rrm_send_scan_results_done;
 	}
 
 	while (scan_results) {
-		next_result = sme_scan_result_get_next(mac_ctx, result_handle);
+		next_result = sme_scan_result_get_next(mac_handle,
+						       result_handle);
 		sme_debug("Scan res timer:%lu, rrm scan timer:%llu",
 				scan_results->timer, rrm_scan_timer);
 		if (scan_results->timer >= rrm_scan_timer) {
