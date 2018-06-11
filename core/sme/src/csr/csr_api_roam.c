@@ -17006,7 +17006,7 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 	session->sessionId = session_param->sme_session_id;
 
 	/* Initialize FT related data structures only in STA mode */
-	sme_ft_open(mac_ctx, session->sessionId);
+	sme_ft_open(MAC_HANDLE(mac_ctx), session->sessionId);
 
 	session->session_open_cb = session_param->session_open_cb;
 	session->session_close_cb = session_param->session_close_cb;
@@ -17237,7 +17237,7 @@ void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId)
 		csr_roam_stop(pMac, sessionId);
 
 		/* Clean up FT related data structures */
-		sme_ft_close(pMac, sessionId);
+		sme_ft_close(MAC_HANDLE(pMac), sessionId);
 		csr_free_connect_bss_desc(pMac, sessionId);
 		csr_roam_free_connect_profile(&pSession->connectedProfile);
 		csr_roam_free_connected_info(pMac, &pSession->connectedInfo);
