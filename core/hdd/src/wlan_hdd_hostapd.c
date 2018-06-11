@@ -1682,6 +1682,13 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
 
 		qdf_atomic_set(&adapter->dfs_radar_found, 0);
+
+		status = policy_mgr_set_chan_switch_complete_evt(
+						hdd_ctx->hdd_psoc);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("set event failed");
+			goto stopbss;
+		}
 		wlansap_get_dfs_ignore_cac(mac_handle, &ignoreCAC);
 
 		/* DFS requirement: DO NOT transmit during CAC. */
@@ -2731,6 +2738,11 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		return -EBUSY;
 	}
 
+	status = policy_mgr_reset_chan_switch_complete_evt(hdd_ctx->hdd_psoc);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("clear event failed");
+		return -EINVAL;
+	}
 	/*
 	 * Post the Channel Change request to SAP.
 	 */
