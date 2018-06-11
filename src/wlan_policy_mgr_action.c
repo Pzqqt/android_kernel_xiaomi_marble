@@ -887,9 +887,10 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 
 	if (policy_mgr_valid_sta_channel_check(psoc, channel)) {
 		if (wlan_reg_is_dfs_ch(pm_ctx->pdev, channel) ||
-			wlan_reg_is_passive_or_disable_ch(
+		    wlan_reg_is_passive_or_disable_ch(
 				pm_ctx->pdev, channel) ||
-			!policy_mgr_is_safe_channel(psoc, channel)) {
+		    !(policy_mgr_sta_sap_scc_on_lte_coex_chan(psoc) ||
+		      policy_mgr_is_safe_channel(psoc, channel))) {
 			if (policy_mgr_is_hw_dbs_capable(psoc)) {
 				temp_channel =
 				policy_mgr_get_alternate_channel_for_sap(psoc);
