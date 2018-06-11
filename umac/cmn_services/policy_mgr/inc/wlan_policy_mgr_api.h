@@ -2336,4 +2336,14 @@ bool policy_mgr_dual_beacon_on_single_mac_scc_capable(
 bool policy_mgr_dual_beacon_on_single_mac_mcc_capable(
 	struct wlan_objmgr_psoc *psoc);
 
+/**
+ * policy_mgr_sta_sap_scc_on_lte_coex_chan() - get capability that
+ * whether support sta sap scc on lte coex chan
+ * @psoc: pointer to soc
+ *
+ *  Return: bool: capable
+ */
+bool policy_mgr_sta_sap_scc_on_lte_coex_chan(
+	struct wlan_objmgr_psoc *psoc);
+
 #endif /* __WLAN_POLICY_MGR_API_H */

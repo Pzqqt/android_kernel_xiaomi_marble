@@ -3074,3 +3074,16 @@ bool policy_mgr_dual_beacon_on_single_mac_mcc_capable(
 	policy_mgr_debug("Not support dual beacon on different channel on single MAC");
 	return false;
 }
+
+bool policy_mgr_sta_sap_scc_on_lte_coex_chan(
+	struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+	return pm_ctx->user_cfg.sta_sap_scc_on_lte_coex_chan;
+}

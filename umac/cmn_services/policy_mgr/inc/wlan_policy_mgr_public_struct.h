@@ -1024,6 +1024,7 @@ struct policy_mgr_user_cfg {
 	bool sub_20_mhz_enabled;
 	bool is_sta_sap_scc_allowed_on_dfs_chan;
 	uint32_t channel_select_logic_conc;
+	uint32_t sta_sap_scc_on_lte_coex_chan;
 };
 
 /**
