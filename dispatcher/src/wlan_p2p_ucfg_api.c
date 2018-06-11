@@ -273,7 +273,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 
 	/* return cookie just for ota ack frames */
 	if (mgmt_frm->dont_wait_for_ack)
-		*cookie = 0;
+		id = 0;
 	else {
 		status = qdf_idr_alloc(&p2p_soc_obj->p2p_idr,
 				       tx_action, &id);
