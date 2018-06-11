@@ -21040,6 +21040,27 @@ csr_find_session_by_type(tpAniSirGlobal mac_ctx, enum QDF_OPMODE type)
 	return session_id;
 }
 /**
+ * csr_find_session_by_bssid() - This function will find given bssid from
+ * all sessions.
+ * @mac_ctx: pointer to mac context.
+ * @bssid: session bssid
+ * Return: false or true.
+ **/
+bool
+csr_find_session_by_bssid(tpAniSirGlobal mac_ctx, uint8_t *bssid)
+{
+	tpPESession session_entry;
+	uint8_t session_id;      /* PE session_id */
+
+	session_entry = pe_find_session_by_bssid(mac_ctx,
+						 bssid, &session_id);
+	if (session_entry)
+		return true;
+	else
+		return false;
+}
+
+/**
  * csr_is_conn_allow_2g_band() - This function will check if station's conn
  * is allowed in 2.4Ghz band.
  * @mac_ctx: pointer to mac context.

@@ -17477,6 +17477,10 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t operationChannel,
 {
 	uint8_t sec_ch = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_station_ctx *station_ctx =
+				 WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	eConnectionState connstate;
+	bool cbmode_select = false;
 
 	/*
 	 * CDS api expects secondary channel for calculating
@@ -17494,7 +17498,16 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t operationChannel,
 	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, operationChannel,
 			sec_ch, ch_params);
 
-	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+	if (adapter->device_mode == QDF_STA_MODE &&
+	    hdd_ctx->config->enable_change_channel_bandwidth) {
+		connstate = station_ctx->conn_info.connState;
+		if (!(eConnectionState_Associated == connstate ||
+		      eConnectionState_Connecting == connstate)) {
+			cbmode_select = true;
+		}
+	}
+
+	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE || cbmode_select)
 		hdd_mon_select_cbmode(adapter, operationChannel, ch_params);
 }
 

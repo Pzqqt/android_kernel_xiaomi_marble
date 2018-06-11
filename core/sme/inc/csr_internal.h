@@ -1348,6 +1348,7 @@ bool csr_store_joinreq_param(tpAniSirGlobal mac_ctx,
 		tScanResultHandle scan_cache,
 		uint32_t *roam_id,
 		uint32_t session_id);
+bool csr_find_session_by_bssid(tpAniSirGlobal mac_ctx, uint8_t *bssid);
 bool csr_clear_joinreq_param(tpAniSirGlobal mac_ctx,
 		uint32_t session_id);
 QDF_STATUS csr_issue_stored_joinreq(tpAniSirGlobal mac_ctx,

@@ -16059,3 +16059,13 @@ uint8_t sme_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
 {
 	return wma_get_mcs_idx(max_rate, rate_flags, nss, mcs_rate_flags);
 }
+
+bool sme_find_session_by_bssid(tHalHandle hal, uint8_t *bssid)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	bool ret;
+
+	ret = csr_find_session_by_bssid(mac_ctx, bssid);
+
+	return ret;
+}

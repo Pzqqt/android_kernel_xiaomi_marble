@@ -14300,6 +14300,30 @@ enum hdd_external_acs_policy {
 #define CFG_NUM_VDEV_ENABLE_DEFAULT   (CFG_TGT_NUM_VDEV)
 
 /*
+ * <ini>
+ * gEnableChangeChannelBandWidth - Enable/Disable change
+ * channel&bandwidth in the mission mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * 0 - not allow change channel&bandwidth by setMonChan
+ * 1 - allow change channel&bandwidth by setMonChan
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_CHANGE_CHANNEL_BANDWIDTH_NAME    "gEnableChangeChannelBandWidth"
+#define CFG_CHANGE_CHANNEL_BANDWIDTH_MIN     (0)
+#define CFG_CHANGE_CHANNEL_BANDWIDTH_MAX     (1)
+#define CFG_CHANGE_CHANNEL_BANDWIDTH_DEFAULT (0)
+
+/*
  * Type declarations
  */
 
@@ -15195,6 +15219,7 @@ struct hdd_config {
 	bool enable_ftopen;
 	bool enable_rtt_mac_randomization;
 	bool roam_force_rssi_trigger;
+	bool enable_change_channel_bandwidth;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

@@ -2591,4 +2591,13 @@ QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle)
 }
 #endif
 
+/**
+ * sme_find_session_by_bssid() - checks whether has session
+ * with given bssid
+ * @hal: global hal handle
+ * @bssid: bssid
+ * Return: true - if has the session
+ *         false - if not has the session
+ */
+bool sme_find_session_by_bssid(tHalHandle hal, uint8_t *bssid);
 #endif /* #if !defined( __SME_API_H ) */
