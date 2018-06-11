@@ -1748,6 +1748,7 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t *mac_addr = NULL;
 	struct wma_target_req *del_req;
+	int ret_value = 0;
 
 	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
 	if (!vdev) {
@@ -1769,7 +1770,9 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 		mac_addr = params->bssid;
 	}
 
-	peer = cdp_peer_find_by_addr(soc, pdev, mac_addr, &peer_id);
+	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_addr,
+					&peer_id,
+					PEER_DEBUG_ID_OL_INTERNAL);
 	if (!peer) {
 		WMA_LOGE(FL("peer NULL for vdev_id = %d"), vdev_id);
 		wma_cleanup_target_req_param(req_msg);
@@ -1792,10 +1795,13 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 			WMA_LOGE(FL("Failed to allocate request. vdev_id %d"),
 				 req_msg->vdev_id);
 			params->status = QDF_STATUS_E_NOMEM;
-			return -EINVAL;
+			ret_value = -EINVAL;
 		}
 	}
-	return 0;
+	if (peer)
+		cdp_peer_release_ref(soc, peer,
+				     PEER_DEBUG_ID_OL_INTERNAL);
+	return ret_value;
 }
 
 /*
@@ -1958,7 +1964,6 @@ wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req,
 	}
 }
 
-
 /**
  * wma_vdev_stop_resp_handler() - vdev stop response handler
  * @handle: wma handle
@@ -1975,7 +1980,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	wmi_vdev_stopped_event_fixed_param *resp_event;
 	struct wma_target_req *req_msg, *del_req, *new_req_msg;
 	struct cdp_pdev *pdev;
-	void *peer;
+	void *peer = NULL;
 	uint8_t peer_id;
 	struct wma_txrx_node *iface;
 	int32_t status = 0;
@@ -2094,7 +2099,9 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		tpLinkStateParams params =
 			(tpLinkStateParams) req_msg->user_data;
 
-		peer = cdp_peer_find_by_addr(soc, pdev, params->bssid, &peer_id);
+		peer = cdp_peer_get_ref_by_addr(soc, pdev, params->bssid,
+						&peer_id,
+						PEER_DEBUG_ID_OL_INTERNAL);
 		if (peer) {
 			WMA_LOGP(FL("Deleting peer %pM vdev id %d"),
 				 params->bssid, req_msg->vdev_id);
@@ -2128,6 +2135,9 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	}
 
 free_req_msg:
+	if (peer)
+		cdp_peer_release_ref(soc, peer,
+				     PEER_DEBUG_ID_OL_INTERNAL);
 	qdf_mc_timer_destroy(&req_msg->event_timeout);
 	qdf_mem_free(req_msg);
 	return status;
