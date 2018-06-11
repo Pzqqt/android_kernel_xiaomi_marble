@@ -35,6 +35,7 @@
 
 #define PM_24_GHZ_CHANNEL_6   (6)
 #define PM_5_GHZ_CHANNEL_36   (36)
+#define CHANNEL_SWITCH_COMPLETE_TIMEOUT   (2000)
 
 /**
  * Policy Mgr hardware mode list bit-mask definitions.
@@ -265,6 +266,7 @@ struct policy_mgr_psoc_priv_obj {
 	uint8_t cur_conc_system_pref;
 	uint8_t sta_sap_scc_on_dfs_chan_allowed;
 	qdf_event_t opportunistic_update_done_evt;
+	qdf_event_t channel_switch_complete_evt;
 	send_mode_change_event_cb mode_change_cb;
 };
 

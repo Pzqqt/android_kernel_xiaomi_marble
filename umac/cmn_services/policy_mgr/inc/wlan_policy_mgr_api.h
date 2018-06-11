@@ -1147,6 +1147,28 @@ QDF_STATUS policy_mgr_reset_connection_update(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS policy_mgr_set_connection_update(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * policy_mgr_set_chan_switch_complete_evt() - set channel
+ * switch completion event
+ * @psoc: PSOC object information
+ * Sets the channel switch completion event.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_set_chan_switch_complete_evt(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_reset_chan_switch_complete_evt() - reset channel
+ * switch completion event
+ * @psoc: PSOC object information
+ * Resets the channel switch completion event.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_reset_chan_switch_complete_evt(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_set_opportunistic_update() - Set opportunistic
  * update event
  * @psoc: PSOC object information
