@@ -4302,7 +4302,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 		beacon_ies = qdf_mem_malloc(sizeof(tDot11fBeaconIEs));
 		if ((NULL != beacon_ies) && (NULL != roam_info->pBssDesc)) {
 			status = csr_parse_bss_description_ies(
-					(tHalHandle) pMac, roam_info->pBssDesc,
+					pMac, roam_info->pBssDesc,
 					beacon_ies);
 			csr_roam_populate_channels(beacon_ies, roam_info,
 					&chan1, &chan2);
