@@ -12752,7 +12752,7 @@ QDF_STATUS sme_update_nss(tHalHandle h_hal, uint8_t nss)
 		mac_ctx->roam.configParam.enable2x2 = (nss == 1) ? 0 : 1;
 
 		/* get the HT capability info*/
-		sme_cfg_get_int(mac_ctx, WNI_CFG_HT_CAP_INFO, &value);
+		sme_cfg_get_int(h_hal, WNI_CFG_HT_CAP_INFO, &value);
 		uHTCapabilityInfo.cfg_value16 = (0xFFFF & value);
 
 		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
@@ -12785,9 +12785,9 @@ void sme_update_user_configured_nss(tHalHandle hal, uint8_t nss)
 int sme_update_tx_bfee_supp(tHalHandle hal, uint8_t session_id,
 			    uint8_t cfg_val)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	status = sme_cfg_set_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
+	QDF_STATUS status;
+
+	status = sme_cfg_set_int(hal, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
 				 cfg_val);
 	if (status != QDF_STATUS_SUCCESS) {
 		sme_err("Failed to set SU BFEE CFG");
@@ -12822,8 +12822,8 @@ void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 		sme_err("invalid Nss value %d", nss);
 	}
 	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_RX_MCS_MAP_LT_80, &rx_mcs_map);
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_TX_MCS_MAP_LT_80, &tx_mcs_map);
+	sme_cfg_get_int(hal, WNI_CFG_HE_RX_MCS_MAP_LT_80, &rx_mcs_map);
+	sme_cfg_get_int(hal, WNI_CFG_HE_TX_MCS_MAP_LT_80, &tx_mcs_map);
 	if (nss == 1) {
 		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, HE_MCS_DISABLE, 2);
 		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, HE_MCS_DISABLE, 2);
@@ -12833,8 +12833,8 @@ void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 	}
 	sme_info("new HE Nss MCS MAP: Rx 0x%0X, Tx: 0x%0X",
 			rx_mcs_map, tx_mcs_map);
-	sme_cfg_set_int(mac_ctx, WNI_CFG_HE_RX_MCS_MAP_LT_80, rx_mcs_map);
-	sme_cfg_set_int(mac_ctx, WNI_CFG_HE_TX_MCS_MAP_LT_80, tx_mcs_map);
+	sme_cfg_set_int(hal, WNI_CFG_HE_RX_MCS_MAP_LT_80, rx_mcs_map);
+	sme_cfg_set_int(hal, WNI_CFG_HE_TX_MCS_MAP_LT_80, tx_mcs_map);
 	csr_update_session_he_cap(mac_ctx, csr_session);
 
 }
@@ -12894,8 +12894,8 @@ int sme_update_he_mcs(tHalHandle hal, uint8_t session_id, uint16_t he_mcs)
 		return -EINVAL;
 	}
 	sme_info("new HE MCS 0x%0x", mcs_map);
-	sme_cfg_set_int(mac_ctx, wni_cfg_tx_param, mcs_map);
-	sme_cfg_set_int(mac_ctx, wni_cfg_rx_param, mcs_map);
+	sme_cfg_set_int(hal, wni_cfg_tx_param, mcs_map);
+	sme_cfg_set_int(hal, wni_cfg_rx_param, mcs_map);
 	csr_update_session_he_cap(mac_ctx, csr_session);
 
 	return 0;
@@ -12912,7 +12912,7 @@ static int sme_update_he_cap(tHalHandle hal, uint8_t session_id,
 		sme_err("No session for id %d", session_id);
 		return -EINVAL;
 	}
-	sme_cfg_set_int(mac_ctx, he_cap, value);
+	sme_cfg_set_int(hal, he_cap, value);
 	csr_update_session_he_cap(mac_ctx, session);
 
 	return 0;
