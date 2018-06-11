@@ -2597,7 +2597,7 @@ QDF_STATUS sme_scan_get_result(tHalHandle hHal, uint8_t sessionId,
 			 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_scan_get_result(hHal, pFilter, phResult);
+		status = csr_scan_get_result(pMac, pFilter, phResult);
 		sme_release_global_lock(&pMac->sme);
 	}
 
