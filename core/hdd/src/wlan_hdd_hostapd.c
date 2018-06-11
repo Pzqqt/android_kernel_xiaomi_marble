@@ -7277,10 +7277,6 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 		}
 	}
 
-	sap_cfg->ch_params.ch_width = sap_cfg->ch_width_orig;
-	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, sap_cfg->channel,
-				sap_cfg->sec_ch, &sap_cfg->ch_params);
-
 	return 0;
 }
 
@@ -7862,6 +7858,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		ret = -EINVAL;
 		goto error;
 	}
+
+	pConfig->ch_params.ch_width = pConfig->ch_width_orig;
+	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, pConfig->channel,
+				    pConfig->sec_ch, &pConfig->ch_params);
 
 	/* ht_capab is not what the name conveys,
 	 * this is used for protection bitmap
