@@ -145,6 +145,8 @@ int wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 				     const void *data,
 				     int data_len);
 
+void wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter);
+
 void hdd_init_ll_stats_ctx(void);
 
 static inline bool hdd_link_layer_stats_supported(void)
@@ -186,7 +188,34 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 			  uint32_t req_mask);
 
-#else
+void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
+						 int indType, void *pRsp);
+/**
+ * wlan_hdd_cfg80211_link_layer_stats_ext_callback() - Callback for LL ext
+ * @ctx: HDD context
+ * @rsp: msg from FW
+ *
+ * This function is an extension of
+ * wlan_hdd_cfg80211_link_layer_stats_callback. It converts
+ * monitoring parameters offloaded to NL data and send the same to the
+ * kernel/upper layers.
+ *
+ * Return: None.
+ */
+void wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
+						     tSirLLStatsResults *rsp);
+
+/**
+ * hdd_lost_link_info_cb() - callback function to get lost link information
+ * @context: HDD context
+ * @lost_link_info: lost link information
+ *
+ * Return: none
+ */
+void hdd_lost_link_info_cb(void *context,
+			   struct sir_lost_link_info *lost_link_info);
+
+#else /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 static inline void hdd_init_ll_stats_ctx(void)
 {
@@ -206,11 +235,34 @@ wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
 	return -EINVAL;
 }
 
-static inline
-int wlan_hdd_ll_stats_get(hdd_adapter_t *adapter, uint32_t req_id,
-			  uint32_t req_mask)
+static inline int
+wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
+		      uint32_t req_mask)
 {
 	return -EINVAL;
+}
+
+static inline void
+wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter)
+{
+}
+
+static inline void
+wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
+					    int indType, void *pRsp)
+{
+}
+
+static inline void
+wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
+						tSirLLStatsResults *rsp)
+{
+}
+
+static inline void
+hdd_lost_link_info_cb(void *context,
+		      struct sir_lost_link_info *lost_link_info)
+{
 }
 
 #endif /* End of WLAN_FEATURE_LINK_LAYER_STATS */
@@ -287,23 +339,6 @@ void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
  */
 void wlan_hdd_cfg80211_stats_ext2_callback(void *ctx,
 				struct sir_sme_rx_aggr_hole_ind *pmsg);
-
-void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
-						 int indType, void *pRsp);
-/**
- * wlan_hdd_cfg80211_link_layer_stats_ext_callback() - Callback for LL ext
- * @ctx: HDD context
- * @rsp: msg from FW
- *
- * This function is an extension of
- * wlan_hdd_cfg80211_link_layer_stats_callback. It converts
- * monitoring parameters offloaded to NL data and send the same to the
- * kernel/upper layers.
- *
- * Return: None.
- */
-void wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
-						     tSirLLStatsResults *rsp);
 
 /**
  * wlan_hdd_get_rcpi() - Wrapper to get current RCPI

@@ -4487,28 +4487,6 @@ typedef struct {
 } tSirAutoShutdownEvtParams;
 #endif
 
-#ifdef WLAN_FEATURE_LINK_LAYER_STATS
-
-typedef struct {
-	uint32_t reqId;
-	uint8_t staId;
-	uint32_t mpduSizeThreshold;
-	uint32_t aggressiveStatisticsGathering;
-} tSirLLStatsSetReq, *tpSirLLStatsSetReq;
-
-typedef struct {
-	uint32_t reqId;
-	uint8_t staId;
-	uint32_t paramIdMask;
-} tSirLLStatsGetReq, *tpSirLLStatsGetReq;
-
-typedef struct {
-	uint32_t reqId;
-	uint8_t staId;
-	uint32_t statsClearReqMask;
-	uint8_t stopReq;
-} tSirLLStatsClearReq, *tpSirLLStatsClearReq;
-
 #ifdef WLAN_POWER_DEBUGFS
 /**
  * struct power_stats_response - Power stats response
@@ -4595,6 +4573,27 @@ struct sir_set_ht_vht_cfg {
 	uint32_t dot11mode;
 };
 
+#define WIFI_INVALID_PEER_ID            (-1)
+#define WIFI_INVALID_VDEV_ID            (-1)
+#define WIFI_MAX_AC                     (4)
+
+typedef struct {
+	uint32_t paramId;
+	uint8_t ifaceId;
+	uint32_t rspId;
+	uint32_t moreResultToFollow;
+	uint32_t nr_received;
+	union {
+		uint32_t num_peers;
+		uint32_t num_radio;
+	};
+
+	uint32_t peer_event_number;
+	/* Variable  length field - Do not add anything after this */
+	uint8_t results[0];
+} tSirLLStatsResults, *tpSirLLStatsResults;
+
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 /*---------------------------------------------------------------------------
    WLAN_HAL_LL_NOTIFY_STATS
    ---------------------------------------------------------------------------*/
@@ -4604,6 +4603,26 @@ struct sir_set_ht_vht_cfg {
 typedef int tSirWifiRadio;
 typedef int tSirWifiChannel;
 typedef int tSirwifiTxRate;
+
+typedef struct {
+	uint32_t reqId;
+	uint8_t staId;
+	uint32_t mpduSizeThreshold;
+	uint32_t aggressiveStatisticsGathering;
+} tSirLLStatsSetReq, *tpSirLLStatsSetReq;
+
+typedef struct {
+	uint32_t reqId;
+	uint8_t staId;
+	uint32_t paramIdMask;
+} tSirLLStatsGetReq, *tpSirLLStatsGetReq;
+
+typedef struct {
+	uint32_t reqId;
+	uint8_t staId;
+	uint32_t statsClearReqMask;
+	uint8_t stopReq;
+} tSirLLStatsClearReq, *tpSirLLStatsClearReq;
 
 /* channel operating width */
 typedef enum {
@@ -5145,10 +5164,6 @@ struct sir_wifi_ll_ext_wmm_ac_stats {
 	struct sir_wifi_rx *rx_stats;
 };
 
-#define WIFI_INVALID_PEER_ID            (-1)
-#define WIFI_INVALID_VDEV_ID            (-1)
-#define WIFI_MAX_AC                     (4)
-
 /**
  * struct sir_wifi_ll_ext_peer_stats - per peer stats
  * @peer_id: peer ID
@@ -5455,22 +5470,6 @@ struct sir_ll_ext_stats_threshold {
 
 #define LL_STATS_MIN_PERIOD          10
 #define LL_STATS_INVALID_PERIOD      0xFFFFFFFF
-
-typedef struct {
-	uint32_t paramId;
-	uint8_t ifaceId;
-	uint32_t rspId;
-	uint32_t moreResultToFollow;
-	uint32_t nr_received;
-	union {
-		uint32_t num_peers;
-		uint32_t num_radio;
-	};
-
-	uint32_t peer_event_number;
-	/* Variable  length field - Do not add anything after this */
-	uint8_t results[0];
-} tSirLLStatsResults, *tpSirLLStatsResults;
 
 /* Result ID for LL stats extension */
 #define WMI_LL_STATS_EXT_PS_CHG             0x00000100

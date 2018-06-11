@@ -125,12 +125,6 @@ struct hdd_context;
 
 #endif
 
-#ifdef WLAN_FEATURE_LINK_LAYER_STATS
-void wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter);
-#else
-static inline void wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter) {}
-#endif
-
 #define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
 #define MAX_SCAN_SSID 10
 
@@ -494,15 +488,6 @@ enum hdd_rate_info_bw {
  */
 void hdd_set_rate_bw(struct rate_info *info, enum hdd_rate_info_bw hdd_bw);
 
-/**
- * hdd_lost_link_info_cb() - callback function to get lost link information
- * @context: HDD context
- * @lost_link_info: lost link information
- *
- * Return: none
- */
-void hdd_lost_link_info_cb(void *context,
-			struct sir_lost_link_info *lost_link_info);
 /*
  * hdd_get_sap_operating_band:  Get current operating channel
  * for sap.

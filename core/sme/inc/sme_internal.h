@@ -179,13 +179,10 @@ typedef struct tagSmeStruct {
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type eventPayload;
 #endif
-#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	void (*pLinkLayerStatsIndCallback)(void *callbackContext,
 			int indType, void *pRsp);
 	void (*link_layer_stats_ext_cb)(hdd_handle_t callback_ctx,
 					tSirLLStatsResults *rsp);
-#endif /* WLAN_FEATURE_LINK_LAYER_STATS */
-
 #ifdef WLAN_POWER_DEBUGFS
 	void *power_debug_stats_context;
 	void (*power_stats_resp_callback)(struct power_stats_response *rsp,

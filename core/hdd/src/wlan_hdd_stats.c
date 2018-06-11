@@ -1672,6 +1672,26 @@ int wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 }
 
 /**
+ * wlan_hdd_clear_link_layer_stats() - clear link layer stats
+ * @adapter: pointer to adapter
+ *
+ * Wrapper function to clear link layer stats.
+ * return - void
+ */
+void wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter)
+{
+	tSirLLStatsClearReq link_layer_stats_clear_req;
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+
+	link_layer_stats_clear_req.statsClearReqMask = WIFI_STATS_IFACE_AC |
+		WIFI_STATS_IFACE_ALL_PEER;
+	link_layer_stats_clear_req.stopReq = 0;
+	link_layer_stats_clear_req.reqId = 1;
+	link_layer_stats_clear_req.staId = adapter->session_id;
+	sme_ll_stats_clear_req(hal, &link_layer_stats_clear_req);
+}
+
+/**
  * hdd_populate_per_peer_ps_info() - populate per peer sta's PS info
  * @wifi_peer_info: peer information
  * @vendor_event: buffer for vendor event
@@ -2800,6 +2820,18 @@ int wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
 	cds_ssr_unprotect(__func__);
 
 	return ret;
+}
+
+/**
+ * hdd_init_ll_stats_ctx() - initialize link layer stats context
+ *
+ * Return: none
+ */
+inline void hdd_init_ll_stats_ctx(void)
+{
+	spin_lock_init(&ll_stats_context.context_lock);
+	init_completion(&ll_stats_context.response_event);
+	ll_stats_context.request_bitmap = 0;
 }
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
@@ -4707,17 +4739,6 @@ int wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	cds_ssr_unprotect(__func__);
 
 	return ret;
-}
-/**
- * hdd_init_ll_stats_ctx() - initialize link layer stats context
- *
- * Return: none
- */
-inline void hdd_init_ll_stats_ctx(void)
-{
-	spin_lock_init(&ll_stats_context.context_lock);
-	init_completion(&ll_stats_context.response_event);
-	ll_stats_context.request_bitmap = 0;
 }
 
 /**

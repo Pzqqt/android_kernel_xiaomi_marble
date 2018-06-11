@@ -60,6 +60,7 @@
 #include "wlan_utility.h"
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_ipa_ucfg_api.h"
+#include "wlan_hdd_stats.h"
 
 #include "wlan_hdd_nud_tracking.h"
 /* These are needed to recognize WPA and RSN suite types */

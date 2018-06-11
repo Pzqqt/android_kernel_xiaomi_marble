@@ -75,9 +75,7 @@
 
 #include "wlan_hdd_ext_scan.h"
 
-#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 #include "wlan_hdd_stats.h"
-#endif
 #include "cds_api.h"
 #include "wlan_policy_mgr_api.h"
 #include "qwlan_version.h"
@@ -21880,26 +21878,6 @@ static int wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	return ret;
 }
 #endif
-
-/**
- * wlan_hdd_clear_link_layer_stats() - clear link layer stats
- * @adapter: pointer to adapter
- *
- * Wrapper function to clear link layer stats.
- * return - void
- */
-void wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter)
-{
-	tSirLLStatsClearReq link_layer_stats_clear_req;
-	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
-
-	link_layer_stats_clear_req.statsClearReqMask = WIFI_STATS_IFACE_AC |
-		WIFI_STATS_IFACE_ALL_PEER;
-	link_layer_stats_clear_req.stopReq = 0;
-	link_layer_stats_clear_req.reqId = 1;
-	link_layer_stats_clear_req.staId = adapter->session_id;
-	sme_ll_stats_clear_req(hal, &link_layer_stats_clear_req);
-}
 
 #define CNT_DIFF(cur, prev) \
 	((cur >= prev) ? (cur - prev) : (cur + (MAX_COUNT - (prev) + 1)))

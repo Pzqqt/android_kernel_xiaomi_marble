@@ -4511,6 +4511,7 @@ QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 	return status;
 }
 
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 tSirWifiPeerType wmi_to_sir_peer_type(enum wmi_peer_type type)
 {
 	switch (type) {
@@ -4527,6 +4528,7 @@ tSirWifiPeerType wmi_to_sir_peer_type(enum wmi_peer_type type)
 		return WIFI_PEER_INVALID;
 	}
 }
+#endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 /**
  * wma_set_vc_mode_config() - set voltage corner mode config to FW.

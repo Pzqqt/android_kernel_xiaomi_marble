@@ -174,7 +174,16 @@ void wma_set_dbs_capability_ut(uint32_t dbs);
 QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 		enum hw_mode_dbs_capab hw_mode, enum cds_band_type band);
 bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel);
+
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 int wma_unified_radio_tx_mem_free(void *handle);
+#else /* WLAN_FEATURE_LINK_LAYER_STATS */
+static inline int wma_unified_radio_tx_mem_free(void *handle)
+{
+	return 0;
+}
+#endif /* WLAN_FEATURE_LINK_LAYER_STATS */
+
 /**
  * wma_form_unit_test_cmd_and_send() - to form a wma command and send it to FW
  * @session_id: wma session id to be filled while forming the command
@@ -327,6 +336,7 @@ static inline bool wma_d0_wow_is_supported(void)
  */
 void wma_store_pdev(void *wma_ctx, struct wlan_objmgr_pdev *pdev);
 
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 /**
  * wmi_to_sir_peer_type() - convert peer type from WMI to SIR enum
  * @type: enum wmi_peer_type
@@ -334,6 +344,7 @@ void wma_store_pdev(void *wma_ctx, struct wlan_objmgr_pdev *pdev);
  * Return: tSirWifiPeerType
  */
 tSirWifiPeerType wmi_to_sir_peer_type(enum wmi_peer_type type);
+#endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 QDF_STATUS wma_crash_inject(WMA_HANDLE wma_handle, uint32_t type,
 			    uint32_t delay_time_ms);
