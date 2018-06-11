@@ -4219,7 +4219,8 @@ static void csr_dump_connection_stats(tpAniSirGlobal mac_ctx,
 		conn_stats.ssid_len = SIR_MAC_MAX_SSID_LENGTH;
 	qdf_mem_copy(conn_stats.ssid, conn_profile->SSID.ssId,
 		     conn_stats.ssid_len);
-	sme_get_rssi_snr_by_bssid(mac_ctx, session->pCurRoamProfile,
+	sme_get_rssi_snr_by_bssid(MAC_HANDLE(mac_ctx),
+				  session->pCurRoamProfile,
 				  &conn_stats.bssid[0],
 				  &conn_stats.rssi, NULL);
 	conn_stats.est_link_speed = 0;
