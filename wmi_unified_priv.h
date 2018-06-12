@@ -169,7 +169,6 @@ struct wmi_debug_log_info {
 	uint32_t buf_offset_command;
 	uint32_t buf_offset_event;
 	struct dentry *wmi_log_debugfs_dir;
-	uint8_t wmi_instance_id;
 };
 
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
@@ -1700,6 +1699,7 @@ struct wmi_host_abi_version {
 	uint32_t abi_version_ns_3;
 };
 
+#define NUM_DEBUG_INFOS 9
 struct wmi_unified {
 	void *scn_handle;    /* handle to device */
 	osdev_t  osdev; /* handle to use OS-independent services */
@@ -1749,6 +1749,7 @@ struct wmi_unified {
 	uint32_t *services;
 	struct wmi_soc *soc;
 	uint16_t wmi_max_cmds;
+	struct dentry *debugfs_de[NUM_DEBUG_INFOS];
 };
 
 #define WMI_MAX_RADIOS 3
@@ -1778,7 +1779,7 @@ struct wmi_soc {
 #endif
 	uint32_t services[wmi_services_max];
 	uint16_t wmi_max_cmds;
-
+	uint32_t soc_idx;
 };
 
 void wmi_unified_register_module(enum wmi_target_type target_type,
