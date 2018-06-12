@@ -138,6 +138,7 @@ struct wmi_unified_attach_params {
 	struct wmi_rx_ops *rx_ops;
 	struct wlan_objmgr_psoc *psoc;
 	uint16_t max_commands;
+	uint32_t soc_id;
 };
 
 /**
