@@ -58,20 +58,6 @@ static inline bool wlan_ipa_is_rm_enabled(struct wlan_ipa_config *ipa_cfg)
 }
 
 /**
- * wlan_ipa_is_clk_scaling_enabled() - Is IPA clock scaling enabled?
- * @ipa_cfg: IPA config
- *
- * Return: true if IPA RM is enabled, false otherwise
- */
-static inline
-bool wlan_ipa_is_clk_scaling_enabled(struct wlan_ipa_config *ipa_cfg)
-{
-	return WLAN_IPA_IS_CONFIG_ENABLED(ipa_cfg,
-					  WLAN_IPA_CLK_SCALING_ENABLE_MASK |
-					  WLAN_IPA_RM_ENABLE_MASK);
-}
-
-/**
  * wlan_ipa_is_rt_debugging_enabled() - Is IPA RT debugging enabled?
  * @ipa_cfg: IPA config
  *
@@ -158,6 +144,21 @@ struct wlan_ipa_iface_context
 *wlan_ipa_get_iface(struct wlan_ipa_priv *ipa_ctx, uint8_t mode);
 
 #ifndef CONFIG_IPA_WDI_UNIFIED_API
+
+/**
+ * wlan_ipa_is_clk_scaling_enabled() - Is IPA clock scaling enabled?
+ * @ipa_cfg: IPA config
+ *
+ * Return: true if IPA clock scaling is enabled, false otherwise
+ */
+static inline
+bool wlan_ipa_is_clk_scaling_enabled(struct wlan_ipa_config *ipa_cfg)
+{
+	return WLAN_IPA_IS_CONFIG_ENABLED(ipa_cfg,
+					  WLAN_IPA_CLK_SCALING_ENABLE_MASK |
+					  WLAN_IPA_RM_ENABLE_MASK);
+}
+
 /**
  * wlan_ipa_wdi_rm_request_resource() - IPA WDI request resource
  * @ipa_ctx: IPA context
@@ -237,6 +238,19 @@ int wlan_ipa_wdi_rm_inactivity_timer_destroy(
 bool wlan_ipa_is_rm_released(struct wlan_ipa_priv *ipa_ctx);
 
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
+
+/**
+ * wlan_ipa_is_clk_scaling_enabled() - Is IPA clock scaling enabled?
+ * @ipa_cfg: IPA config
+ *
+ * Return: true if IPA clock scaling is enabled, false otherwise
+ */
+static inline
+bool wlan_ipa_is_clk_scaling_enabled(struct wlan_ipa_config *ipa_cfg)
+{
+	return WLAN_IPA_IS_CONFIG_ENABLED(ipa_cfg,
+					  WLAN_IPA_CLK_SCALING_ENABLE_MASK);
+}
 
 static inline int wlan_ipa_wdi_rm_request_resource(
 			struct wlan_ipa_priv *ipa_ctx,
