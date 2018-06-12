@@ -27,14 +27,11 @@ QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
 				    uint64_t rx_packets)
 {
 	uint32_t next_cons_bw, next_prod_bw;
-	qdf_ipa_rm_perf_profile_t profile;
 	int ret;
 
 	if ((!wlan_ipa_is_enabled(ipa_ctx->config)) ||
 		(!wlan_ipa_is_clk_scaling_enabled(ipa_ctx->config)))
 		return 0;
-
-	qdf_mem_set(&profile, 0, sizeof(profile));
 
 	if (tx_packets > (ipa_ctx->config->bus_bw_high / 2))
 		next_cons_bw = ipa_ctx->config->ipa_bw_high;
@@ -82,6 +79,36 @@ QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
 		}
 		ipa_ctx->curr_prod_bw = next_prod_bw;
 		ipa_ctx->stats.num_prod_perf_req++;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_ipa_init_perf_level(struct wlan_ipa_priv *ipa_ctx)
+{
+	int ret;
+
+	/* Set lowest bandwidth to start with */
+	if (wlan_ipa_is_clk_scaling_enabled(ipa_ctx->config))
+		return wlan_ipa_set_perf_level(ipa_ctx, 0, 0);
+
+	ipa_debug("IPA clk scaling disabled. Set perf level to maximum %d",
+		  WLAN_IPA_MAX_BANDWIDTH);
+
+	ret = cdp_ipa_set_perf_level(ipa_ctx->dp_soc,
+				     QDF_IPA_CLIENT_WLAN1_CONS,
+				     WLAN_IPA_MAX_BANDWIDTH);
+	if (ret) {
+		ipa_err("CONS set perf profile failed: %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = cdp_ipa_set_perf_level(ipa_ctx->dp_soc,
+				     QDF_IPA_CLIENT_WLAN1_PROD,
+				     WLAN_IPA_MAX_BANDWIDTH);
+	if (ret) {
+		ipa_err("PROD set perf profile failed: %d", ret);
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -463,7 +490,7 @@ void wlan_ipa_wdi_destroy_rm(struct wlan_ipa_priv *ipa_ctx)
 	qdf_cancel_work(&ipa_ctx->uc_rm_work.work);
 	qdf_spinlock_destroy(&ipa_ctx->rm_lock);
 
-	ipa_rm_inactivity_timer_destroy(QDF_IPA_RM_RESOURCE_WLAN_PROD);
+	qdf_ipa_rm_inactivity_timer_destroy(QDF_IPA_RM_RESOURCE_WLAN_PROD);
 
 	ret = qdf_ipa_rm_delete_resource(QDF_IPA_RM_RESOURCE_WLAN_CONS);
 	if (ret)

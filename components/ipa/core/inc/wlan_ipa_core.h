@@ -137,6 +137,17 @@ QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
 				   uint64_t tx_packets, uint64_t rx_packets);
 
 /**
+ * wlan_ipa_init_perf_level() - Initialize IPA performance level
+ * @ipa_ctx: IPA context
+ *
+ * If IPA clock scaling is disabled, initialize perf level to maximum.
+ * Else set the lowest level to start with.
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS wlan_ipa_init_perf_level(struct wlan_ipa_priv *ipa_ctx);
+
+/**
  * wlan_ipa_get_iface() - Get IPA interface
  * @ipa_ctx: IPA context
  * @mode: Interface device mode
