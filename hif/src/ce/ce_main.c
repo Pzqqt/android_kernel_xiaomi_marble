@@ -181,6 +181,19 @@ static struct shadow_reg_cfg target_shadow_reg_cfg_map[] = {
 #endif
 };
 
+#ifdef QCN7605_SUPPORT
+static struct shadow_reg_cfg target_shadow_reg_cfg_map_qcn7605[] = {
+	{ 0, ADRASTEA_SRC_WR_INDEX_OFFSET},
+	{ 4, ADRASTEA_SRC_WR_INDEX_OFFSET},
+	{ 5, ADRASTEA_SRC_WR_INDEX_OFFSET},
+	{ 3, ADRASTEA_DST_WR_INDEX_OFFSET},
+	{ 1, ADRASTEA_DST_WR_INDEX_OFFSET},
+	{ 2, ADRASTEA_DST_WR_INDEX_OFFSET},
+	{ 7, ADRASTEA_DST_WR_INDEX_OFFSET},
+	{ 8, ADRASTEA_DST_WR_INDEX_OFFSET},
+};
+#endif
+
 #ifdef WLAN_FEATURE_EPPING
 static struct shadow_reg_cfg target_shadow_reg_cfg_epping[] = {
 	{ 0, ADRASTEA_SRC_WR_INDEX_OFFSET},
@@ -409,6 +422,38 @@ static struct service_to_pipe target_service_to_ce_map_qca8074[] = {
 };
 #endif
 
+/* PIPEDIR_OUT = HOST to Target */
+/* PIPEDIR_IN  = TARGET to HOST */
+#ifdef QCN7605_SUPPORT
+static struct service_to_pipe target_service_to_ce_map_qcn7605[] = {
+	{ WMI_DATA_VO_SVC, PIPEDIR_OUT, 0, },
+	{ WMI_DATA_VO_SVC, PIPEDIR_IN, 2, },
+	{ WMI_DATA_BK_SVC, PIPEDIR_OUT, 0, },
+	{ WMI_DATA_BK_SVC, PIPEDIR_IN, 2, },
+	{ WMI_DATA_BE_SVC, PIPEDIR_OUT, 0, },
+	{ WMI_DATA_BE_SVC, PIPEDIR_IN, 2, },
+	{ WMI_DATA_VI_SVC, PIPEDIR_OUT, 0, },
+	{ WMI_DATA_VI_SVC, PIPEDIR_IN, 2, },
+	{ WMI_CONTROL_SVC, PIPEDIR_OUT, 0, },
+	{ WMI_CONTROL_SVC, PIPEDIR_IN, 2, },
+	{ HTC_CTRL_RSVD_SVC, PIPEDIR_OUT, 0, },
+	{ HTC_CTRL_RSVD_SVC, PIPEDIR_IN, 2, },
+	{ HTC_RAW_STREAMS_SVC, PIPEDIR_OUT, 0, },
+	{ HTC_RAW_STREAMS_SVC, PIPEDIR_IN, 2, },
+	{ HTT_DATA_MSG_SVC, PIPEDIR_OUT, 4, },
+	{ HTT_DATA_MSG_SVC, PIPEDIR_IN, 1, },
+	{ HTT_DATA2_MSG_SVC, PIPEDIR_IN, 3, },
+#ifdef IPA_OFFLOAD
+	{ WDI_IPA_TX_SVC, PIPEDIR_OUT, 5, },
+#else
+	{ HTT_DATA3_MSG_SVC, PIPEDIR_IN, 8, },
+#endif
+	{ PACKET_LOG_SVC, PIPEDIR_IN, 7, },
+	/* (Additions here) */
+	{ 0, 0, 0, },
+};
+#endif
+
 #if (defined(QCA_WIFI_QCA6290))
 #ifdef CONFIG_WIN
 static struct service_to_pipe target_service_to_ce_map_qca6290[] = {
@@ -590,6 +635,23 @@ void hif_select_epping_service_to_pipe_map(struct service_to_pipe
 }
 #endif
 
+#ifdef QCN7605_SUPPORT
+static inline
+void hif_select_ce_map_qcn7605(struct service_to_pipe **tgt_svc_map_to_use,
+			       uint32_t *sz_tgt_svc_map_to_use)
+{
+	*tgt_svc_map_to_use = target_service_to_ce_map_qcn7605;
+	*sz_tgt_svc_map_to_use = sizeof(target_service_to_ce_map_qcn7605);
+}
+#else
+static inline
+void hif_select_ce_map_qcn7605(struct service_to_pipe **tgt_svc_map_to_use,
+			       uint32_t *sz_tgt_svc_map_to_use)
+{
+	HIF_ERROR("%s: QCN7605 not supported", __func__);
+}
+#endif
+
 static void hif_select_service_to_pipe_map(struct hif_softc *scn,
 				    struct service_to_pipe **tgt_svc_map_to_use,
 				    uint32_t *sz_tgt_svc_map_to_use)
@@ -606,6 +668,10 @@ static void hif_select_service_to_pipe_map(struct hif_softc *scn,
 			*tgt_svc_map_to_use = target_service_to_ce_map_wlan;
 			*sz_tgt_svc_map_to_use =
 				sizeof(target_service_to_ce_map_wlan);
+			break;
+		case TARGET_TYPE_QCN7605:
+			hif_select_ce_map_qcn7605(tgt_svc_map_to_use,
+						  sz_tgt_svc_map_to_use);
 			break;
 		case TARGET_TYPE_AR900B:
 		case TARGET_TYPE_QCA9984:
@@ -2426,6 +2492,47 @@ void hif_ce_stop(struct hif_softc *scn)
 	hif_state->started = false;
 }
 
+#ifdef QCN7605_SUPPORT
+static inline
+void hif_get_shadow_reg_cfg_qcn7605(struct shadow_reg_cfg
+				    **target_shadow_reg_cfg_ret,
+				    uint32_t *shadow_cfg_sz_ret)
+{
+	if (target_shadow_reg_cfg_ret)
+		*target_shadow_reg_cfg_ret = target_shadow_reg_cfg_map_qcn7605;
+	if (shadow_cfg_sz_ret)
+		*shadow_cfg_sz_ret = sizeof(target_shadow_reg_cfg_map_qcn7605);
+}
+#else
+static inline
+void hif_get_shadow_reg_cfg_qcn7605(struct shadow_reg_cfg
+				    **target_shadow_reg_cfg_ret,
+				    uint32_t *shadow_cfg_sz_ret)
+{
+	HIF_ERROR("QCN7605 not supported");
+}
+#endif
+
+static void hif_get_shadow_reg_cfg(struct hif_softc *scn,
+				   struct shadow_reg_cfg
+				   **target_shadow_reg_cfg_ret,
+				   uint32_t *shadow_cfg_sz_ret)
+{
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
+
+	switch (tgt_info->target_type) {
+	case TARGET_TYPE_QCN7605:
+		hif_get_shadow_reg_cfg_qcn7605(target_shadow_reg_cfg_ret,
+					       shadow_cfg_sz_ret);
+		break;
+	default:
+		if (target_shadow_reg_cfg_ret)
+			*target_shadow_reg_cfg_ret = target_shadow_reg_cfg;
+		if (shadow_cfg_sz_ret)
+			*shadow_cfg_sz_ret = shadow_cfg_sz;
+	}
+}
 
 /**
  * hif_get_target_ce_config() - get copy engine configuration
@@ -2458,12 +2565,8 @@ void hif_get_target_ce_config(struct hif_softc *scn,
 
 	hif_select_service_to_pipe_map(scn, target_service_to_ce_map_ret,
 				       target_service_to_ce_map_sz_ret);
-
-	if (target_shadow_reg_cfg_ret)
-		*target_shadow_reg_cfg_ret = target_shadow_reg_cfg;
-
-	if (shadow_cfg_sz_ret)
-		*shadow_cfg_sz_ret = shadow_cfg_sz;
+	hif_get_shadow_reg_cfg(scn, target_shadow_reg_cfg_ret,
+			       shadow_cfg_sz_ret);
 }
 
 #ifdef CONFIG_SHADOW_V2
@@ -2554,6 +2657,26 @@ void hif_ce_prepare_epping_config(struct HIF_CE_state *hif_state)
 }
 #endif
 
+#ifdef QCN7605_SUPPORT
+static inline
+void hif_set_ce_config_qcn7605(struct hif_softc *scn,
+			       struct HIF_CE_state *hif_state)
+{
+	hif_state->host_ce_config = host_ce_config_wlan_qcn7605;
+	hif_state->target_ce_config = target_ce_config_wlan_qcn7605;
+	hif_state->target_ce_config_sz =
+				 sizeof(target_ce_config_wlan_qcn7605);
+	scn->ce_count = QCN7605_CE_COUNT;
+}
+#else
+static inline
+void hif_set_ce_config_qcn7605(struct hif_softc *scn,
+			       struct HIF_CE_state *hif_state)
+{
+	HIF_ERROR("QCN7605 not supported");
+}
+#endif
+
 /**
  * hif_ce_prepare_config() - load the correct static tables.
  * @scn: hif context
@@ -2580,6 +2703,9 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 		hif_state->host_ce_config = host_ce_config_wlan;
 		hif_state->target_ce_config = target_ce_config_wlan;
 		hif_state->target_ce_config_sz = sizeof(target_ce_config_wlan);
+		break;
+	case TARGET_TYPE_QCN7605:
+		hif_set_ce_config_qcn7605(scn, hif_state);
 		break;
 	case TARGET_TYPE_AR900B:
 	case TARGET_TYPE_QCA9984:
@@ -2999,7 +3125,7 @@ void hif_ce_ipa_get_ce_resource(struct hif_softc *scn,
  *      23    No Config - Doesn't point to anything
  * -----------------------------------------------------------
 */
-
+#ifndef QCN7605_SUPPORT
 u32 shadow_sr_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 {
 	u32 addr = 0;
@@ -3067,6 +3193,70 @@ u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 	return addr;
 
 }
+#else
+u32 shadow_sr_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
+{
+	u32 addr = 0;
+	u32 ce = COPY_ENGINE_ID(ctrl_addr);
+
+	switch (ce) {
+	case 0:
+		addr = SHADOW_VALUE0;
+		break;
+	case 4:
+		addr = SHADOW_VALUE4;
+		break;
+	case 5:
+		addr = SHADOW_VALUE5;
+		break;
+	default:
+		HIF_ERROR("invalid CE ctrl_addr (CE=%d)", ce);
+		QDF_ASSERT(0);
+	}
+	return addr;
+}
+
+u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
+{
+	u32 addr = 0;
+	u32 ce = COPY_ENGINE_ID(ctrl_addr);
+
+	switch (ce) {
+	case 1:
+		addr = SHADOW_VALUE13;
+		break;
+	case 2:
+		addr = SHADOW_VALUE14;
+		break;
+	case 3:
+		addr = SHADOW_VALUE15;
+		break;
+	case 5:
+		addr = SHADOW_VALUE17;
+		break;
+	case 7:
+		addr = SHADOW_VALUE19;
+		break;
+	case 8:
+		addr = SHADOW_VALUE20;
+		break;
+	case 9:
+		addr = SHADOW_VALUE21;
+		break;
+	case 10:
+		addr = SHADOW_VALUE22;
+		break;
+	case 11:
+		addr = SHADOW_VALUE23;
+		break;
+	default:
+		HIF_ERROR("invalid CE ctrl_addr (CE=%d)", ce);
+		QDF_ASSERT(0);
+	}
+
+	return addr;
+}
+#endif
 #endif
 
 #if defined(FEATURE_LRO)

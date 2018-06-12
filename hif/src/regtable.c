@@ -43,6 +43,10 @@ void hif_target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 		scn->targetdef = &adrastea_targetdef;
 		scn->target_ce_def = &adrastea_ce_targetdef;
 		break;
+	case TARGET_TYPE_QCN7605:
+		scn->targetdef = &adrastea_targetdef;
+		scn->target_ce_def = &adrastea_ce_targetdef;
+		break;
 #if defined(AR6002_HEADERS_DEF)
 	case TARGET_TYPE_AR6002:
 		scn->targetdef = AR6002_TARGETdef;
@@ -123,6 +127,10 @@ void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type)
 		scn->hostdef = &ar6320v2_hostdef;
 		break;
 	case HIF_TYPE_ADRASTEA:
+		scn->hostdef = &adrastea_hostdef;
+		scn->host_shadow_regs = &adrastea_host_shadow_regs;
+		break;
+	case HIF_TYPE_QCN7605:
 		scn->hostdef = &adrastea_hostdef;
 		scn->host_shadow_regs = &adrastea_host_shadow_regs;
 		break;
