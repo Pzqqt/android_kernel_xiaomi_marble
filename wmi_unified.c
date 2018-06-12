@@ -102,11 +102,6 @@ static int wmi_bp_seq_printf(struct seq_file *m, const char *f, ...)
 #endif
 
 #ifndef MAX_WMI_INSTANCES
-#ifdef CONFIG_MCL
-#define MAX_WMI_INSTANCES 1
-#else
-#define MAX_WMI_INSTANCES 3
-#endif
 #define CUSTOM_MGMT_CMD_DATA_SIZE 4
 #endif
 
@@ -711,11 +706,6 @@ wmi_print_mgmt_event_log(wmi_unified_t wmi, uint32_t count,
 		count, print, print_priv);
 }
 
-#ifdef CONFIG_MCL
-const int8_t * const debugfs_dir[MAX_WMI_INSTANCES] = {"WMI0"};
-#else
-const int8_t * const debugfs_dir[MAX_WMI_INSTANCES] = {"WMI0", "WMI1", "WMI2"};
-#endif
 
 /* debugfs routines*/
 
@@ -1002,7 +992,6 @@ static ssize_t debug_wmi_log_size_write(struct file *file,
 /* Structure to maintain debug information */
 struct wmi_debugfs_info {
 	const char *name;
-	struct dentry *de[MAX_WMI_INSTANCES];
 	const struct file_operations *ops;
 };
 
@@ -1045,7 +1034,7 @@ GENERATE_DEBUG_STRUCTS(wmi_mgmt_event_log);
 GENERATE_DEBUG_STRUCTS(wmi_enable);
 GENERATE_DEBUG_STRUCTS(wmi_log_size);
 
-struct wmi_debugfs_info wmi_debugfs_infos[] = {
+struct wmi_debugfs_info wmi_debugfs_infos[NUM_DEBUG_INFOS] = {
 	DEBUG_FOO(wmi_command_log),
 	DEBUG_FOO(wmi_command_tx_cmp_log),
 	DEBUG_FOO(wmi_event_log),
@@ -1057,8 +1046,6 @@ struct wmi_debugfs_info wmi_debugfs_infos[] = {
 	DEBUG_FOO(wmi_log_size),
 };
 
-#define NUM_DEBUG_INFOS (sizeof(wmi_debugfs_infos) /			\
-		sizeof(wmi_debugfs_infos[0]))
 
 /**
  * wmi_debugfs_create() - Create debug_fs entry for wmi logging.
@@ -1070,20 +1057,19 @@ struct wmi_debugfs_info wmi_debugfs_infos[] = {
  * Return: none
  */
 static void wmi_debugfs_create(wmi_unified_t wmi_handle,
-		struct dentry *par_entry, int id)
+			       struct dentry *par_entry)
 {
 	int i;
 
-	if (par_entry == NULL || (id < 0) || (id >= MAX_WMI_INSTANCES))
+	if (!par_entry)
 		goto out;
 
 	for (i = 0; i < NUM_DEBUG_INFOS; ++i) {
-
-		wmi_debugfs_infos[i].de[id] = debugfs_create_file(
+		wmi_handle->debugfs_de[i] = debugfs_create_file(
 				wmi_debugfs_infos[i].name, 0644, par_entry,
 				wmi_handle, wmi_debugfs_infos[i].ops);
 
-		if (wmi_debugfs_infos[i].de[id] == NULL) {
+		if (!wmi_handle->debugfs_de[i]) {
 			qdf_print("%s: debug Entry creation failed!\n",
 					__func__);
 			goto out;
@@ -1110,24 +1096,16 @@ static void wmi_debugfs_remove(wmi_unified_t wmi_handle)
 {
 	int i;
 	struct dentry *dentry = wmi_handle->log_info.wmi_log_debugfs_dir;
-	int id;
 
-	if (!wmi_handle->log_info.wmi_instance_id)
-		return;
-
-	id = wmi_handle->log_info.wmi_instance_id - 1;
-	if (dentry && (!(id < 0) || (id >= MAX_WMI_INSTANCES))) {
+	if (dentry) {
 		for (i = 0; i < NUM_DEBUG_INFOS; ++i) {
-			if (wmi_debugfs_infos[i].de[id])
-				wmi_debugfs_infos[i].de[id] = NULL;
+			if (wmi_handle->debugfs_de[i])
+				wmi_handle->debugfs_de[i] = NULL;
 		}
 	}
 
 	if (dentry)
 		debugfs_remove_recursive(dentry);
-
-	if (wmi_handle->log_info.wmi_instance_id)
-		wmi_handle->log_info.wmi_instance_id--;
 }
 
 /**
@@ -1138,25 +1116,22 @@ static void wmi_debugfs_remove(wmi_unified_t wmi_handle)
  *
  * Return: init status
  */
-static QDF_STATUS wmi_debugfs_init(wmi_unified_t wmi_handle)
+static QDF_STATUS wmi_debugfs_init(wmi_unified_t wmi_handle, uint32_t pdev_idx)
 {
-	int wmi_index = wmi_handle->log_info.wmi_instance_id;
+	char buf[32];
 
-	if (wmi_index < MAX_WMI_INSTANCES) {
-		wmi_handle->log_info.wmi_log_debugfs_dir =
-			debugfs_create_dir(debugfs_dir[wmi_index], NULL);
+	snprintf(buf, sizeof(buf), "WMI_SOC%u_PDEV%u",
+		 wmi_handle->soc->soc_idx, pdev_idx);
 
-		if (!wmi_handle->log_info.wmi_log_debugfs_dir) {
-			qdf_print("error while creating debugfs dir for %s\n",
-				  debugfs_dir[wmi_index]);
-			return QDF_STATUS_E_FAILURE;
-		}
+	wmi_handle->log_info.wmi_log_debugfs_dir =
+		debugfs_create_dir(buf, NULL);
 
-		wmi_debugfs_create(wmi_handle,
-				   wmi_handle->log_info.wmi_log_debugfs_dir,
-				   wmi_index);
-		wmi_handle->log_info.wmi_instance_id++;
+	if (!wmi_handle->log_info.wmi_log_debugfs_dir) {
+		qdf_print("error while creating debugfs dir for %s\n", buf);
+		return QDF_STATUS_E_FAILURE;
 	}
+	wmi_debugfs_create(wmi_handle,
+			   wmi_handle->log_info.wmi_log_debugfs_dir);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2014,15 +1989,17 @@ void *wmi_unified_get_soc_handle(struct wmi_unified *wmi_handle)
  * return: None
  */
 #ifdef WMI_INTERFACE_EVENT_LOGGING
-static inline void wmi_interface_logging_init(struct wmi_unified *wmi_handle)
+static inline void wmi_interface_logging_init(struct wmi_unified *wmi_handle,
+					      uint32_t pdev_idx)
 {
 	if (QDF_STATUS_SUCCESS == wmi_log_init(wmi_handle)) {
 		qdf_spinlock_create(&wmi_handle->log_info.wmi_record_lock);
-		wmi_debugfs_init(wmi_handle);
+		wmi_debugfs_init(wmi_handle, pdev_idx);
 	}
 }
 #else
-static inline void wmi_interface_logging_init(struct wmi_unified *wmi_handle)
+static inline void wmi_interface_logging_init(struct wmi_unified *wmi_handle,
+					      uint32_t pdev_idx)
 {
 }
 #endif
@@ -2091,12 +2068,12 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 		}
 		wmi_handle->wmi_events = soc->wmi_events;
 		wmi_target_params_init(soc, wmi_handle);
-		wmi_interface_logging_init(wmi_handle);
+		wmi_handle->soc = soc;
+		wmi_interface_logging_init(wmi_handle, pdev_idx);
 		qdf_atomic_init(&wmi_handle->pending_cmds);
 		qdf_atomic_init(&wmi_handle->is_target_suspended);
 		wmi_handle->target_type = soc->target_type;
 		wmi_handle->wmi_max_cmds = soc->wmi_max_cmds;
-		wmi_handle->soc = soc;
 
 		soc->wmi_pdev[pdev_idx] = wmi_handle;
 	} else
@@ -2162,6 +2139,7 @@ void *wmi_unified_attach(void *scn_handle,
 		return NULL;
 	}
 	wmi_handle->soc = soc;
+	wmi_handle->soc->soc_idx = param->soc_id;
 	wmi_handle->event_id = soc->event_id;
 	wmi_handle->event_handler = soc->event_handler;
 	wmi_handle->ctx = soc->ctx;
@@ -2182,7 +2160,7 @@ void *wmi_unified_attach(void *scn_handle,
 		WMI_LOGE("failed to create wmi_rx_event_work_queue");
 		goto error;
 	}
-	wmi_interface_logging_init(wmi_handle);
+	wmi_interface_logging_init(wmi_handle, WMI_HOST_PDEV_ID_0);
 	/* Attach mc_thread context processing function */
 	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk =
 				param->rx_ops->wma_process_fw_event_handler_cbk;
