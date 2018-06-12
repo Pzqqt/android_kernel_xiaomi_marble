@@ -29,6 +29,7 @@
 #include <sound/jack.h>
 #include "wcd-mbhc-adc.h"
 #include "wcd-mbhc-v2.h"
+#include "pdata.h"
 
 #define WCD_MBHC_ADC_HS_THRESHOLD_MV    1700
 #define WCD_MBHC_ADC_HPH_THRESHOLD_MV   75
@@ -355,6 +356,8 @@ static bool wcd_mbhc_adc_check_for_spl_headset(struct wcd_mbhc *mbhc,
 	bool spl_hs = false;
 	int output_mv = 0;
 	int adc_threshold = 0, adc_hph_threshold = 0;
+	struct snd_soc_codec *codec = mbhc->codec;
+	struct wcd9xxx_pdata *pdata = dev_get_platdata(codec->dev->parent);
 
 	pr_debug("%s: enter\n", __func__);
 	if (!mbhc->mbhc_cb->mbhc_micb_ctrl_thr_mic)
@@ -370,7 +373,9 @@ static bool wcd_mbhc_adc_check_for_spl_headset(struct wcd_mbhc *mbhc,
 	 * btn press/relesae for HEADSET type during correct work.
 	 */
 	output_mv = wcd_measure_adc_once(mbhc, MUX_CTL_IN2P);
-	if (mbhc->hs_thr)
+
+	if (mbhc->hs_thr &&
+		(pdata->micbias.micb2_mv != WCD_MBHC_ADC_MICBIAS_MV))
 		adc_threshold = mbhc->hs_thr;
 	else
 		adc_threshold = ((WCD_MBHC_ADC_HS_THRESHOLD_MV *
@@ -414,6 +419,8 @@ static bool wcd_is_special_headset(struct wcd_mbhc *mbhc)
 	bool is_spl_hs = false;
 	int output_mv = 0;
 	int adc_threshold = 0;
+	struct snd_soc_codec *codec = mbhc->codec;
+	struct wcd9xxx_pdata *pdata = dev_get_platdata(codec->dev->parent);
 
 	/*
 	 * Increase micbias to 2.7V to detect headsets with
@@ -433,7 +440,8 @@ static bool wcd_is_special_headset(struct wcd_mbhc *mbhc)
 			return false;
 		}
 	}
-	if (mbhc->hs_thr)
+	if (mbhc->hs_thr &&
+		(pdata->micbias.micb2_mv != WCD_MBHC_ADC_MICBIAS_MV))
 		adc_threshold = mbhc->hs_thr;
 	else
 		adc_threshold = ((WCD_MBHC_ADC_HS_THRESHOLD_MV *
