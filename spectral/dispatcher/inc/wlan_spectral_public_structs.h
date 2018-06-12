@@ -19,6 +19,7 @@
 
 #include <qdf_types.h>
 #include "wlan_dfs_ioctl.h"
+#include <spectral_ioctl.h>
 
 #ifndef _WLAN_SPECTRAL_PUBLIC_STRUCTS_H_
 #define _WLAN_SPECTRAL_PUBLIC_STRUCTS_H_
@@ -42,31 +43,6 @@
 #define SPECTRAL_PHYERR_PARAM_NOVAL  65535
 /* 5 categories x (lower + upper) bands */
 #define MAX_INTERF                   10
-
-/* ioctl parameter types */
-#define SPECTRAL_PARAM_FFT_PERIOD        (1)
-#define SPECTRAL_PARAM_SCAN_PERIOD       (2)
-#define SPECTRAL_PARAM_SCAN_COUNT        (3)
-#define SPECTRAL_PARAM_SHORT_REPORT      (4)
-#define SPECTRAL_PARAM_SPECT_PRI         (5)
-#define SPECTRAL_PARAM_FFT_SIZE          (6)
-#define SPECTRAL_PARAM_GC_ENA            (7)
-#define SPECTRAL_PARAM_RESTART_ENA       (8)
-#define SPECTRAL_PARAM_NOISE_FLOOR_REF   (9)
-#define SPECTRAL_PARAM_INIT_DELAY        (10)
-#define SPECTRAL_PARAM_NB_TONE_THR       (11)
-#define SPECTRAL_PARAM_STR_BIN_THR       (12)
-#define SPECTRAL_PARAM_WB_RPT_MODE       (13)
-#define SPECTRAL_PARAM_RSSI_RPT_MODE     (14)
-#define SPECTRAL_PARAM_RSSI_THR          (15)
-#define SPECTRAL_PARAM_PWR_FORMAT        (16)
-#define SPECTRAL_PARAM_RPT_MODE          (17)
-#define SPECTRAL_PARAM_BIN_SCALE         (18)
-#define SPECTRAL_PARAM_DBM_ADJ           (19)
-#define SPECTRAL_PARAM_CHN_MASK          (20)
-#define SPECTRAL_PARAM_ACTIVE            (21)
-#define SPECTRAL_PARAM_STOP              (22)
-#define SPECTRAL_PARAM_ENABLE            (23)
 
 #ifdef SPECTRAL_USE_EMU_DEFAULTS
 /* Use defaults from emulation */
@@ -222,22 +198,6 @@ struct spectral_diag_stats {
 	uint64_t spectral_no_sec80_sfft;
 	uint64_t spectral_vhtseg1id_mismatch;
 	uint64_t spectral_vhtseg2id_mismatch;
-};
-
-/**
- * struct spectral_caps - Spectral capabilities structure
- * @phydiag_cap:         Phydiag capability
- * @radar_cap:           Radar detection capability
- * @spectral_cap:        Spectral capability
- * @advncd_spectral_cap: Advanced spectral capability
- * @hw_gen: Spectral hw generation
- */
-struct spectral_caps {
-	uint8_t phydiag_cap;
-	uint8_t radar_cap;
-	uint8_t spectral_cap;
-	uint8_t advncd_spectral_cap;
-	uint32_t hw_gen;
 };
 
 /**

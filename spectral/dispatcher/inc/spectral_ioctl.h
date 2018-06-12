@@ -85,11 +85,20 @@ struct spectral_ioctl_params {
 	uint16_t spectral_pri;
 };
 
-struct ath_spectral_caps {
+/**
+ * struct spectral_caps - Spectral capabilities structure
+ * @phydiag_cap:         Phydiag capability
+ * @radar_cap:           Radar detection capability
+ * @spectral_cap:        Spectral capability
+ * @advncd_spectral_cap: Advanced spectral capability
+ * @hw_gen: Spectral hw generation
+ */
+struct spectral_caps {
 	uint8_t phydiag_cap;
 	uint8_t radar_cap;
 	uint8_t spectral_cap;
 	uint8_t advncd_spectral_cap;
+	uint32_t hw_gen;
 };
 
 #define SPECTRAL_IOCTL_PARAM_NOVAL (65535)
