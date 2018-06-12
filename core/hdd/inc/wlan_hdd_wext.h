@@ -247,7 +247,7 @@ int hdd_assemble_rate_code(uint8_t preamble, uint8_t nss, uint8_t rate);
 int hdd_set_11ax_rate(struct hdd_adapter *adapter, int value,
 		      struct sap_config *sap_config);
 
-int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
+int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 			    int new_phymode, struct hdd_context *phddctx);
 
 struct iw_request_info;
