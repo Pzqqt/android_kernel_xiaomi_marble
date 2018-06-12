@@ -2668,15 +2668,6 @@ QDF_STATUS wlan_ipa_uc_ol_init(struct wlan_ipa_priv *ipa_ctx,
 		ipa_ctx->vdev_offload_enabled[i] = false;
 	}
 
-	/* Set the lowest bandwidth to start with */
-	status = wlan_ipa_set_perf_level(ipa_ctx, 0, 0);
-	if (status != QDF_STATUS_SUCCESS) {
-		ipa_err("Set perf level failed: %d", status);
-		wlan_ipa_wdi_rm_inactivity_timer_destroy(
-					QDF_IPA_RM_RESOURCE_WLAN_PROD);
-		goto fail_return;
-	}
-
 	if (cdp_ipa_get_resource(ipa_ctx->dp_soc, ipa_ctx->dp_pdev)) {
 		ipa_err("IPA UC resource alloc fail");
 		status = QDF_STATUS_E_FAILURE;
@@ -2694,6 +2685,9 @@ QDF_STATUS wlan_ipa_uc_ol_init(struct wlan_ipa_priv *ipa_ctx,
 
 		cdp_ipa_set_doorbell_paddr(ipa_ctx->dp_soc, ipa_ctx->dp_pdev);
 		wlan_ipa_init_metering(ipa_ctx);
+
+		if (wlan_ipa_init_perf_level(ipa_ctx) != QDF_STATUS_SUCCESS)
+			ipa_err("Failed to init perf level");
 	}
 
 	cdp_ipa_register_op_cb(ipa_ctx->dp_soc, ipa_ctx->dp_pdev,
