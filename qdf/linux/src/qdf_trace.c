@@ -2808,8 +2808,6 @@ QDF_STATUS qdf_print_ctrl_cleanup(unsigned int idx)
 	qdf_print_clean_node_flag(idx);
 	print_ctrl_obj[idx].in_use = false;
 
-	pr_info("%s: Print control object %d cleaned up\n", __func__, idx);
-
 	return QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(qdf_print_ctrl_cleanup);

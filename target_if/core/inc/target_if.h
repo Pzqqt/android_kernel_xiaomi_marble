@@ -49,8 +49,8 @@
 #define target_if_debug(format, args...) \
 		target_if_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
-#define TARGET_IF_ENTER() target_if_logfl(QDF_TRACE_LEVEL_INFO, "enter")
-#define TARGET_IF_EXIT() target_if_logfl(QDF_TRACE_LEVEL_INFO, "exit")
+#define TARGET_IF_ENTER() target_if_logfl(QDF_TRACE_LEVEL_DEBUG, "enter")
+#define TARGET_IF_EXIT() target_if_logfl(QDF_TRACE_LEVEL_DEBUG, "exit")
 
 
 #ifdef CONFIG_MCL
