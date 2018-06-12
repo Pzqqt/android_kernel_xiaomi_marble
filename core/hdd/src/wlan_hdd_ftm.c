@@ -77,6 +77,7 @@ int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->enablePowersaveOffload;
 	hdd_lpass_populate_cds_config(cds_cfg, hdd_ctx);
 	cds_cfg->sub_20_channel_width = WLAN_SUB_20_CH_WIDTH_NONE;
+	cds_cfg->self_recovery_enabled = hdd_ctx->config->enableSelfRecovery;
 	cds_init_ini_config(cds_cfg);
 
 	return 0;
