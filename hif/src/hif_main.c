@@ -486,7 +486,8 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	qdf_mem_free(scn);
 }
 
-#ifdef QCA_WIFI_QCA8074
+#if defined(QCA_WIFI_QCA8074) || \
+	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
 	if (ce_srng_based(scn)) {
@@ -822,8 +823,16 @@ int hif_get_device_type(uint32_t device_id,
 		HIF_INFO(" *********** QCN7605 *************\n");
 		break;
 
+	case QCA6390_DEVICE_ID:
+	case QCA6390_EMULATION_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCA6390;
+		*target_type = TARGET_TYPE_QCA6390;
+		HIF_INFO(" *********** QCA6390 *************\n");
+		break;
+
 	default:
-		HIF_ERROR("%s: Unsupported device ID!", __func__);
+		HIF_ERROR("%s: Unsupported device ID = 0x%x!",
+			  __func__, device_id);
 		ret = -ENODEV;
 		break;
 	}

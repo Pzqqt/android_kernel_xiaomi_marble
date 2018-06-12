@@ -84,6 +84,7 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	if (scn->bus_type == QDF_BUS_TYPE_SNOC ||
 			(scn->bus_type ==  QDF_BUS_TYPE_PCI &&
 			 (tgt_info->target_type == TARGET_TYPE_QCA6290 ||
+			  tgt_info->target_type == TARGET_TYPE_QCA6390 ||
 			  tgt_info->target_type == TARGET_TYPE_QCA8074))) {
 		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
 		offset = (uint32_t)(*pos) & 0xffffff;
@@ -155,6 +156,7 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 	if (scn->bus_type == QDF_BUS_TYPE_SNOC ||
 			(scn->bus_type ==  QDF_BUS_TYPE_PCI &&
 			 (tgt_info->target_type == TARGET_TYPE_QCA6290 ||
+			  tgt_info->target_type == TARGET_TYPE_QCA6390 ||
 			  tgt_info->target_type == TARGET_TYPE_QCA8074))) {
 		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
 		offset = (uint32_t)(*pos) & 0xffffff;

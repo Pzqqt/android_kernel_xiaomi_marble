@@ -220,6 +220,7 @@ static void hal_target_based_configure(struct hal_soc *hal)
 	switch (hal->target_type) {
 #ifdef QCA_WIFI_QCA6290
 	case TARGET_TYPE_QCA6290:
+	case TARGET_TYPE_QCA6390:
 		hal->use_register_windowing = true;
 		hal_qca6290_attach(hal);
 	break;

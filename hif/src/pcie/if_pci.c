@@ -2160,12 +2160,9 @@ static int hif_enable_pci_nopld(struct hif_pci_softc *sc,
 		goto err_iomap;
 	}
 
-	pr_err("*****BAR is %pK\n", mem);
+	HIF_INFO("*****BAR is %pK\n", (void *)mem);
 
 	sc->mem = mem;
-
-	HIF_INFO("%s, mem after pci_iomap:%pK\n",
-	       __func__, sc->mem);
 
 	/* Hawkeye emulation specific change */
 	if ((device_id == RUMIM2M_DEVICE_ID_NODE0) ||
@@ -4514,6 +4511,7 @@ int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
 	tgt_info = hif_get_target_info_handle(GET_HIF_OPAQUE_HDL(scn));
 
 	if (tgt_info->target_type == TARGET_TYPE_QCA6290 ||
+	    tgt_info->target_type == TARGET_TYPE_QCA6390 ||
 	    tgt_info->target_type == TARGET_TYPE_QCA8074) {
 		/*
 		 * Need to consider offset's memtype for QCA6290/QCA8074,

@@ -108,12 +108,19 @@ void hif_target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 #endif
 
 #if defined(QCA6290_HEADERS_DEF)
-	/* use the same defs for HAWKEYE & NAPIER */
 	case TARGET_TYPE_QCA6290:
 		scn->targetdef = QCA6290_TARGETdef;
 		scn->target_ce_def = QCA6290_CE_TARGETdef;
 		break;
 #endif
+
+#if defined(QCA6390_HEADERS_DEF)
+	case TARGET_TYPE_QCA6390:
+		scn->targetdef = QCA6390_TARGETdef;
+		scn->target_ce_def = QCA6390_CE_TARGETdef;
+		HIF_TRACE("%s: TARGET_TYPE_QCA6390", __func__);
+		break;
+#endif /* QCA6390_HEADERS_DEF */
 
 	default:
 		break;
@@ -193,6 +200,13 @@ void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type)
 		scn->hostdef = QCA6290_HOSTdef;
 		break;
 #endif
+
+#if defined(QCA6390_HEADERS_DEF)
+	case HIF_TYPE_QCA6390:
+		scn->hostdef = QCA6390_HOSTdef;
+		HIF_TRACE("%s: HIF_TYPE_QCA6390", __func__);
+		break;
+#endif /* QCA6390_HEADERS_DEF */
 
 	default:
 		break;

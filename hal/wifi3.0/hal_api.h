@@ -35,7 +35,7 @@
 #include "hal_internal.h"
 
 #define MAX_UNWINDOWED_ADDRESS 0x80000
-#ifdef TARGET_TYPE_QCA6390
+#ifdef QCA_WIFI_QCA6390
 #define WINDOW_ENABLE_BIT 0x40000000
 #else
 #define WINDOW_ENABLE_BIT 0x80000000

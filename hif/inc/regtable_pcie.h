@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -262,7 +262,7 @@
 	(pdev->targetdef->d_RX_ATTENTION_0_MSDU_DONE_MASK)
 #define RX_ATTENTION_0_TCP_UDP_CHKSUM_FAIL_MASK \
 	(pdev->targetdef->d_RX_ATTENTION_0_TCP_UDP_CHKSUM_FAIL_MASK)
-#if !defined(QCA6290_HEADERS_DEF)
+#if !defined(QCA6290_HEADERS_DEF) && !defined(QCA6390_HEADERS_DEF)
 #ifndef RX_MSDU_START_2_DECAP_FORMAT_OFFSET
 #define RX_MSDU_START_2_DECAP_FORMAT_OFFSET \
 	(pdev->targetdef->d_RX_MSDU_START_2_DECAP_FORMAT_OFFSET)
@@ -275,7 +275,7 @@
 #define RX_MSDU_START_2_DECAP_FORMAT_MASK \
 	(pdev->targetdef->d_RX_MSDU_START_2_DECAP_FORMAT_MASK)
 #endif
-#endif /*!QCA6290_HEADERS_DEF*/
+#endif /*!QCA6290_HEADERS_DEF && !QCA6390_HEADERS_DEF */
 /* end */
 #endif
 

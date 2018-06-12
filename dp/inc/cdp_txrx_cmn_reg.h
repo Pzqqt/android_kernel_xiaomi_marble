@@ -62,6 +62,8 @@ static inline ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 	case LITHIUM_DP: /*FIXME Add lithium devide IDs */
 	case QCA8074_DEVICE_ID: /* Hawekeye */
 	case QCA6290_DEVICE_ID:
+	case QCA6390_DEVICE_ID:
+	case QCA6390_EMULATION_DEVICE_ID:
 	case RUMIM2M_DEVICE_ID_NODE0: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE1: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE2: /*lithium emulation */
