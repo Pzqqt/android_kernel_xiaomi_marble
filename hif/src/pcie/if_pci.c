@@ -87,15 +87,15 @@ static void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 	unsigned int target_enable0, target_enable1;
 	unsigned int target_cause0, target_cause1;
 
-	target_enable0 = hif_read32_mb(sc->mem + Q6_ENABLE_REGISTER_0);
-	target_enable1 = hif_read32_mb(sc->mem + Q6_ENABLE_REGISTER_1);
-	target_cause0 = hif_read32_mb(sc->mem + Q6_CAUSE_REGISTER_0);
-	target_cause1 = hif_read32_mb(sc->mem + Q6_CAUSE_REGISTER_1);
+	target_enable0 = hif_read32_mb(sc, sc->mem + Q6_ENABLE_REGISTER_0);
+	target_enable1 = hif_read32_mb(sc, sc->mem + Q6_ENABLE_REGISTER_1);
+	target_cause0 = hif_read32_mb(sc, sc->mem + Q6_CAUSE_REGISTER_0);
+	target_cause1 = hif_read32_mb(sc, sc->mem + Q6_CAUSE_REGISTER_1);
 
 	if ((target_enable0 & target_cause0) ||
 	    (target_enable1 & target_cause1)) {
-		hif_write32_mb(sc->mem + Q6_ENABLE_REGISTER_0, 0);
-		hif_write32_mb(sc->mem + Q6_ENABLE_REGISTER_1, 0);
+		hif_write32_mb(sc, sc->mem + Q6_ENABLE_REGISTER_0, 0);
+		hif_write32_mb(sc, sc->mem + Q6_ENABLE_REGISTER_1, 0);
 
 		if (scn->notice_send)
 			pld_intr_notify_q6(sc->dev);
@@ -128,12 +128,12 @@ static void pci_dispatch_interrupt(struct hif_softc *scn)
 		if ((scn->target_status != TARGET_STATUS_RESET) &&
 			(!qdf_atomic_read(&scn->link_suspended))) {
 
-			hif_write32_mb(scn->mem +
+			hif_write32_mb(scn, scn->mem +
 				(SOC_CORE_BASE_ADDRESS |
 				PCIE_INTR_ENABLE_ADDRESS),
 				HOST_GROUP0_MASK);
 
-			hif_read32_mb(scn->mem +
+			hif_read32_mb(scn, scn->mem +
 					(SOC_CORE_BASE_ADDRESS |
 					PCIE_INTR_ENABLE_ADDRESS));
 		}
@@ -169,9 +169,9 @@ irqreturn_t hif_pci_legacy_ce_interrupt_handler(int irq, void *arg)
 			return IRQ_HANDLED;
 
 		if (ADRASTEA_BU) {
-			host_enable = hif_read32_mb(sc->mem +
+			host_enable = hif_read32_mb(sc, sc->mem +
 						    PCIE_INTR_ENABLE_ADDRESS);
-			host_cause = hif_read32_mb(sc->mem +
+			host_cause = hif_read32_mb(sc, sc->mem +
 						   PCIE_INTR_CAUSE_ADDRESS);
 			if (!(host_enable & host_cause)) {
 				hif_pci_route_adrastea_interrupt(sc);
@@ -184,25 +184,26 @@ irqreturn_t hif_pci_legacy_ce_interrupt_handler(int irq, void *arg)
 		 * after INTR_ENABLE is set to 0,
 		 * otherwise interrupt can not be really cleared
 		 */
-		hif_write32_mb(sc->mem +
+		hif_write32_mb(sc, sc->mem +
 			      (SOC_CORE_BASE_ADDRESS |
 			       PCIE_INTR_ENABLE_ADDRESS), 0);
 
-		hif_write32_mb(sc->mem +
+		hif_write32_mb(sc, sc->mem +
 			      (SOC_CORE_BASE_ADDRESS | PCIE_INTR_CLR_ADDRESS),
 			       ADRASTEA_BU ?
 			       (host_enable & host_cause) :
 			      HOST_GROUP0_MASK);
 
 		if (ADRASTEA_BU)
-			hif_write32_mb(sc->mem + 0x2f100c, (host_cause >> 1));
+			hif_write32_mb(sc, sc->mem + 0x2f100c,
+				       (host_cause >> 1));
 
 		/* IMPORTANT: this extra read transaction is required to
 		 * flush the posted write buffer
 		 */
 		if (!ADRASTEA_BU) {
 		tmp =
-			hif_read32_mb(sc->mem +
+			hif_read32_mb(sc, sc->mem +
 				     (SOC_CORE_BASE_ADDRESS |
 				      PCIE_INTR_ENABLE_ADDRESS));
 
@@ -233,26 +234,26 @@ irqreturn_t hif_pci_legacy_ce_interrupt_handler(int irq, void *arg)
 
 			HIF_ERROR("%s: RTC_STATE_ADDRESS = 0x%08x",
 				  __func__,
-				  hif_read32_mb(sc->mem +
+				  hif_read32_mb(sc, sc->mem +
 						PCIE_LOCAL_BASE_ADDRESS
 						+ RTC_STATE_ADDRESS));
 			HIF_ERROR("%s: PCIE_SOC_WAKE_ADDRESS = 0x%08x",
 				  __func__,
-				  hif_read32_mb(sc->mem +
+				  hif_read32_mb(sc, sc->mem +
 						PCIE_LOCAL_BASE_ADDRESS
 						+ PCIE_SOC_WAKE_ADDRESS));
 			HIF_ERROR("%s: 0x80008 = 0x%08x, 0x8000c = 0x%08x",
 				  __func__,
-				  hif_read32_mb(sc->mem + 0x80008),
-				  hif_read32_mb(sc->mem + 0x8000c));
+				  hif_read32_mb(sc, sc->mem + 0x80008),
+				  hif_read32_mb(sc, sc->mem + 0x8000c));
 			HIF_ERROR("%s: 0x80010 = 0x%08x, 0x80014 = 0x%08x",
 				  __func__,
-				  hif_read32_mb(sc->mem + 0x80010),
-				  hif_read32_mb(sc->mem + 0x80014));
+				  hif_read32_mb(sc, sc->mem + 0x80010),
+				  hif_read32_mb(sc, sc->mem + 0x80014));
 			HIF_ERROR("%s: 0x80018 = 0x%08x, 0x8001c = 0x%08x",
 				  __func__,
-				  hif_read32_mb(sc->mem + 0x80018),
-				  hif_read32_mb(sc->mem + 0x8001c));
+				  hif_read32_mb(sc, sc->mem + 0x80018),
+				  hif_read32_mb(sc, sc->mem + 0x8001c));
 			QDF_BUG(0);
 		}
 
@@ -346,7 +347,7 @@ void hif_pci_cancel_deferred_target_sleep(struct hif_softc *scn)
 	if (hif_state->fake_sleep == true) {
 		qdf_timer_stop(&hif_state->sleep_timer);
 		if (hif_state->verified_awake == false) {
-			hif_write32_mb(pci_addr + PCIE_LOCAL_BASE_ADDRESS +
+			hif_write32_mb(scn, pci_addr + PCIE_LOCAL_BASE_ADDRESS +
 				      PCIE_SOC_WAKE_ADDRESS,
 				      PCIE_SOC_WAKE_RESET);
 		}
@@ -360,12 +361,12 @@ inline void hif_pci_cancel_deferred_target_sleep(struct hif_softc *scn)
 }
 #endif
 
-#define A_PCIE_LOCAL_REG_READ(mem, addr) \
-	hif_read32_mb((char *)(mem) + \
+#define A_PCIE_LOCAL_REG_READ(sc, mem, addr) \
+	hif_read32_mb(sc, (char *)(mem) + \
 	PCIE_LOCAL_BASE_ADDRESS + (uint32_t)(addr))
 
-#define A_PCIE_LOCAL_REG_WRITE(mem, addr, val) \
-	hif_write32_mb(((char *)(mem) + \
+#define A_PCIE_LOCAL_REG_WRITE(sc, mem, addr, val) \
+	hif_write32_mb(sc, ((char *)(mem) + \
 	PCIE_LOCAL_BASE_ADDRESS + (uint32_t)(addr)), (val))
 
 #ifdef QCA_WIFI_3_0
@@ -394,7 +395,7 @@ static bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem)
 
 	if (scn->recovery)
 		return false;
-	val = hif_read32_mb(mem + PCIE_LOCAL_BASE_ADDRESS
+	val = hif_read32_mb(scn, mem + PCIE_LOCAL_BASE_ADDRESS
 		+ RTC_STATE_ADDRESS);
 	return (RTC_STATE_V_GET(val) & RTC_STATE_V_ON) == RTC_STATE_V_ON;
 }
@@ -427,7 +428,7 @@ static void hif_pci_device_reset(struct hif_pci_softc *sc)
 	 * NB: If we try to write SOC_GLOBAL_RESET_ADDRESS without first
 	 * writing WAKE_V, the Target may scribble over Host memory!
 	 */
-	A_PCIE_LOCAL_REG_WRITE(mem, PCIE_SOC_WAKE_ADDRESS,
+	A_PCIE_LOCAL_REG_WRITE(sc, mem, PCIE_SOC_WAKE_ADDRESS,
 			       PCIE_SOC_WAKE_V_MASK);
 	for (i = 0; i < ATH_PCI_RESET_WAIT_MAX; i++) {
 		if (hif_targ_is_awake(scn, mem))
@@ -437,11 +438,11 @@ static void hif_pci_device_reset(struct hif_pci_softc *sc)
 	}
 
 	/* Put Target, including PCIe, into RESET. */
-	val = A_PCIE_LOCAL_REG_READ(mem, SOC_GLOBAL_RESET_ADDRESS);
+	val = A_PCIE_LOCAL_REG_READ(sc, mem, SOC_GLOBAL_RESET_ADDRESS);
 	val |= 1;
-	A_PCIE_LOCAL_REG_WRITE(mem, SOC_GLOBAL_RESET_ADDRESS, val);
+	A_PCIE_LOCAL_REG_WRITE(sc, mem, SOC_GLOBAL_RESET_ADDRESS, val);
 	for (i = 0; i < ATH_PCI_RESET_WAIT_MAX; i++) {
-		if (A_PCIE_LOCAL_REG_READ(mem, RTC_STATE_ADDRESS) &
+		if (A_PCIE_LOCAL_REG_READ(sc, mem, RTC_STATE_ADDRESS) &
 		    RTC_STATE_COLD_RESET_MASK)
 			break;
 
@@ -450,17 +451,18 @@ static void hif_pci_device_reset(struct hif_pci_softc *sc)
 
 	/* Pull Target, including PCIe, out of RESET. */
 	val &= ~1;
-	A_PCIE_LOCAL_REG_WRITE(mem, SOC_GLOBAL_RESET_ADDRESS, val);
+	A_PCIE_LOCAL_REG_WRITE(sc, mem, SOC_GLOBAL_RESET_ADDRESS, val);
 	for (i = 0; i < ATH_PCI_RESET_WAIT_MAX; i++) {
 		if (!
-		    (A_PCIE_LOCAL_REG_READ(mem, RTC_STATE_ADDRESS) &
+		    (A_PCIE_LOCAL_REG_READ(sc, mem, RTC_STATE_ADDRESS) &
 		     RTC_STATE_COLD_RESET_MASK))
 			break;
 
 		qdf_mdelay(1);
 	}
 
-	A_PCIE_LOCAL_REG_WRITE(mem, PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_RESET);
+	A_PCIE_LOCAL_REG_WRITE(sc, mem, PCIE_SOC_WAKE_ADDRESS,
+			       PCIE_SOC_WAKE_RESET);
 }
 
 /* CPU warm reset function
@@ -493,7 +495,7 @@ static void hif_pci_device_warm_reset(struct hif_pci_softc *sc)
 	 * NB: If we try to write SOC_GLOBAL_RESET_ADDRESS without first
 	 * writing WAKE_V, the Target may scribble over Host memory!
 	 */
-	A_PCIE_LOCAL_REG_WRITE(mem, PCIE_SOC_WAKE_ADDRESS,
+	A_PCIE_LOCAL_REG_WRITE(sc, mem, PCIE_SOC_WAKE_ADDRESS,
 			       PCIE_SOC_WAKE_V_MASK);
 	for (i = 0; i < ATH_PCI_RESET_WAIT_MAX; i++) {
 		if (hif_targ_is_awake(scn, mem))
@@ -505,84 +507,87 @@ static void hif_pci_device_warm_reset(struct hif_pci_softc *sc)
 	 * Disable Pending interrupts
 	 */
 	val =
-		hif_read32_mb(mem +
+		hif_read32_mb(sc, mem +
 			     (SOC_CORE_BASE_ADDRESS |
 			      PCIE_INTR_CAUSE_ADDRESS));
 	HIF_INFO_MED("%s: Host Intr Cause reg 0x%x : value : 0x%x", __func__,
 		    (SOC_CORE_BASE_ADDRESS | PCIE_INTR_CAUSE_ADDRESS), val);
 	/* Target CPU Intr Cause */
-	val = hif_read32_mb(mem + (SOC_CORE_BASE_ADDRESS | CPU_INTR_ADDRESS));
+	val = hif_read32_mb(sc, mem +
+			    (SOC_CORE_BASE_ADDRESS | CPU_INTR_ADDRESS));
 	HIF_INFO_MED("%s: Target CPU Intr Cause 0x%x", __func__, val);
 
 	val =
-		hif_read32_mb(mem +
+		hif_read32_mb(sc, mem +
 			     (SOC_CORE_BASE_ADDRESS |
 			      PCIE_INTR_ENABLE_ADDRESS));
-	hif_write32_mb((mem +
+	hif_write32_mb(sc, (mem +
 		       (SOC_CORE_BASE_ADDRESS | PCIE_INTR_ENABLE_ADDRESS)), 0);
-	hif_write32_mb((mem + (SOC_CORE_BASE_ADDRESS + PCIE_INTR_CLR_ADDRESS)),
-		      HOST_GROUP0_MASK);
+	hif_write32_mb(sc, (mem +
+		       (SOC_CORE_BASE_ADDRESS + PCIE_INTR_CLR_ADDRESS)),
+		       HOST_GROUP0_MASK);
 
 	qdf_mdelay(100);
 
 	/* Clear FW_INDICATOR_ADDRESS */
 	if (HAS_FW_INDICATOR) {
-		fw_indicator = hif_read32_mb(mem + FW_INDICATOR_ADDRESS);
-		hif_write32_mb(mem + FW_INDICATOR_ADDRESS, 0);
+		fw_indicator = hif_read32_mb(sc, mem + FW_INDICATOR_ADDRESS);
+		hif_write32_mb(sc, mem + FW_INDICATOR_ADDRESS, 0);
 	}
 
 	/* Clear Target LF Timer interrupts */
 	val =
-		hif_read32_mb(mem +
+		hif_read32_mb(sc, mem +
 			     (RTC_SOC_BASE_ADDRESS +
 			      SOC_LF_TIMER_CONTROL0_ADDRESS));
 	HIF_INFO_MED("%s: addr 0x%x :  0x%x", __func__,
 	       (RTC_SOC_BASE_ADDRESS + SOC_LF_TIMER_CONTROL0_ADDRESS), val);
 	val &= ~SOC_LF_TIMER_CONTROL0_ENABLE_MASK;
-	hif_write32_mb(mem +
+	hif_write32_mb(sc, mem +
 		      (RTC_SOC_BASE_ADDRESS + SOC_LF_TIMER_CONTROL0_ADDRESS),
 		      val);
 
 	/* Reset CE */
 	val =
-		hif_read32_mb(mem +
+		hif_read32_mb(sc, mem +
 			     (RTC_SOC_BASE_ADDRESS |
 			      SOC_RESET_CONTROL_ADDRESS));
 	val |= SOC_RESET_CONTROL_CE_RST_MASK;
-	hif_write32_mb((mem +
+	hif_write32_mb(sc, (mem +
 		       (RTC_SOC_BASE_ADDRESS | SOC_RESET_CONTROL_ADDRESS)),
 		      val);
 	val =
-		hif_read32_mb(mem +
+		hif_read32_mb(sc, mem +
 			     (RTC_SOC_BASE_ADDRESS |
 			      SOC_RESET_CONTROL_ADDRESS));
 	qdf_mdelay(10);
 
 	/* CE unreset */
 	val &= ~SOC_RESET_CONTROL_CE_RST_MASK;
-	hif_write32_mb(mem + (RTC_SOC_BASE_ADDRESS | SOC_RESET_CONTROL_ADDRESS),
-		      val);
+	hif_write32_mb(sc, mem + (RTC_SOC_BASE_ADDRESS |
+		       SOC_RESET_CONTROL_ADDRESS), val);
 	val =
-		hif_read32_mb(mem +
+		hif_read32_mb(sc, mem +
 			     (RTC_SOC_BASE_ADDRESS |
 			      SOC_RESET_CONTROL_ADDRESS));
 	qdf_mdelay(10);
 
 	/* Read Target CPU Intr Cause */
-	val = hif_read32_mb(mem + (SOC_CORE_BASE_ADDRESS | CPU_INTR_ADDRESS));
+	val = hif_read32_mb(sc, mem +
+			    (SOC_CORE_BASE_ADDRESS | CPU_INTR_ADDRESS));
 	HIF_INFO_MED("%s: Target CPU Intr Cause after CE reset 0x%x",
 		    __func__, val);
 
 	/* CPU warm RESET */
 	val =
-		hif_read32_mb(mem +
+		hif_read32_mb(sc, mem +
 			     (RTC_SOC_BASE_ADDRESS |
 			      SOC_RESET_CONTROL_ADDRESS));
 	val |= SOC_RESET_CONTROL_CPU_WARM_RST_MASK;
-	hif_write32_mb(mem + (RTC_SOC_BASE_ADDRESS | SOC_RESET_CONTROL_ADDRESS),
-		      val);
+	hif_write32_mb(sc, mem + (RTC_SOC_BASE_ADDRESS |
+		       SOC_RESET_CONTROL_ADDRESS), val);
 	val =
-		hif_read32_mb(mem +
+		hif_read32_mb(sc, mem +
 			     (RTC_SOC_BASE_ADDRESS |
 			      SOC_RESET_CONTROL_ADDRESS));
 	HIF_INFO_MED("%s: RESET_CONTROL after cpu warm reset 0x%x",
@@ -604,7 +609,7 @@ int hif_check_fw_reg(struct hif_opaque_softc *hif_ctx)
 
 	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
 		return ATH_ISR_NOSCHED;
-	val = hif_read32_mb(mem + FW_INDICATOR_ADDRESS);
+	val = hif_read32_mb(sc, mem + FW_INDICATOR_ADDRESS);
 	if (Q_TARGET_ACCESS_END(scn) < 0)
 		return ATH_ISR_SCHED;
 
@@ -634,15 +639,15 @@ int hif_check_soc_status(struct hif_opaque_softc *hif_ctx)
 	}
 
 	/* Check PCIe local register for bar/memory access */
-	val = hif_read32_mb(sc->mem + PCIE_LOCAL_BASE_ADDRESS +
+	val = hif_read32_mb(sc, sc->mem + PCIE_LOCAL_BASE_ADDRESS +
 			   RTC_STATE_ADDRESS);
 	HIF_INFO_MED("%s: RTC_STATE_ADDRESS is %08x", __func__, val);
 
 	/* Try to wake up taget if it sleeps */
-	hif_write32_mb(sc->mem + PCIE_LOCAL_BASE_ADDRESS +
+	hif_write32_mb(sc, sc->mem + PCIE_LOCAL_BASE_ADDRESS +
 		PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_V_MASK);
 	HIF_INFO_MED("%s: PCIE_SOC_WAKE_ADDRESS is %08x", __func__,
-		hif_read32_mb(sc->mem + PCIE_LOCAL_BASE_ADDRESS +
+		hif_read32_mb(sc, sc->mem + PCIE_LOCAL_BASE_ADDRESS +
 		PCIE_SOC_WAKE_ADDRESS));
 
 	/* Check if taget can be woken up */
@@ -650,16 +655,16 @@ int hif_check_soc_status(struct hif_opaque_softc *hif_ctx)
 		if (timeout_count >= PCIE_WAKE_TIMEOUT) {
 			HIF_ERROR("%s: wake up timeout, %08x, %08x",
 				__func__,
-				hif_read32_mb(sc->mem +
+				hif_read32_mb(sc, sc->mem +
 					     PCIE_LOCAL_BASE_ADDRESS +
 					     RTC_STATE_ADDRESS),
-				hif_read32_mb(sc->mem +
+				hif_read32_mb(sc, sc->mem +
 					     PCIE_LOCAL_BASE_ADDRESS +
 					PCIE_SOC_WAKE_ADDRESS));
 			return -EACCES;
 		}
 
-		hif_write32_mb(sc->mem + PCIE_LOCAL_BASE_ADDRESS +
+		hif_write32_mb(sc, sc->mem + PCIE_LOCAL_BASE_ADDRESS +
 			      PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_V_MASK);
 
 		qdf_mdelay(100);
@@ -668,7 +673,7 @@ int hif_check_soc_status(struct hif_opaque_softc *hif_ctx)
 
 	/* Check Power register for SoC internal bus issues */
 	val =
-		hif_read32_mb(sc->mem + RTC_SOC_BASE_ADDRESS +
+		hif_read32_mb(sc, sc->mem + RTC_SOC_BASE_ADDRESS +
 			     SOC_POWER_REG_OFFSET);
 	HIF_INFO_MED("%s: Power register is %08x", __func__, val);
 
@@ -697,49 +702,51 @@ static void __hif_pci_dump_registers(struct hif_softc *scn)
 
 	/* DEBUG_INPUT_SEL_SRC = 0x6 */
 	val =
-		hif_read32_mb(mem + GPIO_BASE_ADDRESS +
+		hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 			     WLAN_DEBUG_INPUT_SEL_OFFSET);
 	val &= ~WLAN_DEBUG_INPUT_SEL_SRC_MASK;
 	val |= WLAN_DEBUG_INPUT_SEL_SRC_SET(0x6);
-	hif_write32_mb(mem + GPIO_BASE_ADDRESS + WLAN_DEBUG_INPUT_SEL_OFFSET,
-		      val);
+	hif_write32_mb(sc, mem + GPIO_BASE_ADDRESS +
+		       WLAN_DEBUG_INPUT_SEL_OFFSET, val);
 
 	/* DEBUG_CONTROL_ENABLE = 0x1 */
-	val = hif_read32_mb(mem + GPIO_BASE_ADDRESS +
+	val = hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 			   WLAN_DEBUG_CONTROL_OFFSET);
 	val &= ~WLAN_DEBUG_CONTROL_ENABLE_MASK;
 	val |= WLAN_DEBUG_CONTROL_ENABLE_SET(0x1);
-	hif_write32_mb(mem + GPIO_BASE_ADDRESS +
+	hif_write32_mb(sc, mem + GPIO_BASE_ADDRESS +
 		      WLAN_DEBUG_CONTROL_OFFSET, val);
 
 	HIF_INFO_MED("%s: Debug: inputsel: %x dbgctrl: %x", __func__,
-	       hif_read32_mb(mem + GPIO_BASE_ADDRESS +
+	       hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 			    WLAN_DEBUG_INPUT_SEL_OFFSET),
-	       hif_read32_mb(mem + GPIO_BASE_ADDRESS +
+	       hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 			    WLAN_DEBUG_CONTROL_OFFSET));
 
 	HIF_INFO_MED("%s: Debug CE", __func__);
 	/* Loop CE debug output */
 	/* AMBA_DEBUG_BUS_SEL = 0xc */
-	val = hif_read32_mb(mem + GPIO_BASE_ADDRESS + AMBA_DEBUG_BUS_OFFSET);
+	val = hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
+			    AMBA_DEBUG_BUS_OFFSET);
 	val &= ~AMBA_DEBUG_BUS_SEL_MASK;
 	val |= AMBA_DEBUG_BUS_SEL_SET(0xc);
-	hif_write32_mb(mem + GPIO_BASE_ADDRESS + AMBA_DEBUG_BUS_OFFSET, val);
+	hif_write32_mb(sc, mem + GPIO_BASE_ADDRESS + AMBA_DEBUG_BUS_OFFSET,
+		       val);
 
 	for (i = 0; i < sizeof(wrapper_idx) / sizeof(uint32_t); i++) {
 		/* For (i=1,2,3,4,8,9) write CE_WRAPPER_DEBUG_SEL = i */
-		val = hif_read32_mb(mem + CE_WRAPPER_BASE_ADDRESS +
+		val = hif_read32_mb(sc, mem + CE_WRAPPER_BASE_ADDRESS +
 				   CE_WRAPPER_DEBUG_OFFSET);
 		val &= ~CE_WRAPPER_DEBUG_SEL_MASK;
 		val |= CE_WRAPPER_DEBUG_SEL_SET(wrapper_idx[i]);
-		hif_write32_mb(mem + CE_WRAPPER_BASE_ADDRESS +
+		hif_write32_mb(sc, mem + CE_WRAPPER_BASE_ADDRESS +
 			      CE_WRAPPER_DEBUG_OFFSET, val);
 
 		HIF_INFO_MED("%s: ce wrapper: %d amdbg: %x cewdbg: %x",
 			    __func__, wrapper_idx[i],
-			    hif_read32_mb(mem + GPIO_BASE_ADDRESS +
+			    hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 				AMBA_DEBUG_BUS_OFFSET),
-			    hif_read32_mb(mem + CE_WRAPPER_BASE_ADDRESS +
+			    hif_read32_mb(sc, mem + CE_WRAPPER_BASE_ADDRESS +
 				CE_WRAPPER_DEBUG_OFFSET));
 
 		if (wrapper_idx[i] <= 7) {
@@ -747,29 +754,29 @@ static void __hif_pci_dump_registers(struct hif_softc *scn)
 				ce_base = CE_BASE_ADDRESS(wrapper_idx[i]);
 				/* For (j=0~5) write CE_DEBUG_SEL = j */
 				val =
-					hif_read32_mb(mem + ce_base +
+					hif_read32_mb(sc, mem + ce_base +
 						     CE_DEBUG_OFFSET);
 				val &= ~CE_DEBUG_SEL_MASK;
 				val |= CE_DEBUG_SEL_SET(j);
-				hif_write32_mb(mem + ce_base + CE_DEBUG_OFFSET,
-					      val);
+				hif_write32_mb(sc, mem + ce_base +
+					       CE_DEBUG_OFFSET, val);
 
 				/* read (@gpio_athr_wlan_reg)
 				 * WLAN_DEBUG_OUT_DATA
 				 */
-				val = hif_read32_mb(mem + GPIO_BASE_ADDRESS +
-						   WLAN_DEBUG_OUT_OFFSET);
+				val = hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS
+						    + WLAN_DEBUG_OUT_OFFSET);
 				val = WLAN_DEBUG_OUT_DATA_GET(val);
 
 				HIF_INFO_MED("%s: module%d: cedbg: %x out: %x",
 					    __func__, j,
-					    hif_read32_mb(mem + ce_base +
+					    hif_read32_mb(sc, mem + ce_base +
 						    CE_DEBUG_OFFSET), val);
 			}
 		} else {
 			/* read (@gpio_athr_wlan_reg) WLAN_DEBUG_OUT_DATA */
 			val =
-				hif_read32_mb(mem + GPIO_BASE_ADDRESS +
+				hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 					     WLAN_DEBUG_OUT_OFFSET);
 			val = WLAN_DEBUG_OUT_DATA_GET(val);
 
@@ -780,31 +787,33 @@ static void __hif_pci_dump_registers(struct hif_softc *scn)
 	HIF_INFO_MED("%s: Debug PCIe:", __func__);
 	/* Loop PCIe debug output */
 	/* Write AMBA_DEBUG_BUS_SEL = 0x1c */
-	val = hif_read32_mb(mem + GPIO_BASE_ADDRESS + AMBA_DEBUG_BUS_OFFSET);
+	val = hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
+			    AMBA_DEBUG_BUS_OFFSET);
 	val &= ~AMBA_DEBUG_BUS_SEL_MASK;
 	val |= AMBA_DEBUG_BUS_SEL_SET(0x1c);
-	hif_write32_mb(mem + GPIO_BASE_ADDRESS + AMBA_DEBUG_BUS_OFFSET, val);
+	hif_write32_mb(sc, mem + GPIO_BASE_ADDRESS +
+		       AMBA_DEBUG_BUS_OFFSET, val);
 
 	for (i = 0; i <= 8; i++) {
 		/* For (i=1~8) write AMBA_DEBUG_BUS_PCIE_DEBUG_SEL = i */
 		val =
-			hif_read32_mb(mem + GPIO_BASE_ADDRESS +
+			hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 				     AMBA_DEBUG_BUS_OFFSET);
 		val &= ~AMBA_DEBUG_BUS_PCIE_DEBUG_SEL_MASK;
 		val |= AMBA_DEBUG_BUS_PCIE_DEBUG_SEL_SET(i);
-		hif_write32_mb(mem + GPIO_BASE_ADDRESS + AMBA_DEBUG_BUS_OFFSET,
-			      val);
+		hif_write32_mb(sc, mem + GPIO_BASE_ADDRESS +
+			       AMBA_DEBUG_BUS_OFFSET, val);
 
 		/* read (@gpio_athr_wlan_reg) WLAN_DEBUG_OUT_DATA */
 		val =
-			hif_read32_mb(mem + GPIO_BASE_ADDRESS +
+			hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 				     WLAN_DEBUG_OUT_OFFSET);
 		val = WLAN_DEBUG_OUT_DATA_GET(val);
 
 		HIF_INFO_MED("%s: amdbg: %x out: %x %x", __func__,
-		       hif_read32_mb(mem + GPIO_BASE_ADDRESS +
+		       hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 				    WLAN_DEBUG_OUT_OFFSET), val,
-		       hif_read32_mb(mem + GPIO_BASE_ADDRESS +
+		       hif_read32_mb(sc, mem + GPIO_BASE_ADDRESS +
 				    WLAN_DEBUG_OUT_OFFSET));
 	}
 
@@ -1467,7 +1476,7 @@ static void hif_wake_target_cpu(struct hif_softc *scn)
  */
 static void soc_wake_reset(struct hif_softc *scn)
 {
-	hif_write32_mb(scn->mem +
+	hif_write32_mb(scn, scn->mem +
 		PCIE_LOCAL_BASE_ADDRESS +
 		PCIE_SOC_WAKE_ADDRESS,
 		PCIE_SOC_WAKE_RESET);
@@ -1536,7 +1545,7 @@ static void hif_set_hia_extnd(struct hif_softc *scn)
 		 * in RTC space
 		 */
 		tgt_info->target_revision
-			= CHIP_ID_REVISION_GET(hif_read32_mb(scn->mem
+			= CHIP_ID_REVISION_GET(hif_read32_mb(scn, scn->mem
 					+ CHIP_ID_ADDRESS));
 		qdf_print(KERN_INFO"chip_id 0x%x chip_revision 0x%x\n",
 			target_type, tgt_info->target_revision);
@@ -1718,7 +1727,7 @@ static int hif_set_hia(struct hif_softc *scn)
 #ifdef QCA_WIFI_3_0
 	i = 0;
 	while (i < HIF_HIA_MAX_POLL_LOOP) {
-		host_interest_area = hif_read32_mb(scn->mem +
+		host_interest_area = hif_read32_mb(scn, scn->mem +
 						A_SOC_CORE_SCRATCH_0_ADDRESS);
 		if ((host_interest_area & 0x01) == 0) {
 			qdf_mdelay(HIF_HIA_POLLING_DELAY_MS);
@@ -1728,7 +1737,7 @@ static int hif_set_hia(struct hif_softc *scn)
 				HIF_ERROR("%s: poll timeout(%d)", __func__, i);
 		} else {
 			host_interest_area &= (~0x01);
-			hif_write32_mb(scn->mem + 0x113014, 0);
+			hif_write32_mb(scn, scn->mem + 0x113014, 0);
 			break;
 		}
 	}
@@ -2243,7 +2252,7 @@ static int hif_pci_probe_tgt_wakeup(struct hif_pci_softc *sc)
 	 * We try to catch that here in order to reset the Target and
 	 * retry the probe.
 	 */
-	hif_write32_mb(sc->mem + PCIE_LOCAL_BASE_ADDRESS +
+	hif_write32_mb(sc, sc->mem + PCIE_LOCAL_BASE_ADDRESS +
 				  PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_V_MASK);
 	while (!hif_targ_is_awake(scn, sc->mem)) {
 		if (0 == targ_awake_limit) {
@@ -2260,7 +2269,7 @@ static int hif_pci_probe_tgt_wakeup(struct hif_pci_softc *sc)
 		int wait_limit = 200;
 		/* Synchronization point: wait the BAR0 is configured */
 		while (wait_limit-- &&
-			   !(hif_read32_mb(sc->mem +
+			   !(hif_read32_mb(sc, c->mem +
 					  PCIE_LOCAL_BASE_ADDRESS +
 					  PCIE_SOC_RDY_STATUS_ADDRESS)
 					  & PCIE_SOC_RDY_STATUS_BAR_MASK)) {
@@ -2277,8 +2286,8 @@ static int hif_pci_probe_tgt_wakeup(struct hif_pci_softc *sc)
 #endif
 
 #ifndef QCA_WIFI_3_0
-	fw_indicator = hif_read32_mb(sc->mem + FW_INDICATOR_ADDRESS);
-	hif_write32_mb(sc->mem + PCIE_LOCAL_BASE_ADDRESS +
+	fw_indicator = hif_read32_mb(sc, sc->mem + FW_INDICATOR_ADDRESS);
+	hif_write32_mb(sc, sc->mem + PCIE_LOCAL_BASE_ADDRESS +
 				  PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_RESET);
 
 	if (fw_indicator & FW_IND_INITIALIZED) {
@@ -2429,10 +2438,10 @@ static int hif_configure_msi(struct hif_pci_softc *sc)
 	}
 
 	if (ret == 0) {
-		hif_write32_mb(sc->mem+(SOC_CORE_BASE_ADDRESS |
+		hif_write32_mb(sc, sc->mem + (SOC_CORE_BASE_ADDRESS |
 			  PCIE_INTR_ENABLE_ADDRESS),
 			  HOST_GROUP0_MASK);
-		hif_write32_mb(sc->mem +
+		hif_write32_mb(sc, sc->mem +
 			  PCIE_LOCAL_BASE_ADDRESS + PCIE_SOC_WAKE_ADDRESS,
 			  PCIE_SOC_WAKE_RESET);
 	}
@@ -2469,12 +2478,12 @@ static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 	 */
 	sc->irq = sc->pdev->irq;
 	/* Use Legacy PCI Interrupts */
-	hif_write32_mb(sc->mem+(SOC_CORE_BASE_ADDRESS |
+	hif_write32_mb(sc, sc->mem + (SOC_CORE_BASE_ADDRESS |
 		  PCIE_INTR_ENABLE_ADDRESS),
 		  HOST_GROUP0_MASK);
-	hif_read32_mb(sc->mem+(SOC_CORE_BASE_ADDRESS |
+	hif_read32_mb(sc, sc->mem + (SOC_CORE_BASE_ADDRESS |
 			       PCIE_INTR_ENABLE_ADDRESS));
-	hif_write32_mb(sc->mem + PCIE_LOCAL_BASE_ADDRESS +
+	hif_write32_mb(sc, sc->mem + PCIE_LOCAL_BASE_ADDRESS +
 		      PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_RESET);
 
 	if ((target_type == TARGET_TYPE_IPQ4019) ||
@@ -2485,7 +2494,7 @@ static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 			(target_type == TARGET_TYPE_AR6320V1) ||
 			(target_type == TARGET_TYPE_AR6320V2) ||
 			(target_type == TARGET_TYPE_AR6320V3)) {
-		hif_write32_mb(scn->mem + PCIE_LOCAL_BASE_ADDRESS +
+		hif_write32_mb(scn, scn->mem + PCIE_LOCAL_BASE_ADDRESS +
 				PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_V_MASK);
 	}
 end:
@@ -2619,8 +2628,8 @@ void hif_pci_disable_bus(struct hif_softc *scn)
 	if (ADRASTEA_BU) {
 		hif_vote_link_down(GET_HIF_OPAQUE_HDL(scn));
 
-		hif_write32_mb(sc->mem + PCIE_INTR_ENABLE_ADDRESS, 0);
-		hif_write32_mb(sc->mem + PCIE_INTR_CLR_ADDRESS,
+		hif_write32_mb(sc, sc->mem + PCIE_INTR_ENABLE_ADDRESS, 0);
+		hif_write32_mb(sc, sc->mem + PCIE_INTR_CLR_ADDRESS,
 			       HOST_GROUP0_MASK);
 	}
 
@@ -3228,11 +3237,11 @@ static int hif_log_soc_wakeup_timeout(struct hif_pci_softc *sc)
 	HIF_ERROR("%s: PCI BAR 0 = 0x%08x", __func__, bar);
 
 	HIF_ERROR("%s: SOC_WAKE_ADDR 0%08x", __func__,
-			hif_read32_mb(pci_addr + PCIE_LOCAL_BASE_ADDRESS +
+			hif_read32_mb(scn, pci_addr + PCIE_LOCAL_BASE_ADDRESS +
 						PCIE_SOC_WAKE_ADDRESS));
 
 	HIF_ERROR("%s: RTC_STATE_ADDR 0x%08x", __func__,
-			hif_read32_mb(pci_addr + PCIE_LOCAL_BASE_ADDRESS +
+			hif_read32_mb(scn, pci_addr + PCIE_LOCAL_BASE_ADDRESS +
 							RTC_STATE_ADDRESS));
 
 	HIF_ERROR("%s:error, wakeup target", __func__);
@@ -3337,7 +3346,7 @@ int hif_pci_target_sleep_state_adjust(struct hif_softc *scn,
 		} else {
 			if (hif_state->keep_awake_count == 0) {
 				/* Force AWAKE */
-				hif_write32_mb(pci_addr +
+				hif_write32_mb(sc, pci_addr +
 					      PCIE_LOCAL_BASE_ADDRESS +
 					      PCIE_SOC_WAKE_ADDRESS,
 					      PCIE_SOC_WAKE_V_MASK);
@@ -3382,15 +3391,15 @@ int hif_pci_target_sleep_state_adjust(struct hif_softc *scn,
 		debug = 0;
 		HIF_ERROR("%s: INTR_ENABLE_REG = 0x%08x, INTR_CAUSE_REG = 0x%08x, CPU_INTR_REG = 0x%08x, INTR_CLR_REG = 0x%08x, CE_INTERRUPT_SUMMARY_REG = 0x%08x",
 			__func__,
-			hif_read32_mb(sc->mem + SOC_CORE_BASE_ADDRESS +
+			hif_read32_mb(sc, sc->mem + SOC_CORE_BASE_ADDRESS +
 				PCIE_INTR_ENABLE_ADDRESS),
-			hif_read32_mb(sc->mem + SOC_CORE_BASE_ADDRESS +
+			hif_read32_mb(sc, sc->mem + SOC_CORE_BASE_ADDRESS +
 				PCIE_INTR_CAUSE_ADDRESS),
-			hif_read32_mb(sc->mem + SOC_CORE_BASE_ADDRESS +
+			hif_read32_mb(sc, sc->mem + SOC_CORE_BASE_ADDRESS +
 				CPU_INTR_ADDRESS),
-			hif_read32_mb(sc->mem + SOC_CORE_BASE_ADDRESS +
+			hif_read32_mb(sc, sc->mem + SOC_CORE_BASE_ADDRESS +
 				PCIE_INTR_CLR_ADDRESS),
-			hif_read32_mb(sc->mem + CE_WRAPPER_BASE_ADDRESS +
+			hif_read32_mb(sc, sc->mem + CE_WRAPPER_BASE_ADDRESS +
 				CE_WRAPPER_INTERRUPT_SUMMARY_ADDRESS));
 	}
 
@@ -3404,7 +3413,7 @@ uint32_t hif_target_read_checked(struct hif_softc *scn, uint32_t offset)
 	void *addr;
 
 	addr = scn->mem + offset;
-	value = hif_read32_mb(addr);
+	value = hif_read32_mb(scn, addr);
 
 	{
 		unsigned long irq_flags;
@@ -3428,7 +3437,7 @@ hif_target_write_checked(struct hif_softc *scn, uint32_t offset, uint32_t value)
 	void *addr;
 
 	addr = scn->mem + (offset);
-	hif_write32_mb(addr, value);
+	hif_write32_mb(scn, addr, value);
 
 	{
 		unsigned long irq_flags;
@@ -3732,11 +3741,11 @@ end:
  */
 static void hif_target_sync(struct hif_softc *scn)
 {
-	hif_write32_mb(scn->mem+(SOC_CORE_BASE_ADDRESS |
+	hif_write32_mb(scn, scn->mem + (SOC_CORE_BASE_ADDRESS |
 				PCIE_INTR_ENABLE_ADDRESS),
 				PCIE_INTR_FIRMWARE_MASK);
 
-	hif_write32_mb(scn->mem + PCIE_LOCAL_BASE_ADDRESS +
+	hif_write32_mb(scn, scn->mem + PCIE_LOCAL_BASE_ADDRESS +
 			PCIE_SOC_WAKE_ADDRESS,
 			PCIE_SOC_WAKE_V_MASK);
 	while (!hif_targ_is_awake(scn, scn->mem))
@@ -3748,13 +3757,13 @@ static void hif_target_sync(struct hif_softc *scn)
 
 		HIF_TRACE("%s: Loop checking FW signal", __func__);
 		while (1) {
-			fw_ind = hif_read32_mb(scn->mem +
+			fw_ind = hif_read32_mb(scn, scn->mem +
 					FW_INDICATOR_ADDRESS);
 			if (fw_ind & FW_IND_INITIALIZED)
 				break;
 			if (wait_limit-- < 0)
 				break;
-			hif_write32_mb(scn->mem+(SOC_CORE_BASE_ADDRESS |
+			hif_write32_mb(scn, scn->mem + (SOC_CORE_BASE_ADDRESS |
 				PCIE_INTR_ENABLE_ADDRESS),
 				PCIE_INTR_FIRMWARE_MASK);
 
@@ -3767,7 +3776,7 @@ static void hif_target_sync(struct hif_softc *scn)
 			HIF_TRACE("%s: Got FW signal, retries = %x",
 					__func__, 500-wait_limit);
 	}
-	hif_write32_mb(scn->mem + PCIE_LOCAL_BASE_ADDRESS +
+	hif_write32_mb(scn, scn->mem + PCIE_LOCAL_BASE_ADDRESS +
 			PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_RESET);
 }
 
@@ -3784,6 +3793,28 @@ static void hif_pci_get_soc_info(struct hif_pci_softc *sc, struct device *dev)
 #else
 static void hif_pci_get_soc_info(struct hif_pci_softc *sc, struct device *dev)
 {}
+#endif
+
+#ifdef HIF_REG_WINDOW_SUPPORT
+static void hif_pci_init_reg_windowing_support(struct hif_pci_softc *sc,
+					       u32 target_type)
+{
+	switch (target_type) {
+	case TARGET_TYPE_QCN7605:
+		sc->use_register_windowing = true;
+		qdf_spinlock_create(&sc->register_access_lock);
+		sc->register_window = 0;
+		break;
+	default:
+		sc->use_register_windowing = false;
+	}
+}
+#else
+static void hif_pci_init_reg_windowing_support(struct hif_pci_softc *sc,
+					       u32 target_type)
+{
+	sc->use_register_windowing = false;
+}
 #endif
 
 /**
@@ -3856,6 +3887,8 @@ again:
 	hif_register_tbl_attach(ol_sc, hif_type);
 	hif_target_register_tbl_attach(ol_sc, target_type);
 
+	hif_pci_init_reg_windowing_support(sc, target_type);
+
 	tgt_info->target_type = target_type;
 
 	if (ce_srng_based(ol_sc)) {
@@ -3926,12 +3959,12 @@ void hif_pci_irq_enable(struct hif_softc *scn, int ce_id)
 			(scn->target_status != TARGET_STATUS_RESET) &&
 			(!qdf_atomic_read(&scn->link_suspended))) {
 
-			hif_write32_mb(scn->mem +
+			hif_write32_mb(scn, scn->mem +
 				(SOC_CORE_BASE_ADDRESS |
 				PCIE_INTR_ENABLE_ADDRESS),
 				HOST_GROUP0_MASK);
 
-			hif_read32_mb(scn->mem +
+			hif_read32_mb(scn, scn->mem +
 					(SOC_CORE_BASE_ADDRESS |
 					PCIE_INTR_ENABLE_ADDRESS));
 		}

@@ -349,25 +349,26 @@ void war_ce_src_ring_write_idx_set(struct hif_softc *scn,
 
 		if (!war1_allow_sleep
 		    && ctrl_addr == CE_BASE_ADDRESS(CDC_WAR_DATA_CE)) {
-			hif_write32_mb(indicator_addr,
-				      (CDC_WAR_MAGIC_STR | write_index));
+			hif_write32_mb(scn, indicator_addr,
+				       (CDC_WAR_MAGIC_STR | write_index));
 		} else {
 			unsigned long irq_flags;
 
 			local_irq_save(irq_flags);
-			hif_write32_mb(indicator_addr, 1);
+			hif_write32_mb(scn, indicator_addr, 1);
 
 			/*
 			 * PCIE write waits for ACK in IPQ8K, there is no
 			 * need to read back value.
 			 */
-			(void)hif_read32_mb(indicator_addr);
-			(void)hif_read32_mb(indicator_addr); /* conservative */
+			(void)hif_read32_mb(scn, indicator_addr);
+			/* conservative */
+			(void)hif_read32_mb(scn, indicator_addr);
 
 			CE_SRC_RING_WRITE_IDX_SET(scn,
 						  ctrl_addr, write_index);
 
-			hif_write32_mb(indicator_addr, 0);
+			hif_write32_mb(scn, indicator_addr, 0);
 			local_irq_restore(irq_flags);
 		}
 	} else {

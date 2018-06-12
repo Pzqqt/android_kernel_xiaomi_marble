@@ -1205,7 +1205,7 @@ void hif_reg_write(struct hif_opaque_softc *hif_ctx, uint32_t offset,
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
-	hif_write32_mb(scn->mem + offset, value);
+	hif_write32_mb(scn, scn->mem + offset, value);
 
 }
 qdf_export_symbol(hif_reg_write);
@@ -1223,7 +1223,7 @@ uint32_t hif_reg_read(struct hif_opaque_softc *hif_ctx, uint32_t offset)
 
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
-	return hif_read32_mb(scn->mem + offset);
+	return hif_read32_mb(scn, scn->mem + offset);
 }
 qdf_export_symbol(hif_reg_read);
 

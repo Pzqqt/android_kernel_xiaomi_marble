@@ -151,8 +151,8 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 
 	/* Program the above values into Wifi scratch regists */
 	if (msienable) {
-		hif_write32_mb(sc->mem + FW_AXI_MSI_ADDR, msi_addr);
-		hif_write32_mb(sc->mem + FW_AXI_MSI_DATA, msi_base);
+		hif_write32_mb(sc, sc->mem + FW_AXI_MSI_ADDR, msi_addr);
+		hif_write32_mb(sc, sc->mem + FW_AXI_MSI_DATA, msi_base);
 	}
 
 	/* TBD: Temporary changes. Frequency should be
@@ -181,7 +181,8 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 			HIF_INFO("%s: GCC ioremap failed\n", __func__);
 			return PTR_ERR(mem_gcc);
 		}
-		gcc_fepll_pll_div = hif_read32_mb(mem_gcc + GCC_FEPLL_PLL_DIV);
+		gcc_fepll_pll_div = hif_read32_mb(sc, mem_gcc +
+						  GCC_FEPLL_PLL_DIV);
 		clk_sel = (wifi_core_id == 0) ? ((gcc_fepll_pll_div &
 				GCC_FEPLL_PLL_CLK_WIFI_0_SEL_MASK) >>
 					GCC_FEPLL_PLL_CLK_WIFI_0_SEL_SHIFT) :
@@ -191,7 +192,8 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 
 		HIF_INFO("Wifi%d CPU frequency %u\n", wifi_core_id,
 							current_freq);
-		hif_write32_mb(sc->mem + FW_CPU_PLL_CONFIG, gcc_fepll_pll_div);
+		hif_write32_mb(sc, sc->mem + FW_CPU_PLL_CONFIG,
+			       gcc_fepll_pll_div);
 		iounmap(mem_gcc);
 	}
 
@@ -282,7 +284,8 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 	int wait_limit = ATH_AHB_RESET_WAIT_MAX;
 
 
-	wifi_core_id = hif_read32_mb(sc->mem + WLAN_SUBSYSTEM_CORE_ID_ADDRESS);
+	wifi_core_id = hif_read32_mb(sc, sc->mem +
+				     WLAN_SUBSYSTEM_CORE_ID_ADDRESS);
 	glb_cfg_offset = (wifi_core_id == 0) ? TCSR_WIFI0_GLB_CFG :
 							TCSR_WIFI1_GLB_CFG;
 	haltreq_offset = (wifi_core_id == 0) ? TCSR_WCSS0_HALTREQ :
@@ -295,20 +298,20 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 		HIF_INFO("%s: TCSR ioremap failed\n", __func__);
 		return;
 	}
-	reg_value = hif_read32_mb(mem_tcsr + haltreq_offset);
-	hif_write32_mb(mem_tcsr + haltreq_offset, reg_value | 0x1);
+	reg_value = hif_read32_mb(sc, mem_tcsr + haltreq_offset);
+	hif_write32_mb(sc, mem_tcsr + haltreq_offset, reg_value | 0x1);
 	/* Wait for halt ack before asserting reset */
 	while (wait_limit) {
 
-		if (hif_read32_mb(mem_tcsr + haltack_offset) & 0x1)
+		if (hif_read32_mb(sc, mem_tcsr + haltack_offset) & 0x1)
 			break;
 
 		qdf_mdelay(1);
 		wait_limit--;
 	}
 
-	reg_value = hif_read32_mb(mem_tcsr + glb_cfg_offset);
-	hif_write32_mb(mem_tcsr + glb_cfg_offset, reg_value | (1 << 25));
+	reg_value = hif_read32_mb(sc, mem_tcsr + glb_cfg_offset);
+	hif_write32_mb(sc, mem_tcsr + glb_cfg_offset, reg_value | (1 << 25));
 
 	core_resetctl = reset_control_get(&pdev->dev, AHB_RESET_TYPE);
 	if (IS_ERR(core_resetctl)) {
@@ -368,10 +371,10 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 	reset_control_put(resetctl);
 
 	/* Clear gbl_cfg and haltreq before clearing Wifi core reset */
-	reg_value = hif_read32_mb(mem_tcsr + haltreq_offset);
-	hif_write32_mb(mem_tcsr + haltreq_offset, reg_value & ~0x1);
-	reg_value = hif_read32_mb(mem_tcsr + glb_cfg_offset);
-	hif_write32_mb(mem_tcsr + glb_cfg_offset, reg_value & ~(1 << 25));
+	reg_value = hif_read32_mb(sc, mem_tcsr + haltreq_offset);
+	hif_write32_mb(sc, mem_tcsr + haltreq_offset, reg_value & ~0x1);
+	reg_value = hif_read32_mb(sc, mem_tcsr + glb_cfg_offset);
+	hif_write32_mb(sc, mem_tcsr + glb_cfg_offset, reg_value & ~(1 << 25));
 
 	/* de-assert wifi core reset */
 	reset_control_deassert(core_resetctl);

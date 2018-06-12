@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -69,10 +69,11 @@ struct priv_ctrl_ctx {
 
 static struct priv_ctrl_ctx g_priv_dump_ctx;
 
-static inline void set_target_reg_bits(void __iomem *mem, uint32_t reg,
+static inline void set_target_reg_bits(struct hif_softc *scn,
+				       void __iomem *mem, uint32_t reg,
 				       uint32_t bitmask, uint32_t val)
 {
-	uint32_t value = hif_read32_mb(mem + (reg));
+	uint32_t value = hif_read32_mb(scn, mem + (reg));
 	uint32_t shift = 0;
 
 	value &= ~(bitmask);
@@ -80,13 +81,14 @@ static inline void set_target_reg_bits(void __iomem *mem, uint32_t reg,
 		shift++;
 
 	value |= (((val) << shift) & (bitmask));
-	hif_write32_mb(mem + (reg), value);
+	hif_write32_mb(scn, mem + (reg), value);
 }
 
-static inline uint32_t get_target_reg_bits(void __iomem *mem,
+static inline uint32_t get_target_reg_bits(struct hif_softc *scn,
+					   void __iomem *mem,
 					   uint32_t reg, uint32_t bitmask)
 {
-	uint32_t value = hif_read32_mb(mem + (reg));
+	uint32_t value = hif_read32_mb(scn, mem + (reg));
 	uint32_t shift = 0;
 
 	while (!((bitmask >> shift) & 0x01))
@@ -97,22 +99,22 @@ static inline uint32_t get_target_reg_bits(void __iomem *mem,
 
 void priv_start_cap_chaninfo(struct hif_softc *scn)
 {
-	set_target_reg_bits(scn->mem, BB_chaninfo_ctrl,
+	set_target_reg_bits(scn, scn->mem, BB_chaninfo_ctrl,
 			    CHANINFO_CTRL_CAPTURE_CHAN_INFO_MASK, 1);
 }
 
 void priv_start_agc(struct hif_softc *scn)
 {
 	g_priv_dump_ctx.gain_min_offsets_orig =
-		hif_read32_mb(scn->mem + BB_gains_min_offsets);
-	set_target_reg_bits(scn->mem, BB_gains_min_offsets,
+		hif_read32_mb(scn, scn->mem + BB_gains_min_offsets);
+	set_target_reg_bits(scn, scn->mem, BB_gains_min_offsets,
 			    AGC_HISTORY_DUMP_MASK,
 			    0x0f);
 }
 
 static void priv_stop_agc(struct hif_softc *scn)
 {
-	set_target_reg_bits(scn->mem, BB_gains_min_offsets,
+	set_target_reg_bits(scn, scn->mem, BB_gains_min_offsets,
 			    AGC_HISTORY_DUMP_MASK,
 			    0);
 }
@@ -125,13 +127,13 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 	uint32_t chain0, chain1;
 
 	chain_mask =
-		get_target_reg_bits(scn->mem, BB_multichain_enable,
+		get_target_reg_bits(scn, scn->mem, BB_multichain_enable,
 				    MULTICHAIN_ENABLE_RX_CHAIN_MASK_MASK);
 	chain0 = chain_mask & 1;
 	chain1 = chain_mask & 2;
 
 	HIF_TRACE("%s: E", __func__);
-	bw = get_target_reg_bits(scn->mem, BB_chaninfo_ctrl,
+	bw = get_target_reg_bits(scn, scn->mem, BB_chaninfo_ctrl,
 				 CHANINFO_CTRL_CHANINFOMEM_BW_MASK);
 
 	if (bw == 0)
@@ -152,24 +154,23 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 	 */
 
 	if (chain0) {
-		hif_write32_mb(scn->mem + BB_chn_tables_intf_addr,
-			      0x80003200);
+		hif_write32_mb(scn, scn->mem + BB_chn_tables_intf_addr,
+			       0x80003200);
 	}
 	if (chain1) {
-		hif_write32_mb(scn->mem + BB_chn1_tables_intf_addr,
-			      0x80003200);
+		hif_write32_mb(scn, scn->mem + BB_chn1_tables_intf_addr,
+			       0x80003200);
 	}
 
-	set_target_reg_bits(scn->mem, BB_chaninfo_ctrl,
-			CHANINFOMEM_S2_READ_MASK, 0);
+	set_target_reg_bits(scn, scn->mem, BB_chaninfo_ctrl,
+			    CHANINFOMEM_S2_READ_MASK, 0);
 
 	if (chain0) {
 		if (bw < 2) {
 			len = (bw == 0) ? 53 : 57;
 			for (i = 0; i < len; i++) {
-				val =
-					hif_read32_mb(scn->mem +
-						     BB_chn_tables_intf_data) &
+				val = hif_read32_mb(scn, scn->mem +
+						    BB_chn_tables_intf_data) &
 					0x0000ffff;
 				qdf_debug("0x%x\t", val);
 				if (i % 4 == 0)
@@ -178,9 +179,8 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 		} else {
 			len = (bw == 2) ? 59 : 60;
 			for (i = 0; i < len; i++) {
-				tmp =
-					hif_read32_mb(scn->mem +
-						     BB_chn_tables_intf_data);
+				tmp = hif_read32_mb(scn, scn->mem +
+						    BB_chn_tables_intf_data);
 				qdf_debug("0x%x\t", ((tmp >> 16) & 0x0000ffff));
 				qdf_debug("0x%x\t", (tmp & 0x0000ffff));
 				if (i % 2 == 0)
@@ -188,14 +188,13 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 			}
 			if (bw > 2) {
 				/* bw == 3 for vht80 */
-				hif_write32_mb(scn->mem +
+				hif_write32_mb(scn, scn->mem +
 					      BB_chn_tables_intf_addr,
 					      0x80003300);
 				len = 61;
 				for (i = 0; i < len; i++) {
-					tmp =
-						hif_read32_mb(scn->mem +
-						     BB_chn_tables_intf_data);
+					tmp = hif_read32_mb(scn, scn->mem +
+						BB_chn_tables_intf_data);
 					qdf_debug("0x%x\t",
 					       ((tmp >> 16) & 0x0000ffff));
 					qdf_debug("0x%x\t", (tmp & 0x0000ffff));
@@ -210,7 +209,7 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 			len = (bw == 0) ? 53 : 57;
 			for (i = 0; i < len; i++) {
 				val =
-					hif_read32_mb(scn->mem +
+					hif_read32_mb(scn, scn->mem +
 						BB_chn1_tables_intf_data) &
 					0x0000ffff;
 				qdf_debug("0x%x\t", val);
@@ -221,7 +220,7 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 			len = (bw == 2) ? 59 : 60;
 			for (i = 0; i < len; i++) {
 				tmp =
-					hif_read32_mb(scn->mem +
+					hif_read32_mb(scn, scn->mem +
 						     BB_chn1_tables_intf_data);
 				qdf_debug("0x%x\n", (tmp >> 16) & 0x0000ffff);
 				qdf_debug("0x%x\n", tmp & 0x0000ffff);
@@ -230,13 +229,13 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 			}
 			if (bw > 2) {
 				/* bw == 3 for vht80 */
-				hif_write32_mb(scn->mem +
+				hif_write32_mb(scn, scn->mem +
 					      BB_chn1_tables_intf_addr,
 					      0x80003300);
 				len = 61;
 				for (i = 0; i < len; i++) {
 					tmp =
-						hif_read32_mb(scn->mem +
+						hif_read32_mb(scn, scn->mem +
 						     BB_chn1_tables_intf_data);
 					qdf_debug("0x%x\t",
 					       ((tmp >> 16) & 0x0000ffff));
@@ -259,7 +258,7 @@ void priv_dump_agc(struct hif_softc *scn)
 		return;
 
 	chain_mask =
-		get_target_reg_bits(scn->mem, BB_multichain_enable,
+		get_target_reg_bits(scn, scn->mem, BB_multichain_enable,
 				    MULTICHAIN_ENABLE_RX_CHAIN_MASK_MASK);
 	chain0 = chain_mask & 1;
 	chain1 = chain_mask & 2;
@@ -267,16 +266,16 @@ void priv_dump_agc(struct hif_softc *scn)
 	len = len << 1;         /* each agc item is 64bit, total*2 */
 	priv_stop_agc(scn);
 
-	set_target_reg_bits(scn->mem, BB_chaninfo_ctrl,
-			CHANINFOMEM_S2_READ_MASK, 0);
+	set_target_reg_bits(scn, scn->mem, BB_chaninfo_ctrl,
+			    CHANINFOMEM_S2_READ_MASK, 0);
 
 	HIF_TRACE("%s: AGC history buffer dump: E", __func__);
 	if (chain0) {
 		for (i = 0; i < len; i++) {
-			hif_write32_mb(scn->mem +
+			hif_write32_mb(scn, scn->mem +
 				PHY_BB_CHN_TABLES_INTF_ADDR,
 				BB_chaninfo_tab_b0 + i * 4);
-			val = hif_read32_mb(scn->mem +
+			val = hif_read32_mb(scn, scn->mem +
 				PHY_BB_CHN_TABLES_INTF_DATA);
 			qdf_debug("0x%x\t", val);
 			if (i % 4 == 0)
@@ -285,10 +284,10 @@ void priv_dump_agc(struct hif_softc *scn)
 	}
 	if (chain1) {
 		for (i = 0; i < len; i++) {
-			hif_write32_mb(scn->mem +
+			hif_write32_mb(scn, scn->mem +
 				PHY_BB_CHN1_TABLES_INTF_ADDR,
 				BB_chaninfo_tab_b0 + i * 4);
-			val = hif_read32_mb(scn->mem +
+			val = hif_read32_mb(scn, scn->mem +
 				PHY_BB_CHN1_TABLES_INTF_DATA);
 			qdf_debug("0x%x\t", val);
 			if (i % 4 == 0)
@@ -297,8 +296,8 @@ void priv_dump_agc(struct hif_softc *scn)
 	}
 	HIF_TRACE("%s: AGC history buffer dump X", __func__);
 	/* restore original value */
-	hif_write32_mb(scn->mem + BB_gains_min_offsets,
-		      g_priv_dump_ctx.gain_min_offsets_orig);
+	hif_write32_mb(scn, scn->mem + BB_gains_min_offsets,
+		       g_priv_dump_ctx.gain_min_offsets_orig);
 
 	Q_TARGET_ACCESS_END(scn);
 
@@ -309,13 +308,13 @@ void priv_dump_bbwatchdog(struct hif_softc *scn)
 	uint32_t val;
 
 	HIF_TRACE("%s: BB watchdog dump E", __func__);
-	val = hif_read32_mb(scn->mem + BB_watchdog_status);
+	val = hif_read32_mb(scn, scn->mem + BB_watchdog_status);
 	qdf_debug("0x%x\t", val);
-	val = hif_read32_mb(scn->mem + BB_watchdog_ctrl_1);
+	val = hif_read32_mb(scn, scn->mem + BB_watchdog_ctrl_1);
 	qdf_debug("0x%x\t", val);
-	val = hif_read32_mb(scn->mem + BB_watchdog_ctrl_2);
+	val = hif_read32_mb(scn, scn->mem + BB_watchdog_ctrl_2);
 	qdf_debug("0x%x\t", val);
-	val = hif_read32_mb(scn->mem + BB_watchdog_status_B);
+	val = hif_read32_mb(scn, scn->mem + BB_watchdog_status_B);
 	qdf_debug("0x%x", val);
 	HIF_TRACE("%s: BB watchdog dump X", __func__);
 }

@@ -116,6 +116,9 @@ struct hif_pci_softc {
 	u16 devid;
 	struct hif_tasklet_entry tasklet_entries[HIF_MAX_TASKLET_NUM];
 	bool pci_enabled;
+	bool use_register_windowing;
+	uint32_t register_window;
+	qdf_spinlock_t register_access_lock;
 	qdf_spinlock_t irq_lock;
 	qdf_work_t reschedule_tasklet_work;
 	uint32_t lcr_val;

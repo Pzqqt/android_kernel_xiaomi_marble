@@ -234,13 +234,12 @@ int hif_ahb_configure_legacy_irq(struct hif_pci_softc *sc)
 	sc->irq = irq;
 
 	/* Use Legacy PCI Interrupts */
-	hif_write32_mb(sc->mem+(SOC_CORE_BASE_ADDRESS |
+	hif_write32_mb(sc, sc->mem + (SOC_CORE_BASE_ADDRESS |
 				PCIE_INTR_ENABLE_ADDRESS),
 			PCIE_INTR_FIRMWARE_MASK | PCIE_INTR_CE_MASK_ALL);
 	/* read once to flush */
-	hif_read32_mb(sc->mem+(SOC_CORE_BASE_ADDRESS |
-				PCIE_INTR_ENABLE_ADDRESS)
-		     );
+	hif_read32_mb(sc, sc->mem + (SOC_CORE_BASE_ADDRESS |
+				PCIE_INTR_ENABLE_ADDRESS));
 
 end:
 	return ret;
@@ -367,32 +366,32 @@ int hif_target_sync_ahb(struct hif_softc *scn)
 	int limit = 0;
 
 	while (limit < 50) {
-		hif_write32_mb(scn->mem +
+		hif_write32_mb(scn, scn->mem +
 			(SOC_CORE_BASE_ADDRESS | PCIE_INTR_ENABLE_ADDRESS),
 			PCIE_INTR_FIRMWARE_MASK | PCIE_INTR_CE_MASK_ALL);
 		qdf_mdelay(10);
-		val = hif_read32_mb(scn->mem +
+		val = hif_read32_mb(scn, scn->mem +
 			(SOC_CORE_BASE_ADDRESS | PCIE_INTR_ENABLE_ADDRESS));
 		if (val == 0)
 			break;
 		limit++;
 	}
-	hif_write32_mb(scn->mem +
+	hif_write32_mb(scn, scn->mem +
 		(SOC_CORE_BASE_ADDRESS | PCIE_INTR_ENABLE_ADDRESS),
 		PCIE_INTR_FIRMWARE_MASK | PCIE_INTR_CE_MASK_ALL);
-	hif_write32_mb(scn->mem + FW_INDICATOR_ADDRESS, FW_IND_HOST_READY);
+	hif_write32_mb(scn, scn->mem + FW_INDICATOR_ADDRESS, FW_IND_HOST_READY);
 	if (HAS_FW_INDICATOR) {
 		int wait_limit = 500;
 		int fw_ind = 0;
 
 		while (1) {
-			fw_ind = hif_read32_mb(scn->mem +
+			fw_ind = hif_read32_mb(scn, scn->mem +
 					FW_INDICATOR_ADDRESS);
 			if (fw_ind & FW_IND_INITIALIZED)
 				break;
 			if (wait_limit-- < 0)
 				break;
-			hif_write32_mb(scn->mem+(SOC_CORE_BASE_ADDRESS |
+			hif_write32_mb(scn, scn->mem + (SOC_CORE_BASE_ADDRESS |
 				PCIE_INTR_ENABLE_ADDRESS),
 				PCIE_INTR_FIRMWARE_MASK);
 			qdf_mdelay(10);
@@ -649,25 +648,26 @@ void hif_ahb_irq_enable(struct hif_softc *scn, int ce_id)
 		if (target_ce_conf->pipedir & PIPEDIR_OUT) {
 			reg_offset = HOST_IE_ADDRESS;
 			qdf_spin_lock_irqsave(&hif_state->irq_reg_lock);
-			regval = hif_read32_mb(scn->mem + reg_offset);
+			regval = hif_read32_mb(scn, scn->mem + reg_offset);
 			regval |= HOST_IE_REG1_CE_BIT(ce_id);
-			hif_write32_mb(scn->mem + reg_offset, regval);
+			hif_write32_mb(scn, scn->mem + reg_offset, regval);
 			qdf_spin_unlock_irqrestore(&hif_state->irq_reg_lock);
 		}
 		if (target_ce_conf->pipedir & PIPEDIR_IN) {
 			reg_offset = HOST_IE_ADDRESS_2;
 			qdf_spin_lock_irqsave(&hif_state->irq_reg_lock);
-			regval = hif_read32_mb(scn->mem + reg_offset);
+			regval = hif_read32_mb(scn, scn->mem + reg_offset);
 			regval |= HOST_IE_REG2_CE_BIT(ce_id);
-			hif_write32_mb(scn->mem + reg_offset, regval);
+			hif_write32_mb(scn, scn->mem + reg_offset, regval);
 			if (tgt_info->target_type == TARGET_TYPE_QCA8074) {
 				/* Enable destination ring interrupts for 8074
 				 * TODO: To be removed in 2.0 HW */
-				regval = hif_read32_mb(scn->mem +
+				regval = hif_read32_mb(scn, scn->mem +
 					HOST_IE_ADDRESS_3);
 				regval |= HOST_IE_REG3_CE_BIT(ce_id);
 			}
-			hif_write32_mb(scn->mem + HOST_IE_ADDRESS_3, regval);
+			hif_write32_mb(scn, scn->mem + HOST_IE_ADDRESS_3,
+				       regval);
 			qdf_spin_unlock_irqrestore(&hif_state->irq_reg_lock);
 		}
 	} else {
@@ -694,25 +694,26 @@ void hif_ahb_irq_disable(struct hif_softc *scn, int ce_id)
 		if (target_ce_conf->pipedir & PIPEDIR_OUT) {
 			reg_offset = HOST_IE_ADDRESS;
 			qdf_spin_lock_irqsave(&hif_state->irq_reg_lock);
-			regval = hif_read32_mb(scn->mem + reg_offset);
+			regval = hif_read32_mb(scn, scn->mem + reg_offset);
 			regval &= ~HOST_IE_REG1_CE_BIT(ce_id);
-			hif_write32_mb(scn->mem + reg_offset, regval);
+			hif_write32_mb(scn, scn->mem + reg_offset, regval);
 			qdf_spin_unlock_irqrestore(&hif_state->irq_reg_lock);
 		}
 		if (target_ce_conf->pipedir & PIPEDIR_IN) {
 			reg_offset = HOST_IE_ADDRESS_2;
 			qdf_spin_lock_irqsave(&hif_state->irq_reg_lock);
-			regval = hif_read32_mb(scn->mem + reg_offset);
+			regval = hif_read32_mb(scn, scn->mem + reg_offset);
 			regval &= ~HOST_IE_REG2_CE_BIT(ce_id);
-			hif_write32_mb(scn->mem + reg_offset, regval);
+			hif_write32_mb(scn, scn->mem + reg_offset, regval);
 			if (tgt_info->target_type == TARGET_TYPE_QCA8074) {
 				/* Disable destination ring interrupts for 8074
 				 * TODO: To be removed in 2.0 HW */
-				regval = hif_read32_mb(scn->mem +
+				regval = hif_read32_mb(scn, scn->mem +
 					HOST_IE_ADDRESS_3);
 				regval &= ~HOST_IE_REG3_CE_BIT(ce_id);
 			}
-			hif_write32_mb(scn->mem + HOST_IE_ADDRESS_3, regval);
+			hif_write32_mb(scn, scn->mem + HOST_IE_ADDRESS_3,
+				       regval);
 			qdf_spin_unlock_irqrestore(&hif_state->irq_reg_lock);
 		}
 	}

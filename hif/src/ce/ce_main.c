@@ -2848,7 +2848,7 @@ static void hif_post_static_buf_to_target(struct hif_softc *scn)
 		HIF_TRACE("Memory allocation failed could not post target buf");
 		return;
 	}
-	hif_write32_mb(scn->mem + BYPASS_QMI_TEMP_REGISTER, target_pa);
+	hif_write32_mb(scn, scn->mem + BYPASS_QMI_TEMP_REGISTER, target_pa);
 	HIF_TRACE("target va %pK target pa %pa", target_va, &target_pa);
 }
 #else

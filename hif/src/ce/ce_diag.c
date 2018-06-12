@@ -46,7 +46,7 @@ hif_ce_dump_target_memory(struct hif_softc *scn, void *ramdump_base,
 		return;
 
 	while (j < size) {
-		val = hif_read32_mb(scn->mem + loc + j);
+		val = hif_read32_mb(scn, scn->mem + loc + j);
 		qdf_mem_copy(temp, &val, 4);
 		j += 4;
 		temp += 4;
@@ -63,21 +63,21 @@ hif_ce_dump_target_memory(struct hif_softc *scn, void *ramdump_base,
  * but that's not guaranteed.
  */
 #ifdef QCA_WIFI_3_0
-#define TARG_CPU_SPACE_TO_CE_SPACE(pci_addr, addr) \
+#define TARG_CPU_SPACE_TO_CE_SPACE(sc, pci_addr, addr) \
 	(scn->mem_pa + addr)
 #else
-#define TARG_CPU_SPACE_TO_CE_SPACE(pci_addr, addr) \
-	(((hif_read32_mb((pci_addr) + \
+#define TARG_CPU_SPACE_TO_CE_SPACE(sc, pci_addr, addr) \
+	(((hif_read32_mb(sc, (pci_addr) + \
 	(SOC_CORE_BASE_ADDRESS|CORE_CTRL_ADDRESS)) & 0x7ff) << 21) \
 	 | 0x100000 | ((addr) & 0xfffff))
 #endif
 
-#define TARG_CPU_SPACE_TO_CE_SPACE_IPQ4019(pci_addr, addr) \
-	(hif_read32_mb((pci_addr)+(WIFICMN_PCIE_BAR_REG_ADDRESS)) \
+#define TARG_CPU_SPACE_TO_CE_SPACE_IPQ4019(scn, pci_addr, addr) \
+	(hif_read32_mb(scn, (pci_addr) + (WIFICMN_PCIE_BAR_REG_ADDRESS)) \
 	| ((addr) & 0xfffff))
 
-#define TARG_CPU_SPACE_TO_CE_SPACE_AR900B(pci_addr, addr) \
-	(hif_read32_mb((pci_addr)+(WIFICMN_PCIE_BAR_REG_ADDRESS)) \
+#define TARG_CPU_SPACE_TO_CE_SPACE_AR900B(scn, pci_addr, addr) \
+	(hif_read32_mb(scn, (pci_addr) + (WIFICMN_PCIE_BAR_REG_ADDRESS)) \
 	| 0x100000 | ((addr) & 0xfffff))
 
 #define SRAM_BASE_ADDRESS 0xc0000
@@ -113,17 +113,17 @@ static qdf_dma_addr_t get_ce_phy_addr(struct hif_softc *sc, uint32_t  address,
 	}
 
 	if ((target_type == TARGET_TYPE_IPQ4019) && sramregion == 1) {
-		ce_phy_addr =
-			TARG_CPU_SPACE_TO_CE_SPACE_IPQ4019(sc->mem, address);
+		ce_phy_addr = TARG_CPU_SPACE_TO_CE_SPACE_IPQ4019(sc, sc->mem,
+								 address);
 	} else if ((target_type == TARGET_TYPE_AR900B) ||
 	    (target_type == TARGET_TYPE_QCA9984) ||
 	    (target_type == TARGET_TYPE_IPQ4019) ||
 	    (target_type == TARGET_TYPE_QCA9888)) {
 		ce_phy_addr =
-		    TARG_CPU_SPACE_TO_CE_SPACE_AR900B(sc->mem, address);
+		    TARG_CPU_SPACE_TO_CE_SPACE_AR900B(sc, sc->mem, address);
 	} else {
 		ce_phy_addr =
-		    TARG_CPU_SPACE_TO_CE_SPACE(sc->mem, address);
+		    TARG_CPU_SPACE_TO_CE_SPACE(sc, sc->mem, address);
 	}
 
 	return ce_phy_addr;
