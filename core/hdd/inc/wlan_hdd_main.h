@@ -1416,7 +1416,7 @@ struct hdd_adapter {
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
 #define WLAN_HDD_GET_AP_CTX_PTR(adapter) (&(adapter)->session.ap)
 #define WLAN_HDD_GET_CTX(adapter) ((adapter)->hdd_ctx)
-#define WLAN_HDD_GET_HAL_CTX(adapter)  ((adapter)->hdd_ctx->hHal)
+#define WLAN_HDD_GET_HAL_CTX(adapter)  hdd_adapter_get_mac_handle(adapter)
 #define WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter) \
 				(&(adapter)->session.ap.hostapd_state)
 #define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->session.ap.sap_context)
@@ -1641,8 +1641,13 @@ struct hdd_context {
 	struct wlan_objmgr_psoc *hdd_psoc;
 	struct wlan_objmgr_pdev *hdd_pdev;
 
-	/** HAL handle...*/
-	tHalHandle hHal;
+	union {
+		/** HAL handle...*/
+		tHalHandle hHal;
+
+		/** MAC handle */
+		mac_handle_t mac_handle;
+	};
 
 	struct wiphy *wiphy;
 	/* TODO Remove this from here. */
@@ -3286,5 +3291,34 @@ void hdd_update_hw_sw_info(struct hdd_context *hdd_ctx);
  * Return: None
  */
 void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp, void *context);
+
+/**
+ * hdd_context_get_mac_handle() - get mac handle from hdd context
+ * @hdd_ctx: Global HDD context pointer
+ *
+ * Retrieves the global MAC handle from the HDD context
+ *
+ * Return: The global MAC handle (which may be NULL)
+ */
+static inline
+mac_handle_t hdd_context_get_mac_handle(struct hdd_context *hdd_ctx)
+{
+	return hdd_ctx ? hdd_ctx->mac_handle : NULL;
+}
+
+/**
+ * hdd_adapter_get_mac_handle() - get mac handle from hdd adapter
+ * @adapter: HDD adapter pointer
+ *
+ * Retrieves the global MAC handle given an HDD adapter
+ *
+ * Return: The global MAC handle (which may be NULL)
+ */
+static inline
+mac_handle_t hdd_adapter_get_mac_handle(struct hdd_adapter *adapter)
+{
+	return adapter ?
+		hdd_context_get_mac_handle(adapter->hdd_ctx) : NULL;
+}
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
