@@ -1421,6 +1421,11 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 		return;
 	}
 
+	if (!peer) {
+		WMA_LOGE("%s: PEER is NULL for vdev_id: %d", __func__, vdev_id);
+		return;
+	}
+
 	peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
 	if (peer_mac_addr == NULL) {
 		WMA_LOGE("%s: peer mac addr is NULL, Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
@@ -1464,20 +1469,14 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 	}
 
 peer_detach:
-	WMA_LOGE("%s: Remove peer %pK with peer_addr %pM vdevid %d peer_count %d",
-		 __func__, peer, bssid, vdev_id,
-		 wma->interfaces[vdev_id].peer_count);
 	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
-	if (peer) {
-		if (roam_synch_in_progress) {
-			cdp_peer_detach_force_delete(soc, peer);
-		} else {
-			cdp_peer_delete(soc, peer, bitmap);
-			WMA_LOGD("%s: vdev %p has detached peer:%p peer_addr %pM to vdev_id %d, peer_count - %d",
-				 __func__, vdev, peer, peer_mac_addr, vdev_id,
-				 wma->interfaces[vdev_id].peer_count);
-		}
-	}
+	WMA_LOGD("%s: vdev %pK is detaching %pK with peer_addr %pM vdevid %d peer_count %d",
+		 __func__, vdev, peer, peer_mac_addr, vdev_id,
+		 wma->interfaces[vdev_id].peer_count);
+	if (roam_synch_in_progress)
+		cdp_peer_detach_force_delete(soc, peer);
+	else
+		cdp_peer_delete(soc, peer, bitmap);
 
 	wma->interfaces[vdev_id].peer_count--;
 #undef PEER_ALL_TID_BITMASK
@@ -1586,7 +1585,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		WMA_LOGE("%s : Unable to attach peer %pM", __func__, peer_addr);
 		goto err;
 	}
-	WMA_LOGD("%s: vdev %p has attached peer:%p peer_addr %pM to vdev_id %d, peer_count - %d",
+	WMA_LOGD("%s: vdev %pK is attaching peer:%pK peer_addr %pM to vdev_id %d, peer_count - %d",
 		 __func__, vdev, peer, peer_addr, vdev_id,
 		 wma->interfaces[vdev_id].peer_count);
 
@@ -1602,11 +1601,11 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	if (wmi_unified_peer_create_send(wma->wmi_handle,
 					 &param) != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s : Unable to create peer in Target", __func__);
-		cdp_peer_delete(dp_soc, peer,
-				1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER);
-		WMA_LOGD("%s: vdev %p has detached peer:%p peer_addr %pM to vdev_id %d, peer_count - %d",
+		WMA_LOGE("%s: vdev %pK is detaching peer:%pK peer_addr %pM to vdev_id %d, peer_count - %d",
 			 __func__, vdev, peer, peer_addr, vdev_id,
 			 wma->interfaces[vdev_id].peer_count);
+		cdp_peer_delete(dp_soc, peer,
+				1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER);
 		goto err;
 	} else {
 		qdf_atomic_inc(&wma->interfaces[vdev_id].fw_peer_count);
@@ -5510,12 +5509,13 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 		goto fail_del_bss_ho_fail;
 	}
 
-	if (peer)
+	if (peer) {
+		WMA_LOGD("%s: vdev %pK is detaching peer:%pK peer_addr %pM to vdev_id %d, peer_count - %d",
+			 __func__, txrx_vdev, peer, params->bssid,
+			 params->smesessionId, iface->peer_count);
 		cdp_peer_delete(soc, peer, 1 << CDP_PEER_DELETE_NO_SPECIAL);
+	}
 	iface->peer_count--;
-	WMA_LOGD("%s: vdev %p has detached peer:%p peer_addr %pM to vdev_id %d, peer_count - %d",
-		 __func__, txrx_vdev, peer, params->bssid, params->smesessionId,
-		iface->peer_count);
 	WMA_LOGI("%s: Removed peer %pK with peer_addr %pM vdevid %d peer_count %d",
 		 __func__, peer, params->bssid,  params->smesessionId,
 		 iface->peer_count);
