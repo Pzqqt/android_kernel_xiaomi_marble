@@ -280,7 +280,9 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 #define CLEAR_PARAM(__param, __val)  ((__param) &= ((~1) << (__val)))
 
 
-#define RESET_AUTHMODE(_param)       ((_param)->authmodeset = 0)
+#define RESET_AUTHMODE(_param)       ((_param)->authmodeset = \
+					(1 << WLAN_CRYPTO_AUTH_OPEN))
+
 #define SET_AUTHMODE(_param, _mode)  ((_param)->authmodeset |= (1 << (_mode)))
 #define HAS_AUTHMODE(_param, _mode)  ((_param)->authmodeset &  (1 << (_mode)))
 
@@ -298,7 +300,8 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 		(((_param1)->authmodeset & (_param2)->authmodeset) != 0)
 
 
-#define RESET_UCAST_CIPHERS(_param)   ((_param)->ucastcipherset = 0)
+#define RESET_UCAST_CIPHERS(_param)   ((_param)->ucastcipherset =\
+					(1 << WLAN_CRYPTO_CIPHER_NONE))
 #define SET_UCAST_CIPHER(_param, _c)  ((_param)->ucastcipherset |= (1 << (_c)))
 #define HAS_UCAST_CIPHER(_param, _c)  ((_param)->ucastcipherset & (1 << (_c)))
 
@@ -319,7 +322,8 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 #define UCIPHER_IS_SMS4(_param)    \
 		HAS_UCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_WAPI_SMS4)
 
-#define RESET_MCAST_CIPHERS(_param)   ((_param)->mcastcipherset = 0)
+#define RESET_MCAST_CIPHERS(_param)   ((_param)->mcastcipherset = \
+					(1 << WLAN_CRYPTO_CIPHER_NONE))
 #define SET_MCAST_CIPHER(_param, _c)  ((_param)->mcastcipherset |= (1 << (_c)))
 #define HAS_MCAST_CIPHER(_param, _c)  ((_param)->mcastcipherset & (1 << (_c)))
 #define HAS_ANY_MCAST_CIPHER(_param)  ((_param)->mcastcipherset)
@@ -343,7 +347,8 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 #define MCIPHER_IS_SMS4(_param)    \
 		HAS_MCAST_CIPHER((_param), WLAN_CRYPTO_CIPHER_WAPI_SMS4)
 
-#define RESET_MGMT_CIPHERS(_param)   ((_param)->mgmtcipherset = 0)
+#define RESET_MGMT_CIPHERS(_param)   ((_param)->mgmtcipherset = \
+					(1 << WLAN_CRYPTO_CIPHER_NONE))
 #define SET_MGMT_CIPHER(_param, _c)  ((_param)->mgmtcipherset |= (1 << (_c)))
 #define HAS_MGMT_CIPHER(_param, _c)  ((_param)->mgmtcipherset & (1 << (_c)))
 #define IS_MGMT_CIPHER(_c)      ((_c == WLAN_CRYPTO_CIPHER_AES_CMAC) || \
@@ -362,7 +367,8 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 #define MGMT_CIPHER_IS_GMAC256(_param) \
 		HAS_MGMT_CIPHER((_param), WLAN_CRYPTO_CIPHER_AES_GMAC_256)
 
-#define RESET_KEY_MGMT(_param)   ((_param)->key_mgmt = 0)
+#define RESET_KEY_MGMT(_param)   ((_param)->key_mgmt = \
+					(1 << WLAN_CRYPTO_KEY_MGMT_NONE))
 #define SET_KEY_MGMT(_param, _c)  ((_param)->key_mgmt |= (1 << (_c + 1)))
 #define HAS_KEY_MGMT(_param, _c)  ((_param)->key_mgmt & (1 << (_c + 1)))
 

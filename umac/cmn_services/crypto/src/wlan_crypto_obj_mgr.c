@@ -113,6 +113,14 @@ static QDF_STATUS wlan_crypto_vdev_obj_create_handler(
 		return QDF_STATUS_E_NOMEM;
 
 	crypto_param = &(crypto_priv->crypto_params);
+
+	RESET_AUTHMODE(crypto_param);
+	RESET_UCAST_CIPHERS(crypto_param);
+	RESET_MCAST_CIPHERS(crypto_param);
+	RESET_MGMT_CIPHERS(crypto_param);
+	RESET_KEY_MGMT(crypto_param);
+	RESET_CIPHER_CAP(crypto_param);
+
 	pdev = wlan_vdev_get_pdev(vdev);
 	wlan_pdev_obj_lock(pdev);
 	if (wlan_pdev_nif_fw_cap_get(pdev, WLAN_SOC_C_WEP))
@@ -150,6 +158,7 @@ static QDF_STATUS wlan_crypto_peer_obj_create_handler(
 						void *arg)
 {
 	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_param;
 	QDF_STATUS status;
 
 	if (!peer)
@@ -164,6 +173,13 @@ static QDF_STATUS wlan_crypto_peer_obj_create_handler(
 				QDF_STATUS_SUCCESS);
 
 	if (status == QDF_STATUS_SUCCESS) {
+		crypto_param = &crypto_priv->crypto_params;
+		RESET_AUTHMODE(crypto_param);
+		RESET_UCAST_CIPHERS(crypto_param);
+		RESET_MCAST_CIPHERS(crypto_param);
+		RESET_MGMT_CIPHERS(crypto_param);
+		RESET_KEY_MGMT(crypto_param);
+		RESET_CIPHER_CAP(crypto_param);
 		if (wlan_vdev_get_selfpeer(peer->peer_objmgr.vdev) != peer) {
 			wlan_crypto_set_peer_wep_keys(
 					wlan_peer_get_vdev(peer), peer);
