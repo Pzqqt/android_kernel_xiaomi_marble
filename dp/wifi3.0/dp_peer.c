@@ -1768,6 +1768,8 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 	params.u.upd_queue_params.update_pn_size = 1;
 	params.u.upd_queue_params.update_pn = 1;
 	params.u.upd_queue_params.update_pn_check_needed = 1;
+	params.u.upd_queue_params.update_svld = 1;
+	params.u.upd_queue_params.svld = 0;
 
 	peer->security[dp_sec_ucast].sec_type = sec_type;
 
