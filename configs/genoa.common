@@ -138,6 +138,19 @@ endif
 # WoW filer configs
 CONFIG_CFG_PMO_WOW_FILTERS_MAX := 16
 
+# Offload configs
+CONFIG_CFG_GTK_OFFLOAD_MAX_VDEV := 2
+CONFIG_CFG_ROAM_OFFLOAD_MAX_VDEV := 1
+
+# Max Periodic Tx Pattern Config
+CONFIG_CFG_MAX_PERIODIC_TX_PTRNS := 2
+
+# Max Sta Vdev Config
+CONFIG_CFG_MAX_STA_VDEVS := 2
+
 # Additional peers sent to firmware
 CONFIG_CFG_NUM_OF_ADDITIONAL_FW_PEERS := 0
+
+# Number of TDLS peers that each Tdls vdev can track
+CONFIG_CFG_NUM_OF_TDLS_CONN_TABLE_ENTRIES := 4
 ###################################

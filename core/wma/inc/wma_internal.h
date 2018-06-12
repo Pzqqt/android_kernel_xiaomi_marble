@@ -83,7 +83,9 @@
 /* The maximum number of patterns that can be transmitted by the firmware
  *  and maximum patterns size.
  */
+#ifndef WMA_MAXNUM_PERIODIC_TX_PTRNS
 #define WMA_MAXNUM_PERIODIC_TX_PTRNS 6
+#endif
 
 #define WMI_MAX_HOST_CREDITS 2
 #define WMI_WOW_REQUIRED_CREDITS 1
