@@ -1848,7 +1848,7 @@ done:
 #endif
 
 static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
-			 unsigned int cmd, void *arg)
+			 unsigned int cmd, void __user *arg)
 {
 	int err = 0;
 	u32 size = 0;
