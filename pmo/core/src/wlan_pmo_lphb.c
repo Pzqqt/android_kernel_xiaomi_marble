@@ -71,13 +71,13 @@ static QDF_STATUS pmo_core_send_lphb_enable(struct wlan_objmgr_psoc *psoc,
 		psoc_ctx->wow.lphb_cache[i].params.lphb_enable_req.session =
 			ts_lphb_enable->session;
 		qdf_spin_unlock_bh(&psoc_ctx->lock);
-		pmo_info("cached LPHB status in WMA context for item %d", i);
+		pmo_debug("cached LPHB status in WMA context for item %d", i);
 	} else {
 		qdf_spin_lock_bh(&psoc_ctx->lock);
 		qdf_mem_zero((void *)&psoc_ctx->wow.lphb_cache,
 				sizeof(psoc_ctx->wow.lphb_cache));
 		qdf_spin_unlock_bh(&psoc_ctx->lock);
-		pmo_info("cleared all cached LPHB status in WMA context");
+		pmo_debug("cleared all cached LPHB status in WMA context");
 	}
 
 out:
@@ -159,7 +159,7 @@ static QDF_STATUS pmo_process_lphb_conf_req(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	pmo_info("LPHB configuration cmd id is %d", lphb_conf_req->cmd);
+	pmo_debug("LPHB configuration cmd id is %d", lphb_conf_req->cmd);
 	switch (lphb_conf_req->cmd) {
 	case pmo_lphb_set_en_param_indid:
 		status = pmo_core_send_lphb_enable(psoc, psoc_ctx,
