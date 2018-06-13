@@ -33,6 +33,7 @@
 #include "hif_usb_internal.h"
 #include "if_usb.h"
 #include "usb_api.h"
+#include "target_type.h"
 
 #if defined(WLAN_DEBUG) || defined(DEBUG)
 static ATH_DEBUG_MASK_DESCRIPTION g_hif_debug_description[] = {
@@ -416,6 +417,9 @@ QDF_STATUS hif_usb_device_init(struct hif_usb_softc *sc)
 
 	} while (false);
 
+	if (hif_is_supported_rx_ctrl_pipe(HIF_GET_SOFTC(sc)))
+		device->rx_ctrl_pipe_supported = 1;
+
 	if (status != QDF_STATUS_SUCCESS)
 		HIF_ERROR("%s: abnormal condition", __func__);
 
@@ -551,12 +555,16 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *scn, uint16_t svc_id,
 			    int *ul_is_polled, int *dl_is_polled)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(scn);
 
 	switch (svc_id) {
 	case HTC_CTRL_RSVD_SVC:
 	case WMI_CONTROL_SVC:
 		*ul_pipe = HIF_TX_CTRL_PIPE;
-		*dl_pipe = HIF_RX_DATA_PIPE;
+		if (device->rx_ctrl_pipe_supported)
+			*dl_pipe = HIF_RX_CTRL_PIPE;
+		else
+			*dl_pipe = HIF_RX_DATA_PIPE;
 		break;
 	case WMI_DATA_BE_SVC:
 	case WMI_DATA_BK_SVC:
@@ -926,4 +934,24 @@ void hif_usb_set_bundle_mode(struct hif_softc *scn,
 
 	HIF_DBG("athusb bundle %s cnt %d", enabled ? "enabled" : "disabled",
 			rx_bundle_cnt);
+}
+
+/**
+ * hif_is_supported_rx_ctrl_pipe() - return true if device supports exclusive
+ * control pipe in the RX direction.
+ * @scn: hif context
+ *
+ * Return: true if device supports RX control pipe.
+ */
+bool hif_is_supported_rx_ctrl_pipe(struct hif_softc *scn)
+{
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
+
+	switch (tgt_info->target_type) {
+	case TARGET_TYPE_QCN7605:
+		return true;
+	default:
+		return false;
+	}
 }

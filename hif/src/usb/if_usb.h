@@ -127,6 +127,7 @@ struct HIF_DEVICE_USB {
 	A_BOOL is_bundle_enabled;
 	uint16_t rx_bundle_cnt;
 	uint32_t rx_bundle_buf_len;
+	bool rx_ctrl_pipe_supported;
 };
 
 struct hif_usb_softc {

@@ -46,4 +46,5 @@ void hif_usb_reg_tbl_attach(struct hif_softc *scn);
 void hif_fw_assert_ramdump_pattern(struct hif_usb_softc *sc);
 void hif_usb_ramdump_handler(struct hif_opaque_softc *scn);
 bool hif_usb_needs_bmi(struct hif_softc *scn);
+bool hif_is_supported_rx_ctrl_pipe(struct hif_softc *scn);
 #endif /*_USB_API_H_*/

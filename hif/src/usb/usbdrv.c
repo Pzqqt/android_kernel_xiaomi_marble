@@ -1004,15 +1004,22 @@ static void usb_hif_post_recv_bundle_transfers(struct HIF_USB_PIPE *recv_pipe,
  */
 void usb_hif_prestart_recv_pipes(struct HIF_DEVICE_USB *device)
 {
-	struct HIF_USB_PIPE *pipe = &device->pipes[HIF_RX_DATA_PIPE];
+	struct HIF_USB_PIPE *pipe;
+	int prestart_cnt = 8;
 
+	if (device->rx_ctrl_pipe_supported) {
+		pipe = &device->pipes[HIF_RX_CTRL_PIPE];
+		prestart_cnt = 4;
+		usb_hif_post_recv_prestart_transfers(pipe, prestart_cnt);
+	}
 	/*
 	 * USB driver learn to support bundle or not until the firmware
 	 * download and ready. Only allocate some URBs for control message
 	 * communication during the initial phase then start the final
 	 * working pipe after all information understood.
 	 */
-	usb_hif_post_recv_prestart_transfers(pipe, 8);
+	pipe = &device->pipes[HIF_RX_DATA_PIPE];
+	usb_hif_post_recv_prestart_transfers(pipe, prestart_cnt);
 }
 
 /**
@@ -1053,6 +1060,14 @@ void usb_hif_start_recv_pipes(struct HIF_DEVICE_USB *device)
 		usb_hif_post_recv_transfers(pipe, HIF_USB_RX_BUFFER_SIZE);
 	}
 
+	if (device->rx_ctrl_pipe_supported) {
+		HIF_TRACE("Post URBs to RX_CONTROL_PIPE: %d",
+			  device->pipes[HIF_RX_CTRL_PIPE].urb_cnt);
+
+		pipe = &device->pipes[HIF_RX_CTRL_PIPE];
+		pipe->urb_cnt_thresh = pipe->urb_alloc / 2;
+		usb_hif_post_recv_transfers(pipe, HIF_USB_RX_BUFFER_SIZE);
+	}
 	HIF_EXIT();
 }
 
