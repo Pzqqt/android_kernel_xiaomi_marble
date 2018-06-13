@@ -92,6 +92,11 @@ ifdef CONFIG_SOUNDWIRE_WCD_CTRL
 	SWR_CTRL_OBJS += swr-wcd-ctrl.o
 endif
 
+# for new soundwire driver
+ifdef CONFIG_SOUNDWIRE_MSTR_CTRL
+	SWR_CTRL_OBJS += swr-mstr-ctrl.o
+endif
+
 ifdef CONFIG_SOUNDWIRE
 	SWR_OBJS += regmap-swr.o
 	SWR_OBJS += soundwire.o
