@@ -481,7 +481,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_SCAN,
 			 adapter->session_id, request->n_channels));
 
-	if (!sme_is_session_id_valid(hdd_ctx->hHal, adapter->session_id))
+	if (!sme_is_session_id_valid(hdd_ctx->mac_handle, adapter->session_id))
 		return -EINVAL;
 
 	if ((eConnectionState_Associated ==
@@ -1243,8 +1243,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
-	tHalHandle hHal;
-	int ret = 0;
+	int ret;
 
 	hdd_enter();
 
@@ -1265,12 +1264,11 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	if (!hdd_ctx->config->PnoOffload) {
-		hdd_debug("PnoOffloadis not enabled!!!");
+		hdd_debug("PnoOffload is not enabled!!!");
 		return -EINVAL;
 	}
 
@@ -1280,15 +1278,6 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	    (!hdd_ctx->config->enable_connected_scan)) {
 		hdd_info("enable_connected_scan is false, Aborting scan");
 		return -EBUSY;
-	}
-
-	if (!sme_is_session_id_valid(hdd_ctx->hHal, adapter->session_id))
-		return -EINVAL;
-
-	hHal = WLAN_HDD_GET_HAL_CTX(adapter);
-	if (NULL == hHal) {
-		hdd_err("HAL context  is Null!!!");
-		return -EINVAL;
 	}
 
 	return wlan_cfg80211_sched_scan_start(hdd_ctx->hdd_pdev, dev, request,
@@ -1321,7 +1310,6 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
-	tHalHandle hHal;
 
 	hdd_enter_dev(dev);
 
@@ -1341,13 +1329,7 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
 		return -EINVAL;
 	}
 	if (!hdd_ctx->config->PnoOffload) {
-		hdd_debug("PnoOffloadis not enabled!!!");
-		return -EINVAL;
-	}
-
-	hHal = WLAN_HDD_GET_HAL_CTX(adapter);
-	if (NULL == hHal) {
-		hdd_err(" HAL context  is Null!!!");
+		hdd_debug("PnoOffload is not enabled!!!");
 		return -EINVAL;
 	}
 
