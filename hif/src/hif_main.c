@@ -815,6 +815,13 @@ int hif_get_device_type(uint32_t device_id,
 		HIF_INFO(" *********** QCA6290EMU *************\n");
 		break;
 
+	case QCN7605_COMPOSITE:
+	case QCN7605_STANDALONE:
+		*target_type = TARGET_TYPE_QCN7605;
+		*hif_type = 0;
+		HIF_INFO(" *********** QCN7605  *************\n");
+		break;
+
 	default:
 		HIF_ERROR("%s: Unsupported device ID!", __func__);
 		ret = -ENODEV;

@@ -92,6 +92,10 @@
 					actual number once available.
 					currently defining this to 0xffff for
 					emulation purpose */
+/* Genoa */
+#define QCN7605_COMPOSITE  (0x9900)
+#define QCN7605_STANDALONE  (0x9901)
+
 #define RUMIM2M_DEVICE_ID_NODE0	0xabc0
 #define RUMIM2M_DEVICE_ID_NODE1	0xabc1
 #define RUMIM2M_DEVICE_ID_NODE2	0xabc2

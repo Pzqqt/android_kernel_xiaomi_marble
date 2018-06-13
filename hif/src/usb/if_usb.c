@@ -52,7 +52,11 @@ static inline QDF_STATUS
 hif_usb_diag_write_cold_reset(struct hif_softc *scn)
 {
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_target_info *tgt_info = &scn->target_info;
 
+	/* For Genoa, chip-reset is handled in CNSS driver */
+	if (tgt_info->target_type == TARGET_TYPE_QCN7605)
+		return QDF_STATUS_SUCCESS;
 
 	HIF_DBG("%s: resetting SOC", __func__);
 
@@ -186,6 +190,10 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 	struct hif_usb_softc *sc;
 	struct usb_device *usbdev = interface_to_usbdev(interface);
 	int vendor_id, product_id;
+	struct hif_target_info *tgt_info;
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	u32 hif_type;
+	u32 target_type;
 
 	usb_get_dev(usbdev);
 
@@ -212,14 +220,27 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 	sc->dev = &usbdev->dev;
 	sc->devid = id->idProduct;
 
-	if ((usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
-			USB_REQ_SET_CONFIGURATION, 0, 1, 0, NULL, 0,
-			HZ)) < 0) {
-		HIF_ERROR("%s[%d]", __func__, __LINE__);
-		goto err_usb;
+	hif_get_device_type(vendor_id, 0, &hif_type, &target_type);
+	tgt_info = hif_get_target_info_handle(hif_hdl);
+	if (target_type == TARGET_TYPE_QCN7605)
+		tgt_info->target_type = TARGET_TYPE_QCN7605;
+
+	/*
+	 * For Genoa, skip set_configuration, since it is handled
+	 * by CNSS driver.
+	 */
+	if (target_type != TARGET_TYPE_QCN7605) {
+		if ((usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
+				     USB_REQ_SET_CONFIGURATION, 0, 1, 0,
+				     NULL, 0, HZ)) < 0) {
+			HIF_ERROR("%s[%d]", __func__, __LINE__);
+			goto err_usb;
+		}
+		usb_set_interface(usbdev, 0, 0);
+		sc->reboot_notifier.notifier_call = hif_usb_reboot;
+		register_reboot_notifier(&sc->reboot_notifier);
 	}
 
-	usb_set_interface(usbdev, 0, 0);
 	/* disable lpm to avoid usb2.0 probe timeout */
 	hif_usb_disable_lpm(usbdev);
 
@@ -230,9 +251,6 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 	 */
 
 	sc->interface = interface;
-	sc->reboot_notifier.notifier_call = hif_usb_reboot;
-	register_reboot_notifier(&sc->reboot_notifier);
-
 	if (hif_usb_device_init(sc) != QDF_STATUS_SUCCESS) {
 		HIF_ERROR("ath: %s: hif_usb_device_init failed", __func__);
 		goto err_reset;
@@ -250,7 +268,8 @@ err_reset:
 	hif_usb_diag_write_cold_reset(scn);
 	g_usb_sc = NULL;
 	hif_usb_unload_dev_num = -1;
-	unregister_reboot_notifier(&sc->reboot_notifier);
+	if (target_type != TARGET_TYPE_QCN7605)
+		unregister_reboot_notifier(&sc->reboot_notifier);
 err_usb:
 	ret = QDF_STATUS_E_FAILURE;
 	usb_put_dev(usbdev);
@@ -280,6 +299,7 @@ void hif_usb_disable_bus(struct hif_softc *hif_ctx)
 	struct hif_usb_softc *sc = HIF_GET_USB_SOFTC(hif_ctx);
 	struct usb_interface *interface = sc->interface;
 	struct usb_device *udev = interface_to_usbdev(interface);
+	struct hif_target_info *tgt_info = &hif_ctx->target_info;
 
 	HIF_TRACE("%s: trying to remove hif_usb!", __func__);
 
@@ -299,7 +319,9 @@ void hif_usb_disable_bus(struct hif_softc *hif_ctx)
 	if (g_usb_sc->suspend_state)
 		hif_bus_resume(GET_HIF_OPAQUE_HDL(hif_ctx));
 
-	unregister_reboot_notifier(&sc->reboot_notifier);
+	if (tgt_info->target_type != TARGET_TYPE_QCN7605)
+		unregister_reboot_notifier(&sc->reboot_notifier);
+
 	usb_put_dev(interface_to_usbdev(interface));
 
 	hif_usb_device_deinit(sc);
@@ -723,5 +745,11 @@ int hif_check_fw_reg(struct hif_opaque_softc *scn)
  */
 bool hif_usb_needs_bmi(struct hif_softc *scn)
 {
+	struct hif_target_info *tgt_info = &scn->target_info;
+
+	/* BMI is not supported in Genoa */
+	if (tgt_info->target_type == TARGET_TYPE_QCN7605)
+		return false;
+
 	return true;
 }
