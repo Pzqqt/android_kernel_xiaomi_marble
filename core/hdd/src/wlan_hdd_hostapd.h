@@ -110,13 +110,6 @@ QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
 		struct csr_del_sta_params *pDelStaParams);
 void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
 			     struct csr_del_sta_params *pDelStaParams);
-int hdd_softap_unpack_ie(tHalHandle halHandle,
-			 eCsrEncryptionType *pEncryptType,
-			 eCsrEncryptionType *mcEncryptType,
-			 eCsrAuthType *pAuthType,
-			 bool *pMFPCapable,
-			 bool *pMFPRequired,
-			 uint16_t gen_ie_len, uint8_t *gen_ie);
 
 QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				    void *context);
