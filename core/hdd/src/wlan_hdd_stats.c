@@ -1686,14 +1686,14 @@ int wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 void wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter)
 {
 	tSirLLStatsClearReq link_layer_stats_clear_req;
-	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
 
 	link_layer_stats_clear_req.statsClearReqMask = WIFI_STATS_IFACE_AC |
 		WIFI_STATS_IFACE_ALL_PEER;
 	link_layer_stats_clear_req.stopReq = 0;
 	link_layer_stats_clear_req.reqId = 1;
 	link_layer_stats_clear_req.staId = adapter->session_id;
-	sme_ll_stats_clear_req(hal, &link_layer_stats_clear_req);
+	sme_ll_stats_clear_req(mac_handle, &link_layer_stats_clear_req);
 }
 
 /**
