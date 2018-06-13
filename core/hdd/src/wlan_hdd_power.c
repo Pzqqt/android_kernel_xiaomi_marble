@@ -222,7 +222,7 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 		}
 
 		hdd_debug("invoking sme_dhcp_done_ind");
-		sme_dhcp_done_ind(hdd_ctx->hHal, adapter->session_id);
+		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->session_id);
 		schedule_work(&adapter->ipv6_notifier_work);
 	}
 
@@ -699,7 +699,7 @@ static int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
 		 req.hostIpv4Addr[0], req.hostIpv4Addr[1],
 		 req.hostIpv4Addr[2], req.hostIpv4Addr[3]);
 
-	status = sme_set_keep_alive(hdd_ctx->hHal, req.sessionId, &req);
+	status = sme_set_keep_alive(hdd_ctx->mac_handle, req.sessionId, &req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to set keepalive");
 		return qdf_status_to_os_return(status);
@@ -751,7 +751,7 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 
 	ifa = hdd_lookup_ifaddr(adapter);
 	if (ifa && hdd_ctx->is_fils_roaming_supported)
-		sme_send_hlp_ie_info(hdd_ctx->hHal, adapter->session_id,
+		sme_send_hlp_ie_info(hdd_ctx->mac_handle, adapter->session_id,
 				     roam_profile, ifa->ifa_local);
 exit:
 	hdd_exit();
@@ -816,7 +816,7 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 			goto exit;
 		}
 		hdd_debug("invoking sme_dhcp_done_ind");
-		sme_dhcp_done_ind(hdd_ctx->hHal, adapter->session_id);
+		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->session_id);
 
 		if (!hdd_ctx->config->fhostArpOffload) {
 			hdd_debug("Offload not enabled ARPOffload=%d",
@@ -1339,7 +1339,7 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 		    (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_DEVICE_MODE) &&
 		    adapter->scan_info.default_scan_ies) {
-			sme_set_default_scan_ie(hdd_ctx->hHal,
+			sme_set_default_scan_ie(hdd_ctx->mac_handle,
 				      adapter->session_id,
 				      adapter->scan_info.default_scan_ies,
 				      adapter->scan_info.default_scan_ies_len);
@@ -1357,7 +1357,6 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
  */
 QDF_STATUS hdd_wlan_re_init(void)
 {
-
 	struct hdd_context *hdd_ctx = NULL;
 	struct hdd_adapter *adapter;
 	int ret;
@@ -1408,7 +1407,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	/* Allow the phone to go to sleep */
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
 	/* set chip power save failure detected callback */
-	sme_set_chip_pwr_save_fail_cb(hdd_ctx->hHal,
+	sme_set_chip_pwr_save_fail_cb(hdd_ctx->mac_handle,
 				      hdd_chip_pwr_save_fail_detected_cb);
 
 	hdd_lpass_notify_start(hdd_ctx);
@@ -1435,7 +1434,7 @@ success:
 int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 	bool allow_power_save, uint32_t timeout)
 {
-	tHalHandle hal;
+	mac_handle_t mac_handle;
 	struct hdd_context *hdd_ctx;
 
 	if (NULL == adapter) {
@@ -1450,7 +1449,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 	}
 
 	hdd_debug("Allow power save: %d", allow_power_save);
-	hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	mac_handle = hdd_ctx->mac_handle;
 
 	/*
 	 * This is a workaround for defective AP's that send a disassoc
@@ -1468,9 +1467,8 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 		if (QDF_STA_MODE == adapter->device_mode ||
 		    QDF_P2P_CLIENT_MODE == adapter->device_mode) {
 			hdd_debug("Disabling Auto Power save timer");
-			sme_ps_disable_auto_ps_timer(
-				WLAN_HDD_GET_HAL_CTX(adapter),
-				adapter->session_id);
+			sme_ps_disable_auto_ps_timer(mac_handle,
+						     adapter->session_id);
 		}
 
 		if (hdd_ctx->config && hdd_ctx->config->is_ps_enabled) {
@@ -1481,11 +1479,12 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 			 * this means DHCP is completed
 			 */
 			if (timeout)
-				sme_ps_enable_auto_ps_timer(hal,
+				sme_ps_enable_auto_ps_timer(mac_handle,
 							    adapter->session_id,
 							    timeout);
 			else
-				sme_ps_enable_disable(hal, adapter->session_id,
+				sme_ps_enable_disable(mac_handle,
+						      adapter->session_id,
 						      SME_PS_ENABLE);
 		} else {
 			hdd_debug("Power Save is not enabled in the cfg");
@@ -1497,9 +1496,10 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 		 * Enter Full power command received from GUI
 		 * this means we are disconnected
 		 */
-		sme_ps_disable_auto_ps_timer(WLAN_HDD_GET_HAL_CTX(adapter),
-			adapter->session_id);
-		sme_ps_enable_disable(hal, adapter->session_id, SME_PS_DISABLE);
+		sme_ps_disable_auto_ps_timer(mac_handle,
+					     adapter->session_id);
+		sme_ps_enable_disable(mac_handle, adapter->session_id,
+				      SME_PS_DISABLE);
 	}
 
 	return 0;
@@ -1669,6 +1669,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
 	struct hdd_adapter *adapter;
 	struct hdd_scan_info *scan_info;
+	mac_handle_t mac_handle;
 	int rc;
 
 	hdd_enter();
@@ -1689,6 +1690,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 		return 0;
 	}
 	mutex_unlock(&hdd_ctx->iface_change_lock);
+
+	mac_handle = hdd_ctx->mac_handle;
 
 	/* If RADAR detection is in progress (HDD), prevent suspend. The flag
 	 * "dfs_cac_block_tx" is set to true when RADAR is found and stay true
@@ -1732,8 +1735,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		scan_info = &adapter->scan_info;
 
-		if (sme_neighbor_middle_of_roaming
-			    (hdd_ctx->hHal, adapter->session_id)) {
+		if (sme_neighbor_middle_of_roaming(mac_handle,
+						   adapter->session_id)) {
 			hdd_err("Roaming in progress, do not allow suspend");
 			wlan_hdd_inc_suspend_stats(hdd_ctx,
 						   SUSPEND_FAIL_ROAM);
@@ -1746,7 +1749,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	/* flush any pending powersave timers */
 	hdd_for_each_adapter(hdd_ctx, adapter)
-		sme_ps_timer_flush_sync(hdd_ctx->hHal, adapter->session_id);
+		sme_ps_timer_flush_sync(mac_handle, adapter->session_id);
 
 	/*
 	 * Suspend IPA early before proceeding to suspend other entities like
@@ -1851,7 +1854,7 @@ static void hdd_stop_dhcp_ind(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	hdd_debug("DHCP stop indicated through power save");
-	sme_dhcp_stop_ind(hdd_ctx->hHal, adapter->device_mode,
+	sme_dhcp_stop_ind(hdd_ctx->mac_handle, adapter->device_mode,
 			  adapter->mac_addr.bytes,
 			  adapter->session_id);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DHCP);
@@ -1875,7 +1878,7 @@ static void hdd_start_dhcp_ind(struct hdd_adapter *adapter)
 	qdf_runtime_pm_prevent_suspend(&hdd_ctx->runtime_context.connect);
 	hdd_prevent_suspend_timeout(HDD_WAKELOCK_TIMEOUT_CONNECT,
 				    WIFI_POWER_EVENT_WAKELOCK_DHCP);
-	sme_dhcp_start_ind(hdd_ctx->hHal, adapter->device_mode,
+	sme_dhcp_start_ind(hdd_ctx->mac_handle, adapter->device_mode,
 			   adapter->mac_addr.bytes,
 			   adapter->session_id);
 }
@@ -1982,10 +1985,11 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 					   int dbm)
 {
 	struct hdd_context *hdd_ctx = (struct hdd_context *) wiphy_priv(wiphy);
-	tHalHandle hHal = NULL;
+	mac_handle_t mac_handle;
 	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BCAST_INIT;
 	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BCAST_INIT;
-	int status;
+	QDF_STATUS status;
+	int errno;
 
 	hdd_enter();
 
@@ -1998,15 +2002,17 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_SET_TXPOWER,
 			 NO_SESSION, type));
 
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status)
-		return status;
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
 
-	hHal = hdd_ctx->hHal;
+	mac_handle = hdd_ctx->mac_handle;
 
-	if (0 != sme_cfg_set_int(hHal, WNI_CFG_CURRENT_TX_POWER_LEVEL, dbm)) {
-		hdd_err("sme_cfg_set_int failed for tx power %hu",
-				dbm);
+	status = sme_cfg_set_int(mac_handle, WNI_CFG_CURRENT_TX_POWER_LEVEL,
+				 dbm);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("sme_cfg_set_int failed for tx power %hu, %d",
+			dbm, status);
 		return -EIO;
 	}
 
@@ -2018,9 +2024,9 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 	/* Fall through */
 	case NL80211_TX_POWER_LIMITED:
 	/* Limit TX power by the mBm parameter */
-		if (sme_set_max_tx_power(hHal, bssid, selfMac, dbm) !=
-		    QDF_STATUS_SUCCESS) {
-			hdd_err("Setting maximum tx power failed");
+		status = sme_set_max_tx_power(mac_handle, bssid, selfMac, dbm);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Setting maximum tx power failed, %d", status);
 			return -EIO;
 		}
 		break;
