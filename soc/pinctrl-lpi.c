@@ -105,40 +105,8 @@ static const char *const lpi_gpio_groups[] = {
 	"gpio29", "gpio30", "gpio31",
 };
 
-static const u32 lpi_offset[] = {
-	0x00000000,
-	0x00001000,
-	0x00002000,
-	0x00003000,
-	0x00004000,
-	0x00005000,
-	0x00006000,
-	0x00007000,
-	0x00008000,
-	0x00009000,
-	0x0000A000,
-	0x0000B000,
-	0x0000C000,
-	0x0000D000,
-	0x0000E000,
-	0x0000F000,
-	0x00010000,
-	0x00011000,
-	0x00012000,
-	0x00013000,
-	0x00014000,
-	0x00015000,
-	0x00016000,
-	0x00017000,
-	0x00018000,
-	0x00019000,
-	0x0001A000,
-	0x0001B000,
-	0x0001C000,
-	0x0001D000,
-	0x0001E000,
-	0x0001F000,
-};
+#define LPI_TLMM_MAX_PINS 100
+static u32 lpi_offset[LPI_TLMM_MAX_PINS];
 
 static const char *const lpi_gpio_functions[] = {
 	[LPI_GPIO_FUNC_INDEX_GPIO]	= LPI_GPIO_FUNC_GPIO,
@@ -530,6 +498,13 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 		return ret;
 
 	WARN_ON(npins > ARRAY_SIZE(lpi_gpio_groups));
+
+	ret = of_property_read_u32_array(dev->of_node, "qcom,lpi-offset-tbl",
+					 lpi_offset, npins);
+	if (ret < 0) {
+		dev_err(dev, "error in reading lpi offset table: %d\n", ret);
+		return ret;
+	}
 
 	state = devm_kzalloc(dev, sizeof(*state), GFP_KERNEL);
 	if (!state)
