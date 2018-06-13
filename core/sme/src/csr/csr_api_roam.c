@@ -11710,6 +11710,46 @@ csr_roam_chk_lnk_assoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	}
 }
 
+/*
+ * csr_is_deauth_disassoc_already_active() - Function to check if deauth or
+ *  disassoc is already in progress.
+ * @mac_ctx: Global MAC context
+ * @session_id: session id
+ * @peer_macaddr: Peer MAC address
+ *
+ * Return: True if deauth/disassoc indication can be dropped
+ *  else false
+ */
+static bool csr_is_deauth_disassoc_already_active(tpAniSirGlobal mac_ctx,
+					       uint8_t session_id,
+					       struct qdf_mac_addr peer_macaddr)
+{
+	bool ret = false;
+	tSmeCmd *sme_cmd;
+
+	sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc, session_id,
+						 WLAN_SER_CMD_FORCE_DEAUTH_STA);
+	if (!sme_cmd) {
+		sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc,
+					       session_id,
+					       WLAN_SER_CMD_FORCE_DISASSOC_STA);
+		if (!sme_cmd)
+			return ret;
+	}
+
+	if ((mac_ctx->roam.curSubState[session_id] ==
+	     eCSR_ROAM_SUBSTATE_DEAUTH_REQ ||
+	     mac_ctx->roam.curSubState[session_id] ==
+	     eCSR_ROAM_SUBSTATE_DISASSOC_REQ) &&
+	    !qdf_mem_cmp(peer_macaddr.bytes, sme_cmd->u.roamCmd.peerMac,
+			 QDF_MAC_ADDR_SIZE)) {
+		sme_err("Ignore DEAUTH_IND/DIASSOC_IND as Deauth/Disassoc already in progress");
+		ret = true;
+	}
+
+	return ret;
+}
+
 static void
 csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 {
@@ -11736,6 +11776,12 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("Session Id not found for BSSID "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(pDisassocInd->bssid.bytes));
+		qdf_mem_free(cmd);
+		return;
+	}
+
+	if (csr_is_deauth_disassoc_already_active(mac_ctx, sessionId,
+	    pDisassocInd->peer_macaddr)) {
 		qdf_mem_free(cmd);
 		return;
 	}
@@ -11871,6 +11917,10 @@ csr_roam_chk_lnk_deauth_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 						   &pDeauthInd->bssid,
 						   &sessionId);
 	if (!QDF_IS_STATUS_SUCCESS(status))
+		return;
+
+	if (csr_is_deauth_disassoc_already_active(mac_ctx, sessionId,
+	    pDeauthInd->peer_macaddr))
 		return;
 	/* If we are in neighbor preauth done state then on receiving
 	 * disassoc or deauth we dont roam instead we just disassoc
