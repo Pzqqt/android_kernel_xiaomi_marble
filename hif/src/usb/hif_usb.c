@@ -665,6 +665,7 @@ static QDF_STATUS hif_ctrl_msg_exchange(struct HIF_DEVICE_USB *macp,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_BMI
 /**
  * hif_exchange_bmi_msg() - send/recev ctrl message of type BMI_CMD/BMI_RESP
  * @scn: pointer to hif_opaque_softc
@@ -694,6 +695,7 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *scn,
 				USB_CONTROL_REQ_RECV_BMI_RESP,
 				bmi_response, bmi_response_lengthp);
 }
+#endif /* WLAN_FEATURE_BMI */
 
 /**
  * hif_diag_read_access() - Read data from target memory or register

@@ -510,9 +510,11 @@ int hif_apps_wake_irq_enable(struct hif_opaque_softc *hif_ctx)
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_BMI
 bool hif_needs_bmi(struct hif_opaque_softc *scn)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
 
 	return hif_sc->bus_ops.hif_needs_bmi(hif_sc);
 }
+#endif /* WLAN_FEATURE_BMI */

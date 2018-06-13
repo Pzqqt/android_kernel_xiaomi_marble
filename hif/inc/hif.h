@@ -443,6 +443,7 @@ void hif_detach_htc(struct hif_opaque_softc *hif_ctx);
 				     * DiagRead/DiagWrite
 				     */
 
+#ifdef WLAN_FEATURE_BMI
 /*
  * API to handle HIF-specific BMI message exchanges, this API is synchronous
  * and only allowed to be called from a context that can block (sleep)
@@ -453,6 +454,20 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 				uint8_t *pResponseMessage,
 				uint32_t *pResponseLength, uint32_t TimeoutMS);
 void hif_register_bmi_callbacks(struct hif_softc *hif_sc);
+bool hif_needs_bmi(struct hif_opaque_softc *hif_ctx);
+#else /* WLAN_FEATURE_BMI */
+static inline void
+hif_register_bmi_callbacks(struct hif_softc *hif_sc)
+{
+}
+
+static inline bool
+hif_needs_bmi(struct hif_opaque_softc *hif_ctx)
+{
+	return false;
+}
+#endif /* WLAN_FEATURE_BMI */
+
 /*
  * APIs to handle HIF specific diagnostic read accesses. These APIs are
  * synchronous and only allowed to be called from a context that
@@ -848,7 +863,6 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn);
 void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx);
 void hif_get_hw_info(struct hif_opaque_softc *hif_ctx, u32 *version,
 		     u32 *revision, const char **target_name);
-bool hif_needs_bmi(struct hif_opaque_softc *hif_ctx);
 enum qdf_bus_type hif_get_bus_type(struct hif_opaque_softc *hif_hdl);
 struct hif_target_info *hif_get_target_info_handle(struct hif_opaque_softc *
 						   scn);
