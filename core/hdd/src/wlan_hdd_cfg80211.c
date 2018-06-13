@@ -16487,6 +16487,11 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			return -EINVAL;
 		}
 
+		if (adapter->send_mode_change) {
+			wlan_hdd_send_mode_change_event();
+			adapter->send_mode_change = false;
+		}
+
 		/* in case of IBSS as there was no information
 		 * available about WEP keys during IBSS join, group
 		 * key initialized with NULL key, so re-initialize

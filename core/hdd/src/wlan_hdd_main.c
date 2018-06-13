@@ -3673,6 +3673,7 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 		adapter->offloads_configured = false;
 		adapter->is_link_up_service_needed = false;
 		adapter->disconnection_in_progress = false;
+		adapter->send_mode_change = true;
 		/* Init the net_device structure */
 		strlcpy(dev->name, name, IFNAMSIZ);
 
