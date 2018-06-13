@@ -373,7 +373,6 @@ endif
 #Enable USB specific APIS
 ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_HIF_USB := y
-	CONFIG_PLD_USB_CNSS := y
 endif
 
 #Enable SDIO specific APIS

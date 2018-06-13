@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,24 +20,18 @@
 
 #include "pld_common.h"
 
-#if !defined(CONFIG_PLD_USB_CNSS)
+#ifdef HIF_USB
+int pld_usb_register_driver(void);
+void pld_usb_unregister_driver(void);
+int pld_usb_get_ce_id(int irq);
+#else
 static inline int pld_usb_register_driver(void)
 {
 	return 0;
 }
 
 static inline void pld_usb_unregister_driver(void)
-{
-}
-
-static inline int pld_usb_get_ce_id(int irq)
-{
-	return 0;
-}
-#else
-int pld_usb_register_driver(void);
-void pld_usb_unregister_driver(void);
-int pld_usb_get_ce_id(int irq);
+{}
 #endif
 
 static inline int

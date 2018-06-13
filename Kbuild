@@ -1329,7 +1329,7 @@ endif
 ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_sdio.o
 endif
-ifeq ($(CONFIG_PLD_USB_CNSS), y)
+ifeq ($(CONFIG_HIF_USB), y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_usb.o
 endif
 
@@ -1779,7 +1779,6 @@ cppflags-$(CONFIG_FEATURE_SKB_PRE_ALLOC) += -DFEATURE_SKB_PRE_ALLOC
 #Enable USB specific APIS
 ifeq ($(CONFIG_HIF_USB), y)
 cppflags-y += -DHIF_USB \
-            -DCONFIG_PLD_USB_CNSS \
             -DDEBUG_HL_LOGGING \
             -DCONFIG_HL_SUPPORT
 endif

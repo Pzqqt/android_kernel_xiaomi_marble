@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,6 +25,9 @@
 #include <linux/platform_device.h>
 #include <linux/err.h>
 #include <linux/list.h>
+#ifdef CONFIG_PLD_USB_CNSS
+#include <net/cnss2.h>
+#endif
 
 
 #define VENDOR_ATHR             0x0CF3
@@ -155,6 +158,42 @@ static int pld_usb_reset_resume(struct usb_interface *interface)
 	return pld_context->ops->reset_resume(&pdev->dev, PLD_BUS_TYPE_USB);
 }
 
+#ifdef CONFIG_PLD_USB_CNSS
+struct cnss_usb_wlan_driver pld_usb_ops = {
+	.name = "pld_usb_cnss",
+	.id_table = pld_usb_id_table,
+	.probe = pld_usb_probe,
+	.disconnect = pld_usb_remove,
+#ifdef CONFIG_PM
+	.suspend = pld_usb_suspend,
+	.resume = pld_usb_resume,
+	.reset_resume = pld_usb_reset_resume,
+#endif
+
+/**
+ * pld_usb_register_driver() - registration routine for wlan usb drive
+ *
+ * Return: int negative error code on failure and 0 on success
+ */
+int pld_usb_register_driver(void)
+{
+	pr_info("%s usb_register\n", __func__);
+	return cnss_wlan_register_driver(&pld_usb_ops);
+}
+
+/**
+ * pld_usb_unregister_driver() - de-registration routine for wlan usb driver
+ *
+ * Return: void
+ */
+void pld_usb_unregister_driver(void)
+{
+	cnss_wlan_register_driver(&pld_usb_ops);
+	pr_info("%s usb_deregister done!\n", __func__);
+}
+
+#else /* CONFIG_PLD_USB_CNSS */
+
 struct usb_driver pld_usb_ops = {
 	.name = "pld_usb",
 	.id_table = pld_usb_id_table,
@@ -209,3 +248,4 @@ void pld_usb_unregister_driver(void)
 	usb_deregister(&pld_usb_ops);
 	pr_info("%s usb_deregister done!\n", __func__);
 }
+#endif /* CONFIG_PLD_USB_CNSS */
