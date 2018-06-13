@@ -44,22 +44,12 @@
 #define pe_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_PE, params)
 #define pe_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_PE, params)
 
-#define pe_log(level, args...) QDF_TRACE(QDF_MODULE_ID_PE, level, ## args)
-#define pe_logfl(level, format, args...) pe_log(level, FL(format), ## args)
+#define pe_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_PE, params)
+#define pe_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_PE, params)
+#define pe_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_PE, params)
+#define pe_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_PE, params)
+#define pe_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_PE, params)
 
-#define pe_alert(format, args...) \
-		pe_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define pe_err(format, args...) \
-		pe_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define pe_warn(format, args...) \
-		pe_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define pe_info(format, args...) \
-		pe_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define pe_debug(format, args...) \
-		pe_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
-
-#define PE_ENTER() pe_logfl(QDF_TRACE_LEVEL_DEBUG, "enter")
-#define PE_EXIT() pe_logfl(QDF_TRACE_LEVEL_DEBUG, "exit")
-
-
+#define PE_ENTER() pe_debug("enter")
+#define PE_EXIT() pe_debug("exit")
 #endif
