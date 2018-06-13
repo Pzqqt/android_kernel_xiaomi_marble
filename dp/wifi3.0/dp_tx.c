@@ -3129,6 +3129,21 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 				DP_TX_DESC_ID_OFFSET_OS);
 
 		/*
+		 * If the descriptor is already freed in vdev_detach,
+		 * continue to next descriptor
+		 */
+		if (!tx_desc->vdev) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				  QDF_TRACE_LEVEL_INFO,
+				  "Descriptor freed in vdev_detach %d",
+				  tx_desc_id);
+
+			num_processed += !(count & DP_TX_NAPI_BUDGET_DIV_MASK);
+			count++;
+			continue;
+		}
+
+		/*
 		 * If the release source is FW, process the HTT status
 		 */
 		if (qdf_unlikely(buffer_src ==

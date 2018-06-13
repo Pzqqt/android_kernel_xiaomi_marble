@@ -605,6 +605,8 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 {
 	TX_DESC_LOCK_LOCK(&soc->tx_desc[desc_pool_id].lock);
 
+	tx_desc->vdev = NULL;
+	tx_desc->nbuf = NULL;
 	tx_desc->flags = 0;
 	tx_desc->next = soc->tx_desc[desc_pool_id].freelist;
 	soc->tx_desc[desc_pool_id].freelist = tx_desc;
