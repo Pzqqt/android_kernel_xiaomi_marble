@@ -7561,8 +7561,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	pIe = wlan_hdd_get_wps_ie_ptr(pBeacon->tail, pBeacon->tail_len);
 
 	if (pIe) {
-		if (pIe[1] < (2 + WPS_OUI_TYPE_SIZE)) {
-			hdd_err("**Wps Ie Length is too small***");
+		/* To acess pIe[15], length needs to be atlest 14 */
+		if (pIe[1] < 14) {
+			hdd_err("**Wps Ie Length(%hhu) is too small***",
+				pIe[1]);
 			ret = -EINVAL;
 			goto error;
 		} else if (memcmp(&pIe[2], WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE) ==
