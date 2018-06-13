@@ -762,7 +762,6 @@ static bool wma_vdev_uses_self_peer(uint32_t vdev_type, uint32_t vdev_subtype)
 		return vdev_subtype == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE;
 
 	case WMI_VDEV_TYPE_MONITOR:
-	case WMI_VDEV_TYPE_NDI:
 	case WMI_VDEV_TYPE_OCB:
 		return true;
 

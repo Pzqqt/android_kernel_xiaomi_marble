@@ -46,6 +46,7 @@
 void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 {
 	struct cdp_pdev *pdev;
+	struct cdp_vdev *vdev;
 	struct wma_vdev_start_req req;
 	void *peer = NULL;
 	struct wma_target_req *msg;
@@ -54,7 +55,8 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	WMA_LOGD("%s: enter", __func__);
-	if (NULL == wma_find_vdev_by_addr(wma, add_bss->bssId, &vdev_id)) {
+	vdev = wma_find_vdev_by_addr(wma, add_bss->bssId, &vdev_id);
+	if (!vdev) {
 		WMA_LOGE("%s: Failed to find vdev", __func__);
 		goto send_fail_resp;
 	}
@@ -67,12 +69,17 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 
 	wma_set_bss_rate_flags(wma, vdev_id, add_bss);
 
-	peer = cdp_peer_find_by_addr(soc,
-			pdev,
-			add_bss->selfMacAddr, &peer_id);
+	status = wma_create_peer(wma, pdev, vdev, add_bss->selfMacAddr,
+				 WMI_PEER_TYPE_DEFAULT, vdev_id, false);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("%s: Failed to create peer", __func__);
+		goto send_fail_resp;
+	}
+
+	peer = cdp_peer_find_by_addr(soc, pdev, add_bss->selfMacAddr, &peer_id);
 	if (!peer) {
 		WMA_LOGE("%s Failed to find peer %pM", __func__,
-			add_bss->selfMacAddr);
+			 add_bss->selfMacAddr);
 		goto send_fail_resp;
 	}
 
