@@ -143,8 +143,6 @@ QDF_STATUS pmo_tgt_lphb_rsp_evt(struct wlan_objmgr_psoc *psoc,
 
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 	if (psoc_ctx->wow.lphb_cb && psoc_ctx->wow.lphb_cb_ctx) {
-		pmo_info("callback:%pK context:%pK psoc:%pK",
-			psoc_ctx->wow.lphb_cb, psoc_ctx->wow.lphb_cb_ctx, psoc);
 		psoc_ctx->wow.lphb_cb(psoc_ctx->wow.lphb_cb_ctx, rsp_param);
 	} else {
 		pmo_err("lphb rsp callback/context is null for psoc %pK",

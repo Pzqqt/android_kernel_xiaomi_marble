@@ -329,13 +329,13 @@ static QDF_STATUS pmo_core_mc_addr_flitering_sanity(
 
 	/* Check if INI is enabled or not, otherwise just return */
 	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.enable_mc_list) {
-		pmo_info("user disabled mc_addr_list using INI");
+		pmo_debug("user disabled mc_addr_list using INI");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!pmo_core_is_vdev_supports_offload(vdev)) {
-		pmo_info("vdev in invalid opmode for mc addr filtering %d",
-			pmo_get_vdev_opmode(vdev));
+		pmo_debug("vdev in invalid opmode for mc addr filtering %d",
+			  pmo_get_vdev_opmode(vdev));
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -376,8 +376,8 @@ QDF_STATUS pmo_core_cache_mc_addr_list(
 	if (status != QDF_STATUS_SUCCESS)
 		goto dec_ref;
 
-	pmo_info("Cache mc addr list for vdev id: %d psoc: %pK vdev: %pK",
-			mc_list_config->vdev_id, mc_list_config->psoc, vdev);
+	pmo_debug("Cache mc addr list for vdev id: %d psoc: %pK",
+		  mc_list_config->vdev_id, mc_list_config->psoc);
 
 	status = pmo_core_cache_mc_addr_list_in_vdev_priv(mc_list_config, vdev);
 dec_ref:
@@ -419,8 +419,8 @@ QDF_STATUS pmo_core_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		goto dec_ref;
 
-	pmo_info("Flush mc addr list for vdev id: %d psoc: %pK vdev: %pK",
-			vdev_id, psoc, vdev);
+	pmo_debug("Flush mc addr list for vdev id: %d psoc: %pK",
+		  vdev_id, psoc);
 
 	status = pmo_core_flush_mc_addr_list_from_vdev_priv(vdev);
 

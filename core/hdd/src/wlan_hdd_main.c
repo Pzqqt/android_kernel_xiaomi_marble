@@ -3397,7 +3397,7 @@ void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
 static void __hdd_set_multicast_list(struct net_device *dev)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	int i = 0, status;
+	int i = 0, errno;
 	struct netdev_hw_addr *ha;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct pmo_mc_addr_list_params *mc_list_request = NULL;
@@ -3408,17 +3408,17 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		goto out;
 
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status)
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
 		goto out;
 
-	status = hdd_validate_adapter(adapter);
-	if (status)
+	errno = hdd_validate_adapter(adapter);
+	if (errno)
 		goto out;
 
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
 		hdd_err("%s: Driver module is closed", __func__);
-		return;
+		goto out;
 	}
 
 	mc_list_request = qdf_mem_malloc(sizeof(*mc_list_request));
@@ -3429,7 +3429,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 
 	/* Delete already configured multicast address list */
 	if (adapter->mc_addr_list.mc_cnt > 0) {
-		hdd_info("clear previously configured MC address list");
+		hdd_debug("clear previously configured MC address list");
 		hdd_disable_and_flush_mc_addr_list(adapter,
 			pmo_mc_list_change_notify);
 	}
@@ -3442,10 +3442,10 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 		mc_count = netdev_mc_count(dev);
 		if (mc_count > pmo_ucfg_max_mc_addr_supported(psoc)) {
 			hdd_debug("Exceeded max MC filter addresses (%d). Allowing all MC frames by disabling MC address filtering",
-				   pmo_ucfg_max_mc_addr_supported(psoc));
+				  pmo_ucfg_max_mc_addr_supported(psoc));
 			hdd_disable_and_flush_mc_addr_list(adapter,
 				pmo_mc_list_change_notify);
-			goto out;
+			goto free_req;
 		}
 		netdev_for_each_mc_addr(ha, dev) {
 			hdd_debug("ha_addr[%d] "MAC_ADDRESS_STR,
@@ -3456,8 +3456,8 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 				0, ETH_ALEN);
 			memcpy(&(mc_list_request->mc_addr[i].bytes),
 				ha->addr, ETH_ALEN);
-			hdd_info("mlist[%d] = %pM", i,
-				mc_list_request->mc_addr[i].bytes);
+			hdd_debug("mlist[%d] = %pM", i,
+				  mc_list_request->mc_addr[i].bytes);
 			i++;
 		}
 	}
@@ -3465,16 +3465,20 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	mc_list_request->psoc = psoc;
 	mc_list_request->vdev_id = adapter->session_id;
 	mc_list_request->count = mc_count;
-	status = hdd_cache_mc_addr_list(mc_list_request);
-	if (status == 0) {
-		hdd_enable_mc_addr_filtering(adapter,
-			pmo_mc_list_change_notify);
-	} else {
-		hdd_err("error while caching mc list");
+
+	errno = hdd_cache_mc_addr_list(mc_list_request);
+	if (errno) {
+		hdd_err("Failed to cache MC address list for vdev %u; errno:%d",
+			adapter->session_id, errno);
+		goto free_req;
 	}
+
+	hdd_enable_mc_addr_filtering(adapter, pmo_mc_list_change_notify);
+
+free_req:
+	qdf_mem_free(mc_list_request);
+
 out:
-	if (mc_list_request)
-		qdf_mem_free(mc_list_request);
 	hdd_exit();
 }
 

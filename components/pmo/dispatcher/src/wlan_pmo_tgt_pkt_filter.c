@@ -44,9 +44,9 @@ QDF_STATUS pmo_tgt_set_pkt_filter(struct wlan_objmgr_vdev *vdev,
 		goto out;
 	}
 
-	pmo_info("filter_type=%d, filter_id = %d",
-				pmo_set_pkt_fltr_req->filter_type,
-				pmo_set_pkt_fltr_req->filter_id);
+	pmo_debug("filter_type=%d, filter_id = %d",
+		  pmo_set_pkt_fltr_req->filter_type,
+		  pmo_set_pkt_fltr_req->filter_id);
 
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
 
@@ -110,7 +110,7 @@ QDF_STATUS pmo_tgt_clear_pkt_filter(struct wlan_objmgr_vdev *vdev,
 		goto out;
 	}
 
-	pmo_info("filter_id = %d", pmo_clr_pkt_fltr_param->filter_id);
+	pmo_debug("filter_id = %d", pmo_clr_pkt_fltr_param->filter_id);
 
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
 

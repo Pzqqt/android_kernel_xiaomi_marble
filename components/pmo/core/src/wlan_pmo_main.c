@@ -122,16 +122,14 @@ bool pmo_core_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
 	enum wlan_peer_state peer_state;
 
 	peer = wlan_vdev_get_bsspeer(vdev);
-
 	if (!peer) {
-		pmo_err("peer is null");
+		pmo_debug("bss peer is null");
 		return false;
 	}
-	peer_state = wlan_peer_mlme_get_state(peer);
 
+	peer_state = wlan_peer_mlme_get_state(peer);
 	if (peer_state != WLAN_ASSOC_STATE) {
-		pmo_err("peer is not associated.peer state: %d",
-			peer_state);
+		pmo_debug("peer is not associated; state:%d", peer_state);
 		return false;
 	}
 

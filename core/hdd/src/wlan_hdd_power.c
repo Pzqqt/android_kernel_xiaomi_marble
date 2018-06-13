@@ -998,26 +998,20 @@ void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
 				adapter->session_id, trigger);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("failed to disable mc list status %d", status);
+
 out:
 	hdd_exit();
-
 }
 
 int hdd_cache_mc_addr_list(struct pmo_mc_addr_list_params *mc_list_config)
 {
 	QDF_STATUS status;
-	int ret = 0;
 
 	hdd_enter();
-	/* cache mc addr list */
 	status = pmo_ucfg_cache_mc_addr_list(mc_list_config);
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_info("fail to cache mc list status %d", status);
-		ret = -EINVAL;
-	}
 	hdd_exit();
 
-	return ret;
+	return qdf_status_to_os_return(status);
 }
 
 void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
@@ -1038,10 +1032,10 @@ void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
 	status = pmo_ucfg_flush_mc_addr_list(psoc, adapter->session_id);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("fail to flush mc list status %d", status);
+
 	hdd_exit();
 
 	return;
-
 }
 
 /**
