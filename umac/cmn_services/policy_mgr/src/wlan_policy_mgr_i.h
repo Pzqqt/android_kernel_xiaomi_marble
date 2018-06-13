@@ -349,7 +349,8 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_chain_mode chain_mask,
 		uint32_t original_nss,
 		uint32_t vdev_id,
-		bool in_use);
+		bool in_use,
+		bool update_conn);
 void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
 				enum policy_mgr_con_mode mode,
 				bool all_matching_cxn_to_del,

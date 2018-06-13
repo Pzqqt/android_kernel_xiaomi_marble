@@ -1273,6 +1273,7 @@ QDF_STATUS policy_mgr_incr_connection_count(
 	uint8_t chan;
 	uint32_t nss = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool update_conn = true;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -1314,6 +1315,8 @@ QDF_STATUS policy_mgr_incr_connection_count(
 		policy_mgr_err("Error in getting nss");
 	}
 
+	if (mode == PM_STA_MODE || mode == PM_P2P_CLIENT_MODE)
+		update_conn = false;
 
 	/* add the entry */
 	policy_mgr_update_conc_list(psoc, conn_index,
@@ -1322,7 +1325,7 @@ QDF_STATUS policy_mgr_incr_connection_count(
 			policy_mgr_get_bw(conn_table_entry.chan_width),
 			conn_table_entry.mac_id,
 			chain_mask,
-			nss, vdev_id, true);
+			nss, vdev_id, true, update_conn);
 	policy_mgr_debug("Add at idx:%d vdev %d mac=%d",
 		conn_index, vdev_id,
 		conn_table_entry.mac_id);
