@@ -8244,7 +8244,6 @@ QDF_STATUS sme_get_link_speed(tHalHandle hHal, tSirLinkSpeedInfo *lsReq,
 
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac;
-	tSirLinkSpeedInfo *req;
 	void *wma_handle;
 
 	if (!hHal || !pCallbackfn || !lsReq) {
@@ -8261,25 +8260,16 @@ QDF_STATUS sme_get_link_speed(tHalHandle hHal, tSirLinkSpeedInfo *lsReq,
 	}
 
 	pMac = PMAC_STRUCT(hHal);
-	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		sme_err("Failed to allocate memory");
-		return QDF_STATUS_E_NOMEM;
-	}
-	*req = *lsReq;
-
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("Failed to acquire global lock");
-		qdf_mem_free(req);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	pMac->sme.pLinkSpeedCbContext = plsContext;
 	pMac->sme.pLinkSpeedIndCb = pCallbackfn;
-	status = wma_get_link_speed(wma_handle, req);
+	status = wma_get_link_speed(wma_handle, lsReq);
 	sme_release_global_lock(&pMac->sme);
-
 	return status;
 }
 
