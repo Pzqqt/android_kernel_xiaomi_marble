@@ -526,6 +526,8 @@ QDF_STATUS policy_mgr_get_old_and_new_hw_index(
  * @chain_mask: Chain mask
  * @vdev_id: vdev id
  * @in_use: Flag to indicate if the index is in use or not
+ * @update_conn: Flag to indicate if mode change event should
+ *  be sent or not
  *
  * Updates the index value of the concurrent connection list
  *
@@ -540,7 +542,8 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_chain_mode chain_mask,
 		uint32_t original_nss,
 		uint32_t vdev_id,
-		bool in_use)
+		bool in_use,
+		bool update_conn)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	bool mcc_mode;
@@ -568,7 +571,13 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 	pm_conc_connection_list[conn_index].in_use = in_use;
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
-	if (pm_ctx->mode_change_cb)
+	/*
+	 * For STA and P2P client mode, the mode change event sent as part
+	 * of the callback causes delay in processing M1 frame at supplicant
+	 * resulting in cert test case failure. The mode change event is sent
+	 * as part of add key for STA and P2P client mode.
+	 */
+	if (pm_ctx->mode_change_cb && update_conn)
 		pm_ctx->mode_change_cb();
 
 	policy_mgr_dump_connection_status_info(psoc);
