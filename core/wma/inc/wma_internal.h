@@ -1068,13 +1068,13 @@ QDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
 
 /**
  * wma_sar_rsp_evt_handler() -  process sar response event from FW.
- * @handle: wma handle
+ * @handle: ol scn handle
  * @event: event buffer
  * @len: buffer length
  *
  * Return: 0 for success or error code
  */
-int wma_sar_rsp_evt_handler(void *handle, uint8_t *event, uint32_t len);
+int wma_sar_rsp_evt_handler(ol_scn_t handle, uint8_t *event, uint32_t len);
 
 #ifdef FEATURE_WLAN_CH_AVOID
 QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,

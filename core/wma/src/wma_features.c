@@ -4032,11 +4032,27 @@ QDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
 }
 #endif /* WLAN_FEATURE_GPIO_LED_FLASHING */
 
-int wma_sar_rsp_evt_handler(void *handle, uint8_t *event, uint32_t len)
+int wma_sar_rsp_evt_handler(ol_scn_t handle, uint8_t *event, uint32_t len)
 {
+	tp_wma_handle wma_handle;
+	wmi_unified_t wmi_handle;
 	QDF_STATUS status;
 
-	status = wmi_unified_extract_sar2_result_event(handle,
+	WMA_LOGD(FL("handle:%pK event:%pK len:%u"), handle, event, len);
+
+	wma_handle = handle;
+	if (!wma_handle) {
+		WMA_LOGE(FL("NULL wma_handle"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		WMA_LOGE(FL("NULL wmi_handle"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_extract_sar2_result_event(wmi_handle,
 						       event, len);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE(FL("Event extract failure: %d"), status);
