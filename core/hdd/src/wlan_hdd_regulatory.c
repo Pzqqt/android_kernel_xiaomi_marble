@@ -705,7 +705,7 @@ int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code)
 int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
+	mac_handle_t mac_handle;
 	enum band_info band;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
@@ -764,8 +764,8 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	hdd_debug("Current band value = %u, new setting %u ",
 			currBand, band);
 
+	mac_handle = hdd_ctx->mac_handle;
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, false);
 		connectedBand = hdd_conn_get_connected_band(
@@ -773,9 +773,9 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 
 		/* Handling is done only for STA and P2P */
 		if (band != BAND_ALL &&
-			((adapter->device_mode == QDF_STA_MODE) ||
-			 (adapter->device_mode == QDF_P2P_CLIENT_MODE)) &&
-			(hdd_conn_is_connected(
+		    ((adapter->device_mode == QDF_STA_MODE) ||
+		     (adapter->device_mode == QDF_P2P_CLIENT_MODE)) &&
+		    (hdd_conn_is_connected(
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter)))
 			&& (connectedBand != band)) {
 			status = QDF_STATUS_SUCCESS;
@@ -791,7 +791,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 			INIT_COMPLETION(adapter->disconnect_comp_var);
 
 			status = sme_roam_disconnect(
-					WLAN_HDD_GET_HAL_CTX(adapter),
+					mac_handle,
 					adapter->session_id,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED);
 
@@ -812,7 +812,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 			}
 		}
 
-		sme_scan_flush_result(hHal);
+		sme_scan_flush_result(mac_handle);
 	}
 
 	if (QDF_IS_STATUS_ERROR(ucfg_reg_set_band(hdd_ctx->hdd_pdev, band))) {
@@ -971,7 +971,6 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		request->dfs_region = (enum nl80211_dfs_regions) DFS_CN_REG;
 
 	/* first check if this callback is in response to the driver callback */
-
 	switch (request->initiator) {
 	case NL80211_REGDOM_SET_BY_DRIVER:
 	case NL80211_REGDOM_SET_BY_CORE:
@@ -1002,7 +1001,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 				reset = true;
 		} else if (NL80211_REGDOM_SET_BY_DRIVER == request->initiator) {
 			hdd_ctx->reg.cc_src = SOURCE_DRIVER;
-			sme_set_cc_src(hdd_ctx->hHal, SOURCE_DRIVER);
+			sme_set_cc_src(hdd_ctx->mac_handle, SOURCE_DRIVER);
 		} else {
 			hdd_ctx->reg.cc_src = SOURCE_USERSPACE;
 			hdd_restore_custom_reg_settings(wiphy,
@@ -1021,7 +1020,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 
 		hdd_process_regulatory_data(hdd_ctx, wiphy, reset);
 
-		sme_generic_change_country_code(hdd_ctx->hHal,
+		sme_generic_change_country_code(hdd_ctx->mac_handle,
 						hdd_ctx->reg.alpha2);
 
 		cds_fill_and_send_ctl_to_fw(&hdd_ctx->reg);
@@ -1302,7 +1301,7 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 
 	cc_src = ucfg_reg_get_cc_and_src(hdd_ctx->hdd_psoc, alpha2);
 	qdf_mem_copy(hdd_ctx->reg.alpha2, alpha2, REG_ALPHA2_LEN + 1);
-	sme_set_cc_src(hdd_ctx->hHal, cc_src);
+	sme_set_cc_src(hdd_ctx->mac_handle, cc_src);
 
 	/* Check the kernel version for upstream commit aced43ce780dc5 that
 	 * has support for processing user cell_base hints when wiphy is
@@ -1313,7 +1312,7 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 	if (wiphy->registered)
 		hdd_send_wiphy_regd_sync_event(hdd_ctx);
 #endif
-	sme_generic_change_country_code(hdd_ctx->hHal,
+	sme_generic_change_country_code(hdd_ctx->mac_handle,
 					hdd_ctx->reg.alpha2);
 
 	if (avoid_freq_ind)
@@ -1359,7 +1358,7 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 
 		cc_src = ucfg_reg_get_cc_and_src(hdd_ctx->hdd_psoc, alpha2);
 		qdf_mem_copy(hdd_ctx->reg.alpha2, alpha2, REG_ALPHA2_LEN + 1);
-		sme_set_cc_src(hdd_ctx->hHal, cc_src);
+		sme_set_cc_src(hdd_ctx->mac_handle, cc_src);
 	} else {
 		hdd_ctx->reg_offload = false;
 		ucfg_reg_program_default_cc(hdd_ctx->hdd_pdev,
