@@ -161,6 +161,7 @@
 #define SRNG_MAX_SIZE_DWORDS \
 	(SRNG_MS(SRNG_SRC_FLD(BASE_MSB, RING_SIZE), 0xffffffff))
 
+#define HAL_RXDMA_MAX_RING_SIZE 0xFFFF
 /**
  * HW ring configuration table to identify hardware ring attributes like
  * register addresses, number of rings, ring entry size etc., for each type
@@ -191,6 +192,8 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 			HWIO_REO_R2_REO2SW2_RING_HP_ADDR(0) -
 				HWIO_REO_R2_REO2SW1_RING_HP_ADDR(0),
 		},
+		.max_size = HWIO_REO_R0_REO2SW1_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_REO_R0_REO2SW1_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* REO_EXCEPTION */
 		/* Designating REO2TCL ring as exception ring. This ring is
@@ -211,6 +214,8 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		/* Single ring - provide ring size if multiple rings of this
 		 * type are supported */
 		.reg_size = {},
+		.max_size = HWIO_REO_R0_REO2TCL_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_REO_R0_REO2TCL_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* REO_REINJECT */
 		.start_ring_id = HAL_SRNG_SW2REO,
@@ -227,6 +232,8 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		/* Single ring - provide ring size if multiple rings of this
 		 * type are supported */
 		.reg_size = {},
+		.max_size = HWIO_REO_R0_SW2REO_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_REO_R0_SW2REO_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* REO_CMD */
 		.start_ring_id = HAL_SRNG_REO_CMD,
@@ -244,6 +251,8 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		/* Single ring - provide ring size if multiple rings of this
 		 * type are supported */
 		.reg_size = {},
+		.max_size = HWIO_REO_R0_REO_CMD_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_REO_R0_REO_CMD_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* REO_STATUS */
 		.start_ring_id = HAL_SRNG_REO_STATUS,
@@ -261,6 +270,8 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		/* Single ring - provide ring size if multiple rings of this
 		 * type are supported */
 		.reg_size = {},
+		.max_size = HWIO_REO_R0_REO_STATUS_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_REO_R0_REO_STATUS_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* TCL_DATA */
 		.start_ring_id = HAL_SRNG_SW2TCL1,
@@ -281,6 +292,8 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 			HWIO_TCL_R2_SW2TCL2_RING_HP_ADDR(0) -
 				HWIO_TCL_R2_SW2TCL1_RING_HP_ADDR(0),
 		},
+		.max_size = HWIO_TCL_R0_SW2TCL1_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_TCL_R0_SW2TCL1_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* TCL_CMD */
 		.start_ring_id = HAL_SRNG_SW2TCL_CMD,
@@ -298,6 +311,8 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		/* Single ring - provide ring size if multiple rings of this
 		 * type are supported */
 		.reg_size = {},
+		.max_size = HWIO_TCL_R0_SW2TCL_CMD_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_TCL_R0_SW2TCL_CMD_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* TCL_STATUS */
 		.start_ring_id = HAL_SRNG_TCL_STATUS,
@@ -315,6 +330,8 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		/* Single ring - provide ring size if multiple rings of this
 		 * type are supported */
 		.reg_size = {},
+		.max_size = HWIO_TCL_R0_TCL_STATUS1_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_TCL_R0_TCL_STATUS1_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* CE_SRC */
 		.start_ring_id = HAL_SRNG_CE_0_SRC,
@@ -334,6 +351,8 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 			SEQ_WCSS_UMAC_WFSS_CE_0_REG_WFSS_CE_1_CHANNEL_SRC_REG_OFFSET -
 				SEQ_WCSS_UMAC_WFSS_CE_0_REG_WFSS_CE_0_CHANNEL_SRC_REG_OFFSET,
 		},
+		.max_size = HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* CE_DST */
 		.start_ring_id = HAL_SRNG_CE_0_DST,
@@ -357,6 +376,8 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 			SEQ_WCSS_UMAC_WFSS_CE_0_REG_WFSS_CE_1_CHANNEL_DST_REG_OFFSET -
 				SEQ_WCSS_UMAC_WFSS_CE_0_REG_WFSS_CE_0_CHANNEL_DST_REG_OFFSET,
 		},
+		.max_size = HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* CE_DST_STATUS */
 		.start_ring_id = HAL_SRNG_CE_0_DST_STATUS,
@@ -377,6 +398,9 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 			SEQ_WCSS_UMAC_WFSS_CE_0_REG_WFSS_CE_1_CHANNEL_DST_REG_OFFSET -
 				SEQ_WCSS_UMAC_WFSS_CE_0_REG_WFSS_CE_0_CHANNEL_DST_REG_OFFSET,
 		},
+		.max_size =
+			HWIO_WFSS_CE_CHANNEL_DST_R0_STATUS_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_WFSS_CE_CHANNEL_DST_R0_STATUS_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* WBM_IDLE_LINK */
 		.start_ring_id = HAL_SRNG_WBM_IDLE_LINK,
@@ -391,6 +415,9 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		/* Single ring - provide ring size if multiple rings of this
 		 * type are supported */
 		.reg_size = {},
+		.max_size =
+			HWIO_WBM_R0_WBM_IDLE_LINK_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_WBM_R0_WBM_IDLE_LINK_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* SW2WBM_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM_SW_RELEASE,
@@ -405,6 +432,9 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		/* Single ring - provide ring size if multiple rings of this
 		 * type are supported */
 		.reg_size = {},
+		.max_size =
+			HWIO_WBM_R0_SW_RELEASE_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_WBM_R0_SW_RELEASE_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* WBM2SW_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM2SW0_RELEASE,
@@ -422,6 +452,9 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 			HWIO_WBM_R2_WBM2SW1_RELEASE_RING_HP_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET) -
 				HWIO_WBM_R2_WBM2SW0_RELEASE_RING_HP_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET),
 		},
+		.max_size =
+			HWIO_WBM_R0_WBM2SW0_RELEASE_RING_BASE_MSB_RING_SIZE_BMSK >>
+				HWIO_WBM_R0_WBM2SW0_RELEASE_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* RXDMA_BUF */
 		.start_ring_id = HAL_SRNG_WMAC1_SW2RXDMA0_BUF0,
@@ -438,6 +471,7 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		 */
 		.reg_start = {},
 		.reg_size = {},
+		.max_size = HAL_RXDMA_MAX_RING_SIZE,
 	},
 	{ /* RXDMA_DST */
 		.start_ring_id = HAL_SRNG_WMAC1_RXDMA2SW0,
@@ -450,6 +484,7 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		 */
 		.reg_start = {},
 		.reg_size = {},
+		.max_size = HAL_RXDMA_MAX_RING_SIZE,
 	},
 	{ /* RXDMA_MONITOR_BUF */
 		.start_ring_id = HAL_SRNG_WMAC1_SW2RXDMA2_BUF,
@@ -462,6 +497,7 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		 */
 		.reg_start = {},
 		.reg_size = {},
+		.max_size = HAL_RXDMA_MAX_RING_SIZE,
 	},
 	{ /* RXDMA_MONITOR_STATUS */
 		.start_ring_id = HAL_SRNG_WMAC1_SW2RXDMA1_STATBUF,
@@ -474,6 +510,7 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		 */
 		.reg_start = {},
 		.reg_size = {},
+		.max_size = HAL_RXDMA_MAX_RING_SIZE,
 	},
 	{ /* RXDMA_MONITOR_DST */
 		.start_ring_id = HAL_SRNG_WMAC1_RXDMA2SW1,
@@ -486,6 +523,7 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		 */
 		.reg_start = {},
 		.reg_size = {},
+		.max_size = HAL_RXDMA_MAX_RING_SIZE,
 	},
 	{ /* RXDMA_MONITOR_DESC */
 		.start_ring_id = HAL_SRNG_WMAC1_SW2RXDMA1_DESC,
@@ -498,6 +536,7 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		 */
 		.reg_start = {},
 		.reg_size = {},
+		.max_size = HAL_RXDMA_MAX_RING_SIZE,
 	},
 	{ /* DIR_BUF_RX_DMA_SRC */
 		.start_ring_id = HAL_SRNG_DIR_BUF_RX_SRC_DMA_RING,
@@ -510,6 +549,7 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		 */
 		.reg_start = {},
 		.reg_size = {},
+		.max_size = HAL_RXDMA_MAX_RING_SIZE,
 	},
 #ifdef WLAN_FEATURE_CIF_CFR
 	{ /* WIFI_POS_SRC */
@@ -523,6 +563,7 @@ static struct hal_hw_srng_config hw_srng_table[] = {
 		 */
 		.reg_start = {},
 		.reg_size = {},
+		.max_size = HAL_RXDMA_MAX_RING_SIZE,
 	},
 #endif
 };
@@ -1325,8 +1366,10 @@ qdf_export_symbol(hal_srng_get_entrysize);
  */
 uint32_t hal_srng_max_entries(void *hal_soc, int ring_type)
 {
-	struct hal_hw_srng_config *ring_config = HAL_SRNG_CONFIG(hal, ring_type);
-	return SRNG_MAX_SIZE_DWORDS / ring_config->entry_size;
+	struct hal_hw_srng_config *ring_config =
+		HAL_SRNG_CONFIG(hal, ring_type);
+
+	return ring_config->max_size / ring_config->entry_size;
 }
 qdf_export_symbol(hal_srng_max_entries);
 

@@ -318,6 +318,7 @@ struct hal_hw_srng_config {
 	uint16_t reg_size[MAX_SRNG_REG_GROUPS];
 	uint8_t lmac_ring;
 	enum hal_srng_dir ring_dir;
+	uint32_t max_size;
 };
 
 /* calculate the register address offset from bar0 of shadow register x */
