@@ -46,7 +46,7 @@ static void wlan_hdd_get_channel_info(struct hdd_context *hdd_ctx,
 	uint32_t reg_info_2;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	status = sme_get_reg_info(hdd_ctx->hHal, chan_id,
+	status = sme_get_reg_info(hdd_ctx->mac_handle, chan_id,
 				  &reg_info_1, &reg_info_2);
 	if (status != QDF_STATUS_SUCCESS)
 		return;
@@ -126,7 +126,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 		wlan_hdd_get_channel_info(hdd_ctx, chan_info, chan_id);
 	}
 
-	sme_get_country_code(hdd_ctx->hHal, data->country_code, &buflen);
+	sme_get_country_code(hdd_ctx->mac_handle, data->country_code, &buflen);
 	data->is_on = is_on;
 	data->vdev_id = adapter->session_id;
 	data->vdev_mode = adapter->device_mode;
