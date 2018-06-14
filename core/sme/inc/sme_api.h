@@ -52,22 +52,20 @@
 #define SME_GLOBAL_CLASSD_STATS   (1 << eCsrGlobalClassDStats)
 #define SME_PER_CHAIN_RSSI_STATS  (1 << csr_per_chain_rssi_stats)
 
-#define sme_log(level, args...) QDF_TRACE(QDF_MODULE_ID_SME, level, ## args)
-#define sme_logfl(level, format, args...) sme_log(level, FL(format), ## args)
+#define sme_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_SME, params)
+#define sme_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_SME, params)
+#define sme_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_SME, params)
+#define sme_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_SME, params)
+#define sme_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_SME, params)
 
-#define sme_alert(format, args...) \
-		sme_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define sme_err(format, args...) \
-		sme_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define sme_warn(format, args...) \
-		sme_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define sme_info(format, args...) \
-		sme_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define sme_debug(format, args...) \
-		sme_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define sme_alert_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_SME, params)
+#define sme_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_SME, params)
+#define sme_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_SME, params)
+#define sme_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_SME, params)
+#define sme_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_SME, params)
 
-#define SME_ENTER() sme_logfl(QDF_TRACE_LEVEL_DEBUG, "enter")
-#define SME_EXIT() sme_logfl(QDF_TRACE_LEVEL_DEBUG, "exit")
+#define SME_ENTER() sme_debug("enter")
+#define SME_EXIT() sme_debug("exit")
 
 #define SME_SESSION_ID_ANY        50
 #define SME_SESSION_ID_BROADCAST  0xFF
