@@ -1687,7 +1687,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	INIT_COMPLETION(context->response_event);
 	spin_unlock(&context->context_lock);
 
-	status = sme_ext_scan_get_capabilities(hdd_ctx->hHal, pReqMsg);
+	status = sme_ext_scan_get_capabilities(hdd_ctx->mac_handle, pReqMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_ext_scan_get_capabilities failed(err=%d)",
 			status);
@@ -1831,7 +1831,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 	INIT_COMPLETION(context->response_event);
 	spin_unlock(&context->context_lock);
 
-	status = sme_get_cached_results(hdd_ctx->hHal, pReqMsg);
+	status = sme_get_cached_results(hdd_ctx->mac_handle, pReqMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_get_cached_results failed(err=%d)", status);
 		goto fail;
@@ -2065,7 +2065,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	context->request_id = request_id = pReqMsg->requestId;
 	spin_unlock(&context->context_lock);
 
-	status = sme_set_bss_hotlist(hdd_ctx->hHal, pReqMsg);
+	status = sme_set_bss_hotlist(hdd_ctx->mac_handle, pReqMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_set_bss_hotlist failed(err=%d)", status);
 		goto fail;
@@ -2307,7 +2307,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 	context->request_id = request_id = pReqMsg->requestId;
 	spin_unlock(&context->context_lock);
 
-	status = sme_set_significant_change(hdd_ctx->hHal, pReqMsg);
+	status = sme_set_significant_change(hdd_ctx->mac_handle, pReqMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_set_significant_change failed(err=%d)", status);
 		qdf_mem_free(pReqMsg);
@@ -2506,7 +2506,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 
 	hdd_debug("Req Id: %u Wifi band: %d Max channels: %d", requestId,
 		    wifiBand, maxChannels);
-	status = sme_get_valid_channels_by_band((tHalHandle) (hdd_ctx->hHal),
+	status = sme_get_valid_channels_by_band(hdd_ctx->mac_handle,
 						wifiBand, chan_list,
 						&num_channels);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -2669,6 +2669,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 			tpSirWifiScanCmdReqParams req_msg,
 			struct nlattr **tb)
 {
+	mac_handle_t mac_handle;
 	struct nlattr *bucket[
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX + 1];
 	struct nlattr *channel[
@@ -2702,6 +2703,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 	req_msg->numBuckets = 0;
 	bkt_index = 0;
 
+	mac_handle = hdd_ctx->mac_handle;
 	nla_for_each_nested(buckets,
 			tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC], rem1) {
 
@@ -2805,7 +2807,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 
 			num_channels = 0;
 			hdd_debug("WiFi band is specified, driver to fill channel list");
-			status = sme_get_valid_channels_by_band(hdd_ctx->hHal,
+			status = sme_get_valid_channels_by_band(mac_handle,
 						req_msg->buckets[bkt_index].band,
 						chan_list, &num_channels);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -3128,10 +3130,10 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 				    const void *data,
 				    int data_len)
 {
-	tpSirWifiScanCmdReqParams pReqMsg       = NULL;
-	struct net_device *dev                  = wdev->netdev;
-	struct hdd_adapter *adapter                 = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx             = wiphy_priv(wiphy);
+	tpSirWifiScanCmdReqParams pReqMsg;
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb[PARAM_MAX + 1];
 	struct hdd_ext_scan_context *context;
 	uint32_t request_id, num_buckets;
@@ -3256,7 +3258,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	context->buckets_scanned = 0;
 	spin_unlock(&context->context_lock);
 
-	status = sme_ext_scan_start(hdd_ctx->hHal, pReqMsg);
+	status = sme_ext_scan_start(hdd_ctx->mac_handle, pReqMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_ext_scan_start failed(err=%d)", status);
 		goto fail;
@@ -3402,7 +3404,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	context->request_id = request_id = pReqMsg->requestId;
 	spin_unlock(&context->context_lock);
 
-	status = sme_ext_scan_stop(hdd_ctx->hHal, pReqMsg);
+	status = sme_ext_scan_stop(hdd_ctx->mac_handle, pReqMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_ext_scan_stop failed(err=%d)", status);
 		goto fail;
@@ -3535,7 +3537,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 	context->request_id = request_id = pReqMsg->requestId;
 	spin_unlock(&context->context_lock);
 
-	status = sme_reset_bss_hotlist(hdd_ctx->hHal, pReqMsg);
+	status = sme_reset_bss_hotlist(hdd_ctx->mac_handle, pReqMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_reset_bss_hotlist failed(err=%d)", status);
 		goto fail;
@@ -3665,7 +3667,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 	context->request_id = request_id = pReqMsg->requestId;
 	spin_unlock(&context->context_lock);
 
-	status = sme_reset_significant_change(hdd_ctx->hHal, pReqMsg);
+	status = sme_reset_significant_change(hdd_ctx->mac_handle, pReqMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_reset_significant_change failed(err=%d)",
 			status);
@@ -3985,7 +3987,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 
 	}
 
-	status = sme_set_epno_list(hdd_ctx->hHal, req_msg);
+	status = sme_set_epno_list(hdd_ctx->mac_handle, req_msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_set_epno_list failed(err=%d)", status);
 		goto fail;
@@ -4216,7 +4218,7 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 	if (hdd_extscan_passpoint_fill_network_list(hdd_ctx, req_msg, tb))
 		goto fail;
 
-	status = sme_set_passpoint_list(hdd_ctx->hHal, req_msg);
+	status = sme_set_passpoint_list(hdd_ctx->mac_handle, req_msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_set_passpoint_list failed(err=%d)", status);
 		goto fail;
@@ -4317,7 +4319,7 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 	hdd_debug("Req Id %u Session Id %d",
 			req_msg->request_id, req_msg->session_id);
 
-	status = sme_reset_passpoint_list(hdd_ctx->hHal, req_msg);
+	status = sme_reset_passpoint_list(hdd_ctx->mac_handle, req_msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_reset_passpoint_list failed(err=%d)", status);
 		goto fail;
