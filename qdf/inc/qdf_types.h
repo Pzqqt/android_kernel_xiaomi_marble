@@ -649,6 +649,8 @@ void qdf_vtrace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
  *	Exception Case-1: When STA is operating on DFS channel.
  *	Exception Case-2: When STA is operating on LTE-CoEx channel.
  *	Exception Case-3: When STA is operating on AP disabled channel.
+ * @QDF_MCC_TO_SCC_WITH_PREFERRED_BAND: Force SCC only in user preferred band.
+ * Allow MCC if STA is operating or comes up on other than user preferred band.
  *
  * @QDF_MCC_TO_SCC_SWITCH_MAX: max switch
  */
@@ -659,6 +661,7 @@ typedef enum {
 	QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION,
 	QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL,
 	QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION,
+	QDF_MCC_TO_SCC_WITH_PREFERRED_BAND,
 	QDF_MCC_TO_SCC_SWITCH_MAX
 } tQDF_MCC_TO_SCC_SWITCH_MODE;
 #endif
