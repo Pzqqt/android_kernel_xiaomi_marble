@@ -266,7 +266,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 				 &adapter->mac_addr);
 
 		/* Delete pattern */
-		status = sme_del_periodic_tx_ptrn(hdd_ctx->hHal,
+		status = sme_del_periodic_tx_ptrn(hdd_ctx->mac_handle,
 						  delPeriodicTxPtrnParams);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("sme_del_periodic_tx_ptrn() failed!");
@@ -338,7 +338,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	}
 
 	/* Add pattern */
-	status = sme_add_periodic_tx_ptrn(hdd_ctx->hHal,
+	status = sme_add_periodic_tx_ptrn(hdd_ctx->mac_handle,
 					  addPeriodicTxPtrnParams);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("sme_add_periodic_tx_ptrn() failed!");
@@ -484,7 +484,7 @@ static ssize_t __wlan_hdd_read_power_debugfs(struct file *file,
 	}
 	cookie = hdd_request_cookie(request);
 
-	status = sme_power_debug_stats_req(hdd_ctx->hHal,
+	status = sme_power_debug_stats_req(hdd_ctx->mac_handle,
 					   hdd_power_debugstats_cb,
 					   cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {
