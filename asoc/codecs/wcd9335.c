@@ -717,6 +717,7 @@ struct tasha_priv {
 
 	u32 anc_slot;
 	bool anc_func;
+	bool is_wsa_attach;
 
 	/* Vbat module */
 	struct wcd_vbat vbat;
@@ -9049,17 +9050,6 @@ static const struct snd_kcontrol_new tasha_analog_gain_controls[] = {
 	SOC_ENUM_EXT("EAR PA Gain", tasha_ear_pa_gain_enum,
 		tasha_ear_pa_gain_get, tasha_ear_pa_gain_put),
 
-	SOC_ENUM_EXT("EAR SPKR PA Gain", tasha_ear_spkr_pa_gain_enum,
-		     tasha_ear_spkr_pa_gain_get, tasha_ear_spkr_pa_gain_put),
-
-	SOC_ENUM_EXT("SPKR Left Boost Max State", tasha_spkr_boost_stage_enum,
-			tasha_spkr_left_boost_stage_get,
-			tasha_spkr_left_boost_stage_put),
-
-	SOC_ENUM_EXT("SPKR Right Boost Max State", tasha_spkr_boost_stage_enum,
-			tasha_spkr_right_boost_stage_get,
-			tasha_spkr_right_boost_stage_put),
-
 	SOC_SINGLE_TLV("HPHL Volume", WCD9335_HPH_L_EN, 0, 20, 1,
 		line_gain),
 	SOC_SINGLE_TLV("HPHR Volume", WCD9335_HPH_R_EN, 0, 20, 1,
@@ -9085,6 +9075,19 @@ static const struct snd_kcontrol_new tasha_analog_gain_controls[] = {
 			analog_gain),
 	SOC_SINGLE_TLV("ADC6 Volume", WCD9335_ANA_AMIC6, 0, 20, 0,
 			analog_gain),
+};
+
+static const struct snd_kcontrol_new tasha_spkr_wsa_controls[] = {
+	SOC_ENUM_EXT("EAR SPKR PA Gain", tasha_ear_spkr_pa_gain_enum,
+		     tasha_ear_spkr_pa_gain_get, tasha_ear_spkr_pa_gain_put),
+
+	SOC_ENUM_EXT("SPKR Left Boost Max State", tasha_spkr_boost_stage_enum,
+			tasha_spkr_left_boost_stage_get,
+			tasha_spkr_left_boost_stage_put),
+
+	SOC_ENUM_EXT("SPKR Right Boost Max State", tasha_spkr_boost_stage_enum,
+			tasha_spkr_right_boost_stage_get,
+			tasha_spkr_right_boost_stage_put),
 };
 
 static const char * const spl_src0_mux_text[] = {
@@ -13583,6 +13586,10 @@ static int tasha_codec_probe(struct snd_soc_codec *codec)
 	snd_soc_add_codec_controls(codec,
 			tasha_analog_gain_controls,
 			ARRAY_SIZE(tasha_analog_gain_controls));
+	if (tasha->is_wsa_attach)
+		snd_soc_add_codec_controls(codec,
+				tasha_spkr_wsa_controls,
+				ARRAY_SIZE(tasha_wsa_controls));
 	control->num_rx_port = TASHA_RX_MAX;
 	control->rx_chs = ptr;
 	memcpy(control->rx_chs, tasha_rx_chs, sizeof(tasha_rx_chs));
@@ -14053,6 +14060,7 @@ static void tasha_add_child_devices(struct work_struct *work)
 					__func__, ctrl_num);
 				goto fail_pdev_add;
 			}
+			tasha->is_wsa_attach = true;
 		}
 
 		ret = platform_device_add(pdev);
