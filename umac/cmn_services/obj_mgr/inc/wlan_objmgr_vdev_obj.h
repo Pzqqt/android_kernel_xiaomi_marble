@@ -284,7 +284,8 @@ struct wlan_channel {
 /**
  * struct wlan_objmgr_vdev_mlme - VDEV MLME specific sub structure
  * @vdev_opmode:        Opmode of VDEV
- * @mlme_state:         VDEV state
+ * @mlme_state:         VDEV MLME SM state
+ * @mlme_state:         VDEV MLME SM substate
  * @bss_chan:           BSS channel
  * @des_chan:           Desired channel, for STA Desired may not be used
  * @nss:                Num. Spatial streams
@@ -296,6 +297,7 @@ struct wlan_channel {
  * @vdev_feat_ext_caps: VDEV Extended feature caps
  * @max_rate:           MAX rate
  * @tx_mgmt_rate:       TX Mgmt. Rate
+ * @per_band_mgmt_rate: Per-band TX Mgmt. Rate
  * @vdev_op_flags:      Operation flags
  * @mataddr[]:          MAT address
  * @macaddr[]:          VDEV self MAC address
@@ -305,8 +307,9 @@ struct wlan_channel {
 struct wlan_objmgr_vdev_mlme {
 	enum QDF_OPMODE vdev_opmode;
 	enum wlan_vdev_state mlme_state;
-	struct wlan_channel  *bss_chan;   /* Define wlan_channel */
-	struct wlan_channel  *des_chan;  /*TODO ??? */
+	enum wlan_vdev_state mlme_substate;
+	struct wlan_channel *bss_chan;
+	struct wlan_channel *des_chan;
 	uint8_t nss;
 	uint8_t tx_chainmask;
 	uint8_t rx_chainmask;
@@ -316,6 +319,7 @@ struct wlan_objmgr_vdev_mlme {
 	uint32_t vdev_feat_ext_caps;
 	uint32_t max_rate;
 	uint32_t tx_mgmt_rate;
+	uint32_t per_band_mgmt_rate[WLAN_BAND_NUM_MAX];
 	uint32_t vdev_op_flags;
 	uint8_t  mataddr[QDF_MAC_ADDR_SIZE];
 	uint8_t  macaddr[QDF_MAC_ADDR_SIZE];

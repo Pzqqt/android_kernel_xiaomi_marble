@@ -361,6 +361,7 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_MBSSIE: MBSS IE ID
  * @QDF_MODULE_ID_FWOL: FW Offload module ID
  * @QDF_MODULE_ID_SM_ENGINE: SM engine module ID
+ * @QDF_MODULE_ID_CMN_MLME: CMN MLME module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
@@ -469,6 +470,7 @@ typedef enum {
 	QDF_MODULE_ID_MBSSIE,
 	QDF_MODULE_ID_FWOL,
 	QDF_MODULE_ID_SM_ENGINE,
+	QDF_MODULE_ID_CMN_MLME,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;

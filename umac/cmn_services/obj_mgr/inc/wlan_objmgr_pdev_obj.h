@@ -137,9 +137,11 @@ struct wlan_objmgr_pdev_nif {
  * struct wlan_objmgr_pdev_mlme - pdev object mlme structure
  * @pdev_op_flags:    PDEV operation flags, can be used to know the
  *                    operation status (deletion progress, etc)
+ * @mlme_register_ops: Call back to register MLME legacy APIs
  */
 struct wlan_objmgr_pdev_mlme {
 	uint32_t pdev_op_flags;
+	QDF_STATUS (*mlme_register_ops)(void *vdev_mlme);
 };
 
 /**

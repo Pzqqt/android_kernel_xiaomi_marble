@@ -442,12 +442,14 @@ enum wlan_peer_type {
  * @WLAN_BAND_2_4_GHZ: 2.4 GHz band
  * @WLAN_BAND_5_GHZ: 5 GHz band
  * @WLAN_BAND_4_9_GHZ: 4.9 GHz band
+ * @WLAN_BAND_NUM_MAX: Max num band
  */
 enum wlan_band {
 	WLAN_BAND_ALL,
 	WLAN_BAND_2_4_GHZ,
 	WLAN_BAND_5_GHZ,
 	WLAN_BAND_4_9_GHZ,
+	WLAN_BAND_NUM_MAX,
 };
 
 /**

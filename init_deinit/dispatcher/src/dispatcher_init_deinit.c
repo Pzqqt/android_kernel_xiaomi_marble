@@ -27,6 +27,7 @@
 #include <wlan_ftm_init_deinit_api.h>
 #include <wlan_mgmt_txrx_utils_api.h>
 #include <wlan_serialization_api.h>
+#include <wlan_vdev_mlme_main.h>
 #ifdef WLAN_POLICY_MGR_ENABLE
 #include "wlan_policy_mgr_api.h"
 #endif
@@ -973,6 +974,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_IS_STATUS_ERROR(cfg_dispatcher_init()))
 		goto cfg_init_fail;
 
+	if (QDF_STATUS_SUCCESS != wlan_vdev_mlme_init())
+		goto vdev_mlme_init_fail;
+
 	/*
 	 * scheduler INIT has to be the last as each component's
 	 * initialization has to happen first and then at the end
@@ -984,6 +988,8 @@ QDF_STATUS dispatcher_init(void)
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	wlan_vdev_mlme_deinit();
+vdev_mlme_init_fail:
 	cfg_dispatcher_deinit();
 cfg_init_fail:
 	dispatcher_ftm_deinit();
@@ -1040,6 +1046,8 @@ QDF_STATUS dispatcher_deinit(void)
 	QDF_STATUS status;
 
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == wlan_vdev_mlme_deinit());
 
 	status = cfg_dispatcher_deinit();
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));

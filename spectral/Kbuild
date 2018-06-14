@@ -104,6 +104,8 @@ INCS += -I$(obj)/$(DEPTH)/include -I$(obj)/$(DEPTH)/umac/include \
         -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/serialization/core/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/umac/regulatory/dispatcher/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/target_if/regulatory/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/mlme/mlme_objmgr/dispatcher/inc/ \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/mlme/vdev_mgr/dispatcher/inc \
 
 PERF_PWR_OFFLOAD_INC += -I$(PERF_PWR_OFFLOAD_DIR_PATH)/wlan/include \
  -I$(PERF_PWR_OFFLOAD_DIR_PATH)/wlan/ath_pktlog/include \
