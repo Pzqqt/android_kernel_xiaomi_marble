@@ -8532,6 +8532,20 @@ typedef enum {
      */
     WMI_VDEV_PARAM_GTX_ENABLE,                             /* 0x85 */
 
+    /*
+     * Enable/Disable multicast buffer.
+     * A FLAG to enable & disable buffering of multicast frames at AP
+     * when stations are in Power Save mode.
+     * Once AP disables buffering of multicast frame,
+     * clients which goes into Power save mode will not receive these frames.
+     * by default MCAST buffering will be enabled.
+     * (CABQ = Content After Beacon Queue = multicast queue)
+     * Host will send this VDEV param command,
+     * With Value = 1 means fw will disable the MCAST buffering
+     * With Value = 0 means fw will enable the MCAST buffering.
+     */
+    WMI_VDEV_PARAM_DISABLE_CABQ,                          /* 0x86 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
