@@ -1418,7 +1418,6 @@ struct hdd_adapter {
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
 #define WLAN_HDD_GET_AP_CTX_PTR(adapter) (&(adapter)->session.ap)
 #define WLAN_HDD_GET_CTX(adapter) ((adapter)->hdd_ctx)
-#define WLAN_HDD_GET_HAL_CTX(adapter)  hdd_adapter_get_mac_handle(adapter)
 #define WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter) \
 				(&(adapter)->session.ap.hostapd_state)
 #define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->session.ap.sap_context)
@@ -1642,18 +1641,8 @@ enum RX_OFFLOAD {
 struct hdd_context {
 	struct wlan_objmgr_psoc *hdd_psoc;
 	struct wlan_objmgr_pdev *hdd_pdev;
-
-	union {
-		/** HAL handle...*/
-		tHalHandle hHal;
-
-		/** MAC handle */
-		mac_handle_t mac_handle;
-	};
-
+	mac_handle_t mac_handle;
 	struct wiphy *wiphy;
-	/* TODO Remove this from here. */
-
 	qdf_spinlock_t hdd_adapter_lock;
 	qdf_list_t hdd_adapters; /* List of adapters */
 
@@ -2521,8 +2510,20 @@ hdd_get_adapter_by_sme_session_id(struct hdd_context *hdd_ctx,
 struct hdd_adapter *hdd_get_adapter_by_iface_name(struct hdd_context *hdd_ctx,
 					     const char *iface_name);
 enum phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width);
-uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
-			uint8_t bw_offset);
+
+/**
+ * wlan_hdd_find_opclass() - Find operating class for a channel
+ * @mac_handle: global MAC handle
+ * @channel: channel id
+ * @bw_offset: bandwidth offset
+ *
+ * Function invokes sme api to find the operating class
+ *
+ * Return: operating class
+ */
+uint8_t wlan_hdd_find_opclass(mac_handle_t mac_handle, uint8_t channel,
+			      uint8_t bw_offset);
+
 int hdd_update_config(struct hdd_context *hdd_ctx);
 
 /**
