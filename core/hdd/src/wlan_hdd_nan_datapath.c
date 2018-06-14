@@ -164,9 +164,10 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 				uint8_t operating_channel)
 {
-	int ret;
+	QDF_STATUS status;
 	uint32_t roam_id;
 	struct csr_roam_profile *roam_profile;
+	mac_handle_t mac_handle;
 
 	hdd_enter();
 
@@ -205,14 +206,15 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 	roam_profile->EncryptionType.numEntries = 1;
 	roam_profile->EncryptionType.encryptionType[0] = eCSR_ENCRYPT_TYPE_NONE;
 
-	ret = sme_roam_connect(WLAN_HDD_GET_HAL_CTX(adapter),
-		adapter->session_id, roam_profile, &roam_id);
-	if (QDF_STATUS_SUCCESS != ret) {
+	mac_handle = hdd_adapter_get_mac_handle(adapter);
+	status = sme_roam_connect(mac_handle, adapter->session_id,
+				  roam_profile, &roam_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("NDI sme_RoamConnect session %d failed with status %d -> NotConnected",
-			adapter->session_id, ret);
+			adapter->session_id, status);
 		/* change back to NotConnected */
 		hdd_conn_set_connection_state(adapter,
-			eConnectionState_NotConnected);
+					      eConnectionState_NotConnected);
 	} else {
 		hdd_info("sme_RoamConnect issued successfully for NDI");
 	}
@@ -222,7 +224,7 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 
 	hdd_exit();
 
-	return ret;
+	return 0;
 }
 
 /**
@@ -410,7 +412,8 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 	struct net_device *wlan_dev = adapter->dev;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
-	int32_t ret_val = 0;
+	int32_t ret_val;
+	mac_handle_t mac_handle;
 
 	ret_val = hdd_vdev_create(adapter, hdd_sme_roam_callback, adapter);
 	if (ret_val) {
@@ -418,10 +421,12 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 		return ret_val;
 	}
 
+	mac_handle = hdd_ctx->mac_handle;
+
 	/* Configure self HT/VHT capabilities */
-	sme_set_curr_device_mode(hdd_ctx->hHal, adapter->device_mode);
-	sme_set_pdev_ht_vht_ies(hdd_ctx->hHal, hdd_ctx->config->enable2x2);
-	sme_set_vdev_ies_per_band(hdd_ctx->hHal, adapter->session_id);
+	sme_set_curr_device_mode(mac_handle, adapter->device_mode);
+	sme_set_pdev_ht_vht_ies(mac_handle, hdd_ctx->config->enable2x2);
+	sme_set_vdev_ies_per_band(mac_handle, adapter->session_id);
 
 	hdd_roam_profile_init(adapter);
 	hdd_register_wext(wlan_dev);
