@@ -157,6 +157,24 @@ enum p2p_connection_status {
 #endif
 
 /**
+ * struct p2p_param - p2p parameters to be used
+ * @go_keepalive_period:            P2P GO keep alive period
+ * @go_link_monitor_period:         period where link is idle and
+ *                                  where we send NULL frame
+ * @p2p_device_addr_admin:          enable/disable to derive the P2P
+ *                                  MAC address from the primary MAC address
+ * @skip_dfs_channel_p2p_search:    kip DFS Channel in case of P2P Search
+ * @ignore_dynamic_dtim_in_p2p_mode:Ignore Dynamic Dtim in case of P2P options
+ */
+struct p2p_param {
+	uint32_t go_keepalive_period;
+	uint32_t go_link_monitor_period;
+	bool p2p_device_addr_admin;
+	bool skip_dfs_channel_p2p_search;
+	bool ignore_dynamic_dtim_in_p2p_mode;
+};
+
+/**
  * struct p2p_soc_priv_obj - Per SoC p2p private object
  * @soc:              Pointer to SoC context
  * @roc_q:            Queue for pending roc requests
@@ -172,6 +190,7 @@ enum p2p_connection_status {
  * @p2p_cb: Callbacks to protocol stack
  * @cur_roc_vdev_id:  Vdev id of current roc
  * @p2p_idr:          p2p idr
+ * @param:            p2p parameters to be used
  * @connection_status:Global P2P connection status
  */
 struct p2p_soc_priv_obj {
@@ -188,6 +207,7 @@ struct p2p_soc_priv_obj {
 	struct p2p_protocol_callbacks p2p_cb;
 	uint32_t cur_roc_vdev_id;
 	qdf_idr p2p_idr;
+	struct p2p_param param;
 #ifdef WLAN_FEATURE_P2P_DEBUG
 	enum p2p_connection_status connection_status;
 #endif
