@@ -33,6 +33,8 @@
 #include "wlan_p2p_main.h"
 #include "wlan_p2p_roc.h"
 #include "wlan_p2p_off_chan_tx.h"
+#include "wlan_p2p_cfg.h"
+#include "cfg_ucfg_api.h"
 
 #ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 #include <wlan_pmo_obj_mgmt_api.h>
@@ -515,6 +517,34 @@ static QDF_STATUS process_peer_for_noa(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * p2p_object_init_params() - init parameters for p2p object
+ * @psoc:        pointer to psoc object
+ * @p2p_soc_obj: pointer to p2p psoc object
+ *
+ * This function init parameters for p2p object
+ */
+static QDF_STATUS p2p_object_init_params(
+	struct wlan_objmgr_psoc *psoc,
+	struct p2p_soc_priv_obj *p2p_soc_obj)
+{
+	if (!psoc || !p2p_soc_obj) {
+		p2p_err("invalid param");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	p2p_soc_obj->param.go_keepalive_period =
+			cfg_get(psoc, CFG_GO_KEEP_ALIVE_PERIOD);
+	p2p_soc_obj->param.go_link_monitor_period =
+			cfg_get(psoc, CFG_GO_LINK_MONITOR_PERIOD);
+	p2p_soc_obj->param.p2p_device_addr_admin =
+			cfg_get(psoc, CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED);
+	p2p_soc_obj->param.skip_dfs_channel_p2p_search =
+			cfg_get(psoc, CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WLAN_FEATURE_P2P_DEBUG
 /**
  * wlan_p2p_init_connection_status() - init connection status
@@ -815,6 +845,7 @@ QDF_STATUS p2p_psoc_object_open(struct wlan_objmgr_psoc *soc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	p2p_object_init_params(soc, p2p_soc_obj);
 	qdf_list_create(&p2p_soc_obj->roc_q, MAX_QUEUE_LENGTH);
 	qdf_list_create(&p2p_soc_obj->tx_q_roc, MAX_QUEUE_LENGTH);
 	qdf_list_create(&p2p_soc_obj->tx_q_ack, MAX_QUEUE_LENGTH);
