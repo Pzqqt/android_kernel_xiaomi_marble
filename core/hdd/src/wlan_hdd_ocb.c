@@ -60,7 +60,7 @@
  */
 void hdd_set_dot11p_config(struct hdd_context *hdd_ctx)
 {
-	sme_set_dot11p_config(hdd_ctx->hHal,
+	sme_set_dot11p_config(hdd_ctx->mac_handle,
 			      hdd_ctx->config->dot11p_mode !=
 				WLAN_HDD_11P_DISABLED);
 }
@@ -1139,7 +1139,7 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 		tb[QCA_WLAN_VENDOR_ATTR_OCB_START_TIMING_ADVERT_REPEAT_RATE]);
 
 	timing_advert->template_length =
-		sme_ocb_gen_timing_advert_frame(hdd_ctx->hHal,
+		sme_ocb_gen_timing_advert_frame(hdd_ctx->mac_handle,
 			*(tSirMacAddr *)&adapter->mac_addr.bytes,
 			&timing_advert->template_value,
 			&timing_advert->timestamp_offset,
