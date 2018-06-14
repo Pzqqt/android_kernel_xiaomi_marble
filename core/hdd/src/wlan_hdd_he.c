@@ -43,7 +43,7 @@ static int hdd_he_set_wni_cfg(struct hdd_context *hdd_ctx,
 {
 	QDF_STATUS status;
 
-	status = sme_cfg_set_int(hdd_ctx->hHal, cfg_id, new_value);
+	status = sme_cfg_set_int(hdd_ctx->mac_handle, cfg_id, new_value);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("could not set %s", cfg_get_string(cfg_id));
 
@@ -231,12 +231,12 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 		*((uint16_t *)he_cap->tx_he_mcs_map_80_80));
 
 	/* PPET can not be configured by user - Set per band values from FW */
-	status = sme_cfg_set_str(hdd_ctx->hHal, WNI_CFG_HE_PPET_2G,
+	status = sme_cfg_set_str(hdd_ctx->mac_handle, WNI_CFG_HE_PPET_2G,
 				 cfg->ppet_2g, HE_MAX_PPET_SIZE);
 	if (status == QDF_STATUS_E_FAILURE)
 		hdd_alert("could not set 2G HE PPET");
 
-	status = sme_cfg_set_str(hdd_ctx->hHal, WNI_CFG_HE_PPET_5G,
+	status = sme_cfg_set_str(hdd_ctx->mac_handle, WNI_CFG_HE_PPET_5G,
 				 cfg->ppet_5g, HE_MAX_PPET_SIZE);
 	if (status == QDF_STATUS_E_FAILURE)
 		hdd_alert("could not set 5G HE PPET");
@@ -277,7 +277,8 @@ int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx)
 	if (ret)
 		return ret;
 
-	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_HE_UL_MUMIMO, &val);
+	status = sme_cfg_get_int(hdd_ctx->mac_handle,
+				 WNI_CFG_HE_UL_MUMIMO, &val);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("could not get WNI_CFG_HE_UL_MUMIMO");
 		return qdf_status_to_os_return(status);
