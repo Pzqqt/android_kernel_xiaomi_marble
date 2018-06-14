@@ -156,7 +156,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 
 	hdd_nud_set_gateway_addr(adapter, req.gw_mac_addr);
 
-	status = sme_gateway_param_update(hdd_ctx->hHal, &req);
+	status = sme_gateway_param_update(hdd_ctx->mac_handle, &req);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_gateway_param_update failed(err=%d)", status);
 		ret = -EINVAL;
