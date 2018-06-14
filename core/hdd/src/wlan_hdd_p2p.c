@@ -253,7 +253,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	if ((adapter->device_mode == QDF_STA_MODE) &&
 	    (type == SIR_MAC_MGMT_FRAME &&
 	    sub_type == SIR_MAC_MGMT_AUTH)) {
-		qdf_status = sme_send_mgmt_tx(WLAN_HDD_GET_HAL_CTX(adapter),
+		qdf_status = sme_send_mgmt_tx(hdd_ctx->mac_handle,
 					      adapter->session_id, buf, len);
 
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -840,8 +840,8 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 {
 	struct net_device *dev = wdev->netdev;
 	struct hdd_context *hdd_ctx = (struct hdd_context *) wiphy_priv(wiphy);
-	struct hdd_adapter *pVirtAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	int status;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	int errno;
 
 	hdd_enter();
 
@@ -854,34 +854,33 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 	 * Clear SOFTAP_INIT_DONE flag to mark SAP unload, so that we do
 	 * not restart SAP after SSR as SAP is already stopped from user space.
 	 */
-	clear_bit(SOFTAP_INIT_DONE, &pVirtAdapter->event_flags);
+	clear_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_DEL_VIRTUAL_INTF,
-			 pVirtAdapter->session_id, pVirtAdapter->device_mode));
+			 adapter->session_id, adapter->device_mode));
 	hdd_debug("Device_mode %s(%d)",
-		   hdd_device_mode_to_string(pVirtAdapter->device_mode),
-		   pVirtAdapter->device_mode);
+		   hdd_device_mode_to_string(adapter->device_mode),
+		   adapter->device_mode);
 
-	status = wlan_hdd_validate_context(hdd_ctx);
-
-	if (0 != status)
-		return status;
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
 
 	/* check state machine state and kickstart modules if they are closed */
-	status = hdd_wlan_start_modules(hdd_ctx, false);
-	if (status)
-		return status;
+	errno = hdd_wlan_start_modules(hdd_ctx, false);
+	if (errno)
+		return errno;
 
-	if (pVirtAdapter->device_mode == QDF_SAP_MODE &&
-	    wlan_sap_is_pre_cac_active(hdd_ctx->hHal)) {
+	if (adapter->device_mode == QDF_SAP_MODE &&
+	    wlan_sap_is_pre_cac_active(hdd_ctx->mac_handle)) {
 		hdd_clean_up_pre_cac_interface(hdd_ctx);
 	} else {
 		wlan_hdd_release_intf_addr(hdd_ctx,
-					 pVirtAdapter->mac_addr.bytes);
-		hdd_stop_adapter(hdd_ctx, pVirtAdapter);
-		hdd_deinit_adapter(hdd_ctx, pVirtAdapter, true);
-		hdd_close_adapter(hdd_ctx, pVirtAdapter, true);
+					   adapter->mac_addr.bytes);
+		hdd_stop_adapter(hdd_ctx, adapter);
+		hdd_deinit_adapter(hdd_ctx, adapter, true);
+		hdd_close_adapter(hdd_ctx, adapter, true);
 	}
 
 	hdd_exit();
