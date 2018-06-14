@@ -16663,7 +16663,7 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_MIXER("DISPLAY_PORT_RX Port Mixer",
 	SND_SOC_NOPM, 0, 0, display_port_rx_port_mixer_controls,
 	ARRAY_SIZE(display_port_rx_port_mixer_controls)),
-	SND_SOC_DAPM_MIXER("DISPLAY_PORT_RX Port1 Mixer",
+	SND_SOC_DAPM_MIXER("DISPLAY_PORT_RX1 Port Mixer",
 	SND_SOC_NOPM, 0, 0, display_port_rx1_port_mixer_controls,
 	ARRAY_SIZE(display_port_rx1_port_mixer_controls)),
 	SND_SOC_DAPM_MIXER("SEC_I2S_RX Port Mixer",
