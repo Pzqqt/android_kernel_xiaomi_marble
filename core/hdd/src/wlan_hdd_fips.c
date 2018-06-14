@@ -28,9 +28,7 @@
 #include "qdf_mem.h"
 #include "sme_api.h"
 
-
 #define WLAN_WAIT_TIME_FIPS 5000
-
 
 /**
  * hdd_fips_context - hdd fips context
@@ -217,7 +215,7 @@ static int __hdd_fips_test(struct net_device *dev,
 	fips_request->pdev_id = WMI_PDEV_ID_1ST;
 
 	cookie = hdd_request_cookie(request);
-	qdf_status = sme_fips_request(hdd_ctx->hHal, &context->request,
+	qdf_status = sme_fips_request(hdd_ctx->mac_handle, &context->request,
 				      hdd_fips_cb, cookie);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
