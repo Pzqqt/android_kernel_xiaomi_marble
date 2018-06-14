@@ -181,7 +181,7 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 	}
 
 	hdd_ctx->hdd_pdev = pdev;
-	sme_store_pdev(hdd_ctx->hHal, hdd_ctx->hdd_pdev);
+	sme_store_pdev(hdd_ctx->mac_handle, hdd_ctx->hdd_pdev);
 	hdd_init_pdev_os_priv(hdd_ctx, priv);
 	return 0;
 
