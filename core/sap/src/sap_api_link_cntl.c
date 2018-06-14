@@ -80,137 +80,6 @@
  * Function Declarations and Documentation
  * -------------------------------------------------------------------------*/
 
-QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
-				 struct sap_context *sap_ctx,
-				 uint8_t session_id,
-				 uint32_t scan_id, eCsrScanStatus scan_status)
-{
-	tScanResultHandle result = NULL;
-	QDF_STATUS get_result_status = QDF_STATUS_E_FAILURE;
-	tWLAN_SAPEvent sapEvent;        /* State machine event */
-	uint8_t operChannel = 0;
-	QDF_STATUS sap_sm_status;
-	uint32_t event;
-	tpAniSirGlobal mac_ctx;
-
-
-	if (NULL != hal_handle) {
-		mac_ctx = PMAC_STRUCT(hal_handle);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-					"In %s invalid hHal", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (sap_ctx->sapsMachine == eSAP_DISCONNECTED) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_WARN,
-				"In %s BSS already stopped", __func__);
-		if (sap_ctx->channelList != NULL) {
-			qdf_mem_free(sap_ctx->channelList);
-			sap_ctx->channelList = NULL;
-			sap_ctx->num_of_channel = 0;
-		}
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	switch (scan_status) {
-	case eCSR_SCAN_SUCCESS:
-		/* sapScanCompleteCallback with eCSR_SCAN_SUCCESS */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "In %s, CSR scanStatus = %s (%d)", __func__,
-			  "eCSR_SCAN_SUCCESS", scan_status);
-
-		/**
-		 * Get scan results, Run channel selection algorithm,
-		 * select channel and keep in sap_ctx->Channel
-		 */
-		get_result_status =
-			sme_scan_get_result(hal_handle, sap_ctx->sessionId, NULL,
-					    &result);
-
-		event = eSAP_MAC_SCAN_COMPLETE;
-
-		if ((get_result_status != QDF_STATUS_SUCCESS)
-		    && (get_result_status != QDF_STATUS_E_NULL_VALUE)) {
-			/* No scan results */
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				  "In %s, Get scan result failed! ret = %d",
-				  __func__, get_result_status);
-			break;
-		}
-#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-		if (scan_id != 0) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-				  "%s: Sending ACS Scan skip event", __func__);
-			sap_signal_hdd_event(sap_ctx, NULL,
-					  eSAP_ACS_SCAN_SUCCESS_EVENT,
-					  (void *) eSAP_STATUS_SUCCESS);
-		} else
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-				  "%s: ACS scan id: %d (skipped ACS SCAN)",
-				  __func__, scan_id);
-#endif
-		operChannel = sap_select_channel(hal_handle, sap_ctx, result);
-		sme_scan_result_purge(result);
-		break;
-
-	default:
-		event = eSAP_CHANNEL_SELECTION_FAILED;
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "In %s, CSR scanStatus = %s (%d)", __func__,
-			  "eCSR_SCAN_ABORT/FAILURE", scan_status);
-	}
-
-	if (operChannel == SAP_CHANNEL_NOT_SELECTED)
-#ifdef SOFTAP_CHANNEL_RANGE
-	{
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			"%s: No suitable channel selected due to DFS, LTE"
-			"COEX and concurrent mode restrictions", __func__);
-
-		sap_ctx->sapsMachine = eSAP_CH_SELECT;
-		event = eSAP_CHANNEL_SELECTION_FAILED;
-	}
-#else
-		sap_ctx->channel = SAP_DEFAULT_24GHZ_CHANNEL;
-#endif
-	else {
-		sap_ctx->channel = operChannel;
-	}
-
-	sap_ctx->ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
-	wlan_reg_set_channel_params(mac_ctx->pdev, sap_ctx->channel,
-		sap_ctx->secondary_ch,
-		&sap_ctx->ch_params);
-#ifdef SOFTAP_CHANNEL_RANGE
-	if (sap_ctx->channelList != NULL) {
-		/* Always free up the memory for channel selection whatever
-		 * the result */
-		qdf_mem_free(sap_ctx->channelList);
-		sap_ctx->channelList = NULL;
-		sap_ctx->num_of_channel = 0;
-	}
-#endif
-
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "In %s, Channel selected = %d", __func__,
-		  sap_ctx->channel);
-
-	/* Fill in the event structure */
-	sapEvent.event = event;
-	/* pCsrRoamInfo; */
-	sapEvent.params = 0;
-	/* roamstatus */
-	sapEvent.u1 = scan_status;
-	/* roamResult */
-	sapEvent.u2 = 0;
-
-	/* Handle event */
-	sap_sm_status = sap_fsm(sap_ctx, &sapEvent);
-
-	return sap_sm_status;
-} /* wlansap_scan_callback */
-
-
 /**
  * sap_config_acs_result : Generate ACS result params based on ch constraints
  * @sap_ctx: pointer to SAP context data struct
@@ -1366,7 +1235,6 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	bool success = false;
 	eCsrScanStatus scan_status = eCSR_SCAN_FAILURE;
 	tHalHandle hal_handle;
-	struct sap_context *sap_ctx = arg;
 
 	session_id = wlan_vdev_get_id(vdev);
 	scan_id = event->scan_id;
@@ -1383,11 +1251,7 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	if (success)
 		scan_status = eCSR_SCAN_SUCCESS;
 
-	if (!sap_ctx->sap_acs_pre_start_bss)
-		wlansap_scan_callback(hal_handle, arg, session_id, scan_id,
-				scan_status);
-	else
-		wlansap_pre_start_bss_acs_scan_callback(hal_handle,
-					arg, session_id,
-					scan_id, scan_status);
+	wlansap_pre_start_bss_acs_scan_callback(hal_handle,
+						arg, session_id,
+						scan_id, scan_status);
 }

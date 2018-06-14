@@ -244,7 +244,6 @@ struct sap_context {
 	tSirMacRateSet extended_rate_set;
 	enum sap_acs_dfs_mode dfs_mode;
 	wlan_scan_requester req_id;
-	uint8_t sap_acs_pre_start_bss;
 	uint8_t sap_sta_id;
 	bool dfs_cac_offload;
 	bool is_chan_change_inprogress;
@@ -275,23 +274,6 @@ typedef struct sWLAN_SAPEvent {
  * -------------------------------------------------------------------------*/
 QDF_STATUS wlansap_context_get(struct sap_context *ctx);
 void wlansap_context_put(struct sap_context *ctx);
-
-/**
- * wlansap_scan_callback() - Callback for Scan (scan results) Events
- * @hal_handle: tHalHandle passed in with the scan request
- * @sap_ctx: The sap context
- * @session_id: ID of the current session
- * @scan_id: ID assigned to the scan
- * @scan_status: Status of the scan
- *
- * Callback for Scan (scan results) Events
- *
- * Return: Status
- */
-QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
-				 struct sap_context *sap_ctx,
-				 uint8_t session_id,
-				 uint32_t scan_id, eCsrScanStatus scan_status);
 
 /**
  * wlansap_pre_start_bss_acs_scan_callback() - callback for scan results
@@ -383,11 +365,31 @@ bool sap_dfs_is_w53_invalid(tHalHandle hHal, uint8_t channelID);
 bool sap_dfs_is_channel_in_preferred_location(tHalHandle hHal,
 					      uint8_t channelID);
 
-QDF_STATUS sap_goto_channel_sel(
-	struct sap_context *sapContext,
-	ptWLAN_SAPEvent sapEvent,
-	bool sap_do_acs_pre_start_bss,
-	bool check_for_connection_update);
+/**
+ * sap_channel_sel - Function for initiating scan request for ACS
+ * @sap_context: Sap Context value.
+ *
+ * Initiates Scan for ACS to pick a channel.
+ *
+ * Return: The QDF_STATUS code associated with performing the operation.
+ */
+QDF_STATUS sap_channel_sel(struct sap_context *sapContext);
+
+/**
+ * sap_validate_chan - Function validate the channel and forces SCC
+ * @sap_context: Sap Context value.
+ * @pre_start_bss: if its called pre start BSS with valid channel.
+ * @check_for_connection_update: true, check and wait for connection update
+ *				 false, do not perform connection update
+ *
+ * validate and update the channel in case of force SCC.
+ *
+ * Return: The QDF_STATUS code associated with performing the operation.
+ */
+QDF_STATUS
+sap_validate_chan(struct sap_context *sap_context,
+		  bool pre_start_bss,
+		  bool check_for_connection_update);
 
 /**
  * sap_check_in_avoid_ch_list() - checks if given channel present is channel

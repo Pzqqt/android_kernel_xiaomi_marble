@@ -2483,7 +2483,6 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 	tHalHandle h_hal = NULL;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pmac = NULL;
-	tWLAN_SAPEvent sapEvent; /* State machine event */
 
 	if (NULL == sap_context) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -2534,7 +2533,7 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 	 * different scan callback function to process
 	 * the results pre start BSS.
 	 */
-	qdf_status = sap_goto_channel_sel(sap_context, &sapEvent, true, false);
+	qdf_status = sap_channel_sel(sap_context);
 
 	if (QDF_STATUS_E_ABORTED == qdf_status) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
