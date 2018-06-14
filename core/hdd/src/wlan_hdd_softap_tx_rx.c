@@ -1179,7 +1179,7 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 	/*  Mark the indoor channel (passive) to enable  */
 	if (hdd_ctx->config->force_ssc_disable_indoor_channel) {
 		hdd_update_indoor_channel(hdd_ctx, false);
-		sme_update_channel_list(hdd_ctx->hHal);
+		sme_update_channel_list(hdd_ctx->mac_handle);
 	}
 
 	if (ucfg_ipa_is_enabled()) {
