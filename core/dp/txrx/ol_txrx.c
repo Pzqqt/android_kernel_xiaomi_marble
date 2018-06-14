@@ -1409,10 +1409,12 @@ static inline void ol_txrx_debugfs_exit(ol_txrx_pdev_handle pdev)
  *		  NULL for failure
  */
 static struct cdp_pdev *
-ol_txrx_pdev_attach(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
+ol_txrx_pdev_attach(ol_txrx_soc_handle soc,
+		    struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 		    HTC_HANDLE htc_pdev, qdf_device_t osdev, uint8_t pdev_id)
 {
 	struct ol_txrx_pdev_t *pdev;
+	struct cdp_cfg *cfg_pdev = (struct cdp_cfg *)ctrl_pdev;
 	int i, tid;
 
 	pdev = qdf_mem_malloc(sizeof(*pdev));
@@ -1420,22 +1422,22 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
 		goto fail0;
 
 	/* init LL/HL cfg here */
-	pdev->cfg.is_high_latency = ol_cfg_is_high_latency(ctrl_pdev);
+	pdev->cfg.is_high_latency = ol_cfg_is_high_latency(cfg_pdev);
 	/*
 	 * Credit reporting through HTT_T2H_MSG_TYPE_TX_CREDIT_UPDATE_IND
 	 * enabled or not.
 	 */
 	pdev->cfg.credit_update_enabled =
-		ol_cfg_is_credit_update_enabled(ctrl_pdev);
+		ol_cfg_is_credit_update_enabled(cfg_pdev);
 
 	/* Explicitly request TX Completions from FW */
 	pdev->cfg.request_tx_comp = cds_is_ptp_rx_opt_enabled() ||
 		cds_is_packet_log_enabled();
 
-	pdev->cfg.default_tx_comp_req = !ol_cfg_tx_free_at_download(ctrl_pdev);
+	pdev->cfg.default_tx_comp_req = !ol_cfg_tx_free_at_download(cfg_pdev);
 
 	/* store provided params */
-	pdev->ctrl_pdev = ctrl_pdev;
+	pdev->ctrl_pdev = cfg_pdev;
 	pdev->osdev = osdev;
 
 	for (i = 0; i < htt_num_sec_types; i++)
@@ -1459,7 +1461,7 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
 	qdf_atomic_init(&pdev->target_tx_credit);
 	qdf_atomic_init(&pdev->orig_target_tx_credit);
 
-	if (ol_cfg_is_high_latency(ctrl_pdev)) {
+	if (ol_cfg_is_high_latency(cfg_pdev)) {
 		qdf_spinlock_create(&pdev->tx_queue_spinlock);
 		pdev->tx_sched.scheduler = ol_tx_sched_attach(pdev);
 		if (pdev->tx_sched.scheduler == NULL)
@@ -1469,7 +1471,7 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
 	ol_txrx_pdev_grp_stats_init(pdev);
 
 	pdev->htt_pdev =
-		htt_pdev_alloc(pdev, ctrl_pdev, htc_pdev, osdev);
+		htt_pdev_alloc(pdev, cfg_pdev, htc_pdev, osdev);
 	if (!pdev->htt_pdev)
 		goto fail3;
 
@@ -1503,7 +1505,7 @@ fail3:
 	ol_txrx_peer_find_detach(pdev);
 
 fail2:
-	if (ol_cfg_is_high_latency(ctrl_pdev))
+	if (ol_cfg_is_high_latency(cfg_pdev))
 		qdf_spinlock_destroy(&pdev->tx_queue_spinlock);
 
 fail1:
