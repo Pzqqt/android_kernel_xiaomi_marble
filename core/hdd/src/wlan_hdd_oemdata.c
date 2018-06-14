@@ -82,10 +82,10 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 	data_cap->allowed_dwell_time_min = config->nNeighborScanMinChanTime;
 	data_cap->allowed_dwell_time_max = config->nNeighborScanMaxChanTime;
 	data_cap->curr_dwell_time_min =
-		sme_get_neighbor_scan_min_chan_time(hdd_ctx->hHal,
+		sme_get_neighbor_scan_min_chan_time(hdd_ctx->mac_handle,
 						    adapter->session_id);
 	data_cap->curr_dwell_time_max =
-		sme_get_neighbor_scan_max_chan_time(hdd_ctx->hHal,
+		sme_get_neighbor_scan_max_chan_time(hdd_ctx->mac_handle,
 						    adapter->session_id);
 	data_cap->supported_bands = config->nBandCapability;
 
@@ -361,7 +361,7 @@ static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
 	oem_data_req.data_len = oem_data_len;
 	qdf_mem_copy(oem_data_req.data, oem_data, oem_data_len);
 
-	status = sme_oem_data_req(p_hdd_ctx->hHal, &oem_data_req);
+	status = sme_oem_data_req(p_hdd_ctx->mac_handle, &oem_data_req);
 
 	qdf_mem_free(oem_data_req.data);
 	oem_data_req.data = NULL;
@@ -391,7 +391,7 @@ void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
 	uint32_t wni_dot11_mode;
 	tHddChannelInfo *hdd_chan_info = chan_info;
 
-	wni_dot11_mode = sme_get_wni_dot11_mode(hdd_ctx->hHal);
+	wni_dot11_mode = sme_get_wni_dot11_mode(hdd_ctx->mac_handle);
 
 	/* Passing CH_WIDTH_MAX will give the max bandwidth supported */
 	ch_params.ch_width = CH_WIDTH_MAX;
@@ -482,7 +482,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 						    sizeof(*pHddChanInfo));
 
 		chanId = chanList[i];
-		status = sme_get_reg_info(p_hdd_ctx->hHal, chanId,
+		status = sme_get_reg_info(p_hdd_ctx->mac_handle, chanId,
 					  &reg_info_1, &reg_info_2);
 		if (QDF_STATUS_SUCCESS == status) {
 			/* copy into hdd chan info struct */
@@ -557,7 +557,7 @@ static int oem_process_set_cap_req_msg(int oem_cap_len,
 		return -EINVAL;
 	}
 
-	status = sme_oem_update_capability(p_hdd_ctx->hHal,
+	status = sme_oem_update_capability(p_hdd_ctx->mac_handle,
 					(struct sme_oem_capability *)oem_cap);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("error updating rm capability, status: %d", status);
@@ -643,7 +643,7 @@ static int oem_process_get_cap_req_msg(void)
 
 	buf = (char *) buf +  sizeof(data_cap);
 	qdf_mem_zero(&oem_cap, sizeof(oem_cap));
-	sme_oem_get_capability(p_hdd_ctx->hHal, &oem_cap);
+	sme_oem_get_capability(p_hdd_ctx->mac_handle, &oem_cap);
 	qdf_mem_copy(buf, &oem_cap, sizeof(oem_cap));
 
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + ani_hdr->length)));
@@ -678,8 +678,8 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 	tAniMsgHdr *aniHdr;
 	struct peer_status_info *pPeerInfo;
 
-	if (!p_hdd_ctx || !p_hdd_ctx->hHal) {
-		hdd_err("Either HDD Ctx is null or Hal Ctx is null");
+	if (!p_hdd_ctx) {
+		hdd_err("HDD Ctx is null");
 		return;
 	}
 
@@ -772,7 +772,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
  * Return: 0 if success, error code otherwise
  */
 static int oem_app_reg_req_handler(struct hdd_context *hdd_ctx,
-					tAniMsgHdr *msg_hdr, int pid)
+				   tAniMsgHdr *msg_hdr, int pid)
 {
 	char *sign_str = NULL;
 
