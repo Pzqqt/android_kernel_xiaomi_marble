@@ -1268,7 +1268,7 @@ int wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
  */
 void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx)
 {
-	QDF_STATUS hal_status;
+	QDF_STATUS status;
 
 	if (!hdd_ctx)
 		return;
@@ -1281,10 +1281,10 @@ void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx)
 	if (hdd_ctx->config->tsf_gpio_pin == TSF_GPIO_PIN_INVALID)
 		goto fail;
 
-	hal_status = sme_set_tsf_gpio(hdd_ctx->hHal,
-				      hdd_ctx->config->tsf_gpio_pin);
-	if (QDF_STATUS_SUCCESS != hal_status) {
-		hdd_err("set tsf GPIO failed, status: %d", hal_status);
+	status = sme_set_tsf_gpio(hdd_ctx->mac_handle,
+				  hdd_ctx->config->tsf_gpio_pin);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("set tsf GPIO failed, status: %d", status);
 		goto fail;
 	}
 
