@@ -2412,12 +2412,8 @@ typedef struct sSirUpdateAPWPARSNIEsReq {
 #define SIR_ROAM_SCAN_MAX_PB_REQ_SIZE    450
 /* Occupied channel list remains static */
 #define CHANNEL_LIST_STATIC                   1
-/* Occupied channel list can be learnt after init */
-#define CHANNEL_LIST_DYNAMIC_INIT             2
-/* Occupied channel list can be learnt after flush */
-#define CHANNEL_LIST_DYNAMIC_FLUSH            3
-/* Occupied channel list can be learnt after update */
-#define CHANNEL_LIST_DYNAMIC_UPDATE           4
+/* Occupied channel list can be dynamic */
+#define CHANNEL_LIST_DYNAMIC                  2
 #define SIR_ROAM_SCAN_24G_DEFAULT_CH     1
 #define SIR_ROAM_SCAN_5G_DEFAULT_CH      36
 #define SIR_ROAM_SCAN_RESERVED_BYTES     61
