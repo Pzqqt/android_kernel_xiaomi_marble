@@ -22,6 +22,7 @@
 #include <ol_txrx.h>
 #include "cdp_txrx_ipa.h"
 #include "wal_rx_desc.h"
+#include "qdf_str.h"
 
 static struct wlan_ipa_priv *gp_ipa;
 
@@ -2765,14 +2766,87 @@ QDF_STATUS wlan_ipa_uc_ol_deinit(struct wlan_ipa_priv *ipa_ctx)
 	return status;
 }
 
-/**
- * wlan_ipa_is_fw_wdi_activated() - Is FW WDI actived?
- * @ipa_ctx: IPA contex
- *
- * Return: true if FW WDI actived, false otherwise
- */
 bool wlan_ipa_is_fw_wdi_activated(struct wlan_ipa_priv *ipa_ctx)
 {
 	return (WLAN_IPA_UC_NUM_WDI_PIPE == ipa_ctx->activated_fw_pipe);
 }
 
+/**
+ * wlan_ipa_uc_send_evt() - send event to ipa
+ * @net_dev: Interface net device
+ * @type: event type
+ * @mac_addr: pointer to mac address
+ *
+ * Send event to IPA driver
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wlan_ipa_uc_send_evt(qdf_netdev_t net_dev,
+				       qdf_ipa_wlan_event type,
+				       uint8_t *mac_addr)
+{
+	struct wlan_ipa_priv *ipa_ctx = gp_ipa;
+	qdf_ipa_msg_meta_t meta;
+	qdf_ipa_wlan_msg_t *msg;
+
+	QDF_IPA_MSG_META_MSG_LEN(&meta) = sizeof(qdf_ipa_wlan_msg_t);
+	msg = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
+	if (!msg) {
+		ipa_err("msg allocation failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	QDF_IPA_SET_META_MSG_TYPE(&meta, type);
+	qdf_str_lcopy(QDF_IPA_WLAN_MSG_NAME(msg), net_dev->name,
+		      IPA_RESOURCE_NAME_MAX);
+	qdf_mem_copy(QDF_IPA_WLAN_MSG_MAC_ADDR(msg), mac_addr, QDF_NET_ETH_LEN);
+
+	if (qdf_ipa_send_msg(&meta, msg, wlan_ipa_msg_free_fn)) {
+		ipa_err("%s: Evt: %d fail",
+			QDF_IPA_WLAN_MSG_NAME(msg),
+			QDF_IPA_MSG_META_MSG_TYPE(&meta));
+		qdf_mem_free(msg);
+
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ipa_ctx->stats.num_send_msg++;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_ipa_uc_disconnect_ap(struct wlan_ipa_priv *ipa_ctx,
+				     qdf_netdev_t net_dev)
+{
+	struct wlan_ipa_iface_context *iface_ctx;
+	QDF_STATUS status;
+
+	ipa_debug("enter");
+
+	iface_ctx = wlan_ipa_get_iface(ipa_ctx, QDF_SAP_MODE);
+	if (iface_ctx)
+		status = wlan_ipa_uc_send_evt(net_dev, QDF_IPA_AP_DISCONNECT,
+					      net_dev->dev_addr);
+	else
+		return QDF_STATUS_E_INVAL;
+
+	ipa_debug("exit :%d", status);
+
+	return status;
+}
+
+void wlan_ipa_cleanup_dev_iface(struct wlan_ipa_priv *ipa_ctx,
+				qdf_netdev_t net_dev)
+{
+	struct wlan_ipa_iface_context *iface_ctx;
+	int i;
+
+	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
+		iface_ctx = &ipa_ctx->iface_context[i];
+		if (iface_ctx->dev == net_dev)
+			break;
+	}
+
+	if (iface_ctx)
+		wlan_ipa_cleanup_iface(iface_ctx);
+}
