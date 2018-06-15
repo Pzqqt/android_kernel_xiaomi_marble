@@ -520,18 +520,18 @@ static void pmo_unpause_all_vdev(struct wlan_objmgr_psoc *psoc,
 				 struct pmo_psoc_priv_obj *psoc_ctx)
 {
 	uint8_t vdev_id;
-	struct wlan_objmgr_vdev *vdev;
+	struct cdp_vdev *vdev_dp;
 
 	/* Iterate through VDEV list */
 	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
-		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
-		if (!vdev)
+		vdev_dp = pmo_core_vdev_get_dp_handle(psoc_ctx, vdev_id);
+		if (!vdev_dp)
 			continue;
 
 		/* When host resumes, by default unpause all active vdev */
 		if (pmo_core_vdev_get_pause_bitmap(psoc_ctx, vdev_id)) {
 			cdp_fc_vdev_unpause(pmo_core_psoc_get_dp_handle(psoc),
-					    pmo_core_vdev_get_dp_handle(vdev),
+					    vdev_dp,
 					    0xffffffff);
 			if (psoc_ctx->pause_bitmap_notifier)
 				psoc_ctx->pause_bitmap_notifier(vdev_id, 0);

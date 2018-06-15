@@ -62,6 +62,7 @@ struct pmo_psoc_priv_obj {
 	void *txrx_hdl;
 	pmo_notify_pause_bitmap pause_bitmap_notifier;
 	pmo_get_pause_bitmap get_pause_bitmap;
+	pmo_get_vdev_dp_handle get_vdev_dp_handle;
 	pmo_is_device_in_low_pwr_mode is_device_in_low_pwr_mode;
 	pmo_get_cfg_int get_cfg_int;
 	pmo_get_dtim_period get_dtim_period;
@@ -110,7 +111,6 @@ struct wlan_pmo_ctx {
  * @beacon_interval: vdev beacon interval
  * @alt_modulated_dtim_enabled:dynamic modulated dtim enabled
  * @dtim_policy: tells vdev beacon dtim policy
- * @vdev_dp_hdl: vdev data path handle
  * @pmo_vdev_lock: spin lock for pmo vdev priv ctx
  */
 struct pmo_vdev_priv_obj {
@@ -133,7 +133,6 @@ struct pmo_vdev_priv_obj {
 	uint8_t beacon_interval;
 	bool alt_modulated_dtim_enable;
 	uint32_t dtim_policy;
-	void *vdev_dp_hdl;
 	qdf_spinlock_t pmo_vdev_lock;
 };
 

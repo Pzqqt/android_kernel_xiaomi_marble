@@ -273,12 +273,6 @@ void pmo_ucfg_psoc_update_dp_handle(struct wlan_objmgr_psoc *psoc,
 	pmo_core_psoc_update_dp_handle(psoc, dp_handle);
 }
 
-void pmo_ucfg_vdev_update_dp_handle(struct wlan_objmgr_vdev *vdev,
-		void *dp_handle)
-{
-	pmo_core_vdev_update_dp_handle(vdev, dp_handle);
-}
-
 void pmo_ucfg_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc,
 		void *htc_handle)
 {
