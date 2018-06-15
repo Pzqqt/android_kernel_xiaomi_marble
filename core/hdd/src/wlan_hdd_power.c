@@ -2119,6 +2119,11 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	if (sta_ctx->hdd_reassoc_scenario) {
+		hdd_debug("Roaming is in progress, rej this req");
+		return -EINVAL;
+	}
+
 	mutex_lock(&hdd_ctx->iface_change_lock);
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
 		mutex_unlock(&hdd_ctx->iface_change_lock);

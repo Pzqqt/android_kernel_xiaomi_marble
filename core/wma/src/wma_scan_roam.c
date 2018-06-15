@@ -2297,7 +2297,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 				__func__);
 		goto cleanup_label;
 	}
-	WMA_LOGI("LFR3: Received WMA_ROAM_OFFLOAD_SYNCH_IND");
+	WMA_LOGD("LFR3: Received WMA_ROAM_OFFLOAD_SYNCH_IND");
 
 	/*
 	 * All below length fields are unsigned and hence positive numbers.

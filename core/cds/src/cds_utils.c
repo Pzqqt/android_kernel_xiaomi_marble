@@ -731,7 +731,7 @@ void cds_copy_hlp_info(struct qdf_mac_addr *input_dst_mac,
 		       uint8_t *output_hlp_data)
 {
 	if (!input_hlp_data_len) {
-		cds_err("Input HLP data len zero\n");
+		cds_debug("Input HLP data len zero\n");
 		return;
 	}
 

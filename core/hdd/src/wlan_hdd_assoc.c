@@ -1347,7 +1347,7 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		ucfg_p2p_status_connect(adapter->hdd_vdev);
 
-		pr_info("wlan: " MAC_ADDRESS_STR " connected to "
+		hdd_info("wlan: " MAC_ADDRESS_STR " connected to "
 			MAC_ADDRESS_STR "\n",
 			MAC_ADDR_ARRAY(adapter->mac_addr.bytes),
 			MAC_ADDR_ARRAY(wrqu.ap_addr.sa_data));

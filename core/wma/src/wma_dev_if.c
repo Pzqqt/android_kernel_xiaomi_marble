@@ -1743,7 +1743,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		 wma->interfaces[vdev_id].peer_count);
 
 	if (roam_synch_in_progress) {
-		WMA_LOGI("%s: LFR3: Created peer %pK with peer_addr %pM vdev_id %d, peer_count - %d",
+		WMA_LOGD("%s: LFR3: Created peer %pK with peer_addr %pM vdev_id %d, peer_count - %d",
 			 __func__, peer, peer_addr, vdev_id,
 			 wma->interfaces[vdev_id].peer_count);
 		return QDF_STATUS_SUCCESS;

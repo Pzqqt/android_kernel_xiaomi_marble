@@ -12707,7 +12707,7 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 		}
 	}
 
-	hdd_info("STATS_SET_START Received flag %d!", arp_stats_params.flag);
+	hdd_debug("STATS_SET_START Received flag %d!", arp_stats_params.flag);
 
 	arp_stats_params.vdev_id = adapter->session_id;
 

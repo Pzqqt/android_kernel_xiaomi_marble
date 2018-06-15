@@ -4297,7 +4297,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	if (eCSR_ROAM_ASSOCIATION_COMPLETION == u1 &&
 			eCSR_ROAM_RESULT_ASSOCIATED == u2 && roam_info) {
-		sme_info("Assoc complete result: %d status: %d reason: %d",
+		sme_debug("Assoc complete result: %d status: %d reason: %d",
 			u2, roam_info->statusCode, roam_info->reasonCode);
 		beacon_ies = qdf_mem_malloc(sizeof(tDot11fBeaconIEs));
 		if ((NULL != beacon_ies) && (NULL != roam_info->pBssDesc)) {

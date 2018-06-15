@@ -527,7 +527,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	pe_info("received Re/Assoc: %d resp on sessionid: %d systemrole: %d"
+	pe_debug("received Re/Assoc: %d resp on sessionid: %d systemrole: %d"
 		" and mlmstate: %d RSSI: %d from "MAC_ADDRESS_STR, subtype,
 		session_entry->peSessionId, GET_LIM_SYSTEM_ROLE(session_entry),
 		session_entry->limMlmState,
