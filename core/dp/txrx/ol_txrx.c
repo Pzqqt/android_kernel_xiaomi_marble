@@ -1301,7 +1301,6 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
 	ol_txrx_tso_stats_init(pdev);
 
 	TAILQ_INIT(&pdev->vdev_list);
-	TAILQ_INIT(&pdev->roam_stale_peer_list);
 
 	TAILQ_INIT(&pdev->req_list);
 	pdev->req_list_depth = 0;
@@ -3445,33 +3444,6 @@ static inline void ol_txrx_peer_free_tids(ol_txrx_peer_handle peer)
 	}
 }
 
-bool ol_txrx_is_peer_eligible_for_deletion(ol_txrx_peer_handle peer,
-					   struct ol_txrx_pdev_t *pdev)
-{
-	bool peerdel = true;
-	u_int16_t peer_id;
-	int i;
-
-	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
-		peer_id = peer->peer_ids[i];
-
-		if (!pdev->peer_id_to_obj_map[peer_id].peer_ref)
-			continue;
-
-		if (pdev->peer_id_to_obj_map[peer_id].peer_ref != peer)
-			continue;
-
-		if (qdf_atomic_read(&pdev->peer_id_to_obj_map[peer_id].
-					del_peer_id_ref_cnt)) {
-			peerdel = false;
-			break;
-		}
-
-		pdev->peer_id_to_obj_map[peer_id].peer_ref = NULL;
-	}
-	return peerdel;
-}
-
 /**
  * ol_txrx_peer_release_ref() - release peer reference
  * @peer: peer handle
@@ -3669,31 +3641,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 
 		ol_txrx_dump_peer_access_list(peer);
 
-		qdf_spin_lock_bh(&pdev->peer_map_unmap_lock);
-		if (ol_txrx_is_peer_eligible_for_deletion(peer, pdev)) {
-			qdf_mem_free(peer);
-		} else {
-			/*
-			 * Mark this PEER as a stale peer, to be deleted
-			 * during PEER UNMAP. Remove this peer from
-			 * roam_stale_peer_list during UNMAP.
-			 */
-			struct ol_txrx_roam_stale_peer_t *roam_stale_peer;
-
-			roam_stale_peer = qdf_mem_malloc(
-				sizeof(struct ol_txrx_roam_stale_peer_t));
-			if (roam_stale_peer) {
-				roam_stale_peer->peer = peer;
-				TAILQ_INSERT_TAIL(&pdev->roam_stale_peer_list,
-						  roam_stale_peer,
-						  next_stale_entry);
-			} else {
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "No memory allocated");
-			}
-		}
-		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
+		qdf_mem_free(peer);
 	} else {
 		access_list = qdf_atomic_read(
 						&peer->access_list[debug_id]);

@@ -115,8 +115,6 @@ ol_txrx_peer_find_hash_remove(struct ol_txrx_pdev_t *pdev,
 
 void ol_txrx_peer_find_hash_erase(struct ol_txrx_pdev_t *pdev);
 
-void ol_txrx_peer_delete_roam_stale_peer(struct ol_txrx_pdev_t *pdev);
-
 struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev);
 void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 					struct ol_txrx_peer_t *peer);

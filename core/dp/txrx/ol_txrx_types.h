@@ -512,7 +512,6 @@ struct ol_tx_flow_pool_t {
 /*
  * struct ol_txrx_peer_id_map - Map of firmware peer_ids to peers on host
  * @peer: Pointer to peer object
- * @peer_ref: Pointer to peer marked as stale
  * @peer_id_ref_cnt: No. of firmware references to the peer_id
  * @del_peer_id_ref_cnt: No. of outstanding unmap events for peer_id
  *                       after the peer object is deleted on the host.
@@ -521,7 +520,6 @@ struct ol_tx_flow_pool_t {
  */
 struct ol_txrx_peer_id_map {
 	struct ol_txrx_peer_t *peer;
-	struct ol_txrx_peer_t *peer_ref;
 	qdf_atomic_t peer_id_ref_cnt;
 	qdf_atomic_t del_peer_id_ref_cnt;
 };
@@ -658,8 +656,6 @@ struct ol_txrx_pdev_t {
 	TAILQ_HEAD(, ol_txrx_stats_req_internal) req_list;
 	int req_list_depth;
 	qdf_spinlock_t req_list_spinlock;
-
-	TAILQ_HEAD(, ol_txrx_roam_stale_peer_t) roam_stale_peer_list;
 
 	/* peer ID to peer object map (array of pointers to peer objects) */
 	struct ol_txrx_peer_id_map *peer_id_to_obj_map;
@@ -1214,12 +1210,6 @@ struct ol_txrx_cached_bufq_t {
 	uint32_t qdepth_no_thresh;
 	/* # of packes (beyond threshold) dropped from cached_bufq */
 	uint32_t dropped;
-};
-
-struct ol_txrx_roam_stale_peer_t {
-	ol_txrx_peer_handle peer;
-
-	TAILQ_ENTRY(ol_txrx_roam_stale_peer_t)next_stale_entry;
 };
 
 struct ol_txrx_peer_t {
