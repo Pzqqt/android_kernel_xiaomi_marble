@@ -1634,6 +1634,8 @@ cppflags-$(CONFIG_CNSS_GENL) += -DCNSS_GENL
 
 cppflags-$(CONFIG_QCACLD_WLAN_LFR2) += -DWLAN_FEATURE_HOST_ROAM
 
+cppflags-$(CONFIG_FEATURE_ROAM_DEBUG) += -DFEATURE_ROAM_DEBUG
+
 cppflags-$(CONFIG_WLAN_POWER_DEBUGFS) += -DWLAN_POWER_DEBUGFS
 
 # Enable object manager reference count debug infrastructure

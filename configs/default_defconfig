@@ -469,6 +469,9 @@ CONFIG_TRACE_RECORD_FEATURE := y
 #Flag to enable p2p debug feature
 CONFIG_WLAN_FEATURE_P2P_DEBUG := y
 
+#Flag to enable roam debug log
+CONFIG_FEATURE_ROAM_DEBUG := y
+
 #Flag to enable DFS Master feature
 CONFIG_WLAN_DFS_MASTER_ENABLE := y
 
