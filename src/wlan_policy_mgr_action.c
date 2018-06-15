@@ -415,6 +415,76 @@ bool policy_mgr_is_dbs_allowed_for_concurrency(
 	return ret;
 }
 
+static bool policy_mgr_is_chnl_in_diff_band(struct wlan_objmgr_psoc *psoc,
+					    uint8_t channel)
+{
+	uint8_t i, pm_chnl;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	/*
+	 * check given channel against already existing connections'
+	 * channels. if they differ then channels are in different bands
+	 */
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		pm_chnl = pm_conc_connection_list[i].chan;
+		if (pm_conc_connection_list[i].in_use)
+			if (!WLAN_REG_IS_SAME_BAND_CHANNELS(channel, pm_chnl)) {
+				qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+				policy_mgr_debug("channel is in diff band");
+				return true;
+			}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return false;
+}
+
+bool policy_mgr_is_hwmode_set_for_given_chnl(struct wlan_objmgr_psoc *psoc,
+					     uint8_t channel)
+{
+	enum policy_mgr_band band;
+	bool is_hwmode_dbs, is_2x2_dbs;
+
+	if (policy_mgr_is_hw_dbs_capable(psoc) == false)
+		return true;
+
+	if (WLAN_REG_IS_24GHZ_CH(channel))
+		band = POLICY_MGR_BAND_24;
+	else
+		band = POLICY_MGR_BAND_5;
+
+	is_hwmode_dbs = policy_mgr_is_current_hwmode_dbs(psoc);
+	is_2x2_dbs = policy_mgr_is_hw_dbs_2x2_capable(psoc);
+	/*
+	 * If HW supports 2x2 chains in DBS HW mode and if DBS HW mode is not
+	 * yet set then this is the right time to block the connection.
+	 */
+	if ((band == POLICY_MGR_BAND_24) && is_2x2_dbs && !is_hwmode_dbs) {
+		policy_mgr_err("HW mode is not yet in DBS!!!!!");
+		return false;
+	}
+
+	/*
+	 * If HW supports 1x1 chains DBS HW mode and if first connection is
+	 * 2G or 5G band and if second connection is coming up in diffrent
+	 * band than the first connection and if current HW mode is not yet
+	 * set in DBS then this is the right time to block the connection.
+	 */
+	if (policy_mgr_is_chnl_in_diff_band(psoc, channel) && !is_hwmode_dbs) {
+		policy_mgr_err("Given channel & existing conn is diff band & HW mode is not yet in DBS !!!!");
+		return false;
+	}
+
+	return true;
+}
+
 QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 		uint32_t session_id,
 		uint8_t channel,

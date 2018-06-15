@@ -2302,6 +2302,24 @@ bool policy_mgr_is_sta_connected_2g(struct wlan_objmgr_psoc *psoc);
  */
 void policy_mgr_trim_acs_channel_list(struct wlan_objmgr_psoc *psoc,
 		uint8_t *org_ch_list, uint8_t *org_ch_list_count);
+
+/**
+ * policy_mgr_is_hwmode_set_for_given_chnl() - to check for given channel
+ * if the hw mode is properly set.
+ * @psoc: pointer to psoc
+ * @channel: given channel
+ *
+ * If HW mode is properly set for given channel then it returns true else
+ * it returns false.
+ * For example, when 2x2 DBS is supported and if the first connection is
+ * coming up on 2G band then driver expects DBS HW mode to be set first
+ * before the connection can be established. Driver can call this API to
+ * find-out if HW mode is set properly.
+ *
+ * Return: true if HW mode is set properly else false
+ */
+bool policy_mgr_is_hwmode_set_for_given_chnl(struct wlan_objmgr_psoc *psoc,
+					     uint8_t channel);
 /*
  * policy_mgr_get_connection_info() - Get info of all active connections
  * @info: Pointer to connection info
