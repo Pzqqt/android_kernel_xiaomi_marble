@@ -290,6 +290,28 @@ int ucfg_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr);
  */
 bool ucfg_ipa_is_fw_wdi_activated(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * ucfg_ipa_uc_disconnect_ap() - send ap disconnect event
+ * @pdev: pdev obj
+ * @net_dev: Interface net device
+ *
+ * Send disconnect ap event to IPA driver during SSR
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_ipa_uc_disconnect_ap(struct wlan_objmgr_pdev *pdev,
+				     qdf_netdev_t net_dev);
+
+/**
+ * ucfg_ipa_cleanup_dev_iface() - Clean up net dev IPA interface
+ * @pdev: pdev obj
+ * @net_dev: Interface net device
+ *
+ *
+ * Return: None
+ */
+void ucfg_ipa_cleanup_dev_iface(struct wlan_objmgr_pdev *pdev,
+				qdf_netdev_t net_dev);
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -451,6 +473,19 @@ static inline
 bool ucfg_ipa_is_fw_wdi_activated(struct wlan_objmgr_pdev *pdev)
 {
 	return false;
+}
+
+static inline
+QDF_STATUS ucfg_ipa_uc_disconnect_ap(struct wlan_objmgr_pdev *pdev,
+				     qdf_netdev_t net_dev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+void ucfg_ipa_cleanup_dev_iface(struct wlan_objmgr_pdev *pdev,
+				qdf_netdev_t net_dev)
+{
 }
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_UCFG_API_H_ */

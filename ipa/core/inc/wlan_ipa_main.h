@@ -367,5 +367,28 @@ int ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr);
  * Return: true if FW WDI activated, false otherwise
  */
 bool ipa_is_fw_wdi_activated(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ipa_uc_disconnect_ap() - send ap disconnect event
+ * @pdev: pdev obj
+ * @net_dev: Interface net device
+ *
+ * Send disconnect ap event to IPA driver
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ipa_uc_disconnect_ap(struct wlan_objmgr_pdev *pdev,
+				qdf_netdev_t net_dev);
+
+/**
+ * ipa_cleanup_dev_iface() - Clean up net dev IPA interface
+ * @pdev: pdev obj
+ * @net_dev: Interface net device
+ *
+ *
+ * Return: None
+ */
+void ipa_cleanup_dev_iface(struct wlan_objmgr_pdev *pdev,
+			   qdf_netdev_t net_dev);
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */
