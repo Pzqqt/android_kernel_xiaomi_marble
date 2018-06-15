@@ -8546,6 +8546,37 @@ typedef enum {
      */
     WMI_VDEV_PARAM_DISABLE_CABQ,                          /* 0x86 */
 
+    /**
+      * For SU and MU sounding
+      * switch between su ac/ax sounding and mu ac/ax sounding
+      * switch between triggered/ non-triggered on ax sounding enabled.
+      * each bit toggles the corresponding modes by enabling/disabling
+      *
+      * Bit 1 doesn't carry any operation for now and may change later,
+      * so reserved.
+      *
+      *-----------------------
+      * bit(0)   |    mode
+      *-----------------------
+      *       0  |  AC
+      *       1  |  AX
+      *-----------------------
+      *
+      * bit(1)   |  Reserved
+      *
+      *-----------------------
+      * bit(2)   |    mode
+      *-----------------------
+      *       0  |  SU
+      *       1  |  MU
+      *-----------------------
+      * bit(3)   |    mode
+      *-----------------------
+      *       0  |  non -triggered
+      *       1  |  triggered
+      */
+    WMI_VDEV_PARAM_SET_HE_SOUNDING_MODE,                  /* 0x87 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
@@ -8605,6 +8636,10 @@ typedef enum {
 #define WMI_VDEV_HE_ULMUMIMO_IS_ENABLED(hemu_mode) WMI_GET_BITS(hemu_mode, 6, 1)
 #define WMI_VDEV_HE_ULMUMIMO_ENABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 6, 1, 1)
 #define WMI_VDEV_HE_ULMUMIMO_DISABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 6, 1, 0)
+
+#define WMI_VDEV_HE_AX_SOUNDING_IS_ENABLED(mode) WMI_GET_BITS(mode, 0, 1)
+#define WMI_VDEV_HE_MU_SOUNDING_IS_ENABLED(mode) WMI_GET_BITS(mode, 2, 1)
+#define WMI_VDEV_HE_AX_TRIG_SOUNDING_IS_ENABLED(mode) WMI_GET_BITS(mode, 3, 1)
 
 /* vdev capabilities bit mask */
 #define WMI_VDEV_BEACON_SUPPORT  0x1
