@@ -1985,11 +1985,7 @@ void ol_tx_set_peer_group_ptr(
 
 u_int32_t ol_tx_get_max_tx_groups_supported(struct ol_txrx_pdev_t *pdev)
 {
-#ifdef HIF_SDIO
 		return OL_TX_MAX_TXQ_GROUPS;
-#else
-		return 0;
-#endif
 }
 #endif /* FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL */
 
