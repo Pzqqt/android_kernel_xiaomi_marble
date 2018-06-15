@@ -162,6 +162,8 @@ int hif_napi_event(struct hif_opaque_softc     *hif,
 /* called from the ISR within hif, so, ce is known */
 int hif_napi_enabled(struct hif_opaque_softc *hif, int ce);
 
+bool hif_napi_created(struct hif_opaque_softc *hif, int ce);
+
 /* called from hdd (napi_poll), using napi id as a selector */
 void hif_napi_enable_irq(struct hif_opaque_softc *hif, int id);
 
@@ -243,6 +245,9 @@ static inline int hif_napi_event(struct hif_opaque_softc     *hif,
 /* called from the ISR within hif, so, ce is known */
 static inline int hif_napi_enabled(struct hif_opaque_softc *hif, int ce)
 { return 0; }
+
+bool hif_napi_created(struct hif_opaque_softc *hif, int ce)
+{ return false; }
 
 /* called from hdd (napi_poll), using napi id as a selector */
 static inline void hif_napi_enable_irq(struct hif_opaque_softc *hif, int id)

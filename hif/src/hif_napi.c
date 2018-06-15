@@ -166,7 +166,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		if (!napii) {
 			NAPI_DEBUG("NAPI alloc failure %d", i);
 			rc = -ENOMEM;
-			goto napii_alloc_failure;
+			goto napii_free;
 		}
 	}
 
@@ -218,14 +218,15 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 	/* no ces registered with the napi */
 	if (!ce_srng_based(hif) && napid->ce_map == 0) {
 		HIF_WARN("%s: no napis created for copy engines", __func__);
-		return -EFAULT;
+		rc = -EFAULT;
+		goto napii_free;
 	}
 
 	NAPI_DEBUG("napi map = %x", napid->ce_map);
 	NAPI_DEBUG("NAPI ids created for all applicable pipes");
 	return napid->ce_map;
 
-napii_alloc_failure:
+napii_free:
 	for (i = 0; i < hif->ce_count; i++) {
 		napii = napid->napis[i];
 		napid->napis[i] = NULL;
@@ -709,6 +710,24 @@ int hif_napi_enabled(struct hif_opaque_softc *hif_ctx, int ce)
 	return rc;
 }
 qdf_export_symbol(hif_napi_enabled);
+
+/**
+ * hif_napi_created() - checks whether NAPI is created for given ce or not
+ * @hif: hif context
+ * @ce : CE instance
+ *
+ * Return: bool
+ */
+bool hif_napi_created(struct hif_opaque_softc *hif_ctx, int ce)
+{
+	int rc;
+	struct hif_softc *hif = HIF_GET_SOFTC(hif_ctx);
+
+	rc = (hif->napi_data.ce_map & (0x01 << ce));
+
+	return !!rc;
+}
+qdf_export_symbol(hif_napi_created);
 
 /**
  * hif_napi_enable_irq() - enables bus interrupts after napi_complete
