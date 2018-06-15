@@ -1387,6 +1387,7 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	qdf_mem_zero(qdf_nbuf_data(buf), sizeof(WMI_CMD_HDR));
 	WMI_SET_FIELD(qdf_nbuf_data(buf), WMI_CMD_HDR, COMMANDID, cmd_id);
 
 	qdf_atomic_inc(&wmi_handle->pending_cmds);
