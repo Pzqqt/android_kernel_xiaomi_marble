@@ -70,6 +70,14 @@ ifdef CONFIG_VA_MACRO
 	VA_OBJS += va-macro.o
 endif
 
+ifdef CONFIG_TX_MACRO
+	TX_OBJS += tx-macro.o
+endif
+
+ifdef CONFIG_RX_MACRO
+	RX_OBJS += rx-macro.o
+endif
+
 LINUX_INC +=	-Iinclude/linux
 
 INCS +=		$(COMMON_INC) \
@@ -120,6 +128,12 @@ wsa_macro_dlkm-y := $(WSA_OBJS)
 
 obj-$(CONFIG_VA_MACRO) += va_macro_dlkm.o
 va_macro_dlkm-y := $(VA_OBJS)
+
+obj-$(CONFIG_TX_MACRO) += tx_macro_dlkm.o
+tx_macro_dlkm-y := $(TX_OBJS)
+
+obj-$(CONFIG_RX_MACRO) += rx_macro_dlkm.o
+rx_macro_dlkm-y := $(RX_OBJS)
 
 # inject some build related information
 DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
