@@ -246,11 +246,8 @@ QDF_STATUS wlan_objmgr_pdev_obj_delete(struct wlan_objmgr_pdev *pdev)
 		     pdev->pdev_objmgr.wlan_pdev_id);
 
 	print_idx = qdf_get_pidx();
-	if (qdf_print_is_verbose_enabled(print_idx, QDF_MODULE_ID_OBJ_MGR,
-		QDF_TRACE_LEVEL_DEBUG)) {
-		wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg);
-	}
-
+	wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg,
+				  QDF_TRACE_LEVEL_DEBUG);
 	/*
 	 * Update PDEV object state to LOGICALLY DELETED
 	 * It prevents further access of this object
@@ -847,7 +844,8 @@ void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
 	if (!qdf_atomic_read(&pdev->pdev_objmgr.ref_id_dbg[id])) {
 		obj_mgr_err("pdev (id:%d)ref cnt was not taken by %d",
 				pdev_id, id);
-		wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg);
+		wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg,
+					  QDF_TRACE_LEVEL_FATAL);
 		WLAN_OBJMGR_BUG(0);
 	}
 

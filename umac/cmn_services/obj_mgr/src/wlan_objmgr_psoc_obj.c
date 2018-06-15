@@ -254,11 +254,8 @@ QDF_STATUS wlan_objmgr_psoc_obj_delete(struct wlan_objmgr_psoc *psoc)
 	obj_mgr_info("Logically deleting psoc %d", psoc->soc_objmgr.psoc_id);
 
 	print_idx = qdf_get_pidx();
-	if (qdf_print_is_verbose_enabled(print_idx, QDF_MODULE_ID_OBJ_MGR,
-		QDF_TRACE_LEVEL_DEBUG)) {
-		wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
-	}
-
+	wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg,
+				  QDF_TRACE_LEVEL_DEBUG);
 	/*
 	 * Update PSOC object state to LOGICALLY DELETED
 	 * It prevents further access of this object
@@ -1900,7 +1897,8 @@ void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
 
 	if (!qdf_atomic_read(&psoc->soc_objmgr.ref_id_dbg[id])) {
 		obj_mgr_err("psoc ref cnt was not taken by %d", id);
-		wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
+		wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg,
+					  QDF_TRACE_LEVEL_FATAL);
 		WLAN_OBJMGR_BUG(0);
 	}
 
@@ -1936,7 +1934,8 @@ static void wlan_objmgr_psoc_peer_ref_print(struct wlan_objmgr_psoc *psoc,
 	obj_mgr_alert("Peer MAC:%02x:%02x:%02x:%02x:%02x:%02x state:%d vdev_id:%d",
 		  macaddr[0], macaddr[1], macaddr[2], macaddr[3],
 		  macaddr[4], macaddr[5], obj_state, vdev_id);
-	wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg);
+	wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg,
+				  QDF_TRACE_LEVEL_FATAL);
 }
 
 static void wlan_objmgr_psoc_vdev_ref_print(struct wlan_objmgr_psoc *psoc,
@@ -1952,7 +1951,8 @@ static void wlan_objmgr_psoc_vdev_ref_print(struct wlan_objmgr_psoc *psoc,
 	wlan_vdev_obj_unlock(vdev);
 	obj_mgr_alert("Vdev ID is %d, state %d", id, obj_state);
 
-	wlan_objmgr_print_ref_ids(vdev->vdev_objmgr.ref_id_dbg);
+	wlan_objmgr_print_ref_ids(vdev->vdev_objmgr.ref_id_dbg,
+				  QDF_TRACE_LEVEL_FATAL);
 }
 
 static void wlan_objmgr_psoc_pdev_ref_print(struct wlan_objmgr_psoc *psoc,
@@ -1966,7 +1966,8 @@ static void wlan_objmgr_psoc_pdev_ref_print(struct wlan_objmgr_psoc *psoc,
 	wlan_pdev_obj_unlock(pdev);
 	obj_mgr_alert("pdev ID is %d", id);
 
-	wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg);
+	wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg,
+				  QDF_TRACE_LEVEL_FATAL);
 }
 
 QDF_STATUS wlan_objmgr_print_ref_all_objects_per_psoc(
@@ -1983,7 +1984,8 @@ QDF_STATUS wlan_objmgr_print_ref_all_objects_per_psoc(
 				wlan_objmgr_psoc_pdev_ref_print, NULL);
 
 	obj_mgr_alert(" Ref counts of PSOC");
-	wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
+	wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg,
+				  QDF_TRACE_LEVEL_FATAL);
 
 	return QDF_STATUS_SUCCESS;
 }

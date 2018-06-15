@@ -330,11 +330,8 @@ QDF_STATUS wlan_objmgr_peer_obj_delete(struct wlan_objmgr_peer *peer)
 		      QDF_MAC_ADDR_ARRAY(macaddr));
 
 	print_idx = qdf_get_pidx();
-	if (qdf_print_is_verbose_enabled(print_idx, QDF_MODULE_ID_OBJ_MGR,
-		QDF_TRACE_LEVEL_DEBUG)) {
-		wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg);
-	}
-
+	wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg,
+				  QDF_TRACE_LEVEL_DEBUG);
 	/**
 	 * Update VDEV object state to LOGICALLY DELETED
 	 * It prevents further access of this object
@@ -644,7 +641,8 @@ void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
 		"peer(%02x:%02x:%02x:%02x:%02x:%02x) ref was not taken by %d",
 			macaddr[0], macaddr[1], macaddr[2],
 			macaddr[3], macaddr[4], macaddr[5], id);
-		wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg);
+		wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg,
+					  QDF_TRACE_LEVEL_FATAL);
 		WLAN_OBJMGR_BUG(0);
 	}
 

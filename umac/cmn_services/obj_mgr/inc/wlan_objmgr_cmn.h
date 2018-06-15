@@ -59,6 +59,8 @@
 #define obj_mgr_debug(format, args...) \
 		obj_mgr_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
+#define obj_mgr_log_level(level, format, args...)\
+		obj_mgr_logfl(level, format, ## args)
 
 /**
  * enum WLAN_OBJ_STATE - State of Object

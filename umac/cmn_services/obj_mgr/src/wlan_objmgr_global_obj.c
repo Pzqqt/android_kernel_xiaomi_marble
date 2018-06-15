@@ -770,16 +770,17 @@ QDF_STATUS wlan_objmgr_global_obj_can_destroyed(void)
 }
 qdf_export_symbol(wlan_objmgr_global_obj_can_destroyed);
 
-void wlan_objmgr_print_ref_ids(qdf_atomic_t *id)
+void wlan_objmgr_print_ref_ids(qdf_atomic_t *id,
+				QDF_TRACE_LEVEL log_level)
 {
 	uint32_t i;
 	uint32_t pending_ref;
 
-	obj_mgr_alert("Pending references of object");
+	obj_mgr_log_level(log_level, "Pending references of object");
 	for (i = 0; i < WLAN_REF_ID_MAX; i++) {
 		pending_ref = qdf_atomic_read(&id[i]);
 		if (pending_ref)
-			obj_mgr_alert("%s -- %d",
+			obj_mgr_log_level(log_level, "%s -- %d",
 				string_from_dbgid(i), pending_ref);
 	}
 
