@@ -842,7 +842,11 @@ ol_tx_sched_select_batch_wrr_adv(
 
 			OL_TX_SCHED_WRR_ADV_CAT_STAT_INC_DISPATCHED(category,
 								    frames);
+			/* Update used global credits */
 			used_credits = credit;
+			credit =
+			ol_tx_txq_update_borrowed_group_credits(pdev, txq,
+								credit);
 			category->state.frms -= frames;
 			category->state.bytes -= bytes;
 			if (txq->frms > 0) {

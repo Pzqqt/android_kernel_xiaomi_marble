@@ -995,6 +995,11 @@ struct ol_txrx_pdev_t {
 #endif /* CONFIG_Hl_SUPPORT && QCA_BAD_PEER_TX_FLOW_CL */
 
 	struct ol_tx_queue_group_t txq_grps[OL_TX_MAX_TXQ_GROUPS];
+#if defined(FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL) && \
+	defined(FEATURE_HL_DBS_GROUP_CREDIT_SHARING)
+	bool limit_lend;
+	u16 min_reserve;
+#endif
 #ifdef DEBUG_HL_LOGGING
 		qdf_spinlock_t grp_stat_spinlock;
 		struct ol_tx_group_credit_stats_t grp_stats;

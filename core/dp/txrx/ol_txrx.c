@@ -1473,6 +1473,8 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 		for (i = 0 ; i < OL_TX_MAX_TXQ_GROUPS; i++)
 			qdf_atomic_init(&pdev->txq_grps[i].credit);
 
+		ol_txrx_init_txq_group_limit_lend(pdev);
+
 		ol_tx_target_credit_init(pdev, desc_pool_size);
 	} else {
 		qdf_atomic_add(ol_cfg_target_tx_credit(pdev->ctrl_pdev),

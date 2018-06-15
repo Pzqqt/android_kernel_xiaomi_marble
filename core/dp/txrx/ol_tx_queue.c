@@ -1748,6 +1748,93 @@ ol_tx_ac_has_tx_queue_group(
 	return false;
 }
 
+#ifdef FEATURE_HL_DBS_GROUP_CREDIT_SHARING
+static inline struct ol_tx_queue_group_t *
+ol_tx_txq_find_other_group(struct ol_txrx_pdev_t *pdev,
+			   struct ol_tx_queue_group_t *txq_grp)
+{
+	int i;
+	struct ol_tx_queue_group_t *other_grp = NULL;
+
+	for (i = 0; i < OL_TX_MAX_TXQ_GROUPS; i++) {
+		if (&pdev->txq_grps[i] != txq_grp) {
+			other_grp = &pdev->txq_grps[i];
+			break;
+		}
+	}
+	return other_grp;
+}
+
+u32 ol_tx_txq_group_credit_limit(
+	struct ol_txrx_pdev_t *pdev,
+	struct ol_tx_frms_queue_t *txq,
+	u32 credit)
+{
+	struct ol_tx_queue_group_t *txq_grp = txq->group_ptrs[0];
+	struct ol_tx_queue_group_t *other_grp;
+	u32 ask;
+	u32 updated_credit;
+	u32 credit_oth_grp;
+
+	if (qdf_unlikely(!txq_grp))
+		return credit;
+
+	updated_credit = qdf_atomic_read(&txq_grp->credit);
+
+	if (credit <= updated_credit)
+		/* We have enough credits */
+		return credit;
+
+	ask = credit - updated_credit;
+	other_grp = ol_tx_txq_find_other_group(pdev, txq_grp);
+	if (qdf_unlikely(!other_grp))
+		return credit;
+
+	credit_oth_grp = qdf_atomic_read(&other_grp->credit);
+	if (other_grp->frm_count < credit_oth_grp) {
+		u32 spare = credit_oth_grp - other_grp->frm_count;
+
+		if (pdev->limit_lend) {
+			if (spare > pdev->min_reserve)
+				spare -= pdev->min_reserve;
+			else
+				spare = 0;
+		}
+		updated_credit += min(spare, ask);
+	}
+	return updated_credit;
+}
+
+u32 ol_tx_txq_update_borrowed_group_credits(struct ol_txrx_pdev_t *pdev,
+					    struct ol_tx_frms_queue_t *txq,
+					    u32 credits_used)
+{
+	struct ol_tx_queue_group_t *txq_grp = txq->group_ptrs[0];
+	u32 credits_cur_grp;
+	u32 credits_brwd;
+
+	if (qdf_unlikely(!txq_grp))
+		return credits_used;
+
+	credits_cur_grp = qdf_atomic_read(&txq_grp->credit);
+	if (credits_used > credits_cur_grp) {
+		struct ol_tx_queue_group_t *other_grp =
+			ol_tx_txq_find_other_group(pdev, txq_grp);
+
+		if (qdf_likely(other_grp)) {
+			credits_brwd = credits_used - credits_cur_grp;
+			/*
+			 * All the credits were used from the active txq group.
+			 */
+			credits_used = credits_cur_grp;
+			/* Deduct credits borrowed from other group */
+			ol_txrx_update_group_credit(other_grp, -credits_brwd,
+						    0);
+		}
+	}
+	return credits_used;
+}
+#else /* FEATURE_HL_DBS_GROUP_CREDIT_SHARING */
 u_int32_t ol_tx_txq_group_credit_limit(
 	struct ol_txrx_pdev_t *pdev,
 	struct ol_tx_frms_queue_t *txq,
@@ -1774,6 +1861,7 @@ u_int32_t ol_tx_txq_group_credit_limit(
 
 	return credit;
 }
+#endif /* FEATURE_HL_DBS_GROUP_CREDIT_SHARING */
 
 void ol_tx_txq_group_credit_update(
 	struct ol_txrx_pdev_t *pdev,

@@ -210,4 +210,21 @@ bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev)
 }
 
 #endif
+
+#if defined(FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL) && \
+	defined(FEATURE_HL_DBS_GROUP_CREDIT_SHARING)
+static inline void
+ol_txrx_init_txq_group_limit_lend(struct ol_txrx_pdev_t *pdev)
+{
+	BUILD_BUG_ON(OL_TX_MAX_GROUPS_PER_QUEUE > 1);
+	BUILD_BUG_ON(OL_TX_MAX_TXQ_GROUPS > 2);
+	pdev->limit_lend = 0;
+	pdev->min_reserve = 0;
+}
+#else
+static inline void
+ol_txrx_init_txq_group_limit_lend(struct ol_txrx_pdev_t *pdev)
+{}
+#endif
+
 #endif /* _OL_TXRX__H_ */

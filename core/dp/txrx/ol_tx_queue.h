@@ -456,7 +456,6 @@ static inline void ol_tx_throttle_init_period(struct cdp_pdev *ppdev,
 #endif
 
 #ifdef FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL
-
 static inline bool
 ol_tx_is_txq_last_serviced_queue(struct ol_txrx_pdev_t *pdev,
 				 struct ol_tx_frms_queue_t *txq)
@@ -592,10 +591,22 @@ ol_tx_set_peer_group_ptr(
  * @param: num_frms - Number of frames to be added/removed from the group.
  */
 void ol_tx_update_grp_frm_count(struct ol_tx_frms_queue_t *txq, int num_frms);
+
+u32 ol_tx_txq_update_borrowed_group_credits(struct ol_txrx_pdev_t *pdev,
+					    struct ol_tx_frms_queue_t *txq,
+					    u32 credits_used);
 #else
 static inline void ol_tx_update_grp_frm_count(struct ol_tx_frms_queue_t *txq,
 					      int num_frms)
 {}
+
+static inline u32
+ol_tx_txq_update_borrowed_group_credits(struct ol_txrx_pdev_t *pdev,
+					struct ol_tx_frms_queue_t *txq,
+					u32 credits_used)
+{
+	return credits_used;
+}
 #endif /*
 	* FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL &&
 	*  FEATURE_HL_DBS_GROUP_CREDIT_SHARING
