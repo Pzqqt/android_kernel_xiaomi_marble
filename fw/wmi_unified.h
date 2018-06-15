@@ -5073,6 +5073,12 @@ typedef enum {
      * Bit 3-5: "Xretry threshold" to use
      */
     WMI_PDEV_PARAM_SECONDARY_RETRY_ENABLE,            /* 0xA0 */
+    /** Set global uplink triggered PPDU duration limit (usec). */
+    WMI_PDEV_PARAM_SET_UL_PPDU_DURATION,              /* 0xA1 */
+    /** Set target buffer status report trigger interval (ms) */
+    WMI_PDEV_PARAM_SET_UL_BSR_TRIG_INTERVAL,          /* 0xA2 */
+    /** Use simplified equal RU allocation for DL and UL OFDMA */
+    WMI_PDEV_PARAM_EQUAL_RU_ALLOCATION_ENABLE,        /* 0xA3 */
 } WMI_PDEV_PARAM;
 
 typedef struct {
@@ -8577,6 +8583,45 @@ typedef enum {
       */
     WMI_VDEV_PARAM_SET_HE_SOUNDING_MODE,                  /* 0x87 */
 
+    /** Fixed rate setting used in UL Trigger
+     * The top nibble is used to select which format to use for encoding
+     * the rate specification: 0xVXXXXXXX, V must be 1 for the UL
+     * format.
+     * If V == 0b0001: format is: 0x1000RRRR.
+     *                 This will be output of WMI_ASSEMBLE_RATECODE_V1
+     *
+     * This parameter controls the UL OFDMA and UL MU-MIMO vdev fixed rate.
+     */
+    WMI_VDEV_PARAM_UL_FIXED_RATE,                         /* 0x88 */
+
+    /**
+     * Uplink MU-MIMO & OFDMA GI configuration used in UL Trigger
+     * 11AX: GI =
+     *     WMI_GI_400_NS, WMI_GI_800_NS, WMI_GI_1600_NS, or WMI_GI_3200_NS
+     * 11N: SGI=WMI_GI_400_NS
+     */
+    WMI_VDEV_PARAM_UL_GI,                                 /* 0x89 */
+
+    /** Enable/Disable LDPC in UL Trigger */
+    WMI_VDEV_PARAM_UL_LDPC,                               /* 0x8A */
+
+    /** Max NSS allowed in UL Trigger */
+    WMI_VDEV_PARAM_UL_NSS,                                /* 0x8B */
+
+    /** Enable/Disable STBC in UL Trigger */
+    WMI_VDEV_PARAM_UL_STBC,                               /* 0x8C */
+
+    /** specify the HE LTF setting that should be used for fixed rate
+     * uplink transmissions.
+     *
+     * Expects values of WMI_HE_LTF_DEFAULT, WMI_HE_LTF_1X, WMI_HE_LTF_2X,
+     * or WMI_HE_LTF_4X.
+     */
+    WMI_VDEV_PARAM_UL_HE_LTF,                             /* 0x8D */
+
+    /** Uplink OFDMA PPDU bandwidth (0: 20MHz, 1: 40MHz, 2: 80Mhz, 3: 160MHz)*/
+    WMI_VDEV_PARAM_UL_PPDU_BW,                            /* 0x8E */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
@@ -9936,6 +9981,15 @@ typedef struct {
 #define WMI_PEER_PARAM_OFDMA_ENABLE                     0x19
 /* Per peer 11ax/11ac MU enable or disable */
 #define WMI_PEER_PARAM_MU_ENABLE                        0x1a
+/** Set peer fixed rate used in UL Trigger
+ * The top nibble is used to select which format to use for encoding
+ * the rate specification: 0xVXXXXXXX, V must be 1 for this parameter.
+ * If V == 0b0001: format is: 0x1000RRRR.
+ *                 This will be output of WMI_ASSEMBLE_RATECODE_V1
+ *
+ * This parameter controls the UL OFDMA and UL MU-MIMO peer fixed rate.
+ */
+#define WMI_PEER_PARAM_UL_FIXED_RATE                    0x1b
 
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
