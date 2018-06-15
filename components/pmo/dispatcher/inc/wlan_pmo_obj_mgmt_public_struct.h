@@ -61,6 +61,11 @@ typedef QDF_STATUS (*pmo_get_beacon_interval)(uint8_t vdev_id, uint16_t *value);
 typedef  uint16_t(*pmo_get_pause_bitmap)(uint8_t vdev_id);
 
 /**
+ * typedef for getting vdev datapath handle
+ */
+typedef struct cdp_vdev * (*pmo_get_vdev_dp_handle)(uint8_t vdev_id);
+
+/**
  * typedef to know is deviec is in power save mode
  */
 typedef  bool (*pmo_is_device_in_low_pwr_mode)(uint8_t vdev_id);

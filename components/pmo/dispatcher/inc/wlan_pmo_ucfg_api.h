@@ -456,16 +456,6 @@ void pmo_ucfg_psoc_update_dp_handle(struct wlan_objmgr_psoc *psoc,
 	void *dp_hdl);
 
 /**
- * pmo_ucfg_vdev_update_dp_handle() - update vdev data path handle
- * @vdev: objmgr vdev handle
- * @dp_hdl: vdev data path handle
- *
- * Return: None
- */
-void pmo_ucfg_vdev_update_dp_handle(struct wlan_objmgr_vdev *vdev,
-	void *dp_hdl);
-
-/**
  * pmo_ucfg_psoc_update_htc_handle() - update psoc htc layer handle
  * @psoc: objmgr psoc handle
  * @htc_handle: psoc host-to-tagret layer (htc) handle

@@ -3532,6 +3532,8 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		wma_vdev_update_pause_bitmap);
 	pmo_register_get_pause_bitmap(wma_handle->psoc,
 		wma_vdev_get_pause_bitmap);
+	pmo_register_get_vdev_dp_handle(wma_handle->psoc,
+					wma_vdev_get_vdev_dp_handle);
 	pmo_register_is_device_in_low_pwr_mode(wma_handle->psoc,
 		wma_vdev_is_device_in_low_pwr_mode);
 	pmo_register_get_cfg_int_callback(wma_handle->psoc,
@@ -4723,6 +4725,7 @@ QDF_STATUS wma_close(void)
 	pmo_unregister_is_device_in_low_pwr_mode(wma_handle->psoc);
 	pmo_unregister_get_pause_bitmap(wma_handle->psoc);
 	pmo_unregister_pause_bitmap_notifier(wma_handle->psoc);
+	pmo_unregister_get_vdev_dp_handle(wma_handle->psoc);
 
 	target_if_free_psoc_tgt_info(wma_handle->psoc);
 

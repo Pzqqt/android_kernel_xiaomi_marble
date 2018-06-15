@@ -215,40 +215,25 @@ static inline void *pmo_core_psoc_get_dp_handle(struct wlan_objmgr_psoc *psoc)
 }
 
 /**
- * pmo_core_vdev_update_dp_handle() - update vdev data path handle
- * @vdev: objmgr vdev handle
- * @dp_hdl: Vdev data path handle
- *
- * Return: None
- */
-static inline
-void pmo_core_vdev_update_dp_handle(struct wlan_objmgr_vdev *vdev,
-	void *dp_hdl)
-{
-	struct pmo_vdev_priv_obj *vdev_ctx;
-
-	vdev_ctx = pmo_vdev_get_priv(vdev);
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	vdev_ctx->vdev_dp_hdl = dp_hdl;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-}
-
-/**
  * pmo_core_vdev_get_dp_handle() - Get vdev data path handle
- * @vdev: objmgr vdev handle
+ * @psoc_ctx: pmo psoc private context
+ * @vdev_id: vdev id config to get data path handle
  *
  * Return: Vdev data path handle
  */
 static inline
-void *pmo_core_vdev_get_dp_handle(struct wlan_objmgr_vdev *vdev)
+struct cdp_vdev *pmo_core_vdev_get_dp_handle(struct pmo_psoc_priv_obj *psoc_ctx,
+					     uint8_t vdev_id)
 {
-	void *dp_hdl;
-	struct pmo_vdev_priv_obj *vdev_ctx;
+	struct cdp_vdev *dp_hdl = NULL;
+	pmo_get_vdev_dp_handle handler;
 
-	vdev_ctx = pmo_vdev_get_priv(vdev);
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	dp_hdl = vdev_ctx->vdev_dp_hdl;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	qdf_spin_lock_bh(&psoc_ctx->lock);
+	handler = psoc_ctx->get_vdev_dp_handle;
+	qdf_spin_unlock_bh(&psoc_ctx->lock);
+
+	if (handler)
+		dp_hdl = handler(vdev_id);
 
 	return dp_hdl;
 }
