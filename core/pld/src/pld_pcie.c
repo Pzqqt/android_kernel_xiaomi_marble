@@ -698,7 +698,15 @@ int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info)
 	if (ret)
 		return ret;
 
-	memcpy(info, &cnss_info, sizeof(*info));
+	info->v_addr = cnss_info.va;
+	info->p_addr = cnss_info.pa;
+	info->chip_id = cnss_info.chip_id;
+	info->chip_family = cnss_info.chip_family;
+	info->board_id = cnss_info.board_id;
+	info->soc_id = cnss_info.soc_id;
+	info->fw_version = cnss_info.fw_version;
+	strlcpy(info->fw_build_timestamp, cnss_info.fw_build_timestamp,
+		sizeof(info->fw_build_timestamp));
 
 	return 0;
 }
