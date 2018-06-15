@@ -21412,6 +21412,11 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 	if (err)
 		return err;
 
+	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
+		hdd_err("Driver Modules are closed");
+		return -EINVAL;
+	}
+
 	err = wlan_cfg80211_nla_parse(tb, WLAN_HDD_TM_ATTR_MAX, data,
 				      len, wlan_hdd_tm_policy);
 	if (err) {
@@ -21481,6 +21486,12 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 #if  defined(QCA_WIFI_FTM)
 	case WLAN_HDD_TM_CMD_WLAN_FTM:
 	{
+		if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam()) {
+			hdd_err("Command not allowed in FTM mode, mode %d",
+				hdd_get_conparam());
+			return -EINVAL;
+		}
+
 		err = wlan_cfg80211_ftm_testmode_cmd(hdd_ctx->hdd_pdev,
 						     data, len);
 		break;
