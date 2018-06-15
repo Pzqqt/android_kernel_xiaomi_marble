@@ -1903,7 +1903,13 @@ wlan_ipa_uc_proc_pending_event(struct wlan_ipa_priv *ipa_ctx, bool is_loading)
 	qdf_list_remove_front(&ipa_ctx->pending_event,
 			(qdf_list_node_t **)&pending_event);
 	while (pending_event != NULL) {
-		if (pending_event->is_loading == is_loading) {
+		struct wlan_objmgr_pdev *pdev = ipa_ctx->pdev;
+		struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+		struct wlan_objmgr_vdev *vdev =
+				wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+					pending_event->session_id,
+					WLAN_IPA_ID);
+		if (pending_event->is_loading == is_loading && vdev) {
 			__wlan_ipa_wlan_evt(pending_event->net_dev,
 					   pending_event->device_mode,
 					   pending_event->sta_id,
@@ -1911,6 +1917,9 @@ wlan_ipa_uc_proc_pending_event(struct wlan_ipa_priv *ipa_ctx, bool is_loading)
 					   pending_event->type,
 					   pending_event->mac_addr);
 		}
+
+		if (vdev)
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_IPA_ID);
 		qdf_mem_free(pending_event);
 		pending_event = NULL;
 		qdf_list_remove_front(&ipa_ctx->pending_event,
