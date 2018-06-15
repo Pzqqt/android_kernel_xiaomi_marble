@@ -658,11 +658,13 @@ void ol_txrx_update_tx_queue_groups(
 		/* Update Credit Only */
 		goto credit_update;
 
-
+	credit += ol_txrx_distribute_group_credits(pdev, group_id,
+						   vdev_id_mask);
 	/*
 	 * membership (vdev id mask and ac mask) is not matching
 	 * TODO: ignoring ac mask for now
 	 */
+	qdf_assert(ac_mask == 0xffff);
 	group_vdev_id_mask =
 		OL_TXQ_GROUP_VDEV_ID_MASK_GET(group->membership);
 
@@ -698,6 +700,58 @@ credit_update:
 }
 #endif
 
+#if defined(FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL) && \
+	defined(FEATURE_HL_DBS_GROUP_CREDIT_SHARING)
+#define MIN_INIT_GROUP_CREDITS	10
+int ol_txrx_distribute_group_credits(struct ol_txrx_pdev_t *pdev,
+				     u8 group_id,
+				     u32 vdevid_mask_new)
+{
+	struct ol_tx_queue_group_t *grp = &pdev->txq_grps[group_id];
+	struct ol_tx_queue_group_t *grp_nxt = &pdev->txq_grps[!group_id];
+	int creds_nxt = qdf_atomic_read(&grp_nxt->credit);
+	int vdevid_mask = OL_TXQ_GROUP_VDEV_ID_MASK_GET(grp->membership);
+	int vdevid_mask_othgrp =
+		OL_TXQ_GROUP_VDEV_ID_MASK_GET(grp_nxt->membership);
+	int creds_distribute = 0;
+
+	/* if vdev added to the group is the first vdev */
+	if ((vdevid_mask == 0) && (vdevid_mask_new != 0)) {
+		/* if other group has members */
+		if (vdevid_mask_othgrp) {
+			if (creds_nxt < MIN_INIT_GROUP_CREDITS)
+				creds_distribute = creds_nxt / 2;
+			else
+				creds_distribute = MIN_INIT_GROUP_CREDITS;
+
+			ol_txrx_update_group_credit(grp_nxt, -creds_distribute,
+						    0);
+		} else {
+			/*
+			 * Other grp has no members, give all credits to this
+			 * grp.
+			 */
+			creds_distribute =
+				qdf_atomic_read(&pdev->target_tx_credit);
+		}
+	/* if all vdevs are removed from this grp */
+	} else if ((vdevid_mask != 0) && (vdevid_mask_new == 0)) {
+		if (vdevid_mask_othgrp)
+			/* Transfer credits to other grp */
+			ol_txrx_update_group_credit(grp_nxt,
+						    qdf_atomic_read(&grp->
+						    credit),
+						    0);
+		/* Set current grp credits to zero */
+		ol_txrx_update_group_credit(grp, 0, 1);
+	}
+
+	return creds_distribute;
+}
+#endif /*
+	* FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL &&
+	* FEATURE_HL_DBS_GROUP_CREDIT_SHARING
+	*/
 #if defined(CONFIG_HL_SUPPORT) && defined(CONFIG_PER_VDEV_TX_DESC_POOL)
 
 /**

@@ -687,4 +687,19 @@ ol_tx_get_max_tx_groups_supported(struct ol_txrx_pdev_t *pdev)
 }
 #endif
 
+#if defined(FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL) && \
+	defined(FEATURE_HL_DBS_GROUP_CREDIT_SHARING)
+int ol_txrx_distribute_group_credits(struct ol_txrx_pdev_t *pdev, u8 group_id,
+				     u32 membership_new);
+#else
+static inline int ol_txrx_distribute_group_credits(struct ol_txrx_pdev_t *pdev,
+						   u8 group_id,
+						   u32 membership_new)
+{
+	return 0;
+}
+#endif /*
+	* FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL &&
+	* FEATURE_HL_DBS_GROUP_CREDIT_SHARING
+	*/
 #endif /* _OL_TXRX_HTT_API__H_ */
