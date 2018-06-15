@@ -488,7 +488,7 @@ static int32_t scm_calculate_congestion_score(
 		score_params->rssi_score.good_rssi_threshold * (-1);
 
 	/* For bad zone rssi get score from last index */
-	if (entry->rssi_raw < good_rssi_threshold)
+	if (entry->rssi_raw <= good_rssi_threshold)
 		return scm_get_score_for_index(
 				score_params->esp_qbss_scoring.num_slot,
 				score_params->weight_cfg.
