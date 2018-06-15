@@ -799,7 +799,7 @@ static bool policy_mgr_is_restart_sap_allowed(
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) &&
 		((policy_mgr_get_concurrency_mode(psoc) & sta_go_bit_mask)
 			== sta_go_bit_mask)))) {
-		policy_mgr_err("MCC switch disabled or not concurrent STA/SAP, STA/GO");
+		policy_mgr_debug("MCC switch disabled or not concurrent STA/SAP, STA/GO");
 		return false;
 	}
 
