@@ -3554,6 +3554,26 @@ static void lim_update_vht_oper_assoc_resp(tpAniSirGlobal mac_ctx,
 	pe_debug("Updating VHT Operation in assoc Response");
 }
 
+#ifdef WLAN_SUPPORT_TWT
+/**
+ * lim_set_sta_ctx_twt() - Save the TWT settings in STA context
+ * @sta_ctx: Pointer to Station Context
+ * @session: Pointer to PE session
+ *
+ * Return: None
+ */
+static void lim_set_sta_ctx_twt(tAddStaParams *sta_ctx, tpPESession session)
+{
+	sta_ctx->twt_requestor = session->peer_twt_requestor;
+	sta_ctx->twt_responder = session->peer_twt_responder;
+}
+#else
+static inline void lim_set_sta_ctx_twt(tAddStaParams *sta_ctx,
+				       tpPESession session)
+{
+}
+#endif
+
 /**
  * limSendAddBss()
  *
@@ -4098,6 +4118,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 		pAddBssParams->ch_width = CH_WIDTH_10MHZ;
 		pAddBssParams->staContext.ch_width = CH_WIDTH_10MHZ;
 	}
+	lim_set_sta_ctx_twt(&pAddBssParams->staContext, psessionEntry);
 
 	msgQ.type = WMA_ADD_BSS_REQ;
 	/** @ToDo : Update the Global counter to keeptrack of the PE <--> HAL messages*/

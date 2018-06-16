@@ -30,11 +30,26 @@
  * Return: None
  */
 void wma_send_twt_enable_cmd(uint32_t pdev_id, uint32_t congestion_timeout);
+
+/**
+ * wma_set_twt_peer_caps() - Fill the peer TWT capabilities
+ * @params: STA context params which will store the capabilities
+ * @cmd: Command in which the capabilities should be populated
+ *
+ * Return: None
+ */
+void wma_set_twt_peer_caps(tpAddStaParams params,
+			   struct peer_assoc_params *cmd);
 #else
 static inline void wma_send_twt_enable_cmd(uint32_t pdev_id,
 					   uint32_t congestion_timeout)
 {
 	WMA_LOGD(FL("TWT not supported as WLAN_SUPPORT_TWT is disabled"));
+}
+
+static inline void wma_set_twt_peer_caps(tpAddStaParams params,
+					 struct peer_assoc_params *cmd)
+{
 }
 #endif
 

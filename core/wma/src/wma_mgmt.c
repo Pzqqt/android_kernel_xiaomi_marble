@@ -71,6 +71,7 @@
 #include <cdp_txrx_handle.h>
 #include "wma_he.h"
 #include <qdf_crypto.h>
+#include "wma_twt.h"
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -1373,6 +1374,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 		break;
 	}
 
+	wma_set_twt_peer_caps(params, cmd);
 #ifdef FEATURE_WLAN_TDLS
 	if (STA_ENTRY_TDLS_PEER == params->staType)
 		cmd->peer_flags |= WMI_PEER_AUTH;

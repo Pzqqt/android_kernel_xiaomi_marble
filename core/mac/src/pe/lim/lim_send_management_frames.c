@@ -1955,6 +1955,14 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			lim_merge_extcap_struct(&frm->ExtCap, &bcn_ext_cap,
 							false);
 		}
+		/*
+		 * TWT extended capabilities should be populated after the
+		 * intersection of beacon caps and self caps is done because
+		 * the bits for TWT are unique to STA and AP and cannot be
+		 * intersected.
+		 */
+		populate_dot11f_twt_extended_caps(mac_ctx, pe_session,
+						  &frm->ExtCap);
 	}
 
 	if (eSIR_SUCCESS != lim_strip_supp_op_class_update_struct(mac_ctx,

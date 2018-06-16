@@ -454,6 +454,7 @@ static void lim_update_stads_ext_cap(tpAniSirGlobal mac_ctx,
 		ext_cap->tdls_prohibited,
 		ext_cap->tdls_chan_swit_prohibited);
 #endif
+	lim_set_peer_twt_cap(session_entry, ext_cap);
 }
 
 /**

@@ -1215,10 +1215,6 @@ populate_dot11f_ext_cap(tpAniSirGlobal pMac,
 	if (psessionEntry && psessionEntry->enable_bcast_probe_rsp)
 		p_ext_cap->fils_capability = 1;
 
-	if (psessionEntry)
-		populate_dot11f_twt_extended_caps(pMac, psessionEntry,
-						  p_ext_cap);
-
 	/* Need to calculate the num_bytes based on bits set */
 	if (pDot11f->present)
 		pDot11f->num_bytes = lim_compute_ext_cap_ie_length(pDot11f);
@@ -6411,10 +6407,14 @@ QDF_STATUS populate_dot11f_he_bss_color_change(tpAniSirGlobal mac_ctx,
 #ifdef WLAN_SUPPORT_TWT
 tSirRetStatus populate_dot11f_twt_extended_caps(tpAniSirGlobal mac_ctx,
 						tpPESession pe_session,
-						struct s_ext_cap *p_ext_cap)
+						tDot11fIEExtCap *dot11f)
 {
 	uint32_t value = 0;
 	tSirRetStatus status;
+	struct s_ext_cap *p_ext_cap;
+
+	dot11f->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
+	p_ext_cap = (struct s_ext_cap *)dot11f->bytes;
 
 	if (pe_session->pePersona == QDF_STA_MODE) {
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_TWT_REQUESTOR, value);
@@ -6424,6 +6424,7 @@ tSirRetStatus populate_dot11f_twt_extended_caps(tpAniSirGlobal mac_ctx,
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_TWT_RESPONDER, value);
 		p_ext_cap->twt_responder_support = value;
 	}
+	dot11f->num_bytes = lim_compute_ext_cap_ie_length(dot11f);
 
 	return status;
 }

@@ -309,6 +309,10 @@ typedef struct {
 #endif
 	uint8_t stbc_capable;
 	uint8_t max_amsdu_num;
+#ifdef WLAN_SUPPORT_TWT
+	uint8_t twt_requestor;
+	uint8_t twt_responder;
+#endif
 } tAddStaParams, *tpAddStaParams;
 
 /**

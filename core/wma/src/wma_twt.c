@@ -72,3 +72,11 @@ int wma_twt_en_complete_event_handler(void *handle,
 	return status;
 }
 
+void wma_set_twt_peer_caps(tpAddStaParams params, struct peer_assoc_params *cmd)
+{
+	if (params->twt_requestor)
+		cmd->peer_flags |= WMI_PEER_TWT_REQ;
+	if (params->twt_responder)
+		cmd->peer_flags |= WMI_PEER_TWT_RESP;
+}
+

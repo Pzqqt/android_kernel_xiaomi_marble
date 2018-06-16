@@ -6308,6 +6308,18 @@ void lim_set_stads_rtt_cap(tpDphHashNode sta_ds, struct s_ext_cap *ext_cap,
 	    ext_cap->fine_time_meas_responder);
 }
 
+#ifdef WLAN_SUPPORT_TWT
+void lim_set_peer_twt_cap(tpPESession session, struct s_ext_cap *ext_cap)
+{
+	session->peer_twt_requestor = ext_cap->twt_requestor_support;
+	session->peer_twt_responder = ext_cap->twt_responder_support;
+
+	pe_debug("Ext Cap peer TWT requestor: %d, responder: %d",
+		 ext_cap->twt_requestor_support,
+		 ext_cap->twt_responder_support);
+}
+#endif
+
 /**
  * lim_send_ie() - sends IE to wma
  * @mac_ctx: global MAC context

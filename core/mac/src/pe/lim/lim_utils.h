@@ -1413,4 +1413,13 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 void lim_enable_obss_detection_config(tpAniSirGlobal mac_ctx,
 				      tpPESession session);
 
+#ifdef WLAN_SUPPORT_TWT
+void lim_set_peer_twt_cap(tpPESession session, struct s_ext_cap *ext_cap);
+#else
+static inline void lim_set_peer_twt_cap(tpPESession session,
+					struct s_ext_cap *ext_cap)
+{
+}
+#endif
+
 #endif /* __LIM_UTILS_H */

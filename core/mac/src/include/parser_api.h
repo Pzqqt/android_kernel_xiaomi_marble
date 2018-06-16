@@ -1215,7 +1215,7 @@ static inline QDF_STATUS populate_dot11f_he_bss_color_change(
  * populate_dot11f_twt_extended_caps() - populate TWT extended capabilities
  * @mac_ctx: Global MAC context.
  * @pe_session: Pointer to the PE session.
- * @p_ext_cap: Pointer to the extended capabilities of the session.
+ * @dot11f: Pointer to the extended capabilities of the session.
  *
  * Populate the TWT extended capabilities based on the target and INI support.
  *
@@ -1223,12 +1223,12 @@ static inline QDF_STATUS populate_dot11f_he_bss_color_change(
  */
 tSirRetStatus populate_dot11f_twt_extended_caps(tpAniSirGlobal mac_ctx,
 						tpPESession pe_session,
-						struct s_ext_cap *p_ext_cap);
+						tDot11fIEExtCap *dot11f);
 #else
 static inline tSirRetStatus
 populate_dot11f_twt_extended_caps(tpAniSirGlobal mac_ctx,
 				  tpPESession pe_session,
-				  struct s_ext_cap *p_ext_cap)
+				  tDot11fIEExtCap *dot11f)
 {
 	return QDF_STATUS_SUCCESS;
 }
