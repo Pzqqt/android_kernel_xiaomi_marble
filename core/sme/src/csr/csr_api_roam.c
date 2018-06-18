@@ -1637,8 +1637,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.nActiveMaxChnTime = CSR_ACTIVE_MAX_CHANNEL_TIME;
 	pMac->roam.configParam.nPassiveMaxChnTime =
 		CSR_PASSIVE_MAX_CHANNEL_TIME;
-	pMac->roam.configParam.nPassiveMinChnTime =
-		CSR_PASSIVE_MIN_CHANNEL_TIME;
 	pMac->roam.configParam.nActiveMaxChnTimeConc =
 		CSR_ACTIVE_MAX_CHANNEL_TIME_CONC;
 	pMac->roam.configParam.nActiveMinChnTimeConc =
@@ -2784,12 +2782,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			cfg_set_int(pMac, WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
 				    pParam->nPassiveMaxChnTime);
 		}
-		if (pParam->nPassiveMinChnTime) {
-			pMac->roam.configParam.nPassiveMinChnTime =
-				pParam->nPassiveMinChnTime;
-			cfg_set_int(pMac, WNI_CFG_PASSIVE_MINIMUM_CHANNEL_TIME,
-				    pParam->nPassiveMinChnTime);
-		}
 		if (pParam->nActiveMaxChnTimeConc) {
 			pMac->roam.configParam.nActiveMaxChnTimeConc =
 				pParam->nActiveMaxChnTimeConc;
@@ -3303,7 +3295,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->bandCapability = cfg_params->bandCapability;
 	pParam->nActiveMaxChnTime = cfg_params->nActiveMaxChnTime;
 	pParam->nPassiveMaxChnTime = cfg_params->nPassiveMaxChnTime;
-	pParam->nPassiveMinChnTime = cfg_params->nPassiveMinChnTime;
 	pParam->nActiveMaxChnTimeConc = cfg_params->nActiveMaxChnTimeConc;
 	pParam->nActiveMinChnTimeConc = cfg_params->nActiveMinChnTimeConc;
 	pParam->nPassiveMaxChnTimeConc = cfg_params->nPassiveMaxChnTimeConc;

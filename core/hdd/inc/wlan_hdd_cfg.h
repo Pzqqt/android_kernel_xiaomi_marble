@@ -816,29 +816,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gPassiveMinChannelTime - Set min channel time for passive scan
- * @Min: 0
- * @Max: 10000
- * @Default: 60
- *
- * This ini is used to set minimum channel time in secs spent in
- * passive scan
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_PASSIVE_MIN_CHANNEL_TIME_NAME      "gPassiveMinChannelTime"
-#define CFG_PASSIVE_MIN_CHANNEL_TIME_MIN       (0)
-#define CFG_PASSIVE_MIN_CHANNEL_TIME_MAX       (10000)
-#define CFG_PASSIVE_MIN_CHANNEL_TIME_DEFAULT   (60)
-
-/*
- * <ini>
  * gActiveMaxChannelTime - Set max channel time for active scan
  * @Min: 0
  * @Max: 10000
@@ -14343,8 +14320,6 @@ struct hdd_config {
 	/* Additional Handoff params */
 	uint16_t nVccRssiTrigger;
 	uint32_t nVccUlMacLossThreshold;
-
-	uint32_t nPassiveMinChnTime;    /* in units of milliseconds */
 	uint32_t nPassiveMaxChnTime;    /* in units of milliseconds */
 	uint32_t nActiveMaxChnTime;     /* in units of milliseconds */
 	uint32_t scan_probe_repeat_time;

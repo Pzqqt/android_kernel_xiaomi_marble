@@ -329,17 +329,6 @@ NONE
 V    RW    NP
 NONE
 0    65535    40
-*
-* Minimum Channel Time (TU)
-*
-
-WNI_CFG_PASSIVE_MINIMUM_CHANNEL_TIME    I    4    9
-V    RW    NP
-NONE
-0    65535  60
-V    RW    NP
-NONE
-0    65535  60
 
 *
 * Maximum Channel Time (TU)

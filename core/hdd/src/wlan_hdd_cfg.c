@@ -700,13 +700,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_PASSIVE_MAX_CHANNEL_TIME_MIN,
 		     CFG_PASSIVE_MAX_CHANNEL_TIME_MAX),
 
-	REG_VARIABLE(CFG_PASSIVE_MIN_CHANNEL_TIME_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nPassiveMinChnTime,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PASSIVE_MIN_CHANNEL_TIME_DEFAULT,
-		     CFG_PASSIVE_MIN_CHANNEL_TIME_MIN,
-		     CFG_PASSIVE_MIN_CHANNEL_TIME_MAX),
-
 	REG_VARIABLE(CFG_ACTIVE_MAX_CHANNEL_TIME_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nActiveMaxChnTime,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -8124,14 +8117,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 	}
 
 	if (sme_cfg_set_int(mac_handle,
-				WNI_CFG_PASSIVE_MINIMUM_CHANNEL_TIME,
-				config->nPassiveMinChnTime)
-				== QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_PASSIVE_MINIMUM_CHANNEL_TIME to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle,
 				WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
 				config->nPassiveMaxChnTime)
 				== QDF_STATUS_E_FAILURE) {
@@ -8710,7 +8695,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 					pConfig->initial_scan_no_dfs_chnl;
 	smeConfig->csrConfig.nActiveMaxChnTime = pConfig->nActiveMaxChnTime;
 	smeConfig->csrConfig.nPassiveMaxChnTime = pConfig->nPassiveMaxChnTime;
-	smeConfig->csrConfig.nPassiveMinChnTime = pConfig->nPassiveMinChnTime;
 	smeConfig->csrConfig.nActiveMaxChnTimeConc =
 		pConfig->nActiveMaxChnTimeConc;
 	smeConfig->csrConfig.nActiveMinChnTimeConc =
