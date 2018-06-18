@@ -527,7 +527,7 @@ static void wifi_pos_get_ch_info(struct wlan_objmgr_psoc *psoc,
 				 struct wifi_pos_driver_caps *caps)
 {
 	uint32_t i, num_ch = 0;
-	struct regulatory_channel ch_lst[NUM_CHANNELS];
+	struct regulatory_channel ch_lst[NUM_CHANNELS] = {{0}};
 
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
 				     wifi_pos_pdev_iterator,
