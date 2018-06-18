@@ -1413,16 +1413,19 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 		WMA_LOGE("%s: Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
 			__func__, bssid, vdev_id,
 			wma->interfaces[vdev_id].peer_count);
+		QDF_BUG(0);
 		return;
 	}
 
 	if (!soc) {
 		WMA_LOGE("%s:SOC context is NULL", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
 	if (!peer) {
 		WMA_LOGE("%s: PEER is NULL for vdev_id: %d", __func__, vdev_id);
+		QDF_BUG(0);
 		return;
 	}
 
@@ -1431,6 +1434,7 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 		WMA_LOGE("%s: peer mac addr is NULL, Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
 			 __func__, bssid, vdev_id,
 			 wma->interfaces[vdev_id].peer_count);
+		QDF_BUG(0);
 		return;
 	}
 
