@@ -75,14 +75,13 @@ target_if_spectral_get_vdev(struct target_if_spectral *spectral)
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_SPECTRAL_ID);
 
+	if (!first_vdev)
+		return NULL;
+
 	if (wlan_objmgr_vdev_try_get_ref(first_vdev, WLAN_SPECTRAL_ID) !=
 			QDF_STATUS_SUCCESS)
 		first_vdev = NULL;
 
-	if (!first_vdev) {
-		spectral_warn("Unable to get first vdev of pdev.");
-		return NULL;
-	}
 
 	return first_vdev;
 }
