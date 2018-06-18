@@ -367,6 +367,20 @@ void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer);
 qdf_time_t *dp_get_last_assoc_received(void *peer_handle);
 qdf_time_t *dp_get_last_disassoc_received(void *peer_handle);
 qdf_time_t *dp_get_last_deauth_received(void *peer_handle);
+#else
+static inline void dp_local_peer_id_pool_init(struct dp_pdev *pdev)
+{
+}
+
+static inline
+void dp_local_peer_id_alloc(struct dp_pdev *pdev, struct dp_peer *peer)
+{
+}
+
+static inline
+void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer)
+{
+}
 #endif
 extern int dp_addba_requestprocess_wifi3(void *peer_handle,
 	uint8_t dialogtoken, uint16_t tid, uint16_t batimeout,

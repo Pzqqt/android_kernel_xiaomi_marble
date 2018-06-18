@@ -2758,10 +2758,8 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	pdev->mo_ctrl_filter = FILTER_CTRL_ALL;
 	pdev->mo_data_filter = FILTER_DATA_ALL;
 
-#ifndef CONFIG_WIN
-	/* MCL */
 	dp_local_peer_id_pool_init(pdev);
-#endif
+
 	dp_dscp_tid_map_setup(pdev);
 
 	/* Rx monitor mode specific init */
@@ -3577,9 +3575,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 				vdev->vdev_id, peer->mac_addr.raw);
 		}
 
-#ifndef CONFIG_WIN
 		dp_local_peer_id_alloc(pdev, peer);
-#endif
 		DP_STATS_INIT(peer);
 		return (void *)peer;
 	} else {
@@ -3660,9 +3656,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	}
 
 
-#ifndef CONFIG_WIN
 	dp_local_peer_id_alloc(pdev, peer);
-#endif
 	DP_STATS_INIT(peer);
 	peer->ol_peer = ol_peer;
 	return (void *)peer;
@@ -4297,9 +4291,7 @@ static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 		FL("peer %pK (%pM)"),  peer, peer->mac_addr.raw);
 
-#ifndef CONFIG_WIN
 	dp_local_peer_id_free(peer->vdev->pdev, peer);
-#endif
 	qdf_spinlock_destroy(&peer->peer_info_lock);
 
 	/*
