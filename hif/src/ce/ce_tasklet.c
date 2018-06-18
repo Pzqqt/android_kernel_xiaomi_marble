@@ -180,7 +180,7 @@ static void ce_tasklet(unsigned long data)
 
 	ce_per_engine_service(scn, tasklet_entry->ce_id);
 
-	if (ce_check_rx_pending(CE_state)) {
+	if (ce_check_rx_pending(CE_state) && tasklet_entry->inited) {
 		/*
 		 * There are frames pending, schedule tasklet to process them.
 		 * Enable the interrupt only when there is no pending frames in
@@ -237,8 +237,9 @@ void ce_tasklet_kill(struct hif_softc *scn)
 
 	for (i = 0; i < CE_COUNT_MAX; i++)
 		if (hif_ce_state->tasklets[i].inited) {
-			tasklet_kill(&hif_ce_state->tasklets[i].intr_tq);
+			tasklet_disable(&hif_ce_state->tasklets[i].intr_tq);
 			hif_ce_state->tasklets[i].inited = false;
+			tasklet_kill(&hif_ce_state->tasklets[i].intr_tq);
 		}
 	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
 }
