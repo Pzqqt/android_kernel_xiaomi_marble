@@ -16549,7 +16549,7 @@ QDF_STATUS csr_send_mb_set_context_req_msg(tpAniSirGlobal pMac,
 
 		msg.type = eWNI_SME_SETCONTEXT_REQ;
 		msg.bodyptr = pMsg;
-		status = scheduler_post_msg_by_priority(QDF_MODULE_ID_PE, &msg, true);
+		status = scheduler_post_msg(QDF_MODULE_ID_PE, &msg);
 		if (QDF_IS_STATUS_ERROR(status))
 			qdf_mem_free(pMsg);
 	} while (0);
