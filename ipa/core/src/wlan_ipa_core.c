@@ -1277,8 +1277,6 @@ static void wlan_ipa_uc_handle_last_discon(struct wlan_ipa_priv *ipa_ctx)
 	qdf_event_reset(&ipa_ctx->ipa_resource_comp);
 	ipa_info("Disable FW RX PIPE");
 	cdp_ipa_set_active(ipa_ctx->dp_soc, ipa_ctx->dp_pdev, false, false);
-	ipa_info("Disable FW TX PIPE");
-	cdp_ipa_set_active(ipa_ctx->dp_soc, ipa_ctx->dp_pdev, false, true);
 
 	ipa_debug("exit: IPA WDI Pipes deactivated");
 }
@@ -2549,6 +2547,14 @@ static void wlan_ipa_uc_op_cb(struct op_msg_type *op_msg,
 	} else if ((msg->op_code == WLAN_IPA_UC_OPCODE_TX_SUSPEND) ||
 	    (msg->op_code == WLAN_IPA_UC_OPCODE_RX_SUSPEND)) {
 		qdf_mutex_acquire(&ipa_ctx->ipa_lock);
+
+		if (msg->op_code == WLAN_IPA_UC_OPCODE_RX_SUSPEND) {
+			wlan_ipa_uc_disable_pipes(ipa_ctx);
+			ipa_info("Disable FW TX PIPE");
+			cdp_ipa_set_active(ipa_ctx->dp_soc, ipa_ctx->dp_pdev,
+					   false, true);
+		}
+
 		ipa_ctx->activated_fw_pipe--;
 		if (!ipa_ctx->activated_fw_pipe) {
 			/*
@@ -2557,7 +2563,6 @@ static void wlan_ipa_uc_op_cb(struct op_msg_type *op_msg,
 			 */
 			ipa_ctx->resource_unloading = false;
 			qdf_event_set(&ipa_ctx->ipa_resource_comp);
-			wlan_ipa_uc_disable_pipes(ipa_ctx);
 			if (wlan_ipa_is_rm_enabled(ipa_ctx->config))
 				wlan_ipa_wdi_rm_release_resource(ipa_ctx,
 						QDF_IPA_RM_RESOURCE_WLAN_PROD);
