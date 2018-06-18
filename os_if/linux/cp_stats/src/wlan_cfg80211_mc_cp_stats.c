@@ -285,6 +285,7 @@ static void get_peer_rssi_cb(struct stats_event *ev, void *cookie)
 	request = osif_request_get(cookie);
 	if (!request) {
 		cfg80211_err("Obsolete request");
+		ucfg_mc_cp_stats_free_stats_resources(ev);
 		return;
 	}
 
@@ -367,6 +368,7 @@ static void get_station_stats_cb(struct stats_event *station_info, void *cookie)
 	request = osif_request_get(cookie);
 	if (!request) {
 		cfg80211_err("Obsolete request");
+		ucfg_mc_cp_stats_free_stats_resources(station_info);
 		return;
 	}
 	priv = osif_request_priv(request);
