@@ -62,18 +62,9 @@ PEER_CP_STATS_SET_FUNCS(ps_discard);
 PEER_CP_STATS_SET_FUNCS(psq_drops);
 PEER_CP_STATS_SET_FUNCS(tx_assoc);
 PEER_CP_STATS_SET_FUNCS(tx_assoc_fail);
+PEER_CP_STATS_SET_FUNCS(is_tx_nobuf);
 #ifdef ATH_SUPPORT_IQUE
 PEER_CP_STATS_SET_FUNCS(tx_dropblock);
-#endif
-#ifdef WLAN_ATH_SUPPORT_EXT_STAT
-PEER_CP_STATS_SET_FUNCS(tx_bytes_rate);
-PEER_CP_STATS_SET_FUNCS(rx_bytes_rate);
-PEER_CP_STATS_SET_FUNCS(tx_data_rate);
-PEER_CP_STATS_SET_FUNCS(rx_data_rate);
-PEER_CP_STATS_SET_FUNCS(rx_bytes_last);
-PEER_CP_STATS_SET_FUNCS(rx_data_last);
-PEER_CP_STATS_SET_FUNCS(tx_bytes_success_last);
-PEER_CP_STATS_SET_FUNCS(tx_data_success_last);
 #endif
 
 #define PEER_CP_STATS_GET_FUNCS(field) \
@@ -302,33 +293,17 @@ static inline void vdev_cp_stats_reset(struct wlan_objmgr_vdev *vdev)
 PDEV_CP_STATS_SET_FUNCS(tx_beacon);
 PDEV_CP_STATS_SET_FUNCS(be_nobuf);
 PDEV_CP_STATS_SET_FUNCS(tx_buf_count);
-PDEV_CP_STATS_SET_FUNCS(tx_packets);
-PDEV_CP_STATS_SET_FUNCS(rx_packets);
 PDEV_CP_STATS_SET_FUNCS(tx_mgmt);
-PDEV_CP_STATS_SET_FUNCS(tx_num_data);
-PDEV_CP_STATS_SET_FUNCS(rx_num_data);
 PDEV_CP_STATS_SET_FUNCS(rx_mgmt);
 PDEV_CP_STATS_SET_FUNCS(rx_num_mgmt);
 PDEV_CP_STATS_SET_FUNCS(rx_num_ctl);
-PDEV_CP_STATS_SET_FUNCS(rx_ctrl);
-PDEV_CP_STATS_SET_FUNCS(tx_ctrl);
 PDEV_CP_STATS_SET_FUNCS(tx_rssi);
 PDEV_CP_STATS_SET_FUNCS(rx_rssi_comb);
-PDEV_CP_STATS_SET_FUNCS(rx_bytes);
-PDEV_CP_STATS_SET_FUNCS(tx_bytes);
-PDEV_CP_STATS_SET_FUNCS(tx_compaggr);
-PDEV_CP_STATS_SET_FUNCS(rx_aggr);
-PDEV_CP_STATS_SET_FUNCS(tx_bawadv);
-PDEV_CP_STATS_SET_FUNCS(tx_compunaggr);
 PDEV_CP_STATS_SET_FUNCS(rx_overrun);
-PDEV_CP_STATS_SET_FUNCS(rx_crypt_err);
-PDEV_CP_STATS_SET_FUNCS(rx_mic_err);
-PDEV_CP_STATS_SET_FUNCS(rx_crc_err);
 PDEV_CP_STATS_SET_FUNCS(rx_phy_err);
 PDEV_CP_STATS_SET_FUNCS(rx_ack_err);
 PDEV_CP_STATS_SET_FUNCS(rx_rts_err);
 PDEV_CP_STATS_SET_FUNCS(rx_rts_success);
-PDEV_CP_STATS_SET_FUNCS(rx_fcs_err);
 PDEV_CP_STATS_SET_FUNCS(no_beacons);
 PDEV_CP_STATS_SET_FUNCS(mib_int_count);
 PDEV_CP_STATS_SET_FUNCS(rx_looplimit_start);
@@ -336,7 +311,6 @@ PDEV_CP_STATS_SET_FUNCS(rx_looplimit_end);
 PDEV_CP_STATS_SET_FUNCS(ap_stats_tx_cal_enable);
 PDEV_CP_STATS_SET_FUNCS(tgt_asserts);
 PDEV_CP_STATS_SET_FUNCS(chan_nf);
-PDEV_CP_STATS_SET_FUNCS(rx_last_msdu_unset_cnt);
 PDEV_CP_STATS_SET_FUNCS(chan_nf_sec80);
 PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt);
 PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt_completions);
@@ -345,7 +319,6 @@ PDEV_CP_STATS_SET_FUNCS(peer_delete_req);
 PDEV_CP_STATS_SET_FUNCS(peer_delete_resp);
 PDEV_CP_STATS_SET_FUNCS(rx_mgmt_rssi_drop);
 PDEV_CP_STATS_SET_FUNCS(tx_retries);
-PDEV_CP_STATS_SET_FUNCS(rx_data_bytes);
 PDEV_CP_STATS_SET_FUNCS(tx_frame_count);
 PDEV_CP_STATS_SET_FUNCS(rx_frame_count);
 PDEV_CP_STATS_SET_FUNCS(rx_clear_count);
@@ -369,6 +342,7 @@ PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt);
 PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt_completions);
 PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt_completion_err);
 PDEV_CP_STATS_GET_FUNCS(tgt_asserts);
+PDEV_CP_STATS_GET_FUNCS(rx_phy_err);
 
 static inline void pdev_cp_stats_reset(struct wlan_objmgr_pdev *pdev)
 {

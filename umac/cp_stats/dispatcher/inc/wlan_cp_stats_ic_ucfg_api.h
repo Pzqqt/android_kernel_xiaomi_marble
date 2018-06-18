@@ -80,33 +80,17 @@
 UCFG_PDEV_CP_STATS_SET_FUNCS(tx_beacon);
 UCFG_PDEV_CP_STATS_SET_FUNCS(be_nobuf);
 UCFG_PDEV_CP_STATS_SET_FUNCS(tx_buf_count);
-UCFG_PDEV_CP_STATS_SET_FUNCS(tx_packets);
-UCFG_PDEV_CP_STATS_SET_FUNCS(rx_packets);
 UCFG_PDEV_CP_STATS_SET_FUNCS(tx_mgmt);
-UCFG_PDEV_CP_STATS_SET_FUNCS(tx_num_data);
-UCFG_PDEV_CP_STATS_SET_FUNCS(rx_num_data);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_mgmt);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_num_mgmt);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_num_ctl);
-UCFG_PDEV_CP_STATS_SET_FUNCS(rx_ctrl);
-UCFG_PDEV_CP_STATS_SET_FUNCS(tx_ctrl);
 UCFG_PDEV_CP_STATS_SET_FUNCS(tx_rssi);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_rssi_comb);
-UCFG_PDEV_CP_STATS_SET_FUNCS(rx_bytes);
-UCFG_PDEV_CP_STATS_SET_FUNCS(tx_bytes);
-UCFG_PDEV_CP_STATS_SET_FUNCS(tx_compaggr);
-UCFG_PDEV_CP_STATS_SET_FUNCS(rx_aggr);
-UCFG_PDEV_CP_STATS_SET_FUNCS(tx_bawadv);
-UCFG_PDEV_CP_STATS_SET_FUNCS(tx_compunaggr);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_overrun);
-UCFG_PDEV_CP_STATS_SET_FUNCS(rx_crypt_err);
-UCFG_PDEV_CP_STATS_SET_FUNCS(rx_mic_err);
-UCFG_PDEV_CP_STATS_SET_FUNCS(rx_crc_err);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_phy_err);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_ack_err);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_rts_err);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_rts_success);
-UCFG_PDEV_CP_STATS_SET_FUNCS(rx_fcs_err);
 UCFG_PDEV_CP_STATS_SET_FUNCS(no_beacons);
 UCFG_PDEV_CP_STATS_SET_FUNCS(mib_int_count);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_looplimit_start);
@@ -114,7 +98,6 @@ UCFG_PDEV_CP_STATS_SET_FUNCS(rx_looplimit_end);
 UCFG_PDEV_CP_STATS_SET_FUNCS(ap_stats_tx_cal_enable);
 UCFG_PDEV_CP_STATS_SET_FUNCS(tgt_asserts);
 UCFG_PDEV_CP_STATS_SET_FUNCS(chan_nf);
-UCFG_PDEV_CP_STATS_SET_FUNCS(rx_last_msdu_unset_cnt);
 UCFG_PDEV_CP_STATS_SET_FUNCS(chan_nf_sec80);
 UCFG_PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt);
 UCFG_PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt_completions);
@@ -123,7 +106,6 @@ UCFG_PDEV_CP_STATS_SET_FUNCS(peer_delete_req);
 UCFG_PDEV_CP_STATS_SET_FUNCS(peer_delete_resp);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_mgmt_rssi_drop);
 UCFG_PDEV_CP_STATS_SET_FUNCS(tx_retries);
-UCFG_PDEV_CP_STATS_SET_FUNCS(rx_data_bytes);
 UCFG_PDEV_CP_STATS_SET_FUNCS(tx_frame_count);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_frame_count);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_clear_count);
@@ -155,6 +137,7 @@ UCFG_PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt);
 UCFG_PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt_completions);
 UCFG_PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt_completion_err);
 UCFG_PDEV_CP_STATS_GET_FUNCS(tgt_asserts);
+UCFG_PDEV_CP_STATS_GET_FUNCS(rx_phy_err);
 
 static inline void ucfg_pdev_cp_stats_reset(struct wlan_objmgr_pdev *_pdev)
 {
@@ -601,18 +584,9 @@ UCFG_PEER_CP_STATS_SET_FUNCS(ps_discard);
 UCFG_PEER_CP_STATS_SET_FUNCS(psq_drops);
 UCFG_PEER_CP_STATS_SET_FUNCS(tx_assoc);
 UCFG_PEER_CP_STATS_SET_FUNCS(tx_assoc_fail);
+UCFG_PEER_CP_STATS_SET_FUNCS(is_tx_nobuf);
 #ifdef ATH_SUPPORT_IQUE
 UCFG_PEER_CP_STATS_SET_FUNCS(tx_dropblock);
-#endif
-#ifdef WLAN_ATH_SUPPORT_EXT_STAT
-UCFG_PEER_CP_STATS_SET_FUNCS(tx_bytes_rate);
-UCFG_PEER_CP_STATS_SET_FUNCS(rx_bytes_rate);
-UCFG_PEER_CP_STATS_SET_FUNCS(tx_data_rate);
-UCFG_PEER_CP_STATS_SET_FUNCS(rx_data_rate);
-UCFG_PEER_CP_STATS_SET_FUNCS(rx_bytes_last);
-UCFG_PEER_CP_STATS_SET_FUNCS(rx_data_last);
-UCFG_PEER_CP_STATS_SET_FUNCS(tx_bytes_success_last);
-UCFG_PEER_CP_STATS_SET_FUNCS(tx_data_success_last);
 #endif
 
 static inline

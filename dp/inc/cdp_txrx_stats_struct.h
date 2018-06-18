@@ -913,34 +913,18 @@ struct ol_ath_dbg_rx_rssi {
 
 struct ol_ath_radiostats {
 	uint64_t    tx_beacon;
-	uint32_t    be_nobuf;
 	uint32_t    tx_buf_count;
-	uint32_t    tx_packets;
-	uint32_t    rx_packets;
 	int32_t     tx_mgmt;
-	uint32_t    tx_num_data;
-	uint32_t    rx_num_data;
 	int32_t     rx_mgmt;
 	uint32_t    rx_num_mgmt;
 	uint32_t    rx_num_ctl;
 	uint32_t    tx_rssi;
-	uint32_t    tx_mcs[10];
-	uint32_t    rx_mcs[10];
 	uint32_t    rx_rssi_comb;
 	struct      ol_ath_dbg_rx_rssi rx_rssi_chain0;
 	struct      ol_ath_dbg_rx_rssi rx_rssi_chain1;
 	struct      ol_ath_dbg_rx_rssi rx_rssi_chain2;
 	struct      ol_ath_dbg_rx_rssi rx_rssi_chain3;
-	uint64_t    rx_bytes;
-	uint64_t    tx_bytes;
-	uint32_t    tx_compaggr;
-	uint32_t    rx_aggr;
-	uint32_t    tx_bawadv;
-	uint32_t    tx_compunaggr;
 	uint32_t    rx_overrun;
-	uint32_t    rx_badcrypt;
-	uint32_t    rx_badmic;
-	uint32_t    rx_crcerr;
 	uint32_t    rx_phyerr;
 	uint32_t    ackRcvBad;
 	uint32_t    rtsBad;
@@ -955,7 +939,6 @@ struct ol_ath_radiostats {
 	uint8_t     obss_util;
 	uint32_t    tgt_asserts;
 	int16_t     chan_nf;
-	uint32_t    rx_last_msdu_unset_cnt;
 	int16_t     chan_nf_sec80;
 	uint64_t    wmi_tx_mgmt;
 	uint64_t    wmi_tx_mgmt_completions;
@@ -963,14 +946,31 @@ struct ol_ath_radiostats {
 	uint32_t    peer_delete_req;
 	uint32_t    peer_delete_resp;
 	uint32_t    rx_mgmt_rssi_drop;
-	uint32_t    tx_retries;
-	uint32_t    rx_data_bytes;
 	uint32_t    tx_frame_count;
 	uint32_t    rx_frame_count;
 	uint32_t    rx_clear_count;
 	uint32_t    cycle_count;
 	uint32_t    phy_err_count;
 	uint32_t    chan_tx_pwr;
+	uint32_t    be_nobuf;
+	uint32_t    tx_packets;
+	uint32_t    rx_packets;
+	uint32_t    tx_num_data;
+	uint32_t    rx_num_data;
+	uint32_t    tx_mcs[10];
+	uint32_t    rx_mcs[10];
+	uint64_t    rx_bytes;
+	uint64_t    tx_bytes;
+	uint32_t    tx_compaggr;
+	uint32_t    rx_aggr;
+	uint32_t    tx_bawadv;
+	uint32_t    tx_compunaggr;
+	uint32_t    rx_badcrypt;
+	uint32_t    rx_badmic;
+	uint32_t    rx_crcerr;
+	uint32_t    rx_last_msdu_unset_cnt;
+	uint32_t    rx_data_bytes;
+	uint32_t    tx_retries;
 };
 
 /*

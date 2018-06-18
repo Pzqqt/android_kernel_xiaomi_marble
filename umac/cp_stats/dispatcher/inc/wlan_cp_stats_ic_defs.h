@@ -62,37 +62,19 @@ struct pdev_hw_stats {
  * make sure to align this structure with ieee80211_mac_stats
  *
  * @cs_tx_beacon: tx beacon
- * @cs_be_nobuf: no skbuff available for beacon
+ * @cs_be_nobuf: tx no buf
  * @cs_tx_buf_count: tx buf count
- * @cs_tx_packets: tx packets
- * @cs_rx_packets: rx packets
  * @cs_tx_mgmt: tx mgmt
- * @cs_tx_num_data: tx data
- * @cs_rx_num_data: rx data
  * @cs_rx_mgmt: rx mgmt
  * @cs_rx_num_mgmt: rx num mgmt
  * @cs_rx_num_ctl: rx num ctrl
- * @cs_rx_ctrl: rx ctrl
- * @cs_tx_ctrl: tx ctrl
  * @cs_tx_rssi: tx rssi
- * @cs_tx_mcs[]: tx mcs
- * @cs_rx_mcs[]: rx mcs
  * @cs_rx_rssi_comb: rx rssi comb
- * @cs_rx_bytes: rx bytes
- * @cs_tx_bytes: tx bytes
- * @cs_tx_compaggr: tx comp aggr
- * @cs_rx_aggr: rx aggr
- * @cs_tx_bawadv: tx bad adv frames
- * @cs_tx_compunaggr: tx comp unaggr frames
  * @cs_rx_overrun: rx over run frames
- * @cs_rx_crypt_err: rx crypt error count
- * @cs_rx_mic_err: rx mic error count
- * @cs_rx_crc_err: rx crc error count
  * @cs_rx_phy_err: rx phy error count
  * @cs_rx_ack_err: rx ack error count
  * @cs_rx_rts_err: rx rts error count
  * @cs_rx_rts_success: rx rts success count
- * @cs_rx_fcs_err: rx fcs error count
  * @cs_no_beacons: rx beacon
  * @cs_mib_int_count: mib int count
  * @cs_rx_looplimit_start: rx loop limit start
@@ -100,7 +82,6 @@ struct pdev_hw_stats {
  * @cs_ap_stats_tx_cal_enable: ap stats tx cal enable status
  * @cs_tgt_asserts: tgt assert count
  * @cs_chan_nf: channel noise floor
- * @cs_rx_last_msdu_unset_cnt: rx last msdu unset count
  * @cs_chan_nf_sec80: channel noise floor secondary 80
  * @cs_wmi_tx_mgmt: wmi tx mgmt
  * @cs_wmi_tx_mgmt_completions: wmi tx mgmt complete
@@ -109,7 +90,6 @@ struct pdev_hw_stats {
  * @cs_peer_delete_resp: peer del response
  * @cs_rx_mgmt_rssi_drop: rx mgmt rssi drop
  * @cs_tx_retries: tx retries
- * @cs_rx_data_bytes: rx data bytes
  * @cs_tx_frame_count: tx frame count
  * @cs_rx_frame_count: rx frame count
  * @cs_rx_clear_count: rx clear count
@@ -121,39 +101,21 @@ struct pdev_80211_stats {
 	uint64_t cs_tx_beacon;
 	uint32_t cs_be_nobuf;
 	uint32_t cs_tx_buf_count;
-	uint32_t cs_tx_packets;
-	uint32_t cs_rx_packets;
 	uint32_t cs_tx_mgmt;
-	uint32_t cs_tx_num_data;
-	uint32_t cs_rx_num_data;
 	uint32_t cs_rx_mgmt;
 	uint32_t cs_rx_num_mgmt;
 	uint32_t cs_rx_num_ctl;
-	uint64_t cs_rx_ctrl;
-	uint64_t cs_tx_ctrl;
 	uint32_t cs_tx_rssi;
-	uint32_t cs_tx_mcs[10];
-	uint32_t cs_rx_mcs[10];
 	uint32_t cs_rx_rssi_comb;
 	struct pdev_rx_rssi cs_rx_rssi_chain0;
 	struct pdev_rx_rssi cs_rx_rssi_chain1;
 	struct pdev_rx_rssi cs_rx_rssi_chain2;
 	struct pdev_rx_rssi cs_rx_rssi_chain3;
-	uint64_t cs_rx_bytes;
-	uint64_t cs_tx_bytes;
-	uint32_t cs_tx_compaggr;
-	uint32_t cs_rx_aggr;
-	uint32_t cs_tx_bawadv;
-	uint32_t cs_tx_compunaggr;
 	uint32_t cs_rx_overrun;
-	uint32_t cs_rx_crypt_err;
-	uint32_t cs_rx_mic_err;
-	uint32_t cs_rx_crc_err;
 	uint32_t cs_rx_phy_err;
 	uint32_t cs_rx_ack_err;
 	uint32_t cs_rx_rts_err;
 	uint32_t cs_rx_rts_success;
-	uint32_t cs_rx_fcs_err;
 	uint32_t cs_no_beacons;
 	uint32_t cs_mib_int_count;
 	uint32_t cs_rx_looplimit_start;
@@ -163,7 +125,6 @@ struct pdev_80211_stats {
 	uint8_t  cs_obss_util;
 	uint32_t cs_tgt_asserts;
 	int16_t  cs_chan_nf;
-	uint32_t cs_rx_last_msdu_unset_cnt;
 	int16_t  cs_chan_nf_sec80;
 	uint64_t cs_wmi_tx_mgmt;
 	uint64_t cs_wmi_tx_mgmt_completions;
@@ -172,7 +133,6 @@ struct pdev_80211_stats {
 	uint32_t cs_peer_delete_resp;
 	uint32_t cs_rx_mgmt_rssi_drop;
 	uint32_t cs_tx_retries;
-	uint32_t cs_rx_data_bytes;
 	uint32_t cs_tx_frame_count;
 	uint32_t cs_rx_frame_count;
 	uint32_t cs_rx_clear_count;
@@ -418,7 +378,6 @@ struct vdev_80211_stats {
  * @cs_rx_wpireplay: rx wpi replay
  * @cs_rx_wpimic: rx wpi mic failures
  * @cs_rx_countermeasure: rx counter measures count
- * @cs_retries: rx retries
  * @cs_tx_mgmt: tx mgmt
  * @cs_rx_mgmt: rx mgmt
  */
@@ -435,7 +394,6 @@ struct vdev_80211_mac_stats {
 	uint64_t cs_rx_wpireplay;
 	uint64_t cs_rx_wpimic;
 	uint64_t cs_rx_countermeasure;
-	uint64_t cs_retries;
 	uint64_t cs_tx_mgmt;
 	uint64_t cs_rx_mgmt;
 };
@@ -470,14 +428,6 @@ struct vdev_ic_cp_stats {
  *  @cs_is_tx_not_ok: tx failures
  *  @cs_ps_discard: ps discard
  *  @cs_rx_mgmt_rate: rx mgmt rate
- *  @cs_tx_bytes_rate: tx rate
- *  @cs_tx_data_rate: tx data rate
- *  @cs_rx_bytes_rate: rx rate
- *  @cs_rx_data_rate: rx data rate
- *  @cs_tx_bytes_success_last: tx success count in last 1 sec
- *  @cs_tx_data_success_last: tx data success count in last 1 sec
- *  @cs_rx_bytes_last: rx rate
- *  @cs_rx_data_last: rx data rate
  *  @cs_psq_drops: psq drops
  *  @cs_tx_dropblock: tx dropblock
  *  @cs_tx_assoc: tx assoc success
@@ -495,22 +445,13 @@ struct peer_ic_cp_stats {
 	uint32_t cs_is_tx_not_ok;
 	uint32_t cs_ps_discard;
 	uint32_t cs_rx_mgmt_rate;
-#ifdef WLAN_ATH_SUPPORT_EXT_STAT
-	uint32_t cs_tx_bytes_rate;
-	uint32_t cs_tx_data_rate;
-	uint32_t cs_rx_bytes_rate;
-	uint32_t cs_rx_data_rate;
-	uint32_t cs_tx_bytes_success_last;
-	uint32_t cs_tx_data_success_last;
-	uint32_t cs_rx_bytes_last;
-	uint32_t cs_rx_data_last;
-#endif
 	uint32_t cs_psq_drops;
 #ifdef ATH_SUPPORT_IQUE
 	uint32_t cs_tx_dropblock;
 #endif
 	uint32_t cs_tx_assoc;
 	uint32_t cs_tx_assoc_fail;
+	uint32_t cs_is_tx_nobuf;
 };
 
 #endif /* QCA_SUPPORT_CP_STATS */
