@@ -71,6 +71,12 @@ enum {
 };
 
 enum {
+	WSA_MACRO_EC0_MUX = 0,
+	WSA_MACRO_EC1_MUX,
+	WSA_MACRO_EC_MUX_MAX,
+};
+
+enum {
 	WSA_MACRO_COMP1, /* SPK_L */
 	WSA_MACRO_COMP2, /* SPK_R */
 	WSA_MACRO_COMP_MAX
@@ -148,6 +154,7 @@ enum {
 /*
  * @dev: wsa macro device pointer
  * @comp_enabled: compander enable mixer value set
+ * @ec_hq: echo HQ enable mixer value set
  * @prim_int_users: Users of interpolator
  * @wsa_mclk_users: WSA MCLK users count
  * @swr_clk_users: SWR clk users count
@@ -171,6 +178,7 @@ enum {
 struct wsa_macro_priv {
 	struct device *dev;
 	int comp_enabled[WSA_MACRO_COMP_MAX];
+	int ec_hq[WSA_MACRO_RX1 + 1];
 	u16 prim_int_users[WSA_MACRO_RX1 + 1];
 	u16 wsa_mclk_users;
 	u16 swr_clk_users;
@@ -210,6 +218,10 @@ static const char *const rx_text[] = {
 
 static const char *const rx_mix_text[] = {
 	"ZERO", "RX0", "RX1", "RX_MIX0", "RX_MIX1"
+};
+
+static const char *const rx_mix_ec_text[] = {
+	"ZERO", "RX_MIX_TX0", "RX_MIX_TX1"
 };
 
 static const char *const rx_mux_text[] = {
@@ -287,6 +299,20 @@ static const struct snd_kcontrol_new rx1_prim_inp2_mux =
 
 static const struct snd_kcontrol_new rx1_mix_mux =
 	SOC_DAPM_ENUM("WSA_RX1 MIX Mux", rx1_mix_chain_enum);
+
+static const struct soc_enum rx_mix_ec0_enum =
+	SOC_ENUM_SINGLE(BOLERO_CDC_WSA_RX_INP_MUX_RX_MIX_CFG0,
+		0, 3, rx_mix_ec_text);
+
+static const struct soc_enum rx_mix_ec1_enum =
+	SOC_ENUM_SINGLE(BOLERO_CDC_WSA_RX_INP_MUX_RX_MIX_CFG0,
+		3, 3, rx_mix_ec_text);
+
+static const struct snd_kcontrol_new rx_mix_ec0_mux =
+	SOC_DAPM_ENUM("WSA RX_MIX EC0_Mux", rx_mix_ec0_enum);
+
+static const struct snd_kcontrol_new rx_mix_ec1_mux =
+	SOC_DAPM_ENUM("WSA RX_MIX EC1_Mux", rx_mix_ec1_enum);
 
 static struct snd_soc_dai_ops wsa_macro_dai_ops = {
 	.hw_params = wsa_macro_hw_params,
@@ -1317,6 +1343,84 @@ static int wsa_macro_spk_boost_event(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
+static int wsa_macro_enable_echo(struct snd_soc_dapm_widget *w,
+				 struct snd_kcontrol *kcontrol,
+				 int event)
+{
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+	u16 val, ec_tx = 0, ec_hq_reg;
+
+	if (!wsa_macro_get_data(codec, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	dev_dbg(wsa_dev, "%s %d %s\n", __func__, event, w->name);
+
+	val = snd_soc_read(codec, BOLERO_CDC_WSA_RX_INP_MUX_RX_MIX_CFG0);
+	if (!(strcmp(w->name, "WSA RX_MIX EC0_MUX")))
+		ec_tx = (val & 0x07) - 1;
+	else
+		ec_tx = ((val & 0x38) >> 0x3) - 1;
+
+	if (ec_tx < 0 || ec_tx >= (WSA_MACRO_RX1 + 1)) {
+		dev_err(wsa_dev, "%s: EC mix control not set correctly\n",
+			__func__);
+		return -EINVAL;
+	}
+	if (wsa_priv->ec_hq[ec_tx]) {
+		snd_soc_update_bits(codec,
+				BOLERO_CDC_WSA_RX_INP_MUX_RX_MIX_CFG0,
+				0x1 << ec_tx, 0x1 << ec_tx);
+		ec_hq_reg = BOLERO_CDC_WSA_EC_HQ0_EC_REF_HQ_PATH_CTL +
+							0x20 * ec_tx;
+		snd_soc_update_bits(codec, ec_hq_reg, 0x01, 0x01);
+		ec_hq_reg = BOLERO_CDC_WSA_EC_HQ0_EC_REF_HQ_CFG0 +
+							0x20 * ec_tx;
+		/* default set to 48k */
+		snd_soc_update_bits(codec, ec_hq_reg, 0x1E, 0x08);
+	}
+
+	return 0;
+}
+
+static int wsa_macro_get_ec_hq(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	int ec_tx = ((struct soc_multi_mixer_control *)
+		    kcontrol->private_value)->shift;
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+
+	if (!wsa_macro_get_data(codec, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] = wsa_priv->ec_hq[ec_tx];
+	return 0;
+}
+
+static int wsa_macro_set_ec_hq(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	int ec_tx = ((struct soc_multi_mixer_control *)
+		    kcontrol->private_value)->shift;
+	int value = ucontrol->value.integer.value[0];
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+
+	if (!wsa_macro_get_data(codec, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	dev_dbg(wsa_dev, "%s: enable current %d, new %d\n",
+		__func__, wsa_priv->ec_hq[ec_tx], value);
+	wsa_priv->ec_hq[ec_tx] = value;
+
+	return 0;
+}
+
 static int wsa_macro_get_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -1542,6 +1646,10 @@ static const struct snd_kcontrol_new wsa_macro_snd_controls[] = {
 		wsa_macro_get_compander, wsa_macro_set_compander),
 	SOC_SINGLE_EXT("WSA_COMP2 Switch", SND_SOC_NOPM, WSA_MACRO_COMP2, 1, 0,
 		wsa_macro_get_compander, wsa_macro_set_compander),
+	SOC_SINGLE_EXT("WSA_RX0 EC_HQ Switch", SND_SOC_NOPM, WSA_MACRO_RX0,
+			1, 0, wsa_macro_get_ec_hq, wsa_macro_set_ec_hq),
+	SOC_SINGLE_EXT("WSA_RX1 EC_HQ Switch", SND_SOC_NOPM, WSA_MACRO_RX1,
+			1, 0, wsa_macro_get_ec_hq, wsa_macro_set_ec_hq),
 };
 
 static const struct soc_enum rx_mux_enum =
@@ -1662,6 +1770,14 @@ static const struct snd_soc_dapm_widget wsa_macro_dapm_widgets[] = {
 
 	SND_SOC_DAPM_MIXER("WSA_AIF_VI Mixer", SND_SOC_NOPM, WSA_MACRO_AIF_VI,
 		0, aif_vi_mixer, ARRAY_SIZE(aif_vi_mixer)),
+	SND_SOC_DAPM_MUX_E("WSA RX_MIX EC0_MUX", SND_SOC_NOPM,
+			WSA_MACRO_EC0_MUX, 0,
+			&rx_mix_ec0_mux, wsa_macro_enable_echo,
+			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MUX_E("WSA RX_MIX EC1_MUX", SND_SOC_NOPM,
+			WSA_MACRO_EC1_MUX, 0,
+			&rx_mix_ec1_mux, wsa_macro_enable_echo,
+			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_MUX("WSA RX0 MUX", SND_SOC_NOPM, WSA_MACRO_RX0, 0,
 				&rx_mux[WSA_MACRO_RX0]),
@@ -1737,6 +1853,14 @@ static const struct snd_soc_dapm_route wsa_audio_map[] = {
 	{"WSA_AIF_VI Mixer", "WSA_SPKR_VI_2", "VIINPUT_WSA"},
 	{"WSA AIF_VI", NULL, "WSA_AIF_VI Mixer"},
 	{"WSA AIF_VI", NULL, "WSA_MCLK"},
+
+	{"WSA RX_MIX EC0_MUX", "RX_MIX_TX0", "WSA_RX INT0 SEC MIX"},
+	{"WSA RX_MIX EC1_MUX", "RX_MIX_TX0", "WSA_RX INT0 SEC MIX"},
+	{"WSA RX_MIX EC0_MUX", "RX_MIX_TX1", "WSA_RX INT1 SEC MIX"},
+	{"WSA RX_MIX EC1_MUX", "RX_MIX_TX1", "WSA_RX INT1 SEC MIX"},
+	{"WSA AIF_ECHO", NULL, "WSA RX_MIX EC0_MUX"},
+	{"WSA AIF_ECHO", NULL, "WSA RX_MIX EC1_MUX"},
+	{"WSA AIF_ECHO", NULL, "WSA_MCLK"},
 
 	{"WSA AIF1 PB", NULL, "WSA_MCLK"},
 	{"WSA AIF_MIX1 PB", NULL, "WSA_MCLK"},
