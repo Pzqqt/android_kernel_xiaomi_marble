@@ -13996,7 +13996,7 @@ void hdd_start_driver_ops_timer(int drv_op)
 
 	hdd_drv_ops_task = current;
 	qdf_timer_start(&hdd_drv_ops_inactivity_timer,
-		HDD_OPS_INACTIVITY_TIMEOUT);
+		HDD_OPS_INACTIVITY_TIMEOUT * qdf_timer_get_multiplier());
 }
 
 /**
