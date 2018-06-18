@@ -1635,7 +1635,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 			CSR_DEFAULT_RSSI_DB_GAP);
 	pMac->roam.configParam.fSupplicantCountryCodeHasPriority = false;
 	pMac->roam.configParam.nActiveMaxChnTime = CSR_ACTIVE_MAX_CHANNEL_TIME;
-	pMac->roam.configParam.nActiveMinChnTime = CSR_ACTIVE_MIN_CHANNEL_TIME;
 	pMac->roam.configParam.nPassiveMaxChnTime =
 		CSR_PASSIVE_MAX_CHANNEL_TIME;
 	pMac->roam.configParam.nPassiveMinChnTime =
@@ -2779,12 +2778,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			cfg_set_int(pMac, WNI_CFG_ACTIVE_MAXIMUM_CHANNEL_TIME,
 				    pParam->nActiveMaxChnTime);
 		}
-		if (pParam->nActiveMinChnTime) {
-			pMac->roam.configParam.nActiveMinChnTime =
-				pParam->nActiveMinChnTime;
-			cfg_set_int(pMac, WNI_CFG_ACTIVE_MINIMUM_CHANNEL_TIME,
-				    pParam->nActiveMinChnTime);
-		}
 		if (pParam->nPassiveMaxChnTime) {
 			pMac->roam.configParam.nPassiveMaxChnTime =
 				pParam->nPassiveMaxChnTime;
@@ -3309,7 +3302,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->AdHocChannel5G = cfg_params->AdHocChannel5G;
 	pParam->bandCapability = cfg_params->bandCapability;
 	pParam->nActiveMaxChnTime = cfg_params->nActiveMaxChnTime;
-	pParam->nActiveMinChnTime = cfg_params->nActiveMinChnTime;
 	pParam->nPassiveMaxChnTime = cfg_params->nPassiveMaxChnTime;
 	pParam->nPassiveMinChnTime = cfg_params->nPassiveMinChnTime;
 	pParam->nActiveMaxChnTimeConc = cfg_params->nActiveMaxChnTimeConc;

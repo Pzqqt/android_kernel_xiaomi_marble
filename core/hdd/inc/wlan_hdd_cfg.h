@@ -862,29 +862,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gActiveMinChannelTime - Set min channel time for active scan
- * @Min: 0
- * @Max: 10000
- * @Default: 20
- *
- * This ini is used to set minimum channel time in secs spent in
- * active scan
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ACTIVE_MIN_CHANNEL_TIME_NAME       "gActiveMinChannelTime"
-#define CFG_ACTIVE_MIN_CHANNEL_TIME_MIN        (0)
-#define CFG_ACTIVE_MIN_CHANNEL_TIME_MAX        (10000)
-#define CFG_ACTIVE_MIN_CHANNEL_TIME_DEFAULT    (20)
-
-/*
- * <ini>
  * gScanNumProbes - Set the number of probes on each channel for active scan
  * @Min: 0
  * @Max: 20
@@ -14369,7 +14346,6 @@ struct hdd_config {
 
 	uint32_t nPassiveMinChnTime;    /* in units of milliseconds */
 	uint32_t nPassiveMaxChnTime;    /* in units of milliseconds */
-	uint32_t nActiveMinChnTime;     /* in units of milliseconds */
 	uint32_t nActiveMaxChnTime;     /* in units of milliseconds */
 	uint32_t scan_probe_repeat_time;
 	uint32_t scan_num_probes;

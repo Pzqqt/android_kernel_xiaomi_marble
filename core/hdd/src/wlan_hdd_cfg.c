@@ -714,13 +714,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ACTIVE_MAX_CHANNEL_TIME_MIN,
 		     CFG_ACTIVE_MAX_CHANNEL_TIME_MAX),
 
-	REG_VARIABLE(CFG_ACTIVE_MIN_CHANNEL_TIME_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nActiveMinChnTime,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ACTIVE_MIN_CHANNEL_TIME_DEFAULT,
-		     CFG_ACTIVE_MIN_CHANNEL_TIME_MIN,
-		     CFG_ACTIVE_MIN_CHANNEL_TIME_MAX),
-
 	REG_VARIABLE(CFG_SCAN_NUM_PROBES_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, scan_num_probes,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -8716,7 +8709,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.initial_scan_no_dfs_chnl =
 					pConfig->initial_scan_no_dfs_chnl;
 	smeConfig->csrConfig.nActiveMaxChnTime = pConfig->nActiveMaxChnTime;
-	smeConfig->csrConfig.nActiveMinChnTime = pConfig->nActiveMinChnTime;
 	smeConfig->csrConfig.nPassiveMaxChnTime = pConfig->nPassiveMaxChnTime;
 	smeConfig->csrConfig.nPassiveMinChnTime = pConfig->nPassiveMinChnTime;
 	smeConfig->csrConfig.nActiveMaxChnTimeConc =

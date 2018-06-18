@@ -1112,7 +1112,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t vccUlMacLossThreshold;
 	uint32_t nPassiveMinChnTime;        /* in units of milliseconds */
 	uint32_t nPassiveMaxChnTime;        /* in units of milliseconds */
-	uint32_t nActiveMinChnTime;         /* in units of milliseconds */
 	uint32_t nActiveMaxChnTime;         /* in units of milliseconds */
 	uint32_t nInitialDwellTime;         /* in units of milliseconds */
 	bool initial_scan_no_dfs_chnl;

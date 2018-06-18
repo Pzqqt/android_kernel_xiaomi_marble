@@ -318,19 +318,6 @@ V    RW    NP
 HAL
 256    8000    8000
 
-
-*
-* Minimum Channel Time (TU)
-*
-
-WNI_CFG_ACTIVE_MINIMUM_CHANNEL_TIME    I    4    9
-V    RW    NP
-NONE
-0    65535  20
-V    RW    NP
-NONE
-0    65535  20
-
 *
 * Maximum Channel Time (TU)
 *

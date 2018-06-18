@@ -2220,11 +2220,6 @@ static int hdd_get_dwell_time(struct hdd_config *pCfg, uint8_t *command,
 				 (int)pCfg->nActiveMaxChnTime);
 		return 0;
 	}
-	if (strncmp(command, "GETDWELLTIME ACTIVE MIN", 23) == 0) {
-		*len = scnprintf(extra, n, "GETDWELLTIME ACTIVE MIN %u\n",
-				 (int)pCfg->nActiveMinChnTime);
-		return 0;
-	}
 	if (strncmp(command, "GETDWELLTIME PASSIVE MAX", 24) == 0) {
 		*len = scnprintf(extra, n, "GETDWELLTIME PASSIVE MAX %u\n",
 				 (int)pCfg->nPassiveMaxChnTime);
@@ -2281,21 +2276,6 @@ static int hdd_set_dwell_time(struct hdd_adapter *adapter, uint8_t *command)
 		}
 		pCfg->nActiveMaxChnTime = val;
 		sme_config->csrConfig.nActiveMaxChnTime = val;
-		sme_update_config(mac_handle, sme_config);
-	} else if (strncmp(command, "SETDWELLTIME ACTIVE MIN", 23) == 0) {
-		if (drv_cmd_validate(command, 23))
-			return -EINVAL;
-
-		value = value + 24;
-		temp = kstrtou32(value, 10, &val);
-		if (temp != 0 || val < CFG_ACTIVE_MIN_CHANNEL_TIME_MIN ||
-		    val > CFG_ACTIVE_MIN_CHANNEL_TIME_MAX) {
-			hdd_err("argument passed for SETDWELLTIME ACTIVE MIN is incorrect");
-			retval = -EFAULT;
-			goto free;
-		}
-		pCfg->nActiveMinChnTime = val;
-		sme_config->csrConfig.nActiveMinChnTime = val;
 		sme_update_config(mac_handle, sme_config);
 	} else if (strncmp(command, "SETDWELLTIME PASSIVE MAX", 24) == 0) {
 		if (drv_cmd_validate(command, 24))
