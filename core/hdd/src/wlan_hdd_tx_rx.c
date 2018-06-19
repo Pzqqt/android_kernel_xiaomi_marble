@@ -484,40 +484,6 @@ void wlan_hdd_classify_pkt(struct sk_buff *skb)
 }
 
 /**
- * wlan_hdd_latency_opt()- latency option
- * @adapter:  pointer to the adapter structure
- * @skb:      pointer to sk buff
- *
- * Function to disable power save for icmp packets.
- *
- * Return: None
- */
-#ifdef WLAN_ICMP_DISABLE_PS
-static inline void
-wlan_hdd_latency_opt(struct hdd_adapter *adapter, struct sk_buff *skb)
-{
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	if (hdd_ctx->config->icmp_disable_ps_val <= 0)
-		return;
-
-	if (QDF_NBUF_CB_GET_PACKET_TYPE(skb) ==
-				QDF_NBUF_CB_PACKET_TYPE_ICMP) {
-		wlan_hdd_set_powersave(adapter, false,
-				hdd_ctx->config->icmp_disable_ps_val);
-		sme_ps_enable_auto_ps_timer(WLAN_HDD_GET_HAL_CTX(adapter),
-					  adapter->session_id,
-					  hdd_ctx->config->icmp_disable_ps_val);
-	}
-}
-#else
-static inline void
-wlan_hdd_latency_opt(struct hdd_adapter *adapter, struct sk_buff *skb)
-{
-}
-#endif
-
-/**
  * hdd_get_transmit_sta_id() - function to retrieve station id to be used for
  * sending traffic towards a particular destination address. The destination
  * address can be unicast, multicast or broadcast
