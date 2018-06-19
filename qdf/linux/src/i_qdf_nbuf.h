@@ -1649,42 +1649,6 @@ static inline size_t __qdf_nbuf_tcp_tso_size(struct sk_buff *skb)
  */
 void __qdf_nbuf_init(__qdf_nbuf_t nbuf);
 
-/**
- * __qdf_nbuf_set_rx_info() - set rx info
- * @nbuf: sk buffer
- * @info: rx info
- * @len: length
- *
- * Return: none
- */
-static inline void
-__qdf_nbuf_set_rx_info(__qdf_nbuf_t nbuf, void *info, uint32_t len)
-{
-	/* Customer may have skb->cb size increased, e.g. to 96 bytes,
-	 * then len's large enough to save the rs status info struct
-	 */
-	uint8_t offset = sizeof(struct qdf_nbuf_cb);
-	uint32_t max = sizeof(((struct sk_buff *)0)->cb)-offset;
-
-	len = (len > max ? max : len);
-
-	memcpy(((uint8_t *)(nbuf->cb) + offset), info, len);
-}
-
-/**
- * __qdf_nbuf_get_rx_info() - get rx info
- * @nbuf: sk buffer
- *
- * Return: rx_info
- */
-static inline void *
-__qdf_nbuf_get_rx_info(__qdf_nbuf_t nbuf)
-{
-	uint8_t offset = sizeof(struct qdf_nbuf_cb);
-
-	return (void *)((uint8_t *)(nbuf->cb) + offset);
-}
-
 /*
  *  __qdf_nbuf_get_cb() - returns a pointer to skb->cb
  * @nbuf: sk buff

@@ -2786,17 +2786,6 @@ static inline void qdf_nbuf_reset_ctxt(__qdf_nbuf_t nbuf)
 	__qdf_nbuf_reset_ctxt(nbuf);
 }
 
-static inline void
-qdf_nbuf_set_rx_info(__qdf_nbuf_t nbuf, void *info, uint32_t len)
-{
-	__qdf_nbuf_set_rx_info(nbuf, info, len);
-}
-
-static inline void *qdf_nbuf_get_rx_info(__qdf_nbuf_t nbuf)
-{
-	return __qdf_nbuf_get_rx_info(nbuf);
-}
-
 static inline void qdf_nbuf_init(qdf_nbuf_t buf)
 {
 	__qdf_nbuf_init(buf);
