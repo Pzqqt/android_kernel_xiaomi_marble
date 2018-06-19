@@ -427,6 +427,14 @@ enum tdls_feature_bit {
  * @delayed_trig_framint: delayed trigger frame interval
  * @tdls_vdev_nss_2g: tdls NSS setting for 2G band
  * @tdls_vdev_nss_5g: tdls NSS setting for 5G band
+ * @tdls_buffer_sta_enable: tdls buffer station enable
+ * @tdls_off_chan_enable: tdls off channel enable
+ * @tdls_wmm_mode_enable: tdls wmm mode enable
+ * @tdls_external_control: tdls external control enable
+ * @tdls_implicit_trigger_enable: tdls implicit trigger enable
+ * @tdls_scan_enable: tdls scan enable
+ * @tdls_sleep_sta_enable: tdls sleep sta enable
+ * @tdls_support_enable: tdls support enable
  */
 struct tdls_user_config {
 	uint32_t tdls_tx_states_period;
@@ -435,8 +443,8 @@ struct tdls_user_config {
 	uint32_t tdls_max_discovery_attempt;
 	uint32_t tdls_idle_timeout;
 	uint32_t tdls_idle_pkt_threshold;
-	uint32_t tdls_rssi_trigger_threshold;
-	uint32_t tdls_rssi_teardown_threshold;
+	int32_t tdls_rssi_trigger_threshold;
+	int32_t tdls_rssi_teardown_threshold;
 	uint32_t tdls_rssi_delta;
 	uint32_t tdls_uapsd_mask;
 	uint32_t tdls_uapsd_inactivity_time;
@@ -449,6 +457,14 @@ struct tdls_user_config {
 	uint32_t delayed_trig_framint;
 	uint8_t tdls_vdev_nss_2g;
 	uint8_t tdls_vdev_nss_5g;
+	bool tdls_buffer_sta_enable;
+	bool tdls_off_chan_enable;
+	bool tdls_wmm_mode_enable;
+	bool tdls_external_control;
+	bool tdls_implicit_trigger_enable;
+	bool tdls_scan_enable;
+	bool tdls_sleep_sta_enable;
+	bool tdls_support_enable;
 };
 
 /**
