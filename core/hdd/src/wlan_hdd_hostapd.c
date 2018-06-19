@@ -667,7 +667,7 @@ QDF_STATUS hdd_set_sap_ht2040_mode(struct hdd_adapter *adapter,
 static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 {
 	struct sockaddr *psta_mac_addr = addr;
-	struct hdd_adapter *adapter;
+	struct hdd_adapter *adapter, *adapter_temp;
 	struct hdd_context *hdd_ctx;
 	int ret = 0;
 	struct qdf_mac_addr mac_addr;
@@ -681,9 +681,12 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 		return ret;
 
 	qdf_mem_copy(&mac_addr, psta_mac_addr->sa_data, sizeof(mac_addr));
-
-	if (hdd_get_adapter_by_macaddr(hdd_ctx, mac_addr.bytes)) {
-		hdd_err("adapter exist with same mac address " MAC_ADDRESS_STR,
+	adapter_temp = hdd_get_adapter_by_macaddr(hdd_ctx, mac_addr.bytes);
+	if (adapter_temp) {
+		if (!qdf_str_cmp(adapter_temp->dev->name, dev->name))
+			return 0;
+		hdd_err("%s adapter exist with same address " MAC_ADDRESS_STR,
+			adapter_temp->dev->name,
 			MAC_ADDR_ARRAY(mac_addr.bytes));
 		return -EINVAL;
 	}
