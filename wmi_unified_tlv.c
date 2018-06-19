@@ -10837,8 +10837,11 @@ static QDF_STATUS send_vdev_config_ratemask_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->type = param->type;
 	cmd->mask_lower32 = param->lower32;
 	cmd->mask_higher32 = param->higher32;
-	WMI_LOGI("Setting vdev ratemask vdev id = 0x%X, type = 0x%X, mask_l32 = 0x%X mask_h32 = 0x%X\n",
-		 param->vdev_id, param->type, param->lower32, param->higher32);
+	cmd->mask_lower32_2 = param->lower32_2;
+	WMI_LOGI("Setting vdev ratemask vdev id = 0x%X, type = 0x%X"
+		"mask_l32 = 0x%X mask_h32 = 0x%X mask_l32_2 = 0x%X\n",
+		param->vdev_id, param->type, param->lower32,
+		param->higher32, param->lower32_2);
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_VDEV_RATEMASK_CMDID)) {
