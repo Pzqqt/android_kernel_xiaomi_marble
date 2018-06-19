@@ -227,6 +227,47 @@ static void usb_hif_free_pipe_resources(struct HIF_USB_PIPE *pipe)
 
 }
 
+#ifdef CONFIG_QCN7605
+/**
+ * usb_hif_get_logical_pipe_num() - get pipe number for a particular enpoint
+ * @device: pointer to HIF_DEVICE_USB structure
+ * @ep_address: endpoint address
+ * @urb_count: number of urb resources to be allocated to the pipe
+ *
+ * Return: uint8_t pipe number corresponding to ep_address
+ */
+static uint8_t usb_hif_get_logical_pipe_num(struct HIF_DEVICE_USB *device,
+					    uint8_t ep_address,
+					    int *urb_count)
+{
+	uint8_t pipe_num = HIF_USB_PIPE_INVALID;
+
+	switch (ep_address) {
+	case USB_EP_ADDR_APP_CTRL_IN:
+		pipe_num = HIF_RX_CTRL_PIPE;
+		*urb_count = RX_URB_COUNT;
+		break;
+	case USB_EP_ADDR_APP_DATA_IN:
+		pipe_num = HIF_RX_DATA_PIPE;
+		*urb_count = RX_URB_COUNT;
+		break;
+		break;
+	case USB_EP_ADDR_APP_CTRL_OUT:
+		pipe_num = HIF_TX_CTRL_PIPE;
+		*urb_count = TX_URB_COUNT;
+		break;
+	case USB_EP_ADDR_APP_DATA_OUT:
+		pipe_num = HIF_TX_DATA_LP_PIPE;
+		*urb_count = TX_URB_COUNT;
+		break;
+	default:
+		/* note: there may be endpoints not currently used */
+		break;
+	}
+
+	return pipe_num;
+}
+#else
 /**
  * usb_hif_get_logical_pipe_num() - get pipe number for a particular enpoint
  * @device: pointer to HIF_DEVICE_USB structure
@@ -282,6 +323,7 @@ static uint8_t usb_hif_get_logical_pipe_num
 
 	return pipe_num;
 }
+#endif /* CONFIG_QCN7605 */
 
 /**
  * usb_hif_get_logical_pipe_num() - setup urb resources for all pipes
