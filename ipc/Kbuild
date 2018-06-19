@@ -6,32 +6,9 @@ else
 	KERNEL_BUILD := 0
 endif
 
-TARGET_KERNEL_VERSION := 4.9
-
 # These are configurable via Kconfig for kernel-based builds
 # Need to explicitly configure for Android-based builds
-ifeq ($(CONFIG_ARCH_SDM845), y)
-	TARGET_KERNEL_VERSION := 4.9
-endif
-ifeq ($(CONFIG_ARCH_SDM670), y)
-	TARGET_KERNEL_VERSION := 4.9
-endif
-ifeq ($(CONFIG_ARCH_SM8150), y)
-	TARGET_KERNEL_VERSION := 4.14
-endif
-ifeq ($(CONFIG_ARCH_SM6150), y)
-        TARGET_KERNEL_VERSION := 4.14
-endif
-
-ifeq ($(CONFIG_ARCH_QCS405), y)
-        TARGET_KERNEL_VERSION := 4.14
-endif
-
-ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
-	TARGET_KERNEL_VERSION := 4.14
-endif
-
-KDIR := $(TOP)/kernel/msm-$(TARGET_KERNEL_VERSION)
+KDIR := $(TOP)/kernel/msm-4.14
 
 ifeq ($(KERNEL_BUILD), 1)
 	AUDIO_ROOT := $(KDIR)/techpack/audio
