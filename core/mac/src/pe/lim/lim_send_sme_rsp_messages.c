@@ -1966,6 +1966,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 	if (!session_entry) {
 		pe_err("Session does not exists for %pM",
 				csa_params->bssId);
+		qdf_mem_free(csa_offload_ind);
 		goto err;
 	}
 
@@ -1974,11 +1975,13 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 
 	if (!sta_ds) {
 		pe_err("sta_ds does not exist");
+		qdf_mem_free(csa_offload_ind);
 		goto err;
 	}
 
 	if (!LIM_IS_STA_ROLE(session_entry)) {
 		pe_debug("Invalid role to handle CSA");
+		qdf_mem_free(csa_offload_ind);
 		goto err;
 	}
 
@@ -2152,6 +2155,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 		(session_entry->ch_width ==
 		 session_entry->gLimChannelSwitch.ch_width)) {
 		pe_debug("Ignore CSA, no change in ch and bw");
+		qdf_mem_free(csa_offload_ind);
 		goto err;
 	}
 
