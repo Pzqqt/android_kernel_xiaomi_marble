@@ -222,8 +222,22 @@ struct wcd_cpe_params {
 	struct cpe_svc_init_param *cpe_svc_params;
 };
 
+#if IS_ENABLED(CONFIG_SND_SOC_WCD_CPE)
 int wcd_cpe_ssr_event(void *core_handle,
 		      enum wcd_cpe_ssr_state_event event);
 struct wcd_cpe_core *wcd_cpe_init(const char *img_fname,
 struct snd_soc_codec *codec, struct wcd_cpe_params *params);
+#else /* CONFIG_SND_SOC_WCD_CPE */
+static inline int wcd_cpe_ssr_event(void *core_handle,
+		      enum wcd_cpe_ssr_state_event event)
+{
+	return 0;
+}
+static inline struct wcd_cpe_core *wcd_cpe_init(const char *img_fname,
+						struct snd_soc_codec *codec,
+						struct wcd_cpe_params *params)
+{
+	return NULL;
+}
+#endif /* CONFIG_SND_SOC_WCD_CPE */
 #endif
