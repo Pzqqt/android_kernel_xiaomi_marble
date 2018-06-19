@@ -42,6 +42,9 @@
 #define LAB_BUFFER_ALLOC 1
 #define LAB_BUFFER_DEALLOC 0
 
+#define LSM_IS_LAST_STAGE(client, stage_idx) \
+	(client->num_stages == (stage_idx + 1))
+
 static struct snd_pcm_hardware msm_pcm_hardware_capture = {
 	.info =                 (SNDRV_PCM_INFO_MMAP |
 				SNDRV_PCM_INFO_BLOCK_TRANSFER |
@@ -463,7 +466,7 @@ done:
 }
 
 static int msm_lsm_set_epd(struct snd_pcm_substream *substream,
-		struct lsm_params_info *p_info)
+		struct lsm_params_info_v2 *p_info)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
@@ -499,7 +502,7 @@ done:
 }
 
 static int msm_lsm_set_mode(struct snd_pcm_substream *substream,
-		struct lsm_params_info *p_info)
+		struct lsm_params_info_v2 *p_info)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
@@ -535,7 +538,7 @@ done:
 }
 
 static int msm_lsm_set_gain(struct snd_pcm_substream *substream,
-		struct lsm_params_info *p_info)
+		struct lsm_params_info_v2 *p_info)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
@@ -571,7 +574,7 @@ done:
 }
 
 static int msm_lsm_set_conf(struct snd_pcm_substream *substream,
-		struct lsm_params_info *p_info)
+		struct lsm_params_info_v2 *p_info)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
@@ -608,18 +611,17 @@ static int msm_lsm_set_conf(struct snd_pcm_substream *substream,
 }
 
 static int msm_lsm_reg_model(struct snd_pcm_substream *substream,
-		struct lsm_params_info *p_info)
+		struct lsm_params_info_v2 *p_info)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	int rc = 0;
-	u8 *snd_model_ptr;
-	size_t offset;
+	struct lsm_sound_model *sm = NULL;
+	size_t offset = sizeof(union param_hdrs);
 
 	rc = q6lsm_snd_model_buf_alloc(prtd->lsm_client,
-				       p_info->param_size,
-				       true);
+				       p_info->param_size, p_info);
 	if (rc) {
 		dev_err(rtd->dev,
 			"%s: snd_model buf alloc failed, size = %d\n",
@@ -633,9 +635,9 @@ static int msm_lsm_reg_model(struct snd_pcm_substream *substream,
 	 * For set_param, advance the sound model data with the
 	 * number of bytes required by param_data.
 	 */
-	snd_model_ptr = ((u8 *) prtd->lsm_client->sound_model.data) + offset;
 
-	if (copy_from_user(snd_model_ptr,
+	sm = &prtd->lsm_client->stage_cfg[p_info->stage_idx].sound_model;
+	if (copy_from_user((u8 *)sm->data + offset,
 			   p_info->param_data, p_info->param_size)) {
 		dev_err(rtd->dev,
 			"%s: copy_from_user for snd_model failed, size = %d\n",
@@ -654,12 +656,12 @@ static int msm_lsm_reg_model(struct snd_pcm_substream *substream,
 	return rc;
 
 err_copy:
-	q6lsm_snd_model_buf_free(prtd->lsm_client);
+	q6lsm_snd_model_buf_free(prtd->lsm_client, p_info);
 	return rc;
 }
 
 static int msm_lsm_dereg_model(struct snd_pcm_substream *substream,
-		struct lsm_params_info *p_info)
+		struct lsm_params_info_v2 *p_info)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
@@ -673,13 +675,13 @@ static int msm_lsm_dereg_model(struct snd_pcm_substream *substream,
 			"%s: Failed to set det_mode param, err = %d\n",
 			__func__, rc);
 
-	q6lsm_snd_model_buf_free(prtd->lsm_client);
+	q6lsm_snd_model_buf_free(prtd->lsm_client, p_info);
 
 	return rc;
 }
 
 static int msm_lsm_set_custom(struct snd_pcm_substream *substream,
-		struct lsm_params_info *p_info)
+		struct lsm_params_info_v2 *p_info)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
@@ -712,8 +714,96 @@ err_ret:
 	return rc;
 }
 
+static int msm_lsm_check_and_set_lab_controls(struct snd_pcm_substream *substream,
+			u32 enable, struct lsm_params_info_v2 *p_info)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct lsm_priv *prtd = runtime->private_data;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct lsm_hw_params *out_hw_params = &prtd->lsm_client->out_hw_params;
+	u8 chmap[out_hw_params->num_chs];
+	u32 ch_idx;
+	int rc = 0, stage_idx = p_info->stage_idx;
+
+	if (prtd->lsm_client->stage_cfg[stage_idx].lab_enable == enable) {
+		dev_dbg(rtd->dev, "%s: Lab for session %d, stage %d already %s\n",
+				__func__, prtd->lsm_client->session,
+				stage_idx, enable ? "enabled" : "disabled");
+		return rc;
+	}
+
+	rc = q6lsm_lab_control(prtd->lsm_client, enable, p_info);
+	if (rc) {
+		dev_err(rtd->dev, "%s: Failed to set lab_control param, err = %d\n",
+			__func__, rc);
+		return rc;
+	} else {
+		if (LSM_IS_LAST_STAGE(prtd->lsm_client, stage_idx)) {
+			rc = msm_lsm_lab_buffer_alloc(prtd,
+					enable ? LAB_BUFFER_ALLOC : LAB_BUFFER_DEALLOC);
+			if (rc) {
+				dev_err(rtd->dev,
+					"%s: msm_lsm_lab_buffer_alloc failed rc %d for %s\n",
+					__func__, rc, enable ? "ALLOC" : "DEALLOC");
+				return rc;
+			} else {
+				/* set client level flag based on last stage control */
+				prtd->lsm_client->lab_enable = enable;
+			}
+		}
+		if (!rc)
+			prtd->lsm_client->stage_cfg[stage_idx].lab_enable = enable;
+	}
+
+	memset(chmap, 0, out_hw_params->num_chs);
+	/*
+	 * First channel to be read from lab is always the
+	 * best channel (0xff). For second channel onwards,
+	 * the channel indices are 0, 1, .. etc
+	 */
+	chmap[0] = 0xFF;
+	for (ch_idx = 1; ch_idx < out_hw_params->num_chs; ch_idx++)
+		chmap[ch_idx] = ch_idx - 1;
+
+	rc = q6lsm_lab_out_ch_cfg(prtd->lsm_client, chmap, p_info);
+	if (rc)
+		dev_err(rtd->dev, "%s: Failed to set lab out ch cfg %d\n",
+			__func__, rc);
+
+	return rc;
+}
+
+static int msm_lsm_set_lab_control(struct snd_pcm_substream *substream,
+		struct lsm_params_info_v2 *p_info)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct lsm_priv *prtd = runtime->private_data;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_lsm_lab_control lab_ctrl;
+	int rc = 0;
+
+	if (p_info->param_size != sizeof(lab_ctrl))
+		return -EINVAL;
+
+	if (prtd->lsm_client->started) {
+		dev_err(rtd->dev, "%s: lab control sent after start\n", __func__);
+		return -EAGAIN;
+	}
+
+	if (copy_from_user(&lab_ctrl, p_info->param_data,
+			   p_info->param_size)) {
+		dev_err(rtd->dev,
+			"%s: copy_from_user failed for lab_control params, size = %d\n",
+			__func__, p_info->param_size);
+		return  -EFAULT;
+	}
+
+	rc = msm_lsm_check_and_set_lab_controls(substream, lab_ctrl.enable, p_info);
+	return rc;
+}
+
 static int msm_lsm_set_poll_enable(struct snd_pcm_substream *substream,
-		struct lsm_params_info *p_info)
+		struct lsm_params_info_v2 *p_info)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
@@ -761,7 +851,7 @@ done:
 }
 
 static int msm_lsm_set_det_event_type(struct snd_pcm_substream *substream,
-				      struct lsm_params_info *p_info)
+				      struct lsm_params_info_v2 *p_info)
 {
 	struct snd_lsm_det_event_type det_event_type;
 	struct snd_pcm_runtime *runtime = substream->runtime;
@@ -801,65 +891,68 @@ done:
 }
 
 static int msm_lsm_process_params(struct snd_pcm_substream *substream,
-		struct snd_lsm_module_params *p_data,
-		void *params)
+		struct lsm_params_info_v2 *p_info)
 {
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct lsm_priv *prtd = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct lsm_params_info *p_info;
-	int i;
 	int rc = 0;
 
-	p_info = (struct lsm_params_info *) params;
+	dev_dbg(rtd->dev,
+		"%s: mid=0x%x, pid=0x%x, iid=0x%x, stage_idx=%d, size=0x%x, type=%d\n",
+		__func__, p_info->module_id, p_info->param_id, p_info->instance_id,
+		p_info->stage_idx, p_info->param_size, p_info->param_type);
 
-	for (i = 0; i < p_data->num_params; i++) {
-		dev_dbg(rtd->dev,
-			"%s: param (%d), module_id = 0x%x, param_id = 0x%x, param_size = 0x%x, param_type = 0x%x\n",
-			__func__, i, p_info->module_id,
-			p_info->param_id, p_info->param_size,
-			p_info->param_type);
+	if (!prtd->lsm_client ||
+		prtd->lsm_client->num_stages <= p_info->stage_idx) {
+		dev_err(rtd->dev,
+			"%s: invalid stage_idx(%d) for client(%p) having num_stages(%d)\n",
+			__func__, p_info->stage_idx, prtd->lsm_client,
+			prtd->lsm_client ? prtd->lsm_client->num_stages : 0);
+		return -EINVAL;
+	}
 
-		switch (p_info->param_type) {
-		case LSM_ENDPOINT_DETECT_THRESHOLD:
-			rc = msm_lsm_set_epd(substream, p_info);
-			break;
-		case LSM_OPERATION_MODE:
-			rc = msm_lsm_set_mode(substream, p_info);
-			break;
-		case LSM_GAIN:
-			rc = msm_lsm_set_gain(substream, p_info);
-			break;
-		case LSM_MIN_CONFIDENCE_LEVELS:
-			rc = msm_lsm_set_conf(substream, p_info);
-			break;
-		case LSM_REG_SND_MODEL:
-			rc = msm_lsm_reg_model(substream, p_info);
-			break;
-		case LSM_DEREG_SND_MODEL:
-			rc = msm_lsm_dereg_model(substream, p_info);
-			break;
-		case LSM_CUSTOM_PARAMS:
-			rc = msm_lsm_set_custom(substream, p_info);
-			break;
-		case LSM_POLLING_ENABLE:
-			rc = msm_lsm_set_poll_enable(substream, p_info);
-			break;
-		case LSM_DET_EVENT_TYPE:
-			rc = msm_lsm_set_det_event_type(substream, p_info);
-			break;
-		default:
-			dev_err(rtd->dev,
-				"%s: Invalid param_type %d\n",
-				__func__, p_info->param_type);
-			rc = -EINVAL;
-			break;
-		}
-		if (rc) {
-			pr_err("%s: set_param fail for param_type %d\n",
-				__func__, p_info->param_type);
-			return rc;
-		}
-
-		p_info++;
+	switch (p_info->param_type) {
+	case LSM_ENDPOINT_DETECT_THRESHOLD:
+		rc = msm_lsm_set_epd(substream, p_info);
+		break;
+	case LSM_OPERATION_MODE:
+		rc = msm_lsm_set_mode(substream, p_info);
+		break;
+	case LSM_GAIN:
+		rc = msm_lsm_set_gain(substream, p_info);
+		break;
+	case LSM_MIN_CONFIDENCE_LEVELS:
+		rc = msm_lsm_set_conf(substream, p_info);
+		break;
+	case LSM_REG_SND_MODEL:
+		rc = msm_lsm_reg_model(substream, p_info);
+		break;
+	case LSM_DEREG_SND_MODEL:
+		rc = msm_lsm_dereg_model(substream, p_info);
+		break;
+	case LSM_CUSTOM_PARAMS:
+		rc = msm_lsm_set_custom(substream, p_info);
+		break;
+	case LSM_POLLING_ENABLE:
+		rc = msm_lsm_set_poll_enable(substream, p_info);
+		break;
+	case LSM_DET_EVENT_TYPE:
+		rc = msm_lsm_set_det_event_type(substream, p_info);
+		break;
+	case LSM_LAB_CONTROL:
+		rc = msm_lsm_set_lab_control(substream, p_info);
+		break;
+	default:
+		dev_err(rtd->dev,
+			"%s: Invalid param_type %d\n",
+			__func__, p_info->param_type);
+		rc = -EINVAL;
+		break;
+	}
+	if (rc) {
+		pr_err("%s: set_param fail for param_type %d\n",
+			__func__, p_info->param_type);
 	}
 
 	return rc;
@@ -897,12 +990,14 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 	int ret;
 	struct snd_lsm_sound_model_v2 snd_model_v2;
 	struct snd_lsm_session_data session_data;
-	int rc = 0;
+	struct snd_lsm_session_data_v2 ses_data_v2 = {0};
+	int rc = 0, stage_idx;
 	int xchg = 0;
 	struct snd_pcm_runtime *runtime;
 	struct lsm_priv *prtd;
 	struct snd_lsm_detection_params det_params;
 	uint8_t *confidence_level = NULL;
+	uint32_t max_detection_stages_supported = LSM_MAX_STAGES_PER_SESSION;
 
 	if (!substream || !substream->private_data) {
 		pr_err("%s: Invalid %s\n", __func__,
@@ -916,15 +1011,26 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 
 	switch (cmd) {
 	case SNDRV_LSM_SET_SESSION_DATA:
-		dev_dbg(rtd->dev, "%s: set session data\n", __func__);
-		if (copy_from_user(&session_data, arg,
-				   sizeof(session_data))) {
+	case SNDRV_LSM_SET_SESSION_DATA_V2:
+
+		if (cmd == SNDRV_LSM_SET_SESSION_DATA) {
+			dev_dbg(rtd->dev, "%s: set session data\n", __func__);
+			rc = copy_from_user(&session_data, arg, sizeof(session_data));
+			if (!rc) {
+				ses_data_v2.app_id = session_data.app_id;
+				ses_data_v2.num_stages = 1;
+			}
+		} else {
+			dev_dbg(rtd->dev, "%s: set session data_v2\n", __func__);
+			rc = copy_from_user(&ses_data_v2, arg, sizeof(ses_data_v2));
+		}
+		if (rc) {
 			dev_err(rtd->dev, "%s: %s: copy_from_user failed\n",
-				__func__, "LSM_SET_SESSION_DATA");
+				__func__, "LSM_SET_SESSION_DATA(_V2)");
 			return -EFAULT;
 		}
 
-		if (session_data.app_id != LSM_VOICE_WAKEUP_APP_ID_V2) {
+		if (ses_data_v2.app_id != LSM_VOICE_WAKEUP_APP_ID_V2) {
 			dev_err(rtd->dev,
 				"%s:Invalid App id %d for Listen client\n",
 			       __func__, session_data.app_id);
@@ -932,9 +1038,38 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			break;
 		}
 
-		prtd->lsm_client->app_id = session_data.app_id;
-		ret = q6lsm_open(prtd->lsm_client,
-				 prtd->lsm_client->app_id);
+		/*
+		 * Before validating num_stages from user argument.
+		 * Check ADSP support for multi-stage session,
+		 * and reset max_detection_stages_supported to "1" if required.
+		 */
+		if (!q6lsm_adsp_supports_multi_stage_detection()) {
+			dev_dbg(rtd->dev,
+				"%s: multi-stage session not supported by adsp\n", __func__);
+			max_detection_stages_supported = 1;
+		}
+
+		if (ses_data_v2.num_stages <= 0 ||
+			ses_data_v2.num_stages > max_detection_stages_supported) {
+			dev_err(rtd->dev,
+				"%s: Unsupported number of stages req(%d)/max(%d)\n",
+				 __func__, ses_data_v2.num_stages,
+				max_detection_stages_supported);
+			rc = -EINVAL;
+			break;
+		}
+
+		prtd->lsm_client->app_id = ses_data_v2.app_id;
+		prtd->lsm_client->num_stages = ses_data_v2.num_stages;
+		for (stage_idx = LSM_STAGE_INDEX_FIRST;
+			stage_idx < ses_data_v2.num_stages; stage_idx++) {
+			prtd->lsm_client->stage_cfg[stage_idx].app_type =
+				ses_data_v2.stage_info[stage_idx].app_type;
+			prtd->lsm_client->stage_cfg[stage_idx].lpi_enable =
+				ses_data_v2.stage_info[stage_idx].lpi_enable;
+		}
+
+		ret = q6lsm_open(prtd->lsm_client, ses_data_v2.app_id);
 		if (ret < 0) {
 			dev_err(rtd->dev,
 				"%s: lsm open failed, %d\n",
@@ -942,12 +1077,24 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			return ret;
 		}
 		prtd->lsm_client->opened = true;
-		dev_dbg(rtd->dev, "%s: Session_ID = %d, APP ID = %d\n",
+		dev_dbg(rtd->dev, "%s: Session_ID = %d, APP ID = %d, Num stages %d\n",
 			__func__,
 			prtd->lsm_client->session,
-			prtd->lsm_client->app_id);
+			prtd->lsm_client->app_id,
+			prtd->lsm_client->num_stages);
 		break;
-	case SNDRV_LSM_REG_SND_MODEL_V2:
+	case SNDRV_LSM_REG_SND_MODEL_V2: {
+		/*
+		 * With multi-stage support sm buff allocation/free usage param info
+		 * to check stage index for which this sound model is being set, and
+		 * to check whether sm data is sent using set param command or not.
+		 * Hence, set param ids to '0' to indicate allocation is for legacy
+		 * reg_sm cmd, where buffer for param header need not be allocated,
+		 * also set stage index to LSM_STAGE_INDEX_FIRST.
+		 */
+		struct lsm_params_info_v2 p_info = {0};
+		p_info.stage_idx = LSM_STAGE_INDEX_FIRST;
+
 		dev_dbg(rtd->dev, "%s: Registering sound model V2\n",
 			__func__);
 		memcpy(&snd_model_v2, arg,
@@ -962,20 +1109,21 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			break;
 		}
 		rc = q6lsm_snd_model_buf_alloc(prtd->lsm_client,
-					       snd_model_v2.data_size, false);
+					snd_model_v2.data_size, &p_info);
 		if (rc) {
 			dev_err(rtd->dev,
 				"%s: q6lsm buffer alloc failed V2, size %d\n",
 			       __func__, snd_model_v2.data_size);
 			break;
 		}
-		if (copy_from_user(prtd->lsm_client->sound_model.data,
-			   snd_model_v2.data, snd_model_v2.data_size)) {
+		if (copy_from_user(
+				prtd->lsm_client->stage_cfg[stage_idx].sound_model.data,
+				snd_model_v2.data, snd_model_v2.data_size)) {
 			dev_err(rtd->dev,
 				"%s: copy from user data failed\n"
 			       "data %pK size %d\n", __func__,
 			       snd_model_v2.data, snd_model_v2.data_size);
-			q6lsm_snd_model_buf_free(prtd->lsm_client);
+			q6lsm_snd_model_buf_free(prtd->lsm_client, &p_info);
 			rc = -EFAULT;
 			break;
 		}
@@ -1004,13 +1152,13 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 				"%s: Register snd Model v2 failed =%d\n",
 			       __func__, rc);
 			kfree(confidence_level);
-			q6lsm_snd_model_buf_free(prtd->lsm_client);
+			q6lsm_snd_model_buf_free(prtd->lsm_client, &p_info);
 		}
 
 		kfree(prtd->lsm_client->confidence_levels);
 		prtd->lsm_client->confidence_levels = NULL;
 		break;
-
+	}
 	case SNDRV_LSM_SET_PARAMS:
 		dev_dbg(rtd->dev, "%s: set_params\n", __func__);
 		memcpy(&det_params, arg,
@@ -1260,10 +1408,14 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 		break;
 	}
 	case SNDRV_LSM_LAB_CONTROL: {
-		struct lsm_hw_params *out_hw_params =
-				&prtd->lsm_client->out_hw_params;
-		u8 chmap[out_hw_params->num_chs];
-		u32 enable, ch_idx;
+		u32 enable = 0;
+		struct lsm_params_info_v2 p_info = {0};
+
+		if (prtd->lsm_client->num_stages > 1) {
+			dev_err(rtd->dev, "%s: %s: not supported for multi stage session\n",
+				__func__, "LSM_LAB_CONTROL");
+			return -EINVAL;
+		}
 
 		if (copy_from_user(&enable, arg, sizeof(enable))) {
 			dev_err(rtd->dev, "%s: %s: copy_frm_user failed\n",
@@ -1281,53 +1433,19 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			break;
 		}
 
-		if (prtd->lsm_client->lab_enable == enable) {
-			dev_dbg(rtd->dev,
-				"%s: Lab for session %d already %s\n",
-				__func__, prtd->lsm_client->session,
-				enable ? "enabled" : "disabled");
-			rc = 0;
-			break;
-		}
-
-		rc = q6lsm_lab_control(prtd->lsm_client, enable);
-		if (rc) {
-			dev_err(rtd->dev,
-				"%s: ioctl %s failed rc %d to %s lab for session %d\n",
-				__func__, "SNDRV_LAB_CONTROL", rc,
-				enable ? "enable" : "disable",
-				prtd->lsm_client->session);
-			break;
-		}
-
-		rc = msm_lsm_lab_buffer_alloc(prtd,
-			enable ? LAB_BUFFER_ALLOC
-			: LAB_BUFFER_DEALLOC);
-		if (rc) {
-			dev_err(rtd->dev,
-				"%s: msm_lsm_lab_buffer_alloc failed rc %d for %s",
-				__func__, rc,
-				enable ? "ALLOC" : "DEALLOC");
-			break;
-		}
-
-		prtd->lsm_client->lab_enable = enable;
-		memset(chmap, 0, out_hw_params->num_chs);
 		/*
-		 * First channel to be read from lab is always the
-		 * best channel (0xff). For second channel onwards,
-		 * the channel indices are 0, 1, .. etc
+		 * With multi-stage support lab control needs to set param info
+		 * specifying stage index for which this lab control is issued,
+		 * along with values of module/instance ids applicable for the stage.
+		 * Hence, set param info with default lab module/instance ids, and
+		 * set stage index to LSM_STAGE_INDEX_FIRST.
 		 */
-		chmap[0] = 0xFF;
-		for (ch_idx = 1; ch_idx < out_hw_params->num_chs; ch_idx++)
-			chmap[ch_idx] = ch_idx - 1;
-
-		rc = q6lsm_lab_out_ch_cfg(prtd->lsm_client, chmap);
-		if (rc)
-			dev_err(rtd->dev,
-				"%s: Failed to set lab out ch cfg %d\n",
-				__func__, rc);
-
+		p_info.param_type = LSM_LAB_CONTROL;
+		p_info.module_id = LSM_MODULE_ID_LAB;
+		p_info.instance_id = INSTANCE_ID_0;
+		p_info.stage_idx = LSM_STAGE_INDEX_FIRST;
+		p_info.param_size = 0;
+		rc = msm_lsm_check_and_set_lab_controls(substream, enable, &p_info);
 		break;
 	}
 	case SNDRV_LSM_STOP_LAB:
@@ -1476,6 +1594,16 @@ struct lsm_params_info_32 {
 	uint32_t param_type;
 };
 
+struct lsm_params_info_v2_32 {
+	u32 module_id;
+	u32 param_id;
+	u32 param_size;
+	compat_uptr_t param_data;
+	uint32_t param_type;
+	u16 instance_id;
+	u16 stage_idx;
+};
+
 struct snd_lsm_module_params_32 {
 	compat_uptr_t params;
 	u32 num_params;
@@ -1491,6 +1619,8 @@ enum {
 		_IOW('U', 0x0B, struct snd_lsm_module_params_32),
 	SNDRV_LSM_EVENT_STATUS_V3_32 =
 		_IOW('U', 0x0F, struct snd_lsm_event_status_v3_32),
+	SNDRV_LSM_SET_MODULE_PARAMS_V2_32 =
+		_IOW('U', 0x13, struct snd_lsm_module_params_32),
 };
 
 static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
@@ -1760,19 +1890,20 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 		break;
 	}
 
-	case SNDRV_LSM_SET_MODULE_PARAMS_32: {
+	case SNDRV_LSM_SET_MODULE_PARAMS_32:
+	case SNDRV_LSM_SET_MODULE_PARAMS_V2_32: {
 		struct snd_lsm_module_params_32 p_data_32;
 		struct snd_lsm_module_params p_data;
-		u8 *params, *params32;
-		size_t p_size;
-		struct lsm_params_info_32 *p_info_32;
-		struct lsm_params_info *p_info;
-		int i;
+		u8 *params32;
+		size_t expected_size = 0, count;
+		struct lsm_params_info_32 *p_info_32 = NULL;
+		struct lsm_params_info_v2_32 *p_info_v2_32 = NULL;
+		struct lsm_params_info_v2 p_info;
 
 		if (!prtd->lsm_client->use_topology) {
 			dev_err(rtd->dev,
 				"%s: %s: not supported if not using topology\n",
-				__func__, "SET_MODULE_PARAMS_32");
+				__func__, "SET_MODULE_PARAMS(_V2)_32");
 			err = -EINVAL;
 			goto done;
 		}
@@ -1781,7 +1912,7 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 				   sizeof(p_data_32))) {
 			dev_err(rtd->dev,
 				"%s: %s: copy_from_user failed, size = %zd\n",
-				__func__, "SET_MODULE_PARAMS_32",
+				__func__, "SET_MODULE_PARAMS(_V2)_32",
 				sizeof(p_data_32));
 			err = -EFAULT;
 			goto done;
@@ -1794,38 +1925,27 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 		if (p_data.num_params > LSM_PARAMS_MAX) {
 			dev_err(rtd->dev,
 				"%s: %s: Invalid num_params %d\n",
-				__func__, "SET_MODULE_PARAMS_32",
+				__func__, "SET_MODULE_PARAMS(_V2)_32",
 				p_data.num_params);
 			err = -EINVAL;
 			goto done;
 		}
 
-		if (p_data.data_size !=
-		    (p_data.num_params * sizeof(struct lsm_params_info_32))) {
+		expected_size = (cmd == SNDRV_LSM_SET_MODULE_PARAMS_32) ?
+					p_data.num_params * sizeof(struct lsm_params_info_32) :
+					p_data.num_params * sizeof(struct lsm_params_info_v2_32);
+
+		if (p_data.data_size != expected_size) {
 			dev_err(rtd->dev,
 				"%s: %s: Invalid size %d\n",
-				__func__, "SET_MODULE_PARAMS_32",
+				__func__, "SET_MODULE_PARAMS(_V2)_32",
 				p_data.data_size);
 			err = -EINVAL;
 			goto done;
 		}
 
-		p_size = sizeof(struct lsm_params_info_32) *
-			 p_data.num_params;
-
-		params32 = kzalloc(p_size, GFP_KERNEL);
+		params32 = kzalloc(p_data.data_size, GFP_KERNEL);
 		if (!params32) {
-			err = -ENOMEM;
-			goto done;
-		}
-
-		p_size = sizeof(struct lsm_params_info) * p_data.num_params;
-		params = kzalloc(p_size, GFP_KERNEL);
-		if (!params) {
-			dev_err(rtd->dev,
-				"%s: no memory for params, size = %zd\n",
-				__func__, p_size);
-			kfree(params32);
 			err = -ENOMEM;
 			goto done;
 		}
@@ -1836,37 +1956,54 @@ static int msm_lsm_ioctl_compat(struct snd_pcm_substream *substream,
 				"%s: %s: copy_from_user failed, size = %d\n",
 				__func__, "params32", p_data.data_size);
 			kfree(params32);
-			kfree(params);
 			err = -EFAULT;
 			goto done;
 		}
 
-		p_info_32 = (struct lsm_params_info_32 *) params32;
-		p_info = (struct lsm_params_info *) params;
-		for (i = 0; i < p_data.num_params; i++) {
-			p_info->module_id = p_info_32->module_id;
-			p_info->param_id = p_info_32->param_id;
-			p_info->param_size = p_info_32->param_size;
-			p_info->param_data = compat_ptr(p_info_32->param_data);
-			p_info->param_type = p_info_32->param_type;
+		if (cmd == SNDRV_LSM_SET_MODULE_PARAMS_32)
+			p_info_32 = (struct lsm_params_info_32 *) params32;
+		else
+			p_info_v2_32 = (struct lsm_params_info_v2_32 *) params32;
 
-			p_info_32++;
-			p_info++;
+		for (count = 0; count < p_data.num_params; count++) {
+			if (cmd == SNDRV_LSM_SET_MODULE_PARAMS_32) {
+				p_info.module_id = p_info_32->module_id;
+				p_info.param_id = p_info_32->param_id;
+				p_info.param_size = p_info_32->param_size;
+				p_info.param_data = compat_ptr(p_info_32->param_data);
+				p_info.param_type = p_info_32->param_type;
+
+				p_info.instance_id = INSTANCE_ID_0;
+				p_info.stage_idx = LSM_STAGE_INDEX_FIRST;
+
+				p_info_32++;
+			} else {
+				p_info.module_id = p_info_v2_32->module_id;
+				p_info.param_id = p_info_v2_32->param_id;
+				p_info.param_size = p_info_v2_32->param_size;
+				p_info.param_data = compat_ptr(p_info_v2_32->param_data);
+				p_info.param_type = p_info_v2_32->param_type;
+
+				p_info.instance_id = p_info_v2_32->instance_id;
+				p_info.stage_idx = p_info_v2_32->stage_idx;
+
+				p_info_v2_32++;
+			}
+
+			err = msm_lsm_process_params(substream, &p_info);
+			if (err)
+				dev_err(rtd->dev,
+					"%s: Failed to process param, type%d stage=%d err=%d\n",
+					__func__, p_info.param_type, p_info.stage_idx, err);
 		}
 
-		err = msm_lsm_process_params(substream,
-					     &p_data, params);
-		if (err)
-			dev_err(rtd->dev,
-				"%s: Failed to process params, err = %d\n",
-				__func__, err);
-		kfree(params);
 		kfree(params32);
 		break;
 	}
 	case SNDRV_LSM_REG_SND_MODEL_V2:
 	case SNDRV_LSM_SET_PARAMS:
 	case SNDRV_LSM_SET_MODULE_PARAMS:
+	case SNDRV_LSM_SET_MODULE_PARAMS_V2:
 		/*
 		 * In ideal cases, the compat_ioctl should never be called
 		 * with the above unlocked ioctl commands. Print error
@@ -1970,15 +2107,19 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 		goto done;
 	}
 
-	case SNDRV_LSM_SET_MODULE_PARAMS: {
+	case SNDRV_LSM_SET_MODULE_PARAMS:
+	case SNDRV_LSM_SET_MODULE_PARAMS_V2: {
 		struct snd_lsm_module_params p_data;
-		size_t p_size;
+		struct lsm_params_info *temp_ptr_info = NULL;
+		struct lsm_params_info_v2 info_v2;
+		struct lsm_params_info_v2 *ptr_info_v2 = NULL, *temp_ptr_info_v2 = NULL;
+		size_t p_size = 0, count;
 		u8 *params;
 
 		if (!prtd->lsm_client->use_topology) {
 			dev_err(rtd->dev,
 				"%s: %s: not supported if not using topology\n",
-				__func__, "SET_MODULE_PARAMS");
+				__func__, "SET_MODULE_PARAMS(_V2)");
 			err = -EINVAL;
 			goto done;
 		}
@@ -1995,20 +2136,22 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 		if (p_data.num_params > LSM_PARAMS_MAX) {
 			dev_err(rtd->dev,
 				"%s: %s: Invalid num_params %d\n",
-				__func__, "SET_MODULE_PARAMS",
+				__func__, "SET_MODULE_PARAMS(_V2)",
 				p_data.num_params);
 			err = -EINVAL;
 			goto done;
 		}
 
-		p_size = p_data.num_params *
-			 sizeof(struct lsm_params_info);
+		if (cmd == SNDRV_LSM_SET_MODULE_PARAMS)
+			p_size = p_data.num_params * sizeof(struct lsm_params_info);
+		else
+			p_size = p_data.num_params * sizeof(struct lsm_params_info_v2);
 
 		if (p_data.data_size != p_size) {
 			dev_err(rtd->dev,
-				"%s: %s: Invalid size %zd\n",
-				__func__, "SET_MODULE_PARAMS", p_size);
-
+				"%s: %s: Invalid data_size(%zd) against expected(%zd)\n",
+				__func__, "SET_MODULE_PARAMS(_V2)",
+				p_data.data_size, p_size);
 			err = -EFAULT;
 			goto done;
 		}
@@ -2020,20 +2163,46 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 		}
 
 		if (copy_from_user(params, p_data.params,
-				   p_data.data_size)) {
+				  p_data.data_size)) {
 			dev_err(rtd->dev,
 				"%s: %s: copy_from_user failed, size = %d\n",
-				__func__, "params", p_data.data_size);
+				__func__, "set module params", p_data.data_size);
 			kfree(params);
 			err = -EFAULT;
 			goto done;
 		}
 
-		err = msm_lsm_process_params(substream, &p_data, params);
-		if (err)
-			dev_err(rtd->dev,
-				"%s: %s: Failed to set params, err = %d\n",
-				__func__, "SET_MODULE_PARAMS", err);
+		if (cmd == SNDRV_LSM_SET_MODULE_PARAMS)
+			temp_ptr_info = (struct lsm_params_info *)params;
+		else
+			temp_ptr_info_v2 = (struct lsm_params_info_v2 *)params;
+
+		for (count = 0; count < p_data.num_params; count++) {
+			if (cmd == SNDRV_LSM_SET_MODULE_PARAMS) {
+				/* convert to V2 param info struct from legacy param info */
+				info_v2.module_id = temp_ptr_info->module_id;
+				info_v2.param_id = temp_ptr_info->param_id;
+				info_v2.param_size = temp_ptr_info->param_size;
+				info_v2.param_data = temp_ptr_info->param_data;
+				info_v2.param_type = temp_ptr_info->param_type;
+
+				info_v2.instance_id = INSTANCE_ID_0;
+				info_v2.stage_idx = LSM_STAGE_INDEX_FIRST;
+
+				ptr_info_v2 = &info_v2;
+				temp_ptr_info++;
+			} else {
+				/* Just copy the pointer as user already provided v2 params */
+				ptr_info_v2 = temp_ptr_info_v2;
+				temp_ptr_info_v2++;
+			}
+			err = msm_lsm_process_params(substream, ptr_info_v2);
+			if (err)
+				dev_err(rtd->dev,
+					"%s: Failed to process param, type%d stage=%d err=%d\n",
+					__func__, ptr_info_v2->param_type,
+					ptr_info_v2->stage_idx, err);
+		}
 		kfree(params);
 		break;
 	}
