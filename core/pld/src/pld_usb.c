@@ -238,10 +238,12 @@ int pld_usb_register_driver(void)
 
 	usb_register(&pld_usb_ops);
 
-	if (atomic_read(&pld_usb_reg_done) == true)
+	if (atomic_read(&pld_usb_reg_done) == true) {
 		status = 0;
-	else
+	} else {
+		usb_deregister(&pld_usb_ops);
 		status = -1;
+	}
 
 	pr_info("%s usb_register %s, status %d\n", __func__,
 		(status == 0) ? "done" : "failed", status);
