@@ -5528,7 +5528,7 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 				"Rxdma mon desc Ring");
 	}
 
-	for (i = 0; i < MAX_RX_MAC_RINGS; i++) {
+	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
 		snprintf(ring_name, STR_MAXLEN, "Rxdma err dst ring %d", i);
 		dp_print_ring_stat_from_hal(pdev->soc,
 			&pdev->rxdma_err_dst_ring[i],
