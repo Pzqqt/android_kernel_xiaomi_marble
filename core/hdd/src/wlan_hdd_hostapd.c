@@ -1570,7 +1570,6 @@ hdd_stop_sap_due_to_invalid_channel(struct work_struct *work)
 	}
 	hdd_debug("work started for sap session[%d]", sap_adapter->session_id);
 	wlan_hdd_stop_sap(sap_adapter);
-	wlansap_set_invalid_session(WLAN_HDD_GET_SAP_CTX_PTR(sap_adapter));
 	wlansap_cleanup_cac_timer(WLAN_HDD_GET_SAP_CTX_PTR(sap_adapter));
 	hdd_debug("work finished for sap");
 	cds_ssr_unprotect(__func__);
