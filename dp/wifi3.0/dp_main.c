@@ -6321,8 +6321,7 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 	case 2:
 		pdev->mcopy_mode = 1;
 		pdev->tx_sniffer_enable = 0;
-		if (!pdev->enhanced_stats_en)
-			dp_ppdu_ring_cfg(pdev);
+		dp_ppdu_ring_cfg(pdev);
 
 		if (!pdev->pktlog_ppdu_stats)
 			dp_h2t_cfg_stats_msg_send(pdev,
