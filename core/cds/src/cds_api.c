@@ -1797,12 +1797,6 @@ static void cds_trigger_recovery_work(void *param)
 		return;
 	}
 
-	if (!cds_is_self_recovery_enabled()) {
-		cds_err("Recovery is not enabled");
-		QDF_BUG(0);
-		return;
-	}
-
 	qdf = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf) {
 		cds_err("Qdf context is null");
