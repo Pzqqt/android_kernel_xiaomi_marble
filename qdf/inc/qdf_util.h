@@ -108,6 +108,20 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 	 (_a)[4] == 0xff &&        \
 	 (_a)[5] == 0xff)
 
+#define QDF_DECLARE_EWMA(name, factor, weight) \
+	_QDF_DECLARE_EWMA(name, factor, weight)
+
+#define qdf_ewma_tx_lag _qdf_ewma_tx_lag
+
+#define qdf_ewma_tx_lag_init(tx_lag) \
+	 _qdf_ewma_tx_lag_init(tx_lag)
+
+#define qdf_ewma_tx_lag_add(tx_lag, value) \
+	 _qdf_ewma_tx_lag_add(tx_lag, value)
+
+#define qdf_ewma_tx_lag_read(tx_lag) \
+	 _qdf_ewma_tx_lag_read(tx_lag)
+
 /**
  * qdf_status_to_os_return - returns the status to OS.
  * @status: enum QDF_STATUS

@@ -2779,6 +2779,68 @@ static inline void dp_tx_notify_completion(struct dp_soc *soc,
 		tx_compl_cbk(netbuf, osif_dev);
 }
 
+/** dp_tx_sojourn_stats_process() - Collect sojourn stats
+ * @pdev: pdev handle
+ * @tid: tid value
+ * @txdesc_ts: timestamp from txdesc
+ * @ppdu_id: ppdu id
+ *
+ * Return: none
+ */
+#ifdef FEATURE_PERPKT_INFO
+static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
+					       uint8_t tid,
+					       uint64_t txdesc_ts,
+					       uint32_t ppdu_id)
+{
+	uint64_t delta_ms;
+	struct cdp_tx_sojourn_stats *sojourn_stats;
+
+	if (pdev->enhanced_stats_en == 0)
+		return;
+
+	if (pdev->sojourn_stats.ppdu_seq_id == 0)
+		pdev->sojourn_stats.ppdu_seq_id = ppdu_id;
+
+	if (ppdu_id != pdev->sojourn_stats.ppdu_seq_id) {
+		if (!pdev->sojourn_buf)
+			return;
+
+		sojourn_stats = (struct cdp_tx_sojourn_stats *)
+					qdf_nbuf_data(pdev->sojourn_buf);
+
+		qdf_mem_copy(sojourn_stats, &pdev->sojourn_stats,
+			     sizeof(struct cdp_tx_sojourn_stats));
+
+		qdf_mem_zero(&pdev->sojourn_stats,
+			     sizeof(struct cdp_tx_sojourn_stats));
+
+		dp_wdi_event_handler(WDI_EVENT_TX_SOJOURN_STAT, pdev->soc,
+				     pdev->sojourn_buf, HTT_INVALID_PEER,
+				     WDI_NO_VAL, pdev->pdev_id);
+
+		pdev->sojourn_stats.ppdu_seq_id = ppdu_id;
+	}
+
+	if (tid == HTT_INVALID_TID)
+		return;
+
+	delta_ms = qdf_ktime_to_ms(qdf_ktime_get()) -
+				txdesc_ts;
+	qdf_ewma_tx_lag_add(&pdev->sojourn_stats.avg_sojourn_msdu[tid],
+			    delta_ms);
+	pdev->sojourn_stats.sum_sojourn_msdu[tid] += delta_ms;
+	pdev->sojourn_stats.num_msdus[tid]++;
+}
+#else
+static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
+					       uint8_t tid,
+					       uint64_t txdesc_ts,
+					       uint32_t ppdu_id)
+{
+}
+#endif
+
 /**
  * dp_tx_comp_process_tx_status() - Parse and Dump Tx completion status info
  * @tx_desc: software descriptor head pointer
@@ -2859,12 +2921,15 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 			DP_STATS_INC_PKT(peer, tx.bcast, 1, length);
 	}
 
+	dp_tx_sojourn_stats_process(vdev->pdev, ts.tid,
+				    tx_desc->timestamp,
+				    ts.ppdu_id);
+
 	dp_tx_update_peer_stats(peer, &ts, length);
 
 out:
 	return;
 }
-
 /**
  * dp_tx_comp_process_desc() - Tx complete software descriptor handler
  * @soc: core txrx main context
@@ -2924,9 +2989,11 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 		DP_HIST_PACKET_COUNT_INC(desc->pdev->pdev_id);
 
 		next = desc->next;
+
 		dp_tx_desc_release(desc, desc->pool_id);
 		desc = next;
 	}
+
 	DP_TX_HIST_STATS_PER_PDEV();
 }
 

@@ -310,6 +310,8 @@ static inline struct dp_tx_desc_s *dp_tx_desc_alloc(struct dp_soc *soc,
 	soc->tx_desc[desc_pool_id].num_allocated++;
 	soc->tx_desc[desc_pool_id].num_free--;
 
+	tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_get());
+
 	tx_desc->flags = DP_TX_DESC_FLAG_ALLOCATED;
 
 	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);

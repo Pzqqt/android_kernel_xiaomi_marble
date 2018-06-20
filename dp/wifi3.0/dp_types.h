@@ -299,6 +299,7 @@ struct dp_tx_desc_s {
 	void *me_buffer;
 	void *tso_desc;
 	void *tso_num_desc;
+	uint64_t timestamp;
 };
 
 /**
@@ -1235,6 +1236,9 @@ struct dp_pdev {
 	uint8_t is_primary;
 	/* Context of cal client timer */
 	void *cal_client_ctx;
+	struct cdp_tx_sojourn_stats sojourn_stats;
+	qdf_nbuf_t sojourn_buf;
+
 };
 
 struct dp_peer;

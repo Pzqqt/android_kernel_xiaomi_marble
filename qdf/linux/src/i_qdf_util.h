@@ -29,6 +29,7 @@
 #include <linux/types.h>
 #include <linux/mm.h>
 #include <linux/errno.h>
+#include <linux/average.h>
 
 #include <linux/random.h>
 #include <linux/io.h>
@@ -280,6 +281,10 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 
 #define __qdf_min(_a, _b) min(_a, _b)
 #define __qdf_max(_a, _b) max(_a, _b)
+#define _QDF_DECLARE_EWMA(name, _factor, _weight) \
+	DECLARE_EWMA(name, _factor, _weight)
+
+#define _qdf_ewma_tx_lag struct ewma_tx_lag
 
 #define __qdf_ffz(mask) (~(mask) == 0 ? -1 : ffz(mask))
 
@@ -349,6 +354,15 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 #define __qdf_iowrite32(offset, value)     iowrite32(value, offset)
 
 #define __qdf_roundup(x, y) roundup(x, y)
+
+#define  _qdf_ewma_tx_lag_init(tx_lag) \
+	ewma_tx_lag_init(tx_lag)
+
+#define  _qdf_ewma_tx_lag_add(tx_lag, value) \
+	ewma_tx_lag_add(tx_lag, value)
+
+#define  _qdf_ewma_tx_lag_read(tx_lag) \
+	ewma_tx_lag_read(tx_lag)
 
 #ifdef QCA_CONFIG_SMP
 /**

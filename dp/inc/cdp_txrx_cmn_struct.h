@@ -136,6 +136,8 @@
 #define FILTER_DATA_DATA		0x0001
 #define FILTER_DATA_NULL		0x0008
 
+QDF_DECLARE_EWMA(tx_lag, 1024, 8)
+
 /*
  * DP configuration parameters
  */
@@ -897,7 +899,7 @@ enum cdp_stat_update_type {
  */
 struct cdp_tx_sojourn_stats {
 	uint32_t ppdu_seq_id;
-	uint32_t avg_sojourn_msdu[CDP_DATA_TID_MAX];
+	qdf_ewma_tx_lag avg_sojourn_msdu[CDP_DATA_TID_MAX];
 	uint32_t sum_sojourn_msdu[CDP_DATA_TID_MAX];
 	uint32_t num_msdus[CDP_DATA_TID_MAX];
 };

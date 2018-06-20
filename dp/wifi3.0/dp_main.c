@@ -3033,6 +3033,12 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	pdev->tlv_count = 0;
 	pdev->list_depth = 0;
 
+	qdf_mem_zero(&pdev->sojourn_stats, sizeof(struct cdp_tx_sojourn_stats));
+
+	pdev->sojourn_buf = qdf_nbuf_alloc(pdev->soc->osdev,
+			      sizeof(struct cdp_tx_sojourn_stats), 0, 4,
+			      TRUE);
+
 	/* initlialize cal client timer */
 	dp_cal_client_attach(&pdev->cal_client_ctx, pdev, pdev->soc->osdev,
 			     &dp_iterate_update_peer_list);
@@ -3203,6 +3209,8 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 	}
 
 	dp_htt_ppdu_stats_detach(pdev);
+
+	qdf_nbuf_free(pdev->sojourn_buf);
 
 	dp_cal_client_detach(&pdev->cal_client_ctx);
 	soc->pdev_list[pdev->pdev_id] = NULL;
