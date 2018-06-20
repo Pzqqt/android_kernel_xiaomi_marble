@@ -922,6 +922,10 @@ typedef struct sAniSirGlobal {
 	uint8_t no_ack_policy_cfg[MAX_NUM_AC];
 	uint32_t he_sgi_ltf_cfg_bit_mask;
 	struct mgmt_beacon_probe_filter bcn_filter;
+#ifdef WLAN_FEATURE_11AX
+	tDot11fIEhe_cap he_cap_2g;
+	tDot11fIEhe_cap he_cap_5g;
+#endif
 } tAniSirGlobal;
 
 

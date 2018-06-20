@@ -2377,6 +2377,11 @@ uint32_t csr_convert_phy_cb_state_to_ini_value(ePhyChanBondState phyCbState)
 }
 
 #ifdef WLAN_FEATURE_11AX
+#define CSR_REVISE_REQ_HE_CAP_PER_BAND(_req, _pmac, _channelid)              \
+	(_req)->he_config.bfee_sts_lt_80 = WLAN_CHAN_IS_2GHZ((_channelid)) ? \
+					(_pmac)->he_cap_2g.bfee_sts_lt_80 :  \
+					(_pmac)->he_cap_5g.bfee_sts_lt_80
+
 /**
  * csr_update_he_config_param() - Update MAC context with HE config param
  * @mac_ctx: pointer to MAC context
@@ -2634,6 +2639,8 @@ void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 }
 
 #else
+#define CSR_REVISE_REQ_HE_CAP_PER_BAND(_req, _pmac, _channelid)   /* no op */
+
 static inline void csr_update_he_config_param(tpAniSirGlobal mac_ctx,
 					      tCsrConfigParam *param)
 {
@@ -15773,8 +15780,12 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			(unsigned int)(*(uint32_t *) &csr_join_req->
 			vht_config));
 
-		if (IS_DOT11_MODE_HE(csr_join_req->dot11mode))
+		if (IS_DOT11_MODE_HE(csr_join_req->dot11mode)) {
 			csr_join_req_copy_he_cap(csr_join_req, pSession);
+			/* change the HE caps like sts per band */
+			CSR_REVISE_REQ_HE_CAP_PER_BAND(csr_join_req, pMac,
+						pBssDescription->channelId);
+		}
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
 				     &value) != eSIR_SUCCESS)
@@ -16684,8 +16695,12 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 		     &pParam->extendedRateSet,
 		     sizeof(tSirMacRateSet));
 
-	if (IS_DOT11_MODE_HE(pMsg->dot11mode))
+	if (IS_DOT11_MODE_HE(pMsg->dot11mode)) {
 		csr_start_bss_copy_he_cap(pMsg, pSession);
+		/* change the HE caps like sts per band */
+		CSR_REVISE_REQ_HE_CAP_PER_BAND(pMsg, pMac,
+					pBssDesc->channelId);
+	}
 
 	qdf_mem_copy(&pMsg->addIeParams,
 		     &pParam->addIeParams,

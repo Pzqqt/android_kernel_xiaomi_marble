@@ -830,6 +830,8 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 	tDot11fIEhe_cap he_cap_mac;
 	tDot11fIEhe_cap tmp_he_cap = {0};
 
+	qdf_mem_zero(&tgt_cfg->he_cap_2g, sizeof(tgt_cfg->he_cap_2g));
+	qdf_mem_zero(&tgt_cfg->he_cap_5g, sizeof(tgt_cfg->he_cap_5g));
 	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
@@ -865,9 +867,12 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 					&mac_cap->he_ppet2G);
 		}
 
-		if (he_cap_mac.present)
+		if (he_cap_mac.present) {
 			wma_derive_ext_he_cap(&tmp_he_cap,
 					&he_cap_mac);
+			wma_derive_ext_he_cap(&tgt_cfg->he_cap_2g,
+					&he_cap_mac);
+		}
 
 		qdf_mem_zero(&he_cap_mac,
 				sizeof(tDot11fIEhe_cap));
@@ -885,9 +890,12 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 					(struct wmi_host_ppe_threshold *)
 					&mac_cap->he_ppet5G);
 		}
-		if (he_cap_mac.present)
+		if (he_cap_mac.present) {
 			wma_derive_ext_he_cap(&tmp_he_cap,
 					&he_cap_mac);
+			wma_derive_ext_he_cap(&tgt_cfg->he_cap_5g,
+					&he_cap_mac);
+		}
 	}
 
 	qdf_mem_copy(he_cap, &tmp_he_cap, sizeof(*he_cap));

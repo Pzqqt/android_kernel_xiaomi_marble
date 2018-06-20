@@ -240,6 +240,8 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 				 cfg->ppet_5g, HE_MAX_PPET_SIZE);
 	if (status == QDF_STATUS_E_FAILURE)
 		hdd_alert("could not set 5G HE PPET");
+
+	sme_update_tgt_he_cap(hdd_ctx->hHal, cfg);
 }
 
 void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,

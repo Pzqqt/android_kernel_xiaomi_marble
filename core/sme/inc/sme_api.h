@@ -2256,6 +2256,15 @@ int sme_set_auto_rate_he_ltf(tHalHandle hal, uint8_t session_id,
 
 #ifdef WLAN_FEATURE_11AX
 /**
+ * sme_update_tgt_he_cap() - sets the HE caps to pmac
+ * @hal: Pointer to HAL
+ * @cfg: Pointer to wma target cfg
+ *
+ * Return: None
+ */
+void sme_update_tgt_he_cap(tHalHandle hal, struct wma_tgt_cfg *cfg);
+
+/**
  * sme_update_he_cap_nss() - sets the nss based on user request
  * @hal: Pointer to HAL
  * @session_id: SME session id
@@ -2327,6 +2336,9 @@ int sme_update_he_frag_supp(tHalHandle hal, uint8_t session_id,
 int sme_update_he_ldpc_supp(tHalHandle hal, uint8_t session_id,
 			    uint16_t he_ldpc);
 #else
+static inline void sme_update_tgt_he_cap(tHalHandle hal,
+		struct wma_tgt_cfg *cfg)
+{}
 static inline void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 		uint8_t nss)
 {}
