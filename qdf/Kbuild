@@ -48,7 +48,8 @@ linux/src/qdf_file.o \
 src/qdf_flex_mem.o \
 src/qdf_parse.o \
 src/qdf_str.o \
-src/qdf_types.o
+src/qdf_types.o \
+$(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o
 #linux/src/qdf_net.o \
 #linux/src/qdf_net_event.o \
 #linux/src/qdf_net_ioctl.o
@@ -60,7 +61,6 @@ endif
 
 ifeq ($(LOGGING_UTILS_SUPPORT),1)
 qdf-objs += \
-$(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o \
 $(HOST_CMN_CONVG_LOGGING)/src/wlan_logging_sock_svc.o
 endif
 

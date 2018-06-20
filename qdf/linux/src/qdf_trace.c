@@ -3368,10 +3368,12 @@ void qdf_logging_exit(void)
 #else
 void qdf_logging_init(void)
 {
+	nl_srv_init(NULL);
 }
 
 void qdf_logging_exit(void)
 {
+	nl_srv_exit();
 }
 #endif
 
