@@ -175,7 +175,7 @@ static int hdd_get_apf_capabilities(struct hdd_context *hdd_ctx)
 	}
 	cookie = hdd_request_cookie(request);
 
-	status = sme_get_apf_capabilities(hdd_ctx->hHal,
+	status = sme_get_apf_capabilities(hdd_ctx->mac_handle,
 					  hdd_get_apf_capabilities_cb,
 					  cookie);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -298,7 +298,7 @@ post_sme:
 		  apf_set_offload->current_length,
 		  apf_set_offload->current_offset);
 
-	status = sme_set_apf_instructions(hdd_ctx->hHal, apf_set_offload);
+	status = sme_set_apf_instructions(hdd_ctx->mac_handle, apf_set_offload);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_set_apf_instructions failed(err=%d)", status);
 		ret = -EINVAL;
@@ -329,7 +329,8 @@ hdd_enable_disable_apf(struct hdd_context *hdd_ctx, uint8_t vdev_id,
 
 	hdd_enter();
 
-	status = sme_set_apf_enable_disable(hdd_ctx->hHal, vdev_id, apf_enable);
+	status = sme_set_apf_enable_disable(hdd_ctx->mac_handle,
+					    vdev_id, apf_enable);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Unable to post sme apf enable/disable message (status-%d)",
 				status);
@@ -415,7 +416,8 @@ hdd_apf_write_memory(struct hdd_context *hdd_ctx, struct nlattr **tb,
 	write_mem_params.apf_version =
 				apf_context.capability_response.apf_version;
 
-	status = sme_apf_write_work_memory(hdd_ctx->hHal, &write_mem_params);
+	status = sme_apf_write_work_memory(hdd_ctx->mac_handle,
+					   &write_mem_params);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Unable to retrieve APF caps");
 		ret = -EINVAL;
@@ -556,7 +558,8 @@ static int hdd_apf_read_memory(struct hdd_context *hdd_ctx, struct nlattr **tb,
 	context->magic = APF_CONTEXT_MAGIC;
 	qdf_spin_unlock(&context->lock);
 
-	status = sme_apf_read_work_memory(hdd_ctx->hHal, &read_mem_params,
+	status = sme_apf_read_work_memory(hdd_ctx->mac_handle,
+					  &read_mem_params,
 					  hdd_apf_read_memory_callback);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Unable to post sme APF read memory message (status-%d)",
