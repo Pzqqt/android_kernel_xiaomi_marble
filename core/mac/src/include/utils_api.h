@@ -37,14 +37,6 @@ typedef enum eBssSystemRole {
 	eSYSTEM_MULTI_BSS_ROLE = eSYSTEM_LAST_ROLE
 } tBssSystemRole;
 
-#define LOG_FIRST_MODULE_ID    SIR_FIRST_MODULE_ID
-#define LOG_INDEX_FOR_MODULE(modId) ((modId) - LOG_FIRST_MODULE_ID)
-#define GET_MIN_VALUE(__val1, __val2) ((__val1 < __val2) ? __val1 : __val2)
-
-extern uint32_t gPktAllocCnt, gPktFreeCnt;
-
-extern QDF_TRACE_LEVEL get_vos_debug_level(uint32_t debugLevel);
-
 extern tSirRetStatus cfg_init(tpAniSirGlobal);
 extern void cfg_de_init(tpAniSirGlobal);
 
@@ -574,47 +566,6 @@ static inline uint8_t convert_cw(uint16_t cw)
 
 /* ------------------------------------------------------------------- */
 
-/* / Parse the next IE in a message */
-extern tSirRetStatus sirParseNextIE(tpAniSirGlobal, uint8_t *pPayload,
-				    uint16_t payloadLength, int16_t lastType,
-				    uint8_t *pType, uint8_t *pLength);
-
-/* / Check if the given channel is 11b channel */
-#define SIR_IS_CHANNEL_11B(chId)  (chId <= 14)
-
-/**
- * hal_round_s32
- *
- * FUNCTION:
- * Performs integer rounding like returns 12346 for 123456 or -12346 for -123456
- * Note that a decimal place is lost.
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- * None.
- *
- * NOTE:
- *
- * @param  int32_t input
- * @return rounded number
- */
-static inline int32_t hal_round_s32(int32_t p)
-{
-	int32_t k, i, j;
-
-	i = p / 10;
-	j = p % 10;
-	if (p > 0)
-		k = i + (j > 4 ? 1 : 0);
-	else if (p < 0)
-		k = i + (j < -5 ? -1 : 0);
-	else
-		k = p;
-
-	return k;
-}
-
 /* New functions for endianness conversion */
 #ifdef ANI_LITTLE_BYTE_ENDIAN
 #define ani_cpu_to_be16(x) sir_swap_u16((x))
@@ -632,16 +583,5 @@ static inline int32_t hal_round_s32(int32_t p)
 #define ani_le32_to_cpu(x)  ani_cpu_to_le32(x)
 #define ani_be16_to_cpu(x)  ani_cpu_to_be16(x)
 #define ani_be32_to_cpu(x)  ani_cpu_to_be32(x)
-
-void convertto_big_endian(void *ptr, uint16_t size);
-void create_scan_cts_frame(tpAniSirGlobal pMac, tSirMacMgmtHdr *macMgmtHdr,
-			   tSirMacAddr selfMac);
-void create_scan_data_null_frame(tpAniSirGlobal pMac,
-		tSirMacMgmtHdr *macMgmtHdr, uint8_t pwrMgmt, tSirMacAddr bssid,
-		tSirMacAddr selfMacAddr);
-void create_init_scan_raw_frame(tpAniSirGlobal pMac, tSirMacMgmtHdr *macMgmtHdr,
-				tBssSystemRole role);
-void create_finish_scan_raw_frame(tpAniSirGlobal pMac,
-		 tSirMacMgmtHdr *macMgmtHdr, tBssSystemRole role);
 
 #endif /* __UTILSAPI_H */
