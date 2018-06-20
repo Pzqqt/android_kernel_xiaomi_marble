@@ -540,7 +540,7 @@ static int msm_compr_read_buffer(struct msm_compr_audio *prtd)
 			__func__, ret);
 		return ret;
 	}
-	prtd->bytes_read += buffer_length;
+	prtd->bytes_read += buffer_length + prtd->ts_header_offset;
 	prtd->bytes_read_offset += buffer_length + prtd->ts_header_offset;
 	if (prtd->bytes_read_offset >= prtd->buffer_size)
 		prtd->bytes_read_offset -= prtd->buffer_size;
@@ -676,9 +676,8 @@ static void compr_event_handler(uint32_t opcode,
 		if (prtd->ts_header_offset) {
 			/* Update the header for received buffer */
 			buff_addr = prtd->buffer + prtd->byte_offset;
-			/* Write the length of the buffer */
-			*buff_addr = prtd->codec_param.buffer.fragment_size
-						 - prtd->ts_header_offset;
+			/* Write the actual length of the received buffer */
+			*buff_addr = payload[4];
 			buff_addr++;
 			/* Write the offset */
 			*buff_addr = prtd->ts_header_offset;
@@ -1457,28 +1456,54 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 		break;
 	}
 
-	pr_debug("%s: stream_id %d bits_per_sample %d\n",
-			__func__, ac->stream_id, bits_per_sample);
+	pr_debug("%s: stream_id %d bits_per_sample %d compr_passthr %d\n",
+			__func__, ac->stream_id, bits_per_sample,
+			prtd->compr_passthr);
 
-	if (prtd->codec_param.codec.flags & COMPRESSED_TIMESTAMP_FLAG) {
-		ret = q6asm_open_read_v4(prtd->audio_client, prtd->codec,
-			bits_per_sample, true, enc_cfg_id);
+	if (prtd->compr_passthr != LEGACY_PCM) {
+		ret = q6asm_open_read_compressed(prtd->audio_client,
+                                prtd->codec, prtd->compr_passthr);
+		if (ret < 0) {
+			pr_err("%s:ASM open read err[%d] for compr_type[%d]\n",
+					__func__, ret, prtd->compr_passthr);
+			return ret;
+		}
+
+		ret = msm_pcm_routing_reg_phy_compr_stream(
+				soc_prtd->dai_link->id,
+				ac->perf_mode,
+				prtd->session_id,
+				SNDRV_PCM_STREAM_CAPTURE,
+				prtd->compr_passthr);
+		if (ret) {
+			pr_err("%s: compr stream reg failed:%d\n",
+					__func__, ret);
+			return ret;
+		}
 	} else {
-		ret = q6asm_open_read_v4(prtd->audio_client, prtd->codec,
-			bits_per_sample, false, enc_cfg_id);
-	}
-	if (ret < 0) {
-		pr_err("%s: q6asm_open_read failed:%d\n", __func__, ret);
-		return ret;
-	}
+		if (prtd->codec_param.codec.flags & COMPRESSED_TIMESTAMP_FLAG) {
+			ret = q6asm_open_read_v4(prtd->audio_client,
+					prtd->codec,
+					bits_per_sample, true, enc_cfg_id);
+		} else {
+			ret = q6asm_open_read_v4(prtd->audio_client,
+					prtd->codec,
+					bits_per_sample, false, enc_cfg_id);
+		}
+		if (ret < 0) {
+			pr_err("%s: q6asm_open_read failed:%d\n",
+					__func__, ret);
+			return ret;
+		}
 
-	ret = msm_pcm_routing_reg_phy_stream(soc_prtd->dai_link->id,
-			ac->perf_mode,
-			prtd->session_id,
-			SNDRV_PCM_STREAM_CAPTURE);
-	if (ret) {
-		pr_err("%s: stream reg failed:%d\n", __func__, ret);
-		return ret;
+		ret = msm_pcm_routing_reg_phy_stream(soc_prtd->dai_link->id,
+				ac->perf_mode,
+				prtd->session_id,
+				SNDRV_PCM_STREAM_CAPTURE);
+		if (ret) {
+			pr_err("%s: stream reg failed:%d\n", __func__, ret);
+			return ret;
+		}
 	}
 
 	ret = q6asm_set_io_mode(ac, (COMPRESSED_STREAM_IO | ASYNC_IO_MODE));
@@ -1533,7 +1558,7 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 		ret = q6asm_enc_cfg_blk_custom(prtd->audio_client, prtd->sample_rate,
 			prtd->num_channels, prtd->codec,
 			(void *)&prtd->codec_param.codec.options.generic);
-	} else {
+	} else if (prtd->compr_passthr == LEGACY_PCM) {
 		ret = q6asm_enc_cfg_blk_pcm_format_support_v4(prtd->audio_client,
 					prtd->sample_rate, prtd->num_channels,
 					bits_per_sample, sample_word_size,
