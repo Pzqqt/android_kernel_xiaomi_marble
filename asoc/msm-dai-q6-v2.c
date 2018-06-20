@@ -216,7 +216,14 @@ struct msm_dai_q6_spdif_dai_data {
 	u32 rate;
 	u32 channels;
 	u32 bitwidth;
+	u16 port_id;
 	struct afe_spdif_port_config spdif_port;
+	struct afe_event_fmt_update fmt_event;
+};
+
+struct msm_dai_q6_spdif_event_msg {
+	struct afe_port_mod_evt_rsp_hdr  evt_hdr;
+	struct afe_event_fmt_update      fmt_event;
 };
 
 struct msm_dai_q6_mi2s_dai_config {
@@ -1398,14 +1405,88 @@ static int msm_dai_q6_spdif_format_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int msm_dai_q6_spdif_source_put(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+
+	struct msm_dai_q6_spdif_dai_data *dai_data = kcontrol->private_data;
+	int value = ucontrol->value.integer.value[0];
+
+	dai_data->spdif_port.cfg.src_sel = value;
+	pr_debug("%s: value = %d\n", __func__, value);
+	return 0;
+}
+
+static int msm_dai_q6_spdif_source_get(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+
+	struct msm_dai_q6_spdif_dai_data *dai_data = kcontrol->private_data;
+
+	ucontrol->value.integer.value[0] =
+		dai_data->spdif_port.cfg.src_sel;
+	return 0;
+}
+
+static int msm_dai_q6_spdif_ext_state_get(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+
+	struct msm_dai_q6_spdif_dai_data *dai_data = kcontrol->private_data;
+
+	ucontrol->value.integer.value[0] =
+		dai_data->fmt_event.status & 0x3;
+	return 0;
+}
+
+static int msm_dai_q6_spdif_ext_format_get(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+
+	struct msm_dai_q6_spdif_dai_data *dai_data = kcontrol->private_data;
+
+	ucontrol->value.integer.value[0] =
+		dai_data->fmt_event.data_format & 0x1;
+	return 0;
+}
+
+static int msm_dai_q6_spdif_ext_rate_get(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+
+	struct msm_dai_q6_spdif_dai_data *dai_data = kcontrol->private_data;
+
+	ucontrol->value.integer.value[0] =
+		dai_data->fmt_event.sample_rate;
+	return 0;
+}
+
 static const char * const spdif_format[] = {
 	"LPCM",
 	"Compr"
 };
 
-static const struct soc_enum spdif_config_enum[] = {
-	SOC_ENUM_SINGLE_EXT(2, spdif_format),
+static const char * const spdif_source[] = {
+	"Optical", "EXT-ARC", "Coaxial", "VT-ARC"
 };
+
+static const char * const spdif_state[] = {
+	"Inactive", "Active", "EOS"
+};
+
+static const struct soc_enum spdif_rx_config_enum[] = {
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spdif_format), spdif_format),
+};
+
+static const struct soc_enum spdif_tx_config_enum[] = {
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spdif_source), spdif_source),
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spdif_format), spdif_format),
+};
+
+static const struct soc_enum spdif_tx_status_enum[] = {
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spdif_state), spdif_state),
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spdif_format), spdif_format),
+ };
 
 static int msm_dai_q6_spdif_chstatus_put(struct snd_kcontrol *kcontrol,
 		struct snd_ctl_elem_value *ucontrol)
@@ -1428,7 +1509,7 @@ static int msm_dai_q6_spdif_chstatus_put(struct snd_kcontrol *kcontrol,
 				__func__);
 		ret = afe_send_spdif_ch_status_cfg(
 				&dai_data->spdif_port.ch_status,
-				AFE_PORT_ID_SPDIF_RX);
+				dai_data->port_id);
 	}
 	return ret;
 }
@@ -1453,7 +1534,8 @@ static int msm_dai_q6_spdif_chstatus_info(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static const struct snd_kcontrol_new spdif_config_controls[] = {
+static const struct snd_kcontrol_new spdif_rx_config_controls[] = {
+	/* Primary SPDIF output */
 	{
 		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
 				SNDRV_CTL_ELEM_ACCESS_INACTIVE),
@@ -1463,11 +1545,76 @@ static const struct snd_kcontrol_new spdif_config_controls[] = {
 		.get    =   msm_dai_q6_spdif_chstatus_get,
 		.put    =   msm_dai_q6_spdif_chstatus_put,
 	},
-	SOC_ENUM_EXT("SPDIF RX Format", spdif_config_enum[0],
+	SOC_ENUM_EXT("PRI SPDIF RX Format", spdif_rx_config_enum[0],
+			msm_dai_q6_spdif_format_get,
+			msm_dai_q6_spdif_format_put),
+	/* Secondary SPDIF output */
+	{
+		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
+				SNDRV_CTL_ELEM_ACCESS_INACTIVE),
+		.iface  =   SNDRV_CTL_ELEM_IFACE_PCM,
+		.name   =   SNDRV_CTL_NAME_IEC958("SEC", PLAYBACK, PCM_STREAM),
+		.info   =   msm_dai_q6_spdif_chstatus_info,
+		.get    =   msm_dai_q6_spdif_chstatus_get,
+		.put    =   msm_dai_q6_spdif_chstatus_put,
+	},
+	SOC_ENUM_EXT("SEC SPDIF RX Format", spdif_rx_config_enum[0],
 			msm_dai_q6_spdif_format_get,
 			msm_dai_q6_spdif_format_put)
 };
 
+static const struct snd_kcontrol_new spdif_tx_config_controls[] = {
+	SOC_ENUM_EXT("PRI SPDIF TX Source", spdif_tx_config_enum[0],
+			msm_dai_q6_spdif_source_get,
+			msm_dai_q6_spdif_source_put),
+	SOC_ENUM_EXT("PRI SPDIF TX Format", spdif_tx_config_enum[1],
+			msm_dai_q6_spdif_format_get,
+			msm_dai_q6_spdif_format_put),
+	SOC_ENUM_EXT("SEC SPDIF TX Source", spdif_tx_config_enum[0],
+			msm_dai_q6_spdif_source_get,
+			msm_dai_q6_spdif_source_put),
+	SOC_ENUM_EXT("SEC SPDIF TX Format", spdif_tx_config_enum[1],
+			msm_dai_q6_spdif_format_get,
+			msm_dai_q6_spdif_format_put)
+};
+
+static const struct snd_kcontrol_new spdif_tx_status_controls[] = {
+	SOC_ENUM_EXT("PRI SPDIF TX EXT State", spdif_tx_status_enum[0],
+			msm_dai_q6_spdif_ext_state_get, NULL),
+	SOC_ENUM_EXT("PRI SPDIF TX EXT Format", spdif_tx_status_enum[1],
+			msm_dai_q6_spdif_ext_format_get, NULL),
+	SOC_SINGLE_EXT("PRI SPDIF TX EXT Rate", 0, 0, 192000, 0,
+			msm_dai_q6_spdif_ext_rate_get, NULL),
+	SOC_ENUM_EXT("SEC SPDIF TX EXT State", spdif_tx_status_enum[0],
+			msm_dai_q6_spdif_ext_state_get, NULL),
+	SOC_ENUM_EXT("SEC SPDIF TX EXT Format", spdif_tx_status_enum[1],
+			msm_dai_q6_spdif_ext_format_get, NULL),
+	SOC_SINGLE_EXT("SEC SPDIF TX EXT Rate", 0, 0, 192000, 0,
+			msm_dai_q6_spdif_ext_rate_get, NULL)
+};
+
+static void msm_dai_q6_spdif_process_event(uint32_t opcode, uint32_t token,
+		uint32_t *payload, void *private_data)
+{
+	struct msm_dai_q6_spdif_event_msg *evt;
+	struct msm_dai_q6_spdif_dai_data *dai_data;
+
+	evt = (struct msm_dai_q6_spdif_event_msg *)payload;
+	dai_data = (struct msm_dai_q6_spdif_dai_data *)private_data;
+
+	pr_debug("%s: old state %d, fmt %d, rate %d\n",
+			__func__, dai_data->fmt_event.status,
+			dai_data->fmt_event.data_format,
+			dai_data->fmt_event.sample_rate);
+	pr_debug("%s: new state %d, fmt %d, rate %d\n",
+			__func__, evt->fmt_event.status,
+			evt->fmt_event.data_format,
+			evt->fmt_event.sample_rate);
+
+	dai_data->fmt_event.status = evt->fmt_event.status;
+	dai_data->fmt_event.data_format = evt->fmt_event.data_format;
+	dai_data->fmt_event.sample_rate = evt->fmt_event.sample_rate;
+}
 
 static int msm_dai_q6_spdif_hw_params(struct snd_pcm_substream *substream,
 		struct snd_pcm_hw_params *params,
@@ -1475,7 +1622,6 @@ static int msm_dai_q6_spdif_hw_params(struct snd_pcm_substream *substream,
 {
 	struct msm_dai_q6_spdif_dai_data *dai_data = dev_get_drvdata(dai->dev);
 
-	dai->id = AFE_PORT_ID_SPDIF_RX;
 	dai_data->channels = params_channels(params);
 	dai_data->spdif_port.cfg.num_channels = dai_data->channels;
 	switch (params_format(params)) {
@@ -1496,7 +1642,7 @@ static int msm_dai_q6_spdif_hw_params(struct snd_pcm_substream *substream,
 	dai_data->bitwidth = dai_data->spdif_port.cfg.bit_width;
 	dai_data->spdif_port.cfg.sample_rate = dai_data->rate;
 	dai_data->spdif_port.cfg.spdif_cfg_minor_version =
-		AFE_API_VERSION_SPDIF_CONFIG;
+		AFE_API_VERSION_SPDIF_CONFIG_V2;
 	dev_dbg(dai->dev, " channel %d sample rate %d bit width %d\n",
 			dai_data->channels, dai_data->rate,
 			dai_data->spdif_port.cfg.bit_width);
@@ -1520,12 +1666,13 @@ static void msm_dai_q6_spdif_shutdown(struct snd_pcm_substream *substream,
 	if (rc < 0)
 		dev_err(dai->dev, "fail to close AFE port\n");
 
+	dai_data->fmt_event.status = 0; /* report invalid line state */
+
 	pr_debug("%s: dai_data->status_mask = %ld\n", __func__,
 			*dai_data->status_mask);
 
 	clear_bit(STATUS_PORT_STARTED, dai_data->status_mask);
 }
-
 
 static int msm_dai_q6_spdif_prepare(struct snd_pcm_substream *substream,
 		struct snd_soc_dai *dai)
@@ -1534,6 +1681,15 @@ static int msm_dai_q6_spdif_prepare(struct snd_pcm_substream *substream,
 	int rc = 0;
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
+		rc = afe_spdif_reg_event_cfg(dai->id,
+				AFE_MODULE_REGISTER_EVENT_FLAG,
+				msm_dai_q6_spdif_process_event,
+				dai_data);
+		if (rc < 0)
+			dev_err(dai->dev,
+				"fail to register event for port 0x%x\n",
+				dai->id);
+
 		rc = afe_spdif_port_start(dai->id, &dai_data->spdif_port,
 				dai_data->rate);
 		if (rc < 0)
@@ -1550,7 +1706,6 @@ static int msm_dai_q6_spdif_prepare(struct snd_pcm_substream *substream,
 static int msm_dai_q6_spdif_dai_probe(struct snd_soc_dai *dai)
 {
 	struct msm_dai_q6_spdif_dai_data *dai_data;
-	const struct snd_kcontrol_new *kcontrol;
 	int rc = 0;
 	struct snd_soc_dapm_route intercon;
 	struct snd_soc_dapm_context *dapm;
@@ -1563,17 +1718,67 @@ static int msm_dai_q6_spdif_dai_probe(struct snd_soc_dai *dai)
 			GFP_KERNEL);
 
 	if (!dai_data) {
-		dev_err(dai->dev, "DAI-%d: fail to allocate dai data\n",
-				AFE_PORT_ID_SPDIF_RX);
 		rc = -ENOMEM;
 	} else
 		dev_set_drvdata(dai->dev, dai_data);
 
-	kcontrol = &spdif_config_controls[1];
-	dapm = snd_soc_component_get_dapm(dai->component);
+	dai->id = dai->driver->id;
+	dai_data->port_id = dai->id;
 
-	rc = snd_ctl_add(dai->component->card->snd_card,
-			snd_ctl_new1(kcontrol, dai_data));
+	switch (dai->id) {
+	case AFE_PORT_ID_PRIMARY_SPDIF_RX:
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				 snd_ctl_new1(&spdif_rx_config_controls[1],
+				 dai_data));
+		break;
+	case AFE_PORT_ID_SECONDARY_SPDIF_RX:
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				 snd_ctl_new1(&spdif_rx_config_controls[3],
+				 dai_data));
+		break;
+	case AFE_PORT_ID_PRIMARY_SPDIF_TX:
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(&spdif_tx_config_controls[0],
+				dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(&spdif_tx_config_controls[1],
+				dai_data));
+
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(&spdif_tx_status_controls[0],
+				dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(&spdif_tx_status_controls[1],
+				dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(&spdif_tx_status_controls[2],
+				dai_data));
+		break;
+	case AFE_PORT_ID_SECONDARY_SPDIF_TX:
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(&spdif_tx_config_controls[2],
+				dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(&spdif_tx_config_controls[3],
+				dai_data));
+
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(&spdif_tx_status_controls[3],
+				dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(&spdif_tx_status_controls[4],
+				dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				snd_ctl_new1(&spdif_tx_status_controls[5],
+				dai_data));
+		break;
+	}
+	if (rc < 0)
+		dev_err(dai->dev,
+			"%s: err add config ctl, DAI = %s\n",
+			__func__, dai->name);
+
+	dapm = snd_soc_component_get_dapm(dai->component);
 
 	memset(&intercon, 0, sizeof(intercon));
 	if (!rc && dai && dai->driver) {
@@ -1610,6 +1815,15 @@ static int msm_dai_q6_spdif_dai_remove(struct snd_soc_dai *dai)
 
 	/* If AFE port is still up, close it */
 	if (test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
+		rc = afe_spdif_reg_event_cfg(dai->id,
+				AFE_MODULE_DEREGISTER_EVENT_FLAG,
+				NULL,
+				dai_data);
+		if (rc < 0)
+			dev_err(dai->dev,
+				"fail to deregister event for port 0x%x\n",
+				dai->id);
+
 		rc = afe_close(dai->id); /* can block */
 		if (rc < 0)
 			dev_err(dai->dev, "fail to close AFE port\n");
@@ -1628,21 +1842,106 @@ static struct snd_soc_dai_ops msm_dai_q6_spdif_ops = {
 	.shutdown	= msm_dai_q6_spdif_shutdown,
 };
 
-static struct snd_soc_dai_driver msm_dai_q6_spdif_spdif_rx_dai = {
-	.playback = {
-		.stream_name = "SPDIF Playback",
-		.aif_name = "SPDIF_RX",
-		.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_8000 |
-			SNDRV_PCM_RATE_16000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE,
-		.channels_min = 1,
-		.channels_max = 4,
-		.rate_min = 8000,
-		.rate_max = 48000,
+static struct snd_soc_dai_driver msm_dai_q6_spdif_spdif_rx_dai[] = {
+	{
+		.playback = {
+			.stream_name = "Primary SPDIF Playback",
+			.aif_name = "PRI_SPDIF_RX",
+			.rates = SNDRV_PCM_RATE_32000 |
+				 SNDRV_PCM_RATE_44100 |
+				 SNDRV_PCM_RATE_48000 |
+				 SNDRV_PCM_RATE_88200 |
+				 SNDRV_PCM_RATE_96000 |
+				 SNDRV_PCM_RATE_176400 |
+				 SNDRV_PCM_RATE_192000,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE,
+			.channels_min = 1,
+			.channels_max = 2,
+			.rate_min = 32000,
+			.rate_max = 192000,
+		},
+		.name = "PRI_SPDIF_RX",
+		.ops = &msm_dai_q6_spdif_ops,
+		.id = AFE_PORT_ID_PRIMARY_SPDIF_RX,
+		.probe = msm_dai_q6_spdif_dai_probe,
+		.remove = msm_dai_q6_spdif_dai_remove,
 	},
-	.ops = &msm_dai_q6_spdif_ops,
-	.probe = msm_dai_q6_spdif_dai_probe,
-	.remove = msm_dai_q6_spdif_dai_remove,
+	{
+		.playback = {
+			.stream_name = "Secondary SPDIF Playback",
+			.aif_name = "SEC_SPDIF_RX",
+			.rates = SNDRV_PCM_RATE_32000 |
+				 SNDRV_PCM_RATE_44100 |
+				 SNDRV_PCM_RATE_48000 |
+				 SNDRV_PCM_RATE_88200 |
+				 SNDRV_PCM_RATE_96000 |
+				 SNDRV_PCM_RATE_176400 |
+				 SNDRV_PCM_RATE_192000,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE,
+			.channels_min = 1,
+			.channels_max = 2,
+			.rate_min = 32000,
+			.rate_max = 192000,
+		},
+		.name = "SEC_SPDIF_RX",
+		.ops = &msm_dai_q6_spdif_ops,
+		.id = AFE_PORT_ID_SECONDARY_SPDIF_RX,
+		.probe = msm_dai_q6_spdif_dai_probe,
+		.remove = msm_dai_q6_spdif_dai_remove,
+	},
+};
+
+static struct snd_soc_dai_driver msm_dai_q6_spdif_spdif_tx_dai[] = {
+	{
+		.capture = {
+			.stream_name = "Primary SPDIF Capture",
+			.aif_name = "PRI_SPDIF_TX",
+			.rates = SNDRV_PCM_RATE_32000 |
+				 SNDRV_PCM_RATE_44100 |
+				 SNDRV_PCM_RATE_48000 |
+				 SNDRV_PCM_RATE_88200 |
+				 SNDRV_PCM_RATE_96000 |
+				 SNDRV_PCM_RATE_176400 |
+				 SNDRV_PCM_RATE_192000,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE,
+			.channels_min = 1,
+			.channels_max = 2,
+			.rate_min = 32000,
+			.rate_max = 192000,
+		},
+		.name = "PRI_SPDIF_TX",
+		.ops = &msm_dai_q6_spdif_ops,
+		.id = AFE_PORT_ID_PRIMARY_SPDIF_TX,
+		.probe = msm_dai_q6_spdif_dai_probe,
+		.remove = msm_dai_q6_spdif_dai_remove,
+	},
+	{
+		.capture = {
+			.stream_name = "Secondary SPDIF Capture",
+			.aif_name = "SEC_SPDIF_TX",
+			.rates = SNDRV_PCM_RATE_32000 |
+				 SNDRV_PCM_RATE_44100 |
+				 SNDRV_PCM_RATE_48000 |
+				 SNDRV_PCM_RATE_88200 |
+				 SNDRV_PCM_RATE_96000 |
+				 SNDRV_PCM_RATE_176400 |
+				 SNDRV_PCM_RATE_192000,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE,
+			.channels_min = 1,
+			.channels_max = 2,
+			.rate_min = 32000,
+			.rate_max = 192000,
+		},
+		.name = "SEC_SPDIF_TX",
+		.ops = &msm_dai_q6_spdif_ops,
+		.id = AFE_PORT_ID_SECONDARY_SPDIF_TX,
+		.probe = msm_dai_q6_spdif_dai_probe,
+		.remove = msm_dai_q6_spdif_dai_remove,
+	},
 };
 
 static const struct snd_soc_component_driver msm_dai_spdif_q6_component = {
@@ -5471,16 +5770,48 @@ static struct platform_driver msm_dai_q6_mi2s_driver = {
 
 static int msm_dai_q6_spdif_dev_probe(struct platform_device *pdev)
 {
-	int rc;
+	int rc, id;
+	const char *q6_dev_id = "qcom,msm-dai-q6-dev-id";
 
-	pdev->id = AFE_PORT_ID_SPDIF_RX;
+	rc = of_property_read_u32(pdev->dev.of_node, q6_dev_id, &id);
+	if (rc) {
+		dev_err(&pdev->dev,
+			"%s: missing %s in dt node\n", __func__, q6_dev_id);
+		return rc;
+	}
+
+	pdev->id = id;
 
 	pr_debug("%s: dev name %s, id:%d\n", __func__,
 			dev_name(&pdev->dev), pdev->id);
 
-	rc = snd_soc_register_component(&pdev->dev,
+	switch (pdev->id) {
+	case AFE_PORT_ID_PRIMARY_SPDIF_RX:
+		rc = snd_soc_register_component(&pdev->dev,
 			&msm_dai_spdif_q6_component,
-			&msm_dai_q6_spdif_spdif_rx_dai, 1);
+			&msm_dai_q6_spdif_spdif_rx_dai[0], 1);
+		break;
+	case AFE_PORT_ID_SECONDARY_SPDIF_RX:
+		rc = snd_soc_register_component(&pdev->dev,
+			&msm_dai_spdif_q6_component,
+			&msm_dai_q6_spdif_spdif_rx_dai[1], 1);
+		break;
+	case AFE_PORT_ID_PRIMARY_SPDIF_TX:
+		rc = snd_soc_register_component(&pdev->dev,
+			&msm_dai_spdif_q6_component,
+			&msm_dai_q6_spdif_spdif_tx_dai[0], 1);
+		break;
+	case AFE_PORT_ID_SECONDARY_SPDIF_TX:
+		rc = snd_soc_register_component(&pdev->dev,
+			&msm_dai_spdif_q6_component,
+			&msm_dai_q6_spdif_spdif_tx_dai[1], 1);
+		break;
+	default:
+		dev_err(&pdev->dev, "invalid device ID %d\n", pdev->id);
+		rc = -ENODEV;
+		break;
+	}
+
 	return rc;
 }
 
