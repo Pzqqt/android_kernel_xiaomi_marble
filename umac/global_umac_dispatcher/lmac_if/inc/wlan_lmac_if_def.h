@@ -433,6 +433,7 @@ struct wlan_lmac_if_wifi_pos_tx_ops {
  *                                 buffer rx framework
  * @direct_buf_rx_unregister_events: Unregistraton of WMI events for direct
  *                                   buffer rx framework
+ * @direct_buf_rx_print_ring_stat: Print ring status per module per pdev
  */
 struct wlan_lmac_if_direct_buf_rx_tx_ops {
 	QDF_STATUS (*direct_buf_rx_module_register)(
@@ -443,6 +444,8 @@ struct wlan_lmac_if_direct_buf_rx_tx_ops {
 			struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*direct_buf_rx_unregister_events)(
 			struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*direct_buf_rx_print_ring_stat)(
+			struct wlan_objmgr_pdev *pdev);
 };
 #endif
 

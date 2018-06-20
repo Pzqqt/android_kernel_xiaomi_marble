@@ -36,7 +36,7 @@ struct direct_buf_rx_data;
  * @DBR_MODULE_MAX: Max module ID
  */
 enum DBR_MODULE {
-	DBR_MODULE_SPECTRAL = 1,
+	DBR_MODULE_SPECTRAL = 0,
 	DBR_MODULE_MAX,
 };
 
@@ -147,6 +147,16 @@ QDF_STATUS target_if_direct_buf_rx_register_events(
  */
 QDF_STATUS target_if_direct_buf_rx_unregister_events(
 				struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_direct_buf_rx_print_ring_stat() - Print ring status for each
+ *                                             module in the pdev
+ * @pdev: pointer to pdev object
+ *
+ * Return : QDF status of operation
+ */
+QDF_STATUS target_if_direct_buf_rx_print_ring_stat(
+				struct wlan_objmgr_pdev *pdev);
 
 /**
  * target_if_direct_buf_rx_pdev_create_handler() - Handler to be invoked for

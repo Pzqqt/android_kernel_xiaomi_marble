@@ -25,6 +25,18 @@
 #include <service_ready_util.h>
 #include <init_deinit_lmac.h>
 
+/**
+ * struct module_name : Module name information structure
+ * @module_name_str : Module name subscribing to DBR
+ */
+struct module_name {
+	unsigned char module_name_str[QDF_MAX_NAME_SIZE];
+};
+
+static const struct module_name g_dbr_module_name[DBR_MODULE_MAX] = {
+	[DBR_MODULE_SPECTRAL] = {"SPECTRAL"},
+};
+
 static uint8_t get_num_dbr_modules_per_pdev(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -293,7 +305,7 @@ QDF_STATUS target_if_direct_buf_rx_psoc_destroy_handler(
 
 static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 			struct direct_buf_rx_module_param *mod_param,
-			void *aligned_vaddr, uint8_t cookie)
+			void *aligned_vaddr, uint32_t cookie)
 {
 	uint64_t *ring_entry;
 	uint32_t dw_lo, dw_hi = 0, map_status;
@@ -364,7 +376,7 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 static QDF_STATUS target_if_dbr_fill_ring(struct wlan_objmgr_pdev *pdev,
 			  struct direct_buf_rx_module_param *mod_param)
 {
-	uint8_t idx;
+	uint32_t idx;
 	void *buf, *buf_aligned;
 	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;
@@ -898,7 +910,7 @@ static QDF_STATUS target_if_dbr_empty_ring(struct wlan_objmgr_pdev *pdev,
 			struct direct_buf_rx_psoc_obj *dbr_psoc_obj,
 			struct direct_buf_rx_module_param *mod_param)
 {
-	uint8_t idx;
+	uint32_t idx;
 	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;
 	struct direct_buf_rx_buf_info *dbr_buf_pool;
@@ -1034,6 +1046,48 @@ QDF_STATUS target_if_direct_buf_rx_unregister_events(
 	wmi_unified_unregister_event_handler(
 			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dma_buf_release_event_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_direct_buf_rx_print_ring_stat(
+				struct wlan_objmgr_pdev *pdev)
+{
+	struct direct_buf_rx_psoc_obj *dbr_psoc_obj;
+	struct direct_buf_rx_pdev_obj *dbr_pdev_obj;
+	struct wlan_objmgr_psoc *psoc;
+	void *srng, *hal_soc;
+	uint32_t hp = 0, tp = 0;
+	struct direct_buf_rx_module_param *mod_param;
+	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
+	uint8_t num_modules, mod_idx;
+
+	if (!pdev) {
+		direct_buf_rx_err("pdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	dbr_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+				WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
+	dbr_psoc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+				WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
+	hal_soc = dbr_psoc_obj->hal_soc;
+	num_modules = dbr_pdev_obj->num_modules;
+	direct_buf_rx_err("--------------------------------------------------");
+	direct_buf_rx_err("| Module ID |    Module    | Head Idx | Tail Idx |");
+	direct_buf_rx_err("--------------------------------------------------");
+	for (mod_idx = 0; mod_idx < num_modules; mod_idx++) {
+		mod_param = &dbr_pdev_obj->dbr_mod_param[mod_idx];
+		dbr_ring_cfg = mod_param->dbr_ring_cfg;
+		srng = dbr_ring_cfg->srng;
+		hal_api_get_tphp(hal_soc, srng, &tp, &hp);
+		direct_buf_rx_err("|%11d|%14s|%10x|%10x|",
+				  mod_idx,
+				  g_dbr_module_name[mod_idx].module_name_str,
+				  hp, tp);
+	}
+	direct_buf_rx_err("--------------------------------------------------");
 
 	return QDF_STATUS_SUCCESS;
 }
