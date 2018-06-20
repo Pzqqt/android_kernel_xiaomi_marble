@@ -1421,6 +1421,9 @@ struct dp_peer {
 	dp_ecm_policy wds_ecm;
 #endif
 	bool delete_in_progress;
+
+	/* Opaque handle to node */
+	void *ol_peer;
 };
 
 #ifdef CONFIG_WIN

@@ -422,6 +422,8 @@ void dp_set_overload(struct cdp_pdev *pdev_handle, bool overload);
 bool dp_peer_is_inact(void *peer_handle);
 void dp_init_inact_timer(struct dp_soc *soc);
 void dp_free_inact_timer(struct dp_soc *soc);
+void dp_set_michael_key(struct cdp_peer *peer_handle,
+			bool is_unicast, uint32_t *key);
 
 /*
  * dp_get_mac_id_for_pdev() -  Return mac corresponding to pdev for mac

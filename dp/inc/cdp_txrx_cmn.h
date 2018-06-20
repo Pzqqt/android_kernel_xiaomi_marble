@@ -270,7 +270,7 @@ cdp_pdev_detach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, int force)
 
 static inline void *cdp_peer_create
 	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
-	uint8_t *peer_mac_addr)
+	uint8_t *peer_mac_addr, void *ol_peer)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -284,7 +284,7 @@ static inline void *cdp_peer_create
 		return NULL;
 
 	return soc->ops->cmn_drv_ops->txrx_peer_create(vdev,
-			peer_mac_addr);
+			peer_mac_addr, ol_peer);
 }
 
 static inline void cdp_peer_setup
@@ -1234,6 +1234,26 @@ static inline int cdp_set_pn_check(ol_txrx_soc_handle soc,
 
 	soc->ops->cmn_drv_ops->set_pn_check(vdev, peer_handle,
 			sec_type, rx_pn);
+	return 0;
+}
+
+static inline int cdp_set_key(ol_txrx_soc_handle soc,
+			      struct cdp_peer *peer_handle,
+			      bool is_unicast, uint32_t *key)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->set_key)
+		return 0;
+
+	soc->ops->ctrl_ops->set_key(peer_handle,
+			is_unicast, key);
 	return 0;
 }
 

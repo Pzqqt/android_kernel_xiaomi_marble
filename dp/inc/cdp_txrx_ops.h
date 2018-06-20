@@ -85,7 +85,8 @@ struct cdp_cmn_ops {
 	void (*txrx_pdev_detach)(struct cdp_pdev *pdev, int force);
 
 	void *(*txrx_peer_create)
-		(struct cdp_vdev *vdev, uint8_t *peer_mac_addr);
+		(struct cdp_vdev *vdev, uint8_t *peer_mac_addr,
+		 void *ol_peer);
 
 	void (*txrx_peer_setup)
 		(struct cdp_vdev *vdev_hdl, void *peer_hdl);
@@ -520,6 +521,8 @@ struct cdp_ctrl_ops {
 		enum cdp_nac_param_cmd cmd, char *bssid, char *client_macaddr,
 		uint8_t chan_num);
 #endif
+	void (*set_key)(struct cdp_peer *peer_handle,
+			bool is_unicast, uint32_t *key);
 };
 
 struct cdp_me_ops {
@@ -742,6 +745,8 @@ struct ol_if_ops {
 
 	void (*rx_mic_error)(void *ol_soc_handle,
 			 uint16_t vdev_id, void *wh);
+	bool (*rx_frag_tkip_demic)(void *ol_peer, qdf_nbuf_t nbuf,
+				   uint16_t hdr_space);
 	uint8_t (*freq_to_channel)(void *ol_soc_handle,  uint16_t vdev_id);
 
 	void (*record_act_change)(struct wlan_objmgr_pdev *pdev,

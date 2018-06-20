@@ -2378,3 +2378,18 @@ void dp_peer_rxtid_stats(struct dp_peer *peer, void (*dp_stats_cmd_cb),
 	}
 }
 
+void dp_set_michael_key(struct cdp_peer *peer_handle,
+			bool is_unicast, uint32_t *key)
+{
+	struct dp_peer *peer =  (struct dp_peer *)peer_handle;
+	uint8_t sec_index = is_unicast ? 1 : 0;
+
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "peer not found ");
+		return;
+	}
+
+	qdf_mem_copy(&peer->security[sec_index].michael_key[0],
+		     key, IEEE80211_WEP_MICLEN);
+}

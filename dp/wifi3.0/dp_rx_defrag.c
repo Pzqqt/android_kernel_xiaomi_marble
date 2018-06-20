@@ -97,12 +97,12 @@ static void dp_rx_return_head_frag_desc(struct dp_peer *peer,
 		pdev = peer->vdev->pdev;
 		soc = pdev->soc;
 		dp_rxdma_srng = &pdev->rx_refill_buf_ring;
-		rx_desc_pool = &soc->rx_desc_buf[0];
+		rx_desc_pool = &soc->rx_desc_buf[pdev->pdev_id];
 
 		dp_rx_add_to_free_desc_list(&head, &tail,
 					    peer->rx_tid[tid].head_frag_desc);
 		dp_rx_buffers_replenish(soc, 0, dp_rxdma_srng, rx_desc_pool,
-					1, &head, &tail, HAL_RX_BUF_RBM_SW3_BM);
+					1, &head, &tail);
 	}
 }
 
@@ -412,9 +412,6 @@ static QDF_STATUS dp_rx_defrag_tkip_decap(qdf_nbuf_t msdu, uint16_t hdrlen)
 		return QDF_STATUS_E_DEFRAG_ERROR;
 	}
 
-	qdf_mem_move(orig_hdr + dp_f_tkip.ic_header, orig_hdr, hdrlen);
-
-	qdf_nbuf_pull_head(msdu, dp_f_tkip.ic_header);
 	qdf_nbuf_trim_tail(msdu, dp_f_tkip.ic_trailer);
 
 	return QDF_STATUS_SUCCESS;
@@ -611,6 +608,7 @@ static QDF_STATUS dp_rx_defrag_mic(const uint8_t *key, qdf_nbuf_t wbuf,
 
 	dp_rx_defrag_michdr((struct ieee80211_frame *)(qdf_nbuf_data(wbuf)
 		+ rx_desc_len), hdr);
+
 	l = dp_rx_get_le32(key);
 	r = dp_rx_get_le32(key + 4);
 
@@ -625,8 +623,8 @@ static QDF_STATUS dp_rx_defrag_mic(const uint8_t *key, qdf_nbuf_t wbuf,
 	dp_rx_michael_block(l, r);
 
 	/* first buffer has special handling */
-	data = (uint8_t *) qdf_nbuf_data(wbuf) + rx_desc_len + off;
-	space = qdf_nbuf_len(wbuf) - rx_desc_len - off;
+	data = (uint8_t *)qdf_nbuf_data(wbuf) + off;
+	space = qdf_nbuf_len(wbuf) - off;
 
 	for (;; ) {
 		if (space > data_len)
@@ -653,8 +651,8 @@ static QDF_STATUS dp_rx_defrag_mic(const uint8_t *key, qdf_nbuf_t wbuf,
 			 * Block straddles buffers, split references.
 			 */
 			data_next =
-				(uint8_t *) qdf_nbuf_data(wbuf) + rx_desc_len;
-			if ((qdf_nbuf_len(wbuf) - rx_desc_len) <
+				(uint8_t *)qdf_nbuf_data(wbuf) + off;
+			if ((qdf_nbuf_len(wbuf)) <
 				sizeof(uint32_t) - space) {
 				return QDF_STATUS_E_DEFRAG_ERROR;
 			}
@@ -664,22 +662,19 @@ static QDF_STATUS dp_rx_defrag_mic(const uint8_t *key, qdf_nbuf_t wbuf,
 					data_next[0], data_next[1],
 					data_next[2]);
 				data = data_next + 3;
-				space = (qdf_nbuf_len(wbuf) - rx_desc_len)
-					- 3;
+				space = (qdf_nbuf_len(wbuf) - off) - 3;
 				break;
 			case 2:
 				l ^= dp_rx_get_le32_split(data[0], data[1],
 						    data_next[0], data_next[1]);
 				data = data_next + 2;
-				space = (qdf_nbuf_len(wbuf) - rx_desc_len)
-					- 2;
+				space = (qdf_nbuf_len(wbuf) - off) - 2;
 				break;
 			case 3:
 				l ^= dp_rx_get_le32_split(data[0], data[1],
 					data[2], data_next[0]);
 				data = data_next + 1;
-				space = (qdf_nbuf_len(wbuf) - rx_desc_len)
-					- 1;
+				space = (qdf_nbuf_len(wbuf) - off) - 1;
 				break;
 			}
 			dp_rx_michael_block(l, r);
@@ -688,8 +683,8 @@ static QDF_STATUS dp_rx_defrag_mic(const uint8_t *key, qdf_nbuf_t wbuf,
 			/*
 			 * Setup for next buffer.
 			 */
-			data = (uint8_t *) qdf_nbuf_data(wbuf) + rx_desc_len;
-			space = qdf_nbuf_len(wbuf) - rx_desc_len;
+			data = (uint8_t *)qdf_nbuf_data(wbuf) + off;
+			space = qdf_nbuf_len(wbuf) - off;
 		}
 	}
 	/* Last block and padding (0x5a, 4..7 x 0) */
@@ -729,26 +724,34 @@ static QDF_STATUS dp_rx_defrag_tkip_demic(const uint8_t *key,
 					qdf_nbuf_t msdu, uint16_t hdrlen)
 {
 	QDF_STATUS status;
-	uint32_t pktlen;
+	uint32_t pktlen = 0;
 	uint8_t mic[IEEE80211_WEP_MICLEN];
 	uint8_t mic0[IEEE80211_WEP_MICLEN];
-	int rx_desc_len = sizeof(struct rx_pkt_tlvs);
+	qdf_nbuf_t prev = NULL, next;
 
-	pktlen = qdf_nbuf_len(msdu) - rx_desc_len;
+	next = msdu;
+	while (next) {
+		pktlen += (qdf_nbuf_len(next) - hdrlen);
+		prev = next;
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  "%s pktlen %ld\n", __func__,
+				qdf_nbuf_len(next) - hdrlen);
+		next = qdf_nbuf_next(next);
+	}
+
+	qdf_nbuf_copy_bits(prev, qdf_nbuf_len(prev) - dp_f_tkip.ic_miclen,
+			   dp_f_tkip.ic_miclen, (caddr_t)mic0);
+	qdf_nbuf_trim_tail(prev, dp_f_tkip.ic_miclen);
+	pktlen -= dp_f_tkip.ic_miclen;
 
 	status = dp_rx_defrag_mic(key, msdu, hdrlen,
-				pktlen - (hdrlen + dp_f_tkip.ic_miclen), mic);
+				pktlen, mic);
 
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	qdf_nbuf_copy_bits(msdu, pktlen - dp_f_tkip.ic_miclen + rx_desc_len,
-				dp_f_tkip.ic_miclen, (caddr_t)mic0);
-
-	if (!qdf_mem_cmp(mic, mic0, dp_f_tkip.ic_miclen))
+	if (qdf_mem_cmp(mic, mic0, dp_f_tkip.ic_miclen))
 		return QDF_STATUS_E_DEFRAG_ERROR;
-
-	qdf_nbuf_trim_tail(msdu, dp_f_tkip.ic_miclen);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -824,11 +827,20 @@ dp_rx_construct_fraglist(struct dp_peer *peer,
  *
  * Return: None
  */
-static void dp_rx_defrag_err(uint8_t vdev_id, uint8_t *peer_mac_addr,
-	int tid, uint32_t tsf32, uint32_t err_type, qdf_nbuf_t rx_frame,
-	uint64_t *pn, uint8_t key_id)
+static void dp_rx_defrag_err(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 {
-	/* TODO: Who needs to know about the TKIP MIC error */
+	struct ol_if_ops *tops = NULL;
+	struct dp_pdev *pdev = vdev->pdev;
+	int rx_desc_len = sizeof(struct rx_pkt_tlvs);
+	uint8_t *orig_hdr;
+	struct ieee80211_frame *wh;
+
+	orig_hdr = (uint8_t *)(qdf_nbuf_data(nbuf) + rx_desc_len);
+	wh = (struct ieee80211_frame *)orig_hdr;
+
+	tops = pdev->soc->cdp_soc.ol_ops;
+	if (tops->rx_mic_error)
+		tops->rx_mic_error(pdev->osif_pdev, vdev->vdev_id, wh);
 }
 
 
@@ -1117,6 +1129,8 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 	uint16_t hdr_space;
 	uint8_t key[DEFRAG_IEEE80211_KEY_LEN];
 	struct dp_vdev *vdev = peer->vdev;
+	struct dp_soc *soc = vdev->pdev->soc;
+	uint8_t status = 0;
 
 	hdr_space = dp_rx_defrag_hdrsize(cur);
 	index = hal_rx_msdu_is_wlan_mcast(cur) ?
@@ -1134,14 +1148,8 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 	cur = frag_list_head;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			"%s: Security type: %d\n", __func__,
-			peer->security[index].sec_type);
-
-	/* Temporary fix to drop TKIP encrypted packets */
-	if (peer->security[index].sec_type ==
-			htt_sec_type_tkip) {
-		return QDF_STATUS_E_DEFRAG_ERROR;
-	}
+			"%s: index %d Security type: %d\n", __func__,
+			index, peer->security[index].sec_type);
 
 	switch (peer->security[index].sec_type) {
 	case htt_sec_type_tkip:
@@ -1152,9 +1160,6 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 			tmp_next = qdf_nbuf_next(cur);
 			if (dp_rx_defrag_tkip_decap(cur, hdr_space)) {
 
-				/* TKIP decap failed, discard frags */
-				dp_rx_defrag_frames_free(frag_list_head);
-
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					QDF_TRACE_LEVEL_ERROR,
 					"dp_rx_defrag: TKIP decap failed");
@@ -1163,15 +1168,15 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 			}
 			cur = tmp_next;
 		}
+
+		/* If success, increment header to be stripped later */
+		hdr_space += dp_f_tkip.ic_header;
 		break;
 
 	case htt_sec_type_aes_ccmp:
 		while (cur) {
 			tmp_next = qdf_nbuf_next(cur);
 			if (dp_rx_defrag_ccmp_demic(cur, hdr_space)) {
-
-				/* CCMP demic failed, discard frags */
-				dp_rx_defrag_frames_free(frag_list_head);
 
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					QDF_TRACE_LEVEL_ERROR,
@@ -1180,9 +1185,6 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 				return QDF_STATUS_E_DEFRAG_ERROR;
 			}
 			if (dp_rx_defrag_ccmp_decap(cur, hdr_space)) {
-
-				/* CCMP decap failed, discard frags */
-				dp_rx_defrag_frames_free(frag_list_head);
 
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					QDF_TRACE_LEVEL_ERROR,
@@ -1196,15 +1198,13 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 		/* If success, increment header to be stripped later */
 		hdr_space += dp_f_ccmp.ic_header;
 		break;
+
 	case htt_sec_type_wep40:
 	case htt_sec_type_wep104:
 	case htt_sec_type_wep128:
 		while (cur) {
 			tmp_next = qdf_nbuf_next(cur);
 			if (dp_rx_defrag_wep_decap(cur, hdr_space)) {
-
-				/* WEP decap failed, discard frags */
-				dp_rx_defrag_frames_free(frag_list_head);
 
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					QDF_TRACE_LEVEL_ERROR,
@@ -1226,19 +1226,28 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 	}
 
 	if (tkip_demic) {
-		msdu = frag_list_tail; /* Only last fragment has the MIC */
+		msdu = frag_list_head;
+		if (soc->cdp_soc.ol_ops->rx_frag_tkip_demic) {
+			status = soc->cdp_soc.ol_ops->rx_frag_tkip_demic(
+				peer->ol_peer, msdu, hdr_space);
+		} else {
+			qdf_mem_copy(key,
+				     &peer->security[index].michael_key[0],
+				IEEE80211_WEP_MICLEN);
+			status = dp_rx_defrag_tkip_demic(key, msdu,
+							 RX_PKT_TLVS_LEN +
+							 hdr_space);
 
-		qdf_mem_copy(key,
-			peer->security[index].michael_key,
-			sizeof(peer->security[index].michael_key));
-		if (dp_rx_defrag_tkip_demic(key, msdu, hdr_space)) {
-			qdf_nbuf_free(msdu);
-			dp_rx_defrag_err(vdev->vdev_id, peer->mac_addr.raw,
-				tid, 0, QDF_STATUS_E_DEFRAG_ERROR, msdu,
-				NULL, 0);
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"dp_rx_defrag: TKIP demic failed");
-			return QDF_STATUS_E_DEFRAG_ERROR;
+			if (status) {
+				dp_rx_defrag_err(vdev, frag_list_head);
+
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_ERROR,
+					  "%s: TKIP demic failed status %d\n",
+					  __func__, status);
+
+				return QDF_STATUS_E_DEFRAG_ERROR;
+			}
 		}
 	}
 
@@ -1663,6 +1672,7 @@ QDF_STATUS dp_rx_defrag_add_last_frag(struct dp_soc *soc,
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 	struct dp_rx_reorder_array_elem *rx_reorder_array_elem;
 	uint8_t all_frag_present;
+	uint32_t msdu_len;
 	QDF_STATUS status;
 
 	rx_reorder_array_elem = peer->rx_tid[tid].array;
@@ -1675,6 +1685,10 @@ QDF_STATUS dp_rx_defrag_add_last_frag(struct dp_soc *soc,
 		qdf_nbuf_free(nbuf);
 		goto fail;
 	}
+
+	msdu_len = hal_rx_msdu_start_msdu_len_get(qdf_nbuf_data(nbuf));
+
+	qdf_nbuf_set_pktlen(nbuf, (msdu_len + RX_PKT_TLVS_LEN));
 
 	status = dp_rx_defrag_fraglist_insert(peer, tid,
 					      &rx_reorder_array_elem->head,

@@ -62,7 +62,7 @@ static void dp_pkt_log_con_service(struct cdp_pdev *ppdev, void *scn);
 #endif
 static void dp_pktlogmod_exit(struct dp_pdev *handle);
 static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
-					uint8_t *peer_mac_addr);
+				uint8_t *peer_mac_addr, void *ol_peer);
 static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap);
 
 #define DP_INTR_POLL_TIMER_MS	10
@@ -3356,7 +3356,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 
 	if (wlan_op_mode_sta == vdev->opmode)
 		dp_peer_create_wifi3((struct cdp_vdev *)vdev,
-							vdev->mac_addr.raw);
+						vdev->mac_addr.raw, NULL);
 
 	return (struct cdp_vdev *)vdev;
 
@@ -3543,7 +3543,7 @@ static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
  * Return: DP peeer handle on success, NULL on failure
  */
 static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
-		uint8_t *peer_mac_addr)
+		uint8_t *peer_mac_addr, void *ol_peer)
 {
 	struct dp_peer *peer;
 	int i;
@@ -3664,6 +3664,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	dp_local_peer_id_alloc(pdev, peer);
 #endif
 	DP_STATS_INIT(peer);
+	peer->ol_peer = ol_peer;
 	return (void *)peer;
 }
 
@@ -7111,6 +7112,7 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 #ifdef ATH_SUPPORT_NAC_RSSI
 	.txrx_vdev_config_for_nac_rssi = dp_config_for_nac_rssi,
 #endif
+	.set_key = dp_set_michael_key,
 };
 
 static struct cdp_me_ops dp_ops_me = {
