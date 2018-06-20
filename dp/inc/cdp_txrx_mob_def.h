@@ -197,6 +197,7 @@ enum ol_tx_spec {
  * @PEER_DEBUG_ID_WMA_DELBA_REQ: debug id for DELBA request
  * @PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP: debug id for send ADDBA response
  * @PEER_DEBUG_ID_OL_RX_THREAD: debug id for rx thread
+ * @PEER_DEBUG_ID_WMA_CCMP_REPLAY_ATTACK: debug id for CCMP replay
  * @PEER_DEBUG_ID_MAX: debug id MAX
  */
 enum peer_debug_id_type {
@@ -206,6 +207,7 @@ enum peer_debug_id_type {
 	PEER_DEBUG_ID_WMA_DELBA_REQ = 3,
 	PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP = 4,
 	PEER_DEBUG_ID_OL_RX_THREAD = 5,
+	PEER_DEBUG_ID_WMA_CCMP_REPLAY_ATTACK = 6,
 	PEER_DEBUG_ID_MAX
 };
 
