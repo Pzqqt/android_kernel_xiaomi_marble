@@ -153,6 +153,7 @@ QDF_STATUS qdf_event_reset(qdf_event_t *event)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	event->force_set = false;
 	/* (re)initialize event */
 	INIT_COMPLETION(event->complete);
 	return QDF_STATUS_SUCCESS;
