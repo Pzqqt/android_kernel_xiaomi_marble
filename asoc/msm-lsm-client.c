@@ -53,8 +53,8 @@ static struct snd_pcm_hardware msm_pcm_hardware_capture = {
 				SNDRV_PCM_RATE_48000),
 	.rate_min =             16000,
 	.rate_max =             48000,
-	.channels_min =         1,
-	.channels_max =         4,
+	.channels_min =         LSM_INPUT_NUM_CHANNELS_MIN,
+	.channels_max =         LSM_INPUT_NUM_CHANNELS_MAX,
 	.buffer_bytes_max =     CAPTURE_MAX_NUM_PERIODS *
 				CAPTURE_MAX_PERIOD_SIZE,
 	.period_bytes_min =	CAPTURE_MIN_PERIOD_SIZE,
@@ -116,11 +116,11 @@ static int msm_lsm_queue_lab_buffer(struct lsm_priv *prtd, int i)
 	rtd = prtd->substream->private_data;
 
 	if (!prtd->lsm_client->lab_buffer ||
-		i >= prtd->lsm_client->hw_params.period_count) {
+		i >= prtd->lsm_client->out_hw_params.period_count) {
 		dev_err(rtd->dev,
 			"%s: Lab buffer not setup %pK incorrect index %d period count %d\n",
 			__func__, prtd->lsm_client->lab_buffer, i,
-			prtd->lsm_client->hw_params.period_count);
+			prtd->lsm_client->out_hw_params.period_count);
 		return -EINVAL;
 	}
 	cmd_read.buf_addr_lsw =
@@ -165,7 +165,7 @@ static int lsm_lab_buffer_sanity(struct lsm_priv *prtd,
 			prtd->lsm_client->lab_buffer);
 		return -EINVAL;
 	}
-	for (i = 0; i < prtd->lsm_client->hw_params.period_count; i++) {
+	for (i = 0; i < prtd->lsm_client->out_hw_params.period_count; i++) {
 		if ((lower_32_bits(prtd->lsm_client->lab_buffer[i].phys) ==
 			read_done->buf_addr_lsw) &&
 			(msm_audio_populate_upper_32_bits
@@ -240,11 +240,11 @@ static void lsm_event_handler(uint32_t opcode, uint32_t token,
 				"%s: process read done index %d\n",
 				__func__, buf_index);
 			if (buf_index >=
-				prtd->lsm_client->hw_params.period_count) {
+				prtd->lsm_client->out_hw_params.period_count) {
 				dev_err(rtd->dev,
 					"%s: Invalid index %d buf_index max cnt %d\n",
 					__func__, buf_index,
-				prtd->lsm_client->hw_params.period_count);
+				prtd->lsm_client->out_hw_params.period_count);
 				return;
 			}
 			prtd->dma_write += read_done->total_size;
@@ -253,7 +253,7 @@ static void lsm_event_handler(uint32_t opcode, uint32_t token,
 			wake_up(&prtd->period_wait);
 			/* queue the next period buffer */
 			buf_index = (buf_index + 1) %
-			prtd->lsm_client->hw_params.period_count;
+			prtd->lsm_client->out_hw_params.period_count;
 			rc = msm_lsm_queue_lab_buffer(prtd, buf_index);
 			if (rc)
 				dev_err(rtd->dev,
@@ -405,8 +405,8 @@ static int msm_lsm_lab_buffer_alloc(struct lsm_priv *lsm, int alloc)
 		dma_buf->private_data = NULL;
 		dma_buf->area = lsm->lsm_client->lab_buffer[0].data;
 		dma_buf->addr = lsm->lsm_client->lab_buffer[0].phys;
-		dma_buf->bytes = lsm->lsm_client->hw_params.buf_sz *
-		lsm->lsm_client->hw_params.period_count;
+		dma_buf->bytes = lsm->lsm_client->out_hw_params.buf_sz *
+		lsm->lsm_client->out_hw_params.period_count;
 		snd_pcm_set_runtime_buffer(lsm->substream, dma_buf);
 	} else {
 		ret = q6lsm_lab_buffer_alloc(lsm->lsm_client, alloc);
@@ -1260,7 +1260,10 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 		break;
 	}
 	case SNDRV_LSM_LAB_CONTROL: {
-		u32 enable;
+		struct lsm_hw_params *out_hw_params =
+				&prtd->lsm_client->out_hw_params;
+		u8 chmap[out_hw_params->num_chs];
+		u32 enable, ch_idx;
 
 		if (copy_from_user(&enable, arg, sizeof(enable))) {
 			dev_err(rtd->dev, "%s: %s: copy_frm_user failed\n",
@@ -1270,39 +1273,61 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 
 		dev_dbg(rtd->dev, "%s: ioctl %s, enable = %d\n",
 			 __func__, "SNDRV_LSM_LAB_CONTROL", enable);
-		if (!prtd->lsm_client->started) {
-			if (prtd->lsm_client->lab_enable == enable) {
-				dev_dbg(rtd->dev,
-					"%s: Lab for session %d already %s\n",
-					__func__, prtd->lsm_client->session,
-					enable ? "enabled" : "disabled");
-				rc = 0;
-				break;
-			}
-			rc = q6lsm_lab_control(prtd->lsm_client, enable);
-			if (rc) {
-				dev_err(rtd->dev,
-					"%s: ioctl %s failed rc %d to %s lab for session %d\n",
-					__func__, "SNDRV_LAB_CONTROL", rc,
-					enable ? "enable" : "disable",
-					prtd->lsm_client->session);
-			} else {
-				rc = msm_lsm_lab_buffer_alloc(prtd,
-					enable ? LAB_BUFFER_ALLOC
-					: LAB_BUFFER_DEALLOC);
-				if (rc)
-					dev_err(rtd->dev,
-						"%s: msm_lsm_lab_buffer_alloc failed rc %d for %s",
-						__func__, rc,
-						enable ? "ALLOC" : "DEALLOC");
-				if (!rc)
-					prtd->lsm_client->lab_enable = enable;
-			}
-		} else {
+
+		if (prtd->lsm_client->started) {
 			dev_err(rtd->dev, "%s: ioctl %s issued after start",
 				__func__, "SNDRV_LSM_LAB_CONTROL");
 			rc = -EINVAL;
+			break;
 		}
+
+		if (prtd->lsm_client->lab_enable == enable) {
+			dev_dbg(rtd->dev,
+				"%s: Lab for session %d already %s\n",
+				__func__, prtd->lsm_client->session,
+				enable ? "enabled" : "disabled");
+			rc = 0;
+			break;
+		}
+
+		rc = q6lsm_lab_control(prtd->lsm_client, enable);
+		if (rc) {
+			dev_err(rtd->dev,
+				"%s: ioctl %s failed rc %d to %s lab for session %d\n",
+				__func__, "SNDRV_LAB_CONTROL", rc,
+				enable ? "enable" : "disable",
+				prtd->lsm_client->session);
+			break;
+		}
+
+		rc = msm_lsm_lab_buffer_alloc(prtd,
+			enable ? LAB_BUFFER_ALLOC
+			: LAB_BUFFER_DEALLOC);
+		if (rc) {
+			dev_err(rtd->dev,
+				"%s: msm_lsm_lab_buffer_alloc failed rc %d for %s",
+				__func__, rc,
+				enable ? "ALLOC" : "DEALLOC");
+			break;
+		}
+
+		prtd->lsm_client->lab_enable = enable;
+		memset(chmap, 0, out_hw_params->num_chs);
+		/*
+		 * First channel to be read from lab is always the
+		 * best channel (0xff). For second channel onwards,
+		 * the channel indices are 0, 1, .. etc
+		 */
+		chmap[0] = 0xFF;
+		for (ch_idx = 1; ch_idx < out_hw_params->num_chs; ch_idx++)
+			chmap[ch_idx] = ch_idx - 1;
+
+		rc = q6lsm_lab_out_ch_cfg(prtd->lsm_client, chmap);
+		if (rc)
+			dev_err(rtd->dev,
+				"%s: Failed to set lab out ch cfg %d\n",
+				__func__, rc);
+
 		break;
 	}
 	case SNDRV_LSM_STOP_LAB:
@@ -1352,6 +1377,23 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 					"%s: set event mode failed %d\n",
 					__func__, rc);
 		}
+		break;
+	}
+	case SNDRV_LSM_SET_INPUT_HW_PARAMS: {
+		struct lsm_hw_params *in_params;
+		struct snd_lsm_input_hw_params params;
+
+		if (copy_from_user(&params, arg, sizeof(params))) {
+			dev_err(rtd->dev, "%s: %s: copy_from_user failed\n",
+				__func__, "LSM_SET_INPUT_HW_PARAMS");
+			return -EFAULT;
+		}
+
+		in_params = &prtd->lsm_client->in_hw_params;
+		in_params->sample_rate = params.sample_rate;
+		in_params->sample_size = params.bit_width;
+		in_params->num_chs = params.num_channels;
+
 		break;
 	}
 
@@ -2241,7 +2283,7 @@ static int msm_lsm_prepare(struct snd_pcm_substream *substream)
 		return -EINVAL;
 	}
 
-	if (q6lsm_set_media_fmt_params(prtd->lsm_client))
+	if (q6lsm_set_media_fmt_v2_params(prtd->lsm_client))
 		dev_dbg(rtd->dev,
 			"%s: failed to set lsm media fmt params\n", __func__);
 
@@ -2339,7 +2381,8 @@ static int msm_lsm_hw_params(struct snd_pcm_substream *substream,
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
-	struct lsm_hw_params *hw_params = NULL;
+	struct lsm_hw_params *out_hw_params = NULL;
+	struct lsm_hw_params *in_hw_params = NULL;
 	struct snd_soc_pcm_runtime *rtd;
 
 	if (!substream->private_data) {
@@ -2354,37 +2397,48 @@ static int msm_lsm_hw_params(struct snd_pcm_substream *substream,
 			 __func__, prtd, params);
 		return -EINVAL;
 	}
-	hw_params = &prtd->lsm_client->hw_params;
-	hw_params->num_chs = params_channels(params);
-	hw_params->period_count = params_periods(params);
-	hw_params->sample_rate = params_rate(params);
-	if (((hw_params->sample_rate != 16000) &&
-		(hw_params->sample_rate != 48000)) ||
-		(hw_params->period_count == 0)) {
+	in_hw_params = &prtd->lsm_client->in_hw_params;
+	out_hw_params = &prtd->lsm_client->out_hw_params;
+	out_hw_params->num_chs = params_channels(params);
+	out_hw_params->period_count = params_periods(params);
+	out_hw_params->sample_rate = params_rate(params);
+	if (((out_hw_params->sample_rate != 16000) &&
+		(out_hw_params->sample_rate != 48000)) ||
+		(out_hw_params->period_count == 0)) {
 		dev_err(rtd->dev,
 			"%s: Invalid Params sample rate %d period count %d\n",
-			__func__, hw_params->sample_rate,
-			hw_params->period_count);
+			__func__, out_hw_params->sample_rate,
+			out_hw_params->period_count);
 		return -EINVAL;
 	}
 
 	if (params_format(params) == SNDRV_PCM_FORMAT_S16_LE) {
-		hw_params->sample_size = 16;
+		out_hw_params->sample_size = 16;
 	} else if (params_format(params) == SNDRV_PCM_FORMAT_S24_LE) {
-		hw_params->sample_size = 24;
+		out_hw_params->sample_size = 24;
 	} else {
 		dev_err(rtd->dev, "%s: Invalid Format 0x%x\n",
 			__func__, params_format(params));
 		return -EINVAL;
 	}
 
-	hw_params->buf_sz = params_buffer_bytes(params) /
-			hw_params->period_count;
+	out_hw_params->buf_sz = params_buffer_bytes(params) /
+			out_hw_params->period_count;
 	dev_dbg(rtd->dev,
 		"%s: channels %d sample rate %d sample size %d buffer size %d period count %d\n",
-		__func__, hw_params->num_chs, hw_params->sample_rate,
-		hw_params->sample_size, hw_params->buf_sz,
-		hw_params->period_count);
+		__func__, out_hw_params->num_chs, out_hw_params->sample_rate,
+		out_hw_params->sample_size, out_hw_params->buf_sz,
+		out_hw_params->period_count);
+
+	/*
+	 * copy the out_hw_params to in_hw_params. in_hw_params will be
+	 * over-written with LSM_SET_INPUT_HW_PARAMS ioctl from userspace.
+	 * If this ioctl is not set, then it is assumed that input and
+	 * output hw params for LSM are the same.
+	 * Currently the period_count and buf_sz are unused for input params.
+	 */
+	memcpy(in_hw_params, out_hw_params,
+	       sizeof(struct lsm_hw_params));
 	return 0;
 }
 
@@ -2456,7 +2510,7 @@ static int msm_lsm_pcm_copy(struct snd_pcm_substream *substream, int ch,
 		return -EIO;
 	}
 	prtd->appl_cnt = prtd->appl_cnt %
-		prtd->lsm_client->hw_params.period_count;
+		prtd->lsm_client->out_hw_params.period_count;
 	pcm_buf = prtd->lsm_client->lab_buffer[prtd->appl_cnt].data;
 	dev_dbg(rtd->dev,
 		"%s: copy the pcm data size %lu\n",
@@ -2474,7 +2528,7 @@ static int msm_lsm_pcm_copy(struct snd_pcm_substream *substream, int ch,
 		return -EINVAL;
 	}
 	prtd->appl_cnt = (prtd->appl_cnt + 1) %
-		prtd->lsm_client->hw_params.period_count;
+		prtd->lsm_client->out_hw_params.period_count;
 	atomic_dec(&prtd->buf_count);
 	return 0;
 }

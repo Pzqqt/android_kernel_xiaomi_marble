@@ -1028,38 +1028,33 @@ int q6lsm_set_fwk_mode_cfg(struct lsm_client *client,
 }
 EXPORT_SYMBOL(q6lsm_set_fwk_mode_cfg);
 
-static int q6lsm_arrange_mch_map(struct lsm_param_media_fmt *media_fmt,
-			 int channel_count)
+static int q6lsm_arrange_mch_map(uint8_t *ch_map, int ch_cnt)
 {
-	int rc = 0;
+	int ch_idx;
+	u8 mch_map[LSM_V3P0_MAX_NUM_CHANNELS] = {
+			PCM_CHANNEL_FL, PCM_CHANNEL_FR, PCM_CHANNEL_FC,
+			PCM_CHANNEL_LS, PCM_CHANNEL_RS, PCM_CHANNEL_LFE,
+			PCM_CHANNEL_LB, PCM_CHANNEL_RB, PCM_CHANNEL_CS};
 
-	memset(media_fmt->channel_mapping, 0, LSM_MAX_NUM_CHANNELS);
 
-	switch (channel_count) {
-	case 1:
-		media_fmt->channel_mapping[0] = PCM_CHANNEL_FC;
-		break;
-	case 2:
-		media_fmt->channel_mapping[0] = PCM_CHANNEL_FL;
-		media_fmt->channel_mapping[1] = PCM_CHANNEL_FR;
-		break;
-	case 3:
-		media_fmt->channel_mapping[0] = PCM_CHANNEL_FL;
-		media_fmt->channel_mapping[1] = PCM_CHANNEL_FR;
-		media_fmt->channel_mapping[2] = PCM_CHANNEL_FC;
-		break;
-	case 4:
-		media_fmt->channel_mapping[0] = PCM_CHANNEL_FL;
-		media_fmt->channel_mapping[1] = PCM_CHANNEL_FR;
-		media_fmt->channel_mapping[2] = PCM_CHANNEL_LS;
-		media_fmt->channel_mapping[3] = PCM_CHANNEL_RS;
-		break;
-	default:
-		pr_err("%s: invalid num_chan %d\n", __func__, channel_count);
-		rc = -EINVAL;
-		break;
+	if (ch_cnt > LSM_V3P0_MAX_NUM_CHANNELS) {
+		pr_err("%s: invalid num_chan %d\n", __func__, ch_cnt);
+		return -EINVAL;
 	}
-	return rc;
+
+	if (ch_cnt == 1) {
+		ch_map[0] = PCM_CHANNEL_FC;
+	} else if (ch_cnt == 4) {
+		ch_map[0] = PCM_CHANNEL_FL;
+		ch_map[1] = PCM_CHANNEL_FR;
+		ch_map[2] = PCM_CHANNEL_LS;
+		ch_map[3] = PCM_CHANNEL_RS;
+	} else {
+		for (ch_idx = 0; ch_idx < ch_cnt; ch_idx++)
+			ch_map[ch_idx] = mch_map[ch_idx];
+	}
+
+	return 0;
 }
 
 /**
@@ -1073,7 +1068,7 @@ static int q6lsm_arrange_mch_map(struct lsm_param_media_fmt *media_fmt,
 int q6lsm_set_media_fmt_params(struct lsm_client *client)
 {
 	struct lsm_param_media_fmt media_fmt;
-	struct lsm_hw_params param = client->hw_params;
+	struct lsm_hw_params in_param = client->in_hw_params;
 	struct param_hdr_v3 media_fmt_hdr;
 	int rc = 0;
 
@@ -1091,10 +1086,11 @@ int q6lsm_set_media_fmt_params(struct lsm_client *client)
 	media_fmt_hdr.param_size = sizeof(media_fmt);
 
 	media_fmt.minor_version = QLSM_PARAM_ID_MINOR_VERSION_2;
-	media_fmt.sample_rate = param.sample_rate;
-	media_fmt.num_channels = param.num_chs;
-	media_fmt.bit_width = param.sample_size;
-	rc = q6lsm_arrange_mch_map(&media_fmt, media_fmt.num_channels);
+	media_fmt.sample_rate = in_param.sample_rate;
+	media_fmt.num_channels = in_param.num_chs;
+	media_fmt.bit_width = in_param.sample_size;
+	rc = q6lsm_arrange_mch_map(media_fmt.channel_mapping,
+				   media_fmt.num_channels);
 	if (rc)
 		goto err_ret;
 
@@ -1111,6 +1107,65 @@ err_ret:
 	return rc;
 }
 EXPORT_SYMBOL(q6lsm_set_media_fmt_params);
+
+/*
+ * q6lsm_set_media_fmt_v2_params -
+ *       command to set LSM media fmt (version2) params
+ *
+ * @client: LSM client handle
+ *
+ * Returns 0 on success or error on failure
+ */
+int q6lsm_set_media_fmt_v2_params(struct lsm_client *client)
+{
+	u8 *param_buf;
+	struct lsm_param_media_fmt_v2 *media_fmt_v2;
+	struct lsm_hw_params *in_param = &client->in_hw_params;
+	struct param_hdr_v3 media_fmt_v2_hdr;
+	int param_len = 0, rc = 0;
+
+	memset(&media_fmt_v2_hdr, 0, sizeof(media_fmt_v2_hdr));
+
+	param_len = sizeof(*media_fmt_v2) +
+		    (sizeof(uint8_t) * in_param->num_chs);
+
+	/* Add padding to make sure total length is 4-byte aligned */
+	if (param_len % 4)
+		param_len += (4 - (param_len % 4));
+
+	param_buf = kzalloc(param_len, GFP_KERNEL);
+	if (!param_buf)
+		return -ENOMEM;
+	media_fmt_v2 = (struct lsm_param_media_fmt_v2 *) param_buf;
+	media_fmt_v2->minor_version = QLSM_PARAM_ID_MINOR_VERSION;
+	media_fmt_v2->sample_rate = in_param->sample_rate;
+	media_fmt_v2->num_channels = in_param->num_chs;
+	media_fmt_v2->bit_width = in_param->sample_size;
+	rc = q6lsm_arrange_mch_map(media_fmt_v2->channel_mapping,
+				   in_param->num_chs);
+	if (rc)
+		goto err_mch_map;
+
+	media_fmt_v2_hdr.module_id = LSM_MODULE_ID_FRAMEWORK;
+	media_fmt_v2_hdr.instance_id = INSTANCE_ID_0;
+	media_fmt_v2_hdr.param_id = LSM_PARAM_ID_MEDIA_FMT_V2;
+	media_fmt_v2_hdr.param_size = param_len;
+
+	pr_debug("%s: sample rate= %d, channels %d bit width %d\n", __func__,
+		 media_fmt_v2->sample_rate, media_fmt_v2->num_channels,
+		 media_fmt_v2->bit_width);
+
+	rc = q6lsm_pack_and_set_params(client, &media_fmt_v2_hdr,
+				       param_buf,
+				       LSM_SESSION_CMD_SET_PARAMS_V2);
+	if (rc)
+		pr_err("%s: Failed set_params, rc %d\n", __func__, rc);
+
+err_mch_map:
+	kfree(param_buf);
+	return rc;
+}
+EXPORT_SYMBOL(q6lsm_set_media_fmt_v2_params);
 
 /**
  * q6lsm_set_data -
@@ -2051,6 +2106,62 @@ exit:
 }
 EXPORT_SYMBOL(q6lsm_lab_control);
 
+/*
+ * q6lsm_lab_out_ch_cfg -
+ *	Command to set the channel configuration
+ *	for look-ahead buffer.
+ *
+ * @client: LSM client handle
+ * @ch_map: Channel map indicating the order
+ *	    of channels to be configured.
+ *
+ * Returns 0 on success or error on failure
+ */
+int q6lsm_lab_out_ch_cfg(struct lsm_client *client,
+			 u8 *ch_map)
+{
+	u8 *param_buf;
+	struct lsm_param_lab_out_ch_cfg *lab_out_cfg;
+	struct param_hdr_v3 lab_out_cfg_hdr;
+	struct lsm_hw_params *out_params = &client->out_hw_params;
+	int i, rc = 0, param_len = 0;
+
+	param_len = sizeof(*lab_out_cfg) +
+		    sizeof(u8) * out_params->num_chs;
+
+	if (param_len % 4)
+		param_len += (4 - (param_len % 4));
+
+	param_buf = kzalloc(param_len, GFP_KERNEL);
+	if (!param_buf)
+		return -ENOMEM;
+
+	lab_out_cfg = (struct lsm_param_lab_out_ch_cfg *) param_buf;
+	lab_out_cfg->minor_version = QLSM_PARAM_ID_MINOR_VERSION;
+	lab_out_cfg->num_channels = out_params->num_chs;
+
+	for (i = 0; i < out_params->num_chs; i++)
+		lab_out_cfg->channel_indices[i] = ch_map[i];
+
+	memset(&lab_out_cfg_hdr, 0, sizeof(lab_out_cfg_hdr));
+	lab_out_cfg_hdr.module_id = LSM_MODULE_ID_LAB;
+	lab_out_cfg_hdr.instance_id = INSTANCE_ID_0;
+	lab_out_cfg_hdr.param_id = LSM_PARAM_ID_LAB_OUTPUT_CHANNEL_CONFIG;
+	lab_out_cfg_hdr.param_size = param_len;
+
+	rc = q6lsm_pack_and_set_params(client, &lab_out_cfg_hdr,
+				       param_buf,
+				       LSM_SESSION_CMD_SET_PARAMS_V2);
+	if (rc)
+		pr_err("%s: Lab out channel config failed %d\n",
+			__func__, rc);
+
+	kfree(param_buf);
+
+	return rc;
+}
+EXPORT_SYMBOL(q6lsm_lab_out_ch_cfg);
+
 /**
  * q6lsm_stop_lab -
  *       command to stop LSM LAB
@@ -2117,6 +2228,7 @@ int q6lsm_lab_buffer_alloc(struct lsm_client *client, bool alloc)
 {
 	int ret = 0, i = 0;
 	size_t allocate_size = 0, len = 0;
+	struct lsm_hw_params *out_params = &client->out_hw_params;
 
 	if (!client) {
 		pr_err("%s: invalid client\n", __func__);
@@ -2126,20 +2238,20 @@ int q6lsm_lab_buffer_alloc(struct lsm_client *client, bool alloc)
 		if (client->lab_buffer) {
 			pr_err("%s: buffers are allocated period count %d period size %d\n",
 				__func__,
-				client->hw_params.period_count,
-				client->hw_params.buf_sz);
+				out_params->period_count,
+				out_params->buf_sz);
 			return -EINVAL;
 		}
-		allocate_size = client->hw_params.period_count *
-				client->hw_params.buf_sz;
+		allocate_size = out_params->period_count *
+				out_params->buf_sz;
 		allocate_size = PAGE_ALIGN(allocate_size);
 		client->lab_buffer =
 			kzalloc(sizeof(struct lsm_lab_buffer) *
-			client->hw_params.period_count, GFP_KERNEL);
+			out_params->period_count, GFP_KERNEL);
 		if (!client->lab_buffer) {
 			pr_err("%s: memory allocation for lab buffer failed count %d\n"
 				, __func__,
-				client->hw_params.period_count);
+				out_params->period_count);
 			return -ENOMEM;
 		}
 		ret = msm_audio_ion_alloc(&client->lab_buffer[0].dma_buf,
@@ -2170,16 +2282,17 @@ int q6lsm_lab_buffer_alloc(struct lsm_client *client, bool alloc)
 				__func__,
 				client->lab_buffer[0].mem_map_handle,
 				&client->lab_buffer[0].phys,
-				client->hw_params.buf_sz);
-			for (i = 0; i < client->hw_params.period_count; i++) {
+				out_params->buf_sz);
+
+			for (i = 0; i < out_params->period_count; i++) {
 				client->lab_buffer[i].phys =
 				client->lab_buffer[0].phys +
-				(i * client->hw_params.buf_sz);
+				(i * out_params->buf_sz);
 				client->lab_buffer[i].size =
-				client->hw_params.buf_sz;
+				out_params->buf_sz;
 				client->lab_buffer[i].data =
 				(u8 *)(client->lab_buffer[0].data) +
-				(i * client->hw_params.buf_sz);
+				(i * out_params->buf_sz);
 				client->lab_buffer[i].mem_map_handle =
 				client->lab_buffer[0].mem_map_handle;
 			}

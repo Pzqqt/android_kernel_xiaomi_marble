@@ -24,6 +24,7 @@
 #define ADM_LSM_PORT_ID 0xADCB
 
 #define LSM_MAX_NUM_CHANNELS 8
+#define LSM_V3P0_MAX_NUM_CHANNELS 9
 
 typedef void (*lsm_app_cb)(uint32_t opcode, uint32_t token,
 		       uint32_t *payload, void *priv);
@@ -82,7 +83,8 @@ struct lsm_client {
 	bool		lab_enable;
 	bool		lab_started;
 	struct lsm_lab_buffer *lab_buffer;
-	struct lsm_hw_params hw_params;
+	struct lsm_hw_params out_hw_params;
+	struct lsm_hw_params in_hw_params;
 	bool		use_topology;
 	int		session_state;
 	bool		poll_enable;
@@ -157,6 +159,15 @@ struct lsm_param_media_fmt {
 	uint8_t		channel_mapping[LSM_MAX_NUM_CHANNELS];
 } __packed;
 
+struct lsm_param_media_fmt_v2 {
+	uint32_t	minor_version;
+	uint32_t	sample_rate;
+	uint16_t	bit_width;
+	uint16_t	num_channels;
+	uint8_t		channel_mapping[0];
+} __packed;
+
+
 struct lsm_param_confidence_levels {
 	uint8_t num_confidence_levels;
 	uint8_t confidence_levels[0];
@@ -190,6 +201,12 @@ struct lsm_param_lab_enable {
 struct lsm_param_lab_config {
 	uint32_t minor_version;
 	uint32_t wake_up_latency_ms;
+} __packed;
+
+struct lsm_param_lab_out_ch_cfg {
+	uint32_t minor_version;
+	uint32_t num_channels;
+	uint8_t	 channel_indices[0];
 } __packed;
 
 struct lsm_cmd_read {
@@ -250,4 +267,6 @@ void q6lsm_sm_set_param_data(struct lsm_client *client,
 int q6lsm_set_port_connected(struct lsm_client *client);
 int q6lsm_set_fwk_mode_cfg(struct lsm_client *client, uint32_t event_mode);
 int q6lsm_set_media_fmt_params(struct lsm_client *client);
+int q6lsm_set_media_fmt_v2_params(struct lsm_client *client);
+int q6lsm_lab_out_ch_cfg(struct lsm_client *client, u8 *ch_map);
 #endif /* __Q6LSM_H__ */
