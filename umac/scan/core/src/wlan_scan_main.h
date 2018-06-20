@@ -219,10 +219,12 @@ struct pdev_scan_info {
  * struct scan_vdev_obj - scan vdev obj
  * @pno_match_evt_received: pno match received
  * @pno_in_progress: pno in progress
+ * @is_vdev_delete_in_progress: flag to indicate if vdev del is in progress
  */
 struct scan_vdev_obj {
 	bool pno_match_evt_received;
 	bool pno_in_progress;
+	bool is_vdev_delete_in_progress;
 };
 
 /**
