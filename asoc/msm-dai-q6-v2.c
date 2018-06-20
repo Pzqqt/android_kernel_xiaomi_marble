@@ -56,6 +56,7 @@ enum {
 	ENC_FMT_APTX_HD = ASM_MEDIA_FMT_APTX_HD,
 	ENC_FMT_CELT = ASM_MEDIA_FMT_CELT,
 	ENC_FMT_LDAC = ASM_MEDIA_FMT_LDAC,
+	ENC_FMT_APTX_ADAPTIVE = ASM_MEDIA_FMT_APTX_ADAPTIVE,
 };
 
 enum {
@@ -2446,6 +2447,11 @@ static int msm_dai_q6_afe_enc_cfg_get(struct snd_kcontrol *kcontrol,
 				&dai_data->enc_config.data,
 				sizeof(struct asm_ldac_enc_cfg_t));
 			break;
+		case ENC_FMT_APTX_ADAPTIVE:
+			memcpy(ucontrol->value.bytes.data + format_size,
+				&dai_data->enc_config.data,
+				sizeof(struct asm_aptx_ad_enc_cfg_t));
+			break;
 		default:
 			pr_debug("%s: unknown format = %d\n",
 				 __func__, dai_data->enc_config.format);
@@ -2503,6 +2509,11 @@ static int msm_dai_q6_afe_enc_cfg_put(struct snd_kcontrol *kcontrol,
 			memcpy(&dai_data->enc_config.data,
 				ucontrol->value.bytes.data + format_size,
 				sizeof(struct asm_ldac_enc_cfg_t));
+			break;
+		case ENC_FMT_APTX_ADAPTIVE:
+			memcpy(&dai_data->enc_config.data,
+				ucontrol->value.bytes.data + format_size,
+				sizeof(struct asm_aptx_ad_enc_cfg_t));
 			break;
 		default:
 			pr_debug("%s: Ignore enc config for unknown format = %d\n",
