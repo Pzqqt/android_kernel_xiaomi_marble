@@ -3415,6 +3415,7 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 	uint64_t *last_pn = NULL, new_pn;
 	uint32_t *rmf_pn_replays = NULL;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	bool ret = false;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
@@ -3429,10 +3430,10 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 	}
 
 	/* Retrieve the peer based on vdev and addr */
-	peer = cdp_peer_find_by_addr_and_vdev(soc, pdev,
-			vdev, wh->i_addr2, &peer_id);
+	peer = cdp_peer_get_ref_by_addr(soc, pdev, wh->i_addr2, &peer_id,
+					PEER_DEBUG_ID_WMA_CCMP_REPLAY_ATTACK);
 
-	if (NULL == peer) {
+	if (!peer) {
 		WMA_LOGE("%s: Failed to find peer, Not able to validate PN",
 			    __func__);
 		return true;
@@ -3444,7 +3445,7 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 
 	if (!last_pn_valid || !last_pn || !rmf_pn_replays) {
 		WMA_LOGE("%s: PN validation seems not supported", __func__);
-		return false;
+		goto rel_peer_ref;
 	}
 
 	if (*last_pn_valid) {
@@ -3455,14 +3456,16 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 			WMA_LOGE("%s: PN Replay attack detected", __func__);
 			/* per 11W amendment, keeping track of replay attacks */
 			*rmf_pn_replays += 1;
-			return true;
+			ret = true;
 		}
 	} else {
 		*last_pn_valid = 1;
 		*last_pn = new_pn;
 	}
 
-	return false;
+rel_peer_ref:
+	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_WMA_CCMP_REPLAY_ATTACK);
+	return ret;
 }
 
 /**
