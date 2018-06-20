@@ -83,6 +83,29 @@ static void dp_rx_clear_saved_desc_info(struct dp_peer *peer, unsigned tid)
 	peer->rx_tid[tid].dst_ring_desc = NULL;
 }
 
+static void dp_rx_return_head_frag_desc(struct dp_peer *peer,
+					unsigned int tid)
+{
+	struct dp_soc *soc;
+	struct dp_pdev *pdev;
+	struct dp_srng *dp_rxdma_srng;
+	struct rx_desc_pool *rx_desc_pool;
+	union dp_rx_desc_list_elem_t *head = NULL;
+	union dp_rx_desc_list_elem_t *tail = NULL;
+
+	if (peer->rx_tid[tid].head_frag_desc) {
+		pdev = peer->vdev->pdev;
+		soc = pdev->soc;
+		dp_rxdma_srng = &pdev->rx_refill_buf_ring;
+		rx_desc_pool = &soc->rx_desc_buf[0];
+
+		dp_rx_add_to_free_desc_list(&head, &tail,
+					    peer->rx_tid[tid].head_frag_desc);
+		dp_rx_buffers_replenish(soc, 0, dp_rxdma_srng, rx_desc_pool,
+					1, &head, &tail, HAL_RX_BUF_RBM_SW3_BM);
+	}
+}
+
 /*
  * dp_rx_reorder_flush_frag(): Flush the frag list
  * @peer: Pointer to the peer data structure
@@ -96,11 +119,6 @@ void dp_rx_reorder_flush_frag(struct dp_peer *peer,
 			 unsigned int tid)
 {
 	struct dp_soc *soc;
-	struct dp_srng *dp_rxdma_srng;
-	struct rx_desc_pool *rx_desc_pool;
-	struct dp_pdev *pdev;
-	union dp_rx_desc_list_elem_t *head = NULL;
-	union dp_rx_desc_list_elem_t *tail = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("Flushing TID %d"), tid);
@@ -111,8 +129,7 @@ void dp_rx_reorder_flush_frag(struct dp_peer *peer,
 		return;
 	}
 
-	pdev = peer->vdev->pdev;
-	soc = pdev->soc;
+	soc = peer->vdev->pdev->soc;
 
 	if (peer->rx_tid[tid].dst_ring_desc) {
 		if (dp_rx_link_desc_return(soc,
@@ -124,16 +141,7 @@ void dp_rx_reorder_flush_frag(struct dp_peer *peer,
 					__func__);
 	}
 
-	if (peer->rx_tid[tid].head_frag_desc) {
-		dp_rxdma_srng = &pdev->rx_refill_buf_ring;
-		rx_desc_pool = &soc->rx_desc_buf[0];
-
-		dp_rx_add_to_free_desc_list(&head, &tail,
-				peer->rx_tid[tid].head_frag_desc);
-		dp_rx_buffers_replenish(soc, 0, dp_rxdma_srng, rx_desc_pool,
-			1, &head, &tail);
-	}
-
+	dp_rx_return_head_frag_desc(peer, tid);
 	dp_rx_defrag_cleanup(peer, tid);
 }
 
@@ -1531,10 +1539,11 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 		rx_reorder_array_elem->tail = NULL;
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 		"Fragmented sequence successfully reinjected");
-	}
-	else
+	} else {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		"Fragmented sequence reinjection failed");
+		dp_rx_return_head_frag_desc(peer, tid);
+	}
 
 	dp_rx_defrag_cleanup(peer, tid);
 	return QDF_STATUS_SUCCESS;
@@ -1645,4 +1654,87 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 	}
 
 	return rx_bufs_used;
+}
+
+QDF_STATUS dp_rx_defrag_add_last_frag(struct dp_soc *soc,
+				      struct dp_peer *peer, uint16_t tid,
+		uint16_t rxseq, qdf_nbuf_t nbuf)
+{
+	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+	struct dp_rx_reorder_array_elem *rx_reorder_array_elem;
+	uint8_t all_frag_present;
+	QDF_STATUS status;
+
+	rx_reorder_array_elem = peer->rx_tid[tid].array;
+
+	if (rx_reorder_array_elem->head &&
+	    rxseq != rx_tid->curr_seq_num) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: No list found for TID %d Seq# %d\n",
+				__func__, tid, rxseq);
+		qdf_nbuf_free(nbuf);
+		goto fail;
+	}
+
+	status = dp_rx_defrag_fraglist_insert(peer, tid,
+					      &rx_reorder_array_elem->head,
+			&rx_reorder_array_elem->tail, nbuf,
+			&all_frag_present);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s Fragment insert failed\n", __func__);
+
+		goto fail;
+	}
+
+	if (soc->rx.flags.defrag_timeout_check)
+		dp_rx_defrag_waitlist_remove(peer, tid);
+
+	if (!all_frag_present) {
+		uint32_t now_ms =
+			qdf_system_ticks_to_msecs(qdf_system_ticks());
+
+		peer->rx_tid[tid].defrag_timeout_ms =
+			now_ms + soc->rx.defrag.timeout_ms;
+
+		dp_rx_defrag_waitlist_add(peer, tid);
+
+		return QDF_STATUS_SUCCESS;
+	}
+
+	status = dp_rx_defrag(peer, tid, rx_reorder_array_elem->head,
+			      rx_reorder_array_elem->tail);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s Fragment processing failed\n", __func__);
+
+		dp_rx_return_head_frag_desc(peer, tid);
+		dp_rx_defrag_cleanup(peer, tid);
+
+		goto fail;
+	}
+
+	/* Re-inject the fragments back to REO for further processing */
+	status = dp_rx_defrag_reo_reinject(peer, tid,
+					   rx_reorder_array_elem->head);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		rx_reorder_array_elem->head = NULL;
+		rx_reorder_array_elem->tail = NULL;
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+			  "%s: Frag seq successfully reinjected\n",
+			__func__);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Frag seq reinjection failed\n",
+			__func__);
+		dp_rx_return_head_frag_desc(peer, tid);
+	}
+
+	dp_rx_defrag_cleanup(peer, tid);
+	return QDF_STATUS_SUCCESS;
+
+fail:
+	return QDF_STATUS_E_DEFRAG_ERROR;
 }

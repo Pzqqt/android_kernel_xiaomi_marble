@@ -794,7 +794,9 @@ dp_rx_process_mic_error(struct dp_soc *soc,
 	struct ieee80211_frame *wh;
 	uint8_t *rx_pkt_hdr;
 	struct dp_peer *peer;
-	uint16_t peer_id;
+	uint16_t peer_id, rx_seq, fragno;
+	unsigned int tid;
+	QDF_STATUS status;
 
 	if (!hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr))
 		return;
@@ -822,6 +824,24 @@ dp_rx_process_mic_error(struct dp_soc *soc,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"PDEV not found");
 		goto fail;
+	}
+
+	tid = hal_rx_mpdu_start_tid_get(qdf_nbuf_data(nbuf));
+	rx_seq = (((*(uint16_t *)wh->i_seq) &
+			IEEE80211_SEQ_SEQ_MASK) >>
+			IEEE80211_SEQ_SEQ_SHIFT);
+
+	fragno = dp_rx_frag_get_mpdu_frag_number(qdf_nbuf_data(nbuf));
+
+	/* Can get only last fragment */
+	if (fragno) {
+		status = dp_rx_defrag_add_last_frag(soc, peer,
+						    tid, rx_seq, nbuf);
+
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Frag pkt seq# %d frag# %d consumed status %d !\n",
+				__func__, rx_seq, fragno, status);
+			return;
 	}
 
 	tops = pdev->soc->cdp_soc.ol_ops;
