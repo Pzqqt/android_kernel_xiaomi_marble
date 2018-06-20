@@ -500,6 +500,7 @@ struct msm_pcm_routing_app_type_data {
 	int app_type;
 	u32 sample_rate;
 	int bit_width;
+	u32 num_out_channels;
 };
 
 struct msm_pcm_stream_app_type_cfg {

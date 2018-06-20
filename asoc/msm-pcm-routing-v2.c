@@ -14826,22 +14826,30 @@ static int msm_routing_put_lsm_app_type_cfg_control(
 					struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
+	int shift = ((struct soc_multi_mixer_control *)
+				kcontrol->private_value)->shift;
 	int i = 0, j;
 	int num_app_types = ucontrol->value.integer.value[i++];
 
 	memset(lsm_app_type_cfg, 0, MAX_APP_TYPES*
-				sizeof(struct msm_pcm_routing_app_type_data));
+	       sizeof(struct msm_pcm_routing_app_type_data));
+
 	if (num_app_types > MAX_APP_TYPES) {
 		pr_err("%s: number of app types exceed the max supported\n",
 			__func__);
 		return -EINVAL;
 	}
+
 	for (j = 0; j < num_app_types; j++) {
 		lsm_app_type_cfg[j].app_type =
 				ucontrol->value.integer.value[i++];
 		lsm_app_type_cfg[j].sample_rate =
 				ucontrol->value.integer.value[i++];
 		lsm_app_type_cfg[j].bit_width =
+				ucontrol->value.integer.value[i++];
+		/* Shift of 1 indicates this is V2 mixer control */
+		if (shift == 1)
+			lsm_app_type_cfg[j].num_out_channels =
 				ucontrol->value.integer.value[i++];
 	}
 
@@ -14850,6 +14858,9 @@ static int msm_routing_put_lsm_app_type_cfg_control(
 
 static const struct snd_kcontrol_new lsm_app_type_cfg_controls[] = {
 	SOC_SINGLE_MULTI_EXT("Listen App Type Config", SND_SOC_NOPM, 0,
+	0xFFFFFFFF, 0, 128, msm_routing_get_lsm_app_type_cfg_control,
+	msm_routing_put_lsm_app_type_cfg_control),
+	SOC_SINGLE_MULTI_EXT("Listen App Type Config V2", SND_SOC_NOPM, 1,
 	0xFFFFFFFF, 0, 128, msm_routing_get_lsm_app_type_cfg_control,
 	msm_routing_put_lsm_app_type_cfg_control),
 };
