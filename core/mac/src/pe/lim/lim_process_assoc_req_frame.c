@@ -1932,6 +1932,11 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	if ((session->access_policy_vendor_ie) &&
 		(session->access_policy ==
 		LIM_ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT)) {
+		if (frame_len <= LIM_ASSOC_REQ_IE_OFFSET) {
+			pe_debug("Received action frame of invalid len %d",
+				 frame_len);
+			return;
+		}
 		if (!wlan_get_vendor_ie_ptr_from_oui(
 				&session->access_policy_vendor_ie[2],
 				3, frm_body + LIM_ASSOC_REQ_IE_OFFSET,
