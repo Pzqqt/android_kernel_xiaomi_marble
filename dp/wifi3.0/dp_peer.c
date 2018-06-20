@@ -1674,6 +1674,7 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	int hal_pn_type;
 	void *hw_qdesc_vaddr;
 	uint32_t alloc_tries = 0;
+	int err = QDF_STATUS_SUCCESS;
 
 	if (peer->delete_in_progress ||
 	    !qdf_atomic_read(&peer->is_default_route_set))
@@ -1788,24 +1789,45 @@ try_desc_alloc:
 
 	if (dp_reo_desc_addr_chk(rx_tid->hw_qdesc_paddr) !=
 			QDF_STATUS_SUCCESS) {
-		if (alloc_tries++ < 10)
+		if (alloc_tries++ < 10) {
+			qdf_mem_free(rx_tid->hw_qdesc_vaddr_unaligned);
+			rx_tid->hw_qdesc_vaddr_unaligned = NULL;
 			goto try_desc_alloc;
-		else {
+		} else {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: Rx tid HW desc alloc failed (lowmem): tid %d",
 			__func__, tid);
-			return QDF_STATUS_E_NOMEM;
+			err = QDF_STATUS_E_NOMEM;
+			goto error;
 		}
 	}
 
 	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
-		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
-			vdev->pdev->ctrl_pdev,
-			peer->vdev->vdev_id, peer->mac_addr.raw,
-			rx_tid->hw_qdesc_paddr, tid, tid, 1, ba_window_size);
-
+		if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
+		    vdev->pdev->ctrl_pdev, peer->vdev->vdev_id,
+		    peer->mac_addr.raw, rx_tid->hw_qdesc_paddr, tid, tid,
+		    1, ba_window_size)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "%s: Failed to send reo queue setup to FW - tid %d\n",
+				  __func__, tid);
+			err = QDF_STATUS_E_FAILURE;
+			goto error;
+		}
 	}
 	return 0;
+error:
+	if (NULL != rx_tid->hw_qdesc_vaddr_unaligned) {
+		if (dp_reo_desc_addr_chk(rx_tid->hw_qdesc_paddr) ==
+		    QDF_STATUS_SUCCESS)
+			qdf_mem_unmap_nbytes_single(
+				soc->osdev,
+				rx_tid->hw_qdesc_paddr,
+				QDF_DMA_BIDIRECTIONAL,
+				rx_tid->hw_qdesc_alloc_size);
+		qdf_mem_free(rx_tid->hw_qdesc_vaddr_unaligned);
+		rx_tid->hw_qdesc_vaddr_unaligned = NULL;
+	}
+	return err;
 }
 
 /*
