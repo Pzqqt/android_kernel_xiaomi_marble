@@ -211,10 +211,6 @@ void csr_release_command_wm_status_change(tpAniSirGlobal pMac,
 void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx,
 			     tSmeCmd *pCommand);
 
-bool csr_is_duplicate_bss_description(tpAniSirGlobal pMac,
-				      tSirBssDescription *pSirBssDesc1,
-				      tSirBssDescription *pSirBssDesc2,
-				      tDot11fBeaconIEs *pIes2, bool fForced);
 QDF_STATUS csr_roam_save_connected_bss_desc(tpAniSirGlobal pMac,
 					    uint32_t sessionId,
 					    tSirBssDescription *pBssDesc);
