@@ -33,6 +33,7 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
+#include "wlan_objmgr_peer_obj.h"
 #include "wlan_utility.h"
 
 /* NLA policy */
@@ -188,8 +189,18 @@ static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 		return ret;
 	}
 
-
 	return cb_obj.ndi_start(iface_name, transaction_id);
+}
+
+static void os_if_nan_vdev_delete_peer(struct wlan_objmgr_psoc *psoc,
+				       void *peer, void *nan_vdev)
+{
+	/* if peer belongs to nan vdev */
+	if (nan_vdev == wlan_peer_get_vdev(peer)) {
+		cfg80211_debug("deleting peer: %pM",
+			       wlan_peer_get_macaddr(peer));
+		wlan_objmgr_peer_obj_delete(peer);
+	}
 }
 
 static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
@@ -225,6 +236,12 @@ static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 		nla_get_u16(tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]);
 	vdev_id = wlan_vdev_get_id(nan_vdev);
 	num_peers = ucfg_nan_get_active_peers(nan_vdev);
+
+	/* delete all peer for this interface first */
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_PEER_OP,
+				     os_if_nan_vdev_delete_peer,
+				     nan_vdev, 1, WLAN_UMAC_COMP_NAN);
+
 	/*
 	 * wlan_util_get_vdev_by_ifname increments ref count
 	 * decrement here since vdev returned by that api is not used any more
