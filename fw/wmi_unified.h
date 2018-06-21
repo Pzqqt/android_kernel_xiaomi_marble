@@ -13371,6 +13371,12 @@ typedef enum
     WMI_VENDOR_OUI_ACTION_CCKM_1X1 = 2,       /* TX (only) CCKM rates with 1 chain only */
     WMI_VENDOR_OUI_ACTION_ALT_ITO = 3, /* inactivity time-out */
     WMI_VENDOR_OUI_ACTION_SWITCH_TO_11N_MODE = 4, /* Switch from 11ac to 11n mode to avoid IOT issues with ONM frame */
+    /* WMI_VENDOR_OUI_ACTION_CONNECTION_1X1_NUM_TX_RX_CHAINS_1
+     * Connect in 1x1 only and Use only one chain for both Tx and Rx
+     * to avoid IOT issues due to change in number of Tx and Rx chains
+     */
+    WMI_VENDOR_OUI_ACTION_CONNECTION_1X1_NUM_TX_RX_CHAINS_1 = 5,
+
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
 } wmi_vendor_oui_action_id;
