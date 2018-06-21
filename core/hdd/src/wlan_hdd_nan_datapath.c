@@ -645,11 +645,6 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 	hdd_roam_register_sta(adapter, &roam_info,
 				sta_ctx->broadcast_staid,
 				&bc_mac_addr, &tmp_bss_descp);
-	if (hdd_objmgr_add_peer_object(adapter->hdd_vdev,
-				 QDF_NDI_MODE, bc_mac_addr.bytes, false))
-		hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
-			MAC_ADDR_ARRAY(bc_mac_addr.bytes));
-
 	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = adapter;
 }
 
@@ -768,10 +763,6 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 	/* this function is called for each new peer */
 	hdd_roam_register_sta(adapter, &roam_info, sta_id,
 				peer_mac_addr, &tmp_bss_descp);
-	if (hdd_objmgr_add_peer_object(adapter->hdd_vdev,
-			 QDF_NDI_MODE, peer_mac_addr->bytes, false))
-		hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
-			MAC_ADDR_ARRAY(peer_mac_addr->bytes));
 	hdd_ctx->sta_to_adapter[sta_id] = adapter;
 	/* perform following steps for first new peer ind */
 	if (fist_peer) {

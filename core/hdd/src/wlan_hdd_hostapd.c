@@ -2164,16 +2164,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				adapter->device_mode);
 		}
 
-		ret = hdd_objmgr_add_peer_object(
-			adapter->hdd_vdev,
-			adapter->device_mode,
-			event->staMac.bytes,
-			(adapter->sta_info[event->staId].sta_type
-							== eSTA_TYPE_P2P_CLI));
-		if (ret)
-			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
-					MAC_ADDR_ARRAY(event->staMac.bytes));
-
 		hdd_green_ap_add_sta(hdd_ctx);
 		break;
 

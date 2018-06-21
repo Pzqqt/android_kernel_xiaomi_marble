@@ -949,7 +949,6 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct hdd_context *hdd_ctx;
-	int ret;
 
 	if (NULL == adapter) {
 		hdd_err("NULL adapter");
@@ -973,13 +972,6 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 		hdd_err("cdp_clear_peer failed for staID %d, Status=%d [0x%08X]",
 			staId, qdf_status, qdf_status);
 	}
-
-	ret = hdd_objmgr_remove_peer_object(adapter->hdd_vdev,
-					    adapter->sta_info[staId].
-						sta_mac.bytes);
-	if (ret)
-		hdd_err("Peer obj %pM delete fails",
-			adapter->sta_info[staId].sta_mac.bytes);
 
 	if (adapter->sta_info[staId].in_use) {
 		if (ucfg_ipa_is_enabled()) {

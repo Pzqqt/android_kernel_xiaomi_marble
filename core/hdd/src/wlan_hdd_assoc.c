@@ -1383,13 +1383,6 @@ static void hdd_send_association_event(struct net_device *dev,
 		chan_info.reg_info_2 =
 			pCsrRoamInfo->chan_info.reg_info_2;
 
-		ret = hdd_objmgr_add_peer_object(adapter->hdd_vdev,
-						 adapter->device_mode,
-						 peerMacAddr.bytes,
-						 false);
-		if (ret)
-			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
-					MAC_ADDR_ARRAY(peerMacAddr.bytes));
 		ret = hdd_objmgr_set_peer_mlme_state(adapter->hdd_vdev,
 						     WLAN_ASSOC_STATE);
 		if (ret)
@@ -1451,11 +1444,6 @@ static void hdd_send_association_event(struct net_device *dev,
 							adapter->session_id,
 							NULL,
 							adapter->device_mode);
-			ret = hdd_objmgr_remove_peer_object(adapter->hdd_vdev,
-							    peerMacAddr.bytes);
-			if (ret)
-				hdd_err("Peer obj "MAC_ADDRESS_STR" delete fails",
-					MAC_ADDR_ARRAY(peerMacAddr.bytes));
 		}
 
 		hdd_lpass_notify_disconnect(adapter);
@@ -1593,31 +1581,6 @@ static void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 }
 
 /**
- * hdd_wlan_get_ibss_mac_addr_from_staid() - Get IBSS MAC address
- * @adapter: Adapter upon which the IBSS client is active
- * @staIdx: Station index of the IBSS peer
- *
- * Return: a pointer to the MAC address of the IBSS peer if the peer is
- *	   found, otherwise %NULL.
- */
-static struct qdf_mac_addr *
-hdd_wlan_get_ibss_mac_addr_from_staid(struct hdd_adapter *adapter,
-				      uint8_t staIdx)
-{
-	uint8_t idx;
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	for (idx = 0; idx < MAX_PEERS; idx++) {
-		if (HDD_WLAN_INVALID_STA_ID !=
-				sta_ctx->conn_info.staId[idx] &&
-				staIdx == sta_ctx->conn_info.staId[idx]) {
-			return &sta_ctx->conn_info.peerMacAddress[idx];
-		}
-	}
-	return NULL;
-}
-
-/**
  * hdd_roam_deregister_sta() - deregister station
  * @adapter: pointer to adapter
  * @staId: station identifier
@@ -1627,10 +1590,6 @@ hdd_wlan_get_ibss_mac_addr_from_staid(struct hdd_adapter *adapter,
 QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t staid)
 {
 	QDF_STATUS qdf_status;
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	int ret = 0;
-	struct qdf_mac_addr *peer_mac = NULL;
-	struct qdf_mac_addr broadcastMacAddr = QDF_MAC_ADDR_BCAST_INIT;
 
 	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
@@ -1640,30 +1599,6 @@ QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t staid)
 			staid, qdf_status, qdf_status);
 	}
 
-	if (adapter->device_mode == QDF_STA_MODE) {
-		peer_mac = &sta_ctx->conn_info.bssId;
-	} else if (adapter->device_mode == QDF_IBSS_MODE ||
-		adapter->device_mode == QDF_NDI_MODE) {
-		if (sta_ctx->broadcast_staid == staid)
-			peer_mac = &broadcastMacAddr;
-		else
-			peer_mac =
-			  hdd_wlan_get_ibss_mac_addr_from_staid(adapter, staid);
-	}
-
-	if (!peer_mac) {
-		hdd_err("Coudnt find peer MAC for staid %d, delete fails",
-			staid);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	hdd_debug("peer_mac_addr: "MAC_ADDRESS_STR,
-		  MAC_ADDR_ARRAY(peer_mac->bytes));
-	ret = hdd_objmgr_remove_peer_object(adapter->hdd_vdev, peer_mac->bytes);
-	if (ret) {
-		hdd_err("Peer obj %pM delete fails", peer_mac);
-		return QDF_STATUS_E_FAILURE;
-	}
 	return qdf_status;
 }
 
@@ -3480,7 +3415,6 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 		struct hdd_station_ctx *hdd_sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		struct qdf_mac_addr broadcastMacAddr = QDF_MAC_ADDR_BCAST_INIT;
-		int ret;
 
 		if (NULL == roam_info) {
 			QDF_ASSERT(0);
@@ -3509,13 +3443,6 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 				      roam_info->staId,
 				      &broadcastMacAddr,
 				      roam_info->pBssDesc);
-		ret = hdd_objmgr_add_peer_object(adapter->hdd_vdev,
-						 QDF_IBSS_MODE,
-						 broadcastMacAddr.bytes,
-						 false);
-		if (ret)
-			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
-				MAC_ADDR_ARRAY(roam_info->peerMac.bytes));
 
 		if (roam_info->pBssDesc) {
 			struct cfg80211_bss *bss;
@@ -3812,7 +3739,6 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS qdf_status;
-	int ret;
 
 	switch (roamResult) {
 	case eCSR_ROAM_RESULT_IBSS_NEW_PEER:
@@ -3855,13 +3781,6 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 			hdd_err("Cannot register STA with TL for IBSS. qdf_status: %d [%08X]",
 				qdf_status, qdf_status);
 		}
-		ret = hdd_objmgr_add_peer_object(adapter->hdd_vdev,
-						 QDF_IBSS_MODE,
-						 roam_info->peerMac.bytes,
-						 false);
-		if (ret)
-			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
-				MAC_ADDR_ARRAY(roam_info->peerMac.bytes));
 		sta_ctx->ibss_sta_generation++;
 		stainfo = qdf_mem_malloc(sizeof(*stainfo));
 		if (stainfo == NULL) {

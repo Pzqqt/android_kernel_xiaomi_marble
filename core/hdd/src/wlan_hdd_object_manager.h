@@ -133,36 +133,6 @@ int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter);
 
 /**
- * hdd_objmgr_add_peer_object() - Create and add the peer to the vdev
- * @vdev: vdev pointer
- * @adapter_mode: adapter mode
- * @mac_addr: Peer mac address
- * @is_p2p_type: TRUE if peer is p2p type
- *
- * This API creates and adds the peer object to the given @vdev. The peer type
- * (STA, AP, P2P or IBSS) is assigned based on adapter mode. For example, if
- * adapter mode is STA, peer is AP.
- *
- * Return: 0 for success, negative error code for failure
- */
-int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,
-			       enum QDF_OPMODE adapter_mode,
-			       uint8_t *mac_addr,
-			       bool is_p2p_type);
-
-/**
- * hdd_objmgr_remove_peer_object() - Delete and remove the peer from vdev
- * @vdev: vdev pointer
- * @mac_addr: Peer Mac address
- *
- * This API finds the peer object from given @mac_addr and deletes the same.
- *
- * Return: 0 for success, negative error code for failure
- */
-int hdd_objmgr_remove_peer_object(struct wlan_objmgr_vdev *vdev,
-				  uint8_t *mac_addr);
-
-/**
  * hdd_objmgr_set_peer_mlme_auth_state() - set the peer mlme auth state
  * @vdev: vdev pointer
  * @is_authenticated: Peer mlme auth state true/false

@@ -5377,8 +5377,6 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			qdf_copy_macaddr(&peerMacAddr,
 					 &sta_ctx->conn_info.bssId);
 
-			hdd_objmgr_remove_peer_object(adapter->hdd_vdev,
-						      peerMacAddr.bytes);
 		} else if (adapter->device_mode == QDF_P2P_GO_MODE) {
 			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
 			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {

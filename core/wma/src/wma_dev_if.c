@@ -1383,7 +1383,53 @@ QDF_STATUS wma_set_peer_param(void *wma_ctx, uint8_t *peer_addr,
 
 	return err;
 }
+/**
+ * wma_remove_objmgr_peer() - remove objmgr peer information from host driver
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ * @peer: peer mac address
+ *
+ * Return: none
+ */
 
+static void wma_remove_objmgr_peer(tp_wma_handle wma, uint8_t vdev_id,
+					    uint8_t *peer_addr)
+{
+
+	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_objmgr_peer *obj_peer = NULL;
+	struct wlan_objmgr_vdev *obj_vdev = NULL;
+	struct wlan_objmgr_pdev *obj_pdev = NULL;
+	uint8_t pdev_id = 0;
+
+	psoc = wma->psoc;
+	if (!psoc) {
+		WMA_LOGE("%s:PSOC is NULL", __func__);
+		return;
+	}
+
+	obj_vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+				    WLAN_LEGACY_WMA_ID);
+	if (!obj_vdev) {
+		WMA_LOGE("Obj vdev not found. Unable to remove peer");
+		return;
+	}
+	obj_pdev = wlan_vdev_get_pdev(obj_vdev);
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(obj_pdev);
+	obj_peer = wlan_objmgr_get_peer(psoc, pdev_id, peer_addr,
+				    WLAN_LEGACY_WMA_ID);
+	if (obj_peer) {
+		wlan_objmgr_peer_obj_delete(obj_peer);
+		/* Unref to decrement ref happened in find_peer */
+		wlan_objmgr_peer_release_ref(obj_peer, WLAN_LEGACY_WMA_ID);
+		WMA_LOGD("Peer %pM deleted", peer_addr);
+	} else {
+		WMA_LOGE("Peer %pM not found", peer_addr);
+	}
+
+	wlan_objmgr_vdev_release_ref(obj_vdev, WLAN_LEGACY_WMA_ID);
+
+}
 /**
  * wma_remove_peer() - remove peer information from host driver and fw
  * @wma: wma handle
@@ -1401,6 +1447,7 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 #define PEER_ALL_TID_BITMASK 0xffffffff
 	uint32_t peer_tid_bitmap = PEER_ALL_TID_BITMASK;
 	uint8_t *peer_addr = bssid;
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE] = {0};
 	struct peer_flush_params param = {0};
 	uint8_t *peer_mac_addr;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -1475,12 +1522,16 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 peer_detach:
 	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
 	WMA_LOGD("%s: vdev %pK is detaching %pK with peer_addr %pM vdevid %d peer_count %d",
-		 __func__, vdev, peer, peer_mac_addr, vdev_id,
-		 wma->interfaces[vdev_id].peer_count);
+		__func__, vdev, peer, peer_mac_addr, vdev_id,
+		wma->interfaces[vdev_id].peer_count);
+	/* Copy peer mac to find and delete objmgr peer */
+	qdf_mem_copy(peer_mac, peer_mac_addr, QDF_MAC_ADDR_SIZE);
 	if (roam_synch_in_progress)
 		cdp_peer_detach_force_delete(soc, peer);
 	else
 		cdp_peer_delete(soc, peer, bitmap);
+
+	wma_remove_objmgr_peer(wma, vdev_id, peer_mac);
 
 	wma->interfaces[vdev_id].peer_count--;
 #undef PEER_ALL_TID_BITMASK
@@ -1524,6 +1575,99 @@ static bool wma_find_duplicate_peer_on_other_vdev(tp_wma_handle wma,
 }
 
 /**
+ * wma_get_peer_type() - Determine the type of peer(eg. STA/AP) and return it
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ * @peer: peer mac address
+ *
+ * Return: Peer type
+ */
+
+static int wma_get_peer_type(tp_wma_handle wma, uint8_t vdev_id,
+				    uint8_t *peer_addr)
+
+{
+	uint32_t obj_peer_type = 0;
+
+	WMA_LOGD("vdev id %d vdev type %d vdev subtype %d peer addr %pM vdev addr %pM",
+		 vdev_id, wma->interfaces[vdev_id].type,
+		 wma->interfaces[vdev_id].sub_type, peer_addr,
+		 wma->interfaces[vdev_id].addr);
+
+	if (!qdf_mem_cmp(wma->interfaces[vdev_id].addr, peer_addr,
+					IEEE80211_ADDR_LEN)) {
+		obj_peer_type = WLAN_PEER_SELF;
+	} else if (wma->interfaces[vdev_id].type == WMI_VDEV_TYPE_STA) {
+		if (wma->interfaces[vdev_id].sub_type ==
+					WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT)
+			obj_peer_type = WLAN_PEER_P2P_GO;
+		else
+			obj_peer_type = WLAN_PEER_AP;
+	} else if (wma->interfaces[vdev_id].type == WMI_VDEV_TYPE_AP) {
+		if (wma->interfaces[vdev_id].sub_type ==
+				WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO)
+			obj_peer_type = WLAN_PEER_P2P_CLI;
+		else
+			obj_peer_type = WLAN_PEER_STA;
+	} else if (wma->interfaces[vdev_id].type == WMI_VDEV_TYPE_IBSS) {
+		obj_peer_type = WLAN_PEER_IBSS;
+	} else if (wma->interfaces[vdev_id].type == WMI_VDEV_TYPE_NDI) {
+		obj_peer_type = WLAN_PEER_NDP;
+	} else {
+		WMA_LOGE("Couldnt find peertype for type %d and sub type %d",
+			 wma->interfaces[vdev_id].type,
+			 wma->interfaces[vdev_id].sub_type);
+	}
+
+	return obj_peer_type;
+
+}
+
+/**
+ * wma_create_objmgr_peer() - create objmgr peer information in host driver
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ * @peer: peer mac address
+ *
+ * Return: objmgr peer pointer
+ */
+
+static struct wlan_objmgr_peer *wma_create_objmgr_peer(tp_wma_handle wma,
+					 uint8_t vdev_id, uint8_t *peer_addr)
+{
+	uint32_t obj_peer_type = 0;
+	struct wlan_objmgr_peer *obj_peer = NULL;
+	struct wlan_objmgr_vdev *obj_vdev = NULL;
+	struct wlan_objmgr_psoc *psoc = wma->psoc;
+
+	obj_peer_type = wma_get_peer_type(wma, vdev_id, peer_addr);
+	if (!obj_peer_type) {
+		WMA_LOGE("Invalid obj peer type. Unable to create peer %d",
+							obj_peer_type);
+		return NULL;
+	}
+
+	/* Create obj_mgr peer */
+	obj_vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_LEGACY_WMA_ID);
+
+	if (!obj_vdev) {
+		WMA_LOGE("Invalid obj vdev. Unable to create peer %d",
+							obj_peer_type);
+		return NULL;
+	}
+
+	obj_peer = wlan_objmgr_peer_obj_create(obj_vdev, obj_peer_type,
+						peer_addr);
+	wlan_objmgr_vdev_release_ref(obj_vdev, WLAN_LEGACY_WMA_ID);
+	if (obj_peer)
+		WMA_LOGD("Peer %pM added successfully! Type: %d", peer_addr,
+			 obj_peer_type);
+
+	return obj_peer;
+
+}
+/**
  * wma_create_peer() - send peer create command to fw
  * @wma: wma handle
  * @pdev: txrx pdev ptr
@@ -1547,6 +1691,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	void *dp_soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_objmgr_psoc *psoc = wma->psoc;
 	target_resource_config *wlan_res_cfg;
+	struct wlan_objmgr_peer *obj_peer = NULL;
 
 	if (!psoc) {
 		WMA_LOGE("%s: psoc is NULL", __func__);
@@ -1579,6 +1724,10 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	   vdev_id, peer_addr))
 		goto err;
 
+	obj_peer = wma_create_objmgr_peer(wma, vdev_id, peer_addr);
+	if (!obj_peer)
+		goto err;
+
 	/* The peer object should be created before sending the WMI peer
 	 * create command to firmware. This is to prevent a race condition
 	 * where the HTT peer map event is received before the peer object
@@ -1587,6 +1736,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	peer = cdp_peer_create(dp_soc, vdev, peer_addr);
 	if (!peer) {
 		WMA_LOGE("%s : Unable to attach peer %pM", __func__, peer_addr);
+		wlan_objmgr_peer_obj_delete(obj_peer);
 		goto err;
 	}
 	WMA_LOGD("%s: vdev %pK is attaching peer:%pK peer_addr %pM to vdev_id %d, peer_count - %d",
@@ -1605,11 +1755,9 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	if (wmi_unified_peer_create_send(wma->wmi_handle,
 					 &param) != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s : Unable to create peer in Target", __func__);
-		WMA_LOGE("%s: vdev %pK is detaching peer:%pK peer_addr %pM to vdev_id %d, peer_count - %d",
-			 __func__, vdev, peer, peer_addr, vdev_id,
-			 wma->interfaces[vdev_id].peer_count);
 		cdp_peer_delete(dp_soc, peer,
 				1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER);
+		wlan_objmgr_peer_obj_delete(obj_peer);
 		goto err;
 	} else {
 		qdf_atomic_inc(&wma->interfaces[vdev_id].fw_peer_count);
@@ -5526,6 +5674,8 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 			 __func__, txrx_vdev, peer, params->bssid,
 			 params->smesessionId, iface->peer_count);
 		cdp_peer_delete(soc, peer, 1 << CDP_PEER_DELETE_NO_SPECIAL);
+		wma_remove_objmgr_peer(wma, params->smesessionId,
+							params->bssid);
 	}
 	iface->peer_count--;
 	WMA_LOGI("%s: Removed peer %pK with peer_addr %pM vdevid %d peer_count %d",
