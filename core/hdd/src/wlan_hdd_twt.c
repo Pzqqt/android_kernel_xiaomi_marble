@@ -47,18 +47,18 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 		  hdd_ctx->config->enable_twt, services->twt_requestor,
 		  services->twt_responder);
 
-	sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_TWT_REQUESTOR,
+	sme_cfg_set_int(hdd_ctx->mac_handle, WNI_CFG_TWT_REQUESTOR,
 			QDF_MIN(services->twt_requestor,
 				hdd_ctx->config->enable_twt));
 
-	sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_TWT_RESPONDER,
+	sme_cfg_set_int(hdd_ctx->mac_handle, WNI_CFG_TWT_RESPONDER,
 			QDF_MIN(services->twt_responder,
 				hdd_ctx->config->enable_twt));
 
 	/*
 	 * Currently broadcast TWT is not supported
 	 */
-	sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_BCAST_TWT,
+	sme_cfg_set_int(hdd_ctx->mac_handle, WNI_CFG_BCAST_TWT,
 			QDF_MIN(0, hdd_ctx->config->enable_twt));
 }
 
@@ -68,9 +68,9 @@ void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 	uint32_t req_val, resp_val, bcast_val;
 	uint32_t congestion_timeout = hdd_ctx->config->twt_congestion_timeout;
 
-	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_TWT_REQUESTOR, &req_val);
-	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_TWT_RESPONDER, &resp_val);
-	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_BCAST_TWT, &bcast_val);
+	sme_cfg_get_int(hdd_ctx->mac_handle, WNI_CFG_TWT_REQUESTOR, &req_val);
+	sme_cfg_get_int(hdd_ctx->mac_handle, WNI_CFG_TWT_RESPONDER, &resp_val);
+	sme_cfg_get_int(hdd_ctx->mac_handle, WNI_CFG_BCAST_TWT, &bcast_val);
 
 	hdd_debug("TWT cfg req:%d, responder:%d, bcast:%d, pdev:%d, cong:%d",
 		  req_val, resp_val, bcast_val, pdev_id, congestion_timeout);
@@ -133,14 +133,14 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 
 	hdd_ctx->twt_state = TWT_INIT;
-	status = sme_register_twt_enable_complete_cb(hdd_ctx->hHal,
+	status = sme_register_twt_enable_complete_cb(hdd_ctx->mac_handle,
 						     hdd_twt_enable_comp_cb);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Register twt enable complete failed");
 		return;
 	}
 
-	status = sme_register_twt_disable_complete_cb(hdd_ctx->hHal,
+	status = sme_register_twt_disable_complete_cb(hdd_ctx->mac_handle,
 						      hdd_twt_disable_comp_cb);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Register twt disable complete failed");
@@ -151,17 +151,17 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 
 twt_init_fail:
 
-	sme_deregister_twt_enable_complete_cb(hdd_ctx->hHal);
+	sme_deregister_twt_enable_complete_cb(hdd_ctx->mac_handle);
 }
 
 void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 
-	status  = sme_deregister_twt_disable_complete_cb(hdd_ctx->hHal);
+	status  = sme_deregister_twt_disable_complete_cb(hdd_ctx->mac_handle);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("De-register of twt disable cb failed: %d", status);
-	status  = sme_deregister_twt_enable_complete_cb(hdd_ctx->hHal);
+	status  = sme_deregister_twt_enable_complete_cb(hdd_ctx->mac_handle);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("De-register of twt enable cb failed: %d", status);
 
