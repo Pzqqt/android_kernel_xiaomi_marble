@@ -5534,6 +5534,7 @@ typedef enum {
 #ifdef OL_ATH_SMART_LOGGING
 	wmi_debug_fatal_condition_eventid,
 #endif /* OL_ATH_SMART_LOGGING */
+	wmi_wlan_sar2_result_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
