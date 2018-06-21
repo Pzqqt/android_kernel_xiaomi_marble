@@ -325,6 +325,31 @@ void htt_clear_bundle_stats(htt_pdev_handle pdev)
  *
  * Return: 0 for success or error code.
  */
+
+#if defined(QCN7605_SUPPORT) && defined(IPA_OFFLOAD)
+
+/* In case of QCN7605 with IPA offload only 2 CE
+ * are used for RFS
+ */
+static int
+htt_htc_attach_all(struct htt_pdev_t *pdev)
+{
+	if (htt_htc_attach(pdev, HTT_DATA_MSG_SVC))
+		goto flush_endpoint;
+
+	if (htt_htc_attach(pdev, HTT_DATA2_MSG_SVC))
+		goto flush_endpoint;
+
+	return 0;
+
+flush_endpoint:
+	htc_flush_endpoint(pdev->htc_pdev, ENDPOINT_0, HTC_TX_PACKET_TAG_ALL);
+
+	return -EIO;
+}
+
+#else
+
 static int
 htt_htc_attach_all(struct htt_pdev_t *pdev)
 {
@@ -344,6 +369,9 @@ flush_endpoint:
 
 	return -EIO;
 }
+
+#endif
+
 #else
 /**
  * htt_htc_attach_all() - Connect to HTC service for HTT
