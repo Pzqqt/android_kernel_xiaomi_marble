@@ -5668,6 +5668,62 @@ static QDF_STATUS get_sar_limit_cmd_tlv(wmi_unified_t wmi_handle)
 	return status;
 }
 
+/**
+ * wmi_sar2_result_string() - return string conversion of sar2 result
+ * @result: sar2 result value
+ *
+ * This utility function helps log string conversion of sar2 result.
+ *
+ * Return: string conversion of sar 2 result, if match found;
+ *	   "Unknown response" otherwise.
+ */
+static const char *wmi_sar2_result_string(uint32_t result)
+{
+	switch (result) {
+	CASE_RETURN_STRING(WMI_SAR2_SUCCESS);
+	CASE_RETURN_STRING(WMI_SAR2_INVALID_ANTENNA_INDEX);
+	CASE_RETURN_STRING(WMI_SAR2_INVALID_TABLE_INDEX);
+	CASE_RETURN_STRING(WMI_SAR2_STATE_ERROR);
+	CASE_RETURN_STRING(WMI_SAR2_BDF_NO_TABLE);
+	default:
+		return "Unknown response";
+	}
+}
+
+/**
+ * extract_sar2_result_event_tlv() -  process sar response event from FW.
+ * @handle: wma handle
+ * @event: event buffer
+ * @len: buffer length
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_sar2_result_event_tlv(void *handle,
+						uint8_t *event,
+						uint32_t len)
+{
+	wmi_sar2_result_event_fixed_param *sar2_fixed_param;
+
+	WMI_SAR2_RESULT_EVENTID_param_tlvs *param_buf =
+		(WMI_SAR2_RESULT_EVENTID_param_tlvs *)event;
+
+	if (!param_buf) {
+		WMI_LOGI("Invalid sar2 result event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	sar2_fixed_param = param_buf->fixed_param;
+	if (!sar2_fixed_param) {
+		WMI_LOGI("Invalid sar2 result event fixed param buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	WMI_LOGI("SAR2 result: %s",
+		 wmi_sar2_result_string(sar2_fixed_param->result));
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS extract_sar_limit_event_tlv(wmi_unified_t wmi_handle,
 					      uint8_t *evt_buf,
 					      struct sar_limit_event *event)
@@ -19226,6 +19282,34 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_sar_cap_service_ready_ext_tlv() -
+ *       extract SAR cap from service ready event
+ * @wmi_handle: wmi handle
+ * @event: pointer to event buffer
+ * @ext_param: extended target info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_sar_cap_service_ready_ext_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *event,
+			struct wlan_psoc_host_service_ext_param *ext_param)
+{
+	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
+	WMI_SAR_CAPABILITIES *sar_caps;
+
+	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *)event;
+
+	sar_caps = param_buf->sar_caps;
+	if (!sar_caps)
+		return QDF_STATUS_E_INVAL;
+
+	ext_param->sar_version = sar_caps->active_version;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_hw_mode_cap_service_ready_ext_tlv() -
  *       extract HW mode cap from service ready event
  * @wmi_handle: wmi handle
@@ -22068,6 +22152,7 @@ struct wmi_ops tlv_ops =  {
 	.send_sar_limit_cmd = send_sar_limit_cmd_tlv,
 	.get_sar_limit_cmd = get_sar_limit_cmd_tlv,
 	.extract_sar_limit_event = extract_sar_limit_event_tlv,
+	.extract_sar2_result_event = extract_sar2_result_event_tlv,
 	.send_power_dbg_cmd = send_power_dbg_cmd_tlv,
 	.send_multiple_vdev_restart_req_cmd =
 				send_multiple_vdev_restart_req_cmd_tlv,
@@ -22080,6 +22165,8 @@ struct wmi_ops tlv_ops =  {
 				extract_reg_cap_service_ready_ext_tlv,
 	.extract_dbr_ring_cap_service_ready_ext =
 				extract_dbr_ring_cap_service_ready_ext_tlv,
+	.extract_sar_cap_service_ready_ext =
+				extract_sar_cap_service_ready_ext_tlv,
 	.extract_dbr_buf_release_fixed = extract_dbr_buf_release_fixed_tlv,
 	.extract_dbr_buf_release_entry = extract_dbr_buf_release_entry_tlv,
 	.extract_dbr_buf_metadata = extract_dbr_buf_metadata_tlv,
@@ -22475,6 +22562,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 		WMI_TWT_ENABLE_COMPLETE_EVENTID;
 	event_ids[wmi_apf_get_vdev_work_memory_resp_event_id] =
 		WMI_BPF_GET_VDEV_WORK_MEMORY_RESP_EVENTID;
+	event_ids[wmi_wlan_sar2_result_event_id] = WMI_SAR2_RESULT_EVENTID;
 }
 
 /**
