@@ -22,6 +22,9 @@
 #include "bolero-cdc.h"
 #include "internal.h"
 
+#define BOLERO_VERSION_1_0 0x0001
+#define BOLERO_VERSION_ENTRY_SIZE 32
+
 static struct snd_soc_codec_driver bolero;
 
 /* MCLK_MUX table for all macros */
@@ -389,6 +392,95 @@ err:
 }
 EXPORT_SYMBOL(bolero_request_clock);
 
+static ssize_t bolero_version_read(struct snd_info_entry *entry,
+				   void *file_private_data,
+				   struct file *file,
+				   char __user *buf, size_t count,
+				   loff_t pos)
+{
+	struct bolero_priv *priv;
+	char buffer[BOLERO_VERSION_ENTRY_SIZE];
+	int len = 0;
+
+	priv = (struct bolero_priv *) entry->private_data;
+	if (!priv) {
+		pr_err("%s: bolero priv is null\n", __func__);
+		return -EINVAL;
+	}
+
+	switch (priv->version) {
+	case BOLERO_VERSION_1_0:
+		len = snprintf(buffer, sizeof(buffer), "BOLERO_1_0\n");
+		break;
+	default:
+		len = snprintf(buffer, sizeof(buffer), "VER_UNDEFINED\n");
+	}
+
+	return simple_read_from_buffer(buf, count, &pos, buffer, len);
+}
+
+static struct snd_info_entry_ops bolero_info_ops = {
+	.read = bolero_version_read,
+};
+
+/*
+ * bolero_info_create_codec_entry - creates bolero module
+ * @codec_root: The parent directory
+ * @codec: Codec instance
+ *
+ * Creates bolero module and version entry under the given
+ * parent directory.
+ *
+ * Return: 0 on success or negative error code on failure.
+ */
+int bolero_info_create_codec_entry(struct snd_info_entry *codec_root,
+				   struct snd_soc_codec *codec)
+{
+	struct snd_info_entry *version_entry;
+	struct bolero_priv *priv;
+	struct snd_soc_card *card;
+
+	if (!codec_root || !codec)
+		return -EINVAL;
+
+	priv = snd_soc_codec_get_drvdata(codec);
+	if (priv->entry) {
+		dev_dbg(priv->dev,
+			"%s:bolero module already created\n", __func__);
+		return 0;
+	}
+	card = codec->component.card;
+	priv->entry = snd_info_create_subdir(codec_root->module,
+					     "bolero", codec_root);
+	if (!priv->entry) {
+		dev_dbg(codec->dev, "%s: failed to create bolero entry\n",
+			__func__);
+		return -ENOMEM;
+	}
+	version_entry = snd_info_create_card_entry(card->snd_card,
+						   "version",
+						   priv->entry);
+	if (!version_entry) {
+		dev_err(codec->dev, "%s: failed to create bolero version entry\n",
+			__func__);
+		return -ENOMEM;
+	}
+
+	version_entry->private_data = priv;
+	version_entry->size = BOLERO_VERSION_ENTRY_SIZE;
+	version_entry->content = SNDRV_INFO_CONTENT_DATA;
+	version_entry->c.ops = &bolero_info_ops;
+
+	if (snd_info_register(version_entry) < 0) {
+		snd_info_free_entry(version_entry);
+		return -ENOMEM;
+	}
+	priv->version_entry = version_entry;
+
+	return 0;
+}
+EXPORT_SYMBOL(bolero_info_create_codec_entry);
+
 static int bolero_soc_codec_probe(struct snd_soc_codec *codec)
 {
 	struct bolero_priv *priv = dev_get_drvdata(codec->dev);
@@ -407,6 +499,7 @@ static int bolero_soc_codec_probe(struct snd_soc_codec *codec)
 		}
 	}
 	priv->codec = codec;
+	priv->version = BOLERO_VERSION_1_0;
 	dev_dbg(codec->dev, "%s: bolero soc codec probe success\n", __func__);
 err:
 	return ret;
