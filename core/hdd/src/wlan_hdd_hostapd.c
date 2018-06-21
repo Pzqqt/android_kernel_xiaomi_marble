@@ -478,8 +478,10 @@ static int __hdd_hostapd_stop(struct net_device *dev)
 
 	hdd_enter_dev(dev);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret)
+	if (ret) {
+		set_bit(DOWN_DURING_SSR, &adapter->event_flags);
 		return ret;
+	}
 
 	/*
 	 * Some tests requires to do "ifconfig down" only to bring
