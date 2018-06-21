@@ -196,6 +196,10 @@ int adm_get_sound_focus(int port_id, int copp_idx,
 			struct sound_focus_param *soundFocusData);
 int adm_get_source_tracking(int port_id, int copp_idx,
 			    struct source_tracking_param *sourceTrackingData);
+int adm_set_custom_chmix_cfg(int port_id, int copp_idx,
+			     unsigned int session_id, char *params,
+			     uint32_t params_length, int direction,
+				 int stream_type);
 int adm_swap_speaker_channels(int port_id, int copp_idx, int sample_rate,
 				bool spk_swap);
 int adm_programable_channel_mixer(int port_id, int copp_idx, int session_id,
