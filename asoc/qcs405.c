@@ -37,6 +37,7 @@
 #include "codecs/wsa881x.h"
 #include "codecs/csra66x0/csra66x0.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
+#include "codecs/bolero/bolero-cdc.h"
 
 #define DRV_NAME "qcs405-asoc-snd"
 
@@ -4114,7 +4115,6 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	struct snd_soc_dai *codec_dai = rtd->codec_dai;
 	struct snd_card *card;
-	struct snd_info_entry *entry;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
 
@@ -4179,15 +4179,15 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	}
 
 	card = rtd->card->snd_card;
-	entry = snd_info_create_subdir(card->module, "codecs",
-					 card->proc_root);
-	if (!entry) {
-		pr_debug("%s: Cannot create codecs module entry\n",
+	if (!pdata->codec_root)
+		pdata->codec_root = snd_info_create_subdir(card->module,
+					"codecs", card->proc_root);
+	if (!pdata->codec_root) {
+		dev_dbg(codec->dev, "%s: Cannot create codecs module entry\n",
 			 __func__);
 		ret = 0;
 		goto err;
 	}
-	pdata->codec_root = entry;
 	tasha_codec_info_create_codec_entry(pdata->codec_root, codec);
 
 	codec_reg_done = true;
@@ -4202,6 +4202,9 @@ static int msm_va_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 	int ret = 0;
 	struct snd_soc_codec *codec = rtd->codec;
 	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	struct snd_card *card;
+	struct msm_asoc_mach_data *pdata =
+				snd_soc_card_get_drvdata(rtd->card);
 
 	ret = snd_soc_add_codec_controls(codec, msm_snd_va_controls,
 					 ARRAY_SIZE(msm_snd_va_controls));
@@ -4225,6 +4228,18 @@ static int msm_va_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_dapm_sync(dapm);
 
+	card = rtd->card->snd_card;
+	if (!pdata->codec_root)
+		pdata->codec_root = snd_info_create_subdir(card->module,
+					"codecs", card->proc_root);
+	if (!pdata->codec_root) {
+		dev_dbg(codec->dev, "%s: Cannot create codecs module entry\n",
+			__func__);
+		ret = 0;
+		goto done;
+	}
+	bolero_info_create_codec_entry(pdata->codec_root, codec);
+done:
 	return ret;
 }
 
@@ -4233,11 +4248,14 @@ static int msm_wsa_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 	int ret = 0;
 	struct snd_soc_codec *codec = rtd->codec;
 	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	struct snd_card *card;
+	struct msm_asoc_mach_data *pdata =
+				snd_soc_card_get_drvdata(rtd->card);
 
 	ret = snd_soc_add_codec_controls(codec, msm_snd_wsa_controls,
 					 ARRAY_SIZE(msm_snd_wsa_controls));
 	if (ret < 0) {
-		dev_err(codec->dev, "%s: add_codec_controls for va failed, err %d\n",
+		dev_err(codec->dev, "%s: add_codec_controls for wsa failed, err %d\n",
 			__func__, ret);
 		return ret;
 	}
@@ -4251,6 +4269,18 @@ static int msm_wsa_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_dapm_sync(dapm);
 
+	card = rtd->card->snd_card;
+	if (!pdata->codec_root)
+		pdata->codec_root = snd_info_create_subdir(card->module,
+					"codecs", card->proc_root);
+	if (!pdata->codec_root) {
+		dev_dbg(codec->dev, "%s: Cannot create codecs module entry\n",
+			__func__);
+		ret = 0;
+		goto done;
+	}
+	bolero_info_create_codec_entry(pdata->codec_root, codec);
+done:
 	return ret;
 }
 
