@@ -372,7 +372,7 @@ htt_rx_paddr_mark_high_bits(qdf_dma_addr_t paddr)
 static qdf_dma_addr_t
 htt_rx_paddr_mark_high_bits(qdf_dma_addr_t paddr)
 {
-	return 0;
+	return paddr;
 }
 #endif
 
