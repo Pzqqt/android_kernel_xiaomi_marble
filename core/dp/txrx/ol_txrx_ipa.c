@@ -767,6 +767,7 @@ QDF_STATUS ol_txrx_ipa_enable_pipes(struct cdp_pdev *ppdev)
  */
 QDF_STATUS ol_txrx_ipa_disable_pipes(struct cdp_pdev *ppdev)
 {
+	ol_txrx_pdev_handle pdev = (ol_txrx_pdev_handle)ppdev;
 	int ret;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
@@ -781,7 +782,7 @@ QDF_STATUS ol_txrx_ipa_disable_pipes(struct cdp_pdev *ppdev)
 	if (htt_rx_update_smmu_map(pdev->htt_pdev, false) !=
 	    QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "IPA SMMU unmap failed")
+			  "IPA SMMU unmap failed");
 	}
 
 	return ret ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
