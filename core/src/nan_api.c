@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,6 +61,43 @@ nan_psoc_notif_failed:
 	return status;
 }
 
+static void nan_psoc_delete_peer(struct wlan_objmgr_psoc *psoc,
+				 void *peer, void *arg)
+{
+	if (WLAN_PEER_NDP == wlan_peer_get_peer_type(peer))
+		wlan_objmgr_peer_obj_delete(peer);
+}
+
+static void nan_psoc_delete_vdev(struct wlan_objmgr_psoc *psoc,
+				 void *vdev, void *arg)
+{
+	enum nan_datapath_state state;
+	struct nan_vdev_priv_obj *priv_obj = nan_get_vdev_priv_obj(vdev);
+
+	if (!priv_obj) {
+		nan_err("priv_obj is null");
+		return;
+	}
+	/*
+	 * user may issue rrmod wlan without explicitly NDI Delete.
+	 * In that case pending NDI vdev state will not be DELETED/DELETEING
+	 * Forcefully delete vdev object
+	 */
+	if (QDF_NDI_MODE != wlan_vdev_mlme_get_opmode(vdev))
+		return;
+
+	qdf_spin_lock_bh(&priv_obj->lock);
+	state = priv_obj->state;
+	qdf_spin_unlock_bh(&priv_obj->lock);
+
+	/* if already in deleted or deleting state - do not delete */
+	if (state == NAN_DATA_NDI_DELETED_STATE ||
+	    state == NAN_DATA_NDI_DELETING_STATE)
+		return;
+
+	wlan_objmgr_vdev_obj_delete(vdev);
+}
+
 static QDF_STATUS nan_psoc_obj_destroyed_notification(
 				struct wlan_objmgr_psoc *psoc, void *arg_list)
 {
@@ -72,6 +109,14 @@ static QDF_STATUS nan_psoc_obj_destroyed_notification(
 		nan_err("nan_obj is NULL");
 		return QDF_STATUS_E_FAULT;
 	}
+
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_PEER_OP,
+				     nan_psoc_delete_peer,
+				     NULL, 1, WLAN_UMAC_COMP_NAN);
+
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
+				     nan_psoc_delete_vdev,
+				     NULL, 1, WLAN_UMAC_COMP_NAN);
 
 	status = wlan_objmgr_psoc_component_obj_detach(psoc,
 					WLAN_UMAC_COMP_NAN, nan_obj);
