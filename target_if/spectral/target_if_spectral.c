@@ -2657,15 +2657,7 @@ target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev)
 
 	spectral->send_single_packet = 0;
 	spectral->sc_spectral_scan = 0;
-	spectral->sc_spectral_noise_pwr_cal = 0;
 
-	/*
-	 * Reset the priority because it stops WLAN rx.
-	 * If it is needed to set, user has to set it explicitly
-	 *
-	 */
-	/* Reset Priority */
-	spectral->params.ss_spectral_pri = 0;
 	qdf_spin_unlock(&spectral->spectral_lock);
 }
 
