@@ -10154,6 +10154,9 @@ typedef struct {
 #define WMI_PEER_DYN_MIMOPS     0x00020000  /* Dynamic MIMO PS Enabled */
 #define WMI_PEER_STATIC_MIMOPS  0x00040000  /* Static MIMO PS enabled */
 #define WMI_PEER_SPATIAL_MUX    0x00200000  /* SM Enabled */
+#define WMI_PEER_TWT_REQ        0x00400000  /* TWT Requester Support bit in Extended Capabilities element */
+#define WMI_PEER_TWT_RESP       0x00800000  /* TWT Responder Support bit in Extended Capabilities element */
+#define WMI_PEER_MULTI_BSSID    0x01000000  /* Multiple BSSID Support bit in Extended Capabilities element */
 #define WMI_PEER_VHT            0x02000000  /* VHT Enabled */
 #define WMI_PEER_80MHZ          0x04000000  /* 80MHz enabld */
 #define WMI_PEER_PMF            0x08000000  /* Robust Management Frame Protection enabled */
