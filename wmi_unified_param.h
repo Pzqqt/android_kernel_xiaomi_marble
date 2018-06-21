@@ -4090,6 +4090,8 @@ typedef struct {
  * @last_tx_power: Tx power latest
  * @atf_tokens_allocated: atf tokens allocated
  * @atf_tokens_utilized: atf tokens utilized
+ * @num_mu_tx_blacklisted: Blacklisted MU Tx count
+ * @sgi_count: sgi count of the peer
  * @reserved: for future use
  */
 typedef struct {
@@ -4103,7 +4105,9 @@ typedef struct {
 	uint32_t last_tx_power;
 	uint32_t atf_tokens_allocated;
 	uint32_t atf_tokens_utilized;
-	uint32_t reserved[4];
+	uint32_t num_mu_tx_blacklisted;
+	uint32_t sgi_count;
+	uint32_t reserved[2];
 } wmi_host_peer_extd_stats;
 
 /**
