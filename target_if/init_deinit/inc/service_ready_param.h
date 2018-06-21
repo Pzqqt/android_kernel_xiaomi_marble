@@ -280,6 +280,7 @@ struct wlan_psoc_host_chainmask_table {
  * @num_chainmask_tables: Number of chain mask tables.
  * @num_dbr_ring_caps: Number of direct buf rx ring capabilities
  * @chainmask_table: Available chain mask tables.
+ * @sar_version: SAR version info
  */
 struct wlan_psoc_host_service_ext_param {
 	uint32_t default_conc_scan_config_bits;
@@ -295,6 +296,7 @@ struct wlan_psoc_host_service_ext_param {
 	uint32_t num_dbr_ring_caps;
 	struct wlan_psoc_host_chainmask_table
 		chainmask_table[PSOC_MAX_CHAINMASK_TABLES];
+	uint32_t sar_version;
 };
 
 #endif /* _SERVICE_READY_PARAM_H_*/

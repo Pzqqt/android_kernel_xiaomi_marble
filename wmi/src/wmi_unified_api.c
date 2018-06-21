@@ -6551,6 +6551,18 @@ QDF_STATUS wmi_unified_extract_sar_limit_event(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_extract_sar2_result_event(void *handle,
+						 uint8_t *event, uint32_t len)
+{
+	wmi_unified_t wmi_handle = handle;
+
+	if (wmi_handle->ops->extract_sar2_result_event)
+		return wmi_handle->ops->extract_sar2_result_event(wmi_handle,
+								  event,
+								  len);
+
+	return QDF_STATUS_E_FAILURE;
+}
 
 #ifdef WLAN_FEATURE_DISA
 QDF_STATUS wmi_unified_encrypt_decrypt_send_cmd(void *wmi_hdl,
@@ -6637,6 +6649,30 @@ QDF_STATUS wmi_extract_service_ready_ext(void *wmi_hdl, uint8_t *evt_buf,
 	if (wmi_handle->ops->extract_service_ready_ext)
 		return wmi_handle->ops->extract_service_ready_ext(wmi_handle,
 				evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_sar_cap_service_ready_ext() -
+ *	 extract sar cap from service ready event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @ext_param: extended target info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_extract_sar_cap_service_ready_ext(
+			void *wmi_hdl,
+			uint8_t *evt_buf,
+			struct wlan_psoc_host_service_ext_param *ext_param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_sar_cap_service_ready_ext)
+		return wmi_handle->ops->extract_sar_cap_service_ready_ext(
+				wmi_handle,
+				evt_buf, ext_param);
 
 	return QDF_STATUS_E_FAILURE;
 }

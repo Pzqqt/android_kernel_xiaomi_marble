@@ -197,6 +197,20 @@ static int get_hw_mode(void *handle, uint8_t *evt, uint8_t hw_idx,
 	return 0;
 }
 
+static int get_sar_version(void *handle, uint8_t *evt,
+			   struct wlan_psoc_host_service_ext_param *ext_param)
+{
+	QDF_STATUS status;
+
+	status = wmi_extract_sar_cap_service_ready_ext(handle, evt, ext_param);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("failed to parse sar capability");
+		return qdf_status_to_os_return(status);
+	}
+
+	return 0;
+}
+
 int init_deinit_populate_hw_mode_capability(void *wmi_handle,
 		uint8_t *event, struct target_psoc_info *tgt_hdl)
 {
@@ -239,6 +253,9 @@ int init_deinit_populate_hw_mode_capability(void *wmi_handle,
 			target_if_info("num radios is %d\n", info->num_radios);
 		}
 	}
+	status = get_sar_version(wmi_handle, event, &info->service_ext_param);
+	target_if_info("sar version %d",
+		       info->service_ext_param.sar_version);
 
 return_exit:
 	return qdf_status_to_os_return(status);
