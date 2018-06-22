@@ -5886,7 +5886,9 @@ QDF_STATUS extract_encrypt_decrypt_resp_event_tlv(wmi_unified_t wmi_handle,
 	resp->vdev_id = data_event->vdev_id;
 	resp->status = data_event->status;
 
-	if (data_event->data_length > param_buf->num_enc80211_frame) {
+	if ((data_event->data_length > param_buf->num_enc80211_frame) ||
+	    (data_event->data_length > WMI_SVC_MSG_MAX_SIZE - WMI_TLV_HDR_SIZE -
+	     sizeof(*data_event))) {
 		WMI_LOGE("FW msg data_len %d more than TLV hdr %d",
 			 data_event->data_length,
 			 param_buf->num_enc80211_frame);
