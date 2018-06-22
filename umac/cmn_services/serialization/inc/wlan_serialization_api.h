@@ -486,5 +486,21 @@ wlan_serialization_get_scan_cmd_using_scan_id(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id, uint16_t scan_id,
 		uint8_t is_scan_cmd_from_active_queue);
-
+/**
+ * wlan_serialization_get_active_cmd() - Return active umac command which
+ *  matches vdev and cmd type
+ * @psoc: pointer to soc
+ * @vdev_id: vdev id to pull vdev object
+ * @cmd_type: cmd type to match
+ *
+ * This API fetches vdev/pdev object based on vdev_id, loops through active
+ * command queue and find the active command which matches cmd_type as well
+ * as vdev object.
+ *
+ * Return: Pointer to umac command. NULL is returned if active command of given
+ *  type is not found.
+ */
+void *wlan_serialization_get_active_cmd(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id,
+				     enum wlan_serialization_cmd_type cmd_type);
 #endif
