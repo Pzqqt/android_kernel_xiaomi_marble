@@ -246,7 +246,7 @@ static inline int hif_napi_event(struct hif_opaque_softc     *hif,
 static inline int hif_napi_enabled(struct hif_opaque_softc *hif, int ce)
 { return 0; }
 
-bool hif_napi_created(struct hif_opaque_softc *hif, int ce)
+static inline bool hif_napi_created(struct hif_opaque_softc *hif, int ce)
 { return false; }
 
 /* called from hdd (napi_poll), using napi id as a selector */
