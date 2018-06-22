@@ -49,6 +49,9 @@ CONFIG_HTT_PADDR64 := y
 CONFIG_AR900B := y
 CONFIG_HIF_SNOC:= y
 
+# Genoa specific features
+CONFIG_QCA_LL_TX_FLOW_CONTROL_RESIZE := y
+
 # Data Path specific features
 CONFIG_WLAN_FASTPATH := y
 CONFIG_FEATURE_TSO := y
