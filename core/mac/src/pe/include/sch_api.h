@@ -35,60 +35,65 @@
 #include "ani_global.h"
 
 /* update only the broadcast qos params */
-extern void sch_qos_update_broadcast(tpAniSirGlobal pMac,
-				     tpPESession psessionEntry);
+void sch_qos_update_broadcast(tpAniSirGlobal pMac,
+			      tpPESession psessionEntry);
 
 /* fill in the default local edca parameter into gLimEdcaParams[] */
-extern void sch_set_default_edca_params(tpAniSirGlobal pMac, tpPESession psessionE);
+void sch_set_default_edca_params(tpAniSirGlobal pMac, tpPESession psessionE);
 
 /* update only local qos params */
-extern void sch_qos_update_local(tpAniSirGlobal pMac, tpPESession psessionEntry);
+void sch_qos_update_local(tpAniSirGlobal pMac, tpPESession psessionEntry);
 
 /* update the edca profile parameters */
-extern void sch_edca_profile_update(tpAniSirGlobal pMac,
-				    tpPESession psessionEntry);
+void sch_edca_profile_update(tpAniSirGlobal pMac,
+			     tpPESession psessionEntry);
 
 /* / Set the fixed fields in a beacon frame */
-extern tSirRetStatus sch_set_fixed_beacon_fields(tpAniSirGlobal pMac,
-						 tpPESession psessionEntry);
+QDF_STATUS sch_set_fixed_beacon_fields(tpAniSirGlobal pMac,
+				       tpPESession psessionEntry);
 
 /* / Process the scheduler messages */
-extern void sch_process_message(tpAniSirGlobal pMac,
-				struct scheduler_msg *pSchMsg);
+void sch_process_message(tpAniSirGlobal pMac,
+			 struct scheduler_msg *pSchMsg);
 
 /* / The beacon Indication handler function */
-extern void sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
-				       struct scheduler_msg *limMsg);
+void sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
+				struct scheduler_msg *limMsg);
 
 /* / Post a message to the scheduler message queue */
-extern tSirRetStatus sch_post_message(tpAniSirGlobal pMac,
-				      struct scheduler_msg *pMsg);
+QDF_STATUS sch_post_message(tpAniSirGlobal pMac,
+			    struct scheduler_msg *pMsg);
 
-extern void sch_beacon_process(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
-			       tpPESession psessionEntry);
-extern tSirRetStatus sch_beacon_edca_process(tpAniSirGlobal pMac,
-					     tSirMacEdcaParamSetIE *edca,
-					     tpPESession psessionEntry);
+void sch_beacon_process(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
+			tpPESession psessionEntry);
+
+QDF_STATUS sch_beacon_edca_process(tpAniSirGlobal pMac,
+				   tSirMacEdcaParamSetIE *edca,
+				   tpPESession psessionEntry);
 
 void sch_generate_tim(tpAniSirGlobal, uint8_t **, uint16_t *, uint8_t);
 
 void sch_set_beacon_interval(tpAniSirGlobal pMac, tpPESession psessionEntry);
 
-tSirRetStatus sch_send_beacon_req(tpAniSirGlobal, uint8_t *, uint16_t,
-				  tpPESession psessionEntry);
+QDF_STATUS sch_send_beacon_req(tpAniSirGlobal, uint8_t *, uint16_t,
+			       tpPESession psessionEntry);
 
-tSirRetStatus lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal,
-							      tDot11fBeacon1 *,
-							      tpPESession
-							      psessionEntry);
-void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal, tDot11fBeacon2 *,
+QDF_STATUS lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal,
+							   tDot11fBeacon1 *,
+							   tpPESession
+							   psessionEntry);
+void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal,
+						     tDot11fBeacon2 *,
 						     uint32_t *,
 						     tDot11fProbeResponse *);
 void set_probe_rsp_ie_bitmap(uint32_t *, uint32_t);
-uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal, tpPESession, uint32_t *);
+uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal,
+					    tpPESession,
+					    uint32_t *);
 
 int sch_gen_timing_advert_frame(tpAniSirGlobal pMac, tSirMacAddr self_addr,
-	uint8_t **buf, uint32_t *timestamp_offset, uint32_t *time_value_offset);
+				uint8_t **buf, uint32_t *timestamp_offset,
+				uint32_t *time_value_offset);
 
 /*
  * sch_beacon_process_for_ap() - process the beacon frame for AP sessions
@@ -109,8 +114,8 @@ int sch_gen_timing_advert_frame(tpAniSirGlobal pMac, tSirMacAddr self_addr,
  * Return: None
  */
 void sch_beacon_process_for_ap(tpAniSirGlobal mac_ctx,
-					uint8_t session_id,
-					uint8_t *rx_pkt_info,
-					tSchBeaconStruct *bcn);
+			       uint8_t session_id,
+			       uint8_t *rx_pkt_info,
+			       tSchBeaconStruct *bcn);
 
 #endif

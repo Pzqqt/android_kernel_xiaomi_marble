@@ -350,6 +350,8 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
 {
 	uint32_t bi;
 	tpDphHashNode pStaDs = NULL;
+	QDF_STATUS status;
+
 	/*
 	 *  This handles two cases:
 	 *  -- Infra STA receiving beacons from AP
@@ -367,7 +369,7 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
 	}
 	lim_detect_change_in_ap_capabilities(mac_ctx, bcn, session);
 	if (lim_get_sta_hash_bssidx(mac_ctx, DPH_STA_HASH_INDEX_PEER, bssIdx,
-				    session) != eSIR_SUCCESS)
+				    session) != QDF_STATUS_SUCCESS)
 		return false;
 
 	beaconParams->bssIdx = *bssIdx;
@@ -425,12 +427,14 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
 
 	pStaDs = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
 				    &session->dph.dphHashTable);
-	if ((bcn->wmeEdcaPresent && (session->limWmeEnabled))
-	    || (bcn->edcaPresent && (session->limQosEnabled))) {
+	if ((bcn->wmeEdcaPresent && session->limWmeEnabled) ||
+	    (bcn->edcaPresent && session->limQosEnabled)) {
 		if (bcn->edcaParams.qosInfo.count !=
 		    session->gLimEdcaParamSetCount) {
-			if (sch_beacon_edca_process(mac_ctx, &bcn->edcaParams,
-						    session) != eSIR_SUCCESS) {
+			status = sch_beacon_edca_process(mac_ctx,
+							 &bcn->edcaParams,
+							 session);
+			if (QDF_IS_STATUS_ERROR(status)) {
 				pe_err("EDCA parameter processing error");
 			} else if (pStaDs != NULL) {
 				/* If needed, downgrade the EDCA parameters */
@@ -875,7 +879,7 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 			FL("Local power constraint change, Updating new maxTx power %d from old pwr %d"),
 			maxTxPower, session->maxTxPower);
 		if (lim_send_set_max_tx_power_req(mac_ctx, maxTxPower, session)
-		    == eSIR_SUCCESS)
+		    == QDF_STATUS_SUCCESS)
 			session->maxTxPower = maxTxPower;
 	}
 
@@ -1069,7 +1073,7 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	/* Convert the beacon frame into a structure */
 	if (sir_convert_beacon_frame2_struct(mac_ctx, (uint8_t *) rx_pkt_info,
-		&bcn) != eSIR_SUCCESS) {
+		&bcn) != QDF_STATUS_SUCCESS) {
 		pe_err_rl("beacon parsing failed");
 		return;
 	}
@@ -1095,7 +1099,7 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
  *
  * @return status of operation
  */
-tSirRetStatus
+QDF_STATUS
 sch_beacon_edca_process(tpAniSirGlobal pMac, tSirMacEdcaParamSetIE *edca,
 			tpPESession session)
 {
@@ -1185,7 +1189,7 @@ sch_beacon_edca_process(tpAniSirGlobal pMac, tSirMacEdcaParamSetIE *edca,
 		       session->gLimEdcaParams[i].cw.max,
 		       session->gLimEdcaParams[i].txoplimit);
 	}
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 void lim_enable_obss_detection_config(tpAniSirGlobal mac_ctx,
@@ -1606,7 +1610,7 @@ QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
 		sch_set_fixed_beacon_fields(mac_ctx, session);
 		pe_debug("Beacon for PE session: %d got changed: 0x%x",
 			 session->smeSessionId, bcn_prm.paramChangeBitmap);
-		if (!IS_SIR_STATUS_SUCCESS(lim_send_beacon_params(
+		if (!QDF_IS_STATUS_SUCCESS(lim_send_beacon_params(
 		     mac_ctx, &bcn_prm, session))) {
 			pe_err("Failed to send beacon param, session %d",
 				obss_detection->vdev_id);
