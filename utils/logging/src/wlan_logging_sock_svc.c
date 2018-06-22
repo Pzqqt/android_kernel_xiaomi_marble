@@ -174,8 +174,36 @@ struct wlan_logging {
 };
 
 static struct wlan_logging gwlan_logging;
-static struct log_msg gplog_msg[MAX_LOGMSG_COUNT];
 static struct pkt_stats_msg *gpkt_stats_buffers;
+
+#ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
+
+static struct log_msg *gplog_msg;
+
+static inline QDF_STATUS allocate_log_msg_buffer(void)
+{
+	gplog_msg = vzalloc(MAX_LOGMSG_COUNT * sizeof(*gplog_msg));
+
+	return gplog_msg ? QDF_STATUS_SUCCESS : QDF_STATUS_E_NOMEM;
+}
+
+static inline void free_log_msg_buffer(void)
+{
+	vfree(gplog_msg);
+	gplog_msg = NULL;
+}
+
+#else
+static struct log_msg gplog_msg[MAX_LOGMSG_COUNT];
+
+static inline QDF_STATUS allocate_log_msg_buffer(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void free_log_msg_buffer(void)
+{ }
+#endif
 
 /* Need to call this with spin_lock acquired */
 static int wlan_queue_logmsg_for_app(void)
@@ -840,6 +868,12 @@ int wlan_logging_sock_init_svc(void)
 	INIT_LIST_HEAD(&gwlan_logging.free_list);
 	INIT_LIST_HEAD(&gwlan_logging.filled_list);
 
+	if (allocate_log_msg_buffer() != QDF_STATUS_SUCCESS) {
+		pr_err("%s: Could not allocate memory for log_msg\n",
+		       __func__);
+		return -ENOMEM;
+	}
+
 	for (i = 0; i < gwlan_logging.num_buf; i++) {
 		list_add(&gplog_msg[i].node, &gwlan_logging.free_list);
 		gplog_msg[i].index = i;
@@ -922,6 +956,7 @@ err1:
 	spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
 	gwlan_logging.pcur_node = NULL;
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, irq_flag);
+	free_log_msg_buffer();
 
 	return -ENOMEM;
 }
@@ -965,6 +1000,7 @@ int wlan_logging_sock_deinit_svc(void)
 
 	vfree(gpkt_stats_buffers);
 	gpkt_stats_buffers = NULL;
+	free_log_msg_buffer();
 
 	return 0;
 }
