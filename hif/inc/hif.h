@@ -405,8 +405,8 @@ uint32_t hif_reg_read(struct hif_opaque_softc *hif_ctx, uint32_t offset);
  */
 struct htc_callbacks {
 	void *context;
-	QDF_STATUS(*rwCompletionHandler)(void *rwContext, QDF_STATUS status);
-	QDF_STATUS(*dsrHandler)(void *context);
+	QDF_STATUS(*rw_compl_handler)(void *rw_ctx, QDF_STATUS status);
+	QDF_STATUS(*dsr_handler)(void *context);
 };
 
 /**

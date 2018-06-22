@@ -69,4 +69,9 @@ void hif_dev_get_block_size(void *config);
 void hif_dev_set_mailbox_swap(struct hif_sdio_dev *pdev);
 
 bool hif_dev_get_mailbox_swap(struct hif_sdio_dev *pdev);
+
+int hif_sdio_set_drvdata(struct sdio_func *func,
+			 struct hif_sdio_dev *hifdevice);
+
+struct hif_sdio_dev *get_hif_device(struct sdio_func *func);
 #endif /* HIF_SDIO_DEV_H_ */

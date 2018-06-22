@@ -235,24 +235,6 @@ enum hif_device_irq_mode {
 	HIF_DEVICE_IRQ_ASYNC_SYNC,  /* DSR to process interrupts */
 };
 
-struct osdrv_callbacks {
-	void *context;
-	/* context to pass for all callbacks
-	 * except device_removed_handler
-	 * the device_removed_handler is only
-	 * called if the device is claimed
-	 */
-	int (*device_inserted_handler)(void *context, void *hif_handle);
-	int (*device_removed_handler)(void *claimed_ctx,
-				    void *hif_handle);
-	int (*device_suspend_handler)(void *context);
-	int (*device_resume_handler)(void *context);
-	int (*device_wakeup_handler)(void *context);
-	int (*device_power_change_handler)(void *context,
-					enum HIF_DEVICE_POWER_CHANGE_TYPE
-					config);
-};
-
 /* other interrupts are pending, host
  * needs to read the to monitor
  */
@@ -280,11 +262,10 @@ typedef int (*HIF_MASK_UNMASK_RECV_EVENT)(struct hif_sdio_dev *device,
 					  bool mask,
 					  void *async_context);
 
-QDF_STATUS hif_configure_device(struct hif_sdio_dev *device,
-			enum hif_device_config_opcode opcode,
-			void *config, uint32_t config_len);
-
-QDF_STATUS hif_init(struct osdrv_callbacks *callbacks);
+QDF_STATUS hif_configure_device(struct hif_softc *ol_sc,
+				struct hif_sdio_dev *device,
+				enum hif_device_config_opcode opcode,
+				void *config, uint32_t config_len);
 
 QDF_STATUS hif_attach_htc(struct hif_sdio_dev *device,
 			  struct htc_callbacks *callbacks);
@@ -300,7 +281,7 @@ void hif_mask_interrupt(struct hif_sdio_dev *device);
 
 void hif_un_mask_interrupt(struct hif_sdio_dev *device);
 
-QDF_STATUS hif_wait_for_pending_recv(struct hif_sdio_dev *device);
+void hif_sdio_configure_pipes(struct hif_sdio_dev *dev, struct sdio_func *func);
 
 struct _HIF_SCATTER_ITEM {
 	u_int8_t     *buffer; /* CPU accessible address of buffer */
@@ -423,6 +404,14 @@ void hif_sdio_quirk_force_drive_strength(struct sdio_func *func);
 void hif_sdio_quirk_write_cccr(struct sdio_func *func);
 int hif_sdio_quirk_mod_strength(struct sdio_func *func);
 int hif_sdio_quirk_async_intr(struct sdio_func *func);
+int hif_sdio_set_bus_speed(struct sdio_func *func);
+int hif_sdio_set_bus_width(struct sdio_func *func);
+int hif_sdio_func_enable(struct hif_sdio_dev *device,
+			 struct sdio_func *func);
+QDF_STATUS hif_sdio_func_disable(struct hif_sdio_dev *device,
+				 struct sdio_func *func,
+				 bool reset);
+QDF_STATUS reinit_sdio(struct hif_sdio_dev *device);
 
 int func0_cmd52_write_byte(struct mmc_card *card,
 			   unsigned int address,
@@ -431,5 +420,55 @@ int func0_cmd52_write_byte(struct mmc_card *card,
 int func0_cmd52_read_byte(struct mmc_card *card,
 			  unsigned int address,
 			  unsigned char *byte);
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0))
+/**
+ * sdio_card_highspeed() - check if high speed supported
+ * @card: pointer to mmc card struct
+ *
+ * Return: non zero if card supports high speed.
+ */
+static inline int sdio_card_highspeed(struct mmc_card *card)
+{
+	return mmc_card_highspeed(card);
+}
+#else
+static inline int sdio_card_highspeed(struct mmc_card *card)
+{
+	return mmc_card_hs(card);
+}
+#endif
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0))
+/**
+ * sdio_card_set_highspeed() - set high speed
+ * @card: pointer to mmc card struct
+ *
+ * Return: none.
+ */
+static inline void sdio_card_set_highspeed(struct mmc_card *card)
+{
+	mmc_card_set_highspeed(card);
+}
+#else
+static inline void sdio_card_set_highspeed(struct mmc_card *card)
+{
+}
+#endif
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0))
+/**
+ * sdio_card_state() - set card state
+ * @card: pointer to mmc card struct
+ *
+ * Return: none.
+ */
+static inline void sdio_card_state(struct mmc_card *card)
+{
+	card->state &= ~MMC_STATE_HIGHSPEED;
+}
+#else
+static inline void sdio_card_state(struct mmc_card *card)
+{
+}
+#endif
 #endif /* _HIF_INTERNAL_H_ */

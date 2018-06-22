@@ -73,7 +73,7 @@ HTC_PACKET *hif_dev_alloc_rx_buffer(struct hif_sdio_device *pdev)
 
 /**
  * hif_dev_create() - create hif device after probe.
- * @scn: HIF context
+ * @hif_device: HIF context
  * @callbacks: htc callbacks
  * @target: HIF target
  *
@@ -100,7 +100,7 @@ struct hif_sdio_device *hif_dev_create(struct hif_sdio_dev *hif_device,
 
 	pdev->HIFDevice = hif_device;
 	pdev->pTarget = target;
-	status = hif_configure_device(hif_device,
+	status = hif_configure_device(NULL, hif_device,
 				      HIF_DEVICE_SET_HTC_CONTEXT,
 				      (void *)pdev, sizeof(pdev));
 	if (status != QDF_STATUS_SUCCESS)
@@ -123,7 +123,7 @@ void hif_dev_destroy(struct hif_sdio_device *pdev)
 {
 	QDF_STATUS status;
 
-	status = hif_configure_device(pdev->HIFDevice,
+	status = hif_configure_device(NULL, pdev->HIFDevice,
 				      HIF_DEVICE_SET_HTC_CONTEXT,
 				      (void *)NULL, 0);
 	if (status != QDF_STATUS_SUCCESS)
@@ -144,9 +144,10 @@ struct hif_sdio_device *hif_dev_from_hif(struct hif_sdio_dev *hif_device)
 	struct hif_sdio_device *pdev = NULL;
 	QDF_STATUS status;
 
-	status = hif_configure_device(hif_device,
-				HIF_DEVICE_GET_HTC_CONTEXT,
-				(void **)&pdev, sizeof(struct hif_sdio_device));
+	status = hif_configure_device(NULL, hif_device,
+				      HIF_DEVICE_GET_HTC_CONTEXT,
+				      (void **)&pdev,
+				      sizeof(struct hif_sdio_device));
 	if (status != QDF_STATUS_SUCCESS)
 		HIF_ERROR("%s: set context failed", __func__);
 
@@ -358,7 +359,7 @@ QDF_STATUS hif_dev_setup(struct hif_sdio_device *pdev)
 	pdev->HifIRQProcessingMode = HIF_DEVICE_IRQ_ASYNC_SYNC;
 
 	/* see if the HIF layer overrides this assumption */
-	hif_configure_device(hif_device,
+	hif_configure_device(NULL, hif_device,
 			     HIF_DEVICE_GET_IRQ_PROC_MODE,
 			     &pdev->HifIRQProcessingMode,
 			     sizeof(pdev->HifIRQProcessingMode));
@@ -368,7 +369,7 @@ QDF_STATUS hif_dev_setup(struct hif_sdio_device *pdev)
 		AR_DEBUG_PRINTF(ATH_DEBUG_WARN,
 			("HIF Interrupt processing is SYNC ONLY\n"));
 		/* see if HIF layer wants HTC to yield */
-		hif_configure_device(hif_device,
+		hif_configure_device(NULL, hif_device,
 				     HIF_DEVICE_GET_IRQ_YIELD_PARAMS,
 				     &pdev->HifIRQYieldParams,
 				     sizeof(pdev->HifIRQYieldParams));
@@ -395,7 +396,7 @@ QDF_STATUS hif_dev_setup(struct hif_sdio_device *pdev)
 	/* see if the HIF layer implements the mask/unmask recv
 	 * events function
 	 */
-	hif_configure_device(hif_device,
+	hif_configure_device(NULL, hif_device,
 			     HIF_DEVICE_GET_RECV_EVENT_MASK_UNMASK_FUNC,
 			     &pdev->HifMaskUmaskRecvEvent,
 			     sizeof(pdev->HifMaskUmaskRecvEvent));
@@ -404,8 +405,8 @@ QDF_STATUS hif_dev_setup(struct hif_sdio_device *pdev)
 
 	qdf_mem_zero(&htc_cbs, sizeof(struct htc_callbacks));
 	/* the device layer handles these */
-	htc_cbs.rwCompletionHandler = hif_dev_rw_completion_handler;
-	htc_cbs.dsrHandler = hif_dev_dsr_handler;
+	htc_cbs.rw_compl_handler = hif_dev_rw_completion_handler;
+	htc_cbs.dsr_handler = hif_dev_dsr_handler;
 	htc_cbs.context = pdev;
 	status = hif_attach_htc(pdev->HIFDevice, &htc_cbs);
 

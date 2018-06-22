@@ -26,6 +26,7 @@
 #include <ol_if_athvar.h>
 #include <athdefs.h>
 #include "a_osapi.h"
+#include "pld_sdio.h"
 #include "hif_internal.h"
 
 
@@ -39,10 +40,6 @@
 struct hif_sdio_softc {
 	struct hif_softc ol_sc;
 	struct device *dev;
-	struct _NIC_DEV aps_osdev;
-	struct tasklet_struct intr_tq;  /* tasklet */
-
-	int irq;
 	/*
 	 * Guard changes to Target HW state and to software
 	 * structures that track hardware state.
@@ -81,17 +78,18 @@ int ath_sdio_resume(void *context);
 void hif_init_qdf_ctx(qdf_device_t qdf_dev, void *ol_sc);
 void hif_deinit_qdf_ctx(void *ol_sc);
 
-int hif_sdio_device_inserted(struct device *dev,
-		const struct sdio_device_id *id);
+int hif_sdio_device_inserted(struct hif_softc *ol_sc,
+			     struct device *dev,
+			     const struct sdio_device_id *id);
 void hif_sdio_stop(struct hif_softc *hif_ctx);
 void hif_sdio_shutdown(struct hif_softc *hif_ctx);
 void hif_sdio_device_removed(struct sdio_func *func);
-int hif_device_suspend(struct device *dev);
-int hif_device_resume(struct device *dev);
+int hif_device_suspend(struct hif_softc *ol_sc, struct device *dev);
+int hif_device_resume(struct hif_softc *ol_sc, struct device *dev);
 void hif_register_tbl_attach(struct hif_softc *scn,
-						u32 hif_type);
+			     u32 hif_type);
 void target_register_tbl_attach(struct hif_softc *scn,
-						u32 target_type);
+				u32 target_type);
 void hif_enable_power_gating(void *hif_ctx);
 void hif_sdio_close(struct hif_softc *hif_sc);
 QDF_STATUS hif_sdio_open(struct hif_softc *hif_sc,
@@ -100,11 +98,4 @@ void hif_ar6k_fetch_target_regs(struct hif_sdio_dev *hif_device,
 				uint32_t *targregs);
 QDF_STATUS hif_reg_based_get_target_info(struct hif_opaque_softc *hif_ctx,
 					 struct bmi_target_info *targ_info);
-QDF_STATUS
-hif_bmi_raw_write(struct hif_sdio_dev *device, char *buffer,
-		  uint32_t length);
-QDF_STATUS
-hif_bmi_raw_read(struct hif_sdio_dev *device, char *buffer,
-		 u32 length, bool want_timeout);
-
 #endif /* __IF_SDIO_H__ */

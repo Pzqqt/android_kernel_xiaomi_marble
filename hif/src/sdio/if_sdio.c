@@ -40,7 +40,6 @@
 #include <hif_debug.h>
 #include "target_type.h"
 #include "epping_main.h"
-#include "pld_sdio.h"
 #include "targaddrs.h"
 #include "sdio_api.h"
 #include <hif_sdio_dev.h>
@@ -60,257 +59,6 @@ struct ol_pl_os_dep_funcs *g_ol_pl_os_dep_funcs;
 #endif
 #define HIF_SDIO_LOAD_TIMEOUT 1000
 
-struct hif_sdio_softc *scn;
-struct hif_softc *ol_sc;
-static atomic_t hif_sdio_load_state;
-/* Wait queue for MC thread */
-wait_queue_head_t sync_wait_queue;
-
-/**
- * hif_sdio_probe() - configure sdio device
- * @context: sdio device context
- * @hif_handle: pointer to hif handle
- *
- * Return: 0 for success and non-zero for failure
- */
-static A_STATUS hif_sdio_probe(void *context, void *hif_handle)
-{
-	int ret = 0;
-	struct HIF_DEVICE_OS_DEVICE_INFO os_dev_info;
-	struct sdio_func *func = NULL;
-	const struct sdio_device_id *id;
-	uint32_t target_type;
-
-	HIF_ENTER();
-	scn = (struct hif_sdio_softc *)qdf_mem_malloc(sizeof(*scn));
-	if (!scn) {
-		ret = -ENOMEM;
-		goto err_alloc;
-	}
-
-	scn->hif_handle = hif_handle;
-	hif_configure_device(hif_handle, HIF_DEVICE_GET_OS_DEVICE,
-			     &os_dev_info,
-			     sizeof(os_dev_info));
-
-	scn->aps_osdev.device = os_dev_info.os_dev;
-	scn->aps_osdev.bc.bc_bustype = QDF_BUS_TYPE_SDIO;
-	spin_lock_init(&scn->target_lock);
-	ol_sc = qdf_mem_malloc(sizeof(*ol_sc));
-	if (!ol_sc) {
-		ret = -ENOMEM;
-		goto err_attach;
-	}
-	OS_MEMZERO(ol_sc, sizeof(*ol_sc));
-
-	{
-		/*
-		 * Attach Target register table. This is needed early on
-		 * even before BMI since PCI and HIF initialization
-		 * directly access Target registers.
-		 *
-		 * TBDXXX: targetdef should not be global -- should be stored
-		 * in per-device struct so that we can support multiple
-		 * different Target types with a single Host driver.
-		 * The whole notion of an "hif type" -- (not as in the hif
-		 * module, but generic "Host Interface Type") is bizarre.
-		 * At first, one one expect it to be things like SDIO, USB, PCI.
-		 * But instead, it's an actual platform type. Inexplicably, the
-		 * values used for HIF platform types are *different* from the
-		 * values used for Target Types.
-		 */
-
-#if defined(CONFIG_AR9888_SUPPORT)
-		hif_register_tbl_attach(ol_sc, HIF_TYPE_AR9888);
-		target_register_tbl_attach(ol_sc, TARGET_TYPE_AR9888);
-		target_type = TARGET_TYPE_AR9888;
-#elif defined(CONFIG_AR6320_SUPPORT)
-		id = ((struct hif_sdio_dev *) hif_handle)->id;
-		if (((id->device & MANUFACTURER_ID_AR6K_BASE_MASK) ==
-				MANUFACTURER_ID_QCA9377_BASE) ||
-			((id->device & MANUFACTURER_ID_AR6K_BASE_MASK) ==
-				MANUFACTURER_ID_QCA9379_BASE)) {
-			hif_register_tbl_attach(ol_sc, HIF_TYPE_AR6320V2);
-			target_register_tbl_attach(ol_sc, TARGET_TYPE_AR6320V2);
-		} else if ((id->device & MANUFACTURER_ID_AR6K_BASE_MASK) ==
-				MANUFACTURER_ID_AR6320_BASE) {
-			int ar6kid = id->device & MANUFACTURER_ID_AR6K_REV_MASK;
-
-			if (ar6kid >= 1) {
-				/* v2 or higher silicon */
-				hif_register_tbl_attach(ol_sc,
-					HIF_TYPE_AR6320V2);
-				target_register_tbl_attach(ol_sc,
-					  TARGET_TYPE_AR6320V2);
-			} else {
-				/* legacy v1 silicon */
-				hif_register_tbl_attach(ol_sc,
-					HIF_TYPE_AR6320);
-				target_register_tbl_attach(ol_sc,
-					  TARGET_TYPE_AR6320);
-			}
-		}
-		target_type = TARGET_TYPE_AR6320;
-
-#endif
-	}
-	func = ((struct hif_sdio_dev *) hif_handle)->func;
-	scn->targetdef =  ol_sc->targetdef;
-	scn->hostdef =  ol_sc->hostdef;
-	scn->aps_osdev.bdev = func;
-	ol_sc->bus_type = scn->aps_osdev.bc.bc_bustype;
-	scn->ol_sc = *ol_sc;
-	ol_sc->target_info.target_type = target_type;
-
-	scn->ramdump_base = pld_hif_sdio_get_virt_ramdump_mem(
-					scn->aps_osdev.device,
-					&scn->ramdump_size);
-	if (scn->ramdump_base == NULL || !scn->ramdump_size) {
-		QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR,
-			"%s: Failed to get RAM dump memory address or size!\n",
-			__func__);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO,
-			"%s: ramdump base 0x%pK size %d\n", __func__,
-			scn->ramdump_base, (int)scn->ramdump_size);
-	}
-
-	if (athdiag_procfs_init(scn) != 0) {
-		QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR,
-			  "%s athdiag_procfs_init failed", __func__);
-		ret = QDF_STATUS_E_FAILURE;
-		goto err_attach1;
-	}
-
-	atomic_set(&hif_sdio_load_state, true);
-	wake_up_interruptible(&sync_wait_queue);
-
-	return 0;
-
-err_attach1:
-	if (scn->ramdump_base)
-		pld_hif_sdio_release_ramdump_mem(scn->ramdump_base);
-	qdf_mem_free(ol_sc);
-err_attach:
-	qdf_mem_free(scn);
-	scn = NULL;
-err_alloc:
-	return ret;
-}
-
-/**
- * hif_sdio_remove() - remove sdio device
- * @conext: sdio device context
- * @hif_handle: pointer to sdio function
- *
- * Return: 0 for success and non-zero for failure
- */
-static A_STATUS hif_sdio_remove(void *context, void *hif_handle)
-{
-	HIF_ENTER();
-
-	if (!scn) {
-		QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR,
-			  "Global SDIO context is NULL");
-		return A_ERROR;
-	}
-
-	atomic_set(&hif_sdio_load_state, false);
-	athdiag_procfs_remove();
-
-#ifndef TARGET_DUMP_FOR_NON_QC_PLATFORM
-	iounmap(scn->ramdump_base);
-#endif
-
-	if (ol_sc) {
-		qdf_mem_free(ol_sc);
-		ol_sc = NULL;
-	}
-
-	if (scn) {
-		qdf_mem_free(scn);
-		scn = NULL;
-	}
-
-	HIF_EXIT();
-
-	return 0;
-}
-
-/**
- * hif_sdio_suspend() - sdio suspend routine
- * @context: sdio device context
- *
- * Return: 0 for success and non-zero for failure
- */
-static A_STATUS hif_sdio_suspend(void *context)
-{
-	return 0;
-}
-
-/**
- * hif_sdio_resume() - sdio resume routine
- * @context: sdio device context
- *
- * Return: 0 for success and non-zero for failure
- */
-static A_STATUS hif_sdio_resume(void *context)
-{
-	return 0;
-}
-
-/**
- * hif_sdio_power_change() - change power state of sdio bus
- * @conext: sdio device context
- * @config: power state configurartion
- *
- * Return: 0 for success and non-zero for failure
- */
-static A_STATUS hif_sdio_power_change(void *context, uint32_t config)
-{
-	return 0;
-}
-
-/*
- * Module glue.
- */
-#include <linux/version.h>
-static char *version = "HIF (Atheros/multi-bss)";
-static char *dev_info = "ath_hif_sdio";
-
-/**
- * init_ath_hif_sdio() - initialize hif sdio callbacks
- * @param: none
- *
- * Return: 0 for success and non-zero for failure
- */
-static int init_ath_hif_sdio(void)
-{
-	QDF_STATUS status;
-	struct osdrv_callbacks osdrv_callbacks;
-
-	HIF_ENTER();
-	qdf_mem_zero(&osdrv_callbacks, sizeof(osdrv_callbacks));
-	osdrv_callbacks.device_inserted_handler = hif_sdio_probe;
-	osdrv_callbacks.device_removed_handler = hif_sdio_remove;
-	osdrv_callbacks.device_suspend_handler = hif_sdio_suspend;
-	osdrv_callbacks.device_resume_handler = hif_sdio_resume;
-	osdrv_callbacks.device_power_change_handler = hif_sdio_power_change;
-
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO, "%s %d", __func__,
-		  __LINE__);
-	status = hif_init(&osdrv_callbacks);
-	if (status != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_FATAL,
-			  "%s hif_init failed!", __func__);
-		return -ENODEV;
-	}
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR,
-		 "%s: %s\n", dev_info, version);
-
-	return 0;
-}
-
 /**
  * hif_sdio_bus_suspend() - suspend the bus
  *
@@ -325,8 +73,7 @@ int hif_sdio_bus_suspend(struct hif_softc *hif_ctx)
 	struct hif_sdio_dev *hif_device = scn->hif_handle;
 	struct device *dev = &hif_device->func->dev;
 
-	hif_device_suspend(dev);
-	return 0;
+	return hif_device_suspend(hif_ctx, dev);
 }
 
 
@@ -344,7 +91,7 @@ int hif_sdio_bus_resume(struct hif_softc *hif_ctx)
 	struct hif_sdio_dev *hif_device = scn->hif_handle;
 	struct device *dev = &hif_device->func->dev;
 
-	hif_device_resume(dev);
+	hif_device_resume(hif_ctx, dev);
 	return 0;
 }
 
@@ -364,15 +111,6 @@ void hif_enable_power_gating(void *hif_ctx)
  */
 void hif_sdio_close(struct hif_softc *hif_sc)
 {
-	if (ol_sc) {
-		qdf_mem_free(ol_sc);
-		ol_sc = NULL;
-	}
-
-	if (scn) {
-		qdf_mem_free(scn);
-		scn = NULL;
-	}
 }
 
 /**
@@ -385,12 +123,9 @@ void hif_sdio_close(struct hif_softc *hif_sc)
 QDF_STATUS hif_sdio_open(struct hif_softc *hif_sc,
 				   enum qdf_bus_type bus_type)
 {
-	QDF_STATUS status;
-
 	hif_sc->bus_type = bus_type;
-	status = init_ath_hif_sdio();
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 void hif_get_target_revision(struct hif_softc *ol_sc)
@@ -420,37 +155,17 @@ void hif_get_target_revision(struct hif_softc *ol_sc)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS hif_sdio_enable_bus(struct hif_softc *hif_sc,
-		struct device *dev, void *bdev, const struct hif_bus_id *bid,
-		enum hif_enable_type type)
+QDF_STATUS hif_sdio_enable_bus(struct hif_softc *ol_sc, struct device *dev,
+			       void *bdev, const struct hif_bus_id *bid,
+			       enum hif_enable_type type)
 {
 	int ret = 0;
 	const struct sdio_device_id *id = (const struct sdio_device_id *)bid;
-	struct hif_sdio_softc *sc = HIF_GET_SDIO_SOFTC(hif_sc);
 
-	init_waitqueue_head(&sync_wait_queue);
-	if (hif_sdio_device_inserted(dev, id)) {
+	if (hif_sdio_device_inserted(ol_sc, dev, id)) {
 		HIF_ERROR("wlan: %s hif_sdio_device_inserted failed", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	wait_event_interruptible_timeout(sync_wait_queue,
-			  atomic_read(&hif_sdio_load_state) == true,
-			  HIF_SDIO_LOAD_TIMEOUT);
-	hif_sc->hostdef = ol_sc->hostdef;
-	hif_sc->targetdef = ol_sc->targetdef;
-	hif_sc->bus_type = ol_sc->bus_type;
-	hif_sc->target_info.target_type = ol_sc->target_info.target_type;
-
-	sc->hif_handle = scn->hif_handle;
-	sc->aps_osdev.device = scn->aps_osdev.device;
-	sc->aps_osdev.bc.bc_bustype = scn->aps_osdev.bc.bc_bustype;
-	sc->target_lock = scn->target_lock;
-	sc->targetdef = scn->targetdef;
-	sc->hostdef = scn->hostdef;
-	sc->aps_osdev.bdev = scn->aps_osdev.bdev;
-	sc->ramdump_size = scn->ramdump_size;
-	sc->ramdump_base = scn->ramdump_base;
 
 	return ret;
 }
@@ -464,8 +179,7 @@ QDF_STATUS hif_sdio_enable_bus(struct hif_softc *hif_sc,
  */
 void hif_sdio_disable_bus(struct hif_softc *hif_sc)
 {
-	struct hif_sdio_softc *sc = HIF_GET_SDIO_SOFTC(hif_sc);
-	struct sdio_func *func = sc->aps_osdev.bdev;
+	struct sdio_func *func = dev_to_sdio_func(hif_sc->qdf_dev->dev);
 
 	hif_sdio_device_removed(func);
 }
@@ -485,8 +199,8 @@ QDF_STATUS hif_sdio_get_config_item(struct hif_softc *hif_sc,
 	struct hif_sdio_softc *sc = HIF_GET_SDIO_SOFTC(hif_sc);
 	struct hif_sdio_dev *hif_device = sc->hif_handle;
 
-	return hif_configure_device(hif_device,
-				opcode, config, config_len);
+	return hif_configure_device(hif_sc, hif_device, opcode,
+				    config, config_len);
 }
 
 /**

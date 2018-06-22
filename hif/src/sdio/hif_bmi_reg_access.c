@@ -43,14 +43,15 @@ static uint32_t *p_bmi_cmd_credits = &command_credits;
  * Return: QDF_STATUS_SUCCESS for success.
  */
 static QDF_STATUS
-hif_bmi_buffer_send(struct hif_sdio_dev *device, char *buffer, uint32_t length)
+hif_bmi_buffer_send(struct hif_sdio_softc *scn, struct hif_sdio_dev *device,
+		    char *buffer, uint32_t length)
 {
 	QDF_STATUS status;
 	uint32_t timeout;
 	uint32_t address;
 	uint32_t mbox_address[HTC_MAILBOX_NUM_MAX];
 
-	hif_configure_device(device, HIF_DEVICE_GET_FIFO_ADDR,
+	hif_configure_device(NULL, device, HIF_DEVICE_GET_FIFO_ADDR,
 			     &mbox_address[0], sizeof(mbox_address));
 
 	*p_bmi_cmd_credits = 0;
@@ -169,14 +170,14 @@ hif_bmi_buffer_receive(struct hif_sdio_dev *device,
 		 * function to get pending events
 		 * do this only once!
 		 */
-		hif_configure_device(device,
+		hif_configure_device(NULL, device,
 				     HIF_DEVICE_GET_PENDING_EVENTS_FUNC,
 				     &get_pending_events_func,
 				     sizeof(get_pending_events_func));
 		pending_events_func_check = true;
 	}
 
-	hif_configure_device(device, HIF_DEVICE_GET_FIFO_ADDR,
+	hif_configure_device(NULL, device, HIF_DEVICE_GET_FIFO_ADDR,
 			     &mbox_address[0], sizeof(mbox_address));
 
 	/*
@@ -302,7 +303,7 @@ hif_reg_based_get_target_info(struct hif_opaque_softc *hif_ctx,
 			("BMI Get Target Info: Enter (device: 0x%pK)\n",
 			device));
 	cid = BMI_GET_TARGET_INFO;
-	status = hif_bmi_buffer_send(device, (char *) &cid, sizeof(cid));
+	status = hif_bmi_buffer_send(scn, device, (char *)&cid, sizeof(cid));
 	if (status != QDF_STATUS_SUCCESS) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 				("%s:Unable to write to the device\n",
@@ -410,7 +411,7 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = hif_bmi_buffer_send(device, send_message, length);
+	status = hif_bmi_buffer_send(scn, device, send_message, length);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 				("%s:Unable to Send Message to device\n",
@@ -431,39 +432,6 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 	}
 
 	return status;
-}
-
-/**
- * hif_bmi_raw_write - API to handle bmi raw buffer
- * @device: hif context
- * @buffer: buffer
- * @length: length
- *
- * Return: QDF_STATUS_SUCCESS for success.
- */
-
-QDF_STATUS
-hif_bmi_raw_write(struct hif_sdio_dev *device, char *buffer,
-	      uint32_t length)
-{
-	return hif_bmi_buffer_send(device, buffer, length);
-}
-
-/**
- * hif_bmi_raw_read - call when bmi buffer is received
- * @device: hif context
- * @buffer: buffer
- * @length: length
- * @want_timeout: timeout is needed or not
- *
- * Return: QDF_STATUS_SUCCESS for success.
- */
-QDF_STATUS
-hif_bmi_raw_read(struct hif_sdio_dev *device, char *buffer,
-	     uint32_t length, bool want_timeout)
-{
-	return hif_bmi_buffer_receive(device, buffer, length,
-				  want_timeout);
 }
 
 #ifdef BRINGUP_DEBUG

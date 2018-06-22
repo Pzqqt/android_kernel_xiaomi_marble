@@ -66,6 +66,16 @@ unsigned int modstrength;
 module_param(modstrength, uint, 0644);
 MODULE_PARM_DESC(modstrength, "Adjust internal driver strength");
 
+unsigned int mmcbuswidth;
+/* PERM:S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH */
+module_param(mmcbuswidth, uint, 0644);
+MODULE_PARM_DESC(mmcbuswidth,
+		 "Set MMC driver Bus Width: 1-1Bit, 4-4Bit, 8-8Bit");
+
+unsigned int mmcclock;
+module_param(mmcclock, uint, 0644);
+MODULE_PARM_DESC(mmcclock, "Set MMC driver Clock value");
+
 #ifdef CONFIG_X86
 unsigned int asyncintdelay = 2;
 module_param(asyncintdelay, uint, 0644);
@@ -75,6 +85,11 @@ unsigned int asyncintdelay;
 module_param(asyncintdelay, uint, 0644);
 MODULE_PARM_DESC(asyncintdelay,	"Delay clock count for async interrupt, 0 is default, valid values are 1 and 2");
 #endif
+
+unsigned int brokenirq;
+module_param(brokenirq, uint, 0644);
+MODULE_PARM_DESC(brokenirq,
+		 "Set as 1 to use polling method instead of interrupt mode");
 
 /**
  * hif_sdio_force_drive_strength() - Set SDIO drive strength
@@ -346,4 +361,422 @@ int hif_sdio_quirk_async_intr(struct sdio_func *func)
 	}
 
 	return ret;
+}
+
+#if KERNEL_VERSION(3, 4, 0) <= LINUX_VERSION_CODE
+#ifdef SDIO_BUS_WIDTH_8BIT
+static int hif_cmd52_write_byte_8bit(struct sdio_func *func)
+{
+	return func0_cmd52_write_byte(func->card, SDIO_CCCR_IF,
+			SDIO_BUS_CD_DISABLE | SDIO_BUS_WIDTH_8BIT);
+}
+#else
+static int hif_cmd52_write_byte_8bit(struct sdio_func *func)
+{
+	HIF_ERROR("%s: 8BIT Bus Width not supported\n", __func__);
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+#endif
+
+/**
+ * hif_sdio_set_bus_speed() - Set the sdio bus speed
+ * @func: pointer to sdio_func
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+int hif_sdio_set_bus_speed(struct sdio_func *func)
+{
+	uint32_t clock, clock_set = 12500000;
+	struct hif_sdio_dev *device = get_hif_device(func);
+	uint16_t manfid;
+
+	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
+
+	if (manfid == MANUFACTURER_ID_QCN7605_BASE)
+		return 0;
+
+	if (mmcclock > 0)
+		clock_set = mmcclock;
+#if (KERNEL_VERSION(3, 16, 0) > LINUX_VERSION_CODE)
+	if (sdio_card_highspeed(func->card))
+#else
+		if (mmc_card_hs(func->card))
+#endif
+			clock = 50000000;
+		else
+			clock = func->card->cis.max_dtr;
+
+	if (clock > device->host->f_max)
+		clock = device->host->f_max;
+
+	HIF_INFO("%s: Clock setting: (%d,%d)\n", __func__,
+		 func->card->cis.max_dtr, device->host->f_max);
+
+	/* Limit clock if specified */
+	if (mmcclock > 0) {
+		HIF_INFO("%s: Limit clock from %d to %d\n",
+			 __func__, clock, clock_set);
+		device->host->ios.clock = clock_set;
+		device->host->ops->set_ios(device->host,
+				&device->host->ios);
+	}
+
+	return 0;
+}
+
+/**
+ * hif_set_bus_width() - Set the sdio bus width
+ * @func: pointer to sdio_func
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+int hif_sdio_set_bus_width(struct sdio_func *func)
+{
+	int ret = 0;
+	uint16_t manfid;
+	uint8_t data = 0;
+	struct hif_sdio_dev *device = get_hif_device(func);
+
+	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
+
+	if (manfid == MANUFACTURER_ID_QCN7605_BASE)
+		return ret;
+
+#if KERNEL_VERSION(3, 4, 0) <= LINUX_VERSION_CODE
+	if (mmcbuswidth == 0)
+		return ret;
+
+	/* Set MMC Bus Width: 1-1Bit, 4-4Bit, 8-8Bit */
+	if (mmcbuswidth == 1) {
+		data = SDIO_BUS_CD_DISABLE | SDIO_BUS_WIDTH_1BIT;
+		ret = func0_cmd52_write_byte(func->card,
+					     SDIO_CCCR_IF,
+					     data);
+		if (ret)
+			HIF_ERROR("%s: Bus Width 0x%x failed %d\n",
+				  __func__, data, ret);
+		device->host->ios.bus_width = MMC_BUS_WIDTH_1;
+		device->host->ops->set_ios(device->host,
+					   &device->host->ios);
+	} else if (mmcbuswidth == 4 &&
+		   (device->host->caps & MMC_CAP_4_BIT_DATA)) {
+		data = SDIO_BUS_CD_DISABLE | SDIO_BUS_WIDTH_4BIT;
+		ret = func0_cmd52_write_byte(func->card,
+					     SDIO_CCCR_IF,
+					     data);
+		if (ret)
+			HIF_ERROR("%s: Bus Width 0x%x failed: %d\n",
+				  __func__, data, ret);
+		device->host->ios.bus_width = MMC_BUS_WIDTH_4;
+		device->host->ops->set_ios(device->host,
+				&device->host->ios);
+	} else if (mmcbuswidth == 8 &&
+		   (device->host->caps & MMC_CAP_8_BIT_DATA)) {
+		ret = hif_cmd52_write_byte_8bit(func);
+		if (ret)
+			HIF_ERROR("%s: Bus Width 8 failed: %d\n",
+				  __func__, ret);
+		device->host->ios.bus_width = MMC_BUS_WIDTH_8;
+		device->host->ops->set_ios(device->host,
+				&device->host->ios);
+	} else {
+		HIF_ERROR("%s: Unsupported bus width %d",
+			  __func__, mmcbuswidth);
+		ret = QDF_STATUS_E_FAILURE;
+	}
+
+	HIF_INFO("%s: Bus with : %d\n",  __func__, mmcbuswidth);
+#endif
+	return ret;
+}
+
+/**
+ * hif_sdio_func_enable() - Handle device enabling as per device
+ * @device: HIF device object
+ * @func: function pointer
+ *
+ * Return success or failure
+ */
+int hif_sdio_func_enable(struct hif_sdio_dev *device,
+			 struct sdio_func *func)
+{
+	uint16_t manfid;
+
+	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
+
+	if (manfid == MANUFACTURER_ID_QCN7605_BASE)
+		return 0;
+
+	if (device->is_disabled) {
+		int ret = 0;
+
+		sdio_claim_host(func);
+
+		ret = hif_sdio_quirk_async_intr(func);
+		if (ret) {
+			HIF_ERROR("%s: Error setting async intr:%d",
+				  __func__, ret);
+			sdio_release_host(func);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		func->enable_timeout = 100;
+		ret = sdio_enable_func(func);
+		if (ret) {
+			HIF_ERROR("%s: Unable to enable function: %d",
+				  __func__, ret);
+			sdio_release_host(func);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		ret = sdio_set_block_size(func, HIF_BLOCK_SIZE);
+		if (ret) {
+			HIF_ERROR("%s: Unable to set block size 0x%X : %d\n",
+				  __func__, HIF_BLOCK_SIZE, ret);
+			sdio_release_host(func);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		ret = hif_sdio_quirk_mod_strength(func);
+		if (ret) {
+			HIF_ERROR("%s: Error setting mod strength : %d\n",
+				  __func__, ret);
+			sdio_release_host(func);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		sdio_release_host(func);
+	}
+
+	return 0;
+}
+
+/**
+ * hif_mask_interrupt() - Disable hif device irq
+ * @device: pointer to struct hif_sdio_dev
+ *
+ *
+ * Return: None.
+ */
+void hif_mask_interrupt(struct hif_sdio_dev *device)
+{
+	int ret;
+	uint16_t manfid;
+
+	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
+
+	if (manfid == MANUFACTURER_ID_QCN7605_BASE)
+		return;
+
+	HIF_ENTER();
+
+	/* Mask our function IRQ */
+	sdio_claim_host(device->func);
+	while (atomic_read(&device->irq_handling)) {
+		sdio_release_host(device->func);
+		schedule_timeout_interruptible(HZ / 10);
+		sdio_claim_host(device->func);
+	}
+	ret = sdio_release_irq(device->func);
+	sdio_release_host(device->func);
+	if (ret)
+		HIF_ERROR("%s: Failed %d\n", __func__, ret);
+
+	HIF_EXIT();
+}
+
+/**
+ * hif_irq_handler() - hif-sdio interrupt handler
+ * @func: pointer to sdio_func
+ *
+ * Return: None.
+ */
+static void hif_irq_handler(struct sdio_func *func)
+{
+	struct hif_sdio_dev *device;
+
+	HIF_ENTER();
+
+	device = get_hif_device(func);
+	atomic_set(&device->irq_handling, 1);
+	/* release the host during intr so we can use
+	 * it when we process cmds
+	 */
+	sdio_release_host(device->func);
+	device->htc_callbacks.dsr_handler(device->htc_callbacks.context);
+	sdio_claim_host(device->func);
+	atomic_set(&device->irq_handling, 0);
+
+	HIF_EXIT();
+}
+
+/**
+ * hif_un_mask_interrupt() - Re-enable hif device irq
+ * @device: pointer to struct hif_sdio_dev
+ *
+ *
+ * Return: None.
+ */
+void hif_un_mask_interrupt(struct hif_sdio_dev *device)
+{
+	int ret;
+	uint16_t manfid;
+
+	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
+
+	if (manfid == MANUFACTURER_ID_QCN7605_BASE)
+		return;
+
+	HIF_ENTER();
+	/*
+	 * On HP Elitebook 8460P, interrupt mode is not stable
+	 * in high throughput, so polling method should be used
+	 * instead of interrupt mode.
+	 */
+	if (brokenirq) {
+		HIF_INFO("%s: Using broken IRQ mode", __func__);
+		device->func->card->host->caps &= ~MMC_CAP_SDIO_IRQ;
+	}
+	/* Register the IRQ Handler */
+	sdio_claim_host(device->func);
+	ret = sdio_claim_irq(device->func, hif_irq_handler);
+	sdio_release_host(device->func);
+
+	HIF_EXIT();
+}
+
+/**
+ * hif_sdio_func_disable() - Handle device enabling as per device
+ * @device: HIF device object
+ * @func: function pointer
+ *
+ * Return success or failure
+ */
+QDF_STATUS hif_sdio_func_disable(struct hif_sdio_dev *device,
+				 struct sdio_func *func,
+				 bool reset)
+{
+	int ret = 0;
+	uint16_t manfid;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
+
+	if (manfid == MANUFACTURER_ID_QCN7605_BASE)
+		return 0;
+
+	/* Disable the card */
+	sdio_claim_host(device->func);
+
+	ret = sdio_disable_func(device->func);
+	if (ret)
+		status = QDF_STATUS_E_FAILURE;
+
+	if (reset && status == QDF_STATUS_SUCCESS)
+		ret = func0_cmd52_write_byte(device->func->card,
+					     SDIO_CCCR_ABORT,
+					     (1 << 3));
+
+	if (ret) {
+		status = QDF_STATUS_E_FAILURE;
+		HIF_ERROR("%s: reset failed : %d", __func__, ret);
+	}
+
+	sdio_release_host(device->func);
+
+	return status;
+}
+
+/**
+ * reinit_sdio() - re-initialize sdio bus
+ * @device: pointer to hif device
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+QDF_STATUS reinit_sdio(struct hif_sdio_dev *device)
+{
+	int32_t err = 0;
+	struct mmc_host *host;
+	struct mmc_card *card;
+	struct sdio_func *func;
+	uint8_t  cmd52_resp;
+	uint32_t clock;
+	uint16_t manfid;
+
+	func = device->func;
+	card = func->card;
+	host = card->host;
+
+	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
+
+	if (manfid == MANUFACTURER_ID_QCN7605_BASE)
+		return 0;
+
+	sdio_claim_host(func);
+
+	do {
+		/* Enable high speed */
+		if (card->host->caps & MMC_CAP_SD_HIGHSPEED) {
+			HIF_INFO_HI("%s: Set high speed mode", __func__);
+			err = func0_cmd52_read_byte(card, SDIO_CCCR_SPEED,
+						    &cmd52_resp);
+			if (err) {
+				HIF_ERROR("%s: CCCR speed set failed  : %d",
+					  __func__, err);
+				sdio_card_state(card);
+				/* no need to break */
+			} else {
+				err = func0_cmd52_write_byte(card,
+							     SDIO_CCCR_SPEED,
+							     (cmd52_resp |
+							      SDIO_SPEED_EHS));
+				if (err) {
+					HIF_ERROR("%s:CCCR speed set failed:%d",
+						  __func__, err);
+					break;
+				}
+				sdio_card_set_highspeed(card);
+				host->ios.timing = MMC_TIMING_SD_HS;
+				host->ops->set_ios(host, &host->ios);
+			}
+		}
+
+		/* Set clock */
+		if (sdio_card_highspeed(card))
+			clock = 50000000;
+		else
+			clock = card->cis.max_dtr;
+
+		if (clock > host->f_max)
+			clock = host->f_max;
+		/*
+		 * In fpga mode the clk should be set to 12500000,
+		 * or will result in scan channel setting timeout error.
+		 * So in fpga mode, please set module parameter mmcclock
+		 * to 12500000.
+		 */
+		if (mmcclock > 0)
+			clock = mmcclock;
+		host->ios.clock = clock;
+		host->ops->set_ios(host, &host->ios);
+
+		if (card->host->caps & MMC_CAP_4_BIT_DATA) {
+			/* Set bus width & disable card detect resistor */
+			err = func0_cmd52_write_byte(card, SDIO_CCCR_IF,
+						     SDIO_BUS_CD_DISABLE |
+						     SDIO_BUS_WIDTH_4BIT);
+			if (err) {
+				HIF_ERROR("%s: Set bus mode failed : %d",
+					  __func__, err);
+				break;
+			}
+			host->ios.bus_width = MMC_BUS_WIDTH_4;
+			host->ops->set_ios(host, &host->ios);
+		}
+	} while (0);
+
+	sdio_release_host(func);
+
+	return (err) ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
 }

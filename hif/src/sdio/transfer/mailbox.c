@@ -277,7 +277,7 @@ int hif_dev_setup_device(struct hif_sdio_device *pdev)
 	int status = 0;
 	uint32_t blocksizes[MAILBOX_COUNT];
 
-	status = hif_configure_device(pdev->HIFDevice,
+	status = hif_configure_device(NULL, pdev->HIFDevice,
 				      HIF_DEVICE_GET_FIFO_ADDR,
 				      &pdev->MailBoxInfo,
 				      sizeof(pdev->MailBoxInfo));
@@ -285,7 +285,7 @@ int hif_dev_setup_device(struct hif_sdio_device *pdev)
 	if (status != QDF_STATUS_SUCCESS)
 		HIF_ERROR("%s: HIF_DEVICE_GET_MBOX_ADDR failed", __func__);
 
-	status = hif_configure_device(pdev->HIFDevice,
+	status = hif_configure_device(NULL, pdev->HIFDevice,
 				      HIF_DEVICE_GET_BLOCK_SIZE,
 				      blocksizes, sizeof(blocksizes));
 	if (status != QDF_STATUS_SUCCESS)
@@ -519,7 +519,7 @@ void hif_fixup_write_param(struct hif_sdio_dev *pdev, uint32_t req,
 	struct hif_device_mbox_info mboxinfo;
 	uint32_t taddr = *addr, mboxlen = 0;
 
-	hif_configure_device(pdev, HIF_DEVICE_GET_FIFO_ADDR,
+	hif_configure_device(NULL, pdev, HIF_DEVICE_GET_FIFO_ADDR,
 			     &mboxinfo, sizeof(mboxinfo));
 
 	if (taddr >= 0x800 && taddr < 0xC00) {
@@ -1319,5 +1319,35 @@ QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 			 *done, *async_processing, status));
 
 	return status;
+}
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 15, 0)) && \
+		 !defined(WITH_BACKPORTS)
+/**
+ * hif_sdio_set_drvdata() - set wlan driver data into upper layer private
+ * @func: pointer to sdio function
+ * @hifdevice: pointer to hif device
+ *
+ * Return: non zero for success.
+ */
+int hif_sdio_set_drvdata(struct sdio_func *func,
+			 struct hif_sdio_dev *hifdevice)
+{
+	return sdio_set_drvdata(func, hifdevice);
+}
+#else
+int hif_sdio_set_drvdata(struct sdio_func *func,
+			 struct hif_sdio_dev *hifdevice)
+{
+	sdio_set_drvdata(func, hifdevice);
+	return 0;
+}
+#endif /* LINUX VERSION */
+
+struct hif_sdio_dev *get_hif_device(struct sdio_func *func)
+{
+	qdf_assert(func != NULL);
+
+	return (struct hif_sdio_dev *)sdio_get_drvdata(func);
 }
 #endif /* CONFIG_SDIO_TRANSFER_MAILBOX */
