@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,56 +38,58 @@
 uint8_t rrm_get_min_of_max_tx_power(tpAniSirGlobal pMac, int8_t regMax,
 				    int8_t apTxPower);
 
-extern tSirRetStatus rrm_initialize(tpAniSirGlobal pMac);
+QDF_STATUS rrm_initialize(tpAniSirGlobal pMac);
 
-extern tSirRetStatus rrm_cleanup(tpAniSirGlobal pMac);
+QDF_STATUS rrm_cleanup(tpAniSirGlobal pMac);
 
-extern tSirRetStatus rrm_process_link_measurement_request(tpAniSirGlobal pMac,
-							  uint8_t *pRxPacketInfo,
-							  tDot11fLinkMeasurementRequest
+QDF_STATUS rrm_process_link_measurement_request(tpAniSirGlobal pMac,
+						uint8_t *pRxPacketInfo,
+						tDot11fLinkMeasurementRequest
 							  *pLinkReq,
-							  tpPESession
+						tpPESession
 							  pSessionEntry);
 
-extern tSirRetStatus rrm_process_radio_measurement_request(tpAniSirGlobal pMac,
-							   tSirMacAddr peer,
-							   tDot11fRadioMeasurementRequest
+QDF_STATUS rrm_process_radio_measurement_request(tpAniSirGlobal pMac,
+						 tSirMacAddr peer,
+						 tDot11fRadioMeasurementRequest
 							   *pRRMReq,
-							   tpPESession
+						 tpPESession
 							   pSessionEntry);
 
-extern tSirRetStatus rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
-							  tDot11fNeighborReportResponse
+QDF_STATUS rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
+						tDot11fNeighborReportResponse
 							  *pNeighborRep,
-							  tpPESession
+						tpPESession
 							  pSessionEntry);
 
-extern tSirRetStatus rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac,
-						   int8_t txPower,
-						   tpPESession pSessionEntry);
+QDF_STATUS rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac,
+					 int8_t txPower,
+					 tpPESession pSessionEntry);
 
-extern int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal pMac,
-				       tpPESession pSessionEntry);
+int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal pMac,
+			     tpPESession pSessionEntry);
 
-extern void rrm_cache_mgmt_tx_power(tpAniSirGlobal pMac,
-				    int8_t txPower, tpPESession pSessionEntry);
+void rrm_cache_mgmt_tx_power(tpAniSirGlobal pMac,
+			     int8_t txPower, tpPESession pSessionEntry);
 
-extern tpRRMCaps rrm_get_capabilities(tpAniSirGlobal pMac,
-				      tpPESession pSessionEntry);
+tpRRMCaps rrm_get_capabilities(tpAniSirGlobal pMac,
+			       tpPESession pSessionEntry);
 
-extern void rrm_get_start_tsf(tpAniSirGlobal pMac, uint32_t *pStartTSF);
+void rrm_get_start_tsf(tpAniSirGlobal pMac, uint32_t *pStartTSF);
 
-extern void rrm_update_start_tsf(tpAniSirGlobal pMac, uint32_t startTSF[2]);
+void rrm_update_start_tsf(tpAniSirGlobal pMac, uint32_t startTSF[2]);
 
-extern tSirRetStatus rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac,
-					      struct scheduler_msg *limMsgQ);
+QDF_STATUS rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac,
+				    struct scheduler_msg *limMsgQ);
 
-extern tSirRetStatus
+QDF_STATUS
 rrm_process_neighbor_report_req(tpAniSirGlobal pMac,
 				tpSirNeighborReportReqInd pNeighborReq);
-extern tSirRetStatus
+
+QDF_STATUS
 rrm_process_beacon_report_xmit(tpAniSirGlobal pMac,
 			       tpSirBeaconReportXmitInd pBcnReport);
-extern void lim_update_rrm_capability(tpAniSirGlobal mac_ctx,
-				      tpSirSmeJoinReq join_req);
+
+void lim_update_rrm_capability(tpAniSirGlobal mac_ctx,
+			       tpSirSmeJoinReq join_req);
 #endif
