@@ -443,7 +443,7 @@ int wsa_macro_set_spkr_mode(struct snd_soc_codec *codec, int mode)
 		return -EINVAL;
 
 	switch (mode) {
-	case SPKR_MODE_1:
+	case WSA_MACRO_SPKR_MODE_1:
 		regs = wsa_macro_spkr_mode1;
 		size = ARRAY_SIZE(wsa_macro_spkr_mode1);
 		break;
@@ -1168,7 +1168,8 @@ static int wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMU:
 		wsa_macro_config_compander(codec, w->shift, event);
 		/* apply gain after int clk is enabled */
-		if ((wsa_priv->spkr_gain_offset == RX_GAIN_OFFSET_M1P5_DB) &&
+		if ((wsa_priv->spkr_gain_offset ==
+			WSA_MACRO_GAIN_OFFSET_M1P5_DB) &&
 		    (wsa_priv->comp_enabled[WSA_MACRO_COMP1] ||
 		     wsa_priv->comp_enabled[WSA_MACRO_COMP2]) &&
 		    (gain_reg == BOLERO_CDC_WSA_RX0_RX_VOL_CTL ||
@@ -1194,7 +1195,8 @@ static int wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMD:
 		wsa_macro_config_compander(codec, w->shift, event);
 		wsa_macro_enable_prim_interpolator(codec, reg, event);
-		if ((wsa_priv->spkr_gain_offset == RX_GAIN_OFFSET_M1P5_DB) &&
+		if ((wsa_priv->spkr_gain_offset ==
+			WSA_MACRO_GAIN_OFFSET_M1P5_DB) &&
 		    (wsa_priv->comp_enabled[WSA_MACRO_COMP1] ||
 		     wsa_priv->comp_enabled[WSA_MACRO_COMP2]) &&
 		    (gain_reg == BOLERO_CDC_WSA_RX0_RX_VOL_CTL ||
@@ -1229,8 +1231,8 @@ static int wsa_macro_config_ear_spkr_gain(struct snd_soc_codec *codec,
 	int comp_gain_offset, val;
 
 	switch (wsa_priv->spkr_mode) {
-	/* Compander gain in SPKR_MODE1 case is 12 dB */
-	case SPKR_MODE_1:
+	/* Compander gain in WSA_MACRO_SPKR_MODE1 case is 12 dB */
+	case WSA_MACRO_SPKR_MODE_1:
 		comp_gain_offset = -12;
 		break;
 	/* Default case compander gain is 15 dB */
@@ -1938,7 +1940,7 @@ static int wsa_macro_init(struct snd_soc_codec *codec)
 	}
 
 	wsa_priv->codec = codec;
-	wsa_priv->spkr_gain_offset = RX_GAIN_OFFSET_0_DB;
+	wsa_priv->spkr_gain_offset = WSA_MACRO_GAIN_OFFSET_0_DB;
 	wsa_macro_init_reg(codec);
 
 	return 0;
@@ -1975,7 +1977,7 @@ static void wsa_macro_add_child_devices(struct work_struct *work)
 			__func__);
 		return;
 	}
-	if (!!wsa_priv->dev || !wsa_priv->dev->of_node) {
+	if (!wsa_priv->dev || !wsa_priv->dev->of_node) {
 		dev_err(wsa_priv->dev,
 			"%s: DT node for wsa_priv does not exist\n", __func__);
 		return;

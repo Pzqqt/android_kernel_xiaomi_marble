@@ -49,6 +49,9 @@ struct device *bolero_get_device_ptr(struct device *dev, u16 macro_id);
 int bolero_request_clock(struct device *dev, u16 macro_id,
 			 enum mclk_mux mclk_mux_id,
 			 bool enable);
+int bolero_info_create_codec_entry(
+		struct snd_info_entry *codec_root,
+		struct snd_soc_codec *codec);
 #else
 static inline int bolero_register_macro(struct device *dev,
 					u16 macro_id,
@@ -66,9 +69,17 @@ static inline struct device *bolero_get_device_ptr(struct device *dev,
 {
 	return NULL;
 }
+
 static inline int bolero_request_clock(struct device *dev, u16 macro_id,
 				       enum mclk_mux mclk_mux_id,
 				       bool enable)
+{
+	return 0;
+}
+
+static int bolero_info_create_codec_entry(
+		struct snd_info_entry *codec_root,
+		struct snd_soc_codec *codec)
 {
 	return 0;
 }

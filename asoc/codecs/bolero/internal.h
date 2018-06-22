@@ -37,6 +37,11 @@ struct bolero_priv {
 	u16 child_num;
 	u16 current_mclk_mux_macro[MAX_MACRO];
 	struct work_struct bolero_add_child_devices_work;
+	u32 version;
+
+	/* Entry for version info */
+	struct snd_info_entry *entry;
+	struct snd_info_entry *version_entry;
 
 	int (*read_dev)(struct bolero_priv *priv,
 			u16 macro_id, u16 reg, u8 *val);

@@ -17,14 +17,14 @@
  * for a given speaker mode
  */
 enum {
-	SPKR_MODE_DEFAULT,
-	SPKR_MODE_1,          /* COMP Gain = 12dB, Smartboost Max = 5.5V */
+	WSA_MACRO_SPKR_MODE_DEFAULT,
+	WSA_MACRO_SPKR_MODE_1, /* COMP Gain = 12dB, Smartboost Max = 5.5V */
 };
 
 /* Rx path gain offsets */
 enum {
-	RX_GAIN_OFFSET_M1P5_DB,
-	RX_GAIN_OFFSET_0_DB,
+	WSA_MACRO_GAIN_OFFSET_M1P5_DB,
+	WSA_MACRO_GAIN_OFFSET_0_DB,
 };
 
 
