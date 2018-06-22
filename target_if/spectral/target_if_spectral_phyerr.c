@@ -1251,19 +1251,18 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
  *
  * Consume spectral summary report for gen3
  *
- * Return: rssi
+ * Return: void
  */
-static int
+static void
 target_if_consume_sscan_report_gen3(struct target_if_spectral *spectral,
-				    uint8_t *data) {
-	int rssi;
+				    uint8_t *data,
+				    struct sscan_report_fields_gen3 *fields) {
 	struct spectral_sscan_report_gen3 *psscan_report;
 
 	psscan_report = (struct spectral_sscan_report_gen3 *)data;
-	/* RSSI is in 1/2 dBm steps, Covert it to dBm scale */
-	rssi = (get_bitfield(psscan_report->hdr_a, 10, 18)) >> 1;
-
-	return rssi;
+	fields->sscan_agc_total_gain = get_bitfield(psscan_report->hdr_a, 8, 0);
+	fields->inband_pwr_db = get_bitfield(psscan_report->hdr_a, 10, 18);
+	fields->sscan_gainchange = get_bitfield(psscan_report->hdr_b, 1, 30);
 }
 
 /**
@@ -1375,6 +1374,7 @@ target_if_consume_spectral_report_gen3(
 	uint8_t *data = report->data;
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t vdev_rxchainmask;
+	struct sscan_report_fields_gen3 sscan_report_fields;
 
 	OS_MEMZERO(&params, sizeof(params));
 
@@ -1382,7 +1382,12 @@ target_if_consume_spectral_report_gen3(
 			spectral, data,
 			TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3) != 0)
 		goto fail;
-	rssi = target_if_consume_sscan_report_gen3(spectral, data);
+	target_if_consume_sscan_report_gen3(spectral, data,
+					    &sscan_report_fields);
+	/* RSSI is in 1/2 dBm steps, Covert it to dBm scale */
+	rssi = (sscan_report_fields.inband_pwr_db) >> 1;
+	params.agc_total_gain = sscan_report_fields.sscan_agc_total_gain;
+	params.gainchange = sscan_report_fields.sscan_gainchange;
 	/* Advance buf pointer to the search fft report */
 	data += sizeof(struct spectral_sscan_report_gen3);
 
@@ -1502,7 +1507,13 @@ target_if_consume_spectral_report_gen3(
 				spectral, data,
 				TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3) != 0)
 			goto fail;
-		rssi = target_if_consume_sscan_report_gen3(spectral, data);
+		 target_if_consume_sscan_report_gen3(spectral, data,
+						     &sscan_report_fields);
+		/* RSSI is in 1/2 dBm steps, Covert it to dBm scale */
+		rssi = (sscan_report_fields.inband_pwr_db) >> 1;
+		params.agc_total_gain_sec80 =
+			sscan_report_fields.sscan_agc_total_gain;
+		params.gainchange_sec80 = sscan_report_fields.sscan_gainchange;
 		/* Advance buf pointer to the search fft report */
 		data += sizeof(struct spectral_sscan_report_gen3);
 

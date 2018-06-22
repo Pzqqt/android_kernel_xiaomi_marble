@@ -440,6 +440,10 @@ struct spectral_samp_data {
 	int16_t noise_floor;
 	int16_t noise_floor_sec80;
 	uint32_t ch_width;
+	uint8_t spectral_agc_total_gain;
+	uint8_t spectral_agc_total_gain_sec80;
+	uint8_t spectral_gainchange;
+	uint8_t spectral_gainchange_sec80;
 } __ATTRIB_PACKED;
 
 /**

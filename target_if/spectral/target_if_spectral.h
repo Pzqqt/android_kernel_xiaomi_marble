@@ -289,6 +289,20 @@ struct spectral_phyerr_fft_report_gen3 {
 } __ATTRIB_PACK;
 
 /**
+ * struct sscan_report_fields_gen3 - Fields of spectral report
+ * @sscan_agc_total_gain:  The AGC total gain in DB.
+ * @inband_pwr_db: The in-band power of the signal in 1/2 DB steps
+ * @sscan_gainchange: This bit is set to 1 if a gainchange occurred during
+ *                 the spectral scan FFT.  Software may choose to
+ *                 disregard the results.
+ */
+struct sscan_report_fields_gen3 {
+	uint8_t sscan_agc_total_gain;
+	int16_t inband_pwr_db;
+	uint8_t sscan_gainchange;
+};
+
+/**
  * struct spectral_sscan_report_gen3 - spectral report in phyerr event
  * @sscan_timestamp:  Timestamp at which fft report was generated
  * @sscan_hdr_sig:    signature
@@ -888,6 +902,10 @@ struct target_if_samp_msg_params {
 	struct interf_src_rsp interf_list;
 	struct spectral_classifier_params classifier_params;
 	struct ath_softc *sc;
+	uint8_t agc_total_gain;
+	uint8_t agc_total_gain_sec80;
+	uint8_t gainchange;
+	uint8_t gainchange_sec80;
 };
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
