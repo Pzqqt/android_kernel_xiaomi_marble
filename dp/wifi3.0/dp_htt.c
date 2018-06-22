@@ -2578,6 +2578,9 @@ static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 	struct ppdu_info *ppdu_info = NULL;
 	bool free_buf = true;
 
+	if (!pdev)
+		return true;
+
 	if (!pdev->enhanced_stats_en && !pdev->tx_sniffer_enable &&
 			!pdev->mcopy_mode)
 		return free_buf;
