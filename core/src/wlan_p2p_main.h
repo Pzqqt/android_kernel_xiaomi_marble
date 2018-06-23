@@ -35,21 +35,16 @@
 #define P2P_MODULE_NAME  "P2P"
 #define P2P_INVALID_VDEV_ID 0xFFFFFFFF
 
-#define p2p_log(level, args...) \
-	QDF_TRACE(QDF_MODULE_ID_P2P, level, ## args)
-#define p2p_logl(level, format, args...) \
-	p2p_log(level, FL(format), ## args)
-
-#define p2p_debug(format, args ...) \
-	p2p_logl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
-#define p2p_info(format, args ...) \
-	p2p_logl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define p2p_warn(format, args ...) \
-	p2p_logl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define p2p_err(format, args ...) \
-	p2p_logl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define p2p_alert(format, args ...) \
-	p2p_logl(QDF_TRACE_LEVEL_FATAL, format, ## args)
+#define p2p_debug(params ...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_P2P, params)
+#define p2p_info(params ...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_P2P, params)
+#define p2p_warn(params ...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_P2P, params)
+#define p2p_err(params ...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_P2P, params)
+#define p2p_alert(params ...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_P2P, params)
 
 struct scheduler_msg;
 struct p2p_tx_cnf;
