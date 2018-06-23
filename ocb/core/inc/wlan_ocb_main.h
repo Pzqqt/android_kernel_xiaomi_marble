@@ -35,22 +35,18 @@
 #define ocb_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_OCB, params)
 #define ocb_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_OCB, params)
 
-#define ocb_log(level, args...) \
-		QDF_TRACE(QDF_MODULE_ID_OCB, level, ## args)
-#define ocb_logfl(level, format, args...) \
-		ocb_log(level, FL(format), ## args)
-#define ocb_alert(format, args...) \
-		ocb_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define ocb_err(format, args...) \
-		ocb_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define ocb_warn(format, args...) \
-		ocb_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define ocb_notice(format, args...) \
-		ocb_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define ocb_info(format, args...) \
-		ocb_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
-#define ocb_debug(format, args...) \
-		ocb_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define ocb_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_OCB, params)
+#define ocb_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_OCB, params)
+#define ocb_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_OCB, params)
+#define ocb_notice(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_OCB, params)
+#define ocb_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_OCB, params)
+#define ocb_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_OCB, params)
 
 /**
  * enum ocb_southbound_event - OCB south bound event type
