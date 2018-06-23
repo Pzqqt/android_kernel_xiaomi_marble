@@ -1065,7 +1065,10 @@ int adm_get_pp_params(int port_id, int copp_idx, uint32_t client_id,
 				NULL, &total_size);
 
 	/* Pack APR header after filling body so total_size has correct value */
-	adm_get_params.apr_hdr.pkt_size = total_size;
+	adm_get_params.apr_hdr.hdr_field =
+		APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD, APR_HDR_LEN(APR_HDR_SIZE),
+			      APR_PKT_VER);
+	adm_get_params.apr_hdr.pkt_size = sizeof(adm_get_params);
 	adm_get_params.apr_hdr.src_svc = APR_SVC_ADM;
 	adm_get_params.apr_hdr.src_domain = APR_DOMAIN_APPS;
 	adm_get_params.apr_hdr.src_port = port_id;
@@ -1083,6 +1086,7 @@ int adm_get_pp_params(int port_id, int copp_idx, uint32_t client_id,
 
 	copp_stat = &this_adm.copp.stat[port_idx][copp_idx];
 	atomic_set(copp_stat, -1);
+
 	ret = apr_send_pkt(this_adm.apr, (uint32_t *) &adm_get_params);
 	if (ret < 0) {
 		pr_err("%s: Get params APR send failed port = 0x%x ret %d\n",
@@ -1377,6 +1381,8 @@ static int adm_process_get_param_response(u32 opcode, u32 idx, u32 *payload,
 	if ((payload_size >= struct_size + data_size) &&
 	    (ARRAY_SIZE(adm_get_parameters) > idx) &&
 	    (ARRAY_SIZE(adm_get_parameters) >= idx + 1 + data_size)) {
+		pr_debug("%s: Received parameter data in band\n",
+					__func__);
 		/*
 		 * data_size is expressed in number of bytes, store in number of
 		 * ints
@@ -1387,12 +1393,16 @@ static int adm_process_get_param_response(u32 opcode, u32 idx, u32 *payload,
 			 __func__, adm_get_parameters[idx]);
 		/* store params after param_size */
 		memcpy(&adm_get_parameters[idx + 1], param_data, data_size);
-		return 0;
+	} else if (payload_size == sizeof(uint32_t)) {
+		adm_get_parameters[idx] = -1;
+		pr_debug("%s: Out of band case, setting size to %d\n",
+			 __func__, adm_get_parameters[idx]);
+	} else {
+		pr_err("%s: Invalid parameter combination, payload_size %d, idx %d\n",
+		       __func__, payload_size, idx);
+		return -EINVAL;
 	}
-
-	pr_err("%s: Invalid parameter combination, payload_size %d, idx %d\n",
-	       __func__, payload_size, idx);
-	return -EINVAL;
+	return 0;
 }
 
 static int adm_process_get_topo_list_response(u32 opcode, int copp_idx,
@@ -1704,18 +1714,12 @@ static int32_t adm_callback(struct apr_client_data *data, void *priv)
 
 			idx = ADM_GET_PARAMETER_LENGTH * copp_idx;
 			if (payload[0] == 0 && data->payload_size > 0) {
-				pr_debug("%s: Received parameter data in band\n",
-					__func__);
 				ret = adm_process_get_param_response(
 					data->opcode, idx, payload,
 					data->payload_size);
 				if (ret)
 					pr_err("%s: Failed to process get param response, error %d\n",
 					       __func__, ret);
-			} else if (payload[0] == 0 && data->payload_size == 0) {
-				adm_get_parameters[idx] = -1;
-				pr_debug("%s: Out of band case, setting size to %d\n",
-					__func__, adm_get_parameters[idx]);
 			} else {
 				adm_get_parameters[idx] = -1;
 				pr_err("%s: ADM_CMDRSP_GET_PP_PARAMS returned error 0x%x\n",
