@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,24 +32,19 @@
 #define WLAN_SERIALIZATION_MAX_ACTIVE_CMDS 1
 #define WLAN_SERIALIZATION_MAX_ACTIVE_SCAN_CMDS 8
 
-#define serialization_log(level, args...) \
-	QDF_TRACE(QDF_MODULE_ID_SERIALIZATION, level, ## args)
-#define serialization_logfl(level, format, args...) \
-	serialization_log(level, FL(format), ## args)
+#define serialization_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_SERIALIZATION, params)
+#define serialization_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_SERIALIZATION, params)
+#define serialization_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_SERIALIZATION, params)
+#define serialization_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_SERIALIZATION, params)
+#define serialization_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_SERIALIZATION, params)
 
-#define serialization_alert(format, args...) \
-	serialization_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define serialization_err(format, args...) \
-	serialization_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define serialization_warn(format, args...) \
-	serialization_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define serialization_info(format, args...) \
-	serialization_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define serialization_debug(format, args...) \
-	serialization_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
-#define serialization_enter() \
-	serialization_logfl(QDF_TRACE_LEVEL_DEBUG, "enter")
-#define serialization_exit() serialization_logfl(QDF_TRACE_LEVEL_DEBUG, "exit")
+#define serialization_enter() serialization_debug("enter")
+#define serialization_exit() serialization_debug("exit")
 
 /**
  * struct serialization_legacy_callback - to handle legacy serialization cb

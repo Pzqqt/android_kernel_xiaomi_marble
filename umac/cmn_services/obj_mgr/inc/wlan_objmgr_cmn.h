@@ -40,27 +40,21 @@
 
 #define obj_mgr_log(level, args...) \
 		QDF_TRACE(QDF_MODULE_ID_OBJ_MGR, level, ## args)
-
 #define obj_mgr_logfl(level, format, args...) \
 		obj_mgr_log(level, FL(format), ## args)
-
-#define obj_mgr_alert(format, args...) \
-		obj_mgr_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-
-#define obj_mgr_err(format, args...) \
-		obj_mgr_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-
-#define obj_mgr_warn(format, args...) \
-		obj_mgr_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-
-#define obj_mgr_info(format, args...) \
-		obj_mgr_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-
-#define obj_mgr_debug(format, args...) \
-		obj_mgr_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
-
 #define obj_mgr_log_level(level, format, args...)\
 		obj_mgr_logfl(level, format, ## args)
+
+#define obj_mgr_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_OBJ_MGR, params)
+#define obj_mgr_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_OBJ_MGR, params)
+#define obj_mgr_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_OBJ_MGR, params)
+#define obj_mgr_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_OBJ_MGR, params)
+#define obj_mgr_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_OBJ_MGR, params)
 
 /**
  * enum WLAN_OBJ_STATE - State of Object

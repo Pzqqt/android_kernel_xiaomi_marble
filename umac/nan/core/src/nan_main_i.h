@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,23 +33,18 @@ struct wlan_objmgr_vdev;
 struct wlan_objmgr_psoc;
 struct scheduler_msg;
 
-#define nan_log(level, args...) \
-	QDF_TRACE(QDF_MODULE_ID_NAN, level, ## args)
-#define nan_logfl(level, format, args...) \
-	nan_log(level, FL(format), ## args)
-
-#define nan_alert(format, args...) \
-	nan_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define nan_err(format, args...) \
-	nan_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define nan_warn(format, args...) \
-	nan_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define nan_notice(format, args...) \
-	nan_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define nan_info(format, args...) \
-	nan_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
-#define nan_debug(format, args...) \
-	nan_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define nan_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_NAN, params)
+#define nan_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_NAN, params)
+#define nan_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_NAN, params)
+#define nan_notice(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_NAN, params)
+#define nan_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_NAN, params)
+#define nan_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_NAN, params)
 
 #ifndef MAX_PEERS
 #define MAX_PEERS 32

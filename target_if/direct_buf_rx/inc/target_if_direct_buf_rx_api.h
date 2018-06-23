@@ -22,26 +22,22 @@
 #include "qdf_nbuf.h"
 #include "qdf_atomic.h"
 
-#define direct_buf_rx_log(level, args...) \
-		QDF_TRACE(QDF_MODULE_ID_DIRECT_BUF_RX, level, ## args)
-#define direct_buf_rx_logfl(level, format, args...) \
-		direct_buf_rx_log(level, FL(format), ## args)
-#define direct_buf_alert(format, args...) \
-		direct_buf_rx_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define direct_buf_rx_err(format, args...) \
-		direct_buf_rx_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define direct_buf_rx_warn(format, args...) \
-		direct_buf_rx_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define direct_buf_rx_notice(format, args...) \
-		direct_buf_rx_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define direct_buf_rx_info(format, args...) \
-		direct_buf_rx_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
-#define direct_buf_rx_debug(format, args...) \
-		direct_buf_rx_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define direct_buf_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_DIRECT_BUF_RX, params)
+#define direct_buf_rx_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_DIRECT_BUF_RX, params)
+#define direct_buf_rx_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_DIRECT_BUF_RX, params)
+#define direct_buf_rx_notice(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_DIRECT_BUF_RX, params)
+#define direct_buf_rx_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_DIRECT_BUF_RX, params)
+#define direct_buf_rx_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_DIRECT_BUF_RX, params)
 #define direct_buf_rx_enter() \
-		direct_buf_rx_logfl(QDF_TRACE_LEVEL_DEBUG, "enter")
+	direct_buf_rx_debug("enter")
 #define direct_buf_rx_exit() \
-		direct_buf_rx_logfl(QDF_TRACE_LEVEL_DEBUG, "exit")
+	direct_buf_rx_debug("exit")
 
 #define DBR_MAX_CHAINS      (8)
 

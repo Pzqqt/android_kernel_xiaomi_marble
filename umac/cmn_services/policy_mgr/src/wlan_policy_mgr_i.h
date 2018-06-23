@@ -153,23 +153,18 @@
 
 #define POLICY_MGR_DEFAULT_HW_MODE_INDEX 0xFFFF
 
-#define policy_mgr_log(level, args...) \
-		QDF_TRACE(QDF_MODULE_ID_POLICY_MGR, level, ## args)
-#define policy_mgr_logfl(level, format, args...) \
-		policy_mgr_log(level, FL(format), ## args)
-
-#define policy_mgr_alert(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define policy_mgr_err(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define policy_mgr_warn(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define policy_mgr_notice(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define policy_mgr_info(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
-#define policy_mgr_debug(format, args...) \
-		policy_mgr_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define policy_mgr_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_POLICY_MGR, params)
+#define policy_mgr_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_POLICY_MGR, params)
+#define policy_mgr_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_POLICY_MGR, params)
+#define policy_mgr_notice(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_POLICY_MGR, params)
+#define policy_mgr_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_POLICY_MGR, params)
+#define policy_mgr_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_POLICY_MGR, params)
 
 #define PM_CONC_CONNECTION_LIST_VALID_INDEX(index) \
 		((MAX_NUMBER_OF_CONC_CONNECTIONS > index) && \

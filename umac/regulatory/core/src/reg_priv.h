@@ -28,22 +28,18 @@
 #include "reg_db.h"
 #include "reg_services.h"
 
-#define reg_log(level, args...) \
-	QDF_TRACE(QDF_MODULE_ID_REGULATORY, level, ## args)
-#define reg_logfl(level, format, args...) reg_log(level, FL(format), ## args)
-
-#define reg_alert(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define reg_err(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define reg_warn(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define reg_notice(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define reg_info(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
-#define reg_debug(format, args...) \
-		reg_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define reg_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_REGULATORY, params)
+#define reg_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_REGULATORY, params)
+#define reg_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_REGULATORY, params)
+#define reg_notice(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_REGULATORY, params)
+#define reg_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_REGULATORY, params)
+#define reg_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_REGULATORY, params)
 
 struct wlan_regulatory_psoc_priv_obj {
 	struct mas_chan_params mas_chan_params[PSOC_MAX_PHY_REG_CAP];

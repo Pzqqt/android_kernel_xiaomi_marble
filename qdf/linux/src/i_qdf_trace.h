@@ -91,6 +91,7 @@
 
 #define QDF_VTRACE qdf_vtrace_msg
 #define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
+#define __QDF_TRACE_RATE_LIMITED(arg ...)
 #endif /* CONFIG_MCL */
 
 #define __QDF_TRACE_FL(log_level, module_id, format, args...) \

@@ -34,19 +34,16 @@
 #define SCHEDULER_WRAPPER_MAX_FAIL_COUNT (SCHEDULER_CORE_MAX_MESSAGES * 3)
 #define SCHEDULER_WATCHDOG_TIMEOUT (10 * 1000) /* 10s */
 
-#define __sched_log(level, format, args...) \
-	QDF_TRACE(QDF_MODULE_ID_SCHEDULER, level, FL(format), ## args)
-
-#define sched_fatal(format, args...) \
-	__sched_log(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define sched_err(format, args...) \
-	__sched_log(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define sched_warn(format, args...) \
-	__sched_log(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define sched_info(format, args...) \
-	__sched_log(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define sched_debug(format, args...) \
-	__sched_log(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define sched_fatal(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_SCHEDULER, params)
+#define sched_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_SCHEDULER, params)
+#define sched_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_SCHEDULER, params)
+#define sched_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_SCHEDULER, params)
+#define sched_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_SCHEDULER, params)
 
 #define sched_enter() sched_debug("Enter")
 #define sched_exit() sched_debug("Exit")

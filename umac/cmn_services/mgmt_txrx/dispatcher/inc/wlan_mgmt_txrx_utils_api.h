@@ -36,24 +36,18 @@
 #define MGMT_DESC_POOL_MAX 512
 #endif
 
-#define mgmt_txrx_log(level, args...) \
-			QDF_TRACE(QDF_MODULE_ID_MGMT_TXRX, level, ## args)
-#define mgmt_txrx_logfl(level, format, args...) \
-			mgmt_txrx_log(level, FL(format), ## args)
-
-#define mgmt_txrx_alert(format, args...) \
-		mgmt_txrx_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define mgmt_txrx_err(format, args...) \
-		mgmt_txrx_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define mgmt_txrx_warn(format, args...) \
-		mgmt_txrx_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define mgmt_txrx_notice(format, args...) \
-		mgmt_txrx_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define mgmt_txrx_info(format, args...) \
-		mgmt_txrx_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
-#define mgmt_txrx_debug(format, args...) \
-		mgmt_txrx_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
-
+#define mgmt_txrx_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_MGMT_TXRX, params)
+#define mgmt_txrx_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_MGMT_TXRX, params)
+#define mgmt_txrx_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_MGMT_TXRX, params)
+#define mgmt_txrx_notice(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_MGMT_TXRX, params)
+#define mgmt_txrx_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_MGMT_TXRX, params)
+#define mgmt_txrx_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_MGMT_TXRX, params)
 
 /**
  * enum mgmt_subtype - enum of mgmt. subtypes

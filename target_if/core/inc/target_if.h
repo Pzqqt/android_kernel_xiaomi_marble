@@ -33,25 +33,19 @@
 /* ASCII "TGT\0" */
 #define TGT_MAGIC 0x54575400
 
-#define target_if_log(level, args...) \
-		QDF_TRACE(QDF_MODULE_ID_TARGET_IF, level, ## args)
-#define target_if_logfl(level, format, args...) \
-		target_if_log(level, FL(format), ## args)
+#define target_if_fatal(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_TARGET_IF, params)
+#define target_if_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_TARGET_IF, params)
+#define target_if_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_TARGET_IF, params)
+#define target_if_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_TARGET_IF, params)
+#define target_if_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_TARGET_IF, params)
 
-#define target_if_fatal(format, args...) \
-		target_if_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define target_if_err(format, args...) \
-		target_if_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define target_if_warn(format, args...) \
-		target_if_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define target_if_info(format, args...) \
-		target_if_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define target_if_debug(format, args...) \
-		target_if_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
-
-#define TARGET_IF_ENTER() target_if_logfl(QDF_TRACE_LEVEL_DEBUG, "enter")
-#define TARGET_IF_EXIT() target_if_logfl(QDF_TRACE_LEVEL_DEBUG, "exit")
-
+#define TARGET_IF_ENTER() target_if_debug("enter")
+#define TARGET_IF_EXIT() target_if_debug("exit")
 
 #ifdef CONFIG_MCL
 #define TARGET_TYPE_AR900B    9  /* Beeliner */

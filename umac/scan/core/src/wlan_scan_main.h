@@ -31,22 +31,18 @@
 #include "wlan_scan_cache_db.h"
 #include "wlan_scan_11d.h"
 
-#define scm_log(level, args...) \
-		QDF_TRACE(QDF_MODULE_ID_SCAN, level, ## args)
-#define scm_logfl(level, format, args...) \
-		scm_log(level, FL(format), ## args)
-#define scm_alert(format, args...) \
-		scm_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define scm_err(format, args...) \
-		scm_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define scm_warn(format, args...) \
-		scm_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define scm_notice(format, args...) \
-		scm_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define scm_info(format, args...) \
-		scm_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
-#define scm_debug(format, args...) \
-		scm_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define scm_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_SCAN, params)
+#define scm_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_SCAN, params)
+#define scm_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_SCAN, params)
+#define scm_notice(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_SCAN, params)
+#define scm_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_SCAN, params)
+#define scm_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_SCAN, params)
 
 #define scm_hex_dump(level, data, buf_len) \
 		qdf_trace_hex_dump(QDF_MODULE_ID_SCAN, level, data, buf_len)
