@@ -4323,7 +4323,7 @@ int adm_set_sound_focus(int port_id, int copp_idx,
 		  __func__, port_id, copp_idx);
 
 	memset(&param_hdr, 0, sizeof(param_hdr));
-	param_hdr.module_id = VOICEPROC_MODULE_ID_GENERIC_TX;
+	param_hdr.module_id = VOICEPROC_MODULE_ID_FLUENCE_PRO_VC_TX;
 	param_hdr.instance_id = INSTANCE_ID_0;
 	param_hdr.param_id = VOICEPROC_PARAM_ID_FLUENCE_SOUNDFOCUS;
 	param_hdr.param_size = sizeof(soundfocus_params);
@@ -4384,7 +4384,7 @@ int adm_get_sound_focus(int port_id, int copp_idx,
 		return -ENOMEM;
 
 	memset(&param_hdr, 0, sizeof(param_hdr));
-	param_hdr.module_id = VOICEPROC_MODULE_ID_GENERIC_TX;
+	param_hdr.module_id = VOICEPROC_MODULE_ID_FLUENCE_PRO_VC_TX;
 	param_hdr.instance_id = INSTANCE_ID_0;
 	param_hdr.param_id = VOICEPROC_PARAM_ID_FLUENCE_SOUNDFOCUS;
 	param_hdr.param_size = max_param_size;
@@ -4523,7 +4523,7 @@ int adm_get_source_tracking(int port_id, int copp_idx,
 	mem_hdr.mem_map_handle = atomic_read(
 		&this_adm.mem_map_handles[ADM_MEM_MAP_INDEX_SOURCE_TRACKING]);
 
-	param_hdr.module_id = VOICEPROC_MODULE_ID_GENERIC_TX;
+	param_hdr.module_id = VOICEPROC_MODULE_ID_FLUENCE_PRO_VC_TX;
 	param_hdr.instance_id = INSTANCE_ID_0;
 	param_hdr.param_id = VOICEPROC_PARAM_ID_FLUENCE_SOURCETRACKING;
 	/*

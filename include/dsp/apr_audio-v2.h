@@ -11263,6 +11263,7 @@ struct adm_set_compressed_device_latency {
 } __packed;
 
 #define VOICEPROC_MODULE_ID_GENERIC_TX                      0x00010EF6
+#define VOICEPROC_MODULE_ID_FLUENCE_PRO_VC_TX               0x00010F35
 #define VOICEPROC_PARAM_ID_FLUENCE_SOUNDFOCUS               0x00010E37
 #define VOICEPROC_PARAM_ID_FLUENCE_SOURCETRACKING           0x00010E38
 #define MAX_SECTORS                                         8
