@@ -833,7 +833,7 @@ void lim_reset_deferred_msg_q(tpAniSirGlobal pMac)
 uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx,
 				 struct scheduler_msg *lim_msg)
 {
-	uint8_t type, subtype;
+	uint8_t type = 0, subtype = 0;
 
 	pe_debug("Queue a deferred message size: %d write: %d - type: 0x%x",
 		mac_ctx->lim.gLimDeferredMsgQ.size,

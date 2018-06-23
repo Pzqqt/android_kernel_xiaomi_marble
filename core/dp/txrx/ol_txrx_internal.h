@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -70,23 +70,18 @@
 #include <stdarg.h>             /* va_list */
 #include <qdf_types.h>          /* qdf_vprint */
 
-#define ol_txrx_log(level, args...) \
-		QDF_TRACE(QDF_MODULE_ID_TXRX, level, ## args)
-#define ol_txrx_logfl(level, format, args...) \
-		ol_txrx_log(level, FL(format), ## args)
-
-#define ol_txrx_alert(format, args...) \
-		ol_txrx_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define ol_txrx_err(format, args...) \
-		ol_txrx_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define ol_txrx_warn(format, args...) \
-		ol_txrx_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define ol_txrx_info(format, args...) \
-		ol_txrx_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define ol_txrx_info_high(format, args...) \
-		ol_txrx_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
-#define ol_txrx_dbg(format, args...) \
-		ol_txrx_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#define ol_txrx_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_TXRX, params)
+#define ol_txrx_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_TXRX, params)
+#define ol_txrx_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_TXRX, params)
+#define ol_txrx_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_TXRX, params)
+#define ol_txrx_info_high(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_TXRX, params)
+#define ol_txrx_dbg(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_TXRX, params)
 
 /*
  * define PN check failure message print rate
@@ -95,8 +90,6 @@
 #define TXRX_PN_CHECK_FAILURE_PRINT_PERIOD_MS  1000
 
 #else
-#define ol_txrx_log(level, args...)
-#define ol_txrx_logfl(level, format, args...)
 #define ol_txrx_alert(format, args...)
 #define ol_txrx_err(format, args...)
 #define ol_txrx_warn(format, args...)
