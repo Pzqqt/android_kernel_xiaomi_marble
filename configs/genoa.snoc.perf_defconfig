@@ -173,6 +173,22 @@ CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
 endif
 endif
 
+ifeq ($(CONFIG_CNSS), y)
+ifeq ($(CONFIG_CNSS_SDIO), y)
+CONFIG_PLD_SDIO_CNSS_FLAG := y
+endif
+ifeq ($(CONFIG_HIF_PCI), y)
+CONFIG_PLD_PCIE_CNSS_FLAG := y
+endif
+endif
+
+ifeq ($(CONFIG_CNSS2), y)
+ifeq ($(CONFIG_HIF_PCI), y)
+CONFIG_PLD_PCIE_CNSS_FLAG := y
+CONFIG_PLD_PCIE_INIT_FLAG := y
+endif
+endif
+
 CONFIG_ENABLE_SIZE_OPTIMIZE := y
 
 # configure log buffer size
