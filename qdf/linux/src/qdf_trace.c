@@ -2913,11 +2913,12 @@ void qdf_trace_msg_cmn(unsigned int idx,
 			[QDF_TRACE_LEVEL_INFO_MED] = "IM",
 			[QDF_TRACE_LEVEL_INFO_LOW] = "IL",
 			[QDF_TRACE_LEVEL_DEBUG] = "D",
+			[QDF_TRACE_LEVEL_TRACE] = "T",
 			[QDF_TRACE_LEVEL_ALL] = "" };
 
 		/* print the prefix string into the string buffer... */
 		n = scnprintf(str_buffer, QDF_TRACE_BUFFER_SIZE,
-			     "%s: [%d:%2s:%s] ", qdf_trace_wlan_modname(),
+			     "%s: [%d:%s:%s] ", qdf_trace_wlan_modname(),
 			     in_interrupt() ? 0 : current->pid,
 			     VERBOSE_STR[verbose],
 			     g_qdf_category_name[category].category_name_str);
