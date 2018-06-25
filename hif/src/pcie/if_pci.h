@@ -136,6 +136,11 @@ struct hif_pci_softc {
 	struct dentry *pm_dentry;
 #endif
 #endif
+	int (*hif_enable_pci)(struct hif_pci_softc *sc, struct pci_dev *pdev,
+			      const struct pci_device_id *id);
+	void (*hif_pci_deinit)(struct hif_pci_softc *sc);
+	void (*hif_pci_get_soc_info)(struct hif_pci_softc *sc,
+				     struct device *dev);
 };
 
 bool hif_pci_targ_is_present(struct hif_softc *scn, void *__iomem *mem);
