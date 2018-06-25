@@ -81,7 +81,7 @@ static inline void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 {
 }
 #else
-void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
+static void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
 	unsigned int target_enable0, target_enable1;
