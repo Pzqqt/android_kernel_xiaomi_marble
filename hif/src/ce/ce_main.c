@@ -1501,6 +1501,8 @@ bool hif_is_polled_mode_enabled(struct hif_opaque_softc *hif_ctx)
 	return scn->polled_mode_on;
 }
 
+qdf_export_symbol(hif_is_polled_mode_enabled);
+
 /**
  * hif_get_ce_handle - API to get CE handle for FastPath mode
  * @hif_ctx: HIF Context

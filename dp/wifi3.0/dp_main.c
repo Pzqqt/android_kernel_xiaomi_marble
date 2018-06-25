@@ -21,6 +21,7 @@
 #include <qdf_net_types.h>
 #include <qdf_lro.h>
 #include <qdf_module.h>
+#include <hal_hw_headers.h>
 #include <hal_api.h>
 #include <hif.h>
 #include <htt.h>
@@ -1044,7 +1045,7 @@ static void dp_interrupt_timer(void *arg)
  *
  * Return: 0 for success. nonzero for failure.
  */
-static QDF_STATUS dp_soc_interrupt_attach_poll(void *txrx_soc)
+static QDF_STATUS dp_soc_attach_poll(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	int i;
@@ -1077,10 +1078,16 @@ static QDF_STATUS dp_soc_interrupt_attach_poll(void *txrx_soc)
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+static QDF_STATUS dp_soc_attach_poll(void *txrx_soc)
+{
+	return -QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 
+static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc);
 #if defined(CONFIG_MCL)
 extern int con_mode_monitor;
-static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc);
 /*
  * dp_soc_interrupt_attach_wrapper() - Register handlers for DP interrupts
  * @txrx_soc: DP SOC handle
@@ -1098,7 +1105,7 @@ static QDF_STATUS dp_soc_interrupt_attach_wrapper(void *txrx_soc)
 	     con_mode_monitor == QDF_GLOBAL_MONITOR_MODE) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				  "%s: Poll mode", __func__);
-		return dp_soc_interrupt_attach_poll(txrx_soc);
+		return dp_soc_attach_poll(txrx_soc);
 	} else {
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
@@ -1109,9 +1116,13 @@ static QDF_STATUS dp_soc_interrupt_attach_wrapper(void *txrx_soc)
 #else
 static QDF_STATUS dp_soc_interrupt_attach_wrapper(void *txrx_soc)
 {
-	return dp_soc_interrupt_attach_poll(txrx_soc);
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+
+	if (hif_is_polled_mode_enabled(soc->hif_handle))
+		return dp_soc_attach_poll(txrx_soc);
+	else
+		return dp_soc_interrupt_attach(txrx_soc);
 }
-#endif
 #endif
 
 static void dp_soc_interrupt_map_calculate_integrated(struct dp_soc *soc,
@@ -1669,11 +1680,8 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #define WBM_RELEASE_RING_SIZE 64
 #define TCL_CMD_RING_SIZE 32
 #define TCL_STATUS_RING_SIZE 32
-#if defined(QCA_WIFI_QCA6290)
-#define REO_DST_RING_SIZE 1024
-#else
-#define REO_DST_RING_SIZE 2048
-#endif
+#define REO_DST_RING_SIZE_QCA6290 1024
+#define REO_DST_RING_SIZE_QCA8074 2048
 #define REO_REINJECT_RING_SIZE 32
 #define RX_RELEASE_RING_SIZE 1024
 #define REO_EXCEPTION_RING_SIZE 128
@@ -2074,6 +2082,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	struct hal_reo_params reo_params;
 	int tx_ring_size;
 	int tx_comp_ring_size;
+	int reo_dst_ring_size;
 
 	if (qdf_atomic_read(&soc->cmn_init_done))
 		return 0;
@@ -2146,6 +2155,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 	}
 
+	reo_dst_ring_size = wlan_cfg_get_reo_dst_ring_size(soc->wlan_cfg_ctx);
 
 	/* TBD: call dp_tx_init to setup Tx SW descriptors and MSDU extension
 	 * descriptors
@@ -2160,7 +2170,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			FL("num_reo_dest_rings %d\n"), soc->num_reo_dest_rings);
 		for (i = 0; i < soc->num_reo_dest_rings; i++) {
 			if (dp_srng_setup(soc, &soc->reo_dest_ring[i], REO_DST,
-				i, 0, REO_DST_RING_SIZE)) {
+				i, 0, reo_dst_ring_size)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("dp_srng_setup failed for reo_dest_ring[%d]"), i);
@@ -2638,6 +2648,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 {
 	int tx_ring_size;
 	int tx_comp_ring_size;
+	int reo_dst_ring_size;
 
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	struct dp_pdev *pdev = qdf_mem_malloc(sizeof(*pdev));
@@ -2713,10 +2724,11 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail1;
 	}
 
+	reo_dst_ring_size = wlan_cfg_get_reo_dst_ring_size(soc->wlan_cfg_ctx);
 	/* Setup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
 		if (dp_srng_setup(soc, &soc->reo_dest_ring[pdev_id], REO_DST,
-			pdev_id, pdev_id, REO_DST_RING_SIZE)) {
+			pdev_id, pdev_id, reo_dst_ring_size)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("dp_srng_setup failed for reo_dest_ringn"));
 			goto fail1;
@@ -7148,11 +7160,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.display_stats = dp_txrx_dump_stats,
 	.txrx_soc_set_nss_cfg = dp_soc_set_nss_cfg_wifi3,
 	.txrx_soc_get_nss_cfg = dp_soc_get_nss_cfg_wifi3,
-#ifdef DP_INTR_POLL_BASED
 	.txrx_intr_attach = dp_soc_interrupt_attach_wrapper,
-#else
-	.txrx_intr_attach = dp_soc_interrupt_attach,
-#endif
 	.txrx_intr_detach = dp_soc_interrupt_detach,
 	.set_pn_check = dp_set_pn_check_wifi3,
 	.update_config_parameters = dp_update_config_parameters,
@@ -7499,6 +7507,7 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 	struct ol_if_ops *ol_ops)
 {
 	struct dp_soc *soc = qdf_mem_malloc(sizeof(*soc));
+	int target_type;
 
 	if (!soc) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -7526,6 +7535,22 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("wlan_cfg_soc_attach failed"));
 		goto fail2;
+	}
+	target_type = hal_get_target_type(soc->hal_soc);
+	switch (target_type) {
+	case TARGET_TYPE_QCA6290:
+	case TARGET_TYPE_QCA6390:
+		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
+					       REO_DST_RING_SIZE_QCA6290);
+		break;
+	case TARGET_TYPE_QCA8074:
+		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
+					       REO_DST_RING_SIZE_QCA8074);
+		break;
+	default:
+		qdf_print("%s: Unknown tgt type %d\n", __func__, target_type);
+		qdf_assert_always(0);
+		break;
 	}
 
 	wlan_cfg_set_rx_hash(soc->wlan_cfg_ctx, rx_hash);

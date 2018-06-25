@@ -163,6 +163,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint32_t tx_flow_start_queue_offset;
 #endif
 	uint32_t rx_defrag_min_timeout;
+	int reo_dst_ring_size;
 };
 
 /**
@@ -483,6 +484,24 @@ void wlan_cfg_set_num_tx_desc_pool(struct wlan_cfg_dp_soc_ctxt *cfg, int num_poo
  */
 int wlan_cfg_get_num_tx_ext_desc_pool(
 		struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
+
+/*
+ * wlan_cfg_get_reo_dst_ring_size() - Get REO destination ring size
+ *
+ * @wlan_cfg_ctx - Configuration Handle
+ *
+ * Return: reo_dst_ring_size
+ */
+int wlan_cfg_get_reo_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_set_num_tx_desc_pool() - Set the REO Destination ring size
+ *
+ * @wlan_cfg_ctx - Configuration Handle
+ * @reo_dst_ring_size - REO Destination ring size
+ */
+void wlan_cfg_set_reo_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg,
+				    int reo_dst_ring_size);
 
 /*
  * wlan_cfg_set_num_tx_ext_desc_pool() -  Set the number of Tx MSDU ext Descriptor

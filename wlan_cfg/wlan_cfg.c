@@ -600,6 +600,17 @@ void wlan_cfg_set_num_tx_ext_desc_pool(struct wlan_cfg_dp_soc_ctxt *cfg, int num
 	cfg->num_tx_ext_desc_pool = num_pool;
 }
 
+int wlan_cfg_get_reo_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->reo_dst_ring_size;
+}
+
+void wlan_cfg_set_reo_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg,
+				    int reo_dst_ring_size)
+{
+	cfg->reo_dst_ring_size = reo_dst_ring_size;
+}
+
 int wlan_cfg_get_num_tx_desc(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->num_tx_desc;
