@@ -9673,12 +9673,12 @@ static const struct snd_soc_component_driver msm_q6_cdc_dma_dai_component = {
 static int msm_dai_q6_cdc_dma_dev_probe(struct platform_device *pdev)
 {
 	const char *q6_cdc_dma_dev_id = "qcom,msm-dai-cdc-dma-dev-id";
-	u16 cdc_dma_id = 0;
+	u32 cdc_dma_id = 0;
 	int i;
 	int rc = 0;
 	struct msm_dai_q6_cdc_dma_dai_data *dai_data = NULL;
 
-	rc = of_property_read_u16(pdev->dev.of_node, q6_cdc_dma_dev_id,
+	rc = of_property_read_u32(pdev->dev.of_node, q6_cdc_dma_dev_id,
 				  &cdc_dma_id);
 	if (rc) {
 		dev_err(&pdev->dev,
