@@ -16,6 +16,7 @@
 #include <linux/of_gpio.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
+#include <linux/i2c.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/input.h>
@@ -7527,6 +7528,119 @@ static void msm_i2s_auxpcm_deinit(void)
 	}
 }
 
+static int msm_scan_i2c_addr(struct platform_device *pdev,
+		uint32_t busnum, uint32_t addr)
+{
+	struct i2c_adapter *adap;
+	u8 rbuf;
+	struct i2c_msg msg;
+	int status = 0;
+
+	adap = i2c_get_adapter(busnum);
+	if (!adap) {
+		dev_err(&pdev->dev, "%s: Cannot get I2C adapter %d\n",
+			__func__, busnum);
+		return -EBUSY;
+	}
+
+	/* to test presence, read one byte from device */
+	msg.addr = addr;
+	msg.flags = I2C_M_RD;
+	msg.len = 1;
+	msg.buf = &rbuf;
+
+	status = i2c_transfer(adap, &msg, 1);
+
+	i2c_put_adapter(adap);
+
+	if (status != 1) {
+		dev_dbg(&pdev->dev, "%s: I2C read from addr 0x%02x failed\n",
+			__func__, addr);
+		return -ENODEV;
+	}
+
+	dev_dbg(&pdev->dev, "%s: I2C read from addr 0x%02x successful\n",
+		__func__, addr);
+
+	return 0;
+}
+
+static int msm_detect_ep92_dev(struct platform_device *pdev,
+			       struct snd_soc_card *card)
+{
+	int i;
+	uint32_t ep92_busnum = 0;
+	uint32_t ep92_reg = 0;
+	const char *ep92_name = NULL;
+	struct snd_soc_dai_link *dai;
+	int rc = 0;
+
+	rc = of_property_read_u32(pdev->dev.of_node, "qcom,ep92-busnum",
+				  &ep92_busnum);
+	if (rc) {
+		dev_info(&pdev->dev, "%s: No DT match ep92-reg\n", __func__);
+		return 0;
+	}
+
+	rc = of_property_read_u32(pdev->dev.of_node, "qcom,ep92-reg",
+				  &ep92_reg);
+	if (rc) {
+		dev_info(&pdev->dev, "%s: No DT match ep92-busnum\n", __func__);
+		return 0;
+	}
+
+	rc = of_property_read_string(pdev->dev.of_node, "qcom,ep92-name",
+				     &ep92_name);
+	if (rc) {
+		dev_info(&pdev->dev, "%s: No DT match ep92-name\n", __func__);
+		return 0;
+	}
+
+	/* check I2C bus for connected ep92 chip */
+	if (msm_scan_i2c_addr(pdev, ep92_busnum, ep92_reg) < 0) {
+		/* check a second time after a short delay */
+		msleep(20);
+		if (msm_scan_i2c_addr(pdev, ep92_busnum, ep92_reg) < 0) {
+			dev_info(&pdev->dev, "%s: No ep92 device found\n",
+				__func__);
+			/* continue with snd_card registration without ep92 */
+			return 0;
+		}
+	}
+
+	dev_info(&pdev->dev, "%s: ep92 device found\n", __func__);
+
+	/* update codec info in MI2S dai link */
+	dai = &msm_mi2s_be_dai_links[0];
+	for (i=0; i<ARRAY_SIZE(msm_mi2s_be_dai_links); i++) {
+		if (strcmp(dai->name, LPASS_BE_SEC_MI2S_TX) == 0) {
+			dev_dbg(&pdev->dev,
+				"%s: Set Sec MI2S dai to ep92 codec\n",
+				__func__);
+			dai->codec_name = ep92_name;
+			dai->codec_dai_name = "ep92-hdmi";
+			break;
+		}
+		dai++;
+	}
+
+	/* update codec info in SPDIF dai link */
+	dai = &msm_spdif_be_dai_links[0];
+	for (i=0; i<ARRAY_SIZE(msm_spdif_be_dai_links); i++) {
+		if (strcmp(dai->name, LPASS_BE_SEC_SPDIF_TX) == 0) {
+			dev_dbg(&pdev->dev,
+				"%s: Set Sec SPDIF dai to ep92 codec\n",
+				__func__);
+			dai->codec_name = ep92_name;
+			dai->codec_dai_name = "ep92-arc";
+			break;
+		}
+		dai++;
+	}
+
+	return 0;
+}
+
 static int msm_asoc_machine_probe(struct platform_device *pdev)
 {
 	struct snd_soc_card *card;
@@ -7543,6 +7657,11 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			sizeof(struct msm_asoc_mach_data), GFP_KERNEL);
 	if (!pdata)
 		return -ENOMEM;
+
+	/* test for ep92 HDMI bridge and update dai links accordingly */
+	ret = msm_detect_ep92_dev(pdev, card);
+	if (ret)
+		goto err;
 
 	card = populate_snd_card_dailinks(&pdev->dev);
 	if (!card) {
