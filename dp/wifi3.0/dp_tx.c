@@ -929,7 +929,8 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	/* SWAR for HW: Enable WEP bit in the AMSDU frames for RAW mode */
 	if (vdev->raw_mode_war &&
-	    (qos_wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS))
+	    (qos_wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS) &&
+	    (qos_wh->i_qos[0] & IEEE80211_QOS_AMSDU))
 		qos_wh->i_fc[1] |= IEEE80211_FC1_WEP;
 
 	for (curr_nbuf = nbuf, i = 0; curr_nbuf;
