@@ -2209,10 +2209,6 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 				     WDI_NO_VAL, pdev->pdev_id);
 	}
 
-	pdev->mgmtctrl_frm_info.mgmt_buf = NULL;
-	pdev->mgmtctrl_frm_info.mgmt_buf_len = 0;
-	pdev->mgmtctrl_frm_info.ppdu_id = 0;
-
 	return QDF_STATUS_E_ALREADY;
 }
 
@@ -2594,6 +2590,10 @@ static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 		    (pdev, htt_t2h_msg, pdev->mgmtctrl_frm_info.ppdu_id) !=
 		    QDF_STATUS_SUCCESS)
 			free_buf = false;
+
+		pdev->mgmtctrl_frm_info.mgmt_buf = NULL;
+		pdev->mgmtctrl_frm_info.mgmt_buf_len = 0;
+		pdev->mgmtctrl_frm_info.ppdu_id = 0;
 	}
 
 	if (ppdu_info)
