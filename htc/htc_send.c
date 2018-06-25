@@ -633,9 +633,13 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 						("hif_send Failed status:%d\n",
 						 status));
 			}
-			qdf_nbuf_unmap(target->osdev,
-				GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket),
-				QDF_DMA_TO_DEVICE);
+
+			/* only unmap if we mapped in this function */
+			if (IS_TX_CREDIT_FLOW_ENABLED(pEndpoint))
+				qdf_nbuf_unmap(target->osdev,
+					GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket),
+					QDF_DMA_TO_DEVICE);
+
 			if (!pEndpoint->async_update) {
 				LOCK_HTC_TX(target);
 			}
