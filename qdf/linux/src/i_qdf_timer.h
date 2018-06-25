@@ -29,6 +29,9 @@
 #include <linux/timer.h>
 #include <linux/jiffies.h>
 #include <qdf_types.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
+#include <linux/sched/task_stack.h>
+#endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0)
 #define setup_deferrable_timer(timer, fn, data)                                \
