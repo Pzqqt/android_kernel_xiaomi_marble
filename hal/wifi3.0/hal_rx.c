@@ -17,6 +17,7 @@
  */
 
 #include "hal_api.h"
+#include "hal_hw_headers.h"
 #include "qdf_module.h"
 
 /* TODO: See if the following definition is available in HW headers */

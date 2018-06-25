@@ -17,6 +17,7 @@
  */
 
 #include <htt.h>
+#include <hal_hw_headers.h>
 #include <hal_api.h>
 #include "dp_htt.h"
 #include "dp_peer.h"

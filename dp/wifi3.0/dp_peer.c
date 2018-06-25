@@ -18,6 +18,7 @@
 
 #include <qdf_types.h>
 #include <qdf_lock.h>
+#include <hal_hw_headers.h>
 #include "dp_htt.h"
 #include "dp_types.h"
 #include "dp_internal.h"

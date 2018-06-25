@@ -40,6 +40,7 @@
 #include <wdi_event_api.h>    /* WDI subscriber event list */
 #endif
 
+#include "hal_hw_headers.h"
 #include <hal_tx.h>
 #include <hal_reo.h>
 #include "wlan_cfg.h"

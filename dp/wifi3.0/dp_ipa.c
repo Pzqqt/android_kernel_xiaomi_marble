@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <qdf_ipa_wdi3.h>
 #include <qdf_types.h>
 #include <qdf_lock.h>
+#include <hal_hw_headers.h>
 #include <hal_api.h>
 #include <hif.h>
 #include <htt.h>

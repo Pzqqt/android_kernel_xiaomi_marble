@@ -18,6 +18,7 @@
 
 #include "hal_api.h"
 #include "qdf_module.h"
+#include "hal_hw_headers.h"
 
 /**
  * hal_setup_link_idle_list - Setup scattered idle list using the
