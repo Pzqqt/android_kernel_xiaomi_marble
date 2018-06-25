@@ -2093,9 +2093,9 @@ wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req,
 		if (bcn->dma_mapped)
 			qdf_nbuf_unmap_single(wma->qdf_dev, bcn->buf,
 					  QDF_DMA_TO_DEVICE);
-			qdf_nbuf_free(bcn->buf);
-			qdf_mem_free(bcn);
-			wma->interfaces[vdev_id].beacon = NULL;
+		qdf_nbuf_free(bcn->buf);
+		qdf_mem_free(bcn);
+		wma->interfaces[vdev_id].beacon = NULL;
 	}
 
 	/* Timeout status means its WMA generated DEL BSS REQ when ADD
