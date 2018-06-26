@@ -1124,7 +1124,9 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 
 	switch (roam_result) {
 	case eCSR_ROAM_RESULT_INFRA_ASSOCIATION_IND:
-		wlansap_roam_process_infra_assoc_ind(sap_ctx, roam_result,
+		if (csr_roam_info)
+			wlansap_roam_process_infra_assoc_ind(sap_ctx,
+						roam_result,
 						csr_roam_info, &qdf_ret_status);
 		break;
 	case eCSR_ROAM_RESULT_INFRA_ASSOCIATION_CNF:
