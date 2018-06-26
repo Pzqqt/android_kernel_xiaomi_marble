@@ -192,6 +192,7 @@ QDF_STATUS cds_init(void)
 
 	return QDF_STATUS_SUCCESS;
 deinit:
+	qdf_trace_deinit();
 	qdf_mc_timer_manager_exit();
 	qdf_mem_exit();
 	qdf_lock_stats_deinit();
@@ -213,6 +214,7 @@ void cds_deinit(void)
 		return;
 
 	cds_recovery_work_deinit();
+	qdf_trace_deinit();
 	qdf_cpuhp_deinit();
 	qdf_mc_timer_manager_exit();
 	qdf_mem_exit();
