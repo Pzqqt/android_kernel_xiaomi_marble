@@ -16,6 +16,7 @@
 #include <linux/io.h>
 #include <linux/platform_device.h>
 #include <linux/regmap.h>
+#include <linux/regulator/consumer.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
@@ -95,6 +96,10 @@ struct va_macro_priv {
 	s32 dmic_6_7_clk_cnt;
 	u16 va_mclk_users;
 	char __iomem *va_io_base;
+	struct regulator *micb_supply;
+	u32 micb_voltage;
+	u32 micb_current;
+	int micb_users;
 };
 
 static bool va_macro_get_data(struct snd_soc_codec *codec,
@@ -541,7 +546,65 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 static int va_macro_enable_micbias(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *kcontrol, int event)
 {
-	/* Add code to enable/disable regulalator? */
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct device *va_dev = NULL;
+	struct va_macro_priv *va_priv = NULL;
+	int ret = 0;
+
+	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+		return -EINVAL;
+
+	if (!va_priv->micb_supply) {
+		dev_err(va_dev,
+			"%s:regulator not provided in dtsi\n", __func__);
+		return -EINVAL;
+	}
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		if (va_priv->micb_users++ > 0)
+			return 0;
+		ret = regulator_set_voltage(va_priv->micb_supply,
+				      va_priv->micb_voltage,
+				      va_priv->micb_voltage);
+		if (ret) {
+			dev_err(va_dev, "%s: Setting voltage failed, err = %d\n",
+				__func__, ret);
+			return ret;
+		}
+		ret = regulator_set_load(va_priv->micb_supply,
+					 va_priv->micb_current);
+		if (ret) {
+			dev_err(va_dev, "%s: Setting current failed, err = %d\n",
+				__func__, ret);
+			return ret;
+		}
+		ret = regulator_enable(va_priv->micb_supply);
+		if (ret) {
+			dev_err(va_dev, "%s: regulator enable failed, err = %d\n",
+				__func__, ret);
+			return ret;
+		}
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		if (--va_priv->micb_users > 0)
+			return 0;
+		if (va_priv->micb_users < 0) {
+			va_priv->micb_users = 0;
+			dev_dbg(va_dev, "%s: regulator already disabled\n",
+				__func__);
+			return 0;
+		}
+		ret = regulator_disable(va_priv->micb_supply);
+		if (ret) {
+			dev_err(va_dev, "%s: regulator disable failed, err = %d\n",
+				__func__, ret);
+			return ret;
+		}
+		regulator_set_voltage(va_priv->micb_supply, 0,
+				va_priv->micb_voltage);
+		regulator_set_load(va_priv->micb_supply, 0);
+		break;
+	}
 	return 0;
 }
 
@@ -1296,6 +1359,9 @@ static int va_macro_probe(struct platform_device *pdev)
 	char __iomem *va_io_base;
 	struct clk *va_core_clk;
 	bool va_without_decimation = false;
+	const char *micb_supply_str = "va-vdd-micb-supply";
+	const char *micb_voltage_str = "qcom,va-vdd-micb-voltage";
+	const char *micb_current_str = "qcom,va-vdd-micb-current";
 	int ret = 0;
 
 	va_priv = devm_kzalloc(&pdev->dev, sizeof(struct va_macro_priv),
@@ -1330,6 +1396,38 @@ static int va_macro_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 	va_priv->va_core_clk = va_core_clk;
+
+	if (of_parse_phandle(pdev->dev.of_node, micb_supply_str, 0)) {
+		va_priv->micb_supply = devm_regulator_get(&pdev->dev,
+						micb_supply_str);
+		if (IS_ERR(va_priv->micb_supply)) {
+			ret = PTR_ERR(va_priv->micb_supply);
+			dev_err(&pdev->dev,
+				"%s:Failed to get micbias supply for VA Mic\n",
+				__func__, ret);
+			return ret;
+		}
+		ret = of_property_read_u32(pdev->dev.of_node,
+					micb_voltage_str,
+					&va_priv->micb_voltage);
+		if (ret) {
+			dev_err(&pdev->dev,
+				"%s:Looking up %s property in node %s failed\n",
+				__func__, micb_voltage_str,
+				pdev->dev.of_node->full_name);
+			return ret;
+		}
+		ret = of_property_read_u32(pdev->dev.of_node,
+					micb_current_str,
+					&va_priv->micb_current);
+		if (ret) {
+			dev_err(&pdev->dev,
+				"%s:Looking up %s property in node %s failed\n",
+				__func__, micb_current_str,
+				pdev->dev.of_node->full_name);
+			return ret;
+		}
+	}
 
 	mutex_init(&va_priv->mclk_lock);
 	dev_set_drvdata(&pdev->dev, va_priv);
