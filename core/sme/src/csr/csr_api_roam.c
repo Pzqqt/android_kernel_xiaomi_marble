@@ -1551,6 +1551,11 @@ void csr_release_command_wm_status_change(tpAniSirGlobal pMac,
 void csr_roam_substate_change(tpAniSirGlobal pMac,
 		enum csr_roam_substate NewSubstate, uint32_t sessionId)
 {
+	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+		sme_err("Invalid no of concurrent sessions %d",
+			  sessionId);
+		return;
+	}
 	sme_debug("CSR RoamSubstate: [ %s <== %s ]",
 		mac_trace_getcsr_roam_sub_state(NewSubstate),
 		mac_trace_getcsr_roam_sub_state(pMac->roam.
@@ -5542,6 +5547,10 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 	uint32_t cfgCb = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 	uint8_t channel = 0;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
+	if (!pSession) {
+		sme_err("session %d not found", sessionId);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	/* Make sure we have the domain info for the BSS we try to connect to.
 	 * Do we need to worry about sequence for OSs that are not Windows??
