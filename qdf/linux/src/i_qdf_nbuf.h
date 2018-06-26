@@ -36,7 +36,6 @@
 #include <qdf_mem.h>
 #include <linux/tcp.h>
 #include <qdf_util.h>
-#include <qdf_nbuf.h>
 
 /*
  * Use socket buffer as the underlying implementation as skbuf .
