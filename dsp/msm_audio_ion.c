@@ -347,8 +347,7 @@ int msm_audio_ion_alloc(struct dma_buf **dma_buf, size_t bufsz,
 	int rc = -EINVAL;
 	unsigned long err_ion_ptr = 0;
 
-	if ((msm_audio_ion_data.smmu_enabled == true) &&
-	    !(msm_audio_ion_data.device_status & MSM_AUDIO_ION_PROBED)) {
+	if (!(msm_audio_ion_data.device_status & MSM_AUDIO_ION_PROBED)) {
 		pr_debug("%s:probe is not done, deferred\n", __func__);
 		return -EPROBE_DEFER;
 	}
@@ -412,8 +411,7 @@ int msm_audio_ion_import(struct dma_buf **dma_buf, int fd,
 {
 	int rc = 0;
 
-	if ((msm_audio_ion_data.smmu_enabled == true) &&
-	    !(msm_audio_ion_data.device_status & MSM_AUDIO_ION_PROBED)) {
+	if (!(msm_audio_ion_data.device_status & MSM_AUDIO_ION_PROBED)) {
 		pr_debug("%s: probe is not done, deferred\n", __func__);
 		return -EPROBE_DEFER;
 	}
