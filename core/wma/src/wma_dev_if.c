@@ -5677,6 +5677,11 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 							params->bssid);
 	}
 	iface->peer_count--;
+
+	WMA_LOGD("%s: Reset FW peer count", __func__);
+	qdf_atomic_init(&iface->fw_peer_count);
+	qdf_event_set(&iface->fw_peer_delete_completion);
+
 	WMA_LOGI("%s: Removed peer %pK with peer_addr %pM vdevid %d peer_count %d",
 		 __func__, peer, params->bssid,  params->smesessionId,
 		 iface->peer_count);
