@@ -133,7 +133,7 @@ QDF_STATUS hif_dev_send_buffer(struct hif_sdio_device *pdev, uint32_t xfer_id,
 		if (sctx) {
 			sctx->bNewAlloc = true;
 		} else {
-			HIF_ERROR("%s: Alloc send context fail %u\n",
+			HIF_ERROR("%s: Alloc send context fail %zu\n",
 				  __func__, sizeof(*sctx) + padded_length);
 			return QDF_STATUS_E_NOMEM;
 		}
