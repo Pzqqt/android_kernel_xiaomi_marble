@@ -2775,26 +2775,6 @@ static uint8_t __qdf_nbuf_get_tso_cmn_seg_info(qdf_device_t osdev,
 
 
 /**
- * qdf_dmaaddr_to_32s - return high and low parts of dma_addr
- *
- * Returns the high and low 32-bits of the DMA addr in the provided ptrs
- *
- * Return: N/A
- */
-void __qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
-				      uint32_t *lo, uint32_t *hi)
-{
-	if (sizeof(dmaaddr) > sizeof(uint32_t)) {
-		*lo = lower_32_bits(dmaaddr);
-		*hi = upper_32_bits(dmaaddr);
-	} else {
-		*lo = dmaaddr;
-		*hi = 0;
-	}
-}
-qdf_export_symbol(__qdf_dmaaddr_to_32s);
-
-/**
  * __qdf_nbuf_fill_tso_cmn_seg_info() - Init function for each TSO nbuf segment
  *
  * @curr_seg: Segment whose contents are initialized
@@ -3286,6 +3266,27 @@ fail:
 qdf_export_symbol(__qdf_nbuf_get_tso_num_seg);
 
 #endif /* FEATURE_TSO */
+
+/**
+ * qdf_dmaaddr_to_32s - return high and low parts of dma_addr
+ *
+ * Returns the high and low 32-bits of the DMA addr in the provided ptrs
+ *
+ * Return: N/A
+ */
+void __qdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
+			  uint32_t *lo, uint32_t *hi)
+{
+	if (sizeof(dmaaddr) > sizeof(uint32_t)) {
+		*lo = lower_32_bits(dmaaddr);
+		*hi = upper_32_bits(dmaaddr);
+	} else {
+		*lo = dmaaddr;
+		*hi = 0;
+	}
+}
+
+qdf_export_symbol(__qdf_dmaaddr_to_32s);
 
 struct sk_buff *__qdf_nbuf_inc_users(struct sk_buff *skb)
 {
