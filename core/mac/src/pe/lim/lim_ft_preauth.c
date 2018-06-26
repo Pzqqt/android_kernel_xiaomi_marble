@@ -292,10 +292,10 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, QDF_STATUS status,
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_ROAM_AUTH_START_EVENT,
 			pMac->lim.pSessionEntry, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 #endif
-
-	lim_send_auth_mgmt_frame(pMac, &authFrame,
-		 psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
-		 LIM_NO_WEP_IN_FC, psessionEntry);
+	if (psessionEntry->ftPEContext.pFTPreAuthReq)
+		lim_send_auth_mgmt_frame(pMac, &authFrame,
+			 psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
+			 LIM_NO_WEP_IN_FC, psessionEntry);
 
 	return;
 
