@@ -2393,5 +2393,10 @@ QDF_STATUS wmi_unified_send_smart_logging_fatal_cmd
 QDF_STATUS wmi_extract_smartlog_ev
 				(void *wmi_hdl, void *evt_buf,
 				struct wmi_debug_fatal_events *ev);
+
 #endif /* OL_ATH_SMART_LOGGING */
+
+void wmi_process_fw_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
+					    HTC_PACKET * htc_packet);
+
 #endif /* _WMI_UNIFIED_API_H_ */
