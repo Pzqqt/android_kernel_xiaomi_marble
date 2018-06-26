@@ -1568,6 +1568,8 @@ enum _ol_ath_param_t {
 	/* Enable/disable Spatial Reuse */
 	OL_ATH_PARAM_HE_SR = 401,
 	OL_ATH_PARAM_HE_UL_PPDU_DURATION = 402,
+	OL_ATH_PARAM_HE_UL_RU_ALLOCATION = 403,
+
 };
 
 /* Enumeration of PDEV Configuration parameter */
