@@ -4521,6 +4521,7 @@ struct afe_param_id_lpass_core_shared_clk_cfg {
 #define ADSP_MEMORY_MAP_SMI_POOL      1
 #define ADSP_MEMORY_MAP_IMEM_POOL      2
 #define ADSP_MEMORY_MAP_SHMEM8_4K_POOL      3
+#define ADSP_MEMORY_MAP_MDF_SHMEM_4K_POOL   4
 
 /* Definition of virtual memory flag */
 #define ADSP_MEMORY_MAP_VIRTUAL_MEMORY 1
@@ -4643,6 +4644,53 @@ struct avs_cmdrsp_shared_mem_map_regions {
  * returned
  */
 
+} __packed;
+
+#define AVS_MDF_MDSP_PROC_ID	 0x2
+#define AVS_MDF_SSC_PROC_ID      0x3
+#define AVS_MDF_CDSP_PROC_ID	 0x4
+
+/* Shared memory map command payload used by the
+ * #AVCS_CMD_MAP_MDF_SHARED_MEMORY.
+ *
+ * This structure allows clients to map multiple shared memory
+ * regions with remote processor ID. All mapped regions must be
+ * from the same memory pool. Following this structure are
+ * num_regions of avs_shared_map_region_payload.
+ */
+struct avs_cmd_map_mdf_shared_memory {
+	struct apr_hdr hdr;
+	uint32_t mem_map_handle;
+/* Unique identifier for the shared memory address.
+ *
+ * The aDSP returns this handle for
+ * #AVCS_CMD_SHARED_MEM_MAP_REGIONS
+ *
+ * Supported values:
+ * Any 32-bit value
+ *
+ * The aDSP uses this handle to retrieve the shared memory
+ * attributes. This handle can be an abstract representation
+ * of the shared memory regions that are being mapped.
+ */
+
+	uint32_t proc_id;
+/* Supported values:
+ * #AVS_MDF_MDSP_PROC_ID
+ * #AVS_MDF_SSC_PROC_ID
+ * #AVS_MDF_CDSP_PROC_ID
+ */
+
+	uint32_t num_regions;
+/* Number of regions to be mapped with the remote DSP processor
+ * mentioned by proc_id field.
+ *
+ * Array of structures of avs_shared_map_region_payload will follow.
+ * The address fields in those arrays should correspond to the remote
+ * processor mentioned by proc_id.
+ * In case of DSPs with SMMU enabled, the address should be IOVA.
+ * And for DSPs without SMMU, the address should be physical address.
+ */
 } __packed;
 
 /*adsp_audio_memmap_api.h*/

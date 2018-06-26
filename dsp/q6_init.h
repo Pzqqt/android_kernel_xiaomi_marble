@@ -26,6 +26,20 @@ int rtac_init(void);
 int msm_audio_ion_init(void);
 int audio_slimslave_init(void);
 int avtimer_init(void);
+#ifdef CONFIG_MSM_MDF
+int msm_mdf_init(void);
+void msm_mdf_exit(void);
+#else
+static inline int msm_mdf_init(void)
+{
+	return 0;
+}
+
+static inline void msm_mdf_exit(void)
+{
+	return;
+}
+#endif
 
 void avtimer_exit(void);
 void audio_slimslave_exit(void);

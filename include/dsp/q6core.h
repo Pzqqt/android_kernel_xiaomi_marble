@@ -110,6 +110,20 @@ struct avcs_cmdrsp_get_license_validation_result {
 #define AVCS_CMDRSP_SHARED_MEM_MAP_REGIONS                          0x00012925
 #define AVCS_CMD_SHARED_MEM_UNMAP_REGIONS                           0x00012926
 
+/* Commands the AVCS to map multiple shared memory regions with remote
+ * processor ID. All mapped regions must be from the same memory pool.
+ *
+ * Return:
+ * ADSP_EOK        : SUCCESS
+ * ADSP_EHANDLE    : Failed due to incorrect handle.
+ * ADSP_EBADPARAM  : Failed due to bad parameters.
+ *
+ * Dependencies:
+ * The mem_map_handle should be obtained earlier
+ * using AVCS_CMD_SHARED_MEM_MAP_REGIONS with pool ID
+ * ADSP_MEMORY_MAP_MDF_SHMEM_4K_POOL.
+ */
+#define AVCS_CMD_MAP_MDF_SHARED_MEMORY                              0x00012930
 
 #define AVCS_CMD_REGISTER_TOPOLOGIES                                0x00012923
 
@@ -183,10 +197,15 @@ struct avcs_cmd_load_unload_topo_modules {
 } __packed;
 
 
+int q6core_map_memory_regions(phys_addr_t *buf_add, uint32_t mempool_id,
+			uint32_t *bufsz, uint32_t bufcnt, uint32_t *map_handle);
+int q6core_memory_unmap_regions(uint32_t mem_map_handle);
+int q6core_map_mdf_shared_memory(uint32_t map_handle, phys_addr_t *buf_add,
+			uint32_t proc_id, uint32_t *bufsz, uint32_t bufcnt);
+
 int32_t core_set_license(uint32_t key, uint32_t module_id);
 int32_t core_get_license_status(uint32_t module_id);
 
 int32_t q6core_load_unload_topo_modules(uint32_t topology_id,
 			bool preload_type);
-
 #endif /* __Q6CORE_H__ */

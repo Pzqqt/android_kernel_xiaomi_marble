@@ -39,6 +39,8 @@
 
 #define ADSP_STATE_READY_TIMEOUT_MS 3000
 
+#define APR_ENOTREADY 10
+
 enum {
 	META_CAL,
 	CUST_TOP_CAL,
@@ -274,12 +276,24 @@ static int32_t aprv2_core_fn_q(struct apr_client_data *data, void *priv)
 		case AVCS_CMD_SHARED_MEM_UNMAP_REGIONS:
 			pr_debug("%s: Cmd = AVCS_CMD_SHARED_MEM_UNMAP_REGIONS status[0x%x]\n",
 				__func__, payload1[1]);
+			/* -ADSP status to match Linux error standard */
+			q6core_lcl.adsp_status = -payload1[1];
 			q6core_lcl.bus_bw_resp_received = 1;
 			wake_up(&q6core_lcl.bus_bw_req_wait);
 			break;
 		case AVCS_CMD_SHARED_MEM_MAP_REGIONS:
 			pr_debug("%s: Cmd = AVCS_CMD_SHARED_MEM_MAP_REGIONS status[0x%x]\n",
 				__func__, payload1[1]);
+			/* -ADSP status to match Linux error standard */
+			q6core_lcl.adsp_status = -payload1[1];
+			q6core_lcl.bus_bw_resp_received = 1;
+			wake_up(&q6core_lcl.bus_bw_req_wait);
+			break;
+		case AVCS_CMD_MAP_MDF_SHARED_MEMORY:
+			pr_debug("%s: Cmd = AVCS_CMD_MAP_MDF_SHARED_MEMORY status[0x%x]\n",
+				__func__, payload1[1]);
+			/* -ADSP status to match Linux error standard */
+			q6core_lcl.adsp_status = -payload1[1];
 			q6core_lcl.bus_bw_resp_received = 1;
 			wake_up(&q6core_lcl.bus_bw_req_wait);
 			break;
@@ -923,7 +937,7 @@ bail:
 }
 EXPORT_SYMBOL(q6core_is_adsp_ready);
 
-static int q6core_map_memory_regions(phys_addr_t *buf_add, uint32_t mempool_id,
+int q6core_map_memory_regions(phys_addr_t *buf_add, uint32_t mempool_id,
 			uint32_t *bufsz, uint32_t bufcnt, uint32_t *map_handle)
 {
 	struct avs_cmd_shared_mem_map_regions *mmap_regions = NULL;
@@ -951,7 +965,7 @@ static int q6core_map_memory_regions(phys_addr_t *buf_add, uint32_t mempool_id,
 	mmap_regions->hdr.dest_port = 0;
 	mmap_regions->hdr.token = 0;
 	mmap_regions->hdr.opcode = AVCS_CMD_SHARED_MEM_MAP_REGIONS;
-	mmap_regions->mem_pool_id = ADSP_MEMORY_MAP_SHMEM8_4K_POOL & 0x00ff;
+	mmap_regions->mem_pool_id = mempool_id & 0x00ff;
 	mmap_regions->num_regions = bufcnt & 0x00ff;
 	mmap_regions->property_flag = 0x00;
 
@@ -971,6 +985,7 @@ static int q6core_map_memory_regions(phys_addr_t *buf_add, uint32_t mempool_id,
 		__func__, buf_add, bufsz[0], mmap_regions->num_regions);
 
 	*map_handle = 0;
+	q6core_lcl.adsp_status = 0;
 	q6core_lcl.bus_bw_resp_received = 0;
 	ret = apr_send_pkt(q6core_lcl.core_handle_q, (uint32_t *)
 		mmap_regions);
@@ -988,6 +1003,16 @@ static int q6core_map_memory_regions(phys_addr_t *buf_add, uint32_t mempool_id,
 		pr_err("%s: timeout. waited for memory map\n", __func__);
 		ret = -ETIME;
 		goto done;
+	} else {
+		/* set ret to 0 as no timeout happened */
+		ret = 0;
+	}
+
+	if (q6core_lcl.adsp_status < 0) {
+		pr_err("%s: DSP returned error %d\n",
+			__func__, q6core_lcl.adsp_status);
+		ret = q6core_lcl.adsp_status;
+		goto done;
 	}
 
 	*map_handle = q6core_lcl.mem_map_cal_handle;
@@ -996,7 +1021,7 @@ done:
 	return ret;
 }
 
-static int q6core_memory_unmap_regions(uint32_t mem_map_handle)
+int q6core_memory_unmap_regions(uint32_t mem_map_handle)
 {
 	struct avs_cmd_shared_mem_unmap_regions unmap_regions;
 	int ret = 0;
@@ -1015,6 +1040,7 @@ static int q6core_memory_unmap_regions(uint32_t mem_map_handle)
 	unmap_regions.hdr.opcode = AVCS_CMD_SHARED_MEM_UNMAP_REGIONS;
 	unmap_regions.mem_map_handle = mem_map_handle;
 
+	q6core_lcl.adsp_status = 0;
 	q6core_lcl.bus_bw_resp_received = 0;
 
 	pr_debug("%s: unmap regions map handle %d\n",
@@ -1037,8 +1063,107 @@ static int q6core_memory_unmap_regions(uint32_t mem_map_handle)
 		       __func__);
 		ret = -ETIME;
 		goto done;
+	} else {
+		/* set ret to 0 as no timeout happened */
+		ret = 0;
+	}
+	if (q6core_lcl.adsp_status < 0) {
+		pr_err("%s: DSP returned error %d\n",
+			__func__, q6core_lcl.adsp_status);
+		ret = q6core_lcl.adsp_status;
+		goto done;
 	}
 done:
+	return ret;
+}
+
+
+int q6core_map_mdf_shared_memory(uint32_t map_handle, phys_addr_t *buf_add,
+			uint32_t proc_id, uint32_t *bufsz, uint32_t bufcnt)
+{
+	struct avs_cmd_map_mdf_shared_memory *mmap_regions = NULL;
+	struct avs_shared_map_region_payload *mregions = NULL;
+	void *mmap_region_cmd = NULL;
+	void *payload = NULL;
+	int ret = 0;
+	int i = 0;
+	int cmd_size = 0;
+
+	cmd_size = sizeof(struct avs_cmd_map_mdf_shared_memory)
+			+ sizeof(struct avs_shared_map_region_payload)
+			* bufcnt;
+
+	mmap_region_cmd = kzalloc(cmd_size, GFP_KERNEL);
+	if (mmap_region_cmd == NULL)
+		return -ENOMEM;
+
+	mmap_regions = (struct avs_cmd_map_mdf_shared_memory *)mmap_region_cmd;
+	mmap_regions->hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
+						APR_HDR_LEN(APR_HDR_SIZE),
+								APR_PKT_VER);
+	mmap_regions->hdr.pkt_size = cmd_size;
+	mmap_regions->hdr.src_port = 0;
+	mmap_regions->hdr.dest_port = 0;
+	mmap_regions->hdr.token = 0;
+	mmap_regions->hdr.opcode = AVCS_CMD_MAP_MDF_SHARED_MEMORY;
+	mmap_regions->mem_map_handle = map_handle;
+	mmap_regions->proc_id = proc_id & 0x00ff;
+	mmap_regions->num_regions = bufcnt & 0x00ff;
+
+	payload = ((u8 *) mmap_region_cmd +
+				sizeof(struct avs_cmd_map_mdf_shared_memory));
+	mregions = (struct avs_shared_map_region_payload *)payload;
+
+	for (i = 0; i < bufcnt; i++) {
+		mregions->shm_addr_lsw = lower_32_bits(buf_add[i]);
+		mregions->shm_addr_msw =
+				msm_audio_populate_upper_32_bits(buf_add[i]);
+		mregions->mem_size_bytes = bufsz[i];
+		++mregions;
+	}
+
+	pr_debug("%s: sending mdf memory map, addr %pa, size %d, bufcnt = %d\n",
+		__func__, buf_add, bufsz[0], mmap_regions->num_regions);
+
+	q6core_lcl.adsp_status = 0;
+	q6core_lcl.bus_bw_resp_received = 0;
+	ret = apr_send_pkt(q6core_lcl.core_handle_q, (uint32_t *)
+		mmap_regions);
+	if (ret < 0) {
+		pr_err("%s: mdf memory map failed %d\n",
+			__func__, ret);
+		ret = -EINVAL;
+		goto done;
+	}
+
+	ret = wait_event_timeout(q6core_lcl.bus_bw_req_wait,
+				(q6core_lcl.bus_bw_resp_received == 1),
+				msecs_to_jiffies(TIMEOUT_MS));
+	if (!ret) {
+		pr_err("%s: timeout. waited for mdf memory map\n",
+			__func__);
+		ret = -ETIME;
+		goto done;
+	} else {
+		/* set ret to 0 as no timeout happened */
+		ret = 0;
+	}
+
+	/*
+	 * When the remote DSP is not ready, the ADSP will validate and store
+	 * the memory information and return APR_ENOTREADY to HLOS. The ADSP
+	 * will map the memory with remote DSP when it is ready. HLOS should
+	 * not treat APR_ENOTREADY as an error.
+	 */
+	if (q6core_lcl.adsp_status != -APR_ENOTREADY) {
+		pr_err("%s: DSP returned error %d\n",
+			__func__, q6core_lcl.adsp_status);
+		ret = q6core_lcl.adsp_status;
+		goto done;
+	}
+
+done:
+	kfree(mmap_region_cmd);
 	return ret;
 }
 
@@ -1119,10 +1244,11 @@ static int q6core_send_custom_topologies(void)
 
 	q6core_dereg_all_custom_topologies();
 
-	ret = q6core_map_memory_regions(&cal_block->cal_data.paddr, 0,
+	ret = q6core_map_memory_regions(&cal_block->cal_data.paddr,
+		ADSP_MEMORY_MAP_SHMEM8_4K_POOL,
 		(uint32_t *)&cal_block->map_data.map_size, 1,
 		&cal_block->map_data.q6map_handle);
-	if (!ret)  {
+	if (ret)  {
 		pr_err("%s: q6core_map_memory_regions failed\n", __func__);
 		goto unlock;
 	}
@@ -1172,7 +1298,7 @@ static int q6core_send_custom_topologies(void)
 		ret = q6core_lcl.adsp_status;
 unmap:
 	ret2 = q6core_memory_unmap_regions(cal_block->map_data.q6map_handle);
-	if (!ret2)  {
+	if (ret2)  {
 		pr_err("%s: q6core_memory_unmap_regions failed for map handle %d\n",
 			__func__, cal_block->map_data.q6map_handle);
 		ret = ret2;
