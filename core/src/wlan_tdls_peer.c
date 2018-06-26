@@ -185,6 +185,7 @@ static struct tdls_peer *tdls_add_peer(struct tdls_vdev_priv_obj *vdev_obj,
 		tdls_find_opclass(soc_obj->soc,
 				  peer->pref_off_chan_num,
 				  soc_obj->tdls_configs.tdls_pre_off_chan_bw);
+	peer->sta_id = INVALID_TDLS_PEER_ID;
 
 	qdf_list_insert_back(head, &peer->node);
 
