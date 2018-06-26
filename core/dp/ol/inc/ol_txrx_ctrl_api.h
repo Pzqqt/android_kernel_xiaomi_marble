@@ -233,8 +233,7 @@ static inline void ol_txrx_peer_pause(struct ol_txrx_peer_t *data_peer)
  *
  * @param data_pdev - the physical device being paused
  */
-#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
-		defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(CONFIG_HL_SUPPORT)
+#if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(CONFIG_HL_SUPPORT)
 
 void ol_txrx_pdev_pause(struct ol_txrx_pdev_t *data_pdev, uint32_t reason);
 #else
@@ -252,8 +251,7 @@ void ol_txrx_pdev_pause(struct ol_txrx_pdev_t *data_pdev, uint32_t reason)
  *
  * @param data_pdev - the physical device being unpaused
  */
-#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
-		defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(CONFIG_HL_SUPPORT)
+#if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(CONFIG_HL_SUPPORT)
 
 void ol_txrx_pdev_unpause(struct ol_txrx_pdev_t *pdev, uint32_t reason);
 #else
