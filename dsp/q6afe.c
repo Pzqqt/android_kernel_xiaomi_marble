@@ -586,11 +586,23 @@ int afe_get_port_type(u16 port_id)
 {
 	int ret = MSM_AFE_PORT_TYPE_RX;
 
-	/* Odd numbered ports are TX and Rx are Even numbered */
-	if (port_id & 0x1)
+	switch (port_id) {
+	case VOICE_RECORD_RX:
+	case VOICE_RECORD_TX:
 		ret = MSM_AFE_PORT_TYPE_TX;
-	else
+		break;
+	case VOICE_PLAYBACK_TX:
+	case VOICE2_PLAYBACK_TX:
 		ret = MSM_AFE_PORT_TYPE_RX;
+		break;
+	default:
+		/* Odd numbered ports are TX and Rx are Even numbered */
+		if (port_id & 0x1)
+			ret = MSM_AFE_PORT_TYPE_TX;
+		else
+			ret = MSM_AFE_PORT_TYPE_RX;
+		break;
+	}
 
 	return ret;
 }
