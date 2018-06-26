@@ -22,6 +22,7 @@
 #include "htc_api.h"
 #include "htc_api.h"
 #include "wmi_unified_priv.h"
+#include "wmi_unified_api.h"
 #include "qdf_module.h"
 
 #ifndef WMI_NON_TLV_SUPPORT
@@ -1677,7 +1678,7 @@ static void wmi_process_fw_event_default_ctx(struct wmi_unified *wmi_handle,
 		(wmi_handle->scn_handle, evt_buf, exec_ctx);
 #else
 	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk(wmi_handle,
-					 evt_buf, exec_ctx);
+					 htc_packet, exec_ctx);
 #endif
 
 	return;
@@ -1694,8 +1695,8 @@ static void wmi_process_fw_event_default_ctx(struct wmi_unified *wmi_handle,
  *
  * Return: none
  */
-static void wmi_process_fw_event_worker_thread_ctx
-		(struct wmi_unified *wmi_handle, HTC_PACKET *htc_packet)
+void wmi_process_fw_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
+					    HTC_PACKET *htc_packet)
 {
 	wmi_buf_t evt_buf;
 
@@ -1709,6 +1710,8 @@ static void wmi_process_fw_event_worker_thread_ctx
 
 	return;
 }
+
+qdf_export_symbol(wmi_process_fw_event_worker_thread_ctx);
 
 /**
  * wmi_get_pdev_ep: Get wmi handle based on endpoint
