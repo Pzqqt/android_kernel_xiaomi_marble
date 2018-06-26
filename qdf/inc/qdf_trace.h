@@ -503,6 +503,7 @@ static inline void qdf_register_debugcb_init(void)
 #ifdef TRACE_RECORD
 void qdf_trace_register(QDF_MODULE_ID, tp_qdf_trace_cb);
 void qdf_trace_init(void);
+void qdf_trace_deinit(void);
 void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data);
 void qdf_trace_enable(uint32_t, uint8_t enable);
 void qdf_trace_dump_all(void *, uint8_t, uint8_t, uint32_t, uint32_t);
@@ -511,6 +512,11 @@ QDF_STATUS qdf_trace_spin_lock_init(void);
 #ifdef CONFIG_MCL
 static inline
 void qdf_trace_init(void)
+{
+}
+
+static inline
+void qdf_trace_deinit(void)
 {
 }
 

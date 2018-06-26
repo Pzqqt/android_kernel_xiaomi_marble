@@ -88,8 +88,6 @@ module_trace_info g_qdf_trace_info[QDF_MODULE_ID_MAX] = {
 #ifdef TRACE_RECORD
 /* Static and Global variables */
 static spinlock_t ltrace_lock;
-
-static qdf_trace_record_t g_qdf_trace_tbl[MAX_QDF_TRACE_RECORDS];
 /* global qdf trace data */
 static t_qdf_trace_data g_qdf_trace_data;
 /*
@@ -102,6 +100,13 @@ static t_qdf_trace_data g_qdf_trace_data;
  */
 static tp_qdf_trace_cb qdf_trace_cb_table[QDF_MODULE_ID_MAX];
 static tp_qdf_trace_cb qdf_trace_restore_cb_table[QDF_MODULE_ID_MAX];
+
+#ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
+static qdf_trace_record_t *g_qdf_trace_tbl;
+#else
+static qdf_trace_record_t g_qdf_trace_tbl[MAX_QDF_TRACE_RECORDS];
+#endif
+
 #endif
 
 #ifdef WLAN_FEATURE_MEMDUMP_ENABLE
@@ -376,6 +381,30 @@ qdf_export_symbol(qdf_trace_hex_dump);
 #endif
 
 #ifdef TRACE_RECORD
+
+#ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
+static inline QDF_STATUS allocate_g_qdf_trace_tbl_buffer(void)
+{
+	g_qdf_trace_tbl = vzalloc(MAX_QDF_TRACE_RECORDS *
+				  sizeof(*g_qdf_trace_tbl));
+	QDF_BUG(g_qdf_trace_tbl);
+	return g_qdf_trace_tbl ? QDF_STATUS_SUCCESS : QDF_STATUS_E_NOMEM;
+}
+
+static inline void free_g_qdf_trace_tbl_buffer(void)
+{
+	vfree(g_qdf_trace_tbl);
+	g_qdf_trace_tbl = NULL;
+}
+#else
+static inline QDF_STATUS allocate_g_qdf_trace_tbl_buffer(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void free_g_qdf_trace_tbl_buffer(void)
+{ }
+#endif
 /**
  * qdf_trace_enable() - Enable MTRACE for specific modules
  * @bitmask_of_module_id: Bitmask according to enum of the modules.
@@ -446,6 +475,8 @@ void qdf_trace_init(void)
 {
 	uint8_t i;
 
+	if (allocate_g_qdf_trace_tbl_buffer() != QDF_STATUS_SUCCESS)
+		return;
 	g_qdf_trace_data.head = INVALID_QDF_TRACE_ADDR;
 	g_qdf_trace_data.tail = INVALID_QDF_TRACE_ADDR;
 	g_qdf_trace_data.num = 0;
@@ -459,6 +490,26 @@ void qdf_trace_init(void)
 	}
 }
 qdf_export_symbol(qdf_trace_init);
+
+/**
+ * qdf_trace_deinit() - frees memory allocated dynamically
+ *
+ * Called from cds_deinit, so that we can free the memory and resets
+ * the variables
+ *
+ * Return: None
+ */
+void qdf_trace_deinit(void)
+{
+	g_qdf_trace_data.enable = false;
+	g_qdf_trace_data.num = 0;
+	g_qdf_trace_data.head = INVALID_QDF_TRACE_ADDR;
+	g_qdf_trace_data.tail = INVALID_QDF_TRACE_ADDR;
+
+	free_g_qdf_trace_tbl_buffer();
+}
+
+qdf_export_symbol(qdf_trace_deinit);
 
 /**
  * qdf_trace() - puts the messages in to ring-buffer
