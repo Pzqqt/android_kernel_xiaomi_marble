@@ -303,6 +303,7 @@ struct aanc_data {
 	uint16_t aanc_tx_port;
 	uint32_t aanc_rx_port_sample_rate;
 	uint32_t aanc_tx_port_sample_rate;
+	int level;
 };
 
 int afe_open(u16 port_id, union afe_port_config *afe_config, int rate);
@@ -397,6 +398,7 @@ void afe_clear_config(enum afe_config_type config);
 bool afe_has_config(enum afe_config_type config);
 
 void afe_set_aanc_info(struct aanc_data *aanc_info);
+int afe_set_aanc_noise_level(int val);
 int afe_port_group_set_param(u16 group_id,
 	union afe_port_group_config *afe_group_config);
 int afe_port_group_enable(u16 group_id,
