@@ -829,6 +829,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	}
 }
 
+#ifndef QCA_WIFI_QCA6390
 static QDF_STATUS
 dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id) {
 	uint8_t pdev_id = pdev->pdev_id;
@@ -898,7 +899,8 @@ dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev, int mac_id)
  * Allocate and setup link descriptor pool that will be used by HW for
  * various link and queue descriptors and managed by WBM
  */
-static int dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
+static
+QDF_STATUS dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 {
 	struct dp_pdev *dp_pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
@@ -1077,7 +1079,7 @@ static int dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 		"%s: successfully replenished %d buffer\n",
 		__func__, num_replenish_buf);
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 
 fail:
 	for (i = 0; i < MAX_MON_LINK_DESC_BANKS; i++) {
@@ -1099,7 +1101,8 @@ fail:
 /*
  * Free link descriptor pool that was setup HW
  */
-static void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
+static
+void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
 {
 	struct dp_pdev *dp_pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
@@ -1131,7 +1134,6 @@ static void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
  * Return: QDF_STATUS_SUCCESS: success
  *         QDF_STATUS_E_RESOURCES: Error return
  */
-
 QDF_STATUS
 dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
 	struct dp_soc *soc = pdev->soc;
@@ -1172,6 +1174,7 @@ dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
 	qdf_spinlock_create(&pdev->mon_lock);
 	return QDF_STATUS_SUCCESS;
 }
+
 /**
  * dp_rx_pdev_mon_detach() - detach dp rx for monitor mode
  * @pdev: core txrx pdev context
@@ -1200,3 +1203,4 @@ dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
