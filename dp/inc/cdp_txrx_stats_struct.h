@@ -1253,7 +1253,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_PRECAC_INTER_CHANNEL = 373,
 	OL_ATH_PARAM_PRECAC_CHAN_STATE = 374,
 #endif
-
+	OL_ATH_PARAM_DBR_RING_STATUS = 375,
 };
 
 /* Enumeration of PDEV Configuration parameter */
