@@ -734,7 +734,9 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 		for (j = 0; j < ap_info->numOfRssi; j++)
 			hdd_debug("Rssi %d", *rssi++);
 
-		ap_info += ap_info->numOfRssi * sizeof(*rssi);
+		ap_info = (tSirWifiSignificantChange *)((char *)ap_info +
+				ap_info->numOfRssi * sizeof(*rssi) +
+				sizeof(*ap_info));
 	}
 
 	if (nla_put_u32(skb,
@@ -780,7 +782,9 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 
 			nla_nest_end(skb, ap);
 
-			ap_info += ap_info->numOfRssi * sizeof(*rssi);
+			ap_info = (tSirWifiSignificantChange *)((char *)ap_info
+					+ ap_info->numOfRssi * sizeof(*rssi) +
+					sizeof(*ap_info));
 		}
 		nla_nest_end(skb, aps);
 
