@@ -378,6 +378,28 @@ void hif_clear_ce_stats(struct HIF_CE_state *hif_ce_state)
 }
 
 /**
+ * hif_tasklet_schedule() - schedule tasklet
+ * @hif_ctx: hif context
+ * @tasklet_entry: ce tasklet entry
+ *
+ * Return: false if tasklet already scheduled, otherwise true
+ */
+static inline bool hif_tasklet_schedule(struct hif_opaque_softc *hif_ctx,
+					struct ce_tasklet_entry *tasklet_entry)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (test_bit(TASKLET_STATE_SCHED, &tasklet_entry->intr_tq.state)) {
+		HIF_DBG("tasklet scheduled, return");
+		qdf_atomic_dec(&scn->active_tasklet_cnt);
+		return false;
+	}
+
+	tasklet_schedule(&tasklet_entry->intr_tq);
+	return true;
+}
+
+/**
  * ce_dispatch_interrupt() - dispatch an interrupt to a processing context
  * @ce_id: ce_id
  * @tasklet_entry: context
@@ -422,7 +444,7 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
 	if (hif_napi_enabled(hif_hdl, ce_id))
 		hif_napi_schedule(hif_hdl, ce_id);
 	else
-		tasklet_schedule(&tasklet_entry->intr_tq);
+		hif_tasklet_schedule(hif_hdl, tasklet_entry);
 
 	return IRQ_HANDLED;
 }

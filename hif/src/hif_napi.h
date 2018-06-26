@@ -168,7 +168,7 @@ bool hif_napi_created(struct hif_opaque_softc *hif, int ce);
 void hif_napi_enable_irq(struct hif_opaque_softc *hif, int id);
 
 /* called by ce_tasklet.c::ce_dispatch_interrupt*/
-int hif_napi_schedule(struct hif_opaque_softc *scn, int ce_id);
+bool hif_napi_schedule(struct hif_opaque_softc *scn, int ce_id);
 
 /* called by hdd_napi, which is called by kernel */
 int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
@@ -253,8 +253,8 @@ static inline bool hif_napi_created(struct hif_opaque_softc *hif, int ce)
 static inline void hif_napi_enable_irq(struct hif_opaque_softc *hif, int id)
 { return; }
 
-static inline int hif_napi_schedule(struct hif_opaque_softc *hif, int ce_id)
-{ return 0; }
+static inline bool hif_napi_schedule(struct hif_opaque_softc *hif, int ce_id)
+{ return false; }
 
 static inline int hif_napi_poll(struct napi_struct *napi, int budget)
 { return -EPERM; }
