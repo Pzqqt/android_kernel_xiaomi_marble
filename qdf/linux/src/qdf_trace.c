@@ -514,7 +514,7 @@ qdf_export_symbol(qdf_trace_deinit);
 /**
  * qdf_trace() - puts the messages in to ring-buffer
  * @module: Enum of module, basically module id.
- * @param: Code to be recorded
+ * @code: Code to be recorded
  * @session: Session ID of the log
  * @data: Actual message contents
  *
@@ -579,6 +579,32 @@ void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data)
 	spin_unlock_irqrestore(&ltrace_lock, flags);
 }
 qdf_export_symbol(qdf_trace);
+
+#ifdef ENABLE_MTRACE_LOG
+void qdf_mtrace_log(QDF_MODULE_ID src_module, QDF_MODULE_ID dst_module,
+		    uint16_t message_id, uint8_t vdev_id)
+{
+	uint32_t trace_log, payload;
+	static uint16_t counter;
+
+	trace_log = (src_module << 23) | (dst_module << 15) | message_id;
+	payload = (vdev_id << 16) | counter++;
+
+	QDF_TRACE(src_module, QDF_TRACE_LEVEL_TRACE, "%x %x",
+		  trace_log, payload);
+}
+
+qdf_export_symbol(qdf_mtrace_log);
+#endif
+
+void qdf_mtrace(QDF_MODULE_ID src_module, QDF_MODULE_ID dst_module,
+		uint16_t message_id, uint8_t vdev_id, uint32_t data)
+{
+	qdf_trace(src_module, message_id, vdev_id, data);
+	qdf_mtrace_log(src_module, dst_module, message_id, vdev_id);
+}
+
+qdf_export_symbol(qdf_mtrace);
 
 /**
  * qdf_trace_spin_lock_init() - initializes the lock variable before use
