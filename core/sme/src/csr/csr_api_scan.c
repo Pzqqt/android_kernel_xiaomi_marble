@@ -150,6 +150,18 @@ QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac_ctx,
 	profile = session->scan_info.profile;
 	sme_debug("session %d", session_id);
 	do {
+		/* If this scan is for HDD reassociate */
+		if (mac_ctx->roam.neighborRoamInfo[session_id].
+				uOsRequestedHandoff) {
+			/* notify LFR state m/c */
+			status = csr_neighbor_roam_sssid_scan_done
+				(mac_ctx, session_id, QDF_STATUS_SUCCESS);
+			if (!QDF_IS_STATUS_SUCCESS(status))
+				csr_neighbor_roam_start_lfr_scan(mac_ctx,
+								 session_id);
+			status = QDF_STATUS_SUCCESS;
+			break;
+		}
 		/*
 		 * If there is roam command waiting, ignore this roam because
 		 * the newer roam command is the one to execute
@@ -251,6 +263,17 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac_ctx,
 		sme_err("session %d not found", session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/* If this scan is for HDD reassociate */
+	if (mac_ctx->roam.neighborRoamInfo[session_id].uOsRequestedHandoff) {
+		/* notify LFR state m/c */
+		status = csr_neighbor_roam_sssid_scan_done
+				(mac_ctx, session_id, QDF_STATUS_E_FAILURE);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			csr_neighbor_roam_start_lfr_scan(mac_ctx, session_id);
+		return QDF_STATUS_SUCCESS;
+	}
+
 	profile = session->scan_info.profile;
 
 	/*
