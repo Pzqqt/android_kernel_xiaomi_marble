@@ -6338,6 +6338,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_TX_BEAMFORMEE] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_BEAMFORMEE_NSTS] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -7569,6 +7571,26 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		ret_val = sme_update_tx_bfee_supp(mac_handle,
 						  adapter->session_id,
 						  cfg_val);
+		if (ret_val)
+			sme_err("Failed to set Tx beamformee cap");
+
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_BEAMFORMEE_NSTS]) {
+		cfg_val = nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_BEAMFORMEE_NSTS]);
+		if (cfg_val > hdd_ctx->config->txBFCsnValue) {
+			hdd_err("NSTS %d not supported, supp_val %d", cfg_val,
+				hdd_ctx->config->txBFCsnValue);
+			ret_val = -ENOTSUPP;
+			goto send_err;
+		}
+		hdd_debug("Set Tx beamformee NSTS to %d", cfg_val);
+		ret_val = sme_update_tx_bfee_nsts(hdd_ctx->mac_handle,
+						  adapter->session_id,
+						  cfg_val,
+						  hdd_ctx->config->txBFCsnValue
+						  );
 		if (ret_val)
 			sme_err("Failed to set Tx beamformee cap");
 

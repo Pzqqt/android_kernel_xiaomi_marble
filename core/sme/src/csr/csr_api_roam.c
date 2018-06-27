@@ -15836,9 +15836,11 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		if (IS_DOT11_MODE_HE(csr_join_req->dot11mode)) {
 			csr_join_req_copy_he_cap(csr_join_req, pSession);
 			/* change the HE caps like sts per band */
-			CSR_REVISE_REQ_HE_CAP_PER_BAND(csr_join_req, pMac,
-						       pBssDescription->
-						       channelId);
+			if (!pMac->usr_cfg_tx_bfee_nsts)
+				CSR_REVISE_REQ_HE_CAP_PER_BAND(csr_join_req,
+							       pMac,
+							       pBssDescription->
+							       channelId);
 		}
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,

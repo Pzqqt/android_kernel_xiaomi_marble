@@ -922,6 +922,7 @@ typedef struct sAniSirGlobal {
 	bool is_usr_cfg_amsdu_enabled;
 	uint8_t no_ack_policy_cfg[MAX_NUM_AC];
 	uint32_t he_sgi_ltf_cfg_bit_mask;
+	uint8_t usr_cfg_tx_bfee_nsts;
 	struct mgmt_beacon_probe_filter bcn_filter;
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_cap_2g;
