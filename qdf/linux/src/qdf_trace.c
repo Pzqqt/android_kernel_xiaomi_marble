@@ -3482,11 +3482,11 @@ qdf_export_symbol(qdf_get_pidx);
 
 #ifdef PANIC_ON_BUG
 #ifdef CONFIG_SLUB_DEBUG
-void QDF_DEBUG_PANIC(void)
+void __qdf_bug(void)
 {
 	BUG();
 }
-qdf_export_symbol(QDF_DEBUG_PANIC);
+qdf_export_symbol(__qdf_bug);
 #endif /* CONFIG_SLUB_DEBUG */
 #endif /* PANIC_ON_BUG */
 

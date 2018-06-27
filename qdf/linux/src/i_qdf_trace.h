@@ -190,10 +190,10 @@ static inline void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 #ifdef PANIC_ON_BUG
 #ifdef CONFIG_SLUB_DEBUG
 /**
- * QDF_DEBUG_PANIC() - Causes a panic if PANIC_ON_BUG option is enabled
+ * __qdf_bug() - Calls BUG() when the PANIC_ON_BUG compilation option is enabled
  *
- * Note: Calling panic can cause a compiler to assume any following code is
- * unreachable. Because these panics may or may not be enabled by the build
+ * Note: Calling BUG() can cause a compiler to assume any following code is
+ * unreachable. Because these BUG's may or may not be enabled by the build
  * configuration, this can cause developers some pain. Consider:
  *
  *	bool bit;
@@ -201,7 +201,7 @@ static inline void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
  *	if (ptr)
  *		bit = ptr->returns_bool();
  *	else
- *		panic();
+ *		__qdf_bug();
  *
  *	// do stuff with @bit
  *
@@ -213,33 +213,51 @@ static inline void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
  * uninitialized" warning will not be emitted, and the bug remains uncaught
  * until someone tries to make a build without PANIC_ON_BUG.
  *
- * A simple workaround for this, is to put the definition of QDF_DEBUG_PANIC in
+ * A simple workaround for this, is to put the definition of __qdf_bug in
  * another compilation unit, which prevents the compiler from assuming
  * subsequent code is unreachable. For CONFIG_SLUB_DEBUG, do this to catch more
  * bugs. Otherwise, use the typical inlined approach.
  *
  * Return: None
  */
-void QDF_DEBUG_PANIC(void);
-#else
-static inline void QDF_DEBUG_PANIC(void)
+void __qdf_bug(void);
+#else /* CONFIG_SLUB_DEBUG */
+static inline void __qdf_bug(void)
 {
 	BUG();
 }
 #endif /* CONFIG_SLUB_DEBUG */
+
+/**
+ * QDF_DEBUG_PANIC() - In debug builds, panic, otherwise do nothing
+ * @reason: An optional reason format string, followed by args
+ *
+ * Return: None
+ */
+#define QDF_DEBUG_PANIC(reason...) __QDF_DEBUG_PANIC("" reason)
+
+#define __QDF_DEBUG_PANIC(ftm, args...) \
+	do { \
+		pr_err("WLAN Panic @ %s:%d: " ftm "\n", \
+		       __func__, __LINE__, ##args); \
+		__qdf_bug(); \
+	} while (false)
 
 #define QDF_BUG(_condition) \
 	do { \
 		if (!(_condition)) { \
 			pr_err("QDF BUG in %s Line %d: Failed assertion '" \
 			       #_condition "'\n", __func__, __LINE__); \
-			QDF_DEBUG_PANIC(); \
+			__qdf_bug(); \
 		} \
 	} while (0)
 
-#else
+#else /* PANIC_ON_BUG */
 
-static inline void QDF_DEBUG_PANIC(void) { }
+#define QDF_DEBUG_PANIC(reason...) \
+	do { \
+		/* no-op */ \
+	} while (false)
 
 #define QDF_BUG(_condition) \
 	do { \
@@ -247,6 +265,7 @@ static inline void QDF_DEBUG_PANIC(void) { }
 			/* no-op */ \
 		} \
 	} while (0)
+
 #endif /* PANIC_ON_BUG */
 
 #ifdef KSYM_SYMBOL_LEN
