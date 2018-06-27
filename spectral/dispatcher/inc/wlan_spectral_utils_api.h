@@ -25,6 +25,7 @@
 
 /* Forward declaration */
 struct direct_buf_rx_data;
+struct wmi_spectral_cmd_ops;
 
 /**
  * wlan_spectral_init() - API to init spectral component
