@@ -121,7 +121,8 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 						ev->peer_stats[i].peer_macaddr);
 		ev->peer_stats[i].tx_rate = peer_stats.peer_tx_rate;
 		ev->peer_stats[i].rx_rate = peer_stats.peer_rx_rate;
-		ev->peer_stats[i].peer_rssi = peer_stats.peer_rssi;
+		ev->peer_stats[i].peer_rssi = peer_stats.peer_rssi +
+						TGT_NOISE_FLOOR_DBM;
 	}
 
 	return QDF_STATUS_SUCCESS;
