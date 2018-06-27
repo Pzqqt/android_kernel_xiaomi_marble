@@ -7186,9 +7186,9 @@ void sme_qos_cleanup_ctrl_blk_for_handoff(tpAniSirGlobal pMac,
 
 /**
  * sme_qos_is_ts_info_ack_policy_valid() - check if ACK policy is allowed.
- * @pMac: The handle returned by mac_open.
+ * @mac_handle: The handle returned by mac_open.
  * @pQoSInfo: Pointer to struct sme_qos_wmmtspecinfo which contains the
- * @          WMM TSPEC related info, provided by HDD
+ *            WMM TSPEC related info, provided by HDD
  * @sessionId: sessionId returned by sme_open_session.
  *
  * The SME QoS API exposed to HDD to check if TS info ack policy field can be
@@ -7197,15 +7197,16 @@ void sme_qos_cleanup_ctrl_blk_for_handoff(tpAniSirGlobal pMac,
  * Return: true - Current Association is HT association and so TS info ack
  *                 policy can be set to "HT-immediate block acknowledgment"
  */
-bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
+bool sme_qos_is_ts_info_ack_policy_valid(mac_handle_t mac_handle,
 					 struct sme_qos_wmmtspecinfo *pQoSInfo,
 					 uint8_t sessionId)
 {
 	tDot11fBeaconIEs *pIes = NULL;
 	struct sme_qos_sessioninfo *pSession;
 	QDF_STATUS hstatus;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
-	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
+	if (!CSR_IS_SESSION_VALID(mac, sessionId)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Session Id %d is invalid",
 			  __func__, __LINE__, sessionId);
@@ -7228,7 +7229,7 @@ bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
 		return false;
 	}
 
-	hstatus = csr_get_parsed_bss_description_ies(pMac,
+	hstatus = csr_get_parsed_bss_description_ies(mac,
 						   pSession->assocInfo.pBssDesc,
 						      &pIes);
 	if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
@@ -7255,22 +7256,17 @@ bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
 	return true;
 }
 
-static bool sme_qos_validate_requested_params(tpAniSirGlobal pMac,
-				       struct sme_qos_wmmtspecinfo *pQoSInfo,
-				       uint8_t sessionId)
+static bool sme_qos_validate_requested_params(tpAniSirGlobal mac,
+				       struct sme_qos_wmmtspecinfo *qos_info,
+				       uint8_t session_id)
 {
-	bool rc = false;
+	if (SME_QOS_WMM_TS_DIR_RESV == qos_info->ts_info.direction)
+		return false;
+	if (!sme_qos_is_ts_info_ack_policy_valid(MAC_HANDLE(mac),
+						 qos_info, session_id))
+		return false;
 
-	do {
-		if (SME_QOS_WMM_TS_DIR_RESV == pQoSInfo->ts_info.direction)
-			break;
-		if (!sme_qos_is_ts_info_ack_policy_valid(pMac, pQoSInfo,
-							sessionId))
-			break;
-
-		rc = true;
-	} while (0);
-	return rc;
+	return true;
 }
 
 static QDF_STATUS qos_issue_command(tpAniSirGlobal pMac, uint8_t sessionId,

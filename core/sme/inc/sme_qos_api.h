@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -206,8 +206,9 @@ enum sme_qos_statustype sme_qos_modify_req(tHalHandle hHal,
 		struct sme_qos_wmmtspecinfo *pQoSInfo, uint32_t QosFlowID);
 enum sme_qos_statustype sme_qos_release_req(tHalHandle hHal, uint8_t session_id,
 				      uint32_t QosFlowID);
-bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
-		struct sme_qos_wmmtspecinfo *pQoSInfo, uint8_t sessionId);
+bool sme_qos_is_ts_info_ack_policy_valid(mac_handle_t mac_handle,
+					 struct sme_qos_wmmtspecinfo *pQoSInfo,
+					 uint8_t sessionId);
 void sme_qos_update_hand_off(uint8_t sessionId, bool updateHandOff);
 QDF_STATUS sme_update_dsc_pto_up_mapping(tHalHandle hHal,
 		enum sme_qos_wmmuptype *dscpmapping, uint8_t sessionId);

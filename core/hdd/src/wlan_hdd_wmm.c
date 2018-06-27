@@ -1179,9 +1179,8 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 
 	if (qosInfo.ts_info.ack_policy ==
 	    SME_QOS_WMM_TS_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK) {
-		if (!sme_qos_is_ts_info_ack_policy_valid
-			    ((tpAniSirGlobal) mac_handle, &qosInfo,
-			    adapter->session_id)) {
+		if (!sme_qos_is_ts_info_ack_policy_valid(mac_handle, &qosInfo,
+							 adapter->session_id)) {
 			qosInfo.ts_info.ack_policy =
 				SME_QOS_WMM_TS_ACK_POLICY_NORMAL_ACK;
 		}
