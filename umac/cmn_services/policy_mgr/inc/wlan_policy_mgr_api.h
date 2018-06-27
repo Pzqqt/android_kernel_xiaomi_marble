@@ -2427,6 +2427,32 @@ bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
 					    uint8_t channel);
 
 /**
+ * policy_mgr_update_user_config_sap_chan() - Update user configured channel
+ * @psoc: poniter to psoc
+ * @channel: channel to be upated
+ *
+ * Return: void
+ **/
+void policy_mgr_update_user_config_sap_chan(
+			struct wlan_objmgr_psoc *psoc, uint32_t channel);
+
+/**
+ * policy_mgr_is_sap_restart_required_after_sta_disconnect() - is sap restart
+ * required
+ * after sta disconnection
+ * @psoc: psoc object data
+ * @intf_ch: sap channel
+ *
+ * Check if SAP should be moved to a non dfs channel after STA disconnection.
+ * This API applicable only for STA+SAP SCC and ini 'sta_sap_scc_on_dfs_chan'
+ * is enabled.
+ *
+ * Return: true if sap restart is required, otherwise false
+ */
+bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
+			struct wlan_objmgr_psoc *psoc, uint8_t *intf_ch);
+
+/**
  * policy_mgr_is_sta_sap_scc() - check whether SAP is doing SCC with
  * STA
  * @psoc: poniter to psoc
@@ -2436,4 +2462,5 @@ bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
  * Return: true or false
  */
 bool policy_mgr_is_sta_sap_scc(struct wlan_objmgr_psoc *psoc, uint8_t sap_ch);
+
 #endif /* __WLAN_POLICY_MGR_API_H */
