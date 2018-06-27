@@ -758,6 +758,19 @@ QDF_STATUS policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
 }
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+void policy_mgr_update_user_config_sap_chan(
+			struct wlan_objmgr_psoc *psoc, uint32_t channel)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid pm context and failed to update the user config sap channel");
+		return;
+	}
+	pm_ctx->user_config_sap_channel = channel;
+}
+
 /**
  * policy_mgr_is_restart_sap_allowed() - Check if restart SAP
  * allowed during SCC -> MCC switch
@@ -818,6 +831,40 @@ bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
 	}
 
 	return is_safe;
+}
+
+bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
+			struct wlan_objmgr_psoc *psoc, uint8_t *intf_ch)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t sap_chan = policy_mgr_mode_specific_get_channel(psoc,
+								PM_SAP_MODE);
+	bool sta_sap_scc_on_dfs_chan =
+		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
+
+	*intf_ch = 0;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid pm context");
+		return false;
+	}
+
+	policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, sap_chan %u",
+			 sta_sap_scc_on_dfs_chan, sap_chan);
+
+	if (!sta_sap_scc_on_dfs_chan ||
+	    !(sap_chan && WLAN_REG_IS_5GHZ_CH(sap_chan) &&
+	     (wlan_reg_get_channel_state(pm_ctx->pdev, sap_chan) ==
+	      CHANNEL_STATE_DFS))) {
+		return false;
+	}
+
+	*intf_ch = pm_ctx->user_config_sap_channel;
+	policy_mgr_debug("Standalone SAP is not allowed on DFS channel, Move it to channel %u",
+			 *intf_ch);
+
+	return true;
 }
 
 /**
@@ -1040,11 +1087,27 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 	uint8_t operating_channel[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS] = {0};
 	uint32_t cc_count = 0;
+	bool restart_sap = false;
+	uint8_t sap_ch;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid context");
 		return;
+	}
+	if (policy_mgr_get_connection_count(psoc) == 1) {
+		/*
+		 * If STA+SAP sessions are on DFS channel and STA+SAP SCC is
+		 * enabled on DFS channel then move the SAP out of DFS channel
+		 * as soon as STA gets disconnect.
+		 */
+		if (policy_mgr_is_sap_restart_required_after_sta_disconnect(
+							psoc, &sap_ch)) {
+			policy_mgr_debug("move the SAP to configured channel %u",
+					 sap_ch);
+			restart_sap = true;
+			goto sap_restart;
+		}
 	}
 
 	/*
@@ -1069,9 +1132,20 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 		return;
 	}
 
-	if ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
-		policy_mgr_valid_sta_channel_check(psoc, operating_channel[0])
-		&& !pm_ctx->sta_ap_intf_check_work_info) {
+sap_restart:
+	/*
+	 * If sta_sap_scc_on_dfs_chan is true then standalone SAP is not
+	 * allowed on DFS channel. SAP is allowed on DFS channel only when STA
+	 * is already connected on that channel.
+	 * In following condition restart_sap will be true if
+	 * sta_sap_scc_on_dfs_chan is true and SAP is on DFS channel.
+	 * This scenario can come if STA+SAP are operating on DFS channel and
+	 * STA gets disconnected.
+	 */
+	if (restart_sap ||
+	    ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
+	    policy_mgr_valid_sta_channel_check(psoc, operating_channel[0]) &&
+	    !pm_ctx->sta_ap_intf_check_work_info)) {
 		struct sta_ap_intf_check_work_ctx *work_info;
 		work_info = qdf_mem_malloc(
 			sizeof(struct sta_ap_intf_check_work_ctx));

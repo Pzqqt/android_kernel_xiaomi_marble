@@ -268,6 +268,7 @@ struct policy_mgr_psoc_priv_obj {
 	qdf_event_t opportunistic_update_done_evt;
 	qdf_event_t channel_switch_complete_evt;
 	send_mode_change_event_cb mode_change_cb;
+	uint32_t user_config_sap_channel;
 };
 
 /**
