@@ -79,6 +79,8 @@ struct wdsp_glink_priv {
 	/* Respone buffer related */
 	u8 rsp_cnt;
 	struct wdsp_rsp_que rsp[RESP_QUEUE_SIZE];
+	u8 write_idx;
+	u8 read_idx;
 	struct completion rsp_complete;
 	spinlock_t rsp_lock;
 
@@ -139,14 +141,15 @@ static int wdsp_rpmsg_callback(struct rpmsg_device *rpdev, void *data,
 			    wpriv->rsp_cnt);
 
 	if (wpriv->rsp_cnt >= RESP_QUEUE_SIZE) {
-		dev_info_ratelimited(wpriv->dev, "%s: Resp Queue is Full\n",
+		dev_info_ratelimited(wpriv->dev, "%s: Resp Queue is Full. Ignore new one.\n",
 				      __func__);
-		rsp_cnt = 0;
+		return -EINVAL;
 	}
 	spin_lock_irqsave(&wpriv->rsp_lock, flags);
 	rsp_cnt = wpriv->rsp_cnt;
-	memcpy(wpriv->rsp[rsp_cnt].buf, rx_buf, len);
-	wpriv->rsp[rsp_cnt].buf_size = len;
+	memcpy(wpriv->rsp[wpriv->write_idx].buf, rx_buf, len);
+	wpriv->rsp[wpriv->write_idx].buf_size = len;
+	wpriv->write_idx = (wpriv->write_idx + 1) % RESP_QUEUE_SIZE;
 	wpriv->rsp_cnt = ++rsp_cnt;
 	spin_unlock_irqrestore(&wpriv->rsp_lock, flags);
 
@@ -327,11 +330,12 @@ static ssize_t wdsp_glink_read(struct file *file, char __user *buf,
 	spin_lock_irqsave(&wpriv->rsp_lock, flags);
 	if (wpriv->rsp_cnt) {
 		wpriv->rsp_cnt--;
-		dev_dbg(wpriv->dev, "%s: read from buffer %d\n",
-			__func__, wpriv->rsp_cnt);
+		dev_dbg(wpriv->dev, "%s: rsp_cnt=%d read from buffer %d\n",
+			__func__, wpriv->rsp_cnt, wpriv->read_idx);
 
-		memcpy(read_rsp, &wpriv->rsp[wpriv->rsp_cnt],
+		memcpy(read_rsp, &wpriv->rsp[wpriv->read_idx],
 			sizeof(struct wdsp_rsp_que));
+		wpriv->read_idx = (wpriv->read_idx + 1) % RESP_QUEUE_SIZE;
 		spin_unlock_irqrestore(&wpriv->rsp_lock, flags);
 
 		if (count < read_rsp->buf_size) {
