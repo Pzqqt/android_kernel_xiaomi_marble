@@ -47,11 +47,6 @@ QDF_STATUS wlan_ipa_set_perf_level(struct wlan_ipa_priv *ipa_ctx,
 	else
 		next_prod_bw = ipa_ctx->config->ipa_bw_low;
 
-	ipa_debug("CONS perf curr: %d, next: %d", ipa_ctx->curr_cons_bw,
-		  next_cons_bw);
-	ipa_debug("PROD perf curr: %d, next: %d", ipa_ctx->curr_prod_bw,
-		  next_prod_bw);
-
 	if (ipa_ctx->curr_cons_bw != next_cons_bw) {
 		ipa_debug("Requesting CONS perf curr: %d, next: %d",
 			  ipa_ctx->curr_cons_bw, next_cons_bw);
