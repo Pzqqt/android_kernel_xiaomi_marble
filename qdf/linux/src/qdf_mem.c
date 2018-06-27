@@ -1001,9 +1001,6 @@ static void qdf_mem_debug_init(void)
 	for (i = 0; i < QDF_DEBUG_DOMAIN_COUNT; ++i)
 		qdf_list_create(&qdf_mem_dma_domains[i], 0);
 	qdf_spinlock_create(&qdf_mem_dma_list_lock);
-
-	/* skb */
-	qdf_net_buf_debug_init();
 }
 
 static uint32_t
@@ -1041,9 +1038,6 @@ static void qdf_mem_domain_set_check_for_leaks(qdf_list_t *domains)
 static void qdf_mem_debug_exit(void)
 {
 	int i;
-
-	/* skb */
-	qdf_net_buf_debug_exit();
 
 	/* mem */
 	qdf_mem_domain_set_check_for_leaks(qdf_mem_domains);
@@ -1792,6 +1786,7 @@ qdf_export_symbol(qdf_mem_dma_sync_single_for_cpu);
 void qdf_mem_init(void)
 {
 	qdf_mem_debug_init();
+	qdf_net_buf_debug_init();
 	qdf_mem_debugfs_init();
 	qdf_mem_debug_debugfs_init();
 }
@@ -1801,6 +1796,7 @@ void qdf_mem_exit(void)
 {
 	qdf_mem_debug_debugfs_exit();
 	qdf_mem_debugfs_exit();
+	qdf_net_buf_debug_exit();
 	qdf_mem_debug_exit();
 }
 qdf_export_symbol(qdf_mem_exit);
