@@ -1341,8 +1341,11 @@ QDF_STATUS pmo_core_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
 					  uint32_t mod_dtim)
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
+	struct pmo_psoc_cfg *psoc_cfg;
 	bool prev_dtim_enabled;
 	uint32_t listen_interval;
+	uint32_t beacon_interval_mod;
+	uint32_t max_mod_dtim;
 	QDF_STATUS status;
 	uint8_t vdev_id;
 
@@ -1354,13 +1357,32 @@ QDF_STATUS pmo_core_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
 
 	vdev_id = pmo_vdev_get_id(vdev);
 	vdev_ctx = pmo_vdev_get_priv(vdev);
+	psoc_cfg = &vdev_ctx->pmo_psoc_ctx->psoc_cfg;
 
+	/* Calculate Maximum allowed modulated DTIM */
+	beacon_interval_mod =
+		pmo_core_get_vdev_beacon_interval(vdev) / 100;
+	if (!beacon_interval_mod)
+		beacon_interval_mod = 1;
+
+	max_mod_dtim = psoc_cfg->sta_max_li_mod_dtim /
+		(pmo_core_get_vdev_dtim_period(vdev)
+		 * beacon_interval_mod);
+	if (!max_mod_dtim)
+		max_mod_dtim = 1;
+
+	/* Calculate Listen Interval from provided mod DTIM */
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	vdev_ctx->dyn_modulated_dtim = mod_dtim;
 	prev_dtim_enabled = vdev_ctx->dyn_modulated_dtim_enabled;
 	vdev_ctx->dyn_modulated_dtim_enabled = mod_dtim != 1;
-	listen_interval = vdev_ctx->dyn_modulated_dtim  *
-		pmo_core_get_vdev_dtim_period(vdev);
+	if (vdev_ctx->dyn_modulated_dtim > max_mod_dtim) {
+		listen_interval = max_mod_dtim *
+			pmo_core_get_vdev_dtim_period(vdev);
+	} else {
+		listen_interval = vdev_ctx->dyn_modulated_dtim  *
+			pmo_core_get_vdev_dtim_period(vdev);
+	}
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
 	if (prev_dtim_enabled || mod_dtim != 1) {
