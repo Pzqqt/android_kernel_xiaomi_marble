@@ -15817,7 +15817,8 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			csr_join_req_copy_he_cap(csr_join_req, pSession);
 			/* change the HE caps like sts per band */
 			CSR_REVISE_REQ_HE_CAP_PER_BAND(csr_join_req, pMac,
-						pBssDescription->channelId);
+						       pBssDescription->
+						       channelId);
 		}
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
@@ -16732,7 +16733,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 		csr_start_bss_copy_he_cap(pMsg, pSession);
 		/* change the HE caps like sts per band */
 		CSR_REVISE_REQ_HE_CAP_PER_BAND(pMsg, pMac,
-					pBssDesc->channelId);
+					       pBssDesc->channelId);
 	}
 
 	qdf_mem_copy(&pMsg->addIeParams,

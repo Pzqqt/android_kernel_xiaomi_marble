@@ -869,9 +869,9 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 
 		if (he_cap_mac.present) {
 			wma_derive_ext_he_cap(&tmp_he_cap,
-					&he_cap_mac);
+					      &he_cap_mac);
 			wma_derive_ext_he_cap(&tgt_cfg->he_cap_2g,
-					&he_cap_mac);
+					      &he_cap_mac);
 		}
 
 		qdf_mem_zero(&he_cap_mac,
@@ -892,9 +892,9 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 		}
 		if (he_cap_mac.present) {
 			wma_derive_ext_he_cap(&tmp_he_cap,
-					&he_cap_mac);
+					      &he_cap_mac);
 			wma_derive_ext_he_cap(&tgt_cfg->he_cap_5g,
-					&he_cap_mac);
+					      &he_cap_mac);
 		}
 	}
 

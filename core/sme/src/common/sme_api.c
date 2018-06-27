@@ -12769,17 +12769,17 @@ int sme_update_tx_bfee_supp(tHalHandle hal, uint8_t session_id,
 	return sme_update_he_tx_bfee_supp(hal, session_id, cfg_val);
 }
 #ifdef WLAN_FEATURE_11AX
-void sme_update_tgt_he_cap(tHalHandle hal, struct wma_tgt_cfg *cfg)
+void sme_update_tgt_he_cap(mac_handle_t mac_handle, struct wma_tgt_cfg *cfg)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
 
 	qdf_mem_copy(&mac_ctx->he_cap_2g,
-		&cfg->he_cap_2g,
-		sizeof(tDot11fIEhe_cap));
+		     &cfg->he_cap_2g,
+		     sizeof(tDot11fIEhe_cap));
 
 	qdf_mem_copy(&mac_ctx->he_cap_5g,
-		&cfg->he_cap_5g,
-		sizeof(tDot11fIEhe_cap));
+		     &cfg->he_cap_5g,
+		     sizeof(tDot11fIEhe_cap));
 }
 
 void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
