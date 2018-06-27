@@ -131,6 +131,7 @@ struct afe_ctl {
 	struct afe_fw_info *fw_data;
 	u32 island_mode[AFE_MAX_PORTS];
 	struct vad_config vad_cfg[AFE_MAX_PORTS];
+	struct work_struct afe_dc_work;
 };
 
 static atomic_t afe_ports_mad_type[SLIMBUS_PORT_LAST - SLIMBUS_0_RX];
@@ -336,14 +337,20 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
 
 static void afe_notify_dc_presence(void)
 {
+	msm_aud_evt_notifier_call_chain(MSM_AUD_DC_EVENT, NULL);
+
+	schedule_work(&this_afe.afe_dc_work);
+}
+
+static void afe_notify_dc_presence_work_fn(struct work_struct *work)
+{
 	int ret = 0;
 	char event[] = "DC_PRESENCE=TRUE";
 
-	msm_aud_evt_notifier_call_chain(MSM_AUD_DC_EVENT, NULL);
-
 	ret = q6core_send_uevent(this_afe.uevent_data, event);
 	if (ret)
-		pr_err("%s: Send UEvent %s failed :%d\n", __func__, event, ret);
+		pr_err("%s: Send UEvent %s failed :%d\n",
+		       __func__, event, ret);
 }
 
 static int32_t afe_callback(struct apr_client_data *data, void *priv)
@@ -7631,6 +7638,8 @@ int __init afe_init(void)
 	 */
 	this_afe.uevent_data->ktype.release = afe_release_uevent_data;
 	q6core_init_uevent_data(this_afe.uevent_data, "q6afe_uevent");
+
+	INIT_WORK(&this_afe.afe_dc_work, afe_notify_dc_presence_work_fn);
 
 	return 0;
 }
