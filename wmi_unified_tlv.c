@@ -52,6 +52,67 @@ static const uint32_t multi_svc_ids[] = {WMI_CONTROL_SVC,
 				WMI_CONTROL_SVC_WMAC1,
 				WMI_CONTROL_SVC_WMAC2};
 
+/**
+ * convert_host_pdev_id_to_target_pdev_id() - Convert pdev_id from
+ *           host to target defines.
+ * @param pdev_id: host pdev_id to be converted.
+ * Return: target pdev_id after conversion.
+ */
+static uint32_t convert_host_pdev_id_to_target_pdev_id(uint32_t pdev_id)
+{
+	switch (pdev_id) {
+	case WMI_HOST_PDEV_ID_SOC:
+		return WMI_PDEV_ID_SOC;
+	case WMI_HOST_PDEV_ID_0:
+		return WMI_PDEV_ID_1ST;
+	case WMI_HOST_PDEV_ID_1:
+		return WMI_PDEV_ID_2ND;
+	case WMI_HOST_PDEV_ID_2:
+		return WMI_PDEV_ID_3RD;
+	}
+
+	QDF_ASSERT(0);
+
+	return WMI_PDEV_ID_SOC;
+}
+
+/**
+ * convert_target_pdev_id_to_host_pdev_id() - Convert pdev_id from
+ *           target to host defines.
+ * @param pdev_id: target pdev_id to be converted.
+ * Return: host pdev_id after conversion.
+ */
+static uint32_t convert_target_pdev_id_to_host_pdev_id(uint32_t pdev_id)
+{
+	switch (pdev_id) {
+	case WMI_PDEV_ID_SOC:
+		return WMI_HOST_PDEV_ID_SOC;
+	case WMI_PDEV_ID_1ST:
+		return WMI_HOST_PDEV_ID_0;
+	case WMI_PDEV_ID_2ND:
+		return WMI_HOST_PDEV_ID_1;
+	case WMI_PDEV_ID_3RD:
+		return WMI_HOST_PDEV_ID_2;
+	}
+
+	QDF_ASSERT(0);
+
+	return WMI_HOST_PDEV_ID_SOC;
+}
+
+/**
+ * wmi_tlv_pdev_id_conversion_enable() - Enable pdev_id conversion
+ *
+ * Return None.
+ */
+static void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
+{
+	wmi_handle->ops->convert_pdev_id_host_to_target =
+		convert_host_pdev_id_to_target_pdev_id;
+	wmi_handle->ops->convert_pdev_id_target_to_host =
+		convert_target_pdev_id_to_host_pdev_id;
+}
+
 /* copy_vdev_create_pdev_id() - copy pdev from host params to target command
  *                              buffer.
  * @wmi_handle: pointer to wmi_handle
@@ -20337,8 +20398,8 @@ static QDF_STATUS extract_dfs_radar_detection_event_tlv(
 	}
 
 	radar_event = param_tlv->fixed_param;
-	radar_found->pdev_id = wmi_handle->ops->
-		convert_pdev_id_target_to_host(radar_event->pdev_id);
+	radar_found->pdev_id = convert_target_pdev_id_to_host_pdev_id(
+			radar_event->pdev_id);
 	radar_found->detection_mode = radar_event->detection_mode;
 	radar_found->chan_freq = radar_event->chan_freq;
 	radar_found->chan_width = radar_event->chan_width;
@@ -20354,7 +20415,7 @@ static QDF_STATUS extract_dfs_radar_detection_event_tlv(
 		"chan_width (RSSI) %d,detector_id (false_radar) %d,"
 		"freq_offset (radar_check) %d,segment_id %d,sidx %d,"
 		"is_chirp %d,detection mode %d\n",
-		radar_event->pdev_id, radar_event->pdev_id,
+		radar_event->pdev_id, radar_found->pdev_id,
 		radar_event->timestamp, radar_event->chan_freq,
 		radar_event->chan_width, radar_event->detector_id,
 		radar_event->freq_offset, radar_event->segment_id,
@@ -20995,67 +21056,6 @@ send_pdev_caldata_version_check_cmd_tlv(wmi_unified_t wmi_handle,
 	}
 
 	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * convert_host_pdev_id_to_target_pdev_id() - Convert pdev_id from
- *           host to target defines.
- * @param pdev_id: host pdev_id to be converted.
- * Return: target pdev_id after conversion.
- */
-static uint32_t convert_host_pdev_id_to_target_pdev_id(uint32_t pdev_id)
-{
-	switch (pdev_id) {
-	case WMI_HOST_PDEV_ID_SOC:
-		return WMI_PDEV_ID_SOC;
-	case WMI_HOST_PDEV_ID_0:
-		return WMI_PDEV_ID_1ST;
-	case WMI_HOST_PDEV_ID_1:
-		return WMI_PDEV_ID_2ND;
-	case WMI_HOST_PDEV_ID_2:
-		return WMI_PDEV_ID_3RD;
-	}
-
-	QDF_ASSERT(0);
-
-	return WMI_PDEV_ID_SOC;
-}
-
-/**
- * convert_target_pdev_id_to_host_pdev_id() - Convert pdev_id from
- *           target to host defines.
- * @param pdev_id: target pdev_id to be converted.
- * Return: host pdev_id after conversion.
- */
-static uint32_t convert_target_pdev_id_to_host_pdev_id(uint32_t pdev_id)
-{
-	switch (pdev_id) {
-	case WMI_PDEV_ID_SOC:
-		return WMI_HOST_PDEV_ID_SOC;
-	case WMI_PDEV_ID_1ST:
-		return WMI_HOST_PDEV_ID_0;
-	case WMI_PDEV_ID_2ND:
-		return WMI_HOST_PDEV_ID_1;
-	case WMI_PDEV_ID_3RD:
-		return WMI_HOST_PDEV_ID_2;
-	}
-
-	QDF_ASSERT(0);
-
-	return WMI_HOST_PDEV_ID_SOC;
-}
-
-/**
- * wmi_tlv_pdev_id_conversion_enable() - Enable pdev_id conversion
- *
- * Return None.
- */
-static void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
-{
-	wmi_handle->ops->convert_pdev_id_host_to_target =
-		convert_host_pdev_id_to_target_pdev_id;
-	wmi_handle->ops->convert_pdev_id_target_to_host =
-		convert_target_pdev_id_to_host_pdev_id;
 }
 
 /**
