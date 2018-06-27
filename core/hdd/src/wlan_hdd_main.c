@@ -6892,6 +6892,8 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	unregister_reboot_notifier(&system_reboot_notifier);
 	unregister_netdevice_notifier(&hdd_netdev_notifier);
 
+	qdf_dp_trace_deinit();
+
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
 	hdd_driver_memdump_deinit();
@@ -11059,6 +11061,7 @@ err_unregister_netdev:
 	unregister_netdevice_notifier(&hdd_netdev_notifier);
 
 err_wiphy_unregister:
+	qdf_dp_trace_deinit();
 	wiphy_unregister(hdd_ctx->wiphy);
 
 err_stop_modules:

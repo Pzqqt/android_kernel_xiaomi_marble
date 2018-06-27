@@ -1417,6 +1417,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	goto success;
 
 err_re_init:
+	qdf_dp_trace_deinit();
 	/* Allow the phone to go to sleep */
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
 	if (bug_on_reinit_failure)
