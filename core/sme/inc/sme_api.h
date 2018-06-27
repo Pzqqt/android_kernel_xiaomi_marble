@@ -423,6 +423,7 @@ QDF_STATUS sme_roam_set_pmkid_cache(tHalHandle hHal, uint8_t sessionId,
 		uint32_t numItems,
 		bool update_entire_cache);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * sme_get_pmk_info(): A wrapper function to request CSR to save PMK
  * @hal: Global structure
@@ -434,7 +435,6 @@ QDF_STATUS sme_roam_set_pmkid_cache(tHalHandle hHal, uint8_t sessionId,
 void sme_get_pmk_info(tHalHandle hal, uint8_t session_id,
 		      tPmkidCacheInfo *pmk_cache);
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS sme_roam_set_psk_pmk(tHalHandle hHal, uint8_t sessionId,
 		uint8_t *pPSK_PMK, size_t pmk_len);
 #endif
