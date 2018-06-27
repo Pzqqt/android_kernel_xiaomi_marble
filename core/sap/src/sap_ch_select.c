@@ -1526,6 +1526,8 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	int8_t rssi = 0;
 	uint8_t chn_num = 0;
 	uint8_t channel_id = 0;
+	uint8_t i;
+	bool found = false;
 
 	tCsrScanResultInfo *pScanResult;
 	tSapSpectChInfo *pSpectCh = pSpectInfoParams->pSpectCh;
@@ -1587,6 +1589,22 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		/* Processing for each tCsrScanResultInfo in the tCsrScanResult DLink list */
 		for (chn_num = 0; chn_num < pSpectInfoParams->numSpectChans;
 		     chn_num++) {
+
+			/*
+			 * Check if channel is present in scan channel list or
+			 * not. If not present, then continue as no need to
+			 * process the beacon on this channel.
+			 */
+			for (i = 0; i < sap_ctx->num_of_channel; i++) {
+				if (pSpectCh->chNum ==
+				    sap_ctx->channelList[i]) {
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+				continue;
 
 			/*
 			 *  if the Beacon has channel ID, use it other wise we will
