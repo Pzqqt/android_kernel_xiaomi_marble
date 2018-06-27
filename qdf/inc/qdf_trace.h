@@ -67,7 +67,8 @@ typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
 /* DP Trace Implementation */
 #ifdef CONFIG_DP_TRACE
 #define DPTRACE(p) p
-#define DPTRACE_PRINT(args...) QDF_TRACE_DEBUG(QDF_MODULE_ID_QDF, args)
+#define DPTRACE_PRINT(args...) \
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG, args)
 #else
 #define DPTRACE(p)
 #define DPTRACE_PRINT(args...)
@@ -188,6 +189,10 @@ typedef struct s_qdf_trace_data {
  * @QDF_DP_TRACE_RX_PACKET_RECORD - record 32 bytes of rx pkt at any layer
  * @QDF_DP_TRACE_HDD_TX_PACKET_RECORD - record 32 bytes of tx pkt at HDD
  * @QDF_DP_TRACE_HDD_RX_PACKET_RECORD - record 32 bytes of rx pkt at HDD
+ * @QDF_DP_TRACE_LI_DP_TX_PACKET_RECORD - record data bytes of tx pkt at LI_DP
+ * @QDF_DP_TRACE_LI_DP_RX_PACKET_RECORD - record data bytes of rx pkt at LI_DP
+ * @QDF_DP_TRACE_LI_DP_FREE_PACKET_PTR_RECORD - tx completion ptr record for
+ *						lithium
  * @QDF_DP_TRACE_FREE_PACKET_PTR_RECORD - tx completion ptr record
  * @QDF_DP_TRACE_LOW_VERBOSITY - below this are part of low verbosity
  * @QDF_DP_TRACE_HDD_TX_PACKET_PTR_RECORD - HDD layer ptr record
@@ -207,12 +212,11 @@ typedef struct s_qdf_trace_data {
  * @QDF_DP_TRACE_HTC_PACKET_PTR_RECORD - htc packet ptr record
  * @QDF_DP_TRACE_HIF_PACKET_PTR_RECORD - hif packet ptr record
  * @QDF_DP_TRACE_RX_TXRX_PACKET_PTR_RECORD - txrx packet ptr record
- * @QDF_DP_TRACE_LI_DP_TX_PACKET_RECORD - record 32 bytes of tx pkt at LI_DP
- * @QDF_DP_TRACE_LI_DP_RX_PACKET_RECORD - record 32 bytes of rx pkt at LI_DP
  * @QDF_DP_TRACE_LI_DP_NULL_RX_PACKET_RECORD
- *		- record 32 bytes of rx null_queue pkt at LI_DP
+ *		- record data bytes of rx null_queue pkt at LI_DP
  * @QDF_DP_TRACE_HIGH_VERBOSITY - below this are part of high verbosity
  */
+
 enum  QDF_DP_TRACE_ID {
 	QDF_DP_TRACE_INVALID,
 	QDF_DP_TRACE_DROP_PACKET_RECORD,
@@ -231,6 +235,9 @@ enum  QDF_DP_TRACE_ID {
 	QDF_DP_TRACE_RX_PACKET_RECORD,
 	QDF_DP_TRACE_HDD_TX_PACKET_RECORD,
 	QDF_DP_TRACE_HDD_RX_PACKET_RECORD,
+	QDF_DP_TRACE_LI_DP_TX_PACKET_RECORD,
+	QDF_DP_TRACE_LI_DP_RX_PACKET_RECORD,
+	QDF_DP_TRACE_LI_DP_FREE_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_LOW_VERBOSITY,
 	QDF_DP_TRACE_HDD_TX_PACKET_PTR_RECORD,
@@ -250,8 +257,6 @@ enum  QDF_DP_TRACE_ID {
 	QDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_HIF_PACKET_PTR_RECORD,
 	QDF_DP_TRACE_RX_TXRX_PACKET_PTR_RECORD,
-	QDF_DP_TRACE_LI_DP_TX_PACKET_RECORD,
-	QDF_DP_TRACE_LI_DP_RX_PACKET_RECORD,
 	QDF_DP_TRACE_LI_DP_NULL_RX_PACKET_RECORD,
 	QDF_DP_TRACE_HIGH_VERBOSITY,
 	QDF_DP_TRACE_MAX

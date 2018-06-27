@@ -119,6 +119,7 @@
 #define QDF_NBUF_TX_PKT_INVALID              0
 #define QDF_NBUF_TX_PKT_DATA_TRACK           1
 #define QDF_NBUF_TX_PKT_MGMT_TRACK           2
+#define QDF_NBUF_RX_PKT_DATA_TRACK           3
 
 /* Different Packet states */
 #define QDF_NBUF_TX_PKT_HDD                  1

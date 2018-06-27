@@ -87,87 +87,87 @@ typedef union {
  * @paddr   : physical addressed retrieved by dma_map of nbuf->data
  *
  * @rx.dev.priv_cb_w.ext_cb_ptr: extended cb pointer
- * @rx.dev.priv_cb_w.fctx      : ctx to handle special pkts defined by ftype
- * @rx.dev.priv_cb_w.reserved1 : reserved
- * @rx.dev.priv_cb_w.reserved2 : reserved
+ * @rx.dev.priv_cb_w.fctx: ctx to handle special pkts defined by ftype
+ * @rx.dev.priv_cb_w.reserved1: reserved
+ * @rx.dev.priv_cb_w.reserved2: reserved
  *
- * @rx.dev.priv_cb_m.tcp_seq_num     : TCP sequence number
- * @rx.dev.priv_cb_m.tcp_ack_num     : TCP ACK number
- * @rx.dev.priv_cb_m.lro_ctx         : LRO context
- * @rx.dev.priv_cb_m.map_index       :
- * @rx.dev.priv_cb_m.reserved        : reserved
+ * @rx.dev.priv_cb_m.tcp_seq_num: TCP sequence number
+ * @rx.dev.priv_cb_m.tcp_ack_num: TCP ACK number
+ * @rx.dev.priv_cb_m.lro_ctx: LRO context
+ * @rx.dev.priv_cb_m.map_index:
+ * @rx.dev.priv_cb_m.reserved: reserved
  *
- * @rx.lro_eligible        : flag to indicate whether the MSDU is LRO eligible
- * @rx.peer_cached_buf_frm : peer cached buffer
- * @rx.tcp_proto           : L4 protocol is TCP
- * @rx.tcp_pure_ack        : A TCP ACK packet with no payload
- * @rx.ipv6_proto          : L3 protocol is IPV6
- * @rx.ip_offset           : offset to IP header
- * @rx.tcp_offset          : offset to TCP header
- * @rx_ctx_id              : Rx context id
+ * @rx.lro_eligible: flag to indicate whether the MSDU is LRO eligible
+ * @rx.peer_cached_buf_frm: peer cached buffer
+ * @rx.tcp_proto: L4 protocol is TCP
+ * @rx.tcp_pure_ack: A TCP ACK packet with no payload
+ * @rx.ipv6_proto: L3 protocol is IPV6
+ * @rx.ip_offset: offset to IP header
+ * @rx.tcp_offset: offset to TCP header
+ * @rx_ctx_id: Rx context id
  *
- * @rx.tcp_udp_chksum  : L4 payload checksum
- * @rx.tcp_wim         : TCP window size
+ * @rx.tcp_udp_chksum: L4 payload checksum
+ * @rx.tcp_wim: TCP window size
  *
- * @rx.flow_id         : 32bit flow id
+ * @rx.flow_id: 32bit flow id
  *
- * @rx.flag_chfrag_start : first MSDU in an AMSDU
- * @rx.flag_chfrag_cont  : middle or part of MSDU in an AMSDU
- * @rx.flag_chfrag_end   : last MSDU in an AMSDU
- * @rx.rsrvd             : reserved
+ * @rx.flag_chfrag_start: first MSDU in an AMSDU
+ * @rx.flag_chfrag_cont: middle or part of MSDU in an AMSDU
+ * @rx.flag_chfrag_end: last MSDU in an AMSDU
+ * @rx.rsrvd: reserved
  *
- * @rx.trace       : combined structure for DP and protocol trace
- * @rx.trace.packet_state: {NBUF_TX_PKT_[(HDD)|(TXRX_ENQUEUE)|(TXRX_DEQUEUE)|
+ * @rx.trace: combined structure for DP and protocol trace
+ * @rx.trace.packet_stat: {NBUF_TX_PKT_[(HDD)|(TXRX_ENQUEUE)|(TXRX_DEQUEUE)|
  *                       +          (TXRX)|(HTT)|(HTC)|(HIF)|(CE)|(FREE)]
- * @rx.trace.dp_trace       : flag (Datapath trace)
- * @rx.trace.rsrvd          : enable packet logging
+ * @rx.trace.dp_trace: flag (Datapath trace)
+ * @rx.trace.packet_track: RX_DATA packet
+ * @rx.trace.rsrvd: enable packet logging
  *
- * @rx.ftype              : mcast2ucast, TSO, SG, MESH
- * @rx.reserved           : reserved
+ * @rx.ftype: mcast2ucast, TSO, SG, MESH
+ * @rx.reserved: reserved
  *
- * @tx.dev.priv_cb_w.fctx       : ctx to handle special pkts defined by ftype
- * @tx.dev.priv_cb_w.ext_cb_ptr : extended cb pointer
+ * @tx.dev.priv_cb_w.fctx: ctx to handle special pkts defined by ftype
+ * @tx.dev.priv_cb_w.ext_cb_ptr: extended cb pointer
  *
- * @tx.dev.priv_cb_w.data_attr : value that is programmed in CE descr, includes
+ * @tx.dev.priv_cb_w.data_attr: value that is programmed in CE descr, includes
  *                 + (1) CE classification enablement bit
  *                 + (2) packet type (802.3 or Ethernet type II)
  *                 + (3) packet offset (usually length of HTC/HTT descr)
- * @tx.dev.priv_cb_m.ipa.owned : packet owned by IPA
- * @tx.dev.priv_cb_m.ipa.priv  : private data, used by IPA
- * @tx.dev.priv_cb_m.desc_id   : tx desc id, used to sync between host and fw
- * @tx.dev.priv_cb_m.mgmt_desc_id  : mgmt descriptor for tx completion cb
- * @tx.dev.priv_cb_m.reserved  : reserved
+ * @tx.dev.priv_cb_m.ipa.owned: packet owned by IPA
+ * @tx.dev.priv_cb_m.ipa.priv: private data, used by IPA
+ * @tx.dev.priv_cb_m.desc_id: tx desc id, used to sync between host and fw
+ * @tx.dev.priv_cb_m.mgmt_desc_id: mgmt descriptor for tx completion cb
+ * @tx.dev.priv_cb_m.reserved: reserved
  *
- * @tx.ftype             : mcast2ucast, TSO, SG, MESH
- * @tx.vdev_id           : vdev (for protocol trace)
- * @tx.len               : length of efrag pointed by the above pointers
+ * @tx.ftype: mcast2ucast, TSO, SG, MESH
+ * @tx.vdev_id: vdev (for protocol trace)
+ * @tx.len: length of efrag pointed by the above pointers
  *
- * @tx.flags.bits.flag_efrag  : flag, efrag payload to be swapped (wordstream)
- * @tx.flags.bits.num         : number of extra frags ( 0 or 1)
- * @tx.flags.bits.nbuf        : flag, nbuf payload to be swapped (wordstream)
- * @tx.flags.bits.flag_chfrag_start : first MSDU in an AMSDU
- * @tx.flags.bits.flag_chfrag_cont  : middle or part of MSDU in an AMSDU
- * @tx.flags.bits.flag_chfrag_end   : last MSDU in an AMSDU
- * @tx.flags.bits.flag_ext_header   : extended flags
- * @tx.flags.bits.reserved          : reserved
- * @tx.trace       : combined structure for DP and protocol trace
- * @tx.trace.packet_state: {NBUF_TX_PKT_[(HDD)|(TXRX_ENQUEUE)|(TXRX_DEQUEUE)|
+ * @tx.flags.bits.flag_efrag: flag, efrag payload to be swapped (wordstream)
+ * @tx.flags.bits.num: number of extra frags ( 0 or 1)
+ * @tx.flags.bits.nbuf: flag, nbuf payload to be swapped (wordstream)
+ * @tx.flags.bits.flag_chfrag_start: first MSDU in an AMSDU
+ * @tx.flags.bits.flag_chfrag_cont: middle or part of MSDU in an AMSDU
+ * @tx.flags.bits.flag_chfrag_end: last MSDU in an AMSDU
+ * @tx.flags.bits.flag_ext_header: extended flags
+ * @tx.flags.bits.reserved: reserved
+ * @tx.trace: combined structure for DP and protocol trace
+ * @tx.trace.packet_stat: {NBUF_TX_PKT_[(HDD)|(TXRX_ENQUEUE)|(TXRX_DEQUEUE)|
  *                       +          (TXRX)|(HTT)|(HTC)|(HIF)|(CE)|(FREE)]
- * @tx.trace.is_packet_priv :
- * @tx.trace.packet_track   : {NBUF_TX_PKT_[(DATA)|(MGMT)]_TRACK}
- * @tx.trace.proto_type     : bitmap of NBUF_PKT_TRAC_TYPE[(EAPOL)|(DHCP)|
+ * @tx.trace.is_packet_priv:
+ * @tx.trace.packet_track: {NBUF_TX_PKT_[(DATA)|(MGMT)]_TRACK}
+ * @tx.trace.proto_type: bitmap of NBUF_PKT_TRAC_TYPE[(EAPOL)|(DHCP)|
  *                          + (MGMT_ACTION)] - 4 bits
- * @tx.trace.dp_trace       : flag (Datapath trace)
- * @tx.trace.is_bcast       : flag (Broadcast packet)
- * @tx.trace.is_mcast       : flag (Multicast packet)
- * @tx.trace.packet_type    : flag (Packet type)
- * @tx.trace.htt2_frm       : flag (high-latency path only)
- * @tx.trace.print          : enable packet logging
+ * @tx.trace.dp_trace: flag (Datapath trace)
+ * @tx.trace.is_bcast: flag (Broadcast packet)
+ * @tx.trace.is_mcast: flag (Multicast packet)
+ * @tx.trace.packet_type: flag (Packet type)
+ * @tx.trace.htt2_frm: flag (high-latency path only)
+ * @tx.trace.print: enable packet logging
  *
- * @tx.vaddr             : virtual address of ~
- * @tx.paddr             : physical/DMA address of ~
+ * @tx.vaddr: virtual address of ~
+ * @tx.paddr: physical/DMA address of ~
  */
-
 struct qdf_nbuf_cb {
 	/* common */
 	qdf_paddr_t paddr; /* of skb->data */
@@ -208,7 +208,8 @@ struct qdf_nbuf_cb {
 			union {
 				uint8_t packet_state;
 				uint8_t dp_trace:1,
-					rsrvd:1;
+					packet_track:4,
+					rsrvd:3;
 			} trace;
 			uint8_t ftype;
 			uint8_t reserved;
@@ -377,6 +378,10 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 #define QDF_NBUF_CB_TX_PACKET_TRACK(skb)\
 	(((struct qdf_nbuf_cb *) \
 		((skb)->cb))->u.tx.trace.packet_track)
+
+#define QDF_NBUF_CB_RX_PACKET_TRACK(skb)\
+		(((struct qdf_nbuf_cb *) \
+			((skb)->cb))->u.rx.trace.packet_track)
 
 #define QDF_NBUF_CB_TX_PROTO_TYPE(skb)\
 	(((struct qdf_nbuf_cb *) \

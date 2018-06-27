@@ -552,6 +552,34 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 }
 
 /**
+ * dp_tx_trace_pkt() - Trace TX packet at DP layer
+ *
+ * @skb: skb to be traced
+ * @msdu_id: msdu_id of the packet
+ * @vdev_id: vdev_id of the packet
+ *
+ * Return: None
+ */
+static void dp_tx_trace_pkt(qdf_nbuf_t skb, uint16_t msdu_id,
+			    uint8_t vdev_id)
+{
+	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;
+	QDF_NBUF_CB_TX_DP_TRACE(skb) = 1;
+	DPTRACE(qdf_dp_trace_ptr(skb,
+				 QDF_DP_TRACE_LI_DP_TX_PACKET_PTR_RECORD,
+				 QDF_TRACE_DEFAULT_PDEV_ID,
+				 qdf_nbuf_data_addr(skb),
+				 sizeof(qdf_nbuf_data(skb)),
+				 msdu_id, vdev_id));
+
+	qdf_dp_trace_log_pkt(vdev_id, skb, QDF_TX, QDF_TRACE_DEFAULT_PDEV_ID);
+
+	DPTRACE(qdf_dp_trace_data_pkt(skb, QDF_TRACE_DEFAULT_PDEV_ID,
+				      QDF_DP_TRACE_LI_DP_TX_PACKET_RECORD,
+				      msdu_id, QDF_TX));
+}
+
+/**
  * dp_tx_desc_prepare_single - Allocate and prepare Tx descriptor
  * @vdev: DP vdev handle
  * @nbuf: skb
@@ -596,6 +624,8 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->pdev = pdev;
 	tx_desc->msdu_ext_desc = NULL;
 	tx_desc->pkt_offset = 0;
+
+	dp_tx_trace_pkt(nbuf, tx_desc->id, vdev->vdev_id);
 
 	/*
 	 * For special modes (vdev_type == ocb or mesh), data frames should be
@@ -722,6 +752,8 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	tx_desc->pkt_offset = 0;
 	tx_desc->tso_desc = msdu_info->u.tso_info.curr_seg;
 	tx_desc->tso_num_desc = msdu_info->u.tso_info.tso_num_seg_list;
+
+	dp_tx_trace_pkt(nbuf, tx_desc->id, vdev->vdev_id);
 
 	/* Handle scattered frames - TSO/SG/ME */
 	/* Allocate and prepare an extension descriptor for scattered frames */
@@ -2858,6 +2890,15 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 			dp_tx_notify_completion(soc, desc, desc->nbuf);
 
 		dp_tx_comp_process_tx_status(desc, length);
+
+		DPTRACE(qdf_dp_trace_ptr
+				(desc->nbuf,
+				 QDF_DP_TRACE_LI_DP_FREE_PACKET_PTR_RECORD,
+				 QDF_TRACE_DEFAULT_PDEV_ID,
+				 qdf_nbuf_data_addr(desc->nbuf),
+				 sizeof(qdf_nbuf_data(desc->nbuf)),
+				 desc->id, ts.status)
+			);
 
 		/*currently m_copy/tx_capture is not supported for scatter gather packets*/
 		if (!(desc->msdu_ext_desc) && (dp_get_completion_indication_for_stack(soc,

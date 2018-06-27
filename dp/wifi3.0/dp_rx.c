@@ -1500,6 +1500,14 @@ done:
 		peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
 		peer = dp_peer_find_by_id(soc, peer_id);
 
+		if (peer) {
+			QDF_NBUF_CB_DP_TRACE_PRINT(nbuf) = false;
+			qdf_dp_trace_set_track(nbuf, QDF_RX);
+			QDF_NBUF_CB_RX_DP_TRACE(nbuf) = 1;
+			QDF_NBUF_CB_RX_PACKET_TRACK(nbuf) =
+				QDF_NBUF_RX_PKT_DATA_TRACK;
+		}
+
 		rx_bufs_used++;
 
 		if (deliver_list_head && peer && (vdev != peer->vdev)) {

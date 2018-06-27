@@ -6676,10 +6676,10 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 		DP_TRACE(FATAL, "hal ring access fail: %u msdus",
 			pdev->soc->stats.rx.err.hal_ring_access_fail);
 
-		DP_TRACE(FATAL, "Reo errors");
-
 		for (error_code = 0; error_code < HAL_REO_ERR_MAX;
 				error_code++) {
+			if (!pdev->soc->stats.rx.err.reo_error[error_code])
+				continue;
 			DP_TRACE(FATAL, "Reo error number (%u): %u msdus",
 				error_code,
 				pdev->soc->stats.rx.err.reo_error[error_code]);
@@ -6687,6 +6687,8 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 
 		for (error_code = 0; error_code < HAL_RXDMA_ERR_MAX;
 				error_code++) {
+			if (!pdev->soc->stats.rx.err.rxdma_error[error_code])
+				continue;
 			DP_TRACE(FATAL, "Rxdma error number (%u): %u msdus",
 				error_code,
 				pdev->soc->stats.rx.err
