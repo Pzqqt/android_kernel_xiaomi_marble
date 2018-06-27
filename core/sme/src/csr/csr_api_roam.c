@@ -543,11 +543,11 @@ static QDF_STATUS csr_open_stats_ll(struct sAniSirGlobal *mac_ctx)
 {
 	QDF_STATUS status;
 
-	status = csr_ll_open(mac_ctx->hHdd, &mac_ctx->roam.statsClientReqList);
+	status = csr_ll_open(&mac_ctx->roam.statsClientReqList);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	return csr_ll_open(mac_ctx->hHdd, &mac_ctx->roam.peStatsReqList);
+	return csr_ll_open(&mac_ctx->roam.peStatsReqList);
 }
 
 static void csr_close_stats_ll(struct sAniSirGlobal *mac_ctx)
@@ -3989,7 +3989,7 @@ static void csr_roam_remove_duplicate_pending_cmd_from_list(
 	tDblLinkList local_list;
 
 	qdf_mem_zero(&local_list, sizeof(tDblLinkList));
-	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(mac_ctx->hHdd, &local_list))) {
+	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(&local_list))) {
 		sme_err("failed to open list");
 		return;
 	}

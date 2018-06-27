@@ -203,7 +203,7 @@ bool csr_ll_find_entry(tDblLinkList *pList, tListElem *pEntryToFind)
 	return fFound;
 }
 
-QDF_STATUS csr_ll_open(hdd_handle_t hHdd, tDblLinkList *pList)
+QDF_STATUS csr_ll_open(tDblLinkList *pList)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status;
@@ -222,7 +222,6 @@ QDF_STATUS csr_ll_open(hdd_handle_t hHdd, tDblLinkList *pList)
 		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			csr_list_init(&pList->ListHead);
 			pList->Flag = LIST_FLAG_OPEN;
-			pList->hHdd = hHdd;
 		} else
 			status = QDF_STATUS_E_FAILURE;
 	}

@@ -510,7 +510,7 @@ QDF_STATUS sme_qos_open(tpAniSirGlobal pMac)
 	sme_qos_cb.nextFlowId = SME_QOS_MIN_FLOW_ID;
 	sme_qos_cb.nextDialogToken = SME_QOS_MIN_DIALOG_TOKEN;
 	/* init flow list */
-	status = csr_ll_open(pMac->hHdd, &sme_qos_cb.flow_list);
+	status = csr_ll_open(&sme_qos_cb.flow_list);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: cannot initialize Flow List",
@@ -524,8 +524,7 @@ QDF_STATUS sme_qos_open(tpAniSirGlobal pMac)
 		/* initialize the session's per-AC information */
 		sme_qos_init_a_cs(pMac, sessionId);
 		/* initialize the session's buffered command list */
-		status = csr_ll_open(pMac->hHdd, &pSession->
-					bufferedCommandList);
+		status = csr_ll_open(&pSession->bufferedCommandList);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: cannot initialize cmd list for session %d",

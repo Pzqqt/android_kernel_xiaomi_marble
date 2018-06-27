@@ -293,7 +293,7 @@ static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 	pMac->sme.totalSmeCmd = SME_TOTAL_COMMAND;
 
 
-	status = csr_ll_open(pMac->hHdd, &pMac->sme.smeCmdFreeList);
+	status = csr_ll_open(&pMac->sme.smeCmdFreeList);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		goto end;
 

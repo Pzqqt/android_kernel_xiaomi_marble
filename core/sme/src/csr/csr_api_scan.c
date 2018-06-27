@@ -118,8 +118,8 @@ static QDF_STATUS csr_ll_scan_purge_result(tpAniSirGlobal pMac,
 
 QDF_STATUS csr_scan_open(tpAniSirGlobal mac_ctx)
 {
-	csr_ll_open(mac_ctx->hHdd, &mac_ctx->scan.channelPowerInfoList24);
-	csr_ll_open(mac_ctx->hHdd, &mac_ctx->scan.channelPowerInfoList5G);
+	csr_ll_open(&mac_ctx->scan.channelPowerInfoList24);
+	csr_ll_open(&mac_ctx->scan.channelPowerInfoList5G);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1841,7 +1841,7 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	qdf_mem_zero(&localList, sizeof(tDblLinkList));
-	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
+	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(&localList))) {
 		sme_err("failed to open list");
 		return status;
 	}
@@ -2858,7 +2858,7 @@ QDF_STATUS csr_scan_get_result(tpAniSirGlobal mac_ctx,
 		goto error;
 	}
 
-	csr_ll_open(mac_ctx->hHdd, &ret_list->List);
+	csr_ll_open(&ret_list->List);
 	ret_list->pCurEntry = NULL;
 	status = csr_parse_scan_list(mac_ctx,
 		ret_list, list);

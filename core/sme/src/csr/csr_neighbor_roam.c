@@ -1206,7 +1206,7 @@ static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(tpAniSirGlobal pMac)
 			     sizeof(tCsrNeighborReportBssInfo) *
 			     MAX_BSS_IN_NEIGHBOR_RPT);
 
-		status = csr_ll_open(pMac->hHdd, &pFTRoamInfo->preAuthDoneList);
+		status = csr_ll_open(&pFTRoamInfo->preAuthDoneList);
 		if (QDF_STATUS_SUCCESS != status) {
 			sme_err("LL Open of preauth done AP List failed");
 			return QDF_STATUS_E_RESOURCES;
@@ -1326,7 +1326,7 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 	qdf_mem_set(&pNeighborRoamInfo->prevConnProfile,
 		    sizeof(tCsrRoamConnectedProfile), 0);
 
-	status = csr_ll_open(pMac->hHdd, &pNeighborRoamInfo->roamableAPList);
+	status = csr_ll_open(&pNeighborRoamInfo->roamableAPList);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("LL Open of roam able AP List failed");
 		qdf_mem_free(pNeighborRoamInfo->cfgParams.channelInfo.

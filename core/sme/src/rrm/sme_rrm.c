@@ -1409,8 +1409,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 
 	pSmeRrmContext->neighborReqControlInfo.isNeighborRspPending = false;
 
-	qdf_ret_status =
-		csr_ll_open(pMac->hHdd, &pSmeRrmContext->neighborReportCache);
+	qdf_ret_status = csr_ll_open(&pSmeRrmContext->neighborReportCache);
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "rrm_open: Fail to open neighbor cache result");
