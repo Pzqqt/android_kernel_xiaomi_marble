@@ -85,8 +85,7 @@ static QDF_STATUS scheduler_all_queues_init(struct scheduler_ctx *sched_ctx)
 	sched_enter();
 
 	if (!sched_ctx) {
-		sched_err("sched_ctx is null");
-		QDF_DEBUG_PANIC();
+		QDF_DEBUG_PANIC("sched_ctx is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -116,8 +115,7 @@ static QDF_STATUS scheduler_all_queues_deinit(struct scheduler_ctx *sched_ctx)
 	sched_enter();
 
 	if (!sched_ctx) {
-		sched_err("sched_ctx is null");
-		QDF_DEBUG_PANIC();
+		QDF_DEBUG_PANIC("sched_ctx is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -178,8 +176,7 @@ QDF_STATUS scheduler_queues_init(struct scheduler_ctx *sched_ctx)
 	sched_enter();
 
 	if (!sched_ctx) {
-		sched_err("sched_ctx is null");
-		QDF_DEBUG_PANIC();
+		QDF_DEBUG_PANIC("sched_ctx is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -216,8 +213,7 @@ struct scheduler_msg *scheduler_core_msg_dup(struct scheduler_msg *msg)
 	return dup;
 
 buffer_full:
-	sched_err("Scheduler buffer is full");
-	QDF_DEBUG_PANIC();
+	QDF_DEBUG_PANIC("Scheduler buffer is full");
 
 dec_queue_count:
 	qdf_atomic_dec(&__sched_queue_depth);
@@ -239,8 +235,7 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 	struct scheduler_msg *msg;
 
 	if (!sch_ctx) {
-		sched_err("sch_ctx is null");
-		QDF_DEBUG_PANIC();
+		QDF_DEBUG_PANIC("sch_ctx is null");
 		return;
 	}
 
@@ -314,8 +309,7 @@ int scheduler_thread(void *arg)
 	bool shutdown = false;
 
 	if (!arg) {
-		sched_err("arg is null");
-		QDF_DEBUG_PANIC();
+		QDF_DEBUG_PANIC("arg is null");
 		return 0;
 	}
 	qdf_set_user_nice(current, -2);
@@ -336,10 +330,8 @@ int scheduler_thread(void *arg)
 					qdf_atomic_test_bit(MC_SUSPEND_EVENT_MASK,
 						&sch_ctx->sch_event_flag));
 
-		if (retWaitStatus == -ERESTARTSYS) {
-			sched_err("wait_event_interruptible returned -ERESTARTSYS");
-			QDF_DEBUG_PANIC();
-		}
+		if (retWaitStatus == -ERESTARTSYS)
+			QDF_DEBUG_PANIC("Scheduler received -ERESTARTSYS");
 
 		qdf_atomic_clear_bit(MC_POST_EVENT_MASK, &sch_ctx->sch_event_flag);
 		scheduler_thread_process_queues(sch_ctx, &shutdown);

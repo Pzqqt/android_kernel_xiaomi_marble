@@ -163,11 +163,6 @@ void qdf_mc_timer_manager_init(void)
 }
 qdf_export_symbol(qdf_mc_timer_manager_init);
 
-static inline void qdf_mc_timer_panic(void)
-{
-	QDF_DEBUG_PANIC();
-}
-
 static void qdf_mc_timer_print_list(qdf_list_t *timers)
 {
 	QDF_STATUS status;
@@ -200,7 +195,7 @@ void qdf_mc_timer_check_for_leaks(void)
 	qdf_err("Timer leaks detected in %s domain!",
 		qdf_debug_domain_name(current_domain));
 	qdf_mc_timer_print_list(timers);
-	qdf_mc_timer_panic();
+	QDF_DEBUG_PANIC("Previously reported timer leaks detected");
 }
 
 static void qdf_mc_timer_free_leaked_timers(qdf_list_t *timers)
@@ -249,7 +244,7 @@ static void qdf_timer_clean(void)
 		return;
 
 	/* panic, if enabled */
-	qdf_mc_timer_panic();
+	QDF_DEBUG_PANIC("Previously reported timer leaks detected");
 
 	/* if we didn't crash, release the leaked timers */
 	for (i = 0; i < QDF_DEBUG_DOMAIN_COUNT; ++i)

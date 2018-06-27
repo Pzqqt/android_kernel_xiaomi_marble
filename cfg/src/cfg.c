@@ -102,7 +102,8 @@ cfg_int_item_handler(struct cfg_value_store *store,
 
 	switch (meta->fallback) {
 	default:
-		QDF_DEBUG_PANIC();
+		QDF_DEBUG_PANIC("Unknown fallback method %d for cfg item '%s'",
+				meta->fallback, meta->name);
 		/* fall through */
 	case CFG_VALUE_OR_DEFAULT:
 		/* store already contains default */
@@ -155,7 +156,8 @@ cfg_uint_item_handler(struct cfg_value_store *store,
 
 	switch (meta->fallback) {
 	default:
-		QDF_DEBUG_PANIC();
+		QDF_DEBUG_PANIC("Unknown fallback method %d for cfg item '%s'",
+				meta->fallback, meta->name);
 		/* fall through */
 	case CFG_VALUE_OR_DEFAULT:
 		/* store already contains default */
@@ -428,10 +430,9 @@ static void cfg_store_free(struct cfg_value_store *store)
 	qdf_spin_lock_bh(&__cfg_stores_lock);
 	status = qdf_list_remove_node(&__cfg_stores_list, &store->node);
 	qdf_spin_unlock_bh(&__cfg_stores_lock);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg_err("Failed config store list removal; status:%d", status);
-		QDF_DEBUG_PANIC();
-	}
+	if (QDF_IS_STATUS_ERROR(status))
+		QDF_DEBUG_PANIC("Failed config store list removal; status:%d",
+				status);
 
 	qdf_mem_free(store->path);
 	qdf_mem_free(store);

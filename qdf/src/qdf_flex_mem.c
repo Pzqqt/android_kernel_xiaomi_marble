@@ -147,8 +147,7 @@ static void __qdf_flex_mem_free(struct qdf_flex_mem_pool *pool, void *ptr)
 		return;
 	}
 
-	qdf_err("Failed to find pointer in segment pool");
-	QDF_DEBUG_PANIC();
+	QDF_DEBUG_PANIC("Failed to find pointer in segment pool");
 }
 
 void qdf_flex_mem_free(struct qdf_flex_mem_pool *pool, void *ptr)

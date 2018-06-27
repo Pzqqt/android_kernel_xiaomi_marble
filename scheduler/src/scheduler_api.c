@@ -250,8 +250,7 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 	}
 
 	if (msg->reserved != 0 && msg->reserved != SYS_MSG_COOKIE) {
-		sched_err("Uninitialized scheduler message. Please initialize it");
-		QDF_DEBUG_PANIC();
+		QDF_DEBUG_PANIC("Scheduler messages must be initialized");
 		return QDF_STATUS_E_FAILURE;
 	}
 
