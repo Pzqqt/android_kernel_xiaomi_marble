@@ -542,6 +542,7 @@ bool qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
 void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
 				uint16_t time_limit, uint8_t verbosity,
 				uint8_t proto_bitmap);
+void qdf_dp_trace_deinit(void);
 void qdf_dp_trace_spin_lock_init(void);
 void qdf_dp_trace_set_value(uint8_t proto_bitmap, uint8_t no_of_records,
 			 uint8_t verbosity);
@@ -740,6 +741,12 @@ void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
 				uint8_t proto_bitmap)
 {
 }
+
+static inline
+void qdf_dp_trace_deinit(void)
+{
+}
+
 static inline
 void qdf_dp_trace_set_track(qdf_nbuf_t nbuf, enum qdf_proto_dir dir)
 {
