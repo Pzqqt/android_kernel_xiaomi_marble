@@ -679,8 +679,9 @@ qdf_nbuf_track_map(qdf_nbuf_t nbuf, const char *file, uint32_t line)
 	meta = qdf_nbuf_meta_get(nbuf);
 	qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
 	if (meta)
-		panic("Double nbuf map detected @ %s:%u",
-		      kbasename(file), line);
+		QDF_DEBUG_PANIC(
+			"Double nbuf map detected @ %s:%u; last map from %s:%u",
+			kbasename(file), line, meta->file, meta->line);
 
 	meta = qdf_flex_mem_alloc(&qdf_nbuf_map_pool);
 	if (!meta) {
@@ -716,7 +717,8 @@ qdf_nbuf_untrack_map(qdf_nbuf_t nbuf, const char *file, uint32_t line)
 	meta = qdf_nbuf_meta_get(nbuf);
 
 	if (!meta)
-		panic("Double nbuf unmap or unmap without map detected @%s:%u",
+		QDF_DEBUG_PANIC(
+		      "Double nbuf unmap or unmap without map detected @ %s:%u",
 		      kbasename(file), line);
 
 	hash_del(&meta->node);
@@ -2636,6 +2638,14 @@ void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, uint8_t *file, uint32_t line)
 
 	/* Remove SKB from internal QDF tracking table */
 	if (qdf_likely(nbuf)) {
+		struct qdf_nbuf_map_metadata *meta;
+
+		meta = qdf_nbuf_meta_get(nbuf);
+		if (meta)
+			QDF_DEBUG_PANIC(
+				"Nbuf freed @ %s:%u while mapped from %s:%u",
+				kbasename(file), line, meta->file, meta->line);
+
 		qdf_net_buf_debug_delete_node(nbuf);
 		qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_FREE);
 	}
