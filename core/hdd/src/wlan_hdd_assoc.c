@@ -1853,6 +1853,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	}
 	wlan_hdd_clear_link_layer_stats(adapter);
 
+	hdd_debug("check for SAP restart");
+	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->hdd_psoc);
 	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 
 	/* Unblock anyone waiting for disconnect to complete */

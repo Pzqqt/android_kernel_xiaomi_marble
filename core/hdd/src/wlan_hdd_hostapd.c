@@ -2848,6 +2848,19 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (policy_mgr_get_connection_count(psoc) == 1) {
+		/*
+		 * If STA+SAP sessions are on DFS channel and STA+SAP SCC is
+		 * enabled on DFS channel then move the SAP out of DFS channel
+		 * as soon as STA gets disconnect.
+		 */
+		if (policy_mgr_is_sap_restart_required_after_sta_disconnect(
+			psoc, &intf_ch)) {
+			hdd_debug("Move the sap to user configured channel %u",
+				  intf_ch);
+			goto sap_restart;
+		}
+	}
 	/*
 	 * Check if STA's channel is DFS or passive or part of LTE avoided
 	 * channel list. In that case move SAP to other band if DBS is
@@ -2870,6 +2883,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		}
 	}
 
+sap_restart:
 	if (intf_ch == 0) {
 		hdd_debug("interface channel is 0");
 		return QDF_STATUS_E_FAILURE;
@@ -4382,6 +4396,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		pConfig->acs_dfs_mode = wlan_hdd_get_dfs_mode(mode);
 	}
 
+	policy_mgr_update_user_config_sap_chan(hdd_ctx->hdd_psoc,
+					       pConfig->channel);
 	hdd_debug("pConfig->channel %d, pConfig->acs_dfs_mode %d",
 		pConfig->channel, pConfig->acs_dfs_mode);
 
