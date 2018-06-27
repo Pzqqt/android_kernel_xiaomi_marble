@@ -49,9 +49,6 @@ typedef struct tagDblLinkList {
 	qdf_mutex_t Lock;
 	uint32_t Count;
 	tListFlag Flag;
-	/*command debugging */
-	uint32_t cmdTimeoutDuration;       /* command timeout duration */
-	qdf_mc_timer_t *cmdTimeoutTimer;   /*command timeout Timer */
 } tDblLinkList;
 
 /*

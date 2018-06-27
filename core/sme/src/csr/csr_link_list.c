@@ -216,7 +216,6 @@ QDF_STATUS csr_ll_open(tDblLinkList *pList)
 
 	if (LIST_FLAG_OPEN != pList->Flag) {
 		pList->Count = 0;
-		pList->cmdTimeoutTimer = NULL;
 		qdf_status = qdf_mutex_create(&pList->Lock);
 
 		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -282,11 +281,6 @@ void csr_ll_insert_head(tDblLinkList *pList, tListElem *pEntry,
 		pList->Count++;
 		if (fInterlocked)
 			csr_ll_unlock(pList);
-
-		if (pList->cmdTimeoutTimer && pList->cmdTimeoutDuration)
-			/* timer to detect pending command in activelist */
-			qdf_mc_timer_start(pList->cmdTimeoutTimer,
-					   pList->cmdTimeoutDuration);
 	}
 }
 
@@ -466,9 +460,6 @@ bool csr_ll_remove_entry(tDblLinkList *pList, tListElem *pEntryToRemove,
 		}
 		if (fInterlocked)
 			csr_ll_unlock(pList);
-
-		if (pList->cmdTimeoutTimer)
-			qdf_mc_timer_stop(pList->cmdTimeoutTimer);
 	}
 
 	return fFound;
