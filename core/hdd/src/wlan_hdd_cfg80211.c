@@ -19048,8 +19048,6 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 	if (adapter->device_mode ==  QDF_STA_MODE) {
-		sme_indicate_disconnect_inprogress(mac_handle,
-						   adapter->session_id);
 		hdd_debug("Stop firmware roaming");
 		sme_stop_roaming(mac_handle, adapter->session_id,
 				 eCsrForcedDisassoc);
@@ -19452,8 +19450,6 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 		return status;
 	mac_handle = hdd_ctx->mac_handle;
 	if (adapter->device_mode ==  QDF_STA_MODE) {
-		sme_indicate_disconnect_inprogress(mac_handle,
-						   adapter->session_id);
 		hdd_debug("Stop firmware roaming");
 		status = sme_stop_roaming(mac_handle, adapter->session_id,
 					  eCsrForcedDisassoc);

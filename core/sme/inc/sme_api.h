@@ -391,8 +391,18 @@ QDF_STATUS sme_roam_reassoc(tHalHandle hHal, uint8_t sessionId,
 		tCsrRoamModifyProfileFields modProfileFields,
 		uint32_t *pRoamId, bool fForce);
 QDF_STATUS sme_roam_connect_to_last_profile(tHalHandle hHal, uint8_t sessionId);
-QDF_STATUS sme_roam_disconnect(tHalHandle hHal, uint8_t sessionId,
-		eCsrRoamDisconnectReason reason);
+
+/**
+ * sme_roam_disconnect() - API to request CSR to disconnect
+ * @hal: HAL context
+ * @session: SME session identifier
+ * @reason: Reason to disconnect
+ *
+ * Return: QDF Status success or failure
+ */
+QDF_STATUS sme_roam_disconnect(tHalHandle hal, uint8_t session,
+			       eCsrRoamDisconnectReason reason);
+
 void sme_dhcp_done_ind(tHalHandle hal, uint8_t session_id);
 QDF_STATUS sme_roam_stop_bss(tHalHandle hHal, uint8_t sessionId);
 QDF_STATUS sme_roam_get_associated_stas(tHalHandle hHal, uint8_t sessionId,
@@ -675,15 +685,6 @@ QDF_STATUS sme_update_is_mawc_ini_feature_enabled(tHalHandle hHal,
 		const bool MAWCEnabled);
 QDF_STATUS sme_stop_roaming(tHalHandle hHal, uint8_t sessionId, uint8_t reason);
 
-/**
- * sme_indicate_disconnect_inprogress() - Indicate to csr that disconnect is in
- * progress
- * @hal: The handle returned by mac_open
- * @session_id: sessionId on which disconenct has started
- *
- * Return: void
- */
-void sme_indicate_disconnect_inprogress(tHalHandle hal, uint8_t session_id);
 QDF_STATUS sme_start_roaming(tHalHandle hHal, uint8_t sessionId,
 		uint8_t reason);
 QDF_STATUS sme_update_enable_fast_roam_in_concurrency(tHalHandle hHal,

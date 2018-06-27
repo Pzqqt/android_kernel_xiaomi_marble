@@ -3238,31 +3238,23 @@ QDF_STATUS sme_roam_connect_to_last_profile(tHalHandle hHal, uint8_t sessionId)
 	return status;
 }
 
-/*
- * sme_roam_disconnect() -
- * A wrapper function to request CSR to disconnect from a network
- *   This is an asynchronous call.
- *
- * reason -- To indicate the reason for disconnecting. Currently, only
- *		     eCSR_DISCONNECT_REASON_MIC_ERROR is meanful.
- * Return QDF_STATUS
- */
-QDF_STATUS sme_roam_disconnect(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS sme_roam_disconnect(tHalHandle hal, uint8_t session_id,
 			       eCsrRoamDisconnectReason reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_ROAM_DISCONNECT, sessionId,
+			 TRACE_CODE_SME_RX_HDD_ROAM_DISCONNECT, session_id,
 			 reason));
-	status = sme_acquire_global_lock(&pMac->sme);
+	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(pMac, sessionId))
-			status = csr_roam_disconnect(pMac, sessionId, reason);
+		if (CSR_IS_SESSION_VALID(mac_ctx, session_id))
+			status = csr_roam_disconnect(mac_ctx, session_id,
+						     reason);
 		else
 			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&pMac->sme);
+		sme_release_global_lock(&mac_ctx->sme);
 	}
 
 	return status;
@@ -6988,23 +6980,6 @@ QDF_STATUS sme_stop_roaming(tHalHandle hal, uint8_t session_id, uint8_t reason)
 	roam_info->last_sent_cmd = ROAM_SCAN_OFFLOAD_STOP;
 
 	return QDF_STATUS_SUCCESS;
-}
-
-void sme_indicate_disconnect_inprogress(tHalHandle hal, uint8_t session_id)
-{
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_roam_session *session;
-
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
-			session = CSR_GET_SESSION(mac_ctx, session_id);
-			if (session)
-				session->discon_in_progress = true;
-		}
-		sme_release_global_lock(&mac_ctx->sme);
-	}
 }
 
 /*

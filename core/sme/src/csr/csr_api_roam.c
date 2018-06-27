@@ -9440,21 +9440,22 @@ QDF_STATUS csr_roam_disconnect_internal(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-QDF_STATUS csr_roam_disconnect(tpAniSirGlobal pMac, uint32_t sessionId,
+QDF_STATUS csr_roam_disconnect(tpAniSirGlobal mac_ctx, uint32_t session_id,
 			       eCsrRoamDisconnectReason reason)
 {
-	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
-	if (!pSession) {
-		sme_err("session: %d not found ", sessionId);
+	if (!session) {
+		sme_err("session: %d not found ", session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	csr_roam_cancel_roaming(pMac, sessionId);
-	csr_roam_remove_duplicate_command(pMac, sessionId, NULL,
+	session->discon_in_progress = true;
+	csr_roam_cancel_roaming(mac_ctx, session_id);
+	csr_roam_remove_duplicate_command(mac_ctx, session_id, NULL,
 					  eCsrForcedDisassoc);
 
-	return csr_roam_disconnect_internal(pMac, sessionId, reason);
+	return csr_roam_disconnect_internal(mac_ctx, session_id, reason);
 }
 
 QDF_STATUS csr_roam_save_connected_information(tpAniSirGlobal pMac,
