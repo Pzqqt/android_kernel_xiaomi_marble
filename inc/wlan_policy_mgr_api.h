@@ -2426,4 +2426,14 @@ bool policy_mgr_sta_sap_scc_on_lte_coex_chan(
 bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
 					    uint8_t channel);
 
+/**
+ * policy_mgr_is_sta_sap_scc() - check whether SAP is doing SCC with
+ * STA
+ * @psoc: poniter to psoc
+ * @sap_ch: operating channel of SAP interface
+ * This function checks whether SAP is doing SCC with STA
+ *
+ * Return: true or false
+ */
+bool policy_mgr_is_sta_sap_scc(struct wlan_objmgr_psoc *psoc, uint8_t sap_ch);
 #endif /* __WLAN_POLICY_MGR_API_H */
