@@ -55,6 +55,8 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #endif
 #include "dp_ipa.h"
 
+#include "dp_cal_client_api.h"
+
 #ifdef CONFIG_MCL
 #ifndef REMOVE_PKT_LOG
 #include <pktlog_ac_api.h>
@@ -2813,6 +2815,28 @@ static QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 }
 #endif
 
+/*dp_iterate_update_peer_list - update peer stats on cal client timer
+ * @pdev_hdl: pdev handle
+ */
+#ifdef ATH_SUPPORT_EXT_STAT
+void  dp_iterate_update_peer_list(void *pdev_hdl)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
+	struct dp_vdev *vdev = NULL;
+	struct dp_peer *peer = NULL;
+
+	DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+		DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
+			dp_cal_client_update_peer_stats(&peer->stats);
+		}
+	}
+}
+#else
+void  dp_iterate_update_peer_list(void *pdev_hdl)
+{
+}
+#endif
+
 /*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @ctrl_pdev: Opaque PDEV object
@@ -3009,6 +3033,10 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	pdev->tlv_count = 0;
 	pdev->list_depth = 0;
 
+	/* initlialize cal client timer */
+	dp_cal_client_attach(&pdev->cal_client_ctx, pdev, pdev->soc->osdev,
+			     &dp_iterate_update_peer_list);
+
 	return (struct cdp_pdev *)pdev;
 
 fail1:
@@ -3176,6 +3204,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 
 	dp_htt_ppdu_stats_detach(pdev);
 
+	dp_cal_client_detach(&pdev->cal_client_ctx);
 	soc->pdev_list[pdev->pdev_id] = NULL;
 	soc->pdev_count--;
 	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
@@ -6195,6 +6224,12 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 	DP_PRINT_STATS("	Number of Msdu's With No Msdu Level Aggregation = %d\n",
 			peer->stats.tx.non_amsdu_cnt);
 
+	DP_PRINT_STATS("Bytes and Packets transmitted  in last one sec:");
+	DP_PRINT_STATS("	Bytes transmitted in last sec: %d",
+		       peer->stats.tx.tx_byte_rate);
+	DP_PRINT_STATS("	Data transmitted in last sec: %d",
+		       peer->stats.tx.tx_data_rate);
+
 	DP_PRINT_STATS("Node Rx Stats:");
 	DP_PRINT_STATS("Packets Sent To Stack = %d",
 			peer->stats.rx.to_stack.num);
@@ -6279,6 +6314,12 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.rx.amsdu_cnt);
 	DP_PRINT_STATS("	Msdu's With No Msdu Level Aggregation = %d",
 			peer->stats.rx.non_amsdu_cnt);
+
+	DP_PRINT_STATS("Bytes and Packets received in last one sec:");
+	DP_PRINT_STATS("	Bytes received in last sec: %d",
+		       peer->stats.rx.rx_byte_rate);
+	DP_PRINT_STATS("	Data received in last sec: %d",
+		       peer->stats.rx.rx_data_rate);
 }
 
 /*
@@ -6577,6 +6618,10 @@ static void
 dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	if (pdev->enhanced_stats_en == 0)
+		dp_cal_client_timer_start(pdev->cal_client_ctx);
+
 	pdev->enhanced_stats_en = 1;
 
 	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added)
@@ -6601,6 +6646,9 @@ static void
 dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	if (pdev->enhanced_stats_en == 1)
+		dp_cal_client_timer_stop(pdev->cal_client_ctx);
 
 	pdev->enhanced_stats_en = 0;
 

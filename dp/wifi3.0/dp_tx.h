@@ -206,6 +206,8 @@ void  dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 					qdf_nbuf_t netbuf);
 #endif
 
+void  dp_iterate_update_peer_list(void *pdev_hdl);
+
 #ifdef ATH_TX_PRI_OVERRIDE
 #define DP_TX_TID_OVERRIDE(_msdu_info, _nbuf) \
 	((_msdu_info)->tid = qdf_nbuf_get_priority(_nbuf))

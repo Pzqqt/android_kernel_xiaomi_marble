@@ -1233,6 +1233,8 @@ struct dp_pdev {
 	 * with same MAC address across 2 radios
 	 */
 	uint8_t is_primary;
+	/* Context of cal client timer */
+	void *cal_client_ctx;
 };
 
 struct dp_peer;
