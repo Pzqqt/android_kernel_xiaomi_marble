@@ -6252,6 +6252,22 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 }
 
 /*
+ * is_ppdu_txrx_capture_enabled() - API to check both pktlog and debug_sniffer
+ *                              modes are enabled or not.
+ * @dp_pdev: dp pdev handle.
+ *
+ * Return: bool
+ */
+static inline bool is_ppdu_txrx_capture_enabled(struct dp_pdev *pdev)
+{
+	if (!pdev->pktlog_ppdu_stats && !pdev->tx_sniffer_enable &&
+	    !pdev->mcopy_mode)
+		return true;
+	else
+		return false;
+}
+
+/*
  *dp_set_bpr_enable() - API to enable/disable bpr feature
  *@pdev_handle: DP_PDEV handle.
  *@val: Provided value.
@@ -6318,12 +6334,21 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 		pdev->tx_sniffer_enable = 0;
 		pdev->mcopy_mode = 0;
 
-		if (!pdev->pktlog_ppdu_stats && !pdev->enhanced_stats_en) {
+		if (!pdev->pktlog_ppdu_stats && !pdev->enhanced_stats_en &&
+		    !pdev->bpr_enable) {
 			dp_h2t_cfg_stats_msg_send(pdev, 0, pdev->pdev_id);
 			dp_ppdu_ring_reset(pdev);
-		} else if (pdev->enhanced_stats_en) {
+		} else if (pdev->enhanced_stats_en && !pdev->bpr_enable) {
 			dp_h2t_cfg_stats_msg_send(pdev,
 				DP_PPDU_STATS_CFG_ENH_STATS, pdev->pdev_id);
+		} else if (!pdev->enhanced_stats_en && pdev->bpr_enable) {
+			dp_h2t_cfg_stats_msg_send(pdev,
+						  DP_PPDU_STATS_CFG_BPR_ENH,
+						  pdev->pdev_id);
+		} else {
+			dp_h2t_cfg_stats_msg_send(pdev,
+						  DP_PPDU_STATS_CFG_BPR,
+						  pdev->pdev_id);
 		}
 		break;
 
@@ -6366,8 +6391,13 @@ dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
 	if (!pdev->mcopy_mode)
 		dp_ppdu_ring_cfg(pdev);
 
-	if (!pdev->pktlog_ppdu_stats && !pdev->tx_sniffer_enable && !pdev->mcopy_mode)
+	if (is_ppdu_txrx_capture_enabled(pdev) && !pdev->bpr_enable) {
 		dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_ENH_STATS, pdev->pdev_id);
+	} else if (is_ppdu_txrx_capture_enabled(pdev) && pdev->bpr_enable) {
+		dp_h2t_cfg_stats_msg_send(pdev,
+					  DP_PPDU_STATS_CFG_BPR_ENH,
+					  pdev->pdev_id);
+	}
 }
 
 /*
@@ -6383,9 +6413,13 @@ dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
 
 	pdev->enhanced_stats_en = 0;
 
-	if (!pdev->pktlog_ppdu_stats && !pdev->tx_sniffer_enable && !pdev->mcopy_mode)
+	if (is_ppdu_txrx_capture_enabled(pdev) && !pdev->bpr_enable) {
 		dp_h2t_cfg_stats_msg_send(pdev, 0, pdev->pdev_id);
-
+	} else if (is_ppdu_txrx_capture_enabled(pdev) && pdev->bpr_enable) {
+		dp_h2t_cfg_stats_msg_send(pdev,
+					  DP_PPDU_STATS_CFG_BPR,
+					  pdev->pdev_id);
+	}
 	if (!pdev->mcopy_mode)
 		dp_ppdu_ring_reset(pdev);
 }

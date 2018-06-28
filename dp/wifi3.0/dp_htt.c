@@ -2579,7 +2579,7 @@ static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 		return true;
 
 	if (!pdev->enhanced_stats_en && !pdev->tx_sniffer_enable &&
-			!pdev->mcopy_mode)
+	    !pdev->mcopy_mode && !pdev->bpr_enable)
 		return free_buf;
 
 	ppdu_info = dp_htt_process_tlv(pdev, htt_t2h_msg);
