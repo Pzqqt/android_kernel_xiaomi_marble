@@ -1103,31 +1103,28 @@ static void sme_process_ready_to_suspend(tpAniSirGlobal mac,
 
 /**
  * sme_process_ready_to_ext_wow() - inform ready to ExtWoW indication.
- * @hHal - Handle returned by mac_open.
- * @pReadyToExtWoW - Parameter received along with ready to Ext WoW
- *		     indication from WMA.
+ * @mac: Global MAC context
+ * @indication: ready to Ext WoW indication from lower layer
  *
  * On getting ready to Ext WoW indication, this function calls callback
- * registered (HDD callback)with SME to inform ready to ExtWoW indication.
+ * registered (HDD callback) with SME to inform ready to ExtWoW indication.
  *
  * Return: None
  */
-static void sme_process_ready_to_ext_wow(tHalHandle hHal,
-					 tpSirReadyToExtWoWInd pReadyToExtWoW)
+static void sme_process_ready_to_ext_wow(tpAniSirGlobal mac,
+					 tpSirReadyToExtWoWInd indication)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	if (NULL == pMac) {
+	if (!mac) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
-			  "%s: pMac is null", __func__);
+			  "%s: mac is null", __func__);
 		return;
 	}
 
-	if (NULL != pMac->readyToExtWoWCallback) {
-		pMac->readyToExtWoWCallback(pMac->readyToExtWoWContext,
-					    pReadyToExtWoW->status);
-		pMac->readyToExtWoWCallback = NULL;
-		pMac->readyToExtWoWContext = NULL;
+	if (NULL != mac->readyToExtWoWCallback) {
+		mac->readyToExtWoWCallback(mac->readyToExtWoWContext,
+					   indication->status);
+		mac->readyToExtWoWCallback = NULL;
+		mac->readyToExtWoWContext = NULL;
 	}
 
 }
