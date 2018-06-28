@@ -1525,10 +1525,18 @@ peer_detach:
 		wma->interfaces[vdev_id].peer_count);
 	/* Copy peer mac to find and delete objmgr peer */
 	qdf_mem_copy(peer_mac, peer_mac_addr, QDF_MAC_ADDR_SIZE);
-	if (roam_synch_in_progress)
+	if (roam_synch_in_progress &&
+	    is_cdp_peer_detach_force_delete_supported(soc)) {
+		WMA_LOGD("%s: LFR3: trigger force delete for peer %pM",
+			 __func__, peer_mac_addr);
 		cdp_peer_detach_force_delete(soc, peer);
-	else
+	} else {
+		if (roam_synch_in_progress) {
+			WMA_LOGD("%s: LFR3: normal peer delete for peer %pM",
+				 __func__, peer_mac_addr);
+		}
 		cdp_peer_delete(soc, peer, bitmap);
+	}
 
 	wma_remove_objmgr_peer(wma, vdev_id, peer_mac);
 
