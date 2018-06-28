@@ -741,7 +741,8 @@ static int q6lsm_do_open_v3(struct lsm_client *client)
 {
 	int rc, app_type;
 	struct lsm_stream_cmd_open_tx_v3 *open_v3;
-	size_t cmd_size = 0, stage_idx = LSM_STAGE_INDEX_FIRST;
+	size_t cmd_size = 0;
+	int stage_idx = LSM_STAGE_INDEX_FIRST;
 	uint32_t topology_id = 0, *uint32_ptr = NULL;
 
 	cmd_size = sizeof(struct lsm_stream_cmd_open_tx_v3);
@@ -866,7 +867,7 @@ void q6lsm_sm_set_param_data(struct lsm_client *client,
 	param_hdr.module_id = p_info->module_id;
 	param_hdr.instance_id = p_info->instance_id;
 	param_hdr.param_id = p_info->param_id;
-	param_hdr.param_size = sm->size;
+	param_hdr.param_size = p_info->param_size;
 
 	ret = q6lsm_pack_params(sm->data, &param_hdr,
 				NULL, offset, LSM_SESSION_CMD_SET_PARAMS_V2);
