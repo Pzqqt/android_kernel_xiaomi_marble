@@ -391,8 +391,6 @@ static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal pMac,
 						void *pEvent_info);
 static QDF_STATUS sme_qos_process_handoff_success_ev(tpAniSirGlobal pMac,
 					  uint8_t sessionId, void *pEvent_info);
-static QDF_STATUS sme_qos_process_handoff_failure_ev(tpAniSirGlobal pMac,
-					  uint8_t sessionId, void *pEvent_info);
 static QDF_STATUS sme_qos_process_preauth_success_ind(tpAniSirGlobal pMac,
 					       uint8_t sessionId,
 					       void *pEvent_info);
@@ -964,12 +962,6 @@ QDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal pMac,
 		/* nothing expected in pEvent_info */
 		status =
 			sme_qos_process_handoff_success_ev(pMac, sessionId,
-							   pEvent_info);
-		break;
-	case SME_QOS_CSR_HANDOFF_FAILURE:
-		/* nothing expected in pEvent_info */
-		status =
-			sme_qos_process_handoff_failure_ev(pMac, sessionId,
 							   pEvent_info);
 		break;
 	case SME_QOS_CSR_PREAUTH_SUCCESS_IND:
@@ -5014,71 +5006,6 @@ static QDF_STATUS sme_qos_process_handoff_success_ev(tpAniSirGlobal pMac,
 		}
 	}
 	return status;
-}
-
-/*
- * sme_qos_process_handoff_failure_ev() - Function to process the
- *  SME_QOS_CSR_HANDOFF_FAILURE event indication from CSR
- *
- * pEvent_info - Pointer to relevant info from CSR.
- *
- * Return QDF_STATUS
- */
-static QDF_STATUS sme_qos_process_handoff_failure_ev(tpAniSirGlobal pMac,
-					   uint8_t sessionId, void *pEvent_info)
-{
-	struct sme_qos_sessioninfo *pSession;
-	struct sme_qos_acinfo *pACInfo;
-	uint8_t ac;
-
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: %d: invoked on session %d",
-		  __func__, __LINE__, sessionId);
-	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
-		pACInfo = &pSession->ac_info[ac];
-		switch (pACInfo->curr_state) {
-		case SME_QOS_HANDOFF:
-			sme_qos_state_transition(sessionId, ac, SME_QOS_INIT);
-			/* need to clean up flows: TODO */
-			qdf_mem_zero(&pACInfo->
-				     curr_QoSInfo[SME_QOS_TSPEC_INDEX_0],
-				     sizeof(struct sme_qos_wmmtspecinfo));
-			qdf_mem_zero(&pACInfo->
-				     requested_QoSInfo[SME_QOS_TSPEC_INDEX_0],
-				     sizeof(struct sme_qos_wmmtspecinfo));
-			qdf_mem_zero(&pACInfo->
-				     curr_QoSInfo[SME_QOS_TSPEC_INDEX_1],
-				     sizeof(struct sme_qos_wmmtspecinfo));
-			qdf_mem_zero(&pACInfo->
-				     requested_QoSInfo[SME_QOS_TSPEC_INDEX_1],
-				     sizeof(struct sme_qos_wmmtspecinfo));
-			pACInfo->tspec_mask_status = SME_QOS_TSPEC_MASK_CLEAR;
-			pACInfo->tspec_pending = 0;
-			pACInfo->num_flows[SME_QOS_TSPEC_INDEX_0] = 0;
-			pACInfo->num_flows[SME_QOS_TSPEC_INDEX_1] = 0;
-			break;
-		case SME_QOS_INIT:
-		case SME_QOS_CLOSED:
-		case SME_QOS_LINK_UP:
-		case SME_QOS_REQUESTED:
-		case SME_QOS_QOS_ON:
-		default:
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: %d: On session %d AC %d is in wrong state %d",
-				  __func__, __LINE__,
-				  sessionId, ac, pACInfo->curr_state);
-			break;
-		}
-	}
-	/* no longer in handoff */
-	pSession->handoffRequested = false;
-	/* clean up the assoc info */
-	if (pSession->assocInfo.pBssDesc) {
-		qdf_mem_free(pSession->assocInfo.pBssDesc);
-		pSession->assocInfo.pBssDesc = NULL;
-	}
-	return QDF_STATUS_SUCCESS;
 }
 
 /*
