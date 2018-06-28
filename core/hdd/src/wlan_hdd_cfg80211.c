@@ -10508,6 +10508,7 @@ __wlan_hdd_cfg80211_avoid_freq(struct wiphy *wiphy,
 	uint16_t unsafe_channel_index, local_unsafe_list_count;
 	struct ch_avoid_ind_type *channel_list;
 	enum QDF_GLOBAL_MODE curr_mode;
+	uint8_t num_args = 0;
 
 	hdd_enter_dev(wdev->netdev);
 
@@ -10525,10 +10526,26 @@ __wlan_hdd_cfg80211_avoid_freq(struct wiphy *wiphy,
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
+	if (!data || data_len < (sizeof(channel_list->ch_avoid_range_cnt) +
+				 sizeof(struct ch_avoid_freq_type))) {
+		hdd_err("Avoid frequency channel list empty");
+		return -EINVAL;
+	}
+	num_args = (data_len - sizeof(channel_list->ch_avoid_range_cnt)) /
+		sizeof(channel_list->avoid_freq_range[0].start_freq);
+
+	if (num_args < 2 || num_args > CH_AVOID_MAX_RANGE * 2 ||
+	    num_args % 2 != 0) {
+		hdd_err("Invalid avoid frequency channel list");
+		return -EINVAL;
+	}
 
 	channel_list = (struct ch_avoid_ind_type *)data;
-	if (!channel_list) {
-		hdd_err("Avoid frequency channel list empty");
+	if (channel_list->ch_avoid_range_cnt == 0 ||
+	    channel_list->ch_avoid_range_cnt > CH_AVOID_MAX_RANGE ||
+	    2 * channel_list->ch_avoid_range_cnt != num_args) {
+		hdd_err("Invalid frequency range count %d",
+			channel_list->ch_avoid_range_cnt);
 		return -EINVAL;
 	}
 
