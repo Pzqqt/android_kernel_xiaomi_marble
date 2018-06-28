@@ -223,7 +223,8 @@ static void tdls_ct_sampling_tx_rx(struct tdls_vdev_priv_obj *tdls_vdev,
 		return;
 	}
 
-	mac_entries = tdls_vdev->valid_mac_entries;
+	mac_entries = QDF_MIN(tdls_vdev->valid_mac_entries,
+			      WLAN_TDLS_CT_TABLE_SIZE);
 
 	qdf_mem_copy(mac_table, tdls_vdev->ct_peer_table,
 	       (sizeof(struct tdls_conn_tracker_mac_table)) * mac_entries);
