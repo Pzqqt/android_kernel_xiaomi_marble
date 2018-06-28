@@ -590,4 +590,19 @@ void ucfg_scan_set_bt_activity(struct wlan_objmgr_psoc *psoc,
  * Return: true if enabled else false.
  */
 bool ucfg_scan_get_bt_activity(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_scan_set_vdev_del_in_progress() - API to mark vdev delete in progress
+ * @vdev: pointer to vdev object
+ *
+ * Return: none
+ */
+void ucfg_scan_set_vdev_del_in_progress(struct wlan_objmgr_vdev *vdev);
+/**
+ * ucfg_scan_clear_vdev_del_in_progress() - API to reset vdev delete in progress
+ * @vdev: pointer to vdev object
+ *
+ * Return: none
+ */
+void ucfg_scan_clear_vdev_del_in_progress(struct wlan_objmgr_vdev *vdev);
 #endif

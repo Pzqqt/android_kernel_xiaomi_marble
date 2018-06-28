@@ -2178,6 +2178,38 @@ bool ucfg_scan_get_bt_activity(struct wlan_objmgr_psoc *psoc)
 	return scan_obj->bt_a2dp_enabled;
 }
 
+void ucfg_scan_set_vdev_del_in_progress(struct wlan_objmgr_vdev *vdev)
+{
+	struct scan_vdev_obj *scan_vdev_obj;
+
+	if (!vdev) {
+		scm_err("invalid vdev");
+		return;
+	}
+	scan_vdev_obj = wlan_get_vdev_scan_obj(vdev);
+	if (!scan_vdev_obj) {
+		scm_err("null scan_vdev_obj");
+		return;
+	}
+	scan_vdev_obj->is_vdev_delete_in_progress = true;
+}
+
+void ucfg_scan_clear_vdev_del_in_progress(struct wlan_objmgr_vdev *vdev)
+{
+	struct scan_vdev_obj *scan_vdev_obj;
+
+	if (!vdev) {
+		scm_err("invalid vdev");
+		return;
+	}
+	scan_vdev_obj = wlan_get_vdev_scan_obj(vdev);
+	if (!scan_vdev_obj) {
+		scm_err("null scan_vdev_obj");
+		return;
+	}
+	scan_vdev_obj->is_vdev_delete_in_progress = false;
+}
+
 QDF_STATUS
 ucfg_scan_set_global_config(struct wlan_objmgr_psoc *psoc,
 			       enum scan_config config, uint32_t val)

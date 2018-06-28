@@ -369,8 +369,9 @@ scm_scan_start_req(struct scheduler_msg *msg)
 {
 	struct wlan_serialization_command cmd = {0, };
 	enum wlan_serialization_status ser_cmd_status;
-	struct scan_start_request *req;
+	struct scan_start_request *req = NULL;
 	struct wlan_scan_obj *scan_obj;
+	struct scan_vdev_obj *scan_vdev_priv_obj;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!msg) {
@@ -388,7 +389,8 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	scan_obj = wlan_vdev_get_scan_obj(req->vdev);
 	if (!scan_obj) {
 		scm_debug("Couldn't find scan object");
-		return QDF_STATUS_E_NULL_VALUE;
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto err;
 	}
 
 	cmd.cmd_type = WLAN_SER_CMD_SCAN;
@@ -409,6 +411,18 @@ scm_scan_start_req(struct scheduler_msg *msg)
 		req, req->scan_req.scan_req_id, req->scan_req.scan_id,
 		req->scan_req.vdev_id);
 
+	scan_vdev_priv_obj = wlan_get_vdev_scan_obj(req->vdev);
+	if (!scan_vdev_priv_obj) {
+		scm_debug("Couldn't find scan priv object");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto err;
+	}
+	if (scan_vdev_priv_obj->is_vdev_delete_in_progress) {
+		scm_err("Can't allow scan on vdev_id:%d",
+			wlan_vdev_get_id(req->vdev));
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto err;
+	}
 	ser_cmd_status = wlan_serialization_request(&cmd);
 	scm_info("wlan_serialization_request status:%d", ser_cmd_status);
 
@@ -427,21 +441,22 @@ scm_scan_start_req(struct scheduler_msg *msg)
 		 */
 		scm_post_internal_scan_complete_event(req,
 				SCAN_REASON_INTERNAL_FAILURE);
-		/* cmd can't be serviced.
-		 * release vdev reference and free scan_start_request memory
-		 */
-		wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
-		scm_scan_free_scan_request_mem(req);
-		break;
+		goto err;
 	default:
 		QDF_ASSERT(0);
 		status = QDF_STATUS_E_INVAL;
-		/* cmd can't be serviced.
-		 * release vdev reference and free scan_start_request memory
-		 */
+		goto err;
+	}
+
+	return status;
+err:
+	/*
+	 * cmd can't be serviced.
+	 * release vdev reference and free scan_start_request memory
+	 */
+	if (req) {
 		wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
 		scm_scan_free_scan_request_mem(req);
-		break;
 	}
 
 	return status;
