@@ -517,12 +517,9 @@ suspend_recovery:
 			continue;
 
 		resume_status = handler(psoc, arg);
-		if (QDF_IS_STATUS_ERROR(resume_status)) {
-			pmo_fatal("Non-recoverable failure occurred!");
-			pmo_fatal("component %d failed to resume; status: %d",
-				  i, resume_status);
-			QDF_DEBUG_PANIC();
-		}
+		if (QDF_IS_STATUS_ERROR(resume_status))
+			QDF_DEBUG_PANIC("component %d failed resume; status:%d",
+					i, resume_status);
 	}
 
 exit_with_status:
