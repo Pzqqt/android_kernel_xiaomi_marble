@@ -9405,6 +9405,9 @@ static int msm_dai_q6_cdc_dma_hw_params(
 		return -EINVAL;
 	}
 
+	dai_data->rate = params_rate(params);
+	dai_data->channels = params_channels(params);
+
 	dai_data->port_config.cdc_dma.cdc_dma_cfg_minor_version =
 				AFE_API_VERSION_CODEC_DMA_CONFIG;
 	dai_data->port_config.cdc_dma.sample_rate = dai_data->rate;
