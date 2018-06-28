@@ -49,30 +49,38 @@
 
 const uint8_t p2p_oui[] = { 0x50, 0x6F, 0x9A, 0x9 };
 
-static QDF_STATUS sch_get_p2p_ie_offset(uint8_t *pExtraIe,
-					uint32_t extraIeLen,
-					uint16_t *pP2pIeOffset)
+static QDF_STATUS sch_get_p2p_ie_offset(uint8_t *pextra_ie,
+					uint32_t extra_ie_len,
+					uint16_t *pie_offset)
 {
+	uint8_t elem_id;
+	uint8_t elem_len;
+	uint8_t *ie_ptr = pextra_ie;
+	uint8_t oui_size = sizeof(p2p_oui);
+	uint32_t p2p_ie_offset = 0;
+	uint32_t left_len = extra_ie_len;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	*pP2pIeOffset = 0;
 
-	/* Extra IE is not present */
-	if (0 == extraIeLen) {
-		return status;
-	}
-	/* Calculate the P2P IE Offset */
-	do {
-		if (*pExtraIe == 0xDD) {
-			if (!qdf_mem_cmp
-				    ((void *)(pExtraIe + 2), &p2p_oui, sizeof(p2p_oui))) {
-				status = QDF_STATUS_SUCCESS;
-				break;
+	*pie_offset = 0;
+	while (left_len > 2) {
+		elem_id  = ie_ptr[0];
+		elem_len = ie_ptr[1];
+		left_len -= 2;
+
+		if (elem_len > left_len)
+			return status;
+
+		if ((elem_id == 0xDD) && (elem_len >= oui_size)) {
+			if (!qdf_mem_cmp(&ie_ptr[2], &p2p_oui, oui_size)) {
+				*pie_offset = p2p_ie_offset;
+				return QDF_STATUS_SUCCESS;
 			}
 		}
 
-		(*pP2pIeOffset)++;
-		pExtraIe++;
-	} while (--extraIeLen > 0);
+		left_len -= elem_len;
+		ie_ptr += (elem_len + 2);
+		p2p_ie_offset += (elem_len + 2);
+	};
 
 	return status;
 }
