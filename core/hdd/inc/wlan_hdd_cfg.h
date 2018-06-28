@@ -3082,6 +3082,8 @@ enum hdd_dot11_mode {
  *		fav channel(s)without SAP restart.
  * If gWlainMccToSccSwitchMode = 5: Force switch without SAP restart.MCC allowed
  *					in exceptional cases.
+ * If gWlainMccToSccSwitchMode = 6: Force Switch without SAP restart only in
+					user preffered band.
  * Related: None.
  *
  * Supported Feature: Concurrency
@@ -3093,7 +3095,7 @@ enum hdd_dot11_mode {
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE          "gWlanMccToSccSwitchMode"
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MIN      (QDF_MCC_TO_SCC_SWITCH_DISABLE)
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MAX \
-		   (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
+		   (QDF_MCC_TO_SCC_SWITCH_MAX - 1)
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_DEFAULT  (QDF_MCC_TO_SCC_SWITCH_DISABLE)
 #endif
 
