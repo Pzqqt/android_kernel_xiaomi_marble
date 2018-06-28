@@ -122,6 +122,10 @@
 #include "wlan_extscan_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
 
+#include "wlan_crypto_global_api.h"
+#include "wlan_nl_to_crypto_params.h"
+#include "wlan_crypto_global_def.h"
+
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
 
@@ -15980,6 +15984,104 @@ static bool hdd_is_wpaie_present(const uint8_t *ie, uint8_t ie_len)
 }
 
 /**
+ * hdd_populate_crypto_auth_type() - populate auth type for crypto
+ * @vdev: pointed to vdev obmgr
+ * @auth_type: legacy auth_type
+ *
+ * set the crypto auth type for corresponding auth type received
+ * from NL
+ *
+ * Return: None
+ */
+static void hdd_populate_crypto_auth_type(struct wlan_objmgr_vdev *vdev,
+					  enum nl80211_auth_type auth_type)
+{
+	wlan_crypto_auth_mode crypto_auth_type =
+			osif_nl_to_crypto_auth_type(auth_type);
+
+	wlan_crypto_set_vdev_param(vdev,
+				   WLAN_CRYPTO_PARAM_AUTH_MODE,
+				   crypto_auth_type);
+}
+
+/**
+ * hdd_populate_crypto_akm_type() - populate akm type for crypto
+ * @vdev: pointed to vdev obmgr
+ * @akm_type: legacy akm_type
+ *
+ * set the crypto akm type for corresponding akm type received
+ * from NL
+ *
+ * Return: None
+ */
+static void hdd_populate_crypto_akm_type(struct wlan_objmgr_vdev *vdev,
+					 u32 key_mgmt)
+{
+	wlan_crypto_key_mgmt crypto_akm_type =
+			osif_nl_to_crypto_akm_type(key_mgmt);
+
+	wlan_crypto_set_vdev_param(vdev,
+				   WLAN_CRYPTO_PARAM_KEY_MGMT,
+				   crypto_akm_type);
+}
+
+/**
+ * hdd_populate_crypto_cipher_type() - populate cipher type for crypto
+ * @cipher: legacy cipher type
+ * @vdev: pointed to vdev obmgr
+ * @cipher_param_type: param type, UCST/MCAST
+ *
+ * set the crypto cipher type for corresponding cipher type received
+ * from NL
+ *
+ * Return: None
+ */
+static void hdd_populate_crypto_cipher_type(u32 cipher,
+					    struct wlan_objmgr_vdev *vdev,
+					    wlan_crypto_param_type
+					    cipher_param_type)
+{
+	wlan_crypto_cipher_type crypto_cipher_type =
+			osif_nl_to_crypto_cipher_type(cipher);
+
+	wlan_crypto_set_vdev_param(vdev,
+				   cipher_param_type,
+				   crypto_cipher_type);
+}
+
+/**
+ * hdd_populate_crypto_params() - set crypto params
+ * @vdev: Pointer to vdev obh mgr
+ * @req: Pointer to security parameters
+ *
+ * Set Auth, Akm and Cipher type for crypto
+ *
+ * Return: None
+ */
+static void hdd_populate_crypto_params(struct wlan_objmgr_vdev *vdev,
+				       struct cfg80211_connect_params *req)
+{
+	hdd_populate_crypto_auth_type(vdev, req->auth_type);
+
+	if (req->crypto.n_akm_suites)
+		hdd_populate_crypto_akm_type(vdev, req->crypto.akm_suites[0]);
+
+	if (req->crypto.n_ciphers_pairwise) {
+		hdd_populate_crypto_cipher_type(req->crypto.ciphers_pairwise[0],
+						vdev,
+						WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	} else {
+		/* Reset previous cipher suite to none */
+		hdd_populate_crypto_cipher_type(0, vdev,
+						WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	}
+
+	hdd_populate_crypto_cipher_type(req->crypto.cipher_group,
+					vdev,
+					WLAN_CRYPTO_PARAM_MCAST_CIPHER);
+}
+
+/**
  * wlan_hdd_cfg80211_set_privacy() - set security parameters during connection
  * @adapter: Pointer to adapter
  * @req: Pointer to security parameters
@@ -16000,6 +16102,9 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 	hdd_debug("set wpa version to %d", sta_ctx->wpa_versions);
 
 	roam_profile = hdd_roam_profile(adapter);
+
+	/* populate auth,akm and cipher params for crypto */
+	hdd_populate_crypto_params(adapter->vdev, req);
 
 	/*set authentication type */
 	status = wlan_hdd_cfg80211_set_auth_type(adapter, req->auth_type);

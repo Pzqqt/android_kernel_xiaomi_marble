@@ -594,10 +594,12 @@ OS_IF_INC := -I$(WLAN_COMMON_INC)/os_if/linux \
             -I$(WLAN_COMMON_INC)/os_if/linux/scan/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/p2p/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/spectral/inc \
-            -I$(WLAN_COMMON_INC)/os_if/linux/tdls/inc
+            -I$(WLAN_COMMON_INC)/os_if/linux/tdls/inc \
+            -I$(WLAN_COMMON_INC)/os_if/linux/crypto/inc
 
 OS_IF_OBJ := $(OS_IF_DIR)/linux/p2p/src/wlan_cfg80211_p2p.o \
-	     $(OS_IF_DIR)/linux/wlan_osif_request_manager.o
+	     $(OS_IF_DIR)/linux/wlan_osif_request_manager.o \
+	     $(OS_IF_DIR)/linux/crypto/src/wlan_nl_to_crypto_params.o
 
 ############ UMAC_DISP ############
 UMAC_DISP_DIR := umac/global_umac_dispatcher/lmac_if
@@ -1687,9 +1689,7 @@ INCS +=		$(UMAC_TARGET_GREEN_AP_INC)
 INCS +=		$(UMAC_COMMON_INC)
 INCS +=		$(UMAC_SPECTRAL_INC)
 INCS +=		$(UMAC_TARGET_SPECTRAL_INC)
-ifeq ($(CONFIG_CRYPTO_COMPONENT), y)
 INCS +=		$(UMAC_CRYPTO_INC)
-endif
 
 OBJS :=		$(HDD_OBJS) \
 		$(DSC_OBJS) \
