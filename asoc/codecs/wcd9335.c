@@ -13589,7 +13589,7 @@ static int tasha_codec_probe(struct snd_soc_codec *codec)
 	if (tasha->is_wsa_attach)
 		snd_soc_add_codec_controls(codec,
 				tasha_spkr_wsa_controls,
-				ARRAY_SIZE(tasha_wsa_controls));
+				ARRAY_SIZE(tasha_spkr_wsa_controls));
 	control->num_rx_port = TASHA_RX_MAX;
 	control->rx_chs = ptr;
 	memcpy(control->rx_chs, tasha_rx_chs, sizeof(tasha_rx_chs));
