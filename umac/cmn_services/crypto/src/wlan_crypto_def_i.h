@@ -93,6 +93,9 @@
 #define WLAN_TID_SIZE                    17
 #define WLAN_NONQOS_SEQ                  16
 
+/* Number of bits per byte */
+#define CRYPTO_NBBY  8
+
 /* Macros for handling unaligned memory accesses */
 
 static inline uint16_t wlan_crypto_get_be16(const uint8_t *a)

@@ -231,10 +231,19 @@ int wlan_crypto_aes_gcm_ad(const uint8_t *key, size_t key_len,
 			const uint8_t *aad, size_t aad_len,
 			const uint8_t *tag,
 			uint8_t *plain);
-
+#ifdef WLAN_CRYPTO_GCM_OS_DERIVATIVE
+static inline int wlan_crypto_aes_gmac(const uint8_t *key, size_t key_len,
+				       const uint8_t *iv, size_t iv_len,
+				       const uint8_t *aad, size_t aad_len,
+				       uint8_t *tag)
+{
+	return 0;
+}
+#else
 int wlan_crypto_aes_gmac(const uint8_t *key, size_t key_len,
-			const uint8_t *iv, size_t iv_len,
-			const uint8_t *aad, size_t aad_len, uint8_t *tag);
+			 const uint8_t *iv, size_t iv_len,
+			 const uint8_t *aad, size_t aad_len, uint8_t *tag);
+#endif
 int wlan_crypto_aes_ccm_ae(const uint8_t *key, size_t key_len,
 			const uint8_t *nonce, size_t M, const uint8_t *plain,
 			size_t plain_len, const uint8_t *aad, size_t aad_len,
@@ -251,10 +260,24 @@ void wlan_crypto_aes_encrypt_deinit(void *ctx);
 void *wlan_crypto_aes_decrypt_init(const uint8_t *key, size_t len);
 void wlan_crypto_aes_decrypt(void *ctx, const uint8_t *crypt, uint8_t *plain);
 void wlan_crypto_aes_decrypt_deinit(void *ctx);
+#ifdef WLAN_CRYPTO_OMAC1_OS_DERIVATIVE
+static inline int omac1_aes_128(const uint8_t *key, const uint8_t *data,
+				size_t data_len, uint8_t *mac)
+{
+	return 0;
+}
+
+static inline int omac1_aes_256(const uint8_t *key, const uint8_t *data,
+				size_t data_len, uint8_t *mac)
+{
+	return 0;
+}
+#else
 int omac1_aes_128(const uint8_t *key, const uint8_t *data,
-				size_t data_len, uint8_t *mac);
+		  size_t data_len, uint8_t *mac);
 int omac1_aes_256(const uint8_t *key, const uint8_t *data,
-				size_t data_len, uint8_t *mac);
+		  size_t data_len, uint8_t *mac);
+#endif
 int omac1_aes_vector(const uint8_t *key, size_t key_len, size_t num_elem,
 		     const uint8_t *addr[], const size_t *len, uint8_t *mac);
 #endif /* WLAN_CRYPTO_AES_I_H */

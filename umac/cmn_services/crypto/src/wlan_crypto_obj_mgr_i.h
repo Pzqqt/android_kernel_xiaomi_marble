@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +22,63 @@
 
 #ifndef __WLAN_CRYPTO_OBJ_MGR_I_
 #define __WLAN_CRYPTO_OBJ_MGR_I_
+
+#ifdef WLAN_CRYPTO_WEP_OS_DERIVATIVE
+static inline const struct wlan_crypto_cipher *wep_register(void)
+{
+	return NULL;
+}
+#else
+const struct wlan_crypto_cipher *wep_register(void);
+#endif
+
+#ifdef WLAN_CRYPTO_TKIP_OS_DERIVATIVE
+static inline const struct wlan_crypto_cipher *tkip_register(void)
+{
+	return NULL;
+}
+#else
+const struct wlan_crypto_cipher *tkip_register(void);
+#endif
+
+#ifdef WLAN_CRYPTO_CCMP_OS_DERIVATIVE
+static inline const struct wlan_crypto_cipher *ccmp_register(void)
+{
+	return NULL;
+}
+
+static inline const struct wlan_crypto_cipher *ccmp256_register(void)
+{
+	return NULL;
+}
+#else
+const struct wlan_crypto_cipher *ccmp_register(void);
+const struct wlan_crypto_cipher *ccmp256_register(void);
+#endif
+
+#ifdef WLAN_CRYPTO_GCMP_OS_DERIVATIVE
+static inline const struct wlan_crypto_cipher *gcmp_register(void)
+{
+	return NULL;
+}
+
+static inline const struct wlan_crypto_cipher *gcmp256_register(void)
+{
+	return NULL;
+}
+#else
+const struct wlan_crypto_cipher *gcmp_register(void);
+const struct wlan_crypto_cipher *gcmp256_register(void);
+#endif
+
+#ifdef WLAN_CRYPTO_WAPI_OS_DERIVATIVE
+static inline const struct wlan_crypto_cipher *wapi_register(void)
+{
+	return NULL;
+}
+#else
+const struct wlan_crypto_cipher *wapi_register(void);
+#endif
 
 
 static inline void *wlan_get_vdev_crypto_obj(struct wlan_objmgr_vdev *vdev)

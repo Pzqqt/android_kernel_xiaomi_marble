@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,6 +19,12 @@
 #ifndef _WLAN_CRYPTO_FILS_API_H_
 #define _WLAN_CRYPTO_FILS_API_H_
 
+#ifdef WLAN_CRYPTO_FILS_OS_DERIVATIVE
+static inline const struct wlan_crypto_cipher *fils_register(void)
+{
+	return NULL;
+}
+#else
 /**
  * fils_register() - Register all callback functions to Crypto manager
  *
@@ -28,6 +34,7 @@
  * Return: Pointer to wlan_crypto_cipher Object
  */
 const struct wlan_crypto_cipher *fils_register(void);
+#endif
 
 #ifdef WLAN_SUPPORT_FILS
 /**

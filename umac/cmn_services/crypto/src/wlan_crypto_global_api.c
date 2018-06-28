@@ -386,7 +386,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 
 	if (cipher && (!IS_FILS_CIPHER(req_key->type)) &&
 	    (!IS_MGMT_CIPHER(req_key->type)) &&
-	    ((req_key->keylen != (cipher->keylen / NBBY)) &&
+	    ((req_key->keylen != (cipher->keylen / CRYPTO_NBBY)) &&
 	    (req_key->type != WLAN_CRYPTO_CIPHER_WEP))) {
 		qdf_print("%s[%d] cipher invalid\n", __func__, __LINE__);
 		return QDF_STATUS_E_INVAL;
@@ -466,8 +466,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 			crypto_priv->def_igtk_tx_keyid = igtk_idx;
 		} else {
 			if (IS_FILS_CIPHER(req_key->type)) {
-				qdf_print(FL(
-				"FILS key is not for BroadCast packet\n"));
+				qdf_print("FILS key is not for BroadCast pkt");
 				return QDF_STATUS_E_INVAL;
 			}
 			if (!HAS_MCAST_CIPHER(crypto_params, req_key->type)
@@ -3091,13 +3090,13 @@ uint8_t wlan_crypto_get_peer_fils_aead(struct wlan_objmgr_peer *peer)
 	struct wlan_crypto_comp_priv *crypto_priv = NULL;
 
 	if (!peer) {
-		qdf_print(FL("Invalid Input\n"));
+		qdf_print("Invalid Input");
 		return 0;
 	}
 
 	crypto_priv = wlan_get_peer_crypto_obj(peer);
 	if (!crypto_priv) {
-		qdf_print(FL("crypto_priv NULL\n"));
+		qdf_print("crypto_priv NULL");
 		return 0;
 	}
 
@@ -3110,13 +3109,13 @@ wlan_crypto_set_peer_fils_aead(struct wlan_objmgr_peer *peer, uint8_t value)
 	struct wlan_crypto_comp_priv *crypto_priv = NULL;
 
 	if (!peer) {
-		qdf_print(FL("Invalid Input\n"));
+		qdf_print("Invalid Input");
 		return;
 	}
 
 	crypto_priv = wlan_get_peer_crypto_obj(peer);
 	if (!crypto_priv) {
-		qdf_print(FL("crypto_priv NULL\n"));
+		qdf_print("crypto_priv NULL");
 		return;
 	}
 
