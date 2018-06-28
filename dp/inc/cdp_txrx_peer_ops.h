@@ -721,4 +721,31 @@ static inline void cdp_peer_detach_force_delete(ol_txrx_soc_handle soc,
 
 	return;
 }
+
+/**
+ * is_cdp_peer_detach_force_delete_supported() - To check if force delete
+ *						 operation is supported
+ * @soc: pointer to SOC handle
+ *
+ * Some of the platforms support force delete operation and some of them
+ * don't. This API returns true if API which handles force delete operation
+ * is registered and false otherwise.
+ *
+ * Return: true if API which handles force delete operation is registered
+ *	   false in all other cases
+ */
+static inline bool
+is_cdp_peer_detach_force_delete_supported(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return false;
+	}
+
+	if (soc->ops->peer_ops->peer_detach_force_delete)
+		return true;
+
+	return false;
+}
 #endif /* _CDP_TXRX_PEER_H_ */

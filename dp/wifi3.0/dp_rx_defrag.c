@@ -1270,6 +1270,16 @@ void dp_rx_defrag_cleanup(struct dp_peer *peer, unsigned tid)
 	struct dp_rx_reorder_array_elem *rx_reorder_array_elem =
 				peer->rx_tid[tid].array;
 
+	if (!rx_reorder_array_elem) {
+		/*
+		 * if this condition is hit then somebody
+		 * must have reset this pointer to NULL.
+		 * array pointer usually points to base variable
+		 * of TID queue structure: "struct dp_rx_tid"
+		 */
+		QDF_ASSERT(0);
+		return;
+	}
 	/* Free up nbufs */
 	dp_rx_defrag_frames_free(rx_reorder_array_elem->head);
 

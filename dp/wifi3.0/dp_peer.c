@@ -1984,8 +1984,10 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 	if (!peer)
 		return NULL;
 
-	if (peer->vdev != vdev)
+	if (peer->vdev != vdev) {
+		qdf_atomic_dec(&peer->ref_cnt);
 		return NULL;
+	}
 
 	*local_id = peer->local_id;
 	DP_TRACE(INFO, "peer %pK vdev %pK local id %d", peer, vdev, *local_id);
