@@ -574,14 +574,10 @@ void sme_set_tspec_uapsd_mask_per_session(tpAniSirGlobal mac_ctx,
  * sme_ps_start_uapsd(): function to start UAPSD.
  * @hal_ctx: global hal_handle
  * @session_id: session id
- * @uapsd_start_ind_cb: uapsd start indiation cb
- * @callback_context: callback context
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_ps_start_uapsd(tHalHandle hal_ctx, uint32_t session_id,
-		uapsd_start_indication_cb uapsd_start_ind_cb,
-		void *callback_context)
+QDF_STATUS sme_ps_start_uapsd(tHalHandle hal_ctx, uint32_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 

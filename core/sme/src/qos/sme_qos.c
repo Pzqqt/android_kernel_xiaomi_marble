@@ -282,10 +282,6 @@ struct sme_qos_sessioninfo {
 	uint32_t roamID;
 	/* are we in the process of handing off to a different AP */
 	bool handoffRequested;
-	/* following reassoc or AddTS has UAPSD already been requested
-	 * from PMC
-	 */
-	bool uapsdAlreadyRequested;
 	/* commands that are being buffered for this session */
 	tDblLinkList bufferedCommandList;
 
@@ -442,9 +438,6 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal pMac, tListElem
 static bool sme_qos_is_rsp_pending(uint8_t sessionId, sme_QosEdcaAcType ac);
 static bool sme_qos_is_uapsd_active(void);
 
-static void sme_qos_pmc_offload_start_uapsd_callback(void *callbackContext,
-					 uint32_t sessionId, QDF_STATUS status);
-
 static QDF_STATUS sme_qos_buffer_existing_flows(tpAniSirGlobal pMac,
 						uint8_t sessionId);
 static QDF_STATUS sme_qos_delete_existing_flows(tpAniSirGlobal pMac,
@@ -563,7 +556,6 @@ QDF_STATUS sme_qos_close(tpAniSirGlobal pMac)
 		/* this session doesn't require UAPSD */
 		pSession->apsdMask = 0;
 
-		pSession->uapsdAlreadyRequested = false;
 		pSession->handoffRequested = false;
 		pSession->roamID = 0;
 		/* need to clean up buffered req */
@@ -3338,7 +3330,6 @@ static QDF_STATUS sme_qos_process_ft_reassoc_req_ev(
 	 * to reset all these session variables
 	 */
 	session->apsdMask = 0;
-	session->uapsdAlreadyRequested = 0;
 
 	/*
 	 * Now change reason and HO renewal of
@@ -4820,7 +4811,6 @@ static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal pMac,
 	pSession->apsdMask = 0;
 	/* do any sessions still require UAPSD? */
 	sme_ps_uapsd_disable(MAC_HANDLE(pMac), sessionId);
-	pSession->uapsdAlreadyRequested = false;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -4930,7 +4920,6 @@ static QDF_STATUS sme_qos_process_disconnect_ev(tpAniSirGlobal pMac, uint8_t
 
 	sme_ps_uapsd_disable(MAC_HANDLE(pMac), sessionId);
 
-	pSession->uapsdAlreadyRequested = false;
 	pSession->handoffRequested = false;
 	pSession->roamID = 0;
 	/* need to clean up buffered req */
@@ -6165,7 +6154,6 @@ static QDF_STATUS sme_qos_buffer_existing_flows(tpAniSirGlobal mac_ctx,
 		list_entry = list_nextentry;
 	}
 	qos_session = &sme_qos_cb.sessionInfo[sessionid];
-	qos_session->uapsdAlreadyRequested = false;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -6682,15 +6670,12 @@ sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
 		 * do anything.
 		 */
 		if (ac_info->requested_QoSInfo[SME_QOS_TSPEC_INDEX_0].
-				ts_info.psb &&
-				!qos_session->uapsdAlreadyRequested) {
+				ts_info.psb) {
 			/* this is the first flow to detect we need
 			 * PMC in UAPSD mode
 			 */
 			pmc_status = sme_ps_start_uapsd(MAC_HANDLE(mac_ctx),
-					flow_info->sessionId,
-				sme_qos_pmc_offload_start_uapsd_callback,
-					qos_session);
+							flow_info->sessionId);
 			/* if PMC doesn't return success right away means
 			 * it is yet to put the module in BMPS state & later
 			 * to UAPSD state
@@ -6700,11 +6685,6 @@ sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
 					SME_QOS_STATUS_SETUP_SUCCESS_IND_APSD_SET_FAILED;
 				/* we need to always notify this case */
 				flow_info->hoRenewal = false;
-			} else if (QDF_STATUS_PMC_PENDING == pmc_status) {
-				/* let other flows know PMC has been notified */
-				qos_session->uapsdAlreadyRequested =
-				true;
-
 			}
 		}
 		/* for any other pmc status we declare success */
@@ -6720,15 +6700,12 @@ sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
 		delete_entry = false;
 		flow_info->reason = SME_QOS_REASON_REQ_SUCCESS;
 		if (ac_info->requested_QoSInfo[SME_QOS_TSPEC_INDEX_0].
-				ts_info.psb &&
-				!qos_session->uapsdAlreadyRequested) {
+				ts_info.psb) {
 			/* this is the first flow to detect we need
 			 * PMC in UAPSD mode
 			 */
 			pmc_status = sme_ps_start_uapsd(MAC_HANDLE(mac_ctx),
-					 flow_info->sessionId,
-				sme_qos_pmc_offload_start_uapsd_callback,
-					 qos_session);
+							flow_info->sessionId);
 			/* if PMC doesn't return success right away means
 			 * it is yet to put the module in BMPS state &
 			 * later to UAPSD state
@@ -6738,8 +6715,7 @@ sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
 					SME_QOS_STATUS_MODIFY_SETUP_SUCCESS_IND_APSD_SET_FAILED;
 				/* we need to always notify this case */
 				flow_info->hoRenewal = false;
-			} else if (QDF_STATUS_PMC_PENDING == pmc_status)
-				qos_session->uapsdAlreadyRequested = true;
+			}
 		}
 		/* for any other pmc status we declare success */
 		break;
@@ -6921,15 +6897,12 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 		 * notify PMC as App is looking for APSD. If we already
 		 * requested then we don't need to do anything
 		 */
-		if (ac_info->requested_QoSInfo[tspec_index].ts_info.psb &&
-			!qos_session->uapsdAlreadyRequested) {
+		if (ac_info->requested_QoSInfo[tspec_index].ts_info.psb) {
 			/* this is the first flow to detect we need
 			 * PMC in UAPSD mode
 			 */
 			pmc_status = sme_ps_start_uapsd(MAC_HANDLE(mac_ctx),
-				flow_info->sessionId,
-				sme_qos_pmc_offload_start_uapsd_callback,
-				qos_session);
+							flow_info->sessionId);
 			/* if PMC doesn't return success right away means
 			 * it is yet to put the module in BMPS state & later
 			 * to UAPSD state
@@ -6939,10 +6912,7 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 					SME_QOS_STATUS_SETUP_SUCCESS_IND_APSD_SET_FAILED;
 				/* we need to always notify this case */
 				flow_info->hoRenewal = false;
-			} else if (QDF_STATUS_PMC_PENDING == pmc_status)
-				/* let other flows know PMC has been notified */
-				qos_session->uapsdAlreadyRequested = true;
-			/* for any other pmc status we declare success */
+			}
 		}
 		break;
 	case SME_QOS_REASON_RELEASE:
@@ -6962,18 +6932,13 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 		inform_hdd = true;
 		psb = ac_info->requested_QoSInfo[tspec_index].ts_info.psb;
 		/* notify PMC if App is looking for APSD
-		 * notify PMC as App is looking for APSD. If we already
-		 * requested then we don't need to do anything.
 		 */
-		if (psb && !qos_session->uapsdAlreadyRequested) {
+		if (psb) {
 			/* this is the first flow to detect
 			 * we need PMC in UAPSD mode
 			 */
-			pmc_status =
-				sme_ps_start_uapsd(MAC_HANDLE(mac_ctx),
-					flow_info->sessionId,
-				sme_qos_pmc_offload_start_uapsd_callback,
-					qos_session);
+			pmc_status = sme_ps_start_uapsd(MAC_HANDLE(mac_ctx),
+							flow_info->sessionId);
 			/* if PMC doesn't return success right
 			 * away means it is yet to put
 			 * the module in BMPS state & later to UAPSD state
@@ -6983,11 +6948,7 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 				 SME_QOS_STATUS_MODIFY_SETUP_SUCCESS_IND_APSD_SET_FAILED;
 				/* we need to always notify this case */
 				flow_info->hoRenewal = false;
-			} else if (QDF_STATUS_PMC_PENDING == pmc_status)
-				/* let other flows know PMC has been notified */
-				qos_session->uapsdAlreadyRequested = true;
-
-			/* for any other pmc status we declare success */
+			}
 		} else if (!psb &&
 		((ac_info->num_flows[flow_info->tspec_mask - 1] == 1)
 			    && (SME_QOS_TSPEC_MASK_BIT_1_2_SET !=
@@ -7114,23 +7075,6 @@ static bool sme_qos_is_uapsd_active(void)
 	}
 	/* no active sessions have U-APSD active */
 	return false;
-}
-
-/*
- * sme_QosPmcStartUAPSDCallback() - Callback function registered with PMC
- *  to notify SME-QoS when it puts the chip into UAPSD mode
- *
- * callbackContext - The context passed to PMC during pmc_start_uapsd call.
- * status - QDF_STATUS returned by PMC.
- *
- * Return None
- */
-static void sme_qos_pmc_offload_start_uapsd_callback(void *callbackContext,
-					  uint32_t sessionId, QDF_STATUS status)
-{
-	struct sme_qos_sessioninfo *pSession = callbackContext;
-
-	pSession->uapsdAlreadyRequested = false;
 }
 
 QDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(tpAniSirGlobal pMac,

@@ -46,9 +46,7 @@ void sme_set_tspec_uapsd_mask_per_session(tpAniSirGlobal mac_ctx,
 typedef void (*uapsd_start_indication_cb)(void *callback_context,
 		uint32_t session_id, QDF_STATUS status);
 
-QDF_STATUS sme_ps_start_uapsd(tHalHandle hal_ctx, uint32_t session_id,
-		uapsd_start_indication_cb uapsd_start_ind_cb,
-		void *callback_context);
+QDF_STATUS sme_ps_start_uapsd(tHalHandle hal_ctx, uint32_t session_id);
 QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 		tpSirHostOffloadReq request,
 		uint8_t session_id);
