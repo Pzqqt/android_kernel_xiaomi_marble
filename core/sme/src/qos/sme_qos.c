@@ -280,10 +280,6 @@ struct sme_qos_sessioninfo {
 	sme_QosAssocInfo assocInfo;
 	/* ID assigned to our reassoc request */
 	uint32_t roamID;
-	/* maintaining a powersave status in QoS module, to be fed back to PMC
-	 * at times through the sme_qos_pmc_check_routine
-	 */
-	bool readyForPowerSave;
 	/* are we in the process of handing off to a different AP */
 	bool handoffRequested;
 	/* following reassoc or AddTS has UAPSD already been requested
@@ -529,7 +525,6 @@ QDF_STATUS sme_qos_open(tpAniSirGlobal pMac)
 				  __func__, __LINE__, sessionId);
 			return QDF_STATUS_E_FAILURE;
 		}
-		pSession->readyForPowerSave = true;
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -570,7 +565,6 @@ QDF_STATUS sme_qos_close(tpAniSirGlobal pMac)
 
 		pSession->uapsdAlreadyRequested = false;
 		pSession->handoffRequested = false;
-		pSession->readyForPowerSave = true;
 		pSession->roamID = 0;
 		/* need to clean up buffered req */
 		sme_qos_delete_buffered_requests(pMac, sessionId);
@@ -588,7 +582,6 @@ QDF_STATUS sme_qos_close(tpAniSirGlobal pMac)
 			sme_qos_state_transition(sessionId, ac, SME_QOS_CLOSED);
 
 		pSession->sessionActive = false;
-		pSession->readyForPowerSave = true;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: closed down QoS", __func__, __LINE__);
@@ -1106,8 +1099,6 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 		Tspec_Info = *pQoSInfo;
 	}
 	pACInfo = &pSession->ac_info[ac];
-	/* need to vote off powersave for the duration of this request */
-	pSession->readyForPowerSave = false;
 	/* check to consider the following flowing scenario.
 	 * Addts request is pending on one AC, while APSD requested on another
 	 * which needs a reassoc. Will buffer a request if Addts is pending
@@ -1133,9 +1124,6 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't buffer the setup request in state = %d",
 				  __func__, __LINE__, pACInfo->curr_state);
-			/* unable to buffer the request */
-			/* nothing is pending so vote powersave back on */
-			pSession->readyForPowerSave = true;
 			return SME_QOS_STATUS_SETUP_FAILURE_RSP;
 		}
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -1154,10 +1142,6 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: %d: On session %d with AC %d in state SME_QOS_LINK_UP sme_qos_setup returned with status %d",
 			  __func__, __LINE__, sessionId, ac, status);
-		if (SME_QOS_STATUS_SETUP_REQ_PENDING_RSP != status)
-			/* we aren't waiting for a response from the AP */
-			/* so vote powersave back on */
-			pSession->readyForPowerSave = true;
 
 		if ((SME_QOS_STATUS_SETUP_REQ_PENDING_RSP == status) ||
 		    (SME_QOS_STATUS_SETUP_SUCCESS_NO_ACM_NO_APSD_RSP == status)
@@ -1276,9 +1260,6 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 				  "%s: %d: On session %d couldn't buffer the setup request for flow %d in state = %d",
 				  __func__, __LINE__,
 				  sessionId, QosFlowID, pACInfo->curr_state);
-			/* unable to buffer the request */
-			/* nothing is pending so vote powersave back on */
-			pSession->readyForPowerSave = true;
 			return SME_QOS_STATUS_SETUP_FAILURE_RSP;
 		}
 		status = SME_QOS_STATUS_SETUP_REQ_PENDING_RSP;
@@ -1306,11 +1287,6 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 						  "%s: %d: tspec_mask_status can't be 0 for ac: %d in state: %d",
 						__func__, __LINE__, ac,
 						  pACInfo->curr_state);
-					/* unable to service the request
-					 * nothing is pending so vote powersave
-					 * back on
-					 */
-					pSession->readyForPowerSave = true;
 					return status;
 				}
 				/* Flow aggregation */
@@ -1480,10 +1456,6 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 						  QDF_TRACE_LEVEL_ERROR,
 						  "%s: %d: failed to aggregate params",
 						  __func__, __LINE__);
-					/* unable to service the request nothing
-					 * is pending so vote powersave back on
-					 */
-					pSession->readyForPowerSave = true;
 					return SME_QOS_STATUS_SETUP_FAILURE_RSP;
 				}
 			} else {
@@ -1500,9 +1472,6 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: no flows running for ac = %d while in state = %d",
 				  __func__, __LINE__, ac, pACInfo->curr_state);
-			/* unable to service the request */
-			/* nothing is pending so vote powersave back on */
-			pSession->readyForPowerSave = true;
 			return status;
 		}
 		/* although aggregating, make sure to request on the correct
@@ -1523,11 +1492,6 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: %d: On session %d with AC %d in state SME_QOS_QOS_ON sme_qos_setup returned with status %d",
 			__func__,  __LINE__, sessionId, ac, status);
-		if (SME_QOS_STATUS_SETUP_REQ_PENDING_RSP != status) {
-			/* we aren't waiting for a response from the AP */
-			/* so vote powersave back on */
-			pSession->readyForPowerSave = true;
-		}
 		if ((SME_QOS_STATUS_SETUP_REQ_PENDING_RSP == status) ||
 		    (SME_QOS_STATUS_SETUP_SUCCESS_NO_ACM_NO_APSD_RSP == status)
 		    || (SME_QOS_STATUS_SETUP_SUCCESS_APSD_SET_ALREADY ==
@@ -1638,9 +1602,6 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: setup requested in unexpected state = %d",
 			  __func__, __LINE__, pACInfo->curr_state);
-		/* unable to service the request */
-		/* nothing is pending so vote powersave back on */
-		pSession->readyForPowerSave = true;
 		new_state = pACInfo->curr_state;
 	}
 	/* If current state is same as previous no need for transistion,
@@ -1774,8 +1735,6 @@ static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 		return SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
 	}
 
-	/* need to vote off powersave for the duration of this request */
-	pSession->readyForPowerSave = false;
 	/* check to consider the following flowing scenario.
 	 * Addts request is pending on one AC, while APSD requested on another
 	 * which needs a reassoc. Will buffer a request if Addts is pending on
@@ -1797,9 +1756,6 @@ static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't buffer the modify request in state = %d",
 				  __func__, __LINE__, pACInfo->curr_state);
-			/* unable to buffer the request */
-			/* nothing is pending so vote powersave back on */
-			pSession->readyForPowerSave = true;
 			return SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
 		}
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -1820,9 +1776,6 @@ static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't allocate memory for the new  entry in the Flow List",
 				__func__, __LINE__);
-			/* unable to service the request */
-			/* nothing is pending so vote powersave back on */
-			pSession->readyForPowerSave = true;
 			return SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
 		}
 		pNewEntry->ac_type = ac;
@@ -1864,11 +1817,6 @@ static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  "%s: %d: On session %d with AC %d in state SME_QOS_QOS_ON sme_qos_setup returned with status %d",
 				  __func__, __LINE__, sessionId, ac, status);
-			if (SME_QOS_STATUS_SETUP_REQ_PENDING_RSP != status)
-				/* we aren't waiting for a response from the
-				 * AP so vote powersave back on
-				 */
-				pSession->readyForPowerSave = true;
 
 			if (SME_QOS_STATUS_SETUP_REQ_PENDING_RSP == status) {
 				new_state = SME_QOS_REQUESTED;
@@ -1964,9 +1912,6 @@ static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: sme_qos_update_params() failed",
 				  __func__, __LINE__);
-			/* unable to service the request */
-			/* nothing is pending so vote powersave back on */
-			pSession->readyForPowerSave = true;
 			new_state = SME_QOS_LINK_UP;
 		}
 		/* if we are doing reassoc & we are already in handoff state,
@@ -1995,9 +1940,6 @@ static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't buffer the modify request in state = %d",
 				  __func__, __LINE__, pACInfo->curr_state);
-			/* unable to buffer the request */
-			/* nothing is pending so vote powersave back on */
-			pSession->readyForPowerSave = true;
 			return SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
 		}
 		status = SME_QOS_STATUS_MODIFY_SETUP_PENDING_RSP;
@@ -2009,9 +1951,6 @@ static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: modify requested in unexpected state = %d",
 			  __func__, __LINE__, pACInfo->curr_state);
-		/* unable to service the request */
-		/* nothing is pending so vote powersave back on */
-		pSession->readyForPowerSave = true;
 		break;
 	}
 	if ((SME_QOS_STATUS_MODIFY_SETUP_SUCCESS_NO_ACM_NO_APSD_RSP == status)
@@ -2108,8 +2047,6 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	pACInfo = &pSession->ac_info[ac];
-	/* need to vote off powersave for the duration of this request */
-	pSession->readyForPowerSave = false;
 	/* check to consider the following flowing scenario.
 	 * Addts request is pending on one AC, while APSD requested on another
 	 * which needs a reassoc. Will buffer a request if Addts is pending on
@@ -2130,9 +2067,6 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't buffer the release request in state = %d",
 				  __func__, __LINE__, pACInfo->curr_state);
-			/* unable to buffer the request */
-			/* nothing is pending so vote powersave back on */
-			pSession->readyForPowerSave = true;
 			return SME_QOS_STATUS_RELEASE_FAILURE_RSP;
 		}
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -2281,15 +2215,6 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 								pACInfo->
 								curr_state);
 
-							/* unable to buffer the
-							 * request nothing is
-							 * pending so vote
-							 * powersave back on
-							 */
-							pSession->
-							readyForPowerSave =
-								true;
-
 							return
 								SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
 						}
@@ -2322,12 +2247,6 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 					  "%s: %d: On session %d with AC %d in state SME_QOS_QOS_ON sme_qos_setup returned with status %d",
 					  __func__, __LINE__, sessionId, ac,
 					  status);
-				if (SME_QOS_STATUS_SETUP_REQ_PENDING_RSP !=
-				    status)
-					/* we aren't waiting for a response from
-					 * the AP so vote powersave back on
-					 */
-					pSession->readyForPowerSave = true;
 
 				if (SME_QOS_STATUS_SETUP_REQ_PENDING_RSP ==
 				    status) {
@@ -2438,10 +2357,6 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 					  QDF_TRACE_LEVEL_ERROR,
 					  "%s: %d: sme_qos_update_params() failed",
 					  __func__, __LINE__);
-				/* unable to service the request */
-				/* nothing is pending so vote powersave back on
-				 */
-				pSession->readyForPowerSave = true;
 				new_state = SME_QOS_LINK_UP;
 				if (buffered_cmd) {
 					flow_info->QoSCallback(MAC_HANDLE(pMac),
@@ -2521,12 +2436,6 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 							  __func__, __LINE__);
 						status =
 							SME_QOS_STATUS_RELEASE_FAILURE_RSP;
-						/* we won't be waiting for a
-						 * response from the AP so
-						 * vote powersave back on
-						 */
-						pSession->readyForPowerSave =
-							true;
 					} else {
 						pACInfo->tspec_mask_status &=
 						SME_QOS_TSPEC_MASK_BIT_1_2_SET
@@ -2534,7 +2443,6 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 						deltsIssued = true;
 					}
 				} else {
-					pSession->readyForPowerSave = true;
 					pACInfo->tspec_mask_status &=
 						SME_QOS_TSPEC_MASK_BIT_1_2_SET &
 						(~flow_info->tspec_mask);
@@ -2575,11 +2483,6 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 						  __func__, __LINE__);
 					status =
 					SME_QOS_STATUS_RELEASE_FAILURE_RSP;
-					/* we won't be waiting for a response
-					 * from the AP so vote powersave back
-					 * on
-					 */
-					pSession->readyForPowerSave = true;
 				} else {
 					/* no need to wait */
 					pACInfo->reassoc_pending = false;
@@ -2591,10 +2494,6 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 					  QDF_TRACE_LEVEL_DEBUG,
 					  "%s: %d: nothing to do for AC = %d",
 					  __func__, __LINE__, ac);
-				/* we won't be waiting for a response from the
-				 * AP so vote powersave back on
-				 */
-				pSession->readyForPowerSave = true;
 			}
 
 			if (SME_QOS_RELEASE_BY_AP == pACInfo->relTrig) {
@@ -2686,9 +2585,6 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't buffer the release request in state = %d",
 				  __func__, __LINE__, pACInfo->curr_state);
-			/* unable to service the request */
-			/* nothing is pending so vote powersave back on */
-			pSession->readyForPowerSave = true;
 			return SME_QOS_STATUS_RELEASE_FAILURE_RSP;
 		}
 		status = SME_QOS_STATUS_RELEASE_REQ_PENDING_RSP;
@@ -2701,9 +2597,6 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal pMac,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: release request in unexpected state = %d",
 			  __func__, __LINE__, pACInfo->curr_state);
-		/* unable to service the request */
-		/* nothing is pending so vote powersave back on */
-		pSession->readyForPowerSave = true;
 		break;
 	}
 	/* if we deleted a flow, reclaim the memory */
@@ -3446,7 +3339,6 @@ static QDF_STATUS sme_qos_process_ft_reassoc_req_ev(
 	 */
 	session->apsdMask = 0;
 	session->uapsdAlreadyRequested = 0;
-	session->readyForPowerSave = 0;
 
 	/*
 	 * Now change reason and HO renewal of
@@ -4234,16 +4126,12 @@ static QDF_STATUS sme_qos_process_add_ts_rsp(tpAniSirGlobal pMac, void *pMsgBuf)
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"ADDTS Rsp received for AC %d in HANDOFF State. Dropping",
 			ac);
-		pSession->readyForPowerSave = true;
 		return QDF_STATUS_SUCCESS;
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: Invoked on session %d with return code %d",
 		  __func__, __LINE__, sessionId, paddts_rsp->rc);
-	/* our outstanding request has been serviced */
-	/* we can go into powersave */
-	pSession->readyForPowerSave = true;
 	if (paddts_rsp->rc) {
 		/* event: EVENT_WLAN_QOS */
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -4282,9 +4170,6 @@ static QDF_STATUS sme_qos_process_del_ts_rsp(tpAniSirGlobal pMac, void *pMsgBuf)
 		  "%s: %d: Invoked on session %d with return code %d",
 		  __func__, __LINE__, sessionId, pDeltsRsp->rc);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	/* our outstanding request has been serviced */
-	/* we can go into powersave */
-	pSession->readyForPowerSave = true;
 	(void)sme_qos_process_buffered_cmd(sessionId);
 	return QDF_STATUS_SUCCESS;
 }
@@ -4721,11 +4606,6 @@ static QDF_STATUS sme_qos_process_reassoc_success_ev(tpAniSirGlobal mac_ctx,
 	csr_roam_session = CSR_GET_SESSION(mac_ctx, sessionid);
 
 	qos_session = &sme_qos_cb.sessionInfo[sessionid];
-	/*
-	 * our pending reassociation has completed
-	 * we can allow powersave
-	 */
-	qos_session->readyForPowerSave = true;
 
 	/* get the association info */
 	if (!event_info) {
@@ -4831,9 +4711,6 @@ static QDF_STATUS sme_qos_process_reassoc_failure_ev(tpAniSirGlobal pMac,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	/* our pending reassociation has completed */
-	/* we can allow powersave */
-	pSession->readyForPowerSave = true;
 	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
 		pACInfo = &pSession->ac_info[ac];
 		switch (pACInfo->curr_state) {
@@ -5055,7 +4932,6 @@ static QDF_STATUS sme_qos_process_disconnect_ev(tpAniSirGlobal pMac, uint8_t
 
 	pSession->uapsdAlreadyRequested = false;
 	pSession->handoffRequested = false;
-	pSession->readyForPowerSave = true;
 	pSession->roamID = 0;
 	/* need to clean up buffered req */
 	sme_qos_delete_buffered_requests(pMac, sessionId);
@@ -6411,7 +6287,6 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  FL("no more buffered commands on session %d"),
 				  session_id);
-			qos_session->readyForPowerSave = true;
 			return QDF_STATUS_E_FAILURE;
 		}
 		pcmd = GET_BASE_ADDR(list_elt, struct sme_qos_cmdinfoentry,
@@ -6491,7 +6366,6 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  FL("cmd buffer empty"));
-		qos_session->readyForPowerSave = true;
 	}
 	return qdf_ret_status;
 }
@@ -7572,8 +7446,6 @@ enum sme_qos_statustype sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 		session_id, ac, tspec_mask);
 	session = &sme_qos_cb.sessionInfo[session_id];
 	ac_info = &session->ac_info[ac];
-	/* need to vote off powersave for the duration of this request */
-	session->readyForPowerSave = false;
 	/*
 	 * call PMC's request for power function
 	 * AND another check is added considering the flowing scenario
@@ -7600,10 +7472,6 @@ enum sme_qos_statustype sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 				"On session %d unable to buffer the AddTS request for AC %d TSPEC %d in state %d",
 				session_id, ac, tspec_mask,
 				ac_info->curr_state);
-			/* unable to buffer the request
-			 * nothing is pending so vote powersave back on
-			 */
-			session->readyForPowerSave = true;
 			return SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
 		}
 		return SME_QOS_STATUS_MODIFY_SETUP_PENDING_RSP;
@@ -7620,11 +7488,6 @@ enum sme_qos_statustype sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 			FL("sme_qos_setup returned in SME_QOS_QOS_ON state"));
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("sme_qos_setup AC %d with status =%d"), ac, status);
-		if (SME_QOS_STATUS_SETUP_REQ_PENDING_RSP != status) {
-			/* we aren't waiting for a response from the AP */
-			/* so vote powersave back on */
-			session->readyForPowerSave = true;
-		}
 		if (SME_QOS_STATUS_SETUP_REQ_PENDING_RSP == status) {
 			status = SME_QOS_STATUS_MODIFY_SETUP_PENDING_RSP;
 			ac_info->tspec_pending = tspec_mask;
@@ -7659,10 +7522,6 @@ enum sme_qos_statustype sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				FL(" couldn't buf the read request state = %d"),
 				ac_info->curr_state);
-			/* unable to buffer the request
-			 * nothing is pending so vote powersave back on
-			 */
-			session->readyForPowerSave = true;
 			return SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
 		}
 		status = SME_QOS_STATUS_MODIFY_SETUP_PENDING_RSP;
@@ -7675,10 +7534,6 @@ enum sme_qos_statustype sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("ReAdd request in unexpected state = %d"),
 			ac_info->curr_state);
-		/* unable to service the request
-		 * nothing is pending so vote powersave back on
-		 */
-		session->readyForPowerSave = true;
 		break;
 	}
 	if ((SME_QOS_STATUS_MODIFY_SETUP_SUCCESS_NO_ACM_NO_APSD_RSP ==
