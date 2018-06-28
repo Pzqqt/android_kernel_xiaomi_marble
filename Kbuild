@@ -646,6 +646,16 @@ UMAC_GREEN_AP_OBJS := $(UMAC_GREEN_AP_CORE_DIR)/wlan_green_ap_main.o \
                 $(UMAC_GREEN_AP_DISP_DIR)/wlan_green_ap_ucfg_api.o \
                 $(WLAN_COMMON_ROOT)/target_if/green_ap/src/target_if_green_ap.o
 
+############# WLAN_CONV_CRYPTO_SUPPORTED ############
+UMAC_CRYPTO_DIR := umac/cmn_services/crypto
+UMAC_CRYPTO_CORE_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_CRYPTO_DIR)/src
+UMAC_CRYPTO_INC := -I$(WLAN_COMMON_INC)/$(UMAC_CRYPTO_DIR)/inc \
+		-I$(WLAN_COMMON_INC)/$(UMAC_CRYPTO_DIR)/src
+UMAC_CRYPTO_OBJS := $(UMAC_CRYPTO_CORE_DIR)/wlan_crypto_global_api.o \
+		$(UMAC_CRYPTO_CORE_DIR)/wlan_crypto_main.o \
+		$(UMAC_CRYPTO_CORE_DIR)/wlan_crypto_obj_mgr.o \
+		$(UMAC_CRYPTO_CORE_DIR)/wlan_crypto_param_handling.o
+
 ############# FTM CORE ############
 FTM_CORE_DIR := ftm
 TARGET_IF_FTM_DIR := target_if/ftm
@@ -1601,6 +1611,9 @@ INCS +=		$(UMAC_TARGET_GREEN_AP_INC)
 INCS +=		$(UMAC_COMMON_INC)
 INCS +=		$(UMAC_SPECTRAL_INC)
 INCS +=		$(UMAC_TARGET_SPECTRAL_INC)
+ifeq ($(CONFIG_CRYPTO_COMPONENT), y)
+INCS +=		$(UMAC_CRYPTO_INC)
+endif
 
 OBJS :=		$(HDD_OBJS) \
 		$(DSC_OBJS) \
@@ -1695,6 +1708,10 @@ OBJS +=		$(UMAC_SPECTRAL_OBJS)
 
 ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP), y)
 OBJS +=		$(UMAC_GREEN_AP_OBJS)
+endif
+
+ifeq ($(CONFIG_CRYPTO_COMPONENT), y)
+OBJS +=		$(UMAC_CRYPTO_OBJS)
 endif
 
 ifeq ($(CONFIG_LITHIUM), y)
@@ -2056,6 +2073,16 @@ cppflags-$(CONFIG_QCACLD_FEATURE_GREEN_AP) += -DWLAN_SUPPORT_GREEN_AP
 cppflags-$(CONFIG_QCACLD_FEATURE_APF) += -DFEATURE_WLAN_APF
 
 cppflags-$(CONFIG_WLAN_FEATURE_SARV1_TO_SARV2) += -DWLAN_FEATURE_SARV1_TO_SARV2
+#CRYPTO Coverged Component
+cppflags-$(CONFIG_CRYPTO_COMPONENT) += -DWLAN_CONV_CRYPTO_SUPPORTED \
+                                       -DWLAN_CRYPTO_WEP_OS_DERIVATIVE \
+                                       -DWLAN_CRYPTO_TKIP_OS_DERIVATIVE \
+                                       -DWLAN_CRYPTO_CCMP_OS_DERIVATIVE \
+                                       -DWLAN_CRYPTO_GCMP_OS_DERIVATIVE \
+                                       -DWLAN_CRYPTO_WAPI_OS_DERIVATIVE \
+                                       -DWLAN_CRYPTO_GCM_OS_DERIVATIVE \
+                                       -DWLAN_CRYPTO_FILS_OS_DERIVATIVE \
+                                       -DWLAN_CRYPTO_OMAC1_OS_DERIVATIVE
 
 #Stats & Quota Metering feature
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
