@@ -1309,12 +1309,13 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 	if (wiphy->registered)
 		hdd_send_wiphy_regd_sync_event(hdd_ctx);
 #endif
-	sme_generic_change_country_code(hdd_ctx->mac_handle,
-					hdd_ctx->reg.alpha2);
 
 	if (avoid_freq_ind)
 		hdd_ch_avoid_ind(hdd_ctx, &avoid_freq_ind->chan_list,
 				&avoid_freq_ind->freq_list);
+	else
+		sme_generic_change_country_code(hdd_ctx->mac_handle,
+				hdd_ctx->reg.alpha2);
 }
 
 int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
