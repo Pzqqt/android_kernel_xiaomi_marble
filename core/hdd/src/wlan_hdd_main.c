@@ -45,7 +45,6 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_stats.h"
 #include "wlan_hdd_scan.h"
-#include "wlan_hdd_request_manager.h"
 #include <wlan_osif_request_manager.h>
 #ifdef CONFIG_LEAK_DETECTION
 #include "qdf_debug_domain.h"
@@ -6905,7 +6904,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	qdf_spinlock_destroy(&hdd_ctx->sta_update_info_lock);
 	qdf_spinlock_destroy(&hdd_ctx->connection_status_lock);
 
-	hdd_request_manager_deinit();
 	osif_request_manager_deinit();
 
 	hdd_close_all_adapters(hdd_ctx, false);
@@ -10912,7 +10910,6 @@ int hdd_wlan_startup(struct device *dev)
 #endif
 
 	osif_request_manager_init();
-	hdd_request_manager_init();
 	qdf_atomic_init(&hdd_ctx->con_mode_flag);
 
 	hdd_driver_memdump_init();
@@ -11029,7 +11026,6 @@ err_stop_modules:
 err_memdump_deinit:
 	hdd_driver_memdump_deinit();
 
-	hdd_request_manager_deinit();
 	osif_request_manager_deinit();
 	hdd_exit_netlink_services(hdd_ctx);
 
@@ -11076,7 +11072,7 @@ void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp, void *context)
 	struct hdd_context *hdd_ctx = (struct hdd_context *)data;
 	int status;
 	struct hdd_adapter *adapter = NULL;
-	struct hdd_request *request = NULL;
+	struct osif_request *request = NULL;
 
 	hdd_enter();
 
@@ -11089,7 +11085,7 @@ void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp, void *context)
 	if (status != 0)
 		return;
 
-	request = hdd_request_get(context);
+	request = osif_request_get(context);
 	if (!request) {
 		hdd_err("obselete request");
 		return;
@@ -11098,7 +11094,7 @@ void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp, void *context)
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, rsp->vdev_id);
 	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
-		hdd_request_put(request);
+		osif_request_put(request);
 		return;
 	}
 
@@ -11126,8 +11122,8 @@ void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp, void *context)
 							rsp->icmpv4_rsp_recvd;
 	}
 
-	hdd_request_complete(request);
-	hdd_request_put(request);
+	osif_request_complete(request);
+	osif_request_put(request);
 
 	hdd_exit();
 }

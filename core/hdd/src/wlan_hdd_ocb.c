@@ -27,7 +27,7 @@
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_trace.h"
-#include "wlan_hdd_request_manager.h"
+#include "wlan_osif_request_manager.h"
 #include "wlan_tgt_def_config.h"
 #include "sch_api.h"
 #include "wma_api.h"
@@ -352,16 +352,16 @@ struct hdd_ocb_set_config_priv {
  */
 static void hdd_ocb_set_config_callback(void *context_ptr, void *response_ptr)
 {
-	struct hdd_request *hdd_request;
+	struct osif_request *request;
 	struct hdd_ocb_set_config_priv *priv;
 	struct ocb_set_config_response *response = response_ptr;
 
-	hdd_request = hdd_request_get(context_ptr);
-	if (!hdd_request) {
+	request = osif_request_get(context_ptr);
+	if (!request) {
 		hdd_err("Obsolete request");
 		return;
 	}
-	priv = hdd_request_priv(hdd_request);
+	priv = osif_request_priv(request);
 
 	if (response && response->status)
 		hdd_warn("Operation failed: %d", response->status);
@@ -371,8 +371,8 @@ static void hdd_ocb_set_config_callback(void *context_ptr, void *response_ptr)
 	else
 		priv->status = -EINVAL;
 
-	hdd_request_complete(hdd_request);
-	hdd_request_put(hdd_request);
+	osif_request_complete(request);
+	osif_request_put(request);
 }
 
 /**
@@ -388,9 +388,9 @@ static int hdd_ocb_set_config_req(struct hdd_adapter *adapter,
 	int rc;
 	QDF_STATUS status;
 	void *cookie;
-	struct hdd_request *hdd_request;
+	struct osif_request *request;
 	struct hdd_ocb_set_config_priv *priv;
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_OCB_CMD,
 	};
@@ -400,12 +400,12 @@ static int hdd_ocb_set_config_req(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	hdd_request = hdd_request_alloc(&params);
-	if (!hdd_request) {
+	request = osif_request_alloc(&params);
+	if (!request) {
 		hdd_err("Request allocation failure");
 		return -ENOMEM;
 	}
-	cookie = hdd_request_cookie(hdd_request);
+	cookie = osif_request_cookie(request);
 
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
@@ -422,13 +422,13 @@ static int hdd_ocb_set_config_req(struct hdd_adapter *adapter,
 	}
 
 	/* Wait for the function to complete. */
-	rc = hdd_request_wait_for_response(hdd_request);
+	rc = osif_request_wait_for_response(request);
 	if (rc) {
 		hdd_err("Operation timed out");
 		goto end;
 	}
 
-	priv = hdd_request_priv(hdd_request);
+	priv = osif_request_priv(request);
 	rc = priv->status;
 	if (rc) {
 		hdd_err("Operation failed: %d", rc);
@@ -446,7 +446,7 @@ static int hdd_ocb_set_config_req(struct hdd_adapter *adapter,
 
 	/* fall through */
 end:
-	hdd_request_put(hdd_request);
+	osif_request_put(request);
 
 	return rc;
 }
@@ -1298,25 +1298,25 @@ struct hdd_ocb_get_tsf_timer_priv {
 static void hdd_ocb_get_tsf_timer_callback(void *context_ptr,
 					   void *response_ptr)
 {
-	struct hdd_request *hdd_request;
+	struct osif_request *request;
 	struct hdd_ocb_get_tsf_timer_priv *priv;
 	struct ocb_get_tsf_timer_response *response = response_ptr;
 
-	hdd_request = hdd_request_get(context_ptr);
-	if (!hdd_request) {
+	request = osif_request_get(context_ptr);
+	if (!request) {
 		hdd_err("Obsolete request");
 		return;
 	}
 
-	priv = hdd_request_priv(hdd_request);
+	priv = osif_request_priv(request);
 	if (response) {
 		priv->response = *response;
 		priv->status = 0;
 	} else {
 		priv->status = -EINVAL;
 	}
-	hdd_request_complete(hdd_request);
-	hdd_request_put(hdd_request);
+	osif_request_complete(request);
+	osif_request_put(request);
 }
 
 static int
@@ -1384,9 +1384,9 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 	struct ocb_get_tsf_timer_param request = {0};
 	QDF_STATUS status;
 	void *cookie;
-	struct hdd_request *hdd_request;
+	struct osif_request *request;
 	struct hdd_ocb_get_tsf_timer_priv *priv;
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_OCB_CMD,
 	};
@@ -1407,12 +1407,12 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	hdd_request = hdd_request_alloc(&params);
-	if (!hdd_request) {
+	request = osif_request_alloc(&params);
+	if (!request) {
 		hdd_err("Request allocation failure");
 		return -ENOMEM;
 	}
-	cookie = hdd_request_cookie(hdd_request);
+	cookie = osif_request_cookie(request);
 
 	request.vdev_id = adapter->session_id;
 	status = ucfg_ocb_get_tsf_timer(adapter->hdd_vdev, &request,
@@ -1424,13 +1424,13 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 		goto end;
 	}
 
-	rc = hdd_request_wait_for_response(hdd_request);
+	rc = osif_request_wait_for_response(request);
 	if (rc) {
 		hdd_err("Operation timed out");
 		goto end;
 	}
 
-	priv = hdd_request_priv(hdd_request);
+	priv = osif_request_priv(request);
 	rc = priv->status;
 	if (rc) {
 		hdd_err("Operation failed: %d", rc);
@@ -1450,7 +1450,7 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 
 	/* fall through */
 end:
-	hdd_request_put(hdd_request);
+	osif_request_put(request);
 
 	return rc;
 }
@@ -1499,18 +1499,18 @@ static void hdd_dcc_get_stats_dealloc(void *context_ptr)
  */
 static void hdd_dcc_get_stats_callback(void *context_ptr, void *response_ptr)
 {
-	struct hdd_request *hdd_request;
+	struct osif_request *request;
 	struct hdd_dcc_stats_priv *priv;
 	struct ocb_dcc_get_stats_response *response = response_ptr;
 	struct ocb_dcc_get_stats_response *hdd_resp;
 
-	hdd_request = hdd_request_get(context_ptr);
-	if (!hdd_request) {
+	request = osif_request_get(context_ptr);
+	if (!request) {
 		hdd_err("Obsolete request");
 		return;
 	}
 
-	priv = hdd_request_priv(hdd_request);
+	priv = osif_request_priv(request);
 	if (!response) {
 		priv->status = -EINVAL;
 		goto end;
@@ -1532,8 +1532,8 @@ static void hdd_dcc_get_stats_callback(void *context_ptr, void *response_ptr)
 	priv->status = 0;
 
 end:
-	hdd_request_complete(hdd_request);
-	hdd_request_put(hdd_request);
+	osif_request_complete(request);
+	osif_request_put(request);
 }
 
 static int
@@ -1606,9 +1606,9 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	struct ocb_dcc_get_stats_param request = {0};
 	QDF_STATUS status;
 	void *cookie;
-	struct hdd_request *hdd_request;
+	struct osif_request *request;
 	struct hdd_dcc_stats_priv *priv;
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_OCB_CMD,
 		.dealloc = hdd_dcc_get_stats_dealloc,
@@ -1652,12 +1652,12 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	request_array = nla_data(
 		tb[QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_REQUEST_ARRAY]);
 
-	hdd_request = hdd_request_alloc(&params);
-	if (!hdd_request) {
+	request = osif_request_alloc(&params);
+	if (!request) {
 		hdd_err("Request allocation failure");
 		return -ENOMEM;
 	}
-	cookie = hdd_request_cookie(hdd_request);
+	cookie = osif_request_cookie(request);
 
 	request.vdev_id = adapter->session_id;
 	request.channel_count = channel_count;
@@ -1674,13 +1674,13 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	}
 
 	/* Wait for the function to complete. */
-	rc = hdd_request_wait_for_response(hdd_request);
+	rc = osif_request_wait_for_response(request);
 	if (rc) {
 		hdd_err("Operation timed out");
 		goto end;
 	}
 
-	priv = hdd_request_priv(hdd_request);
+	priv = osif_request_priv(request);
 	rc = priv->status;
 	if (rc) {
 		hdd_err("Operation failed: %d", rc);
@@ -1696,7 +1696,7 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 
 	/* fall through */
 end:
-	hdd_request_put(hdd_request);
+	osif_request_put(request);
 
 	return rc;
 }
@@ -1820,23 +1820,23 @@ struct hdd_dcc_update_ndl_priv {
  */
 static void hdd_dcc_update_ndl_callback(void *context_ptr, void *response_ptr)
 {
-	struct hdd_request *hdd_request;
+	struct osif_request *request;
 	struct hdd_dcc_update_ndl_priv *priv;
 	struct ocb_dcc_update_ndl_response *response = response_ptr;
 
-	hdd_request = hdd_request_get(context_ptr);
-	if (!hdd_request) {
+	request = osif_request_get(context_ptr);
+	if (!request) {
 		hdd_err("Obsolete request");
 		return;
 	}
-	priv = hdd_request_priv(hdd_request);
+	priv = osif_request_priv(request);
 	if (response && (0 == response->status)) {
 		priv->status = 0;
 	} else {
 		priv->status = -EINVAL;
 	}
-	hdd_request_complete(hdd_request);
-	hdd_request_put(hdd_request);
+	osif_request_complete(request);
+	osif_request_put(request);
 }
 
 /**
@@ -1866,9 +1866,9 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	int rc;
 	QDF_STATUS status;
 	void *cookie;
-	struct hdd_request *hdd_request;
+	struct osif_request *request;
 	struct hdd_dcc_update_ndl_priv *priv;
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_OCB_CMD,
 	};
@@ -1916,12 +1916,12 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	ndl_active_state_array = nla_data(
 		tb[QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_ACTIVE_STATE_ARRAY]);
 
-	hdd_request = hdd_request_alloc(&params);
-	if (!hdd_request) {
+	request = osif_request_alloc(&params);
+	if (!request) {
 		hdd_err("Request allocation failure");
 		return -ENOMEM;
 	}
-	cookie = hdd_request_cookie(hdd_request);
+	cookie = osif_request_cookie(request);
 
 	/* Copy the parameters to the request structure. */
 	request.vdev_id = adapter->session_id;
@@ -1941,13 +1941,13 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	}
 
 	/* Wait for the function to complete. */
-	rc = hdd_request_wait_for_response(hdd_request);
+	rc = osif_request_wait_for_response(request);
 	if (rc) {
 		hdd_err("Operation timed out");
 		goto end;
 	}
 
-	priv = hdd_request_priv(hdd_request);
+	priv = osif_request_priv(request);
 	rc = priv->status;
 	if (rc) {
 		hdd_err("Operation failed: %d", rc);
@@ -1956,7 +1956,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 
 	/* fall through */
 end:
-	hdd_request_put(hdd_request);
+	osif_request_put(request);
 
 	return rc;
 }

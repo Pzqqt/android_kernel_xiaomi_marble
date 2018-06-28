@@ -24,7 +24,7 @@
 
 #include "wlan_hdd_apf.h"
 #include "qca_vendor.h"
-#include "wlan_hdd_request_manager.h"
+#include "wlan_osif_request_manager.h"
 
 struct hdd_apf_context apf_context;
 
@@ -84,21 +84,21 @@ struct apf_offload_priv {
 void hdd_get_apf_capabilities_cb(void *context,
 				 struct sir_apf_get_offload *data)
 {
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct apf_offload_priv *priv;
 
 	hdd_enter();
 
-	request = hdd_request_get(context);
+	request = osif_request_get(context);
 	if (!request) {
 		hdd_err("Obsolete request");
 		return;
 	}
 
-	priv = hdd_request_priv(request);
+	priv = osif_request_priv(request);
 	priv->apf_get_offload = *data;
-	hdd_request_complete(request);
-	hdd_request_put(request);
+	osif_request_complete(request);
+	osif_request_put(request);
 }
 
 /**
@@ -159,21 +159,21 @@ static int hdd_get_apf_capabilities(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 	int ret;
 	void *cookie;
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct apf_offload_priv *priv;
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_APF,
 	};
 
 	hdd_enter();
 
-	request = hdd_request_alloc(&params);
+	request = osif_request_alloc(&params);
 	if (!request) {
 		hdd_err("Unable to allocate request");
 		return -EINVAL;
 	}
-	cookie = hdd_request_cookie(request);
+	cookie = osif_request_cookie(request);
 
 	status = sme_get_apf_capabilities(hdd_ctx->mac_handle,
 					  hdd_get_apf_capabilities_cb,
@@ -183,12 +183,12 @@ static int hdd_get_apf_capabilities(struct hdd_context *hdd_ctx)
 		ret = qdf_status_to_os_return(status);
 		goto cleanup;
 	}
-	ret = hdd_request_wait_for_response(request);
+	ret = osif_request_wait_for_response(request);
 	if (ret) {
 		hdd_err("Target response timed out");
 		goto cleanup;
 	}
-	priv = hdd_request_priv(request);
+	priv = osif_request_priv(request);
 	ret = hdd_post_get_apf_capabilities_rsp(hdd_ctx,
 						&priv->apf_get_offload);
 	if (ret)
@@ -201,7 +201,7 @@ cleanup:
 	 * response from SME, and posted the response to userspace.
 	 * regardless we are done with the request.
 	 */
-	hdd_request_put(request);
+	osif_request_put(request);
 	hdd_exit();
 
 	return ret;

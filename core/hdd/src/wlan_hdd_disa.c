@@ -25,7 +25,7 @@
 
 #include "wlan_hdd_disa.h"
 #include "wlan_disa_ucfg_api.h"
-#include "wlan_hdd_request_manager.h"
+#include "wlan_osif_request_manager.h"
 #include "sme_api.h"
 #include <qca_vendor.h>
 
@@ -55,7 +55,7 @@ struct hdd_encrypt_decrypt_msg_context {
 static void hdd_encrypt_decrypt_msg_cb(void *cookie,
 	struct disa_encrypt_decrypt_resp_params *resp)
 {
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct hdd_encrypt_decrypt_msg_context *context;
 
 	hdd_enter();
@@ -65,7 +65,7 @@ static void hdd_encrypt_decrypt_msg_cb(void *cookie,
 		return;
 	}
 
-	request = hdd_request_get(cookie);
+	request = osif_request_get(cookie);
 	if (!request) {
 		hdd_err("Obsolete request");
 		return;
@@ -81,7 +81,7 @@ static void hdd_encrypt_decrypt_msg_cb(void *cookie,
 		resp->status,
 		resp->data_len);
 
-	context = hdd_request_priv(request);
+	context = osif_request_priv(request);
 	context->response = *resp;
 	context->status = 0;
 	if (resp->data_len) {
@@ -101,8 +101,8 @@ static void hdd_encrypt_decrypt_msg_cb(void *cookie,
 		context->response.data = NULL;
 	}
 
-	hdd_request_complete(request);
-	hdd_request_put(request);
+	osif_request_complete(request);
+	osif_request_put(request);
 	hdd_exit();
 }
 
@@ -361,27 +361,27 @@ static int hdd_encrypt_decrypt_msg(struct hdd_adapter *adapter,
 	QDF_STATUS qdf_status;
 	int ret;
 	void *cookie;
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct hdd_encrypt_decrypt_msg_context *context;
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*context),
 		.timeout_ms = WLAN_WAIT_TIME_ENCRYPT_DECRYPT,
 		.dealloc = hdd_encrypt_decrypt_context_dealloc,
 	};
 
-	request = hdd_request_alloc(&params);
+	request = osif_request_alloc(&params);
 	if (!request) {
 		hdd_err("Request allocation failure");
 		return -ENOMEM;
 	}
-	context = hdd_request_priv(request);
+	context = osif_request_priv(request);
 
 	ret = hdd_fill_encrypt_decrypt_params(&context->request, adapter,
 					      data, data_len);
 	if (ret)
 		goto cleanup;
 
-	cookie = hdd_request_cookie(request);
+	cookie = osif_request_cookie(request);
 
 	qdf_status = ucfg_disa_encrypt_decrypt_req(hdd_ctx->hdd_psoc,
 				&context->request,
@@ -394,7 +394,7 @@ static int hdd_encrypt_decrypt_msg(struct hdd_adapter *adapter,
 		goto cleanup;
 	}
 
-	ret = hdd_request_wait_for_response(request);
+	ret = osif_request_wait_for_response(request);
 	if (ret) {
 		hdd_err("Target response timed out");
 		goto cleanup;
@@ -411,7 +411,7 @@ static int hdd_encrypt_decrypt_msg(struct hdd_adapter *adapter,
 		hdd_err("Failed to post encrypt/decrypt message response");
 
 cleanup:
-	hdd_request_put(request);
+	osif_request_put(request);
 
 	hdd_exit();
 	return ret;

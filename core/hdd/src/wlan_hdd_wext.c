@@ -87,7 +87,7 @@
 #endif
 #include "wlan_hdd_lro.h"
 #include "cds_utils.h"
-#include "wlan_hdd_request_manager.h"
+#include "wlan_osif_request_manager.h"
 #include "os_if_wifi_pos.h"
 #include <cdp_txrx_stats.h>
 #include <cds_api.h>
@@ -8213,19 +8213,19 @@ struct hdd_statistics_priv {
  */
 static void hdd_statistics_cb(void *stats, void *context)
 {
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct hdd_statistics_priv *priv;
 	tCsrSummaryStatsInfo *summary_stats;
 	tCsrGlobalClassAStatsInfo *class_a_stats;
 	tCsrGlobalClassDStatsInfo *class_d_stats;
 
-	request = hdd_request_get(context);
+	request = osif_request_get(context);
 	if (!request) {
 		hdd_err("Obsolete request");
 		return;
 	}
 
-	priv = hdd_request_priv(request);
+	priv = osif_request_priv(request);
 
 	summary_stats = (tCsrSummaryStatsInfo *)stats;
 	priv->summary_stats = *summary_stats;
@@ -8236,8 +8236,8 @@ static void hdd_statistics_cb(void *stats, void *context)
 	class_d_stats = (tCsrGlobalClassDStatsInfo *)(class_a_stats + 1);
 	priv->class_d_stats = *class_d_stats;
 
-	hdd_request_complete(request);
-	hdd_request_put(request);
+	osif_request_complete(request);
+	osif_request_put(request);
 }
 
 static int hdd_get_wlan_stats(struct hdd_adapter *adapter)
@@ -8245,23 +8245,23 @@ static int hdd_get_wlan_stats(struct hdd_adapter *adapter)
 	int ret = 0;
 	void *cookie;
 	QDF_STATUS status;
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct hdd_station_ctx *sta_ctx;
 	struct hdd_statistics_priv *priv;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	request = hdd_request_alloc(&params);
+	request = osif_request_alloc(&params);
 	if (!request) {
 		hdd_warn("request allocation failed");
 		return -EINVAL;
 	}
 
-	cookie = hdd_request_cookie(request);
+	cookie = osif_request_cookie(request);
 	status = sme_get_statistics(hdd_ctx->mac_handle, eCSR_HDD,
 				    SME_SUMMARY_STATS |
 				    SME_GLOBAL_CLASSA_STATS |
@@ -8276,14 +8276,14 @@ static int hdd_get_wlan_stats(struct hdd_adapter *adapter)
 	}
 
 	/* request was sent -- wait for the response */
-	ret = hdd_request_wait_for_response(request);
+	ret = osif_request_wait_for_response(request);
 	if (ret) {
 		hdd_err("Failed to wait for statistics, errno %d", ret);
 		goto put_request;
 	}
 
 	/* update the adapter cache with the fresh results */
-	priv = hdd_request_priv(request);
+	priv = osif_request_priv(request);
 	adapter->hdd_stats.summary_stat = priv->summary_stats;
 	adapter->hdd_stats.class_a_stat = priv->class_a_stats;
 	adapter->hdd_stats.class_d_stat = priv->class_d_stats;
@@ -8294,7 +8294,7 @@ put_request:
 	 * received a response or we sent a request and timed out.
 	 * regardless we are done with the request.
 	 */
-	hdd_request_put(request);
+	osif_request_put(request);
 	return ret;
 }
 #endif /* QCA_SUPPORT_CP_STATS */

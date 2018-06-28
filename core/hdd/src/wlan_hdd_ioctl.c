@@ -25,7 +25,7 @@
 #include "wlan_hdd_ioctl.h"
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_regulatory.h"
-#include "wlan_hdd_request_manager.h"
+#include "wlan_osif_request_manager.h"
 #include "wlan_hdd_driver_ops.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_hostapd.h"
@@ -155,18 +155,18 @@ struct tsm_priv {
 static void hdd_get_tsm_stats_cb(tAniTrafStrmMetrics tsm_metrics,
 				 const uint32_t staId, void *context)
 {
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct tsm_priv *priv;
 
-	request = hdd_request_get(context);
+	request = osif_request_get(context);
 	if (!request) {
 		hdd_err("Obsolete request");
 		return;
 	}
-	priv = hdd_request_priv(request);
+	priv = osif_request_priv(request);
 	priv->tsm_metrics = tsm_metrics;
-	hdd_request_complete(request);
-	hdd_request_put(request);
+	osif_request_complete(request);
+	osif_request_put(request);
 	hdd_exit();
 
 }
@@ -180,9 +180,9 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	int ret;
 	void *cookie;
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct tsm_priv *priv;
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
@@ -195,12 +195,12 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	request = hdd_request_alloc(&params);
+	request = osif_request_alloc(&params);
 	if (!request) {
 		hdd_err("Request allocation failure");
 		return -ENOMEM;
 	}
-	cookie = hdd_request_cookie(request);
+	cookie = osif_request_cookie(request);
 
 	status = sme_get_tsm_stats(hdd_ctx->mac_handle, hdd_get_tsm_stats_cb,
 				   hdd_sta_ctx->conn_info.staId[0],
@@ -212,17 +212,17 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
 		goto cleanup;
 	}
 
-	ret = hdd_request_wait_for_response(request);
+	ret = osif_request_wait_for_response(request);
 	if (ret) {
 		hdd_err("SME timed out while retrieving tsm statistics");
 		goto cleanup;
 	}
 
-	priv = hdd_request_priv(request);
+	priv = osif_request_priv(request);
 	*tsm_metrics = priv->tsm_metrics;
 
  cleanup:
-	hdd_request_put(request);
+	osif_request_put(request);
 
 	return ret;
 }
@@ -2482,19 +2482,19 @@ sme_config_free:
 
 static void hdd_get_link_status_cb(uint8_t status, void *context)
 {
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct link_status_priv *priv;
 
-	request = hdd_request_get(context);
+	request = osif_request_get(context);
 	if (!request) {
 		hdd_err("Obsolete request");
 		return;
 	}
 
-	priv = hdd_request_priv(request);
+	priv = osif_request_priv(request);
 	priv->link_status = status;
-	hdd_request_complete(request);
-	hdd_request_put(request);
+	osif_request_complete(request);
+	osif_request_put(request);
 }
 
 /**
@@ -2515,9 +2515,9 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	int ret;
 	void *cookie;
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct link_status_priv *priv;
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_LINK_STATUS,
 	};
@@ -2545,12 +2545,12 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 		return 0;
 	}
 
-	request = hdd_request_alloc(&params);
+	request = osif_request_alloc(&params);
 	if (!request) {
 		hdd_err("Request allocation failure");
 		return 0;
 	}
-	cookie = hdd_request_cookie(request);
+	cookie = osif_request_cookie(request);
 
 	status = sme_get_link_status(adapter->hdd_ctx->mac_handle,
 				     hdd_get_link_status_cb,
@@ -2560,13 +2560,13 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 		/* return a cached value */
 	} else {
 		/* request is sent -- wait for the response */
-		ret = hdd_request_wait_for_response(request);
+		ret = osif_request_wait_for_response(request);
 		if (ret) {
 			hdd_err("SME timed out while retrieving link status");
 			/* return a cached value */
 		} else {
 			/* update the adapter with the fresh results */
-			priv = hdd_request_priv(request);
+			priv = osif_request_priv(request);
 			adapter->link_status = priv->link_status;
 		}
 	}
@@ -2576,7 +2576,7 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 	 * received a response or we sent a request and timed out.
 	 * regardless we are done with the request.
 	 */
-	hdd_request_put(request);
+	osif_request_put(request);
 
 	/* either callback updated adapter stats or it has cached data */
 	return adapter->link_status;

@@ -28,7 +28,7 @@
 #ifdef WLAN_OPEN_SOURCE
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_debugfs.h>
-#include <wlan_hdd_request_manager.h>
+#include <wlan_osif_request_manager.h>
 #include <wlan_hdd_wowl.h>
 #include <cds_sched.h>
 #include <wlan_hdd_debugfs_llstat.h>
@@ -394,20 +394,20 @@ static void hdd_power_debugstats_dealloc(void *priv)
 static void hdd_power_debugstats_cb(struct power_stats_response *response,
 				    void *context)
 {
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct power_stats_priv *priv;
 	uint32_t *debug_registers;
 	uint32_t debug_registers_len;
 
 	hdd_enter();
 
-	request = hdd_request_get(context);
+	request = osif_request_get(context);
 	if (!request) {
 		hdd_err("Obsolete request");
 		return;
 	}
 
-	priv = hdd_request_priv(request);
+	priv = osif_request_priv(request);
 
 	/* copy fixed-sized data */
 	priv->power_stats = *response;
@@ -427,8 +427,8 @@ static void hdd_power_debugstats_cb(struct power_stats_response *response,
 			priv->power_stats.num_debug_register = 0;
 		}
 	}
-	hdd_request_complete(request);
-	hdd_request_put(request);
+	osif_request_complete(request);
+	osif_request_put(request);
 	hdd_exit();
 }
 
@@ -454,9 +454,9 @@ static ssize_t __wlan_hdd_read_power_debugfs(struct file *file,
 	unsigned int len = 0;
 	char *power_debugfs_buf = NULL;
 	void *cookie;
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct power_stats_priv	*priv;
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 		.dealloc = hdd_power_debugstats_dealloc,
@@ -477,12 +477,12 @@ static ssize_t __wlan_hdd_read_power_debugfs(struct file *file,
 	if (!wlan_hdd_validate_modules_state(hdd_ctx))
 		return -EINVAL;
 
-	request = hdd_request_alloc(&params);
+	request = osif_request_alloc(&params);
 	if (!request) {
 		hdd_err("Request allocation failure");
 		return -ENOMEM;
 	}
-	cookie = hdd_request_cookie(request);
+	cookie = osif_request_cookie(request);
 
 	status = sme_power_debug_stats_req(hdd_ctx->mac_handle,
 					   hdd_power_debugstats_cb,
@@ -493,14 +493,14 @@ static ssize_t __wlan_hdd_read_power_debugfs(struct file *file,
 		goto cleanup;
 	}
 
-	ret_cnt = hdd_request_wait_for_response(request);
+	ret_cnt = osif_request_wait_for_response(request);
 	if (ret_cnt) {
 		hdd_err("Target response timed out Power stats");
 		ret_cnt = -ETIMEDOUT;
 		goto cleanup;
 	}
 
-	priv = hdd_request_priv(request);
+	priv = osif_request_priv(request);
 	chip_power_stats = &priv->power_stats;
 
 	power_debugfs_buf = qdf_mem_malloc(POWER_DEBUGFS_BUFFER_MAX_LEN);
@@ -540,7 +540,7 @@ static ssize_t __wlan_hdd_read_power_debugfs(struct file *file,
 
  cleanup:
 	qdf_mem_free(power_debugfs_buf);
-	hdd_request_put(request);
+	osif_request_put(request);
 
 	return ret_cnt;
 }

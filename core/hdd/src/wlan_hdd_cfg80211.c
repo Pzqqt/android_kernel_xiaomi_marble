@@ -88,7 +88,7 @@
 #include "wlan_hdd_lpass.h"
 #include "wlan_hdd_nan_datapath.h"
 #include "wlan_hdd_disa.h"
-#include "wlan_hdd_request_manager.h"
+#include "wlan_osif_request_manager.h"
 #include "wlan_hdd_he.h"
 #ifdef FEATURE_WLAN_APF
 #include "wlan_hdd_apf.h"
@@ -11611,7 +11611,7 @@ struct hdd_sar_context {
 static void hdd_sar_cb(void *cookie,
 		       struct sar_limit_event *event)
 {
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct hdd_sar_context *context;
 
 	hdd_enter();
@@ -11621,16 +11621,16 @@ static void hdd_sar_cb(void *cookie,
 		return;
 	}
 
-	request = hdd_request_get(cookie);
+	request = osif_request_get(cookie);
 	if (!request) {
 		hdd_debug("Obsolete request");
 		return;
 	}
 
-	context = hdd_request_priv(request);
+	context = osif_request_priv(request);
 	context->event = *event;
-	hdd_request_complete(request);
-	hdd_request_put(request);
+	osif_request_complete(request);
+	osif_request_put(request);
 
 	hdd_exit();
 }
@@ -11768,13 +11768,13 @@ static int __wlan_hdd_get_sar_power_limits(struct wiphy *wiphy,
 					   const void *data, int data_len)
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct hdd_sar_context *context;
 	mac_handle_t mac_handle;
 	void *cookie;
 	QDF_STATUS status;
 	int ret;
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*context),
 		.timeout_ms = WLAN_WAIT_TIME_SAR,
 	};
@@ -11789,13 +11789,13 @@ static int __wlan_hdd_get_sar_power_limits(struct wiphy *wiphy,
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
 
-	request = hdd_request_alloc(&params);
+	request = osif_request_alloc(&params);
 	if (!request) {
 		hdd_err("Request allocation failure");
 		return -ENOMEM;
 	}
 
-	cookie = hdd_request_cookie(request);
+	cookie = osif_request_cookie(request);
 
 	mac_handle = hdd_ctx->mac_handle;
 	status = sme_get_sar_power_limits(mac_handle, hdd_sar_cb, cookie);
@@ -11805,17 +11805,17 @@ static int __wlan_hdd_get_sar_power_limits(struct wiphy *wiphy,
 		goto cleanup;
 	}
 
-	ret = hdd_request_wait_for_response(request);
+	ret = osif_request_wait_for_response(request);
 	if (ret) {
 		hdd_err("Target response timed out");
 		goto cleanup;
 	}
 
-	context = hdd_request_priv(request);
+	context = osif_request_priv(request);
 	ret = hdd_sar_send_response(wiphy, &context->event);
 
 cleanup:
-	hdd_request_put(request);
+	osif_request_put(request);
 
 	return ret;
 }
@@ -13114,8 +13114,8 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint32_t pkt_type_bitmap;
 	struct sk_buff *skb;
-	struct hdd_request *request = NULL;
-	static const struct hdd_request_params params = {
+	struct osif_request *request = NULL;
+	static const struct osif_request_params params = {
 		.priv_size = 0,
 		.timeout_ms = WLAN_WAIT_TIME_NUD_STATS,
 	};
@@ -13141,13 +13141,13 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	request = hdd_request_alloc(&params);
+	request = osif_request_alloc(&params);
 	if (!request) {
 		hdd_err("Request allocation failure");
 		return -ENOMEM;
 	}
 
-	cookie = hdd_request_cookie(request);
+	cookie = osif_request_cookie(request);
 
 	arp_stats_params.pkt_type = WLAN_NUD_STATS_ARP_PKT_TYPE;
 	arp_stats_params.vdev_id = adapter->session_id;
@@ -13178,7 +13178,7 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 		goto exit;
 	}
 
-	err = hdd_request_wait_for_response(request);
+	err = osif_request_wait_for_response(request);
 	if (err) {
 		hdd_err("SME timedout while retrieving NUD stats");
 		err = -ETIMEDOUT;
@@ -13233,7 +13233,7 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 
 	cfg80211_vendor_cmd_reply(skb);
 exit:
-	hdd_request_put(request);
+	osif_request_put(request);
 	return err;
 }
 
@@ -13333,21 +13333,21 @@ struct chain_rssi_priv {
 static void hdd_get_chain_rssi_cb(void *context,
 				  struct chain_rssi_result *data)
 {
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct chain_rssi_priv *priv;
 
 	hdd_enter();
 
-	request = hdd_request_get(context);
+	request = osif_request_get(context);
 	if (!request) {
 		hdd_err("Obsolete request");
 		return;
 	}
 
-	priv = hdd_request_priv(request);
+	priv = osif_request_priv(request);
 	priv->chain_rssi = *data;
-	hdd_request_complete(request);
-	hdd_request_put(request);
+	osif_request_complete(request);
+	osif_request_put(request);
 }
 
 /**
@@ -13416,9 +13416,9 @@ static int __wlan_hdd_cfg80211_get_chain_rssi(struct wiphy *wiphy,
 	QDF_STATUS status;
 	int retval;
 	void *cookie;
-	struct hdd_request *request;
+	struct osif_request *request;
 	struct chain_rssi_priv *priv;
-	static const struct hdd_request_params params = {
+	static const struct osif_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
@@ -13449,12 +13449,12 @@ static int __wlan_hdd_cfg80211_get_chain_rssi(struct wiphy *wiphy,
 		QDF_MAC_ADDR_SIZE);
 	req_msg.session_id = adapter->session_id;
 
-	request = hdd_request_alloc(&params);
+	request = osif_request_alloc(&params);
 	if (!request) {
 		hdd_err("Request allocation failure");
 		return -ENOMEM;
 	}
-	cookie = hdd_request_cookie(request);
+	cookie = osif_request_cookie(request);
 
 	mac_handle = hdd_ctx->mac_handle;
 	status = sme_get_chain_rssi(mac_handle,
@@ -13465,18 +13465,18 @@ static int __wlan_hdd_cfg80211_get_chain_rssi(struct wiphy *wiphy,
 		hdd_err("Unable to get chain rssi");
 		retval = qdf_status_to_os_return(status);
 	} else {
-		retval = hdd_request_wait_for_response(request);
+		retval = osif_request_wait_for_response(request);
 		if (retval) {
 			hdd_err("Target response timed out");
 		} else {
-			priv = hdd_request_priv(request);
+			priv = osif_request_priv(request);
 			retval = hdd_post_get_chain_rssi_rsp(hdd_ctx,
 					&priv->chain_rssi);
 			if (retval)
 				hdd_err("Failed to post chain rssi");
 		}
 	}
-	hdd_request_put(request);
+	osif_request_put(request);
 
 	hdd_exit();
 	return retval;
