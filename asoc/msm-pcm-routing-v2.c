@@ -1220,7 +1220,7 @@ int msm_pcm_routing_get_pp_ch_cnt(int fe_id, int session_type)
 	ret = msm_pcm_routing_get_stream_app_type_cfg(fe_id, session_type,
 						      &be_id, &cfg_data);
 	if (ret) {
-		pr_err("%s: cannot get stream app type cfg\n");
+		pr_err("%s: cannot get stream app type cfg\n", __func__);
 		return ret;
 	}
 

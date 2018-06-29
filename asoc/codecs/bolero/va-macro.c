@@ -283,7 +283,7 @@ static void va_macro_mute_update_callback(struct work_struct *work)
 	hpf_gate_reg = BOLERO_CDC_VA_TX0_TX_PATH_SEC2 +
 			VA_MACRO_TX_PATH_OFFSET * decimator;
 	snd_soc_update_bits(codec, hpf_gate_reg, 0x01, 0x01);
-	snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x01, 0x00);
+	snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x00);
 	dev_dbg(va_priv->dev, "%s: decimator %u unmute\n",
 		__func__, decimator);
 }
@@ -458,12 +458,15 @@ static int va_macro_enable_dmic(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMU:
 		(*dmic_clk_cnt)++;
 		if (*dmic_clk_cnt == 1) {
-			snd_soc_update_bits(codec, dmic_clk_reg,
-					dmic_clk_en, dmic_clk_en);
+			snd_soc_update_bits(codec,
+					BOLERO_CDC_VA_TOP_CSR_DMIC_CFG,
+					0x80, 0x00);
 			snd_soc_update_bits(codec, dmic_clk_reg,
 					VA_MACRO_TX_DMIC_CLK_DIV_MASK,
 					va_priv->dmic_clk_div <<
 					VA_MACRO_TX_DMIC_CLK_DIV_SHFT);
+			snd_soc_update_bits(codec, dmic_clk_reg,
+					dmic_clk_en, dmic_clk_en);
 		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -1453,7 +1456,7 @@ static int va_macro_probe(struct platform_device *pdev)
 	ret = of_property_read_u32(pdev->dev.of_node, dmic_sample_rate,
 				   &sample_rate);
 	if (ret) {
-		dev_err(&pdev->dev, "%s: could not find %s entry in dt\n",
+		dev_err(&pdev->dev, "%s: could not find %d entry in dt\n",
 			__func__, sample_rate);
 		va_priv->dmic_clk_div = VA_MACRO_CLK_DIV_2;
 	} else {
@@ -1484,7 +1487,7 @@ static int va_macro_probe(struct platform_device *pdev)
 		if (IS_ERR(va_priv->micb_supply)) {
 			ret = PTR_ERR(va_priv->micb_supply);
 			dev_err(&pdev->dev,
-				"%s:Failed to get micbias supply for VA Mic\n",
+				"%s:Failed to get micbias supply for VA Mic %d\n",
 				__func__, ret);
 			return ret;
 		}
