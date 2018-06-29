@@ -112,11 +112,11 @@ static QDF_STATUS nan_psoc_obj_destroyed_notification(
 
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_PEER_OP,
 				     nan_psoc_delete_peer,
-				     NULL, 1, WLAN_UMAC_COMP_NAN);
+				     NULL, 1, WLAN_NAN_ID);
 
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
 				     nan_psoc_delete_vdev,
-				     NULL, 1, WLAN_UMAC_COMP_NAN);
+				     NULL, 1, WLAN_NAN_ID);
 
 	status = wlan_objmgr_psoc_component_obj_detach(psoc,
 					WLAN_UMAC_COMP_NAN, nan_obj);
