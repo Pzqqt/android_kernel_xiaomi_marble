@@ -382,7 +382,7 @@ err_timer:
 
 void lim_timer_handler(void *pMacGlobal, uint32_t param)
 {
-	uint32_t statusCode;
+	QDF_STATUS status;
 	struct scheduler_msg msg = {0};
 	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
 
@@ -392,10 +392,10 @@ void lim_timer_handler(void *pMacGlobal, uint32_t param)
 	msg.bodyptr = NULL;
 	msg.bodyval = 0;
 
-	statusCode = lim_post_msg_high_priority(pMac, &msg);
-	if (statusCode != QDF_STATUS_SUCCESS)
+	status = lim_post_msg_high_priority(pMac, &msg);
+	if (status != QDF_STATUS_SUCCESS)
 		pe_err("posting message: %X to LIM failed, reason: %d",
-			msg.type, statusCode);
+			msg.type, status);
 } /****** end lim_timer_handler() ******/
 
 /**

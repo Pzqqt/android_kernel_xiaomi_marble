@@ -130,7 +130,7 @@ void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
 void lim_handle_param_update(tpAniSirGlobal pMac, eUpdateIEsType cfgId)
 {
 	struct scheduler_msg msg = { 0 };
-	uint32_t status;
+	QDF_STATUS status;
 
 	pe_debug("Handling CFG parameter id %X update", cfgId);
 
@@ -140,7 +140,7 @@ void lim_handle_param_update(tpAniSirGlobal pMac, eUpdateIEsType cfgId)
 		msg.type = SIR_LIM_UPDATE_BEACON;
 		status = lim_post_msg_api(pMac, &msg);
 
-		if (status != TX_SUCCESS)
+		if (status != QDF_STATUS_SUCCESS)
 			pe_err("Failed lim_post_msg_api %u", status);
 			break;
 	}

@@ -152,7 +152,7 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 		}
 
 		/* Post the message to PE Queue */
-		ret = (QDF_STATUS) lim_post_msg_api(mac_ctx, msg);
+		ret = lim_post_msg_api(mac_ctx, msg);
 		if (ret != QDF_STATUS_SUCCESS) {
 			pe_err("posting to LIM2 failed, ret %d\n", ret);
 			goto fail;
@@ -162,7 +162,7 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 	} else if (type == SIR_MAC_DATA_FRAME) {
 		pe_debug("IAPP Frame...");
 		/* Post the message to PE Queue */
-		ret = (QDF_STATUS) lim_post_msg_api(mac_ctx, msg);
+		ret = lim_post_msg_api(mac_ctx, msg);
 		if (ret != QDF_STATUS_SUCCESS) {
 			pe_err("posting to LIM2 failed, ret: %d", ret);
 			goto fail;

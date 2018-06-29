@@ -1047,67 +1047,16 @@ void pe_free_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 	return;
 }
 
-/**
- * lim_post_msg_api()
- *
- ***FUNCTION:
- * This function is called from other thread while posting a
- * message to LIM message Queue gSirLimMsgQ.
- *
- ***LOGIC:
- * NA
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param  pMac - Pointer to Global MAC structure
- * @param  pMsg - Pointer to the message structure
- * @return None
- */
-
-uint32_t lim_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+QDF_STATUS lim_post_msg_api(tpAniSirGlobal mac, struct scheduler_msg *msg)
 {
-	return scheduler_post_msg(QDF_MODULE_ID_PE,  pMsg);
+	return scheduler_post_msg(QDF_MODULE_ID_PE, msg);
+}
 
-} /*** end lim_post_msg_api() ***/
-
-/**
- * lim_post_msg_high_priority() - posts high priority pe message
- * @mac: mac context
- * @msg: message to be posted
- *
- * This function is used to post high priority pe message
- *
- * Return: returns value returned by vos_mq_post_message_by_priority
- */
-uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac,
-				    struct scheduler_msg *msg)
+QDF_STATUS lim_post_msg_high_priority(tpAniSirGlobal mac,
+				      struct scheduler_msg *msg)
 {
 	return scheduler_post_msg_by_priority(QDF_MODULE_ID_PE,
 					       msg, true);
-}
-
-/*--------------------------------------------------------------------------
-
-   \brief pe_post_msg_api() - A wrapper function to post message to Voss msg queues
-
-   This function can be called by legacy code to post message to cds queues OR
-   legacy code may keep on invoking 'lim_post_msg_api' to post the message to cds queue
-   for dispatching it later.
-
-   \param pMac - Pointer to Global MAC structure
-   \param pMsg - Pointer to the message structure
-
-   \return  uint32_t - TX_SUCCESS for success.
-
-   --------------------------------------------------------------------------*/
-
-QDF_STATUS pe_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
-{
-	return (QDF_STATUS) lim_post_msg_api(pMac, pMsg);
 }
 
 /*--------------------------------------------------------------------------
@@ -2017,9 +1966,10 @@ QDF_STATUS lim_update_short_slot(tpAniSirGlobal pMac,
 }
 
 
-void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac,
+				     tpPESession psessionEntry)
 {
-	uint32_t statusCode;
+	QDF_STATUS status;
 	struct scheduler_msg msg = {0};
 
 	/* Prepare and post message to LIM Message Queue */
@@ -2028,11 +1978,11 @@ void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac, tpPESession psessionEn
 	msg.bodyval = 0;
 	pe_err("Heartbeat failure from Fw");
 
-	statusCode = lim_post_msg_api(pMac, &msg);
+	status = lim_post_msg_api(pMac, &msg);
 
-	if (statusCode != QDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		pe_err("posting message: %X to LIM failed, reason: %d",
-			msg.type, statusCode);
+			msg.type, status);
 	}
 }
 

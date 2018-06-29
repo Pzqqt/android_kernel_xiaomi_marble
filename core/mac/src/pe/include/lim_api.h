@@ -115,7 +115,6 @@ void pe_register_tl_handle(tpAniSirGlobal pMac);
 QDF_STATUS lim_start(tpAniSirGlobal pMac);
 QDF_STATUS pe_start(tpAniSirGlobal pMac);
 void pe_stop(tpAniSirGlobal pMac);
-QDF_STATUS pe_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
 QDF_STATUS peProcessMsg(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
 
 /**
@@ -159,10 +158,33 @@ void pe_register_callbacks_with_wma(tpAniSirGlobal pMac,
  * This called upon reset/persona change etc
  */
 extern void lim_cleanup(tpAniSirGlobal);
-/* / Function to post messages to LIM thread */
-extern uint32_t lim_post_msg_api(tpAniSirGlobal, struct scheduler_msg *);
-uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac,
-				    struct scheduler_msg *msg);
+
+/**
+ * lim_post_msg_api() - post normal priority PE message
+ * @mac: mac context
+ * @msg: message to be posted
+ *
+ * This function is called to post a message to the tail of the PE
+ * message queue to be processed in the MC Thread with normal
+ * priority.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, other QDF_STATUS on error
+ */
+QDF_STATUS lim_post_msg_api(tpAniSirGlobal mac, struct scheduler_msg *msg);
+
+/**
+ * lim_post_msg_high_priority() - post high priority PE message
+ * @mac: mac context
+ * @msg: message to be posted
+ *
+ * This function is called to post a message to the head of the PE
+ * message queue to be processed in the MC Thread with expedited
+ * priority.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, other QDF_STATUS on error
+ */
+QDF_STATUS lim_post_msg_high_priority(tpAniSirGlobal mac,
+				      struct scheduler_msg *msg);
 
 /**
  * Function to process messages posted to LIM thread
