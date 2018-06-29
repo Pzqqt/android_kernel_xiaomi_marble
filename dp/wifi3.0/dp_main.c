@@ -326,17 +326,19 @@ static int dp_peer_update_ast_wifi3(struct cdp_soc_t *soc_hdl,
 						uint8_t *wds_macaddr,
 						uint32_t flags)
 {
-	int status;
+	int status = -1;
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_ast_entry  *ast_entry = NULL;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	ast_entry = dp_peer_ast_hash_find(soc, wds_macaddr);
 
-	status = dp_peer_update_ast(soc,
-					(struct dp_peer *)peer_hdl,
-					ast_entry,
-					flags);
+	if (ast_entry) {
+		status = dp_peer_update_ast(soc,
+					    (struct dp_peer *)peer_hdl,
+					   ast_entry, flags);
+	}
+
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	return status;
@@ -358,9 +360,11 @@ static void dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 	qdf_spin_lock_bh(&soc->ast_lock);
 	ast_entry = dp_peer_ast_hash_find(soc, wds_macaddr);
 
-	if (ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) {
-		ast_entry->is_active = TRUE;
+	if (ast_entry) {
+		if (ast_entry->type != CDP_TXRX_AST_TYPE_STATIC)
+			ast_entry->is_active = TRUE;
 	}
+
 	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 
