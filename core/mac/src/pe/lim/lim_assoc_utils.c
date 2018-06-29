@@ -2125,7 +2125,7 @@ static void lim_update_he_stbc_capable(tpAddStaParams add_sta_params)
  * This function is called to add an STA context at hardware
  * whenever a STA is (Re) Associated.
  *
- * Return: QDF_STATUS_SUCCESS on success else eSirRetStatus failure codes
+ * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS failure codes
  */
 
 QDF_STATUS

@@ -315,7 +315,7 @@ static inline void lim_get_rf_band_new(tpAniSirGlobal pMac,
    \param pMac - Pointer to Global MAC structure
    \param pMsg - Pointer to the message structure
 
-   \return  uint32_t - TX_SUCCESS for success.
+   \return  QDF_STATUS_SUCCESS on success, other QDF_STATUS on error
 
    --------------------------------------------------------------------------*/
 QDF_STATUS pe_process_messages(tpAniSirGlobal pMac,

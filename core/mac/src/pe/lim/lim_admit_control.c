@@ -83,7 +83,7 @@ static QDF_STATUS lim_validate_access_policy(tpAniSirGlobal, uint8_t, uint16_t,
    \param     tpAniSirGlobal    pMac
    \param         tSirMacTspecIE *pTspec
    \param         uint32_t            *pSvcInt
-   \return eSirRetStatus - status of the comparison
+   \return QDF_STATUS - status of the comparison
    -------------------------------------------------------------*/
 
 static QDF_STATUS
@@ -176,7 +176,7 @@ lim_validate_tspec_edca(tpAniSirGlobal mac_ctx,
    \brief validate the offered tspec
    \param   tpAniSirGlobal pMac
    \param         tSirMacTspecIE *pTspec
-   \return eSirRetStatus - status
+   \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
 static QDF_STATUS
@@ -214,7 +214,7 @@ lim_validate_tspec(tpAniSirGlobal pMac,
    \param       uint32_t              *pBw
    \param       uint32_t               phyMode
    \param       tpLimTspecInfo    pTspecInfo
-   \return eSirRetStatus - status
+   \return void
    -------------------------------------------------------------*/
 
 static void
@@ -250,7 +250,7 @@ lim_compute_mean_bw_used(tpAniSirGlobal pMac,
    \param       uint32_t              *pMinBw
    \param       uint32_t               phyMode
    \param       uint32_t               bw_factor
-   \return eSirRetStatus - status
+   \return void
    -------------------------------------------------------------*/
 
 static void
@@ -330,7 +330,7 @@ lim_admit_policy_oversubscription(tpAniSirGlobal mac_ctx,
    \brief determine the current admit control policy and apply it for the offered tspec
    \param   tpAniSirGlobal pMac
    \param         tSirMacTspecIE   *pTspec
-   \return eSirRetStatus - status
+   \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
 static QDF_STATUS lim_admit_policy(tpAniSirGlobal pMac,
@@ -373,7 +373,7 @@ static QDF_STATUS lim_admit_policy(tpAniSirGlobal pMac,
    \brief delete the specified tspec
    \param   tpAniSirGlobal pMac
    \param     tpLimTspecInfo pInfo
-   \return eSirRetStatus - status
+   \return void
    -------------------------------------------------------------*/
 
 /* ----------------------------------------------------------------------------- */
@@ -397,7 +397,7 @@ static void lim_tspec_delete(tpAniSirGlobal pMac, tpLimTspecInfo pInfo)
    \param       tSirMacTspecIE    *pTspecIE
    \param       tpLimTspecInfo    pTspecList
    \param       tpLimTspecInfo   *ppInfo
-   \return eSirRetStatus - status
+   \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
 /* find the specified tspec in the list */
@@ -435,7 +435,7 @@ lim_tspec_find_by_sta_addr(tpAniSirGlobal pMac,
    \param       tSirMacTspecIE    *pTspecIE
    \param       tpLimTspecInfo    pTspecList
    \param       tpLimTspecInfo   *ppInfo
-   \return eSirRetStatus - status
+   \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
 QDF_STATUS
@@ -474,7 +474,7 @@ lim_tspec_find_by_assoc_id(tpAniSirGlobal pMac,
    \param     tSirMacTSInfo   *pTsInfo
    \param         tpLimTspecInfo    pTspecList
    \param         tpLimTspecInfo   *ppInfo
-   \return eSirRetStatus - status of the comparison
+   \return QDF_STATUS - status of the comparison
    -------------------------------------------------------------*/
 
 static QDF_STATUS
@@ -514,7 +514,7 @@ lim_find_tspec(tpAniSirGlobal pMac,
    \param uint32_t               interval
    \param tpLimTspecInfo   *ppInfo
 
-   \return eSirRetStatus - status of the comparison
+   \return QDF_STATUS - status of the comparison
    -------------------------------------------------------------*/
 
 QDF_STATUS lim_tspec_add(tpAniSirGlobal pMac,
@@ -599,7 +599,7 @@ QDF_STATUS lim_tspec_add(tpAniSirGlobal pMac,
    \param   tpAniSirGlobal pMac
    \param       uint8_t              accessPolicy
    \param       uint16_t             assocId
-   \return eSirRetStatus - status
+   \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
 static QDF_STATUS
@@ -749,7 +749,7 @@ QDF_STATUS lim_admit_control_add_ts(tpAniSirGlobal pMac, uint8_t *pAddr,
    \param       tSirMacTSInfo    *pTsInfo
    \param       uint8_t               *pTsStatus
    \param       uint8_t             *ptspecIdx
-   \return eSirRetStatus - status
+   \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
 QDF_STATUS
@@ -782,7 +782,7 @@ lim_admit_control_delete_ts(tpAniSirGlobal pMac,
    \brief Delete all TSPEC for the specified STA
    \param   tpAniSirGlobal pMac
    \param     uint16_t assocId
-   \return eSirRetStatus - status
+   \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
 QDF_STATUS lim_admit_control_delete_sta(tpAniSirGlobal pMac, uint16_t assocId)
@@ -806,7 +806,7 @@ QDF_STATUS lim_admit_control_delete_sta(tpAniSirGlobal pMac, uint16_t assocId)
    \fn lim_admit_control_init
    \brief init tspec table
    \param   tpAniSirGlobal pMac
-   \return eSirRetStatus - status
+   \return QDF_STATUS - status
    -------------------------------------------------------------*/
 QDF_STATUS lim_admit_control_init(tpAniSirGlobal pMac)
 {
@@ -819,7 +819,7 @@ QDF_STATUS lim_admit_control_init(tpAniSirGlobal pMac)
    \fn lim_update_admit_policy
    \brief Set the admit control policy based on CFG parameters
    \param   tpAniSirGlobal pMac
-   \return eSirRetStatus - status
+   \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
 QDF_STATUS lim_update_admit_policy(tpAniSirGlobal pMac)
@@ -854,7 +854,7 @@ QDF_STATUS lim_update_admit_policy(tpAniSirGlobal pMac)
    \param       tSirTclasInfo   *tclasInfo
    \param       uint8_t           tclasProc
    \param       uint16_t          tsm_interval
-   \return eSirRetStatus - status
+   \return QDF_STATUS - status
    -------------------------------------------------------------*/
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS
@@ -928,7 +928,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
    \param     uint16_t        staIdx
    \param     uint8_t         tspecIdx
    \param     tSirAddtsReqInfo addts
-   \return eSirRetStatus - status
+   \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
 QDF_STATUS

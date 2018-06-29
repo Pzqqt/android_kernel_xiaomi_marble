@@ -970,7 +970,7 @@ QDF_STATUS pe_close(tpAniSirGlobal pMac)
    \fn pe_start
    \brief will be called in start sequence from mac_start
    \param   tpAniSirGlobal pMac
-   \return none
+   \return QDF_STATUS_SUCCESS on success, other QDF_STATUS on error
    -------------------------------------------------------------*/
 
 QDF_STATUS pe_start(tpAniSirGlobal pMac)

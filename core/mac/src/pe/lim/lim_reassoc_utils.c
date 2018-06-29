@@ -385,7 +385,7 @@ bool lim_is_reassoc_in_progress(tpAniSirGlobal pMac, tpPESession psessionEntry)
  * we add the self sta. We update with the association id from the reassoc
  * response from the AP.
  *
- * Return: QDF_STATUS_SUCCESS on success else eSirRetStatus failure codes
+ * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS failure codes
  */
 QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
 				tpPESession session_entry)
