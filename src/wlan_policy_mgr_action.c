@@ -853,10 +853,12 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 	policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, sap_chan %u",
 			 sta_sap_scc_on_dfs_chan, sap_chan);
 
-	if (!sta_sap_scc_on_dfs_chan ||
-	    !(sap_chan && WLAN_REG_IS_5GHZ_CH(sap_chan) &&
-	     (wlan_reg_get_channel_state(pm_ctx->pdev, sap_chan) ==
-	      CHANNEL_STATE_DFS))) {
+	if ((!sta_sap_scc_on_dfs_chan ||
+	     !(sap_chan && WLAN_REG_IS_5GHZ_CH(sap_chan) &&
+	       (wlan_reg_get_channel_state(pm_ctx->pdev, sap_chan) ==
+			CHANNEL_STATE_DFS))) &&
+	    (!policy_mgr_sta_sap_scc_on_lte_coex_chan(psoc) ||
+	      policy_mgr_is_safe_channel(psoc, sap_chan))) {
 		return false;
 	}
 
@@ -1100,6 +1102,9 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 		 * If STA+SAP sessions are on DFS channel and STA+SAP SCC is
 		 * enabled on DFS channel then move the SAP out of DFS channel
 		 * as soon as STA gets disconnect.
+		 * If STA+SAP sessions are on unsafe channel and STA+SAP SCC is
+		 * enabled on unsafe channel then move the SAP to safe channel
+		 * as soon as STA disconnected.
 		 */
 		if (policy_mgr_is_sap_restart_required_after_sta_disconnect(
 							psoc, &sap_ch)) {
