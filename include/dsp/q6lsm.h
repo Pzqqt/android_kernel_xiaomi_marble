@@ -26,6 +26,8 @@
 #define LSM_MAX_NUM_CHANNELS 8
 #define LSM_V3P0_MAX_NUM_CHANNELS 9
 
+#define LSM_API_VERSION_V3 3
+
 typedef void (*lsm_app_cb)(uint32_t opcode, uint32_t token,
 		       uint32_t *payload, void *priv);
 
@@ -60,6 +62,24 @@ struct lsm_hw_params {
 	u16 num_chs;
 };
 
+struct lsm_cal_data_info {
+	dma_addr_t	phys;
+	void	*data;
+	size_t	size;
+	struct dma_buf	*dma_buf;
+	uint32_t	mem_map_handle;
+};
+
+struct lsm_stage_config {
+	uint32_t	app_type;
+	uint32_t	topology_id;
+	bool	lpi_enable;
+	bool	lab_enable;
+	struct lsm_sound_model	sound_model;
+	struct lsm_cal_data_info	cal_info;
+};
+
+
 struct lsm_client {
 	int		session;
 	lsm_app_cb	cb;
@@ -68,7 +88,6 @@ struct lsm_client {
 	struct apr_svc  *apr;
 	struct apr_svc  *mmap_apr;
 	struct mutex    cmd_lock;
-	struct lsm_sound_model sound_model;
 	wait_queue_head_t cmd_wait;
 	uint32_t	cmd_err_code;
 	uint16_t	mode;
@@ -77,8 +96,6 @@ struct lsm_client {
 	uint8_t		*confidence_levels;
 	bool		opened;
 	bool		started;
-	dma_addr_t	lsm_cal_phy_addr;
-	uint32_t	lsm_cal_size;
 	uint32_t	app_id;
 	bool		lab_enable;
 	bool		lab_started;
@@ -91,6 +108,8 @@ struct lsm_client {
 	int		perf_mode;
 	uint32_t	event_mode;
 	uint32_t	event_type;
+	uint32_t	num_stages;
+	struct lsm_stage_config	stage_cfg[LSM_MAX_STAGES_PER_SESSION];
 };
 
 struct lsm_stream_cmd_open_tx {
@@ -103,6 +122,17 @@ struct lsm_stream_cmd_open_tx {
 struct lsm_stream_cmd_open_tx_v2 {
 	struct apr_hdr hdr;
 	uint32_t	topology_id;
+} __packed;
+
+struct lsm_stream_stage_info {
+	uint32_t	topology_id;
+	uint32_t	island_enable;
+} __packed;
+
+struct lsm_stream_cmd_open_tx_v3 {
+	struct apr_hdr	hdr;
+	uint32_t	num_stages;
+	struct lsm_stream_stage_info	stage_info[0];
 } __packed;
 
 struct lsm_custom_topologies {
@@ -242,8 +272,9 @@ int q6lsm_open(struct lsm_client *client, uint16_t app_id);
 int q6lsm_start(struct lsm_client *client, bool wait);
 int q6lsm_stop(struct lsm_client *client, bool wait);
 int q6lsm_snd_model_buf_alloc(struct lsm_client *client, size_t len,
-			      bool allocate_module_data);
-int q6lsm_snd_model_buf_free(struct lsm_client *client);
+			struct lsm_params_info_v2 *p_info);
+int q6lsm_snd_model_buf_free(struct lsm_client *client,
+			struct lsm_params_info_v2 *p_info);
 int q6lsm_close(struct lsm_client *client);
 int q6lsm_register_sound_model(struct lsm_client *client,
 			       enum lsm_detection_mode mode,
@@ -254,19 +285,22 @@ int q6lsm_set_data(struct lsm_client *client,
 int q6lsm_deregister_sound_model(struct lsm_client *client);
 void set_lsm_port(int lsm_port);
 int get_lsm_port(void);
-int q6lsm_lab_control(struct lsm_client *client, u32 enable);
+int q6lsm_lab_control(struct lsm_client *client, u32 enable,
+		struct lsm_params_info_v2 *p_info);
 int q6lsm_stop_lab(struct lsm_client *client);
 int q6lsm_read(struct lsm_client *client, struct lsm_cmd_read *read);
 int q6lsm_lab_buffer_alloc(struct lsm_client *client, bool alloc);
 int q6lsm_set_one_param(struct lsm_client *client,
-			struct lsm_params_info *p_info, void *data,
+			struct lsm_params_info_v2 *p_info, void *data,
 			uint32_t param_type);
 void q6lsm_sm_set_param_data(struct lsm_client *client,
-		struct lsm_params_info *p_info,
+		struct lsm_params_info_v2 *p_info,
 		size_t *offset);
 int q6lsm_set_port_connected(struct lsm_client *client);
 int q6lsm_set_fwk_mode_cfg(struct lsm_client *client, uint32_t event_mode);
 int q6lsm_set_media_fmt_params(struct lsm_client *client);
 int q6lsm_set_media_fmt_v2_params(struct lsm_client *client);
-int q6lsm_lab_out_ch_cfg(struct lsm_client *client, u8 *ch_map);
+int q6lsm_lab_out_ch_cfg(struct lsm_client *client, u8 *ch_map,
+		struct lsm_params_info_v2 *p_info);
+bool q6lsm_adsp_supports_multi_stage_detection(void);
 #endif /* __Q6LSM_H__ */
