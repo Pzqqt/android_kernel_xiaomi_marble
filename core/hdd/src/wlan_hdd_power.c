@@ -1737,7 +1737,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 		scan_info = &adapter->scan_info;
 
 		if (sme_neighbor_middle_of_roaming(mac_handle,
-						   adapter->session_id)) {
+		    adapter->session_id) ||
+		    hdd_is_roaming_in_progress(hdd_ctx)) {
 			hdd_err("Roaming in progress, do not allow suspend");
 			wlan_hdd_inc_suspend_stats(hdd_ctx,
 						   SUSPEND_FAIL_ROAM);
