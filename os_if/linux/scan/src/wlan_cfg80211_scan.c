@@ -1532,7 +1532,7 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 	req->cancel_req.vdev_id = vdev_id;
 	if (scan_id != INVAL_SCAN_ID)
 		req->cancel_req.req_type = WLAN_SCAN_CANCEL_SINGLE;
-	if (vdev_id == INVAL_VDEV_ID)
+	else if (vdev_id == INVAL_VDEV_ID)
 		req->cancel_req.req_type = WLAN_SCAN_CANCEL_PDEV_ALL;
 	else
 		req->cancel_req.req_type = WLAN_SCAN_CANCEL_VDEV_ALL;
@@ -1587,7 +1587,7 @@ int wlan_vendor_abort_scan(struct wlan_objmgr_pdev *pdev,
 			return ret;
 		if (ucfg_scan_get_pdev_status(pdev) !=
 		   SCAN_NOT_IN_PROGRESS)
-			wlan_abort_scan(pdev, pdev_id,
+			wlan_abort_scan(pdev, INVAL_PDEV_ID,
 					INVAL_VDEV_ID, scan_id, true);
 	}
 	return 0;
