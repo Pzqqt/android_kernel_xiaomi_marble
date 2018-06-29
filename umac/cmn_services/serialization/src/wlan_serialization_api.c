@@ -303,13 +303,8 @@ wlan_serialization_pdev_scan_status(struct wlan_objmgr_pdev *pdev)
 	struct wlan_serialization_pdev_priv_obj *ser_pdev_obj =
 		wlan_serialization_get_pdev_priv_obj(pdev);
 
-	cmd_in_active =
-	wlan_serialization_is_cmd_in_pdev_list(
-			pdev, &ser_pdev_obj->active_scan_list);
-
-	cmd_in_pending =
-	wlan_serialization_is_cmd_in_pdev_list(
-			pdev, &ser_pdev_obj->pending_scan_list);
+	cmd_in_active = !qdf_list_empty(&ser_pdev_obj->active_scan_list);
+	cmd_in_pending = !qdf_list_empty(&ser_pdev_obj->pending_scan_list);
 
 	return wlan_serialization_is_cmd_in_active_pending(
 			cmd_in_active, cmd_in_pending);
