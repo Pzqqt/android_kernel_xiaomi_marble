@@ -2445,7 +2445,7 @@ void policy_mgr_update_user_config_sap_chan(
  *
  * Check if SAP should be moved to a non dfs channel after STA disconnection.
  * This API applicable only for STA+SAP SCC and ini 'sta_sap_scc_on_dfs_chan'
- * is enabled.
+ * or 'sta_sap_scc_on_lte_coex_chan' is enabled.
  *
  * Return: true if sap restart is required, otherwise false
  */
