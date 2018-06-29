@@ -5387,6 +5387,7 @@ static struct platform_driver msm_compr_driver = {
 		.name = "msm-compress-dsp",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_compr_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = msm_compr_dev_probe,
 	.remove = msm_compr_remove,

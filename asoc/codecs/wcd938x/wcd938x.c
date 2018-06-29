@@ -2973,6 +2973,7 @@ static struct platform_driver wcd938x_codec_driver = {
 #ifdef CONFIG_PM_SLEEP
 		.pm = &wcd938x_dev_pm_ops,
 #endif
+		.suppress_bind_attrs = true,
 	},
 };
 

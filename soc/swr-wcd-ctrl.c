@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/irq.h>
@@ -1929,6 +1929,7 @@ static struct platform_driver swr_mstr_driver = {
 		.owner = THIS_MODULE,
 		.pm = &swrm_dev_pm_ops,
 		.of_match_table = swrm_dt_match,
+		.suppress_bind_attrs = true,
 	},
 };
 

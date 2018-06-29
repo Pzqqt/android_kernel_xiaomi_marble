@@ -603,6 +603,7 @@ static struct platform_driver bolero_clk_rsc_mgr = {
 		.name = "bolero-clk-rsc-mngr",
 		.owner = THIS_MODULE,
 		.of_match_table = bolero_clk_rsc_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = bolero_clk_rsc_probe,
 	.remove = bolero_clk_rsc_remove,

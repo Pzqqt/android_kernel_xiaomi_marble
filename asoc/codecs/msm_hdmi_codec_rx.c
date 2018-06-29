@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/platform_device.h>
 #include <linux/slab.h>
@@ -698,6 +698,7 @@ static struct platform_driver msm_ext_disp_audio_codec_rx_driver = {
 		.name = "msm-ext-disp-audio-codec-rx",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_ext_disp_audio_codec_rx_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = msm_ext_disp_audio_codec_rx_plat_probe,
 	.remove = msm_ext_disp_audio_codec_rx_plat_remove,

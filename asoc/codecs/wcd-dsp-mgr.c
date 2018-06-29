@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/platform_device.h>
@@ -1306,6 +1306,7 @@ static struct platform_driver wdsp_mgr_driver = {
 		.name = "wcd-dsp-mgr",
 		.owner = THIS_MODULE,
 		.of_match_table = of_match_ptr(wdsp_mgr_dt_match),
+		.suppress_bind_attrs = true,
 	},
 	.probe = wdsp_mgr_probe,
 	.remove = wdsp_mgr_remove,

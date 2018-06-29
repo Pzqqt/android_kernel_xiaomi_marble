@@ -24817,6 +24817,7 @@ static struct platform_driver msm_routing_pcm_driver = {
 		.name = "msm-pcm-routing",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_pcm_routing_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = msm_routing_pcm_probe,
 	.remove = msm_routing_pcm_remove,

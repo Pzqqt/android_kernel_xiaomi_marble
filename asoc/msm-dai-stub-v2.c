@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2013-2014, 2017 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2014, 2017, 2019 The Linux Foundation. All rights reserved.
  */
 #include <linux/init.h>
 #include <linux/module.h>
@@ -302,6 +302,7 @@ static struct platform_driver msm_dai_stub_dev = {
 		.name = "msm-dai-stub-dev",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_dai_stub_dev_dt_match,
+		.suppress_bind_attrs = true,
 	},
 };
 
@@ -343,6 +344,7 @@ static struct platform_driver msm_dai_stub_driver = {
 		.name = "msm-dai-stub",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_dai_stub_dt_match,
+		.suppress_bind_attrs = true,
 	},
 };
 

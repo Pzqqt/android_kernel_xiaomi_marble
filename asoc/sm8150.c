@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -7245,6 +7245,7 @@ static struct platform_driver sm8150_asoc_machine_driver = {
 		.owner = THIS_MODULE,
 		.pm = &snd_soc_pm_ops,
 		.of_match_table = sm8150_asoc_machine_of_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = msm_asoc_machine_probe,
 	.remove = msm_asoc_machine_remove,

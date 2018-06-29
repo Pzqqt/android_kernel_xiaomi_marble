@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -3331,6 +3331,7 @@ static struct platform_driver msm_cpe_lsm_driver = {
 		.name = "msm-cpe-lsm",
 		.owner = THIS_MODULE,
 		.of_match_table = of_match_ptr(msm_cpe_lsm_dt_match),
+		.suppress_bind_attrs = true,
 	},
 	.probe = msm_cpe_lsm_probe,
 	.remove = msm_cpe_lsm_remove,

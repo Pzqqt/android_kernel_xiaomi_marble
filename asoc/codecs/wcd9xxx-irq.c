@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/bitops.h>
 #include <linux/kernel.h>
@@ -878,6 +878,7 @@ static struct platform_driver wcd9xxx_irq_driver = {
 		.name = "wcd9xxx_intc",
 		.owner = THIS_MODULE,
 		.of_match_table = of_match_ptr(of_match),
+		.suppress_bind_attrs = true,
 	},
 };
 

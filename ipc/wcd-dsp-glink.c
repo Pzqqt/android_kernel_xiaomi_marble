@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -755,6 +755,7 @@ static struct platform_driver wdsp_glink_driver = {
 		.name   = WDSP_GLINK_DRIVER_NAME,
 		.owner  = THIS_MODULE,
 		.of_match_table = wdsp_glink_of_match,
+		.suppress_bind_attrs = true,
 	},
 };
 

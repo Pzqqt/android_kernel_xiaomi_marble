@@ -1907,6 +1907,7 @@ static struct platform_driver q6core_driver = {
 		.name = "q6core_audio",
 		.owner = THIS_MODULE,
 		.of_match_table = q6core_of_match,
+		.suppress_bind_attrs = true,
 	}
 };
 
