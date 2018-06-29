@@ -306,20 +306,17 @@ static inline void lim_get_rf_band_new(tpAniSirGlobal pMac,
 	*band = psessionEntry ? psessionEntry->limRFBand : BAND_UNKNOWN;
 }
 
-/*--------------------------------------------------------------------------
-
-   \brief pe_process_messages() - Message Processor for PE
-
-   Voss calls this function to dispatch the message to PE
-
-   \param pMac - Pointer to Global MAC structure
-   \param pMsg - Pointer to the message structure
-
-   \return  QDF_STATUS_SUCCESS on success, other QDF_STATUS on error
-
-   --------------------------------------------------------------------------*/
-QDF_STATUS pe_process_messages(tpAniSirGlobal pMac,
-				  struct scheduler_msg *pMsg);
+/**
+ * pe_mc_process_handler() - Message Processor for PE
+ * @msg: Pointer to the message structure
+ *
+ * Verifies the system is in a mode where messages are expected to be
+ * processed, and if so, routes the message to the appropriate handler
+ * based upon message type.
+ *
+ * Return: QDF_STATUS_SUCCESS if the message was handled, otherwise an
+ *         appropriate QDF_STATUS error code
+ */
 QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg);
 
 /** -------------------------------------------------------------

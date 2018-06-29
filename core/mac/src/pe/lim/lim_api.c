@@ -1059,49 +1059,26 @@ QDF_STATUS lim_post_msg_high_priority(tpAniSirGlobal mac,
 					       msg, true);
 }
 
-/*--------------------------------------------------------------------------
-
-   \brief pe_process_messages() - Message Processor for PE
-
-   Voss calls this function to dispatch the message to PE
-
-   \param pMac - Pointer to Global MAC structure
-   \param pMsg - Pointer to the message structure
-
-   \return  uint32_t - TX_SUCCESS for success.
-
-   --------------------------------------------------------------------------*/
-
-QDF_STATUS pe_process_messages(tpAniSirGlobal pMac,
-				  struct scheduler_msg *pMsg)
-{
-	if (ANI_DRIVER_TYPE(pMac) == QDF_DRIVER_TYPE_MFG) {
-		return QDF_STATUS_SUCCESS;
-	}
-	/**
-	 * If the Message to be handled is for CFG Module call the CFG Msg
-	 * Handler and for all the other cases post it to LIM
-	 */
-	if (SIR_CFG_PARAM_UPDATE_IND != pMsg->type && IS_CFG_MSG(pMsg->type))
-		cfg_process_mb_msg(pMac, (tSirMbMsg *) pMsg->bodyptr);
-	else
-		lim_message_processor(pMac, pMsg);
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 {
-	QDF_STATUS status;
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (mac_ctx == NULL)
 		return QDF_STATUS_E_FAILURE;
 
-	status = pe_process_messages(mac_ctx, msg);
-	if (status == QDF_STATUS_SUCCESS)
+	if (ANI_DRIVER_TYPE(mac_ctx) == QDF_DRIVER_TYPE_MFG)
 		return QDF_STATUS_SUCCESS;
 
-	return QDF_STATUS_E_FAILURE;
+	/*
+	 * If the Message to be handled is for CFG Module call the CFG Msg
+	 * Handler and for all the other cases post it to LIM
+	 */
+	if (SIR_CFG_PARAM_UPDATE_IND != msg->type && IS_CFG_MSG(msg->type))
+		cfg_process_mb_msg(mac_ctx, msg->bodyptr);
+	else
+		lim_message_processor(mac_ctx, msg);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
