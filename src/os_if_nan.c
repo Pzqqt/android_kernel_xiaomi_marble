@@ -240,7 +240,7 @@ static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 	/* delete all peer for this interface first */
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_PEER_OP,
 				     os_if_nan_vdev_delete_peer,
-				     nan_vdev, 1, WLAN_UMAC_COMP_NAN);
+				     nan_vdev, 1, WLAN_NAN_ID);
 
 	/*
 	 * wlan_util_get_vdev_by_ifname increments ref count
