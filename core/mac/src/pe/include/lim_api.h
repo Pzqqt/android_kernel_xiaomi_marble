@@ -108,15 +108,15 @@ typedef enum eMgmtFrmDropReason {
  * Function to initialize LIM state machines.
  * This called upon LIM thread creation.
  */
-extern tSirRetStatus lim_initialize(tpAniSirGlobal);
-tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg);
-tSirRetStatus pe_close(tpAniSirGlobal pMac);
+extern QDF_STATUS lim_initialize(tpAniSirGlobal);
+QDF_STATUS pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg);
+QDF_STATUS pe_close(tpAniSirGlobal pMac);
 void pe_register_tl_handle(tpAniSirGlobal pMac);
-tSirRetStatus lim_start(tpAniSirGlobal pMac);
-tSirRetStatus pe_start(tpAniSirGlobal pMac);
+QDF_STATUS lim_start(tpAniSirGlobal pMac);
+QDF_STATUS pe_start(tpAniSirGlobal pMac);
 void pe_stop(tpAniSirGlobal pMac);
-tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
-tSirRetStatus peProcessMsg(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
+QDF_STATUS pe_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
+QDF_STATUS peProcessMsg(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
 
 /**
  * pe_register_mgmt_rx_frm_callback() - registers callback for receiving
@@ -177,7 +177,7 @@ extern uint8_t lim_is_system_in_scan_state(tpAniSirGlobal);
  * Function to handle IBSS coalescing.
  * Beacon Processing module to call this.
  */
-extern tSirRetStatus lim_handle_ibss_coalescing(tpAniSirGlobal,
+extern QDF_STATUS lim_handle_ibss_coalescing(tpAniSirGlobal,
 						tpSchBeaconStruct,
 						uint8_t *, tpPESession);
 /* / Function used by other Sirius modules to read global SME state */
@@ -219,7 +219,7 @@ static inline void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
 /* / Function that checks for change in AP's capabilties on STA */
 extern void lim_detect_change_in_ap_capabilities(tpAniSirGlobal,
 						 tpSirProbeRespBeacon, tpPESession);
-tSirRetStatus lim_update_short_slot(tpAniSirGlobal pMac,
+QDF_STATUS lim_update_short_slot(tpAniSirGlobal pMac,
 				    tpSirProbeRespBeacon pBeacon,
 				    tpUpdateBeaconParams pBeaconParams,
 				    tpPESession);
@@ -296,7 +296,7 @@ static inline void lim_get_rf_band_new(tpAniSirGlobal pMac,
    \return  uint32_t - TX_SUCCESS for success.
 
    --------------------------------------------------------------------------*/
-tSirRetStatus pe_process_messages(tpAniSirGlobal pMac,
+QDF_STATUS pe_process_messages(tpAniSirGlobal pMac,
 				  struct scheduler_msg *pMsg);
 QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg);
 

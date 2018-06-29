@@ -146,7 +146,7 @@ lim_compare_capabilities(tpAniSirGlobal pMac,
 	    (pLocalCapabs->shortSlotTime == 1)) {
 		if (wlan_cfg_get_int
 			    (pMac, WNI_CFG_ACCEPT_SHORT_SLOT_ASSOC_ONLY,
-			    &val) != eSIR_SUCCESS) {
+			    &val) != QDF_STATUS_SUCCESS) {
 			pe_err("error getting WNI_CFG_FORCE_SHORT_SLOT_ASSOC_ONLY");
 			return false;
 		}
@@ -274,7 +274,7 @@ uint8_t lim_check_mcs_set(tpAniSirGlobal pMac, uint8_t *supportedMCSSet)
 	cfgLen = WNI_CFG_BASIC_MCS_SET_LEN;
 	if (wlan_cfg_get_str(pMac, WNI_CFG_BASIC_MCS_SET,
 			     (uint8_t *) basicMCSSet,
-			     (uint32_t *) &cfgLen) != eSIR_SUCCESS) {
+			     (uint32_t *) &cfgLen) != QDF_STATUS_SUCCESS) {
 		/* / Could not get Basic MCS rateset from CFG. Log error. */
 		pe_err("could not retrieve Basic MCS rateset");
 		return false;
@@ -341,7 +341,7 @@ static inline bool is_non_rsn_cipher(uint8_t cipher_suite)
  * frame handling to determine whether received RSN in
  * Assoc/Reassoc request frames include supported cipher suites or not.
  *
- * Return: eSIR_SUCCESS if ALL BSS basic rates are present in the
+ * Return: QDF_STATUS_SUCCESS if ALL BSS basic rates are present in the
  *                  received rateset else failure status.
  */
 
@@ -364,7 +364,7 @@ uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
 
 	if (!rx_rsn_ie) {
 		pe_debug("Rx RSN IE is NULL");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Check groupwise cipher suite */
@@ -443,7 +443,7 @@ uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
 		they_require_pmf, *pmf_connection);
 #endif
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -517,7 +517,7 @@ lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA rx_wpaie,
 		return eSIR_MAC_CIPHER_SUITE_REJECTED_STATUS;
 	}
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -550,11 +550,11 @@ lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA rx_wpaie,
  * @return None
  */
 
-tSirRetStatus
+QDF_STATUS
 lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 		    tpPESession psessionEntry)
 {
-	tSirRetStatus retCode = eSIR_SUCCESS;
+	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 
 	pe_debug("Cleanup Rx Path for AID: %d"
 		"psessionEntry->limSmeState: %d, mlmState: %d",
@@ -605,7 +605,7 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	lim_send_sme_tsm_ie_ind(pMac, psessionEntry, 0, 0, 0);
 	/* Any roaming related changes should be above this line */
 	if (lim_is_roam_synch_in_progress(psessionEntry))
-		return eSIR_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	pStaDs->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_STA_RSP_STATE;
 
 	if (LIM_IS_STA_ROLE(psessionEntry)) {
@@ -1222,7 +1222,7 @@ static void lim_decide_short_preamble(tpAniSirGlobal mac_ctx,
 		qdf_mem_set((uint8_t *) &session_entry->gLimNoShortParams,
 				sizeof(tLimNoShortParams), 0);
 		if (lim_enable_short_preamble(mac_ctx, true,
-			beacon_params, session_entry) != eSIR_SUCCESS)
+			beacon_params, session_entry) != QDF_STATUS_SUCCESS)
 			pe_err("Cannot enable short preamble");
 	}
 }
@@ -1336,9 +1336,9 @@ lim_decide_short_slot(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
  *
  * Populates vht mcs rate set based on peer and self capabilities
  *
- * Return: eSIR_SUCCESS on success else eSIR_FAILURE
+ * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS_E_FAILURE
  */
-tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 				       tpSirSupportedRates rates,
 				       tDot11fIEVHTCaps *peer_vht_caps,
 				       tpPESession session_entry,
@@ -1352,17 +1352,17 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_sta_dot11mode);
 
 	if (!IS_DOT11_MODE_VHT(self_sta_dot11mode))
-		return eSIR_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_RX_MCS_MAP, &val) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve VHT RX MCS MAP");
 		goto error;
 	}
 	rates->vhtRxMCSMap = (uint16_t) val;
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TX_MCS_MAP, &val) !=
-		eSIR_SUCCESS) {
+		QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve VHT TX MCS MAP");
 		goto error;
 	}
@@ -1370,7 +1370,7 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 
 	if (wlan_cfg_get_int(mac_ctx,
 			WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE,
-			&val) != eSIR_SUCCESS) {
+			&val) != QDF_STATUS_SUCCESS) {
 		pe_err("couldn't retrieve VHT RX Supported data rate MAP");
 		goto error;
 	}
@@ -1378,7 +1378,7 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 
 	if (wlan_cfg_get_int(mac_ctx,
 			WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
-			&val) != eSIR_SUCCESS) {
+			&val) != QDF_STATUS_SUCCESS) {
 		pe_err("couldn't retrieve VHT RX Supported data rate MAP");
 		goto error;
 	}
@@ -1413,7 +1413,7 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 	}
 
 	if ((peer_vht_caps == NULL) || (!peer_vht_caps->present))
-		return eSIR_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	rates->vhtTxHighestDataRate =
 		QDF_MIN(rates->vhtTxHighestDataRate,
@@ -1479,10 +1479,10 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 		       session_entry->supported_nss_1x1);
 	}
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 error:
 
-	return eSIR_FAILURE;
+	return QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -1505,9 +1505,9 @@ error:
  * ERP bit is set iff the dph PHY mode is 11G and there is at least
  * an A rate in the supported or extended rate sets
  *
- * Return: eSIR_SUCCESS or eSIR_FAILURE.
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE.
  */
-tSirRetStatus
+QDF_STATUS
 lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 		tpSirSupportedRates rates, uint8_t *supported_mcs_set,
 		uint8_t basic_only, tpPESession session_entry,
@@ -1557,7 +1557,7 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 
 	if ((temp_rate_set.numRates + temp_rate_set2.numRates) > 12) {
 		pe_err("more than 12 rates in CFG");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* copy all rates in temp_rate_set, there are 12 rates max */
 	for (i = 0; i < temp_rate_set2.numRates; i++)
@@ -1602,9 +1602,9 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 		val = SIZE_OF_SUPPORTED_MCS_SET;
 		if (wlan_cfg_get_str(mac_ctx, WNI_CFG_SUPPORTED_MCS_SET,
 				     rates->supportedMCSSet,
-				     &val) != eSIR_SUCCESS) {
+				     &val) != QDF_STATUS_SUCCESS) {
 			pe_err("could not retrieve supportedMCSSet");
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 
 		if (session_entry->nss == NSS_1x1_MODE)
@@ -1630,7 +1630,7 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 	lim_populate_he_mcs_set(mac_ctx, rates, he_caps,
 			session_entry, session_entry->nss);
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef WLAN_FEATURE_11AX
@@ -1653,7 +1653,7 @@ static void lim_calculate_he_nss(tpSirSupportedRates rates, tpPESession session)
 }
 #endif
 
-tSirRetStatus
+QDF_STATUS
 lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 		tpSirSupportedRates pRates, uint8_t *pSupportedMCSSet,
 		uint8_t basicOnly, tpPESession psessionEntry,
@@ -1671,7 +1671,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 		tempRateSet.numRates = psessionEntry->rateSet.numRates;
 	} else {
 		pe_err("more than SIR_MAC_RATESET_EID_MAX rates");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if ((psessionEntry->dot11mode == WNI_CFG_DOT11_MODE_11G) ||
 		(psessionEntry->dot11mode == WNI_CFG_DOT11_MODE_11A) ||
@@ -1687,14 +1687,14 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 				psessionEntry->extRateSet.numRates;
 		} else {
 			pe_err("psessionEntry->extRateSet.numRates more than SIR_MAC_RATESET_EID_MAX rates");
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 	} else
 		tempRateSet2.numRates = 0;
 	if ((tempRateSet.numRates + tempRateSet2.numRates) >
 	    SIR_MAC_RATESET_EID_MAX) {
 		pe_err("more than 12 rates in CFG");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* copy all rates in tempRateSet, there are 12 rates max */
@@ -1757,9 +1757,9 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 		val = SIZE_OF_SUPPORTED_MCS_SET;
 		if (wlan_cfg_get_str(pMac, WNI_CFG_SUPPORTED_MCS_SET,
 				     pRates->supportedMCSSet,
-				     &val) != eSIR_SUCCESS) {
+				     &val) != QDF_STATUS_SUCCESS) {
 			pe_err("could not retrieve supportedMCSSet");
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		if (psessionEntry->nss == NSS_1x1_MODE)
 			pRates->supportedMCSSet[1] = 0;
@@ -1802,7 +1802,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 	}
 	pe_debug("nss: %d", psessionEntry->nss);
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 } /*** lim_populate_peer_rate_set() ***/
 
 /**
@@ -1833,9 +1833,9 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
  * The parser has already ensured unicity of the rates in the
  * association request structure
  *
- * Return: eSIR_SUCCESS on success else eSIR_FAILURE
+ * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS_E_FAILURE
  */
-tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 					     tpDphHashNode sta_ds,
 					     tSirMacRateSet *oper_rate_set,
 					     tSirMacRateSet *ext_rate_set,
@@ -1880,7 +1880,7 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 	if (((uint16_t)temp_rate_set.numRates +
 		(uint16_t)temp_rate_set2.numRates) > 12) {
 		pe_err("more than 12 rates in CFG");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/*
@@ -2004,9 +2004,9 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 	{
 		val = SIZE_OF_SUPPORTED_MCS_SET;
 		if (wlan_cfg_get_str(mac_ctx, WNI_CFG_SUPPORTED_MCS_SET,
-				     mcs_set, &val) != eSIR_SUCCESS) {
+				     mcs_set, &val) != QDF_STATUS_SUCCESS) {
 			pe_err("could not retrieve supportedMCSet");
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 
 		if (session_entry->nss == NSS_1x1_MODE)
@@ -2034,7 +2034,7 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 	if ((phy_mode == WNI_CFG_PHY_MODE_11G) && is_arate)
 		sta_ds->erpEnabled = eHAL_SET;
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -2125,16 +2125,16 @@ static void lim_update_he_stbc_capable(tpAddStaParams add_sta_params)
  * This function is called to add an STA context at hardware
  * whenever a STA is (Re) Associated.
  *
- * Return: eSIR_SUCCESS on success else eSirRetStatus failure codes
+ * Return: QDF_STATUS_SUCCESS on success else eSirRetStatus failure codes
  */
 
-tSirRetStatus
+QDF_STATUS
 lim_add_sta(tpAniSirGlobal mac_ctx,
 	tpDphHashNode sta_ds, uint8_t update_entry, tpPESession session_entry)
 {
 	tpAddStaParams add_sta_params = NULL;
 	struct scheduler_msg msg_q = {0};
-	tSirRetStatus ret_code = eSIR_SUCCESS;
+	QDF_STATUS ret_code = QDF_STATUS_SUCCESS;
 	tSirMacAddr sta_mac, *sta_Addr;
 	tpSirAssocReq assoc_req;
 	uint8_t i, nw_type_11b = 0;
@@ -2150,7 +2150,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 	add_sta_params = qdf_mem_malloc(sizeof(tAddStaParams));
 	if (NULL == add_sta_params) {
 		pe_err("Unable to allocate memory during ADD_STA");
-		return eSIR_MEM_ALLOC_FAILED;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_IBSS_ROLE(session_entry) ||
@@ -2400,7 +2400,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 		peer_node = lim_ibss_peer_find(mac_ctx, *sta_Addr);
 		if (!peer_node) {
 			pe_err("Can't find IBSS peer node for ADD_STA");
-			return eSIR_HAL_STA_DOES_NOT_EXIST;
+			return QDF_STATUS_E_NOENT;
 		}
 
 		if (peer_node->atimIePresent) {
@@ -2546,7 +2546,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 			 msg_q.type));
 
 	ret_code = wma_post_ctrl_msg(mac_ctx, &msg_q);
-	if (eSIR_SUCCESS != ret_code) {
+	if (QDF_STATUS_SUCCESS != ret_code) {
 		if (add_sta_params->respReqd)
 			SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 		pe_err("ADD_STA_REQ for aId %d failed (reason %X)",
@@ -2580,18 +2580,18 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
  * @return retCode - Indicates success or failure return code
  */
 
-tSirRetStatus
+QDF_STATUS
 lim_del_sta(tpAniSirGlobal pMac,
 	    tpDphHashNode pStaDs, bool fRespReqd, tpPESession psessionEntry)
 {
 	tpDeleteStaParams pDelStaParams = NULL;
 	struct scheduler_msg msgQ = {0};
-	tSirRetStatus retCode = eSIR_SUCCESS;
+	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 
 	pDelStaParams = qdf_mem_malloc(sizeof(tDeleteStaParams));
 	if (NULL == pDelStaParams) {
 		pe_err("Unable to allocate memory during ADD_STA");
-		return eSIR_MEM_ALLOC_FAILED;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	/*
@@ -2694,7 +2694,7 @@ lim_del_sta(tpAniSirGlobal pMac,
 
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
-	if (eSIR_SUCCESS != retCode) {
+	if (QDF_STATUS_SUCCESS != retCode) {
 		if (fRespReqd)
 			SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
 		pe_err("Posting DELETE_STA_REQ to HAL failed, reason=%X",
@@ -2727,13 +2727,13 @@ lim_del_sta(tpAniSirGlobal pMac,
  * @return retCode - Indicates success or failure return code
  */
 
-tSirRetStatus
+QDF_STATUS
 lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 		 tpPESession psessionEntry)
 {
 	tpAddStaParams pAddStaParams = NULL;
 	struct scheduler_msg msgQ = {0};
-	tSirRetStatus retCode = eSIR_SUCCESS;
+	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 	tSirMacAddr staMac;
 	uint32_t listenInterval = WNI_CFG_LISTEN_INTERVAL_STADEF;
 	uint32_t ampduLenExponent = 0;
@@ -2760,7 +2760,7 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	pAddStaParams = qdf_mem_malloc(sizeof(tAddStaParams));
 	if (NULL == pAddStaParams) {
 		pe_err("Unable to allocate memory during ADD_STA");
-		return eSIR_MEM_ALLOC_FAILED;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	/* / Add STA context at MAC HW (BMU, RHP & TFP) */
@@ -2788,7 +2788,7 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	pAddStaParams->updateSta = updateSta;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val) !=
-			eSIR_SUCCESS) {
+			QDF_STATUS_SUCCESS) {
 		pe_err("Couldn't get SHORT_PREAMBLE, set default");
 		pAddStaParams->shortPreambleSupported = 1;
 	} else {
@@ -2879,7 +2879,7 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	if (IS_DOT11_MODE_VHT(selfStaDot11Mode)) {
 		if (wlan_cfg_get_int
 			    (pMac, WNI_CFG_VHT_AMPDU_LEN_EXPONENT, &ampduLenExponent)
-		    != eSIR_SUCCESS) {
+		    != QDF_STATUS_SUCCESS) {
 			pe_err("Couldn't get WNI_CFG_VHT_AMPDU_LEN_EXPONENT");
 		}
 		pAddStaParams->maxAmpduSize = (uint8_t) ampduLenExponent;
@@ -2901,7 +2901,7 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 		((psessionEntry->txLdpcIniFeatureEnabled >> 1) & 0x01);
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_LISTEN_INTERVAL, &listenInterval) !=
-	    eSIR_SUCCESS)
+	    QDF_STATUS_SUCCESS)
 		pe_err("Couldn't get LISTEN_INTERVAL");
 
 	pAddStaParams->listenInterval = (uint16_t) listenInterval;
@@ -2944,7 +2944,7 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
-	if (eSIR_SUCCESS != retCode) {
+	if (QDF_STATUS_SUCCESS != retCode) {
 		pe_err("Posting WMA_ADD_STA_REQ to HAL failed, reason=%X",
 			retCode);
 		qdf_mem_free(pAddStaParams);
@@ -3137,7 +3137,7 @@ lim_delete_dph_hash_entry(tpAniSirGlobal mac_ctx, tSirMacAddr sta_addr,
 	}
 
 	if (dph_delete_hash_entry(mac_ctx, sta_addr, sta_id,
-		 &session_entry->dph.dphHashTable) != eSIR_SUCCESS)
+		 &session_entry->dph.dphHashTable) != QDF_STATUS_SUCCESS)
 		pe_err("error deleting hash entry");
 }
 
@@ -3240,7 +3240,7 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 
 		if (wlan_cfg_get_int(mac_ctx,
 			WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT, &val) ==
-			 eSIR_SUCCESS) {
+			 QDF_STATUS_SUCCESS) {
 			session_entry->defaultAuthFailureTimeout = val;
 			cfg_set_int(mac_ctx,
 				WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
@@ -3350,9 +3350,9 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
  * @param   ieLen        Length of all IEs combined
  * @param   beaconStruct A pointer to tSirProbeRespBeacon that needs to be
  *                       populated
- * @return  status       A status reporting eSIR_SUCCESS or eSIR_FAILURE
+ * @return  status       A status reporting QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
  */
-tSirRetStatus lim_extract_ap_capabilities(tpAniSirGlobal pMac,
+QDF_STATUS lim_extract_ap_capabilities(tpAniSirGlobal pMac,
 					  uint8_t *pIE,
 					  uint16_t ieLen,
 					  tpSirProbeRespBeacon beaconStruct)
@@ -3364,15 +3364,15 @@ tSirRetStatus lim_extract_ap_capabilities(tpAniSirGlobal pMac,
 				pIE, ieLen);
 	/* Parse the Beacon IE's, Don't try to parse if we dont have anything in IE */
 	if (ieLen > 0) {
-		if (eSIR_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    sir_parse_beacon_ie(pMac, beaconStruct, pIE,
 					(uint32_t) ieLen)) {
 			pe_err("APCapExtract: Beacon parsing error!");
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 	}
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3396,18 +3396,18 @@ tSirRetStatus lim_extract_ap_capabilities(tpAniSirGlobal pMac,
  * @return retCode - Indicates success or failure return code
  */
 
-tSirRetStatus
+QDF_STATUS
 lim_del_bss(tpAniSirGlobal pMac, tpDphHashNode pStaDs, uint16_t bssIdx,
 	    tpPESession psessionEntry)
 {
 	tpDeleteBssParams pDelBssParams = NULL;
 	struct scheduler_msg msgQ = {0};
-	tSirRetStatus retCode = eSIR_SUCCESS;
+	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 
 	pDelBssParams = qdf_mem_malloc(sizeof(tDeleteBssParams));
 	if (NULL == pDelBssParams) {
 		pe_err("Unable to allocate memory during ADD_BSS");
-		return eSIR_MEM_ALLOC_FAILED;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	pDelBssParams->sessionId = psessionEntry->peSessionId; /* update PE session Id */
@@ -3456,7 +3456,7 @@ lim_del_bss(tpAniSirGlobal pMac, tpDphHashNode pStaDs, uint16_t bssIdx,
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
-	if (eSIR_SUCCESS != retCode) {
+	if (QDF_STATUS_SUCCESS != retCode) {
 		SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
 		pe_err("Posting DELETE_BSS_REQ to HAL failed, reason=%X",
 			retCode);
@@ -3601,7 +3601,7 @@ static inline void lim_set_sta_ctx_twt(tAddStaParams *sta_ctx,
  * @return None
  */
 
-tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
+QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				   tpSchBeaconStruct pBeaconStruct,
 				   tpSirBssDescription bssDescription,
 				   uint8_t updateEntry, tpPESession psessionEntry)
@@ -3622,7 +3622,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
 	if (NULL == pAddBssParams) {
 		pe_err("Unable to allocate memory during ADD_BSS");
-		retCode = eSIR_MEM_ALLOC_FAILED;
+		retCode = QDF_STATUS_E_NOMEM;
 		goto returnFailure;
 	}
 
@@ -3800,7 +3800,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	qdf_mem_copy(pAddBssParams->staContext.bssId,
 			bssDescription->bssId, sizeof(tSirMacAddr));
 	if (wlan_cfg_get_int(pMac, WNI_CFG_LISTEN_INTERVAL, &listen_interval) !=
-				eSIR_SUCCESS)
+				QDF_STATUS_SUCCESS)
 		pe_err("Couldn't get LISTEN_INTERVAL");
 	pAddBssParams->staContext.listenInterval = listen_interval;
 
@@ -3813,7 +3813,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(
 				pAddBssParams->staContext.staMac));
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 	}
 
 	pAddBssParams->staContext.uAPSD =
@@ -3914,7 +3914,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 					sta_context->enable_su_tx_bformer);
 		} else {
 			sta_context->ch_width =	CH_WIDTH_20MHZ;
-			if ((IS_SIR_STATUS_SUCCESS(
+			if ((QDF_IS_STATUS_SUCCESS(
 				wlan_cfg_get_int(pMac,
 					WNI_CFG_VHT_ENABLE_TXBF_20MHZ,
 					&enableTxBF20MHz))) &&
@@ -4131,7 +4131,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
-	if (eSIR_SUCCESS != retCode) {
+	if (QDF_STATUS_SUCCESS != retCode) {
 		SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
 		qdf_mem_free(pAddBssParams);
 		pe_err("Posting ADD_BSS_REQ to HAL failed, reason=%X",
@@ -4146,7 +4146,7 @@ returnFailure:
 	return retCode;
 }
 
-tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t updateEntry,
+QDF_STATUS lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t updateEntry,
 					     tpPESession psessionEntry)
 {
 	struct scheduler_msg msgQ = {0};
@@ -4164,14 +4164,14 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (NULL == pBeaconStruct) {
 		pe_err("Unable to allocate memory during ADD_BSS");
-		return eSIR_MEM_ALLOC_FAILED;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
 	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
 	if (NULL == pAddBssParams) {
 		pe_err("Unable to allocate memory during ADD_BSS");
-		retCode = eSIR_MEM_ALLOC_FAILED;
+		retCode = QDF_STATUS_E_NOMEM;
 		goto returnFailure;
 	}
 
@@ -4366,7 +4366,7 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 	qdf_mem_copy(pAddBssParams->staContext.bssId,
 			bssDescription->bssId, sizeof(tSirMacAddr));
 	if (wlan_cfg_get_int(pMac, WNI_CFG_LISTEN_INTERVAL, &listen_interval) !=
-				eSIR_SUCCESS)
+				QDF_STATUS_SUCCESS)
 		pe_err("Couldn't get LISTEN_INTERVAL");
 	pAddBssParams->staContext.listenInterval = listen_interval;
 	pAddBssParams->staContext.assocId = 0;
@@ -4615,7 +4615,7 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
-	if (eSIR_SUCCESS != retCode) {
+	if (QDF_STATUS_SUCCESS != retCode) {
 		SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
 		qdf_mem_free(pAddBssParams);
 		pe_err("Posting ADD_BSS_REQ to HAL failed, reason=%X",
@@ -4699,7 +4699,7 @@ void lim_init_pre_auth_timer_table(tpAniSirGlobal pMac,
 	/* Get AUTH_RSP Timers value */
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_AUTHENTICATE_RSP_TIMEOUT,
-			     &cfgValue) != eSIR_SUCCESS) {
+			     &cfgValue) != QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve AUTH_RSP timeout value");
 		return;
 	}
@@ -4766,7 +4766,7 @@ tLimPreAuthNode *lim_get_pre_auth_node_from_index(tpAniSirGlobal pMac,
 }
 
 /* Util API to check if the channels supported by STA is within range */
-tSirRetStatus lim_is_dot11h_supported_channels_valid(tpAniSirGlobal pMac,
+QDF_STATUS lim_is_dot11h_supported_channels_valid(tpAniSirGlobal pMac,
 						     tSirAssocReq *assoc)
 {
 	/*
@@ -4776,11 +4776,11 @@ tSirRetStatus lim_is_dot11h_supported_channels_valid(tpAniSirGlobal pMac,
 	 * The specification of the algorithm is beyond the scope of this amendment.
 	 */
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /* Util API to check if the txpower supported by STA is within range */
-tSirRetStatus lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal pMac,
+QDF_STATUS lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal pMac,
 							tSirAssocReq *assoc,
 							tpPESession psessionEntry)
 {
@@ -4793,9 +4793,9 @@ tSirRetStatus lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal pMac,
 
 	if (wlan_cfg_get_int
 		    (pMac, WNI_CFG_LOCAL_POWER_CONSTRAINT,
-		    &localPwrConstraint) != eSIR_SUCCESS) {
+		    &localPwrConstraint) != QDF_STATUS_SUCCESS) {
 		pe_err("Unable to get Local Power Constraint from cfg");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	localMaxTxPower -= (int8_t) localPwrConstraint;
 
@@ -4806,10 +4806,10 @@ tSirRetStatus lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal pMac,
 	if (assoc->powerCapability.minTxPower > localMaxTxPower) {
 		pe_warn("minTxPower (STA): %d, localMaxTxPower (AP): %d",
 			assoc->powerCapability.minTxPower, localMaxTxPower);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /** -------------------------------------------------------------

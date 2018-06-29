@@ -321,7 +321,7 @@ static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
 	uint8_t *local_ie_buf;
 	uint16_t local_ie_len;
 	struct scheduler_msg msg_q = {0};
-	tSirRetStatus ret_code;
+	QDF_STATUS ret_code;
 
 	if (!msg_buf) {
 		pe_err("msg_buf is NULL");
@@ -360,7 +360,7 @@ static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
 	msg_q.bodyptr = wma_ie_params;
 	msg_q.bodyval = 0;
 	ret_code = wma_post_ctrl_msg(mac_ctx, &msg_q);
-	if (eSIR_SUCCESS != ret_code) {
+	if (QDF_STATUS_SUCCESS != ret_code) {
 		pe_err("fail to send WMA_SET_IE_INFO");
 		qdf_mem_free(wma_ie_params);
 	}
@@ -648,7 +648,7 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
 	tSirProbeRespBeacon  *frame;
 	uint8_t              *body;
 	uint32_t             frm_len;
-	tSirRetStatus        status;
+	QDF_STATUS        status;
 
 	frm_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 	if (frm_len <= SIR_MAC_B_PR_SSID_OFFSET) {
@@ -677,7 +677,7 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
 		return;
 	}
 
-	if (status != eSIR_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		pe_err("Frame parsing failed");
 		qdf_mem_free(frame);
 		return;
@@ -813,7 +813,7 @@ static QDF_STATUS lim_allocate_and_get_bcn(tpAniSirGlobal mac_ctx,
 	/* Convert the beacon frame into a structure */
 	if (sir_convert_beacon_frame2_struct(mac_ctx,
 	    (uint8_t *) rx_pkt_info,
-	    bcn) != eSIR_SUCCESS) {
+	    bcn) != QDF_STATUS_SUCCESS) {
 		pe_err_rl("beacon parsing failed");
 		goto free;
 	}
@@ -1216,7 +1216,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 			lim_print_mac_addr(pMac, pHdr->bssId, LOGD);
 			if (lim_process_auth_frame_no_session
 				    (pMac, pRxPacketInfo,
-				    limMsg->bodyptr) == eSIR_SUCCESS) {
+				    limMsg->bodyptr) == QDF_STATUS_SUCCESS) {
 				goto end;
 			}
 		}
@@ -1382,7 +1382,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 	if (lim_is_mgmt_frame_loggable(fc.type, fc.subType))
 		lim_diag_mgmt_rx_event_report(pMac, pHdr,
 					      psessionEntry,
-					      eSIR_SUCCESS, eSIR_SUCCESS);
+					      QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 end:
 	lim_pkt_free(pMac, TXRX_FRM_802_11_MGMT, pRxPacketInfo,
 		     (void *)limMsg->bodyptr);
@@ -2229,7 +2229,7 @@ handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 	uint8_t *ptr;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO, &cfgValue) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("Fail to retrieve WNI_CFG_HT_CAP_INFO value");
 		return;
 	}
@@ -2249,7 +2249,7 @@ handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 		(uint8_t) macHTCapabilityInfo.dsssCckMode40MHz;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &cfgValue) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("Fail to retrieve WNI_CFG_HT_PARAM_INFO value");
 		return;
 	}
@@ -2261,7 +2261,7 @@ handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 
 	/* Get HT IE Info */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_INFO_FIELD1, &cfgValue) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("Fail to retrieve WNI_CFG_HT_INFO_FIELD1 value");
 		return;
 	}
@@ -2274,7 +2274,7 @@ handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 	pMac->lim.gHTRifsMode = (uint8_t) macHTInfoField1.rifsMode;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_INFO_FIELD2, &cfgValue) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("Fail to retrieve WNI_CFG_HT_INFO_FIELD2 value");
 		return;
 	}
@@ -2283,7 +2283,7 @@ handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 	pMac->lim.gHTOperMode = (tSirMacHTOperatingMode) macHTInfoField2.opMode;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_INFO_FIELD3, &cfgValue) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("Fail to retrieve WNI_CFG_HT_INFO_FIELD3 value");
 		return;
 	}

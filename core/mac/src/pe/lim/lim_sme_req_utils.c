@@ -63,11 +63,11 @@ lim_is_rsn_ie_valid_in_sme_req_message(tpAniSirGlobal mac_ctx, tpSirRSNie rsn_ie
 	int len;
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_PRIVACY_ENABLED,
-			     &privacy) != eSIR_SUCCESS)
+			     &privacy) != QDF_STATUS_SUCCESS)
 		pe_warn("Unable to retrieve POI from CFG");
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_RSN_ENABLED, &val)
-		!= eSIR_SUCCESS)
+		!= QDF_STATUS_SUCCESS)
 		pe_warn("Unable to retrieve RSN_ENABLED from CFG");
 
 	if (rsn_ie->length && (!privacy || !val)) {
@@ -228,11 +228,11 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
 	uint32_t privacy, val;
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_PRIVACY_ENABLED,
-			     &privacy) != eSIR_SUCCESS)
+			     &privacy) != QDF_STATUS_SUCCESS)
 		pe_warn("Unable to retrieve POI from CFG");
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_RSN_ENABLED,
-			     &val) != eSIR_SUCCESS)
+			     &val) != QDF_STATUS_SUCCESS)
 		pe_warn("Unable to retrieve RSN_ENABLED from CFG");
 
 	if (rsn_ie->length && (!privacy || !val)) {
@@ -720,7 +720,7 @@ lim_is_sme_set_context_req_valid(tpAniSirGlobal pMac,
 		uint32_t poi;
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_PRIVACY_ENABLED,
-				     &poi) != eSIR_SUCCESS)
+				     &poi) != QDF_STATUS_SUCCESS)
 			pe_warn("Unable to retrieve POI from CFG");
 
 		if (!poi) {

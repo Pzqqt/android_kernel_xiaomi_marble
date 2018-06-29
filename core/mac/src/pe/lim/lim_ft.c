@@ -807,7 +807,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		qdf_mem_copy((uint8_t *) &pAddBssParams->extSetStaKeyParam.key,
 			     (uint8_t *) &pKeyInfo->keyMaterial.key,
 			     sizeof(tSirKeys));
-		if (eSIR_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val)) {
 			pe_warn("Unable to read WNI_CFG_SINGLE_TID_RC");
 		}
@@ -929,7 +929,7 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac,
 	return;
 }
 
-tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
+QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
 	struct scheduler_msg msg = {0};
 	tSirAggrQosReq *aggrQosReq = (tSirAggrQosReq *) pMsgBuf;
@@ -945,7 +945,7 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 	pAggrAddTsParam = qdf_mem_malloc(sizeof(tAggrAddTsParams));
 	if (NULL == pAggrAddTsParam) {
 		pe_err("AllocateMemory() failed");
-		return eSIR_MEM_ALLOC_FAILED;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	psessionEntry = pe_find_session_by_bssid(pMac, aggrQosReq->bssid.bytes,
@@ -955,14 +955,14 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 		pe_err("psession Entry Null for sessionId: %d",
 			       aggrQosReq->sessionId);
 		qdf_mem_free(pAggrAddTsParam);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Nothing to be done if the session is not in STA mode */
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
 		pe_err("psessionEntry is not in STA mode");
 		qdf_mem_free(pAggrAddTsParam);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pSta = dph_lookup_hash_entry(pMac, aggrQosReq->bssid.bytes, &aid,
@@ -970,7 +970,7 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 	if (pSta == NULL) {
 		pe_err("Station context not found - ignoring AddTsRsp");
 		qdf_mem_free(pAggrAddTsParam);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pAggrAddTsParam->staIdx = psessionEntry->staId;
@@ -1043,13 +1043,13 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 					     psessionEntry->gLimEdcaParamsActive,
 					     pSta->bssId, false);
 
-			if (eSIR_SUCCESS !=
+			if (QDF_STATUS_SUCCESS !=
 			    lim_tspec_add(pMac, pSta->staAddr, pSta->assocId,
 					  pTspec, 0, &tspecInfo)) {
 				pe_err("Adding entry in lim Tspec Table failed");
 				pMac->lim.gLimAddtsSent = false;
 				qdf_mem_free(pAggrAddTsParam);
-				return eSIR_FAILURE;
+				return QDF_STATUS_E_FAILURE;
 			}
 
 			pAggrAddTsParam->tspec[i] =
@@ -1073,11 +1073,11 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 	SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msg.type));
 
-	if (eSIR_SUCCESS != wma_post_ctrl_msg(pMac, &msg)) {
+	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(pMac, &msg)) {
 			pe_warn("wma_post_ctrl_msg() failed");
 			SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
 			qdf_mem_free(pAggrAddTsParam);
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -1095,5 +1095,5 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 	}
 #endif
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -51,7 +51,7 @@
  * @return success if GET operation is ok, else Failure.
  */
 
-tSirRetStatus lim_get_sta_hash_bssidx(tpAniSirGlobal pMac, uint16_t assocId,
+QDF_STATUS lim_get_sta_hash_bssidx(tpAniSirGlobal pMac, uint16_t assocId,
 				      uint8_t *bssidx, tpPESession psessionEntry)
 {
 	tpDphHashNode pSta =
@@ -59,9 +59,9 @@ tSirRetStatus lim_get_sta_hash_bssidx(tpAniSirGlobal pMac, uint16_t assocId,
 
 	if (pSta == NULL) {
 		pe_err("invalid STA: %d", assocId);
-		return eSIR_LIM_INVALID_STA;
+		return QDF_STATUS_E_NOENT;
 	}
 
 	*bssidx = (uint8_t) pSta->bssId;
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }

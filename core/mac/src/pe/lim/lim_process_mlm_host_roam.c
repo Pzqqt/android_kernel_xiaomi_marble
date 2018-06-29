@@ -523,7 +523,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 	}
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_LISTEN_INTERVAL, &listenInterval) !=
-	    eSIR_SUCCESS)
+	    QDF_STATUS_SUCCESS)
 		pe_err("Couldn't get LISTEN_INTERVAL");
 	pAddStaParams->listenInterval = (uint16_t) listenInterval;
 
@@ -594,7 +594,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	uint16_t caps;
 	uint32_t val;
 	struct scheduler_msg msgQ = {0};
-	tSirRetStatus retCode;
+	QDF_STATUS retCode;
 	uint32_t teleBcnEn = 0;
 
 	chanNum = psessionEntry->currentOperChannel;
@@ -629,7 +629,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
 			(uint32_t *) &pMlmReassocReq->reassocFailureTimeout)
-	    != eSIR_SUCCESS) {
+	    != QDF_STATUS_SUCCESS) {
 		/**
 		 * Could not get ReassocFailureTimeout value
 		 * from CFG. Log error.
@@ -640,7 +640,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	}
 
 	if (cfg_get_capability_info(pMac, &caps, psessionEntry) !=
-			eSIR_SUCCESS) {
+			QDF_STATUS_SUCCESS) {
 		/**
 		 * Could not get Capabilities value
 		 * from CFG. Log error.
@@ -663,7 +663,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	   to WNI_CFG_TELE_BCN_MAX_LI
 	 */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_TELE_BCN_WAKEUP_EN, &teleBcnEn) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("Couldn't get WNI_CFG_TELE_BCN_WAKEUP_EN");
 		qdf_mem_free(pMlmReassocReq);
 		return;
@@ -671,7 +671,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 
 	if (teleBcnEn) {
 		if (wlan_cfg_get_int(pMac, WNI_CFG_TELE_BCN_MAX_LI, &val) !=
-		    eSIR_SUCCESS) {
+		    QDF_STATUS_SUCCESS) {
 			/**
 			 * Could not get ListenInterval value
 			 * from CFG. Log error.
@@ -682,7 +682,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 		}
 	} else {
 		if (wlan_cfg_get_int(pMac, WNI_CFG_LISTEN_INTERVAL, &val) !=
-		    eSIR_SUCCESS) {
+		    QDF_STATUS_SUCCESS) {
 			/**
 			 * Could not get ListenInterval value
 			 * from CFG. Log error.
@@ -694,7 +694,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	}
 	if (lim_set_link_state
 		    (pMac, eSIR_LINK_PREASSOC_STATE, psessionEntry->bssId,
-		    psessionEntry->selfMacAddr, NULL, NULL) != eSIR_SUCCESS) {
+		    psessionEntry->selfMacAddr, NULL, NULL) != QDF_STATUS_SUCCESS) {
 		qdf_mem_free(pMlmReassocReq);
 		return;
 	}
@@ -713,7 +713,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	pe_debug("Sending SIR_HAL_ADD_BSS_REQ");
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
-	if (eSIR_SUCCESS != retCode) {
+	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(psessionEntry->ftPEContext.pAddBssReq);
 		pe_err("Posting ADD_BSS_REQ to HAL failed, reason: %X",
 			retCode);

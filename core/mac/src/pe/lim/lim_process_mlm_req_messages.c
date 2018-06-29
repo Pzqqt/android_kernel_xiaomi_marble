@@ -234,11 +234,11 @@ void lim_covert_channel_scan_type(tpAniSirGlobal mac_ctx, uint8_t chan_num,
 	uint32_t i;
 	uint8_t chan_pair[WNI_CFG_SCAN_CONTROL_LIST_LEN];
 	uint32_t len = WNI_CFG_SCAN_CONTROL_LIST_LEN;
-	tSirRetStatus status;
+	QDF_STATUS status;
 
 	status  = wlan_cfg_get_str(mac_ctx, WNI_CFG_SCAN_CONTROL_LIST,
 				   chan_pair, &len);
-	if (eSIR_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		pe_err("Unable to get scan control list");
 		return;
 	}
@@ -349,12 +349,12 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 
 	/* Configuration related parameters to be changed to support BT-AMP */
 
-	if (eSIR_SUCCESS != wlan_cfg_get_int(mac_ctx, WNI_CFG_LISTEN_INTERVAL,
+	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(mac_ctx, WNI_CFG_LISTEN_INTERVAL,
 					     &val))
 		pe_warn("Couldn't get LISTEN_INTERVAL");
 	sta_param->listenInterval = (uint16_t) val;
 
-	if (eSIR_SUCCESS != wlan_cfg_get_int(mac_ctx, WNI_CFG_SHORT_PREAMBLE,
+	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(mac_ctx, WNI_CFG_SHORT_PREAMBLE,
 					     &val))
 		pe_warn("Couldn't get SHORT_PREAMBLE");
 	sta_param->shortPreambleSupported = (uint8_t) val;
@@ -427,7 +427,7 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 	 */
 	if (IS_DOT11_MODE_VHT(self_dot11mode)) {
 		val = 0;        /* Default 8K AMPDU size */
-		if (eSIR_SUCCESS != wlan_cfg_get_int(mac_ctx,
+		if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(mac_ctx,
 					WNI_CFG_VHT_AMPDU_LEN_EXPONENT, &val))
 			pe_err("Couldn't get WNI_CFG_VHT_AMPDU_LEN_EXPONENT");
 		sta_param->maxAmpduSize = (uint8_t) val;
@@ -638,7 +638,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 
 	pe_debug("Sending WMA_ADD_BSS_REQ...");
 	retcode = wma_post_ctrl_msg(mac_ctx, &msg_buf);
-	if (eSIR_SUCCESS != retcode) {
+	if (QDF_STATUS_SUCCESS != retcode) {
 		pe_err("Posting ADD_BSS_REQ to HAL failed, reason=%X",
 			retcode);
 		qdf_mem_free(addbss_param);
@@ -824,7 +824,7 @@ lim_process_mlm_post_join_suspend_link(tpAniSirGlobal mac_ctx,
 			session->pLimMlmJoinReq->bssDescription.bssId,
 			session->selfMacAddr,
 			lim_post_join_set_link_state_callback,
-			session) != eSIR_SUCCESS) {
+			session) != QDF_STATUS_SUCCESS) {
 		pe_err("SessionId:%d lim_set_link_state to eSIR_LINK_PREASSOC_STATE Failed!!",
 			session->peSessionId);
 		lim_print_mac_addr(mac_ctx,
@@ -1171,7 +1171,7 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		goto end;
 	} else {
 		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_MAX_NUM_PRE_AUTH,
-			(uint32_t *) &num_preauth_ctx) != eSIR_SUCCESS)
+			(uint32_t *) &num_preauth_ctx) != QDF_STATUS_SUCCESS)
 			pe_warn("Could not retrieve NumPreAuthLimit from CFG");
 
 		if (mac_ctx->lim.gLimNumPreAuthContexts == num_preauth_ctx) {
@@ -1200,7 +1200,7 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 			pe_debug("lim_process_mlm_auth_req_sae is successful");
 			lim_diag_event_report(mac_ctx,
 					      WLAN_PE_DIAG_AUTH_ALGO_NUM,
-					      session, eSIR_SUCCESS,
+					      session, QDF_STATUS_SUCCESS,
 					      eSIR_AUTH_TYPE_SAE);
 			return;
 		}
@@ -1219,14 +1219,14 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		(uint8_t) mac_ctx->lim.gpLimMlmAuthReq->authType;
 	}
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_AUTH_ALGO_NUM, session,
-			      eSIR_SUCCESS, auth_frame_body.authAlgoNumber);
+			      QDF_STATUS_SUCCESS, auth_frame_body.authAlgoNumber);
 
 	/* Prepare & send Authentication frame */
 	auth_frame_body.authTransactionSeqNumber = SIR_MAC_AUTH_FRAME_1;
 	auth_frame_body.authStatusCode = 0;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_AUTH_START_EVENT, session,
-			      eSIR_SUCCESS, auth_frame_body.authStatusCode);
+			      QDF_STATUS_SUCCESS, auth_frame_body.authStatusCode);
 #endif
 	mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
 	lim_send_auth_mgmt_frame(mac_ctx,
@@ -1557,7 +1557,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 		/* Disassoc frame is not sent OTA */
 		send_disassoc_frame = 1;
 		/* Receive path cleanup with dummy packet */
-		if (eSIR_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    lim_cleanup_rx_path(mac_ctx, stads, session)) {
 			mlm_disassoccnf.resultCode =
 				eSIR_SME_RESOURCES_UNAVAILABLE;

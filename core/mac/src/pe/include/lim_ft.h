@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,13 +45,13 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 		tpPESession psessionEntry);
 void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, QDF_STATUS status,
 		uint32_t *data, tpPESession psessionEntry);
-void lim_post_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
+void lim_post_ft_pre_auth_rsp(tpAniSirGlobal pMac, QDF_STATUS status,
 		uint8_t *auth_rsp, uint16_t auth_rsp_length,
 		tpPESession psessionEntry);
-void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
+void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, QDF_STATUS status,
 		uint8_t *auth_rsp, uint16_t auth_rsp_len,
 		tpPESession psessionEntry);
-tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
+QDF_STATUS lim_ft_setup_auth_session(tpAniSirGlobal pMac,
 		tpPESession psessionEntry);
 void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg);
 void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
@@ -73,7 +73,7 @@ static inline void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
 		uint32_t *pMsgBuf, tpPESession psessionEntry)
 {}
 static inline void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac,
-		tSirRetStatus status, uint8_t *auth_rsp,
+		QDF_STATUS status, uint8_t *auth_rsp,
 		uint16_t auth_rsp_len, tpPESession psessionEntry)
 {}
 static inline void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx,
@@ -119,7 +119,7 @@ static inline void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 #endif
 
 bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf);
-tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac,
+QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac,
 		uint32_t *pMsgBuf);
 void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac,
 				  struct scheduler_msg *limMsg);

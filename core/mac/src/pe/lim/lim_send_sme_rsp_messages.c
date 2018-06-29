@@ -663,7 +663,7 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 			if (cfg_get_capability_info
 				    (pMac, &pSirSmeRsp->bssDescription.capabilityInfo,
 				    psessionEntry)
-			    != eSIR_SUCCESS)
+			    != QDF_STATUS_SUCCESS)
 				pe_err("could not retrieve Capabilities value");
 
 			lim_get_phy_mode(pMac,
@@ -840,7 +840,7 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal pMac,
 #endif
 		) {
 			if (lim_add_sta(pMac, sta_ds, false, session) !=
-					eSIR_SUCCESS)
+					QDF_STATUS_SUCCESS)
 					pe_err("could not Add STA with assocId: %d",
 					sta_ds->assocId);
 		}
@@ -1413,7 +1413,7 @@ lim_send_sme_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
 	}
 
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TX_SME_MSG, session_id, msg.type));
-	if (eSIR_SUCCESS != lim_sys_process_mmh_msg_api(mac_ctx, &msg, ePROT)) {
+	if (QDF_STATUS_SUCCESS != lim_sys_process_mmh_msg_api(mac_ctx, &msg, ePROT)) {
 		qdf_mem_free(wm_status_change_ntf);
 		pe_err("lim_sys_process_mmh_msg_api failed");
 	}
@@ -1619,7 +1619,7 @@ lim_send_sme_delts_ind(tpAniSirGlobal pMac, tpSirDeltsReqInfo delts, uint16_t ai
 	}
 
 	rsp->messageType = eWNI_SME_DELTS_IND;
-	rsp->rc = eSIR_SUCCESS;
+	rsp->rc = QDF_STATUS_SUCCESS;
 	rsp->aid = aid;
 	qdf_mem_copy((uint8_t *) &rsp->rsp, (uint8_t *) delts, sizeof(*delts));
 
@@ -2182,7 +2182,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(mac_ctx,
 			WLAN_PE_DIAG_SWITCH_CHL_IND_EVENT, session_entry,
-			eSIR_SUCCESS, eSIR_SUCCESS);
+			QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 #endif
 	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
 
@@ -2298,7 +2298,7 @@ lim_send_dfs_chan_sw_ie_update(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 
 	/* Update the beacon template and send to FW */
-	if (sch_set_fixed_beacon_fields(pMac, psessionEntry) != eSIR_SUCCESS) {
+	if (sch_set_fixed_beacon_fields(pMac, psessionEntry) != QDF_STATUS_SUCCESS) {
 		pe_err("Unable to set CSA IE in beacon");
 		return;
 	}
@@ -2411,7 +2411,7 @@ lim_send_bss_color_change_ie_update(tpAniSirGlobal mac_ctx,
 						tpPESession session)
 {
 	/* Update the beacon template and send to FW */
-	if (sch_set_fixed_beacon_fields(mac_ctx, session) != eSIR_SUCCESS) {
+	if (sch_set_fixed_beacon_fields(mac_ctx, session) != QDF_STATUS_SUCCESS) {
 		pe_err("Unable to set BSS color change IE in beacon");
 	       return;
 	}

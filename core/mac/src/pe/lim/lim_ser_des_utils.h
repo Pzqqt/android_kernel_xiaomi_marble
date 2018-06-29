@@ -111,7 +111,7 @@ static inline uint16_t lim_get_u16_be(uint8_t *buf)
 	return (buf[0] << 8) | buf[1];
 }
 
-tSirRetStatus lim_send_disassoc_frm_req_ser_des(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_send_disassoc_frm_req_ser_des(tpAniSirGlobal mac_ctx,
 		struct sme_send_disassoc_frm_req *disassoc_frm_req,
 		uint8_t *buf);
 

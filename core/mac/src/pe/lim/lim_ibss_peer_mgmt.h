@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,11 +32,11 @@
 
 void lim_ibss_init(tpAniSirGlobal);
 void lim_ibss_delete(tpAniSirGlobal, tpPESession psessionEntry);
-tSirRetStatus lim_ibss_coalesce(tpAniSirGlobal, tpSirMacMgmtHdr,
+QDF_STATUS lim_ibss_coalesce(tpAniSirGlobal, tpSirMacMgmtHdr,
 				tpSchBeaconStruct, uint8_t *, uint32_t, uint16_t,
 				tpPESession);
-tSirRetStatus lim_ibss_sta_add(tpAniSirGlobal, void *, tpPESession);
-tSirRetStatus lim_ibss_add_sta_rsp(tpAniSirGlobal, void *, tpPESession);
+QDF_STATUS lim_ibss_sta_add(tpAniSirGlobal, void *, tpPESession);
+QDF_STATUS lim_ibss_add_sta_rsp(tpAniSirGlobal, void *, tpPESession);
 
 /**
  * lim_process_ibss_del_sta_rsp()- Handle ibss delete

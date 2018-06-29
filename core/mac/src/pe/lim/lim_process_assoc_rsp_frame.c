@@ -44,7 +44,7 @@
 #include "lim_send_messages.h"
 #include "lim_process_fils.h"
 
-extern tSirRetStatus sch_beacon_edca_process(tpAniSirGlobal pMac,
+extern QDF_STATUS sch_beacon_edca_process(tpAniSirGlobal pMac,
 	tSirMacEdcaParamSetIE *edca, tpPESession psessionEntry);
 
 /**
@@ -198,7 +198,7 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 	if (lim_populate_peer_rate_set(mac_ctx, &sta_ds->supportedRates,
 				assoc_rsp->HTCaps.supportedMCSSet,
 				false, session_entry,
-				vht_caps, he_cap) != eSIR_SUCCESS) {
+				vht_caps, he_cap) != QDF_STATUS_SUCCESS) {
 		pe_err("could not get rateset and extended rate set");
 		return;
 	}
@@ -218,14 +218,14 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 	/* update TSID to UP mapping */
 	if (qos_mode) {
 		if (assoc_rsp->edcaPresent) {
-			tSirRetStatus status;
+			QDF_STATUS status;
 
 			status =
 				sch_beacon_edca_process(mac_ctx,
 					&assoc_rsp->edca, session_entry);
 			pe_debug("Edca set update based on AssocRsp: status %d",
 				status);
-			if (status != eSIR_SUCCESS) {
+			if (status != QDF_STATUS_SUCCESS) {
 				pe_err("Edca error in AssocResp");
 			} else {
 				/* update default tidmap based on ACM */
@@ -238,14 +238,14 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 	sta_ds->wmeEnabled = 0;
 	sta_ds->wsmEnabled = 0;
 	if (session_entry->limWmeEnabled && assoc_rsp->wmeEdcaPresent) {
-		tSirRetStatus status;
+		QDF_STATUS status;
 
 		status = sch_beacon_edca_process(mac_ctx, &assoc_rsp->edca,
 				session_entry);
 		pe_debug("WME Edca set update based on AssocRsp: status %d",
 			status);
 
-		if (status != eSIR_SUCCESS)
+		if (status != QDF_STATUS_SUCCESS)
 			pe_err("WME Edca error in AssocResp - ignoring");
 
 			else {
@@ -623,7 +623,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	/* parse Re/Association Response frame. */
 	if (sir_convert_assoc_resp_frame2_struct(mac_ctx, session_entry, body,
-		frame_len, assoc_rsp) == eSIR_FAILURE) {
+		frame_len, assoc_rsp) == QDF_STATUS_E_FAILURE) {
 		qdf_mem_free(assoc_rsp);
 		pe_err("Parse error Assoc resp subtype: %d" "length: %d",
 			frame_len, subtype);
@@ -697,7 +697,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	if (cfg_get_capability_info(mac_ctx, &caps, session_entry)
-		!= eSIR_SUCCESS) {
+		!= QDF_STATUS_SUCCESS) {
 		qdf_mem_free(assoc_rsp);
 		qdf_mem_free(beacon);
 		pe_err("could not retrieve Capabilities");
@@ -841,7 +841,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			(mac_ctx, eSIR_LINK_POSTASSOC_STATE,
 			session_entry->bssId,
 			session_entry->selfMacAddr, NULL,
-			NULL) != eSIR_SUCCESS) {
+			NULL) != QDF_STATUS_SUCCESS) {
 			pe_err("Set link state to POSTASSOC failed");
 			qdf_mem_free(beacon);
 			qdf_mem_free(assoc_rsp);
@@ -860,8 +860,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				&assoc_rsp->obss_scanparams);
 
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_ROAM_ASSOC_COMP_EVENT,
-			session_entry, assoc_rsp->statusCode ? eSIR_FAILURE :
-			eSIR_SUCCESS, assoc_rsp->statusCode);
+			session_entry, assoc_rsp->statusCode ? QDF_STATUS_E_FAILURE :
+			QDF_STATUS_SUCCESS, assoc_rsp->statusCode);
 
 	if (subtype == LIM_REASSOC) {
 		pe_debug("Successfully Reassociated with BSS");
@@ -948,7 +948,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			session_entry->gUapsdPerAcTriggerEnableMask = 0;
 
 			if (lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry)
-				!= eSIR_SUCCESS) {
+				!= QDF_STATUS_SUCCESS) {
 				pe_err("Could not cleanup the rx path");
 				goto assocReject;
 			}
@@ -1033,11 +1033,11 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_CONNECTED, session_entry,
-			      eSIR_SUCCESS, eSIR_SUCCESS);
+			      QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 #endif
 	lim_update_stads_ext_cap(mac_ctx, session_entry, assoc_rsp, sta_ds);
 	/* Update the BSS Entry, this entry was added during preassoc. */
-	if (eSIR_SUCCESS == lim_sta_send_add_bss(mac_ctx, assoc_rsp,
+	if (QDF_STATUS_SUCCESS == lim_sta_send_add_bss(mac_ctx, assoc_rsp,
 			beacon,
 			&session_entry->pLimJoinReq->bssDescription, true,
 			 session_entry)) {

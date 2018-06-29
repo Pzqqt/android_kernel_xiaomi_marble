@@ -251,7 +251,7 @@ static bool lim_chk_assoc_req_parse_error(tpAniSirGlobal mac_ctx,
 					  uint8_t sub_type, uint8_t *frm_body,
 					  uint32_t frame_len)
 {
-	tSirRetStatus status;
+	QDF_STATUS status;
 
 	if (sub_type == LIM_ASSOC)
 		status = sir_convert_assoc_req_frame2_struct(mac_ctx, frm_body,
@@ -260,7 +260,7 @@ static bool lim_chk_assoc_req_parse_error(tpAniSirGlobal mac_ctx,
 		status = sir_convert_reassoc_req_frame2_struct(mac_ctx,
 						frm_body, frame_len, assoc_req);
 
-	if (status == eSIR_SUCCESS)
+	if (status == QDF_STATUS_SUCCESS)
 		return true;
 
 	pe_warn("Assoc Req rejected: frame parsing error. source addr:"
@@ -289,7 +289,7 @@ static bool lim_chk_capab(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 {
 	uint16_t temp;
 
-	if (cfg_get_capability_info(mac_ctx, &temp, session) != eSIR_SUCCESS) {
+	if (cfg_get_capability_info(mac_ctx, &temp, session) != QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve Capabilities");
 		return false;
 	}
@@ -558,7 +558,7 @@ static bool lim_check_11ax_basic_mcs(tpAniSirGlobal mac_ctx,
 		rx_mcs = assoc_req->he_cap.rx_he_mcs_map_lt_80;
 		tx_mcs = assoc_req->he_cap.tx_he_mcs_map_lt_80;
 		sta_mcs = HE_INTERSECT_MCS(rx_mcs, tx_mcs);
-		if (eSIR_SUCCESS != wlan_cfg_get_int(mac_ctx,
+		if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(mac_ctx,
 				WNI_CFG_HE_OPS_BASIC_MCS_NSS, &val))
 			val = WNI_CFG_HE_OPS_BASIC_MCS_NSS_DEF;
 		basic_mcs = (uint16_t)val;
@@ -610,7 +610,7 @@ lim_process_for_spectrum_mgmt(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			      uint8_t sub_type, tSirMacCapabilityInfo local_cap)
 {
 	if (local_cap.spectrumMgt) {
-		tSirRetStatus status = eSIR_SUCCESS;
+		QDF_STATUS status = QDF_STATUS_SUCCESS;
 		/*
 		 * If station is 11h capable, then it SHOULD send all mandatory
 		 * IEs in assoc request frame. Let us verify that
@@ -641,7 +641,7 @@ lim_process_for_spectrum_mgmt(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 				status =
 				    lim_is_dot11h_power_capabilities_in_range(
 					mac_ctx, assoc_req, session);
-				if (eSIR_SUCCESS != status) {
+				if (QDF_STATUS_SUCCESS != status) {
 					pe_warn("LIM Info: MinTxPower(STA) > MaxTxPower(AP) in %s Req from "
 						MAC_ADDRESS_STR,
 						(LIM_ASSOC == sub_type) ?
@@ -650,7 +650,7 @@ lim_process_for_spectrum_mgmt(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 				}
 				status = lim_is_dot11h_supported_channels_valid(
 							mac_ctx, assoc_req);
-				if (eSIR_SUCCESS != status) {
+				if (QDF_STATUS_SUCCESS != status) {
 					pe_warn("LIM Info: wrong supported channels (STA) in %s Req from "
 						MAC_ADDRESS_STR,
 						(LIM_ASSOC == sub_type) ?
@@ -737,7 +737,7 @@ static bool lim_chk_is_11b_sta_supported(tpAniSirGlobal mac_ctx,
 
 	if (phy_mode == WNI_CFG_PHY_MODE_11G) {
 		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_11G_ONLY_POLICY,
-			&cfg_11g_only) != eSIR_SUCCESS) {
+			&cfg_11g_only) != QDF_STATUS_SUCCESS) {
 			pe_err("couldn't get 11g-only flag");
 			return false;
 		}
@@ -828,7 +828,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
 	const uint8_t *wps_ie = NULL;
 	tDot11fIEWPA dot11f_ie_wpa = {0};
 	tDot11fIERSN dot11f_ie_rsn = {0};
-	tSirRetStatus status = eSIR_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	/*
 	 * Clear the buffers so that frame parser knows that there isn't a
 	 * previously decoded IE in these buffers
@@ -878,7 +878,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
 						      session,
 						      assoc_req->HTCaps.present,
 						      pmf_connection);
-						if (eSIR_SUCCESS != status) {
+						if (QDF_STATUS_SUCCESS != status) {
 							pe_warn("Re/Assoc rejected from: " MAC_ADDRESS_STR,
 							MAC_ADDR_ARRAY(
 								hdr->sa));
@@ -948,7 +948,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
 						     mac_ctx, dot11f_ie_wpa,
 						     session,
 						     assoc_req->HTCaps.present);
-					if (eSIR_SUCCESS != status) {
+					if (QDF_STATUS_SUCCESS != status) {
 						pe_warn("Re/Assoc rejected from: "
 							   MAC_ADDRESS_STR,
 							MAC_ADDR_ARRAY(
@@ -1229,7 +1229,7 @@ static bool lim_chk_wmm(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 				&(assoc_req->addtsReq),
 				&(assoc_req->qosCapability),
 				0, false, NULL, &tspecIdx, session) !=
-					eSIR_SUCCESS) {
+					QDF_STATUS_SUCCESS) {
 				pe_warn("AdmitControl: TSPEC rejected");
 				lim_send_assoc_rsp_mgmt_frame(mac_ctx,
 					eSIR_MAC_QAP_NO_BANDWIDTH_REASON,
@@ -1240,7 +1240,7 @@ static bool lim_chk_wmm(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 				return false;
 			}
 		} else if (lim_admit_control_add_sta(mac_ctx, hdr->sa, false)
-				!= eSIR_SUCCESS) {
+				!= QDF_STATUS_SUCCESS) {
 			pe_warn("AdmitControl: Sta rejected");
 			lim_send_assoc_rsp_mgmt_frame(mac_ctx,
 				eSIR_MAC_QAP_NO_BANDWIDTH_REASON, 1,
@@ -1493,7 +1493,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			&(assoc_req->extendedRates),
 			assoc_req->HTCaps.supportedMCSSet,
 			session, vht_caps,
-			&assoc_req->he_cap) != eSIR_SUCCESS) {
+			&assoc_req->he_cap) != QDF_STATUS_SUCCESS) {
 		/* Could not update hash table entry at DPH with rateset */
 		pe_err("Couldn't update hash entry for aid: %d MacAddr: "
 		       MAC_ADDRESS_STR,
@@ -1508,7 +1508,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			session);
 		pe_err("Delete dph hash entry");
 		if (dph_delete_hash_entry(mac_ctx, hdr->sa, sta_ds->assocId,
-			 &session->dph.dphHashTable) != eSIR_SUCCESS)
+			 &session->dph.dphHashTable) != QDF_STATUS_SUCCESS)
 			pe_err("error deleting hash entry");
 		return false;
 	}
@@ -1585,7 +1585,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 	timer_id.fields.sessionId = session->peSessionId;
 	timer_id.fields.peerIdx = peer_idx;
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL,
-			&retry_interval) != eSIR_SUCCESS) {
+			&retry_interval) != QDF_STATUS_SUCCESS) {
 		pe_err("Couldn't get PMF SA Query retry interval value");
 		lim_reject_association(mac_ctx, hdr->sa, sub_type, true,
 			auth_type, peer_idx, false,
@@ -1659,7 +1659,7 @@ static bool lim_update_sta_ctx(tpAniSirGlobal mac_ctx, tpPESession session,
 		 * BTAMP: Add STA context at HW - issue WMA_ADD_STA_REQ to HAL
 		 */
 		if (lim_add_sta(mac_ctx, sta_ds, false, session) !=
-		    eSIR_SUCCESS) {
+		    QDF_STATUS_SUCCESS) {
 			pe_err("could not Add STA with assocId: %d",
 				sta_ds->assocId);
 			lim_reject_association(mac_ctx, sta_ds->staAddr,
@@ -1690,7 +1690,7 @@ static bool lim_update_sta_ctx(tpAniSirGlobal mac_ctx, tpPESession session,
 			sta_ds->mlmStaContext.mlmState =
 				eLIM_MLM_WT_ASSOC_DEL_STA_RSP_STATE;
 			if (lim_del_sta(mac_ctx, sta_ds, true, session)
-					!= eSIR_SUCCESS) {
+					!= QDF_STATUS_SUCCESS) {
 				pe_err("Couldn't DEL STA, assocId: %d staId: %d",
 					sta_ds->assocId, sta_ds->staIndex);
 				lim_reject_association(mac_ctx, sta_ds->staAddr,
@@ -1713,7 +1713,7 @@ static bool lim_update_sta_ctx(tpAniSirGlobal mac_ctx, tpPESession session,
 			 * same AID, already allocated
 			 */
 			if (lim_add_sta(mac_ctx, sta_ds, false, session)
-				!= eSIR_SUCCESS) {
+				!= QDF_STATUS_SUCCESS) {
 				pe_err("UPASD not supported, REASSOC Failed");
 				lim_reject_association(mac_ctx, sta_ds->staAddr,
 					sta_ds->mlmStaContext.subType, true,
@@ -1888,7 +1888,7 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			 * STA might have missed the assoc response, so it is
 			 * sending assoc request frame again.
 			 */
-			lim_send_assoc_rsp_mgmt_frame(mac_ctx, eSIR_SUCCESS,
+			lim_send_assoc_rsp_mgmt_frame(mac_ctx, QDF_STATUS_SUCCESS,
 					sta_ds->assocId, sta_ds->staAddr,
 					sub_type,
 					sta_ds, session);
@@ -2452,7 +2452,7 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 		if (assoc_req->wmeInfoPresent) {
 			if (wlan_cfg_get_int (mac_ctx,
 				(uint16_t) WNI_CFG_WME_ENABLED, &tmp)
-				!= eSIR_SUCCESS)
+				!= QDF_STATUS_SUCCESS)
 				pe_err("wlan_cfg_get_int failed for id: %d",
 					WNI_CFG_WME_ENABLED);
 

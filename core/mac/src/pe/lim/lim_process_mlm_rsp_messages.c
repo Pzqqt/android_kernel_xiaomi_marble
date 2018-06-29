@@ -293,7 +293,7 @@ void lim_process_mlm_join_cnf(tpAniSirGlobal mac_ctx,
 			join_cnf->sessionId);
 		/* Setup hardware upfront */
 		if (lim_sta_send_add_bss_pre_assoc(mac_ctx, false,
-			session_entry) == eSIR_SUCCESS)
+			session_entry) == QDF_STATUS_SUCCESS)
 			return;
 		else
 			result_code = eSIR_SME_REFUSED;
@@ -354,13 +354,13 @@ static void lim_send_mlm_assoc_req(tpAniSirGlobal mac_ctx,
 	sir_copy_mac_addr(assoc_req->peerMacAddr, session_entry->bssId);
 	if (wlan_cfg_get_int(mac_ctx,  WNI_CFG_ASSOCIATION_FAILURE_TIMEOUT,
 		(uint32_t *) &assoc_req->assocFailureTimeout)
-		!= eSIR_SUCCESS) {
+		!= QDF_STATUS_SUCCESS) {
 		/* Could not get AssocFailureTimeout value from CFG.*/
 		pe_err("could not retrieve AssocFailureTimeout value");
 	}
 
 	if (cfg_get_capability_info(mac_ctx, &caps, session_entry)
-			!= eSIR_SUCCESS)
+			!= QDF_STATUS_SUCCESS)
 		/* Could not get Capabilities value from CFG.*/
 		pe_err("could not retrieve Capabilities value");
 
@@ -404,22 +404,22 @@ static void lim_send_mlm_assoc_req(tpAniSirGlobal mac_ctx,
 	 * WNI_CFG_TELE_BCN_MAX_LI
 	 */
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_TELE_BCN_WAKEUP_EN, &tele_bcn)
-		!= eSIR_SUCCESS)
+		!= QDF_STATUS_SUCCESS)
 		pe_err("Couldn't get WNI_CFG_TELE_BCN_WAKEUP_EN");
 
 	val = WNI_CFG_LISTEN_INTERVAL_STADEF;
 	if (tele_bcn) {
 		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_TELE_BCN_MAX_LI, &val) !=
-			eSIR_SUCCESS)
+			QDF_STATUS_SUCCESS)
 			pe_err("could not retrieve ListenInterval");
 	} else {
 		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_LISTEN_INTERVAL,
-			 &val) != eSIR_SUCCESS)
+			 &val) != QDF_STATUS_SUCCESS)
 			pe_err("could not retrieve ListenInterval");
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_ASSOC_REQ_EVENT,
-		session_entry, eSIR_SUCCESS, eSIR_SUCCESS);
+		session_entry, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 #endif
 	assoc_req->listenInterval = (uint16_t) val;
 	/* Update PE session ID */
@@ -523,7 +523,7 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	 */
 	if (session_entry->limSmeState == eLIM_SME_WT_AUTH_STATE) {
 		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_AUTHENTICATION_TYPE,
-			(uint32_t *) &auth_type) !=  eSIR_SUCCESS) {
+			(uint32_t *) &auth_type) !=  QDF_STATUS_SUCCESS) {
 			pe_err("Fail to retrieve AuthType value");
 		}
 	} else {
@@ -562,7 +562,7 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		if (wlan_cfg_get_int(mac_ctx,
 			WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
 			(uint32_t *) &auth_req->authFailureTimeout)
-			!= eSIR_SUCCESS) {
+			!= QDF_STATUS_SUCCESS) {
 			pe_err("Fail:retrieve AuthFailureTimeout");
 		}
 		lim_post_mlm_message(mac_ctx, LIM_MLM_AUTH_REQ,
@@ -1378,7 +1378,7 @@ error:
 		if (lim_set_link_state
 			(mac_ctx, eSIR_LINK_DOWN_STATE, session_entry->bssId,
 			 session_entry->selfMacAddr, lim_join_result_callback,
-			 param) != eSIR_SUCCESS) {
+			 param) != QDF_STATUS_SUCCESS) {
 			qdf_mem_free(param);
 			pe_err("Failed to set the LinkState");
 		}
@@ -1588,7 +1588,7 @@ void lim_process_mlm_del_bss_rsp(tpAniSirGlobal pMac,
 
 #ifdef WLAN_FEATURE_11W
 	if (psessionEntry->limRmfEnabled) {
-		if (eSIR_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    lim_send_exclude_unencrypt_ind(pMac, true, psessionEntry)) {
 			pe_err("Could not send down Exclude Unencrypted Indication!");
 		}
@@ -1616,7 +1616,7 @@ void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal pMac,
 		if (lim_set_link_state
 			    (pMac, eSIR_LINK_IDLE_STATE, psessionEntry->bssId,
 			    psessionEntry->selfMacAddr, NULL,
-			    NULL) != eSIR_SUCCESS) {
+			    NULL) != QDF_STATUS_SUCCESS) {
 			pe_err("Failure in setting link state to IDLE");
 			statusCode = eSIR_SME_REFUSED;
 			goto end;
@@ -1669,7 +1669,7 @@ void lim_process_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac,
 				    tpPESession psessionEntry)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
-	tSirRetStatus status;
+	QDF_STATUS status;
 	tpDeleteBssParams pDelBss = (tpDeleteBssParams) limMsgQ->bodyptr;
 	tSirMacAddr nullBssid = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
@@ -1706,7 +1706,7 @@ void lim_process_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac,
 	}
 	status = lim_set_link_state(pMac, eSIR_LINK_IDLE_STATE, nullBssid,
 				    psessionEntry->selfMacAddr, NULL, NULL);
-	if (status != eSIR_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		rc = eSIR_SME_REFUSED;
 		goto end;
 	}
@@ -1848,7 +1848,7 @@ void lim_process_ap_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
 		qdf_mem_free(del_sta_params);
 		msg->bodyptr = NULL;
 		if (lim_add_sta(mac_ctx, sta_ds, false, session_entry) !=
-		    eSIR_SUCCESS) {
+		    QDF_STATUS_SUCCESS) {
 			pe_err("could not Add STA with assocId: %d",
 				sta_ds->assocId);
 			/*
@@ -1858,7 +1858,7 @@ void lim_process_ap_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
 			if (sta_ds->qos.addtsPresent) {
 				tpLimTspecInfo pTspecInfo;
 
-				if (eSIR_SUCCESS ==
+				if (QDF_STATUS_SUCCESS ==
 				    lim_tspec_find_by_assoc_id(mac_ctx,
 					sta_ds->assocId,
 					&sta_ds->qos.addts.tspec,
@@ -2079,7 +2079,7 @@ static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal pMac,
 		if (lim_set_link_state
 			    (pMac, eSIR_LINK_AP_STATE, psessionEntry->bssId,
 			    psessionEntry->selfMacAddr, NULL,
-			    NULL) != eSIR_SUCCESS)
+			    NULL) != QDF_STATUS_SUCCESS)
 			goto end;
 		/* Set MLME state */
 		psessionEntry->limMlmState = eLIM_MLM_BSS_STARTED_STATE;
@@ -2210,7 +2210,7 @@ lim_process_ibss_mlm_add_bss_rsp(tpAniSirGlobal pMac,
 		if (lim_set_link_state
 			    (pMac, eSIR_LINK_IBSS_STATE, psessionEntry->bssId,
 			    psessionEntry->selfMacAddr, NULL,
-			    NULL) != eSIR_SUCCESS)
+			    NULL) != QDF_STATUS_SUCCESS)
 			goto end;
 		/* Set MLME state */
 		psessionEntry->limMlmState = eLIM_MLM_BSS_STARTED_STATE;
@@ -2323,7 +2323,7 @@ lim_process_sta_add_bss_rsp_pre_assoc(tpAniSirGlobal mac_ctx,
 		pStaDs->staIndex = pAddBssParams->staContext.staIdx;
 		/* Trigger Authentication with AP */
 		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_AUTHENTICATION_TYPE,
-			(uint32_t *) &cfgAuthType) != eSIR_SUCCESS) {
+			(uint32_t *) &cfgAuthType) != QDF_STATUS_SUCCESS) {
 			pe_warn("could not retrieve AuthType");
 		}
 		/* Try shared Authentication first */
@@ -2346,7 +2346,7 @@ lim_process_sta_add_bss_rsp_pre_assoc(tpAniSirGlobal mac_ctx,
 		if (wlan_cfg_get_int(mac_ctx,
 			WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
 			(uint32_t *) &pMlmAuthReq->authFailureTimeout)
-			!= eSIR_SUCCESS) {
+			!= QDF_STATUS_SUCCESS) {
 			pe_warn("Fail: retrieve AuthFailureTimeout value");
 		}
 		session_entry->limMlmState = eLIM_MLM_JOINED_STATE;
@@ -2501,7 +2501,7 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 			rrm_cache_mgmt_tx_power(mac_ctx,
 				add_bss_params->txMgmtPower, session_entry);
 			if (lim_add_sta_self(mac_ctx, sta_idx, update_sta,
-				session_entry) != eSIR_SUCCESS) {
+				session_entry) != QDF_STATUS_SUCCESS) {
 				/* Add STA context at HW */
 				pe_err("Session:%d could not Add Self"
 					"Entry for the station",
@@ -2530,7 +2530,7 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 		if (lim_set_link_state(mac_ctx, eSIR_LINK_IDLE_STATE,
 					session_entry->bssId,
 					session_entry->selfMacAddr,
-					NULL, NULL) != eSIR_SUCCESS)
+					NULL, NULL) != QDF_STATUS_SUCCESS)
 			pe_err("Failed to set the LinkState");
 		/* Update PE session Id */
 		mlm_assoc_cnf.sessionId = session_entry->peSessionId;
@@ -2633,7 +2633,7 @@ void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 
 #ifdef WLAN_FEATURE_11W
 	if (session_entry->limRmfEnabled) {
-		if (eSIR_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 			lim_send_exclude_unencrypt_ind(mac_ctx, false,
 				session_entry)) {
 			pe_err("Failed to send Exclude Unencrypted Ind");

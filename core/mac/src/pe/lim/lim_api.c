@@ -260,7 +260,7 @@ static void __lim_init_ht_vars(tpAniSirGlobal pMac)
 	pMac->lim.gHTSTBCBasicMCS = 0;
 }
 
-static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
+static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 {
 	uint32_t val1, val2, val3;
 	uint16_t val16;
@@ -275,22 +275,22 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
 	 */
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOC_STA_LIMIT, &val1)
-		!= eSIR_SUCCESS){
+		!= QDF_STATUS_SUCCESS){
 		pe_err("cfg get assoc sta limit failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pMac->lim.gLimAssocStaLimit = val1;
 	pMac->lim.gLimIbssStaLimit = val1;
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO, &val1) != eSIR_SUCCESS) {
+	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO, &val1) != QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve HT Cap CFG");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_CHANNEL_BONDING_MODE, &val2) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve Channel Bonding CFG");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	val16 = (uint16_t) val1;
 	pHTCapabilityInfo = (tSirMacHTCapabilityInfo *) &val16;
@@ -302,14 +302,14 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
 						      WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 	if (cfg_set_int
 		    (pMac, WNI_CFG_HT_CAP_INFO, *(uint16_t *) pHTCapabilityInfo)
-	    != eSIR_SUCCESS) {
+	    != QDF_STATUS_SUCCESS) {
 		pe_err("could not update HT Cap Info CFG");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_INFO_FIELD1, &val1) != eSIR_SUCCESS) {
+	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_INFO_FIELD1, &val1) != QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve HT INFO Field1 CFG");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	val8 = (uint8_t) val1;
@@ -317,17 +317,17 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
 	pHTInfoField1->recommendedTxWidthSet =
 		(uint8_t) pHTCapabilityInfo->supportedChannelWidthSet;
 	if (cfg_set_int(pMac, WNI_CFG_HT_INFO_FIELD1, *(uint8_t *) pHTInfoField1)
-	    != eSIR_SUCCESS) {
+	    != QDF_STATUS_SUCCESS) {
 		pe_err("could not update HT Info Field");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* WNI_CFG_HEART_BEAT_THRESHOLD */
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD, &val1) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve WNI_CFG_HEART_BEAT_THRESHOLD CFG");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (!val1) {
 		pMac->sys.gSysEnableLinkMonitorMode = 0;
@@ -339,19 +339,19 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
 	/* WNI_CFG_MAX_RX_AMPDU_FACTOR */
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &val1) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve HT AMPDU Param");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_RX_AMPDU_FACTOR, &val2) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve AMPDU Factor CFG");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (wlan_cfg_get_int(pMac, WNI_CFG_MPDU_DENSITY, &val3) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve MPDU Density CFG");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	val16 = (uint16_t) val1;
@@ -360,16 +360,16 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
 	pAmpduParamInfo->mpduDensity = (uint8_t)val3;
 	if (cfg_set_int
 		    (pMac, WNI_CFG_HT_AMPDU_PARAMS,
-		    *(uint8_t *) pAmpduParamInfo) != eSIR_SUCCESS) {
+		    *(uint8_t *) pAmpduParamInfo) != QDF_STATUS_SUCCESS) {
 		pe_err("cfg get short preamble failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* WNI_CFG_SHORT_PREAMBLE - this one is not updated in
 	   lim_handle_cf_gparam_update do we want to update this? */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val1) != eSIR_SUCCESS) {
+	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val1) != QDF_STATUS_SUCCESS) {
 		pe_err("cfg get short preamble failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA - not needed */
@@ -377,58 +377,58 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
 	/* This was initially done after resume notification from HAL. Now, DAL is
 	   started before PE so this can be done here */
 	handle_ht_capabilityand_ht_info(pMac, NULL);
-	if (eSIR_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 	    wlan_cfg_get_int(pMac, WNI_CFG_DISABLE_LDPC_WITH_TXBF_AP,
 			     (uint32_t *) &pMac->lim.disableLDPCWithTxbfAP)) {
 		pe_err("cfg get disableLDPCWithTxbfAP failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 #ifdef FEATURE_WLAN_TDLS
-	if (eSIR_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_TDLS_BUF_STA_ENABLED,
+	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_TDLS_BUF_STA_ENABLED,
 					     (uint32_t *) &pMac->lim.
 					     gLimTDLSBufStaEnabled)) {
 		pe_err("cfg get LimTDLSBufStaEnabled failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	if (eSIR_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 	    wlan_cfg_get_int(pMac, WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK,
 			     (uint32_t *) &pMac->lim.gLimTDLSUapsdMask)) {
 		pe_err("cfg get LimTDLSUapsdMask failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	if (eSIR_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 	    wlan_cfg_get_int(pMac, WNI_CFG_TDLS_OFF_CHANNEL_ENABLED,
 			     (uint32_t *) &pMac->lim.
 			     gLimTDLSOffChannelEnabled)) {
 		pe_err("cfg get LimTDLSUapsdMask failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (eSIR_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_TDLS_WMM_MODE_ENABLED,
+	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_TDLS_WMM_MODE_ENABLED,
 					     (uint32_t *) &pMac->lim.
 					     gLimTDLSWmmMode)) {
 		pe_err("cfg get LimTDLSWmmMode failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 #endif
 
-	if (eSIR_SUCCESS != wlan_cfg_get_int(pMac,
+	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pMac,
 					     WNI_CFG_OBSS_DETECTION_OFFLOAD,
 					     (uint32_t *)&pMac->lim.
 					     global_obss_offload_enabled)) {
 		pe_err("cfg get obss_detection_offloaded failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (eSIR_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 	    wlan_cfg_get_int(pMac, WNI_CFG_OBSS_COLOR_COLLISION_OFFLOAD,
 			     (uint32_t *) &pMac->lim.
 			     global_obss_color_collision_det_offload)) {
 		pe_err("cfg get obss_color_collision_offload failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -436,9 +436,9 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
    This function is to replace the __lim_process_sme_start_req since there is no
    eWNI_SME_START_REQ post to PE.
  */
-tSirRetStatus lim_start(tpAniSirGlobal pMac)
+QDF_STATUS lim_start(tpAniSirGlobal pMac)
 {
-	tSirRetStatus retCode = eSIR_SUCCESS;
+	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 
 	pe_debug("enter");
 
@@ -450,9 +450,9 @@ tSirRetStatus lim_start(tpAniSirGlobal pMac)
 			       pMac->lim.gLimSmeState));
 
 		/* Initialize MLM state machine */
-		if (eSIR_SUCCESS != lim_init_mlm(pMac)) {
+		if (QDF_STATUS_SUCCESS != lim_init_mlm(pMac)) {
 			pe_err("Init MLM failed");
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
 		/**
@@ -462,7 +462,7 @@ tSirRetStatus lim_start(tpAniSirGlobal pMac)
 		 */
 		pe_warn("Invalid SME state: %X",
 			pMac->lim.gLimSmeState);
-		retCode = eSIR_FAILURE;
+		retCode = QDF_STATUS_E_FAILURE;
 	}
 
 	pMac->lim.req_id =
@@ -493,9 +493,9 @@ tSirRetStatus lim_start(tpAniSirGlobal pMac)
  * @return None
  */
 
-tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
+QDF_STATUS lim_initialize(tpAniSirGlobal pMac)
 {
-	tSirRetStatus status = eSIR_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	pMac->lim.mgmtFrameSessionId = NO_SESSION;
 	pMac->lim.tdls_frm_session_id = NO_SESSION;
@@ -508,7 +508,7 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 	if (QDF_IS_STATUS_ERROR(qdf_mutex_create(
 			&pMac->lim.lkPeGlobalLock))) {
 		pe_err("lim lock init failed!");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	__lim_init_assoc_vars(pMac);
@@ -528,7 +528,7 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 		&pMac->lim.lim_frame_register_lock))) {
 		pe_err("lim lock init failed!");
 		qdf_mutex_destroy(&pMac->lim.lkPeGlobalLock);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	qdf_list_create(&pMac->lim.gLimMgmtFrameRegistratinQueue, 0);
@@ -856,15 +856,15 @@ static QDF_STATUS lim_unregister_sap_bcn_callback(tpAniSirGlobal mac_ctx)
    \brief will be called in Open sequence from mac_open
    \param   tpAniSirGlobal pMac
    \param   tHalOpenParameters *pHalOpenParam
-   \return  tSirRetStatus
+   \return  QDF_STATUS
    -------------------------------------------------------------*/
 
-tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
+QDF_STATUS pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 {
-	tSirRetStatus status = eSIR_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (QDF_DRIVER_TYPE_MFG == cds_cfg->driver_type)
-		return eSIR_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	pMac->lim.maxBssId = cds_cfg->max_bssid;
 	pMac->lim.maxStation = cds_cfg->max_station;
@@ -872,28 +872,28 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 
 	if ((pMac->lim.maxBssId == 0) || (pMac->lim.maxStation == 0)) {
 		pe_err("max number of Bssid or Stations cannot be zero!");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pMac->lim.limTimers.gpLimCnfWaitTimer =
 		qdf_mem_malloc(sizeof(TX_TIMER) * (pMac->lim.maxStation + 1));
 	if (NULL == pMac->lim.limTimers.gpLimCnfWaitTimer) {
 		pe_err("gpLimCnfWaitTimer memory allocate failed!");
-		return eSIR_MEM_ALLOC_FAILED;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	pMac->lim.gpSession =
 		qdf_mem_malloc(sizeof(tPESession) * pMac->lim.maxBssId);
 	if (NULL == pMac->lim.gpSession) {
 		pe_err("gpSession memory allocate failed!");
-		status = eSIR_MEM_ALLOC_FAILED;
+		status = QDF_STATUS_E_NOMEM;
 		goto pe_open_psession_fail;
 	}
 
 	status = lim_initialize(pMac);
-	if (eSIR_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		pe_err("lim_initialize failed!");
-		status = eSIR_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 		goto  pe_open_lock_fail;
 	}
 
@@ -915,7 +915,7 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 		pe_err("%s: Shutdown notifier register failed", __func__);
 	}
 
-	return status; /* status here will be eSIR_SUCCESS */
+	return status; /* status here will be QDF_STATUS_SUCCESS */
 
 pe_open_lock_fail:
 	qdf_mem_free(pMac->lim.gpSession);
@@ -931,15 +931,15 @@ pe_open_psession_fail:
    \fn pe_close
    \brief will be called in close sequence from mac_close
    \param   tpAniSirGlobal pMac
-   \return  tSirRetStatus
+   \return  QDF_STATUS
    -------------------------------------------------------------*/
 
-tSirRetStatus pe_close(tpAniSirGlobal pMac)
+QDF_STATUS pe_close(tpAniSirGlobal pMac)
 {
 	uint8_t i;
 
 	if (ANI_DRIVER_TYPE(pMac) == QDF_DRIVER_TYPE_MFG)
-		return eSIR_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	lim_cleanup(pMac);
 	lim_unregister_sap_bcn_callback(pMac);
@@ -961,9 +961,9 @@ tSirRetStatus pe_close(tpAniSirGlobal pMac)
 	pMac->lim.gpSession = NULL;
 	if (!QDF_IS_STATUS_SUCCESS
 		    (qdf_mutex_destroy(&pMac->lim.lkPeGlobalLock))) {
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /** -------------------------------------------------------------
@@ -973,20 +973,20 @@ tSirRetStatus pe_close(tpAniSirGlobal pMac)
    \return none
    -------------------------------------------------------------*/
 
-tSirRetStatus pe_start(tpAniSirGlobal pMac)
+QDF_STATUS pe_start(tpAniSirGlobal pMac)
 {
-	tSirRetStatus status = eSIR_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	status = lim_start(pMac);
-	if (eSIR_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		pe_err("lim_start failed!");
 		return status;
 	}
 	/* Initialize the configurations needed by PE */
-	if (eSIR_FAILURE == __lim_init_config(pMac)) {
+	if (QDF_STATUS_E_FAILURE == __lim_init_config(pMac)) {
 		pe_err("lim init config failed!");
 		/* We need to undo everything in lim_start */
 		lim_cleanup_mlm(pMac);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* Initialize the configurations needed by PE */
 	lim_register_hal_ind_call_back(pMac);
@@ -1105,9 +1105,9 @@ uint32_t lim_post_msg_high_priority(tpAniSirGlobal mac,
 
    --------------------------------------------------------------------------*/
 
-tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+QDF_STATUS pe_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
-	return (tSirRetStatus) lim_post_msg_api(pMac, pMsg);
+	return (QDF_STATUS) lim_post_msg_api(pMac, pMsg);
 }
 
 /*--------------------------------------------------------------------------
@@ -1123,11 +1123,11 @@ tSirRetStatus pe_post_msg_api(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 
    --------------------------------------------------------------------------*/
 
-tSirRetStatus pe_process_messages(tpAniSirGlobal pMac,
+QDF_STATUS pe_process_messages(tpAniSirGlobal pMac,
 				  struct scheduler_msg *pMsg)
 {
 	if (ANI_DRIVER_TYPE(pMac) == QDF_DRIVER_TYPE_MFG) {
-		return eSIR_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 	/**
 	 * If the Message to be handled is for CFG Module call the CFG Msg
@@ -1137,19 +1137,19 @@ tSirRetStatus pe_process_messages(tpAniSirGlobal pMac,
 		cfg_process_mb_msg(pMac, (tSirMbMsg *) pMsg->bodyptr);
 	else
 		lim_message_processor(pMac, pMsg);
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 {
-	tSirRetStatus status;
+	QDF_STATUS status;
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (mac_ctx == NULL)
 		return QDF_STATUS_E_FAILURE;
 
 	status = pe_process_messages(mac_ctx, msg);
-	if (status == eSIR_SUCCESS)
+	if (status == QDF_STATUS_SUCCESS)
 		return QDF_STATUS_SUCCESS;
 
 	return QDF_STATUS_E_FAILURE;
@@ -1436,7 +1436,7 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 	msg.bodyptr = pVosPkt;
 	msg.bodyval = 0;
 
-	if (eSIR_SUCCESS != sys_bbt_process_message_core(pMac,
+	if (QDF_STATUS_SUCCESS != sys_bbt_process_message_core(pMac,
 							 &msg,
 							 mHdr->fc.type,
 							 mHdr->fc.subType)) {
@@ -1679,13 +1679,13 @@ static bool lim_ibss_enc_type_matched(tpSchBeaconStruct pBeacon,
  * @return Status whether to process or ignore received Beacon Frame
  */
 
-tSirRetStatus
+QDF_STATUS
 lim_handle_ibss_coalescing(tpAniSirGlobal pMac,
 			   tpSchBeaconStruct pBeacon,
 			   uint8_t *pRxPacketInfo, tpPESession psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
-	tSirRetStatus retCode;
+	QDF_STATUS retCode;
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 
@@ -1698,13 +1698,13 @@ lim_handle_ibss_coalescing(tpAniSirGlobal pMac,
 	if ((!pBeacon->capabilityInfo.ibss) ||
 	    lim_cmp_ssid(&pBeacon->ssId, psessionEntry) ||
 	    (psessionEntry->currentOperChannel != pBeacon->channelNumber))
-		retCode = eSIR_LIM_IGNORE_BEACON;
+		retCode = QDF_STATUS_E_INVAL;
 	else if (lim_ibss_enc_type_matched(pBeacon, psessionEntry) != true) {
 		pe_debug("peer privacy: %d peer wpa: %d peer rsn: %d self encType: %d",
 			       pBeacon->capabilityInfo.privacy,
 			       pBeacon->wpaPresent, pBeacon->rsnPresent,
 			       psessionEntry->encryptType);
-		retCode = eSIR_LIM_IGNORE_BEACON;
+		retCode = QDF_STATUS_E_INVAL;
 	} else {
 		uint32_t ieLen;
 		uint16_t tsfLater;
@@ -1831,7 +1831,7 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal pMac,
 	uint8_t len;
 	tSirSmeApNewCaps apNewCaps;
 	uint8_t newChannel;
-	tSirRetStatus status = eSIR_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool security_caps_matched = true;
 
 	apNewCaps.capabilityInfo =
@@ -1873,7 +1873,7 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal pMac,
 					      psessionEntry->dot11mode,
 					      NULL, NULL);
 
-			if (eSIR_SUCCESS != status) {
+			if (QDF_STATUS_SUCCESS != status) {
 				pe_err("send ProbeReq failed");
 				psessionEntry->fWaitForProbeRsp = false;
 			}
@@ -1952,7 +1952,7 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal pMac,
  * @return None
  */
 
-tSirRetStatus lim_update_short_slot(tpAniSirGlobal pMac,
+QDF_STATUS lim_update_short_slot(tpAniSirGlobal pMac,
 				    tpSirProbeRespBeacon pBeacon,
 				    tpUpdateBeaconParams pBeaconParams,
 				    tpPESession psessionEntry)
@@ -1965,18 +1965,18 @@ tSirRetStatus lim_update_short_slot(tpAniSirGlobal pMac,
 
 	/* Check Admin mode first. If it is disabled just return */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED, &val)
-	    != eSIR_SUCCESS) {
+	    != QDF_STATUS_SUCCESS) {
 		pe_err("cfg get WNI_CFG_11G_SHORT_SLOT_TIME failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (val == false)
-		return eSIR_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	/* Check for 11a mode or 11b mode. In both cases return since slot time is constant and cannot/should not change in beacon */
 	lim_get_phy_mode(pMac, &phyMode, psessionEntry);
 	if ((phyMode == WNI_CFG_PHY_MODE_11A)
 	    || (phyMode == WNI_CFG_PHY_MODE_11B))
-		return eSIR_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	apNewCaps.capabilityInfo =
 		lim_get_u16((uint8_t *) &pBeacon->capabilityInfo);
@@ -2013,7 +2013,7 @@ tSirRetStatus lim_update_short_slot(tpAniSirGlobal pMac,
 		pBeaconParams->paramChangeBitmap |=
 			PARAM_SHORT_SLOT_TIME_CHANGED;
 	}
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 
@@ -2030,7 +2030,7 @@ void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac, tpPESession psessionEn
 
 	statusCode = lim_post_msg_api(pMac, &msg);
 
-	if (statusCode != eSIR_SUCCESS) {
+	if (statusCode != QDF_STATUS_SUCCESS) {
 		pe_err("posting message: %X to LIM failed, reason: %d",
 			msg.type, statusCode);
 	}
@@ -2169,7 +2169,7 @@ lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 			&bcn_proberesp_ptr[SIR_MAC_HDR_LEN_3A +
 			SIR_MAC_B_PR_SSID_OFFSET],
 			roam_offload_synch_ind_ptr->beaconProbeRespLength -
-			SIR_MAC_HDR_LEN_3A) != eSIR_SUCCESS ||
+			SIR_MAC_HDR_LEN_3A) != QDF_STATUS_SUCCESS ||
 			!parsed_frm_ptr->ssidPresent) {
 			pe_err("Parse error Beacon, length: %d",
 			roam_offload_synch_ind_ptr->beaconProbeRespLength);
@@ -2180,7 +2180,7 @@ lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 		if (sir_convert_probe_frame2_struct(pMac,
 			&bcn_proberesp_ptr[SIR_MAC_HDR_LEN_3A],
 			roam_offload_synch_ind_ptr->beaconProbeRespLength -
-			SIR_MAC_HDR_LEN_3A, parsed_frm_ptr) != eSIR_SUCCESS ||
+			SIR_MAC_HDR_LEN_3A, parsed_frm_ptr) != QDF_STATUS_SUCCESS ||
 			!parsed_frm_ptr->ssidPresent) {
 			pe_err("Parse error ProbeResponse, length: %d",
 			roam_offload_synch_ind_ptr->beaconProbeRespLength);
@@ -2779,11 +2779,11 @@ QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	uint32_t dot11mode;
 	bool vht_enabled = false;
 	tDot11fIEExtCap default_scan_ext_cap = {0}, driver_ext_cap = {0};
-	tSirRetStatus status;
+	QDF_STATUS status;
 
 	status = lim_strip_extcap_update_struct(mac_ctx, ie_data,
 				   local_ie_len, &default_scan_ext_cap);
-	if (eSIR_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		pe_err("Strip ext cap fails %d", status);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2804,7 +2804,7 @@ QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
 
 	status = populate_dot11f_ext_cap(mac_ctx, vht_enabled,
 					&driver_ext_cap, NULL);
-	if (eSIR_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		pe_err("Failed %d to create ext cap IE. Use default value instead",
 				status);
 		local_ie_buf[*local_ie_len + 1] = DOT11F_IE_EXTCAP_MAX_LEN;

@@ -135,7 +135,7 @@ void lim_print_sme_state(tpAniSirGlobal pMac, uint16_t logLevel,
 		tLimSmeStates state);
 void lim_print_msg_name(tpAniSirGlobal pMac, uint16_t logLevel, uint32_t msgType);
 
-extern tSirRetStatus lim_send_set_max_tx_power_req(tpAniSirGlobal pMac,
+extern QDF_STATUS lim_send_set_max_tx_power_req(tpAniSirGlobal pMac,
 		int8_t txPower,
 		tpPESession pSessionEntry);
 extern uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
@@ -215,45 +215,45 @@ void lim_decide_ap_protection_on_delete(tpAniSirGlobal pMac,
 		tpUpdateBeaconParams pBeaconParams,
 		tpPESession psessionEntry);
 
-extern tSirRetStatus lim_update_11a_protection(tpAniSirGlobal pMac,
+extern QDF_STATUS lim_update_11a_protection(tpAniSirGlobal pMac,
 		uint8_t enable,
 		uint8_t overlap,
 		tpUpdateBeaconParams pBeaconParams,
 		tpPESession);
-extern tSirRetStatus lim_enable11g_protection(tpAniSirGlobal pMac,
+extern QDF_STATUS lim_enable11g_protection(tpAniSirGlobal pMac,
 		uint8_t enable,
 		uint8_t overlap,
 		tpUpdateBeaconParams pBeaconParams,
 		tpPESession psessionEntry);
-extern tSirRetStatus lim_enable_ht_protection_from11g(tpAniSirGlobal pMac,
+extern QDF_STATUS lim_enable_ht_protection_from11g(tpAniSirGlobal pMac,
 		uint8_t enable,
 		uint8_t overlap,
 		tpUpdateBeaconParams
 		pBeaconParams,
 		tpPESession psessionEntry);
-extern tSirRetStatus lim_enable_ht20_protection(tpAniSirGlobal pMac,
+extern QDF_STATUS lim_enable_ht20_protection(tpAniSirGlobal pMac,
 		uint8_t enable, uint8_t overlap,
 		tpUpdateBeaconParams pBeaconParams,
 		tpPESession sessionEntry);
-extern tSirRetStatus lim_enable_ht_non_gf_protection(tpAniSirGlobal pMac,
+extern QDF_STATUS lim_enable_ht_non_gf_protection(tpAniSirGlobal pMac,
 		uint8_t enable, uint8_t overlap,
 		tpUpdateBeaconParams
 		pBeaconParams, tpPESession);
-extern tSirRetStatus lim_enable_ht_rifs_protection(tpAniSirGlobal pMac,
+extern QDF_STATUS lim_enable_ht_rifs_protection(tpAniSirGlobal pMac,
 		uint8_t enable, uint8_t overlap,
 		tpUpdateBeaconParams
 		pBeaconParams,
 		tpPESession psessionEntry);
-extern tSirRetStatus lim_enable_ht_lsig_txop_protection(tpAniSirGlobal pMac,
+extern QDF_STATUS lim_enable_ht_lsig_txop_protection(tpAniSirGlobal pMac,
 		uint8_t enable,
 		uint8_t overlap,
 		tpUpdateBeaconParams
 		pBeaconParams, tpPESession);
-extern tSirRetStatus lim_enable_short_preamble(tpAniSirGlobal pMac,
+extern QDF_STATUS lim_enable_short_preamble(tpAniSirGlobal pMac,
 		uint8_t enable,
 		tpUpdateBeaconParams pBeaconParams,
 		tpPESession psessionEntry);
-extern tSirRetStatus lim_enable_ht_obss_protection(tpAniSirGlobal pMac,
+extern QDF_STATUS lim_enable_ht_obss_protection(tpAniSirGlobal pMac,
 		uint8_t enable, uint8_t overlap,
 		tpUpdateBeaconParams
 		pBeaconParams, tpPESession);
@@ -281,7 +281,7 @@ void lim_handle_defer_msg_error(tpAniSirGlobal pMac,
 /* Deferred Message Queue Reset */
 void lim_reset_deferred_msg_q(tpAniSirGlobal pMac);
 
-tSirRetStatus lim_sys_process_mmh_msg_api(tpAniSirGlobal,
+QDF_STATUS lim_sys_process_mmh_msg_api(tpAniSirGlobal,
 					  struct scheduler_msg *, uint8_t);
 
 void lim_handle_update_olbc_cache(tpAniSirGlobal pMac);
@@ -291,7 +291,7 @@ uint8_t lim_is_null_ssid(tSirMacSSid *pSsid);
 /* 11h Support */
 void lim_stop_tx_and_switch_channel(tpAniSirGlobal pMac, uint8_t sessionId);
 void lim_process_channel_switch_timeout(tpAniSirGlobal);
-tSirRetStatus lim_start_channel_switch(tpAniSirGlobal pMac,
+QDF_STATUS lim_start_channel_switch(tpAniSirGlobal pMac,
 		tpPESession psessionEntry);
 void lim_update_channel_switch(tpAniSirGlobal, tpSirProbeRespBeacon,
 		tpPESession psessionEntry);
@@ -321,9 +321,9 @@ bool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal pMac,
 		uint8_t channel);
 void lim_frame_transmission_control(tpAniSirGlobal pMac, tLimQuietTxMode type,
 		tLimControlTx mode);
-tSirRetStatus lim_restore_pre_channel_switch_state(tpAniSirGlobal pMac,
+QDF_STATUS lim_restore_pre_channel_switch_state(tpAniSirGlobal pMac,
 		tpPESession psessionEntry);
-tSirRetStatus lim_restore_pre_quiet_state(tpAniSirGlobal pMac,
+QDF_STATUS lim_restore_pre_quiet_state(tpAniSirGlobal pMac,
 		tpPESession psessionEntry);
 
 void lim_prepare_for11h_channel_switch(tpAniSirGlobal pMac,
@@ -356,7 +356,7 @@ static inline enum band_info lim_get_rf_band(uint8_t channel)
 	return BAND_UNKNOWN;
 }
 
-static inline tSirRetStatus
+static inline QDF_STATUS
 lim_get_mgmt_staid(tpAniSirGlobal pMac, uint16_t *staid,
 		tpPESession psessionEntry)
 {
@@ -365,9 +365,9 @@ lim_get_mgmt_staid(tpAniSirGlobal pMac, uint16_t *staid,
 	else if (LIM_IS_STA_ROLE(psessionEntry))
 		*staid = 0;
 	else
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 static inline uint8_t lim_is_system_in_set_mimops_state(tpAniSirGlobal pMac)
@@ -443,9 +443,9 @@ QDF_STATUS lim_tx_complete(void *context, qdf_nbuf_t buf, bool free);
  */
 
 void lim_process_del_ts_ind(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
-tSirRetStatus lim_process_hal_ind_messages(tpAniSirGlobal pMac, uint32_t mesgId,
+QDF_STATUS lim_process_hal_ind_messages(tpAniSirGlobal pMac, uint32_t mesgId,
 		void *mesgParam);
-tSirRetStatus lim_validate_delts_req(tpAniSirGlobal pMac,
+QDF_STATUS lim_validate_delts_req(tpAniSirGlobal pMac,
 		tpSirDeltsReq pDeltsReq,
 		tSirMacAddr peerMacAddr,
 		tpPESession psessionEntry);
@@ -478,7 +478,7 @@ static inline uint32_t utils_power_xy(uint16_t base, uint16_t power)
 	return result;
 }
 
-tSirRetStatus lim_post_sm_state_update(tpAniSirGlobal pMac,
+QDF_STATUS lim_post_sm_state_update(tpAniSirGlobal pMac,
 		uint16_t StaIdx,
 		tSirMacHTMIMOPowerSaveState MIMOPSState,
 		uint8_t *pPeerStaMac, uint8_t sessionId);
@@ -763,11 +763,11 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx, uint32_t session_id,
 QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 				 tpPESession session, uint8_t vdev_id);
 
-tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx, uint8_t *addn_ie,
+QDF_STATUS lim_strip_extcap_ie(tpAniSirGlobal mac_ctx, uint8_t *addn_ie,
 			  uint16_t *addn_ielen, uint8_t *extracted_extcap);
 void lim_update_extcap_struct(tpAniSirGlobal mac_ctx, uint8_t *buf,
 			      tDot11fIEExtCap *ext_cap);
-tSirRetStatus lim_strip_extcap_update_struct(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_strip_extcap_update_struct(tpAniSirGlobal mac_ctx,
 		uint8_t *addn_ie, uint16_t *addn_ielen, tDot11fIEExtCap *dst);
 void lim_merge_extcap_struct(tDot11fIEExtCap *dst, tDot11fIEExtCap *src,
 		bool add);
@@ -810,9 +810,9 @@ lim_del_pmf_sa_query_timer(tpAniSirGlobal mac_ctx, tpPESession pe_session)
  * This function is used to strip supp op class IE from IE buffer and
  * update the passed structure.
  *
- * Return: tSirRetStatus
+ * Return: QDF_STATUS
  */
-tSirRetStatus lim_strip_supp_op_class_update_struct(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_strip_supp_op_class_update_struct(tpAniSirGlobal mac_ctx,
 		uint8_t *addn_ie, uint16_t *addn_ielen,
 		tDot11fIESuppOperatingClasses *dst);
 
@@ -877,7 +877,7 @@ void lim_update_caps_info_for_bss(tpAniSirGlobal mac_ctx,
 void lim_send_set_dtim_period(tpAniSirGlobal mac_ctx, uint8_t dtim_period,
 			      tpPESession session);
 
-tSirRetStatus lim_strip_ie(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_strip_ie(tpAniSirGlobal mac_ctx,
 		uint8_t *addn_ie, uint16_t *addn_ielen,
 		uint8_t eid, eSizeOfLenField size_of_len_field,
 		uint8_t *oui, uint8_t out_len, uint8_t *extracted_ie,

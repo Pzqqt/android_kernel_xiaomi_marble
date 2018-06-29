@@ -51,11 +51,11 @@
  *
  * Return: 0 on success, one on failure
  */
-static tSirRetStatus
+static QDF_STATUS
 lim_validate_ie_information_in_probe_rsp_frame(tpAniSirGlobal mac_ctx,
 				uint8_t *pRxPacketInfo)
 {
-	tSirRetStatus status = eSIR_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t *pframe;
 	uint32_t nframe;
 	uint32_t missing_rsn_bytes;
@@ -68,7 +68,7 @@ lim_validate_ie_information_in_probe_rsp_frame(tpAniSirGlobal mac_ctx,
 
 	if (WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo) <
 		(SIR_MAC_B_PR_SSID_OFFSET + SIR_MAC_MIN_IE_LEN))
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	pframe = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 	nframe = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
@@ -77,7 +77,7 @@ lim_validate_ie_information_in_probe_rsp_frame(tpAniSirGlobal mac_ctx,
 	status = sir_validate_and_rectify_ies(mac_ctx,
 			pframe, nframe, &missing_rsn_bytes);
 
-	if (status == eSIR_SUCCESS)
+	if (status == QDF_STATUS_SUCCESS)
 		WMA_GET_RX_MPDU_LEN(pRxPacketInfo) += missing_rsn_bytes;
 
 	return status;
@@ -134,7 +134,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 	/* Validate IE information before processing Probe Response Frame */
 	if (lim_validate_ie_information_in_probe_rsp_frame(mac_ctx,
 				rx_Packet_info) !=
-		eSIR_SUCCESS) {
+		QDF_STATUS_SUCCESS) {
 		pe_err("Parse error ProbeResponse, length=%d", frame_len);
 		qdf_mem_free(probe_rsp);
 		return;
@@ -150,7 +150,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 	body = WMA_GET_RX_MPDU_DATA(rx_Packet_info);
 		/* Enforce Mandatory IEs */
 	if ((sir_convert_probe_frame2_struct(mac_ctx,
-		body, frame_len, probe_rsp) == eSIR_FAILURE) ||
+		body, frame_len, probe_rsp) == QDF_STATUS_E_FAILURE) ||
 		!probe_rsp->ssidPresent) {
 		pe_err("Parse error ProbeResponse, length=%d", frame_len);
 		qdf_mem_free(probe_rsp);
@@ -261,7 +261,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		     session_entry->gLimEdcaParamSetCount)) {
 			if (sch_beacon_edca_process(mac_ctx,
 				&probe_rsp->edcaParams,
-				session_entry) != eSIR_SUCCESS) {
+				session_entry) != QDF_STATUS_SUCCESS) {
 				pe_err("EDCA param process error");
 			} else if (sta_ds != NULL) {
 				/*

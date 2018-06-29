@@ -128,7 +128,7 @@ void lim_stop_tx_and_switch_channel(tpAniSirGlobal pMac, uint8_t sessionId)
    \param  psessionEntry
    \return NONE
    ------------------------------------------------------------*/
-tSirRetStatus lim_start_channel_switch(tpAniSirGlobal pMac,
+QDF_STATUS lim_start_channel_switch(tpAniSirGlobal pMac,
 				       tpPESession psessionEntry)
 {
 	pe_debug("Starting the channel switch");
@@ -140,7 +140,7 @@ tSirRetStatus lim_start_channel_switch(tpAniSirGlobal pMac,
 	     eLIM_11H_CHANSW_RUNNING) || psessionEntry->csaOffloadEnable) {
 		pe_warn("Ignoring channel switch on session: %d",
 			psessionEntry->peSessionId);
-		return eSIR_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	/* Deactivate and change reconfigure the timeout value */
@@ -149,16 +149,16 @@ tSirRetStatus lim_start_channel_switch(tpAniSirGlobal pMac,
 		       (pMac, TRACE_CODE_TIMER_DEACTIVATE, psessionEntry->peSessionId,
 		       eLIM_CHANNEL_SWITCH_TIMER));
 	if (tx_timer_deactivate(&pMac->lim.limTimers.gLimChannelSwitchTimer) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_err("tx_timer_deactivate failed!");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (tx_timer_change(&pMac->lim.limTimers.gLimChannelSwitchTimer,
 			    psessionEntry->gLimChannelSwitch.switchTimeoutValue,
 			    0) != TX_SUCCESS) {
 		pe_err("tx_timer_change failed");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Follow the channel switch, forget about the previous quiet. */
@@ -171,7 +171,7 @@ tSirRetStatus lim_start_channel_switch(tpAniSirGlobal pMac,
 		if (tx_timer_deactivate(&pMac->lim.limTimers.gLimQuietTimer) !=
 		    TX_SUCCESS) {
 			pe_err("tx_timer_deactivate failed");
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 	} else if (psessionEntry->gLimSpecMgmt.quietState == eLIM_QUIET_RUNNING) {
 		MTRACE(mac_trace
@@ -180,7 +180,7 @@ tSirRetStatus lim_start_channel_switch(tpAniSirGlobal pMac,
 		if (tx_timer_deactivate(&pMac->lim.limTimers.gLimQuietBssTimer)
 		    != TX_SUCCESS) {
 			pe_err("tx_timer_deactivate failed");
-			return eSIR_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 	}
 	psessionEntry->gLimSpecMgmt.quietState = eLIM_QUIET_INIT;
@@ -191,7 +191,7 @@ tSirRetStatus lim_start_channel_switch(tpAniSirGlobal pMac,
 	/** Dont add any more statements here as we posted finish scan request
 	 * to HAL, wait till we get the response
 	 */
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -322,7 +322,7 @@ static void __lim_process_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 			session->htSupportedChannelWidthSet;
 	}
 
-	if (eSIR_SUCCESS != lim_start_channel_switch(mac_ctx, session))
+	if (QDF_STATUS_SUCCESS != lim_start_channel_switch(mac_ctx, session))
 		pe_err("Could not start channel switch");
 
 	qdf_mem_free(chnl_switch_frame);
@@ -690,7 +690,7 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
 		uint8_t *rx_pkt_info, tpPESession session)
 {
 	tSirAddtsRspInfo addts;
-	tSirRetStatus retval;
+	QDF_STATUS retval;
 	tpSirMacMgmtHdr mac_hdr;
 	tpDphHashNode sta_ptr;
 	uint16_t aid;
@@ -722,7 +722,7 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
 
 	retval = sir_convert_addts_rsp2_struct(mac_ctx, body_ptr,
 			frameLen, &addts);
-	if (retval != eSIR_SUCCESS) {
+	if (retval != QDF_STATUS_SUCCESS) {
 		pe_err("AddTsRsp parsing failed %d", retval);
 		return;
 	}
@@ -853,7 +853,7 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
 	/* if schedule is not present then add TSPEC with svcInterval as 0. */
 	if (!addts.schedulePresent)
 		addts.schedule.svcInterval = 0;
-	if (eSIR_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 	    lim_tspec_add(mac_ctx, sta_ptr->staAddr, sta_ptr->assocId,
 		&addts.tspec, addts.schedule.svcInterval, &tspec_info)) {
 		pe_err("Adding entry in lim Tspec Table failed");
@@ -880,7 +880,7 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
 				sta_ptr->staIndex, tspec_info->idx,
 				addts.tspec, session->peSessionId);
 #endif
-		if (eSIR_SUCCESS != retval) {
+		if (QDF_STATUS_SUCCESS != retval) {
 			lim_admit_control_delete_ts(mac_ctx, sta_ptr->assocId,
 				&addts.tspec.tsinfo, NULL, &tspec_info->idx);
 
@@ -930,7 +930,7 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
 static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
 		uint8_t *rx_pkt_info, tpPESession session)
 {
-	tSirRetStatus retval;
+	QDF_STATUS retval;
 	tSirDeltsReqInfo delts;
 	tpSirMacMgmtHdr mac_hdr;
 	tpDphHashNode sta_ptr;
@@ -956,7 +956,7 @@ static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
 	/* parse the delts request */
 	retval = sir_convert_delts_req2_struct(mac_ctx, body_ptr,
 			frame_len, &delts);
-	if (retval != eSIR_SUCCESS) {
+	if (retval != QDF_STATUS_SUCCESS) {
 		pe_err("DelTs parsing failed %d", retval);
 		return;
 	}
@@ -991,7 +991,7 @@ static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
 		lim_send_sme_delts_ind(mac_ctx, &delts, aid, session);
 
 	/* try to delete the TS */
-	if (eSIR_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 	    lim_admit_control_delete_ts(mac_ctx, sta_ptr->assocId, tsinfo,
 				&ts_status, &tspec_idx)) {
 		pe_warn("Unable to Delete TS");
@@ -1000,7 +1000,7 @@ static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
 			|| (tsinfo->traffic.accessPolicy ==
 					SIR_MAC_ACCESSPOLICY_BOTH))){
 		/* send message to HAL to delete TS */
-		if (eSIR_SUCCESS != lim_send_hal_msg_del_ts(mac_ctx,
+		if (QDF_STATUS_SUCCESS != lim_send_hal_msg_del_ts(mac_ctx,
 						sta_ptr->staIndex, tspec_idx,
 						delts, session->peSessionId,
 						session->bssId)) {
@@ -1078,14 +1078,14 @@ static void __lim_process_qos_map_configure_frame(tpAniSirGlobal mac_ctx,
 	tpSirMacMgmtHdr mac_hdr;
 	uint32_t frame_len;
 	uint8_t *body_ptr;
-	tSirRetStatus retval;
+	QDF_STATUS retval;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 	retval = sir_convert_qos_map_configure_frame2_struct(mac_ctx,
 				body_ptr, frame_len, &session->QosMapSet);
-	if (retval != eSIR_SUCCESS) {
+	if (retval != QDF_STATUS_SUCCESS) {
 		pe_err("QosMapConfigure frame parsing fail %d", retval);
 		return;
 	}
@@ -1104,7 +1104,7 @@ __lim_process_basic_meas_req(tpAniSirGlobal pMac,
 {
 	if (lim_send_meas_report_frame(pMac, pMeasReqFrame,
 				       peerMacAddr, psessionEntry) !=
-					 eSIR_SUCCESS) {
+					 QDF_STATUS_SUCCESS) {
 		pe_err("fail to send Basic Meas report");
 		return;
 	}
@@ -1116,7 +1116,7 @@ __lim_process_cca_meas_req(tpAniSirGlobal pMac,
 {
 	if (lim_send_meas_report_frame(pMac, pMeasReqFrame,
 				       peerMacAddr, psessionEntry) !=
-					 eSIR_SUCCESS) {
+					 QDF_STATUS_SUCCESS) {
 		pe_err("fail to send CCA Meas report");
 		return;
 	}
@@ -1128,7 +1128,7 @@ __lim_process_rpi_meas_req(tpAniSirGlobal pMac,
 {
 	if (lim_send_meas_report_frame(pMac, pMeasReqFrame,
 				       peerMacAddr, psessionEntry) !=
-					 eSIR_SUCCESS) {
+					 QDF_STATUS_SUCCESS) {
 		pe_err("fail to send RPI Meas report");
 		return;
 	}
@@ -1154,7 +1154,7 @@ __lim_process_measurement_request_frame(tpAniSirGlobal pMac,
 	}
 
 	if (sir_convert_meas_req_frame2_struct(pMac, pBody, pMeasReqFrame, frameLen)
-	    != eSIR_SUCCESS) {
+	    != QDF_STATUS_SUCCESS) {
 		pe_warn("Rcv invalid Measurement Request Action Frame");
 		return;
 	}
@@ -1197,13 +1197,13 @@ __lim_process_tpc_request_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		return;
 	}
 	if (sir_convert_tpc_req_frame2_struct(pMac, pBody, pTpcReqFrame, frameLen) !=
-	    eSIR_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		pe_warn("Rcv invalid TPC Req Action Frame");
 		return;
 	}
 	if (lim_send_tpc_report_frame(pMac,
 				      pTpcReqFrame,
-				      pHdr->sa, psessionEntry) != eSIR_SUCCESS) {
+				      pHdr->sa, psessionEntry) != QDF_STATUS_SUCCESS) {
 		pe_err("fail to send TPC Report Frame");
 		return;
 	}
@@ -1344,7 +1344,7 @@ err:
 	qdf_mem_free(frm);
 }
 
-static tSirRetStatus
+static QDF_STATUS
 __lim_process_link_measurement_req(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 				   tpPESession psessionEntry)
 {
@@ -1358,7 +1358,7 @@ __lim_process_link_measurement_req(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 
 	if (psessionEntry == NULL) {
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/**Unpack the received frame */
@@ -1371,7 +1371,7 @@ __lim_process_link_measurement_req(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			nStatus, frameLen);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 				   pBody, frameLen);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	} else if (DOT11F_WARNED(nStatus)) {
 		pe_debug("There were warnings while unpacking a Link Measure request (0x%08x, %d bytes):",
 			nStatus, frameLen);
@@ -1487,7 +1487,7 @@ static void __lim_process_sa_query_request_action_frame(tpAniSirGlobal pMac,
 	if (lim_send_sa_query_response_frame(pMac,
 					     transId,
 					     pHdr->sa,
-					     psessionEntry) != eSIR_SUCCESS) {
+					     psessionEntry) != QDF_STATUS_SUCCESS) {
 		pe_err("fail to send SA query response action frame");
 		return;
 	}
@@ -1990,7 +1990,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 				if (__lim_process_link_measurement_req(
 						mac_ctx,
 						(uint8_t *)rx_pkt_info,
-						session) == eSIR_SUCCESS)
+						session) == QDF_STATUS_SUCCESS)
 					lim_update_last_processed_frame(
 							&rrm_link_action_frm,
 							rx_pkt_info);

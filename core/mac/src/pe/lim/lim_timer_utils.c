@@ -93,7 +93,7 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 	}
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_JOIN_FAILURE_TIMEOUT,
-			     &cfgValue) != eSIR_SUCCESS)
+			     &cfgValue) != QDF_STATUS_SUCCESS)
 		pe_err("could not retrieve JoinFailureTimeout value");
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 	/* Create Join failure timer and activate it later */
@@ -131,7 +131,7 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 	}
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOCIATION_FAILURE_TIMEOUT,
-			     &cfgValue) != eSIR_SUCCESS)
+			     &cfgValue) != QDF_STATUS_SUCCESS)
 		pe_err("could not retrieve AssocFailureTimeout value");
 
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
@@ -145,7 +145,7 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 	}
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_ADDTS_RSP_TIMEOUT, &cfgValue)
-			     != eSIR_SUCCESS)
+			     != QDF_STATUS_SUCCESS)
 		pe_err("Fail to get WNI_CFG_ADDTS_RSP_TIMEOUT");
 
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
@@ -161,7 +161,7 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 	}
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
-			     &cfgValue) != eSIR_SUCCESS)
+			     &cfgValue) != QDF_STATUS_SUCCESS)
 		pe_err("could not retrieve AuthFailureTimeout value");
 
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
@@ -176,7 +176,7 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 	}
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_PROBE_AFTER_HB_FAIL_TIMEOUT,
-			     &cfgValue) != eSIR_SUCCESS)
+			     &cfgValue) != QDF_STATUS_SUCCESS)
 		pe_err("could not retrieve PROBE_AFTER_HB_FAIL_TIMEOUT value");
 
 	/* Change timer to reactivate it in future */
@@ -234,7 +234,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 
 	/* Create all CNF_WAIT Timers upfront */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_WT_CNF_TIMEOUT, &cfgValue)
-		!= eSIR_SUCCESS) {
+		!= QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve CNF timeout value");
 	}
 
@@ -253,7 +253,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 
 	/* Alloc and init table for the preAuth timer list */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_NUM_PRE_AUTH,
-			     &cfgValue) != eSIR_SUCCESS)
+			     &cfgValue) != QDF_STATUS_SUCCESS)
 		pe_err("could not retrieve mac preauth value");
 	pMac->lim.gLimPreAuthTimerTable.numEntry = cfgValue;
 	pMac->lim.gLimPreAuthTimerTable.pTable =
@@ -278,7 +278,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 	pe_debug("alloc and init table for preAuth timers");
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_OLBC_DETECT_TIMEOUT,
-			     &cfgValue) != eSIR_SUCCESS)
+			     &cfgValue) != QDF_STATUS_SUCCESS)
 		pe_err("could not retrieve OLBD detect timeout value");
 
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
@@ -393,7 +393,7 @@ void lim_timer_handler(void *pMacGlobal, uint32_t param)
 	msg.bodyval = 0;
 
 	statusCode = lim_post_msg_high_priority(pMac, &msg);
-	if (statusCode != eSIR_SUCCESS)
+	if (statusCode != QDF_STATUS_SUCCESS)
 		pe_err("posting message: %X to LIM failed, reason: %d",
 			msg.type, statusCode);
 } /****** end lim_timer_handler() ******/
@@ -604,7 +604,7 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 		}
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_JOIN_FAILURE_TIMEOUT,
-				     &val) != eSIR_SUCCESS) {
+				     &val) != QDF_STATUS_SUCCESS) {
 			/**
 			 * Could not get JoinFailureTimeout value
 			 * from CFG. Log error.
@@ -653,7 +653,7 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 		}
 		/* Change timer to reactivate it in future */
 		if (wlan_cfg_get_int(pMac, WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
-				     &val) != eSIR_SUCCESS) {
+				     &val) != QDF_STATUS_SUCCESS) {
 			/**
 			 * Could not get AuthFailureTimeout value
 			 * from CFG. Log error.
@@ -709,7 +709,7 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 		}
 		/* Change timer to reactivate it in future */
 		if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOCIATION_FAILURE_TIMEOUT,
-				     &val) != eSIR_SUCCESS) {
+				     &val) != QDF_STATUS_SUCCESS) {
 			/**
 			 * Could not get AssocFailureTimeout value
 			 * from CFG. Log error.
@@ -739,7 +739,7 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 		}
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_PROBE_AFTER_HB_FAIL_TIMEOUT,
-				     &val) != eSIR_SUCCESS) {
+				     &val) != QDF_STATUS_SUCCESS) {
 			/**
 			 * Could not get PROBE_AFTER_HB_FAILURE
 			 * value from CFG. Log error.
@@ -895,7 +895,7 @@ lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal pMac, uint32_t timerId
 		/* Change timer to reactivate it in future */
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_WT_CNF_TIMEOUT,
-				     &val) != eSIR_SUCCESS) {
+				     &val) != QDF_STATUS_SUCCESS) {
 			/**
 			 * Could not get cnf timeout value
 			 * from CFG. Log error.
@@ -940,7 +940,7 @@ lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal pMac, uint32_t timerId
 
 		if (wlan_cfg_get_int
 			    (pMac, WNI_CFG_AUTHENTICATE_RSP_TIMEOUT,
-			    &val) != eSIR_SUCCESS) {
+			    &val) != QDF_STATUS_SUCCESS) {
 			/**
 			 * Could not get auth rsp timeout value
 			 * from CFG. Log error.
@@ -1055,7 +1055,7 @@ void lim_cnf_wait_tmer_handler(void *pMacGlobal, uint32_t param)
 	msg.bodyptr = NULL;
 
 	statusCode = lim_post_msg_api(pMac, &msg);
-	if (statusCode != eSIR_SUCCESS)
+	if (statusCode != QDF_STATUS_SUCCESS)
 		pe_err("posting to LIM failed, reason: %d", statusCode);
 
 }

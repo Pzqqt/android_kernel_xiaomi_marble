@@ -87,7 +87,7 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 		}
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_OPEN_SYSTEM_AUTH_ENABLE,
-				     &algoEnable) != eSIR_SUCCESS) {
+				     &algoEnable) != QDF_STATUS_SUCCESS) {
 			pe_err("could not retrieve AuthAlgo1 Enable value");
 
 			return false;
@@ -106,7 +106,7 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 
 		if (wlan_cfg_get_int
 			    (pMac, WNI_CFG_SHARED_KEY_AUTH_ENABLE,
-			    &algoEnable) != eSIR_SUCCESS) {
+			    &algoEnable) != QDF_STATUS_SUCCESS) {
 			pe_err("could not retrieve AuthAlgo2 Enable value");
 
 			return false;
@@ -117,7 +117,7 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 		} else
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_PRIVACY_ENABLED,
-				     &privacyOptImp) != eSIR_SUCCESS) {
+				     &privacyOptImp) != QDF_STATUS_SUCCESS) {
 			pe_err("could not retrieve PrivacyOptImplemented value");
 
 			return false;
@@ -691,7 +691,7 @@ lim_rc4(uint8_t *pDest, uint8_t *pSrc, uint8_t *seed, uint32_t keyLength,
  * @param pPlainBody Pointer to the decrypted body
  * @param keyLength  8 (WEP40) or 16 (WEP104)
  *
- * @return Decrypt result - eSIR_SUCCESS for success and
+ * @return Decrypt result - QDF_STATUS_SUCCESS for success and
  *                          LIM_DECRYPT_ICV_FAIL for ICV mismatch.
  *                          If decryption is a success, pBody will
  *                          have decrypted auth frame body.
@@ -732,7 +732,7 @@ lim_decrypt_auth_frame(tpAniSirGlobal pMac, uint8_t *pKey, uint8_t *pEncrBody,
 			return LIM_DECRYPT_ICV_FAIL;
 	}
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 } /****** end lim_decrypt_auth_frame() ******/
 
 /**
@@ -783,7 +783,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 	struct scheduler_msg msgQ = {0};
 	tpSetBssKeyParams pSetBssKeyParams = NULL;
 	tLimMlmSetKeysCnf mlmSetKeysCnf;
-	tSirRetStatus retCode;
+	QDF_STATUS retCode;
 	uint32_t val = 0;
 
 	if (pMlmSetKeysReq->numKeys > SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS) {
@@ -809,7 +809,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 	pSetBssKeyParams->bssIdx = psessionEntry->bssIdx;
 	pSetBssKeyParams->encType = pMlmSetKeysReq->edType;
 
-	if (eSIR_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val))
+	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val))
 		pe_warn("Unable to read WNI_CFG_SINGLE_TID_RC");
 
 	pSetBssKeyParams->singleTidRc = (uint8_t) val;
@@ -847,7 +847,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 	pe_debug("Sending WMA_SET_BSSKEY_REQ...");
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
-	if (eSIR_SUCCESS != retCode) {
+	if (QDF_STATUS_SUCCESS != retCode) {
 		pe_err("Posting SET_BSSKEY to HAL failed, reason=%X",
 			retCode);
 
@@ -891,7 +891,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	struct scheduler_msg msgQ = {0};
 	tpSetStaKeyParams pSetStaKeyParams = NULL;
 	tLimMlmSetKeysCnf mlmSetKeysCnf;
-	tSirRetStatus retCode;
+	QDF_STATUS retCode;
 	uint32_t val = 0;
 
 	/* Package WMA_SET_STAKEY_REQ message parameters */
@@ -905,7 +905,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	pSetStaKeyParams->staIdx = staIdx;
 	pSetStaKeyParams->encType = pMlmSetKeysReq->edType;
 
-	if (eSIR_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val))
+	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val))
 		pe_warn("Unable to read WNI_CFG_SINGLE_TID_RC");
 
 	pSetStaKeyParams->singleTidRc = (uint8_t) val;
@@ -1017,7 +1017,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	pe_debug("Sending WMA_SET_STAKEY_REQ...");
 	MTRACE(mac_trace_msg_tx(pMac, sessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
-	if (eSIR_SUCCESS != retCode) {
+	if (QDF_STATUS_SUCCESS != retCode) {
 		pe_err("Posting SET_STAKEY to HAL failed, reason=%X",
 			retCode);
 		goto free_sta_key;

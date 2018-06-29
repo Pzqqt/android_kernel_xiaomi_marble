@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,7 +35,7 @@
 #include "ani_global.h"
 #include "lim_types.h"
 
-tSirRetStatus lim_get_sta_hash_bssidx(tpAniSirGlobal pMac, uint16_t assocId,
+QDF_STATUS lim_get_sta_hash_bssidx(tpAniSirGlobal pMac, uint16_t assocId,
 				      uint8_t *bssidx, tpPESession psessionEntry);
 
 #endif

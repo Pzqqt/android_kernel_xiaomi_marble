@@ -81,7 +81,7 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	/* Parse received Beacon */
 	if (sir_convert_beacon_frame2_struct(mac_ctx,
 			rx_pkt_info, bcn_ptr) !=
-			eSIR_SUCCESS) {
+			QDF_STATUS_SUCCESS) {
 		/*
 		 * Received wrongly formatted/invalid Beacon.
 		 * Ignore it and move on.

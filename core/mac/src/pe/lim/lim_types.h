@@ -439,7 +439,7 @@ void lim_apply_configuration(tpAniSirGlobal, tpPESession);
 void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry);
 
 /* Function to Initialize MLM state machine on STA */
-tSirRetStatus lim_init_mlm(tpAniSirGlobal);
+QDF_STATUS lim_init_mlm(tpAniSirGlobal);
 
 /* Function to cleanup MLM state machine */
 void lim_cleanup_mlm(tpAniSirGlobal);
@@ -453,7 +453,7 @@ void lim_process_probe_req_frame_multiple_bss(tpAniSirGlobal, uint8_t *,
 
 /* Process Auth frame when we have a session in progress. */
 void lim_process_auth_frame(tpAniSirGlobal, uint8_t *, tpPESession);
-tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *,
+QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *,
 						void *body);
 
 void lim_process_assoc_req_frame(tpAniSirGlobal, uint8_t *, uint8_t, tpPESession);
@@ -511,7 +511,7 @@ void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pRxMetaIn
 void lim_populate_p2p_mac_header(tpAniSirGlobal, uint8_t *);
 void lim_populate_mac_header(tpAniSirGlobal, uint8_t *, uint8_t, uint8_t,
 				      tSirMacAddr, tSirMacAddr);
-tSirRetStatus lim_send_probe_req_mgmt_frame(tpAniSirGlobal, tSirMacSSid *,
+QDF_STATUS lim_send_probe_req_mgmt_frame(tpAniSirGlobal, tSirMacSSid *,
 					    tSirMacAddr, uint8_t, tSirMacAddr,
 					    uint32_t, uint16_t *, uint8_t *);
 void lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal, tSirMacAddr, tpAniSSID, short,
@@ -618,25 +618,25 @@ void lim_process_mlm_update_hidden_ssid_rsp(tpAniSirGlobal mac_ctx,
 tSirResultCodes lim_mlm_add_bss(tpAniSirGlobal, tLimMlmStartReq *,
 				tpPESession psessionEntry);
 
-tSirRetStatus lim_send_channel_switch_mgmt_frame(tpAniSirGlobal, tSirMacAddr,
+QDF_STATUS lim_send_channel_switch_mgmt_frame(tpAniSirGlobal, tSirMacAddr,
 						 uint8_t, uint8_t, uint8_t,
 						 tpPESession);
 
-tSirRetStatus lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 	tSirMacAddr peer, uint8_t mode, uint8_t new_op_class,
 	uint8_t new_channel, uint8_t count, tpPESession session_entry);
-tSirRetStatus lim_p2p_oper_chan_change_confirm_action_frame(
+QDF_STATUS lim_p2p_oper_chan_change_confirm_action_frame(
 	tpAniSirGlobal mac_ctx, tSirMacAddr peer,
 	tpPESession session_entry);
 
-tSirRetStatus lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 						     tSirMacAddr peer, uint8_t nMode,
 						     tpPESession psessionEntry);
 
-tSirRetStatus lim_send_neighbor_report_request_frame(tpAniSirGlobal,
+QDF_STATUS lim_send_neighbor_report_request_frame(tpAniSirGlobal,
 						     tpSirMacNeighborReportReq,
 						     tSirMacAddr, tpPESession);
-tSirRetStatus lim_send_link_report_action_frame(tpAniSirGlobal, tpSirMacLinkReport,
+QDF_STATUS lim_send_link_report_action_frame(tpAniSirGlobal, tpSirMacLinkReport,
 						tSirMacAddr, tpPESession);
 
 /**
@@ -651,7 +651,7 @@ tSirRetStatus lim_send_link_report_action_frame(tpAniSirGlobal, tpSirMacLinkRepo
  *
  * Return: Ret Status
  */
-tSirRetStatus
+QDF_STATUS
 lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 				uint8_t dialog_token,
 				uint8_t num_report,
@@ -663,27 +663,27 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 
 #ifdef FEATURE_WLAN_TDLS
 void lim_init_tdls_data(tpAniSirGlobal, tpPESession);
-tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal pMac,
+QDF_STATUS lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal pMac,
 						 uint32_t *pMsgBuf);
-tSirRetStatus lim_process_sme_tdls_add_sta_req(tpAniSirGlobal pMac,
+QDF_STATUS lim_process_sme_tdls_add_sta_req(tpAniSirGlobal pMac,
 					       uint32_t *pMsgBuf);
-tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
+QDF_STATUS lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 					       uint32_t *pMsgBuf);
 void lim_send_sme_mgmt_tx_completion(
 		tpAniSirGlobal pMac,
 		uint32_t sme_session_id,
 		uint32_t txCompleteStatus);
-tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 				    tpPESession session_entry);
 QDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession);
 void lim_process_tdls_del_sta_rsp(tpAniSirGlobal mac_ctx,
 				  struct scheduler_msg *lim_msg,
 				  tpPESession session_entry);
 #else
-static inline tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
+static inline QDF_STATUS lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 						tpPESession session_entry)
 {
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 static inline void lim_init_tdls_data(tpAniSirGlobal pMac,
 					tpPESession pSessionEntry)
@@ -715,11 +715,11 @@ void lim_set_channel(tpAniSirGlobal pMac, uint8_t channel,
 
 #ifdef ANI_SUPPORT_11H
 /* / Function that sends Measurement Report action frame */
-tSirRetStatus lim_send_meas_report_frame(tpAniSirGlobal, tpSirMacMeasReqActionFrame,
+QDF_STATUS lim_send_meas_report_frame(tpAniSirGlobal, tpSirMacMeasReqActionFrame,
 					 tSirMacAddr, tpPESession psessionEntry);
 
 /* / Function that sends TPC Report action frame */
-tSirRetStatus lim_send_tpc_report_frame(tpAniSirGlobal, tpSirMacTpcReqActionFrame,
+QDF_STATUS lim_send_tpc_report_frame(tpAniSirGlobal, tpSirMacTpcReqActionFrame,
 					tSirMacAddr, tpPESession psessionEntry);
 #endif
 
@@ -763,11 +763,11 @@ void limContinueChannelLearn(tpAniSirGlobal);
 
 #ifdef WLAN_FEATURE_11W
 /* 11w send SA query request action frame */
-tSirRetStatus lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *transId,
+QDF_STATUS lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *transId,
 					      tSirMacAddr peer,
 					      tpPESession psessionEntry);
 /* 11w SA query request action frame handler */
-tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 					       uint8_t *transId, tSirMacAddr peer,
 					       tpPESession psessionEntry);
 #endif
@@ -990,14 +990,14 @@ void lim_send_sme_disassoc_deauth_ntf(tpAniSirGlobal mac_ctx,
 				QDF_STATUS status, uint32_t *ctx);
 
 #ifdef FEATURE_WLAN_TDLS
-tSirRetStatus lim_process_sme_del_all_tdls_peers(tpAniSirGlobal p_mac,
+QDF_STATUS lim_process_sme_del_all_tdls_peers(tpAniSirGlobal p_mac,
 						 uint32_t *msg_buf);
 #else
 static inline
-tSirRetStatus lim_process_sme_del_all_tdls_peers(tpAniSirGlobal p_mac,
+QDF_STATUS lim_process_sme_del_all_tdls_peers(tpAniSirGlobal p_mac,
 						 uint32_t *msg_buf)
 {
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 

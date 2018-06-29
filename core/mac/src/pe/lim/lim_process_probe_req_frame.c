@@ -378,7 +378,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 		/* Parse Probe Request frame */
 		if (sir_convert_probe_req_frame2_struct(mac_ctx, body_ptr,
-				frame_len, &probe_req) == eSIR_FAILURE) {
+				frame_len, &probe_req) == QDF_STATUS_E_FAILURE) {
 			pe_err("Parse error ProbeReq, length: %d, SA is: "
 					MAC_ADDRESS_STR, frame_len,
 					MAC_ADDR_ARRAY(mac_hdr->sa));
@@ -667,7 +667,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 	qdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.probeReqIE, pProbeReqIE,
 		     ProbeReqIELen);
 
-	if (lim_sys_process_mmh_msg_api(pMac, &msgQ, ePROT) != eSIR_SUCCESS)
+	if (lim_sys_process_mmh_msg_api(pMac, &msgQ, ePROT) != QDF_STATUS_SUCCESS)
 		pe_err("couldnt send the probe req to hdd");
 
 } /*** end lim_send_sme_probe_req_ind() ***/

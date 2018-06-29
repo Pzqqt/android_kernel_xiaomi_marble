@@ -145,7 +145,7 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx,
 			   MAC_ADDRESS_STR,
 			   MAC_ADDR_ARRAY(ft_pre_auth_req->currbssId));
 		/* Post the FT Pre Auth Response to SME */
-		lim_post_ft_pre_auth_rsp(mac_ctx, eSIR_FAILURE, NULL, 0,
+		lim_post_ft_pre_auth_rsp(mac_ctx, QDF_STATUS_E_FAILURE, NULL, 0,
 					 session);
 		buf_consumed = true;
 		return buf_consumed;
@@ -159,7 +159,7 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx,
 	}
 
 	/* Can set it only after sending auth */
-	session->ftPEContext.ftPreAuthStatus = eSIR_FAILURE;
+	session->ftPEContext.ftPreAuthStatus = QDF_STATUS_E_FAILURE;
 	session->ftPEContext.ftPreAuthSession = true;
 
 	/* Indicate that this is the session on which preauth is being done */
@@ -290,7 +290,7 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, QDF_STATUS status,
 	pe_debug("FT Auth Rsp Timer Started");
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_ROAM_AUTH_START_EVENT,
-			pMac->lim.pSessionEntry, eSIR_SUCCESS, eSIR_SUCCESS);
+			pMac->lim.pSessionEntry, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 #endif
 
 	lim_send_auth_mgmt_frame(pMac, &authFrame,
@@ -300,7 +300,7 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, QDF_STATUS status,
 	return;
 
 preauth_fail:
-	lim_handle_ft_pre_auth_rsp(pMac, eSIR_FAILURE, NULL, 0, psessionEntry);
+	lim_handle_ft_pre_auth_rsp(pMac, QDF_STATUS_E_FAILURE, NULL, 0, psessionEntry);
 	return;
 }
 
@@ -313,7 +313,7 @@ preauth_fail:
  *
  * Return: Success or Failure Status
  */
-tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
+QDF_STATUS lim_ft_setup_auth_session(tpAniSirGlobal pMac,
 					tpPESession psessionEntry)
 {
 	tpPESession pftSessionEntry = NULL;
@@ -325,13 +325,13 @@ tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
 	if (pftSessionEntry == NULL) {
 		pe_err("No session found for bssid");
 		lim_print_mac_addr(pMac, psessionEntry->limReAssocbssId, LOGE);
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Nothing to be done if the session is not in STA mode */
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
 		pe_err("psessionEntry is not in STA mode");
-		return eSIR_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (psessionEntry->ftPEContext.pFTPreAuthReq &&
@@ -345,7 +345,7 @@ tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
 		     psessionEntry->ftPEContext.pFTPreAuthReq->pbssDescription);
 	}
 
-	return eSIR_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -368,7 +368,7 @@ static void lim_ft_process_pre_auth_result(tpAniSirGlobal pMac,
 		return;
 	}
 
-	if (psessionEntry->ftPEContext.ftPreAuthStatus == eSIR_SUCCESS) {
+	if (psessionEntry->ftPEContext.ftPreAuthStatus == QDF_STATUS_SUCCESS) {
 		psessionEntry->ftPEContext.ftPreAuthStatus =
 			lim_ft_setup_auth_session(pMac, psessionEntry);
 	}
@@ -396,7 +396,7 @@ static void lim_ft_process_pre_auth_result(tpAniSirGlobal pMac,
  *
  * @Return: None
  */
-void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
+void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, QDF_STATUS status,
 				uint8_t *auth_rsp, uint16_t auth_rsp_length,
 				tpPESession psessionEntry)
 {
@@ -435,7 +435,7 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 	}
 
 	/* Create FT session for the re-association at this point */
-	if (psessionEntry->ftPEContext.ftPreAuthStatus == eSIR_SUCCESS) {
+	if (psessionEntry->ftPEContext.ftPreAuthStatus == QDF_STATUS_SUCCESS) {
 		pbssDescription =
 		      psessionEntry->ftPEContext.pFTPreAuthReq->pbssDescription;
 		pftSessionEntry =
@@ -444,7 +444,7 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 					psessionEntry->bssType);
 		if (pftSessionEntry == NULL) {
 			pe_err("Session not created for pre-auth 11R AP");
-			status = eSIR_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			psessionEntry->ftPEContext.ftPreAuthStatus = status;
 			goto send_rsp;
 		}
@@ -571,7 +571,7 @@ void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal mac_ctx)
 	 * Attempted at Pre-Auth and failed. If we are off channel. We need
 	 * to get back to home channel
 	 */
-	lim_handle_ft_pre_auth_rsp(mac_ctx, eSIR_FAILURE, NULL, 0, session);
+	lim_handle_ft_pre_auth_rsp(mac_ctx, QDF_STATUS_E_FAILURE, NULL, 0, session);
 }
 
 /*
@@ -588,7 +588,7 @@ void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal mac_ctx)
  * Return: void
  */
 void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
-			      tSirRetStatus status,
+			      QDF_STATUS status,
 			      uint8_t *auth_rsp,
 			      uint16_t auth_rsp_length,
 			      tpPESession session)
@@ -632,7 +632,7 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 		ft_pre_auth_rsp->ft_ies_length = auth_rsp_length;
 	}
 
-	if (status != eSIR_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		/*
 		 * Ensure that on Pre-Auth failure the cached Pre-Auth Req and
 		 * other allocated memory is freed up before returning.
@@ -647,7 +647,7 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 
 	pe_debug("Posted Auth Rsp to SME with status of 0x%x", status);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
-	if (status == eSIR_SUCCESS)
+	if (status == QDF_STATUS_SUCCESS)
 		lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_PREAUTH_DONE,
 				      session, status, 0);
 #endif
@@ -779,7 +779,7 @@ void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 	case SIR_SCAN_EVENT_START_FAILED:
 		/* Scan command is rejected by firmware */
 		pe_err("Failed to start preauth scan");
-		lim_post_ft_pre_auth_rsp(mac_ctx, eSIR_FAILURE, NULL, 0,
+		lim_post_ft_pre_auth_rsp(mac_ctx, QDF_STATUS_E_FAILURE, NULL, 0,
 					 session_entry);
 		return;
 

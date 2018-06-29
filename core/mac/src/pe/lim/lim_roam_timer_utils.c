@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,7 +40,7 @@ uint32_t lim_create_timers_host_roam(tpAniSirGlobal mac_ctx)
 	uint32_t cfg_value;
 
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
-			     &cfg_value) != eSIR_SUCCESS)
+			     &cfg_value) != QDF_STATUS_SUCCESS)
 		pe_warn("could not retrieve ReassocFailureTimeout value");
 
 	cfg_value = SYS_MS_TO_TICKS(cfg_value);
@@ -113,7 +113,7 @@ void lim_deactivate_and_change_timer_host_roam(tpAniSirGlobal mac_ctx,
 
 		if (wlan_cfg_get_int(mac_ctx,
 				WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
-				&val) != eSIR_SUCCESS)
+				&val) != QDF_STATUS_SUCCESS)
 			pe_warn("could not get ReassocFailureTimeout val");
 
 		val = SYS_MS_TO_TICKS(val);

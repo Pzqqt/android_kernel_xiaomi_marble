@@ -70,7 +70,7 @@ typedef struct sSirFTPreAuthRsp {
 	uint16_t length;
 	uint8_t smeSessionId;
 	tSirMacAddr preAuthbssId;       /* BSSID to preauth to */
-	tSirRetStatus status;
+	QDF_STATUS status;
 	uint16_t ft_ies_length;
 	uint8_t ft_ies[MAX_FTIE_SIZE];
 	uint16_t ric_ies_length;
@@ -102,7 +102,7 @@ typedef struct sSirFTPreAuthKeyInfo {
    ------------------------------------------------------------------------*/
 typedef struct sFTPEContext {
 	tpSirFTPreAuthReq pFTPreAuthReq;        /* Saved FT Pre Auth Req */
-	tSirRetStatus ftPreAuthStatus;
+	QDF_STATUS ftPreAuthStatus;
 	uint16_t saved_auth_rsp_length;
 	uint8_t saved_auth_rsp[MAX_FTIE_SIZE];
 	tSirFTPreAuthKeyInfo PreAuthKeyInfo;

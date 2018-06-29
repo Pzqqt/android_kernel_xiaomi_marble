@@ -363,7 +363,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 {
 	tSirProbeRespBeacon *beacon_struct;
 	uint32_t enable_txbf_20mhz;
-	tSirRetStatus cfg_get_status = eSIR_FAILURE;
+	QDF_STATUS cfg_get_status = QDF_STATUS_E_FAILURE;
 	uint8_t ap_bcon_ch_width;
 	bool new_ch_width_dfn = false;
 	bool is_vendor_ap_present;
@@ -386,7 +386,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   p_ie, ie_len);
 	if (sir_parse_beacon_ie(mac_ctx, beacon_struct, p_ie,
-		(uint32_t) ie_len) != eSIR_SUCCESS) {
+		(uint32_t) ie_len) != QDF_STATUS_SUCCESS) {
 		pe_err("sir_parse_beacon_ie failed to parse beacon");
 		qdf_mem_free(beacon_struct);
 		return;
@@ -458,7 +458,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		cfg_get_status = wlan_cfg_get_int(mac_ctx,
 				WNI_CFG_VHT_ENABLE_TXBF_20MHZ,
 				&enable_txbf_20mhz);
-		if ((IS_SIR_STATUS_SUCCESS(cfg_get_status)) &&
+		if ((QDF_IS_STATUS_SUCCESS(cfg_get_status)) &&
 				(false == enable_txbf_20mhz))
 			session->vht_config.su_beam_formee = 0;
 	} else if (session->vhtCapabilityPresentInBeacon &&
