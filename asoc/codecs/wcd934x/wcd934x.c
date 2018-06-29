@@ -9980,6 +9980,7 @@ static int tavil_device_down(struct wcd9xxx *wcd9xxx)
 	for (count = 0; count < NUM_CODEC_DAIS; count++)
 		priv->dai[count].bus_down_in_recovery = true;
 
+	priv->mbhc->wcd_mbhc.deinit_in_progress = true;
 	if (delayed_work_pending(&priv->spk_anc_dwork.dwork))
 		cancel_delayed_work(&priv->spk_anc_dwork.dwork);
 	for (decimator = 0; decimator < WCD934X_NUM_DECIMATORS; decimator++) {

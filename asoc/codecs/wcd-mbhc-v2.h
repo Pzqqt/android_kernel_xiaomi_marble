@@ -582,6 +582,7 @@ struct wcd_mbhc {
 	struct completion btn_press_compl;
 	struct mutex hphl_pa_lock;
 	struct mutex hphr_pa_lock;
+	bool deinit_in_progress;
 
 	/* Holds mbhc detection method - ADC/Legacy */
 	unsigned int mbhc_detection_logic;
