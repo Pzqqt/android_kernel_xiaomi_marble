@@ -40,6 +40,8 @@
 
 /* Function declarations and documenation */
 
+typedef int (*qdf_thread_os_func)(void *data);
+
 /**
  *  qdf_sleep() - sleep
  *  @ms_interval : Number of milliseconds to suspend the current thread.
@@ -116,6 +118,43 @@ qdf_thread_t *qdf_create_thread(int (*thread_handler)(void *data), void *data,
 	return kthread_create(thread_handler, data, thread_name);
 }
 qdf_export_symbol(qdf_create_thread);
+
+static uint16_t qdf_thread_id;
+
+qdf_thread_t *qdf_thread_run(qdf_thread_func callback, void *context)
+{
+	struct task_struct *thread;
+
+	thread = kthread_create((qdf_thread_os_func)callback, context,
+				"qdf %u", qdf_thread_id++);
+	if (IS_ERR(thread))
+		return NULL;
+
+	get_task_struct(thread);
+	wake_up_process(thread);
+
+	return thread;
+}
+qdf_export_symbol(qdf_thread_run);
+
+QDF_STATUS qdf_thread_join(qdf_thread_t *thread)
+{
+	QDF_STATUS status;
+
+	QDF_BUG(thread);
+
+	status = (QDF_STATUS)kthread_stop(thread);
+	put_task_struct(thread);
+
+	return status;
+}
+qdf_export_symbol(qdf_thread_join);
+
+bool qdf_thread_should_stop(void)
+{
+	return kthread_should_stop();
+}
+qdf_export_symbol(qdf_thread_should_stop);
 
 int qdf_wake_up_process(qdf_thread_t *thread)
 {

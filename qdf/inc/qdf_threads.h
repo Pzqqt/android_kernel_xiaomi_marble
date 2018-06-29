@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +28,7 @@
 #include "i_qdf_threads.h"
 
 typedef __qdf_thread_t qdf_thread_t;
+typedef QDF_STATUS (*qdf_thread_func)(void *context);
 
 /* Function declarations and documenation */
 
@@ -55,6 +56,38 @@ void qdf_set_user_nice(qdf_thread_t *thread, long nice);
  */
 qdf_thread_t *qdf_create_thread(int (*thread_handler)(void *data), void *data,
 				const char thread_name[]);
+
+/**
+ * qdf_thread_run() - run the given function in a new thread
+ *
+ * You must call qdf_thread_join() to avoid a reasource leak!
+ *
+ * For more flexibility, use qdf_create_thread() instead.
+ *
+ * Return: a new qdf_thread pointer
+ */
+qdf_thread_t *qdf_thread_run(qdf_thread_func callback, void *context);
+
+/**
+ * qdf_thread_join() - signal and wait for a thread to stop
+ *
+ * This sets a flag that the given thread can check to see if it should exit.
+ * The thread can check to see if this flag has been set by calling
+ * qdf_thread_should_stop().
+ *
+ * Return: QDF_STATUS - the return value from the thread function
+ */
+QDF_STATUS qdf_thread_join(qdf_thread_t *thread);
+
+/**
+ * qdf_thread_should_stop() - true if the current thread was signalled to stop
+ *
+ * If qdf_thread_join() has been called on the current thread, this API returns
+ * true. Otherwise, this returns false.
+ *
+ * Return: true if the current thread should stop
+ */
+bool qdf_thread_should_stop(void);
 
 /**
  * qdf_wake_up_process() - wake up given thread
