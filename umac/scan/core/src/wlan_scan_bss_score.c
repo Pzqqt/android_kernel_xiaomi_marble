@@ -556,11 +556,6 @@ static int32_t scm_calculate_nss_score(struct wlan_objmgr_psoc *psoc,
 	uint8_t sta_nss;
 
 	sta_nss = score_config->nss;
-
-#ifdef WLAN_POLICY_MGR_ENABLE
-	if (policy_mgr_is_current_hwmode_dbs(psoc))
-		sta_nss--;
-#endif
 	nss = ap_nss;
 	if (sta_nss < nss)
 		nss = sta_nss;
