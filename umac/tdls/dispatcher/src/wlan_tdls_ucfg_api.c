@@ -636,7 +636,7 @@ QDF_STATUS ucfg_tdls_notify_sta_connect(
 	msg.bodyptr = notify;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_NOTIFY_STA_CONNECTION;
-	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 
 	tdls_debug("Exit ");
 	return QDF_STATUS_SUCCESS;
@@ -669,7 +669,7 @@ QDF_STATUS ucfg_tdls_notify_sta_disconnect(
 	msg.bodyptr = notify;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_NOTIFY_STA_DISCONNECTION;
-	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 
 	tdls_debug("Exit ");
 
