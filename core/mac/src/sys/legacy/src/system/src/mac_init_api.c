@@ -86,13 +86,13 @@ QDF_STATUS mac_stop(tHalHandle hHal, tHalStopType stopType)
    \brief this function will be called during init. This function is suppose to allocate all the
  \       memory with the global context will be allocated here.
    \param   tHalHandle pHalHandle
-   \param   hdd_handle_t hHdd
+   \param   hdd_handle_t hdd_handle
    \param   tHalOpenParameters* pHalOpenParams
    \return QDF_STATUS
    -------------------------------------------------------------*/
 
 QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
-		    hdd_handle_t hHdd, struct cds_config_info *cds_cfg)
+		    hdd_handle_t hdd_handle, struct cds_config_info *cds_cfg)
 {
 	tpAniSirGlobal p_mac = &global_mac_context;
 	QDF_STATUS status;
@@ -105,7 +105,7 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	 * (Could be platform dependent as some variables in p_mac are platform
 	 * dependent)
 	 */
-	p_mac->hHdd = hHdd;
+	p_mac->hdd_handle = hdd_handle;
 
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_MAC_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {

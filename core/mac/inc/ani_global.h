@@ -857,7 +857,7 @@ typedef struct sAniSirGlobal {
 	tAniSirSys sys;
 
 	/* PAL/HDD handle */
-	hdd_handle_t hHdd;
+	hdd_handle_t hdd_handle;
 
 
 	tSmeStruct sme;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -137,7 +137,7 @@ QDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg)
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  FL("SME: Received sme_nan_event"));
 		if (pMac->sme.nanCallback) {
-			pMac->sme.nanCallback(pMac->hHdd,
+			pMac->sme.nanCallback(pMac->hdd_handle,
 					      (tSirNanEvent *) pMsg);
 		}
 	}

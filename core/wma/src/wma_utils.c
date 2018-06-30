@@ -1375,7 +1375,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	 * vdev_id/ifacId in link_stats_results will be
 	 * used to retrieve the correct HDD context
 	 */
-	pMac->sme.pLinkLayerStatsIndCallback(pMac->hHdd,
+	pMac->sme.pLinkLayerStatsIndCallback(pMac->hdd_handle,
 					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 					     link_stats_results);
 	qdf_mem_free(link_stats_results);
@@ -1571,7 +1571,7 @@ post_stats:
 	 * vdev_id/ifacId in link_stats_results will be
 	 * used to retrieve the correct HDD context
 	 */
-	mac->sme.pLinkLayerStatsIndCallback(mac->hHdd,
+	mac->sme.pLinkLayerStatsIndCallback(mac->hdd_handle,
 		WMA_LINK_LAYER_STATS_RESULTS_RSP,
 		link_stats_results);
 	wma_unified_radio_tx_mem_free(handle);
@@ -1779,7 +1779,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		return 0;
 	}
 
-	pMac->sme.pLinkLayerStatsIndCallback(pMac->hHdd,
+	pMac->sme.pLinkLayerStatsIndCallback(pMac->hdd_handle,
 					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 					     link_stats_results);
 	wma_unified_radio_tx_mem_free(handle);
@@ -2204,7 +2204,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	 * vdev_id/ifacId in link_stats_results will be
 	 * used to retrieve the correct HDD context
 	 */
-	pMac->sme.pLinkLayerStatsIndCallback(pMac->hHdd,
+	pMac->sme.pLinkLayerStatsIndCallback(pMac->hdd_handle,
 					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 					     link_stats_results);
 	qdf_mem_free(link_stats_results);
@@ -3186,7 +3186,7 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 			}
 			WMA_LOGI("%s: congestion %d", __func__,
 				congestion_stats->congestion);
-			mac->sme.congestion_cb(mac->hHdd,
+			mac->sme.congestion_cb(mac->hdd_handle,
 				congestion_stats->congestion,
 				congestion_stats->vdev_id);
 		}
@@ -4611,7 +4611,7 @@ int wma_chip_power_save_failure_detected_handler(void *handle,
 				event->protocol_wake_lock_bitmap[2];
 	pwr_save_fail_params.wake_lock_bitmap[3] =
 				event->protocol_wake_lock_bitmap[3];
-	mac->sme.chip_power_save_fail_cb(mac->hHdd,
+	mac->sme.chip_power_save_fail_cb(mac->hdd_handle,
 				&pwr_save_fail_params);
 
 	WMA_LOGD("%s: Invoke HDD pwr_save_fail callback", __func__);

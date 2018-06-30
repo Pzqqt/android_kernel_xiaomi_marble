@@ -556,7 +556,8 @@ void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
 
 hb_handler_fail:
 	if (mac_ctx->sme.tx_queue_cb)
-		mac_ctx->sme.tx_queue_cb(mac_ctx->hHdd, session->smeSessionId,
+		mac_ctx->sme.tx_queue_cb(mac_ctx->hdd_handle,
+					 session->smeSessionId,
 					 WLAN_WAKE_ALL_NETIF_QUEUE,
 					 WLAN_CONTROL_PATH);
 }

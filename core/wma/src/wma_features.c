@@ -4671,7 +4671,7 @@ int wma_apf_read_work_memory_event_handler(void *handle, uint8_t *evt_buf,
 		return -EINVAL;
 	}
 
-	pmac->sme.apf_read_mem_cb(pmac->hHdd, &evt_params);
+	pmac->sme.apf_read_mem_cb(pmac->hdd_handle, &evt_params);
 
 	return 0;
 }
@@ -5120,7 +5120,7 @@ int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
 	event->vdev_id = fix_param->vdev_id;
 	event->reason_code = fix_param->reason;
 
-	p_mac->sme.p2p_lo_event_callback(p_mac->hHdd, event);
+	p_mac->sme.p2p_lo_event_callback(p_mac->hdd_handle, event);
 
 	wma->interfaces[event->vdev_id].p2p_lo_in_progress = false;
 
@@ -5453,7 +5453,7 @@ int wma_get_arp_stats_handler(void *handle, uint8_t *data,
 			connect_stats_event->icmpv4_rsp_recvd);
 	}
 
-	mac->sme.get_arp_stats_cb(mac->hHdd, &rsp,
+	mac->sme.get_arp_stats_cb(mac->hdd_handle, &rsp,
 				  mac->sme.get_arp_stats_context);
 
 	return 0;
@@ -5708,7 +5708,7 @@ int wma_rx_aggr_failure_event_handler(void *handle, u_int8_t *event_buf,
 		hole_info++;
 	}
 
-	mac->sme.stats_ext2_cb(mac->hHdd, rx_aggr_hole_event);
+	mac->sme.stats_ext2_cb(mac->hdd_handle, rx_aggr_hole_event);
 	qdf_mem_free(rx_aggr_hole_event);
 
 	return 0;

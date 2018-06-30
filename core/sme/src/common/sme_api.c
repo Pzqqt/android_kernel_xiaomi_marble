@@ -2201,7 +2201,7 @@ QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 #ifdef FEATURE_WLAN_EXTSCAN
 	case eWNI_SME_EXTSCAN_FULL_SCAN_RESULT_IND:
 		if (pMac->sme.pExtScanIndCb)
-			pMac->sme.pExtScanIndCb(pMac->hHdd,
+			pMac->sme.pExtScanIndCb(pMac->hdd_handle,
 					eSIR_EXTSCAN_FULL_SCAN_RESULT_IND,
 					pMsg->bodyptr);
 		else
@@ -2212,7 +2212,7 @@ QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 		break;
 	case eWNI_SME_EPNO_NETWORK_FOUND_IND:
 		if (pMac->sme.pExtScanIndCb)
-			pMac->sme.pExtScanIndCb(pMac->hHdd,
+			pMac->sme.pExtScanIndCb(pMac->hdd_handle,
 					eSIR_EPNO_NETWORK_FOUND_IND,
 					pMsg->bodyptr);
 		else
@@ -2313,8 +2313,8 @@ QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 		break;
 	case eWNI_SME_SET_THERMAL_LEVEL_IND:
 		if (pMac->sme.set_thermal_level_cb)
-			pMac->sme.set_thermal_level_cb(pMac->hHdd,
-								pMsg->bodyval);
+			pMac->sme.set_thermal_level_cb(pMac->hdd_handle,
+						       pMsg->bodyval);
 		break;
 	case eWNI_SME_EXT_CHANGE_CHANNEL_IND:
 		 status = sme_extended_change_channel_ind(pMac, pMsg->bodyptr);
@@ -2331,24 +2331,25 @@ QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 		break;
 	case eWNI_SME_LOST_LINK_INFO_IND:
 		if (pMac->sme.lost_link_info_cb)
-			pMac->sme.lost_link_info_cb(pMac->hHdd,
+			pMac->sme.lost_link_info_cb(pMac->hdd_handle,
 				(struct sir_lost_link_info *)pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 	case eWNI_SME_RSO_CMD_STATUS_IND:
 		if (pMac->sme.rso_cmd_status_cb)
-			pMac->sme.rso_cmd_status_cb(pMac->hHdd, pMsg->bodyptr);
+			pMac->sme.rso_cmd_status_cb(pMac->hdd_handle,
+						    pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 	case eWMI_SME_LL_STATS_IND:
 		if (pMac->sme.link_layer_stats_ext_cb)
-			pMac->sme.link_layer_stats_ext_cb(pMac->hHdd,
+			pMac->sme.link_layer_stats_ext_cb(pMac->hdd_handle,
 							  pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 	case eWNI_SME_BT_ACTIVITY_INFO_IND:
 		if (pMac->sme.bt_activity_info_cb)
-			pMac->sme.bt_activity_info_cb(pMac->hHdd,
+			pMac->sme.bt_activity_info_cb(pMac->hdd_handle,
 						      pMsg->bodyval);
 		break;
 	default:
@@ -10784,7 +10785,7 @@ static QDF_STATUS sme_stats_ext_event(tpAniSirGlobal mac,
 	}
 
 	if (mac->sme.StatsExtCallback)
-		mac->sme.StatsExtCallback(mac->hHdd, msg);
+		mac->sme.StatsExtCallback(mac->hdd_handle, msg);
 
 	return QDF_STATUS_SUCCESS;
 }

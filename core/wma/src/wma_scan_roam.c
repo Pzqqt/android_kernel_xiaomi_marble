@@ -2856,7 +2856,7 @@ int wma_rssi_breached_event_handler(void *handle,
 		rssi.request_id, rssi.session_id, rssi.curr_rssi);
 	WMA_LOGI("%s: curr_bssid: %pM", __func__, rssi.curr_bssid.bytes);
 
-	mac->sme.rssi_threshold_breached_cb(mac->hHdd, &rssi);
+	mac->sme.rssi_threshold_breached_cb(mac->hdd_handle, &rssi);
 	WMA_LOGD("%s: Invoke HDD rssi breached callback", __func__);
 	return 0;
 }
@@ -3446,7 +3446,7 @@ int wma_extscan_start_stop_event_handler(void *handle,
 		qdf_mem_free(extscan_ind);
 		return -EINVAL;
 	}
-	pMac->sme.pExtScanIndCb(pMac->hHdd, event_type, extscan_ind);
+	pMac->sme.pExtScanIndCb(pMac->hdd_handle, event_type, extscan_ind);
 	WMA_LOGD("%s: sending event to umac for requestid %u with status %d",
 		__func__, extscan_ind->request_id, extscan_ind->status);
 	qdf_mem_free(extscan_ind);
@@ -3563,7 +3563,7 @@ int wma_extscan_operations_event_handler(void *handle,
 		qdf_mem_free(oprn_ind);
 		return -EINVAL;
 	}
-	pMac->sme.pExtScanIndCb(pMac->hHdd,
+	pMac->sme.pExtScanIndCb(pMac->hdd_handle,
 				eSIR_EXTSCAN_SCAN_PROGRESS_EVENT_IND, oprn_ind);
 	WMA_LOGI("%s: sending scan progress event to hdd", __func__);
 exit_handler:
@@ -3613,7 +3613,7 @@ int wma_extscan_table_usage_event_handler(void *handle,
 	}
 	tbl_usg_ind->requestId = event->request_id;
 	tbl_usg_ind->numResultsAvailable = event->entries_in_use;
-	pMac->sme.pExtScanIndCb(pMac->hHdd,
+	pMac->sme.pExtScanIndCb(pMac->hdd_handle,
 				eSIR_EXTSCAN_SCAN_RES_AVAILABLE_IND,
 				tbl_usg_ind);
 	WMA_LOGI("%s: sending scan_res available event to hdd", __func__);
@@ -3720,7 +3720,7 @@ int wma_extscan_capabilities_event_handler(void *handle,
 		__func__, dest_capab->max_number_of_white_listed_ssid,
 		dest_capab->max_number_of_black_listed_bssid);
 
-	pMac->sme.pExtScanIndCb(pMac->hHdd,
+	pMac->sme.pExtScanIndCb(pMac->hdd_handle,
 				eSIR_EXTSCAN_GET_CAPABILITIES_IND, dest_capab);
 	qdf_mem_free(dest_capab);
 	return 0;
@@ -3840,7 +3840,7 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 		src_hotlist++;
 	}
 	dest_hotlist->ap_found = ap_found;
-	pMac->sme.pExtScanIndCb(pMac->hHdd,
+	pMac->sme.pExtScanIndCb(pMac->hdd_handle,
 				eSIR_EXTSCAN_HOTLIST_MATCH_IND, dest_hotlist);
 	WMA_LOGI("%s: sending hotlist match event to hdd", __func__);
 	qdf_mem_free(dest_hotlist);
@@ -4149,7 +4149,7 @@ int wma_extscan_cached_results_event_handler(void *handle,
 
 	status = wma_group_num_bss_to_scan_id(cmd_param_info, dest_cachelist);
 	if (!status)
-	pMac->sme.pExtScanIndCb(pMac->hHdd,
+	pMac->sme.pExtScanIndCb(pMac->hdd_handle,
 				eSIR_EXTSCAN_CACHED_RESULTS_IND,
 				dest_cachelist);
 	else
@@ -4170,7 +4170,7 @@ noresults:
 	empty_cachelist.more_data = 0;
 	empty_cachelist.num_scan_ids = 0;
 
-	pMac->sme.pExtScanIndCb(pMac->hHdd,
+	pMac->sme.pExtScanIndCb(pMac->hdd_handle,
 				eSIR_EXTSCAN_CACHED_RESULTS_IND,
 				&empty_cachelist);
 	return 0;
@@ -4312,7 +4312,7 @@ int wma_extscan_change_results_event_handler(void *handle,
 	dest_chglist->moreData = moredata;
 	dest_chglist->numResults = numap;
 
-	pMac->sme.pExtScanIndCb(pMac->hHdd,
+	pMac->sme.pExtScanIndCb(pMac->hdd_handle,
 			eSIR_EXTSCAN_SIGNIFICANT_WIFI_CHANGE_RESULTS_IND,
 			dest_chglist);
 	WMA_LOGI("%s: sending change monitor results", __func__);
@@ -4425,7 +4425,7 @@ int wma_passpoint_match_event_handler(void *handle,
 			WMI_TLV_HDR_SIZE + dest_ap->ieLength,
 			dest_match->anqp_len);
 
-	mac->sme.pExtScanIndCb(mac->hHdd,
+	mac->sme.pExtScanIndCb(mac->hdd_handle,
 				eSIR_PASSPOINT_NETWORK_FOUND_IND,
 				dest_match);
 	WMA_LOGI("%s: sending passpoint match event to hdd", __func__);

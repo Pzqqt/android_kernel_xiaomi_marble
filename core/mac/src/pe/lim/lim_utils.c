@@ -5524,7 +5524,7 @@ void lim_handle_heart_beat_failure_timeout(tpAniSirGlobal mac_ctx)
 			lim_print_mlm_state(mac_ctx, LOGE,
 				psession_entry->limMlmState);
 			if (mac_ctx->sme.tx_queue_cb)
-				mac_ctx->sme.tx_queue_cb(mac_ctx->hHdd,
+				mac_ctx->sme.tx_queue_cb(mac_ctx->hdd_handle,
 						psession_entry->smeSessionId,
 						WLAN_WAKE_ALL_NETIF_QUEUE,
 						WLAN_CONTROL_PATH);

@@ -67,7 +67,7 @@ int wma_twt_en_complete_event_handler(void *handle,
 	WMA_LOGD("TWT: Received TWT enable comp event, status:%d", status);
 
 	if (mac->sme.twt_enable_cb)
-		mac->sme.twt_enable_cb(mac->hHdd, &param);
+		mac->sme.twt_enable_cb(mac->hdd_handle, &param);
 
 	return status;
 }

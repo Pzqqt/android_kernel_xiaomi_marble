@@ -35,7 +35,7 @@
 QDF_STATUS mac_start(tHalHandle hHal, void *pHalMacStartParams);
 QDF_STATUS mac_stop(tHalHandle hHal, tHalStopType stopType);
 QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
-		    hdd_handle_t hHdd, struct cds_config_info *cds_cfg);
+		    hdd_handle_t hdd_handle, struct cds_config_info *cds_cfg);
 QDF_STATUS mac_close(tHalHandle hHal);
 
 #endif /* __MAC_INIT_API_H */

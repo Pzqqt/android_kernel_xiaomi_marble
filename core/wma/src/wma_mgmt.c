@@ -2957,7 +2957,7 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 		return;
 	}
 	if (mac && mac->sme.tx_queue_cb)
-		mac->sme.tx_queue_cb(mac->hHdd, vdev_id,
+		mac->sme.tx_queue_cb(mac->hdd_handle, vdev_id,
 				     WLAN_STOP_ALL_NETIF_QUEUE,
 				     WLAN_CONTROL_PATH);
 	beacon_miss_ind->messageType = WMA_MISSED_BEACON_IND;

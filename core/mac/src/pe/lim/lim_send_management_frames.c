@@ -3192,7 +3192,7 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
 	qdf_status =
-		cds_packet_alloc(pMac->hHdd, TXRX_FRM_802_11_MGMT,
+		cds_packet_alloc(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				 (uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -3220,7 +3220,7 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to pack a Measurement Report (0x%08x)",
 			nStatus);
-		cds_packet_free(pMac->hHdd, TXRX_FRM_802_11_MGMT,
+		cds_packet_free(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				(void *)pFrame, (void *)pPacket);
 		return QDF_STATUS_E_FAILURE;    /* allocated! */
 	} else if (DOT11F_WARNED(nStatus)) {
@@ -3292,7 +3292,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
 	qdf_status =
-		cds_packet_alloc(pMac->hHdd, TXRX_FRM_802_11_MGMT,
+		cds_packet_alloc(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				 (uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -3320,7 +3320,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to pack a TPC Request (0x%08x)",
 			nStatus);
-		cds_packet_free(pMac->hHdd, TXRX_FRM_802_11_MGMT,
+		cds_packet_free(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				(void *)pFrame, (void *)pPacket);
 		return;         /* allocated! */
 	} else if (DOT11F_WARNED(nStatus)) {
@@ -3395,7 +3395,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
 	qdf_status =
-		cds_packet_alloc(pMac->hHdd, TXRX_FRM_802_11_MGMT,
+		cds_packet_alloc(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				 (uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -3424,7 +3424,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to pack a TPC Report (0x%08x)",
 			nStatus);
-		cds_packet_free(pMac->hHdd, TXRX_FRM_802_11_MGMT,
+		cds_packet_free(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				(void *)pFrame, (void *)pPacket);
 		return QDF_STATUS_E_FAILURE;    /* allocated! */
 	} else if (DOT11F_WARNED(nStatus)) {
