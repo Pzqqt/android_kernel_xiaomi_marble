@@ -8441,7 +8441,7 @@ void hdd_rssi_threshold_breached(void *hddctx,
 				  GFP_KERNEL);
 
 	if (!skb) {
-		hdd_err("cfg80211_vendor_event_alloc failed");
+		hdd_err("mem alloc failed");
 		return;
 	}
 
