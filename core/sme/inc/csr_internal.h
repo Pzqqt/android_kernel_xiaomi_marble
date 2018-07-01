@@ -834,7 +834,7 @@ struct csr_roam_session {
 
 	csr_session_open_cb  session_open_cb;
 	csr_session_close_cb session_close_cb;
-	csr_roam_completeCallback callback;
+	csr_roam_complete_cb callback;
 	void *pContext;
 	eCsrConnectState connectState;
 	struct rsn_caps rsn_caps;

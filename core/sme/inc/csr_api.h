@@ -1664,11 +1664,11 @@ typedef QDF_STATUS (*csr_scan_completeCallback)(tHalHandle, void *p2,
 						uint8_t sessionId,
 						uint32_t scanID,
 						eCsrScanStatus status);
-typedef QDF_STATUS (*csr_roam_completeCallback)(void *pContext,
-						struct csr_roam_info *pParam,
-						uint32_t roamId,
-						eRoamCmdStatus roamStatus,
-						eCsrRoamResult roamResult);
+typedef QDF_STATUS (*csr_roam_complete_cb)(void *context,
+					   struct csr_roam_info *param,
+					   uint32_t roam_id,
+					   eRoamCmdStatus roam_status,
+					   eCsrRoamResult roam_result);
 typedef QDF_STATUS (*csr_session_open_cb)(uint8_t session_id);
 typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 

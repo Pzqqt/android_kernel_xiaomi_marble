@@ -264,9 +264,9 @@ typedef struct sWLAN_SAPEvent {
 	void *params;
 	/* State machine input event message */
 	uint32_t event;
-	/* introduced to handle csr_roam_completeCallback roamStatus */
+	/* introduced to handle csr_roam_complete_cb roamStatus */
 	uint32_t u1;
-	/* introduced to handle csr_roam_completeCallback roamResult */
+	/* introduced to handle csr_roam_complete_cb roamResult */
 	uint32_t u2;
 } tWLAN_SAPEvent, *ptWLAN_SAPEvent;
 

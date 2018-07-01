@@ -2083,7 +2083,7 @@ struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
 					  tSirMacAddr macAddr);
 
 int hdd_vdev_create(struct hdd_adapter *adapter,
-		    csr_roam_completeCallback callback, void *ctx);
+		    csr_roam_complete_cb callback, void *ctx);
 int hdd_vdev_destroy(struct hdd_adapter *adapter);
 int hdd_vdev_ready(struct hdd_adapter *adapter);
 

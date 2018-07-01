@@ -233,6 +233,8 @@ struct sme_5g_band_pref_params {
  * struct sme_session_params: Session creation params passed by HDD layer
  * @session_open_cb: callback to be registered with SME for opening the session
  * @session_close_cb: callback to be registered with SME for closing the session
+ * @callback: callback to be invoked for roaming events
+ * @callback_ctx: user-supplied context to be passed back on roaming events
  * @self_mac_addr: Self mac address
  * @sme_session_id: SME session id
  * @type_of_persona: person type
@@ -241,7 +243,7 @@ struct sme_5g_band_pref_params {
 struct sme_session_params {
 	csr_session_open_cb  session_open_cb;
 	csr_session_close_cb session_close_cb;
-	csr_roam_completeCallback callback;
+	csr_roam_complete_cb callback;
 	void *callback_ctx;
 	uint8_t *self_mac_addr;
 	uint8_t sme_session_id;

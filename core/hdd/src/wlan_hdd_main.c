@@ -3996,7 +3996,7 @@ release_vdev:
 
 static int hdd_set_sme_session_param(struct hdd_adapter *adapter,
 			struct sme_session_params *session_param,
-			csr_roam_completeCallback callback,
+			csr_roam_complete_cb callback,
 			void *callback_ctx)
 {
 	uint32_t type;
@@ -4022,7 +4022,7 @@ static int hdd_set_sme_session_param(struct hdd_adapter *adapter,
 }
 
 int hdd_vdev_create(struct hdd_adapter *adapter,
-		    csr_roam_completeCallback callback, void *ctx)
+		    csr_roam_complete_cb callback, void *ctx)
 {
 	QDF_STATUS status;
 	int errno;
