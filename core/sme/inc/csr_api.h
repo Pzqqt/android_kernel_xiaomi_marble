@@ -1656,14 +1656,6 @@ struct wep_update_default_key_idx {
 	uint8_t default_idx;
 };
 
-/*
- * NOTE: p2 is the second context pass in for the caller
- * NOTE: what if callback is called before requester gets the scanId??
- */
-typedef QDF_STATUS (*csr_scan_completeCallback)(tHalHandle, void *p2,
-						uint8_t sessionId,
-						uint32_t scanID,
-						eCsrScanStatus status);
 typedef QDF_STATUS (*csr_roam_complete_cb)(void *context,
 					   struct csr_roam_info *param,
 					   uint32_t roam_id,

@@ -7995,39 +7995,6 @@ void wlan_hdd_clear_netif_queue_history(struct hdd_context *hdd_ctx)
 	}
 }
 
-/**
- * hdd_11d_scan_done() - callback for 11d scan completion of flushing results
- * @mac_handle:	MAC handle
- * @context:	Pointer to the context
- * @session_id:	Session ID
- * @scan_id:	Scan ID
- * @status:	Status
- *
- * This is the callback to be executed when 11d scan is completed to flush out
- * the scan results
- *
- * 11d scan is done during driver load and is a passive scan on all
- * channels supported by the device, 11d scans may find some APs on
- * frequencies which are forbidden to be used in the regulatory domain
- * the device is operating in. If these APs are notified to the supplicant
- * it may try to connect to these APs, thus flush out all the scan results
- * which are present in SME after 11d scan is done.
- *
- * Return:  QDF_STATUS_SUCCESS
- */
-static QDF_STATUS hdd_11d_scan_done(mac_handle_t mac_handle, void *context,
-				    uint8_t session_id, uint32_t scan_id,
-				    eCsrScanStatus status)
-{
-	hdd_enter();
-
-	sme_scan_flush_result(mac_handle);
-
-	hdd_exit();
-
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef WLAN_FEATURE_OFFLOAD_PACKETS
 /**
  * hdd_init_offloaded_packets_ctx() - Initialize offload packets context
@@ -11280,7 +11247,6 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 	hdd_enter();
 
 	mac_handle = hdd_ctx->mac_handle;
-	sme_register11d_scan_done_callback(mac_handle, hdd_11d_scan_done);
 
 	sme_register_oem_data_rsp_callback(mac_handle,
 					   hdd_send_oem_data_rsp_msg);
@@ -11387,7 +11353,6 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 		hdd_err("Failed to de-register data stall detect event callback");
 
 	sme_deregister_oem_data_rsp_callback(mac_handle);
-	sme_deregister11d_scan_done_callback(mac_handle);
 
 	hdd_exit();
 }

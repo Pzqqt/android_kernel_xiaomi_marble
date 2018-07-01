@@ -3900,49 +3900,6 @@ void sme_set_dhcp_till_power_active_flag(tHalHandle hal, uint8_t flag)
 	ps_global_info->remain_in_power_active_till_dhcp = flag;
 }
 
-/*
- * sme_register11d_scan_done_callback() -
- * Register a routine of type csr_scan_completeCallback which is
- *	called whenever an 11d scan is done
- *
- * hHal - The handle returned by mac_open.
- * callback -  11d scan complete routine to be registered
- * Return QDF_STATUS
- */
-QDF_STATUS sme_register11d_scan_done_callback(tHalHandle hHal,
-					     csr_scan_completeCallback callback)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	pMac->scan.callback11dScanDone = callback;
-
-	return status;
-}
-
-/**
- * sme_deregister11d_scan_done_callback() - De-register scandone callback
- * @h_hal: Handler return by mac_open
- *
- * This function De-registers the scandone callback  to SME
- *
- * Return: None
- */
-void sme_deregister11d_scan_done_callback(tHalHandle h_hal)
-{
-	tpAniSirGlobal pmac;
-
-	if (!h_hal) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("hHal is not valid"));
-		return;
-	}
-
-	pmac = PMAC_STRUCT(h_hal);
-	pmac->scan.callback11dScanDone = NULL;
-}
-
-
 #ifdef FEATURE_OEM_DATA_SUPPORT
 /**
  * sme_register_oem_data_rsp_callback() - Register a routine of

@@ -523,9 +523,6 @@ QDF_STATUS sme_get_modify_profile_fields(tHalHandle hHal, uint8_t sessionId,
 extern QDF_STATUS sme_set_host_power_save(tHalHandle hHal, bool psMode);
 
 void sme_set_dhcp_till_power_active_flag(tHalHandle hHal, uint8_t flag);
-extern QDF_STATUS sme_register11d_scan_done_callback(tHalHandle hHal,
-		csr_scan_completeCallback);
-void sme_deregister11d_scan_done_callback(tHalHandle hHal);
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 extern QDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,

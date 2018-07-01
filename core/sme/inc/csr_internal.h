@@ -685,7 +685,6 @@ struct csr_scanstruct {
 	struct csr_channel occupiedChannels[CSR_ROAM_SESSION_MAX];
 	int8_t roam_candidate_count[CSR_ROAM_SESSION_MAX];
 	int8_t inScanResultBestAPRssi;
-	csr_scan_completeCallback callback11dScanDone;
 	bool fcc_constraint;
 	uint8_t max_scan_count;
 	bool defer_update_channel_list;
