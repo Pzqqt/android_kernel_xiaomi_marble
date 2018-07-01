@@ -1413,6 +1413,33 @@ static QDF_STATUS send_vdev_set_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ *  send_vdev_sifs_trigger_cmd_non_tlv() - WMI vdev sifs trigger param function
+ *
+ *  @param wmi_handle     : handle to WMI.
+ *  @param param        : pointer to hold sifs trigger parameter
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+QDF_STATUS send_vdev_sifs_trigger_cmd_non_tlv(wmi_unified_t wmi_handle,
+					      struct sifs_trigger_param *param)
+{
+	wmi_vdev_sifs_trigger_time_cmd *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(wmi_vdev_sifs_trigger_time_cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_vdev_sifs_trigger_time_cmd *)wmi_buf_data(buf);
+	cmd->vdev_id = param->if_id;
+	cmd->sifs_trigger_time = param->param_value;
+
+	return wmi_unified_cmd_send(wmi_handle, buf, len,
+				    WMI_VDEV_SIFS_TRIGGER_TIME_CMDID);
+}
+
+/**
  *  get_stats_id_non_tlv() - Get stats identifier function
  *
  *  @param host_stats_id: host stats identifier value
@@ -8724,6 +8751,7 @@ struct wmi_ops non_tlv_ops =  {
 	.send_crash_inject_cmd = send_crash_inject_cmd_non_tlv,
 	.send_dbglog_cmd = send_dbglog_cmd_non_tlv,
 	.send_vdev_set_param_cmd = send_vdev_set_param_cmd_non_tlv,
+	.send_vdev_sifs_trigger_cmd = send_vdev_sifs_trigger_cmd_non_tlv,
 	.send_stats_request_cmd = send_stats_request_cmd_non_tlv,
 	.send_packet_log_enable_cmd = send_packet_log_enable_cmd_non_tlv,
 	.send_packet_log_disable_cmd = send_packet_log_disable_cmd_non_tlv,

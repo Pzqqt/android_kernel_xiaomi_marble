@@ -679,6 +679,25 @@ QDF_STATUS wmi_unified_vdev_set_param_send(void *wmi_hdl,
 }
 
 /**
+ *  wmi_unified_sifs_trigger_send() - WMI vdev sifs trigger parameter function
+ *  @param wmi_handle      : handle to WMI.
+ *  @param param    : pointer to hold sifs trigger parameter
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_sifs_trigger_send(void *wmi_hdl,
+					 struct sifs_trigger_param *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_vdev_sifs_trigger_cmd)
+		return wmi_handle->ops->send_vdev_sifs_trigger_cmd(wmi_handle,
+				param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  *  wmi_unified_stats_request_send() - WMI request stats function
  *  @param wmi_handle      : handle to WMI.
  *  @param macaddr        : MAC address
