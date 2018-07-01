@@ -924,8 +924,6 @@ QDF_STATUS wma_unified_fw_profiling_cmd(wmi_unified_t wmi_handle,
 
 void wma_wow_tx_complete(void *wma);
 
-int wmi_unified_nat_keepalive_enable(tp_wma_handle wma, uint8_t vdev_id);
-
 int wma_unified_csa_offload_enable(tp_wma_handle wma, uint8_t vdev_id);
 
 #ifdef WLAN_FEATURE_NAN

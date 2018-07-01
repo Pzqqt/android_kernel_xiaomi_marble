@@ -5135,9 +5135,9 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	}
 
 	if (wmi_service_enabled(wma->wmi_handle,
-				   wmi_service_filter_ipsec_natkeepalive)) {
-		if (wmi_unified_nat_keepalive_enable(wma, params->smesessionId)
-		    < 0) {
+				wmi_service_filter_ipsec_natkeepalive)) {
+		if (wmi_unified_nat_keepalive_en_cmd(wma->wmi_handle,
+						     params->smesessionId)) {
 			WMA_LOGE("Unable to enable NAT keepalive for vdev_id:%d",
 				params->smesessionId);
 		}

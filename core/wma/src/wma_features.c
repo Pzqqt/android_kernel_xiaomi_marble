@@ -1187,22 +1187,6 @@ void wma_check_and_set_wake_timer(uint32_t time)
 }
 
 /**
- * wmi_unified_nat_keepalive_enable() - enable NAT keepalive filter
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * Return: 0 for success or error code
- */
-int wmi_unified_nat_keepalive_enable(tp_wma_handle wma, uint8_t vdev_id)
-{
-
-	if (wmi_unified_nat_keepalive_en_cmd(wma->wmi_handle, vdev_id))
-		return QDF_STATUS_E_FAILURE;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wma_unified_csa_offload_enable() - sen CSA offload enable command
  * @wma: wma handle
  * @vdev_id: vdev id
