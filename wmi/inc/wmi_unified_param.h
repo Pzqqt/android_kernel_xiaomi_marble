@@ -881,6 +881,15 @@ struct vdev_set_params {
 	uint32_t param_value;
 };
 
+/**
+ * struct sifs_trigger_param - sifs_trigger cmd parameter
+ * @if_id: vdev id
+ * @param_value: parameter value
+ */
+struct sifs_trigger_param {
+	uint32_t if_id;
+	uint32_t param_value;
+};
 
 /**
  * struct peer_delete_params - peer delete cmd parameter

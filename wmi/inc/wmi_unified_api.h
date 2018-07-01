@@ -470,6 +470,9 @@ QDF_STATUS wmi_unified_hidden_ssid_vdev_restart_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_vdev_set_param_send(void *wmi_hdl,
 				struct vdev_set_params *param);
 
+QDF_STATUS wmi_unified_sifs_trigger_send(void *wmi_hdl,
+					 struct sifs_trigger_param *param);
+
 QDF_STATUS wmi_unified_peer_delete_send(void *wmi_hdl,
 				    uint8_t
 				    peer_addr[IEEE80211_ADDR_LEN],
