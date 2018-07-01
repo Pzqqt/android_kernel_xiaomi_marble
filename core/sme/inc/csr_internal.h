@@ -375,6 +375,8 @@ struct addstafor_sessioncmd {
 struct delstafor_sessionCmd {
 	/* Session self mac addr */
 	tSirMacAddr selfMacAddr;
+	csr_session_close_cb session_close_cb;
+	void *context;
 };
 
 struct csr_neighbor_roamconfig {

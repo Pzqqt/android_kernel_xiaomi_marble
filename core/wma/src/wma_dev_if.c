@@ -587,15 +587,12 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 		goto out;
 	}
 
-	QDF_BUG(qdf_atomic_read(&iface->fw_peer_count) == 0);
 
 	status = wmi_unified_vdev_delete_send(wma_handle->wmi_handle, vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Unable to remove an interface");
 		goto out;
 	}
-
-	qdf_event_destroy(&iface->fw_peer_delete_completion);
 
 	WMA_LOGD("vdev_id:%hu vdev_hdl:%pK", vdev_id, iface->handle);
 	if (!generate_rsp) {
@@ -701,58 +698,8 @@ static void wma_force_vdev_cleanup(tp_wma_handle wma_handle, uint8_t vdev_id)
 					 wma_peer_remove_for_vdev_callback,
 					 wma_handle);
 
-	qdf_atomic_init(&iface->fw_peer_count);
-	qdf_event_destroy(&iface->fw_peer_delete_completion);
-
 VDEV_DETACH:
 	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
-}
-
-#define WMA_WAIT_PEER_DELETE_COMPLETION_TIMEOUT (WMA_VDEV_STOP_REQUEST_TIMEOUT+ 1000)
-
-/**
- * wma_vdev_wait_for_peer_delete_completion(): wait for all peers of the vdev
- * to be deleted except vdev type is P2P device.
- * @wma_handle: wma handle
- * @vdev_id: vdev id
- *
- * Return: None
- */
-void wma_vdev_wait_for_peer_delete_completion(tp_wma_handle wma_handle,
-					      uint8_t vdev_id)
-{
-	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
-
-	/* Do NOT wait when SSR is in progress
-	 * since all WMI commands will be ignored and not sent to FW
-	 */
-	if (cds_is_driver_recovering()) {
-		WMA_LOGD("%s: SSR is in progress", __func__);
-		return;
-	}
-
-	if (!iface || !iface->vdev_active) {
-		WMA_LOGE("%s: iface of vdev-%d is not available",
-			 __func__, vdev_id);
-		return;
-	}
-
-	/* For P2P Device, firstly it will delete the last peer in
-	 * wma vdev detach, so not wait before deliver
-	 * WMA_DEL_STA_SELF_REQ. Secondly, no throughput case run on
-	 * P2P device, and no need to take care the case which no
-	 * vdev stop response from FW.
-	 */
-	if (((iface->type == WMI_VDEV_TYPE_AP) &&
-	    (iface->sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE)) ||
-	    (cds_is_fw_down())) {
-		WMA_LOGD("%s: type %d P2P devices  or firmware is down, do not wait",
-				__func__, iface->type);
-		return;
-	}
-
-	qdf_wait_for_event_completion(&iface->fw_peer_delete_completion,
-				      WMA_WAIT_PEER_DELETE_COMPLETION_TIMEOUT);
 }
 
 static bool wma_vdev_uses_self_peer(uint32_t vdev_type, uint32_t vdev_subtype)
@@ -1518,12 +1465,6 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 			 __func__, qdf_status);
 		/* Clear default bit and set to NOT_START_UNMAP */
 		bitmap = 1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER;
-	} else {
-		qdf_atomic_dec(&wma->interfaces[vdev_id].fw_peer_count);
-		WMA_LOGD("%s: vdev-%d fw_peer_count %d", __func__, vdev_id,
-			 qdf_atomic_read(&wma->interfaces[vdev_id].fw_peer_count));
-		if (qdf_atomic_read(&wma->interfaces[vdev_id].fw_peer_count) == 0)
-			qdf_event_set(&wma->interfaces[vdev_id].fw_peer_delete_completion);
 	}
 
 peer_detach:
@@ -1784,11 +1725,6 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 				1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER);
 		wlan_objmgr_peer_obj_delete(obj_peer);
 		goto err;
-	} else {
-		qdf_atomic_inc(&wma->interfaces[vdev_id].fw_peer_count);
-		WMA_LOGD("%s: vdev-%d fw_peer_count %d", __func__, vdev_id,
-			 qdf_atomic_read(&wma->interfaces[vdev_id].fw_peer_count));
-		qdf_event_reset(&wma->interfaces[vdev_id].fw_peer_delete_completion);
 	}
 
 	WMA_LOGD("%s: Created peer %pK with peer_addr %pM vdev_id %d, peer_count - %d",
@@ -2519,15 +2455,6 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		self_sta_req->sub_type;
 	qdf_atomic_init(&wma_handle->interfaces
 			[self_sta_req->session_id].bss_status);
-	qdf_atomic_init(&wma_handle->interfaces
-			[self_sta_req->session_id].fw_peer_count);
-	status = qdf_event_create(&wma_handle->interfaces
-				  [self_sta_req->session_id].fw_peer_delete_completion);
-	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: Failed to create fw_peer_delete_completion", __func__);
-		goto end;
-	}
-	qdf_event_set(&wma_handle->interfaces[vdev_id].fw_peer_delete_completion);
 
 	if (wma_vdev_uses_self_peer(self_sta_req->type,
 				    self_sta_req->sub_type)) {
@@ -5709,10 +5636,6 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 							params->bssid);
 	}
 	iface->peer_count--;
-
-	WMA_LOGD("%s: Reset FW peer count", __func__);
-	qdf_atomic_init(&iface->fw_peer_count);
-	qdf_event_set(&iface->fw_peer_delete_completion);
 
 	WMA_LOGI("%s: Removed peer %pK with peer_addr %pM vdevid %d peer_count %d",
 		 __func__, peer, params->bssid,  params->smesessionId,

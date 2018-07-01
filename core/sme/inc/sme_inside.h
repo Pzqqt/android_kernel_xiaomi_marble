@@ -216,6 +216,18 @@ void csr_roam_wm_status_change_complete(tpAniSirGlobal mac_ctx,
 					uint8_t session_id);
 void csr_roam_process_wm_status_change_command(tpAniSirGlobal pMac,
 		tSmeCmd *pCommand);
+/**
+ * csr_process_del_sta_session_command() - Post WMA_DEL_STA_SELF_REQ to wma
+ *
+ * @mac_ctx: global mac context
+ * @sme_command: received Delete Self station request command
+ *
+ * This API sends the WMA_DEL_STA_SELF_REQ msg to WMA.
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS csr_process_del_sta_session_command(tpAniSirGlobal mac_ctx,
+					       tSmeCmd *sme_command);
 void csr_reinit_roam_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_reinit_wm_status_change_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 QDF_STATUS csr_roam_send_set_key_cmd(tpAniSirGlobal mac_ctx,
