@@ -1208,6 +1208,29 @@ static void map_nl_reg_rule_flags(uint16_t drv_reg_rule_flag,
 		*regd_rule_flag |= NL80211_RRF_NO_OFDM;
 }
 
+/**
+ * dfs_reg_to_nl80211_dfs_regions() - convert dfs_reg to nl80211_dfs_regions
+ * @dfs_region: DFS region
+ *
+ * Return: nl80211_dfs_regions
+ */
+static enum nl80211_dfs_regions dfs_reg_to_nl80211_dfs_regions(
+					enum dfs_reg dfs_region)
+{
+	switch (dfs_region) {
+	case DFS_UNINIT_REG:
+		return NL80211_DFS_UNSET;
+	case DFS_FCC_REG:
+		return NL80211_DFS_FCC;
+	case DFS_ETSI_REG:
+		return NL80211_DFS_ETSI;
+	case DFS_MKK_REG:
+		return NL80211_DFS_JP;
+	default:
+		return NL80211_DFS_UNSET;
+	}
+}
+
 void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx)
 {
 	struct ieee80211_regdomain *regd;
@@ -1240,12 +1263,8 @@ void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx)
 	}
 	regd->n_reg_rules = reg_rules->num_of_reg_rules;
 	qdf_mem_copy(regd->alpha2, reg_rules->alpha2, REG_ALPHA2_LEN + 1);
-	if ((reg_rules->dfs_region == DFS_CN_REG) ||
-	    (reg_rules->dfs_region == DFS_KR_REG) ||
-	    (reg_rules->dfs_region == DFS_UNDEF_REG))
-		regd->dfs_region = NL80211_DFS_UNSET;
-	else
-		regd->dfs_region = reg_rules->dfs_region;
+	regd->dfs_region =
+		dfs_reg_to_nl80211_dfs_regions(reg_rules->dfs_region);
 	regd_rules = regd->reg_rules;
 	hdd_debug("Regulatory Domain %s", regd->alpha2);
 	hdd_debug("start freq\tend freq\t@ max_bw\tant_gain\tpwr\tflags");
