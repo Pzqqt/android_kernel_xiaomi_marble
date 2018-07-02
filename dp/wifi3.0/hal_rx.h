@@ -704,7 +704,7 @@ hal_rx_print_pn(uint8_t *buf)
 	uint32_t pn_95_64 = HAL_RX_MPDU_PN_95_64_GET(mpdu_info);
 	uint32_t pn_127_96 = HAL_RX_MPDU_PN_127_96_GET(mpdu_info);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		"PN number pn_127_96 0x%x pn_95_64 0x%x pn_63_32 0x%x pn_31_0 0x%x \n",
+		"PN number pn_127_96 0x%x pn_95_64 0x%x pn_63_32 0x%x pn_31_0 0x%x ",
 			pn_127_96, pn_95_64, pn_63_32, pn_31_0);
 }
 
@@ -1947,7 +1947,7 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 	msdu_details = HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] msdu_link=%pK msdu_details=%pK\n",
+		"[%s][%d] msdu_link=%pK msdu_details=%pK",
 		__func__, __LINE__, msdu_link, msdu_details);
 
 	for (i = 0; i < HAL_RX_NUM_MSDU_DESC; i++) {
@@ -1979,7 +1979,7 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 		 msdu_list->rbm[i] = HAL_RX_BUF_RBM_GET(
 				&msdu_details[i].buffer_addr_info_details);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"[%s][%d] i=%d sw_cookie=%d\n",
+			"[%s][%d] i=%d sw_cookie=%d",
 			__func__, __LINE__, i, msdu_list->sw_cookie[i]);
 	}
 	*num_msdus = i;
@@ -2769,7 +2769,7 @@ static inline void hal_rx_dump_pkt_hdr_tlv(struct rx_pkt_hdr_tlv  *pkt_hdr_tlv,
 			"\n---------------\n"
 			"rx_pkt_hdr_tlv \n"
 			"---------------\n"
-			"phy_ppdu_id %d \n",
+			"phy_ppdu_id %d ",
 			pkt_hdr_tlv->phy_ppdu_id);
 
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, dbg_level,

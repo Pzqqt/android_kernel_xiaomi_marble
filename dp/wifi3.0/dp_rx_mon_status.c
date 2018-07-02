@@ -456,7 +456,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 	if (!mon_status_srng || !hal_srng_initialized(mon_status_srng)) {
 
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL Monitor Status Ring Init Failed -- %pK\n",
+			"%s %d : HAL Monitor Status Ring Init Failed -- %pK",
 			__func__, __LINE__, mon_status_srng);
 		return work_done;
 	}
@@ -700,7 +700,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 	qdf_assert(rxdma_srng);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] requested %d buffers for replenish\n",
+		"[%s][%d] requested %d buffers for replenish",
 		__func__, __LINE__, num_req_buffers);
 
 	/*
@@ -716,13 +716,13 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 
 		if (!num_alloc_desc) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"[%s][%d] no free rx_descs in freelist\n",
+			"[%s][%d] no free rx_descs in freelist",
 			__func__, __LINE__);
 			return QDF_STATUS_E_NOMEM;
 		}
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"[%s][%d] %d rx desc allocated\n", __func__, __LINE__,
+			"[%s][%d] %d rx desc allocated", __func__, __LINE__,
 			num_alloc_desc);
 
 		num_req_buffers = num_alloc_desc;
@@ -733,7 +733,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 				rxdma_srng, sync_hw_ptr);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] no of available entries in rxdma ring: %d\n",
+		"[%s][%d] no of available entries in rxdma ring: %d",
 		  __func__, __LINE__, num_entries_avail);
 
 	if (num_entries_avail < num_req_buffers) {
@@ -765,7 +765,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 
 		if (qdf_unlikely(rxdma_ring_entry == NULL)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					"[%s][%d] rxdma_ring_entry is NULL, count - %d\n",
+					"[%s][%d] rxdma_ring_entry is NULL, count - %d",
 					__func__, __LINE__, count);
 			qdf_nbuf_unmap_single(dp_soc->osdev, rx_netbuf,
 					      QDF_DMA_BIDIRECTIONAL);
@@ -782,7 +782,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"[%s][%d] rx_desc=%pK, cookie=%d, nbuf=%pK, \
-			paddr=%pK\n",
+			paddr=%pK",
 			__func__, __LINE__, &(*desc_list)->rx_desc,
 			(*desc_list)->rx_desc.cookie, rx_netbuf,
 			(void *)paddr);
@@ -793,13 +793,13 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"successfully replenished %d buffers\n", num_req_buffers);
+		"successfully replenished %d buffers", num_req_buffers);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"%d rx desc added back to free list\n", num_desc_to_free);
+		"%d rx desc added back to free list", num_desc_to_free);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] desc_list=%pK, tail=%pK rx_desc=%pK, cookie=%d\n",
+		"[%s][%d] desc_list=%pK, tail=%pK rx_desc=%pK, cookie=%d",
 		__func__, __LINE__, desc_list, tail, &(*desc_list)->rx_desc,
 		(*desc_list)->rx_desc.cookie);
 
@@ -843,19 +843,19 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
 	rx_desc_pool = &soc->rx_desc_status[ring_id];
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-			"%s: Mon RX Status Pool[%d] allocation size=%d\n",
+			"%s: Mon RX Status Pool[%d] allocation size=%d",
 			__func__, ring_id, rxdma_entries);
 
 	status = dp_rx_desc_pool_alloc(soc, ring_id, rxdma_entries+1,
 			rx_desc_pool);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_rx_desc_pool_alloc() failed \n", __func__);
+			"%s: dp_rx_desc_pool_alloc() failed ", __func__);
 		return status;
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-			"%s: Mon RX Status Buffers Replenish ring_id=%d\n",
+			"%s: Mon RX Status Buffers Replenish ring_id=%d",
 			__func__, ring_id);
 
 	status = dp_rx_mon_status_buffers_replenish(soc, ring_id, rxdma_srng,
@@ -863,7 +863,7 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
 			HAL_RX_BUF_RBM_SW3_BM);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_rx_buffers_replenish() failed \n", __func__);
+			"%s: dp_rx_buffers_replenish() failed ", __func__);
 		return status;
 	}
 

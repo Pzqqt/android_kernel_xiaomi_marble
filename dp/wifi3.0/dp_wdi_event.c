@@ -39,7 +39,7 @@ dp_wdi_event_next_sub(wdi_event_subscribe *wdi_sub)
 {
 	if (!wdi_sub) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"Invalid subscriber in %s\n", __func__);
+			"Invalid subscriber in %s", __func__);
 		return NULL;
 	}
 	return wdi_sub->priv.next;
@@ -123,12 +123,12 @@ dp_wdi_event_handler(
 
 	if (!event) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"Invalid WDI event in %s\n", __func__);
+			"Invalid WDI event in %s", __func__);
 		return;
 	}
 	if (!txrx_pdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"Invalid pdev in WDI event handler\n");
+			"Invalid pdev in WDI event handler");
 		return;
 	}
 
@@ -259,7 +259,7 @@ dp_wdi_event_attach(struct dp_pdev *txrx_pdev)
 {
 	if (!txrx_pdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"Invalid device in %s\nWDI event attach failed\n",
+			"Invalid device in %s\nWDI event attach failed",
 			__func__);
 		return -EINVAL;
 	}
@@ -269,7 +269,7 @@ dp_wdi_event_attach(struct dp_pdev *txrx_pdev)
 			sizeof(wdi_event_subscribe *) * WDI_NUM_EVENTS);
 	if (!txrx_pdev->wdi_event_list) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"Insufficient memory for the WDI event lists\n");
+			"Insufficient memory for the WDI event lists");
 		return -EINVAL;
 	}
 	return 0;

@@ -228,8 +228,8 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 		if (pool->avail_desc == pool->pool_size) {
 			dp_tx_desc_pool_free(soc, desc_pool_id);
 			qdf_spin_unlock_bh(&pool->flow_pool_lock);
-			qdf_print("%s %d pool is freed!!\n",
-				 __func__, __LINE__);
+			qdf_print("%s %d pool is freed!!",
+				  __func__, __LINE__);
 			return;
 		}
 		break;
@@ -237,8 +237,8 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	case FLOW_POOL_ACTIVE_UNPAUSED:
 		break;
 	default:
-		qdf_print("%s %d pool is INACTIVE State!!\n",
-				 __func__, __LINE__);
+		qdf_print("%s %d pool is INACTIVE State!!",
+			  __func__, __LINE__);
 		break;
 	};
 

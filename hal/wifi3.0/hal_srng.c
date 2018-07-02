@@ -58,9 +58,9 @@ static int hal_get_srng_ring_id(struct hal_soc *hal, int ring_type,
 	int ring_id;
 
 	if (ring_num >= ring_config->max_rings) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: ring_num exceeded maximum no. of supported rings\n",
-			__func__);
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+			  "%s: ring_num exceeded maximum no. of supported rings",
+			  __func__);
 		/* TODO: This is a programming error. Assert if this happens */
 		return -EINVAL;
 	}
@@ -137,7 +137,7 @@ QDF_STATUS hal_set_one_shadow_config(void *hal_soc,
 				      ring_num);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-	    "%s: target_reg %x, shadow_index %x, ring_type %d, ring num %d\n",
+	    "%s: target_reg %x, shadow_index %x, ring_type %d, ring num %d",
 	    __func__, target_register, shadow_config_index,
 	    ring_type, ring_num);
 
@@ -180,7 +180,7 @@ void hal_get_shadow_config(void *hal_soc,
 		hal->num_shadow_registers_configured;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s\n", __func__);
+			"%s", __func__);
 }
 
 
@@ -197,11 +197,11 @@ static void hal_validate_shadow_register(struct hal_soc *hal,
 
 	if (index >= MAX_SHADOW_REGISTERS) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: index %x out of bounds\n", __func__, index);
+			"%s: index %x out of bounds", __func__, index);
 		goto error;
 	} else if (hal->shadow_config[index].addr != destination_ba_offset) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: sanity check failure, expected %x, found %x\n",
+			"%s: sanity check failure, expected %x, found %x",
 			__func__, destination_ba_offset,
 			hal->shadow_config[index].addr);
 		goto error;
@@ -272,7 +272,7 @@ void *hal_attach(void *hif_handle, qdf_device_t qdf_dev)
 
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: hal_soc allocation failed\n", __func__);
+			"%s: hal_soc allocation failed", __func__);
 		goto fail0;
 	}
 	hal->hif_handle = hif_handle;
@@ -283,7 +283,7 @@ void *hal_attach(void *hif_handle, qdf_device_t qdf_dev)
 		HAL_SRNG_ID_MAX, &(hal->shadow_rdptr_mem_paddr));
 	if (!hal->shadow_rdptr_mem_paddr) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: hal->shadow_rdptr_mem_paddr allocation failed\n",
+			"%s: hal->shadow_rdptr_mem_paddr allocation failed",
 			__func__);
 		goto fail1;
 	}
@@ -294,7 +294,7 @@ void *hal_attach(void *hif_handle, qdf_device_t qdf_dev)
 		&(hal->shadow_wrptr_mem_paddr));
 	if (!hal->shadow_wrptr_mem_vaddr) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: hal->shadow_wrptr_mem_vaddr allocation failed\n",
+			"%s: hal->shadow_wrptr_mem_vaddr allocation failed",
 			__func__);
 		goto fail2;
 	}
@@ -549,7 +549,7 @@ void hal_srng_dst_init_hp(struct hal_srng *srng,
 	*(srng->u.dst_ring.hp_addr) = srng->u.dst_ring.cached_hp;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		"hp_addr=%pK, cached_hp=%d, hp=%d\n",
+		"hp_addr=%pK, cached_hp=%d, hp=%d",
 		(void *)srng->u.dst_ring.hp_addr, srng->u.dst_ring.cached_hp,
 		*(srng->u.dst_ring.hp_addr));
 }
@@ -697,16 +697,16 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	if (ring_id < 0)
 		return NULL;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			 "%s: mac_id %d ring_id %d\n",
-			 __func__, mac_id, ring_id);
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+		  "%s: mac_id %d ring_id %d",
+		  __func__, mac_id, ring_id);
 
 	srng = hal_get_srng(hal_soc, ring_id);
 
 	if (srng->initialized) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Ring (ring_type, ring_num) already initialized\n",
-			__func__);
+			  "%s: Ring (ring_type, ring_num) already initialized",
+			  __func__);
 		return NULL;
 	}
 
@@ -765,7 +765,7 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 			if (CHECK_SHADOW_REGISTERS) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 				    QDF_TRACE_LEVEL_ERROR,
-				    "%s: Ring (%d, %d) missing shadow config\n",
+				    "%s: Ring (%d, %d) missing shadow config",
 				    __func__, ring_type, ring_num);
 			}
 		} else {
@@ -800,7 +800,7 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 			if (CHECK_SHADOW_REGISTERS) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 				    QDF_TRACE_LEVEL_ERROR,
-				    "%s: Ring (%d, %d) missing shadow config\n",
+				    "%s: Ring (%d, %d) missing shadow config",
 				    __func__, ring_type, ring_num);
 			}
 		} else {

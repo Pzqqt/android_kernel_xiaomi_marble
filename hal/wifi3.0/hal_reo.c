@@ -76,7 +76,7 @@ inline void hal_reo_cmd_set_descr_addr(uint32_t *reo_desc,
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Invalid REO command type\n", __func__);
+			"%s: Invalid REO command type", __func__);
 		break;
 	}
 }
@@ -91,7 +91,7 @@ inline int hal_reo_cmd_queue_stats(void *reo_ring, struct hal_soc *soc,
 	reo_desc = hal_srng_src_get_next(soc, reo_ring);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Out of cmd ring entries\n", __func__);
+			"%s: Out of cmd ring entries", __func__);
 		hal_srng_access_end(soc, reo_ring);
 		return -EBUSY;
 	}
@@ -131,7 +131,7 @@ inline int hal_reo_cmd_flush_queue(void *reo_ring, struct hal_soc *soc,
 	reo_desc = hal_srng_src_get_next(soc, reo_ring);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Out of cmd ring entries\n", __func__);
+			"%s: Out of cmd ring entries", __func__);
 		hal_srng_access_end(soc, reo_ring);
 		return -EBUSY;
 	}
@@ -184,7 +184,8 @@ inline int hal_reo_cmd_flush_cache(void *reo_ring, struct hal_soc *soc,
 	if (cp->block_use_after_flush) {
 		index = hal_find_zero_bit(soc->reo_res_bitmap);
 		if (index > 3) {
-			qdf_print("%s, No blocking resource available!\n", __func__);
+			qdf_print("%s, No blocking resource available!",
+				  __func__);
 			hal_srng_access_end(soc, reo_ring);
 			return -EBUSY;
 		}
@@ -194,7 +195,7 @@ inline int hal_reo_cmd_flush_cache(void *reo_ring, struct hal_soc *soc,
 	reo_desc = hal_srng_src_get_next(soc, reo_ring);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Out of cmd ring entries\n", __func__);
+			"%s: Out of cmd ring entries", __func__);
 		hal_srng_access_end(soc, reo_ring);
 		hal_srng_dump(reo_ring);
 		return -EBUSY;
@@ -256,7 +257,7 @@ inline int hal_reo_cmd_unblock_cache(void *reo_ring, struct hal_soc *soc,
 		index = hal_find_one_bit(soc->reo_res_bitmap);
 		if (index > 3) {
 			hal_srng_access_end(soc, reo_ring);
-			qdf_print("%s: No blocking resource to unblock!\n",
+			qdf_print("%s: No blocking resource to unblock!",
 				  __func__);
 			return -EBUSY;
 		}
@@ -265,7 +266,7 @@ inline int hal_reo_cmd_unblock_cache(void *reo_ring, struct hal_soc *soc,
 	reo_desc = hal_srng_src_get_next(soc, reo_ring);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Out of cmd ring entries\n", __func__);
+			"%s: Out of cmd ring entries", __func__);
 		hal_srng_access_end(soc, reo_ring);
 		return -EBUSY;
 	}
@@ -306,7 +307,7 @@ inline int hal_reo_cmd_flush_timeout_list(void *reo_ring, struct hal_soc *soc,
 	reo_desc = hal_srng_src_get_next(soc, reo_ring);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Out of cmd ring entries\n", __func__);
+			"%s: Out of cmd ring entries", __func__);
 		hal_srng_access_end(soc, reo_ring);
 		return -EBUSY;
 	}
@@ -352,7 +353,7 @@ inline int hal_reo_cmd_update_rx_queue(void *reo_ring, struct hal_soc *soc,
 	reo_desc = hal_srng_src_get_next(soc, reo_ring);
 	if (!reo_desc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Out of cmd ring entries\n", __func__);
+			"%s: Out of cmd ring entries", __func__);
 		hal_srng_access_end(soc, reo_ring);
 		return -EBUSY;
 	}

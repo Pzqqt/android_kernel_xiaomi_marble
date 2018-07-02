@@ -40,7 +40,7 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 
 	if (!(rx_desc_pool->array)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-			"%s: RX Desc Pool[%d] allocation failed\n",
+			"%s: RX Desc Pool[%d] allocation failed",
 			__func__, pool_id);
 
 		return QDF_STATUS_E_NOMEM;
@@ -158,7 +158,7 @@ void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 
 	temp_list = rx_desc_pool->freelist;
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-	"temp_list: %pK, *local_desc_list: %pK, *tail: %pK (*tail)->next: %pK\n",
+	"temp_list: %pK, *local_desc_list: %pK, *tail: %pK (*tail)->next: %pK",
 	temp_list, *local_desc_list, *tail, (*tail)->next);
 	rx_desc_pool->freelist = *local_desc_list;
 	(*tail)->next = temp_list;

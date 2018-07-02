@@ -100,7 +100,7 @@ void dp_tx_clear_flow_pool_stats(struct dp_soc *soc)
 
 	if (!soc) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: soc is null\n", __func__);
+			"%s: soc is null", __func__);
 		return;
 	}
 	qdf_mem_zero(&soc->pool_stats, sizeof(soc->pool_stats));
@@ -130,7 +130,7 @@ struct dp_tx_desc_pool_s *dp_tx_create_flow_pool(struct dp_soc *soc,
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
 	if ((pool->status != FLOW_POOL_INACTIVE) || pool->pool_create_cnt) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: flow pool already allocated, attached %d times\n",
+			"%s: flow pool already allocated, attached %d times",
 			__func__, pool->pool_create_cnt);
 		if (pool->avail_desc > pool->start_th)
 			pool->status = FLOW_POOL_ACTIVE_UNPAUSED;
@@ -181,7 +181,7 @@ int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
 {
 	if (!soc || !pool) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		   "%s: pool or soc is NULL\n", __func__);
+		   "%s: pool or soc is NULL", __func__);
 		QDF_ASSERT(0);
 		return ENOMEM;
 	}
@@ -196,7 +196,7 @@ int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
 	pool->pool_create_cnt--;
 	if (pool->pool_create_cnt) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: pool is still attached, pending detach %d\n",
+			  "%s: pool is still attached, pending detach %d",
 			  __func__, pool->pool_create_cnt);
 		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		return -EAGAIN;
@@ -232,7 +232,7 @@ static void dp_tx_flow_pool_vdev_map(struct dp_pdev *pdev,
 					(struct cdp_pdev *)pdev, vdev_id);
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		   "%s: invalid vdev_id %d\n",
+		   "%s: invalid vdev_id %d",
 		   __func__, vdev_id);
 		return;
 	}
@@ -262,7 +262,7 @@ static void dp_tx_flow_pool_vdev_unmap(struct dp_pdev *pdev,
 					(struct cdp_pdev *)pdev, vdev_id);
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		   "%s: invalid vdev_id %d\n",
+		   "%s: invalid vdev_id %d",
 		   __func__, vdev_id);
 		return;
 	}
@@ -292,7 +292,7 @@ QDF_STATUS dp_tx_flow_pool_map_handler(struct dp_pdev *pdev, uint8_t flow_id,
 
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		"%s: flow_id %d flow_type %d flow_pool_id %d flow_pool_size %d\n",
+		"%s: flow_id %d flow_type %d flow_pool_id %d flow_pool_size %d",
 		__func__, flow_id, flow_type, flow_pool_id, flow_pool_size);
 
 	if (qdf_unlikely(!soc)) {
@@ -306,7 +306,7 @@ QDF_STATUS dp_tx_flow_pool_map_handler(struct dp_pdev *pdev, uint8_t flow_id,
 			flow_pool_size);
 	if (pool == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			   "%s: creation of flow_pool %d size %d failed\n",
+			   "%s: creation of flow_pool %d size %d failed",
 			   __func__, flow_pool_id, flow_pool_size);
 		return QDF_STATUS_E_RESOURCES;
 	}
@@ -318,7 +318,7 @@ QDF_STATUS dp_tx_flow_pool_map_handler(struct dp_pdev *pdev, uint8_t flow_id,
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		   "%s: flow type %d not supported !!!\n",
+		   "%s: flow type %d not supported !!!",
 		   __func__, type);
 		break;
 	}
@@ -346,7 +346,7 @@ void dp_tx_flow_pool_unmap_handler(struct dp_pdev *pdev, uint8_t flow_id,
 	enum htt_flow_type type = flow_type;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		"%s: flow_id %d flow_type %d flow_pool_id %d\n",
+		"%s: flow_id %d flow_type %d flow_pool_id %d",
 		__func__, flow_id, flow_type, flow_pool_id);
 
 	if (qdf_unlikely(!pdev)) {
@@ -359,7 +359,7 @@ void dp_tx_flow_pool_unmap_handler(struct dp_pdev *pdev, uint8_t flow_id,
 	pool = &soc->tx_desc[flow_pool_id];
 	if (!pool) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		   "%s: flow_pool not available flow_pool_id %d\n",
+		   "%s: flow_pool not available flow_pool_id %d",
 		   __func__, type);
 		return;
 	}
@@ -371,7 +371,7 @@ void dp_tx_flow_pool_unmap_handler(struct dp_pdev *pdev, uint8_t flow_id,
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		   "%s: flow type %d not supported !!!\n",
+		   "%s: flow type %d not supported !!!",
 		   __func__, type);
 		return;
 	}

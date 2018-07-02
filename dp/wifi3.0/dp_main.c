@@ -914,16 +914,16 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 
 	if (soc->intr_mode == DP_INTR_MSI) {
 		dp_srng_msi_setup(soc, &ring_params, ring_type, ring_num);
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("Using MSI for ring_type: %d, ring_num %d"),
-			ring_type, ring_num);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  FL("Using MSI for ring_type: %d, ring_num %d"),
+			  ring_type, ring_num);
 
 	} else {
 		ring_params.msi_data = 0;
 		ring_params.msi_addr = 0;
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("Skipping MSI for ring_type: %d, ring_num %d"),
-			ring_type, ring_num);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  FL("Skipping MSI for ring_type: %d, ring_num %d"),
+			  ring_type, ring_num);
 	}
 
 	/*
@@ -2303,8 +2303,8 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		soc->num_reo_dest_rings =
 			wlan_cfg_num_reo_dest_rings(soc_cfg_ctx);
 		QDF_TRACE(QDF_MODULE_ID_DP,
-			QDF_TRACE_LEVEL_ERROR,
-			FL("num_reo_dest_rings %d\n"), soc->num_reo_dest_rings);
+			QDF_TRACE_LEVEL_INFO,
+			FL("num_reo_dest_rings %d"), soc->num_reo_dest_rings);
 		for (i = 0; i < soc->num_reo_dest_rings; i++) {
 			if (dp_srng_setup(soc, &soc->reo_dest_ring[i], REO_DST,
 				i, 0, reo_dst_ring_size)) {
@@ -2514,7 +2514,7 @@ static int dp_rxdma_ring_setup(struct dp_soc *soc,
 
 	for (i = 0; i < max_mac_rings; i++) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			 "%s: pdev_id %d mac_id %d\n",
+			 "%s: pdev_id %d mac_id %d",
 			 __func__, pdev->pdev_id, i);
 		if (dp_srng_setup(soc, &pdev->rx_mac_buf_ring[i],
 			RXDMA_BUF, 1, i,
@@ -2967,13 +2967,13 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	/* Rx monitor mode specific init */
 	if (dp_rx_pdev_mon_attach(pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"dp_rx_pdev_attach failed\n");
+				"dp_rx_pdev_attach failed");
 		goto fail1;
 	}
 
 	if (dp_wdi_event_attach(pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"dp_wdi_evet_attach failed\n");
+				"dp_wdi_evet_attach failed");
 		goto fail1;
 	}
 
@@ -3359,18 +3359,18 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 			if (dbs_enable) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 				QDF_TRACE_LEVEL_ERROR,
-				FL("DBS enabled max_mac_rings %d\n"),
+				FL("DBS enabled max_mac_rings %d"),
 					 max_mac_rings);
 			} else {
 				max_mac_rings = 1;
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					 QDF_TRACE_LEVEL_ERROR,
-					 FL("DBS disabled, max_mac_rings %d\n"),
+					 FL("DBS disabled, max_mac_rings %d"),
 					 max_mac_rings);
 			}
 
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-					 FL("pdev_id %d max_mac_rings %d\n"),
+					 FL("pdev_id %d max_mac_rings %d"),
 					 pdev->pdev_id, max_mac_rings);
 
 			for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
@@ -3379,7 +3379,7 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					 QDF_TRACE_LEVEL_ERROR,
-					 FL("mac_id %d\n"), mac_for_pdev);
+					 FL("mac_id %d"), mac_for_pdev);
 				htt_srng_setup(soc->htt_handle, mac_for_pdev,
 					 pdev->rx_mac_buf_ring[mac_id]
 						.hal_srng,
@@ -3496,8 +3496,8 @@ static void dp_soc_set_nss_cfg_wifi3(struct cdp_soc_t *cdp_soc, int config)
 		wlan_cfg_set_num_tx_ext_desc(wlan_cfg_ctx, 0);
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("nss-wifi<0> nss config is enabled"));
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		  FL("nss-wifi<0> nss config is enabled"));
 }
 /*
 * dp_vdev_attach_wifi3() - attach txrx vdev
@@ -4002,7 +4002,7 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 		hash_based = wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		FL("hash based steering for pdev: %d is %d\n"),
+		FL("hash based steering for pdev: %d is %d"),
 		pdev->pdev_id, hash_based);
 
 	/*
@@ -4483,7 +4483,7 @@ void dp_peer_unref_delete(void *peer_handle)
 	 */
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "%s: peer %pK ref_cnt(before decrement): %d\n", __func__,
+		  "%s: peer %pK ref_cnt(before decrement): %d", __func__,
 		  peer, qdf_atomic_read(&peer->ref_cnt));
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		peer_id = peer->peer_ids[0];
@@ -4811,13 +4811,13 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	pdev_id = pdev->pdev_id;
 	soc = pdev->soc;
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-		"pdev=%pK, pdev_id=%d, soc=%pK vdev=%pK\n",
+		"pdev=%pK, pdev_id=%d, soc=%pK vdev=%pK",
 		pdev, pdev_id, soc, vdev);
 
 	/*Check if current pdev's monitor_vdev exists */
 	if (pdev->monitor_vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"vdev=%pK\n", vdev);
+			"vdev=%pK", vdev);
 		qdf_assert(vdev);
 	}
 
@@ -4828,7 +4828,7 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 		return QDF_STATUS_SUCCESS;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"MODE[%x] FP[%02x|%02x|%02x] MO[%02x|%02x|%02x]\n",
+		"MODE[%x] FP[%02x|%02x|%02x] MO[%02x|%02x|%02x]",
 		pdev->mon_filter_mode, pdev->fp_mgmt_filter,
 		pdev->fp_ctrl_filter, pdev->fp_data_filter,
 		pdev->mo_mgmt_filter, pdev->mo_ctrl_filter,
@@ -4930,13 +4930,13 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	soc = pdev->soc;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-		"pdev=%pK, pdev_id=%d, soc=%pK vdev=%pK\n",
+		"pdev=%pK, pdev_id=%d, soc=%pK vdev=%pK",
 		pdev, pdev_id, soc, vdev);
 
 	/*Check if current pdev's monitor_vdev exists */
 	if (!pdev->monitor_vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"vdev=%pK\n", vdev);
+			"vdev=%pK", vdev);
 		qdf_assert(vdev);
 	}
 
@@ -4950,7 +4950,7 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	pdev->mo_data_filter = filter_val->mo_data;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"MODE[%x] FP[%02x|%02x|%02x] MO[%02x|%02x|%02x]\n",
+		"MODE[%x] FP[%02x|%02x|%02x] MO[%02x|%02x|%02x]",
 		pdev->mon_filter_mode, pdev->fp_mgmt_filter,
 		pdev->fp_ctrl_filter, pdev->fp_data_filter,
 		pdev->mo_mgmt_filter, pdev->mo_ctrl_filter,
@@ -5377,7 +5377,7 @@ static void dp_get_device_stats(void *handle,
 	default:
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"apstats cannot be updated for this input "
-			"type %d\n", type);
+			"type %d", type);
 		break;
 	}
 
@@ -6474,7 +6474,7 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"Invalid value\n");
+			"Invalid value");
 		break;
 	}
 }
@@ -7225,7 +7225,7 @@ dp_txrx_peer_wds_tx_policy_update(struct cdp_peer *peer_handle,
 			FL("Policy Update set to :\
 				peer->wds_enabled %d\
 				peer->wds_ecm.wds_tx_ucast_4addr %d\
-				peer->wds_ecm.wds_tx_mcast_4addr %d\n"),
+				peer->wds_ecm.wds_tx_mcast_4addr %d"),
 				peer->wds_enabled, peer->wds_ecm.wds_tx_ucast_4addr,
 				peer->wds_ecm.wds_tx_mcast_4addr);
 	return;
@@ -7976,7 +7976,7 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	dp_is_hw_dbs_enable(soc, &max_mac_rings);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			FL("Max_mac_rings %d \n"),
+			FL("Max_mac_rings %d "),
 			max_mac_rings);
 
 	if (enable) {

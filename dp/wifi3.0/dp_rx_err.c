@@ -352,7 +352,7 @@ dp_rx_pn_error_handle(struct dp_soc *soc, void *ring_desc,
 		 */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"discard rx due to PN error for peer  %pK  "
-			"(%02x:%02x:%02x:%02x:%02x:%02x)\n",
+			"(%02x:%02x:%02x:%02x:%02x:%02x)",
 			peer,
 			peer->mac_addr.raw[0], peer->mac_addr.raw[1],
 			peer->mac_addr.raw[2], peer->mac_addr.raw[3],
@@ -850,7 +850,7 @@ dp_rx_process_mic_error(struct dp_soc *soc,
 						    tid, rx_seq, nbuf);
 
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Frag pkt seq# %d frag# %d consumed status %d !\n",
+			  "%s: Frag pkt seq# %d frag# %d consumed status %d !",
 				__func__, rx_seq, fragno, status);
 			return;
 	}
@@ -1338,7 +1338,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 					QDF_TRACE(QDF_MODULE_ID_DP,
 						QDF_TRACE_LEVEL_DEBUG,
-						"[%s][%d] msdu_nbuf=%pK \n",
+						"[%s][%d] msdu_nbuf=%pK ",
 						__func__, __LINE__, msdu);
 
 					qdf_nbuf_free(msdu);
@@ -1403,7 +1403,7 @@ dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	if (!err_dst_srng) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"%s %d : HAL Monitor Destination Ring Init \
-			Failed -- %pK\n",
+			Failed -- %pK",
 			__func__, __LINE__, err_dst_srng);
 		return 0;
 	}
@@ -1415,7 +1415,7 @@ dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	if (qdf_unlikely(hal_srng_access_start(hal_soc, err_dst_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"%s %d : HAL Monitor Destination Ring Init \
-			Failed -- %pK\n",
+			Failed -- %pK",
 			__func__, __LINE__, err_dst_srng);
 		return 0;
 	}

@@ -126,7 +126,7 @@ void dp_rx_reorder_flush_frag(struct dp_peer *peer,
 
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					"%s: NULL peer\n", __func__);
+					"%s: NULL peer", __func__);
 		return;
 	}
 
@@ -138,7 +138,7 @@ void dp_rx_reorder_flush_frag(struct dp_peer *peer,
 					HAL_BM_ACTION_PUT_IN_IDLE_LIST) !=
 					QDF_STATUS_SUCCESS)
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					"%s: Failed to return link desc\n",
+					"%s: Failed to return link desc",
 					__func__);
 	}
 
@@ -735,7 +735,7 @@ static QDF_STATUS dp_rx_defrag_tkip_demic(const uint8_t *key,
 		pktlen += (qdf_nbuf_len(next) - hdrlen);
 		prev = next;
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  "%s pktlen %ld\n", __func__,
+			  "%s pktlen %ld", __func__,
 				qdf_nbuf_len(next) - hdrlen);
 		next = qdf_nbuf_next(next);
 	}
@@ -778,7 +778,7 @@ static void dp_rx_frag_pull_hdr(qdf_nbuf_t nbuf, uint16_t hdrsize)
 			RX_PKT_TLVS_LEN + hdrsize);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s: final pktlen %d .11len %d\n",
+			"%s: final pktlen %d .11len %d",
 			__func__,
 			(uint32_t)qdf_nbuf_len(nbuf), hdrsize);
 }
@@ -811,7 +811,7 @@ dp_rx_construct_fraglist(struct dp_peer *peer,
 	qdf_nbuf_set_next(head, NULL);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s: head len %d ext len %d data len %d \n",
+			"%s: head len %d ext len %d data len %d ",
 			__func__,
 			(uint32_t)qdf_nbuf_len(head),
 			(uint32_t)qdf_nbuf_len(rx_nbuf),
@@ -872,7 +872,7 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 
 	if (rx_desc_info == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: Memory alloc failed ! \n", __func__);
+			"%s: Memory alloc failed ! ", __func__);
 		QDF_ASSERT(0);
 		return;
 	}
@@ -1031,7 +1031,7 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 
 	if (qdf_unlikely(ret == QDF_STATUS_E_FAILURE)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"%s: nbuf map failed !\n", __func__);
+				"%s: nbuf map failed !", __func__);
 		qdf_nbuf_free(head);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1042,7 +1042,7 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 
 	if (ret == QDF_STATUS_E_FAILURE) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"%s: x86 check failed !\n", __func__);
+				"%s: x86 check failed !", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1112,7 +1112,7 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 	hal_srng_access_end(soc->hal_soc, hal_srng);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"%s: reinjection done !\n", __func__);
+				"%s: reinjection done !", __func__);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1155,7 +1155,7 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 	cur = frag_list_head;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			"%s: index %d Security type: %d\n", __func__,
+			"%s: index %d Security type: %d", __func__,
 			index, peer->security[index].sec_type);
 
 	switch (peer->security[index].sec_type) {
@@ -1250,7 +1250,7 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: TKIP demic failed status %d\n",
+					  "%s: TKIP demic failed status %d",
 					  __func__, status);
 
 				return QDF_STATUS_E_DEFRAG_ERROR;
@@ -1317,7 +1317,7 @@ static QDF_STATUS dp_rx_defrag_save_info_from_ring_desc(void *ring_desc,
 
 	if (dst_ring_desc == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: Memory alloc failed !\n", __func__);
+			"%s: Memory alloc failed !", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -1499,7 +1499,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 
 		if (status != QDF_STATUS_SUCCESS) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"%s: Unable to store ring desc !\n", __func__);
+				"%s: Unable to store ring desc !", __func__);
 			goto end;
 		}
 	} else {
@@ -1511,7 +1511,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 					HAL_BM_ACTION_PUT_IN_IDLE_LIST) !=
 				QDF_STATUS_SUCCESS)
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					"%s: Failed to return link desc\n",
+					"%s: Failed to return link desc",
 					__func__);
 
 	}
@@ -1551,7 +1551,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 					HAL_BM_ACTION_PUT_IN_IDLE_LIST) !=
 				QDF_STATUS_SUCCESS)
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					"%s: Failed to return link desc\n",
+					"%s: Failed to return link desc",
 					__func__);
 		dp_rx_defrag_cleanup(peer, tid);
 		goto end;
@@ -1698,7 +1698,7 @@ QDF_STATUS dp_rx_defrag_add_last_frag(struct dp_soc *soc,
 	if (rx_reorder_array_elem->head &&
 	    rxseq != rx_tid->curr_seq_num) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: No list found for TID %d Seq# %d\n",
+			  "%s: No list found for TID %d Seq# %d",
 				__func__, tid, rxseq);
 		qdf_nbuf_free(nbuf);
 		goto fail;
@@ -1715,7 +1715,7 @@ QDF_STATUS dp_rx_defrag_add_last_frag(struct dp_soc *soc,
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s Fragment insert failed\n", __func__);
+			  "%s Fragment insert failed", __func__);
 
 		goto fail;
 	}
@@ -1740,7 +1740,7 @@ QDF_STATUS dp_rx_defrag_add_last_frag(struct dp_soc *soc,
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s Fragment processing failed\n", __func__);
+			  "%s Fragment processing failed", __func__);
 
 		dp_rx_return_head_frag_desc(peer, tid);
 		dp_rx_defrag_cleanup(peer, tid);
@@ -1755,11 +1755,11 @@ QDF_STATUS dp_rx_defrag_add_last_frag(struct dp_soc *soc,
 		rx_reorder_array_elem->head = NULL;
 		rx_reorder_array_elem->tail = NULL;
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			  "%s: Frag seq successfully reinjected\n",
+			  "%s: Frag seq successfully reinjected",
 			__func__);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Frag seq reinjection failed\n",
+			  "%s: Frag seq reinjection failed",
 			__func__);
 		dp_rx_return_head_frag_desc(peer, tid);
 	}

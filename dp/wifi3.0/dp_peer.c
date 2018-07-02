@@ -41,7 +41,7 @@ dp_set_ssn_valid_flag(struct hal_reo_cmd_params *params,
 	params->u.upd_queue_params.update_svld = 1;
 	params->u.upd_queue_params.svld = valid;
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		"%s: Setting SSN valid bit to %d\n",
+		"%s: Setting SSN valid bit to %d",
 				__func__, valid);
 }
 #else
@@ -74,12 +74,12 @@ static int dp_peer_find_map_attach(struct dp_soc *soc)
 	max_peers = soc->max_peers;
 	/* allocate the peer ID -> peer object map */
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-		"\n<=== cfg max peer id %d ====>\n", max_peers);
+		"\n<=== cfg max peer id %d ====>", max_peers);
 	peer_map_size = max_peers * sizeof(soc->peer_id_to_obj_map[0]);
 	soc->peer_id_to_obj_map = qdf_mem_malloc(peer_map_size);
 	if (!soc->peer_id_to_obj_map) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: peer map memory allocation failed\n", __func__);
+			"%s: peer map memory allocation failed", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -358,7 +358,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x\n",
+		"%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x",
 		__func__, peer, hw_peer_id, vdev_id, mac_addr[0],
 		mac_addr[1], mac_addr[2], mac_addr[3],
 		mac_addr[4], mac_addr[5]);
@@ -384,7 +384,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 		}
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"AST entry not found\n");
+			"AST entry not found");
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
@@ -423,7 +423,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"%s: peer %pK mac %02x:%02x:%02x:%02x:%02x:%02x\n",
+		"%s: peer %pK mac %02x:%02x:%02x:%02x:%02x:%02x",
 		__func__, peer, mac_addr[0], mac_addr[1], mac_addr[2],
 		mac_addr[3], mac_addr[4], mac_addr[5]);
 
@@ -902,7 +902,7 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 	peer = dp_peer_find_hash_find(soc, peer_mac_addr,
 		0 /* is aligned */, vdev_id);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x\n",
+		"%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x",
 		__func__, peer, peer_id, vdev_id, peer_mac_addr[0],
 		peer_mac_addr[1], peer_mac_addr[2], peer_mac_addr[3],
 		peer_mac_addr[4], peer_mac_addr[5]);
@@ -950,7 +950,7 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 		"peer_map_event (soc:%pK): peer_id %di, hw_peer_id %d, peer_mac "
-		"%02x:%02x:%02x:%02x:%02x:%02x, vdev_id %d\n", soc, peer_id,
+		"%02x:%02x:%02x:%02x:%02x:%02x, vdev_id %d", soc, peer_id,
 		hw_peer_id, peer_mac_addr[0], peer_mac_addr[1],
 		peer_mac_addr[2], peer_mac_addr[3], peer_mac_addr[4],
 		peer_mac_addr[5], vdev_id);
@@ -1002,7 +1002,7 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id)
 	peer = __dp_peer_find_by_id(soc, peer_id);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"peer_unmap_event (soc:%pK) peer_id %d peer %pK\n",
+		"peer_unmap_event (soc:%pK) peer_id %d peer %pK",
 		soc, peer_id, peer);
 
 	/*
@@ -1013,7 +1013,7 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id)
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: Received unmap event for invalid peer_id"
-			" %u\n", __func__, peer_id);
+			" %u", __func__, peer_id);
 		return;
 	}
 
@@ -1056,7 +1056,7 @@ static void dp_rx_tid_update_cb(struct dp_soc *soc, void *cb_ctxt,
 		HAL_REO_CMD_DRAIN)) {
 		/* Should not happen normally. Just print error for now */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Rx tid HW desc update failed(%d): tid %d\n",
+			"%s: Rx tid HW desc update failed(%d): tid %d",
 			__func__,
 			reo_status->rx_queue_status.header.status,
 			rx_tid->tid);
@@ -1158,13 +1158,13 @@ static void dp_reo_desc_free(struct dp_soc *soc, void *cb_ctxt,
 		(reo_status->fl_cache_status.header.status !=
 		HAL_REO_CMD_DRAIN)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Rx tid HW desc flush failed(%d): tid %d\n",
+			"%s: Rx tid HW desc flush failed(%d): tid %d",
 			__func__,
 			reo_status->rx_queue_status.header.status,
 			freedesc->rx_tid.tid);
 	}
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		"%s: hw_qdesc_paddr: %pK, tid:%d\n", __func__,
+		"%s: hw_qdesc_paddr: %pK, tid:%d", __func__,
 		(void *)(rx_tid->hw_qdesc_paddr), rx_tid->tid);
 	qdf_mem_unmap_nbytes_single(soc->osdev,
 		rx_tid->hw_qdesc_paddr,
@@ -1255,7 +1255,7 @@ try_desc_alloc:
 
 	if (!rx_tid->hw_qdesc_vaddr_unaligned) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Rx tid HW desc alloc failed: tid %d\n",
+			"%s: Rx tid HW desc alloc failed: tid %d",
 			__func__, tid);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -1272,7 +1272,7 @@ try_desc_alloc:
 
 		if (!rx_tid->hw_qdesc_vaddr_unaligned) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: Rx tid HW desc alloc failed: tid %d\n",
+				"%s: Rx tid HW desc alloc failed: tid %d",
 				__func__, tid);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -1282,7 +1282,7 @@ try_desc_alloc:
 			hw_qdesc_align);
 
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Total Size %d Aligned Addr %pK\n",
+			"%s: Total Size %d Aligned Addr %pK",
 			__func__, rx_tid->hw_qdesc_alloc_size,
 			hw_qdesc_vaddr);
 
@@ -1326,7 +1326,7 @@ try_desc_alloc:
 			goto try_desc_alloc;
 		else {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Rx tid HW desc alloc failed (lowmem): tid %d\n",
+			"%s: Rx tid HW desc alloc failed (lowmem): tid %d",
 			__func__, tid);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -1370,14 +1370,14 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 		HAL_REO_CMD_SUCCESS) {
 		/* Should not happen normally. Just print error for now */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Rx tid HW desc deletion failed(%d): tid %d\n",
+			"%s: Rx tid HW desc deletion failed(%d): tid %d",
 			__func__,
 			reo_status->rx_queue_status.header.status,
 			freedesc->rx_tid.tid);
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-		"%s: rx_tid: %d status: %d\n", __func__,
+		"%s: rx_tid: %d status: %d", __func__,
 		freedesc->rx_tid.tid,
 		reo_status->rx_queue_status.header.status);
 
@@ -1420,7 +1420,7 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
 					"%s: fail to send CMD_CACHE_FLUSH:"
-					"tid %d desc %pK\n", __func__,
+					"tid %d desc %pK", __func__,
 					rx_tid->tid,
 					(void *)(rx_tid->hw_qdesc_paddr));
 			}
@@ -1447,7 +1447,7 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 			 * Here invoke desc_free function directly to do clean up.
 			 */
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: fail to send REO cmd to flush cache: tid %d\n",
+				"%s: fail to send REO cmd to flush cache: tid %d",
 				__func__, rx_tid->tid);
 			qdf_mem_zero(&reo_status, sizeof(reo_status));
 			reo_status.fl_cache_status.header.status = 0;
@@ -1474,7 +1474,7 @@ static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 
 	if (!freedesc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: malloc failed for freedesc: tid %d\n",
+			"%s: malloc failed for freedesc: tid %d",
 			__func__, tid);
 		return -ENOMEM;
 	}
@@ -1507,7 +1507,7 @@ static void dp_peer_setup_remaining_tids(struct dp_peer *peer)
 	for (tid = 1; tid < DP_MAX_TIDS-1; tid++) {
 		dp_rx_tid_setup_wifi3(peer, tid, 1, 0);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"Setting up TID %d for peer %pK peer->local_id %d\n",
+			"Setting up TID %d for peer %pK peer->local_id %d",
 			tid, peer, peer->local_id);
 	}
 }
@@ -1800,7 +1800,7 @@ void dp_rx_discard(struct dp_vdev *vdev, struct dp_peer *peer, unsigned tid,
 		msdu_list = qdf_nbuf_next(msdu_list);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 			"discard rx %pK from partly-deleted peer %pK "
-			"(%02x:%02x:%02x:%02x:%02x:%02x)\n",
+			"(%02x:%02x:%02x:%02x:%02x:%02x)",
 			msdu, peer,
 			peer->mac_addr.raw[0], peer->mac_addr.raw[1],
 			peer->mac_addr.raw[2], peer->mac_addr.raw[3],
@@ -1907,7 +1907,7 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 				dp_rx_tid_update_cb, rx_tid);
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-				"PN Check not setup for TID :%d \n", i);
+				"PN Check not setup for TID :%d ", i);
 		}
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 	}
@@ -1926,13 +1926,13 @@ dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 	peer = dp_peer_find_by_id(soc, peer_id);
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"Couldn't find peer from ID %d - skipping security inits\n",
+			"Couldn't find peer from ID %d - skipping security inits",
 			peer_id);
 		return;
 	}
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 		"sec spec for peer %pK (%02x:%02x:%02x:%02x:%02x:%02x): "
-		"%s key of type %d\n",
+		"%s key of type %d",
 		peer,
 		peer->mac_addr.raw[0], peer->mac_addr.raw[1],
 		peer->mac_addr.raw[2], peer->mac_addr.raw[3],

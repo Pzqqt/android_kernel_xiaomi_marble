@@ -790,7 +790,7 @@ void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
 static void dp_rx_print_lro_info(uint8_t *rx_tlv)
 {
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-	FL("----------------------RX DESC LRO----------------------\n"));
+	FL("----------------------RX DESC LRO----------------------"));
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		FL("lro_eligible 0x%x"), HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv));
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -810,7 +810,7 @@ static void dp_rx_print_lro_info(uint8_t *rx_tlv)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		FL("toeplitz 0x%x"), HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv));
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-	FL("---------------------------------------------------------\n"));
+	FL("---------------------------------------------------------"));
 }
 
 /**
@@ -1581,7 +1581,7 @@ done:
 		 * begins.
 		 */
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			FL("rxhash: flow id toeplitz: 0x%x\n"),
+			FL("rxhash: flow id toeplitz: 0x%x"),
 			hal_rx_msdu_start_toeplitz_get(rx_tlv_hdr));
 
 		dp_rx_msdu_stats_update(soc, nbuf, rx_tlv_hdr, peer, ring_id);
@@ -1702,8 +1702,8 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	struct rx_desc_pool *rx_desc_pool;
 
 	if (wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"nss-wifi<4> skip Rx refil %d", pdev_id);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  "nss-wifi<4> skip Rx refil %d", pdev_id);
 		return QDF_STATUS_SUCCESS;
 	}
 

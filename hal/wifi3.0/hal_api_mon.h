@@ -297,7 +297,7 @@ void hal_rx_reo_ent_buf_paddr_get(void *rx_desc,
 	buf_info->sw_cookie = HAL_RX_BUF_COOKIE_GET(buf_addr_info);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] ReoAddr=%pK, addrInfo=%pK, paddr=0x%llx, loopcnt=%d\n",
+		"[%s][%d] ReoAddr=%pK, addrInfo=%pK, paddr=0x%llx, loopcnt=%d",
 		__func__, __LINE__, reo_ent_ring, buf_addr_info,
 	(unsigned long long)buf_info->paddr, loop_cnt);
 
@@ -349,7 +349,7 @@ static inline void hal_rx_mon_msdu_link_desc_set(struct hal_soc *soc,
 		(HAL_RX_BUFFER_ADDR_39_32_GET(buf_addr_info)) << 32));
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] src_srng_desc=%pK, buf_addr=0x%llx, cookie=0x%llx\n",
+		"[%s][%d] src_srng_desc=%pK, buf_addr=0x%llx, cookie=0x%llx",
 		__func__, __LINE__, src_srng_desc, (unsigned long long)paddr,
 		(unsigned long long)p_buffer_addr_info->sw_buffer_cookie);
 
@@ -1239,43 +1239,43 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info,
 		value = HAL_RX_GET(rssi_info_tlv,
 			RECEIVE_RSSI_INFO_0, RSSI_PRI20_CHAIN0);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_PRI20_CHAIN0: %d\n", value);
+			"RSSI_PRI20_CHAIN0: %d", value);
 
 		value = HAL_RX_GET(rssi_info_tlv,
 			RECEIVE_RSSI_INFO_0, RSSI_EXT20_CHAIN0);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_EXT20_CHAIN0: %d\n", value);
+			"RSSI_EXT20_CHAIN0: %d", value);
 
 		value = HAL_RX_GET(rssi_info_tlv,
 			RECEIVE_RSSI_INFO_0, RSSI_EXT40_LOW20_CHAIN0);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_EXT40_LOW20_CHAIN0: %d\n", value);
+			"RSSI_EXT40_LOW20_CHAIN0: %d", value);
 
 		value = HAL_RX_GET(rssi_info_tlv,
 			RECEIVE_RSSI_INFO_0, RSSI_EXT40_HIGH20_CHAIN0);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_EXT40_HIGH20_CHAIN0: %d\n", value);
+			"RSSI_EXT40_HIGH20_CHAIN0: %d", value);
 
 		value = HAL_RX_GET(rssi_info_tlv,
 			RECEIVE_RSSI_INFO_1, RSSI_EXT80_LOW20_CHAIN0);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_EXT80_LOW20_CHAIN0: %d\n", value);
+			"RSSI_EXT80_LOW20_CHAIN0: %d", value);
 
 		value = HAL_RX_GET(rssi_info_tlv,
 			RECEIVE_RSSI_INFO_1, RSSI_EXT80_LOW_HIGH20_CHAIN0);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_EXT80_LOW_HIGH20_CHAIN0: %d\n", value);
+			"RSSI_EXT80_LOW_HIGH20_CHAIN0: %d", value);
 
 		value = HAL_RX_GET(rssi_info_tlv,
 			RECEIVE_RSSI_INFO_1, RSSI_EXT80_HIGH_LOW20_CHAIN0);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_EXT80_HIGH_LOW20_CHAIN0: %d\n", value);
+			"RSSI_EXT80_HIGH_LOW20_CHAIN0: %d", value);
 
 		value = HAL_RX_GET(rssi_info_tlv,
 				   RECEIVE_RSSI_INFO_1,
 				   RSSI_EXT80_HIGH20_CHAIN0);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"RSSI_EXT80_HIGH20_CHAIN0: %d\n", value);
+			"RSSI_EXT80_HIGH20_CHAIN0: %d", value);
 		break;
 	}
 	case WIFIPHYRX_OTHER_RECEIVE_INFO_E:
