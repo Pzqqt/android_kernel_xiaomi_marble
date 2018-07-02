@@ -4025,24 +4025,12 @@ wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 
 #define PWR_SAVE_FAIL_CMD_INDEX \
 	QCA_NL80211_VENDOR_SUBCMD_PWR_SAVE_FAIL_DETECTED_INDEX
-/**
- * hdd_chip_pwr_save_fail_detected_cb() - chip power save failure detected
- * callback
- * @hddctx: HDD context
- * @data: chip power save failure detected data
- *
- * This function reads the chip power save failure detected data and fill in
- * the skb with NL attributes and send up the NL event.
- * This callback execute in atomic context and must not invoke any
- * blocking calls.
- *
- * Return: none
- */
-void hdd_chip_pwr_save_fail_detected_cb(void *hddctx,
+
+void hdd_chip_pwr_save_fail_detected_cb(hdd_handle_t hdd_handle,
 			struct chip_pwr_save_fail_detected_params
 			*data)
 {
-	struct hdd_context *hdd_ctx	= hddctx;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	struct sk_buff *skb;
 	int flags = cds_get_gfp_flags();
 

@@ -1834,9 +1834,9 @@ QDF_STATUS sme_set_rx_set_blocksize(tHalHandle hal,
  */
 QDF_STATUS sme_get_rcpi(tHalHandle hal, struct sme_rcpi_req *rcpi);
 
-/*
+/**
  * sme_set_chip_pwr_save_fail_cb() - set chip power save failure callback
- * @hal: global hal handle
+ * @mac_handle: opaque handle to the MAC context
  * @cb: callback function pointer
  *
  * This function stores the chip power save failure callback function.
@@ -1844,8 +1844,8 @@ QDF_STATUS sme_get_rcpi(tHalHandle hal, struct sme_rcpi_req *rcpi);
  * Return: QDF_STATUS enumeration.
  */
 
-QDF_STATUS sme_set_chip_pwr_save_fail_cb(tHalHandle hal, void (*cb)(void *,
-				 struct chip_pwr_save_fail_detected_params *));
+QDF_STATUS sme_set_chip_pwr_save_fail_cb(mac_handle_t mac_handle,
+					 pwr_save_fail_cb cb);
 /**
  * sme_cli_set_command() - SME wrapper API over WMA "set" command
  * processor cmd

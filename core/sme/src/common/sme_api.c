@@ -13073,12 +13073,11 @@ bool sme_is_any_session_in_connected_state(tHalHandle h_hal)
 	return ret;
 }
 
-QDF_STATUS sme_set_chip_pwr_save_fail_cb(tHalHandle hal,
-		 void (*cb)(void *,
-		 struct chip_pwr_save_fail_detected_params *)) {
-
-	QDF_STATUS status  = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+QDF_STATUS sme_set_chip_pwr_save_fail_cb(mac_handle_t mac_handle,
+					 pwr_save_fail_cb cb)
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (status != QDF_STATUS_SUCCESS) {
