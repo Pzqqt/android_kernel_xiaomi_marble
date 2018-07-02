@@ -1907,7 +1907,7 @@ static void hdd_update_ra_rate_limit(struct hdd_context *hdd_ctx,
 void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 {
 	int ret;
-	struct hdd_context *hdd_ctx = (struct hdd_context *)hdd_handle;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	uint8_t temp_band_cap;
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
 	uint8_t antenna_mode;

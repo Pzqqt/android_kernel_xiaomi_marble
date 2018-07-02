@@ -3385,4 +3385,15 @@ mac_handle_t hdd_adapter_get_mac_handle(struct hdd_adapter *adapter)
 		hdd_context_get_mac_handle(adapter->hdd_ctx) : NULL;
 }
 
+/**
+ * hdd_handle_to_context() - turn an HDD handle into an HDD context
+ * @hdd_handle: HDD handle to be converted
+ *
+ * Return: HDD context referenced by @hdd_handle
+ */
+static inline
+struct hdd_context *hdd_handle_to_context(hdd_handle_t hdd_handle)
+{
+	return (struct hdd_context *)hdd_handle;
+}
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

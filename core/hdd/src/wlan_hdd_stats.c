@@ -2296,17 +2296,12 @@ void wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
 
 	hdd_enter();
 
-	if (!ctx) {
-		hdd_err("Invalid HDD context.");
-		return;
-	}
-
 	if (!rsp) {
 		hdd_err("Invalid result.");
 		return;
 	}
 
-	hdd_ctx = (struct hdd_context *)ctx;
+	hdd_ctx = hdd_handle_to_context(ctx);
 	linkLayer_stats_results = rsp;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
