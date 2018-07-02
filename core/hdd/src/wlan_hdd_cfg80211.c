@@ -8467,6 +8467,7 @@ fail:
 	kfree_skb(skb);
 }
 
+#ifdef WLAN_NS_OFFLOAD
 static const struct nla_policy
 ns_offload_set_policy[QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_FLAG] = {.type = NLA_U8},
@@ -8557,6 +8558,7 @@ static int wlan_hdd_cfg80211_set_ns_offload(struct wiphy *wiphy,
 
 	return ret;
 }
+#endif /* WLAN_NS_OFFLOAD */
 
 static const struct nla_policy get_preferred_freq_list_policy
 		[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1] = {
@@ -14384,6 +14386,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_monitor_rssi
 	},
+#ifdef WLAN_NS_OFFLOAD
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_ND_OFFLOAD,
@@ -14392,6 +14395,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_set_ns_offload
 	},
+#endif /* WLAN_NS_OFFLOAD */
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_LOGGER_FEATURE_SET,

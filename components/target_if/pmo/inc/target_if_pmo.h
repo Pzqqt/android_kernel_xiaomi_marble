@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -211,6 +211,7 @@ QDF_STATUS target_if_pmo_send_arp_offload_req(
 		struct pmo_arp_offload_params *arp_offload_req,
 		struct pmo_ns_offload_params *ns_offload_req);
 
+#ifdef WLAN_NS_OFFLOAD
 /**
  * target_if_pmo_send_ns_offload_req() - sends ns request to fwr
  * @vdev: objmgr vdev
@@ -225,7 +226,15 @@ QDF_STATUS target_if_pmo_send_ns_offload_req(
 		struct wlan_objmgr_vdev *vdev,
 		struct pmo_arp_offload_params *arp_offload_req,
 		struct pmo_ns_offload_params *ns_offload_req);
-
+#else /* WLAN_NS_OFFLOAD */
+static inline QDF_STATUS
+target_if_pmo_send_ns_offload_req(struct wlan_objmgr_vdev *vdev,
+		struct pmo_arp_offload_params *arp_offload_req,
+		struct pmo_ns_offload_params *ns_offload_req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_NS_OFFLOAD */
 /**
  * target_if_pmo_send_gtk_offload_req() - send gtk offload request in fwr
  * @vdev: objmgr vdev handle

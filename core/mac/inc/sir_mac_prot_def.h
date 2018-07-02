@@ -511,7 +511,6 @@
 #define SIR_MAC_OUI_WSM_SCHEDULE_MIN        20
 #define SIR_MAC_OUI_WSM_SCHEDULE_MAX        20
 
-#ifdef WLAN_NS_OFFLOAD
 #define SIR_MAC_NS_OFFLOAD_SIZE             1   /* support only one IPv6 offload */
 /* Number of target IP V6 addresses for NS offload */
 #define SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA   16
@@ -519,7 +518,6 @@
 #define SIR_IPV6_ADDR_VALID                 1
 #define SIR_IPV6_ADDR_UC_TYPE               0
 #define SIR_IPV6_ADDR_AC_TYPE               1
-#endif /* WLAN_NS_OFFLOAD */
 
 /* ----------------------------------------------------------------------------- */
 

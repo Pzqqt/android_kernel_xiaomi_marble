@@ -297,6 +297,7 @@ int wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy);
  */
 void hdd_ipv4_notifier_work_queue(struct work_struct *work);
 
+#ifdef WLAN_NS_OFFLOAD
 /**
  * hdd_enable_ns_offload() - enable NS offload
  * @adapter:   pointer to the adapter
@@ -313,7 +314,20 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
  * Return: nothing
  */
 void hdd_disable_ns_offload(struct hdd_adapter *adapter,
-			    enum pmo_offload_trigger trigger);
+	enum pmo_offload_trigger trigger);
+#else /* WLAN_NS_OFFLOAD */
+static inline
+void hdd_enable_ns_offload(struct hdd_adapter *adapter,
+			   enum pmo_offload_trigger trigger)
+{
+}
+
+static inline
+void hdd_disable_ns_offload(struct hdd_adapter *adapter,
+			    enum pmo_offload_trigger trigger)
+{
+}
+#endif /* WLAN_NS_OFFLOAD */
 
 /**
  * hdd_ipv6_notifier_work_queue() - IP V6 change notifier work handler

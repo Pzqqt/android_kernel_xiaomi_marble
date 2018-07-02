@@ -167,7 +167,7 @@ static void hdd_disable_gtk_offload(struct hdd_adapter *adapter)
 
 }
 
-
+#ifdef WLAN_NS_OFFLOAD
 /**
  * __wlan_hdd_ipv6_changed() - IPv6 notifier callback function
  * @nb: notifier block that was registered with the kernel
@@ -470,6 +470,7 @@ void hdd_ipv6_notifier_work_queue(struct work_struct *work)
 	__hdd_ipv6_notifier_work_queue(work);
 	cds_ssr_unprotect(__func__);
 }
+#endif /* WLAN_NS_OFFLOAD */
 
 static void hdd_enable_hw_filter(struct hdd_adapter *adapter)
 {
