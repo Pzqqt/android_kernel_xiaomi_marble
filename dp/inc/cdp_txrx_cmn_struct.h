@@ -45,6 +45,7 @@
 
 #define CDP_BA_256_BIT_MAP_SIZE_DWORDS 8
 #define CDP_BA_64_BIT_MAP_SIZE_DWORDS 2
+#define CDP_RSSI_CHAIN_LEN 8
 
 #define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 #define CDP_INVALID_VDEV_ID 0xff
@@ -874,6 +875,20 @@ enum cdp_stat_update_type {
 	UPDATE_PDEV_STATS = 2,
 };
 
+/*
+ * struct cdp_tx_sojourn_stats - Tx sojourn stats
+ * @ppdu_seq_id: ppdu_seq_id from tx completion
+ * @avg_sojourn_msdu: average sojourn msdu time
+ * @sum_sojourn_msdu: sum sojourn msdu time
+ * @num_msdu: number of msdus per ppdu
+ */
+struct cdp_tx_sojourn_stats {
+	uint32_t ppdu_seq_id;
+	uint32_t avg_sojourn_msdu[CDP_DATA_TID_MAX];
+	uint32_t sum_sojourn_msdu[CDP_DATA_TID_MAX];
+	uint32_t num_msdus[CDP_DATA_TID_MAX];
+};
+
 /**
  * struct cdp_tx_completion_ppdu_user - Tx PPDU completion per-user information
  * @completion_status: completion status - OK/Filter/Abort/Timeout
@@ -924,6 +939,7 @@ struct cdp_tx_completion_ppdu_user {
 	uint32_t mpdu_tried_ucast:16,
 		mpdu_tried_mcast:16;
 	uint16_t mpdu_success:16;
+	uint16_t mpdu_failed:16;
 	uint32_t long_retries:4,
 		 short_retries:4,
 		 tx_ratecode:8,
@@ -951,18 +967,23 @@ struct cdp_tx_completion_ppdu_user {
 	uint32_t ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
 	uint32_t start_seq;
 	uint32_t enq_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
+	uint32_t failed_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
 	uint32_t num_mpdu:9,
 		 num_msdu:16;
 	uint32_t tx_duration;
 	uint16_t ru_tones;
 	bool is_mcast;
 	uint32_t tx_rate;
+	uint32_t tx_ratekbps;
+	/*ack rssi for separate chains*/
+	uint32_t ack_rssi[CDP_RSSI_CHAIN_LEN];
 };
 
 /**
  * struct cdp_tx_completion_ppdu - Tx PPDU completion information
  * @completion_status: completion status - OK/Filter/Abort/Timeout
  * @ppdu_id: PPDU Id
+ * @ppdu_seq_id: ppdu sequence id for sojourn stats
  * @vdev_id: VAP Id
  * @num_users: Number of users
  * @num_mpdu: Number of MPDUs in PPDU
@@ -979,6 +1000,7 @@ struct cdp_tx_completion_ppdu_user {
  */
 struct cdp_tx_completion_ppdu {
 	uint32_t ppdu_id;
+	uint32_t ppdu_seq_id;
 	uint16_t vdev_id;
 	uint32_t num_users;
 	uint32_t num_mpdu:9,
@@ -1150,6 +1172,15 @@ struct cdp_rx_indication_ppdu {
 	uint32_t length;
 	uint8_t channel;
 	uint8_t beamformed;
+
+	uint32_t rx_ratekbps;
+	uint32_t ppdu_rx_rate;
+
+	uint32_t retries;
+	uint32_t rx_byte_count;
+	uint8_t rx_ratecode;
+	uint8_t fcs_error_mpdus;
+
 };
 
 /**

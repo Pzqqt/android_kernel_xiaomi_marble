@@ -78,261 +78,402 @@ enum cdp_packet_type {
 	DOT11_MAX = 5,
 };
 
-/* packet info */
+/* struct cdp_pkt_info - packet info
+ * @num: no of packets
+ * @bytes: total no of bytes
+ */
 struct cdp_pkt_info {
-	/*no of packets*/
 	uint32_t num;
-	/* total no of bytes */
 	uint64_t bytes;
 };
 
-/* Tx  Stats */
+/* struct cdp_tx_stats - tx stats
+ * @cdp_pkt_info comp_pkt: Pkt Info for which completions were received
+ * @cdp_pkt_info ucast: Unicast Packet Count
+ * @cdp_pkt_info mcast: Multicast Packet Count
+ * @cdp_pkt_info bcast: Broadcast Packet Count
+ * @cdp_pkt_info nawds_mcast: NAWDS  Multicast Packet Count
+ * @nawds_mcast_drop: NAWDS  Multicast Drop Count
+ * @cdp_pkt_info tx_success: Successful Tx Packets
+ * @tx_failed: Total Tx failure
+ * @ofdma: Total Packets as ofdma
+ * @stbc: Packets in STBC
+ * @ldpc: Packets in LDPC
+ * @retries: Packet retries
+ * @non_amsdu_cnt: Number of MSDUs with no MSDU level aggregation
+ * @amsdu_cnt: Number of MSDUs part of AMSDU
+ * @tx_rate: Tx Rate
+ * @last_tx_rate: Last tx rate
+ * @last_tx_rate_mcs: Tx rate mcs
+ * @last_per: Tx Per
+ * @rnd_avg_tx_rate: Rounded average tx rate
+ * @avg_tx_rate: Average TX rate
+ * @last_ack_rssi: RSSI of last acked packet
+ * @tx_bytes_success_last: last Tx success bytes
+ * @tx_data_success_last: last Tx success data
+ * @tx_byte_rate: Bytes Trasmitted in last one sec
+ * @tx_data_rate: Data Transmitted in last one sec
+ * @sgi_count[MAX_GI]: SGI count
+ * @nss[SS_COUNT]: Packet count for different num_spatial_stream values
+ * @bw[MAX_BW]: Packet Count for different bandwidths
+ * @wme_ac_type[WME_AC_MAX]: Wireless Multimedia type Count
+ * @excess_retries_per_ac[WME_AC_MAX]: Wireless Multimedia type Count
+ * @fw_rem: Discarded by firmware
+ * @fw_rem_notx: firmware_discard_untransmitted
+ * @fw_rem_tx: firmware_discard_transmitted
+ * @age_out: aged out in mpdu/msdu queues
+ * @fw_reason1: discarded by firmware reason 1
+ * @fw_reason2: discarded by firmware reason 2
+ * @fw_reason3: discarded by firmware reason 3
+ * @mcs_count: MCS Count
+ * @dot11_tx_pkts: dot11 tx packets
+ * @an_tx_cnt: ald tx count
+ * @an_tx_rates_used: ald rx rate used
+ * @an_tx_bytes: ald tx bytes
+ * @ald_txcount: ald tx count
+ * @ald_lastper: ald last PER
+ * @ald_max4msframelen: ald max frame len
+ * @an_tx_ratecount: ald tx ratecount
+ * @ald_retries: ald retries
+ * @ald_ac_nobufs: #buffer overflows per node per AC
+ * @ald_ac_excretries: #pkts dropped after excessive retries per node per AC
+ * @rssi_chain: rssi chain
+ * @inactive_time: inactive time in secs
+ * @tx_ratecode: Tx rate code of last frame
+ * @tx_flags: tx flags
+ * @tx_power: Tx power latest
+ * @is_tx_no_ack: no ack received
+ * @is_tx_nodefkey: tx failed 'cuz no defkey
+ * @is_tx_noheadroom: tx failed 'cuz no space
+ * @is_crypto_enmicfail:
+ * @is_tx_nonode: tx failed for no node
+ * @is_tx_unknownmgt: tx of unknown mgt frame
+ * @is_tx_badcipher: tx failed 'cuz key type
+ * @ampdu_cnt: completion of aggregation
+ * @non_ampdu_cnt: tx completion not aggregated
+ */
 struct cdp_tx_stats {
-	/* Pkt Info for which completions were received */
 	struct cdp_pkt_info comp_pkt;
-	/* Unicast Packet Count */
 	struct cdp_pkt_info ucast;
-	/* Multicast Packet Count */
 	struct cdp_pkt_info mcast;
-	/* Broadcast Packet Count*/
 	struct cdp_pkt_info bcast;
-	/*NAWDS  Multicast Packet Count */
 	struct cdp_pkt_info nawds_mcast;
-	/*NAWDS  Multicast Drop Count */
 	uint32_t nawds_mcast_drop;
-	/* Successful Tx Packets */
 	struct cdp_pkt_info tx_success;
-	/* Total Tx failure */
 	uint32_t tx_failed;
-	/* Total Packets as ofdma*/
 	uint32_t ofdma;
-	/* Packets in STBC */
 	uint32_t stbc;
-	/* Packets in LDPC */
 	uint32_t ldpc;
-	/* Packet retries */
 	uint32_t retries;
-	/* Number of MSDUs with no MSDU level aggregation */
 	uint32_t non_amsdu_cnt;
-	/* Number of MSDUs part of AMSDU*/
 	uint32_t amsdu_cnt;
-	/* Tx Rate */
 	uint32_t tx_rate;
-
-	/* RSSI of last packet */
+	uint32_t last_tx_rate;
+	uint32_t last_tx_rate_mcs;
+	uint32_t last_per;
+	uint32_t rnd_avg_tx_rate;
+	uint32_t avg_tx_rate;
 	uint32_t last_ack_rssi;
-
-	/* Packet Type */
+	uint32_t tx_bytes_success_last;
+	uint32_t tx_data_success_last;
+	uint32_t tx_byte_rate;
+	uint32_t tx_data_rate;
 	struct {
-		/* MCS Count */
 		uint32_t mcs_count[MAX_MCS];
 	} pkt_type[DOT11_MAX];
 
-	/* SGI count */
 	uint32_t sgi_count[MAX_GI];
 
-	/* Packet count for different num_spatial_stream values */
 	uint32_t nss[SS_COUNT];
 
-	/* Packet Count for different bandwidths */
 	uint32_t bw[MAX_BW];
 
-	/* Wireless Multimedia type Count */
 	uint32_t wme_ac_type[WME_AC_MAX];
 
-	/* Wireless Multimedia type Count */
 	uint32_t excess_retries_per_ac[WME_AC_MAX];
 
-	/* Packets dropped on the Tx side */
 	struct {
-		/* Discarded by firmware */
 		uint32_t fw_rem;
-		/* firmware_discard_untransmitted */
 		uint32_t fw_rem_notx;
-		/* firmware_discard_transmitted */
 		uint32_t fw_rem_tx;
-		/* aged out in mpdu/msdu queues*/
 		uint32_t age_out;
-		/* discarded by firmware reason 1 */
 		uint32_t fw_reason1;
-		/* discarded by firmware reason 2 */
 		uint32_t fw_reason2;
-		/* discarded by firmware reason 3 */
 		uint32_t fw_reason3;
 	} dropped;
+
+	struct cdp_pkt_info dot11_tx_pkts;
+
+	uint32_t fw_tx_cnt;
+	uint32_t fw_tx_rates_used;
+	uint32_t fw_tx_bytes;
+	uint32_t fw_txcount;
+	uint32_t fw_max4msframelen;
+	uint32_t fw_ratecount;
+
+	uint32_t ac_nobufs[WME_AC_MAX];
+	uint32_t rssi_chain[WME_AC_MAX];
+	uint32_t inactive_time;
+
+	uint32_t tx_ratecode;
+	uint32_t tx_flags;
+	uint32_t tx_power;
+
+	/* MSDUs which the target sent but couldn't get an ack for */
+	struct cdp_pkt_info is_tx_no_ack;
+
+	/*add for peer and upadted from ppdu*/
+	uint32_t ampdu_cnt;
+	uint32_t non_ampdu_cnt;
 };
 
-/* Rx Level Stats */
+/* struct cdp_rx_stats - rx Level Stats
+ * @to_stack: Total packets sent up the stack
+ * @rcvd_reo[CDP_MAX_RX_RINGS]:  Packets received on the reo ring
+ * @unicast: Total unicast packets
+ * @multicast: Total multicast packets
+ * @bcast:  Broadcast Packet Count
+ * @raw: Raw Pakets received
+ * @nawds_mcast_drop: Total multicast packets
+ * @pkts: Intra BSS packets received
+ * @fail: Intra BSS packets failed
+ * @mic_err: Rx MIC errors CCMP
+ * @decrypt_err: Rx Decryption Errors CRC
+ * @fcserr: rx MIC check failed (CCMP)
+ * @wme_ac_type[WME_AC_MAX]: Wireless Multimedia type Count
+ * @reception_type[MAX_RECEPTION_TYPES]: Reception type os packets
+ * @mcs_count[MAX_MCS]: mcs count
+ * @sgi_count[MAX_GI]: sgi count
+ * @nss[SS_COUNT]: Packet count in spatiel Streams
+ * @bw[MAX_BW]:  Packet Count in different bandwidths
+ * @non_ampdu_cnt: Number of MSDUs with no MPDU level aggregation
+ * @ampdu_cnt: Number of MSDUs part of AMSPU
+ * @non_amsdu_cnt: Number of MSDUs with no MSDU level aggregation
+ * @amsdu_cnt: Number of MSDUs part of AMSDU
+ * @bar_recv_cnt: Number of bar received
+ * @rssi: RSSI of received signal
+ * @last_rssi: Previous rssi
+ * @rx_rate: Rx rate
+ * @last_rx_rate: Previous rx rate
+ * @rnd_avg_rx_rate: Rounded average rx rate
+ * @avg_rx_rate:  Average Rx rate
+ * @dot11_rx_pkts: dot11 rx packets
+ * @rx_bytes_last: last Rx success bytes
+ * @rx_data_last: last rx success data
+ * @rx_byte_rate: bytes received in last one sec
+ * @rx_data_rate: data received in last one sec
+ * @rx_retries: retries of packet in rx
+ * @rx_mpdus: mpdu in rx
+ * @rx_ppdus: ppdu in rx
+ * @is_rx_tooshort: tooshort
+ * @is_rx_decap: rx decap
+ * @rx_ccmpmic: rx MIC check failed (CCMP)
+ * @rx_tkipmic: rx MIC check failed (TKIP)
+ * @rx_tkipicv: rx ICV check failed (TKIP)
+ * @rx_wpimic: rx MIC check failed (WPI)
+ * @rx_wepfail: rx wep processing failed
+ * @rx_aggr: aggregation on rx
+ */
 struct cdp_rx_stats {
-	/* Total packets sent up the stack */
 	struct cdp_pkt_info to_stack;
-	/* Packets received on the reo ring */
 	struct cdp_pkt_info rcvd_reo[CDP_MAX_RX_RINGS];
-	/* Total unicast packets */
 	struct cdp_pkt_info unicast;
-	/* Total multicast packets */
 	struct cdp_pkt_info multicast;
-	/* Broadcast Packet Count*/
 	struct cdp_pkt_info bcast;
-	/* Raw Pakets received */
 	struct cdp_pkt_info raw;
-	/* Total multicast packets */
 	uint32_t nawds_mcast_drop;
-
 	struct {
-	/* Intra BSS packets received */
-	struct cdp_pkt_info pkts;
-	struct cdp_pkt_info fail;
+		struct cdp_pkt_info pkts;
+		struct cdp_pkt_info fail;
 	} intra_bss;
 
-	/* Errors */
 	struct {
-		/* Rx MIC errors */
 		uint32_t mic_err;
-		/* Rx Decryption Errors */
 		uint32_t decrypt_err;
+		uint32_t fcserr;
 	} err;
 
-	/* Wireless Multimedia type Count */
 	uint32_t wme_ac_type[WME_AC_MAX];
-	/* Reception type os packets */
 	uint32_t reception_type[MAX_RECEPTION_TYPES];
-	/* Packet Type */
 	struct {
-		/* MCS Count */
 		uint32_t mcs_count[MAX_MCS];
 	} pkt_type[DOT11_MAX];
-	/* SGI count */
 	uint32_t sgi_count[MAX_GI];
-	/* Packet count in spatiel Streams */
 	uint32_t nss[SS_COUNT];
-	/* Packet Count in different bandwidths */
 	uint32_t bw[MAX_BW];
-	/*  Number of MSDUs with no MPDU level aggregation */
 	uint32_t non_ampdu_cnt;
-	/* Number of MSDUs part of AMSPU */
 	uint32_t ampdu_cnt;
-	/* Number of MSDUs with no MSDU level aggregation */
 	uint32_t non_amsdu_cnt;
-	/* Number of MSDUs part of AMSDU*/
 	uint32_t amsdu_cnt;
-	/* Number of bar received */
 	uint32_t bar_recv_cnt;
-	/* RSSI of received signal */
 	uint32_t rssi;
-	/*Rx rate */
+	uint32_t last_rssi;
 	uint32_t rx_rate;
+	uint32_t last_rx_rate;
+	uint32_t rnd_avg_rx_rate;
+	uint32_t avg_rx_rate;
+	struct cdp_pkt_info  dot11_rx_pkts;
+
+	uint32_t rx_bytes_success_last;
+	uint32_t rx_data_success_last;
+	uint32_t rx_byte_rate;
+	uint32_t rx_data_rate;
+
+	uint32_t rx_retries;
+	uint32_t rx_mpdus;
+	uint32_t rx_ppdus;
+
+	/*add for peer updated for ppdu*/
+	uint32_t rx_aggr;
 };
 
-/* Tx ingress Stats */
+/* struct cdp_tx_ingress_stats - Tx ingress Stats
+ * @rcvd: Total packets received for transmission
+ * @processed: Tx packets processed
+ * @inspect_pkts: Total packets passed to inspect handler
+ * @nawds_mcast: NAWDS  Multicast Packet Count
+ * @bcast: Number of broadcast packets
+ * @raw_pkt: Total Raw packets
+ * @dma_map_error: DMA map error
+ * @num_seg: No of segments in TSO packets
+ * @tso_pkt:total no of TSO packets
+ * @non_tso_pkts: non - TSO packets
+ * @tso_desc_cnt: TSO descriptors
+ * @dropped_host: TSO packets dropped by host
+ * @dropped_target:TSO packets dropped by target
+ * @sg_pkt: Total scatter gather packets
+ * @non_sg_pkts: non SG packets
+ * @sg_desc_cnt: SG Descriptors
+ * @dropped_host: SG packets dropped by host
+ * @dropped_target: SG packets dropped by target
+ * @dma_map_error: Dma map error
+ * @mcast_pkt: total no of multicast conversion packets
+ * @dropped_map_error: packets dropped due to map error
+ * @dropped_self_mac: packets dropped due to self Mac address
+ * @dropped_send_fail: Packets dropped due to send fail
+ * @ucast: total unicast packets transmitted
+ * @fail_seg_alloc: Segment allocation failure
+ * @clone_fail: NBUF clone failure
+ * @dropped_pkt: Total scatter gather packets
+ * @desc_na: Desc Not Available
+ * @ring_full: ring full
+ * @enqueue_fail: hw enqueue fail
+ * @dma_error: dma fail
+ * @res_full: Resource Full: Congestion Control
+ * @exception_fw: packets sent to fw
+ * @completion_fw: packets completions received from fw
+ * @cce_classified:Number of packets classified by CCE
+ * @cce_classified_raw:Number of raw packets classified by CCE
+ */
 struct cdp_tx_ingress_stats {
-	/* Total packets received for transmission */
 	struct cdp_pkt_info rcvd;
-	/* Tx packets processed*/
 	struct cdp_pkt_info processed;
-	/* Total packets passed Reinject handler */
 	struct cdp_pkt_info reinject_pkts;
-	/*  Total packets passed to inspect handler */
 	struct cdp_pkt_info inspect_pkts;
-	/*NAWDS  Multicast Packet Count */
 	struct cdp_pkt_info nawds_mcast;
-	/* Number of broadcast packets */
 	struct cdp_pkt_info bcast;
 
 	struct {
-		/* Total Raw packets */
 		struct cdp_pkt_info raw_pkt;
-		/* DMA map error */
 		uint32_t dma_map_error;
 	} raw;
 
 	/* TSO packets info */
 	struct {
-		/* No of segments in TSO packets */
 		uint32_t num_seg;
-		/* total no of TSO packets */
 		struct cdp_pkt_info tso_pkt;
-		/* TSO packets dropped by host */
-		uint32_t dropped_host;
-		/* TSO packets dropped by target */
+		struct cdp_pkt_info non_tso_pkts;
+		uint32_t tso_desc_cnt;
+		struct cdp_pkt_info  dropped_host;
 		uint32_t dropped_target;
 	} tso;
 
 	/* Scatter Gather packet info */
 	struct {
-		/* Total scatter gather packets */
 		struct cdp_pkt_info sg_pkt;
-		/* SG packets dropped by host */
-		uint32_t dropped_host;
-		/* SG packets dropped by target */
+		struct cdp_pkt_info non_sg_pkts;
+		uint32_t sg_desc_cnt;
+		struct cdp_pkt_info  dropped_host;
 		uint32_t dropped_target;
-		/* Dma map error */
 		uint32_t dma_map_error;
 	} sg;
 
 	/* Multicast Enhancement packets info */
 	struct {
-		/* total no of multicast conversion packets */
 		struct cdp_pkt_info mcast_pkt;
-		/* packets dropped due to map error */
 		uint32_t dropped_map_error;
-		/* packets dropped due to self Mac address */
 		uint32_t dropped_self_mac;
-		/* Packets dropped due to send fail */
 		uint32_t dropped_send_fail;
-		/* total unicast packets transmitted */
 		uint32_t ucast;
-		/* Segment allocation failure */
 		uint32_t fail_seg_alloc;
-		/* NBUF clone failure */
 		uint32_t clone_fail;
 	} mcast_en;
 
 	/* Packets dropped on the Tx side */
 	struct {
-		/* Total scatter gather packets */
 		struct cdp_pkt_info dropped_pkt;
-		/* Desc Not Available */
-		uint32_t desc_na;
-		/* Ring Full */
+		uint32_t  desc_na;
 		uint32_t ring_full;
-		/* Hwenqueue failed */
 		uint32_t enqueue_fail;
-		/* DMA failed */
 		uint32_t dma_error;
-		/* Resource Full: Congestion Control */
 		uint32_t res_full;
 	} dropped;
 
 	/* Mesh packets info */
 	struct {
-		/* packets sent to fw */
 		uint32_t exception_fw;
-		/* packets completions received from fw */
 		uint32_t completion_fw;
 	} mesh;
 
-	/*Number of packets classified by CCE*/
 	uint32_t cce_classified;
-
-	/*Number of raw packets classified by CCE*/
 	uint32_t cce_classified_raw;
 };
 
+/* struct cdp_vdev_stats - vdev stats structure
+ * @tx_i: ingress tx stats
+ * @tx: cdp tx stats
+ * @rx: cdp rx stats
+ */
 struct cdp_vdev_stats {
-	/* Tx ingress stats */
 	struct cdp_tx_ingress_stats tx_i;
-	/* CDP Tx Stats */
 	struct cdp_tx_stats tx;
-	/* CDP Rx Stats */
 	struct cdp_rx_stats rx;
 };
 
+/* struct cdp_peer_stats - peer stats structure
+ * @tx: cdp tx stats
+ * @rx: cdp rx stats
+ */
 struct cdp_peer_stats {
 	/* CDP Tx Stats */
 	struct cdp_tx_stats tx;
 	/* CDP Rx Stats */
 	struct cdp_rx_stats rx;
+};
+
+/* struct cdp_interface_peer_stats - interface structure for txrx peer stats
+ * @peer_hdl: control path peer handle
+ * @last_peer_tx_rate: peer tx rate for last transmission
+ * @peer_tx_rate: tx rate for current transmission
+ * @peer_rssi: current rssi value of peer
+ * @rssi_changed: denotes rssi is changed
+ * @tx_packet_count: tx packet count
+ * @rx_packet_count: rx packet count
+ * @tx_byte_count: tx byte count
+ * @rx_byte_count: rx byte count
+ * @per: per error rate
+ */
+struct cdp_interface_peer_stats {
+	void  *peer_hdl;
+	uint32_t last_peer_tx_rate;
+	uint32_t peer_tx_rate;
+	uint32_t  peer_rssi;
+	uint32_t tx_packet_count;
+	uint32_t rx_packet_count;
+	uint32_t tx_byte_count;
+	uint32_t rx_byte_count;
+	uint32_t per;
+	uint8_t  rssi_changed;
 };
 
 /* Tx completions per interrupt */
@@ -725,60 +866,64 @@ struct cdp_htt_rx_pdev_stats {
     struct cdp_htt_rx_pdev_fw_stats_phy_err_tlv fw_stats_phy_err_tlv;
 };
 
+/* struct cdp_pdev_stats - pdev stats
+ * @msdu_not_done: packets dropped because msdu done bit not set
+ * @mec:Multicast Echo check
+ * @mesh_filter: Mesh Filtered packets
+ * @mon_rx_drop: packets dropped on monitor vap
+ * @pkts: total packets replenished
+ * @rxdma_err: rxdma errors for replenished
+ * @nbuf_alloc_fail: nbuf alloc failed
+ * @map_err: Mapping failure
+ * @x86_fail: x86 failures
+ * @low_thresh_intrs: low threshold interrupts
+ * @rx_raw_pkts: Rx Raw Packets
+ * @mesh_mem_alloc: Mesh Rx Stats Alloc fail
+ * @desc_alloc_fail: desc alloc failed errors
+ * @ip_csum_err: ip checksum errors
+ * @tcp_udp_csum_err: tcp/udp checksum errors
+ * @buf_freelist: buffers added back in freelist
+ * @tx_i: Tx Ingress stats
+ * @tx:CDP Tx Stats
+ * @rx: CDP Rx Stats
+ * @tx_comp_histogram: Number of Tx completions per interrupt
+ * @rx_ind_histogram:  Number of Rx ring descriptors reaped per interrupt
+ * @ppdu_stats_counter: ppdu stats counter
+ * @htt_tx_pdev_stats: htt pdev stats for tx
+ * @htt_rx_pdev_stats: htt pdev stats for rx
+ */
 struct cdp_pdev_stats {
-	/* packets dropped on rx */
 	struct {
-		/* packets dropped because nsdu_done bit not set */
 		uint32_t msdu_not_done;
-		/* Multicast Echo check */
 		uint32_t mec;
-		/* Mesh Filtered packets */
 		uint32_t mesh_filter;
-		/* packets dropped on monitor vap */
 		uint32_t mon_rx_drop;
 	} dropped;
 
 	struct {
-		/* total packets replnished */
 		struct cdp_pkt_info pkts;
-		/* rxdma errors */
 		uint32_t rxdma_err;
-		/* nbuf alloc failed */
 		uint32_t nbuf_alloc_fail;
-		/* Mapping failure */
 		uint32_t map_err;
-		/* x86 failures */
 		uint32_t x86_fail;
-		/* low threshold interrupts */
 		uint32_t low_thresh_intrs;
 	} replenish;
 
-	/* Rx Raw Packets */
 	uint32_t rx_raw_pkts;
-	/* Mesh Rx Stats Alloc fail */
 	uint32_t mesh_mem_alloc;
 
 	/* Rx errors */
 	struct {
-		/* desc alloc failed errors */
 		uint32_t desc_alloc_fail;
-		/* ip csum errors */
 		uint32_t ip_csum_err;
-		/* tcp/udp csum errors */
 		uint32_t tcp_udp_csum_err;
 	} err;
 
-	/* buffers added back in freelist */
 	uint32_t buf_freelist;
-	/* Tx Ingress stats */
 	struct cdp_tx_ingress_stats tx_i;
-	/* CDP Tx Stats */
 	struct cdp_tx_stats tx;
-	/* CDP Rx Stats */
 	struct cdp_rx_stats rx;
-	/* Number of Tx completions per interrupt */
 	struct cdp_hist_tx_comp tx_comp_histogram;
-	/* Number of Rx ring descriptors reaped per interrupt */
 	struct cdp_hist_rx_ind rx_ind_histogram;
 	uint64_t ppdu_stats_counter[CDP_PPDU_STATS_MAX_TAG];
 

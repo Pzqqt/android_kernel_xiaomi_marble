@@ -2029,7 +2029,8 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 				qdf_nbuf_len(nbuf));
 
 		if (dp_tx_prepare_tso(vdev, nbuf, &msdu_info)) {
-			DP_STATS_INC(vdev, tx_i.tso.dropped_host, 1);
+			DP_STATS_INC_PKT(vdev, tx_i.tso.dropped_host, 1,
+					 qdf_nbuf_len(nbuf));
 			return nbuf;
 		}
 

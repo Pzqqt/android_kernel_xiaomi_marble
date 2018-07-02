@@ -5155,9 +5155,9 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.raw.raw_pkt);
 		DP_STATS_AGGR(pdev, vdev, tx_i.raw.dma_map_error);
 		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.tso.tso_pkt);
-		DP_STATS_AGGR(pdev, vdev, tx_i.tso.dropped_host);
+		DP_STATS_AGGR(pdev, vdev, tx_i.tso.dropped_host.num);
 		DP_STATS_AGGR(pdev, vdev, tx_i.tso.dropped_target);
-		DP_STATS_AGGR(pdev, vdev, tx_i.sg.dropped_host);
+		DP_STATS_AGGR(pdev, vdev, tx_i.sg.dropped_host.num);
 		DP_STATS_AGGR(pdev, vdev, tx_i.sg.dropped_target);
 		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.sg.sg_pkt);
 		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.mcast_en.mcast_pkt);
@@ -5339,7 +5339,7 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 	DP_PRINT_STATS("	Bytes = %llu",
 			pdev->stats.tx_i.sg.sg_pkt.bytes);
 	DP_PRINT_STATS("	Dropped By Host = %d",
-			pdev->stats.tx_i.sg.dropped_host);
+			pdev->stats.tx_i.sg.dropped_host.num);
 	DP_PRINT_STATS("	Dropped By Target = %d",
 			pdev->stats.tx_i.sg.dropped_target);
 	DP_PRINT_STATS("TSO:");
@@ -5350,7 +5350,7 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 	DP_PRINT_STATS("	Bytes = %llu",
 			pdev->stats.tx_i.tso.tso_pkt.bytes);
 	DP_PRINT_STATS("	Dropped By Host = %d",
-			pdev->stats.tx_i.tso.dropped_host);
+			pdev->stats.tx_i.tso.dropped_host.num);
 	DP_PRINT_STATS("Mcast Enhancement:");
 	DP_PRINT_STATS("	Packets = %d",
 			pdev->stats.tx_i.mcast_en.mcast_pkt.num);
