@@ -137,6 +137,7 @@ QDF_STATUS pmo_ucfg_disable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 	return pmo_core_disable_arp_offload_in_fwr(vdev, trigger);
 }
 
+#ifdef WLAN_NS_OFFLOAD
 QDF_STATUS pmo_ucfg_cache_ns_offload_req(struct pmo_ns_req *ns_req)
 {
 	return pmo_core_cache_ns_offload_req(ns_req);
@@ -158,6 +159,7 @@ QDF_STATUS pmo_ucfg_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 {
 	return pmo_core_disable_ns_offload_in_fwr(vdev, trigger);
 }
+#endif /* WLAN_NS_OFFLOAD */
 
 QDF_STATUS pmo_ucfg_cache_mc_addr_list(
 		struct pmo_mc_addr_list_params *mc_list_config)

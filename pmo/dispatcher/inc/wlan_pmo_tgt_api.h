@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -92,6 +92,7 @@ QDF_STATUS pmo_tgt_enable_arp_offload_req(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS pmo_tgt_disable_arp_offload_req(struct wlan_objmgr_vdev *vdev,
 		uint8_t vdev_id);
 
+#ifdef WLAN_NS_OFFLOAD
 /**
  * pmo_tgt_enable_ns_offload_req() -  Send ns offload req to targe
  * @vdev: objmgr vdev
@@ -111,6 +112,7 @@ QDF_STATUS pmo_tgt_enable_ns_offload_req(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS pmo_tgt_disable_ns_offload_req(struct wlan_objmgr_vdev *vdev,
 		uint8_t vdev_id);
+#endif /* WLAN_NS_OFFLOAD */
 
 /**
  * pmo_tgt_enable_wow_wakeup_event() - Send Enable wow wakeup events req to fwr
