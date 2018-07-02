@@ -1014,7 +1014,7 @@ static QDF_STATUS send_peer_add_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		qdf_print("%s: wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 	cmd = (wmi_peer_add_wds_entry_cmd_fixed_param *) wmi_buf_data(buf);
@@ -1047,7 +1047,7 @@ static QDF_STATUS send_peer_del_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		qdf_print("%s: wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
 	cmd = (wmi_peer_remove_wds_entry_cmd_fixed_param *)wmi_buf_data(buf);
@@ -1077,7 +1077,7 @@ static QDF_STATUS send_peer_update_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		qdf_print("%s: wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -13486,7 +13486,7 @@ send_pdev_fips_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		qdf_print("%s:wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -13515,8 +13515,8 @@ send_pdev_fips_cmd_tlv(wmi_unified_t wmi_handle,
 		} else {
 			cmd->mode = FIPS_ENGINE_AES_CTR;
 		}
-		qdf_print(KERN_ERR "Key len = %d, Data len = %d\n",
-			cmd->key_len, cmd->data_len);
+		qdf_print("Key len = %d, Data len = %d",
+			  cmd->key_len, cmd->data_len);
 
 		print_hex_dump(KERN_DEBUG, "Key: ", DUMP_PREFIX_NONE, 16, 1,
 				cmd->key, cmd->key_len, true);
@@ -13536,9 +13536,9 @@ send_pdev_fips_cmd_tlv(wmi_unified_t wmi_handle,
 
 		retval = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_PDEV_FIPS_CMDID);
-		qdf_print("%s return value %d\n", __func__, retval);
+		qdf_print("%s return value %d", __func__, retval);
 	} else {
-		qdf_print("\n%s:%d Key or Data is NULL\n", __func__, __LINE__);
+		qdf_print("\n%s:%d Key or Data is NULL", __func__, __LINE__);
 		wmi_buf_free(buf);
 		retval = -QDF_STATUS_E_BADMSG;
 	}
@@ -16108,7 +16108,7 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len + mem_chunk_len + hw_mode_len);
 	if (!buf) {
-		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		qdf_print("%s: wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -16329,7 +16329,7 @@ QDF_STATUS send_bcn_offload_control_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		qdf_print("%s: wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -17376,7 +17376,7 @@ static QDF_STATUS extract_service_ready_tlv(wmi_unified_t wmi_handle,
 
 	ev = (wmi_service_ready_event_fixed_param *) param_buf->fixed_param;
 	if (!ev) {
-		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		qdf_print("%s: wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -17532,7 +17532,7 @@ static host_mem_req *extract_host_mem_req_tlv(wmi_unified_t wmi_handle,
 
 	ev = (wmi_service_ready_event_fixed_param *) param_buf->fixed_param;
 	if (!ev) {
-		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		qdf_print("%s: wmi_buf_alloc failed", __func__);
 		return NULL;
 	}
 
@@ -17560,7 +17560,7 @@ save_fw_version_in_service_ready_tlv(wmi_unified_t wmi_handle, void *evt_buf)
 
 	ev = (wmi_service_ready_event_fixed_param *) param_buf->fixed_param;
 	if (!ev) {
-		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		qdf_print("%s: wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -17588,7 +17588,7 @@ static uint32_t ready_extract_init_status_tlv(wmi_unified_t wmi_handle,
 	param_buf = (WMI_READY_EVENTID_param_tlvs *) evt_buf;
 	ev = param_buf->fixed_param;
 
-	qdf_print("%s:%d\n", __func__, ev->status);
+	qdf_print("%s:%d", __func__, ev->status);
 
 	return ev->status;
 }
@@ -17702,13 +17702,13 @@ static QDF_STATUS extract_vdev_start_resp_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_VDEV_START_RESP_EVENTID_param_tlvs *) evt_buf;
 	if (!param_buf) {
-		qdf_print("Invalid start response event buffer\n");
+		qdf_print("Invalid start response event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	ev = param_buf->fixed_param;
 	if (!ev) {
-		qdf_print("Invalid start response event buffer\n");
+		qdf_print("Invalid start response event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -17724,7 +17724,7 @@ static QDF_STATUS extract_vdev_start_resp_tlv(wmi_unified_t wmi_handle,
 		vdev_rsp->resp_type = WMI_HOST_VDEV_RESTART_RESP_EVENT;
 		break;
 	default:
-		qdf_print("Invalid start response event buffer\n");
+		qdf_print("Invalid start response event buffer");
 		break;
 	};
 	vdev_rsp->status = ev->status;
@@ -17787,7 +17787,7 @@ static QDF_STATUS extract_tbttoffset_num_vdevs_tlv(void *wmi_hdl,
 
 	param_buf = (WMI_TBTTOFFSET_UPDATE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		qdf_print("Invalid tbtt update ext event buffer\n");
+		qdf_print("Invalid tbtt update ext event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 	tbtt_offset_event = param_buf->fixed_param;
@@ -17813,7 +17813,7 @@ static QDF_STATUS extract_ext_tbttoffset_num_vdevs_tlv(void *wmi_hdl,
 
 	param_buf = (WMI_TBTTOFFSET_EXT_UPDATE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		qdf_print("Invalid tbtt update ext event buffer\n");
+		qdf_print("Invalid tbtt update ext event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 	tbtt_offset_ext_event = param_buf->fixed_param;
@@ -17842,7 +17842,7 @@ static QDF_STATUS extract_tbttoffset_update_params_tlv(void *wmi_hdl,
 
 	param_buf = (WMI_TBTTOFFSET_UPDATE_EVENTID_param_tlvs *) evt_buf;
 	if (!param_buf) {
-		qdf_print("Invalid tbtt update event buffer\n");
+		qdf_print("Invalid tbtt update event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -17875,7 +17875,7 @@ static QDF_STATUS extract_ext_tbttoffset_update_params_tlv(void *wmi_hdl,
 
 	param_buf = (WMI_TBTTOFFSET_EXT_UPDATE_EVENTID_param_tlvs *)evt_buf;
 	if (!param_buf) {
-		qdf_print("Invalid tbtt update event buffer\n");
+		qdf_print("Invalid tbtt update event buffer");
 		return QDF_STATUS_E_INVAL;
 	}
 	tbtt_offset_info = &param_buf->tbtt_offset_info[idx];
@@ -19217,7 +19217,7 @@ static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
 
 	for (i = 0; i < hw_caps->num_chainmask_tables; i++) {
 
-		qdf_print("Dumping chain mask combo data for table : %d\n", i);
+		qdf_print("Dumping chain mask combo data for table : %d", i);
 		for (j = 0; j < chainmask_table[i].num_valid_chainmasks; j++) {
 
 			chainmask_table[i].cap_list[j].chainmask =
@@ -19253,9 +19253,9 @@ static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
 			chainmask_table[i].cap_list[j].supports_aDFS =
 				WMI_SUPPORT_CHAIN_MASK_ADFS_GET(chainmask_caps->supported_flags);
 
-			qdf_print("supported_flags: 0x%08x  chainmasks: 0x%08x\n",
-					chainmask_caps->supported_flags,
-					chainmask_caps->chainmask
+			qdf_print("supported_flags: 0x%08x  chainmasks: 0x%08x",
+				  chainmask_caps->supported_flags,
+				  chainmask_caps->chainmask
 				 );
 			chainmask_caps++;
 		}
@@ -19316,7 +19316,7 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 
 	if (hw_caps) {
 		param->num_chainmask_tables = hw_caps->num_chainmask_tables;
-		qdf_print("Num chain mask tables: %d\n", hw_caps->num_chainmask_tables);
+		qdf_print("Num chain mask tables: %d", hw_caps->num_chainmask_tables);
 	} else
 		param->num_chainmask_tables = 0;
 
@@ -19325,13 +19325,13 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 	if (chain_mask_combo == NULL)
 		return QDF_STATUS_SUCCESS;
 
-	qdf_print("Dumping chain mask combo data\n");
+	qdf_print("Dumping chain mask combo data");
 
 	for (i = 0; i < param->num_chainmask_tables; i++) {
 
-		qdf_print("table_id : %d Num valid chainmasks: %d\n",
-				chain_mask_combo->chainmask_table_id,
-				chain_mask_combo->num_valid_chainmask
+		qdf_print("table_id : %d Num valid chainmasks: %d",
+			  chain_mask_combo->chainmask_table_id,
+			  chain_mask_combo->num_valid_chainmask
 			 );
 
 		param->chainmask_table[i].table_id =
@@ -19340,7 +19340,7 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 			chain_mask_combo->num_valid_chainmask;
 		chain_mask_combo++;
 	}
-	qdf_print("chain mask combo end\n");
+	qdf_print("chain mask combo end");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -21191,7 +21191,7 @@ send_pdev_caldata_version_check_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		qdf_print("%s:wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 	cmd = (wmi_pdev_check_cal_version_cmd_fixed_param *)wmi_buf_data(buf);
@@ -21261,7 +21261,7 @@ static QDF_STATUS send_btm_config_cmd_tlv(wmi_unified_t wmi_handle,
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
-		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		qdf_print("%s:wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
 

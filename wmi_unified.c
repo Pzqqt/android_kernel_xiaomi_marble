@@ -400,7 +400,7 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 	cmd_log_buf->size = wmi_log_max_entry;
 
 	if (!cmd_log_buf->buf) {
-		qdf_print("no memory for WMI command log buffer..\n");
+		qdf_print("no memory for WMI command log buffer..");
 		return QDF_STATUS_E_NOMEM;
 	}
 	cmd_log_buf->p_buf_tail_idx = &cmd_log_buf->buf_tail_idx;
@@ -413,7 +413,7 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 	cmd_tx_cmpl_log_buf->size = wmi_log_max_entry;
 
 	if (!cmd_tx_cmpl_log_buf->buf) {
-		qdf_print("no memory for WMI Command Tx Complete log buffer..\n");
+		qdf_print("no memory for WMI Command Tx Complete log buffer..");
 		return QDF_STATUS_E_NOMEM;
 	}
 	cmd_tx_cmpl_log_buf->p_buf_tail_idx =
@@ -427,7 +427,7 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 	event_log_buf->size = wmi_log_max_entry;
 
 	if (!event_log_buf->buf) {
-		qdf_print("no memory for WMI Event log buffer..\n");
+		qdf_print("no memory for WMI Event log buffer..");
 		return QDF_STATUS_E_NOMEM;
 	}
 	event_log_buf->p_buf_tail_idx = &event_log_buf->buf_tail_idx;
@@ -440,7 +440,7 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 	rx_event_log_buf->size = wmi_log_max_entry;
 
 	if (!rx_event_log_buf->buf) {
-		qdf_print("no memory for WMI Event Rx log buffer..\n");
+		qdf_print("no memory for WMI Event Rx log buffer..");
 		return QDF_STATUS_E_NOMEM;
 	}
 	rx_event_log_buf->p_buf_tail_idx = &rx_event_log_buf->buf_tail_idx;
@@ -453,7 +453,7 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 	mgmt_cmd_log_buf->size = wmi_mgmt_log_max_entry;
 
 	if (!mgmt_cmd_log_buf->buf) {
-		qdf_print("no memory for WMI Management Command log buffer..\n");
+		qdf_print("no memory for WMI Management Command log buffer..");
 		return QDF_STATUS_E_NOMEM;
 	}
 	mgmt_cmd_log_buf->p_buf_tail_idx = &mgmt_cmd_log_buf->buf_tail_idx;
@@ -468,7 +468,7 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 	mgmt_cmd_tx_cmp_log_buf->size = wmi_mgmt_log_max_entry;
 
 	if (!mgmt_cmd_tx_cmp_log_buf->buf) {
-		qdf_print("no memory for WMI Management Command Tx complete log buffer..\n");
+		qdf_print("no memory for WMI Management Command Tx complete log buffer..");
 		return QDF_STATUS_E_NOMEM;
 	}
 	mgmt_cmd_tx_cmp_log_buf->p_buf_tail_idx =
@@ -484,7 +484,7 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 	mgmt_event_log_buf->size = wmi_mgmt_log_max_entry;
 
 	if (!mgmt_event_log_buf->buf) {
-		qdf_print("no memory for WMI Management Event log buffer..\n");
+		qdf_print("no memory for WMI Management Event log buffer..");
 		return QDF_STATUS_E_NOMEM;
 	}
 	mgmt_event_log_buf->p_buf_tail_idx = &mgmt_event_log_buf->buf_tail_idx;
@@ -911,7 +911,7 @@ static int debug_wmi_log_size_show(struct seq_file *m, void *v)
 									\
 		ret = sscanf(locbuf, "%d", &k);				\
 		if ((ret != 1) || (k != 0)) {                           \
-			qdf_print("Wrong input, echo 0 to clear the wmi	buffer\n");\
+			qdf_print("Wrong input, echo 0 to clear the wmi buffer");\
 			return -EINVAL;					\
 		}							\
 									\
@@ -1070,8 +1070,7 @@ static void wmi_debugfs_create(wmi_unified_t wmi_handle,
 				wmi_handle, wmi_debugfs_infos[i].ops);
 
 		if (!wmi_handle->debugfs_de[i]) {
-			qdf_print("%s: debug Entry creation failed!\n",
-					__func__);
+			qdf_print("debug Entry creation failed!");
 			goto out;
 		}
 	}
@@ -1079,7 +1078,7 @@ static void wmi_debugfs_create(wmi_unified_t wmi_handle,
 	return;
 
 out:
-	qdf_print("%s: debug Entry creation failed!\n", __func__);
+	qdf_print("debug Entry creation failed!");
 	wmi_log_buffer_free(wmi_handle);
 	return;
 }
@@ -1127,7 +1126,7 @@ static QDF_STATUS wmi_debugfs_init(wmi_unified_t wmi_handle, uint32_t pdev_idx)
 		debugfs_create_dir(buf, NULL);
 
 	if (!wmi_handle->log_info.wmi_log_debugfs_dir) {
-		qdf_print("error while creating debugfs dir for %s\n", buf);
+		qdf_print("error while creating debugfs dir for %s", buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	wmi_debugfs_create(wmi_handle,
@@ -1337,7 +1336,7 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 	}
 	if (wmi_handle->wmi_stopinprogress) {
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-			"WMI  stop in progress\n");
+			"WMI  stop in progress");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1475,19 +1474,22 @@ int wmi_unified_register_event(wmi_unified_t wmi_handle,
 
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
-		qdf_print("%s: Event id %d is unavailable\n",
-				 __func__, event_id);
+		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Event id %d is unavailable",
+					__func__, event_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	evt_id = wmi_handle->wmi_events[event_id];
 	if (wmi_unified_get_event_handler_ix(wmi_handle, evt_id) != -1) {
-		qdf_print("%s : event handler already registered 0x%x\n",
-		       __func__, evt_id);
+		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
+			  "%s : event handler already registered 0x%x",
+				__func__, evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (soc->max_event_idx == WMI_UNIFIED_MAX_EVENT) {
-		qdf_print("%s : no more event handlers 0x%x\n",
-		       __func__, evt_id);
+		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
+			  "%s : no more event handlers 0x%x",
+					__func__, evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	idx = soc->max_event_idx;
@@ -1522,24 +1524,25 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
-		qdf_print("%s: Event id %d is unavailable\n",
-				 __func__, event_id);
+		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Event id %d is unavailable",
+					__func__, event_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	evt_id = wmi_handle->wmi_events[event_id];
 
 	if (wmi_unified_get_event_handler_ix(wmi_handle, evt_id) != -1) {
-		qdf_print("%s : event handler already registered 0x%x\n",
-		       __func__, evt_id);
+		qdf_print("event handler already registered 0x%x",
+			  evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (soc->max_event_idx == WMI_UNIFIED_MAX_EVENT) {
-		qdf_print("%s : no more event handlers 0x%x\n",
-		       __func__, evt_id);
+		qdf_print("no more event handlers 0x%x",
+			  evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
-			"Registered event handler for event 0x%8x\n", evt_id);
+		  "Registered event handler for event 0x%8x", evt_id);
 	idx = soc->max_event_idx;
 	wmi_handle->event_handler[idx] = handler_func;
 	wmi_handle->event_id[idx] = evt_id;
@@ -1568,16 +1571,17 @@ int wmi_unified_unregister_event(wmi_unified_t wmi_handle,
 
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
-		qdf_print("%s: Event id %d is unavailable\n",
-				 __func__, event_id);
+		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Event id %d is unavailable",
+					__func__, event_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	evt_id = wmi_handle->wmi_events[event_id];
 
 	idx = wmi_unified_get_event_handler_ix(wmi_handle, evt_id);
 	if (idx == -1) {
-		qdf_print("%s : event handler is not registered: evt id 0x%x\n",
-		       __func__, evt_id);
+		qdf_print("event handler is not registered: evt id 0x%x",
+			  evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	wmi_handle->event_handler[idx] = NULL;
@@ -1607,16 +1611,16 @@ int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
-		qdf_print("%s: Event id %d is unavailable\n",
-				 __func__, event_id);
+		qdf_print("Event id %d is unavailable",
+			  event_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	evt_id = wmi_handle->wmi_events[event_id];
 
 	idx = wmi_unified_get_event_handler_ix(wmi_handle, evt_id);
 	if (idx == -1) {
-		qdf_print("%s : event handler is not registered: evt id 0x%x\n",
-		       __func__, evt_id);
+		qdf_print("event handler is not registered: evt id 0x%x",
+			  evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	wmi_handle->event_handler[idx] = NULL;
@@ -1731,8 +1735,8 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 	wmi_handle = wmi_get_pdev_ep(soc, htc_packet->Endpoint);
 	if (wmi_handle == NULL) {
 		qdf_print
-		("%s :unable to get wmi_handle to Endpoint %d\n",
-			__func__, htc_packet->Endpoint);
+		("unable to get wmi_handle to Endpoint %d\n",
+		 htc_packet->Endpoint);
 		qdf_nbuf_free(evt_buf);
 		return;
 	}
@@ -1769,7 +1773,7 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 		wmi_process_fw_event_default_ctx
 					(wmi_handle, htc_packet, exec_ctx);
 	} else {
-		qdf_print("%s :Invalid event context %d\n", __func__, exec_ctx);
+		qdf_print("Invalid event context %d", exec_ctx);
 		qdf_nbuf_free(evt_buf);
 	}
 
@@ -1824,8 +1828,8 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 							&wmi_cmd_struct_ptr);
 		if (tlv_ok_status != 0) {
 			QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-				"%s: Error: id=0x%d, wmitlv check status=%d\n",
-				__func__, id, tlv_ok_status);
+				  "%s: Error: id=0x%x, wmitlv check status=%d",
+				  __func__, id, tlv_ok_status);
 			goto end;
 		}
 	}
@@ -1834,7 +1838,7 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 	idx = wmi_unified_get_event_handler_ix(wmi_handle, id);
 	if (idx == A_ERROR) {
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-		   "%s : event handler is not registered: event id 0x%x\n",
+		   "%s : event handler is not registered: event id 0x%x",
 			__func__, id);
 		goto end;
 	}
@@ -2046,8 +2050,8 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 			(struct wmi_unified *) qdf_mem_malloc(
 					sizeof(struct wmi_unified));
 		if (wmi_handle == NULL) {
-			qdf_print("allocation of wmi handle failed %zu\n",
-					sizeof(struct wmi_unified));
+			qdf_print("allocation of wmi handle failed %zu",
+				  sizeof(struct wmi_unified));
 			return NULL;
 		}
 		wmi_handle->scn_handle = soc->scn_handle;
@@ -2124,8 +2128,8 @@ void *wmi_unified_attach(void *scn_handle,
 
 	soc = (struct wmi_soc *) qdf_mem_malloc(sizeof(struct wmi_soc));
 	if (soc == NULL) {
-		qdf_print("Allocation of wmi_soc failed %zu\n",
-				sizeof(struct wmi_soc));
+		qdf_print("Allocation of wmi_soc failed %zu",
+			  sizeof(struct wmi_soc));
 		return NULL;
 	}
 
@@ -2134,8 +2138,8 @@ void *wmi_unified_attach(void *scn_handle,
 			sizeof(struct wmi_unified));
 	if (wmi_handle == NULL) {
 		qdf_mem_free(soc);
-		qdf_print("allocation of wmi handle failed %zu\n",
-			sizeof(struct wmi_unified));
+		qdf_print("allocation of wmi handle failed %zu",
+			  sizeof(struct wmi_unified));
 		return NULL;
 	}
 	wmi_handle->soc = soc;
@@ -2493,7 +2497,7 @@ int
 wmi_stop(wmi_unified_t wmi_handle)
 {
 	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
-		  "WMI Stop\n");
+		  "WMI Stop");
 	wmi_handle->wmi_stopinprogress = 1;
 	return 0;
 }
