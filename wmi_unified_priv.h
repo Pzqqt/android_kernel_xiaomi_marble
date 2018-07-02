@@ -1801,7 +1801,7 @@ void wmi_non_tlv_init(void);
 #ifdef WMI_NON_TLV_SUPPORT
 /* ONLY_NON_TLV_TARGET:TLV attach dummy function definition for case when
  * driver supports only NON-TLV target (WIN mainline) */
-#define wmi_tlv_attach(x) qdf_print("TLV Unavailable\n")
+#define wmi_tlv_attach(x) qdf_print("TLV Unavailable")
 #else
 void wmi_tlv_attach(wmi_unified_t wmi_handle);
 #endif
