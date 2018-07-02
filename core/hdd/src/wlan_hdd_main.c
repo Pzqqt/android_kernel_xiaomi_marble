@@ -1889,6 +1889,10 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
 
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return;
+	}
 	ret = hdd_objmgr_create_and_store_pdev(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to create pdev; errno:%d", ret);
