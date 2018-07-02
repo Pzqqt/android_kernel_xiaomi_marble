@@ -257,11 +257,11 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 		}
 
 	if (max_score_index != 0) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"%s: Rejecting Radar since Fractional PRI detected: searchpri=%d, threshold=%d, fractional PRI=%d, Fractional PRI score=%d\n",
-				__func__, dl->dl_search_pri, scores[0],
-				dl->dl_search_pri/(max_score_index + 1),
-				max_score);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "Rejecting Radar since Fractional PRI detected: searchpri=%d, threshold=%d, fractional PRI=%d, Fractional PRI score=%d",
+			  dl->dl_search_pri, scores[0],
+			  dl->dl_search_pri/(max_score_index + 1),
+			  max_score);
 		return 0;
 	}
 
@@ -274,10 +274,10 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 		dl->dl_max_sidx = pl->pl_elems[start_index].p_sidx;
 
 	if ((dl->dl_max_sidx - dl->dl_min_sidx) > rf->rf_sidx_spread) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"%s: Rejecting Radar since frequency spread is too large : min_sidx=%d, max_sidx=%d, rf_sidx_spread=%d\n",
-				__func__, dl->dl_min_sidx, dl->dl_max_sidx,
-				rf->rf_sidx_spread);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "Rejecting Radar since frequency spread is too large : min_sidx=%d, max_sidx=%d, rf_sidx_spread=%d",
+			  dl->dl_min_sidx, dl->dl_max_sidx,
+			  rf->rf_sidx_spread);
 		return 0;
 	}
 
@@ -285,11 +285,11 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 			((dl->dl_delta_peak_match_count +
 			dl->dl_psidx_diff_match_count - 1) <
 			rf->rf_threshold)) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			"%s: Rejecting Radar since delta peak values are invalid : dl_delta_peak_match_count=%d, dl_psidx_diff_match_count=%d, rf_threshold=%d\n",
-			__func__, dl->dl_delta_peak_match_count,
-			dl->dl_psidx_diff_match_count,
-			rf->rf_threshold);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "Rejecting Radar since delta peak values are invalid : dl_delta_peak_match_count=%d, dl_psidx_diff_match_count=%d, rf_threshold=%d",
+			  dl->dl_delta_peak_match_count,
+			  dl->dl_psidx_diff_match_count,
+			  rf->rf_threshold);
 		return 0;
 	}
 
