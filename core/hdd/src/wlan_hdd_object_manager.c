@@ -44,6 +44,7 @@ static void hdd_init_pdev_os_priv(struct hdd_context *hdd_ctx,
 
 static void hdd_deinit_pdev_os_priv(struct wlan_objmgr_pdev *pdev)
 {
+	os_if_spectral_netlink_deinit(pdev);
 	wlan_cfg80211_scan_priv_deinit(pdev);
 }
 
