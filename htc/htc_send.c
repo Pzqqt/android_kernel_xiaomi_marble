@@ -321,7 +321,7 @@ static QDF_STATUS htc_send_bundled_netbuf(HTC_TARGET *target,
 	pEndpoint->ul_outstanding_cnt++;
 	UNLOCK_HTC_TX(target);
 #if DEBUG_BUNDLE
-	qdf_print(" Send bundle EP%d buffer size:0x%x, total:0x%x, count:%d.\n",
+	qdf_print(" Send bundle EP%d buffer size:0x%x, total:0x%x, count:%d.",
 		  pEndpoint->Id,
 		  pEndpoint->TxCreditSize,
 		  data_len, data_len / pEndpoint->TxCreditSize);
@@ -335,7 +335,7 @@ static QDF_STATUS htc_send_bundled_netbuf(HTC_TARGET *target,
 			       pEndpoint->Id, data_len,
 			       bundleBuf, data_attr);
 	if (status != QDF_STATUS_SUCCESS) {
-		qdf_print("%s:hif_send_head failed(len=%zu).\n", __func__,
+		qdf_print("%s:hif_send_head failed(len=%zu).", __func__,
 			  data_len);
 	}
 	return status;
@@ -608,7 +608,7 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 		if (pPacket->PktInfo.AsTx.Tag == HTC_TX_PACKET_TAG_RUNTIME_PUT)
 			rt_put = true;
 #if DEBUG_BUNDLE
-		qdf_print(" Send single EP%d buffer size:0x%x, total:0x%x.\n",
+		qdf_print(" Send single EP%d buffer size:0x%x, total:0x%x.",
 			  pEndpoint->Id,
 			  pEndpoint->TxCreditSize,
 			  HTC_HDR_LENGTH + pPacket->ActualLength);
@@ -1755,7 +1755,7 @@ QDF_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 				       HTC_HDR_LENGTH + pPacket->ActualLength,
 				       netbuf, data_attr);
 #if DEBUG_BUNDLE
-		qdf_print(" Send single EP%d buffer size:0x%x, total:0x%x.\n",
+		qdf_print(" Send single EP%d buffer size:0x%x, total:0x%x.",
 			  pEndpoint->Id,
 			  pEndpoint->TxCreditSize,
 			  HTC_HDR_LENGTH + pPacket->ActualLength);

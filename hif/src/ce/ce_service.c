@@ -2875,7 +2875,7 @@ ssize_t hif_dump_desc_event(struct hif_softc *scn, char *buf)
 		(struct hif_ce_desc_event *)ce_hist->hist_ev[ce_hist->hist_id];
 
 	if (!hist_ev) {
-		qdf_print("Low Memory\n");
+		qdf_print("Low Memory");
 		return -EINVAL;
 	}
 
@@ -2883,7 +2883,7 @@ ssize_t hif_dump_desc_event(struct hif_softc *scn, char *buf)
 
 	if ((ce_hist->hist_id >= CE_COUNT_MAX) ||
 		(ce_hist->hist_index >= HIF_CE_HISTORY_MAX)) {
-		qdf_print("Invalid values\n");
+		qdf_print("Invalid values");
 		return -EINVAL;
 	}
 
@@ -2953,7 +2953,7 @@ ssize_t hif_input_desc_trace_buf_index(struct hif_softc *scn,
 	}
 	if ((ce_hist->hist_id >= CE_COUNT_MAX) ||
 	   (ce_hist->hist_index >= HIF_CE_HISTORY_MAX)) {
-		qdf_print("Invalid values\n");
+		qdf_print("Invalid values");
 		return -EINVAL;
 	}
 
@@ -2996,12 +2996,12 @@ ssize_t hif_ce_en_desc_hist(struct hif_softc *scn, const char *buf, size_t size)
 		return -EINVAL;
 	}
 	if (ce_id >= CE_COUNT_MAX) {
-		qdf_print("Invalid value CE Id\n");
+		qdf_print("Invalid value CE Id");
 		return -EINVAL;
 	}
 
 	if ((cfg > 1 || cfg < 0)) {
-		qdf_print("Invalid values: enter 0 or 1\n");
+		qdf_print("Invalid values: enter 0 or 1");
 		return -EINVAL;
 	}
 
@@ -3011,18 +3011,18 @@ ssize_t hif_ce_en_desc_hist(struct hif_softc *scn, const char *buf, size_t size)
 	qdf_mutex_acquire(&ce_dbg_datamem_lock[ce_id]);
 	if (cfg == 1) {
 		if (ce_hist->data_enable[ce_id] == 1) {
-			qdf_print("\nAlready Enabled\n");
+			qdf_print("\nAlready Enabled");
 		} else {
 			if (alloc_mem_ce_debug_hist_data(scn, ce_id)
 							== QDF_STATUS_E_NOMEM){
 				ce_hist->data_enable[ce_id] = 0;
-				qdf_print("%s:Memory Alloc failed\n");
+				qdf_print("%s:Memory Alloc failed");
 			} else
 				ce_hist->data_enable[ce_id] = 1;
 		}
 	} else if (cfg == 0) {
 		if (ce_hist->data_enable[ce_id] == 0) {
-			qdf_print("\nAlready Disabled\n");
+			qdf_print("\nAlready Disabled");
 		} else {
 			ce_hist->data_enable[ce_id] = 0;
 				free_mem_ce_debug_hist_data(scn, ce_id);

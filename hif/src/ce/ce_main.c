@@ -2637,11 +2637,11 @@ static void hif_print_hal_shadow_register_cfg(struct pld_wlan_enable_cfg *cfg)
 {
 	int i;
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "%s: num_config %d\n", __func__, cfg->num_shadow_reg_v2_cfg);
+		  "%s: num_config %d", __func__, cfg->num_shadow_reg_v2_cfg);
 
 	for (i = 0; i < cfg->num_shadow_reg_v2_cfg; i++) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-		     "%s: i %d, val %x\n", __func__, i,
+		     "%s: i %d, val %x", __func__, i,
 		     cfg->shadow_reg_v2_cfg[i].addr);
 	}
 }
@@ -2650,7 +2650,7 @@ static void hif_print_hal_shadow_register_cfg(struct pld_wlan_enable_cfg *cfg)
 static void hif_print_hal_shadow_register_cfg(struct pld_wlan_enable_cfg *cfg)
 {
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "%s: CONFIG_SHADOW_V2 not defined\n", __func__);
+		  "%s: CONFIG_SHADOW_V2 not defined", __func__);
 }
 #endif
 
@@ -3597,19 +3597,19 @@ int hif_dump_ce_registers(struct hif_softc *scn)
 		qdf_trace_hex_dump(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_DEBUG,
 				   (uint8_t *) &ce_reg_values[0],
 				   ce_reg_word_size * sizeof(uint32_t));
-		qdf_print("ADDR:[0x%08X], SR_WR_INDEX:%d\n", (ce_reg_address
+		qdf_print("ADDR:[0x%08X], SR_WR_INDEX:%d", (ce_reg_address
 				+ SR_WR_INDEX_ADDRESS),
 				ce_reg_values[SR_WR_INDEX_ADDRESS/4]);
-		qdf_print("ADDR:[0x%08X], CURRENT_SRRI:%d\n", (ce_reg_address
+		qdf_print("ADDR:[0x%08X], CURRENT_SRRI:%d", (ce_reg_address
 				+ CURRENT_SRRI_ADDRESS),
 				ce_reg_values[CURRENT_SRRI_ADDRESS/4]);
-		qdf_print("ADDR:[0x%08X], DST_WR_INDEX:%d\n", (ce_reg_address
+		qdf_print("ADDR:[0x%08X], DST_WR_INDEX:%d", (ce_reg_address
 				+ DST_WR_INDEX_ADDRESS),
 				ce_reg_values[DST_WR_INDEX_ADDRESS/4]);
-		qdf_print("ADDR:[0x%08X], CURRENT_DRRI:%d\n", (ce_reg_address
+		qdf_print("ADDR:[0x%08X], CURRENT_DRRI:%d", (ce_reg_address
 				+ CURRENT_DRRI_ADDRESS),
 				ce_reg_values[CURRENT_DRRI_ADDRESS/4]);
-		qdf_print("---\n");
+		qdf_print("---");
 	}
 	return 0;
 }

@@ -315,7 +315,7 @@ int hif_get_irq_num(struct hif_opaque_softc *scn, int *irq, uint32_t size)
 	}
 
 	if (sc->num_msi_intrs > size) {
-		qdf_print("Not enough space in irq buffer to return irqs\n");
+		qdf_print("Not enough space in irq buffer to return irqs");
 		return -EINVAL;
 	}
 
@@ -1547,8 +1547,8 @@ static void hif_set_hia_extnd(struct hif_softc *scn)
 		tgt_info->target_revision
 			= CHIP_ID_REVISION_GET(hif_read32_mb(scn, scn->mem
 					+ CHIP_ID_ADDRESS));
-		qdf_print(KERN_INFO"chip_id 0x%x chip_revision 0x%x\n",
-			target_type, tgt_info->target_revision);
+		qdf_print("chip_id 0x%x chip_revision 0x%x",
+			  target_type, tgt_info->target_revision);
 	}
 
 	{
@@ -1561,14 +1561,14 @@ static void hif_set_hia_extnd(struct hif_softc *scn)
 			(frac != -1) && (intval != -1)) {
 			hif_diag_read_access(hif_hdl, flag2_targ_addr,
 				&flag2_value);
-			qdf_print("\n Setting clk_override\n");
+			qdf_print("\n Setting clk_override");
 			flag2_value |= CLOCK_OVERRIDE;
 
 			hif_diag_write_access(hif_hdl, flag2_targ_addr,
 					flag2_value);
-			qdf_print("\n CLOCK PLL val set %d\n", flag2_value);
+			qdf_print("\n CLOCK PLL val set %d", flag2_value);
 		} else {
-			qdf_print(KERN_INFO"\n CLOCK PLL skipped\n");
+			qdf_print("\n CLOCK PLL skipped");
 		}
 	}
 
@@ -1583,7 +1583,7 @@ static void hif_set_hia_extnd(struct hif_softc *scn)
 		 */
 
 		qdf_print(KERN_INFO
-			  "%s: setting the target pll frac %x intval %x\n",
+			  "%s: setting the target pll frac %x intval %x",
 			  __func__, frac, intval);
 
 		/* do not touch frac, and int val, let them be default -1,
@@ -1599,16 +1599,16 @@ static void hif_set_hia_extnd(struct hif_softc *scn)
 					hi_clock_info));
 			hif_diag_read_access(hif_hdl,
 				flag2_targ_addr, &flag2_value);
-			qdf_print("\n ====> FRAC Val %x Address %x\n", frac,
-				flag2_value);
+			qdf_print("\n ====> FRAC Val %x Address %x", frac,
+				  flag2_value);
 			hif_diag_write_access(hif_hdl, flag2_value, frac);
-			qdf_print("\n INT Val %x  Address %x\n",
-				intval, flag2_value + 4);
+			qdf_print("\n INT Val %x  Address %x",
+				  intval, flag2_value + 4);
 			hif_diag_write_access(hif_hdl,
 					flag2_value + 4, intval);
 		} else {
 			qdf_print(KERN_INFO
-				  "%s: no frac provided, skipping pre-configuring PLL\n",
+				  "%s: no frac provided, skipping pre-configuring PLL",
 				  __func__);
 		}
 
@@ -1625,7 +1625,7 @@ static void hif_set_hia_extnd(struct hif_softc *scn)
 					hi_desired_cpu_speed_hz));
 			hif_diag_read_access(hif_hdl, flag2_targ_addr,
 							&flag2_value);
-			qdf_print("\n ==> hi_desired_cpu_speed_hz Address %x\n",
+			qdf_print("\n ==> hi_desired_cpu_speed_hz Address %x",
 				  flag2_value);
 			hif_diag_write_access(hif_hdl, flag2_value,
 				ar900b_20_targ_clk/*300000000u*/);
@@ -1644,7 +1644,7 @@ static void hif_set_hia_extnd(struct hif_softc *scn)
 			hif_diag_write_access(hif_hdl, flag2_targ_addr,
 				qca9888_20_targ_clk);
 		} else {
-			qdf_print(KERN_INFO"%s: targ_clk is not provided, skipping pre-configuring PLL\n",
+			qdf_print("%s: targ_clk is not provided, skipping pre-configuring PLL",
 				  __func__);
 		}
 	} else {
@@ -1656,13 +1656,13 @@ static void hif_set_hia_extnd(struct hif_softc *scn)
 							hi_clock_info));
 			hif_diag_read_access(hif_hdl, flag2_targ_addr,
 						&flag2_value);
-			qdf_print("\n ====> FRAC Val %x Address %x\n", frac,
-							flag2_value);
+			qdf_print("\n ====> FRAC Val %x Address %x", frac,
+				  flag2_value);
 			hif_diag_write_access(hif_hdl, flag2_value, frac);
-			qdf_print("\n INT Val %x  Address %x\n", intval,
-							flag2_value + 4);
+			qdf_print("\n INT Val %x  Address %x", intval,
+				  flag2_value + 4);
 			hif_diag_write_access(hif_hdl, flag2_value + 4,
-					intval);
+					      intval);
 		}
 	}
 }

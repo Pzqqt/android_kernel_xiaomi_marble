@@ -46,7 +46,7 @@ void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)
 	int i, j;
 
 	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_FATAL,
-		"NAPI[#ctx]CPU[#] |schedules |polls |completes |workdone\n");
+		"NAPI[#ctx]CPU[#] |schedules |polls |completes |workdone");
 
 	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
 		if (hif_state->hif_ext_group[i]) {
@@ -57,7 +57,7 @@ void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)
 					QDF_TRACE(QDF_MODULE_ID_HIF,
 						QDF_TRACE_LEVEL_FATAL,
 						"NAPI[%2d]CPU[%d]: "
-						"%7d %7d %7d %7d \n",
+						"%7d %7d %7d %7d ",
 						i, j,
 						napi_stats->napi_schedules,
 						napi_stats->napi_polls,

@@ -686,7 +686,7 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle
 		total_length += padded_length;
 	}
 #if DEBUG_BUNDLE
-	qdf_print("Recv bundle count %d, length %d.\n",
+	qdf_print("Recv bundle count %d, length %d.",
 		  sync_completion_queue ?
 		  HTC_PACKET_QUEUE_DEPTH(sync_completion_queue) : 0,
 		  total_length);

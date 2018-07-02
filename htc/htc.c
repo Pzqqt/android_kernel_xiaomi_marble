@@ -81,7 +81,7 @@ static HTC_PACKET *build_htc_tx_ctrl_packet(qdf_device_t osdev)
 		if (NULL == netbuf) {
 			qdf_mem_free(pPacket);
 			pPacket = NULL;
-			qdf_print("%s: nbuf alloc failed\n", __func__);
+			qdf_print("%s: nbuf alloc failed", __func__);
 			break;
 		}
 		AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
@@ -701,7 +701,7 @@ QDF_STATUS htc_start(HTC_HANDLE HTCHandle)
 		pSendPacket = htc_alloc_control_tx_packet(target);
 		if (NULL == pSendPacket) {
 			AR_DEBUG_ASSERT(false);
-			qdf_print("%s: allocControlTxPacket failed\n",
+			qdf_print("%s: allocControlTxPacket failed",
 				  __func__);
 			status = QDF_STATUS_E_NOMEM;
 			break;

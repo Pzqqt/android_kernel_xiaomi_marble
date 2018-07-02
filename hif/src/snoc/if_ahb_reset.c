@@ -250,7 +250,7 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 		struct platform_device *pdev,
 		const struct platform_device_id *id)
 {
-	qdf_print("%s:%d:Reset routines not available in kernel version.\n",
+	qdf_print("%s:%d:Reset routines not available in kernel version.",
 		  __func__, __LINE__);
 	return -EIO;
 }
@@ -389,7 +389,7 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 #else
 void hif_ahb_device_reset(struct hif_softc *scn)
 {
-	qdf_print("%s:%d:Reset routines not available in kernel version.\n",
+	qdf_print("%s:%d:Reset routines not available in kernel version.",
 		  __func__, __LINE__);
 }
 #endif

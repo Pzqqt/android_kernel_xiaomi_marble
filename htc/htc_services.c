@@ -341,7 +341,7 @@ QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 		if (maxMsgSize % target->TargetCreditSize)
 			pEndpoint->TxCreditsPerMaxMsg++;
 #if DEBUG_CREDIT
-		qdf_print(" Endpoint%d initial credit:%d, size:%d.\n",
+		qdf_print(" Endpoint%d initial credit:%d, size:%d.",
 			  pEndpoint->Id, pEndpoint->TxCredits,
 			  pEndpoint->TxCreditSize);
 #endif
@@ -424,7 +424,7 @@ void htc_set_async_ep(HTC_HANDLE HTCHandle,
 	HTC_ENDPOINT *pEndpoint = &target->endpoint[htc_ep_id];
 
 	pEndpoint->async_update = value;
-	qdf_print("%s: htc_handle %pK, ep %d, value %d\n", __func__,
-					HTCHandle, htc_ep_id, value);
+	qdf_print("%s: htc_handle %pK, ep %d, value %d", __func__,
+		  HTCHandle, htc_ep_id, value);
 }
 

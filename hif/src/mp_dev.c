@@ -222,8 +222,8 @@ void priv_dump_chaninfo(struct hif_softc *scn)
 				tmp =
 					hif_read32_mb(scn, scn->mem +
 						     BB_chn1_tables_intf_data);
-				qdf_debug("0x%x\n", (tmp >> 16) & 0x0000ffff);
-				qdf_debug("0x%x\n", tmp & 0x0000ffff);
+				qdf_debug("0x%x", (tmp >> 16) & 0x0000ffff);
+				qdf_debug("0x%x", tmp & 0x0000ffff);
 				if (i % 2 == 0)
 					qdf_debug("\n");
 			}
