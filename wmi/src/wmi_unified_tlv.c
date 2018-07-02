@@ -15597,7 +15597,7 @@ static QDF_STATUS send_roam_scan_offload_chan_list_cmd_tlv(wmi_unified_t wmi_han
 	for (i = 0; ((i < chan_list_fp->num_chan) &&
 		     (i < WMI_ROAM_MAX_CHANNELS)); i++) {
 		roam_chan_list_array[i] = chan_list[i];
-		WMI_LOGI("%d,", roam_chan_list_array[i]);
+		WMI_LOGD("%d,", roam_chan_list_array[i]);
 	}
 
 	status = wmi_unified_cmd_send(wmi_handle, buf,
