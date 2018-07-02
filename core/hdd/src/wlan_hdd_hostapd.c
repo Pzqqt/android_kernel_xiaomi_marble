@@ -4823,7 +4823,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	if (0 != wlan_hdd_cfg80211_update_apies(adapter)) {
 		hdd_err("SAP Not able to set AP IEs");
-		wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
 		ret = -EINVAL;
 		goto error;
 	}
@@ -4918,7 +4917,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		mutex_unlock(&hdd_ctx->sap_lock);
 
-		wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
 		hdd_set_connection_in_progress(false);
 		hdd_err("SAP Start Bss fail");
 		ret = -EINVAL;
@@ -4981,6 +4979,7 @@ error:
 	clear_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
 	qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
 	wlan_hdd_undo_acs(adapter);
+	wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
 
 free:
 	/* Enable Roaming after start bss in case of failure/success */
