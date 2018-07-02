@@ -591,20 +591,6 @@ typedef enum {
 	eCSR_ROAM_RESULT_INVOKE_FAILED,
 } eCsrRoamResult;
 
-/*----------------------------------------------------------------------------
-   List of link quality indications HDD can receive from SME
-   --------------------------------------------------------------------------*/
-typedef enum {
-	eCSR_ROAM_LINK_QUAL_MIN_IND = -1,
-
-	eCSR_ROAM_LINK_QUAL_POOR_IND = 0,       /* bad link                */
-	eCSR_ROAM_LINK_QUAL_GOOD_IND = 1,       /* acceptable for voice    */
-	eCSR_ROAM_LINK_QUAL_VERY_GOOD_IND = 2,  /* suitable for voice      */
-	eCSR_ROAM_LINK_QUAL_EXCELLENT_IND = 3,  /* suitable for voice      */
-
-	eCSR_ROAM_LINK_QUAL_MAX_IND     /* invalid value */
-} eCsrRoamLinkQualityInd;
-
 typedef enum {
 	eCSR_DISCONNECT_REASON_UNSPECIFIED = 0,
 	eCSR_DISCONNECT_REASON_MIC_ERROR,
@@ -1704,8 +1690,6 @@ const char *get_e_csr_roam_result_str(eCsrRoamResult val);
 const char *csr_phy_mode_str(eCsrPhyMode phy_mode);
 QDF_STATUS csr_set_phy_mode(tHalHandle hHal, uint32_t phyMode,
 			    enum band_info eBand, bool *pfRestartNeeded);
-typedef void (*csr_roamLinkQualityIndCallback)
-	(eCsrRoamLinkQualityInd ind, void *pContext);
 typedef void (*tCsrStatsCallback)(void *stats, void *pContext);
 typedef void (*tCsrRssiCallback)(int8_t rssi, uint32_t staId, void *pContext);
 

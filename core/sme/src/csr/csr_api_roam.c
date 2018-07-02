@@ -1198,8 +1198,6 @@ QDF_STATUS csr_start(tpAniSirGlobal pMac)
 		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
 			status = csr_neighbor_roam_init(pMac, i);
 		csr_init_tl_stats(pMac);
-		/* init the link quality indication also */
-		pMac->roam.vccLinkQuality = eCSR_ROAM_LINK_QUAL_MIN_IND;
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sme_warn("csr_start: Couldn't Init HO control blk ");
 			break;
@@ -17440,7 +17438,6 @@ static void csr_roam_link_up(tpAniSirGlobal pMac, struct qdf_mac_addr bssid)
 		(0 == pMac->roam.configParam.vccRssiThreshold) ?
 		CSR_VCC_RSSI_THRESHOLD :
 		pMac->roam.configParam.vccRssiThreshold;
-	pMac->roam.vccLinkQuality = eCSR_ROAM_LINK_QUAL_POOR_IND;
 	/* Check for user misconfig of UL MAC Loss trigger threshold */
 	pMac->roam.configParam.vccUlMacLossThreshold =
 		(0 == pMac->roam.configParam.vccUlMacLossThreshold) ?
@@ -17481,7 +17478,6 @@ static void csr_roam_link_down(tpAniSirGlobal pMac, uint32_t sessionId)
 	 * corresponding timers
 	 */
 	csr_roam_dereg_statistics_req(pMac);
-	pMac->roam.vccLinkQuality = eCSR_ROAM_LINK_QUAL_POOR_IND;
 	/* Indicate the neighbor roal algorithm about the disconnect
 	 * indication
 	 */
