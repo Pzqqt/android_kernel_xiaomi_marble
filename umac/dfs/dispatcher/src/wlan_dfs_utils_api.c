@@ -22,6 +22,7 @@
  * to outside of DFS component.
  */
 #include "wlan_dfs_utils_api.h"
+#include "wlan_dfs_mlme_api.h"
 #include "../../core/src/dfs.h"
 #include "../../core/src/dfs_zero_cac.h"
 #include "../../core/src/dfs_etsi_precac.h"
@@ -544,6 +545,9 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 		chan_num = tmp_chan_list[i].dfs_ch_ieee;
 		center_freq = tmp_chan_list[i].dfs_ch_freq;
 		flagext = tmp_chan_list[i].dfs_ch_flagext;
+
+		if (!dfs_mlme_check_allowed_prim_chanlist(pdev, chan_num))
+			continue;
 
 		if ((is_curchan_5g) && WLAN_REG_IS_5GHZ_CH(chan_num)) {
 			chan_list[j].dfs_ch_ieee = chan_num;

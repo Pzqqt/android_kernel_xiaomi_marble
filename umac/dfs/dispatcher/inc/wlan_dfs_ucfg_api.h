@@ -54,6 +54,9 @@
  * @mlme_rebuild_chan_list_with_non_dfs_channel: Rebuild channels with non-dfs
  *                                     channels.
  * @mlme_restart_vaps_with_non_dfs_chan: Restart vaps with non-dfs channel.
+ * @mlme_check_allowed_prim_chanlist:  Check whether the given channel is
+ *                                     present in the primary allowed channel
+ *                                     list or not.
  */
 struct dfs_to_mlme {
 	QDF_STATUS (*pdev_component_obj_attach)(struct wlan_objmgr_pdev *pdev,
@@ -130,6 +133,8 @@ struct dfs_to_mlme {
 			(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_restart_vaps_with_non_dfs_chan)
 			(struct wlan_objmgr_pdev *pdev, int no_chans_avail);
+	bool (*mlme_check_allowed_prim_chanlist)
+			(struct wlan_objmgr_pdev *pdev, uint32_t chan_num);
 };
 
 extern struct dfs_to_mlme global_dfs_to_mlme;

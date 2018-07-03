@@ -243,4 +243,23 @@ void dfs_mlme_restart_vaps_with_non_dfs_chan(struct wlan_objmgr_pdev *pdev,
 {
 }
 #endif
+
+/**
+ * dfs_mlme_check_allowed_prim_chanlist() - Check whether the given channel is
+ * present in the primary allowed channel list or not
+ * @pdev: Pointer to DFS pdev object.
+ * @chan_num: Channel number
+ */
+#if defined(WLAN_SUPPORT_PRIMARY_ALLOWED_CHAN)
+bool dfs_mlme_check_allowed_prim_chanlist(struct wlan_objmgr_pdev *pdev,
+					  uint32_t chan_num);
+
+#else
+static inline
+bool dfs_mlme_check_allowed_prim_chanlist(struct wlan_objmgr_pdev *pdev,
+					  uint32_t chan_num)
+{
+	return true;
+}
+#endif
 #endif /* _WLAN_DFS_MLME_API_H_ */
