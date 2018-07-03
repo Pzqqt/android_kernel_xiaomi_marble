@@ -1923,6 +1923,7 @@ struct hdd_context {
 	bool force_rsne_override;
 	qdf_wake_lock_t monitor_mode_wakelock;
 	bool lte_coex_ant_share;
+	bool obss_scan_offload;
 	int sscan_pid;
 	uint32_t track_arp_ip;
 

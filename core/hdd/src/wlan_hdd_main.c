@@ -2092,6 +2092,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	hdd_nan_datapath_target_config(hdd_ctx, cfg);
 	hdd_ctx->dfs_cac_offload = cfg->dfs_cac_offload;
 	hdd_ctx->lte_coex_ant_share = cfg->services.lte_coex_ant_share;
+	hdd_ctx->obss_scan_offload = cfg->services.obss_scan_offload;
 	status = sme_cfg_set_int(mac_handle, WNI_CFG_OBSS_DETECTION_OFFLOAD,
 				 cfg->obss_detection_offloaded);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -7260,6 +7261,12 @@ static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
 	wiphy->wowlan.pattern_min_len = WOW_MIN_PATTERN_SIZE;
 	wiphy->wowlan.pattern_max_len = WOW_MAX_PATTERN_SIZE;
 #endif
+	if (hdd_ctx->obss_scan_offload) {
+		hdd_debug("wmi_service_obss_scan supported");
+	} else if (hdd_ctx->config->nChannelBondingMode24GHz) {
+		hdd_debug("enable wpa_supp obss_scan");
+		wiphy->features |= NL80211_FEATURE_NEED_OBSS_SCAN;
+	}
 
 	/* registration of wiphy dev with cfg80211 */
 	ret_val = wlan_hdd_cfg80211_register(wiphy);

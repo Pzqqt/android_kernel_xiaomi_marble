@@ -928,6 +928,7 @@ typedef struct sAniSirGlobal {
 	tDot11fIEhe_cap he_cap_2g;
 	tDot11fIEhe_cap he_cap_5g;
 #endif
+	bool obss_scan_offload;
 } tAniSirGlobal;
 
 

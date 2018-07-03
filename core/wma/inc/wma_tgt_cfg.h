@@ -69,6 +69,7 @@ struct wma_tgt_services {
 	bool is_11k_offload_supported;
 	bool twt_requestor;
 	bool twt_responder;
+	bool obss_scan_offload;
 };
 
 /**

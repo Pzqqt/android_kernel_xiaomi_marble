@@ -12564,7 +12564,8 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 			 * OBSS SCAN Indication will be sent to Firmware
 			 * to start OBSS Scan
 			 */
-			if (CSR_IS_CHANNEL_24GHZ(
+			if (mac_ctx->obss_scan_offload &&
+			    CSR_IS_CHANNEL_24GHZ(
 				session->connectedProfile.operationChannel)
 				&& (session->connectState ==
 					eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)
