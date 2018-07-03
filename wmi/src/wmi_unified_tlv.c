@@ -22988,8 +22988,10 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 		WMI_PDEV_PARAM_ATF_DYNAMIC_ENABLE;
 	pdev_param[wmi_pdev_param_atf_ssid_group_policy] =
 						WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_igmpmld_override] = WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_igmpmld_tid] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_igmpmld_override] =
+					WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE;
+	pdev_param[wmi_pdev_param_igmpmld_tid] =
+					WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE;
 	pdev_param[wmi_pdev_param_antenna_gain] = WMI_PDEV_PARAM_ANTENNA_GAIN;
 	pdev_param[wmi_pdev_param_block_interbss] =
 				WMI_PDEV_PARAM_BLOCK_INTERBSS;
@@ -23008,8 +23010,6 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 					WMI_PDEV_PARAM_SET_PROMISC_MODE_CMDID;
 	pdev_param[wmi_pdev_param_set_ppdu_duration_cmdid] =
 					WMI_PDEV_PARAM_SET_PPDU_DURATION_CMDID;
-	pdev_param[wmi_pdev_param_igmpmld_ac_override] =
-					WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE;
 	pdev_param[wmi_pdev_param_remove_mcast2ucast_buffer] =
 				WMI_PDEV_PARAM_REMOVE_MCAST2UCAST_BUFFER;
 	pdev_param[wmi_pdev_param_set_mcast2ucast_buffer] =
