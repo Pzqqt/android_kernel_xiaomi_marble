@@ -1381,7 +1381,7 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int rc;
-	struct ocb_get_tsf_timer_param request = {0};
+	struct ocb_get_tsf_timer_param tsf_request = {0};
 	QDF_STATUS status;
 	void *cookie;
 	struct osif_request *request;
@@ -1414,8 +1414,8 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 	}
 	cookie = osif_request_cookie(request);
 
-	request.vdev_id = adapter->session_id;
-	status = ucfg_ocb_get_tsf_timer(adapter->hdd_vdev, &request,
+	tsf_request.vdev_id = adapter->session_id;
+	status = ucfg_ocb_get_tsf_timer(adapter->hdd_vdev, &tsf_request,
 					hdd_ocb_get_tsf_timer_callback,
 					cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1603,7 +1603,7 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_MAX + 1];
 	int rc;
-	struct ocb_dcc_get_stats_param request = {0};
+	struct ocb_dcc_get_stats_param dcc_request = {0};
 	QDF_STATUS status;
 	void *cookie;
 	struct osif_request *request;
@@ -1659,12 +1659,12 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	}
 	cookie = osif_request_cookie(request);
 
-	request.vdev_id = adapter->session_id;
-	request.channel_count = channel_count;
-	request.request_array_len = request_array_len;
-	request.request_array = request_array;
+	dcc_request.vdev_id = adapter->session_id;
+	dcc_request.channel_count = channel_count;
+	dcc_request.request_array_len = request_array_len;
+	dcc_request.request_array = request_array;
 
-	status = ucfg_ocb_dcc_get_stats(adapter->hdd_vdev, &request,
+	status = ucfg_ocb_dcc_get_stats(adapter->hdd_vdev, &dcc_request,
 					hdd_dcc_get_stats_callback,
 					cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1857,7 +1857,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_MAX + 1];
-	struct ocb_dcc_update_ndl_param request;
+	struct ocb_dcc_update_ndl_param dcc_request;
 	uint32_t channel_count;
 	uint32_t ndl_channel_array_len;
 	void *ndl_channel_array;
@@ -1924,14 +1924,14 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	cookie = osif_request_cookie(request);
 
 	/* Copy the parameters to the request structure. */
-	request.vdev_id = adapter->session_id;
-	request.channel_count = channel_count;
-	request.dcc_ndl_chan_list_len = ndl_channel_array_len;
-	request.dcc_ndl_chan_list = ndl_channel_array;
-	request.dcc_ndl_active_state_list_len = ndl_active_state_array_len;
-	request.dcc_ndl_active_state_list = ndl_active_state_array;
+	dcc_request.vdev_id = adapter->session_id;
+	dcc_request.channel_count = channel_count;
+	dcc_request.dcc_ndl_chan_list_len = ndl_channel_array_len;
+	dcc_request.dcc_ndl_chan_list = ndl_channel_array;
+	dcc_request.dcc_ndl_active_state_list_len = ndl_active_state_array_len;
+	dcc_request.dcc_ndl_active_state_list = ndl_active_state_array;
 
-	status = ucfg_ocb_dcc_update_ndl(adapter->hdd_vdev, &request,
+	status = ucfg_ocb_dcc_update_ndl(adapter->hdd_vdev, &dcc_request,
 					 hdd_dcc_update_ndl_callback,
 					 cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {
