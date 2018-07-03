@@ -381,11 +381,6 @@ ifeq ($(CONFIG_ROME_IF),sdio)
 	CONFIG_HIF_SDIO := y
 endif
 
-#Enable pci read/write config functions
-ifeq ($(CONFIG_ROME_IF),pci)
-	CONFIG_ATH_PCI := y
-endif
-
 ifeq ($(CONFIG_ROME_IF),snoc)
 	CONFIG_HIF_SNOC:= y
 endif

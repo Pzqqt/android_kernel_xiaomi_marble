@@ -1791,9 +1791,6 @@ cppflags-$(CONFIG_CREDIT_REP_THROUGH_CREDIT_UPDATE) += -DCONFIG_CREDIT_REP_THROU
 #Enable FW logs through ini
 cppflags-y += -DCONFIG_FW_LOGS_BASED_ON_INI
 
-#Enable pci read/write config functions
-cppflags-$(CONFIG_ATH_PCI) += -DATH_PCI
-
 #Enable power management suspend/resume functionality
 cppflags-$(CONFIG_ATH_BUS_PM) += -DATH_BUS_PM
 
