@@ -94,7 +94,7 @@ void hif_ce_war_enable(void)
  * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked
  * for defined here
  */
-#if HIF_CE_DEBUG_DATA_BUF
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 
 #define CE_DEBUG_PRINT_BUF_SIZE(x) (((x) * 3) - 1)
 #define CE_DEBUG_DATA_PER_ROW 16
@@ -2792,7 +2792,7 @@ static uint32_t hif_dump_desc_data_buf(uint8_t *buf, ssize_t pos,
  * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked
  * for defined here
  */
-#if HIF_CE_DEBUG_DATA_BUF
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 static const char *ce_event_type_to_str(enum hif_ce_event_type type)
 {
 	switch (type) {

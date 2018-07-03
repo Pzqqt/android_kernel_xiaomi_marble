@@ -118,7 +118,7 @@ struct hif_ce_stats {
  * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked
  * for defined here
  */
-#if HIF_CE_DEBUG_DATA_BUF
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 struct ce_desc_hist {
 	qdf_atomic_t history_index[CE_COUNT_MAX];
 	uint32_t enable[CE_COUNT_MAX];
@@ -194,7 +194,7 @@ struct hif_softc {
  * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked
  * for defined here
  */
-#if HIF_CE_DEBUG_DATA_BUF
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 	struct ce_desc_hist hif_ce_desc_hist;
 #endif /* #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
 #ifdef IPA_OFFLOAD
