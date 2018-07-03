@@ -4156,6 +4156,14 @@ typedef struct {
     A_UINT32 vdev_id;
     A_UINT32 desc_id;  /* echoed in tx_compl_event */
     A_UINT32 chanfreq; /* MHz units */
+    /* WMI_MGMT_TX_SEND_CMDID is used for both pass by value and
+     * pass by reference WMI management frames.
+     *
+     * a) If the command is for pass by reference,
+     *    paddr_lo and padd_hi will hold the address of remote/host buffer
+     * b) If the command is for pass by value,
+     *    paddr_lo and paddr_hi will be NULL.
+     */
     A_UINT32 paddr_lo;
     A_UINT32 paddr_hi;
     A_UINT32 frame_len;
