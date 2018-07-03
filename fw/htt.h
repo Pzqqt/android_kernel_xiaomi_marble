@@ -167,9 +167,10 @@
  * 3.50 Add learning_frame flag to htt_tx_msdu_desc_ext2_t
  * 3.51 Add SW peer ID and TID num to HTT TX WBM COMPLETION
  * 3.52 Add HTT_T2H FLOW_POOL_RESIZE msg def
+ * 3.53 Update HTT_T2H FLOW_POOL_RESIZE msg def
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 52
+#define HTT_CURRENT_VERSION_MINOR 53
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -10485,18 +10486,18 @@ typedef struct {
  *
  *  The message would appear as follows:
  *
- *     |31            24|23            16|15             8|7              0|
- *     |----------------+----------------+----------------+----------------|
- *     |               flow Pool ID      |  reserved0     | Msg type       |
+ *     |31                             16|15             8|7              0|
+ *     |---------------------------------+----------------+----------------|
+ *     |                      reserved0                   | Msg type       |
  *     |-------------------------------------------------------------------|
- *     |               reserved1         |      flow pool new size         |
+ *     |         flow pool new size      |           flow pool ID          |
  *     |-------------------------------------------------------------------|
  *
  *  The message is interpreted as follows:
  *  b'0:7   - msg_type: This will be set to
  *            HTT_T2H_MSG_TYPE_FLOW_POOL_RESIZE
  *
- *  b'8:15  - flow pool ID: Existing flow pool ID
+ *  b'0:15  - flow pool ID: Existing flow pool ID
  *
  *  b'16:31 - flow pool new size: new pool size for exisiting flow pool ID
  *
@@ -10504,19 +10505,18 @@ typedef struct {
 
 PREPACK struct htt_flow_pool_resize_t {
     A_UINT32 msg_type:8,
-             reserved0:8,
-             flow_pool_id:16;
-    A_UINT32 flow_pool_new_size:16,
-             reserved1:16;
+             reserved0:24;
+    A_UINT32 flow_pool_id:16,
+             flow_pool_new_size:16;
 } POSTPACK;
 
 #define HTT_FLOW_POOL_RESIZE_SZ  (sizeof(struct htt_flow_pool_resize_t))
 
-#define HTT_FLOW_POOL_RESIZE_FLOW_POOL_ID_M      0xffff0000
-#define HTT_FLOW_POOL_RESIZE_FLOW_POOL_ID_S      16
+#define HTT_FLOW_POOL_RESIZE_FLOW_POOL_ID_M      0x0000ffff
+#define HTT_FLOW_POOL_RESIZE_FLOW_POOL_ID_S      0
 
-#define HTT_FLOW_POOL_RESIZE_FLOW_POOL_NEW_SIZE_M    0x0000ffff
-#define HTT_FLOW_POOL_RESIZE_FLOW_POOL_NEW_SIZE_S    0
+#define HTT_FLOW_POOL_RESIZE_FLOW_POOL_NEW_SIZE_M    0xffff0000
+#define HTT_FLOW_POOL_RESIZE_FLOW_POOL_NEW_SIZE_S    16
 
 
 #define HTT_FLOW_POOL_RESIZE_FLOW_POOL_ID_GET(_var)    \
