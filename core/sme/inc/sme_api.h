@@ -1706,14 +1706,14 @@ QDF_STATUS sme_fast_reassoc(tHalHandle hal, struct csr_roam_profile *profile,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid);
 #endif
 /**
- * sme_congestion_register_callback(): registers congestion callback
+ * sme_congestion_register_callback() - registers congestion callback
  * @hal: handler for HAL
  * @congestion_cb: congestion callback
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_congestion_register_callback(tHalHandle hal,
-	void (*congestion_cb)(void *, uint32_t congestion, uint32_t vdev_id));
+					    congestion_cb congestion_cb);
 
 /**
  * sme_register_tx_queue_cb(): Register tx queue callback

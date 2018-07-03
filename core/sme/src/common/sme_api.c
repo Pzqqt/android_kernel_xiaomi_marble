@@ -15398,7 +15398,7 @@ void sme_store_pdev(tHalHandle hal, struct wlan_objmgr_pdev *pdev)
 }
 
 QDF_STATUS sme_congestion_register_callback(tHalHandle hal,
-	void (*congestion_cb)(void *, uint32_t congestion, uint32_t vdev_id))
+					    congestion_cb congestion_cb)
 {
 	QDF_STATUS status;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);

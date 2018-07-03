@@ -176,6 +176,15 @@ struct chip_pwr_save_fail_detected_params;
 typedef void (*pwr_save_fail_cb)(hdd_handle_t hdd_handle,
 			struct chip_pwr_save_fail_detected_params *params);
 
+/**
+ * typedef congestion_cb - congestion callback function
+ * @hdd_handle: HDD handle registered with SME
+ * @congestion: Current congestion value
+ * @vdev_id: ID of the vdev for which congestion is being reported
+ */
+typedef void (*congestion_cb)(hdd_handle_t hdd_handle, uint32_t congestion,
+			      uint32_t vdev_id);
+
 typedef struct tagSmeStruct {
 	eSmeState state;
 	qdf_mutex_t lkSmeGlobalLock;
@@ -261,7 +270,7 @@ typedef struct tagSmeStruct {
 			enum scan_reject_states *reason);
 	void (*rso_cmd_status_cb)(void *hdd_context,
 			struct rso_cmd_status *rso_status);
-	void (*congestion_cb)(void *, uint32_t congestion, uint32_t vdev_id);
+	congestion_cb congestion_cb;
 	void (*stats_ext2_cb)(void *, struct sir_sme_rx_aggr_hole_ind *);
 	pwr_save_fail_cb chip_power_save_fail_cb;
 	void (*bt_activity_info_cb)(void *context, uint32_t bt_activity);

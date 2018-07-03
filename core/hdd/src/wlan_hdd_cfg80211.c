@@ -12492,10 +12492,10 @@ end:
 	return err;
 }
 
-void hdd_update_cca_info_cb(void *context, uint32_t congestion,
+void hdd_update_cca_info_cb(hdd_handle_t hdd_handle, uint32_t congestion,
 			    uint32_t vdev_id)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *)context;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	int status;
 	struct hdd_adapter *adapter = NULL;
 	struct hdd_station_ctx *hdd_sta_ctx;
