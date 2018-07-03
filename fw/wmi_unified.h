@@ -8629,6 +8629,12 @@ typedef enum {
 
     /** Uplink OFDMA PPDU bandwidth (0: 20MHz, 1: 40MHz, 2: 80Mhz, 3: 160MHz)*/
     WMI_VDEV_PARAM_UL_PPDU_BW,                            /* 0x8E */
+    
+    /** Enable/Disable FW handling MU EDCA change from AP (1: En, 0:Dis)  */
+    WMI_VDEV_PARAM_MU_EDCA_FW_UPDATE_EN,                  /* 0x8F */
+    
+    /** Update dot11ObssNbruToleranceTime in fw. Param value: seconds */
+    WMI_VDEV_PARAM_UPDATE_OBSS_RU_TOLERANCE_TIME,         /* 0x90 */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
