@@ -2190,6 +2190,10 @@ QDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
 	tpSirBssDescription pBssDescription = NULL;
 
 	csr_neighbor_roam_get_handoff_ap_info(pMac, &handoffNode, sessionId);
+	if (!handoffNode.pBssDescription) {
+		sme_err("Invalid BSS Description");
+		return QDF_STATUS_E_INVAL;
+	}
 	pBssDescription = handoffNode.pBssDescription;
 	/* Get the time diff in nano seconds */
 	timer_diff = (qdf_get_monotonic_boottime_ns()  -
