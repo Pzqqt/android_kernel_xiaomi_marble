@@ -508,8 +508,13 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
 	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
 
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		  FL("Len %d Extn list %pK "),
+				(uint32_t)qdf_nbuf_len(nbuf),
+				qdf_nbuf_get_ext_list(nbuf));
 	/* Set length in nbuf */
-	qdf_nbuf_set_pktlen(nbuf, pkt_len);
+	if (!qdf_nbuf_get_ext_list(nbuf))
+		qdf_nbuf_set_pktlen(nbuf, pkt_len);
 
 	/*
 	 * Check if DMA completed -- msdu_done is the last bit
@@ -558,7 +563,10 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 	 * Advance the packet start pointer by total size of
 	 * pre-header TLV's
 	 */
-	qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
+	if (qdf_nbuf_get_ext_list(nbuf))
+		qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
+	else
+		qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
 
 	if (dp_rx_mcast_echo_check(soc, peer, rx_tlv_hdr, nbuf)) {
 		/* this is a looped back MCBC pkt, drop it */
