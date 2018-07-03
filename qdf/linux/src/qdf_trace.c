@@ -110,10 +110,13 @@ static tp_qdf_state_info_cb qdf_state_info_table[QDF_MODULE_ID_MAX];
 
 #ifdef CONFIG_DP_TRACE
 /* Static and Global variables */
-static spinlock_t l_dp_trace_lock;
-
+#ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
+static struct qdf_dp_trace_record_s *g_qdf_dp_trace_tbl;
+#else
 static struct qdf_dp_trace_record_s
 			g_qdf_dp_trace_tbl[MAX_QDF_DP_TRACE_RECORDS];
+#endif
+static spinlock_t l_dp_trace_lock;
 
 /*
  * all the options to configure/control DP trace are
@@ -733,6 +736,31 @@ qdf_export_symbol(qdf_state_info_dump_all);
 #endif
 
 #ifdef CONFIG_DP_TRACE
+
+#ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
+static inline QDF_STATUS allocate_g_qdf_dp_trace_tbl_buffer(void)
+{
+	g_qdf_dp_trace_tbl = vzalloc(MAX_QDF_DP_TRACE_RECORDS *
+				     sizeof(*g_qdf_dp_trace_tbl));
+	QDF_BUG(g_qdf_dp_trace_tbl);
+	return g_qdf_dp_trace_tbl ? QDF_STATUS_SUCCESS : QDF_STATUS_E_NOMEM;
+}
+
+static inline void free_g_qdf_dp_trace_tbl_buffer(void)
+{
+	vfree(g_qdf_dp_trace_tbl);
+	g_qdf_dp_trace_tbl = NULL;
+}
+#else
+static inline QDF_STATUS allocate_g_qdf_dp_trace_tbl_buffer(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void free_g_qdf_dp_trace_tbl_buffer(void)
+{ }
+#endif
+
 #define QDF_DP_TRACE_PREPEND_STR_SIZE 100
 static void qdf_dp_unused(struct qdf_dp_trace_record_s *record,
 			  uint16_t index, uint8_t pdev_id, uint8_t info)
@@ -765,6 +793,11 @@ void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
 {
 	uint8_t i;
 
+	if (allocate_g_qdf_dp_trace_tbl_buffer() != QDF_STATUS_SUCCESS) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_QDF,
+				"Failed!!! DP Trace buffer allocation");
+		return;
+	}
 	qdf_dp_trace_spin_lock_init();
 	qdf_dp_trace_clear_buffer();
 	g_qdf_dp_trace_data.enable = true;
@@ -807,6 +840,17 @@ void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
 }
 qdf_export_symbol(qdf_dp_trace_init);
 
+void qdf_dp_trace_deinit(void)
+{
+	if (!g_qdf_dp_trace_data.enable)
+		return;
+	spin_lock_bh(&l_dp_trace_lock);
+	g_qdf_dp_trace_data.enable = false;
+	g_qdf_dp_trace_data.no_of_record = 0;
+
+	free_g_qdf_dp_trace_tbl_buffer();
+	spin_unlock_bh(&l_dp_trace_lock);
+}
 /**
  * qdf_dp_trace_set_value() - Configure the value to control DP trace
  * @proto_bitmap: defines the protocol to be tracked
@@ -2032,8 +2076,10 @@ void qdf_dp_trace_clear_buffer(void)
 	g_qdf_dp_trace_data.head = INVALID_QDF_DP_TRACE_ADDR;
 	g_qdf_dp_trace_data.tail = INVALID_QDF_DP_TRACE_ADDR;
 	g_qdf_dp_trace_data.num = 0;
-	memset(g_qdf_dp_trace_tbl, 0,
-	   MAX_QDF_DP_TRACE_RECORDS * sizeof(struct qdf_dp_trace_record_s));
+	if (g_qdf_dp_trace_data.enable)
+		memset(g_qdf_dp_trace_tbl, 0,
+		       MAX_QDF_DP_TRACE_RECORDS *
+		       sizeof(struct qdf_dp_trace_record_s));
 }
 qdf_export_symbol(qdf_dp_trace_clear_buffer);
 
@@ -2323,6 +2369,9 @@ QDF_STATUS qdf_dpt_dump_stats_debugfs(qdf_debugfs_file_t file,
 	struct qdf_dp_trace_record_s p_record;
 	uint32_t i = curr_pos;
 	uint32_t tail = g_qdf_dp_trace_data.saved_tail;
+
+	if (!g_qdf_dp_trace_data.enable)
+		return QDF_STATUS_E_FAILURE;
 
 	spin_lock_bh(&l_dp_trace_lock);
 
