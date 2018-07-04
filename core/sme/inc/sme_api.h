@@ -976,9 +976,19 @@ QDF_STATUS sme_ll_stats_set_req(tHalHandle hHal,
 		tSirLLStatsSetReq *psetStatsReq);
 QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal,
 		tSirLLStatsGetReq *pgetStatsReq);
-QDF_STATUS sme_set_link_layer_stats_ind_cb(tHalHandle hHal,
-		void (*callbackRoutine)(void *callbackCtx,
-				int indType, void *pRsp));
+
+/**
+ * sme_set_link_layer_stats_ind_cb() -
+ * SME API to trigger the stats are available after get request
+ * @mac_handle: MAC handle
+ * @callback_routine - HDD callback which needs to be invoked after
+ *    getting status notification from FW
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_link_layer_stats_ind_cb(mac_handle_t mac_handle,
+					   link_layer_stats_cb callback);
+
 QDF_STATUS sme_set_link_layer_ext_cb(tHalHandle hal,
 		     void (*ll_stats_ext_cb)(hdd_handle_t callback_ctx,
 					     tSirLLStatsResults * rsp));
@@ -995,8 +1005,8 @@ sme_set_link_layer_ext_cb(tHalHandle hal, void (*ll_stats_ext_cb)
 }
 
 static inline QDF_STATUS
-sme_set_link_layer_stats_ind_cb(tHalHandle hHal, void (*callback_routine)
-				(void *callbackCtx, int indType, void *pRsp))
+sme_set_link_layer_stats_ind_cb(mac_handle_t mac_handle,
+				link_layer_stats_cb callback)
 {
 	return QDF_STATUS_SUCCESS;
 }

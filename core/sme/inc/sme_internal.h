@@ -116,6 +116,10 @@ typedef struct sSelfRecoveryStats {
 	uint8_t cmdStatsIndx;
 } tSelfRecoveryStats;
 
+typedef void (*link_layer_stats_cb)(hdd_handle_t hdd_handle,
+				    int indication_type,
+				    tSirLLStatsResults *results);
+
 typedef void (*ocb_callback)(void *context, void *response);
 typedef void (*sme_set_thermal_level_callback)(void *context, u_int8_t level);
 typedef void (*p2p_lo_callback)(void *context, void *event);
@@ -197,8 +201,7 @@ typedef struct tagSmeStruct {
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type eventPayload;
 #endif
-	void (*pLinkLayerStatsIndCallback)(void *callbackContext,
-			int indType, void *pRsp);
+	link_layer_stats_cb link_layer_stats_cb;
 	void (*link_layer_stats_ext_cb)(hdd_handle_t callback_ctx,
 					tSirLLStatsResults *rsp);
 #ifdef WLAN_POWER_DEBUGFS

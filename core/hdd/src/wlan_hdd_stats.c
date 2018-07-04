@@ -1060,24 +1060,13 @@ static void hdd_ll_process_peer_stats(struct hdd_adapter *adapter,
 						  (tpSirWifiPeerStat) data);
 }
 
-/**
- * wlan_hdd_cfg80211_link_layer_stats_callback() - This function is called
- * @ctx: Pointer to hdd context
- * @indType: Indication type
- * @pRsp: Pointer to response
- *
- * After receiving Link Layer indications from FW.This callback converts the
- * firmware data to the NL data and send the same to the kernel/upper layers.
- *
- * Return: None
- */
-void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
-							int indType, void *pRsp)
+void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
+						 int indication_type,
+						 tSirLLStatsResults *results)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *) ctx;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	struct hdd_ll_stats_context *context;
 	struct hdd_adapter *adapter = NULL;
-	tpSirLLStatsResults linkLayerStatsResults = (tpSirLLStatsResults) pRsp;
 	int status;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -1085,58 +1074,58 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 		return;
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx,
-					   linkLayerStatsResults->ifaceId);
+					   results->ifaceId);
 
 	if (NULL == adapter) {
 		hdd_err("vdev_id %d does not exist with host",
-			linkLayerStatsResults->ifaceId);
+			results->ifaceId);
 		return;
 	}
 
-	hdd_debug("Link Layer Indication indType: %d", indType);
+	hdd_debug("Link Layer Indication Type: %d", indication_type);
 
-	switch (indType) {
+	switch (indication_type) {
 	case SIR_HAL_LL_STATS_RESULTS_RSP:
 	{
 		hdd_debug("LL_STATS RESP paramID = 0x%x, ifaceId = %u, respId= %u , moreResultToFollow = %u, num radio = %u result = %pK",
-			linkLayerStatsResults->paramId,
-			linkLayerStatsResults->ifaceId,
-			linkLayerStatsResults->rspId,
-			linkLayerStatsResults->moreResultToFollow,
-			linkLayerStatsResults->num_radio,
-			linkLayerStatsResults->results);
+			results->paramId,
+			results->ifaceId,
+			results->rspId,
+			results->moreResultToFollow,
+			results->num_radio,
+			results->results);
 
 		context = &ll_stats_context;
 		spin_lock(&context->context_lock);
 		/* validate response received from target */
-		if ((context->request_id != linkLayerStatsResults->rspId) ||
-		  !(context->request_bitmap & linkLayerStatsResults->paramId)) {
+		if ((context->request_id != results->rspId) ||
+		    !(context->request_bitmap & results->paramId)) {
 			spin_unlock(&context->context_lock);
 			hdd_err("Error : Request id %d response id %d request bitmap 0x%x response bitmap 0x%x",
-			context->request_id, linkLayerStatsResults->rspId,
-			context->request_bitmap, linkLayerStatsResults->paramId);
+			context->request_id, results->rspId,
+			context->request_bitmap, results->paramId);
 			return;
 		}
 		spin_unlock(&context->context_lock);
 
-		if (linkLayerStatsResults->paramId & WMI_LINK_STATS_RADIO) {
+		if (results->paramId & WMI_LINK_STATS_RADIO) {
 			hdd_ll_process_radio_stats(adapter,
-				linkLayerStatsResults->moreResultToFollow,
-				linkLayerStatsResults->results,
-				linkLayerStatsResults->num_radio,
-				linkLayerStatsResults->rspId);
+				results->moreResultToFollow,
+				results->results,
+				results->num_radio,
+				results->rspId);
 
 			spin_lock(&context->context_lock);
-			if (!linkLayerStatsResults->moreResultToFollow)
+			if (!results->moreResultToFollow)
 				context->request_bitmap &= ~(WMI_LINK_STATS_RADIO);
 			spin_unlock(&context->context_lock);
 
-		} else if (linkLayerStatsResults->paramId &
+		} else if (results->paramId &
 				WMI_LINK_STATS_IFACE) {
 			hdd_ll_process_iface_stats(adapter,
-				linkLayerStatsResults->results,
-				linkLayerStatsResults->num_peers,
-				linkLayerStatsResults->rspId);
+				results->results,
+				results->num_peers,
+				results->rspId);
 
 			spin_lock(&context->context_lock);
 			/* Firmware doesn't send peerstats event if no peers are
@@ -1144,21 +1133,21 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 			 * this case and return the status to middleware after
 			 * receiving iface stats
 			 */
-			if (!linkLayerStatsResults->num_peers)
+			if (!results->num_peers)
 				context->request_bitmap &=
 					~(WMI_LINK_STATS_ALL_PEER);
 			context->request_bitmap &= ~(WMI_LINK_STATS_IFACE);
 			spin_unlock(&context->context_lock);
 
-		} else if (linkLayerStatsResults->
+		} else if (results->
 			   paramId & WMI_LINK_STATS_ALL_PEER) {
 			hdd_ll_process_peer_stats(adapter,
-				linkLayerStatsResults->moreResultToFollow,
-				linkLayerStatsResults->results,
-				linkLayerStatsResults->rspId);
+				results->moreResultToFollow,
+				results->results,
+				results->rspId);
 
 			spin_lock(&context->context_lock);
-			if (!linkLayerStatsResults->moreResultToFollow)
+			if (!results->moreResultToFollow)
 				context->request_bitmap &= ~(WMI_LINK_STATS_ALL_PEER);
 			spin_unlock(&context->context_lock);
 
@@ -1175,7 +1164,7 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 		break;
 	}
 	default:
-		hdd_warn("invalid event type %d", indType);
+		hdd_warn("invalid event type %d", indication_type);
 		break;
 	}
 }

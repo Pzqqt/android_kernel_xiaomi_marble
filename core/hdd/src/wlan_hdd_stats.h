@@ -188,8 +188,21 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 			  uint32_t req_mask);
 
-void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
-						 int indType, void *pRsp);
+/**
+ * wlan_hdd_cfg80211_link_layer_stats_callback() - This function is called
+ * @hdd_handle: Handle to HDD context
+ * @indication_type: Indication type
+ * @results: Pointer to results
+ *
+ * After receiving Link Layer indications from FW.This callback converts the
+ * firmware data to the NL data and send the same to the kernel/upper layers.
+ *
+ * Return: None
+ */
+void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
+						 int indication_type,
+						 tSirLLStatsResults *results);
+
 /**
  * wlan_hdd_cfg80211_link_layer_stats_ext_callback() - Callback for LL ext
  * @ctx: HDD context
@@ -248,8 +261,9 @@ wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter)
 }
 
 static inline void
-wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
-					    int indType, void *pRsp)
+wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
+					    int indication_type,
+					    tSirLLStatsResults *results)
 {
 }
 

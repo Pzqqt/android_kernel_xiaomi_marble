@@ -11809,28 +11809,19 @@ QDF_STATUS sme_ll_stats_get_req(tHalHandle hHal, tSirLLStatsGetReq
 	return status;
 }
 
-/*
- * sme_set_link_layer_stats_ind_cb() -
- * SME API to trigger the stats are available  after get request
- *
- * hHal
- * callback_routine - HDD callback which needs to be invoked after
-	   getting status notification from FW
- * Return QDF_STATUS
- */
-QDF_STATUS sme_set_link_layer_stats_ind_cb(tHalHandle hHal,
-	void (*callback_routine)(void *callbackCtx, int indType, void *pRsp))
+QDF_STATUS sme_set_link_layer_stats_ind_cb(mac_handle_t mac_handle,
+					   link_layer_stats_cb callback)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	QDF_STATUS status;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
-	status = sme_acquire_global_lock(&pMac->sme);
+	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pMac->sme.pLinkLayerStatsIndCallback = callback_routine;
-		sme_release_global_lock(&pMac->sme);
-	} else
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: sme_acquire_global_lock error", __func__);
+		mac->sme.link_layer_stats_cb = callback;
+		sme_release_global_lock(&mac->sme);
+	} else {
+		sme_err("sme_acquire_global_lock error");
+	}
 
 	return status;
 }
@@ -11884,7 +11875,7 @@ QDF_STATUS sme_reset_link_layer_stats_ind_cb(tHalHandle h_hal)
 
 	status = sme_acquire_global_lock(&pmac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pmac->sme.pLinkLayerStatsIndCallback = NULL;
+		pmac->sme.link_layer_stats_cb = NULL;
 		sme_release_global_lock(&pmac->sme);
 	} else
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,

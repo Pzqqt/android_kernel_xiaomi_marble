@@ -1253,7 +1253,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	if (!pMac->sme.pLinkLayerStatsIndCallback) {
+	if (!pMac->sme.link_layer_stats_cb) {
 		WMA_LOGD("%s: HDD callback is null", __func__);
 		return -EINVAL;
 	}
@@ -1375,7 +1375,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	 * vdev_id/ifacId in link_stats_results will be
 	 * used to retrieve the correct HDD context
 	 */
-	pMac->sme.pLinkLayerStatsIndCallback(pMac->hdd_handle,
+	pMac->sme.link_layer_stats_cb(pMac->hdd_handle,
 					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 					     link_stats_results);
 	qdf_mem_free(link_stats_results);
@@ -1449,7 +1449,7 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	if (!mac->sme.pLinkLayerStatsIndCallback) {
+	if (!mac->sme.link_layer_stats_cb) {
 		WMA_LOGD("%s: HDD callback is null", __func__);
 		return -EINVAL;
 	}
@@ -1571,7 +1571,7 @@ post_stats:
 	 * vdev_id/ifacId in link_stats_results will be
 	 * used to retrieve the correct HDD context
 	 */
-	mac->sme.pLinkLayerStatsIndCallback(mac->hdd_handle,
+	mac->sme.link_layer_stats_cb(mac->hdd_handle,
 		WMA_LINK_LAYER_STATS_RESULTS_RSP,
 		link_stats_results);
 	wma_unified_radio_tx_mem_free(handle);
@@ -1611,7 +1611,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	if (!pMac->sme.pLinkLayerStatsIndCallback) {
+	if (!pMac->sme.link_layer_stats_cb) {
 		WMA_LOGD("%s: HDD callback is null", __func__);
 		return -EINVAL;
 	}
@@ -1779,7 +1779,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		return 0;
 	}
 
-	pMac->sme.pLinkLayerStatsIndCallback(pMac->hdd_handle,
+	pMac->sme.link_layer_stats_cb(pMac->hdd_handle,
 					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 					     link_stats_results);
 	wma_unified_radio_tx_mem_free(handle);
@@ -2073,7 +2073,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	if (!pMac->sme.pLinkLayerStatsIndCallback) {
+	if (!pMac->sme.link_layer_stats_cb) {
 		WMA_LOGD("%s: HDD callback is null", __func__);
 		return -EINVAL;
 	}
@@ -2204,7 +2204,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	 * vdev_id/ifacId in link_stats_results will be
 	 * used to retrieve the correct HDD context
 	 */
-	pMac->sme.pLinkLayerStatsIndCallback(pMac->hdd_handle,
+	pMac->sme.link_layer_stats_cb(pMac->hdd_handle,
 					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 					     link_stats_results);
 	qdf_mem_free(link_stats_results);
