@@ -959,11 +959,12 @@ QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
 QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
 					struct wifi_passpoint_req *req_msg);
 
-QDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
-		void (*pExtScanIndCb)(void *, const uint16_t, void *));
+QDF_STATUS sme_ext_scan_register_callback(mac_handle_t mac_handle,
+					  ext_scan_ind_cb ext_scan_ind_cb);
 #else
-static inline QDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
-		void (*pExtScanIndCb)(void *, const uint16_t, void *))
+static inline
+QDF_STATUS sme_ext_scan_register_callback(mac_handle_t mac_handle,
+					  ext_scan_ind_cb ext_scan_ind_cb)
 {
 	return QDF_STATUS_SUCCESS;
 }

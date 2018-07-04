@@ -2200,8 +2200,8 @@ QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 	}
 #ifdef FEATURE_WLAN_EXTSCAN
 	case eWNI_SME_EXTSCAN_FULL_SCAN_RESULT_IND:
-		if (pMac->sme.pExtScanIndCb)
-			pMac->sme.pExtScanIndCb(pMac->hdd_handle,
+		if (pMac->sme.ext_scan_ind_cb)
+			pMac->sme.ext_scan_ind_cb(pMac->hdd_handle,
 					eSIR_EXTSCAN_FULL_SCAN_RESULT_IND,
 					pMsg->bodyptr);
 		else
@@ -2211,8 +2211,8 @@ QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 	case eWNI_SME_EPNO_NETWORK_FOUND_IND:
-		if (pMac->sme.pExtScanIndCb)
-			pMac->sme.pExtScanIndCb(pMac->hdd_handle,
+		if (pMac->sme.ext_scan_ind_cb)
+			pMac->sme.ext_scan_ind_cb(pMac->hdd_handle,
 					eSIR_EPNO_NETWORK_FOUND_IND,
 					pMsg->bodyptr);
 		else
@@ -11572,18 +11572,16 @@ QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
 	return status;
 }
 
-QDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
-					  void (*pExtScanIndCb)(void *,
-								const uint16_t,
-								void *))
+QDF_STATUS sme_ext_scan_register_callback(mac_handle_t mac_handle,
+					  ext_scan_ind_cb ext_scan_ind_cb)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	QDF_STATUS status;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
-	status = sme_acquire_global_lock(&pMac->sme);
+	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pMac->sme.pExtScanIndCb = pExtScanIndCb;
-		sme_release_global_lock(&pMac->sme);
+		mac->sme.ext_scan_ind_cb = ext_scan_ind_cb;
+		sme_release_global_lock(&mac->sme);
 	}
 	return status;
 }

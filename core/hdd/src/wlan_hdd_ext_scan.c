@@ -192,17 +192,16 @@ wlan_hdd_extscan_results_policy[QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_MAX + 1] = 
 
 /**
  * wlan_hdd_cfg80211_extscan_get_capabilities_rsp() - response from target
- * @ctx: Pointer to hdd context
+ * @hdd_ctx: Pointer to hdd context
  * @data: Pointer to ext scan capabilities response from fw
  *
  * Return: None
  */
 static void
-wlan_hdd_cfg80211_extscan_get_capabilities_rsp(void *ctx,
+wlan_hdd_cfg80211_extscan_get_capabilities_rsp(struct hdd_context *hdd_ctx,
 	struct ext_scan_capabilities_response *data)
 {
 	struct hdd_ext_scan_context *context;
-	struct hdd_context *hdd_ctx  = ctx;
 
 	hdd_enter();
 
@@ -312,8 +311,9 @@ static int hdd_extscan_nl_fill_bss(struct sk_buff *skb, tSirWifiScanResult *ap,
 #undef PARAM_IE_LENGTH
 #undef PARAM_IE_DATA
 
-/** wlan_hdd_cfg80211_extscan_cached_results_ind() - get cached results
- * @ctx: hdd global context
+/**
+ * wlan_hdd_cfg80211_extscan_cached_results_ind() - get cached results
+ * @hdd_ctx: hdd global context
  * @data: cached results
  *
  * This function reads the cached results %data, populated the NL
@@ -322,10 +322,9 @@ static int hdd_extscan_nl_fill_bss(struct sk_buff *skb, tSirWifiScanResult *ap,
  * Return: none
  */
 static void
-wlan_hdd_cfg80211_extscan_cached_results_ind(void *ctx,
+wlan_hdd_cfg80211_extscan_cached_results_ind(struct hdd_context *hdd_ctx,
 				struct extscan_cached_scan_results *data)
 {
-	struct hdd_context *hdd_ctx = ctx;
 	struct sk_buff *skb = NULL;
 	struct hdd_ext_scan_context *context;
 	struct extscan_cached_scan_result *result;
@@ -543,8 +542,8 @@ fail:
 
 /**
  * wlan_hdd_cfg80211_extscan_hotlist_match_ind() - hot list match ind
- * @ctx: Pointer to hdd context
- * @pData: Pointer to ext scan result event
+ * @hdd_ctx: Pointer to hdd context
+ * @data: Pointer to ext scan result event
  *
  * This callback execute in atomic context and must not invoke any
  * blocking calls.
@@ -552,10 +551,9 @@ fail:
  * Return: none
  */
 static void
-wlan_hdd_cfg80211_extscan_hotlist_match_ind(void *ctx,
+wlan_hdd_cfg80211_extscan_hotlist_match_ind(struct hdd_context *hdd_ctx,
 					    struct extscan_hotlist_match *data)
 {
-	struct hdd_context *hdd_ctx = ctx;
 	struct sk_buff *skb = NULL;
 	uint32_t i, index;
 	int flags = cds_get_gfp_flags();
@@ -678,8 +676,8 @@ fail:
 /**
  * wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind() -
  *	significant wifi change results indication
- * @ctx: Pointer to hdd context
- * @pData: Pointer to signif wifi change event
+ * @hdd_ctx: Pointer to hdd context
+ * @data: Pointer to signif wifi change event
  *
  * This callback execute in atomic context and must not invoke any
  * blocking calls.
@@ -688,10 +686,9 @@ fail:
  */
 static void
 wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
-			void *ctx,
-			tpSirWifiSignificantChangeEvent pData)
+			struct hdd_context *hdd_ctx,
+			tpSirWifiSignificantChangeEvent data)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *) ctx;
 	struct sk_buff *skb = NULL;
 	tSirWifiSignificantChange *ap_info;
 	int32_t *rssi;
@@ -702,8 +699,8 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
-	if (!pData) {
-		hdd_err("pData is null");
+	if (!data) {
+		hdd_err("data is null");
 		return;
 	}
 
@@ -719,10 +716,10 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 		return;
 	}
 	hdd_debug("Req Id %u Num results %u More Data %u",
-		pData->requestId, pData->numResults, pData->moreData);
+		data->requestId, data->numResults, data->moreData);
 
-	ap_info = &pData->ap[0];
-	for (i = 0; i < pData->numResults; i++) {
+	ap_info = &data->ap[0];
+	for (i = 0; i < data->numResults; i++) {
 		hdd_debug("[i=%d] "
 		       "Bssid (" MAC_ADDRESS_STR ") "
 		       "Channel %u "
@@ -741,15 +738,15 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 
 	if (nla_put_u32(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_REQUEST_ID,
-		pData->requestId) ||
+		data->requestId) ||
 	    nla_put_u32(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_NUM_RESULTS_AVAILABLE,
-		pData->numResults)) {
+		data->numResults)) {
 		hdd_err("put fail");
 		goto fail;
 	}
 
-	if (pData->numResults) {
+	if (data->numResults) {
 		struct nlattr *aps;
 
 		aps = nla_nest_start(skb,
@@ -757,8 +754,8 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 		if (!aps)
 			goto fail;
 
-		ap_info = &pData->ap[0];
-		for (i = 0; i < pData->numResults; i++) {
+		ap_info = &data->ap[0];
+		for (i = 0; i < data->numResults; i++) {
 			struct nlattr *ap;
 
 			ap = nla_nest_start(skb, i);
@@ -790,7 +787,7 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 
 		if (nla_put_u8(skb,
 		     QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_MORE_DATA,
-		     pData->moreData))
+		     data->moreData))
 			goto fail;
 	}
 
@@ -805,8 +802,8 @@ fail:
 
 /**
  * wlan_hdd_cfg80211_extscan_full_scan_result_event() - full scan result event
- * @ctx: Pointer to hdd context
- * @pData: Pointer to full scan result event
+ * @hdd_ctx: Pointer to hdd context
+ * @data: Pointer to full scan result event
  *
  * This callback execute in atomic context and must not invoke any
  * blocking calls.
@@ -814,12 +811,11 @@ fail:
  * Return: none
  */
 static void
-wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
+wlan_hdd_cfg80211_extscan_full_scan_result_event(struct hdd_context *hdd_ctx,
 						 tpSirWifiFullScanResultEvent
-						 pData)
+						 data)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *) ctx;
-	struct sk_buff *skb = NULL;
+	struct sk_buff *skb;
 	struct timespec ts;
 	struct hdd_ext_scan_context *context;
 
@@ -829,12 +825,12 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
-	if (!pData) {
-		hdd_err("pData is null");
+	if (!data) {
+		hdd_err("data is null");
 		return;
 	}
 
-	if ((sizeof(*pData) + pData->ap.ieLength) >= EXTSCAN_EVENT_BUF_SIZE) {
+	if ((sizeof(*data) + data->ap.ieLength) >= EXTSCAN_EVENT_BUF_SIZE) {
 		hdd_err("Frame exceeded NL size limitation, drop it!!");
 		return;
 	}
@@ -850,17 +846,17 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 		return;
 	}
 
-	pData->ap.channel = cds_chan_to_freq(pData->ap.channel);
+	data->ap.channel = cds_chan_to_freq(data->ap.channel);
 
 	/*
 	 * Android does not want the time stamp from the frame.
 	 * Instead it wants a monotonic increasing value since boot
 	 */
 	get_monotonic_boottime(&ts);
-	pData->ap.ts = ((u64)ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
+	data->ap.ts = ((u64)ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 
-	hdd_debug("Req Id %u More Data %u", pData->requestId,
-	       pData->moreData);
+	hdd_debug("Req Id %u More Data %u", data->requestId,
+		  data->moreData);
 	hdd_debug("AP Info: Timestamp %llu Ssid: %s "
 	       "Bssid (" MAC_ADDRESS_STR ") "
 	       "Channel %u "
@@ -870,61 +866,61 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 	       "Bcn Period %d "
 	       "Capability 0x%X "
 	       "IE Length %d",
-	       pData->ap.ts,
-	       pData->ap.ssid,
-	       MAC_ADDR_ARRAY(pData->ap.bssid.bytes),
-	       pData->ap.channel,
-	       pData->ap.rssi,
-	       pData->ap.rtt,
-	       pData->ap.rtt_sd,
-	       pData->ap.beaconPeriod,
-	       pData->ap.capability, pData->ap.ieLength);
+	       data->ap.ts,
+	       data->ap.ssid,
+	       MAC_ADDR_ARRAY(data->ap.bssid.bytes),
+	       data->ap.channel,
+	       data->ap.rssi,
+	       data->ap.rtt,
+	       data->ap.rtt_sd,
+	       data->ap.beaconPeriod,
+	       data->ap.capability, data->ap.ieLength);
 
 	if (nla_put_u32(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_REQUEST_ID,
-		pData->requestId) ||
+		data->requestId) ||
 	    hdd_wlan_nla_put_u64(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_TIME_STAMP,
-		pData->ap.ts) ||
+		data->ap.ts) ||
 	    nla_put(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_SSID,
-		sizeof(pData->ap.ssid),
-		pData->ap.ssid) ||
+		sizeof(data->ap.ssid),
+		data->ap.ssid) ||
 	    nla_put(skb, QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_BSSID,
-		sizeof(pData->ap.bssid),
-		pData->ap.bssid.bytes) ||
+		sizeof(data->ap.bssid),
+		data->ap.bssid.bytes) ||
 	    nla_put_u32(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_CHANNEL,
-		pData->ap.channel) ||
+		data->ap.channel) ||
 	    nla_put_s32(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_RSSI,
-		pData->ap.rssi) ||
+		data->ap.rssi) ||
 	    nla_put_u32(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_RTT,
-		pData->ap.rtt) ||
+		data->ap.rtt) ||
 	    nla_put_u32(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_RTT_SD,
-		pData->ap.rtt_sd) ||
+		data->ap.rtt_sd) ||
 	    nla_put_u16(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_BEACON_PERIOD,
-		pData->ap.beaconPeriod) ||
+		data->ap.beaconPeriod) ||
 	    nla_put_u16(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_CAPABILITY,
-		pData->ap.capability) ||
+		data->ap.capability) ||
 	    nla_put_u32(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_IE_LENGTH,
-		pData->ap.ieLength) ||
+		data->ap.ieLength) ||
 	    nla_put_u8(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_MORE_DATA,
-		pData->moreData)) {
+		data->moreData)) {
 		hdd_err("nla put fail");
 		goto nla_put_failure;
 	}
 
-	if (pData->ap.ieLength) {
+	if (data->ap.ieLength) {
 		if (nla_put(skb,
 		    QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_IE_DATA,
-		    pData->ap.ieLength, pData->ap.ieData))
+		    data->ap.ieLength, data->ap.ieData))
 			goto nla_put_failure;
 	}
 
@@ -948,8 +944,8 @@ nla_put_failure:
 
 /**
  * wlan_hdd_cfg80211_extscan_scan_res_available_event() - scan result event
- * @ctx: Pointer to hdd context
- * @pData: Pointer to scan results available indication param
+ * @hdd_ctx: Pointer to hdd context
+ * @data: Pointer to scan results available indication param
  *
  * This callback execute in atomic context and must not invoke any
  * blocking calls.
@@ -958,19 +954,18 @@ nla_put_failure:
  */
 static void
 wlan_hdd_cfg80211_extscan_scan_res_available_event(
-			void *ctx,
-			tpSirExtScanResultsAvailableIndParams pData)
+			struct hdd_context *hdd_ctx,
+			tpSirExtScanResultsAvailableIndParams data)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *) ctx;
-	struct sk_buff *skb = NULL;
+	struct sk_buff *skb;
 	int flags = cds_get_gfp_flags();
 
 	hdd_enter();
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
-	if (!pData) {
-		hdd_err("pData is null");
+	if (!data) {
+		hdd_err("data is null");
 		return;
 	}
 
@@ -987,13 +982,13 @@ wlan_hdd_cfg80211_extscan_scan_res_available_event(
 	}
 
 	hdd_debug("Req Id %u Num results %u",
-	       pData->requestId, pData->numResultsAvailable);
+	       data->requestId, data->numResultsAvailable);
 	if (nla_put_u32(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_REQUEST_ID,
-		pData->requestId) ||
+		data->requestId) ||
 	    nla_put_u32(skb,
 		QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_NUM_RESULTS_AVAILABLE,
-		pData->numResultsAvailable)) {
+		data->numResultsAvailable)) {
 		hdd_err("nla put fail");
 		goto nla_put_failure;
 	}
@@ -1008,8 +1003,8 @@ nla_put_failure:
 
 /**
  * wlan_hdd_cfg80211_extscan_scan_progress_event() - scan progress event
- * @ctx: Pointer to hdd context
- * @pData: Pointer to scan event indication param
+ * @hdd_ctx: Pointer to hdd context
+ * @data: Pointer to scan event indication param
  *
  * This callback execute in atomic context and must not invoke any
  * blocking calls.
@@ -1017,12 +1012,11 @@ nla_put_failure:
  * Return: none
  */
 static void
-wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
+wlan_hdd_cfg80211_extscan_scan_progress_event(struct hdd_context *hdd_ctx,
 					      tpSirExtScanOnScanEventIndParams
-					      pData)
+					      data)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *) ctx;
-	struct sk_buff *skb = NULL;
+	struct sk_buff *skb;
 	int flags = cds_get_gfp_flags();
 	struct hdd_ext_scan_context *context;
 
@@ -1030,8 +1024,8 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
-	if (!pData) {
-		hdd_err("pData is null");
+	if (!data) {
+		hdd_err("data is null");
 		return;
 	}
 
@@ -1048,17 +1042,17 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 	}
 
 	hdd_debug("Request Id: %u Scan event type: %u Scan event status: %u buckets scanned: %u",
-		pData->requestId, pData->scanEventType, pData->status,
-		pData->buckets_scanned);
+		  data->requestId, data->scanEventType, data->status,
+		  data->buckets_scanned);
 
 	context = &ext_scan_context;
 	spin_lock(&context->context_lock);
-	if (pData->scanEventType == WIFI_EXTSCAN_CYCLE_COMPLETED_EVENT) {
+	if (data->scanEventType == WIFI_EXTSCAN_CYCLE_COMPLETED_EVENT) {
 		context->buckets_scanned = 0;
-		pData->scanEventType = WIFI_EXTSCAN_RESULTS_AVAILABLE;
+		data->scanEventType = WIFI_EXTSCAN_RESULTS_AVAILABLE;
 		spin_unlock(&context->context_lock);
-	} else if (pData->scanEventType == WIFI_EXTSCAN_CYCLE_STARTED_EVENT) {
-		context->buckets_scanned = pData->buckets_scanned;
+	} else if (data->scanEventType == WIFI_EXTSCAN_CYCLE_STARTED_EVENT) {
+		context->buckets_scanned = data->buckets_scanned;
 		/* No need to report to user space */
 		spin_unlock(&context->context_lock);
 		goto nla_put_failure;
@@ -1067,10 +1061,10 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 	}
 
 	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_REQUEST_ID,
-			pData->requestId) ||
+			data->requestId) ||
 	    nla_put_u8(skb,
 		       QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_EVENT_TYPE,
-		       pData->scanEventType)) {
+		       data->scanEventType)) {
 		hdd_err("nla put fail");
 		goto nla_put_failure;
 	}
@@ -1084,7 +1078,7 @@ nla_put_failure:
 
 /**
  * wlan_hdd_cfg80211_extscan_epno_match_found() - pno match found
- * @hddctx: HDD context
+ * @hdd_ctx: HDD context
  * @data: matched network data
  *
  * This function reads the matched network data and fills NL vendor attributes
@@ -1095,11 +1089,10 @@ nla_put_failure:
  * Return: 0 on success, error number otherwise
  */
 static void
-wlan_hdd_cfg80211_extscan_epno_match_found(void *ctx,
-					struct pno_match_found *data)
+wlan_hdd_cfg80211_extscan_epno_match_found(struct hdd_context *hdd_ctx,
+					   struct pno_match_found *data)
 {
-	struct hdd_context *hdd_ctx  = (struct hdd_context *)ctx;
-	struct sk_buff *skb     = NULL;
+	struct sk_buff *skb;
 	uint32_t len, i;
 	int flags = cds_get_gfp_flags();
 
@@ -1340,11 +1333,9 @@ fail:
  * Return: none
  */
 static void
-wlan_hdd_cfg80211_extscan_generic_rsp
-	(void *ctx,
+wlan_hdd_cfg80211_extscan_generic_rsp(struct hdd_context *hdd_ctx,
 	 struct sir_extscan_generic_response *response)
 {
-	struct hdd_context *hdd_ctx = ctx;
 	struct hdd_ext_scan_context *context;
 
 	hdd_enter();
@@ -1369,25 +1360,25 @@ wlan_hdd_cfg80211_extscan_generic_rsp
 
 /**
  * wlan_hdd_cfg80211_extscan_callback() - ext scan callback
- * @ctx: Pointer to hdd context
- * @evType: Event type
- * @pMag: Pointer to message
+ * @hdd_handle: Opaque handle to hdd context
+ * @event_id: Event identifier
+ * @msg: Pointer to message
  *
  * Return: none
  */
-void wlan_hdd_cfg80211_extscan_callback(void *ctx, const uint16_t evType,
-					void *pMsg)
+void wlan_hdd_cfg80211_extscan_callback(hdd_handle_t hdd_handle,
+					const uint16_t event_id, void *msg)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *) ctx;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 
 	/* ENTER() intentionally not used in a frequently invoked API */
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
-	hdd_debug("Rcvd Event %d", evType);
+	hdd_debug("Rcvd Event %d", event_id);
 
-	switch (evType) {
+	switch (event_id) {
 	case eSIR_EXTSCAN_CACHED_RESULTS_RSP:
 		/* There is no need to send this response to upper layer
 		 * Just log the message
@@ -1396,46 +1387,41 @@ void wlan_hdd_cfg80211_extscan_callback(void *ctx, const uint16_t evType,
 		break;
 
 	case eSIR_EXTSCAN_GET_CAPABILITIES_IND:
-		wlan_hdd_cfg80211_extscan_get_capabilities_rsp(ctx,
-			(struct ext_scan_capabilities_response *) pMsg);
+		wlan_hdd_cfg80211_extscan_get_capabilities_rsp(hdd_ctx, msg);
 		break;
 
 	case eSIR_EXTSCAN_HOTLIST_MATCH_IND:
-		wlan_hdd_cfg80211_extscan_hotlist_match_ind(ctx, pMsg);
+		wlan_hdd_cfg80211_extscan_hotlist_match_ind(hdd_ctx, msg);
 		break;
 
 	case eSIR_EXTSCAN_SIGNIFICANT_WIFI_CHANGE_RESULTS_IND:
-		wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(ctx,
-					(tpSirWifiSignificantChangeEvent) pMsg);
+		wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(hdd_ctx,
+									 msg);
 		break;
 
 	case eSIR_EXTSCAN_CACHED_RESULTS_IND:
-		wlan_hdd_cfg80211_extscan_cached_results_ind(ctx, pMsg);
+		wlan_hdd_cfg80211_extscan_cached_results_ind(hdd_ctx, msg);
 		break;
 
 	case eSIR_EXTSCAN_SCAN_RES_AVAILABLE_IND:
-		wlan_hdd_cfg80211_extscan_scan_res_available_event(ctx,
-			   (tpSirExtScanResultsAvailableIndParams) pMsg);
+		wlan_hdd_cfg80211_extscan_scan_res_available_event(hdd_ctx,
+								   msg);
 		break;
 
 	case eSIR_EXTSCAN_FULL_SCAN_RESULT_IND:
-		wlan_hdd_cfg80211_extscan_full_scan_result_event(ctx,
-					 (tpSirWifiFullScanResultEvent) pMsg);
+		wlan_hdd_cfg80211_extscan_full_scan_result_event(hdd_ctx, msg);
 		break;
 
 	case eSIR_EPNO_NETWORK_FOUND_IND:
-		wlan_hdd_cfg80211_extscan_epno_match_found(ctx,
-					(struct pno_match_found *)pMsg);
+		wlan_hdd_cfg80211_extscan_epno_match_found(hdd_ctx, msg);
 		break;
 
 	case eSIR_EXTSCAN_SCAN_PROGRESS_EVENT_IND:
-		wlan_hdd_cfg80211_extscan_scan_progress_event(ctx,
-			      (tpSirExtScanOnScanEventIndParams) pMsg);
+		wlan_hdd_cfg80211_extscan_scan_progress_event(hdd_ctx, msg);
 		break;
 
 	case eSIR_PASSPOINT_NETWORK_FOUND_IND:
-		wlan_hdd_cfg80211_passpoint_match_found(ctx,
-					(struct wifi_passpoint_match *) pMsg);
+		wlan_hdd_cfg80211_passpoint_match_found(hdd_ctx, msg);
 		break;
 
 	case eSIR_EXTSCAN_START_RSP:
@@ -1446,11 +1432,11 @@ void wlan_hdd_cfg80211_extscan_callback(void *ctx, const uint16_t evType,
 	case eSIR_EXTSCAN_RESET_SIGNIFICANT_WIFI_CHANGE_RSP:
 	case eSIR_EXTSCAN_SET_SSID_HOTLIST_RSP:
 	case eSIR_EXTSCAN_RESET_SSID_HOTLIST_RSP:
-		wlan_hdd_cfg80211_extscan_generic_rsp(ctx, pMsg);
+		wlan_hdd_cfg80211_extscan_generic_rsp(hdd_ctx, msg);
 		break;
 
 	default:
-		hdd_err("Unknown event type: %u", evType);
+		hdd_err("Unknown event type: %u", event_id);
 		break;
 	}
 }

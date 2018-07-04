@@ -120,6 +120,9 @@ typedef void (*link_layer_stats_cb)(hdd_handle_t hdd_handle,
 				    int indication_type,
 				    tSirLLStatsResults *results);
 
+typedef void (*ext_scan_ind_cb)(hdd_handle_t hdd_handle,
+				const uint16_t, void *);
+
 typedef void (*ocb_callback)(void *context, void *response);
 typedef void (*sme_set_thermal_level_callback)(void *context, u_int8_t level);
 typedef void (*p2p_lo_callback)(void *context, void *event);
@@ -232,7 +235,7 @@ typedef struct tagSmeStruct {
 		void *pcontext);
 	void *pget_peer_info_ext_cb_context;
 #ifdef FEATURE_WLAN_EXTSCAN
-	void (*pExtScanIndCb)(void *, const uint16_t, void *);
+	ext_scan_ind_cb ext_scan_ind_cb;
 #endif /* FEATURE_WLAN_EXTSCAN */
 #ifdef WLAN_FEATURE_NAN
 	void (*nanCallback)(void *, tSirNanEvent *);
