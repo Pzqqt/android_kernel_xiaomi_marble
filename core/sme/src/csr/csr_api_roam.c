@@ -16758,7 +16758,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 		csr_start_bss_copy_he_cap(pMsg, pSession);
 		/* change the HE caps like sts per band */
 		CSR_REVISE_REQ_HE_CAP_PER_BAND(pMsg, pMac,
-					       pBssDesc->channelId);
+					       pParam->operationChn);
 	}
 
 	qdf_mem_copy(&pMsg->addIeParams,

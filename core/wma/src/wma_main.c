@@ -6192,9 +6192,9 @@ static void wma_print_populate_soc_caps(struct target_psoc_info *tgt_hdl)
 	WMA_LOGD("%s: <====== HW mode cap printing starts ======>", __func__);
 	/* print cap of each hw mode */
 	for (i = 0; i < total_mac_phy_cnt; i++) {
-		WMA_LOGD("====>: hw mode id[%d], phy_id map[%d]",
-				mac_phy_cap[i].hw_mode_id,
-				mac_phy_cap[i].phy_id);
+		WMA_LOGD("====>: hw mode id[%d], phy id[%d]",
+			 mac_phy_cap[i].hw_mode_id,
+			 mac_phy_cap[i].phy_id);
 		tmp = &mac_phy_cap[i];
 		wma_print_mac_phy_capabilities(tmp, i);
 	}
