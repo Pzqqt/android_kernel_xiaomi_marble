@@ -10102,12 +10102,19 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(tpAniSirGlobal pMac,
 						tpSirSmeJoinRsp pSmeJoinRsp)
 {
 	enum csr_roamcomplete_result result;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-		&pMac->roam.neighborRoamInfo[pSmeJoinRsp->sessionId];
+	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 	struct csr_roam_info roamInfo;
 	uint32_t roamId = 0;
 	struct csr_roam_session *csr_session;
 
+	if (pSmeJoinRsp->sessionId >= CSR_ROAM_SESSION_MAX) {
+		sme_err("Invalid session ID received %d",
+			 pSmeJoinRsp->sessionId);
+		return;
+	}
+
+	pNeighborRoamInfo =
+		&pMac->roam.neighborRoamInfo[pSmeJoinRsp->sessionId];
 	if (eSIR_SME_SUCCESS == pSmeJoinRsp->statusCode) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			 "CSR SmeReassocReq Successful");
