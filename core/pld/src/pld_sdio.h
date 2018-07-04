@@ -192,6 +192,60 @@ static inline void pld_hif_sdio_release_ramdump_mem(unsigned long *address)
 {
 }
 #else
+#ifdef CONFIG_PLD_SDIO_CNSS2
+#include <net/cnss2.h>
+
+/**
+ * pld_sdio_get_sdio_al_client_handle() - Get the sdio al client handle
+ * @func: SDIO function pointer
+ *
+ * Return: On success return client handle from al via cnss, else NULL
+ */
+static inline struct sdio_al_client_handle *pld_sdio_get_sdio_al_client_handle
+(
+struct sdio_func *func
+)
+{
+	if (!func)
+		return NULL;
+
+	return cnss_sdio_wlan_get_sdio_al_client_handle(func);
+}
+
+/**
+ * pld_sdio_register_sdio_al_channel() - Register channel with sdio al
+ * @al_client: SDIO al client handle
+ * @ch_data: SDIO client channel data
+ *
+ * Return: Channel handle on success, else null
+ */
+static inline struct sdio_al_channel_handle *pld_sdio_register_sdio_al_channel
+(
+struct sdio_al_client_handle *al_client,
+struct sdio_al_channel_data *ch_data
+)
+{
+	if (!al_client || !ch_data)
+		return NULL;
+
+	return cnss_sdio_wlan_register_sdio_al_channel(ch_data);
+}
+
+/**
+ * pld_sdio_unregister_sdio_al_channel() - Unregister the sdio al channel
+ * @ch_handle: SDIO al channel handle
+ *
+ * Return: None
+ */
+static inline void pld_sdio_unregister_sdio_al_channel
+(
+struct sdio_al_channel_handle *ch_handle
+)
+{
+	cnss_sdio_wlan_unregister_sdio_al_channel(ch_handle);
+}
+#endif /* CONFIG_PLD_SDIO_CNSS2 */
+
 /**
  * pld_hif_sdio_get_virt_ramdump_mem() - Get virtual ramdump memory
  * @dev: device

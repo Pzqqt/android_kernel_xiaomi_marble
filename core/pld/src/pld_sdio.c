@@ -25,6 +25,9 @@
 #ifdef CONFIG_PLD_SDIO_CNSS
 #include <net/cnss.h>
 #endif
+#ifdef CONFIG_PLD_SDIO_CNSS2
+#include <net/cnss2.h>
+#endif
 
 #include "pld_common.h"
 #include "pld_internal.h"
@@ -273,7 +276,51 @@ static struct sdio_device_id pld_sdio_id_table[] = {
 	{},
 };
 
-#ifdef CONFIG_PLD_SDIO_CNSS
+#ifdef CONFIG_PLD_SDIO_CNSS2
+/**
+ * pld_sdio_reinit() - SSR re-initialize function for SDIO device
+ * @sdio_func: pointer to sdio device function
+ * @id: SDIO device ID
+ *
+ * During subsystem restart(SSR), this function will be called to
+ * re-initialize SDIO device.
+ *
+ * Return: int
+ */
+static int pld_sdio_reinit(struct sdio_func *sdio_func,
+			   const struct sdio_device_id *id)
+{
+	/* TODO */
+	return -ENODEV;
+}
+
+/**
+ * pld_sdio_shutdown() - SSR shutdown function for SDIO device
+ * @sdio_func: pointer to sdio device function
+ *
+ * During SSR, this function will be called to shutdown SDIO device.
+ *
+ * Return: void
+ */
+static void pld_sdio_shutdown(struct sdio_func *sdio_func)
+{
+	/* TODO */
+}
+
+/**
+ * pld_sdio_crash_shutdown() - Crash shutdown function for SDIO device
+ * @sdio_func: pointer to sdio device function
+ *
+ * This function will be called when a crash is detected, it will shutdown
+ * the SDIO device.
+ *
+ * Return: void
+ */
+static void pld_sdio_crash_shutdown(struct sdio_func *sdio_func)
+{
+	/* TODO */
+}
+
 struct cnss_sdio_wlan_driver pld_sdio_ops = {
 	.name       = "pld_sdio",
 	.id_table   = pld_sdio_id_table,
