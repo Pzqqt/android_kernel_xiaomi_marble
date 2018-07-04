@@ -108,14 +108,14 @@ void hdd_tx_rx_collect_connectivity_stats_info(struct sk_buff *skb,
 
 /**
  * hdd_tx_queue_cb() - Disable/Enable the Transmit Queues
- * @context: HDD context
+ * @hdd_handle: HDD handle
  * @vdev_id: vdev id
  * @action: Action to be taken on the Tx Queues
  * @reason: Reason for the netif action
  *
  * Return: None
  */
-void hdd_tx_queue_cb(void *context, uint32_t vdev_id,
+void hdd_tx_queue_cb(hdd_handle_t hdd_handle, uint32_t vdev_id,
 		     enum netif_action_type action,
 		     enum netif_reason_type reason);
 

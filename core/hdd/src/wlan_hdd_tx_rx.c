@@ -2545,12 +2545,12 @@ void hdd_send_rps_disable_ind(struct hdd_adapter *adapter)
 	cds_cfg->rps_enabled = false;
 }
 
-void hdd_tx_queue_cb(void *context, uint32_t vdev_id,
+void hdd_tx_queue_cb(hdd_handle_t hdd_handle, uint32_t vdev_id,
 		     enum netif_action_type action,
 		     enum netif_reason_type reason)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *)context;
-	struct hdd_adapter *adapter = NULL;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
+	struct hdd_adapter *adapter;
 
 	/*
 	 * Validating the context is not required here.
@@ -2559,13 +2559,13 @@ void hdd_tx_queue_cb(void *context, uint32_t vdev_id,
 	 * driver got a firmware event of sta kick out, then it is
 	 * good to disable the Tx Queue to stop the influx of traffic.
 	 */
-	if (hdd_ctx == NULL) {
+	if (!hdd_ctx) {
 		hdd_err("Invalid context passed");
 		return;
 	}
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (adapter == NULL) {
+	if (!adapter) {
 		hdd_err("vdev_id %d does not exist with host", vdev_id);
 		return;
 	}

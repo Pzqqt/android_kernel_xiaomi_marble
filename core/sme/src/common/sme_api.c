@@ -15375,14 +15375,11 @@ QDF_STATUS sme_congestion_register_callback(tHalHandle hal,
 	return status;
 }
 
-QDF_STATUS sme_register_tx_queue_cb(tHalHandle hal,
-				    void (*tx_queue_cb)(void *,
-				    uint32_t vdev_id,
-				    enum netif_action_type action,
-				    enum netif_reason_type reason))
+QDF_STATUS sme_register_tx_queue_cb(mac_handle_t mac_handle,
+				    tx_queue_cb tx_queue_cb)
 {
 	QDF_STATUS status;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -15396,9 +15393,9 @@ QDF_STATUS sme_register_tx_queue_cb(tHalHandle hal,
 	return status;
 }
 
-QDF_STATUS sme_deregister_tx_queue_cb(tHalHandle hal)
+QDF_STATUS sme_deregister_tx_queue_cb(mac_handle_t mac_handle)
 {
-	return sme_register_tx_queue_cb(hal, NULL);
+	return sme_register_tx_queue_cb(mac_handle, NULL);
 }
 
 #ifdef WLAN_SUPPORT_TWT

@@ -186,6 +186,10 @@ struct chain_rssi_result;
 typedef void (*get_chain_rssi_callback)(void *context,
 					struct chain_rssi_result *data);
 
+typedef void (*tx_queue_cb)(hdd_handle_t hdd_handle, uint32_t vdev_id,
+			    enum netif_action_type action,
+			    enum netif_reason_type reason);
+
 /**
  * typedef pwr_save_fail_cb - power save fail callback function
  * @hdd_handle: HDD handle registered with SME
@@ -296,9 +300,7 @@ typedef struct tagSmeStruct {
 	void (*get_arp_stats_cb)(void *, struct rsp_stats *, void *);
 	get_chain_rssi_callback get_chain_rssi_cb;
 	void *get_chain_rssi_context;
-	void (*tx_queue_cb)(void *, uint32_t vdev_id,
-			    enum netif_action_type action,
-			    enum netif_reason_type reason);
+	tx_queue_cb tx_queue_cb;
 	twt_enable_cb twt_enable_cb;
 	twt_disable_cb twt_disable_cb;
 #ifdef FEATURE_WLAN_APF
