@@ -9286,8 +9286,6 @@ static void populate_pdev_param_non_tlv(uint32_t *pdev_param)
 		WMI_PDEV_PARAM_REMOVE_MCAST2UCAST_BUFFER;
 	pdev_param[wmi_pdev_peer_sta_ps_statechg_enable] =
 		WMI_PDEV_PEER_STA_PS_STATECHG_ENABLE;
-	pdev_param[wmi_pdev_param_igmpmld_ac_override] =
-		WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE;
 	pdev_param[wmi_pdev_param_block_interbss] =
 		WMI_PDEV_PARAM_BLOCK_INTERBSS;
 	pdev_param[wmi_pdev_param_set_disable_reset_cmdid] =

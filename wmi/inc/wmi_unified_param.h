@@ -5604,7 +5604,6 @@ typedef enum {
 	wmi_pdev_param_set_mcast2ucast_buffer,
 	wmi_pdev_param_remove_mcast2ucast_buffer,
 	wmi_pdev_peer_sta_ps_statechg_enable,
-	wmi_pdev_param_igmpmld_ac_override,
 	wmi_pdev_param_block_interbss,
 	wmi_pdev_param_set_disable_reset_cmdid,
 	wmi_pdev_param_set_msdu_ttl_cmdid,
