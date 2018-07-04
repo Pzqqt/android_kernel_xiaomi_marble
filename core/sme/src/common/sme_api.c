@@ -15435,12 +15435,11 @@ QDF_STATUS sme_deregister_tx_queue_cb(tHalHandle hal)
 }
 
 #ifdef WLAN_SUPPORT_TWT
-QDF_STATUS sme_register_twt_enable_complete_cb(tHalHandle hal,
-		void (*twt_enable_cb)(void *hdd_ctx,
-		struct wmi_twt_enable_complete_event_param *params))
+QDF_STATUS sme_register_twt_enable_complete_cb(mac_handle_t mac_handle,
+					       twt_enable_cb twt_enable_cb)
 {
 	QDF_STATUS status;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -15454,11 +15453,11 @@ QDF_STATUS sme_register_twt_enable_complete_cb(tHalHandle hal,
 	return status;
 }
 
-QDF_STATUS sme_register_twt_disable_complete_cb(tHalHandle hal,
-				void (*twt_disable_cb)(void *hdd_ctx))
+QDF_STATUS sme_register_twt_disable_complete_cb(mac_handle_t mac_handle,
+						twt_disable_cb twt_disable_cb)
 {
 	QDF_STATUS status;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -15472,14 +15471,14 @@ QDF_STATUS sme_register_twt_disable_complete_cb(tHalHandle hal,
 	return status;
 }
 
-QDF_STATUS sme_deregister_twt_enable_complete_cb(tHalHandle hal)
+QDF_STATUS sme_deregister_twt_enable_complete_cb(mac_handle_t mac_handle)
 {
-	return sme_register_twt_enable_complete_cb(hal, NULL);
+	return sme_register_twt_enable_complete_cb(mac_handle, NULL);
 }
 
-QDF_STATUS sme_deregister_twt_disable_complete_cb(tHalHandle hal)
+QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle)
 {
-	return sme_register_twt_disable_complete_cb(hal, NULL);
+	return sme_register_twt_disable_complete_cb(mac_handle, NULL);
 }
 #endif
 

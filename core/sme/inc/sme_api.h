@@ -2490,25 +2490,23 @@ uint8_t sme_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
 #ifdef WLAN_SUPPORT_TWT
 /**
  * sme_register_twt_enable_complete_cb() - TWT enable registrar
- * @hal: HAL handle
+ * @mac_handle: MAC handle
  * @twt_enable_cb: Function callback to handle enable event
- * @hdd_ctx: Global HDD Context
  *
  * Return: QDF Status
  */
-QDF_STATUS sme_register_twt_enable_complete_cb(tHalHandle hal,
-		void (*twt_enable_cb)(void *hdd_ctx,
-		struct wmi_twt_enable_complete_event_param *params));
+QDF_STATUS sme_register_twt_enable_complete_cb(mac_handle_t mac_handle,
+					       twt_enable_cb twt_enable_cb);
 
 /**
  * sme_register_twt_disable_complete_cb - TWT disable registrar
- * @hal: HAL handle
+ * @mac_handle: MAC handle
  * @twt_disable_cb: Function callback to handle disable event
  *
  * Return: QDF Status
  */
-QDF_STATUS sme_register_twt_disable_complete_cb(tHalHandle hal,
-			void (*twt_disable_cb)(void *hdd_ctx));
+QDF_STATUS sme_register_twt_disable_complete_cb(mac_handle_t mac_handle,
+						twt_disable_cb twt_disable_cb);
 
 /**
  * sme_deregister_twt_enable_complete_cb() - TWT enable deregistrar
@@ -2516,7 +2514,7 @@ QDF_STATUS sme_register_twt_disable_complete_cb(tHalHandle hal,
  *
  * Return: QDF Status
  */
-QDF_STATUS sme_deregister_twt_enable_complete_cb(tHalHandle hal);
+QDF_STATUS sme_deregister_twt_enable_complete_cb(mac_handle_t mac_handle);
 
 /**
  * sme_deregister_twt_disable_complete_cb - TWT disable deregistrar
@@ -2524,28 +2522,31 @@ QDF_STATUS sme_deregister_twt_enable_complete_cb(tHalHandle hal);
  *
  * Return: QDF Status
  */
-QDF_STATUS sme_deregister_twt_disable_complete_cb(tHalHandle hal);
+QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle);
 
 #else
-static inline QDF_STATUS sme_register_twt_enable_complete_cb(tHalHandle hal,
-		void (*twt_enable_cb)(void *hdd_ctx,
-		struct wmi_twt_enable_complete_event_param *params))
+static inline
+QDF_STATUS sme_register_twt_enable_complete_cb(mac_handle_t mac_handle,
+					       twt_enable_cb twt_enable_cb)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS sme_register_twt_disable_complete_cb(tHalHandle hal,
-					void (*twt_disable_cb)(void *hdd_ctx))
+static inline
+QDF_STATUS sme_register_twt_disable_complete_cb(mac_handle_t mac_handle,
+						twt_disable_cb twt_disable_cb)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS sme_deregister_twt_enable_complete_cb(tHalHandle hal)
+static inline
+QDF_STATUS sme_deregister_twt_enable_complete_cb(mac_handle_t mac_handle)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS sme_deregister_twt_disable_complete_cb(tHalHandle hal)
+static inline
+QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle)
 {
 	return QDF_STATUS_SUCCESS;
 }

@@ -91,24 +91,6 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx);
 
 /**
- * hdd_twt_enable_comp_cb() - TWT enable complete event callback
- * @hdd_ctx: pointer to global HDD Context
- * @twt_event: TWT event data received from the target
- *
- * Return: None
- */
-void hdd_twt_enable_comp_cb(void *hdd_ctx,
-			    struct wmi_twt_enable_complete_event_param *params);
-
-/**
- * hdd_twt_disable_comp_cb() - TWT disable complete event callback
- * @hdd_ctx: pointer to global HDD Context
- *
- * Return: None
- */
-void hdd_twt_disable_comp_cb(void *hdd_ctx);
-
-/**
  * wlan_hdd_twt_init() - Initialize TWT
  * @hdd_ctx: pointer to global HDD Context
  *
@@ -141,15 +123,6 @@ static inline void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 }
 
 static inline void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
-{
-}
-
-static inline void hdd_twt_enable_comp_cb(void *hdd_ctx,
-			  struct wmi_twt_enable_complete_event_param *params)
-{
-}
-
-static inline void hdd_twt_disable_comp_cb(void *hdd_ctx)
 {
 }
 

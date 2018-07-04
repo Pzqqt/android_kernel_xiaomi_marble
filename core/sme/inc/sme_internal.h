@@ -127,6 +127,10 @@ typedef void (*p2p_lo_callback)(void *context, void *event);
 typedef void (*sme_send_oem_data_rsp_msg)(struct oem_data_rsp *);
 #endif
 
+typedef void (*twt_enable_cb)(hdd_handle_t hdd_handle,
+			      struct wmi_twt_enable_complete_event_param *params);
+typedef void (*twt_disable_cb)(hdd_handle_t hdd_handle);
+
 #ifdef FEATURE_WLAN_APF
 /**
  * typedef apf_get_offload_cb - APF offload callback signature
@@ -284,9 +288,8 @@ typedef struct tagSmeStruct {
 	void (*tx_queue_cb)(void *, uint32_t vdev_id,
 			    enum netif_action_type action,
 			    enum netif_reason_type reason);
-	void (*twt_enable_cb)(void *hdd_ctx,
-			struct wmi_twt_enable_complete_event_param *params);
-	void (*twt_disable_cb)(void *hdd_ctx);
+	twt_enable_cb twt_enable_cb;
+	twt_disable_cb twt_disable_cb;
 #ifdef FEATURE_WLAN_APF
 	apf_get_offload_cb apf_get_offload_cb;
 	apf_read_mem_cb apf_read_mem_cb;

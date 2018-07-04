@@ -79,10 +79,18 @@ void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 		wma_send_twt_enable_cmd(pdev_id, congestion_timeout);
 }
 
-void hdd_twt_enable_comp_cb(void *hddctx,
-		struct wmi_twt_enable_complete_event_param *params)
+/**
+ * hdd_twt_enable_comp_cb() - TWT enable complete event callback
+ * @hdd_handle: opaque handle for the global HDD Context
+ * @twt_event: TWT event data received from the target
+ *
+ * Return: None
+ */
+static void
+hdd_twt_enable_comp_cb(hdd_handle_t hdd_handle,
+		       struct wmi_twt_enable_complete_event_param *params)
 {
-	struct hdd_context *hdd_ctx = hddctx;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	enum twt_status prev_state;
 
 	if (!hdd_ctx) {
@@ -112,9 +120,16 @@ void hdd_twt_enable_comp_cb(void *hddctx,
 		  prev_state, hdd_ctx->twt_state);
 }
 
-void hdd_twt_disable_comp_cb(void *hddctx)
+/**
+ * hdd_twt_disable_comp_cb() - TWT disable complete event callback
+ * @hdd_handle: opaque handle for the global HDD Context
+ *
+ * Return: None
+ */
+static void
+hdd_twt_disable_comp_cb(hdd_handle_t hdd_handle)
 {
-	struct hdd_context *hdd_ctx = hddctx;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	enum twt_status prev_state;
 
 	if (!hdd_ctx) {
