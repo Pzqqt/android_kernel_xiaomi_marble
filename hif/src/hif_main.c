@@ -955,8 +955,7 @@ void hif_clear_stats(struct hif_opaque_softc *hif_ctx)
  *
  * Return: n/a
  */
-#if defined(TARGET_RAMDUMP_AFTER_KERNEL_PANIC) \
-&& defined(DEBUG)
+#if defined(TARGET_RAMDUMP_AFTER_KERNEL_PANIC) && defined(WLAN_FEATURE_BMI)
 
 static void hif_crash_shutdown_dump_bus_register(void *hif_ctx)
 {
@@ -1003,6 +1002,7 @@ void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx)
 	}
 
 	hif_crash_shutdown_dump_bus_register(hif_ctx);
+	hif_set_target_status(hif_ctx, TARGET_STATUS_RESET);
 
 	if (ol_copy_ramdump(hif_ctx))
 		goto out;
