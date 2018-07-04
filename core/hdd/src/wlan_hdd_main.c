@@ -235,6 +235,8 @@ static qdf_wake_lock_t wlan_wake_lock;
 
 /* max peer can be tdls peers + self peer + bss peer */
 #define HDD_MAX_VDEV_PEER_COUNT  (HDD_MAX_NUM_TDLS_STA + 2)
+#define IS_IDLE_STOP (!cds_is_driver_unloading() && \
+		      !cds_is_driver_recovering() && !cds_is_driver_loading())
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
 static const struct wiphy_wowlan_support wowlan_support_reg_init = {
@@ -10772,10 +10774,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	void *hif_ctx;
 	qdf_device_t qdf_ctx;
 	QDF_STATUS qdf_status;
-	int ret = 0;
 	bool is_recovery_stop = cds_is_driver_recovering();
-	bool is_idle_stop = !cds_is_driver_unloading() && !is_recovery_stop &&
-		!cds_is_driver_loading();
+	int ret = 0;
 	int active_threads;
 	struct target_psoc_info *tgt_hdl;
 
@@ -10802,7 +10802,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 		cds_print_external_threads();
 
-		if (is_idle_stop && !ftm_mode) {
+		if (IS_IDLE_STOP && !ftm_mode) {
 			mutex_unlock(&hdd_ctx->iface_change_lock);
 			qdf_sched_delayed_work(&hdd_ctx->iface_idle_work,
 				       hdd_ctx->config->iface_change_wait_time);
@@ -10912,7 +10912,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 	ol_cds_free();
 
-	if (is_idle_stop) {
+	if (IS_IDLE_STOP && cds_is_target_ready()) {
 		ret = pld_power_off(qdf_ctx->dev);
 		if (ret)
 			hdd_err("CNSS power down failed put device into Low power mode:%d",
