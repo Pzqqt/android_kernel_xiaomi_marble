@@ -1581,6 +1581,25 @@ cdp_peer_map_attach(ol_txrx_soc_handle soc, uint32_t max_peers)
 		soc->ops->cmn_drv_ops->txrx_peer_map_attach(soc, max_peers);
 }
 
+/**
+
+ * cdp_pdev_set_ctrl_pdev() - set UMAC ctrl pdev to dp pdev
+ * @soc: opaque soc handle
+ * @pdev: opaque dp pdev handle
+ * @ctrl_pdev: opaque ctrl pdev handle
+ *
+ * Return: void
+ */
+static inline void
+cdp_pdev_set_ctrl_pdev(ol_txrx_soc_handle soc, struct cdp_pdev *dp_pdev,
+		       struct cdp_ctrl_objmgr_pdev *ctrl_pdev)
+{
+	if (soc && soc->ops && soc->ops->cmn_drv_ops &&
+	    soc->ops->cmn_drv_ops->txrx_pdev_set_ctrl_pdev)
+		soc->ops->cmn_drv_ops->txrx_pdev_set_ctrl_pdev(dp_pdev,
+							       ctrl_pdev);
+}
+
 #ifdef RECEIVE_OFFLOAD
 /**
  * cdp_register_rx_offld_flush_cb() - register LRO/GRO flush cb function pointer

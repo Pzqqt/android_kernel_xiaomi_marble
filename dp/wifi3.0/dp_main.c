@@ -7012,6 +7012,21 @@ static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * dp_pdev_set_ctrl_pdev() - set ctrl pdev handle in dp pdev
+ * @dp_pdev: dp pdev handle
+ * @ctrl_pdev: UMAC ctrl pdev handle
+ *
+ * Return: void
+ */
+static void dp_pdev_set_ctrl_pdev(struct cdp_pdev *dp_pdev,
+				  struct cdp_ctrl_objmgr_pdev *ctrl_pdev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)dp_pdev;
+
+	pdev->ctrl_pdev = ctrl_pdev;
+}
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -7077,6 +7092,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_peer_reset_ast_table = dp_wds_reset_ast_table_wifi3,
 	.txrx_peer_flush_ast_table = dp_wds_flush_ast_table_wifi3,
 	.txrx_peer_map_attach = dp_peer_map_attach_wifi3,
+	.txrx_pdev_set_ctrl_pdev = dp_pdev_set_ctrl_pdev,
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
