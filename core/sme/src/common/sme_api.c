@@ -74,7 +74,7 @@ static QDF_STATUS sme_process_channel_change_resp(tpAniSirGlobal pMac,
 					   uint16_t msg_type, void *pMsgBuf);
 
 static QDF_STATUS sme_stats_ext_event(tpAniSirGlobal mac,
-				      tpStatsExtEvent msg);
+				      struct stats_ext_event *msg);
 
 /* Internal SME APIs */
 QDF_STATUS sme_acquire_global_lock(tSmeStruct *psSme)
@@ -10653,51 +10653,36 @@ QDF_STATUS sme_ap_disable_intra_bss_fwd(tHalHandle hHal, uint8_t sessionId,
 
 #ifdef WLAN_FEATURE_STATS_EXT
 
-/*
- * sme_stats_ext_register_callback() -
- * This function called to register the callback that send vendor event for
- * stats ext
- *
- * callback - callback to be registered
- */
-void sme_stats_ext_register_callback(tHalHandle hHal, StatsExtCallback callback)
+void sme_stats_ext_register_callback(mac_handle_t mac_handle,
+				     stats_ext_cb callback)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
-	pMac->sme.StatsExtCallback = callback;
-}
-
-void sme_stats_ext2_register_callback(tHalHandle hal_handle,
-	void (*stats_ext2_cb)(void *, struct sir_sme_rx_aggr_hole_ind *))
-{
-	tpAniSirGlobal pmac = PMAC_STRUCT(hal_handle);
-
-	pmac->sme.stats_ext2_cb = stats_ext2_cb;
-}
-
-/**
- * sme_stats_ext_deregister_callback() - De-register ext stats callback
- * @h_hal: Hal Handle
- *
- * This function is called to  de initialize the HDD NAN feature.  Currently
- * the only operation required is to de-register a callback with SME.
- *
- * Return: None
- */
-void sme_stats_ext_deregister_callback(tHalHandle h_hal)
-{
-	tpAniSirGlobal pmac;
-
-	if (!h_hal) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("hHal is not valid"));
+	if (!mac) {
+		sme_err("Invalid mac context");
 		return;
 	}
 
-	pmac = PMAC_STRUCT(h_hal);
-	pmac->sme.StatsExtCallback = NULL;
+	mac->sme.stats_ext_cb = callback;
 }
 
+void sme_stats_ext_deregister_callback(mac_handle_t mac_handle)
+{
+	sme_stats_ext_register_callback(mac_handle, NULL);
+}
+
+void sme_stats_ext2_register_callback(mac_handle_t mac_handle,
+				      stats_ext2_cb callback)
+{
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+
+	if (!mac) {
+		sme_err("Invalid mac context");
+		return;
+	}
+
+	mac->sme.stats_ext2_cb = callback;
+}
 
 /*
  * sme_stats_ext_request() -
@@ -10752,15 +10737,15 @@ QDF_STATUS sme_stats_ext_request(uint8_t session_id, tpStatsExtRequestReq input)
  * Return: QDF_STATUS
  */
 static QDF_STATUS sme_stats_ext_event(tpAniSirGlobal mac,
-				      tpStatsExtEvent msg)
+				      struct stats_ext_event *msg)
 {
 	if (!msg) {
 		sme_err("Null msg");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (mac->sme.StatsExtCallback)
-		mac->sme.StatsExtCallback(mac->hdd_handle, msg);
+	if (mac->sme.stats_ext_cb)
+		mac->sme.stats_ext_cb(mac->hdd_handle, msg);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -10768,7 +10753,7 @@ static QDF_STATUS sme_stats_ext_event(tpAniSirGlobal mac,
 #else
 
 static QDF_STATUS sme_stats_ext_event(tpAniSirGlobal mac,
-				      tpStatsExtEvent msg)
+				      struct stats_ext_event *msg)
 {
 	return QDF_STATUS_SUCCESS;
 }

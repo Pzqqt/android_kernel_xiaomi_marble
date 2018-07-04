@@ -341,18 +341,26 @@ int wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 void hdd_display_hif_stats(void);
 void hdd_clear_hif_stats(void);
 
-void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
-					  tStatsExtEvent *msg);
+/**
+ * wlan_hdd_cfg80211_stats_ext_callback() - ext stats callback
+ * @hdd_handle: Opaque handle to HDD context
+ * @data: ext stats payload
+ *
+ * Return: nothing
+ */
+void wlan_hdd_cfg80211_stats_ext_callback(hdd_handle_t hdd_handle,
+					  struct stats_ext_event *data);
 
 /**
- * wlan_hdd_cfg80211_stats_ext2_callback - stats_ext2_callback
- * @ctx: hdd context
+ * wlan_hdd_cfg80211_stats_ext2_callback() - stats_ext2_callback
+ * @hdd_handle: opaque handle to the hdd context
  * @pmsg: sir_sme_rx_aggr_hole_ind
  *
  * Return: void
  */
-void wlan_hdd_cfg80211_stats_ext2_callback(void *ctx,
-				struct sir_sme_rx_aggr_hole_ind *pmsg);
+void
+wlan_hdd_cfg80211_stats_ext2_callback(hdd_handle_t hdd_handle,
+				      struct sir_sme_rx_aggr_hole_ind *pmsg);
 
 /**
  * wlan_hdd_get_rcpi() - Wrapper to get current RCPI

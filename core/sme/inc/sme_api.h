@@ -883,18 +883,37 @@ QDF_STATUS sme_ap_disable_intra_bss_fwd(tHalHandle hHal, uint8_t sessionId,
 		bool disablefwd);
 QDF_STATUS sme_get_channel_bonding_mode5_g(tHalHandle hHal, uint32_t *mode);
 QDF_STATUS sme_get_channel_bonding_mode24_g(tHalHandle hHal, uint32_t *mode);
+
 #ifdef WLAN_FEATURE_STATS_EXT
 typedef struct sStatsExtRequestReq {
 	uint32_t request_data_len;
 	uint8_t *request_data;
 } tStatsExtRequestReq, *tpStatsExtRequestReq;
-typedef void (*StatsExtCallback)(void *, tStatsExtEvent *);
-void sme_stats_ext_register_callback(tHalHandle hHal,
-		StatsExtCallback callback);
+
 /**
- * sme_register_stats_ext2_callback() - Register stats ext2 register
- * @hal_handle: hal handle for getting global mac struct
- * @stats_ext2_cb: callback to be registered
+ * sme_stats_ext_register_callback() - Register stats ext callback
+ * @mac_handle: Opaque handle to the MAC context
+ * @callback: Function to be invoked for stats ext events
+ *
+ * This function is called to register the callback that send vendor
+ * event for stats ext
+ */
+void sme_stats_ext_register_callback(mac_handle_t mac_handle,
+				     stats_ext_cb callback);
+
+/**
+ * sme_stats_ext_deregister_callback() - Deregister stats ext callback
+ * @mac_handle: Opaque handle to the MAC context
+ *
+ * This function is called to deregister the callback that send vendor
+ * event for stats ext
+ */
+void sme_stats_ext_deregister_callback(mac_handle_t mac_handle);
+
+/**
+ * sme_stats_ext2_register_callback() - Register stats ext2 callback
+ * @mac_handle: Opaque handle to the MAC context
+ * @callback: Function to be invoked for stats ext2 events
  *
  * This function will register a callback for frame aggregation failure
  * indications processing.
@@ -902,7 +921,12 @@ void sme_stats_ext_register_callback(tHalHandle hHal,
  * Return: void
  */
 void sme_stats_ext2_register_callback(tHalHandle hal_handle,
-	void (*stats_ext2_cb)(void *, struct sir_sme_rx_aggr_hole_ind *));
+				      stats_ext2_cb callback);
+
+QDF_STATUS sme_stats_ext_request(uint8_t session_id,
+				 tpStatsExtRequestReq input);
+#endif /* WLAN_FEATURE_STATS_EXT */
+
 /**
  * sme_send_unit_test_cmd() - send unit test command to lower layer
  * @session_id: sme session id to be filled while forming the command
@@ -917,10 +941,7 @@ void sme_stats_ext2_register_callback(tHalHandle hal_handle,
  */
 QDF_STATUS sme_send_unit_test_cmd(uint32_t vdev_id, uint32_t module_id,
 				  uint32_t arg_count, uint32_t *arg);
-void sme_stats_ext_deregister_callback(tHalHandle hhal);
-QDF_STATUS sme_stats_ext_request(uint8_t session_id,
-		tpStatsExtRequestReq input);
-#endif
+
 QDF_STATUS sme_update_dfs_scan_mode(tHalHandle hHal,
 		uint8_t sessionId,
 		uint8_t allowDFSChannelRoam);

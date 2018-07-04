@@ -2905,31 +2905,21 @@ int wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 	return ret;
 }
 
-/**
- * wlan_hdd_cfg80211_stats_ext_callback() - ext stats callback
- * @ctx: Pointer to HDD context
- * @msg: Message received
- *
- * Return: nothing
- */
-void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
-						 tStatsExtEvent *msg)
+void wlan_hdd_cfg80211_stats_ext_callback(hdd_handle_t hdd_handle,
+					  struct stats_ext_event *data)
 {
-
-	struct hdd_context *hdd_ctx = (struct hdd_context *) ctx;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	struct sk_buff *vendor_event;
 	int status;
 	int ret_val;
-	tStatsExtEvent *data = msg;
-	struct hdd_adapter *adapter = NULL;
+	struct hdd_adapter *adapter;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status)
 		return;
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, data->vdev_id);
-
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("vdev_id %d does not exist with host", data->vdev_id);
 		return;
 	}
@@ -2970,10 +2960,11 @@ void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 
 }
 
-void wlan_hdd_cfg80211_stats_ext2_callback(void *ctx,
-				struct sir_sme_rx_aggr_hole_ind *pmsg)
+void
+wlan_hdd_cfg80211_stats_ext2_callback(hdd_handle_t hdd_handle,
+				      struct sir_sme_rx_aggr_hole_ind *pmsg)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *)ctx;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	int status;
 	uint32_t data_size, hole_info_size;
 	struct sk_buff *vendor_event;

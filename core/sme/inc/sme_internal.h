@@ -96,11 +96,33 @@ typedef struct tagSmePeerInfoHddCbkInfo {
 	pIbssPeerInfoCb peerInfoCbk;
 } tSmePeerInfoHddCbkInfo;
 
-typedef struct sStatsExtEvent {
+/**
+ * struct stats_ext_event - stats_ext_event payload
+ * @vdev_id: ID of the vdev for the stats
+ * @event_data_len: length of the @event_data
+ * @event_data: actual ext stats
+ */
+struct stats_ext_event {
 	uint32_t vdev_id;
 	uint32_t event_data_len;
 	uint8_t event_data[];
-} tStatsExtEvent, *tpStatsExtEvent;
+};
+
+/**
+ * typedef stats_ext_cb - stats ext callback
+ * @hdd_handle: Opaque handle to the HDD context
+ * @data: stats ext payload from firmware
+ */
+typedef void (*stats_ext_cb)(hdd_handle_t hdd_handle,
+			     struct stats_ext_event *data);
+
+/**
+ * typedef stats_ext2_cb - stats ext2 callback
+ * @hdd_handle: Opaque handle to the HDD context
+ * @data: stats ext2 payload from firmware
+ */
+typedef void (*stats_ext2_cb)(hdd_handle_t hdd_handle,
+			      struct sir_sme_rx_aggr_hole_ind *data);
 
 #define MAX_ACTIVE_CMD_STATS    16
 
@@ -233,7 +255,8 @@ typedef struct tagSmeStruct {
 #endif
 	/* Maximum interfaces allowed by the host */
 	uint8_t max_intf_count;
-	void (*StatsExtCallback)(void *, tStatsExtEvent *);
+	stats_ext_cb stats_ext_cb;
+	stats_ext2_cb stats_ext2_cb;
 	/* linkspeed callback */
 	void (*pLinkSpeedIndCb)(tSirLinkSpeedInfo *indParam,
 			void *pDevContext);
@@ -293,7 +316,6 @@ typedef struct tagSmeStruct {
 	void (*rso_cmd_status_cb)(void *hdd_context,
 			struct rso_cmd_status *rso_status);
 	congestion_cb congestion_cb;
-	void (*stats_ext2_cb)(void *, struct sir_sme_rx_aggr_hole_ind *);
 	pwr_save_fail_cb chip_power_save_fail_cb;
 	void (*bt_activity_info_cb)(void *context, uint32_t bt_activity);
 	void *get_arp_stats_context;
