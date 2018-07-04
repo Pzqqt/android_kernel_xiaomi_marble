@@ -655,6 +655,7 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 					   old_ptr, new_ptr);
 	ie_lst->esp = conv_ptr(ie_lst->esp, old_ptr, new_ptr);
 	ie_lst->mbo_oce = conv_ptr(ie_lst->mbo_oce, old_ptr, new_ptr);
+	ie_lst->extender = conv_ptr(ie_lst->extender, old_ptr, new_ptr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1478,5 +1479,19 @@ enum wlan_band util_scan_scm_freq_to_band(uint16_t freq);
  * Return: true if scan complete, false otherwise
  */
 bool util_is_scan_completed(struct scan_event *event, bool *success);
+
+/**
+ * util_scan_entry_extenderie() - function to read extender IE
+ * @scan_entry: scan entry
+ *
+ * API, function to read extender IE
+ *
+ * Return: extenderie or NULL if ie is not present
+ */
+static inline uint8_t*
+util_scan_entry_extenderie(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.extender;
+}
 
 #endif
