@@ -13319,9 +13319,9 @@ static int wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 #undef QCA_ATTR_NUD_STATS_AP_LINK_ACTIVE
 #undef QCA_ATTR_NUD_STATS_GET_MAX
 
-void hdd_bt_activity_cb(void *context, uint32_t bt_activity)
+void hdd_bt_activity_cb(hdd_handle_t hdd_handle, uint32_t bt_activity)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *)context;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	int status;
 
 	status = wlan_hdd_validate_context(hdd_ctx);

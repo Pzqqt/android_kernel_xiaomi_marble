@@ -15490,11 +15490,11 @@ int sme_cli_set_command(int vdev_id, int param_id, int sval, int vpdev)
 	return wma_cli_set_command(vdev_id, param_id, sval, vpdev);
 }
 
-QDF_STATUS sme_set_bt_activity_info_cb(tHalHandle hal,
-			void (*cb)(void *, uint32_t bt_activity))
+QDF_STATUS sme_set_bt_activity_info_cb(mac_handle_t mac_handle,
+				       bt_activity_info_cb cb)
 {
 	QDF_STATUS status;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {

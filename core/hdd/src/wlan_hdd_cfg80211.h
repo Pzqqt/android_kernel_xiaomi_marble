@@ -567,12 +567,12 @@ int wlan_hdd_merge_avoid_freqs(struct ch_avoid_ind_type *destFreqList,
 
 /**
  * hdd_bt_activity_cb() - callback function to receive bt activity
- * @context: HDD context
+ * @hdd_handle: Opaque handle to the HDD context
  * @bt_activity: specifies the kind of bt activity
  *
  * Return: none
  */
-void hdd_bt_activity_cb(void *context, uint32_t bt_activity);
+void hdd_bt_activity_cb(hdd_handle_t hdd_handle, uint32_t bt_activity);
 
 /**
  * wlan_hdd_save_gtk_offload_params() - Save gtk offload parameters in STA

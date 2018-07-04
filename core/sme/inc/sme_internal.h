@@ -224,6 +224,14 @@ typedef void (*pwr_save_fail_cb)(hdd_handle_t hdd_handle,
 			struct chip_pwr_save_fail_detected_params *params);
 
 /**
+ * typedef bt_activity_info_cb - bluetooth activity callback function
+ * @hdd_handle: HDD handle registered with SME
+ * @bt_activity: bluetooth activity information
+ */
+typedef void (*bt_activity_info_cb)(hdd_handle_t hdd_handle,
+				    uint32_t bt_activity);
+
+/**
  * typedef congestion_cb - congestion callback function
  * @hdd_handle: HDD handle registered with SME
  * @congestion: Current congestion value
@@ -319,7 +327,7 @@ typedef struct tagSmeStruct {
 			struct rso_cmd_status *rso_status);
 	congestion_cb congestion_cb;
 	pwr_save_fail_cb chip_power_save_fail_cb;
-	void (*bt_activity_info_cb)(void *context, uint32_t bt_activity);
+	bt_activity_info_cb bt_activity_info_cb;
 	void *get_arp_stats_context;
 	void (*get_arp_stats_cb)(void *, struct rsp_stats *, void *);
 	get_chain_rssi_callback get_chain_rssi_cb;
