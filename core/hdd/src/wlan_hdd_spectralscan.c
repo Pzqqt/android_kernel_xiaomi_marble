@@ -54,6 +54,8 @@ static int __wlan_hdd_cfg80211_spectral_scan_start(struct wiphy *wiphy,
 {
 	int ret;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter;
 
 	hdd_enter();
 
@@ -64,6 +66,12 @@ static int __wlan_hdd_cfg80211_spectral_scan_start(struct wiphy *wiphy,
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
+	}
+
+	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
+		return -EINVAL;
 	}
 
 	ret = wlan_cfg80211_spectral_scan_config_and_start(wiphy,
