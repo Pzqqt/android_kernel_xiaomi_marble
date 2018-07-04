@@ -282,6 +282,7 @@ static QDF_STATUS p2p_execute_cancel_roc_req(
 		p2p_err("Failed to abort scan, status:%d, destroy roc %pK",
 			status, roc_ctx);
 		qdf_mc_timer_destroy(&roc_ctx->roc_timer);
+		p2p_mgmt_rx_ops(p2p_soc_obj->soc, false);
 		p2p_destroy_roc_ctx(roc_ctx, true, true);
 		qdf_event_set(&p2p_soc_obj->cancel_roc_done);
 		return status;
