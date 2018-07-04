@@ -187,7 +187,7 @@ static void htc_cleanup(HTC_TARGET *target)
 	}
 #endif
 
-	htc_flush_endpoint_txlookupQ(target, ENDPOINT_0);
+	htc_flush_endpoint_txlookupQ(target, ENDPOINT_0, true);
 
 	qdf_spinlock_destroy(&target->HTCLock);
 	qdf_spinlock_destroy(&target->HTCRxLock);
@@ -830,6 +830,17 @@ void htc_stop(HTC_HANDLE HTCHandle)
 	RESET_RX_SG_CONFIG(target);
 	UNLOCK_HTC_RX(target);
 #endif
+
+	/**
+	 * In SSR case, HTC tx completion callback for wmi will be blocked
+	 * by TARGET_STATUS_RESET and HTC packets will be left unfreed on
+	 * lookup queue.
+	 */
+	for (i = 0; i < ENDPOINT_MAX; i++) {
+		pEndpoint = &target->endpoint[i];
+		if (pEndpoint->service_id == WMI_CONTROL_SVC)
+			htc_flush_endpoint_txlookupQ(target, i, false);
+	}
 
 	reset_endpoint_states(target);
 

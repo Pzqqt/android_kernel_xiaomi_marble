@@ -296,8 +296,18 @@ void free_htc_packet_container(HTC_TARGET *target, HTC_PACKET *pPacket);
 void htc_flush_rx_hold_queue(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint);
 void htc_flush_endpoint_tx(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint,
 			   HTC_TX_TAG Tag);
+
+/**
+ * htc_flush_endpoint_txlookupQ() - Flush EP's lookup queue
+ * @target: HTC target
+ * @endpoint_id: EP ID
+ * @call_ep_callback: whether to call EP tx completion callback
+ *
+ * Return: void
+ */
 void htc_flush_endpoint_txlookupQ(HTC_TARGET *target,
-				  HTC_ENDPOINT_ID endpoint_id);
+				  HTC_ENDPOINT_ID endpoint_id,
+				  bool call_ep_callback);
 
 void htc_recv_init(HTC_TARGET *target);
 QDF_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target);

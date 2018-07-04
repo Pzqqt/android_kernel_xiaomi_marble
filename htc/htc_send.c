@@ -2064,7 +2064,8 @@ void htc_flush_endpoint_tx(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint,
 
 /* flush pending entries in endpoint TX Lookup queue */
 void htc_flush_endpoint_txlookupQ(HTC_TARGET *target,
-				  HTC_ENDPOINT_ID endpoint_id)
+				  HTC_ENDPOINT_ID endpoint_id,
+				  bool call_ep_callback)
 {
 	HTC_PACKET *packet;
 	HTC_ENDPOINT *endpoint;
@@ -2078,8 +2079,12 @@ void htc_flush_endpoint_txlookupQ(HTC_TARGET *target,
 		packet = htc_packet_dequeue(&endpoint->TxLookupQueue);
 
 		if (packet) {
-			packet->Status = QDF_STATUS_E_CANCELED;
-			send_packet_completion(target, packet);
+			if (call_ep_callback == true) {
+				packet->Status = QDF_STATUS_E_CANCELED;
+				send_packet_completion(target, packet);
+			} else {
+				qdf_mem_free(packet);
+			}
 		}
 	}
 }
