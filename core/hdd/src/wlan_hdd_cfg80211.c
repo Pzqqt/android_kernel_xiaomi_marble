@@ -8419,20 +8419,10 @@ wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy, struct wireless_dev *wdev,
 	return ret;
 }
 
-/**
- * hdd_rssi_threshold_breached() - rssi breached NL event
- * @hddctx: HDD context
- * @data: rssi breached event data
- *
- * This function reads the rssi breached event %data and fill in the skb with
- * NL attributes and send up the NL event.
- *
- * Return: none
- */
-void hdd_rssi_threshold_breached(void *hddctx,
+void hdd_rssi_threshold_breached(hdd_handle_t hdd_handle,
 				 struct rssi_breach_event *data)
 {
-	struct hdd_context *hdd_ctx  = hddctx;
+	struct hdd_context *hdd_ctx  = hdd_handle_to_context(hdd_handle);
 	struct sk_buff *skb;
 
 	hdd_enter();
@@ -8456,16 +8446,16 @@ void hdd_rssi_threshold_breached(void *hddctx,
 	}
 
 	hdd_debug("Req Id: %u Current rssi: %d",
-			data->request_id, data->curr_rssi);
-	hdd_debug("Current BSSID: "MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(data->curr_bssid.bytes));
+		  data->request_id, data->curr_rssi);
+	hdd_debug("Current BSSID: " MAC_ADDRESS_STR,
+		  MAC_ADDR_ARRAY(data->curr_bssid.bytes));
 
 	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_REQUEST_ID,
-		data->request_id) ||
+			data->request_id) ||
 	    nla_put(skb, QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_CUR_BSSID,
-		sizeof(data->curr_bssid), data->curr_bssid.bytes) ||
+		    sizeof(data->curr_bssid), data->curr_bssid.bytes) ||
 	    nla_put_s8(skb, QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_CUR_RSSI,
-		data->curr_rssi)) {
+		       data->curr_rssi)) {
 		hdd_err("nla put fail");
 		goto fail;
 	}

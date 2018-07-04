@@ -12976,33 +12976,21 @@ QDF_STATUS sme_set_nud_debug_stats_cb(tHalHandle hal,
 	return status;
 }
 
-/**
- * sme_set_rssi_threshold_breached_cb() - set rssi threshold breached callback
- * @h_hal: global hal handle
- * @cb: callback function pointer
- * @context: callback context
- *
- * This function stores the rssi threshold breached callback function.
- *
- * Return: QDF_STATUS enumeration.
- */
-QDF_STATUS sme_set_rssi_threshold_breached_cb(tHalHandle h_hal,
-				void (*cb)(void *, struct rssi_breach_event *))
+QDF_STATUS sme_set_rssi_threshold_breached_cb(mac_handle_t mac_handle,
+					      rssi_threshold_breached_cb cb)
 {
-	QDF_STATUS status  = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	tpAniSirGlobal mac;
 
-	if (!h_hal) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  FL("hHal is not valid"));
+	mac = MAC_CONTEXT(mac_handle);
+	if (!mac) {
+		sme_err("Invalid mac context");
 		return QDF_STATUS_E_INVAL;
 	}
-	mac = PMAC_STRUCT(h_hal);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("sme_acquire_global_lock failed!(status=%d)"),
+		sme_err("sme_acquire_global_lock failed!(status=%d)",
 			status);
 		return status;
 	}
@@ -13012,28 +13000,9 @@ QDF_STATUS sme_set_rssi_threshold_breached_cb(tHalHandle h_hal,
 	return status;
 }
 
-/**
- * sme_set_rssi_threshold_breached_cb() - Reset rssi threshold breached callback
- * @hal: global hal handle
- *
- * This function de-registers the rssi threshold breached callback function.
- *
- * Return: QDF_STATUS enumeration.
- */
-QDF_STATUS sme_reset_rssi_threshold_breached_cb(tHalHandle hal)
+QDF_STATUS sme_reset_rssi_threshold_breached_cb(mac_handle_t mac_handle)
 {
-	QDF_STATUS status;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("sme_acquire_global_lock failed!(status=%d)", status);
-		return status;
-	}
-
-	mac->sme.rssi_threshold_breached_cb = NULL;
-	sme_release_global_lock(&mac->sme);
-	return status;
+	return sme_set_rssi_threshold_breached_cb(mac_handle, NULL);
 }
 
 /**

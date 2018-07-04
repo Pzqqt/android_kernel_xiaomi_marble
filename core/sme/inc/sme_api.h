@@ -1116,9 +1116,29 @@ QDF_STATUS sme_disable_uapsd_for_ac(uint8_t sta_id,
 
 QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 					struct rssi_monitor_req *input);
-QDF_STATUS sme_set_rssi_threshold_breached_cb(tHalHandle hal,
-			void (*cb)(void *, struct rssi_breach_event *));
-QDF_STATUS sme_reset_rssi_threshold_breached_cb(tHalHandle hal);
+
+/**
+ * sme_set_rssi_threshold_breached_cb() - Set RSSI threshold breached callback
+ * @mac_handle: global MAC handle
+ * @cb: callback function pointer
+ *
+ * This function registers the RSSI threshold breached callback function.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS sme_set_rssi_threshold_breached_cb(mac_handle_t mac_handle,
+					      rssi_threshold_breached_cb cb);
+
+/**
+ * sme_reset_rssi_threshold_breached_cb() - Reset RSSI threshold breached
+ *                                          callback
+ * @mac_handle: global MAC handle
+ *
+ * This function de-registers the RSSI threshold breached callback function.
+ *
+ * Return: QDF_STATUS enumeration.
+ */
+QDF_STATUS sme_reset_rssi_threshold_breached_cb(mac_handle_t mac_handle);
 
 QDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
 			sir_mgmt_frame_ind_callback callback);

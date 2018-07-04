@@ -157,6 +157,14 @@ typedef void (*apf_read_mem_cb)(void *context,
 #endif /* FEATURE_WLAN_APF */
 
 /**
+ * typedef rssi_threshold_breached_cb - RSSI threshold breach callback
+ * @hdd_handle: Opaque handle to the HDD context
+ * @event: The RSSI breach event
+ */
+typedef void (*rssi_threshold_breached_cb)(hdd_handle_t hdd_handle,
+					   struct rssi_breach_event *event);
+
+/**
  * typedef sme_encrypt_decrypt_callback - encrypt/decrypt callback
  *    signature
  * @context: Opaque context that the client can use to associate the
@@ -250,7 +258,7 @@ typedef struct tagSmeStruct {
 	void (*pGetTemperatureCb)(int temperature, void *context);
 	uint8_t miracast_value;
 	struct ps_global_info  ps_global_info;
-	void (*rssi_threshold_breached_cb)(void *, struct rssi_breach_event *);
+	rssi_threshold_breached_cb rssi_threshold_breached_cb;
 	hw_mode_transition_cb sme_hw_mode_trans_cb;
 	/* OCB callbacks */
 	void *ocb_set_config_context;
