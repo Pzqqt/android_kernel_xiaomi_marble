@@ -45,7 +45,7 @@ void sme_nan_register_callback(tHalHandle hHal, nan_callback callback)
 		return;
 	}
 	pMac = PMAC_STRUCT(hHal);
-	pMac->sme.nanCallback = callback;
+	pMac->sme.nan_callback = callback;
 }
 
 /**
@@ -66,7 +66,7 @@ void sme_nan_deregister_callback(tHalHandle h_hal)
 		return;
 	}
 	pmac = PMAC_STRUCT(h_hal);
-	pmac->sme.nanCallback = NULL;
+	pmac->sme.nan_callback = NULL;
 }
 
 
@@ -136,8 +136,8 @@ QDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg)
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  FL("SME: Received sme_nan_event"));
-		if (pMac->sme.nanCallback) {
-			pMac->sme.nanCallback(pMac->hdd_handle,
+		if (pMac->sme.nan_callback) {
+			pMac->sme.nan_callback(pMac->hdd_handle,
 					      (tSirNanEvent *) pMsg);
 		}
 	}

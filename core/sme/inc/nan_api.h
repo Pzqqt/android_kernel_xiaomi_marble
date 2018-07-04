@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,8 +28,9 @@
 #define __NAN_API_H__
 
 #include "qdf_types.h"
+#include "sir_types.h"
 
-typedef void (*nan_callback)(void *, tSirNanEvent *);
+typedef void (*nan_callback)(hdd_handle_t hdd_handle, tSirNanEvent *event);
 
 #ifdef WLAN_FEATURE_NAN
 typedef struct sNanRequestReq {

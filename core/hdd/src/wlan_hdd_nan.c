@@ -110,25 +110,13 @@ int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 	return ret;
 }
 
-/**
- * wlan_hdd_cfg80211_nan_callback() - cfg80211 NAN event handler
- * @ctx: global HDD context
- * @msg: NAN event message
- *
- * This is a callback function and it gets called when we need to report
- * a nan event to userspace.  The wlan host driver simply encapsulates the
- * event into a netlink payload and then forwards it to userspace via a
- * cfg80211 vendor event.
- *
- * Return: nothing
- */
-void wlan_hdd_cfg80211_nan_callback(void *ctx, tSirNanEvent *msg)
+void wlan_hdd_cfg80211_nan_callback(hdd_handle_t hdd_handle, tSirNanEvent *msg)
 {
-	struct hdd_context *hdd_ctx = ctx;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	struct sk_buff *vendor_event;
 	int status;
 
-	if (NULL == msg) {
+	if (!msg) {
 		hdd_err("msg received here is null");
 		return;
 	}

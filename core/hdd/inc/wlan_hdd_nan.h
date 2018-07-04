@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -63,7 +63,19 @@ static inline void hdd_nan_populate_pmo_config(struct pmo_psoc_cfg *pmo_cfg,
 	pmo_cfg->nan_enable = hdd_ctx->config->enable_nan_support;
 }
 
-void wlan_hdd_cfg80211_nan_callback(void *ctx, tSirNanEvent *msg);
+/**
+ * wlan_hdd_cfg80211_nan_callback() - cfg80211 NAN event handler
+ * @hdd_handle: opaque handle to the global HDD context
+ * @msg: NAN event message
+ *
+ * This is a callback function and it gets called when we need to report
+ * a nan event to userspace.  The wlan host driver simply encapsulates the
+ * event into a netlink payload and then forwards it to userspace via a
+ * cfg80211 vendor event.
+ *
+ * Return: nothing
+ */
+void wlan_hdd_cfg80211_nan_callback(hdd_handle_t hdd_handle, tSirNanEvent *msg);
 #else
 static inline bool wlan_hdd_nan_is_supported(void)
 {
@@ -79,8 +91,8 @@ static inline void hdd_nan_populate_pmo_config(struct pmo_psoc_cfg *pmo_cfg,
 {
 }
 
-static inline void wlan_hdd_cfg80211_nan_callback(void *ctx,
-						  tSirNanEvent *msg)
+static inline
+void wlan_hdd_cfg80211_nan_callback(hdd_handle_t hdd_handle, tSirNanEvent *msg)
 {
 }
 #endif /* WLAN_FEATURE_NAN */
