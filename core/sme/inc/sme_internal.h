@@ -240,6 +240,14 @@ typedef void (*bt_activity_info_cb)(hdd_handle_t hdd_handle,
 typedef void (*congestion_cb)(hdd_handle_t hdd_handle, uint32_t congestion,
 			      uint32_t vdev_id);
 
+/**
+ * typedef rso_cmd_status_cb - RSO command status  callback function
+ * @hdd_handle: HDD handle registered with SME
+ * @rso_status: Status of the operation
+ */
+typedef void (*rso_cmd_status_cb)(hdd_handle_t hdd_handle,
+				  struct rso_cmd_status *rso_status);
+
 typedef struct tagSmeStruct {
 	eSmeState state;
 	qdf_mutex_t lkSmeGlobalLock;
@@ -323,8 +331,7 @@ typedef struct tagSmeStruct {
 	bool (*set_connection_info_cb)(bool);
 	bool (*get_connection_info_cb)(uint8_t *session_id,
 			enum scan_reject_states *reason);
-	void (*rso_cmd_status_cb)(void *hdd_context,
-			struct rso_cmd_status *rso_status);
+	rso_cmd_status_cb rso_cmd_status_cb;
 	congestion_cb congestion_cb;
 	pwr_save_fail_cb chip_power_save_fail_cb;
 	bt_activity_info_cb bt_activity_info_cb;

@@ -12078,9 +12078,10 @@ nla_policy qca_wlan_vendor_attr[QCA_WLAN_VENDOR_ATTR_MAX+1] = {
 						 .len = QDF_MAC_ADDR_SIZE},
 };
 
-void wlan_hdd_rso_cmd_status_cb(void *ctx, struct rso_cmd_status *rso_status)
+void wlan_hdd_rso_cmd_status_cb(hdd_handle_t hdd_handle,
+				struct rso_cmd_status *rso_status)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *)ctx;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	struct hdd_adapter *adapter;
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, rso_status->vdev_id);

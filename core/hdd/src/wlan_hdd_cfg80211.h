@@ -358,7 +358,7 @@ void wlan_hdd_cfg80211_extscan_callback(hdd_handle_t hdd_handle,
 #endif /* FEATURE_WLAN_EXTSCAN */
 /**
  * wlan_hdd_rso_cmd_status_cb() - HDD callback to read RSO command status
- * @ctx: void pointer to hdd context
+ * @hdd_handle: opaque handle for the hdd context
  * @rso_status: rso command status
  *
  * This callback function is invoked by firmware to update
@@ -366,7 +366,8 @@ void wlan_hdd_cfg80211_extscan_callback(hdd_handle_t hdd_handle,
  *
  * Return: None
  */
-void wlan_hdd_rso_cmd_status_cb(void *ctx, struct rso_cmd_status *rso_status);
+void wlan_hdd_rso_cmd_status_cb(hdd_handle_t hdd_handle,
+				struct rso_cmd_status *rso_status);
 
 /**
  * hdd_rssi_threshold_breached() - rssi breached NL event

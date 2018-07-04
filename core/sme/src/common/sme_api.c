@@ -15235,11 +15235,11 @@ QDF_STATUS sme_register_set_connection_info_cb(tHalHandle hHal,
 	return status;
 }
 
-QDF_STATUS sme_rso_cmd_status_cb(tHalHandle hal,
-		void (*cb)(void *, struct rso_cmd_status *))
+QDF_STATUS sme_rso_cmd_status_cb(mac_handle_t mac_handle,
+				 rso_cmd_status_cb cb)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
 	mac->sme.rso_cmd_status_cb = cb;
 	sme_debug("Registered RSO command status callback");

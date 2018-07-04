@@ -1787,15 +1787,15 @@ QDF_STATUS sme_deregister_tx_queue_cb(mac_handle_t mac_handle);
 
 /**
  * sme_rso_cmd_status_cb() - Set RSO cmd status callback
- * @hal: HAL Handle
- * @cb: HDD Callback to rso comman status read
+ * @mac_handle: Opaque handle for the MAC context
+ * @cb: HDD Callback to rso command status read
  *
  * This function is used to save HDD RSO Command status callback in MAC
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_rso_cmd_status_cb(tHalHandle hal,
-		void (*cb)(void *, struct rso_cmd_status *));
+QDF_STATUS sme_rso_cmd_status_cb(mac_handle_t mac_handle,
+				 rso_cmd_status_cb cb);
 
 /**
  * sme_register_set_connection_info_cb() - Register connection
