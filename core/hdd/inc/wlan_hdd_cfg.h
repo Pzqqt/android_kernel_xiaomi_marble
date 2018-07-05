@@ -11473,13 +11473,15 @@ enum hdd_wext_control {
 /*
  * <ini>
  * twt_congestion_timeout - Target wake time congestion timeout.
- * @Min: 10
+ * @Min: 0
  * @Max: 10000
  * @Default: 100
  *
  * STA uses this timer to continuously monitor channel congestion levels to
  * decide whether to start or stop TWT. This ini is used to configure the
  * target wake time congestion timeout value in the units of milliseconds.
+ * A value of Zero indicates that this is a host triggered TWT and all the
+ * necessary configuration for TWT will be directed from the host.
  *
  * Related: NA
  *
@@ -11490,7 +11492,7 @@ enum hdd_wext_control {
  * </ini>
  */
 #define CFG_TWT_CONGESTION_TIMEOUT_NAME    "twt_congestion_timeout"
-#define CFG_TWT_CONGESTION_TIMEOUT_MIN     (10)
+#define CFG_TWT_CONGESTION_TIMEOUT_MIN     (0)
 #define CFG_TWT_CONGESTION_TIMEOUT_MAX     (10000)
 #define CFG_TWT_CONGESTION_TIMEOUT_DEFAULT (100)
 
