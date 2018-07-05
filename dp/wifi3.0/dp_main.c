@@ -3579,6 +3579,7 @@ static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
 	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry)
 		dp_peer_del_ast(soc, ast_entry);
 
+	peer->self_ast_entry = NULL;
 	TAILQ_INIT(&peer->ast_entry_list);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 }
@@ -4238,6 +4239,13 @@ void dp_peer_unref_delete(void *peer_handle)
 
 		/* remove the reference to the peer from the hash table */
 		dp_peer_find_hash_remove(soc, peer);
+
+		qdf_spin_lock_bh(&soc->ast_lock);
+		if (peer->self_ast_entry) {
+			dp_peer_del_ast(soc, peer->self_ast_entry);
+			peer->self_ast_entry = NULL;
+		}
+		qdf_spin_unlock_bh(&soc->ast_lock);
 
 		TAILQ_FOREACH(tmppeer, &peer->vdev->peer_list, peer_list_elem) {
 			if (tmppeer == peer) {
