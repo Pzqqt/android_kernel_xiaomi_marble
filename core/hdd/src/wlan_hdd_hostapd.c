@@ -5466,12 +5466,20 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		hdd_err("ERR: clear event failed");
 
 	/*
-	 * Stop opportunistic timer here if running as we are already doing
-	 * hw mode change before vdev start based on the new concurrency
-	 * situation. If timer is not stopped and if it gets triggered before
-	 * VDEV_UP, it will reset the hw mode to some wrong value.
+	 * For Start Ap, the driver checks whether the SAP comes up in a
+	 * different or same band( whether we require DBS or Not).
+	 * If we dont require DBS, then the driver does nothing assuming
+	 * the state would be already in non DBS mode, and just continues
+	 * with vdev up on same MAC, by stoping the opportunistic timer,
+	 * which results in a connection of 1x1 if already the state was in
+	 * DBS. So first stop timer, and check the current hw mode.
+	 * If the SAP comes up in band different from STA, DBS mode is already
+	 * set. IF not, then well check for upgrade, and shift the connection
+	 * back to single MAC 2x2 (if initial was 2x2).
 	 */
-	status = policy_mgr_stop_opportunistic_timer(hdd_ctx->hdd_psoc);
+
+	policy_mgr_checkn_update_hw_mode_single_mac_mode(hdd_ctx->hdd_psoc,
+							 channel);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to stop DBS opportunistic timer");
 		return -EINVAL;
