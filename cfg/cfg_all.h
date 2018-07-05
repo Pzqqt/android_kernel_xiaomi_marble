@@ -19,5 +19,12 @@
 #include "cfg_define.h"
 #include "cfg_converged.h"
 
+#ifdef CONVERGED_P2P_ENABLE
+#include "wlan_p2p_cfg.h"
+#else
+#define CFG_P2P_ALL
+#endif
+
 #define CFG_ALL \
-	CFG_CONVERGED_ALL
+	CFG_CONVERGED_ALL \
+	CFG_P2P_ALL
