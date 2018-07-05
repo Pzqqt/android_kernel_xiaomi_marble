@@ -1999,6 +1999,8 @@ endif
 cppflags-$(CONFIG_WLAN_FEATURE_11AX) += -DWLAN_FEATURE_11AX
 cppflags-$(CONFIG_WLAN_FEATURE_11AX) += -DWLAN_FEATURE_11AX_BSS_COLOR
 
+cppflags-$(CONFIG_LITHIUM) += -DFEATURE_AST
+
 # Dummy flag for WIN/MCL converged data path compilation
 cppflags-y += -DDP_PRINT_ENABLE=0
 cppflags-y += -DATH_SUPPORT_WRAP=0
