@@ -898,9 +898,9 @@ void qdf_dp_trace_deinit(void)
 	spin_lock_bh(&l_dp_trace_lock);
 	g_qdf_dp_trace_data.enable = false;
 	g_qdf_dp_trace_data.no_of_record = 0;
+	spin_unlock_bh(&l_dp_trace_lock);
 
 	free_g_qdf_dp_trace_tbl_buffer();
-	spin_unlock_bh(&l_dp_trace_lock);
 }
 /**
  * qdf_dp_trace_set_value() - Configure the value to control DP trace

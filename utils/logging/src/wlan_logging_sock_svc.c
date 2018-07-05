@@ -864,15 +864,15 @@ int wlan_logging_sock_init_svc(void)
 	gwlan_logging.num_buf = MAX_LOGMSG_COUNT;
 	gwlan_logging.buffer_length = MAX_LOGMSG_LENGTH;
 
-	spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
-	INIT_LIST_HEAD(&gwlan_logging.free_list);
-	INIT_LIST_HEAD(&gwlan_logging.filled_list);
-
 	if (allocate_log_msg_buffer() != QDF_STATUS_SUCCESS) {
 		pr_err("%s: Could not allocate memory for log_msg\n",
 		       __func__);
 		return -ENOMEM;
 	}
+
+	spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
+	INIT_LIST_HEAD(&gwlan_logging.free_list);
+	INIT_LIST_HEAD(&gwlan_logging.filled_list);
 
 	for (i = 0; i < gwlan_logging.num_buf; i++) {
 		list_add(&gplog_msg[i].node, &gwlan_logging.free_list);
