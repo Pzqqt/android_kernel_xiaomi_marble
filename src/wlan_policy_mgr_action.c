@@ -1442,6 +1442,10 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 		return;
 	}
 
+	if (QDF_TIMER_STATE_RUNNING ==
+		pm_ctx->dbs_opportunistic_timer.state)
+		qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
+
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
 		if (pm_conc_connection_list[i].in_use)
@@ -1453,11 +1457,6 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 			}
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-
-	if (QDF_TIMER_STATE_RUNNING ==
-		pm_ctx->dbs_opportunistic_timer.state)
-		qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
-
 	pm_dbs_opportunistic_timer_handler((void *)psoc);
 }
 
