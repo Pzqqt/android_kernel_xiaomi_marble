@@ -1035,9 +1035,8 @@ struct cdp_ocb_ops {
  * @remove_peers_for_vdev_no_lock:
  * @copy_mac_addr_raw:
  * @add_last_real_peer:
- * @last_assoc_received:
- * @last_disassoc_received:
- * @last_deauth_received:
+ * @get_last_mgmt_timestamp:
+ * @set_last_mgmt_timestamp:
  * @is_vdev_restore_last_peer:
  * @update_last_real_peer:
  */
@@ -1081,13 +1080,18 @@ struct cdp_peer_ops {
 	void (*copy_mac_addr_raw)(struct cdp_vdev *vdev, uint8_t *bss_addr);
 	void (*add_last_real_peer)(struct cdp_pdev *pdev,
 		struct cdp_vdev *vdev, uint8_t *peer_id);
-	qdf_time_t * (*last_assoc_received)(void *peer);
-	qdf_time_t * (*last_disassoc_received)(void *peer);
-	qdf_time_t * (*last_deauth_received)(void *peer);
 	bool (*is_vdev_restore_last_peer)(void *peer);
 	void (*update_last_real_peer)(struct cdp_pdev *pdev, void *peer,
 			uint8_t *peer_id, bool restore_last_peer);
 	void (*peer_detach_force_delete)(void *peer);
+	bool (*get_last_mgmt_timestamp)(struct cdp_pdev *ppdev,
+					u8 *peer_addr,
+					u8 subtype,
+					qdf_time_t *timestamp);
+	bool (*update_last_mgmt_timestamp)(struct cdp_pdev *ppdev,
+					   u8 *peer_addr,
+					   qdf_time_t timestamp,
+					   u8 subtype);
 };
 
 /**

@@ -2174,48 +2174,125 @@ int dp_get_peer_state(void *peer_handle)
 }
 
 /**
- * dp_get_last_assoc_received() - get time of last assoc received
- * @peer_handle: peer handle
+ * dp_get_last_mgmt_timestamp() - get timestamp of last mgmt frame
+ * @pdev: pdev handle
+ * @ppeer_addr: peer mac addr
+ * @subtype: management frame type
+ * @timestamp: last timestamp
  *
- * Return: pointer for the time of last assoc received
+ * Return: true if timestamp is retrieved for valid peer else false
  */
-qdf_time_t *dp_get_last_assoc_received(void *peer_handle)
+bool dp_get_last_mgmt_timestamp(struct cdp_pdev *ppdev, u8 *peer_addr,
+				u8 subtype, qdf_time_t *timestamp)
 {
-	struct dp_peer *peer = peer_handle;
+	union dp_align_mac_addr local_mac_addr_aligned, *mac_addr;
+	unsigned int index;
+	struct dp_peer *peer;
+	struct dp_soc *soc;
 
-	DP_TRACE(INFO, "peer %pK last_assoc_rcvd: %lu", peer,
-		peer->last_assoc_rcvd);
-	return &peer->last_assoc_rcvd;
+	bool ret = false;
+	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
+
+	soc = pdev->soc;
+	qdf_mem_copy(
+		&local_mac_addr_aligned.raw[0],
+		peer_addr, DP_MAC_ADDR_LEN);
+	mac_addr = &local_mac_addr_aligned;
+
+	index = dp_peer_find_hash_index(soc, mac_addr);
+
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	TAILQ_FOREACH(peer, &soc->peer_hash.bins[index], hash_list_elem) {
+#if ATH_SUPPORT_WRAP
+		/* ProxySTA may have multiple BSS peer with same MAC address,
+		 * modified find will take care of finding the correct BSS peer.
+		 */
+		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0 &&
+		    (peer->vdev->vdev_id == DP_VDEV_ALL)) {
+#else
+		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0) {
+#endif
+			/* found it */
+			switch (subtype) {
+			case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
+				*timestamp = peer->last_assoc_rcvd;
+				ret = true;
+				break;
+			case IEEE80211_FC0_SUBTYPE_DISASSOC:
+			case IEEE80211_FC0_SUBTYPE_DEAUTH:
+				*timestamp = peer->last_disassoc_rcvd;
+				ret = true;
+				break;
+			default:
+				break;
+			}
+			qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+			return ret;
+		}
+	}
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	return false;		/*failure*/
 }
 
 /**
- * dp_get_last_disassoc_received() - get time of last disassoc received
- * @peer_handle: peer handle
+ * dp_update_last_mgmt_timestamp() - set timestamp of last mgmt frame
+ * @pdev: pdev handle
+ * @ppeer_addr: peer mac addr
+ * @timestamp: time to be set
+ * @subtype: management frame type
  *
- * Return: pointer for the time of last disassoc received
+ * Return: true if timestamp is updated for valid peer else false
  */
-qdf_time_t *dp_get_last_disassoc_received(void *peer_handle)
+
+bool dp_update_last_mgmt_timestamp(struct cdp_pdev *ppdev, u8 *peer_addr,
+				   qdf_time_t timestamp, u8 subtype)
 {
-	struct dp_peer *peer = peer_handle;
+	union dp_align_mac_addr local_mac_addr_aligned, *mac_addr;
+	unsigned int index;
+	struct dp_peer *peer;
+	struct dp_soc *soc;
 
-	DP_TRACE(INFO, "peer %pK last_disassoc_rcvd: %lu", peer,
-		peer->last_disassoc_rcvd);
-	return &peer->last_disassoc_rcvd;
-}
+	bool ret = false;
+	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
 
-/**
- * dp_get_last_deauth_received() - get time of last deauth received
- * @peer_handle: peer handle
- *
- * Return: pointer for the time of last deauth received
- */
-qdf_time_t *dp_get_last_deauth_received(void *peer_handle)
-{
-	struct dp_peer *peer = peer_handle;
+	soc = pdev->soc;
+	qdf_mem_copy(&local_mac_addr_aligned.raw[0],
+		     peer_addr, DP_MAC_ADDR_LEN);
+	mac_addr = &local_mac_addr_aligned;
 
-	DP_TRACE(INFO, "peer %pK last_deauth_rcvd: %lu", peer,
-		peer->last_deauth_rcvd);
-	return &peer->last_deauth_rcvd;
+	index = dp_peer_find_hash_index(soc, mac_addr);
+
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	TAILQ_FOREACH(peer, &soc->peer_hash.bins[index], hash_list_elem) {
+#if ATH_SUPPORT_WRAP
+		/* ProxySTA may have multiple BSS peer with same MAC address,
+		 * modified find will take care of finding the correct BSS peer.
+		 */
+		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0 &&
+		    (peer->vdev->vdev_id == DP_VDEV_ALL)) {
+#else
+		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0) {
+#endif
+			/* found it */
+			switch (subtype) {
+			case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
+				peer->last_assoc_rcvd = timestamp;
+				ret = true;
+				break;
+			case IEEE80211_FC0_SUBTYPE_DISASSOC:
+			case IEEE80211_FC0_SUBTYPE_DEAUTH:
+				peer->last_disassoc_rcvd = timestamp;
+				ret = true;
+				break;
+			default:
+				break;
+			}
+			qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+			return ret;
+		}
+	}
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	return false;		/*failure*/
 }
 
 /**

@@ -364,9 +364,10 @@ int dp_get_peer_state(void *peer_handle);
 void dp_local_peer_id_pool_init(struct dp_pdev *pdev);
 void dp_local_peer_id_alloc(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer);
-qdf_time_t *dp_get_last_assoc_received(void *peer_handle);
-qdf_time_t *dp_get_last_disassoc_received(void *peer_handle);
-qdf_time_t *dp_get_last_deauth_received(void *peer_handle);
+bool dp_get_last_mgmt_timestamp(struct cdp_pdev *ppdev, u8 *peer_addr,
+				u8 subtype, qdf_time_t *timestamp);
+bool dp_update_last_mgmt_timestamp(struct cdp_pdev *ppdev, u8 *peer_addr,
+				   qdf_time_t timestamp, u8 subtype);
 #else
 static inline void dp_local_peer_id_pool_init(struct dp_pdev *pdev)
 {

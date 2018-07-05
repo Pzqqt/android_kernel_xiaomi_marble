@@ -568,78 +568,65 @@ cdp_peer_add_last_real_peer(ol_txrx_soc_handle soc,
 }
 
 /**
- * cdp_peer_last_assoc_received() - last assoc received peer
+ * cdp_peer_get_last_mgmt_timestamp() - retrieve last timestamp for peer
  * @soc - data path soc handle
- * @peer - peer instance pointer
+ * @pdev - data path device instance
+ * @peer_addr - peer mac addr
+ * @subtype - Management frame subtype
  *
- * !!! This should be implemented on legacy also
- * last assoc received peer
- *
- * Return: pointer
+ * Return: true/false
  */
-static inline qdf_time_t *
-cdp_peer_last_assoc_received(ol_txrx_soc_handle soc, void *peer)
+static inline bool
+cdp_peer_get_last_mgmt_timestamp(ol_txrx_soc_handle soc,
+				 struct cdp_pdev *pdev,
+				 u8 *peer_addr,
+				 u8 subtype,
+				 qdf_time_t *timestamp)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-			"%s invalid instance", __func__);
-		return NULL;
+			  "%s invalid instance", __func__);
+		return 0;
 	}
 
-	if (soc->ops->peer_ops->last_assoc_received)
-		return soc->ops->peer_ops->last_assoc_received(peer);
+	if (soc->ops->peer_ops->get_last_mgmt_timestamp) {
+		return soc->ops->peer_ops->
+		get_last_mgmt_timestamp(pdev, peer_addr,
+					subtype, timestamp);
+	}
 
-	return NULL;
+	return false;
 }
 
 /**
- * cdp_peer_last_disassoc_received() - last disassoc received peer
+ * cdp_peer_update_last_mgmt_timestamp() - update timestamp for the peer
  * @soc - data path soc handle
- * @peer - peer instance pointer
+ * @pdev - data path device instance
+ * @peer_addr - peer mac addr
+ * @subtype - Management frame subtype
  *
- * !!! This should be implemented on legacy also
- * last disassoc received peer
- *
- * Return: pointer
+ * Return: true/false
  */
-static inline qdf_time_t *
-cdp_peer_last_disassoc_received(ol_txrx_soc_handle soc, void *peer)
+static inline bool
+cdp_peer_update_last_mgmt_timestamp(ol_txrx_soc_handle soc,
+				    struct cdp_pdev *pdev,
+				    u8 *peer_addr,
+				    qdf_time_t timestamp,
+				    u8 subtype)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-			"%s invalid instance", __func__);
-		return NULL;
+			  "%s invalid instance", __func__);
+		return false;
 	}
 
-	if (soc->ops->peer_ops->last_disassoc_received)
-		return soc->ops->peer_ops->last_disassoc_received(peer);
-
-	return NULL;
-}
-
-/**
- * cdp_peer_last_deauth_received() - last deauth received peer
- * @soc - data path soc handle
- * @peer - peer instance pointer
- *
- * !!! This should be implemented on legacy also
- * last deauth received peer
- *
- * Return: pointer
- */
-static inline qdf_time_t *
-cdp_peer_last_deauth_received(ol_txrx_soc_handle soc, void *peer)
-{
-	if (!soc || !soc->ops || !soc->ops->peer_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-			"%s invalid instance", __func__);
-		return NULL;
+	if (soc->ops->peer_ops->update_last_mgmt_timestamp) {
+		return soc->ops->peer_ops->
+		update_last_mgmt_timestamp(pdev, peer_addr,
+					   timestamp, subtype);
 	}
 
-	if (soc->ops->peer_ops->last_deauth_received)
-		return soc->ops->peer_ops->last_deauth_received(peer);
-
-	return NULL;
+	return false;
 }
 
 /**
