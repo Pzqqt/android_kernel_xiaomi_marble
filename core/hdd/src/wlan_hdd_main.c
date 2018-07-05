@@ -2128,7 +2128,9 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 				true;
 			hdd_info("tx blocked for session: %d",
 				adapter->session_id);
-			cdp_fc_vdev_flush(cds_get_context(QDF_MODULE_ID_SOC),
+			if (adapter->txrx_vdev)
+				cdp_fc_vdev_flush(
+					cds_get_context(QDF_MODULE_ID_SOC),
 					adapter->txrx_vdev);
 		}
 	}
