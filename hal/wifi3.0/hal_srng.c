@@ -37,6 +37,9 @@ void hal_qca6290_attach(struct hal_soc *hal);
 #ifdef QCA_WIFI_QCA8074
 void hal_qca8074_attach(struct hal_soc *hal);
 #endif
+#ifdef QCA_WIFI_QCA6390
+void hal_qca6390_attach(struct hal_soc *hal);
+#endif
 
 /**
  * hal_get_srng_ring_id() - get the ring id of a descriped ring
@@ -219,6 +222,12 @@ static void hal_target_based_configure(struct hal_soc *hal)
 	case TARGET_TYPE_QCA6290:
 		hal->use_register_windowing = true;
 		hal_qca6290_attach(hal);
+	break;
+#endif
+#ifdef QCA_WIFI_QCA6390
+	case TARGET_TYPE_QCA6390:
+		hal->use_register_windowing = true;
+		hal_qca6390_attach(hal);
 	break;
 #endif
 #ifdef QCA_WIFI_QCA8074
