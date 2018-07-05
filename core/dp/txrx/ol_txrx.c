@@ -4247,9 +4247,6 @@ int ol_txrx_fw_stats_desc_pool_init(struct ol_txrx_pdev_t *pdev,
  */
 void ol_txrx_fw_stats_desc_pool_deinit(struct ol_txrx_pdev_t *pdev)
 {
-	struct ol_txrx_fw_stats_desc_elem_t *desc;
-	uint8_t i;
-
 	if (!pdev) {
 		ol_txrx_err("%s: pdev is NULL", __func__);
 		return;
@@ -4264,11 +4261,6 @@ void ol_txrx_fw_stats_desc_pool_deinit(struct ol_txrx_pdev_t *pdev)
 	}
 	qdf_spin_lock_bh(&pdev->ol_txrx_fw_stats_desc_pool.pool_lock);
 	qdf_atomic_set(&pdev->ol_txrx_fw_stats_desc_pool.initialized, 0);
-	for (i = 0; i < pdev->ol_txrx_fw_stats_desc_pool.pool_size; i++) {
-		desc = &pdev->ol_txrx_fw_stats_desc_pool.pool[i];
-		if (desc && desc->desc.req)
-			qdf_mem_free(desc->desc.req);
-	}
 	qdf_mem_free(pdev->ol_txrx_fw_stats_desc_pool.pool);
 	pdev->ol_txrx_fw_stats_desc_pool.pool = NULL;
 
