@@ -25,6 +25,13 @@
 #define CFG_P2P_ALL
 #endif
 
+#ifdef CONVERGED_TDLS_ENABLE
+#include "wlan_tdls_cfg.h"
+#else
+#define CFG_TDLS_ALL
+#endif
+
 #define CFG_ALL \
 	CFG_CONVERGED_ALL \
-	CFG_P2P_ALL
+	CFG_P2P_ALL \
+	CFG_TDLS_ALL
