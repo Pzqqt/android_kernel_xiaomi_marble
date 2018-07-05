@@ -1858,15 +1858,6 @@ static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 	tsap_config_t *sap_config = &adapter->session.ap.sap_config;
 	mac_handle_t mac_handle;
 
-	/* memory allocation */
-	sap_config->channel_info = qdf_mem_malloc(
-					sizeof(struct hdd_channel_info) *
-					channel_count);
-	if (!sap_config->channel_info) {
-		hdd_err("memory allocation failed");
-		return -ENOMEM;
-
-	}
 	mac_handle = hdd_ctx->mac_handle;
 	sap_config->channel_info_count = channel_count;
 	for (i = 0; i < channel_count; i++) {
@@ -2110,7 +2101,6 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	enum qca_wlan_vendor_attr_external_acs_policy acs_policy;
 	uint32_t i;
 
-
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
 		return -EINVAL;
@@ -2160,6 +2150,14 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 			band);
 	}
 
+	sap_config->channel_info = qdf_mem_malloc(
+					sizeof(struct hdd_channel_info) *
+					channel_count);
+	if (!sap_config->channel_info) {
+		hdd_err("memory allocation failed");
+		return -ENOMEM;
+	}
+
 	hdd_update_reg_chan_info(adapter, channel_count, channel_list);
 	hdd_get_freq_list(channel_list, freq_list, channel_count);
 	/* Get phymode */
@@ -2173,6 +2171,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 
 	if (!skb) {
 		hdd_err("cfg80211_vendor_event_alloc failed");
+		qdf_mem_free(sap_config->channel_info);
 		return -ENOMEM;
 	}
 	/*
@@ -2247,7 +2246,6 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	status = hdd_cfg80211_update_channel_info(skb, sap_config,
 			QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHAN_INFO);
 
-	qdf_mem_free(sap_config->channel_info);
 	if (status != 0)
 		goto fail;
 
@@ -2259,8 +2257,11 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 		goto fail;
 
 	cfg80211_vendor_event(skb, GFP_KERNEL);
+	qdf_mem_free(sap_config->channel_info);
+
 	return 0;
 fail:
+	qdf_mem_free(sap_config->channel_info);
 	if (skb)
 		kfree_skb(skb);
 	return status;
@@ -14023,8 +14024,10 @@ int wlan_hdd_send_mode_change_event(void)
 	}
 
 	for (mac_id = 0; mac_id < MAX_MAC; mac_id++) {
-		if (wlan_hdd_fill_mac_info(skb, info, mac_id, conn_count))
+		if (wlan_hdd_fill_mac_info(skb, info, mac_id, conn_count)) {
+			kfree_skb(skb);
 			return -EINVAL;
+		}
 	}
 
 	nla_nest_end(skb, attr);
