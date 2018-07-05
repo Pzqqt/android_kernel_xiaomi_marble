@@ -924,6 +924,7 @@ typedef struct sAniSirGlobal {
 	uint32_t he_sgi_ltf_cfg_bit_mask;
 	uint8_t usr_cfg_tx_bfee_nsts;
 	struct mgmt_beacon_probe_filter bcn_filter;
+	tSirMacEdcaParamRecord usr_mu_edca_params[MAX_NUM_AC];
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_cap_2g;
 	tDot11fIEhe_cap he_cap_5g;

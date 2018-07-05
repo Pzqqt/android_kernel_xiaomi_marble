@@ -1128,6 +1128,10 @@ typedef struct sSirMacRRMEnabledCap {
 #define SIR_MAC_EDCAACI_VIDEO       (EDCA_AC_VI)
 #define SIR_MAC_EDCAACI_VOICE       (EDCA_AC_VO)
 
+#define MU_EDCA_DEF_AIFSN     0
+#define MU_EDCA_DEF_CW_MAX    15
+#define MU_EDCA_DEF_CW_MIN    15
+#define MU_EDCA_DEF_TIMER     255
 /* access category record */
 typedef struct sSirMacAciAifsn {
 #ifndef ANI_LITTLE_BIT_ENDIAN

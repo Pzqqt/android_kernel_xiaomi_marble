@@ -2391,6 +2391,24 @@ int sme_update_he_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
  * Return: 0 on success else err code
  */
 int sme_update_he_mcs(tHalHandle hal, uint8_t session_id, uint16_t he_mcs);
+
+/**
+ * sme_set_he_mu_edca_def_cfg() - sets the default MU EDCA params values
+ * @hal: Pointer to HAL
+ *
+ * Return: none
+ */
+void sme_set_he_mu_edca_def_cfg(mac_handle_t hal);
+
+/**
+ * sme_update_mu_edca_params() - updates MU EDCA params values
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_mu_edca_params(mac_handle_t hal, uint8_t session_id);
+
 /**
  * sme_update_he_tx_stbc_cap() - Sets the HE Tx STBC capability
  * @hal: Pointer to HAL
@@ -2441,6 +2459,16 @@ static inline void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 {}
 static inline int sme_update_he_mcs(tHalHandle hal, uint8_t session_id,
 				    uint16_t he_mcs)
+{
+	return 0;
+}
+
+static inline void sme_set_he_mu_edca_def_cfg(mac_handle_t hal)
+{
+}
+
+static inline int sme_update_mu_edca_params(mac_handle_t hal,
+					    uint8_t session_id)
 {
 	return 0;
 }

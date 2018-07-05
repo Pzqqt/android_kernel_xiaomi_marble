@@ -12864,6 +12864,38 @@ static int sme_update_he_cap(tHalHandle hal, uint8_t session_id,
 	return 0;
 }
 
+int sme_update_mu_edca_params(mac_handle_t hal, uint8_t session_id)
+{
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
+
+	qdf_mem_zero(&msg, sizeof(msg));
+	msg.type = WNI_SME_UPDATE_MU_EDCA_PARAMS;
+	msg.reserved = 0;
+	msg.bodyval = session_id;
+	status = scheduler_post_msg(QDF_MODULE_ID_PE, &msg);
+	if (status != QDF_STATUS_SUCCESS) {
+		sme_err("Not able to post update edca profile");
+		return -EIO;
+	}
+
+	return 0;
+}
+void sme_set_he_mu_edca_def_cfg(mac_handle_t hal)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	uint8_t i;
+
+	for (i = 0; i < MAX_NUM_AC; i++) {
+		mac_ctx->usr_mu_edca_params[i].aci.aifsn = MU_EDCA_DEF_AIFSN;
+		mac_ctx->usr_mu_edca_params[i].aci.aci = i;
+		mac_ctx->usr_mu_edca_params[i].cw.max = MU_EDCA_DEF_CW_MAX;
+		mac_ctx->usr_mu_edca_params[i].cw.min = MU_EDCA_DEF_CW_MIN;
+		mac_ctx->usr_mu_edca_params[i].mu_edca_timer =
+							MU_EDCA_DEF_TIMER;
+	}
+}
+
 int sme_update_he_tx_bfee_supp(tHalHandle hal, uint8_t session_id,
 			       uint8_t cfg_val)
 {
