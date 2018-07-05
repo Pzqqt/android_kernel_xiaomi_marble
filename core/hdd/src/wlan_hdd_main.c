@@ -10088,19 +10088,19 @@ out:
 
 /**
  * wlan_hdd_p2p_lo_event_callback - P2P listen offload stop event handler
- * @context_ptr - hdd context pointer
- * @event_ptr - event structure pointer
+ * @context: context registered with sme_register_p2p_lo_event(). HDD
+ *   always registers a hdd context pointer
+ * @evt:event structure pointer
  *
  * This is the p2p listen offload stop event handler, it sends vendor
  * event back to supplicant to notify the stop reason.
  *
  * Return: None
  */
-static void wlan_hdd_p2p_lo_event_callback(void *context_ptr,
-				void *event_ptr)
+static void wlan_hdd_p2p_lo_event_callback(void *context,
+					   struct sir_p2p_lo_event *evt)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *)context_ptr;
-	struct sir_p2p_lo_event *evt = event_ptr;
+	struct hdd_context *hdd_ctx = context;
 	struct sk_buff *vendor_event;
 	struct hdd_adapter *adapter;
 

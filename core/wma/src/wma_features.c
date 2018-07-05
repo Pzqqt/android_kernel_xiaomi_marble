@@ -5121,7 +5121,8 @@ int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
 	event->vdev_id = fix_param->vdev_id;
 	event->reason_code = fix_param->reason;
 
-	p_mac->sme.p2p_lo_event_callback(p_mac->hdd_handle, event);
+	p_mac->sme.p2p_lo_event_callback(p_mac->sme.p2p_lo_event_context,
+					 event);
 
 	wma->interfaces[event->vdev_id].p2p_lo_in_progress = false;
 

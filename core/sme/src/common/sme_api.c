@@ -14382,7 +14382,7 @@ void sme_update_hw_dbs_capable(tHalHandle hal, uint8_t hw_dbs_capable)
  * Return: none
  */
 void sme_register_p2p_lo_event(tHalHandle hHal, void *context,
-					p2p_lo_callback callback)
+			       p2p_lo_callback callback)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
