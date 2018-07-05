@@ -1254,6 +1254,12 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_PRECAC_CHAN_STATE = 374,
 #endif
 	OL_ATH_PARAM_DBR_RING_STATUS = 375,
+#ifdef QCN_ESP_IE
+	OL_ATH_PARAM_ESP_PERIODICITY = 376,
+	OL_ATH_PARAM_ESP_AIRTIME = 377,
+	OL_ATH_PARAM_ESP_PPDU_DURATION = 378,
+	OL_ATH_PARAM_ESP_BA_WINDOW = 379,
+#endif /* QCN_ESP_IE */
 };
 
 /* Enumeration of PDEV Configuration parameter */
