@@ -8133,7 +8133,7 @@ void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
 #if defined(FEATURE_WLAN_CH_AVOID)
 /**
  * hdd_set_thermal_level_cb() - set thermal level callback function
- * @context:	hdd context pointer
+ * @hdd_handle:	opaque handle for the hdd context
  * @level:	thermal level
  *
  * Change IPA data path to SW path when the thermal throttle level greater
@@ -8141,9 +8141,9 @@ void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
  *
  * Return: none
  */
-static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
+static void hdd_set_thermal_level_cb(hdd_handle_t hdd_handle, u_int8_t level)
 {
-	struct hdd_context *hdd_ctx = context;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 
 	/* Change IPA to SW path when throttle level greater than 0 */
 	if (level > THROTTLE_LEVEL_0)
@@ -8550,7 +8550,7 @@ static void hdd_init_channel_avoidance(struct hdd_context *hdd_ctx)
 {
 }
 
-static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
+static void hdd_set_thermal_level_cb(hdd_handle_t hdd_handle, u_int8_t level)
 {
 }
 
