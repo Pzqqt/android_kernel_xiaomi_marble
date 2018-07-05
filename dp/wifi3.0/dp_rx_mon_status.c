@@ -271,6 +271,8 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 			struct hal_rx_ppdu_info *ppdu_info, qdf_nbuf_t nbuf)
 {
 	uint8_t size = 0;
+	struct ieee80211_frame *wh;
+	uint32_t *nbuf_data;
 
 	if (ppdu_info->msdu_info.first_msdu_payload == NULL)
 		return QDF_STATUS_SUCCESS;
@@ -280,14 +282,24 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 
 	pdev->m_copy_id.rx_ppdu_id = ppdu_info->com_info.ppdu_id;
 
-	/* Include 2 bytes of reserved space appended to the msdu payload */
+	wh = (struct ieee80211_frame *)(ppdu_info->msdu_info.first_msdu_payload
+					+ 4);
 	size = (ppdu_info->msdu_info.first_msdu_payload -
-				qdf_nbuf_data(nbuf)) + 2;
+				qdf_nbuf_data(nbuf));
 	ppdu_info->msdu_info.first_msdu_payload = NULL;
 
 	if (qdf_nbuf_pull_head(nbuf, size) == NULL)
 		return QDF_STATUS_SUCCESS;
 
+	if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	     IEEE80211_FC0_TYPE_MGT) ||
+	     ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	     IEEE80211_FC0_TYPE_CTL)) {
+		return QDF_STATUS_SUCCESS;
+	}
+
+	nbuf_data = (uint32_t *)qdf_nbuf_data(nbuf);
+	*nbuf_data = pdev->ppdu_info.com_info.ppdu_id;
 	/* only retain RX MSDU payload in the skb */
 	qdf_nbuf_trim_tail(nbuf, qdf_nbuf_len(nbuf) -
 				ppdu_info->msdu_info.payload_len);

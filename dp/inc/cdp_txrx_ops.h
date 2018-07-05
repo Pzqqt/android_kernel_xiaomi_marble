@@ -172,7 +172,15 @@ struct cdp_cmn_ops {
 
 	void (*txrx_set_nac)(struct cdp_peer *peer);
 
-	void (*txrx_set_pdev_tx_capture)(struct cdp_pdev *pdev, int val);
+	/**
+	 * txrx_set_pdev_tx_capture() - callback to set pdev tx_capture
+	 * @soc: opaque soc handle
+	 * @pdev: data path pdev handle
+	 * @val: value of pdev_tx_capture
+	 *
+	 * Return: status: 0 - Success, non-zero: Failure
+	 */
+	QDF_STATUS (*txrx_set_pdev_tx_capture)(struct cdp_pdev *pdev, int val);
 
 	void (*txrx_get_peer_mac_from_peer_id)
 		(struct cdp_pdev *pdev_handle,
@@ -601,8 +609,17 @@ struct cdp_ctrl_ops {
 	void (*txrx_update_mgmt_txpow_vdev)(struct cdp_vdev *vdev,
 			uint8_t subtype, uint8_t tx_power);
 
-	void (*txrx_set_pdev_param)(struct cdp_pdev *pdev,
-			enum cdp_pdev_param_type type, uint8_t val);
+	/**
+	 * txrx_set_pdev_param() - callback to set pdev parameter
+	 * @soc: opaque soc handle
+	 * @pdev: data path pdev handle
+	 * @val: value of pdev_tx_capture
+	 *
+	 * Return: status: 0 - Success, non-zero: Failure
+	 */
+	QDF_STATUS (*txrx_set_pdev_param)(struct cdp_pdev *pdev,
+					  enum cdp_pdev_param_type type,
+					  uint8_t val);
 	void * (*txrx_get_pldev)(struct cdp_pdev *pdev);
 
 #ifdef ATH_SUPPORT_NAC_RSSI

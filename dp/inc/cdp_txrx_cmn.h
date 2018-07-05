@@ -1959,16 +1959,16 @@ void cdp_set_nac(ol_txrx_soc_handle soc,
  * @pdev: data path pdev handle
  * @val: value of pdev_tx_capture
  *
- * Return: void
+ * Return: status: 0 - Success, non-zero: Failure
  */
 static inline
-void cdp_set_pdev_tx_capture(ol_txrx_soc_handle soc,
-		struct cdp_pdev *pdev, int val)
+QDF_STATUS cdp_set_pdev_tx_capture(ol_txrx_soc_handle soc,
+				   struct cdp_pdev *pdev, int val)
 {
 	if (soc->ops->cmn_drv_ops->txrx_set_pdev_tx_capture)
 		return soc->ops->cmn_drv_ops->txrx_set_pdev_tx_capture(pdev,
 				val);
-
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

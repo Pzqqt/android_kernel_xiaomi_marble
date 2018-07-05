@@ -5380,6 +5380,7 @@ static QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 	}
 
 	pdev->monitor_vdev = NULL;
+	pdev->mcopy_mode = 0;
 
 	qdf_spin_unlock_bh(&pdev->mon_lock);
 
@@ -5437,47 +5438,21 @@ static void dp_get_peer_mac_from_peer_id(struct cdp_pdev *pdev_handle,
 }
 
 /**
- * dp_vdev_set_monitor_mode() - Set DP VDEV to monitor mode
+ * dp_pdev_configure_monitor_rings() - configure monitor rings
  * @vdev_handle: Datapath VDEV handle
- * @smart_monitor: Flag to denote if its smart monitor mode
  *
- * Return: 0 on success, not 0 on failure
+ * Return: void
  */
-static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
-					   uint8_t smart_monitor)
+static QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 {
-	/* Many monitor VAPs can exists in a system but only one can be up at
-	 * anytime
-	 */
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
-	struct dp_pdev *pdev;
 	struct htt_rx_ring_tlv_filter htt_tlv_filter;
 	struct dp_soc *soc;
 	uint8_t pdev_id;
 	int mac_id;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	qdf_assert(vdev);
-
-	pdev = vdev->pdev;
 	pdev_id = pdev->pdev_id;
 	soc = pdev->soc;
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-		"pdev=%pK, pdev_id=%d, soc=%pK vdev=%pK",
-		pdev, pdev_id, soc, vdev);
-
-	/*Check if current pdev's monitor_vdev exists */
-	if (pdev->monitor_vdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"vdev=%pK", vdev);
-		qdf_assert(vdev);
-	}
-
-	pdev->monitor_vdev = vdev;
-
-	/* If smart monitor mode, do not configure monitor ring */
-	if (smart_monitor)
-		return QDF_STATUS_SUCCESS;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 		"MODE[%x] FP[%02x|%02x|%02x] MO[%02x|%02x|%02x]",
@@ -5508,7 +5483,10 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 		(pdev->mon_filter_mode & MON_FILTER_OTHER) ? 1 : 0;
 	htt_tlv_filter.fp_mgmt_filter = pdev->fp_mgmt_filter;
 	htt_tlv_filter.fp_ctrl_filter = pdev->fp_ctrl_filter;
-	htt_tlv_filter.fp_data_filter = pdev->fp_data_filter;
+	if (pdev->mcopy_mode)
+		htt_tlv_filter.fp_data_filter = 0;
+	else
+		htt_tlv_filter.fp_data_filter = pdev->fp_data_filter;
 	htt_tlv_filter.mo_mgmt_filter = pdev->mo_mgmt_filter;
 	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
 	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
@@ -5561,7 +5539,44 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
+}
+
+/**
+ * dp_vdev_set_monitor_mode() - Set DP VDEV to monitor mode
+ * @vdev_handle: Datapath VDEV handle
+ * @smart_monitor: Flag to denote if its smart monitor mode
+ *
+ * Return: 0 on success, not 0 on failure
+ */
+static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
+					   uint8_t smart_monitor)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_pdev *pdev;
+
+	qdf_assert(vdev);
+
+	pdev = vdev->pdev;
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
+		  "pdev=%pK, pdev_id=%d, soc=%pK vdev=%pK\n",
+		  pdev, pdev->pdev_id, pdev->soc, vdev);
+
+	/*Check if current pdev's monitor_vdev exists */
+	if (pdev->monitor_vdev || pdev->mcopy_mode) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "monitor vap already created vdev=%pK\n", vdev);
+		qdf_assert(vdev);
+		return QDF_STATUS_E_RESOURCES;
+	}
+
+	pdev->monitor_vdev = vdev;
+
+	/* If smart monitor mode, do not configure monitor ring */
+	if (smart_monitor)
+		return QDF_STATUS_SUCCESS;
+
+	return dp_pdev_configure_monitor_rings(pdev);
 }
 
 /**
@@ -5654,7 +5669,10 @@ dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 		(pdev->mon_filter_mode & MON_FILTER_OTHER) ? 1 : 0;
 	htt_tlv_filter.fp_mgmt_filter = pdev->fp_mgmt_filter;
 	htt_tlv_filter.fp_ctrl_filter = pdev->fp_ctrl_filter;
-	htt_tlv_filter.fp_data_filter = pdev->fp_data_filter;
+	if (pdev->mcopy_mode)
+		htt_tlv_filter.fp_data_filter = 0;
+	else
+		htt_tlv_filter.fp_data_filter = pdev->fp_data_filter;
 	htt_tlv_filter.mo_mgmt_filter = pdev->mo_mgmt_filter;
 	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
 	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
@@ -7464,9 +7482,9 @@ static inline bool is_ppdu_txrx_capture_enabled(struct dp_pdev *pdev)
  *@pdev_handle: DP_PDEV handle.
  *@val: Provided value.
  *
- *Return: void
+ *Return: 0 for success. nonzero for failure.
  */
-static void
+static QDF_STATUS
 dp_set_bpr_enable(struct cdp_pdev *pdev_handle, int val)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
@@ -7507,6 +7525,8 @@ dp_set_bpr_enable(struct cdp_pdev *pdev_handle, int val)
 	default:
 		break;
 	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -7514,12 +7534,16 @@ dp_set_bpr_enable(struct cdp_pdev *pdev_handle, int val)
  * @pdev_handle: DP_PDEV handle
  * @val: user provided value
  *
- * Return: void
+ * Return: 0 for success. nonzero for failure.
  */
-static void
+static QDF_STATUS
 dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (pdev->mcopy_mode)
+		dp_reset_monitor_mode(pdev_handle);
 
 	switch (val) {
 	case 0:
@@ -7553,9 +7577,14 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 				DP_PPDU_STATS_CFG_SNIFFER, pdev->pdev_id);
 		break;
 	case 2:
+		if (pdev->monitor_vdev) {
+			status = QDF_STATUS_E_RESOURCES;
+			break;
+		}
+
 		pdev->mcopy_mode = 1;
+		dp_pdev_configure_monitor_rings(pdev);
 		pdev->tx_sniffer_enable = 0;
-		dp_ppdu_ring_cfg(pdev);
 
 		if (!pdev->pktlog_ppdu_stats)
 			dp_h2t_cfg_stats_msg_send(pdev,
@@ -7566,6 +7595,7 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 			"Invalid value");
 		break;
 	}
+	return status;
 }
 
 /*
@@ -7709,25 +7739,25 @@ dp_get_htt_stats(struct cdp_pdev *pdev_handle, void *data, uint32_t data_len)
  * @param: parameter type to be set
  * @val: value of parameter to be set
  *
- * return: void
+ * Return: 0 for success. nonzero for failure.
  */
-static void dp_set_pdev_param(struct cdp_pdev *pdev_handle,
-		enum cdp_pdev_param_type param, uint8_t val)
+static QDF_STATUS dp_set_pdev_param(struct cdp_pdev *pdev_handle,
+				    enum cdp_pdev_param_type param,
+				    uint8_t val)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	switch (param) {
 	case CDP_CONFIG_DEBUG_SNIFFER:
-		dp_config_debug_sniffer(pdev_handle, val);
-		break;
+		return dp_config_debug_sniffer(pdev_handle, val);
 	case CDP_CONFIG_BPR_ENABLE:
-		dp_set_bpr_enable(pdev_handle, val);
-		break;
+		return dp_set_bpr_enable(pdev_handle, val);
 	case CDP_CONFIG_PRIMARY_RADIO:
 		pdev->is_primary = val;
 		break;
 	default:
-		break;
+		return QDF_STATUS_E_INVAL;
 	}
+	return QDF_STATUS_SUCCESS;
 }
 
 /*

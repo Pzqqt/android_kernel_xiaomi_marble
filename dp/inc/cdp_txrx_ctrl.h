@@ -466,22 +466,32 @@ cdp_peer_set_nawds(ol_txrx_soc_handle soc,
 			(peer, value);
 }
 
-static inline void cdp_txrx_set_pdev_param(ol_txrx_soc_handle soc,
-		struct cdp_pdev *pdev, enum cdp_pdev_param_type type,
-		uint8_t val)
+/**
+ * cdp_txrx_set_pdev_param() - set pdev parameter
+ * @soc: opaque soc handle
+ * @pdev: data path pdev handle
+ * @type: param type
+ * @val: value of pdev_tx_capture
+ *
+ * Return: status: 0 - Success, non-zero: Failure
+ */
+static inline QDF_STATUS cdp_txrx_set_pdev_param(ol_txrx_soc_handle soc,
+						 struct cdp_pdev *pdev,
+						 enum cdp_pdev_param_type type,
+						 uint8_t val)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	if (!soc->ops->ctrl_ops ||
 	    !soc->ops->ctrl_ops->txrx_set_pdev_param)
-		return;
+		return QDF_STATUS_SUCCESS;
 
-	soc->ops->ctrl_ops->txrx_set_pdev_param
+	return soc->ops->ctrl_ops->txrx_set_pdev_param
 			(pdev, type, val);
 }
 

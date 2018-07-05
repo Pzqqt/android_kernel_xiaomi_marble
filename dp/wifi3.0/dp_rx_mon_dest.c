@@ -440,7 +440,6 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					+ frag_len;
 
 			qdf_nbuf_set_pktlen(msdu, rx_buf_size);
-
 #if 0
 			/* Disble it.see packet on msdu done set to 0 */
 			/*
@@ -815,6 +814,60 @@ mpdu_stitch_fail:
 }
 
 /**
+ * dp_send_mgmt_packet_to_stack(): send indicataion to upper layers
+ *
+ * @soc: soc handle
+ * @nbuf: Mgmt packet
+ * @pdev: pdev handle
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ *         QDF_STATUS_E_INVAL in error
+ */
+#ifdef FEATURE_PERPKT_INFO
+static inline QDF_STATUS dp_send_mgmt_packet_to_stack(struct dp_soc *soc,
+						      qdf_nbuf_t nbuf,
+						      struct dp_pdev *pdev)
+{
+	uint32_t *nbuf_data;
+	struct ieee80211_frame *wh;
+
+	if (!nbuf)
+		return QDF_STATUS_E_INVAL;
+
+	/*check if this is not a mgmt packet*/
+	wh = (struct ieee80211_frame *)qdf_nbuf_data(nbuf);
+	if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
+	     IEEE80211_FC0_TYPE_MGT) &&
+	     ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
+	     IEEE80211_FC0_TYPE_CTL)) {
+		qdf_nbuf_free(nbuf);
+		return QDF_STATUS_E_INVAL;
+	}
+	nbuf_data = (uint32_t *)qdf_nbuf_push_head(nbuf, 4);
+	if (!nbuf_data) {
+		QDF_TRACE(QDF_MODULE_ID_DP,
+			  QDF_TRACE_LEVEL_ERROR,
+			  FL("No headroom"));
+		qdf_nbuf_free(nbuf);
+		return QDF_STATUS_E_INVAL;
+	}
+	*nbuf_data = pdev->ppdu_info.com_info.ppdu_id;
+
+	dp_wdi_event_handler(WDI_EVENT_RX_MGMT_CTRL, soc, nbuf,
+			     HTT_INVALID_PEER,
+			     WDI_NO_VAL, pdev->pdev_id);
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS dp_send_mgmt_packet_to_stack(struct dp_soc *soc,
+						      qdf_nbuf_t nbuf,
+						      struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
  * dp_rx_extract_radiotap_info(): Extract and populate information in
  *				struct mon_rx_status type
  * @rx_status: Receive status
@@ -842,6 +895,15 @@ void dp_rx_extract_radiotap_info(struct cdp_mon_status *rx_status,
 	/* TODO: rx_mon_status->vht_flag_values1 */
 }
 
+/*
+ * dp_rx_mon_deliver(): function to deliver packets to stack
+ * @soc: DP soc
+ * @mac_id: MAC ID
+ * @head_msdu: head of msdu list
+ * @tail_msdu: tail of msdu list
+ *
+ * Return: status: 0 - Success, non-zero: Failure
+ */
 QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu)
 {
@@ -850,16 +912,21 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t mon_skb, skb_next;
 	qdf_nbuf_t mon_mpdu = NULL;
 
-	if ((pdev->monitor_vdev == NULL) ||
-		(pdev->monitor_vdev->osif_rx_mon == NULL)) {
+	if (!pdev->monitor_vdev && !pdev->mcopy_mode)
 		goto mon_deliver_fail;
-	}
 
 	/* restitch mon MPDU for delivery via monitor interface */
 	mon_mpdu = dp_rx_mon_restitch_mpdu_from_msdus(soc, mac_id, head_msdu,
 				tail_msdu, rs);
 
-	if (mon_mpdu && pdev->monitor_vdev && pdev->monitor_vdev->osif_vdev) {
+	/* monitor vap cannot be present when mcopy is enabled
+	 * hence same skb can be consumed
+	 */
+	if (pdev->mcopy_mode)
+		return dp_send_mgmt_packet_to_stack(soc, mon_mpdu, pdev);
+
+	if (mon_mpdu && pdev->monitor_vdev && pdev->monitor_vdev->osif_vdev &&
+	    pdev->monitor_vdev->osif_rx_mon) {
 		pdev->ppdu_info.rx_status.ppdu_id =
 			pdev->ppdu_info.com_info.ppdu_id;
 		pdev->ppdu_info.rx_status.device_id = soc->device_id;
@@ -872,9 +939,10 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 				pdev->monitor_vdev->osif_vdev, mon_mpdu, NULL);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  "[%s][%d] mon_mpdu=%pK pdev->monitor_vdev %pK osif_vdev %pK",
-				  __func__, __LINE__, mon_mpdu, pdev->monitor_vdev,
-				  pdev->monitor_vdev->osif_vdev);
+			  "[%s][%d] mon_mpdu=%pK monitor_vdev %pK osif_vdev %pK"
+			  , __func__, __LINE__, mon_mpdu, pdev->monitor_vdev,
+			  (pdev->monitor_vdev ? pdev->monitor_vdev->osif_vdev
+			   : NULL));
 		goto mon_deliver_fail;
 	}
 
