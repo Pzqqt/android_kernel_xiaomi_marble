@@ -577,7 +577,9 @@ qdf_nbuf_history_add(qdf_nbuf_t nbuf, const char *file, uint32_t line,
 	event->type = type;
 	event->timestamp = qdf_get_log_timestamp();
 }
+#endif /* NBUF_MEMORY_DEBUG */
 
+#ifdef NBUF_MAP_UNMAP_DEBUG
 struct qdf_nbuf_map_metadata {
 	struct hlist_node node;
 	qdf_nbuf_t nbuf;
@@ -853,7 +855,35 @@ void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
 }
 
 qdf_export_symbol(qdf_nbuf_unmap_nbytes_single_debug);
-#endif /* NBUF_MEMORY_DEBUG */
+
+static void qdf_nbuf_panic_on_free_if_mapped(qdf_nbuf_t nbuf, uint8_t *file,
+					     uint32_t line)
+{
+	struct qdf_nbuf_map_metadata *meta;
+
+	qdf_spin_lock_irqsave(&qdf_nbuf_map_lock);
+	meta = qdf_nbuf_meta_get(nbuf);
+	if (meta)
+		QDF_DEBUG_PANIC(
+			"Nbuf freed @ %s:%u while mapped from %s:%u",
+			kbasename(file), line, meta->file, meta->line);
+	qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
+}
+#else
+static inline void qdf_nbuf_map_tracking_init(void)
+{
+}
+
+static inline void qdf_nbuf_map_tracking_deinit(void)
+{
+}
+
+static inline void qdf_nbuf_panic_on_free_if_mapped(qdf_nbuf_t nbuf,
+						    uint8_t *file,
+						    uint32_t line)
+{
+}
+#endif /* NBUF_MAP_UNMAP_DEBUG */
 
 /**
  * __qdf_nbuf_map() - map a buffer to local bus address space
@@ -2627,16 +2657,7 @@ void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, uint8_t *file, uint32_t line)
 
 	/* Remove SKB from internal QDF tracking table */
 	if (qdf_likely(nbuf)) {
-		struct qdf_nbuf_map_metadata *meta;
-
-		qdf_spin_lock_irqsave(&qdf_nbuf_map_lock);
-		meta = qdf_nbuf_meta_get(nbuf);
-		if (meta)
-			QDF_DEBUG_PANIC(
-				"Nbuf freed @ %s:%u while mapped from %s:%u",
-				kbasename(file), line, meta->file, meta->line);
-		qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
-
+		qdf_nbuf_panic_on_free_if_mapped(nbuf, file, line);
 		qdf_net_buf_debug_delete_node(nbuf);
 		qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_FREE);
 	}

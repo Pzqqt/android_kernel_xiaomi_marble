@@ -651,7 +651,7 @@ qdf_nbuf_set_send_complete_flag(qdf_nbuf_t buf, bool flag)
 	__qdf_nbuf_set_send_complete_flag(buf, flag);
 }
 
-#ifdef NBUF_MEMORY_DEBUG
+#ifdef NBUF_MAP_UNMAP_DEBUG
 /**
  * qdf_nbuf_map_check_for_leaks() - check for nbut map leaks
  *
@@ -739,7 +739,7 @@ void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
 	qdf_nbuf_unmap_nbytes_single_debug(osdev, buf, dir, nbytes, \
 					   __FILE__, __LINE__)
 
-#else /* NBUF_MEMORY_DEBUG */
+#else /* NBUF_MAP_UNMAP_DEBUG */
 
 static inline void qdf_nbuf_map_check_for_leaks(void) {}
 
@@ -794,7 +794,7 @@ qdf_nbuf_unmap_nbytes_single(
 {
 	return __qdf_nbuf_unmap_nbytes_single(osdev, buf, dir, nbytes);
 }
-#endif /* NBUF_MEMORY_DEBUG */
+#endif /* NBUF_MAP_UNMAP_DEBUG */
 
 /**
  * qdf_nbuf_queue_head_dequeue() - dequeue nbuf from the head of queue
