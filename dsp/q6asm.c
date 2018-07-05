@@ -7503,8 +7503,8 @@ static int q6asm_memory_map_regions(struct audio_client *ac, int dir,
 	}
 
 	rc = wait_event_timeout(ac->mem_wait,
-			(atomic_read(&ac->mem_state) >= 0)
-			 , 5*HZ);
+			(atomic_read(&ac->mem_state) >= 0 &&
+			 ac->port[dir].tmp_hdl), 5*HZ);
 	if (!rc) {
 		pr_err("%s: timeout. waited for memory_map\n", __func__);
 		rc = -ETIMEDOUT;
