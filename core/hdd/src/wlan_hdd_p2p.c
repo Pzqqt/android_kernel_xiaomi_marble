@@ -47,6 +47,7 @@
 #include "wlan_p2p_public_struct.h"
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_cfg80211_p2p.h"
+#include "wlan_p2p_cfg_api.h"
 
 /* Ms to Time Unit Micro Sec */
 #define MS_TO_TU_MUS(x)   ((x) * 1024)
@@ -629,6 +630,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = NULL;
 	int ret;
 	uint8_t session_type;
+	bool p2p_dev_addr_admin = false;
 
 	hdd_enter();
 
@@ -683,7 +685,8 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	}
 
 	adapter = NULL;
-	if (hdd_ctx->config->isP2pDeviceAddrAdministrated &&
+	cfg_p2p_get_device_addr_admin(hdd_ctx->hdd_psoc, &p2p_dev_addr_admin);
+	if (p2p_dev_addr_admin &&
 	    ((NL80211_IFTYPE_P2P_GO == type) ||
 	     (NL80211_IFTYPE_P2P_CLIENT == type))) {
 		/*

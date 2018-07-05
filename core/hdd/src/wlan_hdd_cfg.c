@@ -42,6 +42,7 @@
 #include "wlan_hdd_green_ap.h"
 #include "wlan_hdd_green_ap_cfg.h"
 #include "wlan_hdd_twt.h"
+#include "wlan_p2p_cfg_api.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(struct hdd_context *hdd_ctx,
@@ -644,26 +645,12 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_AP_KEEP_ALIVE_PERIOD_MIN,
 		     CFG_AP_KEEP_ALIVE_PERIOD_MAX),
 
-	REG_VARIABLE(CFG_GO_KEEP_ALIVE_PERIOD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, goKeepAlivePeriod,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_GO_KEEP_ALIVE_PERIOD_DEFAULT,
-		     CFG_GO_KEEP_ALIVE_PERIOD_MIN,
-		     CFG_GO_KEEP_ALIVE_PERIOD_MAX),
-
 	REG_VARIABLE(CFG_AP_LINK_MONITOR_PERIOD_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, apLinkMonitorPeriod,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_AP_LINK_MONITOR_PERIOD_DEFAULT,
 		     CFG_AP_LINK_MONITOR_PERIOD_MIN,
 		     CFG_AP_LINK_MONITOR_PERIOD_MAX),
-
-	REG_VARIABLE(CFG_GO_LINK_MONITOR_PERIOD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, goLinkMonitorPeriod,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_GO_LINK_MONITOR_PERIOD_DEFAULT,
-		     CFG_GO_LINK_MONITOR_PERIOD_MIN,
-		     CFG_GO_LINK_MONITOR_PERIOD_MAX),
 
 	REG_VARIABLE(CFG_DISABLE_PACKET_FILTER, WLAN_PARAM_Integer,
 		     struct hdd_config, disablePacketFilter,
@@ -1854,14 +1841,6 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX,
 			     cb_notify_set_roam_scan_home_away_time, 0),
 
-	REG_VARIABLE(CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, isP2pDeviceAddrAdministrated,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED_DEFAULT,
-		     CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED_MIN,
-		     CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_MCC_ENABLED_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enableMCC,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2152,21 +2131,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_FIRST_SCAN_2G_ONLY_DEFAULT,
 		     CFG_ENABLE_FIRST_SCAN_2G_ONLY_MIN,
 		     CFG_ENABLE_FIRST_SCAN_2G_ONLY_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, skipDfsChnlInP2pSearch,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH_DEFAULT,
-		     CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH_MIN,
-		     CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH_MAX),
-
-	REG_VARIABLE(CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, ignoreDynamicDtimInP2pMode,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_DEFAULT,
-		     CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_MIN,
-		     CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_RX_STBC, WLAN_PARAM_Integer,
 		     struct hdd_config, enableRxSTBC,
@@ -6711,10 +6675,6 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->vhtChannelWidth);
 	hdd_debug("Name = [enableFirstScan2GOnly] Value = [%u] ",
 		  hdd_ctx->config->enableFirstScan2GOnly);
-	hdd_debug("Name = [skipDfsChnlInP2pSearch] Value = [%u] ",
-		  hdd_ctx->config->skipDfsChnlInP2pSearch);
-	hdd_debug("Name = [ignoreDynamicDtimInP2pMode] Value = [%u] ",
-		  hdd_ctx->config->ignoreDynamicDtimInP2pMode);
 	hdd_debug("Name = [enableRxSTBC] Value = [%u] ",
 		  hdd_ctx->config->enableRxSTBC);
 	hdd_debug("Name = [gEnableSSR] Value = [%u] ",
@@ -6723,12 +6683,8 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->enable_data_stall_det);
 	hdd_debug("Name = [gEnableVhtFor24GHzBand] Value = [%u] ",
 		  hdd_ctx->config->enableVhtFor24GHzBand);
-	hdd_debug("Name = [gGoLinkMonitorPeriod] Value = [%u]",
-		  hdd_ctx->config->goLinkMonitorPeriod);
 	hdd_debug("Name = [gApLinkMonitorPeriod] Value = [%u]",
 		  hdd_ctx->config->apLinkMonitorPeriod);
-	hdd_debug("Name = [gGoKeepAlivePeriod] Value = [%u]",
-		  hdd_ctx->config->goKeepAlivePeriod);
 	hdd_debug("Name = [gApKeepAlivePeriod]Value = [%u]",
 		  hdd_ctx->config->apKeepAlivePeriod);
 	hdd_debug("Name = [max_amsdu_num] Value = [%u] ",
@@ -8107,6 +8063,8 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 	bool status = true;
 	struct hdd_config *config = hdd_ctx->config;
 	mac_handle_t mac_handle;
+	uint32_t ivalue;
+	QDF_STATUS ret;
 
 	/*
 	 * During the initialization both 2G and 5G capabilities should be same.
@@ -8194,10 +8152,16 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_AP_KEEP_ALIVE_TIMEOUT to CFG");
 	}
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_GO_KEEP_ALIVE_TIMEOUT,
-		    config->goKeepAlivePeriod) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_GO_KEEP_ALIVE_TIMEOUT to CFG");
+	ret = cfg_p2p_get_go_keepalive_period(hdd_ctx->hdd_psoc, &ivalue);
+	if (ret == QDF_STATUS_SUCCESS) {
+		ret = sme_cfg_set_int(mac_handle,
+				      WNI_CFG_GO_KEEP_ALIVE_TIMEOUT,
+				      ivalue);
+
+		if (ret == QDF_STATUS_E_FAILURE) {
+			status = false;
+			hdd_err("Couldn't pass on WNI_CFG_GO_KEEP_ALIVE_TIMEOUT to CFG");
+		}
 	}
 
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_AP_LINK_MONITOR_TIMEOUT,
@@ -8206,10 +8170,15 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_AP_LINK_MONITOR_TIMEOUT to CFG");
 	}
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_GO_LINK_MONITOR_TIMEOUT,
-		    config->goLinkMonitorPeriod) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_GO_LINK_MONITOR_TIMEOUT to CFG");
+	ret = cfg_p2p_get_go_link_monitor_period(hdd_ctx->hdd_psoc, &ivalue);
+	if (ret == QDF_STATUS_SUCCESS) {
+		ret = sme_cfg_set_int(mac_handle,
+				      WNI_CFG_GO_LINK_MONITOR_TIMEOUT,
+				      ivalue);
+		if (ret == QDF_STATUS_E_FAILURE) {
+			status = false;
+			hdd_err("Couldn't pass on WNI_CFG_GO_LINK_MONITOR_TIMEOUT to CFG");
+		}
 	}
 
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_SINGLE_TID_RC,

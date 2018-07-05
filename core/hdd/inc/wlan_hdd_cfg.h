@@ -3109,19 +3109,6 @@ enum hdd_dot11_mode {
 #define CFG_ENABLE_LTE_COEX_MAX               (1)
 #define CFG_ENABLE_LTE_COEX_DEFAULT           (0)
 
-#define CFG_GO_KEEP_ALIVE_PERIOD_NAME          "gGoKeepAlivePeriod"
-#define CFG_GO_KEEP_ALIVE_PERIOD_MIN           WNI_CFG_GO_KEEP_ALIVE_TIMEOUT_STAMIN
-#define CFG_GO_KEEP_ALIVE_PERIOD_MAX           WNI_CFG_GO_KEEP_ALIVE_TIMEOUT_STAMAX
-#define CFG_GO_KEEP_ALIVE_PERIOD_DEFAULT       WNI_CFG_GO_KEEP_ALIVE_TIMEOUT_STADEF
-
-/* gGoLinkMonitorPeriod is period where link is idle and where
- * we send NULL frame
- */
-#define CFG_GO_LINK_MONITOR_PERIOD_NAME          "gGoLinkMonitorPeriod"
-#define CFG_GO_LINK_MONITOR_PERIOD_MIN           (3)
-#define CFG_GO_LINK_MONITOR_PERIOD_MAX           (50)
-#define CFG_GO_LINK_MONITOR_PERIOD_DEFAULT       (10)
-
 #define CFG_VCC_RSSI_TRIGGER_NAME             "gVccRssiTrigger"
 #define CFG_VCC_RSSI_TRIGGER_MIN              (0)
 #define CFG_VCC_RSSI_TRIGGER_MAX              (80)
@@ -5408,29 +5395,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * isP2pDeviceAddrAdministrated - Enables to derive the P2P MAC address from
- * the primary MAC address
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable to derive the P2P MAC address from the
- * primary MAC address.
- *
- * Supported Feature: P2P
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED_NAME                "isP2pDeviceAddrAdministrated"
-#define CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED_MIN                 (0)
-#define CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED_MAX                 (1)
-#define CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED_DEFAULT             (1)
-
-/*
- * <ini>
  * gEnableSSR - Enable/Disable SSR
  * @Min: 0
  * @Max: 1
@@ -5787,58 +5751,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MIN   (0)
 #define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MAX   (1)
 #define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_DEFAULT (0)
-
-/*
- * Skip DFS Channel in case of P2P Search
- * Options
- * 0 - Don't Skip DFS Channel in case of P2P Search
- * 1 - Skip DFS Channel in case of P2P Search
- */
-/*
- * <ini>
- * gSkipDfsChannelInP2pSearch - Skip DFS Channel in case of P2P Search
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to to disable(skip) dfs channel in p2p search.
- * Related: NA.
- *
- * Supported Feature: DFS P2P
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH_NAME       "gSkipDfsChannelInP2pSearch"
-#define CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH_MIN        (0)
-#define CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH_MAX        (1)
-#define CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH_DEFAULT    (1)
-/*
- * <ini>
- * gIgnoreDynamicDtimInP2pMode - Ignore Dynamic Dtim in case of P2P
- * Options.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to decide if Dynamic Dtim needs to be consider or
- * not in case of P2P.
- * 0 - Consider Dynamic Dtim incase of P2P
- * 1 - Ignore Dynamic Dtim incase of P2P
- *
- * Supported Feature: P2P
- *
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_NAME       "gIgnoreDynamicDtimInP2pMode"
-#define CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_MIN        (0)
-#define CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_MAX        (1)
-#define CFG_IGNORE_DYNAMIC_DTIM_IN_P2P_MODE_DEFAULT    (0)
 
 /*
  * <ini>
@@ -14374,10 +14286,8 @@ struct hdd_config {
 	bool apDisableIntraBssFwd;
 	uint8_t enableLTECoex;
 	uint32_t apKeepAlivePeriod;
-	uint32_t goKeepAlivePeriod;
 	enum station_keepalive_method sta_keepalive_method;
 	uint32_t apLinkMonitorPeriod;
-	uint32_t goLinkMonitorPeriod;
 	uint32_t nBeaconInterval;
 	uint8_t nTxPowerCap;    /* In dBm */
 	bool allow_tpc_from_ap;
@@ -14576,7 +14486,6 @@ struct hdd_config {
 	uint16_t nRoamScanHomeAwayTime;
 	uint8_t enableMCC;
 	uint8_t allowMCCGODiffBI;
-	bool isP2pDeviceAddrAdministrated;
 	uint8_t thermalMitigationEnable;
 	uint32_t throttlePeriod;
 	uint32_t throttle_dutycycle_level0;
@@ -14637,8 +14546,6 @@ struct hdd_config {
 	uint8_t enableModulatedDTIM;
 	uint32_t fEnableMCAddrList;
 	bool enableFirstScan2GOnly;
-	bool skipDfsChnlInP2pSearch;
-	bool ignoreDynamicDtimInP2pMode;
 	bool enableRxSTBC;
 	bool enableTxSTBC;
 	uint8_t enable_tx_ldpc;

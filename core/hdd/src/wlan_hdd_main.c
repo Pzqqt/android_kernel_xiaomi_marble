@@ -135,6 +135,8 @@
 #include "wlan_hdd_twt.h"
 #include "qc_sap_ioctl.h"
 #include "wlan_mlme_main.h"
+#include "wlan_p2p_cfg_api.h"
+
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
 #endif
@@ -9029,8 +9031,10 @@ static int hdd_open_p2p_interface(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	struct hdd_adapter *adapter;
 	uint8_t *p2p_dev_addr;
+	bool p2p_dev_addr_admin = false;
 
-	if (hdd_ctx->config->isP2pDeviceAddrAdministrated &&
+	cfg_p2p_get_device_addr_admin(hdd_ctx->hdd_psoc, &p2p_dev_addr_admin);
+	if (p2p_dev_addr_admin &&
 	    !(hdd_ctx->config->intfMacAddr[0].bytes[0] & 0x02)) {
 		qdf_mem_copy(hdd_ctx->p2p_device_address.bytes,
 			     hdd_ctx->config->intfMacAddr[0].bytes,
@@ -9479,6 +9483,7 @@ exit:
 static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc_user_config *user_config;
+	bool skip_dfs_in_p2p_search = false;
 
 	user_config = qdf_mem_malloc(sizeof(*user_config));
 	if (user_config == NULL) {
@@ -9497,8 +9502,9 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->Is11hSupportEnabled;
 	user_config->optimize_chan_avoid_event =
 		hdd_ctx->config->goptimize_chan_avoid_event;
-	user_config->skip_dfs_chnl_in_p2p_search =
-		hdd_ctx->config->skipDfsChnlInP2pSearch;
+	cfg_p2p_get_skip_dfs_channel_p2p_search(hdd_ctx->hdd_psoc,
+						&skip_dfs_in_p2p_search);
+	user_config->skip_dfs_chnl_in_p2p_search = skip_dfs_in_p2p_search;
 	user_config->band_capability = hdd_ctx->config->nBandCapability;
 	wlan_objmgr_psoc_set_user_config(hdd_ctx->hdd_psoc, user_config);
 

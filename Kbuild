@@ -784,6 +784,7 @@ UMAC_P2P_INC := -I$(WLAN_COMMON_INC)/$(P2P_DISPATCHER_INC_DIR) \
 		-I$(WLAN_COMMON_INC)/umac/scan/dispatcher/inc
 UMAC_P2P_OBJS := $(P2P_DISPATCHER_OBJ_DIR)/wlan_p2p_ucfg_api.o \
                  $(P2P_DISPATCHER_OBJ_DIR)/wlan_p2p_tgt_api.o \
+                 $(P2P_DISPATCHER_OBJ_DIR)/wlan_p2p_cfg.o \
                  $(P2P_CORE_OBJ_DIR)/wlan_p2p_main.o \
                  $(P2P_CORE_OBJ_DIR)/wlan_p2p_roc.o \
                  $(P2P_CORE_OBJ_DIR)/wlan_p2p_off_chan_tx.o
