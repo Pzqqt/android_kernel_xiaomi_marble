@@ -4783,7 +4783,8 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 #endif
 #ifdef WLAN_FEATURE_11W
 	case eCSR_ROAM_UNPROT_MGMT_FRAME_IND:
-		hdd_indicate_unprot_mgmt_frame(adapter,
+		if (roam_info)
+			hdd_indicate_unprot_mgmt_frame(adapter,
 					       roam_info->nFrameLength,
 					       roam_info->pbFrames,
 					       roam_info->frameType);
@@ -4791,7 +4792,8 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 #endif
 #ifdef FEATURE_WLAN_ESE
 	case eCSR_ROAM_TSM_IE_IND:
-		hdd_indicate_tsm_ie(adapter, roam_info->tsmIe.tsid,
+		if (roam_info)
+			hdd_indicate_tsm_ie(adapter, roam_info->tsmIe.tsid,
 				    roam_info->tsmIe.state,
 				    roam_info->tsmIe.msmt_interval);
 		break;
