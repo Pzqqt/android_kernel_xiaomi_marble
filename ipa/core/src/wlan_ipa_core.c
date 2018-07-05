@@ -618,9 +618,9 @@ wlan_ipa_send_skb_to_network(qdf_nbuf_t skb,
 	struct wlan_ipa_priv *ipa_ctx = gp_ipa;
 
 	if (!iface_ctx->dev) {
-		WLAN_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "Invalid interface");
+		ipa_debug_rl("Invalid interface");
 		ipa_ctx->ipa_rx_internal_drop_count++;
-		qdf_nbuf_free(skb);
+		dev_kfree_skb_any(skb);
 		return;
 	}
 
@@ -658,8 +658,7 @@ static void wlan_ipa_forward(struct wlan_ipa_priv *ipa_ctx,
 	/* WLAN subsystem is in suspend, put in queue */
 	if (ipa_ctx->suspended) {
 		qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
-		WLAN_IPA_LOG(QDF_TRACE_LEVEL_INFO,
-			"Tx in suspend, put in queue");
+		ipa_info_rl("Tx in suspend, put in queue");
 		qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
 		pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
 		pm_tx_cb->exception = true;
@@ -674,8 +673,7 @@ static void wlan_ipa_forward(struct wlan_ipa_priv *ipa_ctx,
 
 		if (ipa_ctx->softap_xmit) {
 			if (ipa_ctx->softap_xmit(skb, iface_ctx->dev)) {
-				WLAN_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-					     "packet Tx fail");
+				ipa_err_rl("packet Tx fail");
 				ipa_ctx->stats.num_tx_fwd_err++;
 			} else {
 				ipa_ctx->stats.num_tx_fwd_ok++;
@@ -721,8 +719,7 @@ static enum wlan_ipa_forward_type wlan_ipa_intrabss_forward(
 			ret = WLAN_IPA_FORWARD_PKT_DISCARD;
 			return ret;
 		}
-		WLAN_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
-				"Forward packet to Tx (fw_desc=%d)", desc);
+		ipa_debug_rl("Forward packet to Tx (fw_desc=%d)", desc);
 		ipa_ctx->ipa_tx_forward++;
 
 		if ((desc & FW_RX_DESC_DISCARD_M)) {
@@ -737,8 +734,7 @@ static enum wlan_ipa_forward_type wlan_ipa_intrabss_forward(
 				wlan_ipa_forward(ipa_ctx, iface_ctx,
 						 cloned_skb);
 			else
-				WLAN_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-						"tx skb alloc failed");
+				ipa_err_rl("tx skb alloc failed");
 			ret = WLAN_IPA_FORWARD_PKT_LOCAL_STACK;
 		}
 	}
@@ -781,8 +777,7 @@ static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 			iface_id = WLAN_IPA_GET_IFACE_ID(skb->data);
 		}
 		if (iface_id >= WLAN_IPA_MAX_IFACE) {
-			ipa_err("IPA_RECEIVE: Invalid iface_id: %u",
-				iface_id);
+			ipa_err_rl("Invalid iface_id: %u", iface_id);
 			ipa_ctx->ipa_rx_internal_drop_count++;
 			dev_kfree_skb_any(skb);
 			return;
@@ -790,7 +785,8 @@ static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 
 		iface_context = &ipa_ctx->iface_context[iface_id];
 		if (!iface_context->tl_context) {
-			ipa_err("IPA_RECEIVE: TL context is NULL");
+			ipa_err_rl("TL context of iface_id %u is NULL",
+				   iface_id);
 			ipa_ctx->ipa_rx_internal_drop_count++;
 			dev_kfree_skb_any(skb);
 			return;
@@ -825,14 +821,14 @@ static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 						     fw_desc, skb))
 				break;
 		} else {
-			ipa_debug("Intra-BSS FWD is disabled-skip forward to Tx");
+			ipa_debug_rl("Intra-BSS forwarding is disabled");
 		}
 
 		wlan_ipa_send_skb_to_network(skb, iface_context);
 		break;
 
 	default:
-		ipa_err("w2i cb wrong event: 0x%x", evt);
+		ipa_err_rl("w2i cb wrong event: 0x%x", evt);
 		return;
 	}
 }
@@ -860,7 +856,7 @@ static void wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 	ipa_ctx = iface_context->ipa_ctx;
 
 	if (evt != IPA_RECEIVE) {
-		WLAN_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "Event is not IPA_RECEIVE");
+		ipa_err_rl("Event is not IPA_RECEIVE");
 		ipa_free_skb(ipa_tx_desc);
 		iface_context->stats.num_tx_drop++;
 		return;

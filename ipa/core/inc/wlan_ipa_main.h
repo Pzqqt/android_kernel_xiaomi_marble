@@ -44,6 +44,12 @@
 #define ipa_debug(format, args...) \
 		ipa_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
+#define ipa_fatal_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_IPA, params)
+#define ipa_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_IPA, params)
+#define ipa_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_IPA, params)
+#define ipa_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_IPA, params)
+#define ipa_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_IPA, params)
+
 #define IPA_ENTER() ipa_debug("enter")
 #define IPA_EXIT() ipa_debug("exit")
 
