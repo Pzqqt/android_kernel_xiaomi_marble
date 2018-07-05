@@ -4297,7 +4297,8 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 				void *mgmt_tx_params)
 {
 	tp_wma_handle wma_handle;
-	QDF_STATUS status;
+	int ret;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct wmi_mgmt_params *mgmt_params =
 			(struct wmi_mgmt_params *)mgmt_tx_params;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -4326,14 +4327,15 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 				   wmi_service_mgmt_tx_wmi)) {
 		status = wmi_mgmt_unified_cmd_send(wma_handle->wmi_handle,
 						   mgmt_params);
-	} else {
+	} else if (txrx_vdev) {
 		QDF_NBUF_CB_MGMT_TXRX_DESC_ID(buf)
 						= mgmt_params->desc_id;
 
-		status = cdp_mgmt_send_ext(soc, txrx_vdev, buf,
-					   mgmt_params->tx_type,
-					   mgmt_params->use_6mbps,
-					   mgmt_params->chanfreq);
+		ret = cdp_mgmt_send_ext(soc, txrx_vdev, buf,
+					mgmt_params->tx_type,
+					mgmt_params->use_6mbps,
+					mgmt_params->chanfreq);
+		status = qdf_status_from_os_return(ret);
 	}
 
 	if (status != QDF_STATUS_SUCCESS) {
