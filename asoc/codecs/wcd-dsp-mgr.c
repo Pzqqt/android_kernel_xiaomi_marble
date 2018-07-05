@@ -1091,6 +1091,8 @@ static void wdsp_mgr_unbind(struct device *dev)
 	struct wdsp_cmpnt *cmpnt;
 	int idx;
 
+	cancel_work_sync(&wdsp->load_fw_work);
+
 	component_unbind_all(dev, wdsp->ops);
 
 	wdsp_mgr_debugfs_remove(wdsp);
