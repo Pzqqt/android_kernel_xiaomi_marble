@@ -1169,24 +1169,24 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
 	}
 }
 
-void hdd_lost_link_info_cb(void *context,
-				  struct sir_lost_link_info *lost_link_info)
+void hdd_lost_link_info_cb(hdd_handle_t hdd_handle,
+			   struct sir_lost_link_info *lost_link_info)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *)context;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	int status;
 	struct hdd_adapter *adapter;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status)
+	if (status)
 		return;
 
-	if (NULL == lost_link_info) {
+	if (!lost_link_info) {
 		hdd_err("lost_link_info is NULL");
 		return;
 	}
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, lost_link_info->vdev_id);
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("invalid adapter");
 		return;
 	}

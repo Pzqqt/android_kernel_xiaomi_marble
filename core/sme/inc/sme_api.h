@@ -1635,13 +1635,13 @@ QDF_STATUS sme_update_sta_inactivity_timeout(tHalHandle hal_handle,
 
 /**
  * sme_set_lost_link_info_cb() - plug in callback function for receiving
- * @hal: HAL handle
+ * @mac_handle: Opaque handle to the MAC context
  * @cb: callback function
  *
  * Return: HAL status
  */
-QDF_STATUS sme_set_lost_link_info_cb(tHalHandle hal,
-		void (*cb)(void *, struct sir_lost_link_info *));
+QDF_STATUS sme_set_lost_link_info_cb(mac_handle_t mac_handle,
+				     lost_link_info_cb cb);
 
 /**
  * sme_update_new_channel_event() - update new channel event for sapFsm

@@ -220,12 +220,12 @@ void wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
 
 /**
  * hdd_lost_link_info_cb() - callback function to get lost link information
- * @context: HDD context
+ * @hdd_handle: Opaque handle for the HDD context
  * @lost_link_info: lost link information
  *
  * Return: none
  */
-void hdd_lost_link_info_cb(void *context,
+void hdd_lost_link_info_cb(hdd_handle_t hdd_handle,
 			   struct sir_lost_link_info *lost_link_info);
 
 #else /* WLAN_FEATURE_LINK_LAYER_STATS */
@@ -274,7 +274,7 @@ wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
 }
 
 static inline void
-hdd_lost_link_info_cb(void *context,
+hdd_lost_link_info_cb(hdd_handle_t hdd_handle,
 		      struct sir_lost_link_info *lost_link_info)
 {
 }

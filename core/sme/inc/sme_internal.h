@@ -248,6 +248,14 @@ typedef void (*congestion_cb)(hdd_handle_t hdd_handle, uint32_t congestion,
 typedef void (*rso_cmd_status_cb)(hdd_handle_t hdd_handle,
 				  struct rso_cmd_status *rso_status);
 
+/**
+ * typedef lost_link_info_cb - lost link indication callback function
+ * @hdd_handle: HDD handle registered with SME
+ * @lost_link_info: Information about the lost link
+ */
+typedef void (*lost_link_info_cb)(hdd_handle_t hdd_handle,
+				  struct sir_lost_link_info *lost_link_info);
+
 typedef struct tagSmeStruct {
 	eSmeState state;
 	qdf_mutex_t lkSmeGlobalLock;
@@ -325,8 +333,7 @@ typedef struct tagSmeStruct {
 #endif
 	sme_encrypt_decrypt_callback encrypt_decrypt_cb;
 	void *encrypt_decrypt_context;
-	void (*lost_link_info_cb)(void *context,
-			struct sir_lost_link_info *lost_link_info);
+	lost_link_info_cb lost_link_info_cb;
 
 	bool (*set_connection_info_cb)(bool);
 	bool (*get_connection_info_cb)(uint8_t *session_id,
