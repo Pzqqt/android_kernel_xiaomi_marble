@@ -12403,6 +12403,13 @@ static void __hdd_module_exit(void)
 	if (!hdd_wait_for_recovery_completion())
 		return;
 
+	cds_set_driver_loaded(false);
+	cds_set_unload_in_progress(true);
+
+	if (!cds_wait_for_external_threads_completion(__func__))
+		hdd_warn("External threads are still active attempting "
+			 "driver unload anyway");
+
 	if (hdd_ctx)
 		qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
 
