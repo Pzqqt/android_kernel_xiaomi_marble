@@ -3707,11 +3707,10 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 				      uint8_t *peer_addr, uint8_t *bssid,
 				      uint8_t subtype)
 {
-	void *peer = NULL;
 	struct cdp_pdev *pdev_ctx;
-	uint8_t peer_id;
 	bool should_drop = false;
-	qdf_time_t *ptr;
+	qdf_time_t timestamp;
+	bool ret;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t nan_addr[] = {0x50, 0x6F, 0x9A, 0x01, 0x00, 0x00};
 
@@ -3741,63 +3740,34 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 		goto end;
 	}
 
-	peer = cdp_peer_get_ref_by_addr(soc, pdev_ctx, peer_addr, &peer_id,
-					PEER_DEBUG_ID_WMA_PKT_DROP);
-	if (!peer) {
+	ret = cdp_peer_get_last_mgmt_timestamp(soc, pdev_ctx,
+					       peer_addr, subtype,
+					       &timestamp);
+
+	if (!ret) {
 		if (IEEE80211_FC0_SUBTYPE_ASSOC_REQ != subtype) {
-			WMA_LOGI(
-			   FL("Received mgmt frame: %0x from unknown peer: %pM"),
-			   subtype, peer_addr);
+			WMA_LOGE(FL("cdp_last_mgmt_timestamp_received %s 0x%x"),
+				 "failed for subtype", subtype);
 			should_drop = true;
 		}
 		goto end;
+	} else if (timestamp > 0 &&
+		   qdf_system_time_before(qdf_get_system_timestamp(),
+					  timestamp +
+					  WMA_MGMT_FRAME_DETECT_DOS_TIMER)) {
+		WMA_LOGD(FL("Dropping subtype 0x%x frame. %s %d ms %s %d ms"),
+			 subtype, "It is received after",
+			 (int)(qdf_get_system_timestamp() - timestamp),
+			 "of last frame. Allow it only after",
+			 WMA_MGMT_FRAME_DETECT_DOS_TIMER);
+		should_drop = true;
+		goto end;
 	}
-
-	switch (subtype) {
-	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
-		ptr = cdp_peer_last_assoc_received(soc, peer);
-		if (!ptr) {
-			WMA_LOGE(FL("cdp_peer_last_assoc_received Failed"));
-			should_drop = true;
-			goto end;
-		} else if (*ptr > 0 &&
-			   qdf_system_time_before(qdf_get_system_timestamp(),
-				    *ptr + WMA_MGMT_FRAME_DETECT_DOS_TIMER)) {
-			WMA_LOGD(FL("Dropping Assoc Req as it is received after %d ms of last frame. Allow it only after %d ms"),
-				 (int)(qdf_get_system_timestamp() - *ptr),
-				  WMA_MGMT_FRAME_DETECT_DOS_TIMER);
-			should_drop = true;
-			break;
-		}
-		*ptr = qdf_get_system_timestamp();
-		break;
-	case IEEE80211_FC0_SUBTYPE_DISASSOC:
-	case IEEE80211_FC0_SUBTYPE_DEAUTH:
-		ptr = cdp_peer_last_disassoc_received(soc, peer);
-		if (!ptr) {
-			WMA_LOGE(FL("cdp_peer_last_disassoc_received Failed"));
-			should_drop = true;
-			goto end;
-		} else if (*ptr > 0  &&
-			   qdf_system_time_before(qdf_get_system_timestamp(),
-				    *ptr + WMA_MGMT_FRAME_DETECT_DOS_TIMER)) {
-			WMA_LOGD(FL("Dropping subtype %x frame as it is received after %d ms of last frame. Allow it only after %d ms"),
-				 subtype, (int)
-				 (qdf_get_system_timestamp() - *ptr),
-				 WMA_MGMT_FRAME_DETECT_DOS_TIMER);
-			should_drop = true;
-			break;
-		}
-		*ptr = qdf_get_system_timestamp();
-		break;
-	default:
-		break;
-	}
-
+	if (!cdp_peer_update_last_mgmt_timestamp(soc, pdev_ctx, peer_addr,
+						 qdf_get_system_timestamp(),
+						 subtype))
+		should_drop = true;
 end:
-	if (peer)
-		cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_WMA_PKT_DROP);
-
 	return should_drop;
 }
 
