@@ -40,6 +40,7 @@
 #include "wma_types.h"
 #include "wlan_policy_mgr_api.h"
 #include <qca_vendor.h>
+#include "wlan_tdls_cfg_api.h"
 
 /**
  * enum qca_wlan_vendor_tdls_trigger_mode_hdd_map: Maps the user space TDLS
@@ -442,6 +443,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	bool tdls_support;
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 15, 0))
 #if !(TDLS_MGMT_VERSION2)
 	u32 peer_capability;
@@ -467,7 +469,8 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
 
-	if (false == hdd_ctx->config->fEnableTDLSSupport) {
+	cfg_tdls_get_support_enable(hdd_ctx->hdd_psoc, &tdls_support);
+	if (!tdls_support) {
 		hdd_debug("TDLS Disabled in INI OR not enabled in FW. "
 			"Cannot process TDLS commands");
 		return -ENOTSUPP;
@@ -629,6 +632,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int status;
+	bool tdls_support;
 
 	hdd_enter();
 
@@ -642,7 +646,8 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (false == hdd_ctx->config->fEnableTDLSSupport) {
+	cfg_tdls_get_support_enable(hdd_ctx->hdd_psoc, &tdls_support);
+	if (!tdls_support) {
 		hdd_debug("TDLS Disabled in INI OR not enabled in FW. "
 			"Cannot process TDLS commands");
 		return -ENOTSUPP;
@@ -812,7 +817,8 @@ int hdd_set_tdls_scan_type(struct hdd_context *hdd_ctx, int val)
 		return -EINVAL;
 	}
 
-	hdd_ctx->config->enable_tdls_scan = val;
+	cfg_tdls_set_scan_enable(hdd_ctx->hdd_psoc, (bool)val);
+
 	return 0;
 }
 

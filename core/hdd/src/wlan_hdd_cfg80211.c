@@ -106,6 +106,7 @@
 #include "wlan_ipa_ucfg_api.h"
 #include <wlan_cfg80211_mc_cp_stats.h>
 #include <wlan_cp_stats_mc_ucfg_api.h>
+#include "wlan_tdls_cfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -716,6 +717,11 @@ static int __wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 	struct sk_buff *skb;
 	uint32_t set = 0;
 	uint32_t max_num_tdls_sta = 0;
+	bool tdls_support;
+	bool tdls_external_control;
+	bool tdls_sleep_sta_enable;
+	bool tdls_buffer_sta;
+	bool tdls_off_channel;
 
 	hdd_enter_dev(wdev->netdev);
 
@@ -735,7 +741,8 @@ static int __wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 		goto fail;
 	}
 
-	if (false == hdd_ctx->config->fEnableTDLSSupport) {
+	if ((cfg_tdls_get_support_enable(hdd_ctx->hdd_psoc, &tdls_support) ==
+	     QDF_STATUS_SUCCESS) && tdls_support) {
 		hdd_debug("TDLS feature not Enabled or Not supported in FW");
 		if (nla_put_u32(skb, PARAM_MAX_TDLS_SESSION, 0) ||
 			nla_put_u32(skb, PARAM_TDLS_FEATURE_SUPPORT, 0)) {
@@ -743,14 +750,21 @@ static int __wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 			goto fail;
 		}
 	} else {
+		cfg_tdls_get_external_control(hdd_ctx->hdd_psoc,
+					      &tdls_external_control);
+		cfg_tdls_get_sleep_sta_enable(hdd_ctx->hdd_psoc,
+					      &tdls_sleep_sta_enable);
+		cfg_tdls_get_buffer_sta_enable(hdd_ctx->hdd_psoc,
+					       &tdls_buffer_sta);
+		cfg_tdls_get_off_channel_enable(hdd_ctx->hdd_psoc,
+						&tdls_off_channel);
 		set = set | WIFI_TDLS_SUPPORT;
-		set = set | (hdd_ctx->config->fTDLSExternalControl ?
+		set = set | (tdls_external_control ?
 					WIFI_TDLS_EXTERNAL_CONTROL_SUPPORT : 0);
-		set = set | (hdd_ctx->config->fEnableTDLSOffChannel ?
+		set = set | (tdls_off_channel ?
 					WIIF_TDLS_OFFCHANNEL_SUPPORT : 0);
-		if (hdd_ctx->config->fEnableTDLSSleepSta ||
-		    hdd_ctx->config->fEnableTDLSBufferSta ||
-		    hdd_ctx->config->fEnableTDLSOffChannel)
+		if (tdls_sleep_sta_enable || tdls_buffer_sta ||
+		    tdls_off_channel)
 			max_num_tdls_sta = HDD_MAX_NUM_TDLS_STA_P_UAPSD_OFFCHAN;
 		else
 			max_num_tdls_sta = HDD_MAX_NUM_TDLS_STA;
@@ -2918,6 +2932,9 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 	struct sk_buff *skb = NULL;
 	uint32_t fset = 0;
 	int ret;
+#ifdef FEATURE_WLAN_TDLS
+	bool bvalue;
+#endif
 
 	/* ENTER_DEV() intentionally not used in a frequently invoked API */
 
@@ -2975,14 +2992,15 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 #endif
 	fset |= WIFI_FEATURE_ADDITIONAL_STA;
 #ifdef FEATURE_WLAN_TDLS
-	if ((true == hdd_ctx->config->fEnableTDLSSupport) &&
-	    sme_is_feature_supported_by_fw(TDLS)) {
+	cfg_tdls_get_support_enable(hdd_ctx->hdd_psoc, &bvalue);
+	if ((bvalue) && sme_is_feature_supported_by_fw(TDLS)) {
 		hdd_debug("TDLS is supported by firmware");
 		fset |= WIFI_FEATURE_TDLS;
 	}
+
+	cfg_tdls_get_off_channel_enable(hdd_ctx->hdd_psoc, &bvalue);
 	if (sme_is_feature_supported_by_fw(TDLS) &&
-	    (true == hdd_ctx->config->fEnableTDLSOffChannel) &&
-	    sme_is_feature_supported_by_fw(TDLS_OFF_CHANNEL)) {
+	    bvalue && sme_is_feature_supported_by_fw(TDLS_OFF_CHANNEL)) {
 		hdd_debug("TDLS off-channel is supported by firmware");
 		fset |= WIFI_FEATURE_TDLS_OFFCHANNEL;
 	}

@@ -43,6 +43,7 @@
 #include "wlan_hdd_green_ap_cfg.h"
 #include "wlan_hdd_twt.h"
 #include "wlan_p2p_cfg_api.h"
+#include "wlan_tdls_cfg_api.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(struct hdd_context *hdd_ctx,
@@ -2160,171 +2161,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_PREVENT_LINK_DOWN_MIN,
 		     CFG_PREVENT_LINK_DOWN_MAX),
 
-#ifdef FEATURE_WLAN_TDLS
-	REG_VARIABLE(CFG_TDLS_SUPPORT_ENABLE, WLAN_PARAM_Integer,
-		     struct hdd_config, fEnableTDLSSupport,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_SUPPORT_ENABLE_DEFAULT,
-		     CFG_TDLS_SUPPORT_ENABLE_MIN,
-		     CFG_TDLS_SUPPORT_ENABLE_MAX),
-
-	REG_VARIABLE(CFG_TDLS_IMPLICIT_TRIGGER, WLAN_PARAM_Integer,
-		     struct hdd_config, fEnableTDLSImplicitTrigger,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_IMPLICIT_TRIGGER_DEFAULT,
-		     CFG_TDLS_IMPLICIT_TRIGGER_MIN,
-		     CFG_TDLS_IMPLICIT_TRIGGER_MAX),
-
-	REG_VARIABLE(CFG_TDLS_TX_STATS_PERIOD, WLAN_PARAM_Integer,
-		     struct hdd_config, fTDLSTxStatsPeriod,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_TX_STATS_PERIOD_DEFAULT,
-		     CFG_TDLS_TX_STATS_PERIOD_MIN,
-		     CFG_TDLS_TX_STATS_PERIOD_MAX),
-
-	REG_VARIABLE(CFG_TDLS_TX_PACKET_THRESHOLD, WLAN_PARAM_Integer,
-		     struct hdd_config, fTDLSTxPacketThreshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_TX_PACKET_THRESHOLD_DEFAULT,
-		     CFG_TDLS_TX_PACKET_THRESHOLD_MIN,
-		     CFG_TDLS_TX_PACKET_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_TDLS_MAX_DISCOVERY_ATTEMPT, WLAN_PARAM_Integer,
-		     struct hdd_config, fTDLSMaxDiscoveryAttempt,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_MAX_DISCOVERY_ATTEMPT_DEFAULT,
-		     CFG_TDLS_MAX_DISCOVERY_ATTEMPT_MIN,
-		     CFG_TDLS_MAX_DISCOVERY_ATTEMPT_MAX),
-
-	REG_VARIABLE(CFG_TDLS_IDLE_TIMEOUT, WLAN_PARAM_Integer,
-		     struct hdd_config, tdls_idle_timeout,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_IDLE_TIMEOUT_DEFAULT,
-		     CFG_TDLS_IDLE_TIMEOUT_MIN,
-		     CFG_TDLS_IDLE_TIMEOUT_MAX),
-
-	REG_VARIABLE(CFG_TDLS_IDLE_PACKET_THRESHOLD, WLAN_PARAM_Integer,
-		     struct hdd_config, fTDLSIdlePacketThreshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_IDLE_PACKET_THRESHOLD_DEFAULT,
-		     CFG_TDLS_IDLE_PACKET_THRESHOLD_MIN,
-		     CFG_TDLS_IDLE_PACKET_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_TDLS_RSSI_TRIGGER_THRESHOLD, WLAN_PARAM_SignedInteger,
-		     struct hdd_config, fTDLSRSSITriggerThreshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_RSSI_TRIGGER_THRESHOLD_DEFAULT,
-		     CFG_TDLS_RSSI_TRIGGER_THRESHOLD_MIN,
-		     CFG_TDLS_RSSI_TRIGGER_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_TDLS_RSSI_TEARDOWN_THRESHOLD, WLAN_PARAM_SignedInteger,
-		     struct hdd_config, fTDLSRSSITeardownThreshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_RSSI_TEARDOWN_THRESHOLD_DEFAULT,
-		     CFG_TDLS_RSSI_TEARDOWN_THRESHOLD_MIN,
-		     CFG_TDLS_RSSI_TEARDOWN_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_TDLS_RSSI_DELTA, WLAN_PARAM_SignedInteger,
-		     struct hdd_config, fTDLSRSSIDelta,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_RSSI_DELTA_DEFAULT,
-		     CFG_TDLS_RSSI_DELTA_MIN,
-		     CFG_TDLS_RSSI_DELTA_MAX),
-
-	REG_VARIABLE(CFG_TDLS_QOS_WMM_UAPSD_MASK_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, fTDLSUapsdMask,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_QOS_WMM_UAPSD_MASK_DEFAULT,
-		     CFG_TDLS_QOS_WMM_UAPSD_MASK_MIN,
-		     CFG_TDLS_QOS_WMM_UAPSD_MASK_MAX),
-
-	REG_VARIABLE(CFG_TDLS_BUFFER_STA_SUPPORT_ENABLE, WLAN_PARAM_Integer,
-		     struct hdd_config, fEnableTDLSBufferSta,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_BUFFER_STA_SUPPORT_ENABLE_DEFAULT,
-		     CFG_TDLS_BUFFER_STA_SUPPORT_ENABLE_MIN,
-		     CFG_TDLS_BUFFER_STA_SUPPORT_ENABLE_MAX),
-
-	REG_VARIABLE(CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE, WLAN_PARAM_Integer,
-		     struct hdd_config, fEnableTDLSOffChannel,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE_DEFAULT,
-		     CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE_MIN,
-		     CFG_TDLS_OFF_CHANNEL_SUPPORT_ENABLE_MAX),
-
-	REG_VARIABLE(CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM, WLAN_PARAM_Integer,
-		     struct hdd_config, fTDLSPrefOffChanNum,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_DEFAULT,
-		     CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_MIN,
-		     CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_MAX),
-
-	REG_VARIABLE(CFG_TDLS_PREFERRED_OFF_CHANNEL_BW, WLAN_PARAM_Integer,
-		     struct hdd_config, fTDLSPrefOffChanBandwidth,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_PREFERRED_OFF_CHANNEL_BW_DEFAULT,
-		     CFG_TDLS_PREFERRED_OFF_CHANNEL_BW_MIN,
-		     CFG_TDLS_PREFERRED_OFF_CHANNEL_BW_MAX),
-
-	REG_VARIABLE(CFG_TDLS_PUAPSD_INACTIVITY_TIME, WLAN_PARAM_Integer,
-		     struct hdd_config, fTDLSPuapsdInactivityTimer,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_PUAPSD_INACTIVITY_TIME_DEFAULT,
-		     CFG_TDLS_PUAPSD_INACTIVITY_TIME_MIN,
-		     CFG_TDLS_PUAPSD_INACTIVITY_TIME_MAX),
-
-	REG_VARIABLE(CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD, WLAN_PARAM_Integer,
-		     struct hdd_config, fTDLSRxFrameThreshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD_DEFAULT,
-		     CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD_MIN,
-		     CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_TDLS_PUAPSD_PEER_TRAFFIC_IND_WINDOW,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, fTDLSPuapsdPTIWindow,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_PUAPSD_PEER_TRAFFIC_IND_WINDOW_DEFAULT,
-		     CFG_TDLS_PUAPSD_PEER_TRAFFIC_IND_WINDOW_MIN,
-		     CFG_TDLS_PUAPSD_PEER_TRAFFIC_IND_WINDOW_MAX),
-
-	REG_VARIABLE(CFG_TDLS_PUAPSD_PEER_TRAFFIC_RSP_TIMEOUT,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, fTDLSPuapsdPTRTimeout,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_PUAPSD_PEER_TRAFFIC_RSP_TIMEOUT_DEFAULT,
-		     CFG_TDLS_PUAPSD_PEER_TRAFFIC_RSP_TIMEOUT_MIN,
-		     CFG_TDLS_PUAPSD_PEER_TRAFFIC_RSP_TIMEOUT_MAX),
-
-	REG_VARIABLE(CFG_TDLS_EXTERNAL_CONTROL, WLAN_PARAM_Integer,
-		     struct hdd_config, fTDLSExternalControl,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_EXTERNAL_CONTROL_DEFAULT,
-		     CFG_TDLS_EXTERNAL_CONTROL_MIN,
-		     CFG_TDLS_EXTERNAL_CONTROL_MAX),
-	REG_VARIABLE(CFG_TDLS_WMM_MODE_ENABLE, WLAN_PARAM_Integer,
-		     struct hdd_config, fEnableTDLSWmmMode,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_WMM_MODE_ENABLE_DEFAULT,
-		     CFG_TDLS_WMM_MODE_ENABLE_MIN,
-		     CFG_TDLS_WMM_MODE_ENABLE_MAX),
-
-	REG_VARIABLE(CFG_TDLS_SCAN_ENABLE, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_tdls_scan,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_SCAN_ENABLE_DEFAULT,
-		     CFG_TDLS_SCAN_ENABLE_MIN,
-		     CFG_TDLS_SCAN_ENABLE_MAX),
-
-	REG_VARIABLE(CFG_TDLS_PEER_KICKOUT_THRESHOLD, WLAN_PARAM_Integer,
-		     struct hdd_config, tdls_peer_kickout_threshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_PEER_KICKOUT_THRESHOLD_DEFAULT,
-		     CFG_TDLS_PEER_KICKOUT_THRESHOLD_MIN,
-		     CFG_TDLS_PEER_KICKOUT_THRESHOLD_MAX),
-
-#endif
-
 	REG_VARIABLE(CFG_SCAN_AGING_PARAM_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, scanAgingTimeout,
 		     VAR_FLAGS_OPTIONAL,
@@ -3416,13 +3252,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_APF_PACKET_FILTER_OFFLOAD_DEFAULT,
 		     CFG_APF_PACKET_FILTER_OFFLOAD_MIN,
 		     CFG_APF_PACKET_FILTER_OFFLOAD_MAX),
-
-	REG_VARIABLE(CFG_TDLS_ENABLE_DEFER_TIMER, WLAN_PARAM_Integer,
-		     struct hdd_config, tdls_enable_defer_time,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TDLS_ENABLE_DEFER_TIMER_DEFAULT,
-		     CFG_TDLS_ENABLE_DEFER_TIMER_MIN,
-		     CFG_TDLS_ENABLE_DEFER_TIMER_MAX),
 
 	REG_VARIABLE(CFG_FLOW_STEERING_ENABLED_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, flow_steering_enable,
@@ -6551,22 +6380,6 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [gPNOSlowScanMultiplier] Value = [%u] ",
 		  hdd_ctx->config->pno_slow_scan_multiplier);
 #endif
-#ifdef FEATURE_WLAN_TDLS
-	hdd_debug("Name = [fEnableTDLSSupport] Value = [%u] ",
-		  hdd_ctx->config->fEnableTDLSSupport);
-	hdd_debug("Name = [fEnableTDLSImplicitTrigger] Value = [%u] ",
-		  hdd_ctx->config->fEnableTDLSImplicitTrigger);
-	hdd_debug("Name = [fTDLSExternalControl] Value = [%u] ",
-		  hdd_ctx->config->fTDLSExternalControl);
-	hdd_debug("Name = [fTDLSUapsdMask] Value = [%u] ",
-		  hdd_ctx->config->fTDLSUapsdMask);
-	hdd_debug("Name = [fEnableTDLSBufferSta] Value = [%u] ",
-		  hdd_ctx->config->fEnableTDLSBufferSta);
-	hdd_debug("Name = [fEnableTDLSWmmMode] Value = [%u] ",
-		  hdd_ctx->config->fEnableTDLSWmmMode);
-	hdd_debug("Name = [enable_tdls_scan] Value = [%u]",
-		  hdd_ctx->config->enable_tdls_scan);
-#endif
 	hdd_debug("Name = [InfraDirAcVo] Value = [%u] ",
 		  hdd_ctx->config->InfraDirAcVo);
 	hdd_debug("Name = [InfraNomMsduSizeAcVo] Value = [0x%x] ",
@@ -7121,9 +6934,6 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] Value = [%d]",
 		CFG_APF_PACKET_FILTER_OFFLOAD,
 		hdd_ctx->config->apf_packet_filter_enable);
-	hdd_debug("Name = [%s] Value = [%u]",
-		CFG_TDLS_ENABLE_DEFER_TIMER,
-		hdd_ctx->config->tdls_enable_defer_time);
 	hdd_debug("Name = [%s] Value = [%d]",
 		CFG_FILTER_MULTICAST_REPLAY_NAME,
 		hdd_ctx->config->multicast_replay_filter);
@@ -8098,6 +7908,7 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 	struct hdd_config *config = hdd_ctx->config;
 	mac_handle_t mac_handle;
 	uint32_t ivalue;
+	bool bvalue;
 	QDF_STATUS ret;
 
 	/*
@@ -8291,41 +8102,70 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 
 #ifdef FEATURE_WLAN_TDLS
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK,
-			    config->fTDLSUapsdMask) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK to CFG");
-	}
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_TDLS_BUF_STA_ENABLED,
-			    config->fEnableTDLSBufferSta) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_TDLS_BUF_STA_ENABLED to CFG");
-	}
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_TDLS_PUAPSD_INACT_TIME,
-			    config->fTDLSPuapsdInactivityTimer) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_TDLS_PUAPSD_INACT_TIME to CFG");
-	}
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_TDLS_RX_FRAME_THRESHOLD,
-			    config->fTDLSRxFrameThreshold) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_TDLS_RX_FRAME_THRESHOLD to CFG");
+	ret = cfg_tdls_get_uapsd_mask(hdd_ctx->hdd_psoc, &ivalue);
+	if (ret == QDF_STATUS_SUCCESS) {
+		ret = sme_cfg_set_int(mac_handle,
+				      WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK,
+				      ivalue);
+		if (ret == QDF_STATUS_E_FAILURE) {
+			status = false;
+			hdd_err("Couldn't pass on WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK to CFG");
+		}
 	}
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_TDLS_OFF_CHANNEL_ENABLED,
-			    config->fEnableTDLSOffChannel) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_TDLS_BUF_STA_ENABLED to CFG");
+	ret = cfg_tdls_get_buffer_sta_enable(hdd_ctx->hdd_psoc, &bvalue);
+	if (ret == QDF_STATUS_SUCCESS) {
+		ret = sme_cfg_set_int(mac_handle,
+				      WNI_CFG_TDLS_BUF_STA_ENABLED,
+				      (uint32_t)bvalue);
+		if (ret == QDF_STATUS_E_FAILURE) {
+			status = false;
+			hdd_err("Couldn't pass on WNI_CFG_TDLS_BUF_STA_ENABLED to CFG");
+		}
 	}
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_TDLS_WMM_MODE_ENABLED,
-			    config->fEnableTDLSWmmMode) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_TDLS_WMM_MODE_ENABLED to CFG");
+
+	ret = cfg_tdls_get_uapsd_inactivity_time(hdd_ctx->hdd_psoc, &ivalue);
+	if (ret == QDF_STATUS_SUCCESS) {
+		ret = sme_cfg_set_int(mac_handle,
+				      WNI_CFG_TDLS_PUAPSD_INACT_TIME,
+				      ivalue);
+		if (ret == QDF_STATUS_E_FAILURE) {
+			status = false;
+			hdd_err("Couldn't pass on WNI_CFG_TDLS_PUAPSD_INACT_TIME to CFG");
+		}
+	}
+
+	ret = cfg_tdls_get_rx_pkt_threshold(hdd_ctx->hdd_psoc, &ivalue);
+	if (ret == QDF_STATUS_SUCCESS) {
+		ret = sme_cfg_set_int(mac_handle,
+				      WNI_CFG_TDLS_RX_FRAME_THRESHOLD,
+				      ivalue);
+		if (ret == QDF_STATUS_E_FAILURE) {
+			status = false;
+			hdd_err("Couldn't pass on WNI_CFG_TDLS_RX_FRAME_THRESHOLD to CFG");
+		}
+	}
+
+	ret = cfg_tdls_get_off_channel_enable(hdd_ctx->hdd_psoc, &bvalue);
+	if (ret == QDF_STATUS_SUCCESS) {
+		ret = sme_cfg_set_int(mac_handle,
+				      WNI_CFG_TDLS_OFF_CHANNEL_ENABLED,
+				      (uint32_t)bvalue);
+		if (ret == QDF_STATUS_E_FAILURE) {
+			status = false;
+			hdd_err("Couldn't pass on WNI_CFG_TDLS_BUF_STA_ENABLED to CFG");
+		}
+	}
+
+	ret = cfg_tdls_get_wmm_mode_enable(hdd_ctx->hdd_psoc, &bvalue);
+	if (ret == QDF_STATUS_SUCCESS) {
+		ret = sme_cfg_set_int(mac_handle,
+				      WNI_CFG_TDLS_WMM_MODE_ENABLED,
+				      (uint32_t)bvalue);
+		if (ret == QDF_STATUS_E_FAILURE) {
+			status = false;
+			hdd_err("Couldn't pass on WNI_CFG_TDLS_WMM_MODE_ENABLED to CFG");
+		}
 	}
 #endif
 

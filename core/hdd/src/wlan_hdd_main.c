@@ -137,6 +137,7 @@
 #include "qc_sap_ioctl.h"
 #include "wlan_mlme_main.h"
 #include "wlan_p2p_cfg_api.h"
+#include "wlan_tdls_cfg_api.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -1169,41 +1170,13 @@ static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct tdls_start_params tdls_cfg;
-	struct tdls_user_config *config = &tdls_cfg.config;
 	struct hdd_config *cfg = hdd_ctx->config;
 	QDF_STATUS status;
 
-	config->tdls_tx_states_period = cfg->fTDLSTxStatsPeriod;
-	config->tdls_tx_pkt_threshold = cfg->fTDLSTxPacketThreshold;
-	config->tdls_rx_pkt_threshold = cfg->fTDLSRxFrameThreshold;
-	config->tdls_max_discovery_attempt = cfg->fTDLSMaxDiscoveryAttempt;
-	config->tdls_idle_timeout = cfg->tdls_idle_timeout;
-	config->tdls_idle_pkt_threshold = cfg->fTDLSIdlePacketThreshold;
-	config->tdls_rssi_trigger_threshold = cfg->fTDLSRSSITriggerThreshold;
-	config->tdls_rssi_teardown_threshold = cfg->fTDLSRSSITeardownThreshold;
-	config->tdls_rssi_delta = cfg->fTDLSRSSIDelta;
-	config->tdls_uapsd_mask = cfg->fTDLSUapsdMask;
-	config->tdls_uapsd_inactivity_time = cfg->fTDLSPuapsdInactivityTimer;
-	config->tdls_uapsd_pti_window = cfg->fTDLSPuapsdPTIWindow;
-	config->tdls_uapsd_ptr_timeout = cfg->fTDLSPuapsdPTRTimeout;
-	config->tdls_pre_off_chan_num = cfg->fTDLSPrefOffChanNum;
-	config->tdls_pre_off_chan_bw = cfg->fTDLSPrefOffChanBandwidth;
-	config->tdls_peer_kickout_threshold = cfg->tdls_peer_kickout_threshold;
-	config->delayed_trig_framint = cfg->DelayedTriggerFrmInt;
-	config->tdls_feature_flags = ((cfg->fEnableTDLSOffChannel ?
-				     1 << TDLS_FEATURE_OFF_CHANNEL : 0) |
-		(cfg->fEnableTDLSWmmMode ? 1 << TDLS_FEATURE_WMM : 0) |
-		(cfg->fEnableTDLSBufferSta ? 1 << TDLS_FEATURE_BUFFER_STA : 0) |
-		(cfg->fEnableTDLSSleepSta ? 1 << TDLS_FEATURE_SLEEP_STA : 0) |
-		(cfg->enable_tdls_scan ? 1 << TDLS_FEATURE_SCAN : 0) |
-		(cfg->fEnableTDLSSupport ? 1 << TDLS_FEATURE_ENABLE : 0) |
-		(cfg->fEnableTDLSImplicitTrigger ?
-		 1 << TDLS_FEAUTRE_IMPLICIT_TRIGGER : 0) |
-		(cfg->fTDLSExternalControl ?
-		 1 << TDLS_FEATURE_EXTERNAL_CONTROL : 0));
-	config->tdls_vdev_nss_2g = CFG_TDLS_NSS(cfg->vdev_type_nss_2g);
-	config->tdls_vdev_nss_5g = CFG_TDLS_NSS(cfg->vdev_type_nss_5g);
-
+	cfg_tdls_set_vdev_nss_2g(hdd_ctx->hdd_psoc,
+				 CFG_TDLS_NSS(cfg->vdev_type_nss_2g));
+	cfg_tdls_set_vdev_nss_5g(hdd_ctx->hdd_psoc,
+				 CFG_TDLS_NSS(cfg->vdev_type_nss_5g));
 	tdls_cfg.tdls_send_mgmt_req = eWNI_SME_TDLS_SEND_MGMT_REQ;
 	tdls_cfg.tdls_add_sta_req = eWNI_SME_TDLS_ADD_STA_REQ;
 	tdls_cfg.tdls_del_sta_req = eWNI_SME_TDLS_DEL_STA_REQ;
@@ -1238,7 +1211,12 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 				    struct wma_tgt_services *cfg)
 {
 	struct hdd_config *config = hdd_ctx->config;
-
+#ifdef FEATURE_WLAN_TDLS
+	bool tdls_support;
+	bool tdls_off_channel;
+	bool tdls_buffer_sta;
+	uint32_t tdls_uapsd_mask;
+#endif
 	/* Set up UAPSD */
 	config->apUapsdEnabled &= cfg->uapsd;
 
@@ -1262,15 +1240,25 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 		config->PnoOffload = true;
 #endif
 #ifdef FEATURE_WLAN_TDLS
-	config->fEnableTDLSSupport &= cfg->en_tdls;
-	config->fEnableTDLSOffChannel = config->fEnableTDLSOffChannel &&
-						cfg->en_tdls_offchan;
-	config->fEnableTDLSBufferSta = config->fEnableTDLSBufferSta &&
-						cfg->en_tdls_uapsd_buf_sta;
-	if (config->fTDLSUapsdMask && cfg->en_tdls_uapsd_sleep_sta)
-		config->fEnableTDLSSleepSta = true;
+	cfg_tdls_get_support_enable(hdd_ctx->hdd_psoc, &tdls_support);
+	cfg_tdls_set_support_enable(hdd_ctx->hdd_psoc,
+				    tdls_support & cfg->en_tdls);
+
+	cfg_tdls_get_off_channel_enable(hdd_ctx->hdd_psoc, &tdls_off_channel);
+	cfg_tdls_set_off_channel_enable(hdd_ctx->hdd_psoc,
+					tdls_off_channel &&
+					cfg->en_tdls_offchan);
+
+	cfg_tdls_get_buffer_sta_enable(hdd_ctx->hdd_psoc, &tdls_buffer_sta);
+	cfg_tdls_set_buffer_sta_enable(hdd_ctx->hdd_psoc,
+				       tdls_buffer_sta &&
+				       cfg->en_tdls_uapsd_buf_sta);
+
+	cfg_tdls_get_uapsd_mask(hdd_ctx->hdd_psoc, &tdls_uapsd_mask);
+	if (tdls_uapsd_mask && cfg->en_tdls_uapsd_sleep_sta)
+		cfg_tdls_set_sleep_sta_enable(hdd_ctx->hdd_psoc, true);
 	else
-		config->fEnableTDLSSleepSta = false;
+		cfg_tdls_set_sleep_sta_enable(hdd_ctx->hdd_psoc, false);
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	config->isRoamOffloadEnabled &= cfg->en_roam_offload;

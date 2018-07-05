@@ -832,6 +832,7 @@ UMAC_TDLS_OBJS := $(UMAC_TDLS_DIR)/core/src/wlan_tdls_main.o \
        $(UMAC_TDLS_DIR)/dispatcher/src/wlan_tdls_tgt_api.o \
        $(UMAC_TDLS_DIR)/dispatcher/src/wlan_tdls_ucfg_api.o \
        $(UMAC_TDLS_DIR)/dispatcher/src/wlan_tdls_utils_api.o \
+       $(UMAC_TDLS_DIR)/dispatcher/src/wlan_tdls_cfg.o \
        $(WLAN_COMMON_ROOT)/os_if/linux/tdls/src/wlan_cfg80211_tdls.o
 
 ########### BMI ###########
