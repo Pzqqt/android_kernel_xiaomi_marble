@@ -2439,6 +2439,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 					continue;
 				/* SAP to be moved to DISCONNECTING state */
 				t_sap_ctx->sapsMachine = eSAP_DISCONNECTING;
+				t_sap_ctx->is_chan_change_inprogress = true;
 				/*
 				 * eSAP_DFS_CHANNEL_CAC_RADAR_FOUND:
 				 * A Radar is found on current DFS Channel
