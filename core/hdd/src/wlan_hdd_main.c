@@ -7364,7 +7364,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	bool rx_level_change = false;
 	bool tx_level_change = false;
 	bool rxthread_high_tput_req = false;
-
+	bool dptrace_high_tput_req;
 	if (total_pkts > hdd_ctx->config->busBandwidthHighThreshold)
 		next_vote_level = PLD_BUS_WIDTH_HIGH;
 	else if (total_pkts > hdd_ctx->config->busBandwidthMediumThreshold)
@@ -7373,6 +7373,9 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		next_vote_level = PLD_BUS_WIDTH_LOW;
 	else
 		next_vote_level = PLD_BUS_WIDTH_NONE;
+
+	dptrace_high_tput_req =
+			next_vote_level > PLD_BUS_WIDTH_NONE ? true : false;
 
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
 		hdd_debug("trigger level %d, tx_packets: %lld, rx_packets: %lld",
@@ -7406,9 +7409,9 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			hdd_disable_rx_ol_for_low_tput(hdd_ctx, true);
 		else
 			hdd_disable_rx_ol_for_low_tput(hdd_ctx, false);
-
-		qdf_dp_trace_apply_tput_policy(next_vote_level);
 	}
+
+	qdf_dp_trace_apply_tput_policy(dptrace_high_tput_req);
 
 	/*
 	 * Includes tcp+udp, if perf core is required for tcp, then
@@ -10923,7 +10926,6 @@ static void wlan_init_bug_report_lock(void)
 #ifdef CONFIG_DP_TRACE
 void hdd_dp_trace_init(struct hdd_config *config)
 {
-
 	bool live_mode = DP_TRACE_CONFIG_DEFAULT_LIVE_MODE;
 	uint8_t thresh = DP_TRACE_CONFIG_DEFAULT_THRESH;
 	uint16_t thresh_time_limit = DP_TRACE_CONFIG_DEFAULT_THRESH_TIME_LIMIT;
@@ -10965,9 +10967,9 @@ void hdd_dp_trace_init(struct hdd_config *config)
 		live_mode = config_params[0];
 		/* fall through */
 	default:
-		hdd_debug("live_mode %u thresh %u time_limit %u verbosity %u bitmap 0x%x",
-			live_mode, thresh, thresh_time_limit,
-			verbosity, proto_bitmap);
+		hdd_info("live_mode %u thresh %u time_limit %u verbosity %u bitmap 0x%x",
+			 live_mode, thresh, thresh_time_limit,
+			 verbosity, proto_bitmap);
 	};
 
 	qdf_dp_trace_init(live_mode, thresh, thresh_time_limit,

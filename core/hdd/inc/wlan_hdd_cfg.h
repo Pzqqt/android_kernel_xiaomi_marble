@@ -9721,14 +9721,14 @@ enum dot11p_mode {
  * Use this default in case the value cannot be determined from cfg string
  * gDptraceConfig
  */
-#define DP_TRACE_CONFIG_DEFAULT_THRESH		(4)
+#define DP_TRACE_CONFIG_DEFAULT_THRESH		(6)
 
 /*
  * Number of intervals of BW timer to wait before enabling/disabling DP Trace.
  * Since throughput threshold to disable live logging for DP Trace is very low,
  * we calculate throughput based on # packets received in a second.
- * For example assuming bandwidth timer interval is 100ms, and if more than 4
- * packets are received in 10 * 100 ms interval, we want to disable DP Trace
+ * For example assuming bandwidth timer interval is 100ms, and if more than 6
+ * prints are received in 10 * 100 ms interval, we want to disable DP Trace
  * live logging. DP_TRACE_CONFIG_DEFAULT_THRESH_TIME_LIMIT is the default
  * value, to be used in case the real value cannot be derived from
  * bw timer interval
@@ -9759,12 +9759,12 @@ enum dot11p_mode {
  *          (decimal 62 = 0x3e)
  * e.g., to disable live mode, use the following param in the ini file.
  * gDptraceConfig = 0
- * e.g., to enable dptrace live mode and set the thresh as 4,
+ * e.g., to enable dptrace live mode and set the thresh as 6,
  * use the following param in the ini file.
- * gDptraceConfig = 1, 4
+ * gDptraceConfig = 1, 6
  */
 #define CFG_ENABLE_DP_TRACE_CONFIG		"gDptraceConfig"
-#define CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT	"1, 4, 1, 126"
+#define CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT	"1, 6, 2, 126"
 #endif
 
 /*
