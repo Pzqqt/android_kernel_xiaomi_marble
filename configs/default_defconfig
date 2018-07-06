@@ -559,6 +559,7 @@ endif
 ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
 	CONFIG_FEATURE_UNIT_TEST_SUSPEND := y
 	CONFIG_LEAK_DETECTION := y
+	CONFIG_UNIT_TEST := y
 endif
 
 # enable unit-test suspend for napier builds

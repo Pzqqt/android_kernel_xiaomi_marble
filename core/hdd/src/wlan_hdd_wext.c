@@ -66,6 +66,7 @@
 #include "qc_sap_ioctl.h"
 #include "sme_api.h"
 #include "wma_types.h"
+#include "qdf_str.h"
 #include "qdf_trace.h"
 #include "wlan_hdd_assoc.h"
 #include "wlan_hdd_ioctl.h"
@@ -1808,6 +1809,19 @@
  */
 #define WE_SET_AP_WPS_IE     4
 #define WE_SET_CONFIG        5
+
+/*
+ * <ioctl>
+ * unit_test - execute component-level unit tests
+ *
+ * @INPUT: string - the name of the component to test.
+ *	All tests are executed if unspecified
+ * @OUTPUT: None
+ *
+ * Usage: Internal only
+ * </ioctl>
+ */
+#define WE_UNIT_TEST         6
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_THREE_INT_GET_NONE   (SIOCIWFIRSTPRIV + 4)
@@ -5284,6 +5298,35 @@ static int iw_setnone_get_threeint(struct net_device *dev,
 	return ret;
 }
 
+#ifdef WLAN_UNIT_TEST
+static int hdd_we_unit_test(struct hdd_context *hdd_ctx, const char *component)
+{
+	uint32_t errors = 0;
+	bool all = !component || !component[0];
+
+	if (all)
+		hdd_info("Starting unit tests for all components");
+	else
+		hdd_info("Starting unit tests for component '%s'", component);
+
+	/* add future tests here */
+
+	if (errors) {
+		hdd_err("Unit tests failed with %u errors", errors);
+		return -EPERM;
+	}
+
+	hdd_info("Unit tests passed successfully");
+
+	return 0;
+}
+#else
+static int hdd_we_unit_test(struct hdd_context *hdd_ctx, const char *component)
+{
+	return -EOPNOTSUPP;
+}
+#endif /* WLAN_UNIT_TEST */
+
 /**
  * iw_setchar_getnone() - Generic "set string" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5297,10 +5340,10 @@ static int __iw_setchar_getnone(struct net_device *dev,
 				struct iw_request_info *info,
 				union iwreq_data *wrqu, char *extra)
 {
-	QDF_STATUS vstatus;
+	QDF_STATUS status;
 	int sub_cmd;
 	int ret;
-	char *pBuffer = NULL;
+	char *str_arg = NULL;
 	struct hdd_adapter *adapter = (netdev_priv(dev));
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_config *pConfig = hdd_ctx->config;
@@ -5332,24 +5375,24 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	sub_cmd = s_priv_data.flags;
 
 	/* ODD number is used for set, copy data using copy_from_user */
-	pBuffer = mem_alloc_copy_from_user_helper(s_priv_data.pointer,
+	str_arg = mem_alloc_copy_from_user_helper(s_priv_data.pointer,
 						  s_priv_data.length);
-	if (NULL == pBuffer) {
+	if (!str_arg) {
 		hdd_err("mem_alloc_copy_from_user_helper fail");
 		return -ENOMEM;
 	}
 
 	hdd_debug("Received length: %d data: %s",
-			s_priv_data.length, pBuffer);
+			s_priv_data.length, str_arg);
 
 	switch (sub_cmd) {
 	case WE_WOWL_ADD_PTRN:
 		hdd_debug("ADD_PTRN");
-		hdd_add_wowl_ptrn(adapter, pBuffer);
+		hdd_add_wowl_ptrn(adapter, str_arg);
 		break;
 	case WE_WOWL_DEL_PTRN:
 		hdd_debug("DEL_PTRN");
-		hdd_del_wowl_ptrn(adapter, pBuffer);
+		hdd_del_wowl_ptrn(adapter, str_arg);
 		break;
 	case WE_NEIGHBOR_REPORT_REQUEST:
 	{
@@ -5367,7 +5410,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 					(s_priv_data.length - 1) >
 					32 ? 32 : (s_priv_data.length - 1);
 				qdf_mem_copy(neighborReq.ssid.ssId,
-					     pBuffer,
+					     str_arg,
 					     neighborReq.ssid.length);
 			}
 
@@ -5400,21 +5443,25 @@ static int __iw_setchar_getnone(struct net_device *dev,
 		hdd_debug("Received WE_SET_AP_WPS_IE, won't process");
 		break;
 	case WE_SET_CONFIG:
-		vstatus = hdd_execute_global_config_command(hdd_ctx, pBuffer);
-		if (QDF_STATUS_SUCCESS != vstatus)
+		status = hdd_execute_global_config_command(hdd_ctx, str_arg);
+		if (QDF_IS_STATUS_ERROR(status))
 			ret = -EINVAL;
 
 		break;
+	case WE_UNIT_TEST:
+		ret = hdd_we_unit_test(hdd_ctx, str_arg);
+		break;
 	default:
 	{
-		hdd_err("Invalid sub command %d",
-		       sub_cmd);
+		hdd_err("Invalid sub command %d", sub_cmd);
 		ret = -EINVAL;
 		break;
 	}
 	}
-	qdf_mem_free(pBuffer);
+
+	qdf_mem_free(str_arg);
 	hdd_exit();
+
 	return ret;
 }
 
@@ -9723,6 +9770,13 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_CHAR | 512,
 	 0,
 	 "setConfig"},
+
+#ifdef WLAN_UNIT_TEST
+	{WE_UNIT_TEST,
+	 IW_PRIV_TYPE_CHAR | 512,
+	 0,
+	 "unit_test"},
+#endif
 
 	/* handlers for main ioctl */
 	{WLAN_PRIV_SET_THREE_INT_GET_NONE,
