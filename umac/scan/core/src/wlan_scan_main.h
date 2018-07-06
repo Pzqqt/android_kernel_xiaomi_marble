@@ -200,11 +200,15 @@ struct scan_requester_info {
  * @wide_band_scan: wide band scan capability
  * @last_scan_time: time of last scan start on this pdev
  * @custom_chan_list: scan only these channels
+ * @conf_bssid: configured bssid of the hidden AP
+ * @conf_ssid: configured desired ssid
  */
 struct pdev_scan_info {
 	bool wide_band_scan;
 	qdf_time_t last_scan_time;
 	struct chan_list custom_chan_list;
+	uint8_t conf_bssid[QDF_MAC_ADDR_SIZE];
+	struct wlan_ssid conf_ssid;
 };
 
 /**

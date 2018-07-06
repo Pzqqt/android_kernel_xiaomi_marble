@@ -63,6 +63,24 @@ qdf_list_t *util_scan_unpack_beacon_frame(
 	struct mgmt_rx_event_params *rx_param);
 
 /**
+ * util_scan_add_hidden_ssid() - func to add hidden ssid
+ * @pdev: pdev pointer
+ * @frame: beacon buf
+ *
+ * Return:
+ */
+#ifdef WLAN_DFS_CHAN_HIDDEN_SSID
+QDF_STATUS
+util_scan_add_hidden_ssid(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t bcnbuf);
+#else
+static inline QDF_STATUS
+util_scan_add_hidden_ssid(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t bcnbuf)
+{
+	return  QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_DFS_CHAN_HIDDEN_SSID */
+
+/**
  * util_scan_get_ev_type_name() - converts enum event to printable string
  * @event:      event of type scan_event_type
  *

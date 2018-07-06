@@ -1041,6 +1041,34 @@ bool ucfg_scan_get_wide_band_scan(struct wlan_objmgr_pdev *pdev)
 	return scan_obj->pdev_info[pdev_id].wide_band_scan;
 }
 
+#ifdef WLAN_DFS_CHAN_HIDDEN_SSID
+QDF_STATUS
+ucfg_scan_config_hidden_ssid_for_bssid(struct wlan_objmgr_pdev *pdev,
+				       uint8_t *bssid, struct wlan_ssid *ssid)
+{
+	uint8_t pdev_id;
+	struct wlan_scan_obj *scan_obj;
+
+	if (!pdev) {
+		scm_warn("null vdev");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	scan_obj = wlan_pdev_get_scan_obj(pdev);
+
+	scm_debug("Configure bsssid:%pM ssid:%.*s",
+		  bssid, ssid->length, ssid->ssid);
+	qdf_mem_copy(scan_obj->pdev_info[pdev_id].conf_bssid,
+		     bssid, QDF_MAC_ADDR_SIZE);
+	scan_obj->pdev_info[pdev_id].conf_ssid.length = ssid->length;
+	qdf_mem_copy(scan_obj->pdev_info[pdev_id].conf_ssid.ssid,
+		     ssid->ssid,
+		     scan_obj->pdev_info[pdev_id].conf_ssid.length);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_DFS_CHAN_HIDDEN_SSID */
+
 QDF_STATUS
 ucfg_scan_cancel(struct scan_cancel_request *req)
 {

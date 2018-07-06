@@ -826,6 +826,141 @@ static int util_scan_scm_calc_nss_supported_by_ap(
 	return 1;
 }
 
+#ifdef WLAN_DFS_CHAN_HIDDEN_SSID
+QDF_STATUS
+util_scan_add_hidden_ssid(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t bcnbuf)
+{
+	struct wlan_frame_hdr *hdr;
+	struct wlan_bcn_frame *bcn;
+	struct wlan_scan_obj *scan_obj;
+	struct wlan_ssid *conf_ssid;
+	struct  ie_header *ie;
+	uint32_t frame_len = qdf_nbuf_len(bcnbuf);
+	uint16_t bcn_ie_offset, ssid_ie_start_offset, ssid_ie_end_offset;
+	uint16_t tmplen, ie_length;
+	uint8_t *pbeacon, *tmp;
+	bool     set_ssid_flag = false;
+	struct ie_ssid *ssid;
+	uint8_t pdev_id;
+
+	if (!pdev) {
+		scm_warn("pdev: 0x%pK is NULL", pdev);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	scan_obj = wlan_pdev_get_scan_obj(pdev);
+
+	conf_ssid = &scan_obj->pdev_info[pdev_id].conf_ssid;
+
+	hdr = (struct wlan_frame_hdr *)qdf_nbuf_data(bcnbuf);
+
+	/* received bssid does not match configured bssid */
+	if (qdf_mem_cmp(hdr->i_addr3, scan_obj->pdev_info[pdev_id].conf_bssid,
+			QDF_MAC_ADDR_SIZE) ||
+			conf_ssid->length == 0) {
+		return QDF_STATUS_SUCCESS;
+	}
+
+	bcn = (struct wlan_bcn_frame *)(qdf_nbuf_data(bcnbuf) + sizeof(*hdr));
+	pbeacon = (uint8_t *)bcn;
+
+	ie = (struct ie_header *)(pbeacon +
+				  offsetof(struct wlan_bcn_frame, ie));
+
+	bcn_ie_offset = offsetof(struct wlan_bcn_frame, ie);
+	ie_length = (uint16_t)(frame_len - sizeof(*hdr) -
+			       bcn_ie_offset);
+
+	while (ie_length >=  sizeof(struct ie_header)) {
+		ie_length -= sizeof(struct ie_header);
+
+		bcn_ie_offset += sizeof(struct ie_header);
+
+		if (ie_length < ie->ie_len) {
+			scm_debug("Incomplete corrupted IE:%x", ie->ie_id);
+			return QDF_STATUS_E_INVAL;
+		}
+		if (ie->ie_id == WLAN_ELEMID_SSID) {
+			if (ie->ie_len > (sizeof(struct ie_ssid) -
+						 sizeof(struct ie_header))) {
+				return QDF_STATUS_E_INVAL;
+			}
+			ssid = (struct ie_ssid *)ie;
+			if (util_scan_is_hidden_ssid(ssid)) {
+				set_ssid_flag  = true;
+				ssid_ie_start_offset = bcn_ie_offset -
+					sizeof(struct ie_header);
+				ssid_ie_end_offset = bcn_ie_offset +
+					ie->ie_len;
+			}
+		}
+		if (ie->ie_len == 0) {
+			ie += 1;    /* next IE */
+			continue;
+		}
+		if (ie->ie_id == WLAN_ELEMID_VENDOR &&
+		    is_wps_oui((uint8_t *)ie)) {
+			set_ssid_flag = false;
+			break;
+		}
+		/* Consume info element */
+		ie_length -=  ie->ie_len;
+		/* Go to next IE */
+		ie = (struct ie_header *)(((uint8_t *)ie) +
+				sizeof(struct ie_header) +
+				ie->ie_len);
+	}
+
+	if (set_ssid_flag) {
+		/* Hidden SSID if the Length is 0 */
+		if (!ssid->ssid_len) {
+			/* increase the taillength by length of ssid */
+			if (qdf_nbuf_put_tail(bcnbuf,
+					      conf_ssid->length) == NULL) {
+				scm_debug("No enough tailroom");
+				return  QDF_STATUS_E_NOMEM;
+			}
+			/* length of the buffer to be copied */
+			tmplen = frame_len -
+				sizeof(*hdr) - ssid_ie_end_offset;
+			/*
+			 * tmp memory to copy the beacon info
+			 * after ssid ie.
+			 */
+			tmp = qdf_mem_malloc(tmplen * sizeof(u_int8_t));
+			if (!tmp) {
+				scm_debug("tmp memory alloc failed");
+				return  QDF_STATUS_E_NOMEM;
+			}
+			/* Copy beacon data after ssid ie to tmp */
+			qdf_nbuf_copy_bits(bcnbuf, (sizeof(*hdr) +
+					   ssid_ie_end_offset), tmplen, tmp);
+			/* Add ssid length */
+			*(pbeacon + (ssid_ie_start_offset + 1))
+				= conf_ssid->length;
+			/* Insert the  SSID string */
+			qdf_mem_copy((pbeacon + ssid_ie_end_offset),
+				     conf_ssid->ssid, conf_ssid->length);
+			/* Copy rest of the beacon data */
+			qdf_mem_copy((pbeacon + ssid_ie_end_offset +
+				      conf_ssid->length), tmp, tmplen);
+			qdf_mem_free(tmp);
+
+			/* Hidden ssid with all 0's */
+		} else if (ssid->ssid_len == conf_ssid->length) {
+			/* Insert the  SSID string */
+			qdf_mem_copy((pbeacon + ssid_ie_start_offset +
+				      sizeof(struct ie_header)),
+				      conf_ssid->ssid, conf_ssid->length);
+		} else {
+			scm_debug("mismatch in hidden ssid length");
+			return QDF_STATUS_E_INVAL;
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_DFS_CHAN_HIDDEN_SSID */
+
 qdf_list_t *
 util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
 	qdf_size_t frame_len, uint32_t frm_subtype,

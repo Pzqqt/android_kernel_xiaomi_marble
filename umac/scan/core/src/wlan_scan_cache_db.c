@@ -50,6 +50,7 @@
 #include "wlan_scan_cache_db_i.h"
 #include "wlan_reg_services_api.h"
 #include "wlan_reg_ucfg_api.h"
+#include <wlan_dfs_utils_api.h>
 
 /**
  * scm_del_scan_node() - API to remove scan node from the list
@@ -745,6 +746,11 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 		scm_debug("invalid beacon/probe length");
 		status = QDF_STATUS_E_INVAL;
 		goto free_nbuf;
+	}
+
+	if (bcn->frm_type == MGMT_SUBTYPE_BEACON &&
+	    utils_is_dfs_ch(pdev, bcn->rx_data->channel)) {
+		util_scan_add_hidden_ssid(pdev, bcn->buf);
 	}
 
 	scan_list =
