@@ -35,9 +35,9 @@
 #define direct_buf_rx_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_DIRECT_BUF_RX, params)
 #define direct_buf_rx_enter() \
-	direct_buf_rx_debug("enter")
+	QDF_TRACE_ENTER(QDF_MODULE_ID_DIRECT_BUF_RX, "enter")
 #define direct_buf_rx_exit() \
-	direct_buf_rx_debug("exit")
+	QDF_TRACE_EXIT(QDF_MODULE_ID_DIRECT_BUF_RX, "exit")
 
 #define DBR_MAX_CHAINS      (8)
 

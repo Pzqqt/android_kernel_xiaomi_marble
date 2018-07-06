@@ -43,9 +43,10 @@
 	QDF_TRACE_INFO(QDF_MODULE_ID_TARGET_IF, params)
 #define target_if_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_TARGET_IF, params)
-
-#define TARGET_IF_ENTER() target_if_debug("enter")
-#define TARGET_IF_EXIT() target_if_debug("exit")
+#define TARGET_IF_ENTER() \
+	QDF_TRACE_ENTER(QDF_MODULE_ID_TARGET_IF, "enter")
+#define TARGET_IF_EXIT() \
+	QDF_TRACE_EXIT(QDF_MODULE_ID_TARGET_IF, "exit")
 
 #ifdef CONFIG_MCL
 #define TARGET_TYPE_AR900B    9  /* Beeliner */

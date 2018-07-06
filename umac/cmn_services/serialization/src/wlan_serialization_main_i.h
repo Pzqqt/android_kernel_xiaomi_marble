@@ -42,9 +42,10 @@
 	QDF_TRACE_INFO(QDF_MODULE_ID_SERIALIZATION, params)
 #define serialization_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_SERIALIZATION, params)
-
-#define serialization_enter() serialization_debug("enter")
-#define serialization_exit() serialization_debug("exit")
+#define serialization_enter() \
+	QDF_TRACE_ENTER(QDF_MODULE_ID_SERIALIZATION, "enter")
+#define serialization_exit() \
+	QDF_TRACE_EXIT(QDF_MODULE_ID_SERIALIZATION, "exit")
 
 /**
  * struct serialization_legacy_callback - to handle legacy serialization cb

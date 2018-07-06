@@ -152,6 +152,20 @@ static inline void __qdf_trace_noop(QDF_MODULE_ID module, char *format, ...) { }
 #define QDF_TRACE_DEBUG_RL(params...) __qdf_trace_noop(params)
 #endif
 
+#ifdef WLAN_LOG_ENTER
+#define QDF_TRACE_ENTER(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_DEBUG, ## params)
+#else
+#define QDF_TRACE_ENTER(params...) __qdf_trace_noop(params)
+#endif
+
+#ifdef WLAN_LOG_EXIT
+#define QDF_TRACE_EXIT(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_DEBUG, ## params)
+#else
+#define QDF_TRACE_EXIT(params...) __qdf_trace_noop(params)
+#endif
+
 #define QDF_ENABLE_TRACING
 #define qdf_scnprintf scnprintf
 
