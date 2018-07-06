@@ -169,12 +169,6 @@ static int audio_get_pinctrl(struct platform_device *pdev)
 	int ret;
 	u32 reg;
 
-	if (clk_priv->clk_src == AUDIO_EXT_CLK_LNBB2) {
-		dev_dbg(dev, "%s no pinctrl for clk_src = %d\n",
-			__func__, clk_priv->clk_src);
-		return 0;
-	}
-
 	pnctrl_info = &clk_priv->audio_clk.pnctrl_info;
 	if (pnctrl_info->pinctrl) {
 		dev_err(dev, "%s: already requested before\n",
@@ -286,8 +280,7 @@ static int audio_ref_clk_probe(struct platform_device *pdev)
 {
 	int ret;
 	struct audio_ext_clk_priv *clk_priv;
-	u32 clk_freq = 0, clk_id = 0, clk_src = 0;
-
+	u32 clk_freq = 0, clk_id = 0, clk_src = 0, use_pinctrl = 0;
 
 	clk_priv = devm_kzalloc(&pdev->dev, sizeof(*clk_priv), GFP_KERNEL);
 	if (!clk_priv)
@@ -336,11 +329,22 @@ static int audio_ref_clk_probe(struct platform_device *pdev)
 			clk_priv->clk_cfg.clk_id, clk_priv->clk_src);
 	platform_set_drvdata(pdev, clk_priv);
 
-	ret = audio_get_pinctrl(pdev);
-	if (ret) {
-		dev_err(&pdev->dev, "%s: Parsing PMI pinctrl failed\n",
-			__func__);
-		return ret;
+	/*
+	 * property qcom,use-pinctrl to be defined in DTSI to val 1
+	 * for clock nodes using pinctrl
+	 */
+	of_property_read_u32(pdev->dev.of_node, "qcom,use-pinctrl",
+			     &use_pinctrl);
+	dev_dbg(&pdev->dev, "%s: use-pinctrl : %d\n",
+		__func__, use_pinctrl);
+
+	if (use_pinctrl) {
+		ret = audio_get_pinctrl(pdev);
+		if (ret) {
+			dev_err(&pdev->dev, "%s: Parsing PMI pinctrl failed\n",
+				__func__);
+			return ret;
+		}
 	}
 
 	ret = audio_get_clk_data(pdev);
