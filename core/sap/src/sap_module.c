@@ -713,13 +713,6 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 		goto fail;
 	}
 	pmac = PMAC_STRUCT(hHal);
-	if (NULL == pmac) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Invalid MAC context from p_cds_gctx",
-			  __func__);
-		qdf_status = QDF_STATUS_E_FAULT;
-		goto fail;
-	}
 	/* If concurrent session is running that is already associated
 	 * then we just follow that sessions country info (whether
 	 * present or not doesn't maater as we have to follow whatever
