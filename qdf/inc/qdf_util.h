@@ -707,4 +707,49 @@ void qdf_get_random_bytes(void *buf, int nbytes)
 {
 	return __qdf_get_random_bytes(buf, nbytes);
 }
+
+/**
+ * qdf_hex_to_bin() - QDF API to Convert hexa decimal ASCII character to
+ * unsigned integer value.
+ * @ch: hexa decimal ASCII character
+ *
+ * Return: For hexa decimal ASCII char return actual decimal value
+ *	   else -1 for bad input.
+ */
+static inline
+int qdf_hex_to_bin(char ch)
+{
+	return __qdf_hex_to_bin(ch);
+}
+
+/**
+ * qdf_hex_str_to_binary() - QDF API to Convert string of hexa decimal
+ * ASCII characters to array of unsigned integers.
+ * @dst: output array to hold converted values
+ * @src: input string of hexa decimal ASCII characters
+ * @count: size of dst string
+ *
+ * This function is used to convert string of hexa decimal characters to
+ * array of unsigned integers and caller should ensure:
+ *	a) @dst, @src are not NULL,
+ *	b) size of @dst should be (size of src / 2)
+ *
+ * Example 1:
+ * src = 11aa, means, src[0] = '1', src[1] = '2', src[2] = 'a', src[3] = 'a'
+ * count = (size of src / 2) = 2
+ * after conversion, dst[0] = 0x11, dst[1] = oxAA and return (0).
+ *
+ * Example 2:
+ * src = 11az, means, src[0] = '1', src[1] = '2', src[2] = 'a', src[3] = 'z'
+ * src[3] is not ASCII hexa decimal character, return negative value (-1).
+ *
+ * Return: For a string of hexa decimal ASCII characters return 0
+ *	   else -1 for bad input.
+ */
+static inline
+int qdf_hex_str_to_binary(u8 *dst, const char *src, size_t count)
+{
+	return __qdf_hex_str_to_binary(dst, src, count);
+}
+
 #endif /*_QDF_UTIL_H*/

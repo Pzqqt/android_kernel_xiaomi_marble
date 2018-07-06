@@ -506,4 +506,35 @@ uint64_t __qdf_do_div_rem(uint64_t dividend, uint32_t divisor)
 {
 	return do_div(dividend, divisor);
 }
+
+/**
+ * __qdf_hex_to_bin() - Wrapper function to kernel API to get unsigned
+ * integer from hexa decimal ASCII character.
+ * @ch: hexa decimal ASCII character
+ *
+ * Return: For hexa decimal ASCII char return actual decimal value
+ *	   else -1 for bad input.
+ */
+static inline
+int __qdf_hex_to_bin(char ch)
+{
+	return hex_to_bin(ch);
+}
+
+/**
+ * __qdf_hex_str_to_binary() - Wrapper function to get array of unsigned
+ * integers from string of hexa decimal ASCII characters.
+ * @dst: output array to hold converted values
+ * @src: input string of hexa decimal ASCII characters
+ * @count: size of dst string
+ *
+ * Return: For a string of hexa decimal ASCII characters return 0
+ *	   else -1 for bad input.
+ */
+static inline
+int __qdf_hex_str_to_binary(u8 *dst, const char *src, size_t count)
+{
+	return hex2bin(dst, src, count);
+}
+
 #endif /*_I_QDF_UTIL_H*/
