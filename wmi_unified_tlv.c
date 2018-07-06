@@ -19324,11 +19324,14 @@ static QDF_STATUS extract_sar_cap_service_ready_ext_tlv(
 
 	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *)event;
 
-	sar_caps = param_buf->sar_caps;
-	if (!sar_caps)
+	if (!param_buf)
 		return QDF_STATUS_E_INVAL;
 
-	ext_param->sar_version = sar_caps->active_version;
+	sar_caps = param_buf->sar_caps;
+	if (sar_caps)
+		ext_param->sar_version = sar_caps->active_version;
+	else
+		ext_param->sar_version = 0;
 
 	return QDF_STATUS_SUCCESS;
 }
