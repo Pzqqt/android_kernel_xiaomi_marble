@@ -731,7 +731,8 @@ next_pop:
 }
 #endif /* CONFIG_HL_SUPPORT */
 
-#if !defined(QCA6290_HEADERS_DEF)
+#if defined(FEATURE_MONITOR_MODE_SUPPORT)
+#if !defined(QCA6290_HEADERS_DEF) && !defined(QCA6390_HEADERS_DEF)
 static void
 htt_rx_parse_ppdu_start_status(struct htt_host_rx_desc_base *rx_desc,
 			       struct ieee80211_rx_status *rs)
@@ -1082,4 +1083,5 @@ mpdu_stitch_fail:
 
 	return NULL;
 }
+#endif
 #endif
