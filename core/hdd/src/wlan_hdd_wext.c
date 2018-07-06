@@ -92,6 +92,7 @@
 #include "os_if_wifi_pos.h"
 #include <cdp_txrx_stats.h>
 #include <cds_api.h>
+#include "wlan_dsc_test.h"
 #include <wlan_osif_priv.h>
 #include "wlan_hdd_regulatory.h"
 #include "wlan_reg_ucfg_api.h"
@@ -5313,6 +5314,9 @@ static int hdd_we_unit_test(struct hdd_context *hdd_ctx, const char *component)
 		hdd_info("Starting unit tests for all components");
 	else
 		hdd_info("Starting unit tests for component '%s'", component);
+
+	if (all || qdf_str_eq(component, "dsc"))
+		errors += dsc_unit_test();
 
 	/* add future tests here */
 

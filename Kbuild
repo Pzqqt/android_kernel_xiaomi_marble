@@ -166,6 +166,30 @@ ifeq ($(CONFIG_WLAN_FEATURE_PACKET_FILTERING), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_packet_filter.o
 endif
 
+########### Driver Synchronization Core (DSC) ###########
+DSC_DIR := components/dsc
+DSC_INC_DIR := $(DSC_DIR)/inc
+DSC_SRC_DIR := $(DSC_DIR)/src
+DSC_TEST_DIR := $(DSC_DIR)/test
+
+DSC_INC := \
+	-I$(WLAN_ROOT)/$(DSC_INC_DIR) \
+	-I$(WLAN_ROOT)/$(DSC_SRC_DIR) \
+	-I$(WLAN_ROOT)/$(DSC_TEST_DIR)
+
+DSC_OBJS := \
+	$(DSC_SRC_DIR)/__wlan_dsc.o \
+	$(DSC_SRC_DIR)/wlan_dsc_driver.o \
+	$(DSC_SRC_DIR)/wlan_dsc_psoc.o \
+	$(DSC_SRC_DIR)/wlan_dsc_vdev.o
+
+ifeq ($(CONFIG_DSC_TEST), y)
+	DSC_OBJS += $(DSC_TEST_DIR)/wlan_dsc_test.o
+endif
+
+cppflags-$(CONFIG_DSC_DEBUG) += -DWLAN_DSC_DEBUG
+cppflags-$(CONFIG_DSC_TEST) += -DWLAN_DSC_TEST
+
 ########### HOST DIAG LOG ###########
 HOST_DIAG_LOG_DIR :=	$(WLAN_COMMON_ROOT)/utils/host_diag_log
 
@@ -188,8 +212,7 @@ EPPING_OBJS := $(EPPING_SRC_DIR)/epping_main.o \
 		$(EPPING_SRC_DIR)/epping_txrx.o \
 		$(EPPING_SRC_DIR)/epping_tx.o \
 		$(EPPING_SRC_DIR)/epping_rx.o \
-		$(EPPING_SRC_DIR)/epping_helper.o \
-
+		$(EPPING_SRC_DIR)/epping_helper.o
 
 ############ MAC ############
 MAC_DIR :=	core/mac
@@ -1425,6 +1448,7 @@ endif
 LINUX_INC :=	-Iinclude
 
 INCS :=		$(HDD_INC) \
+		$(DSC_INC) \
 		$(EPPING_INC) \
 		$(LINUX_INC) \
 		$(MAC_INC) \
@@ -1519,6 +1543,7 @@ INCS +=		$(UMAC_SPECTRAL_INC)
 INCS +=		$(UMAC_TARGET_SPECTRAL_INC)
 
 OBJS :=		$(HDD_OBJS) \
+		$(DSC_OBJS) \
 		$(MAC_OBJS) \
 		$(SAP_OBJS) \
 		$(SME_OBJS) \
