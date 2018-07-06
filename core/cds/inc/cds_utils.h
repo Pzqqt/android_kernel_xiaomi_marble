@@ -71,8 +71,8 @@
 #define cds_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_QDF, params)
 #define cds_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_QDF, params)
 
-#define cds_enter() cds_debug("enter")
-#define cds_exit() cds_debug("exit")
+#define cds_enter() QDF_TRACE_ENTER(QDF_MODULE_ID_QDF, "enter")
+#define cds_exit() QDF_TRACE_EXIT(QDF_MODULE_ID_QDF, "exit")
 
 /**
  * enum cds_band_type - Band type - 2g, 5g or all

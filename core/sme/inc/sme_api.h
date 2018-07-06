@@ -64,8 +64,8 @@
 #define sme_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_SME, params)
 #define sme_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_SME, params)
 
-#define SME_ENTER() sme_debug("enter")
-#define SME_EXIT() sme_debug("exit")
+#define SME_ENTER() QDF_TRACE_ENTER(QDF_MODULE_ID_SME, "enter")
+#define SME_EXIT() QDF_TRACE_EXIT(QDF_MODULE_ID_SME, "exit")
 
 #define SME_SESSION_ID_ANY        50
 #define SME_SESSION_ID_BROADCAST  0xFF

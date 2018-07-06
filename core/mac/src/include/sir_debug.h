@@ -50,6 +50,6 @@
 #define pe_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_PE, params)
 #define pe_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_PE, params)
 
-#define PE_ENTER() pe_debug("enter")
-#define PE_EXIT() pe_debug("exit")
+#define PE_ENTER() QDF_TRACE_ENTER(QDF_MODULE_ID_PE, "enter")
+#define PE_EXIT() QDF_TRACE_EXIT(QDF_MODULE_ID_PE, "exit")
 #endif

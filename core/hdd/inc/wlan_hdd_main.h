@@ -317,9 +317,10 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
 #define hdd_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_HDD, params)
 #define hdd_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_HDD, params)
 
-#define hdd_enter() hdd_debug("enter")
-#define hdd_enter_dev(dev) hdd_debug("enter(%s)", (dev)->name)
-#define hdd_exit() hdd_debug("exit")
+#define hdd_enter() QDF_TRACE_ENTER(QDF_MODULE_ID_HDD, "enter")
+#define hdd_enter_dev(dev) \
+	QDF_TRACE_ENTER(QDF_MODULE_ID_HDD, "enter(%s)", (dev)->name)
+#define hdd_exit() QDF_TRACE_EXIT(QDF_MODULE_ID_HDD, "exit")
 
 #define WLAN_HDD_GET_PRIV_PTR(__dev__) \
 		(struct hdd_adapter *)(netdev_priv((__dev__)))
