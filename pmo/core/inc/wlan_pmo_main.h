@@ -36,8 +36,8 @@
 #define pmo_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_PMO, params)
 #define pmo_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_PMO, params)
 
-#define pmo_enter() pmo_debug("enter")
-#define pmo_exit() pmo_debug("exit")
+#define pmo_enter() QDF_TRACE_ENTER(QDF_MODULE_ID_PMO, "enter")
+#define pmo_exit() QDF_TRACE_EXIT(QDF_MODULE_ID_PMO, "exit")
 
 #define PMO_VDEV_IN_STA_MODE(mode) \
 	((mode) == QDF_STA_MODE || (mode) == QDF_P2P_CLIENT_MODE ? 1 : 0)

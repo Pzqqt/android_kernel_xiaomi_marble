@@ -38,9 +38,10 @@
 	QDF_TRACE_INFO(QDF_MODULE_ID_DISA, params)
 #define disa_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_DISA, params)
-
-#define DISA_ENTER() disa_debug("enter")
-#define DISA_EXIT() disa_debug("exit")
+#define DISA_ENTER() \
+	QDF_TRACE_ENTER(QDF_MODULE_ID_DISA, "enter")
+#define DISA_EXIT() \
+	QDF_TRACE_EXIT(QDF_MODULE_ID_DISA, "exit")
 
 /**
  * disa_allocate_ctx() - Api to allocate disa ctx
