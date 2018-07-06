@@ -588,7 +588,8 @@ struct wlan_ipa_priv {
 	qdf_spinlock_t q_lock;
 
 	qdf_list_node_t pend_desc_head;
-	qdf_list_t tx_desc_list;
+	struct wlan_ipa_tx_desc *tx_desc_pool;
+	qdf_list_t tx_desc_free_list;
 
 	struct wlan_ipa_stats stats;
 

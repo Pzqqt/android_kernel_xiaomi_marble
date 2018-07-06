@@ -243,8 +243,8 @@ static void wlan_ipa_send_pkt_to_tl(
 
 	qdf_spin_lock_bh(&ipa_ctx->q_lock);
 	/* get free Tx desc and assign ipa_tx_desc pointer */
-	if (qdf_list_remove_front(&ipa_ctx->tx_desc_list,
-				 (qdf_list_node_t **)&tx_desc) ==
+	if (qdf_list_remove_front(&ipa_ctx->tx_desc_free_list,
+				  (qdf_list_node_t **)&tx_desc) ==
 	    QDF_STATUS_SUCCESS) {
 		tx_desc->ipa_tx_desc_ptr = ipa_tx_desc;
 		ipa_ctx->stats.num_tx_desc_q_cnt++;
@@ -1120,6 +1120,46 @@ static void wlan_ipa_cleanup_iface(struct wlan_ipa_iface_context *iface_context)
 }
 
 /**
+ * wlan_ipa_nbuf_cb() - IPA TX complete callback
+ * @skb: packet buffer which was transmitted
+ *
+ * Return: None
+ */
+static void wlan_ipa_nbuf_cb(qdf_nbuf_t skb)
+{
+	struct wlan_ipa_priv *ipa_ctx = gp_ipa;
+	qdf_ipa_rx_data_t *ipa_tx_desc;
+	struct wlan_ipa_tx_desc *tx_desc;
+	uint16_t id;
+
+	if (!qdf_nbuf_ipa_owned_get(skb)) {
+		dev_kfree_skb_any(skb);
+		return;
+	}
+
+	/* Get Tx desc pointer from SKB CB */
+	id = QDF_NBUF_CB_TX_IPA_PRIV(skb);
+	tx_desc = &ipa_ctx->tx_desc_pool[id];
+	ipa_tx_desc = tx_desc->ipa_tx_desc_ptr;
+
+	/* Return Tx Desc to IPA */
+	qdf_ipa_free_skb(ipa_tx_desc);
+
+	/* Return to free tx desc list */
+	qdf_spin_lock_bh(&ipa_ctx->q_lock);
+	tx_desc->ipa_tx_desc_ptr = NULL;
+	qdf_list_insert_back(&ipa_ctx->tx_desc_free_list, &tx_desc->node);
+	ipa_ctx->stats.num_tx_desc_q_cnt--;
+	qdf_spin_unlock_bh(&ipa_ctx->q_lock);
+
+	ipa_ctx->stats.num_tx_comp_cnt++;
+
+	qdf_atomic_dec(&ipa_ctx->tx_ref_cnt);
+
+	wlan_ipa_wdi_rm_try_release(ipa_ctx);
+}
+
+/**
  * wlan_ipa_setup_iface() - Setup IPA on a given interface
  * @ipa_ctx: IPA IPA global context
  * @net_dev: Interface net device
@@ -1197,6 +1237,9 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 				     wlan_ipa_is_ipv6_enabled(ipa_ctx->config));
 	if (status != QDF_STATUS_SUCCESS)
 		goto end;
+
+	/* Register IPA Tx desc free callback */
+	qdf_nbuf_reg_free_cb(wlan_ipa_nbuf_cb);
 
 	ipa_ctx->num_iface++;
 
@@ -1930,54 +1973,65 @@ wlan_ipa_uc_proc_pending_event(struct wlan_ipa_priv *ipa_ctx, bool is_loading)
  */
 static inline void wlan_ipa_free_tx_desc_list(struct wlan_ipa_priv *ipa_ctx)
 {
-	struct wlan_ipa_tx_desc *tmp_desc;
+	int i;
 	qdf_ipa_rx_data_t *ipa_tx_desc;
-	qdf_list_node_t *node;
+	uint32_t pool_size;
 
-	while (qdf_list_remove_front(&ipa_ctx->tx_desc_list, &node) ==
-	       QDF_STATUS_SUCCESS) {
-		tmp_desc = qdf_container_of(node, struct wlan_ipa_tx_desc,
-					    node);
+	if (!ipa_ctx->tx_desc_pool)
+		return;
 
-		ipa_tx_desc = tmp_desc->ipa_tx_desc_ptr;
+	qdf_spin_lock_bh(&ipa_ctx->q_lock);
+	pool_size = ipa_ctx->tx_desc_free_list.max_size;
+	for (i = 0; i < pool_size; i++) {
+		ipa_tx_desc = ipa_ctx->tx_desc_pool[i].ipa_tx_desc_ptr;
 		if (ipa_tx_desc)
 			qdf_ipa_free_skb(ipa_tx_desc);
 
-		qdf_mem_free(tmp_desc);
-		tmp_desc = NULL;
+		if (qdf_list_remove_node(&ipa_ctx->tx_desc_free_list,
+					 &ipa_ctx->tx_desc_pool[i].node) !=
+		    QDF_STATUS_SUCCESS)
+			ipa_err("Failed to remove node from tx desc freelist");
 	}
+	qdf_spin_unlock_bh(&ipa_ctx->q_lock);
+
+	qdf_list_destroy(&ipa_ctx->tx_desc_free_list);
+	qdf_mem_free(ipa_ctx->tx_desc_pool);
+	ipa_ctx->tx_desc_pool = NULL;
+
+	ipa_ctx->stats.num_tx_desc_q_cnt = 0;
+	ipa_ctx->stats.num_tx_desc_error = 0;
 }
 
 /**
- * wlan_ipa_alloc_tx_desc_list() - Allocate IPA Tx desc list
+ * wlan_ipa_alloc_tx_desc_free_list() - Allocate IPA Tx desc list
  * @ipa_ctx: IPA context
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS wlan_ipa_alloc_tx_desc_list(struct wlan_ipa_priv *ipa_ctx)
+static QDF_STATUS
+wlan_ipa_alloc_tx_desc_free_list(struct wlan_ipa_priv *ipa_ctx)
 {
 	int i;
 	uint32_t max_desc_cnt;
-	struct wlan_ipa_tx_desc *tmp_desc;
 
 	max_desc_cnt = ipa_ctx->config->txbuf_count;
 
-	qdf_list_create(&ipa_ctx->tx_desc_list, max_desc_cnt);
+	ipa_ctx->tx_desc_pool = qdf_mem_malloc(sizeof(struct wlan_ipa_tx_desc) *
+					       max_desc_cnt);
+
+	if (!ipa_ctx->tx_desc_pool) {
+		ipa_err("Free Tx descriptor allocation failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_list_create(&ipa_ctx->tx_desc_free_list, max_desc_cnt);
 
 	qdf_spin_lock_bh(&ipa_ctx->q_lock);
 	for (i = 0; i < max_desc_cnt; i++) {
-		tmp_desc = qdf_mem_malloc(sizeof(*tmp_desc));
-
-		if (!tmp_desc) {
-			qdf_spin_unlock_bh(&ipa_ctx->q_lock);
-			goto alloc_fail;
-		}
-
-		tmp_desc->id = i;
-		tmp_desc->ipa_tx_desc_ptr = NULL;
-		qdf_list_insert_back(&ipa_ctx->tx_desc_list,
-				     &tmp_desc->node);
-		tmp_desc++;
+		ipa_ctx->tx_desc_pool[i].id = i;
+		ipa_ctx->tx_desc_pool[i].ipa_tx_desc_ptr = NULL;
+		qdf_list_insert_back(&ipa_ctx->tx_desc_free_list,
+				     &ipa_ctx->tx_desc_pool[i].node);
 	}
 
 	ipa_ctx->stats.num_tx_desc_q_cnt = 0;
@@ -1986,11 +2040,6 @@ static QDF_STATUS wlan_ipa_alloc_tx_desc_list(struct wlan_ipa_priv *ipa_ctx)
 	qdf_spin_unlock_bh(&ipa_ctx->q_lock);
 
 	return QDF_STATUS_SUCCESS;
-
-alloc_fail:
-	wlan_ipa_free_tx_desc_list(ipa_ctx);
-	return QDF_STATUS_E_NOMEM;
-
 }
 
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
@@ -2167,7 +2216,7 @@ static int wlan_ipa_setup_sys_pipe(struct wlan_ipa_priv *ipa_ctx)
 	}
 
        /* Allocate free Tx desc list */
-	ret = wlan_ipa_alloc_tx_desc_list(ipa_ctx);
+	ret = wlan_ipa_alloc_tx_desc_free_list(ipa_ctx);
 	if (ret)
 		goto setup_sys_pipe_fail;
 

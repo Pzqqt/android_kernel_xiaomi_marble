@@ -600,7 +600,7 @@ static void wlan_ipa_print_txrx_stats(struct wlan_ipa_priv *ipa_ctx)
 		ipa_ctx->tx_ref_cnt.counter,
 		ipa_ctx->suspended,
 		&ipa_ctx->pend_desc_head,
-		&ipa_ctx->tx_desc_list);
+		&ipa_ctx->tx_desc_free_list);
 
 	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 
