@@ -16212,6 +16212,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *sta_ctx;
+	struct hdd_ap_ctx *ap_ctx;
 	struct qdf_mac_addr STAMacAddress;
 	int ret;
 
@@ -16243,6 +16244,18 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	if ((adapter->device_mode == QDF_SAP_MODE) ||
 	    (adapter->device_mode == QDF_P2P_GO_MODE)) {
 		if (params->sta_flags_set & BIT(NL80211_STA_FLAG_AUTHORIZED)) {
+			ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+			/*
+			 * For Encrypted SAP session, this will be done as
+			 * part of eSAP_STA_SET_KEY_EVENT
+			 */
+			if (ap_ctx->encryption_type !=
+			    eCSR_ENCRYPT_TYPE_NONE) {
+				hdd_debug("Encrypt type %d, not setting peer authorized now",
+					  ap_ctx->encryption_type);
+				return 0;
+			}
+
 			status =
 				hdd_softap_change_sta_state(adapter,
 							    &STAMacAddress,
