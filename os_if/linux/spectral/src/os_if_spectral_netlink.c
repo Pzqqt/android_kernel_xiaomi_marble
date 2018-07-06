@@ -374,7 +374,6 @@ os_if_spectral_nl_unicast_msg(struct wlan_objmgr_pdev *pdev)
 		return -EINVAL;
 	}
 
-	spectral_debug("spectral unicast message");
 	os_if_init_spectral_skb_pid_portid(ps->skb);
 
 	status = nl_srv_ucast(ps->skb, ps->spectral_pid, MSG_DONTWAIT,
