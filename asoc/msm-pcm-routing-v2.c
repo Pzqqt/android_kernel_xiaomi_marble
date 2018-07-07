@@ -1212,7 +1212,7 @@ int msm_pcm_routing_get_pp_ch_cnt(int fe_id, int session_type)
 {
 	struct msm_pcm_stream_app_type_cfg cfg_data;
 	int be_id = 0, app_type_idx = 0, app_type = 0;
-	int ret;
+	int ret = -EINVAL;
 
 	memset(&cfg_data, 0, sizeof(cfg_data));
 
@@ -20267,7 +20267,7 @@ done:
 static void msm_routing_load_topology(size_t data_size, void *data)
 {
 	uint32_t topology_id;
-	int ret;
+	int ret = -EINVAL;
 
 	topology_id = msm_routing_get_topology(data_size, data);
 	if (topology_id != NULL_COPP_TOPOLOGY)
@@ -20281,7 +20281,7 @@ static void msm_routing_load_topology(size_t data_size, void *data)
 
 static void msm_routing_unload_topology(uint32_t topology_id)
 {
-	int ret;
+	int ret = -EINVAL;
 
 	if (topology_id != NULL_COPP_TOPOLOGY)
 		ret = q6core_load_unload_topo_modules(topology_id,
@@ -20430,7 +20430,7 @@ static int msm_routing_be_dai_name_table_tlv_get(struct snd_kcontrol *kcontrol,
 						 unsigned int size)
 {
 	int i;
-	int ret;
+	int ret = 0;
 
 	if (size < sizeof(be_dai_name_table)) {
 		pr_err("%s: invalid size %d requested, returning\n",
