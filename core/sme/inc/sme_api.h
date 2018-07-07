@@ -1053,9 +1053,9 @@ QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(tHalHandle hal_ctx,
 #ifdef WLAN_FEATURE_NAN
 QDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg);
 #endif /* WLAN_FEATURE_NAN */
-QDF_STATUS sme_get_link_status(tHalHandle hHal,
-		tCsrLinkStatusCallback callback,
-		void *pContext, uint8_t sessionId);
+QDF_STATUS sme_get_link_status(mac_handle_t mac_handle,
+			       csr_link_status_callback callback,
+			       void *context, uint8_t session_id);
 QDF_STATUS sme_get_temperature(tHalHandle hHal,
 		void *tempContext,
 		void (*pCallbackfn)(int temperature,

@@ -2168,13 +2168,13 @@ QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 		tAniGetLinkStatus *pLinkStatus =
 			(tAniGetLinkStatus *) pMsg->bodyptr;
 		if (pLinkStatus) {
-			if (pMac->sme.linkStatusCallback)
-				pMac->sme.linkStatusCallback(
+			if (pMac->sme.link_status_callback)
+				pMac->sme.link_status_callback(
 					pLinkStatus->linkStatus,
-					pMac->sme.linkStatusContext);
+					pMac->sme.link_status_context);
 
-			pMac->sme.linkStatusCallback = NULL;
-			pMac->sme.linkStatusContext = NULL;
+			pMac->sme.link_status_callback = NULL;
+			pMac->sme.link_status_context = NULL;
 			qdf_mem_free(pLinkStatus);
 		}
 		break;
@@ -4211,48 +4211,43 @@ QDF_STATUS sme_get_statistics(tHalHandle hHal,
 }
 #endif
 
-QDF_STATUS sme_get_link_status(tHalHandle hHal,
-			       tCsrLinkStatusCallback callback,
-			       void *pContext, uint8_t sessionId)
+QDF_STATUS sme_get_link_status(mac_handle_t mac_handle,
+			       csr_link_status_callback callback,
+			       void *context, uint8_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	tAniGetLinkStatus *pMsg;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	tAniGetLinkStatus *msg;
 	struct scheduler_msg message = {0};
 
-	status = sme_acquire_global_lock(&pMac->sme);
+	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pMsg = qdf_mem_malloc(sizeof(tAniGetLinkStatus));
-		if (NULL == pMsg) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Not able to allocate memory for link status",
-				  __func__);
-			sme_release_global_lock(&pMac->sme);
+		msg = qdf_mem_malloc(sizeof(*msg));
+		if (!msg) {
+			sme_err("Malloc failure");
+			sme_release_global_lock(&mac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
 
-		pMsg->msgType = WMA_LINK_STATUS_GET_REQ;
-		pMsg->msgLen = (uint16_t) sizeof(tAniGetLinkStatus);
-		pMsg->sessionId = sessionId;
-		pMac->sme.linkStatusContext = pContext;
-		pMac->sme.linkStatusCallback = callback;
+		msg->msgType = WMA_LINK_STATUS_GET_REQ;
+		msg->msgLen = sizeof(*msg);
+		msg->sessionId = session_id;
+		mac->sme.link_status_context = context;
+		mac->sme.link_status_callback = callback;
 
 		message.type = WMA_LINK_STATUS_GET_REQ;
-		message.bodyptr = pMsg;
+		message.bodyptr = msg;
 		message.reserved = 0;
 
-		if (!QDF_IS_STATUS_SUCCESS
-			    (scheduler_post_msg(QDF_MODULE_ID_WMA,
-						 &message))) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Post LINK STATUS MSG fail", __func__);
-			qdf_mem_free(pMsg);
-			pMac->sme.linkStatusContext = NULL;
-			pMac->sme.linkStatusCallback = NULL;
-			status = QDF_STATUS_E_FAILURE;
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			sme_err("post msg failed, %d", status);
+			qdf_mem_free(msg);
+			mac->sme.link_status_context = NULL;
+			mac->sme.link_status_callback = NULL;
 		}
 
-		sme_release_global_lock(&pMac->sme);
+		sme_release_global_lock(&mac->sme);
 	}
 
 	return status;

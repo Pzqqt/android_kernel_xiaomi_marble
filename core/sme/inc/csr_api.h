@@ -1727,7 +1727,7 @@ typedef void (*csr_readyToSuspendCallback)(void *pContext, bool suspended);
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 typedef void (*csr_readyToExtWoWCallback)(void *pContext, bool status);
 #endif
-typedef void (*tCsrLinkStatusCallback)(uint8_t status, void *pContext);
+typedef void (*csr_link_status_callback)(uint8_t status, void *context);
 #ifdef FEATURE_WLAN_TDLS
 void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx,
 			     struct csr_roam_info *roam_info,
