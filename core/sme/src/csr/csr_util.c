@@ -6135,32 +6135,6 @@ uint16_t sme_chn_to_freq(uint8_t chanNum)
 	return 0;
 }
 
-/* Disconnect all active sessions by sending disassoc. This is mainly
- * used to disconnect the remaining session when we transition from
- * concurrent sessions to a single session. The use case is Infra STA
- * and wifi direct multiple sessions are up and P2P session is removed.
- * The Infra STA session remains and should resume BMPS if BMPS is enabled
- * by default. However, there are some issues seen with BMPS resume during
- * this transition and this is a workaround which will allow the Infra STA
- * session to disconnect and auto connect back and enter BMPS this giving
- * the same effect as resuming BMPS
- */
-
-/* Remove this code once SLM_Sessionization is supported */
-/* BMPS_WORKAROUND_NOT_NEEDED */
-void csr_disconnect_all_active_sessions(tpAniSirGlobal pMac)
-{
-	uint8_t i;
-
-	/* Disconnect all the active sessions */
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-		if (CSR_IS_SESSION_VALID(pMac, i)
-		    && !csr_is_conn_state_disconnected(pMac, i))
-			csr_roam_disconnect_internal(pMac, i,
-					eCSR_DISCONNECT_REASON_UNSPECIFIED);
-	}
-}
-
 struct lim_channel_status *csr_get_channel_status(
 	void *p_mac, uint32_t channel_id)
 {

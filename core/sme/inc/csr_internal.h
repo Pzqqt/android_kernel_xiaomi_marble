@@ -1273,9 +1273,6 @@ QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 		void *pContext, uint8_t tid);
 #endif
 
-/* Remove this code once SLM_Sessionization is supported */
-void csr_disconnect_all_active_sessions(tpAniSirGlobal pMac);
-
 /* Returns whether "Legacy Fast Roaming" is enabled...or not */
 bool csr_roam_is_fast_roam_enabled(tpAniSirGlobal pMac,
 						uint32_t sessionId);
