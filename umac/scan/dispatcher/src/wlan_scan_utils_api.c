@@ -27,6 +27,8 @@
 #include <../../core/src/wlan_scan_main.h>
 #include <wlan_reg_services_api.h>
 
+#define MAX_IE_LEN 1024
+
 const char*
 util_scan_get_ev_type_name(enum scan_event_type type)
 {
@@ -960,33 +962,26 @@ util_scan_add_hidden_ssid(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t bcnbuf)
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_DFS_CHAN_HIDDEN_SSID */
-
-qdf_list_t *
-util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
-	qdf_size_t frame_len, uint32_t frm_subtype,
-	struct mgmt_rx_event_params *rx_param)
+static QDF_STATUS
+util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
+			 uint8_t *frame, qdf_size_t frame_len,
+			 uint32_t frm_subtype,
+			 struct mgmt_rx_event_params *rx_param,
+			 qdf_list_t *scan_list)
 {
 	struct wlan_frame_hdr *hdr;
 	struct wlan_bcn_frame *bcn;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct ie_ssid *ssid;
 	struct scan_cache_entry *scan_entry;
 	struct qbss_load_ie *qbss_load;
-	qdf_list_t *scan_list;
 	struct scan_cache_node *scan_node;
-
-	scan_list = qdf_mem_malloc_atomic(sizeof(*scan_list));
-	if (!scan_list) {
-		scm_err("failed to allocate scan_list");
-		return NULL;
-	}
-	qdf_list_create(scan_list, MAX_SCAN_CACHE_SIZE);
 
 	scan_entry = qdf_mem_malloc_atomic(sizeof(*scan_entry));
 	if (!scan_entry) {
 		scm_err("failed to allocate memory for scan_entry");
 		qdf_mem_free(scan_list);
-		return NULL;
+		return QDF_STATUS_E_NOMEM;
 	}
 	scan_entry->raw_frame.ptr =
 			qdf_mem_malloc_atomic(frame_len);
@@ -994,7 +989,7 @@ util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
 		scm_err("failed to allocate memory for frame");
 		qdf_mem_free(scan_entry);
 		qdf_mem_free(scan_list);
-		return NULL;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	bcn = (struct wlan_bcn_frame *)
@@ -1022,7 +1017,7 @@ util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
 		     WLAN_MGMT_TXRX_HOST_MAX_ANTENNA);
 
 	/* store jiffies */
-	scan_entry->rrm_parent_tsf = (u_int32_t) qdf_system_ticks();
+	scan_entry->rrm_parent_tsf = (uint32_t)qdf_system_ticks();
 
 	scan_entry->bcn_int = le16toh(bcn->beacon_interval);
 
@@ -1048,15 +1043,13 @@ util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
 		scm_debug("failed to parse beacon IE");
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);
-		qdf_mem_free(scan_list);
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!scan_entry->ie_list.rates) {
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);
-		qdf_mem_free(scan_list);
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ssid = (struct ie_ssid *)
@@ -1065,8 +1058,7 @@ util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
 	if (ssid && (ssid->ssid_len > WLAN_SSID_MAX_LEN)) {
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);
-		qdf_mem_free(scan_list);
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (scan_entry->ie_list.p2p)
@@ -1108,14 +1100,351 @@ util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
 	if (!scan_node) {
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);
-		qdf_mem_free(scan_list);
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	scan_node->entry = scan_entry;
 	qdf_list_insert_front(scan_list, &scan_node->node);
 
-	/* TODO calculate channel struct */
+	return status;
+}
+
+/**
+ * util_scan_find_ie() - find information element
+ * @eid: element id
+ * @ies: pointer consisting of IEs
+ * @len: IE length
+ *
+ * Return: NULL if the element ID is not found or
+ * a pointer to the first byte of the requested
+ * element
+ */
+static uint8_t *util_scan_find_ie(uint8_t eid, uint8_t *ies,
+				  int32_t len)
+{
+	while (len >= 2 && len >= ies[1] + 2) {
+		if (ies[0] == eid)
+			return ies;
+		len -= ies[1] + 2;
+		ies += ies[1] + 2;
+	}
+
+	return NULL;
+}
+
+#ifdef WLAN_FEATURE_MBSSID
+static void util_gen_new_bssid(uint8_t *bssid, uint8_t max_bssid,
+			       uint8_t mbssid_index,
+			       uint8_t *new_bssid_addr)
+{
+	uint64_t bssid_tmp = 0, new_bssid = 0;
+	uint64_t lsb_n;
+	int i;
+
+	for (i = 0; i < QDF_MAC_ADDR_SIZE; i++)
+		bssid_tmp = bssid_tmp << 8 | bssid[i];
+
+	lsb_n = bssid_tmp & ((1 << max_bssid) - 1);
+	new_bssid = bssid_tmp;
+	new_bssid &= ~((1 << max_bssid) - 1);
+	new_bssid |= (lsb_n + mbssid_index) % (1 << max_bssid);
+
+	for (i = QDF_MAC_ADDR_SIZE - 1; i >= 0; i--) {
+		new_bssid_addr[i] = new_bssid & 0xff;
+		new_bssid = new_bssid >> 8;
+	}
+}
+
+static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
+				uint8_t *subelement,
+				size_t subie_len, uint8_t *new_ie)
+{
+	uint8_t *pos, *tmp;
+	const uint8_t *tmp_old, *tmp_new;
+	uint8_t *sub_copy;
+
+	/* copy subelement as we need to change its content to
+	 * mark an ie after it is processed.
+	 */
+	sub_copy = qdf_mem_malloc(subie_len);
+	if (!sub_copy)
+		return 0;
+	qdf_mem_copy(sub_copy, subelement, subie_len);
+
+	pos = &new_ie[0];
+
+	/* new ssid */
+	tmp_new = util_scan_find_ie(WLAN_ELEMID_SSID, sub_copy, subie_len);
+	if (tmp_new) {
+		qdf_mem_copy(pos, tmp_new, tmp_new[1] + 2);
+		pos += (tmp_new[1] + 2);
+	}
+
+	/* go through IEs in ie (skip SSID) and subelement,
+	 * merge them into new_ie
+	 */
+	tmp_old = util_scan_find_ie(WLAN_ELEMID_SSID, ie, ielen);
+	tmp_old = (tmp_old) ? tmp_old + tmp_old[1] + 2 : ie;
+
+	while (tmp_old + tmp_old[1] + 2 - ie <= ielen) {
+		if (tmp_old[0] == 0) {
+			tmp_old++;
+			continue;
+		}
+
+		tmp = (uint8_t *)util_scan_find_ie(tmp_old[0], sub_copy,
+				subie_len);
+		if (!tmp) {
+			/* ie in old ie but not in subelement */
+			if (tmp_old[0] != WLAN_ELEMID_MULTIPLE_BSSID) {
+				qdf_mem_copy(pos, tmp_old, tmp_old[1] + 2);
+				pos += tmp_old[1] + 2;
+			}
+		} else {
+			/* ie in transmitting ie also in subelement,
+			 * copy from subelement and flag the ie in subelement
+			 * as copied (by setting eid field to 0xff). For
+			 * vendor ie, compare OUI + type + subType to
+			 * determine if they are the same ie.
+			 */
+			if (tmp_old[0] == WLAN_ELEMID_VENDOR) {
+				if (!qdf_mem_cmp(tmp_old + 2, tmp + 2, 5)) {
+					/* same vendor ie, copy from
+					 * subelement
+					 */
+					qdf_mem_copy(pos, tmp, tmp[1] + 2);
+					pos += tmp[1] + 2;
+					tmp[0] = 0xff;
+				} else {
+					qdf_mem_copy(pos, tmp_old,
+						     tmp_old[1] + 2);
+					pos += tmp_old[1] + 2;
+				}
+			} else {
+				/* copy ie from subelement into new ie */
+				qdf_mem_copy(pos, tmp, tmp[1] + 2);
+				pos += tmp[1] + 2;
+				tmp[0] = 0xff;
+			}
+		}
+
+		if (tmp_old + tmp_old[1] + 2 - ie == ielen)
+			break;
+
+		tmp_old += tmp_old[1] + 2;
+	}
+
+	/* go through subelement again to check if there is any ie not
+	 * copied to new ie, skip ssid, capability, bssid-index ie
+	 */
+	tmp_new = sub_copy;
+	while (tmp_new + tmp_new[1] + 2 - sub_copy <= subie_len) {
+		if (!(tmp_new[0] == WLAN_ELEMID_NONTX_BSSID_CAP ||
+		      tmp_new[0] == WLAN_ELEMID_SSID ||
+		      tmp_new[0] == WLAN_ELEMID_MULTI_BSSID_IDX ||
+		      tmp_new[0] == 0xff)) {
+			qdf_mem_copy(pos, tmp_new, tmp_new[1] + 2);
+			pos += tmp_new[1] + 2;
+		}
+		if (tmp_new + tmp_new[1] + 2 - sub_copy == subie_len)
+			break;
+		tmp_new += tmp_new[1] + 2;
+	}
+
+	qdf_mem_free(sub_copy);
+	return pos - new_ie;
+}
+
+static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
+					 uint8_t *frame, qdf_size_t frame_len,
+					 uint32_t frm_subtype,
+					 struct mgmt_rx_event_params *rx_param,
+					 qdf_list_t *scan_list)
+{
+	struct wlan_bcn_frame *bcn;
+	struct wlan_frame_hdr *hdr;
+	QDF_STATUS status;
+	uint8_t *pos, *subelement, *mbssid_end_pos;
+	uint8_t *tmp, *mbssid_index_ie;
+	uint32_t subie_len, new_ie_len;
+	uint8_t new_bssid[QDF_MAC_ADDR_SIZE], bssid[QDF_MAC_ADDR_SIZE];
+	uint8_t *new_ie;
+	uint8_t *ie, *new_frame = NULL;
+	uint64_t ielen, new_frame_len;
+
+	hdr = (struct wlan_frame_hdr *)frame;
+	bcn = (struct wlan_bcn_frame *)(frame + sizeof(struct wlan_frame_hdr));
+	ie = (uint8_t *)&bcn->ie;
+	ielen = (uint16_t)(frame_len -
+		sizeof(struct wlan_frame_hdr) -
+		offsetof(struct wlan_bcn_frame, ie));
+	qdf_mem_copy(bssid, hdr->i_addr3, QDF_MAC_ADDR_SIZE);
+
+	if (!util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID, ie, ielen))
+		return QDF_STATUS_E_FAILURE;
+
+	pos = ie;
+
+	new_ie = qdf_mem_malloc(MAX_IE_LEN);
+	if (!new_ie) {
+		scm_err("Failed to allocate memory for new ie");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	while (pos < ie + ielen + 2) {
+		tmp = util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID, pos,
+					ielen - (pos - ie));
+		if (!tmp)
+			break;
+
+		mbssid_end_pos = tmp + tmp[1] + 2;
+		/* Skip Element ID, Len, MaxBSSID Indicator */
+		if (tmp[1] < 4)
+			break;
+		for (subelement = tmp + 3; subelement < mbssid_end_pos - 1;
+		     subelement += 2 + subelement[1]) {
+			subie_len = subelement[1];
+			if (mbssid_end_pos - subelement < 2 + subie_len)
+				break;
+			if (subelement[0] != 0 || subelement[1] < 4) {
+				/* not a valid BSS profile */
+				continue;
+			}
+
+			if (subelement[2] != WLAN_ELEMID_NONTX_BSSID_CAP ||
+			    subelement[3] != 2) {
+				/* The first element within the Nontransmitted
+				 * BSSID Profile is not the Nontransmitted
+				 * BSSID Capability element.
+				 */
+				continue;
+			}
+
+			/* found a Nontransmitted BSSID Profile */
+			mbssid_index_ie =
+				util_scan_find_ie(WLAN_ELEMID_MULTI_BSSID_IDX,
+						  subelement + 2, subie_len);
+			if (!mbssid_index_ie || mbssid_index_ie[1] < 1 ||
+			    mbssid_index_ie[2] == 0) {
+				/* No valid Multiple BSSID-Index element */
+				continue;
+			}
+
+			util_gen_new_bssid(bssid, tmp[2], mbssid_index_ie[2],
+					   new_bssid);
+			new_ie_len = util_gen_new_ie(ie, ielen, subelement + 2,
+						     subie_len, new_ie);
+			if (!new_ie_len)
+				continue;
+
+			new_frame_len = frame_len - ielen + new_ie_len;
+			new_frame = qdf_mem_malloc(new_frame_len);
+			if (!new_frame) {
+				qdf_mem_free(new_ie);
+				scm_err("failed to allocate memory");
+				return QDF_STATUS_E_NOMEM;
+			}
+
+			/*
+			 * Copy the header(24byte), timestamp(8 byte),
+			 * beaconinterval(2byte) and capability(2byte)
+			 */
+			qdf_mem_copy(new_frame, frame, 36);
+			/* Copy the new ie generated from MBSSID profile*/
+			qdf_mem_copy(new_frame +
+					offsetof(struct wlan_bcn_frame, ie),
+					new_ie, new_ie_len);
+			status = util_scan_gen_scan_entry(pdev, new_frame,
+							  new_frame_len,
+							  frm_subtype,
+							  rx_param, scan_list);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				qdf_mem_free(new_frame);
+				scm_err("failed to generate a scan entry");
+				break;
+			}
+			/* scan entry makes its own copy so free the frame*/
+			qdf_mem_free(new_frame);
+		}
+
+		pos = mbssid_end_pos;
+	}
+	qdf_mem_free(new_ie);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
+					 uint8_t *frame, qdf_size_t frame_len,
+					 uint32_t frm_subtype,
+					 struct mgmt_rx_event_params *rx_param,
+					 qdf_list_t *scan_list)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+static QDF_STATUS
+util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
+			     uint8_t *frame,
+			     qdf_size_t frame_len,
+			     uint32_t frm_subtype,
+			     struct mgmt_rx_event_params *rx_param,
+			     qdf_list_t *scan_list)
+{
+	struct wlan_bcn_frame *bcn;
+	uint32_t ie_len = 0;
+	QDF_STATUS status;
+
+	bcn = (struct wlan_bcn_frame *)
+			   (frame + sizeof(struct wlan_frame_hdr));
+	ie_len = (uint16_t)(frame_len -
+		sizeof(struct wlan_frame_hdr) -
+		offsetof(struct wlan_bcn_frame, ie));
+
+	/*
+	 * IF MBSSID IE is present in the beacon then
+	 * scan component will create a new entry for
+	 * each BSSID found in the MBSSID
+	 */
+	if (util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID,
+			      (uint8_t *)&bcn->ie, ie_len))
+		util_scan_parse_mbssid(pdev, frame, frame_len,
+				       frm_subtype, rx_param, scan_list);
+
+	status = util_scan_gen_scan_entry(pdev, frame, frame_len,
+					  frm_subtype, rx_param, scan_list);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(scan_list);
+		scm_err("Failed to create a scan entry");
+	}
+
+	return status;
+}
+
+qdf_list_t *
+util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
+			      qdf_size_t frame_len, uint32_t frm_subtype,
+			      struct mgmt_rx_event_params *rx_param)
+{
+	qdf_list_t *scan_list;
+	QDF_STATUS status;
+
+	scan_list = qdf_mem_malloc_atomic(sizeof(*scan_list));
+	if (!scan_list) {
+		scm_err("failed to allocate scan_list");
+		return NULL;
+	}
+	qdf_list_create(scan_list, MAX_SCAN_CACHE_SIZE);
+
+	status = util_scan_parse_beacon_frame(pdev, frame, frame_len,
+					      frm_subtype, rx_param,
+					      scan_list);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(scan_list);
+		return NULL;
+	}
+
 	return scan_list;
 }
 
