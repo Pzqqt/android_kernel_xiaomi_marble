@@ -6135,38 +6135,35 @@ uint16_t sme_chn_to_freq(uint8_t chanNum)
 	return 0;
 }
 
-struct lim_channel_status *csr_get_channel_status(
-	void *p_mac, uint32_t channel_id)
+struct lim_channel_status *
+csr_get_channel_status(tpAniSirGlobal mac, uint32_t channel_id)
 {
 	uint8_t i;
 	struct lim_scan_channel_status *channel_status;
-	tpAniSirGlobal mac_ptr = (tpAniSirGlobal)p_mac;
+	struct lim_channel_status *entry;
 
-	if (!mac_ptr->sap.acs_with_more_param)
+	if (!mac->sap.acs_with_more_param)
 		return NULL;
 
-	channel_status = (struct lim_scan_channel_status *)
-				&mac_ptr->lim.scan_channel_status;
+	channel_status = &mac->lim.scan_channel_status;
 	for (i = 0; i < channel_status->total_channel; i++) {
-		if (channel_status->channel_status_list[i].channel_id ==
-		    channel_id)
-			return &channel_status->channel_status_list[i];
+		entry = &channel_status->channel_status_list[i];
+		if (entry->channel_id == channel_id)
+			return entry;
 	}
-	cds_err("Channel %d status info not exist", channel_id);
+	sme_err("Channel %d status info not exist", channel_id);
 
 	return NULL;
 }
 
-void csr_clear_channel_status(void *p_mac)
+void csr_clear_channel_status(tpAniSirGlobal mac)
 {
-	tpAniSirGlobal mac_ptr = (tpAniSirGlobal)p_mac;
 	struct lim_scan_channel_status *channel_status;
 
-	if (!mac_ptr->sap.acs_with_more_param)
+	if (!mac->sap.acs_with_more_param)
 		return;
 
-	channel_status = (struct lim_scan_channel_status *)
-			&mac_ptr->lim.scan_channel_status;
+	channel_status = &mac->lim.scan_channel_status;
 	channel_status->total_channel = 0;
 
 	return;
