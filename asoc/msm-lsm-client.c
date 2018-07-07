@@ -1117,7 +1117,7 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			break;
 		}
 		if (copy_from_user(
-				prtd->lsm_client->stage_cfg[stage_idx].sound_model.data,
+				prtd->lsm_client->stage_cfg[p_info.stage_idx].sound_model.data,
 				snd_model_v2.data, snd_model_v2.data_size)) {
 			dev_err(rtd->dev,
 				"%s: copy from user data failed\n"
@@ -2149,7 +2149,7 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 
 		if (p_data.data_size != p_size) {
 			dev_err(rtd->dev,
-				"%s: %s: Invalid data_size(%zd) against expected(%zd)\n",
+				"%s: %s: Invalid data_size(%u) against expected(%zd)\n",
 				__func__, "SET_MODULE_PARAMS(_V2)",
 				p_data.data_size, p_size);
 			err = -EFAULT;
