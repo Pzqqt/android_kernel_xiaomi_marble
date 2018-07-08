@@ -352,6 +352,7 @@ static inline int ol_tx_encap_wrapper(struct ol_txrx_pdev_t *pdev,
  *
  * Return: true if ocb parsing is successful
  */
+#ifdef WLAN_FEATURE_DSRC
 #define OCB_HEADER_VERSION     1
 static bool parse_ocb_tx_header(qdf_nbuf_t msdu,
 				struct ocb_tx_ctrl_hdr_t *tx_ctrl)
@@ -384,6 +385,13 @@ static bool parse_ocb_tx_header(qdf_nbuf_t msdu,
 	qdf_nbuf_pull_head(msdu, tx_ctrl_hdr->length);
 	return true;
 }
+#else
+static bool parse_ocb_tx_header(qdf_nbuf_t msdu,
+				struct ocb_tx_ctrl_hdr_t *tx_ctrl)
+{
+	return true;
+}
+#endif
 
 /**
  * ol_txrx_mgmt_tx_desc_alloc() - Allocate and initialize a tx descriptor

@@ -471,12 +471,42 @@ static void process_reorder(ol_txrx_pdev_handle pdev,
 	}
 } /* process_reorder */
 
+#ifdef WLAN_FEATURE_DSRC
+static void
+ol_rx_ocb_update_peer(ol_txrx_pdev_handle pdev, qdf_nbuf_t rx_ind_msg,
+		      struct ol_txrx_peer_t *peer)
+{
+	int i;
+
+	htt_rx_ind_legacy_rate(pdev->htt_pdev, rx_ind_msg,
+			       &peer->last_pkt_legacy_rate,
+			       &peer->last_pkt_legacy_rate_sel);
+	peer->last_pkt_rssi_cmb = htt_rx_ind_rssi_dbm(
+				pdev->htt_pdev, rx_ind_msg);
+	for (i = 0; i < 4; i++)
+		peer->last_pkt_rssi[i] =
+		    htt_rx_ind_rssi_dbm_chain(pdev->htt_pdev, rx_ind_msg, i);
+
+	htt_rx_ind_timestamp(pdev->htt_pdev, rx_ind_msg,
+			     &peer->last_pkt_timestamp_microsec,
+			     &peer->last_pkt_timestamp_submicrosec);
+	peer->last_pkt_tsf = htt_rx_ind_tsf32(pdev->htt_pdev, rx_ind_msg);
+	peer->last_pkt_tid = htt_rx_ind_ext_tid(pdev->htt_pdev, rx_ind_msg);
+}
+#else
+static void
+ol_rx_ocb_update_peer(ol_txrx_pdev_handle pdev, qdf_nbuf_t rx_ind_msg,
+		      struct ol_txrx_peer_t *peer)
+{
+}
+#endif
+
 void
 ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 			 qdf_nbuf_t rx_ind_msg,
 			 uint16_t peer_id, uint8_t tid, int num_mpdu_ranges)
 {
-	int mpdu_range, i;
+	int mpdu_range;
 	unsigned int seq_num_start = 0, seq_num_end = 0;
 	bool rx_ind_release = false;
 	struct ol_txrx_vdev_t *vdev = NULL;
@@ -504,24 +534,8 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 		vdev = peer->vdev;
 		ol_rx_ind_rssi_update(peer, rx_ind_msg);
 
-		if (vdev->opmode == wlan_op_mode_ocb) {
-			htt_rx_ind_legacy_rate(pdev->htt_pdev, rx_ind_msg,
-				       &peer->last_pkt_legacy_rate,
-				       &peer->last_pkt_legacy_rate_sel);
-			peer->last_pkt_rssi_cmb = htt_rx_ind_rssi_dbm(
-				pdev->htt_pdev, rx_ind_msg);
-			for (i = 0; i < 4; i++)
-				peer->last_pkt_rssi[i] =
-					htt_rx_ind_rssi_dbm_chain(
-					pdev->htt_pdev, rx_ind_msg, i);
-			htt_rx_ind_timestamp(pdev->htt_pdev, rx_ind_msg,
-					&peer->last_pkt_timestamp_microsec,
-					&peer->last_pkt_timestamp_submicrosec);
-			peer->last_pkt_tsf = htt_rx_ind_tsf32(pdev->htt_pdev,
-							      rx_ind_msg);
-			peer->last_pkt_tid = htt_rx_ind_ext_tid(pdev->htt_pdev,
-								rx_ind_msg);
-		}
+		if (vdev->opmode == wlan_op_mode_ocb)
+			ol_rx_ocb_update_peer(pdev, rx_ind_msg, peer);
 	}
 
 	TXRX_STATS_INCR(pdev, priv.rx.normal.ppdus);
@@ -1187,6 +1201,91 @@ static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
 }
 #endif
 
+#ifdef WLAN_FEATURE_DSRC
+static inline
+void ol_rx_ocb_prepare_rx_stats_header(struct ol_txrx_vdev_t *vdev,
+				       struct ol_txrx_peer_t *peer,
+				       qdf_nbuf_t msdu)
+{
+	int i;
+	struct ol_txrx_ocb_chan_info *chan_info = 0;
+	int packet_freq = peer->last_pkt_center_freq;
+
+	for (i = 0; i < vdev->ocb_channel_count; i++) {
+		if (vdev->ocb_channel_info[i].chan_freq == packet_freq) {
+			chan_info = &vdev->ocb_channel_info[i];
+			break;
+		}
+	}
+
+	if (!chan_info || !chan_info->disable_rx_stats_hdr) {
+		struct ether_header eth_header = { {0} };
+		struct ocb_rx_stats_hdr_t rx_header = {0};
+
+		/*
+		 * Construct the RX stats header and
+		 * push that to the frontof the packet.
+		 */
+		rx_header.version = 1;
+		rx_header.length = sizeof(rx_header);
+		rx_header.channel_freq = peer->last_pkt_center_freq;
+		rx_header.rssi_cmb = peer->last_pkt_rssi_cmb;
+		qdf_mem_copy(rx_header.rssi, peer->last_pkt_rssi,
+			     sizeof(rx_header.rssi));
+
+		if (peer->last_pkt_legacy_rate_sel)
+			rx_header.datarate = 0xFF;
+		else if (peer->last_pkt_legacy_rate == 0x8)
+			rx_header.datarate = 6;
+		else if (peer->last_pkt_legacy_rate == 0x9)
+			rx_header.datarate = 4;
+		else if (peer->last_pkt_legacy_rate == 0xA)
+			rx_header.datarate = 2;
+		else if (peer->last_pkt_legacy_rate == 0xB)
+			rx_header.datarate = 0;
+		else if (peer->last_pkt_legacy_rate == 0xC)
+			rx_header.datarate = 7;
+		else if (peer->last_pkt_legacy_rate == 0xD)
+			rx_header.datarate = 5;
+		else if (peer->last_pkt_legacy_rate == 0xE)
+			rx_header.datarate = 3;
+		else if (peer->last_pkt_legacy_rate == 0xF)
+			rx_header.datarate = 1;
+		else
+			rx_header.datarate = 0xFF;
+
+		rx_header.timestamp_microsec =
+			 peer->last_pkt_timestamp_microsec;
+		rx_header.timestamp_submicrosec =
+			 peer->last_pkt_timestamp_submicrosec;
+		rx_header.tsf32 = peer->last_pkt_tsf;
+		rx_header.ext_tid = peer->last_pkt_tid;
+
+		qdf_nbuf_push_head(msdu, sizeof(rx_header));
+		qdf_mem_copy(qdf_nbuf_data(msdu),
+			     &rx_header, sizeof(rx_header));
+
+		/*
+		 * Construct the ethernet header with
+		 * type 0x8152 and push that to the
+		 * front of the packet to indicate the
+		 * RX stats header.
+		 */
+		eth_header.ether_type = QDF_SWAP_U16(ETHERTYPE_OCB_RX);
+		qdf_nbuf_push_head(msdu, sizeof(eth_header));
+		qdf_mem_copy(qdf_nbuf_data(msdu), &eth_header,
+			     sizeof(eth_header));
+	}
+}
+#else
+static inline
+void ol_rx_ocb_prepare_rx_stats_header(struct ol_txrx_vdev_t *vdev,
+				       struct ol_txrx_peer_t *peer,
+				       qdf_nbuf_t msdu)
+{
+}
+#endif
+
 #ifdef WLAN_PARTIAL_REORDER_OFFLOAD
 void
 ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
@@ -1276,95 +1375,10 @@ DONE:
 			 *  If this is for OCB,
 			 *  then prepend the RX stats header.
 			 */
-			if (vdev->opmode == wlan_op_mode_ocb) {
-				int i;
-				struct ol_txrx_ocb_chan_info *chan_info = 0;
-				int packet_freq = peer->last_pkt_center_freq;
+			if (vdev->opmode == wlan_op_mode_ocb)
+				ol_rx_ocb_prepare_rx_stats_header(vdev, peer,
+								  msdu);
 
-				for (i = 0; i < vdev->ocb_channel_count; i++) {
-					if (vdev->ocb_channel_info[i].
-						chan_freq == packet_freq) {
-						chan_info = &vdev->
-							ocb_channel_info[i];
-						break;
-					}
-				}
-				if (!chan_info || !chan_info->
-					disable_rx_stats_hdr) {
-					struct ether_header eth_header = {
-						{0} };
-					struct ocb_rx_stats_hdr_t rx_header = {
-						0};
-
-					/*
-					 * Construct the RX stats header and
-					 * push that to the frontof the packet.
-					 */
-					rx_header.version = 1;
-					rx_header.length = sizeof(rx_header);
-					rx_header.channel_freq =
-						peer->last_pkt_center_freq;
-					rx_header.rssi_cmb =
-						peer->last_pkt_rssi_cmb;
-					qdf_mem_copy(rx_header.rssi,
-							peer->last_pkt_rssi,
-							sizeof(rx_header.rssi));
-					if (peer->last_pkt_legacy_rate_sel)
-						rx_header.datarate = 0xFF;
-					else if (peer->last_pkt_legacy_rate ==
-						 0x8)
-						rx_header.datarate = 6;
-					else if (peer->last_pkt_legacy_rate ==
-						 0x9)
-						rx_header.datarate = 4;
-					else if (peer->last_pkt_legacy_rate ==
-						 0xA)
-						rx_header.datarate = 2;
-					else if (peer->last_pkt_legacy_rate ==
-						 0xB)
-						rx_header.datarate = 0;
-					else if (peer->last_pkt_legacy_rate ==
-						 0xC)
-						rx_header.datarate = 7;
-					else if (peer->last_pkt_legacy_rate ==
-						 0xD)
-						rx_header.datarate = 5;
-					else if (peer->last_pkt_legacy_rate ==
-						 0xE)
-						rx_header.datarate = 3;
-					else if (peer->last_pkt_legacy_rate ==
-						 0xF)
-						rx_header.datarate = 1;
-					else
-						rx_header.datarate = 0xFF;
-
-					rx_header.timestamp_microsec = peer->
-						last_pkt_timestamp_microsec;
-					rx_header.timestamp_submicrosec = peer->
-						last_pkt_timestamp_submicrosec;
-					rx_header.tsf32 = peer->last_pkt_tsf;
-					rx_header.ext_tid = peer->last_pkt_tid;
-
-					qdf_nbuf_push_head(msdu,
-						sizeof(rx_header));
-					qdf_mem_copy(qdf_nbuf_data(msdu),
-						&rx_header, sizeof(rx_header));
-
-					/*
-					 * Construct the ethernet header with
-					 * type 0x8152 and push that to the
-					 * front of the packet to indicate the
-					 * RX stats header.
-					 */
-					eth_header.ether_type = QDF_SWAP_U16(
-						ETHERTYPE_OCB_RX);
-					qdf_nbuf_push_head(msdu,
-							   sizeof(eth_header));
-					qdf_mem_copy(qdf_nbuf_data(msdu),
-							&eth_header,
-							 sizeof(eth_header));
-				}
-			}
 			OL_RX_PEER_STATS_UPDATE(peer, msdu);
 			OL_RX_ERR_STATISTICS_1(pdev, vdev, peer, rx_desc,
 					       OL_RX_ERR_NONE);

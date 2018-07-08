@@ -2255,6 +2255,7 @@ QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
+#ifdef WLAN_FEATURE_DSRC
 	case eWNI_SME_OCB_SET_CONFIG_RSP:
 		if (pMac->sme.ocb_set_config_callback)
 			pMac->sme.ocb_set_config_callback(
@@ -2308,6 +2309,7 @@ QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 			sme_err("No callback for Msg type: %d", pMsg->type);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
+#endif
 	case eWNI_SME_SET_DUAL_MAC_CFG_RESP:
 		if (pMsg->bodyptr) {
 			status = sme_process_dual_mac_config_resp(pMac,

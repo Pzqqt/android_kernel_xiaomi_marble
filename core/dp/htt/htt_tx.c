@@ -1568,10 +1568,12 @@ int htt_get_channel_freq(enum extension_header_type type,
  *
  * Return: none
  */
+#ifdef WLAN_FEATURE_DSRC
 static
 void htt_fill_ocb_ext_header(qdf_nbuf_t msdu,
-	struct htt_tx_msdu_desc_ext_t *local_desc_ext,
-	enum extension_header_type type, void *ext_header_data)
+			     struct htt_tx_msdu_desc_ext_t *local_desc_ext,
+			     enum extension_header_type type,
+			     void *ext_header_data)
 {
 	struct ocb_tx_ctrl_hdr_t *tx_ctrl =
 		(struct ocb_tx_ctrl_hdr_t *)ext_header_data;
@@ -1606,6 +1608,15 @@ void htt_fill_ocb_ext_header(qdf_nbuf_t msdu,
 			sizeof(struct htt_tx_msdu_desc_ext_t));
 	QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_EXT_HEADER(msdu) = 1;
 }
+#else
+static
+void htt_fill_ocb_ext_header(qdf_nbuf_t msdu,
+			     struct htt_tx_msdu_desc_ext_t *local_desc_ext,
+			     enum extension_header_type type,
+			     void *ext_header_data)
+{
+}
+#endif
 
 /**
  * htt_fill_wisa_ext_header() - fill WiSA extension header

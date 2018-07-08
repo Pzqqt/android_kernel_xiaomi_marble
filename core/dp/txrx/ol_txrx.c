@@ -2556,6 +2556,7 @@ ol_txrx_remove_peers_for_vdev_no_lock(struct cdp_vdev *pvdev,
 	}
 }
 
+#ifdef WLAN_FEATURE_DSRC
 /**
  * ol_txrx_set_ocb_chan_info() - set OCB channel info to vdev.
  * @vdev: vdev handle
@@ -2585,6 +2586,7 @@ ol_txrx_get_ocb_chan_info(struct cdp_vdev *pvdev)
 
 	return vdev->ocb_channel_info;
 }
+#endif
 
 /**
  * @brief specify the peer's authentication state
@@ -5563,10 +5565,12 @@ static struct cdp_bus_ops ol_ops_bus = {
 	.bus_resume = ol_txrx_bus_resume
 };
 
+#ifdef WLAN_FEATURE_DSRC
 static struct cdp_ocb_ops ol_ops_ocb = {
 	.set_ocb_chan_info = ol_txrx_set_ocb_chan_info,
 	.get_ocb_chan_info = ol_txrx_get_ocb_chan_info
 };
+#endif
 
 static struct cdp_throttle_ops ol_ops_throttle = {
 #ifdef QCA_SUPPORT_TX_THROTTLE
@@ -5684,7 +5688,9 @@ static struct cdp_ops ol_txrx_ops = {
 	.rx_offld_ops = &ol_rx_offld_ops,
 #endif
 	.bus_ops = &ol_ops_bus,
+#ifdef WLAN_FEATURE_DSRC
 	.ocb_ops = &ol_ops_ocb,
+#endif
 	.peer_ops = &ol_ops_peer,
 	.throttle_ops = &ol_ops_throttle,
 	.mob_stats_ops = &ol_ops_mob_stats,
