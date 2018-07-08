@@ -7456,7 +7456,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		struct wlan_rx_tp_data rx_tp_data = {0};
 
 		hdd_debug("TCP DELACK trigger level %d, average_rx: %llu",
-		          next_rx_level, avg_rx);
+			  next_rx_level, avg_rx);
 		hdd_ctx->cur_rx_level = next_rx_level;
 		rx_level_change = true;
 		/* Send throughput indication only if it is enabled.
