@@ -197,7 +197,4 @@ struct _NIC_DEV {
 #define __QDF_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer, lenp, ppos) \
 	proc_dointvec(ctl, write, buffer, lenp, ppos)
 
-#define __QDF_SYSCTL_PROC_DOSTRING(ctl, write, filp, buffer, lenp, ppos) \
-	proc_dostring(ctl, write, filp, buffer, lenp, ppos)
-
 #endif /* _I_OSDEP_H */
