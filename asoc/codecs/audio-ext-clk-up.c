@@ -47,6 +47,7 @@ struct audio_ext_clk_priv {
 	int clk_src;
 	struct afe_clk_set clk_cfg;
 	struct audio_ext_clk audio_clk;
+	const char *clk_name;
 };
 
 static inline struct audio_ext_clk_priv *to_audio_clk(struct clk_hw *hw)
@@ -113,9 +114,34 @@ static void audio_ext_clk_unprepare(struct clk_hw *hw)
 		iowrite32(0, pnctrl_info->base);
 }
 
+static u8 audio_ext_clk_get_parent(struct clk_hw *hw)
+{
+	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
+	int num_parents = clk_hw_get_num_parents(hw);
+	const char * const *parent_names = hw->init->parent_names;
+	u8 i = 0, ret = hw->init->num_parents + 1;
+
+	if ((clk_priv->clk_src == AUDIO_EXT_CLK_PMI) && clk_priv->clk_name) {
+		for (i = 0; i < num_parents; i++) {
+			if (!strcmp(parent_names[i], clk_priv->clk_name))
+				ret = i;
+		}
+		pr_debug("%s: parent index = %u\n", __func__, ret);
+		return ret;
+	} else
+		return 0;
+}
+
 static const struct clk_ops audio_ext_clk_ops = {
 	.prepare = audio_ext_clk_prepare,
 	.unprepare = audio_ext_clk_unprepare,
+	.get_parent = audio_ext_clk_get_parent,
+};
+
+static const char * const audio_ext_pmi_div_clk[] = {
+	"qpnp_clkdiv_1",
+	"pms405_div_clk1",
+	"pm6150_div_clk1",
 };
 
 static struct audio_ext_clk audio_clk_array[] = {
@@ -126,9 +152,9 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.div = 1,
 			.hw.init = &(struct clk_init_data){
 				.name = "audio_ext_pmi_clk",
-				.parent_names = (const char *[])
-							{ "qpnp_clkdiv_1" },
-				.num_parents = 1,
+				.parent_names = audio_ext_pmi_div_clk,
+				.num_parents =
+					 ARRAY_SIZE(audio_ext_pmi_div_clk),
 				.ops = &audio_ext_clk_ops,
 			},
 		},
@@ -300,7 +326,7 @@ static int audio_ref_clk_probe(struct platform_device *pdev)
 				__func__, clk_src);
 		return -EINVAL;
 	}
-
+	clk_priv->clk_name = NULL;
 	clk_priv->clk_src = clk_src;
 	memcpy(&clk_priv->audio_clk, &audio_clk_array[clk_src],
 		   sizeof(struct audio_ext_clk));
@@ -329,6 +355,11 @@ static int audio_ref_clk_probe(struct platform_device *pdev)
 			clk_priv->clk_cfg.clk_id, clk_priv->clk_src);
 	platform_set_drvdata(pdev, clk_priv);
 
+	ret = of_property_read_string(pdev->dev.of_node, "pmic-clock-names",
+				      &clk_priv->clk_name);
+	if (ret)
+		dev_dbg(&pdev->dev, "%s: could not find pmic clock names\n",
+			__func__);
 	/*
 	 * property qcom,use-pinctrl to be defined in DTSI to val 1
 	 * for clock nodes using pinctrl
