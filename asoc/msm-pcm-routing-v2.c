@@ -3833,6 +3833,10 @@ static int msm_routing_ec_ref_rx_put(struct snd_kcontrol *kcontrol,
 		msm_route_ec_ref_rx = 28;
 		ec_ref_port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_2;
 		break;
+	case 29:
+		msm_route_ec_ref_rx = 29;
+		ec_ref_port_id = SLIMBUS_7_RX;
+		break;
 	default:
 		msm_route_ec_ref_rx = 0; /* NONE */
 		pr_err("%s EC ref rx %ld not valid\n",
@@ -3857,7 +3861,8 @@ static const char *const ec_ref_rx[] = { "None", "SLIM_RX", "I2S_RX",
 	"TERT_MI2S_RX", "QUAT_MI2S_RX", "TERT_TDM_TX_0", "USB_AUDIO_RX",
 	"INT0_MI2S_RX", "INT4_MI2S_RX", "INT3_MI2S_TX", "DISPLAY_PORT",
 	"WSA_CDC_DMA_RX_0", "WSA_CDC_DMA_RX_1",
-	"WSA_CDC_DMA_TX_0", "WSA_CDC_DMA_TX_1", "WSA_CDC_DMA_TX_2"
+	"WSA_CDC_DMA_TX_0", "WSA_CDC_DMA_TX_1", "WSA_CDC_DMA_TX_2",
+	"SLIM_7_RX"
 };
 
 static const struct soc_enum msm_route_ec_ref_rx_enum[] = {
