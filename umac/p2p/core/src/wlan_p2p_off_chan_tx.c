@@ -1843,6 +1843,20 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 		}
 	}
 
+	curr_roc_ctx = p2p_find_roc_by_chan(p2p_soc_obj, tx_ctx->chan);
+	if (curr_roc_ctx && (curr_roc_ctx->roc_state == ROC_STATE_IDLE)) {
+		tx_ctx->roc_cookie = (uintptr_t)curr_roc_ctx;
+		status = qdf_list_insert_back(
+				&p2p_soc_obj->tx_q_roc,
+				&tx_ctx->node);
+		if (status != QDF_STATUS_SUCCESS) {
+			p2p_err("Failed to insert off chan tx context to wait roc req queue");
+			goto fail;
+		} else {
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+
 	status = p2p_roc_req_for_tx_action(tx_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("Failed to request roc before off chan tx");
