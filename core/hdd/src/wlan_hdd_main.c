@@ -37,6 +37,7 @@
 #include <wlan_ptt_sock_svc.h>
 #include <dbglog_host.h>
 #include <wlan_logging_sock_svc.h>
+#include <wlan_roam_debug.h>
 #include <wlan_hdd_wowl.h>
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_wext.h>
@@ -12164,6 +12165,7 @@ int hdd_init(void)
 	hdd_qdf_print_init();
 
 	hdd_register_debug_callback();
+	wlan_roam_debug_init();
 
 err_out:
 	return ret;
@@ -12178,15 +12180,16 @@ err_out:
  */
 void hdd_deinit(void)
 {
+	wlan_roam_debug_deinit();
+	hdd_qdf_print_deinit();
 	qdf_timer_free(&hdd_drv_ops_inactivity_timer);
 
-	wlan_destroy_bug_report_lock();
-	cds_deinit();
-
-	hdd_qdf_print_deinit();
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 	wlan_logging_sock_deinit_svc();
 #endif
+
+	wlan_destroy_bug_report_lock();
+	cds_deinit();
 }
 
 #ifdef QCA_WIFI_NAPIER_EMULATION
