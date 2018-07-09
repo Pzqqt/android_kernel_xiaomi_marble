@@ -2771,6 +2771,172 @@ static void hif_print_hal_shadow_register_cfg(struct pld_wlan_enable_cfg *cfg)
 }
 #endif
 
+#ifdef ADRASTEA_RRI_ON_DDR
+/**
+ * hif_get_src_ring_read_index(): Called to get the SRRI
+ *
+ * @scn: hif_softc pointer
+ * @CE_ctrl_addr: base address of the CE whose RRI is to be read
+ *
+ * This function returns the SRRI to the caller. For CEs that
+ * dont have interrupts enabled, we look at the DDR based SRRI
+ *
+ * Return: SRRI
+ */
+inline unsigned int hif_get_src_ring_read_index(struct hif_softc *scn,
+		uint32_t CE_ctrl_addr)
+{
+	struct CE_attr attr;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	attr = hif_state->host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
+	if (attr.flags & CE_ATTR_DISABLE_INTR) {
+		return CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr);
+	} else {
+		if (TARGET_REGISTER_ACCESS_ALLOWED(scn))
+			return A_TARGET_READ(scn,
+					(CE_ctrl_addr) + CURRENT_SRRI_ADDRESS);
+		else
+			return CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn,
+					CE_ctrl_addr);
+	}
+}
+
+/**
+ * hif_get_dst_ring_read_index(): Called to get the DRRI
+ *
+ * @scn: hif_softc pointer
+ * @CE_ctrl_addr: base address of the CE whose RRI is to be read
+ *
+ * This function returns the DRRI to the caller. For CEs that
+ * dont have interrupts enabled, we look at the DDR based DRRI
+ *
+ * Return: DRRI
+ */
+inline unsigned int hif_get_dst_ring_read_index(struct hif_softc *scn,
+		uint32_t CE_ctrl_addr)
+{
+	struct CE_attr attr;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	attr = hif_state->host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
+
+	if (attr.flags & CE_ATTR_DISABLE_INTR) {
+		return CE_DEST_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr);
+	} else {
+		if (TARGET_REGISTER_ACCESS_ALLOWED(scn))
+			return A_TARGET_READ(scn,
+					(CE_ctrl_addr) + CURRENT_DRRI_ADDRESS);
+		else
+			return CE_DEST_RING_READ_IDX_GET_FROM_DDR(scn,
+					CE_ctrl_addr);
+	}
+}
+
+/**
+ * hif_alloc_rri_on_ddr() - Allocate memory for rri on ddr
+ * @scn: hif_softc pointer
+ *
+ * Return: qdf status
+ */
+static inline QDF_STATUS hif_alloc_rri_on_ddr(struct hif_softc *scn)
+{
+	qdf_dma_addr_t paddr_rri_on_ddr = 0;
+
+	scn->vaddr_rri_on_ddr =
+		(uint32_t *)qdf_mem_alloc_consistent(scn->qdf_dev,
+		scn->qdf_dev->dev, (CE_COUNT * sizeof(uint32_t)),
+		&paddr_rri_on_ddr);
+
+	if (!scn->vaddr_rri_on_ddr) {
+		hif_err("dmaable page alloc fail");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	scn->paddr_rri_on_ddr = paddr_rri_on_ddr;
+
+	qdf_mem_zero(scn->vaddr_rri_on_ddr, CE_COUNT * sizeof(uint32_t));
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#if (!defined(QCN7605_SUPPORT)) && defined(ADRASTEA_RRI_ON_DDR)
+/**
+ * hif_config_rri_on_ddr(): Configure the RRI on DDR mechanism
+ *
+ * @scn: hif_softc pointer
+ *
+ * This function allocates non cached memory on ddr and sends
+ * the physical address of this memory to the CE hardware. The
+ * hardware updates the RRI on this particular location.
+ *
+ * Return: None
+ */
+static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
+{
+	unsigned int i;
+	uint32_t high_paddr, low_paddr;
+
+	if (hif_alloc_rri_on_ddr(scn) != QDF_STATUS_SUCCESS)
+		return;
+
+	low_paddr  = BITS0_TO_31(scn->paddr_rri_on_ddr);
+	high_paddr = BITS32_TO_35(scn->paddr_rri_on_ddr);
+
+	HIF_DBG("%s using srri and drri from DDR", __func__);
+
+	WRITE_CE_DDR_ADDRESS_FOR_RRI_LOW(scn, low_paddr);
+	WRITE_CE_DDR_ADDRESS_FOR_RRI_HIGH(scn, high_paddr);
+
+	for (i = 0; i < CE_COUNT; i++)
+		CE_IDX_UPD_EN_SET(scn, CE_BASE_ADDRESS(i));
+}
+#else
+/**
+ * hif_config_rri_on_ddr(): Configure the RRI on DDR mechanism
+ *
+ * @scn: hif_softc pointer
+ *
+ * This is a dummy implementation for platforms that don't
+ * support this functionality.
+ *
+ * Return: None
+ */
+static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
+{
+}
+#endif
+
+/**
+ * hif_update_rri_over_ddr_config() - update rri_over_ddr config for
+ *                                    QMI command
+ * @scn: hif context
+ * @cfg: wlan enable config
+ *
+ * In case of Genoa, rri_over_ddr memory configuration is passed
+ * to firmware through QMI configure command.
+ */
+#if defined(QCN7605_SUPPORT) && defined(ADRASTEA_RRI_ON_DDR)
+static void hif_update_rri_over_ddr_config(struct hif_softc *scn,
+					   struct pld_wlan_enable_cfg *cfg)
+{
+	if (hif_alloc_rri_on_ddr(scn) != QDF_STATUS_SUCCESS)
+		return;
+
+	cfg->rri_over_ddr_cfg_valid = true;
+	cfg->rri_over_ddr_cfg.base_addr_low =
+		 BITS0_TO_31(scn->paddr_rri_on_ddr);
+	cfg->rri_over_ddr_cfg.base_addr_high =
+		 BITS32_TO_35(scn->paddr_rri_on_ddr);
+}
+#else
+static void hif_update_rri_over_ddr_config(struct hif_softc *scn,
+					   struct pld_wlan_enable_cfg *cfg)
+{
+}
+#endif
+
 /**
  * hif_wlan_enable(): call the platform driver to enable wlan
  * @scn: HIF Context
@@ -2803,6 +2969,8 @@ int hif_wlan_enable(struct hif_softc *scn)
 			      &cfg.num_shadow_reg_v2_cfg);
 
 	hif_print_hal_shadow_register_cfg(&cfg);
+
+	hif_update_rri_over_ddr_config(scn, &cfg);
 
 	if (QDF_GLOBAL_FTM_MODE == con_mode)
 		mode = PLD_FTM;
@@ -3602,127 +3770,6 @@ inline uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct hif_softc *scn,
 	return drri_from_ddr;
 }
 
-#endif
-
-#ifdef ADRASTEA_RRI_ON_DDR
-/**
- * hif_get_src_ring_read_index(): Called to get the SRRI
- *
- * @scn: hif_softc pointer
- * @CE_ctrl_addr: base address of the CE whose RRI is to be read
- *
- * This function returns the SRRI to the caller. For CEs that
- * dont have interrupts enabled, we look at the DDR based SRRI
- *
- * Return: SRRI
- */
-inline unsigned int hif_get_src_ring_read_index(struct hif_softc *scn,
-		uint32_t CE_ctrl_addr)
-{
-	struct CE_attr attr;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-
-	attr = hif_state->host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
-	if (attr.flags & CE_ATTR_DISABLE_INTR) {
-		return CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr);
-	} else {
-		if (TARGET_REGISTER_ACCESS_ALLOWED(scn))
-			return A_TARGET_READ(scn,
-					(CE_ctrl_addr) + CURRENT_SRRI_ADDRESS);
-		else
-			return CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn,
-					CE_ctrl_addr);
-	}
-}
-
-/**
- * hif_get_dst_ring_read_index(): Called to get the DRRI
- *
- * @scn: hif_softc pointer
- * @CE_ctrl_addr: base address of the CE whose RRI is to be read
- *
- * This function returns the DRRI to the caller. For CEs that
- * dont have interrupts enabled, we look at the DDR based DRRI
- *
- * Return: DRRI
- */
-inline unsigned int hif_get_dst_ring_read_index(struct hif_softc *scn,
-		uint32_t CE_ctrl_addr)
-{
-	struct CE_attr attr;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-
-	attr = hif_state->host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
-
-	if (attr.flags & CE_ATTR_DISABLE_INTR) {
-		return CE_DEST_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr);
-	} else {
-		if (TARGET_REGISTER_ACCESS_ALLOWED(scn))
-			return A_TARGET_READ(scn,
-					(CE_ctrl_addr) + CURRENT_DRRI_ADDRESS);
-		else
-			return CE_DEST_RING_READ_IDX_GET_FROM_DDR(scn,
-					CE_ctrl_addr);
-	}
-}
-
-/**
- * hif_config_rri_on_ddr(): Configure the RRI on DDR mechanism
- *
- * @scn: hif_softc pointer
- *
- * This function allocates non cached memory on ddr and sends
- * the physical address of this memory to the CE hardware. The
- * hardware updates the RRI on this particular location.
- *
- * Return: None
- */
-static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
-{
-	unsigned int i;
-	uint32_t high_paddr, low_paddr;
-	qdf_dma_addr_t paddr_rri_on_ddr = 0;
-
-	scn->vaddr_rri_on_ddr =
-		(uint32_t *)qdf_mem_alloc_consistent(scn->qdf_dev,
-		scn->qdf_dev->dev, (CE_COUNT*sizeof(uint32_t)),
-		&paddr_rri_on_ddr);
-
-	if (!scn->vaddr_rri_on_ddr) {
-		HIF_DBG("dmaable page alloc fail");
-		return;
-	}
-
-	scn->paddr_rri_on_ddr = paddr_rri_on_ddr;
-	low_paddr  = BITS0_TO_31(paddr_rri_on_ddr);
-	high_paddr = BITS32_TO_35(paddr_rri_on_ddr);
-
-	HIF_DBG("%s using srri and drri from DDR", __func__);
-
-	WRITE_CE_DDR_ADDRESS_FOR_RRI_LOW(scn, low_paddr);
-	WRITE_CE_DDR_ADDRESS_FOR_RRI_HIGH(scn, high_paddr);
-
-	for (i = 0; i < CE_COUNT; i++)
-		CE_IDX_UPD_EN_SET(scn, CE_BASE_ADDRESS(i));
-
-	qdf_mem_zero(scn->vaddr_rri_on_ddr, CE_COUNT*sizeof(uint32_t));
-
-}
-#else
-
-/**
- * hif_config_rri_on_ddr(): Configure the RRI on DDR mechanism
- *
- * @scn: hif_softc pointer
- *
- * This is a dummy implementation for platforms that don't
- * support this functionality.
- *
- * Return: None
- */
-static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
-{
-}
 #endif
 
 /**
