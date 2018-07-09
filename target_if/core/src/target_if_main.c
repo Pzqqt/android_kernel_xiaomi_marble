@@ -522,7 +522,7 @@ QDF_STATUS target_if_alloc_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 	wlan_psoc_set_tgt_if_handle(psoc, tgt_psoc_info);
 	target_psoc_set_preferred_hw_mode(tgt_psoc_info, WMI_HOST_HW_MODE_MAX);
 
-	qdf_init_waitqueue_head(&tgt_psoc_info->info.event_queue);
+	qdf_event_create(&tgt_psoc_info->info.event);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -546,6 +546,8 @@ QDF_STATUS target_if_free_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 	}
 	init_deinit_chainmask_table_free(ext_param);
 	init_deinit_dbr_ring_cap_free(tgt_psoc_info);
+
+	qdf_event_destroy(&tgt_psoc_info->info.event);
 
 	wlan_psoc_set_tgt_if_handle(psoc, NULL);
 

@@ -138,8 +138,7 @@ struct comp_hdls {
  * @max_descs: Max descriptors
  * @preferred_hw_mode: preferred hw mode
  * @wmi_timeout: wait timeout for target events
- * @wmi_timeout_unintr: wait timeout uninterruptedly
- * @event_queue: wait queue for target events
+ * @event: qdf_event for target events
  * @service_bitmap: WMI service bitmap
  * @target_cap: target capabilities
  * @service_ext_param: ext service params
@@ -161,8 +160,7 @@ struct tgt_info {
 	uint32_t max_descs;
 	uint32_t preferred_hw_mode;
 	uint32_t wmi_timeout;
-	uint32_t wmi_timeout_unintr;
-	qdf_wait_queue_head_t event_queue;
+	qdf_event_t event;
 	uint32_t service_bitmap[PSOC_SERVICE_BM_SIZE];
 	struct wlan_psoc_target_capability_info target_caps;
 	struct wlan_psoc_host_service_ext_param service_ext_param;
@@ -690,41 +688,6 @@ static inline uint32_t target_psoc_get_wmi_timeout
 }
 
 /**
- * target_psoc_set_wmi_timeout_unintr() - set wmi_timeout_unintr
- * @psoc_info:  pointer to structure target_psoc_info
- * @wmi_timeout_unint: WMI timeout uninterrupted in sec
- *
- * API to set wmi_timeout_unintr
- *
- * Return: void
- */
-static inline void target_psoc_set_wmi_timeout_unintr
-		(struct target_psoc_info *psoc_info, uint32_t wmi_timeout_unint)
-{
-	if (psoc_info == NULL)
-		return;
-
-	psoc_info->info.wmi_timeout_unintr = wmi_timeout_unint;
-}
-
-/**
- * target_psoc_get_wmi_timeout_unintr() - get wmi_timeout_unintr
- * @psoc_info:  pointer to structure target_psoc_info
- *
- * API to get wmi_timeout_unintr
- *
- * Return: unint32_t
- */
-static inline uint32_t target_psoc_get_wmi_timeout_unintr
-		(struct target_psoc_info *psoc_info)
-{
-	if (psoc_info == NULL)
-		return (uint32_t)-1;
-
-	return psoc_info->info.wmi_timeout_unintr;
-}
-
-/**
  * target_psoc_set_total_mac_phy_cnt() - set total_mac_phy
  * @psoc_info:  pointer to structure target_psoc_infoa
  * @total_mac_phy_cnt: Total MAC PHY cnt
@@ -1192,13 +1155,13 @@ static inline wmi_host_ext_resource_config *target_psoc_get_wlan_ext_res_cfg
  *
  * Return: structure pointer to qdf_wait_queue_head_t
  */
-static inline qdf_wait_queue_head_t *target_psoc_get_event_queue
+static inline qdf_event_t *target_psoc_get_event
 		(struct target_psoc_info *psoc_info)
 {
 	if (psoc_info == NULL)
 		return NULL;
 
-	return &psoc_info->info.event_queue;
+	return &psoc_info->info.event;
 }
 
 /**

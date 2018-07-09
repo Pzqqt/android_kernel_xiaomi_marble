@@ -26,6 +26,7 @@
 #include <qdf_trace.h>
 #include <qdf_nbuf.h>
 #include <qdf_mem.h>
+#include <qdf_event.h>
 
 MODULE_AUTHOR("Qualcomm Atheros Inc.");
 MODULE_DESCRIPTION("Qualcomm Atheros Device Framework Module");
@@ -49,6 +50,7 @@ qdf_mod_init(void)
 	qdf_logging_init();
 	qdf_perfmod_init();
 	qdf_nbuf_mod_init();
+	qdf_event_list_init();
 	return 0;
 }
 module_init(qdf_mod_init);
@@ -61,6 +63,7 @@ module_init(qdf_mod_init);
 static void __exit
 qdf_mod_exit(void)
 {
+	qdf_event_list_destroy();
 	qdf_nbuf_mod_exit();
 	qdf_perfmod_exit();
 	qdf_logging_exit();

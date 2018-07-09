@@ -570,5 +570,5 @@ void init_deinit_wakeup_host_wait(
 		target_if_err("psoc target_psoc_info is null in target ready");
 		return;
 	}
-	qdf_wake_up(&tgt_hdl->info.event_queue);
+	qdf_event_set(&tgt_hdl->info.event);
 }
