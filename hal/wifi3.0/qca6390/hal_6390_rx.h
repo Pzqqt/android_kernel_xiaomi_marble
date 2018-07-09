@@ -183,32 +183,6 @@ void hal_rx_proc_phyrx_other_receive_info_tlv_6390(void *rx_tlv_hdr,
 	other_tlv = other_tlv_hdr + HAL_RX_TLV32_HDR_SIZE;
 
 	switch (other_tlv_tag) {
-	case WIFIPHYRX_OTHER_RECEIVE_INFO_RU_DETAILS_E:
-		ru_details_channel_0 =
-			HAL_RX_GET(other_tlv,
-				   PHYRX_OTHER_RECEIVE_INFO_RU_DETAILS_0,
-				   RU_DETAILS_CHANNEL_0);
-
-		qdf_mem_copy(ppdu_info->rx_status.he_RU,
-			     &ru_details_channel_0,
-			     sizeof(ppdu_info->rx_status.he_RU));
-
-		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_20)
-			ppdu_info->rx_status.he_sig_b_common_known |=
-				QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU0;
-
-		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_40)
-			ppdu_info->rx_status.he_sig_b_common_known |=
-				QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU1;
-
-		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_80)
-			ppdu_info->rx_status.he_sig_b_common_known |=
-				QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU2;
-
-		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_160)
-			ppdu_info->rx_status.he_sig_b_common_known |=
-				QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU3;
-			break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s unhandled TLV type: %d, TLV len:%d",
@@ -295,6 +269,117 @@ void hal_rx_dump_msdu_start_tlv_6390(void *msdustart,   uint8_t dbg_level)
 
 qdf_export_symbol(hal_rx_dump_msdu_start_tlv_6390);
 
+/**
+ * hal_rx_dump_msdu_end_tlv_6390: dump RX msdu_end TLV in structured
+ *			     human readable format.
+ * @ msdu_end: pointer the msdu_end TLV in pkt.
+ * @ dbg_level: log level.
+ *
+ * Return: void
+ */
+void hal_rx_dump_msdu_end_tlv_6390(void *msduend,
+				   uint8_t dbg_level)
+{
+	struct rx_msdu_end *msdu_end = (struct rx_msdu_end *)msduend;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"rx_msdu_end tlv - "
+			"rxpcu_mpdu_filter_in_category: %d "
+			"sw_frame_group_id: %d "
+			"phy_ppdu_id: %d "
+			"ip_hdr_chksum: %d "
+			"tcp_udp_chksum: %d "
+			"key_id_octet: %d "
+			"cce_super_rule: %d "
+			"cce_classify_not_done_truncat: %d "
+			"cce_classify_not_done_cce_dis: %d "
+			"ext_wapi_pn_63_48: %d "
+			"ext_wapi_pn_95_64: %d "
+			"ext_wapi_pn_127_96: %d "
+			"reported_mpdu_length: %d "
+			"first_msdu: %d "
+			"last_msdu: %d "
+			"sa_idx_timeout: %d "
+			"da_idx_timeout: %d "
+			"msdu_limit_error: %d "
+			"flow_idx_timeout: %d "
+			"flow_idx_invalid: %d "
+			"wifi_parser_error: %d "
+			"amsdu_parser_error: %d "
+			"sa_is_valid: %d "
+			"da_is_valid: %d "
+			"da_is_mcbc: %d "
+			"l3_header_padding: %d "
+			"ipv6_options_crc: %d "
+			"tcp_seq_number: %d "
+			"tcp_ack_number: %d "
+			"tcp_flag: %d "
+			"lro_eligible: %d "
+			"window_size: %d "
+			"da_offset: %d "
+			"sa_offset: %d "
+			"da_offset_valid: %d "
+			"sa_offset_valid: %d "
+			"rule_indication_31_0: %d "
+			"rule_indication_63_32: %d "
+			"sa_idx: %d "
+			"da_idx: %d "
+			"msdu_drop: %d "
+			"reo_destination_indication: %d "
+			"flow_idx: %d "
+			"fse_metadata: %d "
+			"cce_metadata: %d "
+			"sa_sw_peer_id: %d ",
+			msdu_end->rxpcu_mpdu_filter_in_category,
+			msdu_end->sw_frame_group_id,
+			msdu_end->phy_ppdu_id,
+			msdu_end->ip_hdr_chksum,
+			msdu_end->tcp_udp_chksum,
+			msdu_end->key_id_octet,
+			msdu_end->cce_super_rule,
+			msdu_end->cce_classify_not_done_truncate,
+			msdu_end->cce_classify_not_done_cce_dis,
+			msdu_end->ext_wapi_pn_63_48,
+			msdu_end->ext_wapi_pn_95_64,
+			msdu_end->ext_wapi_pn_127_96,
+			msdu_end->reported_mpdu_length,
+			msdu_end->first_msdu,
+			msdu_end->last_msdu,
+			msdu_end->sa_idx_timeout,
+			msdu_end->da_idx_timeout,
+			msdu_end->msdu_limit_error,
+			msdu_end->flow_idx_timeout,
+			msdu_end->flow_idx_invalid,
+			msdu_end->wifi_parser_error,
+			msdu_end->amsdu_parser_error,
+			msdu_end->sa_is_valid,
+			msdu_end->da_is_valid,
+			msdu_end->da_is_mcbc,
+			msdu_end->l3_header_padding,
+			msdu_end->ipv6_options_crc,
+			msdu_end->tcp_seq_number,
+			msdu_end->tcp_ack_number,
+			msdu_end->tcp_flag,
+			msdu_end->lro_eligible,
+			msdu_end->window_size,
+			msdu_end->da_offset,
+			msdu_end->sa_offset,
+			msdu_end->da_offset_valid,
+			msdu_end->sa_offset_valid,
+			msdu_end->rule_indication_31_0,
+			msdu_end->rule_indication_63_32,
+			msdu_end->sa_idx,
+			msdu_end->da_idx_or_sw_peer_id,
+			msdu_end->msdu_drop,
+			msdu_end->reo_destination_indication,
+			msdu_end->flow_idx,
+			msdu_end->fse_metadata,
+			msdu_end->cce_metadata,
+			msdu_end->sa_sw_peer_id);
+}
+
+qdf_export_symbol(hal_rx_dump_msdu_end_tlv_6390);
+
 /*
  * Get tid from RX_MPDU_START
  */
@@ -344,4 +429,28 @@ uint32_t hal_rx_msdu_start_reception_type_get_6390(uint8_t *buf)
 }
 
 qdf_export_symbol(hal_rx_msdu_start_reception_type_get_6390);
+
+#define HAL_RX_MSDU_END_DA_IDX_GET(_rx_msdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
+		RX_MSDU_END_13_DA_IDX_OR_SW_PEER_ID_OFFSET)),	\
+		RX_MSDU_END_13_DA_IDX_OR_SW_PEER_ID_MASK,	\
+		RX_MSDU_END_13_DA_IDX_OR_SW_PEER_ID_LSB))
+
+ /**
+ * hal_rx_msdu_end_da_idx_get_6390: API to get da_idx
+ * from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: da index
+ */
+uint16_t hal_rx_msdu_end_da_idx_get_6390(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint16_t da_idx;
+
+	da_idx = HAL_RX_MSDU_END_DA_IDX_GET(msdu_end);
+
+	return da_idx;
+}
 

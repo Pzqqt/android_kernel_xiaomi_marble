@@ -55,9 +55,11 @@ struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	hal_rx_get_tlv_6390,
 	hal_rx_proc_phyrx_other_receive_info_tlv_6390,
 	hal_rx_dump_msdu_start_tlv_6390,
+	hal_rx_dump_msdu_end_tlv_6390,
 	hal_get_link_desc_size_6390,
 	hal_rx_mpdu_start_tid_get_6390,
 	hal_rx_msdu_start_reception_type_get_6390,
+	hal_rx_msdu_end_da_idx_get_6390,
 };
 
 struct hal_hw_srng_config hw_srng_table_6390[] = {
