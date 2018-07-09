@@ -248,6 +248,24 @@ static inline void dp_peer_ast_cleanup(struct dp_soc *soc,
  */
 static void dp_peer_ast_hash_detach(struct dp_soc *soc)
 {
+	unsigned int index;
+	struct dp_ast_entry *ast, *ast_next;
+
+	if (!soc->ast_hash.mask)
+		return;
+
+	for (index = 0; index <= soc->ast_hash.mask; index++) {
+		if (!TAILQ_EMPTY(&soc->ast_hash.bins[index])) {
+			TAILQ_FOREACH_SAFE(ast, &soc->ast_hash.bins[index],
+					   hash_list_elem, ast_next) {
+				TAILQ_REMOVE(&soc->ast_hash.bins[index], ast,
+					     hash_list_elem);
+				dp_peer_ast_cleanup(soc, ast);
+				qdf_mem_free(ast);
+			}
+		}
+	}
+
 	qdf_mem_free(soc->ast_hash.bins);
 }
 
