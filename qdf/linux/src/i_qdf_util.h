@@ -136,6 +136,8 @@ static inline int __qdf_status_to_os_return(QDF_STATUS status)
 		return -ENETRESET;
 	case QDF_STATUS_E_PENDING:
 		return -EINPROGRESS;
+	case QDF_STATUS_E_TIMEOUT:
+		return -ETIMEDOUT;
 	default:
 		return -EPERM;
 	}
@@ -186,6 +188,8 @@ static inline QDF_STATUS __qdf_status_from_os_return(int rc)
 		return QDF_STATUS_E_NETRESET;
 	case -EINPROGRESS:
 		return QDF_STATUS_E_PENDING;
+	case -ETIMEDOUT:
+		return QDF_STATUS_E_TIMEOUT;
 	default:
 		return QDF_STATUS_E_PERM;
 	}
