@@ -199,7 +199,7 @@ static int lsm_lab_buffer_sanity(struct lsm_priv *prtd,
 }
 
 static void lsm_event_handler(uint32_t opcode, uint32_t token,
-			      void *payload, void *priv)
+			      uint32_t *payload, void *priv)
 {
 	unsigned long flags;
 	struct lsm_priv *prtd = priv;
@@ -222,7 +222,7 @@ static void lsm_event_handler(uint32_t opcode, uint32_t token,
 	switch (opcode) {
 	case LSM_DATA_EVENT_READ_DONE: {
 		int rc;
-		struct lsm_cmd_read_done *read_done = payload;
+		struct lsm_cmd_read_done *read_done = (struct lsm_cmd_read_done *)payload;
 		int buf_index = 0;
 
 		if (prtd->lsm_client->session != token ||
@@ -2415,7 +2415,7 @@ static int msm_lsm_open(struct snd_pcm_substream *substream)
 		pr_info("%s: constraint for buffer bytes step ret = %d\n",
 			__func__, ret);
 	prtd->lsm_client = q6lsm_client_alloc(
-				(lsm_app_cb)lsm_event_handler, prtd);
+				lsm_event_handler, prtd);
 	if (!prtd->lsm_client) {
 		pr_err("%s: Could not allocate memory\n", __func__);
 		kfree(prtd);
