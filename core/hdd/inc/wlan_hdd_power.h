@@ -143,9 +143,32 @@ enum suspend_resume_state {
 	 HDD_WLAN_RESUME
 };
 
+/**
+ * hdd_svc_fw_shutdown_ind() - API to send FW SHUTDOWN IND to Userspace
+ * @dev: Device Pointer
+ *
+ * Return: None
+ */
+void hdd_svc_fw_shutdown_ind(struct device *dev);
 
-/* SSR shutdown & re-init functions */
+/**
+ * hdd_wlan_shutdown() - HDD SSR shutdown function
+ *
+ * This function is called by the HIF to shutdown the driver during SSR.
+ *
+ * Return: QDF_STATUS_SUCCESS if the driver was shut down,
+ *	or an error status otherwise
+ */
 QDF_STATUS hdd_wlan_shutdown(void);
+
+/**
+ * hdd_wlan_re_init() - HDD SSR re-init function
+ *
+ * This function is called by the HIF to re-initialize the driver after SSR.
+ *
+ * Return: QDF_STATUS_SUCCESS if the driver was re-initialized,
+ *	or an error status otherwise
+ */
 QDF_STATUS hdd_wlan_re_init(void);
 
 /**
@@ -156,7 +179,7 @@ QDF_STATUS hdd_wlan_re_init(void);
  * Return: None
  */
 void hdd_enable_arp_offload(struct hdd_adapter *adapter,
-		enum pmo_offload_trigger trigger);
+			    enum pmo_offload_trigger trigger);
 
 /**
  * hdd_disable_arp_offload() - API to disable ARP offload
@@ -166,7 +189,7 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
  * Return: None
  */
 void hdd_disable_arp_offload(struct hdd_adapter *adapter,
-		enum pmo_offload_trigger trigger);
+			     enum pmo_offload_trigger trigger);
 
 /**
  * hdd_enable_host_offloads() - Central API to enable the supported offloads
@@ -178,7 +201,7 @@ void hdd_disable_arp_offload(struct hdd_adapter *adapter,
  * Return: nothing
  */
 void hdd_enable_host_offloads(struct hdd_adapter *adapter,
-	enum pmo_offload_trigger trigger);
+			      enum pmo_offload_trigger trigger);
 
 /**
  * hdd_disable_host_offloads() - Central API to disable the supported offloads
@@ -190,7 +213,7 @@ void hdd_enable_host_offloads(struct hdd_adapter *adapter,
  * Return: nothing
  */
 void hdd_disable_host_offloads(struct hdd_adapter *adapter,
-	enum pmo_offload_trigger trigger);
+			       enum pmo_offload_trigger trigger);
 
 /**
  * hdd_enable_mc_addr_filtering() - enable MC address list in FW
@@ -200,7 +223,7 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
  * Return: nothing
  */
 void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
-	enum pmo_offload_trigger trigger);
+				  enum pmo_offload_trigger trigger);
 
 /**
  * hdd_disable_mc_addr_filtering() - disable MC address list in FW
@@ -210,7 +233,7 @@ void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
  * Return: nothing
  */
 void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
-	enum pmo_offload_trigger trigger);
+				   enum pmo_offload_trigger trigger);
 
 /**
  * hdd_cache_mc_addr_list() - API to cache MC address list
@@ -228,7 +251,7 @@ int hdd_cache_mc_addr_list(struct pmo_mc_addr_list_params *mc_list_config);
  * Return: nothing
  */
 void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
-	enum pmo_offload_trigger trigger);
+					enum pmo_offload_trigger trigger);
 
 /**
  * wlan_hdd_cfg80211_update_replay_counter_cb() - replay counter callback
@@ -243,13 +266,36 @@ void wlan_hdd_cfg80211_update_replay_counter_cb(
 	void *cb_ctx,
 	struct pmo_gtk_rsp_params *gtk_rsp_param);
 
+/**
+ * wlan_hdd_cfg80211_suspend_wlan() - cfg80211 suspend callback
+ * @wiphy: Pointer to wiphy
+ * @wow: Pointer to wow
+ *
+ * This API is called when cfg80211 driver suspends
+ *
+ * Return: integer status
+ */
 int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				   struct cfg80211_wowlan *wow);
 
+/**
+ * wlan_hdd_cfg80211_resume_wlan() - cfg80211 resume callback
+ * @wiphy: Pointer to wiphy
+ *
+ * This API is called when cfg80211 driver resumes driver updates
+ * latest sched_scan scan result(if any) to cfg80211 database
+ *
+ * Return: integer status
+ */
 int wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy);
 
+/**
+ * hdd_ipv4_notifier_work_queue() - IP V4 change notifier work handler
+ * @work: Pointer to work context
+ *
+ * Return: none
+ */
 void hdd_ipv4_notifier_work_queue(struct work_struct *work);
-
 
 /**
  * hdd_enable_ns_offload() - enable NS offload
@@ -258,7 +304,7 @@ void hdd_ipv4_notifier_work_queue(struct work_struct *work);
  * Return: nothing
  */
 void hdd_enable_ns_offload(struct hdd_adapter *adapter,
-	enum pmo_offload_trigger trigger);
+			   enum pmo_offload_trigger trigger);
 
 /**
  * hdd_disable_ns_offload() - disable NS offload
@@ -267,28 +313,89 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
  * Return: nothing
  */
 void hdd_disable_ns_offload(struct hdd_adapter *adapter,
-	enum pmo_offload_trigger trigger);
+			    enum pmo_offload_trigger trigger);
 
+/**
+ * hdd_ipv6_notifier_work_queue() - IP V6 change notifier work handler
+ * @work: Pointer to work context
+ *
+ * Return: none
+ */
 void hdd_ipv6_notifier_work_queue(struct work_struct *work);
 
-
+/**
+ * wlan_hdd_cfg80211_get_txpower() - cfg80211 get power handler function
+ * @wiphy: Pointer to wiphy structure.
+ * @wdev: Pointer to wireless_dev structure.
+ * @dbm: dbm
+ *
+ * This is the cfg80211 get txpower handler function which invokes
+ * the internal function @__wlan_hdd_cfg80211_get_txpower with
+ * SSR protection.
+ *
+ * Return: 0 for success, error number on failure.
+ */
 int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
 				  int *dbm);
+
+/**
+ * wlan_hdd_cfg80211_set_txpower() - set TX power
+ * @wiphy: Pointer to wiphy
+ * @wdev: Pointer to network device
+ * @type: TX power setting type
+ * @dbm: TX power in dbm
+ *
+ * Return: 0 for success, non-zero for failure
+ */
 int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
 				  enum nl80211_tx_power_setting type,
 				  int dbm);
+
+/**
+ * wlan_hdd_cfg80211_set_power_mgmt() - set cfg80211 power management config
+ * @wiphy: Pointer to wiphy
+ * @dev: Pointer to network device
+ * @allow_power_save: is wlan allowed to go into power save mode
+ * @timeout: Timeout value
+ *
+ * Return: 0 for success, non-zero for failure
+ */
 int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 				     struct net_device *dev,
 				     bool allow_power_save,
 				     int timeout);
 
+/**
+ * wlan_hdd_ipv4_changed() - IPv4 change notifier callback
+ * @nb: pointer to notifier block
+ * @data: data
+ * @arg: arg
+ *
+ * This is the IPv4 notifier callback function gets invoked
+ * if any change in IP and then invoke the function @__wlan_hdd_ipv4_changed
+ * to reconfigure the offload parameters.
+ *
+ * Return: 0 on success, error number otherwise.
+ */
 int wlan_hdd_ipv4_changed(struct notifier_block *nb,
-				unsigned long data, void *arg);
+			  unsigned long data, void *arg);
 
+/**
+ * wlan_hdd_ipv6_changed() - IPv6 change notifier callback
+ * @nb: pointer to notifier block
+ * @data: data
+ * @arg: arg
+ *
+ * This is the IPv6 notifier callback function gets invoked
+ * if any change in IP and then invoke the function @__wlan_hdd_ipv6_changed
+ * to reconfigure the offload parameters.
+ *
+ * Return: 0 on success, error number otherwise.
+ */
 int wlan_hdd_ipv6_changed(struct notifier_block *nb,
-				unsigned long data, void *arg);
+			  unsigned long data, void *arg);
 
 /**
  * hdd_set_qpower_config() - set qpower config to firmware
@@ -303,7 +410,16 @@ int hdd_set_qpower_config(struct hdd_context *hddctx,
 			  uint8_t qpower);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * hdd_wlan_suspend_resume_event()- send suspend/resume state
+ * @state: suspend/resume state
+ *
+ * This Function sends suspend resume state diag event
+ *
+ * Return: void.
+ */
 void hdd_wlan_suspend_resume_event(uint8_t state);
+
 #else
 static inline
 void hdd_wlan_suspend_resume_event(uint8_t state) {}

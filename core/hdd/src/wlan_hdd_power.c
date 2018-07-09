@@ -87,14 +87,6 @@
 /* Type declarations */
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
-/**
- * hdd_wlan_suspend_resume_event()- send suspend/resume state
- * @state: suspend/resume state
- *
- * This Function send send suspend resume state diag event
- *
- * Return: void.
- */
 void hdd_wlan_suspend_resume_event(uint8_t state)
 {
 	WLAN_HOST_DIAG_EVENT_DEF(suspend_state, struct host_event_suspend);
@@ -232,18 +224,6 @@ exit:
 	return NOTIFY_DONE;
 }
 
-/**
- * wlan_hdd_ipv6_changed() - IPv6 change notifier callback
- * @nb: pointer to notifier block
- * @data: data
- * @arg: arg
- *
- * This is the IPv6 notifier callback function gets invoked
- * if any change in IP and then invoke the function @__wlan_hdd_ipv6_changed
- * to reconfigure the offload parameters.
- *
- * Return: 0 on success, error number otherwise.
- */
 int wlan_hdd_ipv6_changed(struct notifier_block *nb,
 				unsigned long data, void *arg)
 {
@@ -484,12 +464,6 @@ exit:
 	hdd_exit();
 }
 
-/**
- * hdd_ipv6_notifier_work_queue() - IP V6 change notifier work handler
- * @work: Pointer to work context
- *
- * Return: none
- */
 void hdd_ipv6_notifier_work_queue(struct work_struct *work)
 {
 	cds_ssr_protect(__func__);
@@ -757,12 +731,6 @@ exit:
 	hdd_exit();
 }
 
-/**
- * hdd_ipv4_notifier_work_queue() - IP V4 change notifier work handler
- * @work: Pointer to work context
- *
- * Return: none
- */
 void hdd_ipv4_notifier_work_queue(struct work_struct *work)
 {
 	cds_ssr_protect(__func__);
@@ -835,18 +803,6 @@ exit:
 	return NOTIFY_DONE;
 }
 
-/**
- * wlan_hdd_ipv4_changed() - IPv4 change notifier callback
- * @nb: pointer to notifier block
- * @data: data
- * @arg: arg
- *
- * This is the IPv4 notifier callback function gets invoked
- * if any change in IP and then invoke the function @__wlan_hdd_ipv4_changed
- * to reconfigure the offload parameters.
- *
- * Return: 0 on success, error number otherwise.
- */
 int wlan_hdd_ipv4_changed(struct notifier_block *nb,
 			unsigned long data, void *arg)
 {
@@ -1179,13 +1135,6 @@ static int hdd_resume_wlan(void)
 	return 0;
 }
 
-/**
- * hdd_svc_fw_shutdown_ind() - API to send FW SHUTDOWN IND to Userspace
- *
- * @dev: Device Pointer
- *
- * Return: None
- */
 void hdd_svc_fw_shutdown_ind(struct device *dev)
 {
 	struct hdd_context *hdd_ctx;
@@ -1221,14 +1170,6 @@ static void hdd_ssr_restart_sap(struct hdd_context *hdd_ctx)
 	hdd_exit();
 }
 
-/**
- * hdd_wlan_shutdown() - HDD SSR shutdown function
- *
- * This function is called by the HIF to shutdown the driver during SSR.
- *
- * Return: QDF_STATUS_SUCCESS if the driver was shut down,
- *	or an error status otherwise
- */
 QDF_STATUS hdd_wlan_shutdown(void)
 {
 	struct hdd_context *hdd_ctx;
@@ -1347,14 +1288,6 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 	}
 }
 
-/**
- * hdd_wlan_re_init() - HDD SSR re-init function
- *
- * This function is called by the HIF to re-initialize the driver after SSR.
- *
- * Return: QDF_STATUS_SUCCESS if the driver was re-initialized,
- *	or an error status otherwise
- */
 QDF_STATUS hdd_wlan_re_init(void)
 {
 	struct hdd_context *hdd_ctx = NULL;
@@ -1618,15 +1551,6 @@ exit_with_code:
 	return exit_code;
 }
 
-/**
- * wlan_hdd_cfg80211_resume_wlan() - cfg80211 resume callback
- * @wiphy: Pointer to wiphy
- *
- * This API is called when cfg80211 driver resumes driver updates
- * latest sched_scan scan result(if any) to cfg80211 database
- *
- * Return: integer status
- */
 int wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 {
 	int ret;
@@ -1821,15 +1745,6 @@ resume_tx:
 
 }
 
-/**
- * wlan_hdd_cfg80211_suspend_wlan() - cfg80211 suspend callback
- * @wiphy: Pointer to wiphy
- * @wow: Pointer to wow
- *
- * This API is called when cfg80211 driver suspends
- *
- * Return: integer status
- */
 int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				   struct cfg80211_wowlan *wow)
 {
@@ -1948,15 +1863,6 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	return status;
 }
 
-/**
- * wlan_hdd_cfg80211_set_power_mgmt() - set cfg80211 power management config
- * @wiphy: Pointer to wiphy
- * @dev: Pointer to network device
- * @allow_power_save: is wlan allowed to go into power save mode
- * @timeout: Timeout value
- *
- * Return: 0 for success, non-zero for failure
- */
 int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 				     struct net_device *dev,
 				     bool allow_power_save,
@@ -2046,15 +1952,6 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 	return 0;
 }
 
-/**
- * wlan_hdd_cfg80211_set_txpower() - set TX power
- * @wiphy: Pointer to wiphy
- * @wdev: Pointer to network device
- * @type: TX power setting type
- * @dbm: TX power in dbm
- *
- * Return: 0 for success, non-zero for failure
- */
 int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
 				  enum nl80211_tx_power_setting type,
@@ -2153,18 +2050,6 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	return 0;
 }
 
-/**
- * wlan_hdd_cfg80211_get_txpower() - cfg80211 get power handler function
- * @wiphy: Pointer to wiphy structure.
- * @wdev: Pointer to wireless_dev structure.
- * @dbm: dbm
- *
- * This is the cfg80211 get txpower handler function which invokes
- * the internal function @__wlan_hdd_cfg80211_get_txpower with
- * SSR protection.
- *
- * Return: 0 for success, error number on failure.
- */
 int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 					 struct wireless_dev *wdev,
 					 int *dbm)
