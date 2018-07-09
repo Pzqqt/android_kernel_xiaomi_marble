@@ -6678,32 +6678,26 @@ bool wma_needshutdown(void)
  */
 QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle)
 {
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	QDF_STATUS qdf_status;
+	tp_wma_handle wma_handle = (tp_wma_handle)handle;
+	QDF_STATUS status;
 	struct target_psoc_info *tgt_hdl;
-	int timeleft;
 
 	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
 	if (!tgt_hdl) {
-		WMA_LOGE("%s: target psoc info is NULL", __func__);
+		wma_err("target psoc info is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	timeleft = qdf_wait_queue_timeout(
-			tgt_hdl->info.event_queue,
-			((tgt_hdl->info.wmi_service_ready) &&
-			(tgt_hdl->info.wmi_ready)),
-			WMA_READY_EVENTID_TIMEOUT);
-	if (!timeleft) {
-		WMA_LOGE("%s: Timeout waiting for ready event from FW",
-			 __func__);
-		qdf_status = QDF_STATUS_E_FAILURE;
-	} else {
-		WMA_LOGI("%s Ready event received from FW", __func__);
-		qdf_status = QDF_STATUS_SUCCESS;
-	}
+	status = qdf_wait_for_event_completion(&tgt_hdl->info.event,
+					       WMA_READY_EVENTID_TIMEOUT);
+	if (status == QDF_STATUS_E_TIMEOUT)
+		wma_err("Timeout waiting for FW ready event");
+	else if (QDF_IS_STATUS_ERROR(status))
+		wma_err("Failed to wait for FW ready event; status:%u", status);
+	else
+		wma_info("FW ready event received");
 
-	return qdf_status;
+	return status;
 }
 
 /**
