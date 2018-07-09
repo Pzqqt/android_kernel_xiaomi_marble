@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -839,21 +839,20 @@ static int wdsp_ssr_handler(struct wdsp_mgr_priv *wdsp, void *arg,
 }
 
 #ifdef CONFIG_DEBUG_FS
-static int wdsp_debug_dump_handler(struct wdsp_mgr_priv *wdsp, void *arg)
+static int __wdsp_dbg_dump_locked(struct wdsp_mgr_priv *wdsp, void *arg)
 {
 	struct wdsp_err_signal_arg *err_data;
 	int ret = 0;
 
-	WDSP_MGR_MUTEX_LOCK(wdsp, wdsp->ssr_mutex);
 	/* If there is no SSR, set the SSR type to collect ramdumps */
 	if (wdsp->ssr_type == WDSP_SSR_TYPE_NO_SSR) {
 		wdsp->ssr_type = WDSP_SSR_TYPE_WDSP_DOWN;
 	} else {
 		WDSP_DBG(wdsp, "SSR handling is running, skip debug ramdump");
 		ret = 0;
-		WDSP_MGR_MUTEX_UNLOCK(wdsp, wdsp->ssr_mutex);
 		goto done;
 	}
+
 	if (arg) {
 		err_data = (struct wdsp_err_signal_arg *) arg;
 		memcpy(&wdsp->dump_data.err_data, err_data,
@@ -861,16 +860,29 @@ static int wdsp_debug_dump_handler(struct wdsp_mgr_priv *wdsp, void *arg)
 	} else {
 		WDSP_DBG(wdsp, "Invalid input, arg is NULL");
 		ret = -EINVAL;
-		WDSP_MGR_MUTEX_UNLOCK(wdsp, wdsp->ssr_mutex);
 		goto done;
 	}
 	wdsp_collect_ramdumps(wdsp);
 	wdsp->ssr_type = WDSP_SSR_TYPE_NO_SSR;
-	WDSP_MGR_MUTEX_UNLOCK(wdsp, wdsp->ssr_mutex);
 done:
 	return ret;
 }
+static int wdsp_debug_dump_handler(struct wdsp_mgr_priv *wdsp, void *arg)
+{
+	int ret = 0;
+
+	WDSP_MGR_MUTEX_LOCK(wdsp, wdsp->ssr_mutex);
+	ret = __wdsp_dbg_dump_locked(wdsp, arg);
+	WDSP_MGR_MUTEX_UNLOCK(wdsp, wdsp->ssr_mutex);
+
+	return ret;
+}
 #else
+static int __wdsp_dbg_dump_locked(struct wdsp_mgr_priv *wdsp, void *arg)
+{
+	return 0;
+}
+
 static int wdsp_debug_dump_handler(struct wdsp_mgr_priv *wdsp, void *arg)
 {
 	return 0;
@@ -887,7 +899,13 @@ static int wdsp_signal_handler(struct device *wdsp_dev,
 		return -EINVAL;
 
 	wdsp = dev_get_drvdata(wdsp_dev);
+
+#ifdef CONFIG_DEBUG_FS
+	if (signal != WDSP_DEBUG_DUMP_INTERNAL)
+		WDSP_MGR_MUTEX_LOCK(wdsp, wdsp->api_mutex);
+#else
 	WDSP_MGR_MUTEX_LOCK(wdsp, wdsp->api_mutex);
+#endif
 
 	WDSP_DBG(wdsp, "Raised signal %d", signal);
 
@@ -908,6 +926,9 @@ static int wdsp_signal_handler(struct device *wdsp_dev,
 	case WDSP_DEBUG_DUMP:
 		ret = wdsp_debug_dump_handler(wdsp, arg);
 		break;
+	case WDSP_DEBUG_DUMP_INTERNAL:
+		ret = __wdsp_dbg_dump_locked(wdsp, arg);
+		break;
 	default:
 		ret = -EINVAL;
 		break;
@@ -916,7 +937,13 @@ static int wdsp_signal_handler(struct device *wdsp_dev,
 	if (ret < 0)
 		WDSP_ERR(wdsp, "handling signal %d failed with error %d",
 			 signal, ret);
+
+#ifdef CONFIG_DEBUG_FS
+	if (signal != WDSP_DEBUG_DUMP_INTERNAL)
+		WDSP_MGR_MUTEX_UNLOCK(wdsp, wdsp->api_mutex);
+#else
 	WDSP_MGR_MUTEX_UNLOCK(wdsp, wdsp->api_mutex);
+#endif
 
 	return ret;
 }

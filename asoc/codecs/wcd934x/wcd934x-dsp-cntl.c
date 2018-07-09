@@ -101,6 +101,7 @@ static u16 wdsp_reg_for_debug_dump[] = {
 	WCD934X_CPE_SS_SOC_SW_COLLAPSE_CTL,
 	WCD934X_CPE_SS_MAD_CTL,
 	WCD934X_CPE_SS_CPAR_CTL,
+	WCD934X_CPE_SS_CPAR_CFG,
 	WCD934X_CPE_SS_WDOG_CFG,
 	WCD934X_CPE_SS_STATUS,
 	WCD934X_CPE_SS_SS_ERROR_INT_MASK_0A,
@@ -113,10 +114,12 @@ static u16 wdsp_reg_for_debug_dump[] = {
 	WCD934X_CPE_SS_SS_ERROR_INT_STATUS_1B,
 };
 
-static void wcd_cntl_collect_debug_dumps(struct wcd_dsp_cntl *cntl)
+static void wcd_cntl_collect_debug_dumps(struct wcd_dsp_cntl *cntl,
+					 bool internal)
 {
 	struct snd_soc_codec *codec = cntl->codec;
 	struct wdsp_err_signal_arg arg;
+	enum wdsp_signal signal;
 	int i;
 	u8 val;
 
@@ -146,8 +149,8 @@ static void wcd_cntl_collect_debug_dumps(struct wcd_dsp_cntl *cntl)
 		arg.mem_dumps_enabled = cntl->ramdump_enable;
 		arg.remote_start_addr = WCD_934X_RAMDUMP_START_ADDR;
 		arg.dump_size = WCD_934X_RAMDUMP_SIZE;
-		cntl->m_ops->signal_handler(cntl->m_dev, WDSP_DEBUG_DUMP,
-					    &arg);
+		signal = internal ? WDSP_DEBUG_DUMP_INTERNAL : WDSP_DEBUG_DUMP;
+		cntl->m_ops->signal_handler(cntl->m_dev, signal, &arg);
 	}
 
 	/* Unmask the fatal irqs */
@@ -161,7 +164,8 @@ static void wcd_cntl_collect_debug_dumps(struct wcd_dsp_cntl *cntl)
 #else
 #define WCD_CNTL_SET_ERR_IRQ_FLAG(cntl) 0
 #define WCD_CNTL_CLR_ERR_IRQ_FLAG(cntl) do {} while (0)
-static void wcd_cntl_collect_debug_dumps(struct wcd_dsp_cntl *cntl)
+static void wcd_cntl_collect_debug_dumps(struct wcd_dsp_cntl *cntl,
+					 bool internal)
 {
 }
 #endif
@@ -753,7 +757,7 @@ static int wcd_cntl_do_boot(struct wcd_dsp_cntl *cntl)
 	if (!ret) {
 		dev_err(codec->dev, "%s: WDSP boot timed out\n",
 			__func__);
-		wcd_cntl_collect_debug_dumps(cntl);
+		wcd_cntl_collect_debug_dumps(cntl, true);
 		ret = -ETIMEDOUT;
 		goto err_boot;
 	} else {
@@ -1041,7 +1045,7 @@ static ssize_t wcd_miscdev_write(struct file *filep, const char __user *ubuf,
 	} else if (!strcmp(val, "DEBUG_DUMP")) {
 		dev_dbg(cntl->codec->dev,
 			"%s: Collect dumps for debug use\n", __func__);
-		wcd_cntl_collect_debug_dumps(cntl);
+		wcd_cntl_collect_debug_dumps(cntl, false);
 		goto done;
 	} else {
 		dev_err(cntl->codec->dev, "%s: Invalid value %s\n",
