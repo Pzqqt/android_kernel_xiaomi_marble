@@ -13935,7 +13935,6 @@ static int wlan_hdd_fill_intf_info(struct sk_buff *skb,
 	return 0;
 error:
 	hdd_err("Fill buffer with interface info failed");
-	kfree_skb(skb);
 	return -EINVAL;
 }
 
@@ -13999,7 +13998,6 @@ static int wlan_hdd_fill_mac_info(struct sk_buff *skb,
 	return 0;
 error:
 	hdd_err("Fill buffer with mac info failed");
-	kfree_skb(skb);
 	return -EINVAL;
 }
 
