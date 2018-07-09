@@ -576,6 +576,13 @@ int pld_pcie_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 	cfg.num_shadow_reg_v2_cfg = config->num_shadow_reg_v2_cfg;
 	cfg.shadow_reg_v2_cfg = (struct cnss_shadow_reg_v2_cfg *)
 		config->shadow_reg_v2_cfg;
+	cfg.rri_over_ddr_cfg_valid = config->rri_over_ddr_cfg_valid;
+	if (config->rri_over_ddr_cfg_valid) {
+		cfg.rri_over_ddr_cfg.base_addr_low =
+			 config->rri_over_ddr_cfg.base_addr_low;
+		cfg.rri_over_ddr_cfg.base_addr_high =
+			 config->rri_over_ddr_cfg.base_addr_high;
+	}
 
 	switch (mode) {
 	case PLD_FTM:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -206,6 +206,19 @@ struct pld_shadow_reg_v2_cfg {
 };
 
 /**
+ * struct pld_rri_over_ddr_cfg_s - rri_over_ddr configuration
+ * @base_addr_low: lower 32bit
+ * @base_addr_high: higher 32bit
+ *
+ * pld_rri_over_ddr_cfg_s is used in Genoa to pass rri_over_ddr configuration
+ * to firmware to update ring/write index in host DDR.
+ */
+struct pld_rri_over_ddr_cfg {
+	u32 base_addr_low;
+	u32 base_addr_high;
+};
+
+/**
  * struct pld_wlan_enable_cfg - WLAN FW configuration
  * @num_ce_tgt_cfg: number of CE target configuration
  * @ce_tgt_cfg: CE target configuration
@@ -215,6 +228,8 @@ struct pld_shadow_reg_v2_cfg {
  * @shadow_reg_cfg: shadow register configuration
  * @num_shadow_reg_v2_cfg: number of shadow register version 2 configuration
  * @shadow_reg_v2_cfg: shadow register version 2 configuration
+ * @rri_over_ddr_cfg_valid: valid flag for rri_over_ddr config
+ * @rri_over_ddr_cfg: rri over ddr config
  *
  * pld_wlan_enable_cfg stores WLAN FW configurations. It will be
  * passed to WLAN FW when WLAN host driver calls wlan_enable.
@@ -228,6 +243,8 @@ struct pld_wlan_enable_cfg {
 	struct pld_shadow_reg_cfg *shadow_reg_cfg;
 	u32 num_shadow_reg_v2_cfg;
 	struct pld_shadow_reg_v2_cfg *shadow_reg_v2_cfg;
+	bool rri_over_ddr_cfg_valid;
+	struct pld_rri_over_ddr_cfg rri_over_ddr_cfg;
 };
 
 /**
