@@ -139,7 +139,7 @@ QDF_STATUS p2p_mgmt_rx_action_ops(struct wlan_objmgr_psoc *psoc,
  * p2p_find_current_roc_ctx() - Find out roc context in progressing
  * @p2p_soc_obj: p2p psoc private object
  *
- * This function find out roc context in progressing from p2p psoc
+ * This function finds out roc context in progressing from p2p psoc
  * private object
  *
  * Return: Pointer to roc context - success
@@ -153,7 +153,7 @@ struct p2p_roc_context *p2p_find_current_roc_ctx(
  * @p2p_soc_obj: p2p psoc private object
  * @cookie: cookie is the key to find out roc context
  *
- * This function find out roc context by tx context from p2p psoc
+ * This function finds out roc context by tx context from p2p psoc
  * private object
  *
  * Return: Pointer to roc context - success
@@ -161,6 +161,20 @@ struct p2p_roc_context *p2p_find_current_roc_ctx(
  */
 struct p2p_roc_context *p2p_find_roc_by_tx_ctx(
 	struct p2p_soc_priv_obj *p2p_soc_obj, uint64_t cookie);
+
+/**
+ * p2p_find_roc_by_chan() - Find out roc context by channel
+ * @p2p_soc_obj: p2p psoc private object
+ * @chan: channel of the ROC
+ *
+ * This function finds out roc context by channel from p2p psoc
+ * private object
+ *
+ * Return: Pointer to roc context - success
+ *         NULL                   - failure
+ */
+struct p2p_roc_context *p2p_find_roc_by_chan(
+	struct p2p_soc_priv_obj *p2p_soc_obj, uint8_t chan);
 
 /**
  * p2p_restart_roc_timer() - Restarts roc timer

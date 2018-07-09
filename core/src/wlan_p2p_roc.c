@@ -631,6 +631,35 @@ struct p2p_roc_context *p2p_find_roc_by_tx_ctx(
 	return NULL;
 }
 
+struct p2p_roc_context *p2p_find_roc_by_chan(
+	struct p2p_soc_priv_obj *p2p_soc_obj, uint8_t chan)
+{
+	struct p2p_roc_context *roc_ctx;
+	qdf_list_node_t *p_node;
+	QDF_STATUS status;
+
+	status = qdf_list_peek_front(&p2p_soc_obj->roc_q, &p_node);
+	while (QDF_IS_STATUS_SUCCESS(status)) {
+		roc_ctx = qdf_container_of(p_node,
+					   struct p2p_roc_context,
+					   node);
+		if (roc_ctx->chan == chan) {
+			p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+				  roc_ctx->p2p_soc_obj, roc_ctx,
+				  roc_ctx->vdev_id, roc_ctx->scan_id,
+				  roc_ctx->tx_ctx, roc_ctx->chan,
+				  roc_ctx->phy_mode, roc_ctx->duration,
+				  roc_ctx->roc_type, roc_ctx->roc_state);
+
+			return roc_ctx;
+		}
+		status = qdf_list_peek_next(&p2p_soc_obj->roc_q,
+					    p_node, &p_node);
+	}
+
+	return NULL;
+}
+
 QDF_STATUS p2p_restart_roc_timer(struct p2p_roc_context *roc_ctx)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
