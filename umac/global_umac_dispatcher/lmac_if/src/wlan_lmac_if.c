@@ -134,7 +134,6 @@ wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	atf_rx_ops->atf_set_sched = tgt_atf_set_sched;
 	atf_rx_ops->atf_set_fmcap = tgt_atf_set_fmcap;
 	atf_rx_ops->atf_set_obss_scale = tgt_atf_set_obss_scale;
-	atf_rx_ops->atf_set_mode = tgt_atf_set_mode;
 	atf_rx_ops->atf_set_msdu_desc = tgt_atf_set_msdu_desc;
 	atf_rx_ops->atf_set_max_vdevs = tgt_atf_set_max_vdevs;
 	atf_rx_ops->atf_set_peers = tgt_atf_set_peers;

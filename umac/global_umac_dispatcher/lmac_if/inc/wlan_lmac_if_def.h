@@ -863,7 +863,6 @@ struct wlan_lmac_if_p2p_rx_ops {
  * @atf_set_sched:                     Set ATF schedule policy
  * @atf_set_fmcap:                     Set firmware capability for ATF
  * @atf_set_obss_scale:                Set ATF obss scale
- * @atf_set_mode:                      Set ATF mode
  * @atf_set_msdu_desc:                 Set msdu desc
  * @atf_set_max_vdevs:                 Set maximum vdevs number
  * @atf_set_peers:                     Set peers number
@@ -906,7 +905,6 @@ struct wlan_lmac_if_atf_rx_ops {
 	void (*atf_set_fmcap)(struct wlan_objmgr_psoc *psoc, uint32_t value);
 	void (*atf_set_obss_scale)(struct wlan_objmgr_pdev *pdev,
 				   uint32_t value);
-	void (*atf_set_mode)(struct wlan_objmgr_psoc *psoc, uint8_t value);
 	void (*atf_set_msdu_desc)(struct wlan_objmgr_psoc *psoc,
 				  uint32_t value);
 	void (*atf_set_max_vdevs)(struct wlan_objmgr_psoc *psoc,
