@@ -14270,6 +14270,33 @@ send_cmd:
 	return QDF_STATUS_SUCCESS;
 }
 
+static void
+fill_fils_tlv_params(WMI_GTK_OFFLOAD_CMD_fixed_param *cmd,
+			  uint8_t vdev_id,
+			  struct pmo_gtk_req *params)
+{
+	uint8_t *buf_ptr;
+	wmi_gtk_offload_fils_tlv_param *ext_param;
+
+	buf_ptr = (uint8_t *) cmd + sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(*ext_param));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	ext_param = (wmi_gtk_offload_fils_tlv_param *)buf_ptr;
+	WMITLV_SET_HDR(&ext_param->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_gtk_offload_extended_tlv_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_gtk_offload_fils_tlv_param));
+	ext_param->vdev_id = vdev_id;
+	ext_param->flags = cmd->flags;
+	ext_param->kek_len = params->kek_len;
+	qdf_mem_copy(ext_param->KEK, params->kek, params->kek_len);
+	qdf_mem_copy(ext_param->KCK, params->kck,
+		     WMI_GTK_OFFLOAD_KCK_BYTES);
+	qdf_mem_copy(ext_param->replay_counter, &params->replay_counter,
+		     GTK_REPLAY_COUNTER_BYTES);
+}
 
 /**
  * send_gtk_offload_cmd_tlv() - send GTK offload command to fw
@@ -14288,13 +14315,15 @@ QDF_STATUS send_gtk_offload_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
 	int len;
 	wmi_buf_t buf;
 	WMI_GTK_OFFLOAD_CMD_fixed_param *cmd;
-	wmi_gtk_offload_fils_tlv_param *ext_param;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t *buf_ptr;
 
 	WMI_LOGD("%s Enter", __func__);
 
-	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE + sizeof(*ext_param);
+	len = sizeof(*cmd);
+
+	if (params->is_fils_connection)
+		len += WMI_TLV_HDR_SIZE +
+		       sizeof(wmi_gtk_offload_fils_tlv_param);
 
 	/* alloc wmi buffer */
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -14305,7 +14334,6 @@ QDF_STATUS send_gtk_offload_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
 	}
 
 	cmd = (WMI_GTK_OFFLOAD_CMD_fixed_param *) wmi_buf_data(buf);
-	buf_ptr = (uint8_t *)cmd;
 	WMITLV_SET_HDR(&cmd->tlv_header,
 		       WMITLV_TAG_STRUC_WMI_GTK_OFFLOAD_CMD_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
@@ -14325,23 +14353,8 @@ QDF_STATUS send_gtk_offload_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
 	} else {
 		cmd->flags = gtk_offload_opcode;
 	}
-
-	buf_ptr += sizeof(*cmd);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, sizeof(*ext_param));
-	buf_ptr += WMI_TLV_HDR_SIZE;
-
-	ext_param = (wmi_gtk_offload_fils_tlv_param *)buf_ptr;
-	WMITLV_SET_HDR(&ext_param->tlv_header,
-			WMITLV_TAG_STRUC_wmi_gtk_offload_extended_tlv_param,
-			WMITLV_GET_STRUCT_TLVLEN(
-				wmi_gtk_offload_fils_tlv_param));
-	ext_param->vdev_id = vdev_id;
-	ext_param->flags = cmd->flags;
-	ext_param->kek_len = params->kek_len;
-	qdf_mem_copy(ext_param->KEK, params->kek, params->kek_len);
-	qdf_mem_copy(ext_param->KCK, params->kck, WMI_GTK_OFFLOAD_KCK_BYTES);
-	qdf_mem_copy(ext_param->replay_counter, &params->replay_counter,
-			GTK_REPLAY_COUNTER_BYTES);
+	if (params->is_fils_connection)
+		fill_fils_tlv_params(cmd, vdev_id, params);
 
 	WMI_LOGD("VDEVID: %d, GTK_FLAGS: x%x kek len %d", vdev_id, cmd->flags, params->kek_len);
 	/* send the wmi command */
