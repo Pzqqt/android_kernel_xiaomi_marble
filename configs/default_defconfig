@@ -8,7 +8,6 @@ ifeq ($(CONFIG_CNSS_QCA6290), y)
 	CONFIG_IPA3 := n
 endif
 
-
 ifeq ($(CONFIG_CNSS_QCA6390), y)
 	ifeq ($(CONFIG_CNSS_EMULATION), y)
 		CONFIG_QCA_WIFI_NAPIER_EMULATION := y

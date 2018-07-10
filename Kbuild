@@ -954,10 +954,9 @@ endif
 
 ifeq ($(CONFIG_LITHIUM), y)
 ############ DP 3.0 ############
-DP_TARGET_INC_DIR := $(WLAN_COMMON_ROOT)/target_if/dp/inc
-DP_INC := -I$(WLAN_COMMON_ROOT)/dp/inc \
-	-I$(WLAN_COMMON_ROOT)/dp/wifi3.0 \
-	-I$(WLAN_ROOT)/$(DP_TARGET_INC_DIR)
+DP_INC := -I$(WLAN_COMMON_INC)/dp/inc \
+	-I$(WLAN_COMMON_INC)/dp/wifi3.0 \
+	-I$(WLAN_COMMON_INC)/target_if/dp/inc
 
 DP_SRC := $(WLAN_COMMON_ROOT)/dp/wifi3.0
 DP_OBJS := $(DP_SRC)/dp_main.o \
@@ -1292,7 +1291,18 @@ HAL_OBJS :=	$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_srng.o \
 		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_rx.o \
 		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_wbm.o \
 		$(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/hal_reo.o
+
+ifeq ($(CONFIG_CNSS_QCA6290), y)
+HAL_INC += -I$(WLAN_COMMON_INC)/$(HAL_DIR)/wifi3.0/qca6290
+HAL_OBJS += $(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/qca6290/hal_6290_srng.o
+else ifeq ($(CONFIG_CNSS_QCA6390), y)
+HAL_INC += -I$(WLAN_COMMON_INC)/$(HAL_DIR)/wifi3.0/qca6390
+HAL_OBJS += $(WLAN_COMMON_ROOT)/$(HAL_DIR)/wifi3.0/qca6390/hal_6390_srng.o
+else
+#error "Not 11ax"
 endif
+
+endif #####CONFIG_LITHIUM####
 
 ############ WMA ############
 WMA_DIR :=	core/wma
