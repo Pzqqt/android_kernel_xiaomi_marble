@@ -100,7 +100,6 @@ enum peer_debug_op {
 #define DEBUG_INVALID_VDEV_ID 0xff
 
 #ifdef FEATURE_ROAM_DEBUG
-
 /**
  * wlan_roam_debug_log() - Add a debug log entry to wlan roam debug records
  * @vdev_id: vdev identifier
@@ -125,8 +124,30 @@ void wlan_roam_debug_log(uint8_t vdev_id, uint8_t op,
  */
 void wlan_roam_debug_dump_table(void);
 
-#else /* FEATURE_ROAM_DEBUG */
+#ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
+/**
+ * wlan_roam_debug_init() - Allocate log buffer dynamically
+ *
+ * Return: none
+ */
+void wlan_roam_debug_init(void);
+/**
+ * wlan_roam_debug_deinit() - Free log buffer allocated dynamically
+ *
+ * Return: none
+ */
+void wlan_roam_debug_deinit(void);
+#else /* WLAN_LOGGING_BUFFERS_DYNAMICALLY */
+static inline void wlan_roam_debug_init(void)
+{
+}
 
+static inline void wlan_roam_debug_deinit(void)
+{
+}
+#endif /* WLAN_LOGGING_BUFFERS_DYNAMICALLY */
+
+#else /* FEATURE_ROAM_DEBUG */
 static inline void
 wlan_roam_debug_log(uint8_t vdev_id, uint8_t op,
 		    uint16_t peer_id, void *mac_addr,
@@ -137,6 +158,6 @@ wlan_roam_debug_log(uint8_t vdev_id, uint8_t op,
 static inline void wlan_roam_debug_dump_table(void)
 {
 }
-
 #endif /* FEATURE_ROAM_DEBUG */
+
 #endif /* _WLAN_ROAM_DEBUG_H_ */

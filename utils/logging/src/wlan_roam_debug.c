@@ -30,6 +30,48 @@
 #include "wlan_roam_debug.h"
 
 #ifdef FEATURE_ROAM_DEBUG
+#ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
+static struct wlan_roam_debug_info *global_wlan_roam_debug_table;
+
+/**
+ * wlan_roam_debug_init() - Allocate log buffer dynamically
+ *
+ * Return: none
+ */
+void wlan_roam_debug_init(void)
+{
+	global_wlan_roam_debug_table = vzalloc(
+				sizeof(*global_wlan_roam_debug_table));
+
+	QDF_BUG(global_wlan_roam_debug_table);
+
+	if (global_wlan_roam_debug_table) {
+		qdf_atomic_init(&global_wlan_roam_debug_table->index);
+		global_wlan_roam_debug_table->num_max_rec =
+						WLAN_ROAM_DEBUG_MAX_REC;
+	}
+}
+
+qdf_export_symbol(wlan_roam_debug_init);
+
+static inline struct wlan_roam_debug_info *wlan_roam_debug_get_table(void)
+{
+	return global_wlan_roam_debug_table;
+}
+
+/**
+ * wlan_roam_debug_deinit() - Free log buffer allocated dynamically
+ *
+ * Return: none
+ */
+void wlan_roam_debug_deinit(void)
+{
+	vfree(global_wlan_roam_debug_table);
+	global_wlan_roam_debug_table = NULL;
+}
+
+qdf_export_symbol(wlan_roam_debug_deinit);
+#else /* WLAN_LOGGING_BUFFERS_DYNAMICALLY */
 /*
  * wlan roam debug log is stored in this global structure. It can be accessed
  * without requiring any psoc or vdev context. It will be accessible in
@@ -39,6 +81,12 @@ static struct wlan_roam_debug_info global_wlan_roam_debug_table = {
 				{ 0 },
 				WLAN_ROAM_DEBUG_MAX_REC,
 };
+
+static inline struct wlan_roam_debug_info *wlan_roam_debug_get_table(void)
+{
+	return &global_wlan_roam_debug_table;
+}
+#endif /* WLAN_LOGGING_BUFFERS_DYNAMICALLY */
 
 /**
  * wlan_roam_next_debug_log_index() - atomically increment and wrap around index
@@ -76,12 +124,17 @@ void wlan_roam_debug_log(uint8_t vdev_id, uint8_t op,
 			void *peer_obj, uint32_t arg1, uint32_t arg2)
 {
 	uint32_t i;
+	struct wlan_roam_debug_info *dbg_tbl;
 	struct wlan_roam_debug_rec *rec;
 
+	dbg_tbl = wlan_roam_debug_get_table();
+	if (!dbg_tbl)
+		return;
+
 	i = wlan_roam_next_debug_log_index(
-				    &global_wlan_roam_debug_table.index,
+				    &dbg_tbl->index,
 				    WLAN_ROAM_DEBUG_MAX_REC);
-	rec = &global_wlan_roam_debug_table.rec[i];
+	rec = &dbg_tbl->rec[i];
 	rec->time = qdf_get_log_timestamp();
 	rec->operation = op;
 	rec->vdev_id = vdev_id;
@@ -154,13 +207,18 @@ void wlan_roam_debug_dump_table(void)
 {
 	uint32_t i;
 	int32_t current_index;
+	struct wlan_roam_debug_info *dbg_tbl;
 	struct wlan_roam_debug_rec *dbg_rec;
 	uint64_t startt = 0;
 	uint32_t delta;
 
 #define DEBUG_CLOCK_TICKS_PER_MSEC 19200
 
-	current_index = qdf_atomic_read(&global_wlan_roam_debug_table.index);
+	dbg_tbl = wlan_roam_debug_get_table();
+	if (!dbg_tbl)
+		return;
+
+	current_index = qdf_atomic_read(&dbg_tbl->index);
 	if (current_index < 0) {
 		QDF_TRACE(QDF_MODULE_ID_ROAM_DEBUG, QDF_TRACE_LEVEL_ERROR,
 			  "%s: No records to dump", __func__);
@@ -174,7 +232,7 @@ void wlan_roam_debug_dump_table(void)
 	do {
 		/* wrap around */
 		i = (i + 1) % WLAN_ROAM_DEBUG_MAX_REC;
-		dbg_rec = &global_wlan_roam_debug_table.rec[i];
+		dbg_rec = &dbg_tbl->rec[i];
 		/* skip unused entry */
 		if (dbg_rec->time == 0)
 			continue;
@@ -205,7 +263,8 @@ void wlan_roam_debug_dump_table(void)
 			  dbg_rec->arg1, dbg_rec->arg2);
 	} while (i != current_index);
 }
-qdf_export_symbol(global_wlan_roam_debug_table);
+
+qdf_export_symbol(wlan_roam_debug_dump_table);
 
 #endif /* FEATURE_ROAM_DEBUG */
 
