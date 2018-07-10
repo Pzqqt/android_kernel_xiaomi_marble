@@ -199,6 +199,8 @@
 #define SIR_MAC_VHT_GID_NOTIFICATION           1
 #define SIR_MAC_VHT_OPMODE_NOTIFICATION        2
 
+#define SIR_MAC_VHT_OPMODE_SIZE                3
+
 #define NUM_OF_SOUNDING_DIMENSIONS	1 /*Nss - 1, (Nss = 2 for 2x2)*/
 /* HT Action Field Codes */
 #define SIR_MAC_SM_POWER_SAVE       1
