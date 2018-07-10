@@ -758,7 +758,7 @@ static bool bolero_is_readable_register(struct device *dev,
 		return false;
 
 	reg_tbl = bolero_reg_access[macro_id];
-	reg_offset = reg - macro_id_base_offset[macro_id];
+	reg_offset = (reg - macro_id_base_offset[macro_id])/4;
 
 	if (reg_tbl)
 		return (reg_tbl[reg_offset] & RD_REG);
@@ -783,7 +783,7 @@ static bool bolero_is_writeable_register(struct device *dev,
 		return false;
 
 	reg_tbl = bolero_reg_access[macro_id];
-	reg_offset = reg - macro_id_base_offset[macro_id];
+	reg_offset = (reg - macro_id_base_offset[macro_id])/4;
 
 	if (reg_tbl)
 		return (reg_tbl[reg_offset] & WR_REG);
