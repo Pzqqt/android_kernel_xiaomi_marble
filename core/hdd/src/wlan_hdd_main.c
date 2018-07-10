@@ -229,6 +229,9 @@ static qdf_wake_lock_t wlan_wake_lock;
 #define WOW_MIN_PATTERN_SIZE 6
 #define WOW_MAX_PATTERN_SIZE 64
 
+/* max peer can be tdls peers + self peer + bss peer */
+#define HDD_MAX_VDEV_PEER_COUNT  (HDD_MAX_NUM_TDLS_STA + 2)
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
 static const struct wiphy_wowlan_support wowlan_support_reg_init = {
 	.flags = WIPHY_WOWLAN_ANY |
@@ -4103,6 +4106,11 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 			hdd_err("RTT mac randomization param set failed %d",
 				errno);
 	}
+
+	if (adapter->device_mode == QDF_STA_MODE ||
+	    adapter->device_mode == QDF_P2P_CLIENT_MODE)
+		wlan_vdev_set_max_peer_count(adapter->hdd_vdev,
+					     HDD_MAX_VDEV_PEER_COUNT);
 
 	hdd_info("vdev %d created successfully", adapter->session_id);
 

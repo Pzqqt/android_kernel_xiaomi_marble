@@ -37,6 +37,9 @@
 #define HDD_MAX_NUM_TDLS_STA_P_UAPSD_OFFCHAN  1
 #define TDLS_STA_INDEX_VALID(staId) \
 	(((staId) >= 0) && ((staId) < 0xFF))
+#else
+#define HDD_MAX_NUM_TDLS_STA          0
+
 #endif
 /* Timeout (in ms) for Link to Up before Registering Station */
 #define ASSOC_LINKUP_TIMEOUT 60
