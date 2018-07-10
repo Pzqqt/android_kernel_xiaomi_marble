@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -200,6 +200,24 @@ struct shadow_reg_cfg {
 struct shadow_reg_v2_cfg {
 	uint32_t reg_value;
 };
+
+#ifdef CONFIG_BYPASS_QMI
+
+#define FW_SHARED_MEM (2 * 1024 * 1024)
+
+#ifdef QCN7605_SUPPORT
+struct msi_cfg {
+	u16 ce_id;
+	u16 msi_vector;
+} qdf_packed;
+
+struct ce_info {
+	u32 rri_over_ddr_low_paddr;
+	u32 rri_over_ddr_high_paddr;
+	struct msi_cfg cfg[CE_COUNT_MAX];
+} qdf_packed;
+#endif
+#endif
 
 void hif_ce_stop(struct hif_softc *scn);
 int hif_dump_ce_registers(struct hif_softc *scn);

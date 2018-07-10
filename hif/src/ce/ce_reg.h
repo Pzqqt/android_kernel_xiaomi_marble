@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -271,9 +271,9 @@ uint32_t DEBUG_CE_SRC_RING_READ_IDX_GET(struct hif_softc *scn,
 uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr);
 
-#define BITS0_TO_31(val) ((uint32_t)((uint64_t)(paddr_rri_on_ddr)\
+#define BITS0_TO_31(val) ((uint32_t)((uint64_t)(val)\
 				     & (uint64_t)(0xFFFFFFFF)))
-#define BITS32_TO_35(val) ((uint32_t)(((uint64_t)(paddr_rri_on_ddr)\
+#define BITS32_TO_35(val) ((uint32_t)(((uint64_t)(val)\
 				     & (uint64_t)(0xF00000000))>>32))
 
 #define VADDR_FOR_CE(scn, CE_ctrl_addr)\

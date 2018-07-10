@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3042,8 +3042,61 @@ void hif_unconfig_ce(struct hif_softc *hif_sc)
 }
 
 #ifdef CONFIG_BYPASS_QMI
-#define FW_SHARED_MEM (2 * 1024 * 1024)
+#ifdef QCN7605_SUPPORT
+/**
+ * hif_post_static_buf_to_target() - post static buffer to WLAN FW
+ * @scn: pointer to HIF structure
+ *
+ * WLAN FW needs 2MB memory from DDR when QMI is disabled.
+ *
+ * Return: void
+ */
+static void hif_post_static_buf_to_target(struct hif_softc *scn)
+{
+	void *target_va;
+	phys_addr_t target_pa;
+	struct ce_info *ce_info_ptr;
+	uint32_t msi_data_start;
+	uint32_t msi_data_count;
+	uint32_t msi_irq_start;
+	uint32_t i = 0;
+	int ret;
 
+	target_va = qdf_mem_alloc_consistent(scn->qdf_dev,
+					     scn->qdf_dev->dev,
+					     FW_SHARED_MEM +
+					     sizeof(struct ce_info),
+					     &target_pa);
+	if (!target_va)
+		return;
+
+	ce_info_ptr = (struct ce_info *)target_va;
+
+	if (scn->vaddr_rri_on_ddr) {
+		ce_info_ptr->rri_over_ddr_low_paddr  =
+			 BITS0_TO_31(scn->paddr_rri_on_ddr);
+		ce_info_ptr->rri_over_ddr_high_paddr =
+			 BITS32_TO_35(scn->paddr_rri_on_ddr);
+	}
+
+	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
+					  &msi_data_count, &msi_data_start,
+					  &msi_irq_start);
+	if (ret) {
+		hif_err("Failed to get CE msi config");
+		return;
+	}
+
+	for (i = 0; i < CE_COUNT_MAX; i++) {
+		ce_info_ptr->cfg[i].ce_id = i;
+		ce_info_ptr->cfg[i].msi_vector =
+			 (i % msi_data_count) + msi_irq_start;
+	}
+
+	hif_write32_mb(scn, scn->mem + BYPASS_QMI_TEMP_REGISTER, target_pa);
+	hif_info("target va %pK target pa %pa", target_va, &target_pa);
+}
+#else
 /**
  * hif_post_static_buf_to_target() - post static buffer to WLAN FW
  * @scn: pointer to HIF structure
@@ -3066,6 +3119,8 @@ static void hif_post_static_buf_to_target(struct hif_softc *scn)
 	hif_write32_mb(scn, scn->mem + BYPASS_QMI_TEMP_REGISTER, target_pa);
 	HIF_TRACE("target va %pK target pa %pa", target_va, &target_pa);
 }
+#endif
+
 #else
 static inline void hif_post_static_buf_to_target(struct hif_softc *scn)
 {
