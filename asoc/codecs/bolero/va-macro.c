@@ -1430,7 +1430,8 @@ static int va_macro_probe(struct platform_device *pdev)
 	char __iomem *va_io_base;
 	struct clk *va_core_clk;
 	bool va_without_decimation = false;
-	const char *micb_supply_str = "va-vdd-micb";
+	const char *micb_supply_str = "va-vdd-micb-supply";
+	const char *micb_supply_str1 = "va-vdd-micb";
 	const char *micb_voltage_str = "qcom,va-vdd-micb-voltage";
 	const char *micb_current_str = "qcom,va-vdd-micb-current";
 	int ret = 0;
@@ -1483,7 +1484,7 @@ static int va_macro_probe(struct platform_device *pdev)
 
 	if (of_parse_phandle(pdev->dev.of_node, micb_supply_str, 0)) {
 		va_priv->micb_supply = devm_regulator_get(&pdev->dev,
-						micb_supply_str);
+						micb_supply_str1);
 		if (IS_ERR(va_priv->micb_supply)) {
 			ret = PTR_ERR(va_priv->micb_supply);
 			dev_err(&pdev->dev,
