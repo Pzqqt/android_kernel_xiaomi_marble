@@ -192,6 +192,26 @@ void pld_usb_unregister_driver(void)
 	pr_info("%s usb_deregister done!\n", __func__);
 }
 
+int pld_usb_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
+			enum pld_driver_mode mode, const char *host_version)
+{
+	struct cnss_wlan_enable_cfg cfg;
+	enum cnss_driver_mode cnss_mode;
+
+	switch (mode) {
+	case PLD_FTM:
+		cnss_mode = CNSS_FTM;
+		break;
+	case PLD_EPPING:
+		cnss_mode = CNSS_EPPING;
+		break;
+	default:
+		cnss_mode = CNSS_MISSION;
+		break;
+	}
+	return cnss_wlan_enable(dev, &cfg, cnss_mode, host_version);
+}
+
 #else /* CONFIG_PLD_USB_CNSS */
 
 struct usb_driver pld_usb_ops = {
@@ -247,5 +267,11 @@ void pld_usb_unregister_driver(void)
 	atomic_set(&pld_usb_reg_done, false);
 	usb_deregister(&pld_usb_ops);
 	pr_info("%s usb_deregister done!\n", __func__);
+}
+
+int pld_usb_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
+			enum pld_driver_mode mode, const char *host_version)
+{
+	return 0;
 }
 #endif /* CONFIG_PLD_USB_CNSS */

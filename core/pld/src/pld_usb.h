@@ -24,6 +24,8 @@
 int pld_usb_register_driver(void);
 void pld_usb_unregister_driver(void);
 int pld_usb_get_ce_id(int irq);
+int pld_usb_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
+			enum pld_driver_mode mode, const char *host_version);
 #else
 static inline int pld_usb_register_driver(void)
 {
@@ -32,6 +34,14 @@ static inline int pld_usb_register_driver(void)
 
 static inline void pld_usb_unregister_driver(void)
 {}
+
+static inline int pld_usb_wlan_enable(struct device *dev,
+				      struct pld_wlan_enable_cfg *config,
+				      enum pld_driver_mode mode,
+				      const char *host_version)
+{
+	return 0;
+}
 #endif
 
 static inline int
