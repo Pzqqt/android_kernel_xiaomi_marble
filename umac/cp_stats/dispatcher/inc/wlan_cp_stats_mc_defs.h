@@ -238,6 +238,28 @@ struct vdev_mc_cp_stats {
 };
 
 /**
+ * struct peer_extd_stats - Peer extension statistics
+ * @peer_macaddr: peer MAC address
+ * @rx_duration: lower 32 bits of rx duration in microseconds
+ * @peer_tx_bytes: Total TX bytes (including dot11 header) sent to peer
+ * @peer_rx_bytes: Total RX bytes (including dot11 header) received from peer
+ * @last_tx_rate_code: last TX ratecode
+ * @last_tx_power: TX power used by peer - units are 0.5 dBm
+ * @rx_mc_bc_cnt: Total number of received multicast & broadcast data frames
+ * corresponding to this peer, 1 in the MSB of rx_mc_bc_cnt represents a
+ * valid data
+ */
+struct peer_extd_stats {
+	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
+	uint32_t rx_duration;
+	uint32_t peer_tx_bytes;
+	uint32_t peer_rx_bytes;
+	uint32_t last_tx_rate_code;
+	int32_t last_tx_power;
+	uint32_t rx_mc_bc_cnt;
+};
+
+/**
  * struct peer_mc_cp_stats - peer specific stats
  * @tx_rate: tx rate
  * @rx_rate: rx rate
@@ -303,6 +325,8 @@ struct chain_rssi_event {
  * @peer_stats: if populated array indicating peer stats
  * @peer_adv_stats: if populated, indicates peer adv (extd2) stats
  * @num_peer_adv_stats: number of peer adv (extd2) stats
+ * @num_peer_extd_stats: Num peer extended stats
+ * @peer_extended_stats: Peer extended stats
  * @cca_stats: if populated indicates congestion stats
  * @num_summary_stats: number of summary stats
  * @vdev_summary_stats: if populated indicates array of summary stats per vdev
@@ -320,6 +344,8 @@ struct stats_event {
 	struct peer_mc_cp_stats *peer_stats;
 	uint32_t num_peer_adv_stats;
 	struct peer_adv_mc_cp_stats *peer_adv_stats;
+	uint32_t num_peer_extd_stats;
+	struct peer_extd_stats *peer_extended_stats;
 	struct congestion_stats_event *cca_stats;
 	uint32_t num_summary_stats;
 	struct summary_stats_event *vdev_summary_stats;

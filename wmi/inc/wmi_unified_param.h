@@ -4083,6 +4083,8 @@ struct rx_reorder_queue_remove_params {
  * @num_pdev_ext_stats: number of pdev ext stats event structures
  * @num_vdev_stats: number of vdev stats
  * @num_peer_stats: number of peer stats event structures 0 or max peers
+ * @num_peer_extd_stats: number of peer extended stats event structures 0
+ * or max peers
  * @num_bcnflt_stats: number of beacon filter stats
  * @num_chan_stats: number of channel stats
  * @pdev_id: device id for the radio
@@ -4097,6 +4099,7 @@ typedef struct {
 	uint32_t num_pdev_ext_stats;
 	uint32_t num_vdev_stats;
 	uint32_t num_peer_stats;
+	uint32_t num_peer_extd_stats;
 	uint32_t num_bcnflt_stats;
 	uint32_t num_chan_stats;
 	uint32_t pdev_id;
@@ -4119,7 +4122,10 @@ typedef struct {
  * @atf_tokens_utilized: atf tokens utilized
  * @num_mu_tx_blacklisted: Blacklisted MU Tx count
  * @sgi_count: sgi count of the peer
- * @reserved: for future use
+ * @rx_mc_bc_cnt: Total number of received multicast & broadcast data frames
+ * corresponding to this peer, 1 in the MSB of rx_mc_bc_cnt represents a
+ * valid data
+ * @rx_retry_cnt: Number of rx retries received from current station
  */
 typedef struct {
 	wmi_host_mac_addr peer_macaddr;
@@ -4133,7 +4139,8 @@ typedef struct {
 	uint32_t atf_tokens_utilized;
 	uint32_t num_mu_tx_blacklisted;
 	uint32_t sgi_count;
-	uint32_t reserved[2];
+	uint32_t rx_mc_bc_cnt;
+	uint32_t rx_retry_cnt;
 } wmi_host_peer_extd_stats;
 
 /**
