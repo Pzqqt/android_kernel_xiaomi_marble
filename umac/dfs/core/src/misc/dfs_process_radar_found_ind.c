@@ -479,6 +479,18 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		return QDF_STATUS_SUCCESS;
 	}
 
+	/* For Full Offload, FW sends segment id,freq_offset and
+	 * is chirp information and gets assigned when there is radar detect.
+	 * In case of radartool bangradar enhanced command and real radar
+	 * for FO and PO, we assign these information here.
+	 */
+	if (!dfs->dfs_is_offload_enabled || dfs->dfs_enhanced_bangradar) {
+		radar_found->segment_id = dfs->dfs_seg_id;
+		radar_found->freq_offset = dfs->dfs_freq_offset;
+		radar_found->is_chirp = dfs->dfs_is_chirp;
+		dfs->dfs_enhanced_bangradar = 0;
+	}
+
 	if (dfs->dfs_use_nol_subchannel_marking)
 		num_channels = dfs_find_radar_affected_subchans(dfs,
 								radar_found,

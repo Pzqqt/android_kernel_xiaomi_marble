@@ -58,6 +58,8 @@
 
 /* Frequency offset to sidx */
 #define DFS_FREQ_OFFSET_TO_SIDX(_f)  ((32 * (_f)) / 10)
+/* Sidx to frequency offset */
+#define DFS_SIDX_TO_FREQ_OFFSET(_s)  ((10 * (_s)) / 32)
 /* sidx offset boundary */
 #define DFS_BOUNDARY_SIDX  32
 /* freq offset for chirp */

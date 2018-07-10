@@ -419,6 +419,15 @@ QDF_STATUS utils_dfs_is_ignore_cac(struct wlan_objmgr_pdev *pdev,
 
 	*ignore_cac = dfs->dfs_ignore_cac;
 
+	/*
+	 * This is needed as, if after channel bandwidth reduction, channel
+	 * change occurs using dothchanswitch or chan commands, resetting.
+	 * dfs->dfs_ignore_cac will make sure we not skip CAC on the new channel
+	 */
+
+	if (dfs->dfs_bw_reduced)
+		dfs->dfs_ignore_cac = 0;
+
 	return QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(utils_dfs_is_ignore_cac);
@@ -751,6 +760,57 @@ random_chan_error:
 	return status;
 }
 qdf_export_symbol(utils_dfs_get_random_channel);
+
+QDF_STATUS utils_dfs_bw_reduced_channel(
+	struct wlan_objmgr_pdev *pdev,
+	uint16_t flags,
+	struct ch_params *ch_params,
+	uint32_t *hw_mode,
+	uint8_t *target_chan)
+{
+	struct wlan_dfs *dfs = NULL;
+	struct wlan_objmgr_psoc *psoc;
+	enum channel_state ch_state;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	*target_chan = 0;
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null psoc");
+		return status;
+	}
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null dfs");
+		return status;
+	}
+
+	ch_state = reg_get_channel_state(pdev, dfs->dfs_curchan->dfs_ch_ieee);
+
+	if (ch_state == CHANNEL_STATE_DFS ||
+	    ch_state == CHANNEL_STATE_ENABLE) {
+		ch_params->center_freq_seg0 =
+			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1;
+		ch_params->center_freq_seg1 =
+			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2;
+		/*If bandwidth reduction is applied,
+		 * dfs_ignore_cac ensures we skip CAC.
+		 */
+		dfs->dfs_ignore_cac = 1;
+		dfs->dfs_bw_reduced = 1;
+		wlan_reg_set_channel_params(pdev,
+					    dfs->dfs_curchan->dfs_ch_ieee,
+					    0, ch_params);
+
+		*target_chan = dfs->dfs_curchan->dfs_ch_ieee;
+		utils_dfs_get_max_phy_mode(pdev, hw_mode);
+
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return status;
+}
 
 #ifdef QCA_DFS_NOL_PLATFORM_DRV_SUPPORT
 void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)

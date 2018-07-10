@@ -292,7 +292,11 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 			  rf->rf_threshold);
 		return 0;
 	}
+	dfs_debug(dfs, WLAN_DEBUG_DFS_FALSE_DET, "%s : dl->dl_min_sidx: %d , dl->dl_max_sidx :%d",
+		  __func__, dl->dl_min_sidx, dl->dl_max_sidx);
 
+	dfs->dfs_freq_offset = DFS_SIDX_TO_FREQ_OFFSET((dl->dl_min_sidx +
+							dl->dl_max_sidx) / 2);
 	return 1;
 }
 
@@ -1238,9 +1242,16 @@ static inline int dfs_process_each_radarevent(
 		dfs_conditional_clear_delaylines(dfs, diff_ts, this_ts, re);
 
 		found = 0;
+		if (events_processed == 1) {
+			dfs->dfs_min_sidx = (re).re_sidx;
+			dfs->dfs_max_sidx = (re).re_sidx;
+		}
+
 		dfs_check_if_bin5(dfs, &re, this_ts, diff_ts, &found);
 		if (found) {
 			*retval |= found;
+			dfs->dfs_freq_offset = DFS_SIDX_TO_FREQ_OFFSET(
+				   (dfs->dfs_min_sidx + dfs->dfs_max_sidx) / 2);
 			return 1;
 		}
 

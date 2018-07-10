@@ -24,6 +24,7 @@
  */
 
 #include "../dfs.h"
+#include "../dfs_process_radar_found_ind.h"
 
 /**
  * dfs_find_first_index_within_window() - Find first index within window
@@ -169,8 +170,16 @@ static inline int dfs_pulses_within_window(
 					refpri, index, dur, &numpulses))
 				break;
 		}
+		if (dfs->dfs_min_sidx > pl->pl_elems[*index].p_sidx)
+			dfs->dfs_min_sidx = pl->pl_elems[*index].p_sidx;
+
+		if (dfs->dfs_max_sidx < pl->pl_elems[*index].p_sidx)
+			dfs->dfs_max_sidx = pl->pl_elems[*index].p_sidx;
 	}
 
+	dfs->dfs_freq_offset =
+		DFS_SIDX_TO_FREQ_OFFSET((dfs->dfs_min_sidx +
+					 dfs->dfs_min_sidx) / 2);
 	return numpulses;
 }
 

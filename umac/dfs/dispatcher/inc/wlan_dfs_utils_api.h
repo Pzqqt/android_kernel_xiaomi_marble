@@ -404,6 +404,24 @@ QDF_STATUS utils_dfs_get_random_channel(struct wlan_objmgr_pdev *pdev,
 		struct dfs_acs_info *acs_info);
 
 /**
+ * utils_dfs_bw_reduced_channel() - Get BW reduced channel.
+ * @pdev: Pointer to DFS pdev object.
+ * @flags: Reduced bandwidth channel flags.
+ * @ch_params: current channel params.
+ * @hw_mode: current operating mode.
+ * @target_chan: Pointer to target_chan.
+ *
+ * wrapper function for get bw_reduced_channel. this
+ * function called from outside of dfs component.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS utils_dfs_bw_reduced_channel(struct wlan_objmgr_pdev *pdev,
+					uint16_t flags,
+					struct ch_params *ch_params,
+					uint32_t *hw_mode,
+					uint8_t *target_chan);
+/**
  * utils_dfs_init_nol() - Initialize nol from platform driver.
  * @pdev: pdev handler.
  *

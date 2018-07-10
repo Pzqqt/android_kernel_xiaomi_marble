@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2010, Atheros Communications Inc.
  * All Rights Reserved.
  *
@@ -51,13 +51,14 @@
 #define DFS_SECOND_SEGMENT_BANGRADAR  23
 #define DFS_SHOW_PRECAC_LISTS    24
 #define DFS_RESET_PRECAC_LISTS   25
+#define DFS_BANGRADAR_ENH        26
 
 /*
  * Spectral IOCTLs use DFS_LAST_IOCTL as the base.
  * This must always be the last IOCTL in DFS and have
  * the highest value.
  */
-#define DFS_LAST_IOCTL 26
+#define DFS_LAST_IOCTL 27
 
 #ifndef DFS_CHAN_MAX
 #define DFS_CHAN_MAX 1023
@@ -119,6 +120,17 @@ struct dfs_ioctl_params {
 	int32_t dfs_maxlen;
 };
 
+/**
+ * struct dfs_bangradar_enh_params - DFS enhanced bangradr params.
+ * @seg_id:      Segment ID information.
+ * @is_chirp:    Chirp radar or not.
+ * @freq_offset: Frequency offset at which radar was found.
+ */
+struct dfs_bangradar_enh_params {
+	uint8_t seg_id;
+	uint8_t is_chirp;
+	int32_t freq_offset;
+};
 #define DFS_IOCTL_PARAM_NOVAL  65535
 #define DFS_IOCTL_PARAM_ENABLE 0x8000
 
@@ -143,6 +155,9 @@ struct dfs_ioctl_params {
 
 /* Flag to exclude all 2.4GHz channels */
 #define DFS_RANDOM_CH_FLAG_NO_2GHZ_CH           0x0040 /* 0000 0000 0100 0000 */
+
+/* Flag to enable Reduced BW Agile DFS */
+#define DFS_RANDOM_CH_FLAG_ENABLE_REDUCED_BW    0x0080 /* 0000 0000 1000 0000 */
 
 /**
  * struct wlan_dfs_caps - DFS capability structure.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013, 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -99,6 +99,11 @@ int dfs_bin5_addpulse(struct wlan_dfs *dfs,
 		}
 	}
 
+	if (dfs->dfs_min_sidx > re->re_sidx)
+		dfs->dfs_min_sidx = re->re_sidx;
+
+	if (dfs->dfs_max_sidx < re->re_sidx)
+		dfs->dfs_max_sidx = re->re_sidx;
 	/* Circular buffer of size 2^n. */
 	index = (br->br_lastelem + 1) & DFS_MAX_B5_MASK;
 	br->br_lastelem = index;

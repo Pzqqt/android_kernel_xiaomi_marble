@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013, 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -24,6 +24,7 @@
  */
 
 #include "../dfs.h"
+#include "../dfs_process_radar_found_ind.h"
 
 /**
  * dfs_is_pri_multiple() - Is PRI is multiple.
@@ -143,6 +144,9 @@ int dfs_staggered_check(struct wlan_dfs *dfs, struct dfs_filter *rf,
 				score[n]++;
 		}
 	}
+
+	dfs->dfs_freq_offset = DFS_SIDX_TO_FREQ_OFFSET(
+				       (dl->dl_min_sidx + dl->dl_max_sidx) / 2);
 
 	for (n = 0; n < dl->dl_numelems; n++) {
 		delayindex = (dl->dl_firstelem + n) & DFS_MAX_DL_MASK;

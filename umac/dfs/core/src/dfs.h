@@ -966,9 +966,15 @@ struct dfs_event_log {
  * @dfs_no_res_from_fw:              Indicates no response from fw.
  * @dfs_spoof_check_failed:          Indicates if the spoof check has failed.
  * @dfs_spoof_test_done:             Indicates if the sppof test is done.
- * @dfs_seg_id:                      Segment ID of the radar hit channel.
  * @dfs_status_timeout_override:     Used to change the timeout value of
  *                                   dfs_host_wait_timer.
+ * @dfs_min_sidx:                    Minimum sidx of the received radar pulses.
+ * @dfs_max_sidx:                    Maximum sidx of the received radar pulses.
+ * @dfs_seg_id:                      Segment ID of the radar hit channel.
+ * @dfs_is_chirp:                    Radar Chirp in pulse present or not.
+ * @dfs_bw_reduced:                  DFS bandwidth reduced channel bit.
+ * @dfs_freq_offset:                 Frequency offset where radar was found.
+ * @dfs_enhanced_bangradar:          DFS enhance bagradar bit for Full offload.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1087,10 +1093,16 @@ struct wlan_dfs {
 				   dfs_no_res_from_fw:1,
 				   dfs_spoof_check_failed:1,
 				   dfs_spoof_test_done:1;
-	uint8_t        dfs_seg_id;
 	struct dfs_channel dfs_radar_found_chan;
 	int            dfs_status_timeout_override;
 #endif
+	uint32_t       dfs_min_sidx;
+	uint32_t       dfs_max_sidx;
+	uint8_t        dfs_seg_id;
+	uint8_t        dfs_is_chirp;
+	uint8_t        dfs_bw_reduced;
+	int32_t        dfs_freq_offset;
+	uint8_t        dfs_enhanced_bangradar;
 };
 
 /**
