@@ -4285,12 +4285,27 @@ wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
  */
 bool wma_is_p2p_lo_capable(void)
 {
-	return wma_is_service_enabled(wmi_service_p2p_listen_offload_support);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (wma) {
+		return wmi_service_enabled
+				(wma->wmi_handle,
+				 wmi_service_p2p_listen_offload_support);
+	}
+
+	return 0;
 }
 
 bool wma_capability_enhanced_mcast_filter(void)
 {
-	return wma_is_service_enabled(wmi_service_enhanced_mcast_filter);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (wma) {
+		return wmi_service_enabled(wma->wmi_handle,
+					   wmi_service_enhanced_mcast_filter);
+	}
+
+	return 0;
 }
 
 
@@ -4453,23 +4468,7 @@ int wma_rcpi_event_handler(void *handle, uint8_t *cmd_param_info,
 	return 0;
 }
 
-bool wma_is_service_enabled(uint32_t service_type)
-{
-	tp_wma_handle wma;
 
-	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		WMA_LOGE("%s: Invalid WMA handle", __func__);
-		return false;
-	}
-
-	if (service_type >= WMI_MAX_SERVICE) {
-		WMA_LOGE("%s: Invalid service type %d", __func__, service_type);
-		return false;
-	}
-
-	return wmi_service_enabled(wma->wmi_handle, service_type);
-}
 
 QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 				  struct vdev_up_params *params,

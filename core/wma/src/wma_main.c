@@ -5600,19 +5600,24 @@ static void wma_update_ra__limit(tp_wma_handle handle)
 static void wma_set_pmo_caps(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
+	tp_wma_handle wma;
 	struct pmo_device_caps caps;
 
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	caps.arp_ns_offload =
-		wma_is_service_enabled(wmi_service_arpns_offload);
+		wmi_service_enabled(wma->wmi_handle, wmi_service_arpns_offload);
 	caps.apf =
-		wma_is_service_enabled(wmi_service_apf_offload);
+		wmi_service_enabled(wma->wmi_handle, wmi_service_apf_offload);
 	caps.packet_filter =
-		wma_is_service_enabled(wmi_service_packet_filter_offload);
+		wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_packet_filter_offload);
 	caps.unified_wow =
-		wma_is_service_enabled(wmi_service_unified_wow_capability);
+		wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_unified_wow_capability);
 	caps.li_offload =
-		wma_is_service_enabled(
-				wmi_service_listen_interval_offload_support);
+		wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_listen_interval_offload_support
+				    );
 
 	status = ucfg_pmo_psoc_set_caps(psoc, &caps);
 	if (QDF_IS_STATUS_ERROR(status))
