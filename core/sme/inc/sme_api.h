@@ -2393,6 +2393,25 @@ int sme_update_he_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 int sme_update_he_mcs(tHalHandle hal, uint8_t session_id, uint16_t he_mcs);
 
 /**
+ * sme_update_he_trigger_frm_mac_pad() - sets the HE MAC padding capability
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @cfg_val: HE MAC padding duration value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_he_trigger_frm_mac_pad(mac_handle_t hal, uint8_t session_id,
+				      uint8_t cfg_val);
+/**
+ * sme_set_usr_cfg_mu_edca() - sets the user cfg MU EDCA params flag
+ * @hal: Pointer to HAL
+ * @val: value to be set
+ *
+ * Return: none
+ */
+void sme_set_usr_cfg_mu_edca(mac_handle_t hal, bool val);
+
+/**
  * sme_set_he_mu_edca_def_cfg() - sets the default MU EDCA params values
  * @hal: Pointer to HAL
  *
@@ -2472,6 +2491,17 @@ static inline int sme_update_mu_edca_params(mac_handle_t hal,
 {
 	return 0;
 }
+static inline int sme_update_he_trigger_frm_mac_pad(mac_handle_t hal,
+						    uint8_t session_id,
+						    uint8_t cfg_val)
+{
+	return 0;
+}
+
+static inline void sme_set_usr_cfg_mu_edca(mac_handle_t hal, bool val)
+{
+}
+
 static inline int sme_update_he_tx_stbc_cap(tHalHandle hal, uint8_t session_id,
 					    int value)
 {

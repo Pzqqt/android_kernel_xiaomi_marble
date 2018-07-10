@@ -6329,6 +6329,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_BEAMFORMEE_NSTS] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_MAC_PADDING_DUR] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -7583,6 +7585,33 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		if (ret_val)
 			sme_err("Failed to set Tx beamformee cap");
 
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_MAC_PADDING_DUR]) {
+		cfg_val = nla_get_u8(tb[
+				     QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_MAC_PADDING_DUR]);
+		if (cfg_val) {
+			ret_val = sme_cli_set_command(adapter->session_id,
+					WMI_VDEV_PARAM_MU_EDCA_FW_UPDATE_EN,
+					0, VDEV_CMD);
+			if (ret_val)
+				hdd_err("MU_EDCA update disable failed");
+			sme_set_usr_cfg_mu_edca(hdd_ctx->mac_handle, true);
+			sme_set_he_mu_edca_def_cfg(hdd_ctx->mac_handle);
+			if (sme_update_mu_edca_params(hdd_ctx->mac_handle,
+						      adapter->session_id))
+				hdd_err("Failed to send mu edca params");
+		} else {
+			ret_val = sme_cli_set_command(adapter->session_id,
+					WMI_VDEV_PARAM_MU_EDCA_FW_UPDATE_EN,
+					1, VDEV_CMD);
+			sme_set_usr_cfg_mu_edca(hdd_ctx->mac_handle, false);
+		}
+		ret_val = sme_update_he_trigger_frm_mac_pad(hdd_ctx->mac_handle,
+							    adapter->session_id,
+							    cfg_val);
+		if (ret_val)
+			hdd_err("Failed to set Trig frame mac padding cap");
 	}
 
 	if (update_sme_cfg)

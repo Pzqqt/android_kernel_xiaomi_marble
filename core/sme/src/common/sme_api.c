@@ -12864,6 +12864,13 @@ static int sme_update_he_cap(tHalHandle hal, uint8_t session_id,
 	return 0;
 }
 
+void sme_set_usr_cfg_mu_edca(mac_handle_t hal, bool val)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	mac_ctx->usr_cfg_mu_edca_params = val;
+}
+
 int sme_update_mu_edca_params(mac_handle_t hal, uint8_t session_id)
 {
 	struct scheduler_msg msg = {0};
@@ -12900,6 +12907,13 @@ int sme_update_he_tx_bfee_supp(tHalHandle hal, uint8_t session_id,
 			       uint8_t cfg_val)
 {
 	return sme_update_he_cap(hal, session_id, WNI_CFG_HE_SU_BEAMFORMEE,
+				 cfg_val);
+}
+
+int sme_update_he_trigger_frm_mac_pad(mac_handle_t hal, uint8_t session_id,
+				      uint8_t cfg_val)
+{
+	return sme_update_he_cap(hal, session_id, WNI_CFG_HE_TRIG_PAD,
 				 cfg_val);
 }
 

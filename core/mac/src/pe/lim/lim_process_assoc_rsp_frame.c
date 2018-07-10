@@ -996,15 +996,28 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		ie_len,
 		beacon);
 
-	if (lim_is_session_he_capable(session_entry) &&
-			assoc_rsp->mu_edca_present) {
-		pe_debug("Send MU EDCA params to FW");
-		mu_edca_set[EDCA_AC_BE] = assoc_rsp->mu_edca.acbe;
-		mu_edca_set[EDCA_AC_BK] = assoc_rsp->mu_edca.acbk;
-		mu_edca_set[EDCA_AC_VI] = assoc_rsp->mu_edca.acvi;
-		mu_edca_set[EDCA_AC_VO] = assoc_rsp->mu_edca.acvo;
-		lim_send_edca_params(mac_ctx, mu_edca_set,
-				sta_ds->bssId, true);
+	if (lim_is_session_he_capable(session_entry)) {
+		if (mac_ctx->usr_cfg_mu_edca_params) {
+			pe_debug("Send user cfg MU EDCA params to FW");
+			mu_edca_set[EDCA_AC_BE] =
+				mac_ctx->usr_mu_edca_params[EDCA_AC_BE];
+			mu_edca_set[EDCA_AC_BK] =
+				mac_ctx->usr_mu_edca_params[EDCA_AC_BK];
+			mu_edca_set[EDCA_AC_VI] =
+				mac_ctx->usr_mu_edca_params[EDCA_AC_VI];
+			mu_edca_set[EDCA_AC_VO] =
+				mac_ctx->usr_mu_edca_params[EDCA_AC_VO];
+			lim_send_edca_params(mac_ctx, mu_edca_set,
+					     sta_ds->bssId, true);
+		} else if (assoc_rsp->mu_edca_present) {
+			pe_debug("Send MU EDCA params to FW");
+			mu_edca_set[EDCA_AC_BE] = assoc_rsp->mu_edca.acbe;
+			mu_edca_set[EDCA_AC_BK] = assoc_rsp->mu_edca.acbk;
+			mu_edca_set[EDCA_AC_VI] = assoc_rsp->mu_edca.acvi;
+			mu_edca_set[EDCA_AC_VO] = assoc_rsp->mu_edca.acvo;
+			lim_send_edca_params(mac_ctx, mu_edca_set,
+					     sta_ds->bssId, true);
+		}
 
 	}
 
