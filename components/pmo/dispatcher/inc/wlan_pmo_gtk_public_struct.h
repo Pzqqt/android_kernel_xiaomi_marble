@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,6 +45,7 @@
  * @kek_len: KEK Length
  * @replay_counter: replay_counter
  * @bssid: bssid
+ * @is_fils_connection: is current connection with peer FILS or not.
  */
 struct pmo_gtk_req {
 	uint32_t flags;
@@ -53,6 +54,7 @@ struct pmo_gtk_req {
 	uint32_t kek_len;
 	uint64_t replay_counter;
 	struct qdf_mac_addr bssid;
+	bool is_fils_connection;
 };
 
 /**
