@@ -1848,8 +1848,8 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	if ((mode == PM_SAP_MODE) || (mode == PM_P2P_GO_MODE)) {
 		if ((policy_mgr_mode_specific_connection_count(psoc,
 							       PM_STA_MODE,
-							       NULL) > 0) ||
-		    !sta_sap_scc_on_dfs_chan) {
+							       NULL) > 0) &&
+		    (!sta_sap_scc_on_dfs_chan)) {
 			policy_mgr_debug("skip DFS ch from pcl for SAP/Go");
 			skip_dfs_channel = true;
 		}
