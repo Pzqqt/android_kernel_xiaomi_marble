@@ -54,8 +54,6 @@ void hal_tx_desc_set_dscp_tid_table_id_8074(void *desc,
 		  DSCP_TO_TID_PRIORITY_TABLE_ID, id);
 }
 
-qdf_export_symbol(hal_tx_desc_set_dscp_tid_table_id_8074);
-
 /**
  * hal_tx_set_dscp_tid_map_8074() - Configure default DSCP to TID map table
  * @soc: HAL SoC context
@@ -106,8 +104,6 @@ void hal_tx_set_dscp_tid_map_8074(void *hal_soc, uint8_t *map,
 	}
 }
 
-qdf_export_symbol(hal_tx_set_dscp_tid_map_8074);
-
 /**
  * hal_tx_update_dscp_tid_8074() - Update the dscp tid map table as
 					updated by user
@@ -150,7 +146,6 @@ void hal_tx_update_dscp_tid_8074(void *hal_soc, uint8_t tid,
 		      (regval & HWIO_TCL_R0_DSCP_TID1_MAP_1_RMSK));
 }
 
-qdf_export_symbol(hal_tx_update_dscp_tid_8074);
 /**
  * hal_tx_desc_set_lmac_id - Set the lmac_id value
  * @desc: Handle to Tx Descriptor
@@ -166,6 +161,3 @@ void hal_tx_desc_set_lmac_id_8074(void *desc,
 				  uint8_t lmac_id)
 {
 }
-
-qdf_export_symbol(hal_tx_desc_set_lmac_id_8074);
-

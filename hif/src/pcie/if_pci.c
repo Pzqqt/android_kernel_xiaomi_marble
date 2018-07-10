@@ -3793,7 +3793,9 @@ static bool hif_is_pld_based_target(int device_id)
 	switch (device_id) {
 	case QCA6290_DEVICE_ID:
 	case QCA6290_EMULATION_DEVICE_ID:
+#ifdef QCA_WIFI_QCA6390
 	case QCA6390_DEVICE_ID:
+#endif
 	case AR6320_DEVICE_ID:
 		return true;
 	}

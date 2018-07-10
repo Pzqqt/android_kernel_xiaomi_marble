@@ -107,7 +107,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	 */
 	qdf_spin_lock_bh(&soc->ast_lock);
 	if (hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr)) {
-		sa_idx = hal_rx_msdu_end_sa_idx_get(soc->hal_soc, rx_tlv_hdr);
+		sa_idx = hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr);
 
 		if ((sa_idx < 0) ||
 				(sa_idx >= (WLAN_UMAC_PSOC_MAX_PEERS * 2))) {
@@ -837,7 +837,7 @@ dp_rx_process_mic_error(struct dp_soc *soc,
 		goto fail;
 	}
 
-	tid = hal_rx_mpdu_start_tid_get(qdf_nbuf_data(nbuf));
+	tid = hal_rx_mpdu_start_tid_get(soc->hal_soc, qdf_nbuf_data(nbuf));
 	rx_seq = (((*(uint16_t *)wh->i_seq) &
 			IEEE80211_SEQ_SEQ_MASK) >>
 			IEEE80211_SEQ_SEQ_SHIFT);

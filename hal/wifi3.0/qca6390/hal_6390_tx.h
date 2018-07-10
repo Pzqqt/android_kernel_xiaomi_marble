@@ -56,8 +56,6 @@ void hal_tx_desc_set_dscp_tid_table_id_6390(void *desc,
 		  DSCP_TID_TABLE_NUM, id);
 }
 
-qdf_export_symbol(hal_tx_desc_set_dscp_tid_table_id_6390);
-
 #define DSCP_TID_TABLE_SIZE 24
 #define NUM_WORDS_PER_DSCP_TID_TABLE (DSCP_TID_TABLE_SIZE / 4)
 
@@ -129,8 +127,6 @@ void hal_tx_set_dscp_tid_map_6390(void *hal_soc, uint8_t *map,
 	HAL_REG_WRITE(soc, cmn_reg_addr, regval);
 }
 
-qdf_export_symbol(hal_tx_set_dscp_tid_map_6390);
-
 /**
  * hal_tx_update_dscp_tid_6390() - Update the dscp tid map table as updated
  *					by the user
@@ -164,8 +160,6 @@ void hal_tx_update_dscp_tid_6390(void *hal_soc, uint8_t tid,
 	HAL_REG_WRITE(soc, addr, (regval & HWIO_TCL_R0_DSCP_TID_MAP_n_RMSK));
 }
 
-qdf_export_symbol(hal_tx_update_dscp_tid_6390);
-
 /**
  * hal_tx_desc_set_lmac_id - Set the lmac_id value
  * @desc: Handle to Tx Descriptor
@@ -183,5 +177,4 @@ void hal_tx_desc_set_lmac_id_6390(void *desc,
 	HAL_SET_FLD(desc, TCL_DATA_CMD_4, LMAC_ID) |=
 		HAL_TX_SM(TCL_DATA_CMD_4, LMAC_ID, lmac_id);
 }
-qdf_export_symbol(hal_tx_desc_set_lmac_id_6390);
 

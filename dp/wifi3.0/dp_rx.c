@@ -374,7 +374,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 
 	if ((hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr) &&
 	   !hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
-		da_idx = hal_rx_msdu_end_da_idx_get(rx_tlv_hdr);
+		da_idx = hal_rx_msdu_end_da_idx_get(soc->hal_soc, rx_tlv_hdr);
 
 		ast_entry = soc->ast_table[da_idx];
 		if (!ast_entry)

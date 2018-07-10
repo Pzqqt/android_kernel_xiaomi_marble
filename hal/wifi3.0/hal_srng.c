@@ -230,7 +230,7 @@ static void hal_target_based_configure(struct hal_soc *hal)
 		hal_qca6390_attach(hal);
 	break;
 #endif
-#ifdef QCA_WIFI_QCA8074
+#if defined(QCA_WIFI_QCA8074) && defined(CONFIG_WIN)
 	case TARGET_TYPE_QCA8074:
 		hal_qca8074_attach(hal);
 	break;

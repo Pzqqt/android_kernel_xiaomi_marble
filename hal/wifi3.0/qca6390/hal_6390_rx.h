@@ -59,7 +59,7 @@
  * @buf: pointer to the start of RX PKT TLV header
  * Return: uint32_t(nss)
  */
-uint32_t
+static uint32_t
 hal_rx_msdu_start_nss_get_6390(uint8_t *buf)
 {
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
@@ -72,7 +72,6 @@ hal_rx_msdu_start_nss_get_6390(uint8_t *buf)
 	return qdf_get_hweight8(mimo_ss_bitmap);
 }
 
-qdf_export_symbol(hal_rx_msdu_start_nss_get_6390);
 /**
  * hal_rx_mon_hw_desc_get_mpdu_status_6390(): Retrieve MPDU status
  *
@@ -127,8 +126,6 @@ void hal_rx_mon_hw_desc_get_mpdu_status_6390(void *hw_desc_addr,
 	/* TODO: rs->beamformed should be set for SU beamforming also */
 }
 
-qdf_export_symbol(hal_rx_mon_hw_desc_get_mpdu_status_6390);
-
 #define LINK_DESC_SIZE (NUM_OF_DWORDS_RX_MSDU_LINK << 2)
 
 uint32_t hal_get_link_desc_size_6390(void)
@@ -136,20 +133,16 @@ uint32_t hal_get_link_desc_size_6390(void)
 	return LINK_DESC_SIZE;
 }
 
-qdf_export_symbol(hal_get_link_desc_size_6390);
-
 /*
  * hal_rx_get_tlv_6390(): API to get the tlv
  *
  * @rx_tlv: TLV data extracted from the rx packet
  * Return: uint8_t
  */
-uint8_t hal_rx_get_tlv_6390(void *rx_tlv)
+static uint8_t hal_rx_get_tlv_6390(void *rx_tlv)
 {
 	return HAL_RX_GET(rx_tlv, PHYRX_RSSI_LEGACY_0, RECEIVE_BANDWIDTH);
 }
-
-qdf_export_symbol(hal_rx_get_tlv_6390);
 
 /**
  * hal_rx_proc_phyrx_other_receive_info_tlv_6390()
@@ -167,9 +160,6 @@ void hal_rx_proc_phyrx_other_receive_info_tlv_6390(void *rx_tlv_hdr,
 	void *rx_tlv = (uint8_t *)rx_tlv_hdr + HAL_RX_TLV32_HDR_SIZE;
 	void *other_tlv_hdr = NULL;
 	void *other_tlv = NULL;
-	uint32_t ru_details_channel_0;
-	struct hal_rx_ppdu_info *ppdu_info =
-		(struct hal_rx_ppdu_info *)ppdu_info_handle;
 
 	tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(rx_tlv_hdr);
 	tlv_len = HAL_RX_GET_USER_TLV32_LEN(rx_tlv_hdr);
@@ -190,8 +180,6 @@ void hal_rx_proc_phyrx_other_receive_info_tlv_6390(void *rx_tlv_hdr,
 		break;
 	}
 }
-
-qdf_export_symbol(hal_rx_proc_phyrx_other_receive_info_tlv_6390);
 
 /**
  * hal_rx_dump_msdu_start_tlv_6390() : dump RX msdu_start TLV in structured
@@ -267,8 +255,6 @@ void hal_rx_dump_msdu_start_tlv_6390(void *msdustart,   uint8_t dbg_level)
 			msdu_start->sw_phy_meta_data);
 }
 
-qdf_export_symbol(hal_rx_dump_msdu_start_tlv_6390);
-
 /**
  * hal_rx_dump_msdu_end_tlv_6390: dump RX msdu_end TLV in structured
  *			     human readable format.
@@ -277,8 +263,8 @@ qdf_export_symbol(hal_rx_dump_msdu_start_tlv_6390);
  *
  * Return: void
  */
-void hal_rx_dump_msdu_end_tlv_6390(void *msduend,
-				   uint8_t dbg_level)
+static void hal_rx_dump_msdu_end_tlv_6390(void *msduend,
+					  uint8_t dbg_level)
 {
 	struct rx_msdu_end *msdu_end = (struct rx_msdu_end *)msduend;
 
@@ -378,7 +364,6 @@ void hal_rx_dump_msdu_end_tlv_6390(void *msduend,
 			msdu_end->sa_sw_peer_id);
 }
 
-qdf_export_symbol(hal_rx_dump_msdu_end_tlv_6390);
 
 /*
  * Get tid from RX_MPDU_START
@@ -389,7 +374,7 @@ qdf_export_symbol(hal_rx_dump_msdu_end_tlv_6390);
 		RX_MPDU_INFO_3_TID_MASK,		\
 		RX_MPDU_INFO_3_TID_LSB))
 
-uint32_t hal_rx_mpdu_start_tid_get_6390(uint8_t *buf)
+static uint32_t hal_rx_mpdu_start_tid_get_6390(uint8_t *buf)
 {
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
 	struct rx_mpdu_start *mpdu_start =
@@ -400,8 +385,6 @@ uint32_t hal_rx_mpdu_start_tid_get_6390(uint8_t *buf)
 
 	return tid;
 }
-
-qdf_export_symbol(hal_rx_mpdu_start_tid_get_6390);
 
 #define HAL_RX_MSDU_START_RECEPTION_TYPE_GET(_rx_msdu_start) \
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),	\
@@ -416,6 +399,7 @@ qdf_export_symbol(hal_rx_mpdu_start_tid_get_6390);
  * @buf: pointer to the start of RX PKT TLV header
  * Return: uint32_t(reception_type)
  */
+static
 uint32_t hal_rx_msdu_start_reception_type_get_6390(uint8_t *buf)
 {
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
@@ -427,8 +411,6 @@ uint32_t hal_rx_msdu_start_reception_type_get_6390(uint8_t *buf)
 
 	return reception_type;
 }
-
-qdf_export_symbol(hal_rx_msdu_start_reception_type_get_6390);
 
 #define HAL_RX_MSDU_END_DA_IDX_GET(_rx_msdu_end)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
@@ -443,6 +425,7 @@ qdf_export_symbol(hal_rx_msdu_start_reception_type_get_6390);
  * @ buf: pointer to the start of RX PKT TLV headers
  * Return: da index
  */
+static
 uint16_t hal_rx_msdu_end_da_idx_get_6390(uint8_t *buf)
 {
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;

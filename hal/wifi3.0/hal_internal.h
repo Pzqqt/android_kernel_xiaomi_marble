@@ -295,7 +295,7 @@ struct hal_hw_txrx_ops {
 	uint32_t (*hal_get_link_desc_size)(void);
 	uint32_t (*hal_rx_mpdu_start_tid_get)(uint8_t *buf);
 	uint32_t (*hal_rx_msdu_start_reception_type_get)(uint8_t *buf);
-	uint16_t (*hal_rx_msdu_end_sa_idx_get)(uint8_t *buf);
+	uint16_t (*hal_rx_msdu_end_da_idx_get)(uint8_t *buf);
 };
 
 /**
@@ -342,4 +342,8 @@ struct hal_soc {
 	int32_t *hal_hw_reg_offset;
 	struct hal_hw_txrx_ops *ops;
 };
+
+void hal_qca6390_attach(struct hal_soc *hal_soc);
+void hal_qca6290_attach(struct hal_soc *hal_soc);
+void hal_qca8074_attach(struct hal_soc *hal_soc);
 #endif /* _HAL_INTERNAL_H_ */

@@ -1030,7 +1030,13 @@ hal_rx_msdu_end_l3_hdr_padding_get(uint8_t *buf)
 	return l3_header_padding;
 }
 
-/**
+#define HAL_RX_MSDU_END_SA_IDX_GET(_rx_msdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
+		RX_MSDU_END_13_SA_IDX_OFFSET)),	\
+		RX_MSDU_END_13_SA_IDX_MASK,		\
+		RX_MSDU_END_13_SA_IDX_LSB))
+
+ /**
  * hal_rx_msdu_end_sa_idx_get(): API to get the
  * sa_idx from rx_msdu_end TLV
  *
@@ -1038,9 +1044,15 @@ hal_rx_msdu_end_l3_hdr_padding_get(uint8_t *buf)
  * Return: sa_idx (SA AST index)
  */
 static inline uint16_t
-hal_rx_msdu_end_sa_idx_get(struct hal_soc *hal_soc, uint8_t *buf)
+hal_rx_msdu_end_sa_idx_get(uint8_t *buf)
 {
-	return hal_soc->ops->hal_rx_msdu_end_sa_idx_get(buf);
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint16_t sa_idx;
+
+	sa_idx = HAL_RX_MSDU_END_SA_IDX_GET(msdu_end);
+
+	return sa_idx;
 }
 
 #define HAL_RX_MSDU_END_SA_IS_VALID_GET(_rx_msdu_end)	\
@@ -1715,12 +1727,6 @@ QDF_STATUS hal_rx_mpdu_get_addr4(uint8_t *buf, uint8_t *mac_addr)
 	return QDF_STATUS_E_FAILURE;
 }
 
-#define HAL_RX_MSDU_END_DA_IDX_GET(_rx_msdu_end)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
-		RX_MSDU_END_13_DA_IDX_OFFSET)),		\
-		RX_MSDU_END_13_DA_IDX_MASK,		\
-		RX_MSDU_END_13_DA_IDX_LSB))
-
  /**
  * hal_rx_msdu_end_da_idx_get: API to get da_idx
  * from rx_msdu_end TLV
@@ -1729,15 +1735,9 @@ QDF_STATUS hal_rx_mpdu_get_addr4(uint8_t *buf, uint8_t *mac_addr)
  * Return: da index
  */
 static inline uint16_t
-hal_rx_msdu_end_da_idx_get(uint8_t *buf)
+hal_rx_msdu_end_da_idx_get(struct hal_soc *hal_soc, uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint16_t da_idx;
-
-	da_idx = HAL_RX_MSDU_END_DA_IDX_GET(msdu_end);
-
-	return da_idx;
+	return hal_soc->ops->hal_rx_msdu_end_da_idx_get(buf);
 }
 
 #define HAL_RX_MSDU_END_DA_IS_VALID_GET(_rx_msdu_end)	\
