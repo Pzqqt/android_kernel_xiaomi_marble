@@ -812,6 +812,9 @@ void lim_process_rx_scan_handler(struct wlan_objmgr_vdev *vdev,
 	mac_ctx = (tpAniSirGlobal)arg;
 	event_type = 0x1 << event->type;
 
+	qdf_mtrace(QDF_MODULE_ID_SCAN, QDF_MODULE_ID_PE, event->type,
+		   event->vdev_id, event->scan_id);
+
 	switch (event_type) {
 	case SIR_SCAN_EVENT_STARTED:
 		break;

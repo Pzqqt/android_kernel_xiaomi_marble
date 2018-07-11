@@ -678,6 +678,9 @@ static void sme_rrm_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
+	qdf_mtrace(QDF_MODULE_ID_SCAN, QDF_MODULE_ID_SME, event->type,
+		   event->vdev_id, event->scan_id);
+
 	if (!util_is_scan_completed(event, &success))
 		return;
 

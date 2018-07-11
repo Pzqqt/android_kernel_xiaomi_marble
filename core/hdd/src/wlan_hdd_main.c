@@ -302,6 +302,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_ACTION_OUI] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_CONFIG] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_MLME] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_TARGET] = {QDF_TRACE_LEVEL_ALL},
 };
 
 struct notifier_block hdd_netdev_notifier;
