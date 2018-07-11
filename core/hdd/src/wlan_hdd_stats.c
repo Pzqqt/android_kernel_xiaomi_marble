@@ -283,53 +283,53 @@ error:
  *
  * Return: bool
  */
-static bool put_wifi_wmm_ac_stat(tpSirWifiWmmAcStat stats,
+static bool put_wifi_wmm_ac_stat(wmi_wmm_ac_stats *stats,
 				 struct sk_buff *vendor_event)
 {
 	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_AC,
-			stats->ac) ||
+			stats->ac_type) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_TX_MPDU,
-			stats->txMpdu) ||
+			stats->tx_mpdu) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_RX_MPDU,
-			stats->rxMpdu) ||
+			stats->rx_mpdu) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_TX_MCAST,
-			stats->txMcast) ||
+			stats->tx_mcast) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_RX_MCAST,
-			stats->rxMcast) ||
+			stats->rx_mcast) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_RX_AMPDU,
-			stats->rxAmpdu) ||
+			stats->rx_ampdu) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_TX_AMPDU,
-			stats->txAmpdu) ||
+			stats->tx_ampdu) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_MPDU_LOST,
-			stats->mpduLost) ||
+			stats->mpdu_lost) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_RETRIES,
 			stats->retries) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_RETRIES_SHORT,
-			stats->retriesShort) ||
+			stats->retries_short) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_RETRIES_LONG,
-			stats->retriesLong) ||
+			stats->retries_long) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_CONTENTION_TIME_MIN,
-			stats->contentionTimeMin) ||
+			stats->contention_time_min) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_CONTENTION_TIME_MAX,
-			stats->contentionTimeMax) ||
+			stats->contention_time_max) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_CONTENTION_TIME_AVG,
-			stats->contentionTimeAvg) ||
+			stats->contention_time_avg) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_CONTENTION_NUM_SAMPLES,
-			stats->contentionNumSamples)) {
+			stats->contention_num_samples)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
 		return false;
 	}
@@ -396,6 +396,7 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 	struct nlattr *wmmInfo;
 	struct nlattr *wmmStats;
 	u64 average_tsf_offset;
+	wmi_iface_link_stats *link_stats = &pWifiIfaceStat->link_stats;
 
 	if (false == put_wifi_interface_info(&pWifiIfaceStat->info,
 					     vendor_event)) {
@@ -404,9 +405,9 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 
 	}
 
-	average_tsf_offset =  pWifiIfaceStat->avg_bcn_spread_offset_high;
+	average_tsf_offset =  link_stats->avg_bcn_spread_offset_high;
 	average_tsf_offset =  (average_tsf_offset << 32) |
-		pWifiIfaceStat->avg_bcn_spread_offset_low;
+		link_stats->avg_bcn_spread_offset_low;
 
 	if (nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_TYPE,
@@ -416,34 +417,34 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 			num_peers) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_BEACON_RX,
-			pWifiIfaceStat->beaconRx) ||
+			link_stats->beacon_rx) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_MGMT_RX,
-			pWifiIfaceStat->mgmtRx) ||
+			link_stats->mgmt_rx) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_MGMT_ACTION_RX,
-			pWifiIfaceStat->mgmtActionRx) ||
+			link_stats->mgmt_action_rx) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_MGMT_ACTION_TX,
-			pWifiIfaceStat->mgmtActionTx) ||
+			link_stats->mgmt_action_tx) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_RSSI_MGMT,
-			pWifiIfaceStat->rssiMgmt) ||
+			link_stats->rssi_mgmt) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_RSSI_DATA,
-			pWifiIfaceStat->rssiData) ||
+			link_stats->rssi_data) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_RSSI_ACK,
-			pWifiIfaceStat->rssiAck) ||
+			link_stats->rssi_ack) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_LEAKY_AP_DETECTED,
-			pWifiIfaceStat->is_leaky_ap) ||
+			link_stats->is_leaky_ap) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_LEAKY_AP_AVG_NUM_FRAMES_LEAKED,
-			pWifiIfaceStat->avg_rx_frms_leaked) ||
+			link_stats->avg_rx_frms_leaked) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_LEAKY_AP_GUARD_TIME,
-			pWifiIfaceStat->rx_leak_window) ||
+			link_stats->rx_leak_window) ||
 	    hdd_wlan_nla_put_u64(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_AVERAGE_TSF_OFFSET,
 			average_tsf_offset) ||
@@ -474,7 +475,7 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 			return false;
 
 		if (false ==
-		    put_wifi_wmm_ac_stat(&pWifiIfaceStat->AccessclassStats[i],
+		    put_wifi_wmm_ac_stat(&pWifiIfaceStat->ac_stats[i],
 					 vendor_event)) {
 			hdd_err("put_wifi_wmm_ac_stat Fail");
 			return false;

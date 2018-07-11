@@ -42,8 +42,9 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 {
 	tpSirWifiIfaceStat iface_stat;
 	tpSirWifiInterfaceInfo iface_info;
-	tpSirWifiWmmAcStat ac_stat;
-	struct wifi_iface_offload_stat *offload_stat;
+	wmi_iface_link_stats *link_stats;
+	wmi_wmm_ac_stats *ac_stats;
+	wmi_iface_offload_stats *offload_stats;
 	uint64_t average_tsf_offset;
 	int i;
 	ssize_t len = 0;
@@ -81,47 +82,50 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 			&iface_info->bssid.bytes[0], iface_info->apCountryStr,
 			iface_info->countryStr);
 
-	average_tsf_offset =  iface_stat->avg_bcn_spread_offset_high;
+	link_stats = &iface_stat->link_stats;
+	average_tsf_offset =  link_stats->avg_bcn_spread_offset_high;
 	average_tsf_offset =  (average_tsf_offset << 32) |
-				iface_stat->avg_bcn_spread_offset_low;
+				link_stats->avg_bcn_spread_offset_low;
 
 	buffer += len;
 	ll_stats.len += len;
 	len = scnprintf(buffer, DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
 			"\nbeacon_rx: %u, mgmt_rx: %u, mgmt_action_rx: %u, mgmt_action_tx: %u, rssi_mgmt: %u, rssi_data: %u, rssi_ack: %u, is_leaky_ap: %u, avg_rx_frms_leaked: %u, rx_leak_window: %u, average_tsf_offset: %llu, Tx RTS success count: %u, Tx RTS fail count: %u, Tx ppdu success count: %u, Tx ppdu fail count: %u, Connected duration: %u, Disconnected duration: %u, RTT ranging duration: %u, RTT responder duration: %u, Num tx probes: %u, Num beacon miss: %u,\n\nNumber of AC: %d",
-			iface_stat->beaconRx, iface_stat->mgmtRx,
-			iface_stat->mgmtActionRx, iface_stat->mgmtActionTx,
-			iface_stat->rssiMgmt, iface_stat->rssiData,
-			iface_stat->rssiAck, iface_stat->is_leaky_ap,
-			iface_stat->avg_rx_frms_leaked,
-			iface_stat->rx_leak_window, average_tsf_offset,
-			iface_stat->tx_rts_succ_cnt,
-			iface_stat->tx_rts_fail_cnt,
-			iface_stat->tx_ppdu_succ_cnt,
-			iface_stat->tx_ppdu_fail_cnt,
-			iface_stat->connected_duration,
-			iface_stat->disconnected_duration,
-			iface_stat->rtt_ranging_duration,
-			iface_stat->rtt_responder_duration,
-			iface_stat->num_probes_tx, iface_stat->num_beacon_miss,
-			iface_stat->num_ac);
+			link_stats->beacon_rx, link_stats->mgmt_rx,
+			link_stats->mgmt_action_rx, link_stats->mgmt_action_tx,
+			link_stats->rssi_mgmt, link_stats->rssi_data,
+			link_stats->rssi_ack, link_stats->is_leaky_ap,
+			link_stats->avg_rx_frms_leaked,
+			link_stats->rx_leak_window, average_tsf_offset,
+			link_stats->tx_rts_succ_cnt,
+			link_stats->tx_rts_fail_cnt,
+			link_stats->tx_ppdu_succ_cnt,
+			link_stats->tx_ppdu_fail_cnt,
+			link_stats->connected_duration,
+			link_stats->disconnected_duration,
+			link_stats->rtt_ranging_duration,
+			link_stats->rtt_responder_duration,
+			link_stats->num_probes_tx, link_stats->num_beacon_miss,
+			link_stats->num_ac);
 
-	for (i = 0; i < iface_stat->num_ac; i++) {
-		ac_stat = &iface_stat->AccessclassStats[i];
+	for (i = 0; i < link_stats->num_ac; i++) {
+		ac_stats = &iface_stat->ac_stats[i];
 		buffer += len;
 		ll_stats.len += len;
 		len = scnprintf(buffer,
 				DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
-				"\nAC: %d, tx_mpdu: %u, rx_mpdu: %u, tx_mcast: %u, rx_mcast: %u, rx_ampdu: %u tx_ampdu: %u, mpdu_lost: %u, retries: %u, retries_short: %u, retries_long: %u, contention_time: min-%u max-%u avg-%u, contention num samples: %u",
-				ac_stat->ac, ac_stat->txMpdu, ac_stat->rxMpdu,
-				ac_stat->txMcast, ac_stat->rxMcast,
-				ac_stat->rxAmpdu, ac_stat->txAmpdu,
-				ac_stat->mpduLost, ac_stat->retries,
-				ac_stat->retriesShort, ac_stat->retriesLong,
-				ac_stat->contentionTimeMin,
-				ac_stat->contentionTimeMax,
-				ac_stat->contentionTimeAvg,
-				ac_stat->contentionNumSamples);
+				"\nac_type: %d, tx_mpdu: %u, rx_mpdu: %u, tx_mcast: %u, rx_mcast: %u, rx_ampdu: %u tx_ampdu: %u, mpdu_lost: %u, retries: %u, retries_short: %u, retries_long: %u, contention_time: min-%u max-%u avg-%u, contention num samples: %u, tx_pending_msdu: %u",
+				ac_stats->ac_type,
+				ac_stats->tx_mpdu, ac_stats->rx_mpdu,
+				ac_stats->tx_mcast, ac_stats->rx_mcast,
+				ac_stats->rx_ampdu, ac_stats->rx_ampdu,
+				ac_stats->mpdu_lost, ac_stats->retries,
+				ac_stats->retries_short, ac_stats->retries_long,
+				ac_stats->contention_time_min,
+				ac_stats->contention_time_max,
+				ac_stats->contention_time_avg,
+				ac_stats->contention_num_samples,
+				ac_stats->tx_pending_msdu);
 	}
 
 	buffer += len;
@@ -131,15 +135,15 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 			iface_stat->num_offload_stats);
 
 	for (i = 0; i < iface_stat->num_offload_stats; i++) {
-		offload_stat = &iface_stat->offload_stat[i];
+		offload_stats = &iface_stat->offload_stats[i];
 		buffer += len;
 		ll_stats.len += len;
 		len = scnprintf(buffer,
 				DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
 				"\ntype: %d, rx_count: %u, drp_count: %u, fwd_count: %u",
-				offload_stat->type, offload_stat->rx_count,
-				offload_stat->drp_count,
-				offload_stat->fwd_count);
+				offload_stats->type, offload_stats->rx_count,
+				offload_stats->drp_count,
+				offload_stats->fwd_count);
 	}
 
 	ll_stats.len += len;

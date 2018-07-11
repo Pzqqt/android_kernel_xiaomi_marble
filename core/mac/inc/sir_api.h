@@ -4842,137 +4842,26 @@ typedef struct {
 	tSirWifiRateStat rateStats[0];
 } tSirWifiPeerInfo, *tpSirWifiPeerInfo;
 
-/**
- * struct wifi_iface_offload_stat - Wifi Iface offload statistics
- * @type: type of offload stats (enum wmi_offload_stats_type)
- * @rx_count: Number of (MSDUs) frames Received
- * @drp_count: Number of frames Dropped
- * @fwd_count:
- *  Number of frames for which FW Responded (Valid for ARP and NS only).(or)
- *  Number of frames forwarded to Host (Valid for stats type except ARP and NS).
- */
-struct wifi_iface_offload_stat {
-	wmi_offload_stats_type type;
-	uint32_t rx_count;
-	uint32_t drp_count;
-	uint32_t fwd_count;
-};
-
-/* per access category statistics */
-typedef struct {
-	/* tSirWifiTrafficAc */
-	/* access category (VI, VO, BE, BK) */
-	uint32_t ac;
-	/* number of successfully transmitted unicast data pkts (ACK rcvd) */
-	uint32_t txMpdu;
-	/* number of received unicast mpdus */
-	uint32_t rxMpdu;
-	/* number of successfully transmitted multicast data packets */
-	/* STA case: implies ACK received from AP for the unicast */
-	/* packet in which mcast pkt was sent */
-	uint32_t txMcast;
-	/* number of received multicast data packets */
-	uint32_t rxMcast;
-	/* number of received unicast a-mpdus */
-	uint32_t rxAmpdu;
-	/* number of transmitted unicast a-mpdus */
-	uint32_t txAmpdu;
-	/* number of data pkt losses (no ACK) */
-	uint32_t mpduLost;
-	/* total number of data pkt retries */
-	uint32_t retries;
-	/* number of short data pkt retries */
-	uint32_t retriesShort;
-	/* number of long data pkt retries */
-	uint32_t retriesLong;
-	/* data pkt min contention time (usecs) */
-	uint32_t contentionTimeMin;
-	/* data pkt max contention time (usecs) */
-	uint32_t contentionTimeMax;
-	/* data pkt avg contention time (usecs) */
-	uint32_t contentionTimeAvg;
-	/* num of data pkts used for contention statistics */
-	uint32_t contentionNumSamples;
-} tSirWifiWmmAcStat, *tpSirWifiWmmAcStat;
-
 /* Interface statistics - corresponding to 2nd most
  * LSB in wifi statistics bitmap  for getting statistics
  */
 typedef struct {
 	/* current state of the interface */
 	tSirWifiInterfaceInfo info;
-	/* access point beacon received count from connected AP */
-	uint32_t beaconRx;
-	/* access point mgmt frames received count from */
-	/* connected AP (including Beacon) */
-	uint32_t mgmtRx;
-	/* action frames received count */
-	uint32_t mgmtActionRx;
-	/* action frames transmit count */
-	uint32_t mgmtActionTx;
-	/* access Point Beacon and Management frames RSSI (averaged) */
-	uint32_t rssiMgmt;
-	/* access Point Data Frames RSSI (averaged) from connected AP */
-	uint32_t rssiData;
-	/* access Point ACK RSSI (averaged) from connected AP */
-	uint32_t rssiAck;
-	/* number of peers */
-	uint32_t num_peers;
-	/*
-	 * Indicates how many peer_stats events will be sent depending on the
-	 * num_peers.
-	 */
-	uint32_t num_peer_events;
-	/* number of ac */
-	uint32_t num_ac;
-	/* Roaming Stat */
-	uint32_t roam_state;
-	/*
-	 * Average Beacon spread offset is the averaged time delay between TBTT
-	 * and beacon TSF. Upper 32 bits of averaged 64 bit beacon spread offset
-	 */
-	uint32_t avg_bcn_spread_offset_high;
-	/* Lower 32 bits of averaged 64 bit beacon spread offset */
-	uint32_t avg_bcn_spread_offset_low;
-	/*
-	 * Takes value of 1 if AP leaks packets after sending an ACK for PM=1
-	 * otherwise 0
-	 */
-	uint32_t is_leaky_ap;
-	/*
-	 * Average number of frames received from AP after receiving the ACK
-	 * for a frame with PM = 1
-	 */
-	uint32_t avg_rx_frms_leaked;
-	/*
-	 *  Rx leak watch window currently in force to minimize data loss
-	 *  because of leaky AP. Rx leak window is the
-	 *  time driver waits before shutting down the radio or switching
-	 *  the channel and after receiving an ACK for
-	 *  a data frame with PM bit set.
-	 */
-	uint32_t rx_leak_window;
+
 	uint32_t rts_succ_cnt;
 	uint32_t rts_fail_cnt;
 	uint32_t ppdu_succ_cnt;
 	uint32_t ppdu_fail_cnt;
 
-	uint32_t tx_rts_succ_cnt;
-	uint32_t tx_rts_fail_cnt;
-	uint32_t tx_ppdu_succ_cnt;
-	uint32_t tx_ppdu_fail_cnt;
-	uint32_t connected_duration;
-	uint32_t disconnected_duration;
-	uint32_t rtt_ranging_duration;
-	uint32_t rtt_responder_duration;
-	uint32_t num_probes_tx;
-	uint32_t num_beacon_miss;
+	/* link statistics */
+	wmi_iface_link_stats link_stats;
 
 	/* per ac data packet statistics */
-	tSirWifiWmmAcStat AccessclassStats[WIFI_AC_MAX];
+	wmi_wmm_ac_stats ac_stats[WIFI_AC_MAX];
 
 	uint32_t num_offload_stats;
-	struct wifi_iface_offload_stat offload_stat[WMI_OFFLOAD_STATS_TYPE_MAX];
+	wmi_iface_offload_stats offload_stats[WMI_OFFLOAD_STATS_TYPE_MAX];
 } tSirWifiIfaceStat, *tpSirWifiIfaceStat;
 
 /* Peer statistics - corresponding to 3rd most LSB in
