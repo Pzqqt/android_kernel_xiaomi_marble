@@ -13806,6 +13806,14 @@ enum hdd_external_acs_policy {
  * This ini is used to specify which AP for which the connection has to be
  * made in 2x2 mode with HT capabilities only and not VHT.
  *
+ * Default OUIs: (All values in Hex)
+ * OUI 1 : 00904C
+ *   OUI data Len : 03
+ *   OUI Data : 0418BF
+ *   OUI data Mask: E0 - 11100000
+ *   Info Mask : 21 - Check for Band
+ *   Capabilities: 40 - Band == 2G
+ *
  * Related: None
  *
  * Supported Feature: Action OUIs
@@ -13815,7 +13823,7 @@ enum hdd_external_acs_policy {
  * </ini>
  */
 #define CFG_ACTION_OUI_SWITCH_TO_11N_MODE_NAME    "gActionOUISwitchTo11nMode"
-#define CFG_ACTION_OUI_SWITCH_TO_11N_MODE_DEFAULT "00904C 03 FFFFBF 20 21 40"
+#define CFG_ACTION_OUI_SWITCH_TO_11N_MODE_DEFAULT "00904C 03 0418BF E0 21 40"
 
  /* End of action oui inis */
 
