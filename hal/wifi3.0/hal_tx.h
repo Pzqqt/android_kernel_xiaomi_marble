@@ -455,33 +455,6 @@ static inline void hal_tx_desc_set_to_fw(void *desc, uint8_t to_fw)
 }
 
 /**
- * hal_tx_desc_set_dscp_tid_table_id - Sets DSCP to TID conversion table ID
- * @desc: Handle to Tx Descriptor
- * @id: DSCP to tid conversion table to be used for this frame
- *
- * Return: void
- */
-#if !defined(QCA_WIFI_QCA6290_11AX)
-static inline void hal_tx_desc_set_dscp_tid_table_id(void *desc,
-						     uint8_t id)
-{
-	HAL_SET_FLD(desc, TCL_DATA_CMD_3,
-			 DSCP_TO_TID_PRIORITY_TABLE_ID) |=
-		HAL_TX_SM(TCL_DATA_CMD_3,
-		       DSCP_TO_TID_PRIORITY_TABLE_ID, id);
-}
-#else
-static inline void hal_tx_desc_set_dscp_tid_table_id(void *desc,
-						     uint8_t id)
-{
-	HAL_SET_FLD(desc, TCL_DATA_CMD_5,
-			 DSCP_TID_TABLE_NUM) |=
-		HAL_TX_SM(TCL_DATA_CMD_5,
-		       DSCP_TID_TABLE_NUM, id);
-}
-#endif
-
-/**
  * hal_tx_desc_set_mesh_en - Set mesh_enable flag in Tx descriptor
  * @desc: Handle to Tx Descriptor
  * @en:   For raw WiFi frames, this indicates transmission to a mesh STA,
@@ -515,31 +488,6 @@ static inline void hal_tx_desc_set_hlos_tid(void *desc,
 	HAL_SET_FLD(desc, TCL_DATA_CMD_4, HLOS_TID_OVERWRITE) |=
 	   HAL_TX_SM(TCL_DATA_CMD_4, HLOS_TID_OVERWRITE, 1);
 }
-
-#ifdef QCA_WIFI_QCA6290_11AX
-/**
- * hal_tx_desc_set_lmac_id - Set the lmac_id value
- * @desc: Handle to Tx Descriptor
- * @lmac_id: mac Id to ast matching
- *                     b00 – mac 0
- *                     b01 – mac 1
- *                     b10 – mac 2
- *                     b11 – all macs (legacy HK way)
- *
- * Return: void
- */
-static inline void hal_tx_desc_set_lmac_id(void *desc,
-					    uint8_t lmac_id)
-{
-	HAL_SET_FLD(desc, TCL_DATA_CMD_4, LMAC_ID) |=
-		HAL_TX_SM(TCL_DATA_CMD_4, LMAC_ID, lmac_id);
-}
-#else
-static inline void hal_tx_desc_set_lmac_id(void *desc,
-					    uint8_t lmac_id)
-{
-}
-#endif
 /**
  * hal_tx_desc_sync - Commit the descriptor to Hardware
  * @hal_tx_des_cached: Cached descriptor that software maintains
@@ -1005,199 +953,6 @@ static inline void hal_tx_comp_get_htt_desc(void *hw_desc, uint8_t *htt_desc)
 	qdf_mem_copy(htt_desc, desc, HAL_TX_COMP_HTT_STATUS_LEN);
 }
 
-#if !defined(QCA_WIFI_QCA6290_11AX)
-/**
- * hal_tx_set_dscp_tid_map_default() - Configure default DSCP to TID map table
- * @soc: HAL SoC context
- * @map: DSCP-TID mapping table
- * @id: mapping table ID - 0,1
- *
- * DSCP are mapped to 8 TID values using TID values programmed
- * in two set of mapping registers DSCP_TID1_MAP_<0 to 6> (id = 0)
- * and DSCP_TID2_MAP_<0 to 6> (id = 1)
- * Each mapping register has TID mapping for 10 DSCP values
- *
- * Return: none
- */
-static inline void hal_tx_set_dscp_tid_map(void *hal_soc, uint8_t *map,
-		uint8_t id)
-{
-	int i;
-	uint32_t addr;
-	uint32_t value;
-
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
-
-	if (id == HAL_TX_DSCP_TID_MAP_TABLE_DEFAULT) {
-		addr =
-			HWIO_TCL_R0_DSCP_TID1_MAP_0_ADDR(
-					SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
-	} else {
-		addr =
-			HWIO_TCL_R0_DSCP_TID2_MAP_0_ADDR(
-					SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
-	}
-
-	for (i = 0; i < 64; i += 10) {
-		value = (map[i] |
-			(map[i+1] << HWIO_TCL_R0_DSCP_TID1_MAP_0_DSCP_1_SHFT) |
-			(map[i+2] << HWIO_TCL_R0_DSCP_TID1_MAP_0_DSCP_2_SHFT) |
-			(map[i+3] << HWIO_TCL_R0_DSCP_TID1_MAP_0_DSCP_3_SHFT) |
-			(map[i+4] << HWIO_TCL_R0_DSCP_TID1_MAP_0_DSCP_4_SHFT) |
-			(map[i+5] << HWIO_TCL_R0_DSCP_TID1_MAP_0_DSCP_5_SHFT) |
-			(map[i+6] << HWIO_TCL_R0_DSCP_TID1_MAP_0_DSCP_6_SHFT) |
-			(map[i+7] << HWIO_TCL_R0_DSCP_TID1_MAP_0_DSCP_7_SHFT) |
-			(map[i+8] << HWIO_TCL_R0_DSCP_TID1_MAP_0_DSCP_8_SHFT) |
-			(map[i+9] << HWIO_TCL_R0_DSCP_TID1_MAP_0_DSCP_9_SHFT));
-
-		HAL_REG_WRITE(soc, addr,
-				(value & HWIO_TCL_R0_DSCP_TID1_MAP_1_RMSK));
-
-		addr += 4;
-	}
-}
-
-/**
- * hal_tx_update_dscp_tid() - Update the dscp tid map table as updated by user
- * @soc: HAL SoC context
- * @map: DSCP-TID mapping table
- * @id : MAP ID
- * @dscp: DSCP_TID map index
- *
- * Return: void
- */
-static inline void hal_tx_update_dscp_tid(void *hal_soc, uint8_t tid,
-		uint8_t id, uint8_t dscp)
-{
-	int index;
-	uint32_t addr;
-	uint32_t value;
-	uint32_t regval;
-
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
-
-	if (id == HAL_TX_DSCP_TID_MAP_TABLE_DEFAULT)
-		addr =
-			HWIO_TCL_R0_DSCP_TID1_MAP_0_ADDR(
-					SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
-	else
-		addr =
-			HWIO_TCL_R0_DSCP_TID2_MAP_0_ADDR(
-					SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
-
-	index = dscp % HAL_TX_NUM_DSCP_PER_REGISTER;
-	addr += 4 * (dscp/HAL_TX_NUM_DSCP_PER_REGISTER);
-	value = tid << (HAL_TX_BITS_PER_TID * index);
-
-	/* Read back previous DSCP TID config and update
-	 * with new config.
-	 */
-	regval = HAL_REG_READ(soc, addr);
-	regval &= ~(HAL_TX_TID_BITS_MASK << (HAL_TX_BITS_PER_TID * index));
-	regval |= value;
-
-	HAL_REG_WRITE(soc, addr,
-			(regval & HWIO_TCL_R0_DSCP_TID1_MAP_1_RMSK));
-}
-#else
-
-#define DSCP_TID_TABLE_SIZE 24
-#define NUM_WORDS_PER_DSCP_TID_TABLE (DSCP_TID_TABLE_SIZE/4)
-
-/**
- * hal_tx_set_dscp_tid_map_default() - Configure default DSCP to TID map table
- * @soc: HAL SoC context
- * @map: DSCP-TID mapping table
- * @id: mapping table ID - 0-31
- *
- * DSCP are mapped to 8 TID values using TID values programmed
- * in any of the 32 DSCP_TID_MAPS (id = 0-31).
- *
- * Return: none
- */
-static inline void hal_tx_set_dscp_tid_map(void *hal_soc, uint8_t *map,
-		uint8_t id)
-{
-	int i;
-	uint32_t addr, cmn_reg_addr;
-	uint32_t value = 0, regval;
-	uint8_t val[DSCP_TID_TABLE_SIZE], cnt = 0;
-
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
-
-	if (id >= HAL_MAX_HW_DSCP_TID_MAPS_11AX) {
-		return;
-	}
-
-	cmn_reg_addr = HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_ADDR(
-					SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
-
-	addr = HWIO_TCL_R0_DSCP_TID_MAP_n_ADDR(
-				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET,
-				id * NUM_WORDS_PER_DSCP_TID_TABLE);
-
-	/* Enable read/write access */
-	regval = HAL_REG_READ(soc, cmn_reg_addr);
-	regval |=
-		(1 << HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_DSCP_TID_MAP_PROGRAM_EN_SHFT);
-
-	HAL_REG_WRITE(soc, cmn_reg_addr, regval);
-
-	/* Write 8 (24 bits) DSCP-TID mappings in each interation */
-	for (i = 0; i < 64; i += 8) {
-		value = (map[i] |
-			(map[i+1] << 0x3) |
-			(map[i+2] << 0x6) |
-			(map[i+3] << 0x9) |
-			(map[i+4] << 0xc) |
-			(map[i+5] << 0xf) |
-			(map[i+6] << 0x12) |
-			(map[i+7] << 0x15));
-
-		qdf_mem_copy(&val[cnt], (void *)&value, 3);
-		cnt += 3;
-	}
-
-	for (i = 0; i < DSCP_TID_TABLE_SIZE; i += 4) {
-		regval = *(uint32_t *)(val + i);
-		HAL_REG_WRITE(soc, addr,
-				(regval & HWIO_TCL_R0_DSCP_TID_MAP_n_RMSK));
-		addr += 4;
-	}
-
-	/* Diasble read/write access */
-	regval = HAL_REG_READ(soc, cmn_reg_addr);
-	regval &=
-		~(HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_DSCP_TID_MAP_PROGRAM_EN_BMSK);
-
-	HAL_REG_WRITE(soc, cmn_reg_addr, regval);
-}
-
-static inline void hal_tx_update_dscp_tid(void *hal_soc, uint8_t tid,
-		uint8_t id, uint8_t dscp)
-{
-	int index;
-	uint32_t addr;
-	uint32_t value;
-	uint32_t regval;
-
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
-	addr = HWIO_TCL_R0_DSCP_TID_MAP_n_ADDR(
-				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET, id);
-
-	index = dscp % HAL_TX_NUM_DSCP_PER_REGISTER;
-	addr += 4 * (dscp/HAL_TX_NUM_DSCP_PER_REGISTER);
-	value = tid << (HAL_TX_BITS_PER_TID * index);
-
-	regval = HAL_REG_READ(soc, addr);
-	regval &= ~(HAL_TX_TID_BITS_MASK << (HAL_TX_BITS_PER_TID * index));
-	regval |= value;
-
-	HAL_REG_WRITE(soc, addr,
-			(regval & HWIO_TCL_R0_DSCP_TID_MAP_n_RMSK));
-}
-#endif
-
 /**
  * hal_tx_init_data_ring() - Initialize all the TCL Descriptors in SRNG
  * @hal_soc: Handle to HAL SoC structure
@@ -1214,15 +969,77 @@ static inline void hal_tx_init_data_ring(void *hal_soc, void *hal_srng)
 
 	hal_get_srng_params(hal_soc, hal_srng, &srng_params);
 
-	desc_addr = (uint8_t *) srng_params.ring_base_vaddr;
+	desc_addr = (uint8_t *)srng_params.ring_base_vaddr;
 	desc_size = sizeof(struct tcl_data_cmd);
 	num_desc = srng_params.num_entries;
 
 	while (num_desc) {
 		HAL_TX_DESC_SET_TLV_HDR(desc_addr, HAL_TX_TCL_DATA_TAG,
-				desc_size);
+					desc_size);
 		desc_addr += (desc_size + sizeof(struct tlv_32_hdr));
 		num_desc--;
 	}
+}
+
+/**
+ * hal_tx_desc_set_dscp_tid_table_id() - Sets DSCP to TID conversion table ID
+ * @hal_soc: Handle to HAL SoC structure
+ * @desc: Handle to Tx Descriptor
+ * @id: DSCP to tid conversion table to be used for this frame
+ *
+ * Return: void
+ */
+static inline void hal_tx_desc_set_dscp_tid_table_id(struct hal_soc *hal_soc,
+						     void *desc, uint8_t id)
+{
+	hal_soc->ops->hal_tx_desc_set_dscp_tid_table_id(desc, id);
+}
+
+/**
+ * hal_tx_set_dscp_tid_map_default() - Configure default DSCP to TID map table
+ *
+ * @soc: HAL SoC context
+ * @map: DSCP-TID mapping table
+ * @id: mapping table ID - 0,1
+ *
+ * Return: void
+ */
+static inline void hal_tx_set_dscp_tid_map(struct hal_soc *hal_soc,
+					   uint8_t *map, uint8_t id)
+{
+	hal_soc->ops->hal_tx_set_dscp_tid_map(hal_soc, map, id);
+}
+
+/**
+ * hal_tx_update_dscp_tid() - Update the dscp tid map table as updated by user
+ *
+ * @soc: HAL SoC context
+ * @map: DSCP-TID mapping table
+ * @id : MAP ID
+ * @dscp: DSCP_TID map index
+ *
+ * Return: void
+ */
+static inline void hal_tx_update_dscp_tid(struct hal_soc *hal_soc, uint8_t tid,
+					  uint8_t id, uint8_t dscp)
+{
+	hal_soc->ops->hal_tx_update_dscp_tid(hal_soc, tid, id, dscp);
+}
+
+/**
+ * hal_tx_desc_set_lmac_id - Set the lmac_id value
+ * @desc: Handle to Tx Descriptor
+ * @lmac_id: mac Id to ast matching
+ *                     b00 – mac 0
+ *                     b01 – mac 1
+ *                     b10 – mac 2
+ *                     b11 – all macs (legacy HK way)
+ *
+ * Return: void
+ */
+static inline void hal_tx_desc_set_lmac_id(struct hal_soc *hal_soc,
+					   void *desc, uint8_t lmac_id)
+{
+	hal_soc->ops->hal_tx_desc_set_lmac_id(desc, lmac_id);
 }
 #endif /* HAL_TX_H */

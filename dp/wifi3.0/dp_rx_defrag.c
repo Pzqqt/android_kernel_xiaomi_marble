@@ -16,6 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "hal_hw_headers.h"
 #include "dp_types.h"
 #include "dp_rx.h"
 #include "dp_peer.h"
@@ -1650,7 +1651,8 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 
 		qdf_nbuf_set_pktlen(msdu, (msdu_len + RX_PKT_TLVS_LEN));
 
-		tid = hal_rx_mpdu_start_tid_get(rx_desc->rx_buf_start);
+		tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
+						rx_desc->rx_buf_start);
 
 		/* Process fragment-by-fragment */
 		status = dp_rx_defrag_store_fragment(soc, ring_desc,

@@ -16,6 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "hal_hw_headers.h"
 #include "dp_types.h"
 #include "dp_rx.h"
 #include "dp_peer.h"
@@ -508,7 +509,7 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
 	rate_mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
 	bw = hal_rx_msdu_start_bw_get(rx_tlv_hdr);
-	nss = hal_rx_msdu_start_nss_get(rx_tlv_hdr);
+	nss = hal_rx_msdu_start_nss_get(vdev->pdev->soc->hal_soc, rx_tlv_hdr);
 	rx_info->rs_ratephy1 = rate_mcs | (nss << 0x8) | (pkt_type << 16) |
 				(bw << 24);
 
@@ -1136,10 +1137,11 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 
 	sgi = hal_rx_msdu_start_sgi_get(rx_tlv_hdr);
 	mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
-	tid = hal_rx_mpdu_start_tid_get(rx_tlv_hdr);
+	tid = hal_rx_mpdu_start_tid_get(soc->hal_soc, rx_tlv_hdr);
 	bw = hal_rx_msdu_start_bw_get(rx_tlv_hdr);
-	reception_type = hal_rx_msdu_start_reception_type_get(rx_tlv_hdr);
-	nss = hal_rx_msdu_start_nss_get(rx_tlv_hdr);
+	reception_type = hal_rx_msdu_start_reception_type_get(soc->hal_soc,
+							      rx_tlv_hdr);
+	nss = hal_rx_msdu_start_nss_get(soc->hal_soc, rx_tlv_hdr);
 	pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
 
 	/* Save tid to skb->priority */
@@ -1492,7 +1494,8 @@ done:
 		if (qdf_unlikely(!hal_rx_attn_msdu_done_get(rx_tlv_hdr))) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  FL("MSDU DONE failure"));
-			hal_rx_dump_pkt_tlvs(rx_tlv_hdr, QDF_TRACE_LEVEL_INFO);
+			hal_rx_dump_pkt_tlvs(hal_soc, rx_tlv_hdr,
+					     QDF_TRACE_LEVEL_INFO);
 			qdf_assert(0);
 		}
 

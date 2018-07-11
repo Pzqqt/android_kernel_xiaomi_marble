@@ -16,6 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "hal_hw_headers.h"
 #include "dp_types.h"
 #include "dp_rx.h"
 #include "dp_peer.h"
@@ -288,7 +289,8 @@ static uint32_t dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
 		}
 
 		rx_bufs_used++;
-		tid = hal_rx_mpdu_start_tid_get(rx_desc->rx_buf_start);
+		tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
+						rx_desc->rx_buf_start);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"Packet received with PN error for tid :%d", tid);
 
@@ -446,8 +448,7 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 
 		dp_pdev->invalid_peer_head_msdu = NULL;
 		dp_pdev->invalid_peer_tail_msdu = NULL;
-
-		hal_rx_mon_hw_desc_get_mpdu_status(rx_tlv_hdr,
+		hal_rx_mon_hw_desc_get_mpdu_status(soc->hal_soc, rx_tlv_hdr,
 				&(dp_pdev->ppdu_info.rx_status));
 
 	}
@@ -525,7 +526,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("MSDU DONE failure"));
 
-		hal_rx_dump_pkt_tlvs(rx_tlv_hdr, QDF_TRACE_LEVEL_INFO);
+		hal_rx_dump_pkt_tlvs(soc->hal_soc, rx_tlv_hdr,
+				     QDF_TRACE_LEVEL_INFO);
 		qdf_assert(0);
 	}
 
@@ -614,7 +616,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 		/* TODO: Assuming that qos_control_valid also indicates
 		 * unicast. Should we check this?
 		 */
-		tid = hal_rx_mpdu_start_tid_get(rx_tlv_hdr);
+		tid = hal_rx_mpdu_start_tid_get(soc->hal_soc, rx_tlv_hdr);
 		if (peer &&
 			peer->rx_tid[tid].hw_qdesc_vaddr_unaligned == NULL) {
 			/* IEEE80211_SEQ_MAX indicates invalid start_seq */
@@ -696,7 +698,8 @@ dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("MSDU DONE failure"));
 
-		hal_rx_dump_pkt_tlvs(rx_tlv_hdr, QDF_TRACE_LEVEL_INFO);
+		hal_rx_dump_pkt_tlvs(soc->hal_soc, rx_tlv_hdr,
+				     QDF_TRACE_LEVEL_INFO);
 		qdf_assert(0);
 	}
 
@@ -1246,7 +1249,8 @@ done:
 			qdf_assert(0);
 		}
 
-		hal_rx_dump_pkt_tlvs(rx_tlv_hdr, QDF_TRACE_LEVEL_DEBUG);
+		hal_rx_dump_pkt_tlvs(hal_soc, rx_tlv_hdr,
+				     QDF_TRACE_LEVEL_DEBUG);
 		qdf_nbuf_free(nbuf);
 		nbuf = next;
 	}

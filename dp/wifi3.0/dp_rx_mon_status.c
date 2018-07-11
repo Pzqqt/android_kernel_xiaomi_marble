@@ -15,6 +15,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+#include "hal_hw_headers.h"
 #include "dp_types.h"
 #include "dp_rx.h"
 #include "dp_peer.h"
@@ -361,7 +362,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 
 			do {
 				tlv_status = hal_rx_status_get_tlv_info(rx_tlv,
-						ppdu_info);
+						ppdu_info, pdev->soc->hal_soc);
 
 				dp_rx_mon_update_dbg_ppdu_stats(ppdu_info,
 								rx_mon_stats);

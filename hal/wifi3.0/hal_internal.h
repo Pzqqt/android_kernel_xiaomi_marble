@@ -34,57 +34,8 @@
 #include "qdf_lock.h"
 #include "qdf_mem.h"
 #include "qdf_nbuf.h"
-#include "wcss_seq_hwiobase.h"
-#include "tlv_hdr.h"
-#include "tlv_tag_def.h"
-#include "reo_destination_ring.h"
-#include "reo_reg_seq_hwioreg.h"
-#include "reo_entrance_ring.h"
-#include "reo_get_queue_stats.h"
-#include "reo_get_queue_stats_status.h"
-#include "tcl_data_cmd.h"
-#include "tcl_gse_cmd.h"
-#include "tcl_status_ring.h"
-#include "mac_tcl_reg_seq_hwioreg.h"
-#include "ce_src_desc.h"
-#include "ce_stat_desc.h"
-#include "wfss_ce_reg_seq_hwioreg.h"
-#include "wbm_link_descriptor_ring.h"
-#include "wbm_reg_seq_hwioreg.h"
-#include "wbm_buffer_ring.h"
-#include "wbm_release_ring.h"
-#include "rx_msdu_desc_info.h"
-#include "rx_mpdu_start.h"
-#include "rx_mpdu_end.h"
-#include "rx_msdu_start.h"
-#include "rx_msdu_end.h"
-#include "rx_attention.h"
-#include "rx_ppdu_start.h"
-#include "rx_ppdu_start_user_info.h"
-#include "rx_ppdu_end_user_stats.h"
-#include "rx_ppdu_end_user_stats_ext.h"
-#include "rx_mpdu_desc_info.h"
-#include "rxpcu_ppdu_end_info.h"
-#include "phyrx_he_sig_a_su.h"
-#include "phyrx_he_sig_a_mu_dl.h"
-#include "phyrx_he_sig_b1_mu.h"
-#include "phyrx_he_sig_b2_mu.h"
-#include "phyrx_he_sig_b2_ofdma.h"
-#include "phyrx_l_sig_a.h"
-#include "phyrx_l_sig_b.h"
-#include "phyrx_vht_sig_a.h"
-#include "phyrx_ht_sig.h"
-#include "tx_msdu_extension.h"
-#include "receive_rssi_info.h"
-#include "phyrx_pkt_end.h"
-#include "phyrx_rssi_legacy.h"
-#include "wcss_version.h"
 #include "pld_common.h"
-#include "rx_msdu_link.h"
 
-#ifdef QCA_WIFI_QCA6290_11AX
-#include "phyrx_other_receive_info_ru_details.h"
-#endif /* QCA_WIFI_QCA6290_11AX */
 
 /* TBD: This should be movded to shared HW header file */
 enum hal_srng_ring_id {
@@ -181,9 +132,7 @@ enum hal_srng_ring_id {
 	HAL_SRNG_LMAC1_ID_END = 143
 };
 
-#define HAL_SRNG_REO_EXCEPTION HAL_SRNG_REO2SW1
-#define HAL_SRNG_REO_ALTERNATE_SELECT 0x7
-
+#define HAL_RXDMA_MAX_RING_SIZE 0xFFFF
 #define HAL_MAX_LMACS 3
 #define HAL_MAX_RINGS_PER_LMAC (HAL_SRNG_LMAC1_ID_END - HAL_SRNG_LMAC1_ID_START)
 #define HAL_MAX_LMAC_RINGS (HAL_MAX_LMACS * HAL_MAX_RINGS_PER_LMAC)
@@ -202,6 +151,7 @@ enum hal_srng_dir {
 #define SRNG_UNLOCK(_lock) qdf_spin_unlock_bh(_lock)
 #define SRNG_LOCK_DESTROY(_lock) qdf_spinlock_destroy(_lock)
 
+struct hal_soc;
 #define MAX_SRNG_REG_GROUPS 2
 
 /* Common SRNG ring structure for source and destination rings */
@@ -321,9 +271,29 @@ struct hal_hw_srng_config {
 	uint32_t max_size;
 };
 
-/* calculate the register address offset from bar0 of shadow register x */
-#define SHADOW_REGISTER(x) (0x00003024 + (4*x))
 #define MAX_SHADOW_REGISTERS 36
+
+struct hal_hw_txrx_ops {
+	/* tx */
+	void (*hal_tx_desc_set_dscp_tid_table_id)(void *desc, uint8_t id);
+	void (*hal_tx_set_dscp_tid_map)(void *hal_soc, uint8_t *map,
+					uint8_t id);
+	void (*hal_tx_update_dscp_tid)(void *hal_soc, uint8_t tid, uint8_t id,
+				       uint8_t dscp);
+	void (*hal_tx_desc_set_lmac_id)(void *desc, uint8_t lmac_id);
+
+	/* rx */
+	uint32_t (*hal_rx_msdu_start_nss_get)(uint8_t *);
+	void (*hal_rx_mon_hw_desc_get_mpdu_status)(void *hw_desc_addr,
+						   struct mon_rx_status *rs);
+	uint8_t (*hal_rx_get_tlv)(void *rx_tlv);
+	void (*hal_rx_proc_phyrx_other_receive_info_tlv)(void *rx_tlv_hdr,
+							void *ppdu_info_handle);
+	void (*hal_rx_dump_msdu_start_tlv)(void *msdu_start, uint8_t dbg_level);
+	uint32_t (*hal_get_link_desc_size)(void);
+	uint32_t (*hal_rx_mpdu_start_tid_get)(uint8_t *buf);
+	uint32_t (*hal_rx_msdu_start_reception_type_get)(uint8_t *buf);
+};
 
 /**
  * HAL context to be used to access SRNG APIs (currently used by data path
@@ -355,6 +325,7 @@ struct hal_soc {
 	/* REO blocking resource index */
 	uint8_t reo_res_bitmap;
 	uint8_t index;
+	uint32_t target_type;
 
 	/* shadow register configuration */
 	struct pld_shadow_reg_v2_cfg shadow_config[MAX_SHADOW_REGISTERS];
@@ -362,35 +333,10 @@ struct hal_soc {
 	bool use_register_windowing;
 	uint32_t register_window;
 	qdf_spinlock_t register_access_lock;
+
+	/* srng table */
+	struct hal_hw_srng_config *hw_srng_table;
+	int32_t *hal_hw_reg_offset;
+	struct hal_hw_txrx_ops *ops;
 };
-
-/* TODO: Check if the following can be provided directly by HW headers */
-#define SRNG_LOOP_CNT_MASK REO_DESTINATION_RING_15_LOOPING_COUNT_MASK
-#define SRNG_LOOP_CNT_LSB REO_DESTINATION_RING_15_LOOPING_COUNT_LSB
-
-#define HAL_SRNG_LMAC_RING 0x80000000
-
-#define HAL_DEFAULT_REO_TIMEOUT_MS 40 /* milliseconds */
-
-#define HAL_DESC_SET_FIELD(_desc, _word, _fld, _value) do { \
-	((uint32_t *)(_desc))[(_word ## _ ## _fld ## _OFFSET) >> 2] &= \
-		~(_word ## _ ## _fld ## _MASK); \
-	((uint32_t *)(_desc))[(_word ## _ ## _fld ## _OFFSET) >> 2] |= \
-		((_value) << _word ## _ ## _fld ## _LSB); \
-} while (0)
-
-#define HAL_SM(_reg, _fld, _val) \
-	(((_val) << (_reg ## _ ## _fld ## _SHFT)) & \
-		(_reg ## _ ## _fld ## _BMSK))
-
-#define HAL_MS(_reg, _fld, _val) \
-	(((_val) & (_reg ## _ ## _fld ## _BMSK)) >> \
-		(_reg ## _ ## _fld ## _SHFT))
-
-#define HAL_REG_WRITE(_soc, _reg, _value) \
-	hal_write32_mb(_soc, (_reg), (_value))
-
-#define HAL_REG_READ(_soc, _offset) \
-	hal_read32_mb(_soc, (_offset))
-
 #endif /* _HAL_INTERNAL_H_ */

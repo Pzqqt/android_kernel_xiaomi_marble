@@ -33,9 +33,6 @@
 #include "qdf_types.h"
 #include "qdf_util.h"
 #include "hal_internal.h"
-#include "rx_msdu_link.h"
-#include "rx_reo_queue.h"
-#include "rx_reo_queue_ext.h"
 
 #define MAX_UNWINDOWED_ADDRESS 0x80000
 #ifdef TARGET_TYPE_QCA6390
@@ -168,6 +165,7 @@ enum hal_ring_type {
 	MAX_RING_TYPES
 };
 
+#define HAL_SRNG_LMAC_RING 0x80000000
 /* SRNG flags passed in hal_srng_params.flags */
 #define HAL_SRNG_MSI_SWAP				0x00000008
 #define HAL_SRNG_RING_PTR_SWAP			0x00000010
@@ -512,8 +510,8 @@ static inline uint32_t hal_srng_dst_num_valid(void *hal_soc, void *hal_ring,
 	int sync_hw_ptr)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
-	uint32 hp;
-	uint32 tp = srng->u.dst_ring.tp;
+	uint32_t hp;
+	uint32_t tp = srng->u.dst_ring.tp;
 
 	if (sync_hw_ptr) {
 		hp = *(srng->u.dst_ring.hp_addr);
@@ -747,8 +745,8 @@ static inline uint32_t hal_srng_src_num_avail(void *hal_soc,
 	void *hal_ring, int sync_hw_ptr)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
-	uint32 tp;
-	uint32 hp = srng->u.src_ring.hp;
+	uint32_t tp;
+	uint32_t hp = srng->u.src_ring.hp;
 
 	if (sync_hw_ptr) {
 		tp = *(srng->u.src_ring.tp_addr);
@@ -836,13 +834,11 @@ static inline void hal_srng_access_end_reap(void *hal_soc, void *hal_ring)
 }
 
 /* TODO: Check if the following definitions is available in HW headers */
-#define WBM_IDLE_DESC_LIST 1
 #define WBM_IDLE_SCATTER_BUF_SIZE 32704
 #define NUM_MPDUS_PER_LINK_DESC 6
 #define NUM_MSDUS_PER_LINK_DESC 7
 #define REO_QUEUE_DESC_ALIGN 128
 
-#define LINK_DESC_SIZE (NUM_OF_DWORDS_RX_MSDU_LINK << 2)
 #define LINK_DESC_ALIGN 128
 
 #define ADDRESS_MATCH_TAG_VAL 0x5
@@ -858,28 +854,6 @@ static inline void hal_srng_access_end_reap(void *hal_soc, void *hal_ring)
  */
 #define WBM_IDLE_SCATTER_BUF_NEXT_PTR_SIZE 8
 
-/**
- * hal_set_link_desc_addr - Setup link descriptor in a buffer_addr_info
- * HW structure
- *
- * @desc: Descriptor entry (from WBM_IDLE_LINK ring)
- * @cookie: SW cookie for the buffer/descriptor
- * @link_desc_paddr: Physical address of link descriptor entry
- *
- */
-static inline void hal_set_link_desc_addr(void *desc, uint32_t cookie,
-	qdf_dma_addr_t link_desc_paddr)
-{
-	uint32_t *buf_addr = (uint32_t *)desc;
-	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO_0, BUFFER_ADDR_31_0,
-		link_desc_paddr & 0xffffffff);
-	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO_1, BUFFER_ADDR_39_32,
-		(uint64_t)link_desc_paddr >> 32);
-	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO_1, RETURN_BUFFER_MANAGER,
-		WBM_IDLE_DESC_LIST);
-	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO_1, SW_BUFFER_COOKIE,
-		cookie);
-}
 
 /**
  * hal_idle_list_scatter_buf_size - Get the size of each scatter buffer
@@ -899,9 +873,19 @@ static inline uint32_t hal_idle_list_scatter_buf_size(void *hal_soc)
  * @hal_soc: Opaque HAL SOC handle
  *
  */
-static inline uint32_t hal_get_link_desc_size(void *hal_soc)
+static inline uint32_t hal_get_link_desc_size(struct hal_soc *hal_soc)
 {
-	return LINK_DESC_SIZE;
+	if (!hal_soc || !hal_soc->ops) {
+		qdf_print("Error: Invalid ops\n");
+		QDF_BUG(0);
+		return -EINVAL;
+	}
+	if (!hal_soc->ops->hal_get_link_desc_size) {
+		qdf_print("Error: Invalid function pointer\n");
+		QDF_BUG(0);
+		return -EINVAL;
+	}
+	return hal_soc->ops->hal_get_link_desc_size();
 }
 
 /**
@@ -1036,30 +1020,6 @@ enum hal_pn_type {
 };
 
 #define HAL_RX_MAX_BA_WINDOW 256
-/**
- * hal_get_reo_qdesc_size - Get size of reo queue descriptor
- *
- * @hal_soc: Opaque HAL SOC handle
- * @ba_window_size: BlockAck window size
- *
- */
-static inline uint32_t hal_get_reo_qdesc_size(void *hal_soc,
-	uint32_t ba_window_size)
-{
-	if (ba_window_size <= 1)
-		return sizeof(struct rx_reo_queue);
-
-	if (ba_window_size <= 105)
-		return sizeof(struct rx_reo_queue) +
-			sizeof(struct rx_reo_queue_ext);
-
-	if (ba_window_size <= 210)
-		return sizeof(struct rx_reo_queue) +
-			(2 * sizeof(struct rx_reo_queue_ext));
-
-	return sizeof(struct rx_reo_queue) +
-		(3 * sizeof(struct rx_reo_queue_ext));
-}
 
 /**
  * hal_get_reo_qdesc_align - Get start address alignment for reo
@@ -1151,4 +1111,11 @@ extern void hal_get_srng_params(void *hal_soc, void *hal_ring,
  * @mem: pointer to structure to be updated with hal mem info
  */
 extern void hal_get_meminfo(void *hal_soc,struct hal_mem_info *mem );
+
+/**
+ * hal_get_target_type - Return target type
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ */
+uint32_t hal_get_target_type(struct hal_soc *hal);
 #endif /* _HAL_APIH_ */

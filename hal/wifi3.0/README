@@ -1,0 +1,17 @@
+The below qca6290 and qca8074 folder has c files defining functions
+and structures to hold target specific definitions to handle differences between
+chips with respect to hal.
+
+Please ensure changes get applied to all platform specific files if the fixes
+are generic and applicable to all the folders.
+
+qca6290
+	hal_6290_rx.c - rx related target specific function
+	hal_6290_srng_table.c - holds hw srng table and hal hw reg offsets array
+	hal_6290_tx.c - tx related target specific function
+qca8074
+	hal_8074_rx.c - rx related target specific function
+	hal_8074_srng_table.c - holds hw srng table and hal hw reg offsets array
+	hal_8074_tx.c - tx related target specific function
+
+
