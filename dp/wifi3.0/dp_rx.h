@@ -420,7 +420,7 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 	/*
 	 * Get the AST entry from HW SA index and mark it as active
 	 */
-	sa_idx = hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr);
+	sa_idx = hal_rx_msdu_end_sa_idx_get(soc->hal_soc, rx_tlv_hdr);
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	ast = soc->ast_table[sa_idx];

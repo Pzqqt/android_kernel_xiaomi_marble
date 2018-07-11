@@ -1030,13 +1030,7 @@ hal_rx_msdu_end_l3_hdr_padding_get(uint8_t *buf)
 	return l3_header_padding;
 }
 
-#define HAL_RX_MSDU_END_SA_IDX_GET(_rx_msdu_end)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
-		RX_MSDU_END_13_SA_IDX_OFFSET)),	\
-		RX_MSDU_END_13_SA_IDX_MASK,		\
-		RX_MSDU_END_13_SA_IDX_LSB))
-
- /**
+/**
  * hal_rx_msdu_end_sa_idx_get(): API to get the
  * sa_idx from rx_msdu_end TLV
  *
@@ -1044,15 +1038,9 @@ hal_rx_msdu_end_l3_hdr_padding_get(uint8_t *buf)
  * Return: sa_idx (SA AST index)
  */
 static inline uint16_t
-hal_rx_msdu_end_sa_idx_get(uint8_t *buf)
+hal_rx_msdu_end_sa_idx_get(struct hal_soc *hal_soc, uint8_t *buf)
 {
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint16_t sa_idx;
-
-	sa_idx = HAL_RX_MSDU_END_SA_IDX_GET(msdu_end);
-
-	return sa_idx;
+	return hal_soc->ops->hal_rx_msdu_end_sa_idx_get(buf);
 }
 
 #define HAL_RX_MSDU_END_SA_IS_VALID_GET(_rx_msdu_end)	\
@@ -2711,103 +2699,11 @@ uint8_t dbg_level)
  *
  * Return: void
  */
-static inline void hal_rx_dump_msdu_end_tlv(struct rx_msdu_end *msdu_end,
-							uint8_t dbg_level)
+static inline void hal_rx_dump_msdu_end_tlv(struct hal_soc *hal_soc,
+					    struct rx_msdu_end *msdu_end,
+					    uint8_t dbg_level)
 {
-	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_msdu_end tlv - "
-			"rxpcu_mpdu_filter_in_category: %d "
-			"sw_frame_group_id: %d "
-			"phy_ppdu_id: %d "
-			"ip_hdr_chksum: %d "
-			"tcp_udp_chksum: %d "
-			"key_id_octet: %d "
-			"cce_super_rule: %d "
-			"cce_classify_not_done_truncat: %d "
-			"cce_classify_not_done_cce_dis: %d "
-			"ext_wapi_pn_63_48: %d "
-			"ext_wapi_pn_95_64: %d "
-			"ext_wapi_pn_127_96: %d "
-			"reported_mpdu_length: %d "
-			"first_msdu: %d "
-			"last_msdu: %d "
-			"sa_idx_timeout: %d "
-			"da_idx_timeout: %d "
-			"msdu_limit_error: %d "
-			"flow_idx_timeout: %d "
-			"flow_idx_invalid: %d "
-			"wifi_parser_error: %d "
-			"amsdu_parser_error: %d "
-			"sa_is_valid: %d "
-			"da_is_valid: %d "
-			"da_is_mcbc: %d "
-			"l3_header_padding: %d "
-			"ipv6_options_crc: %d "
-			"tcp_seq_number: %d "
-			"tcp_ack_number: %d "
-			"tcp_flag: %d "
-			"lro_eligible: %d "
-			"window_size: %d "
-			"da_offset: %d "
-			"sa_offset: %d "
-			"da_offset_valid: %d "
-			"sa_offset_valid: %d "
-			"rule_indication_31_0: %d "
-			"rule_indication_63_32: %d "
-			"sa_idx: %d "
-			"da_idx: %d "
-			"msdu_drop: %d "
-			"reo_destination_indication: %d "
-			"flow_idx: %d "
-			"fse_metadata: %d "
-			"cce_metadata: %d "
-			"sa_sw_peer_id: %d ",
-			msdu_end->rxpcu_mpdu_filter_in_category,
-			msdu_end->sw_frame_group_id,
-			msdu_end->phy_ppdu_id,
-			msdu_end->ip_hdr_chksum,
-			msdu_end->tcp_udp_chksum,
-			msdu_end->key_id_octet,
-			msdu_end->cce_super_rule,
-			msdu_end->cce_classify_not_done_truncate,
-			msdu_end->cce_classify_not_done_cce_dis,
-			msdu_end->ext_wapi_pn_63_48,
-			msdu_end->ext_wapi_pn_95_64,
-			msdu_end->ext_wapi_pn_127_96,
-			msdu_end->reported_mpdu_length,
-			msdu_end->first_msdu,
-			msdu_end->last_msdu,
-			msdu_end->sa_idx_timeout,
-			msdu_end->da_idx_timeout,
-			msdu_end->msdu_limit_error,
-			msdu_end->flow_idx_timeout,
-			msdu_end->flow_idx_invalid,
-			msdu_end->wifi_parser_error,
-			msdu_end->amsdu_parser_error,
-			msdu_end->sa_is_valid,
-			msdu_end->da_is_valid,
-			msdu_end->da_is_mcbc,
-			msdu_end->l3_header_padding,
-			msdu_end->ipv6_options_crc,
-			msdu_end->tcp_seq_number,
-			msdu_end->tcp_ack_number,
-			msdu_end->tcp_flag,
-			msdu_end->lro_eligible,
-			msdu_end->window_size,
-			msdu_end->da_offset,
-			msdu_end->sa_offset,
-			msdu_end->da_offset_valid,
-			msdu_end->sa_offset_valid,
-			msdu_end->rule_indication_31_0,
-			msdu_end->rule_indication_63_32,
-			msdu_end->sa_idx,
-			msdu_end->da_idx,
-			msdu_end->msdu_drop,
-			msdu_end->reo_destination_indication,
-			msdu_end->flow_idx,
-			msdu_end->fse_metadata,
-			msdu_end->cce_metadata,
-			msdu_end->sa_sw_peer_id);
+	hal_soc->ops->hal_rx_dump_msdu_end_tlv(msdu_end, dbg_level);
 }
 
 /**
@@ -3496,7 +3392,7 @@ static inline void hal_rx_dump_pkt_tlvs(struct hal_soc *hal_soc,
 	hal_rx_dump_mpdu_start_tlv(mpdu_start, dbg_level);
 	hal_rx_dump_msdu_start_tlv(hal_soc, msdu_start, dbg_level);
 	hal_rx_dump_mpdu_end_tlv(mpdu_end, dbg_level);
-	hal_rx_dump_msdu_end_tlv(msdu_end, dbg_level);
+	hal_rx_dump_msdu_end_tlv(hal_soc, msdu_end, dbg_level);
 	hal_rx_dump_pkt_hdr_tlv(pkt_hdr_tlv, dbg_level);
 }
 

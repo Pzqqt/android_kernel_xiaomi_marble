@@ -290,9 +290,12 @@ struct hal_hw_txrx_ops {
 	void (*hal_rx_proc_phyrx_other_receive_info_tlv)(void *rx_tlv_hdr,
 							void *ppdu_info_handle);
 	void (*hal_rx_dump_msdu_start_tlv)(void *msdu_start, uint8_t dbg_level);
+	void (*hal_rx_dump_msdu_end_tlv)(void *msdu_end,
+					 uint8_t dbg_level);
 	uint32_t (*hal_get_link_desc_size)(void);
 	uint32_t (*hal_rx_mpdu_start_tid_get)(uint8_t *buf);
 	uint32_t (*hal_rx_msdu_start_reception_type_get)(uint8_t *buf);
+	uint16_t (*hal_rx_msdu_end_sa_idx_get)(uint8_t *buf);
 };
 
 /**
