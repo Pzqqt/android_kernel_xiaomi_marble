@@ -235,12 +235,21 @@ static inline void __qdf_bug(void)
  *
  * Return: None
  */
-#define QDF_DEBUG_PANIC(reason...) __QDF_DEBUG_PANIC("" reason)
+#define QDF_DEBUG_PANIC(reason...) \
+	QDF_DEBUG_PANIC_FL(__func__, __LINE__, "" reason)
 
-#define __QDF_DEBUG_PANIC(ftm, args...) \
+/**
+ * QDF_DEBUG_PANIC_FL() - In debug builds, panic, otherwise do nothing
+ * @func: origin function name to be logged
+ * @line: origin line number to be logged
+ * @fmt: printf compatible format string to be logged
+ * @args: zero or more printf compatible logging arguments
+ *
+ * Return: None
+ */
+#define QDF_DEBUG_PANIC_FL(func, line, fmt, args...) \
 	do { \
-		pr_err("WLAN Panic @ %s:%d: " ftm "\n", \
-		       __func__, __LINE__, ##args); \
+		pr_err("WLAN Panic @ %s:%d: " fmt "\n", func, line, ##args); \
 		__qdf_bug(); \
 	} while (false)
 
