@@ -27,6 +27,7 @@
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_cfg80211_mc_cp_stats.h>
 #include "wlan_osif_request_manager.h"
+#include "wlan_objmgr_peer_obj.h"
 
 /* max time in ms, caller may wait for stats request get serviced */
 #define CP_STATS_WAIT_TIME_STAT 800
@@ -212,6 +213,7 @@ int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 	void *cookie;
 	QDF_STATUS status;
 	struct request_info info = {0};
+	struct wlan_objmgr_peer *peer;
 	struct tx_power_priv *priv = NULL;
 	struct osif_request *request = NULL;
 	static const struct osif_request_params params = {
@@ -230,8 +232,13 @@ int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 	info.u.get_tx_power_cb = get_tx_power_cb;
 	info.vdev_id = wlan_vdev_get_id(vdev);
 	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
-	qdf_mem_copy(info.peer_mac_addr, wlan_vdev_mlme_get_macaddr(vdev),
-		     WLAN_MACADDR_LEN);
+	peer = wlan_vdev_get_bsspeer(vdev);
+	if (!peer) {
+		ret = -EINVAL;
+		goto peer_is_null;
+	}
+	qdf_mem_copy(info.peer_mac_addr, peer->macaddr, WLAN_MACADDR_LEN);
+
 	status = ucfg_mc_cp_stats_send_stats_request(vdev,
 						     TYPE_CONNECTION_TX_POWER,
 						     &info);
@@ -259,6 +266,7 @@ fetch_tx_power:
 		}
 	}
 
+peer_is_null:
 	/*
 	 * either we never sent a request, we sent a request and
 	 * received a response or we sent a request and timed out.
@@ -384,6 +392,7 @@ int wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 	void *cookie;
 	QDF_STATUS status;
 	struct stats_event *priv;
+	struct wlan_objmgr_peer *peer;
 	struct osif_request *request;
 	struct request_info info = {0};
 	static const struct osif_request_params params = {
@@ -404,8 +413,13 @@ int wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 	info.u.get_station_stats_cb = get_station_stats_cb;
 	info.vdev_id = wlan_vdev_get_id(vdev);
 	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
-	qdf_mem_copy(info.peer_mac_addr, wlan_vdev_mlme_get_macaddr(vdev),
-		     WLAN_MACADDR_LEN);
+	peer = wlan_vdev_get_bsspeer(vdev);
+	if (!peer) {
+		ret = -EINVAL;
+		goto peer_is_null;
+	}
+	qdf_mem_copy(info.peer_mac_addr, peer->macaddr, WLAN_MACADDR_LEN);
+
 	status = ucfg_mc_cp_stats_send_stats_request(vdev, TYPE_STATION_STATS,
 						     &info);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -420,6 +434,7 @@ int wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 			*out = *priv;
 	}
 
+peer_is_null:
 	/*
 	 * either we never sent a request, we sent a request and
 	 * received a response or we sent a request and timed out.
