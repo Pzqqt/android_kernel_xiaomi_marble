@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,8 +29,6 @@
 #include "hif.h"
 
 struct ol_context;
-QDF_STATUS ol_cds_init(qdf_device_t qdf_dev, void *hif_ctx);
-void ol_cds_free(void);
 
 /**
  * struct hif_config_info - Place Holder for hif confiruation
@@ -51,10 +49,52 @@ struct ol_config_info {
 	bool enable_ramdump_collection;
 };
 
+#ifdef WLAN_FEATURE_BMI
+QDF_STATUS ol_cds_init(qdf_device_t qdf_dev, void *hif_ctx);
+void ol_cds_free(void);
 void ol_init_ini_config(struct ol_context *ol_ctx,
 			struct ol_config_info *cfg);
 void bmi_cleanup(struct ol_context *scn);
 QDF_STATUS bmi_done(struct ol_context *ol_ctx);
 void bmi_target_ready(struct hif_opaque_softc *scn, void *cfg_ctx);
 QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx);
+
+#else /* WLAN_FEATURE_BMI */
+
+static inline QDF_STATUS
+ol_cds_init(qdf_device_t qdf_dev, void *hif_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void ol_cds_free(void)
+{
+}
+
+static inline void
+ol_init_ini_config(struct ol_context *ol_ctx, struct ol_config_info *cfg)
+{
+}
+
+static inline void bmi_cleanup(struct ol_context *scn)
+{
+}
+
+static inline QDF_STATUS bmi_done(struct ol_context *ol_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+bmi_target_ready(struct hif_opaque_softc *scn, void *cfg_ctx)
+{
+}
+
+static inline QDF_STATUS
+bmi_download_firmware(struct ol_context *ol_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_BMI */
+
 #endif /* _BMI_H_ */

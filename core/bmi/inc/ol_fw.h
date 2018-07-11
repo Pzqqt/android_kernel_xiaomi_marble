@@ -34,9 +34,13 @@
 #define HI_ACS_FLAGS_SDIO_SWAP_MAILBOX_FW_ACK       (1 << 16)
 #define HI_ACS_FLAGS_SDIO_REDUCE_TX_COMPL_FW_ACK    (1 << 17)
 
+#ifdef WLAN_FEATURE_BMI
 void ol_target_failure(void *instance, QDF_STATUS status);
 
 void ol_target_ready(struct hif_opaque_softc *scn, void *cfg_ctx);
 QDF_STATUS ol_get_fw_files(struct ol_context *ol_ctx);
 QDF_STATUS ol_extra_initialization(struct ol_context *ol_ctx);
+#else /* WLAN_FEATURE_BMI */
+static inline void ol_target_failure(void *instance, QDF_STATUS status) {}
+#endif /* WLAN_FEATURE_BMI */
 #endif /* _OL_FW_H_ */

@@ -807,10 +807,12 @@ BMI_DIR := core/bmi
 
 BMI_INC := -I$(WLAN_ROOT)/$(BMI_DIR)/inc
 
+ifeq ($(CONFIG_WLAN_FEATURE_BMI), y)
 BMI_OBJS := $(BMI_DIR)/src/bmi.o \
+            $(BMI_DIR)/src/bmi_1.o \
             $(BMI_DIR)/src/ol_fw.o \
             $(BMI_DIR)/src/ol_fw_common.o
-BMI_OBJS += $(BMI_DIR)/src/bmi_1.o
+endif
 
 ##########  TARGET_IF #######
 TARGET_IF_DIR := $(WLAN_COMMON_ROOT)/target_if
@@ -1178,14 +1180,15 @@ HIF_COMMON_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_exec.o
 HIF_COMMON_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_irq_affinity.o
 endif
 
-
-
-HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_diag.o \
+HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_diag.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_main.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_tasklet.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o
+
+ifeq ($(CONFIG_WLAN_FEATURE_BMI), y)
+HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o
+endif
 
 ifeq ($(CONFIG_LITHIUM), y)
 ifeq ($(CONFIG_CNSS_QCA6290), y)
@@ -1204,12 +1207,16 @@ HIF_USB_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/usbdrv.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/if_usb.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_USB_DIR)/regtable_usb.o
 
-HIF_SDIO_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_bmi_reg_access.o \
-                 $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_diag_reg_access.o \
+HIF_SDIO_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_diag_reg_access.o \
                  $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_sdio_dev.o \
                  $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_sdio.o \
                  $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/regtable_sdio.o \
                  $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/transfer/transfer.o
+
+ifeq ($(CONFIG_WLAN_FEATURE_BMI), y)
+HIF_SDIO_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/hif_bmi_reg_access.o
+endif
+
 ifeq ($(CONFIG_SDIO_TRANSFER), adma)
 HIF_SDIO_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/transfer/adma.o
 else
@@ -1962,6 +1969,7 @@ cppflags-$(CONFIG_FEATURE_TSO) += -DFEATURE_TSO
 cppflags-$(CONFIG_TSO_DEBUG_LOG_ENABLE) += -DTSO_DEBUG_LOG_ENABLE
 cppflags-$(CONFIG_DP_LFR) += -DDP_LFR
 cppflags-$(CONFIG_HTT_PADDR64) += -DHTT_PADDR64
+cppflags-$(CONFIG_WLAN_FEATURE_BMI) += -DWLAN_FEATURE_BMI
 
 ccflags-$(CONFIG_QCA_LL_TX_FLOW_CONTROL_RESIZE) += -DQCA_LL_TX_FLOW_CONTROL_RESIZE
 
