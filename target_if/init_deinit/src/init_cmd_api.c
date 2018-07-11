@@ -32,6 +32,7 @@
 #include <init_cmd_api.h>
 #include <wlan_defs.h>
 #include <target_if_scan.h>
+#include <target_if_reg.h>
 
 /**
  *  init_deinit_alloc_host_mem_chunk() - allocates chunk of memory requested
@@ -462,6 +463,12 @@ void init_deinit_prepare_send_init_cmd(
 
 		init_deinit_derive_band_to_mac_param(psoc, tgt_hdl,
 						     init_param.band_to_mac);
+	} else {
+		ret_val = tgt_if_regulatory_modify_freq_range(psoc);
+		if (QDF_IS_STATUS_ERROR(ret_val)) {
+			target_if_err("Modify freq range is failed");
+			return;
+		}
 	}
 
 	ret_val = target_if_alloc_pdevs(psoc, tgt_hdl);

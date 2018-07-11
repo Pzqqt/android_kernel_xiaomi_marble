@@ -29,6 +29,7 @@
 #include <target_if.h>
 #include <target_if_reg.h>
 #include <wmi_unified_reg_api.h>
+#include <wlan_reg_ucfg_api.h>
 
 static inline uint32_t get_chan_list_cc_event_id(void)
 {
@@ -334,6 +335,37 @@ static QDF_STATUS tgt_if_regulatory_stop_11d_scan(
 						  reg_stop_11d_scan_req);
 }
 
+QDF_STATUS tgt_if_regulatory_modify_freq_range(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap;
+
+	reg_cap = ucfg_reg_get_hal_reg_cap(psoc);
+	if (!reg_cap) {
+		target_if_err("reg cap is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!(reg_cap->wireless_modes & WMI_HOST_REGDMN_MODE_11A)) {
+		reg_cap->low_5ghz_chan = 0;
+		reg_cap->high_5ghz_chan = 0;
+	}
+
+	if (!(reg_cap->wireless_modes &
+	     (WMI_HOST_REGDMN_MODE_11B | WMI_HOST_REGDMN_MODE_PUREG))) {
+		reg_cap->low_2ghz_chan = 0;
+		reg_cap->high_2ghz_chan = 0;
+	}
+
+	target_if_info(
+			"phy_id = %d - low_2ghz_chan = %d high_2ghz_chan = %d low_5ghz_chan = %d high_5ghz_chan = %d",
+			reg_cap->phy_id,
+			reg_cap->low_2ghz_chan,
+			reg_cap->high_2ghz_chan,
+			reg_cap->low_5ghz_chan,
+			reg_cap->high_5ghz_chan);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
 						*tx_ops)

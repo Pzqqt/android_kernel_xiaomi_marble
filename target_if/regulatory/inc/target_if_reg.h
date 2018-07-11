@@ -41,4 +41,9 @@ QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
  */
 QDF_STATUS target_if_reg_set_offloaded_info(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * tgt_if_regulatory_modify_freq_range() - Modify low and high freq ranges based
+ * on wireless mode.
+ */
+QDF_STATUS tgt_if_regulatory_modify_freq_range(struct wlan_objmgr_psoc *psoc);
 #endif /* __TARGET_IF_REG_H__ */
