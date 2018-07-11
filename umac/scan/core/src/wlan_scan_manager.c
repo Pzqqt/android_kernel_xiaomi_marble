@@ -321,6 +321,9 @@ scm_scan_serialize_callback(struct wlan_serialization_command *cmd,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	qdf_mtrace(QDF_MODULE_ID_SERIALIZATION, QDF_MODULE_ID_SCAN, reason,
+		   req->scan_req.vdev_id, req->scan_req.scan_id);
+
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
 		/* command moved to active list
@@ -423,6 +426,11 @@ scm_scan_start_req(struct scheduler_msg *msg)
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto err;
 	}
+
+	qdf_mtrace(QDF_MODULE_ID_SCAN, QDF_MODULE_ID_SERIALIZATION,
+		   WLAN_SER_CMD_SCAN, req->vdev->vdev_objmgr.vdev_id,
+		   req->scan_req.scan_id);
+
 	ser_cmd_status = wlan_serialization_request(&cmd);
 	scm_debug("wlan_serialization_request status:%d", ser_cmd_status);
 

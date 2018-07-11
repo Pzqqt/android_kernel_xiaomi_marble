@@ -914,6 +914,9 @@ static void wlan_cfg80211_scan_done_callback(
 	struct net_device *netdev = NULL;
 	QDF_STATUS status;
 
+	qdf_mtrace(QDF_MODULE_ID_SCAN, QDF_MODULE_ID_OS_IF, event->type,
+		   event->vdev_id, event->scan_id);
+
 	if (!util_is_scan_completed(event, &success))
 		return;
 
