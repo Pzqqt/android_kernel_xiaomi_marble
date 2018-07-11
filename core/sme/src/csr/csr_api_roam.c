@@ -20583,6 +20583,9 @@ QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
 		&param.operationalRateSet, sizeof(pMsg->operational_rateset));
 	qdf_mem_copy(&pMsg->extended_rateset,
 		&param.extendedRateSet, sizeof(pMsg->extended_rateset));
+
+	sme_debug("target_chan %d ch_width %d dot11mode %d",
+		  pMsg->targetChannel, pMsg->ch_width, pMsg->dot11mode);
 	status = umac_send_mb_message_to_mac(pMsg);
 
 	return status;

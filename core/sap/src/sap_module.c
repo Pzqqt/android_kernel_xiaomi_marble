@@ -1741,6 +1741,21 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
 	mac_ctx = PMAC_STRUCT(hHal);
 	phy_mode = sapContext->csr_roamProfile.phyMode;
 
+	/* Update phy_mode if the target channel is in the other band */
+	if (WLAN_CHAN_IS_5GHZ(target_channel) &&
+	    ((phy_mode == eCSR_DOT11_MODE_11g) ||
+	    (phy_mode == eCSR_DOT11_MODE_11g_ONLY)))
+		phy_mode = eCSR_DOT11_MODE_11a;
+	else if (WLAN_CHAN_IS_2GHZ(target_channel) &&
+		 (phy_mode == eCSR_DOT11_MODE_11a))
+		phy_mode = eCSR_DOT11_MODE_11g;
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: phy_mode: %d, target_channel: %d new phy_mode: %d",
+		  __func__, sapContext->csr_roamProfile.phyMode,
+		  target_channel, phy_mode);
+	sapContext->csr_roamProfile.phyMode = phy_mode;
+
 	if (sapContext->csr_roamProfile.ChannelInfo.numOfChannels == 0 ||
 	    sapContext->csr_roamProfile.ChannelInfo.ChannelList == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1774,8 +1789,8 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
 				ch_params, &sapContext->csr_roamProfile);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-		"%s: chan:%d width:%d offset:%d seg0:%d seg1:%d",
-		__func__, sapContext->channel, ch_params->ch_width,
+		"%s: chan:%d phy_mode %d width:%d offset:%d seg0:%d seg1:%d",
+		__func__, sapContext->channel, phy_mode, ch_params->ch_width,
 		ch_params->sec_ch_offset, ch_params->center_freq_seg0,
 		ch_params->center_freq_seg1);
 
