@@ -407,7 +407,9 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 			qdf_nbuf_free(status_nbuf);
 		}
 
-		if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
+		if (tlv_status == HAL_TLV_STATUS_PPDU_NON_STD_DONE) {
+			dp_rx_mon_deliver_non_std(soc, mac_id);
+		} else if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
 			rx_mon_stats->status_ppdu_done++;
 			if (pdev->enhanced_stats_en ||
 					pdev->mcopy_mode)

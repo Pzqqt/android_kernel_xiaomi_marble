@@ -73,6 +73,17 @@ QDF_STATUS dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id)
 uint32_t dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota);
 QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu);
+/*
+ * dp_rx_mon_deliver_non_std() - deliver frames for non standard path
+ * @soc: core txrx main contex
+ * @mac_id: MAC ID
+ *
+ * This function delivers the radio tap and dummy MSDU
+ * into user layer application for preamble only PPDU.
+ *
+ * Return: Operation status
+ */
+QDF_STATUS dp_rx_mon_deliver_non_std(struct dp_soc *soc, uint32_t mac_id);
 
 uint32_t dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t quota);

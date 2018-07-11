@@ -29,6 +29,8 @@
 #include "wlan_cfg.h"
 #include "dp_internal.h"
 
+/* The maxinum buffer length allocated for radio tap */
+#define MAX_MONITOR_HEADER (512)
 /**
  * dp_rx_mon_link_desc_return() - Return a MPDU link descriptor to HW
  *			      (WBM), following error handling
@@ -525,7 +527,6 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	 * status of the now decapped first msdu. Leave enough headroom for
 	 * accomodating any radio-tap /prism like PHY header
 	 */
-#define MAX_MONITOR_HEADER (512)
 	mpdu_buf = qdf_nbuf_alloc(soc->osdev,
 			MAX_MONITOR_HEADER + mpdu_buf_len,
 			MAX_MONITOR_HEADER, 4, FALSE);
@@ -727,6 +728,63 @@ mon_deliver_fail:
 		qdf_nbuf_free(mon_skb);
 		mon_skb = skb_next;
 	}
+	return QDF_STATUS_E_INVAL;
+}
+
+/**
+* dp_rx_mon_deliver_non_std()
+* @soc: core txrx main contex
+* @mac_id: MAC ID
+*
+* This function delivers the radio tap and dummy MSDU
+* into user layer application for preamble only PPDU.
+*
+* Return: QDF_STATUS
+*/
+QDF_STATUS dp_rx_mon_deliver_non_std(struct dp_soc *soc,
+				     uint32_t mac_id)
+{
+	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	ol_txrx_rx_mon_fp osif_rx_mon;
+	qdf_nbuf_t dummy_msdu;
+
+	/* Sanity checking */
+	if ((!pdev->monitor_vdev) || (!pdev->monitor_vdev->osif_rx_mon))
+		goto mon_deliver_non_std_fail;
+
+	/* Generate a dummy skb_buff */
+	osif_rx_mon = pdev->monitor_vdev->osif_rx_mon;
+	dummy_msdu = qdf_nbuf_alloc(soc->osdev, MAX_MONITOR_HEADER,
+				    MAX_MONITOR_HEADER, 4, FALSE);
+	if (!dummy_msdu)
+		goto allocate_dummy_msdu_fail;
+
+	qdf_nbuf_set_pktlen(dummy_msdu, 0);
+	qdf_nbuf_set_next(dummy_msdu, NULL);
+
+	pdev->ppdu_info.rx_status.ppdu_id =
+		pdev->ppdu_info.com_info.ppdu_id;
+
+	/* Apply the radio header to this dummy skb */
+	qdf_nbuf_update_radiotap(&pdev->ppdu_info.rx_status,
+				 dummy_msdu, MAX_MONITOR_HEADER);
+
+	/* deliver to the user layer application */
+	osif_rx_mon(pdev->monitor_vdev->osif_vdev,
+		    dummy_msdu, NULL);
+
+	/* Clear rx_status*/
+	qdf_mem_zero(&pdev->ppdu_info.rx_status,
+		     sizeof(pdev->ppdu_info.rx_status));
+	pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
+
+	return QDF_STATUS_SUCCESS;
+
+allocate_dummy_msdu_fail:
+	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_DP, "[%s][%d] mon_skb=%pK ",
+			   __func__, __LINE__, dummy_msdu);
+
+mon_deliver_non_std_fail:
 	return QDF_STATUS_E_INVAL;
 }
 
