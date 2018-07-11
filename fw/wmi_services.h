@@ -255,6 +255,7 @@ typedef  enum  {
     WMI_SERVICE_DUAL_BEACON_ON_SINGLE_MAC_MCC_SUPPORT=159, /* Support dual beacon on different channel on single MAC */
     WMI_SERVICE_MOTION_DET=160, /* support for motion detection config */
     WMI_SERVICE_INFRA_MBSSID=161, /* support infra multi-BSSID feature */
+    WMI_SERVICE_OBSS_SPATIAL_REUSE=162, /* support spatial reuse feature */
 
 
     /******* ADD NEW SERVICES HERE *******/

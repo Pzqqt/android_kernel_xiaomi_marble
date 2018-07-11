@@ -244,6 +244,7 @@ typedef enum {
     WMI_GRP_11K_OFFLOAD,    /* 0x3d */
     WMI_GRP_TWT,            /* 0x3e TWT (Target Wake Time) for STA and AP */
     WMI_GRP_MOTION_DET,     /* 0x3f */
+    WMI_GRP_SPATIAL_REUSE,  /* 0x40 */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1139,6 +1140,9 @@ typedef enum {
     WMI_MOTION_DET_BASE_LINE_CONFIG_PARAM_CMDID,
     WMI_MOTION_DET_START_STOP_CMDID,
     WMI_MOTION_DET_BASE_LINE_START_STOP_CMDID,
+
+    /** WMI commands related to OBSS PD Spatial Reuse **/
+    WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_SPATIAL_REUSE),
 } WMI_CMD_ID;
 
 typedef enum {
@@ -8647,10 +8651,10 @@ typedef enum {
 
     /** Uplink OFDMA PPDU bandwidth (0: 20MHz, 1: 40MHz, 2: 80Mhz, 3: 160MHz)*/
     WMI_VDEV_PARAM_UL_PPDU_BW,                            /* 0x8E */
-    
+
     /** Enable/Disable FW handling MU EDCA change from AP (1: En, 0:Dis)  */
     WMI_VDEV_PARAM_MU_EDCA_FW_UPDATE_EN,                  /* 0x8F */
-    
+
     /** Update dot11ObssNbruToleranceTime in fw. Param value: seconds */
     WMI_VDEV_PARAM_UPDATE_OBSS_RU_TOLERANCE_TIME,         /* 0x90 */
 
@@ -23161,6 +23165,27 @@ typedef struct {
     A_UINT32 bl_min_corr_reserved; /** min corr value obtained during baselining
                                     * phase (in %); reserved for future */
 } wmi_motion_det_base_line_event;
+
+/* Below structures are related to OBSS_PD_SPATIAL Reuse */
+typedef struct {
+    /** TLV tag and len; tag equals
+    * WMITLV_TAG_STRUC_wmi_obss_set_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** Enable/Disable Spatial Reuse */
+    A_UINT32 enable;
+    /*
+     * In the below fields, "OBSS level" refers to the power of the
+     * signals received from "Other BSS".
+     * Spatial reuse will only be permitted if the Other BSS's signal power
+     * is witin the min to max range specified by the below fields.
+     */
+    /** Minimum OBSS level to use */
+    A_INT32 obss_min; /* RSSI in dBm */
+    /** Maximum OBSS level to use */
+    A_INT32 obss_max; /* RSSI in dBm */
+    /** Vdev id*/
+    A_UINT32 vdev_id;
+} wmi_obss_spatial_reuse_set_cmd_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
