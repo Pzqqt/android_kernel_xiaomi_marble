@@ -3491,20 +3491,28 @@ int wma_process_bip(tp_wma_handle wma_handle,
 	qdf_nbuf_t wbuf
 )
 {
+	uint16_t mmie_size;
 	uint16_t key_id;
 	uint8_t *efrm;
 
 	efrm = qdf_nbuf_data(wbuf) + qdf_nbuf_len(wbuf);
 
 	if (iface->key.key_cipher == WMI_CIPHER_AES_CMAC) {
-		key_id = (uint16_t)*(efrm - cds_get_mmie_size() + 2);
+		mmie_size = cds_get_mmie_size();
 	} else if (iface->key.key_cipher == WMI_CIPHER_AES_GMAC) {
-		key_id = (uint16_t)*(efrm - cds_get_gmac_mmie_size() + 2);
+		mmie_size = cds_get_gmac_mmie_size();
 	} else {
 		WMA_LOGE(FL("Invalid key cipher %d"), iface->key.key_cipher);
 		return -EINVAL;
 	}
 
+	/* Check if frame is invalid length */
+	if (efrm - (uint8_t *)wh < sizeof(*wh) + mmie_size) {
+		WMA_LOGE(FL("Invalid frame length"));
+		return -EINVAL;
+	}
+
+	key_id = (uint16_t)*(efrm - mmie_size + 2);
 	if (!((key_id == WMA_IGTK_KEY_INDEX_4)
 	     || (key_id == WMA_IGTK_KEY_INDEX_5))) {
 		WMA_LOGE(FL("Invalid KeyID(%d) dropping the frame"), key_id);
