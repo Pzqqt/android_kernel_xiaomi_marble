@@ -506,6 +506,18 @@ typedef struct {
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_COMMON_TLV_BW_S)); \
      } while (0)
 
+#define HTT_PPDU_STATS_USER_COMMON_TLV_DELAYED_BA_M     0x00004000
+#define HTT_PPDU_STATS_USER_COMMON_TLV_DELAYED_BA_S             14
+ 
+#define HTT_PPDU_STATS_USER_COMMON_TLV_DELAYED_BA_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_COMMON_TLV_DELAYED_BA_M) >> \
+    HTT_PPDU_STATS_USER_COMMON_TLV_DELAYED_BA_S)
+ 
+#define HTT_PPDU_STATS_USER_COMMON_TLV_DELAYED_BA_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_COMMON_TLV_DELAYED_BA, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_COMMON_TLV_DELAYED_BA_S)); \
+     } while (0)
 
 #define HTT_PPDU_STATS_USER_COMMON_TLV_FRAME_CTRL_M     0x0000ffff
 #define HTT_PPDU_STATS_USER_COMMON_TLV_FRAME_CTRL_S              0
@@ -552,7 +564,8 @@ typedef struct {
     /* BIT [ 0 :    0]   :- mcast
      * BIT [ 9 :    1]   :- mpdus_tried
      * BIT [ 13:   10]   :- bw - HTT_PPDU_STATS_BW
-     * BIT [ 31:   14]   :- rsvd
+     * BIT [ 14:   14]   : - delayed_ba
+     * BIT [ 31:   15]   :- rsvd
      */
     union {
         A_UINT32 bw__mpdus_tried__mcast;
@@ -560,7 +573,8 @@ typedef struct {
             A_UINT32 mcast:              1,
                      mpdus_tried:        9,
                      bw:                 4,
-                     reserved0:         18;
+                     delayed_ba:         1,
+                     reserved0:         17;
         };
     };
 
