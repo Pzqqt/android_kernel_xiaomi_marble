@@ -2514,8 +2514,6 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 				(uint32_t *)((uint8_t *)tlv_buf + tlv_length);
 			length -= (tlv_length);
 			continue;
-		} else {
-			pdev->mgmtctrl_frm_info.mgmt_buf = NULL;
 		}
 
 		ppdu_info = dp_get_ppdu_desc(pdev, ppdu_id, tlv_type);
