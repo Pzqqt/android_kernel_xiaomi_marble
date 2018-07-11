@@ -906,6 +906,9 @@ void p2p_scan_event_cb(struct wlan_objmgr_vdev *vdev,
 		p2p_err("Failed to find valid P2P roc context");
 		return;
 	}
+
+	qdf_mtrace(QDF_MODULE_ID_SCAN, QDF_MODULE_ID_P2P, event->type,
+		   event->vdev_id, event->scan_id);
 	switch (event->type) {
 	case SCAN_EVENT_TYPE_STARTED:
 		p2p_process_scan_start_evt(curr_roc_ctx);
