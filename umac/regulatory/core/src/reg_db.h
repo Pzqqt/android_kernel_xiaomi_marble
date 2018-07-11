@@ -64,7 +64,7 @@ enum dfs_reg {
 	DFS_MKK_REG = 3,
 	DFS_CN_REG = 4,
 	DFS_KR_REG = 5,
-	DFS_UNDEF_REG
+	DFS_UNDEF_REG = 0xFFFF,
 };
 
 /**
