@@ -251,7 +251,7 @@ os_if_spectral_prep_skb(struct wlan_objmgr_pdev *pdev)
 	qdf_nbuf_put_tail(ps->skb, MAX_SPECTRAL_PAYLOAD);
 	spectral_nlh = (struct nlmsghdr *)ps->skb->data;
 
-	OS_MEMZERO(spectral_nlh, sizeof(*spectral_nlh));
+	qdf_mem_zero(spectral_nlh, sizeof(*spectral_nlh));
 
 	/*
 	 * Possible bug that size of  struct spectral_samp_msg and
@@ -263,6 +263,8 @@ os_if_spectral_prep_skb(struct wlan_objmgr_pdev *pdev)
 	spectral_nlh->nlmsg_flags = 0;
 	spectral_nlh->nlmsg_type = WLAN_NL_MSG_SPECTRAL_SCAN;
 
+	qdf_mem_zero(NLMSG_DATA(spectral_nlh),
+		     sizeof(struct spectral_samp_msg));
 	return NLMSG_DATA(spectral_nlh);
 }
 
