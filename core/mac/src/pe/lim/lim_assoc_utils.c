@@ -1691,7 +1691,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 		}
 	} else
 		tempRateSet2.numRates = 0;
-	if ((tempRateSet.numRates + tempRateSet2.numRates) >=
+	if ((tempRateSet.numRates + tempRateSet2.numRates) >
 	    SIR_MAC_RATESET_EID_MAX) {
 		pe_err("more than 12 rates in CFG");
 		return QDF_STATUS_E_FAILURE;
