@@ -50,7 +50,9 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #include <dot11f.h>
 #include "wlan_policy_mgr_api.h"
 
+#ifndef SIR_MAX_SUPPORTED_BSS
 #define SIR_MAX_SUPPORTED_BSS 5
+#endif
 
 #define OFFSET_OF(structType, fldName)   (&((structType *)0)->fldName)
 
@@ -113,7 +115,9 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define MAX_PEER_STA 12
 
 /* Maximum number of peers for SAP */
+#ifndef SIR_SAP_MAX_NUM_PEERS
 #define SIR_SAP_MAX_NUM_PEERS 32
+#endif
 
 #define SIR_KRK_KEY_LEN 16
 #define SIR_BTK_KEY_LEN 32

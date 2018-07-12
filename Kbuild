@@ -2138,6 +2138,14 @@ ifdef CONFIG_CFG_NUM_OF_TDLS_CONN_TABLE_ENTRIES
 ccflags-y += -DCFG_TGT_NUM_TDLS_CONN_TABLE_ENTRIES=$(CONFIG_CFG_NUM_OF_TDLS_CONN_TABLE_ENTRIES)
 endif
 
+ifdef CONFIG_SIR_MAX_SUPPORTED_BSS
+ccflags-y += -DSIR_MAX_SUPPORTED_BSS=$(CONFIG_SIR_MAX_SUPPORTED_BSS)
+endif
+
+ifdef CONFIG_SIR_SAP_MAX_NUM_PEERS
+ccflags-y += -DSIR_SAP_MAX_NUM_PEERS=$(CONFIG_SIR_SAP_MAX_NUM_PEERS)
+endif
+
 KBUILD_CPPFLAGS += $(cppflags-y)
 
 # Currently, for versions of gcc which support it, the kernel Makefile
