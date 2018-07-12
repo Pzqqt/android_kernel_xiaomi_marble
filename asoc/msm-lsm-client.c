@@ -311,7 +311,7 @@ static void lsm_event_handler(uint32_t opcode, uint32_t token,
 		if (!tmp) {
 			spin_unlock_irqrestore(&prtd->event_lock, flags);
 			dev_err(rtd->dev,
-				"%s: Failed to allocate memory for %s, size = %lu\n",
+				"%s: Failed to allocate memory for %s, size = %zu\n",
 				__func__,
 				"LSM_SESSION_DETECTION_ENGINE_GENERIC_EVENT",
 				sizeof(struct snd_lsm_event_status) +
