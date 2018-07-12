@@ -1769,7 +1769,11 @@ hif_send_head(struct hif_opaque_softc *hif_ctx,
 	int status, i = 0;
 	unsigned int mux_id = 0;
 
-	QDF_ASSERT(nbytes <= qdf_nbuf_len(nbuf));
+	if (nbytes > qdf_nbuf_len(nbuf)) {
+		HIF_ERROR("%s: nbytes:%d nbuf_len:%d", __func__, nbytes,
+			  (uint32_t)qdf_nbuf_len(nbuf));
+		QDF_ASSERT(0);
+	}
 
 	transfer_id =
 		(mux_id & MUX_ID_MASK) |
