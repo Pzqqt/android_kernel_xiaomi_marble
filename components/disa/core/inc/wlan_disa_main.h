@@ -38,6 +38,18 @@
 	QDF_TRACE_INFO(QDF_MODULE_ID_DISA, params)
 #define disa_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_DISA, params)
+
+#define disa_nofl_fatal(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_DISA, params)
+#define disa_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_DISA, params)
+#define disa_nofl_warn(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_DISA, params)
+#define disa_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_DISA, params)
+#define disa_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_DISA, params)
+
 #define DISA_ENTER() \
 	QDF_TRACE_ENTER(QDF_MODULE_ID_DISA, "enter")
 #define DISA_EXIT() \

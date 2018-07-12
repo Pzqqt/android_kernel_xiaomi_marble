@@ -50,6 +50,17 @@
 #define pe_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_PE, params)
 #define pe_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_PE, params)
 
+#define pe_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_PE, params)
+#define pe_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_PE, params)
+#define pe_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_PE, params)
+#define pe_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_PE, params)
+#define pe_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_PE, params)
+
 #define PE_ENTER() QDF_TRACE_ENTER(QDF_MODULE_ID_PE, "enter")
 #define PE_EXIT() QDF_TRACE_EXIT(QDF_MODULE_ID_PE, "exit")
 #endif
