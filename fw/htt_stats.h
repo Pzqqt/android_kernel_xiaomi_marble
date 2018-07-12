@@ -346,6 +346,11 @@ typedef enum {
     HTT_STATS_RX_REFILL_REO_ERR_TAG                     = 78,    /* htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v */
     HTT_STATS_RX_REO_RESOURCE_STATS_TAG                 = 79,    /* htt_rx_reo_debug_stats_tlv_v */
     HTT_STATS_TX_SOUNDING_STATS_TAG                     = 80,    /* htt_tx_sounding_stats_tlv */
+    HTT_STATS_TX_PDEV_TX_PPDU_STATS_TAG                 = 81,    /* htt_tx_pdev_stats_tx_ppdu_stats_tlv_v */
+    HTT_STATS_TX_PDEV_TRIED_MPDU_CNT_HIST_TAG           = 82,    /* htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v */
+    HTT_STATS_TX_HWQ_TRIED_MPDU_CNT_HIST_TAG            = 83,    /* htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v */
+    HTT_STATS_TX_HWQ_TXOP_USED_CNT_HIST_TAG             = 84,    /* htt_tx_hwq_txop_used_cnt_hist_tlv_v */
+    HTT_STATS_TX_DE_FW2WBM_RING_FULL_HIST_TAG           = 85,    /* htt_tx_de_fw2wbm_ring_full_hist_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -463,7 +468,7 @@ typedef struct {
     A_UINT32 illgl_rate_phy_err;
     /* wal pdev continous xretry */
     A_UINT32 cont_xretry;
-    /* wal pdev continous xretry */
+    /* wal pdev tx timeout */
     A_UINT32 tx_timeout;
     /* wal pdev resets  */
     A_UINT32 pdev_resets;
@@ -535,6 +540,14 @@ typedef struct {
      * (acked, no ack, flush, TTL, etc)
      */
     A_UINT32 local_data_freed;
+
+    /* Num MPDUs tried by SW */
+    A_UINT32 mpdu_tried;
+    /* Num of waiting seq posted in isr completion handler */
+    A_UINT32 isr_wait_seq_posted;
+
+    A_UINT32 tx_active_dur_us_low;
+    A_UINT32 tx_active_dur_us_high;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -572,6 +585,34 @@ typedef struct {
     A_UINT32 sifs_hist_status[1]; /* HTT_TX_PDEV_SIFS_BURST_HIST_STATS */
 } htt_tx_pdev_stats_sifs_hist_tlv_v;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 num_data_ppdus_legacy_su;
+    A_UINT32 num_data_ppdus_ac_su;
+    A_UINT32 num_data_ppdus_ax_su;
+    A_UINT32 num_data_ppdus_ac_su_txbf;
+    A_UINT32 num_data_ppdus_ax_su_txbf;
+} htt_tx_pdev_stats_tx_ppdu_stats_tlv_v;
+
+#define HTT_TX_PDEV_STATS_TRIED_MPDU_CNT_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
+/* NOTE: Variable length TLV, use length spec to infer array size .
+ *
+ *  Tried_mpdu_cnt_hist is the histogram of MPDUs tries per HWQ.
+ *  The tries here is the count of the  MPDUS within a PPDU that the
+ *  HW had attempted to transmit on  air, for the HWSCH Schedule
+ *  command submitted by FW.It is not the retry attempts.
+ *  The histogram bins are  0-29, 30-59, 60-89 and so on. The are
+ *   10 bins in this histogram. They are defined in FW using the
+ *  following macros
+ *  #define WAL_MAX_TRIED_MPDU_CNT_HISTOGRAM 9
+ *  #define WAL_TRIED_MPDU_CNT_HISTOGRAM_INTERVAL 30
+ *
+ */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 tried_mpdu_cnt_hist[1]; /* HTT_TX_PDEV_TRIED_MPDU_CNT_HIST */
+    A_UINT32 hist_bin_size;
+} htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v;
 
 /* STATS_TYPE: HTT_DBG_EXT_STATS_PDEV_TX
  * TLV_TAGS:
@@ -581,6 +622,8 @@ typedef struct {
  *      - HTT_STATS_TX_PDEV_FLUSH_TAG
  *      - HTT_STATS_TX_PDEV_PHY_ERR_TAG
  *      - HTT_STATS_TX_PDEV_SIFS_HIST_TAG
+ *      - HTT_STATS_TX_PDEV_TX_PPDU_STATS_TAG
+ *      - HTT_STATS_TX_PDEV_TRIED_MPDU_CNT_HIST_TAG
  */
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -593,6 +636,8 @@ typedef struct _htt_tx_pdev_stats {
     htt_tx_pdev_stats_flush_tlv_v flush_tlv;
     htt_tx_pdev_stats_phy_err_tlv_v phy_err_tlv;
     htt_tx_pdev_stats_sifs_hist_tlv_v sifs_hist_tlv;
+    htt_tx_pdev_stats_tx_ppdu_stats_tlv_v tx_su_tlv;
+    htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v tried_mpdu_cnt_hist_tlv;
 } htt_tx_pdev_stats_t;
 
 /* == SOC ERROR STATS == */
@@ -1279,6 +1324,8 @@ typedef struct {
     A_UINT32 mpdu_ack_fail_cnt;      /* mpdus tried but ack was not received */
     A_UINT32 mpdu_filt_cnt;          /* This will include sched cmd flush and time based discard */
     A_UINT32 false_mpdu_ack_count;   /* Number of MPDUs for which ACK was sucessful but no Tx happened */
+
+    A_UINT32 txq_timeout;            /* Number of times txq timeout happened */
 } htt_tx_hwq_stats_cmn_tlv;
 
 #define HTT_TX_HWQ_DIFS_LATENCY_STATS_TLV_SZ(_num_elems) ( sizeof(A_UINT32) + /* hist_intvl */ \
@@ -1318,6 +1365,45 @@ typedef struct {
     A_UINT32 fes_result[1]; /* HTT_TX_HWQ_MAX_FES_RESULT_STATS */
 } htt_tx_hwq_fes_result_stats_tlv_v;
 
+#define HTT_TX_HWQ_TRIED_MPDU_CNT_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
+/* NOTE: Variable length TLV, use length spec to infer array size
+ *
+ *  The hwq_tried_mpdu_cnt_hist is a  histogram of MPDUs tries per HWQ.
+ *  The tries here is the count of the  MPDUS within a PPDU that the HW
+ *  had attempted to transmit on  air, for the HWSCH Schedule command
+ *  submitted by FW in this HWQ .It is not the retry attempts. The
+ *  histogram bins are  0-29, 30-59, 60-89 and so on. The are 10 bins
+ *  in this histogram.
+ *  they are defined in FW using the following macros
+ *  #define WAL_MAX_TRIED_MPDU_CNT_HISTOGRAM 9
+ *  #define WAL_TRIED_MPDU_CNT_HISTOGRAM_INTERVAL 30
+ *
+ * */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* Histogram of number of mpdus on tried mpdu */
+    A_UINT32 tried_mpdu_cnt_hist[1]; /* HTT_TX_HWQ_TRIED_MPDU_CNT_HIST */
+    A_UINT32 hist_bin_size;
+} htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v;
+
+#define HTT_TX_HWQ_TXOP_USED_CNT_HIST_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
+/* NOTE: Variable length TLV, use length spec to infer array size
+ *
+ * The txop_used_cnt_hist is the histogram of txop per burst. After
+ * completing the burst, we identify the txop used in the burst and
+ * incr the corresponding bin.
+ * Each bin represents 1ms & we have 10 bins in this histogram.
+ * they are deined in FW using the following macros
+ * #define WAL_MAX_TXOP_USED_CNT_HISTOGRAM 10
+ * #define WAL_TXOP_USED_HISTOGRAM_INTERVAL 1000 ( 1 ms )
+ *
+ * */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* Histogram of txop used cnt */
+    A_UINT32 txop_used_cnt_hist[1]; /* HTT_TX_HWQ_TXOP_USED_CNT_HIST */
+} htt_tx_hwq_txop_used_cnt_hist_tlv_v;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_HWQ
  * TLV_TAGS:
  *    - HTT_STATS_STRING_TAG
@@ -1326,10 +1412,17 @@ typedef struct {
  *    - HTT_STATS_TX_HWQ_CMD_RESULT_TAG
  *    - HTT_STATS_TX_HWQ_CMD_STALL_TAG
  *    - HTT_STATS_TX_HWQ_FES_STATUS_TAG
+ *    - HTT_STATS_TX_HWQ_TRIED_MPDU_CNT_HIST_TAG
+ *    - HTT_STATS_TX_HWQ_TXOP_USED_CNT_HIST_TAG
  */
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
  * Instead, use the constituent TLV structures to fill/parse.
+ * General  HWQ stats Mechanism:
+ * Once the host request for the stats, FW fill all the HWQ TAGS in a buffer
+ * for all the HWQ requested. & the FW send the  buffer to  host. In the
+ * buffer the HWQ ID  is filled in mac_id__hwq_id, thus identifying each
+ * HWQ distinctly.
  */
 typedef struct _htt_tx_hwq_stats {
     htt_stats_string_tlv hwq_str_tlv;
@@ -1338,6 +1431,8 @@ typedef struct _htt_tx_hwq_stats {
     htt_tx_hwq_cmd_result_stats_tlv_v cmd_result_tlv;
     htt_tx_hwq_cmd_stall_stats_tlv_v cmd_stall_tlv;
     htt_tx_hwq_fes_result_stats_tlv_v fes_stats_tlv;
+    htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v tried_mpdu_tlv;
+    htt_tx_hwq_txop_used_cnt_hist_tlv_v txop_used_tlv;
 } htt_tx_hwq_stats_t;
 
 /* == TX SELFGEN STATS == */
@@ -1752,6 +1847,22 @@ typedef struct {
     A_UINT32 enqueue_notify;
     A_UINT32 notify_mpdu_at_head;
     A_UINT32 notify_mpdu_state_valid;
+/*
+ * On receiving TQM_FLOW_NOT_EMPTY_STATUS from TQM, (on MSDUs being enqueued
+ * the flow is non empty), if the number of MSDUs is greater than the threshold,
+ * notify is incremented. UDP_THRESH counters are for UDP MSDUs, and NONUDP are
+ * for non-UDP MSDUs.
+ * MSDUQ_SWNOTIFY_UDP_THRESH1 threshold    - sched_udp_notify1 is incremented
+ * MSDUQ_SWNOTIFY_UDP_THRESH2 threshold    - sched_udp_notify2 is incremented
+ * MSDUQ_SWNOTIFY_NONUDP_THRESH1 threshold - sched_nonudp_notify1 is incremented
+ * MSDUQ_SWNOTIFY_NONUDP_THRESH2 threshold - sched_nonudp_notify2 is incremented
+ *
+ * Notify signifies that we trigger the scheduler.
+ */
+    A_UINT32 sched_udp_notify1;
+    A_UINT32 sched_udp_notify2;
+    A_UINT32 sched_nonudp_notify1;
+    A_UINT32 sched_nonudp_notify2;
 } htt_tx_tqm_pdev_stats_tlv_v;
 
 #define HTT_TX_TQM_CMN_STATS_MAC_ID_M     0x000000ff
@@ -1905,6 +2016,8 @@ typedef struct {
     A_UINT32    eapol_lookup_failed;
     A_UINT32    qpeer_not_allow_data;
     A_UINT32    fse_tid_override;
+    A_UINT32    ipv6_jumbogram_zero_length;
+    A_UINT32    qos_to_non_qos_in_prog;
 } htt_tx_de_classify_failed_stats_tlv;
 
 typedef struct {
@@ -1938,6 +2051,15 @@ typedef struct {
     A_UINT32    fse_hwqueue_send_to_host;
     A_UINT32    mcast_entry;
     A_UINT32    bcast_entry;
+    A_UINT32    htt_update_peer_cache;
+    A_UINT32    htt_learning_frame;
+    A_UINT32    fse_invalid_peer;
+    /*
+     * mec_notify is HTT TX WBM multicast echo check notification
+     * from firmware to host.  FW sends SA addresses to host for all
+     * multicast/broadcast packets received on STA side.
+     */
+    A_UINT32    mec_notify;
 } htt_tx_de_classify_stats_tlv;
 
 typedef struct {
@@ -1988,6 +2110,22 @@ typedef struct {
          ((_var) |= ((_val) << HTT_TX_DE_CMN_STATS_MAC_ID_S)); \
      } while (0)
 
+/*
+ *  The htt_tx_de_fw2wbm_ring_full_hist_tlv is a histogram of time we waited
+ *  for the fw2wbm ring buffer.  we are requesting a buffer in FW2WBM release
+ *  ring,which may fail, due to non availability of buffer. Hence we sleep for
+ *  200us & again request for it. This is a histogram of time we wait, with
+ *  bin of 200ms & there are 10 bin (2 seconds max)
+ *  They are defined by the following macros in FW
+ *  #define ENTRIES_PER_BIN_COUNT 1000  // per bin 1000 * 200us = 200ms
+ *  #define RING_FULL_BIN_ENTRIES (WAL_TX_DE_FW2WBM_ALLOC_TIMEOUT_COUNT /
+ *                               ENTRIES_PER_BIN_COUNT)
+ */
+typedef struct {
+     htt_tlv_hdr_t tlv_hdr;
+     A_UINT32 fw2wbm_ring_full_hist[1];
+} htt_tx_de_fw2wbm_ring_full_hist_tlv;
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /* BIT [ 7 :  0]   :- mac_id
@@ -2007,6 +2145,7 @@ typedef struct {
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_DE_INFO
  * TLV_TAGS:
  *     - HTT_STATS_TX_DE_CMN_TAG
+ *     - HTT_STATS_TX_DE_FW2WBM_RING_FULL_HIST_TAG
  *     - HTT_STATS_TX_DE_EAPOL_PACKETS_TAG
  *     - HTT_STATS_TX_DE_CLASSIFY_STATS_TAG
  *     - HTT_STATS_TX_DE_CLASSIFY_FAILED_TAG
@@ -2021,6 +2160,7 @@ typedef struct {
  */
 typedef struct {
     htt_tx_de_cmn_stats_tlv             cmn_tlv;
+    htt_tx_de_fw2wbm_ring_full_hist_tlv fw2wbm_hist_tlv;
     htt_tx_de_eapol_packets_stats_tlv   eapol_stats_tlv;
     htt_tx_de_classify_stats_tlv        classify_stats_tlv;
     htt_tx_de_classify_failed_stats_tlv classify_failed_tlv;
@@ -2641,6 +2781,8 @@ typedef struct {
 
 /* == PDEV RX RATE CTRL STATS == */
 
+#define HTT_RX_PDEV_STATS_NUM_LEGACY_CCK_STATS     4
+#define HTT_RX_PDEV_STATS_NUM_LEGACY_OFDM_STATS    8
 #define HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS        12
 #define HTT_RX_PDEV_STATS_NUM_GI_COUNTERS          4
 #define HTT_RX_PDEV_STATS_NUM_DCM_COUNTERS         5
@@ -2689,6 +2831,16 @@ typedef struct {
     /* Counters to track number of rx packets in each GI in each mcs (0-11) */
     A_UINT32 rx_gi[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
     A_INT32 rssi_in_dbm; /* rx Signal Strength value in dBm unit */
+
+    A_UINT32 rx_11ax_su_ext;
+    A_UINT32 rx_11ac_mumimo;
+    A_UINT32 rx_11ax_mumimo;
+    A_UINT32 rx_11ax_ofdma;
+    A_UINT32 txbf;
+    A_UINT32 rx_legacy_cck_rate[HTT_RX_PDEV_STATS_NUM_LEGACY_CCK_STATS];
+    A_UINT32 rx_legacy_ofdm_rate[HTT_RX_PDEV_STATS_NUM_LEGACY_OFDM_STATS];
+    A_UINT32 rx_active_dur_us_low;
+    A_UINT32 rx_active_dur_us_high;
 } htt_rx_pdev_rate_stats_tlv;
 
 
