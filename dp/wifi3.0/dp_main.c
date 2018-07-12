@@ -54,11 +54,9 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #include "dp_ipa.h"
 
 #ifdef CONFIG_MCL
-static void dp_service_mon_rings(void *arg);
 #ifndef REMOVE_PKT_LOG
 #include <pktlog_ac_api.h>
 #include <pktlog_ac.h>
-static void dp_pkt_log_con_service(struct cdp_pdev *ppdev, void *scn);
 #endif
 #endif
 static void dp_pktlogmod_exit(struct dp_pdev *handle);
@@ -297,6 +295,144 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_SRNG_PTR_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_RX_MON_STATS},
 };
+
+/* MCL specific functions */
+#ifdef CONFIG_MCL
+/**
+ * dp_soc_get_mon_mask_for_interrupt_mode() - get mon mode mask for intr mode
+ * @soc: pointer to dp_soc handle
+ * @intr_ctx_num: interrupt context number for which mon mask is needed
+ *
+ * For MCL, monitor mode rings are being processed in timer contexts (polled).
+ * This function is returning 0, since in interrupt mode(softirq based RX),
+ * we donot want to process monitor mode rings in a softirq.
+ *
+ * So, in case packet log is enabled for SAP/STA/P2P modes,
+ * regular interrupt processing will not process monitor mode rings. It would be
+ * done in a separate timer context.
+ *
+ * Return: 0
+ */
+static inline
+uint32_t dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx_num)
+{
+	return 0;
+}
+
+/*
+ * dp_service_mon_rings()- timer to reap monitor rings
+ * reqd as we are not getting ppdu end interrupts
+ * @arg: SoC Handle
+ *
+ * Return:
+ *
+ */
+static void dp_service_mon_rings(void *arg)
+{
+	struct dp_soc *soc = (struct dp_soc *)arg;
+	int ring = 0, work_done, mac_id;
+	struct dp_pdev *pdev = NULL;
+
+	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
+		pdev = soc->pdev_list[ring];
+		if (!pdev)
+			continue;
+		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
+								pdev->pdev_id);
+			work_done = dp_mon_process(soc, mac_for_pdev,
+						   QCA_NAPI_BUDGET);
+
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				  FL("Reaped %d descs from Monitor rings"),
+				  work_done);
+		}
+	}
+
+	qdf_timer_mod(&soc->mon_reap_timer, DP_INTR_POLL_TIMER_MS);
+}
+
+#ifndef REMOVE_PKT_LOG
+/**
+ * dp_pkt_log_init() - API to initialize packet log
+ * @ppdev: physical device handle
+ * @scn: HIF context
+ *
+ * Return: none
+ */
+void dp_pkt_log_init(struct cdp_pdev *ppdev, void *scn)
+{
+	struct dp_pdev *handle = (struct dp_pdev *)ppdev;
+
+	if (handle->pkt_log_init) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Packet log not initialized", __func__);
+		return;
+	}
+
+	pktlog_sethandle(&handle->pl_dev, scn);
+	pktlog_set_callback_regtype(PKTLOG_LITE_CALLBACK_REGISTRATION);
+
+	if (pktlogmod_init(scn)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: pktlogmod_init failed", __func__);
+		handle->pkt_log_init = false;
+	} else {
+		handle->pkt_log_init = true;
+	}
+}
+
+/**
+ * dp_pkt_log_con_service() - connect packet log service
+ * @ppdev: physical device handle
+ * @scn: device context
+ *
+ * Return: none
+ */
+static void dp_pkt_log_con_service(struct cdp_pdev *ppdev, void *scn)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
+
+	dp_pkt_log_init((struct cdp_pdev *)pdev, scn);
+	pktlog_htc_attach();
+}
+
+/**
+ * dp_pktlogmod_exit() - API to cleanup pktlog info
+ * @handle: Pdev handle
+ *
+ * Return: none
+ */
+static void dp_pktlogmod_exit(struct dp_pdev *handle)
+{
+	void *scn = (void *)handle->soc->hif_handle;
+
+	if (!scn) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid hif(scn) handle", __func__);
+		return;
+	}
+
+	pktlogmod_exit(scn);
+	handle->pkt_log_init = false;
+}
+#endif
+#else
+static void dp_pktlogmod_exit(struct dp_pdev *handle) { }
+
+/**
+ * dp_soc_get_mon_mask_for_interrupt_mode() - get mon mode mask for intr mode
+ * @soc: pointer to dp_soc handle
+ * @intr_ctx_num: interrupt context number for which mon mask is needed
+ *
+ * Return: mon mask value
+ */
+static inline
+uint32_t dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx_num)
+{
+	return wlan_cfg_get_rx_mon_ring_mask(soc->wlan_cfg_ctx, intr_ctx_num);
+}
+#endif
 
 static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
 					struct cdp_peer *peer_hdl,
@@ -1275,7 +1411,7 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 		int rx_mask =
 			wlan_cfg_get_rx_ring_mask(soc->wlan_cfg_ctx, i);
 		int rx_mon_mask =
-			wlan_cfg_get_rx_mon_ring_mask(soc->wlan_cfg_ctx, i);
+			dp_soc_get_mon_mask_for_interrupt_mode(soc, i);
 		int rx_err_ring_mask =
 			wlan_cfg_get_rx_err_ring_mask(soc->wlan_cfg_ctx, i);
 		int rx_wbm_rel_ring_mask =
@@ -7848,107 +7984,3 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	return 0;
 }
 #endif
-
-#ifdef CONFIG_MCL
-/*
- * dp_service_mon_rings()- timer to reap monitor rings
- * reqd as we are not getting ppdu end interrupts
- * @arg: SoC Handle
- *
- * Return:
- *
- */
-static void dp_service_mon_rings(void *arg)
-{
-	struct dp_soc *soc = (struct dp_soc *) arg;
-	int ring = 0, work_done, mac_id;
-	struct dp_pdev *pdev = NULL;
-
-	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
-		pdev = soc->pdev_list[ring];
-		if (pdev == NULL)
-			continue;
-		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
-								pdev->pdev_id);
-			work_done = dp_mon_process(soc, mac_for_pdev,
-							QCA_NAPI_BUDGET);
-
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				FL("Reaped %d descs from Monitor rings"),
-				work_done);
-		}
-	}
-
-	qdf_timer_mod(&soc->mon_reap_timer, DP_INTR_POLL_TIMER_MS);
-}
-
-#ifndef REMOVE_PKT_LOG
-/**
- * dp_pkt_log_init() - API to initialize packet log
- * @ppdev: physical device handle
- * @scn: HIF context
- *
- * Return: none
- */
-void dp_pkt_log_init(struct cdp_pdev *ppdev, void *scn)
-{
-	struct dp_pdev *handle = (struct dp_pdev *)ppdev;
-
-	if (handle->pkt_log_init) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			 "%s: Packet log not initialized", __func__);
-		return;
-	}
-
-	pktlog_sethandle(&handle->pl_dev, scn);
-	pktlog_set_callback_regtype(PKTLOG_LITE_CALLBACK_REGISTRATION);
-
-	if (pktlogmod_init(scn)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			 "%s: pktlogmod_init failed", __func__);
-		handle->pkt_log_init = false;
-	} else {
-		handle->pkt_log_init = true;
-	}
-}
-
-/**
- * dp_pkt_log_con_service() - connect packet log service
- * @ppdev: physical device handle
- * @scn: device context
- *
- * Return: none
- */
-static void dp_pkt_log_con_service(struct cdp_pdev *ppdev, void *scn)
-{
-	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
-
-	dp_pkt_log_init((struct cdp_pdev *)pdev, scn);
-	pktlog_htc_attach();
-}
-
-/**
- * dp_pktlogmod_exit() - API to cleanup pktlog info
- * @handle: Pdev handle
- *
- * Return: none
- */
-static void dp_pktlogmod_exit(struct dp_pdev *handle)
-{
-	void *scn = (void *)handle->soc->hif_handle;
-
-	if (!scn) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			 "%s: Invalid hif(scn) handle", __func__);
-		return;
-	}
-
-	pktlogmod_exit(scn);
-	handle->pkt_log_init = false;
-}
-#endif
-#else
-static void dp_pktlogmod_exit(struct dp_pdev *handle) { }
-#endif
-
