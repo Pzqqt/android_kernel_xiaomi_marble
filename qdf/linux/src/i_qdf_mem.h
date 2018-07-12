@@ -267,6 +267,22 @@ __qdf_os_mem_dma_get_sgtable(struct device *dev, void *sgt, void *cpu_addr,
 }
 
 /**
+ * __qdf_dma_get_sgtable_dma_addr()-Assigns DMA address to scatterlist elements
+ * @sgt: scatter gather table pointer
+ *
+ * @Return: None
+ */
+static inline void
+__qdf_dma_get_sgtable_dma_addr(struct sg_table *sgt)
+{
+	struct scatterlist *sg;
+	int i;
+
+	for_each_sg(sgt->sgl, sg, sgt->nents, i)
+		sg->dma_address = sg_phys(sg);
+}
+
+/**
  * __qdf_mem_get_dma_addr() - Return dma addr based on SMMU translation status
  * @osdev: parent device instance
  * @mem_info: Pointer to allocated memory information
