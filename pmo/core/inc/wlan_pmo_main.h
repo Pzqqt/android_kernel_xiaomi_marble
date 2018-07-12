@@ -36,6 +36,17 @@
 #define pmo_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_PMO, params)
 #define pmo_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_PMO, params)
 
+#define pmo_nofl_fatal(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_PMO, params)
+#define pmo_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_PMO, params)
+#define pmo_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_PMO, params)
+#define pmo_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_PMO, params)
+#define pmo_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_PMO, params)
+
 #define pmo_enter() QDF_TRACE_ENTER(QDF_MODULE_ID_PMO, "enter")
 #define pmo_exit() QDF_TRACE_EXIT(QDF_MODULE_ID_PMO, "exit")
 
