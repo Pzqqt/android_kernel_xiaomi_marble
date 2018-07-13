@@ -73,7 +73,7 @@ QDF_STATUS wmi_unified_set_passpoint_network_list_cmd(void *wmi_hdl,
  *          error number otherwise
  */
 QDF_STATUS wmi_unified_set_epno_network_list_cmd(void *wmi_hdl,
-		struct wifi_enhanched_pno_params *req)
+		struct wifi_enhanced_pno_params *req)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
@@ -246,7 +246,7 @@ QDF_STATUS wmi_unified_start_extscan_cmd(void *wmi_hdl,
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure.
  */
 QDF_STATUS wmi_unified_get_buf_extscan_hotlist_cmd(void *wmi_hdl,
-				   struct ext_scan_setbssi_hotlist_params *
+				   struct ext_scan_setbssid_hotlist_params *
 				   photlist, int *buf_len)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
