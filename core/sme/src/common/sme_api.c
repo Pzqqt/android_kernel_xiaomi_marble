@@ -15008,7 +15008,23 @@ QDF_STATUS sme_fast_reassoc(tHalHandle hal, struct csr_roam_profile *profile,
 	struct wma_roam_invoke_cmd *fastreassoc;
 	struct scheduler_msg msg = {0};
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session;
+	struct csr_roam_profile *roam_profile;
 
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+	if (!session || !session->pCurRoamProfile) {
+		sme_err("session %d not found", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	roam_profile = session->pCurRoamProfile;
+	if (roam_profile->supplicant_disabled_roaming ||
+	    roam_profile->driver_disabled_roaming) {
+		sme_debug("roaming status in Supplicant %d and in driver %d",
+			  roam_profile->supplicant_disabled_roaming,
+			  roam_profile->driver_disabled_roaming);
+		return QDF_STATUS_E_FAILURE;
+	}
 	fastreassoc = qdf_mem_malloc(sizeof(*fastreassoc));
 	if (NULL == fastreassoc) {
 		sme_err("qdf_mem_malloc failed for fastreassoc");

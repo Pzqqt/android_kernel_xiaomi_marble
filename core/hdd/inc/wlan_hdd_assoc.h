@@ -359,8 +359,9 @@ void hdd_delete_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id);
 QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t sta_id);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
-				  const tSirMacAddr bssid, int channel);
+QDF_STATUS
+hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
+			     const tSirMacAddr bssid, int channel);
 /**
  * hdd_save_gtk_params() - Save GTK offload params
  * @adapter: HDD adapter
@@ -372,9 +373,11 @@ void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 void hdd_save_gtk_params(struct hdd_adapter *adapter,
 			 struct csr_roam_info *csr_roam_info, bool is_reassoc);
 #else
-static inline void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
-		const tSirMacAddr bssid, int channel)
+static inline QDF_STATUS
+hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
+			     const tSirMacAddr bssid, int channel)
 {
+	return QDF_STATUS_SUCCESS;
 }
 static inline void hdd_save_gtk_params(struct hdd_adapter *adapter,
 				       struct csr_roam_info *csr_roam_info,
