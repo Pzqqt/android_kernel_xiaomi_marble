@@ -26,7 +26,7 @@ QDF_STATUS wmi_unified_set_passpoint_network_list_cmd(void *wmi_hdl,
 					struct wifi_passpoint_req_param *req);
 
 QDF_STATUS wmi_unified_set_epno_network_list_cmd(void *wmi_hdl,
-		struct wifi_enhanched_pno_params *req);
+		struct wifi_enhanced_pno_params *req);
 
 QDF_STATUS wmi_unified_extscan_get_capabilities_cmd(void *wmi_hdl,
 			  struct extscan_capabilities_params *pgetcapab);
@@ -51,7 +51,7 @@ QDF_STATUS wmi_unified_start_extscan_cmd(void *wmi_hdl,
 			  struct wifi_scan_cmd_req_params *pstart);
 
 QDF_STATUS wmi_unified_get_buf_extscan_hotlist_cmd(void *wmi_hdl,
-				   struct ext_scan_setbssi_hotlist_params *
+				   struct ext_scan_setbssid_hotlist_params *
 				   photlist, int *buf_len);
 
 #endif /* _WMI_UNIFIED_EXTSCAN_API_H_ */

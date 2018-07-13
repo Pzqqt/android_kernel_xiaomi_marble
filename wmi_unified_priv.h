@@ -470,7 +470,7 @@ QDF_STATUS (*send_set_passpoint_network_list_cmd)(wmi_unified_t wmi_handle,
 					struct wifi_passpoint_req_param *req);
 
 QDF_STATUS (*send_set_epno_network_list_cmd)(wmi_unified_t wmi_handle,
-		struct wifi_enhanched_pno_params *req);
+		struct wifi_enhanced_pno_params *req);
 
 QDF_STATUS (*send_extscan_get_capabilities_cmd)(wmi_unified_t wmi_handle,
 			  struct extscan_capabilities_params *pgetcapab);
@@ -807,7 +807,7 @@ QDF_STATUS (*send_get_arp_stats_req_cmd)(wmi_unified_t wmi_handle,
 					 struct get_arp_stats *req_buf);
 
 QDF_STATUS (*send_get_buf_extscan_hotlist_cmd)(wmi_unified_t wmi_handle,
-				   struct ext_scan_setbssi_hotlist_params *
+				   struct ext_scan_setbssid_hotlist_params *
 				   photlist, int *buf_len);
 
 #ifdef FEATURE_WLAN_APF
