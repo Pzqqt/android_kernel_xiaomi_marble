@@ -128,20 +128,55 @@ void hdd_notify_tdls_reset_adapter(struct wlan_objmgr_vdev *vdev)
 	ucfg_tdls_notify_reset_adapter(vdev);
 }
 
+static void hdd_notify_sta_connect_callback(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		cfg80211_err("vdev is NULL");
+		return;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+}
+
 void
 hdd_notify_sta_connect(uint8_t session_id,
 		       bool tdls_chan_swit_prohibited,
 		       bool tdls_prohibited,
 		       struct wlan_objmgr_vdev *vdev)
 {
-	struct tdls_sta_notify_params notify_info;
+	struct tdls_sta_notify_params notify_info = {0};
+	QDF_STATUS status;
+
+	if (!vdev) {
+		cfg80211_err("vdev is NULL");
+		return;
+	}
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_TDLS_NB_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("can't get vdev");
+		return;
+	}
 
 	notify_info.session_id = session_id;
 	notify_info.vdev = vdev;
 	notify_info.tdls_chan_swit_prohibited = tdls_chan_swit_prohibited;
 	notify_info.tdls_prohibited = tdls_prohibited;
-	ucfg_tdls_notify_sta_connect(&notify_info);
+	notify_info.callback = hdd_notify_sta_connect_callback;
+	status = ucfg_tdls_notify_sta_connect(&notify_info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("ucfg_tdls_notify_sta_connect failed");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+	}
+}
 
+static void hdd_notify_sta_disconnect_callback(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		cfg80211_err("vdev is NULL");
+		return;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 }
 
 void hdd_notify_sta_disconnect(uint8_t session_id,
@@ -149,14 +184,32 @@ void hdd_notify_sta_disconnect(uint8_t session_id,
 			       bool user_disconnect,
 			       struct wlan_objmgr_vdev *vdev)
 {
-	struct tdls_sta_notify_params notify_info;
+	struct tdls_sta_notify_params notify_info = {0};
+	QDF_STATUS status;
+
+	if (!vdev) {
+		cfg80211_err("vdev is NULL");
+		return;
+	}
+
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_TDLS_NB_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("can't get vdev");
+		return;
+	}
 
 	notify_info.session_id = session_id;
 	notify_info.lfr_roam = lfr_roam;
+	notify_info.tdls_chan_swit_prohibited = false;
+	notify_info.tdls_prohibited = false;
 	notify_info.vdev = vdev;
 	notify_info.user_disconnect = user_disconnect;
-	ucfg_tdls_notify_sta_disconnect(&notify_info);
-
+	notify_info.callback = hdd_notify_sta_disconnect_callback;
+	status = ucfg_tdls_notify_sta_disconnect(&notify_info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("ucfg_tdls_notify_sta_disconnect failed");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+	}
 }
 int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_pdev *pdev,
 				struct net_device *dev, const uint8_t *mac)

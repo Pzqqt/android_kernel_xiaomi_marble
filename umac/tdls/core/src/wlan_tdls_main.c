@@ -901,19 +901,16 @@ QDF_STATUS tdls_notify_sta_connect(struct tdls_sta_notify_params *notify)
 {
 	QDF_STATUS status;
 
-	if (!notify || !notify->vdev)
-		return QDF_STATUS_E_INVAL;
-
-	if (QDF_STATUS_SUCCESS != wlan_objmgr_vdev_try_get_ref(notify->vdev,
-							WLAN_TDLS_NB_ID)) {
-		qdf_mem_free(notify);
+	if (!notify || !notify->vdev) {
+		tdls_err("invalid param");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	status = tdls_process_sta_connect(notify);
 
-	wlan_objmgr_vdev_release_ref(notify->vdev,
-				     WLAN_TDLS_NB_ID);
+	if (notify->callback)
+		notify->callback(notify->vdev);
+
 	qdf_mem_free(notify);
 	return status;
 }
@@ -993,19 +990,15 @@ QDF_STATUS tdls_notify_sta_disconnect(struct tdls_sta_notify_params *notify)
 {
 	QDF_STATUS status;
 
-	if (!notify || !notify->vdev)
-		return QDF_STATUS_E_INVAL;
-
-	if (QDF_STATUS_SUCCESS != wlan_objmgr_vdev_try_get_ref(notify->vdev,
-							WLAN_TDLS_NB_ID)) {
-		qdf_mem_free(notify);
+	if (!notify || !notify->vdev) {
+		tdls_err("invalid param");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	status = tdls_process_sta_disconnect(notify);
 
-	wlan_objmgr_vdev_release_ref(notify->vdev,
-			     WLAN_TDLS_NB_ID);
+	if (notify->callback)
+		notify->callback(notify->vdev);
 
 	qdf_mem_free(notify);
 	return status;
@@ -1127,8 +1120,8 @@ void tdls_notify_reset_adapter(struct wlan_objmgr_vdev *vdev)
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 }
 
-void tdls_peers_deleted_notification(struct wlan_objmgr_vdev *vdev,
-					 uint32_t session_id)
+QDF_STATUS tdls_peers_deleted_notification(
+				struct tdls_sta_notify_params *notify_info)
 {
 	struct scheduler_msg msg = {0, };
 	struct tdls_sta_notify_params *notify;
@@ -1137,15 +1130,10 @@ void tdls_peers_deleted_notification(struct wlan_objmgr_vdev *vdev,
 	notify = qdf_mem_malloc(sizeof(*notify));
 	if (!notify) {
 		tdls_err("memory allocation failed !!!");
-		return;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	notify->lfr_roam = true;
-	notify->tdls_chan_swit_prohibited = false;
-	notify->tdls_prohibited = false;
-	notify->session_id = session_id;
-	notify->vdev = vdev;
-	notify->user_disconnect = false;
+	*notify = *notify_info;
 
 	msg.bodyptr = notify;
 	msg.callback = tdls_process_cmd;
@@ -1155,7 +1143,10 @@ void tdls_peers_deleted_notification(struct wlan_objmgr_vdev *vdev,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(notify);
 		tdls_alert("message post failed ");
+		return QDF_STATUS_E_FAILURE;
 	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
