@@ -210,9 +210,9 @@ cfg_string_in_range(const char *value, qdf_size_t min_len, qdf_size_t max_len)
 	return len >= min_len && len <= max_len;
 }
 
-#define __cfg_int_in_range(value, min, max) (value >= min && value <= max)
-#define __cfg_uint_in_range(value, min, max) (value >= min && value <= max)
-#define __cfg_string_in_range(value, min_len, max_len) \
+#define __cfg_INT_in_range(value, min, max) (value >= min && value <= max)
+#define __cfg_UINT_in_range(value, min, max) (value >= min && value <= max)
+#define __cfg_STRING_in_range(value, min_len, max_len) \
 	cfg_string_in_range(value, min_len, max_len)
 
 #define __cfg_in_range(id, value, mtype) \
@@ -220,7 +220,7 @@ cfg_string_in_range(const char *value, qdf_size_t min_len, qdf_size_t max_len)
 
 /* this may look redundant, but forces @mtype to be expanded */
 #define __cfg_in_range_type(id, value, mtype) \
-	__cfg_is_range(id, value, mtype)
+	__cfg_in_range(id, value, mtype)
 
 #define cfg_in_range(id, value) __cfg_in_range_type(id, value, cfg_mtype(id))
 
