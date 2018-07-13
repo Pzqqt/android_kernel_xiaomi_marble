@@ -273,8 +273,8 @@ cfg_ipv6_item_handler(struct cfg_value_store *store,
 }
 
 /* populate metadata lookup table */
-#undef __CFG_ANY
-#define __CFG_ANY(_id, _mtype, _ctype, _name, _min, _max, _fallback, ...) \
+#undef __CFG_INI
+#define __CFG_INI(_id, _mtype, _ctype, _name, _min, _max, _fallback, ...) \
 { \
 	.name = _name, \
 	.field_offset = qdf_offsetof(struct cfg_values, _id##_internal), \
@@ -300,17 +300,17 @@ static const struct cfg_meta cfg_meta_lookup_table[] = {
 
 static void cfg_store_set_defaults(struct cfg_value_store *store)
 {
-#undef __CFG_ANY
-#define __CFG_ANY(id, mtype, ctype, name, min, max, fallback, desc, def...) \
+#undef __CFG_INI
+#define __CFG_INI(id, mtype, ctype, name, min, max, fallback, desc, def...) \
 	ctype id = def;
 
 	CFG_ALL
 
-#undef __CFG_STRING
-#define __CFG_STRING(id, mtype, ctype, name, min_len, max_len, ...) \
-	qdf_str_lcopy((char *)&store->values.id##_internal, id, max_len + 1);
-#undef __CFG_ANY
-#define __CFG_ANY(id, mtype, ctype, name, min, max, fallback, desc, def...) \
+#undef __CFG_INI_STRING
+#define __CFG_INI_STRING(id, mtype, ctype, name, min_len, max_len, ...) \
+	qdf_str_lcopy((char *)&store->values.id##_internal, id, (max_len) + 1);
+#undef __CFG_INI
+#define __CFG_INI(id, mtype, ctype, name, min, max, fallback, desc, def...) \
 	*(ctype *)&store->values.id##_internal = id;
 
 	CFG_ALL

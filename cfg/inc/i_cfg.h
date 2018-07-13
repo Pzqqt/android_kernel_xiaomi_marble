@@ -38,11 +38,12 @@
 
 /* define global config values structure */
 
-#undef __CFG_STRING
-#define __CFG_STRING(id, mtype, ctype, name, min, max, fallback, desc, def...) \
-	const char id##_internal[max + 1];
-#undef __CFG_ANY
-#define __CFG_ANY(id, mtype, ctype, name, min, max, fallback, desc, def...) \
+#undef __CFG_INI_STRING
+#define __CFG_INI_STRING(id, mtype, ctype, name, min, max, fallback, desc, \
+			 def...) \
+	const char id##_internal[(max) + 1];
+#undef __CFG_INI
+#define __CFG_INI(id, mtype, ctype, name, min, max, fallback, desc, def...) \
 	const ctype id##_internal;
 
 struct cfg_values {
@@ -50,10 +51,10 @@ struct cfg_values {
 	CFG_ALL
 };
 
-#undef __CFG_STRING
-#define __CFG_STRING(args...) __CFG_ANY(args)
-#undef __CFG_ANY
-#define __CFG_ANY(args...) (args)
+#undef __CFG_INI_STRING
+#define __CFG_INI_STRING(args...) __CFG_INI(args)
+#undef __CFG_INI
+#define __CFG_INI(args...) (args)
 
 struct cfg_values *cfg_psoc_get_values(struct wlan_objmgr_psoc *psoc);
 

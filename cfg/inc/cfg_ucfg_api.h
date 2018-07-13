@@ -174,28 +174,36 @@ QDF_STATUS cfg_psoc_parse(struct wlan_objmgr_psoc *psoc, const char *path);
 
 #define cfg_id(id) #id
 
-#define __cfg_mtype(mtype, ctype, name, min, max, fallback, desc, def...) mtype
+#define __cfg_mtype(ini, mtype, ctype, name, min, max, fallback, desc, def...) \
+	mtype
 #define cfg_mtype(id) do_call(__cfg_mtype, id)
 
-#define __cfg_type(mtype, ctype, name, min, max, fallback, desc, def...) ctype
+#define __cfg_type(ini, mtype, ctype, name, min, max, fallback, desc, def...) \
+	ctype
 #define cfg_type(id) do_call(__cfg_type, id)
 
-#define __cfg_name(mtype, ctype, name, min, max, fallback, desc, def...) name
+#define __cfg_name(ini, mtype, ctype, name, min, max, fallback, desc, def...) \
+	name
 #define cfg_name(id) do_call(__cfg_name, id)
 
-#define __cfg_min(mtype, ctype, name, min, max, fallback, desc, def...) min
+#define __cfg_min(ini, mtype, ctype, name, min, max, fallback, desc, def...) \
+	min
 #define cfg_min(id) do_call(__cfg_min, id)
 
-#define __cfg_max(mtype, ctype, name, min, max, fallback, desc, def...) max
+#define __cfg_max(ini, mtype, ctype, name, min, max, fallback, desc, def...) \
+	max
 #define cfg_max(id) do_call(__cfg_max, id)
 
-#define __cfg_fb(mtype, ctype, name, min, max, fallback, desc, def...) fallback
+#define __cfg_fb(ini, mtype, ctype, name, min, max, fallback, desc, def...) \
+	fallback
 #define cfg_fallback(id) do_call(__cfg_fb, id)
 
-#define __cfg_desc(mtype, ctype, name, min, max, fallback, desc, def...) desc
+#define __cfg_desc(ini, mtype, ctype, name, min, max, fallback, desc, def...) \
+	desc
 #define cfg_description(id) do_call(__cfg_desc, id)
 
-#define __cfg_def(mtype, ctype, name, min, max, fallback, desc, def...) def
+#define __cfg_def(ini, mtype, ctype, name, min, max, fallback, desc, def...) \
+	def
 #define cfg_default(id) do_call(__cfg_def, id)
 
 #define __cfg_str(id...) #id

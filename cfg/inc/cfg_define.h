@@ -29,52 +29,60 @@ enum cfg_fallback_behavior {
 };
 
 #define rm_parens(...) __VA_ARGS__
-#define __CFG(id, mtype, args...) __CFG_##mtype(id, mtype, args)
+#define __CFG(id, is_ini, mtype, args...) \
+	__CFG_##is_ini##_##mtype(id, mtype, args)
 #define _CFG(id, args) __CFG(id, args)
 #define CFG(id) _CFG(__##id, rm_parens id)
 
-#define __CFG_INT(args...) __CFG_ANY(args)
-#define __CFG_UINT(args...) __CFG_ANY(args)
-#define __CFG_BOOL(args...) __CFG_ANY(args)
-#define __CFG_STRING(args...) __CFG_ANY(args)
-#define __CFG_MAC(args...) __CFG_ANY(args)
-#define __CFG_IPV4(args...) __CFG_ANY(args)
-#define __CFG_IPV6(args...) __CFG_ANY(args)
+#define __CFG_INI_INT(args...) __CFG_INI(args)
+#define __CFG_INI_UINT(args...) __CFG_INI(args)
+#define __CFG_INI_BOOL(args...) __CFG_INI(args)
+#define __CFG_INI_STRING(args...) __CFG_INI(args)
+#define __CFG_INI_MAC(args...) __CFG_INI(args)
+#define __CFG_INI_IPV4(args...) __CFG_INI(args)
+#define __CFG_INI_IPV6(args...) __CFG_INI(args)
+#define __CFG_INI(args...) (args)
 
-#define __CFG_ANY(args...) (args)
-#define __CFG_NONE(args...)
+#define __CFG_NON_INI_INT(args...) __CFG_NON_INI(args)
+#define __CFG_NON_INI_UINT(args...) __CFG_NON_INI(args)
+#define __CFG_NON_INI_BOOL(args...) __CFG_NON_INI(args)
+#define __CFG_NON_INI_STRING(args...) __CFG_NON_INI(args)
+#define __CFG_NON_INI_MAC(args...) __CFG_NON_INI(args)
+#define __CFG_NON_INI_IPV4(args...) __CFG_NON_INI(args)
+#define __CFG_NON_INI_IPV6(args...) __CFG_NON_INI(args)
+#define __CFG_NON_INI(args...)
 
 /* configuration available in ini */
 #define CFG_INI_INT(name, min, max, def, fallback, desc) \
-	(INT, int32_t, name, min, max, fallback, desc, def)
+	(INI, INT, int32_t, name, min, max, fallback, desc, def)
 #define CFG_INI_UINT(name, min, max, def, fallback, desc) \
-	(UINT, uint32_t, name, min, max, fallback, desc, def)
+	(INI, UINT, uint32_t, name, min, max, fallback, desc, def)
 #define CFG_INI_BOOL(name, def, desc) \
-	(BOOL, bool, name, -1, -1, -1, desc, def)
+	(INI, BOOL, bool, name, -1, -1, -1, desc, def)
 #define CFG_INI_STRING(name, min_len, max_len, def, desc) \
-	(STRING, char *, name, min_len, max_len, -1, desc, def)
+	(INI, STRING, char *, name, min_len, max_len, -1, desc, def)
 #define CFG_INI_MAC(name, def, desc) \
-	(MAC, struct qdf_mac_addr, name, -1, -1, -1, desc, def)
+	(INI, MAC, struct qdf_mac_addr, name, -1, -1, -1, desc, def)
 #define CFG_INI_IPV4(name, def, desc) \
-	(IPV4, struct qdf_ipv4_addr, name, -1, -1, -1, desc, def)
+	(INI, IPV4, struct qdf_ipv4_addr, name, -1, -1, -1, desc, def)
 #define CFG_INI_IPV6(name, def, desc) \
-	(IPV6, struct qdf_ipv6_addr, name, -1, -1, -1, desc, def)
+	(INI, IPV6, struct qdf_ipv6_addr, name, -1, -1, -1, desc, def)
 
 /* configuration *not* available in ini */
 #define CFG_INT(name, min, max, def, fallback, desc) \
-	(NONE, int32_t, name, min, max, fallback, desc, def)
+	(NON_INI, INT, int32_t, name, min, max, fallback, desc, def)
 #define CFG_UINT(name, min, max, def, fallback, desc) \
-	(NONE, uint32_t, name, min, max, fallback, desc, def)
+	(NON_INI, UINT, uint32_t, name, min, max, fallback, desc, def)
 #define CFG_BOOL(name, def, desc) \
-	(NONE, bool, name, -1, -1, -1, desc, def)
+	(NON_INI, BOOL, bool, name, -1, -1, -1, desc, def)
 #define CFG_STRING(name, min_len, max_len, def, desc) \
-	(NONE, char *, name, min_len, max_len, -1, desc, def)
+	(NON_INI, STRING, char *, name, min_len, max_len, -1, desc, def)
 #define CFG_MAC(name, def, desc) \
-	(NONE, struct qdf_mac_addr, name, -1, -1, -1, desc, def)
+	(NON_INI, MAC, struct qdf_mac_addr, name, -1, -1, -1, desc, def)
 #define CFG_IPV4(name, def, desc) \
-	(NONE, struct qdf_ipv4_addr, name, -1, -1, -1, desc, def)
+	(NON_INI, IPV4, struct qdf_ipv4_addr, name, -1, -1, -1, desc, def)
 #define CFG_IPV6(name, def, desc) \
-	(NONE, struct qdf_ipv6_addr, name, -1, -1, -1, desc, def)
+	(NON_INI, IPV6, struct qdf_ipv6_addr, name, -1, -1, -1, desc, def)
 
 /* utility macros/functions */
 #ifdef MCL
