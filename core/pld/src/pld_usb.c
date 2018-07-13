@@ -159,16 +159,56 @@ static int pld_usb_reset_resume(struct usb_interface *interface)
 }
 
 #ifdef CONFIG_PLD_USB_CNSS
+/**
+ * pld_usb_reinit() - SSR re-initialize function for USB device
+ * @interface: Pointer to struct usb_interface
+ * @id: Pointer to USB device ID
+ *
+ * Return: int
+ */
+static int pld_usb_reinit(struct usb_interface *interface,
+			  const struct usb_device_id *id)
+{
+	struct pld_context *pld_context;
+	struct usb_device *pdev = interface_to_usbdev(interface);
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->reinit)
+		return pld_context->ops->reinit(&pdev->dev, PLD_BUS_TYPE_USB,
+						interface, (void *)id);
+
+	return -ENODEV;
+}
+
+/**
+ * pld_usb_shutdown() - SSR shutdown function for USB device
+ * @interface: Pointer to struct usb_interface
+ *
+ * Return: void
+ */
+static void pld_usb_shutdown(struct usb_interface *interface)
+{
+	struct pld_context *pld_context;
+	struct usb_device *pdev = interface_to_usbdev(interface);
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->shutdown)
+		pld_context->ops->shutdown(&pdev->dev, PLD_BUS_TYPE_USB);
+}
+
 struct cnss_usb_wlan_driver pld_usb_ops = {
 	.name = "pld_usb_cnss",
 	.id_table = pld_usb_id_table,
 	.probe = pld_usb_probe,
-	.disconnect = pld_usb_remove,
+	.remove = pld_usb_remove,
+	.shutdown = pld_usb_shutdown,
+	.reinit = pld_usb_reinit,
 #ifdef CONFIG_PM
 	.suspend = pld_usb_suspend,
 	.resume = pld_usb_resume,
 	.reset_resume = pld_usb_reset_resume,
 #endif
+};
 
 /**
  * pld_usb_register_driver() - registration routine for wlan usb drive
@@ -178,7 +218,7 @@ struct cnss_usb_wlan_driver pld_usb_ops = {
 int pld_usb_register_driver(void)
 {
 	pr_info("%s usb_register\n", __func__);
-	return cnss_wlan_register_driver(&pld_usb_ops);
+	return cnss_usb_wlan_register_driver(&pld_usb_ops);
 }
 
 /**
@@ -188,7 +228,7 @@ int pld_usb_register_driver(void)
  */
 void pld_usb_unregister_driver(void)
 {
-	cnss_wlan_register_driver(&pld_usb_ops);
+	cnss_usb_wlan_unregister_driver(&pld_usb_ops);
 	pr_info("%s usb_deregister done!\n", __func__);
 }
 
