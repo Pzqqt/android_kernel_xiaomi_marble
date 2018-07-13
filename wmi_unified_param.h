@@ -1868,10 +1868,7 @@ struct wifi_passpoint_network_param {
  */
 struct wifi_passpoint_req_param {
 	uint32_t request_id;
-	union {
-		uint32_t session_id;
-		uint32_t vdev_id;
-	};
+	uint32_t vdev_id;
 	uint32_t num_networks;
 	struct wifi_passpoint_network_param networks[];
 };
@@ -2266,10 +2263,7 @@ struct wifi_epno_network_params {
  */
 struct wifi_enhanced_pno_params {
 	uint32_t    request_id;
-	union {
-		uint32_t    session_id;
-		uint32_t    vdev_id;
-	};
+	uint32_t    vdev_id;
 	uint32_t    min_5ghz_rssi;
 	uint32_t    min_24ghz_rssi;
 	uint32_t    initial_score_max;
@@ -2280,9 +2274,6 @@ struct wifi_enhanced_pno_params {
 	uint32_t    num_networks;
 	struct wifi_epno_network_params networks[];
 };
-
-/* legacy misspelled name */
-#define wifi_enhanched_pno_params wifi_enhanced_pno_params
 
 enum {
 	WMI_AP_RX_DATA_OFFLOAD             = 0x00,
@@ -2323,10 +2314,7 @@ enum wmi_extscan_report_events_type {
  */
 struct extscan_capabilities_params {
 	uint32_t request_id;
-	union {
-		uint8_t session_id;
-		uint8_t vdev_id;
-	};
+	uint8_t vdev_id;
 };
 
 /**
@@ -2337,10 +2325,7 @@ struct extscan_capabilities_params {
  */
 struct extscan_capabilities_reset_params {
 	uint32_t request_id;
-	union {
-		uint8_t session_id;
-		uint8_t vdev_id;
-	};
+	uint8_t vdev_id;
 };
 
 /**
@@ -2350,10 +2335,7 @@ struct extscan_capabilities_reset_params {
  */
 struct extscan_bssid_hotlist_reset_params {
 	uint32_t request_id;
-	union {
-		uint8_t session_id;
-		uint8_t vdev_id;
-	};
+	uint8_t vdev_id;
 };
 
 /**
@@ -2363,10 +2345,7 @@ struct extscan_bssid_hotlist_reset_params {
  */
 struct extscan_stop_req_params {
 	uint32_t request_id;
-	union {
-		uint8_t session_id;
-		uint8_t vdev_id;
-	};
+	uint8_t vdev_id;
 };
 
 /**
@@ -2393,10 +2372,7 @@ struct ap_threshold_params {
  */
 struct extscan_set_sig_changereq_params {
 	uint32_t request_id;
-	union {
-		uint8_t session_id;
-		uint8_t vdev_id;
-	};
+	uint8_t vdev_id;
 	uint32_t rssi_sample_size;
 	uint32_t lostap_sample_size;
 	uint32_t min_breaching;
@@ -2412,10 +2388,7 @@ struct extscan_set_sig_changereq_params {
  */
 struct extscan_cached_result_params {
 	uint32_t request_id;
-	union {
-		uint8_t session_id;
-		uint8_t vdev_id;
-	};
+	uint8_t vdev_id;
 	bool flush;
 };
 
@@ -2434,15 +2407,9 @@ struct extscan_cached_result_params {
  */
 struct wifi_scan_channelspec_params {
 	uint32_t channel;
-	union {
-		uint32_t dwellTimeMs;
-		uint32_t dwell_time_ms;
-	};
+	uint32_t dwell_time_ms;
 	bool passive;
-	union {
-		uint8_t chnlClass;
-		uint8_t channel_class;
-	};
+	uint8_t channel_class;
 };
 
 /**
@@ -2504,17 +2471,11 @@ struct wifi_scan_bucket_params {
 	uint8_t         bucket;
 	enum wmi_wifi_band   band;
 	uint32_t        period;
-	union {
-		uint32_t        reportEvents;
-		uint32_t        report_events;
-	};
+	uint32_t        report_events;
 	uint32_t        max_period;
 	uint32_t        exponent;
 	uint32_t        step_count;
-	union {
-		uint32_t        numChannels;
-		uint32_t        num_channels;
-	};
+	uint32_t        num_channels;
 	uint32_t        min_dwell_time_active;
 	uint32_t        max_dwell_time_active;
 	uint32_t        min_dwell_time_passive;
@@ -2543,28 +2504,13 @@ struct wifi_scan_bucket_params {
  * @buckets: buckets array
  */
 struct wifi_scan_cmd_req_params {
-	union {
-		uint32_t basePeriod;
-		uint32_t base_period;
-	};
-	union {
-		uint32_t maxAPperScan;
-		uint32_t max_ap_per_scan;
-	};
+	uint32_t base_period;
+	uint32_t max_ap_per_scan;
 	uint32_t report_threshold_percent;
 	uint32_t report_threshold_num_scans;
-	union {
-		uint32_t requestId;
-		uint32_t request_id;
-	};
-	union {
-		uint8_t  sessionId;
-		uint8_t  vdev_id;
-	};
-	union {
-		uint32_t numBuckets;
-		uint32_t num_buckets;
-	};
+	uint32_t request_id;
+	uint8_t  vdev_id;
+	uint32_t num_buckets;
 	uint32_t min_dwell_time_active;
 	uint32_t max_dwell_time_active;
 	uint32_t min_dwell_time_passive;
@@ -3628,24 +3574,12 @@ struct wmi_roam_invoke_cmd {
  * @ap: hotlist APs
  */
 struct ext_scan_setbssid_hotlist_params {
-	union {
-		uint32_t  requestId;
-		uint32_t  request_id;
-	};
-	union {
-		uint8_t   sessionId;
-		uint8_t   vdev_id;
-	};
+	uint32_t  request_id;
+	uint8_t   vdev_id;
 	uint32_t  lost_ap_sample_size;
-	union {
-		uint32_t  numAp;
-		uint32_t  num_ap;
-	};
+	uint32_t  num_ap;
 	struct ap_threshold_params ap[WMI_WLAN_EXTSCAN_MAX_HOTLIST_APS];
 };
-
-/* legacy misspelled name */
-#define ext_scan_setbssi_hotlist_params ext_scan_setbssid_hotlist_params
 
 /**
  * struct host_mem_req - Host memory request paramseters request by target
