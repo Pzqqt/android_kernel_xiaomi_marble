@@ -3513,10 +3513,11 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 		/* send VAD configuration if is enabled */
 		if (this_afe.vad_cfg[port_index].is_enable) {
 			ret = afe_send_port_vad_cfg_params(port_id);
-			if (ret)
+			if (ret) {
 				pr_err("%s: afe send VAD config failed %d\n",
 					__func__, ret);
 				goto fail_cmd;
+			}
 		}
 	}
 

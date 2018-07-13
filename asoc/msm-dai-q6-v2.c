@@ -1127,7 +1127,6 @@ static int msm_dai_q6_dai_auxpcm_remove(struct snd_soc_dai *dai)
 	return 0;
 }
 
-
 static int msm_dai_q6_island_mode_put(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
@@ -1155,6 +1154,7 @@ static struct snd_kcontrol_new island_config_controls[] = {
 	{
 	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "?",
+	.info = snd_ctl_boolean_mono_info,
 	.get = msm_dai_q6_island_mode_get,
 	.put = msm_dai_q6_island_mode_put,
 	.private_value = SOC_SINGLE_VALUE(0, 0, 1, 0, 0)
@@ -1178,8 +1178,7 @@ static int msm_dai_q6_add_island_mx_ctls(struct snd_card *card,
 	if (!mixer_str)
 		return -ENOMEM;
 
-	snprintf(mixer_str, ctl_len + strlen(mx_ctl_name) + 1,
-		 "%s %s", dai_name, mx_ctl_name);
+	snprintf(mixer_str, ctl_len, "%s %s", dai_name, mx_ctl_name);
 	island_config_controls[0].name = mixer_str;
 	((struct soc_enum *) island_config_controls[0].private_value)->reg
 		= dai_id;
