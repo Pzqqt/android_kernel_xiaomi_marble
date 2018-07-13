@@ -4466,13 +4466,13 @@ QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	params->basePeriod = pstart->basePeriod;
-	params->maxAPperScan = pstart->maxAPperScan;
+	params->base_period = pstart->basePeriod;
+	params->max_ap_per_scan = pstart->maxAPperScan;
 	params->report_threshold_percent = pstart->report_threshold_percent;
 	params->report_threshold_num_scans = pstart->report_threshold_num_scans;
-	params->requestId = pstart->requestId;
-	params->sessionId = pstart->sessionId;
-	params->numBuckets = pstart->numBuckets;
+	params->request_id = pstart->requestId;
+	params->vdev_id = pstart->sessionId;
+	params->num_buckets = pstart->numBuckets;
 	params->min_dwell_time_active = pstart->min_dwell_time_active;
 	params->min_dwell_time_passive = pstart->min_dwell_time_passive;
 	params->max_dwell_time_active = pstart->max_dwell_time_active;
@@ -4485,12 +4485,13 @@ QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 		params->buckets[i].band =
 			(enum wmi_wifi_band) pstart->buckets[i].band;
 		params->buckets[i].period = pstart->buckets[i].period;
-		params->buckets[i].reportEvents =
+		params->buckets[i].report_events =
 			pstart->buckets[i].reportEvents;
 		params->buckets[i].max_period = pstart->buckets[i].max_period;
 		params->buckets[i].exponent = pstart->buckets[i].exponent;
 		params->buckets[i].step_count = pstart->buckets[i].step_count;
-		params->buckets[i].numChannels = pstart->buckets[i].numChannels;
+		params->buckets[i].num_channels =
+			pstart->buckets[i].numChannels;
 		params->buckets[i].min_dwell_time_active =
 			pstart->buckets[i].min_dwell_time_active;
 		params->buckets[i].min_dwell_time_passive =
@@ -4502,11 +4503,11 @@ QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 		for (j = 0; j < WLAN_EXTSCAN_MAX_CHANNELS; j++) {
 			params->buckets[i].channels[j].channel =
 				pstart->buckets[i].channels[j].channel;
-			params->buckets[i].channels[j].dwellTimeMs =
+			params->buckets[i].channels[j].dwell_time_ms =
 				pstart->buckets[i].channels[j].dwellTimeMs;
 			params->buckets[i].channels[j].passive =
 				pstart->buckets[i].channels[j].passive;
-			params->buckets[i].channels[j].chnlClass =
+			params->buckets[i].channels[j].channel_class =
 				pstart->buckets[i].channels[j].chnlClass;
 		}
 	}
@@ -4550,7 +4551,7 @@ QDF_STATUS wma_stop_extscan(tp_wma_handle wma,
 	}
 
 	params.request_id = pstopcmd->requestId;
-	params.session_id = pstopcmd->sessionId;
+	params.vdev_id = pstopcmd->sessionId;
 
 	status = wmi_unified_stop_extscan_cmd(wma->wmi_handle,
 						&params);
@@ -4606,8 +4607,8 @@ QDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
 				int *buf_len)
 {
 	return wmi_unified_get_buf_extscan_hotlist_cmd(wma_handle->wmi_handle,
-			 (struct ext_scan_setbssi_hotlist_params *)photlist,
-			  buf_len);
+			(struct ext_scan_setbssid_hotlist_params *)photlist,
+			buf_len);
 }
 
 /**
@@ -4671,7 +4672,7 @@ QDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
 	}
 
 	params.request_id = photlist_reset->requestId;
-	params.session_id = photlist_reset->requestId;
+	params.vdev_id = photlist_reset->requestId;
 
 	return wmi_unified_extscan_stop_hotlist_monitor_cmd(wma->wmi_handle,
 				&params);
@@ -4710,7 +4711,7 @@ QDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
 	}
 
 	params_ptr->request_id = psigchange->requestId;
-	params_ptr->session_id = psigchange->sessionId;
+	params_ptr->vdev_id = psigchange->sessionId;
 	params_ptr->rssi_sample_size = psigchange->rssiSampleSize;
 	params_ptr->lostap_sample_size = psigchange->lostApSampleSize;
 	params_ptr->min_breaching = psigchange->minBreaching;
@@ -4755,7 +4756,7 @@ QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
 	}
 
 	params.request_id = pResetReq->requestId;
-	params.session_id = pResetReq->sessionId;
+	params.vdev_id = pResetReq->sessionId;
 
 	return wmi_unified_extscan_stop_change_monitor_cmd(wma->wmi_handle,
 					&params);
@@ -4787,7 +4788,7 @@ QDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
 	}
 
 	params.request_id = pcached_results->requestId;
-	params.session_id = pcached_results->sessionId;
+	params.vdev_id = pcached_results->sessionId;
 	params.flush = pcached_results->flush;
 
 	return wmi_unified_extscan_get_cached_results_cmd(wma->wmi_handle,
@@ -4820,7 +4821,7 @@ QDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
 	}
 
 	params.request_id = pgetcapab->requestId;
-	params.session_id = pgetcapab->sessionId;
+	params.vdev_id = pgetcapab->sessionId;
 
 	return wmi_unified_extscan_get_capabilities_cmd(wma->wmi_handle,
 						&params);
@@ -4838,7 +4839,7 @@ QDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
 QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 		struct wifi_epno_params *req)
 {
-	struct wifi_enhanched_pno_params *params;
+	struct wifi_enhanced_pno_params *params;
 	uint8_t i = 0;
 	QDF_STATUS status;
 	size_t params_len;
@@ -4864,7 +4865,7 @@ QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 	}
 
 	params->request_id = req->request_id;
-	params->session_id = req->session_id;
+	params->vdev_id = req->session_id;
 	params->num_networks = req->num_networks;
 
 	/* Fill only when num_networks are non zero */
@@ -4941,7 +4942,7 @@ QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 	}
 
 	params->request_id = req->request_id;
-	params->session_id = req->session_id;
+	params->vdev_id = req->session_id;
 	params->num_networks = req->num_networks;
 	for (i = 0; i < req->num_networks; i++) {
 		params->networks[i].id = req->networks[i].id;
@@ -5007,7 +5008,7 @@ QDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
 	}
 
 	params->request_id = req->request_id;
-	params->session_id = req->session_id;
+	params->vdev_id = req->session_id;
 	params->num_networks = req->num_networks;
 	for (i = 0; i < req->num_networks; i++) {
 		params->networks[i].id = req->networks[i].id;
