@@ -329,10 +329,23 @@ release_nbuf:
 	return status;
 }
 
+static void tgt_tdls_peers_deleted_notification_callback(
+			struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		tdls_err("vdev is NULL");
+		return;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_SB_ID);
+}
+
 void tgt_tdls_peers_deleted_notification(struct wlan_objmgr_psoc *psoc,
 						uint32_t session_id)
 {
 	struct wlan_objmgr_vdev *vdev;
+	struct tdls_sta_notify_params notify_info;
+	QDF_STATUS status;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 						    session_id,
@@ -344,9 +357,17 @@ void tgt_tdls_peers_deleted_notification(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	tdls_peers_deleted_notification(vdev, session_id);
-
-	wlan_objmgr_vdev_release_ref(vdev,
-				     WLAN_TDLS_SB_ID);
+	notify_info.lfr_roam = true;
+	notify_info.tdls_chan_swit_prohibited = false;
+	notify_info.tdls_prohibited = false;
+	notify_info.session_id = session_id;
+	notify_info.vdev = vdev;
+	notify_info.user_disconnect = false;
+	notify_info.callback = tgt_tdls_peers_deleted_notification_callback;
+	status = tdls_peers_deleted_notification(&notify_info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("tdls_peers_deleted_notification failed");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_SB_ID);
+	}
 }
 

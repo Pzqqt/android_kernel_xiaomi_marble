@@ -627,11 +627,7 @@ QDF_STATUS ucfg_tdls_notify_sta_connect(
 	if (!notify)
 		return QDF_STATUS_E_NULL_VALUE;
 
-	notify->session_id = notify_info->session_id;
-	notify->tdls_chan_swit_prohibited =
-			notify_info->tdls_chan_swit_prohibited;
-	notify->tdls_prohibited = notify_info->tdls_prohibited;
-	notify->vdev = notify_info->vdev;
+	*notify = *notify_info;
 
 	msg.bodyptr = notify;
 	msg.callback = tdls_process_cmd;
@@ -659,12 +655,7 @@ QDF_STATUS ucfg_tdls_notify_sta_disconnect(
 	if (!notify)
 		return QDF_STATUS_E_NULL_VALUE;
 
-	notify->session_id = notify_info->session_id;
-	notify->tdls_chan_swit_prohibited = false;
-	notify->tdls_prohibited = false;
-	notify->vdev = notify_info->vdev;
-	notify->lfr_roam = notify_info->lfr_roam;
-	notify->user_disconnect = notify_info->user_disconnect;
+	*notify = *notify_info;
 
 	msg.bodyptr = notify;
 	msg.callback = tdls_process_cmd;
