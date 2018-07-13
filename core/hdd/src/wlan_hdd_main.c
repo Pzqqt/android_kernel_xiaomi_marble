@@ -3938,7 +3938,7 @@ int hdd_vdev_ready(struct hdd_adapter *adapter)
 int hdd_vdev_destroy(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
-	int errno = 0;
+	int errno;
 	struct hdd_context *hdd_ctx;
 	uint8_t vdev_id;
 
@@ -3947,9 +3947,10 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 
 	/* vdev created sanity check */
 	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
-		hdd_err("vdev for Id %d does not exist", adapter->session_id);
+		hdd_err("vdev %u does not exist", vdev_id);
 		return -EINVAL;
 	}
+
 	status = ucfg_reg_11d_vdev_delete_update(adapter->hdd_vdev);
 	ucfg_scan_set_vdev_del_in_progress(adapter->hdd_vdev);
 
@@ -3958,8 +3959,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = sme_close_session(hdd_ctx->mac_handle, adapter->session_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("failed to close sme session: %d", status);
-		errno = qdf_status_to_os_return(status);
+		hdd_err("failed to close sme session; status:%d", status);
 		goto release_vdev;
 	}
 
@@ -3967,34 +3967,24 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	status = qdf_wait_for_event_completion(
 			&adapter->qdf_session_close_event,
 			WLAN_WAIT_TIME_SESSIONOPENCLOSE);
-	if (QDF_STATUS_SUCCESS != status) {
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
+
 		if (adapter->device_mode == QDF_NDI_MODE)
 			hdd_ndp_session_end_handler(adapter);
-		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
-		adapter->session_id = HDD_SESSION_ID_INVALID;
-		if (QDF_STATUS_E_TIMEOUT != status) {
-			hdd_err("timed out waiting for close sme session: %u", status);
-			errno = -ETIMEDOUT;
-			goto release_vdev;
-		} else if (adapter->qdf_session_close_event.force_set) {
-			hdd_err("Session close evt focefully set, SSR/PDR has occurred");
-			errno = -EINVAL;
-			goto release_vdev;
-		} else {
-			hdd_err("Failed to close sme session (%u)", status);
-			errno = -EINVAL;
-			goto release_vdev;
-		}
+
+		if (status == QDF_STATUS_E_TIMEOUT)
+			hdd_err("timed out waiting for sme close session");
+		else if (adapter->qdf_session_close_event.force_set)
+			hdd_info("SSR occurred during sme close session");
+		else
+			hdd_err("failed to wait for sme close session; status:%u",
+				status);
 	}
 
 release_vdev:
 	ucfg_scan_clear_vdev_del_in_progress(adapter->hdd_vdev);
-	/*
-	 * In SSR or driver unloading case, directly exit may cause objects
-	 * leak, if sme_close_session failed. Free objects anyway.
-	 */
-	if (errno && !cds_is_driver_recovering() && !cds_is_driver_unloading())
-		return errno;
 
 	/* do vdev logical destroy via objmgr */
 	errno = hdd_objmgr_release_and_destroy_vdev(adapter);
