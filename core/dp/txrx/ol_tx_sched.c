@@ -630,22 +630,21 @@ static void ol_tx_sched_wrr_adv_cat_stat_dump(
 {
 	int i;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "Scheduler Stats:");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "====category(CRR,CRT,WSW): Queued  Discard  Dequeued  frms  wrr===");
+	txrx_nofl_info("Scheduler Stats:");
+	txrx_nofl_info("====category(CRR,CRT,WSW): Queued  Discard  Dequeued  frms  wrr===");
 	for (i = 0; i < OL_TX_SCHED_WRR_ADV_NUM_CATEGORIES; ++i) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%12s(%2d, %2d, %2d):  %6d  %7d  %8d  %4d  %3d",
-			  scheduler->categories[i].stat.cat_name,
-			  scheduler->categories[i].specs.credit_reserve,
-			  scheduler->categories[i].specs.credit_threshold,
-			  scheduler->categories[i].specs.wrr_skip_weight,
-			  scheduler->categories[i].stat.queued,
-			  scheduler->categories[i].stat.discard,
-			  scheduler->categories[i].stat.dispatched,
-			  scheduler->categories[i].state.frms,
-			  scheduler->categories[i].state.wrr_count);
+		txrx_nofl_info("%12s(%2d, %2d, %2d):  %6d  %7d  %8d  %4d  %3d",
+			       scheduler->categories[i].stat.cat_name,
+			       scheduler->categories[i].specs.credit_reserve,
+			       scheduler->categories[i].specs.
+					credit_threshold,
+			       scheduler->categories[i].
+					specs.wrr_skip_weight,
+			       scheduler->categories[i].stat.queued,
+			       scheduler->categories[i].stat.discard,
+			       scheduler->categories[i].stat.dispatched,
+			       scheduler->categories[i].state.frms,
+			       scheduler->categories[i].state.wrr_count);
 	}
 }
 
@@ -654,21 +653,20 @@ static void ol_tx_sched_wrr_adv_cat_cur_state_dump(
 {
 	int i;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "Scheduler State Snapshot:");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "====category(CRR,CRT,WSW): IS_Active  Pend_Frames  Pend_bytes  wrr===");
+	txrx_nofl_info("Scheduler State Snapshot:");
+	txrx_nofl_info("====category(CRR,CRT,WSW): IS_Active  Pend_Frames  Pend_bytes  wrr===");
 	for (i = 0; i < OL_TX_SCHED_WRR_ADV_NUM_CATEGORIES; ++i) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%12s(%2d, %2d, %2d):  %9d  %11d  %10d  %3d",
-			  scheduler->categories[i].stat.cat_name,
-			  scheduler->categories[i].specs.credit_reserve,
-			  scheduler->categories[i].specs.credit_threshold,
-			  scheduler->categories[i].specs.wrr_skip_weight,
-			  scheduler->categories[i].state.active,
-			  scheduler->categories[i].state.frms,
-			  scheduler->categories[i].state.bytes,
-			  scheduler->categories[i].state.wrr_count);
+		txrx_nofl_info("%12s(%2d, %2d, %2d):  %9d  %11d  %10d  %3d",
+			       scheduler->categories[i].stat.cat_name,
+			       scheduler->categories[i].specs.credit_reserve,
+			       scheduler->categories[i].specs.
+					credit_threshold,
+			       scheduler->categories[i].specs.
+					wrr_skip_weight,
+			       scheduler->categories[i].state.active,
+			       scheduler->categories[i].state.frms,
+			       scheduler->categories[i].state.bytes,
+			       scheduler->categories[i].state.wrr_count);
 	}
 }
 

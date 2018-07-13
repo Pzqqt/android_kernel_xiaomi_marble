@@ -706,37 +706,38 @@ void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 	int msdu_idx;
 	int seg_idx;
 
-	ol_txrx_info("TSO Statistics:");
-	ol_txrx_info("TSO pkts %lld, bytes %lld\n",
-		     pdev->stats.pub.tx.tso.tso_pkts.pkts,
-		     pdev->stats.pub.tx.tso.tso_pkts.bytes);
+	txrx_nofl_info("TSO Statistics:");
+	txrx_nofl_info("TSO pkts %lld, bytes %lld\n",
+		       pdev->stats.pub.tx.tso.tso_pkts.pkts,
+		       pdev->stats.pub.tx.tso.tso_pkts.bytes);
 
-	ol_txrx_info("TSO Histogram for numbers of segments:\n"
-		     "Single segment %d\n"
-		     "  2-5 segments %d\n"
-		     " 6-10 segments %d\n"
-		     "11-15 segments %d\n"
-		     "16-20 segments %d\n"
-		     "  20+ segments %d\n",
-		     pdev->stats.pub.tx.tso.tso_hist.pkts_1,
-		     pdev->stats.pub.tx.tso.tso_hist.pkts_2_5,
-		     pdev->stats.pub.tx.tso.tso_hist.pkts_6_10,
-		     pdev->stats.pub.tx.tso.tso_hist.pkts_11_15,
-		     pdev->stats.pub.tx.tso.tso_hist.pkts_16_20,
-		     pdev->stats.pub.tx.tso.tso_hist.pkts_20_plus);
+	txrx_nofl_info("TSO Histogram for numbers of segments:\n"
+		       "Single segment	%d\n"
+		       "  2-5 segments	%d\n"
+		       " 6-10 segments	%d\n"
+		       "11-15 segments	%d\n"
+		       "16-20 segments	%d\n"
+		       "  20+ segments	%d\n",
+		       pdev->stats.pub.tx.tso.tso_hist.pkts_1,
+		       pdev->stats.pub.tx.tso.tso_hist.pkts_2_5,
+		       pdev->stats.pub.tx.tso.tso_hist.pkts_6_10,
+		       pdev->stats.pub.tx.tso.tso_hist.pkts_11_15,
+		       pdev->stats.pub.tx.tso.tso_hist.pkts_16_20,
+		       pdev->stats.pub.tx.tso.tso_hist.pkts_20_plus);
 
-	ol_txrx_info("TSO History Buffer: Total size %d, current_index %d",
-		     NUM_MAX_TSO_MSDUS, TXRX_STATS_TSO_MSDU_IDX(pdev));
+	txrx_nofl_info("TSO History Buffer: Total size %d, current_index %d",
+		       NUM_MAX_TSO_MSDUS,
+		       TXRX_STATS_TSO_MSDU_IDX(pdev));
 
 	for (msdu_idx = 0; msdu_idx < NUM_MAX_TSO_MSDUS; msdu_idx++) {
 		if (TXRX_STATS_TSO_MSDU_TOTAL_LEN(pdev, msdu_idx) == 0)
 			continue;
-		ol_txrx_info("jumbo pkt idx: %d num segs %d gso_len %d total_len %d nr_frags %d",
-			     msdu_idx,
-			     TXRX_STATS_TSO_MSDU_NUM_SEG(pdev, msdu_idx),
-			     TXRX_STATS_TSO_MSDU_GSO_SIZE(pdev, msdu_idx),
-			     TXRX_STATS_TSO_MSDU_TOTAL_LEN(pdev, msdu_idx),
-			     TXRX_STATS_TSO_MSDU_NR_FRAGS(pdev, msdu_idx));
+		txrx_nofl_info("jumbo pkt idx: %d num segs %d gso_len %d total_len %d nr_frags %d",
+			       msdu_idx,
+			       TXRX_STATS_TSO_MSDU_NUM_SEG(pdev, msdu_idx),
+			       TXRX_STATS_TSO_MSDU_GSO_SIZE(pdev, msdu_idx),
+			       TXRX_STATS_TSO_MSDU_TOTAL_LEN(pdev, msdu_idx),
+			       TXRX_STATS_TSO_MSDU_NR_FRAGS(pdev, msdu_idx));
 
 		for (seg_idx = 0;
 			 ((seg_idx < TXRX_STATS_TSO_MSDU_NUM_SEG(pdev,
@@ -745,22 +746,22 @@ void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 			struct qdf_tso_seg_t tso_seg =
 				 TXRX_STATS_TSO_SEG(pdev, msdu_idx, seg_idx);
 
-			ol_txrx_info("seg idx: %d", seg_idx);
-			ol_txrx_info("tso_enable: %d",
-				     tso_seg.tso_flags.tso_enable);
-			ol_txrx_info("fin %d syn %d rst %d psh %d ack %d urg %d ece %d cwr %d ns %d",
-				     tso_seg.tso_flags.fin,
-				     tso_seg.tso_flags.syn,
-				     tso_seg.tso_flags.rst,
-				     tso_seg.tso_flags.psh,
-				     tso_seg.tso_flags.ack,
-				     tso_seg.tso_flags.urg,
-				     tso_seg.tso_flags.ece,
-				     tso_seg.tso_flags.cwr,
-				     tso_seg.tso_flags.ns);
-			ol_txrx_info("tcp_seq_num: 0x%x ip_id: %d",
-				     tso_seg.tso_flags.tcp_seq_num,
-				     tso_seg.tso_flags.ip_id);
+			txrx_nofl_info("seg idx: %d", seg_idx);
+			txrx_nofl_info("tso_enable: %d",
+				       tso_seg.tso_flags.tso_enable);
+			txrx_nofl_info("fin %d syn %d rst %d psh %d ack %d urg %d ece %d cwr %d ns %d",
+				       tso_seg.tso_flags.fin,
+				       tso_seg.tso_flags.syn,
+				       tso_seg.tso_flags.rst,
+				       tso_seg.tso_flags.psh,
+				       tso_seg.tso_flags.ack,
+				       tso_seg.tso_flags.urg,
+				       tso_seg.tso_flags.ece,
+				       tso_seg.tso_flags.cwr,
+				       tso_seg.tso_flags.ns);
+			txrx_nofl_info("tcp_seq_num: 0x%x ip_id: %d",
+				       tso_seg.tso_flags.tcp_seq_num,
+				       tso_seg.tso_flags.ip_id);
 		}
 	}
 }

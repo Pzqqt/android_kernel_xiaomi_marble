@@ -191,31 +191,31 @@ static inline struct htt_host_rx_desc_base *htt_rx_desc(qdf_nbuf_t msdu)
  */
 static inline void htt_print_rx_desc_lro(struct htt_host_rx_desc_base *rx_desc)
 {
-	qdf_print
+	qdf_nofl_info
 		("----------------------RX DESC LRO----------------------\n");
-	qdf_print("msdu_end.lro_eligible:0x%x\n",
-		 rx_desc->msdu_end.lro_eligible);
-	qdf_print("msdu_start.tcp_only_ack:0x%x\n",
-		 rx_desc->msdu_start.tcp_only_ack);
-	qdf_print("msdu_end.tcp_udp_chksum:0x%x\n",
-		 rx_desc->msdu_end.tcp_udp_chksum);
-	qdf_print("msdu_end.tcp_seq_number:0x%x\n",
-		 rx_desc->msdu_end.tcp_seq_number);
-	qdf_print("msdu_end.tcp_ack_number:0x%x\n",
-		 rx_desc->msdu_end.tcp_ack_number);
-	qdf_print("msdu_start.tcp_proto:0x%x\n",
-		 rx_desc->msdu_start.tcp_proto);
-	qdf_print("msdu_start.ipv6_proto:0x%x\n",
-		 rx_desc->msdu_start.ipv6_proto);
-	qdf_print("msdu_start.ipv4_proto:0x%x\n",
-		 rx_desc->msdu_start.ipv4_proto);
-	qdf_print("msdu_start.l3_offset:0x%x\n",
-		 rx_desc->msdu_start.l3_offset);
-	qdf_print("msdu_start.l4_offset:0x%x\n",
-		 rx_desc->msdu_start.l4_offset);
-	qdf_print("msdu_start.flow_id_toeplitz:0x%x\n",
-			   rx_desc->msdu_start.flow_id_toeplitz);
-	qdf_print
+	qdf_nofl_info("msdu_end.lro_eligible:0x%x\n",
+		      rx_desc->msdu_end.lro_eligible);
+	qdf_nofl_info("msdu_start.tcp_only_ack:0x%x\n",
+		      rx_desc->msdu_start.tcp_only_ack);
+	qdf_nofl_info("msdu_end.tcp_udp_chksum:0x%x\n",
+		      rx_desc->msdu_end.tcp_udp_chksum);
+	qdf_nofl_info("msdu_end.tcp_seq_number:0x%x\n",
+		      rx_desc->msdu_end.tcp_seq_number);
+	qdf_nofl_info("msdu_end.tcp_ack_number:0x%x\n",
+		      rx_desc->msdu_end.tcp_ack_number);
+	qdf_nofl_info("msdu_start.tcp_proto:0x%x\n",
+		      rx_desc->msdu_start.tcp_proto);
+	qdf_nofl_info("msdu_start.ipv6_proto:0x%x\n",
+		      rx_desc->msdu_start.ipv6_proto);
+	qdf_nofl_info("msdu_start.ipv4_proto:0x%x\n",
+		      rx_desc->msdu_start.ipv4_proto);
+	qdf_nofl_info("msdu_start.l3_offset:0x%x\n",
+		      rx_desc->msdu_start.l3_offset);
+	qdf_nofl_info("msdu_start.l4_offset:0x%x\n",
+		      rx_desc->msdu_start.l4_offset);
+	qdf_nofl_info("msdu_start.flow_id_toeplitz:0x%x\n",
+		      rx_desc->msdu_start.flow_id_toeplitz);
+	qdf_nofl_info
 		("---------------------------------------------------------\n");
 }
 
@@ -269,67 +269,67 @@ static inline void htt_rx_extract_lro_info(qdf_nbuf_t msdu,
 
 static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 {
-	qdf_print
+	qdf_nofl_info
 		("----------------------RX DESC----------------------------\n");
-	qdf_print("attention: %#010x\n",
-		  (unsigned int)(*(uint32_t *) &rx_desc->attention));
-	qdf_print("frag_info: %#010x\n",
-		  (unsigned int)(*(uint32_t *) &rx_desc->frag_info));
-	qdf_print("mpdu_start: %#010x %#010x %#010x\n",
-		  (unsigned int)(((uint32_t *) &rx_desc->mpdu_start)[0]),
-		  (unsigned int)(((uint32_t *) &rx_desc->mpdu_start)[1]),
-		  (unsigned int)(((uint32_t *) &rx_desc->mpdu_start)[2]));
-	qdf_print("msdu_start: %#010x %#010x %#010x\n",
-		  (unsigned int)(((uint32_t *) &rx_desc->msdu_start)[0]),
-		  (unsigned int)(((uint32_t *) &rx_desc->msdu_start)[1]),
-		  (unsigned int)(((uint32_t *) &rx_desc->msdu_start)[2]));
-	qdf_print("msdu_end: %#010x %#010x %#010x %#010x %#010x\n",
-		  (unsigned int)(((uint32_t *) &rx_desc->msdu_end)[0]),
-		  (unsigned int)(((uint32_t *) &rx_desc->msdu_end)[1]),
-		  (unsigned int)(((uint32_t *) &rx_desc->msdu_end)[2]),
-		  (unsigned int)(((uint32_t *) &rx_desc->msdu_end)[3]),
-		  (unsigned int)(((uint32_t *) &rx_desc->msdu_end)[4]));
-	qdf_print("mpdu_end: %#010x\n",
-		  (unsigned int)(*(uint32_t *) &rx_desc->mpdu_end));
-	qdf_print("ppdu_start: %#010x %#010x %#010x %#010x %#010x\n"
-		  "%#010x %#010x %#010x %#010x %#010x\n",
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[0]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[1]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[2]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[3]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[4]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[5]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[6]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[7]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[8]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[9]));
-	qdf_print("ppdu_end: %#010x %#010x %#010x %#010x %#010x\n"
-		  "%#010x %#010x %#010x %#010x %#010x\n"
-		  "%#010x,%#010x %#010x %#010x %#010x\n"
-		  "%#010x %#010x %#010x %#010x %#010x\n" "%#010x %#010x\n",
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[0]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[1]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[2]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[3]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[4]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[5]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[6]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[7]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[8]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[9]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[10]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[11]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[12]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[13]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[14]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[15]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[16]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[17]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[18]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[19]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[20]),
-		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[21]));
-	qdf_print
+	qdf_nofl_info("attention: %#010x\n",
+		      (unsigned int)(*(uint32_t *)&rx_desc->attention));
+	qdf_nofl_info("frag_info: %#010x\n",
+		      (unsigned int)(*(uint32_t *)&rx_desc->frag_info));
+	qdf_nofl_info("mpdu_start: %#010x %#010x %#010x\n",
+		      (unsigned int)(((uint32_t *)&rx_desc->mpdu_start)[0]),
+		      (unsigned int)(((uint32_t *)&rx_desc->mpdu_start)[1]),
+		      (unsigned int)(((uint32_t *)&rx_desc->mpdu_start)[2]));
+	qdf_nofl_info("msdu_start: %#010x %#010x %#010x\n",
+		      (unsigned int)(((uint32_t *)&rx_desc->msdu_start)[0]),
+		      (unsigned int)(((uint32_t *)&rx_desc->msdu_start)[1]),
+		      (unsigned int)(((uint32_t *)&rx_desc->msdu_start)[2]));
+	qdf_nofl_info("msdu_end: %#010x %#010x %#010x %#010x %#010x\n",
+		      (unsigned int)(((uint32_t *)&rx_desc->msdu_end)[0]),
+		      (unsigned int)(((uint32_t *)&rx_desc->msdu_end)[1]),
+		      (unsigned int)(((uint32_t *)&rx_desc->msdu_end)[2]),
+		      (unsigned int)(((uint32_t *)&rx_desc->msdu_end)[3]),
+		      (unsigned int)(((uint32_t *)&rx_desc->msdu_end)[4]));
+	qdf_nofl_info("mpdu_end: %#010x\n",
+		      (unsigned int)(*(uint32_t *)&rx_desc->mpdu_end));
+	qdf_nofl_info("ppdu_start: %#010x %#010x %#010x %#010x %#010x\n"
+		      "%#010x %#010x %#010x %#010x %#010x\n",
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_start)[0]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_start)[1]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_start)[2]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_start)[3]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_start)[4]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_start)[5]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_start)[6]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_start)[7]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_start)[8]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_start)[9]));
+	qdf_nofl_info("ppdu_end: %#010x %#010x %#010x %#010x %#010x\n"
+		      "%#010x %#010x %#010x %#010x %#010x\n"
+		      "%#010x,%#010x %#010x %#010x %#010x\n"
+		      "%#010x %#010x %#010x %#010x %#010x\n" "%#010x %#010x\n",
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[0]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[1]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[2]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[3]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[4]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[5]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[6]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[7]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[8]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[9]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[10]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[11]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[12]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[13]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[14]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[15]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[16]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[17]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[18]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[19]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[20]),
+		      (unsigned int)(((uint32_t *)&rx_desc->ppdu_end)[21]));
+	qdf_nofl_info
 		("---------------------------------------------------------\n");
 }
 
@@ -703,31 +703,27 @@ static inline int htt_display_rx_buf_debug(struct htt_pdev_t *pdev)
 		buf = pdev->rx_buff_list;
 		for (i = 0; i < HTT_RX_RING_BUFF_DBG_LIST; i++) {
 			if (buf[i].posted != 0)
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "[%d][0x%x] %pK %lu %pK %llu %llu",
-					  i, buf[i].cpu,
-					  buf[i].nbuf_data,
-					  (unsigned long)buf[i].paddr,
-					  buf[i].nbuf,
-					  buf[i].posted,
-					  buf[i].recved);
+				qdf_nofl_info("[%d][0x%x] %pK %lu %pK %llu %llu",
+					      i, buf[i].cpu,
+					      buf[i].nbuf_data,
+					      (unsigned long)buf[i].paddr,
+					      buf[i].nbuf,
+					      buf[i].posted,
+					      buf[i].recved);
 		}
 
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"rxbuf_idx %d all_posted: %d all_recvd: %d recv_err: %d",
-		pdev->rx_buff_index,
-		pdev->rx_buff_posted_cum,
-		pdev->rx_buff_recvd_cum,
-		pdev->rx_buff_recvd_err);
+		qdf_nofl_info("rxbuf_idx %d all_posted: %d all_recvd: %d recv_err: %d",
+			      pdev->rx_buff_index,
+			      pdev->rx_buff_posted_cum,
+			      pdev->rx_buff_recvd_cum,
+			      pdev->rx_buff_recvd_err);
 
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"timer kicks :%d actual  :%d restarts:%d debtors: %d fill_n: %d",
-		pdev->refill_retry_timer_starts,
-		pdev->refill_retry_timer_calls,
-		pdev->refill_retry_timer_doubles,
-		pdev->rx_buff_debt_invoked,
-		pdev->rx_buff_fill_n_invoked);
+		qdf_nofl_info("timer kicks :%d actual  :%d restarts:%d debtors: %d fill_n: %d",
+			      pdev->refill_retry_timer_starts,
+			      pdev->refill_retry_timer_calls,
+			      pdev->refill_retry_timer_doubles,
+			      pdev->rx_buff_debt_invoked,
+			      pdev->rx_buff_fill_n_invoked);
 	} else
 		return -EINVAL;
 	return 0;

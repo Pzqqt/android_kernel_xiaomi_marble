@@ -3178,17 +3178,17 @@ void hdd_wlan_list_fw_profile(uint16_t *length,
  */
 static void hdd_display_stats_help(void)
 {
-	hdd_err("iwpriv wlan0 dumpStats [option] - dump statistics");
-	hdd_err("iwpriv wlan0 clearStats [option] - clear statistics");
-	hdd_err("options:");
-	hdd_err("  1 -- TXRX PATH statistics");
-	hdd_err("  2 -- TXRX HIST statistics");
-	hdd_err("  3 -- TSO statistics");
-	hdd_err("  4 -- Network queue statistics");
-	hdd_err("  5 -- Flow control statistics");
-	hdd_err("  6 -- Per Layer statistics");
-	hdd_err("  7 -- Copy engine interrupt statistics");
-	hdd_err("  9 -- NAPI statistics");
+	hdd_nofl_info("iwpriv wlan0 dumpStats [option] - dump statistics");
+	hdd_nofl_info("iwpriv wlan0 clearStats [option] - clear statistics");
+	hdd_nofl_info("options:");
+	hdd_nofl_info("  1 -- TXRX PATH statistics");
+	hdd_nofl_info("  2 -- TXRX HIST statistics");
+	hdd_nofl_info("  3 -- TSO statistics");
+	hdd_nofl_info("  4 -- Network queue statistics");
+	hdd_nofl_info("  5 -- Flow control statistics");
+	hdd_nofl_info("  6 -- Per Layer statistics");
+	hdd_nofl_info("  7 -- Copy engine interrupt statistics");
+	hdd_nofl_info("  9 -- NAPI statistics");
 }
 
 /**

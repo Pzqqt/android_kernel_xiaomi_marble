@@ -4039,13 +4039,12 @@ ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned int buf_len)
  */
 static void ol_txrx_disp_peer_cached_bufq_stats(struct ol_txrx_peer_t *peer)
 {
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-		  "cached_bufq: curr %d drops %d hwm %d whatifs %d thresh %d",
-		  peer->bufq_info.curr,
-		  peer->bufq_info.dropped,
-		  peer->bufq_info.high_water_mark,
-		  peer->bufq_info.qdepth_no_thresh,
-		  peer->bufq_info.thresh);
+	txrx_nofl_info("cached_bufq: curr %d drops %d hwm %d whatifs %d thresh %d",
+		       peer->bufq_info.curr,
+		       peer->bufq_info.dropped,
+		       peer->bufq_info.high_water_mark,
+		       peer->bufq_info.qdepth_no_thresh,
+		       peer->bufq_info.thresh);
 }
 
 /**
@@ -4073,8 +4072,8 @@ static void ol_txrx_disp_peer_stats(ol_txrx_pdev_handle pdev)
 		qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
 
 		if (peer) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"stats: peer 0x%pK local peer id %d", peer, i);
+			txrx_nofl_info("stats: peer 0x%pK local peer id %d",
+				       peer, i);
 			ol_txrx_disp_peer_cached_bufq_stats(peer);
 			ol_txrx_peer_release_ref(peer,
 						 PEER_DEBUG_ID_OL_INTERNAL);
@@ -4084,8 +4083,7 @@ static void ol_txrx_disp_peer_stats(ol_txrx_pdev_handle pdev)
 #else
 static void ol_txrx_disp_peer_stats(ol_txrx_pdev_handle pdev)
 {
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "peer stats not supported w/o QCA_SUPPORT_TXRX_LOCAL_PEER_ID");
+	txrx_nofl_info("peer stats not supported w/o QCA_SUPPORT_TXRX_LOCAL_PEER_ID");
 }
 #endif
 
@@ -4099,117 +4097,112 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev,
 		  + pdev->stats.pub.tx.dropped.others.pkts;
 
 	if (level == QDF_STATS_VERBOSITY_LEVEL_LOW) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-			  "STATS |%u %u|TX: %lld tso %lld ok %lld drops(%u-%lld %u-%lld %u-%lld ?-%lld hR-%lld)|RX: %lld drops(E %lld PI %lld ME %lld) fwd(S %d F %d SF %d)|",
-			  pdev->tx_desc.num_free,
-			  pdev->tx_desc.pool_size,
-			  pdev->stats.pub.tx.from_stack.pkts,
-			  pdev->stats.pub.tx.tso.tso_pkts.pkts,
-			  pdev->stats.pub.tx.delivered.pkts,
-			  htt_tx_status_download_fail,
-			  pdev->stats.pub.tx.dropped.download_fail.pkts,
-			  htt_tx_status_discard,
-			  pdev->stats.pub.tx.dropped.target_discard.pkts,
-			  htt_tx_status_no_ack,
-			  pdev->stats.pub.tx.dropped.no_ack.pkts,
-			  pdev->stats.pub.tx.dropped.others.pkts,
-			  pdev->stats.pub.tx.dropped.host_reject.pkts,
-			  pdev->stats.pub.rx.delivered.pkts,
-			  pdev->stats.pub.rx.dropped_err.pkts,
-			  pdev->stats.pub.rx.dropped_peer_invalid.pkts,
-			  pdev->stats.pub.rx.dropped_mic_err.pkts,
-			  pdev->stats.pub.rx.intra_bss_fwd.packets_stack,
-			  pdev->stats.pub.rx.intra_bss_fwd.packets_fwd,
-			  pdev->stats.pub.rx.intra_bss_fwd.packets_stack_n_fwd);
+		txrx_nofl_dbg("STATS |%u %u|TX: %lld tso %lld ok %lld drops(%u-%lld %u-%lld %u-%lld ?-%lld hR-%lld)|RX: %lld drops(E %lld PI %lld ME %lld) fwd(S %d F %d SF %d)|",
+			      pdev->tx_desc.num_free,
+			      pdev->tx_desc.pool_size,
+			      pdev->stats.pub.tx.from_stack.pkts,
+			      pdev->stats.pub.tx.tso.tso_pkts.pkts,
+			      pdev->stats.pub.tx.delivered.pkts,
+			      htt_tx_status_download_fail,
+			      pdev->stats.pub.tx.dropped.download_fail.pkts,
+			      htt_tx_status_discard,
+			      pdev->stats.pub.tx.dropped.
+					target_discard.pkts,
+			      htt_tx_status_no_ack,
+			      pdev->stats.pub.tx.dropped.no_ack.pkts,
+			      pdev->stats.pub.tx.dropped.others.pkts,
+			      pdev->stats.pub.tx.dropped.host_reject.pkts,
+			      pdev->stats.pub.rx.delivered.pkts,
+			      pdev->stats.pub.rx.dropped_err.pkts,
+			      pdev->stats.pub.rx.dropped_peer_invalid.pkts,
+			      pdev->stats.pub.rx.dropped_mic_err.pkts,
+			      pdev->stats.pub.rx.intra_bss_fwd.
+					packets_stack,
+			      pdev->stats.pub.rx.intra_bss_fwd.
+					packets_fwd,
+			      pdev->stats.pub.rx.intra_bss_fwd.
+					packets_stack_n_fwd);
 		return;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-		  "TX PATH Statistics:");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-		  "sent %lld msdus (%lld B), host rejected %lld (%lld B), dropped %lld (%lld B)",
-		  pdev->stats.pub.tx.from_stack.pkts,
-		  pdev->stats.pub.tx.from_stack.bytes,
-		  pdev->stats.pub.tx.dropped.host_reject.pkts,
-		  pdev->stats.pub.tx.dropped.host_reject.bytes,
-		  tx_dropped,
-		  pdev->stats.pub.tx.dropped.download_fail.bytes
-		  + pdev->stats.pub.tx.dropped.target_discard.bytes
-		  + pdev->stats.pub.tx.dropped.no_ack.bytes);
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-		  "successfully delivered: %lld (%lld B), download fail: %lld (%lld B), target discard: %lld (%lld B), no ack: %lld (%lld B) others: %lld (%lld B)",
-		  pdev->stats.pub.tx.delivered.pkts,
-		  pdev->stats.pub.tx.delivered.bytes,
-		  pdev->stats.pub.tx.dropped.download_fail.pkts,
-		  pdev->stats.pub.tx.dropped.download_fail.bytes,
-		  pdev->stats.pub.tx.dropped.target_discard.pkts,
-		  pdev->stats.pub.tx.dropped.target_discard.bytes,
-		  pdev->stats.pub.tx.dropped.no_ack.pkts,
-		  pdev->stats.pub.tx.dropped.no_ack.bytes,
-		  pdev->stats.pub.tx.dropped.others.pkts,
-		  pdev->stats.pub.tx.dropped.others.bytes);
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-		  "Tx completions per HTT message:\n"
-		  "Single Packet  %d\n"
-		  " 2-10 Packets  %d\n"
-		  "11-20 Packets  %d\n"
-		  "21-30 Packets  %d\n"
-		  "31-40 Packets  %d\n"
-		  "41-50 Packets  %d\n"
-		  "51-60 Packets  %d\n"
-		  "  60+ Packets  %d\n",
-		  pdev->stats.pub.tx.comp_histogram.pkts_1,
-		  pdev->stats.pub.tx.comp_histogram.pkts_2_10,
-		  pdev->stats.pub.tx.comp_histogram.pkts_11_20,
-		  pdev->stats.pub.tx.comp_histogram.pkts_21_30,
-		  pdev->stats.pub.tx.comp_histogram.pkts_31_40,
-		  pdev->stats.pub.tx.comp_histogram.pkts_41_50,
-		  pdev->stats.pub.tx.comp_histogram.pkts_51_60,
-		  pdev->stats.pub.tx.comp_histogram.pkts_61_plus);
+	txrx_nofl_info("TX PATH Statistics:");
+	txrx_nofl_info("sent %lld msdus (%lld B), host rejected %lld (%lld B), dropped %lld (%lld B)",
+		       pdev->stats.pub.tx.from_stack.pkts,
+		       pdev->stats.pub.tx.from_stack.bytes,
+		       pdev->stats.pub.tx.dropped.host_reject.pkts,
+		       pdev->stats.pub.tx.dropped.host_reject.bytes,
+			  tx_dropped,
+		       pdev->stats.pub.tx.dropped.download_fail.bytes
+			  + pdev->stats.pub.tx.dropped.target_discard.bytes
+			  + pdev->stats.pub.tx.dropped.no_ack.bytes);
+	txrx_nofl_info("successfully delivered: %lld (%lld B), download fail: %lld (%lld B), target discard: %lld (%lld B), no ack: %lld (%lld B) others: %lld (%lld B)",
+		       pdev->stats.pub.tx.delivered.pkts,
+		       pdev->stats.pub.tx.delivered.bytes,
+		       pdev->stats.pub.tx.dropped.download_fail.pkts,
+		       pdev->stats.pub.tx.dropped.download_fail.bytes,
+		       pdev->stats.pub.tx.dropped.target_discard.pkts,
+		       pdev->stats.pub.tx.dropped.target_discard.bytes,
+		       pdev->stats.pub.tx.dropped.no_ack.pkts,
+		       pdev->stats.pub.tx.dropped.no_ack.bytes,
+		       pdev->stats.pub.tx.dropped.others.pkts,
+		       pdev->stats.pub.tx.dropped.others.bytes);
+	txrx_nofl_info("Tx completions per HTT message:\n"
+		       "Single Packet  %d\n"
+		       " 2-10 Packets  %d\n"
+		       "11-20 Packets  %d\n"
+		       "21-30 Packets  %d\n"
+		       "31-40 Packets  %d\n"
+		       "41-50 Packets  %d\n"
+		       "51-60 Packets  %d\n"
+		       "  60+ Packets  %d\n",
+		       pdev->stats.pub.tx.comp_histogram.pkts_1,
+		       pdev->stats.pub.tx.comp_histogram.pkts_2_10,
+		       pdev->stats.pub.tx.comp_histogram.pkts_11_20,
+		       pdev->stats.pub.tx.comp_histogram.pkts_21_30,
+		       pdev->stats.pub.tx.comp_histogram.pkts_31_40,
+		       pdev->stats.pub.tx.comp_histogram.pkts_41_50,
+		       pdev->stats.pub.tx.comp_histogram.pkts_51_60,
+		       pdev->stats.pub.tx.comp_histogram.pkts_61_plus);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-		  "RX PATH Statistics:");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-		  "%lld ppdus, %lld mpdus, %lld msdus, %lld bytes\n"
-		  "dropped: err %lld (%lld B), peer_invalid %lld (%lld B), mic_err %lld (%lld B)\n"
-		  "msdus with frag_ind: %d msdus with offload_ind: %d",
-		  pdev->stats.priv.rx.normal.ppdus,
-		  pdev->stats.priv.rx.normal.mpdus,
-		  pdev->stats.pub.rx.delivered.pkts,
-		  pdev->stats.pub.rx.delivered.bytes,
-		  pdev->stats.pub.rx.dropped_err.pkts,
-		  pdev->stats.pub.rx.dropped_err.bytes,
-		  pdev->stats.pub.rx.dropped_peer_invalid.pkts,
-		  pdev->stats.pub.rx.dropped_peer_invalid.bytes,
-		  pdev->stats.pub.rx.dropped_mic_err.pkts,
-		  pdev->stats.pub.rx.dropped_mic_err.bytes,
-		  pdev->stats.pub.rx.msdus_with_frag_ind,
-		  pdev->stats.pub.rx.msdus_with_offload_ind);
+	txrx_nofl_info("RX PATH Statistics:");
+	txrx_nofl_info("%lld ppdus, %lld mpdus, %lld msdus, %lld bytes\n"
+		       "dropped: err %lld (%lld B), peer_invalid %lld (%lld B), mic_err %lld (%lld B)\n"
+		       "msdus with frag_ind: %d msdus with offload_ind: %d",
+		       pdev->stats.priv.rx.normal.ppdus,
+		       pdev->stats.priv.rx.normal.mpdus,
+		       pdev->stats.pub.rx.delivered.pkts,
+		       pdev->stats.pub.rx.delivered.bytes,
+		       pdev->stats.pub.rx.dropped_err.pkts,
+		       pdev->stats.pub.rx.dropped_err.bytes,
+		       pdev->stats.pub.rx.dropped_peer_invalid.pkts,
+		       pdev->stats.pub.rx.dropped_peer_invalid.bytes,
+		       pdev->stats.pub.rx.dropped_mic_err.pkts,
+		       pdev->stats.pub.rx.dropped_mic_err.bytes,
+		       pdev->stats.pub.rx.msdus_with_frag_ind,
+		       pdev->stats.pub.rx.msdus_with_offload_ind);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-		  "  fwd to stack %d, fwd to fw %d, fwd to stack & fw  %d\n",
-		  pdev->stats.pub.rx.intra_bss_fwd.packets_stack,
-		  pdev->stats.pub.rx.intra_bss_fwd.packets_fwd,
-		  pdev->stats.pub.rx.intra_bss_fwd.packets_stack_n_fwd);
+	txrx_nofl_info("  fwd to stack %d, fwd to fw %d, fwd to stack & fw  %d\n",
+		       pdev->stats.pub.rx.intra_bss_fwd.packets_stack,
+		       pdev->stats.pub.rx.intra_bss_fwd.packets_fwd,
+		       pdev->stats.pub.rx.intra_bss_fwd.packets_stack_n_fwd);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-		  "Rx packets per HTT message:\n"
-		  "Single Packet  %d\n"
-		  " 2-10 Packets  %d\n"
-		  "11-20 Packets  %d\n"
-		  "21-30 Packets  %d\n"
-		  "31-40 Packets  %d\n"
-		  "41-50 Packets  %d\n"
-		  "51-60 Packets  %d\n"
-		  "  60+ Packets  %d\n",
-		  pdev->stats.pub.rx.rx_ind_histogram.pkts_1,
-		  pdev->stats.pub.rx.rx_ind_histogram.pkts_2_10,
-		  pdev->stats.pub.rx.rx_ind_histogram.pkts_11_20,
-		  pdev->stats.pub.rx.rx_ind_histogram.pkts_21_30,
-		  pdev->stats.pub.rx.rx_ind_histogram.pkts_31_40,
-		  pdev->stats.pub.rx.rx_ind_histogram.pkts_41_50,
-		  pdev->stats.pub.rx.rx_ind_histogram.pkts_51_60,
-		  pdev->stats.pub.rx.rx_ind_histogram.pkts_61_plus);
+	txrx_nofl_info("packets per HTT message:\n"
+		       "Single Packet  %d\n"
+		       " 2-10 Packets  %d\n"
+		       "11-20 Packets  %d\n"
+		       "21-30 Packets  %d\n"
+		       "31-40 Packets  %d\n"
+		       "41-50 Packets  %d\n"
+		       "51-60 Packets  %d\n"
+		       "  60+ Packets  %d\n",
+		       pdev->stats.pub.rx.rx_ind_histogram.pkts_1,
+		       pdev->stats.pub.rx.rx_ind_histogram.pkts_2_10,
+		       pdev->stats.pub.rx.rx_ind_histogram.pkts_11_20,
+		       pdev->stats.pub.rx.rx_ind_histogram.pkts_21_30,
+		       pdev->stats.pub.rx.rx_ind_histogram.pkts_31_40,
+		       pdev->stats.pub.rx.rx_ind_histogram.pkts_41_50,
+		       pdev->stats.pub.rx.rx_ind_histogram.pkts_51_60,
+		       pdev->stats.pub.rx.rx_ind_histogram.pkts_61_plus);
 
 	ol_txrx_disp_peer_stats(pdev);
 }

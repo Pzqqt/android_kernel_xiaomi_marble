@@ -476,10 +476,10 @@ int hdd_display_napi_stats(void)
 		hdd_err("%s unable to retrieve napi structure", __func__);
 		return -EFAULT;
 	}
-	hdd_debug("[NAPI %u][BL %d]:  scheds   polls   comps    done t-lim p-lim  corr  max_time napi-buckets(%d)",
-		  napid->napi_mode,
-		  hif_napi_cpu_blacklist(napid, BLACKLIST_QUERY),
-		  QCA_NAPI_NUM_BUCKETS);
+	hdd_nofl_info("[NAPI %u][BL %d]:  scheds   polls   comps    done t-lim p-lim  corr  max_time napi-buckets(%d)",
+		      napid->napi_mode,
+		      hif_napi_cpu_blacklist(napid, BLACKLIST_QUERY),
+		      QCA_NAPI_NUM_BUCKETS);
 
 	for (i = 0; i < CE_COUNT_MAX; i++)
 		if (napid->ce_map & (0x01 << i)) {
@@ -499,17 +499,18 @@ int hdd_display_napi_stats(void)
 				}
 
 				if (napis->napi_schedules != 0)
-					hdd_debug("NAPI[%2d]CPU[%d]: %7d %7d %7d %7d %5d %5d %5d %9llu %s",
-						  i, j,
-						  napis->napi_schedules,
-						  napis->napi_polls,
-						  napis->napi_completes,
-						  napis->napi_workdone,
-						  napis->time_limit_reached,
-						  napis->rxpkt_thresh_reached,
-						  napis->cpu_corrected,
-						  napis->napi_max_poll_time,
-						  buf);
+					hdd_nofl_info("NAPI[%2d]CPU[%d]: %7d %7d %7d %7d %5d %5d %5d %9llu %s",
+						      i, j,
+						      napis->napi_schedules,
+						      napis->napi_polls,
+						      napis->napi_completes,
+						      napis->napi_workdone,
+						      napis->time_limit_reached,
+						      napis->
+							rxpkt_thresh_reached,
+						      napis->cpu_corrected,
+						      napis->napi_max_poll_time,
+						      buf);
 			}
 		}
 

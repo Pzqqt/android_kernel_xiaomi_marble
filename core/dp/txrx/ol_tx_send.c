@@ -938,10 +938,8 @@ void ol_tx_dump_group_credit_stats(ol_txrx_pdev_handle pdev)
 	int16_t curr_index, old_index, wrap_around;
 	uint16_t curr_credit, old_credit, mem_vdevs;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "Group credit stats:");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "  No: GrpID: Credit: Change: vdev_map");
+	txrx_nofl_info("Group credit stats:");
+	txrx_nofl_info("  No: GrpID: Credit: Change: vdev_map");
 
 	qdf_spin_lock_bh(&pdev->grp_stat_spinlock);
 	curr_index = pdev->grp_stats.last_valid_index;
@@ -949,8 +947,7 @@ void ol_tx_dump_group_credit_stats(ol_txrx_pdev_handle pdev)
 	qdf_spin_unlock_bh(&pdev->grp_stat_spinlock);
 
 	if (curr_index < 0) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Not initialized");
+		txrx_nofl_info("Not initialized");
 		return;
 	}
 
@@ -979,19 +976,15 @@ void ol_tx_dump_group_credit_stats(ol_txrx_pdev_handle pdev)
 			qdf_spin_unlock_bh(&pdev->grp_stat_spinlock);
 
 			if (!is_break)
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%4d: %5d: %6d %6d %8x",
-					  curr_index, j,
-					  curr_credit,
-					  (curr_credit - old_credit),
-					  mem_vdevs);
+				txrx_nofl_info("%4d: %5d: %6d %6d %8x",
+					       curr_index, j,
+					       curr_credit,
+					       (curr_credit - old_credit),
+					       mem_vdevs);
 			else
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%4d: %5d: %6d %6s %8x",
-					  curr_index, j,
-					  curr_credit, "NA", mem_vdevs);
+				txrx_nofl_info("%4d: %5d: %6d %6s %8x",
+					       curr_index, j,
+					       curr_credit, "NA", mem_vdevs);
 		}
 
 		if (is_break)

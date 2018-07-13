@@ -51,10 +51,10 @@ static char *bw_str_arr[] = {"20MHz", "40MHz", "80MHz", "160MHz"};
  */
 #define tx_rate_stats_print_cmn(_tx_rate_info, _concise) \
 	do {							 \
-		qdf_debug("TX Rate Info:");			 \
+		qdf_nofl_info("TX Rate Info:");			 \
 		\
 		/* MCS */					 \
-		qdf_debug("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+		qdf_nofl_info("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
 				"MCS counts (0..9)",		 \
 				_tx_rate_info->mcs[0],		 \
 				_tx_rate_info->mcs[1],		 \
@@ -68,7 +68,7 @@ static char *bw_str_arr[] = {"20MHz", "40MHz", "80MHz", "160MHz"};
 				_tx_rate_info->mcs[9]);		 \
 		\
 		/* SGI */					 \
-		qdf_debug("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+		qdf_nofl_info("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
 				"SGI counts (0..9)",		 \
 				_tx_rate_info->sgi[0],		 \
 				_tx_rate_info->sgi[1],		 \
@@ -82,18 +82,18 @@ static char *bw_str_arr[] = {"20MHz", "40MHz", "80MHz", "160MHz"};
 				_tx_rate_info->sgi[9]);		 \
 		\
 		/* NSS */					 \
-		qdf_debug("NSS  counts: 1x1 %d, 2x2 %d, 3x3 %d", \
+		qdf_nofl_info("NSS  counts: 1x1 %d, 2x2 %d, 3x3 %d", \
 				_tx_rate_info->nss[0],		 \
 				_tx_rate_info->nss[1], _tx_rate_info->nss[2]);\
 		\
 		/* BW */					 \
 		if (ARRAY_SIZE(_tx_rate_info->bw) == 3) \
-			qdf_debug("BW counts: %s %d, %s %d, %s %d", \
+			qdf_nofl_info("BW counts: %s %d, %s %d, %s %d", \
 				bw_str_arr[0], _tx_rate_info->bw[0],	 \
 				bw_str_arr[1], _tx_rate_info->bw[1],	 \
 				bw_str_arr[2], _tx_rate_info->bw[2]);	 \
 		else if (ARRAY_SIZE(_tx_rate_info->bw) == 4) \
-			qdf_debug("BW counts: %s %d, %s %d, %s %d, %s %d", \
+			qdf_nofl_info("BW counts: %s %d, %s %d, %s %d, %s %d", \
 				bw_str_arr[0], _tx_rate_info->bw[0],	 \
 				bw_str_arr[1], _tx_rate_info->bw[1],	 \
 				bw_str_arr[2], _tx_rate_info->bw[2],     \
@@ -101,14 +101,14 @@ static char *bw_str_arr[] = {"20MHz", "40MHz", "80MHz", "160MHz"};
 		\
 		\
 		/* Preamble */					 \
-		qdf_debug("Preamble (O C H V) counts: %d, %d, %d, %d",\
+		qdf_nofl_info("Preamble (O C H V) counts: %d, %d, %d, %d",\
 				_tx_rate_info->pream[0],		 \
 				_tx_rate_info->pream[1],		 \
 				_tx_rate_info->pream[2],		 \
 				_tx_rate_info->pream[3]);		 \
 		\
 		/* STBC rate counts */				 \
-		qdf_debug("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+		qdf_nofl_info("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
 				"STBC rate counts (0..9)",	 \
 				_tx_rate_info->stbc[0],		 \
 				_tx_rate_info->stbc[1],		 \
@@ -122,10 +122,10 @@ static char *bw_str_arr[] = {"20MHz", "40MHz", "80MHz", "160MHz"};
 				_tx_rate_info->stbc[9]);	 \
 			\
 		/* LDPC and TxBF counts */			 \
-		qdf_debug("LDPC Counts: %d", _tx_rate_info->ldpc);\
-		qdf_debug("RTS Counts: %d", _tx_rate_info->rts_cnt);\
+		qdf_nofl_info("LDPC Counts: %d", _tx_rate_info->ldpc);\
+		qdf_nofl_info("RTS Counts: %d", _tx_rate_info->rts_cnt);\
 		/* RSSI Values for last ack frames */		\
-		qdf_debug("Ack RSSI: %d", _tx_rate_info->ack_rssi);\
+		qdf_nofl_info("Ack RSSI: %d", _tx_rate_info->ack_rssi);\
 	} while (0)
 
 static void htt_t2h_stats_tx_rate_stats_print(wlan_dbg_tx_rate_info_t *
@@ -152,10 +152,10 @@ static void htt_t2h_stats_tx_rate_stats_print_v2(wlan_dbg_tx_rate_info_v2_t *
  */
 #define rx_rate_stats_print_cmn(_rx_phy_info, _concise) \
 	do {							\
-		qdf_debug("RX Rate Info:");			\
+		qdf_nofl_info("RX Rate Info:");			\
 		\
 		/* MCS */					\
-		qdf_debug("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+		qdf_nofl_info("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
 				"MCS counts (0..9)",		 \
 				_rx_phy_info->mcs[0],			\
 				_rx_phy_info->mcs[1],			\
@@ -169,7 +169,7 @@ static void htt_t2h_stats_tx_rate_stats_print_v2(wlan_dbg_tx_rate_info_v2_t *
 				_rx_phy_info->mcs[9]);			\
 		\
 		/* SGI */						\
-		qdf_debug("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+		qdf_nofl_info("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
 				"SGI counts (0..9)",		 \
 				_rx_phy_info->sgi[0],			\
 				_rx_phy_info->sgi[1],			\
@@ -193,30 +193,30 @@ static void htt_t2h_stats_tx_rate_stats_print_v2(wlan_dbg_tx_rate_info_v2_t *
 		 * if needed in the future. Hence the addition in the host code\
 		 * at this line.
 		 */							       \
-		qdf_debug("NSS  counts: 1x1 %d, 2x2 %d, 3x3 %d, 4x4 %d",\
+		qdf_nofl_info("NSS  counts: 1x1 %d, 2x2 %d, 3x3 %d, 4x4 %d",\
 				_rx_phy_info->nss[0] + _rx_phy_info->nsts,\
 				_rx_phy_info->nss[1],			\
 				_rx_phy_info->nss[2],			\
 				_rx_phy_info->nss[3]);		\
 		\
 		/* NSTS */					\
-		qdf_debug("NSTS count: %d", _rx_phy_info->nsts);	\
+		qdf_nofl_info("NSTS count: %d", _rx_phy_info->nsts);	\
 		\
 		/* BW */					\
 		if (ARRAY_SIZE(_rx_phy_info->bw) == 3) \
-			qdf_debug("BW counts: %s %d, %s %d, %s %d",	\
+			qdf_nofl_info("BW counts: %s %d, %s %d, %s %d",	\
 				bw_str_arr[0], _rx_phy_info->bw[0],	\
 				bw_str_arr[1], _rx_phy_info->bw[1],	\
 				bw_str_arr[2], _rx_phy_info->bw[2]);	\
 		else if (ARRAY_SIZE(_rx_phy_info->bw) == 4) \
-			qdf_debug("BW counts: %s %d, %s %d, %s %d, %s %d", \
+			qdf_nofl_info("BW counts: %s %d, %s %d, %s %d, %s %d", \
 				bw_str_arr[0], _rx_phy_info->bw[0],	\
 				bw_str_arr[1], _rx_phy_info->bw[1],	\
 				bw_str_arr[2], _rx_phy_info->bw[2],    \
 				bw_str_arr[3], _rx_phy_info->bw[3]);	\
 		\
 		/* Preamble */					\
-		qdf_debug("Preamble counts: %d, %d, %d, %d, %d, %d",\
+		qdf_nofl_info("Preamble counts: %d, %d, %d, %d, %d, %d",\
 				_rx_phy_info->pream[0],		\
 				_rx_phy_info->pream[1],		\
 				_rx_phy_info->pream[2],		\
@@ -225,7 +225,7 @@ static void htt_t2h_stats_tx_rate_stats_print_v2(wlan_dbg_tx_rate_info_v2_t *
 				_rx_phy_info->pream[5]);		\
 		\
 		/* STBC rate counts */				\
-		qdf_debug("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
+		qdf_nofl_info("%s: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d",\
 				"STBC rate counts (0..9)",	\
 				_rx_phy_info->stbc[0],		\
 				_rx_phy_info->stbc[1],		\
@@ -239,25 +239,25 @@ static void htt_t2h_stats_tx_rate_stats_print_v2(wlan_dbg_tx_rate_info_v2_t *
 				_rx_phy_info->stbc[9]);		\
 		\
 		/* LDPC and TxBF counts */			\
-		qdf_debug("LDPC TXBF Counts: %d, %d",		\
+		qdf_nofl_info("LDPC TXBF Counts: %d, %d",		\
 				_rx_phy_info->ldpc, _rx_phy_info->txbf);\
 		/* RSSI Values for last received frames */	\
-		qdf_debug("RSSI (data, mgmt): %d, %d", _rx_phy_info->data_rssi,\
+		qdf_nofl_info("RSSI (data, mgmt): %d, %d", _rx_phy_info->data_rssi,\
 				_rx_phy_info->mgmt_rssi);		\
 		\
-		qdf_debug("RSSI Chain 0 (0x%02x 0x%02x 0x%02x 0x%02x)",\
+		qdf_nofl_info("RSSI Chain 0 (0x%02x 0x%02x 0x%02x 0x%02x)",\
 				((_rx_phy_info->rssi_chain0 >> 24) & 0xff),\
 				((_rx_phy_info->rssi_chain0 >> 16) & 0xff),\
 				((_rx_phy_info->rssi_chain0 >> 8) & 0xff),\
 				((_rx_phy_info->rssi_chain0 >> 0) & 0xff));\
 		\
-		qdf_debug("RSSI Chain 1 (0x%02x 0x%02x 0x%02x 0x%02x)",\
+		qdf_nofl_info("RSSI Chain 1 (0x%02x 0x%02x 0x%02x 0x%02x)",\
 				((_rx_phy_info->rssi_chain1 >> 24) & 0xff),\
 				((_rx_phy_info->rssi_chain1 >> 16) & 0xff),\
 				((_rx_phy_info->rssi_chain1 >> 8) & 0xff),\
 				((_rx_phy_info->rssi_chain1 >> 0) & 0xff));\
 		\
-		qdf_debug("RSSI Chain 2 (0x%02x 0x%02x 0x%02x 0x%02x)",\
+		qdf_nofl_info("RSSI Chain 2 (0x%02x 0x%02x 0x%02x 0x%02x)",\
 				((_rx_phy_info->rssi_chain2 >> 24) & 0xff),\
 				((_rx_phy_info->rssi_chain2 >> 16) & 0xff),\
 				((_rx_phy_info->rssi_chain2 >> 8) & 0xff),\
@@ -283,78 +283,78 @@ htt_t2h_stats_pdev_stats_print(struct wlan_dbg_stats *wlan_pdev_stats,
 	struct wlan_dbg_tx_stats *tx = &wlan_pdev_stats->tx;
 	struct wlan_dbg_rx_stats *rx = &wlan_pdev_stats->rx;
 
-	qdf_debug("WAL Pdev stats:");
-	qdf_debug("\n### Tx ###");
+	qdf_nofl_info("WAL Pdev stats:");
+	qdf_nofl_info("\n### Tx ###");
 
 	/* Num HTT cookies queued to dispatch list */
-	qdf_debug("comp_queued       :\t%d", tx->comp_queued);
+	qdf_nofl_info("comp_queued       :\t%d", tx->comp_queued);
 	/* Num HTT cookies dispatched */
-	qdf_debug("comp_delivered    :\t%d", tx->comp_delivered);
+	qdf_nofl_info("comp_delivered    :\t%d", tx->comp_delivered);
 	/* Num MSDU queued to WAL */
-	qdf_debug("msdu_enqued       :\t%d", tx->msdu_enqued);
+	qdf_nofl_info("msdu_enqued       :\t%d", tx->msdu_enqued);
 	/* Num MPDU queued to WAL */
-	qdf_debug("mpdu_enqued       :\t%d", tx->mpdu_enqued);
+	qdf_nofl_info("mpdu_enqued       :\t%d", tx->mpdu_enqued);
 	/* Num MSDUs dropped by WMM limit */
-	qdf_debug("wmm_drop          :\t%d", tx->wmm_drop);
+	qdf_nofl_info("wmm_drop          :\t%d", tx->wmm_drop);
 	/* Num Local frames queued */
-	qdf_debug("local_enqued      :\t%d", tx->local_enqued);
+	qdf_nofl_info("local_enqued      :\t%d", tx->local_enqued);
 	/* Num Local frames done */
-	qdf_debug("local_freed       :\t%d", tx->local_freed);
+	qdf_nofl_info("local_freed       :\t%d", tx->local_freed);
 	/* Num queued to HW */
-	qdf_debug("hw_queued         :\t%d", tx->hw_queued);
+	qdf_nofl_info("hw_queued         :\t%d", tx->hw_queued);
 	/* Num PPDU reaped from HW */
-	qdf_debug("hw_reaped         :\t%d", tx->hw_reaped);
+	qdf_nofl_info("hw_reaped         :\t%d", tx->hw_reaped);
 	/* Num underruns */
-	qdf_debug("mac underrun      :\t%d", tx->underrun);
+	qdf_nofl_info("mac underrun      :\t%d", tx->underrun);
 	/* Num underruns */
-	qdf_debug("phy underrun      :\t%d", tx->phy_underrun);
+	qdf_nofl_info("phy underrun      :\t%d", tx->phy_underrun);
 	/* Num PPDUs cleaned up in TX abort */
-	qdf_debug("tx_abort          :\t%d", tx->tx_abort);
+	qdf_nofl_info("tx_abort          :\t%d", tx->tx_abort);
 	/* Num MPDUs requed by SW */
-	qdf_debug("mpdus_requed      :\t%d", tx->mpdus_requed);
+	qdf_nofl_info("mpdus_requed      :\t%d", tx->mpdus_requed);
 	/* Excessive retries */
-	qdf_debug("excess retries    :\t%d", tx->tx_ko);
+	qdf_nofl_info("excess retries    :\t%d", tx->tx_ko);
 	/* last data rate */
-	qdf_debug("last rc           :\t%d", tx->data_rc);
+	qdf_nofl_info("last rc           :\t%d", tx->data_rc);
 	/* scheduler self triggers */
-	qdf_debug("sched self trig   :\t%d", tx->self_triggers);
+	qdf_nofl_info("sched self trig   :\t%d", tx->self_triggers);
 	/* SW retry failures */
-	qdf_debug("ampdu retry failed:\t%d", tx->sw_retry_failure);
+	qdf_nofl_info("ampdu retry failed:\t%d", tx->sw_retry_failure);
 	/* ilegal phy rate errirs */
-	qdf_debug("illegal rate errs :\t%d", tx->illgl_rate_phy_err);
+	qdf_nofl_info("illegal rate errs :\t%d", tx->illgl_rate_phy_err);
 	/* pdev continuous excessive retries  */
-	qdf_debug("pdev cont xretry  :\t%d", tx->pdev_cont_xretry);
+	qdf_nofl_info("pdev cont xretry  :\t%d", tx->pdev_cont_xretry);
 	/* pdev continuous excessive retries  */
-	qdf_debug("pdev tx timeout   :\t%d", tx->pdev_tx_timeout);
+	qdf_nofl_info("pdev tx timeout   :\t%d", tx->pdev_tx_timeout);
 	/* pdev resets  */
-	qdf_debug("pdev resets       :\t%d", tx->pdev_resets);
+	qdf_nofl_info("pdev resets       :\t%d", tx->pdev_resets);
 	/* PPDU > txop duration  */
-	qdf_debug("ppdu txop ovf     :\t%d", tx->txop_ovf);
+	qdf_nofl_info("ppdu txop ovf     :\t%d", tx->txop_ovf);
 
-	qdf_debug("\n### Rx ###\n");
+	qdf_nofl_info("\n### Rx ###\n");
 	/* Cnts any change in ring routing mid-ppdu */
-	qdf_debug("ppdu_route_change :\t%d", rx->mid_ppdu_route_change);
+	qdf_nofl_info("ppdu_route_change :\t%d", rx->mid_ppdu_route_change);
 	/* Total number of statuses processed */
-	qdf_debug("status_rcvd       :\t%d", rx->status_rcvd);
+	qdf_nofl_info("status_rcvd       :\t%d", rx->status_rcvd);
 	/* Extra frags on rings 0-3 */
-	qdf_debug("r0_frags          :\t%d", rx->r0_frags);
-	qdf_debug("r1_frags          :\t%d", rx->r1_frags);
-	qdf_debug("r2_frags          :\t%d", rx->r2_frags);
-	qdf_debug("r3_frags          :\t%d", rx->r3_frags);
+	qdf_nofl_info("r0_frags          :\t%d", rx->r0_frags);
+	qdf_nofl_info("r1_frags          :\t%d", rx->r1_frags);
+	qdf_nofl_info("r2_frags          :\t%d", rx->r2_frags);
+	qdf_nofl_info("r3_frags          :\t%d", rx->r3_frags);
 	/* MSDUs / MPDUs delivered to HTT */
-	qdf_debug("htt_msdus         :\t%d", rx->htt_msdus);
-	qdf_debug("htt_mpdus         :\t%d", rx->htt_mpdus);
+	qdf_nofl_info("htt_msdus         :\t%d", rx->htt_msdus);
+	qdf_nofl_info("htt_mpdus         :\t%d", rx->htt_mpdus);
 	/* MSDUs / MPDUs delivered to local stack */
-	qdf_debug("loc_msdus         :\t%d", rx->loc_msdus);
-	qdf_debug("loc_mpdus         :\t%d", rx->loc_mpdus);
+	qdf_nofl_info("loc_msdus         :\t%d", rx->loc_msdus);
+	qdf_nofl_info("loc_mpdus         :\t%d", rx->loc_mpdus);
 	/* AMSDUs that have more MSDUs than the status ring size */
-	qdf_debug("oversize_amsdu    :\t%d", rx->oversize_amsdu);
+	qdf_nofl_info("oversize_amsdu    :\t%d", rx->oversize_amsdu);
 	/* Number of PHY errors */
-	qdf_debug("phy_errs          :\t%d", rx->phy_errs);
+	qdf_nofl_info("phy_errs          :\t%d", rx->phy_errs);
 	/* Number of PHY errors dropped */
-	qdf_debug("phy_errs dropped  :\t%d", rx->phy_err_drop);
+	qdf_nofl_info("phy_errs dropped  :\t%d", rx->phy_err_drop);
 	/* Number of mpdu errors - FCS, MIC, ENC etc. */
-	qdf_debug("mpdu_errs         :\t%d", rx->mpdu_errs);
+	qdf_nofl_info("mpdu_errs         :\t%d", rx->mpdu_errs);
 
 }
 
@@ -362,268 +362,269 @@ static void
 htt_t2h_stats_rx_reorder_stats_print(struct rx_reorder_stats *stats_ptr,
 				     int concise)
 {
-	qdf_debug("Rx reorder statistics:");
-	qdf_debug("  %u non-QoS frames received", stats_ptr->deliver_non_qos);
-	qdf_debug("  %u frames received in-order",
-		  stats_ptr->deliver_in_order);
-	qdf_debug("  %u frames flushed due to timeout",
-		  stats_ptr->deliver_flush_timeout);
-	qdf_debug("  %u frames flushed due to moving out of window",
-		  stats_ptr->deliver_flush_oow);
-	qdf_debug("  %u frames flushed due to receiving DELBA",
-		  stats_ptr->deliver_flush_delba);
-	qdf_debug("  %u frames discarded due to FCS error",
-		  stats_ptr->fcs_error);
-	qdf_debug("  %u frames discarded due to invalid peer",
-		  stats_ptr->invalid_peer);
-	qdf_debug
+	qdf_nofl_info("Rx reorder statistics:");
+	qdf_nofl_info("  %u non-QoS frames received",
+		      stats_ptr->deliver_non_qos);
+	qdf_nofl_info("  %u frames received in-order",
+		      stats_ptr->deliver_in_order);
+	qdf_nofl_info("  %u frames flushed due to timeout",
+		      stats_ptr->deliver_flush_timeout);
+	qdf_nofl_info("  %u frames flushed due to moving out of window",
+		      stats_ptr->deliver_flush_oow);
+	qdf_nofl_info("  %u frames flushed due to receiving DELBA",
+		      stats_ptr->deliver_flush_delba);
+	qdf_nofl_info("  %u frames discarded due to FCS error",
+		      stats_ptr->fcs_error);
+	qdf_nofl_info("  %u frames discarded due to invalid peer",
+		      stats_ptr->invalid_peer);
+	qdf_nofl_info
 		("  %u frames discarded due to duplication (non aggregation)",
-		stats_ptr->dup_non_aggr);
-	qdf_debug("  %u frames discarded due to duplication in reorder queue",
-		 stats_ptr->dup_in_reorder);
-	qdf_debug("  %u frames discarded due to processed before",
-		  stats_ptr->dup_past);
-	qdf_debug("  %u times reorder timeout happened",
-		  stats_ptr->reorder_timeout);
-	qdf_debug("  %u times incorrect bar received",
-		  stats_ptr->invalid_bar_ssn);
-	qdf_debug("  %u times bar ssn reset happened",
-			stats_ptr->ssn_reset);
-	qdf_debug("  %u times flushed due to peer delete",
-			stats_ptr->deliver_flush_delpeer);
-	qdf_debug("  %u times flushed due to offload",
-			stats_ptr->deliver_flush_offload);
-	qdf_debug("  %u times flushed due to ouf of buffer",
-			stats_ptr->deliver_flush_oob);
-	qdf_debug("  %u MPDU's dropped due to PN check fail",
-			stats_ptr->pn_fail);
-	qdf_debug("  %u MPDU's dropped due to lack of memory",
-			stats_ptr->store_fail);
-	qdf_debug("  %u times tid pool alloc succeeded",
-			stats_ptr->tid_pool_alloc_succ);
-	qdf_debug("  %u times MPDU pool alloc succeeded",
-			stats_ptr->mpdu_pool_alloc_succ);
-	qdf_debug("  %u times MSDU pool alloc succeeded",
-			stats_ptr->msdu_pool_alloc_succ);
-	qdf_debug("  %u times tid pool alloc failed",
-			stats_ptr->tid_pool_alloc_fail);
-	qdf_debug("  %u times MPDU pool alloc failed",
-			stats_ptr->mpdu_pool_alloc_fail);
-	qdf_debug("  %u times MSDU pool alloc failed",
-			stats_ptr->msdu_pool_alloc_fail);
-	qdf_debug("  %u times tid pool freed",
-			stats_ptr->tid_pool_free);
-	qdf_debug("  %u times MPDU pool freed",
-			stats_ptr->mpdu_pool_free);
-	qdf_debug("  %u times MSDU pool freed",
-			stats_ptr->msdu_pool_free);
-	qdf_debug("  %u MSDUs undelivered to HTT, queued to Rx MSDU free list",
-			stats_ptr->msdu_queued);
-	qdf_debug("  %u MSDUs released from Rx MSDU list to MAC ring",
-			stats_ptr->msdu_recycled);
-	qdf_debug("  %u MPDUs with invalid peer but A2 found in AST",
-			stats_ptr->invalid_peer_a2_in_ast);
-	qdf_debug("  %u MPDUs with invalid peer but A3 found in AST",
-			stats_ptr->invalid_peer_a3_in_ast);
-	qdf_debug("  %u MPDUs with invalid peer, Broadcast or Mulitcast frame",
-			stats_ptr->invalid_peer_bmc_mpdus);
-	qdf_debug("  %u MSDUs with err attention word",
-			stats_ptr->rxdesc_err_att);
-	qdf_debug("  %u MSDUs with flag of peer_idx_invalid",
-			stats_ptr->rxdesc_err_peer_idx_inv);
-	qdf_debug("  %u MSDUs with  flag of peer_idx_timeout",
-			stats_ptr->rxdesc_err_peer_idx_to);
-	qdf_debug("  %u MSDUs with  flag of overflow",
-			stats_ptr->rxdesc_err_ov);
-	qdf_debug("  %u MSDUs with  flag of msdu_length_err",
-			stats_ptr->rxdesc_err_msdu_len);
-	qdf_debug("  %u MSDUs with  flag of mpdu_length_err",
-			stats_ptr->rxdesc_err_mpdu_len);
-	qdf_debug("  %u MSDUs with  flag of tkip_mic_err",
-			stats_ptr->rxdesc_err_tkip_mic);
-	qdf_debug("  %u MSDUs with  flag of decrypt_err",
-			stats_ptr->rxdesc_err_decrypt);
-	qdf_debug("  %u MSDUs with  flag of fcs_err",
-			stats_ptr->rxdesc_err_fcs);
-	qdf_debug("  %u Unicast frames with invalid peer handler",
-			stats_ptr->rxdesc_uc_msdus_inv_peer);
-	qdf_debug("  %u unicast frame to DUT with invalid peer handler",
-			stats_ptr->rxdesc_direct_msdus_inv_peer);
-	qdf_debug("  %u Broadcast/Multicast frames with invalid peer handler",
-			stats_ptr->rxdesc_bmc_msdus_inv_peer);
-	qdf_debug("  %u MSDUs dropped due to no first MSDU flag",
-			stats_ptr->rxdesc_no_1st_msdu);
-	qdf_debug("  %u MSDUs dropped due to ring overflow",
-			stats_ptr->msdu_drop_ring_ov);
-	qdf_debug("  %u MSDUs dropped due to FC mismatch",
-			stats_ptr->msdu_drop_fc_mismatch);
-	qdf_debug("  %u MSDUs dropped due to mgt frame in Remote ring",
-			stats_ptr->msdu_drop_mgmt_remote_ring);
-	qdf_debug("  %u MSDUs dropped due to misc non error",
-			stats_ptr->msdu_drop_misc);
-	qdf_debug("  %u MSDUs go to offload before reorder",
-			stats_ptr->offload_msdu_wal);
-	qdf_debug("  %u data frame dropped by offload after reorder",
-			stats_ptr->offload_msdu_reorder);
-	qdf_debug("  %u  MPDUs with SN in the past & within BA window",
-			stats_ptr->dup_past_within_window);
-	qdf_debug("  %u  MPDUs with SN in the past & outside BA window",
-			stats_ptr->dup_past_outside_window);
+		 stats_ptr->dup_non_aggr);
+	qdf_nofl_info("  %u frames discarded due to duplication in reorder queue",
+		      stats_ptr->dup_in_reorder);
+	qdf_nofl_info("  %u frames discarded due to processed before",
+		      stats_ptr->dup_past);
+	qdf_nofl_info("  %u times reorder timeout happened",
+		      stats_ptr->reorder_timeout);
+	qdf_nofl_info("  %u times incorrect bar received",
+		      stats_ptr->invalid_bar_ssn);
+	qdf_nofl_info("  %u times bar ssn reset happened",
+		      stats_ptr->ssn_reset);
+	qdf_nofl_info("  %u times flushed due to peer delete",
+		      stats_ptr->deliver_flush_delpeer);
+	qdf_nofl_info("  %u times flushed due to offload",
+		      stats_ptr->deliver_flush_offload);
+	qdf_nofl_info("  %u times flushed due to ouf of buffer",
+		      stats_ptr->deliver_flush_oob);
+	qdf_nofl_info("  %u MPDU's dropped due to PN check fail",
+		      stats_ptr->pn_fail);
+	qdf_nofl_info("  %u MPDU's dropped due to lack of memory",
+		      stats_ptr->store_fail);
+	qdf_nofl_info("  %u times tid pool alloc succeeded",
+		      stats_ptr->tid_pool_alloc_succ);
+	qdf_nofl_info("  %u times MPDU pool alloc succeeded",
+		      stats_ptr->mpdu_pool_alloc_succ);
+	qdf_nofl_info("  %u times MSDU pool alloc succeeded",
+		      stats_ptr->msdu_pool_alloc_succ);
+	qdf_nofl_info("  %u times tid pool alloc failed",
+		      stats_ptr->tid_pool_alloc_fail);
+	qdf_nofl_info("  %u times MPDU pool alloc failed",
+		      stats_ptr->mpdu_pool_alloc_fail);
+	qdf_nofl_info("  %u times MSDU pool alloc failed",
+		      stats_ptr->msdu_pool_alloc_fail);
+	qdf_nofl_info("  %u times tid pool freed",
+		      stats_ptr->tid_pool_free);
+	qdf_nofl_info("  %u times MPDU pool freed",
+		      stats_ptr->mpdu_pool_free);
+	qdf_nofl_info("  %u times MSDU pool freed",
+		      stats_ptr->msdu_pool_free);
+	qdf_nofl_info("  %u MSDUs undelivered to HTT, queued to Rx MSDU free list",
+		      stats_ptr->msdu_queued);
+	qdf_nofl_info("  %u MSDUs released from Rx MSDU list to MAC ring",
+		      stats_ptr->msdu_recycled);
+	qdf_nofl_info("  %u MPDUs with invalid peer but A2 found in AST",
+		      stats_ptr->invalid_peer_a2_in_ast);
+	qdf_nofl_info("  %u MPDUs with invalid peer but A3 found in AST",
+		      stats_ptr->invalid_peer_a3_in_ast);
+	qdf_nofl_info("  %u MPDUs with invalid peer, Broadcast or Mulitcast frame",
+		      stats_ptr->invalid_peer_bmc_mpdus);
+	qdf_nofl_info("  %u MSDUs with err attention word",
+		      stats_ptr->rxdesc_err_att);
+	qdf_nofl_info("  %u MSDUs with flag of peer_idx_invalid",
+		      stats_ptr->rxdesc_err_peer_idx_inv);
+	qdf_nofl_info("  %u MSDUs with  flag of peer_idx_timeout",
+		      stats_ptr->rxdesc_err_peer_idx_to);
+	qdf_nofl_info("  %u MSDUs with  flag of overflow",
+		      stats_ptr->rxdesc_err_ov);
+	qdf_nofl_info("  %u MSDUs with  flag of msdu_length_err",
+		      stats_ptr->rxdesc_err_msdu_len);
+	qdf_nofl_info("  %u MSDUs with  flag of mpdu_length_err",
+		      stats_ptr->rxdesc_err_mpdu_len);
+	qdf_nofl_info("  %u MSDUs with  flag of tkip_mic_err",
+		      stats_ptr->rxdesc_err_tkip_mic);
+	qdf_nofl_info("  %u MSDUs with  flag of decrypt_err",
+		      stats_ptr->rxdesc_err_decrypt);
+	qdf_nofl_info("  %u MSDUs with  flag of fcs_err",
+		      stats_ptr->rxdesc_err_fcs);
+	qdf_nofl_info("  %u Unicast frames with invalid peer handler",
+		      stats_ptr->rxdesc_uc_msdus_inv_peer);
+	qdf_nofl_info("  %u unicast frame to DUT with invalid peer handler",
+		      stats_ptr->rxdesc_direct_msdus_inv_peer);
+	qdf_nofl_info("  %u Broadcast/Multicast frames with invalid peer handler",
+		      stats_ptr->rxdesc_bmc_msdus_inv_peer);
+	qdf_nofl_info("  %u MSDUs dropped due to no first MSDU flag",
+		      stats_ptr->rxdesc_no_1st_msdu);
+	qdf_nofl_info("  %u MSDUs dropped due to ring overflow",
+		      stats_ptr->msdu_drop_ring_ov);
+	qdf_nofl_info("  %u MSDUs dropped due to FC mismatch",
+		      stats_ptr->msdu_drop_fc_mismatch);
+	qdf_nofl_info("  %u MSDUs dropped due to mgt frame in Remote ring",
+		      stats_ptr->msdu_drop_mgmt_remote_ring);
+	qdf_nofl_info("  %u MSDUs dropped due to misc non error",
+		      stats_ptr->msdu_drop_misc);
+	qdf_nofl_info("  %u MSDUs go to offload before reorder",
+		      stats_ptr->offload_msdu_wal);
+	qdf_nofl_info("  %u data frame dropped by offload after reorder",
+		      stats_ptr->offload_msdu_reorder);
+	qdf_nofl_info("  %u  MPDUs with SN in the past & within BA window",
+		      stats_ptr->dup_past_within_window);
+	qdf_nofl_info("  %u  MPDUs with SN in the past & outside BA window",
+		      stats_ptr->dup_past_outside_window);
 }
 
 static void
 htt_t2h_stats_rx_rem_buf_stats_print(
 	struct rx_remote_buffer_mgmt_stats *stats_ptr, int concise)
 {
-	qdf_debug("Rx Remote Buffer Statistics:");
-	qdf_debug("  %u MSDU's reaped for Rx processing",
-			stats_ptr->remote_reaped);
-	qdf_debug("  %u MSDU's recycled within firmware",
-			stats_ptr->remote_recycled);
-	qdf_debug("  %u MSDU's stored by Data Rx",
-			stats_ptr->data_rx_msdus_stored);
-	qdf_debug("  %u HTT indications from WAL Rx MSDU",
-			stats_ptr->wal_rx_ind);
-	qdf_debug("  %u HTT indications unconsumed from WAL Rx MSDU",
-			stats_ptr->wal_rx_ind_unconsumed);
-	qdf_debug("  %u HTT indications from Data Rx MSDU",
-			stats_ptr->data_rx_ind);
-	qdf_debug("  %u HTT indications unconsumed from Data Rx MSDU",
-			stats_ptr->data_rx_ind_unconsumed);
-	qdf_debug("  %u HTT indications from ATHBUF",
-			stats_ptr->athbuf_rx_ind);
-	qdf_debug("  %u Remote buffers requested for refill",
-			stats_ptr->refill_buf_req);
-	qdf_debug("  %u Remote buffers filled by host",
-			stats_ptr->refill_buf_rsp);
-	qdf_debug("  %u times MAC has no buffers",
-			stats_ptr->mac_no_bufs);
-	qdf_debug("  %u times f/w write & read indices on MAC ring are equal",
-			stats_ptr->fw_indices_equal);
-	qdf_debug("  %u times f/w has no remote buffers to post to MAC",
-			stats_ptr->host_no_bufs);
+	qdf_nofl_info("Rx Remote Buffer Statistics:");
+	qdf_nofl_info("  %u MSDU's reaped for Rx processing",
+		      stats_ptr->remote_reaped);
+	qdf_nofl_info("  %u MSDU's recycled within firmware",
+		      stats_ptr->remote_recycled);
+	qdf_nofl_info("  %u MSDU's stored by Data Rx",
+		      stats_ptr->data_rx_msdus_stored);
+	qdf_nofl_info("  %u HTT indications from WAL Rx MSDU",
+		      stats_ptr->wal_rx_ind);
+	qdf_nofl_info("  %u HTT indications unconsumed from WAL Rx MSDU",
+		      stats_ptr->wal_rx_ind_unconsumed);
+	qdf_nofl_info("  %u HTT indications from Data Rx MSDU",
+		      stats_ptr->data_rx_ind);
+	qdf_nofl_info("  %u HTT indications unconsumed from Data Rx MSDU",
+		      stats_ptr->data_rx_ind_unconsumed);
+	qdf_nofl_info("  %u HTT indications from ATHBUF",
+		      stats_ptr->athbuf_rx_ind);
+	qdf_nofl_info("  %u Remote buffers requested for refill",
+		      stats_ptr->refill_buf_req);
+	qdf_nofl_info("  %u Remote buffers filled by host",
+		      stats_ptr->refill_buf_rsp);
+	qdf_nofl_info("  %u times MAC has no buffers",
+		      stats_ptr->mac_no_bufs);
+	qdf_nofl_info("  %u times f/w write & read indices on MAC ring are equal",
+		      stats_ptr->fw_indices_equal);
+	qdf_nofl_info("  %u times f/w has no remote buffers to post to MAC",
+		      stats_ptr->host_no_bufs);
 }
 
 static void
 htt_t2h_stats_txbf_info_buf_stats_print(
 	struct wlan_dbg_txbf_data_stats *stats_ptr)
 {
-	qdf_debug("TXBF data Statistics:");
-	qdf_debug("tx_txbf_vht (0..9): %u, %u, %u, %u, %u, %u, %u, %u, %u, %d",
-		  stats_ptr->tx_txbf_vht[0],
-		  stats_ptr->tx_txbf_vht[1],
-		  stats_ptr->tx_txbf_vht[2],
-		  stats_ptr->tx_txbf_vht[3],
-		  stats_ptr->tx_txbf_vht[4],
-		  stats_ptr->tx_txbf_vht[5],
-		  stats_ptr->tx_txbf_vht[6],
-		  stats_ptr->tx_txbf_vht[7],
-		  stats_ptr->tx_txbf_vht[8],
-		  stats_ptr->tx_txbf_vht[9]);
-	qdf_debug("rx_txbf_vht (0..9): %u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
-		  stats_ptr->rx_txbf_vht[0],
-		  stats_ptr->rx_txbf_vht[1],
-		  stats_ptr->rx_txbf_vht[2],
-		  stats_ptr->rx_txbf_vht[3],
-		  stats_ptr->rx_txbf_vht[4],
-		  stats_ptr->rx_txbf_vht[5],
-		  stats_ptr->rx_txbf_vht[6],
-		  stats_ptr->rx_txbf_vht[7],
-		  stats_ptr->rx_txbf_vht[8],
-		  stats_ptr->rx_txbf_vht[9]);
-	qdf_debug("tx_txbf_ht (0..7): %u, %u, %u, %u, %u, %u, %u, %u",
-		  stats_ptr->tx_txbf_ht[0],
-		  stats_ptr->tx_txbf_ht[1],
-		  stats_ptr->tx_txbf_ht[2],
-		  stats_ptr->tx_txbf_ht[3],
-		  stats_ptr->tx_txbf_ht[4],
-		  stats_ptr->tx_txbf_ht[5],
-		  stats_ptr->tx_txbf_ht[6],
-		  stats_ptr->tx_txbf_ht[7]);
-	qdf_debug("tx_txbf_ofdm (0..7): %u, %u, %u, %u, %u, %u, %u, %u",
-		  stats_ptr->tx_txbf_ofdm[0],
-		  stats_ptr->tx_txbf_ofdm[1],
-		  stats_ptr->tx_txbf_ofdm[2],
-		  stats_ptr->tx_txbf_ofdm[3],
-		  stats_ptr->tx_txbf_ofdm[4],
-		  stats_ptr->tx_txbf_ofdm[5],
-		  stats_ptr->tx_txbf_ofdm[6],
-		  stats_ptr->tx_txbf_ofdm[7]);
-	qdf_debug("tx_txbf_cck (0..6): %u, %u, %u, %u, %u, %u, %u",
-		  stats_ptr->tx_txbf_cck[0],
-		  stats_ptr->tx_txbf_cck[1],
-		  stats_ptr->tx_txbf_cck[2],
-		  stats_ptr->tx_txbf_cck[3],
-		  stats_ptr->tx_txbf_cck[4],
-		  stats_ptr->tx_txbf_cck[5],
-		  stats_ptr->tx_txbf_cck[6]);
+	qdf_nofl_info("TXBF data Statistics:");
+	qdf_nofl_info("tx_txbf_vht (0..9): %u, %u, %u, %u, %u, %u, %u, %u, %u, %d",
+		      stats_ptr->tx_txbf_vht[0],
+		      stats_ptr->tx_txbf_vht[1],
+		      stats_ptr->tx_txbf_vht[2],
+		      stats_ptr->tx_txbf_vht[3],
+		      stats_ptr->tx_txbf_vht[4],
+		      stats_ptr->tx_txbf_vht[5],
+		      stats_ptr->tx_txbf_vht[6],
+		      stats_ptr->tx_txbf_vht[7],
+		      stats_ptr->tx_txbf_vht[8],
+		      stats_ptr->tx_txbf_vht[9]);
+	qdf_nofl_info("rx_txbf_vht (0..9): %u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
+		      stats_ptr->rx_txbf_vht[0],
+		      stats_ptr->rx_txbf_vht[1],
+		      stats_ptr->rx_txbf_vht[2],
+		      stats_ptr->rx_txbf_vht[3],
+		      stats_ptr->rx_txbf_vht[4],
+		      stats_ptr->rx_txbf_vht[5],
+		      stats_ptr->rx_txbf_vht[6],
+		      stats_ptr->rx_txbf_vht[7],
+		      stats_ptr->rx_txbf_vht[8],
+		      stats_ptr->rx_txbf_vht[9]);
+	qdf_nofl_info("tx_txbf_ht (0..7): %u, %u, %u, %u, %u, %u, %u, %u",
+		      stats_ptr->tx_txbf_ht[0],
+		      stats_ptr->tx_txbf_ht[1],
+		      stats_ptr->tx_txbf_ht[2],
+		      stats_ptr->tx_txbf_ht[3],
+		      stats_ptr->tx_txbf_ht[4],
+		      stats_ptr->tx_txbf_ht[5],
+		      stats_ptr->tx_txbf_ht[6],
+		      stats_ptr->tx_txbf_ht[7]);
+	qdf_nofl_info("tx_txbf_ofdm (0..7): %u, %u, %u, %u, %u, %u, %u, %u",
+		      stats_ptr->tx_txbf_ofdm[0],
+		      stats_ptr->tx_txbf_ofdm[1],
+		      stats_ptr->tx_txbf_ofdm[2],
+		      stats_ptr->tx_txbf_ofdm[3],
+		      stats_ptr->tx_txbf_ofdm[4],
+		      stats_ptr->tx_txbf_ofdm[5],
+		      stats_ptr->tx_txbf_ofdm[6],
+		      stats_ptr->tx_txbf_ofdm[7]);
+	qdf_nofl_info("tx_txbf_cck (0..6): %u, %u, %u, %u, %u, %u, %u",
+		      stats_ptr->tx_txbf_cck[0],
+		      stats_ptr->tx_txbf_cck[1],
+		      stats_ptr->tx_txbf_cck[2],
+		      stats_ptr->tx_txbf_cck[3],
+		      stats_ptr->tx_txbf_cck[4],
+		      stats_ptr->tx_txbf_cck[5],
+		      stats_ptr->tx_txbf_cck[6]);
 }
 
 static void
 htt_t2h_stats_txbf_snd_buf_stats_print(
 	struct wlan_dbg_txbf_snd_stats *stats_ptr)
 {
-	qdf_debug("TXBF snd Buffer Statistics:");
-	qdf_debug("cbf_20: %u, %u, %u, %u",
-		  stats_ptr->cbf_20[0],
-		  stats_ptr->cbf_20[1],
-		  stats_ptr->cbf_20[2],
-		  stats_ptr->cbf_20[3]);
-	qdf_debug("cbf_40: %u, %u, %u, %u",
-		  stats_ptr->cbf_40[0],
-		  stats_ptr->cbf_40[1],
-		  stats_ptr->cbf_40[2],
-		  stats_ptr->cbf_40[3]);
-	qdf_debug("cbf_80: %u, %u, %u, %u",
-		  stats_ptr->cbf_80[0],
-		  stats_ptr->cbf_80[1],
-		  stats_ptr->cbf_80[2],
-		  stats_ptr->cbf_80[3]);
-	qdf_debug("sounding: %u, %u, %u, %u, %u, %u, %u, %u, %u",
-		  stats_ptr->sounding[0],
-		  stats_ptr->sounding[1],
-		  stats_ptr->sounding[2],
-		  stats_ptr->sounding[3],
-		  stats_ptr->sounding[4],
-		  stats_ptr->sounding[5],
-		  stats_ptr->sounding[6],
-		  stats_ptr->sounding[7],
-		  stats_ptr->sounding[8]);
+	qdf_nofl_info("TXBF snd Buffer Statistics:");
+	qdf_nofl_info("cbf_20: %u, %u, %u, %u",
+		      stats_ptr->cbf_20[0],
+		      stats_ptr->cbf_20[1],
+		      stats_ptr->cbf_20[2],
+		      stats_ptr->cbf_20[3]);
+	qdf_nofl_info("cbf_40: %u, %u, %u, %u",
+		      stats_ptr->cbf_40[0],
+		      stats_ptr->cbf_40[1],
+		      stats_ptr->cbf_40[2],
+		      stats_ptr->cbf_40[3]);
+	qdf_nofl_info("cbf_80: %u, %u, %u, %u",
+		      stats_ptr->cbf_80[0],
+		      stats_ptr->cbf_80[1],
+		      stats_ptr->cbf_80[2],
+		      stats_ptr->cbf_80[3]);
+	qdf_nofl_info("sounding: %u, %u, %u, %u, %u, %u, %u, %u, %u",
+		      stats_ptr->sounding[0],
+		      stats_ptr->sounding[1],
+		      stats_ptr->sounding[2],
+		      stats_ptr->sounding[3],
+		      stats_ptr->sounding[4],
+		      stats_ptr->sounding[5],
+		      stats_ptr->sounding[6],
+		      stats_ptr->sounding[7],
+		      stats_ptr->sounding[8]);
 }
 
 static void
 htt_t2h_stats_tx_selfgen_buf_stats_print(
 	struct wlan_dbg_tx_selfgen_stats *stats_ptr)
 {
-	qdf_debug("Tx selfgen Buffer Statistics:");
-	qdf_debug("  %u su_ndpa",
-			stats_ptr->su_ndpa);
-	qdf_debug("  %u mu_ndp",
-			stats_ptr->mu_ndp);
-	qdf_debug("  %u mu_ndpa",
-			stats_ptr->mu_ndpa);
-	qdf_debug("  %u mu_ndp",
-			stats_ptr->mu_ndp);
-	qdf_debug("  %u mu_brpoll_1",
-			stats_ptr->mu_brpoll_1);
-	qdf_debug("  %u mu_brpoll_2",
-			stats_ptr->mu_brpoll_2);
-	qdf_debug("  %u mu_bar_1",
-			stats_ptr->mu_bar_1);
-	qdf_debug("  %u mu_bar_2",
-			stats_ptr->mu_bar_2);
-	qdf_debug("  %u cts_burst",
-			stats_ptr->cts_burst);
-	qdf_debug("  %u su_ndp_err",
-			stats_ptr->su_ndp_err);
-	qdf_debug("  %u su_ndpa_err",
-			stats_ptr->su_ndpa_err);
-	qdf_debug("  %u mu_ndp_err",
-			stats_ptr->mu_ndp_err);
-	qdf_debug("  %u mu_brp1_err",
-			stats_ptr->mu_brp1_err);
-	qdf_debug("  %u mu_brp2_err",
-			stats_ptr->mu_brp2_err);
+	qdf_nofl_info("Tx selfgen Buffer Statistics:");
+	qdf_nofl_info("  %u su_ndpa",
+		      stats_ptr->su_ndpa);
+	qdf_nofl_info("  %u mu_ndp",
+		      stats_ptr->mu_ndp);
+	qdf_nofl_info("  %u mu_ndpa",
+		      stats_ptr->mu_ndpa);
+	qdf_nofl_info("  %u mu_ndp",
+		      stats_ptr->mu_ndp);
+	qdf_nofl_info("  %u mu_brpoll_1",
+		      stats_ptr->mu_brpoll_1);
+	qdf_nofl_info("  %u mu_brpoll_2",
+		      stats_ptr->mu_brpoll_2);
+	qdf_nofl_info("  %u mu_bar_1",
+		      stats_ptr->mu_bar_1);
+	qdf_nofl_info("  %u mu_bar_2",
+		      stats_ptr->mu_bar_2);
+	qdf_nofl_info("  %u cts_burst",
+		      stats_ptr->cts_burst);
+	qdf_nofl_info("  %u su_ndp_err",
+		      stats_ptr->su_ndp_err);
+	qdf_nofl_info("  %u su_ndpa_err",
+		      stats_ptr->su_ndpa_err);
+	qdf_nofl_info("  %u mu_ndp_err",
+		      stats_ptr->mu_ndp_err);
+	qdf_nofl_info("  %u mu_brp1_err",
+		      stats_ptr->mu_brp1_err);
+	qdf_nofl_info("  %u mu_brp2_err",
+		      stats_ptr->mu_brp2_err);
 }
 
 static void
@@ -632,57 +633,57 @@ htt_t2h_stats_wifi2_error_stats_print(
 {
 	int i;
 
-	qdf_debug("Scheduler error Statistics:");
-	qdf_debug("urrn_stats: ");
-	qdf_debug("urrn_stats: %d, %d, %d",
-		  stats_ptr->urrn_stats[0],
-		  stats_ptr->urrn_stats[1],
-		  stats_ptr->urrn_stats[2]);
-	qdf_debug("flush_errs (0..%d): ",
-			WHAL_DBG_FLUSH_REASON_MAXCNT);
+	qdf_nofl_info("Scheduler error Statistics:");
+	qdf_nofl_info("urrn_stats: ");
+	qdf_nofl_info("urrn_stats: %d, %d, %d",
+		      stats_ptr->urrn_stats[0],
+		      stats_ptr->urrn_stats[1],
+		      stats_ptr->urrn_stats[2]);
+	qdf_nofl_info("flush_errs (0..%d): ",
+		      WHAL_DBG_FLUSH_REASON_MAXCNT);
 	for (i = 0; i < WHAL_DBG_FLUSH_REASON_MAXCNT; i++)
-		qdf_debug("  %u", stats_ptr->flush_errs[i]);
-	qdf_debug("\n");
-	qdf_debug("schd_stall_errs (0..3): ");
-	qdf_debug("%d, %d, %d, %d",
-		  stats_ptr->schd_stall_errs[0],
-		  stats_ptr->schd_stall_errs[1],
-		  stats_ptr->schd_stall_errs[2],
-		  stats_ptr->schd_stall_errs[3]);
-	qdf_debug("schd_cmd_result (0..%d): ",
-			WHAL_DBG_CMD_RESULT_MAXCNT);
+		qdf_nofl_info("  %u", stats_ptr->flush_errs[i]);
+	qdf_nofl_info("\n");
+	qdf_nofl_info("schd_stall_errs (0..3): ");
+	qdf_nofl_info("%d, %d, %d, %d",
+		      stats_ptr->schd_stall_errs[0],
+		      stats_ptr->schd_stall_errs[1],
+		      stats_ptr->schd_stall_errs[2],
+		      stats_ptr->schd_stall_errs[3]);
+	qdf_nofl_info("schd_cmd_result (0..%d): ",
+		      WHAL_DBG_CMD_RESULT_MAXCNT);
 	for (i = 0; i < WHAL_DBG_CMD_RESULT_MAXCNT; i++)
-		qdf_debug("  %u", stats_ptr->schd_cmd_result[i]);
-	qdf_debug("\n");
-	qdf_debug("sifs_status (0..%d): ",
-			WHAL_DBG_SIFS_STATUS_MAXCNT);
+		qdf_nofl_info("  %u", stats_ptr->schd_cmd_result[i]);
+	qdf_nofl_info("\n");
+	qdf_nofl_info("sifs_status (0..%d): ",
+		      WHAL_DBG_SIFS_STATUS_MAXCNT);
 	for (i = 0; i < WHAL_DBG_SIFS_STATUS_MAXCNT; i++)
-		qdf_debug("  %u", stats_ptr->sifs_status[i]);
-	qdf_debug("\n");
-	qdf_debug("phy_errs (0..%d): ",
-			WHAL_DBG_PHY_ERR_MAXCNT);
+		qdf_nofl_info("  %u", stats_ptr->sifs_status[i]);
+	qdf_nofl_info("\n");
+	qdf_nofl_info("phy_errs (0..%d): ",
+		      WHAL_DBG_PHY_ERR_MAXCNT);
 	for (i = 0; i < WHAL_DBG_PHY_ERR_MAXCNT; i++)
-		qdf_debug("  %u", stats_ptr->phy_errs[i]);
-	qdf_debug("\n");
-	qdf_debug("  %u rx_rate_inval",
-			stats_ptr->rx_rate_inval);
+		qdf_nofl_info("  %u", stats_ptr->phy_errs[i]);
+	qdf_nofl_info("\n");
+	qdf_nofl_info("  %u rx_rate_inval",
+		      stats_ptr->rx_rate_inval);
 }
 
 static void
 htt_t2h_rx_musu_ndpa_pkts_stats_print(
 	struct rx_txbf_musu_ndpa_pkts_stats *stats_ptr)
 {
-	qdf_debug("Rx TXBF MU/SU Packets and NDPA Statistics:");
-	qdf_debug("  %u Number of TXBF MU packets received",
-			stats_ptr->number_mu_pkts);
-	qdf_debug("  %u Number of TXBF SU packets received",
-			stats_ptr->number_su_pkts);
-	qdf_debug("  %u Number of TXBF directed NDPA",
-			stats_ptr->txbf_directed_ndpa_count);
-	qdf_debug("  %u Number of TXBF retried NDPA",
-			stats_ptr->txbf_ndpa_retry_count);
-	qdf_debug("  %u Total number of TXBF NDPA",
-			stats_ptr->txbf_total_ndpa_count);
+	qdf_nofl_info("Rx TXBF MU/SU Packets and NDPA Statistics:");
+	qdf_nofl_info("  %u Number of TXBF MU packets received",
+		      stats_ptr->number_mu_pkts);
+	qdf_nofl_info("  %u Number of TXBF SU packets received",
+		      stats_ptr->number_su_pkts);
+	qdf_nofl_info("  %u Number of TXBF directed NDPA",
+		      stats_ptr->txbf_directed_ndpa_count);
+	qdf_nofl_info("  %u Number of TXBF retried NDPA",
+		      stats_ptr->txbf_ndpa_retry_count);
+	qdf_nofl_info("  %u Total number of TXBF NDPA",
+		      stats_ptr->txbf_total_ndpa_count);
 }
 
 #define HTT_TICK_TO_USEC(ticks, microsec_per_tick) (ticks * microsec_per_tick)
@@ -722,8 +723,8 @@ htt_t2h_tx_ppdu_bitmaps_pr(uint32_t *queued_ptr, uint32_t *acked_ptr)
 	}
 	queued_str[HTT_FW_STATS_MAX_BLOCK_ACK_WINDOW] = '\0';
 	acked_str[HTT_FW_STATS_MAX_BLOCK_ACK_WINDOW] = '\0';
-	qdf_debug("%s\n", queued_str);
-	qdf_debug("%s\n", acked_str);
+	qdf_nofl_info("%s\n", queued_str);
+	qdf_nofl_info("%s\n", acked_str);
 }
 
 static inline uint16_t htt_msg_read16(uint16_t *p16)
@@ -863,7 +864,7 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 		qdf_err("Underflow due to length %d", length);
 		return;
 	}
-	qdf_debug("Tx PPDU log elements: num_records %d", num_records);
+	qdf_nofl_info("Tx PPDU log elements: num_records %d", num_records);
 
 	for (i = 0; i < num_records; i++) {
 		uint16_t start_seq_num;
@@ -939,30 +940,31 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 				OL_FW_TX_DBG_PPDU_TRIES_M) >>
 				OL_FW_TX_DBG_PPDU_TRIES_S;
 
-			qdf_debug(" - PPDU tx to peer %d, TID %d", peer_id,
-				  ext_tid);
-			qdf_debug("   start seq num= %u, start PN LSBs= %#04x",
-				start_seq_num, start_pn_lsbs);
-			qdf_debug("   PPDU: %d MPDUs, (?) MSDUs, %d bytes",
-				num_mpdus,
-				 /* num_msdus - not yet computed in target */
-				record->num_bytes);
+			qdf_nofl_info(" - PPDU tx to peer %d, TID %d", peer_id,
+				      ext_tid);
+			qdf_nofl_info("   start seq num= %u, start PN LSBs= %#04x",
+				      start_seq_num, start_pn_lsbs);
+			qdf_nofl_info("   PPDU: %d MPDUs, (?) MSDUs, %d bytes",
+				      num_mpdus,
+				      /* num_msdus-not yet computed in target */
+				      record->num_bytes);
 			if (complete) {
-				qdf_debug("   enqueued: %u, completed: %u usec)",
-				       time_enqueue_us, time_completion_us);
-				qdf_debug("   %d tries, last tx used rate %d ",
-					tries, rate_code);
-				qdf_debug("on %d MHz chan (flags = %#x)",
-					htt_rate_flags_to_mhz
-					(rate_flags), rate_flags);
-				qdf_debug("  enqueued and acked MPDU bitmaps:");
+				qdf_nofl_info("   enqueued: %u, completed: %u usec)",
+					      time_enqueue_us,
+					      time_completion_us);
+				qdf_nofl_info("   %d tries, last tx used rate %d ",
+					      tries, rate_code);
+				qdf_nofl_info("on %d MHz chan (flags = %#x)",
+					      htt_rate_flags_to_mhz
+					      (rate_flags), rate_flags);
+				qdf_nofl_info("  enqueued and acked MPDU bitmaps:");
 				htt_t2h_tx_ppdu_bitmaps_pr(msg_word +
 					OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_WORD,
 					msg_word +
 					OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_WORD);
 			} else {
-				qdf_debug("  enqueued: %d us, not yet completed",
-					time_enqueue_us);
+				qdf_nofl_info("  enqueued: %d us, not yet completed",
+					      time_enqueue_us);
 			}
 			/* skip the regular msg fields to reach the tail area */
 			p8 = (uint8_t *) record;
@@ -977,7 +979,7 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 						      BUF_SIZE,
 						      hdr->
 						      mpdu_bytes_array_len);
-				qdf_debug("   MPDU bytes: %s", buf);
+				qdf_nofl_info("   MPDU bytes: %s", buf);
 			}
 			calculated_p8 += hdr->mpdu_bytes_array_len * sizeof(uint16_t);
 			if (calculated_p8 < p8) {
@@ -990,7 +992,7 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 				htt_make_u8_list_str((uint32_t *) p8, buf,
 						     BUF_SIZE,
 						     hdr->mpdu_msdus_array_len);
-				qdf_debug("   MPDU MSDUs: %s", buf);
+				qdf_nofl_info("   MPDU MSDUs: %s", buf);
 			}
 			calculated_p8 += hdr->mpdu_msdus_array_len * sizeof(uint8_t);
 			if (calculated_p8 < p8) {
@@ -1004,19 +1006,19 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 						      BUF_SIZE,
 						      hdr->
 						      msdu_bytes_array_len);
-				qdf_debug("   MSDU bytes: %s", buf);
+				qdf_nofl_info("   MSDU bytes: %s", buf);
 			}
 		} else {
 			/* concise */
-			qdf_debug("start seq num = %u ", start_seq_num);
-			qdf_debug("enqueued and acked MPDU bitmaps:");
+			qdf_nofl_info("start seq num = %u ", start_seq_num);
+			qdf_nofl_info("enqueued and acked MPDU bitmaps:");
 			if (complete) {
 				htt_t2h_tx_ppdu_bitmaps_pr(msg_word +
 					OL_FW_TX_DBG_PPDU_ENQUEUED_LSBS_WORD,
 							   msg_word +
 					OL_FW_TX_DBG_PPDU_BLOCK_ACK_LSBS_WORD);
 			} else {
-				qdf_debug("(not completed)");
+				qdf_nofl_info("(not completed)");
 			}
 		}
 		record = (struct ol_fw_tx_dbg_ppdu_base *)
@@ -1027,130 +1029,130 @@ htt_t2h_tx_ppdu_log_print(struct ol_fw_tx_dbg_ppdu_msg_hdr *hdr,
 static void htt_t2h_stats_tidq_stats_print(
 	struct wlan_dbg_tidq_stats *tidq_stats, int concise)
 {
-	qdf_debug("TID QUEUE STATS:");
-	qdf_debug("tid_txq_stats: %u", tidq_stats->wlan_dbg_tid_txq_status);
-	qdf_debug("num_pkts_queued(0..9):");
-	qdf_debug("%u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
-		tidq_stats->txq_st.num_pkts_queued[0],
-		tidq_stats->txq_st.num_pkts_queued[1],
-		tidq_stats->txq_st.num_pkts_queued[2],
-		tidq_stats->txq_st.num_pkts_queued[3],
-		tidq_stats->txq_st.num_pkts_queued[4],
-		tidq_stats->txq_st.num_pkts_queued[5],
-		tidq_stats->txq_st.num_pkts_queued[6],
-		tidq_stats->txq_st.num_pkts_queued[7],
-		tidq_stats->txq_st.num_pkts_queued[8],
-		tidq_stats->txq_st.num_pkts_queued[9]);
-	qdf_debug("tid_hw_qdepth(0..19):");
-	qdf_debug("%u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
-		tidq_stats->txq_st.tid_hw_qdepth[0],
-		tidq_stats->txq_st.tid_hw_qdepth[1],
-		tidq_stats->txq_st.tid_hw_qdepth[2],
-		tidq_stats->txq_st.tid_hw_qdepth[3],
-		tidq_stats->txq_st.tid_hw_qdepth[4],
-		tidq_stats->txq_st.tid_hw_qdepth[5],
-		tidq_stats->txq_st.tid_hw_qdepth[6],
-		tidq_stats->txq_st.tid_hw_qdepth[7],
-		tidq_stats->txq_st.tid_hw_qdepth[8],
-		tidq_stats->txq_st.tid_hw_qdepth[9]);
-	qdf_debug("%u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
-		tidq_stats->txq_st.tid_hw_qdepth[10],
-		tidq_stats->txq_st.tid_hw_qdepth[11],
-		tidq_stats->txq_st.tid_hw_qdepth[12],
-		tidq_stats->txq_st.tid_hw_qdepth[13],
-		tidq_stats->txq_st.tid_hw_qdepth[14],
-		tidq_stats->txq_st.tid_hw_qdepth[15],
-		tidq_stats->txq_st.tid_hw_qdepth[16],
-		tidq_stats->txq_st.tid_hw_qdepth[17],
-		tidq_stats->txq_st.tid_hw_qdepth[18],
-		tidq_stats->txq_st.tid_hw_qdepth[19]);
-	qdf_debug("tid_sw_qdepth(0..19):");
-	qdf_debug("%u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
-		tidq_stats->txq_st.tid_sw_qdepth[0],
-		tidq_stats->txq_st.tid_sw_qdepth[1],
-		tidq_stats->txq_st.tid_sw_qdepth[2],
-		tidq_stats->txq_st.tid_sw_qdepth[3],
-		tidq_stats->txq_st.tid_sw_qdepth[4],
-		tidq_stats->txq_st.tid_sw_qdepth[5],
-		tidq_stats->txq_st.tid_sw_qdepth[6],
-		tidq_stats->txq_st.tid_sw_qdepth[7],
-		tidq_stats->txq_st.tid_sw_qdepth[8],
-		tidq_stats->txq_st.tid_sw_qdepth[9]);
-	qdf_debug("%u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
-		tidq_stats->txq_st.tid_sw_qdepth[10],
-		tidq_stats->txq_st.tid_sw_qdepth[11],
-		tidq_stats->txq_st.tid_sw_qdepth[12],
-		tidq_stats->txq_st.tid_sw_qdepth[13],
-		tidq_stats->txq_st.tid_sw_qdepth[14],
-		tidq_stats->txq_st.tid_sw_qdepth[15],
-		tidq_stats->txq_st.tid_sw_qdepth[16],
-		tidq_stats->txq_st.tid_sw_qdepth[17],
-		tidq_stats->txq_st.tid_sw_qdepth[18],
-		tidq_stats->txq_st.tid_sw_qdepth[19]);
+	qdf_nofl_info("TID QUEUE STATS:");
+	qdf_nofl_info("tid_txq_stats: %u", tidq_stats->wlan_dbg_tid_txq_status);
+	qdf_nofl_info("num_pkts_queued(0..9):");
+	qdf_nofl_info("%u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
+		      tidq_stats->txq_st.num_pkts_queued[0],
+		      tidq_stats->txq_st.num_pkts_queued[1],
+		      tidq_stats->txq_st.num_pkts_queued[2],
+		      tidq_stats->txq_st.num_pkts_queued[3],
+		      tidq_stats->txq_st.num_pkts_queued[4],
+		      tidq_stats->txq_st.num_pkts_queued[5],
+		      tidq_stats->txq_st.num_pkts_queued[6],
+		      tidq_stats->txq_st.num_pkts_queued[7],
+		      tidq_stats->txq_st.num_pkts_queued[8],
+		      tidq_stats->txq_st.num_pkts_queued[9]);
+	qdf_nofl_info("tid_hw_qdepth(0..19):");
+	qdf_nofl_info("%u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
+		      tidq_stats->txq_st.tid_hw_qdepth[0],
+		      tidq_stats->txq_st.tid_hw_qdepth[1],
+		      tidq_stats->txq_st.tid_hw_qdepth[2],
+		      tidq_stats->txq_st.tid_hw_qdepth[3],
+		      tidq_stats->txq_st.tid_hw_qdepth[4],
+		      tidq_stats->txq_st.tid_hw_qdepth[5],
+		      tidq_stats->txq_st.tid_hw_qdepth[6],
+		      tidq_stats->txq_st.tid_hw_qdepth[7],
+		      tidq_stats->txq_st.tid_hw_qdepth[8],
+		      tidq_stats->txq_st.tid_hw_qdepth[9]);
+	qdf_nofl_info("%u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
+		      tidq_stats->txq_st.tid_hw_qdepth[10],
+		      tidq_stats->txq_st.tid_hw_qdepth[11],
+		      tidq_stats->txq_st.tid_hw_qdepth[12],
+		      tidq_stats->txq_st.tid_hw_qdepth[13],
+		      tidq_stats->txq_st.tid_hw_qdepth[14],
+		      tidq_stats->txq_st.tid_hw_qdepth[15],
+		      tidq_stats->txq_st.tid_hw_qdepth[16],
+		      tidq_stats->txq_st.tid_hw_qdepth[17],
+		      tidq_stats->txq_st.tid_hw_qdepth[18],
+		      tidq_stats->txq_st.tid_hw_qdepth[19]);
+	qdf_nofl_info("tid_sw_qdepth(0..19):");
+	qdf_nofl_info("%u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
+		      tidq_stats->txq_st.tid_sw_qdepth[0],
+		      tidq_stats->txq_st.tid_sw_qdepth[1],
+		      tidq_stats->txq_st.tid_sw_qdepth[2],
+		      tidq_stats->txq_st.tid_sw_qdepth[3],
+		      tidq_stats->txq_st.tid_sw_qdepth[4],
+		      tidq_stats->txq_st.tid_sw_qdepth[5],
+		      tidq_stats->txq_st.tid_sw_qdepth[6],
+		      tidq_stats->txq_st.tid_sw_qdepth[7],
+		      tidq_stats->txq_st.tid_sw_qdepth[8],
+		      tidq_stats->txq_st.tid_sw_qdepth[9]);
+	qdf_nofl_info("%u, %u, %u, %u, %u, %u, %u, %u, %u, %u",
+		      tidq_stats->txq_st.tid_sw_qdepth[10],
+		      tidq_stats->txq_st.tid_sw_qdepth[11],
+		      tidq_stats->txq_st.tid_sw_qdepth[12],
+		      tidq_stats->txq_st.tid_sw_qdepth[13],
+		      tidq_stats->txq_st.tid_sw_qdepth[14],
+		      tidq_stats->txq_st.tid_sw_qdepth[15],
+		      tidq_stats->txq_st.tid_sw_qdepth[16],
+		      tidq_stats->txq_st.tid_sw_qdepth[17],
+		      tidq_stats->txq_st.tid_sw_qdepth[18],
+		      tidq_stats->txq_st.tid_sw_qdepth[19]);
 }
 
 static void htt_t2h_stats_tx_mu_stats_print(
 	struct wlan_dbg_tx_mu_stats *tx_mu_stats, int concise)
 {
-	qdf_debug("TX MU STATS:");
-	qdf_debug("mu_sch_nusers_2: %u", tx_mu_stats->mu_sch_nusers_2);
-	qdf_debug("mu_sch_nusers_3: %u", tx_mu_stats->mu_sch_nusers_3);
-	qdf_debug("mu_mpdus_queued_usr: %u, %u, %u, %u",
-		tx_mu_stats->mu_mpdus_queued_usr[0],
-		tx_mu_stats->mu_mpdus_queued_usr[1],
-		tx_mu_stats->mu_mpdus_queued_usr[2],
-		tx_mu_stats->mu_mpdus_queued_usr[3]);
-	qdf_debug("mu_mpdus_tried_usr: %u, %u, %u, %u",
-		tx_mu_stats->mu_mpdus_tried_usr[0],
-		tx_mu_stats->mu_mpdus_tried_usr[1],
-		tx_mu_stats->mu_mpdus_tried_usr[2],
-		tx_mu_stats->mu_mpdus_tried_usr[3]);
-	qdf_debug("mu_mpdus_failed_usr: %u, %u, %u, %u",
-		tx_mu_stats->mu_mpdus_failed_usr[0],
-		tx_mu_stats->mu_mpdus_failed_usr[1],
-		tx_mu_stats->mu_mpdus_failed_usr[2],
-		tx_mu_stats->mu_mpdus_failed_usr[3]);
-	qdf_debug("mu_mpdus_requeued_usr: %u, %u, %u, %u",
-		tx_mu_stats->mu_mpdus_requeued_usr[0],
-		tx_mu_stats->mu_mpdus_requeued_usr[1],
-		tx_mu_stats->mu_mpdus_requeued_usr[2],
-		tx_mu_stats->mu_mpdus_requeued_usr[3]);
-	qdf_debug("mu_err_no_ba_usr: %u, %u, %u, %u",
-		tx_mu_stats->mu_err_no_ba_usr[0],
-		tx_mu_stats->mu_err_no_ba_usr[1],
-		tx_mu_stats->mu_err_no_ba_usr[2],
-		tx_mu_stats->mu_err_no_ba_usr[3]);
-	qdf_debug("mu_mpdu_underrun_usr: %u, %u, %u, %u",
-		tx_mu_stats->mu_mpdu_underrun_usr[0],
-		tx_mu_stats->mu_mpdu_underrun_usr[1],
-		tx_mu_stats->mu_mpdu_underrun_usr[2],
-		tx_mu_stats->mu_mpdu_underrun_usr[3]);
-	qdf_debug("mu_ampdu_underrun_usr: %u, %u, %u, %u",
-		tx_mu_stats->mu_ampdu_underrun_usr[0],
-		tx_mu_stats->mu_ampdu_underrun_usr[1],
-		tx_mu_stats->mu_ampdu_underrun_usr[2],
-		tx_mu_stats->mu_ampdu_underrun_usr[3]);
+	qdf_nofl_info("TX MU STATS:");
+	qdf_nofl_info("mu_sch_nusers_2: %u", tx_mu_stats->mu_sch_nusers_2);
+	qdf_nofl_info("mu_sch_nusers_3: %u", tx_mu_stats->mu_sch_nusers_3);
+	qdf_nofl_info("mu_mpdus_queued_usr: %u, %u, %u, %u",
+		      tx_mu_stats->mu_mpdus_queued_usr[0],
+		      tx_mu_stats->mu_mpdus_queued_usr[1],
+		      tx_mu_stats->mu_mpdus_queued_usr[2],
+		      tx_mu_stats->mu_mpdus_queued_usr[3]);
+	qdf_nofl_info("mu_mpdus_tried_usr: %u, %u, %u, %u",
+		      tx_mu_stats->mu_mpdus_tried_usr[0],
+		      tx_mu_stats->mu_mpdus_tried_usr[1],
+		      tx_mu_stats->mu_mpdus_tried_usr[2],
+		      tx_mu_stats->mu_mpdus_tried_usr[3]);
+	qdf_nofl_info("mu_mpdus_failed_usr: %u, %u, %u, %u",
+		      tx_mu_stats->mu_mpdus_failed_usr[0],
+		      tx_mu_stats->mu_mpdus_failed_usr[1],
+		      tx_mu_stats->mu_mpdus_failed_usr[2],
+		      tx_mu_stats->mu_mpdus_failed_usr[3]);
+	qdf_nofl_info("mu_mpdus_requeued_usr: %u, %u, %u, %u",
+		      tx_mu_stats->mu_mpdus_requeued_usr[0],
+		      tx_mu_stats->mu_mpdus_requeued_usr[1],
+		      tx_mu_stats->mu_mpdus_requeued_usr[2],
+		      tx_mu_stats->mu_mpdus_requeued_usr[3]);
+	qdf_nofl_info("mu_err_no_ba_usr: %u, %u, %u, %u",
+		      tx_mu_stats->mu_err_no_ba_usr[0],
+		      tx_mu_stats->mu_err_no_ba_usr[1],
+		      tx_mu_stats->mu_err_no_ba_usr[2],
+		      tx_mu_stats->mu_err_no_ba_usr[3]);
+	qdf_nofl_info("mu_mpdu_underrun_usr: %u, %u, %u, %u",
+		      tx_mu_stats->mu_mpdu_underrun_usr[0],
+		      tx_mu_stats->mu_mpdu_underrun_usr[1],
+		      tx_mu_stats->mu_mpdu_underrun_usr[2],
+		      tx_mu_stats->mu_mpdu_underrun_usr[3]);
+	qdf_nofl_info("mu_ampdu_underrun_usr: %u, %u, %u, %u",
+		      tx_mu_stats->mu_ampdu_underrun_usr[0],
+		      tx_mu_stats->mu_ampdu_underrun_usr[1],
+		      tx_mu_stats->mu_ampdu_underrun_usr[2],
+		      tx_mu_stats->mu_ampdu_underrun_usr[3]);
 
 }
 
 static void htt_t2h_stats_sifs_resp_stats_print(
 	struct wlan_dbg_sifs_resp_stats *sifs_stats, int concise)
 {
-	qdf_debug("SIFS RESP STATS:");
-	qdf_debug("num of ps-poll trigger frames: %u",
-		sifs_stats->ps_poll_trigger);
-	qdf_debug("num of uapsd trigger frames: %u",
-		sifs_stats->uapsd_trigger);
-	qdf_debug("num of data trigger frames: %u, %u",
-		sifs_stats->qb_data_trigger[0],
-		sifs_stats->qb_data_trigger[1]);
-	qdf_debug("num of bar trigger frames: %u, %u",
-		sifs_stats->qb_bar_trigger[0],
-		sifs_stats->qb_bar_trigger[1]);
-	qdf_debug("num of ppdu transmitted at SIFS interval: %u",
-		sifs_stats->sifs_resp_data);
-	qdf_debug("num of ppdu failed to meet SIFS resp timing: %u",
-		sifs_stats->sifs_resp_err);
+	qdf_nofl_info("SIFS RESP STATS:");
+	qdf_nofl_info("num of ps-poll trigger frames: %u",
+		      sifs_stats->ps_poll_trigger);
+	qdf_nofl_info("num of uapsd trigger frames: %u",
+		      sifs_stats->uapsd_trigger);
+	qdf_nofl_info("num of data trigger frames: %u, %u",
+		      sifs_stats->qb_data_trigger[0],
+		      sifs_stats->qb_data_trigger[1]);
+	qdf_nofl_info("num of bar trigger frames: %u, %u",
+		      sifs_stats->qb_bar_trigger[0],
+		      sifs_stats->qb_bar_trigger[1]);
+	qdf_nofl_info("num of ppdu transmitted at SIFS interval: %u",
+		      sifs_stats->sifs_resp_data);
+	qdf_nofl_info("num of ppdu failed to meet SIFS resp timing: %u",
+		      sifs_stats->sifs_resp_err);
 }
 
 void htt_t2h_stats_print(uint8_t *stats_data, int concise)

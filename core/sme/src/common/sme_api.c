@@ -15617,23 +15617,23 @@ void sme_display_disconnect_stats(tHalHandle hal, uint8_t session_id)
 		return;
 	}
 
-	sme_debug("Total No. of Disconnections: %d",
-		  session->disconnect_stats.disconnection_cnt);
+	sme_nofl_info("Total No. of Disconnections: %d",
+		      session->disconnect_stats.disconnection_cnt);
 
-	sme_debug("No. of Diconnects Triggered by Application: %d",
-		  session->disconnect_stats.disconnection_by_app);
+	sme_nofl_info("No. of Diconnects Triggered by Application: %d",
+		      session->disconnect_stats.disconnection_by_app);
 
-	sme_debug("No. of Disassoc Sent by Peer: %d",
-		  session->disconnect_stats.disassoc_by_peer);
+	sme_nofl_info("No. of Disassoc Sent by Peer: %d",
+		      session->disconnect_stats.disassoc_by_peer);
 
-	sme_debug("No. of Deauth Sent by Peer: %d",
-		  session->disconnect_stats.deauth_by_peer);
+	sme_nofl_info("No. of Deauth Sent by Peer: %d",
+		      session->disconnect_stats.deauth_by_peer);
 
-	sme_debug("No. of Disconnections due to Beacon Miss: %d",
-		  session->disconnect_stats.bmiss);
+	sme_nofl_info("No. of Disconnections due to Beacon Miss: %d",
+		      session->disconnect_stats.bmiss);
 
-	sme_debug("No. of Disconnections due to Peer Kickout: %d",
-		  session->disconnect_stats.peer_kickout);
+	sme_nofl_info("No. of Disconnections due to Peer Kickout: %d",
+		      session->disconnect_stats.peer_kickout);
 }
 
  /**

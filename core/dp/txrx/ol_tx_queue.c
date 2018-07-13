@@ -1458,13 +1458,10 @@ ol_tx_queue_log_display(struct ol_txrx_pdev_t *pdev)
 	 * being changed while in use, but since this is just for debugging,
 	 * don't bother.
 	 */
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"Current target credit: %d",
-		 qdf_atomic_read(&pdev->target_tx_credit));
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "Tx queue log:");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  ": Frames  Bytes  TID  PEER");
+	txrx_nofl_info("Current target credit: %d",
+		       qdf_atomic_read(&pdev->target_tx_credit));
+	txrx_nofl_info("Tx queue log:");
+	txrx_nofl_info(": Frames  Bytes  TID  PEER");
 
 	while (unwrap || offset != pdev->txq_log.offset) {
 		int delta = ol_tx_queue_log_record_display(pdev, offset);
