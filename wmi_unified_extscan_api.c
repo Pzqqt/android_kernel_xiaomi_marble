@@ -245,27 +245,3 @@ QDF_STATUS wmi_unified_start_extscan_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-
-/**
- * wmi_unified_get_buf_extscan_hotlist_cmd() - prepare hotlist command
- * @wmi_hdl: wmi handle
- * @photlist: hotlist command params
- * @buf_len: buffer length
- *
- * This function fills individual elements for  hotlist request and
- * TLV for bssid entries
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure.
- */
-QDF_STATUS wmi_unified_get_buf_extscan_hotlist_cmd(void *wmi_hdl,
-				   struct ext_scan_setbssid_hotlist_params *
-				   photlist, int *buf_len)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_get_buf_extscan_hotlist_cmd)
-		return wmi_handle->ops->send_get_buf_extscan_hotlist_cmd(wmi_handle,
-				  photlist, buf_len);
-
-	return QDF_STATUS_E_FAILURE;
-}
