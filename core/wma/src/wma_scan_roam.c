@@ -4628,56 +4628,22 @@ static inline int wma_get_hotlist_entries_per_page(wmi_unified_t wmi_handle,
 	return num_entries;
 }
 
-/**
- * wma_get_buf_extscan_hotlist_cmd() - prepare hotlist command
- * @handle: wma handle
- * @photlist: hotlist command params
- * @buf_len: buffer length
- *
- * This function fills individual elements for  hotlist request and
- * TLV for bssid entries
- *
- * Return: QDF Status.
- */
-QDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
-				tSirExtScanSetBssidHotListReqParams *photlist,
-				int *buf_len)
-{
-	return wmi_unified_get_buf_extscan_hotlist_cmd(wma_handle->wmi_handle,
-			(struct ext_scan_setbssid_hotlist_params *)photlist,
-			buf_len);
-}
-
-/**
- * wma_extscan_start_hotlist_monitor() - start hotlist monitor
- * @wma: wma handle
- * @photlist: hotlist request params
- *
- * This function configures hotlist monitor in fw.
- *
- * Return: QDF status
- */
 QDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
-			     tSirExtScanSetBssidHotListReqParams *photlist)
+			struct extscan_bssid_hotlist_set_params *params)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	int len;
-
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue hotlist cmd",
 			 __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	/* Fill individual elements for  hotlist request and
-	 * TLV for bssid entries
-	 */
-	qdf_status = wma_get_buf_extscan_hotlist_cmd(wma, photlist, &len);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: Failed to get buffer for hotlist scan cmd",
-			__func__);
-		return QDF_STATUS_E_FAILURE;
+
+	if (!params) {
+		WMA_LOGE("%s: Invalid params", __func__);
+		return QDF_STATUS_E_INVAL;
 	}
-	return QDF_STATUS_SUCCESS;
+
+	return wmi_unified_extscan_start_hotlist_monitor_cmd(wma->wmi_handle,
+							     params);
 }
 
 /**
