@@ -140,7 +140,7 @@ struct index_vht_data_rate_type {
 	uint16_t ht80_rate[2];
 };
 
-struct tSirWifiScanCmdReqParams;
+struct wifi_scan_cmd_req_params;
 /*
  * wma_main.c functions declarations
  */
@@ -356,8 +356,17 @@ int wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len);
 
 void wma_register_extscan_event_handler(tp_wma_handle wma_handle);
 
+/**
+ * wma_start_extscan() - start extscan command to fw.
+ * @wma: wma handle
+ * @params: extscan command request params
+ *
+ * This function sends start extscan request to fw.
+ *
+ * Return: QDF Status.
+ */
 QDF_STATUS wma_start_extscan(tp_wma_handle wma,
-			     tSirWifiScanCmdReqParams *pstart);
+			     struct wifi_scan_cmd_req_params *pstart);
 
 QDF_STATUS wma_stop_extscan(tp_wma_handle wma,
 			    tSirExtScanStopReqParams *pstopcmd);

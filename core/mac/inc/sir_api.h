@@ -4036,8 +4036,8 @@ struct extscan_cached_scan_results {
  *             1 - still more fragment(s) coming
  * @ap: bssid info
  *
- * Reported when each probe response is received, if reportEvents
- * enabled in tSirWifiScanCmdReqParams
+ * Reported when each probe response is received, if report_events
+ * enabled in struct wifi_scan_cmd_req_params
  */
 typedef struct {
 	uint32_t            requestId;
@@ -4063,105 +4063,6 @@ struct pno_match_found {
 	uint32_t            num_results;
 	tSirWifiScanResult  ap[];
 };
-
-typedef struct {
-	/* Frequency in MHz */
-	uint32_t channel;
-
-	uint32_t dwellTimeMs;
-
-	/* 0 => active
-	   1 => passive scan; ignored for DFS */
-	bool passive;
-
-	uint8_t chnlClass;
-} tSirWifiScanChannelSpec, *tpSirWifiScanChannelSpec;
-
-/**
- * struct tSirWifiScanBucketSpec - wifi scan bucket spec
- * @bucket: bucket identifier
- * @band: wifi band
- * @period: Desired period, in millisecond; if this is too
- *		low, the firmware should choose to generate results as fast as
- *		it can instead of failing the command byte
- *		for exponential backoff bucket this is the min_period
- * @reportEvents: 0 => normal reporting (reporting rssi history
- *		only, when rssi history buffer is % full)
- *		1 => same as 0 + report a scan completion event after scanning
- *		this bucket
- *		2 => same as 1 + forward scan results
- *		(beacons/probe responses + IEs) in real time to HAL
- * @max_period: if max_period is non zero or different than period,
- *		then this bucket is an exponential backoff bucket and
- *		the scan period will grow exponentially as per formula:
- *		actual_period(N) = period ^ (N/(step_count+1)) to a
- *		maximum period of max_period
- * @exponent: for exponential back off bucket: multiplier:
- *		new_period = old_period * exponent
- * @step_count: for exponential back off bucket, number of scans performed
- *		at a given period and until the exponent is applied
- * @numChannels: channels to scan; these may include DFS channels
- *		Note that a given channel may appear in multiple buckets
- * @min_dwell_time_active: per bucket minimum active dwell time
- * @max_dwell_time_active: per bucket maximum active dwell time
- * @min_dwell_time_passive: per bucket minimum passive dwell time
- * @max_dwell_time_passive: per bucket maximum passive dwell time
- * @channels: Channel list
- */
-typedef struct {
-	uint8_t         bucket;
-	tWifiBand       band;
-	uint32_t        period;
-	uint32_t        reportEvents;
-	uint32_t        max_period;
-	uint32_t        exponent;
-	uint32_t        step_count;
-	uint32_t        numChannels;
-
-	uint32_t        min_dwell_time_active;
-	uint32_t        max_dwell_time_active;
-	uint32_t        min_dwell_time_passive;
-	uint32_t        max_dwell_time_passive;
-	tSirWifiScanChannelSpec channels[WLAN_EXTSCAN_MAX_CHANNELS];
-} tSirWifiScanBucketSpec, *tpSirWifiScanBucketSpec;
-
-/**
- * struct tSirWifiScanCmdReqParams - wifi scan command request params
- * @basePeriod: base timer period
- * @maxAPperScan: max ap per scan
- * @report_threshold_percent: report threshold
- *	in %, when buffer is this much full, wake up host
- * @report_threshold_num_scans: report threshold number of scans
- *	in number of scans, wake up host after these many scans
- * @requestId: request id
- * @sessionId: session id
- * @numBuckets: number of buckets
- * @min_dwell_time_active: per bucket minimum active dwell time
- * @max_dwell_time_active: per bucket maximum active dwell time
- * @min_dwell_time_passive: per bucket minimum passive dwell time
- * @max_dwell_time_passive: per bucket maximum passive dwell time
- * @configuration_flags: configuration flags
- * @buckets: buckets array
- */
-typedef struct {
-	uint32_t basePeriod;
-	uint32_t maxAPperScan;
-
-	uint32_t report_threshold_percent;
-	uint32_t report_threshold_num_scans;
-
-	uint32_t requestId;
-	uint8_t  sessionId;
-	uint32_t numBuckets;
-
-	uint32_t min_dwell_time_active;
-	uint32_t max_dwell_time_active;
-	uint32_t min_dwell_time_passive;
-	uint32_t max_dwell_time_passive;
-	uint32_t configuration_flags;
-	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
-	tSirWifiScanBucketSpec buckets[WLAN_EXTSCAN_MAX_BUCKETS];
-} tSirWifiScanCmdReqParams, *tpSirWifiScanCmdReqParams;
 
 /**
  * struct sir_extscan_generic_response -

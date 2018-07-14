@@ -1017,8 +1017,17 @@ QDF_STATUS
 sme_ext_scan_get_capabilities(mac_handle_t mac_handle,
 			      struct extscan_capabilities_params *params);
 
-QDF_STATUS sme_ext_scan_start(tHalHandle hHal,
-		tSirWifiScanCmdReqParams *pStartCmd);
+/**
+ * sme_ext_scan_start() - SME API to issue extscan start
+ * @mac_handle: Opaque handle to the MAC context
+ * @params: extscan start structure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_ext_scan_start(mac_handle_t mac_handle,
+		   struct wifi_scan_cmd_req_params *params);
+
 QDF_STATUS sme_ext_scan_stop(tHalHandle hHal,
 		tSirExtScanStopReqParams *pStopReq);
 

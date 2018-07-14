@@ -11101,37 +11101,38 @@ sme_ext_scan_get_capabilities(mac_handle_t mac_handle,
 	return status;
 }
 
-/*
- * sme_ext_scan_start() -
- * SME API to issue extscan start
- *
- * hHal
- * pStartCmd: extscan start structure
- * Return QDF_STATUS
- */
-QDF_STATUS sme_ext_scan_start(tHalHandle hHal,
-			      tSirWifiScanCmdReqParams *pStartCmd)
+QDF_STATUS
+sme_ext_scan_start(mac_handle_t mac_handle,
+		   struct wifi_scan_cmd_req_params *params)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	QDF_STATUS status;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
+	struct wifi_scan_cmd_req_params *bodyptr;
 
-	status = sme_acquire_global_lock(&pMac->sme);
+	/* per contract must make a copy of the params when messaging */
+	bodyptr = qdf_mem_malloc(sizeof(*bodyptr));
+	if (!bodyptr)
+		return QDF_STATUS_E_NOMEM;
+	*bodyptr = *params;
+
+	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Serialize the req through MC thread */
-		message.bodyptr = pStartCmd;
+		message.bodyptr = bodyptr;
 		message.type = WMA_EXTSCAN_START_REQ;
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, message.type));
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			status = QDF_STATUS_E_FAILURE;
+		qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			  NO_SESSION, message.type);
+		status = scheduler_post_message(QDF_MODULE_ID_SME,
+						QDF_MODULE_ID_WMA,
+						QDF_MODULE_ID_WMA,
+						&message);
+		sme_release_global_lock(&mac->sme);
+	}
 
-		sme_release_global_lock(&pMac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("failure: %d", status);
+		qdf_mem_free(bodyptr);
 	}
 	return status;
 }

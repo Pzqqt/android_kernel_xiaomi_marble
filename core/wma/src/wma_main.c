@@ -8182,8 +8182,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 #endif /* WLAN_FEATURE_EXTWOW_SUPPORT */
 #ifdef FEATURE_WLAN_EXTSCAN
 	case WMA_EXTSCAN_START_REQ:
-		wma_start_extscan(wma_handle,
-				  (tSirWifiScanCmdReqParams *) msg->bodyptr);
+		wma_start_extscan(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_EXTSCAN_STOP_REQ:

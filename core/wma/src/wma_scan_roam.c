@@ -4474,92 +4474,29 @@ int wma_passpoint_match_event_handler(void *handle,
 	return 0;
 }
 
-/**
- * wma_start_extscan() - start extscan command to fw.
- * @handle: wma handle
- * @pstart: scan command request params
- *
- * This function sends start extscan request to fw.
- *
- * Return: QDF Status.
- */
 QDF_STATUS wma_start_extscan(tp_wma_handle wma,
-			     tSirWifiScanCmdReqParams *pstart)
+			     struct wifi_scan_cmd_req_params *params)
 {
-	struct wifi_scan_cmd_req_params *params;
-	int i, j;
 	QDF_STATUS status;
 
 	if (!wma || !wma->wmi_handle) {
-		WMA_LOGE("%s: WMA is closed,can not issue extscan cmd",
-			 __func__);
+		wma_err("WMA is closed, can not issue cmd");
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!wmi_service_enabled(wma->wmi_handle,
-				    wmi_service_extscan)) {
-		WMA_LOGE("%s: extscan feature bit not enabled", __func__);
+	if (!wmi_service_enabled(wma->wmi_handle, wmi_service_extscan)) {
+		wma_err("extscan not enabled");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	params = qdf_mem_malloc(sizeof(struct wifi_scan_cmd_req_params));
 	if (!params)
+		wma_err("NULL param");
 		return QDF_STATUS_E_NOMEM;
 
-	params->base_period = pstart->basePeriod;
-	params->max_ap_per_scan = pstart->maxAPperScan;
-	params->report_threshold_percent = pstart->report_threshold_percent;
-	params->report_threshold_num_scans = pstart->report_threshold_num_scans;
-	params->request_id = pstart->requestId;
-	params->vdev_id = pstart->sessionId;
-	params->num_buckets = pstart->numBuckets;
-	params->min_dwell_time_active = pstart->min_dwell_time_active;
-	params->min_dwell_time_passive = pstart->min_dwell_time_passive;
-	params->max_dwell_time_active = pstart->max_dwell_time_active;
-	params->max_dwell_time_passive = pstart->max_dwell_time_passive;
-	params->configuration_flags = pstart->configuration_flags;
-	params->extscan_adaptive_dwell_mode =
-			pstart->extscan_adaptive_dwell_mode;
-	for (i = 0; i < WMI_WLAN_EXTSCAN_MAX_BUCKETS; i++) {
-		params->buckets[i].bucket = pstart->buckets[i].bucket;
-		params->buckets[i].band =
-			(enum wmi_wifi_band) pstart->buckets[i].band;
-		params->buckets[i].period = pstart->buckets[i].period;
-		params->buckets[i].report_events =
-			pstart->buckets[i].reportEvents;
-		params->buckets[i].max_period = pstart->buckets[i].max_period;
-		params->buckets[i].exponent = pstart->buckets[i].exponent;
-		params->buckets[i].step_count = pstart->buckets[i].step_count;
-		params->buckets[i].num_channels =
-			pstart->buckets[i].numChannels;
-		params->buckets[i].min_dwell_time_active =
-			pstart->buckets[i].min_dwell_time_active;
-		params->buckets[i].min_dwell_time_passive =
-			pstart->buckets[i].min_dwell_time_passive;
-		params->buckets[i].max_dwell_time_active =
-			pstart->buckets[i].max_dwell_time_active;
-		params->buckets[i].max_dwell_time_passive =
-			pstart->buckets[i].max_dwell_time_passive;
-		for (j = 0; j < WLAN_EXTSCAN_MAX_CHANNELS; j++) {
-			params->buckets[i].channels[j].channel =
-				pstart->buckets[i].channels[j].channel;
-			params->buckets[i].channels[j].dwell_time_ms =
-				pstart->buckets[i].channels[j].dwellTimeMs;
-			params->buckets[i].channels[j].passive =
-				pstart->buckets[i].channels[j].passive;
-			params->buckets[i].channels[j].channel_class =
-				pstart->buckets[i].channels[j].chnlClass;
-		}
-	}
+	status = wmi_unified_start_extscan_cmd(wma->wmi_handle, params);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		wma->interfaces[params->vdev_id].extscan_in_progress = true;
 
-	status = wmi_unified_start_extscan_cmd(wma->wmi_handle,
-					params);
-	qdf_mem_free(params);
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-
-	wma->interfaces[pstart->sessionId].extscan_in_progress = true;
-	WMA_LOGD("Extscan start request sent successfully for vdev %d",
-		 pstart->sessionId);
+	wma_debug("Exit, vdev %d, status %d", params->vdev_id, status);
 
 	return status;
 }
