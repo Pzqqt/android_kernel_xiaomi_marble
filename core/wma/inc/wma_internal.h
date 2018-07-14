@@ -361,10 +361,6 @@ int wma_extscan_wow_event_callback(void *handle, void *event, uint32_t len);
 
 void wma_register_extscan_event_handler(tp_wma_handle wma_handle);
 
-QDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
-					 tSirWifiScanCmdReqParams *pstart,
-					 wmi_buf_t *buf, int *buf_len);
-
 QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 			     tSirWifiScanCmdReqParams *pstart);
 
