@@ -374,8 +374,17 @@ QDF_STATUS wma_stop_extscan(tp_wma_handle wma,
 QDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
 			struct extscan_bssid_hotlist_set_params *params);
 
+/**
+ * wma_extscan_stop_hotlist_monitor() - stop hotlist monitor
+ * @wma: wma handle
+ * @params: hotlist request params
+ *
+ * This function configures hotlist monitor to stop in fw.
+ *
+ * Return: QDF status
+ */
 QDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
-			tSirExtScanResetBssidHotlistReqParams *photlist_reset);
+			struct extscan_bssid_hotlist_reset_params *params);
 
 QDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
 					    tSirExtScanSetSigChangeReqParams *

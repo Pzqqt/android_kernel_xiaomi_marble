@@ -4674,39 +4674,26 @@ QDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
 							     params);
 }
 
-/**
- * wma_extscan_stop_hotlist_monitor() - stop hotlist monitor
- * @wma: wma handle
- * @photlist_reset: hotlist reset params
- *
- * This function configures hotlist monitor to stop in fw.
- *
- * Return: QDF status
- */
 QDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
-		    tSirExtScanResetBssidHotlistReqParams *photlist_reset)
+		    struct extscan_bssid_hotlist_reset_params *params)
 {
-	struct extscan_bssid_hotlist_reset_params params = {0};
-
 	if (!wma || !wma->wmi_handle) {
-		WMA_LOGE("%s: WMA is closed, can not issue  cmd", __func__);
+		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!photlist_reset) {
-		WMA_LOGE("%s: Invalid reset hotlist buffer", __func__);
+
+	if (!params) {
+		WMA_LOGE("%s: Invalid params", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 	if (!wmi_service_enabled(wma->wmi_handle,
-				    wmi_service_extscan)) {
+				 wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	params.request_id = photlist_reset->requestId;
-	params.vdev_id = photlist_reset->requestId;
-
 	return wmi_unified_extscan_stop_hotlist_monitor_cmd(wma->wmi_handle,
-				&params);
+							    params);
 }
 
 /**

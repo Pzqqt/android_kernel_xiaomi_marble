@@ -1007,9 +1007,19 @@ QDF_STATUS
 sme_set_bss_hotlist(mac_handle_t mac_handle,
 		    struct extscan_bssid_hotlist_set_params *params);
 
-QDF_STATUS sme_reset_bss_hotlist(tHalHandle hHal,
-		tSirExtScanResetBssidHotlistReqParams *
-		pResetReq);
+/**
+ * sme_reset_bss_hotlist() - SME API to reset BSSID hotlist
+ * @mac_handle: Opaque handle to the MAC context
+ * @params: extscan reset hotlist structure
+ *
+ * Handles the request to reset the BSSID hotlist in firmware.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_reset_bss_hotlist(mac_handle_t mac_handle,
+		      struct extscan_bssid_hotlist_reset_params *params);
+
 QDF_STATUS sme_set_significant_change(tHalHandle hHal,
 		tSirExtScanSetSigChangeReqParams *
 		pSetSignificantChangeReq);
