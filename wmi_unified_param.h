@@ -3566,20 +3566,22 @@ struct wmi_roam_invoke_cmd {
 };
 
 /**
- * struct ext_scan_setbssid_hotlist_params - set hotlist request
+ * struct extscan_bssid_hotlist_set_params - set hotlist request
  * @request_id: request_id
  * @vdev_id: vdev id
  * @lost_ap_sample_size: number of samples to confirm AP loss
  * @num_ap: Number of hotlist APs
  * @ap: hotlist APs
  */
-struct ext_scan_setbssid_hotlist_params {
+struct extscan_bssid_hotlist_set_params {
 	uint32_t  request_id;
 	uint8_t   vdev_id;
 	uint32_t  lost_ap_sample_size;
 	uint32_t  num_ap;
 	struct ap_threshold_params ap[WMI_WLAN_EXTSCAN_MAX_HOTLIST_APS];
 };
+/* legacy naming */
+#define ext_scan_setbssid_hotlist_params extscan_bssid_hotlist_set_params
 
 /**
  * struct host_mem_req - Host memory request paramseters request by target

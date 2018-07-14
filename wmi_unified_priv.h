@@ -488,6 +488,9 @@ QDF_STATUS (*send_extscan_start_change_monitor_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_extscan_stop_hotlist_monitor_cmd)(wmi_unified_t wmi_handle,
 		struct extscan_bssid_hotlist_reset_params *photlist_reset);
 
+QDF_STATUS (*send_extscan_start_hotlist_monitor_cmd)(wmi_unified_t wmi_handle,
+		struct extscan_bssid_hotlist_set_params *params);
+
 QDF_STATUS (*send_stop_extscan_cmd)(wmi_unified_t wmi_handle,
 		  struct extscan_stop_req_params *pstopcmd);
 
