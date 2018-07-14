@@ -44,6 +44,18 @@ QDF_STATUS wmi_unified_extscan_start_change_monitor_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_extscan_stop_hotlist_monitor_cmd(void *wmi_hdl,
 		  struct extscan_bssid_hotlist_reset_params *photlist_reset);
 
+/**
+ * wmi_unified_extscan_start_hotlist_monitor_cmd() - start hotlist monitor
+ * @wmi_hdl: wmi handle
+ * @params: hotlist params
+ *
+ * This function configures hotlist monitor to start in fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_extscan_start_hotlist_monitor_cmd(void *wmi_hdl,
+			struct extscan_bssid_hotlist_set_params *params);
+
 QDF_STATUS wmi_unified_stop_extscan_cmd(void *wmi_hdl,
 			  struct extscan_stop_req_params *pstopcmd);
 
