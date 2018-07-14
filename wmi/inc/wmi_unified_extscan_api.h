@@ -62,8 +62,4 @@ QDF_STATUS wmi_unified_stop_extscan_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_start_extscan_cmd(void *wmi_hdl,
 			  struct wifi_scan_cmd_req_params *pstart);
 
-QDF_STATUS wmi_unified_get_buf_extscan_hotlist_cmd(void *wmi_hdl,
-				   struct ext_scan_setbssid_hotlist_params *
-				   photlist, int *buf_len);
-
 #endif /* _WMI_UNIFIED_EXTSCAN_API_H_ */

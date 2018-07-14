@@ -1084,26 +1084,6 @@ static QDF_STATUS send_extscan_start_hotlist_monitor_cmd_tlv
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * send_get_buf_extscan_hotlist_cmd_tlv() - prepare hotlist command
- * @wmi_handle: wmi handle
- * @photlist: hotlist command params
- * @buf_len: buffer length
- *
- * This function fills individual elements for  hotlist request and
- * TLV for bssid entries
- *
- * Return: CDF Status.
- */
-static QDF_STATUS send_get_buf_extscan_hotlist_cmd_tlv
-			(wmi_unified_t wmi_handle,
-			struct ext_scan_setbssid_hotlist_params *photlist,
-			int *buf_len)
-{
-	return send_extscan_start_hotlist_monitor_cmd_tlv(wmi_handle,
-							  photlist);
-}
-
 void wmi_extscan_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -1127,6 +1107,4 @@ void wmi_extscan_attach_tlv(wmi_unified_t wmi_handle)
 				send_extscan_start_hotlist_monitor_cmd_tlv;
 	ops->send_stop_extscan_cmd = send_stop_extscan_cmd_tlv;
 	ops->send_start_extscan_cmd = send_start_extscan_cmd_tlv;
-	ops->send_get_buf_extscan_hotlist_cmd =
-				send_get_buf_extscan_hotlist_cmd_tlv;
 }
