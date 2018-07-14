@@ -3586,8 +3586,6 @@ struct extscan_bssid_hotlist_set_params {
 	uint32_t  num_ap;
 	struct ap_threshold_params ap[WMI_WLAN_EXTSCAN_MAX_HOTLIST_APS];
 };
-/* legacy naming */
-#define ext_scan_setbssid_hotlist_params extscan_bssid_hotlist_set_params
 
 /**
  * struct host_mem_req - Host memory request paramseters request by target
