@@ -536,13 +536,13 @@ bool ipa_is_fw_wdi_activated(struct wlan_objmgr_pdev *pdev)
 	struct wlan_ipa_priv *ipa_obj;
 
 	if (!ipa_config_is_enabled()) {
-		ipa_debug("ipa is disabled");
+		ipa_debug_rl("ipa is disabled");
 		return false;
 	}
 
 	ipa_obj = ipa_pdev_get_priv_obj(pdev);
 	if (!ipa_obj) {
-		ipa_err("IPA object is NULL");
+		ipa_err_rl("IPA object is NULL");
 		return false;
 	}
 
