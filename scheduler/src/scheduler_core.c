@@ -84,10 +84,9 @@ static QDF_STATUS scheduler_all_queues_init(struct scheduler_ctx *sched_ctx)
 
 	sched_enter();
 
-	if (!sched_ctx) {
-		QDF_DEBUG_PANIC("sched_ctx is null");
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	qdf_atomic_set(&__sched_queue_depth, 0);
 
@@ -114,10 +113,9 @@ static QDF_STATUS scheduler_all_queues_deinit(struct scheduler_ctx *sched_ctx)
 
 	sched_enter();
 
-	if (!sched_ctx) {
-		QDF_DEBUG_PANIC("sched_ctx is null");
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	/* De-Initialize all message queues */
 	for (i = 0; i < SCHEDULER_NUMBER_OF_MSG_QUEUE; i++)
@@ -175,10 +173,9 @@ QDF_STATUS scheduler_queues_init(struct scheduler_ctx *sched_ctx)
 
 	sched_enter();
 
-	if (!sched_ctx) {
-		QDF_DEBUG_PANIC("sched_ctx is null");
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	status = scheduler_all_queues_init(sched_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -245,7 +242,7 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 		/* Check if MC needs to shutdown */
 		if (qdf_atomic_test_bit(MC_SHUTDOWN_EVENT_MASK,
 					&sch_ctx->sch_event_flag)) {
-			sched_info("scheduler thread signaled to shutdown");
+			sched_debug("scheduler thread signaled to shutdown");
 			*shutdown = true;
 
 			/* Check for any Suspend Indication */
@@ -338,7 +335,7 @@ int scheduler_thread(void *arg)
 	}
 
 	/* If we get here the scheduler thread must exit */
-	sched_info("Scheduler thread exiting");
+	sched_debug("Scheduler thread exiting");
 	qdf_event_set(&sch_ctx->sch_shutdown);
 	qdf_exit_thread(QDF_STATUS_SUCCESS);
 
@@ -352,13 +349,13 @@ static void scheduler_flush_single_queue(struct scheduler_mq_type *mq)
 
 	while ((msg = scheduler_mq_get(mq))) {
 		if (msg->flush_callback) {
-			sched_info("Calling flush callback; type: %x",
-				   msg->type);
+			sched_debug("Calling flush callback; type: %x",
+				    msg->type);
 			flush_cb = msg->flush_callback;
 			flush_cb(msg);
 		} else if (msg->bodyptr) {
-			sched_info("Freeing scheduler msg bodyptr; type: %x",
-				   msg->type);
+			sched_debug("Freeing scheduler msg bodyptr; type: %x",
+				    msg->type);
 			qdf_mem_free(msg->bodyptr);
 		}
 
@@ -371,7 +368,7 @@ void scheduler_queues_flush(struct scheduler_ctx *sched_ctx)
 	struct scheduler_mq_type *mq;
 	int i;
 
-	sched_info("Flushing scheduler message queues");
+	sched_debug("Flushing scheduler message queues");
 
 	for (i = 0; i < SCHEDULER_NUMBER_OF_MSG_QUEUE; i++) {
 		mq = &sched_ctx->queue_ctx.sch_msg_q[i];

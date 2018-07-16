@@ -24,14 +24,12 @@ QDF_STATUS scheduler_disable(void)
 {
 	struct scheduler_ctx *sched_ctx;
 
-	sched_info("Disabling Scheduler");
+	sched_debug("Disabling Scheduler");
 
 	sched_ctx = scheduler_get_context();
 	QDF_BUG(sched_ctx);
-	if (!sched_ctx) {
-		sched_err("sched_ctx is NULL");
+	if (!sched_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	/* send shutdown signal to scheduler thread */
 	qdf_atomic_set_bit(MC_SHUTDOWN_EVENT_MASK, &sched_ctx->sch_event_flag);
@@ -73,8 +71,7 @@ static void scheduler_watchdog_timeout(void *arg)
 	if (qdf_atomic_test_bit(MC_SHUTDOWN_EVENT_MASK, &sched->sch_event_flag))
 		return;
 
-	sched_fatal("Going down for Scheduler Watchdog Bite!");
-	QDF_BUG(0);
+	QDF_DEBUG_PANIC("Going down for Scheduler Watchdog Bite!");
 }
 #else
 static void scheduler_watchdog_timeout(void *arg)
@@ -87,14 +84,12 @@ QDF_STATUS scheduler_enable(void)
 {
 	struct scheduler_ctx *sched_ctx;
 
-	sched_info("Enabling Scheduler");
+	sched_debug("Enabling Scheduler");
 
 	sched_ctx = scheduler_get_context();
 	QDF_BUG(sched_ctx);
-	if (!sched_ctx) {
-		sched_err("sched_ctx is null");
+	if (!sched_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	qdf_atomic_clear_bit(MC_SHUTDOWN_EVENT_MASK,
 			     &sched_ctx->sch_event_flag);
@@ -109,13 +104,13 @@ QDF_STATUS scheduler_enable(void)
 		return QDF_STATUS_E_RESOURCES;
 	}
 
-	sched_info("Scheduler thread created");
+	sched_debug("Scheduler thread created");
 
 	/* wait for the scheduler thread to startup */
 	qdf_wake_up_process(sched_ctx->sch_thread);
 	qdf_wait_single_event(&sched_ctx->sch_start_event, 0);
 
-	sched_info("Scheduler thread started");
+	sched_debug("Scheduler thread started");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -125,7 +120,7 @@ QDF_STATUS scheduler_init(void)
 	QDF_STATUS status;
 	struct scheduler_ctx *sched_ctx;
 
-	sched_info("Initializing Scheduler");
+	sched_debug("Initializing Scheduler");
 
 	status = scheduler_create_ctx();
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -136,7 +131,6 @@ QDF_STATUS scheduler_init(void)
 	sched_ctx = scheduler_get_context();
 	QDF_BUG(sched_ctx);
 	if (!sched_ctx) {
-		sched_err("sched_ctx is null");
 		status = QDF_STATUS_E_FAILURE;
 		goto ctx_destroy;
 	}
@@ -198,14 +192,12 @@ QDF_STATUS scheduler_deinit(void)
 	QDF_STATUS status;
 	struct scheduler_ctx *sched_ctx;
 
-	sched_info("Deinitializing Scheduler");
+	sched_debug("Deinitializing Scheduler");
 
 	sched_ctx = scheduler_get_context();
 	QDF_BUG(sched_ctx);
-	if (!sched_ctx) {
-		sched_err("sched_ctx is null");
+	if (!sched_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	qdf_timer_free(&sched_ctx->watchdog_timer);
 	qdf_spinlock_destroy(&sched_ctx->sch_thread_lock);
@@ -233,16 +225,14 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 	struct scheduler_msg *queue_msg;
 	struct scheduler_ctx *sched_ctx;
 
-	if (!msg) {
-		sched_err("msg is null");
+	QDF_BUG(msg);
+	if (!msg)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	sched_ctx = scheduler_get_context();
-	if (!sched_ctx) {
-		sched_err("sched_ctx is null");
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	if (!sched_ctx->sch_thread) {
 		sched_err("Cannot post message; scheduler thread is stopped");
@@ -278,8 +268,7 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 	}
 
 	if (!sched_ctx->queue_ctx.scheduler_msg_process_fn[qidx]) {
-		sched_err("callback not registered for qid[%d]", qid);
-		QDF_ASSERT(0);
+		QDF_DEBUG_PANIC("callback not registered for qid[%d]", qid);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -301,18 +290,16 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 }
 
 QDF_STATUS scheduler_register_module(QDF_MODULE_ID qid,
-		scheduler_msg_process_fn_t callback)
+				     scheduler_msg_process_fn_t callback)
 {
 	struct scheduler_mq_ctx *ctx;
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 
 	sched_enter();
 
-	if (!sched_ctx) {
-		QDF_ASSERT(0);
-		sched_err("sched_ctx is NULL");
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	if (sched_ctx->sch_last_qidx >= SCHEDULER_NUMBER_OF_MSG_QUEUE) {
 		sched_err("Already registered max %d no of message queues",
@@ -339,11 +326,9 @@ QDF_STATUS scheduler_deregister_module(QDF_MODULE_ID qid)
 
 	sched_enter();
 
-	if (!sched_ctx) {
-		QDF_ASSERT(0);
-		sched_err("sched_ctx is NULL");
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	ctx = &sched_ctx->queue_ctx;
 	qidx = ctx->scheduler_msg_qid_to_qidx[qid];
@@ -400,10 +385,13 @@ QDF_STATUS scheduler_target_if_mq_handler(struct scheduler_msg *msg)
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 	QDF_STATUS (*target_if_msg_handler)(struct scheduler_msg *);
 
-	if (NULL == msg || NULL == sched_ctx) {
-		sched_err("msg %pK sch %pK", msg, sched_ctx);
+	QDF_BUG(msg);
+	if (!msg)
 		return QDF_STATUS_E_FAILURE;
-	}
+
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
+		return QDF_STATUS_E_FAILURE;
 
 	target_if_msg_handler = msg->callback;
 
@@ -417,7 +405,7 @@ QDF_STATUS scheduler_target_if_mq_handler(struct scheduler_msg *msg)
 	 * 2) For new messages which have valid callbacks invoke their callbacks
 	 *    directly.
 	 */
-	if (NULL == target_if_msg_handler)
+	if (!target_if_msg_handler)
 		status = sched_ctx->legacy_wma_handler(msg);
 	else
 		status = target_if_msg_handler(msg);
@@ -429,18 +417,16 @@ QDF_STATUS scheduler_os_if_mq_handler(struct scheduler_msg *msg)
 {
 	QDF_STATUS (*os_if_msg_handler)(struct scheduler_msg *);
 
-	if (NULL == msg) {
-		sched_err("Msg is NULL");
+	QDF_BUG(msg);
+	if (!msg)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	os_if_msg_handler = msg->callback;
 
-	if (NULL == os_if_msg_handler) {
-		sched_err("Msg callback is NULL");
-		QDF_ASSERT(0);
+	QDF_BUG(os_if_msg_handler);
+	if (!os_if_msg_handler)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	os_if_msg_handler(msg);
 
 	return QDF_STATUS_SUCCESS;
@@ -448,53 +434,45 @@ QDF_STATUS scheduler_os_if_mq_handler(struct scheduler_msg *msg)
 
 QDF_STATUS scheduler_timer_q_mq_handler(struct scheduler_msg *msg)
 {
-	QDF_STATUS status;
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
-	qdf_mc_timer_callback_t timer_q_msg_handler;
+	qdf_mc_timer_callback_t timer_callback;
 
-	if (NULL == msg || NULL == sched_ctx) {
-		sched_err("msg %pK sch %pK", msg, sched_ctx);
+	QDF_BUG(msg);
+	if (!msg)
 		return QDF_STATUS_E_FAILURE;
-	}
 
-	timer_q_msg_handler = msg->callback;
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
+		return QDF_STATUS_E_FAILURE;
 
-	/* Timer message handler */
-	if (SYS_MSG_COOKIE == msg->reserved &&
-		SYS_MSG_ID_MC_TIMER == msg->type) {
-		if (timer_q_msg_handler) {
-			status = QDF_STATUS_SUCCESS;
-			timer_q_msg_handler(msg->bodyptr);
-		} else {
-			sched_err("Timer cb is null");
-			status = QDF_STATUS_E_FAILURE;
-		}
+	/* legacy sys message handler? */
+	if (msg->reserved != SYS_MSG_COOKIE || msg->type != SYS_MSG_ID_MC_TIMER)
+		return sched_ctx->legacy_sys_handler(msg);
 
-		return status;
-	} else {
-		/* Legacy sys message handler */
-		status = sched_ctx->legacy_sys_handler(msg);
+	timer_callback = msg->callback;
+	QDF_BUG(timer_callback);
+	if (!timer_callback)
+		return QDF_STATUS_E_FAILURE;
 
-		return status;
-	}
+	timer_callback(msg->bodyptr);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS scheduler_scan_mq_handler(struct scheduler_msg *msg)
 {
 	QDF_STATUS (*scan_q_msg_handler)(struct scheduler_msg *);
 
-	if (NULL == msg) {
-		sched_err("Msg is NULL");
+	QDF_BUG(msg);
+	if (!msg)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	scan_q_msg_handler = msg->callback;
 
-	if (NULL == scan_q_msg_handler) {
-		sched_err("Msg callback is NULL");
-		QDF_ASSERT(0);
+	QDF_BUG(scan_q_msg_handler);
+	if (!scan_q_msg_handler)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	scan_q_msg_handler(msg);
 
 	return QDF_STATUS_SUCCESS;
@@ -505,10 +483,9 @@ QDF_STATUS scheduler_register_wma_legacy_handler(scheduler_msg_process_fn_t
 {
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 
-	if (NULL == sched_ctx) {
-		sched_err("scheduler context is null");
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	sched_ctx->legacy_wma_handler = wma_callback;
 
@@ -520,10 +497,9 @@ QDF_STATUS scheduler_register_sys_legacy_handler(scheduler_msg_process_fn_t
 {
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 
-	if (NULL == sched_ctx) {
-		sched_err("scheduler context is null");
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	sched_ctx->legacy_sys_handler = sys_callback;
 
@@ -534,10 +510,9 @@ QDF_STATUS scheduler_deregister_wma_legacy_handler(void)
 {
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 
-	if (NULL == sched_ctx) {
-		sched_err("scheduler context is null");
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	sched_ctx->legacy_wma_handler = NULL;
 
@@ -548,10 +523,9 @@ QDF_STATUS scheduler_deregister_sys_legacy_handler(void)
 {
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 
-	if (NULL == sched_ctx) {
-		sched_err("scheduler context is null");
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	sched_ctx->legacy_sys_handler = NULL;
 
@@ -573,12 +547,9 @@ void scheduler_mc_timer_callback(unsigned long data)
 	void *user_data = NULL;
 	QDF_TIMER_TYPE type = QDF_TIMER_TYPE_SW;
 
-	QDF_ASSERT(timer);
-
-	if (timer == NULL) {
-		sched_err("Null pointer passed in!");
+	QDF_BUG(timer);
+	if (!timer)
 		return;
-	}
 
 	qdf_spin_lock_irqsave(&timer->platform_info.spinlock);
 
@@ -623,19 +594,16 @@ void scheduler_mc_timer_callback(unsigned long data)
 
 	qdf_spin_unlock_irqrestore(&timer->platform_info.spinlock);
 
-	if (QDF_STATUS_SUCCESS != status) {
-		sched_err("TIMER callback called in a wrong state=%d",
-			  timer->state);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sched_debug("MC timer fired but is not running; skip callback");
 		return;
 	}
 
 	qdf_try_allowing_sleep(type);
 
-	if (callback == NULL) {
-		sched_err("No TIMER callback, Couldn't enqueue timer to any queue");
-		QDF_ASSERT(0);
+	QDF_BUG(callback);
+	if (!callback)
 		return;
-	}
 
 	/* serialize to scheduler controller thread */
 	msg.type = SYS_MSG_ID_MC_TIMER;
@@ -647,7 +615,7 @@ void scheduler_mc_timer_callback(unsigned long data)
 	/* bodyptr points to user data, do not free it during msg flush */
 	msg.flush_callback = scheduler_msg_flush_noop;
 
-	if (scheduler_post_msg(QDF_MODULE_ID_SYS, &msg) == QDF_STATUS_SUCCESS)
-		return;
-	sched_err("Could not enqueue timer to timer queue");
+	status = scheduler_post_msg(QDF_MODULE_ID_SYS, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		sched_err("Could not enqueue timer to timer queue");
 }
