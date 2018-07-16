@@ -3447,7 +3447,7 @@ enum hdd_dot11_mode {
 #define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_NAME          "gStaKeepAlivePeriod"
 #define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_MIN           (0)
 #define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_MAX           (65535)
-#define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_DEFAULT       (90)
+#define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_DEFAULT       (60)
 
 /**
  * enum station_keepalive_method - available keepalive methods for stations
