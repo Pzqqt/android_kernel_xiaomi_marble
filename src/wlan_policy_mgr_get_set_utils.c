@@ -1544,6 +1544,29 @@ static bool policy_mgr_is_sub_20_mhz_enabled(struct wlan_objmgr_psoc *psoc)
 	return pm_ctx->user_cfg.sub_20_mhz_enabled;
 }
 
+/**
+ * policy_mgr_check_privacy_for_new_conn() - Check privacy mode concurrency
+ * @pm_ctx: policy_mgr_psoc_priv_obj policy mgr context
+ *
+ * This routine is called to check vdev security mode allowed in concurrency.
+ * At present, WAPI security mode is not allowed to run concurrency with any
+ * other vdev.
+ *
+ * Return: true - allow
+ */
+static bool policy_mgr_check_privacy_for_new_conn(
+	struct policy_mgr_psoc_priv_obj *pm_ctx)
+{
+	if (!pm_ctx->hdd_cbacks.hdd_wapi_security_sta_exist)
+		return true;
+
+	if (pm_ctx->hdd_cbacks.hdd_wapi_security_sta_exist() &&
+	    (policy_mgr_get_connection_count(pm_ctx->psoc) > 0))
+		return false;
+
+	return true;
+}
+
 bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 				       enum policy_mgr_con_mode mode,
 				       uint8_t channel,
@@ -1729,6 +1752,11 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 			index++;
 		}
 		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+	}
+
+	if (!policy_mgr_check_privacy_for_new_conn(pm_ctx)) {
+		policy_mgr_err("Don't allow new conn when wapi security conn existing");
+		goto done;
 	}
 
 	status = true;
