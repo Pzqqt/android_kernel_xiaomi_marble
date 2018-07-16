@@ -574,7 +574,7 @@ struct cdp_mon_ops {
 	void (*txrx_monitor_set_filter_mcast_data)
 		(struct cdp_pdev *, u_int8_t val);
 	void (*txrx_monitor_set_filter_non_data)
-		(struct cdp_pdev *, u_int8_t val);
+	      (struct cdp_pdev *, u_int8_t val);
 
 	bool (*txrx_monitor_get_filter_ucast_data)
 		(struct cdp_vdev *vdev_txrx_handle);
@@ -662,6 +662,25 @@ struct cdp_host_stats_ops {
 	void
 		(*get_htt_stats)(struct cdp_pdev *pdev, void *data,
 				uint32_t data_len);
+	void
+		(*txrx_update_pdev_stats)(struct cdp_pdev *pdev, void *data,
+					  uint16_t stats_id);
+	struct cdp_peer_stats*
+		(*txrx_get_peer_stats)(struct cdp_peer *peer);
+	void
+		(*txrx_reset_peer_ald_stats)(struct cdp_peer *peer);
+	void
+		(*txrx_reset_peer_stats)(struct cdp_peer *peer);
+	int
+		(*txrx_get_vdev_stats)(struct cdp_vdev *vdev, void *buf,
+				       bool is_aggregate);
+	int
+		(*txrx_process_wmi_host_vdev_stats)(ol_txrx_soc_handle soc,
+						    void *data, uint32_t len,
+						    uint32_t stats_id);
+	int
+		(*txrx_get_vdev_extd_stats)(struct cdp_vdev *vdev_handle,
+					    void *buffer);
 };
 
 struct cdp_wds_ops {
