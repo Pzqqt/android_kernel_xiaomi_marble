@@ -458,6 +458,32 @@ enum qdf_proto_type {
 };
 
 /**
+ * cb_ftype - Frame type information in skb cb
+ * @CB_FTYPE_INVALID - Invalid
+ * @CB_FTYPE_MCAST2UCAST - Multicast to Unicast converted packet
+ * @CB_FTYPE_TSO - TCP Segmentation Offload
+ * @CB_FTYPE_TSO_SG - TSO Scatter Gather
+ * @CB_FTYPE_SG - Scatter Gather
+ * @CB_FTYPE_INTRABSS_FWD - Intra BSS forwarding
+ * @CB_FTYPE_RX_INFO - Rx information
+ * @CB_FTYPE_MESH_RX_INFO - Mesh Rx information
+ * @CB_FTYPE_MESH_TX_INFO - Mesh Tx information
+ * @CB_FTYPE_DMS - Directed Multicast Service
+ */
+enum cb_ftype {
+	CB_FTYPE_INVALID = 0,
+	CB_FTYPE_MCAST2UCAST = 1,
+	CB_FTYPE_TSO = 2,
+	CB_FTYPE_TSO_SG = 3,
+	CB_FTYPE_SG = 4,
+	CB_FTYPE_INTRABSS_FWD = 5,
+	CB_FTYPE_RX_INFO = 6,
+	CB_FTYPE_MESH_RX_INFO = 7,
+	CB_FTYPE_MESH_TX_INFO = 8,
+	CB_FTYPE_DMS = 9,
+};
+
+/**
  * qdf_proto_subtype - subtype of packet
  * @QDF_PROTO_EAPOL_M1 - EAPOL 1/4
  * @QDF_PROTO_EAPOL_M2 - EAPOL 2/4
@@ -830,13 +856,13 @@ qdf_nbuf_set_vdev_ctx(qdf_nbuf_t buf, uint8_t vdev_id)
 }
 
 static inline void
-qdf_nbuf_set_tx_ftype(qdf_nbuf_t buf, uint8_t type)
+qdf_nbuf_set_tx_ftype(qdf_nbuf_t buf, enum cb_ftype type)
 {
 	__qdf_nbuf_set_tx_ftype(buf, type);
 }
 
 static inline void
-qdf_nbuf_set_rx_ftype(qdf_nbuf_t buf, uint8_t type)
+qdf_nbuf_set_rx_ftype(qdf_nbuf_t buf, enum cb_ftype type)
 {
 	__qdf_nbuf_set_rx_ftype(buf, type);
 }
@@ -849,12 +875,12 @@ qdf_nbuf_get_vdev_ctx(qdf_nbuf_t buf)
 	return  __qdf_nbuf_get_vdev_ctx(buf);
 }
 
-static inline uint8_t qdf_nbuf_get_tx_ftype(qdf_nbuf_t buf)
+static inline enum cb_ftype qdf_nbuf_get_tx_ftype(qdf_nbuf_t buf)
 {
 	return  __qdf_nbuf_get_tx_ftype(buf);
 }
 
-static inline uint8_t qdf_nbuf_get_rx_ftype(qdf_nbuf_t buf)
+static inline enum cb_ftype qdf_nbuf_get_rx_ftype(qdf_nbuf_t buf)
 {
 	return  __qdf_nbuf_get_rx_ftype(buf);
 }
