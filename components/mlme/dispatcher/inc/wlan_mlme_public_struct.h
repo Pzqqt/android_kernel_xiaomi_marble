@@ -801,6 +801,8 @@ struct wlan_mlme_sta_cfg {
  * @rssi_penalize_factor_5g:        Factor by which 5GHz RSSI is penalizeed
  * @max_rssi_penalize_5g:           Max penalty that can be applied to 5G RSSI
  * @max_num_pre_auth:               Configure max number of pre-auth
+ * @roam_preauth_retry_count:       Configure the max number of preauth retry
+ * @roam_preauth_no_ack_timeout:    Configure the no ack timeout period
  */
 struct wlan_mlme_lfr_cfg {
 	bool mawc_roam_enabled;
@@ -842,6 +844,8 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t rssi_penalize_factor_5g;
 	uint32_t max_rssi_penalize_5g;
 	uint32_t max_num_pre_auth;
+	uint32_t roam_preauth_retry_count;
+	uint32_t roam_preauth_no_ack_timeout;
 };
 
 /**

@@ -18214,6 +18214,10 @@ csr_update_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 	req_buf->RoamRssiCatGap = mac_ctx->roam.configParam.bCatRssiOffset;
 	req_buf->Select5GHzMargin = mac_ctx->mlme_cfg->gen.select_5ghz_margin;
 	req_buf->ho_delay_for_rx = mac_ctx->roam.configParam.ho_delay_for_rx;
+	req_buf->roam_preauth_retry_count =
+			mac_ctx->mlme_cfg->lfr.roam_preauth_retry_count;
+	req_buf->roam_preauth_no_ack_timeout =
+			mac_ctx->mlme_cfg->lfr.roam_preauth_no_ack_timeout;
 	req_buf->min_delay_btw_roam_scans =
 			mac_ctx->roam.configParam.min_delay_btw_roam_scans;
 	req_buf->roam_trigger_reason_bitmask =
