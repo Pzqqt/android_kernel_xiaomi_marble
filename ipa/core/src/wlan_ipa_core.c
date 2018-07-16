@@ -1597,8 +1597,19 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			/* Disable IPA UC TX PIPE when STA disconnected */
 			if ((ipa_ctx->num_iface == 1) &&
 			    wlan_ipa_is_fw_wdi_activated(ipa_ctx) &&
-			    !ipa_ctx->ipa_pipes_down)
-				wlan_ipa_uc_handle_last_discon(ipa_ctx);
+			    !ipa_ctx->ipa_pipes_down) {
+				if (cds_is_driver_unloading()) {
+					/*
+					 * We disable WDI pipes directly here
+					 * since IPA_OPCODE_TX/RX_SUSPEND
+					 * message will not be processed when
+					 * unloading WLAN driver is in progress
+					 */
+					wlan_ipa_uc_disable_pipes(ipa_ctx);
+				} else {
+					wlan_ipa_uc_handle_last_discon(ipa_ctx);
+				}
+			}
 		}
 
 		if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config) &&
@@ -1793,7 +1804,17 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			if ((false == ipa_ctx->resource_unloading) &&
 			    wlan_ipa_is_fw_wdi_activated(ipa_ctx) &&
 			    !ipa_ctx->ipa_pipes_down) {
-				wlan_ipa_uc_handle_last_discon(ipa_ctx);
+				if (cds_is_driver_unloading()) {
+					/*
+					 * We disable WDI pipes directly here
+					 * since IPA_OPCODE_TX/RX_SUSPEND
+					 * message will not be processed when
+					 * unloading WLAN driver is in progress
+					 */
+					wlan_ipa_uc_disable_pipes(ipa_ctx);
+				} else {
+					wlan_ipa_uc_handle_last_discon(ipa_ctx);
+				}
 			}
 
 			if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config) &&
