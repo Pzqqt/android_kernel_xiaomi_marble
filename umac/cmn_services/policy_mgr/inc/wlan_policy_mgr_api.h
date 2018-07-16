@@ -871,6 +871,10 @@ struct policy_mgr_sme_cbacks {
  *                      SAP
  * @get_mode_for_non_connected_vdev: Get the mode for a non
  *                                 connected vdev
+ * @hdd_get_device_mode: Get QDF_OPMODE type for session id (vdev id)
+ * @hdd_wapi_security_sta_exist: Get whether wapi encription station existing
+ * or not. Some hw doesn't support WAPI encryption concurrency with other
+ * encryption type.
  */
 struct policy_mgr_hdd_cbacks {
 	void (*sap_restart_chan_switch_cb)(struct wlan_objmgr_psoc *psoc,
@@ -885,6 +889,7 @@ struct policy_mgr_hdd_cbacks {
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id);
 	enum QDF_OPMODE (*hdd_get_device_mode)(uint32_t session_id);
+	bool (*hdd_wapi_security_sta_exist)(void);
 };
 
 
