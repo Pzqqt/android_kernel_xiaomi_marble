@@ -412,7 +412,7 @@ struct cdp_tx_ingress_stats {
 	/* Packets dropped on the Tx side */
 	struct {
 		struct cdp_pkt_info dropped_pkt;
-		uint32_t  desc_na;
+		struct cdp_pkt_info  desc_na;
 		uint32_t ring_full;
 		uint32_t enqueue_fail;
 		uint32_t dma_error;

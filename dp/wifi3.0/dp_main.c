@@ -5171,7 +5171,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.dma_error);
 		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.ring_full);
 		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.enqueue_fail);
-		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.desc_na);
+		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.desc_na.num);
 		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.res_full);
 		DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified);
 		DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified_raw);
@@ -5182,7 +5182,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 			pdev->stats.tx_i.dropped.dma_error +
 			pdev->stats.tx_i.dropped.ring_full +
 			pdev->stats.tx_i.dropped.enqueue_fail +
-			pdev->stats.tx_i.dropped.desc_na +
+			pdev->stats.tx_i.dropped.desc_na.num +
 			pdev->stats.tx_i.dropped.res_full;
 
 		pdev->stats.tx.last_ack_rssi =
@@ -5309,7 +5309,7 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 	DP_PRINT_STATS("	Ring Full = %d",
 			pdev->stats.tx_i.dropped.ring_full);
 	DP_PRINT_STATS("	Descriptor Not available = %d",
-			pdev->stats.tx_i.dropped.desc_na);
+			pdev->stats.tx_i.dropped.desc_na.num);
 	DP_PRINT_STATS("	HW enqueue failed= %d",
 			pdev->stats.tx_i.dropped.enqueue_fail);
 	DP_PRINT_STATS("	Resources Full = %d",
@@ -6775,7 +6775,7 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 		DP_TRACE(FATAL, "Total packets dropped: %u,",
 			pdev->stats.tx_i.dropped.dropped_pkt.num);
 		DP_TRACE(FATAL, "Descriptor not available: %u",
-			pdev->stats.tx_i.dropped.desc_na);
+			pdev->stats.tx_i.dropped.desc_na.num);
 		DP_TRACE(FATAL, "Ring full: %u",
 			pdev->stats.tx_i.dropped.ring_full);
 		DP_TRACE(FATAL, "Enqueue fail: %u",
