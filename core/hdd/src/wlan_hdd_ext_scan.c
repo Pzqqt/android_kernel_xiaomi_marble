@@ -3018,13 +3018,6 @@ static uint32_t hdd_extscan_map_usr_drv_config_flags(uint32_t config_flags)
 	return configuration_flags;
 }
 
-/*
- * define short names for the global vendor params
- * used by __wlan_hdd_cfg80211_extscan_start()
- */
-#define PARAM_MAX \
-	QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX
-
 /**
  * __wlan_hdd_cfg80211_extscan_start() - ext scan start
  * @wiphy: Pointer to wireless phy
@@ -3044,7 +3037,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct nlattr *tb[PARAM_MAX + 1];
+	struct nlattr *tb[EXTSCAN_PARAM_MAX + 1];
 	struct hdd_ext_scan_context *context;
 	uint32_t num_buckets;
 	QDF_STATUS status;
@@ -3071,7 +3064,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
-	if (wlan_cfg80211_nla_parse(tb, PARAM_MAX, data, data_len,
+	if (wlan_cfg80211_nla_parse(tb, EXTSCAN_PARAM_MAX, data, data_len,
 				    wlan_hdd_extscan_config_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
@@ -3236,15 +3229,6 @@ int wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 }
 
 
-/*
- * define short names for the global vendor params
- * used by __wlan_hdd_cfg80211_extscan_stop()
- */
-#define PARAM_MAX \
-		QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX
-#define PARAM_REQUEST_ID \
-		QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID
-
 /**
  * __wlan_hdd_cfg80211_extscan_stop() - ext scan stop
  * @wiphy: Pointer to wireless phy
@@ -3256,18 +3240,17 @@ int wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
  */
 static int
 __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
-				   struct wireless_dev *wdev,
-				   const void *data, int data_len)
+				 struct wireless_dev *wdev,
+				 const void *data, int data_len)
 {
-	tpSirExtScanStopReqParams pReqMsg = NULL;
+	struct extscan_stop_req_params params;
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct nlattr *tb[PARAM_MAX + 1];
+	struct nlattr *tb[EXTSCAN_PARAM_MAX + 1];
 	struct hdd_ext_scan_context *context;
 	QDF_STATUS status;
-	uint32_t request_id;
-	int retval;
+	int id, retval;
 	unsigned long rc;
 
 	hdd_enter_dev(dev);
@@ -3285,39 +3268,34 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
-	if (wlan_cfg80211_nla_parse(tb, PARAM_MAX, data, data_len,
+
+	if (wlan_cfg80211_nla_parse(tb, EXTSCAN_PARAM_MAX, data, data_len,
 				    wlan_hdd_extscan_config_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
 
-	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
-	if (!pReqMsg) {
-		hdd_err("qdf_mem_malloc failed");
-		return -ENOMEM;
-	}
-
 	/* Parse and fetch request Id */
-	if (!tb[PARAM_REQUEST_ID]) {
+	id = QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID;
+	if (!tb[id]) {
 		hdd_err("attr request id failed");
-		goto fail;
+		return -EINVAL;
 	}
-
-	pReqMsg->requestId = nla_get_u32(tb[PARAM_REQUEST_ID]);
-	pReqMsg->sessionId = adapter->session_id;
-	hdd_debug("Req Id %d Session Id %d",
-		pReqMsg->requestId, pReqMsg->sessionId);
+	params.request_id = nla_get_u32(tb[id]);
+	params.vdev_id = adapter->session_id;
+	hdd_debug("Req Id %d Vdev Id %d",
+		  params.request_id, params.vdev_id);
 
 	context = &ext_scan_context;
 	spin_lock(&context->context_lock);
 	INIT_COMPLETION(context->response_event);
-	context->request_id = request_id = pReqMsg->requestId;
+	context->request_id = params.request_id;
 	spin_unlock(&context->context_lock);
 
-	status = sme_ext_scan_stop(hdd_ctx->mac_handle, pReqMsg);
+	status = sme_ext_scan_stop(hdd_ctx->mac_handle, &params);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_ext_scan_stop failed(err=%d)", status);
-		goto fail;
+		return qdf_status_to_os_return(status);
 	}
 
 	/* request was sent -- wait for the response */
@@ -3329,7 +3307,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 		retval = -ETIMEDOUT;
 	} else {
 		spin_lock(&context->context_lock);
-		if (context->request_id == request_id)
+		if (context->request_id == params.request_id)
 			retval = context->response_status;
 		else
 			retval = -EINVAL;
@@ -3337,18 +3315,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	}
 	hdd_exit();
 	return retval;
-
-fail:
-	qdf_mem_free(pReqMsg);
-	return -EINVAL;
 }
-/*
- * done with short names for the global vendor params
- * used by wlan_hdd_cfg80211_extscan_stop()
- */
-#undef PARAM_MAX
-#undef PARAM_REQUEST_ID
-
 
 /**
  * wlan_hdd_cfg80211_extscan_stop() - stop extscan
@@ -3360,8 +3327,8 @@ fail:
  * Return: 0 on success, negative errno on failure
  */
 int wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
-				struct wireless_dev *wdev,
-				const void *data, int data_len)
+				   struct wireless_dev *wdev,
+				   const void *data, int data_len)
 {
 	int ret = 0;
 

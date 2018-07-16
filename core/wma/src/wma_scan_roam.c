@@ -4501,42 +4501,27 @@ QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 	return status;
 }
 
-/**
- * wma_stop_extscan() - stop extscan command to fw.
- * @handle: wma handle
- * @pstopcmd: stop scan command request params
- *
- * This function sends stop extscan request to fw.
- *
- * Return: QDF Status.
- */
 QDF_STATUS wma_stop_extscan(tp_wma_handle wma,
-			    tSirExtScanStopReqParams *pstopcmd)
+			    struct extscan_stop_req_params *params)
 {
-	struct extscan_stop_req_params params = {0};
 	QDF_STATUS status;
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, cannot issue cmd", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!wmi_service_enabled(wma->wmi_handle,
-				    wmi_service_extscan)) {
+	if (!wmi_service_enabled(wma->wmi_handle, wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	params.request_id = pstopcmd->requestId;
-	params.vdev_id = pstopcmd->sessionId;
-
-	status = wmi_unified_stop_extscan_cmd(wma->wmi_handle,
-						&params);
+	status = wmi_unified_stop_extscan_cmd(wma->wmi_handle, params);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	wma->interfaces[pstopcmd->sessionId].extscan_in_progress = false;
+	wma->interfaces[params->vdev_id].extscan_in_progress = false;
 	WMA_LOGD("Extscan stop request sent successfully for vdev %d",
-		 pstopcmd->sessionId);
+		 params->vdev_id);
 
 	return status;
 }

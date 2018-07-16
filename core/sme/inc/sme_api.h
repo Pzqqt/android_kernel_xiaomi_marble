@@ -1028,8 +1028,15 @@ QDF_STATUS
 sme_ext_scan_start(mac_handle_t mac_handle,
 		   struct wifi_scan_cmd_req_params *params);
 
-QDF_STATUS sme_ext_scan_stop(tHalHandle hHal,
-		tSirExtScanStopReqParams *pStopReq);
+/**
+ * sme_ext_scan_stop() - SME API to issue extscan stop
+ * @mac_handle: Opaque handle to the MAC context
+ * @params: extscan stop structure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_ext_scan_stop(mac_handle_t mac_handle,
+			     struct extscan_stop_req_params *params);
 
 /**
  * sme_set_bss_hotlist() - SME API to set BSSID hotlist

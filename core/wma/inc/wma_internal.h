@@ -368,8 +368,17 @@ void wma_register_extscan_event_handler(tp_wma_handle wma_handle);
 QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 			     struct wifi_scan_cmd_req_params *pstart);
 
+/**
+ * wma_stop_extscan() - stop extscan command to fw.
+ * @wma: wma handle
+ * @params: stop scan command request params
+ *
+ * This function sends stop extscan request to fw.
+ *
+ * Return: QDF Status.
+ */
 QDF_STATUS wma_stop_extscan(tp_wma_handle wma,
-			    tSirExtScanStopReqParams *pstopcmd);
+			    struct extscan_stop_req_params *params);
 
 /**
  * wma_extscan_start_hotlist_monitor() - start hotlist monitor

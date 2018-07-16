@@ -4076,11 +4076,6 @@ struct sir_extscan_generic_response {
 };
 
 typedef struct {
-	uint32_t requestId;
-	uint8_t sessionId;
-} tSirExtScanStopReqParams, *tpSirExtScanStopReqParams;
-
-typedef struct {
 	struct qdf_mac_addr bssid;
 	uint32_t channel;
 	uint32_t numOfRssi;
