@@ -901,6 +901,10 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_LFR_5G_MAX_RSSI_PENALIZE);
 	lfr->max_num_pre_auth = (uint32_t)
 		cfg_default(CFG_LFR_MAX_NUM_PRE_AUTH);
+	lfr->roam_preauth_no_ack_timeout =
+		cfg_get(psoc, CFG_LFR3_ROAM_PREAUTH_NO_ACK_TIMEOUT);
+	lfr->roam_preauth_retry_count =
+		cfg_get(psoc, CFG_LFR3_ROAM_PREAUTH_RETRY_COUNT);
 }
 
 static uint32_t

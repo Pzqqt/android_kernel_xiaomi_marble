@@ -1086,6 +1086,61 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"")
 
+/*
+ * roam_preauth_retry_count
+ *
+ * @Min: 1
+ * @Max: 10
+ * @Default: 5
+ *
+ * The maximum number of software retries for preauth or
+ * reassoc made before picking up the next candidate for
+ * connection during roaming.
+ *
+ * Related: N/A
+ *
+ * Supported Features: Roaming
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_LFR3_ROAM_PREAUTH_RETRY_COUNT CFG_INI_INT( \
+			"roam_preauth_retry_count", \
+			1, \
+			10, \
+			5, \
+			CFG_VALUE_OR_DEFAULT, \
+			"The maximum number of software retries for preauth")
+
+/*
+ * <ini>
+ * roam_preauth_no_ack_timeout
+ *
+ * @Min: 5
+ * @Max: 50
+ * @Default: 5
+ *
+ * Time to wait (in ms) after sending an preauth or reassoc
+ * request which didn’t have an ack, before considering
+ * it as a failure and making another software retry.
+ *
+ * Related: N/A
+ *
+ * Supported Features: Roaming
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_LFR3_ROAM_PREAUTH_NO_ACK_TIMEOUT CFG_INI_INT( \
+			"roam_preauth_no_ack_timeout", \
+			5, \
+			50, \
+			5, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Time to wait after sending an preauth or reassoc")
+
 #define CFG_LFR_ALL \
 	CFG(CFG_LFR_MAWC_ROAM_ENABLED) \
 	CFG(CFG_LFR_MAWC_ROAM_TRAFFIC_THRESHOLD) \
@@ -1125,6 +1180,8 @@
 	CFG(CFG_LFR_5G_RSSI_PENALIZE_THRESHOLD) \
 	CFG(CFG_LFR_5G_RSSI_PENALIZE_FACTOR) \
 	CFG(CFG_LFR_5G_MAX_RSSI_PENALIZE) \
-	CFG(CFG_LFR_MAX_NUM_PRE_AUTH)
+	CFG(CFG_LFR_MAX_NUM_PRE_AUTH) \
+	CFG(CFG_LFR3_ROAM_PREAUTH_RETRY_COUNT) \
+	CFG(CFG_LFR3_ROAM_PREAUTH_NO_ACK_TIMEOUT)
 
 #endif /* CFG_MLME_LFR_H__ */
