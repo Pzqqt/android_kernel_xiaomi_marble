@@ -4420,6 +4420,8 @@ QDF_STATUS wmi_extract_smartlog_ev(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+qdf_export_symbol(wmi_extract_smartlog_ev);
 #endif /* OL_ATH_SMART_LOGGING */
 
 QDF_STATUS
