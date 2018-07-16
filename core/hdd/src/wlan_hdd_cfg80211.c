@@ -19606,7 +19606,20 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 		return -EALREADY;
 	}
 
-	/* Check for max concurrent connections after doing disconnect if any */
+	/*initialise security parameters */
+	status = wlan_hdd_cfg80211_set_privacy(adapter, req);
+
+	if (status < 0) {
+		hdd_err("Failed to set security params");
+		return status;
+	}
+
+	/*
+	 * Check for max concurrent connections after doing disconnect if any,
+	 * must be called after the invocation of wlan_hdd_cfg80211_set_privacy
+	 * so privacy is already set for the current adapter before it's
+	 * checked against concurrency.
+	 */
 	if (req->channel) {
 		bool ok = false;
 
@@ -19657,14 +19670,6 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 			hdd_warn("This concurrency combination is not allowed");
 			return -ECONNREFUSED;
 		}
-	}
-
-	/*initialise security parameters */
-	status = wlan_hdd_cfg80211_set_privacy(adapter, req);
-
-	if (0 > status) {
-		hdd_err("Failed to set security params");
-		return status;
 	}
 
 	if (req->channel)
