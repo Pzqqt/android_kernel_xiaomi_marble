@@ -1960,5 +1960,7 @@ uint8_t *hif_log_dump_ce(struct hif_softc *scn, uint8_t *buf_cur,
 
 	return buf_cur;
 }
+
+qdf_export_symbol(hif_log_dump_ce);
 #endif /* OL_ATH_SMART_LOGGING */
 

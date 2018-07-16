@@ -29,8 +29,8 @@ struct dbglog_ops {
 
 void (*dbglog_set_log_lvl)(ol_scn_t scn, uint32_t log_lvl);
 int (*dbglog_fw_handler)(ol_scn_t soc, uint8_t *data, uint32_t datalen);
-int (*dbglog_parse_debug_logs)(const char *name,
-			u_int8_t *datap, uint16_t len, void *context);
+int (*dbglog_parse_debug_logs)(ol_scn_t scn,
+			       u_int8_t *datap, uint16_t len, void *context);
 void (*dbglog_ratelimit_set)(uint32_t burst_limit);
 void (*dbglog_vap_log_enable)(ol_scn_t soc, uint16_t vap_id,
 				bool isenable);
@@ -41,6 +41,10 @@ void (*dbglog_module_log_enable)(ol_scn_t scn,
 void (*dbglog_init)(void *scn);
 void (*dbglog_set_report_size)(ol_scn_t scn, uint16_t size);
 void (*dbglog_free)(void *soc);
+int  (*smartlog_init)(void *sc);
+void (*smartlog_deinit)(void *sc);
+ssize_t (*smartlog_dump)(struct device *dev,
+			 struct device_attribute *attr, char *buf);
 
 };
 
