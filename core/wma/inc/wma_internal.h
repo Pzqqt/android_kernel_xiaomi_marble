@@ -378,10 +378,6 @@ QDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
 QDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
 			tSirExtScanResetBssidHotlistReqParams *photlist_reset);
 
-QDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
-				tSirExtScanSetSigChangeReqParams *psigchange,
-				wmi_buf_t *buf, int *buf_len);
-
 QDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
 					    tSirExtScanSetSigChangeReqParams *
 					    psigchange);
