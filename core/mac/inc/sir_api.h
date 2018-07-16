@@ -3979,16 +3979,6 @@ enum extscan_configuration_flags {
 };
 
 typedef struct {
-	struct qdf_mac_addr bssid;
-
-	/* Low threshold */
-	int32_t low;
-
-	/* High threshold */
-	int32_t high;
-} tSirAPThresholdParam, *tpSirAPThresholdParam;
-
-typedef struct {
 	uint32_t requestId;
 	uint8_t sessionId;
 } tSirGetExtScanCapabilitiesReqParams, *tpSirGetExtScanCapabilitiesReqParams;
@@ -4300,25 +4290,6 @@ typedef struct {
 	uint32_t requestId;
 	uint8_t sessionId;
 } tSirExtScanStopReqParams, *tpSirExtScanStopReqParams;
-
-typedef struct {
-	uint32_t requestId;
-	uint8_t sessionId;
-
-	/* Number of samples for averaging RSSI */
-	uint32_t rssiSampleSize;
-
-	/* Number of missed samples to confirm AP loss */
-	uint32_t lostApSampleSize;
-
-	/* Number of APs breaching threshold required for firmware
-	 * to generate event
-	 */
-	uint32_t minBreaching;
-
-	uint32_t numAp;
-	tSirAPThresholdParam ap[WLAN_EXTSCAN_MAX_SIGNIFICANT_CHANGE_APS];
-} tSirExtScanSetSigChangeReqParams, *tpSirExtScanSetSigChangeReqParams;
 
 typedef struct {
 	struct qdf_mac_addr bssid;

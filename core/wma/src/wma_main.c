@@ -8166,8 +8166,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_EXTSCAN_SET_SIGNF_CHANGE_REQ:
-		wma_extscan_start_change_monitor(wma_handle,
-			(tSirExtScanSetSigChangeReqParams *) msg->bodyptr);
+		wma_extscan_start_change_monitor(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_EXTSCAN_RESET_SIGNF_CHANGE_REQ:
