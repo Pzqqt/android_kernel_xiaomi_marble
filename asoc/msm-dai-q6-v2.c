@@ -206,7 +206,6 @@ struct msm_dai_q6_dai_data {
 	u16 afe_in_bitformat;
 	struct afe_enc_config enc_config;
 	struct afe_dec_config dec_config;
-	u32 island_enable;
 	union afe_port_config port_config;
 	u16 vi_feed_mono;
 };
@@ -1131,36 +1130,32 @@ static int msm_dai_q6_dai_auxpcm_remove(struct snd_soc_dai *dai)
 static int msm_dai_q6_island_mode_put(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
-	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
 	int value = ucontrol->value.integer.value[0];
-	u16 port_id = ((struct soc_enum *) kcontrol->private_value)->reg;
+	u16 port_id = (u16)kcontrol->private_value;
 
-	dai_data->island_enable = value;
 	pr_debug("%s: island mode = %d\n", __func__, value);
 
-	afe_set_island_mode_cfg(port_id, dai_data->island_enable);
+	afe_set_island_mode_cfg(port_id, value);
 	return 0;
 }
 
 static int msm_dai_q6_island_mode_get(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
-	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+	int value;
+	u16 port_id = (u16)kcontrol->private_value;
 
-	ucontrol->value.integer.value[0] = dai_data->island_enable;
+	afe_get_island_mode_cfg(port_id, &value);
+	ucontrol->value.integer.value[0] = value;
 	return 0;
 }
 
-static struct snd_kcontrol_new island_config_controls[] = {
-	{
-	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
-	.name = "?",
-	.info = snd_ctl_boolean_mono_info,
-	.get = msm_dai_q6_island_mode_get,
-	.put = msm_dai_q6_island_mode_put,
-	.private_value = SOC_SINGLE_VALUE(0, 0, 1, 0, 0)
-	},
-};
+static void island_mx_ctl_private_free(struct snd_kcontrol *kcontrol)
+{
+	struct snd_kcontrol_new *knew = snd_kcontrol_chip(kcontrol);
+
+	kfree(knew);
+}
 
 static int msm_dai_q6_add_island_mx_ctls(struct snd_card *card,
 				      const char *dai_name,
@@ -1170,6 +1165,8 @@ static int msm_dai_q6_add_island_mx_ctls(struct snd_card *card,
 	char *mixer_str = NULL;
 	int dai_str_len = 0, ctl_len = 0;
 	int rc = 0;
+	struct snd_kcontrol_new *knew = NULL;
+	struct snd_kcontrol *kctl = NULL;
 
 	dai_str_len = strlen(dai_name) + 1;
 
@@ -1180,12 +1177,26 @@ static int msm_dai_q6_add_island_mx_ctls(struct snd_card *card,
 		return -ENOMEM;
 
 	snprintf(mixer_str, ctl_len, "%s %s", dai_name, mx_ctl_name);
-	island_config_controls[0].name = mixer_str;
-	((struct soc_enum *) island_config_controls[0].private_value)->reg
-		= dai_id;
-	rc = snd_ctl_add(card,
-			 snd_ctl_new1(&island_config_controls[0],
-			 dai_data));
+
+	knew = kzalloc(sizeof(struct snd_kcontrol_new), GFP_KERNEL);
+	if (!knew) {
+		kfree(mixer_str);
+		return -ENOMEM;
+	}
+	knew->iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	knew->info = snd_ctl_boolean_mono_info;
+	knew->get = msm_dai_q6_island_mode_get;
+	knew->put = msm_dai_q6_island_mode_put;
+	knew->name = mixer_str;
+	knew->private_value = dai_id;
+	kctl = snd_ctl_new1(knew, knew);
+	if (!kctl) {
+		kfree(knew);
+		kfree(mixer_str);
+		return -ENOMEM;
+	}
+	kctl->private_free = island_mx_ctl_private_free;
+	rc = snd_ctl_add(card, kctl);
 	if (rc < 0)
 		pr_err("%s: err add config ctl, DAI = %s\n",
 			__func__, dai_name);

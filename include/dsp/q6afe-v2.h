@@ -342,6 +342,7 @@ void afe_set_cal_mode(u16 port_id, enum afe_cal_mode afe_cal_mode);
 void afe_set_vad_cfg(u32 vad_enable, u32 preroll_config,
 		     u32 port_id);
 void afe_set_island_mode_cfg(u16 port_id, u32 enable_flag);
+void afe_get_island_mode_cfg(u16 port_id, u32 *enable_flag);
 int afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	u32 rate);
 int afe_port_start_v2(u16 port_id, union afe_port_config *afe_config,

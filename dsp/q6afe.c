@@ -3049,6 +3049,25 @@ void afe_set_vad_cfg(u32 vad_enable, u32 preroll_config,
 EXPORT_SYMBOL(afe_set_vad_cfg);
 
 /**
+ * afe_get_island_mode_cfg -
+ *         get island mode configuration
+ *
+ * @port_id: AFE port id number
+ * @enable_flag: Enable or Disable
+ *
+ */
+void afe_get_island_mode_cfg(u16 port_id, u32 *enable_flag)
+{
+	uint16_t port_index;
+
+	if (enable_flag) {
+		port_index = afe_get_port_index(port_id);
+		*enable_flag = this_afe.island_mode[port_index];
+	}
+}
+EXPORT_SYMBOL(afe_get_island_mode_cfg);
+
+/**
  * afe_set_island_mode_cfg -
  *         set island mode configuration
  *
@@ -6239,6 +6258,13 @@ int afe_validate_port(u16 port_id)
 	case AFE_PORT_ID_INT4_MI2S_TX:
 	case AFE_PORT_ID_INT5_MI2S_TX:
 	case AFE_PORT_ID_INT6_MI2S_TX:
+	case AFE_PORT_ID_WSA_CODEC_DMA_RX_0:
+	case AFE_PORT_ID_WSA_CODEC_DMA_TX_0:
+	case AFE_PORT_ID_WSA_CODEC_DMA_RX_1:
+	case AFE_PORT_ID_WSA_CODEC_DMA_TX_1:
+	case AFE_PORT_ID_WSA_CODEC_DMA_TX_2:
+	case AFE_PORT_ID_VA_CODEC_DMA_TX_0:
+	case AFE_PORT_ID_VA_CODEC_DMA_TX_1:
 	{
 		ret = 0;
 		break;
