@@ -4311,12 +4311,6 @@ typedef struct {
 
 typedef struct {
 	uint32_t requestId;
-	uint8_t sessionId;
-} tSirExtScanResetSignificantChangeReqParams,
-*tpSirExtScanResetSignificantChangeReqParams;
-
-typedef struct {
-	uint32_t requestId;
 	uint32_t numResultsAvailable;
 } tSirExtScanResultsAvailableIndParams, *tpSirExtScanResultsAvailableIndParams;
 

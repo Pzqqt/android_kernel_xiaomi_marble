@@ -1033,9 +1033,17 @@ QDF_STATUS
 sme_set_significant_change(mac_handle_t mac_handle,
 			   struct extscan_set_sig_changereq_params *params);
 
-QDF_STATUS sme_reset_significant_change(tHalHandle hHal,
-		tSirExtScanResetSignificantChangeReqParams
-		*pResetReq);
+/**
+ * sme_reset_significant_change() -  SME API to reset significant change
+ * @mac_handle: Opaque handle to the MAC context
+ * @params: extscan reset significant change structure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_reset_significant_change(mac_handle_t mac_handle,
+			     struct extscan_capabilities_reset_params *params);
+
 QDF_STATUS sme_get_cached_results(tHalHandle hHal,
 		tSirExtScanGetCachedResultsReqParams *
 		pCachedResultsReq);

@@ -4734,20 +4734,9 @@ wma_extscan_start_change_monitor(tp_wma_handle wma,
 	return status;
 }
 
-/**
- * wma_extscan_stop_change_monitor() - send stop change monitor cmd
- * @wma: wma handle
- * @pResetReq: Reset change request params
- *
- * This function sends stop change monitor request to fw.
- *
- * Return: QDF status
- */
 QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
-		   tSirExtScanResetSignificantChangeReqParams *pResetReq)
+			struct extscan_capabilities_reset_params *params)
 {
-	struct extscan_capabilities_reset_params params = {0};
-
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue  cmd", __func__);
 		return QDF_STATUS_E_INVAL;
@@ -4758,11 +4747,8 @@ QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	params.request_id = pResetReq->requestId;
-	params.vdev_id = pResetReq->sessionId;
-
 	return wmi_unified_extscan_stop_change_monitor_cmd(wma->wmi_handle,
-					&params);
+							   params);
 }
 
 /**

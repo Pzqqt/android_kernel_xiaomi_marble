@@ -3549,23 +3549,19 @@ int wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
  * Return: none
  */
 static int
-__wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
-						       *wiphy,
-						       struct
-						       wireless_dev
-						       *wdev, const void *data,
-						       int data_len)
+__wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy *wiphy,
+						     struct wireless_dev *wdev,
+						     const void *data,
+						     int data_len)
 {
-	tpSirExtScanResetSignificantChangeReqParams pReqMsg = NULL;
+	struct extscan_capabilities_reset_params params;
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
-			  1];
+	struct nlattr *tb[EXTSCAN_PARAM_MAX + 1];
 	struct hdd_ext_scan_context *context;
-	uint32_t request_id;
 	QDF_STATUS status;
-	int retval;
+	int id, retval;
 	unsigned long rc;
 
 	hdd_enter_dev(dev);
@@ -3584,43 +3580,33 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 		return -ENOTSUPP;
 	}
 
-	if (wlan_cfg80211_nla_parse(tb,
-			   QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX,
-			   data, data_len, wlan_hdd_extscan_config_policy)) {
+	if (wlan_cfg80211_nla_parse(tb, EXTSCAN_PARAM_MAX, data, data_len,
+				    wlan_hdd_extscan_config_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
 
-	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
-	if (!pReqMsg) {
-		hdd_err("qdf_mem_malloc failed");
-		return -ENOMEM;
-	}
-
 	/* Parse and fetch request Id */
-	if (!tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]) {
+	id = QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID;
+	if (!tb[id]) {
 		hdd_err("attr request id failed");
-		goto fail;
+		return -EINVAL;
 	}
 
-	pReqMsg->requestId =
-		nla_get_u32(tb
-		 [QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]);
-	pReqMsg->sessionId = adapter->session_id;
-	hdd_debug("Req Id %d Session Id %d",
-		pReqMsg->requestId, pReqMsg->sessionId);
+	params.request_id = nla_get_u32(tb[id]);
+	params.vdev_id = adapter->session_id;
+	hdd_debug("Req Id %d Vdev Id %d", params.request_id, params.vdev_id);
 
 	context = &ext_scan_context;
 	spin_lock(&context->context_lock);
 	INIT_COMPLETION(context->response_event);
-	context->request_id = request_id = pReqMsg->requestId;
+	context->request_id = params.request_id;
 	spin_unlock(&context->context_lock);
 
-	status = sme_reset_significant_change(hdd_ctx->mac_handle, pReqMsg);
+	status = sme_reset_significant_change(hdd_ctx->mac_handle, &params);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_reset_significant_change failed(err=%d)",
 			status);
-		qdf_mem_free(pReqMsg);
 		return -EINVAL;
 	}
 
@@ -3633,7 +3619,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 		retval = -ETIMEDOUT;
 	} else {
 		spin_lock(&context->context_lock);
-		if (context->request_id == request_id)
+		if (context->request_id == params.request_id)
 			retval = context->response_status;
 		else
 			retval = -EINVAL;
@@ -3641,10 +3627,6 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 	}
 	hdd_exit();
 	return retval;
-
-fail:
-	qdf_mem_free(pReqMsg);
-	return -EINVAL;
 }
 
 /**

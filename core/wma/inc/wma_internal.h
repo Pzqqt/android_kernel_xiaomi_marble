@@ -399,8 +399,18 @@ QDF_STATUS
 wma_extscan_start_change_monitor(tp_wma_handle wma,
 			struct extscan_set_sig_changereq_params *params);
 
-QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
-		   tSirExtScanResetSignificantChangeReqParams *pResetReq);
+/**
+ * wma_extscan_stop_change_monitor() - send stop change monitor cmd
+ * @wma: wma handle
+ * @params: change monitor request params
+ *
+ * This function sends stop change monitor request to fw.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS
+wma_extscan_stop_change_monitor(tp_wma_handle wma,
+			struct extscan_capabilities_reset_params *params);
 
 QDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
 					  tSirExtScanGetCachedResultsReqParams *
