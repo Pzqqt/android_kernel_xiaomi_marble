@@ -351,6 +351,8 @@ typedef enum {
     HTT_STATS_TX_HWQ_TRIED_MPDU_CNT_HIST_TAG            = 83,    /* htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v */
     HTT_STATS_TX_HWQ_TXOP_USED_CNT_HIST_TAG             = 84,    /* htt_tx_hwq_txop_used_cnt_hist_tlv_v */
     HTT_STATS_TX_DE_FW2WBM_RING_FULL_HIST_TAG           = 85,    /* htt_tx_de_fw2wbm_ring_full_hist_tlv */
+    HTT_STATS_SCHED_TXQ_SCHED_ORDER_SU_TAG              = 86,    /* htt_sched_txq_sched_order_su_tlv */
+    HTT_STATS_SCHED_TXQ_SCHED_INELIGIBILITY_TAG         = 87,    /* htt_sched_txq_sched_eligibility_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -407,6 +409,7 @@ typedef enum {
 #define HTT_TX_PDEV_MAX_SIFS_BURST_HIST_STATS  10
 #define HTT_TX_PDEV_MAX_PHY_ERR_STATS          18
 #define HTT_TX_PDEV_SCHED_TX_MODE_MAX          4
+#define HTT_TX_PDEV_NUM_SCHED_ORDER_LOG        20
 
 #define HTT_RX_STATS_REFILL_MAX_RING         4
 #define HTT_RX_STATS_RXDMA_MAX_ERR           16
@@ -1670,6 +1673,52 @@ typedef struct {
     A_UINT32 sched_cmd_reaped[1]; /* HTT_TX_PDEV_SCHED_TX_MODE_MAX */
 } htt_sched_txq_cmd_reaped_tlv_v;
 
+#define HTT_SCHED_TXQ_SCHED_ORDER_SU_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
+
+/* NOTE: Variable length TLV, use length spec to infer array size */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /*
+     * sched_order_su contains the peer IDs of peers chosen in the last
+     * NUM_SCHED_ORDER_LOG scheduler instances.
+     * The array is circular; it's unspecified which array element corresponds
+     * to the most recent scheduler invocation, and which corresponds to
+     * the (NUM_SCHED_ORDER_LOG-1) most recent scheduler invocation.
+     */
+    A_UINT32 sched_order_su[1]; /* HTT_TX_PDEV_NUM_SCHED_ORDER_LOG */
+} htt_sched_txq_sched_order_su_tlv_v;
+
+typedef enum {
+    HTT_SCHED_TID_SKIP_SCHED_MASK_DISABLED = 0, /* Skip the tid when WAL_TID_DISABLE_TX_SCHED_MASK is true                                       */
+    HTT_SCHED_TID_SKIP_NOTIFY_MPDU,             /* Skip the tid's 2nd sched_cmd when 1st cmd is ongoing                                          */
+    HTT_SCHED_TID_SKIP_MPDU_STATE_INVALID,      /* Skip the tid when MPDU state is invalid                                                       */
+    HTT_SCHED_TID_SKIP_SCHED_DISABLED,          /* Skip the tid when scheduling is disabled for that tid                                         */
+    HTT_SCHED_TID_SKIP_TQM_BYPASS_CMD_PENDING,  /* Skip the TQM bypass tid when it has pending sched_cmd                                         */
+    HTT_SCHED_TID_SKIP_SECOND_SU_SCHEDULE,      /* Skip tid from 2nd SU schedule when any of the following flag is set
+                                                   WAL_TX_TID(SEND_BAR | TQM_MPDU_STATE_VALID | SEND_QOS_NULL | TQM_NOTIFY_MPDU | SENDN_PENDING) */
+    HTT_SCHED_TID_SKIP_CMD_SLOT_NOT_AVAIL,      /* Skip the tid when command slot is not available                                               */
+    HTT_SCHED_TID_SKIP_NO_ENQ,                  /* Skip the tid when num_frames is zero with g_disable_remove_tid as true                        */
+    HTT_SCHED_TID_SKIP_LOW_ENQ,                 /* Skip the tid when enqueue is low                                                              */
+    HTT_SCHED_TID_SKIP_PAUSED,                  /* Skipping the paused tid(sendn-frames)                                                         */
+    HTT_SCHED_TID_SKIP_UL,                      /* UL tid skip                                                                                   */
+    HTT_SCHED_TID_REMOVE_PAUSED,                /* Removing the paused tid when number of sendn frames is zero                                   */
+    HTT_SCHED_TID_REMOVE_NO_ENQ,                /* Remove tid with zero queue depth                                                              */
+    HTT_SCHED_TID_REMOVE_UL,                    /* UL tid remove                                                                                 */
+    HTT_SCHED_TID_QUERY,                        /* Moving to next user and adding tid in prepend list when qstats update is pending              */
+    HTT_SCHED_TID_SU_ONLY,                      /* Tid is eligible and TX_SCHED_SU_ONLY is true                                                  */
+    HTT_SCHED_TID_ELIGIBLE,                     /* Tid is eligible for scheduling                                                                */
+    HTT_SCHED_INELIGIBILITY_MAX,
+} htt_sched_txq_sched_ineligibility_tlv_enum;
+
+#define HTT_SCHED_TXQ_SCHED_INELIGIBILITY_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
+
+/* NOTE: Variable length TLV, use length spec to infer array size */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* sched_ineligibility counts the number of occurrences of different reasons for tid ineligibility during eligibility checks per txq in scheduling */
+    A_UINT32 sched_ineligibility[1]; /* indexed by htt_sched_txq_sched_ineligibility_tlv_enum */
+} htt_sched_txq_sched_ineligibility_tlv_v;
+
 #define HTT_TX_PDEV_STATS_SCHED_PER_TXQ_MAC_ID_M         0x000000ff
 #define HTT_TX_PDEV_STATS_SCHED_PER_TXQ_MAC_ID_S                  0
 
@@ -1742,6 +1791,8 @@ typedef struct {
     A_UINT32 num_tqm_sched_algo_trigger;
     /* Num of schedules for notify frame */
     A_UINT32 notify_sched;
+    /* Duration based sendn termination */
+    A_UINT32 dur_based_sendn_term;
 } htt_tx_pdev_stats_sched_per_txq_tlv;
 
 #define HTT_STATS_TX_SCHED_CMN_MAC_ID_M     0x000000ff
@@ -1773,6 +1824,8 @@ typedef struct {
  *     - HTT_STATS_TX_PDEV_SCHEDULER_TXQ_STATS_TAG
  *     - HTT_STATS_SCHED_TXQ_CMD_POSTED_TAG
  *     - HTT_STATS_SCHED_TXQ_CMD_REAPED_TAG
+ *     - HTT_STATS_SCHED_TXQ_SCHED_ORDER_SU_TAG
+ *     - HTT_STATS_SCHED_TXQ_SCHED_INELIGIBILITY_TAG
  */
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -1784,6 +1837,8 @@ typedef struct {
         htt_tx_pdev_stats_sched_per_txq_tlv txq_tlv;
         htt_sched_txq_cmd_posted_tlv_v cmd_posted_tlv;
         htt_sched_txq_cmd_reaped_tlv_v cmd_reaped_tlv;
+        htt_sched_txq_sched_order_su_tlv_v sched_order_su_tlv;
+        htt_sched_txq_sched_ineligibility_tlv_v sched_ineligibility_tlv;
     } txq[1];
 } htt_stats_tx_sched_t;
 
