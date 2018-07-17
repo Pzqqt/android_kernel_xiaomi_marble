@@ -27,7 +27,10 @@ enum {
 	AUDIO_EXT_CLK_PMI,
 	AUDIO_EXT_CLK_LNBB2,
 	AUDIO_EXT_CLK_LPASS,
-	AUDIO_EXT_CLK_MAX,
+	AUDIO_EXT_CLK_LPASS2,
+	AUDIO_EXT_CLK_LPASS3,
+	AUDIO_EXT_CLK_LPASS_MAX,
+	AUDIO_EXT_CLK_MAX = AUDIO_EXT_CLK_LPASS_MAX,
 };
 
 struct pinctrl_info {
@@ -60,7 +63,8 @@ static int audio_ext_clk_prepare(struct clk_hw *hw)
 	struct pinctrl_info *pnctrl_info = &clk_priv->audio_clk.pnctrl_info;
 	int ret;
 
-	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS) {
+	if ((clk_priv->clk_src >= AUDIO_EXT_CLK_LPASS) &&
+		(clk_priv->clk_src < AUDIO_EXT_CLK_LPASS_MAX))  {
 		clk_priv->clk_cfg.enable = 1;
 		ret = afe_set_lpass_clk_cfg(IDX_RSVD_3, &clk_priv->clk_cfg);
 		if (ret < 0) {
@@ -101,7 +105,8 @@ static void audio_ext_clk_unprepare(struct clk_hw *hw)
 		}
 	}
 
-	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS) {
+	if ((clk_priv->clk_src >= AUDIO_EXT_CLK_LPASS) &&
+		(clk_priv->clk_src < AUDIO_EXT_CLK_LPASS_MAX))  {
 		clk_priv->clk_cfg.enable = 0;
 		ret = afe_set_lpass_clk_cfg(IDX_RSVD_3, &clk_priv->clk_cfg);
 		if (ret < 0)
@@ -154,6 +159,28 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.div = 1,
 			.hw.init = &(struct clk_init_data){
 				.name = "audio_lpass_mclk",
+				.ops = &audio_ext_clk_ops,
+			},
+		},
+	},
+	{
+		.pnctrl_info = {NULL},
+		.fact = {
+			.mult = 1,
+			.div = 1,
+			.hw.init = &(struct clk_init_data){
+				.name = "audio_lpass_mclk2",
+				.ops = &audio_ext_clk_ops,
+			},
+		},
+	},
+	{
+		.pnctrl_info = {NULL},
+		.fact = {
+			.mult = 1,
+			.div = 1,
+			.hw.init = &(struct clk_init_data){
+				.name = "audio_lpass_mclk3",
 				.ops = &audio_ext_clk_ops,
 			},
 		},
