@@ -1277,6 +1277,9 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	else if (params->quarter_rate)
 		req->scan_req.scan_f_quarter_rate = true;
 
+	if (params->strict_pscan)
+		req->scan_req.scan_f_strict_passive_pch = true;
+
 	if ((request->n_ssids == 1) && request->ssids &&
 	   !qdf_mem_cmp(&request->ssids[0], "DIRECT-", 7))
 		is_p2p_scan = true;

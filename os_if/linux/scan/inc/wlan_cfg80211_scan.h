@@ -121,12 +121,14 @@ struct scan_req {
  * @default_ie: default scan ie
  * @half_rate: Half rate flag
  * @quarter_rate: Quarter rate flag
+ * @strict_pscan: strict passive scan flag
  */
 struct scan_params {
 	uint8_t source;
 	struct element_info default_ie;
 	bool half_rate;
 	bool quarter_rate;
+	bool strict_pscan;
 };
 
 /**
