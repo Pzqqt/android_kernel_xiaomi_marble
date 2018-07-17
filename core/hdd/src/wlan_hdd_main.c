@@ -10256,6 +10256,44 @@ static int hdd_set_auto_shutdown_cb(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#ifdef MWS_COEX
+/**
+ * hdd_set_mws_coex() - Set MWS coex configurations
+ * @hdd_ctx:   HDD context
+ *
+ * This function sends MWS-COEX 4G quick FTDM and
+ * MWS-COEX 5G-NR power limit to FW
+ *
+ * Return: 0 on success and errno on failure.
+ */
+static int hdd_init_mws_coex(struct hdd_context *hdd_ctx)
+{
+	int ret = 0;
+
+	ret = sme_cli_set_command(0, WMI_PDEV_PARAM_MWSCOEX_4G_ALLOW_QUICK_FTDM,
+				  hdd_ctx->config->mws_coex_4g_quick_tdm,
+				  PDEV_CMD);
+	if (ret) {
+		hdd_warn("Unable to send MWS-COEX 4G quick FTDM policy");
+		return ret;
+	}
+
+	ret = sme_cli_set_command(0, WMI_PDEV_PARAM_MWSCOEX_SET_5GNR_PWR_LIMIT,
+				  hdd_ctx->config->mws_coex_5g_nr_pwr_limit,
+				  PDEV_CMD);
+	if (ret) {
+		hdd_warn("Unable to send MWS-COEX 4G quick FTDM policy");
+		return ret;
+	}
+	return ret;
+}
+#else
+static int hdd_init_mws_coex(struct hdd_context *hdd_ctx)
+{
+	return 0;
+}
+#endif
+
 /**
  * hdd_features_init() - Init features
  * @hdd_ctx:	HDD context
@@ -10274,6 +10312,10 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	struct hdd_config *cfg;
 
 	hdd_enter();
+
+	ret = hdd_init_mws_coex(hdd_ctx);
+	if (ret)
+		hdd_warn("Error initializing mws-coex");
 
 	cfg = hdd_ctx->config;
 	/* FW capabilities received, Set the Dot11 mode */
