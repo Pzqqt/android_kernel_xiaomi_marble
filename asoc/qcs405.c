@@ -6605,7 +6605,7 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_RX_0,
 		.stream_name = "WSA CDC DMA0 Playback",
-		.cpu_dai_name = "msm-dai-cdc-dma.45056",
+		.cpu_dai_name = "msm-dai-cdc-dma-dev.45056",
 		.platform_name = "msm-pcm-routing",
 		.codec_name = "bolero_codec",
 		.codec_dai_name = "wsa_macro_rx1",
@@ -6621,7 +6621,7 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_TX_0,
 		.stream_name = "WSA CDC DMA0 Capture",
-		.cpu_dai_name = "msm-dai-cdc-dma.45057",
+		.cpu_dai_name = "msm-dai-cdc-dma-dev.45057",
 		.platform_name = "msm-pcm-hostless",
 		.codec_name = "bolero_codec",
 		.codec_dai_name = "wsa_macro_vifeedback",
@@ -6634,7 +6634,7 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_RX_1,
 		.stream_name = "WSA CDC DMA1 Playback",
-		.cpu_dai_name = "msm-dai-cdc-dma.45058",
+		.cpu_dai_name = "msm-dai-cdc-dma-dev.45058",
 		.platform_name = "msm-pcm-routing",
 		.codec_name = "bolero_codec",
 		.codec_dai_name = "wsa_macro_rx_mix",
@@ -6649,27 +6649,13 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_TX_1,
 		.stream_name = "WSA CDC DMA1 Capture",
-		.cpu_dai_name = "msm-dai-cdc-dma.45059",
+		.cpu_dai_name = "msm-dai-cdc-dma-dev.45059",
 		.platform_name = "msm-pcm-routing",
 		.codec_name = "bolero_codec",
 		.codec_dai_name = "wsa_macro_echo",
 		.no_pcm = 1,
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_WSA_CDC_DMA_TX_1,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ignore_suspend = 1,
-		.ops = &msm_cdc_dma_be_ops,
-	},
-	{
-		.name = LPASS_BE_WSA_CDC_DMA_TX_2,
-		.stream_name = "WSA CDC DMA2 Capture",
-		.cpu_dai_name = "msm-dai-cdc-dma.45061",
-		.platform_name = "msm-pcm-routing",
-		.codec_name = "bolero_codec",
-		.codec_dai_name = "msm-stub-tx",
-		.no_pcm = 1,
-		.dpcm_capture = 1,
-		.id = MSM_BACKEND_DAI_WSA_CDC_DMA_TX_2,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
@@ -7276,7 +7262,7 @@ static int msm_init_wsa_dev(struct platform_device *pdev,
 	}
 
 	if (found < wsa_max_devs) {
-		dev_dbg(&pdev->dev,
+		dev_err(&pdev->dev,
 			"%s: failed to find %d components. Found only %d\n",
 			__func__, wsa_max_devs, found);
 		return -EPROBE_DEFER;
