@@ -1330,9 +1330,11 @@ static int wsa_macro_spk_boost_event(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMU:
 		snd_soc_update_bits(codec, boost_path_cfg1, 0x01, 0x01);
 		snd_soc_update_bits(codec, boost_path_ctl, 0x10, 0x10);
-		snd_soc_update_bits(codec, reg, 0x10, 0x00);
 		if ((snd_soc_read(codec, reg_mix)) & 0x10)
 			snd_soc_update_bits(codec, reg_mix, 0x10, 0x00);
+		break;
+	case SND_SOC_DAPM_POST_PMU:
+		snd_soc_update_bits(codec, reg, 0x10, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_update_bits(codec, boost_path_ctl, 0x10, 0x00);
@@ -1833,10 +1835,12 @@ static const struct snd_soc_dapm_widget wsa_macro_dapm_widgets[] = {
 
 	SND_SOC_DAPM_MIXER_E("WSA_RX INT0 CHAIN", SND_SOC_NOPM, 0, 0,
 		NULL, 0, wsa_macro_spk_boost_event,
-		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
+		SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_MIXER_E("WSA_RX INT1 CHAIN", SND_SOC_NOPM, 0, 0,
 		NULL, 0, wsa_macro_spk_boost_event,
-		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
+		SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_INPUT("VIINPUT_WSA"),
 
