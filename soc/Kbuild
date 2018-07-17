@@ -150,6 +150,7 @@ obj-$(CONFIG_SOUNDWIRE) += swr_dlkm.o
 swr_dlkm-y := $(SWR_OBJS)
 
 obj-$(CONFIG_SOUNDWIRE_WCD_CTRL) += swr_ctrl_dlkm.o
+obj-$(CONFIG_SOUNDWIRE_MSTR_CTRL) += swr_ctrl_dlkm.o
 swr_ctrl_dlkm-y := $(SWR_CTRL_OBJS)
 
 # inject some build related information
