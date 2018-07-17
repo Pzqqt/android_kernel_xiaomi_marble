@@ -1953,6 +1953,7 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 		case ASM_DATA_CMD_REMOVE_INITIAL_SILENCE:
 		case ASM_DATA_CMD_REMOVE_TRAILING_SILENCE:
 		case ASM_SESSION_CMD_REGISTER_FOR_RX_UNDERFLOW_EVENTS:
+		case ASM_STREAM_CMD_OPEN_READ_COMPRESSED:
 		case ASM_STREAM_CMD_OPEN_WRITE_COMPRESSED:
 			pr_debug("%s: session %d opcode 0x%x token 0x%x Payload = [0x%x] stat 0x%x src %d dest %d\n",
 				__func__, ac->session,
@@ -2166,7 +2167,7 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 
 		if (ac->io_mode & SYNC_IO_MODE) {
 			if (port->buf == NULL) {
-				pr_err("%s: Unexpected Write Done\n", __func__);
+				pr_err("%s: Unexpected Read Done\n", __func__);
 				spin_unlock_irqrestore(
 					&(session[session_id].session_lock),
 					flags);
@@ -2832,6 +2833,85 @@ int q6asm_set_soft_volume_module_instance_ids(int instance,
 	}
 }
 EXPORT_SYMBOL(q6asm_set_soft_volume_module_instance_ids);
+
+/**
+ * q6asm_open_read_compressed -
+ *       command to open ASM in compressed read mode
+ *
+ * @ac: Audio client handle
+ * @format: capture format for ASM
+ * @passthrough_flag: flag to indicate passthrough option
+ *
+ * Returns 0 on success or error on failure
+ */
+int q6asm_open_read_compressed(struct audio_client *ac, uint32_t format,
+			       uint32_t passthrough_flag)
+{
+	int rc = 0;
+	struct asm_stream_cmd_open_read_compressed open;
+
+	if (ac == NULL) {
+		pr_err("%s: ac[%pK] NULL\n",  __func__, ac);
+		rc = -EINVAL;
+		goto fail_cmd;
+	}
+
+	if (ac->apr == NULL) {
+		pr_err("%s: APR handle[%pK] NULL\n", __func__,  ac->apr);
+		rc = -EINVAL;
+		goto fail_cmd;
+	}
+	pr_debug("%s: session[%d] wr_format[0x%x]\n", __func__, ac->session,
+		format);
+
+	q6asm_add_hdr(ac, &open.hdr, sizeof(open), TRUE);
+	open.hdr.opcode = ASM_STREAM_CMD_OPEN_READ_COMPRESSED;
+	atomic_set(&ac->cmd_state, -1);
+
+	/*
+	 * Below flag indicates whether DSP shall keep IEC61937 packing or
+	 * unpack to raw compressed format
+	 */
+	if (format == FORMAT_IEC61937) {
+		open.mode_flags = 0x1;
+		pr_debug("%s: Flag 1 IEC61937 output\n", __func__);
+	} else {
+		open.mode_flags = 0;
+		open.frames_per_buf = 1;
+		pr_debug("%s: Flag 0 RAW_COMPR output\n", __func__);
+	}
+
+	rc = apr_send_pkt(ac->apr, (uint32_t *) &open);
+	if (rc < 0) {
+		pr_err("%s: open failed op[0x%x]rc[%d]\n",
+			__func__, open.hdr.opcode, rc);
+		rc = -EINVAL;
+		goto fail_cmd;
+	}
+	rc = wait_event_timeout(ac->cmd_wait,
+			(atomic_read(&ac->cmd_state) >= 0), 1*HZ);
+	if (!rc) {
+		pr_err("%s: timeout. waited for OPEN_READ_COMPR rc[%d]\n",
+			__func__, rc);
+		rc = -ETIMEDOUT;
+		goto fail_cmd;
+	}
+
+	if (atomic_read(&ac->cmd_state) > 0) {
+		pr_err("%s: DSP returned error[%s]\n",
+			__func__, adsp_err_get_err_str(
+			atomic_read(&ac->cmd_state)));
+		rc = adsp_err_get_lnx_err_code(
+			atomic_read(&ac->cmd_state));
+		goto fail_cmd;
+	}
+
+	return 0;
+
+fail_cmd:
+	return rc;
+}
+EXPORT_SYMBOL(q6asm_open_read_compressed);
 
 static int __q6asm_open_read(struct audio_client *ac,
 			     uint32_t format, uint16_t bits_per_sample,

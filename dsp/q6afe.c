@@ -103,6 +103,19 @@ struct afe_ctl {
 	void *rx_private_data;
 	uint32_t mmap_handle;
 
+	void (*pri_spdif_tx_cb)(uint32_t opcode,
+		uint32_t token, uint32_t *payload, void *priv);
+	void (*sec_spdif_tx_cb)(uint32_t opcode,
+		uint32_t token, uint32_t *payload, void *priv);
+	void *pri_spdif_tx_private_data;
+	void *sec_spdif_tx_private_data;
+	struct afe_port_mod_evt_rsp_hdr pri_spdif_evt_pl;
+	struct afe_event_fmt_update pri_spdif_fmt_event;
+	struct afe_port_mod_evt_rsp_hdr sec_spdif_evt_pl;
+	struct afe_event_fmt_update sec_spdif_fmt_event;
+	struct work_struct afe_pri_spdif_work;
+	struct work_struct afe_sec_spdif_work;
+
 	int	topology[AFE_MAX_PORTS];
 	struct cal_type_data *cal_data[MAX_AFE_CAL_TYPES];
 
@@ -353,6 +366,128 @@ static void afe_notify_dc_presence_work_fn(struct work_struct *work)
 		       __func__, event, ret);
 }
 
+
+static const char *const afe_event_port_text[] = {
+	"PORT=Primary",
+	"PORT=Secondary",
+};
+
+static const char * const afe_event_state_text[] = {
+	"STATE=Inactive",
+	"STATE=Active",
+	"STATE=EOS",
+};
+
+static const char *const afe_event_rate_text[] = {
+	"RATE=32000",
+	"RATE=44100",
+	"RATE=48000",
+	"RATE=88200",
+	"RATE=96000",
+	"RATE=176400",
+	"RATE=192000",
+};
+
+static const char *const afe_event_format_text[] = {
+	"FORMAT=LPCM",
+	"FORMAT=Compr",
+};
+
+static void afe_notify_spdif_fmt_update_common(void *payload)
+{
+	int ret = 0;
+	char *env[6];
+	struct afe_port_mod_evt_rsp_hdr *evt_pl;
+	struct afe_event_fmt_update *fmt_event;
+
+	evt_pl = (struct afe_port_mod_evt_rsp_hdr *)payload;
+	fmt_event = (struct afe_event_fmt_update *)
+			(payload + sizeof(struct afe_port_mod_evt_rsp_hdr));
+
+	env[0] = "SPDIF_FMT_UPDATE=TRUE";
+	if (evt_pl->port_id == AFE_PORT_ID_PRIMARY_SPDIF_TX)
+		env[1] = (char *)afe_event_port_text[0];
+	else
+		env[1] = (char *)afe_event_port_text[1];
+
+	switch (fmt_event->status) {
+	case AFE_PORT_STATUS_AUDIO_ACTIVE:
+		env[2] = (char *)afe_event_state_text[1];
+		break;
+	case AFE_PORT_STATUS_AUDIO_EOS:
+		env[2] = (char *)afe_event_state_text[2];
+		break;
+	default:
+		env[2] = (char *)afe_event_state_text[0];
+	}
+
+	switch (fmt_event->sample_rate) {
+	case 32000:
+		env[3] = (char *)afe_event_rate_text[0];
+		break;
+	case 44100:
+		env[3] = (char *)afe_event_rate_text[1];
+		break;
+	case 48000:
+		env[3] = (char *)afe_event_rate_text[2];
+		break;
+	case 88200:
+		env[3] = (char *)afe_event_rate_text[3];
+		break;
+	case 96000:
+		env[3] = (char *)afe_event_rate_text[4];
+		break;
+	case 176400:
+		env[3] = (char *)afe_event_rate_text[5];
+		break;
+	case 192000:
+		env[3] = (char *)afe_event_rate_text[6];
+		break;
+	default:
+		env[3] = (char *)afe_event_rate_text[2];
+	}
+
+	if (fmt_event->data_format == AFE_NON_LINEAR_DATA)
+		env[4] = (char *)afe_event_format_text[1];
+	else
+		env[4] = (char *)afe_event_format_text[0];
+
+	env[5] = NULL;
+
+	ret = q6core_send_uevent_env(this_afe.uevent_data, env);
+	if (ret)
+		pr_err("%s: Send UEvent %s failed: %d\n", __func__,
+			env[0], ret);
+}
+
+static void afe_notify_pri_spdif_fmt_update_work_fn(struct work_struct *work)
+{
+	afe_notify_spdif_fmt_update_common(&this_afe.pri_spdif_evt_pl);
+}
+
+static void afe_notify_sec_spdif_fmt_update_work_fn(struct work_struct *work)
+{
+	afe_notify_spdif_fmt_update_common(&this_afe.sec_spdif_evt_pl);
+}
+
+static void afe_notify_spdif_fmt_update(void *payload)
+{
+	struct afe_port_mod_evt_rsp_hdr *evt_pl;
+
+	evt_pl = (struct afe_port_mod_evt_rsp_hdr *)payload;
+	if (evt_pl->port_id == AFE_PORT_ID_PRIMARY_SPDIF_TX) {
+		memcpy(&this_afe.pri_spdif_evt_pl, payload,
+			sizeof(struct afe_port_mod_evt_rsp_hdr) +
+			sizeof(struct afe_event_fmt_update));
+		schedule_work(&this_afe.afe_pri_spdif_work);
+	} else {
+		memcpy(&this_afe.sec_spdif_evt_pl, payload,
+			sizeof(struct afe_port_mod_evt_rsp_hdr) +
+			sizeof(struct afe_event_fmt_update));
+		schedule_work(&this_afe.afe_sec_spdif_work);
+	}
+}
+
 static int32_t afe_callback(struct apr_client_data *data, void *priv)
 {
 	if (!data) {
@@ -549,6 +684,20 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 					flag_dc_presence[1] == 1) {
 					afe_notify_dc_presence();
 				}
+			} else if (evt_pl->port_id == AFE_PORT_ID_PRIMARY_SPDIF_TX) {
+				if (this_afe.pri_spdif_tx_cb) {
+					this_afe.pri_spdif_tx_cb(data->opcode,
+						data->token, data->payload,
+						this_afe.pri_spdif_tx_private_data);
+				}
+				afe_notify_spdif_fmt_update(data->payload);
+			} else if (evt_pl->port_id == AFE_PORT_ID_SECONDARY_SPDIF_TX) {
+				if (this_afe.sec_spdif_tx_cb) {
+					this_afe.sec_spdif_tx_cb(data->opcode,
+						data->token, data->payload,
+						this_afe.sec_spdif_tx_private_data);
+				}
+				afe_notify_spdif_fmt_update(data->payload);
 			} else {
 				pr_debug("%s: mod ID = 0x%x event_id = 0x%x\n",
 						__func__, evt_pl->module_id,
@@ -638,6 +787,13 @@ int afe_sizeof_cfg_cmd(u16 port_id)
 	case DISPLAY_PORT_RX:
 		ret_size =
 		SIZEOF_CFG_CMD(afe_param_id_hdmi_multi_chan_audio_cfg);
+		break;
+	case AFE_PORT_ID_PRIMARY_SPDIF_RX:
+	case AFE_PORT_ID_PRIMARY_SPDIF_TX:
+	case AFE_PORT_ID_SECONDARY_SPDIF_RX:
+	case AFE_PORT_ID_SECONDARY_SPDIF_TX:
+		ret_size =
+		SIZEOF_CFG_CMD(afe_param_id_spdif_cfg_v2);
 		break;
 	case SLIMBUS_0_RX:
 	case SLIMBUS_0_TX:
@@ -2793,7 +2949,7 @@ int afe_spdif_port_start(u16 port_id, struct afe_spdif_port_config *spdif_port,
 					       param_hdr, (u8 *) spdif_port);
 	if (ret) {
 		pr_err("%s: AFE enable for port 0x%x failed ret = %d\n",
-				__func__, port_id, ret);
+			__func__, port_id, ret);
 		goto fail_cmd;
 	}
 
@@ -2806,10 +2962,13 @@ int afe_spdif_port_start(u16 port_id, struct afe_spdif_port_config *spdif_port,
 		goto fail_cmd;
 	}
 
-	ret = afe_send_spdif_ch_status_cfg(&spdif_port->ch_status, port_id);
-	if (ret < 0) {
-		pr_err("%s: afe send failed %d\n", __func__, ret);
-		goto fail_cmd;
+	if (afe_get_port_type(port_id) == MSM_AFE_PORT_TYPE_RX) {
+		ret = afe_send_spdif_ch_status_cfg(&spdif_port->ch_status,
+						   port_id);
+		if (ret < 0) {
+			pr_err("%s: afe send failed %d\n", __func__, ret);
+			goto fail_cmd;
+		}
 	}
 
 	return afe_send_cmd_port_start(port_id);
@@ -2818,6 +2977,105 @@ fail_cmd:
 	return ret;
 }
 EXPORT_SYMBOL(afe_spdif_port_start);
+
+/**
+ * afe_spdif_reg_event_cfg -
+ *         register for event from AFE spdif port
+ *
+ * @port_id: Port ID to register event
+ * @reg_flag: register or unregister
+ * @cb: callback function to invoke for events from module
+ * @private_data: private data to sent back in callback fn
+ *
+ * Returns 0 on success or error on failure
+ */
+int afe_spdif_reg_event_cfg(u16 port_id, u16 reg_flag,
+		void (*cb)(uint32_t opcode,
+		uint32_t token, uint32_t *payload, void *priv),
+		void *private_data)
+{
+	struct afe_port_cmd_event_cfg *config;
+	struct afe_port_cmd_mod_evt_cfg_payload pl;
+	int index;
+	int ret;
+	int num_events = 1;
+	int cmd_size = sizeof(struct afe_port_cmd_event_cfg) +
+		(num_events * sizeof(struct afe_port_cmd_mod_evt_cfg_payload));
+
+	config = kzalloc(cmd_size, GFP_KERNEL);
+	if (!config)
+		return -ENOMEM;
+
+	if (port_id == AFE_PORT_ID_PRIMARY_SPDIF_TX) {
+		this_afe.pri_spdif_tx_cb = cb;
+		this_afe.pri_spdif_tx_private_data = private_data;
+	} else if (port_id == AFE_PORT_ID_SECONDARY_SPDIF_TX) {
+		this_afe.sec_spdif_tx_cb = cb;
+		this_afe.sec_spdif_tx_private_data = private_data;
+	} else {
+		pr_err("%s: wrong port id 0x%x\n", __func__, port_id);
+		ret = -EINVAL;
+		goto fail_idx;
+	}
+
+	index = q6audio_get_port_index(port_id);
+	if (index < 0) {
+		pr_err("%s: Invalid index number: %d\n", __func__, index);
+		ret = -EINVAL;
+		goto fail_idx;
+	}
+
+	memset(&pl, 0, sizeof(pl));
+	pl.module_id = AFE_MODULE_CUSTOM_EVENTS;
+	pl.event_id = AFE_PORT_FMT_UPDATE_EVENT;
+	pl.reg_flag = reg_flag;
+
+	config->hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
+				APR_HDR_LEN(APR_HDR_SIZE), APR_PKT_VER);
+	config->hdr.pkt_size = cmd_size;
+	config->hdr.src_port = 1;
+	config->hdr.dest_port = 1;
+	config->hdr.token = index;
+
+	config->hdr.opcode = AFE_PORT_CMD_MOD_EVENT_CFG;
+	config->port_id = q6audio_get_port_id(port_id);
+	config->num_events = num_events;
+	config->version = 1;
+	memcpy(config->payload, &pl, sizeof(pl));
+	atomic_set(&this_afe.state, 1);
+	atomic_set(&this_afe.status, 0);
+	ret = apr_send_pkt(this_afe.apr, (uint32_t *) config);
+	if (ret < 0) {
+		pr_err("%s: port = 0x%x failed %d\n",
+			__func__, port_id, ret);
+		goto fail_cmd;
+	}
+	ret = wait_event_timeout(this_afe.wait[index],
+		(atomic_read(&this_afe.state) == 0),
+		msecs_to_jiffies(TIMEOUT_MS));
+	if (!ret) {
+		pr_err("%s: wait_event timeout\n", __func__);
+		ret = -EINVAL;
+		goto fail_cmd;
+	}
+	if (atomic_read(&this_afe.status) > 0) {
+		pr_err("%s: config cmd failed [%s]\n",
+			__func__, adsp_err_get_err_str(
+			atomic_read(&this_afe.status)));
+		ret = adsp_err_get_lnx_err_code(
+				atomic_read(&this_afe.status));
+		goto fail_idx;
+	}
+	ret = 0;
+fail_cmd:
+	pr_debug("%s: config.opcode 0x%x status %d\n",
+		__func__, config->hdr.opcode, ret);
+
+fail_idx:
+	kfree(config);
+	return ret;
+}
+EXPORT_SYMBOL(afe_spdif_reg_event_cfg);
 
 int afe_send_slot_mapping_cfg(
 	struct afe_param_id_slot_mapping_cfg *slot_mapping_cfg,
@@ -3880,7 +4138,10 @@ int afe_get_port_index(u16 port_id)
 	case MI2S_TX: return IDX_MI2S_TX;
 	case HDMI_RX: return IDX_HDMI_RX;
 	case DISPLAY_PORT_RX: return IDX_DISPLAY_PORT_RX;
-	case AFE_PORT_ID_SPDIF_RX: return IDX_SPDIF_RX;
+	case AFE_PORT_ID_PRIMARY_SPDIF_RX: return IDX_PRIMARY_SPDIF_RX;
+	case AFE_PORT_ID_PRIMARY_SPDIF_TX: return IDX_PRIMARY_SPDIF_TX;
+	case AFE_PORT_ID_SECONDARY_SPDIF_RX: return IDX_SECONDARY_SPDIF_RX;
+	case AFE_PORT_ID_SECONDARY_SPDIF_TX: return IDX_SECONDARY_SPDIF_TX;
 	case RSVD_2: return IDX_RSVD_2;
 	case RSVD_3: return IDX_RSVD_3;
 	case DIGI_MIC_TX: return IDX_DIGI_MIC_TX;
@@ -4258,6 +4519,12 @@ int afe_open(u16 port_id,
 	case HDMI_RX:
 	case DISPLAY_PORT_RX:
 		cfg_type = AFE_PARAM_ID_HDMI_CONFIG;
+		break;
+	case AFE_PORT_ID_PRIMARY_SPDIF_RX:
+	case AFE_PORT_ID_PRIMARY_SPDIF_TX:
+	case AFE_PORT_ID_SECONDARY_SPDIF_RX:
+	case AFE_PORT_ID_SECONDARY_SPDIF_TX:
+		cfg_type = AFE_PARAM_ID_SPDIF_CONFIG;
 		break;
 	case SLIMBUS_0_RX:
 	case SLIMBUS_0_TX:
@@ -6100,7 +6367,10 @@ int afe_validate_port(u16 port_id)
 	case MI2S_TX:
 	case HDMI_RX:
 	case DISPLAY_PORT_RX:
-	case AFE_PORT_ID_SPDIF_RX:
+	case AFE_PORT_ID_PRIMARY_SPDIF_RX:
+	case AFE_PORT_ID_PRIMARY_SPDIF_TX:
+	case AFE_PORT_ID_SECONDARY_SPDIF_RX:
+	case AFE_PORT_ID_SECONDARY_SPDIF_TX:
 	case RSVD_2:
 	case RSVD_3:
 	case DIGI_MIC_TX:
@@ -7695,6 +7965,10 @@ int __init afe_init(void)
 	q6core_init_uevent_data(this_afe.uevent_data, "q6afe_uevent");
 
 	INIT_WORK(&this_afe.afe_dc_work, afe_notify_dc_presence_work_fn);
+	INIT_WORK(&this_afe.afe_pri_spdif_work,
+		  afe_notify_pri_spdif_fmt_update_work_fn);
+	INIT_WORK(&this_afe.afe_sec_spdif_work,
+		  afe_notify_sec_spdif_fmt_update_work_fn);
 
 	return 0;
 }
