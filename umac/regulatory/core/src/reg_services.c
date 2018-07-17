@@ -1485,6 +1485,7 @@ QDF_STATUS reg_set_11d_country(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc;
 	struct cc_regdmn_s rd;
 	QDF_STATUS status;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 
 	if (!country) {
 		reg_err("country code is NULL");
@@ -1514,8 +1515,15 @@ QDF_STATUS reg_set_11d_country(struct wlan_objmgr_pdev *pdev,
 	psoc_reg->new_11d_ctry_pending = true;
 
 	if (psoc_reg->offload_enabled) {
-		reg_err("reg offload, 11d offload too!");
-		status = QDF_STATUS_E_FAULT;
+		tx_ops = reg_get_psoc_tx_ops(psoc);
+		if (tx_ops->set_country_code) {
+			tx_ops->set_country_code(psoc, &country_code);
+		} else {
+			reg_err("country set fw handler not present");
+			psoc_reg->new_11d_ctry_pending = false;
+			return QDF_STATUS_E_FAULT;
+		}
+		status = QDF_STATUS_SUCCESS;
 	} else {
 		qdf_mem_copy(rd.cc.alpha, country, REG_ALPHA2_LEN + 1);
 		rd.flags = ALPHA_IS_SET;
