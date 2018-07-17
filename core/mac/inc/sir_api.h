@@ -3932,17 +3932,6 @@ struct ext_scan_capabilities_response {
 
 typedef struct {
 	uint32_t requestId;
-	uint8_t sessionId;
-
-	/*
-	 * 1 - return cached results and flush it
-	 * 0 - return cached results and do not flush
-	 */
-	bool flush;
-} tSirExtScanGetCachedResultsReqParams, *tpSirExtScanGetCachedResultsReqParams;
-
-typedef struct {
-	uint32_t requestId;
 	uint32_t status;
 } tSirExtScanGetCachedResultsRspParams, *tpSirExtScanGetCachedResultsRspParams;
 

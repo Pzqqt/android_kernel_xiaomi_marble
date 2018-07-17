@@ -412,9 +412,18 @@ QDF_STATUS
 wma_extscan_stop_change_monitor(tp_wma_handle wma,
 			struct extscan_capabilities_reset_params *params);
 
-QDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
-					  tSirExtScanGetCachedResultsReqParams *
-					  pcached_results);
+/**
+ * wma_extscan_get_cached_results() - extscan get cached results
+ * @wma: wma handle
+ * @params: cached results parameters
+ *
+ * This function send request to fw to get cached results.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS
+wma_extscan_get_cached_results(tp_wma_handle wma,
+			       struct extscan_cached_result_params *params);
 
 QDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
 					tSirGetExtScanCapabilitiesReqParams *

@@ -8241,8 +8241,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_EXTSCAN_GET_CACHED_RESULTS_REQ:
-		wma_extscan_get_cached_results(wma_handle,
-			(tSirExtScanGetCachedResultsReqParams *) msg->bodyptr);
+		wma_extscan_get_cached_results(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_EXTSCAN_GET_CAPABILITIES_REQ:

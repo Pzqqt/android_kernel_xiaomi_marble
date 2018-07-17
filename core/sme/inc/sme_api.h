@@ -1056,9 +1056,16 @@ QDF_STATUS
 sme_reset_significant_change(mac_handle_t mac_handle,
 			     struct extscan_capabilities_reset_params *params);
 
-QDF_STATUS sme_get_cached_results(tHalHandle hHal,
-		tSirExtScanGetCachedResultsReqParams *
-		pCachedResultsReq);
+/**
+ * sme_get_cached_results() - SME API to get cached results
+ * @mac_handle: Opaque handle to the MAC context
+ * @params: extscan get cached results structure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_get_cached_results(mac_handle_t mac_handle,
+		       struct extscan_cached_result_params *params);
 
 QDF_STATUS sme_set_epno_list(tHalHandle hal,
 			     struct wifi_epno_params *req_msg);

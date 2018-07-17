@@ -1728,16 +1728,6 @@ int wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	return ret;
 }
 
-/*
- * define short names for the global vendor params
- * used by wlan_hdd_cfg80211_extscan_get_cached_results()
- */
-#define PARAM_MAX \
-	QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX
-#define PARAM_REQUEST_ID \
-	QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID
-#define PARAM_FLUSH \
-	QCA_WLAN_VENDOR_ATTR_EXTSCAN_GET_CACHED_SCAN_RESULTS_CONFIG_PARAM_FLUSH
 /**
  * __wlan_hdd_cfg80211_extscan_get_cached_results() - extscan get cached results
  * @wiphy: wiphy pointer
@@ -1757,20 +1747,20 @@ int wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
  *
  * Return: 0 on success; error number otherwise.
  */
-static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
-						 struct wireless_dev
-						 *wdev, const void *data,
-						 int data_len)
+static int
+__wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
+					       struct wireless_dev *wdev,
+					       const void *data,
+					       int data_len)
 {
-	tpSirExtScanGetCachedResultsReqParams pReqMsg = NULL;
+	struct extscan_cached_result_params params;
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
-			  1];
+	struct nlattr *tb[EXTSCAN_PARAM_MAX + 1];
 	struct hdd_ext_scan_context *context;
 	QDF_STATUS status;
-	int retval = 0;
+	int id, retval;
 	unsigned long rc;
 
 	/* ENTER_DEV() intentionally not used in a frequently invoked API */
@@ -1788,47 +1778,43 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
-	if (wlan_cfg80211_nla_parse(tb, PARAM_MAX, data, data_len,
+	if (wlan_cfg80211_nla_parse(tb, EXTSCAN_PARAM_MAX, data, data_len,
 				    wlan_hdd_extscan_config_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
 
-	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
-	if (!pReqMsg) {
-		hdd_err("qdf_mem_malloc failed");
-		return -ENOMEM;
-	}
-
 	/* Parse and fetch request Id */
-	if (!tb[PARAM_REQUEST_ID]) {
+	id = QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID;
+	if (!tb[id]) {
 		hdd_err("attr request id failed");
-		goto fail;
+		return -EINVAL;
 	}
 
-	pReqMsg->requestId = nla_get_u32(tb[PARAM_REQUEST_ID]);
-	pReqMsg->sessionId = adapter->session_id;
+	params.request_id = nla_get_u32(tb[id]);
+	params.vdev_id = adapter->session_id;
 
 	/* Parse and fetch flush parameter */
-	if (!tb[PARAM_FLUSH]) {
+	id = QCA_WLAN_VENDOR_ATTR_EXTSCAN_GET_CACHED_SCAN_RESULTS_CONFIG_PARAM_FLUSH;
+	if (!tb[id]) {
 		hdd_err("attr flush failed");
-		goto fail;
+		return -EINVAL;
 	}
-	pReqMsg->flush = nla_get_u8(tb[PARAM_FLUSH]);
-	hdd_debug("Req Id: %u Session Id: %d Flush: %d",
-		pReqMsg->requestId, pReqMsg->sessionId, pReqMsg->flush);
+	params.flush = nla_get_u8(tb[id]);
+	hdd_debug("Req Id: %u Vdev Id: %d Flush: %d",
+		  params.request_id, params.vdev_id, params.flush);
 
 	context = &ext_scan_context;
 	spin_lock(&context->context_lock);
-	context->request_id = pReqMsg->requestId;
+	context->request_id = params.request_id;
 	context->ignore_cached_results = false;
 	INIT_COMPLETION(context->response_event);
 	spin_unlock(&context->context_lock);
 
-	status = sme_get_cached_results(hdd_ctx->mac_handle, pReqMsg);
+	status = sme_get_cached_results(hdd_ctx->mac_handle, &params);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_get_cached_results failed(err=%d)", status);
-		goto fail;
+		return -EINVAL;
 	}
 
 	rc = wait_for_completion_timeout(&context->response_event,
@@ -1845,18 +1831,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 		spin_unlock(&context->context_lock);
 	}
 	return retval;
-
-fail:
-	qdf_mem_free(pReqMsg);
-	return -EINVAL;
 }
-/*
- * done with short names for the global vendor params
- * used by wlan_hdd_cfg80211_extscan_get_cached_results()
- */
-#undef PARAM_MAX
-#undef PARAM_REQUEST_ID
-#undef PARAM_FLUSH
 
 /**
  * wlan_hdd_cfg80211_extscan_get_cached_results() - extscan get cached results

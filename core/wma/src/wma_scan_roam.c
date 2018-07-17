@@ -4752,37 +4752,21 @@ QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
 							   params);
 }
 
-/**
- * wma_extscan_get_cached_results() - extscan get cached results
- * @wma: wma handle
- * @pcached_results: cached results parameters
- *
- * This function send request to fw to get cached results.
- *
- * Return: QDF status
- */
-QDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
-					  tSirExtScanGetCachedResultsReqParams *
-					  pcached_results)
+QDF_STATUS
+wma_extscan_get_cached_results(tp_wma_handle wma,
+			       struct extscan_cached_result_params *params)
 {
-	struct extscan_cached_result_params params = {0};
-
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, cannot issue cmd", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!wmi_service_enabled(wma->wmi_handle,
-				    wmi_service_extscan)) {
+	if (!wmi_service_enabled(wma->wmi_handle, wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	params.request_id = pcached_results->requestId;
-	params.vdev_id = pcached_results->sessionId;
-	params.flush = pcached_results->flush;
-
 	return wmi_unified_extscan_get_cached_results_cmd(wma->wmi_handle,
-					&params);
+							  params);
 }
 
 /**
