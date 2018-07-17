@@ -42,7 +42,7 @@ QDF_STATUS wlan_scan_psoc_created_notification(struct wlan_objmgr_psoc *psoc,
 	if (QDF_IS_STATUS_ERROR(status))
 		scm_err("Failed to attach psoc scan component");
 	else
-		scm_info("Scan object attach to psoc successful");
+		scm_debug("Scan object attach to psoc successful");
 
 	return status;
 }
@@ -92,7 +92,7 @@ QDF_STATUS wlan_scan_vdev_created_notification(struct wlan_objmgr_vdev *vdev,
 		scm_err("Failed to attach vdev scan component");
 		qdf_mem_free(scan_vdev_obj);
 	} else {
-		scm_info("vdev scan object attach successful");
+		scm_debug("vdev scan object attach successful");
 	}
 
 	return status;

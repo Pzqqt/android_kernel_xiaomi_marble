@@ -95,8 +95,8 @@ static void wlan_fill_scan_rand_attrs(struct wlan_objmgr_vdev *vdev,
 	*randomize = true;
 	memcpy(addr, mac_addr, QDF_MAC_ADDR_SIZE);
 	memcpy(mask, mac_addr_mask, QDF_MAC_ADDR_SIZE);
-	cfg80211_info("Random mac addr: %pM and Random mac mask: %pM",
-		      addr, mask);
+	cfg80211_debug("Random mac addr: %pM and Random mac mask: %pM",
+		       addr, mask);
 }
 
 /**
@@ -234,7 +234,7 @@ static void wlan_cfg80211_pno_callback(struct wlan_objmgr_vdev *vdev,
 	if (event->type != SCAN_EVENT_TYPE_NLO_COMPLETE)
 		return;
 
-	cfg80211_info("vdev id = %d", event->vdev_id);
+	cfg80211_debug("vdev id = %d", event->vdev_id);
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
@@ -706,7 +706,7 @@ static QDF_STATUS wlan_scan_request_dequeue(
 	struct pdev_osif_priv *osif_ctx;
 	struct osif_scan_pdev *scan_priv;
 
-	cfg80211_info("Dequeue Scan id: %d", scan_id);
+	cfg80211_debug("Dequeue Scan id: %d", scan_id);
 
 	if ((source == NULL) || (req == NULL)) {
 		cfg80211_err("source or request is NULL");
@@ -747,9 +747,10 @@ static QDF_STATUS wlan_scan_request_dequeue(
 				*dev = scan_req->dev;
 				qdf_mem_free(scan_req);
 				qdf_mutex_release(&scan_priv->scan_req_q_lock);
-				cfg80211_info("removed Scan id: %d, req = %pK, pending scans %d",
-				      scan_id, req,
-				      qdf_list_size(&scan_priv->scan_req_q));
+				cfg80211_debug("removed Scan id: %d, req = %pK, pending scans %d",
+					       scan_id, req,
+					       qdf_list_size(&scan_priv->
+							     scan_req_q));
 				return QDF_STATUS_SUCCESS;
 			} else {
 				qdf_mutex_release(&scan_priv->scan_req_q_lock);
@@ -914,12 +915,11 @@ static void wlan_cfg80211_scan_done_callback(
 	if (!util_is_scan_completed(event, &success))
 		return;
 
-	cfg80211_info("scan ID = %d vdev id = %d, event type %s(%d) reason = %s(%d)",
-		scan_id, event->vdev_id,
-		util_scan_get_ev_type_name(event->type),
-		event->type,
-		util_scan_get_ev_reason_name(event->reason),
-		event->reason);
+	cfg80211_debug("scan ID = %d vdev id = %d, event type %s(%d) reason = %s(%d)",
+		       scan_id, event->vdev_id,
+		       util_scan_get_ev_type_name(event->type), event->type,
+		       util_scan_get_ev_reason_name(event->reason),
+		       event->reason);
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	status = wlan_scan_request_dequeue(
@@ -1795,9 +1795,8 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	qdf_mem_copy(bss_data.per_chain_snr, scan_params->per_chain_snr,
 		     WLAN_MGMT_TXRX_HOST_MAX_ANTENNA);
 
-	cfg80211_info("BSSID: %pM Channel:%d RSSI:%d",
-		bss_data.mgmt->bssid, bss_data.chan->center_freq,
-		(int)(bss_data.rssi / 100));
+	cfg80211_debug("BSSID: %pM Channel:%d RSSI:%d", bss_data.mgmt->bssid,
+		       bss_data.chan->center_freq, (int)(bss_data.rssi / 100));
 
 	bss = wlan_cfg80211_inform_bss_frame_data(wiphy, &bss_data);
 	if (!bss)

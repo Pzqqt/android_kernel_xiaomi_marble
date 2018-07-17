@@ -108,8 +108,8 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev)
 		return;
 	}
 
-	cfg80211_info("Wait for tdls teardown completion. Timeout %u ms",
-		WAIT_TIME_FOR_TDLS_TEARDOWN_LINKS);
+	cfg80211_debug("Wait for tdls teardown completion. Timeout %u ms",
+		       WAIT_TIME_FOR_TDLS_TEARDOWN_LINKS);
 
 	rc = wait_for_completion_timeout(
 		&tdls_priv->tdls_teardown_comp,
@@ -120,7 +120,7 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev)
 		return;
 	}
 
-	cfg80211_info("TDLS teardown completion status %ld ", rc);
+	cfg80211_debug("TDLS teardown completion status %ld ", rc);
 }
 
 void hdd_notify_tdls_reset_adapter(struct wlan_objmgr_vdev *vdev)
@@ -670,8 +670,8 @@ int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
 		goto error_get_tdls_peers;
 	}
 
-	cfg80211_info("Wait for tdls_user_cmd_comp. Timeout %u ms",
-		WAIT_TIME_FOR_TDLS_USER_CMD);
+	cfg80211_debug("Wait for tdls_user_cmd_comp. Timeout %u ms",
+		       WAIT_TIME_FOR_TDLS_USER_CMD);
 
 	rc = wait_for_completion_timeout(
 		&tdls_priv->tdls_user_cmd_comp,
@@ -776,8 +776,8 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
 		goto error_mgmt_req;
 	}
 
-	cfg80211_info("Wait for tdls_mgmt_comp. Timeout %u ms",
-		WAIT_TIME_FOR_TDLS_MGMT);
+	cfg80211_debug("Wait for tdls_mgmt_comp. Timeout %u ms",
+		       WAIT_TIME_FOR_TDLS_MGMT);
 
 	rc = wait_for_completion_timeout(
 		&tdls_priv->tdls_mgmt_comp,
@@ -794,8 +794,8 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
 		goto error_mgmt_req;
 	}
 
-	cfg80211_info("Mgmt Tx Completion status %ld TxCompletion %u",
-		rc, tdls_priv->mgmt_tx_completion_status);
+	cfg80211_debug("Mgmt Tx Completion status %ld TxCompletion %u",
+		       rc, tdls_priv->mgmt_tx_completion_status);
 
 	if (chk_frame.max_sta_failed) {
 		status = max_sta_failed;
@@ -867,7 +867,7 @@ wlan_cfg80211_tdls_indicate_discovery(struct tdls_osif_indication *ind)
 
 	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
 
-	cfg80211_info("Implicit TDLS, request Send Discovery request");
+	cfg80211_debug("Implicit TDLS, request Send Discovery request");
 	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
 				   ind->peer_mac, NL80211_TDLS_DISCOVERY_REQ,
 				   false, GFP_KERNEL);
@@ -880,7 +880,7 @@ wlan_cfg80211_tdls_indicate_setup(struct tdls_osif_indication *ind)
 
 	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
 
-	cfg80211_info("Indication to request TDLS setup");
+	cfg80211_debug("Indication to request TDLS setup");
 	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
 				   ind->peer_mac, NL80211_TDLS_SETUP, false,
 				   GFP_KERNEL);
@@ -893,7 +893,7 @@ wlan_cfg80211_tdls_indicate_teardown(struct tdls_osif_indication *ind)
 
 	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
 
-	cfg80211_info("Teardown reason %d", ind->reason);
+	cfg80211_debug("Teardown reason %d", ind->reason);
 	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
 				   ind->peer_mac, NL80211_TDLS_TEARDOWN,
 				   ind->reason, GFP_KERNEL);
