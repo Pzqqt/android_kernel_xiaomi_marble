@@ -1013,7 +1013,10 @@ endif
 WCFG_DIR := wlan_cfg
 WCFG_INC := -I$(WLAN_COMMON_INC)/$(WCFG_DIR)
 WCFG_SRC := $(WLAN_COMMON_ROOT)/$(WCFG_DIR)
+
+ifeq ($(CONFIG_LITHIUM), y)
 WCFG_OBJS := $(WCFG_SRC)/wlan_cfg.o
+endif
 
 ############ OL ############
 OL_DIR :=     core/dp/ol
