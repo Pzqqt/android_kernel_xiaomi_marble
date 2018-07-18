@@ -1001,8 +1001,18 @@ uint8_t sme_get_dfs_scan_mode(tHalHandle hHal);
 QDF_STATUS sme_get_valid_channels_by_band(tHalHandle hHal, uint8_t wifiBand,
 		uint32_t *aValidChannels,
 		uint8_t *pNumChannels);
-QDF_STATUS sme_ext_scan_get_capabilities(tHalHandle hHal,
-		tSirGetExtScanCapabilitiesReqParams *pReq);
+
+/**
+ * sme_ext_scan_get_capabilities() - SME API to fetch extscan capabilities
+ * @mac_handle: Opaque handle to the MAC context
+ * @params: extscan capabilities request structure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_ext_scan_get_capabilities(mac_handle_t mac_handle,
+			      struct extscan_capabilities_params *params);
+
 QDF_STATUS sme_ext_scan_start(tHalHandle hHal,
 		tSirWifiScanCmdReqParams *pStartCmd);
 QDF_STATUS sme_ext_scan_stop(tHalHandle hHal,

@@ -3882,11 +3882,6 @@ enum extscan_configuration_flags {
 	EXTSCAN_LP_EXTENDED_BATCHING = 0x00000001,
 };
 
-typedef struct {
-	uint32_t requestId;
-	uint8_t sessionId;
-} tSirGetExtScanCapabilitiesReqParams, *tpSirGetExtScanCapabilitiesReqParams;
-
 /**
  * struct ext_scan_capabilities_response - extscan capabilities response data
  * @requestId: request identifier

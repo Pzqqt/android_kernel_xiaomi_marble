@@ -1614,19 +1614,19 @@ nla_put_failure:
  *
  * Return: none
  */
-static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
-					       struct wireless_dev *wdev,
-					       const void *data, int data_len)
+static int
+__wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
+					     struct wireless_dev *wdev,
+					     const void *data, int data_len)
 {
-	int ret;
+	int id, ret;
 	unsigned long rc;
 	struct hdd_ext_scan_context *context;
-	tpSirGetExtScanCapabilitiesReqParams pReqMsg = NULL;
+	struct extscan_capabilities_params params;
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
-			  1];
+	struct nlattr *tb[EXTSCAN_PARAM_MAX + 1];
 	QDF_STATUS status;
 
 	hdd_enter_dev(dev);
@@ -1649,43 +1649,34 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
-	if (wlan_cfg80211_nla_parse(tb,
-			   QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX,
-			   data, data_len, wlan_hdd_extscan_config_policy)) {
+	if (wlan_cfg80211_nla_parse(tb, EXTSCAN_PARAM_MAX, data, data_len,
+				    wlan_hdd_extscan_config_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
 
-	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
-	if (!pReqMsg) {
-		hdd_err("qdf_mem_malloc failed");
-		return -ENOMEM;
-	}
-
 	/* Parse and fetch request Id */
-	if (!tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]) {
+	id = QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID;
+	if (!tb[id]) {
 		hdd_err("attr request id failed");
-		goto fail;
+		return -EINVAL;
 	}
 
-	pReqMsg->requestId =
-		nla_get_u32(tb
-		 [QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]);
-	pReqMsg->sessionId = adapter->session_id;
-	hdd_debug("Req Id %d Session Id %d",
-		pReqMsg->requestId, pReqMsg->sessionId);
+	params.request_id = nla_get_u32(tb[id]);
+	params.vdev_id = adapter->session_id;
+	hdd_debug("Req Id %d Vdev Id %d", params.request_id, params.vdev_id);
 
 	context = &ext_scan_context;
 	spin_lock(&context->context_lock);
-	context->request_id = pReqMsg->requestId;
+	context->request_id = params.request_id;
 	INIT_COMPLETION(context->response_event);
 	spin_unlock(&context->context_lock);
 
-	status = sme_ext_scan_get_capabilities(hdd_ctx->mac_handle, pReqMsg);
+	status = sme_ext_scan_get_capabilities(hdd_ctx->mac_handle, &params);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_ext_scan_get_capabilities failed(err=%d)",
 			status);
-		goto fail;
+		return -EINVAL;
 	}
 
 	rc = wait_for_completion_timeout(&context->response_event,
@@ -1700,9 +1691,6 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 		hdd_err("Failed to send ext scan capability to user space");
 	hdd_exit();
 	return ret;
-fail:
-	qdf_mem_free(pReqMsg);
-	return -EINVAL;
 }
 
 /**

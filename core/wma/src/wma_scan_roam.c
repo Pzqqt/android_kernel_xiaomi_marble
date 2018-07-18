@@ -4769,36 +4769,21 @@ wma_extscan_get_cached_results(tp_wma_handle wma,
 							  params);
 }
 
-/**
- * wma_extscan_get_capabilities() - extscan get capabilities
- * @wma: wma handle
- * @pgetcapab: get capabilities params
- *
- * This function send request to fw to get extscan capabilities.
- *
- * Return: QDF status
- */
-QDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
-					tSirGetExtScanCapabilitiesReqParams *
-					pgetcapab)
+QDF_STATUS
+wma_extscan_get_capabilities(tp_wma_handle wma,
+			     struct extscan_capabilities_params *params)
 {
-	struct extscan_capabilities_params params = {0};
-
 	if (!wma || !wma->wmi_handle) {
-		WMA_LOGE("%s: WMA is closed, can not issue  cmd", __func__);
+		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!wmi_service_enabled(wma->wmi_handle,
-				    wmi_service_extscan)) {
+	if (!wmi_service_enabled(wma->wmi_handle, wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	params.request_id = pgetcapab->requestId;
-	params.vdev_id = pgetcapab->sessionId;
-
 	return wmi_unified_extscan_get_capabilities_cmd(wma->wmi_handle,
-						&params);
+							params);
 }
 
 /** wma_set_epno_network_list() - set epno network list

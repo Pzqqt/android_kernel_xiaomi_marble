@@ -8243,8 +8243,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_EXTSCAN_GET_CAPABILITIES_REQ:
-		wma_extscan_get_capabilities(wma_handle,
-			(tSirGetExtScanCapabilitiesReqParams *) msg->bodyptr);
+		wma_extscan_get_capabilities(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_SET_EPNO_LIST_REQ:

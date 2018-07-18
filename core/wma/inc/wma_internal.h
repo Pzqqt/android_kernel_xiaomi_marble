@@ -425,9 +425,19 @@ QDF_STATUS
 wma_extscan_get_cached_results(tp_wma_handle wma,
 			       struct extscan_cached_result_params *params);
 
-QDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
-					tSirGetExtScanCapabilitiesReqParams *
-					pgetcapab);
+/**
+ * wma_extscan_get_capabilities() - extscan get capabilities
+ * @wma: wma handle
+ * @params: get capabilities params
+ *
+ * This function sends request to fw to get extscan capabilities.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS
+wma_extscan_get_capabilities(tp_wma_handle wma,
+			     struct extscan_capabilities_params *params);
+
 QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 				struct wifi_epno_params *req);
 
