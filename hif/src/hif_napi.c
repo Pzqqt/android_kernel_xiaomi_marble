@@ -1142,7 +1142,6 @@ static int hnc_link_clusters(struct qca_napi_data *napid)
 				   i, cl);
 			if ((cl < HNC_MIN_CLUSTER) || (cl > HNC_MAX_CLUSTER)) {
 				NAPI_DEBUG("Bad cluster (%d). SKIPPED\n", cl);
-				QDF_ASSERT(0);
 				/* continue if ASSERTs are disabled */
 				continue;
 			};
