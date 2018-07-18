@@ -32,23 +32,27 @@
 
 ol_txrx_soc_handle ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_if_ops);
 
-#ifdef QCA_WIFI_QCA8074
-void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
-	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-	struct ol_if_ops *ol_ops);
-#else
-/*
+/**
  * dp_soc_attach_wifi3() - Attach txrx SOC
  * @ctrl_psoc:	Opaque SOC handle from Ctrl plane
  * @htc_handle:	Opaque HTC handle
  * @hif_handle:	Opaque HIF handle
  * @qdf_osdev:	QDF device
+ * @ol_ops:	Offload Operations
+ * @device_id:	Device ID
  *
  * Return: DP SOC handle on success, NULL on failure
  */
+#ifdef QCA_WIFI_QCA8074
+void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
+			  HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+			  struct ol_if_ops *ol_ops, uint16_t device_id);
+#else
 static inline void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
-	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-	struct ol_if_ops *ol_ops)
+					HTC_HANDLE htc_handle,
+					qdf_device_t qdf_osdev,
+					struct ol_if_ops *ol_ops,
+					uint16_t device_id)
 {
 	return NULL;
 }
@@ -69,7 +73,7 @@ static inline ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 	case RUMIM2M_DEVICE_ID_NODE2: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE3: /*lithium emulation */
 		return dp_soc_attach_wifi3(psoc, hif_handle, htc_handle,
-			qdf_dev, dp_ol_if_ops);
+			qdf_dev, dp_ol_if_ops, devid);
 	break;
 	default:
 		return ol_txrx_soc_attach(psoc, dp_ol_if_ops);

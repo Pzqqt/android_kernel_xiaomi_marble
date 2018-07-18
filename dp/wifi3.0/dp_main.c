@@ -37,6 +37,7 @@
 #include <wlan_cfg.h>
 #include "cdp_txrx_cmn_struct.h"
 #include "cdp_txrx_stats_struct.h"
+#include "cdp_txrx_cmn_reg.h"
 #include <qdf_util.h>
 #include "dp_peer.h"
 #include "dp_rx_mon.h"
@@ -5056,6 +5057,22 @@ uint8_t dp_get_pdev_id_frm_pdev(struct cdp_pdev *pdev_handle)
 }
 
 /**
+ * dp_pdev_set_chan_noise_floor() - set channel noise floor
+ * @pdev_handle: Datapath PDEV handle
+ * @chan_noise_floor: Channel Noise Floor
+ *
+ * Return: void
+ */
+static
+void dp_pdev_set_chan_noise_floor(struct cdp_pdev *pdev_handle,
+				  int16_t chan_noise_floor)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	pdev->chan_noise_floor = chan_noise_floor;
+}
+
+/**
  * dp_vdev_get_filter_ucast_data() - get DP VDEV monitor ucast filter
  * @vdev_handle: Datapath VDEV handle
  * Return: true on ucast filter flag set
@@ -7555,6 +7572,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_stats_request = dp_txrx_stats_request,
 	.txrx_set_monitor_mode = dp_vdev_set_monitor_mode,
 	.txrx_get_pdev_id_frm_pdev = dp_get_pdev_id_frm_pdev,
+	.txrx_pdev_set_chan_noise_floor = dp_pdev_set_chan_noise_floor,
 	.txrx_set_nac = dp_set_nac,
 	.txrx_get_tx_pending = dp_get_tx_pending,
 	.txrx_set_pdev_tx_capture = dp_config_debug_sniffer,
@@ -7891,26 +7909,21 @@ static void dp_soc_set_txrx_ring_map(struct dp_soc *soc)
 	}
 }
 
-/*
+#ifdef QCA_WIFI_QCA8074
+/**
  * dp_soc_attach_wifi3() - Attach txrx SOC
  * @ctrl_psoc:	Opaque SOC handle from control plane
  * @htc_handle:	Opaque HTC handle
  * @hif_handle:	Opaque HIF handle
  * @qdf_osdev:	QDF device
+ * @ol_ops:	Offload Operations
+ * @device_id:	Device ID
  *
  * Return: DP SOC handle on success, NULL on failure
  */
-/*
- * Local prototype added to temporarily address warning caused by
- * -Wmissing-prototypes. A more correct solution, namely to expose
- * a prototype in an appropriate header file, will come later.
- */
 void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
-	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-	struct ol_if_ops *ol_ops);
-void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
-	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-	struct ol_if_ops *ol_ops)
+			  HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+			  struct ol_if_ops *ol_ops, uint16_t device_id)
 {
 	struct dp_soc *soc = qdf_mem_malloc(sizeof(*soc));
 	int target_type;
@@ -7921,6 +7934,7 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 		goto fail0;
 	}
 
+	soc->device_id = device_id;
 	soc->cdp_soc.ops = &dp_txrx_ops;
 	soc->cdp_soc.ol_ops = ol_ops;
 	soc->ctrl_psoc = ctrl_psoc;
@@ -8003,6 +8017,7 @@ fail1:
 fail0:
 	return NULL;
 }
+#endif
 
 /*
  * dp_get_pdev_for_mac_id() -  Return pdev for mac_id

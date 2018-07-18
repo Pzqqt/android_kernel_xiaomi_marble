@@ -889,6 +889,8 @@ struct dp_soc {
 		qdf_dma_addr_t ipa_rx_refill_buf_hp_paddr;
 	} ipa_uc_rx_rsc;
 #endif
+	/* Device ID coming from Bus sub-system */
+	uint32_t device_id;
 };
 
 #ifdef IPA_OFFLOAD
@@ -1199,6 +1201,8 @@ struct dp_pdev {
 		uint32_t mgmt_buf_len; /* Len of mgmt. payload in ppdu stats */
 		uint32_t ppdu_id;
 	} mgmtctrl_frm_info;
+	/* Current noise-floor reading for the pdev channel */
+	int16_t chan_noise_floor;
 };
 
 struct dp_peer;

@@ -156,6 +156,7 @@
  * struct mon_rx_status - This will have monitor mode rx_status extracted from
  * htt_rx_desc used later to update radiotap information.
  * @tsft: Time Synchronization Function timer
+ * @ppdu_timestamp: Timestamp in the PPDU_START TLV
  * @preamble_type: Preamble type in radio header
  * @chan_freq: Capture channel frequency
  * @chan_num: Capture channel number
@@ -171,6 +172,8 @@
  * @he_sig_A2_known: HE (11ax) sig A2 known field
  * @he_sig_b_common: HE (11ax) sig B common field
  * @he_sig_b_common_known: HE (11ax) sig B common known field
+ * @l_sig_a_info: L_SIG_A value coming in Rx descriptor
+ * @l_sig_b_info: L_SIG_B value coming in Rx descriptor
  * @rate: Rate in terms 500Kbps
  * @rtap_flags: Bit map of available fields in the radiotap
  * @ant_signal_db: Rx packet RSSI
@@ -207,9 +210,16 @@
  * @he_data5: HE property of received frame
  * @prev_ppdu_id: ppdu_id in previously received message
  * @ppdu_id: Id of the PLCP protocol data unit
+ *
+ * The following variables are not coming from the TLVs.
+ * These variables are placeholders for passing information to update_radiotap
+ * function.
+ * @device_id: Device ID coming from sub-system (PCI, AHB etc..)
+ * @chan_noise_floor: Channel Noise Floor for the pdev
  */
 struct mon_rx_status {
 	uint64_t tsft;
+	uint32_t ppdu_timestamp;
 	uint32_t preamble_type;
 	uint16_t chan_freq;
 	uint16_t chan_num;
@@ -224,6 +234,8 @@ struct mon_rx_status {
 	uint16_t he_sig_A2_known;
 	uint16_t he_sig_b_common;
 	uint16_t he_sig_b_common_known;
+	uint32_t l_sig_a_info;
+	uint32_t l_sig_b_info;
 	uint8_t  rate;
 	uint8_t  rtap_flags;
 	uint8_t  ant_signal_db;
@@ -273,7 +285,40 @@ struct mon_rx_status {
 	uint32_t ppdu_len;
 	uint32_t prev_ppdu_id;
 	uint32_t ppdu_id;
+	uint32_t device_id;
+	int16_t chan_noise_floor;
 };
+
+/**
+ * struct qdf_radiotap_vendor_ns - Vendor Namespace header as per
+ * Radiotap spec: https://www.radiotap.org/fields/Vendor%20Namespace.html
+ * @oui: Vendor OUI
+ * @selector: sub_namespace selector
+ * @skip_length: How many bytes of Vendor Namespace data that follows
+ */
+struct qdf_radiotap_vendor_ns {
+	uint8_t oui[3];
+	uint8_t selector;
+	uint16_t skip_length;
+} __attribute__((__packed__));
+
+/**
+ * strcut qdf_radiotap_vendor_ns_ath - Combined QTI Vendor NS
+ * including the Radiotap specified Vendor Namespace header and
+ * QTI specific Vendor Namespace data
+ * @lsig: L_SIG_A (or L_SIG)
+ * @device_id: Device Identification
+ * @lsig_b: L_SIG_B
+ * @ppdu_start_timestamp: Timestamp from RX_PPDU_START TLV
+ */
+struct qdf_radiotap_vendor_ns_ath {
+	struct qdf_radiotap_vendor_ns hdr;
+	/* QTI specific data follows */
+	uint32_t lsig;
+	uint32_t device_id;
+	uint32_t lsig_b;
+	uint32_t ppdu_start_timestamp;
+} __attribute__((__packed__));
 
 /* Masks for HE SIG known fields in mon_rx_status structure */
 #define QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU0	0x00000001

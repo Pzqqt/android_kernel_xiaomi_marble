@@ -517,6 +517,8 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info,
 		ppdu_info->com_info.ppdu_timestamp =
 			HAL_RX_GET(rx_tlv, RX_PPDU_START_2,
 				PPDU_START_TIMESTAMP);
+		ppdu_info->rx_status.ppdu_timestamp =
+			ppdu_info->com_info.ppdu_timestamp;
 		ppdu_info->rx_state = HAL_RX_MON_PPDU_START;
 		break;
 
@@ -647,6 +649,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info,
 				L_SIG_B_INFO_PHYRX_L_SIG_B_INFO_DETAILS);
 
 		value = HAL_RX_GET(l_sig_b_info, L_SIG_B_INFO_0, RATE);
+		ppdu_info->rx_status.l_sig_b_info = *((uint32_t *)l_sig_b_info);
 		switch (value) {
 		case 1:
 			ppdu_info->rx_status.rate = HAL_11B_RATE_3MCS;
@@ -683,6 +686,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info,
 				L_SIG_A_INFO_PHYRX_L_SIG_A_INFO_DETAILS);
 
 		value = HAL_RX_GET(l_sig_a_info, L_SIG_A_INFO_0, RATE);
+		ppdu_info->rx_status.l_sig_a_info = *((uint32_t *)l_sig_a_info);
 		switch (value) {
 		case 8:
 			ppdu_info->rx_status.rate = HAL_11A_RATE_0MCS;

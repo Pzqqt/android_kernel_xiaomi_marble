@@ -130,6 +130,9 @@ struct cdp_cmn_ops {
 
 	uint8_t (*txrx_get_pdev_id_frm_pdev)(struct cdp_pdev *pdev);
 
+	void (*txrx_pdev_set_chan_noise_floor)(struct cdp_pdev *pdev,
+					       int16_t chan_noise_floor);
+
 	void (*txrx_set_nac)(struct cdp_peer *peer);
 
 	void (*txrx_set_pdev_tx_capture)(struct cdp_pdev *pdev, int val);

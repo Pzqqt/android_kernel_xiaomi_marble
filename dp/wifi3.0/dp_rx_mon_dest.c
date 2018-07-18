@@ -702,6 +702,10 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	if (mon_mpdu && pdev->monitor_vdev && pdev->monitor_vdev->osif_vdev) {
 		pdev->ppdu_info.rx_status.ppdu_id =
 			pdev->ppdu_info.com_info.ppdu_id;
+		pdev->ppdu_info.rx_status.device_id = soc->device_id;
+		pdev->ppdu_info.rx_status.chan_noise_floor =
+			pdev->chan_noise_floor;
+
 		qdf_nbuf_update_radiotap(&(pdev->ppdu_info.rx_status),
 			mon_mpdu, sizeof(struct rx_pkt_tlvs));
 		pdev->monitor_vdev->osif_rx_mon(

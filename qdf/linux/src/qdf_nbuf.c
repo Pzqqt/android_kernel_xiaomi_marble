@@ -3720,6 +3720,8 @@ static unsigned int qdf_nbuf_update_radiotap_vht_flags(
 {
 	uint16_t vht_flags = 0;
 
+	rtap_len = qdf_align(rtap_len, 2);
+
 	/* IEEE80211_RADIOTAP_VHT u16, u8, u8, u8[4], u8, u8, u16 */
 	vht_flags |= IEEE80211_RADIOTAP_VHT_KNOWN_STBC |
 		IEEE80211_RADIOTAP_VHT_KNOWN_GI |
@@ -3791,6 +3793,8 @@ qdf_nbuf_update_radiotap_he_flags(struct mon_rx_status *rx_status,
 	 * IEEE80211_RADIOTAP_HE u16, u16, u16, u16, u16, u16
 	 * Enable all "known" HE radiotap flags for now
 	 */
+	rtap_len = qdf_align(rtap_len, 2);
+
 	put_unaligned_le16(rx_status->he_data1, &rtap_buf[rtap_len]);
 	rtap_len += 2;
 
@@ -3831,6 +3835,8 @@ static unsigned int
 qdf_nbuf_update_radiotap_he_mu_flags(struct mon_rx_status *rx_status,
 				     int8_t *rtap_buf, uint32_t rtap_len)
 {
+	rtap_len = qdf_align(rtap_len, 2);
+
 	/*
 	 * IEEE80211_RADIOTAP_HE_MU u16, u16, u8[4]
 	 * Enable all "known" he-mu radiotap flags for now
@@ -3875,6 +3881,8 @@ static unsigned int
 qdf_nbuf_update_radiotap_he_mu_other_flags(struct mon_rx_status *rx_status,
 				     int8_t *rtap_buf, uint32_t rtap_len)
 {
+	rtap_len = qdf_align(rtap_len, 2);
+
 	/*
 	 * IEEE80211_RADIOTAP_HE-MU-OTHER u16, u16, u8, u8
 	 * Enable all "known" he-mu-other radiotap flags for now
@@ -3897,21 +3905,24 @@ qdf_nbuf_update_radiotap_he_mu_other_flags(struct mon_rx_status *rx_status,
 	return rtap_len;
 }
 
-#define NORMALIZED_TO_NOISE_FLOOR (-96)
 
-/* This is the length for radiotap, combined length
+/**
+ * This is the length for radiotap, combined length
  * (Mandatory part struct ieee80211_radiotap_header + RADIOTAP_HEADER_LEN)
  * cannot be more than available headroom_sz.
  * increase this when we add more radiotap elements.
+ * Number after '+' indicates maximum possible increase due to alignment
  */
 
-#define RADIOTAP_VHT_FLAGS_LEN 12
-#define RADIOTAP_HE_FLAGS_LEN 12
-#define RADIOTAP_HE_MU_FLAGS_LEN 8
-#define RADIOTAP_HE_MU_OTHER_FLAGS_LEN 18
-#define RADIOTAP_FIXED_HEADER_LEN 16
+#define RADIOTAP_VHT_FLAGS_LEN (12 + 1)
+#define RADIOTAP_HE_FLAGS_LEN (12 + 1)
+#define RADIOTAP_HE_MU_FLAGS_LEN (8 + 1)
+#define RADIOTAP_HE_MU_OTHER_FLAGS_LEN (18 + 1)
+#define RADIOTAP_FIXED_HEADER_LEN 17
 #define RADIOTAP_HT_FLAGS_LEN 3
-#define RADIOTAP_AMPDU_STATUS_LEN 8
+#define RADIOTAP_AMPDU_STATUS_LEN (8 + 3)
+#define RADIOTAP_VENDOR_NS_LEN \
+	(sizeof(struct qdf_radiotap_vendor_ns_ath) + 1)
 #define RADIOTAP_HEADER_LEN (sizeof(struct ieee80211_radiotap_header) + \
 				RADIOTAP_FIXED_HEADER_LEN + \
 				RADIOTAP_HT_FLAGS_LEN + \
@@ -3919,11 +3930,13 @@ qdf_nbuf_update_radiotap_he_mu_other_flags(struct mon_rx_status *rx_status,
 				RADIOTAP_AMPDU_STATUS_LEN + \
 				RADIOTAP_HE_FLAGS_LEN + \
 				RADIOTAP_HE_MU_FLAGS_LEN + \
-				RADIOTAP_HE_MU_OTHER_FLAGS_LEN)
+				RADIOTAP_HE_MU_OTHER_FLAGS_LEN + \
+				RADIOTAP_VENDOR_NS_LEN)
 
 #define IEEE80211_RADIOTAP_HE 23
 #define IEEE80211_RADIOTAP_HE_MU	24
 #define IEEE80211_RADIOTAP_HE_MU_OTHER	25
+uint8_t ATH_OUI[] = {0x00, 0x03, 0x7f}; /* Atheros OUI */
 
 /**
  * radiotap_num_to_freq() - Get frequency from chan number
@@ -3975,6 +3988,8 @@ static unsigned int qdf_nbuf_update_radiotap_ampdu_flags(
 	uint16_t ampdu_flags = 0;
 	uint16_t ampdu_reserved_flags = 0;
 
+	rtap_len = qdf_align(rtap_len, 4);
+
 	put_unaligned_le32(ampdu_reference_num, &rtap_buf[rtap_len]);
 	rtap_len += 4;
 	put_unaligned_le16(ampdu_flags, &rtap_buf[rtap_len]);
@@ -4002,14 +4017,15 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	uint32_t rtap_hdr_len = sizeof(struct ieee80211_radiotap_header);
 	uint32_t rtap_len = rtap_hdr_len;
 	uint8_t length = rtap_len;
+	struct qdf_radiotap_vendor_ns_ath *radiotap_vendor_ns_ath;
 
 	/* IEEE80211_RADIOTAP_TSFT              __le64       microseconds*/
-	rthdr->it_present = cpu_to_le32(1 << IEEE80211_RADIOTAP_TSFT);
+	rthdr->it_present = (1 << IEEE80211_RADIOTAP_TSFT);
 	put_unaligned_le64(rx_status->tsft, &rtap_buf[rtap_len]);
 	rtap_len += 8;
 
 	/* IEEE80211_RADIOTAP_FLAGS u8 */
-	rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_FLAGS);
+	rthdr->it_present |= (1 << IEEE80211_RADIOTAP_FLAGS);
 
 	if (rx_status->rs_fcs_err)
 		rx_status->rtap_flags |= IEEE80211_RADIOTAP_F_BADFCS;
@@ -4020,14 +4036,14 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	/* IEEE80211_RADIOTAP_RATE  u8           500kb/s */
 	if (!rx_status->ht_flags && !rx_status->vht_flags &&
 	    !rx_status->he_flags) {
-		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_RATE);
+		rthdr->it_present |= (1 << IEEE80211_RADIOTAP_RATE);
 		rtap_buf[rtap_len] = rx_status->rate;
 	} else
 		rtap_buf[rtap_len] = 0;
 	rtap_len += 1;
 
 	/* IEEE80211_RADIOTAP_CHANNEL 2 x __le16   MHz, bitmap */
-	rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_CHANNEL);
+	rthdr->it_present |= (1 << IEEE80211_RADIOTAP_CHANNEL);
 	rx_status->chan_freq = radiotap_num_to_freq(rx_status->chan_num);
 	put_unaligned_le16(rx_status->chan_freq, &rtap_buf[rtap_len]);
 	rtap_len += 2;
@@ -4046,17 +4062,21 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	/* IEEE80211_RADIOTAP_DBM_ANTSIGNAL s8  decibels from one milliwatt
 	 *					(dBm)
 	 */
-	rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL);
+	rthdr->it_present |= (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL);
 	/*
 	 * rssi_comb is int dB, need to convert it to dBm.
 	 * normalize value to noise floor of -96 dBm
 	 */
-	rtap_buf[rtap_len] = rx_status->rssi_comb +
-		NORMALIZED_TO_NOISE_FLOOR;
+	rtap_buf[rtap_len] = rx_status->rssi_comb + rx_status->chan_noise_floor;
+	rtap_len += 1;
+
+	/* RX signal noise floor */
+	rthdr->it_present |= (1 << IEEE80211_RADIOTAP_DBM_ANTNOISE);
+	rtap_buf[rtap_len] = (uint8_t)rx_status->chan_noise_floor;
 	rtap_len += 1;
 
 	/* IEEE80211_RADIOTAP_ANTENNA   u8      antenna index */
-	rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_ANTENNA);
+	rthdr->it_present |= (1 << IEEE80211_RADIOTAP_ANTENNA);
 	rtap_buf[rtap_len] = rx_status->nr_ant;
 	rtap_len += 1;
 
@@ -4068,7 +4088,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	if (rx_status->ht_flags) {
 		length = rtap_len;
 		/* IEEE80211_RADIOTAP_VHT u8, u8, u8 */
-		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_MCS);
+		rthdr->it_present |= (1 << IEEE80211_RADIOTAP_MCS);
 		rtap_buf[rtap_len] = IEEE80211_RADIOTAP_MCS_HAVE_BW |
 					IEEE80211_RADIOTAP_MCS_HAVE_MCS |
 					IEEE80211_RADIOTAP_MCS_HAVE_GI;
@@ -4093,8 +4113,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 
 	if (rx_status->rs_flags & IEEE80211_AMPDU_FLAG) {
 		/* IEEE80211_RADIOTAP_AMPDU_STATUS u32 u16 u8 u8 */
-		rthdr->it_present |=
-			cpu_to_le32(1 << IEEE80211_RADIOTAP_AMPDU_STATUS);
+		rthdr->it_present |= (1 << IEEE80211_RADIOTAP_AMPDU_STATUS);
 		rtap_len = qdf_nbuf_update_radiotap_ampdu_flags(rx_status,
 								rtap_buf,
 								rtap_len);
@@ -4103,7 +4122,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	if (rx_status->vht_flags) {
 		length = rtap_len;
 		/* IEEE80211_RADIOTAP_VHT u16, u8, u8, u8[4], u8, u8, u16 */
-		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_VHT);
+		rthdr->it_present |= (1 << IEEE80211_RADIOTAP_VHT);
 		rtap_len = qdf_nbuf_update_radiotap_vht_flags(rx_status,
 								rtap_buf,
 								rtap_len);
@@ -4117,7 +4136,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	if (rx_status->he_flags) {
 		length = rtap_len;
 		/* IEEE80211_RADIOTAP_HE */
-		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_HE);
+		rthdr->it_present |= (1 << IEEE80211_RADIOTAP_HE);
 		rtap_len = qdf_nbuf_update_radiotap_he_flags(rx_status,
 								rtap_buf,
 								rtap_len);
@@ -4131,7 +4150,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	if (rx_status->he_mu_flags) {
 		length = rtap_len;
 		/* IEEE80211_RADIOTAP_HE-MU */
-		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_HE_MU);
+		rthdr->it_present |= (1 << IEEE80211_RADIOTAP_HE_MU);
 		rtap_len = qdf_nbuf_update_radiotap_he_mu_flags(rx_status,
 								rtap_buf,
 								rtap_len);
@@ -4145,8 +4164,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	if (rx_status->he_mu_other_flags) {
 		length = rtap_len;
 		/* IEEE80211_RADIOTAP_HE-MU-OTHER */
-		rthdr->it_present |=
-			cpu_to_le32(1 << IEEE80211_RADIOTAP_HE_MU_OTHER);
+		rthdr->it_present |= (1 << IEEE80211_RADIOTAP_HE_MU_OTHER);
 		rtap_len =
 			qdf_nbuf_update_radiotap_he_mu_other_flags(rx_status,
 								rtap_buf,
@@ -4158,7 +4176,34 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 		}
 	}
 
+	rtap_len = qdf_align(rtap_len, 2);
+	/*
+	 * Radiotap Vendor Namespace
+	 */
+	rthdr->it_present |= (1 << IEEE80211_RADIOTAP_VENDOR_NAMESPACE);
+	radiotap_vendor_ns_ath = (struct qdf_radiotap_vendor_ns_ath *)
+					(rtap_buf + rtap_len);
+	/*
+	 * Copy Atheros OUI - 3 bytes (4th byte is 0)
+	 */
+	qdf_mem_copy(radiotap_vendor_ns_ath->hdr.oui, ATH_OUI, sizeof(ATH_OUI));
+	/*
+	 * Name space selector = 0
+	 * We only will have one namespace for now
+	 */
+	radiotap_vendor_ns_ath->hdr.selector = 0;
+	radiotap_vendor_ns_ath->hdr.skip_length = cpu_to_le16(
+					sizeof(*radiotap_vendor_ns_ath) -
+					sizeof(radiotap_vendor_ns_ath->hdr));
+	radiotap_vendor_ns_ath->device_id = cpu_to_le32(rx_status->device_id);
+	radiotap_vendor_ns_ath->lsig = cpu_to_le32(rx_status->l_sig_a_info);
+	radiotap_vendor_ns_ath->lsig_b = cpu_to_le32(rx_status->l_sig_b_info);
+	radiotap_vendor_ns_ath->ppdu_start_timestamp =
+				cpu_to_le32(rx_status->ppdu_timestamp);
+	rtap_len += sizeof(*radiotap_vendor_ns_ath);
+
 	rthdr->it_len = cpu_to_le16(rtap_len);
+	rthdr->it_present = cpu_to_le32(rthdr->it_present);
 
 	if (headroom_sz < rtap_len) {
 		qdf_err("ERROR: not enough space to update radiotap");

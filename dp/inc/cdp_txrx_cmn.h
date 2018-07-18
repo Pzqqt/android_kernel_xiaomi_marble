@@ -1482,6 +1482,24 @@ uint8_t cdp_get_pdev_id_frm_pdev(ol_txrx_soc_handle soc,
 }
 
 /**
+ * cdp_pdev_set_chan_noise_floor() - Set channel noise floor to DP layer
+ * @soc: opaque soc handle
+ * @pdev: data path pdev handle
+ * @chan_noise_floor: Channel Noise Floor (in dbM) obtained from control path
+ *
+ * Return: None
+ */
+static inline
+void cdp_pdev_set_chan_noise_floor(ol_txrx_soc_handle soc,
+				   struct cdp_pdev *pdev,
+				   int16_t chan_noise_floor)
+{
+	if (soc->ops->cmn_drv_ops->txrx_pdev_set_chan_noise_floor)
+		return soc->ops->cmn_drv_ops->txrx_pdev_set_chan_noise_floor(
+				pdev, chan_noise_floor);
+}
+
+/**
  * cdp_set_nac() - set nac
  * @soc: opaque soc handle
  * @peer: data path peer handle
