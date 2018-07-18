@@ -3735,8 +3735,11 @@ end:
 static void hif_target_sync(struct hif_softc *scn)
 {
 	hif_write32_mb(scn, scn->mem + (SOC_CORE_BASE_ADDRESS |
-				PCIE_INTR_ENABLE_ADDRESS),
-				PCIE_INTR_FIRMWARE_MASK);
+			    PCIE_INTR_ENABLE_ADDRESS),
+			    PCIE_INTR_FIRMWARE_MASK | PCIE_INTR_CE_MASK_ALL);
+	/* read to flush pcie write */
+	(void)hif_read32_mb(scn, scn->mem + (SOC_CORE_BASE_ADDRESS |
+			PCIE_INTR_ENABLE_ADDRESS));
 
 	hif_write32_mb(scn, scn->mem + PCIE_LOCAL_BASE_ADDRESS +
 			PCIE_SOC_WAKE_ADDRESS,
@@ -3757,8 +3760,11 @@ static void hif_target_sync(struct hif_softc *scn)
 			if (wait_limit-- < 0)
 				break;
 			hif_write32_mb(scn, scn->mem + (SOC_CORE_BASE_ADDRESS |
-				PCIE_INTR_ENABLE_ADDRESS),
-				PCIE_INTR_FIRMWARE_MASK);
+			    PCIE_INTR_ENABLE_ADDRESS),
+			    PCIE_INTR_FIRMWARE_MASK | PCIE_INTR_CE_MASK_ALL);
+			    /* read to flush pcie write */
+			(void)hif_read32_mb(scn, scn->mem +
+			    (SOC_CORE_BASE_ADDRESS | PCIE_INTR_ENABLE_ADDRESS));
 
 			qdf_mdelay(10);
 		}
