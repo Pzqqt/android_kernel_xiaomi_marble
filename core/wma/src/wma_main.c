@@ -1724,7 +1724,7 @@ static int wma_process_fw_event_mc_thread_ctx(void *ctx, void *ev)
 	}
 
 	params_buf->wmi_handle = (struct wmi_unified *)ctx;
-	params_buf->evt_buf = (wmi_buf_t *)ev;
+	params_buf->evt_buf = ev;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	event_id = WMI_GET_FIELD(qdf_nbuf_data(params_buf->evt_buf),
@@ -1777,8 +1777,7 @@ int wma_process_fw_event_handler(void *ctx, void *htc_packet, uint8_t rx_ctx)
 		return err;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		WMA_LOGE("target_psoc_info is null");
 		return err;
@@ -1786,8 +1785,8 @@ int wma_process_fw_event_handler(void *ctx, void *htc_packet, uint8_t rx_ctx)
 
 	is_wmi_ready = target_psoc_get_wmi_ready(tgt_hdl);
 	if (!is_wmi_ready) {
-		WMA_LOGW("wmi event recvd before wmi_ready_event is fully processed");
-		WMA_LOGW("therefore use worker thread");
+		WMA_LOGD("fw event recvd before ready event processed");
+		WMA_LOGD("therefore use worker thread");
 		wmi_process_fw_event_worker_thread_ctx(ctx, htc_packet);
 		return err;
 	}
