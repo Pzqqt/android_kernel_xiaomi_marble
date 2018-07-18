@@ -3439,6 +3439,21 @@ struct afe_param_id_aptx_sync_mode {
 	uint32_t     sync_mode;
 } __packed;
 
+#define AFE_ID_APTX_ADAPTIVE_ENC_INIT 0x00013324
+
+struct afe_id_aptx_adaptive_enc_init
+{
+	uint32_t  sampling_freq;
+	uint32_t  mtu;
+	uint32_t  channel_mode;
+	uint32_t  min_sink_modeA;
+	uint32_t  max_sink_modeA;
+	uint32_t  min_sink_modeB;
+	uint32_t  max_sink_modeB;
+	uint32_t  min_sink_modeC;
+	uint32_t  max_sink_modeC;
+} __attribute__ ((packed));
+
 /*
  * Generic encoder module ID.
  * This module supports the following parameter IDs:
@@ -3504,6 +3519,7 @@ struct afe_param_id_aptx_sync_mode {
  * Macro for defining the depacketizer ID: COP.
  */
 #define AFE_MODULE_ID_DEPACKETIZER_COP        0x00013233
+#define AFE_MODULE_ID_DEPACKETIZER_COP_V1     0x000132E9
 
 /*
  * Depacketizer type parameter for the #AVS_MODULE_ID_DECODER module.
@@ -3693,6 +3709,9 @@ struct asm_aac_enc_cfg_v2_t {
 /* FMT ID for apt-X HD */
 #define ASM_MEDIA_FMT_APTX_HD 0x00013200
 
+/* FMT ID for apt-X Adaptive */
+#define ASM_MEDIA_FMT_APTX_ADAPTIVE 0x00013204
+
 #define PCM_CHANNEL_L         1
 #define PCM_CHANNEL_R         2
 #define PCM_CHANNEL_C         3
@@ -3722,6 +3741,13 @@ struct asm_aptx_enc_cfg_t {
 	struct asm_custom_enc_cfg_t custom_cfg;
 	struct asm_aptx_v2_enc_cfg_ext_t aptx_v2_cfg;
 } __packed;
+
+struct asm_aptx_ad_enc_cfg_t
+{
+	struct asm_custom_enc_cfg_t  custom_cfg;
+	struct afe_id_aptx_adaptive_enc_init aptx_ad_cfg;
+	struct afe_abr_enc_cfg_t abr_cfg;
+} __attribute__ ((packed));
 
 #define ASM_MEDIA_FMT_CELT 0x00013221
 struct asm_celt_specific_enc_cfg_t {
@@ -3886,6 +3912,7 @@ union afe_enc_config_data {
 	struct asm_celt_enc_cfg_t  celt_config;
 	struct asm_aptx_enc_cfg_t  aptx_config;
 	struct asm_ldac_enc_cfg_t  ldac_config;
+	struct asm_aptx_ad_enc_cfg_t  aptx_ad_config;
 };
 
 struct afe_enc_config {
