@@ -1214,8 +1214,7 @@ HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_SDIO_NATIVE_INC_DIR)
 endif
 
 HIF_COMMON_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o
+		   $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main.o
 
 ifeq ($(CONFIG_WLAN_NAPI), y)
 HIF_COMMON_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_exec.o
@@ -1226,6 +1225,7 @@ HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_diag.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_main.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_tasklet.o \
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o
 
 ifeq ($(CONFIG_WLAN_FEATURE_BMI), y)
