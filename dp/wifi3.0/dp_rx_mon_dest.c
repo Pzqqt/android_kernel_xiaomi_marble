@@ -31,6 +31,14 @@
 
 /* The maxinum buffer length allocated for radio tap */
 #define MAX_MONITOR_HEADER (512)
+/*
+ * PPDU id is from 0 to 64k-1. PPDU id read from status ring and PPDU id
+ * read from destination ring shall track each other. If the distance of
+ * two ppdu id is less than 20000. It is assume no wrap around. Otherwise,
+ * It is assume wrap around.
+ */
+#define NOT_PPDU_ID_WRAP_AROUND 20000
+
 /**
  * dp_rx_mon_link_desc_return() - Return a MPDU link descriptor to HW
  *			      (WBM), following error handling
@@ -143,7 +151,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	void *p_buf_addr_info;
 	void *p_last_buf_addr_info;
 	uint32_t rx_bufs_used = 0;
-	uint32_t msdu_ppdu_id, msdu_cnt, last_ppdu_id;
+	uint32_t msdu_ppdu_id, msdu_cnt;
 	uint8_t *data;
 	uint32_t i;
 	uint32_t total_frag_len = 0, frag_len = 0;
@@ -151,7 +159,6 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	bool drop_mpdu = false;
 
 	msdu = 0;
-	last_ppdu_id = dp_pdev->ppdu_info.com_info.last_ppdu_id;
 
 	last = NULL;
 
@@ -210,10 +217,9 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_DEBUG,
-				"[%s] i=%d, ppdu_id=%x, "
-				"last_ppdu_id=%x num_msdus = %u",
+				"[%s] i=%d, ppdu_id=%x, num_msdus = %u\n",
 				__func__, i, *ppdu_id,
-				last_ppdu_id, num_msdus);
+				 num_msdus);
 
 			if (is_first_msdu) {
 				msdu_ppdu_id = HAL_RX_HW_DESC_GET_PPDUID_GET(
@@ -233,11 +239,18 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 						__func__, __LINE__, *ppdu_id,
 						msdu_ppdu_id);
 
-				if ((*ppdu_id < msdu_ppdu_id) && (*ppdu_id >
-					last_ppdu_id)) {
+				if ((*ppdu_id < msdu_ppdu_id) && (
+					(msdu_ppdu_id - *ppdu_id) <
+						NOT_PPDU_ID_WRAP_AROUND)) {
+					*ppdu_id = msdu_ppdu_id;
+					return rx_bufs_used;
+				} else if ((*ppdu_id > msdu_ppdu_id) && (
+					(*ppdu_id - msdu_ppdu_id) >
+						NOT_PPDU_ID_WRAP_AROUND)) {
 					*ppdu_id = msdu_ppdu_id;
 					return rx_bufs_used;
 				}
+
 			}
 
 			if (hal_rx_desc_is_first_msdu(rx_desc_tlv))
@@ -864,8 +877,6 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 			qdf_mem_zero(&(pdev->ppdu_info.rx_status),
 				sizeof(pdev->ppdu_info.rx_status));
-			pdev->ppdu_info.com_info.last_ppdu_id =
-				pdev->ppdu_info.com_info.ppdu_id;
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 					  "%s %d ppdu_id %x != ppdu_info.com_info .ppdu_id %x",
 					  __func__, __LINE__,

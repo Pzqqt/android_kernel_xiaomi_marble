@@ -409,7 +409,6 @@ struct hal_rx_ppdu_user_info {
 
 struct hal_rx_ppdu_common_info {
 	uint32_t ppdu_id;
-	uint32_t last_ppdu_id;
 	uint32_t ppdu_timestamp;
 	uint32_t mpdu_cnt_fcs_ok;
 	uint32_t mpdu_cnt_fcs_err;
