@@ -45,8 +45,7 @@
  * Return: void
  */
 
-void hal_tx_desc_set_dscp_tid_table_id_8074(void *desc,
-					    uint8_t id)
+static void hal_tx_desc_set_dscp_tid_table_id_8074(void *desc, uint8_t id)
 {
 	HAL_SET_FLD(desc, TCL_DATA_CMD_3,
 		    DSCP_TO_TID_PRIORITY_TABLE_ID) |=
@@ -67,8 +66,8 @@ void hal_tx_desc_set_dscp_tid_table_id_8074(void *desc,
  *
  * Return: none
  */
-void hal_tx_set_dscp_tid_map_8074(void *hal_soc, uint8_t *map,
-				  uint8_t id)
+static void hal_tx_set_dscp_tid_map_8074(void *hal_soc, uint8_t *map,
+					 uint8_t id)
 {
 	int i;
 	uint32_t addr;
@@ -114,6 +113,7 @@ void hal_tx_set_dscp_tid_map_8074(void *hal_soc, uint8_t *map,
  *
  * Return: void
  */
+static
 void hal_tx_update_dscp_tid_8074(void *hal_soc, uint8_t tid,
 				 uint8_t id, uint8_t dscp)
 {
@@ -157,7 +157,6 @@ void hal_tx_update_dscp_tid_8074(void *hal_soc, uint8_t tid,
  *
  * Return: void
  */
-void hal_tx_desc_set_lmac_id_8074(void *desc,
-				  uint8_t lmac_id)
+static void hal_tx_desc_set_lmac_id_8074(void *desc, uint8_t lmac_id)
 {
 }

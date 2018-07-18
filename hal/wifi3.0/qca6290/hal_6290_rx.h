@@ -80,8 +80,8 @@ hal_rx_msdu_start_nss_get_6290(uint8_t *buf)
  *
  * Return: void
  */
-void hal_rx_mon_hw_desc_get_mpdu_status_6290(void *hw_desc_addr,
-					     struct mon_rx_status *rs)
+static void hal_rx_mon_hw_desc_get_mpdu_status_6290(void *hw_desc_addr,
+						    struct mon_rx_status *rs)
 {
 	struct rx_msdu_start *rx_msdu_start;
 	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
@@ -128,7 +128,7 @@ void hal_rx_mon_hw_desc_get_mpdu_status_6290(void *hw_desc_addr,
 
 #define LINK_DESC_SIZE (NUM_OF_DWORDS_RX_MSDU_LINK << 2)
 
-uint32_t hal_get_link_desc_size_6290(void)
+static uint32_t hal_get_link_desc_size_6290(void)
 {
 	return LINK_DESC_SIZE;
 }
@@ -153,6 +153,7 @@ static uint8_t hal_rx_get_tlv_6290(void *rx_tlv)
  *
  * Return: None
  */
+static
 void hal_rx_proc_phyrx_other_receive_info_tlv_6290(void *rx_tlv_hdr,
 						   void *ppdu_info_handle)
 {

@@ -63,8 +63,8 @@ hal_rx_msdu_start_nss_get_8074(uint8_t *buf)
  *
  * Return: void
  */
-void hal_rx_mon_hw_desc_get_mpdu_status_8074(void *hw_desc_addr,
-					     struct mon_rx_status *rs)
+static void hal_rx_mon_hw_desc_get_mpdu_status_8074(void *hw_desc_addr,
+						    struct mon_rx_status *rs)
 {
 	struct rx_msdu_start *rx_msdu_start;
 	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
@@ -134,6 +134,7 @@ static uint8_t hal_rx_get_tlv_8074(void *rx_tlv)
  *
  * Return: None
  */
+static
 void hal_rx_proc_phyrx_other_receive_info_tlv_8074(void *rx_tlv_hdr,
 						   void *ppdu_info)
 {

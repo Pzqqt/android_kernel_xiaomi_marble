@@ -80,8 +80,8 @@ hal_rx_msdu_start_nss_get_6390(uint8_t *buf)
  *
  * Return: void
  */
-void hal_rx_mon_hw_desc_get_mpdu_status_6390(void *hw_desc_addr,
-					     struct mon_rx_status *rs)
+static void hal_rx_mon_hw_desc_get_mpdu_status_6390(void *hw_desc_addr,
+						    struct mon_rx_status *rs)
 {
 	struct rx_msdu_start *rx_msdu_start;
 	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
@@ -128,7 +128,7 @@ void hal_rx_mon_hw_desc_get_mpdu_status_6390(void *hw_desc_addr,
 
 #define LINK_DESC_SIZE (NUM_OF_DWORDS_RX_MSDU_LINK << 2)
 
-uint32_t hal_get_link_desc_size_6390(void)
+static uint32_t hal_get_link_desc_size_6390(void)
 {
 	return LINK_DESC_SIZE;
 }
@@ -152,6 +152,7 @@ static uint8_t hal_rx_get_tlv_6390(void *rx_tlv)
  *
  * Return: None
  */
+static
 void hal_rx_proc_phyrx_other_receive_info_tlv_6390(void *rx_tlv_hdr,
 						   void *ppdu_info_handle)
 {
@@ -189,7 +190,7 @@ void hal_rx_proc_phyrx_other_receive_info_tlv_6390(void *rx_tlv_hdr,
  *
  * Return: void
  */
-void hal_rx_dump_msdu_start_tlv_6390(void *msdustart,   uint8_t dbg_level)
+static void hal_rx_dump_msdu_start_tlv_6390(void *msdustart, uint8_t dbg_level)
 {
 	struct rx_msdu_start *msdu_start = (struct rx_msdu_start *)msdustart;
 
@@ -425,8 +426,7 @@ uint32_t hal_rx_msdu_start_reception_type_get_6390(uint8_t *buf)
  * @ buf: pointer to the start of RX PKT TLV headers
  * Return: da index
  */
-static
-uint16_t hal_rx_msdu_end_da_idx_get_6390(uint8_t *buf)
+static uint16_t hal_rx_msdu_end_da_idx_get_6390(uint8_t *buf)
 {
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
 	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;

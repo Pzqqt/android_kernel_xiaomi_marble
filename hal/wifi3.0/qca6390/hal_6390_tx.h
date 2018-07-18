@@ -47,8 +47,7 @@
  *
  * Return: void
  */
-void hal_tx_desc_set_dscp_tid_table_id_6390(void *desc,
-					    uint8_t id)
+static void hal_tx_desc_set_dscp_tid_table_id_6390(void *desc, uint8_t id)
 {
 	HAL_SET_FLD(desc, TCL_DATA_CMD_5,
 		    DSCP_TID_TABLE_NUM) |=
@@ -70,8 +69,8 @@ void hal_tx_desc_set_dscp_tid_table_id_6390(void *desc,
  *
  * Return: none
  */
-void hal_tx_set_dscp_tid_map_6390(void *hal_soc, uint8_t *map,
-				  uint8_t id)
+static void hal_tx_set_dscp_tid_map_6390(void *hal_soc, uint8_t *map,
+					 uint8_t id)
 {
 	int i;
 	uint32_t addr, cmn_reg_addr;
@@ -137,8 +136,8 @@ void hal_tx_set_dscp_tid_map_6390(void *hal_soc, uint8_t *map,
  *
  * Return: void
  */
-void hal_tx_update_dscp_tid_6390(void *hal_soc, uint8_t tid,
-				 uint8_t id, uint8_t dscp)
+static void hal_tx_update_dscp_tid_6390(void *hal_soc, uint8_t tid,
+					uint8_t id, uint8_t dscp)
 {
 	int index;
 	uint32_t addr;
@@ -171,8 +170,7 @@ void hal_tx_update_dscp_tid_6390(void *hal_soc, uint8_t tid,
  *
  * Return: void
  */
-void hal_tx_desc_set_lmac_id_6390(void *desc,
-				  uint8_t lmac_id)
+static void hal_tx_desc_set_lmac_id_6390(void *desc, uint8_t lmac_id)
 {
 	HAL_SET_FLD(desc, TCL_DATA_CMD_4, LMAC_ID) |=
 		HAL_TX_SM(TCL_DATA_CMD_4, LMAC_ID, lmac_id);
