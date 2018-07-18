@@ -1675,8 +1675,12 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	}
 
 	/* flush any pending powersave timers */
-	hdd_for_each_adapter(hdd_ctx, adapter)
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->session_id >= MAX_NUMBER_OF_ADAPTERS)
+			continue;
+
 		sme_ps_timer_flush_sync(mac_handle, adapter->session_id);
+	}
 
 	/*
 	 * Suspend IPA early before proceeding to suspend other entities like
