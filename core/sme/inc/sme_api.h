@@ -2418,6 +2418,15 @@ int sme_update_he_tx_bfee_supp(tHalHandle hal, uint8_t session_id,
  */
 int sme_update_he_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 			       uint8_t cfg_val);
+
+/**
+ * sme_set_he_tx_bf_cbf_rates() - sets the HE Tx Bfee CBF frame rates to FW
+ * @session_id: SME session id
+ *
+ * Return: None
+ */
+void sme_set_he_tx_bf_cbf_rates(uint8_t session_id);
+
 /**
  * sme_update_he_mcs() - sets the HE MCS based on user request
  * @hal: Pointer to HAL
@@ -2571,6 +2580,10 @@ static inline int sme_update_he_tx_bfee_nsts(mac_handle_t hal, uint8_t session_i
 					     uint8_t cfg_val)
 {
 	return 0;
+}
+
+static inline void sme_set_he_tx_bf_cbf_rates(uint8_t session_id)
+{
 }
 #endif
 

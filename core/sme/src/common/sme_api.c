@@ -12699,6 +12699,9 @@ int sme_update_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 		return -EFAULT;
 	}
 
+	if (usr_cfg_val)
+		sme_set_he_tx_bf_cbf_rates(session_id);
+
 	return sme_update_he_tx_bfee_nsts(hal, session_id, nsts_set_val);
 }
 #ifdef WLAN_FEATURE_11AX
@@ -12881,6 +12884,23 @@ int sme_update_he_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 {
 	return sme_update_he_cap(hal, session_id, WNI_CFG_HE_BFEE_STS_LT80,
 				 cfg_val);
+}
+
+void sme_set_he_tx_bf_cbf_rates(uint8_t session_id)
+{
+	uint32_t tx_bf_cbf_rates_5g[] = {91, 1, 0, 3, 2, 4, 0};
+	uint32_t tx_bf_cbf_rates_2g[] = {91, 1, 1, 3, 1, 3, 0};
+	QDF_STATUS status;
+
+	status = wma_form_unit_test_cmd_and_send(session_id, 0x48, 7,
+						 tx_bf_cbf_rates_5g);
+	if (QDF_STATUS_SUCCESS != status)
+		sme_err("send_unit_test_cmd returned %d", status);
+
+	status = wma_form_unit_test_cmd_and_send(session_id, 0x48, 7,
+						 tx_bf_cbf_rates_2g);
+	if (QDF_STATUS_SUCCESS != status)
+		sme_err("send_unit_test_cmd returned %d", status);
 }
 
 int sme_update_he_tx_stbc_cap(tHalHandle hal, uint8_t session_id, int value)
