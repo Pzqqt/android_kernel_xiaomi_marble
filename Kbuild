@@ -1490,15 +1490,18 @@ ifeq ($(CONFIG_HIF_USB), y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_usb.o
 endif
 
+TARGET_INC := 	-I$(WLAN_ROOT)/../fw-api/fw
+
+ifeq ($(CONFIG_CNSS_QCA6290), y)
 ifeq ($(CONFIG_QCA6290_11AX), y)
-TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/11ax/v2 \
-		-I$(WLAN_ROOT)/../fw-api/fw
-else ifeq ($(CONFIG_QCA6390_11AX), y)
-TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6390/v1 \
-		-I$(WLAN_ROOT)/../fw-api/fw
+TARGET_INC +=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/11ax/v2
 else
-TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/v2 \
-		-I$(WLAN_ROOT)/../fw-api/fw
+TARGET_INC +=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/v2
+endif
+endif
+
+ifeq ($(CONFIG_CNSS_QCA6390), y)
+TARGET_INC +=	-I$(WLAN_ROOT)/../fw-api/hw/qca6390/v1
 endif
 
 LINUX_INC :=	-Iinclude
