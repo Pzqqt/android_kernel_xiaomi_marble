@@ -166,7 +166,15 @@ QDF_STATUS sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 	pe_err("TimIeOffset:[%d]", beaconParams->TimIeOffset);
 #endif
 
-	beaconParams->beacon = beaconPayload;
+	if (size >= SIR_MAX_BEACON_SIZE) {
+		pe_err("beacon size (%d) exceed host limit %d",
+		       size, SIR_MAX_BEACON_SIZE);
+		QDF_ASSERT(0);
+		qdf_mem_free(beaconParams);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_copy(beaconParams->beacon, beaconPayload, size);
+
 	beaconParams->beaconLength = (uint32_t) size;
 	msgQ.bodyptr = beaconParams;
 	msgQ.bodyval = 0;
@@ -346,7 +354,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 	nBytes += nPayload + sizeof(tSirMacMgmtHdr);
 
 	/* Make sure we are not exceeding allocated len */
-	if (nBytes > SCH_MAX_PROBE_RESP_SIZE) {
+	if (nBytes > SIR_MAX_PROBE_RESP_SIZE) {
 		pe_err("nBytes %d greater than max size", nBytes);
 		qdf_mem_free(addIE);
 		return QDF_STATUS_E_FAILURE;
@@ -394,7 +402,8 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 		pe_err("malloc failed for bytes %d", nBytes);
 	} else {
 		sir_copy_mac_addr(pprobeRespParams->bssId, psessionEntry->bssId);
-		pprobeRespParams->pProbeRespTemplate = pFrame2Hal;
+		qdf_mem_copy(pprobeRespParams->probeRespTemplate,
+			     pFrame2Hal, nBytes);
 		pprobeRespParams->probeRespTemplateLen = nBytes;
 		qdf_mem_copy(pprobeRespParams->ucProxyProbeReqValidIEBmap,
 			     IeBitmap, (sizeof(uint32_t) * 8));

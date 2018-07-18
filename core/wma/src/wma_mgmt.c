@@ -2538,11 +2538,11 @@ static int wmi_unified_probe_rsp_tmpl_send(tp_wma_handle wma,
 	adjusted_tsf_le = cpu_to_le64(0ULL -
 				      wma->interfaces[vdev_id].tsfadjust);
 	/* Update the timstamp in the probe response buffer with adjusted TSF */
-	wh = (struct ieee80211_frame *)probe_rsp_info->pProbeRespTemplate;
+	wh = (struct ieee80211_frame *)probe_rsp_info->probeRespTemplate;
 	A_MEMCPY(&wh[1], &adjusted_tsf_le, sizeof(adjusted_tsf_le));
 
 	params.prb_rsp_template_len = probe_rsp_info->probeRespTemplateLen;
-	params.prb_rsp_template_frm = probe_rsp_info->pProbeRespTemplate;
+	params.prb_rsp_template_frm = probe_rsp_info->probeRespTemplate;
 
 	return wmi_unified_probe_rsp_tmpl_send_cmd(wma->wmi_handle, vdev_id,
 						   &params);
@@ -2761,7 +2761,8 @@ int wma_tbttoffset_update_event_handler(void *handle, uint8_t *event,
 
 		qdf_spin_lock_bh(&bcn->lock);
 		qdf_mem_zero(&bcn_info, sizeof(bcn_info));
-		bcn_info.beacon = qdf_nbuf_data(bcn->buf);
+		qdf_mem_copy(bcn_info.beacon,
+			     qdf_nbuf_data(bcn->buf), bcn->len);
 		bcn_info.p2pIeOffset = bcn->p2p_ie_offset;
 		bcn_info.beaconLength = bcn->len;
 		bcn_info.timIeOffset = bcn->tim_ie_offset;
@@ -2815,7 +2816,8 @@ void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
 		return;
 	}
 
-	probe_rsp = (struct sAniProbeRspStruct *) (probe_rsp_info->pProbeRespTemplate);
+	probe_rsp = (struct sAniProbeRspStruct *)
+			(probe_rsp_info->probeRespTemplate);
 	if (!probe_rsp) {
 		WMA_LOGE(FL("probe_rsp is NULL"));
 		return;

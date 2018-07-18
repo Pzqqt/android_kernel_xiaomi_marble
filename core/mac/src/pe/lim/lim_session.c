@@ -620,11 +620,11 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 
 	if (eSIR_INFRA_AP_MODE == bssType || eSIR_IBSS_MODE == bssType) {
 		session_ptr->pSchProbeRspTemplate =
-			qdf_mem_malloc(SCH_MAX_PROBE_RESP_SIZE);
+			qdf_mem_malloc(SIR_MAX_PROBE_RESP_SIZE);
 		session_ptr->pSchBeaconFrameBegin =
-			qdf_mem_malloc(SCH_MAX_BEACON_SIZE);
+			qdf_mem_malloc(SIR_MAX_BEACON_SIZE);
 		session_ptr->pSchBeaconFrameEnd =
-			qdf_mem_malloc(SCH_MAX_BEACON_SIZE);
+			qdf_mem_malloc(SIR_MAX_BEACON_SIZE);
 		if ((NULL == session_ptr->pSchProbeRspTemplate)
 		    || (NULL == session_ptr->pSchBeaconFrameBegin)
 		    || (NULL == session_ptr->pSchBeaconFrameEnd)) {

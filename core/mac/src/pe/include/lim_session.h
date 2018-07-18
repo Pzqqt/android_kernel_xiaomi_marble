@@ -59,10 +59,6 @@ typedef struct tagComebackTimerInfo {
 /* Maximum Number of WEP KEYS */
 #define MAX_WEP_KEYS 4
 
-/* Maximum allowable size of a beacon frame */
-#define SCH_MAX_BEACON_SIZE    512
-
-#define SCH_MAX_PROBE_RESP_SIZE 512
 #define SCH_PROTECTION_RESET_TIME 4000
 
 /*--------------------------------------------------------------------------
