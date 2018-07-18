@@ -6418,7 +6418,7 @@ QDF_STATUS populate_dot11f_twt_extended_caps(tpAniSirGlobal mac_ctx,
 					     tDot11fIEExtCap *dot11f)
 {
 	uint32_t value = 0;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct s_ext_cap *p_ext_cap;
 
 	dot11f->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
