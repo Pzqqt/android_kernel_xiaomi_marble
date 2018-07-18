@@ -93,6 +93,7 @@
 #include <net/netevent.h>
 #include "wlan_hdd_nud_tracking.h"
 #include "wlan_hdd_twt.h"
+#include "wma_sar_public_structs.h"
 
 /*
  * Preprocessor definitions and constants
@@ -1980,6 +1981,7 @@ struct hdd_context {
 	struct hdd_cache_channels *original_channels;
 	qdf_mutex_t cache_channel_lock;
 #endif
+	enum sar_version sar_version;
 };
 
 /**
