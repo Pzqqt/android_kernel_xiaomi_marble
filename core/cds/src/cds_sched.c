@@ -132,8 +132,8 @@ static void cds_rx_thread_log_cpu_affinity_change(unsigned char core_affine_cnt,
 	cpumap_print_to_pagebuf(false, old_mask_str, old_mask);
 	cpumap_print_to_pagebuf(false, new_mask_str, new_mask);
 
-	qdf_err("num online perf cores %d, high tput req %d, old aff mask %s new aff mask %s",
-		core_affine_cnt, tput_req, old_mask_str, new_mask_str);
+	cds_debug("num online perf cores %d, high tput req %d, Rx_thread old mask %s new mask %s",
+		  core_affine_cnt, tput_req, old_mask_str, new_mask_str);
 }
 #else
 static void cds_rx_thread_log_cpu_affinity_change(unsigned char core_affine_cnt,
