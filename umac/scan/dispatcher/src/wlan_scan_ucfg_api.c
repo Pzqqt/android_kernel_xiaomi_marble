@@ -1411,17 +1411,21 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 	scan_obj->scan_def.conc_max_rest_time = SCAN_CONC_MAX_REST_TIME;
 	scan_obj->scan_def.conc_min_rest_time = SCAN_CONC_MIN_REST_TIME;
 	scan_obj->scan_def.conc_idle_time = SCAN_CONC_IDLE_TIME;
-	scan_obj->scan_def.repeat_probe_time = SCAN_REPEAT_PROBE_TIME;
+	scan_obj->scan_def.repeat_probe_time =
+			cfg_get(psoc, CFG_SCAN_PROBE_REPEAT_TIME);
 	scan_obj->scan_def.probe_spacing_time = SCAN_PROBE_SPACING_TIME;
 	scan_obj->scan_def.probe_delay = SCAN_PROBE_DELAY;
 	scan_obj->scan_def.burst_duration = SCAN_BURST_DURATION;
 	scan_obj->scan_def.max_scan_time = SCAN_MAX_SCAN_TIME;
-	scan_obj->scan_def.num_probes = SCAN_NUM_PROBES;
+	scan_obj->scan_def.num_probes = cfg_get(psoc, CFG_SCAN_NUM_PROBES);
 	scan_obj->scan_def.scan_cache_aging_time = SCAN_CACHE_AGING_TIME;
 	scan_obj->scan_def.max_bss_per_pdev = SCAN_MAX_BSS_PDEV;
 	scan_obj->scan_def.scan_priority = SCAN_PRIORITY;
 	scan_obj->scan_def.idle_time = SCAN_NETWORK_IDLE_TIMEOUT;
-	scan_obj->scan_def.adaptive_dwell_time_mode = SCAN_DWELL_MODE_DEFAULT;
+	scan_obj->scan_def.adaptive_dwell_time_mode =
+			cfg_get(psoc, CFG_ADAPTIVE_SCAN_DWELL_MODE);
+	scan_obj->scan_def.is_bssid_hint_priority =
+			cfg_get(psoc, CFG_IS_BSSID_HINT_PRIORITY);
 	/* scan contrl flags */
 	scan_obj->scan_def.scan_f_passive = true;
 	scan_obj->scan_def.scan_f_ofdm_rates = true;
@@ -1906,12 +1910,8 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	scan_def->scan_cache_aging_time = scan_cfg->scan_cache_aging_time;
 	scan_def->prefer_5ghz = scan_cfg->prefer_5ghz;
 	scan_def->select_5ghz_margin = scan_cfg->select_5ghz_margin;
-	scan_def->adaptive_dwell_time_mode = scan_cfg->scan_dwell_time_mode;
 	scan_def->scan_f_chan_stat_evnt = scan_cfg->is_snr_monitoring_enabled;
 	scan_obj->ie_whitelist = scan_cfg->ie_whitelist;
-	scan_def->repeat_probe_time = scan_cfg->usr_cfg_probe_rpt_time;
-	scan_def->num_probes = scan_cfg->usr_cfg_num_probes;
-	scan_def->is_bssid_hint_priority = scan_cfg->is_bssid_hint_priority;
 	scan_def->enable_mac_spoofing = scan_cfg->enable_mac_spoofing;
 	scan_def->sta_miracast_mcc_rest_time =
 				scan_cfg->sta_miracast_mcc_rest_time;
