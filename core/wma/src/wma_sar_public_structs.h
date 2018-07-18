@@ -21,6 +21,11 @@
 
 struct sar_limit_event;
 
+enum sar_version {
+	SAR_VERSION_1,
+	SAR_VERSION_2
+};
+
 /**
  * typedef wma_sar_cb() - SAR callback function
  * @context: Opaque context provided by caller in the original request

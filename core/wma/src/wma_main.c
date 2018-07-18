@@ -5328,6 +5328,13 @@ static void wma_update_ra_rate_limit(tp_wma_handle wma_handle,
 }
 #endif
 
+static void
+wma_update_sar_version(struct wlan_psoc_host_service_ext_param *param,
+		       struct wma_tgt_cfg *cfg)
+{
+	cfg->sar_version = param ? param->sar_version : SAR_VERSION_1;
+}
+
 /**
  * wma_update_hdd_band_cap() - update band cap which hdd understands
  * @supported_band: supported band which has been given by FW
@@ -5493,6 +5500,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_update_ra_rate_limit(wma_handle, &tgt_cfg);
 	wma_update_hdd_band_cap(target_if_get_phy_capability(tgt_hdl),
 				&tgt_cfg);
+	wma_update_sar_version(service_ext_param, &tgt_cfg);
 	tgt_cfg.fine_time_measurement_cap =
 		target_if_get_wmi_fw_sub_feat_caps(tgt_hdl);
 	tgt_cfg.wmi_max_len = wmi_get_max_msg_len(wma_handle->wmi_handle)

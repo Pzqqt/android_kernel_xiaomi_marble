@@ -114,11 +114,6 @@
 #define MAX_NUM_HW_MODE    0xff
 #define MAX_NUM_PHY        0xff
 
-enum sar_version {
-	SAR_VERSION_1,
-	SAR_VERSION_2
-};
-
 /**
  * struct index_data_rate_type - non vht data rate type
  * @mcs_index: mcs rate index
