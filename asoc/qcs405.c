@@ -38,6 +38,7 @@
 #include "codecs/csra66x0/csra66x0.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include "codecs/bolero/bolero-cdc.h"
+#include "codecs/bolero/wsa-macro.h"
 
 #define DRV_NAME "qcs405-asoc-snd"
 
@@ -4248,6 +4249,7 @@ static int msm_wsa_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 	int ret = 0;
 	struct snd_soc_codec *codec = rtd->codec;
 	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	struct snd_soc_component *aux_comp;
 	struct snd_card *card;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
@@ -4269,6 +4271,26 @@ static int msm_wsa_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_dapm_sync(dapm);
 
+	/*
+	 * Send speaker configuration only for WSA8810.
+	 * Default configuration is for WSA8815.
+	 */
+	dev_dbg(codec->dev, "%s: Number of aux devices: %d\n",
+		__func__, rtd->card->num_aux_devs);
+	if (rtd->card->num_aux_devs &&
+	    !list_empty(&rtd->card->component_dev_list)) {
+		aux_comp = list_first_entry(
+				&rtd->card->component_dev_list,
+				struct snd_soc_component,
+				card_aux_list);
+		if (!strcmp(aux_comp->name, WSA8810_NAME_1) ||
+		    !strcmp(aux_comp->name, WSA8810_NAME_2)) {
+			wsa_macro_set_spkr_mode(rtd->codec,
+						WSA_MACRO_SPKR_MODE_1);
+			wsa_macro_set_spkr_gain_offset(rtd->codec,
+					WSA_MACRO_GAIN_OFFSET_M1P5_DB);
+		}
+	}
 	card = rtd->card->snd_card;
 	if (!pdata->codec_root)
 		pdata->codec_root = snd_info_create_subdir(card->module,
