@@ -201,7 +201,18 @@ wmi_buf_t
 wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint32_t len,
 		    uint8_t *file_name, uint32_t line_num);
 #else
-wmi_buf_t wmi_buf_alloc(wmi_unified_t wmi_handle, uint32_t len);
+/**
+ * wmi_buf_alloc() - generic function to allocate WMI buffer
+ * @wmi_handle: handle to WMI.
+ * @len: length of the buffer
+ *
+ * Return: return wmi_buf_t or null if memory alloc fails
+ */
+#define wmi_buf_alloc(wmi_handle, len) \
+	wmi_buf_alloc_fl(wmi_handle, len, __func__, __LINE__)
+
+wmi_buf_t wmi_buf_alloc_fl(wmi_unified_t wmi_handle, uint32_t len,
+			   const char *func, uint32_t line);
 #endif
 
 /**
