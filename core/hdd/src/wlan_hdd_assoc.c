@@ -268,56 +268,47 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
  */
 static inline bool
 hdd_conn_get_connection_state(struct hdd_station_ctx *sta_ctx,
-			      eConnectionState *pConnState)
+			      eConnectionState *out_state)
 {
-	bool connected = false;
-	eConnectionState connState;
+	eConnectionState state = sta_ctx->conn_info.connState;
 
-	/* get the connection state. */
-	connState = sta_ctx->conn_info.connState;
+	if (out_state)
+		*out_state = state;
 
-	if (eConnectionState_Associated == connState ||
-	    eConnectionState_IbssConnected == connState ||
-	    eConnectionState_IbssDisconnected == connState) {
-		connected = true;
+	switch (state) {
+	case eConnectionState_Associated:
+	case eConnectionState_IbssConnected:
+	case eConnectionState_IbssDisconnected:
+	case eConnectionState_NdiConnected:
+		return true;
+	default:
+		return false;
 	}
-
-	if (pConnState)
-		*pConnState = connState;
-
-	return connected;
 }
 
-/**
- * hdd_is_connecting() - Function to check connection progress
- * @hdd_sta_ctx:    pointer to global HDD Station context
- *
- * Return: true if connecting, false otherwise
- */
 bool hdd_is_connecting(struct hdd_station_ctx *hdd_sta_ctx)
 {
 	return hdd_sta_ctx->conn_info.connState ==
 		eConnectionState_Connecting;
 }
 
-/**
- * hdd_conn_is_connected() - Function to check connection status
- * @sta_ctx:    pointer to global HDD Station context
- *
- * Return: false if any errors encountered, true otherwise
- */
 bool hdd_conn_is_connected(struct hdd_station_ctx *sta_ctx)
 {
 	return hdd_conn_get_connection_state(sta_ctx, NULL);
 }
 
-/**
- * hdd_conn_get_connected_band() - get current connection radio band
- * @sta_ctx:    pointer to global HDD Station context
- *
- * Return: BAND_2G or BAND_5G based on current AP connection
- *	BAND_ALL if not connected
- */
+bool hdd_adapter_is_connected_sta(struct hdd_adapter *adapter)
+{
+	switch (adapter->device_mode) {
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_NDI_MODE:
+		return hdd_conn_is_connected(&adapter->session.station);
+	default:
+		return false;
+	}
+}
+
 enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx)
 {
 	uint8_t staChannel = 0;

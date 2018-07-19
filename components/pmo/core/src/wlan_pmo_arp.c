@@ -64,14 +64,12 @@ static QDF_STATUS pmo_core_cache_arp_in_vdev_priv(
 	/* cache arp request */
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	qdf_mem_copy(&vdev_ctx->vdev_arp_req, request,
-		sizeof(vdev_ctx->vdev_arp_req));
+		     sizeof(vdev_ctx->vdev_arp_req));
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-	pmo_debug("arp offload ipv4 addr: %d.%d.%d.%d enable: %d",
-		request->host_ipv4_addr[0],
-		request->host_ipv4_addr[1],
-		request->host_ipv4_addr[2],
-		request->host_ipv4_addr[3],
-		request->enable);
+
+	pmo_debug("cached arp offload; addr:" QDF_IPV4_ADDR_STR ", enable:%d",
+		  QDF_IPV4_ADDR_ARRAY(request->host_ipv4_addr),
+		  request->enable);
 
 free_req:
 	qdf_mem_free(request);

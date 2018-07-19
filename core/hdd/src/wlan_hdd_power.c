@@ -878,13 +878,13 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 
 	status = pmo_ucfg_cache_arp_offload_req(arp_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("failed to cache arp offload request");
+		hdd_err("failed to cache arp offload req; status:%d", status);
 		goto free_req;
 	}
 
 	status = pmo_ucfg_enable_arp_offload_in_fwr(adapter->hdd_vdev, trigger);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("failed to configure arp offload in firmware");
+		hdd_err("failed arp offload config in fw; status:%d", status);
 		goto free_req;
 	}
 
@@ -921,40 +921,48 @@ out:
 }
 
 void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
-		enum pmo_offload_trigger trigger)
+				  enum pmo_offload_trigger trigger)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 
 	hdd_enter();
+
 	if (wlan_hdd_validate_context(hdd_ctx))
 		goto out;
 
-	status = pmo_ucfg_enable_mc_addr_filtering_in_fwr(psoc,
-				adapter->session_id, trigger);
+	if (!hdd_adapter_is_connected_sta(adapter))
+		goto out;
+
+	status = pmo_ucfg_enable_mc_addr_filtering_in_fwr(hdd_ctx->hdd_psoc,
+							  adapter->session_id,
+							  trigger);
 	if (QDF_IS_STATUS_ERROR(status))
-		hdd_info("failed to enable mc list status %d", status);
+		hdd_err("failed to enable mc list; status:%d", status);
+
 out:
 	hdd_exit();
-
 }
 
 void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
-		enum pmo_offload_trigger trigger)
+				   enum pmo_offload_trigger trigger)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	QDF_STATUS status;
 
 	hdd_enter();
+
 	if (wlan_hdd_validate_context(hdd_ctx))
 		goto out;
 
-	status = pmo_ucfg_disable_mc_addr_filtering_in_fwr(psoc,
-				adapter->session_id, trigger);
-	if (status != QDF_STATUS_SUCCESS)
-		hdd_info("failed to disable mc list status %d", status);
+	if (!hdd_adapter_is_connected_sta(adapter))
+		goto out;
+
+	status = pmo_ucfg_disable_mc_addr_filtering_in_fwr(hdd_ctx->hdd_psoc,
+							   adapter->session_id,
+							   trigger);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("failed to disable mc list; status:%d", status);
 
 out:
 	hdd_exit();
@@ -972,23 +980,28 @@ int hdd_cache_mc_addr_list(struct pmo_mc_addr_list_params *mc_list_config)
 }
 
 void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
-	enum pmo_offload_trigger trigger)
+					enum pmo_offload_trigger trigger)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 
 	hdd_enter();
-	/* disable mc list first */
-	status = pmo_ucfg_disable_mc_addr_filtering_in_fwr(psoc,
-			adapter->session_id, trigger);
-	if (status != QDF_STATUS_SUCCESS)
-		hdd_info("fail to disable mc list");
 
-	/* flush mc list */
-	status = pmo_ucfg_flush_mc_addr_list(psoc, adapter->session_id);
-	if (status != QDF_STATUS_SUCCESS)
-		hdd_info("fail to flush mc list status %d", status);
+	if (!hdd_adapter_is_connected_sta(adapter))
+		goto flush_mc_list;
+
+	/* disable mc list first because the mc list is cached in PMO */
+	status = pmo_ucfg_disable_mc_addr_filtering_in_fwr(hdd_ctx->hdd_psoc,
+							   adapter->session_id,
+							   trigger);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("failed to disable mc list; status:%d", status);
+
+flush_mc_list:
+	status = pmo_ucfg_flush_mc_addr_list(hdd_ctx->hdd_psoc,
+					     adapter->session_id);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("failed to flush mc list; status:%d", status);
 
 	hdd_exit();
 

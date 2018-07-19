@@ -234,6 +234,14 @@ bool hdd_is_fils_connection(struct hdd_adapter *adapter);
 bool hdd_conn_is_connected(struct hdd_station_ctx *sta_ctx);
 
 /**
+ * hdd_adapter_is_connected_sta() - check if @adapter is a connected station
+ * @adapter: the adapter to check
+ *
+ * Return: true if @adapter is a connected station
+ */
+bool hdd_adapter_is_connected_sta(struct hdd_adapter *adapter);
+
+/**
  * hdd_conn_get_connected_band() - get current connection radio band
  * @sta_ctx:    pointer to global HDD Station context
  *
