@@ -20688,6 +20688,16 @@ typedef enum wmi_coex_config_type {
     WMI_COEX_CONFIG_SINK_WLAN_TDM       = 21, /* config interval (ms units) (arg1 BT, arg2 WLAN) for A2DP SINK + WLAN */
     WMI_COEX_CONFIG_COEX_ENABLE_MCC_TDM = 22, /* config disable/enable COEX TDM for MCC */
     WMI_COEX_CONFIG_LOWRSSI_A2DPOPP_TDM = 23, /* config interval (ms units) (arg1 BT, arg2 WLAN) for STA + A2dp + OPP + LOWRSSI */
+    WMI_COEX_CONFIG_BTC_MODE            = 24, /* config BTC mode, arg1 mode: 0 TDD/1 FDD/2 Hybrid*/
+    WMI_COEX_CONFIG_ANTENNA_ISOLATION   = 25, /* config isolation between BT and WLAN antenna, arg1 isolation in db*/
+    WMI_COEX_CONFIG_BT_LOW_RSSI_THRESHOLD = 26,/*config BT low rssi threshold (dbm units)*/
+    WMI_COEX_CONFIG_BT_INTERFERENCE_LEVEL = 27,/*config bt interference level (dbm units)
+                                                 arg1 low - lower limit
+                                                 arg2 low - upper limit
+                                                 arg3 medium - lower limit
+                                                 arg4 medium - upper limit
+                                                 arg5 high - lower limit
+                                                 arg6 high - upper limit */
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
