@@ -159,7 +159,7 @@ static QDF_STATUS pmo_core_do_enable_ns_offload(struct wlan_objmgr_vdev *vdev,
 		if (!psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is disabled, skip in mode:%d",
 				trigger);
-			status = QDF_STATUS_E_INVAL;
+			status = QDF_STATUS_SUCCESS;
 			goto out;
 		}
 		/* enable arp when active offload is true (ipv6 notifier) */
@@ -169,7 +169,7 @@ static QDF_STATUS pmo_core_do_enable_ns_offload(struct wlan_objmgr_vdev *vdev,
 		if (psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is enabled, skip in mode: %d",
 				trigger);
-			status = QDF_STATUS_E_INVAL;
+			status = QDF_STATUS_SUCCESS;
 			goto out;
 		}
 		/* enable arp when active offload is false (apps suspend) */

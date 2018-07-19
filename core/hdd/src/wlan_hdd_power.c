@@ -1061,10 +1061,8 @@ hdd_suspend_wlan(void)
 	}
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (wlan_hdd_validate_session_id(adapter->session_id)) {
-			hdd_err("invalid session id: %d", adapter->session_id);
+		if (wlan_hdd_validate_session_id(adapter->session_id))
 			continue;
-		}
 
 		/* stop all TX queues before suspend */
 		hdd_debug("Disabling queues for dev mode %s",

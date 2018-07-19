@@ -454,7 +454,7 @@ static QDF_STATUS pmo_core_handle_enable_mc_list_trigger(
 		if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is disabled, skip in mode %d",
 				  trigger);
-			status = QDF_STATUS_E_INVAL;
+			status = QDF_STATUS_SUCCESS;
 			goto free_req;
 		}
 		status = pmo_core_do_enable_mc_addr_list(vdev, vdev_ctx,
@@ -464,7 +464,7 @@ static QDF_STATUS pmo_core_handle_enable_mc_list_trigger(
 		if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is enabled, skip in mode %d",
 				  trigger);
-			status = QDF_STATUS_E_INVAL;
+			status = QDF_STATUS_SUCCESS;
 			goto free_req;
 		}
 		status = pmo_core_do_enable_mc_addr_list(vdev, vdev_ctx,

@@ -64,8 +64,8 @@ QDF_STATUS target_if_pmo_send_vdev_update_param_req(
 	param.if_id = vdev_id;
 	param.param_id = param_id;
 	param.param_value = param_value;
-	target_if_info("set vdev param vdev_id: %d value: %d for param_id: %d",
-		vdev_id, param_value, param_id);
+	target_if_debug("set vdev param vdev_id: %d value: %d for param_id: %d",
+			vdev_id, param_value, param_id);
 	return wmi_unified_vdev_set_param_send(
 			get_wmi_unified_hdl_from_psoc(psoc), &param);
 }
@@ -104,8 +104,8 @@ QDF_STATUS target_if_pmo_send_vdev_ps_param_req(
 	sta_ps_param.vdev_id = vdev_id;
 	sta_ps_param.param = param_id;
 	sta_ps_param.value = param_value;
-	target_if_info("set vdev param vdev_id: %d value: %d for param_id: %d",
-		vdev_id, param_value, param_id);
+	target_if_debug("set vdev param vdev_id: %d value: %d for param_id: %d",
+			vdev_id, param_value, param_id);
 
 	status = wmi_unified_sta_ps_cmd_send(
 			get_wmi_unified_hdl_from_psoc(psoc), &sta_ps_param);
