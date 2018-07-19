@@ -105,7 +105,7 @@ pmo_core_do_enable_arp_offload(struct wlan_objmgr_vdev *vdev,
 			       uint8_t vdev_id,
 			       enum pmo_offload_trigger trigger)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
@@ -125,7 +125,7 @@ pmo_core_do_enable_arp_offload(struct wlan_objmgr_vdev *vdev,
 		if (!psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is disabled, skip in mode %d",
 				  trigger);
-			status = QDF_STATUS_E_INVAL;
+			status = QDF_STATUS_SUCCESS;
 			goto out;
 		}
 		/* enable arp when active offload is true (ipv4 notifier) */
@@ -135,7 +135,7 @@ pmo_core_do_enable_arp_offload(struct wlan_objmgr_vdev *vdev,
 		if (psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is enabled, skip in mode %d",
 				  trigger);
-			status = QDF_STATUS_E_INVAL;
+			status = QDF_STATUS_SUCCESS;
 			goto out;
 		}
 		/* enable arp when active offload is false (apps suspend) */
@@ -175,7 +175,7 @@ static QDF_STATUS pmo_core_do_disable_arp_offload(struct wlan_objmgr_vdev *vdev,
 		if (psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is enabled, skip in mode: %d",
 				trigger);
-			status = QDF_STATUS_E_INVAL;
+			status = QDF_STATUS_SUCCESS;
 			goto out;
 		}
 		/* disable arp on apps resume when active offload is disable */
