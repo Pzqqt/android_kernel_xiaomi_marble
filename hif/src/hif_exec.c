@@ -20,6 +20,7 @@
 #include <ce_main.h>
 #include <hif_irq_affinity.h>
 #include "qdf_module.h"
+#include "qdf_net_if.h"
 
 /* mapping NAPI budget 0 to internal budget 0
  * NAPI budget 1 to internal budget [1,scaler -1]
@@ -197,7 +198,7 @@ static struct hif_exec_context *hif_exec_napi_create(uint32_t scale)
 	ctx->exec_ctx.sched_ops = &napi_sched_ops;
 	ctx->exec_ctx.inited = true;
 	ctx->exec_ctx.scale_bin_shift = scale;
-	init_dummy_netdev(&(ctx->netdev));
+	qdf_net_if_create_dummy_if((struct qdf_net_if *)&ctx->netdev);
 	netif_napi_add(&(ctx->netdev), &(ctx->napi), hif_exec_poll,
 		       QCA_NAPI_BUDGET);
 	napi_enable(&ctx->napi);

@@ -35,6 +35,7 @@
 #include "ahb_api.h"
 #include "pci_api.h"
 #include "hif_napi.h"
+#include "qal_vbus_dev.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
 #define IRQF_DISABLED 0x00000020
@@ -218,7 +219,7 @@ int hif_ahb_configure_legacy_irq(struct hif_pci_softc *sc)
 
 	/* do not support MSI or MSI IRQ failed */
 	tasklet_init(&sc->intr_tq, wlan_tasklet, (unsigned long)sc);
-	irq = platform_get_irq_byname(pdev, "legacy");
+	qal_vbus_get_irq((struct qdf_pfm_hndl *)pdev, "legacy", &irq);
 	if (irq < 0) {
 		dev_err(&pdev->dev, "Unable to get irq\n");
 		ret = -1;
@@ -259,7 +260,8 @@ int hif_ahb_configure_irq(struct hif_pci_softc *sc)
 	for (i = 0; i < scn->ce_count; i++) {
 		if (host_ce_conf[i].flags & CE_ATTR_DISABLE_INTR)
 			continue;
-		irq = platform_get_irq_byname(pdev, ic_irqname[HIF_IC_CE0_IRQ_OFFSET + i]);
+		qal_vbus_get_irq((struct qdf_pfm_hndl *)pdev,
+				 ic_irqname[HIF_IC_CE0_IRQ_OFFSET + i], &irq);
 		ic_irqnum[HIF_IC_CE0_IRQ_OFFSET + i] = irq;
 		ret = request_irq(irq ,
 				hif_ahb_interrupt_handler,
@@ -284,7 +286,6 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	struct platform_device *pdev = (struct platform_device *)sc->pdev;
 	int irq = 0;
-	const char *irq_name;
 	int j;
 
 	/* configure external interrupts */
@@ -295,8 +296,8 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
 
 	for (j = 0; j < hif_ext_group->numirq; j++) {
-		irq_name = ic_irqname[hif_ext_group->irq[j]];
-		irq = platform_get_irq_byname(pdev, irq_name);
+		qal_vbus_get_irq((struct qdf_pfm_hndl *)pdev,
+				 ic_irqname[hif_ext_group->irq[j]], &irq);
 
 		ic_irqnum[hif_ext_group->irq[j]] = irq;
 		irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY);
@@ -426,11 +427,14 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 	struct resource *memres = NULL;
 	int mem_pa_size = 0;
 	struct hif_target_info *tgt_info = NULL;
+	struct qdf_vbus_resource *vmres = NULL;
 
 	tgt_info = &scn->target_info;
 	/*Disable WIFI clock input*/
 	if (sc->mem) {
-		memres = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+		qal_vbus_get_resource((struct qdf_pfm_hndl *)pdev, &vmres,
+				      IORESOURCE_MEM, 0);
+		memres = (struct resource *)vmres;
 		if (!memres) {
 			HIF_INFO("%s: Failed to get IORESOURCE_MEM\n",
 								__func__);

@@ -31,6 +31,7 @@
 #include "ce_tasklet.h"
 #include "ahb_api.h"
 #include "if_ahb.h"
+#include "qal_vbus_dev.h"
 
 #include <linux/clk.h>
 #include <linux/of_address.h>
@@ -60,6 +61,7 @@ static int clk_enable_disable(struct device *dev, const char *str, int enable)
 {
 	struct clk *clk_t = NULL;
 	int ret;
+	QDF_STATUS status;
 
 	clk_t = clk_get(dev, str);
 	if (IS_ERR(clk_t)) {
@@ -69,17 +71,18 @@ static int clk_enable_disable(struct device *dev, const char *str, int enable)
 	}
 	if (true == enable) {
 		/* Prepare and Enable clk */
-		ret = clk_prepare_enable(clk_t);
+		status = qal_vbus_enable_devclk((struct qdf_dev_clk *)clk_t);
+		ret = qdf_status_to_os_return(status);
 		if (ret) {
 			HIF_INFO("%s: err enabling clk %s , error:%d\n",
 					__func__, str, ret);
-			return ret;
 		}
 	} else {
 		/* Disable and unprepare clk */
-		clk_disable_unprepare(clk_t);
+		status = qal_vbus_disable_devclk((struct qdf_dev_clk *)clk_t);
+		ret = qdf_status_to_os_return(status);
 	}
-	return 0;
+	return ret;
 }
 
 
@@ -129,6 +132,7 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 	struct device_node *dev_node = pdev->dev.of_node;
 	bool msienable = false;
 	int ret = 0;
+	struct qdf_vbus_rstctl *vrstctl = NULL;
 
 	ret = of_property_read_u32(dev_node, "qca,msi_addr", &msi_addr);
 	if (ret) {
@@ -198,47 +202,63 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 	}
 
 	/* De-assert radio cold reset */
-	reset_ctl = reset_control_get(&pdev->dev, "wifi_radio_cold");
+	qal_vbus_get_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				"wifi_radio_cold", &vrstctl);
+	reset_ctl = (struct reset_control *)vrstctl;
 	if (IS_ERR(reset_ctl)) {
 		HIF_INFO("%s: Failed to get radio cold reset control\n",
 							__func__);
 		ret = PTR_ERR(reset_ctl);
 		goto err_reset;
 	}
-	reset_control_deassert(reset_ctl);
-	reset_control_put(reset_ctl);
+	qal_vbus_deactivate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				       (struct qdf_vbus_rstctl *)reset_ctl);
+	qal_vbus_release_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				    (struct qdf_vbus_rstctl *)reset_ctl);
 
 	/* De-assert radio warm reset */
-	reset_ctl = reset_control_get(&pdev->dev, "wifi_radio_warm");
+	qal_vbus_get_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				"wifi_radio_warm", &vrstctl);
+	reset_ctl = (struct reset_control *)vrstctl;
 	if (IS_ERR(reset_ctl)) {
 		HIF_INFO("%s: Failed to get radio warm reset control\n",
 							__func__);
 		ret = PTR_ERR(reset_ctl);
 		goto err_reset;
 	}
-	reset_control_deassert(reset_ctl);
-	reset_control_put(reset_ctl);
+	qal_vbus_deactivate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				       (struct qdf_vbus_rstctl *)reset_ctl);
+	qal_vbus_release_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				    (struct qdf_vbus_rstctl *)reset_ctl);
 
 	/* De-assert radio srif reset */
-	reset_ctl = reset_control_get(&pdev->dev, "wifi_radio_srif");
+	qal_vbus_get_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				"wifi_radio_srif",  &vrstctl);
+	reset_ctl = (struct reset_control *)vrstctl;
 	if (IS_ERR(reset_ctl)) {
 		HIF_INFO("%s: Failed to get radio srif reset control\n",
 							__func__);
 		ret = PTR_ERR(reset_ctl);
 		goto err_reset;
 	}
-	reset_control_deassert(reset_ctl);
-	reset_control_put(reset_ctl);
+	qal_vbus_deactivate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				       (struct qdf_vbus_rstctl *)reset_ctl);
+	qal_vbus_release_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				    (struct qdf_vbus_rstctl *)reset_ctl);
 
 	/* De-assert target CPU reset */
-	reset_ctl = reset_control_get(&pdev->dev, "wifi_cpu_init");
+	qal_vbus_get_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				"wifi_cpu_init", &vrstctl);
+	reset_ctl = (struct reset_control *)vrstctl;
 	if (IS_ERR(reset_ctl)) {
 		HIF_INFO("%s: Failed to get cpu init reset control", __func__);
 		ret = PTR_ERR(reset_ctl);
 		goto err_reset;
 	}
-	reset_control_deassert(reset_ctl);
-	reset_control_put(reset_ctl);
+	qal_vbus_activate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				     (struct qdf_vbus_rstctl *)reset_ctl);
+	qal_vbus_deactivate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				       (struct qdf_vbus_rstctl *)reset_ctl);
 
 	return 0;
 
@@ -282,6 +302,7 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 	uint32_t wifi_core_id = 0XFFFFFFFF;
 	uint32_t reg_value;
 	int wait_limit = ATH_AHB_RESET_WAIT_MAX;
+	struct qdf_vbus_rstctl *vrstctl = NULL;
 
 
 	wifi_core_id = hif_read32_mb(sc, sc->mem +
@@ -313,14 +334,17 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 	reg_value = hif_read32_mb(sc, mem_tcsr + glb_cfg_offset);
 	hif_write32_mb(sc, mem_tcsr + glb_cfg_offset, reg_value | (1 << 25));
 
-	core_resetctl = reset_control_get(&pdev->dev, AHB_RESET_TYPE);
+	qal_vbus_get_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				AHB_RESET_TYPE, &vrstctl);
+	core_resetctl = (struct reset_control *)vrstctl;
 	if (IS_ERR(core_resetctl)) {
 		HIF_INFO("Failed to get wifi core cold reset control\n");
 		return;
 	}
 
 	/* Reset wifi core */
-	reset_control_assert(core_resetctl);
+	qal_vbus_activate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				     (struct qdf_vbus_rstctl *)core_resetctl);
 
 	/* TBD: Check if we should also assert other bits (radio_cold, radio_
 	 * warm, radio_srif, cpu_ini)
@@ -328,47 +352,63 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 	qdf_mdelay(1); /* TBD: Get reqd delay from HW team */
 
 	/* Assert radio cold reset */
-	resetctl = reset_control_get(&pdev->dev, "wifi_radio_cold");
+	qal_vbus_get_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				"wifi_radio_cold", &vrstctl);
+	resetctl = (struct reset_control *)vrstctl;
 	if (IS_ERR(resetctl)) {
 		HIF_INFO("%s: Failed to get radio cold reset control\n",
 						__func__);
 		return;
 	}
-	reset_control_assert(resetctl);
+	qal_vbus_activate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				     (struct qdf_vbus_rstctl *)resetctl);
 	qdf_mdelay(1); /* TBD: Get reqd delay from HW team */
-	reset_control_put(resetctl);
+	qal_vbus_release_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				    (struct qdf_vbus_rstctl *)resetctl);
 
 	/* Assert radio warm reset */
-	resetctl = reset_control_get(&pdev->dev, "wifi_radio_warm");
+	qal_vbus_get_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				"wifi_radio_warm", &vrstctl);
+	resetctl = (struct reset_control *)vrstctl;
 	if (IS_ERR(resetctl)) {
 		HIF_INFO("%s: Failed to get radio warm reset control\n",
 						__func__);
 		return;
 	}
-	reset_control_assert(resetctl);
+	qal_vbus_activate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				     (struct qdf_vbus_rstctl *)resetctl);
 	qdf_mdelay(1); /* TBD: Get reqd delay from HW team */
-	reset_control_put(resetctl);
+	qal_vbus_release_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				    (struct qdf_vbus_rstctl *)resetctl);
 
 	/* Assert radio srif reset */
-	resetctl = reset_control_get(&pdev->dev, "wifi_radio_srif");
+	qal_vbus_get_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				"wifi_radio_srif", &vrstctl);
+	resetctl = (struct reset_control *)vrstctl;
 	if (IS_ERR(resetctl)) {
 		HIF_INFO("%s: Failed to get radio srif reset control\n",
 						__func__);
 		return;
 	}
-	reset_control_assert(resetctl);
+	qal_vbus_activate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				     (struct qdf_vbus_rstctl *)resetctl);
 	qdf_mdelay(1); /* TBD: Get reqd delay from HW team */
-	reset_control_put(resetctl);
+	qal_vbus_release_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				    (struct qdf_vbus_rstctl *)resetctl);
 
 	/* Assert target CPU reset */
-	resetctl = reset_control_get(&pdev->dev, "wifi_cpu_init");
+	qal_vbus_get_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				"wifi_cpu_init", &vrstctl);
+	resetctl = (struct reset_control *)vrstctl;
 	if (IS_ERR(resetctl)) {
 		HIF_INFO("%s: Failed to get cpu init reset control", __func__);
 		return;
 	}
-	reset_control_assert(resetctl);
+	qal_vbus_activate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				     (struct qdf_vbus_rstctl *)resetctl);
 	qdf_mdelay(10); /* TBD: Get reqd delay from HW team */
-	reset_control_put(resetctl);
+	qal_vbus_release_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				    (struct qdf_vbus_rstctl *)resetctl);
 
 	/* Clear gbl_cfg and haltreq before clearing Wifi core reset */
 	reg_value = hif_read32_mb(sc, mem_tcsr + haltreq_offset);
@@ -377,12 +417,14 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 	hif_write32_mb(sc, mem_tcsr + glb_cfg_offset, reg_value & ~(1 << 25));
 
 	/* de-assert wifi core reset */
-	reset_control_deassert(core_resetctl);
+	qal_vbus_deactivate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				       (struct qdf_vbus_rstctl *)core_resetctl);
 
 	qdf_mdelay(1); /* TBD: Get reqd delay from HW team */
 
 	/* TBD: Check if we should de-assert other bits here */
-	reset_control_put(core_resetctl);
+	qal_vbus_release_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				    (struct qdf_vbus_rstctl *)core_resetctl);
 	iounmap(mem_tcsr);
 	HIF_INFO("Reset complete for wifi core id : %d\n", wifi_core_id);
 }
