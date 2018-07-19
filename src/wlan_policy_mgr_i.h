@@ -26,7 +26,7 @@
 #include "qdf_defer.h"
 #include "wlan_reg_services_api.h"
 
-#define DBS_OPPORTUNISTIC_TIME    10
+#define DBS_OPPORTUNISTIC_TIME   5
 #ifdef QCA_WIFI_3_0_EMU
 #define CONNECTION_UPDATE_TIMEOUT 3000
 #else
