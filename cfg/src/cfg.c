@@ -501,6 +501,26 @@ cfg_ini_parse_to_store(const char *path, struct cfg_value_store *store)
 	return status;
 }
 
+QDF_STATUS cfg_parse_to_psoc_store(struct wlan_objmgr_psoc *psoc,
+				   const char *path)
+{
+	return cfg_ini_parse_to_store(path, cfg_psoc_get_ctx(psoc)->store);
+}
+
+qdf_export_symbol(cfg_parse_to_psoc_store);
+
+QDF_STATUS cfg_parse_to_global_store(const char *path)
+{
+	if (!__cfg_global_store) {
+		cfg_err("Global INI store is not valid");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	return cfg_ini_parse_to_store(path, __cfg_global_store);
+}
+
+qdf_export_symbol(cfg_parse_to_global_store);
+
 static void cfg_init(void)
 {
 	qdf_list_create(&__cfg_stores_list, 0);

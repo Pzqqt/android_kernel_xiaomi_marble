@@ -156,6 +156,24 @@ void cfg_release(void);
 QDF_STATUS cfg_psoc_parse(struct wlan_objmgr_psoc *psoc, const char *path);
 
 /**
+ * cfg_parse_to_psoc_store() - Parse file @path and update psoc ini store
+ * @psoc: The psoc whose config store should be updated
+ * @path: The full file path of the ini file to parse
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cfg_parse_to_psoc_store(struct wlan_objmgr_psoc *psoc,
+				   const char *path);
+
+/**
+ * cfg_parse_to_global_store() Parse file @path and update global ini store
+ * @path: The full file path of the ini file to parse
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cfg_parse_to_global_store(const char *path);
+
+/**
  * cfg_get() - lookup the configured value for @id from @psoc
  * @psoc: The psoc from which to lookup the configured value
  * @id: The id of the configured value to lookup
