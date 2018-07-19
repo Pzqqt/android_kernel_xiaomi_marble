@@ -1307,19 +1307,9 @@ static bool wmi_is_pm_resume_cmd(uint32_t cmd_id)
 }
 #endif
 
-/**
- * wmi_unified_cmd_send() - WMI command API
- * @wmi_handle: handle to wmi
- * @buf: wmi buf
- * @len: wmi buffer length
- * @cmd_id: wmi command id
- *
- * Note, it is NOT safe to access buf after calling this function!
- *
- * Return: 0 on success
- */
-QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
-				uint32_t len, uint32_t cmd_id)
+QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
+				   uint32_t len, uint32_t cmd_id,
+				   const char *func, uint32_t line)
 {
 	HTC_PACKET *pkt;
 	QDF_STATUS status;
@@ -1331,14 +1321,12 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 						wmi_handle, buf, cmd_id);
 	} else if (qdf_atomic_read(&wmi_handle->is_target_suspended) &&
 		(!wmi_is_pm_resume_cmd(cmd_id))) {
-		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Target is suspended", __func__);
-		QDF_ASSERT(0);
+		wmi_nofl_err("%s:%d, Target is suspended", func, line);
+		QDF_DEBUG_PANIC();
 		return QDF_STATUS_E_BUSY;
 	}
 	if (wmi_handle->wmi_stopinprogress) {
-		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-			"WMI  stop in progress");
+		wmi_nofl_err("%s:%d, WMI stop in progress", func, line);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1349,18 +1337,16 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 
 		if (wmi_handle->ops->wmi_check_command_params(NULL, buf_ptr, len, cmd_id)
 			!= 0) {
-			QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-			"\nERROR: %s: Invalid WMI Param Buffer for Cmd:%d",
-				__func__, cmd_id);
+			wmi_nofl_err("%s:%d, Invalid WMI Param Buffer for Cmd:%d",
+				     func, line, cmd_id);
 			return QDF_STATUS_E_INVAL;
 		}
 	}
 #endif
 
 	if (qdf_nbuf_push_head(buf, sizeof(WMI_CMD_HDR)) == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-			 "%s, Failed to send cmd %x, no memory",
-			 __func__, cmd_id);
+		wmi_nofl_err("%s:%d, Failed to send cmd %x, no memory",
+			     func, line, cmd_id);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -1370,24 +1356,19 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 	qdf_atomic_inc(&wmi_handle->pending_cmds);
 	if (qdf_atomic_read(&wmi_handle->pending_cmds) >=
 			wmi_handle->wmi_max_cmds) {
-		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-		    "\n%s: hostcredits = %d", __func__,
-		wmi_get_host_credits(wmi_handle));
+		wmi_nofl_err("hostcredits = %d",
+			     wmi_get_host_credits(wmi_handle));
 		htc_dump_counter_info(wmi_handle->htc_handle);
 		qdf_atomic_dec(&wmi_handle->pending_cmds);
-		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-			"%s: MAX %d WMI Pending cmds reached.", __func__,
-			wmi_handle->wmi_max_cmds);
+		wmi_nofl_err("%s:%d, MAX %d WMI Pending cmds reached",
+			     func, line, wmi_handle->wmi_max_cmds);
 		QDF_BUG(0);
 		return QDF_STATUS_E_BUSY;
 	}
 
-	pkt = qdf_mem_malloc(sizeof(*pkt));
+	pkt = qdf_mem_malloc_fl(sizeof(*pkt), func, line);
 	if (!pkt) {
 		qdf_atomic_dec(&wmi_handle->pending_cmds);
-		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-			 "%s, Failed to alloc htc packet %x, no memory",
-			 __func__, cmd_id);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -1423,15 +1404,15 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 
 	if (QDF_STATUS_SUCCESS != status) {
 		qdf_atomic_dec(&wmi_handle->pending_cmds);
-		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-		   "%s %d, htc_send_pkt failed", __func__, __LINE__);
+		wmi_nofl_err("%s:%d, htc_send_pkt failed, status:%d",
+			     func, line, status);
 		qdf_mem_free(pkt);
 		return status;
 	}
 
 	return QDF_STATUS_SUCCESS;
 }
-qdf_export_symbol(wmi_unified_cmd_send);
+qdf_export_symbol(wmi_unified_cmd_send_fl);
 
 /**
  * wmi_unified_get_event_handler_ix() - gives event handler's index
