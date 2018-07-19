@@ -8228,16 +8228,13 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		/* Issue reset passpoint network list first and clear
 		 * the entries
 		 */
-		wma_reset_passpoint_network_list(wma_handle,
-			(struct wifi_passpoint_req *)msg->bodyptr);
+		wma_reset_passpoint_network_list(wma_handle, msg->bodyptr);
 
-		wma_set_passpoint_network_list(wma_handle,
-			(struct wifi_passpoint_req *)msg->bodyptr);
+		wma_set_passpoint_network_list(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_RESET_PASSPOINT_LIST_REQ:
-		wma_reset_passpoint_network_list(wma_handle,
-			(struct wifi_passpoint_req *)msg->bodyptr);
+		wma_reset_passpoint_network_list(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif /* FEATURE_WLAN_EXTSCAN */

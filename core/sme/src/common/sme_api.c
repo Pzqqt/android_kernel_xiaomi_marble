@@ -11392,48 +11392,23 @@ QDF_STATUS sme_set_epno_list(mac_handle_t mac_handle,
 	return status;
 }
 
-/**
- * sme_set_passpoint_list() - set passpoint network list
- * @hal: global hal handle
- * @input: request message
- *
- * This function constructs the cds message and fill in message type,
- * bodyptr with @input and posts it to WDA queue.
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
-				struct wifi_passpoint_req *input)
+QDF_STATUS sme_set_passpoint_list(mac_handle_t mac_handle,
+				  struct wifi_passpoint_req_param *params)
 {
-	QDF_STATUS status  = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	QDF_STATUS status;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
-	struct wifi_passpoint_req *req_msg;
-	int len, i;
+	struct wifi_passpoint_req_param *req_msg;
+	int len;
 
 	SME_ENTER();
+
 	len = sizeof(*req_msg) +
-		(input->num_networks * sizeof(struct wifi_passpoint_network));
+		(params->num_networks * sizeof(params->networks[0]));
 	req_msg = qdf_mem_malloc(len);
 	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-
-	req_msg->num_networks = input->num_networks;
-	req_msg->request_id = input->request_id;
-	req_msg->session_id = input->session_id;
-	for (i = 0; i < req_msg->num_networks; i++) {
-		req_msg->networks[i].id =
-				input->networks[i].id;
-		qdf_mem_copy(req_msg->networks[i].realm,
-				input->networks[i].realm,
-				strlen(input->networks[i].realm) + 1);
-		qdf_mem_copy(req_msg->networks[i].plmn,
-				input->networks[i].plmn,
-				SIR_PASSPOINT_PLMN_LEN);
-		qdf_mem_copy(req_msg->networks[i].roaming_consortium_ids,
-			     input->networks[i].roaming_consortium_ids,
-			sizeof(req_msg->networks[i].roaming_consortium_ids));
-	}
+	qdf_mem_copy(req_msg, params, len);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -11453,34 +11428,25 @@ QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
 		sme_err("scheduler_post_msg failed!(err=%d)",
 			status);
 		qdf_mem_free(req_msg);
-		status = QDF_STATUS_E_FAILURE;
 	}
 	sme_release_global_lock(&mac->sme);
 	return status;
 }
 
-/**
- * sme_reset_passpoint_list() - reset passpoint network list
- * @hHal: global hal handle
- * @input: request message
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
-				    struct wifi_passpoint_req *input)
+QDF_STATUS sme_reset_passpoint_list(mac_handle_t mac_handle,
+				    struct wifi_passpoint_req_param *params)
 {
-	QDF_STATUS status   = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac  = PMAC_STRUCT(hal);
+	QDF_STATUS status;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
-	struct wifi_passpoint_req *req_msg;
+	struct wifi_passpoint_req_param *req_msg;
 
 	SME_ENTER();
+
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
 	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-
-	req_msg->request_id = input->request_id;
-	req_msg->session_id = input->session_id;
+	*req_msg = *params;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -11500,7 +11466,6 @@ QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
 		sme_err("scheduler_post_msg failed!(err=%d)",
 			status);
 		qdf_mem_free(req_msg);
-		status = QDF_STATUS_E_FAILURE;
 	}
 	sme_release_global_lock(&mac->sme);
 	return status;

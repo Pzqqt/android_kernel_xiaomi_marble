@@ -451,11 +451,32 @@ wma_extscan_get_capabilities(tp_wma_handle wma,
 QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 				     struct wifi_enhanced_pno_params *req);
 
-QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
-					struct wifi_passpoint_req *req);
+/**
+ * wma_set_passpoint_network_list() - set passpoint network list
+ * @wma: WMA handle
+ * @params: passpoint network request structure
+ *
+ * This function sends the passpoint configs down to the firmware
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS
+wma_set_passpoint_network_list(tp_wma_handle wma,
+			       struct wifi_passpoint_req_param *params);
 
-QDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
-					struct wifi_passpoint_req *req);
+/**
+ * wma_reset_passpoint_network_list() - reset passpoint network list
+ * @wma: WMA handle
+ * @params: passpoint network request structure
+ *
+ * This function sends down WMI command with network id set to wildcard id.
+ * firmware shall clear all the config entries
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS
+wma_reset_passpoint_network_list(tp_wma_handle wma,
+				 struct wifi_passpoint_req_param *params);
 #endif
 
 QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui);

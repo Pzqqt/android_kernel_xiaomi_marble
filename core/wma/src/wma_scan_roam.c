@@ -4766,124 +4766,50 @@ QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 	return status;
 }
 
-/**
- * wma_set_passpoint_network_list() - set passpoint network list
- * @handle: WMA handle
- * @req: passpoint network request structure
- *
- * This function reads the incoming @req and fill in the destination
- * WMI structure and send down the passpoint configs down to the firmware
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
-					struct wifi_passpoint_req *req)
+QDF_STATUS
+wma_set_passpoint_network_list(tp_wma_handle wma,
+			       struct wifi_passpoint_req_param *params)
 {
-	struct wifi_passpoint_req_param *params;
-	int i = 0;
 	QDF_STATUS status;
-	size_t params_len;
 
-	WMA_LOGD("wma_set_passpoint_network_list");
+	wma_debug("Enter");
 
 	if (!wma || !wma->wmi_handle) {
-		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
+		wma_err("WMA is closed, can not issue cmd");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (!wmi_service_enabled(wma->wmi_handle,
-			wmi_service_extscan)) {
-		WMA_LOGE("%s: extscan not enabled", __func__);
+	if (!wmi_service_enabled(wma->wmi_handle, wmi_service_extscan)) {
+		wma_err("extscan not enabled");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
-	params_len = sizeof(*params) + (req->num_networks *
-				sizeof(struct wifi_passpoint_network_param));
-	params = qdf_mem_malloc(params_len);
-	if (!params)
-		return QDF_STATUS_E_NOMEM;
-
-	params->request_id = req->request_id;
-	params->vdev_id = req->session_id;
-	params->num_networks = req->num_networks;
-	for (i = 0; i < req->num_networks; i++) {
-		params->networks[i].id = req->networks[i].id;
-		qdf_mem_copy(params->networks[i].realm, req->networks[i].realm,
-				WMI_PASSPOINT_REALM_LEN);
-		qdf_mem_copy(params->networks[i].roaming_consortium_ids,
-				req->networks[i].roaming_consortium_ids,
-				WMI_PASSPOINT_ROAMING_CONSORTIUM_ID_NUM *
-				sizeof(int64_t));
-		qdf_mem_copy(params->networks[i].plmn, req->networks[i].plmn,
-				WMI_PASSPOINT_PLMN_LEN);
-	}
-
 	status = wmi_unified_set_passpoint_network_list_cmd(wma->wmi_handle,
-							params);
-	qdf_mem_free(params);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-
-	WMA_LOGD("Set passpoint network list request is sent successfully for vdev %d",
-		 req->session_id);
+							    params);
+	wma_debug("Exit, vdev %d, status %d", params->vdev_id, status);
 
 	return status;
 }
 
-/**
- * wma_reset_passpoint_network_list() - reset passpoint network list
- * @handle: WMA handle
- * @req: passpoint network request structure
- *
- * This function sends down WMI command with network id set to wildcard id.
- * firmware shall clear all the config entries
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
-					struct wifi_passpoint_req *req)
+QDF_STATUS
+wma_reset_passpoint_network_list(tp_wma_handle wma,
+				 struct wifi_passpoint_req_param *params)
 {
-	struct wifi_passpoint_req_param *params;
-	int i = 0;
 	QDF_STATUS status;
-	size_t params_len;
 
-	WMA_LOGD("wma_reset_passpoint_network_list");
+	wma_debug("Enter");
 
 	if (!wma || !wma->wmi_handle) {
-		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
+		wma_err("WMA is closed, can not issue cmd");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (!wmi_service_enabled(wma->wmi_handle,
-			wmi_service_extscan)) {
-		WMA_LOGE("%s: extscan not enabled", __func__);
+	if (!wmi_service_enabled(wma->wmi_handle, wmi_service_extscan)) {
+		wma_err("extscan not enabled");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
-	params_len = sizeof(*params) + (req->num_networks *
-				sizeof(struct wifi_passpoint_network_param));
-	params = qdf_mem_malloc(params_len);
-	if (!params)
-		return QDF_STATUS_E_NOMEM;
-
-	params->request_id = req->request_id;
-	params->vdev_id = req->session_id;
-	params->num_networks = req->num_networks;
-	for (i = 0; i < req->num_networks; i++) {
-		params->networks[i].id = req->networks[i].id;
-		qdf_mem_copy(params->networks[i].realm, req->networks[i].realm,
-				WMI_PASSPOINT_REALM_LEN);
-		qdf_mem_copy(params->networks[i].roaming_consortium_ids,
-				req->networks[i].roaming_consortium_ids,
-				WMI_PASSPOINT_ROAMING_CONSORTIUM_ID_NUM *
-				sizeof(int64_t));
-		qdf_mem_copy(params->networks[i].plmn, req->networks[i].plmn,
-				WMI_PASSPOINT_PLMN_LEN);
-	}
-
 	status = wmi_unified_reset_passpoint_network_list_cmd(wma->wmi_handle,
-							params);
-	qdf_mem_free(params);
+							      params);
+	wma_debug("Exit, vdev %d, status %d", params->vdev_id, status);
 
 	return status;
 }

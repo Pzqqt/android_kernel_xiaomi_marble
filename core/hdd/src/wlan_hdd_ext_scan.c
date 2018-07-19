@@ -3949,109 +3949,125 @@ int wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	return ret;
 }
 
-#define PARAM_ID QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_NETWORK_PARAM_ID
-#define PARAM_REALM QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_NETWORK_PARAM_REALM
-#define PARAM_ROAM_ID \
-	QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_NETWORK_PARAM_ROAM_CNSRTM_ID
-#define PARAM_ROAM_PLMN \
-	QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_NETWORK_PARAM_ROAM_PLMN
-
 /**
- * hdd_extscan_passpoint_fill_network_list() - passpoint fill network list
- * @hddctx: HDD context
- * @req_msg: request message
- * @tb: vendor attribute table
+ * hdd_extscan_passpoint_fill_network() - passpoint fill single network
+ * @network: aggregate network attribute
+ * @nw: passpoint network record to be filled
  *
- * This function reads the network block NL vendor attributes from %tb and
- * fill in the passpoint request message.
+ * This function takes a single network block NL vendor attribute from
+ * @network and decodes it into the internal record @nw.
  *
  * Return: 0 on success, error number otherwise
  */
-static int hdd_extscan_passpoint_fill_network_list(
-			struct hdd_context *hddctx,
-			struct wifi_passpoint_req *req_msg,
-			struct nlattr **tb)
+static int
+hdd_extscan_passpoint_fill_network(struct nlattr *network,
+				   struct wifi_passpoint_network_param *nw)
 {
-	struct nlattr *network[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
-	struct nlattr *networks;
-	int rem1;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
+	int id;
 	size_t len;
-	uint8_t index;
+
+	if (!network) {
+		hdd_err("attr network attr failed");
+		return -EINVAL;
+	}
+
+	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_PNO_MAX,
+				    nla_data(network),
+				    nla_len(network),
+				    wlan_hdd_pno_config_policy)) {
+		hdd_err("nla_parse failed");
+		return -EINVAL;
+	}
+
+	/* Parse and fetch identifier */
+	id = QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_NETWORK_PARAM_ID;
+	if (!tb[id]) {
+		hdd_err("attr passpoint id failed");
+		return -EINVAL;
+	}
+	nw->id = nla_get_u32(tb[id]);
+	hdd_debug("Id %u", nw->id);
+
+	/* Parse and fetch realm */
+	id = QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_NETWORK_PARAM_REALM;
+	if (!tb[id]) {
+		hdd_err("attr realm failed");
+		return -EINVAL;
+	}
+	len = nla_strlcpy(nw->realm, tb[id],
+			  WMI_PASSPOINT_REALM_LEN);
+	/* Don't send partial realm to firmware */
+	if (len >= WMI_PASSPOINT_REALM_LEN) {
+		hdd_err("user passed invalid realm, len:%zu", len);
+		return -EINVAL;
+	}
+
+	hdd_debug("realm: %s", nw->realm);
+
+	/* Parse and fetch roaming consortium ids */
+	id = QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_NETWORK_PARAM_ROAM_CNSRTM_ID;
+	if (!tb[id]) {
+		hdd_err("attr roaming consortium ids failed");
+		return -EINVAL;
+	}
+	nla_memcpy(&nw->roaming_consortium_ids, tb[id],
+		   sizeof(nw->roaming_consortium_ids));
+	hdd_debug("roaming consortium ids");
+
+	/* Parse and fetch plmn */
+	id = QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_NETWORK_PARAM_ROAM_PLMN;
+	if (!tb[id]) {
+		hdd_err("attr plmn failed");
+		return -EINVAL;
+	}
+	nla_memcpy(&nw->plmn, tb[id],
+		   WMI_PASSPOINT_PLMN_LEN);
+	hdd_debug("plmn %02x:%02x:%02x)",
+		  nw->plmn[0],
+		  nw->plmn[1],
+		  nw->plmn[2]);
+
+	return 0;
+}
+
+/**
+ * hdd_extscan_passpoint_fill_networks() - passpoint fill network list
+ * @req_msg: request message
+ * @networks: aggregate network list attribute
+ *
+ * This function reads the network block NL vendor attributes from
+ * @networks and fills in the passpoint request message.
+ *
+ * Return: 0 on success, error number otherwise
+ */
+static int
+hdd_extscan_passpoint_fill_networks(struct wifi_passpoint_req_param *req_msg,
+				    struct nlattr *networks)
+{
+	struct nlattr *network;
+	int rem;
+	uint32_t index;
 	uint32_t expected_networks;
+	struct wifi_passpoint_network_param *nw;
+
+	if (!networks) {
+		hdd_err("attr networks list failed");
+		return -EINVAL;
+	}
 
 	expected_networks = req_msg->num_networks;
 	index = 0;
 
-	if (!tb[QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_LIST_PARAM_NETWORK_ARRAY]) {
-		hdd_err("attr network array failed");
-		return -EINVAL;
-	}
-	nla_for_each_nested(networks,
-		tb[QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_LIST_PARAM_NETWORK_ARRAY],
-		rem1) {
-
+	nla_for_each_nested(network, networks, rem) {
 		if (index == expected_networks) {
 			hdd_warn("ignoring excess networks");
 			break;
 		}
 
-		if (wlan_cfg80211_nla_parse(network,
-					    QCA_WLAN_VENDOR_ATTR_PNO_MAX,
-					    nla_data(networks),
-					    nla_len(networks),
-					    wlan_hdd_pno_config_policy)) {
-			hdd_err("nla_parse failed");
+		nw = &req_msg->networks[index++];
+		if (hdd_extscan_passpoint_fill_network(network, nw))
 			return -EINVAL;
-		}
-
-		/* Parse and fetch identifier */
-		if (!network[PARAM_ID]) {
-			hdd_err("attr passpoint id failed");
-			return -EINVAL;
-		}
-		req_msg->networks[index].id = nla_get_u32(network[PARAM_ID]);
-		hdd_debug("Id %u", req_msg->networks[index].id);
-
-		/* Parse and fetch realm */
-		if (!network[PARAM_REALM]) {
-			hdd_err("attr realm failed");
-			return -EINVAL;
-		}
-		len = nla_strlcpy(req_msg->networks[index].realm,
-				  network[PARAM_REALM],
-				  SIR_PASSPOINT_REALM_LEN);
-		/* Don't send partial realm to firmware */
-		if (len >= SIR_PASSPOINT_REALM_LEN) {
-			hdd_err("user passed invalid realm, len:%zu", len);
-			return -EINVAL;
-		}
-
-		hdd_debug("realm: %s", req_msg->networks[index].realm);
-
-		/* Parse and fetch roaming consortium ids */
-		if (!network[PARAM_ROAM_ID]) {
-			hdd_err("attr roaming consortium ids failed");
-			return -EINVAL;
-		}
-		nla_memcpy(&req_msg->networks[index].roaming_consortium_ids,
-			   network[PARAM_ROAM_ID],
-			   sizeof(req_msg->networks[0].roaming_consortium_ids));
-		hdd_debug("roaming consortium ids");
-
-		/* Parse and fetch plmn */
-		if (!network[PARAM_ROAM_PLMN]) {
-			hdd_err("attr plmn failed");
-			return -EINVAL;
-		}
-		nla_memcpy(&req_msg->networks[index].plmn,
-			   network[PARAM_ROAM_PLMN],
-			   SIR_PASSPOINT_PLMN_LEN);
-		hdd_debug("plmn %02x:%02x:%02x)",
-			req_msg->networks[index].plmn[0],
-			req_msg->networks[index].plmn[1],
-			req_msg->networks[index].plmn[2]);
-
-		index++;
 	}
 	req_msg->num_networks = index;
 	return 0;
@@ -4074,14 +4090,15 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 						  const void *data,
 						  int data_len)
 {
-	struct wifi_passpoint_req *req_msg = NULL;
-	struct net_device *dev             = wdev->netdev;
-	struct hdd_adapter *adapter             = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx        = wiphy_priv(wiphy);
+	struct wifi_passpoint_req_param *req_msg;
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
+	struct nlattr *networks;
+	uint32_t num_networks;
 	QDF_STATUS status;
-	uint32_t num_networks = 0;
-	int ret;
+	int id, ret;
 
 	hdd_enter_dev(dev);
 
@@ -4101,12 +4118,12 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 	}
 
 	/* Parse and fetch number of networks */
-	if (!tb[QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_LIST_PARAM_NUM]) {
+	id = QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_LIST_PARAM_NUM;
+	if (!tb[id]) {
 		hdd_err("attr num networks failed");
 		return -EINVAL;
 	}
-	num_networks = nla_get_u32(
-		tb[QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_LIST_PARAM_NUM]);
+	num_networks = nla_get_u32(tb[id]);
 	if (num_networks > SIR_PASSPOINT_LIST_MAX_NETWORKS) {
 		hdd_err("num networks %u exceeds max %u",
 			num_networks, SIR_PASSPOINT_LIST_MAX_NETWORKS);
@@ -4124,18 +4141,20 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 	req_msg->num_networks = num_networks;
 
 	/* Parse and fetch request Id */
-	if (!tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]) {
+	id = QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID;
+	if (!tb[id]) {
 		hdd_err("attr request id failed");
 		goto fail;
 	}
-	req_msg->request_id = nla_get_u32(
-	    tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]);
+	req_msg->request_id = nla_get_u32(tb[id]);
 
-	req_msg->session_id = adapter->session_id;
-	hdd_debug("Req Id %u Session Id %d", req_msg->request_id,
-			req_msg->session_id);
+	req_msg->vdev_id = adapter->session_id;
+	hdd_debug("Req Id %u Vdev Id %d",
+		  req_msg->request_id, req_msg->vdev_id);
 
-	if (hdd_extscan_passpoint_fill_network_list(hdd_ctx, req_msg, tb))
+	id = QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_LIST_PARAM_NETWORK_ARRAY;
+	networks = tb[id];
+	if (hdd_extscan_passpoint_fill_networks(req_msg, networks))
 		goto fail;
 
 	status = sme_set_passpoint_list(hdd_ctx->mac_handle, req_msg);
@@ -4196,13 +4215,13 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 						    const void *data,
 						    int data_len)
 {
-	struct wifi_passpoint_req *req_msg = NULL;
-	struct net_device *dev             = wdev->netdev;
-	struct hdd_adapter *adapter             = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx        = wiphy_priv(wiphy);
+	struct wifi_passpoint_req_param *req_msg;
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
 	QDF_STATUS status;
-	int ret;
+	int id, ret;
 
 	hdd_enter_dev(dev);
 
@@ -4228,16 +4247,16 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 	}
 
 	/* Parse and fetch request Id */
-	if (!tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]) {
+	id = QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID;
+	if (!tb[id]) {
 		hdd_err("attr request id failed");
 		goto fail;
 	}
-	req_msg->request_id = nla_get_u32(
-	    tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]);
+	req_msg->request_id = nla_get_u32(tb[id]);
 
-	req_msg->session_id = adapter->session_id;
-	hdd_debug("Req Id %u Session Id %d",
-			req_msg->request_id, req_msg->session_id);
+	req_msg->vdev_id = adapter->session_id;
+	hdd_debug("Req Id %u Vdev Id %d",
+		  req_msg->request_id, req_msg->vdev_id);
 
 	status = sme_reset_passpoint_list(hdd_ctx->mac_handle, req_msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

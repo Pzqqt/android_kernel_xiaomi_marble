@@ -1093,10 +1093,28 @@ sme_get_cached_results(mac_handle_t mac_handle,
 QDF_STATUS sme_set_epno_list(mac_handle_t mac_handle,
 			     struct wifi_enhanced_pno_params *params);
 
-QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
-					struct wifi_passpoint_req *req_msg);
-QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
-					struct wifi_passpoint_req *req_msg);
+/**
+ * sme_set_passpoint_list() - set passpoint network list
+ * @mac_handle: Opaque handle to the MAC context
+ * @params: set passpoint list request parameters
+ *
+ * This function constructs the cds message and fill in message type,
+ * bodyptr with @params and posts it to WDA queue.
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS sme_set_passpoint_list(mac_handle_t mac_handle,
+				  struct wifi_passpoint_req_param *params);
+
+/**
+ * sme_reset_passpoint_list() - reset passpoint network list
+ * @mac_handle: Opaque handle to the MAC context
+ * @params: reset passpoint list request parameters
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS sme_reset_passpoint_list(mac_handle_t mac_handle,
+				    struct wifi_passpoint_req_param *params);
 
 QDF_STATUS sme_ext_scan_register_callback(mac_handle_t mac_handle,
 					  ext_scan_ind_cb ext_scan_ind_cb);
