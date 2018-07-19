@@ -256,6 +256,7 @@ typedef  enum  {
     WMI_SERVICE_MOTION_DET=160, /* support for motion detection config */
     WMI_SERVICE_INFRA_MBSSID=161, /* support infra multi-BSSID feature */
     WMI_SERVICE_OBSS_SPATIAL_REUSE=162, /* support spatial reuse feature */
+    WMI_SERVICE_VDEV_DIFFERENT_BEACON_INTERVAL_SUPPORT=163, /* Support different beacon intervals on different VDEVs */
 
 
     /******* ADD NEW SERVICES HERE *******/
