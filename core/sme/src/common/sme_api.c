@@ -17,7 +17,7 @@
  */
 
 /*
- * DOC: smeApi.c
+ * DOC: sme_api.c
  *
  * Definitions for SME APIs
  */
@@ -11349,59 +11349,25 @@ sme_get_cached_results(mac_handle_t mac_handle,
 	return status;
 }
 
-/**
- * sme_set_epno_list() - set epno network list
- * @hal: global hal handle
- * @input: request message
- *
- * This function constructs the cds message and fill in message type,
- * bodyptr with %input and posts it to WDA queue.
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS sme_set_epno_list(tHalHandle hal,
-				struct wifi_epno_params *input)
+QDF_STATUS sme_set_epno_list(mac_handle_t mac_handle,
+			     struct wifi_enhanced_pno_params *params)
 {
-	QDF_STATUS status    = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac   = PMAC_STRUCT(hal);
+	QDF_STATUS status;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
-	struct wifi_epno_params *req_msg;
-	int len, i;
+	struct wifi_enhanced_pno_params *req_msg;
+	int len;
 
 	SME_ENTER();
+
+	/* per contract must make a copy of the params when messaging */
 	len = sizeof(*req_msg) +
-		(input->num_networks * sizeof(struct wifi_epno_network));
+		(params->num_networks * sizeof(req_msg->networks[0]));
 
 	req_msg = qdf_mem_malloc(len);
 	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-
-	req_msg->num_networks = input->num_networks;
-	req_msg->request_id = input->request_id;
-	req_msg->session_id = input->session_id;
-
-	/* Fill only when num_networks are non zero */
-	if (req_msg->num_networks) {
-		req_msg->min_5ghz_rssi = input->min_5ghz_rssi;
-		req_msg->min_24ghz_rssi = input->min_24ghz_rssi;
-		req_msg->initial_score_max = input->initial_score_max;
-		req_msg->same_network_bonus = input->same_network_bonus;
-		req_msg->secure_bonus = input->secure_bonus;
-		req_msg->band_5ghz_bonus = input->band_5ghz_bonus;
-		req_msg->current_connection_bonus =
-			input->current_connection_bonus;
-
-		for (i = 0; i < req_msg->num_networks; i++) {
-			req_msg->networks[i].flags = input->networks[i].flags;
-			req_msg->networks[i].auth_bit_field =
-					input->networks[i].auth_bit_field;
-			req_msg->networks[i].ssid.length =
-					input->networks[i].ssid.length;
-			qdf_mem_copy(req_msg->networks[i].ssid.ssId,
-					input->networks[i].ssid.ssId,
-					req_msg->networks[i].ssid.length);
-		}
-	}
+	qdf_mem_copy(req_msg, params, len);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -11418,12 +11384,11 @@ QDF_STATUS sme_set_epno_list(tHalHandle hal,
 					QDF_MODULE_ID_WMA,
 					QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("scheduler_post_msg failed!(err=%d)",
-			status);
+		sme_err("scheduler_post_msg failed!(err=%d)", status);
 		qdf_mem_free(req_msg);
-		status = QDF_STATUS_E_FAILURE;
 	}
 	sme_release_global_lock(&mac->sme);
+
 	return status;
 }
 

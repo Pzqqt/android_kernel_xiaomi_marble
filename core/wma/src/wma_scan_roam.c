@@ -4743,76 +4743,25 @@ wma_extscan_get_capabilities(tp_wma_handle wma,
 							params);
 }
 
-/** wma_set_epno_network_list() - set epno network list
- * @wma: WMA handle
- * @req: epno config params request structure
- *
- * This function reads the incoming epno config request structure
- * and constructs the WMI message to the firmware.
- *
- * Returns: 0 on success, error number otherwise
- */
 QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
-		struct wifi_epno_params *req)
+				     struct wifi_enhanced_pno_params *req)
 {
-	struct wifi_enhanced_pno_params *params;
-	uint8_t i = 0;
 	QDF_STATUS status;
-	size_t params_len;
 
-	WMA_LOGD("wma_set_epno_network_list");
+	wma_debug("Enter");
 
 	if (!wma || !wma->wmi_handle) {
-		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
+		wma_err("WMA is closed, can not issue cmd");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (!wmi_service_enabled(wma->wmi_handle,
-			wmi_service_extscan)) {
-		WMA_LOGE("%s: extscan not enabled", __func__);
+
+	if (!wmi_service_enabled(wma->wmi_handle, wmi_service_extscan)) {
+		wma_err("extscan not enabled");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
-	params_len = sizeof(*params) + (req->num_networks *
-			sizeof(struct wifi_epno_network_params));
-	params = qdf_mem_malloc(params_len);
-	if (!params)
-		return QDF_STATUS_E_NOMEM;
-
-	params->request_id = req->request_id;
-	params->vdev_id = req->session_id;
-	params->num_networks = req->num_networks;
-
-	/* Fill only when num_networks are non zero */
-	if (req->num_networks) {
-		params->min_5ghz_rssi = req->min_5ghz_rssi;
-		params->min_24ghz_rssi = req->min_24ghz_rssi;
-		params->initial_score_max = req->initial_score_max;
-		params->same_network_bonus = req->same_network_bonus;
-		params->secure_bonus = req->secure_bonus;
-		params->band_5ghz_bonus = req->band_5ghz_bonus;
-		params->current_connection_bonus =
-			req->current_connection_bonus;
-
-		for (i = 0; i < req->num_networks; i++) {
-			params->networks[i].flags = req->networks[i].flags;
-			params->networks[i].auth_bit_field =
-					req->networks[i].auth_bit_field;
-			params->networks[i].ssid.length =
-					req->networks[i].ssid.length;
-			qdf_mem_copy(params->networks[i].ssid.mac_ssid,
-					req->networks[i].ssid.ssId,
-					req->networks[i].ssid.length);
-		}
-	}
-
-	status = wmi_unified_set_epno_network_list_cmd(wma->wmi_handle, params);
-	qdf_mem_free(params);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-
-	WMA_LOGD("set ePNO list request sent successfully for vdev %d",
-		 req->session_id);
+	status = wmi_unified_set_epno_network_list_cmd(wma->wmi_handle, req);
+	wma_debug("Exit, vdev %d, status %d", req->vdev_id, status);
 
 	return status;
 }

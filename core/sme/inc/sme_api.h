@@ -1081,8 +1081,18 @@ QDF_STATUS
 sme_get_cached_results(mac_handle_t mac_handle,
 		       struct extscan_cached_result_params *params);
 
-QDF_STATUS sme_set_epno_list(tHalHandle hal,
-			     struct wifi_epno_params *req_msg);
+/**
+ * sme_set_epno_list() - set epno network list
+ * @mac_handle: Opaque handle to the MAC context
+ * @params: request message
+ *
+ * This function sends an Enhanced PNO configuration to firmware.
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS sme_set_epno_list(mac_handle_t mac_handle,
+			     struct wifi_enhanced_pno_params *params);
+
 QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
 					struct wifi_passpoint_req *req_msg);
 QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,

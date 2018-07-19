@@ -438,8 +438,18 @@ QDF_STATUS
 wma_extscan_get_capabilities(tp_wma_handle wma,
 			     struct extscan_capabilities_params *params);
 
+/**
+ * wma_set_epno_network_list() - set epno network list
+ * @wma: WMA handle
+ * @req: epno config params request structure
+ *
+ * This function reads the incoming epno config request structure
+ * and constructs the WMI message to the firmware.
+ *
+ * Return: 0 on success, error number otherwise
+ */
 QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
-				struct wifi_epno_params *req);
+				     struct wifi_enhanced_pno_params *req);
 
 QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 					struct wifi_passpoint_req *req);

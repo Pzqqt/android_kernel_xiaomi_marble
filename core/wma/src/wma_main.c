@@ -8216,8 +8216,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_SET_EPNO_LIST_REQ:
-		wma_set_epno_network_list(wma_handle,
-			(struct wifi_epno_params *)msg->bodyptr);
+		wma_set_epno_network_list(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_SET_PER_ROAM_CONFIG_CMD:

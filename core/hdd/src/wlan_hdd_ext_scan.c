@@ -3625,98 +3625,117 @@ int wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy *wiphy,
 
 
 /**
- * hdd_extscan_epno_fill_network_list() - epno fill network list
- * @hddctx: HDD context
- * @req_msg: request message
- * @tb: vendor attribute table
+ * hdd_extscan_epno_fill_network() - epno fill single network
+ * @network: aggregate network attribute
+ * @nw: epno network record to be filled
  *
- * This function reads the network block NL vendor attributes from %tb and
- * fill in the epno request message.
+ * This function takes a single network block NL vendor attribute from
+ * @network and decodes it into the internal record @nw.
  *
  * Return: 0 on success, error number otherwise
  */
-static int hdd_extscan_epno_fill_network_list(
-			struct hdd_context *hddctx,
-			struct wifi_epno_params *req_msg,
-			struct nlattr **tb)
+static int
+hdd_extscan_epno_fill_network(struct nlattr *network,
+			      struct wifi_epno_network_params *nw)
 {
-	struct nlattr *network[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
-	struct nlattr *networks;
-	int rem1, ssid_len;
-	uint8_t index, *ssid;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
+	int id, ssid_len;
+	uint8_t *ssid;
+
+	if (!network) {
+		hdd_err("attr network attr failed");
+		return -EINVAL;
+	}
+
+	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_PNO_MAX,
+				    nla_data(network),
+				    nla_len(network),
+				    wlan_hdd_pno_config_policy)) {
+		hdd_err("nla_parse failed");
+		return -EINVAL;
+	}
+
+	/* Parse and fetch ssid */
+	id = QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_SSID;
+	if (!tb[id]) {
+		hdd_err("attr network ssid failed");
+		return -EINVAL;
+	}
+	ssid_len = nla_len(tb[id]);
+
+	/* nla_parse will detect overflow but not underflow */
+	if (0 == ssid_len) {
+		hdd_err("zero ssid length");
+		return -EINVAL;
+	}
+
+	/* Decrement by 1, don't count null character */
+	ssid_len--;
+
+	nw->ssid.length = ssid_len;
+	hdd_debug("network ssid length %d", ssid_len);
+	ssid = nla_data(tb[id]);
+	qdf_mem_copy(nw->ssid.mac_ssid, ssid, ssid_len);
+	hdd_debug("Ssid (%.*s)", nw->ssid.length, nw->ssid.mac_ssid);
+
+	/* Parse and fetch epno flags */
+	id = QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_FLAGS;
+	if (!tb[id]) {
+		hdd_err("attr epno flags failed");
+		return -EINVAL;
+	}
+	nw->flags = nla_get_u8(tb[id]);
+	hdd_debug("flags %u", nw->flags);
+
+	/* Parse and fetch auth bit */
+	id = QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_AUTH_BIT;
+	if (!tb[id]) {
+		hdd_err("attr auth bit failed");
+		return -EINVAL;
+	}
+	nw->auth_bit_field = nla_get_u8(tb[id]);
+	hdd_debug("auth bit %u", nw->auth_bit_field);
+
+	return 0;
+}
+
+/**
+ * hdd_extscan_epno_fill_network_list() - epno fill network list
+ * @req_msg: request message
+ * @networks: aggregate network list attribute
+ *
+ * This function reads the network block NL vendor attributes from
+ * @networks and fills in the epno request message @req_msg.
+ *
+ * Return: 0 on success, error number otherwise
+ */
+static int
+hdd_extscan_epno_fill_network_list(struct wifi_enhanced_pno_params *req_msg,
+				   struct nlattr *networks)
+{
+	struct nlattr *network;
+	int rem;
+	uint32_t index;
 	uint32_t expected_networks;
+	struct wifi_epno_network_params *nw;
+
+	if (!networks) {
+		hdd_err("attr networks list failed");
+		return -EINVAL;
+	}
 
 	expected_networks = req_msg->num_networks;
 	index = 0;
 
-	if (!tb[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORKS_LIST]) {
-		hdd_err("attr networks list failed");
-		return -EINVAL;
-	}
-	nla_for_each_nested(networks,
-			    tb[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORKS_LIST],
-			    rem1) {
-
+	nla_for_each_nested(network, networks, rem) {
 		if (index == expected_networks) {
 			hdd_warn("ignoring excess networks");
 			break;
 		}
 
-		if (wlan_cfg80211_nla_parse(network,
-					    QCA_WLAN_VENDOR_ATTR_PNO_MAX,
-					    nla_data(networks),
-					    nla_len(networks),
-					    wlan_hdd_pno_config_policy)) {
-			hdd_err("nla_parse failed");
+		nw = &req_msg->networks[index++];
+		if (hdd_extscan_epno_fill_network(network, nw))
 			return -EINVAL;
-		}
-
-		/* Parse and fetch ssid */
-		if (!network[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_SSID]) {
-			hdd_err("attr network ssid failed");
-			return -EINVAL;
-		}
-		ssid_len = nla_len(
-			network[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_SSID]);
-
-		/* nla_parse will detect overflow but not underflow */
-		if (0 == ssid_len) {
-			hdd_err("zero ssid length");
-			return -EINVAL;
-		}
-
-		/* Decrement by 1, don't count null character */
-		ssid_len--;
-
-		req_msg->networks[index].ssid.length = ssid_len;
-		hdd_debug("network ssid length %d", ssid_len);
-		ssid = nla_data(network[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_SSID]);
-		qdf_mem_copy(req_msg->networks[index].ssid.ssId,
-				ssid, ssid_len);
-		hdd_debug("Ssid (%.*s)",
-			req_msg->networks[index].ssid.length,
-			req_msg->networks[index].ssid.ssId);
-
-		/* Parse and fetch epno flags */
-		if (!network[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_FLAGS]) {
-			hdd_err("attr epno flags failed");
-			return -EINVAL;
-		}
-		req_msg->networks[index].flags = nla_get_u8(
-			network[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_FLAGS]);
-		hdd_debug("flags %u", req_msg->networks[index].flags);
-
-		/* Parse and fetch auth bit */
-		if (!network[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_AUTH_BIT]) {
-			hdd_err("attr auth bit failed");
-			return -EINVAL;
-		}
-		req_msg->networks[index].auth_bit_field = nla_get_u8(
-			network[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_AUTH_BIT]);
-		hdd_debug("auth bit %u",
-			req_msg->networks[index].auth_bit_field);
-
-		index++;
 	}
 	req_msg->num_networks = index;
 	return 0;
@@ -3729,8 +3748,8 @@ static int hdd_extscan_epno_fill_network_list(
  * @data: data pointer
  * @data_len: data length
  *
- * This function reads the NL vendor attributes from %tb and
- * fill in the epno request message.
+ * This function reads the NL vendor attributes from @data and
+ * fills in the epno request message.
  *
  * Return: 0 on success, error number otherwise
  */
@@ -3739,15 +3758,15 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 					     const void *data,
 					     int data_len)
 {
-	struct wifi_epno_params *req_msg = NULL;
-	struct net_device *dev           = wdev->netdev;
-	struct hdd_adapter *adapter           = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx      = wiphy_priv(wiphy);
-	struct nlattr *tb[
-		QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
+	struct wifi_enhanced_pno_params *req_msg;
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
+	struct nlattr *networks;
 	QDF_STATUS status;
 	uint32_t num_networks, len;
-	int ret_val;
+	int id, ret_val;
 
 	hdd_enter_dev(dev);
 
@@ -3772,7 +3791,8 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	}
 
 	/* Parse and fetch number of networks */
-	if (!tb[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_NUM_NETWORKS]) {
+	id = QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_NUM_NETWORKS;
+	if (!tb[id]) {
 		hdd_err("attr num networks failed");
 		return -EINVAL;
 	}
@@ -3781,8 +3801,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	 * num_networks is also used as EPNO SET/RESET request.
 	 * if num_networks is zero then it is treated as RESET.
 	 */
-	num_networks = nla_get_u32(
-		tb[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_NUM_NETWORKS]);
+	num_networks = nla_get_u32(tb[id]);
 
 	if (num_networks > MAX_EPNO_NETWORKS) {
 		hdd_debug("num of nw: %d exceeded max: %d, resetting to: %d",
@@ -3792,7 +3811,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 
 	hdd_debug("num networks %u", num_networks);
 	len = sizeof(*req_msg) +
-			(num_networks * sizeof(struct wifi_epno_network));
+			(num_networks * sizeof(req_msg->networks[0]));
 
 	req_msg = qdf_mem_malloc(len);
 	if (!req_msg) {
@@ -3802,75 +3821,73 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	req_msg->num_networks = num_networks;
 
 	/* Parse and fetch request Id */
-	if (!tb[QCA_WLAN_VENDOR_ATTR_PNO_CONFIG_REQUEST_ID]) {
+	id = QCA_WLAN_VENDOR_ATTR_PNO_CONFIG_REQUEST_ID;
+	if (!tb[id]) {
 		hdd_err("attr request id failed");
 		goto fail;
 	}
-	req_msg->request_id = nla_get_u32(
-	    tb[QCA_WLAN_VENDOR_ATTR_PNO_CONFIG_REQUEST_ID]);
+	req_msg->request_id = nla_get_u32(tb[id]);
 	hdd_debug("Req Id %u", req_msg->request_id);
 
-	req_msg->session_id = adapter->session_id;
-	hdd_debug("Session Id %d", req_msg->session_id);
+	req_msg->vdev_id = adapter->session_id;
+	hdd_debug("Vdev Id %d", req_msg->vdev_id);
 
 	if (num_networks) {
-
 		/* Parse and fetch min_5ghz_rssi */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_EPNO_MIN5GHZ_RSSI]) {
+		id = QCA_WLAN_VENDOR_ATTR_EPNO_MIN5GHZ_RSSI;
+		if (!tb[id]) {
 			hdd_err("min_5ghz_rssi id failed");
 			goto fail;
 		}
-		req_msg->min_5ghz_rssi = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_EPNO_MIN5GHZ_RSSI]);
+		req_msg->min_5ghz_rssi = nla_get_u32(tb[id]);
 
 		/* Parse and fetch min_24ghz_rssi */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_EPNO_MIN24GHZ_RSSI]) {
+		id = QCA_WLAN_VENDOR_ATTR_EPNO_MIN24GHZ_RSSI;
+		if (!tb[id]) {
 			hdd_err("min_24ghz_rssi id failed");
 			goto fail;
 		}
-		req_msg->min_24ghz_rssi = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_EPNO_MIN24GHZ_RSSI]);
+		req_msg->min_24ghz_rssi = nla_get_u32(tb[id]);
 
 		/* Parse and fetch initial_score_max */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_EPNO_INITIAL_SCORE_MAX]) {
+		id = QCA_WLAN_VENDOR_ATTR_EPNO_INITIAL_SCORE_MAX;
+		if (!tb[id]) {
 			hdd_err("initial_score_max id failed");
 			goto fail;
 		}
-		req_msg->initial_score_max = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_EPNO_INITIAL_SCORE_MAX]);
+		req_msg->initial_score_max = nla_get_u32(tb[id]);
 
 		/* Parse and fetch current_connection_bonus */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_EPNO_CURRENT_CONNECTION_BONUS]) {
+		id = QCA_WLAN_VENDOR_ATTR_EPNO_CURRENT_CONNECTION_BONUS;
+		if (!tb[id]) {
 			hdd_err("current_connection_bonus id failed");
 			goto fail;
 		}
-		req_msg->current_connection_bonus = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_EPNO_CURRENT_CONNECTION_BONUS]
-			);
+		req_msg->current_connection_bonus = nla_get_u32(tb[id]);
 
 		/* Parse and fetch same_network_bonus */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_EPNO_SAME_NETWORK_BONUS]) {
+		id = QCA_WLAN_VENDOR_ATTR_EPNO_SAME_NETWORK_BONUS;
+		if (!tb[id]) {
 			hdd_err("same_network_bonus id failed");
 			goto fail;
 		}
-		req_msg->same_network_bonus = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_EPNO_SAME_NETWORK_BONUS]);
+		req_msg->same_network_bonus = nla_get_u32(tb[id]);
 
 		/* Parse and fetch secure_bonus */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_EPNO_SECURE_BONUS]) {
+		id = QCA_WLAN_VENDOR_ATTR_EPNO_SECURE_BONUS;
+		if (!tb[id]) {
 			hdd_err("secure_bonus id failed");
 			goto fail;
 		}
-		req_msg->secure_bonus = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_EPNO_SECURE_BONUS]);
+		req_msg->secure_bonus = nla_get_u32(tb[id]);
 
 		/* Parse and fetch band_5ghz_bonus */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_EPNO_BAND5GHZ_BONUS]) {
+		id = QCA_WLAN_VENDOR_ATTR_EPNO_BAND5GHZ_BONUS;
+		if (!tb[id]) {
 			hdd_err("band_5ghz_bonus id failed");
 			goto fail;
 		}
-		req_msg->band_5ghz_bonus = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_EPNO_BAND5GHZ_BONUS]);
+		req_msg->band_5ghz_bonus = nla_get_u32(tb[id]);
 
 		hdd_debug("min_5ghz_rssi: %d min_24ghz_rssi: %d",
 			req_msg->min_5ghz_rssi,
@@ -3883,7 +3900,9 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 			req_msg->secure_bonus,
 			req_msg->band_5ghz_bonus);
 
-		if (hdd_extscan_epno_fill_network_list(hdd_ctx, req_msg, tb))
+		id = QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORKS_LIST;
+		networks = tb[id];
+		if (hdd_extscan_epno_fill_network_list(req_msg, networks))
 			goto fail;
 
 	}
