@@ -942,9 +942,9 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 		goto dec_peer_ref_cnt;
 	}
 
-	mgmt_txrx_info("Rcvd mgmt frame, mgmt txrx frm type: %u seq. no.: %u, peer: %pK fc: %x %x",
-		       frm_type, *(uint16_t *)wh->i_seq, peer, wh->i_fc[0],
-		       wh->i_fc[1]);
+	mgmt_txrx_debug("Rcvd mgmt frame, mgmt txrx frm type: %u seq. no.: %u, peer: %pK fc: %x %x",
+			frm_type, *(uint16_t *)wh->i_seq, peer, wh->i_fc[0],
+			wh->i_fc[1]);
 
 	mgmt_txrx_psoc_ctx = (struct mgmt_txrx_priv_psoc_context *)
 			wlan_objmgr_psoc_get_comp_private_obj(psoc,
@@ -975,8 +975,8 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 
 	if (!rx_handler_head) {
 		qdf_spin_unlock_bh(&mgmt_txrx_psoc_ctx->mgmt_txrx_psoc_ctx_lock);
-		mgmt_txrx_info("No rx callback registered for frm_type: %d",
-			frm_type);
+		mgmt_txrx_debug("No rx callback registered for frm_type: %d",
+				frm_type);
 		qdf_nbuf_free(buf);
 		status = QDF_STATUS_E_FAILURE;
 		goto dec_peer_ref_cnt;
