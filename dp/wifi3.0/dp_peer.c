@@ -225,6 +225,21 @@ static int dp_peer_ast_hash_attach(struct dp_soc *soc)
 	return 0;
 }
 
+#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
+static inline void dp_peer_ast_cleanup(struct dp_soc *soc,
+				       struct dp_ast_entry *ast)
+{
+	struct cdp_soc_t *cdp_soc = &soc->cdp_soc;
+
+	if (ast->cp_ctx && cdp_soc->ol_ops->peer_del_wds_cp_ctx)
+		cdp_soc->ol_ops->peer_del_wds_cp_ctx(ast->cp_ctx);
+}
+#else
+static inline void dp_peer_ast_cleanup(struct dp_soc *soc,
+				       struct dp_ast_entry *ast)
+{
+}
+#endif
 /*
  * dp_peer_ast_hash_detach() - Free AST Hash table
  * @soc: SoC handle
@@ -529,6 +544,22 @@ int dp_peer_add_ast(struct dp_soc *soc,
 	return ret;
 }
 
+#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
+void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
+{
+	struct dp_peer *peer = ast_entry->peer;
+
+	if (ast_entry->next_hop) {
+		dp_peer_ast_send_wds_del(soc, ast_entry);
+	} else {
+		soc->ast_table[ast_entry->ast_idx] = NULL;
+		TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
+		DP_STATS_INC(soc, ast.deleted, 1);
+		dp_peer_ast_hash_remove(soc, ast_entry);
+		qdf_mem_free(ast_entry);
+	}
+}
+#else
 /*
  * dp_peer_del_ast() - Delete and free AST entry
  * @soc: SoC handle
@@ -558,6 +589,7 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 	dp_peer_ast_hash_remove(soc, ast_entry);
 	qdf_mem_free(ast_entry);
 }
+#endif
 
 /*
  * dp_peer_update_ast() - Delete and free AST entry
@@ -705,6 +737,57 @@ uint8_t dp_peer_ast_get_next_hop(struct dp_soc *soc,
 				struct dp_ast_entry *ast_entry)
 {
 	return 0xff;
+}
+#endif
+
+#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
+void dp_peer_ast_set_cp_ctx(struct dp_soc *soc,
+			    struct dp_ast_entry *ast_entry,
+			    void *cp_ctx)
+{
+	ast_entry->cp_ctx = cp_ctx;
+}
+
+void *dp_peer_ast_get_cp_ctx(struct dp_soc *soc,
+			     struct dp_ast_entry *ast_entry)
+{
+	void *cp_ctx = NULL;
+
+	cp_ctx = ast_entry->cp_ctx;
+	ast_entry->cp_ctx = NULL;
+
+	return cp_ctx;
+}
+
+void dp_peer_ast_send_wds_del(struct dp_soc *soc,
+			      struct dp_ast_entry *ast_entry)
+{
+	struct dp_peer *peer = ast_entry->peer;
+	struct cdp_soc_t *cdp_soc = &soc->cdp_soc;
+
+	if (!ast_entry->wmi_sent) {
+		cdp_soc->ol_ops->peer_del_wds_entry(peer->vdev->osif_vdev,
+						    ast_entry->mac_addr.raw);
+		ast_entry->wmi_sent = true;
+	}
+}
+
+bool dp_peer_ast_get_wmi_sent(struct dp_soc *soc,
+			      struct dp_ast_entry *ast_entry)
+{
+	return ast_entry->wmi_sent;
+}
+
+void dp_peer_ast_free_entry(struct dp_soc *soc,
+			    struct dp_ast_entry *ast_entry)
+{
+	struct dp_peer *peer = ast_entry->peer;
+
+	soc->ast_table[ast_entry->ast_idx] = NULL;
+	TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
+	DP_STATS_INC(soc, ast.deleted, 1);
+	dp_peer_ast_hash_remove(soc, ast_entry);
+	qdf_mem_free(ast_entry);
 }
 #endif
 

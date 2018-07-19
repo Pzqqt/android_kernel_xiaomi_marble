@@ -107,6 +107,25 @@ void dp_peer_ast_set_type(struct dp_soc *soc,
 				struct dp_ast_entry *ast_entry,
 				enum cdp_txrx_ast_entry_type type);
 
+#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
+void dp_peer_ast_set_cp_ctx(struct dp_soc *soc,
+			    struct dp_ast_entry *ast_entry,
+			    void *cp_ctx);
+
+void *dp_peer_ast_get_cp_ctx(struct dp_soc *soc,
+			     struct dp_ast_entry *ast_entry);
+
+void dp_peer_ast_send_wds_del(struct dp_soc *soc,
+			      struct dp_ast_entry *ast_entry);
+
+bool dp_peer_ast_get_wmi_sent(struct dp_soc *soc,
+			      struct dp_ast_entry *ast_entry);
+
+void dp_peer_ast_free_entry(struct dp_soc *soc,
+			    struct dp_ast_entry *ast_entry);
+
+#endif
+
 /*
  * dp_get_vdev_from_soc_vdev_id_wifi3() -
  * Returns vdev object given the vdev id

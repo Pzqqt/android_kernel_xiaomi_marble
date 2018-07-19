@@ -20574,6 +20574,8 @@ static QDF_STATUS extract_wds_addr_event_tlv(wmi_unified_t wmi_handle,
 		wds_ev->dest_mac[4+i] =
 			((u_int8_t *)&(ev->dest_mac.mac_addr47to32))[i];
 	}
+	wds_ev->vdev_id = ev->vdev_id;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -23242,6 +23244,9 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_wlan_sar2_result_event_id] = WMI_SAR2_RESULT_EVENTID;
 	event_ids[wmi_esp_estimate_event_id] = WMI_ESP_ESTIMATE_EVENTID;
 	event_ids[wmi_roam_scan_stats_event_id] = WMI_ROAM_SCAN_STATS_EVENTID;
+#ifdef AST_HKV1_WORKAROUND
+	event_ids[wmi_wds_peer_event_id] = WMI_WDS_PEER_EVENTID;
+#endif
 }
 
 /**

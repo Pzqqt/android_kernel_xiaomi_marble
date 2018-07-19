@@ -118,6 +118,20 @@ struct cdp_cmn_ops {
 	void (*txrx_peer_ast_set_type)
 		(ol_txrx_soc_handle soc, void *ast_hdl,
 		enum cdp_txrx_ast_entry_type type);
+#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
+	void (*txrx_peer_ast_set_cp_ctx)(ol_txrx_soc_handle soc,
+					 void *ast_entry,
+					 void *cp_ctx);
+
+	void * (*txrx_peer_ast_get_cp_ctx)(ol_txrx_soc_handle soc,
+					   void *ast_entry);
+
+	bool (*txrx_peer_ast_get_wmi_sent)(ol_txrx_soc_handle soc,
+					   void *ast_entry);
+
+	void (*txrx_peer_ast_free_entry)(ol_txrx_soc_handle soc,
+					 void *ast_entry);
+#endif
 
 	enum cdp_txrx_ast_entry_type (*txrx_peer_ast_get_type)
 		(ol_txrx_soc_handle soc, void *ast_hdl);
@@ -803,6 +817,9 @@ struct ol_if_ops {
 			uint32_t flags);
 	void (*peer_del_wds_entry)(void *ol_soc_handle,
 			uint8_t *wds_macaddr);
+#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
+	void (*peer_del_wds_cp_ctx)(void *cp_ctx);
+#endif
 	QDF_STATUS
 	(*lro_hash_config)(struct wlan_objmgr_psoc *ctrl_psoc,
 			   struct cdp_lro_hash_config *rx_offld_hash);

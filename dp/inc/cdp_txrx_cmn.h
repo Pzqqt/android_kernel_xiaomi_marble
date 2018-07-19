@@ -520,6 +520,80 @@ static inline void cdp_peer_ast_set_type
 	soc->ops->cmn_drv_ops->txrx_peer_ast_set_type(soc, ast_handle, type);
 }
 
+#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
+static inline void cdp_peer_ast_set_cp_ctx(struct cdp_soc_t *soc,
+					   void *ast_handle,
+					   void *cp_ctx)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "Invalid Instance:");
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_ast_set_cp_ctx)
+		return;
+
+	soc->ops->cmn_drv_ops->txrx_peer_ast_set_cp_ctx(soc, ast_handle,
+							cp_ctx);
+}
+
+static inline void *cdp_peer_ast_get_cp_ctx(struct cdp_soc_t *soc,
+					    void *ast_handle)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "Invalid Instance:");
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_ast_get_cp_ctx)
+		return NULL;
+
+	return soc->ops->cmn_drv_ops->txrx_peer_ast_get_cp_ctx(soc, ast_handle);
+}
+
+static inline bool cdp_peer_ast_get_wmi_sent(struct cdp_soc_t *soc,
+					     void *ast_handle)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "Invalid Instance:");
+		QDF_BUG(0);
+		return false;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_ast_get_wmi_sent)
+		return false;
+
+	return soc->ops->cmn_drv_ops->txrx_peer_ast_get_wmi_sent(soc,
+								 ast_handle);
+}
+
+static inline
+void cdp_peer_ast_free_entry(struct cdp_soc_t *soc,
+			     void *ast_handle)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "Invalid Instance:");
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_ast_free_entry)
+		return;
+
+	soc->ops->cmn_drv_ops->txrx_peer_ast_free_entry(soc, ast_handle);
+}
+#endif
+
 static inline void cdp_peer_teardown
 	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev, void *peer)
 {
