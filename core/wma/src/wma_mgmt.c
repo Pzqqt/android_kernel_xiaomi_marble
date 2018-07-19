@@ -3172,12 +3172,21 @@ void wma_process_update_opmode(tp_wma_handle wma_handle,
 void wma_process_update_rx_nss(tp_wma_handle wma_handle,
 			       tUpdateRxNss *update_rx_nss)
 {
+	struct target_psoc_info *tgt_hdl;
 	struct wma_txrx_node *intr =
 		&wma_handle->interfaces[update_rx_nss->smesessionId];
 	int rx_nss = update_rx_nss->rxNss;
+	int num_rf_chains;
 
-	if (rx_nss > WMA_MAX_NSS)
-		rx_nss = WMA_MAX_NSS;
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
+	if (!tgt_hdl) {
+		WMA_LOGE("%s: target psoc info is NULL", __func__);
+		return;
+	}
+
+	num_rf_chains = target_if_get_num_rf_chains(tgt_hdl);
+	if (rx_nss > num_rf_chains || rx_nss > WMA_MAX_NSS)
+		rx_nss = QDF_MIN(num_rf_chains, WMA_MAX_NSS);
 
 	intr->nss = (uint8_t)rx_nss;
 	update_rx_nss->rxNss = (uint32_t)rx_nss;
