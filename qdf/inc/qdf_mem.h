@@ -109,6 +109,9 @@ void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
 #define qdf_mem_malloc(size) \
 	qdf_mem_malloc_debug(size, __FILE__, __LINE__, QDF_RET_IP, 0)
 
+#define qdf_mem_malloc_fl(size, func, line) \
+	qdf_mem_malloc_debug(size, func, line, QDF_RET_IP, 0)
+
 #define qdf_mem_malloc_atomic(size) \
 	qdf_mem_malloc_debug(size, __FILE__, __LINE__, QDF_RET_IP, GFP_ATOMIC)
 /**
@@ -200,8 +203,42 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
 	qdf_mem_free_consistent_debug(osdev, dev, size, vaddr, paddr, memctx, \
 				  __FILE__, __LINE__)
 #else
-void *qdf_mem_malloc(qdf_size_t size);
-void *qdf_mem_malloc_atomic(qdf_size_t size);
+
+/**
+ * qdf_mem_malloc() - allocation QDF memory
+ * @size: Number of bytes of memory to allocate.
+ *
+ * This function will dynamicallly allocate the specified number of bytes of
+ * memory.
+ *
+ * Return:
+ * Upon successful allocate, returns a non-NULL pointer to the allocated
+ * memory.  If this function is unable to allocate the amount of memory
+ * specified (for any reason) it returns NULL.
+ */
+#define qdf_mem_malloc(size) \
+	qdf_mem_malloc_fl(size, __func__, __LINE__)
+
+void *qdf_mem_malloc_fl(qdf_size_t size, const char *func, uint32_t line);
+
+/**
+ * qdf_mem_malloc_atomic() - allocation QDF memory atomically
+ * @size: Number of bytes of memory to allocate.
+ *
+ * This function will dynamicallly allocate the specified number of bytes of
+ * memory.
+ *
+ * Return:
+ * Upon successful allocate, returns a non-NULL pointer to the allocated
+ * memory.  If this function is unable to allocate the amount of memory
+ * specified (for any reason) it returns NULL.
+ */
+#define qdf_mem_malloc_atomic(size) \
+	qdf_mem_malloc_atomic_fl(size, __func__, __LINE__)
+
+void *qdf_mem_malloc_atomic_fl(qdf_size_t size,
+			       const char *func,
+			       uint32_t line);
 
 /**
  * qdf_mem_free() - free QDF memory
