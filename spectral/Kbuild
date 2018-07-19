@@ -70,6 +70,7 @@ INCS += -I$(obj)/$(DEPTH)/include -I$(obj)/$(DEPTH)/umac/include \
         -I$(obj)/$(DEPTH)/qca_ol \
         -I$(obj)/$(DEPTH)/cmn_dev/qdf/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/qdf/linux/src \
+        -I$(obj)/$(DEPTH)/cmn_dev/qal/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/hif \
         -I$(obj)/$(DEPTH)/cmn_dev/hif/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/hif/src \

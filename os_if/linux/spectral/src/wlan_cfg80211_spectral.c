@@ -31,6 +31,7 @@
 #include <wlan_spectral_ucfg_api.h>
 #include <wlan_cfg80211_spectral.h>
 #include <spectral_ioctl.h>
+#include "qal_devcfg.h"
 
 static const struct nla_policy spectral_scan_policy[
 		QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_MAX + 1] = {
@@ -430,7 +431,7 @@ int wlan_cfg80211_spectral_scan_config_and_start(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	cfg80211_vendor_cmd_reply(skb);
+	qal_devcfg_send_response((qdf_nbuf_t)skb);
 
 	return 0;
 }
@@ -534,7 +535,7 @@ int wlan_cfg80211_spectral_scan_get_config(struct wiphy *wiphy,
 		kfree_skb(skb);
 		return -EINVAL;
 	}
-	cfg80211_vendor_cmd_reply(skb);
+	qal_devcfg_send_response((qdf_nbuf_t)skb);
 
 	return 0;
 }
@@ -584,7 +585,7 @@ int wlan_cfg80211_spectral_scan_get_cap(struct wiphy *wiphy,
 			spectral_cap.hw_gen))
 		goto fail;
 
-	cfg80211_vendor_cmd_reply(skb);
+	qal_devcfg_send_response((qdf_nbuf_t)skb);
 
 	return 0;
 
@@ -633,7 +634,7 @@ int wlan_cfg80211_spectral_scan_get_diag_stats(struct wiphy *wiphy,
 		kfree_skb(skb);
 		return -EINVAL;
 	}
-	cfg80211_vendor_cmd_reply(skb);
+	qal_devcfg_send_response((qdf_nbuf_t)skb);
 
 	return 0;
 }
@@ -666,7 +667,7 @@ int wlan_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
 			skb,
 			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_STATUS_IS_ACTIVE))
 			goto fail;
-	cfg80211_vendor_cmd_reply(skb);
+	qal_devcfg_send_response((qdf_nbuf_t)skb);
 	return 0;
 
 fail:
