@@ -2669,46 +2669,15 @@ void hif_ce_stop(struct hif_softc *scn)
 	hif_state->started = false;
 }
 
-#ifdef QCN7605_SUPPORT
-static inline
-void hif_get_shadow_reg_cfg_qcn7605(struct shadow_reg_cfg
-				    **target_shadow_reg_cfg_ret,
-				    uint32_t *shadow_cfg_sz_ret)
-{
-	if (target_shadow_reg_cfg_ret)
-		*target_shadow_reg_cfg_ret = target_shadow_reg_cfg_map_qcn7605;
-	if (shadow_cfg_sz_ret)
-		*shadow_cfg_sz_ret = sizeof(target_shadow_reg_cfg_map_qcn7605);
-}
-#else
-static inline
-void hif_get_shadow_reg_cfg_qcn7605(struct shadow_reg_cfg
-				    **target_shadow_reg_cfg_ret,
-				    uint32_t *shadow_cfg_sz_ret)
-{
-	HIF_ERROR("QCN7605 not supported");
-}
-#endif
-
 static void hif_get_shadow_reg_cfg(struct hif_softc *scn,
 				   struct shadow_reg_cfg
 				   **target_shadow_reg_cfg_ret,
 				   uint32_t *shadow_cfg_sz_ret)
 {
-	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
-	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
-
-	switch (tgt_info->target_type) {
-	case TARGET_TYPE_QCN7605:
-		hif_get_shadow_reg_cfg_qcn7605(target_shadow_reg_cfg_ret,
-					       shadow_cfg_sz_ret);
-		break;
-	default:
-		if (target_shadow_reg_cfg_ret)
-			*target_shadow_reg_cfg_ret = target_shadow_reg_cfg;
-		if (shadow_cfg_sz_ret)
-			*shadow_cfg_sz_ret = shadow_cfg_sz;
-	}
+	if (target_shadow_reg_cfg_ret)
+		*target_shadow_reg_cfg_ret = target_shadow_reg_cfg;
+	if (shadow_cfg_sz_ret)
+		*shadow_cfg_sz_ret = shadow_cfg_sz;
 }
 
 /**
@@ -3011,6 +2980,8 @@ void hif_set_ce_config_qcn7605(struct hif_softc *scn,
 	hif_state->target_ce_config = target_ce_config_wlan_qcn7605;
 	hif_state->target_ce_config_sz =
 				 sizeof(target_ce_config_wlan_qcn7605);
+	target_shadow_reg_cfg = target_shadow_reg_cfg_map_qcn7605;
+	shadow_cfg_sz = sizeof(target_shadow_reg_cfg_map_qcn7605);
 	scn->ce_count = QCN7605_CE_COUNT;
 }
 #else
@@ -3061,6 +3032,7 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 	/* if epping is enabled we need to use the epping configuration. */
 	if (QDF_IS_EPPING_ENABLED(mode)) {
 		hif_ce_prepare_epping_config(hif_state);
+		return;
 	}
 
 	switch (tgt_info->target_type) {

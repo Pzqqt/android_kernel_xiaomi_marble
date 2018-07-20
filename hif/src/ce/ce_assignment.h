@@ -231,6 +231,50 @@ static struct CE_attr host_ce_config_wlan_epping_poll[] = {
 	{ /* CE7 */ CE_ATTR_DIAG_FLAGS, 0, 2,   DIAG_TRANSFER_LIMIT, 2, NULL,},
 };
 
+#ifdef QCN7605_SUPPORT
+static struct CE_attr host_ce_config_wlan_epping_irq[] = {
+	/* host->target HTC control and raw streams */
+	{ /* CE0 */ CE_ATTR_FLAGS, 0,  16, 2048, 0, NULL,},
+	/* target->host EP-ping */
+	{ /* CE1 */ CE_ATTR_FLAGS, 0,   0, 2048, 32, NULL,},
+	/* target->host EP-ping */
+	{ /* CE2 */ CE_ATTR_FLAGS, 0,   0, 2048, 32, NULL,},
+	/* host->target EP-ping */
+	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
+	/* host->target EP-ping */
+	{ /* CE4 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
+	/* EP-ping heartbeat */
+	{ /* CE5 */ CE_ATTR_FLAGS, 0,   0, 2048, 16, NULL,},
+	/* unused */
+	{ /* CE6 */ CE_ATTR_FLAGS, 0,   0, 0, 0, NULL,},
+	/* ce_diag, the Diagnostic Window */
+	{ /* CE7 */ CE_ATTR_DIAG_FLAGS, 0,   2, DIAG_TRANSFER_LIMIT, 2, NULL,},
+};
+
+/*
+ * EP-ping firmware's CE configuration
+ */
+static struct CE_pipe_config target_ce_config_wlan_epping[] = {
+	/* host->target HTC control and raw streams */
+	{ /* CE0 */ 0, PIPEDIR_OUT,  16, 2048, CE_ATTR_FLAGS, 0,},
+	/* target->host EP-ping */
+	{ /* CE1 */ 1, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	/* target->host EP-ping */
+	{ /* CE2 */ 2, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	/* host->target EP-ping */
+	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	/* host->target EP-ping */
+	{ /* CE4 */ 4, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	/* EP-ping heartbeat */
+	{ /* CE5 */ 5, PIPEDIR_IN,  16, 2048, CE_ATTR_FLAGS, 0,},
+	/* unused */
+	{ /* CE6 */ 6, PIPEDIR_INOUT, 0, 0, CE_ATTR_FLAGS, 0,},
+	/* CE7 used only by Host */
+	{ /* CE7 */ 7, PIPEDIR_INOUT_H2H, 0, 0, 0, 0,},
+	/* CE8 used only by IPA */
+	{ /* CE8 */ 8, PIPEDIR_IN, 4, 2048, CE_ATTR_FLAGS, 0,}
+};
+#else
 static struct CE_attr host_ce_config_wlan_epping_irq[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0,  16, 2048, 0, NULL,},
@@ -272,6 +316,7 @@ static struct CE_pipe_config target_ce_config_wlan_epping[] = {
 	/* CE8 used only by IPA */
 	{ /* CE8 */ 8, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,}
 };
+#endif
 #endif
 #else
 static struct CE_attr host_ce_config_wlan[] = {

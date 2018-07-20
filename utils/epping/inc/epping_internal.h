@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -177,7 +177,8 @@ void epping_refill(void *ctx, HTC_ENDPOINT_ID Endpoint);
 /* epping_txrx signatures */
 epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 				     tSirMacAddr macAddr,
-				     enum QDF_OPMODE device_mode);
+				     enum QDF_OPMODE device_mode,
+				     bool rtnl_held);
 void epping_destroy_adapter(epping_adapter_t *adapter);
 int epping_connect_service(epping_context_t *pEpping_ctx);
 #ifdef HIF_PCI
