@@ -84,17 +84,17 @@ static int regmap_bus_read(void *context, const void *reg, size_t reg_size,
 	}
 	mutex_lock(&priv->io_lock);
 	for (i = 0; i < val_size; i++) {
-		__reg = reg_p[i] - macro_id_base_offset[macro_id];
+		__reg = (reg_p[0] + i * 4) - macro_id_base_offset[macro_id];
 		ret = priv->read_dev(priv, macro_id, __reg, &temp);
 		if (ret < 0) {
 			dev_err_ratelimited(dev,
 			"%s: Codec read failed (%d), reg: 0x%x, size:%zd\n",
-			__func__, ret, reg_p[i], val_size);
+			__func__, ret, reg_p[0] + i * 4, val_size);
 			break;
 		}
 		((u8 *)val)[i] = temp;
 		dev_dbg(dev, "%s: Read 0x%02x from reg 0x%x\n",
-			__func__, temp, reg_p[i]);
+			__func__, temp, reg_p[0] + i * 4);
 	}
 	mutex_unlock(&priv->io_lock);
 
@@ -137,16 +137,16 @@ static int regmap_bus_gather_write(void *context,
 	}
 	mutex_lock(&priv->io_lock);
 	for (i = 0; i < val_size; i++) {
-		__reg = reg_p[i] - macro_id_base_offset[macro_id];
+		__reg = (reg_p[0] + i * 4) - macro_id_base_offset[macro_id];
 		ret = priv->write_dev(priv, macro_id, __reg, ((u8 *)val)[i]);
 		if (ret < 0) {
 			dev_err_ratelimited(dev,
 			"%s: Codec write failed (%d), reg:0x%x, size:%zd\n",
-			__func__, ret, reg_p[i], val_size);
+			__func__, ret, reg_p[0] + i * 4, val_size);
 			break;
 		}
 		dev_dbg(dev, "Write %02x to reg 0x%x\n", ((u8 *)val)[i],
-			reg_p[i]);
+			reg_p[0] + i * 4);
 	}
 	mutex_unlock(&priv->io_lock);
 	return ret;
