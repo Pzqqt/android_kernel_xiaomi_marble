@@ -39,28 +39,13 @@
 #endif
 #endif
 
-#define spectral_log(level, args...) \
-QDF_PRINT_INFO(QDF_PRINT_IDX_SHARED, QDF_MODULE_ID_SPECTRAL, level, ## args)
-
-#define spectral_logfl(level, format, args...) \
-		spectral_log(level, FL(format), ## args)
-
-#define spectral_fatal(format, args...) \
-	spectral_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
-#define spectral_err(format, args...) \
-	spectral_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define spectral_warn(format, args...) \
-	spectral_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
-#define spectral_info(format, args...) \
-	spectral_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define spectral_debug(format, args...) \
-	spectral_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+#include <spectral_defs_i.h>
 
 #define STATUS_PASS       1
 #define STATUS_FAIL       0
 #undef spectral_dbg_line
 #define spectral_dbg_line() \
-	spectral_debug("----------------------------------------------------\n")
+	spectral_debug("----------------------------------------------------")
 
 #undef spectral_ops_not_registered
 #define spectral_ops_not_registered(str) \

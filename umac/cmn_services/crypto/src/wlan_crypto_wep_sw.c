@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  */
 /*
  * Wired Equivalent Privacy (WEP)
@@ -67,7 +67,7 @@ uint8_t *wlan_crypto_wep_encrypt(const uint8_t *key, uint16_t key_len,
 	uint32_t icv;
 
 	if (data_len < 4 + 4) {
-		qdf_print("%s[%d] invalid len\n", __func__, __LINE__);
+		qdf_print("%s[%d] invalid len", __func__, __LINE__);
 		return NULL;
 	}
 
@@ -84,7 +84,7 @@ uint8_t *wlan_crypto_wep_decrypt(const uint8_t *key, uint16_t key_len,
 	uint32_t icv, rx_icv;
 
 	if (data_len < 4 + 4) {
-		qdf_print("%s[%d] invalid len\n", __func__, __LINE__);
+		qdf_print("%s[%d] invalid len", __func__, __LINE__);
 		return NULL;
 	}
 
@@ -96,7 +96,7 @@ uint8_t *wlan_crypto_wep_decrypt(const uint8_t *key, uint16_t key_len,
 	wlan_crypto_try_wep(k, 3 + key_len, data + 4, data_len - 4, &icv);
 
 	if (icv != rx_icv) {
-		qdf_print("%s[%d] iv mismatch\n", __func__, __LINE__);
+		qdf_print("%s[%d] iv mismatch", __func__, __LINE__);
 		return NULL;
 	}
 

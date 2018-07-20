@@ -45,8 +45,8 @@ static void aes_ccm_auth_start(void *aes, size_t M, size_t L,
 	wlan_crypto_aes_encrypt(aes, b, x); /* X_1 = E(K, B_0) */
 
 	if (!aad_len) {
-		qdf_print("%s[%d] aad length should be non zero\n",
-						__func__, __LINE__);
+		qdf_print("%s[%d] aad length should be non zero",
+			  __func__, __LINE__);
 		return;
 	}
 

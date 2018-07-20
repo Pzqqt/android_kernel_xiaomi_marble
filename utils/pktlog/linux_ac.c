@@ -422,7 +422,7 @@ static int pktlog_attach(struct hif_opaque_softc *scn)
 		pl_info_lnx = kmalloc(sizeof(*pl_info_lnx), GFP_KERNEL);
 		if (pl_info_lnx == NULL) {
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				 "%s: Allocation failed for pl_info\n",
+				 "%s: Allocation failed for pl_info",
 				 __func__);
 			goto attach_fail1;
 		}
@@ -560,7 +560,7 @@ static int __pktlog_open(struct inode *i, struct file *f)
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!scn) {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-		qdf_print("%s: Invalid scn context\n", __func__);
+		qdf_print("%s: Invalid scn context", __func__);
 		ASSERT(0);
 		return -EINVAL;
 	}
@@ -569,7 +569,7 @@ static int __pktlog_open(struct inode *i, struct file *f)
 
 	if (!pl_dev) {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-		qdf_print("%s: Invalid pktlog handle\n", __func__);
+		qdf_print("%s: Invalid pktlog handle", __func__);
 		ASSERT(0);
 		return -ENODEV;
 	}
@@ -625,7 +625,7 @@ static int __pktlog_release(struct inode *i, struct file *f)
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!scn) {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-		qdf_print("%s: Invalid scn context\n", __func__);
+		qdf_print("%s: Invalid scn context", __func__);
 		ASSERT(0);
 		return -EINVAL;
 	}
@@ -634,7 +634,7 @@ static int __pktlog_release(struct inode *i, struct file *f)
 
 	if (!pl_dev) {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-		qdf_print("%s: Invalid pktlog handle\n", __func__);
+		qdf_print("%s: Invalid pktlog handle", __func__);
 		ASSERT(0);
 		return -ENODEV;
 	}
