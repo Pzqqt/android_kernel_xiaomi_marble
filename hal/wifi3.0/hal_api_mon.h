@@ -727,7 +727,19 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info,
 
 			break;
 		case TARGET_TYPE_QCA6290:
+#if !defined(QCA_WIFI_QCA6290_11AX)
+			ppdu_info->rx_status.is_stbc =
+				HAL_RX_GET(vht_sig_a_info,
+					   VHT_SIG_A_INFO_0, STBC);
+			value =  HAL_RX_GET(vht_sig_a_info,
+					    VHT_SIG_A_INFO_0, N_STS);
+			if (ppdu_info->rx_status.is_stbc && (value > 0))
+				value = ((value + 1) >> 1) - 1;
+			ppdu_info->rx_status.nss =
+				((value & VHT_SIG_SU_NSS_MASK) + 1);
+#else
 			ppdu_info->rx_status.nss = 0;
+#endif
 			break;
 #ifdef QCA_WIFI_QCA6390
 		case TARGET_TYPE_QCA6390:

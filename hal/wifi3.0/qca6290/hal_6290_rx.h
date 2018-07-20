@@ -46,6 +46,7 @@
 #include "hal_api_mon.h"
 #include "phyrx_other_receive_info_ru_details.h"
 
+#if defined(QCA_WIFI_QCA6290_11AX)
 #define HAL_RX_MSDU_START_MIMO_SS_BITMAP(_rx_msdu_start)\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
 	RX_MSDU_START_5_MIMO_SS_BITMAP_OFFSET)),	\
@@ -71,6 +72,19 @@ hal_rx_msdu_start_nss_get_6290(uint8_t *buf)
 
 	return qdf_get_hweight8(mimo_ss_bitmap);
 }
+#else
+static uint32_t
+hal_rx_msdu_start_nss_get_6290(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_start *msdu_start =
+				&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	uint32_t nss;
+
+	nss = HAL_RX_MSDU_START_NSS_GET(msdu_start);
+	return nss;
+}
+#endif
 
 /**
  * hal_rx_mon_hw_desc_get_mpdu_status_6290(): Retrieve MPDU status
@@ -103,7 +117,9 @@ static void hal_rx_mon_hw_desc_get_mpdu_status_6290(void *hw_desc_addr,
 
 	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, SGI);
 	rs->sgi = sgi_hw_to_cdp[reg_value];
-
+#if !defined(QCA_WIFI_QCA6290_11AX)
+	rs->nr_ant = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, NSS);
+#endif
 	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, PKT_TYPE);
 	switch (reg_value) {
 	case HAL_RX_PKT_TYPE_11N:
@@ -134,6 +150,7 @@ static uint32_t hal_get_link_desc_size_6290(void)
 }
 
 
+#ifdef QCA_WIFI_QCA6290_11AX
 /*
  * hal_rx_get_tlv_6290(): API to get the tlv
  *
@@ -144,7 +161,14 @@ static uint8_t hal_rx_get_tlv_6290(void *rx_tlv)
 {
 	return HAL_RX_GET(rx_tlv, PHYRX_RSSI_LEGACY_0, RECEIVE_BANDWIDTH);
 }
+#else
+static uint8_t hal_rx_get_tlv_6290(void *rx_tlv)
+{
+	return HAL_RX_GET(rx_tlv, PHYRX_RSSI_LEGACY_35, RECEIVE_BANDWIDTH);
+}
+#endif
 
+#ifdef QCA_WIFI_QCA6290_11AX
 /**
  * hal_rx_proc_phyrx_other_receive_info_tlv_6290()
  *				    - process other receive info TLV
@@ -211,6 +235,13 @@ void hal_rx_proc_phyrx_other_receive_info_tlv_6290(void *rx_tlv_hdr,
 		break;
 	}
 }
+#else
+static
+void hal_rx_proc_phyrx_other_receive_info_tlv_6290(void *rx_tlv_hdr,
+						   void *ppdu_info_handle)
+{
+}
+#endif /* QCA_WIFI_QCA6290_11AX */
 
 /**
  * hal_rx_dump_msdu_start_tlv_6290() : dump RX msdu_start TLV in structured
@@ -254,6 +285,10 @@ static void hal_rx_dump_msdu_start_tlv_6290(void *msdustart,
 			"rate_mcs: %d "
 			"receive_bandwidth: %d "
 			"reception_type: %d "
+#if !defined(QCA_WIFI_QCA6290_11AX)
+			"toeplitz_hash: %d "
+			"nss: %d "
+#endif
 			"ppdu_start_timestamp: %d "
 			"sw_phy_meta_data: %d ",
 			msdu_start->rxpcu_mpdu_filter_in_category,
@@ -283,6 +318,10 @@ static void hal_rx_dump_msdu_start_tlv_6290(void *msdustart,
 			msdu_start->rate_mcs,
 			msdu_start->receive_bandwidth,
 			msdu_start->reception_type,
+#if !defined(QCA_WIFI_QCA6290_11AX)
+			msdu_start->toeplitz_hash,
+			msdu_start->nss,
+#endif
 			msdu_start->ppdu_start_timestamp,
 			msdu_start->sw_phy_meta_data);
 }
