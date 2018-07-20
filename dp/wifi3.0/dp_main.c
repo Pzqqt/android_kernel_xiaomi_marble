@@ -6728,7 +6728,8 @@ dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
 
 	pdev->enhanced_stats_en = 1;
 
-	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added)
+	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added &&
+	    !pdev->monitor_vdev)
 		dp_ppdu_ring_cfg(pdev);
 
 	if (is_ppdu_txrx_capture_enabled(pdev) && !pdev->bpr_enable) {
@@ -6764,7 +6765,8 @@ dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
 					  pdev->pdev_id);
 	}
 
-	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added)
+	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added &&
+	    !pdev->monitor_vdev)
 		dp_ppdu_ring_reset(pdev);
 }
 
