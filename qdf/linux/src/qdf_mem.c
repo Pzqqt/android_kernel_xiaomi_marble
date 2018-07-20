@@ -1645,7 +1645,7 @@ void *qdf_mem_dma_alloc(qdf_device_t osdev, void *dev, qdf_size_t size,
 					   qdf_mem_malloc_flags());
 
 		if (!vaddr) {
-			qdf_print("%s failed , size: %zu!\n", __func__, size);
+			qdf_err("%s failed , size: %zu!", __func__, size);
 			return NULL;
 		}
 

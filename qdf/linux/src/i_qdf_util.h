@@ -302,7 +302,7 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
  */
 #define __qdf_target_assert(expr)  do {    \
 	if (unlikely(!(expr))) {                                 \
-		qdf_print("Assertion failed! %s:%s %s:%d\n",   \
+		qdf_err("Assertion failed! %s:%s %s:%d",   \
 		#expr, __FUNCTION__, __FILE__, __LINE__);      \
 		dump_stack();                                      \
 		panic("Take care of the TARGET ASSERT first\n");          \

@@ -122,42 +122,42 @@ static qdf_atomic_t nbuf_count;
  */
 void qdf_nbuf_tx_desc_count_display(void)
 {
-	qdf_print("Current Snapshot of the Driver:\n");
-	qdf_print("Data Packets:\n");
-	qdf_print("HDD %d TXRX_Q %d TXRX %d HTT %d",
-		nbuf_tx_data[QDF_NBUF_TX_PKT_HDD] -
-		(nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX] +
-		nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX_ENQUEUE] -
-		nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX_DEQUEUE]),
-		nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX_ENQUEUE] -
-		nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX_DEQUEUE],
-		nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX] -
-			 nbuf_tx_data[QDF_NBUF_TX_PKT_HTT],
-		nbuf_tx_data[QDF_NBUF_TX_PKT_HTT]  -
-			 nbuf_tx_data[QDF_NBUF_TX_PKT_HTC]);
-	qdf_print(" HTC %d  HIF %d CE %d TX_COMP %d\n",
-		nbuf_tx_data[QDF_NBUF_TX_PKT_HTC] -
-			nbuf_tx_data[QDF_NBUF_TX_PKT_HIF],
-		nbuf_tx_data[QDF_NBUF_TX_PKT_HIF] -
-			 nbuf_tx_data[QDF_NBUF_TX_PKT_CE],
-		nbuf_tx_data[QDF_NBUF_TX_PKT_CE] -
-			 nbuf_tx_data[QDF_NBUF_TX_PKT_FREE],
-		nbuf_tx_data[QDF_NBUF_TX_PKT_FREE]);
-	qdf_print("Mgmt Packets:\n");
-	qdf_print("TXRX_Q %d TXRX %d HTT %d HTC %d HIF %d CE %d TX_COMP %d\n",
-		nbuf_tx_mgmt[QDF_NBUF_TX_PKT_TXRX_ENQUEUE] -
-		nbuf_tx_mgmt[QDF_NBUF_TX_PKT_TXRX_DEQUEUE],
-		nbuf_tx_mgmt[QDF_NBUF_TX_PKT_TXRX] -
-			 nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HTT],
-		nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HTT] -
-			 nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HTC],
-		nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HTC] -
-			 nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HIF],
-		nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HIF] -
-			 nbuf_tx_mgmt[QDF_NBUF_TX_PKT_CE],
-		nbuf_tx_mgmt[QDF_NBUF_TX_PKT_CE] -
-			 nbuf_tx_mgmt[QDF_NBUF_TX_PKT_FREE],
-		nbuf_tx_mgmt[QDF_NBUF_TX_PKT_FREE]);
+	qdf_debug("Current Snapshot of the Driver:");
+	qdf_debug("Data Packets:");
+	qdf_debug("HDD %d TXRX_Q %d TXRX %d HTT %d",
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_HDD] -
+		  (nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX] +
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX_ENQUEUE] -
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX_DEQUEUE]),
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX_ENQUEUE] -
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX_DEQUEUE],
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_TXRX] -
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_HTT],
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_HTT]  -
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_HTC]);
+	qdf_debug(" HTC %d  HIF %d CE %d TX_COMP %d",
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_HTC] -
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_HIF],
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_HIF] -
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_CE],
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_CE] -
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_FREE],
+		  nbuf_tx_data[QDF_NBUF_TX_PKT_FREE]);
+	qdf_debug("Mgmt Packets:");
+	qdf_debug("TXRX_Q %d TXRX %d HTT %d HTC %d HIF %d CE %d TX_COMP %d",
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_TXRX_ENQUEUE] -
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_TXRX_DEQUEUE],
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_TXRX] -
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HTT],
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HTT] -
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HTC],
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HTC] -
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HIF],
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_HIF] -
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_CE],
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_CE] -
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_FREE],
+		  nbuf_tx_mgmt[QDF_NBUF_TX_PKT_FREE]);
 }
 qdf_export_symbol(qdf_nbuf_tx_desc_count_display);
 
@@ -401,7 +401,7 @@ skb_alloc:
 	if (virt_to_phys(qdf_nbuf_data(skb)) < 0x50000040) {
 		lowmem_alloc_tries++;
 		if (lowmem_alloc_tries > 100) {
-			qdf_print("%s Failed \n",__func__);
+			qdf_err("Failed");
 			return NULL;
 		} else {
 			/* Not freeing to make sure it
@@ -2309,19 +2309,19 @@ static void qdf_nbuf_track_memory_manager_destroy(void)
 			  __func__);
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-		  "%s: %d residual freelist size\n",
+		  "%s: %d residual freelist size",
 		  __func__, qdf_net_buf_track_free_list_count);
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-		  "%s: %d max freelist size observed\n",
+		  "%s: %d max freelist size observed",
 		  __func__, qdf_net_buf_track_max_free);
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-		  "%s: %d max buffers used observed\n",
+		  "%s: %d max buffers used observed",
 		  __func__, qdf_net_buf_track_max_used);
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-		  "%s: %d max buffers allocated observed\n",
+		  "%s: %d max buffers allocated observed",
 		  __func__, qdf_net_buf_track_max_allocated);
 
 	while (node) {
@@ -2332,12 +2332,12 @@ static void qdf_nbuf_track_memory_manager_destroy(void)
 	}
 
 	if (qdf_net_buf_track_free_list_count != 0)
-		qdf_print("%s: %d unfreed tracking memory lost in freelist\n",
-			  __func__, qdf_net_buf_track_free_list_count);
+		qdf_info("%d unfreed tracking memory lost in freelist",
+			 qdf_net_buf_track_free_list_count);
 
 	if (qdf_net_buf_track_used_list_count != 0)
-		qdf_print("%s: %d unfreed tracking memory still in use\n",
-			  __func__, qdf_net_buf_track_used_list_count);
+		qdf_info("%d unfreed tracking memory still in use",
+			 qdf_net_buf_track_used_list_count);
 
 	spin_unlock_irqrestore(&qdf_net_buf_track_free_list_lock, irq_flag);
 	kmem_cache_destroy(nbuf_tracking_cache);
@@ -2395,9 +2395,9 @@ void qdf_net_buf_debug_exit(void)
 			p_prev = p_node;
 			p_node = p_node->p_next;
 			count++;
-			qdf_print("SKB buf memory Leak@ File %s, @Line %d, size %zu, nbuf %pK\n",
-				  p_prev->file_name, p_prev->line_num,
-				  p_prev->size, p_prev->net_buf);
+			qdf_info("SKB buf memory Leak@ File %s, @Line %d, size %zu, nbuf %pK",
+				 p_prev->file_name, p_prev->line_num,
+				 p_prev->size, p_prev->net_buf);
 			qdf_nbuf_track_free(p_prev);
 		}
 		spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
@@ -2408,7 +2408,7 @@ void qdf_net_buf_debug_exit(void)
 
 #ifdef CONFIG_HALT_KMEMLEAK
 	if (count) {
-		qdf_print("%d SKBs leaked .. please fix the SKB leak", count);
+		qdf_err("%d SKBs leaked .. please fix the SKB leak", count);
 		QDF_BUG(0);
 	}
 #endif
@@ -2723,16 +2723,16 @@ static uint8_t __qdf_nbuf_get_tso_cmn_seg_info(qdf_device_t osdev,
 		tso_info->ipv4_csum_en = 1;
 		tso_info->tcp_ipv4_csum_en = 1;
 		if (qdf_unlikely(ipv4_hdr->protocol != IPPROTO_TCP)) {
-			qdf_print("TSO IPV4 proto 0x%x not TCP\n",
-				 ipv4_hdr->protocol);
+			qdf_err("TSO IPV4 proto 0x%x not TCP",
+				ipv4_hdr->protocol);
 			return 1;
 		}
 	} else if (tso_info->ethproto == htons(ETH_P_IPV6)) { /* IPv6 */
 		/* for IPv6, enable TCP csum. No IP ID or IP csum */
 		tso_info->tcp_ipv6_csum_en = 1;
 	} else {
-		qdf_print("TSO: ethertype 0x%x is not supported!\n",
-			 tso_info->ethproto);
+		qdf_err("TSO: ethertype 0x%x is not supported!",
+			tso_info->ethproto);
 		return 1;
 	}
 	tso_info->l2_len = (skb_network_header(skb) - skb_mac_header(skb));
@@ -2748,7 +2748,7 @@ static uint8_t __qdf_nbuf_get_tso_cmn_seg_info(qdf_device_t osdev,
 							DMA_TO_DEVICE);
 	if (unlikely(dma_mapping_error(osdev->dev,
 				       tso_info->eit_hdr_dma_map_addr))) {
-		qdf_print("DMA mapping error!\n");
+		qdf_err("DMA mapping error!");
 		qdf_assert(0);
 		return 1;
 	}
@@ -2870,7 +2870,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 
 	if (qdf_unlikely(__qdf_nbuf_get_tso_cmn_seg_info(osdev,
 						skb, &tso_cmn_info))) {
-		qdf_print("TSO: error getting common segment info\n");
+		qdf_warn("TSO: error getting common segment info");
 		return 0;
 	}
 
@@ -2897,7 +2897,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 
 	if (unlikely(dma_mapping_error(osdev->dev,
 					tso_frag_paddr))) {
-		qdf_print("%s:%d DMA mapping error!\n", __func__, __LINE__);
+		qdf_err("DMA mapping error!");
 		qdf_assert(0);
 		return 0;
 	}
@@ -2993,13 +2993,13 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 
 			} else { /* the next fragment is not contiguous */
 				if (skb_shinfo(skb)->nr_frags == 0) {
-					qdf_print("TSO: nr_frags == 0!\n");
+					qdf_info("TSO: nr_frags == 0!");
 					qdf_assert(0);
 					return 0;
 				}
 				if (j >= skb_shinfo(skb)->nr_frags) {
-					qdf_print("TSO: nr_frags %d j %d\n",
-						  skb_shinfo(skb)->nr_frags, j);
+					qdf_info("TSO: nr_frags %d j %d",
+						 skb_shinfo(skb)->nr_frags, j);
 					qdf_assert(0);
 					return 0;
 				}
@@ -3027,8 +3027,7 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 						 DMA_TO_DEVICE);
 			if (unlikely(dma_mapping_error(osdev->dev,
 							tso_frag_paddr))) {
-				qdf_print("%s:%d DMA mapping error!\n",
-						__func__, __LINE__);
+				qdf_err("DMA mapping error!");
 				qdf_assert(0);
 				return 0;
 			}
@@ -3068,16 +3067,16 @@ void __qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
 	/*Num of frags in a tso seg cannot be less than 2 */
 	if (num_frags < 1) {
 		qdf_assert(0);
-		qdf_print("ERROR: num of frags in a tso segment is %d\n",
-				  (num_frags + 1));
+		qdf_err("ERROR: num of frags in a tso segment is %d",
+			(num_frags + 1));
 		return;
 	}
 
 	while (num_frags) {
 		/*Do dma unmap the tso seg except the 0th frag */
 		if (0 ==  tso_seg->seg.tso_frags[num_frags].paddr) {
-			qdf_print("ERROR: TSO seg frag %d mapped physical address is NULL\n",
-				  num_frags);
+			qdf_err("ERROR: TSO seg frag %d mapped physical address is NULL",
+				num_frags);
 			qdf_assert(0);
 			return;
 		}
@@ -3093,7 +3092,7 @@ void __qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
 	if (is_last_seg) {
 		/*Do dma unmap for the tso seg 0th frag */
 		if (0 ==  tso_seg->seg.tso_frags[0].paddr) {
-			qdf_print("ERROR: TSO seg frag 0 mapped physical address is NULL\n");
+			qdf_err("ERROR: TSO seg frag 0 mapped physical address is NULL");
 			qdf_assert(0);
 			return;
 		}
@@ -3156,8 +3155,8 @@ uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
 
 	while (skb_nr_frags) {
 		if (j >= skb_shinfo(skb)->nr_frags) {
-			qdf_print("TSO: nr_frags %d j %d\n",
-			skb_shinfo(skb)->nr_frags, j);
+			qdf_info("TSO: nr_frags %d j %d",
+				 skb_shinfo(skb)->nr_frags, j);
 			qdf_assert(0);
 			return 0;
 		}
@@ -3428,7 +3427,7 @@ __qdf_nbuf_unmap_nbytes_single(
 	qdf_device_t osdev, struct sk_buff *buf, qdf_dma_dir_t dir, int nbytes)
 {
 	if (0 ==  QDF_NBUF_CB_PADDR(buf)) {
-		qdf_print("ERROR: NBUF mapped physical address is NULL\n");
+		qdf_err("ERROR: NBUF mapped physical address is NULL");
 		return;
 	}
 	dma_unmap_single(osdev->dev, QDF_NBUF_CB_PADDR(buf),
@@ -3674,7 +3673,7 @@ static void __qdf_nbuf_sync_single_for_cpu(
 	qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
 	if (0 ==  QDF_NBUF_CB_PADDR(buf)) {
-		qdf_print("ERROR: NBUF mapped physical address is NULL\n");
+		qdf_err("ERROR: NBUF mapped physical address is NULL");
 		return;
 	}
 	dma_sync_single_for_cpu(osdev->dev, QDF_NBUF_CB_PADDR(buf),
@@ -4162,7 +4161,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	rthdr->it_len = cpu_to_le16(rtap_len);
 
 	if (headroom_sz < rtap_len) {
-		qdf_print("ERROR: not enough space to update radiotap\n");
+		qdf_err("ERROR: not enough space to update radiotap");
 		return 0;
 	}
 	qdf_nbuf_push_head(nbuf, rtap_len);
@@ -4175,14 +4174,14 @@ static unsigned int qdf_nbuf_update_radiotap_vht_flags(
 					int8_t *rtap_buf,
 					uint32_t rtap_len)
 {
-	qdf_print("ERROR: struct ieee80211_radiotap_header not supported");
+	qdf_err("ERROR: struct ieee80211_radiotap_header not supported");
 	return 0;
 }
 
 unsigned int qdf_nbuf_update_radiotap_he_flags(struct mon_rx_status *rx_status,
 				      int8_t *rtap_buf, uint32_t rtap_len)
 {
-	qdf_print("ERROR: struct ieee80211_radiotap_header not supported");
+	qdf_err("ERROR: struct ieee80211_radiotap_header not supported");
 	return 0;
 }
 
@@ -4191,14 +4190,14 @@ static unsigned int qdf_nbuf_update_radiotap_ampdu_flags(
 					uint8_t *rtap_buf,
 					uint32_t rtap_len)
 {
-	qdf_print("ERROR: struct ieee80211_radiotap_header not supported");
+	qdf_err("ERROR: struct ieee80211_radiotap_header not supported");
 	return 0;
 }
 
 unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 				      qdf_nbuf_t nbuf, uint32_t headroom_sz)
 {
-	qdf_print("ERROR: struct ieee80211_radiotap_header not supported");
+	qdf_err("ERROR: struct ieee80211_radiotap_header not supported");
 	return 0;
 }
 #endif

@@ -49,6 +49,29 @@
 #define QDF_TRACE qdf_trace_msg
 #define QDF_VTRACE qdf_vtrace_msg
 #define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
+#else
+#define QDF_TRACE(arg ...)
+#define QDF_VTRACE(arg ...)
+#define QDF_TRACE_HEX_DUMP(arg ...)
+#endif
+#else /* CONFIG_MCL */
+
+#define qdf_trace(log_level, args...) \
+		do {	\
+			extern int qdf_dbg_mask; \
+			if (qdf_dbg_mask >= log_level) { \
+				printk(args); \
+				printk("\n"); \
+			} \
+		} while (0)
+
+#define QDF_TRACE qdf_trace_msg
+
+#define QDF_VTRACE qdf_vtrace_msg
+#define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
+#endif /* CONFIG_MCL */
+
+#if defined(WLAN_DEBUG) || defined(DEBUG)
 #define QDF_MAX_LOGS_PER_SEC 2
 /**
  * __QDF_TRACE_RATE_LIMITED() - rate limited version of QDF_TRACE
@@ -71,28 +94,8 @@
 		} \
 	} while (0)
 #else
-#define QDF_TRACE(arg ...)
-#define QDF_VTRACE(arg ...)
-#define QDF_TRACE_HEX_DUMP(arg ...)
 #define __QDF_TRACE_RATE_LIMITED(arg ...)
 #endif
-#else /* CONFIG_MCL */
-
-#define qdf_trace(log_level, args...) \
-		do {	\
-			extern int qdf_dbg_mask; \
-			if (qdf_dbg_mask >= log_level) { \
-				printk(args); \
-				printk("\n"); \
-			} \
-		} while (0)
-
-#define QDF_TRACE qdf_trace_msg
-
-#define QDF_VTRACE qdf_vtrace_msg
-#define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
-#define __QDF_TRACE_RATE_LIMITED(arg ...)
-#endif /* CONFIG_MCL */
 
 #define __QDF_TRACE_NO_FL(log_level, module_id, format, args...) \
 	QDF_TRACE(module_id, log_level, format, ## args)

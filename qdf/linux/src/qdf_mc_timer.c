@@ -234,7 +234,7 @@ static void qdf_timer_clean(void)
 
 		leaks_detected = true;
 
-		qdf_err("\nTimer leaks detected in the %s (Id %d) domain!\n",
+		qdf_err("\nTimer leaks detected in the %s (Id %d) domain!",
 			qdf_debug_domain_name(i), i);
 		qdf_mc_timer_print_list(timers);
 	}
