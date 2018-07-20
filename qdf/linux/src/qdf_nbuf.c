@@ -2635,8 +2635,7 @@ void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf)
 
 		next = qdf_nbuf_queue_next(ext_list);
 
-		if (qdf_nbuf_is_tso(ext_list) &&
-			qdf_nbuf_get_users(ext_list) > 1) {
+		if (qdf_nbuf_get_users(ext_list) > 1) {
 			ext_list = next;
 			continue;
 		}
@@ -2645,7 +2644,7 @@ void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf)
 		ext_list = next;
 	}
 
-	if (qdf_nbuf_is_tso(net_buf) && qdf_nbuf_get_users(net_buf) > 1)
+	if (qdf_nbuf_get_users(net_buf) > 1)
 		return;
 
 	qdf_net_buf_debug_delete_node(net_buf);
@@ -2677,7 +2676,7 @@ void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 	if (qdf_unlikely(!nbuf))
 		return;
 
-	if (qdf_nbuf_is_tso(nbuf) && qdf_nbuf_get_users(nbuf) > 1)
+	if (qdf_nbuf_get_users(nbuf) > 1)
 		goto free_buf;
 
 	/* Remove SKB from internal QDF tracking table */
