@@ -1418,11 +1418,16 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 	scan_obj->scan_def.sta_miracast_mcc_rest_time =
 					SCAN_STA_MIRACAST_MCC_REST_TIME;
 	scan_obj->scan_def.min_rest_time = SCAN_MIN_REST_TIME;
-	scan_obj->scan_def.conc_active_dwell = SCAN_CONC_ACTIVE_DWELL_TIME;
-	scan_obj->scan_def.conc_passive_dwell = SCAN_CONC_PASSIVE_DWELL_TIME;
-	scan_obj->scan_def.conc_max_rest_time = SCAN_CONC_MAX_REST_TIME;
-	scan_obj->scan_def.conc_min_rest_time = SCAN_CONC_MIN_REST_TIME;
-	scan_obj->scan_def.conc_idle_time = SCAN_CONC_IDLE_TIME;
+	scan_obj->scan_def.conc_active_dwell =
+			cfg_get(psoc, CFG_ACTIVE_MAX_CHANNEL_TIME_CONC);
+	scan_obj->scan_def.conc_passive_dwell =
+			cfg_get(psoc, CFG_PASSIVE_MAX_CHANNEL_TIME_CONC);
+	scan_obj->scan_def.conc_max_rest_time =
+			cfg_get(psoc, CFG_MAX_REST_TIME_CONC);
+	scan_obj->scan_def.conc_min_rest_time =
+			cfg_get(psoc, CFG_MIN_REST_TIME_CONC);
+	scan_obj->scan_def.conc_idle_time =
+			cfg_get(psoc, CFG_IDLE_TIME_CONC);
 	scan_obj->scan_def.repeat_probe_time =
 			cfg_get(psoc, CFG_SCAN_PROBE_REPEAT_TIME);
 	scan_obj->scan_def.probe_spacing_time = SCAN_PROBE_SPACING_TIME;
@@ -1936,12 +1941,6 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	}
 
 	scan_def = &scan_obj->scan_def;
-	scan_def->passive_dwell = scan_cfg->passive_dwell;
-	scan_def->conc_active_dwell = scan_cfg->conc_active_dwell;
-	scan_def->conc_passive_dwell = scan_cfg->conc_passive_dwell;
-	scan_def->conc_max_rest_time = scan_cfg->conc_max_rest_time;
-	scan_def->conc_min_rest_time = scan_cfg->conc_min_rest_time;
-	scan_def->conc_idle_time = scan_cfg->conc_idle_time;
 	scan_def->scan_cache_aging_time = scan_cfg->scan_cache_aging_time;
 	scan_def->prefer_5ghz = scan_cfg->prefer_5ghz;
 	scan_def->select_5ghz_margin = scan_cfg->select_5ghz_margin;

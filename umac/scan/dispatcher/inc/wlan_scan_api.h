@@ -66,4 +66,63 @@ void wlan_scan_cfg_set_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
 void wlan_scan_cfg_get_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *dwell_time);
 
+/**
+ * wlan_scan_cfg_get_conc_active_dwelltime() - Get concurrent active dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan active dwelltime
+ *
+ * Return: scan concurrent active dwell time
+ */
+void wlan_scan_cfg_get_conc_active_dwelltime(struct wlan_objmgr_psoc *psoc,
+					     uint32_t *dwell_time);
+
+/**
+ * wlan_scan_cfg_set_conc_active_dwelltime() - Set concurrent active dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan active dwelltime
+ *
+ * Return: scan concurrent active dwell time
+ */
+void wlan_scan_cfg_set_conc_active_dwelltime(struct wlan_objmgr_psoc *psoc,
+					     uint32_t dwell_time);
+
+/**
+ * wlan_scan_cfg_get_conc_passive_dwelltime() - Get passive concurrent dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan passive dwelltime
+ *
+ * Return: scan concurrent passive dwell time
+ */
+void wlan_scan_cfg_get_conc_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
+					      uint32_t *dwell_time);
+
+/**
+ * wlan_scan_cfg_set_conc_passive_dwelltime() - Set passive concurrent dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan passive dwelltime
+ *
+ * Return: scan concurrent passive dwell time
+ */
+void wlan_scan_cfg_set_conc_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
+					      uint32_t dwell_time);
+
+/**
+ * wlan_scan_cfg_get_conc_max_resttime() - API to get max rest time
+ * @psoc: pointer to psoc object
+ * @rest_time: scan concurrent max resttime
+ *
+ * Return: scan concurrent max rest time
+ */
+void wlan_scan_cfg_get_conc_max_resttime(struct wlan_objmgr_psoc *psoc,
+					 uint32_t *rest_time);
+
+/**
+ * wlan_scan_cfg_get_conc_min_resttime() - API to get concurrent min rest time
+ * @psoc: pointer to psoc object
+ * @rest_time: scan concurrent min rest time
+ *
+ * Return: scan concurrent min rest time
+ */
+void wlan_scan_cfg_get_conc_min_resttime(struct wlan_objmgr_psoc *psoc,
+					 uint32_t *rest_time);
 #endif

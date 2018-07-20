@@ -121,7 +121,7 @@
  */
 #define CFG_SCAN_NUM_PROBES CFG_INI_UINT(\
 			"gScanNumProbes",\
-			0, 20, MCL_OR_WIN_VALUE(0, 5),\
+			0, 20, MCL_OR_WIN_VALUE(0, 2),\
 			CFG_VALUE_OR_DEFAULT,\
 			"number of probes on each channel")
 
@@ -177,7 +177,7 @@
  */
 #define CFG_ADAPTIVE_SCAN_DWELL_MODE CFG_INI_UINT(\
 			"hostscan_adaptive_dwell_mode",\
-			0, 4, 2,\
+			0, 4, MCL_OR_WIN_VALUE(2, 0),\
 			CFG_VALUE_OR_DEFAULT,\
 			"Enable adaptive dwell mode")
 
@@ -267,6 +267,130 @@
 #define CFG_SCAN_PNO
 #endif
 
+/*
+ * <ini>
+ * gActiveMaxChannelTimeConc - Maximum active scan time in milliseconds.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 40
+ *
+ * This ini is used to set maximum active scan time in STA+SAP concurrent
+ * mode.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC CFG_INI_UINT(\
+				"gActiveMaxChannelTimeConc",\
+				0, 10000, MCL_OR_WIN_VALUE(40, 0),\
+				CFG_VALUE_OR_DEFAULT, \
+				"active scan time in STA+SAP concurrent")
+
+/*
+ * <ini>
+ * gPassiveMaxChannelTimeConc - Maximum passive scan time in milliseconds.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 110
+ *
+ * This ini is used to set maximum passive scan time in STA+SAP concurrent
+ * mode.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_PASSIVE_MAX_CHANNEL_TIME_CONC CFG_INI_UINT(\
+				"gPassiveMaxChannelTimeConc",\
+				0, 10000, MCL_OR_WIN_VALUE(110, 0),\
+				CFG_VALUE_OR_DEFAULT, \
+				"Set priority for connection with bssid_hint")
+
+/*
+ * <ini>
+ * gRestTimeConc - Rest time before moving to a new channel to scan.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 100
+ *
+ * This ini is used to configure rest time.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_MAX_REST_TIME_CONC CFG_INI_UINT(\
+				"nRestTimeConc",\
+				0, 10000, MCL_OR_WIN_VALUE(100, 0),\
+				CFG_VALUE_OR_DEFAULT, \
+				"Rest time before moving to a new channel")
+
+/*
+ * <ini>
+ * min_rest_time_conc - Mininum time spent on home channel before moving to a
+ * new channel to scan.
+ * @Min: 0
+ * @Max: 50
+ * @Default: 50
+ *
+ * This ini is used to configure minimum time spent on home channel before
+ * moving to a new channel to scan.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_MIN_REST_TIME_CONC CFG_INI_UINT(\
+				"min_rest_time_conc",\
+				0, 50, MCL_OR_WIN_VALUE(50, 0),\
+				CFG_VALUE_OR_DEFAULT, \
+				"minimum time spent on home channel")
+
+/*
+ * <ini>
+ * gIdleTimeConc - Data inactivity time in msec.
+ * @Min: 0
+ * @Max: 25
+ * @Default: 25
+ *
+ * This ini is used to configure data inactivity time in msec on bss channel
+ * that will be used by scan engine in firmware.
+ * For example if this value is 25ms then firmware will check for data
+ * inactivity every 25ms till gRestTimeConc is reached.
+ * If inactive then scan engine will move from home channel to scan the next
+ * frequency.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IDLE_TIME_CONC CFG_INI_UINT(\
+				"gIdleTimeConc",\
+				0, 25, MCL_OR_WIN_VALUE(25, 0),\
+				CFG_VALUE_OR_DEFAULT, \
+				"data inactivity time on bss channel")
+
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
 	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME) \
@@ -276,5 +400,11 @@
 	CFG(CFG_SCAN_PROBE_REPEAT_TIME) \
 	CFG(CFG_ADAPTIVE_SCAN_DWELL_MODE) \
 	CFG(CFG_IS_BSSID_HINT_PRIORITY) \
-	CFG_SCAN_PNO
+	CFG_SCAN_PNO \
+	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME_CONC) \
+	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME_CONC) \
+	CFG(CFG_MAX_REST_TIME_CONC) \
+	CFG(CFG_MIN_REST_TIME_CONC) \
+	CFG(CFG_IDLE_TIME_CONC)
+
 #endif
