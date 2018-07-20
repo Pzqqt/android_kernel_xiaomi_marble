@@ -637,6 +637,23 @@ void qdf_vtrace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 #define qdf_nofl_debug(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_QDF, ## params)
 
+#define qdf_rl_alert(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_QDF, ## params)
+#define qdf_rl_err(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_QDF, ## params)
+#define qdf_rl_warn(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_QDF, ## params)
+#define qdf_rl_info(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_QDF, ## params)
+#define qdf_rl_debug(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_QDF, ## params)
+
+#define qdf_rl_nofl_alert(params...) \
+	QDF_TRACE_FATAL_RL_NO_FL(QDF_MODULE_ID_QDF, ## params)
+#define qdf_rl_nofl_err(params...) \
+	QDF_TRACE_ERROR_RL_NO_FL(QDF_MODULE_ID_QDF, ## params)
+#define qdf_rl_nofl_warn(params...) \
+	QDF_TRACE_WARN_RL_NO_FL(QDF_MODULE_ID_QDF, ## params)
+#define qdf_rl_nofl_info(params...) \
+	QDF_TRACE_INFO_RL_NO_FL(QDF_MODULE_ID_QDF, ## params)
+#define qdf_rl_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_RL_NO_FL(QDF_MODULE_ID_QDF, ## params)
+
 #define qdf_vprint    __qdf_vprint
 #define qdf_snprint   __qdf_snprint
 

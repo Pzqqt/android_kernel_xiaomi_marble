@@ -596,8 +596,27 @@ void __qdf_nbuf_num_frags_init(struct sk_buff *skb)
 /*
  * prototypes. Implemented in qdf_nbuf.c
  */
-__qdf_nbuf_t __qdf_nbuf_alloc(__qdf_device_t osdev, size_t size, int reserve,
-			int align, int prio);
+
+/**
+ * __qdf_nbuf_alloc() - Allocate nbuf
+ * @osdev: Device handle
+ * @size: Netbuf requested size
+ * @reserve: headroom to start with
+ * @align: Align
+ * @prio: Priority
+ * @func: Function name of the call site
+ * @line: line number of the call site
+ *
+ * This allocates an nbuf aligns if needed and reserves some space in the front,
+ * since the reserve is done after alignment the reserve value if being
+ * unaligned will result in an unaligned address.
+ *
+ * Return: nbuf or %NULL if no memory
+ */
+__qdf_nbuf_t
+__qdf_nbuf_alloc(__qdf_device_t osdev, size_t size, int reserve, int align,
+		 int prio, const char *func, uint32_t line);
+
 void __qdf_nbuf_free(struct sk_buff *skb);
 QDF_STATUS __qdf_nbuf_map(__qdf_device_t osdev,
 			struct sk_buff *skb, qdf_dma_dir_t dir);

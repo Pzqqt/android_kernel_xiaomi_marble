@@ -741,6 +741,8 @@ void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
 
 #else /* NBUF_MEMORY_DEBUG */
 
+static inline void qdf_nbuf_map_check_for_leaks(void) {}
+
 static inline QDF_STATUS
 qdf_nbuf_map(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
@@ -1321,11 +1323,14 @@ static inline void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf)
 
 /* Nbuf allocation rouines */
 
+#define qdf_nbuf_alloc(osdev, size, reserve, align, prio) \
+	qdf_nbuf_alloc_fl(osdev, size, reserve, align, prio, \
+			  __func__, __LINE__)
 static inline qdf_nbuf_t
-qdf_nbuf_alloc(qdf_device_t osdev,
-		qdf_size_t size, int reserve, int align, int prio)
+qdf_nbuf_alloc_fl(qdf_device_t osdev, qdf_size_t size, int reserve, int align,
+		  int prio, const char *func, uint32_t line)
 {
-	return __qdf_nbuf_alloc(osdev, size, reserve, align, prio);
+	return __qdf_nbuf_alloc(osdev, size, reserve, align, prio, func, line);
 }
 
 static inline void qdf_nbuf_free(qdf_nbuf_t buf)
