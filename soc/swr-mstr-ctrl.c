@@ -69,6 +69,8 @@ enum {
 #define SWR_MSTR_RD_BUF_LEN      8
 #define SWR_MSTR_WR_BUF_LEN      32
 
+#define MAX_FIFO_RD_FAIL_RETRY 3
+
 static struct swr_mstr_ctrl *dbgswrm;
 static struct dentry *debugfs_swrm_dent;
 static struct dentry *debugfs_peek;
@@ -243,7 +245,7 @@ static int swrm_clk_request(struct swr_mstr_ctrl *swrm, bool enable)
 static int swrm_ahb_write(struct swr_mstr_ctrl *swrm,
 					u16 reg, u32 *value)
 {
-	u32 temp = (u32)(*value) & 0x000000FF;
+	u32 temp = (u32)(*value);
 	int ret;
 
 	ret = swrm_clk_request(swrm, TRUE);
@@ -253,7 +255,7 @@ static int swrm_ahb_write(struct swr_mstr_ctrl *swrm,
 
 	iowrite32(temp, swrm->swrm_dig_base + reg);
 
-	swrm_clk_request(swrm, TRUE);
+	swrm_clk_request(swrm, FALSE);
 
 	return 0;
 }
@@ -261,7 +263,7 @@ static int swrm_ahb_write(struct swr_mstr_ctrl *swrm,
 static int swrm_ahb_read(struct swr_mstr_ctrl *swrm,
 					u16 reg, u32 *value)
 {
-	u32 temp;
+	u32 temp = 0;
 	int ret;
 
 	ret = swrm_clk_request(swrm, TRUE);
@@ -270,7 +272,7 @@ static int swrm_ahb_read(struct swr_mstr_ctrl *swrm,
 		return -EINVAL;
 
 	temp = ioread32(swrm->swrm_dig_base + reg);
-	*value = (u8)temp;
+	*value = temp;
 	swrm_clk_request(swrm, FALSE);
 	return 0;
 }
@@ -302,8 +304,11 @@ static int swr_master_bulk_write(struct swr_mstr_ctrl *swrm, u32 *reg_addr,
 	if (swrm->bulk_write)
 		swrm->bulk_write(swrm->handle, reg_addr, val, length);
 	else {
-		for (i = 0; i < length; i++)
+		for (i = 0; i < length; i++) {
+		/* wait for FIFO WR command to complete to avoid overflow */
+			usleep_range(100, 105);
 			swr_master_write(swrm, reg_addr[i], val[i]);
+		}
 	}
 	return 0;
 }
@@ -318,10 +323,8 @@ static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 	u8 master_device_id;
 	int i;
 
-	if (swrm->version == SWRM_VERSION_1_5)
-		master_device_id = swr_master_read(swrm, SWRM_COMP_MASTER_ID);
-	else
-		master_device_id = MASTER_ID_WSA;
+	/* update device_id for tx/rx */
+	master_device_id = MASTER_ID_WSA;
 
 	switch (master_device_id & MASTER_ID_MASK) {
 	case MASTER_ID_WSA:
@@ -398,15 +401,30 @@ static int swrm_cmd_fifo_rd_cmd(struct swr_mstr_ctrl *swrm, int *cmd_data,
 				 u32 len)
 {
 	u32 val;
+	u32 retry_attempt = 0;
 
 	val = swrm_get_packed_reg_val(&swrm->rcmd_id, len, dev_addr, reg_addr);
+	/* wait for FIFO RD to complete to avoid overflow */
+	usleep_range(100, 105);
 	swr_master_write(swrm, SWRM_CMD_FIFO_RD_CMD, val);
-
+	/* wait for FIFO RD CMD complete to avoid overflow */
+	usleep_range(250, 255);
+retry_read:
 	*cmd_data = swr_master_read(swrm, SWRM_CMD_FIFO_RD_FIFO_ADDR);
 	dev_dbg(swrm->dev,
 		"%s: reg: 0x%x, cmd_id: 0x%x, dev_num: 0x%x, cmd_data: 0x%x\n",
 		__func__, reg_addr, cmd_id, dev_addr, *cmd_data);
-
+	if ((((*cmd_data) & 0xF00) >> 8) != swrm->rcmd_id) {
+		if (retry_attempt < MAX_FIFO_RD_FAIL_RETRY) {
+			/* wait 500 us before retry on fifo read failure */
+			usleep_range(500, 505);
+			retry_attempt++;
+			goto retry_read;
+		} else {
+			dev_err_ratelimited(swrm->dev,
+				"%s: failed to read fifo\n", __func__);
+		}
+	}
 	return 0;
 }
 
@@ -422,12 +440,12 @@ static int swrm_cmd_fifo_wr_cmd(struct swr_mstr_ctrl *swrm, u8 cmd_data,
 	else
 		val = swrm_get_packed_reg_val(&cmd_id, cmd_data,
 					      dev_addr, reg_addr);
-
 	dev_dbg(swrm->dev,
-		"%s: reg: 0x%x, cmd_id: 0x%x, dev_num: 0x%x, cmd_data: 0x%x\n",
-		__func__, reg_addr, cmd_id, dev_addr, cmd_data);
+		"%s: reg: 0x%x, cmd_id: 0x%x, val:0x%x, dev_num: 0x%x, cmd_data: 0x%x\n",
+		__func__, reg_addr, cmd_id, val, dev_addr, cmd_data);
+	/* wait for FIFO WR command to complete to avoid overflow */
+	usleep_range(250, 255);
 	swr_master_write(swrm, SWRM_CMD_FIFO_WR_CMD, val);
-
 	if (cmd_id == 0xF) {
 		/*
 		 * sleep for 10ms for MSM soundwire variant to allow broadcast
@@ -806,9 +824,8 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 	}
 	mutex_lock(&swrm->mlock);
 
-	/* wakeup soundwire master if in sleep */
-	pm_runtime_get_sync(swrm->dev);
-
+	if (enable)
+		pm_runtime_get_sync(swrm->dev);
 	bank = get_inactive_bank_num(swrm);
 
 	if (enable) {
@@ -816,6 +833,8 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 		if (ret) {
 			/* cannot accommodate ports */
 			swrm_cleanup_disabled_port_reqs(master);
+			pm_runtime_mark_last_busy(swrm->dev);
+			pm_runtime_put_autosuspend(swrm->dev);
 			mutex_unlock(&swrm->mlock);
 			return -EINVAL;
 		}
@@ -858,8 +877,6 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 	else {
 		swrm_disable_ports(master, inactive_bank);
 		swrm_cleanup_disabled_port_reqs(master);
-	}
-	if (!swrm_is_port_en(master)) {
 		dev_dbg(&master->dev, "%s: pm_runtime auto suspend triggered\n",
 			__func__);
 		pm_runtime_mark_last_busy(swrm->dev);
@@ -1300,8 +1317,9 @@ static int swrm_probe(struct platform_device *pdev)
 		ret = -EINVAL;
 		goto err_pdata_fail;
 	}
-	if (!(of_property_read_u32(pdev->dev.of_node, "swrm-io-base", NULL)))
-		swrm->swrm_base_reg = of_property_read_u32(pdev->dev.of_node,
+	if (!(of_property_read_u32(pdev->dev.of_node,
+			"swrm-io-base", &swrm->swrm_base_reg)))
+		ret = of_property_read_u32(pdev->dev.of_node,
 			"swrm-io-base", &swrm->swrm_base_reg);
 	if (!swrm->swrm_base_reg) {
 		swrm->read = pdata->read;
@@ -1414,6 +1432,19 @@ static int swrm_probe(struct platform_device *pdev)
 	for (i = 0 ; i < SWR_MSTR_PORT_LEN; i++)
 		INIT_LIST_HEAD(&swrm->mport_cfg[i].port_req_list);
 
+	ret = of_property_read_u32(swrm->dev->of_node, "qcom,swr-num-dev",
+				   &swrm->num_dev);
+	if (ret) {
+		dev_dbg(&pdev->dev, "%s: Looking up %s property failed\n",
+			__func__, "qcom,swr-num-dev");
+	} else {
+		if (swrm->num_dev > SWR_MAX_SLAVE_DEVICES) {
+			dev_err(&pdev->dev, "%s: num_dev %d > max limit %d\n",
+				__func__, swrm->num_dev, SWR_MAX_SLAVE_DEVICES);
+			ret = -EINVAL;
+			goto err_pdata_fail;
+		}
+	}
 	if (swrm->reg_irq) {
 		ret = swrm->reg_irq(swrm->handle, swr_mstr_interrupt, swrm,
 			    SWR_IRQ_REGISTER);
@@ -1427,12 +1458,12 @@ static int swrm_probe(struct platform_device *pdev)
 		if (swrm->irq < 0) {
 			dev_err(swrm->dev, "%s() error getting irq hdle: %d\n",
 					__func__, swrm->irq);
-			goto err_pdata_fail;
+			goto err_irq_fail;
 		}
 
 		ret = request_threaded_irq(swrm->irq, NULL,
 					   swr_mstr_interrupt,
-					   IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
+					   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					   "swr_master_irq", swrm);
 		if (ret) {
 			dev_err(swrm->dev, "%s: Failed to request irq %d\n",

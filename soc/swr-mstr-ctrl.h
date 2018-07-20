@@ -30,6 +30,7 @@
 
 #define SWR_MAX_CH_PER_PORT 8
 
+#define SWR_MAX_SLAVE_DEVICES 11
 
 enum {
 	SWR_MSTR_PAUSE,
