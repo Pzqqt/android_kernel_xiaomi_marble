@@ -930,14 +930,14 @@ err_soc_target_detach:
 	/* NOOP */
 
 err_sme_stop:
-	sme_stop(gp_cds_context->mac_context, HAL_STOP_TYPE_SYS_RESET);
+	sme_stop(gp_cds_context->mac_context);
 
 err_mac_stop:
-	mac_stop(gp_cds_context->mac_context, HAL_STOP_TYPE_SYS_RESET);
+	mac_stop(gp_cds_context->mac_context);
 
 err_wma_stop:
 	qdf_event_reset(&gp_cds_context->wma_complete_event);
-	qdf_status = wma_stop(HAL_STOP_TYPE_RF_KILL);
+	qdf_status = wma_stop();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_err("Failed to stop wma");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
@@ -984,7 +984,7 @@ QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc)
 		dispatcher_psoc_disable(psoc);
 	}
 
-	qdf_status = wma_stop(HAL_STOP_TYPE_RF_KILL);
+	qdf_status = wma_stop();
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_err("Failed to stop wma");

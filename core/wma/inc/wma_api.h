@@ -102,7 +102,14 @@ QDF_STATUS wma_mc_process_handler(struct scheduler_msg *msg);
 
 QDF_STATUS wma_start(void);
 
-QDF_STATUS wma_stop(uint8_t reason);
+/**
+ * wma_stop() - wma stop function.
+ *
+ * Performs all of the operations required to stop the WMA layer
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF Error on failure
+ */
+QDF_STATUS wma_stop(void);
 
 QDF_STATUS wma_close(void);
 

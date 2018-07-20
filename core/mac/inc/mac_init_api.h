@@ -33,7 +33,21 @@
 #include "sir_types.h"
 
 QDF_STATUS mac_start(tHalHandle hHal, void *pHalMacStartParams);
-QDF_STATUS mac_stop(tHalHandle hHal, tHalStopType stopType);
+
+/**
+ * mac_stop() - Stop all MAC modules
+ * @mac_handle: Opaque handle to the MAC context
+ *
+ * This function is called to stop MAC. This function will stop all
+ * the mac modules.
+ *
+ * Return: QDF_STATUS_SUCCESS if the MAC was successfully stopped. Any
+ *         other value means that there was an issue with stopping the
+ *         MAC, but the caller should still consider the MAC to be
+ *         stopped.
+ */
+QDF_STATUS mac_stop(mac_handle_t mac_handle);
+
 QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 		    hdd_handle_t hdd_handle, struct cds_config_info *cds_cfg);
 QDF_STATUS mac_close(tHalHandle hHal);

@@ -71,12 +71,6 @@ typedef mac_handle_t tHalHandle;
 struct opaque_hdd_handle;
 typedef struct opaque_hdd_handle *hdd_handle_t;
 
-typedef enum {
-	HAL_STOP_TYPE_SYS_RESET,
-	HAL_STOP_TYPE_SYS_DEEP_SLEEP,
-	HAL_STOP_TYPE_RF_KILL,
-} tHalStopType;
-
 #define HAL_NUM_ASSOC_STA           32
 #define HAL_NUM_STA                 41
 

@@ -288,7 +288,22 @@ QDF_STATUS sme_init_chan_list(tHalHandle hal, uint8_t *alpha2,
 		enum country_src cc_src);
 QDF_STATUS sme_close(tHalHandle hHal);
 QDF_STATUS sme_start(tHalHandle hHal);
-QDF_STATUS sme_stop(tHalHandle hHal, tHalStopType stopType);
+
+/**
+ * sme_stop() - Stop all SME modules and put them at idle state
+ * @mac_handle: Opaque handle to the MAC context
+ *
+ * The function stops each module in SME. Upon return, all modules are
+ * at idle state ready to start.
+ *
+ * This is a synchronous call
+ *
+ * Return: QDF_STATUS_SUCCESS if SME is stopped.  Other status means
+ *         SME failed to stop one or more modules but caller should
+ *         still consider SME is stopped.
+ */
+QDF_STATUS sme_stop(mac_handle_t mac_handle);
+
 /*
  * sme_open_session() - Open a session for given persona
  *

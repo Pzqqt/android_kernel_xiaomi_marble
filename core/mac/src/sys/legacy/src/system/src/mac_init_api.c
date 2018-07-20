@@ -62,21 +62,12 @@ QDF_STATUS mac_start(tHalHandle hHal, void *pHalMacStartParams)
 	return status;
 }
 
-/** -------------------------------------------------------------
-   \fn mac_stop
-   \brief this function will be called from HDD to stop MAC. This function will stop all the mac modules.
- \       memory with global context will only be initialized not freed here.
-   \param   tHalHandle hHal
-   \param tHalStopType
-   \return QDF_STATUS
-   -------------------------------------------------------------*/
-
-QDF_STATUS mac_stop(tHalHandle hHal, tHalStopType stopType)
+QDF_STATUS mac_stop(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal pMac = (tpAniSirGlobal) hHal;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
-	pe_stop(pMac);
-	cfg_cleanup(pMac);
+	pe_stop(mac);
+	cfg_cleanup(mac);
 
 	return QDF_STATUS_SUCCESS;
 }

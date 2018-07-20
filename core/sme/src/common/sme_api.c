@@ -2446,42 +2446,27 @@ static QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-/*
- * sme_stop() - Stop all SME modules and put them at idle state
- *
- *  The function stops each module in SME, PMC, CSR, etc. . Upon
- *  return, all modules are at idle state ready to start.
- *  This is a synchronous call
- *
- * hHal - The handle returned by mac_open
- * tHalStopType - reason for stopping
- * Return QDF_STATUS_SUCCESS - SME is stopped.
- *  Other status means SME is failed to stop but caller should still
- *  consider SME is stopped.
- */
-QDF_STATUS sme_stop(tHalHandle hHal, tHalStopType stopType)
+QDF_STATUS sme_stop(mac_handle_t mac_handle)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	QDF_STATUS fail_status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	QDF_STATUS status;
+	QDF_STATUS ret_status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
-	status = rrm_stop(pMac);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	status = rrm_stop(mac);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret_status = status;
 		sme_err("rrm_stop failed with status: %d", status);
 	}
 
-	status = csr_stop(pMac, stopType);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	status = csr_stop(mac);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret_status = status;
 		sme_err("csr_stop failed with status: %d", status);
-		fail_status = status;
 	}
 
-	if (!QDF_IS_STATUS_SUCCESS(fail_status))
-		status = fail_status;
+	mac->sme.state = SME_STATE_STOP;
 
-	pMac->sme.state = SME_STATE_STOP;
-
-	return status;
+	return ret_status;
 }
 
 /*

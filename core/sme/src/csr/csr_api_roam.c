@@ -1211,7 +1211,7 @@ QDF_STATUS csr_start(tpAniSirGlobal pMac)
 	return status;
 }
 
-QDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType)
+QDF_STATUS csr_stop(tpAniSirGlobal pMac)
 {
 	uint32_t sessionId;
 

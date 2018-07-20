@@ -1223,7 +1223,7 @@ QDF_STATUS csr_open(tpAniSirGlobal pMac);
 QDF_STATUS csr_init_chan_list(tpAniSirGlobal mac, uint8_t *alpha2);
 QDF_STATUS csr_close(tpAniSirGlobal pMac);
 QDF_STATUS csr_start(tpAniSirGlobal pMac);
-QDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType);
+QDF_STATUS csr_stop(tpAniSirGlobal pMac);
 QDF_STATUS csr_ready(tpAniSirGlobal pMac);
 
 #ifdef FEATURE_WLAN_WAPI

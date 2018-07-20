@@ -163,11 +163,9 @@ static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 					"%s: Invalid hHal", __func__);
 				break;
 			}
-			qdf_status = sme_stop(hHal,
-					      HAL_STOP_TYPE_SYS_DEEP_SLEEP);
+			qdf_status = sme_stop(hHal);
 			QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-			qdf_status = mac_stop(hHal,
-					      HAL_STOP_TYPE_SYS_DEEP_SLEEP);
+			qdf_status = mac_stop(hHal);
 			QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 			((sys_rsp_cb) pMsg->callback)(pMsg->bodyptr);
 			qdf_status = QDF_STATUS_SUCCESS;
