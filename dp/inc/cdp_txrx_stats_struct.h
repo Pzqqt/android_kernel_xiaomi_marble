@@ -1269,6 +1269,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_CBS_REST_TIME = 385,
 	OL_ATH_PARAM_CBS_CSA = 386,
 	OL_ATH_PARAM_TWICE_ANTENNA_GAIN = 387,
+	OL_ATH_PARAM_ACTIVITY_FACTOR = 388,
 };
 
 /* Enumeration of PDEV Configuration parameter */
