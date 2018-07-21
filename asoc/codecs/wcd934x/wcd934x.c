@@ -30,6 +30,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include <soc/swr-wcd.h>
+#include <soc/snd_event.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>
@@ -9979,6 +9980,7 @@ static int tavil_device_down(struct wcd9xxx *wcd9xxx)
 	priv = snd_soc_codec_get_drvdata(codec);
 	for (count = 0; count < NUM_CODEC_DAIS; count++)
 		priv->dai[count].bus_down_in_recovery = true;
+	snd_event_notify(priv->dev->parent, SND_EVENT_DOWN);
 
 	priv->mbhc->wcd_mbhc.deinit_in_progress = true;
 	if (delayed_work_pending(&priv->spk_anc_dwork.dwork))
@@ -10006,7 +10008,8 @@ static int tavil_device_down(struct wcd9xxx *wcd9xxx)
 		swrm_wcd_notify(priv->swr.ctrl_data[0].swr_pdev,
 				SWR_DEVICE_DOWN, NULL);
 	tavil_dsd_reset(priv->dsd_config);
-	snd_soc_card_change_online_state(codec->component.card, 0);
+	if (!is_snd_event_fwk_enabled())
+		snd_soc_card_change_online_state(codec->component.card, 0);
 	wcd_dsp_ssr_event(priv->wdsp_cntl, WCD_CDC_DOWN_EVENT);
 	wcd_resmgr_set_sido_input_src_locked(priv->resmgr,
 					     SIDO_SOURCE_INTERNAL);
@@ -10039,7 +10042,8 @@ static int tavil_post_reset_cb(struct wcd9xxx *wcd9xxx)
 	tavil_slimbus_slave_port_cfg.slave_dev_pgd_la =
 					control->slim->laddr;
 	tavil_init_slim_slave_cfg(codec);
-	snd_soc_card_change_online_state(codec->component.card, 1);
+	if (!is_snd_event_fwk_enabled())
+		snd_soc_card_change_online_state(codec->component.card, 1);
 
 	for (i = 0; i < TAVIL_MAX_MICBIAS; i++)
 		tavil->micb_ref[i] = 0;
@@ -10102,6 +10106,7 @@ static int tavil_post_reset_cb(struct wcd9xxx *wcd9xxx)
 	 */
 	tavil_vote_svs(tavil, false);
 	wcd_dsp_ssr_event(tavil->wdsp_cntl, WCD_CDC_UP_EVENT);
+	snd_event_notify(tavil->dev->parent, SND_EVENT_UP);
 
 done:
 	mutex_unlock(&tavil->codec_mutex);
@@ -10900,6 +10905,28 @@ struct wcd_dsp_cntl *tavil_get_wcd_dsp_cntl(struct device *dev)
 }
 EXPORT_SYMBOL(tavil_get_wcd_dsp_cntl);
 
+static void wcd934x_ssr_disable(struct device *dev, void *data)
+{
+	struct wcd9xxx *wcd9xxx = dev_get_drvdata(dev);
+	struct tavil_priv *tavil;
+	struct snd_soc_codec *codec;
+	int count = 0;
+
+	if (!wcd9xxx) {
+		dev_dbg(dev, "%s: wcd9xxx pointer NULL.\n", __func__);
+		return;
+	}
+	codec = (struct snd_soc_codec *)(wcd9xxx->ssr_priv);
+	tavil = snd_soc_codec_get_drvdata(codec);
+
+	for (count = 0; count < NUM_CODEC_DAIS; count++)
+		tavil->dai[count].bus_down_in_recovery = true;
+}
+
+static const struct snd_event_ops wcd934x_ssr_ops = {
+	.disable = wcd934x_ssr_disable,
+};
+
 static int tavil_probe(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -11024,6 +11051,15 @@ static int tavil_probe(struct platform_device *pdev)
 	}
 	schedule_work(&tavil->tavil_add_child_devices_work);
 
+	ret = snd_event_client_register(pdev->dev.parent, &wcd934x_ssr_ops, NULL);
+	if (!ret) {
+		snd_event_notify(pdev->dev.parent, SND_EVENT_UP);
+	} else {
+		pr_err("%s: Registration with SND event fwk failed ret = %d\n",
+			__func__, ret);
+		ret = 0;
+	}
+
 	return ret;
 
 err_cdc_reg:
@@ -11056,6 +11092,8 @@ static int tavil_remove(struct platform_device *pdev)
 		tavil_dsd_deinit(tavil->dsd_config);
 		tavil->dsd_config = NULL;
 	}
+
+	snd_event_client_deregister(pdev->dev.parent);
 
 	if (tavil->spi)
 		spi_unregister_device(tavil->spi);
