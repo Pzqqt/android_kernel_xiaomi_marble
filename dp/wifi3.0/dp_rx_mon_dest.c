@@ -844,10 +844,6 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	qdf_assert(hal_soc);
 
 	qdf_spin_lock_bh(&pdev->mon_lock);
-	if (pdev->monitor_vdev == NULL) {
-		qdf_spin_unlock(&pdev->mon_lock);
-		return;
-	}
 
 	if (qdf_unlikely(hal_srng_access_start(hal_soc, mon_dst_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
