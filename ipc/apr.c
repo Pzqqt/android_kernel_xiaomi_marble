@@ -31,6 +31,7 @@
 #include <linux/of_platform.h>
 #include <soc/qcom/subsystem_restart.h>
 #include <soc/qcom/scm.h>
+#include <soc/snd_event.h>
 #include <dsp/apr_audio-v2.h>
 #include <dsp/audio_notifier.h>
 #include <ipc/apr.h>
@@ -281,9 +282,19 @@ int apr_set_q6_state(enum apr_subsys_state state)
 }
 EXPORT_SYMBOL(apr_set_q6_state);
 
+static void apr_ssr_disable(struct device *dev, void *data)
+{
+	apr_set_q6_state(APR_SUBSYS_DOWN);
+}
+
+static const struct snd_event_ops apr_ssr_ops = {
+	.disable = apr_ssr_disable,
+};
+
 static void apr_adsp_down(unsigned long opcode)
 {
 	pr_info("%s: Q6 is Down\n", __func__);
+	snd_event_notify(apr_priv->dev, SND_EVENT_DOWN);
 	apr_set_q6_state(APR_SUBSYS_DOWN);
 	dispatch_event(opcode, APR_DEST_QDSP6);
 }
@@ -308,6 +319,7 @@ static void apr_adsp_up(void)
 	if (apr_priv->is_initial_boot)
 		schedule_work(&apr_priv->add_chld_dev_work);
 	spin_unlock(&apr_priv->apr_lock);
+	snd_event_notify(apr_priv->dev, SND_EVENT_UP);
 }
 
 int apr_load_adsp_image(void)
@@ -1186,11 +1198,20 @@ static int apr_probe(struct platform_device *pdev)
 	}
 
 	apr_tal_init();
+
+	ret = snd_event_client_register(&pdev->dev, &apr_ssr_ops, NULL);
+	if (ret) {
+		pr_err("%s: Registration with Audio SSR FW failed ret = %d\n",
+			__func__, ret);
+		ret = 0;
+	}
+
 	return apr_debug_init();
 }
 
 static int apr_remove(struct platform_device *pdev)
 {
+	snd_event_client_deregister(&pdev->dev);
 	apr_cleanup();
 	apr_tal_exit();
 	apr_priv = NULL;
