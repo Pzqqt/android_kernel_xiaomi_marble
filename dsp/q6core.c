@@ -26,6 +26,7 @@
 #include <dsp/q6core.h>
 #include <dsp/audio_cal_utils.h>
 #include <dsp/apr_audio-v2.h>
+#include <soc/snd_event.h>
 #include <ipc/apr.h>
 #include "adsp_err.h"
 
@@ -79,6 +80,7 @@ struct q6core_str {
 	struct cal_type_data *cal_data[CORE_MAX_CAL];
 	uint32_t mem_map_cal_handle;
 	int32_t adsp_status;
+	int32_t avs_state;
 	struct q6core_avcs_ver_info q6core_avcs_ver_info;
 };
 
@@ -1448,50 +1450,111 @@ err:
 	return ret;
 }
 
-static int q6core_probe(struct platform_device *pdev)
+static int q6core_is_avs_up(int32_t *avs_state)
 {
 	unsigned long timeout;
-	int adsp_ready = 0, rc;
+	int32_t adsp_ready = 0;
+	int ret = 0;
 
 	timeout = jiffies +
 		msecs_to_jiffies(ADSP_STATE_READY_TIMEOUT_MS);
 
 	do {
-		if (!adsp_ready) {
-			adsp_ready = q6core_is_adsp_ready();
-			dev_dbg(&pdev->dev, "%s: ADSP Audio is %s\n", __func__,
-				adsp_ready ? "ready" : "not ready");
-		}
+		adsp_ready = q6core_is_adsp_ready();
+		pr_debug("%s: ADSP Audio is %s\n", __func__,
+			 adsp_ready ? "ready" : "not ready");
 		if (adsp_ready)
 			break;
 
 		/*
-		 * ADSP will be coming up after loading (PD up event) and
-		 * it might not be fully up when the control reaches
-		 * here. So, wait for 50msec before checking ADSP state
+		 * ADSP will be coming up after boot up and AVS might
+		 * not be fully up when the control reaches here.
+		 * So, wait for 50msec before checking ADSP state again.
 		 */
 		msleep(50);
 	} while (time_after(timeout, jiffies));
 
+	*avs_state = adsp_ready;
+	pr_debug("%s: ADSP Audio is %s\n", __func__,
+	       adsp_ready ? "ready" : "not ready");
+
 	if (!adsp_ready) {
-		dev_err(&pdev->dev, "%s: Timeout. ADSP Audio is %s\n",
-		       __func__,
-		       adsp_ready ? "ready" : "not ready");
-		return -ETIMEDOUT;
+		pr_err_ratelimited("%s: Timeout. ADSP Audio is not ready\n",
+				   __func__);
+		ret = -ETIMEDOUT;
 	}
+
+	return ret;
+}
+
+static int q6core_ssr_enable(struct device *dev, void *data)
+{
+	int32_t avs_state = 0;
+	int ret = 0;
+
+	if (!dev) {
+		pr_err("%s: dev is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!q6core_lcl.avs_state) {
+		ret = q6core_is_avs_up(&avs_state);
+		if (ret < 0)
+			goto err;
+		q6core_lcl.avs_state = avs_state;
+	}
+
+err:
+	return ret;
+}
+
+static void q6core_ssr_disable(struct device *dev, void *data)
+{
+	/* Reset AVS state to 0 */
+	q6core_lcl.avs_state = 0;
+}
+
+static const struct snd_event_ops q6core_ssr_ops = {
+	.enable = q6core_ssr_enable,
+	.disable = q6core_ssr_disable,
+};
+
+static int q6core_probe(struct platform_device *pdev)
+{
+	int32_t avs_state = 0;
+	int rc = 0;
+
+	rc = q6core_is_avs_up(&avs_state);
+	if (rc < 0)
+		goto err;
+	q6core_lcl.avs_state = avs_state;
+
 	rc = of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);
 	if (rc) {
 		dev_err(&pdev->dev, "%s: failed to add child nodes, rc=%d\n",
 			__func__, rc);
-		return -EINVAL;
+		rc = -EINVAL;
+		goto err;
 	}
 	dev_dbg(&pdev->dev, "%s: added child node\n", __func__);
 
-	return 0;
+	rc = snd_event_client_register(&pdev->dev, &q6core_ssr_ops, NULL);
+	if (!rc) {
+		snd_event_notify(&pdev->dev, SND_EVENT_UP);
+	} else {
+		dev_err(&pdev->dev,
+			"%s: Registration with SND event fwk failed rc = %d\n",
+			__func__, rc);
+		rc = 0;
+	}
+
+err:
+	return rc;
 }
 
 static int q6core_remove(struct platform_device *pdev)
 {
+	snd_event_client_deregister(&pdev->dev);
 	of_platform_depopulate(&pdev->dev);
 	return 0;
 }
