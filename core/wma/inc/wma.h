@@ -990,7 +990,6 @@ struct wma_valid_channels {
  * @recovery_event: wma FW recovery event
  * @max_station: max stations
  * @max_bssid: max bssid
- * @driver_type: driver type
  * @myaddr: current mac address
  * @hwaddr: mac address from EEPROM
  * @lpss_support: LPSS feature is supported in target or not
@@ -1120,7 +1119,6 @@ typedef struct {
 	qdf_event_t recovery_event;
 	uint16_t max_station;
 	uint16_t max_bssid;
-	enum qdf_driver_type driver_type;
 	uint8_t myaddr[IEEE80211_ADDR_LEN];
 	uint8_t hwaddr[IEEE80211_ADDR_LEN];
 #ifdef WLAN_FEATURE_LPSS

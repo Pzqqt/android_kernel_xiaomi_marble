@@ -3174,7 +3174,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	wma_handle->max_station = cds_cfg->max_station;
 	wma_handle->max_bssid = cds_cfg->max_bssid;
-	wma_handle->driver_type = cds_cfg->driver_type;
 	wma_handle->ssdp = cds_cfg->ssdp;
 	wma_handle->enable_mc_list = cds_cfg->enable_mc_list;
 	wma_handle->apf_packet_filter_enable =
