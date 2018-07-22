@@ -980,18 +980,6 @@ struct wma_valid_channels {
 };
 
 /**
- * struct hw_mode_idx_to_mac_cap_idx - map between hw_mode to capabilities
- * @num_of_macs: number of macs/PHYs for given hw_mode through hw_mode_id
- * @mac_cap_idx: index of the mac/PHY for given hw_mode through hw_mode_id
- * @hw_mode_id: given hw_mode id
- */
-struct hw_mode_idx_to_mac_cap_idx {
-	uint8_t num_of_macs;
-	uint8_t mac_cap_idx;
-	uint8_t hw_mode_id;
-};
-
-/**
  * struct t_wma_handle - wma context
  * @wmi_handle: wmi handle
  * @cds_context: cds handle
