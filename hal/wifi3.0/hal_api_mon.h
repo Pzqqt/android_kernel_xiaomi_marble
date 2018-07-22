@@ -212,6 +212,25 @@ HAL_RX_DESC_GET_80211_HDR(void *hw_desc_addr) {
 	return rx_pkt_hdr;
 }
 
+/*
+ * HAL_RX_HW_DESC_MPDU_VALID() - check MPDU start TLV tag in MPDU
+ *			start TLV of Hardware TLV descriptor
+ * @hw_desc_addr: Hardware desciptor address
+ *
+ * Return: bool: if TLV tag match
+ */
+static inline
+bool HAL_RX_HW_DESC_MPDU_VALID(void *hw_desc_addr)
+{
+	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
+	uint32_t tlv_tag;
+
+	tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(
+		&rx_desc->mpdu_start_tlv);
+
+	return tlv_tag == WIFIRX_MPDU_START_E ? true : false;
+}
+
 static inline
 uint32_t HAL_RX_HW_DESC_GET_PPDUID_GET(void *hw_desc_addr)
 {

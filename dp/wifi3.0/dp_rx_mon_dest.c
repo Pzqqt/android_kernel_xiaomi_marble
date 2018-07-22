@@ -222,6 +222,14 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				 num_msdus);
 
 			if (is_first_msdu) {
+				if (!HAL_RX_HW_DESC_MPDU_VALID(
+					rx_desc_tlv)) {
+					drop_mpdu = true;
+					qdf_nbuf_free(msdu);
+					msdu = NULL;
+					goto next_msdu;
+				}
+
 				msdu_ppdu_id = HAL_RX_HW_DESC_GET_PPDUID_GET(
 						rx_desc_tlv);
 				is_first_msdu = false;
