@@ -842,17 +842,10 @@ exit_with_status:
 	return status;
 }
 
-/**
- * cds_enable() - start/enable cds module
- * @psoc: Psoc pointer
- * @cds_context: CDS context
- *
- * Return: QDF status
- */
 QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tHalMacStartParameters halStartParams;
+	struct mac_start_params mac_params;
 
 	/* We support only one instance for now ... */
 	if (!gp_cds_context) {
@@ -879,11 +872,9 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 	cds_info("wma correctly started");
 
 	/* Start the MAC */
-	qdf_mem_zero(&halStartParams,
-		     sizeof(tHalMacStartParameters));
-
-	/* Start the MAC */
-	qdf_status = mac_start(gp_cds_context->mac_context, &halStartParams);
+	qdf_mem_zero(&mac_params, sizeof(mac_params));
+	mac_params.driver_type = QDF_DRIVER_TYPE_PRODUCTION;
+	qdf_status = mac_start(gp_cds_context->mac_context, &mac_params);
 
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		cds_alert("Failed to start MAC");

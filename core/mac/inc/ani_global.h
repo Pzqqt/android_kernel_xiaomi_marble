@@ -779,12 +779,6 @@ typedef struct sRrmContext {
 	tRrmPEContext rrmPEContext;
 } tRrmContext, *tpRrmContext;
 
-typedef struct sHalMacStartParameters {
-	/* parameters for the Firmware */
-	enum qdf_driver_type driverType;
-
-} tHalMacStartParameters;
-
 /**
  * enum auth_tx_ack_status - Indicate TX status of AUTH
  * @LIM_AUTH_ACK_NOT_RCD : Default status while waiting for ack status.

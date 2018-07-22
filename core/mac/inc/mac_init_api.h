@@ -32,7 +32,28 @@
 #include "ani_global.h"
 #include "sir_types.h"
 
-QDF_STATUS mac_start(tHalHandle hHal, void *pHalMacStartParams);
+/**
+ * struct mac_start_params - parameters needed when starting the MAC
+ * @driver_type: Operating mode of the driver
+ */
+struct mac_start_params {
+	enum qdf_driver_type driver_type;
+};
+
+/**
+ * mac_start() - Start all MAC modules
+ * @mac_handle: Opaque handle to the MAC context
+ * @params: Parameters needed to start the MAC
+ *
+ * This function is called to start MAC. This function will start all
+ * the mac modules.
+ *
+ * Return: QDF_STATUS_SUCCESS if the MAC was successfully started. Any
+ *         other value means that there was an issue with starting the
+ *         MAC and the MAC should not be considered operational.
+ */
+QDF_STATUS mac_start(mac_handle_t mac_handle,
+		     struct mac_start_params *params);
 
 /**
  * mac_stop() - Stop all MAC modules

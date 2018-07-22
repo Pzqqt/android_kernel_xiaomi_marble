@@ -41,23 +41,22 @@
 
 static tAniSirGlobal global_mac_context;
 
-QDF_STATUS mac_start(tHalHandle hHal, void *pHalMacStartParams)
+QDF_STATUS mac_start(mac_handle_t mac_handle,
+		     struct mac_start_params *params)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = (tpAniSirGlobal) hHal;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
-	if (NULL == pMac) {
+	if (!mac || !params) {
 		QDF_ASSERT(0);
 		status = QDF_STATUS_E_FAILURE;
 		return status;
 	}
 
-	pMac->gDriverType =
-		((tHalMacStartParameters *) pHalMacStartParams)->driverType;
+	mac->gDriverType = params->driver_type;
 
-	if (ANI_DRIVER_TYPE(pMac) != QDF_DRIVER_TYPE_MFG) {
-		status = pe_start(pMac);
-	}
+	if (ANI_DRIVER_TYPE(mac) != QDF_DRIVER_TYPE_MFG)
+		status = pe_start(mac);
 
 	return status;
 }

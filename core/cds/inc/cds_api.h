@@ -403,6 +403,12 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * cds_enable() - start/enable cds module
+ * @psoc: Psoc pointer
+ *
+ * Return: QDF status
+ */
 QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc);
 
 QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc);
