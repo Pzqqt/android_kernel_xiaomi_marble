@@ -995,23 +995,6 @@ struct dbs_hw_mode_info {
 };
 
 /**
- * struct extended_caps - new extended caps given by firmware
- * @num_hw_modes: number of hardware modes for current SOC
- * @each_hw_mode_cap: hw mode id to phy id mapping
- * @each_phy_cap_per_hwmode: PHY's caps for each hw mode
- * @num_phy_for_hal_reg_cap: number of phy for hal reg cap
- * @hw_mode_to_mac_cap_map: map between hw_mode to capabilities
- */
-struct extended_caps {
-	WMI_SOC_MAC_PHY_HW_MODE_CAPS num_hw_modes;
-	WMI_HW_MODE_CAPABILITIES *each_hw_mode_cap;
-	WMI_MAC_PHY_CAPABILITIES *each_phy_cap_per_hwmode;
-	WMI_SOC_HAL_REG_CAPABILITIES num_phy_for_hal_reg_cap;
-	WMI_HAL_REG_CAPABILITIES_EXT *each_phy_hal_reg_cap;
-	struct hw_mode_idx_to_mac_cap_idx *hw_mode_to_mac_cap_map;
-};
-
-/**
  * struct dual_mac_config - Dual MAC configurations
  * @prev_scan_config: Previous scan configuration
  * @prev_fw_mode_config: Previous FW mode configuration
