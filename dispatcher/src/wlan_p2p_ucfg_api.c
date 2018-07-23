@@ -209,7 +209,7 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS ucfg_p2p_cleanup_roc(struct wlan_objmgr_vdev *vdev)
+QDF_STATUS ucfg_p2p_cleanup_roc_by_vdev(struct wlan_objmgr_vdev *vdev)
 {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct wlan_objmgr_psoc *psoc;
@@ -235,6 +235,67 @@ QDF_STATUS ucfg_p2p_cleanup_roc(struct wlan_objmgr_vdev *vdev)
 	}
 
 	return p2p_cleanup_roc_sync(p2p_soc_obj, vdev);
+}
+
+QDF_STATUS ucfg_p2p_cleanup_roc_by_psoc(struct wlan_objmgr_psoc *psoc)
+{
+	struct p2p_soc_priv_obj *obj;
+
+	if (!psoc) {
+		p2p_err("null psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	obj = wlan_objmgr_psoc_get_comp_private_obj(psoc, WLAN_UMAC_COMP_P2P);
+	if (!obj) {
+		p2p_err("null p2p soc obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return p2p_cleanup_roc_sync(obj, NULL);
+}
+
+QDF_STATUS ucfg_p2p_cleanup_tx_by_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	struct p2p_soc_priv_obj *obj;
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!vdev) {
+		p2p_err("null vdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		p2p_err("null psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	obj = wlan_objmgr_psoc_get_comp_private_obj(psoc, WLAN_UMAC_COMP_P2P);
+	if (!obj) {
+		p2p_err("null p2p soc obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return p2p_cleanup_tx_sync(obj, vdev);
+}
+
+QDF_STATUS ucfg_p2p_cleanup_tx_by_psoc(struct wlan_objmgr_psoc *psoc)
+{
+	struct p2p_soc_priv_obj *obj;
+
+	if (!psoc) {
+		p2p_err("null psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	obj = wlan_objmgr_psoc_get_comp_private_obj(psoc, WLAN_UMAC_COMP_P2P);
+	if (!obj) {
+		p2p_err("null p2p soc obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return p2p_cleanup_tx_sync(obj, NULL);
 }
 
 QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
