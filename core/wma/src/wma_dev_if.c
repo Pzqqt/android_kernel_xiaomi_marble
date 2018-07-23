@@ -1429,7 +1429,6 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 		QDF_BUG(0);
 		return;
 	}
-
 	peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
 	if (peer_mac_addr == NULL) {
 		WMA_LOGE("%s: peer mac addr is NULL, Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
@@ -1438,6 +1437,15 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 		QDF_BUG(0);
 		return;
 	}
+	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
+	if (!vdev) {
+		WMA_LOGE("%s vdev is null for peer peer->mac_addr %pM",
+			 __func__, peer_mac_addr);
+		QDF_BUG(0);
+		return;
+	}
+
+	cdp_peer_teardown(soc, vdev, peer);
 
 	if (roam_synch_in_progress)
 		goto peer_detach;
@@ -1468,7 +1476,6 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 	}
 
 peer_detach:
-	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
 	WMA_LOGD("%s: vdev %pK is detaching %pK with peer_addr %pM vdevid %d peer_count %d",
 		__func__, vdev, peer, peer_mac_addr, vdev_id,
 		wma->interfaces[vdev_id].peer_count);
