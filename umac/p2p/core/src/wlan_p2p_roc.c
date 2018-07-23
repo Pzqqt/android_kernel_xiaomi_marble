@@ -160,6 +160,9 @@ static QDF_STATUS p2p_scan_abort(struct p2p_roc_context *roc_ctx)
 	req->cancel_req.vdev_id = roc_ctx->vdev_id;
 	req->cancel_req.req_type = WLAN_SCAN_CANCEL_SINGLE;
 
+	qdf_mtrace(QDF_MODULE_ID_P2P, QDF_MODULE_ID_SCAN,
+		   req->cancel_req.req_type,
+		   req->vdev->vdev_objmgr.vdev_id, req->cancel_req.scan_id);
 	status = ucfg_scan_cancel(req);
 
 	p2p_debug("abort scan, scan req id:%d, scan id:%d, status:%d",
