@@ -50,6 +50,7 @@
 #include "wma.h"
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_peer_ops.h>
+#include "dot11f.h"
 
 #define BA_DEFAULT_TX_BUFFER_SIZE 64
 
@@ -1456,6 +1457,7 @@ static void __lim_process_sa_query_request_action_frame(tpAniSirGlobal pMac,
 {
 	tpSirMacMgmtHdr pHdr;
 	uint8_t *pBody;
+	uint32_t frame_len;
 	uint8_t transId[2];
 
 	/* Prima  --- Below Macro not available in prima
@@ -1464,7 +1466,12 @@ static void __lim_process_sa_query_request_action_frame(tpAniSirGlobal pMac,
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
+	frame_len = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 
+	if (frame_len < sizeof(struct sDot11fSaQueryReq)) {
+		pe_err("Invalid frame length");
+		return;
+	}
 	/* If this is an unprotected SA Query Request, then ignore it. */
 	if (pHdr->fc.wep == 0)
 		return;
@@ -1516,7 +1523,7 @@ static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal pMac,
 							 tpPESession psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
-	uint32_t frameLen;
+	uint32_t frame_len;
 	uint8_t *pBody;
 	tpDphHashNode pSta;
 	uint16_t aid;
@@ -1524,16 +1531,22 @@ static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal pMac,
 	uint8_t retryNum;
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
-	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
+	frame_len = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 	pe_debug("SA Query Response received");
 
+	if (frame_len < sizeof(struct sDot11fSaQueryRsp)) {
+		pe_err("Invalid frame length");
+		return;
+	}
 	/* When a station, supplicant handles SA Query Response.
 	 * Forward to SME to HDD to wpa_supplicant.
 	 */
 	if (LIM_IS_STA_ROLE(psessionEntry)) {
-		lim_send_sme_mgmt_frame_ind(pMac, pHdr->fc.subType, (uint8_t *) pHdr,
-					    frameLen + sizeof(tSirMacMgmtHdr), 0,
+		lim_send_sme_mgmt_frame_ind(pMac, pHdr->fc.subType,
+					    (uint8_t *)pHdr,
+					    frame_len + sizeof(tSirMacMgmtHdr),
+					    0,
 					    WMA_GET_RX_CH(pRxPacketInfo),
 					    psessionEntry,
 					    WMA_GET_RX_RSSI_NORMALIZED(
