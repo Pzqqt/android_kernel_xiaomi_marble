@@ -1792,28 +1792,6 @@ typedef struct sAniGetSnrReq {
 } tAniGetSnrReq, *tpAniGetSnrReq;
 
 /**
- * struct ani_scan_req - Scan request
- * @msg_type: Message type
- * @msg_len: Message Length
- * @session_id: SME session Id
- * @scan_param: scan request parameter
- * @callback: call back function for scan result
- * @ctx: Global context
- *
- * Scan request message structure
- */
-struct ani_scan_req {
-	/* message type is same as the request type */
-	uint16_t msg_type;
-	/* length of the entire request */
-	uint16_t msg_len;
-	uint16_t session_id;
-	void *scan_param;
-	void *callback;
-	void *ctx;
-};
-
-/**
  * struct ani_roc_req - Remain on channel request
  * @msg_type: Message type
  * @msg_len: Message Length
