@@ -355,7 +355,7 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	QDF_ASSERT(!((uint64_t)paddr & dbr_ring_cap->min_buf_align));
+	QDF_ASSERT(!((uint64_t)paddr % dbr_ring_cap->min_buf_align));
 	dbr_buf_pool[cookie].paddr = paddr;
 
 	hal_srng_access_start(hal_soc, srng);
