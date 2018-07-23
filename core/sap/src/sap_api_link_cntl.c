@@ -91,10 +91,12 @@ QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
 	uint8_t operChannel = 0;
 	QDF_STATUS sap_sm_status;
 	uint32_t event;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
+	tpAniSirGlobal mac_ctx;
 
 
-	if (NULL == hal_handle) {
+	if (NULL != hal_handle) {
+		mac_ctx = PMAC_STRUCT(hal_handle);
+	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 					"In %s invalid hHal", __func__);
 		return QDF_STATUS_E_FAILURE;

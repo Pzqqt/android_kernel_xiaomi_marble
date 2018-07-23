@@ -116,11 +116,6 @@ tpAniSirGlobal sme_get_mac_context(void)
 	}
 
 	mac_ctx = PMAC_STRUCT(h_hal);
-	if (NULL == mac_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-		FL("Invalid MAC context"));
-		return NULL;
-	}
 
 	return mac_ctx;
 }
@@ -485,9 +480,10 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 	}
 
 	hal = cds_get_context(QDF_MODULE_ID_SME);
-	mac_ctx = PMAC_STRUCT(hal);
-	if (!mac_ctx) {
-		sme_err("No mac_ctx found");
+	if (NULL != hal) {
+		mac_ctx = PMAC_STRUCT(hal);
+	} else {
+		sme_err("No hal found");
 		return QDF_STATUS_E_FAILURE;
 	}
 	sme_cmd = cmd->umac_cmd;
@@ -543,9 +539,10 @@ QDF_STATUS sme_ser_cmd_callback(void *buf,
 	tSmeCmd *sme_cmd;
 
 	hal = cds_get_context(QDF_MODULE_ID_SME);
-	mac_ctx = PMAC_STRUCT(hal);
-	if (!mac_ctx) {
-		sme_err("mac_ctx is null");
+	if (hal != NULL) {
+		mac_ctx = PMAC_STRUCT(hal);
+	} else {
+		sme_err("hal is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 	/*
@@ -3148,12 +3145,6 @@ QDF_STATUS sme_roam_connect(tHalHandle hHal, uint8_t sessionId,
 QDF_STATUS sme_set_phy_mode(tHalHandle hHal, eCsrPhyMode phyMode)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	if (NULL == pMac) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: invalid context", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	pMac->roam.configParam.phyMode = phyMode;
 	pMac->roam.configParam.uCfgDot11Mode =
@@ -8714,14 +8705,15 @@ void sme_get_command_q_status(tHalHandle hHal)
 {
 	tSmeCmd *pTempCmd = NULL;
 	tListElem *pEntry;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal pMac;
 
-	if (NULL == pMac) {
+	if (NULL != hHal) {
+		pMac = PMAC_STRUCT(hHal);
+	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: pMac is NULL", __func__);
+			  "%s: Invalid hHal pointer", __func__);
 		return;
 	}
-
 	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry)
 		pTempCmd = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
@@ -12257,10 +12249,6 @@ QDF_STATUS sme_enable_dfs_chan_scan(tHalHandle h_hal, uint8_t dfs_flag)
 	}
 
 	mac = PMAC_STRUCT(h_hal);
-	if (!mac) {
-		sme_err("mac is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
 
 	mac->scan.fEnableDFSChnlScan = dfs_flag;
 
@@ -13639,9 +13627,11 @@ void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg)
  */
 bool sme_is_session_id_valid(tHalHandle hal, uint32_t session_id)
 {
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac;
 
-	if (!mac) {
+	if (NULL != hal) {
+		mac = PMAC_STRUCT(hal);
+	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			"%s: null mac pointer", __func__);
 		return false;

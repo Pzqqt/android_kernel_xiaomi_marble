@@ -421,11 +421,6 @@ void sap_update_unsafe_channel_list(tHalHandle hal, struct sap_context *sap_ctx)
 		return;
 	}
 	mac_ctx = PMAC_STRUCT(hal);
-	if (!mac_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
-			  "mac_ctx is NULL");
-		return;
-	}
 
 	/* Flush, default set all channel safe */
 	for (i = 0; i < NUM_CHANNELS; i++) {
