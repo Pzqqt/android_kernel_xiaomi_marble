@@ -2139,7 +2139,17 @@ void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason);
 
 void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy);
 QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *adapter);
-int wlan_hdd_validate_context(struct hdd_context *hdd_ctx);
+
+/**
+ * wlan_hdd_validate_context() - check the HDD context
+ * @hdd_ctx: Global HDD context pointer
+ *
+ * Return: 0 if the context is valid. Error code otherwise
+ */
+#define wlan_hdd_validate_context(hdd_ctx) \
+	__wlan_hdd_validate_context(hdd_ctx, __func__)
+
+int __wlan_hdd_validate_context(struct hdd_context *hdd_ctx, const char *func);
 
 /**
  * hdd_validate_adapter() - Validate the given adapter
@@ -2150,14 +2160,6 @@ int wlan_hdd_validate_context(struct hdd_context *hdd_ctx);
  * Return: Errno
  */
 int hdd_validate_adapter(struct hdd_adapter *adapter);
-
-/**
- * wlan_hdd_validate_context_in_loading() - check the HDD context in loading
- * @hdd_ctx:	HDD context pointer
- *
- * Return: 0 if the context is valid. Error code otherwise
- */
-int wlan_hdd_validate_context_in_loading(struct hdd_context *hdd_ctx);
 
 bool hdd_is_valid_mac_address(const uint8_t *pMacAddr);
 QDF_STATUS hdd_issta_p2p_clientconnected(struct hdd_context *hdd_ctx);

@@ -839,82 +839,54 @@ int hdd_qdf_trace_enable(QDF_MODULE_ID module_id, uint32_t bitmask)
 	return 0;
 }
 
-/**
- * wlan_hdd_validate_context_in_loading() - check the HDD context in loading
- * @hdd_ctx:	HDD context pointer
- *
- * Return: 0 if the context is valid. Error code otherwise
- */
-int wlan_hdd_validate_context_in_loading(struct hdd_context *hdd_ctx)
+int __wlan_hdd_validate_context(struct hdd_context *hdd_ctx, const char *func)
 {
-	if (NULL == hdd_ctx || NULL == hdd_ctx->config) {
-		hdd_info("%pS HDD context is Null", (void *)_RET_IP_);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is null (via %s)", func);
+		return -ENODEV;
+	}
+
+	if (!hdd_ctx->config) {
+		hdd_err("HDD config is null (via %s)", func);
 		return -ENODEV;
 	}
 
 	if (cds_is_driver_recovering()) {
-		hdd_info("%pS Recovery in Progress. State: 0x%x Ignore!!!",
-			(void *)_RET_IP_, cds_get_driver_state());
-		return -EAGAIN;
-	}
-
-	if (hdd_ctx->start_modules_in_progress ||
-	    hdd_ctx->stop_modules_in_progress) {
-		hdd_info("%pS Start/Stop Modules in progress. Ignore!!!",
-			(void *)_RET_IP_);
-		return -EAGAIN;
-	}
-
-	return 0;
-}
-
-
-/**
- * wlan_hdd_validate_context() - check the HDD context
- * @hdd_ctx:	HDD context pointer
- *
- * Return: 0 if the context is valid. Error code otherwise
- */
-int wlan_hdd_validate_context(struct hdd_context *hdd_ctx)
-{
-	if (NULL == hdd_ctx || NULL == hdd_ctx->config) {
-		hdd_err("%pS HDD context is Null", (void *)_RET_IP_);
-		return -ENODEV;
-	}
-
-	if (cds_is_driver_recovering()) {
-		hdd_debug("%pS Recovery in Progress. State: 0x%x Ignore!!!",
-			(void *)_RET_IP_, cds_get_driver_state());
+		hdd_debug("Recovery in progress (via %s); state:0x%x",
+			  func, cds_get_driver_state());
 		return -EAGAIN;
 	}
 
 	if (cds_is_load_or_unload_in_progress()) {
-		hdd_debug("%pS Load or unload in progress, state: 0x%x, ignore!",
-			  (void *)_RET_IP_, cds_get_driver_state());
+		hdd_debug("Load/unload in progress (via %s); state:0x%x",
+			  func, cds_get_driver_state());
 		return -EAGAIN;
 	}
 
-	if (hdd_ctx->start_modules_in_progress ||
-	    hdd_ctx->stop_modules_in_progress) {
-		hdd_debug("%pS Start/Stop Modules in progress. Ignore!!!",
-				(void *)_RET_IP_);
+	if (hdd_ctx->start_modules_in_progress) {
+		hdd_debug("Start modules in progress (via %s)", func);
+		return -EAGAIN;
+	}
+
+	if (hdd_ctx->stop_modules_in_progress) {
+		hdd_debug("Stop modules in progress (via %s)", func);
 		return -EAGAIN;
 	}
 
 	if (cds_is_driver_in_bad_state()) {
-		hdd_debug("%pS driver in bad State: 0x%x Ignore!!!",
-			(void *)_RET_IP_, cds_get_driver_state());
+		hdd_debug("Driver in bad state (via %s); state:0x%x",
+			  func, cds_get_driver_state());
 		return -EAGAIN;
 	}
 
 	if (cds_is_fw_down()) {
-		hdd_debug("%pS FW is down: 0x%x Ignore!!!",
-			(void *)_RET_IP_, cds_get_driver_state());
+		hdd_debug("FW is down (via %s); state:0x%x",
+			  func, cds_get_driver_state());
 		return -EAGAIN;
 	}
 
 	if (qdf_atomic_read(&hdd_ctx->con_mode_flag)) {
-		hdd_debug("con_mode_handler is in progress Ignore!!!");
+		hdd_debug("Driver mode change in progress (via %s)", func);
 		return -EAGAIN;
 	}
 
