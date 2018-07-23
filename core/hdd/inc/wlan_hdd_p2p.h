@@ -196,4 +196,14 @@ int wlan_hdd_go_set_mcc_p2p_quota(struct hdd_adapter *hostapd_adapter,
  * Return: None
  */
 void wlan_hdd_set_mcc_latency(struct hdd_adapter *adapter, int set_value);
+
+/**
+ * wlan_hdd_cleanup_actionframe() - Cleanup action frame
+ * @adapter: Pointer to HDD adapter
+ *
+ * This function cleans up action frame.
+ *
+ * Return: None
+ */
+void wlan_hdd_cleanup_actionframe(struct hdd_adapter *adapter);
 #endif /* __P2P_H */

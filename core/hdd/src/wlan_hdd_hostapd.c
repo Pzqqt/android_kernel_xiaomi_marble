@@ -5128,6 +5128,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		       adapter->session_id);
 		return -EINVAL;
 	}
+	wlan_hdd_cleanup_actionframe(adapter);
 	wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {

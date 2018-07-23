@@ -81,15 +81,12 @@ const char *tdls_action_frame_type[] = { "TDLS Setup Request",
 
 void wlan_hdd_cancel_existing_remain_on_channel(struct hdd_adapter *adapter)
 {
-	QDF_STATUS status;
-
 	if (!adapter) {
 		hdd_err("null adapter");
 		return;
 	}
 
-	status = ucfg_p2p_cleanup_roc(adapter->hdd_vdev);
-	hdd_debug("status:%d", status);
+	ucfg_p2p_cleanup_roc_by_vdev(adapter->hdd_vdev);
 }
 
 int wlan_hdd_check_remain_on_channel(struct hdd_adapter *adapter)
@@ -103,15 +100,22 @@ int wlan_hdd_check_remain_on_channel(struct hdd_adapter *adapter)
 /* Clean up RoC context at hdd_stop_adapter*/
 void wlan_hdd_cleanup_remain_on_channel_ctx(struct hdd_adapter *adapter)
 {
-	QDF_STATUS status;
-
 	if (!adapter) {
 		hdd_err("null adapter");
 		return;
 	}
 
-	status = ucfg_p2p_cleanup_roc(adapter->hdd_vdev);
-	hdd_debug("status:%d", status);
+	ucfg_p2p_cleanup_roc_by_vdev(adapter->hdd_vdev);
+}
+
+void wlan_hdd_cleanup_actionframe(struct hdd_adapter *adapter)
+{
+	if (!adapter) {
+		hdd_err("null adapter");
+		return;
+	}
+
+	ucfg_p2p_cleanup_tx_by_vdev(adapter->hdd_vdev);
 }
 
 static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,

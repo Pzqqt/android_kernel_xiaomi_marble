@@ -5185,6 +5185,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 		}
 		wlan_hdd_scan_abort(adapter);
 
+		wlan_hdd_cleanup_actionframe(adapter);
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 		hdd_clear_fils_connection_info(adapter);
 
