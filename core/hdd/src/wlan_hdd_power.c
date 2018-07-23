@@ -1687,7 +1687,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	/* flush any pending powersave timers */
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (adapter->session_id >= MAX_NUMBER_OF_ADAPTERS)
+		if (wlan_hdd_validate_session_id(adapter->session_id))
 			continue;
 
 		sme_ps_timer_flush_sync(mac_handle, adapter->session_id);

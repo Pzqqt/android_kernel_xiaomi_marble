@@ -943,7 +943,7 @@ int hdd_validate_adapter(struct hdd_adapter *adapter)
 		return -EAGAIN;
 	}
 
-	if (adapter->session_id >= MAX_NUMBER_OF_ADAPTERS) {
+	if (adapter->session_id >= CSR_ROAM_SESSION_MAX) {
 		hdd_err("bad adapter session Id: %u", adapter->session_id);
 		return -EINVAL;
 	}
@@ -2035,7 +2035,14 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	qdf_mem_copy(&hdd_ctx->hw_bd_info, &cfg->hw_bd_info,
 		     sizeof(cfg->hw_bd_info));
 
-	hdd_ctx->max_intf_count = cfg->max_intf_count;
+	if (cfg->max_intf_count > CSR_ROAM_SESSION_MAX) {
+		hdd_err("fw max vdevs (%u) > host max vdevs (%u); using %u",
+			cfg->max_intf_count, CSR_ROAM_SESSION_MAX,
+			CSR_ROAM_SESSION_MAX);
+		hdd_ctx->max_intf_count = CSR_ROAM_SESSION_MAX;
+	} else {
+		hdd_ctx->max_intf_count = cfg->max_intf_count;
+	}
 
 	hdd_lpass_target_config(hdd_ctx, cfg);
 
@@ -7868,7 +7875,7 @@ hdd_display_netif_queue_history_compact(struct hdd_context *hdd_ctx)
 	uint32_t comb_log_str_size;
 	struct hdd_adapter *adapter = NULL;
 
-	comb_log_str_size = (ADAP_NETIFQ_LOG_LEN * MAX_NUMBER_OF_ADAPTERS) + 1;
+	comb_log_str_size = (ADAP_NETIFQ_LOG_LEN * CSR_ROAM_SESSION_MAX) + 1;
 	comb_log_str = qdf_mem_malloc(comb_log_str_size);
 	if (!comb_log_str) {
 		hdd_err("failed to alloc comb_log_str");
@@ -8793,7 +8800,7 @@ static int hdd_context_init(struct hdd_context *hdd_ctx)
 	qdf_spinlock_create(&hdd_ctx->sta_update_info_lock);
 	qdf_spinlock_create(&hdd_ctx->hdd_adapter_lock);
 
-	qdf_list_create(&hdd_ctx->hdd_adapters, MAX_NUMBER_OF_ADAPTERS);
+	qdf_list_create(&hdd_ctx->hdd_adapters, 0);
 
 	ret = hdd_scan_context_init(hdd_ctx);
 	if (ret)

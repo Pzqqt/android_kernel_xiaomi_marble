@@ -243,8 +243,6 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
 /* rcpi request timeout in milli seconds */
 #define WLAN_WAIT_TIME_RCPI 500
 
-#define MAX_NUMBER_OF_ADAPTERS 4
-
 #define MAX_CFG_STRING_LEN  255
 
 /* Maximum time(ms) to wait for external acs response */
@@ -2790,7 +2788,7 @@ hdd_wlan_nla_put_u64(struct sk_buff *skb, int attrtype, u64 value)
 
 static inline int wlan_hdd_validate_session_id(u8 session_id)
 {
-	if (session_id != HDD_SESSION_ID_INVALID)
+	if (session_id < CSR_ROAM_SESSION_MAX)
 		return 0;
 
 	return -EINVAL;
