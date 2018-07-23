@@ -200,14 +200,44 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	uint64_t cookie);
 
 /**
- * ucfg_p2p_cleanup_roc() - Cleanup roc request by vdev
+ * ucfg_p2p_cleanup_roc_by_vdev() - Cleanup roc request by vdev
  * @vdev: pointer to vdev object
  *
- * This function call P2P API to cleanup roc request by vdev.
+ * This function call P2P API to cleanup roc request by vdev
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS ucfg_p2p_cleanup_roc(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS ucfg_p2p_cleanup_roc_by_vdev(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_p2p_cleanup_roc_by_poc() - Cleanup roc request by psoc
+ * @psoc: pointer to psoc object
+ *
+ * This function call P2P API to cleanup roc request by psoc
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ucfg_p2p_cleanup_roc_by_psoc(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_p2p_cleanup_tx_by_vdev() - Cleanup tx request by vdev
+ * @vdev: pointer to vdev object
+ *
+ * This function call P2P API to cleanup tx action frame request by vdev
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ucfg_p2p_cleanup_tx_by_vdev(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_p2p_cleanup_tx_by_poc() - Cleanup tx request by psoc
+ * @psoc: pointer to psoc object
+ *
+ * This function call P2P API to cleanup tx action frame request by psoc
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ucfg_p2p_cleanup_tx_by_psoc(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_p2p_mgmt_tx() - Mgmt frame tx request
