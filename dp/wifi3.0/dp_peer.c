@@ -2030,8 +2030,8 @@ void *dp_peer_find_by_local_id(struct cdp_pdev *pdev_handle, uint8_t local_id)
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
 	if (local_id >= OL_TXRX_NUM_LOCAL_PEER_IDS) {
-		DP_TRACE(DEBUG, "Incorrect local id %d", local_id);
-		QDF_BUG(0);
+		QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_DP,
+				   "Incorrect local id %u", local_id);
 		return NULL;
 	}
 	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
