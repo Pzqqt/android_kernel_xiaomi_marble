@@ -830,12 +830,13 @@ struct roam_synch_frame_ind {
  * @ns_offload_req: cached ns offload request
  * @wow_stats: stat counters for WoW related events
  * @rcpi_req: rcpi request
- * It stores parameters per vdev in wma.
- * @in_bmps : Whether bmps for this interface has been enabled
+ * @in_bmps: Whether bmps for this interface has been enabled
  * @vdev_start_wakelock: wakelock to protect vdev start op with firmware
  * @vdev_stop_wakelock: wakelock to protect vdev stop op with firmware
  * @vdev_set_key_wakelock: wakelock to protect vdev set key op with firmware
  * @channel: channel
+ *
+ * It stores parameters per vdev in wma.
  */
 struct wma_txrx_node {
 	uint8_t addr[IEEE80211_ADDR_LEN];
@@ -985,6 +986,7 @@ struct wma_valid_channels {
  * @cds_context: cds handle
  * @mac_context: mac context
  * @psoc: psoc context
+ * @pdev: physical device global object
  * @wma_resume_event: wma resume event
  * @target_suspend: target suspend event
  * @recovery_event: wma FW recovery event
@@ -993,23 +995,23 @@ struct wma_valid_channels {
  * @myaddr: current mac address
  * @hwaddr: mac address from EEPROM
  * @lpss_support: LPSS feature is supported in target or not
- * @egap_support: Enhanced Green AP support flag
  * @wmi_ready: wmi status flag
  * @wlan_init_status: wlan init status
  * @qdf_dev: qdf device
  * @wmi_service_bitmap: wmi services bitmap received from Target
- * @frameTransRequired: frame transmission required
- * @wmaGlobalSystemRole: global system role
+ * @wmi_service_ext_bitmap: extended wmi services bitmap received from Target
  * @tx_frm_download_comp_cb: Tx Frame Compl Cb registered by umac
  * @tx_frm_download_comp_event: Event to wait for tx download completion
- * @tx_queue_empty_event: wait for tx queue to get flushed
+ * @tx_queue_empty_event: Dummy event to wait for draining MSDUs left
+ *   in hardware tx queue and before requesting VDEV_STOP. Nobody will
+ *   set this and wait will timeout, and code will poll the pending tx
+ *   descriptors number to be zero.
  * @umac_ota_ack_cb: Ack Complete Callback registered by umac
  * @umac_data_ota_ack_cb: ack complete callback
- * @last_umac_data_ota_timestamp: timestamp when OTA of last umac data was done
+ * @last_umac_data_ota_timestamp: timestamp when OTA of last umac data
+ *   was done
  * @last_umac_data_nbuf: cache nbuf ptr for the last umac data buf
  * @needShutdown: is shutdown needed or not
- * @num_mem_chunks: number of memory chunk
- * @mem_chunks: memory chunks
  * @tgt_cfg_update_cb: configuration update callback
  * @reg_cap: regulatory capablities
  * @scan_id: scan id
@@ -1017,23 +1019,28 @@ struct wma_valid_channels {
  * @pdevconfig: pdev related configrations
  * @vdev_resp_queue: vdev response queue
  * @vdev_respq_lock: vdev response queue lock
+ * @wma_hold_req_queue: Queue use to serialize requests to firmware
+ * @wma_hold_req_q_lock: Mutex for @wma_hold_req_queue
  * @vht_supp_mcs: VHT supported MCS
  * @is_fw_assert: is fw asserted
  * @wow: wow related patterns & parameters
  * @no_of_suspend_ind: number of suspend indications
  * @no_of_resume_ind: number of resume indications
- * @mArpInfo: arp info
+ * @ack_work_ctx: Context for deferred processing of TX ACK
  * @powersave_mode: power save mode
  * @ptrn_match_enable_all_vdev: is pattern match is enable/disable
  * @pGetRssiReq: get RSSI request
+ * @get_one_peer_info: When a "get peer info" request is active, is
+ *   the request for a single peer?
+ * @get_sta_peer_info: Is a "get peer info" request active?
+ * @peer_macaddr: When @get_one_peer_info is true, the peer's mac address
  * @thermal_mgmt_info: Thermal mitigation related info
  * @roam_offload_enabled: is roam offload enable/disable
  * @ssdp: ssdp flag
- * @enable_mc_list : To Check if Multicast list filtering is enabled in FW
+ * @enable_mc_list: To Check if Multicast list filtering is enabled in FW
  * @ibss_started: is IBSS started or not
  * @ibsskey_info: IBSS key info
  * @hddTxFailCb: tx fail indication callback
- * @pno_wake_lock: PNO wake lock
  * @extscan_wake_lock: extscan wake lock
  * @wow_wake_lock: wow wake lock
  * @wow_auth_req_wl: wow wake lock for auth req
@@ -1044,12 +1051,11 @@ struct wma_valid_channels {
  * @wow_auto_shutdown_wl: wow wake lock for shutdown req
  * @roam_ho_wl: wake lock for roam handoff req
  * @wow_nack: wow negative ack flag
- * @ap_client_cnt: ap client count
  * @is_wow_bus_suspended: is wow bus suspended flag
  * @wma_scan_comp_timer: scan completion timer
  * @suitable_ap_hb_failure: better ap found
- * @suitable_ap_hb_failure_rssi: record the RSSI when suitable_ap_hb_failure
- * for later usage to report RSSI at beacon miss scenario
+ * @suitable_ap_hb_failure_rssi: RSSI when suitable_ap_hb_failure
+ *   triggered for later usage to report RSSI at beacon miss scenario
  * @wma_ibss_power_save_params: IBSS Power Save config Parameters
  * @IsRArateLimitEnabled: RA rate limiti s enabled or not
  * @RArateLimitInterval: RA rate limit interval
@@ -1062,50 +1068,66 @@ struct wma_valid_channels {
  * @last_mhf_entries_timestamp: timestamp when last entries where set
  * @hw_bd_id: hardware board id
  * @hw_bd_info: hardware board info
- * @in_d0wow: D0WOW is enable/disable
  * @miracast_value: miracast value
  * @log_completion_timer: log completion timer
  * @num_dbs_hw_modes: Number of HW modes supported by the FW
- * @dbs_mode: DBS HW mode list
+ * @hw_mode: DBS HW mode list
  * @old_hw_mode_index: Previous configured HW mode index
  * @new_hw_mode_index: Current configured HW mode index
- * @extended_caps phy_caps: extended caps per hw mode
  * @peer_authorized_cb: peer authorized hdd callback
- * @ocb_callback: callback to OCB commands
- * @ocb_resp: response to OCB commands
- * @wow_pno_match_wake_up_count: PNO match wake up count
- * @wow_pno_complete_wake_up_count: PNO complete wake up count
- * @wow_gscan_wake_up_count: Gscan wake up count
- * @wow_low_rssi_wake_up_count: Low rssi wake up count
- * @wow_rssi_breach_wake_up_count: RSSI breach wake up count
- * @wow_ucast_wake_up_count: WoW unicast packet wake up count
- * @wow_bcast_wake_up_count: WoW brodcast packet wake up count
- * @wow_ipv4_mcast_wake_up_count: WoW IPV4 mcast packet wake up count
- * @wow_ipv6_mcast_wake_up_count: WoW IPV6 mcast packet wake up count
- * @wow_ipv6_mcast_ra_stats: WoW IPV6 mcast RA packet wake up count
- * @wow_ipv6_mcast_ns_stats: WoW IPV6 mcast NS packet wake up count
- * @wow_ipv6_mcast_na_stats: WoW IPV6 mcast NA packet wake up count
- * @wow_icmpv4_count: WoW ipv4 icmp packet wake up count
- * @wow_icmpv6_count: WoW ipv6 icmp packet wake up count
- * @dual_mac_cfg: Dual mac configuration params for scan and fw mode
- *
+ * @wow_unspecified_wake_count: Number of wake events which did not
+ *   correspond to known wake events. Note that known wake events are
+ *   tracked on a per-vdev basis via the struct sir_vdev_wow_stats
+ *   wow_stats in struct wma_txrx_node
+ * @ocb_config_req: OCB request context
  * @max_scan:  maximum scan requests than can be queued
- * This structure is global wma context
- * It contains global wma module parameters and
- * handle of other modules.
- * @apf_packet_filter_enable: APF filter enabled or not
- * @active_uc_apf_mode: Setting that determines how APF is applied in active
- * mode for uc packets
- * @active_mc_bc_apf_mode: Setting that determines how APF is applied in
- * active mode for MC/BC packets
- * @service_ready_ext_evt: Wait event for service ready ext
+ * @self_gen_frm_pwr: Self-generated frame power
+ * @tx_chain_mask_cck: Is the CCK tx chain mask enabled
+ * @service_ready_ext_timer: Timer for service ready extended.  Note
+ *   this is a a timer instead of wait event because on receiving the
+ *   service ready event, we will be waiting on the MC thread for the
+ *   service extended ready event which is also processed in MC
+ *   thread.  This leads to MC thread being stuck. Alternative was to
+ *   process these events in tasklet/workqueue context. But, this
+ *   leads to race conditions when the events are processed in two
+ *   different context. So, processing ready event and extended ready
+ *   event in the serialized MC thread context with a timer.
+ * @csr_roam_synch_cb: CSR callback for firmware Roam Sync events
+ * @pe_roam_synch_cb: pe callback for firmware Roam Sync events
  * @wmi_cmd_rsp_wake_lock: wmi command response wake lock
  * @wmi_cmd_rsp_runtime_lock: wmi command response bus lock
- * @saved_chan: saved channel list sent as part of WMI_SCAN_CHAN_LIST_CMDID
- * @is_dfs_offloaded: dfs and cac timer offload
+ * @apf_enabled: Is APF enabled in firmware?
+ * @apf_packet_filter_enable: Is APF filter enabled om host?
+ * @active_uc_apf_mode: Setting that determines how APF is applied in
+ *   active mode for uc packets
+ * @active_mc_bc_apf_mode: Setting that determines how APF is applied in
+ *   active mode for MC/BC packets
+ * @ini_config: Initial configuration from upper layer
+ * @saved_chan: saved channel list sent as part of
+ *   WMI_SCAN_CHAN_LIST_CMDID
+ * @nan_datapath_enabled: Is NAN datapath support enabled in firmware?
+ * @pe_ndp_event_handler: Handler function for NAN Data Path events
+ * @fw_timeout_crash: Should firmware be reset upon response timeout?
+ * @sub_20_support: Does target support sub-20MHz bandwidth (aka
+ *   half-rate and quarter-rate)?
+ * @is_dfs_offloaded: Is dfs and cac timer offloaded?
+ * @wma_mgmt_tx_packetdump_cb: Callback function for TX packet dump
+ * @wma_mgmt_rx_packetdump_cb: Callback function for RX packet dump
+ * @rcpi_enabled: Is RCPI enabled?
+ * @link_stats_results: Structure for handing link stats from firmware
+ * @tx_fail_cnt: Number of TX failures
+ * @he_cap: 802.11ax capabilities
  * @bandcapability: band capability configured through ini
+ * @tx_bfee_8ss_enabled: Is Tx Beamformee support for 8x8 enabled?
+ * @in_imps: Is device in Idle Mode Power Save?
  * @ito_repeat_count: Indicates ito repeated count
- * @critical_events_in_flight: number of suspend preventing events in flight
+ * @wma_fw_time_sync_timer: timer used for firmware time sync
+ * @critical_events_in_flight: number of suspend-preventing events
+ *   in flight
+ *
+ * This structure is the global wma context.  It contains global wma
+ * module parameters and handles of other modules.
+
  */
 typedef struct {
 	void *wmi_handle;
@@ -1129,26 +1151,16 @@ typedef struct {
 	uint32_t wlan_init_status;
 	qdf_device_t qdf_dev;
 	uint32_t wmi_service_bitmap[WMI_SERVICE_BM_SIZE];
-	uint32_t wmi_service_ext_offset;
 	uint32_t wmi_service_ext_bitmap[WMI_SERVICE_SEGMENT_BM_SIZE32];
-	uint32_t frameTransRequired;
-	tBssSystemRole wmaGlobalSystemRole;
 	wma_tx_dwnld_comp_callback tx_frm_download_comp_cb;
 	qdf_event_t tx_frm_download_comp_event;
-	/*
-	 * Dummy event to wait for draining MSDUs left in hardware tx
-	 * queue and before requesting VDEV_STOP. Nobody will set this
-	 * and wait will timeout, and code will poll the pending tx
-	 * descriptors number to be zero.
-	 */
 	qdf_event_t tx_queue_empty_event;
-	wma_tx_ota_comp_callback umac_ota_ack_cb[SIR_MAC_MGMT_RESERVED15];
+	wma_tx_ota_comp_callback
+				umac_ota_ack_cb[SIR_MAC_MGMT_RESERVED15];
 	wma_tx_ota_comp_callback umac_data_ota_ack_cb;
 	unsigned long last_umac_data_ota_timestamp;
 	qdf_nbuf_t last_umac_data_nbuf;
 	bool needShutdown;
-	uint32_t num_mem_chunks;
-	struct wmi_host_mem_chunk mem_chunks[MAX_MEM_CHUNKS];
 	wma_tgt_cfg_cb tgt_cfg_update_cb;
 	HAL_REG_CAPABILITIES reg_cap;
 	uint32_t scan_id;
@@ -1163,10 +1175,6 @@ typedef struct {
 	struct wma_wow wow;
 	uint8_t no_of_suspend_ind;
 	uint8_t no_of_resume_ind;
-	/* Have a back up of arp info to send along
-	 * with ns info suppose if ns also enabled
-	 */
-	tSirHostOffloadReq mArpInfo;
 	struct wma_tx_ack_work_ctx *ack_work_ctx;
 	uint8_t powersave_mode;
 	bool ptrn_match_enable_all_vdev;
@@ -1223,21 +1231,10 @@ typedef struct {
 	uint32_t new_hw_mode_index;
 	wma_peer_authorized_fp peer_authorized_cb;
 	uint32_t wow_unspecified_wake_count;
-
-	/* OCB request contexts */
 	struct sir_ocb_config *ocb_config_req;
 	uint8_t max_scan;
 	uint16_t self_gen_frm_pwr;
 	bool tx_chain_mask_cck;
-	/* Going with a timer instead of wait event because on receiving the
-	 * service ready event, we will be waiting on the MC thread for the
-	 * service extended ready event which is also processed in MC thread.
-	 * This leads to MC thread being stuck. Alternative was to process
-	 * these events in tasklet/workqueue context. But, this leads to
-	 * race conditions when the events are processed in two different
-	 * context. So, processing ready event and extended ready event in
-	 * the serialized MC thread context with a timer.
-	 */
 	qdf_mc_timer_t service_ready_ext_timer;
 
 	QDF_STATUS (*csr_roam_synch_cb)(tpAniSirGlobal mac,
@@ -1256,7 +1253,6 @@ typedef struct {
 	enum active_apf_mode active_mc_bc_apf_mode;
 	struct wma_ini_config ini_config;
 	struct wma_valid_channels saved_chan;
-	/* NAN datapath support enabled in firmware */
 	bool nan_datapath_enabled;
 	QDF_STATUS (*pe_ndp_event_handler)(tpAniSirGlobal mac_ctx,
 					   struct scheduler_msg *msg);
