@@ -5161,9 +5161,6 @@ QDF_STATUS sme_send_mgmt_tx(tHalHandle hal, uint8_t session_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_SEND_MGMT_TX, session_id, 0));
-
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status = sme_prepare_mgmt_tx(hal, session_id, buf, len);

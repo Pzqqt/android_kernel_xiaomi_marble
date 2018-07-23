@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -100,6 +100,7 @@
 	ENUM(TRACE_CODE_HDD_CFG80211_SCHED_SCAN_START) \
 	ENUM(TRACE_CODE_HDD_CFG80211_SCHED_SCAN_STOP) \
 	ENUM(TRACE_CODE_HDD_CFG80211_DEL_PMKSA) \
+	ENUM(TRACE_CODE_HDD_SEND_MGMT_TX) \
 	/*
 	 * New CFG80211 enums to be added before this comment.
 	 * TRACE_CODE_HDD_RX_SME_MSG is used as code for MTRACE commands.

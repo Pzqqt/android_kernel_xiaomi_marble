@@ -251,6 +251,10 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	if ((adapter->device_mode == QDF_STA_MODE) &&
 	    (type == SIR_MAC_MGMT_FRAME &&
 	    sub_type == SIR_MAC_MGMT_AUTH)) {
+		qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_SME,
+			   TRACE_CODE_HDD_SEND_MGMT_TX,
+			   wlan_vdev_get_id(adapter->vdev), 0);
+
 		qdf_status = sme_send_mgmt_tx(hdd_ctx->mac_handle,
 					      adapter->session_id, buf, len);
 
@@ -259,6 +263,10 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		else
 			return -EINVAL;
 	}
+
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_OS_IF,
+		   TRACE_CODE_HDD_SEND_MGMT_TX,
+		   wlan_vdev_get_id(adapter->vdev), 0);
 
 	status = wlan_cfg80211_mgmt_tx(adapter->vdev, chan, offchan, wait, buf,
 				       len, no_cck, dont_wait_for_ack, cookie);
