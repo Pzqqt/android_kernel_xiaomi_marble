@@ -168,7 +168,6 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 
 	/* FW: 0 to 2047 and Host: 2048 to 4095 */
 	p_mac->mgmtSeqNum = WLAN_HOST_SEQ_NUM_MIN - 1;
-	p_mac->first_scan_done = false;
 	p_mac->he_sgi_ltf_cfg_bit_mask = DEF_HE_AUTO_SGI_LTF;
 	p_mac->is_usr_cfg_amsdu_enabled = true;
 

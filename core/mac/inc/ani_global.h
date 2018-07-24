@@ -899,7 +899,6 @@ typedef struct sAniSirGlobal {
 	bool snr_monitor_enabled;
 	bool ignore_assoc_disallowed;
 	bool sta_prefer_80MHz_over_160MHz;
-	bool first_scan_done;
 	int8_t first_scan_bucket_threshold;
 	uint32_t peer_rssi;
 	uint32_t peer_txrate;
