@@ -68,6 +68,17 @@
 #define tdls_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_TDLS, params)
 
+#define tdls_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_TDLS, params)
+#define tdls_nofl_notice(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_TDLS, params)
+#define tdls_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_TDLS, params)
+#define tdls_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_TDLS, params)
+#define tdls_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_TDLS, params)
+
 #define TDLS_IS_LINK_CONNECTED(peer)  \
 	((TDLS_LINK_CONNECTED == (peer)->link_status) || \
 	 (TDLS_LINK_TEARING == (peer)->link_status))
