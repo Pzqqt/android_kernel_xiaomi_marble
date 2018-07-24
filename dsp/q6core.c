@@ -299,8 +299,6 @@ static int32_t aprv2_core_fn_q(struct apr_client_data *data, void *priv)
 				"AVCS_CMD_LOAD_TOPO_MODULES" :
 				"AVCS_CMD_UNLOAD_TOPO_MODULES",
 				adsp_err_get_err_str(payload1[1]));
-			q6core_lcl.bus_bw_resp_received = 1;
-			wake_up(&q6core_lcl.bus_bw_req_wait);
 			break;
 		default:
 			pr_err("%s: Invalid cmd rsp[0x%x][0x%x] opcode %d\n",
@@ -848,25 +846,14 @@ int32_t q6core_load_unload_topo_modules(uint32_t topo_id,
 			AVCS_CMD_UNLOAD_TOPO_MODULES;
 
 	load_unload_topo_modules.topology_id = topo_id;
-	q6core_lcl.bus_bw_resp_received = 0;
 	ret = apr_send_pkt(q6core_lcl.core_handle_q,
 		(uint32_t *) &load_unload_topo_modules);
 	if (ret < 0) {
 		pr_err("%s: Load/unload topo modules failed for topology = %d ret = %d\n",
 			__func__, topo_id, ret);
 		ret = -EINVAL;
-		goto done;
 	}
 
-	ret = wait_event_timeout(q6core_lcl.bus_bw_req_wait,
-				(q6core_lcl.bus_bw_resp_received == 1),
-				msecs_to_jiffies(TIMEOUT_MS));
-	if (!ret) {
-		pr_err("%s: wait_event timeout for load/unload topo modules\n",
-			__func__);
-		ret = -ETIME;
-		goto done;
-	}
 done:
 	mutex_unlock(&(q6core_lcl.cmd_lock));
 
