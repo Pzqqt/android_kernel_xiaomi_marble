@@ -2703,6 +2703,7 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 /**
  * hdd_check_for_leaks() - Perform runtime memory leak checks
  * @hdd_ctx: the global HDD context
+ * @is_ssr: true if SSR is in progress
  *
  * This API triggers runtime memory leak detection. This feature enforces the
  * policy that any memory allocated at runtime must also be released at runtime.
@@ -2714,12 +2715,17 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_check_for_leaks(struct hdd_context *hdd_ctx)
+static void hdd_check_for_leaks(struct hdd_context *hdd_ctx, bool is_ssr)
 {
 	/* DO NOT REMOVE these checks; for false positives, read above first */
 
 	wlan_objmgr_psoc_check_for_vdev_leaks(hdd_ctx->hdd_psoc);
 	wlan_objmgr_psoc_check_for_pdev_leaks(hdd_ctx->hdd_psoc);
+
+	/* many adapter resources are not freed by design during SSR */
+	if (is_ssr)
+		return;
+
 	qdf_mc_timer_check_for_leaks();
 	qdf_nbuf_map_check_for_leaks();
 	qdf_mem_check_for_leaks();
@@ -2727,7 +2733,8 @@ static void hdd_check_for_leaks(struct hdd_context *hdd_ctx)
 
 #define hdd_debug_domain_set(domain) qdf_debug_domain_set(domain)
 #else
-static inline void hdd_check_for_leaks(struct hdd_context *hdd_ctx) { }
+static inline void hdd_check_for_leaks(struct hdd_context *hdd_ctx, bool is_ssr)
+{ }
 
 #define hdd_debug_domain_set(domain)
 #endif /* CONFIG_LEAK_DETECTION */
@@ -2980,9 +2987,8 @@ release_lock:
 		qdf_mem_free(hdd_ctx->target_hw_name);
 		hdd_ctx->target_hw_name = NULL;
 	}
-	/* many adapter resources are not freed by design in SSR case */
-	if (!reinit)
-		hdd_check_for_leaks(hdd_ctx);
+
+	hdd_check_for_leaks(hdd_ctx, reinit);
 	hdd_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
 
 	hdd_exit();
@@ -10923,9 +10929,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 				ret);
 	}
 
-	/* many adapter resources are not freed by design in SSR case */
-	if (!is_recovery_stop)
-		hdd_check_for_leaks(hdd_ctx);
+	hdd_check_for_leaks(hdd_ctx, is_recovery_stop);
 	hdd_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
 
 	/* Once the firmware sequence is completed reset this flag */

@@ -1246,8 +1246,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	hdd_lpass_notify_stop(hdd_ctx);
 
-	wlan_objmgr_print_ref_all_objects_per_psoc(hdd_ctx->hdd_psoc);
-
 	hdd_info("WLAN driver shutdown complete");
 
 	return QDF_STATUS_SUCCESS;
