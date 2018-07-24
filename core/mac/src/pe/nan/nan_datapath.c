@@ -315,7 +315,6 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	 * Copy peer info in del peer indication before
 	 * lim_delete_dph_hash_entry is called as this will be lost.
 	 */
-	peer_ind.session_id = pe_session->smeSessionId;
 	peer_ind.sta_id = sta_ds->staIndex;
 	qdf_mem_copy(&peer_ind.peer_mac_addr.bytes,
 		sta_ds->staAddr, sizeof(tSirMacAddr));
@@ -478,8 +477,6 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	/* this message is going to os_if, fill in sme session id */
-	new_peer_ind->session_id = add_sta_rsp->smesessionId;
 	qdf_mem_copy(new_peer_ind->peer_mac_addr.bytes, add_sta_rsp->staMac,
 		     sizeof(tSirMacAddr));
 	new_peer_ind->sta_id = add_sta_rsp->staIdx;
