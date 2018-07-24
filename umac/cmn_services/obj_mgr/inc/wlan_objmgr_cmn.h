@@ -56,6 +56,17 @@
 #define obj_mgr_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_OBJ_MGR, params)
 
+#define objmgr_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_OBJ_MGR, params)
+#define objmgr_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_OBJ_MGR, params)
+#define objmgr_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_OBJ_MGR, params)
+#define objmgr_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_OBJ_MGR, params)
+#define objmgr_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_OBJ_MGR, params)
+
 /**
  * enum WLAN_OBJ_STATE - State of Object
  * @WLAN_OBJ_STATE_ALLOCATED:           Common object is allocated, but not

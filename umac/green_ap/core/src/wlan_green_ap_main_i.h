@@ -49,6 +49,17 @@
 #define green_ap_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_GREEN_AP, params)
 
+#define greenap_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_GREEN_AP, params)
+#define greenap_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_GREEN_AP, params)
+#define greenap_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_GREEN_AP, params)
+#define greenap_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_GREEN_AP, params)
+#define greenap_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_GREEN_AP, params)
+
 #define WLAN_GREEN_AP_PS_DISABLE 0
 #define WLAN_GREEN_AP_PS_ENABLE 1
 #define WLAN_GREEN_AP_PS_SUSPEND 2

@@ -22,7 +22,7 @@
 #include "qdf_nbuf.h"
 #include "qdf_atomic.h"
 
-#define direct_buf_alert(params...) \
+#define direct_buf_rx_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_DIRECT_BUF_RX, params)
 #define direct_buf_rx_err(params...) \
 	QDF_TRACE_ERROR(QDF_MODULE_ID_DIRECT_BUF_RX, params)
@@ -38,6 +38,17 @@
 	QDF_TRACE_ENTER(QDF_MODULE_ID_DIRECT_BUF_RX, "enter")
 #define direct_buf_rx_exit() \
 	QDF_TRACE_EXIT(QDF_MODULE_ID_DIRECT_BUF_RX, "exit")
+
+#define directbuf_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_DIRECT_BUF_RX, params)
+#define directbuf_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_DIRECT_BUF_RX, params)
+#define directbuf_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_DIRECT_BUF_RX, params)
+#define directbuf_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_DIRECT_BUF_RX, params)
+#define directbuf_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_DIRECT_BUF_RX, params)
 
 #define DBR_MAX_CHAINS      (8)
 

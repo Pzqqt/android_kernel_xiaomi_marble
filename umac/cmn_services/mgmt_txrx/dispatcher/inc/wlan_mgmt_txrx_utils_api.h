@@ -49,6 +49,17 @@
 #define mgmt_txrx_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_MGMT_TXRX, params)
 
+#define mgmttxrx_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_MGMT_TXRX, params)
+#define mgmttxrx_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_MGMT_TXRX, params)
+#define mgmttxrx_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_MGMT_TXRX, params)
+#define mgmttxrx_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_MGMT_TXRX, params)
+#define mgmttxrx_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_MGMT_TXRX, params)
+
 /**
  * enum mgmt_subtype - enum of mgmt. subtypes
  * @MGMT_SUBTYPE_ASSOC_REQ:       association request frame

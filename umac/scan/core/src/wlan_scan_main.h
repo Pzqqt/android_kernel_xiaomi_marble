@@ -44,9 +44,19 @@
 #define scm_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_SCAN, params)
 
+#define scm_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_SCAN, params)
+#define scm_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_SCAN, params)
+#define scm_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_SCAN, params)
+#define scm_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_SCAN, params)
+#define scm_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_SCAN, params)
+
 #define scm_hex_dump(level, data, buf_len) \
 		qdf_trace_hex_dump(QDF_MODULE_ID_SCAN, level, data, buf_len)
-
 
 #define MAX_SCAN_EVENT_HANDLERS_PER_PDEV   100
 #define WLAN_MAX_MODULE_NAME    40

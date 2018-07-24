@@ -46,6 +46,17 @@
 #define p2p_alert(params ...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_P2P, params)
 
+#define p2p_nofl_debug(params ...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_P2P, params)
+#define p2p_nofl_info(params ...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_P2P, params)
+#define p2p_nofl_warn(params ...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_P2P, params)
+#define p2p_nofl_err(params ...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_P2P, params)
+#define p2p_nofl_alert(params ...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_P2P, params)
+
 struct scheduler_msg;
 struct p2p_tx_cnf;
 struct p2p_rx_mgmt_frame;

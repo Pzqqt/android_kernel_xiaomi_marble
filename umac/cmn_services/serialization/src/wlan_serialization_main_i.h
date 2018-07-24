@@ -42,6 +42,18 @@
 	QDF_TRACE_INFO(QDF_MODULE_ID_SERIALIZATION, params)
 #define serialization_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_SERIALIZATION, params)
+
+#define serialization_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
+#define serialization_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
+#define serialization_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
+#define serialization_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
+#define serialization_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
+
 #define serialization_enter() \
 	QDF_TRACE_ENTER(QDF_MODULE_ID_SERIALIZATION, "enter")
 #define serialization_exit() \
