@@ -332,7 +332,7 @@ struct cdp_ctrl_ops {
 				uint32_t val);
 	int
 		(*txrx_update_filter_neighbour_peers)(
-				struct cdp_pdev *pdev,
+				struct cdp_vdev *vdev,
 				uint32_t cmd, uint8_t *macaddr);
 	/**
 	 * @brief set the safemode of the device
@@ -531,6 +531,9 @@ struct cdp_ctrl_ops {
 	QDF_STATUS (*txrx_vdev_config_for_nac_rssi)(struct cdp_vdev *vdev,
 		enum cdp_nac_param_cmd cmd, char *bssid, char *client_macaddr,
 		uint8_t chan_num);
+	QDF_STATUS (*txrx_vdev_get_neighbour_rssi)(struct cdp_vdev *vdev,
+						   char *macaddr,
+						   uint8_t *rssi);
 #endif
 	void (*set_key)(struct cdp_peer *peer_handle,
 			bool is_unicast, uint32_t *key);

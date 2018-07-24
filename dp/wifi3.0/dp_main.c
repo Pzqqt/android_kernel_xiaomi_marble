@@ -65,6 +65,8 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 				uint8_t *peer_mac_addr,
 				struct cdp_ctrl_objmgr_peer *ctrl_peer);
 static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap);
+static void dp_ppdu_ring_reset(struct dp_pdev *pdev);
+static void dp_ppdu_ring_cfg(struct dp_pdev *pdev);
 
 #define DP_INTR_POLL_TIMER_MS	10
 #define DP_WDS_AGING_TIMER_DEFAULT_MS	120000
@@ -2846,6 +2848,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	qdf_spinlock_create(&pdev->tx_mutex);
 	qdf_spinlock_create(&pdev->neighbour_peer_mutex);
 	TAILQ_INIT(&pdev->neighbour_peers_list);
+	pdev->neighbour_peers_added = false;
 
 	if (dp_soc_cmn_setup(soc)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -3683,6 +3686,7 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
+	struct dp_neighbour_peer *peer = NULL;
 
 	/* preconditions */
 	qdf_assert(vdev);
@@ -3723,6 +3727,13 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 		return;
 	}
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+
+	qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
+	TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
+		      neighbour_peer_list_elem) {
+		QDF_ASSERT(peer->vdev != vdev);
+	}
+	qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
 
 	dp_tx_vdev_detach(vdev);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -4105,16 +4116,17 @@ static int dp_set_filter_neighbour_peers(struct cdp_pdev *pdev_handle,
 /*
  * dp_update_filter_neighbour_peers() - set neighbour peers(nac clients)
  * address for smart mesh filtering
- * @pdev_handle: device object
+ * @vdev_handle: virtual device object
  * @cmd: Add/Del command
  * @macaddr: nac client mac address
  *
  * Return: void
  */
-static int dp_update_filter_neighbour_peers(struct cdp_pdev *pdev_handle,
-	 uint32_t cmd, uint8_t *macaddr)
+static int dp_update_filter_neighbour_peers(struct cdp_vdev *vdev_handle,
+					    uint32_t cmd, uint8_t *macaddr)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_neighbour_peer *peer = NULL;
 
 	if (!macaddr)
@@ -4135,14 +4147,21 @@ static int dp_update_filter_neighbour_peers(struct cdp_pdev *pdev_handle,
 
 		qdf_mem_copy(&peer->neighbour_peers_macaddr.raw[0],
 			macaddr, DP_MAC_ADDR_LEN);
-
+		peer->vdev = vdev;
 
 		qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
+
 		/* add this neighbour peer into the list */
 		TAILQ_INSERT_TAIL(&pdev->neighbour_peers_list, peer,
 				neighbour_peer_list_elem);
 		qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
 
+		/* first neighbour */
+		if (!pdev->neighbour_peers_added) {
+			if (!pdev->mcopy_mode && !pdev->enhanced_stats_en)
+				dp_ppdu_ring_cfg(pdev);
+			pdev->neighbour_peers_added = true;
+		}
 		return 1;
 
 	} else if (cmd == DP_NAC_PARAM_DEL) {
@@ -4158,8 +4177,15 @@ static int dp_update_filter_neighbour_peers(struct cdp_pdev *pdev_handle,
 				break;
 			}
 		}
+		/* last neighbour deleted */
+		if (TAILQ_EMPTY(&pdev->neighbour_peers_list))
+			pdev->neighbour_peers_added = false;
+
 		qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
 
+		if (!pdev->mcopy_mode && !pdev->neighbour_peers_added &&
+		    !pdev->enhanced_stats_en)
+			dp_ppdu_ring_reset(pdev);
 		return 1;
 
 	}
@@ -6461,7 +6487,7 @@ dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	pdev->enhanced_stats_en = 1;
 
-	if (!pdev->mcopy_mode)
+	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added)
 		dp_ppdu_ring_cfg(pdev);
 
 	if (is_ppdu_txrx_capture_enabled(pdev) && !pdev->bpr_enable) {
@@ -6493,7 +6519,8 @@ dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
 					  DP_PPDU_STATS_CFG_BPR,
 					  pdev->pdev_id);
 	}
-	if (!pdev->mcopy_mode)
+
+	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added)
 		dp_ppdu_ring_reset(pdev);
 }
 
@@ -7308,6 +7335,37 @@ static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 #endif
 
 #ifdef ATH_SUPPORT_NAC_RSSI
+/**
+ * dp_vdev_get_neighbour_rssi(): Store RSSI for configured NAC
+ * @vdev_hdl: DP vdev handle
+ * @rssi: rssi value
+ *
+ * Return: 0 for success. nonzero for failure.
+ */
+QDF_STATUS  dp_vdev_get_neighbour_rssi(struct cdp_vdev *vdev_hdl,
+				       char *mac_addr,
+				       uint8_t *rssi)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
+	struct dp_pdev *pdev = vdev->pdev;
+	struct dp_neighbour_peer *peer = NULL;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	*rssi = 0;
+	qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
+	TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
+		      neighbour_peer_list_elem) {
+		if (qdf_mem_cmp(&peer->neighbour_peers_macaddr.raw[0],
+				mac_addr, DP_MAC_ADDR_LEN) == 0) {
+			*rssi = peer->rssi;
+			status = QDF_STATUS_SUCCESS;
+			break;
+		}
+	}
+	qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
+	return status;
+}
+
 static QDF_STATUS dp_config_for_nac_rssi(struct cdp_vdev *vdev_handle,
 		enum cdp_nac_param_cmd cmd, char *bssid, char *client_macaddr,
 		uint8_t chan_num)
@@ -7323,17 +7381,12 @@ static QDF_STATUS dp_config_for_nac_rssi(struct cdp_vdev *vdev_handle,
 	 */
 
 	if (cmd == CDP_NAC_PARAM_ADD) {
-		qdf_mem_copy(vdev->cdp_nac_rssi.client_mac,
-				client_macaddr, DP_MAC_ADDR_LEN);
-		vdev->cdp_nac_rssi_enabled = 1;
+		dp_update_filter_neighbour_peers(vdev_handle, DP_NAC_PARAM_ADD,
+						 client_macaddr);
 	} else if (cmd == CDP_NAC_PARAM_DEL) {
-		if (!qdf_mem_cmp(vdev->cdp_nac_rssi.client_mac,
-			client_macaddr, DP_MAC_ADDR_LEN)) {
-				/* delete this peer from the list */
-			qdf_mem_zero(vdev->cdp_nac_rssi.client_mac,
-				DP_MAC_ADDR_LEN);
-		}
-		vdev->cdp_nac_rssi_enabled = 0;
+		dp_update_filter_neighbour_peers(vdev_handle,
+						 DP_NAC_PARAM_DEL,
+						 client_macaddr);
 	}
 
 	if (soc->cdp_soc.ol_ops->config_bssid_in_fw_for_nac_rssi)
@@ -7473,6 +7526,7 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_set_pdev_param = dp_set_pdev_param,
 #ifdef ATH_SUPPORT_NAC_RSSI
 	.txrx_vdev_config_for_nac_rssi = dp_config_for_nac_rssi,
+	.txrx_vdev_get_neighbour_rssi = dp_vdev_get_neighbour_rssi,
 #endif
 	.set_key = dp_set_michael_key,
 };

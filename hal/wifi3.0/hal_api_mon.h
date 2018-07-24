@@ -139,6 +139,8 @@
 #define HAL_RX_GET_MSDU_AGGREGATION(rx_desc, rs)
 #endif
 
+#define HAL_MAC_ADDR_LEN 6
+
 enum {
 	HAL_HW_RX_DECAP_FORMAT_RAW = 0,
 	HAL_HW_RX_DECAP_FORMAT_NWIFI,
@@ -416,11 +418,26 @@ struct hal_rx_msdu_payload_info {
 	uint32_t payload_len;
 };
 
+/**
+ * struct hal_rx_nac_info - struct for neighbour info
+ * @fc_valid: flag indicate if it has valid frame control information
+ * @to_ds_flag: flag indicate to_ds bit
+ * @mac_addr2_valid: flag indicate if mac_addr2 is valid
+ * @mac_addr2: mac address2 in wh
+ */
+struct hal_rx_nac_info {
+	uint8_t fc_valid;
+	uint8_t to_ds_flag;
+	uint8_t mac_addr2_valid;
+	uint8_t mac_addr2[HAL_MAC_ADDR_LEN];
+};
+
 struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_common_info com_info;
 	struct hal_rx_ppdu_user_info user_info[HAL_MAX_UL_MU_USERS];
 	struct mon_rx_status rx_status;
 	struct hal_rx_msdu_payload_info msdu_info;
+	struct hal_rx_nac_info nac_info;
 	/* status ring PPDU start and end state */
 	uint32_t rx_state;
 };
@@ -1274,6 +1291,31 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info,
 					RX_MPDU_INFO_RX_MPDU_INFO_DETAILS);
 		uint32_t ppdu_id = HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0,
 					      PHY_PPDU_ID);
+
+		ppdu_info->nac_info.fc_valid =
+			HAL_RX_GET(rx_mpdu_start,
+				   RX_MPDU_INFO_2,
+				   MPDU_FRAME_CONTROL_VALID);
+
+		ppdu_info->nac_info.to_ds_flag =
+			HAL_RX_GET(rx_mpdu_start,
+				   RX_MPDU_INFO_2,
+				   TO_DS);
+
+		ppdu_info->nac_info.mac_addr2_valid =
+			HAL_RX_GET(rx_mpdu_start,
+				   RX_MPDU_INFO_2,
+				   MAC_ADDR_AD2_VALID);
+
+		*(uint16_t *)&ppdu_info->nac_info.mac_addr2[0] =
+			HAL_RX_GET(rx_mpdu_start,
+				   RX_MPDU_INFO_16,
+				   MAC_ADDR_AD2_15_0);
+
+		*(uint32_t *)&ppdu_info->nac_info.mac_addr2[2] =
+			HAL_RX_GET(rx_mpdu_start,
+				   RX_MPDU_INFO_17,
+				   MAC_ADDR_AD2_47_16);
 
 		if (ppdu_info->rx_status.prev_ppdu_id != ppdu_id) {
 			ppdu_info->rx_status.prev_ppdu_id = ppdu_id;

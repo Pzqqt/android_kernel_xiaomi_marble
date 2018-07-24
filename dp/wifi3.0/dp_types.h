@@ -949,10 +949,15 @@ enum dp_nac_param_cmd {
  * struct dp_neighbour_peer - neighbour peer list type for smart mesh
  * @neighbour_peers_macaddr: neighbour peer's mac address
  * @neighbour_peer_list_elem: neighbour peer list TAILQ element
+ * @ast_entry: ast_entry for neighbour peer
+ * @rssi: rssi value
  */
 struct dp_neighbour_peer {
 	/* MAC address of neighbour's peer */
 	union dp_align_mac_addr neighbour_peers_macaddr;
+	struct dp_vdev *vdev;
+	struct dp_ast_entry *ast_entry;
+	uint8_t rssi;
 	/* node in the list of neighbour's peer */
 	TAILQ_ENTRY(dp_neighbour_peer) neighbour_peer_list_elem;
 };
@@ -1066,6 +1071,9 @@ struct dp_pdev {
 
 	/* Smart Mesh */
 	bool filter_neighbour_peers;
+
+	/*flag to indicate neighbour_peers_list not empty */
+	bool neighbour_peers_added;
 	/* smart mesh mutex */
 	qdf_spinlock_t neighbour_peer_mutex;
 	/* Neighnour peer list */
@@ -1335,18 +1343,6 @@ struct dp_vdev {
 	uint32_t ap_bridge_enabled;
 
 	enum cdp_sec_type  sec_type;
-
-#ifdef ATH_SUPPORT_NAC_RSSI
-	bool cdp_nac_rssi_enabled;
-	struct {
-		uint8_t bssid_mac[6];
-		uint8_t client_mac[6];
-		uint8_t  chan_num;
-		uint8_t client_rssi_valid;
-		uint8_t client_rssi;
-		uint8_t vdev_id;
-	} cdp_nac_rssi;
-#endif
 };
 
 

@@ -100,14 +100,14 @@ cdp_set_filter_neighbour_peers(ol_txrx_soc_handle soc,
  *  which needs to be filtered
  *
  * @param soc - the pointer to soc object
- * @param pdev - the pointer to physical device object
+ * @param vdev - the pointer to vdev
  * @param cmd - add/del entry into peer table
  * @param macaddr - the address of neighbour peer
  * @return - int
  */
 static inline int
 cdp_update_filter_neighbour_peers(ol_txrx_soc_handle soc,
-	struct cdp_pdev *pdev, uint32_t cmd, uint8_t *macaddr)
+	struct cdp_vdev *vdev, uint32_t cmd, uint8_t *macaddr)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -121,7 +121,7 @@ cdp_update_filter_neighbour_peers(ol_txrx_soc_handle soc,
 		return 0;
 
 	return soc->ops->ctrl_ops->txrx_update_filter_neighbour_peers
-			(pdev, cmd, macaddr);
+			(vdev, cmd, macaddr);
 }
 
 /**
@@ -758,6 +758,35 @@ static inline QDF_STATUS cdp_vdev_config_for_nac_rssi(ol_txrx_soc_handle soc,
 
 	return soc->ops->ctrl_ops->txrx_vdev_config_for_nac_rssi(vdev,
 			nac_cmd, bssid, client_macaddr, chan_num);
+}
+
+/*
+ * cdp_vdev_get_neighbour_rssi(): To invoke dp callback to get rssi value of nac
+ * @soc: soc pointer
+ * @vdev: vdev pointer
+ * @macaddr: Non-Associated client MAC
+ * @rssi: rssi
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS cdp_vdev_get_neighbour_rssi(ol_txrx_soc_handle soc,
+						     struct cdp_vdev *vdev,
+						     char *macaddr,
+						     uint8_t *rssi)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_vdev_get_neighbour_rssi)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_vdev_get_neighbour_rssi(vdev, macaddr,
+								rssi);
 }
 #endif
 #endif

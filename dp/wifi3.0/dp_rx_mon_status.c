@@ -282,6 +282,27 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 	if (ppdu_info->com_info.mpdu_cnt_fcs_ok == 0)
 		return;
 
+	if (ppdu_info->nac_info.fc_valid &&
+	    ppdu_info->nac_info.to_ds_flag &&
+	    ppdu_info->nac_info.mac_addr2_valid) {
+		struct dp_neighbour_peer *peer = NULL;
+		uint8_t rssi = ppdu_info->rx_status.rssi_comb;
+
+		qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
+		if (pdev->neighbour_peers_added) {
+			TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
+				      neighbour_peer_list_elem) {
+				if (!qdf_mem_cmp(&peer->neighbour_peers_macaddr,
+						 &ppdu_info->nac_info.mac_addr2,
+						 DP_MAC_ADDR_LEN)) {
+					peer->rssi = rssi;
+					break;
+				}
+			}
+		}
+		qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
+	}
+
 	if (!pdev->mcopy_mode) {
 		if (!ppdu_info->rx_status.frame_control_info_valid)
 			return;
