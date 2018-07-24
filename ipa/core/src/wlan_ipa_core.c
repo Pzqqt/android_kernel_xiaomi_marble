@@ -274,11 +274,10 @@ static void wlan_ipa_send_pkt_to_tl(
 }
 
 #ifdef CONFIG_IPA_WDI_UNIFIED_API
-
 /*
  * TODO: Get WDI version through FW capabilities
  */
-#ifdef CONFIG_LITHIUM
+#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
 static inline void wlan_ipa_wdi_get_wdi_version(struct wlan_ipa_priv *ipa_ctx)
 {
 	ipa_ctx->wdi_version = IPA_WDI_3;
@@ -760,7 +759,7 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 	struct wlan_ipa_priv *ipa_ctx = NULL;
 	qdf_nbuf_t skb;
 	uint8_t iface_id;
-	uint8_t session_id;
+	uint8_t session_id = 0xff;
 	struct wlan_ipa_iface_context *iface_context;
 	uint8_t fw_desc;
 
@@ -777,7 +776,6 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 	switch (evt) {
 	case IPA_RECEIVE:
 		skb = (qdf_nbuf_t) data;
-
 		if (wlan_ipa_uc_is_enabled(ipa_ctx->config)) {
 			session_id = (uint8_t)skb->cb[0];
 			iface_id = ipa_ctx->vdev_to_iface[session_id];
@@ -785,7 +783,9 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 			iface_id = WLAN_IPA_GET_IFACE_ID(skb->data);
 		}
 		if (iface_id >= WLAN_IPA_MAX_IFACE) {
-			ipa_err_rl("Invalid iface_id: %u", iface_id);
+			ipa_err_rl("Invalid iface_id: %u,session id: %x %x %x %x. Dropped!",
+				   iface_id, session_id, (uint8_t)skb->cb[1],
+				   (uint8_t)skb->cb[2], (uint8_t)skb->cb[3]);
 			ipa_ctx->ipa_rx_internal_drop_count++;
 			dev_kfree_skb_any(skb);
 			return;
@@ -806,7 +806,6 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 		} else {
 			qdf_nbuf_pull_head(skb, WLAN_IPA_WLAN_CLD_HDR_LEN);
 		}
-
 		iface_context->stats.num_rx_ipa_excep++;
 
 		/* Disable to forward Intra-BSS Rx packets when
@@ -1230,8 +1229,11 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 	if (device_mode == QDF_SAP_MODE) {
 		for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 			iface_context = &(ipa_ctx->iface_context[i]);
-			if (iface_context->dev == net_dev)
+			if (iface_context->dev == net_dev) {
+				ipa_debug("found iface %u device_mode %u",
+					 i, device_mode);
 				return QDF_STATUS_SUCCESS;
+			}
 		}
 	}
 
@@ -1435,8 +1437,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 	QDF_STATUS status;
 	uint8_t sta_session_id = WLAN_IPA_MAX_SESSION;
 
-	ipa_debug("%s: EVT: %d, MAC: %pM, sta_id: %d",
-		  net_dev->name, type, mac_addr, sta_id);
+	ipa_debug("%s: EVT: %d, MAC: %pM, sta_id: %d session_id: %u",
+		 net_dev->name, type, mac_addr, sta_id, session_id);
 
 	if (type >= QDF_IPA_WLAN_EVENT_MAX)
 		return QDF_STATUS_E_INVAL;
@@ -1560,6 +1562,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		status = wlan_ipa_setup_iface(ipa_ctx, net_dev, device_mode,
 					   sta_id, session_id);
 		if (status != QDF_STATUS_SUCCESS) {
+			ipa_err("wlan_ipa_setup_iface failed %u", status);
 			qdf_mutex_release(&ipa_ctx->event_lock);
 			goto end;
 		}
@@ -1581,7 +1584,10 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 
 		qdf_mutex_release(&ipa_ctx->event_lock);
 
-		ipa_debug("sta_connected=%d", ipa_ctx->sta_connected);
+		ipa_debug("sta_connected=%d vdev_to_iface[%u] %u",
+			 ipa_ctx->sta_connected,
+			 session_id,
+			 ipa_ctx->vdev_to_iface[session_id]);
 		break;
 
 	case QDF_IPA_AP_CONNECT:
@@ -1617,6 +1623,9 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 
 		ipa_ctx->vdev_to_iface[session_id] =
 				wlan_ipa_get_ifaceid(ipa_ctx, session_id);
+		ipa_debug("vdev_to_iface[%u]=%u",
+			 session_id,
+			 ipa_ctx->vdev_to_iface[session_id]);
 		qdf_mutex_release(&ipa_ctx->event_lock);
 		break;
 
@@ -1663,6 +1672,9 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			qdf_mutex_acquire(&ipa_ctx->event_lock);
 			ipa_ctx->vdev_to_iface[session_id] =
 				WLAN_IPA_MAX_SESSION;
+			ipa_debug("vdev_to_iface[%u]=%u",
+				 session_id,
+				 ipa_ctx->vdev_to_iface[session_id]);
 		}
 
 		for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
@@ -1712,6 +1724,9 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			qdf_mutex_acquire(&ipa_ctx->event_lock);
 			ipa_ctx->vdev_to_iface[session_id] =
 				WLAN_IPA_MAX_SESSION;
+			ipa_debug("vdev_to_iface[%u]=%u",
+				 session_id,
+				 ipa_ctx->vdev_to_iface[session_id]);
 		}
 
 		for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
@@ -1772,7 +1787,9 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 				}
 
 				return status;
-			}
+			} else
+				ipa_debug("%s: handle 1st con success",
+					  net_dev->name);
 		}
 
 		ipa_ctx->sap_num_connected_sta++;
