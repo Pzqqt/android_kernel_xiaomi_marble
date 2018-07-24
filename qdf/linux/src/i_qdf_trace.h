@@ -94,6 +94,9 @@
 #define __QDF_TRACE_RATE_LIMITED(arg ...)
 #endif /* CONFIG_MCL */
 
+#define __QDF_TRACE_NO_FL(log_level, module_id, format, args...) \
+	QDF_TRACE(module_id, log_level, format, ## args)
+
 #define __QDF_TRACE_FL(log_level, module_id, format, args...) \
 	QDF_TRACE(module_id, log_level, FL(format), ## args)
 
@@ -105,50 +108,65 @@ static inline void __qdf_trace_noop(QDF_MODULE_ID module, char *format, ...) { }
 #ifdef WLAN_LOG_FATAL
 #define QDF_TRACE_FATAL(params...) \
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_FATAL, ## params)
+#define QDF_TRACE_FATAL_NO_FL(params...) \
+	__QDF_TRACE_NO_FL(QDF_TRACE_LEVEL_FATAL, ## params)
 #define QDF_TRACE_FATAL_RL(params...) \
 	__QDF_TRACE_RL(QDF_TRACE_LEVEL_FATAL, ## params)
 #else
 #define QDF_TRACE_FATAL(params...) __qdf_trace_noop(params)
+#define QDF_TRACE_FATAL_NO_FL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_FATAL_RL(params...) __qdf_trace_noop(params)
 #endif
 
 #ifdef WLAN_LOG_ERROR
 #define QDF_TRACE_ERROR(params...) \
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_ERROR, ## params)
+#define QDF_TRACE_ERROR_NO_FL(params...) \
+	__QDF_TRACE_NO_FL(QDF_TRACE_LEVEL_ERROR, ## params)
 #define QDF_TRACE_ERROR_RL(params...) \
 	__QDF_TRACE_RL(QDF_TRACE_LEVEL_ERROR, ## params)
 #else
 #define QDF_TRACE_ERROR(params...) __qdf_trace_noop(params)
+#define QDF_TRACE_ERROR_NO_FL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_ERROR_RL(params...) __qdf_trace_noop(params)
 #endif
 
 #ifdef WLAN_LOG_WARN
 #define QDF_TRACE_WARN(params...) \
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_WARN, ## params)
+#define QDF_TRACE_WARN_NO_FL(params...) \
+	__QDF_TRACE_NO_FL(QDF_TRACE_LEVEL_WARN, ## params)
 #define QDF_TRACE_WARN_RL(params...) \
 	__QDF_TRACE_RL(QDF_TRACE_LEVEL_WARN, ## params)
 #else
 #define QDF_TRACE_WARN(params...) __qdf_trace_noop(params)
+#define QDF_TRACE_WARN_NO_FL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_WARN_RL(params...) __qdf_trace_noop(params)
 #endif
 
 #ifdef WLAN_LOG_INFO
 #define QDF_TRACE_INFO(params...) \
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO, ## params)
+#define QDF_TRACE_INFO_NO_FL(params...) \
+	__QDF_TRACE_NO_FL(QDF_TRACE_LEVEL_INFO, ## params)
 #define QDF_TRACE_INFO_RL(params...) \
 	__QDF_TRACE_RL(QDF_TRACE_LEVEL_INFO, ## params)
 #else
 #define QDF_TRACE_INFO(params...) __qdf_trace_noop(params)
+#define QDF_TRACE_INFO_NO_FL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_INFO_RL(params...) __qdf_trace_noop(params)
 #endif
 
 #ifdef WLAN_LOG_DEBUG
 #define QDF_TRACE_DEBUG(params...) \
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_DEBUG, ## params)
+#define QDF_TRACE_DEBUG_NO_FL(params...) \
+	__QDF_TRACE_NO_FL(QDF_TRACE_LEVEL_DEBUG, ## params)
 #define QDF_TRACE_DEBUG_RL(params...) \
 	__QDF_TRACE_RL(QDF_TRACE_LEVEL_DEBUG, ## params)
 #else
 #define QDF_TRACE_DEBUG(params...) __qdf_trace_noop(params)
+#define QDF_TRACE_DEBUG_NO_FL(params...) __qdf_trace_noop(params)
 #define QDF_TRACE_DEBUG_RL(params...) __qdf_trace_noop(params)
 #endif
 
