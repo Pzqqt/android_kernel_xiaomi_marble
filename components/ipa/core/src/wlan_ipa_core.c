@@ -3004,3 +3004,29 @@ void wlan_ipa_uc_ssr_cleanup(struct wlan_ipa_priv *ipa_ctx)
 		}
 	}
 }
+
+void wlan_ipa_fw_rejuvenate_send_msg(struct wlan_ipa_priv *ipa_ctx)
+{
+	qdf_ipa_msg_meta_t meta;
+	qdf_ipa_wlan_msg_t *msg;
+	int ret;
+
+	meta.msg_len = sizeof(*msg);
+	msg = qdf_mem_malloc(meta.msg_len);
+	if (!msg) {
+		ipa_debug("msg allocation failed");
+		return;
+	}
+
+	QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_FWR_SSR_BEFORE_SHUTDOWN);
+	ipa_debug("ipa_send_msg(Evt:%d)",
+		  meta.msg_type);
+	ret = qdf_ipa_send_msg(&meta, msg, wlan_ipa_msg_free_fn);
+
+	if (ret) {
+		ipa_err("ipa_send_msg(Evt:%d)-fail=%d",
+			meta.msg_type, ret);
+		qdf_mem_free(msg);
+	}
+	ipa_ctx->stats.num_send_msg++;
+}

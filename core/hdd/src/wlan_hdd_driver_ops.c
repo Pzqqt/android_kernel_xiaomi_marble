@@ -1552,6 +1552,9 @@ static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 		qdf_complete_wait_events();
 		cds_set_target_ready(false);
 		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
+		if (pld_is_fw_rejuvenate(hdd_ctx->parent_dev) &&
+		    ucfg_ipa_is_enabled())
+			ucfg_ipa_fw_rejuvenate_send_msg(hdd_ctx->pdev);
 		break;
 	default:
 		break;

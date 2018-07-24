@@ -126,6 +126,12 @@ static inline int pld_snoc_force_assert_target(struct device *dev)
 {
 	return 0;
 }
+
+static inline int pld_snoc_is_fw_rejuvenate(void)
+{
+	return 0;
+}
+
 #else
 int pld_snoc_register_driver(void);
 void pld_snoc_unregister_driver(void);
@@ -293,5 +299,11 @@ static inline int pld_snoc_force_assert_target(struct device *dev)
 {
 	return icnss_trigger_recovery(dev);
 }
+
+static inline int pld_snoc_is_fw_rejuvenate(void)
+{
+	return icnss_is_rejuvenate();
+}
+
 #endif
 #endif

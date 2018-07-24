@@ -650,5 +650,14 @@ void wlan_ipa_cleanup_dev_iface(struct wlan_ipa_priv *ipa_ctx,
  * Return: None
  */
 void wlan_ipa_uc_ssr_cleanup(struct wlan_ipa_priv *ipa_ctx);
+
+/**
+ * wlan_ipa_fw_rejuvenate_send_msg() - send fw rejuvenate message to IPA driver
+ * @ipa_ctx: IPA context
+ *
+ * Return: void
+ */
+void wlan_ipa_fw_rejuvenate_send_msg(struct wlan_ipa_priv *ipa_ctx);
+
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_CORE_H_ */

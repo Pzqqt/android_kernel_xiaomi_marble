@@ -413,5 +413,14 @@ void ipa_cleanup_dev_iface(struct wlan_objmgr_pdev *pdev,
  * Return: None
  */
 void ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ipa_fw_rejuvenate_send_msg() - send fw rejuvenate message to IPA driver
+ * @pdev: pdev obj
+ *
+ * Return: None
+ */
+void ipa_fw_rejuvenate_send_msg(struct wlan_objmgr_pdev *pdev);
+
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */

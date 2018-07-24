@@ -323,6 +323,15 @@ void ucfg_ipa_cleanup_dev_iface(struct wlan_objmgr_pdev *pdev,
  * Return: None
  */
 void ucfg_ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_ipa_fw_rejuvenate_send_msg() - Send msg to IPA driver in FW rejuvenate
+ * @pdev: pdev obj
+ *
+ * Return: None
+ */
+void ucfg_ipa_fw_rejuvenate_send_msg(struct wlan_objmgr_pdev *pdev);
+
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -501,6 +510,11 @@ void ucfg_ipa_cleanup_dev_iface(struct wlan_objmgr_pdev *pdev,
 
 static inline
 void ucfg_ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *pdev)
+{
+}
+
+static inline
+void ucfg_ipa_fw_rejuvenate_send_msg(struct wlan_objmgr_pdev *pdev)
 {
 }
 #endif /* IPA_OFFLOAD */

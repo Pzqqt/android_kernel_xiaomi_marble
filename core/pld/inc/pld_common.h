@@ -546,6 +546,17 @@ int pld_is_fw_down(struct device *dev);
 int pld_force_assert_target(struct device *dev);
 bool pld_is_fw_dump_skipped(struct device *dev);
 
+/**
+ * pld_is_fw_rejuvenate() - Check WLAN fw is rejuvenating
+ *
+ * Help the driver decide whether FW down is due to
+ * SSR or FW rejuvenate.
+ *
+ * Return: 1 FW is rejuvenating
+ *         0 FW is not rejuvenating
+ */
+int pld_is_fw_rejuvenate(struct device *dev);
+
 #if defined(CONFIG_WCNSS_MEM_PRE_ALLOC) && defined(FEATURE_SKB_PRE_ALLOC)
 
 /**
