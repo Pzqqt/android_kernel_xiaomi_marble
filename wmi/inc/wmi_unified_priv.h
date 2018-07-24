@@ -835,9 +835,6 @@ QDF_STATUS (*send_pdev_get_tpc_config_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_set_bwf_cmd)(wmi_unified_t wmi_handle,
 		struct set_bwf_params *param);
 
-QDF_STATUS (*send_set_atf_cmd)(wmi_unified_t wmi_handle,
-		struct set_atf_params *param);
-
 QDF_STATUS (*send_pdev_fips_cmd)(wmi_unified_t wmi_handle,
 		struct fips_params *param);
 
@@ -1098,13 +1095,30 @@ QDF_STATUS (*send_lcr_set_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_periodic_chan_stats_config_cmd)(wmi_unified_t wmi_handle,
 			struct periodic_chan_stats_params *param);
 
+#ifdef WLAN_ATF_ENABLE
+QDF_STATUS (*send_set_atf_cmd)(wmi_unified_t wmi_handle,
+			       struct set_atf_params *param);
+
 QDF_STATUS
 (*send_atf_peer_request_cmd)(wmi_unified_t wmi_handle,
-			struct atf_peer_request_params *param);
+			     struct atf_peer_request_params *param);
 
 QDF_STATUS
 (*send_set_atf_grouping_cmd)(wmi_unified_t wmi_handle,
-			struct atf_grouping_params *param);
+			     struct atf_grouping_params *param);
+
+QDF_STATUS
+(*send_set_atf_group_ac_cmd)(wmi_unified_t wmi_handle,
+			     struct atf_group_ac_params *param);
+
+QDF_STATUS (*extract_atf_peer_stats_ev)(wmi_unified_t wmi_handle,
+					void *evt_buf,
+					wmi_host_atf_peer_stats_event *ev);
+
+QDF_STATUS (*extract_atf_token_info_ev)(wmi_unified_t wmi_handle,
+					void *evt_buf, uint8_t idx,
+					wmi_host_atf_peer_stats_info *atf_info);
+#endif
 
 QDF_STATUS (*send_get_user_position_cmd)(wmi_unified_t wmi_handle,
 			uint32_t value);
@@ -1357,14 +1371,6 @@ QDF_STATUS (*extract_inst_rssi_stats_event)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*extract_tx_data_traffic_ctrl_ev)(wmi_unified_t wmi_handle,
 		void *evt_buf, wmi_host_tx_data_traffic_ctrl_event *ev);
-
-QDF_STATUS (*extract_atf_peer_stats_ev)(wmi_unified_t wmi_handle,
-		void *evt_buf, wmi_host_atf_peer_stats_event *ev);
-
-QDF_STATUS (*extract_atf_token_info_ev)(wmi_unified_t wmi_handle,
-		void *evt_buf,
-		uint8_t idx,
-		wmi_host_atf_peer_stats_info *atf_token_info);
 
 QDF_STATUS (*extract_vdev_extd_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 		uint32_t index, wmi_host_vdev_extd_stats *vdev_extd_stats);

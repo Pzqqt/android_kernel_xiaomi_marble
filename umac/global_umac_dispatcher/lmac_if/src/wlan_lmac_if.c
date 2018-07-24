@@ -116,8 +116,8 @@ wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	atf_rx_ops->atf_get_logging = tgt_atf_get_logging;
 	atf_rx_ops->atf_update_buf_held = tgt_atf_update_buf_held;
 	atf_rx_ops->atf_get_ssidgroup = tgt_atf_get_ssidgroup;
-	atf_rx_ops->atf_get_tx_block_count = tgt_atf_get_tx_block_count;
-	atf_rx_ops->atf_get_peer_blk_txtraffic = tgt_atf_get_peer_blk_txtraffic;
+	atf_rx_ops->atf_get_vdev_ac_blk_cnt = tgt_atf_get_vdev_ac_blk_cnt;
+	atf_rx_ops->atf_get_peer_blk_txbitmap = tgt_atf_get_peer_blk_txbitmap;
 	atf_rx_ops->atf_get_vdev_blk_txtraffic = tgt_atf_get_vdev_blk_txtraffic;
 	atf_rx_ops->atf_get_sched = tgt_atf_get_sched;
 	atf_rx_ops->atf_get_tx_tokens = tgt_atf_get_tx_tokens;
@@ -145,8 +145,8 @@ wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	atf_rx_ops->atf_set_peers = tgt_atf_set_peers;
 	atf_rx_ops->atf_set_peer_stats = tgt_atf_set_peer_stats;
 	atf_rx_ops->atf_set_vdev_blk_txtraffic = tgt_atf_set_vdev_blk_txtraffic;
-	atf_rx_ops->atf_set_peer_blk_txtraffic = tgt_atf_set_peer_blk_txtraffic;
-	atf_rx_ops->atf_set_tx_block_count = tgt_atf_set_tx_block_count;
+	atf_rx_ops->atf_peer_blk_txtraffic = tgt_atf_peer_blk_txtraffic;
+	atf_rx_ops->atf_peer_unblk_txtraffic = tgt_atf_peer_unblk_txtraffic;
 	atf_rx_ops->atf_set_token_allocated = tgt_atf_set_token_allocated;
 	atf_rx_ops->atf_set_token_utilized = tgt_atf_set_token_utilized;
 }

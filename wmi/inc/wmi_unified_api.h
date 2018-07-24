@@ -1197,9 +1197,6 @@ QDF_STATUS wmi_unified_send_coex_ver_cfg_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_send_coex_config_cmd(void *wmi_hdl,
 					    struct coex_config_params *param);
 
-QDF_STATUS wmi_unified_set_atf_cmd_send(void *wmi_hdl,
-				struct set_atf_params *param);
-
 QDF_STATUS wmi_unified_pdev_fips_cmd_send(void *wmi_hdl,
 				struct fips_params *param);
 
@@ -1496,13 +1493,32 @@ QDF_STATUS wmi_unified_lcr_set_cmd_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_send_periodic_chan_stats_config_cmd(void *wmi_hdl,
 			struct periodic_chan_stats_params *param);
 
+#ifdef WLAN_ATF_ENABLE
+QDF_STATUS
+wmi_unified_set_atf_cmd_send(void *wmi_hdl,
+			     struct set_atf_params *param);
+
 QDF_STATUS
 wmi_send_atf_peer_request_cmd(void *wmi_hdl,
-			struct atf_peer_request_params *param);
+			      struct atf_peer_request_params *param);
 
 QDF_STATUS
 wmi_send_set_atf_grouping_cmd(void *wmi_hdl,
-			struct atf_grouping_params *param);
+			      struct atf_grouping_params *param);
+
+QDF_STATUS
+wmi_send_set_atf_group_ac_cmd(void *wmi_hdl,
+			      struct atf_group_ac_params *param);
+
+QDF_STATUS
+wmi_extract_atf_peer_stats_ev(void *wmi_hdl, void *evt_buf,
+			      wmi_host_atf_peer_stats_event *ev);
+
+QDF_STATUS
+wmi_extract_atf_token_info_ev(void *wmi_hdl, void *evt_buf, uint8_t idx,
+			      wmi_host_atf_peer_stats_info *atf_token_info);
+#endif
+
 /* Extract APIs */
 
 QDF_STATUS wmi_extract_wds_addr_event(void *wmi_hdl,
@@ -1722,12 +1738,6 @@ QDF_STATUS wmi_extract_peer_stats(void *wmi_hdl, void *evt_buf,
 
 QDF_STATUS wmi_extract_tx_data_traffic_ctrl_ev(void *wmi_hdl, void *evt_buf,
 		wmi_host_tx_data_traffic_ctrl_event *ev);
-
-QDF_STATUS wmi_extract_atf_peer_stats_ev(void *wmi_hdl, void *evt_buf,
-		wmi_host_atf_peer_stats_event *ev);
-
-QDF_STATUS wmi_extract_atf_token_info_ev(void *wmi_hdl, void *evt_buf,
-		uint8_t idx, wmi_host_atf_peer_stats_info *atf_token_info);
 
 QDF_STATUS wmi_extract_vdev_stats(void *wmi_hdl, void *evt_buf,
 		uint32_t index, wmi_host_vdev_stats *vdev_stats);

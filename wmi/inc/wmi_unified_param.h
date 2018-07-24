@@ -4305,6 +4305,32 @@ struct atf_grouping_params {
 };
 
 /**
+ * struct atf_group_wmm_ac_info - ATF group AC info params
+ * @atf_config_ac_be: Relative ATF% for BE traffic
+ * @atf_config_ac_bk: Relative ATF% for BK traffic
+ * @atf_config_ac_vi: Relative ATF% for VI traffic
+ * @atf_config_ac_vo: Relative ATF% for VO traffic
+ * @reserved: Reserved for future use
+ */
+struct atf_group_wmm_ac_info {
+	uint32_t  atf_config_ac_be;
+	uint32_t  atf_config_ac_bk;
+	uint32_t  atf_config_ac_vi;
+	uint32_t  atf_config_ac_vo;
+	uint32_t reserved[2];
+};
+
+/**
+ * struct atf_grp_ac_params - ATF group AC config params
+ * @num_groups: number of groups
+ * @group_inf: Group informaition
+ */
+struct atf_group_ac_params {
+	uint32_t num_groups;
+	struct atf_group_wmm_ac_info group_info[ATF_ACTIVED_MAX_ATFGROUPS];
+};
+
+/**
  * struct wlan_profile_params - WLAN profile params
  * @param_id: param id
  * @profile_id: profile id
@@ -7475,12 +7501,17 @@ typedef struct {
  *                WMI_INVALID_PEER_AST_INDEX
  * @vdev_id: only applies if peer_ast_idx == INVALID
  * @ctrl_cmd: WMI_TX_DATA_TRAFFIC_CTRL_BLOCK or
- *                WMI_TX_DATA_TRAFFIC_CTRL_UNBLOCK
+ *            WMI_TX_DATA_TRAFFIC_CTRL_UNBLOCK
+ * @wmm_ac: Indicates AC to be blocked or unblocked
+ *          Bits  4-31 : Reserved (Shall be zero)
+ *          Bits  0-3  : WMM AC NO [ BE (1), BK (2), VI (3), VO (4)]
+ *          Started numbering from 1 to preserve backward compatibility
  */
 typedef struct {
 	uint32_t peer_ast_idx;
 	uint32_t vdev_id;
 	uint32_t ctrl_cmd;
+	uint32_t wmm_ac;
 } wmi_host_tx_data_traffic_ctrl_event;
 
 enum {

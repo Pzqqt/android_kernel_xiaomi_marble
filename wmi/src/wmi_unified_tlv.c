@@ -11413,6 +11413,7 @@ static QDF_STATUS send_smart_ant_set_node_config_cmd_tlv(
 	return ret;
 }
 
+#ifdef WLAN_ATF_ENABLE
 /**
  * send_set_atf_cmd_tlv() - send set atf command to fw
  * @wmi_handle: wmi handle
@@ -11491,6 +11492,7 @@ send_set_atf_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return retval;
 }
+#endif
 
 /**
  * send_vdev_set_fwtest_param_cmd_tlv() - send fwtest param in fw
@@ -22122,7 +22124,9 @@ struct wmi_ops tlv_ops =  {
 		send_smart_ant_set_training_info_cmd_tlv,
 	.send_smart_ant_set_node_config_cmd =
 		send_smart_ant_set_node_config_cmd_tlv,
+#ifdef WLAN_ATF_ENABLE
 	.send_set_atf_cmd = send_set_atf_cmd_tlv,
+#endif
 	.send_vdev_set_fwtest_param_cmd = send_vdev_set_fwtest_param_cmd_tlv,
 	.send_set_qboost_param_cmd = send_set_qboost_param_cmd_tlv,
 	.send_gpio_config_cmd = send_gpio_config_cmd_tlv,
