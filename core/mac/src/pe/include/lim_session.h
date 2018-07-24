@@ -551,6 +551,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	enum wmi_obss_color_collision_evt_type obss_color_collision_dec_evt;
 	bool is_session_obss_color_collision_det_enabled;
 	int8_t def_max_tx_pwr;
+	bool active_ba_64_session;
 #ifdef WLAN_SUPPORT_TWT
 	uint8_t peer_twt_requestor;
 	uint8_t peer_twt_responder;
