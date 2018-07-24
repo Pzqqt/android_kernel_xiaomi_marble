@@ -31,7 +31,7 @@
  * @Max: 10000
  * @Default: 40
  *
- * This ini is used to set maximum channel time in secs spent in
+ * This ini is used to set maximum channel time in msecs spent in
  * active scan
  *
  * Related: None
@@ -47,12 +47,34 @@
 
 /*
  * <ini>
+ * active_max_channel_time_2g - Set max time for active 2G channel scan
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 80
+ *
+ * This ini is used to set maximum time in msecs spent in active 2G channel scan
+ * if it's not zero, in case of zero, CFG_ACTIVE_MAX_CHANNEL_TIME is used for 2G
+ * channels also.
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ACTIVE_MAX_2G_CHANNEL_TIME CFG_INI_UINT(\
+		"active_max_channel_time_2g",\
+		0, 10000, MCL_OR_WIN_VALUE(80, 0),\
+		CFG_VALUE_OR_DEFAULT, "active dwell time for 2G channels")
+
+/*
+ * <ini>
  * gPassiveMaxChannelTime - Set max channel time for passive scan
  * @Min: 0
  * @Max: 10000
  * @Default: 110
  *
- * This ini is used to set maximum channel time in secs spent in
+ * This ini is used to set maximum channel time in msecs spent in
  * passive scan
  *
  * Related: None
@@ -137,6 +159,7 @@
 			0, 4, 2,\
 			CFG_VALUE_OR_DEFAULT,\
 			"Enable adaptive dwell mode")
+
 /*
  * <ini>
  * is_bssid_hint_priority - Set priority for connection with bssid_hint
@@ -164,6 +187,7 @@
 
 #define CFG_SCAN_ALL \
 	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME) \
+	CFG(CFG_ACTIVE_MAX_2G_CHANNEL_TIME) \
 	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME) \
 	CFG(CFG_SCAN_NUM_PROBES) \
 	CFG(CFG_SCAN_PROBE_REPEAT_TIME) \

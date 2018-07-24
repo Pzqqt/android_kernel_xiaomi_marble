@@ -251,6 +251,7 @@ struct pno_def_config {
 /**
  * struct scan_default_params - default scan parameters to be used
  * @active_dwell: default active dwell time
+ * @active_dwell_2g: default active dwell time for 2G channels, if it's not zero
  * @passive_dwell:default passive dwell time
  * @max_rest_time: default max rest time
  * @sta_miracast_mcc_rest_time: max rest time for miracast and mcc
@@ -326,6 +327,7 @@ struct pno_def_config {
  */
 struct scan_default_params {
 	uint32_t active_dwell;
+	uint32_t active_dwell_2g;
 	uint32_t passive_dwell;
 	uint32_t max_rest_time;
 	uint32_t sta_miracast_mcc_rest_time;
