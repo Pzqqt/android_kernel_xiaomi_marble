@@ -170,7 +170,9 @@ struct wlan_ipa_tx_hdr {
  * @reserved1: Reserved not used
  * @reserved2: Reserved not used
  */
-#if defined (QCA_WIFI_3_0) || defined (CONFIG_LITHIUM)
+#if defined(QCA_WIFI_3_0) || \
+    defined(QCA_WIFI_QCA6290) || \
+    defined(QCA_WIFI_QCA6390)
 struct frag_header {
 	uint16_t length;
 	uint32_t reserved1;

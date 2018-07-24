@@ -13624,6 +13624,7 @@ static int hdd_update_dp_config(struct hdd_context *hdd_ctx)
 	params.napi_enable = hdd_ctx->napi_enable;
 	params.tcp_udp_checksumoffload =
 			hdd_ctx->config->enable_ip_tcp_udp_checksum_offload;
+	params.ipa_enable = ucfg_ipa_is_enabled();
 
 	status = cdp_update_config_parameters(
 					cds_get_context(QDF_MODULE_ID_SOC),

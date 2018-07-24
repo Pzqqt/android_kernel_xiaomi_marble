@@ -350,9 +350,25 @@ static void hdd_ipa_set_wake_up_idle(bool wake_up_idle)
 #endif
 
 #ifdef QCA_CONFIG_SMP
+
+/**
+ * hdd_ipa_aggregated_rx_ind() - Submit aggregated packets to the stack
+ * @skb: skb to be submitted to the stack
+ *
+ * For CONFIG_SMP systems, simply call netif_rx_ni.
+ * For non CONFIG_SMP systems call netif_rx till
+ * IPA_WLAN_RX_SOFTIRQ_THRESH. When threshold is reached call netif_rx_ni.
+ * In this manner, UDP/TCP packets are sent in an aggregated way to the stack.
+ * For IP/ICMP packets, simply call netif_rx_ni.
+ *
+ * Return: return value from the netif_rx_ni/netif_rx api.
+ */
 static int hdd_ipa_aggregated_rx_ind(qdf_nbuf_t skb)
 {
-	return netif_rx_ni(skb);
+	int ret;
+
+	ret =  netif_rx_ni(skb);
+	return ret;
 }
 #else
 static int hdd_ipa_aggregated_rx_ind(qdf_nbuf_t skb)
@@ -432,11 +448,9 @@ void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb, qdf_netdev_t dev)
 	 * Update STA RX exception packet stats.
 	 * For SAP as part of IPA HW stats are updated.
 	 */
-	if (adapter->device_mode == QDF_STA_MODE) {
-		++adapter->stats.rx_packets;
-		adapter->stats.rx_bytes += skb->len;
-	}
 
+	++adapter->stats.rx_packets;
+	adapter->stats.rx_bytes += skb->len;
 	result = hdd_ipa_aggregated_rx_ind(skb);
 	if (result == NET_RX_SUCCESS)
 		++adapter->hdd_stats.tx_rx_stats.rx_delivered[cpu_index];
