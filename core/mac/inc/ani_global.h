@@ -81,7 +81,6 @@ static inline mac_handle_t MAC_HANDLE(tpAniSirGlobal mac)
 
 #define ANI_DRIVER_TYPE(pMac)     (((tpAniSirGlobal)(pMac))->gDriverType)
 
-#define IS_MIRACAST_SESSION_PRESENT(pMac)     (((tpAniSirGlobal)(pMac))->fMiracastSessionPresent ? 1 : 0)
 /* ------------------------------------------------------------------- */
 /* Bss Qos Caps bit map definition */
 #define LIM_BSS_CAPS_OFFSET_HCF 0
@@ -856,15 +855,11 @@ typedef struct sAniSirGlobal {
 	/* PAL/HDD handle */
 	hdd_handle_t hdd_handle;
 
-
 	tSmeStruct sme;
 	tSapStruct sap;
 	struct csr_scanstruct scan;
 	struct csr_roamstruct roam;
-
 	tRrmContext rrm;
-
-
 	csr_readyToSuspendCallback readyToSuspendCallback;
 	void *readyToSuspendContext;
 	uint8_t isCoalesingInIBSSAllowed;
@@ -873,11 +868,9 @@ typedef struct sAniSirGlobal {
 	bool pmf_offload;
 	bool is_fils_roaming_supported;
 	bool enable5gEBT;
-	uint8_t fMiracastSessionPresent;
 	uint8_t f_prefer_non_dfs_on_radar;
 	uint32_t fEnableDebugLog;
 	uint32_t f_sta_miracast_mcc_rest_time_val;
-	/* Miracast session 0-Disabled, 1-Source, 2-sink */
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 	csr_readyToExtWoWCallback readyToExtWoWCallback;
 	void *readyToExtWoWContext;
