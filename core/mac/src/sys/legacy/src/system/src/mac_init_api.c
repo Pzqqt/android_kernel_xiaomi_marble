@@ -98,37 +98,27 @@ QDF_STATUS mac_stop(mac_handle_t mac_handle)
 	return QDF_STATUS_SUCCESS;
 }
 
-/** -------------------------------------------------------------
-   \fn mac_open
-   \brief this function will be called during init. This function is suppose to allocate all the
- \       memory with the global context will be allocated here.
-   \param   tHalHandle pHalHandle
-   \param   hdd_handle_t hdd_handle
-   \param   tHalOpenParameters* pHalOpenParams
-   \return QDF_STATUS
-   -------------------------------------------------------------*/
-
-QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
+QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, mac_handle_t *mac_handle,
 		    hdd_handle_t hdd_handle, struct cds_config_info *cds_cfg)
 {
-	tpAniSirGlobal p_mac;
+	tpAniSirGlobal mac;
 	QDF_STATUS status;
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
-	QDF_BUG(pHalHandle);
-	if (!pHalHandle)
+	QDF_BUG(mac_handle);
+	if (!mac_handle)
 		return QDF_STATUS_E_FAILURE;
 
-	p_mac = mac_allocate_context_buffer();
-	if (!p_mac)
+	mac = mac_allocate_context_buffer();
+	if (!mac)
 		return QDF_STATUS_E_NOMEM;
 
 	/*
-	 * Set various global fields of p_mac here
-	 * (Could be platform dependent as some variables in p_mac are platform
+	 * Set various global fields of mac here
+	 * (Could be platform dependent as some variables in mac are platform
 	 * dependent)
 	 */
-	p_mac->hdd_handle = hdd_handle;
+	mac->hdd_handle = hdd_handle;
 
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_MAC_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -136,35 +126,35 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 		goto free_mac_context;
 	}
 
-	p_mac->psoc = psoc;
+	mac->psoc = psoc;
 	mlme_obj = mlme_get_psoc_obj(psoc);
 	if (!mlme_obj) {
 		pe_err("Failed to get MLME Obj");
 		status = QDF_STATUS_E_FAILURE;
 		goto release_psoc_ref;
 	}
-	p_mac->mlme_cfg = &mlme_obj->cfg;
+	mac->mlme_cfg = &mlme_obj->cfg;
 
-	*pHalHandle = (tHalHandle)p_mac;
+	*mac_handle = MAC_HANDLE(mac);
 
 	/* For Non-FTM cases this value will be reset during mac_start */
 	if (cds_cfg->driver_type)
-		p_mac->gDriverType = QDF_DRIVER_TYPE_MFG;
+		mac->gDriverType = QDF_DRIVER_TYPE_MFG;
 
-	status = cfg_init(p_mac);
+	status = cfg_init(mac);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("failed to init legacy CFG; status:%u", status);
 		goto release_psoc_ref;
 	}
 
-	sys_init_globals(p_mac);
+	sys_init_globals(mac);
 
 	/* FW: 0 to 2047 and Host: 2048 to 4095 */
-	p_mac->mgmtSeqNum = WLAN_HOST_SEQ_NUM_MIN - 1;
-	p_mac->he_sgi_ltf_cfg_bit_mask = DEF_HE_AUTO_SGI_LTF;
-	p_mac->is_usr_cfg_amsdu_enabled = true;
+	mac->mgmtSeqNum = WLAN_HOST_SEQ_NUM_MIN - 1;
+	mac->he_sgi_ltf_cfg_bit_mask = DEF_HE_AUTO_SGI_LTF;
+	mac->is_usr_cfg_amsdu_enabled = true;
 
-	status = pe_open(p_mac, cds_cfg);
+	status = pe_open(mac, cds_cfg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("failed to open PE; status:%u", status);
 		goto deinit_cfg;
@@ -173,7 +163,7 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	return QDF_STATUS_SUCCESS;
 
 deinit_cfg:
-	cfg_de_init(p_mac);
+	cfg_de_init(mac);
 
 release_psoc_ref:
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_LEGACY_MAC_ID);
@@ -184,34 +174,26 @@ free_mac_context:
 	return status;
 }
 
-/** -------------------------------------------------------------
-   \fn mac_close
-   \brief this function will be called in shutdown sequence from HDD. All the
- \       allocated memory with global context will be freed here.
-   \param   tpAniSirGlobal pMac
-   \return none
-   -------------------------------------------------------------*/
-
-QDF_STATUS mac_close(tHalHandle hHal)
+QDF_STATUS mac_close(mac_handle_t mac_handle)
 {
 
-	tpAniSirGlobal pMac = (tpAniSirGlobal) hHal;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
-	if (!pMac)
+	if (!mac)
 		return QDF_STATUS_E_FAILURE;
 
-	pe_close(pMac);
+	pe_close(mac);
 
 	/* Call routine to free-up all CFG data structures */
-	cfg_de_init(pMac);
+	cfg_de_init(mac);
 
-	if (pMac->pdev) {
-		wlan_objmgr_pdev_release_ref(pMac->pdev, WLAN_LEGACY_MAC_ID);
-		pMac->pdev = NULL;
+	if (mac->pdev) {
+		wlan_objmgr_pdev_release_ref(mac->pdev, WLAN_LEGACY_MAC_ID);
+		mac->pdev = NULL;
 	}
-	wlan_objmgr_psoc_release_ref(pMac->psoc, WLAN_LEGACY_MAC_ID);
-	pMac->mlme_cfg = NULL;
-	pMac->psoc = NULL;
+	wlan_objmgr_psoc_release_ref(mac->psoc, WLAN_LEGACY_MAC_ID);
+	mac->mlme_cfg = NULL;
+	mac->psoc = NULL;
 	mac_free_context_buffer();
 
 	return QDF_STATUS_SUCCESS;

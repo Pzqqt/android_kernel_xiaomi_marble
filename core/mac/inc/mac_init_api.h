@@ -69,8 +69,36 @@ QDF_STATUS mac_start(mac_handle_t mac_handle,
  */
 QDF_STATUS mac_stop(mac_handle_t mac_handle);
 
-QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
+/**
+ * mac_open() - Open the MAC
+ * @psoc: SOC global object
+ * @mac_handle: Pointer to where the MAC handle is to be stored
+ * @hdd_handle: Opaque handle to the HDD context
+ * @cds_cfg: Initial configuration
+ *
+ * This function will be called during init. This function is suppose
+ * to allocate all the memory with the global context will be
+ * allocated here.
+ *
+ * Return: QDF_STATUS_SUCCESS if the MAC was successfully opened and a
+ *         MAC handle was returned to the caller. Any other value
+ *         means the MAC was not opened.
+ */
+QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, mac_handle_t *mac_handle,
 		    hdd_handle_t hdd_handle, struct cds_config_info *cds_cfg);
-QDF_STATUS mac_close(tHalHandle hHal);
+
+/**
+ * mac_close() - close the MAC
+ * @mac_handle: Opaque handle to the MAC context returned by mac_open()
+ *
+ * This function will be called in shutdown sequence from HDD. All the
+ * allocated memory with global context will be freed here.
+ *
+ * Return: QDF_STATUS_SUCCESS if the MAC was successfully closed. Any
+ *         other value means that there was an issue with closing the
+ *         MAC, but the caller should still consider the MAC to be
+ *         closed.
+ */
+QDF_STATUS mac_close(mac_handle_t mac_handle);
 
 #endif /* __MAC_INIT_API_H */
