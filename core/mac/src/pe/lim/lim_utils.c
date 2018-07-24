@@ -61,6 +61,9 @@
 #ifdef WLAN_FEATURE_11W
 #include "wni_cfg.h"
 #endif
+#include "cfg_mlme_obss_ht40.h"
+#include "cfg_ucfg_api.h"
+
 #define ASCII_SPACE_CHARACTER 0x20
 
 /* A DFS channel can be ACTIVE for max 9000 msec, from the last
@@ -6881,66 +6884,35 @@ const char *lim_bss_type_to_string(const uint16_t bss_type)
  */
 void lim_init_obss_params(tpAniSirGlobal mac_ctx, tpPESession session)
 {
-	uint32_t  cfg_value;
+	struct wlan_mlme_obss_ht40 *obss_ht40;
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME,
-		&cfg_value) !=  QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve: %x value",
-			WNI_CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME);
+	if (!(mac_ctx->mlme_cfg)) {
+		pe_err("invalid mlme cfg");
 		return;
 	}
-	session->obss_ht40_scanparam.obss_active_dwelltime = cfg_value;
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME,
-		&cfg_value) != QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve: %x value",
-			WNI_CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME);
-		return;
-	}
-	session->obss_ht40_scanparam.obss_passive_dwelltime = cfg_value;
+	obss_ht40  = &mac_ctx->mlme_cfg->obss_ht40;
 
-	if (wlan_cfg_get_int(mac_ctx,
-		WNI_CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL,
-		&cfg_value) != QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve: %x value",
-			WNI_CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL);
-		return;
-	}
-	session->obss_ht40_scanparam.obss_width_trigger_interval = cfg_value;
-	if (wlan_cfg_get_int(mac_ctx,
-		WNI_CFG_OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL,
-		&cfg_value) != QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve: %x value",
-			WNI_CFG_OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL);
-		return;
-	}
-	session->obss_ht40_scanparam.obss_active_total_per_channel = cfg_value;
-	if (wlan_cfg_get_int(mac_ctx,
-		WNI_CFG_OBSS_HT40_SCAN_PASSIVE_TOTAL_PER_CHANNEL, &cfg_value)
-		!= QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve: %x value",
-			WNI_CFG_OBSS_HT40_SCAN_PASSIVE_TOTAL_PER_CHANNEL);
-		return;
-	}
-	session->obss_ht40_scanparam.obss_passive_total_per_channel = cfg_value;
+	session->obss_ht40_scanparam.obss_active_dwelltime =
+		obss_ht40->active_dwelltime;
 
-	if (wlan_cfg_get_int(mac_ctx,
-		WNI_CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY, &cfg_value)
-		!= QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve: %x value",
-			WNI_CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY);
-		return;
-	}
+	session->obss_ht40_scanparam.obss_passive_dwelltime =
+		obss_ht40->passive_dwelltime;
+
+	session->obss_ht40_scanparam.obss_width_trigger_interval =
+		obss_ht40->width_trigger_interval;
+
+	session->obss_ht40_scanparam.obss_active_total_per_channel =
+		obss_ht40->active_per_channel;
+
+	session->obss_ht40_scanparam.obss_passive_total_per_channel =
+		obss_ht40->passive_per_channel;
+
 	session->obss_ht40_scanparam.bsswidth_ch_trans_delay =
-								cfg_value;
+		obss_ht40->width_trans_delay;
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD,
-		&cfg_value) != QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve: %x value",
-			WNI_CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD);
-		return;
-	}
-	session->obss_ht40_scanparam.obss_activity_threshold = cfg_value;
+	session->obss_ht40_scanparam.obss_activity_threshold =
+		obss_ht40->scan_activity_threshold;
 }
 
 /**
@@ -6959,51 +6931,51 @@ void lim_update_obss_scanparams(tpPESession session,
 	 * configured through cfg
 	 */
 	if ((scan_params->obssScanActiveDwell >
-		WNI_CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_STAMIN) &&
+		cfg_min(CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME)) &&
 		(scan_params->obssScanActiveDwell <
-		WNI_CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_STAMAX))
+		cfg_max(CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME)))
 		session->obss_ht40_scanparam.obss_active_dwelltime =
 			scan_params->obssScanActiveDwell;
 
 	if ((scan_params->obssScanPassiveDwell >
-		WNI_CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_STAMIN) &&
+		cfg_min(CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME)) &&
 		(scan_params->obssScanPassiveDwell <
-		WNI_CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_STAMAX))
+		cfg_max(CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME)))
 		session->obss_ht40_scanparam.obss_passive_dwelltime =
 			scan_params->obssScanPassiveDwell;
 
 	if ((scan_params->bssWidthChannelTransitionDelayFactor >
-		WNI_CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY_STAMIN) &&
+		cfg_min(CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY)) &&
 		(scan_params->bssWidthChannelTransitionDelayFactor <
-		WNI_CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY_STAMAX))
+		cfg_max(CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY)))
 		session->obss_ht40_scanparam.bsswidth_ch_trans_delay =
 			scan_params->bssWidthChannelTransitionDelayFactor;
 
 	if ((scan_params->obssScanActiveTotalPerChannel >
-		WNI_CFG_OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL_STAMIN) &&
+		cfg_min(CFG_OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL)) &&
 		(scan_params->obssScanActiveTotalPerChannel <
-		WNI_CFG_OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL_STAMAX))
+		cfg_max(CFG_OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL)))
 		session->obss_ht40_scanparam.obss_active_total_per_channel =
 			scan_params->obssScanActiveTotalPerChannel;
 
 	if ((scan_params->obssScanPassiveTotalPerChannel >
-		WNI_CFG_OBSS_HT40_SCAN_PASSIVE_TOTAL_PER_CHANNEL_STAMIN) &&
+		cfg_min(CFG_OBSS_HT40_SCAN_PASSIVE_TOTAL_PER_CHANNEL)) &&
 		(scan_params->obssScanPassiveTotalPerChannel <
-		WNI_CFG_OBSS_HT40_SCAN_PASSIVE_TOTAL_PER_CHANNEL_STAMAX))
+		cfg_max(CFG_OBSS_HT40_SCAN_PASSIVE_TOTAL_PER_CHANNEL)))
 		session->obss_ht40_scanparam.obss_passive_total_per_channel =
 			scan_params->obssScanPassiveTotalPerChannel;
 
 	if ((scan_params->bssChannelWidthTriggerScanInterval >
-		WNI_CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_STAMIN) &&
+		cfg_min(CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL)) &&
 		(scan_params->bssChannelWidthTriggerScanInterval <
-		WNI_CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_STAMAX))
+		cfg_max(CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL)))
 		session->obss_ht40_scanparam.obss_width_trigger_interval =
 			scan_params->bssChannelWidthTriggerScanInterval;
 
 	if ((scan_params->obssScanActivityThreshold >
-		WNI_CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD_STAMIN) &&
+		cfg_min(CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD)) &&
 		(scan_params->obssScanActivityThreshold <
-		WNI_CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD_STAMAX))
+		cfg_max(CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD)))
 		session->obss_ht40_scanparam.obss_activity_threshold =
 			scan_params->obssScanActivityThreshold;
 	return;

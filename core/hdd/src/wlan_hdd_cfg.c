@@ -3431,30 +3431,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_LFR_SUBNET_MIN,
 		     CFG_ENABLE_LFR_SUBNET_MAX),
 #endif
-	REG_VARIABLE(CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_NAME,
-		WLAN_PARAM_Integer,
-		struct hdd_config, obss_active_dwelltime,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_DEFAULT,
-		CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_MIN,
-		CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_MAX),
-
-	REG_VARIABLE(CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_NAME,
-		WLAN_PARAM_Integer,
-		struct hdd_config, obss_passive_dwelltime,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_DEFAULT,
-		CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_MIN,
-		CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_MAX),
-
-	REG_VARIABLE(CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_NAME,
-		WLAN_PARAM_Integer,
-		struct hdd_config, obss_width_trigger_interval,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_DEFAULT,
-		CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_MIN,
-		CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_MAX),
-
 	REG_VARIABLE(CFG_INFORM_BSS_RSSI_RAW_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, inform_bss_rssi_raw,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -7387,13 +7363,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->min_delay_btw_roam_scans;
 	smeConfig->csrConfig.roam_trigger_reason_bitmask =
 		hdd_ctx->config->roam_trigger_reason_bitmask;
-	smeConfig->csrConfig.obss_width_interval =
-			hdd_ctx->config->obss_width_trigger_interval;
-	smeConfig->csrConfig.obss_active_dwelltime =
-			hdd_ctx->config->obss_active_dwelltime;
-	smeConfig->csrConfig.obss_passive_dwelltime =
-			hdd_ctx->config->obss_passive_dwelltime;
-
 	status = ucfg_mlme_get_ignore_peer_ht_mode(hdd_ctx->hdd_psoc,
 						   &ignore_peer_ht_mode);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -7401,7 +7370,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		goto error;
 	}
 	smeConfig->csrConfig.ignore_peer_ht_opmode = ignore_peer_ht_mode;
-
 	smeConfig->csrConfig.enable_fatal_event =
 			pConfig->enable_fatal_event;
 	smeConfig->csrConfig.scan_adaptive_dwell_mode =

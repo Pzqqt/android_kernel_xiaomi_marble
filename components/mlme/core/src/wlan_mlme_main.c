@@ -198,6 +198,25 @@ static void mlme_update_sap_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_INI_REDUCED_BEACON_INTERVAL);
 }
 
+static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_mlme_obss_ht40 *obss_ht40)
+{
+	obss_ht40->active_dwelltime =
+		cfg_get(psoc, CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME);
+	obss_ht40->passive_dwelltime =
+		cfg_get(psoc, CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME);
+	obss_ht40->width_trigger_interval =
+		cfg_get(psoc, CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL);
+	obss_ht40->passive_per_channel = (uint32_t)
+		cfg_default(CFG_OBSS_HT40_SCAN_PASSIVE_TOTAL_PER_CHANNEL);
+	obss_ht40->active_per_channel = (uint32_t)
+		cfg_default(CFG_OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL);
+	obss_ht40->width_trans_delay = (uint32_t)
+		cfg_default(CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY);
+	obss_ht40->scan_activity_threshold = (uint32_t)
+		cfg_default(CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -216,6 +235,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_update_sap_protection_cfg(psoc, &mlme_cfg->sap_protection_cfg);
 	mlme_init_chainmask_cfg(psoc, &mlme_cfg->chainmask_cfg);
 	mlme_update_sap_cfg(psoc, &mlme_cfg->sap_cfg);
+	mlme_init_obss_ht40_cfg(psoc, &mlme_cfg->obss_ht40);
 
 	return status;
 }

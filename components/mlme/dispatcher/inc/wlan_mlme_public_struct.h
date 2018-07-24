@@ -181,14 +181,36 @@ struct wlan_mlme_chainmask {
 };
 
 /**
+ * struct wlan_mlme_obss_ht40 - OBSS HT40 config items
+ * @active_dwelltime:        obss active dwelltime
+ * @passive_dwelltime:       obss passive dwelltime
+ * @width_trigger_interval:  obss trigger interval
+ * @passive_per_channel:     obss scan passive total duration per channel
+ * @active_per_channel:      obss scan active total duration per channel
+ * @width_trans_delay:       obss width transition delay
+ * @scan_activity_threshold: obss scan activity threshold
+ */
+struct wlan_mlme_obss_ht40 {
+	uint32_t active_dwelltime;
+	uint32_t passive_dwelltime;
+	uint32_t width_trigger_interval;
+	uint32_t passive_per_channel;
+	uint32_t active_per_channel;
+	uint32_t width_trans_delay;
+	uint32_t scan_activity_threshold;
+};
+
+/**
  * struct wlan_mlme_cfg - MLME config items
  * @ht_cfg: HT related CFG Items
+ * @obss_ht40:obss ht40 CFG Items
  * @vht_cfg: VHT related CFG Items
  * @rates: Rates related cfg items
  * @sap_protection_cfg: SAP erp protection related CFG items
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_ht_caps ht_caps;
+	struct wlan_mlme_obss_ht40 obss_ht40;
 	struct wlan_mlme_vht_caps vht_caps;
 	struct wlan_mlme_rates rates;
 	struct wlan_mlme_sap_protection sap_protection_cfg;

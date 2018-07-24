@@ -1017,76 +1017,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * obss_active_dwelltime - Set obss active dwelltime
- * @Min: 5
- * @Max: 1000
- * @Default: 10
- *
- * This ini is used to set dwell time in secs for active
- * obss scan
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_NAME    "obss_active_dwelltime"
-#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_MIN     (5)
-#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_MAX     (1000)
-#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_DEFAULT (10)
-
-/*
- * <ini>
- * obss_passive_dwelltime - Set obss passive dwelltime
- * @Min: 10
- * @Max: 1000
- * @Default: 20
- *
- * This ini is used to set dwell time in secs for passive
- * obss scan
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_NAME   "obss_passive_dwelltime"
-#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_MIN    (10)
-#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_MAX    (1000)
-#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_DEFAULT (20)
-
-/*
- * <ini>
- * obss_width_trigger_interval - Set obss trigger interval
- * @Min: 10
- * @Max: 900
- * @Default: 200
- *
- * This ini is used during an OBSS scan operation,
- * where each channel in the set is scanned at least
- * once per configured trigger interval time.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_NAME "obss_width_trigger_interval"
-#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_MIN  (10)
-#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_MAX  (900)
-#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_DEFAULT (200)
-
-/*
- * <ini>
  * gbug_report_for_scan_results - Enable bug report
  * @Min: 0
  * @Max: 1
@@ -14109,9 +14039,6 @@ struct hdd_config {
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	bool enable_lfr_subnet_detection;
 #endif
-	uint16_t obss_active_dwelltime;
-	uint16_t obss_passive_dwelltime;
-	uint16_t obss_width_trigger_interval;
 	uint8_t inform_bss_rssi_raw;
 #ifdef WLAN_FEATURE_TSF
 	uint32_t tsf_gpio_pin;

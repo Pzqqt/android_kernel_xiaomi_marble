@@ -2888,27 +2888,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pMac->roam.configParam.agingCount =
 				pParam->nScanResultAgeCount;
 		}
-		if (pParam->obss_width_interval) {
-			pMac->roam.configParam.obss_width_interval =
-				pParam->obss_width_interval;
-			cfg_set_int(pMac,
-				WNI_CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL,
-				pParam->obss_width_interval);
-		}
-		if (pParam->obss_active_dwelltime) {
-			pMac->roam.configParam.obss_active_dwelltime =
-				pParam->obss_active_dwelltime;
-			cfg_set_int(pMac,
-				WNI_CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME,
-				pParam->obss_active_dwelltime);
-		}
-		if (pParam->obss_passive_dwelltime) {
-			pMac->roam.configParam.obss_passive_dwelltime =
-				pParam->obss_passive_dwelltime;
-			cfg_set_int(pMac,
-				WNI_CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME,
-				pParam->obss_passive_dwelltime);
-		}
 
 		pMac->first_scan_bucket_threshold =
 			pParam->first_scan_bucket_threshold;
@@ -3536,12 +3515,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.early_stop_scan_min_threshold;
 	pParam->early_stop_scan_max_threshold =
 		pMac->roam.configParam.early_stop_scan_max_threshold;
-	pParam->obss_width_interval =
-		pMac->roam.configParam.obss_width_interval;
-	pParam->obss_active_dwelltime =
-		pMac->roam.configParam.obss_active_dwelltime;
-	pParam->obss_passive_dwelltime =
-		pMac->roam.configParam.obss_passive_dwelltime;
 	pParam->ignore_peer_ht_opmode =
 		pMac->roam.configParam.ignore_peer_ht_opmode;
 	pParam->enableHtSmps = pMac->roam.configParam.enableHtSmps;
