@@ -400,7 +400,6 @@ QDF_STATUS wlan_dfs_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 				WLAN_UMAC_COMP_DFS,
 				(void *)dfs);
 
-		dfs_reset(dfs);
 		dfs_detach(dfs);
 		dfs->dfs_pdev_obj = NULL;
 		dfs_destroy_object(dfs);

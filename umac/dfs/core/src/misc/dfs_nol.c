@@ -126,6 +126,7 @@ static void dfs_nol_elem_free_work_cb(void *context)
 				tmp_nol_entry) {
 			TAILQ_REMOVE(&dfs->dfs_nol_free_list,
 					nol_entry, nolelem_list);
+			qdf_timer_free(&nol_entry->nol_timer);
 			qdf_mem_free(nol_entry);
 		}
 	WLAN_DFSNOL_UNLOCK(dfs);
@@ -157,6 +158,11 @@ void dfs_nol_detach(struct wlan_dfs *dfs)
 	qdf_flush_work(&dfs->dfs_nol_elem_free_work);
 	qdf_destroy_work(NULL, &dfs->dfs_nol_elem_free_work);
 	WLAN_DFSNOL_LOCK_DESTROY(dfs);
+}
+
+void dfs_nol_timer_free(struct wlan_dfs *dfs)
+{
+	qdf_timer_free(&dfs->dfs_nol_timer);
 }
 
 /**
@@ -539,16 +545,13 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 	while (nol) {
 		dfs->dfs_nol = nol->nol_next;
 		dfs->dfs_nol_count--;
-
-		if (!qdf_timer_stop(&nol->nol_timer)) {
-			/*
-			 * Unlock is required so that when we sync with the
-			 * nol_timeout timer we do not run into deadlock.
-			 */
-			WLAN_DFSNOL_UNLOCK(dfs);
-			qdf_timer_sync_cancel(&(nol->nol_timer));
-			WLAN_DFSNOL_LOCK(dfs);
-		}
+		/*
+		 * Unlock is required so that when we sync with the
+		 * nol_timeout timer we do not run into deadlock.
+		 */
+		WLAN_DFSNOL_UNLOCK(dfs);
+		qdf_timer_free(&nol->nol_timer);
+		WLAN_DFSNOL_LOCK(dfs);
 
 		qdf_mem_free(nol);
 		nol = dfs->dfs_nol;

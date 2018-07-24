@@ -186,6 +186,14 @@ void dfs_cac_timer_reset(struct wlan_dfs *dfs)
 
 }
 
+void dfs_cac_timer_free(struct wlan_dfs *dfs)
+{
+	qdf_timer_free(&dfs->dfs_cac_timer);
+
+	qdf_timer_free(&dfs->dfs_cac_valid_timer);
+	dfs->dfs_cac_valid = 0;
+}
+
 int dfs_is_ap_cac_timer_running(struct wlan_dfs *dfs)
 {
 	return dfs->dfs_cac_timer_running;

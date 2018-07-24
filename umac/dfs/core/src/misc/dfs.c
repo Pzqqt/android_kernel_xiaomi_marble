@@ -31,6 +31,7 @@
 #include "../dfs_full_offload.h"
 #include "wlan_dfs_utils_api.h"
 #include "../dfs_etsi_precac.h"
+#include "../dfs_partial_offload_radar.h"
 
 /**
  * dfs_testtimer_task() - Sends CSA in the current channel.
@@ -139,9 +140,15 @@ void dfs_stop(struct wlan_dfs *dfs)
 void dfs_task_testtimer_reset(struct wlan_dfs *dfs)
 {
 	if (dfs->wlan_dfstest) {
-		qdf_timer_stop(&dfs->wlan_dfstesttimer);
+		qdf_timer_sync_cancel(&dfs->wlan_dfstesttimer);
 		dfs->wlan_dfstest = 0;
 	}
+}
+
+void dfs_task_testtimer_free(struct wlan_dfs *dfs)
+{
+	qdf_timer_free(&dfs->wlan_dfstesttimer);
+	dfs->wlan_dfstest = 0;
 }
 
 void dfs_reset(struct wlan_dfs *dfs)
@@ -155,13 +162,29 @@ void dfs_reset(struct wlan_dfs *dfs)
 	dfs_zero_cac_reset(dfs);
 	if (!dfs->dfs_is_offload_enabled) {
 		dfs_main_timer_reset(dfs);
+		dfs_host_wait_timer_reset(dfs);
 		dfs->dfs_event_log_count = 0;
 	}
 	dfs_task_testtimer_reset(dfs);
 }
 
+void dfs_timer_free(struct wlan_dfs *dfs)
+{
+	dfs_cac_timer_free(dfs);
+	dfs_zero_cac_timer_free(dfs);
+
+	if (!dfs->dfs_is_offload_enabled) {
+		dfs_main_timer_free(dfs);
+		dfs_host_wait_timer_free(dfs);
+	}
+
+	dfs_task_testtimer_free(dfs);
+	dfs_nol_timer_free(dfs);
+}
+
 void dfs_detach(struct wlan_dfs *dfs)
 {
+	dfs_timer_free(dfs);
 	if (!dfs->dfs_is_offload_enabled)
 		dfs_main_detach(dfs);
 	dfs_etsi_precac_detach(dfs);

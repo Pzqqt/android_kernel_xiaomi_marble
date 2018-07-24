@@ -76,4 +76,16 @@ static void dfs_main_timer_reset(struct wlan_dfs *dfs)
 }
 #endif
 
+/**
+ * dfs_main_timer_free() - Free dfs timers.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+void dfs_main_timer_free(struct wlan_dfs *dfs);
+#else
+static void dfs_main_timer_free(struct wlan_dfs *dfs)
+{
+}
+#endif
+
 #endif /* _DFS_FILTER_INIT_H_ */

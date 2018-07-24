@@ -1384,6 +1384,12 @@ void dfs_nol_update(struct wlan_dfs *dfs);
 void dfs_nol_timer_cleanup(struct wlan_dfs *dfs);
 
 /**
+ * dfs_nol_timer_free() - Free NOL timer.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_nol_timer_free(struct wlan_dfs *dfs);
+
+/**
  * dfs_nol_workqueue_cleanup() - Flushes NOL workqueue.
  * @dfs: Pointer to wlan_dfs structure.
  *
@@ -2014,6 +2020,12 @@ void dfs_cac_attach(struct wlan_dfs *dfs);
 void dfs_cac_timer_reset(struct wlan_dfs *dfs);
 
 /**
+ * dfs_cac_timer_free() - Free dfs cac timers.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_cac_timer_free(struct wlan_dfs *dfs);
+
+/**
  * dfs_nol_timer_init() - Initialize NOL timers.
  * @dfs: Pointer to wlan_dfs structure.
  */
@@ -2332,4 +2344,15 @@ void dfs_task_testtimer_reset(struct wlan_dfs *dfs);
  */
 bool dfs_freq_is_in_nol(struct wlan_dfs *dfs, uint32_t freq);
 
+/**
+ * dfs_task_testtimer_free() - Free dfs test timer.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_task_testtimer_free(struct wlan_dfs *dfs);
+
+/**
+ * dfs_timer_free() - Free dfs timers.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_timer_free(struct wlan_dfs *dfs);
 #endif  /* _DFS_H_ */

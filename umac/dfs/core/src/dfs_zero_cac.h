@@ -185,6 +185,18 @@ static inline void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 #endif
 
 /**
+ * dfs_zero_cac_timer_free() - Free Zero cac DFS variables.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
+void dfs_zero_cac_timer_free(struct wlan_dfs *dfs);
+#else
+static inline void dfs_zero_cac_timer_free(struct wlan_dfs *dfs)
+{
+}
+#endif
+
+/**
  * dfs_is_precac_done() - Is precac done.
  * @dfs: Pointer to wlan_dfs structure.
  * @chan: Pointer to dfs_channel for which preCAC done is checked.

@@ -219,10 +219,23 @@ bad1:
 void dfs_main_timer_reset(struct wlan_dfs *dfs)
 {
 	if (dfs->wlan_radar_tasksched) {
-		qdf_timer_stop(&dfs->wlan_dfs_task_timer);
+		qdf_timer_sync_cancel(&dfs->wlan_dfs_task_timer);
 		dfs->wlan_radar_tasksched = 0;
 	}
 }
+
+void dfs_main_timer_free(struct wlan_dfs *dfs)
+{
+	qdf_timer_free(&dfs->wlan_dfs_task_timer);
+	dfs->wlan_radar_tasksched = 0;
+}
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+void dfs_host_wait_timer_free(struct wlan_dfs *dfs)
+{
+	qdf_timer_free(&dfs->dfs_host_wait_timer);
+}
+#endif
 
 void dfs_main_detach(struct wlan_dfs *dfs)
 {

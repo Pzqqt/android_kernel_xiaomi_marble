@@ -68,6 +68,18 @@ static inline void dfs_host_wait_timer_init(struct wlan_dfs *dfs)
 #endif
 
 /**
+ * dfs_host_wait_timer_free() - Free dfs host status wait timer.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+void dfs_host_wait_timer_free(struct wlan_dfs *dfs);
+#else
+static inline void dfs_host_wait_timer_free(struct wlan_dfs *dfs)
+{
+}
+#endif
+
+/**
  * dfs_set_override_status_timeout() - Change the dfs host status timeout.
  * @dfs: Pointer to wlan_dfs structure.
  * @status_timeout: timeout value.
