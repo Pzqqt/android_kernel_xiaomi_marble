@@ -579,13 +579,11 @@ struct nan_datapath_indication_event {
 
 /**
  * struct nan_datapath_peer_ind - ndp peer indication
- * @session_id: session id
  * @peer_mac_addr: peer mac address
  * @sta_id: station id
  *
  */
 struct nan_datapath_peer_ind {
-	uint8_t session_id;
 	struct qdf_mac_addr peer_mac_addr;
 	uint16_t sta_id;
 };
