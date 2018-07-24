@@ -172,7 +172,7 @@ QDF_STATUS hif_dev_disable_interrupts(struct hif_sdio_device *pdev)
 	/* To Do mask the host controller interrupts */
 	hif_mask_interrupt(pdev->HIFDevice);
 
-	HIF_EXIT("status :%d", status);
+	HIF_EXIT();
 	return status;
 }
 

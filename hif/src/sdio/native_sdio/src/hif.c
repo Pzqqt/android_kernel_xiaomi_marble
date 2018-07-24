@@ -1426,7 +1426,7 @@ static struct hif_sdio_dev *add_hif_device(struct sdio_func *func)
 	hifdevice->power_config = HIF_DEVICE_POWER_UP;
 	hifdevice->device_state = HIF_DEVICE_STATE_ON;
 	ret = hif_sdio_set_drvdata(func, hifdevice);
-	HIF_EXIT("status %d", ret);
+	hif_info("status %d", ret);
 
 	return hifdevice;
 }

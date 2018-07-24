@@ -26,27 +26,43 @@
 #define hif_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_HIF, params)
 #define hif_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_HIF, params)
 
+/* Deprecated macros. Do not use it in new code */
 #define HIF_ERROR(args ...) \
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR, ## args)
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_HIF, args)
 #define HIF_WARN(args ...) \
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_WARN, ## args)
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_HIF, args)
 #define HIF_INFO(args ...) \
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO, ## args)
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_HIF, args)
 #define HIF_INFO_HI(args ...) \
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO_HIGH, ## args)
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_HIF, args)
 #define HIF_INFO_MED(args ...) \
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO_MED, ## args)
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_HIF, args)
 #define HIF_INFO_LO(args ...) \
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO_LOW, ## args)
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_HIF, args)
 #define HIF_TRACE(args ...) \
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO, ## args)
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_HIF, args)
 #define HIF_DBG(args ...) \
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_DEBUG, ## args)
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_HIF, args)
 
-#define HIF_ENTER(fmt, ...) QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO, \
-		"Enter: %s "fmt, __func__, ## __VA_ARGS__)
+#define hif_alert(args ...) QDF_TRACE_FATAL(QDF_MODULE_ID_HIF, args)
+#define hif_err(args ...) QDF_TRACE_ERROR(QDF_MODULE_ID_HIF, args)
+#define hif_warn(args ...) QDF_TRACE_WARN(QDF_MODULE_ID_HIF, args)
+#define hif_info(args ...) QDF_TRACE_INFO(QDF_MODULE_ID_HIF, args)
+#define hif_debug(args ...) QDF_TRACE_DEBUG(QDF_MODULE_ID_HIF, args)
 
-#define HIF_EXIT(fmt, ...) QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO, \
-		"Exit: %s "fmt, __func__, ## __VA_ARGS__)
+#define hif_nofl_alert(args ...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_HIF, args)
+#define hif_nofl_err(args ...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_HIF, args)
+#define hif_nofl_warn(args ...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_HIF, args)
+#define hif_nofl_info(args ...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_HIF, args)
+#define hif_nofl_debug(args ...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_HIF, args)
+
+#define HIF_ENTER() QDF_TRACE_ENTER(QDF_MODULE_ID_HIF, "enter")
+
+#define HIF_EXIT() QDF_TRACE_EXIT(QDF_MODULE_ID_HIF, "exit")
 
 #endif /* __HIF_DEBUG_H__ */
