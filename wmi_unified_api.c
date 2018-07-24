@@ -3260,24 +3260,6 @@ QDF_STATUS wmi_unified_set_bwf_cmd_send(void *wmi_hdl,
 }
 
 /**
- *  wmi_unified_set_atf_cmd_send() - WMI set atf function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to set atf param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_set_atf_cmd_send(void *wmi_hdl,
-				struct set_atf_params *param)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_set_atf_cmd)
-		return wmi_handle->ops->send_set_atf_cmd(wmi_handle, param);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
  *  wmi_unified_pdev_fips_cmd_send() - WMI pdev fips cmd function
  *  @param wmi_handle      : handle to WMI.
  *  @param param    : pointer to hold pdev fips param
@@ -4901,6 +4883,26 @@ QDF_STATUS wmi_unified_send_periodic_chan_stats_config_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_ATF_ENABLE
+/**
+ *  wmi_unified_set_atf_cmd_send() - WMI set atf function
+ *  @param wmi_handle      : handle to WMI.
+ *  @param param    : pointer to set atf param
+ *
+ *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_set_atf_cmd_send(void *wmi_hdl,
+			     struct set_atf_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_set_atf_cmd)
+		return wmi_handle->ops->send_set_atf_cmd(wmi_handle, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 /**
  * wmi_send_atf_peer_request_cmd() - send atf peer request command to fw
  * @wmi_handle: wmi handle
@@ -4910,13 +4912,13 @@ QDF_STATUS wmi_unified_send_periodic_chan_stats_config_cmd(void *wmi_hdl,
  */
 QDF_STATUS
 wmi_send_atf_peer_request_cmd(void *wmi_hdl,
-		struct atf_peer_request_params *param)
+			      struct atf_peer_request_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
 
 	if (wmi_handle->ops->send_atf_peer_request_cmd)
 		return wmi_handle->ops->send_atf_peer_request_cmd(wmi_handle,
-					param);
+								  param);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -4930,17 +4932,81 @@ wmi_send_atf_peer_request_cmd(void *wmi_hdl,
  */
 QDF_STATUS
 wmi_send_set_atf_grouping_cmd(void *wmi_hdl,
-		struct atf_grouping_params *param)
+			      struct atf_grouping_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
 
 	if (wmi_handle->ops->send_set_atf_grouping_cmd)
 		return wmi_handle->ops->send_set_atf_grouping_cmd(wmi_handle,
-					param);
+								  param);
 
 	return QDF_STATUS_E_FAILURE;
-
 }
+
+/**
+ * wmi_send_set_atf_group_ac_cmd() - send set atf AC command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to set atf AC group param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_send_set_atf_group_ac_cmd(void *wmi_hdl,
+			      struct atf_group_ac_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_set_atf_group_ac_cmd)
+		return wmi_handle->ops->send_set_atf_group_ac_cmd(wmi_handle,
+								  param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_atf_peer_stats_ev() - extract atf peer stats
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param ev: Pointer to hold atf peer stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_atf_peer_stats_ev(void *wmi_hdl, void *evt_buf,
+			      wmi_host_atf_peer_stats_event *ev)
+{
+	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
+
+	if (wmi->ops->extract_atf_peer_stats_ev)
+		return wmi->ops->extract_atf_peer_stats_ev(wmi, evt_buf, ev);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_atf_token_info_ev() - extract atf token info
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param idx: Index indicating the peer number
+ * @param ev: Pointer to hold atf token info
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_atf_token_info_ev(void *wmi_hdl, void *evt_buf, uint8_t idx,
+			      wmi_host_atf_peer_stats_info *ev)
+{
+	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
+
+	if (wmi->ops->extract_atf_token_info_ev)
+		return wmi->ops->extract_atf_token_info_ev(wmi, evt_buf,
+							   idx, ev);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_ATF_ENABLE */
 
 /**
  * wmi_send_get_user_position_cmd() - send get user position command to fw
@@ -6365,49 +6431,6 @@ QDF_STATUS wmi_extract_tx_data_traffic_ctrl_ev(void *wmi_hdl, void *evt_buf,
 	if (wmi->ops->extract_tx_data_traffic_ctrl_ev)
 		return wmi->ops->extract_tx_data_traffic_ctrl_ev(wmi,
 				evt_buf, ev);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_extract_atf_peer_stats_ev() - extract atf peer stats
- * from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param ev: Pointer to hold atf peer stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_atf_peer_stats_ev(void *wmi_hdl, void *evt_buf,
-			wmi_host_atf_peer_stats_event *ev)
-{
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->extract_atf_peer_stats_ev)
-		return wmi->ops->extract_atf_peer_stats_ev(wmi,
-				evt_buf, ev);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_extract_atf_token_info_ev() - extract atf token info
- * from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param idx: Index indicating the peer number
- * @param ev: Pointer to hold atf token info
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_atf_token_info_ev(void *wmi_hdl, void *evt_buf,
-			uint8_t idx, wmi_host_atf_peer_stats_info *ev)
-{
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->extract_atf_token_info_ev)
-		return wmi->ops->extract_atf_token_info_ev(wmi,
-				evt_buf, idx, ev);
 
 	return QDF_STATUS_E_FAILURE;
 }

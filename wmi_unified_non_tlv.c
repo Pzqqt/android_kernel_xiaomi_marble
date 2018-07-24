@@ -3412,6 +3412,7 @@ send_set_bwf_cmd_non_tlv(wmi_unified_t wmi_handle,
 	return retval;
 }
 
+#ifdef WLAN_ATF_ENABLE
 /**
  * send_set_atf_cmd_non_tlv() - send set atf command to fw
  * @wmi_handle: wmi handle
@@ -3421,7 +3422,7 @@ send_set_bwf_cmd_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_set_atf_cmd_non_tlv(wmi_unified_t wmi_handle,
-				struct set_atf_params *param)
+			 struct set_atf_params *param)
 {
 	struct wmi_atf_peer_info   *peer_info;
 	wmi_peer_atf_request *cmd;
@@ -3441,13 +3442,13 @@ send_set_atf_cmd_non_tlv(wmi_unified_t wmi_handle,
 	peer_info = (struct wmi_atf_peer_info *)&(cmd->peer_info[0]);
 	for (i = 0; i < param->num_peers; i++) {
 		qdf_mem_copy(&(peer_info[i].peer_macaddr),
-			&(param->peer_info[i].peer_macaddr),
-			sizeof(wmi_mac_addr));
+			     &param->peer_info[i].peer_macaddr,
+			     sizeof(wmi_mac_addr));
 		peer_info[i].atf_units = param->peer_info[i].percentage_peer;
 	}
 /*	qdf_print("wmi_unified_pdev_set_atf peer_num=%d", cmd->num_peers); */
 	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
-		WMI_PEER_ATF_REQUEST_CMDID);
+				      WMI_PEER_ATF_REQUEST_CMDID);
 	return retval;
 }
 
@@ -3460,7 +3461,7 @@ send_set_atf_cmd_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_atf_peer_request_cmd_non_tlv(wmi_unified_t wmi_handle,
-				struct atf_peer_request_params *param)
+				  struct atf_peer_request_params *param)
 {
 	struct wmi_atf_peer_ext_info *peer_ext_info;
 	wmi_peer_atf_ext_request *cmd;
@@ -3481,15 +3482,15 @@ send_atf_peer_request_cmd_non_tlv(wmi_unified_t wmi_handle,
 	    (struct wmi_atf_peer_ext_info *)&(cmd->peer_ext_info[0]);
 	for (i = 0; i < param->num_peers; i++) {
 		qdf_mem_copy(&(peer_ext_info[i].peer_macaddr),
-			&(param->peer_ext_info[i].peer_macaddr),
-			sizeof(wmi_mac_addr));
+			     &param->peer_ext_info[i].peer_macaddr,
+			     sizeof(wmi_mac_addr));
 		peer_ext_info[i].atf_groupid =
 			param->peer_ext_info[i].group_index;
 		peer_ext_info[i].atf_units_reserved =
 			param->peer_ext_info[i].atf_index_reserved;
 	}
 	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
-		WMI_PEER_ATF_EXT_REQUEST_CMDID);
+				      WMI_PEER_ATF_EXT_REQUEST_CMDID);
 
 	return retval;
 }
@@ -3503,7 +3504,7 @@ send_atf_peer_request_cmd_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_set_atf_grouping_cmd_non_tlv(wmi_unified_t wmi_handle,
-				struct atf_grouping_params *param)
+				  struct atf_grouping_params *param)
 {
 	struct wmi_atf_group_info *group_info;
 	wmi_atf_ssid_grp_request *cmd;
@@ -3520,7 +3521,7 @@ send_set_atf_grouping_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 	cmd = (wmi_atf_ssid_grp_request *)wmi_buf_data(buf);
 	qdf_mem_copy(&(cmd->num_groups), &(param->num_groups),
-		sizeof(uint32_t));
+		     sizeof(uint32_t));
 	group_info = (struct wmi_atf_group_info *)&(cmd->group_info[0]);
 	for (i = 0; i < param->num_groups; i++)	{
 		group_info[i].atf_group_units =
@@ -3529,10 +3530,101 @@ send_set_atf_grouping_cmd_non_tlv(wmi_unified_t wmi_handle,
 			param->group_info[i].atf_group_units_reserved;
 	}
 	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
-		WMI_ATF_SSID_GROUPING_REQUEST_CMDID);
+				      WMI_ATF_SSID_GROUPING_REQUEST_CMDID);
 
 	return retval;
 }
+
+/**
+ * send_set_atf_group_ac_cmd_non_tlv() - send set atf AC command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to set atf AC group param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_set_atf_group_ac_cmd_non_tlv(wmi_unified_t wmi_handle,
+				  struct atf_group_ac_params *param)
+{
+	struct wmi_atf_group_wmm_ac_info *group_info;
+	wmi_atf_grp_wmm_ac_cfg_request *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(wmi_atf_grp_wmm_ac_cfg_request);
+	int i;
+
+	len += param->num_groups * sizeof(struct wmi_atf_group_wmm_ac_info);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_atf_grp_wmm_ac_cfg_request *)wmi_buf_data(buf);
+	qdf_mem_copy(&cmd->num_groups, &param->num_groups, sizeof(uint32_t));
+	group_info = (struct wmi_atf_group_wmm_ac_info *)&cmd->group_info[0];
+	for (i = 0; i < param->num_groups; i++)	{
+		qdf_mem_copy(&group_info[i], &param->group_info[i],
+			     sizeof(struct wmi_atf_group_wmm_ac_info));
+	}
+
+	return wmi_unified_cmd_send(wmi_handle, buf, len,
+				    WMI_ATF_GROUP_WMM_AC_CONFIG_REQUEST_CMDID);
+}
+
+/**
+ * extract_atf_peer_stats_ev_non_tlv() - extract atf peer stats
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param ev: Pointer to hold atf stats event data
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+extract_atf_peer_stats_ev_non_tlv(wmi_unified_t wmi_handle,
+				  void *evt_buf,
+				  wmi_host_atf_peer_stats_event *ev)
+{
+	wmi_atf_peer_stats_event *evt =
+		(wmi_atf_peer_stats_event *)evt_buf;
+
+	ev->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
+	ev->num_atf_peers = evt->num_atf_peers;
+	ev->comp_usable_airtime = evt->comp_usable_airtime;
+	qdf_mem_copy(&ev->reserved[0], &evt->reserved[0],
+		     sizeof(evt->reserved));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_atf_token_info_ev_non_tlv() - extract atf token info
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @idx: Index indicating the peer number
+ * @param atf_token_info: Pointer to hold atf token info
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+extract_atf_token_info_ev_non_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+				  uint8_t idx,
+				  wmi_host_atf_peer_stats_info *atf_token_info)
+{
+	wmi_atf_peer_stats_event *evt =
+		(wmi_atf_peer_stats_event *)evt_buf;
+
+	if (idx > evt->num_atf_peers)
+		return QDF_STATUS_E_INVAL;
+
+	atf_token_info->field1 = evt->token_info_list[idx].field1;
+	atf_token_info->field2 = evt->token_info_list[idx].field2;
+	atf_token_info->field3 = evt->token_info_list[idx].field3;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * send_wlan_profile_enable_cmd_non_tlv() - send wlan profile enable command
@@ -8315,58 +8407,6 @@ static QDF_STATUS extract_tx_data_traffic_ctrl_ev_non_tlv(
 }
 
 /**
- * extract_atf_peer_stats_ev_non_tlv() - extract atf peer stats
- * from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param ev: Pointer to hold atf stats event data
- *
- * Return: 0 for success or error code
- */
-static QDF_STATUS extract_atf_peer_stats_ev_non_tlv(
-	wmi_unified_t wmi_handle, void *evt_buf,
-	wmi_host_atf_peer_stats_event *ev)
-{
-	wmi_atf_peer_stats_event *evt =
-		(wmi_atf_peer_stats_event *)evt_buf;
-
-	ev->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
-	ev->num_atf_peers = evt->num_atf_peers;
-	ev->comp_usable_airtime = evt->comp_usable_airtime;
-	qdf_mem_copy(&ev->reserved[0], &evt->reserved[0],
-				sizeof(evt->reserved));
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * extract_atf_token_info_ev_non_tlv() - extract atf token info
- * from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @idx: Index indicating the peer number
- * @param atf_token_info: Pointer to hold atf token info
- *
- * Return: 0 for success or error code
- */
-static QDF_STATUS extract_atf_token_info_ev_non_tlv(
-	wmi_unified_t wmi_handle, void *evt_buf,
-	uint8_t idx, wmi_host_atf_peer_stats_info *atf_token_info)
-{
-	wmi_atf_peer_stats_event *evt =
-		(wmi_atf_peer_stats_event *)evt_buf;
-
-	if (idx > evt->num_atf_peers)
-		return QDF_STATUS_E_INVAL;
-
-	atf_token_info->field1 = evt->token_info_list[idx].field1;
-	atf_token_info->field2 = evt->token_info_list[idx].field2;
-	atf_token_info->field3 = evt->token_info_list[idx].field3;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * extract_pdev_utf_event_non_tlv() - extract UTF data info from event
  * @wmi_handle: WMI handle
  * @param evt_buf: Pointer to event buffer
@@ -8678,9 +8718,14 @@ struct wmi_ops non_tlv_ops =  {
 	.send_scan_stop_cmd = send_scan_stop_cmd_non_tlv,
 	.send_scan_chan_list_cmd = send_scan_chan_list_cmd_non_tlv,
 	.send_pdev_get_tpc_config_cmd = send_pdev_get_tpc_config_cmd_non_tlv,
+#ifdef WLAN_ATF_ENABLE
 	.send_set_atf_cmd = send_set_atf_cmd_non_tlv,
 	.send_atf_peer_request_cmd = send_atf_peer_request_cmd_non_tlv,
 	.send_set_atf_grouping_cmd = send_set_atf_grouping_cmd_non_tlv,
+	.send_set_atf_group_ac_cmd = send_set_atf_group_ac_cmd_non_tlv,
+	.extract_atf_peer_stats_ev = extract_atf_peer_stats_ev_non_tlv,
+	.extract_atf_token_info_ev = extract_atf_token_info_ev_non_tlv,
+#endif
 	.send_set_bwf_cmd = send_set_bwf_cmd_non_tlv,
 	.send_pdev_fips_cmd = send_pdev_fips_cmd_non_tlv,
 	.send_wlan_profile_enable_cmd = send_wlan_profile_enable_cmd_non_tlv,
@@ -8868,8 +8913,6 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_pdev_caldata_version_check_ev_param =
 			extract_pdev_caldata_version_check_ev_param_non_tlv,
 	.extract_mu_db_entry = extract_mu_db_entry_non_tlv,
-	.extract_atf_peer_stats_ev = extract_atf_peer_stats_ev_non_tlv,
-	.extract_atf_token_info_ev = extract_atf_token_info_ev_non_tlv,
 	.extract_pdev_utf_event = extract_pdev_utf_event_non_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_non_tlv,
 	.is_management_record = is_management_record_non_tlv,
