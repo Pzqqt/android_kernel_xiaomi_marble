@@ -2719,6 +2719,7 @@ static void hdd_check_for_leaks(struct hdd_context *hdd_ctx, bool is_ssr)
 {
 	/* DO NOT REMOVE these checks; for false positives, read above first */
 
+	wlan_objmgr_psoc_check_for_peer_leaks(hdd_ctx->hdd_psoc);
 	wlan_objmgr_psoc_check_for_vdev_leaks(hdd_ctx->hdd_psoc);
 	wlan_objmgr_psoc_check_for_pdev_leaks(hdd_ctx->hdd_psoc);
 
