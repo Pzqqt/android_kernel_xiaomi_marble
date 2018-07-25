@@ -85,7 +85,7 @@ enum cfg_fallback_behavior {
 	(NON_INI, IPV6, struct qdf_ipv6_addr, name, -1, -1, -1, desc, def)
 
 /* utility macros/functions */
-#ifdef MCL
+#ifdef CONFIG_MCL
 #define MCL_OR_WIN_VALUE(mcl_value, win_value) mcl_value
 #else
 #define MCL_OR_WIN_VALUE(mcl_value, win_value) win_value
