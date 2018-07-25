@@ -6835,8 +6835,8 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 	DP_PRINT_STATS("	 Voice = %d",
 			peer->stats.tx.excess_retries_per_ac[3]);
 	DP_PRINT_STATS("BW Counts = 20MHZ %d 40MHZ %d 80MHZ %d 160MHZ %d\n",
-			peer->stats.tx.bw[2], peer->stats.tx.bw[3],
-			peer->stats.tx.bw[4], peer->stats.tx.bw[5]);
+			peer->stats.tx.bw[0], peer->stats.tx.bw[1],
+			peer->stats.tx.bw[2], peer->stats.tx.bw[3]);
 
 	index = 0;
 	for (i = 0; i < SS_COUNT; i++) {
