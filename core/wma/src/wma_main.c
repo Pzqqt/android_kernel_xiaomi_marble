@@ -1955,6 +1955,7 @@ static void wma_shutdown_notifier_cb(void *priv)
 
 	qdf_event_set(&wma_handle->wma_resume_event);
 	pmo_ucfg_psoc_wakeup_host_event_received(wma_handle->psoc);
+	wmi_stop(wma_handle->wmi_handle);
 
 	msg.bodyptr = priv;
 	msg.callback = wma_cleanup_vdev_resp_and_hold_req;
