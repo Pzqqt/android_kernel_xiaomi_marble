@@ -6671,6 +6671,7 @@ static QDF_STATUS extract_pdev_tpc_config_ev_param_non_tlv(wmi_unified_t wmi_han
 	param->phyMode = event->phyMode;
 	param->twiceAntennaReduction = event->twiceAntennaReduction;
 	param->twiceMaxRDPower = event->twiceMaxRDPower;
+	param->twiceAntennaGain = event->twiceAntennaGain;
 	param->powerLimit = event->powerLimit;
 	param->rateMax = event->rateMax;
 	param->numTxChain = event->numTxChain;
@@ -9443,6 +9444,8 @@ static void populate_pdev_param_non_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_rx_chain_mask_5g] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_tx_chain_mask_cck] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_tx_chain_mask_1ss] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_antenna_gain_half_db] =
+		WMI_PDEV_PARAM_ANTENNA_GAIN_HALF_DB;
 }
 
 /**

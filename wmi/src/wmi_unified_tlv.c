@@ -18272,6 +18272,7 @@ static QDF_STATUS extract_pdev_tpc_config_ev_param_tlv(wmi_unified_t wmi_handle,
 	param->chanFreq = event->chanFreq;
 	param->phyMode = event->phyMode;
 	param->twiceAntennaReduction = event->twiceAntennaReduction;
+	param->twiceAntennaGain = event->twiceAntennaGain;
 	param->twiceMaxRDPower = event->twiceMaxRDPower;
 	param->powerLimit = event->powerLimit;
 	param->rateMax = event->rateMax;
@@ -23056,6 +23057,8 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_rx_decap_mode] = WMI_PDEV_PARAM_RX_DECAP_MODE;
 	pdev_param[wmi_pdev_param_tx_ack_timeout] = WMI_PDEV_PARAM_ACK_TIMEOUT;
 	pdev_param[wmi_pdev_param_cck_tx_enable] = WMI_PDEV_PARAM_CCK_TX_ENABLE;
+	pdev_param[wmi_pdev_param_antenna_gain_half_db] =
+		WMI_PDEV_PARAM_ANTENNA_GAIN_HALF_DB;
 }
 
 /**
