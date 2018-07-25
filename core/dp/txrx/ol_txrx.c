@@ -1452,6 +1452,7 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc,
 	TAILQ_INIT(&pdev->req_list);
 	pdev->req_list_depth = 0;
 	qdf_spinlock_create(&pdev->req_list_spinlock);
+	qdf_spinlock_create(&pdev->tx_mutex);
 
 	/* do initial set up of the peer ID -> peer object lookup map */
 	if (ol_txrx_peer_find_attach(pdev))
@@ -1509,6 +1510,7 @@ fail2:
 		qdf_spinlock_destroy(&pdev->tx_queue_spinlock);
 
 fail1:
+	qdf_spinlock_destroy(&pdev->tx_mutex);
 	ol_txrx_tso_stats_deinit(pdev);
 	ol_txrx_fw_stats_desc_pool_deinit(pdev);
 	qdf_mem_free(pdev);
@@ -1904,7 +1906,6 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 	}
 
 	/* initialize mutexes for tx desc alloc and peer lookup */
-	qdf_spinlock_create(&pdev->tx_mutex);
 	qdf_spinlock_create(&pdev->peer_ref_mutex);
 	qdf_spinlock_create(&pdev->rx.mutex);
 	qdf_spinlock_create(&pdev->last_real_peer_mutex);
@@ -2040,7 +2041,6 @@ pn_trace_attach_fail:
 	OL_RX_REORDER_TRACE_DETACH(pdev);
 
 reorder_trace_attach_fail:
-	qdf_spinlock_destroy(&pdev->tx_mutex);
 	qdf_spinlock_destroy(&pdev->peer_ref_mutex);
 	qdf_spinlock_destroy(&pdev->rx.mutex);
 	qdf_spinlock_destroy(&pdev->last_real_peer_mutex);
@@ -2206,7 +2206,6 @@ static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 	htt_detach(pdev->htt_pdev);
 	ol_tx_desc_dup_detect_deinit(pdev);
 
-	qdf_spinlock_destroy(&pdev->tx_mutex);
 	qdf_spinlock_destroy(&pdev->peer_ref_mutex);
 	qdf_spinlock_destroy(&pdev->last_real_peer_mutex);
 	qdf_spinlock_destroy(&pdev->rx.mutex);
@@ -2288,6 +2287,7 @@ static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 	qdf_spin_unlock_bh(&pdev->req_list_spinlock);
 
 	qdf_spinlock_destroy(&pdev->req_list_spinlock);
+	qdf_spinlock_destroy(&pdev->tx_mutex);
 
 	OL_RX_REORDER_TIMEOUT_CLEANUP(pdev);
 
