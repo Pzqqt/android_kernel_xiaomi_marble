@@ -1453,6 +1453,14 @@ void wlan_objmgr_psoc_check_for_pdev_leaks(struct wlan_objmgr_psoc *psoc);
 void wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * wlan_objmgr_psoc_check_for_peer_leaks() - Assert no peers attached to @psoc
+ * @psoc: The psoc to check
+ *
+ * Return: None
+ */
+void wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc);
+
+/**
 * wlan_objmgr_psoc_get_dual_mac_disable () - get user config
 * data for DBS disable
 * @psoc: psoc object pointer

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,6 +20,45 @@
   */
 #ifndef _WLAN_OBJMGR_PSOC_OBJ_I_H_
 #define _WLAN_OBJMGR_PSOC_OBJ_I_H_
+
+/**
+ * wlan_objmgr_for_each_psoc_pdev() - iterate over each pdev for @psoc
+ * @psoc: the psoc whose pdevs should be iterated
+ * @pdev_id: pdev Id index cursor
+ * @pdev: pdev object cursor
+ *
+ * Note: The caller is responsible for grabbing @psoc's object lock before
+ * using this iterator
+ */
+#define wlan_objmgr_for_each_psoc_pdev(psoc, pdev_id, pdev) \
+	for (pdev_id = 0; pdev_id < WLAN_UMAC_MAX_PDEVS; pdev_id++) \
+		if ((pdev = (psoc)->soc_objmgr.wlan_pdev_list[pdev_id]))
+
+/**
+ * wlan_objmgr_for_each_psoc_vdev() - iterate over each vdev for @psoc
+ * @psoc: the psoc whose vdevs should be iterated
+ * @vdev_id: vdev Id index cursor
+ * @vdev: vdev object cursor
+ *
+ * Note: The caller is responsible for grabbing @psoc's object lock before
+ * using this iterator
+ */
+#define wlan_objmgr_for_each_psoc_vdev(psoc, vdev_id, vdev) \
+	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) \
+		if ((vdev = (psoc)->soc_objmgr.wlan_vdev_list[vdev_id]))
+
+/**
+ * wlan_objmgr_for_each_refs() - iterate non-zero ref counts in @ref_id_dbg
+ * @ref_id_dbg: the ref count array to iterate
+ * @ref_id: the reference Id index cursor
+ * @refs: the ref count cursor
+ *
+ * Note: The caller is responsible for grabbing @ref_id_dbg's parent object lock
+ * before using this iterator
+ */
+#define wlan_objmgr_for_each_refs(ref_id_dbg, ref_id, refs) \
+	for (ref_id = 0; ref_id < WLAN_REF_ID_MAX; ref_id++) \
+		if ((refs = qdf_atomic_read(&(ref_id_dbg)[ref_id])) > 0)
 
 /**
  * wlan_objmgr_psoc_pdev_attach() - store pdev in psoc's pdev list
