@@ -13196,7 +13196,7 @@ enum hdd_external_acs_policy {
 #define CFG_BTM_ENABLE_NAME      "btm_offload_config"
 #define CFG_BTM_ENABLE_MIN       (0x00000000)
 #define CFG_BTM_ENABLE_MAX       (0xffffffff)
-#define CFG_BTM_ENABLE_DEFAULT   (0x00000041)
+#define CFG_BTM_ENABLE_DEFAULT   (0x00000001)
 
 /*
  * <ini>
