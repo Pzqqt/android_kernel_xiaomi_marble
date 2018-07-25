@@ -12725,6 +12725,7 @@ void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 	struct csr_roam_session *csr_session;
 	uint32_t tx_mcs_map = 0;
 	uint32_t rx_mcs_map = 0;
+	uint32_t mcs_map = 0;
 
 	if (!nss || (nss > 2)) {
 		sme_err("invalid Nss value %d", nss);
@@ -12732,12 +12733,13 @@ void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
 	sme_cfg_get_int(hal, WNI_CFG_HE_RX_MCS_MAP_LT_80, &rx_mcs_map);
 	sme_cfg_get_int(hal, WNI_CFG_HE_TX_MCS_MAP_LT_80, &tx_mcs_map);
+	mcs_map = rx_mcs_map & 0x3;
 	if (nss == 1) {
 		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, HE_MCS_DISABLE, 2);
 		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, HE_MCS_DISABLE, 2);
 	} else {
-		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, HE_MCS_0_11, 2);
-		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, HE_MCS_0_11, 2);
+		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, mcs_map, 2);
+		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, mcs_map, 2);
 	}
 	sme_info("new HE Nss MCS MAP: Rx 0x%0X, Tx: 0x%0X",
 			rx_mcs_map, tx_mcs_map);
@@ -12855,6 +12857,7 @@ void sme_set_he_mu_edca_def_cfg(mac_handle_t hal)
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	uint8_t i;
 
+	sme_debug("Set MU EDCA params to default");
 	for (i = 0; i < MAX_NUM_AC; i++) {
 		mac_ctx->usr_mu_edca_params[i].aci.aifsn = MU_EDCA_DEF_AIFSN;
 		mac_ctx->usr_mu_edca_params[i].aci.aci = i;
