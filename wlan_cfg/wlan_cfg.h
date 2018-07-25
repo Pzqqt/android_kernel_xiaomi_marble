@@ -116,6 +116,17 @@ struct wlan_cfg_dp_pdev_ctxt;
  * @napi_enabled - enable/disable interrupt mode for reaping tx and rx packets
  * @tcp_Udp_Checksumoffload - enable/disable checksum offload
  * @nss_cfg - nss configuration
+ * @rx_defrag_min_timeout - rx defrag minimum timeout
+ * @wbm_release_ring - wbm release ring size
+ * @tcl_cmd_ring - tcl cmd ring size
+ * @tcl_status_ring - tcl status ring size
+ * @reo_reinject_ring - reo reinject ring
+ * @rx_release_ring - rx release ring size
+ * @reo_exception_ring - reo exception ring size
+ * @reo_cmd_ring - reo cmd ring size
+ * @reo_status_ring - reo status ting size
+ * @rxdma_refill_ring - rxdma refill ring size
+ * @rxdma_err_dst_ring - rxdma error detination ring size
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -140,6 +151,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	int int_timer_threshold_other;
 	int tx_ring_size;
 	int tx_comp_ring_size;
+	int tx_comp_ring_size_nss;
 	int int_tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
@@ -162,12 +174,24 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint32_t tx_flow_stop_queue_threshold;
 	uint32_t tx_flow_start_queue_offset;
 #endif
-	uint32_t rx_defrag_min_timeout;
+	int rx_defrag_min_timeout;
 	int reo_dst_ring_size;
+	int wbm_release_ring;
+	int tcl_cmd_ring;
+	int tcl_status_ring;
+	int reo_reinject_ring;
+	int rx_release_ring;
+	int reo_exception_ring;
+	int reo_cmd_ring;
+	int reo_status_ring;
+
+	int rxdma_refill_ring;
+	int rxdma_err_dst_ring;
 };
 
 /**
  * wlan_cfg_soc_attach() - Attach configuration interface for SoC
+ * @ctrl_obj - PSOC object
  *
  * Allocates context for Soc configuration parameters,
  * Read configuration information from device tree/ini file and
@@ -175,7 +199,7 @@ struct wlan_cfg_dp_soc_ctxt {
  *
  * Return: Handle to configuration context
  */
-struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void);
+struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void *ctrl_obj);
 
 /**
  * wlan_cfg_soc_detach() - Detach soc configuration handle
@@ -189,6 +213,7 @@ void wlan_cfg_soc_detach(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /**
  * wlan_cfg_pdev_attach() Attach configuration interface for pdev
+ * @ctrl_obj - PSOC object
  *
  * Allocates context for pdev configuration parameters,
  * Read configuration information from device tree/ini file and
@@ -196,7 +221,7 @@ void wlan_cfg_soc_detach(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
  *
  * Return: Handle to configuration context
  */
-struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_attach(void);
+struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_attach(void *ctrl_obj);
 
 /**
  * wlan_cfg_pdev_detach() Detach and free pdev configuration handle
@@ -581,6 +606,15 @@ int wlan_cfg_get_dma_mon_stat_ring_size(
 		struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_ctx);
 
 /*
+ * wlan_cfg_get_dma_mon_desc_ring_size - Get rxdma monitor size
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: rxdma monitor desc ring size
+ */
+int
+wlan_cfg_get_dma_mon_desc_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg);
+
+/*
  * wlan_cfg_get_rx_dma_buf_ring_size() - Return Size of RxDMA buffer ring
  * @wlan_cfg_pdev_ctx
  *
@@ -721,6 +755,97 @@ int wlan_cfg_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: Tx Completion ring size
  */
 int wlan_cfg_tx_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_wbm_release_ring_size - Get wbm_release_ring size
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: wbm_release_ring size
+ */
+int
+wlan_cfg_get_dp_soc_wbm_release_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_tcl_cmd_ring_size - Get tcl_cmd_ring size
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: tcl_cmd_ring size
+ */
+int
+wlan_cfg_get_dp_soc_tcl_cmd_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_tcl_status_ring_size - Get tcl_status_ring size
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: tcl_status_ring size
+ */
+int
+wlan_cfg_get_dp_soc_tcl_status_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_reo_reinject_ring_size - Get reo_reinject_ring size
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: reo_reinject_ring size
+ */
+int
+wlan_cfg_get_dp_soc_reo_reinject_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_rx_release_ring_size - Get rx_release_ring size
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: rx_release_ring size
+ */
+int
+wlan_cfg_get_dp_soc_rx_release_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_reo_exception_ring_size - Get reo_exception_ring size
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: reo_exception_ring size
+ */
+int
+wlan_cfg_get_dp_soc_reo_exception_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_reo_cmd_ring_size - Get reo_cmd_ring size
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: reo_cmd_ring size
+ */
+int
+wlan_cfg_get_dp_soc_reo_cmd_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_reo_status_ring_size - Get reo_status_ring size
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: reo_status_ring size
+ */
+int
+wlan_cfg_get_dp_soc_reo_status_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_rxdma_refill_ring_size - Get rxdma refill ring size
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: rxdma refill ring size
+ */
+int
+wlan_cfg_get_dp_soc_rxdma_refill_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size - Get rxdma dst ring size
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: rxdma error dst ring size
+ */
+int
+wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 int wlan_cfg_get_tx_flow_stop_queue_th(struct wlan_cfg_dp_soc_ctxt *cfg);
 

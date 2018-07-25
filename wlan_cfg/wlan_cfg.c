@@ -25,6 +25,7 @@
 #include "qdf_trace.h"
 #include "qdf_mem.h"
 #include "wlan_cfg.h"
+#include "cfg_ucfg_api.h"
 
 /*
  * FIX THIS -
@@ -32,96 +33,12 @@
  * Many of these should actually be coming from dts file/ini file
  */
 
-#ifdef CONFIG_MCL
-#define WLAN_CFG_PER_PDEV_RX_RING 0
-#define WLAN_CFG_PER_PDEV_LMAC_RING 0
-#define WLAN_LRO_ENABLE 1
-#ifdef IPA_OFFLOAD
-#define WLAN_CFG_TX_RING_SIZE 2048
-#else
-#define WLAN_CFG_TX_RING_SIZE 512
-#endif
-#define WLAN_CFG_TX_COMP_RING_SIZE 1024
-
-/* Tx Descriptor and Tx Extension Descriptor pool sizes */
-#define WLAN_CFG_NUM_TX_DESC  1024
-#define WLAN_CFG_NUM_TX_EXT_DESC 1024
-
-/* Interrupt Mitigation - Batch threshold in terms of number of frames */
-#define WLAN_CFG_INT_BATCH_THRESHOLD_TX 1
-#define WLAN_CFG_INT_BATCH_THRESHOLD_RX 1
-#define WLAN_CFG_INT_BATCH_THRESHOLD_OTHER 1
-
-/* Interrupt Mitigation - Timer threshold in us */
-#define WLAN_CFG_INT_TIMER_THRESHOLD_TX 8
-#define WLAN_CFG_INT_TIMER_THRESHOLD_RX 8
-#define WLAN_CFG_INT_TIMER_THRESHOLD_OTHER 8
-#endif
-
-#ifdef CONFIG_WIN
-#define WLAN_CFG_PER_PDEV_RX_RING 0
-#define WLAN_CFG_PER_PDEV_LMAC_RING 1
-#define WLAN_LRO_ENABLE 0
-
-/* Tx Descriptor and Tx Extension Descriptor pool sizes */
-#define WLAN_CFG_NUM_TX_DESC  (32 << 10)
-#define WLAN_CFG_NUM_TX_EXT_DESC (8 << 10)
-
-
-/* Interrupt Mitigation - Batch threshold in terms of number of frames */
-#define WLAN_CFG_INT_BATCH_THRESHOLD_TX 256
-#define WLAN_CFG_INT_BATCH_THRESHOLD_RX 128
-#define WLAN_CFG_INT_BATCH_THRESHOLD_OTHER 1
-
-/* Interrupt Mitigation - Timer threshold in us */
-#define WLAN_CFG_INT_TIMER_THRESHOLD_TX 1000
-#define WLAN_CFG_INT_TIMER_THRESHOLD_RX 500
-#define WLAN_CFG_INT_TIMER_THRESHOLD_OTHER 1000
-
-#define WLAN_CFG_TX_RING_SIZE 512
-
-/* Size the completion ring using following 2 parameters
- *  - NAPI schedule latency (assuming 1 netdev competing for CPU) = 20 ms (2 jiffies)
- *  - Worst case PPS requirement = 400K PPS
- *
- * Ring size = 20 * 400 = 8000
- * 8192 is nearest power of 2
- */
-#define WLAN_CFG_TX_COMP_RING_SIZE (8 << 10)
-#endif
-
 /*
  * The max allowed size for tx comp ring is 8191.
  * This is limitted by h/w ring max size.
  * As this is not a power of 2 it does not work with nss offload so the
  * nearest available size which is power of 2 is 4096 chosen for nss
  */
-#define NSS_TX_COMP_RING_SIZE (4 << 10)
-
-#define RXDMA_BUF_RING_SIZE 2048
-#define RXDMA_MONITOR_BUF_RING_SIZE 2048
-#define RXDMA_MONITOR_DEST_RING_SIZE 2048
-#define RXDMA_MONITOR_STATUS_RING_SIZE 2048
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-
-/* Per vdev pools */
-#define WLAN_CFG_NUM_TX_DESC_POOL	3
-#define WLAN_CFG_NUM_TXEXT_DESC_POOL	3
-
-#else /* QCA_LL_TX_FLOW_CONTROL_V2 */
-
-#ifdef TX_PER_PDEV_DESC_POOL
-#define WLAN_CFG_NUM_TX_DESC_POOL	MAX_PDEV_CNT
-#define WLAN_CFG_NUM_TXEXT_DESC_POOL	MAX_PDEV_CNT
-
-#else /* TX_PER_PDEV_DESC_POOL */
-
-#define WLAN_CFG_NUM_TX_DESC_POOL 3
-#define WLAN_CFG_NUM_TXEXT_DESC_POOL 3
-
-#endif /* TX_PER_PDEV_DESC_POOL */
-#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
 #define WLAN_CFG_TX_RING_MASK_0 0x1
 #define WLAN_CFG_TX_RING_MASK_1 0x2
@@ -162,30 +79,6 @@
 #define WLAN_CFG_HOST2RXDMA_RING_MASK_1 0x2
 #define WLAN_CFG_HOST2RXDMA_RING_MASK_2 0x4
 #define WLAN_CFG_HOST2RXDMA_RING_MASK_3 0x0
-
-#define WLAN_CFG_DP_TX_NUM_POOLS 3
-/* Change this to a lower value to enforce scattered idle list mode */
-#define WLAN_CFG_MAX_ALLOC_SIZE (2 << 20)
-
-#define WLAN_CFG_MAX_CLIENTS 64
-
-#ifdef CONFIG_MCL
-#ifdef IPA_OFFLOAD
-#define WLAN_CFG_PER_PDEV_TX_RING 0
-#else
-#define WLAN_CFG_PER_PDEV_TX_RING 1
-#endif
-#else
-#define WLAN_CFG_PER_PDEV_TX_RING 0
-#endif
-
-#define WLAN_CFG_NUM_TCL_DATA_RINGS 3
-#define WLAN_CFG_NUM_REO_DEST_RING 4
-
-#define WLAN_CFG_HTT_PKT_TYPE 2
-#define WLAN_CFG_MAX_PEER_ID 64
-
-#define WLAN_CFG_RX_DEFRAG_TIMEOUT 100
 
 #ifdef CONFIG_MCL
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
@@ -274,22 +167,24 @@ static const int host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
  * @dma_mon_buf_ring_size - Size of RxDMA Monitor buffer ring
  * @dma_mon_dest_ring_size - Size of RxDMA Monitor Destination ring
  * @dma_mon_status_ring_size - Size of RxDMA Monitor Status ring
+ * @rxdma_monitor_desc_ring - rxdma monitor desc ring size
  */
 struct wlan_cfg_dp_pdev_ctxt {
 	int rx_dma_buf_ring_size;
 	int dma_mon_buf_ring_size;
 	int dma_mon_dest_ring_size;
 	int dma_mon_status_ring_size;
+	int rxdma_monitor_desc_ring;
 	int num_mac_rings;
 	int nss_enabled;
 };
 
 /**
  * wlan_cfg_soc_attach() - Allocate and prepare SoC configuration
- *
+ * @psoc - Object manager psoc
  * Return: wlan_cfg_ctx - Handle to Configuration context
  */
-struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
+struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void *psoc)
 {
 	int i = 0;
 
@@ -300,31 +195,39 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 		return NULL;
 
 	wlan_cfg_ctx->num_int_ctxts = WLAN_CFG_INT_NUM_CONTEXTS;
-	wlan_cfg_ctx->max_clients = WLAN_CFG_MAX_CLIENTS;
-	wlan_cfg_ctx->max_alloc_size = WLAN_CFG_MAX_ALLOC_SIZE;
-	wlan_cfg_ctx->per_pdev_tx_ring = WLAN_CFG_PER_PDEV_TX_RING;
-	wlan_cfg_ctx->num_tcl_data_rings = WLAN_CFG_NUM_TCL_DATA_RINGS;
-	wlan_cfg_ctx->per_pdev_rx_ring = WLAN_CFG_PER_PDEV_RX_RING;
-	wlan_cfg_ctx->per_pdev_lmac_ring = WLAN_CFG_PER_PDEV_LMAC_RING;
-	wlan_cfg_ctx->num_reo_dest_rings = WLAN_CFG_NUM_REO_DEST_RING;
+	wlan_cfg_ctx->max_clients = cfg_get(psoc, CFG_DP_MAX_CLIENTS);
+	wlan_cfg_ctx->max_alloc_size = cfg_get(psoc, CFG_DP_MAX_ALLOC_SIZE);
+	wlan_cfg_ctx->per_pdev_tx_ring = cfg_get(psoc, CFG_DP_PDEV_TX_RING);
+	wlan_cfg_ctx->num_tcl_data_rings = cfg_get(psoc, CFG_DP_TCL_DATA_RINGS);
+	wlan_cfg_ctx->per_pdev_rx_ring = cfg_get(psoc, CFG_DP_PDEV_RX_RING);
+	wlan_cfg_ctx->per_pdev_lmac_ring = cfg_get(psoc, CFG_DP_PDEV_LMAC_RING);
+	wlan_cfg_ctx->num_reo_dest_rings = cfg_get(psoc, CFG_DP_REO_DEST_RINGS);
 	wlan_cfg_ctx->num_tx_desc_pool = MAX_TXDESC_POOLS;
-	wlan_cfg_ctx->num_tx_ext_desc_pool = WLAN_CFG_NUM_TXEXT_DESC_POOL;
-	wlan_cfg_ctx->num_tx_desc = WLAN_CFG_NUM_TX_DESC;
-	wlan_cfg_ctx->num_tx_ext_desc = WLAN_CFG_NUM_TX_EXT_DESC;
-	wlan_cfg_ctx->htt_packet_type = WLAN_CFG_HTT_PKT_TYPE;
-	wlan_cfg_ctx->max_peer_id = WLAN_CFG_MAX_PEER_ID;
+	wlan_cfg_ctx->num_tx_ext_desc_pool = cfg_get(psoc,
+						     CFG_DP_TX_EXT_DESC_POOLS);
+	wlan_cfg_ctx->num_tx_desc = cfg_get(psoc, CFG_DP_TX_DESC);
+	wlan_cfg_ctx->num_tx_ext_desc = cfg_get(psoc, CFG_DP_TX_EXT_DESC);
+	wlan_cfg_ctx->htt_packet_type = cfg_get(psoc, CFG_DP_HTT_PACKET_TYPE);
+	wlan_cfg_ctx->max_peer_id = cfg_get(psoc, CFG_DP_MAX_PEER_ID);
 
-	wlan_cfg_ctx->tx_ring_size = WLAN_CFG_TX_RING_SIZE;
-	wlan_cfg_ctx->tx_comp_ring_size = WLAN_CFG_TX_COMP_RING_SIZE;
+	wlan_cfg_ctx->tx_ring_size = cfg_get(psoc, CFG_DP_TX_RING_SIZE);
+	wlan_cfg_ctx->tx_comp_ring_size = cfg_get(psoc,
+						  CFG_DP_TX_COMPL_RING_SIZE);
 
-	wlan_cfg_ctx->int_batch_threshold_tx = WLAN_CFG_INT_BATCH_THRESHOLD_TX;
-	wlan_cfg_ctx->int_timer_threshold_tx =  WLAN_CFG_INT_TIMER_THRESHOLD_TX;
-	wlan_cfg_ctx->int_batch_threshold_rx = WLAN_CFG_INT_BATCH_THRESHOLD_RX;
-	wlan_cfg_ctx->int_timer_threshold_rx = WLAN_CFG_INT_TIMER_THRESHOLD_RX;
+	wlan_cfg_ctx->tx_comp_ring_size_nss =
+		cfg_get(psoc, CFG_DP_NSS_COMP_RING_SIZE);
+	wlan_cfg_ctx->int_batch_threshold_tx =
+			cfg_get(psoc, CFG_DP_INT_BATCH_THRESHOLD_TX);
+	wlan_cfg_ctx->int_timer_threshold_tx =
+			cfg_get(psoc, CFG_DP_INT_TIMER_THRESHOLD_TX);
+	wlan_cfg_ctx->int_batch_threshold_rx =
+			cfg_get(psoc, CFG_DP_INT_BATCH_THRESHOLD_RX);
+	wlan_cfg_ctx->int_timer_threshold_rx =
+			cfg_get(psoc, CFG_DP_INT_TIMER_THRESHOLD_RX);
 	wlan_cfg_ctx->int_batch_threshold_other =
-		WLAN_CFG_INT_BATCH_THRESHOLD_OTHER;
+		cfg_get(psoc, CFG_DP_INT_BATCH_THRESHOLD_OTHER);
 	wlan_cfg_ctx->int_timer_threshold_other =
-		WLAN_CFG_INT_TIMER_THRESHOLD_OTHER;
+		cfg_get(psoc, CFG_DP_INT_TIMER_THRESHOLD_OTHER);
 
 	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
 		wlan_cfg_ctx->int_tx_ring_mask[i] = tx_ring_mask[i];
@@ -349,12 +252,43 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 	if (MAX_PDEV_CNT > 2)
 		wlan_cfg_set_hw_macid(wlan_cfg_ctx, 2, 2);
 
-	wlan_cfg_ctx->base_hw_macid = 1;
-	/*Enable checksum offload by default*/
-	wlan_cfg_ctx->tcp_udp_checksumoffload = 1;
+	wlan_cfg_ctx->base_hw_macid = cfg_get(psoc, CFG_DP_BASE_HW_MAC_ID);
 
-	wlan_cfg_ctx->defrag_timeout_check = 1;
-	wlan_cfg_ctx->rx_defrag_min_timeout = WLAN_CFG_RX_DEFRAG_TIMEOUT;
+	wlan_cfg_ctx->lro_enabled = cfg_get(psoc, CFG_DP_LRO);
+	wlan_cfg_ctx->rx_hash = cfg_get(psoc, CFG_DP_RX_HASH);
+	wlan_cfg_ctx->tso_enabled = cfg_get(psoc, CFG_DP_TSO);
+	wlan_cfg_ctx->napi_enabled = cfg_get(psoc, CFG_DP_NAPI);
+	/*Enable checksum offload by default*/
+	wlan_cfg_ctx->tcp_udp_checksumoffload =
+			cfg_get(psoc, CFG_DP_TCP_UDP_CKSUM_OFFLOAD);
+
+	wlan_cfg_ctx->defrag_timeout_check =
+			cfg_get(psoc, CFG_DP_DEFRAG_TIMEOUT_CHECK);
+	wlan_cfg_ctx->rx_defrag_min_timeout =
+			cfg_get(psoc, CFG_DP_RX_DEFRAG_TIMEOUT);
+
+	wlan_cfg_ctx->wbm_release_ring = cfg_get(psoc,
+						 CFG_DP_WBM_RELEASE_RING);
+	wlan_cfg_ctx->tcl_cmd_ring = cfg_get(psoc,
+					     CFG_DP_TCL_CMD_RING);
+	wlan_cfg_ctx->tcl_status_ring = cfg_get(psoc,
+						CFG_DP_TCL_STATUS_RING);
+	wlan_cfg_ctx->reo_reinject_ring = cfg_get(psoc,
+						  CFG_DP_REO_REINJECT_RING);
+	wlan_cfg_ctx->rx_release_ring = cfg_get(psoc,
+						CFG_DP_RX_RELEASE_RING);
+	wlan_cfg_ctx->reo_exception_ring = cfg_get(psoc,
+						   CFG_DP_REO_EXCEPTION_RING);
+	wlan_cfg_ctx->reo_cmd_ring = cfg_get(psoc,
+					     CFG_DP_REO_CMD_RING);
+	wlan_cfg_ctx->reo_status_ring = cfg_get(psoc,
+						CFG_DP_REO_STATUS_RING);
+
+	wlan_cfg_ctx->rxdma_refill_ring = cfg_get(psoc,
+						  CFG_DP_RXDMA_REFILL_RING);
+
+	wlan_cfg_ctx->rxdma_err_dst_ring = cfg_get(psoc,
+						   CFG_DP_RXDMA_ERR_DST_RING);
 
 	return wlan_cfg_ctx;
 }
@@ -364,7 +298,7 @@ void wlan_cfg_soc_detach(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
 	qdf_mem_free(wlan_cfg_ctx);
 }
 
-struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_attach(void)
+struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_attach(void *psoc)
 {
 	struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx =
 		qdf_mem_malloc(sizeof(struct wlan_cfg_dp_pdev_ctxt));
@@ -372,10 +306,16 @@ struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_attach(void)
 	if (wlan_cfg_ctx == NULL)
 		return NULL;
 
-	wlan_cfg_ctx->rx_dma_buf_ring_size = RXDMA_BUF_RING_SIZE;
-	wlan_cfg_ctx->dma_mon_buf_ring_size = RXDMA_MONITOR_BUF_RING_SIZE;
-	wlan_cfg_ctx->dma_mon_dest_ring_size = RXDMA_MONITOR_DEST_RING_SIZE;
-	wlan_cfg_ctx->dma_mon_status_ring_size = RXDMA_MONITOR_STATUS_RING_SIZE;
+	wlan_cfg_ctx->rx_dma_buf_ring_size = cfg_get(psoc,
+					CFG_DP_RXDMA_BUF_RING);
+	wlan_cfg_ctx->dma_mon_buf_ring_size = cfg_get(psoc,
+					CFG_DP_RXDMA_MONITOR_BUF_RING);
+	wlan_cfg_ctx->dma_mon_dest_ring_size = cfg_get(psoc,
+					CFG_DP_RXDMA_MONITOR_DST_RING);
+	wlan_cfg_ctx->dma_mon_status_ring_size = cfg_get(psoc,
+					CFG_DP_RXDMA_MONITOR_STATUS_RING);
+	wlan_cfg_ctx->rxdma_monitor_desc_ring = cfg_get(psoc,
+					CFG_DP_RXDMA_MONITOR_DESC_RING);
 	wlan_cfg_ctx->num_mac_rings = NUM_RXDMA_RINGS_PER_PDEV;
 
 	return wlan_cfg_ctx;
@@ -652,6 +592,12 @@ int wlan_cfg_get_dma_mon_stat_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 	return  cfg->dma_mon_status_ring_size;
 }
 
+int
+wlan_cfg_get_dma_mon_desc_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
+{
+	return cfg->rxdma_monitor_desc_ring;
+}
+
 int wlan_cfg_get_rx_dma_buf_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {
 	return  cfg->rx_dma_buf_ring_size;
@@ -696,7 +642,7 @@ void wlan_cfg_set_dp_soc_nss_cfg(struct wlan_cfg_dp_soc_ctxt *cfg, int nss_cfg)
 {
 	cfg->nss_cfg = nss_cfg;
 	if (cfg->nss_cfg)
-		cfg->tx_comp_ring_size = NSS_TX_COMP_RING_SIZE;
+		cfg->tx_comp_ring_size = cfg->tx_comp_ring_size_nss;
 }
 
 int wlan_cfg_get_int_batch_threshold_tx(struct wlan_cfg_dp_soc_ctxt *cfg)
@@ -742,6 +688,66 @@ int wlan_cfg_get_rx_defrag_min_timeout(struct wlan_cfg_dp_soc_ctxt *cfg)
 int wlan_cfg_get_defrag_timeout_check(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->defrag_timeout_check;
+}
+
+int
+wlan_cfg_get_dp_soc_wbm_release_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->wbm_release_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_tcl_cmd_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->tcl_cmd_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_tcl_status_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->tcl_status_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_reo_reinject_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->reo_reinject_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_rx_release_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->rx_release_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_reo_exception_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->reo_exception_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_reo_cmd_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->reo_cmd_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_reo_status_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->reo_status_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_rxdma_refill_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->rxdma_refill_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->rxdma_err_dst_ring;
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
