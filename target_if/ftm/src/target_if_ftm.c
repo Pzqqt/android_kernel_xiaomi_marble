@@ -43,6 +43,7 @@ target_if_ftm_process_utf_event(ol_scn_t sc, uint8_t *event_buf, uint32_t len)
 	struct wmi_host_pdev_utf_event event;
 	struct wlan_lmac_if_ftm_rx_ops *ftm_rx_ops;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	uint32_t pdev_id;
 
 	psoc = target_if_get_psoc_from_scn_hdl(sc);
 	if (!psoc) {
@@ -64,11 +65,18 @@ target_if_ftm_process_utf_event(ol_scn_t sc, uint8_t *event_buf, uint32_t len)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	pdev = wlan_objmgr_get_pdev_by_id(psoc, event.pdev_id, WLAN_FTM_ID);
+	pdev_id = event.pdev_id;
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id, WLAN_FTM_ID);
 	if (!pdev) {
-		ftm_err("null pdev");
-		wlan_objmgr_psoc_release_ref(psoc, WLAN_FTM_ID);
-		return QDF_STATUS_E_INVAL;
+		pdev_id = TGT_WMI_PDEV_ID_SOC;
+		ftm_debug("Can't find pdev by pdev_id %d, try soc_id",
+			  event.pdev_id);
+		pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id, WLAN_FTM_ID);
+		if (!pdev) {
+			ftm_err("null pdev");
+			wlan_objmgr_psoc_release_ref(psoc, WLAN_FTM_ID);
+			return QDF_STATUS_E_INVAL;
+		}
 	}
 
 	ftm_rx_ops = target_if_ftm_get_rx_ops(psoc);

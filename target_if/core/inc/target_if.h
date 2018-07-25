@@ -30,6 +30,8 @@
 #include "wmi_unified_priv.h"
 #include "wmi_unified_param.h"
 
+#define TGT_WMI_PDEV_ID_SOC	0	/* WMI SOC ID */
+
 /* ASCII "TGT\0" */
 #define TGT_MAGIC 0x54575400
 
