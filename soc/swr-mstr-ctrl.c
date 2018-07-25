@@ -38,6 +38,8 @@
 #define SWR_REG_VAL_PACK(data, dev, id, reg)	\
 			((reg) | ((id) << 16) | ((dev) << 20) | ((data) << 24))
 
+#define SWR_INVALID_PARAM 0xFF
+
 /* pm runtime auto suspend timer in msecs */
 static int auto_suspend_timer = SWR_AUTO_SUSPEND_DELAY * 1000;
 module_param(auto_suspend_timer, int, 0664);
@@ -55,7 +57,6 @@ enum {
 	MASTER_ID_RX,
 	MASTER_ID_TX
 };
-#define MASTER_ID_MASK 0xF
 #define TRUE 1
 #define FALSE 0
 
@@ -320,36 +321,51 @@ static bool swrm_is_port_en(struct swr_master *mstr)
 	return !!(mstr->num_port);
 }
 
+static void copy_port_tables(struct swr_mstr_ctrl *swrm,
+				struct port_params *params)
+{
+	u8 i;
+	struct port_params *config = params;
+
+	for (i = 0; i < SWR_MSTR_PORT_LEN; i++) {
+		/* wsa uses single frame structure for all configurations */
+		if (!swrm->mport_cfg[i].port_en)
+			continue;
+		swrm->mport_cfg[i].sinterval = config[i].si;
+		swrm->mport_cfg[i].offset1 = config[i].off1;
+		swrm->mport_cfg[i].offset2 = config[i].off2;
+		swrm->mport_cfg[i].hstart = config[i].hstart;
+		swrm->mport_cfg[i].hstop = config[i].hstop;
+		swrm->mport_cfg[i].blk_pack_mode = config[i].bp_mode;
+		swrm->mport_cfg[i].blk_grp_count = config[i].bgp_ctrl;
+		swrm->mport_cfg[i].word_length = config[i].wd_len;
+		swrm->mport_cfg[i].lane_ctrl = config[i].lane_ctrl;
+	}
+}
 static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 {
-	u8 master_device_id;
-	int i;
+	struct port_params *params;
 
-	/* update device_id for tx/rx */
-	master_device_id = MASTER_ID_WSA;
-
-	switch (master_device_id & MASTER_ID_MASK) {
+	switch (swrm->master_id) {
 	case MASTER_ID_WSA:
-		/* get port params for wsa */
-		for (i = 0; i < SWR_MSTR_PORT_LEN; i++) {
-		/* wsa uses single frame structure for all configurations */
-			if (!swrm->mport_cfg[i].port_en)
-				continue;
-			swrm->mport_cfg[i].sinterval = wsa_frame_superset[i].si;
-			swrm->mport_cfg[i].offset1 = wsa_frame_superset[i].off1;
-			swrm->mport_cfg[i].offset2 = wsa_frame_superset[i].off2;
-		}
+		params = wsa_frame_superset;
 		break;
 	case MASTER_ID_RX:
-		/* get port params for rx */
+		/* Two RX tables for dsd and without dsd enabled */
+		if (swrm->mport_cfg[4].port_en)
+			params = rx_frame_params_dsd;
+		else
+			params = rx_frame_params;
 		break;
 	case MASTER_ID_TX:
-		/* get port params for tx */
+		params = tx_frame_params_superset;
 		break;
 	default: /* MASTER_GENERIC*/
 		/* computer generic frame parameters */
 		return -EINVAL;
 	}
+
+	copy_port_tables(swrm, params);
 	return 0;
 }
 
@@ -735,6 +751,7 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 	u32 reg[SWRM_MAX_PORT_REG];
 	u32 val[SWRM_MAX_PORT_REG];
 	int len = 0;
+	u8 hparams;
 	struct swr_mstr_ctrl *swrm = swr_get_ctrl_data(master);
 
 	if (!swrm) {
@@ -770,12 +787,53 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 					SWRS_DP_OFFSET_CONTROL_1_BANK(slv_id,
 								bank));
 
-			if (port_req->slave_port_id) {
+			if (mport->offset2 != SWR_INVALID_PARAM) {
 				reg[len] = SWRM_CMD_FIFO_WR_CMD;
 				val[len++] = SWR_REG_VAL_PACK(mport->offset2,
 						port_req->dev_num, 0x00,
 						SWRS_DP_OFFSET_CONTROL_2_BANK(
 							slv_id, bank));
+			}
+			if (mport->hstart != SWR_INVALID_PARAM
+				&& mport->hstop != SWR_INVALID_PARAM) {
+				hparams = (mport->hstart << 4) | mport->hstop;
+
+				reg[len] = SWRM_CMD_FIFO_WR_CMD;
+				val[len++] = SWR_REG_VAL_PACK(hparams,
+						port_req->dev_num, 0x00,
+						SWRS_DP_HCONTROL_BANK(slv_id,
+									bank));
+			}
+			if (mport->word_length != SWR_INVALID_PARAM) {
+				reg[len] = SWRM_CMD_FIFO_WR_CMD;
+				val[len++] =
+					SWR_REG_VAL_PACK(mport->word_length,
+						port_req->dev_num, 0x00,
+						SWRS_DP_BLOCK_CONTROL_1(slv_id));
+			}
+			if (mport->blk_pack_mode != SWR_INVALID_PARAM) {
+				reg[len] = SWRM_CMD_FIFO_WR_CMD;
+				val[len++] =
+					SWR_REG_VAL_PACK(mport->blk_pack_mode,
+					port_req->dev_num, 0x00,
+					SWRS_DP_BLOCK_CONTROL_3_BANK(slv_id,
+									bank));
+			}
+			if (mport->blk_grp_count != SWR_INVALID_PARAM) {
+				reg[len] = SWRM_CMD_FIFO_WR_CMD;
+				val[len++] =
+					 SWR_REG_VAL_PACK(mport->blk_grp_count,
+						port_req->dev_num, 0x00,
+						SWRS_DP_BLOCK_CONTROL_2_BANK(slv_id,
+									bank));
+			}
+			if (mport->lane_ctrl != SWR_INVALID_PARAM) {
+				reg[len] = SWRM_CMD_FIFO_WR_CMD;
+				val[len++] =
+					SWR_REG_VAL_PACK(mport->lane_ctrl,
+						port_req->dev_num, 0x00,
+						SWRS_DP_LANE_CONTROL_BANK(slv_id,
+									bank));
 			}
 			port_req->ch_en = port_req->req_ch;
 		}
@@ -790,11 +848,33 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 
 		reg[len] = SWRM_DP_PORT_CTRL_BANK(i + 1, bank);
 		val[len++] = value;
-
 		dev_dbg(swrm->dev, "%s: mport :%d, reg: 0x%x, val: 0x%x\n",
 			__func__, i,
 			(SWRM_DP_PORT_CTRL_BANK(i + 1, bank)), value);
 
+		if (mport->lane_ctrl != SWR_INVALID_PARAM) {
+			reg[len] = SWRM_DP_PORT_CTRL_2_BANK(i + 1, bank);
+			val[len++] = mport->lane_ctrl;
+		}
+		if (mport->word_length != SWR_INVALID_PARAM) {
+			reg[len] = SWRM_DP_BLOCK_CTRL_1(i + 1);
+			val[len++] = mport->word_length;
+		}
+
+		if (mport->blk_grp_count != SWR_INVALID_PARAM) {
+			reg[len] = SWRM_DP_BLOCK_CTRL2_BANK(i + 1, bank);
+			val[len++] = mport->blk_grp_count;
+		}
+		if (mport->hstart != SWR_INVALID_PARAM
+				&& mport->hstop != SWR_INVALID_PARAM) {
+			reg[len] = SWRM_DP_PORT_HCTRL_BANK(i + 1, bank);
+			hparams = (mport->hstart << 4) | mport->hstop;
+			val[len++] = hparams;
+		}
+		if (mport->blk_pack_mode != SWR_INVALID_PARAM) {
+			reg[len] = SWRM_DP_BLOCK_CTRL3_BANK(i + 1, bank);
+			val[len++] = mport->blk_pack_mode;
+		}
 		mport->ch_en = mport->req_ch;
 
 	}
@@ -826,7 +906,7 @@ static void swrm_apply_port_config(struct swr_master *master)
 static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 {
 	u8 bank;
-	u32 value, n_col;
+	u32 value, n_row, n_col;
 	int ret;
 	struct swr_mstr_ctrl *swrm = swr_get_ctrl_data(master);
 	int mask = (SWRM_MCP_FRAME_CTRL_BANK_ROW_CTRL_BMSK |
@@ -863,21 +943,22 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 		__func__, enable, swrm->num_cfg_devs);
 
 	if (enable) {
-		/* set Row = 48 and col = 16 */
+		/* set col = 16 */
 		n_col = SWR_MAX_COL;
 	} else {
 		/*
-		 * Do not change to 48x2 if there are still active ports
+		 * Do not change to col = 2 if there are still active ports
 		 */
 		if (!master->num_port)
 			n_col = SWR_MIN_COL;
 		else
 			n_col = SWR_MAX_COL;
 	}
-
+	/* Use default 50 * x, frame shape. Change based on mclk */
+	n_row = SWR_ROW_50;
 	value = swr_master_read(swrm, SWRM_MCP_FRAME_CTRL_BANK_ADDR(bank));
 	value &= (~mask);
-	value |= ((0 << SWRM_MCP_FRAME_CTRL_BANK_ROW_CTRL_SHFT) |
+	value |= ((n_row << SWRM_MCP_FRAME_CTRL_BANK_ROW_CTRL_SHFT) |
 		  (n_col << SWRM_MCP_FRAME_CTRL_BANK_COL_CTRL_SHFT) |
 		  (0 << SWRM_MCP_FRAME_CTRL_BANK_SSP_PERIOD_SHFT));
 	swr_master_write(swrm, SWRM_MCP_FRAME_CTRL_BANK_ADDR(bank), value);
@@ -885,7 +966,7 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 	dev_dbg(swrm->dev, "%s: regaddr: 0x%x, value: 0x%x\n", __func__,
 		SWRM_MCP_FRAME_CTRL_BANK_ADDR(bank), value);
 
-	enable_bank_switch(swrm, bank, SWR_MAX_ROW, n_col);
+	enable_bank_switch(swrm, bank, n_row, n_col);
 	inactive_bank = bank ? 0 : 1;
 
 	if (enable)
@@ -1288,7 +1369,7 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 {
 	int ret = 0;
 	u32 val;
-	u8 row_ctrl = SWR_MAX_ROW;
+	u8 row_ctrl = SWR_ROW_50;
 	u8 col_ctrl = SWR_MIN_COL;
 	u8 ssp_period = 1;
 	u8 retry_cmd_num = 3;
@@ -1374,6 +1455,12 @@ static int swrm_probe(struct platform_device *pdev)
 		ret = -EINVAL;
 		goto err_pdata_fail;
 	}
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,swr_master_id",
+				&swrm->master_id);
+	if (ret) {
+		dev_err(&pdev->dev, "%s: failed to get master id\n", __func__);
+		goto err_pdata_fail;
+	}
 	if (!(of_property_read_u32(pdev->dev.of_node,
 			"swrm-io-base", &swrm->swrm_base_reg)))
 		ret = of_property_read_u32(pdev->dev.of_node,
@@ -1412,7 +1499,11 @@ static int swrm_probe(struct platform_device *pdev)
 		ret = -EINVAL;
 		goto err_pdata_fail;
 	}
-
+	if (of_property_read_u32(pdev->dev.of_node,
+			"qcom,swr-clock-stop-mode0",
+			&swrm->clk_stop_mode0_supp)) {
+		swrm->clk_stop_mode0_supp = FALSE;
+	}
 	/* Parse soundwire port mapping */
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,swr-num-ports",
 				&num_ports);
@@ -1648,15 +1739,21 @@ static int swrm_runtime_resume(struct device *dev)
 			if (swrm_clk_request(swrm, true))
 				goto exit;
 		}
-		list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
-			ret = swr_device_up(swr_dev);
-			if (ret) {
-				dev_err(dev,
-					"%s: failed to wakeup swr dev %d\n",
-					__func__, swr_dev->dev_num);
-				swrm_clk_request(swrm, false);
-				goto exit;
+		if (!swrm->clk_stop_mode0_supp) {
+			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
+				ret = swr_device_up(swr_dev);
+				if (ret) {
+					dev_err(dev,
+						"%s: failed to wakeup swr dev %d\n",
+						__func__, swr_dev->dev_num);
+					swrm_clk_request(swrm, false);
+					goto exit;
+				}
 			}
+		} else {
+			/*wake up from clock stop*/
+			swr_master_write(swrm, SWRM_MCP_BUS_CTRL_ADDR, 0x2);
+			usleep_range(100, 105);
 		}
 		swr_master_write(swrm, SWRM_COMP_SW_RESET, 0x01);
 		swr_master_write(swrm, SWRM_COMP_SW_RESET, 0x01);
@@ -1693,16 +1790,23 @@ static int swrm_runtime_suspend(struct device *dev)
 			ret = -EBUSY;
 			goto exit;
 		}
-		swrm_clk_pause(swrm);
-		swr_master_write(swrm, SWRM_COMP_CFG_ADDR, 0x00);
-		list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
-			ret = swr_device_down(swr_dev);
-			if (ret) {
-				dev_err(dev,
-					"%s: failed to shutdown swr dev %d\n",
-					__func__, swr_dev->dev_num);
-				goto exit;
+		if (!swrm->clk_stop_mode0_supp) {
+			swrm_clk_pause(swrm);
+			swr_master_write(swrm, SWRM_COMP_CFG_ADDR, 0x00);
+			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
+				ret = swr_device_down(swr_dev);
+				if (ret) {
+					dev_err(dev,
+						"%s: failed to shutdown swr dev %d\n",
+						__func__, swr_dev->dev_num);
+					goto exit;
+				}
 			}
+		} else {
+			/* clock stop sequence */
+			swrm_cmd_fifo_wr_cmd(swrm, 0x2, 0xF, 0xF,
+					SWRS_SCP_CONTROL);
+			usleep_range(100, 105);
 		}
 		swrm_clk_request(swrm, false);
 	}
