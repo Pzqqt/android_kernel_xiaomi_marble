@@ -286,15 +286,6 @@ irqreturn_t hif_pci_legacy_ce_interrupt_handler(int irq, void *arg)
 	return IRQ_HANDLED;
 }
 
-static irqreturn_t hif_pci_msi_fw_handler(int irq, void *arg)
-{
-	struct hif_pci_softc *sc = (struct hif_pci_softc *)arg;
-
-	(irqreturn_t) hif_fw_interrupt_handler(sc->irq_event, arg);
-
-	return IRQ_HANDLED;
-}
-
 bool hif_pci_targ_is_present(struct hif_softc *scn, void *__iomem *mem)
 {
 	return 1;               /* FIX THIS */
@@ -842,29 +833,6 @@ int hif_pci_dump_registers(struct hif_softc *hif_ctx)
 	__hif_pci_dump_registers(scn);
 
 	return 0;
-}
-
-/*
- * Handler for a per-engine interrupt on a PARTICULAR CE.
- * This is used in cases where each CE has a private
- * MSI interrupt.
- */
-static irqreturn_t ce_per_engine_handler(int irq, void *arg)
-{
-	int CE_id = irq - MSI_ASSIGN_CE_INITIAL;
-
-	/*
-	 * NOTE: We are able to derive CE_id from irq because we
-	 * use a one-to-one mapping for CE's 0..5.
-	 * CE's 6 & 7 do not use interrupts at all.
-	 *
-	 * This mapping must be kept in sync with the mapping
-	 * used by firmware.
-	 */
-
-	ce_per_engine_service(arg, CE_id);
-
-	return IRQ_HANDLED;
 }
 
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON
@@ -2297,159 +2265,6 @@ end:
 	return ret;
 }
 
-static void wlan_tasklet_msi(unsigned long data)
-{
-	struct hif_tasklet_entry *entry = (struct hif_tasklet_entry *)data;
-	struct hif_pci_softc *sc = (struct hif_pci_softc *) entry->hif_handler;
-	struct hif_softc *scn = HIF_GET_SOFTC(sc);
-
-	if (scn->hif_init_done == false)
-		goto irq_handled;
-
-	if (qdf_atomic_read(&scn->link_suspended))
-		goto irq_handled;
-
-	qdf_atomic_inc(&scn->active_tasklet_cnt);
-
-	if (entry->id == HIF_MAX_TASKLET_NUM) {
-		/* the last tasklet is for fw IRQ */
-		(irqreturn_t)hif_fw_interrupt_handler(sc->irq_event, scn);
-		if (scn->target_status == TARGET_STATUS_RESET)
-			goto irq_handled;
-	} else if (entry->id < scn->ce_count) {
-		ce_per_engine_service(scn, entry->id);
-	} else {
-		HIF_ERROR("%s: ERROR - invalid CE_id = %d",
-		       __func__, entry->id);
-	}
-	return;
-
-irq_handled:
-	qdf_atomic_dec(&scn->active_tasklet_cnt);
-
-}
-
-/* deprecated */
-static int hif_configure_msi(struct hif_pci_softc *sc)
-{
-	int ret = 0;
-	int num_msi_desired;
-	int rv = -1;
-	struct hif_softc *scn = HIF_GET_SOFTC(sc);
-
-	HIF_TRACE("%s: E", __func__);
-
-	num_msi_desired = MSI_NUM_REQUEST; /* Multiple MSI */
-	if (num_msi_desired < 1) {
-		HIF_ERROR("%s: MSI is not configured", __func__);
-		return -EINVAL;
-	}
-
-	if (num_msi_desired > 1) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0))
-		rv = pci_enable_msi_range(sc->pdev, num_msi_desired,
-						num_msi_desired);
-#else
-		rv = pci_enable_msi_block(sc->pdev, num_msi_desired);
-#endif
-	}
-	HIF_TRACE("%s: num_msi_desired = %d, available_msi = %d",
-		  __func__, num_msi_desired, rv);
-
-	if (rv == 0 || rv >= HIF_MAX_TASKLET_NUM) {
-		int i;
-
-		sc->num_msi_intrs = HIF_MAX_TASKLET_NUM;
-		sc->tasklet_entries[HIF_MAX_TASKLET_NUM-1].hif_handler =
-			(void *)sc;
-		sc->tasklet_entries[HIF_MAX_TASKLET_NUM-1].id =
-			HIF_MAX_TASKLET_NUM;
-		tasklet_init(&sc->intr_tq, wlan_tasklet_msi,
-			 (unsigned long)&sc->tasklet_entries[
-			 HIF_MAX_TASKLET_NUM-1]);
-		ret = request_irq(sc->pdev->irq + MSI_ASSIGN_FW,
-				  hif_pci_msi_fw_handler,
-				  IRQF_SHARED, "wlan_pci", sc);
-		if (ret) {
-			HIF_ERROR("%s: request_irq failed", __func__);
-			goto err_intr;
-		}
-		for (i = 0; i <= scn->ce_count; i++) {
-			sc->tasklet_entries[i].hif_handler = (void *)sc;
-			sc->tasklet_entries[i].id = i;
-			tasklet_init(&sc->intr_tq, wlan_tasklet_msi,
-				 (unsigned long)&sc->tasklet_entries[i]);
-			ret = request_irq((sc->pdev->irq +
-					   i + MSI_ASSIGN_CE_INITIAL),
-					  ce_per_engine_handler, IRQF_SHARED,
-					  "wlan_pci", sc);
-			if (ret) {
-				HIF_ERROR("%s: request_irq failed", __func__);
-				goto err_intr;
-			}
-		}
-	} else if (rv > 0) {
-		HIF_TRACE("%s: use single msi", __func__);
-
-		ret = pci_enable_msi(sc->pdev);
-		if (ret < 0) {
-			HIF_ERROR("%s: single MSI allocation failed",
-				  __func__);
-			/* Try for legacy PCI line interrupts */
-			sc->num_msi_intrs = 0;
-		} else {
-			sc->num_msi_intrs = 1;
-			tasklet_init(&sc->intr_tq,
-				wlan_tasklet, (unsigned long)sc);
-			ret = request_irq(sc->pdev->irq,
-					 hif_pci_legacy_ce_interrupt_handler,
-					  IRQF_SHARED, "wlan_pci", sc);
-			if (ret) {
-				HIF_ERROR("%s: request_irq failed", __func__);
-				goto err_intr;
-			}
-		}
-	} else {
-		sc->num_msi_intrs = 0;
-		ret = -EIO;
-		HIF_ERROR("%s: do not support MSI, rv = %d", __func__, rv);
-	}
-	ret = pci_enable_msi(sc->pdev);
-	if (ret < 0) {
-		HIF_ERROR("%s: single MSI interrupt allocation failed",
-			  __func__);
-		/* Try for legacy PCI line interrupts */
-		sc->num_msi_intrs = 0;
-	} else {
-		sc->num_msi_intrs = 1;
-		tasklet_init(&sc->intr_tq, wlan_tasklet, (unsigned long)sc);
-		ret = request_irq(sc->pdev->irq,
-				  hif_pci_legacy_ce_interrupt_handler,
-				  IRQF_SHARED, "wlan_pci", sc);
-		if (ret) {
-			HIF_ERROR("%s: request_irq failed", __func__);
-			goto err_intr;
-		}
-	}
-
-	if (ret == 0) {
-		hif_write32_mb(sc, sc->mem + (SOC_CORE_BASE_ADDRESS |
-			  PCIE_INTR_ENABLE_ADDRESS),
-			  HOST_GROUP0_MASK);
-		hif_write32_mb(sc, sc->mem +
-			  PCIE_LOCAL_BASE_ADDRESS + PCIE_SOC_WAKE_ADDRESS,
-			  PCIE_SOC_WAKE_RESET);
-	}
-	HIF_TRACE("%s: X, ret = %d", __func__, ret);
-
-	return ret;
-
-err_intr:
-	if (sc->num_msi_intrs >= 1)
-		pci_disable_msi(sc->pdev);
-	return ret;
-}
-
 static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 {
 	int ret = 0;
@@ -3694,12 +3509,6 @@ int hif_configure_irq(struct hif_softc *scn)
 		goto end;
 	}
 
-	if (ENABLE_MSI) {
-		ret = hif_configure_msi(sc);
-		if (ret == 0)
-			goto end;
-	}
-	/* MSI failed. Try legacy irq */
 	switch (scn->target_info.target_type) {
 	case TARGET_TYPE_IPQ4019:
 		ret = hif_ahb_configure_legacy_irq(sc);
