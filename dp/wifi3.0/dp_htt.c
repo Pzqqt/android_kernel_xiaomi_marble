@@ -1671,6 +1671,9 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	if ((frame_type == HTT_STATS_FTYPE_TIDQ_DATA_SU) ||
 			(frame_type == HTT_STATS_FTYPE_TIDQ_DATA_MU))
 		ppdu_desc->frame_type = CDP_PPDU_FTYPE_DATA;
+	else if ((frame_type == HTT_STATS_FTYPE_SGEN_MU_BAR) ||
+		 (frame_type == HTT_STATS_FTYPE_SGEN_BAR))
+		ppdu_desc->frame_type = CDP_PPDU_FTYPE_BAR;
 	else
 		ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
 
@@ -1731,6 +1734,10 @@ static void dp_process_ppdu_stats_user_common_tlv(
 
 	tag_buf++;
 
+	if (HTT_PPDU_STATS_USER_COMMON_TLV_DELAYED_BA_GET(*tag_buf)) {
+		ppdu_user_desc->delayed_ba = 1;
+	}
+
 	if (HTT_PPDU_STATS_USER_COMMON_TLV_MCAST_GET(*tag_buf)) {
 		ppdu_user_desc->is_mcast = true;
 		ppdu_user_desc->mpdu_tried_mcast =
@@ -1748,6 +1755,12 @@ static void dp_process_ppdu_stats_user_common_tlv(
 	ppdu_user_desc->frame_ctrl =
 		HTT_PPDU_STATS_USER_COMMON_TLV_FRAME_CTRL_GET(*tag_buf);
 	ppdu_desc->frame_ctrl = ppdu_user_desc->frame_ctrl;
+
+	if (ppdu_user_desc->delayed_ba) {
+		ppdu_user_desc->mpdu_success = 0;
+		ppdu_user_desc->mpdu_tried_mcast = 0;
+		ppdu_user_desc->mpdu_tried_ucast = 0;
+	}
 }
 
 

@@ -206,10 +206,12 @@ enum cdp_host_txrx_stats {
  * cdp_ppdu_ftype: PPDU Frame Type
  * @CDP_PPDU_FTYPE_DATA: SU or MU Data Frame
  * @CDP_PPDU_FTYPE_CTRL: Control/Management Frames
+ * @CDP_PPDU_FTYPE_BAR: SU or MU BAR frames
 */
 enum cdp_ppdu_ftype {
 	CDP_PPDU_FTYPE_CTRL,
 	CDP_PPDU_FTYPE_DATA,
+	CDP_PPDU_FTYPE_BAR,
 	CDP_PPDU_FTYPE_MAX
 };
 
@@ -924,6 +926,7 @@ struct cdp_tx_sojourn_stats {
  * @gi: guard interval 800/400/1600/3200 ns
  * @dcm: dcm
  * @ldpc: ldpc
+ * @delayed_ba: delayed ba bit
  * @ppdu_type: SU/MU_MIMO/MU_OFDMA/MU_MIMO_OFDMA/UL_TRIG/BURST_BCN/UL_BSR_RESP/
  * UL_BSR_TRIG/UNKNOWN
  * @ba_seq_no: Block Ack sequence number
@@ -966,7 +969,8 @@ struct cdp_tx_completion_ppdu_user {
 		 preamble:4,
 		 gi:4,
 		 dcm:1,
-		 ldpc:1;
+		 ldpc:1,
+		 delayed_ba:1;
 	uint32_t ba_seq_no;
 	uint32_t ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
 	uint32_t start_seq;
