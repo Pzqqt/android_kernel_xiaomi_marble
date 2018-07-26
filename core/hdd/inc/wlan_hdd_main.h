@@ -1632,36 +1632,6 @@ enum hdd_sta_smps_param {
 };
 
 /**
- * tos - Type of service requested by the application
- * TOS_BK: Back ground traffic
- * TOS_BE: Best effort traffic
- * TOS_VI: Video traffic
- * TOS_VO: Voice traffic
- */
-enum tos {
-	TOS_BK = 0,
-	TOS_BE = 1,
-	TOS_VI = 2,
-	TOS_VO = 3,
-};
-
-#define HDD_AC_BK_BIT                   1
-#define HDD_AC_BE_BIT                   2
-#define HDD_AC_VI_BIT                   4
-#define HDD_AC_VO_BIT                   8
-
-#define HDD_MAX_OFF_CHAN_TIME_FOR_VO    20
-#define HDD_MAX_OFF_CHAN_TIME_FOR_VI    20
-#define HDD_MAX_OFF_CHAN_TIME_FOR_BE    40
-#define HDD_MAX_OFF_CHAN_TIME_FOR_BK    40
-
-#define HDD_MAX_AC                      4
-#define HDD_MAX_OFF_CHAN_ENTRIES        2
-
-#define HDD_AC_BIT_INDX                 0
-#define HDD_DWELL_TIME_INDX             1
-
-/**
  * enum RX_OFFLOAD - Receive offload modes
  * @CFG_LRO_ENABLED: Large Rx offload
  * @CFG_GRO_ENABLED: Generic Rx Offload
@@ -2932,22 +2902,6 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void);
 bool hdd_set_connection_in_progress(bool value);
 
 /**
- * wlan_hdd_sap_get_valid_channellist() - Get SAPs valid channel list
- * @ap_adapter: adapter
- * @channel_count: valid channel count
- * @channel_list: valid channel list
- * @band: frequency band
- *
- * This API returns valid channel list for SAP after removing nol and
- * channel which lies outside of configuration.
- *
- * Return: Zero on success, non-zero on failure
- */
-int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
-				       uint32_t *channel_count,
-				       uint8_t *channel_list,
-				       enum band_info band);
-/**
  * wlan_hdd_init_chan_info() - initialize channel info variables
  * @hdd_ctx: hdd ctx
  *
@@ -3210,19 +3164,6 @@ void hdd_dp_trace_init(struct hdd_config *config) {}
 #endif
 
 void hdd_set_rx_mode_rps(bool enable);
-
-/**
- * hdd_set_limit_off_chan_for_tos() - set limit off-chan command parameters
- * @adapter: pointer adapter context
- * @tos: type of service
- * @status: status of the traffic (active/inactive)
- *
- * This function updates the limit off-channel command parameters to WMA
- *
- * Return: 0 on success or non zero value on failure
- */
-int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
-		bool is_tos_active);
 
 /**
  * hdd_drv_ops_inactivity_handler() - Timeout handler for driver ops

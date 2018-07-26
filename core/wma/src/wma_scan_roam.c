@@ -2853,6 +2853,37 @@ void wma_set_ric_req(tp_wma_handle wma, void *msg, uint8_t is_add_ts)
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
+#ifdef FEATURE_RSSI_MONITOR
+/**
+ * wma_set_rssi_monitoring() - set rssi monitoring
+ * @handle: WMA handle
+ * @req: rssi monitoring request structure
+ *
+ * This function reads the incoming @req and fill in the destination
+ * WMI structure and send down the rssi monitoring configs down to the firmware
+ *
+ * Return: 0 on success; error number otherwise
+ */
+QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
+				   struct rssi_monitor_req *req)
+{
+	struct rssi_monitor_param params = {0};
+
+	if (!wma) {
+		WMA_LOGE("%s: wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	params.request_id = req->request_id;
+	params.session_id = req->session_id;
+	params.min_rssi = req->min_rssi;
+	params.max_rssi = req->max_rssi;
+	params.control = req->control;
+
+	return wmi_unified_set_rssi_monitoring_cmd(wma->wmi_handle,
+						   &params);
+}
+
 /**
  * wma_rssi_breached_event_handler() - rssi breached event handler
  * @handle: wma handle
@@ -2890,13 +2921,14 @@ int wma_rssi_breached_event_handler(void *handle,
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->bssid, rssi.curr_bssid.bytes);
 
 	WMA_LOGD("%s: req_id: %u vdev_id: %d curr_rssi: %d", __func__,
-		rssi.request_id, rssi.session_id, rssi.curr_rssi);
+		 rssi.request_id, rssi.session_id, rssi.curr_rssi);
 	WMA_LOGI("%s: curr_bssid: %pM", __func__, rssi.curr_bssid.bytes);
 
 	mac->sme.rssi_threshold_breached_cb(mac->hdd_handle, &rssi);
 	WMA_LOGD("%s: Invoke HDD rssi breached callback", __func__);
 	return 0;
 }
+#endif /* FEATURE_RSSI_MONITOR */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
@@ -5266,37 +5298,6 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		break;
 	}
 	return 0;
-}
-
-
-/**
- * wma_set_rssi_monitoring() - set rssi monitoring
- * @handle: WMA handle
- * @req: rssi monitoring request structure
- *
- * This function reads the incoming @req and fill in the destination
- * WMI structure and send down the rssi monitoring configs down to the firmware
- *
- * Return: 0 on success; error number otherwise
- */
-QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
-					struct rssi_monitor_req *req)
-{
-	struct rssi_monitor_param params = {0};
-
-	if (!wma) {
-		WMA_LOGE("%s: wma handle is NULL", __func__);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	 params.request_id = req->request_id;
-	 params.session_id = req->session_id;
-	 params.min_rssi = req->min_rssi;
-	 params.max_rssi = req->max_rssi;
-	 params.control = req->control;
-
-	return wmi_unified_set_rssi_monitoring_cmd(wma->wmi_handle,
-						&params);
 }
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION

@@ -910,12 +910,27 @@ QDF_STATUS sme_ap_disable_intra_bss_fwd(tHalHandle hHal, uint8_t sessionId,
 QDF_STATUS sme_get_channel_bonding_mode5_g(tHalHandle hHal, uint32_t *mode);
 QDF_STATUS sme_get_channel_bonding_mode24_g(tHalHandle hHal, uint32_t *mode);
 
-#ifdef WLAN_FEATURE_STATS_EXT
+/**
+ * sme_send_unit_test_cmd() - send unit test command to lower layer
+ * @session_id: sme session id to be filled while forming the command
+ * @module_id: module id given by user to be filled in the command
+ * @arg_count: number of argument count
+ * @arg: pointer to argument list
+ *
+ * This API exposed to HDD layer which takes the argument from user and sends
+ * down to lower layer for further processing
+ *
+ * Return: QDF_STATUS based on overall success
+ */
+QDF_STATUS sme_send_unit_test_cmd(uint32_t vdev_id, uint32_t module_id,
+				  uint32_t arg_count, uint32_t *arg);
+
 typedef struct sStatsExtRequestReq {
 	uint32_t request_data_len;
 	uint8_t *request_data;
 } tStatsExtRequestReq, *tpStatsExtRequestReq;
 
+#ifdef WLAN_FEATURE_STATS_EXT
 /**
  * sme_stats_ext_register_callback() - Register stats ext callback
  * @mac_handle: Opaque handle to the MAC context
@@ -951,23 +966,19 @@ void sme_stats_ext2_register_callback(tHalHandle hal_handle,
 
 QDF_STATUS sme_stats_ext_request(uint8_t session_id,
 				 tpStatsExtRequestReq input);
+#else
+static inline void
+sme_stats_ext_register_callback(mac_handle_t mac_handle,
+				stats_ext_cb callback)
+{
+}
+
+static inline void
+sme_stats_ext2_register_callback(tHalHandle hal_handle,
+				 stats_ext2_cb callback)
+{
+}
 #endif /* WLAN_FEATURE_STATS_EXT */
-
-/**
- * sme_send_unit_test_cmd() - send unit test command to lower layer
- * @session_id: sme session id to be filled while forming the command
- * @module_id: module id given by user to be filled in the command
- * @arg_count: number of argument count
- * @arg: pointer to argument list
- *
- * This API exposed to HDD layer which takes the argument from user and sends
- * down to lower layer for further processing
- *
- * Return: QDF_STATUS based on overall success
- */
-QDF_STATUS sme_send_unit_test_cmd(uint32_t vdev_id, uint32_t module_id,
-				  uint32_t arg_count, uint32_t *arg);
-
 QDF_STATUS sme_update_dfs_scan_mode(tHalHandle hHal,
 		uint8_t sessionId,
 		uint8_t allowDFSChannelRoam);
@@ -1182,6 +1193,7 @@ QDF_STATUS sme_disable_uapsd_for_ac(uint8_t sta_id,
 				       sme_ac_enum_type ac,
 				       uint32_t sessionId);
 
+#ifdef FEATURE_RSSI_MONITOR
 QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 					struct rssi_monitor_req *input);
 
@@ -1196,7 +1208,14 @@ QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
  */
 QDF_STATUS sme_set_rssi_threshold_breached_cb(mac_handle_t mac_handle,
 					      rssi_threshold_breached_cb cb);
-
+#else /* FEATURE_RSSI_MONITOR */
+static inline
+QDF_STATUS sme_set_rssi_threshold_breached_cb(mac_handle_t mac_handle,
+					      rssi_threshold_breached_cb cb)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /**
  * sme_reset_rssi_threshold_breached_cb() - Reset RSSI threshold breached
  *                                          callback

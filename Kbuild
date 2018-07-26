@@ -166,6 +166,46 @@ ifeq ($(CONFIG_WLAN_FEATURE_PACKET_FILTERING), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_packet_filter.o
 endif
 
+ifeq ($(CONFIG_FEATURE_RSSI_MONITOR), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_rssi_monitor.o
+endif
+
+ifeq ($(CONFIG_FEATURE_BSS_TRANSITION), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_bss_transition.o
+endif
+
+ifeq ($(CONFIG_FEATURE_STATION_INFO), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_station_info.o
+endif
+
+ifeq ($(CONFIG_FEATURE_TX_POWER), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_tx_power.o
+endif
+
+ifeq ($(CONFIG_FEATURE_OTA_TEST), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_ota_test.o
+endif
+
+ifeq ($(CONFIG_FEATURE_ACTIVE_TOS), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_active_tos.o
+endif
+
+ifeq ($(CONFIG_FEATURE_SAR_LIMITS), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sar_limits.o
+endif
+
+ifeq ($(CONFIG_FEATURE_CONCURRENCY_MATRIX), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_concurrency_matrix.o
+endif
+
+ifeq ($(CONFIG_FEATURE_SAP_COND_CHAN_SWITCH), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sap_cond_chan_switch.o
+endif
+
+ifeq ($(CONFIG_FEATURE_P2P_LISTEN_OFFLOAD), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_p2p_listen_offload.o
+endif
+
 ########### Driver Synchronization Core (DSC) ###########
 DSC_DIR := components/dsc
 DSC_INC_DIR := $(DSC_DIR)/inc
@@ -2093,11 +2133,22 @@ ifeq ($(CONFIG_QCA6290_11AX), y)
 cppflags-y += -DQCA_WIFI_QCA6290_11AX
 endif
 
-
 cppflags-$(CONFIG_WLAN_FEATURE_11AX) += -DWLAN_FEATURE_11AX
 cppflags-$(CONFIG_WLAN_FEATURE_11AX) += -DWLAN_FEATURE_11AX_BSS_COLOR
 
 cppflags-$(CONFIG_LITHIUM) += -DFEATURE_AST
+
+# Vendor Commands
+cppflags-$(CONFIG_FEATURE_RSSI_MONITOR) += -DFEATURE_RSSI_MONITOR
+cppflags-$(CONFIG_FEATURE_BSS_TRANSITION) += -DFEATURE_BSS_TRANSITION
+cppflags-$(CONFIG_FEATURE_STATION_INFO) += -DFEATURE_STATION_INFO
+cppflags-$(CONFIG_FEATURE_TX_POWER) += -DFEATURE_TX_POWER
+cppflags-$(CONFIG_FEATURE_OTA_TEST) += -DFEATURE_OTA_TEST
+cppflags-$(CONFIG_FEATURE_ACTIVE_TOS) += -DFEATURE_ACTIVE_TOS
+cppflags-$(CONFIG_FEATURE_SAR_LIMITS) += -DFEATURE_SAR_LIMITS
+cppflags-$(CONFIG_FEATURE_CONCURRENCY_MATRIX) += -DFEATURE_CONCURRENCY_MATRIX
+cppflags-$(CONFIG_FEATURE_SAP_COND_CHAN_SWITCH) += -DFEATURE_SAP_COND_CHAN_SWITCH
+cppflags-$(CONFIG_FEATURE_P2P_LISTEN_OFFLOAD) += -DFEATURE_P2P_LISTEN_OFFLOAD
 
 # Dummy flag for WIN/MCL converged data path compilation
 cppflags-y += -DDP_PRINT_ENABLE=0

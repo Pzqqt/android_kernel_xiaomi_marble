@@ -1094,8 +1094,17 @@ QDF_STATUS wma_set_tdls_offchan_mode(WMA_HANDLE wma_handle,
 void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id);
 void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id);
 
+#ifdef FEATURE_RSSI_MONITOR
 int wma_rssi_breached_event_handler(void *handle,
 				u_int8_t  *cmd_param_info, u_int32_t len);
+#else /* FEATURE_RSSI_MONITOR */
+static inline
+int wma_rssi_breached_event_handler(void *handle,
+				u_int8_t  *cmd_param_info, u_int32_t len)
+{
+	return 0;
+}
+#endif /* FEATURE_RSSI_MONITOR */
 
 QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 				   struct vdev_ie_info *ie_info);

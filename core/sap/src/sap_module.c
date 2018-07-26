@@ -1525,6 +1525,7 @@ QDF_STATUS wlan_sap_update_next_channel(struct sap_context *sap_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_SAP_COND_CHAN_SWITCH
 QDF_STATUS wlan_sap_set_pre_cac_status(struct sap_context *sap_ctx,
 				       bool status, tHalHandle handle)
 {
@@ -1561,6 +1562,7 @@ QDF_STATUS wlan_sap_set_chan_before_pre_cac(struct sap_context *sap_ctx,
 	sap_ctx->chan_before_pre_cac = chan_before_pre_cac;
 	return QDF_STATUS_SUCCESS;
 }
+#endif /* FEATURE_SAP_COND_CHAN_SWITCH */
 
 QDF_STATUS wlan_sap_set_pre_cac_complete_status(struct sap_context *sap_ctx,
 						bool status)

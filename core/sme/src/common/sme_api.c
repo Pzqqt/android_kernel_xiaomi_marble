@@ -12995,35 +12995,6 @@ QDF_STATUS sme_set_nud_debug_stats_cb(tHalHandle hal,
 	return status;
 }
 
-QDF_STATUS sme_set_rssi_threshold_breached_cb(mac_handle_t mac_handle,
-					      rssi_threshold_breached_cb cb)
-{
-	QDF_STATUS status;
-	tpAniSirGlobal mac;
-
-	mac = MAC_CONTEXT(mac_handle);
-	if (!mac) {
-		sme_err("Invalid mac context");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("sme_acquire_global_lock failed!(status=%d)",
-			status);
-		return status;
-	}
-
-	mac->sme.rssi_threshold_breached_cb = cb;
-	sme_release_global_lock(&mac->sme);
-	return status;
-}
-
-QDF_STATUS sme_reset_rssi_threshold_breached_cb(mac_handle_t mac_handle)
-{
-	return sme_set_rssi_threshold_breached_cb(mac_handle, NULL);
-}
-
 /**
  * sme_is_any_session_in_connected_state() - SME wrapper API to
  * check if any session is in connected state or not.
@@ -13066,6 +13037,7 @@ QDF_STATUS sme_set_chip_pwr_save_fail_cb(mac_handle_t mac_handle,
 	return status;
 }
 
+#ifdef FEATURE_RSSI_MONITOR
 /**
  * sme_set_rssi_monitoring() - set rssi monitoring
  * @hal: global hal handle
@@ -13111,6 +13083,36 @@ QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 	sme_release_global_lock(&mac->sme);
 
 	return status;
+}
+
+QDF_STATUS sme_set_rssi_threshold_breached_cb(mac_handle_t mac_handle,
+					      rssi_threshold_breached_cb cb)
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac;
+
+	mac = MAC_CONTEXT(mac_handle);
+	if (!mac) {
+		sme_err("Invalid mac context");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("sme_acquire_global_lock failed!(status=%d)",
+			status);
+		return status;
+	}
+
+	mac->sme.rssi_threshold_breached_cb = cb;
+	sme_release_global_lock(&mac->sme);
+	return status;
+}
+#endif /* FEATURE_RSSI_MONITOR */
+
+QDF_STATUS sme_reset_rssi_threshold_breached_cb(mac_handle_t mac_handle)
+{
+	return sme_set_rssi_threshold_breached_cb(mac_handle, NULL);
 }
 
 /*
@@ -15708,6 +15710,16 @@ QDF_STATUS sme_send_limit_off_channel_params(tHalHandle hal, uint8_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+uint32_t sme_unpack_rsn_ie(tHalHandle hal, uint8_t *buf,
+			   uint8_t buf_len, tDot11fIERSN *rsn_ie,
+			   bool append_ie)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	return dot11f_unpack_ie_rsn(mac_ctx, buf, buf_len, rsn_ie, append_ie);
+}
+
+#ifdef FEATURE_BSS_TRANSITION
 /**
  * sme_get_status_for_candidate() - Get bss transition status for candidate
  * @hal: Handle for HAL
@@ -15806,15 +15818,6 @@ static bool sme_get_status_for_candidate(tHalHandle hal,
 	return false;
 }
 
-uint32_t sme_unpack_rsn_ie(tHalHandle hal, uint8_t *buf,
-				  uint8_t buf_len, tDot11fIERSN *rsn_ie,
-				  bool append_ie)
-{
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-
-	return dot11f_unpack_ie_rsn(mac_ctx, buf, buf_len, rsn_ie, append_ie);
-}
-
 /**
  * wlan_hdd_get_bss_transition_status() - get bss transition status all cadidates
  * @adapter : Pointer to adapter
@@ -15896,6 +15899,7 @@ free:
 
 	return status;
 }
+#endif /* FEATURE_BSS_TRANSITION */
 
 void sme_enable_roaming_on_connected_sta(tHalHandle hal)
 {

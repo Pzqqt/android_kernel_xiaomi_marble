@@ -369,19 +369,6 @@ void wlan_hdd_cfg80211_extscan_callback(hdd_handle_t hdd_handle,
 void wlan_hdd_rso_cmd_status_cb(hdd_handle_t hdd_handle,
 				struct rso_cmd_status *rso_status);
 
-/**
- * hdd_rssi_threshold_breached() - rssi breached NL event
- * @hdd_handle: HDD handle
- * @data: rssi breached event data
- *
- * This function reads the rssi breached event %data and fill in the skb with
- * NL attributes and send up the NL event.
- *
- * Return: none
- */
-void hdd_rssi_threshold_breached(hdd_handle_t hdd_handle,
-				 struct rssi_breach_event *data);
-
 struct cfg80211_bss *
 wlan_hdd_cfg80211_update_bss_list(struct hdd_adapter *adapter,
 				  tSirMacAddr bssid);

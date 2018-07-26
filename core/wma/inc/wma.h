@@ -1729,8 +1729,17 @@ QDF_STATUS wma_update_vdev_tbl(tp_wma_handle wma_handle, uint8_t vdev_id,
 void wma_send_flush_logs_to_fw(tp_wma_handle wma_handle);
 void wma_log_completion_timeout(void *data);
 
+#ifdef FEATURE_RSSI_MONITOR
 QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
-					struct rssi_monitor_req *req);
+				   struct rssi_monitor_req *req);
+#else /* FEATURE_RSSI_MONITOR */
+static inline
+QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
+				   struct rssi_monitor_req *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_RSSI_MONITOR */
 
 QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 		struct wmi_pcl_chan_weights *msg);

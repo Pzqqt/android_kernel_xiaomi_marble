@@ -1690,6 +1690,7 @@ QDF_STATUS wma_set_smps_params(tp_wma_handle wma, uint8_t vdev_id,
 	return ret;
 }
 
+#ifdef FEATURE_TX_POWER
 /**
  * wma_set_tx_power_scale() - set tx power scale
  * @vdev_id: vdev id
@@ -1751,3 +1752,5 @@ QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value)
 
 	return ret;
 }
+#endif /* FEATURE_TX_POWER */
+

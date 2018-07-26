@@ -124,30 +124,6 @@ int wlan_hdd_set_power_save(struct hdd_adapter *adapter,
 	struct p2p_ps_config *ps_config);
 
 /**
- * wlan_hdd_listen_offload_start() - hdd set listen offload start
- * @adapter:  adapter context
- * @params:   listen offload parameters
- *
- * This function sets listen offload start parameters.
- *
- * Return: 0 - success
- *    others - failure
- */
-int wlan_hdd_listen_offload_start(struct hdd_adapter *adapter,
-	struct sir_p2p_lo_start *params);
-
-/**
- * wlan_hdd_listen_offload_stop() - hdd set listen offload stop
- * @adapter:  adapter context
- *
- * This function sets listen offload stop parameters.
- *
- * Return: 0 - success
- *    others - failure
- */
-int wlan_hdd_listen_offload_stop(struct hdd_adapter *adapter);
-
-/**
  * wlan_hdd_set_mas() - Function to set MAS value to FW
  * @adapter:            Pointer to HDD adapter
  * @mas_value:          0-Disable, 1-Enable MAS

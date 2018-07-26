@@ -138,6 +138,7 @@
 #include "wlan_mlme_main.h"
 #include "wlan_p2p_cfg_api.h"
 #include "wlan_tdls_cfg_api.h"
+#include <wlan_hdd_rssi_monitor.h>
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -298,13 +299,6 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_IPA] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_ACTION_OUI] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_CONFIG] = {QDF_TRACE_LEVEL_ALL},
-};
-
-int limit_off_chan_tbl[HDD_MAX_AC][HDD_MAX_OFF_CHAN_ENTRIES] = {
-	{ HDD_AC_BK_BIT, HDD_MAX_OFF_CHAN_TIME_FOR_BK },
-	{ HDD_AC_BE_BIT, HDD_MAX_OFF_CHAN_TIME_FOR_BE },
-	{ HDD_AC_VI_BIT, HDD_MAX_OFF_CHAN_TIME_FOR_VI },
-	{ HDD_AC_VO_BIT, HDD_MAX_OFF_CHAN_TIME_FOR_VO },
 };
 
 struct notifier_block hdd_netdev_notifier;
@@ -14127,76 +14121,6 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
 	}
 
 	return 0;
-}
-
-/**
- * hdd_set_limit_off_chan_for_tos() - set limit off-channel command parameters
- * @adapter - HDD adapter
- * @tos - type of service
- * @status - status of the traffic
- *
- * Return: 0 on success and non zero value on failure
- */
-
-int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
-		bool is_tos_active)
-{
-	int ac_bit;
-	struct hdd_context *hdd_ctx;
-	uint32_t max_off_chan_time = 0;
-	QDF_STATUS status;
-	int ret;
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-
-	if (ret < 0) {
-		hdd_err("failed to set limit off chan params");
-		return ret;
-	}
-
-	ac_bit = limit_off_chan_tbl[tos][HDD_AC_BIT_INDX];
-
-	if (is_tos_active)
-		adapter->active_ac |= ac_bit;
-	else
-		adapter->active_ac &= ~ac_bit;
-
-	if (adapter->active_ac) {
-		if (adapter->active_ac & HDD_AC_VO_BIT) {
-			max_off_chan_time =
-				limit_off_chan_tbl[TOS_VO][HDD_DWELL_TIME_INDX];
-			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
-					PM_LATENCY);
-		} else if (adapter->active_ac & HDD_AC_VI_BIT) {
-			max_off_chan_time =
-				limit_off_chan_tbl[TOS_VI][HDD_DWELL_TIME_INDX];
-			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
-					PM_LATENCY);
-		} else {
-			/*ignore this command if only BE/BK is active */
-			is_tos_active = false;
-			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
-					hdd_ctx->config->conc_system_pref);
-		}
-	} else {
-		/* No active tos */
-		policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
-				hdd_ctx->config->conc_system_pref);
-	}
-
-	status = sme_send_limit_off_channel_params(hdd_ctx->mac_handle,
-						   adapter->session_id,
-						   is_tos_active,
-						   max_off_chan_time,
-						   hdd_ctx->config->nRestTimeConc,
-						   true);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("failed to set limit off chan params");
-		ret = -EINVAL;
-	}
-
-	return ret;
 }
 
 /**

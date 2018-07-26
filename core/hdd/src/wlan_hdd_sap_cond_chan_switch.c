@@ -1,0 +1,518 @@
+/*
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/**
+ * DOC: wlan_hdd_sap_cond_chan_switch.c
+ *
+ * WLAN SAP conditional channel switch functions
+ *
+ */
+
+#include <wlan_hdd_includes.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/etherdevice.h>
+#include <linux/if_ether.h>
+#include <cds_utils.h>
+#include <qdf_str.h>
+#include <wlan_hdd_sap_cond_chan_switch.h>
+
+/**
+ * wlan_hdd_set_pre_cac_status() - Set the pre cac status
+ * @pre_cac_adapter: AP adapter used for pre cac
+ * @status: Status (true or false)
+ * @handle: Global handle
+ *
+ * Sets the status of pre cac i.e., whether the pre cac is active or not
+ *
+ * Return: Zero on success, non-zero on failure
+ */
+static int wlan_hdd_set_pre_cac_status(struct hdd_adapter *pre_cac_adapter,
+				       bool status, mac_handle_t handle)
+{
+	QDF_STATUS ret;
+
+	ret = wlan_sap_set_pre_cac_status(
+		WLAN_HDD_GET_SAP_CTX_PTR(pre_cac_adapter), status, handle);
+	if (QDF_IS_STATUS_ERROR(ret))
+		return -EINVAL;
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_set_chan_before_pre_cac() - Save the channel before pre cac
+ * @ap_adapter: AP adapter
+ * @chan_before_pre_cac: Channel
+ *
+ * Saves the channel which the AP was beaconing on before moving to the pre
+ * cac channel. If radar is detected on the pre cac channel, this saved
+ * channel will be used for AP operations.
+ *
+ * Return: Zero on success, non-zero on failure
+ */
+static int wlan_hdd_set_chan_before_pre_cac(struct hdd_adapter *ap_adapter,
+					    uint8_t chan_before_pre_cac)
+{
+	QDF_STATUS ret;
+
+	ret = wlan_sap_set_chan_before_pre_cac(
+		WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter), chan_before_pre_cac);
+	if (QDF_IS_STATUS_ERROR(ret))
+		return -EINVAL;
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_validate_and_get_pre_cac_ch() - Validate and get pre cac channel
+ * @hdd_ctx: HDD context
+ * @ap_adapter: AP adapter
+ * @channel: Channel requested by userspace
+ * @pre_cac_chan: Pointer to the pre CAC channel
+ *
+ * Validates the channel provided by userspace. If user provided channel 0,
+ * a valid outdoor channel must be selected from the regulatory channel.
+ *
+ * Return: Zero on success and non zero value on error
+ */
+static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
+						struct hdd_adapter *ap_adapter,
+						uint8_t channel,
+						uint8_t *pre_cac_chan)
+{
+	uint32_t i;
+	QDF_STATUS status;
+	uint32_t weight_len = 0;
+	uint32_t len = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+	uint8_t channel_list[QDF_MAX_NUM_CHAN] = {0};
+	uint8_t pcl_weights[QDF_MAX_NUM_CHAN] = {0};
+	mac_handle_t mac_handle;
+
+	if (channel == 0) {
+		/* Channel is not obtained from PCL because PCL may not have
+		 * the entire channel list. For example: if SAP is up on
+		 * channel 6 and PCL is queried for the next SAP interface,
+		 * if SCC is preferred, the PCL will contain only the channel
+		 * 6. But, we are in need of a DFS channel. So, going with the
+		 * first channel from the valid channel list.
+		 */
+		status = policy_mgr_get_valid_chans(hdd_ctx->hdd_psoc,
+						    channel_list, &len);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Failed to get channel list");
+			return -EINVAL;
+		}
+		policy_mgr_update_with_safe_channel_list(hdd_ctx->hdd_psoc,
+							 channel_list, &len,
+							 pcl_weights,
+							 weight_len);
+		for (i = 0; i < len; i++) {
+			if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
+					       channel_list[i])) {
+				*pre_cac_chan = channel_list[i];
+				break;
+			}
+		}
+		if (*pre_cac_chan == 0) {
+			hdd_err("unable to find outdoor channel");
+			return -EINVAL;
+		}
+	} else {
+		/* Only when driver selects a channel, check is done for
+		 * unnsafe and NOL channels. When user provides a fixed channel
+		 * the user is expected to take care of this.
+		 */
+		mac_handle = hdd_ctx->mac_handle;
+		if (!sme_is_channel_valid(mac_handle, channel) ||
+		    !wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, channel)) {
+			hdd_err("Invalid channel for pre cac:%d", channel);
+			return -EINVAL;
+		}
+		*pre_cac_chan = channel;
+	}
+	hdd_debug("selected pre cac channel:%d", *pre_cac_chan);
+	return 0;
+}
+
+/**
+ * wlan_hdd_request_pre_cac() - Start pre CAC in the driver
+ * @channel: Channel option provided by userspace
+ *
+ * Sets the driver to the required hardware mode and start an adapter for
+ * pre CAC which will mimic an AP.
+ *
+ * Return: Zero on success, non-zero value on error
+ */
+int wlan_hdd_request_pre_cac(uint8_t channel)
+{
+	uint8_t pre_cac_chan = 0, *mac_addr;
+	struct hdd_context *hdd_ctx;
+	int ret;
+	struct hdd_adapter *ap_adapter, *pre_cac_adapter;
+	struct hdd_ap_ctx *hdd_ap_ctx;
+	QDF_STATUS status;
+	struct wiphy *wiphy;
+	struct net_device *dev;
+	struct cfg80211_chan_def chandef;
+	enum nl80211_channel_type channel_type;
+	uint32_t freq;
+	struct ieee80211_channel *chan;
+	mac_handle_t mac_handle;
+	bool val;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (wlan_hdd_validate_context(hdd_ctx) != 0)
+		return -EINVAL;
+
+	if (policy_mgr_get_connection_count(hdd_ctx->hdd_psoc) > 1) {
+		hdd_err("pre cac not allowed in concurrency");
+		return -EINVAL;
+	}
+
+	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
+	if (!ap_adapter) {
+		hdd_err("unable to get SAP adapter");
+		return -EINVAL;
+	}
+
+	mac_handle = hdd_ctx->mac_handle;
+	val = wlan_sap_is_pre_cac_active(mac_handle);
+	if (val) {
+		hdd_err("pre cac is already in progress");
+		return -EINVAL;
+	}
+
+	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
+	if (!hdd_ap_ctx) {
+		hdd_err("SAP context is NULL");
+		return -EINVAL;
+	}
+
+	if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
+			       hdd_ap_ctx->operating_channel)) {
+		hdd_err("SAP is already on DFS channel:%d",
+			hdd_ap_ctx->operating_channel);
+		return -EINVAL;
+	}
+
+	if (!WLAN_REG_IS_24GHZ_CH(hdd_ap_ctx->operating_channel)) {
+		hdd_err("pre CAC alllowed only when SAP is in 2.4GHz:%d",
+			hdd_ap_ctx->operating_channel);
+		return -EINVAL;
+	}
+
+	mac_addr = wlan_hdd_get_intf_addr(hdd_ctx);
+	if (!mac_addr) {
+		hdd_err("can't add virtual intf: Not getting valid mac addr");
+		return -EINVAL;
+	}
+
+	hdd_debug("channel:%d", channel);
+
+	ret = wlan_hdd_validate_and_get_pre_cac_ch(hdd_ctx, ap_adapter, channel,
+						   &pre_cac_chan);
+	if (ret != 0) {
+		hdd_err("can't validate pre-cac channel");
+		goto release_intf_addr_and_return_failure;
+	}
+
+	hdd_debug("starting pre cac SAP  adapter");
+
+	/* Starting a SAP adapter:
+	 * Instead of opening an adapter, we could just do a SME open session
+	 * for AP type. But, start BSS would still need an adapter.
+	 * So, this option is not taken.
+	 *
+	 * hdd open adapter is going to register this precac interface with
+	 * user space. This interface though exposed to user space will be in
+	 * DOWN state. Consideration was done to avoid this registration to the
+	 * user space. But, as part of SAP operations multiple events are sent
+	 * to user space. Some of these events received from unregistered
+	 * interface was causing crashes. So, retaining the registration.
+	 *
+	 * So, this interface would remain registered and will remain in DOWN
+	 * state for the CAC duration. We will add notes in the feature
+	 * announcement to not use this temporary interface for any activity
+	 * from user space.
+	 */
+	pre_cac_adapter = hdd_open_adapter(hdd_ctx, QDF_SAP_MODE, "precac%d",
+					   mac_addr, NET_NAME_UNKNOWN, true);
+	if (!pre_cac_adapter) {
+		hdd_err("error opening the pre cac adapter");
+		goto release_intf_addr_and_return_failure;
+	}
+
+	/*
+	 * This interface is internally created by the driver. So, no interface
+	 * up comes for this interface from user space and hence starting
+	 * the adapter internally.
+	 */
+	if (hdd_start_adapter(pre_cac_adapter)) {
+		hdd_err("error starting the pre cac adapter");
+		goto close_pre_cac_adapter;
+	}
+
+	hdd_debug("preparing for start ap/bss on the pre cac adapter");
+
+	wiphy = hdd_ctx->wiphy;
+	dev = pre_cac_adapter->dev;
+
+	/* Since this is only a dummy interface lets us use the IEs from the
+	 * other active SAP interface. In regular scenarios, these IEs would
+	 * come from the user space entity
+	 */
+	pre_cac_adapter->session.ap.beacon = qdf_mem_malloc(
+			sizeof(*ap_adapter->session.ap.beacon));
+	if (!pre_cac_adapter->session.ap.beacon) {
+		hdd_err("failed to alloc mem for beacon");
+		goto stop_close_pre_cac_adapter;
+	}
+	qdf_mem_copy(pre_cac_adapter->session.ap.beacon,
+		     ap_adapter->session.ap.beacon,
+		     sizeof(*pre_cac_adapter->session.ap.beacon));
+	pre_cac_adapter->session.ap.sap_config.ch_width_orig =
+			ap_adapter->session.ap.sap_config.ch_width_orig;
+	pre_cac_adapter->session.ap.sap_config.authType =
+			ap_adapter->session.ap.sap_config.authType;
+
+	/* Premise is that on moving from 2.4GHz to 5GHz, the SAP will continue
+	 * to operate on the same bandwidth as that of the 2.4GHz operations.
+	 * Only bandwidths 20MHz/40MHz are possible on 2.4GHz band.
+	 */
+	switch (ap_adapter->session.ap.sap_config.ch_width_orig) {
+	case CH_WIDTH_20MHZ:
+		channel_type = NL80211_CHAN_HT20;
+		break;
+	case CH_WIDTH_40MHZ:
+		if (ap_adapter->session.ap.sap_config.sec_ch >
+				ap_adapter->session.ap.sap_config.channel)
+			channel_type = NL80211_CHAN_HT40PLUS;
+		else
+			channel_type = NL80211_CHAN_HT40MINUS;
+		break;
+	default:
+		channel_type = NL80211_CHAN_NO_HT;
+		break;
+	}
+
+	freq = cds_chan_to_freq(pre_cac_chan);
+	chan = ieee80211_get_channel(wiphy, freq);
+	if (!chan) {
+		hdd_err("channel converion failed");
+		goto stop_close_pre_cac_adapter;
+	}
+
+	cfg80211_chandef_create(&chandef, chan, channel_type);
+
+	hdd_debug("orig width:%d channel_type:%d freq:%d",
+		  ap_adapter->session.ap.sap_config.ch_width_orig,
+		  channel_type, freq);
+	/*
+	 * Doing update after opening and starting pre-cac adapter will make
+	 * sure that driver won't do hardware mode change if there are any
+	 * initial hick-ups or issues in pre-cac adapter's configuration.
+	 * Since current SAP is in 2.4GHz and pre CAC channel is in 5GHz, this
+	 * connection update should result in DBS mode
+	 */
+	status = policy_mgr_update_and_wait_for_connection_update(
+					hdd_ctx->hdd_psoc,
+					ap_adapter->session_id,
+					pre_cac_chan,
+					POLICY_MGR_UPDATE_REASON_PRE_CAC);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("error in moving to DBS mode");
+		goto stop_close_pre_cac_adapter;
+	}
+
+	ret = wlan_hdd_set_channel(wiphy, dev, &chandef, channel_type);
+	if (ret != 0) {
+		hdd_err("failed to set channel");
+		goto stop_close_pre_cac_adapter;
+	}
+
+	status = wlan_hdd_cfg80211_start_bss(pre_cac_adapter, NULL,
+			PRE_CAC_SSID, qdf_str_len(PRE_CAC_SSID),
+			NL80211_HIDDEN_SSID_NOT_IN_USE, false);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("start bss failed");
+		goto stop_close_pre_cac_adapter;
+	}
+
+	/*
+	 * The pre cac status is set here. But, it would not be reset explicitly
+	 * anywhere, since after the pre cac success/failure, the pre cac
+	 * adapter itself would be removed.
+	 */
+	ret = wlan_hdd_set_pre_cac_status(pre_cac_adapter, true, mac_handle);
+	if (ret != 0) {
+		hdd_err("failed to set pre cac status");
+		goto stop_close_pre_cac_adapter;
+	}
+
+	ret = wlan_hdd_set_chan_before_pre_cac(ap_adapter,
+					       hdd_ap_ctx->operating_channel);
+	if (ret != 0) {
+		hdd_err("failed to set channel before pre cac");
+		goto stop_close_pre_cac_adapter;
+	}
+
+	ap_adapter->pre_cac_chan = pre_cac_chan;
+
+	return 0;
+
+stop_close_pre_cac_adapter:
+	hdd_stop_adapter(hdd_ctx, pre_cac_adapter);
+	qdf_mem_free(pre_cac_adapter->session.ap.beacon);
+	pre_cac_adapter->session.ap.beacon = NULL;
+close_pre_cac_adapter:
+	hdd_close_adapter(hdd_ctx, pre_cac_adapter, false);
+release_intf_addr_and_return_failure:
+	/*
+	 * Release the interface address as the adapter
+	 * failed to start, if you don't release then next
+	 * adapter which is trying to come wouldn't get valid
+	 * mac address. Remember we have limited pool of mac addresses
+	 */
+	wlan_hdd_release_intf_addr(hdd_ctx, mac_addr);
+	return -EINVAL;
+}
+
+/**
+ * __wlan_hdd_cfg80211_conditional_chan_switch() - Conditional channel switch
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * Processes the conditional channel switch request and invokes the helper
+ * APIs to process the channel switch request.
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int
+__wlan_hdd_cfg80211_conditional_chan_switch(struct wiphy *wiphy,
+					    struct wireless_dev *wdev,
+					    const void *data,
+					    int data_len)
+{
+	int ret;
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter;
+	struct nlattr
+		*tb[QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_MAX + 1];
+	uint32_t freq_len, i;
+	uint32_t *freq;
+	uint8_t chans[QDF_MAX_NUM_CHAN] = {0};
+
+	hdd_enter_dev(dev);
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	if (!hdd_ctx->config->enableDFSMasterCap) {
+		hdd_err("DFS master capability is not present in the driver");
+		return -EINVAL;
+	}
+
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	if (adapter->device_mode != QDF_SAP_MODE) {
+		hdd_err("Invalid device mode %d", adapter->device_mode);
+		return -EINVAL;
+	}
+
+	/*
+	 * audit note: it is ok to pass a NULL policy here since only
+	 * one attribute is parsed which is array of frequencies and
+	 * it is explicitly validated for both under read and over read
+	 */
+	if (wlan_cfg80211_nla_parse(tb,
+			   QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_MAX,
+			   data, data_len, NULL)) {
+		hdd_err("Invalid ATTR");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_FREQ_LIST]) {
+		hdd_err("Frequency list is missing");
+		return -EINVAL;
+	}
+
+	freq_len = nla_len(
+		tb[QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_FREQ_LIST])/
+		sizeof(uint32_t);
+
+	if (freq_len > QDF_MAX_NUM_CHAN) {
+		hdd_err("insufficient space to hold channels");
+		return -ENOMEM;
+	}
+
+	hdd_debug("freq_len=%d", freq_len);
+
+	freq = nla_data(
+		tb[QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_FREQ_LIST]);
+
+	for (i = 0; i < freq_len; i++) {
+		if (freq[i] == 0)
+			chans[i] = 0;
+		else
+			chans[i] = ieee80211_frequency_to_channel(freq[i]);
+
+		hdd_debug("freq[%d]=%d", i, freq[i]);
+	}
+
+	/*
+	 * The input frequency list from user space is designed to be a
+	 * priority based frequency list. This is only to accommodate any
+	 * future request. But, current requirement is only to perform CAC
+	 * on a single channel. So, the first entry from the list is picked.
+	 *
+	 * If channel is zero, any channel in the available outdoor regulatory
+	 * domain will be selected.
+	 */
+	ret = wlan_hdd_request_pre_cac(chans[0]);
+	if (ret) {
+		hdd_err("pre cac request failed with reason:%d", ret);
+		return ret;
+	}
+
+	return 0;
+}
+
+int wlan_hdd_cfg80211_conditional_chan_switch(struct wiphy *wiphy,
+					      struct wireless_dev *wdev,
+					      const void *data,
+					      int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_conditional_chan_switch(wiphy, wdev,
+							  data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
