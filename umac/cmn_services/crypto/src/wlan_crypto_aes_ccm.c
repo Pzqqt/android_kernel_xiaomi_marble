@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  */
 /*
  * Counter with CBC-MAC (CCM) with AES
@@ -51,13 +51,15 @@ static void aes_ccm_auth_start(void *aes, size_t M, size_t L,
 	}
 
 	wlan_crypto_put_be16(aad_buf, aad_len);
-	qdf_mem_copy(aad_buf + 2, aad, aad_len);
-	qdf_mem_set(aad_buf + 2 + aad_len, sizeof(aad_buf) - 2 - aad_len, 0);
+	qdf_mem_copy(aad_buf + AAD_LEN_FIELD, aad, aad_len);
+	if ((AAD_LEN_FIELD + aad_len) < sizeof(aad_buf))
+		qdf_mem_set(aad_buf + AAD_LEN_FIELD + aad_len,
+			    sizeof(aad_buf) - AAD_LEN_FIELD - aad_len, 0);
 
 	xor_aes_block(aad_buf, x);
 	wlan_crypto_aes_encrypt(aes, aad_buf, x); /* X_2 = E(K, X_1 XOR B_1) */
 
-	if (aad_len > AES_BLOCK_SIZE - 2) {
+	if (aad_len > AES_BLOCK_SIZE - AAD_LEN_FIELD) {
 		xor_aes_block(&aad_buf[AES_BLOCK_SIZE], x);
 		/* X_3 = E(K, X_2 XOR B_2) */
 		wlan_crypto_aes_encrypt(aes, &aad_buf[AES_BLOCK_SIZE], x);

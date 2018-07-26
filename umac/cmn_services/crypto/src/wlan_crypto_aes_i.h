@@ -26,6 +26,7 @@
 				+ WLAN_CRYPTO_EXT_IV_LEN)
 
 #define AES_BLOCK_SIZE 16
+#define AAD_LEN_FIELD  (2)
 #define wpa_printf(args...) do { } while (0)
 #define wpa_hexdump(l, t, b, le) do { } while (0)
 #define wpa_hexdump_buf(l, t, b) do { } while (0)
