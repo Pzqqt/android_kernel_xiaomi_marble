@@ -4863,6 +4863,8 @@ struct rtt_keepalive_req_params {
  * @hw_qdesc_paddr_lo: lower 32 bits of queue desc adddress
  * @hw_qdesc_paddr_hi: upper 32 bits of queue desc adddress
  * @queue_no: 16-bit number assigned by host for queue
+ * @ba_window_size_valid: BA window size validity flag
+ * @ba_window_size: BA window size
  */
 struct rx_reorder_queue_setup_params {
 	uint8_t *peer_macaddr;
@@ -4871,6 +4873,9 @@ struct rx_reorder_queue_setup_params {
 	uint32_t hw_qdesc_paddr_lo;
 	uint32_t hw_qdesc_paddr_hi;
 	uint16_t queue_no;
+	uint8_t ba_window_size_valid;
+	uint16_t ba_window_size;
+
 };
 
 /**
