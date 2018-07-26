@@ -1011,6 +1011,7 @@ typedef struct {
  * @tspec: tspec value
  * @status: QDF status
  * @sessionId: session id
+ * @vdev_id: vdev id
  */
 typedef struct {
 	uint16_t staIdx;
@@ -1018,6 +1019,7 @@ typedef struct {
 	tSirMacTspecIE tspec[HAL_QOS_NUM_AC_MAX];
 	QDF_STATUS status[HAL_QOS_NUM_AC_MAX];
 	uint8_t sessionId;
+	uint8_t vdev_id;
 } tAggrAddTsParams, *tpAggrAddTsParams;
 
 

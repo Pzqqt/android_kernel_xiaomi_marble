@@ -977,6 +977,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	/* Fill in the sessionId specific to PE */
 	pAggrAddTsParam->sessionId = sessionId;
 	pAggrAddTsParam->tspecIdx = aggrQosReq->aggrInfo.tspecIdx;
+	pAggrAddTsParam->vdev_id = psessionEntry->smeSessionId;
 
 	for (i = 0; i < HAL_QOS_NUM_AC_MAX; i++) {
 		if (aggrQosReq->aggrInfo.tspecIdx & (1 << i)) {
