@@ -35,7 +35,7 @@ QDF_STATUS wmi_extract_reg_chan_list_update_event(void *wmi_hdl,
 {
 	struct wmi_unified *wmi_handle = (struct wmi_unified *)wmi_hdl;
 
-	if (wmi_handle->ops->extract_reg_chan_list_update_event)
+	if (wmi_handle && wmi_handle->ops->extract_reg_chan_list_update_event)
 		return wmi_handle->ops->extract_reg_chan_list_update_event
 			(wmi_handle,
 			 evt_buf, reg_info, len);
@@ -87,7 +87,7 @@ QDF_STATUS wmi_extract_reg_11d_new_cc_event(void *wmi_hdl,
 {
 	struct wmi_unified *wmi_handle = (struct wmi_unified *)wmi_hdl;
 
-	if (wmi_handle->ops->extract_reg_11d_new_country_event)
+	if (wmi_handle && wmi_handle->ops->extract_reg_11d_new_country_event)
 		return wmi_handle->ops->extract_reg_11d_new_country_event(
 				wmi_handle, evt_buf, reg_11d_new_cc, len);
 
@@ -115,7 +115,7 @@ QDF_STATUS wmi_extract_reg_ch_avoid_event(void *wmi_hdl,
 {
 	struct wmi_unified *wmi_handle = (struct wmi_unified *)wmi_hdl;
 
-	if (wmi_handle->ops->extract_reg_ch_avoid_event)
+	if (wmi_handle && wmi_handle->ops->extract_reg_ch_avoid_event)
 		return wmi_handle->ops->extract_reg_ch_avoid_event(
 				wmi_handle, evt_buf, ch_avoid_ind, len);
 
