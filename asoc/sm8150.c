@@ -6958,6 +6958,8 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	int len_1, len_2, len_3, len_4;
 	int total_links;
 	const struct of_device_id *match;
+	int ret = 0;
+	u32 val = 0;
 
 	match = of_match_node(sm8150_asoc_machine_of_match, dev->of_node);
 	if (!match) {
@@ -6989,7 +6991,8 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			   msm_pahu_be_dai_links,
 			   sizeof(msm_pahu_be_dai_links));
 
-		if (of_property_read_bool(dev->of_node, "qcom,wcn-btfm")) {
+		ret = of_property_read_u32(dev->of_node, "qcom,wcn-btfm", &val);
+		if (!ret && val) {
 			dev_dbg(dev, "%s(): WCN BTFM support present\n",
 				__func__);
 			memcpy(msm_pahu_snd_card_dai_links + total_links,
@@ -6998,8 +7001,9 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			total_links += ARRAY_SIZE(msm_wcn_be_dai_links);
 		}
 
-		if (of_property_read_bool(dev->of_node,
-					  "qcom,ext-disp-audio-rx")) {
+		ret = of_property_read_u32(dev->of_node,
+					   "qcom,ext-disp-audio-rx", &val);
+		if (!ret && val) {
 			dev_dbg(dev, "%s(): ext disp audio support present\n",
 				__func__);
 			memcpy(msm_pahu_snd_card_dai_links + total_links,
@@ -7007,15 +7011,19 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			       sizeof(ext_disp_be_dai_link));
 			total_links += ARRAY_SIZE(ext_disp_be_dai_link);
 		}
-		if (of_property_read_bool(dev->of_node,
-					  "qcom,mi2s-audio-intf")) {
+
+		ret = of_property_read_u32(dev->of_node,
+					   "qcom,mi2s-audio-intf", &val);
+		if (!ret && val) {
 			memcpy(msm_pahu_snd_card_dai_links + total_links,
 			       msm_mi2s_be_dai_links,
 			       sizeof(msm_mi2s_be_dai_links));
 			total_links += ARRAY_SIZE(msm_mi2s_be_dai_links);
 		}
-		if (of_property_read_bool(dev->of_node,
-					  "qcom,auxpcm-audio-intf")) {
+
+		ret = of_property_read_u32(dev->of_node,
+					   "qcom,auxpcm-audio-intf", &val);
+		if (!ret && val) {
 			memcpy(msm_pahu_snd_card_dai_links + total_links,
 			msm_auxpcm_be_dai_links,
 			sizeof(msm_auxpcm_be_dai_links));
@@ -7046,7 +7054,8 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		       msm_tavil_be_dai_links,
 		       sizeof(msm_tavil_be_dai_links));
 
-		if (of_property_read_bool(dev->of_node, "qcom,wcn-btfm")) {
+		ret = of_property_read_u32(dev->of_node, "qcom,wcn-btfm", &val);
+		if (!ret && val) {
 			dev_dbg(dev, "%s(): WCN BTFM support present\n",
 				__func__);
 			memcpy(msm_tavil_dai_links + total_links,
@@ -7055,8 +7064,9 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			total_links += ARRAY_SIZE(msm_wcn_be_dai_links);
 		}
 
-		if (of_property_read_bool(dev->of_node,
-					  "qcom,ext-disp-audio-rx")) {
+		ret = of_property_read_u32(dev->of_node,
+					   "qcom,ext-disp-audio-rx", &val);
+		if (!ret && val) {
 			dev_dbg(dev, "%s(): ext disp audio support present\n",
 				__func__);
 			memcpy(msm_tavil_dai_links + total_links,
@@ -7064,15 +7074,19 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			       sizeof(ext_disp_be_dai_link));
 			total_links += ARRAY_SIZE(ext_disp_be_dai_link);
 		}
-		if (of_property_read_bool(dev->of_node,
-					  "qcom,mi2s-audio-intf")) {
+
+		ret = of_property_read_u32(dev->of_node,
+					   "qcom,mi2s-audio-intf", &val);
+		if (!ret && val) {
 			memcpy(msm_tavil_dai_links + total_links,
 			       msm_mi2s_be_dai_links,
 			       sizeof(msm_mi2s_be_dai_links));
 			total_links += ARRAY_SIZE(msm_mi2s_be_dai_links);
 		}
-		if (of_property_read_bool(dev->of_node,
-					  "qcom,auxpcm-audio-intf")) {
+
+		ret = of_property_read_u32(dev->of_node,
+					   "qcom,auxpcm-audio-intf", &val);
+		if (!ret && val) {
 			memcpy(msm_tavil_dai_links + total_links,
 			msm_auxpcm_be_dai_links,
 			sizeof(msm_auxpcm_be_dai_links));
