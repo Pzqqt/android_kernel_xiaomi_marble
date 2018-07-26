@@ -935,6 +935,9 @@ QDF_STATUS send_peer_rx_reorder_queue_setup_cmd_tlv(wmi_unified_t wmi,
 	cmd->queue_ptr_lo = param->hw_qdesc_paddr_lo;
 	cmd->queue_ptr_hi = param->hw_qdesc_paddr_hi;
 	cmd->queue_no = param->queue_no;
+	cmd->ba_window_size_valid = param->ba_window_size_valid;
+	cmd->ba_window_size = param->ba_window_size;
+
 
 	if (wmi_unified_cmd_send(wmi, buf, len,
 			WMI_PEER_REORDER_QUEUE_SETUP_CMDID)) {

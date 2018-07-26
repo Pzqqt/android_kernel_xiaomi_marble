@@ -62,7 +62,9 @@ QDF_STATUS
 target_if_peer_rx_reorder_queue_setup(struct cdp_ctrl_objmgr_pdev *pdev,
 				      uint8_t vdev_id, uint8_t *peer_macaddr,
 				      qdf_dma_addr_t hw_qdesc, int tid,
-				      uint16_t queue_no)
+				      uint16_t queue_no,
+				      uint8_t ba_window_size_valid,
+				      uint16_t ba_window_size)
 {
 	struct rx_reorder_queue_setup_params param;
 	struct common_wmi_handle *pdev_wmi_handle;
@@ -79,6 +81,9 @@ target_if_peer_rx_reorder_queue_setup(struct cdp_ctrl_objmgr_pdev *pdev,
 	param.hw_qdesc_paddr_lo = hw_qdesc & 0xffffffff;
 	param.hw_qdesc_paddr_hi = (uint64_t)hw_qdesc >> 32;
 	param.queue_no = queue_no;
+	param.ba_window_size_valid = ba_window_size_valid;
+	param.ba_window_size = ba_window_size;
+
 	return wmi_unified_peer_rx_reorder_queue_setup_send(pdev_wmi_handle,
 							    &param);
 }

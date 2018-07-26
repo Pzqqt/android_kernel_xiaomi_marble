@@ -753,7 +753,9 @@ struct ol_if_ops {
 	(*peer_rx_reorder_queue_setup)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 				       uint8_t vdev_id, uint8_t *peer_mac,
 				       qdf_dma_addr_t hw_qdesc, int tid,
-				       uint16_t queue_num);
+				       uint16_t queue_num,
+				       uint8_t ba_window_size_valid,
+				       uint16_t ba_window_size);
 	QDF_STATUS
 	(*peer_rx_reorder_queue_remove)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 					uint8_t vdev_id, uint8_t *peer_macaddr,

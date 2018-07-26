@@ -1128,6 +1128,13 @@ static int dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params, dp_rx_tid_update_cb, rx_tid);
 
 	rx_tid->ba_win_size = ba_window_size;
+	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
+		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
+			peer->vdev->pdev->ctrl_pdev,
+			peer->vdev->vdev_id, peer->mac_addr.raw,
+			rx_tid->hw_qdesc_paddr, tid, tid, 1, ba_window_size);
+
+	}
 	return 0;
 }
 
@@ -1329,7 +1336,7 @@ try_desc_alloc:
 		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
 			vdev->pdev->ctrl_pdev,
 			peer->vdev->vdev_id, peer->mac_addr.raw,
-			rx_tid->hw_qdesc_paddr, tid, tid);
+			rx_tid->hw_qdesc_paddr, tid, tid, 1, ba_window_size);
 
 	}
 	return 0;
