@@ -408,10 +408,6 @@ QDF_STATUS wmi_unified_vdev_create_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_vdev_delete_send(void *wmi_hdl,
 					  uint8_t if_id);
 
-QDF_STATUS wmi_unified_vdev_restart_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
-				struct vdev_start_params *param);
-
 QDF_STATUS wmi_unified_vdev_stop_send(void *wmi_hdl,
 					uint8_t vdev_id);
 
