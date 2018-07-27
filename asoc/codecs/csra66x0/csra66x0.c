@@ -23,6 +23,8 @@
 #include <sound/soc.h>
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
+#include <linux/fs.h>
+#include <linux/debugfs.h>
 #include "csra66x0.h"
 
 /* CSRA66X0 register default values */
@@ -258,7 +260,136 @@ struct csra66x0_priv {
 	u32 irq_active_low;
 	u32 in_cluster;
 	u32 is_master;
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+	struct dentry *debugfs_dir;
+	struct dentry *debugfs_file_wo;
+	struct dentry *debugfs_file_ro;
+#endif /* CONFIG_DEBUG_FS */
 };
+
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+static int debugfs_codec_open_op(struct inode *inode, struct file *file)
+{
+	file->private_data = inode->i_private;
+	return 0;
+}
+
+static int debugfs_get_parameters(char *buf, u32 *param1, int num_of_par)
+{
+	char *token;
+	int base, cnt;
+
+	token = strsep(&buf, " ");
+	for (cnt = 0; cnt < num_of_par; cnt++) {
+		if (token) {
+			if ((token[1] == 'x') || (token[1] == 'X'))
+				base = 16;
+			else
+				base = 10;
+
+			if (kstrtou32(token, base, &param1[cnt]) != 0)
+				return -EINVAL;
+
+			token = strsep(&buf, " ");
+		} else {
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
+
+static ssize_t debugfs_codec_write_op(struct file *filp,
+		const char __user *ubuf, size_t cnt, loff_t *ppos)
+{
+	struct csra66x0_priv *csra66x0 =
+			(struct csra66x0_priv *) filp->private_data;
+	struct snd_soc_codec *codec = csra66x0->codec;
+	char lbuf[32];
+	int rc;
+	u32 param[2];
+
+	if (!filp || !ppos || !ubuf)
+		return -EINVAL;
+	if (cnt > sizeof(lbuf) - 1)
+		return -EINVAL;
+	rc = copy_from_user(lbuf, ubuf, cnt);
+	if (rc)
+		return -EFAULT;
+	lbuf[cnt] = '\0';
+	rc = debugfs_get_parameters(lbuf, param, 2);
+	if ((param[0] < CSRA66X0_AUDIO_IF_RX_CONFIG1)
+		|| (param[0] > CSRA66X0_MAX_REGISTER_ADDR)) {
+		dev_err(codec->dev, "%s: register address 0x%04X out of range\n",
+			__func__, param[0]);
+		return -EINVAL;
+	}
+	if ((param[1] < 0) || (param[1] > 255)) {
+		dev_err(codec->dev, "%s: register data 0x%02X out of range\n",
+			__func__, param[1]);
+		return -EINVAL;
+	}
+	if (rc == 0)
+	{
+		rc = cnt;
+		dev_info(codec->dev, "%s: reg[0x%04X]=0x%02X\n",
+			__func__, param[0], param[1]);
+		snd_soc_write(codec, param[0], param[1]);
+	} else {
+		dev_err(codec->dev, "%s: write to register addr=0x%04X failed\n",
+			__func__, param[0]);
+	}
+	return rc;
+}
+
+static ssize_t debugfs_csra66x0_reg_show(struct snd_soc_codec *codec,
+		char __user *ubuf, size_t count, loff_t *ppos)
+{
+	int i, reg_val, len;
+	ssize_t total = 0;
+	char tmp_buf[20];
+
+	if (!ubuf || !ppos || !codec || *ppos < 0)
+		return -EINVAL;
+
+	for (i = ((int) *ppos + CSRA66X0_BASE);
+		i <= CSRA66X0_MAX_REGISTER_ADDR; i++) {
+		reg_val = snd_soc_read(codec, i);
+		len = snprintf(tmp_buf, 20, "0x%04X: 0x%02X\n", i, (reg_val & 0xFF));
+		if ((total + len) >= count - 1)
+			break;
+		if (copy_to_user((ubuf + total), tmp_buf, len)) {
+			dev_err(codec->dev, "%s: fail to copy reg dump\n", __func__);
+			total = -EFAULT;
+			goto copy_err;
+		}
+		*ppos += len;
+		total += len;
+	}
+
+copy_err:
+	return total;
+}
+
+static ssize_t debugfs_codec_read_op(struct file *filp,
+		char __user *ubuf, size_t cnt, loff_t *ppos)
+{
+	struct csra66x0_priv *csra66x0 =
+		(struct csra66x0_priv *) filp->private_data;
+	struct snd_soc_codec *codec = csra66x0->codec;
+	ssize_t ret_cnt;
+
+	if (!filp || !ppos || !ubuf || *ppos < 0)
+		return -EINVAL;
+	ret_cnt = debugfs_csra66x0_reg_show(codec, ubuf, cnt, ppos);
+	return ret_cnt;
+}
+
+static const struct file_operations debugfs_codec_ops = {
+	.open = debugfs_codec_open_op,
+	.write = debugfs_codec_write_op,
+	.read = debugfs_codec_read_op,
+};
+#endif /* CONFIG_DEBUG_FS */
 
 /*
  * CSRA66X0 Controls
@@ -442,7 +573,7 @@ static int csra66x0_soc_probe(struct snd_soc_codec *codec)
 
 	if (csra66x0->in_cluster) {
 		dapm = snd_soc_codec_get_dapm(codec);
-		dev_dbg(codec->dev, "%s: setting %s to codec %s\n",
+		dev_dbg(codec->dev, "%s: assign prefix %s to codec device %s\n",
 			__func__, codec->component.name_prefix,
 			codec->component.name);
 		snd_soc_write(codec, CSRA66X0_CHIP_STATE_CTRL_FA,
@@ -580,6 +711,31 @@ static irqreturn_t csra66x0_irq(int irq, void *data)
 
 		/* clear fault state and re-init */
 		snd_soc_write(codec, CSRA66X0_FAULT_STATUS_FA, 0x00);
+		snd_soc_write(codec, CSRA66X0_IRQ_OUTPUT_STATUS_FA, 0x00);
+		/* apply reset to CSRA66X0 */
+		val = snd_soc_read(codec, CSRA66X0_MISC_CONTROL_STATUS_1_FA);
+		snd_soc_write(codec, CSRA66X0_MISC_CONTROL_STATUS_1_FA, val | 0x08);
+		/* wait 2s after reset to recover CSRA66X0 */
+		msleep(2000);
+		/* re-init */
+		snd_soc_write(codec, CSRA66X0_CHIP_STATE_CTRL_FA,
+			CONFIG_STATE);
+		/* settle time in HW is min. 500ms before proceeding */
+		msleep(500);
+		snd_soc_write(codec, CSRA66X0_PIO7_SELECT, 0x04);
+		snd_soc_write(codec, CSRA66X0_PIO8_SELECT, 0x04);
+		if (csra66x0->is_master) {
+			/* Master specific config */
+			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN0, 0xFF);
+			snd_soc_write(codec, CSRA66X0_PIO_PULL_DIR0, 0x80);
+			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN1, 0x01);
+			snd_soc_write(codec, CSRA66X0_PIO_PULL_DIR1, 0x01);
+		} else {
+			/* Slave specific config */
+			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN0, 0x7F);
+			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN1, 0x00);
+		}
+		snd_soc_write(codec, CSRA66X0_DCA_CTRL, 0x05);
 		csra66x0_init(codec, csra66x0);
 	} else {
 		return IRQ_NONE;
@@ -599,6 +755,7 @@ static int csra66x0_i2c_probe(struct i2c_client *client_i2c,
 {
 	struct csra66x0_priv *csra66x0;
 	int ret, irq_trigger;
+	char debugfs_dir_name[32];
 
 	csra66x0 = devm_kzalloc(&client_i2c->dev, sizeof(struct csra66x0_priv),
 			GFP_KERNEL);
@@ -662,7 +819,7 @@ static int csra66x0_i2c_probe(struct i2c_client *client_i2c,
 			}
 		} else {
 			gpio_direction_output(csra66x0->vreg_gpio, 1);
-			gpio_set_value(csra66x0->vreg_gpio, 1);
+			gpio_set_value(csra66x0->vreg_gpio, 0);
 		}
 
 		/* register interrupt handle */
@@ -695,12 +852,45 @@ static int csra66x0_i2c_probe(struct i2c_client *client_i2c,
 		}
 	}
 
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+	/* debugfs interface */
+	snprintf(debugfs_dir_name, sizeof(debugfs_dir_name), "%s-%s",
+		client_i2c->name, dev_name(&client_i2c->dev));
+	csra66x0->debugfs_dir = debugfs_create_dir(debugfs_dir_name, NULL);
+	if (!csra66x0->debugfs_dir) {
+		dev_dbg(&client_i2c->dev,
+			"%s: Failed to create /sys/kernel/debug/%s for debugfs\n",
+			__func__, debugfs_dir_name);
+		return -ENOMEM;
+	}
+	csra66x0->debugfs_file_wo = debugfs_create_file(
+		"write_reg_val", S_IFREG | S_IRUGO, csra66x0->debugfs_dir,
+		(void *) csra66x0,
+		&debugfs_codec_ops);
+	if (!csra66x0->debugfs_file_wo) {
+		dev_dbg(&client_i2c->dev,
+			"%s: Failed to create /sys/kernel/debug/%s/write_reg_val\n",
+			__func__, debugfs_dir_name);
+		return -ENOMEM;
+	}
+	csra66x0->debugfs_file_ro = debugfs_create_file(
+		"show_reg_dump", S_IFREG | S_IRUGO, csra66x0->debugfs_dir,
+		(void *) csra66x0,
+		&debugfs_codec_ops);
+	if (!csra66x0->debugfs_file_ro) {
+		dev_dbg(&client_i2c->dev,
+			"%s: Failed to create /sys/kernel/debug/%s/show_reg_dump\n",
+			__func__, debugfs_dir_name);
+		return -ENOMEM;
+	}
+#endif /* CONFIG_DEBUG_FS */
+
 	/* register codec */
 	ret = snd_soc_register_codec(&client_i2c->dev,
 			&soc_codec_drv_csra66x0, NULL, 0);
 	if (ret != 0) {
-		dev_err(&client_i2c->dev, "%s %d: Failed to register CODEC: %d\n",
-			__func__,  __LINE__, ret);
+		dev_err(&client_i2c->dev, "%s %d: Failed to register codec: %d\n",
+			__func__, __LINE__, ret);
 		if (gpio_is_valid(csra66x0->vreg_gpio)) {
 			gpio_set_value(csra66x0->vreg_gpio, 0);
 			gpio_free(csra66x0->vreg_gpio);
@@ -719,6 +909,9 @@ static int csra66x0_i2c_remove(struct i2c_client *i2c_client)
 			gpio_set_value(csra66x0->vreg_gpio, 0);
 			gpio_free(csra66x0->vreg_gpio);
 		}
+#if IS_ENABLED(CONFIG_DEBUG_FS)
+		debugfs_remove_recursive(csra66x0->debugfs_dir);
+#endif
 	}
 	snd_soc_unregister_codec(&i2c_client->dev);
 	return 0;
