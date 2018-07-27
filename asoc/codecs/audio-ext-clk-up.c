@@ -149,6 +149,21 @@ static const char * const audio_ext_pmi_div_clk[] = {
 	"pm6150_div_clk1",
 };
 
+static int audio_ext_clk_dummy_prepare(struct clk_hw *hw)
+{
+	return 0;
+}
+
+static void audio_ext_clk_dummy_unprepare(struct clk_hw *hw)
+{
+
+}
+
+static const struct clk_ops audio_ext_clk_dummy_ops = {
+	.prepare = audio_ext_clk_dummy_prepare,
+	.unprepare = audio_ext_clk_dummy_unprepare,
+};
+
 static struct audio_ext_clk audio_clk_array[] = {
 	{
 		.pnctrl_info = {NULL},
@@ -174,7 +189,7 @@ static struct audio_ext_clk audio_clk_array[] = {
 				.parent_names = (const char *[])
 							{ "ln_bb_clk2" },
 				.num_parents = 1,
-				.ops = &clk_dummy_ops,
+				.ops = &audio_ext_clk_dummy_ops,
 			},
 		},
 	},
