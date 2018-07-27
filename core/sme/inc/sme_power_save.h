@@ -25,8 +25,6 @@
 #include "ani_system_defs.h"
 #include "sir_api.h"
 
-#define MAX_SME_SESSIONS 5
-
 /*
  * Auto Ps Entry User default timeout value, used instead of negative timeouts
  * from user space - 5000ms
@@ -91,7 +89,7 @@ struct ps_params {
 struct ps_global_info {
 	bool ps_enabled;
 	uint32_t auto_bmps_timer_val;
-	struct ps_params ps_params[MAX_SME_SESSIONS];
+	struct ps_params ps_params[SIR_MAX_SUPPORTED_BSS];
 	/* Remain in Power active till DHCP completes */
 	bool remain_in_power_active_till_dhcp;
 };

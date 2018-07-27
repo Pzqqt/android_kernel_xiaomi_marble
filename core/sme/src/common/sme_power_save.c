@@ -788,7 +788,7 @@ QDF_STATUS sme_ps_open(tHalHandle hal_ctx)
 
 	uint32_t i;
 
-	for (i = 0; i < MAX_SME_SESSIONS; i++) {
+	for (i = 0; i < SIR_MAX_SUPPORTED_BSS; i++) {
 		if (QDF_STATUS_SUCCESS != sme_ps_open_per_session(hal_ctx, i)) {
 			sme_err("PMC Init Failed for session: %d", i);
 			return QDF_STATUS_E_FAILURE;
