@@ -101,7 +101,7 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 	if (wmi_service_enabled(wmi_handle, wmi_service_check_cal_version))
 		wlan_psoc_nif_fw_ext_cap_set(psoc, WLAN_SOC_CEXT_SW_CAL);
 
-	target_if_info(" TT support %d, Wide BW Scan %d, SW cal %d",
+	target_if_debug(" TT support %d, Wide BW Scan %d, SW cal %d",
 		wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_TT_SUPPORT),
 		wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_WIDEBAND_SCAN),
 		wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_SW_CAL));
@@ -140,11 +140,11 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 
 	if (wmi_service_enabled(wmi_handle, wmi_service_mgmt_tx_wmi)) {
 		wlan_psoc_nif_fw_ext_cap_set(psoc, WLAN_SOC_CEXT_WMI_MGMT_REF);
-		target_if_info("WMI mgmt service enabled");
+		target_if_debug("WMI mgmt service enabled");
 	} else {
 		wlan_psoc_nif_fw_ext_cap_clear(psoc,
 					       WLAN_SOC_CEXT_WMI_MGMT_REF);
-		target_if_info("WMI mgmt service disabled");
+		target_if_debug("WMI mgmt service disabled");
 	}
 
 	err_code = init_deinit_handle_host_mem_req(psoc, tgt_hdl, event);
@@ -153,13 +153,13 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 
 	target_if_reg_set_offloaded_info(psoc);
 	if (!wmi_service_enabled(wmi_handle, wmi_service_ext_msg)) {
-		target_if_info("No EXT message, send init command");
+		target_if_debug("No EXT message, send init command");
 		tgt_hdl->info.wmi_service_ready = TRUE;
 		target_psoc_set_num_radios(tgt_hdl, 1);
 		/* send init command */
 		init_deinit_prepare_send_init_cmd(psoc, tgt_hdl);
 	} else {
-		target_if_info("Wait for EXT message");
+		target_if_debug("Wait for EXT message");
 	}
 
 	target_if_smart_log_enable(psoc, tgt_hdl, event);

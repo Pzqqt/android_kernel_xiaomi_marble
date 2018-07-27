@@ -356,8 +356,7 @@ QDF_STATUS tgt_if_regulatory_modify_freq_range(struct wlan_objmgr_psoc *psoc)
 		reg_cap->high_2ghz_chan = 0;
 	}
 
-	target_if_info(
-			"phy_id = %d - low_2ghz_chan = %d high_2ghz_chan = %d low_5ghz_chan = %d high_5ghz_chan = %d",
+	target_if_debug("phy_id = %d - low_2ghz_chan = %d high_2ghz_chan = %d low_5ghz_chan = %d high_5ghz_chan = %d",
 			reg_cap->phy_id,
 			reg_cap->low_2ghz_chan,
 			reg_cap->high_2ghz_chan,

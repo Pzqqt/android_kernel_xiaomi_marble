@@ -153,8 +153,8 @@ int init_deinit_populate_mac_phy_capability(void *handle, uint8_t *evt,
 
 	hw_mode_id = hw_cap->hw_mode_id;
 	phy_bit_map = hw_cap->phy_id_map;
-	target_if_info("hw_mode_id %d phy_bit_map 0x%x",
-		       hw_mode_id, phy_bit_map);
+	target_if_debug("hw_mode_id %d phy_bit_map 0x%x",
+			hw_mode_id, phy_bit_map);
 
 	mac_phy_id = 0;
 	while (phy_bit_map) {
@@ -177,7 +177,7 @@ int init_deinit_populate_mac_phy_capability(void *handle, uint8_t *evt,
 		phy_bit_map &= (phy_bit_map - 1);
 		mac_phy_id++;
 	}
-	target_if_info("total_mac_phy_cnt %d", info->total_mac_phy_cnt);
+	target_if_debug("total_mac_phy_cnt %d", info->total_mac_phy_cnt);
 
 	return 0;
 }
@@ -227,7 +227,7 @@ int init_deinit_populate_hw_mode_capability(void *wmi_handle,
 		target_if_err("invalid num_hw_modes %d", num_hw_modes);
 		return -EINVAL;
 	}
-	target_if_info("num_hw_modes %d", num_hw_modes);
+	target_if_debug("num_hw_modes %d", num_hw_modes);
 
 	qdf_mem_zero(&hw_mode_caps, sizeof(hw_mode_caps));
 
@@ -250,12 +250,11 @@ int init_deinit_populate_hw_mode_capability(void *wmi_handle,
 		if ((preferred_mode != WMI_HOST_HW_MODE_MAX) &&
 		    (hw_mode_caps[hw_idx].hw_mode_id == preferred_mode)) {
 			info->num_radios = info->total_mac_phy_cnt;
-			target_if_info("num radios is %d\n", info->num_radios);
+			target_if_debug("num radios is %d\n", info->num_radios);
 		}
 	}
 	status = get_sar_version(wmi_handle, event, &info->service_ext_param);
-	target_if_info("sar version %d",
-		       info->service_ext_param.sar_version);
+	target_if_debug("sar version %d", info->service_ext_param.sar_version);
 
 return_exit:
 	return qdf_status_to_os_return(status);
@@ -271,7 +270,7 @@ int init_deinit_populate_dbr_ring_cap(struct wlan_objmgr_psoc *psoc,
 
 	num_dbr_ring_caps = info->service_ext_param.num_dbr_ring_caps;
 
-	target_if_info("Num DMA Capabilities = %d", num_dbr_ring_caps);
+	target_if_debug("Num DMA Capabilities = %d", num_dbr_ring_caps);
 
 	if (!num_dbr_ring_caps)
 		return 0;
@@ -340,8 +339,8 @@ int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 		reg_cap[0].phy_id = 0;
 		qdf_mem_copy(&(reg_cap[0].eeprom_reg_domain), &cap,
 			     sizeof(struct wlan_psoc_hal_reg_capability));
-		target_if_info("FW wireless modes 0x%x",
-			       reg_cap[0].wireless_modes);
+		target_if_debug("FW wireless modes 0x%x",
+				reg_cap[0].wireless_modes);
 	} else {
 		num_phy_reg_cap = info->service_ext_param.num_phy;
 		if (num_phy_reg_cap > PSOC_MAX_PHY_REG_CAP) {
@@ -349,7 +348,7 @@ int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 				      num_phy_reg_cap);
 			return -EINVAL;
 		}
-		target_if_info("num_phy_reg_cap %d", num_phy_reg_cap);
+		target_if_debug("num_phy_reg_cap %d", num_phy_reg_cap);
 
 		for (reg_idx = 0; reg_idx < num_phy_reg_cap; reg_idx++) {
 			status = wmi_extract_reg_cap_service_ready_ext(handle,

@@ -116,8 +116,8 @@ int target_if_nlo_complete_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	nlo_event = param_buf->fixed_param;
-	target_if_info("PNO complete event received for vdev %d",
-		nlo_event->vdev_id);
+	target_if_debug("PNO complete event received for vdev %d",
+			nlo_event->vdev_id);
 
 	event_info->event.type = SCAN_EVENT_TYPE_NLO_COMPLETE;
 	event_info->event.vdev_id = nlo_event->vdev_id;
@@ -166,8 +166,8 @@ int target_if_nlo_match_event_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	nlo_event = param_buf->fixed_param;
-	target_if_info("PNO match event received for vdev %d",
-		nlo_event->vdev_id);
+	target_if_debug("PNO match event received for vdev %d",
+			nlo_event->vdev_id);
 
 	event_info->event.type = SCAN_EVENT_TYPE_NLO_MATCH;
 	event_info->event.vdev_id = nlo_event->vdev_id;

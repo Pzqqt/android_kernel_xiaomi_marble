@@ -103,9 +103,8 @@ static uint32_t init_deinit_alloc_host_mem_chunk(struct wlan_objmgr_psoc *psoc,
 			info->mem_chunks[idx].req_id =  req_id;
 		}
 	}
-	target_if_info(
-		"req_id %d idx %d num_units %d unit_len %d",
-		req_id, idx, num_units, unit_len);
+	target_if_debug("req_id %d idx %d num_units %d unit_len %d",
+			req_id, idx, num_units, unit_len);
 
 	return num_units;
 }
@@ -250,11 +249,11 @@ static QDF_STATUS init_deinit_alloc_num_units(struct wlan_objmgr_psoc *psoc,
 			}
 		}
 
-		target_if_info("idx %d req %d  num_units %d num_unit_info %d unit size %d actual units %d",
-			       idx, mem_reqs[idx].req_id,
-			       mem_reqs[idx].num_units,
-			       mem_reqs[idx].num_unit_info,
-			       mem_reqs[idx].unit_size, num_units);
+		target_if_debug("idx %d req %d  num_units %d num_unit_info %d unit size %d actual units %d",
+				idx, mem_reqs[idx].req_id,
+				mem_reqs[idx].num_units,
+				mem_reqs[idx].num_unit_info,
+				mem_reqs[idx].unit_size, num_units);
 
 		status = init_deinit_alloc_host_mem(psoc, tgt_hdl,
 				mem_reqs[idx].req_id, num_units,
@@ -384,7 +383,7 @@ void init_deinit_derive_band_to_mac_param(
 			(WMI_HOST_WLAN_5G_CAPABILITY |
 					WMI_HOST_WLAN_2G_CAPABILITY)) {
 			/*Supports both 5G and 2G. Use freq from both radios*/
-			target_if_info("Supports both 2G and 5G");
+			target_if_debug("Supports both 2G and 5G");
 			band_to_mac[i].pdev_id = mac_phy_cap->pdev_id;
 			band_to_mac[i].start_freq =
 					reg_cap[i].low_2ghz_chan;
@@ -402,11 +401,10 @@ void init_deinit_derive_band_to_mac_param(
 			reg_cap[mac_phy_cap->phy_id].low_5ghz_chan = 0;
 			reg_cap[mac_phy_cap->phy_id].high_5ghz_chan = 0;
 
-			target_if_info(
-			"2G radio - pdev_id = %d start_freq = %d end_freq= %d",
-				band_to_mac[i].pdev_id,
-				band_to_mac[i].start_freq,
-				band_to_mac[i].end_freq);
+			target_if_debug("2G radio - pdev_id = %d start_freq = %d end_freq= %d",
+					band_to_mac[i].pdev_id,
+					band_to_mac[i].start_freq,
+					band_to_mac[i].end_freq);
 
 		} else if (mac_phy_cap->supported_bands ==
 					WMI_HOST_WLAN_5G_CAPABILITY) {
@@ -419,11 +417,10 @@ void init_deinit_derive_band_to_mac_param(
 			reg_cap[mac_phy_cap->phy_id].low_2ghz_chan = 0;
 			reg_cap[mac_phy_cap->phy_id].high_2ghz_chan = 0;
 
-			target_if_info(
-			"5G radio -pdev_id = %d start_freq = %d end_freq =%d\n",
-				band_to_mac[i].pdev_id,
-				band_to_mac[i].start_freq,
-				band_to_mac[i].end_freq);
+			target_if_debug("5G radio -pdev_id = %d start_freq = %d end_freq =%d\n",
+					band_to_mac[i].pdev_id,
+					band_to_mac[i].start_freq,
+					band_to_mac[i].end_freq);
 		}
 	}
 }
@@ -480,8 +477,7 @@ void init_deinit_prepare_send_init_cmd(
 		return;
 
 	target_if_info("FW version 0x%x ", info->target_caps.fw_version);
-	if (init_deinit_is_service_ext_msg(psoc, tgt_hdl) ==
-			QDF_STATUS_SUCCESS)
+	if (init_deinit_is_service_ext_msg(psoc, tgt_hdl) == QDF_STATUS_SUCCESS)
 		target_if_info("0x%x\n",
 			       info->service_ext_param.fw_build_vers_ext);
 	else
