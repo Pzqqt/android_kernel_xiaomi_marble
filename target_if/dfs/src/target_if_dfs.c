@@ -164,22 +164,11 @@ static int target_if_radar_event_handler(
 static QDF_STATUS target_if_reg_phyerr_events_dfs2(
 				struct wlan_objmgr_psoc *psoc)
 {
-	int ret = -1;
-	struct wlan_lmac_if_dfs_rx_ops *dfs_rx_ops;
-	bool is_phyerr_filter_offload;
+	int ret;
 
-	dfs_rx_ops = target_if_dfs_get_rx_ops(psoc);
-
-	if (dfs_rx_ops && dfs_rx_ops->dfs_is_phyerr_filter_offload)
-		if (QDF_IS_STATUS_SUCCESS(
-			dfs_rx_ops->dfs_is_phyerr_filter_offload(psoc,
-						&is_phyerr_filter_offload)))
-			if (is_phyerr_filter_offload)
-				ret = wmi_unified_register_event(
-						get_wmi_unified_hdl_from_psoc(psoc),
-						wmi_dfs_radar_event_id,
-						target_if_radar_event_handler);
-
+	ret = wmi_unified_register_event(get_wmi_unified_hdl_from_psoc(psoc),
+					 wmi_dfs_radar_event_id,
+					 target_if_radar_event_handler);
 	if (ret) {
 		target_if_err("failed to register wmi_dfs_radar_event_id");
 		return QDF_STATUS_E_FAILURE;
