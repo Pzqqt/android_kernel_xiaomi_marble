@@ -19619,7 +19619,8 @@ static int wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 {
-	int status, result = 0;
+	QDF_STATUS status;
+	int result = 0;
 	unsigned long rc;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -19629,10 +19630,6 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 
 	hdd_enter();
 
-	status = wlan_hdd_validate_context(hdd_ctx);
-
-	if (0 != status)
-		return status;
 	mac_handle = hdd_ctx->mac_handle;
 	if (adapter->device_mode ==  QDF_STA_MODE) {
 		hdd_debug("Stop firmware roaming");
