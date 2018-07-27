@@ -1206,16 +1206,7 @@ static void dfs_remove_cur_ch_from_list(
 	return;
 }
 
-/**
- * dfs_freq_is_in_nol()- check if given channel in nol list
- * @dfs: dfs handler
- * @freq: channel frequency.
- *
- * check if given channel in nol list.
- *
- * Return: true if channel in nol, false else
- */
-static bool dfs_freq_is_in_nol(struct wlan_dfs *dfs, uint32_t freq)
+bool dfs_freq_is_in_nol(struct wlan_dfs *dfs, uint32_t freq)
 {
 	struct dfs_nolelem *nol;
 

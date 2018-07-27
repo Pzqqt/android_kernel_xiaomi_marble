@@ -57,6 +57,17 @@ QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+bool utils_dfs_freq_is_in_nol(struct wlan_objmgr_pdev *pdev, uint32_t freq)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return false;
+
+	return dfs_freq_is_in_nol(dfs, freq);
+}
+
 QDF_STATUS utils_dfs_cac_valid_reset(struct wlan_objmgr_pdev *pdev,
 		uint8_t prevchan_ieee,
 		uint32_t prevchan_flags)

@@ -2321,4 +2321,15 @@ int dfs_second_segment_radar_disable(struct wlan_dfs *dfs);
  */
 void dfs_task_testtimer_reset(struct wlan_dfs *dfs);
 
+/**
+ * dfs_freq_is_in_nol() - check if given channel in nol list
+ * @dfs: Pointer to wlan_dfs structure
+ * @freq: channel frequency
+ *
+ * check if given channel in nol list.
+ *
+ * Return: true if channel in nol, false else
+ */
+bool dfs_freq_is_in_nol(struct wlan_dfs *dfs, uint32_t freq);
+
 #endif  /* _DFS_H_ */
