@@ -72,6 +72,7 @@
 #include "wma_he.h"
 #include <qdf_crypto.h>
 #include "wma_twt.h"
+#include "wlan_p2p_cfg_api.h"
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -552,6 +553,80 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 }
 
 /**
+ * wma_get_go_probe_timeout() - get P2P GO probe timeout
+ * @mac: UMAC handler
+ * @max_inactive_time: return max inactive time
+ * @max_unresponsive_time: return max unresponsive time
+ *
+ * Return: none
+ */
+#ifdef CONVERGED_P2P_ENABLE
+static inline void
+wma_get_go_probe_timeout(struct sAniSirGlobal *mac,
+			 uint32_t *max_inactive_time,
+			 uint32_t *max_unresponsive_time)
+{
+	uint32_t keep_alive;
+	QDF_STATUS status;
+
+	status = cfg_p2p_get_go_link_monitor_period(mac->psoc,
+						    max_inactive_time);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("Failed to go monitor period");
+		*max_inactive_time = WMA_LINK_MONITOR_DEFAULT_TIME_SECS;
+	}
+	status = cfg_p2p_get_go_keepalive_period(mac->psoc,
+						 &keep_alive);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("Failed to read go keep alive");
+		keep_alive = WMA_KEEP_ALIVE_DEFAULT_TIME_SECS;
+	}
+
+	*max_unresponsive_time = *max_inactive_time + keep_alive;
+}
+#else
+static inline void
+wma_get_go_probe_timeout(struct sAniSirGlobal *mac,
+			 uint32_t *max_inactive_time,
+			 uint32_t *max_unresponsive_time)
+{
+}
+#endif
+
+/**
+ * wma_get_sap_probe_timeout() - get sap probe timeout
+ * @mac: UMAC handler
+ * @max_inactive_time: return max inactive time
+ * @max_unresponsive_time: return max unresponsive time
+ *
+ * Return: none
+ */
+static inline void
+wma_get_sap_probe_timeout(struct sAniSirGlobal *mac,
+			  uint32_t *max_inactive_time,
+			  uint32_t *max_unresponsive_time)
+{
+	uint32_t keep_alive;
+	QDF_STATUS status;
+
+	status = wlan_cfg_get_int(mac, WNI_CFG_AP_LINK_MONITOR_TIMEOUT,
+				  max_inactive_time);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("Failed to read sap monitor period");
+		*max_inactive_time = WMA_LINK_MONITOR_DEFAULT_TIME_SECS;
+	}
+
+	status = wlan_cfg_get_int(mac, WNI_CFG_AP_KEEP_ALIVE_TIMEOUT,
+				  &keep_alive);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("Failed to read sap keep alive");
+		keep_alive = WMA_KEEP_ALIVE_DEFAULT_TIME_SECS;
+	}
+
+	*max_unresponsive_time = *max_inactive_time + keep_alive;
+}
+
+/**
  * wma_get_link_probe_timeout() - get link timeout based on sub type
  * @mac: UMAC handler
  * @sub_type: vdev syb type
@@ -560,39 +635,18 @@ int wma_unified_bcntx_status_event_handler(void *handle,
  *
  * Return: none
  */
-static inline void wma_get_link_probe_timeout(struct sAniSirGlobal *mac,
-					      uint32_t sub_type,
-					      uint32_t *max_inactive_time,
-					      uint32_t *max_unresponsive_time)
+static inline void
+wma_get_link_probe_timeout(struct sAniSirGlobal *mac,
+			   uint32_t sub_type,
+			   uint32_t *max_inactive_time,
+			   uint32_t *max_unresponsive_time)
 {
-	uint32_t keep_alive;
-	uint16_t lm_id, ka_id;
-	QDF_STATUS status;
-
-	switch (sub_type) {
-	case WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO:
-		lm_id = WNI_CFG_GO_LINK_MONITOR_TIMEOUT;
-		ka_id = WNI_CFG_GO_KEEP_ALIVE_TIMEOUT;
-		break;
-	default:
-		/*For softAp the subtype value will be zero */
-		lm_id = WNI_CFG_AP_LINK_MONITOR_TIMEOUT;
-		ka_id = WNI_CFG_AP_KEEP_ALIVE_TIMEOUT;
-	}
-
-	status = wlan_cfg_get_int(mac, lm_id, max_inactive_time);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("Failed to read link monitor for subtype %d",
-			 sub_type);
-		*max_inactive_time = WMA_LINK_MONITOR_DEFAULT_TIME_SECS;
-	}
-
-	status = wlan_cfg_get_int(mac, ka_id, &keep_alive);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("Failed to read keep alive for subtype %d", sub_type);
-		keep_alive = WMA_KEEP_ALIVE_DEFAULT_TIME_SECS;
-	}
-	*max_unresponsive_time = *max_inactive_time + keep_alive;
+	if (sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO)
+		wma_get_go_probe_timeout(mac, max_inactive_time,
+					 max_unresponsive_time);
+	else
+		wma_get_sap_probe_timeout(mac, max_inactive_time,
+					  max_unresponsive_time);
 }
 
 /**

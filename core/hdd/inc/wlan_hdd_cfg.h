@@ -6408,12 +6408,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_MAX     (1)
 #define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_DEFAULT (0)
 
-/* Enable debug for remain on channel issues */
-#define CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_NAME    "gDebugP2pRemainOnChannel"
-#define CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_DEFAULT (0)
-#define CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_MIN     (0)
-#define CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_MAX     (1)
-
 /*
  * SAP ALLOW All Channels
  */
@@ -7639,32 +7633,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_MAC_ADDR_SPOOFING_MIN            (0)
 #define CFG_ENABLE_MAC_ADDR_SPOOFING_MAX            (1)
 #define CFG_ENABLE_MAC_ADDR_SPOOFING_DEFAULT        (1)
-
-/*
- * <ini>
- * gP2PListenDeferInterval - Defer Remain on channel for some duration
- * @Min: 100
- * @Max: 200
- * @Default: 100
- *
- * This ini is used to defer back to back RoC request when sta is
- * connected.
- * If back to back listen received when sta is connected then fw is
- * not getting enough time to spend on home channel so it leading to
- * heartbeat failure.
- *
- * Supported Feature: P2P
- *
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_P2P_LISTEN_DEFER_INTERVAL_NAME        "gP2PListenDeferInterval"
-#define CFG_P2P_LISTEN_DEFER_INTERVAL_MIN         (100)
-#define CFG_P2P_LISTEN_DEFER_INTERVAL_MAX         (200)
-#define CFG_P2P_LISTEN_DEFER_INTERVAL_DEFAULT     (100)
 
 /*
  * <ini>
@@ -14402,8 +14370,6 @@ struct hdd_config {
 
 	uint8_t allowDFSChannelRoam;
 
-	bool debugP2pRemainOnChannel;
-
 #ifndef REMOVE_PKT_LOG
 	bool enablePacketLog;
 #endif
@@ -14498,7 +14464,6 @@ struct hdd_config {
 	uint8_t conc_custom_rule1;
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
-	uint16_t p2p_listen_defer_interval;
 	uint32_t sta_miracast_mcc_rest_time_val;
 	bool is_ramdump_enabled;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE

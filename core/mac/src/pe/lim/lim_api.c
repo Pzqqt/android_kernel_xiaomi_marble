@@ -69,7 +69,7 @@
 #include <wlan_scan_ucfg_api.h>
 #include <wlan_p2p_ucfg_api.h>
 #include "wlan_utility.h"
-
+#include <wlan_tdls_cfg_api.h>
 
 static void __lim_init_scan_vars(tpAniSirGlobal pMac)
 {
@@ -265,6 +265,8 @@ static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 	uint32_t val1, val2, val3;
 	uint16_t val16;
 	uint8_t val8;
+	bool valb;
+	QDF_STATUS status;
 	tSirMacHTCapabilityInfo *pHTCapabilityInfo;
 	tSirMacHTInfoField1 *pHTInfoField1;
 	tSirMacHTParametersInfo *pAmpduParamInfo;
@@ -384,32 +386,33 @@ static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 		return QDF_STATUS_E_FAILURE;
 	}
 #ifdef FEATURE_WLAN_TDLS
-	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_TDLS_BUF_STA_ENABLED,
-					     (uint32_t *) &pMac->lim.
-					     gLimTDLSBufStaEnabled)) {
+	status = cfg_tdls_get_buffer_sta_enable(pMac->psoc, &valb);
+	if (QDF_STATUS_SUCCESS != status) {
 		pe_err("cfg get LimTDLSBufStaEnabled failed");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (QDF_STATUS_SUCCESS !=
-	    wlan_cfg_get_int(pMac, WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK,
-			     (uint32_t *) &pMac->lim.gLimTDLSUapsdMask)) {
-		pe_err("cfg get LimTDLSUapsdMask failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (QDF_STATUS_SUCCESS !=
-	    wlan_cfg_get_int(pMac, WNI_CFG_TDLS_OFF_CHANNEL_ENABLED,
-			     (uint32_t *) &pMac->lim.
-			     gLimTDLSOffChannelEnabled)) {
-		pe_err("cfg get LimTDLSUapsdMask failed");
-		return QDF_STATUS_E_FAILURE;
-	}
+	pMac->lim.gLimTDLSBufStaEnabled = (uint8_t)valb;
 
-	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_TDLS_WMM_MODE_ENABLED,
-					     (uint32_t *) &pMac->lim.
-					     gLimTDLSWmmMode)) {
+	status = cfg_tdls_get_uapsd_mask(pMac->psoc, &val1);
+	if (QDF_STATUS_SUCCESS != status) {
+		pe_err("cfg get LimTDLSUapsdMask failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	pMac->lim.gLimTDLSUapsdMask = (uint8_t)val1;
+
+	status = cfg_tdls_get_off_channel_enable(pMac->psoc, &valb);
+	if (QDF_STATUS_SUCCESS != status) {
+		pe_err("cfg get LimTDLSUapsdMask failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	pMac->lim.gLimTDLSOffChannelEnabled = (uint8_t)valb;
+
+	status = cfg_tdls_get_wmm_mode_enable(pMac->psoc, &valb);
+	if (QDF_STATUS_SUCCESS != status) {
 		pe_err("cfg get LimTDLSWmmMode failed");
 		return QDF_STATUS_E_FAILURE;
 	}
+	pMac->lim.gLimTDLSWmmMode = (uint8_t)valb;
 #endif
 
 	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pMac,

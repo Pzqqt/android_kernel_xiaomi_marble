@@ -42,8 +42,6 @@
 #include "wlan_hdd_green_ap.h"
 #include "wlan_hdd_green_ap_cfg.h"
 #include "wlan_hdd_twt.h"
-#include "wlan_p2p_cfg_api.h"
-#include "wlan_tdls_cfg_api.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(struct hdd_context *hdd_ctx,
@@ -2743,13 +2741,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_CCK_TX_FIR_OVERRIDE_MIN,
 		     CFG_ENABLE_CCK_TX_FIR_OVERRIDE_MAX),
 
-	REG_VARIABLE(CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, debugP2pRemainOnChannel,
-		     VAR_FLAGS_OPTIONAL,
-		     CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_DEFAULT,
-		     CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_MIN,
-		     CFG_DEBUG_P2P_REMAIN_ON_CHANNEL_MAX),
-
 #ifndef REMOVE_PKT_LOG
 	REG_VARIABLE(CFG_ENABLE_PACKET_LOG, WLAN_PARAM_Integer,
 		     struct hdd_config, enablePacketLog,
@@ -3202,14 +3193,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_DEFAULT,
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MIN,
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MAX),
-
-	REG_VARIABLE(CFG_P2P_LISTEN_DEFER_INTERVAL_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, p2p_listen_defer_interval,
-		     VAR_FLAGS_OPTIONAL |
-		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_P2P_LISTEN_DEFER_INTERVAL_DEFAULT,
-		     CFG_P2P_LISTEN_DEFER_INTERVAL_MIN,
-		     CFG_P2P_LISTEN_DEFER_INTERVAL_MAX),
 
 	REG_VARIABLE(CFG_MULTICAST_HOST_FW_MSGS, WLAN_PARAM_Integer,
 		     struct hdd_config, multicast_host_fw_msgs,
@@ -6705,8 +6688,6 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [gEnableDumpCollect] Value = [%u]",
 			hdd_ctx->config->is_ramdump_enabled);
 
-	hdd_debug("Name = [gP2PListenDeferInterval] Value = [%u]",
-		  hdd_ctx->config->p2p_listen_defer_interval);
 	hdd_debug("Name = [is_ps_enabled] value = [%d]",
 		   hdd_ctx->config->is_ps_enabled);
 	hdd_debug("Name = [tso_enable] value = [%d]",
@@ -7925,9 +7906,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 	bool status = true;
 	struct hdd_config *config = hdd_ctx->config;
 	mac_handle_t mac_handle;
-	uint32_t ivalue;
-	bool bvalue;
-	QDF_STATUS ret;
 
 	/*
 	 * During the initialization both 2G and 5G capabilities should be same.
@@ -8015,33 +7993,10 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_AP_KEEP_ALIVE_TIMEOUT to CFG");
 	}
 
-	ret = cfg_p2p_get_go_keepalive_period(hdd_ctx->hdd_psoc, &ivalue);
-	if (ret == QDF_STATUS_SUCCESS) {
-		ret = sme_cfg_set_int(mac_handle,
-				      WNI_CFG_GO_KEEP_ALIVE_TIMEOUT,
-				      ivalue);
-
-		if (ret == QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass on WNI_CFG_GO_KEEP_ALIVE_TIMEOUT to CFG");
-		}
-	}
-
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_AP_LINK_MONITOR_TIMEOUT,
 		    config->apLinkMonitorPeriod) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_AP_LINK_MONITOR_TIMEOUT to CFG");
-	}
-
-	ret = cfg_p2p_get_go_link_monitor_period(hdd_ctx->hdd_psoc, &ivalue);
-	if (ret == QDF_STATUS_SUCCESS) {
-		ret = sme_cfg_set_int(mac_handle,
-				      WNI_CFG_GO_LINK_MONITOR_TIMEOUT,
-				      ivalue);
-		if (ret == QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass on WNI_CFG_GO_LINK_MONITOR_TIMEOUT to CFG");
-		}
 	}
 
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_SINGLE_TID_RC,
@@ -8118,82 +8073,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_DISABLE_LDPC_WITH_TXBF_AP to CFG");
 	}
 
-#ifdef FEATURE_WLAN_TDLS
-
-	ret = cfg_tdls_get_uapsd_mask(hdd_ctx->hdd_psoc, &ivalue);
-	if (ret == QDF_STATUS_SUCCESS) {
-		ret = sme_cfg_set_int(mac_handle,
-				      WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK,
-				      ivalue);
-		if (ret == QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass on WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK to CFG");
-		}
-	}
-
-	ret = cfg_tdls_get_buffer_sta_enable(hdd_ctx->hdd_psoc, &bvalue);
-	if (ret == QDF_STATUS_SUCCESS) {
-		ret = sme_cfg_set_int(mac_handle,
-				      WNI_CFG_TDLS_BUF_STA_ENABLED,
-				      (uint32_t)bvalue);
-		if (ret == QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass on WNI_CFG_TDLS_BUF_STA_ENABLED to CFG");
-		}
-	}
-
-	ret = cfg_tdls_get_uapsd_inactivity_time(hdd_ctx->hdd_psoc, &ivalue);
-	if (ret == QDF_STATUS_SUCCESS) {
-		ret = sme_cfg_set_int(mac_handle,
-				      WNI_CFG_TDLS_PUAPSD_INACT_TIME,
-				      ivalue);
-		if (ret == QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass on WNI_CFG_TDLS_PUAPSD_INACT_TIME to CFG");
-		}
-	}
-
-	ret = cfg_tdls_get_rx_pkt_threshold(hdd_ctx->hdd_psoc, &ivalue);
-	if (ret == QDF_STATUS_SUCCESS) {
-		ret = sme_cfg_set_int(mac_handle,
-				      WNI_CFG_TDLS_RX_FRAME_THRESHOLD,
-				      ivalue);
-		if (ret == QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass on WNI_CFG_TDLS_RX_FRAME_THRESHOLD to CFG");
-		}
-	}
-
-	ret = cfg_tdls_get_off_channel_enable(hdd_ctx->hdd_psoc, &bvalue);
-	if (ret == QDF_STATUS_SUCCESS) {
-		ret = sme_cfg_set_int(mac_handle,
-				      WNI_CFG_TDLS_OFF_CHANNEL_ENABLED,
-				      (uint32_t)bvalue);
-		if (ret == QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass on WNI_CFG_TDLS_BUF_STA_ENABLED to CFG");
-		}
-	}
-
-	ret = cfg_tdls_get_wmm_mode_enable(hdd_ctx->hdd_psoc, &bvalue);
-	if (ret == QDF_STATUS_SUCCESS) {
-		ret = sme_cfg_set_int(mac_handle,
-				      WNI_CFG_TDLS_WMM_MODE_ENABLED,
-				      (uint32_t)bvalue);
-		if (ret == QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass on WNI_CFG_TDLS_WMM_MODE_ENABLED to CFG");
-		}
-	}
-#endif
-
-	if (sme_cfg_set_int(mac_handle,
-			    WNI_CFG_DEBUG_P2P_REMAIN_ON_CHANNEL,
-			    config->debugP2pRemainOnChannel) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_DEBUG_P2P_REMAIN_ON_CHANNEL to CFG");
-	}
 #ifdef WLAN_FEATURE_11W
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_PMF_SA_QUERY_MAX_RETRIES,
 			    config->pmfSaQueryMaxRetries) ==

@@ -3758,17 +3758,6 @@ HAL
 1    65535    20
 
 *
-* GO Keep Alive Timeout (TU)
-*
-WNI_CFG_GO_KEEP_ALIVE_TIMEOUT    I    4    7
-V    RW    NP
-HAL
-1    65535    20
-V    RW    NP
-HAL
-1    65535    20
-
-*
 * MC Addr List power control will be enabled if value is set to 1
 *
 *
@@ -3831,53 +3820,6 @@ HAL
 1    255    3
 
 *
-*TDLS Station's UAPSD MASK Configuration
-*
-*
-*
-WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK  I   4   7
-V    RW    NP
-LIM
-0    15    0
-V    RW    NP
-LIM
-0    15   0
-*
-*TDLS Stations Buffer STA Capability
-*
-*
-*
-WNI_CFG_TDLS_BUF_STA_ENABLED  I   4   7
-V    RW    NP
-LIM
-0    1    0
-V    RW    NP
-LIM
-0    1    0
-*TDLS Stations PUAPSD Inactivity Timer
-*
-*
-*
-WNI_CFG_TDLS_PUAPSD_INACT_TIME  I   4   7
-V    RW    NP
-LIM
-0    10    0
-V    RW    NP
-LIM
-0    10    0
-*TDLS Stations PUAPSD RX Frame Threshold
-*
-*
-*
-WNI_CFG_TDLS_RX_FRAME_THRESHOLD  I   4   7
-V    RW    NP
-LIM
-10   20    10
-V    RW    NP
-LIM
-10   20    10
-
-*
 * PMF SA Query Maximum Retries
 *
 
@@ -3914,18 +3856,6 @@ V    RW    NP
 NONE
 0    9     0
 
-* GO Link Monitor Timeout (TU)
-*
-WNI_CFG_GO_LINK_MONITOR_TIMEOUT    I    4    7
-V    RW    NP
-HAL
-3   50    10
-V    RW    NP
-HAL
-3   50    10
-*
-*
-
 * RMC action period frequency (milli seconds)
 *
 WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY    I    4    7
@@ -3958,27 +3888,6 @@ V    RW    NP
 NONE
 0    1    1
 
-* Debug p2p remain on channel
-*
-WNI_CFG_DEBUG_P2P_REMAIN_ON_CHANNEL    I    4    7
-V    RW    NP
-NONE
-0    1    0
-V    RW    NP
-NONE
-0    1    0
-
-*
-* TDLS Off Channel Implementation
-*
-WNI_CFG_TDLS_OFF_CHANNEL_ENABLED    I    4    7
-V    RW    NP
-LIM
-0    1     0
-V    RW    NP
-LIM
-0    1     0
-
 WNI_CFG_IBSS_ATIM_WIN_SIZE I    4    7
 V    RW    NP
 NONE
@@ -4005,15 +3914,4 @@ NONE
 0    1    0
 V    RW    NP
 NONE
-0    1    0
-*
-*TDLS WMM Mode
-*
-*
-WNI_CFG_TDLS_WMM_MODE_ENABLED   I   4   7
-V    RW    NP
-LIM
-0    1    0
-V    RW    NP
-LIM
 0    1    0
