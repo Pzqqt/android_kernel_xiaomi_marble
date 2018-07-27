@@ -1408,7 +1408,7 @@ void *pld_smmu_get_mapping(struct device *dev)
 		ptr = pld_snoc_smmu_get_mapping(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE:
-		pr_err("Not supported on type %d\n", type);
+		ptr = pld_pcie_smmu_get_mapping(dev);
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);
@@ -1439,8 +1439,7 @@ int pld_smmu_map(struct device *dev, phys_addr_t paddr,
 		ret = pld_snoc_smmu_map(dev, paddr, iova_addr, size);
 		break;
 	case PLD_BUS_TYPE_PCIE:
-		pr_err("Not supported on type %d\n", type);
-		ret = -ENODEV;
+		ret = pld_pcie_smmu_map(dev, paddr, iova_addr, size);
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);

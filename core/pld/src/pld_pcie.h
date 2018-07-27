@@ -127,6 +127,18 @@ static inline int pld_pcie_wlan_pm_control(struct device *dev, bool vote)
 #endif
 
 #ifndef CONFIG_PLD_PCIE_CNSS
+static inline void *pld_pcie_smmu_get_mapping(struct device *dev)
+{
+	return NULL;
+}
+
+static inline int
+pld_pcie_smmu_map(struct device *dev,
+		  phys_addr_t paddr, uint32_t *iova_addr, size_t size)
+{
+	return 0;
+}
+
 static inline int
 pld_pcie_get_fw_files_for_target(struct device *dev,
 				 struct pld_fw_files *pfw_files,
@@ -307,6 +319,18 @@ void pld_pcie_schedule_recovery_work(struct device *dev,
 				     enum pld_recovery_reason reason);
 void pld_pcie_device_self_recovery(struct device *dev,
 				   enum pld_recovery_reason reason);
+
+static inline void *pld_pcie_smmu_get_mapping(struct device *dev)
+{
+	return cnss_smmu_get_mapping(dev);
+}
+
+static inline int
+pld_pcie_smmu_map(struct device *dev,
+		  phys_addr_t paddr, uint32_t *iova_addr, size_t size)
+{
+	return cnss_smmu_map(dev, paddr, iova_addr, size);
+}
 
 static inline void pld_pcie_link_down(struct device *dev)
 {
