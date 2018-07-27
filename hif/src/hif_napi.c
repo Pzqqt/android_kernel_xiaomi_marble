@@ -82,8 +82,23 @@ static void hif_init_rx_thread_napi(struct qca_napi_info *napii)
 		       hif_rxthread_napi_poll, 64);
 	napi_enable(&napii->rx_thread_napi);
 }
+
+/**
+ * hif_deinit_rx_thread_napi() - Deinitialize dummy Rx_thread NAPI
+ * @napii: Handle to napi_info holding rx_thread napi
+ *
+ * Return: None
+ */
+static void hif_deinit_rx_thread_napi(struct qca_napi_info *napii)
+{
+	netif_napi_del(&napii->rx_thread_napi);
+}
 #else /* RECEIVE_OFFLOAD */
 static void hif_init_rx_thread_napi(struct qca_napi_info *napii)
+{
+}
+
+static void hif_deinit_rx_thread_napi(struct qca_napi_info *napii)
 {
 }
 #endif
@@ -373,6 +388,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 
 			qdf_lro_deinit(napii->lro_ctx);
 			netif_napi_del(&(napii->napi));
+			hif_deinit_rx_thread_napi(napii);
 
 			napid->ce_map &= ~(0x01 << ce);
 			napid->napis[ce] = NULL;
