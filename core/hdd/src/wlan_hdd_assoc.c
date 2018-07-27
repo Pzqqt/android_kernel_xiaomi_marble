@@ -245,9 +245,9 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	/* save the new connection state */
-	hdd_debug("%pS Changed conn state from old:%d to new:%d for dev %s",
-		(void *)_RET_IP_, hdd_sta_ctx->conn_info.connState,
-		conn_state, adapter->dev->name);
+	hdd_debug("Changed conn state from old:%d to new:%d for dev %s",
+		  hdd_sta_ctx->conn_info.connState, conn_state,
+		  adapter->dev->name);
 
 	hdd_tsf_notify_wlan_state_change(adapter,
 					 hdd_sta_ctx->conn_info.connState,
