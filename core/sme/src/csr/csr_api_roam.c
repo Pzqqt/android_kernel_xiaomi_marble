@@ -6610,6 +6610,7 @@ void csr_reinit_roam_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 		csr_release_profile(pMac, &pCommand->u.roamCmd.roamProfile);
 		pCommand->u.roamCmd.fReleaseProfile = false;
 	}
+	pCommand->u.roamCmd.pLastRoamBss = NULL;
 	pCommand->u.roamCmd.pRoamBssEntry = NULL;
 	/* Because u.roamCmd is union and share with scanCmd and StatusChange */
 	qdf_mem_set(&pCommand->u.roamCmd, sizeof(struct roam_cmd), 0);
@@ -8652,7 +8653,6 @@ QDF_STATUS csr_roam_issue_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		status = csr_queue_sme_command(pMac, pCommand, fImediate);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sme_err("fail to send message status: %d", status);
-			csr_release_command_roam(pMac, pCommand);
 		}
 	}
 

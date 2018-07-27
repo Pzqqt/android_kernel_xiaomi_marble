@@ -35,7 +35,6 @@
 #include "wlan_policy_mgr_api.h"
 #include "sir_api.h"
 
-static void csr_reinit_preauth_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 static QDF_STATUS csr_neighbor_roam_add_preauth_fail(tpAniSirGlobal mac_ctx,
 			uint8_t session_id, tSirMacAddr bssid);
 
@@ -93,20 +92,6 @@ void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 }
 
 /**
- * csr_reinit_preauth_cmd() - Cleanup the preauth command
- * @mac_ctx: Global MAC context
- * @command: Command to be cleaned up
- *
- * Return: None
- */
-static void csr_reinit_preauth_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *command)
-{
-	command->u.roamCmd.pLastRoamBss = NULL;
-	command->u.roamCmd.pRoamBssEntry = NULL;
-	qdf_mem_set(&command->u.roamCmd, sizeof(struct roam_cmd), 0);
-}
-
-/**
  * csr_roam_enqueue_preauth() - Put the preauth command in the queue
  * @mac_ctx: Global MAC Context
  * @session_id: SME Session ID
@@ -138,7 +123,6 @@ QDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal mac_ctx,
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				sme_err("fail to queue preauth,status: %d",
 					status);
-				csr_reinit_preauth_cmd(mac_ctx, command);
 			}
 		} else {
 			status = QDF_STATUS_E_RESOURCES;
