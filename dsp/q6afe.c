@@ -337,6 +337,7 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
 
 static void afe_notify_dc_presence(void)
 {
+	pr_debug("%s: DC detected\n", __func__);
 	msm_aud_evt_notifier_call_chain(MSM_AUD_DC_EVENT, NULL);
 
 	schedule_work(&this_afe.afe_dc_work);
@@ -542,7 +543,7 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 			    (evt_pl->payload_size == sizeof(flag_dc_presence))) {
 
 				memcpy(&flag_dc_presence,
-					payload +
+					(uint8_t *)payload +
 					sizeof(struct afe_port_mod_evt_rsp_hdr),
 					evt_pl->payload_size);
 				if (flag_dc_presence[0] == 1 ||
