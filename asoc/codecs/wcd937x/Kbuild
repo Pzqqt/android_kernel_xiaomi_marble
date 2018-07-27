@@ -52,6 +52,8 @@ COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 # for WCD937X Codec
 ifdef CONFIG_SND_SOC_WCD937X
 	WCD937X_OBJS += wcd937x.o
+	WCD937X_OBJS += wcd937x-regmap.o
+	WCD937X_OBJS += wcd937x-tables.o
 endif
 
 ifdef CONFIG_SND_SOC_WCD937X_SLAVE
