@@ -782,53 +782,62 @@ static void lim_fill_sap_bcn_pkt_meta(struct scan_cache_entry *scan_entry,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS lim_allocate_and_get_bcn(tpAniSirGlobal mac_ctx,
-				cds_pkt_t *pkt,
-				uint8_t *rx_pkt_info,
-				tSchBeaconStruct *bcn,
+static QDF_STATUS lim_allocate_and_get_bcn(
+				tpAniSirGlobal mac_ctx,
+				cds_pkt_t **pkt,
+				uint8_t **rx_pkt_info,
+				tSchBeaconStruct **bcn,
 				struct scan_cache_entry *scan_entry)
 {
 	QDF_STATUS status;
+	uint8_t *rx_pkt_info_l = NULL;
+	tSchBeaconStruct *bcn_l = NULL;
+	cds_pkt_t *pkt_l = NULL;
 
-	pkt = qdf_mem_malloc(sizeof(*pkt));
-	if (!pkt) {
+	pkt_l = qdf_mem_malloc(sizeof(cds_pkt_t));
+	if (!pkt_l) {
 		pe_err("Failed to allocate pkt");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = wma_ds_peek_rx_packet_info(pkt, (void *)&rx_pkt_info, false);
+	status = wma_ds_peek_rx_packet_info(
+		pkt_l, (void *)&rx_pkt_info_l, false);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		pe_err("Failed to get Rx Pkt meta");
 		goto free;
 	}
 
-	bcn = qdf_mem_malloc(sizeof(tSchBeaconStruct));
-	if (!bcn) {
+	bcn_l = qdf_mem_malloc(sizeof(tSchBeaconStruct));
+	if (!bcn_l) {
 		pe_err("Failed to allocate bcn struct");
 		goto free;
 	}
 
-	lim_fill_sap_bcn_pkt_meta(scan_entry, pkt);
+	lim_fill_sap_bcn_pkt_meta(scan_entry, pkt_l);
 
 	/* Convert the beacon frame into a structure */
 	if (sir_convert_beacon_frame2_struct(mac_ctx,
-	    (uint8_t *) rx_pkt_info,
-	    bcn) != QDF_STATUS_SUCCESS) {
-		pe_err_rl("beacon parsing failed");
+	    (uint8_t *)rx_pkt_info_l,
+	    bcn_l) != QDF_STATUS_SUCCESS) {
+		pe_err("beacon parsing failed");
 		goto free;
 	}
+
+	*pkt = pkt_l;
+	*bcn = bcn_l;
+	*rx_pkt_info = rx_pkt_info_l;
 
 	return QDF_STATUS_SUCCESS;
 
 free:
-	if (pkt) {
-		qdf_mem_free(pkt);
-		pkt = NULL;
+	if (pkt_l) {
+		qdf_mem_free(pkt_l);
+		pkt_l = NULL;
 	}
 
-	if (bcn) {
-		qdf_mem_free(bcn);
-		bcn = NULL;
+	if (bcn_l) {
+		qdf_mem_free(bcn_l);
+		bcn_l = NULL;
 	}
 
 	return QDF_STATUS_E_FAILURE;
@@ -850,7 +859,7 @@ void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 
-	if (scan_entry->frm_subtype != SIR_MAC_MGMT_BEACON)
+	if (scan_entry->frm_subtype != MGMT_SUBTYPE_BEACON)
 		return;
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
@@ -869,10 +878,13 @@ void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
 		    (filter->sap_channel[session_id] ==
 		    scan_entry->channel.chan_idx)) {
 			if (!pkt) {
-				status = lim_allocate_and_get_bcn(mac_ctx, pkt,
-						rx_pkt_info, bcn, scan_entry);
-				if (!QDF_IS_STATUS_SUCCESS(status))
+				status = lim_allocate_and_get_bcn(
+					mac_ctx, &pkt, &rx_pkt_info,
+					&bcn, scan_entry);
+				if (!QDF_IS_STATUS_SUCCESS(status)) {
+					pe_debug("lim_allocate_and_get_bcn fail!");
 					return;
+				}
 			}
 			sch_beacon_process_for_ap(mac_ctx, session_id,
 						  rx_pkt_info, bcn);
