@@ -169,6 +169,7 @@ static QDF_STATUS send_twt_del_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 			(wmi_twt_del_dialog_cmd_fixed_param));
 
 	cmd->vdev_id = params->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->peer_macaddr, &cmd->peer_macaddr);
 	cmd->dialog_id = params->dialog_id;
 
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
@@ -201,6 +202,7 @@ static QDF_STATUS send_twt_pause_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 			(wmi_twt_pause_dialog_cmd_fixed_param));
 
 	cmd->vdev_id = params->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->peer_macaddr, &cmd->peer_macaddr);
 	cmd->dialog_id = params->dialog_id;
 
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
@@ -233,6 +235,7 @@ static QDF_STATUS send_twt_resume_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 			(wmi_twt_resume_dialog_cmd_fixed_param));
 
 	cmd->vdev_id = params->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->peer_macaddr, &cmd->peer_macaddr);
 	cmd->dialog_id = params->dialog_id;
 	cmd->sp_offset_us = params->sp_offset_us;
 
@@ -309,6 +312,7 @@ static QDF_STATUS extract_twt_add_dialog_comp_event_tlv(
 	ev = param_buf->fixed_param;
 
 	params->vdev_id = ev->vdev_id;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, params->peer_macaddr);
 	params->status = ev->status;
 	params->dialog_id = ev->dialog_id;
 
@@ -332,6 +336,7 @@ static QDF_STATUS extract_twt_del_dialog_comp_event_tlv(
 	ev = param_buf->fixed_param;
 
 	params->vdev_id = ev->vdev_id;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, params->peer_macaddr);
 	params->dialog_id = ev->dialog_id;
 
 	return QDF_STATUS_SUCCESS;
@@ -354,6 +359,7 @@ static QDF_STATUS extract_twt_pause_dialog_comp_event_tlv(
 	ev = param_buf->fixed_param;
 
 	params->vdev_id = ev->vdev_id;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, params->peer_macaddr);
 	params->status = ev->status;
 	params->dialog_id = ev->dialog_id;
 
@@ -378,6 +384,7 @@ static QDF_STATUS extract_twt_resume_dialog_comp_event_tlv(
 	ev = param_buf->fixed_param;
 
 	params->vdev_id = ev->vdev_id;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, params->peer_macaddr);
 	params->status = ev->status;
 	params->dialog_id = ev->dialog_id;
 
