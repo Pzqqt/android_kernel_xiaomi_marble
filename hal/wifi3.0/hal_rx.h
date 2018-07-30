@@ -401,11 +401,6 @@ enum hal_rx_ret_buf_manager {
 	HAL_RX_MSDU_DA_IS_MCBC_FLAG_GET(msdu_info_ptr) | \
 	HAL_RX_MSDU_DA_IDX_TIMEOUT_FLAG_GET(msdu_info_ptr))
 
-#define HAL_RX_MSDU_DESC_INFO_GET(msdu_details_ptr)	\
-	((struct rx_msdu_desc_info *)			\
-	_OFFSET_TO_BYTE_PTR(msdu_details_ptr,		\
-RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET))
-
 
 #define HAL_RX_MPDU_PN_31_0_GET(_rx_mpdu_info)		\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
@@ -664,6 +659,7 @@ static inline uint8_t
 *hal_rx_padding0_get(uint8_t *buf)
 {
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+
 	return pkt_tlvs->rx_padding0;
 }
 
@@ -703,6 +699,7 @@ hal_rx_print_pn(uint8_t *buf)
 	uint32_t pn_63_32 = HAL_RX_MPDU_PN_63_32_GET(mpdu_info);
 	uint32_t pn_95_64 = HAL_RX_MPDU_PN_95_64_GET(mpdu_info);
 	uint32_t pn_127_96 = HAL_RX_MPDU_PN_127_96_GET(mpdu_info);
+
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		"PN number pn_127_96 0x%x pn_95_64 0x%x pn_63_32 0x%x pn_31_0 0x%x ",
 			pn_127_96, pn_95_64, pn_63_32, pn_31_0);
@@ -1899,11 +1896,6 @@ hal_rx_mpdu_end_mic_err_get(uint8_t *buf)
  * RX REO ERROR APIS
  ******************************************************************************/
 
-#define HAL_RX_LINK_DESC_MSDU0_PTR(link_desc)	\
-	((struct rx_msdu_details *)		\
-		_OFFSET_TO_BYTE_PTR((link_desc),\
-		RX_MSDU_LINK_8_RX_MSDU_DETAILS_MSDU_0_OFFSET))
-
 #define HAL_RX_NUM_MSDU_DESC 6
 #define HAL_RX_MAX_SAVED_RING_DESC 16
 
@@ -1919,8 +1911,37 @@ struct hal_buf_info {
 	uint32_t sw_cookie;
 };
 
+/**
+ * hal_rx_link_desc_msdu0_ptr - Get pointer to rx_msdu details
+ * @msdu_link_ptr - msdu link ptr
+ * @hal - pointer to hal_soc
+ * Return - Pointer to rx_msdu_details structure
+ *
+ */
+static inline void *hal_rx_link_desc_msdu0_ptr(void *msdu_link_ptr, void *hal)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal;
+
+	return hal_soc->ops->hal_rx_link_desc_msdu0_ptr(msdu_link_ptr);
+}
+
+/**
+ * hal_rx_msdu_desc_info_get_ptr() - Get msdu desc info ptr
+ * @msdu_details_ptr - Pointer to msdu_details_ptr
+ * @hal - pointer to hal_soc
+ * Return - Pointer to rx_msdu_desc_info structure.
+ *
+ */
+static inline void *hal_rx_msdu_desc_info_get_ptr(void *msdu_details_ptr, void *hal)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal;
+
+	return hal_soc->ops->hal_rx_msdu_desc_info_get_ptr(msdu_details_ptr);
+}
+
 /* This special cookie value will be used to indicate FW allocated buffers
- * received through RXDMA2SW ring for RXDMA WARs */
+ * received through RXDMA2SW ring for RXDMA WARs
+ */
 #define HAL_RX_COOKIE_SPECIAL 0x1fffff
 
 /**
@@ -1936,15 +1957,17 @@ struct hal_buf_info {
  *
  * Return: void
  */
-static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
-		struct hal_rx_msdu_list *msdu_list, uint16_t *num_msdus)
+static inline void hal_rx_msdu_list_get(struct hal_soc *hal_soc,
+					void *msdu_link_desc,
+					struct hal_rx_msdu_list *msdu_list,
+					uint16_t *num_msdus)
 {
 	struct rx_msdu_details *msdu_details;
 	struct rx_msdu_desc_info *msdu_desc_info;
 	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
 	int i;
 
-	msdu_details = HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link);
+	msdu_details = hal_rx_link_desc_msdu0_ptr(msdu_link, hal_soc);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"[%s][%d] msdu_link=%pK msdu_details=%pK",
@@ -1952,16 +1975,18 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 
 	for (i = 0; i < HAL_RX_NUM_MSDU_DESC; i++) {
 		/* num_msdus received in mpdu descriptor may be incorrect
-		 * sometimes due to HW issue. Check msdu buffer address also */
+		 * sometimes due to HW issue. Check msdu buffer address also
+		 */
 		if (HAL_RX_BUFFER_ADDR_31_0_GET(
 			&msdu_details[i].buffer_addr_info_details) == 0) {
 			/* set the last msdu bit in the prev msdu_desc_info */
 			msdu_desc_info =
-				HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[i - 1]);
+				hal_rx_msdu_desc_info_get_ptr(&msdu_details[i - 1], hal_soc);
 			HAL_RX_LAST_MSDU_IN_MPDU_FLAG_SET(msdu_desc_info, 1);
 			break;
 		}
-		msdu_desc_info = HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[i]);
+		msdu_desc_info = hal_rx_msdu_desc_info_get_ptr(&msdu_details[i],
+								hal_soc);
 
 		/* set first MSDU bit or the last MSDU bit */
 		if (!i)
@@ -1995,17 +2020,18 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
  * Return: dst_ind (REO destination ring ID)
  */
 static inline uint32_t
-hal_rx_msdu_reo_dst_ind_get(void *msdu_link_desc)
+hal_rx_msdu_reo_dst_ind_get(struct hal_soc *hal_soc, void *msdu_link_desc)
 {
 	struct rx_msdu_details *msdu_details;
 	struct rx_msdu_desc_info *msdu_desc_info;
 	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
 	uint32_t dst_ind;
 
-	msdu_details = HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link);
+	msdu_details = hal_rx_link_desc_msdu0_ptr(msdu_link, hal_soc);
 
 	/* The first msdu in the link should exsist */
-	msdu_desc_info = HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[0]);
+	msdu_desc_info = hal_rx_msdu_desc_info_get_ptr(&msdu_details[0],
+							hal_soc);
 	dst_ind = HAL_RX_MSDU_REO_DST_IND_GET(msdu_desc_info);
 	return dst_ind;
 }
@@ -2102,18 +2128,18 @@ enum hal_reo_error_code {
  *
  * @HAL_RXDMA_ERR_OVERFLOW: MPDU frame is not complete due to a FIFO overflow
  * @ HAL_RXDMA_ERR_OVERFLOW      : MPDU frame is not complete due to a FIFO
- * 				   overflow
+ *                                 overflow
  * @ HAL_RXDMA_ERR_MPDU_LENGTH   : MPDU frame is not complete due to receiving
- * 				   incomplete
- * 		               	   MPDU from the PHY
+ *                                 incomplete
+ *                                 MPDU from the PHY
  * @ HAL_RXDMA_ERR_FCS           : FCS check on the MPDU frame failed
  * @ HAL_RXDMA_ERR_DECRYPT       : Decryption error
  * @ HAL_RXDMA_ERR_TKIP_MIC      : TKIP MIC error
  * @ HAL_RXDMA_ERR_UNENCRYPTED   : Received a frame that was expected to be
- * 			  	   encrypted but wasn’t
+ *                                 encrypted but wasn’t
  * @ HAL_RXDMA_ERR_MSDU_LEN      : MSDU related length error
  * @ HAL_RXDMA_ERR_MSDU_LIMIT    : Number of MSDUs in the MPDUs exceeded
- * 				   the max allowed
+ *                                 the max allowed
  * @ HAL_RXDMA_ERR_WIFI_PARSE    : wifi parsing error
  * @ HAL_RXDMA_ERR_AMSDU_PARSE   : Amsdu parsing error
  * @ HAL_RXDMA_ERR_SA_TIMEOUT    : Source Address search timeout
@@ -2379,7 +2405,7 @@ enum hal_rx_wbm_rxdma_push_reason {
 
 #define HAL_RX_WBM_LAST_MSDU_GET(wbm_desc)		\
 	(((*(((uint32_t *) wbm_desc) +			\
-	(WBM_RELEASE_RING_4_LAST_MSDU_OFFSET >> 2))) & 	\
+	(WBM_RELEASE_RING_4_LAST_MSDU_OFFSET >> 2))) &  \
 	WBM_RELEASE_RING_4_LAST_MSDU_MASK) >>		\
 	WBM_RELEASE_RING_4_LAST_MSDU_LSB)
 
@@ -3038,7 +3064,7 @@ void hal_rx_clear_msdu_link_ptr(struct hal_rx_msdu_link_ptr_info *msdu_link_ptr,
  * Returns: Number of processed msdus
  */
 static inline
-int hal_rx_chain_msdu_links(qdf_nbuf_t msdu,
+int hal_rx_chain_msdu_links(struct hal_soc *hal_soc, qdf_nbuf_t msdu,
 	struct hal_rx_msdu_link_ptr_info *msdu_link_ptr_info,
 	struct hal_rx_mpdu_desc_info *mpdu_desc_info)
 {
@@ -3047,7 +3073,7 @@ int hal_rx_chain_msdu_links(qdf_nbuf_t msdu,
 		&msdu_link_ptr_info->msdu_link;
 	struct rx_msdu_link *prev_msdu_link_ptr = NULL;
 	struct rx_msdu_details *msdu_details =
-		HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link_ptr);
+		hal_rx_link_desc_msdu0_ptr(msdu_link_ptr, hal_soc);
 	uint8_t num_msdus = mpdu_desc_info->msdu_count;
 	struct rx_msdu_desc_info *msdu_desc_info;
 	uint8_t fragno, more_frag;
@@ -3056,7 +3082,8 @@ int hal_rx_chain_msdu_links(qdf_nbuf_t msdu,
 
 	for (j = 0; j < num_msdus; j++) {
 		msdu_desc_info =
-			HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[j]);
+			hal_rx_msdu_desc_info_get_ptr(&msdu_details[j],
+							hal_soc);
 		msdu_list.msdu_info[j].msdu_flags =
 			HAL_RX_MSDU_FLAGS_GET(msdu_desc_info);
 		msdu_list.msdu_info[j].msdu_len =
@@ -3394,6 +3421,24 @@ static inline void hal_rx_dump_pkt_tlvs(struct hal_soc *hal_soc,
 	hal_rx_dump_mpdu_end_tlv(mpdu_end, dbg_level);
 	hal_rx_dump_msdu_end_tlv(hal_soc, msdu_end, dbg_level);
 	hal_rx_dump_pkt_hdr_tlv(pkt_hdr_tlv, dbg_level);
+}
+
+
+/**
+ * hal_reo_status_get_header_generic - Process reo desc info
+ * @d - Pointer to reo descriptior
+ * @b - tlv type info
+ * @h - Pointer to hal_reo_status_header where info to be stored
+ * @hal- pointer to hal_soc structure
+ * Return - none.
+ *
+ */
+static inline void hal_reo_status_get_header(uint32_t *d, int b,
+						void *h, void *hal)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal;
+
+	hal_soc->ops->hal_reo_status_get_header(d, b, h);
 }
 
 #endif /* _HAL_RX_H */

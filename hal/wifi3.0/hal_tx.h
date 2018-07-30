@@ -277,47 +277,6 @@ enum hal_tx_dscp_tid_table_id {
 /*---------------------------------------------------------------------------
   TCL Descriptor accessor APIs
   ---------------------------------------------------------------------------*/
-/**
- * hal_tx_desc_set_buf_addr - Fill Buffer Address information in Tx Descriptor
- * @desc: Handle to Tx Descriptor
- * @paddr: Physical Address
- * @pool_id: Return Buffer Manager ID
- * @desc_id: Descriptor ID
- * @type: 0 - Address points to a MSDU buffer
- *		1 - Address points to MSDU extension descriptor
- *
- * Return: void
- */
-static inline void hal_tx_desc_set_buf_addr(void *desc,
-		dma_addr_t paddr, uint8_t pool_id,
-		uint32_t desc_id, uint8_t type)
-{
-	/* Set buffer_addr_info.buffer_addr_31_0 */
-	HAL_SET_FLD(desc, TCL_DATA_CMD_0, BUFFER_ADDR_INFO_BUF_ADDR_INFO) =
-		HAL_TX_SM(BUFFER_ADDR_INFO_0, BUFFER_ADDR_31_0, paddr);
-
-	/* Set buffer_addr_info.buffer_addr_39_32 */
-	HAL_SET_FLD(desc, TCL_DATA_CMD_1,
-			 BUFFER_ADDR_INFO_BUF_ADDR_INFO) |=
-		HAL_TX_SM(BUFFER_ADDR_INFO_1, BUFFER_ADDR_39_32,
-		       (((uint64_t) paddr) >> 32));
-
-	/* Set buffer_addr_info.return_buffer_manager = pool id */
-	HAL_SET_FLD(desc, TCL_DATA_CMD_1,
-			 BUFFER_ADDR_INFO_BUF_ADDR_INFO) |=
-		HAL_TX_SM(BUFFER_ADDR_INFO_1,
-		       RETURN_BUFFER_MANAGER, (pool_id + HAL_WBM_SW0_BM_ID));
-
-	/* Set buffer_addr_info.sw_buffer_cookie = desc_id */
-	HAL_SET_FLD(desc, TCL_DATA_CMD_1,
-			BUFFER_ADDR_INFO_BUF_ADDR_INFO) |=
-		HAL_TX_SM(BUFFER_ADDR_INFO_1, SW_BUFFER_COOKIE, desc_id);
-
-	/* Set  Buffer or Ext Descriptor Type */
-	HAL_SET_FLD(desc, TCL_DATA_CMD_2,
-			BUF_OR_EXT_DESC_TYPE) |=
-		HAL_TX_SM(TCL_DATA_CMD_2, BUF_OR_EXT_DESC_TYPE, type);
-}
 
 /**
  * hal_tx_desc_set_buf_length - Set Data length in bytes in Tx Descriptor
@@ -831,90 +790,6 @@ static inline uint8_t hal_tx_comp_get_release_reason(void *hal_desc)
 }
 
 /**
- * hal_tx_comp_get_status() - TQM Release reason
- * @hal_desc: completion ring Tx status
- *
- * This function will parse the WBM completion descriptor and populate in
- * HAL structure
- *
- * Return: none
- */
-#if defined(WCSS_VERSION) && \
-	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
-	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
-static inline void hal_tx_comp_get_status(void *desc,
-		struct hal_tx_completion_status *ts)
-{
-	uint8_t rate_stats_valid = 0;
-	uint32_t rate_stats = 0;
-
-	ts->ppdu_id = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_3,
-			TQM_STATUS_NUMBER);
-	ts->ack_frame_rssi = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
-			ACK_FRAME_RSSI);
-	ts->first_msdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4, FIRST_MSDU);
-	ts->last_msdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4, LAST_MSDU);
-	ts->msdu_part_of_amsdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
-			MSDU_PART_OF_AMSDU);
-
-	ts->peer_id = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_7, SW_PEER_ID);
-	ts->tid = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_7, TID);
-	ts->transmit_cnt = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_3,
-			TRANSMIT_COUNT);
-
-	rate_stats = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_5,
-			TX_RATE_STATS);
-
-	rate_stats_valid = HAL_TX_MS(TX_RATE_STATS_INFO_0,
-			TX_RATE_STATS_INFO_VALID, rate_stats);
-
-	ts->valid = rate_stats_valid;
-
-	if (rate_stats_valid) {
-		ts->bw = HAL_TX_MS(TX_RATE_STATS_INFO_0, TRANSMIT_BW,
-				rate_stats);
-		ts->pkt_type = HAL_TX_MS(TX_RATE_STATS_INFO_0,
-				TRANSMIT_PKT_TYPE, rate_stats);
-		ts->stbc = HAL_TX_MS(TX_RATE_STATS_INFO_0,
-				TRANSMIT_STBC, rate_stats);
-		ts->ldpc = HAL_TX_MS(TX_RATE_STATS_INFO_0, TRANSMIT_LDPC,
-				rate_stats);
-		ts->sgi = HAL_TX_MS(TX_RATE_STATS_INFO_0, TRANSMIT_SGI,
-				rate_stats);
-		ts->mcs = HAL_TX_MS(TX_RATE_STATS_INFO_0, TRANSMIT_MCS,
-				rate_stats);
-		ts->ofdma = HAL_TX_MS(TX_RATE_STATS_INFO_0, OFDMA_TRANSMISSION,
-				rate_stats);
-		ts->tones_in_ru = HAL_TX_MS(TX_RATE_STATS_INFO_0, TONES_IN_RU,
-				rate_stats);
-	}
-
-	ts->release_src = hal_tx_comp_get_buffer_source(desc);
-	ts->status = hal_tx_comp_get_release_reason(desc);
-
-	ts->tsf = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_6,
-			TX_RATE_STATS_INFO_TX_RATE_STATS);
-}
-#else
-static inline void hal_tx_comp_get_status(void *desc,
-		struct hal_tx_completion_status *ts)
-{
-
-	ts->ppdu_id = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_3,
-			TQM_STATUS_NUMBER);
-	ts->ack_frame_rssi = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
-			ACK_FRAME_RSSI);
-	ts->first_msdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4, FIRST_MSDU);
-	ts->last_msdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4, LAST_MSDU);
-	ts->msdu_part_of_amsdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
-			MSDU_PART_OF_AMSDU);
-
-	ts->release_src = hal_tx_comp_get_buffer_source(desc);
-	ts->status = hal_tx_comp_get_release_reason(desc);
-}
-#endif
-
-/**
  * hal_tx_comp_desc_sync() - collect hardware descriptor contents
  * @hal_desc: hardware descriptor pointer
  * @comp: software descriptor pointer
@@ -1041,5 +916,43 @@ static inline void hal_tx_desc_set_lmac_id(struct hal_soc *hal_soc,
 					   void *desc, uint8_t lmac_id)
 {
 	hal_soc->ops->hal_tx_desc_set_lmac_id(desc, lmac_id);
+}
+
+/**
+ * hal_tx_comp_get_status() - TQM Release reason
+ * @hal_desc: completion ring Tx status
+ *
+ * This function will parse the WBM completion descriptor and populate in
+ * HAL structure
+ *
+ * Return: none
+ */
+static inline void hal_tx_comp_get_status(void *desc, void *ts, void *hal)
+{
+	struct hal_soc *hal_soc = hal;
+
+	hal_soc->ops->hal_tx_comp_get_status(desc, ts);
+}
+
+
+/**
+ * hal_tx_desc_set_buf_addr - Fill Buffer Address information in Tx Descriptor
+ * @desc: Handle to Tx Descriptor
+ * @paddr: Physical Address
+ * @pool_id: Return Buffer Manager ID
+ * @desc_id: Descriptor ID
+ * @type: 0 - Address points to a MSDU buffer
+ *		1 - Address points to MSDU extension descriptor
+ *
+ * Return: void
+ */
+static inline void hal_tx_desc_set_buf_addr(void *desc, dma_addr_t paddr,
+		uint8_t pool_id, uint32_t desc_id, uint8_t type, void *hal)
+{
+	struct hal_soc *hal_soc = hal;
+
+	hal_soc->ops->hal_tx_desc_set_buf_addr(desc, paddr, pool_id,
+						desc_id, type);
+
 }
 #endif /* HAL_TX_H */

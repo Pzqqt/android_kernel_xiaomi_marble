@@ -1,30 +1,19 @@
 /*
  * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *     * Neither the name of The Linux Foundation nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
  *
- * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 #ifndef _HAL_API_H_
@@ -970,25 +959,6 @@ static inline uint32_t hal_idle_list_num_scatter_bufs(void *hal_soc,
 	return num_scatter_bufs;
 }
 
-/**
- * hal_idle_scatter_buf_setup - Setup scattered idle list using the buffer list
- * provided
- *
- * @hal_soc: Opaque HAL SOC handle
- * @idle_scatter_bufs_base_paddr: Array of physical base addresses
- * @idle_scatter_bufs_base_vaddr: Array of virtual base addresses
- * @num_scatter_bufs: Number of scatter buffers in the above lists
- * @scatter_buf_size: Size of each scatter buffer
- * @last_buf_end_offset: Offset to the last entry
- * @num_entries: Total entries of all scatter bufs
- *
- */
-extern void hal_setup_link_idle_list(void *hal_soc,
-	qdf_dma_addr_t scatter_bufs_base_paddr[],
-	void *scatter_bufs_base_vaddr[], uint32_t num_scatter_bufs,
-	uint32_t scatter_buf_size, uint32_t last_buf_end_offset,
-	uint32_t num_entries);
-
 /* REO parameters to be passed to hal_reo_setup */
 struct hal_reo_params {
 	/** rx hash steering enabled or disabled */
@@ -1003,14 +973,6 @@ struct hal_reo_params {
 	uint8_t padding[3];
 };
 
-/**
- * hal_reo_setup - Initialize HW REO block
- *
- * @hal_soc: Opaque HAL SOC handle
- * @reo_params: parameters needed by HAL for REO config
- */
-extern void hal_reo_setup(void *hal_soc,
-	 struct hal_reo_params *reo_params);
 
 enum hal_pn_type {
 	HAL_PN_NONE,
@@ -1128,7 +1090,6 @@ uint32_t hal_get_target_type(struct hal_soc *hal);
  */
 void hal_get_ba_aging_timeout(void *hal_soc, uint8_t ac,
 			      uint32_t *value);
-
 /**
  * hal_set_aging_timeout - Set BA aging timeout
  *
@@ -1138,5 +1099,69 @@ void hal_get_ba_aging_timeout(void *hal_soc, uint8_t ac,
  */
 void hal_set_ba_aging_timeout(void *hal_soc, uint8_t ac,
 			      uint32_t value);
+/**
+ * hal_srng_dst_hw_init - Private function to initialize SRNG
+ * destination ring HW
+ * @hal_soc: HAL SOC handle
+ * @srng: SRNG ring pointer
+ */
+static inline void hal_srng_dst_hw_init(struct hal_soc *hal,
+	struct hal_srng *srng)
+{
+	hal->ops->hal_srng_dst_hw_init(hal, srng);
+}
 
+/**
+ * hal_srng_src_hw_init - Private function to initialize SRNG
+ * source ring HW
+ * @hal_soc: HAL SOC handle
+ * @srng: SRNG ring pointer
+ */
+static inline void hal_srng_src_hw_init(struct hal_soc *hal,
+	struct hal_srng *srng)
+{
+	hal->ops->hal_srng_src_hw_init(hal, srng);
+}
+
+/**
+ * hal_reo_setup - Initialize HW REO block
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @reo_params: parameters needed by HAL for REO config
+ */
+static inline void hal_reo_setup(void *halsoc,
+	 void *reoparams)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)halsoc;
+
+	hal_soc->ops->hal_reo_setup(halsoc, reoparams);
+}
+
+/**
+ * hal_setup_link_idle_list - Setup scattered idle list using the
+ * buffer list provided
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @scatter_bufs_base_paddr: Array of physical base addresses
+ * @scatter_bufs_base_vaddr: Array of virtual base addresses
+ * @num_scatter_bufs: Number of scatter buffers in the above lists
+ * @scatter_buf_size: Size of each scatter buffer
+ * @last_buf_end_offset: Offset to the last entry
+ * @num_entries: Total entries of all scatter bufs
+ *
+ */
+static inline void hal_setup_link_idle_list(void *halsoc,
+	qdf_dma_addr_t scatter_bufs_base_paddr[],
+	void *scatter_bufs_base_vaddr[], uint32_t num_scatter_bufs,
+	uint32_t scatter_buf_size, uint32_t last_buf_end_offset,
+	uint32_t num_entries)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)halsoc;
+
+	hal_soc->ops->hal_setup_link_idle_list(halsoc, scatter_bufs_base_paddr,
+			scatter_bufs_base_vaddr, num_scatter_bufs,
+			scatter_buf_size, last_buf_end_offset,
+			num_entries);
+
+}
 #endif /* _HAL_APIH_ */

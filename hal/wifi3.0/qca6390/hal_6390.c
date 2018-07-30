@@ -1,32 +1,20 @@
 /*
  * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *     * Neither the name of The Linux Foundation nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
  *
- * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
-
 #include "qdf_types.h"
 #include "qdf_util.h"
 #include "qdf_types.h"
@@ -39,30 +27,120 @@
 #include "target_type.h"
 #include "wcss_version.h"
 #include "qdf_module.h"
-#include "hal_6290_tx.h"
-#include "hal_6290_rx.h"
 
-struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
+#define UNIFIED_RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_OFFSET \
+	RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_OFFSET
+#define UNIFIED_RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_MASK \
+	RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_MASK
+#define UNIFIED_RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_LSB \
+	RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_LSB
+#define UNIFIED_PHYRX_HT_SIG_0_HT_SIG_INFO_PHYRX_HT_SIG_INFO_DETAILS_OFFSET \
+	PHYRX_HT_SIG_0_HT_SIG_INFO_PHYRX_HT_SIG_INFO_DETAILS_OFFSET
+#define UNIFIED_PHYRX_L_SIG_B_0_L_SIG_B_INFO_PHYRX_L_SIG_B_INFO_DETAILS_OFFSET \
+	PHYRX_L_SIG_B_0_L_SIG_B_INFO_PHYRX_L_SIG_B_INFO_DETAILS_OFFSET
+#define UNIFIED_PHYRX_L_SIG_A_0_L_SIG_A_INFO_PHYRX_L_SIG_A_INFO_DETAILS_OFFSET \
+	PHYRX_L_SIG_A_0_L_SIG_A_INFO_PHYRX_L_SIG_A_INFO_DETAILS_OFFSET
+#define UNIFIED_PHYRX_VHT_SIG_A_0_VHT_SIG_A_INFO_PHYRX_VHT_SIG_A_INFO_DETAILS_OFFSET \
+	PHYRX_VHT_SIG_A_0_VHT_SIG_A_INFO_PHYRX_VHT_SIG_A_INFO_DETAILS_OFFSET
+#define UNIFIED_PHYRX_HE_SIG_A_SU_0_HE_SIG_A_SU_INFO_PHYRX_HE_SIG_A_SU_INFO_DETAILS_OFFSET \
+	PHYRX_HE_SIG_A_SU_0_HE_SIG_A_SU_INFO_PHYRX_HE_SIG_A_SU_INFO_DETAILS_OFFSET
+#define UNIFIED_PHYRX_HE_SIG_A_MU_DL_0_HE_SIG_A_MU_DL_INFO_PHYRX_HE_SIG_A_MU_DL_INFO_DETAILS_OFFSET \
+	PHYRX_HE_SIG_A_MU_DL_0_HE_SIG_A_MU_DL_INFO_PHYRX_HE_SIG_A_MU_DL_INFO_DETAILS_OFFSET
+#define UNIFIED_PHYRX_HE_SIG_B1_MU_0_HE_SIG_B1_MU_INFO_PHYRX_HE_SIG_B1_MU_INFO_DETAILS_OFFSET \
+	PHYRX_HE_SIG_B1_MU_0_HE_SIG_B1_MU_INFO_PHYRX_HE_SIG_B1_MU_INFO_DETAILS_OFFSET
+#define UNIFIED_PHYRX_HE_SIG_B2_MU_0_HE_SIG_B2_MU_INFO_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_OFFSET \
+	PHYRX_HE_SIG_B2_MU_0_HE_SIG_B2_MU_INFO_PHYRX_HE_SIG_B2_MU_INFO_DETAILS_OFFSET
+#define UNIFIED_PHYRX_HE_SIG_B2_OFDMA_0_HE_SIG_B2_OFDMA_INFO_PHYRX_HE_SIG_B2_OFDMA_INFO_DETAILS_OFFSET \
+	PHYRX_HE_SIG_B2_OFDMA_0_HE_SIG_B2_OFDMA_INFO_PHYRX_HE_SIG_B2_OFDMA_INFO_DETAILS_OFFSET
+#define UNIFIED_PHYRX_RSSI_LEGACY_3_RECEIVE_RSSI_INFO_PRE_RSSI_INFO_DETAILS_OFFSET \
+	PHYRX_RSSI_LEGACY_3_RECEIVE_RSSI_INFO_PRE_RSSI_INFO_DETAILS_OFFSET
+#define UNIFIED_RX_MPDU_START_0_RX_MPDU_INFO_RX_MPDU_INFO_DETAILS_OFFSET \
+	RX_MPDU_START_0_RX_MPDU_INFO_RX_MPDU_INFO_DETAILS_OFFSET
+#define UNIFIED_RX_MSDU_LINK_8_RX_MSDU_DETAILS_MSDU_0_OFFSET \
+	RX_MSDU_LINK_8_RX_MSDU_DETAILS_MSDU_0_OFFSET
+#define UNIFIED_RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET \
+	RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET
+#define UNIFIED_RX_MPDU_DETAILS_2_RX_MPDU_DESC_INFO_RX_MPDU_DESC_INFO_DETAILS_OFFSET \
+	RX_MPDU_DETAILS_2_RX_MPDU_DESC_INFO_RX_MPDU_DESC_INFO_DETAILS_OFFSET
+#define UNIFIED_REO_DESTINATION_RING_2_RX_MPDU_DESC_INFO_RX_MPDU_DESC_INFO_DETAILS_OFFSET \
+	REO_DESTINATION_RING_2_RX_MPDU_DESC_INFO_RX_MPDU_DESC_INFO_DETAILS_OFFSET
+#define UNIFORM_REO_STATUS_HEADER_STATUS_HEADER_GENERIC \
+	UNIFORM_REO_STATUS_HEADER_STATUS_HEADER
+#define UNIFIED_RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET \
+	RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET
+#define UNIFIED_RX_MSDU_LINK_8_RX_MSDU_DETAILS_MSDU_0_OFFSET \
+	RX_MSDU_LINK_8_RX_MSDU_DETAILS_MSDU_0_OFFSET
+#define UNIFIED_TCL_DATA_CMD_0_BUFFER_ADDR_INFO_BUF_ADDR_INFO_OFFSET \
+	TCL_DATA_CMD_0_BUFFER_ADDR_INFO_BUF_ADDR_INFO_OFFSET
+#define UNIFIED_TCL_DATA_CMD_1_BUFFER_ADDR_INFO_BUF_ADDR_INFO_OFFSET \
+	TCL_DATA_CMD_1_BUFFER_ADDR_INFO_BUF_ADDR_INFO_OFFSET
+#define UNIFIED_TCL_DATA_CMD_2_BUF_OR_EXT_DESC_TYPE_OFFSET \
+	TCL_DATA_CMD_2_BUF_OR_EXT_DESC_TYPE_OFFSET
+#define UNIFIED_BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_LSB \
+	BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_LSB
+#define UNIFIED_BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_MASK \
+	BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_MASK
+#define UNIFIED_BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_LSB \
+	BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_LSB
+#define UNIFIED_BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_MASK \
+	BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_MASK
+#define UNIFIED_BUFFER_ADDR_INFO_1_RETURN_BUFFER_MANAGER_LSB \
+	BUFFER_ADDR_INFO_1_RETURN_BUFFER_MANAGER_LSB
+#define UNIFIED_BUFFER_ADDR_INFO_1_RETURN_BUFFER_MANAGER_MASK \
+	BUFFER_ADDR_INFO_1_RETURN_BUFFER_MANAGER_MASK
+#define UNIFIED_BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_LSB \
+	BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_LSB
+#define UNIFIED_BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_MASK \
+	BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_MASK
+#define UNIFIED_TCL_DATA_CMD_2_BUF_OR_EXT_DESC_TYPE_LSB \
+	TCL_DATA_CMD_2_BUF_OR_EXT_DESC_TYPE_LSB
+#define UNIFIED_TCL_DATA_CMD_2_BUF_OR_EXT_DESC_TYPE_MASK \
+	TCL_DATA_CMD_2_BUF_OR_EXT_DESC_TYPE_MASK
+#define UNIFIED_WBM_RELEASE_RING_6_TX_RATE_STATS_INFO_TX_RATE_STATS_MASK \
+	WBM_RELEASE_RING_6_TX_RATE_STATS_INFO_TX_RATE_STATS_MASK
+#define UNIFIED_WBM_RELEASE_RING_6_TX_RATE_STATS_INFO_TX_RATE_STATS_OFFSET \
+	WBM_RELEASE_RING_6_TX_RATE_STATS_INFO_TX_RATE_STATS_OFFSET
+#define UNIFIED_WBM_RELEASE_RING_6_TX_RATE_STATS_INFO_TX_RATE_STATS_LSB \
+	WBM_RELEASE_RING_6_TX_RATE_STATS_INFO_TX_RATE_STATS_LSB
+
+#include "hal_6390_tx.h"
+#include "hal_6390_rx.h"
+#include <hal_generic_api.h>
+#include <hal_wbm.h>
+
+struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
+	/* init and setup */
+	hal_srng_dst_hw_init_generic,
+	hal_srng_src_hw_init_generic,
+	hal_reo_setup_generic,
+	hal_setup_link_idle_list_generic,
+
 	/* tx */
-	hal_tx_desc_set_dscp_tid_table_id_6290,
-	hal_tx_set_dscp_tid_map_6290,
-	hal_tx_update_dscp_tid_6290,
-	hal_tx_desc_set_lmac_id_6290,
+	hal_tx_desc_set_dscp_tid_table_id_6390,
+	hal_tx_set_dscp_tid_map_6390,
+	hal_tx_update_dscp_tid_6390,
+	hal_tx_desc_set_lmac_id_6390,
+	hal_tx_desc_set_buf_addr_generic,
+	hal_tx_comp_get_status_generic,
 
 	/* rx */
-	hal_rx_msdu_start_nss_get_6290,
-	hal_rx_mon_hw_desc_get_mpdu_status_6290,
-	hal_rx_get_tlv_6290,
-	hal_rx_proc_phyrx_other_receive_info_tlv_6290,
-	hal_rx_dump_msdu_start_tlv_6290,
-	hal_rx_dump_msdu_end_tlv_6290,
-	hal_get_link_desc_size_6290,
-	hal_rx_mpdu_start_tid_get_6290,
-	hal_rx_msdu_start_reception_type_get_6290,
-	hal_rx_msdu_end_da_idx_get_6290,
+	hal_rx_msdu_start_nss_get_6390,
+	hal_rx_mon_hw_desc_get_mpdu_status_6390,
+	hal_rx_get_tlv_6390,
+	hal_rx_proc_phyrx_other_receive_info_tlv_6390,
+	hal_rx_dump_msdu_start_tlv_6390,
+	hal_rx_dump_msdu_end_tlv_6390,
+	hal_get_link_desc_size_6390,
+	hal_rx_mpdu_start_tid_get_6390,
+	hal_rx_msdu_start_reception_type_get_6390,
+	hal_rx_msdu_end_da_idx_get_6390,
+	hal_rx_msdu_desc_info_get_ptr_generic,
+	hal_rx_link_desc_msdu0_ptr_generic,
+	hal_reo_status_get_header_generic,
+	hal_rx_status_get_tlv_info_generic,
 };
 
-struct hal_hw_srng_config hw_srng_table_6290[] = {
+struct hal_hw_srng_config hw_srng_table_6390[] = {
 	/* TODO: max_rings can populated by querying HW capabilities */
 	{ /* REO_DST */
 		.start_ring_id = HAL_SRNG_REO2SW1,
@@ -82,7 +160,8 @@ struct hal_hw_srng_config hw_srng_table_6290[] = {
 			HWIO_REO_R2_REO2SW2_RING_HP_ADDR(0) -
 				HWIO_REO_R2_REO2SW1_RING_HP_ADDR(0),
 		},
-		.max_size = HWIO_REO_R0_REO2SW1_RING_BASE_MSB_RING_SIZE_BMSK >>
+		.max_size =
+			HWIO_REO_R0_REO2SW1_RING_BASE_MSB_RING_SIZE_BMSK >>
 			HWIO_REO_R0_REO2SW1_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* REO_EXCEPTION */
@@ -105,7 +184,8 @@ struct hal_hw_srng_config hw_srng_table_6290[] = {
 		 * type are supported
 		 */
 		.reg_size = {},
-		.max_size = HWIO_REO_R0_REO2TCL_RING_BASE_MSB_RING_SIZE_BMSK >>
+		.max_size =
+			HWIO_REO_R0_REO2TCL_RING_BASE_MSB_RING_SIZE_BMSK >>
 			HWIO_REO_R0_REO2TCL_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* REO_REINJECT */
@@ -144,7 +224,8 @@ struct hal_hw_srng_config hw_srng_table_6290[] = {
 		 * type are supported
 		 */
 		.reg_size = {},
-		.max_size = HWIO_REO_R0_REO_CMD_RING_BASE_MSB_RING_SIZE_BMSK >>
+		.max_size =
+			HWIO_REO_R0_REO_CMD_RING_BASE_MSB_RING_SIZE_BMSK >>
 			HWIO_REO_R0_REO_CMD_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* REO_STATUS */
@@ -187,7 +268,8 @@ struct hal_hw_srng_config hw_srng_table_6290[] = {
 			HWIO_TCL_R2_SW2TCL2_RING_HP_ADDR(0) -
 				HWIO_TCL_R2_SW2TCL1_RING_HP_ADDR(0),
 		},
-		.max_size = HWIO_TCL_R0_SW2TCL1_RING_BASE_MSB_RING_SIZE_BMSK >>
+		.max_size =
+			HWIO_TCL_R0_SW2TCL1_RING_BASE_MSB_RING_SIZE_BMSK >>
 			HWIO_TCL_R0_SW2TCL1_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* TCL_CMD */
@@ -319,7 +401,7 @@ struct hal_hw_srng_config hw_srng_table_6290[] = {
 		.reg_size = {},
 		.max_size =
 		HWIO_WBM_R0_WBM_IDLE_LINK_RING_BASE_MSB_RING_SIZE_BMSK >>
-			HWIO_WBM_R0_WBM_IDLE_LINK_RING_BASE_MSB_RING_SIZE_SHFT,
+		HWIO_WBM_R0_WBM_IDLE_LINK_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* SW2WBM_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM_SW_RELEASE,
@@ -336,8 +418,8 @@ struct hal_hw_srng_config hw_srng_table_6290[] = {
 		 */
 		.reg_size = {},
 		.max_size =
-			HWIO_WBM_R0_SW_RELEASE_RING_BASE_MSB_RING_SIZE_BMSK >>
-			HWIO_WBM_R0_SW_RELEASE_RING_BASE_MSB_RING_SIZE_SHFT,
+		HWIO_WBM_R0_SW_RELEASE_RING_BASE_MSB_RING_SIZE_BMSK >>
+		HWIO_WBM_R0_SW_RELEASE_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* WBM2SW_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM2SW0_RELEASE,
@@ -350,14 +432,14 @@ struct hal_hw_srng_config hw_srng_table_6290[] = {
 		HWIO_WBM_R2_WBM2SW0_RELEASE_RING_HP_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET),
 		},
 		.reg_size = {
-			HWIO_WBM_R0_WBM2SW1_RELEASE_RING_BASE_LSB_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET) -
-				HWIO_WBM_R0_WBM2SW0_RELEASE_RING_BASE_LSB_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET),
-			HWIO_WBM_R2_WBM2SW1_RELEASE_RING_HP_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET) -
-				HWIO_WBM_R2_WBM2SW0_RELEASE_RING_HP_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		HWIO_WBM_R0_WBM2SW1_RELEASE_RING_BASE_LSB_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET) -
+		HWIO_WBM_R0_WBM2SW0_RELEASE_RING_BASE_LSB_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		HWIO_WBM_R2_WBM2SW1_RELEASE_RING_HP_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET) -
+		HWIO_WBM_R2_WBM2SW0_RELEASE_RING_HP_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET),
 		},
 		.max_size =
-			HWIO_WBM_R0_WBM2SW0_RELEASE_RING_BASE_MSB_RING_SIZE_BMSK >>
-				HWIO_WBM_R0_WBM2SW0_RELEASE_RING_BASE_MSB_RING_SIZE_SHFT,
+		HWIO_WBM_R0_WBM2SW0_RELEASE_RING_BASE_MSB_RING_SIZE_BMSK >>
+		HWIO_WBM_R0_WBM2SW0_RELEASE_RING_BASE_MSB_RING_SIZE_SHFT,
 	},
 	{ /* RXDMA_BUF */
 		.start_ring_id = HAL_SRNG_WMAC1_SW2RXDMA0_BUF0,
@@ -471,7 +553,7 @@ struct hal_hw_srng_config hw_srng_table_6290[] = {
 #endif
 };
 
-int32_t hal_hw_reg_offset_qca6290[] = {
+int32_t hal_hw_reg_offset_qca6390[] = {
 	/* dst */
 	REG_OFFSET(DST, HP),
 	REG_OFFSET(DST, TP),
@@ -501,9 +583,13 @@ int32_t hal_hw_reg_offset_qca6290[] = {
 	REG_OFFSET(SRC, CONSUMER_INT_SETUP_IX1),
 };
 
-void hal_qca6290_attach(struct hal_soc *hal_soc)
+/**
+ * hal_qca6390_attach() - Attach 6390 target specific hal_soc ops,
+ *			  offset and srng table
+ */
+void hal_qca6390_attach(struct hal_soc *hal_soc)
 {
-	hal_soc->hw_srng_table = hw_srng_table_6290;
-	hal_soc->hal_hw_reg_offset = hal_hw_reg_offset_qca6290;
-	hal_soc->ops = &qca6290_hal_hw_txrx_ops;
+	hal_soc->hw_srng_table = hw_srng_table_6390;
+	hal_soc->hal_hw_reg_offset = hal_hw_reg_offset_qca6390;
+	hal_soc->ops = &qca6390_hal_hw_txrx_ops;
 }

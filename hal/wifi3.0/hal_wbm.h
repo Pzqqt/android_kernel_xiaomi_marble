@@ -16,10 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "hal_api.h"
-#include "qdf_module.h"
-#include "hal_hw_headers.h"
-
 /**
  * hal_setup_link_idle_list - Setup scattered idle list using the
  * buffer list provided
@@ -33,7 +29,7 @@
  * @num_entries: Total entries of all scatter bufs
  *
  */
-void hal_setup_link_idle_list(void *hal_soc,
+static void hal_setup_link_idle_list_generic(void *hal_soc,
 	qdf_dma_addr_t scatter_bufs_base_paddr[],
 	void *scatter_bufs_base_vaddr[], uint32_t num_scatter_bufs,
 	uint32_t scatter_buf_size, uint32_t last_buf_end_offset,
@@ -156,4 +152,3 @@ void hal_setup_link_idle_list(void *hal_soc,
 		SEQ_WCSS_UMAC_WBM_REG_OFFSET),
 		0x40);
 }
-qdf_export_symbol(hal_setup_link_idle_list);
