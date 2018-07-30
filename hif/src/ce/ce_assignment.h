@@ -744,16 +744,19 @@ static struct CE_attr host_ce_config_wlan_qca6290[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 2048, 0, NULL,},
 	/* target->host HTT + HTC control */
-	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
+	{ /* CE1 */ (CE_ATTR_FLAGS | CE_ATTR_ENABLE_POLL), 0, 0,  2048,
+		512, NULL,},
 	/* target->host WMI */
-	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0,  2048, 32, NULL,},
+	{ /* CE2 */ (CE_ATTR_FLAGS | CE_ATTR_ENABLE_POLL), 0, 0,  2048,
+		32, NULL,},
 	/* host->target WMI */
 	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
 	/* host->target HTT */
 	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
 	/* target -> host PKTLOG */
-	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
+	{ /* CE5 */ (CE_ATTR_FLAGS | CE_ATTR_ENABLE_POLL), 0, 0, 2048,
+		512, NULL,},
 	/* Target autonomous HIF_memcpy */
 	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* host->target WMI (mac1) */

@@ -3682,7 +3682,8 @@ int hif_configure_irq(struct hif_softc *scn)
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
 	HIF_TRACE("%s: E", __func__);
-	if (scn->polled_mode_on) {
+
+	if (hif_is_polled_mode_enabled(GET_HIF_OPAQUE_HDL(scn))) {
 		scn->request_irq_done = false;
 		return 0;
 	}

@@ -200,6 +200,8 @@ void hif_ce_ipa_get_ce_resource(struct hif_softc *scn,
 
 #endif
 int hif_wlan_enable(struct hif_softc *scn);
+void ce_enable_polling(void *cestate);
+void ce_disable_polling(void *cestate);
 void hif_wlan_disable(struct hif_softc *scn);
 void hif_get_target_ce_config(struct hif_softc *scn,
 		struct CE_pipe_config **target_ce_config_ret,

@@ -512,6 +512,7 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 					"%s: pld_unregister_irq error - ce_id = %d, ret = %d",
 					__func__, id, ret);
 		}
+		ce_disable_polling(scn->ce_id_to_state[id]);
 	}
 	hif_ce_state->ce_register_irq_done &= ~mask;
 

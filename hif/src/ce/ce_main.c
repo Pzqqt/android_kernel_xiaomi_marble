@@ -1229,6 +1229,22 @@ static inline void reset_ce_debug_history(struct hif_softc *scn)
 }
 #endif /*Note: defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
 
+void ce_enable_polling(void *cestate)
+{
+	struct CE_state *CE_state = (struct CE_state *)cestate;
+
+	if (CE_state && CE_state->attr_flags & CE_ATTR_ENABLE_POLL)
+		CE_state->timer_inited = true;
+}
+
+void ce_disable_polling(void *cestate)
+{
+	struct CE_state *CE_state = (struct CE_state *)cestate;
+
+	if (CE_state && CE_state->attr_flags & CE_ATTR_ENABLE_POLL)
+		CE_state->timer_inited = false;
+}
+
 /*
  * Initialize a Copy Engine based on caller-supplied attributes.
  * This may be called once to initialize both source and destination
@@ -1410,14 +1426,13 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 
 			/* epping */
 			/* poll timer */
-			if ((CE_state->attr_flags & CE_ATTR_ENABLE_POLL) ||
-					scn->polled_mode_on) {
+			if (CE_state->attr_flags & CE_ATTR_ENABLE_POLL) {
 				qdf_timer_init(scn->qdf_dev,
-						       &CE_state->poll_timer,
-						       ce_poll_timeout,
-						       CE_state,
-						       QDF_TIMER_TYPE_SW);
-				CE_state->timer_inited = true;
+						&CE_state->poll_timer,
+						ce_poll_timeout,
+						CE_state,
+						QDF_TIMER_TYPE_WAKE_APPS);
+				ce_enable_polling(CE_state);
 				qdf_timer_mod(&CE_state->poll_timer,
 						      CE_POLL_TIMEOUT);
 			}
@@ -1471,14 +1486,6 @@ void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx)
 	scn->fastpath_mode_on = true;
 }
 
-void hif_enable_polled_mode(struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	HIF_DBG("%s, Enabling polled mode", __func__);
-
-	scn->polled_mode_on = true;
-}
-
 /**
  * hif_is_fastpath_mode_enabled - API to query if fasthpath mode is enabled
  * @hif_ctx: HIF Context
@@ -1494,13 +1501,30 @@ bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx)
 	return scn->fastpath_mode_on;
 }
 
+/**
+ * hif_is_polled_mode_enabled - API to query if polling is enabled on all CEs
+ * @hif_ctx: HIF Context
+ *
+ * API to check if polling is enabled on all CEs. Returns true when polling
+ * is enabled on all CEs.
+ *
+ * Return: bool
+ */
 bool hif_is_polled_mode_enabled(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct CE_attr *attr;
+	int id;
 
-	return scn->polled_mode_on;
+	for (id = 0; id < scn->ce_count; id++) {
+		attr = &hif_state->host_ce_config[id];
+		if (attr && (attr->dest_nentries) &&
+		    !(attr->flags & CE_ATTR_ENABLE_POLL))
+			return false;
+	}
+	return true;
 }
-
 qdf_export_symbol(hif_is_polled_mode_enabled);
 
 /**
@@ -1663,7 +1687,8 @@ void ce_fini(struct CE_handle *copyeng)
 	CE_state->state = CE_UNUSED;
 	scn->ce_id_to_state[CE_id] = NULL;
 	/* Set the flag to false first to stop processing in ce_poll_timeout */
-	CE_state->timer_inited = false;
+	ce_disable_polling(CE_state);
+
 	qdf_lro_deinit(CE_state->lro_data);
 
 	if (CE_state->src_ring) {
