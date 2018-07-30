@@ -740,6 +740,12 @@ static QDF_STATUS dp_rx_defrag_tkip_demic(const uint8_t *key,
 		next = qdf_nbuf_next(next);
 	}
 
+	if (!prev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s Defrag chaining failed !\n", __func__);
+		return QDF_STATUS_E_DEFRAG_ERROR;
+	}
+
 	qdf_nbuf_copy_bits(prev, qdf_nbuf_len(prev) - dp_f_tkip.ic_miclen,
 			   dp_f_tkip.ic_miclen, (caddr_t)mic0);
 	qdf_nbuf_trim_tail(prev, dp_f_tkip.ic_miclen);
