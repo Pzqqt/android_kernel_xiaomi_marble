@@ -43,6 +43,10 @@ bool wmi_get_action_oui_id(enum action_oui_id action_id,
 		*id = WMI_VENDOR_OUI_ACTION_SWITCH_TO_11N_MODE;
 		return true;
 
+	case ACTION_OUI_CONNECT_1X1_WITH_1_CHAIN:
+		*id = WMI_VENDOR_OUI_ACTION_CONNECTION_1X1_NUM_TX_RX_CHAINS_1;
+		return true;
+
 	default:
 		return false;
 	}
