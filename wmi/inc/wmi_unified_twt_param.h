@@ -163,7 +163,7 @@ enum WMI_HOST_TWT_COMMAND {
  */
 struct wmi_twt_add_dialog_param {
 	uint32_t vdev_id;
-	uint8_t  peer_macaddr[6];
+	uint8_t  peer_macaddr[IEEE80211_ADDR_LEN];
 	uint32_t dialog_id;
 	uint32_t wake_intvl_us;
 	uint32_t wake_intvl_mantis;
@@ -206,21 +206,25 @@ enum WMI_HOST_ADD_TWT_STATUS {
 
 /** struct wmi_twt_add_dialog_complete_param -
  * @vdev_id: VDEV identifier
+ * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
  * @status: refer to WMI_HOST_ADD_TWT_STATUS enum
  */
 struct wmi_twt_add_dialog_complete_event_param {
 	uint32_t vdev_id;
+	uint8_t  peer_macaddr[IEEE80211_ADDR_LEN];
 	uint32_t dialog_id;
 	uint32_t status;
 };
 
 /** struct wmi_twt_del_dialog_param -
  * @vdev_id: VDEV identifier
+ * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
  */
 struct wmi_twt_del_dialog_param {
 	uint32_t vdev_id;
+	uint8_t  peer_macaddr[IEEE80211_ADDR_LEN];
 	uint32_t dialog_id;
 };
 
@@ -248,21 +252,25 @@ enum WMI_HOST_DEL_TWT_STATUS {
 
 /** struct wmi_twt_del_dialog_complete_event_param -
  * @vdev_id: VDEV identifier
+ * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
  * @status: refer to WMI_HOST_DEL_TWT_STATUS enum
  */
 struct wmi_twt_del_dialog_complete_event_param {
 	uint32_t vdev_id;
+	uint8_t  peer_macaddr[IEEE80211_ADDR_LEN];
 	uint32_t dialog_id;
 	uint32_t status;
 };
 
 /** struct wmi_twt_pause_dialog_cmd_param -
  * @vdev_id: VDEV identifier
+ * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
  */
 struct wmi_twt_pause_dialog_cmd_param {
 	uint32_t vdev_id;
+	uint8_t  peer_macaddr[IEEE80211_ADDR_LEN];
 	uint32_t dialog_id;
 };
 
@@ -290,24 +298,31 @@ enum WMI_HOST_PAUSE_TWT_STATUS {
 
 /** struct wmi_twt_pause_dialog_complete_event_param -
  * @vdev_id: VDEV identifier
+ * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
  * @status: refer to WMI_HOST_PAUSE_TWT_STATUS
  */
 struct wmi_twt_pause_dialog_complete_event_param {
 	uint32_t vdev_id;
+	uint8_t  peer_macaddr[IEEE80211_ADDR_LEN];
 	uint32_t dialog_id;
 	uint32_t status;
 };
 
 /** struct wmi_twt_resume_dialog_cmd_param -
  * @vdev_id: VDEV identifier
+ * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
  * @sp_offset_us: this long time after TWT resumed the 1st SP will start
+ * @next_twt_size: Next TWT subfield Size.
+ *                 Refer IEEE 802.11ax section "9.4.1.60 TWT Information field"
  */
 struct wmi_twt_resume_dialog_cmd_param {
 	uint32_t vdev_id;
+	uint8_t  peer_macaddr[IEEE80211_ADDR_LEN];
 	uint32_t dialog_id;
 	uint32_t sp_offset_us;
+	uint32_t next_twt_size;
 };
 
 /* enum WMI_HOST_RESUME_TWT_STATUS - status code of resuming TWT dialog
@@ -336,11 +351,13 @@ enum WMI_HOST_RESUME_TWT_STATUS {
 
 /** struct wmi_twt_resume_dialog_complete_event_param -
  * @vdev_id: VDEV identifier
+ * @peer_macaddr: Peer mac address
  * @dialog_id: TWT dialog ID
  * @status: refer to WMI_HOST_RESUME_TWT_STATUS
  */
 struct wmi_twt_resume_dialog_complete_event_param {
 	uint32_t vdev_id;
+	uint8_t  peer_macaddr[IEEE80211_ADDR_LEN];
 	uint32_t dialog_id;
 	uint32_t status;
 };
