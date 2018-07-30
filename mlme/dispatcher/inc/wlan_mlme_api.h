@@ -47,4 +47,14 @@ QDF_STATUS wlan_mlme_get_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 				     struct mlme_ht_capabilities_info
 				     ht_cap_info);
+
+/**
+ * wlan_mlme_get_ignore_peer_ht_mode() - Get the ignore peer ht opmode flag
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_ignore_peer_ht_mode(struct wlan_objmgr_psoc *psoc,
+					bool *value);
 #endif /* _WLAN_MLME_API_H_ */
