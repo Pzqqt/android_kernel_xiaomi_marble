@@ -749,14 +749,13 @@ QDF_STATUS hdd_softap_init_tx_rx(struct hdd_adapter *adapter)
 
 QDF_STATUS hdd_softap_deinit_tx_rx(struct hdd_adapter *adapter)
 {
-	if (adapter == NULL) {
-		hdd_err("Called with adapter = NULL.");
+	QDF_BUG(adapter);
+	if (!adapter)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	adapter->txrx_vdev = NULL;
 	adapter->tx_fn = NULL;
-	hdd_info("Deregistering TX function hook !");
+
 	return QDF_STATUS_SUCCESS;
 }
 

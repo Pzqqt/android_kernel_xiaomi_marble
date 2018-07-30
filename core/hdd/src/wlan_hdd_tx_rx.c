@@ -1329,15 +1329,14 @@ QDF_STATUS hdd_init_tx_rx(struct hdd_adapter *adapter)
  */
 QDF_STATUS hdd_deinit_tx_rx(struct hdd_adapter *adapter)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (NULL == adapter) {
-		hdd_err("adapter is NULL");
-		QDF_ASSERT(0);
+	QDF_BUG(adapter);
+	if (!adapter)
 		return QDF_STATUS_E_FAILURE;
-	}
 
-	return status;
+	adapter->txrx_vdev = NULL;
+	adapter->tx_fn = NULL;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
