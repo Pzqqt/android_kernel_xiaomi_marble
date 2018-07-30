@@ -1196,6 +1196,8 @@ typedef struct {
  * @amsdu_disable: AMSDU disble
  * @peer_mac: Peer mac address
  * @he_flag: HE flags
+ * @twt_requester: TWT Requester Support bit in Extended Capabilities element
+ * @twt_responder: TWT Responder Support bit in Extended Capabilities element
  * @peer_he_cap_macinfo: Peer HE Cap MAC info
  * @peer_he_ops: Peer HE operation info
  * @peer_he_cap_phyinfo: Peer HE Cap PHY info
@@ -1254,6 +1256,8 @@ struct peer_assoc_params {
 	uint8_t peer_mac[IEEE80211_ADDR_LEN];
 #endif
 	bool he_flag;
+	bool twt_requester;
+	bool twt_responder;
 	uint32_t peer_he_cap_macinfo;
 	uint32_t peer_he_ops;
 	uint32_t peer_he_cap_phyinfo[WMI_HOST_MAX_HECAP_PHY_SIZE];
