@@ -2313,6 +2313,12 @@ static inline void copy_peer_flags_tlv(
 	 **/
 	if (param->peer_ht_rates.num_rates == 0)
 		cmd->peer_flags &= ~WMI_PEER_HT;
+
+	if (param->twt_requester)
+		cmd->peer_flags |= WMI_PEER_TWT_REQ;
+
+	if (param->twt_responder)
+		cmd->peer_flags |= WMI_PEER_TWT_RESP;
 }
 #endif
 
