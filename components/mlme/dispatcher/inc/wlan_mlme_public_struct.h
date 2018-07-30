@@ -108,16 +108,33 @@ struct wlan_mlme_rates {
 	uint8_t disable_high_ht_mcs_2x2;
 };
 
+/*
+ * struct wlan_mlme_sap_protection_cfg - SAP erp protection config items
+ *
+ * @protection_enabled - Force enable protection. static via cfg
+ * @protection_always_11g - Force protection enable for 11g. Static via cfg
+ * @protection_force_policy - Protection force policy. Static via cfg
+ * @ignore_peer_ht_mode - ignore the ht opmode of the peer. Dynamic via INI.
+ *
+ */
+struct wlan_mlme_sap_protection {
+	uint32_t protection_enabled;
+	uint8_t protection_force_policy;
+	bool ignore_peer_ht_mode;
+};
+
 /**
  * struct wlan_mlme_cfg - MLME config items
  * @ht_cfg: HT related CFG Items
  * @vht_cfg: VHT related CFG Items
  * @rates: Rates related cfg items
+ * @sap_protection_cfg: SAP erp protection related CFG items
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_ht_caps ht_caps;
 	struct wlan_mlme_vht_caps vht_caps;
 	struct wlan_mlme_rates rates;
+	struct wlan_mlme_sap_protection sap_protection_cfg;
 };
 
 #endif

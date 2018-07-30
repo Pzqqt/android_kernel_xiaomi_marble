@@ -3556,14 +3556,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MIN,
 		CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MAX),
 
-	REG_VARIABLE(CFG_IGNORE_PEER_HT_MODE_NAME, WLAN_PARAM_Integer,
-			struct hdd_config, ignore_peer_ht_opmode,
-			VAR_FLAGS_OPTIONAL |
-			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			CFG_IGNORE_PEER_HT_MODE_DEFAULT,
-			CFG_IGNORE_PEER_HT_MODE_MIN,
-			CFG_IGNORE_PEER_HT_MODE_MAX),
-
 	REG_VARIABLE(CFG_ROAM_DENSE_MIN_APS, WLAN_PARAM_Integer,
 		struct hdd_config, roam_dense_min_aps,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -7183,6 +7175,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSmeConfigParams *smeConfig;
 	uint8_t rrm_capab_len, val;
+	bool ignore_peer_ht_mode;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 
 	struct hdd_config *pConfig = hdd_ctx->config;
@@ -7504,8 +7497,15 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->obss_active_dwelltime;
 	smeConfig->csrConfig.obss_passive_dwelltime =
 			hdd_ctx->config->obss_passive_dwelltime;
-	smeConfig->csrConfig.ignore_peer_ht_opmode =
-			pConfig->ignore_peer_ht_opmode;
+
+	status = ucfg_mlme_get_ignore_peer_ht_mode(hdd_ctx->hdd_psoc,
+						   &ignore_peer_ht_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Get ignore_peer_ht_mode failed");
+		goto error;
+	}
+	smeConfig->csrConfig.ignore_peer_ht_opmode = ignore_peer_ht_mode;
+
 	smeConfig->csrConfig.enable_fatal_event =
 			pConfig->enable_fatal_event;
 	smeConfig->csrConfig.scan_adaptive_dwell_mode =
@@ -7655,7 +7655,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	status = sme_update_config(mac_handle, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("sme_update_config() failure: %d", status);
-
+error:
 	qdf_mem_free(smeConfig);
 	return status;
 }

@@ -117,6 +117,18 @@ static void mlme_update_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
 					 CFG_INI_DISABLE_HIGH_HT_RX_MCS_2x2);
 }
 
+static void mlme_update_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,
+					   struct wlan_mlme_sap_protection
+					   *sap_protection_params)
+{
+	sap_protection_params->protection_enabled =
+				cfg_default(CFG_PROTECTION_ENABLED);
+	sap_protection_params->protection_force_policy =
+				cfg_default(CFG_FORCE_POLICY_PROTECTION);
+	sap_protection_params->ignore_peer_ht_mode =
+				cfg_get(psoc, CFG_IGNORE_PEER_HT_MODE);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -132,6 +144,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_cfg = &mlme_obj->cfg;
 	mlme_update_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps.ht_cap_info);
 	mlme_update_rates_in_cfg(psoc, &mlme_cfg->rates);
+	mlme_update_sap_protection_cfg(psoc, &mlme_cfg->sap_protection_cfg);
 
 	return status;
 }

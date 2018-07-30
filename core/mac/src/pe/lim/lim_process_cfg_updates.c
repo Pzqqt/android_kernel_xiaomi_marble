@@ -48,6 +48,7 @@ static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry);
 void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
 {
 	uint32_t val = 0;
+	struct wlan_mlme_cfg *mlme_cfg = pMac->mlme_cfg;
 
 	if (pesessionEntry != NULL && LIM_IS_AP_ROLE(pesessionEntry)) {
 		if (pesessionEntry->gLimProtectionControl ==
@@ -68,24 +69,17 @@ void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
 				pesessionEntry->cfgProtection.obss);
 		}
 	} else {
-		if (wlan_cfg_get_int(pMac, WNI_CFG_FORCE_POLICY_PROTECTION, &val)
-		    != QDF_STATUS_SUCCESS) {
-			pe_err("reading WNI_CFG_FORCE_POLICY_PROTECTION cfg failed");
-			return;
-		} else
-			pMac->lim.gLimProtectionControl = (uint8_t) val;
+		pMac->lim.gLimProtectionControl =
+			mlme_cfg->sap_protection_cfg.protection_force_policy;
 
-		if (wlan_cfg_get_int(pMac, WNI_CFG_PROTECTION_ENABLED, &val) !=
-		    QDF_STATUS_SUCCESS) {
-			pe_err("reading protection cfg failed");
-			return;
-		}
 
 		if (pMac->lim.gLimProtectionControl ==
 		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
 			qdf_mem_set((void *)&pMac->lim.cfgProtection,
 				    sizeof(tCfgProtection), 0);
 		else {
+			val = mlme_cfg->sap_protection_cfg.protection_enabled;
+
 			pMac->lim.cfgProtection.fromlla =
 				(val >> WNI_CFG_PROTECTION_ENABLED_FROM_llA) & 1;
 			pMac->lim.cfgProtection.fromllb =

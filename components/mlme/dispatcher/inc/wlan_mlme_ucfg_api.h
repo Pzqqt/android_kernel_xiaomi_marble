@@ -99,4 +99,22 @@ QDF_STATUS ucfg_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 {
 	return wlan_mlme_set_ht_cap_info(psoc, ht_cap_info);
 }
+
+/**
+ * ucfg_mlme_get_ignore_peer_ht_mode() - Get the ignore peer ht mode flag
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * ignore_peer_ht_opmode flag value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_ignore_peer_ht_mode(struct wlan_objmgr_psoc *psoc,
+					     bool *value)
+{
+	return wlan_mlme_get_ignore_peer_ht_mode(psoc, value);
+}
 #endif /* _WLAN_MLME_UCFG_API_H_ */

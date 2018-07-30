@@ -487,7 +487,6 @@ QDF_STATUS
 populate_dot11f_erp_info(tpAniSirGlobal pMac,
 			 tDot11fIEERPInfo *pDot11f, tpPESession psessionEntry)
 {
-	QDF_STATUS nSirStatus;
 	uint32_t val;
 	enum band_info rfBand = BAND_UNKNOWN;
 
@@ -517,14 +516,6 @@ populate_dot11f_erp_info(tpAniSirGlobal pMac,
 		    || !psessionEntry->beaconParams.fShortPreamble) {
 			pDot11f->barker_preamble = 1;
 
-		}
-		/* if protection always flag is set, advertise protection enabled */
-		/* regardless of legacy stations presence */
-		CFG_GET_INT(nSirStatus, pMac, WNI_CFG_11G_PROTECTION_ALWAYS,
-			    val);
-
-		if (val) {
-			pDot11f->use_prot = 1;
 		}
 	}
 

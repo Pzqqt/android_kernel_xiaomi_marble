@@ -8556,15 +8556,6 @@ enum dot11p_mode {
 #define CFG_USER_ACS_DFS_LTE_DEFAULT   (0)
 
 /*
- * Enabling gignore_peer_ht_opmode will enable 11g
- * protection only when there is a 11g AP in vicinity.
- */
-#define CFG_IGNORE_PEER_HT_MODE_NAME       "gignore_peer_ht_opmode"
-#define CFG_IGNORE_PEER_HT_MODE_MIN        (0)
-#define CFG_IGNORE_PEER_HT_MODE_MAX        (1)
-#define CFG_IGNORE_PEER_HT_MODE_DEFAULT    (0)
-
-/*
  * Enable/Disable to initiate BUG report in case of fatal event
  * Default: Enable
  */
@@ -14525,7 +14516,6 @@ struct hdd_config {
 #endif
 	uint32_t roam_dense_traffic_thresh;
 	uint32_t roam_dense_rssi_thresh_offset;
-	bool ignore_peer_ht_opmode;
 	uint32_t roam_dense_min_aps;
 	int8_t roam_bg_scan_bad_rssi_thresh;
 	uint8_t roam_bad_rssi_thresh_offset_2g;
