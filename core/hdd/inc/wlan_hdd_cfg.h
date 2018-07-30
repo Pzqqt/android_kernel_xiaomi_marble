@@ -13795,6 +13795,50 @@ enum hdd_external_acs_policy {
 #define CFG_ACTION_OUI_SWITCH_TO_11N_MODE_NAME    "gActionOUISwitchTo11nMode"
 #define CFG_ACTION_OUI_SWITCH_TO_11N_MODE_DEFAULT "00904C 03 0418BF E0 21 40"
 
+/*
+ * <ini>
+ * gActionOUIConnect1x1with1TxRxChain - Used to specify action OUIs for
+ *					 1x1 connection with one Tx/Rx Chain
+ * @Default:
+ * Note: User should strictly add new action OUIs at the end of this
+ * default value.
+ *
+ * Default OUIs: (All values in Hex)
+ * OUI 1 : 001018
+ *   OUI data Len : 06
+ *   OUI Data : 02FFF0040000
+ *   OUI data Mask: BC - 10111100
+ *   Info Mask : 21 - Check for Band
+ *   Capabilities: 40 - Band == 2G
+ *
+ * OUI 2 : 001018
+ *   OUI data Len : 06
+ *   OUI Data : 02FFF0050000
+ *   OUI data Mask: BC - 10111100
+ *   Info Mask : 21 - Check for Band
+ *   Capabilities: 40 - Band == 2G
+ *
+ * OUI 3 : 001018
+ *   OUI data Len : 06
+ *   OUI Data : 02FFF4050000
+ *   OUI data Mask: BC - 10111100
+ *   Info Mask : 21 - Check for Band
+ *   Capabilities: 40 - Band == 2G
+ *
+ * This ini is used to specify the AP OUIs with which only 1x1 connection
+ * with one Tx/Rx Chain is allowed.
+ *
+ * Related: gEnableActionOUI
+ *
+ * Supported Feature: Action OUIs
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ACTION_OUI_CONNECT_1X1_WITH_1_CHAIN_NAME    "gActionOUIConnect1x1with1TxRxChain"
+#define CFG_ACTION_OUI_CONNECT_1X1_WITH_1_CHAIN_DEFAULT "001018 06 02FFF0040000 BC 21 40 001018 06 02FFF0050000 BC 21 40 001018 06 02FFF4050000 BC 21 40"
+
  /* End of action oui inis */
 
 

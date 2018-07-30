@@ -15442,17 +15442,16 @@ void csr_dump_vendor_ies(uint8_t *ie, uint16_t ie_len)
 		elem_len = ptr[1];
 		left -= 2;
 		if (elem_len > left) {
-			pe_err("Invalid IEs eid: %d elem_len: %d left: %d",
-			       elem_id, elem_len, left);
+			sme_err("Invalid IEs eid: %d elem_len: %d left: %d",
+				elem_id, elem_len, left);
 			return;
 		}
 		if (elem_id == SIR_MAC_EID_VENDOR) {
-			pe_debug("Dumping Vendor IE of len %d", elem_len);
+			sme_debug("Dumping Vendor IE of len %d", elem_len);
 			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
 					   QDF_TRACE_LEVEL_DEBUG,
 					   &ptr[2], elem_len);
 		}
-
 		left -= elem_len;
 		ptr += (elem_len + 2);
 	}
@@ -15481,7 +15480,7 @@ csr_check_vendor_ap_3_present(tpAniSirGlobal mac_ctx, uint8_t *ie,
 	    SIR_MAC_VENDOR_AP_3_OUI_LEN, ie, ie_len)) &&
 	    (wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_4_OUI,
 	    SIR_MAC_VENDOR_AP_4_OUI_LEN, ie, ie_len))) {
-		pe_debug("Vendor OUI 3 and Vendor OUI 4 found");
+		sme_debug("Vendor OUI 3 and Vendor OUI 4 found");
 		ret = false;
 	}
 
@@ -15700,6 +15699,22 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 						pMac, (uint8_t *)pIes, ieLen);
 		}
 
+		/*
+		 * For WMI_ACTION_OUI_CONNECT_1x1_WITH_1_CHAIN, the host
+		 * sends the NSS as 1 to the FW and the FW then decides
+		 * after receiving the first beacon after connection to
+		 * switch to 1 Tx/Rx Chain.
+		 */
+
+		if (!is_vendor_ap_present) {
+			is_vendor_ap_present =
+				ucfg_action_oui_search(pMac->psoc,
+					&vendor_ap_search_attr,
+					ACTION_OUI_CONNECT_1X1_WITH_1_CHAIN);
+			if (is_vendor_ap_present)
+				sme_debug("1x1 with 1 Chain AP");
+		}
+
 		if (pMac->roam.configParam.is_force_1x1 &&
 		    pMac->lteCoexAntShare &&
 		    is_vendor_ap_present) {
@@ -15719,7 +15734,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 						       &vendor_ap_search_attr,
 						       ACTION_OUI_CCKM_1X1);
 		if (is_vendor_ap_present) {
-			pe_debug("vdev: %d WMI_VDEV_PARAM_ABG_MODE_TX_CHAIN_NUM 1",
+			sme_debug("vdev: %d WMI_VDEV_PARAM_ABG_MODE_TX_CHAIN_NUM 1",
 				 pSession->sessionId);
 			wma_cli_set_command(
 				pSession->sessionId,
