@@ -3073,7 +3073,7 @@ qdf_export_symbol(wlan_crypto_vdev_has_mcastcipher);
 bool wlan_crypto_peer_has_mcastcipher(struct wlan_objmgr_peer *peer,
 					wlan_crypto_cipher_type mcastcipher)
 {
-	return wlan_crypto_get_peer_param(peer, WLAN_CRYPTO_PARAM_UCAST_CIPHER)
+	return wlan_crypto_get_peer_param(peer, WLAN_CRYPTO_PARAM_MCAST_CIPHER)
 			& mcastcipher;
 }
 qdf_export_symbol(wlan_crypto_peer_has_mcastcipher);
