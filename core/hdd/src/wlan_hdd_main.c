@@ -1300,8 +1300,8 @@ static void hdd_update_wiphy_vhtcap(struct hdd_context *hdd_ctx)
 	band_5g->vht_cap.cap |=
 		(val << IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT);
 
-	hdd_info("Updated wiphy vhtcap:0x%x, CSNAntSupp:%d, NumSoundDim:%d",
-		band_5g->vht_cap.cap, hdd_ctx->config->txBFCsnValue, val);
+	hdd_debug("Updated wiphy vhtcap:0x%x, CSNAntSupp:%d, NumSoundDim:%d",
+		  band_5g->vht_cap.cap, hdd_ctx->config->txBFCsnValue, val);
 }
 
 /**
@@ -4765,8 +4765,8 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	case QDF_STA_MODE:
 		/* Reset locally administered bit if the device mode is STA */
 		WLAN_HDD_RESET_LOCALLY_ADMINISTERED_BIT(macAddr);
-		hdd_info("locally administered bit reset in sta mode: "
-			 MAC_ADDRESS_STR, MAC_ADDR_ARRAY(macAddr));
+		hdd_debug("locally administered bit reset in sta mode: "
+			  MAC_ADDRESS_STR, MAC_ADDR_ARRAY(macAddr));
 	/* fall through */
 	case QDF_P2P_CLIENT_MODE:
 	case QDF_P2P_DEVICE_MODE:
@@ -9854,10 +9854,8 @@ static int hdd_platform_wlan_mac(struct hdd_context *hdd_ctx)
 
 	addr = hdd_get_platform_wlan_mac_buff(dev, &no_of_mac_addr);
 
-	if (no_of_mac_addr == 0 || !addr) {
-		hdd_warn("Platform Driver Doesn't have wlan mac addresses");
+	if (no_of_mac_addr == 0 || !addr)
 		return -EINVAL;
-	}
 
 	if (no_of_mac_addr > max_mac_addr)
 		no_of_mac_addr = max_mac_addr;
@@ -9921,26 +9919,23 @@ static void hdd_initialize_mac_address(struct hdd_context *hdd_ctx)
 	int ret;
 
 	ret = hdd_platform_wlan_mac(hdd_ctx);
-	if (ret == 0)
+	if (!ret) {
+		hdd_info("using MAC address from platform driver");
 		return;
-
-	hdd_info("MAC is not programmed in platform driver ret: %d, use wlan_mac.bin",
-		 ret);
+	}
 
 	status = hdd_update_mac_config(hdd_ctx);
-
-	if (QDF_IS_STATUS_SUCCESS(status))
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_info("using MAC address from wlan_mac.bin");
 		return;
+	}
 
-	hdd_info("MAC is not programmed in wlan_mac.bin ret %d, use default MAC",
-		 status);
+	hdd_info("using default MAC address");
 
 	if (hdd_ctx->update_mac_addr_to_fw) {
 		ret = hdd_update_mac_addr_to_fw(hdd_ctx);
-		if (ret != 0) {
+		if (ret)
 			hdd_err("MAC address out-of-sync, ret:%d", ret);
-			QDF_ASSERT(ret);
-		}
 	}
 }
 
@@ -14013,7 +14008,7 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 
 	if (policy_mgr_get_concurrency_mode(hdd_ctx->hdd_psoc)
 		!= (QDF_STA_MASK | QDF_SAP_MASK)) {
-		hdd_info("Concurrency mode is not SAP");
+		hdd_debug("Concurrency mode is not SAP");
 		return;
 	}
 

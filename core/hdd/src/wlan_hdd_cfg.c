@@ -7227,12 +7227,15 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 
 	memset(macTable, 0, sizeof(macTable));
 	status = request_firmware(&fw, WLAN_MAC_FILE, hdd_ctx->parent_dev);
-
 	if (status) {
-		hdd_err("request_firmware failed %d", status);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		return qdf_status;
+		/*
+		 * request_firmware "fails" if the file is not found, which is a
+		 * valid setup for us, so log using debug instead of error
+		 */
+		hdd_debug("request_firmware failed; status:%d", status);
+		return QDF_STATUS_E_FAILURE;
 	}
+
 	if (!fw || !fw->data || !fw->size) {
 		hdd_alert("invalid firmware");
 		qdf_status = QDF_STATUS_E_INVAL;
@@ -7286,6 +7289,7 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 		}
 		buffer = line;
 	}
+
 	if (i <= QDF_MAX_CONCURRENCY_PERSONA) {
 		hdd_debug("%d Mac addresses provided", i);
 	} else {
