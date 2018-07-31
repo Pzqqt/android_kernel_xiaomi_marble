@@ -2640,11 +2640,13 @@ void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, uint8_t *file, uint32_t line)
 	if (qdf_likely(nbuf)) {
 		struct qdf_nbuf_map_metadata *meta;
 
+		qdf_spin_lock_irqsave(&qdf_nbuf_map_lock);
 		meta = qdf_nbuf_meta_get(nbuf);
 		if (meta)
 			QDF_DEBUG_PANIC(
 				"Nbuf freed @ %s:%u while mapped from %s:%u",
 				kbasename(file), line, meta->file, meta->line);
+		qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
 
 		qdf_net_buf_debug_delete_node(nbuf);
 		qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_FREE);
