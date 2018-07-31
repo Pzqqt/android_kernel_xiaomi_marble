@@ -370,11 +370,11 @@ static inline QDF_STATUS wlan_ipa_wdi_init(struct wlan_ipa_priv *ipa_ctx)
 	}
 
 	if (QDF_IPA_WDI_INIT_OUT_PARAMS_IS_UC_READY(&out)) {
-		ipa_info("IPA uC READY");
+		ipa_debug("IPA uC READY");
 		ipa_ctx->uc_loaded = true;
 		ipa_ctx->is_smmu_enabled =
 			QDF_IPA_WDI_INIT_OUT_PARAMS_IS_SMMU_ENABLED(&out);
-		ipa_info("is_smmu_enabled=%d", ipa_ctx->is_smmu_enabled);
+		ipa_debug("is_smmu_enabled=%d", ipa_ctx->is_smmu_enabled);
 	} else {
 		return QDF_STATUS_E_BUSY;
 	}

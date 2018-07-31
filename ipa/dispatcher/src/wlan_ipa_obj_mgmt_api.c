@@ -71,7 +71,7 @@ ipa_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 	QDF_STATUS status;
 	struct wlan_ipa_priv *ipa_obj;
 
-	ipa_info("ipa pdev created");
+	ipa_debug("ipa pdev created");
 
 	if (!ipa_config_is_enabled()) {
 		ipa_info("IPA is disabled");
@@ -110,7 +110,7 @@ ipa_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 
 	target_if_ipa_register_tx_ops(&ipa_obj->ipa_tx_op);
 
-	ipa_info("ipa pdev attached");
+	ipa_debug("ipa pdev attached");
 
 	return status;
 }
