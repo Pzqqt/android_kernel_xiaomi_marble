@@ -81,7 +81,6 @@ extern "C" {
 /* SAP FSM states for Access Point role */
 typedef enum {
 	eSAP_DISCONNECTED,
-	eSAP_CH_SELECT,
 	eSAP_DFS_CAC_WAIT,
 	eSAP_STARTING,
 	eSAP_STARTED,
@@ -130,11 +129,6 @@ struct sap_context {
 
 	/* Include the SME(CSR) sessionId here */
 	uint8_t sessionId;
-
-	/* Include the key material for this physical link */
-	uint8_t key_type;
-	uint8_t key_length;
-	uint8_t key_material[32];
 
 	/* Include the associations MAC addresses */
 	uint8_t self_mac_addr[CDS_MAC_ADDRESS_LEN];

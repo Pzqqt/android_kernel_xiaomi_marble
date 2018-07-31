@@ -176,34 +176,6 @@ static uint8_t *sap_hdd_event_to_string(eSapHddEvent event)
  * Function Declarations and Documentation
  * -------------------------------------------------------------------------*/
 
-/*==========================================================================
-   FUNCTION    sap_event_init
-
-   DESCRIPTION
-    Function for initializing sWLAN_SAPEvent structure
-
-   DEPENDENCIES
-    NA.
-
-   PARAMETERS
-
-    IN
-    sapEvent    : State machine event
-
-   RETURN VALUE
-
-    None
-
-   SIDE EFFECTS
-   ============================================================================*/
-static inline void sap_event_init(ptWLAN_SAPEvent sapEvent)
-{
-	sapEvent->event = eSAP_MAC_SCAN_COMPLETE;
-	sapEvent->params = 0;
-	sapEvent->u1 = 0;
-	sapEvent->u2 = 0;
-}
-
 #ifdef DFS_COMPONENT_ENABLE
 /**
  * sap_random_channel_sel() - This function randomly pick up an available
@@ -1292,67 +1264,6 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
 }
 
 /*==========================================================================
-   FUNCTION    sapGotoStarting
-
-   DESCRIPTION
-    Function for initiating start bss request for SME
-
-   DEPENDENCIES
-    NA.
-
-   PARAMETERS
-
-    IN
-    sapContext  : Sap Context value
-    sapEvent    : State machine event
-    bssType     : Type of bss to start, INRA AP
-    status      : Return the SAP status here
-
-   RETURN VALUE
-    The QDF_STATUS code associated with performing the operation
-
-    QDF_STATUS_SUCCESS: Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-static QDF_STATUS sap_goto_starting(struct sap_context *sapContext,
-				    ptWLAN_SAPEvent sapEvent,
-				    eCsrRoamBssType bssType)
-{
-	/* tHalHandle */
-	tHalHandle hHal = CDS_GET_HAL_CB();
-	QDF_STATUS qdf_ret_status;
-
-	/*- - - - - - - - TODO:once configs from hdd available - - - - - - - - -*/
-	char key_material[32] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3,
-		4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, };
-	sapContext->key_type = 0x05;
-	sapContext->key_length = 32;
-	/* Need a key size define */
-	qdf_mem_copy(sapContext->key_material, key_material,
-		     sizeof(key_material));
-
-	if (NULL == hHal) {
-		/* we have a serious problem */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
-			  "In %s, invalid hHal", __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, "%s: session: %d",
-		  __func__, sapContext->sessionId);
-
-	qdf_ret_status = sme_roam_connect(hHal, sapContext->sessionId,
-					  &sapContext->csr_roamProfile,
-					  &sapContext->csr_roamId);
-	if (QDF_STATUS_SUCCESS != qdf_ret_status)
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			"%s: Failed to issue sme_roam_connect", __func__);
-
-	return qdf_ret_status;
-} /* sapGotoStarting */
-
-/*==========================================================================
    FUNCTION    sapGotoDisconnecting
 
    DESCRIPTION
@@ -2154,28 +2065,135 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
 	return qdf_status;
 }
 
-static QDF_STATUS sap_switch_ch_sel(struct sap_context *sap_ctx)
+/**
+ * sap_goto_starting() - Trigger softap start
+ * @sap_ctx: SAP context
+ * @sap_event: SAP event buffer
+ * @mac_ctx: global MAC context
+ * @hal: HAL handle
+ *
+ * This function triggers start of softap. Before starting, it can select
+ * new channel if given channel has leakage or if given channel in DFS_NOL.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+sap_goto_starting(struct sap_context *sap_ctx,
+		  ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
+		  tHalHandle hal)
 {
-	tWLAN_SAPEvent sap_event;
-	QDF_STATUS qdf_status;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+	bool b_leak_chan = false;
+	uint8_t temp_chan;
+
+	temp_chan = sap_ctx->channel;
+	utils_dfs_mark_leaking_ch(mac_ctx->pdev,
+				  sap_ctx->ch_params.ch_width,
+				  1, &temp_chan);
 
 	/*
-	 * Fill in the event structure Eventhough scan was not done,
-	 * means a user set channel was chosen
+	 * if selelcted channel has leakage to channels
+	 * in NOL, the temp_chan will be reset
 	 */
-	sap_event_init(&sap_event);
-	/* Handle event */
-	qdf_status = sap_fsm(sap_ctx, &sap_event);
+	b_leak_chan = (temp_chan != sap_ctx->channel);
+	/*
+	 * check if channel is in DFS_NOL or if the channel
+	 * has leakage to the channels in NOL
+	 */
+	if (sap_dfs_is_channel_in_nol_list(sap_ctx, sap_ctx->channel,
+					   PHY_CHANNEL_BONDING_STATE_MAX) ||
+	    b_leak_chan) {
+		uint8_t ch;
+
+		/* find a new available channel */
+		ch = sap_random_channel_sel(sap_ctx);
+		if (!ch) {
+			/* No available channel found */
+			QDF_TRACE(QDF_MODULE_ID_SAP,
+				  QDF_TRACE_LEVEL_ERROR,
+				  FL("No available channel found!!!"));
+			sap_signal_hdd_event(sap_ctx, NULL,
+					     eSAP_DFS_NO_AVAILABLE_CHANNEL,
+					     (void *)eSAP_STATUS_SUCCESS);
+			return QDF_STATUS_E_FAULT;
+		}
+
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("channel %d is in NOL, Start Bss on new chan %d"),
+			  sap_ctx->channel, ch);
+
+		sap_ctx->channel = ch;
+		wlan_reg_set_channel_params(mac_ctx->pdev,
+					    sap_ctx->channel,
+					    sap_ctx->secondary_ch,
+					    &sap_ctx->ch_params);
+	}
+	if (sap_ctx->channel > 14 &&
+	    (sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11g ||
+	     sap_ctx->csr_roamProfile.phyMode ==
+					eCSR_DOT11_MODE_11g_ONLY))
+		sap_ctx->csr_roamProfile.phyMode = eCSR_DOT11_MODE_11a;
 
 	/*
-	 * If scan failed, get default channel and advance state
-	 * machine as success with default channel
-	 *
-	 * Have to wait for the call back to be called to get the
-	 * channel cannot advance state machine here as said above
+	 * when AP2 is started while AP1 is performing ACS, we may not
+	 * have the AP1 channel yet.So here after the completion of AP2
+	 * ACS check if AP1 ACS resulting channel is DFS and if yes
+	 * override AP2 ACS scan result with AP1 DFS channel
+	 */
+	if (policy_mgr_concurrent_beaconing_sessions_running(mac_ctx->psoc)) {
+		uint16_t con_ch;
+
+		con_ch = sme_get_concurrent_operation_channel(hal);
+		if (con_ch && wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch))
+			sap_ctx->channel = con_ch;
+	}
+
+	/*
+	 * Transition from eSAP_DISCONNECTED to eSAP_STARTING
+	 * (both without substates)
 	 */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("before exiting sap_switch_ch_sel"));
+		  FL("from state %s => %s"),
+		  "eSAP_DISCONNECTED", "eSAP_STARTING");
+	/* Channel selected. Now can sap_goto_starting */
+	sap_ctx->sapsMachine = eSAP_STARTING;
+	/* Specify the channel */
+	sap_ctx->csr_roamProfile.ChannelInfo.numOfChannels =
+					1;
+	sap_ctx->csr_roamProfile.ChannelInfo.ChannelList =
+		&sap_ctx->csr_roamProfile.operationChannel;
+	sap_ctx->csr_roamProfile.operationChannel =
+		(uint8_t)sap_ctx->channel;
+	sap_ctx->csr_roamProfile.ch_params.ch_width =
+				sap_ctx->ch_params.ch_width;
+	sap_ctx->csr_roamProfile.ch_params.center_freq_seg0 =
+			sap_ctx->ch_params.center_freq_seg0;
+	sap_ctx->csr_roamProfile.ch_params.center_freq_seg1 =
+			sap_ctx->ch_params.center_freq_seg1;
+	sap_ctx->csr_roamProfile.ch_params.sec_ch_offset =
+			sap_ctx->ch_params.sec_ch_offset;
+	sap_get_cac_dur_dfs_region(sap_ctx,
+				   &sap_ctx->csr_roamProfile.cac_duration_ms,
+				   &sap_ctx->csr_roamProfile.dfs_regdomain);
+	sap_ctx->csr_roamProfile.beacon_tx_rate =
+			sap_ctx->beacon_tx_rate;
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  FL("notify hostapd about channel selection: %d"),
+		  sap_ctx->channel);
+	sap_signal_hdd_event(sap_ctx, NULL,
+			     eSAP_CHANNEL_CHANGE_EVENT,
+			     (void *)eSAP_STATUS_SUCCESS);
+	sap_dfs_set_current_channel(sap_ctx);
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, "%s: session: %d",
+		  __func__, sap_ctx->sessionId);
+
+	qdf_status = sme_roam_connect(hal, sap_ctx->sessionId,
+				      &sap_ctx->csr_roamProfile,
+				      &sap_ctx->csr_roamId);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Failed to issue sme_roam_connect", __func__);
 
 	return qdf_status;
 }
@@ -2199,29 +2217,33 @@ static QDF_STATUS sap_fsm_state_disconnected(struct sap_context *sap_ctx,
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	if (msg == eSAP_HDD_START_INFRA_BSS) {
-		/*
-		 * Transition from eSAP_DISCONNECTED to eSAP_CH_SELECT
-		 * (both without substates)
-		 */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("new from state %s => %s: session:%d"),
-			  "eSAP_DISCONNECTED", "eSAP_CH_SELECT",
-			  sap_ctx->sessionId);
-
 		/* init dfs channel nol */
 		sap_init_dfs_channel_nol_list(sap_ctx);
-
-		/* Set SAP device role */
-		sap_ctx->sapsMachine = eSAP_CH_SELECT;
 
 		/*
 		 * Perform sme_ScanRequest. This scan request is post start bss
 		 * request so, set the third to false.
 		 */
 		qdf_status = sap_validate_chan(sap_ctx, false, true);
-		if (qdf_status == QDF_STATUS_SUCCESS ||
-		    qdf_status == QDF_STATUS_E_CANCELED)
-			qdf_status = sap_switch_ch_sel(sap_ctx);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			QDF_TRACE(QDF_MODULE_ID_SAP,
+				  QDF_TRACE_LEVEL_ERROR,
+				  FL("channel is not valid!"));
+			goto exit;
+		}
+
+		/* Transition from eSAP_DISCONNECTED to eSAP_STARTING */
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("new from state %s => %s: session:%d"),
+			  "eSAP_DISCONNECTED", "eSAP_STARTING",
+			  sap_ctx->sessionId);
+
+		qdf_status = sap_goto_starting(sap_ctx, sap_event,
+					       mac_ctx, hal);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			QDF_TRACE(QDF_MODULE_ID_SAP,
+				  QDF_TRACE_LEVEL_ERROR,
+				  FL("sap_goto_starting failed"));
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_START) {
 		/*
 		 * No need of state check here, caller is expected to perform
@@ -2245,148 +2267,7 @@ static QDF_STATUS sap_fsm_state_disconnected(struct sap_context *sap_ctx,
 			  "eSAP_DISCONNECTED", msg);
 	}
 
-	return qdf_status;
-}
-
-/**
- * sap_fsm_state_ch_select() - utility function called from sap fsm
- * @sap_ctx: SAP context
- * @sap_event: SAP event buffer
- * @mac_ctx: global MAC context
- * @hal: HAL handle
- *
- * This function is called for state transition from "eSAP_CH_SELECT"
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS sap_fsm_state_ch_select(struct sap_context *sap_ctx,
-			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-			tHalHandle hal)
-{
-	uint32_t msg = sap_event->event;
-	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	bool b_leak_chan = false;
-	uint8_t temp_chan;
-
-	if (msg == eSAP_MAC_SCAN_COMPLETE) {
-		temp_chan = sap_ctx->channel;
-		utils_dfs_mark_leaking_ch(mac_ctx->pdev,
-					sap_ctx->ch_params.ch_width,
-					1, &temp_chan);
-
-		/*
-		 * if selelcted channel has leakage to channels
-		 * in NOL, the temp_chan will be reset
-		 */
-		b_leak_chan = (temp_chan != sap_ctx->channel);
-		/*
-		 * check if channel is in DFS_NOL or if the channel
-		 * has leakage to the channels in NOL
-		 */
-		if (sap_dfs_is_channel_in_nol_list(sap_ctx, sap_ctx->channel,
-			PHY_CHANNEL_BONDING_STATE_MAX) || b_leak_chan) {
-			uint8_t ch;
-
-			/* find a new available channel */
-			ch = sap_random_channel_sel(sap_ctx);
-			if (ch == 0) {
-				/* No available channel found */
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					QDF_TRACE_LEVEL_ERROR,
-					FL("No available channel found!!!"));
-				sap_signal_hdd_event(sap_ctx, NULL,
-					eSAP_DFS_NO_AVAILABLE_CHANNEL,
-					(void *)eSAP_STATUS_SUCCESS);
-				return QDF_STATUS_E_FAULT;
-			}
-
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-				  FL("channel %d is in NOL, StartBss on new channel %d"),
-				  sap_ctx->channel, ch);
-
-			sap_ctx->channel = ch;
-			wlan_reg_set_channel_params(mac_ctx->pdev,
-					sap_ctx->channel,
-					sap_ctx->secondary_ch,
-					&sap_ctx->ch_params);
-		}
-		if (sap_ctx->channel > 14 &&
-		    (sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11g ||
-		     sap_ctx->csr_roamProfile.phyMode ==
-						eCSR_DOT11_MODE_11g_ONLY))
-			sap_ctx->csr_roamProfile.phyMode = eCSR_DOT11_MODE_11a;
-
-		/*
-		 * when AP2 is started while AP1 is performing ACS, we may not
-		 * have the AP1 channel yet.So here after the completion of AP2
-		 * ACS check if AP1 ACS resulting channel is DFS and if yes
-		 * override AP2 ACS scan result with AP1 DFS channel
-		 */
-		if (policy_mgr_concurrent_beaconing_sessions_running(
-			mac_ctx->psoc)) {
-			uint16_t con_ch;
-
-			con_ch = sme_get_concurrent_operation_channel(hal);
-			if (con_ch && wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch))
-				sap_ctx->channel = con_ch;
-		}
-
-		/*
-		 * Transition from eSAP_CH_SELECT to eSAP_STARTING
-		 * (both without substates)
-		 */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("from state %s => %s"),
-			  "eSAP_CH_SELECT", "eSAP_STARTING");
-		/* Channel selected. Now can sap_goto_starting */
-		sap_ctx->sapsMachine = eSAP_STARTING;
-		/* Specify the channel */
-		sap_ctx->csr_roamProfile.ChannelInfo.numOfChannels =
-						1;
-		sap_ctx->csr_roamProfile.ChannelInfo.ChannelList =
-			&sap_ctx->csr_roamProfile.operationChannel;
-		sap_ctx->csr_roamProfile.operationChannel =
-			(uint8_t) sap_ctx->channel;
-		sap_ctx->csr_roamProfile.ch_params.ch_width =
-					sap_ctx->ch_params.ch_width;
-		sap_ctx->csr_roamProfile.ch_params.center_freq_seg0 =
-				sap_ctx->ch_params.center_freq_seg0;
-		sap_ctx->csr_roamProfile.ch_params.center_freq_seg1 =
-				sap_ctx->ch_params.center_freq_seg1;
-		sap_ctx->csr_roamProfile.ch_params.sec_ch_offset =
-				sap_ctx->ch_params.sec_ch_offset;
-		sap_get_cac_dur_dfs_region(sap_ctx,
-				&sap_ctx->csr_roamProfile.cac_duration_ms,
-				&sap_ctx->csr_roamProfile.dfs_regdomain);
-		sap_ctx->csr_roamProfile.beacon_tx_rate =
-				sap_ctx->beacon_tx_rate;
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		    FL("notify hostapd about channel selection: %d"),
-		    sap_ctx->channel);
-		sap_signal_hdd_event(sap_ctx, NULL,
-					eSAP_CHANNEL_CHANGE_EVENT,
-					(void *) eSAP_STATUS_SUCCESS);
-		sap_dfs_set_current_channel(sap_ctx);
-		qdf_status = sap_goto_starting(sap_ctx, sap_event,
-					  eCSR_BSS_TYPE_INFRA_AP);
-	} else if (msg == eSAP_CHANNEL_SELECTION_FAILED) {
-		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-		FL("Cannot start BSS, ACS Fail"));
-		sap_signal_hdd_event(sap_ctx, NULL, eSAP_START_BSS_EVENT,
-					(void *)eSAP_STATUS_FAILURE);
-	} else if (msg == eSAP_HDD_STOP_INFRA_BSS) {
-		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
-		sap_signal_hdd_event(sap_ctx, NULL, eSAP_START_BSS_EVENT,
-					(void *)eSAP_STATUS_FAILURE);
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			"%s: BSS stopped when Ch select in Progress", __func__);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("in state %s, invalid event msg %d"),
-			  "eSAP_CH_SELECT", msg);
-	}
-
+exit:
 	return qdf_status;
 }
 
@@ -2413,7 +2294,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 	if (msg == eSAP_DFS_CHANNEL_CAC_START) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("from state %s => %s"),
-			  "eSAP_CH_SELECT", "eSAP_DFS_CAC_WAIT");
+			  "eSAP_STARTING", "eSAP_DFS_CAC_WAIT");
 		if (mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running != true)
 			sap_start_dfs_cac_timer(sap_ctx);
 		qdf_status = sap_cac_start_notify(hal);
@@ -2844,11 +2725,6 @@ QDF_STATUS sap_fsm(struct sap_context *sap_ctx, ptWLAN_SAPEvent sap_event)
 	switch (state_var) {
 	case eSAP_DISCONNECTED:
 		qdf_status = sap_fsm_state_disconnected(sap_ctx, sap_event,
-				mac_ctx, hal);
-		break;
-
-	case eSAP_CH_SELECT:
-		qdf_status = sap_fsm_state_ch_select(sap_ctx, sap_event,
 				mac_ctx, hal);
 		break;
 
