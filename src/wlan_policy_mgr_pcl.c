@@ -222,7 +222,7 @@ void policy_mgr_update_with_safe_channel_list(struct wlan_objmgr_psoc *psoc,
 				pm_ctx->unsafe_channel_list[j]) {
 				/* Found unsafe channel, update it */
 				is_unsafe = 1;
-				policy_mgr_warn("CH %d is not safe",
+				policy_mgr_debug("CH %d is not safe",
 					current_channel_list[i]);
 				break;
 			}
@@ -1646,9 +1646,9 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		 * below!
 		 */
 		for (i = 0; i < weight->saved_num_chan; i++) {
-			if (policy_mgr_allow_concurrency(psoc, PM_STA_MODE,
-					weight->saved_chan_list[i],
-					HW_MODE_20_MHZ)) {
+			if (policy_mgr_is_concurrency_allowed
+				(psoc, PM_STA_MODE, weight->saved_chan_list[i],
+				HW_MODE_20_MHZ)) {
 				weight->weighed_valid_list[i] =
 					WEIGHT_OF_NON_PCL_CHANNELS;
 			}

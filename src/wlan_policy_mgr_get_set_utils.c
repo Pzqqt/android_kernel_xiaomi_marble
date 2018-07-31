@@ -1544,16 +1544,15 @@ static bool policy_mgr_is_sub_20_mhz_enabled(struct wlan_objmgr_psoc *psoc)
 	return pm_ctx->user_cfg.sub_20_mhz_enabled;
 }
 
-bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
-				enum policy_mgr_con_mode mode,
-				uint8_t channel, enum hw_mode_bandwidth bw)
+bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
+				       enum policy_mgr_con_mode mode,
+				       uint8_t channel,
+				       enum hw_mode_bandwidth bw)
 {
 	uint32_t num_connections = 0, count = 0, index = 0;
 	bool status = false, match = false;
 	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	QDF_STATUS ret;
-	struct policy_mgr_pcl_list pcl;
 	bool sta_sap_scc_on_dfs_chan;
 
 	pm_ctx = policy_mgr_get_context(psoc);
@@ -1561,16 +1560,6 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("Invalid Context");
 		return status;
 	}
-
-
-	qdf_mem_zero(&pcl, sizeof(pcl));
-	ret = policy_mgr_get_pcl(psoc, mode, pcl.pcl_list, &pcl.pcl_len,
-			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list));
-	if (QDF_IS_STATUS_ERROR(ret)) {
-		policy_mgr_err("disallow connection:%d", ret);
-		goto done;
-	}
-
 	/* find the current connection state from pm_conc_connection_list*/
 	num_connections = policy_mgr_get_connection_count(psoc);
 
@@ -1746,6 +1735,25 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 
 done:
 	return status;
+}
+
+bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
+				  enum policy_mgr_con_mode mode,
+				  uint8_t channel, enum hw_mode_bandwidth bw)
+{
+	QDF_STATUS status;
+	struct policy_mgr_pcl_list pcl;
+
+	qdf_mem_zero(&pcl, sizeof(pcl));
+	status = policy_mgr_get_pcl(psoc, mode, pcl.pcl_list, &pcl.pcl_len,
+				    pcl.weight_list,
+				    QDF_ARRAY_SIZE(pcl.weight_list));
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("disallow connection:%d", status);
+		return false;
+	}
+
+	return policy_mgr_is_concurrency_allowed(psoc, mode, channel, bw);
 }
 
 /**

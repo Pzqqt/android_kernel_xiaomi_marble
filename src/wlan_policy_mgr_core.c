@@ -2264,9 +2264,11 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_debug("pcl len (%d) and weight list len mismatch (%d)",
 			*len, i);
 
-	/* check the channel avoidance list */
-	policy_mgr_update_with_safe_channel_list(psoc, pcl_channels, len,
-				pcl_weights, weight_len);
+	/* check the channel avoidance list for beaconing entities */
+	if ((mode == PM_SAP_MODE) || (mode == PM_P2P_GO_MODE))
+		policy_mgr_update_with_safe_channel_list(psoc, pcl_channels,
+							 len, pcl_weights,
+							 weight_len);
 
 	policy_mgr_set_weight_of_dfs_passive_channels_to_zero(psoc,
 			pcl_channels, len, pcl_weights, weight_len);
