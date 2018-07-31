@@ -3704,7 +3704,7 @@ end:
 	return status;
 }
 
-#ifdef CONVERGED_P2P_ENABLE
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * send_p2p_lo_start_cmd_tlv() - send p2p lo start request to fw
  * @wmi_handle: wmi handle
@@ -3845,7 +3845,7 @@ static QDF_STATUS send_p2p_lo_stop_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* End of CONVERGED_P2P_ENABLE */
+#endif /* End of FEATURE_P2P_LISTEN_OFFLOAD */
 
 /**
  * send_get_temperature_cmd_tlv() - get pdev temperature req
@@ -18549,6 +18549,7 @@ static QDF_STATUS extract_p2p_noa_ev_param_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * extract_p2p_lo_stop_ev_param_tlv() - extract p2p lo stop
  * information from event
@@ -18585,6 +18586,7 @@ static QDF_STATUS extract_p2p_lo_stop_ev_param_tlv(
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 #endif /* End of CONVERGED_P2P_ENABLE */
 
 /**
@@ -21959,7 +21961,7 @@ struct wmi_ops tlv_ops =  {
 	.send_get_temperature_cmd = send_get_temperature_cmd_tlv,
 	.send_set_p2pgo_oppps_req_cmd = send_set_p2pgo_oppps_req_cmd_tlv,
 	.send_set_p2pgo_noa_req_cmd = send_set_p2pgo_noa_req_cmd_tlv,
-#ifdef CONVERGED_P2P_ENABLE
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 	.send_p2p_lo_start_cmd = send_p2p_lo_start_cmd_tlv,
 	.send_p2p_lo_stop_cmd = send_p2p_lo_stop_cmd_tlv,
 #endif
@@ -22244,8 +22246,10 @@ struct wmi_ops tlv_ops =  {
 	.extract_swba_noa_info = extract_swba_noa_info_tlv,
 #ifdef CONVERGED_P2P_ENABLE
 	.extract_p2p_noa_ev_param = extract_p2p_noa_ev_param_tlv,
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 	.extract_p2p_lo_stop_ev_param =
 				extract_p2p_lo_stop_ev_param_tlv,
+#endif
 #endif
 	.extract_offchan_data_tx_compl_param =
 				extract_offchan_data_tx_compl_param_tlv,
