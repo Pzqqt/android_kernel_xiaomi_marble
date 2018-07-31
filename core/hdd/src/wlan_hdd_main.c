@@ -10200,6 +10200,7 @@ out:
 	return ret;
 }
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * wlan_hdd_p2p_lo_event_callback - P2P listen offload stop event handler
  * @context: context registered with sme_register_p2p_lo_event(). HDD
@@ -10255,6 +10256,12 @@ static void wlan_hdd_p2p_lo_event_callback(void *context,
 	hdd_debug("Sent P2P_LISTEN_OFFLOAD_STOP event for vdev_id = %d",
 			evt->vdev_id);
 }
+#else
+static void wlan_hdd_p2p_lo_event_callback(void *context,
+					   struct sir_p2p_lo_event *evt)
+{
+}
+#endif
 
 #ifdef FEATURE_WLAN_DYNAMIC_CVM
 static inline int hdd_set_vc_mode_config(struct hdd_context *hdd_ctx)

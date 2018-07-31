@@ -238,10 +238,17 @@ QDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value);
 QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value);
 
 bool wma_is_csa_offload_enabled(void);
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 bool wma_is_p2p_lo_capable(void);
-bool wma_capability_enhanced_mcast_filter(void);
 QDF_STATUS wma_p2p_lo_start(struct sir_p2p_lo_start *params);
 QDF_STATUS wma_p2p_lo_stop(u_int32_t vdev_id);
+#else
+static inline bool wma_is_p2p_lo_capable(void)
+{
+	return 0;
+}
+#endif
+bool wma_capability_enhanced_mcast_filter(void);
 #ifndef QCA_SUPPORT_CP_STATS
 QDF_STATUS wma_get_wakelock_stats(struct sir_wake_lock_stats *wake_lock_stats);
 #endif

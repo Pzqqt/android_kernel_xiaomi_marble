@@ -4277,7 +4277,7 @@ wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
 	return wmi_unified_dbglog_cmd_send(wmi_handle, &dbg_param);
 }
 #endif
-
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * wma_is_p2p_lo_capable() - if driver is capable of p2p listen offload
  *
@@ -4299,6 +4299,7 @@ bool wma_is_p2p_lo_capable(void)
 
 	return 0;
 }
+#endif
 
 bool wma_capability_enhanced_mcast_filter(void)
 {

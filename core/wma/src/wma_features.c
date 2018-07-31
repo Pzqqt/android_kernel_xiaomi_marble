@@ -4940,6 +4940,7 @@ QDF_STATUS wma_set_sw_retry_threshold(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  *  wma_p2p_lo_start() - P2P listen offload start
  *  @params: p2p listen offload parameters
@@ -5135,6 +5136,7 @@ int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
 
 	return 0;
 }
+#endif /* FEATURE_P2P_LISTEN_OFFLOAD */
 
 #ifndef QCA_SUPPORT_CP_STATS
 /**

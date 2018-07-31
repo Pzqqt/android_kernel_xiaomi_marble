@@ -331,8 +331,10 @@ typedef struct tagSmeStruct {
 	ocb_callback dcc_stats_event_callback;
 	sme_set_thermal_level_callback set_thermal_level_cb;
 	void *apf_get_offload_context;
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 	p2p_lo_callback p2p_lo_event_callback;
 	void *p2p_lo_event_context;
+#endif
 #ifdef FEATURE_OEM_DATA_SUPPORT
 	sme_send_oem_data_rsp_msg oem_data_rsp_callback;
 #endif

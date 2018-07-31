@@ -14364,6 +14364,7 @@ void sme_update_hw_dbs_capable(tHalHandle hal, uint8_t hw_dbs_capable)
 	mac_ctx->hw_dbs_capable = hw_dbs_capable;
 }
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * sme_register_p2p_lo_event() - Register for the p2p lo event
  * @hHal: reference to the HAL
@@ -14386,6 +14387,7 @@ void sme_register_p2p_lo_event(tHalHandle hHal, void *context,
 	pMac->sme.p2p_lo_event_context = context;
 	sme_release_global_lock(&pMac->sme);
 }
+#endif
 
 /**
  * sme_process_mac_pwr_dbg_cmd() - enable mac pwr debugging
