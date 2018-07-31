@@ -7921,6 +7921,7 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /* send_set_ric_req_cmd_tlv() - set ric request element
  * @wmi_handle: wmi handle
  * @msg: message
@@ -7971,10 +7972,8 @@ static QDF_STATUS send_set_ric_req_cmd_tlv(wmi_unified_t wmi_handle,
 
 	if (is_add_ts)
 		ptspecIE = &(((struct add_ts_param *) msg)->tspec);
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	else
 		ptspecIE = &(((struct del_ts_params *) msg)->delTsInfo.tspec);
-#endif
 	if (ptspecIE) {
 		/* Fill the tsinfo in the format expected by firmware */
 #ifndef ANI_LITTLE_BIT_ENDIAN
@@ -8017,6 +8016,49 @@ static QDF_STATUS send_set_ric_req_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * send_process_roam_synch_complete_cmd_tlv() - roam synch complete command to fw.
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * This function sends roam synch complete event to fw.
+ *
+ * Return: CDF STATUS
+ */
+static QDF_STATUS send_process_roam_synch_complete_cmd_tlv(wmi_unified_t wmi_handle,
+		 uint8_t vdev_id)
+{
+	wmi_roam_synch_complete_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint8_t *buf_ptr;
+	uint16_t len;
+	len = sizeof(wmi_roam_synch_complete_fixed_param);
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_roam_synch_complete_fixed_param *) wmi_buf_data(wmi_buf);
+	buf_ptr = (uint8_t *) cmd;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_synch_complete_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_roam_synch_complete_fixed_param));
+	cmd->vdev_id = vdev_id;
+	wmi_mtrace(WMI_ROAM_SYNCH_COMPLETE, cmd->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+				 WMI_ROAM_SYNCH_COMPLETE)) {
+		WMI_LOGP("%s: failed to send roam synch confirmation",
+			 __func__);
+		wmi_buf_free(wmi_buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 /**
@@ -15307,48 +15349,6 @@ send_set_ssid_hotlist_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * send_process_roam_synch_complete_cmd_tlv() - roam synch complete command to fw.
- * @wmi_handle: wmi handle
- * @vdev_id: vdev id
- *
- * This function sends roam synch complete event to fw.
- *
- * Return: CDF STATUS
- */
-static QDF_STATUS send_process_roam_synch_complete_cmd_tlv(wmi_unified_t wmi_handle,
-		 uint8_t vdev_id)
-{
-	wmi_roam_synch_complete_fixed_param *cmd;
-	wmi_buf_t wmi_buf;
-	uint8_t *buf_ptr;
-	uint16_t len;
-	len = sizeof(wmi_roam_synch_complete_fixed_param);
-
-	wmi_buf = wmi_buf_alloc(wmi_handle, len);
-	if (!wmi_buf) {
-		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-	cmd = (wmi_roam_synch_complete_fixed_param *) wmi_buf_data(wmi_buf);
-	buf_ptr = (uint8_t *) cmd;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_roam_synch_complete_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_roam_synch_complete_fixed_param));
-	cmd->vdev_id = vdev_id;
-	wmi_mtrace(WMI_ROAM_SYNCH_COMPLETE, cmd->vdev_id, 0);
-	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
-				 WMI_ROAM_SYNCH_COMPLETE)) {
-		WMI_LOGP("%s: failed to send roam synch confirmation",
-			 __func__);
-		wmi_buf_free(wmi_buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * send_fw_test_cmd_tlv() - send fw test command to fw.
  * @wmi_handle: wmi handle
  * @wmi_fwtest: fw test command
@@ -22589,7 +22589,11 @@ struct wmi_ops tlv_ops =  {
 	.send_pno_stop_cmd = send_pno_stop_cmd_tlv,
 	.send_pno_start_cmd = send_pno_start_cmd_tlv,
 	.send_nlo_mawc_cmd = send_nlo_mawc_cmd_tlv,
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	.send_set_ric_req_cmd = send_set_ric_req_cmd_tlv,
+	.send_process_roam_synch_complete_cmd =
+		 send_process_roam_synch_complete_cmd_tlv,
+#endif
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	.send_process_ll_stats_clear_cmd = send_process_ll_stats_clear_cmd_tlv,
 	.send_process_ll_stats_set_cmd = send_process_ll_stats_set_cmd_tlv,
@@ -22705,8 +22709,6 @@ struct wmi_ops tlv_ops =  {
 	.send_app_type1_params_in_fw_cmd =
 		 send_app_type1_params_in_fw_cmd_tlv,
 	.send_set_ssid_hotlist_cmd = send_set_ssid_hotlist_cmd_tlv,
-	.send_process_roam_synch_complete_cmd =
-		 send_process_roam_synch_complete_cmd_tlv,
 	.send_unit_test_cmd = send_unit_test_cmd_tlv,
 	.send_roam_invoke_cmd = send_roam_invoke_cmd_tlv,
 	.send_roam_scan_offload_cmd = send_roam_scan_offload_cmd_tlv,

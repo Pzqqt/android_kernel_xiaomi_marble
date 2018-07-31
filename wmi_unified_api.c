@@ -1839,27 +1839,6 @@ QDF_STATUS wmi_unified_nlo_mawc_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/* wmi_unified_set_ric_req_cmd() - set ric request element
- * @wmi_hdl: wmi handle
- * @msg: message
- * @is_add_ts: is addts required
- *
- * This function sets ric request element for 11r roaming.
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_set_ric_req_cmd(void *wmi_hdl, void *msg,
-		uint8_t is_add_ts)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_set_ric_req_cmd)
-		return wmi_handle->ops->send_set_ric_req_cmd(wmi_handle, msg,
-			    is_add_ts);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 /**
  * wmi_unified_process_ll_stats_clear_cmd() - clear link layer stats
@@ -2877,6 +2856,7 @@ wmi_unified_set_ssid_hotlist_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wmi_unified_roam_synch_complete_cmd() - roam synch complete command to fw.
  * @wmi_hdl: wmi handle
@@ -2897,6 +2877,28 @@ QDF_STATUS wmi_unified_roam_synch_complete_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/* wmi_unified_set_ric_req_cmd() - set ric request element
+ * @wmi_hdl: wmi handle
+ * @msg: message
+ * @is_add_ts: is addts required
+ *
+ * This function sets ric request element for 11r roaming.
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_ric_req_cmd(void *wmi_hdl, void *msg,
+		uint8_t is_add_ts)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_ric_req_cmd)
+		return wmi_handle->ops->send_set_ric_req_cmd(wmi_handle, msg,
+			    is_add_ts);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
 
 /**
  * wmi_unified_fw_test_cmd() - send fw test command to fw.
