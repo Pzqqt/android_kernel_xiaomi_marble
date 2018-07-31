@@ -619,6 +619,7 @@ static int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 				return -EINVAL;
 			}
 		} else {
+			pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
 			qdf_print("Unable to subscribe %d to the WDI %s\n",
 				  log_state, __func__);
 			return -EINVAL;
