@@ -26,6 +26,7 @@
 /* Include Files */
 #include <wbuff.h>
 #include "cfg_ucfg_api.h"
+#include "wlan_dsc.h"
 #include <wlan_hdd_includes.h>
 #include <cds_api.h>
 #include <cds_sched.h>
@@ -12786,6 +12787,34 @@ void hdd_component_pdev_close(struct wlan_objmgr_pdev *pdev)
 	ucfg_mlme_pdev_close(pdev);
 }
 
+static struct hdd_driver __hdd_driver;
+
+static QDF_STATUS hdd_driver_ctx_init(struct hdd_driver *hdd_driver)
+{
+	QDF_BUG(hdd_driver);
+	if (!hdd_driver)
+		return QDF_STATUS_E_INVAL;
+
+	hdd_driver->state = driver_state_uninit;
+
+	return dsc_driver_create(&hdd_driver->dsc_driver);
+}
+
+static void hdd_driver_ctx_deinit(struct hdd_driver *hdd_driver)
+{
+	QDF_BUG(hdd_driver);
+	if (!hdd_driver)
+		return;
+
+	dsc_driver_destroy(&hdd_driver->dsc_driver);
+	qdf_mem_zero(hdd_driver, sizeof(*hdd_driver));
+}
+
+struct hdd_driver *hdd_driver_get(void)
+{
+	return &__hdd_driver;
+}
+
 static QDF_STATUS hdd_qdf_print_init(void)
 {
 	QDF_STATUS status;
@@ -12895,6 +12924,7 @@ static void hdd_qdf_deinit(void)
  */
 static int hdd_driver_load(void)
 {
+	struct hdd_driver *hdd_driver = hdd_driver_get();
 	QDF_STATUS status;
 	int errno;
 
@@ -12908,10 +12938,24 @@ static int hdd_driver_load(void)
 		goto exit;
 	}
 
+	status = hdd_driver_ctx_init(hdd_driver);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to init driver context; status:%u", status);
+		errno = qdf_status_to_os_return(status);
+		goto qdf_deinit;
+	}
+
+	status = dsc_driver_trans_start(hdd_driver->dsc_driver, "load");
+	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
+	if (QDF_IS_STATUS_ERROR(status)) {
+		errno = qdf_status_to_os_return(status);
+		goto hdd_driver_deinit;
+	}
+
 	errno = hdd_init();
 	if (errno) {
 		hdd_err("Failed to init HDD; errno:%d", errno);
-		goto qdf_deinit;
+		goto trans_stop;
 	}
 
 	status = hdd_component_init();
@@ -12942,6 +12986,10 @@ static int hdd_driver_load(void)
 		goto param_destroy;
 	}
 
+	hdd_driver->state = driver_state_loaded;
+	dsc_driver_trans_stop(hdd_driver->dsc_driver);
+
+	/* psoc probe can happen in registration; do after 'load' transition */
 	errno = wlan_hdd_register_driver();
 	if (errno) {
 		hdd_err("Failed to register driver; errno:%d", errno);
@@ -12953,7 +13001,11 @@ static int hdd_driver_load(void)
 	return 0;
 
 pld_deinit:
+	status = dsc_driver_trans_start(hdd_driver->dsc_driver, "unload");
+	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
+
 	pld_deinit();
+
 param_destroy:
 	wlan_hdd_state_ctrl_param_destroy();
 wakelock_destroy:
@@ -12962,6 +13014,11 @@ comp_deinit:
 	hdd_component_deinit();
 hdd_deinit:
 	hdd_deinit();
+trans_stop:
+	hdd_driver->state = driver_state_deinit;
+	dsc_driver_trans_stop(hdd_driver->dsc_driver);
+hdd_driver_deinit:
+	hdd_driver_ctx_deinit(hdd_driver);
 qdf_deinit:
 	hdd_qdf_deinit();
 
@@ -12978,13 +13035,26 @@ exit:
  */
 static void hdd_driver_unload(void)
 {
+	struct hdd_driver *hdd_driver = hdd_driver_get();
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	QDF_STATUS status;
 
 	pr_info("%s: Unloading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
 
-	if (!hdd_wait_for_recovery_completion())
+	status = dsc_driver_trans_start_wait(hdd_driver->dsc_driver, "unload");
+	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Unable to unload wlan; status:%u", status);
 		return;
+	}
+
+	dsc_driver_wait_for_ops(hdd_driver->dsc_driver);
+
+	if (!hdd_wait_for_recovery_completion()) {
+		dsc_driver_trans_stop(hdd_driver->dsc_driver);
+		return;
+	}
 
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
@@ -13003,6 +13073,11 @@ static void hdd_driver_unload(void)
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 	hdd_component_deinit();
 	hdd_deinit();
+
+	hdd_driver->state = driver_state_deinit;
+	dsc_driver_trans_stop(hdd_driver->dsc_driver);
+	hdd_driver_ctx_deinit(hdd_driver);
+
 	hdd_qdf_deinit();
 }
 

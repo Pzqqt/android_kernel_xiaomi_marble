@@ -52,6 +52,7 @@
 #include <qdf_types.h>
 #include "sir_mac_prot_def.h"
 #include "csr_api.h"
+#include "wlan_dsc.h"
 #include <wlan_hdd_assoc.h>
 #include <wlan_hdd_wmm.h>
 #include <wlan_hdd_cfg.h>
@@ -1702,6 +1703,24 @@ struct hdd_cache_channels {
 	struct hdd_cache_channel_info *channel_info;
 };
 #endif
+
+enum hdd_driver_state {
+	driver_state_uninit,
+	driver_state_deinit,
+	driver_state_loaded,
+};
+
+/**
+ * struct hdd_driver - HDD driver-level context information
+ * @dsc_driver: driver synchronization driver context handle
+ * @state: the current stable state of the driver
+ */
+struct hdd_driver {
+	struct dsc_driver *dsc_driver;
+	enum hdd_driver_state state;
+};
+
+struct hdd_driver *hdd_driver_get(void);
 
 /**
  * struct hdd_context - hdd shared driver and psoc/device context
