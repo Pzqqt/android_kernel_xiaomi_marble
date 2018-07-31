@@ -354,6 +354,7 @@ QDF_STATUS p2p_process_cmd(struct scheduler_msg *msg);
  */
 QDF_STATUS p2p_process_evt(struct scheduler_msg *msg);
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * p2p_process_lo_stop() - Process lo stop event
  * @lo_stop_event: listen offload stop event information
@@ -365,7 +366,13 @@ QDF_STATUS p2p_process_evt(struct scheduler_msg *msg);
  */
 QDF_STATUS p2p_process_lo_stop(
 	struct p2p_lo_stop_event *lo_stop_event);
-
+#else
+static inline QDF_STATUS p2p_process_lo_stop(
+	struct p2p_lo_stop_event *lo_stop_event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /**
  * p2p_process_noa() - Process noa event
  * @noa_event: noa event information

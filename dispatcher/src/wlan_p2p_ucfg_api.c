@@ -463,6 +463,7 @@ QDF_STATUS ucfg_p2p_set_ps(struct wlan_objmgr_psoc *soc,
 	return status;
 }
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 QDF_STATUS ucfg_p2p_lo_start(struct wlan_objmgr_psoc *soc,
 	struct p2p_lo_start *p2p_lo_start)
 {
@@ -511,6 +512,7 @@ QDF_STATUS ucfg_p2p_lo_stop(struct wlan_objmgr_psoc *soc,
 
 	return status;
 }
+#endif
 
 QDF_STATUS  ucfg_p2p_set_noa(struct wlan_objmgr_psoc *soc,
 	uint32_t vdev_id, bool disable_noa)
