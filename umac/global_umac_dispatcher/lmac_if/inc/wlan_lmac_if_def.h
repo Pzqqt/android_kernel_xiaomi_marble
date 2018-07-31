@@ -213,18 +213,20 @@ struct p2p_lo_start;
 struct wlan_lmac_if_p2p_tx_ops {
 	QDF_STATUS (*set_ps)(struct wlan_objmgr_psoc *psoc,
 		struct p2p_ps_config *ps_config);
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 	QDF_STATUS (*lo_start)(struct wlan_objmgr_psoc *psoc,
 		struct p2p_lo_start *lo_start);
 	QDF_STATUS (*lo_stop)(struct wlan_objmgr_psoc *psoc,
 		uint32_t vdev_id);
-	QDF_STATUS (*set_noa)(struct wlan_objmgr_psoc *psoc,
-		uint32_t vdev_id, bool disable_noa);
 	QDF_STATUS (*reg_lo_ev_handler)(struct wlan_objmgr_psoc *psoc,
-			void *arg);
-	QDF_STATUS (*reg_noa_ev_handler)(struct wlan_objmgr_psoc *psoc,
 			void *arg);
 	QDF_STATUS (*unreg_lo_ev_handler)(struct wlan_objmgr_psoc *psoc,
 			void *arg);
+#endif
+	QDF_STATUS (*set_noa)(struct wlan_objmgr_psoc *psoc,
+			      uint32_t vdev_id, bool disable_noa);
+	QDF_STATUS (*reg_noa_ev_handler)(struct wlan_objmgr_psoc *psoc,
+					 void *arg);
 	QDF_STATUS (*unreg_noa_ev_handler)(struct wlan_objmgr_psoc *psoc,
 			void *arg);
 };
@@ -828,8 +830,10 @@ struct p2p_lo_event;
  * @noa_ev_handler:   function pointer to give noa event
  */
 struct wlan_lmac_if_p2p_rx_ops {
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 	QDF_STATUS (*lo_ev_handler)(struct wlan_objmgr_psoc *psoc,
 		struct p2p_lo_event *event_info);
+#endif
 	QDF_STATUS (*noa_ev_handler)(struct wlan_objmgr_psoc *psoc,
 		struct p2p_noa_info *event_info);
 };

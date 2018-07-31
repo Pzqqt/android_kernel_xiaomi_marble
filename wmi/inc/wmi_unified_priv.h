@@ -343,7 +343,7 @@ QDF_STATUS (*send_set_p2pgo_oppps_req_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_set_p2pgo_noa_req_cmd)(wmi_unified_t wmi_handle,
 			struct p2p_ps_params *noa);
 
-#ifdef CONVERGED_P2P_ENABLE
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 QDF_STATUS (*send_p2p_lo_start_cmd)(wmi_unified_t wmi_handle,
 			struct p2p_lo_start *param);
 
@@ -1276,8 +1276,10 @@ QDF_STATUS (*extract_swba_noa_info)(wmi_unified_t wmi_handle, void *evt_buf,
 	    uint32_t idx, wmi_host_p2p_noa_info *p2p_desc);
 
 #ifdef CONVERGED_P2P_ENABLE
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 QDF_STATUS (*extract_p2p_lo_stop_ev_param)(wmi_unified_t wmi_handle,
 	void *evt_buf, struct p2p_lo_event *param);
+#endif
 
 QDF_STATUS (*extract_p2p_noa_ev_param)(wmi_unified_t wmi_handle,
 	void *evt_buf, struct p2p_noa_info *param);

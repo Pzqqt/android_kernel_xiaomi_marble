@@ -789,6 +789,20 @@ QDF_STATUS p2p_psoc_object_close(struct wlan_objmgr_psoc *soc)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
+static inline void p2p_init_lo_event(struct p2p_start_param *start_param,
+				     struct p2p_start_param *req)
+{
+	start_param->lo_event_cb = req->lo_event_cb;
+	start_param->lo_event_cb_data = req->lo_event_cb_data;
+}
+#else
+static inline void p2p_init_lo_event(struct p2p_start_param *start_param,
+				     struct p2p_start_param *req)
+{
+}
+#endif
+
 QDF_STATUS p2p_psoc_start(struct wlan_objmgr_psoc *soc,
 	struct p2p_start_param *req)
 {
@@ -818,8 +832,7 @@ QDF_STATUS p2p_psoc_start(struct wlan_objmgr_psoc *soc,
 	start_param->event_cb_data = req->event_cb_data;
 	start_param->tx_cnf_cb = req->tx_cnf_cb;
 	start_param->tx_cnf_cb_data = req->tx_cnf_cb_data;
-	start_param->lo_event_cb = req->lo_event_cb;
-	start_param->lo_event_cb_data = req->lo_event_cb_data;
+	p2p_init_lo_event(start_param, req);
 	p2p_soc_obj->start_param = start_param;
 
 	wlan_p2p_init_connection_status(p2p_soc_obj);
@@ -995,6 +1008,7 @@ QDF_STATUS p2p_process_evt(struct scheduler_msg *msg)
 	return status;
 }
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 QDF_STATUS p2p_process_lo_stop(
 	struct p2p_lo_stop_event *lo_stop_event)
 {
@@ -1034,6 +1048,7 @@ QDF_STATUS p2p_process_lo_stop(
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 QDF_STATUS p2p_process_noa(struct p2p_noa_event *noa_event)
 {

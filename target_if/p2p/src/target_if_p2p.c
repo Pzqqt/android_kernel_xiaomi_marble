@@ -32,6 +32,18 @@ target_if_psoc_get_p2p_rx_ops(struct wlan_objmgr_psoc *psoc)
 	return &(psoc->soc_cb.rx_ops.p2p);
 }
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
+static inline void
+target_if_p2p_lo_register_tx_ops(struct wlan_lmac_if_p2p_tx_ops *p2p_tx_ops)
+{
+	p2p_tx_ops->lo_start = target_if_p2p_lo_start;
+	p2p_tx_ops->lo_stop = target_if_p2p_lo_stop;
+	p2p_tx_ops->reg_lo_ev_handler =
+			target_if_p2p_register_lo_event_handler;
+	p2p_tx_ops->unreg_lo_ev_handler =
+			target_if_p2p_unregister_lo_event_handler;
+}
+
 /**
  * target_p2p_lo_event_handler() - WMI callback for lo stop event
  * @scn:       pointer to scn
@@ -97,6 +109,90 @@ static int target_p2p_lo_event_handler(ol_scn_t scn, uint8_t *data,
 
 	return qdf_status_to_os_return(status);
 }
+
+QDF_STATUS target_if_p2p_register_lo_event_handler(
+	struct wlan_objmgr_psoc *psoc, void *arg)
+{
+	int status;
+	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
+
+	target_if_debug("psoc:%pK, arg:%pK", psoc, arg);
+
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_register_event(wmi_handle,
+					    wmi_p2p_lo_stop_event_id,
+					    target_p2p_lo_event_handler);
+
+	target_if_debug("wmi register lo event handle, status:%d", status);
+
+	return status == 0 ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS target_if_p2p_unregister_lo_event_handler(
+	struct wlan_objmgr_psoc *psoc, void *arg)
+{
+	int status;
+	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
+
+	target_if_debug("psoc:%pK, arg:%pK", psoc, arg);
+
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_unregister_event(wmi_handle,
+					      wmi_p2p_lo_stop_event_id);
+
+	target_if_debug("wmi unregister lo event handle, status:%d", status);
+
+	return status == 0 ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS target_if_p2p_lo_start(struct wlan_objmgr_psoc *psoc,
+				  struct p2p_lo_start *lo_start)
+{
+	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
+
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!lo_start) {
+		target_if_err("lo start parameters is null");
+		return QDF_STATUS_E_INVAL;
+	}
+	target_if_debug("psoc:%pK, vdev_id:%d", psoc, lo_start->vdev_id);
+
+	return wmi_unified_p2p_lo_start_cmd(wmi_handle, lo_start);
+}
+
+QDF_STATUS target_if_p2p_lo_stop(struct wlan_objmgr_psoc *psoc,
+				 uint32_t vdev_id)
+{
+	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
+
+	target_if_debug("psoc:%pK, vdev_id:%d", psoc, vdev_id);
+
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_p2p_lo_stop_cmd(wmi_handle,
+			(uint8_t)vdev_id);
+}
+#else
+static inline void
+target_if_p2p_lo_register_tx_ops(struct wlan_lmac_if_p2p_tx_ops *p2p_tx_ops)
+{
+}
+#endif /* FEATURE_P2P_LISTEN_OFFLOAD */
 
 /**
  * target_p2p_noa_event_handler() - WMI callback for noa event
@@ -164,29 +260,6 @@ static int target_p2p_noa_event_handler(ol_scn_t scn, uint8_t *data,
 	return qdf_status_to_os_return(status);
 }
 
-QDF_STATUS target_if_p2p_register_lo_event_handler(
-	struct wlan_objmgr_psoc *psoc, void *arg)
-{
-	int status;
-	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
-
-	target_if_debug("psoc:%pK, arg:%pK", psoc, arg);
-
-	if (!wmi_handle) {
-		target_if_err("Invalid wmi handle");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	status = wmi_unified_register_event(wmi_handle,
-			wmi_p2p_lo_stop_event_id,
-			target_p2p_lo_event_handler);
-
-	target_if_debug("wmi register lo event handle, status:%d",
-		status);
-
-	return status == 0 ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
-}
-
 QDF_STATUS target_if_p2p_register_noa_event_handler(
 	struct wlan_objmgr_psoc *psoc, void *arg)
 {
@@ -205,28 +278,6 @@ QDF_STATUS target_if_p2p_register_noa_event_handler(
 			target_p2p_noa_event_handler);
 
 	target_if_debug("wmi register noa event handle, status:%d",
-		status);
-
-	return status == 0 ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS target_if_p2p_unregister_lo_event_handler(
-	struct wlan_objmgr_psoc *psoc, void *arg)
-{
-	int status;
-	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
-
-	target_if_debug("psoc:%pK, arg:%pK", psoc, arg);
-
-	if (!wmi_handle) {
-		target_if_err("Invalid wmi handle");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	status = wmi_unified_unregister_event(wmi_handle,
-			wmi_p2p_lo_stop_event_id);
-
-	target_if_debug("wmi unregister lo event handle, status:%d",
 		status);
 
 	return status == 0 ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
@@ -297,41 +348,6 @@ QDF_STATUS target_if_p2p_set_ps(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-QDF_STATUS target_if_p2p_lo_start(struct wlan_objmgr_psoc *psoc,
-	struct p2p_lo_start *lo_start)
-{
-	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
-
-	if (!wmi_handle) {
-		target_if_err("Invalid wmi handle");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (!lo_start) {
-		target_if_err("lo start parameters is null");
-		return QDF_STATUS_E_INVAL;
-	}
-	target_if_debug("psoc:%pK, vdev_id:%d", psoc, lo_start->vdev_id);
-
-	return wmi_unified_p2p_lo_start_cmd(wmi_handle, lo_start);
-}
-
-QDF_STATUS target_if_p2p_lo_stop(struct wlan_objmgr_psoc *psoc,
-	uint32_t vdev_id)
-{
-	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
-
-	target_if_debug("psoc:%pK, vdev_id:%d", psoc, vdev_id);
-
-	if (!wmi_handle) {
-		target_if_err("Invalid wmi handle");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	return wmi_unified_p2p_lo_stop_cmd(wmi_handle,
-			(uint8_t)vdev_id);
-}
-
 QDF_STATUS target_if_p2p_set_noa(struct wlan_objmgr_psoc *psoc,
 	uint32_t vdev_id, bool disable_noa)
 {
@@ -363,15 +379,11 @@ void target_if_p2p_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 
 	p2p_tx_ops = &tx_ops->p2p;
 	p2p_tx_ops->set_ps = target_if_p2p_set_ps;
-	p2p_tx_ops->lo_start = target_if_p2p_lo_start;
-	p2p_tx_ops->lo_stop = target_if_p2p_lo_stop;
 	p2p_tx_ops->set_noa = target_if_p2p_set_noa;
-	p2p_tx_ops->reg_lo_ev_handler =
-			target_if_p2p_register_lo_event_handler;
 	p2p_tx_ops->reg_noa_ev_handler =
 			target_if_p2p_register_noa_event_handler;
-	p2p_tx_ops->unreg_lo_ev_handler =
-			target_if_p2p_unregister_lo_event_handler;
 	p2p_tx_ops->unreg_noa_ev_handler =
 			target_if_p2p_unregister_noa_event_handler;
+	/* register P2P listen offload callbacks */
+	target_if_p2p_lo_register_tx_ops(p2p_tx_ops);
 }

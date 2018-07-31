@@ -1032,7 +1032,7 @@ QDF_STATUS wmi_unified_set_p2pgo_noa_req_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef CONVERGED_P2P_ENABLE
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * wmi_unified_p2p_lo_start_cmd() - send p2p lo start request to fw
  * @wmi_hdl: wmi handle
@@ -1073,13 +1073,13 @@ QDF_STATUS wmi_unified_p2p_lo_stop_cmd(void *wmi_hdl, uint8_t vdev_id)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (wmi_handle->ops->send_p2p_lo_start_cmd)
+	if (wmi_handle->ops->send_p2p_lo_stop_cmd)
 		return wmi_handle->ops->send_p2p_lo_stop_cmd(wmi_handle,
 				  vdev_id);
 
 	return QDF_STATUS_E_FAILURE;
 }
-#endif /* End of CONVERGED_P2P_ENABLE */
+#endif /* End of FEATURE_P2P_LISTEN_OFFLOAD*/
 
 /**
  * wmi_get_temperature() - get pdev temperature req
@@ -5791,6 +5791,7 @@ QDF_STATUS wmi_extract_swba_noa_info(void *wmi_hdl, void *evt_buf,
 }
 
 #ifdef CONVERGED_P2P_ENABLE
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * wmi_extract_p2p_lo_stop_ev_param() - extract p2p lo stop param from event
  * @wmi_handle: wmi handle
@@ -5815,6 +5816,7 @@ QDF_STATUS wmi_extract_p2p_lo_stop_ev_param(void *wmi_hdl, void *evt_buf,
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif
 
 /**
  * wmi_extract_p2p_noa_ev_param() - extract p2p noa param from event

@@ -110,8 +110,10 @@ struct p2p_start_param {
 	void *event_cb_data;
 	p2p_action_tx_cnf_callback tx_cnf_cb;
 	void *tx_cnf_cb_data;
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 	p2p_lo_event_callback lo_event_cb;
 	void *lo_event_cb_data;
+#endif
 };
 
 /**
@@ -277,6 +279,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 QDF_STATUS ucfg_p2p_set_ps(struct wlan_objmgr_psoc *soc,
 	struct p2p_ps_config *ps_config);
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * ucfg_p2p_lo_start() - Listen offload start request
  * @soc: soc context
@@ -301,6 +304,7 @@ QDF_STATUS ucfg_p2p_lo_start(struct wlan_objmgr_psoc *soc,
  */
 QDF_STATUS ucfg_p2p_lo_stop(struct wlan_objmgr_psoc *soc,
 	uint32_t vdev_id);
+#endif
 
 /**
  * p2p_peer_authorized() - Process peer authorized event

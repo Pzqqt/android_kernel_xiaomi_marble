@@ -292,12 +292,20 @@ static void wlan_lmac_if_umac_reg_rx_ops_register(
 }
 
 #ifdef CONVERGED_P2P_ENABLE
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 static void wlan_lmac_if_umac_rx_ops_register_p2p(
 				struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	rx_ops->p2p.lo_ev_handler = tgt_p2p_lo_event_cb;
 	rx_ops->p2p.noa_ev_handler = tgt_p2p_noa_event_cb;
 }
+#else
+static void wlan_lmac_if_umac_rx_ops_register_p2p(
+				struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	rx_ops->p2p.noa_ev_handler = tgt_p2p_noa_event_cb;
+}
+#endif
 #else
 static void wlan_lmac_if_umac_rx_ops_register_p2p(
 				struct wlan_lmac_if_rx_ops *rx_ops)
