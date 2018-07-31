@@ -1843,6 +1843,7 @@ static void wma_cleanup_target_req_param(struct wma_target_req *tgt_req)
 		tpLinkStateParams params =
 			(tpLinkStateParams) tgt_req->user_data;
 		qdf_mem_free(params->callbackArg);
+		params->callbackArg = NULL;
 		qdf_mem_free(tgt_req->user_data);
 		tgt_req->user_data = NULL;
 	}

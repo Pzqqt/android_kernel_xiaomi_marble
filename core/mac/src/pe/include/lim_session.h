@@ -559,6 +559,10 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 #endif
 } tPESession, *tpPESession;
 
+struct session_params {
+	uint16_t session_id;
+};
+
 /*-------------------------------------------------------------------------
    Function declarations and documenation
    ------------------------------------------------------------------------*/
