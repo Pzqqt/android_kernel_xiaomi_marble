@@ -148,13 +148,15 @@ void wlan_hdd_cfg80211_nan_callback(hdd_handle_t hdd_handle, tSirNanEvent *msg)
 
 /**
  * wlan_hdd_nan_is_supported() - HDD NAN support query function
+ * @hdd_ctx: Pointer to hdd context
  *
  * This function is called to determine if NAN is supported by the
  * driver and by the firmware.
  *
  * Return: true if NAN is supported by the driver and firmware
  */
-bool wlan_hdd_nan_is_supported(void)
+bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx)
 {
-	return sme_is_feature_supported_by_fw(NAN);
+	return cfg_nan_get_enable(hdd_ctx->hdd_psoc) &&
+		sme_is_feature_supported_by_fw(NAN);
 }

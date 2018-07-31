@@ -36,7 +36,7 @@ int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 				  const void *data,
 				  int data_len);
 
-bool wlan_hdd_nan_is_supported(void);
+bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx);
 
 /**
  * wlan_hdd_cfg80211_nan_callback() - cfg80211 NAN event handler
@@ -52,7 +52,7 @@ bool wlan_hdd_nan_is_supported(void);
  */
 void wlan_hdd_cfg80211_nan_callback(hdd_handle_t hdd_handle, tSirNanEvent *msg);
 #else
-static inline bool wlan_hdd_nan_is_supported(void)
+static inline bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx)
 {
 	return false;
 }
