@@ -603,14 +603,13 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 	hdd_enter_dev(dev);
 
 	if (!dev->ieee80211_ptr) {
-		hdd_err("ieee80211_ptr is NULL!!!");
+		hdd_debug("ieee80211_ptr is null");
 		return NOTIFY_DONE;
 	}
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hdd_err("HDD Context is Null");
-		QDF_ASSERT(0);
 		return NOTIFY_DONE;
 	}
 
@@ -622,7 +621,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 	/* Make sure that this callback corresponds to our device. */
 	adapter = hdd_get_adapter_by_iface_name(hdd_ctx, dev->name);
 	if (!adapter) {
-		hdd_err("Couldn't find adapter for dev name %s", dev->name);
+		hdd_debug("failed to look up adapter for '%s'", dev->name);
 		return NOTIFY_DONE;
 	}
 
@@ -631,8 +630,13 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 		return NOTIFY_DONE;
 	}
 
-	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
-		hdd_err("Driver is in recovery or bad state");
+	if (cds_is_driver_recovering()) {
+		hdd_debug("Driver is recovering");
+		return NOTIFY_DONE;
+	}
+
+	if (cds_is_driver_in_bad_state()) {
+		hdd_debug("Driver is in failed recovery state");
 		return NOTIFY_DONE;
 	}
 
