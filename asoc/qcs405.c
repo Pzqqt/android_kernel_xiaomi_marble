@@ -5725,7 +5725,7 @@ static struct snd_soc_dai_link msm_bolero_fe_dai_links[] = {
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_TX_0,
 		.stream_name = "WSA CDC DMA0 Capture",
-		.cpu_dai_name = "msm-dai-cdc-dma.45057",
+		.cpu_dai_name = "msm-dai-cdc-dma-dev.45057",
 		.platform_name = "msm-pcm-hostless",
 		.codec_name = "bolero_codec",
 		.codec_dai_name = "wsa_macro_vifeedback",
