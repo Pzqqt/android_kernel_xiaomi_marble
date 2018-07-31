@@ -874,8 +874,13 @@ QDF_STATUS wmi_unified_pno_start_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_nlo_mawc_cmd(void *wmi_hdl,
 		struct nlo_mawc_params *params);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS wmi_unified_set_ric_req_cmd(void *wmi_hdl, void *msg,
 			uint8_t is_add_ts);
+
+QDF_STATUS wmi_unified_roam_synch_complete_cmd(void *wmi_hdl,
+		 uint8_t vdev_id);
+#endif
 
 QDF_STATUS wmi_unified_process_ll_stats_clear_cmd
 	(void *wmi_hdl, const struct ll_stats_clear_params *clear_req,
@@ -1070,9 +1075,6 @@ QDF_STATUS wmi_unified_app_type1_params_in_fw_cmd(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_set_ssid_hotlist_cmd(void *wmi_hdl,
 		     struct ssid_hotlist_request_params *request);
-
-QDF_STATUS wmi_unified_roam_synch_complete_cmd(void *wmi_hdl,
-		 uint8_t vdev_id);
 
 QDF_STATUS wmi_unified_unit_test_cmd(void *wmi_hdl,
 			       struct wmi_unit_test_cmd *wmi_utest);

@@ -578,8 +578,13 @@ QDF_STATUS (*send_ipa_offload_control_cmd)(wmi_unified_t wmi_handle,
 		struct ipa_uc_offload_control_params *ipa_offload);
 #endif
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS (*send_set_ric_req_cmd)(wmi_unified_t wmi_handle, void *msg,
 			uint8_t is_add_ts);
+
+QDF_STATUS (*send_process_roam_synch_complete_cmd)(wmi_unified_t wmi_handle,
+		 uint8_t vdev_id);
+#endif
 
 QDF_STATUS (*send_process_ll_stats_clear_cmd)
 	   (wmi_unified_t wmi_handle,
@@ -827,9 +832,6 @@ QDF_STATUS (*send_app_type1_params_in_fw_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_set_ssid_hotlist_cmd)(wmi_unified_t wmi_handle,
 		     struct ssid_hotlist_request_params *request);
-
-QDF_STATUS (*send_process_roam_synch_complete_cmd)(wmi_unified_t wmi_handle,
-		 uint8_t vdev_id);
 
 QDF_STATUS (*send_unit_test_cmd)(wmi_unified_t wmi_handle,
 				 struct wmi_unit_test_cmd *wmi_utest);
