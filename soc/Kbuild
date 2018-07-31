@@ -102,6 +102,10 @@ ifdef CONFIG_SOUNDWIRE
 	SWR_OBJS += soundwire.o
 endif
 
+ifdef CONFIG_SND_EVENT
+	SND_EVENT_OBJS += snd_event.o
+endif
+
 LINUX_INC +=	-Iinclude/linux
 
 INCS +=		$(COMMON_INC) \
@@ -148,6 +152,9 @@ pinctrl_lpi_dlkm-y := $(PINCTRL_LPI_OBJS)
 
 obj-$(CONFIG_SOUNDWIRE) += swr_dlkm.o
 swr_dlkm-y := $(SWR_OBJS)
+
+obj-$(CONFIG_SND_EVENT) += snd_event_dlkm.o
+snd_event_dlkm-y := $(SND_EVENT_OBJS)
 
 obj-$(CONFIG_SOUNDWIRE_WCD_CTRL) += swr_ctrl_dlkm.o
 obj-$(CONFIG_SOUNDWIRE_MSTR_CTRL) += swr_ctrl_dlkm.o
