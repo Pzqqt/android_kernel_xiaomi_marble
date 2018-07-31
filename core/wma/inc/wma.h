@@ -2590,4 +2590,14 @@ void wma_check_and_set_wake_timer(uint32_t time);
  */
 uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh);
 
+/**
+ * wma_get_psoc_from_scn_handle() - API to get psoc from scn handle
+ * @scn_handle: opaque wma handle
+ *
+ * API to get psoc from scn handle
+ *
+ * Return: psoc context or null in case of failure
+ */
+struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle);
+
 #endif

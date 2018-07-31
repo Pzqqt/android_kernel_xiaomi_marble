@@ -2290,27 +2290,6 @@ static void wma_target_if_close(tp_wma_handle wma_handle)
 }
 
 /**
- * wma_get_psoc_from_scn_handle() - API to get psoc from scn handle
- * @scn_handle: opaque wma handle
- *
- * API to get psoc from scn handle
- *
- * Return: None
- */
-static struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle)
-{
-	tp_wma_handle wma_handle;
-
-	if (!scn_handle) {
-		WMA_LOGE("invalid scn handle");
-		return NULL;
-	}
-	wma_handle = (tp_wma_handle)scn_handle;
-
-	return wma_handle->psoc;
-}
-
-/**
  * wma_get_pdev_from_scn_handle() - API to get pdev from scn handle
  * @scn_handle: opaque wma handle
  *
@@ -3094,6 +3073,19 @@ static void wma_register_apf_events(tp_wma_handle wma_handle)
 }
 #endif /* FEATURE_WLAN_APF */
 
+struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle)
+{
+	tp_wma_handle wma_handle;
+
+	if (!scn_handle) {
+		WMA_LOGE("invalid scn handle");
+		return NULL;
+	}
+	wma_handle = (tp_wma_handle)scn_handle;
+
+	return wma_handle->psoc;
+}
+
 /**
  * wma_get_phy_mode_cb() - Callback to get current PHY Mode.
  * @chan: channel number
@@ -3217,9 +3209,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	}
 	wma_handle->psoc = psoc;
 
-	/* Open target_if layer and register wma callback */
 	wma_target_if_open(wma_handle);
-	target_if_open(wma_get_psoc_from_scn_handle);
 
 	/*
 	 * Allocate locally used params with its rx_ops member,
@@ -3691,7 +3681,6 @@ err_scn_context:
 	OS_FREE(wmi_handle);
 
 err_wma_handle:
-	target_if_close();
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_LEGACY_WMA_ID);
 err_get_psoc_ref:
 	target_if_free_psoc_tgt_info(psoc);
@@ -4800,7 +4789,6 @@ QDF_STATUS wma_close(void)
 
 	wlan_objmgr_psoc_release_ref(wma_handle->psoc, WLAN_LEGACY_WMA_ID);
 	wma_handle->psoc = NULL;
-	target_if_close();
 	wma_target_if_close(wma_handle);
 
 	WMA_LOGD("%s: Exit", __func__);
