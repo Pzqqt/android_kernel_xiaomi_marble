@@ -503,18 +503,20 @@ void lim_perform_deauth(tpAniSirGlobal mac_ctx, tpPESession pe_session,
 	}
 
 	if ((sta_ds->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_STA_RSP_STATE) ||
-	    (sta_ds->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_BSS_RSP_STATE)) {
+	    (sta_ds->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_BSS_RSP_STATE) ||
+	    sta_ds->sta_deletion_in_progress) {
 		/**
 		 * Already in the process of deleting context for the peer
 		 * and received Deauthentication frame. Log and Ignore.
 		 */
-		pe_err("received Deauth frame from peer that is in state %X, addr "
-			MAC_ADDRESS_STR, sta_ds->mlmStaContext.mlmState,
-			MAC_ADDR_ARRAY(addr));
+		pe_debug("Deletion is in progress (%d) for peer:%pM in mlmState %d",
+			 sta_ds->sta_deletion_in_progress, addr,
+			 sta_ds->mlmStaContext.mlmState);
 		return;
 	}
 	sta_ds->mlmStaContext.disassocReason = (tSirMacReasonCodes) rc;
 	sta_ds->mlmStaContext.cleanupTrigger = eLIM_PEER_ENTITY_DEAUTH;
+	sta_ds->sta_deletion_in_progress = true;
 
 	/* / Issue Deauth Indication to SME. */
 	qdf_mem_copy((uint8_t *) &mlmDeauthInd.peerMacAddr,

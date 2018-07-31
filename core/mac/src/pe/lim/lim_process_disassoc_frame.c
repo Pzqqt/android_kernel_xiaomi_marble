@@ -282,16 +282,18 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	}
 
 	if ((pStaDs->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_STA_RSP_STATE) ||
-	    (pStaDs->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_BSS_RSP_STATE)) {
+	    (pStaDs->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_BSS_RSP_STATE) ||
+	    pStaDs->sta_deletion_in_progress) {
 		/**
 		 * Already in the process of deleting context for the peer
 		 * and received Disassociation frame. Log and Ignore.
 		 */
-		pe_err("received Disassoc frame in state: %d from"
-			MAC_ADDRESS_STR, pStaDs->mlmStaContext.mlmState,
-			MAC_ADDR_ARRAY(pHdr->sa));
+		pe_debug("Deletion is in progress (%d) for peer:%pM in mlmState %d",
+			 pStaDs->sta_deletion_in_progress, pHdr->sa,
+			 pStaDs->mlmStaContext.mlmState);
 		return;
 	}
+	pStaDs->sta_deletion_in_progress = true;
 	lim_disassoc_tdls_peers(pMac, psessionEntry, pHdr->sa);
 	if (pStaDs->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) {
 		/**

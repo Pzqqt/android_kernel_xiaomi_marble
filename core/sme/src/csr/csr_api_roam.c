@@ -11509,7 +11509,7 @@ bool csr_roam_issue_wm_status_change(tpAniSirGlobal pMac, uint32_t sessionId,
 					    DeauthIndMsg));
 		}
 		if (QDF_IS_STATUS_SUCCESS
-			    (csr_queue_sme_command(pMac, pCommand, true)))
+			    (csr_queue_sme_command(pMac, pCommand, false)))
 			fCommandQueued = true;
 		else
 			sme_err("fail to send message");
