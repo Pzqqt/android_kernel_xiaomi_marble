@@ -474,4 +474,24 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 		uint8_t  new_nss, uint8_t next_action,
 		enum policy_mgr_band band,
 		enum policy_mgr_conn_update_reason reason);
+
+/**
+ * policy_mgr_is_concurrency_allowed() - Check for allowed
+ * concurrency combination
+ * @psoc: PSOC object information
+ * @mode: new connection mode
+ * @channel: channel on which new connection is coming up
+ * @bw: Bandwidth requested by the connection (optional)
+ *
+ * When a new connection is about to come up check if current
+ * concurrency combination including the new connection is
+ * allowed or not based on the HW capability, but no need to
+ * invoke get_pcl
+ *
+ * Return: True/False
+ */
+bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
+				       enum policy_mgr_con_mode mode,
+				       uint8_t channel,
+				       enum hw_mode_bandwidth bw);
 #endif

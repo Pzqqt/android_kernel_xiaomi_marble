@@ -379,7 +379,7 @@ bool policy_mgr_is_any_dfs_beaconing_session_present(
 
 /**
  * policy_mgr_allow_concurrency() - Check for allowed concurrency
- * combination
+ * combination consulting the PCL
  * @psoc: PSOC object information
  * @mode:	new connection mode
  * @channel: channel on which new connection is coming up
