@@ -1236,7 +1236,11 @@ struct adm_cmd_connect_afe_port_v5 {
 #define AFE_PORT_ID_QUINARY_PCM_RX       0x103C
 #define AFE_PORT_ID_QUINARY_PCM_TX       0x103D
 
-#define AFE_PORT_ID_SPDIF_RX                0x5000
+#define AFE_PORT_ID_PRIMARY_SPDIF_RX        0x5000
+#define AFE_PORT_ID_PRIMARY_SPDIF_TX        0x5001
+#define AFE_PORT_ID_SECONDARY_SPDIF_RX      0x5002
+#define AFE_PORT_ID_SECONDARY_SPDIF_TX      0x5003
+
 #define  AFE_PORT_ID_RT_PROXY_PORT_001_RX   0x2000
 #define  AFE_PORT_ID_RT_PROXY_PORT_001_TX   0x2001
 #define AFE_PORT_ID_INTERNAL_BT_SCO_RX      0x3000
@@ -2270,6 +2274,7 @@ struct afe_param_id_i2s_cfg {
  * This param id is used to configure PCM interface
  */
 
+#define AFE_API_VERSION_SPDIF_CONFIG_V2 0x2
 #define AFE_API_VERSION_SPDIF_CONFIG 0x1
 #define AFE_API_VERSION_SPDIF_CH_STATUS_CONFIG 0x1
 #define AFE_API_VERSION_SPDIF_CLK_CONFIG 0x1
@@ -2283,10 +2288,20 @@ struct afe_param_id_i2s_cfg {
 #define AFE_PORT_CLK_ROOT_LPAPLL 0x3
 #define AFE_PORT_CLK_ROOT_LPAQ6PLL   0x4
 
-struct afe_param_id_spdif_cfg {
+#define AFE_MODULE_CUSTOM_EVENTS            0x00010251
+
+#define AFE_PORT_FMT_UPDATE_EVENT           0x0001010E
+
+#define AFE_API_VERSION_EVENT_FMT_UPDATE    0x1
+#define AFE_PORT_STATUS_NO_SIGNAL           0
+#define AFE_PORT_STATUS_AUDIO_ACTIVE        1
+#define AFE_PORT_STATUS_AUDIO_EOS           2
+
+struct afe_param_id_spdif_cfg_v2 {
 /* Minor version used for tracking the version of the SPDIF
  * configuration interface.
- * Supported values: #AFE_API_VERSION_SPDIF_CONFIG
+ * Supported values: #AFE_API_VERSION_SPDIF_CONFIG,
+ *                   #AFE_API_VERSION_SPDIF_CONFIG_V2
  */
 	u32	spdif_cfg_minor_version;
 
@@ -2318,6 +2333,8 @@ struct afe_param_id_spdif_cfg {
 	u16	bit_width;
 /* This field must be set to zero. */
 	u16	reserved;
+/* Input select for spdif input, must be set to 0 for spdif output. */
+	u32	src_sel;
 } __packed;
 
 struct afe_param_id_spdif_ch_status_cfg {
@@ -2344,6 +2361,7 @@ struct afe_param_id_spdif_ch_status_cfg {
  */
 } __packed;
 
+/* deprecated */
 struct afe_param_id_spdif_clk_cfg {
 	u32 clk_cfg_minor_version;
 /* Minor version used for tracking the version of SPDIF
@@ -2367,8 +2385,43 @@ struct afe_param_id_spdif_clk_cfg {
  */
 } __packed;
 
+struct afe_event_fmt_update {
+	/* Tracks the configuration of this event. */
+	u32 minor_version;
+
+	/* Detected port status.
+	 * Supported values:
+	 * - #AFE_PORT_STATUS_NO_SIGNAL
+	 * - #AFE_PORT_STATUS_AUDIO_ACTIVE
+	 * - #AFE_PORT_STATUS_AUDIO_EOS
+	 */
+	u32 status;
+
+	/* Sampling rate of the port.
+	 * Supported values:
+	 * - #AFE_PORT_SAMPLE_RATE_32K
+	 * - #AFE_PORT_SAMPLE_RATE_44_1K
+	 * - #AFE_PORT_SAMPLE_RATE_48K
+	 * - #AFE_PORT_SAMPLE_RATE_88_2K
+	 * - #AFE_PORT_SAMPLE_RATE_96K
+	 * - #AFE_PORT_SAMPLE_RATE_176_4K
+	 * - #AFE_PORT_SAMPLE_RATE_192K
+	 */
+	u32 sample_rate;
+
+	/* Data format of the port.
+	 * Supported values:
+	 * - #AFE_LINEAR_PCM_DATA
+	 * - #AFE_NON_LINEAR_DATA
+	 */
+	u16 data_format;
+
+	/* First 6 bytes of channel status bits */
+	u8 channel_status[6];
+} __packed;
+
 struct afe_spdif_port_config {
-	struct afe_param_id_spdif_cfg            cfg;
+	struct afe_param_id_spdif_cfg_v2         cfg;
 	struct afe_param_id_spdif_ch_status_cfg  ch_status;
 } __packed;
 
@@ -4093,7 +4146,7 @@ union afe_port_config {
 	struct afe_param_id_internal_bt_fm_cfg    int_bt_fm;
 	struct afe_param_id_pseudo_port_cfg       pseudo_port;
 	struct afe_param_id_device_hw_delay_cfg   hw_delay;
-	struct afe_param_id_spdif_cfg             spdif;
+	struct afe_param_id_spdif_cfg_v2          spdif;
 	struct afe_param_id_set_topology_cfg      topology;
 	struct afe_param_id_tdm_cfg               tdm;
 	struct afe_param_id_usb_audio_cfg         usb_audio;
@@ -4793,7 +4846,7 @@ struct asm_generic_compressed_fmt_blk_t {
 
 /* Command to send sample rate & channels for IEC61937 (compressed) or IEC60958
  * (pcm) streams. Both audio standards use the same format and are used for
- * HDMI or SPDIF.
+ * HDMI or SPDIF output.
  */
 #define ASM_DATA_CMD_IEC_60958_MEDIA_FMT        0x0001321E
 
@@ -7669,11 +7722,23 @@ struct asm_data_cmd_remove_silence {
 
 #define ASM_STREAM_CMD_OPEN_READ_COMPRESSED                        0x00010D95
 
+/* Bitmask for the IEC 61937 to 61937 pass-through capture. */
+#define ASM_BIT_MASK_IEC_61937_PASS_THROUGH_FLAG        (0x00000001UL)
+
+/* Shift value for the IEC 61937 to 61937 pass-through capture. */
+#define ASM_SHIFT_IEC_61937_PASS_THROUGH_FLAG           0
+
 struct asm_stream_cmd_open_read_compressed {
 	struct apr_hdr hdr;
 	u32                    mode_flags;
 /* Mode flags that indicate whether meta information per encoded
- * frame is to be provided.
+ * frame is to be provided and packaging.
+ * Supported values for bit 0: (IEC 61937 pass-through mode)
+ * - 0 -- Unpack the IEC 61937 format stream to RAW compressed format
+ * - 1 -- Pass-through transfer of the IEC 61937 format stream
+ * - Use #ASM_BIT_MASK_IEC_61937_PASS_THROUGH_FLAG to set the bitmask
+ *   and #ASM_SHIFT_IEC_61937_PASS_THROUGH_FLAG to set the shift value
+ *   for this bit.
  * Supported values for bit 4:
  * - 0 -- Return data buffer contains all encoded frames only; it does
  *      not contain frame metadata.
@@ -7687,7 +7752,9 @@ struct asm_stream_cmd_open_read_compressed {
 	u32                    frames_per_buf;
 /* Indicates the number of frames that need to be returned per
  * read buffer
- * Supported values: should be greater than 0
+ * Supported values: should be greater than 0 for IEC to RAW compressed
+ *                   unpack mode.
+ *                   Value is don't care for IEC 61937 pass-through mode.
  */
 
 } __packed;
@@ -10321,8 +10388,18 @@ enum afe_lpass_clk_mode {
 /* Clock ID for AHB HDMI input */
 #define Q6AFE_LPASS_CLK_ID_AHB_HDMI_INPUT                         0x400
 
-/* Clock ID for SPDIF core */
-#define Q6AFE_LPASS_CLK_ID_SPDIF_CORE                             0x500
+/* Clock ID for the primary SPDIF output core. */
+#define AFE_CLOCK_SET_CLOCK_ID_PRI_SPDIF_OUTPUT_CORE              0x500
+/* Clock ID for the secondary SPDIF output core. */
+#define AFE_CLOCK_SET_CLOCK_ID_SEC_SPDIF_OUTPUT_CORE              0x501
+/* Clock ID for the primary SPDIF input core. */
+#define AFE_CLOCK_SET_CLOCK_ID_PRI_SPDIF_INPUT_CORE               0x502
+/* Clock ID for the secondary SPDIF input core. */
+#define AFE_CLOCK_SET_CLOCK_ID_SEC_SPDIF_INPUT_CORE               0x503
+/* Clock ID for the secondary SPDIF output NPL clk. */
+#define AFE_CLOCK_SET_CLOCK_ID_PRI_SPDIF_OUTPUT_NPL               0x504
+/* Clock ID for the primary SPDIF output NPL clk. */
+#define AFE_CLOCK_SET_CLOCK_ID_SEC_SPDIF_OUTPUT_NPL               0x505
 
 
 /* Clock attribute for invalid use (reserved for internal usage) */

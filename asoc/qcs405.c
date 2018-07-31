@@ -61,6 +61,10 @@
 #define SAMPLING_RATE_352P8KHZ  352800
 #define SAMPLING_RATE_384KHZ    384000
 
+#define SPDIF_TX_CORE_CLK_204_P8_MHZ  204800000
+#define TLMM_EAST_SPARE 0x07BA0000
+#define TLMM_SPDIF_HDMI_ARC_CTL 0x07BA2000
+
 #define WSA8810_NAME_1 "wsa881x.20170211"
 #define WSA8810_NAME_2 "wsa881x.20170212"
 #define WCN_CDC_SLIM_RX_CH_MAX 2
@@ -126,6 +130,18 @@ enum {
 	VA_CDC_DMA_TX_0,
 	VA_CDC_DMA_TX_1,
 	CDC_DMA_TX_MAX,
+};
+
+enum {
+	PRIM_SPDIF_RX = 0,
+	SEC_SPDIF_RX,
+	SPDIF_RX_MAX,
+};
+
+enum {
+	PRIM_SPDIF_TX = 0,
+	SEC_SPDIF_TX,
+	SPDIF_TX_MAX,
 };
 
 struct mi2s_conf {
@@ -396,6 +412,17 @@ static struct dev_config mi2s_rx_cfg[] = {
 	[QUIN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 };
 
+/* Default configuration of SPDIF channels */
+static struct dev_config spdif_rx_cfg[] = {
+	[PRIM_SPDIF_RX] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	[SEC_SPDIF_RX]  = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+};
+
+static struct dev_config spdif_tx_cfg[] = {
+	[PRIM_SPDIF_TX] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	[SEC_SPDIF_TX]  = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+};
+
 static struct dev_config mi2s_tx_cfg[] = {
 	[PRIM_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 	[SEC_MI2S]  = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
@@ -469,6 +496,12 @@ static char const *cdc_dma_sample_rate_text[] = {"KHZ_8", "KHZ_11P025",
 					"KHZ_32", "KHZ_44P1", "KHZ_48",
 					"KHZ_88P2", "KHZ_96", "KHZ_176P4",
 					"KHZ_192", "KHZ_352P8", "KHZ_384"};
+
+static const char *spdif_rate_text[] = {"KHZ_32", "KHZ_44P1", "KHZ_48",
+					"KHZ_88P2", "KHZ_96", "KHZ_176P4",
+					"KHZ_192"};
+static const char *spdif_ch_text[] = {"One", "Two"};
+static const char *spdif_bit_format_text[] = {"S16_LE", "S24_LE"};
 
 static SOC_ENUM_SINGLE_EXT_DECL(slim_0_rx_chs, slim_rx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(slim_2_rx_chs, slim_rx_ch_text);
@@ -561,6 +594,12 @@ static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_0_sample_rate,
 				cdc_dma_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_1_sample_rate,
 				cdc_dma_sample_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(spdif_rx_sample_rate, spdif_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(spdif_tx_sample_rate, spdif_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(spdif_rx_chs, spdif_ch_text);
+static SOC_ENUM_SINGLE_EXT_DECL(spdif_tx_chs, spdif_ch_text);
+static SOC_ENUM_SINGLE_EXT_DECL(spdif_rx_format, spdif_bit_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(spdif_tx_format, spdif_bit_format_text);
 
 static struct platform_device *spdev;
 
@@ -2904,6 +2943,337 @@ static int msm_aux_pcm_tx_format_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int spdif_get_port_idx(struct snd_kcontrol *kcontrol)
+{
+	int idx;
+
+	if (strnstr(kcontrol->id.name, "PRIM_SPDIF_RX",
+	    sizeof("PRIM_SPDIF_RX")))
+		idx = PRIM_SPDIF_RX;
+	else if (strnstr(kcontrol->id.name, "SEC_SPDIF_RX",
+		 sizeof("SEC_SPDIF_RX")))
+		idx = SEC_SPDIF_RX;
+	else if (strnstr(kcontrol->id.name, "PRIM_SPDIF_TX",
+		 sizeof("PRIM_SPDIF_TX")))
+		idx = PRIM_SPDIF_TX;
+	else if (strnstr(kcontrol->id.name, "SEC_SPDIF_TX",
+		 sizeof("SEC_SPDIF_TX")))
+		idx = SEC_SPDIF_TX;
+	else {
+		pr_err("%s: unsupported channel: %s",
+			__func__, kcontrol->id.name);
+		idx = -EINVAL;
+	}
+
+	return idx;
+}
+
+static int spdif_get_sample_rate_val(int sample_rate)
+{
+	int sample_rate_val;
+
+	switch (sample_rate) {
+	case SAMPLING_RATE_32KHZ:
+		sample_rate_val = 0;
+		break;
+	case SAMPLING_RATE_44P1KHZ:
+		sample_rate_val = 1;
+		break;
+	case SAMPLING_RATE_48KHZ:
+		sample_rate_val = 2;
+		break;
+	case SAMPLING_RATE_88P2KHZ:
+		sample_rate_val = 3;
+		break;
+	case SAMPLING_RATE_96KHZ:
+		sample_rate_val = 4;
+		break;
+	case SAMPLING_RATE_176P4KHZ:
+		sample_rate_val = 5;
+		break;
+	case SAMPLING_RATE_192KHZ:
+		sample_rate_val = 6;
+		break;
+	default:
+		sample_rate_val = 2;
+		break;
+	}
+	return sample_rate_val;
+}
+
+static int spdif_get_sample_rate(int value)
+{
+	int sample_rate;
+
+	switch (value) {
+	case 0:
+		sample_rate = SAMPLING_RATE_32KHZ;
+		break;
+	case 1:
+		sample_rate = SAMPLING_RATE_44P1KHZ;
+		break;
+	case 2:
+		sample_rate = SAMPLING_RATE_48KHZ;
+		break;
+	case 3:
+		sample_rate = SAMPLING_RATE_88P2KHZ;
+		break;
+	case 4:
+		sample_rate = SAMPLING_RATE_96KHZ;
+		break;
+	case 5:
+		sample_rate = SAMPLING_RATE_176P4KHZ;
+		break;
+	case 6:
+		sample_rate = SAMPLING_RATE_192KHZ;
+		break;
+	default:
+		sample_rate = SAMPLING_RATE_48KHZ;
+		break;
+	}
+	return sample_rate;
+}
+
+static int spdif_get_format(int value)
+{
+	int format;
+
+	switch (value) {
+	case 0:
+		format = SNDRV_PCM_FORMAT_S16_LE;
+		break;
+	case 1:
+		format = SNDRV_PCM_FORMAT_S24_LE;
+		break;
+	default:
+		format = SNDRV_PCM_FORMAT_S16_LE;
+		break;
+	}
+	return format;
+}
+
+static int spdif_get_format_value(int format)
+{
+	int value;
+
+	switch (format) {
+	case SNDRV_PCM_FORMAT_S16_LE:
+		value = 0;
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
+		value = 1;
+		break;
+	default:
+		value = 0;
+		break;
+	}
+	return value;
+}
+
+static int msm_spdif_rx_sample_rate_put(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	spdif_rx_cfg[idx].sample_rate =
+		spdif_get_sample_rate(ucontrol->value.enumerated.item[0]);
+
+	pr_debug("%s: idx[%d]_rx_sample_rate = %d, item = %d\n", __func__,
+		 idx, spdif_rx_cfg[idx].sample_rate,
+		 ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_spdif_rx_sample_rate_get(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	ucontrol->value.enumerated.item[0] =
+		spdif_get_sample_rate_val(spdif_rx_cfg[idx].sample_rate);
+
+	pr_debug("%s: idx[%d]_rx_sample_rate = %d, item = %d\n", __func__,
+		 idx, spdif_rx_cfg[idx].sample_rate,
+		 ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_spdif_tx_sample_rate_put(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	spdif_tx_cfg[idx].sample_rate =
+		spdif_get_sample_rate(ucontrol->value.enumerated.item[0]);
+
+	pr_debug("%s: idx[%d]_tx_sample_rate = %d, item = %d\n", __func__,
+		 idx, spdif_tx_cfg[idx].sample_rate,
+		 ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_spdif_tx_sample_rate_get(struct snd_kcontrol *kcontrol,
+				   struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	ucontrol->value.enumerated.item[0] =
+		spdif_get_sample_rate_val(spdif_tx_cfg[idx].sample_rate);
+
+	pr_debug("%s: idx[%d]_tx_sample_rate = %d, item = %d\n", __func__,
+		 idx, spdif_tx_cfg[idx].sample_rate,
+		 ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_spdif_rx_ch_get(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	pr_debug("%s: msm_spdif_[%d]_rx_ch  = %d\n", __func__,
+		 idx, spdif_rx_cfg[idx].channels);
+	ucontrol->value.enumerated.item[0] = spdif_rx_cfg[idx].channels - 1;
+
+	return 0;
+}
+
+static int msm_spdif_rx_ch_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	spdif_rx_cfg[idx].channels = ucontrol->value.enumerated.item[0] + 1;
+	pr_debug("%s: msm_spdif_[%d]_rx_ch  = %d\n", __func__,
+		 idx, spdif_rx_cfg[idx].channels);
+
+	return 1;
+}
+
+static int msm_spdif_tx_ch_get(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	pr_debug("%s: msm_spdif_[%d]_tx_ch  = %d\n", __func__,
+		 idx, spdif_tx_cfg[idx].channels);
+	ucontrol->value.enumerated.item[0] = spdif_tx_cfg[idx].channels - 1;
+
+	return 0;
+}
+
+static int msm_spdif_tx_ch_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	spdif_tx_cfg[idx].channels = ucontrol->value.enumerated.item[0] + 1;
+	pr_debug("%s: msm_spdif_[%d]_tx_ch  = %d\n", __func__,
+		 idx, spdif_tx_cfg[idx].channels);
+
+	return 1;
+}
+
+static int msm_spdif_rx_format_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	ucontrol->value.enumerated.item[0] =
+		spdif_get_format_value(spdif_rx_cfg[idx].bit_format);
+
+	pr_debug("%s: idx[%d]_rx_format = %d, item = %d\n", __func__,
+		idx, spdif_rx_cfg[idx].bit_format,
+		ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_spdif_rx_format_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	spdif_rx_cfg[idx].bit_format =
+		spdif_get_format(ucontrol->value.enumerated.item[0]);
+
+	pr_debug("%s: idx[%d]_rx_format = %d, item = %d\n", __func__,
+		  idx, spdif_rx_cfg[idx].bit_format,
+		  ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_spdif_tx_format_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	ucontrol->value.enumerated.item[0] =
+		spdif_get_format_value(spdif_tx_cfg[idx].bit_format);
+
+	pr_debug("%s: idx[%d]_tx_format = %d, item = %d\n", __func__,
+		idx, spdif_tx_cfg[idx].bit_format,
+		ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_spdif_tx_format_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int idx = spdif_get_port_idx(kcontrol);
+
+	if (idx < 0)
+		return idx;
+
+	spdif_tx_cfg[idx].bit_format =
+		spdif_get_format(ucontrol->value.enumerated.item[0]);
+
+	pr_debug("%s: idx[%d]_tx_format = %d, item = %d\n", __func__,
+		  idx, spdif_tx_cfg[idx].bit_format,
+		  ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
 static const struct snd_kcontrol_new msm_snd_sb_controls[] = {
 	SOC_ENUM_EXT("SLIM_0_RX Channels", slim_0_rx_chs,
 			slim_rx_ch_get, slim_rx_ch_put),
@@ -3231,6 +3601,34 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 			msm_aux_pcm_tx_format_get, msm_aux_pcm_tx_format_put),
 	SOC_SINGLE_MULTI_EXT("VAD CFG", SND_SOC_NOPM, 0, 1000, 0, 3, NULL,
 				msm_snd_vad_cfg_put),
+	SOC_ENUM_EXT("PRIM_SPDIF_RX SampleRate", spdif_rx_sample_rate,
+			msm_spdif_rx_sample_rate_get,
+			msm_spdif_rx_sample_rate_put),
+	SOC_ENUM_EXT("PRIM_SPDIF_TX SampleRate", spdif_tx_sample_rate,
+			msm_spdif_tx_sample_rate_get,
+			msm_spdif_tx_sample_rate_put),
+	SOC_ENUM_EXT("SEC_SPDIF_RX SampleRate", spdif_rx_sample_rate,
+			msm_spdif_rx_sample_rate_get,
+			msm_spdif_rx_sample_rate_put),
+	SOC_ENUM_EXT("SEC_SPDIF_TX SampleRate", spdif_tx_sample_rate,
+			msm_spdif_tx_sample_rate_get,
+			msm_spdif_tx_sample_rate_put),
+	SOC_ENUM_EXT("PRIM_SPDIF_RX Channels", spdif_rx_chs,
+			msm_spdif_rx_ch_get, msm_spdif_rx_ch_put),
+	SOC_ENUM_EXT("PRIM_SPDIF_TX Channels", spdif_tx_chs,
+			msm_spdif_tx_ch_get, msm_spdif_tx_ch_put),
+	SOC_ENUM_EXT("SEC_SPDIF_RX Channels", spdif_rx_chs,
+			msm_spdif_rx_ch_get, msm_spdif_rx_ch_put),
+	SOC_ENUM_EXT("SEC_SPDIF_TX Channels", spdif_tx_chs,
+			msm_spdif_tx_ch_get, msm_spdif_tx_ch_put),
+	SOC_ENUM_EXT("PRIM_SPDIF_RX Format", spdif_rx_format,
+			msm_spdif_rx_format_get, msm_spdif_rx_format_put),
+	SOC_ENUM_EXT("PRIM_SPDIF_TX Format", spdif_tx_format,
+			msm_spdif_tx_format_get, msm_spdif_tx_format_put),
+	SOC_ENUM_EXT("SEC_SPDIF_RX Format", spdif_rx_format,
+			msm_spdif_rx_format_get, msm_spdif_rx_format_put),
+	SOC_ENUM_EXT("SEC_SPDIF_TX Format", spdif_tx_format,
+			msm_spdif_tx_format_get, msm_spdif_tx_format_put),
 };
 
 static int msm_snd_enable_codec_ext_clk(struct snd_soc_codec *codec,
@@ -3928,6 +4326,42 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		rate->min = rate->max = SAMPLING_RATE_8KHZ;
 		channels->min = channels->max = msm_vi_feed_tx_ch;
 		break;
+
+	case MSM_BACKEND_DAI_PRI_SPDIF_RX:
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+			spdif_rx_cfg[PRIM_SPDIF_RX].bit_format);
+		rate->min = rate->max =
+				spdif_rx_cfg[PRIM_SPDIF_RX].sample_rate;
+		channels->min = channels->max =
+			spdif_rx_cfg[PRIM_SPDIF_RX].channels;
+		break;
+
+	case MSM_BACKEND_DAI_PRI_SPDIF_TX:
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+			spdif_tx_cfg[PRIM_SPDIF_TX].bit_format);
+		rate->min = rate->max =
+				spdif_tx_cfg[PRIM_SPDIF_TX].sample_rate;
+		channels->min = channels->max =
+			spdif_tx_cfg[PRIM_SPDIF_TX].channels;
+		break;
+
+	case MSM_BACKEND_DAI_SEC_SPDIF_RX:
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+			spdif_rx_cfg[SEC_SPDIF_RX].bit_format);
+		rate->min = rate->max =
+				spdif_rx_cfg[SEC_SPDIF_RX].sample_rate;
+		channels->min = channels->max =
+			spdif_rx_cfg[SEC_SPDIF_RX].channels;
+		break;
+
+	case MSM_BACKEND_DAI_SEC_SPDIF_TX:
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+			spdif_tx_cfg[SEC_SPDIF_TX].bit_format);
+		rate->min = rate->max =
+				spdif_tx_cfg[SEC_SPDIF_TX].sample_rate;
+		channels->min = channels->max =
+			spdif_tx_cfg[SEC_SPDIF_TX].channels;
+	break;
 
 	default:
 		rate->min = rate->max = SAMPLING_RATE_48KHZ;
@@ -5115,6 +5549,136 @@ static void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 	mutex_unlock(&mi2s_intf_conf[index].lock);
 }
 
+static int msm_spdif_set_clk(struct snd_pcm_substream *substream, bool enable)
+{
+	int ret = 0;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
+	int port_id = cpu_dai->id;
+	struct afe_clk_set clk_cfg;
+
+	clk_cfg.clk_set_minor_version = Q6AFE_LPASS_CLK_CONFIG_API_VERSION;
+	clk_cfg.clk_attri = Q6AFE_LPASS_CLK_ATTRIBUTE_COUPLE_NO;
+	clk_cfg.clk_root = Q6AFE_LPASS_CLK_ROOT_DEFAULT;
+	clk_cfg.enable = enable;
+
+	/* Set core clock (based on sample rate for RX, fixed for TX) */
+	switch (port_id) {
+	case AFE_PORT_ID_PRIMARY_SPDIF_RX:
+		clk_cfg.clk_id = AFE_CLOCK_SET_CLOCK_ID_PRI_SPDIF_OUTPUT_CORE;
+		/* rate x 2ch x 2_for_biphase_coding x 32_bits_per_sample */
+		clk_cfg.clk_freq_in_hz =
+			spdif_rx_cfg[PRIM_SPDIF_RX].sample_rate * 2 * 2 * 32;
+		break;
+	case AFE_PORT_ID_SECONDARY_SPDIF_RX:
+		clk_cfg.clk_id = AFE_CLOCK_SET_CLOCK_ID_SEC_SPDIF_OUTPUT_CORE;
+		clk_cfg.clk_freq_in_hz =
+			spdif_rx_cfg[SEC_SPDIF_RX].sample_rate * 2 * 2 * 32;
+		break;
+	case AFE_PORT_ID_PRIMARY_SPDIF_TX:
+		clk_cfg.clk_id = AFE_CLOCK_SET_CLOCK_ID_PRI_SPDIF_INPUT_CORE;
+		clk_cfg.clk_freq_in_hz = SPDIF_TX_CORE_CLK_204_P8_MHZ;
+		break;
+	case AFE_PORT_ID_SECONDARY_SPDIF_TX:
+		clk_cfg.clk_id = AFE_CLOCK_SET_CLOCK_ID_SEC_SPDIF_INPUT_CORE;
+		clk_cfg.clk_freq_in_hz = SPDIF_TX_CORE_CLK_204_P8_MHZ;
+		break;
+	}
+
+	ret = afe_set_lpass_clock_v2(port_id, &clk_cfg);
+	if (ret < 0) {
+		dev_err(rtd->card->dev,
+			"%s: afe lpass clock failed for port 0x%x , err:%d\n",
+			__func__, port_id, ret);
+		goto err;
+	}
+
+	/* Set NPL clock for RX in addition */
+	switch (port_id) {
+	case AFE_PORT_ID_PRIMARY_SPDIF_RX:
+		clk_cfg.clk_id = AFE_CLOCK_SET_CLOCK_ID_PRI_SPDIF_OUTPUT_NPL;
+
+		ret = afe_set_lpass_clock_v2(port_id, &clk_cfg);
+		if (ret < 0) {
+			dev_err(rtd->card->dev,
+				"%s: afe NPL failed port 0x%x, err:%d\n",
+				__func__, port_id, ret);
+			goto err;
+		}
+		break;
+	case AFE_PORT_ID_SECONDARY_SPDIF_RX:
+		clk_cfg.clk_id = AFE_CLOCK_SET_CLOCK_ID_SEC_SPDIF_OUTPUT_NPL;
+
+		ret = afe_set_lpass_clock_v2(port_id, &clk_cfg);
+		if (ret < 0) {
+			dev_err(rtd->card->dev,
+				"%s: afe NPL failed for port 0x%x, err:%d\n",
+				__func__, port_id, ret);
+			goto err;
+		}
+		break;
+	}
+
+	if (enable) {
+		dev_dbg(rtd->card->dev, "%s: clock rate %ul\n", __func__,
+				clk_cfg.clk_freq_in_hz);
+	}
+
+err:
+	return ret;
+}
+
+static int msm_spdif_snd_startup(struct snd_pcm_substream *substream)
+{
+	int ret = 0;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
+	int port_id = cpu_dai->id;
+
+	dev_dbg(rtd->card->dev,
+		"%s: substream = %s  stream = %d, dai name %s, dai ID %d\n",
+		__func__, substream->name, substream->stream,
+		cpu_dai->name, cpu_dai->id);
+
+	if (port_id < AFE_PORT_ID_PRIMARY_SPDIF_RX ||
+	    port_id > AFE_PORT_ID_SECONDARY_SPDIF_TX) {
+		ret = -EINVAL;
+		dev_err(rtd->card->dev,
+			"%s: CPU DAI id (%d) out of range\n",
+			__func__, cpu_dai->id);
+		goto err;
+	}
+
+	ret = msm_spdif_set_clk(substream, true);
+	if (ret < 0) {
+		dev_err(rtd->card->dev,
+			"%s: afe lpass clock failed to enable (%d), err:%d\n",
+			__func__, port_id, ret);
+	}
+err:
+	return ret;
+}
+
+static void msm_spdif_snd_shutdown(struct snd_pcm_substream *substream)
+{
+	int ret;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	int port_id = rtd->cpu_dai->id;
+
+	pr_debug("%s(): substream = %s  stream = %d\n", __func__,
+		 substream->name, substream->stream);
+	if (port_id < AFE_PORT_ID_PRIMARY_SPDIF_RX ||
+	    port_id > AFE_PORT_ID_SECONDARY_SPDIF_TX) {
+		pr_err("%s:invalid SPDIF DAI(%d)\n", __func__, port_id);
+		return;
+	}
+
+	ret = msm_spdif_set_clk(substream, false);
+	if (ret < 0)
+		pr_err("%s:clock disable failed for SPDIF (%d); ret=%d\n",
+			__func__, port_id, ret);
+}
+
 static struct snd_soc_ops msm_mi2s_be_ops = {
 	.startup = msm_mi2s_snd_startup,
 	.shutdown = msm_mi2s_snd_shutdown,
@@ -5130,6 +5694,11 @@ static struct snd_soc_ops msm_be_ops = {
 
 static struct snd_soc_ops msm_wcn_ops = {
 	.hw_params = msm_wcn_hw_params,
+};
+
+static struct snd_soc_ops msm_spdif_be_ops = {
+	.startup = msm_spdif_snd_startup,
+	.shutdown = msm_spdif_snd_shutdown,
 };
 
 
@@ -5786,6 +6355,20 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.ignore_pmdown_time = 1,
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
+	},
+	{
+		.name = MSM_DAILINK_NAME(Compr Capture),
+		.stream_name = "Compr Capture",
+		.cpu_dai_name = "MultiMedia18",
+		.platform_name = "msm-compress-dsp",
+		.dynamic = 1,
+		.dpcm_capture = 1,
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			    SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_pmdown_time = 1,
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA18,
 	},
 };
 
@@ -6648,6 +7231,67 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 	},
 };
 
+static struct snd_soc_dai_link msm_spdif_be_dai_links[] = {
+	{
+		.name = LPASS_BE_PRI_SPDIF_RX,
+		.stream_name = "Primary SPDIF Playback",
+		.cpu_dai_name = "msm-dai-q6-spdif.20480",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-rx",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_PRI_SPDIF_RX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_spdif_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+	},
+	{
+		.name = LPASS_BE_PRI_SPDIF_TX,
+		.stream_name = "Primary SPDIF Capture",
+		.cpu_dai_name = "msm-dai-q6-spdif.20481",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-tx",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_PRI_SPDIF_TX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_spdif_be_ops,
+		.ignore_suspend = 1,
+	},
+	{
+		.name = LPASS_BE_SEC_SPDIF_RX,
+		.stream_name = "Secondary SPDIF Playback",
+		.cpu_dai_name = "msm-dai-q6-spdif.20482",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-rx",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_SEC_SPDIF_RX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_spdif_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+	},
+	{
+		.name = LPASS_BE_SEC_SPDIF_TX,
+		.stream_name = "Secondary SPDIF Capture",
+		.cpu_dai_name = "msm-dai-q6-spdif.20483",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-tx",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_SEC_SPDIF_TX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_spdif_be_ops,
+		.ignore_suspend = 1,
+	},
+};
+
 static struct snd_soc_dai_link msm_qcs405_dai_links[
 			 ARRAY_SIZE(msm_common_dai_links) +
 			 ARRAY_SIZE(msm_common_misc_fe_dai_links) +
@@ -6658,7 +7302,8 @@ static struct snd_soc_dai_link msm_qcs405_dai_links[
 			 ARRAY_SIZE(msm_auxpcm_be_dai_links) +
 			 ARRAY_SIZE(msm_va_cdc_dma_be_dai_links) +
 			 ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links) +
-			 ARRAY_SIZE(msm_bolero_fe_dai_links)];
+			 ARRAY_SIZE(msm_bolero_fe_dai_links) +
+			 ARRAY_SIZE(msm_spdif_be_dai_links)];
 
 static int msm_snd_card_tasha_late_probe(struct snd_soc_card *card)
 {
@@ -6907,7 +7552,9 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	int total_links = 0;
 	uint32_t tasha_codec = 0, auxpcm_audio_intf = 0;
 	uint32_t va_bolero_codec = 0, wsa_bolero_codec = 0, mi2s_audio_intf = 0;
+	uint32_t spdif_audio_intf = 0;
 	const struct of_device_id *match;
+	char __iomem *spdif_cfg, *spdif_pin_ctl;
 	int rc = 0;
 
 	match = of_match_node(qcs405_asoc_machine_of_match, dev->of_node);
@@ -7026,6 +7673,27 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 				sizeof(msm_auxpcm_be_dai_links));
 				total_links +=
 				ARRAY_SIZE(msm_auxpcm_be_dai_links);
+			}
+		}
+		rc = of_property_read_u32(dev->of_node, "qcom,spdif-audio-intf",
+					  &spdif_audio_intf);
+		if (rc) {
+			dev_dbg(dev, "%s: No DT match SPDIF audio interface\n",
+				__func__);
+		} else {
+			if (spdif_audio_intf) {
+				memcpy(msm_qcs405_dai_links + total_links,
+				msm_spdif_be_dai_links,
+				sizeof(msm_spdif_be_dai_links));
+				total_links +=
+				ARRAY_SIZE(msm_spdif_be_dai_links);
+
+				/* enable spdif coax pins */
+				spdif_cfg = ioremap(TLMM_EAST_SPARE, 0x4);
+				spdif_pin_ctl =
+					ioremap(TLMM_SPDIF_HDMI_ARC_CTL, 0x4);
+				iowrite32(0xc0, spdif_cfg);
+				iowrite32(0x2220, spdif_pin_ctl);
 			}
 		}
 		dailink = msm_qcs405_dai_links;
