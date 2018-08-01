@@ -375,17 +375,14 @@ QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 				QDF_TIMER_TYPE_SW);
 		}
 
-		AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
-				("SVC:0x%4.4X, ULpipe:%d DLpipe:%d id:%d Ready",
-				 pEndpoint->service_id, pEndpoint->UL_PipeID,
-				 pEndpoint->DL_PipeID, pEndpoint->Id));
+		HTC_TRACE("SVC:0x%4.4X, ULpipe:%d DLpipe:%d id:%d Ready",
+			  pEndpoint->service_id, pEndpoint->UL_PipeID,
+			  pEndpoint->DL_PipeID, pEndpoint->Id);
 
 		if (disableCreditFlowCtrl && pEndpoint->TxCreditFlowEnabled) {
 			pEndpoint->TxCreditFlowEnabled = false;
-			AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
-					("SVC:0x%4.4X ep:%d TX flow control disabled",
-					 pEndpoint->service_id,
-					 assignedEndpoint));
+			HTC_TRACE("SVC:0x%4.4X ep:%d TX flow control disabled",
+				  pEndpoint->service_id, assignedEndpoint);
 		}
 
 	} while (false);
