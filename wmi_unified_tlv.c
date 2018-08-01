@@ -14829,6 +14829,7 @@ static QDF_STATUS send_conf_hw_filter_cmd_tlv(wmi_unified_t wmi,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 /**
  * send_enable_disable_packet_filter_cmd_tlv() - enable/disable packet filter
  * @wmi_handle: wmi handle
@@ -14957,6 +14958,7 @@ static QDF_STATUS send_config_packet_filter_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif /* End of WLAN_FEATURE_PACKET_FILTERING */
 #endif /* End of WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 /**
@@ -22055,9 +22057,11 @@ struct wmi_ops tlv_ops =  {
 	.send_lphb_config_udp_params_cmd = send_lphb_config_udp_params_cmd_tlv,
 	.send_lphb_config_udp_pkt_filter_cmd =
 		send_lphb_config_udp_pkt_filter_cmd_tlv,
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 	.send_enable_disable_packet_filter_cmd =
 		send_enable_disable_packet_filter_cmd_tlv,
 	.send_config_packet_filter_cmd = send_config_packet_filter_cmd_tlv,
+#endif
 #endif /* End of WLAN_POWER_MANAGEMENT_OFFLOAD */
 #ifdef CONFIG_MCL
 	.send_process_dhcp_ind_cmd = send_process_dhcp_ind_cmd_tlv,
