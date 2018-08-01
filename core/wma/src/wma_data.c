@@ -1250,6 +1250,7 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 				 vdev_id);
 			params->status = false;
 			status = QDF_STATUS_E_NOMEM;
+			goto out;
 		}
 		wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 		if (wma_send_vdev_stop_to_fw(wma, vdev_id)) {
