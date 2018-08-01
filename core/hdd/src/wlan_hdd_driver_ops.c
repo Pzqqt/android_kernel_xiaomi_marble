@@ -348,6 +348,110 @@ static int check_for_probe_defer(int ret)
 }
 #endif
 
+static void hdd_soc_load_lock(struct device *dev, int load_op)
+{
+	mutex_lock(&hdd_init_deinit_lock);
+	hdd_start_driver_ops_timer(load_op);
+	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
+	hdd_request_pm_qos(dev, DISABLE_KRAIT_IDLE_PS_VAL);
+}
+
+static void hdd_soc_load_unlock(struct device *dev)
+{
+	hdd_remove_pm_qos(dev);
+	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
+	hdd_stop_driver_ops_timer();
+	mutex_unlock(&hdd_init_deinit_lock);
+}
+
+static int hdd_soc_probe(struct device *dev,
+			 void *bdev,
+			 const struct hif_bus_id *bid,
+			 enum qdf_bus_type bus_type)
+{
+	int errno;
+
+	hdd_info("probing driver");
+
+	hdd_soc_load_lock(dev, eHDD_DRV_OP_PROBE);
+	cds_set_load_in_progress(true);
+	cds_set_driver_in_bad_state(false);
+
+	errno = hdd_init_qdf_ctx(dev, bdev, bus_type, bid);
+	if (errno)
+		goto unlock;
+
+	errno = hdd_wlan_startup(dev);
+	if (errno) {
+		probe_fail_cnt++;
+		goto assert_fail_count;
+	}
+
+	probe_fail_cnt = 0;
+	cds_set_driver_loaded(true);
+	cds_set_fw_down(false);
+	hdd_start_complete(0);
+	cds_set_load_in_progress(false);
+
+	hdd_soc_load_unlock(dev);
+
+	return 0;
+
+assert_fail_count:
+	hdd_err("consecutive probe failures:%u", probe_fail_cnt);
+	QDF_BUG(probe_fail_cnt < SSR_MAX_FAIL_CNT);
+
+unlock:
+	cds_set_fw_down(false);
+	cds_set_load_in_progress(false);
+	hdd_soc_load_unlock(dev);
+
+	return check_for_probe_defer(errno);
+}
+
+static int hdd_soc_reinit(struct device *dev, void *bdev,
+			  const struct hif_bus_id *bid,
+			  enum qdf_bus_type bus_type)
+{
+	int errno;
+
+	hdd_info("re-probing driver");
+
+	hdd_soc_load_lock(dev, eHDD_DRV_OP_REINIT);
+	cds_set_recovery_in_progress(true);
+	cds_set_driver_in_bad_state(false);
+
+	errno = hdd_init_qdf_ctx(dev, bdev, bus_type, bid);
+	if (errno)
+		goto unlock;
+
+	errno = hdd_wlan_re_init();
+	if (errno) {
+		re_init_fail_cnt++;
+		goto assert_fail_count;
+	}
+
+	re_init_fail_cnt = 0;
+	cds_set_fw_down(false);
+	cds_set_recovery_in_progress(false);
+
+	hdd_soc_load_unlock(dev);
+
+	return 0;
+
+assert_fail_count:
+	hdd_err("consecutive reinit failures:%u", re_init_fail_cnt);
+	QDF_BUG(re_init_fail_cnt < SSR_MAX_FAIL_CNT);
+
+unlock:
+	cds_set_driver_in_bad_state(true);
+	cds_set_recovery_in_progress(false);
+	cds_set_fw_down(false);
+	hdd_soc_load_unlock(dev);
+
+	return check_for_probe_defer(errno);
+}
+
 /**
  * wlan_hdd_probe() - handles probe request
  *
@@ -365,91 +469,10 @@ static int wlan_hdd_probe(struct device *dev, void *bdev,
 			  const struct hif_bus_id *bid,
 			  enum qdf_bus_type bus_type, bool reinit)
 {
-	int ret = 0;
-
-	pr_info("%s: %sprobing driver v%s\n", WLAN_MODULE_NAME,
-		reinit ? "re-" : "", QWLAN_VERSIONSTR);
-
-	mutex_lock(&hdd_init_deinit_lock);
-	cds_set_driver_in_bad_state(false);
-	if (!reinit)
-		hdd_start_driver_ops_timer(eHDD_DRV_OP_PROBE);
-	else
-		hdd_start_driver_ops_timer(eHDD_DRV_OP_REINIT);
-
-	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
-
-	/*
-	 * The Krait is going to Idle/Stand Alone Power Save more
-	 * aggressively which is resulting in the longer driver load
-	 * time. The Fix is to not allow Krait to enter Idle Power
-	 * Save during driver load.
-	 */
-	hdd_request_pm_qos(dev, DISABLE_KRAIT_IDLE_PS_VAL);
-
 	if (reinit)
-		cds_set_recovery_in_progress(true);
+		return hdd_soc_reinit(dev, bdev, bid, bus_type);
 	else
-		cds_set_load_in_progress(true);
-
-	ret = hdd_init_qdf_ctx(dev, bdev, bus_type,
-			       (const struct hif_bus_id *)bid);
-	if (ret < 0)
-		goto err_init_qdf_ctx;
-
-	if (reinit) {
-		ret = hdd_wlan_re_init();
-		if (ret)
-			re_init_fail_cnt++;
-	} else {
-		ret = hdd_wlan_startup(dev);
-		if (ret)
-			probe_fail_cnt++;
-	}
-
-	if (ret)
-		goto err_hdd_deinit;
-
-
-	if (reinit) {
-		cds_set_recovery_in_progress(false);
-	} else {
-		cds_set_load_in_progress(false);
-		cds_set_driver_loaded(true);
-		hdd_start_complete(0);
-	}
-
-	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
-	hdd_remove_pm_qos(dev);
-	cds_set_fw_down(false);
-	probe_fail_cnt = 0;
-	re_init_fail_cnt = 0;
-	hdd_stop_driver_ops_timer();
-	mutex_unlock(&hdd_init_deinit_lock);
-	return 0;
-
-
-err_hdd_deinit:
-	pr_err("probe/reinit failure counts %hhu/%hhu",
-		probe_fail_cnt, re_init_fail_cnt);
-	if (probe_fail_cnt >= SSR_MAX_FAIL_CNT ||
-	    re_init_fail_cnt >= SSR_MAX_FAIL_CNT)
-		QDF_BUG(0);
-
-	if (reinit) {
-		cds_set_driver_in_bad_state(true);
-		cds_set_recovery_in_progress(false);
-	} else
-		cds_set_load_in_progress(false);
-
-err_init_qdf_ctx:
-	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
-	hdd_remove_pm_qos(dev);
-
-	cds_set_fw_down(false);
-	hdd_stop_driver_ops_timer();
-	mutex_unlock(&hdd_init_deinit_lock);
-	return check_for_probe_defer(ret);
+		return hdd_soc_probe(dev, bdev, bid, bus_type);
 }
 
 /**
