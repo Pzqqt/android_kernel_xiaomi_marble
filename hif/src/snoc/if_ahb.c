@@ -293,7 +293,6 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 	hif_ext_group->work_complete = &hif_dummy_grp_done;
 
 	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
-	hif_ext_group->irq_requested = true;
 
 	for (j = 0; j < hif_ext_group->numirq; j++) {
 		irq_name = ic_irqname[hif_ext_group->irq[j]];
@@ -313,6 +312,7 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 		}
 		hif_ext_group->os_irq[j] = irq;
 	}
+	hif_ext_group->irq_requested = true;
 
 end:
 	qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
