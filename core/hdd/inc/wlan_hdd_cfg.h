@@ -196,6 +196,25 @@ struct hdd_context;
 #define CFG_11D_SUPPORT_ENABLED_MAX            WNI_CFG_11D_ENABLED_STAMAX
 #define CFG_11D_SUPPORT_ENABLED_DEFAULT        WNI_CFG_11D_ENABLED_STADEF       /* Default is ON */
 
+/*
+ * <ini>
+ * enable_11d_in_world_mode - enable 11d in world mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini enables 11d in world mode, irrespective of value of
+ * g11dSupportEnabled
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+ #define CFG_ENABLE_11D_IN_WORLD_MODE_NAME "enable_11d_in_world_mode"
+ #define CFG_ENABLE_11D_IN_WORLD_MODE_MIN     (0)
+ #define CFG_ENABLE_11D_IN_WORLD_MODE_MAX     (1)
+ #define CFG_ENABLE_11D_IN_WORLD_MODE_DEFAULT (0)
+
 #define CFG_11H_SUPPORT_ENABLED_NAME           "g11hSupportEnabled"
 #define CFG_11H_SUPPORT_ENABLED_MIN            (0)
 #define CFG_11H_SUPPORT_ENABLED_MAX            (1)
@@ -14594,6 +14613,7 @@ struct hdd_config {
 	uint32_t num_disallowed_aps;
 	bool oce_sta_enabled;
 	bool oce_sap_enabled;
+	bool enable_11d_in_world_mode;
 	/* 5G preference parameters for boosting RSSI */
 	bool                        enable_5g_band_pref;
 	int8_t                      rssi_boost_threshold_5g;
