@@ -738,7 +738,7 @@ dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
 }
 
 /**
- * dp_rx_pdev_mon_detach() - detach dp rx for status ring
+ * dp_rx_pdev_mon_status_detach() - detach dp rx for status ring
  * @pdev: core txrx pdev context
  * @mac_id: mac_id/pdev_id correspondinggly for MCL and WIN
  *
@@ -749,7 +749,6 @@ dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
  * Return: QDF_STATUS_SUCCESS: success
  *         QDF_STATUS_E_RESOURCES: Error return
  */
-#ifndef QCA_WIFI_QCA6390
 QDF_STATUS
 dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id)
 {
@@ -762,7 +761,6 @@ dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id)
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif
 
 /*
  * dp_rx_buffers_replenish() -  replenish monitor status ring with
@@ -924,14 +922,13 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 /**
  * dp_rx_pdev_mon_status_attach() - attach DP RX monitor status ring
  * @pdev: core txrx pdev context
- *
+ * @ring_id: ring number
  * This function will attach a DP RX monitor status ring into pDEV
  * and replenish monitor status ring with buffer.
  *
  * Return: QDF_STATUS_SUCCESS: success
  *         QDF_STATUS_E_RESOURCES: Error return
  */
-#ifndef QCA_WIFI_QCA6390
 QDF_STATUS
 dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
 	struct dp_soc *soc = pdev->soc;
@@ -990,4 +987,3 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif

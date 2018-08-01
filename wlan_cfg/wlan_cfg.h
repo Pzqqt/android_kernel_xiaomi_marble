@@ -26,6 +26,7 @@
 #if defined(CONFIG_MCL)
 #define MAX_PDEV_CNT 1
 #define WLAN_CFG_INT_NUM_CONTEXTS 7
+#define WLAN_CFG_RXDMA1_ENABLE 1
 /*
  * This mask defines how many transmit frames account for 1 NAPI work unit
  * 0 means each tx completion is 1 unit
@@ -39,6 +40,7 @@
 #else
 #define MAX_PDEV_CNT 3
 #define WLAN_CFG_INT_NUM_CONTEXTS 7
+#define WLAN_CFG_RXDMA1_ENABLE 1
 /*
  * This mask defines how many transmit frames account for 1 NAPI work unit
  * 0xFFFF means each 64K tx frame completions account for 1 unit of NAPI budget
@@ -198,12 +200,12 @@ struct wlan_cfg_dp_soc_ctxt {
 	int reo_exception_ring;
 	int reo_cmd_ring;
 	int reo_status_ring;
-
 	int rxdma_refill_ring;
 	int rxdma_err_dst_ring;
 	bool raw_mode_war;
 	bool enable_data_stall_detection;
 	bool disable_intra_bss_fwd;
+	bool rxdma1_enable;
 };
 
 /**

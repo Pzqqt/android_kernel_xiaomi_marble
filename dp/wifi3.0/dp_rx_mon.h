@@ -38,36 +38,10 @@
 void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t quota);
 
-#ifndef QCA_WIFI_QCA6390
 QDF_STATUS dp_rx_pdev_mon_attach(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_mon_detach(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int mac_id);
 QDF_STATUS dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id);
-#else
-static inline
-QDF_STATUS dp_rx_pdev_mon_attach(struct dp_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS dp_rx_pdev_mon_detach(struct dp_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int mac_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 
 uint32_t dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota);

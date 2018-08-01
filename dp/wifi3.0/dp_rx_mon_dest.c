@@ -118,6 +118,118 @@ uint32_t *frag_len)
 }
 
 /**
+ * dp_rx_cookie_2_mon_link_desc() - Retrieve Link descriptor based on target
+ * @pdev: core physical device context
+ * @hal_buf_info: structure holding the buffer info
+ * mac_id: mac number
+ *
+ * Return: link descriptor address
+ */
+static inline
+void *dp_rx_cookie_2_mon_link_desc(struct dp_pdev *pdev,
+				   struct hal_buf_info buf_info,
+				   uint8_t mac_id)
+{
+	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable)
+		return dp_rx_cookie_2_mon_link_desc_va(pdev, &buf_info,
+						       mac_id);
+
+	return dp_rx_cookie_2_link_desc_va(pdev->soc, &buf_info);
+}
+
+/**
+ * dp_rx_monitor_link_desc_return() - Return Link descriptor based on target
+ * @pdev: core physical device context
+ * @p_last_buf_addr_info: MPDU Link descriptor
+ * mac_id: mac number
+ *
+ * Return: QDF_STATUS
+ */
+static inline
+QDF_STATUS dp_rx_monitor_link_desc_return(struct dp_pdev *pdev,
+					  void *p_last_buf_addr_info,
+					  uint8_t mac_id, uint8_t bm_action)
+{
+	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable)
+		return dp_rx_mon_link_desc_return(pdev, p_last_buf_addr_info,
+						  mac_id);
+
+	return dp_rx_link_desc_return(pdev->soc, p_last_buf_addr_info,
+				      bm_action);
+}
+
+/**
+ * dp_rxdma_get_mon_dst_ring() - Return the pointer to rxdma_err_dst_ring
+ *					or mon_dst_ring based on the target
+ * @pdev: core physical device context
+ * @mac_for_pdev: mac_id number
+ *
+ * Return: ring address
+ */
+static inline
+void *dp_rxdma_get_mon_dst_ring(struct dp_pdev *pdev,
+				uint8_t mac_for_pdev)
+{
+	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable)
+		return pdev->rxdma_mon_dst_ring[mac_for_pdev].hal_srng;
+
+	return pdev->rxdma_err_dst_ring[mac_for_pdev].hal_srng;
+}
+
+/**
+ * dp_rxdma_get_mon_buf_ring() - Return monitor buf ring address
+ *				    based on target
+ * @pdev: core physical device context
+ * @mac_for_pdev: mac id number
+ *
+ * Return: ring address
+ */
+static inline
+struct dp_srng *dp_rxdma_get_mon_buf_ring(struct dp_pdev *pdev,
+					  uint8_t mac_for_pdev)
+{
+	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable)
+		return &pdev->rxdma_mon_buf_ring[mac_for_pdev];
+
+	return &pdev->rx_refill_buf_ring;
+}
+
+/**
+ * dp_rx_get_desc_pool() - Return monitor descriptor pool
+ *			      based on target
+ * @soc: soc handle
+ * @mac_id: mac id number
+ *
+ * Return: descriptor pool address
+ */
+static inline
+struct rx_desc_pool *dp_rx_get_desc_pool(struct dp_soc *soc,
+					 uint8_t mac_id)
+{
+	if (soc->wlan_cfg_ctx->rxdma1_enable)
+		return &soc->rx_desc_mon[mac_id];
+
+	return &soc->rx_desc_buf[mac_id];
+}
+
+/**
+ * dp_rx_get_mon_desc() - Return Rx descriptor based on target
+ * @soc: soc handle
+ * @cookie: cookie value
+ *
+ * Return: Rx descriptor
+ */
+static inline
+struct dp_rx_desc *dp_rx_get_mon_desc(struct dp_soc *soc,
+				      uint32_t cookie)
+{
+	if (soc->wlan_cfg_ctx->rxdma1_enable)
+		return dp_rx_cookie_2_va_mon_buf(soc, cookie);
+
+	return dp_rx_cookie_2_va_rxdma_buf(soc, cookie);
+}
+
+/**
  * dp_rx_mon_mpdu_pop() - Return a MPDU link descriptor to HW
  *			      (WBM), following error handling
  *
@@ -157,6 +269,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t total_frag_len = 0, frag_len = 0;
 	bool is_frag, is_first_msdu;
 	bool drop_mpdu = false;
+	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
 
 	msdu = 0;
 
@@ -183,8 +296,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 	do {
 		rx_msdu_link_desc =
-			dp_rx_cookie_2_mon_link_desc_va(dp_pdev, &buf_info,
-							mac_id);
+			dp_rx_cookie_2_mon_link_desc(dp_pdev,
+						     buf_info, mac_id);
 
 		qdf_assert(rx_msdu_link_desc);
 
@@ -194,10 +307,11 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		for (i = 0; i < num_msdus; i++) {
 			uint32_t l2_hdr_offset;
 			struct dp_rx_desc *rx_desc =
-				dp_rx_cookie_2_va_mon_buf(soc,
-					msdu_list.sw_cookie[i]);
+				dp_rx_get_mon_desc(soc,
+						   msdu_list.sw_cookie[i]);
 
-			qdf_assert(rx_desc);
+			qdf_assert_always(rx_desc);
+
 			msdu = rx_desc->nbuf;
 
 			if (rx_desc->unmapped == 0) {
@@ -352,10 +466,13 @@ next_msdu:
 		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info,
 			&p_buf_addr_info);
 
-		if (dp_rx_mon_link_desc_return(dp_pdev, p_last_buf_addr_info,
-			mac_id) != QDF_STATUS_SUCCESS)
+		if (dp_rx_monitor_link_desc_return(dp_pdev,
+						   p_last_buf_addr_info,
+						   mac_id,
+						   bm_action)
+						   != QDF_STATUS_SUCCESS)
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"dp_rx_mon_link_desc_return failed");
+				  "dp_rx_monitor_link_desc_return failed");
 
 		p_last_buf_addr_info = p_buf_addr_info;
 
@@ -839,7 +956,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
 	struct cdp_pdev_mon_stats *rx_mon_stats;
 
-	mon_dst_srng = pdev->rxdma_mon_dst_ring[mac_for_pdev].hal_srng;
+	mon_dst_srng = dp_rxdma_get_mon_dst_ring(pdev, mac_for_pdev);
 
 	if (!mon_dst_srng || !hal_srng_initialized(mon_dst_srng)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -904,12 +1021,21 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	if (rx_bufs_used) {
 		rx_mon_stats->dest_ppdu_done++;
 		dp_rx_buffers_replenish(soc, mac_id,
-			&pdev->rxdma_mon_buf_ring[mac_for_pdev],
-			&soc->rx_desc_mon[mac_id], rx_bufs_used, &head, &tail);
+			dp_rxdma_get_mon_buf_ring(pdev, mac_for_pdev),
+			dp_rx_get_desc_pool(soc, mac_id),
+			rx_bufs_used, &head, &tail);
 	}
 }
 
 #ifndef QCA_WIFI_QCA6390
+/**
+ * dp_rx_pdev_mon_buf_attach() - Allocate the monitor descriptor pool
+ *
+ * @pdev: physical device handle
+ * @mac_id: mac id
+ *
+ * Return: QDF_STATUS
+ */
 static QDF_STATUS
 dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id) {
 	uint8_t pdev_id = pdev->pdev_id;
@@ -975,9 +1101,15 @@ dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev, int mac_id)
 	return QDF_STATUS_SUCCESS;
 }
 
-/*
- * Allocate and setup link descriptor pool that will be used by HW for
- * various link and queue descriptors and managed by WBM
+/**
+ * dp_mon_link_desc_pool_setup(): Allocate and setup link descriptor pool
+ *				  that will be used by HW for various link
+ *				  and queue descriptorsand managed by WBM
+ *
+ * @soc: soc handle
+ * @mac_id: mac id
+ *
+ * Return: QDF_STATUS
  */
 static
 QDF_STATUS dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
@@ -1202,6 +1334,30 @@ void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
 		}
 	}
 }
+#else
+static
+QDF_STATUS dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static
+void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
+{
+}
+
+static QDF_STATUS
+dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev, int mac_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * dp_rx_pdev_mon_attach() - attach DP RX for monitor mode
@@ -1230,9 +1386,10 @@ dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
 
 		status = dp_rx_pdev_mon_buf_attach(pdev, mac_for_pdev);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"%s: dp_rx_pdev_mon_buf_attach() failed",
-				__func__);
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				  QDF_TRACE_LEVEL_ERROR,
+				  "%s: dp_rx_pdev_mon_buf_attach() failed\n",
+				   __func__);
 			return status;
 		}
 
@@ -1255,12 +1412,6 @@ dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
 	qdf_spinlock_create(&pdev->mon_lock);
 	return QDF_STATUS_SUCCESS;
 }
-#else
-QDF_STATUS
-dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 /**
  * dp_rx_pdev_mon_detach() - detach dp rx for monitor mode
@@ -1273,7 +1424,6 @@ dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
  * Return: QDF_STATUS_SUCCESS: success
  *         QDF_STATUS_E_RESOURCES: Error return
  */
-#ifndef DISABLE_MON_CONFIG
 QDF_STATUS
 dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
 	uint8_t pdev_id = pdev->pdev_id;
@@ -1293,8 +1443,12 @@ dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
 }
 #else
 QDF_STATUS
+dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* DISABLE_MON_CONFIG */
-#endif

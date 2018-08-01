@@ -133,7 +133,7 @@ static inline bool cdp_monitor_get_filter_non_data
 			(vdev_txrx_handle);
 }
 
-static inline int cdp_reset_monitor_mode
+static inline QDF_STATUS cdp_reset_monitor_mode
 (ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 {
 	if (!soc || !soc->ops) {

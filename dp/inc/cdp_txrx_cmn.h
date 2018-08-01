@@ -40,19 +40,19 @@
 #define dp_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_DP, params)
 #define dp_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP, params)
 
-static inline int
+static inline QDF_STATUS
 cdp_soc_attach_target(ol_txrx_soc_handle soc)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance:", __func__);
 		QDF_BUG(0);
-		return 0;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!soc->ops->cmn_drv_ops ||
 	    !soc->ops->cmn_drv_ops->txrx_soc_attach_target)
-		return 0;
+		return QDF_STATUS_SUCCESS;
 
 	return soc->ops->cmn_drv_ops->txrx_soc_attach_target(soc);
 

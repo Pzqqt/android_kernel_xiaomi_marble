@@ -128,6 +128,15 @@ static const int host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					0,
 					0,
 					0};
+
+static const int rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					WLAN_CFG_RXDMA2HOST_RING_MASK_0,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_1,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_2,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_3,
+					0,
+					0,
+					0};
 #else
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 						WLAN_CFG_TX_RING_MASK_0,
@@ -155,6 +164,12 @@ static const int host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_HOST2RXDMA_RING_MASK_1,
 					WLAN_CFG_HOST2RXDMA_RING_MASK_2,
 					WLAN_CFG_HOST2RXDMA_RING_MASK_3};
+
+static const int rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					WLAN_CFG_RXDMA2HOST_RING_MASK_0,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_1,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_2,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_3};
 #endif
 
 static const int rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
@@ -174,12 +189,6 @@ static const int reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_REO_STATUS_RING_MASK_1,
 					WLAN_CFG_REO_STATUS_RING_MASK_2,
 					WLAN_CFG_REO_STATUS_RING_MASK_3};
-
-static const int rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
-					WLAN_CFG_RXDMA2HOST_RING_MASK_0,
-					WLAN_CFG_RXDMA2HOST_RING_MASK_1,
-					WLAN_CFG_RXDMA2HOST_RING_MASK_2,
-					WLAN_CFG_RXDMA2HOST_RING_MASK_3};
 
 /**
  * struct wlan_cfg_dp_pdev_ctxt - Configuration parameters for pdev (radio)
@@ -214,6 +223,7 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void *psoc)
 	if (wlan_cfg_ctx == NULL)
 		return NULL;
 
+	wlan_cfg_ctx->rxdma1_enable = WLAN_CFG_RXDMA1_ENABLE;
 	wlan_cfg_ctx->num_int_ctxts = WLAN_CFG_INT_NUM_CONTEXTS;
 	wlan_cfg_ctx->max_clients = cfg_get(psoc, CFG_DP_MAX_CLIENTS);
 	wlan_cfg_ctx->max_alloc_size = cfg_get(psoc, CFG_DP_MAX_ALLOC_SIZE);

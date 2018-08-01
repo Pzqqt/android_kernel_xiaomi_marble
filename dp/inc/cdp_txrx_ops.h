@@ -61,7 +61,7 @@ enum cdp_nac_param_cmd {
 
 struct cdp_cmn_ops {
 
-	int (*txrx_soc_attach_target)(ol_txrx_soc_handle soc);
+	QDF_STATUS (*txrx_soc_attach_target)(ol_txrx_soc_handle soc);
 
 	int (*txrx_pdev_attach_target)(struct cdp_pdev *pdev);
 
@@ -147,8 +147,8 @@ struct cdp_cmn_ops {
 
 	void (*txrx_peer_delete)(void *peer, uint32_t bitmap);
 
-	int (*txrx_set_monitor_mode)(struct cdp_vdev *vdev,
-			uint8_t smart_monitor);
+	QDF_STATUS (*txrx_set_monitor_mode)(struct cdp_vdev *vdev,
+					    uint8_t smart_monitor);
 
 	uint8_t (*txrx_get_pdev_id_frm_pdev)(struct cdp_pdev *pdev);
 
@@ -607,10 +607,10 @@ struct cdp_mon_ops {
 		(struct cdp_vdev *vdev_txrx_handle);
 	bool (*txrx_monitor_get_filter_non_data)
 		(struct cdp_vdev *vdev_txrx_handle);
-	int (*txrx_reset_monitor_mode)(struct cdp_pdev *pdev);
+	QDF_STATUS (*txrx_reset_monitor_mode)(struct cdp_pdev *pdev);
 
 	/* HK advance monitor filter support */
-	int (*txrx_set_advance_monitor_filter)
+	QDF_STATUS (*txrx_set_advance_monitor_filter)
 		(struct cdp_pdev *pdev, struct cdp_monitor_filter *filter_val);
 };
 

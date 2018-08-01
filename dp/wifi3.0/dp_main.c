@@ -54,10 +54,9 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 }
 #endif
 #include "dp_ipa.h"
-
 #include "dp_cal_client_api.h"
-
 #ifdef CONFIG_MCL
+extern int con_mode_monitor;
 #ifndef REMOVE_PKT_LOG
 #include <pktlog_ac_api.h>
 #include <pktlog_ac.h>
@@ -1215,6 +1214,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 				remaining_quota = budget;
 			}
 		}
+
 		for (ring = 0; ring < MAX_RX_MAC_RINGS; ring++) {
 			work_done = dp_rxdma_err_process(soc, ring,
 						remaining_quota);
@@ -1299,14 +1299,14 @@ static void dp_interrupt_timer(void *arg)
 }
 
 /*
- * dp_soc_interrupt_attach_poll() - Register handlers for DP interrupts
+ * dp_soc_attach_poll() - Register handlers for DP interrupts
  * @txrx_soc: DP SOC handle
  *
  * Host driver will register for “DP_NUM_INTERRUPT_CONTEXTS” number of NAPI
  * contexts. Each NAPI context will have a tx_ring_mask , rx_ring_mask ,and
  * rx_monitor_ring mask to indicate the rings that are processed by the handler.
  *
- * Return: 0 for success. nonzero for failure.
+ * Return: 0 for success, nonzero for failure.
  */
 static QDF_STATUS dp_soc_attach_poll(void *txrx_soc)
 {
@@ -1344,7 +1344,6 @@ static QDF_STATUS dp_soc_attach_poll(void *txrx_soc)
 
 static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc);
 #if defined(CONFIG_MCL)
-extern int con_mode_monitor;
 /*
  * dp_soc_interrupt_attach_wrapper() - Register handlers for DP interrupts
  * @txrx_soc: DP SOC handle
@@ -2756,7 +2755,14 @@ static void dp_cleanup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
 }
 #endif
 
-#if !defined(QCA_WIFI_QCA6390) && !defined(DISABLE_MON_CONFIG)
+#if !defined(DISABLE_MON_CONFIG)
+/**
+ * dp_mon_rings_setup() - Initialize Monitor rings based on target
+ * @soc: soc handle
+ * @pdev: physical device handle
+ *
+ * Return: nonzero on failure and zero on success
+ */
 static
 QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 {
@@ -2770,46 +2776,74 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
 
-		entries = wlan_cfg_get_dma_mon_buf_ring_size(pdev_cfg_ctx);
-		if (dp_srng_setup(soc, &pdev->rxdma_mon_buf_ring[mac_id],
-				  RXDMA_MONITOR_BUF, 0, mac_for_pdev,
-				  entries)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  FL(RNG_ERR "rxdma_mon_buf_ring "));
-			return QDF_STATUS_E_NOMEM;
-		}
+		if (soc->wlan_cfg_ctx->rxdma1_enable) {
+			entries =
+			   wlan_cfg_get_dma_mon_buf_ring_size(pdev_cfg_ctx);
+			if (dp_srng_setup(soc,
+					  &pdev->rxdma_mon_buf_ring[mac_id],
+					  RXDMA_MONITOR_BUF, 0, mac_for_pdev,
+					  entries)) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					  QDF_TRACE_LEVEL_ERROR,
+					  FL(RNG_ERR "rxdma_mon_buf_ring "));
+				return QDF_STATUS_E_NOMEM;
+			}
 
-		entries = wlan_cfg_get_dma_mon_dest_ring_size(pdev_cfg_ctx);
-		if (dp_srng_setup(soc, &pdev->rxdma_mon_dst_ring[mac_id],
-				  RXDMA_MONITOR_DST, 0, mac_for_pdev,
-				  entries)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  FL(RNG_ERR "rxdma_mon_dst_ring"));
-			return QDF_STATUS_E_NOMEM;
-		}
+			entries =
+			   wlan_cfg_get_dma_mon_dest_ring_size(pdev_cfg_ctx);
+			if (dp_srng_setup(soc,
+					  &pdev->rxdma_mon_dst_ring[mac_id],
+					  RXDMA_MONITOR_DST, 0, mac_for_pdev,
+					  entries)) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					  QDF_TRACE_LEVEL_ERROR,
+					  FL(RNG_ERR "rxdma_mon_dst_ring"));
+				return QDF_STATUS_E_NOMEM;
+			}
 
-		entries = wlan_cfg_get_dma_mon_stat_ring_size(pdev_cfg_ctx);
-		if (dp_srng_setup(soc, &pdev->rxdma_mon_status_ring[mac_id],
-				  RXDMA_MONITOR_STATUS, 0, mac_for_pdev,
-				  entries)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  FL(RNG_ERR "rxdma_mon_status_ring"));
-			return QDF_STATUS_E_NOMEM;
-		}
+			entries =
+			    wlan_cfg_get_dma_mon_stat_ring_size(pdev_cfg_ctx);
+			if (dp_srng_setup(soc,
+					  &pdev->rxdma_mon_status_ring[mac_id],
+					  RXDMA_MONITOR_STATUS, 0, mac_for_pdev,
+					  entries)) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					  QDF_TRACE_LEVEL_ERROR,
+					  FL(RNG_ERR "rxdma_mon_status_ring"));
+				return QDF_STATUS_E_NOMEM;
+			}
 
-		entries = wlan_cfg_get_dma_mon_desc_ring_size(pdev_cfg_ctx);
-		if (dp_srng_setup(soc, &pdev->rxdma_mon_desc_ring[mac_id],
-				  RXDMA_MONITOR_DESC, 0, mac_for_pdev,
-				  entries)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  FL(RNG_ERR "rxdma_mon_desc_ring"));
-			return QDF_STATUS_E_NOMEM;
+			entries =
+			   wlan_cfg_get_dma_mon_desc_ring_size(pdev_cfg_ctx);
+			if (dp_srng_setup(soc,
+					  &pdev->rxdma_mon_desc_ring[mac_id],
+					  RXDMA_MONITOR_DESC, 0, mac_for_pdev,
+					  entries)) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					  QDF_TRACE_LEVEL_ERROR,
+					  FL(RNG_ERR "rxdma_mon_desc_ring"));
+				return QDF_STATUS_E_NOMEM;
+			}
+		} else {
+			entries =
+			   wlan_cfg_get_dma_mon_stat_ring_size(pdev_cfg_ctx);
+			if (dp_srng_setup(soc,
+					  &pdev->rxdma_mon_status_ring[mac_id],
+					  RXDMA_MONITOR_STATUS, 0, mac_for_pdev,
+					  entries)) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					  QDF_TRACE_LEVEL_ERROR,
+					  FL(RNG_ERR "rxdma_mon_status_ring"));
+				return QDF_STATUS_E_NOMEM;
+			}
 		}
 	}
+
 	return QDF_STATUS_SUCCESS;
 }
 #else
-static QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
+static
+QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -3003,9 +3037,10 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	/* Rx specific init */
 	if (dp_rx_pdev_attach(pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("dp_rx_pdev_attach failed"));
-		goto fail0;
+			  FL("dp_rx_pdev_attach failed"));
+		goto fail1;
 	}
+
 	DP_STATS_INIT(pdev);
 
 	/* Monitor filter init */
@@ -3024,7 +3059,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	/* Rx monitor mode specific init */
 	if (dp_rx_pdev_mon_attach(pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"dp_rx_pdev_attach failed");
+				"dp_rx_pdev_mon_attach failed");
 		goto fail1;
 	}
 
@@ -3135,23 +3170,50 @@ static void dp_htt_ppdu_stats_detach(struct dp_pdev *pdev)
 	}
 }
 
-#if !defined(QCA_WIFI_QCA6390) && !defined(DISABLE_MON_CONFIG)
+#if !defined(DISABLE_MON_CONFIG)
+/**
+ * dp_mon_ring_deinit() - Cleanup Monitor rings
+ *
+ * @soc: soc handle
+ * @pdev: datapath physical dev handle
+ * @mac_id: mac number
+ *
+ * Return: None
+ */
 static
 void dp_mon_ring_deinit(struct dp_soc *soc, struct dp_pdev *pdev,
 			int mac_id)
 {
-		dp_srng_cleanup(soc, &pdev->rxdma_mon_buf_ring[mac_id],
-				RXDMA_MONITOR_BUF, 0);
-		dp_srng_cleanup(soc, &pdev->rxdma_mon_dst_ring[mac_id],
-				RXDMA_MONITOR_DST, 0);
+		if (soc->wlan_cfg_ctx->rxdma1_enable) {
+			dp_srng_cleanup(soc,
+					&pdev->rxdma_mon_buf_ring[mac_id],
+					RXDMA_MONITOR_BUF, 0);
 
-		dp_srng_cleanup(soc, &pdev->rxdma_mon_status_ring[mac_id],
-				RXDMA_MONITOR_STATUS, 0);
+			dp_srng_cleanup(soc,
+					&pdev->rxdma_mon_dst_ring[mac_id],
+					RXDMA_MONITOR_DST, 0);
 
-		dp_srng_cleanup(soc, &pdev->rxdma_mon_desc_ring[mac_id],
-				RXDMA_MONITOR_DESC, 0);
-		dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring[mac_id],
-				RXDMA_DST, 0);
+			dp_srng_cleanup(soc,
+					&pdev->rxdma_mon_status_ring[mac_id],
+					RXDMA_MONITOR_STATUS, 0);
+
+			dp_srng_cleanup(soc,
+					&pdev->rxdma_mon_desc_ring[mac_id],
+					RXDMA_MONITOR_DESC, 0);
+
+			dp_srng_cleanup(soc,
+					&pdev->rxdma_err_dst_ring[mac_id],
+					RXDMA_DST, 0);
+		} else {
+			dp_srng_cleanup(soc,
+					&pdev->rxdma_mon_status_ring[mac_id],
+					RXDMA_MONITOR_STATUS, 0);
+
+			dp_srng_cleanup(soc,
+					&pdev->rxdma_err_dst_ring[mac_id],
+					RXDMA_DST, 0);
+		}
+
 }
 #else
 static void dp_mon_ring_deinit(struct dp_soc *soc, struct dp_pdev *pdev,
@@ -3354,36 +3416,88 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	qdf_mem_free(soc);
 }
 
-#if !defined(QCA_WIFI_QCA6390) && !defined(DISABLE_MON_CONFIG)
-static void dp_mon_htt_srng_setup(struct dp_soc *soc,
-				  struct dp_pdev *pdev,
-				  int mac_id,
-				  int mac_for_pdev)
+#if !defined(DISABLE_MON_CONFIG)
+/**
+ * dp_mon_htt_srng_setup() - Prepare HTT messages for Monitor rings
+ * @soc: soc handle
+ * @pdev: physical device handle
+ * @mac_id: ring number
+ * @mac_for_pdev: mac_id
+ *
+ * Return: non-zero for failure, zero for success
+ */
+static QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
+					struct dp_pdev *pdev,
+					int mac_id,
+					int mac_for_pdev)
 {
-	htt_srng_setup(soc->htt_handle, mac_for_pdev,
-		       pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
-		       RXDMA_MONITOR_BUF);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	htt_srng_setup(soc->htt_handle, mac_for_pdev,
-		       pdev->rxdma_mon_dst_ring[mac_id].hal_srng,
-		       RXDMA_MONITOR_DST);
+	if (soc->wlan_cfg_ctx->rxdma1_enable) {
+		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
+					pdev->rxdma_mon_buf_ring[mac_id]
+					.hal_srng,
+					RXDMA_MONITOR_BUF);
 
-	htt_srng_setup(soc->htt_handle, mac_for_pdev,
-		       pdev->rxdma_mon_status_ring[mac_id].hal_srng,
-		       RXDMA_MONITOR_STATUS);
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_err("Failed to send htt srng setup message for Rxdma mon buf ring");
+			return status;
+		}
 
-	htt_srng_setup(soc->htt_handle, mac_for_pdev,
-		       pdev->rxdma_mon_desc_ring[mac_id].hal_srng,
-		       RXDMA_MONITOR_DESC);
+		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
+					pdev->rxdma_mon_dst_ring[mac_id]
+					.hal_srng,
+					RXDMA_MONITOR_DST);
+
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_err("Failed to send htt srng setup message for Rxdma mon dst ring");
+			return status;
+		}
+
+		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
+					pdev->rxdma_mon_status_ring[mac_id]
+					.hal_srng,
+					RXDMA_MONITOR_STATUS);
+
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_err("Failed to send htt srng setup message for Rxdma mon status ring");
+			return status;
+		}
+
+		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
+					pdev->rxdma_mon_desc_ring[mac_id]
+					.hal_srng,
+					RXDMA_MONITOR_DESC);
+
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_err("Failed to send htt srng message for Rxdma mon desc ring");
+			return status;
+		}
+	} else {
+		status = htt_srng_setup(soc->htt_handle, mac_for_pdev,
+					pdev->rxdma_mon_status_ring[mac_id]
+					.hal_srng,
+					RXDMA_MONITOR_STATUS);
+
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_err("Failed to send htt srng setup message for Rxdma mon status ring");
+			return status;
+		}
+	}
+
+	return status;
+
 }
 #else
-static void dp_mon_htt_srng_setup(struct dp_soc *soc,
-				  struct dp_pdev *pdev,
-				  int mac_id,
-				  int mac_for_pdev)
+static QDF_STATUS dp_mon_htt_srng_setup(struct dp_soc *soc,
+					struct dp_pdev *pdev,
+					int mac_id,
+					int mac_for_pdev)
 {
+	return QDF_STATUS_SUCCESS;
 }
 #endif
+
 /*
  * dp_rxdma_ring_config() - configure the RX DMA rings
  *
@@ -3394,13 +3508,13 @@ static void dp_mon_htt_srng_setup(struct dp_soc *soc,
  *
  * @soc: data path SoC handle
  *
- * Return: void
+ * Return: zero on success, non-zero on failure
  */
 #ifdef QCA_HOST2FW_RXBUF_RING
-static void dp_rxdma_ring_config(struct dp_soc *soc)
+static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 {
 	int i;
-
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		struct dp_pdev *pdev = soc->pdev_list[i];
 
@@ -3450,6 +3564,7 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					 QDF_TRACE_LEVEL_ERROR,
 					 FL("mac_id %d"), mac_for_pdev);
+
 				htt_srng_setup(soc->htt_handle, mac_for_pdev,
 					 pdev->rx_mac_buf_ring[mac_id]
 						.hal_srng,
@@ -3460,8 +3575,13 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 					RXDMA_DST);
 
 				/* Configure monitor mode rings */
-				dp_mon_htt_srng_setup(soc, pdev, mac_id,
-						      mac_for_pdev);
+				status = dp_mon_htt_srng_setup(soc, pdev,
+							       mac_id,
+							       mac_for_pdev);
+				if (status != QDF_STATUS_SUCCESS) {
+					dp_err("Failed to send htt monitor messages to target");
+					return status;
+				}
 
 			}
 		}
@@ -3475,13 +3595,15 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 			dp_service_mon_rings, (void *)soc,
 			QDF_TIMER_TYPE_WAKE_APPS);
 	soc->reap_timer_init = 1;
+	return status;
 }
 #else
 /* This is only for WIN */
-static void dp_rxdma_ring_config(struct dp_soc *soc)
+static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 {
 	int i;
 	int mac_id;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		struct dp_pdev *pdev = soc->pdev_list[i];
@@ -3513,27 +3635,36 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 				RXDMA_DST);
 		}
 	}
+	return status;
 }
 #endif
 
 /*
  * dp_soc_attach_target_wifi3() - SOC initialization in the target
- * @txrx_soc: Datapath SOC handle
+ * @cdp_soc: Opaque Datapath SOC handle
+ *
+ * Return: zero on success, non-zero on failure
  */
-static int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
+static QDF_STATUS
+dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	htt_soc_attach_target(soc->htt_handle);
 
-	dp_rxdma_ring_config(soc);
+	status = dp_rxdma_ring_config(soc);
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_err("Failed to send htt srng setup messages to target");
+		return status;
+	}
 
 	DP_STATS_INIT(soc);
 
 	/* initialize work queue for stats processing */
 	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -4729,18 +4860,53 @@ static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(struct cdp_vdev *pvdev)
 }
 
 /**
+ * dp_monitor_mode_ring_config() - Send the tlv config to fw for monitor buffer
+ *                                 ring based on target
+ * @soc: soc handle
+ * @mac_for_pdev: pdev_id
+ * @pdev: physical device handle
+ * @ring_num: mac id
+ * @htt_tlv_filter: tlv filter
+ *
+ * Return: zero on success, non-zero on failure
+ */
+static inline
+QDF_STATUS dp_monitor_mode_ring_config(struct dp_soc *soc, uint8_t mac_for_pdev,
+				       struct dp_pdev *pdev, uint8_t ring_num,
+				       struct htt_rx_ring_tlv_filter htt_tlv_filter)
+{
+	QDF_STATUS status;
+
+	if (soc->wlan_cfg_ctx->rxdma1_enable)
+		status = htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
+					     pdev->rxdma_mon_buf_ring[ring_num]
+					     .hal_srng,
+					     RXDMA_MONITOR_BUF, RX_BUFFER_SIZE,
+					     &htt_tlv_filter);
+	else
+		status = htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
+					     pdev->rx_mac_buf_ring[ring_num]
+					     .hal_srng,
+					     RXDMA_BUF, RX_BUFFER_SIZE,
+					     &htt_tlv_filter);
+
+	return status;
+}
+
+/**
  * dp_reset_monitor_mode() - Disable monitor mode
  * @pdev_handle: Datapath PDEV handle
  *
  * Return: 0 on success, not 0 on failure
  */
-static int dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
+static QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct htt_rx_ring_tlv_filter htt_tlv_filter;
 	struct dp_soc *soc = pdev->soc;
 	uint8_t pdev_id;
 	int mac_id;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	pdev_id = pdev->pdev_id;
 	soc = pdev->soc;
@@ -4752,20 +4918,26 @@ static int dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
 
-		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-			pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
-			RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+		status = dp_monitor_mode_ring_config(soc, mac_for_pdev,
+						     pdev, mac_id,
+						     htt_tlv_filter);
+
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_err("Failed to send tlv filter for monitor mode rings");
+			return status;
+		}
 
 		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
-			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
+			    pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+			    RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE,
+			    &htt_tlv_filter);
 	}
 
 	pdev->monitor_vdev = NULL;
 
 	qdf_spin_unlock_bh(&pdev->mon_lock);
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -4825,8 +4997,8 @@ static void dp_get_peer_mac_from_peer_id(struct cdp_pdev *pdev_handle,
  *
  * Return: 0 on success, not 0 on failure
  */
-static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
-		uint8_t smart_monitor)
+static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
+					   uint8_t smart_monitor)
 {
 	/* Many monitor VAPs can exists in a system but only one can be up at
 	 * anytime
@@ -4837,6 +5009,7 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	struct dp_soc *soc;
 	uint8_t pdev_id;
 	int mac_id;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	qdf_assert(vdev);
 
@@ -4897,9 +5070,14 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
 
-		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-			pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
-			RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+		status = dp_monitor_mode_ring_config(soc, mac_for_pdev,
+						     pdev, mac_id,
+						     htt_tlv_filter);
+
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_err("Failed to send tlv filter for monitor mode rings");
+			return status;
+		}
 	}
 
 	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
@@ -4946,8 +5124,9 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
  * @filter_val: Flag to select Filter for monitor mode
  * Return: 0 on success, not 0 on failure
  */
-static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
-	struct cdp_monitor_filter *filter_val)
+static QDF_STATUS
+dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
+				   struct cdp_monitor_filter *filter_val)
 {
 	/* Many monitor VAPs can exists in a system but only one can be up at
 	 * anytime
@@ -4958,6 +5137,7 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	struct dp_soc *soc;
 	uint8_t pdev_id;
 	int mac_id;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	pdev_id = pdev->pdev_id;
 	soc = pdev->soc;
@@ -4994,9 +5174,14 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
 
-		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-			pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
-			RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+		status = dp_monitor_mode_ring_config(soc, mac_for_pdev,
+						     pdev, mac_id,
+						     htt_tlv_filter);
+
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_err("Failed to send tlv filter for monitor mode rings");
+			return status;
+		}
 
 		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
 			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
@@ -5031,9 +5216,14 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
 
-		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-			pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
-			RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+		status = dp_monitor_mode_ring_config(soc, mac_for_pdev,
+						     pdev, mac_id,
+						     htt_tlv_filter);
+
+		if (status != QDF_STATUS_SUCCESS) {
+			dp_err("Failed to send tlv filter for monitor mode rings");
+			return status;
+		}
 	}
 
 	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
@@ -5814,6 +6004,34 @@ dp_print_ring_stat_from_hal(struct dp_soc *soc,  struct dp_srng *srng,
 }
 
 /**
+ * dp_print_mon_ring_stats_from_hal() - Print stat for monitor rings based
+ *					on target
+ * @pdev: physical device handle
+ * @mac_id: mac id
+ *
+ * Return: void
+ */
+static inline
+void dp_print_mon_ring_stat_from_hal(struct dp_pdev *pdev, uint8_t mac_id)
+{
+	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable) {
+		dp_print_ring_stat_from_hal(pdev->soc,
+					    &pdev->rxdma_mon_buf_ring[mac_id],
+					    "Rxdma Mon Buf Ring");
+		dp_print_ring_stat_from_hal(pdev->soc,
+					    &pdev->rxdma_mon_dst_ring[mac_id],
+					    "Rxdma Mon Dst Ring");
+		dp_print_ring_stat_from_hal(pdev->soc,
+					    &pdev->rxdma_mon_desc_ring[mac_id],
+					    "Rxdma mon desc Ring");
+	}
+
+	dp_print_ring_stat_from_hal(pdev->soc,
+				    &pdev->rxdma_mon_status_ring[mac_id],
+				    "Rxdma Mon Status Ring");
+}
+
+/**
  * dp_print_ring_stats(): Print tail and head pointer
  * @pdev: DP_PDEV handle
  *
@@ -5878,18 +6096,7 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 			"Second Rx Refill Buf Ring");
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		dp_print_ring_stat_from_hal(pdev->soc,
-				&pdev->rxdma_mon_buf_ring[mac_id],
-				"Rxdma Mon Buf Ring");
-		dp_print_ring_stat_from_hal(pdev->soc,
-				&pdev->rxdma_mon_dst_ring[mac_id],
-				"Rxdma Mon Dst Ring");
-		dp_print_ring_stat_from_hal(pdev->soc,
-				&pdev->rxdma_mon_status_ring[mac_id],
-				"Rxdma Mon Status Ring");
-		dp_print_ring_stat_from_hal(pdev->soc,
-				&pdev->rxdma_mon_desc_ring[mac_id],
-				"Rxdma mon desc Ring");
+		dp_print_mon_ring_stat_from_hal(pdev, mac_id);
 	}
 
 	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
@@ -8181,6 +8388,7 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 {
 	struct dp_soc *soc = qdf_mem_malloc(sizeof(*soc));
 	int target_type;
+	int int_ctx;
 
 	if (!soc) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -8188,6 +8396,7 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 		goto fail0;
 	}
 
+	int_ctx = 0;
 	soc->device_id = device_id;
 	soc->cdp_soc.ops = &dp_txrx_ops;
 	soc->cdp_soc.ol_ops = ol_ops;
@@ -8225,6 +8434,13 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 					       REO_DST_RING_SIZE_QCA6290);
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, true);
 		soc->ast_override_support = 1;
+		if (con_mode_monitor == QDF_GLOBAL_MONITOR_MODE) {
+			for (int_ctx = 0; int_ctx < WLAN_CFG_INT_NUM_CONTEXTS; int_ctx++) {
+				soc->wlan_cfg_ctx->int_rx_ring_mask[int_ctx] = 0;
+				soc->wlan_cfg_ctx->int_rxdma2host_ring_mask[int_ctx] = 0;
+			}
+		}
+		soc->wlan_cfg_ctx->rxdma1_enable = 0;
 		break;
 #endif
 	case TARGET_TYPE_QCA8074:

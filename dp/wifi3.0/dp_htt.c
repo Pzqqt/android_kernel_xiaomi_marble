@@ -795,13 +795,8 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 
 	switch (hal_ring_type) {
 	case RXDMA_BUF:
-#if QCA_HOST2FW_RXBUF_RING
-		htt_ring_id = HTT_HOST1_TO_FW_RXBUF_RING;
-		htt_ring_type = HTT_SW_TO_SW_RING;
-#else
 		htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
 		htt_ring_type = HTT_SW_TO_HW_RING;
-#endif
 		break;
 	case RXDMA_MONITOR_BUF:
 		htt_ring_id = HTT_RXDMA_MONITOR_BUF_RING;
