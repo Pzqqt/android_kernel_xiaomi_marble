@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -238,6 +238,7 @@ QDF_STATUS wmi_unified_lphb_config_udp_params_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_lphb_config_udp_pkt_filter_cmd(void *wmi_hdl,
 		wmi_hb_set_udp_pkt_filter_cmd_fixed_param *lphb_conf_req);
 
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 /**
  * wmi_unified_enable_disable_packet_filter_cmd() - enable/disable packet filter
  * @wmi_handle: wmi handle
@@ -262,5 +263,6 @@ QDF_STATUS wmi_unified_enable_disable_packet_filter_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_config_packet_filter_cmd(void *wmi_hdl,
 		uint8_t vdev_id, struct pmo_rcv_pkt_fltr_cfg *rcv_filter_param,
 		uint8_t filter_id, bool enable);
+#endif
 
 #endif /* _WMI_UNIFIED_PMO_API_H_ */
