@@ -43,14 +43,6 @@
 uint32_t ucfg_pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_pmo_get_num_packet_filters() - get the number of packet filters
- * @psoc: the psoc to query
- *
- * Return: number of packet filters
- */
-uint32_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc);
-
-/**
  * ucfg_pmo_get_num_wow_filters() - get the supported number of WoW filters
  * @psoc: the psoc to query
  *
@@ -356,6 +348,16 @@ QDF_STATUS pmo_ucfg_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
  */
 QDF_STATUS pmo_ucfg_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
 
+#ifdef WLAN_FEATURE_PACKET_FILTERING
+
+/**
+ * ucfg_pmo_get_num_packet_filters() - get the number of packet filters
+ * @psoc: the psoc to query
+ *
+ * Return: number of packet filters
+ */
+uint32_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc);
+
 /**
  * pmo_ucfg_set_pkt_filter() - Set packet filter
  * @psoc: objmgr psoc handle
@@ -379,6 +381,31 @@ QDF_STATUS pmo_ucfg_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS pmo_ucfg_clear_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param,
 	uint8_t vdev_id);
+#else
+static inline uint32_t
+ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_set_pkt_filter(
+		struct wlan_objmgr_psoc *psoc,
+		struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req,
+		uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+pmo_ucfg_clear_pkt_filter(
+		struct wlan_objmgr_psoc *psoc,
+		struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param,
+		uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * pmo_ucfg_get_gtk_rsp(): API to send gtk response request to fwr
@@ -633,7 +660,7 @@ QDF_STATUS pmo_ucfg_config_listen_interval(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS pmo_ucfg_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
 				       uint32_t mod_dtim);
-#else
+#else /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 static inline uint32_t
 ucfg_pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc)
 {

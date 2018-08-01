@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,6 +23,22 @@
 
 #include "target_if_pmo.h"
 #include "wlan_pmo_common_public_struct.h"
+
+#ifdef WLAN_FEATURE_PACKET_FILTERING
+static inline
+void tgt_if_pmo_reg_pkt_filter_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
+{
+	pmo_tx_ops->send_set_pkt_filter =
+		target_if_pmo_send_pkt_filter_req;
+	pmo_tx_ops->send_clear_pkt_filter =
+		target_if_pmo_clear_pkt_filter_req;
+}
+#else
+static inline
+void tgt_if_pmo_reg_pkt_filter_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
+{
+}
+#endif
 
 void target_if_pmo_register_tx_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
 {
@@ -103,10 +119,6 @@ void target_if_pmo_register_tx_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
 		target_if_pmo_psoc_send_d0wow_enable_req;
 	pmo_tx_ops->psoc_send_d0wow_disable_req =
 		target_if_pmo_psoc_send_d0wow_disable_req;
-	pmo_tx_ops->send_set_pkt_filter =
-		target_if_pmo_send_pkt_filter_req;
-	pmo_tx_ops->send_clear_pkt_filter =
-		target_if_pmo_clear_pkt_filter_req;
-
+	tgt_if_pmo_reg_pkt_filter_ops(pmo_tx_ops);
 }
 
