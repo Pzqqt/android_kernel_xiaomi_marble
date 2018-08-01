@@ -7,13 +7,9 @@ ifeq ($(call is-board-platform,msmnile),true)
 AUDIO_SELECT  := CONFIG_SND_SOC_SM8150=m
 endif
 
-ifeq ($(call is-board-platform,$(MSMSTEPPE)),true)
-AUDIO_SELECT  := CONFIG_SND_SOC_SM6150=m
-endif
-
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
-ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE)),true)
+ifeq ($(call is-board-platform-in-list,msmnile),true)
 
 LOCAL_PATH := $(call my-dir)
 
