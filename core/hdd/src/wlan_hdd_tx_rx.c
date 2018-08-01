@@ -1126,17 +1126,15 @@ drop_pkt_and_release_skb:
 	qdf_net_buf_debug_release_skb(skb);
 drop_pkt:
 
-	if (skb) {
-		/* track connectivity stats */
-		if (adapter->pkt_type_bitmap)
-			hdd_tx_rx_collect_connectivity_stats_info(skb, adapter,
-						PKT_TYPE_TX_DROPPED, &pkt_type);
-		qdf_dp_trace_data_pkt(skb, QDF_TRACE_DEFAULT_PDEV_ID,
-				      QDF_DP_TRACE_DROP_PACKET_RECORD, 0,
-				      QDF_TX);
-		kfree_skb(skb);
-		skb = NULL;
-	}
+	/* track connectivity stats */
+	if (adapter->pkt_type_bitmap)
+		hdd_tx_rx_collect_connectivity_stats_info(skb, adapter,
+							  PKT_TYPE_TX_DROPPED,
+							  &pkt_type);
+	qdf_dp_trace_data_pkt(skb, QDF_TRACE_DEFAULT_PDEV_ID,
+			      QDF_DP_TRACE_DROP_PACKET_RECORD, 0,
+			      QDF_TX);
+	kfree_skb(skb);
 
 drop_pkt_accounting:
 
