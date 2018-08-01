@@ -130,7 +130,7 @@ static QDF_STATUS target_if_direct_buf_rx_deinit(void)
 }
 #endif /* DIRECT_BUF_RX_ENABLE */
 
-QDF_STATUS target_if_open(get_psoc_handle_callback psoc_hdl_cb)
+QDF_STATUS target_if_init(get_psoc_handle_callback psoc_hdl_cb)
 {
 	g_target_if_ctx = qdf_mem_malloc(sizeof(*g_target_if_ctx));
 	if (!g_target_if_ctx) {
@@ -151,7 +151,7 @@ QDF_STATUS target_if_open(get_psoc_handle_callback psoc_hdl_cb)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS target_if_close(void)
+QDF_STATUS target_if_deinit(void)
 {
 	if (!g_target_if_ctx) {
 		QDF_ASSERT(0);
@@ -174,7 +174,8 @@ QDF_STATUS target_if_close(void)
 
 	return QDF_STATUS_SUCCESS;
 }
-qdf_export_symbol(target_if_close);
+
+qdf_export_symbol(target_if_deinit);
 
 QDF_STATUS target_if_store_pdev_target_if_ctx(
 		get_pdev_handle_callback pdev_hdl_cb)

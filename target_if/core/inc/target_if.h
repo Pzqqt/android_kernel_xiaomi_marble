@@ -319,21 +319,21 @@ struct target_pdev_info {
 
 
 /**
- * target_if_open() - target_if open
+ * target_if_init() - target_if Initialization
  * @get_wmi_handle: function pointer to get wmi handle
  *
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS target_if_open(get_psoc_handle_callback psoc_hdl_cb);
+QDF_STATUS target_if_init(get_psoc_handle_callback psoc_hdl_cb);
 
 /**
- * target_if_close() - Close target_if
+ * target_if_deinit() - Close target_if
  * @scn_handle: scn handle
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS target_if_close(void);
+QDF_STATUS target_if_deinit(void);
 
 /**
  * target_if_store_pdev_target_if_ctx() - stores objmgr pdev in target if ctx
