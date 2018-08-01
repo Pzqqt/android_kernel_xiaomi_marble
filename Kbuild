@@ -768,7 +768,6 @@ PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/core/src/wlan_pmo_lphb.o \
 		$(PMO_DIR)/core/src/wlan_pmo_suspend_resume.o \
 		$(PMO_DIR)/core/src/wlan_pmo_hw_filter.o \
-		$(PMO_DIR)/core/src/wlan_pmo_pkt_filter.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_obj_mgmt_api.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_ucfg_api.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_arp.o \
@@ -779,7 +778,11 @@ PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_lphb.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_suspend_resume.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_hw_filter.o \
+
+ifeq ($(CONFIG_WLAN_FEATURE_PACKET_FILTERING), y)
+PMO_OBJS +=	$(PMO_DIR)/core/src/wlan_pmo_pkt_filter.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_pkt_filter.o
+endif
 endif
 
 ifeq ($(CONFIG_WLAN_NS_OFFLOAD), y)
@@ -861,12 +864,14 @@ CLD_TARGET_IF_OBJ := $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_arp.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_lphb.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_main.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_mc_addr_filtering.o \
-		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_pkt_filter.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_suspend_resume.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_wow.o
 ifeq ($(CONFIG_WLAN_NS_OFFLOAD), y)
 CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_ns.o
+endif
+ifeq ($(CONFIG_WLAN_FEATURE_PACKET_FILTERING), y)
+CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_pkt_filter.o
 endif
 endif
 

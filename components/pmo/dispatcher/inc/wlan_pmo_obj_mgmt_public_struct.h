@@ -132,11 +132,13 @@ struct wlan_pmo_tx_ops {
 	QDF_STATUS (*send_ns_offload_req)(struct wlan_objmgr_vdev *vdev,
 			struct pmo_arp_offload_params *arp_offload_req,
 			struct pmo_ns_offload_params *ns_offload_req);
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 	QDF_STATUS(*send_set_pkt_filter)(struct wlan_objmgr_vdev *vdev,
 			struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req);
 	QDF_STATUS(*send_clear_pkt_filter)(struct wlan_objmgr_vdev *vdev,
 			struct pmo_rcv_pkt_fltr_clear_param
 						*pmo_clr_pkt_fltr_param);
+#endif
 	QDF_STATUS (*send_enable_wow_wakeup_event_req)(
 			struct wlan_objmgr_vdev *vdev,
 			uint32_t *bitmap);

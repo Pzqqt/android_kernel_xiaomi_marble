@@ -41,15 +41,6 @@ uint32_t ucfg_pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc)
 	return pmo_get_apf_instruction_size(psoc);
 }
 
-uint32_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
-{
-	QDF_BUG(psoc);
-	if (!psoc)
-		return 0;
-
-	return pmo_get_num_packet_filters(psoc);
-}
-
 uint8_t ucfg_pmo_get_num_wow_filters(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_BUG(psoc);
@@ -217,6 +208,16 @@ QDF_STATUS pmo_ucfg_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 	return pmo_core_disable_gtk_offload_in_fwr(vdev);
 }
 
+#ifdef WLAN_FEATURE_PACKET_FILTERING
+uint32_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_BUG(psoc);
+	if (!psoc)
+		return 0;
+
+	return pmo_get_num_packet_filters(psoc);
+}
+
 QDF_STATUS pmo_ucfg_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
 		struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req,
 		uint8_t vdev_id)
@@ -231,6 +232,7 @@ QDF_STATUS pmo_ucfg_clear_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	return pmo_core_clear_pkt_filter(psoc,
 				pmo_clr_pkt_fltr_param, vdev_id);
 }
+#endif
 
 QDF_STATUS pmo_ucfg_get_gtk_rsp(struct wlan_objmgr_vdev *vdev,
 		struct pmo_gtk_rsp_req *gtk_rsp_req)

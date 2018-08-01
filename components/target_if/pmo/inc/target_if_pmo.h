@@ -172,6 +172,7 @@ QDF_STATUS target_if_pmo_send_action_frame_patterns(
 QDF_STATUS target_if_pmo_conf_hw_filter(struct wlan_objmgr_psoc *psoc,
 					struct pmo_hw_filter_params *req);
 
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 /**
  * target_if_pmo_send_pkt_filter_req() - enable packet filter
  * @vdev: objmgr vdev
@@ -195,6 +196,7 @@ QDF_STATUS target_if_pmo_send_pkt_filter_req(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS target_if_pmo_clear_pkt_filter_req(struct wlan_objmgr_vdev *vdev,
 			struct pmo_rcv_pkt_fltr_clear_param *rcv_clear_param);
+#endif
 
 /**
  * target_if_pmo_send_arp_offload_req() - sends arp request to fwr
