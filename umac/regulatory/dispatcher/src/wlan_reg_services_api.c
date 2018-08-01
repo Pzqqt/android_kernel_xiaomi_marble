@@ -498,9 +498,9 @@ void wlan_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 	reg_unregister_chan_change_callback(psoc, cbk);
 }
 
-bool wlan_reg_11d_original_enabled_on_host(struct wlan_objmgr_psoc *psoc)
+bool wlan_reg_is_11d_offloaded(struct wlan_objmgr_psoc *psoc)
 {
-	return reg_11d_original_enabled_on_host(psoc);
+	return reg_is_11d_offloaded(psoc);
 }
 
 bool wlan_reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc)

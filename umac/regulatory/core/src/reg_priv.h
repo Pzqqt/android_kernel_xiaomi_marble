@@ -27,6 +27,9 @@
 
 #include "reg_db.h"
 #include "reg_services.h"
+#ifdef HOST_11D_SCAN
+#include <qdf_mc_timer.h>
+#endif
 
 #define reg_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_REGULATORY, params)
@@ -77,6 +80,12 @@ struct wlan_regulatory_psoc_priv_obj {
 	uint8_t master_vdev_cnt;
 	uint8_t vdev_cnt_11d;
 	uint32_t scan_11d_interval;
+#ifdef HOST_11D_SCAN
+	bool is_host_11d_inited;
+	wlan_scan_requester scan_req_id;
+	uint32_t scan_id;
+	qdf_mc_timer_t timer;
+#endif
 	uint8_t vdev_ids_11d[MAX_STA_VDEV_CNT];
 	bool user_ctry_priority;
 	bool user_ctry_set;

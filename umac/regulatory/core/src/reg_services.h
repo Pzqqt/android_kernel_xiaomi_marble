@@ -502,12 +502,12 @@ QDF_STATUS reg_save_new_11d_country(struct wlan_objmgr_psoc *psoc,
 		uint8_t *country);
 
 /**
- * reg_11d_original_enabled_on_host() - whether 11d original enabled on host
+ * reg_is_11d_offloaded() - whether 11d offloaded supported or not
  * @psoc: psoc ptr
  *
  * Return: bool
  */
-bool reg_11d_original_enabled_on_host(struct wlan_objmgr_psoc *psoc);
+bool reg_is_11d_offloaded(struct wlan_objmgr_psoc *psoc);
 
 /**
  * reg_11d_enabled_on_host() - know whether 11d enabled on host

@@ -24,6 +24,7 @@
 #include "reg_services.h"
 #include "reg_priv.h"
 #include "reg_db_parser.h"
+#include "reg_host_11d.h"
 #include <scheduler_api.h>
 
 #define CHAN_12_CENT_FREQ 2467
@@ -2989,10 +2990,20 @@ static void reg_run_11d_state_machine(struct wlan_objmgr_psoc *psoc)
 		psoc_priv_obj->enable_11d_supp =
 			psoc_priv_obj->enable_11d_supp_original;
 
-	reg_debug("inside 11d state machine");
-	if ((temp_11d_support != psoc_priv_obj->enable_11d_supp) &&
-	    (psoc_priv_obj->is_11d_offloaded)) {
-		reg_sched_11d_msg(psoc);
+	reg_debug("inside 11d state machine:tmp %d 11d_supp %d org %d set %d pri %d cnt %d vdev %d",
+		  temp_11d_support,
+		  psoc_priv_obj->enable_11d_supp,
+		  psoc_priv_obj->enable_11d_supp_original,
+		  psoc_priv_obj->user_ctry_set,
+		  psoc_priv_obj->user_ctry_priority,
+		  psoc_priv_obj->master_vdev_cnt,
+		  psoc_priv_obj->vdev_id_for_11d_scan);
+
+	if (temp_11d_support != psoc_priv_obj->enable_11d_supp) {
+		if (psoc_priv_obj->is_11d_offloaded)
+			reg_sched_11d_msg(psoc);
+		else
+			reg_11d_host_scan(psoc_priv_obj);
 	}
 }
 
@@ -3664,6 +3675,9 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 						     WLAN_UMAC_COMP_REGULATORY,
 						     pdev_priv_obj,
 						     QDF_STATUS_SUCCESS);
+	if (QDF_IS_STATUS_SUCCESS(status) &&
+	    !psoc_priv_obj->is_11d_offloaded)
+		reg_11d_host_scan_init(parent_psoc);
 
 	reg_debug("reg pdev obj created with status %d", status);
 
@@ -3675,6 +3689,7 @@ QDF_STATUS wlan_regulatory_pdev_obj_destroyed_notification(
 {
 	QDF_STATUS status;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 
@@ -3682,6 +3697,15 @@ QDF_STATUS wlan_regulatory_pdev_obj_destroyed_notification(
 		reg_err("reg pdev private obj is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	psoc_priv_obj = reg_get_psoc_obj(wlan_pdev_get_psoc(pdev));
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("reg psoc private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!psoc_priv_obj->is_11d_offloaded)
+		reg_11d_host_scan_deinit(wlan_pdev_get_psoc(pdev));
 
 	pdev_priv_obj->pdev_ptr = NULL;
 
@@ -4586,23 +4610,6 @@ QDF_STATUS reg_save_new_11d_country(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-bool reg_11d_original_enabled_on_host(struct wlan_objmgr_psoc *psoc)
-{
-	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
-
-	psoc_priv_obj =
-	     wlan_objmgr_psoc_get_comp_private_obj(psoc,
-						   WLAN_UMAC_COMP_REGULATORY);
-
-	if (NULL == psoc_priv_obj) {
-		reg_err("reg psoc private obj is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return (psoc_priv_obj->enable_11d_supp_original &&
-		!psoc_priv_obj->is_11d_offloaded);
-}
-
 bool reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
@@ -4649,8 +4656,24 @@ QDF_STATUS reg_set_11d_offloaded(struct wlan_objmgr_psoc *psoc,
 	}
 
 	soc_reg->is_11d_offloaded = val;
-
+	reg_debug("set is_11d_offloaded %d", val);
 	return QDF_STATUS_SUCCESS;
+}
+
+bool reg_is_11d_offloaded(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj =
+	     wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						   WLAN_UMAC_COMP_REGULATORY);
+
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return false;
+	}
+
+	return psoc_priv_obj->is_11d_offloaded;
 }
 
 QDF_STATUS reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,

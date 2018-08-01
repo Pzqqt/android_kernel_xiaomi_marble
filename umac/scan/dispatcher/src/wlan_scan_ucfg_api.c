@@ -2181,7 +2181,7 @@ ucfg_scan_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	/* Subscribe for scan events from lmac layesr */
 	status = tgt_scan_register_ev_handler(psoc);
 	QDF_ASSERT(status == QDF_STATUS_SUCCESS);
-	if (wlan_reg_11d_original_enabled_on_host(psoc))
+	if (!wlan_reg_is_11d_offloaded(psoc))
 		scm_11d_cc_db_init(psoc);
 	ucfg_scan_register_unregister_bcn_cb(psoc, true);
 	status = wlan_serialization_register_apply_rules_cb(psoc,
@@ -2205,7 +2205,7 @@ ucfg_scan_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	status = tgt_scan_unregister_ev_handler(psoc);
 	QDF_ASSERT(status == QDF_STATUS_SUCCESS);
 	ucfg_scan_register_unregister_bcn_cb(psoc, false);
-	if (wlan_reg_11d_original_enabled_on_host(psoc))
+	if (!wlan_reg_is_11d_offloaded(psoc))
 		scm_11d_cc_db_deinit(psoc);
 
 	return status;
