@@ -130,16 +130,7 @@ void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
 	 */
 	policy_mgr_set_pcl_for_existing_combo(psoc, PM_STA_MODE);
 	/* do we need to change the HW mode */
-	if (policy_mgr_need_opportunistic_upgrade(psoc)) {
-		/* let's start the timer */
-		qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
-		qdf_status = qdf_mc_timer_start(
-					&pm_ctx->dbs_opportunistic_timer,
-					DBS_OPPORTUNISTIC_TIME * 1000);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			policy_mgr_err("Failed to start dbs opportunistic timer");
-	}
-
+	policy_mgr_check_n_start_opportunistic_timer(psoc);
 	return;
 }
 

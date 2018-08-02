@@ -93,6 +93,29 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 	return;
 }
 
+QDF_STATUS policy_mgr_check_n_start_opportunistic_timer(
+		struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("PM ctx not valid. Oppurtunistic timer cannot start");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (policy_mgr_need_opportunistic_upgrade(psoc)) {
+	/* let's start the timer */
+	qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
+	status = qdf_mc_timer_start(
+				&pm_ctx->dbs_opportunistic_timer,
+				DBS_OPPORTUNISTIC_TIME * 1000);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		policy_mgr_err("Failed to start dbs opportunistic timer");
+	}
+	return status;
+}
+
 QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 		uint32_t session_id,
 		enum hw_mode_ss_config mac0_ss,
@@ -1458,13 +1481,22 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
-		if (pm_conc_connection_list[i].in_use)
+		if (pm_conc_connection_list[i].in_use) {
 			if (!WLAN_REG_IS_SAME_BAND_CHANNELS(channel,
 				pm_conc_connection_list[i].chan)) {
 				qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 				policy_mgr_debug("DBS required");
 				return;
 			}
+			if (policy_mgr_is_hw_dbs_2x2_capable(psoc) &&
+			    (WLAN_REG_IS_24GHZ_CH(channel) ||
+			    WLAN_REG_IS_24GHZ_CH
+				(pm_conc_connection_list[i].chan))) {
+				qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+				policy_mgr_debug("DBS required");
+				return;
+			}
+		}
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 	pm_dbs_opportunistic_timer_handler((void *)psoc);
