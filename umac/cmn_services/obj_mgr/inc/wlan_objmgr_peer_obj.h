@@ -147,7 +147,9 @@ struct wlan_objmgr_peer_mlme {
 struct wlan_objmgr_peer_objmgr {
 	struct wlan_objmgr_vdev *vdev;
 	qdf_atomic_t ref_cnt;
+#ifdef WLAN_OBJMGR_REF_ID_DEBUG
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
+#endif
 	uint8_t print_cnt;
 };
 
@@ -1035,5 +1037,26 @@ static inline void wlan_peer_set_pdev_id(struct wlan_objmgr_peer *peer,
 {
 	peer->pdev_id = pdev_id;
 }
+
+/**
+ * wlan_objmgr_print_peer_ref_ids() - print peer object refs
+ * @peer: peer object pointer
+ * @log_level: log level
+ *
+ * Return: void
+ */
+void wlan_objmgr_print_peer_ref_ids(struct wlan_objmgr_peer *peer,
+				    QDF_TRACE_LEVEL log_level);
+
+/**
+ * wlan_objmgr_peer_get_comp_ref_cnt() - get component ref count for a peer
+ * @peer: peer object pointer
+ * @id: component id
+ *
+ * Return: uint32_t
+ */
+uint32_t
+wlan_objmgr_peer_get_comp_ref_cnt(struct wlan_objmgr_peer *peer,
+				  enum wlan_umac_comp_id id);
 
 #endif /* _WLAN_OBJMGR_PEER_OBJ_H_*/

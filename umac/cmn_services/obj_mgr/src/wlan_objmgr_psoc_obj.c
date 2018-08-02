@@ -1935,8 +1935,7 @@ static void wlan_objmgr_psoc_peer_ref_print(struct wlan_objmgr_psoc *psoc,
 	obj_mgr_alert("Peer MAC:%02x:%02x:%02x:%02x:%02x:%02x state:%d vdev_id:%d",
 		  macaddr[0], macaddr[1], macaddr[2], macaddr[3],
 		  macaddr[4], macaddr[5], obj_state, vdev_id);
-	wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg,
-				  QDF_TRACE_LEVEL_FATAL);
+	wlan_objmgr_print_peer_ref_ids(peer, QDF_TRACE_LEVEL_FATAL);
 }
 
 static void wlan_objmgr_psoc_vdev_ref_print(struct wlan_objmgr_psoc *psoc,
@@ -2098,6 +2097,35 @@ void wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc)
 }
 qdf_export_symbol(wlan_objmgr_psoc_check_for_vdev_leaks);
 
+#ifdef WLAN_OBJMGR_REF_ID_DEBUG
+static void
+wlan_objmgr_print_peer_ref_leaks(struct wlan_objmgr_peer *peer, int vdev_id)
+{
+	qdf_atomic_t *ref_id_dbg;
+	int32_t refs;
+	int ref_id;
+
+	ref_id_dbg = peer->peer_objmgr.ref_id_dbg;
+	wlan_objmgr_for_each_refs(ref_id_dbg, ref_id, refs) {
+		obj_mgr_err(QDF_MAC_ADDR_STR " %7u   %4u   %s",
+			    QDF_MAC_ADDR_ARRAY(peer->macaddr),
+			    vdev_id,
+			    refs,
+			    string_from_dbgid(ref_id));
+	}
+}
+#else
+static inline void
+wlan_objmgr_print_peer_ref_leaks(struct wlan_objmgr_peer *peer, int vdev_id)
+{
+	obj_mgr_err(QDF_MAC_ADDR_STR " %7u   %4u   %s",
+		    QDF_MAC_ADDR_ARRAY(peer->macaddr),
+		    vdev_id,
+		    qdf_atomic_read(&peer->peer_objmgr.ref_cnt),
+		    "TOTAL_REF_COUNT");
+}
+#endif
+
 void wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_objmgr_psoc_objmgr *_psoc;
@@ -2126,20 +2154,9 @@ void wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc)
 
 		wlan_vdev_obj_lock(vdev);
 		wlan_objmgr_for_each_vdev_peer(vdev, peer) {
-			qdf_atomic_t *ref_id_dbg;
-			int ref_id;
-			int32_t refs;
-
 			wlan_peer_obj_lock(peer);
-			ref_id_dbg = peer->peer_objmgr.ref_id_dbg;
-			wlan_objmgr_for_each_refs(ref_id_dbg, ref_id, refs) {
-				leaks++;
-				obj_mgr_err(QDF_MAC_ADDR_STR " %7u   %4u   %s",
-					    QDF_MAC_ADDR_ARRAY(peer->macaddr),
-					    vdev_id,
-					    refs,
-					    string_from_dbgid(ref_id));
-			}
+			leaks += qdf_atomic_read(&peer->peer_objmgr.ref_cnt);
+			wlan_objmgr_print_peer_ref_leaks(peer, vdev_id);
 			wlan_peer_obj_unlock(peer);
 		}
 		wlan_vdev_obj_unlock(vdev);
