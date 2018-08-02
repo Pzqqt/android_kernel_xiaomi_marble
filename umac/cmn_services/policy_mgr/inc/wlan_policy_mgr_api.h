@@ -705,6 +705,18 @@ enum QDF_OPMODE policy_mgr_get_qdf_mode_from_pm(
 			enum policy_mgr_con_mode device_mode);
 
 /**
+ * policy_mgr_check_n_start_opportunistic_timer - check single mac upgrade
+ * needed or not, if needed start the oppurtunistic timer.
+ * @psoc: pointer to SOC
+ *
+ * This function starts the oppurtunistic timer if hw_mode change is needed
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_check_n_start_opportunistic_timer(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_pdev_set_hw_mode() - Set HW mode command to FW
  * @psoc: PSOC object information
  * @session_id: Session ID
