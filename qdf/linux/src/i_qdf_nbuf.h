@@ -123,6 +123,7 @@ typedef union {
  * @rx.flag_chfrag_start: first MSDU in an AMSDU
  * @rx.flag_chfrag_cont: middle or part of MSDU in an AMSDU
  * @rx.flag_chfrag_end: last MSDU in an AMSDU
+ * @rx.packet_buff_pool: indicate packet from pre-allocated pool for Rx ring
  * @rx.rsrvd: reserved
  *
  * @rx.trace: combined structure for DP and protocol trace
@@ -215,7 +216,8 @@ struct qdf_nbuf_cb {
 			uint8_t flag_chfrag_start:1,
 				flag_chfrag_cont:1,
 				flag_chfrag_end:1,
-				rsrvd:5;
+				packet_buff_pool:1,
+				rsrvd:4;
 			union {
 				uint8_t packet_state;
 				uint8_t dp_trace:1,
@@ -338,6 +340,9 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 #define QDF_NBUF_CB_RX_CHFRAG_END(skb) \
 		(((struct qdf_nbuf_cb *) \
 		((skb)->cb))->u.rx.flag_chfrag_end)
+#define QDF_NBUF_CB_RX_PACKET_BUFF_POOL(skb) \
+		(((struct qdf_nbuf_cb *) \
+		((skb)->cb))->u.rx.packet_buff_pool)
 
 #define QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, PACKET_STATE) \
 	qdf_nbuf_set_state(skb, PACKET_STATE)
