@@ -1530,15 +1530,14 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	int8_t rssi = 0;
 	uint8_t chn_num = 0;
 	uint8_t channel_id = 0;
-	uint8_t i;
-	bool found = false;
-
 	tCsrScanResultInfo *pScanResult;
 	tSapSpectChInfo *pSpectCh = pSpectInfoParams->pSpectCh;
 	uint32_t operatingBand;
 	uint16_t channelWidth;
 	uint16_t secondaryChannelOffset;
 	uint16_t centerFreq;
+	uint8_t i;
+	bool found;
 	uint16_t centerFreq_2 = 0;
 	uint16_t vhtSupport;
 	uint32_t ieLen = 0;
@@ -1604,22 +1603,6 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 			else
 				channel_id =
 				      pScanResult->BssDescriptor.channelId;
-
-			/*
-			 * Check if channel is present in scan channel list or
-			 * not. If not present, then continue as no need to
-			 * process the beacon on this channel.
-			 */
-			for (i = 0; i < sap_ctx->num_of_channel; i++) {
-				if (channel_id ==
-				    sap_ctx->channelList[i]) {
-					found = true;
-					break;
-				}
-			}
-
-			if (!found)
-				continue;
 
 			if (pSpectCh && (channel_id == pSpectCh->chNum)) {
 				if (pSpectCh->rssiAgr <
@@ -1714,12 +1697,38 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		if (pSpectCh->weight == SAP_ACS_WEIGHT_MAX)
 			goto debug_info;
 
-		pSpectCh->weight =
-			SAPDFS_NORMALISE_1000 *
-			(sapweight_rssi_count(sap_ctx, rssi,
-			 pSpectCh->bssCount) + sap_weight_channel_status(
-			 sap_ctx, sap_get_channel_status(pMac,
+		/* There may be channels in scanlist, which were not sent to
+		 * FW for scanning as part of ACS scan list, but they do have an
+		 * effect on the neighbouring channels, so they help to find a
+		 * suitable channel, but there weight should be max as they were
+		 * and not meant to be included in the ACS scan results.
+		 * So just assign RSSI as -100, bsscount as 0, and weight as max
+		 * to them, so that they always stay low in sorting of best
+		 * channles which were included in ACS scan list
+		 */
+		found = false;
+		for (i = 0; i < sap_ctx->num_of_channel; i++) {
+			if (pSpectCh->chNum == sap_ctx->channelList[i]) {
+			/* Scan channel was included in ACS scan list */
+				found = true;
+				break;
+			}
+		}
+
+		if (found)
+			pSpectCh->weight =
+				SAPDFS_NORMALISE_1000 *
+				(sapweight_rssi_count(sap_ctx, rssi,
+				pSpectCh->bssCount) + sap_weight_channel_status(
+				sap_ctx, sap_get_channel_status(pMac,
 							 pSpectCh->chNum)));
+		else {
+			pSpectCh->weight = SAP_ACS_WEIGHT_MAX;
+			pSpectCh->rssiAgr = SOFTAP_MIN_RSSI;
+			rssi = SOFTAP_MIN_RSSI;
+			pSpectCh->bssCount = SOFTAP_MIN_COUNT;
+		}
+
 		if (pSpectCh->weight > SAP_ACS_WEIGHT_MAX)
 			pSpectCh->weight = SAP_ACS_WEIGHT_MAX;
 		pSpectCh->weight_copy = pSpectCh->weight;
