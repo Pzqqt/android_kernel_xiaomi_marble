@@ -2102,6 +2102,98 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 	return bss_descr;
 }
 
+uint8_t
+csr_get_channel_for_hw_mode_change(tpAniSirGlobal mac_ctx,
+				   tScanResultHandle result_handle,
+				   uint32_t session_id)
+{
+	tListElem *next_element = NULL;
+	struct tag_csrscan_result *scan_result = NULL;
+	struct scan_result_list *bss_list =
+				(struct scan_result_list *)result_handle;
+	uint8_t channel_id = 0;
+
+	if (NULL == bss_list) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("Empty bss_list"));
+		goto end;
+	}
+
+	if (policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) == false) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  FL("driver isn't dbs capable"));
+		goto end;
+	}
+
+	if (policy_mgr_is_current_hwmode_dbs(mac_ctx->psoc)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  FL("driver is already in DBS"));
+		goto end;
+	}
+
+	if (!policy_mgr_is_dbs_allowed_for_concurrency(mac_ctx->psoc,
+						       QDF_STA_MODE)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  FL("DBS is not allowed for this concurrency combo"));
+		goto end;
+	}
+
+	if (!policy_mgr_is_hw_dbs_2x2_capable(mac_ctx->psoc) &&
+	    !policy_mgr_get_connection_count(mac_ctx->psoc)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  FL("1x1 DBS HW with no prior connection"));
+		goto end;
+	}
+
+	if (csr_ll_is_list_empty(&bss_list->List, LL_ACCESS_NOLOCK)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("bss_list->List is empty"));
+		qdf_mem_free(bss_list);
+		goto end;
+	}
+
+	next_element = csr_ll_peek_head(&bss_list->List, LL_ACCESS_NOLOCK);
+	while (next_element) {
+		scan_result = GET_BASE_ADDR(next_element,
+					    struct tag_csrscan_result,
+					    Link);
+		if (policy_mgr_is_hw_dbs_2x2_capable(mac_ctx->psoc)) {
+			if (WLAN_REG_IS_24GHZ_CH
+				(scan_result->Result.BssDescriptor.channelId)) {
+				channel_id =
+					scan_result->
+					Result.BssDescriptor.channelId;
+				break;
+			}
+		} else {
+			if (WLAN_REG_IS_24GHZ_CH
+				(scan_result->Result.BssDescriptor.channelId) &&
+			    policy_mgr_is_any_mode_active_on_band_along_with_session
+				(mac_ctx->psoc,
+				 session_id, POLICY_MGR_BAND_5)) {
+				channel_id =
+					scan_result->
+					Result.BssDescriptor.channelId;
+				break;
+			}
+			if (WLAN_REG_IS_5GHZ_CH
+				(scan_result->Result.BssDescriptor.channelId) &&
+			    policy_mgr_is_any_mode_active_on_band_along_with_session
+				(mac_ctx->psoc,
+				 session_id, POLICY_MGR_BAND_24)) {
+				channel_id =
+					scan_result->
+					Result.BssDescriptor.channelId;
+				break;
+			}
+		}
+		next_element = csr_ll_next(&bss_list->List, next_element,
+					   LL_ACCESS_NOLOCK);
+	}
+end:
+	return channel_id;
+}
+
 static enum wlan_auth_type csr_covert_auth_type_new(eCsrAuthType auth)
 {
 	switch (auth) {

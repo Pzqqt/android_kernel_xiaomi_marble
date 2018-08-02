@@ -3254,9 +3254,12 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		hdd_debug("check for SAP restart");
 		policy_mgr_check_concurrent_intf_and_restart_sap(
 			hdd_ctx->hdd_psoc);
+		policy_mgr_checkn_update_hw_mode_single_mac_mode
+			(hdd_ctx->hdd_psoc, roam_info->pBssDesc->channelId);
 	} else {
 		bool connect_timeout = false;
-
+		/* do we need to change the HW mode */
+		policy_mgr_check_n_start_opportunistic_timer(hdd_ctx->hdd_psoc);
 		if (roam_info && roam_info->is_fils_connection &&
 		    eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE == roamResult)
 			qdf_copy_macaddr(&roam_info->bssid,

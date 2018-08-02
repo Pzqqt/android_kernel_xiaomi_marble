@@ -1095,5 +1095,24 @@ static inline void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 {
 }
 #endif
-
+/**
+ * csr_get_channel_for_hw_mode_change() - This function to find
+ *                                       out if HW mode change
+ *                                       is needed for any of
+ *                                       the candidate AP which
+ *                                       STA could join
+ * @mac_ctx: mac context
+ * @result_handle: an object for the result.
+ * @session_id: STA session ID
+ *
+ * This function is written to find out for any bss from scan
+ * handle a HW mode change to DBS will be needed or not.
+ *
+ * Return: AP channel for which DBS HW mode will be needed. 0
+ * means no HW mode change is needed.
+ */
+uint8_t
+csr_get_channel_for_hw_mode_change(tpAniSirGlobal mac_ctx,
+				   tScanResultHandle result_handle,
+				   uint32_t session_id);
 #endif /* CSR_INSIDE_API_H__ */

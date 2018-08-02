@@ -8820,6 +8820,7 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 	bool fCallCallback = false;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
 	tSirBssDescription *first_ap_profile;
+	uint8_t channel_id = 0;
 
 	if (NULL == pSession) {
 		sme_err("session does not exist for given sessionId: %d",
@@ -8951,8 +8952,14 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 				status = QDF_STATUS_E_INVAL;
 				goto error;
 			}
+
+			channel_id = csr_get_channel_for_hw_mode_change
+					(pMac, hBSSList, sessionId);
+			if (!channel_id)
+				channel_id = first_ap_profile->channelId;
+
 			status = policy_mgr_handle_conc_multiport(pMac->psoc,
-					sessionId, first_ap_profile->channelId);
+					sessionId, channel_id);
 			if ((QDF_IS_STATUS_SUCCESS(status)) &&
 				(!csr_wait_for_connection_update(pMac, true))) {
 					sme_debug("conn update error");
