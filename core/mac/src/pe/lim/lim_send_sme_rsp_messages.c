@@ -2167,6 +2167,12 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 		 (session_entry->dot11mode == WNI_CFG_DOT11_MODE_11G_ONLY)))
 		session_entry->dot11mode = WNI_CFG_DOT11_MODE_11A;
 
+	/* Send RSO Stop to FW before triggering the vdev restart for CSA */
+	if (mac_ctx->lim.stop_roaming_callback)
+		mac_ctx->lim.stop_roaming_callback(mac_ctx,
+						   session_entry->smeSessionId,
+						   ecsr_driver_disabled);
+
 	lim_prepare_for11h_channel_switch(mac_ctx, session_entry);
 
 	csa_offload_ind->mesgType = eWNI_SME_CSA_OFFLOAD_EVENT;

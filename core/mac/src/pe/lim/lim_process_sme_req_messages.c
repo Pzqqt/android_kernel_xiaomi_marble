@@ -469,6 +469,7 @@ static bool __lim_process_sme_sys_ready_ind(tpAniSirGlobal pMac, uint32_t *pMsgB
 		pe_register_mgmt_rx_frm_callback(pMac);
 		pe_register_callbacks_with_wma(pMac, ready_req);
 		pMac->lim.sme_msg_callback = ready_req->sme_msg_cb;
+		pMac->lim.stop_roaming_callback = ready_req->stop_roaming_cb;
 	}
 
 	pe_debug("sending WMA_SYS_READY_IND msg to HAL");

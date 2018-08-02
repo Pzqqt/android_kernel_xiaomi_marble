@@ -4485,9 +4485,15 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 	struct wiphy *wiphy = wdev->wiphy;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 
 	hdd_debug("channel switch for session:%d to channel:%d",
 		adapter->session_id, roam_info->chan_info.chan_id);
+
+	/* Enable Roaming on STA interface which was disabled before CSA */
+	if (adapter->device_mode == QDF_STA_MODE)
+		sme_start_roaming(mac_handle, adapter->session_id,
+				  REASON_DRIVER_ENABLED);
 
 	chan_change.chan = roam_info->chan_info.chan_id;
 	chan_change.chan_params.ch_width =
