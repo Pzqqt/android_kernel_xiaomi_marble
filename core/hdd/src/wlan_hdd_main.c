@@ -12188,34 +12188,6 @@ end:
 }
 
 /**
- * wlan_hdd_soc_set_antenna_mode_cb() - Callback for set dual
- * mac scan config
- * @status: Status of set antenna mode
- * @context: callback context
- *
- * Callback on setting the dual mac configuration
- *
- * Return: None
- */
-void wlan_hdd_soc_set_antenna_mode_cb(enum set_antenna_mode_status status,
-				      void *context)
-{
-	struct osif_request *request = NULL;
-
-	hdd_debug("Status: %d", status);
-
-	request = osif_request_get(context);
-	if (!request) {
-		hdd_err("obselete request");
-		return;
-	}
-
-	/* Signal the completion of set dual mac config */
-	osif_request_complete(request);
-	osif_request_put(request);
-}
-
-/**
  * hdd_get_fw_version() - Get FW version
  * @hdd_ctx:     pointer to HDD context.
  * @major_spid:  FW version - major spid.

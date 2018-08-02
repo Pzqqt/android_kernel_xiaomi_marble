@@ -6565,6 +6565,34 @@ QDF_STATUS hdd_update_smps_antenna_mode(struct hdd_context *hdd_ctx, int mode)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * wlan_hdd_soc_set_antenna_mode_cb() - Callback for set antenna mode
+ * @status: Status of set antenna mode
+ * @context: callback context
+ *
+ * Callback on setting antenna mode
+ *
+ * Return: None
+ */
+static void
+wlan_hdd_soc_set_antenna_mode_cb(enum set_antenna_mode_status status,
+				 void *context)
+{
+	struct osif_request *request = NULL;
+
+	hdd_debug("Status: %d", status);
+
+	request = osif_request_get(context);
+	if (!request) {
+		hdd_err("obselete request");
+		return;
+	}
+
+	/* Signal the completion of set dual mac config */
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
 int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 				  struct hdd_context *hdd_ctx, int mode)
 {
