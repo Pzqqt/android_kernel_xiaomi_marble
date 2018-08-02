@@ -2264,14 +2264,14 @@ void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx);
 int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx);
 
 /**
- * hdd_bus_bandwidth_destroy() - Destroy bus bandwidth data structures.
+ * hdd_bus_bandwidth_deinit() - De-initialize bus bandwidth data structures.
  * @hdd_ctx: HDD context
  *
- * Destroy bus bandwidth related data structures like timer.
+ * De-initialize bus bandwidth related data structures like timer.
  *
  * Return: None.
  */
-void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx);
+void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_bus_bw_cancel_work() - Cancel the bus_bw_work worker
@@ -2315,7 +2315,7 @@ int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx)
 }
 
 static inline
-void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx)
+void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx)
 {
 }
 

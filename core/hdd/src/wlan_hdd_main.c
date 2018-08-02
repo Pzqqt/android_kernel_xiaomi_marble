@@ -6949,8 +6949,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_unregister_notifiers(hdd_ctx);
 
-	hdd_bus_bandwidth_destroy(hdd_ctx);
-
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	if (QDF_TIMER_STATE_RUNNING ==
 	    qdf_mc_timer_get_current_state(&hdd_ctx->skip_acs_scan_timer)) {
@@ -7012,6 +7010,7 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
+	hdd_bus_bandwidth_deinit(hdd_ctx);
 	hdd_driver_memdump_deinit();
 
 	qdf_nbuf_deinit_replenish_timer();
@@ -7715,7 +7714,7 @@ int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
-void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx)
+void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx)
 {
 	if (hdd_ctx->bus_bw_timer_running)
 		hdd_reset_tcp_delack(hdd_ctx);
@@ -11173,8 +11172,8 @@ int hdd_wlan_startup(struct device *dev)
 
 	osif_request_manager_init();
 	qdf_atomic_init(&hdd_ctx->con_mode_flag);
-
 	hdd_driver_memdump_init();
+	hdd_bus_bandwidth_init(hdd_ctx);
 
 	ret = hdd_wlan_start_modules(hdd_ctx, false);
 	if (ret) {
@@ -11236,8 +11235,6 @@ int hdd_wlan_startup(struct device *dev)
 	qdf_spinlock_create(&hdd_ctx->acs_skip_lock);
 #endif
 
-	hdd_bus_bandwidth_init(hdd_ctx);
-
 	hdd_lpass_notify_start(hdd_ctx);
 
 	if (hdd_ctx->rps)
@@ -11287,6 +11284,7 @@ err_stop_modules:
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
 err_memdump_deinit:
+	hdd_bus_bandwidth_deinit(hdd_ctx);
 	hdd_driver_memdump_deinit();
 
 	osif_request_manager_deinit();
