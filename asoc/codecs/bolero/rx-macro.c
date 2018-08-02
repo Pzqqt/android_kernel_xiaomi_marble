@@ -883,7 +883,8 @@ static int rx_macro_set_idle_detect_thr(struct snd_soc_codec *codec,
 					int interp, int path_type)
 {
 	int port_id[4] = { 0, 0, 0, 0 };
-	int *port_ptr = NULL, num_ports = NULL;
+	int *port_ptr = NULL;
+	int num_ports = 0;
 	int bit_width = 0, i = 0;
 	int mux_reg = 0, mux_reg_val = 0;
 	int dai_id = 0, idle_thr = 0;
