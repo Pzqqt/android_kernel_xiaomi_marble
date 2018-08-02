@@ -2197,6 +2197,7 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->tim_ie_offset = param->tim_ie_offset;
 	cmd->csa_switch_count_offset = param->csa_switch_count_offset;
 	cmd->ext_csa_switch_count_offset = param->ext_csa_switch_count_offset;
+	cmd->esp_ie_offset = param->esp_ie_offset;
 	cmd->buf_len = param->tmpl_len;
 	buf_ptr += sizeof(wmi_bcn_tmpl_cmd_fixed_param);
 
@@ -21853,6 +21854,35 @@ static QDF_STATUS extract_single_phyerr_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_esp_estimation_ev_param_tlv() - extract air time from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: Pointer to hold esp event
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_INVAL on failure
+ */
+static QDF_STATUS
+extract_esp_estimation_ev_param_tlv(wmi_unified_t wmi_handle,
+				    void *evt_buf,
+				    struct esp_estimation_event *param)
+{
+	WMI_ESP_ESTIMATE_EVENTID_param_tlvs *param_buf;
+	wmi_esp_estimate_event_fixed_param *esp_event;
+
+	param_buf = (WMI_ESP_ESTIMATE_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("Invalid ESP Estimate Event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+	esp_event = param_buf->fixed_param;
+	param->ac_airtime_percentage = esp_event->ac_airtime_percentage;
+	param->pdev_id = convert_target_pdev_id_to_host_pdev_id(
+				esp_event->pdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -22345,6 +22375,8 @@ struct wmi_ops tlv_ops =  {
 #ifdef QCA_SUPPORT_CP_STATS
 	.extract_cca_stats = extract_cca_stats_tlv,
 #endif
+	.extract_esp_estimation_ev_param =
+				extract_esp_estimation_ev_param_tlv,
 };
 
 /**
@@ -22639,6 +22671,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_apf_get_vdev_work_memory_resp_event_id] =
 		WMI_BPF_GET_VDEV_WORK_MEMORY_RESP_EVENTID;
 	event_ids[wmi_wlan_sar2_result_event_id] = WMI_SAR2_RESULT_EVENTID;
+	event_ids[wmi_esp_estimate_event_id] = WMI_ESP_ESTIMATE_EVENTID;
 }
 
 /**
@@ -23101,6 +23134,8 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_cck_tx_enable] = WMI_PDEV_PARAM_CCK_TX_ENABLE;
 	pdev_param[wmi_pdev_param_antenna_gain_half_db] =
 		WMI_PDEV_PARAM_ANTENNA_GAIN_HALF_DB;
+	pdev_param[wmi_pdev_param_esp_indication_period] =
+				WMI_PDEV_PARAM_ESP_INDICATION_PERIOD;
 }
 
 /**
