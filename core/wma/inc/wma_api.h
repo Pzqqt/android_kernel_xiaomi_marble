@@ -364,6 +364,7 @@ QDF_STATUS wma_crash_inject(WMA_HANDLE wma_handle, uint32_t type,
  */
 uint32_t wma_critical_events_in_flight(void);
 
+#ifdef FEATURE_WLAN_DYNAMIC_CVM
 /**
  * wma_set_vc_mode_config() - set voltage corner mode config to FW.
  * @wma_handle:	pointer to wma handle.
@@ -376,6 +377,7 @@ uint32_t wma_critical_events_in_flight(void);
  */
 QDF_STATUS wma_set_vc_mode_config(void *wma_handle,
 		uint32_t vc_bitmap);
+#endif
 
 QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE wma_handle,
 				tAniDHCPInd *ta_dhcp_ind);

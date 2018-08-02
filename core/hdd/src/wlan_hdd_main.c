@@ -10248,6 +10248,18 @@ static void wlan_hdd_p2p_lo_event_callback(void *context,
 			evt->vdev_id);
 }
 
+#ifdef FEATURE_WLAN_DYNAMIC_CVM
+static inline int hdd_set_vc_mode_config(struct hdd_context *hdd_ctx)
+{
+	return sme_set_vc_mode_config(hdd_ctx->config->vc_mode_cfg_bitmap);
+}
+#else
+static inline int hdd_set_vc_mode_config(struct hdd_context *hdd_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * hdd_adaptive_dwelltime_init() - initialization for adaptive dwell time config
  * @hdd_ctx: HDD context
@@ -10456,7 +10468,7 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	if (hdd_ctx->config->enable_go_cts2self_for_sta)
 		sme_set_cts2self_for_p2p_go(mac_handle);
 
-	if (sme_set_vc_mode_config(hdd_ctx->config->vc_mode_cfg_bitmap))
+	if (hdd_set_vc_mode_config(hdd_ctx))
 		hdd_warn("Error in setting Voltage Corner mode config to FW");
 
 	if (hdd_rx_ol_init(hdd_ctx))

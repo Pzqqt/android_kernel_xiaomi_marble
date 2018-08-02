@@ -53,6 +53,9 @@ CONFIG_FEATURE_EPPING := n
 CONFIG_WLAN_LOG_ENTER := n
 CONFIG_WLAN_LOG_EXIT := n
 
+#Flag to enable Dynamic Voltage WDCVS (Config Voltage Mode)
+CONFIG_WLAN_DYNAMIC_CVM := y
+
 # Features gets enabled on slub debug
 CONFIG_WLAN_OBJMGR_DEBUG:= n
 CONFIG_FEATURE_MEMDUMP_ENABLE := n

@@ -618,12 +618,14 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_LTE_COEX_MIN,
 		     CFG_ENABLE_LTE_COEX_MAX),
 
+#ifdef FEATURE_WLAN_DYNAMIC_CVM
 	REG_VARIABLE(CFG_VC_MODE_BITMAP, WLAN_PARAM_HexInteger,
 		struct hdd_config, vc_mode_cfg_bitmap,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		CFG_VC_MODE_BITMAP_DEFAULT,
 		CFG_VC_MODE_BITMAP_MIN,
 		CFG_VC_MODE_BITMAP_MAX),
+#endif
 
 	REG_VARIABLE(CFG_ENABLE_SAP_MANDATORY_CHAN_LIST, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_sap_mandatory_chan_list,

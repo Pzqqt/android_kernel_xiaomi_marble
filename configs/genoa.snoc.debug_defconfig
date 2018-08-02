@@ -71,6 +71,8 @@ endif
 
 # other features
 
+#Flag to enable Dynamic Voltage WDCVS (Config Voltage Mode)
+CONFIG_WLAN_DYNAMIC_CVM := y
 ifeq ($(CONFIG_CNSS2), y)
 ifeq ($(CONFIG_HIF_PCI), y)
 CONFIG_PLD_PCIE_CNSS_FLAG := y

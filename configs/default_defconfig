@@ -548,6 +548,9 @@ CONFIG_WLAN_NUD_TRACKING := y
 #Flag to enable set and get disable channel list feature
 CONFIG_DISABLE_CHANNEL_LIST :=y
 
+#Flag to enable Dynamic Voltage WDCVS (Config Voltage Mode)
+CONFIG_WLAN_DYNAMIC_CVM := y
+
 CONFIG_WIFI_POS_CONVERGED := y
 ifneq ($(CONFIG_WIFI_POS_CONVERGED), y)
 CONFIG_WIFI_POS_LEGACY := y

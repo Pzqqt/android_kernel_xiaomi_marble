@@ -2152,6 +2152,7 @@ QDF_STATUS sme_send_limit_off_channel_params(tHalHandle hal, uint8_t vdev_id,
 		bool is_tos_active, uint32_t max_off_chan_time,
 		uint32_t rest_time, bool skip_dfs_chan);
 
+#ifdef FEATURE_WLAN_DYNAMIC_CVM
 /**
  * sme_set_vc_mode_config() - Set voltage corner config to FW.
  * @bitmap:	Bitmap that refers to voltage corner config with
@@ -2160,6 +2161,7 @@ QDF_STATUS sme_send_limit_off_channel_params(tHalHandle hal, uint8_t vdev_id,
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_set_vc_mode_config(uint32_t vc_bitmap);
+#endif
 
 /**
  * sme_set_del_pmkid_cache() - API to update PMKID cache

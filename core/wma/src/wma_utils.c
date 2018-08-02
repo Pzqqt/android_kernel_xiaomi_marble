@@ -4523,6 +4523,7 @@ tSirWifiPeerType wmi_to_sir_peer_type(enum wmi_peer_type type)
 }
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
+#ifdef FEATURE_WLAN_DYNAMIC_CVM
 /**
  * wma_set_vc_mode_config() - set voltage corner mode config to FW.
  * @wma_handle:	pointer to wma handle.
@@ -4557,6 +4558,7 @@ QDF_STATUS wma_set_vc_mode_config(void *wma_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 int wma_chip_power_save_failure_detected_handler(void *handle,
 						 uint8_t  *cmd_param_info,

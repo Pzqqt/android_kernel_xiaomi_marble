@@ -15633,6 +15633,7 @@ void sme_display_disconnect_stats(tHalHandle hal, uint8_t session_id)
 		      session->disconnect_stats.peer_kickout);
 }
 
+#ifdef FEATURE_WLAN_DYNAMIC_CVM
  /**
  * sme_set_vc_mode_config() - Set voltage corner config to FW
  * @bitmap:	Bitmap that referes to voltage corner config with
@@ -15659,6 +15660,7 @@ QDF_STATUS sme_set_vc_mode_config(uint32_t vc_bitmap)
 	}
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 /**
  * sme_set_bmiss_bcnt() - set bmiss config parameters

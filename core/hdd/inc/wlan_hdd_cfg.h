@@ -13926,8 +13926,10 @@ struct hdd_config {
 	/* length includes separator */
 	char rm_capability[3 * DOT11F_IE_RRMENABLEDCAP_MAX_LEN];
 
+#ifdef FEATURE_WLAN_DYNAMIC_CVM
 	/* Bitmap for operating voltage corner mode */
 	uint32_t vc_mode_cfg_bitmap;
+#endif
 
 #ifdef MWS_COEX
 	/* Bitmap for MWS-COEX 4G Quick FTDM */

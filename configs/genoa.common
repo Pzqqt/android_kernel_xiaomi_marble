@@ -45,6 +45,10 @@ CONFIG_WLAN_FEATURE_DSRC := n
 CONFIG_FEATURE_MONITOR_MODE_SUPPORT := n
 CONFIG_DP_TRACE := y
 CONFIG_QCACLD_FEATURE_METERING := n
+
+#Flag to enable Dynamic Voltage WDCVS (Config Voltage Mode)
+CONFIG_WLAN_DYNAMIC_CVM := n
+
 #We might need to disable WEXT support in perf builds in future
 CONFIG_WLAN_WEXT_SUPPORT_ENABLE := y
 
