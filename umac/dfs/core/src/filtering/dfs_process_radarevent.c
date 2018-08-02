@@ -1269,8 +1269,7 @@ static inline void dfs_false_radarfound_reset_vars(
 	dfs->dfs_phyerr_w53_counter  = 0;
 }
 
-void dfs_radarfound_action_generic(struct wlan_dfs *dfs,
-		uint8_t seg_id, int false_radar_found)
+void dfs_radarfound_action_generic(struct wlan_dfs *dfs, uint8_t seg_id)
 {
 	struct radar_found_info *radar_found;
 
@@ -1288,15 +1287,11 @@ void dfs_radarfound_action_generic(struct wlan_dfs *dfs,
 
 	dfs_process_radar_ind(dfs, radar_found);
 	qdf_mem_free(radar_found);
-
-	if (false_radar_found)
-		dfs_false_radarfound_reset_vars(dfs);
 }
 
 void dfs_radar_found_action(struct wlan_dfs *dfs,
 			    bool bangradar,
-			    uint8_t seg_id,
-			    int false_radar_found)
+			    uint8_t seg_id)
 {
 	/* If Host DFS confirmation is supported, save the curchan as
 	 * radar found chan, send radar found indication along with
@@ -1306,9 +1301,9 @@ void dfs_radar_found_action(struct wlan_dfs *dfs,
 	if (!bangradar &&
 	    (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_FCC_DOMAIN) &&
 	    lmac_is_host_dfs_check_support_enabled(dfs->dfs_pdev_obj)) {
-		dfs_radarfound_action_fcc(dfs, seg_id, false_radar_found);
+		dfs_radarfound_action_fcc(dfs, seg_id);
 	} else {
-		dfs_radarfound_action_generic(dfs, seg_id, false_radar_found);
+		dfs_radarfound_action_generic(dfs, seg_id);
 	}
 }
 
@@ -1343,8 +1338,9 @@ void dfs_process_radarevent(
 dfsfound:
 	if (retval) {
 		dfs_radarfound_reset_vars(dfs, rs, chan, seg_id);
-		dfs_radar_found_action(dfs, bangradar, seg_id,
-				       false_radar_found);
+		dfs_radar_found_action(dfs, bangradar, seg_id);
 	}
 
+	if (false_radar_found)
+		dfs_false_radarfound_reset_vars(dfs);
 }

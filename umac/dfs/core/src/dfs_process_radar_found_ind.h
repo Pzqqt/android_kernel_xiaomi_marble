@@ -126,12 +126,10 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
  * for domains other than FCC.
  * @dfs: Pointer to wlan_dfs structure.
  * @seg_id: segment id.
- * @false_radar_found: Indicates detection of false radar.
  *
  * Return: None
  */
-void dfs_radarfound_action_generic(struct wlan_dfs *dfs,
-				   uint8_t seg_id, int false_radar_found);
+void dfs_radarfound_action_generic(struct wlan_dfs *dfs, uint8_t seg_id);
 
 /**
  * dfs_get_bonding_channels() - Get bonding channels.

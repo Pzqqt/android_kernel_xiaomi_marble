@@ -967,7 +967,6 @@ struct dfs_event_log {
  * @dfs_spoof_check_failed:          Indicates if the spoof check has failed.
  * @dfs_spoof_test_done:             Indicates if the sppof test is done.
  * @dfs_seg_id:                      Segment ID of the radar hit channel.
- * @dfs_false_radar_found:           Indicates if false radar is found.
  * @dfs_status_timeout_override:     Used to change the timeout value of
  *                                   dfs_host_wait_timer.
  */
@@ -1089,7 +1088,6 @@ struct wlan_dfs {
 				   dfs_spoof_check_failed:1,
 				   dfs_spoof_test_done:1;
 	uint8_t        dfs_seg_id;
-	int            dfs_false_radar_found;
 	struct dfs_channel dfs_radar_found_chan;
 	int            dfs_status_timeout_override;
 #endif
@@ -2242,12 +2240,10 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
  * @dfs: Pointer to wlan_dfs structure.
  * @bangradar: true if radar is due to bangradar command.
  * @seg_id: Segment id.
- * @false_radar_found: value is 1 if false radar is found.
  */
 void dfs_radar_found_action(struct wlan_dfs *dfs,
 			    bool bangradar,
-			    uint8_t seg_id,
-			    int false_radar_found);
+			    uint8_t seg_id);
 
 /**
  * bin5_rules_check_internal() - This is a extension of dfs_bin5_check().
