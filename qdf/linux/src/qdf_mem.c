@@ -269,12 +269,11 @@ qdf_mem_header_assert_valid(struct qdf_mem_header *header,
 		qdf_err("Corrupted memory domain 0x%x", header->domain);
 
 	if (error_bitmap & QDF_MEM_WRONG_DOMAIN)
-		qdf_err("Memory domain mismatch; found %s(%d), expected %s(%d)",
+		qdf_err("Memory domain mismatch; allocated:%s(%d), current:%s(%d)",
 			qdf_debug_domain_name(header->domain), header->domain,
 			qdf_debug_domain_name(current_domain), current_domain);
 
-	panic("A fatal memory error was detected @ %s:%d",
-	      file, line);
+	QDF_DEBUG_PANIC("Fatal memory error detected @ %s:%d", file, line);
 }
 #endif /* MEMORY_DEBUG */
 
