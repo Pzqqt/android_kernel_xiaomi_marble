@@ -3118,16 +3118,10 @@ bool policy_mgr_dual_beacon_on_single_mac_scc_capable(
 	if (wmi_service_enabled(
 			wmi_handle,
 			wmi_service_dual_beacon_on_single_mac_scc_support)) {
-		policy_mgr_debug("Support dual beacon on same channel on single MAC");
+		policy_mgr_debug("Dual beaconing on same channel on single MAC supported");
 		return true;
 	}
-	if (wmi_service_enabled(
-			wmi_handle,
-			wmi_service_dual_beacon_on_single_mac_mcc_support)) {
-		policy_mgr_debug("Support dual beacon on both different and same channel on single MAC");
-		return true;
-	}
-	policy_mgr_debug("Not support dual beacon on same channel on single MAC");
+	policy_mgr_debug("Dual beaconing on same channel on single MAC is not supported");
 	return false;
 }
 
@@ -3145,10 +3139,10 @@ bool policy_mgr_dual_beacon_on_single_mac_mcc_capable(
 	if (wmi_service_enabled(
 			wmi_handle,
 			wmi_service_dual_beacon_on_single_mac_mcc_support)) {
-		policy_mgr_debug("Support dual beacon on different channel on single MAC");
+		policy_mgr_debug("Dual beaconing on different channel on single MAC supported");
 		return true;
 	}
-	policy_mgr_debug("Not support dual beacon on different channel on single MAC");
+	policy_mgr_debug("Dual beaconing on different channel on single MAC is not supported");
 	return false;
 }
 
