@@ -224,6 +224,11 @@ void qdf_mem_free_consistent(qdf_device_t osdev, void *dev,
 
 void *qdf_mem_alloc_outline(qdf_device_t osdev, qdf_size_t size);
 
+void qdf_mem_set_io(void *ptr, uint32_t num_bytes, uint32_t value);
+
+void qdf_mem_copy_toio(void *dst_addr, const void *src_addr,
+					   uint32_t num_bytes);
+
 void qdf_mem_set(void *ptr, uint32_t num_bytes, uint32_t value);
 
 void qdf_mem_zero(void *ptr, uint32_t num_bytes);

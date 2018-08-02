@@ -1511,6 +1511,52 @@ void qdf_mem_zero(void *ptr, uint32_t num_bytes)
 qdf_export_symbol(qdf_mem_zero);
 
 /**
+ * qdf_mem_copy_toio() - copy memory
+ * @dst_addr: Pointer to destination memory location (to copy to)
+ * @src_addr: Pointer to source memory location (to copy from)
+ * @num_bytes: Number of bytes to copy.
+ *
+ * Return: none
+ */
+void qdf_mem_copy_toio(void *dst_addr, const void *src_addr, uint32_t num_bytes)
+{
+	if (0 == num_bytes) {
+		/* special case where dst_addr or src_addr can be NULL */
+		return;
+	}
+
+	if ((!dst_addr) || (!src_addr)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s called with NULL parameter, source:%pK destination:%pK",
+			  __func__, src_addr, dst_addr);
+		QDF_ASSERT(0);
+		return;
+	}
+	memcpy_toio(dst_addr, src_addr, num_bytes);
+}
+
+qdf_export_symbol(qdf_mem_copy_toio);
+
+/**
+ * qdf_mem_set_io() - set (fill) memory with a specified byte value.
+ * @ptr: Pointer to memory that will be set
+ * @value: Byte set in memory
+ * @num_bytes: Number of bytes to be set
+ *
+ * Return: None
+ */
+void qdf_mem_set_io(void *ptr, uint32_t num_bytes, uint32_t value)
+{
+	if (!ptr) {
+		qdf_print("%s called with NULL parameter ptr", __func__);
+		return;
+	}
+	memset_io(ptr, value, num_bytes);
+}
+
+qdf_export_symbol(qdf_mem_set_io);
+
+/**
  * qdf_mem_set() - set (fill) memory with a specified byte value.
  * @ptr: Pointer to memory that will be set
  * @num_bytes: Number of bytes to be set
