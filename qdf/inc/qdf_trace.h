@@ -40,6 +40,20 @@
 
 #define QDF_TRACE_BUFFER_SIZE (512)
 
+/*
+ * Extracts the 8-bit group id from the wmi command id by performing the
+ * reverse operation of WMI_CMD_GRP_START_ID
+ */
+#define QDF_WMI_MTRACE_GRP_ID(message_id) (((message_id) >> 12) & 0xFF)
+/*
+ * Number of bits reserved for WMI mtrace command id
+ */
+ #define QDF_WMI_MTRACE_CMD_NUM_BITS 7
+/*
+ * Extracts the 7-bit group specific command id from the wmi command id
+ */
+#define QDF_WMI_MTRACE_CMD_ID(message_id) ((message_id) & 0x7F)
+
 #ifdef CONFIG_MCL
 #define QDF_DEFAULT_TRACE_LEVEL \
 	((1 << QDF_TRACE_LEVEL_FATAL) | (1 << QDF_TRACE_LEVEL_ERROR))
