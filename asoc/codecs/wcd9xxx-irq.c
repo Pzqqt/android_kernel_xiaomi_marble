@@ -295,6 +295,7 @@ static irqreturn_t wcd9xxx_irq_thread(int irq, void *data)
 	static DEFINE_RATELIMIT_STATE(ratelimit, 5 * HZ, 1);
 	struct wcd9xxx_core_resource *wcd9xxx_res = data;
 	int num_irq_regs = wcd9xxx_res->num_irq_regs;
+	struct wcd9xxx *wcd9xxx;
 	u8 status[4], status1[4] = {0}, unmask_status[4] = {0};
 
 	if (unlikely(wcd9xxx_lock_sleep(wcd9xxx_res) == false)) {
@@ -307,6 +308,23 @@ static irqreturn_t wcd9xxx_irq_thread(int irq, void *data)
 			"%s: Codec core regmap not supplied\n",
 			   __func__);
 		goto err_disable_irq;
+	}
+
+	wcd9xxx = (struct wcd9xxx *)wcd9xxx_res->parent;
+	if (!wcd9xxx) {
+		dev_err(wcd9xxx_res->dev,
+			"%s: Codec core not supplied\n", __func__);
+		goto err_disable_irq;
+	}
+
+	if (!wcd9xxx->dev_up) {
+		dev_info_ratelimited(wcd9xxx_res->dev, "wcd9xxx dev not up\n");
+		/*
+		 * sleep to not block the core when device is
+		 * not up (slimbus will not be available) to
+		 * process interrupts.
+		 */
+		msleep(10);
 	}
 
 	memset(status, 0, sizeof(status));
