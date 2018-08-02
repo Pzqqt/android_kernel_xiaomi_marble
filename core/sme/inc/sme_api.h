@@ -806,9 +806,11 @@ QDF_STATUS sme_roam_del_pmkid_from_cache(tHalHandle hHal, uint8_t sessionId,
 		tPmkidCacheInfo *pmksa, bool flush_cache);
 void sme_get_command_q_status(tHalHandle hHal);
 
+#ifdef FEATURE_WLAN_RMC
 QDF_STATUS sme_enable_rmc(tHalHandle hHal, uint32_t sessionId);
 QDF_STATUS sme_disable_rmc(tHalHandle hHal, uint32_t sessionId);
 QDF_STATUS sme_send_rmc_action_period(tHalHandle hHal, uint32_t sessionId);
+#endif
 QDF_STATUS sme_request_ibss_peer_info(tHalHandle hHal, void *pUserData,
 	pIbssPeerInfoCb peerInfoCbk, bool allPeerInfoReqd, uint8_t staIdx);
 QDF_STATUS sme_send_cesium_enable_ind(tHalHandle hHal, uint32_t sessionId);

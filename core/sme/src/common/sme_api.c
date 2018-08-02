@@ -8475,6 +8475,7 @@ sme_del_periodic_tx_ptrn(tHalHandle hal,
 	return status;
 }
 
+#ifdef FEATURE_WLAN_RMC
 /*
  * sme_enable_rmc() - enables RMC
  * @hHal : Pointer to global HAL handle
@@ -8572,6 +8573,7 @@ QDF_STATUS sme_send_rmc_action_period(tHalHandle hHal, uint32_t sessionId)
 
 	return status;
 }
+#endif /* FEATURE_WLAN_RMC */
 
 /*
  * sme_request_ibss_peer_info() -  request ibss peer info
@@ -9839,7 +9841,7 @@ QDF_STATUS sme_send_rate_update_ind(tHalHandle hHal,
 		if (!QDF_IS_STATUS_SUCCESS
 			    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Not able to post WMA_SET_RMC_RATE_IND to WMA!",
+				  "%s: Not able to post WMA_RATE_UPDATE_IND to WMA!",
 				  __func__);
 
 			sme_release_global_lock(&pMac->sme);

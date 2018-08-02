@@ -3439,6 +3439,7 @@ QDF_STATUS wma_process_tx_fail_monitor_ind(tp_wma_handle wma,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_WLAN_RMC
 /**
  * wma_process_rmc_enable_ind() - enables RMC functionality in target
  * @wma: wma handle
@@ -3608,6 +3609,7 @@ QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif /* FEATURE_WLAN_RMC */
 
 /**
  * wma_process_add_periodic_tx_ptrn_ind - add periodic tx ptrn

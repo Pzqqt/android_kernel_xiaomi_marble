@@ -980,11 +980,31 @@ QDF_STATUS wma_process_get_peer_info_req
 QDF_STATUS wma_process_tx_fail_monitor_ind
 	(tp_wma_handle wma, tAniTXFailMonitorInd *pReq);
 
+#ifdef FEATURE_WLAN_RMC
 QDF_STATUS wma_process_rmc_enable_ind(tp_wma_handle wma);
 
 QDF_STATUS wma_process_rmc_disable_ind(tp_wma_handle wma);
 
 QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma);
+#else
+static inline
+QDF_STATUS wma_process_rmc_enable_ind(tp_wma_handle wma)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS wma_process_rmc_disable_ind(tp_wma_handle wma)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 						tSirAddPeriodicTxPtrn *

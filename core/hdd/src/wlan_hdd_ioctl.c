@@ -238,150 +238,6 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
 }
 #endif /*FEATURE_WLAN_ESE */
 
-/* Function header is left blank intentionally */
-static int hdd_parse_setrmcenable_command(uint8_t *pValue,
-					  uint8_t *pRmcEnable)
-{
-	uint8_t *inPtr = pValue;
-	int tempInt;
-	int v = 0;
-	char buf[32];
-	*pRmcEnable = 0;
-
-	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
-
-	if (NULL == inPtr)
-		return 0;
-	else if (SPACE_ASCII_VALUE != *inPtr)
-		return 0;
-
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
-
-	if ('\0' == *inPtr)
-		return 0;
-
-	v = sscanf(inPtr, "%31s ", buf);
-	if (1 != v)
-		return -EINVAL;
-
-	v = kstrtos32(buf, 10, &tempInt);
-	if (v < 0)
-		return -EINVAL;
-
-	*pRmcEnable = tempInt;
-
-	hdd_debug("ucRmcEnable: %d", *pRmcEnable);
-
-	return 0;
-}
-
-/* Function header is left blank intentionally */
-static int hdd_parse_setrmcactionperiod_command(uint8_t *pValue,
-						uint32_t *pActionPeriod)
-{
-	uint8_t *inPtr = pValue;
-	int tempInt;
-	int v = 0;
-	char buf[32];
-	*pActionPeriod = 0;
-
-	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
-
-	if (NULL == inPtr)
-		return -EINVAL;
-	else if (SPACE_ASCII_VALUE != *inPtr)
-		return -EINVAL;
-
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
-
-	if ('\0' == *inPtr)
-		return 0;
-
-	v = sscanf(inPtr, "%31s ", buf);
-	if (1 != v)
-		return -EINVAL;
-
-	v = kstrtos32(buf, 10, &tempInt);
-	if (v < 0)
-		return -EINVAL;
-
-	if ((tempInt < WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STAMIN) ||
-	    (tempInt > WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STAMAX))
-		return -EINVAL;
-
-	*pActionPeriod = tempInt;
-
-	hdd_debug("uActionPeriod: %d", *pActionPeriod);
-
-	return 0;
-}
-
-/* Function header is left blank intentionally */
-static int hdd_parse_setrmcrate_command(uint8_t *pValue,
-					uint32_t *pRate,
-					enum tx_rate_info *pTxFlags)
-{
-	uint8_t *inPtr = pValue;
-	int tempInt;
-	int v = 0;
-	char buf[32];
-	*pRate = 0;
-	*pTxFlags = 0;
-
-	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
-
-	if (NULL == inPtr)
-		return -EINVAL;
-	else if (SPACE_ASCII_VALUE != *inPtr)
-		return -EINVAL;
-
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
-
-	if ('\0' == *inPtr)
-		return 0;
-
-	v = sscanf(inPtr, "%31s ", buf);
-	if (1 != v)
-		return -EINVAL;
-
-	v = kstrtos32(buf, 10, &tempInt);
-	if (v < 0)
-		return -EINVAL;
-
-	switch (tempInt) {
-	default:
-		hdd_warn("Unsupported rate: %d", tempInt);
-		return -EINVAL;
-	case 0:
-	case 6:
-	case 9:
-	case 12:
-	case 18:
-	case 24:
-	case 36:
-	case 48:
-	case 54:
-		*pTxFlags = TX_RATE_LEGACY;
-		*pRate = tempInt * 10;
-		break;
-	case 65:
-		*pTxFlags = TX_RATE_HT20;
-		*pRate = tempInt * 10;
-		break;
-	case 72:
-		*pTxFlags = TX_RATE_HT20 | TX_RATE_SGI;
-		*pRate = 722;
-		break;
-	}
-
-	hdd_debug("Rate: %d", *pRate);
-
-	return 0;
-}
-
 /**
  * hdd_get_ibss_peer_info_cb() - IBSS peer Info request callback
  * @UserData: Adapter private data
@@ -5012,6 +4868,151 @@ exit:
 	return ret;
 }
 
+#ifdef FEATURE_WLAN_RMC
+/* Function header is left blank intentionally */
+static int hdd_parse_setrmcenable_command(uint8_t *pValue,
+					  uint8_t *pRmcEnable)
+{
+	uint8_t *inPtr = pValue;
+	int tempInt;
+	int v = 0;
+	char buf[32];
+	*pRmcEnable = 0;
+
+	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+
+	if (NULL == inPtr)
+		return 0;
+	else if (SPACE_ASCII_VALUE != *inPtr)
+		return 0;
+
+	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
+		inPtr++;
+
+	if ('\0' == *inPtr)
+		return 0;
+
+	v = sscanf(inPtr, "%31s ", buf);
+	if (1 != v)
+		return -EINVAL;
+
+	v = kstrtos32(buf, 10, &tempInt);
+	if (v < 0)
+		return -EINVAL;
+
+	*pRmcEnable = tempInt;
+
+	hdd_debug("ucRmcEnable: %d", *pRmcEnable);
+
+	return 0;
+}
+
+/* Function header is left blank intentionally */
+static int hdd_parse_setrmcactionperiod_command(uint8_t *pValue,
+						uint32_t *pActionPeriod)
+{
+	uint8_t *inPtr = pValue;
+	int tempInt;
+	int v = 0;
+	char buf[32];
+	*pActionPeriod = 0;
+
+	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+
+	if (NULL == inPtr)
+		return -EINVAL;
+	else if (SPACE_ASCII_VALUE != *inPtr)
+		return -EINVAL;
+
+	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
+		inPtr++;
+
+	if ('\0' == *inPtr)
+		return 0;
+
+	v = sscanf(inPtr, "%31s ", buf);
+	if (1 != v)
+		return -EINVAL;
+
+	v = kstrtos32(buf, 10, &tempInt);
+	if (v < 0)
+		return -EINVAL;
+
+	if ((tempInt < WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STAMIN) ||
+	    (tempInt > WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STAMAX))
+		return -EINVAL;
+
+	*pActionPeriod = tempInt;
+
+	hdd_debug("uActionPeriod: %d", *pActionPeriod);
+
+	return 0;
+}
+
+/* Function header is left blank intentionally */
+static int hdd_parse_setrmcrate_command(uint8_t *pValue,
+					uint32_t *pRate,
+					enum tx_rate_info *pTxFlags)
+{
+	uint8_t *inPtr = pValue;
+	int tempInt;
+	int v = 0;
+	char buf[32];
+	*pRate = 0;
+	*pTxFlags = 0;
+
+	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+
+	if (NULL == inPtr)
+		return -EINVAL;
+	else if (SPACE_ASCII_VALUE != *inPtr)
+		return -EINVAL;
+
+	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
+		inPtr++;
+
+	if ('\0' == *inPtr)
+		return 0;
+
+	v = sscanf(inPtr, "%31s ", buf);
+	if (1 != v)
+		return -EINVAL;
+
+	v = kstrtos32(buf, 10, &tempInt);
+	if (v < 0)
+		return -EINVAL;
+
+	switch (tempInt) {
+	default:
+		hdd_warn("Unsupported rate: %d", tempInt);
+		return -EINVAL;
+	case 0:
+	case 6:
+	case 9:
+	case 12:
+	case 18:
+	case 24:
+	case 36:
+	case 48:
+	case 54:
+		*pTxFlags = TX_RATE_LEGACY;
+		*pRate = tempInt * 10;
+		break;
+	case 65:
+		*pTxFlags = TX_RATE_HT20;
+		*pRate = tempInt * 10;
+		break;
+	case 72:
+		*pTxFlags = TX_RATE_HT20 | TX_RATE_SGI;
+		*pRate = 722;
+		break;
+	}
+
+	hdd_debug("Rate: %d", *pRate);
+
+	return 0;
+}
+
 static int drv_cmd_set_rmc_enable(struct hdd_adapter *adapter,
 				  struct hdd_context *hdd_ctx,
 				  uint8_t *command,
@@ -5117,6 +5118,60 @@ static int drv_cmd_set_rmc_action_period(struct hdd_adapter *adapter,
 exit:
 	return ret;
 }
+
+static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
+				   struct hdd_context *hdd_ctx,
+				   uint8_t *command,
+				   uint8_t command_len,
+				   struct hdd_priv_data *priv_data)
+{
+	int ret = 0;
+	uint8_t *value = command;
+	uint32_t uRate = 0;
+	enum tx_rate_info txFlags = 0;
+	tSirRateUpdateInd rateUpdateParams = {0};
+	int status;
+	struct hdd_config *pConfig = hdd_ctx->config;
+
+	if ((QDF_IBSS_MODE != adapter->device_mode) &&
+	    (QDF_SAP_MODE != adapter->device_mode)) {
+		hdd_err("Received SETRMCTXRATE cmd in invalid mode %s(%d)",
+			 hdd_device_mode_to_string(adapter->device_mode),
+			 adapter->device_mode);
+		hdd_err("SETRMCTXRATE cmd is allowed only in IBSS/SOFTAP mode");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	status = hdd_parse_setrmcrate_command(value, &uRate, &txFlags);
+	if (status) {
+		hdd_err("Invalid SETRMCTXRATE command");
+		ret = -EINVAL;
+		goto exit;
+	}
+	hdd_debug("uRate %d", uRate);
+	/* -1 implies ignore this param */
+	rateUpdateParams.ucastDataRate = -1;
+
+	/*
+	 * Fill the user specifieed RMC rate param
+	 * and the derived tx flags.
+	 */
+	rateUpdateParams.nss = (pConfig->enable2x2 == 0) ? 0 : 1;
+	rateUpdateParams.reliableMcastDataRate = uRate;
+	rateUpdateParams.reliableMcastDataRateTxFlag = txFlags;
+	rateUpdateParams.dev_mode = adapter->device_mode;
+	rateUpdateParams.bcastDataRate = -1;
+	memcpy(rateUpdateParams.bssid.bytes,
+	       adapter->mac_addr.bytes,
+	       sizeof(rateUpdateParams.bssid));
+	status = sme_send_rate_update_ind(hdd_ctx->mac_handle,
+					  &rateUpdateParams);
+
+exit:
+	return ret;
+}
+#endif /* FEATURE_WLAN_RMC */
 
 static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 					  struct hdd_context *hdd_ctx,
@@ -5326,59 +5381,6 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	/* Success ! */
 	hdd_debug("%s", extra);
 	ret = 0;
-
-exit:
-	return ret;
-}
-
-static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
-				   struct hdd_context *hdd_ctx,
-				   uint8_t *command,
-				   uint8_t command_len,
-				   struct hdd_priv_data *priv_data)
-{
-	int ret = 0;
-	uint8_t *value = command;
-	uint32_t uRate = 0;
-	enum tx_rate_info txFlags = 0;
-	tSirRateUpdateInd rateUpdateParams = {0};
-	int status;
-	struct hdd_config *pConfig = hdd_ctx->config;
-
-	if ((QDF_IBSS_MODE != adapter->device_mode) &&
-	    (QDF_SAP_MODE != adapter->device_mode)) {
-		hdd_err("Received SETRMCTXRATE cmd in invalid mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
-			 adapter->device_mode);
-		hdd_err("SETRMCTXRATE cmd is allowed only in IBSS/SOFTAP mode");
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	status = hdd_parse_setrmcrate_command(value, &uRate, &txFlags);
-	if (status) {
-		hdd_err("Invalid SETRMCTXRATE command");
-		ret = -EINVAL;
-		goto exit;
-	}
-	hdd_debug("uRate %d", uRate);
-	/* -1 implies ignore this param */
-	rateUpdateParams.ucastDataRate = -1;
-
-	/*
-	 * Fill the user specifieed RMC rate param
-	 * and the derived tx flags.
-	 */
-	rateUpdateParams.nss = (pConfig->enable2x2 == 0) ? 0 : 1;
-	rateUpdateParams.reliableMcastDataRate = uRate;
-	rateUpdateParams.reliableMcastDataRateTxFlag = txFlags;
-	rateUpdateParams.dev_mode = adapter->device_mode;
-	rateUpdateParams.bcastDataRate = -1;
-	memcpy(rateUpdateParams.bssid.bytes,
-	       adapter->mac_addr.bytes,
-	       sizeof(rateUpdateParams.bssid));
-	status = sme_send_rate_update_ind(hdd_ctx->mac_handle,
-					  &rateUpdateParams);
 
 exit:
 	return ret;
@@ -7353,11 +7355,13 @@ static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 	{"SETDWELLTIME",              drv_cmd_set_dwell_time, true},
 	{"MIRACAST",                  drv_cmd_miracast, true},
 	{"SETIBSSBEACONOUIDATA",      drv_cmd_set_ibss_beacon_oui_data, true},
+#ifdef FEATURE_WLAN_RMC
 	{"SETRMCENABLE",              drv_cmd_set_rmc_enable, true},
 	{"SETRMCACTIONPERIOD",        drv_cmd_set_rmc_action_period, true},
+	{"SETRMCTXRATE",              drv_cmd_set_rmc_tx_rate, true},
+#endif
 	{"GETIBSSPEERINFOALL",        drv_cmd_get_ibss_peer_info_all, false},
 	{"GETIBSSPEERINFO",           drv_cmd_get_ibss_peer_info, true},
-	{"SETRMCTXRATE",              drv_cmd_set_rmc_tx_rate, true},
 	{"SETIBSSTXFAILEVENT",        drv_cmd_set_ibss_tx_fail_event, true},
 #ifdef FEATURE_WLAN_ESE
 	{"SETCCXROAMSCANCHANNELS",    drv_cmd_set_ccx_roam_scan_channels, true},
