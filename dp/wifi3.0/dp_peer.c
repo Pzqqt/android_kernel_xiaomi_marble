@@ -1521,7 +1521,7 @@ static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 
 	qdf_mem_zero(&params, sizeof(params));
 
-	params.std.need_status = 0;
+	params.std.need_status = 1;
 	params.std.addr_lo = rx_tid->hw_qdesc_paddr & 0xffffffff;
 	params.std.addr_hi = (uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
 	params.u.upd_queue_params.update_vld = 1;

@@ -102,7 +102,9 @@ inline int hal_reo_cmd_queue_stats(void *reo_ring, struct hal_soc *soc,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)reo_desc, sizeof(struct reo_get_queue_stats));
+	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+		     sizeof(struct reo_get_queue_stats) -
+		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
 	HAL_DESC_SET_FIELD(reo_desc, UNIFORM_REO_CMD_HEADER_0,
 		REO_STATUS_REQUIRED, cmd->std.need_status);
@@ -142,7 +144,9 @@ inline int hal_reo_cmd_flush_queue(void *reo_ring, struct hal_soc *soc,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)reo_desc, sizeof(struct reo_flush_queue));
+	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+		     sizeof(struct reo_flush_queue) -
+		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
 	HAL_DESC_SET_FIELD(reo_desc, UNIFORM_REO_CMD_HEADER_0,
 		REO_STATUS_REQUIRED, cmd->std.need_status);
@@ -207,7 +211,9 @@ inline int hal_reo_cmd_flush_cache(void *reo_ring, struct hal_soc *soc,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)reo_desc, sizeof(struct reo_flush_cache));
+	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+		     sizeof(struct reo_flush_cache) -
+		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
 	HAL_DESC_SET_FIELD(reo_desc, UNIFORM_REO_CMD_HEADER_0,
 		REO_STATUS_REQUIRED, cmd->std.need_status);
@@ -277,7 +283,9 @@ inline int hal_reo_cmd_unblock_cache(void *reo_ring, struct hal_soc *soc,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)reo_desc, sizeof(struct reo_unblock_cache));
+	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+		     sizeof(struct reo_unblock_cache) -
+		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
 	HAL_DESC_SET_FIELD(reo_desc, UNIFORM_REO_CMD_HEADER_0,
 		REO_STATUS_REQUIRED, cmd->std.need_status);
@@ -318,7 +326,9 @@ inline int hal_reo_cmd_flush_timeout_list(void *reo_ring, struct hal_soc *soc,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)reo_desc, sizeof(struct reo_flush_timeout_list));
+	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+		     sizeof(struct reo_flush_timeout_list) -
+		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
 	HAL_DESC_SET_FIELD(reo_desc, UNIFORM_REO_CMD_HEADER_0,
 		REO_STATUS_REQUIRED, cmd->std.need_status);
@@ -364,7 +374,9 @@ inline int hal_reo_cmd_update_rx_queue(void *reo_ring, struct hal_soc *soc,
 	/* Offsets of descriptor fields defined in HW headers start from
 	 * the field after TLV header */
 	reo_desc += (sizeof(struct tlv_32_hdr) >> 2);
-	qdf_mem_zero((void *)reo_desc, sizeof(struct reo_update_rx_reo_queue));
+	qdf_mem_zero((void *)(reo_desc + NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER),
+		     sizeof(struct reo_update_rx_reo_queue) -
+		     (NUM_OF_DWORDS_UNIFORM_REO_CMD_HEADER << 2));
 
 	HAL_DESC_SET_FIELD(reo_desc, UNIFORM_REO_CMD_HEADER_0,
 		REO_STATUS_REQUIRED, cmd->std.need_status);
