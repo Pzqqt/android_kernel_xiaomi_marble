@@ -80,6 +80,7 @@ do {                                                             \
 
 #define HTT_FRAMECTRL_DATATYPE 0x08
 #define HTT_PPDU_DESC_MAX_DEPTH 16
+#define DP_SCAN_PEER_ID 0xFFFF
 
 /*
  * dp_tx_stats_update() - Update per-peer statistics
@@ -1718,17 +1719,25 @@ static void dp_process_ppdu_stats_user_common_tlv(
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
 	uint8_t curr_user_index = 0;
 
-	ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
+	ppdu_desc =
+		(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
 
 	tag_buf++;
-	peer_id = HTT_PPDU_STATS_USER_COMMON_TLV_SW_PEER_ID_GET(*tag_buf);
-	peer = dp_peer_find_by_id(pdev->soc, peer_id);
+	peer_id = HTT_PPDU_STATS_USER_RATE_TLV_SW_PEER_ID_GET(*tag_buf);
 
-	if (!peer)
-		return;
-
-	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
+	curr_user_index =
+		dp_get_ppdu_info_user_index(pdev,
+					    peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
+
+	if (peer_id == DP_SCAN_PEER_ID) {
+		ppdu_desc->vdev_id =
+			HTT_PPDU_STATS_USER_COMMON_TLV_VAP_ID_GET(*tag_buf);
+	} else {
+		peer = dp_peer_find_by_id(pdev->soc, peer_id);
+		if (!peer)
+			return;
+	}
 
 	ppdu_user_desc->peer_id = peer_id;
 
@@ -1781,31 +1790,42 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
 	uint8_t curr_user_index = 0;
+	struct dp_vdev *vdev;
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
 
 	tag_buf++;
 	peer_id = HTT_PPDU_STATS_USER_RATE_TLV_SW_PEER_ID_GET(*tag_buf);
-	peer = dp_peer_find_by_id(pdev->soc, peer_id);
 
-	if (!peer)
-		return;
-
-	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
-
+	curr_user_index =
+		dp_get_ppdu_info_user_index(pdev,
+					    peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
+
+	if (peer_id == DP_SCAN_PEER_ID) {
+		vdev =
+		       dp_get_vdev_from_soc_vdev_id_wifi3(pdev->soc,
+							  ppdu_desc->vdev_id);
+		qdf_mem_copy(ppdu_user_desc->mac_addr, vdev->mac_addr.raw,
+			     DP_MAC_ADDR_LEN);
+	} else {
+		peer = dp_peer_find_by_id(pdev->soc, peer_id);
+		if (!peer)
+			return;
+		qdf_mem_copy(ppdu_user_desc->mac_addr,
+			     peer->mac_addr.raw, DP_MAC_ADDR_LEN);
+	}
+
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->tid =
 		HTT_PPDU_STATS_USER_RATE_TLV_TID_NUM_GET(*tag_buf);
 
-	qdf_mem_copy(ppdu_user_desc->mac_addr, peer->mac_addr.raw,
-			DP_MAC_ADDR_LEN);
-
 	tag_buf += 2;
 
-	ppdu_user_desc->ru_tones = (HTT_PPDU_STATS_USER_RATE_TLV_RU_END_GET(*tag_buf) -
-			HTT_PPDU_STATS_USER_RATE_TLV_RU_START_GET(*tag_buf)) + 1;
+	ppdu_user_desc->ru_tones =
+		(HTT_PPDU_STATS_USER_RATE_TLV_RU_END_GET(*tag_buf) -
+		HTT_PPDU_STATS_USER_RATE_TLV_RU_START_GET(*tag_buf)) + 1;
 
 	tag_buf += 2;
 
