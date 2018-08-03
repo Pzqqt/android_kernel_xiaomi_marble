@@ -136,6 +136,9 @@ struct dp_tx_desc_pool_s *dp_tx_create_flow_pool(struct dp_soc *soc,
 			pool->status = FLOW_POOL_ACTIVE_UNPAUSED;
 		else
 			pool->status = FLOW_POOL_ACTIVE_PAUSED;
+
+		pool->pool_create_cnt++;
+
 		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		return pool;
 	}
