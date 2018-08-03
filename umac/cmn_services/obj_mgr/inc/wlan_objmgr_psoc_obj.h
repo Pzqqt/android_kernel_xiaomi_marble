@@ -121,6 +121,10 @@
 #define WLAN_SOC_CEXT_WMI_MGMT_REF     0x00000800
 	/* Wideband scan */
 #define WLAN_SOC_CEXT_WIDEBAND_SCAN    0x00001000
+	/* TWT Requester capable */
+#define WLAN_SOC_CEXT_TWT_REQUESTER    0x00002000
+	/* TWT Responder capable */
+#define WLAN_SOC_CEXT_TWT_RESPONDER    0x00004000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */
