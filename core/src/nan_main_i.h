@@ -51,6 +51,24 @@ struct scheduler_msg;
 #endif
 
 /**
+ * struct nan_cfg_params - NAN INI config params
+ * @enable: NAN feature enable
+ * @dp_enable: NAN Datapath feature enable
+ * @ndi_ch: NAN Datapath channel
+ * @ndi_mac_randomize: Randomize NAN datapath interface MAC
+ */
+struct nan_cfg_params {
+#ifdef WLAN_FEATURE_NAN
+	bool enable;
+#endif
+#ifdef WLAN_FEATURE_NAN_DATAPATH
+	bool dp_enable;
+	uint32_t ndi_ch;
+	bool ndi_mac_randomize;
+#endif
+};
+
+/**
  * struct nan_psoc_priv_obj - nan private psoc obj
  * @lock: lock to be acquired before reading or writing to object
  * @cb_obj: struct contaning callback pointers
@@ -58,6 +76,7 @@ struct scheduler_msg;
 struct nan_psoc_priv_obj {
 	qdf_spinlock_t lock;
 	struct nan_callbacks cb_obj;
+	struct nan_cfg_params cfg_param;
 };
 
 /**
