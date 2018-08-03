@@ -1351,7 +1351,8 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
  */
 static int __wlan_hdd_cfg80211_sched_scan_stop(struct net_device *dev)
 {
-	int err;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	int errno;
 
 	hdd_enter_dev(dev);
 
@@ -1377,10 +1378,19 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct net_device *dev)
 		return 0;
 	}
 
-	err = wlan_hdd_sched_scan_stop(dev);
+	errno = hdd_validate_adapter(adapter);
+	if (errno)
+		return errno;
+
+	errno = wlan_hdd_validate_context(WLAN_HDD_GET_CTX(adapter));
+	if (errno)
+		return errno;
+
+	errno = wlan_hdd_sched_scan_stop(dev);
 
 	hdd_exit();
-	return err;
+
+	return errno;
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
