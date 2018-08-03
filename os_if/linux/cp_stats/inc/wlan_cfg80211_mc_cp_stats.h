@@ -57,48 +57,39 @@ int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
  * wlan_cfg80211_mc_cp_stats_get_station_stats() - API to get station
  * statistics to firmware
  * @vdev:    Pointer to vdev
- * @info:    pointer to object to populate with station stats
+ * @errno:   error type in case of failure
  *
- * Call of this API must call wlan_cfg80211_mc_cp_stats_put_station_stats
+ * Call of this API must call wlan_cfg80211_mc_cp_stats_free_stats_event
  * API when done with information provided by info.
- * Return: 0 on success, negative value on failure
+ * Return: stats buffer on success, Null on failure
  */
-int wlan_cfg80211_mc_cp_stats_get_station_stats(
-					struct wlan_objmgr_vdev *vdev,
-					struct stats_event *info);
+struct stats_event *
+wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
+					    int *errno);
 
 /**
- * wlan_cfg80211_mc_cp_stats_put_station_stats() - API to release station
+ * wlan_cfg80211_mc_cp_stats_free_stats_event() - API to release station
  * statistics buffer
  * @vdev:    Pointer to vdev
  * @info:    pointer to object to populate with station stats
  *
  * Return: None
  */
-void wlan_cfg80211_mc_cp_stats_put_station_stats(struct stats_event *info);
+void wlan_cfg80211_mc_cp_stats_free_stats_event(struct stats_event *info);
 
 /**
  * wlan_cfg80211_mc_cp_stats_get_peer_rssi() - API to fetch peer rssi
  * @vdev:    Pointer to vdev
  * @macaddress: mac address
- * @rssi_info: stats structure within which rssi info will be populated
+ * @errno:   error type in case of failure
  *
- * Call of this API must call wlan_cfg80211_mc_cp_stats_put_peer_rssi
+ * Call of this API must call wlan_cfg80211_mc_cp_stats_free_stats_event
  * API when done with information provided by rssi_info.
- * Return: 0 on success, negative value on failure
+ * Return: stats buffer on success, Null on failure
  */
-int wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
-					    uint8_t *macaddress,
-					    struct stats_event *rssi_info);
-
-/**
- * wlan_cfg80211_mc_cp_stats_put_peer_rssi() - API to free rssi_info after user
- * or caller is done with the buffer/information
- * @rssi_info: structure which needs to be freed
- *
- * Return: None
- */
-void wlan_cfg80211_mc_cp_stats_put_peer_rssi(struct stats_event *rssi_info);
+struct stats_event *
+wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
+					uint8_t *macaddress, int *errno);
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CFG80211_MC_CP_STATS_H__ */
