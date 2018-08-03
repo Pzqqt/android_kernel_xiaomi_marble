@@ -437,6 +437,7 @@ struct wcd_mbhc_config {
 	int anc_micbias;
 	bool enable_anc_mic_detect;
 	u32 enable_usbc_analog;
+	bool moisture_duty_cycle_en;
 };
 
 struct wcd_mbhc_intr {
@@ -502,6 +503,9 @@ struct wcd_mbhc_cb {
 				 bool enable, int anc_num);
 	bool (*is_anc_on)(struct wcd_mbhc *mbhc);
 	void (*hph_pull_up_control_v2)(struct snd_soc_codec *, int);
+	bool (*mbhc_get_moisture_status)(struct wcd_mbhc *);
+	void (*mbhc_moisture_polling_ctrl)(struct wcd_mbhc *, bool);
+	void (*mbhc_moisture_detect_en)(struct wcd_mbhc *, bool);
 };
 
 struct wcd_mbhc_fn {

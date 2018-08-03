@@ -850,6 +850,36 @@ exit:
 }
 EXPORT_SYMBOL(wcd_mbhc_find_plug_and_report);
 
+static bool wcd_mbhc_moisture_detect(struct wcd_mbhc *mbhc, bool detection_type)
+{
+	bool ret = false;
+
+	if (!mbhc->mbhc_cfg->moisture_en ||
+	    !mbhc->mbhc_cfg->moisture_duty_cycle_en)
+		return ret;
+
+	if (!mbhc->mbhc_cb->mbhc_get_moisture_status ||
+	    !mbhc->mbhc_cb->mbhc_moisture_polling_ctrl ||
+	    !mbhc->mbhc_cb->mbhc_moisture_detect_en)
+		return ret;
+
+	if (mbhc->mbhc_cb->mbhc_get_moisture_status(mbhc)) {
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0);
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_GND_DET_EN, 0);
+		mbhc->mbhc_cb->mbhc_moisture_polling_ctrl(mbhc, true);
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MECH_DETECTION_TYPE,
+					detection_type);
+		ret = true;
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 1);
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_GND_DET_EN, 1);
+	} else {
+		mbhc->mbhc_cb->mbhc_moisture_polling_ctrl(mbhc, false);
+		mbhc->mbhc_cb->mbhc_moisture_detect_en(mbhc, false);
+	}
+
+	return ret;
+}
+
 static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 {
 	bool detection_type = 0;
@@ -885,6 +915,13 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 
 	if ((mbhc->current_plug == MBHC_PLUG_TYPE_NONE) &&
 	    detection_type) {
+
+		/* If moisture is present, then enable polling, disable
+		 * moisture detection and wait for interrupt
+		 */
+		if (wcd_mbhc_moisture_detect(mbhc, detection_type))
+			goto done;
+
 		/* Make sure MASTER_BIAS_CTL is enabled */
 		mbhc->mbhc_cb->mbhc_bias(codec, true);
 
@@ -970,6 +1007,16 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 				mbhc->mbhc_cb->clk_setup(mbhc->codec, false);
 		}
 
+		if (mbhc->mbhc_cfg->moisture_en &&
+		    mbhc->mbhc_cfg->moisture_duty_cycle_en) {
+			if (mbhc->mbhc_cb->mbhc_moisture_polling_ctrl)
+				mbhc->mbhc_cb->mbhc_moisture_polling_ctrl(mbhc,
+									false);
+			if (mbhc->mbhc_cb->mbhc_moisture_detect_en)
+				mbhc->mbhc_cb->mbhc_moisture_detect_en(mbhc,
+									false);
+		}
+
 	} else if (!detection_type) {
 		/* Disable external voltage source to micbias if present */
 		if (mbhc->mbhc_cb->enable_mb_source)
@@ -980,6 +1027,7 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 		mbhc->extn_cable_hph_rem = false;
 	}
 
+done:
 	mbhc->in_swch_irq_handler = false;
 	WCD_MBHC_RSC_UNLOCK(mbhc);
 	pr_debug("%s: leave\n", __func__);
@@ -1294,7 +1342,8 @@ static int wcd_mbhc_initialise(struct wcd_mbhc *mbhc)
 	else
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HS_L_DET_PULL_UP_CTRL, 3);
 
-	if (mbhc->mbhc_cfg->moisture_en && mbhc->mbhc_cb->mbhc_moisture_config)
+	if (mbhc->mbhc_cfg->moisture_en && mbhc->mbhc_cb->mbhc_moisture_config
+		&& !mbhc->mbhc_cfg->moisture_duty_cycle_en)
 		mbhc->mbhc_cb->mbhc_moisture_config(mbhc);
 
 	/*
