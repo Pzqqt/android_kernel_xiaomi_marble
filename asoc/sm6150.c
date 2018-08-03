@@ -39,6 +39,7 @@
 #include "codecs/wsa881x.h"
 #include "codecs/bolero/bolero-cdc.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
+#include "codecs/bolero/wsa-macro.h"
 
 #define DRV_NAME "sm6150-asoc-snd"
 
@@ -496,10 +497,13 @@ static const char *const cdc_dma_rx_ch_text[] = {"One", "Two"};
 static const char *const cdc_dma_tx_ch_text[] = {"One", "Two", "Three", "Four",
 						"Five", "Six", "Seven",
 						"Eight"};
-static char const *cdc_dma_sample_rate_text[] = {"KHZ_8", "KHZ_16",
-					"KHZ_32", "KHZ_44P1", "KHZ_48",
-					"KHZ_88P2", "KHZ_96", "KHZ_176P4",
-					"KHZ_192", "KHZ_352P8", "KHZ_384"};
+static char const *cdc_dma_sample_rate_text[] = {"KHZ_8", "KHZ_11P025",
+						 "KHZ_16", "KHZ_22P05",
+						 "KHZ_32", "KHZ_44P1", "KHZ_48",
+						 "KHZ_88P2", "KHZ_96",
+						 "KHZ_176P4", "KHZ_192",
+						 "KHZ_352P8", "KHZ_384"};
+
 
 static SOC_ENUM_SINGLE_EXT_DECL(slim_0_rx_chs, slim_rx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(slim_2_rx_chs, slim_rx_ch_text);
@@ -1323,6 +1327,7 @@ static int cdc_dma_rx_format_put(struct snd_kcontrol *kcontrol,
 	return rc;
 }
 
+
 static int cdc_dma_get_sample_rate_val(int sample_rate)
 {
 	int sample_rate_val = 0;
@@ -1331,38 +1336,44 @@ static int cdc_dma_get_sample_rate_val(int sample_rate)
 	case SAMPLING_RATE_8KHZ:
 		sample_rate_val = 0;
 		break;
-	case SAMPLING_RATE_16KHZ:
+	case SAMPLING_RATE_11P025KHZ:
 		sample_rate_val = 1;
 		break;
-	case SAMPLING_RATE_32KHZ:
+	case SAMPLING_RATE_16KHZ:
 		sample_rate_val = 2;
 		break;
-	case SAMPLING_RATE_44P1KHZ:
+	case SAMPLING_RATE_22P05KHZ:
 		sample_rate_val = 3;
 		break;
-	case SAMPLING_RATE_48KHZ:
+	case SAMPLING_RATE_32KHZ:
 		sample_rate_val = 4;
 		break;
-	case SAMPLING_RATE_88P2KHZ:
+	case SAMPLING_RATE_44P1KHZ:
 		sample_rate_val = 5;
 		break;
-	case SAMPLING_RATE_96KHZ:
+	case SAMPLING_RATE_48KHZ:
 		sample_rate_val = 6;
 		break;
-	case SAMPLING_RATE_176P4KHZ:
+	case SAMPLING_RATE_88P2KHZ:
 		sample_rate_val = 7;
 		break;
-	case SAMPLING_RATE_192KHZ:
+	case SAMPLING_RATE_96KHZ:
 		sample_rate_val = 8;
 		break;
-	case SAMPLING_RATE_352P8KHZ:
+	case SAMPLING_RATE_176P4KHZ:
 		sample_rate_val = 9;
 		break;
-	case SAMPLING_RATE_384KHZ:
+	case SAMPLING_RATE_192KHZ:
 		sample_rate_val = 10;
 		break;
+	case SAMPLING_RATE_352P8KHZ:
+		sample_rate_val = 11;
+		break;
+	case SAMPLING_RATE_384KHZ:
+		sample_rate_val = 12;
+		break;
 	default:
-		sample_rate_val = 4;
+		sample_rate_val = 6;
 		break;
 	}
 	return sample_rate_val;
@@ -1377,33 +1388,39 @@ static int cdc_dma_get_sample_rate(int value)
 		sample_rate = SAMPLING_RATE_8KHZ;
 		break;
 	case 1:
-		sample_rate = SAMPLING_RATE_16KHZ;
+		sample_rate = SAMPLING_RATE_11P025KHZ;
 		break;
 	case 2:
-		sample_rate = SAMPLING_RATE_32KHZ;
+		sample_rate = SAMPLING_RATE_16KHZ;
 		break;
 	case 3:
-		sample_rate = SAMPLING_RATE_44P1KHZ;
+		sample_rate = SAMPLING_RATE_22P05KHZ;
 		break;
 	case 4:
-		sample_rate = SAMPLING_RATE_48KHZ;
+		sample_rate = SAMPLING_RATE_32KHZ;
 		break;
 	case 5:
-		sample_rate = SAMPLING_RATE_88P2KHZ;
+		sample_rate = SAMPLING_RATE_44P1KHZ;
 		break;
 	case 6:
-		sample_rate = SAMPLING_RATE_96KHZ;
+		sample_rate = SAMPLING_RATE_48KHZ;
 		break;
 	case 7:
-		sample_rate = SAMPLING_RATE_176P4KHZ;
+		sample_rate = SAMPLING_RATE_88P2KHZ;
 		break;
 	case 8:
-		sample_rate = SAMPLING_RATE_192KHZ;
+		sample_rate = SAMPLING_RATE_96KHZ;
 		break;
 	case 9:
-		sample_rate = SAMPLING_RATE_352P8KHZ;
+		sample_rate = SAMPLING_RATE_176P4KHZ;
 		break;
 	case 10:
+		sample_rate = SAMPLING_RATE_192KHZ;
+		break;
+	case 11:
+		sample_rate = SAMPLING_RATE_352P8KHZ;
+		break;
+	case 12:
 		sample_rate = SAMPLING_RATE_384KHZ;
 		break;
 	default:
@@ -1412,7 +1429,6 @@ static int cdc_dma_get_sample_rate(int value)
 	}
 	return sample_rate;
 }
-
 
 static int cdc_dma_rx_sample_rate_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
@@ -1639,7 +1655,6 @@ static int cdc_dma_tx_format_put(struct snd_kcontrol *kcontrol,
 	return rc;
 }
 
-/***************/
 static int usb_audio_rx_ch_get(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -3763,7 +3778,7 @@ static int msm_dmic_event(struct snd_soc_dapm_widget *w,
 	struct msm_asoc_mach_data *pdata = NULL;
 	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
 	int ret = 0;
-	uint32_t dmic_idx;
+	u32 dmic_idx;
 	int *dmic_gpio_cnt;
 	struct device_node *dmic_gpio;
 	char  *wname;
@@ -4839,6 +4854,7 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
 	struct snd_card *card;
 	struct snd_info_entry *entry;
+	struct snd_soc_component *aux_comp;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
 
@@ -4860,23 +4876,43 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	snd_soc_dapm_new_controls(dapm, msm_int_dapm_widgets,
 				ARRAY_SIZE(msm_int_dapm_widgets));
 
+	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic0");
 	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic1");
 	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic2");
 	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic3");
-	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic4");
 
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic1");
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic2");
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic3");
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic4");
 
-	snd_soc_dapm_ignore_suspend(dapm, "SPK1 OUT");
-	snd_soc_dapm_ignore_suspend(dapm, "SPK2 OUT");
-	snd_soc_dapm_ignore_suspend(dapm, "AIF4 VI");
-	snd_soc_dapm_ignore_suspend(dapm, "VIINPUT");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK1 OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK2 OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA AIF VI");
+	snd_soc_dapm_ignore_suspend(dapm, "VIINPUT_WSA");
 
 	snd_soc_dapm_sync(dapm);
 
+	/*
+	 * Send speaker configuration only for WSA8810.
+	 * Default configuration is for WSA8815.
+	 */
+	dev_dbg(codec->dev, "%s: Number of aux devices: %d\n",
+		__func__, rtd->card->num_aux_devs);
+	if (rtd->card->num_aux_devs &&
+	    !list_empty(&rtd->card->component_dev_list)) {
+		aux_comp = list_first_entry(
+				&rtd->card->component_dev_list,
+				struct snd_soc_component,
+				card_aux_list);
+		if (!strcmp(aux_comp->name, WSA8810_NAME_1) ||
+		    !strcmp(aux_comp->name, WSA8810_NAME_2)) {
+			wsa_macro_set_spkr_mode(rtd->codec,
+						WSA_MACRO_SPKR_MODE_1);
+			wsa_macro_set_spkr_gain_offset(rtd->codec,
+					WSA_MACRO_GAIN_OFFSET_M1P5_DB);
+		}
+	}
 	card = rtd->card->snd_card;
 	entry = snd_info_create_subdir(card->module, "codecs",
 					 card->proc_root);
@@ -7299,20 +7335,6 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 	},
-	{
-		.name = LPASS_BE_WSA_CDC_DMA_TX_2,
-		.stream_name = "WSA CDC DMA2 Capture",
-		.cpu_dai_name = "msm-dai-cdc-dma-dev.45061",
-		.platform_name = "msm-pcm-routing",
-		.codec_name = "bolero_codec",
-		.codec_dai_name = "msm-stub-tx",
-		.no_pcm = 1,
-		.dpcm_capture = 1,
-		.id = MSM_BACKEND_DAI_WSA_CDC_DMA_TX_2,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ignore_suspend = 1,
-		.ops = &msm_cdc_dma_be_ops,
-	},
 };
 
 static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
@@ -7679,7 +7701,10 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 {
 	struct snd_soc_card *card = NULL;
 	struct snd_soc_dai_link *dailink;
-	int total_links = 0;
+	int total_links = 0, rc = 0;
+	u32 tavil_codec = 0, auxpcm_audio_intf = 0;
+	u32 mi2s_audio_intf = 0, ext_disp_audio_intf = 0;
+	u32 wcn_btfm_intf = 0;
 	const struct of_device_id *match;
 
 	match = of_match_node(sm6150_asoc_machine_of_match, dev->of_node);
@@ -7703,20 +7728,29 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 
 		total_links += ARRAY_SIZE(msm_common_misc_fe_dai_links);
 
-		if (of_property_read_bool(dev->of_node, "qcom,tavil_codec")) {
-
-			dev_dbg(dev, "%s(): Tavil codec is present\n",
+		rc = of_property_read_u32(dev->of_node, "qcom,tavil_codec",
+						&tavil_codec);
+		if (rc) {
+			dev_dbg(dev, "%s: No DT match for tavil codec\n",
 				__func__);
-			card->late_probe = msm_snd_card_tavil_late_probe;
-			memcpy(msm_sm6150_dai_links + total_links,
+		} else {
+			if (tavil_codec) {
+				card->late_probe =
+					msm_snd_card_tavil_late_probe;
+				memcpy(msm_sm6150_dai_links + total_links,
 					msm_tavil_fe_dai_links,
 					sizeof(msm_tavil_fe_dai_links));
-			total_links += ARRAY_SIZE(msm_tavil_fe_dai_links);
-		} else {
+				total_links +=
+					ARRAY_SIZE(msm_tavil_fe_dai_links);
+			}
+		}
+
+		if (!tavil_codec) {
 			memcpy(msm_sm6150_dai_links + total_links,
-					msm_bolero_fe_dai_links,
-					sizeof(msm_bolero_fe_dai_links));
-			total_links += ARRAY_SIZE(msm_bolero_fe_dai_links);
+				msm_bolero_fe_dai_links,
+				sizeof(msm_bolero_fe_dai_links));
+			total_links +=
+				ARRAY_SIZE(msm_bolero_fe_dai_links);
 		}
 
 		memcpy(msm_sm6150_dai_links + total_links,
@@ -7725,7 +7759,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 
 		total_links += ARRAY_SIZE(msm_common_be_dai_links);
 
-		if (of_property_read_bool(dev->of_node, "qcom,tavil_codec")) {
+		if (tavil_codec) {
 			memcpy(msm_sm6150_dai_links + total_links,
 					msm_tavil_be_dai_links,
 					sizeof(msm_tavil_be_dai_links));
@@ -7734,7 +7768,8 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			memcpy(msm_sm6150_dai_links + total_links,
 			       msm_wsa_cdc_dma_be_dai_links,
 			       sizeof(msm_wsa_cdc_dma_be_dai_links));
-			total_links += ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
+			total_links +=
+				ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
 
 			memcpy(msm_sm6150_dai_links + total_links,
 			       msm_rx_tx_cdc_dma_be_dai_links,
@@ -7743,37 +7778,69 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 				ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links);
 		}
 
-		if (of_property_read_bool(dev->of_node,
-					  "qcom,ext-disp-audio-rx")) {
-			dev_dbg(dev, "%s(): External display audio support present\n",
+		rc = of_property_read_u32(dev->of_node,
+					  "qcom,ext-disp-audio-rx",
+					  &ext_disp_audio_intf);
+		if (rc) {
+			dev_dbg(dev, "%s: No DT match Ext Disp interface\n",
 				__func__);
-			memcpy(msm_sm6150_dai_links + total_links,
-			ext_disp_be_dai_link,
-			sizeof(ext_disp_be_dai_link));
-			total_links += ARRAY_SIZE(ext_disp_be_dai_link);
+		} else {
+			if (auxpcm_audio_intf) {
+				memcpy(msm_sm6150_dai_links + total_links,
+					ext_disp_be_dai_link,
+					sizeof(ext_disp_be_dai_link));
+				total_links +=
+					ARRAY_SIZE(ext_disp_be_dai_link);
+			}
 		}
-		if (of_property_read_bool(dev->of_node,
-					  "qcom,mi2s-audio-intf")) {
-			memcpy(msm_sm6150_dai_links + total_links,
-			       msm_mi2s_be_dai_links,
-			       sizeof(msm_mi2s_be_dai_links));
-			total_links += ARRAY_SIZE(msm_mi2s_be_dai_links);
+
+		rc = of_property_read_u32(dev->of_node, "qcom,mi2s-audio-intf",
+					  &mi2s_audio_intf);
+		if (rc) {
+			dev_dbg(dev, "%s: No DT match MI2S audio interface\n",
+				__func__);
+		} else {
+			if (mi2s_audio_intf) {
+				memcpy(msm_sm6150_dai_links + total_links,
+					msm_mi2s_be_dai_links,
+					sizeof(msm_mi2s_be_dai_links));
+				total_links +=
+					ARRAY_SIZE(msm_mi2s_be_dai_links);
+			}
 		}
-		if (of_property_read_bool(dev->of_node,
-					  "qcom,auxpcm-audio-intf")) {
-			memcpy(msm_sm6150_dai_links + total_links,
-			       msm_auxpcm_be_dai_links,
-			       sizeof(msm_auxpcm_be_dai_links));
-			total_links += ARRAY_SIZE(msm_auxpcm_be_dai_links);
+
+
+		rc = of_property_read_u32(dev->of_node, "qcom,wcn-btfm",
+					  &wcn_btfm_intf);
+		if (rc) {
+			dev_dbg(dev, "%s: No DT match wcn btfm interface\n",
+				__func__);
+		} else {
+			if (wcn_btfm_intf) {
+				memcpy(msm_sm6150_dai_links + total_links,
+					msm_wcn_be_dai_links,
+					sizeof(msm_wcn_be_dai_links));
+				total_links +=
+					ARRAY_SIZE(msm_wcn_be_dai_links);
+			}
 		}
-		if (of_property_read_bool(dev->of_node, "qcom,wcn-btfm")) {
-			dev_dbg(dev, "%s(): WCN BTFM support present\n",
-					__func__);
-			memcpy(msm_sm6150_dai_links + total_links,
-				   msm_wcn_be_dai_links,
-				   sizeof(msm_wcn_be_dai_links));
-			total_links += ARRAY_SIZE(msm_wcn_be_dai_links);
+
+		rc = of_property_read_u32(dev->of_node,
+					  "qcom,auxpcm-audio-intf",
+					  &auxpcm_audio_intf);
+		if (rc) {
+			dev_dbg(dev, "%s: No DT match Aux PCM interface\n",
+				__func__);
+		} else {
+			if (auxpcm_audio_intf) {
+				memcpy(msm_sm6150_dai_links + total_links,
+					msm_auxpcm_be_dai_links,
+					sizeof(msm_auxpcm_be_dai_links));
+				total_links +=
+					ARRAY_SIZE(msm_auxpcm_be_dai_links);
+			}
 		}
+
 		dailink = msm_sm6150_dai_links;
 	} else if (!strcmp(match->data, "stub_codec")) {
 		card = &snd_soc_card_stub_msm;
@@ -7858,6 +7925,19 @@ err:
 
 static int msm_aux_codec_init(struct snd_soc_component *component)
 {
+	struct snd_soc_codec *codec = snd_soc_component_to_codec(component);
+	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+
+	snd_soc_dapm_ignore_suspend(dapm, "EAR");
+	snd_soc_dapm_ignore_suspend(dapm, "AUX");
+	snd_soc_dapm_ignore_suspend(dapm, "HPHL");
+	snd_soc_dapm_ignore_suspend(dapm, "HPHR");
+	snd_soc_dapm_ignore_suspend(dapm, "AMIC1");
+	snd_soc_dapm_ignore_suspend(dapm, "AMIC2");
+	snd_soc_dapm_ignore_suspend(dapm, "AMIC3");
+	snd_soc_dapm_ignore_suspend(dapm, "AMIC4");
+	snd_soc_dapm_sync(dapm);
+
 	return 0;
 }
 
@@ -8326,7 +8406,7 @@ static struct platform_driver sm6150_asoc_machine_driver = {
 };
 module_platform_driver(sm6150_asoc_machine_driver);
 
-MODULE_DESCRIPTION("ALSA SoC msm");
+MODULE_DESCRIPTION("ALSA SoC SM6150 Machine driver");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:" DRV_NAME);
 MODULE_DEVICE_TABLE(of, sm6150_asoc_machine_of_match);
