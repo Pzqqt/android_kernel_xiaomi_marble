@@ -3956,7 +3956,6 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 				  struct station_info *sinfo)
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	int ssidlen = sta_ctx->conn_info.SSID.SSID.length;
 	uint8_t rate_flags;
 	uint8_t mcs_index;
 
@@ -3989,10 +3988,8 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 	enum data_rate_11ac_max_mcs vht_max_mcs;
 	int32_t rcpi_value;
 
-	if ((eConnectionState_Associated != sta_ctx->conn_info.connState) ||
-	    (0 == ssidlen)) {
-		hdd_debug("Not associated or Invalid ssidlen, %d",
-			ssidlen);
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+		hdd_debug("Not associated");
 		/*To keep GUI happy */
 		return 0;
 	}
