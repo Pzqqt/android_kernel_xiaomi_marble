@@ -182,8 +182,8 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 	struct regmap *regmap = dev_get_regmap(tx_priv->dev->parent, NULL);
 	int ret = 0;
 
-	dev_dbg(tx_priv->dev, "%s: mclk_enable = %u, dapm = %d clk_users= %d\n",
-		__func__, mclk_enable, dapm, tx_priv->tx_mclk_users);
+	dev_dbg(tx_priv->dev, "%s: mclk_enable = %u,clk_users= %d\n",
+		__func__, mclk_enable, tx_priv->tx_mclk_users);
 
 	mutex_lock(&tx_priv->mclk_lock);
 	if (mclk_enable) {
@@ -631,7 +631,7 @@ static int tx_macro_hw_params(struct snd_pcm_substream *substream,
 	int tx_fs_rate = -EINVAL;
 	struct snd_soc_codec *codec = dai->codec;
 	u32 decimator = 0;
-	u16 sample_rate = 0;
+	u32 sample_rate = 0;
 	u16 tx_fs_reg = 0;
 	struct device *tx_dev = NULL;
 	struct tx_macro_priv *tx_priv = NULL;
