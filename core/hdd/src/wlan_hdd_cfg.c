@@ -2977,15 +2977,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_LPASS_SUPPORT_MAX),
 #endif
 
-#ifdef WLAN_FEATURE_NAN
-	REG_VARIABLE(CFG_ENABLE_NAN_SUPPORT, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_nan_support,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_NAN_SUPPORT_DEFAULT,
-		     CFG_ENABLE_NAN_SUPPORT_MIN,
-		     CFG_ENABLE_NAN_SUPPORT_MAX),
-#endif
-
 	REG_VARIABLE(CFG_ENABLE_SELF_RECOVERY, WLAN_PARAM_Integer,
 		     struct hdd_config, enableSelfRecovery,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -3780,22 +3771,6 @@ struct reg_table_entry g_registry_table[] = {
 			struct hdd_config, tx_sched_wrr_bk,
 			VAR_FLAGS_OPTIONAL,
 			(void *) CFG_ENABLE_TX_SCHED_WRR_BK_DEFAULT),
-
-#ifdef WLAN_FEATURE_NAN_DATAPATH
-	REG_VARIABLE(CFG_ENABLE_NAN_DATAPATH_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, enable_nan_datapath,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ENABLE_NAN_DATAPATH_DEFAULT,
-		CFG_ENABLE_NAN_DATAPATH_MIN,
-		CFG_ENABLE_NAN_DATAPATH_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_NAN_NDI_CHANNEL_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, nan_datapath_ndi_channel,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ENABLE_NAN_NDI_CHANNEL_DEFAULT,
-		CFG_ENABLE_NAN_NDI_CHANNEL_MIN,
-		CFG_ENABLE_NAN_NDI_CHANNEL_MAX),
-#endif
 
 	REG_VARIABLE(CFG_CREATE_BUG_REPORT_FOR_SCAN, WLAN_PARAM_Integer,
 		struct hdd_config, bug_report_for_no_scan_results,
@@ -4645,13 +4620,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_DTIM_1CHRX_ENABLE_DEFAULT,
 		CFG_DTIM_1CHRX_ENABLE_MIN,
 		CFG_DTIM_1CHRX_ENABLE_MAX),
-
-	REG_VARIABLE(CFG_RANDOMIZE_NDI_MAC_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, is_ndi_mac_randomized,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_RANDOMIZE_NDI_MAC_DEFAULT,
-		CFG_RANDOMIZE_NDI_MAC_MIN,
-		CFG_RANDOMIZE_NDI_MAC_MAX),
 
 	REG_VARIABLE(CFG_SCAN_11D_INTERVAL_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, scan_11d_interval,
@@ -6962,7 +6930,6 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_SAP_MAX_INACTIVITY_OVERRIDE_NAME,
 		hdd_ctx->config->sap_max_inactivity_override);
-	hdd_ndp_print_ini_config(hdd_ctx);
 	hdd_debug("Name = [%s] Value = [%s]",
 		CFG_RM_CAPABILITY_NAME,
 		hdd_ctx->config->rm_capability);
@@ -7057,9 +7024,6 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] value = [%u]",
 		CFG_DTIM_1CHRX_ENABLE_NAME,
 		hdd_ctx->config->enable_dtim_1chrx);
-	hdd_debug("Name = [%s] value = [%u]",
-		CFG_RANDOMIZE_NDI_MAC_NAME,
-		hdd_ctx->config->is_ndi_mac_randomized);
 	hdd_debug("Name = [%s] value = [%u]",
 		CFG_DOT11P_MODE_NAME,
 		hdd_ctx->config->dot11p_mode);

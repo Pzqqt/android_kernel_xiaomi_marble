@@ -37,31 +37,6 @@ int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 				  int data_len);
 
 bool wlan_hdd_nan_is_supported(void);
-/**
- * hdd_nan_populate_cds_config() - Populate NAN cds configuration
- * @cds_cfg: CDS Configuration
- * @hdd_ctx: Pointer to hdd context
- *
- * Return: none
- */
-static inline void hdd_nan_populate_cds_config(struct cds_config_info *cds_cfg,
-			struct hdd_context *hdd_ctx)
-{
-	cds_cfg->is_nan_enabled = hdd_ctx->config->enable_nan_support;
-}
-
-/**
- * hdd_nan_populate_pmo_config() - Populate NAN pmo configuration
- * @pmo_cfg: PMO Configuration
- * @hdd_ctx: Pointer to hdd context
- *
- * Return: none
- */
-static inline void hdd_nan_populate_pmo_config(struct pmo_psoc_cfg *pmo_cfg,
-			struct hdd_context *hdd_ctx)
-{
-	pmo_cfg->nan_enable = hdd_ctx->config->enable_nan_support;
-}
 
 /**
  * wlan_hdd_cfg80211_nan_callback() - cfg80211 NAN event handler

@@ -9513,7 +9513,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 
 	hdd_ra_populate_cds_config(cds_cfg, hdd_ctx);
 	hdd_txrx_populate_cds_config(cds_cfg, hdd_ctx);
-	hdd_nan_populate_cds_config(cds_cfg, hdd_ctx);
 	hdd_lpass_populate_cds_config(cds_cfg, hdd_ctx);
 	cds_init_ini_config(cds_cfg);
 	return 0;
@@ -13380,7 +13379,6 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->auto_pwr_save_fail_mode;
 
 	hdd_ra_populate_pmo_config(&psoc_cfg, hdd_ctx);
-	hdd_nan_populate_pmo_config(&psoc_cfg, hdd_ctx);
 	hdd_lpass_populate_pmo_config(&psoc_cfg, hdd_ctx);
 
 	status = ucfg_pmo_update_psoc_config(hdd_ctx->hdd_psoc, &psoc_cfg);

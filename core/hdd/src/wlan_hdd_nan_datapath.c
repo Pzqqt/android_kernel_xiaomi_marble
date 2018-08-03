@@ -36,20 +36,7 @@
 #include "os_if_nan.h"
 #include "wlan_nan_api.h"
 #include "nan_public_structs.h"
-
-/**
- * hdd_ndp_print_ini_config()- Print nan datapath specific INI configuration
- * @hdd_ctx: handle to hdd context
- *
- * Return: None
- */
-void hdd_ndp_print_ini_config(struct hdd_context *hdd_ctx)
-{
-	hdd_debug("Name = [%s] Value = [%u]", CFG_ENABLE_NAN_DATAPATH_NAME,
-		hdd_ctx->config->enable_nan_datapath);
-	hdd_debug("Name = [%s] Value = [%u]", CFG_ENABLE_NAN_NDI_CHANNEL_NAME,
-		hdd_ctx->config->nan_datapath_ndi_channel);
-}
+#include "cfg_nan_api.h"
 
 /**
  * hdd_nan_datapath_target_config() - Configure NAN datapath features
@@ -62,15 +49,15 @@ void hdd_ndp_print_ini_config(struct hdd_context *hdd_ctx)
  * Return: None
  */
 void hdd_nan_datapath_target_config(struct hdd_context *hdd_ctx,
-					struct wma_tgt_cfg *cfg)
+					struct wma_tgt_cfg *tgt_cfg)
 {
 	hdd_ctx->nan_datapath_enabled =
-		hdd_ctx->config->enable_nan_datapath &&
-			cfg->nan_datapath_enabled;
-	hdd_debug("final: %d, host: %d, fw: %d",
+			cfg_nan_get_datapath_enable(hdd_ctx->hdd_psoc) &&
+			tgt_cfg->nan_datapath_enabled;
+	hdd_debug("NAN Datapath Enable: %d (Host: %d FW: %d)",
 		  hdd_ctx->nan_datapath_enabled,
-		  hdd_ctx->config->enable_nan_datapath,
-		  cfg->nan_datapath_enabled);
+		  cfg_nan_get_datapath_enable(hdd_ctx->hdd_psoc),
+		  tgt_cfg->nan_datapath_enabled);
 }
 
 /**
@@ -485,7 +472,7 @@ int hdd_ndi_open(char *iface_name)
 		return -EINVAL;
 	}
 
-	if (hdd_ctx->config->is_ndi_mac_randomized) {
+	if (cfg_nan_get_ndi_mac_randomize(hdd_ctx->hdd_psoc)) {
 		if (hdd_get_random_nan_mac_addr(hdd_ctx, &random_ndi_mac)) {
 			hdd_err("get random mac address failed");
 			return -EFAULT;
@@ -524,7 +511,7 @@ int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 		return -EINVAL;
 	}
 
-	op_channel = hdd_ctx->config->nan_datapath_ndi_channel;
+	op_channel = cfg_nan_get_ndi_channel(hdd_ctx->hdd_psoc);
 	adapter = hdd_get_adapter_by_iface_name(hdd_ctx, iface_name);
 	if (!adapter) {
 		hdd_err("adapter is null");

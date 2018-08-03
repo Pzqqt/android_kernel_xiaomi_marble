@@ -7489,18 +7489,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_LPASS_SUPPORT_MAX                      (1)
 #endif
 
-/*
- * NaN feature support configuration
- * gEnableNanSupport = 0 means NaN is not supported
- * gEnableNanSupport = 1 means NaN is supported
- */
-#ifdef WLAN_FEATURE_NAN
-#define CFG_ENABLE_NAN_SUPPORT                          "gEnableNanSupport"
-#define CFG_ENABLE_NAN_SUPPORT_DEFAULT                  (0)
-#define CFG_ENABLE_NAN_SUPPORT_MIN                      (0)
-#define CFG_ENABLE_NAN_SUPPORT_MAX                      (1)
-#endif
-
 #define CFG_ENABLE_SELF_RECOVERY                   "gEnableSelfRecovery"
 #define CFG_ENABLE_SELF_RECOVERY_MIN               (0)
 #define CFG_ENABLE_SELF_RECOVERY_MAX               (1)
@@ -8587,26 +8575,6 @@ enum dot11p_mode {
 #define CFG_IGNORE_PEER_HT_MODE_MIN        (0)
 #define CFG_IGNORE_PEER_HT_MODE_MAX        (1)
 #define CFG_IGNORE_PEER_HT_MODE_DEFAULT    (0)
-
-#ifdef WLAN_FEATURE_NAN_DATAPATH
-/*
- * Enable NaN data path feature. NaN data path enables
- * NaN supported devices to exchange data over traditional
- * TCP/UDP network stack.
- */
-#define CFG_ENABLE_NAN_DATAPATH_NAME    "genable_nan_datapath"
-#define CFG_ENABLE_NAN_DATAPATH_MIN     (0)
-#define CFG_ENABLE_NAN_DATAPATH_MAX     (1)
-#define CFG_ENABLE_NAN_DATAPATH_DEFAULT (0)
-
-/*
- * NAN channel on which NAN data interface to start
- */
-#define CFG_ENABLE_NAN_NDI_CHANNEL_NAME    "gnan_datapath_ndi_channel"
-#define CFG_ENABLE_NAN_NDI_CHANNEL_MIN     (6)
-#define CFG_ENABLE_NAN_NDI_CHANNEL_MAX     (149)
-#define CFG_ENABLE_NAN_NDI_CHANNEL_DEFAULT (6)
-#endif
 
 /*
  * Enable/Disable to initiate BUG report in case of fatal event
@@ -11540,30 +11508,6 @@ enum hdd_external_acs_policy {
 #define CFG_ROAM_NUM_DISALLOWED_APS_MAX     (8)
 #define CFG_ROAM_NUM_DISALLOWED_APS_DEFAULT (3)
 
-
-/*
- * <ini>
- * gEnableNDIMacRandomization - When enabled this will randomize NDI Mac
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * When enabled this will randomize NDI Mac
- *
- *
- * Related: None
- *
- * Supported Feature: NAN
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_RANDOMIZE_NDI_MAC_NAME      "gEnableNDIMacRandomization"
-#define CFG_RANDOMIZE_NDI_MAC_MIN       (0)
-#define CFG_RANDOMIZE_NDI_MAC_MAX       (1)
-#define CFG_RANDOMIZE_NDI_MAC_DEFAULT   (1)
-
 /*
  * <ini>
  * gEnableLPRx - Enable/Disable LPRx
@@ -14477,9 +14421,6 @@ struct hdd_config {
 #ifdef WLAN_FEATURE_LPSS
 	bool enable_lpass_support;
 #endif
-#ifdef WLAN_FEATURE_NAN
-	bool enable_nan_support;
-#endif
 	bool enableSelfRecovery;
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 	uint8_t SapSccChanAvoidance;
@@ -14640,10 +14581,6 @@ struct hdd_config {
 	bool acs_support_for_dfs_ltecoex;
 	bool bug_report_for_no_scan_results;
 	bool bug_on_reinit_failure;
-#ifdef WLAN_FEATURE_NAN_DATAPATH
-	bool enable_nan_datapath;
-	uint8_t nan_datapath_ndi_channel;
-#endif
 	uint32_t iface_change_wait_time;
 	/* parameter to control GTX */
 	uint32_t tgt_gtx_usr_cfg;
@@ -14765,7 +14702,6 @@ struct hdd_config {
 	uint8_t lower_brssi_thresh;
 	bool enable_dtim_1chrx;
 	int8_t rssi_thresh_offset_5g;
-	bool is_ndi_mac_randomized;
 	uint32_t scan_11d_interval;
 	bool chan_switch_hostapd_rate_enabled;
 	bool is_bssid_hint_priority;

@@ -49,7 +49,6 @@ struct wireless_dev;
 #endif /* WLAN_FEATURE_NAN_DATAPATH */
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
-void hdd_ndp_print_ini_config(struct hdd_context *hdd_ctx);
 void hdd_nan_datapath_target_config(struct hdd_context *hdd_ctx,
 						struct wma_tgt_cfg *cfg);
 void hdd_ndp_event_handler(struct hdd_adapter *adapter,
@@ -61,9 +60,6 @@ int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 int hdd_init_nan_data_mode(struct hdd_adapter *adapter);
 void hdd_ndp_session_end_handler(struct hdd_adapter *adapter);
 #else
-static inline void hdd_ndp_print_ini_config(struct hdd_context *hdd_ctx)
-{
-}
 static inline void hdd_nan_datapath_target_config(struct hdd_context *hdd_ctx,
 						struct wma_tgt_cfg *cfg)
 {

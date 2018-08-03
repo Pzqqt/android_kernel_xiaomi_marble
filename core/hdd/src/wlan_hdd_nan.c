@@ -32,6 +32,7 @@
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_nan.h"
 #include <qca_vendor.h>
+#include "cfg_nan_api.h"
 
 /**
  * __wlan_hdd_cfg80211_nan_request() - cfg80211 NAN request handler
@@ -68,7 +69,7 @@ static int __wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	if (!hdd_ctx->config->enable_nan_support) {
+	if (!cfg_nan_get_enable(hdd_ctx->hdd_psoc)) {
 		hdd_err("NaN support is not enabled in INI");
 		return -EPERM;
 	}

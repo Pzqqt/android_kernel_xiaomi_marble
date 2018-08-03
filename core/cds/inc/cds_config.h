@@ -92,7 +92,6 @@ enum active_apf_mode {
  * @tx_flow_stop_queue_th: Threshold to stop queue in percentage
  * @tx_flow_start_queue_offset: Start queue offset in percentage
  * @is_lpass_enabled: Indicate whether LPASS is enabled or not
- * @is_nan_enabled: Indicate whether NAN is enabled or not
  * @bool apf_packet_filter_enable; Indicate apf filter enabled or not
  * @tx_chain_mask_cck: Tx chain mask enabled or not
  * @self_gen_frm_pwr: Self gen from power
@@ -149,9 +148,6 @@ struct cds_config_info {
 #endif
 #ifdef WLAN_FEATURE_LPSS
 	bool is_lpass_enabled;
-#endif
-#ifdef WLAN_FEATURE_NAN
-	bool is_nan_enabled;
 #endif
 	bool apf_packet_filter_enable;
 	bool tx_chain_mask_cck;

@@ -89,6 +89,7 @@
 #include "target_if_green_ap.h"
 #include "service_ready_param.h"
 #include "wlan_cp_stats_mc_ucfg_api.h"
+#include "cfg_nan_api.h"
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -1814,7 +1815,7 @@ int wma_process_fw_event_handler(void *ctx, void *htc_packet, uint8_t rx_ctx)
 static void wma_set_nan_enable(tp_wma_handle wma_handle,
 				struct cds_config_info *cds_cfg)
 {
-	wma_handle->is_nan_enabled = cds_cfg->is_nan_enabled;
+	wma_handle->is_nan_enabled = cfg_nan_get_enable(wma_handle->psoc);
 }
 #else
 static void wma_set_nan_enable(tp_wma_handle wma_handle,

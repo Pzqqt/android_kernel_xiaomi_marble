@@ -1195,6 +1195,7 @@ WLAN_NAN_OBJS := $(NAN_CORE_DIR)/nan_main.o \
 		 $(NAN_CORE_DIR)/nan_api.o \
 		 $(NAN_CORE_DIR)/nan_utils.o \
 		 $(NAN_UCFG_DIR)/nan_ucfg_api.o \
+		 $(NAN_UCFG_DIR)/cfg_nan.o \
 		 $(NAN_TGT_DIR)/target_if_nan.o \
 		 $(NAN_OS_IF_DIR)/os_if_nan.o
 endif
