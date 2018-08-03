@@ -63,6 +63,9 @@ static enum ipa_wlan_event __qdf_to_ipa_wlan_event(int qdf_ipa_event)
 	case QDF_WDI_DISABLE:
 		ipa_event = WLAN_WDI_DISABLE;
 		break;
+	case QDF_FWR_SSR_BEFORE_SHUTDOWN:
+		ipa_event = WLAN_FWR_SSR_BEFORE_SHUTDOWN;
+		break;
 	case QDF_IPA_WLAN_EVENT_MAX:
 	default:
 		ipa_event = IPA_WLAN_EVENT_MAX;
