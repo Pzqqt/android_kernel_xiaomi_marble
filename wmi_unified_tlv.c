@@ -9256,7 +9256,7 @@ static QDF_STATUS send_aggr_qos_cmd_tlv(wmi_unified_t wmi_handle,
 			       WMITLV_TAG_STRUC_wmi_vdev_wmm_addts_cmd_fixed_param,
 			       WMITLV_GET_STRUCT_TLVLEN
 				       (wmi_vdev_wmm_addts_cmd_fixed_param));
-			cmd->vdev_id = aggr_qos_rsp_msg->sessionId;
+			cmd->vdev_id = aggr_qos_rsp_msg->vdev_id;
 			cmd->ac =
 				WMI_TID_TO_AC(aggr_qos_rsp_msg->tspec[i].tsinfo.
 					      traffic.userPrio);
