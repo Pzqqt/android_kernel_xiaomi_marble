@@ -127,6 +127,7 @@ struct wlan_cfg_dp_pdev_ctxt;
  * @reo_status_ring - reo status ting size
  * @rxdma_refill_ring - rxdma refill ring size
  * @rxdma_err_dst_ring - rxdma error detination ring size
+ * @raw_mode_war - enable/disable raw mode war
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -187,6 +188,7 @@ struct wlan_cfg_dp_soc_ctxt {
 
 	int rxdma_refill_ring;
 	int rxdma_err_dst_ring;
+	bool raw_mode_war;
 };
 
 /**
@@ -527,6 +529,24 @@ int wlan_cfg_get_reo_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
  */
 void wlan_cfg_set_reo_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg,
 				    int reo_dst_ring_size);
+
+/*
+ * wlan_cfg_set_raw_mode_war() - Set raw mode war configuration
+ *
+ * @wlan_cfg_ctx - Configuration Handle
+ * @raw_mode_war - raw mode war configuration
+ */
+void wlan_cfg_set_raw_mode_war(struct wlan_cfg_dp_soc_ctxt *cfg,
+			       bool raw_mode_war);
+
+/*
+ * wlan_cfg_get_raw_mode_war() - Get raw mode war configuration
+ *
+ * @wlan_cfg_ctx - Configuration Handle
+ *
+ * Return: reo_dst_ring_size
+ */
+bool wlan_cfg_get_raw_mode_war(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
  * wlan_cfg_set_num_tx_ext_desc_pool() -  Set the number of Tx MSDU ext Descriptor

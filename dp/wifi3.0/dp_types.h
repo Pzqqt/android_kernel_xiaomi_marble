@@ -1389,6 +1389,9 @@ struct dp_vdev {
 	uint32_t ap_bridge_enabled;
 
 	enum cdp_sec_type  sec_type;
+
+	/* SWAR for HW: Enable WEP bit in the AMSDU frames for RAW mode */
+	bool raw_mode_war;
 };
 
 

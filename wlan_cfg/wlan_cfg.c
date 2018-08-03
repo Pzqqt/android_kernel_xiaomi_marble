@@ -551,6 +551,17 @@ void wlan_cfg_set_reo_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg,
 	cfg->reo_dst_ring_size = reo_dst_ring_size;
 }
 
+void wlan_cfg_set_raw_mode_war(struct wlan_cfg_dp_soc_ctxt *cfg,
+			       bool raw_mode_war)
+{
+	cfg->raw_mode_war = raw_mode_war;
+}
+
+bool wlan_cfg_get_raw_mode_war(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->raw_mode_war;
+}
+
 int wlan_cfg_get_num_tx_desc(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->num_tx_desc;
