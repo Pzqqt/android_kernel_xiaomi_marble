@@ -4187,7 +4187,8 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	 * during that time, then as part of SSR init, do not enable
 	 * the LRO again. Keep the LRO state same as before SSR.
 	 */
-	if (!(qdf_atomic_read(&hdd_ctx->vendor_disable_lro_flag)))
+	if (hdd_ctx->config->lro_enable &&
+	    !(qdf_atomic_read(&hdd_ctx->vendor_disable_lro_flag)))
 		adapter->dev->features |= NETIF_F_LRO;
 
 	/* rcpi info initialization */
