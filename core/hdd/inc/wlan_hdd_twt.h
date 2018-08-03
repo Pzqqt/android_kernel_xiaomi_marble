@@ -65,14 +65,6 @@ enum twt_status {
 };
 
 /**
- * hdd_twt_print_ini_config() - Print TWT INI config items
- * @hdd_ctx: HDD Context
- *
- * Return: None
- */
-void hdd_twt_print_ini_config(struct hdd_context *hdd_ctx);
-
-/**
  * hdd_update_tgt_twt_cap() - Update TWT target capabilities
  * @hdd_ctx: HDD Context
  * @cfg: Pointer to target configuration
@@ -113,10 +105,6 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx);
 void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx);
 
 #else
-static inline void hdd_twt_print_ini_config(struct hdd_context *hdd_ctx)
-{
-}
-
 static inline void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 					  struct wma_tgt_cfg *cfg)
 {

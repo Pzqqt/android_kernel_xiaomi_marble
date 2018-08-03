@@ -88,20 +88,6 @@ int hdd_green_ap_enable_egap(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
-void hdd_green_ap_print_config(struct hdd_context *hdd_ctx)
-{
-	hdd_debug("Name = [gEnableGreenAp] Value = [%u] ",
-		  hdd_ctx->config->enable_green_ap);
-	hdd_debug("Name = [gEenableEGAP] Value = [%u] ",
-		  hdd_ctx->config->enable_egap);
-	hdd_debug("Name = [gEGAPInactTime] Value = [%u] ",
-		  hdd_ctx->config->egap_inact_time);
-	hdd_debug("Name = [gEGAPWaitTime] Value = [%u] ",
-		  hdd_ctx->config->egap_wait_time);
-	hdd_debug("Name = [gEGAPFeatures] Value = [%u] ",
-		  hdd_ctx->config->egap_feature_flag);
-}
-
 int hdd_green_ap_update_config(struct hdd_context *hdd_ctx)
 {
 	struct green_ap_user_cfg green_ap_cfg;

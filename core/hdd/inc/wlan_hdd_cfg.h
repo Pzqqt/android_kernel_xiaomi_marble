@@ -14874,8 +14874,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_set_sme_chan_list(struct hdd_context *hdd_ctx);
 bool hdd_update_config_cfg(struct hdd_context *hdd_ctx);
-QDF_STATUS hdd_cfg_get_global_config(struct hdd_context *hdd_ctx, char *pBuf,
-				     int buflen);
+void hdd_cfg_get_global_config(struct hdd_context *hdd_ctx, char *buf,
+			       int buflen);
 
 eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(enum hdd_dot11_mode dot11Mode);
 QDF_STATUS hdd_execute_global_config_command(struct hdd_context *hdd_ctx,
@@ -14906,7 +14906,7 @@ QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *array,
 QDF_STATUS hdd_hex_string_to_u16_array(char *str, uint16_t *int_array,
 				uint8_t *len, uint8_t int_array_max_len);
 
-void hdd_cfg_print(struct hdd_context *hdd_ctx);
+void hdd_cfg_print_global_config(struct hdd_context *hdd_ctx);
 
 QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss);
 

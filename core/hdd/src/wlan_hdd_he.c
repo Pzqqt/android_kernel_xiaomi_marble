@@ -255,18 +255,6 @@ void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
 		config->SapHw_mode = eCSR_DOT11_MODE_11ax;
 }
 
-void hdd_he_print_ini_config(struct hdd_context *hdd_ctx)
-{
-	hdd_info("Name = [%s] Value = [%d]", CFG_ENABLE_UL_MIMO_NAME,
-		hdd_ctx->config->enable_ul_mimo);
-	hdd_info("Name = [%s] Value = [%d]", CFG_ENABLE_UL_OFDMA_NAME,
-		hdd_ctx->config->enable_ul_ofdma);
-	hdd_info("Name = [%s] Value = [%d]", CFG_HE_STA_OBSSPD_NAME,
-		hdd_ctx->config->he_sta_obsspd);
-	hdd_info("Name = [%s] Value = [%d]", CFG_HE_DYNAMIC_FRAGMENTATION_NAME,
-		hdd_ctx->config->he_dynamic_frag_support);
-}
-
 int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx)
 {
 	uint32_t val, val1 = 0;

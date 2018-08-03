@@ -8867,7 +8867,7 @@ static void hdd_set_trace_level_for_each(struct hdd_context *hdd_ctx)
 				hdd_ctx->config->qdf_trace_enable_cp_stats);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_MLME, 0xffff);
 
-	hdd_cfg_print(hdd_ctx);
+	hdd_cfg_print_global_config(hdd_ctx);
 }
 
 /**

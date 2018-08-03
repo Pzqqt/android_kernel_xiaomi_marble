@@ -30,13 +30,6 @@ void hdd_nud_set_gateway_addr(struct hdd_adapter *adapter,
 		     sizeof(struct qdf_mac_addr));
 }
 
-void hdd_nud_cfg_print(struct hdd_context *hdd_ctx)
-{
-	hdd_debug("Name = [%s] value = [0x%x]",
-		  CFG_ENABLE_NUD_TRACKING_NAME,
-		  hdd_ctx->config->enable_nud_tracking);
-}
-
 void hdd_nud_incr_gw_rx_pkt_cnt(struct hdd_adapter *adapter,
 				struct qdf_mac_addr *mac_addr)
 {

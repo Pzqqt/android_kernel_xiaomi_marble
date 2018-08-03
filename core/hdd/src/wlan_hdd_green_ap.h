@@ -57,16 +57,6 @@ void hdd_green_ap_del_sta(struct hdd_context *hdd_ctx);
 int hdd_green_ap_enable_egap(struct hdd_context *hdd_ctx);
 
 /**
- * hdd_green_ap_print_config() - Print Green AP component configuration
- * @hdd_ctx: Global HDD context
- *
- * This function will print the static Green AP configuration
- *
- * Return: void
- */
-void hdd_green_ap_print_config(struct hdd_context *hdd_ctx);
-
-/**
  * hdd_green_ap_update_config() - Update Green AP component configuration
  * @hdd_ctx: Global HDD context
  *
@@ -104,11 +94,6 @@ static inline
 int hdd_green_ap_enable_egap(struct hdd_context *hdd_ctx)
 {
 	return 0;
-}
-
-static inline
-void hdd_green_ap_print_config(struct hdd_context *hdd_ctx)
-{
 }
 
 static inline

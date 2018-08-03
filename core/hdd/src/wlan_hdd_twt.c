@@ -30,14 +30,6 @@
 #include "sme_api.h"
 #include "wma_twt.h"
 
-void hdd_twt_print_ini_config(struct hdd_context *hdd_ctx)
-{
-	hdd_debug("Name = [%s] Value = [%d]", CFG_ENABLE_TWT_NAME,
-		  hdd_ctx->config->enable_twt);
-	hdd_debug("Name = [%s] Value = [%d]", CFG_TWT_CONGESTION_TIMEOUT_NAME,
-		  hdd_ctx->config->twt_congestion_timeout);
-}
-
 void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 			    struct wma_tgt_cfg *cfg)
 {

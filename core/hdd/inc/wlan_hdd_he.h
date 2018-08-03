@@ -94,14 +94,6 @@ void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
 				 struct sap_config *config);
 
 /**
- * hdd_he_print_ini_config()- Print 11AX(HE) specific INI configuration
- * @hdd_ctx: handle to hdd context
- *
- * Return: None
- */
-void hdd_he_print_ini_config(struct hdd_context *hdd_ctx);
-
-/**
  * hdd_update_he_cap_in_cfg() - update HE cap in global CFG
  * @hdd_ctx: pointer to hdd context
  *
@@ -151,10 +143,6 @@ static inline void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 
 static inline void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
 					       struct sap_config *config)
-{
-}
-
-static inline void hdd_he_print_ini_config(struct hdd_context *hdd_ctx)
 {
 }
 
