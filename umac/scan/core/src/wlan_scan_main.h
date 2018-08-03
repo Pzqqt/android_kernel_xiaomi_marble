@@ -269,6 +269,21 @@ struct pno_def_config {
 	struct nlo_mawc_params mawc_params;
 };
 
+/**
+ * struct extscan_def_config - def configuration for EXTSCAN
+ * @extscan_enabled: enable extscan
+ * @extscan_passive_max_chn_time: max passive channel time
+ * @extscan_passive_min_chn_time: min passive channel time
+ * @extscan_active_max_chn_time: max active channel time
+ * @extscan_active_min_chn_time: min active channel time
+ */
+struct extscan_def_config {
+	bool     extscan_enabled;
+	uint32_t extscan_passive_max_chn_time;
+	uint32_t extscan_passive_min_chn_time;
+	uint32_t extscan_active_max_chn_time;
+	uint32_t extscan_active_min_chn_time;
+};
 
 /**
  * struct scan_default_params - default scan parameters to be used
@@ -456,6 +471,7 @@ struct scan_cb {
  * @global_evhandlers:  registered scan event handlers
  * @pdev_info: pointer to pdev info
  * @pno_cfg: default pno configuration
+ * @extscan_cfg: default extscan configuration
  * @ie_whitelist: default ie whitelist attrs
  * @bt_a2dp_enabled: if bt a2dp is enabled
  * @miracast_enabled: miracast enabled
@@ -476,6 +492,9 @@ struct wlan_scan_obj {
 	struct global_scan_ev_handlers global_evhandlers;
 	struct pdev_scan_info pdev_info[WLAN_UMAC_MAX_PDEVS];
 	struct pno_def_config pno_cfg;
+#ifdef FEATURE_WLAN_EXTSCAN
+	struct extscan_def_config extscan_cfg;
+#endif
 	struct probe_req_whitelist_attr ie_whitelist;
 	bool bt_a2dp_enabled;
 	bool miracast_enabled;

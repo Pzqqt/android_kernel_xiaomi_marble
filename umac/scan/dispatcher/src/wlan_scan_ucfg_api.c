@@ -41,6 +41,7 @@
 #include <wlan_policy_mgr_api.h>
 #endif
 #include "cfg_ucfg_api.h"
+#include "wlan_extscan_api.h"
 
 QDF_STATUS ucfg_scan_register_bcn_cb(struct wlan_objmgr_psoc *psoc,
 	update_beacon_cb cb, enum scan_cb_type type)
@@ -1476,7 +1477,20 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 	/* init scan id seed */
 	qdf_atomic_init(&scan_obj->scan_ids);
 
+	/* init extscan */
+	wlan_extscan_global_init(psoc, scan_obj);
+
 	return wlan_pno_global_init(&scan_obj->pno_cfg);
+}
+
+static void
+wlan_scan_global_deinit(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	wlan_pno_global_deinit(&scan_obj->pno_cfg);
+	wlan_extscan_global_deinit();
 }
 
 static QDF_STATUS
@@ -2119,7 +2133,7 @@ ucfg_scan_psoc_close(struct wlan_objmgr_psoc *psoc)
 	}
 	ucfg_scan_unregister_pmo_handler();
 	qdf_spinlock_destroy(&scan_obj->lock);
-	wlan_pno_global_deinit(&scan_obj->pno_cfg);
+	wlan_scan_global_deinit(psoc);
 
 	return QDF_STATUS_SUCCESS;
 }
