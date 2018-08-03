@@ -1796,8 +1796,11 @@ static void afe_send_cal_spkr_prot_tx(int port_id)
 	}
 	mutex_unlock(&this_afe.cal_data[AFE_FB_SPKR_PROT_EX_VI_CAL]->lock);
 
-	/* Register for DC detection event */
-	afe_spkr_prot_reg_event_cfg(port_id);
+	/* Register for DC detection event if speaker protection is enabled */
+	if (this_afe.prot_cfg.mode != MSM_SPKR_PROT_DISABLED &&
+		(this_afe.vi_tx_port == port_id)) {
+		afe_spkr_prot_reg_event_cfg(port_id);
+	}
 }
 
 static void afe_send_cal_spkr_prot_rx(int port_id)
