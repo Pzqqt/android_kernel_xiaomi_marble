@@ -326,7 +326,16 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 		 * separate from normal frames
 		 */
 		ol_rx_reorder_flush_frag(htt_pdev, peer, tid, seq_num_start);
+	} else {
+		uint32_t *msg_word;
+		uint8_t *rx_ind_data;
+
+		rx_ind_data = qdf_nbuf_data(rx_frag_ind_msg);
+		msg_word = (uint32_t *)rx_ind_data;
+		msdu_count = HTT_RX_IN_ORD_PADDR_IND_MSDU_CNT_GET(*(msg_word +
+								    1));
 	}
+
 	pktlog_bit =
 		(htt_rx_amsdu_rx_in_order_get_pktlog(rx_frag_ind_msg) == 0x01);
 	ret = htt_rx_frag_pop(htt_pdev, rx_frag_ind_msg, &head_msdu,
@@ -362,7 +371,11 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 		htt_rx_desc_frame_free(htt_pdev, head_msdu);
 	}
 	/* request HTT to provide new rx MSDU buffers for the target to fill. */
-	htt_rx_msdu_buff_replenish(htt_pdev);
+	if (ol_cfg_is_full_reorder_offload(pdev->ctrl_pdev) &&
+	    !pdev->cfg.is_high_latency)
+		htt_rx_msdu_buff_in_order_replenish(htt_pdev, msdu_count);
+	else
+		htt_rx_msdu_buff_replenish(htt_pdev);
 }
 
 /*
