@@ -2823,6 +2823,7 @@ struct dhcp_stop_ind_params {
  * @tspec: tspec value
  * @status: CDF status
  * @sessionId: session id
+ * @vdev_id: vdev id
  */
 struct aggr_add_ts_param {
 	uint16_t staIdx;
@@ -2830,6 +2831,7 @@ struct aggr_add_ts_param {
 	struct mac_tspec_ie tspec[WMI_QOS_NUM_AC_MAX];
 	QDF_STATUS status[WMI_QOS_NUM_AC_MAX];
 	uint8_t sessionId;
+	uint8_t vdev_id;
 };
 
 
