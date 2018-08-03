@@ -1925,6 +1925,9 @@ static QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
 		len += sizeof(wmi_bssid_list) + (param->num_bssid - 1)
 		    * sizeof(wmi_mac_addr);
 	}
+	if (param->scan_offset_time) {
+		len += sizeof(wmi_scan_start_offset);
+	}
 	if (param->extraie.len) {
 		i = param->extraie.len % sizeof(uint32_t);
 		if (i)
@@ -2072,7 +2075,7 @@ static QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
 			    param->num_bssid)/sizeof(uint32_t));
 	}
 	if (param->scan_offset_time) {
-		offset = sizeof(param->scan_offset_time) / sizeof(A_UINT32);
+		offset = sizeof(param->scan_offset_time) / sizeof(uint32_t);
 		scan_start_offset = (wmi_scan_start_offset *)tmp_ptr;
 		scan_start_offset->tag = WMI_SCAN_START_OFFSET_TAG;
 		scan_start_offset->num_offset = offset;
