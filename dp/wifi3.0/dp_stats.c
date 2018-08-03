@@ -3330,3 +3330,39 @@ void dp_htt_stats_copy_tag(struct dp_pdev *pdev, uint8_t tag_type, uint32_t *tag
 	if (dest_ptr)
 		qdf_mem_copy(dest_ptr, tag_buf, size);
 }
+
+#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
+QDF_STATUS dp_peer_stats_notify(struct dp_peer *peer)
+{
+	struct dp_pdev *dp_pdev;
+	struct cdp_interface_peer_stats peer_stats_intf;
+	struct cdp_peer_stats *peer_stats = &peer->stats;
+
+	if (!peer->vdev)
+		return QDF_STATUS_E_FAULT;
+
+	dp_pdev = peer->vdev->pdev;
+	qdf_mem_zero(&peer_stats_intf, sizeof(peer_stats_intf));
+	if (peer_stats->rx.last_rssi != peer_stats->rx.rssi)
+		peer_stats_intf.rssi_changed = true;
+
+	if ((peer_stats->rx.rssi && peer_stats_intf.rssi_changed) ||
+	    (peer_stats->tx.tx_rate &&
+	     peer_stats->tx.tx_rate != peer_stats->tx.last_tx_rate)) {
+		peer_stats_intf.peer_hdl = peer->ctrl_peer;
+		peer_stats_intf.last_peer_tx_rate = peer_stats->tx.last_tx_rate;
+		peer_stats_intf.peer_tx_rate = peer_stats->tx.tx_rate;
+		peer_stats_intf.peer_rssi = peer_stats->rx.rssi;
+		peer_stats_intf.tx_packet_count = peer_stats->tx.ucast.num;
+		peer_stats_intf.rx_packet_count = peer_stats->rx.to_stack.num;
+		peer_stats_intf.tx_byte_count = peer_stats->tx.tx_success.bytes;
+		peer_stats_intf.rx_byte_count = peer_stats->rx.to_stack.bytes;
+		peer_stats_intf.per = peer_stats->tx.last_per;
+		dp_wdi_event_handler(WDI_EVENT_PEER_STATS, dp_pdev->soc,
+				     (void *)&peer_stats_intf, 0,
+				     WDI_NO_VAL, dp_pdev->pdev_id);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif

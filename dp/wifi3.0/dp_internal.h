@@ -528,6 +528,8 @@ static inline void dp_hif_update_pipe_callback(void *soc, void *cb_context,
 		DP_HTT_T2H_HP_PIPE, &hif_pipe_callbacks);
 }
 
+QDF_STATUS dp_peer_stats_notify(struct dp_peer *peer);
+
 #else
 static inline int dp_wdi_event_unsub(struct cdp_pdev *txrx_pdev_handle,
 	void *event_cb_sub_handle,
@@ -573,6 +575,12 @@ static inline void dp_hif_update_pipe_callback(void *soc, void *cb_context,
 	QDF_STATUS (*callback)(void *, qdf_nbuf_t, uint8_t), uint8_t pipe_id)
 {
 }
+
+static inline QDF_STATUS dp_peer_stats_notify(struct dp_peer *peer)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif /* CONFIG_WIN */
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 void dp_tx_dump_flow_pool_info(void *soc);

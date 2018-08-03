@@ -197,6 +197,8 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	ac = TID_TO_WME_AC(ppdu->tid);
 	if (ppdu->tid != HAL_TID_INVALID)
 		DP_STATS_INC(peer, rx.wme_ac_type[ac], num_msdu);
+	dp_peer_stats_notify(peer);
+	DP_STATS_UPD(peer, rx.last_rssi, ppdu->rssi);
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
 		soc->cdp_soc.ol_ops->update_dp_stats(pdev->ctrl_pdev,
