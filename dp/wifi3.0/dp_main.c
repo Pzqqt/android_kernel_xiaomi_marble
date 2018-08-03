@@ -6891,6 +6891,8 @@ static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
 		req->param1 = 0xFFFFFFFF;
 		req->param2 = 0xFFFFFFFF;
 		req->param3 = 0xFFFFFFFF;
+	} else if (req->stats == (uint8_t)HTT_DBG_EXT_STATS_PDEV_TX_MU) {
+		req->param0 = HTT_DBG_EXT_STATS_SET_VDEV_MASK(vdev->vdev_id);
 	}
 
 	return dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,

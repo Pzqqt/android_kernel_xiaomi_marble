@@ -1366,6 +1366,7 @@ static inline void dp_print_tx_selfgen_ax_err_stats_tlv(uint32_t *tag_buf)
  */
 static inline void dp_print_tx_pdev_mu_mimo_sch_stats_tlv(uint32_t *tag_buf)
 {
+	uint8_t i;
 	htt_tx_pdev_mu_mimo_sch_stats_tlv *dp_stats_buf =
 		(htt_tx_pdev_mu_mimo_sch_stats_tlv *)tag_buf;
 
@@ -1376,6 +1377,27 @@ static inline void dp_print_tx_pdev_mu_mimo_sch_stats_tlv(uint32_t *tag_buf)
 			dp_stats_buf->mu_mimo_sch_failed);
 	DP_TRACE_STATS(FATAL, "mu_mimo_ppdu_posted = %d\n",
 			dp_stats_buf->mu_mimo_ppdu_posted);
+
+	DP_TRACE_STATS(FATAL, "11ac MU_MIMO SCH STATS:");
+
+	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS; i++) {
+		DP_TRACE_STATS(FATAL, "ac_mu_mimo_sch_nusers_%u = %u", i,
+			       dp_stats_buf->ac_mu_mimo_sch_nusers[i]);
+	}
+
+	DP_TRACE_STATS(FATAL, "\n11ax MU_MIMO SCH STATS:");
+
+	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS; i++) {
+		DP_TRACE_STATS(FATAL, "ax_mu_mimo_sch_nusers_%u = %u", i,
+			       dp_stats_buf->ax_mu_mimo_sch_nusers[i]);
+	}
+
+	DP_TRACE_STATS(FATAL, "\n11ax OFDMA SCH STATS:");
+
+	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS; i++) {
+		DP_TRACE_STATS(FATAL, "ax_ofdma_sch_nusers_%u = %u", i,
+			       dp_stats_buf->ax_ofdma_sch_nusers[i]);
+	}
 }
 
 /*
@@ -1387,24 +1409,124 @@ static inline void dp_print_tx_pdev_mu_mimo_sch_stats_tlv(uint32_t *tag_buf)
  */
 static inline void dp_print_tx_pdev_mu_mimo_mpdu_stats_tlv(uint32_t *tag_buf)
 {
-	htt_tx_pdev_mu_mimo_mpdu_stats_tlv *dp_stats_buf =
-		(htt_tx_pdev_mu_mimo_mpdu_stats_tlv *)tag_buf;
+	htt_tx_pdev_mpdu_stats_tlv *dp_stats_buf =
+		(htt_tx_pdev_mpdu_stats_tlv *)tag_buf;
 
-	DP_TRACE_STATS(FATAL, "HTT_TX_PDEV_MU_MIMO_MPDU_STATS_TLV:");
-	DP_TRACE_STATS(FATAL, "mu_mimo_mpdus_queued_usr = %d",
-			dp_stats_buf->mu_mimo_mpdus_queued_usr);
-	DP_TRACE_STATS(FATAL, "mu_mimo_mpdus_tried_usr = %d",
-			dp_stats_buf->mu_mimo_mpdus_tried_usr);
-	DP_TRACE_STATS(FATAL, "mu_mimo_mpdus_failed_usr = %d",
-			dp_stats_buf->mu_mimo_mpdus_failed_usr);
-	DP_TRACE_STATS(FATAL, "mu_mimo_mpdus_requeued_usr = %d",
-			dp_stats_buf->mu_mimo_mpdus_requeued_usr);
-	DP_TRACE_STATS(FATAL, "mu_mimo_err_no_ba_usr = %d",
-			dp_stats_buf->mu_mimo_err_no_ba_usr);
-	DP_TRACE_STATS(FATAL, "mu_mimo_mpdu_underrun_usr = %d",
-			dp_stats_buf->mu_mimo_mpdu_underrun_usr);
-	DP_TRACE_STATS(FATAL, "mu_mimo_ampdu_underrun_usr = %d\n",
-			dp_stats_buf->mu_mimo_ampdu_underrun_usr);
+	if (dp_stats_buf->tx_sched_mode ==
+			HTT_STATS_TX_SCHED_MODE_MU_MIMO_AC) {
+		if (!dp_stats_buf->user_index)
+			DP_TRACE_STATS(FATAL,
+				       "HTT_TX_PDEV_MU_MIMO_AC_MPDU_STATS:\n");
+
+		if (dp_stats_buf->user_index <
+			HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS) {
+			DP_TRACE_STATS(FATAL,
+				       "ac_mu_mimo_mpdus_queued_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_queued_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ac_mu_mimo_mpdus_tried_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_tried_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ac_mu_mimo_mpdus_failed_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_failed_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ac_mu_mimo_mpdus_requeued_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_requeued_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ac_mu_mimo_err_no_ba_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->err_no_ba_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ac_mu_mimo_mpdu_underrun_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdu_underrun_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ac_mu_mimo_ampdu_underrun_usr_%u = %u\n",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->ampdu_underrun_usr);
+		}
+	}
+
+	if (dp_stats_buf->tx_sched_mode == HTT_STATS_TX_SCHED_MODE_MU_MIMO_AX) {
+		if (!dp_stats_buf->user_index)
+			DP_TRACE_STATS(FATAL,
+				       "HTT_TX_PDEV_MU_MIMO_AX_MPDU_STATS:\n");
+
+		if (dp_stats_buf->user_index <
+				HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS) {
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_mimo_mpdus_queued_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_queued_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_mimo_mpdus_tried_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_tried_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_mimo_mpdus_failed_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_failed_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_mimo_mpdus_requeued_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_requeued_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_mimo_err_no_ba_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->err_no_ba_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_mimo_mpdu_underrun_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdu_underrun_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_mimo_ampdu_underrun_usr_%u = %u\n",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->ampdu_underrun_usr);
+		}
+	}
+
+	if (dp_stats_buf->tx_sched_mode ==
+			HTT_STATS_TX_SCHED_MODE_MU_OFDMA_AX) {
+		if (!dp_stats_buf->user_index)
+			DP_TRACE_STATS(FATAL,
+				       "HTT_TX_PDEV_AX_MU_OFDMA_MPDU_STATS:\n");
+
+		if (dp_stats_buf->user_index <
+				HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS) {
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_ofdma_mpdus_queued_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_queued_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_ofdma_mpdus_tried_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_tried_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_ofdma_mpdus_failed_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_failed_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_ofdma_mpdus_requeued_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdus_requeued_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_ofdma_err_no_ba_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->err_no_ba_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_ofdma_mpdu_underrun_usr_%u = %u",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->mpdu_underrun_usr);
+			DP_TRACE_STATS(FATAL,
+				       "ax_mu_ofdma_ampdu_underrun_usr_%u = %u\n",
+				       dp_stats_buf->user_index,
+				       dp_stats_buf->ampdu_underrun_usr);
+		}
+	}
 }
 
 /*
@@ -3125,7 +3247,7 @@ void dp_htt_stats_print_tag(uint8_t tag_type, uint32_t *tag_buf)
 		dp_print_stats_tx_sched_cmn_tlv(tag_buf);
 		break;
 
-	case HTT_STATS_TX_PDEV_MUMIMO_MPDU_STATS_TAG:
+	case HTT_STATS_TX_PDEV_MPDU_STATS_TAG:
 		dp_print_tx_pdev_mu_mimo_mpdu_stats_tlv(tag_buf);
 		break;
 
