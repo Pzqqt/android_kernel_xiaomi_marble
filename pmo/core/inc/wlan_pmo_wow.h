@@ -634,38 +634,6 @@ bool pmo_core_is_lpass_enabled(struct wlan_objmgr_vdev *vdev)
 }
 #endif
 
-#ifdef WLAN_FEATURE_NAN
-/**
- * pmo_is_nan_enabled() - check if NaN is enabled
- * @vdev: objmgr vdev handle
- *
- * WoW is needed if LPASS or NaN feature is enabled in INI because
- * target can't wake up itself if its put in PDEV suspend when LPASS
- * or NaN features are supported
- *
- * Return: true if NaN is enabled else false
- */
-static inline
-bool pmo_core_is_nan_enabled(struct wlan_objmgr_vdev *vdev)
-{
-	bool nan_enable;
-	struct pmo_vdev_priv_obj *vdev_ctx;
-
-	vdev_ctx = pmo_vdev_get_priv(vdev);
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	nan_enable = vdev_ctx->pmo_psoc_ctx->psoc_cfg.nan_enable;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-
-	return nan_enable;
-}
-#else
-static inline
-bool pmo_core_is_nan_enabled(struct wlan_objmgr_vdev *vdev)
-{
-	return false;
-}
-#endif
-
 /**
  * pmo_get_event_bitmap_idx() - get indices for extended wow bitmaps
  * @event: wow event

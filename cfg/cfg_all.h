@@ -31,7 +31,14 @@
 #define CFG_TDLS_ALL
 #endif
 
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#include "cfg_nan.h"
+#else
+#define CFG_NAN_ALL
+#endif
+
 #define CFG_ALL \
 	CFG_CONVERGED_ALL \
 	CFG_P2P_ALL \
-	CFG_TDLS_ALL
+	CFG_TDLS_ALL \
+	CFG_NAN_ALL

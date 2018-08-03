@@ -278,7 +278,6 @@ enum pmo_auto_pwr_detect_failure_mode {
  * @deauth_enable: true when wake up on deauth is enabled else false
  * @disassoc_enable:  true when wake up on disassoc is enabled else false
  * @bmiss_enable: true when wake up on bmiss is enabled else false
- * @nan_enable:  true when nan is enabled else false
  * @lpass_enable: true when lpass is enabled else false
  * @sta_dynamic_dtim: station dynamic DTIM value
  * @sta_mod_dtim: station modulated DTIM value
@@ -305,7 +304,6 @@ struct pmo_psoc_cfg {
 	bool deauth_enable;
 	bool disassoc_enable;
 	bool bmiss_enable;
-	bool nan_enable;
 	bool lpass_enable;
 	uint8_t sta_dynamic_dtim;
 	uint8_t sta_mod_dtim;

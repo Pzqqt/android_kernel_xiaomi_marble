@@ -26,6 +26,7 @@
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_pmo_static_config.h"
 #include "wlan_reg_services_api.h"
+#include "cfg_nan_api.h"
 
 void pmo_set_wow_event_bitmap(WOW_WAKE_EVENT_TYPE event,
 			      uint32_t wow_bitmap_size,
@@ -315,7 +316,7 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 		} else if (pmo_core_is_lpass_enabled(vdev)) {
 			pmo_debug("LPASS is enabled, enabling WoW");
 			is_wow_applicable = true;
-		} else if (pmo_core_is_nan_enabled(vdev)) {
+		} else if (cfg_nan_get_enable(psoc)) {
 			pmo_debug("NAN is enabled, enabling WoW");
 			is_wow_applicable = true;
 		} else if (pmo_core_get_vdev_op_mode(vdev) == QDF_NDI_MODE) {
