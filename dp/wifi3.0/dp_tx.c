@@ -628,6 +628,9 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 
 	dp_tx_trace_pkt(nbuf, tx_desc->id, vdev->vdev_id);
 
+	/* Reset the control block */
+	qdf_nbuf_reset_ctxt(nbuf);
+
 	/*
 	 * For special modes (vdev_type == ocb or mesh), data frames should be
 	 * transmitted using varying transmit parameters (tx spec) which include
@@ -755,6 +758,9 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	tx_desc->tso_num_desc = msdu_info->u.tso_info.tso_num_seg_list;
 
 	dp_tx_trace_pkt(nbuf, tx_desc->id, vdev->vdev_id);
+
+	/* Reset the control block */
+	qdf_nbuf_reset_ctxt(nbuf);
 
 	/* Handle scattered frames - TSO/SG/ME */
 	/* Allocate and prepare an extension descriptor for scattered frames */
@@ -1847,9 +1853,6 @@ qdf_nbuf_t dp_tx_send_exception(void *vap_dev, qdf_nbuf_t nbuf,
 	 */
 	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
 
-	/* Reset the control block */
-	qdf_nbuf_reset_ctxt(nbuf);
-
 	/*  Single linear frame */
 	/*
 	 * If nbuf is a simple linear frame, use send_single function to
@@ -2011,9 +2014,6 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	 * to fill in TCL Input descriptor (per-packet TID override).
 	 */
 	dp_tx_classify_tid(vdev, nbuf, &msdu_info);
-
-	/* Reset the control block */
-	qdf_nbuf_reset_ctxt(nbuf);
 
 	/*
 	 * Classify the frame and call corresponding
