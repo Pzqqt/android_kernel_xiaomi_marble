@@ -2415,7 +2415,7 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 {
 	int ret, i;
 	struct hdd_context *hddctx;
-	struct stats_event rssi_info;
+	struct stats_event *rssi_info;
 	char macaddrarray[MAC_ADDRESS_STR_LEN];
 	struct hdd_adapter *adapter = netdev_priv(dev);
 	struct qdf_mac_addr macaddress = QDF_MAC_ADDR_BCAST_INIT;
@@ -2448,27 +2448,27 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 			hdd_err("String to Hex conversion Failed");
 	}
 
-	ret = wlan_cfg80211_mc_cp_stats_get_peer_rssi(adapter->hdd_vdev,
-						      macaddress.bytes,
-						      &rssi_info);
-	if (ret) {
-		hdd_err("Unable to retrieve peer rssi: %d", ret);
-		wlan_cfg80211_mc_cp_stats_put_peer_rssi(&rssi_info);
+	rssi_info = wlan_cfg80211_mc_cp_stats_get_peer_rssi(adapter->hdd_vdev,
+							    macaddress.bytes,
+							    &ret);
+	if (ret || !rssi_info) {
+		wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);
 		return ret;
 	}
 
 	wrqu->data.length = scnprintf(extra, IW_PRIV_SIZE_MASK, "\n");
-	for (i = 0; i < rssi_info.num_peer_stats; i++) {
-		wrqu->data.length += scnprintf(extra + wrqu->data.length,
-					IW_PRIV_SIZE_MASK - wrqu->data.length,
-					"[%pM] [%d]\n",
-					rssi_info.peer_stats[i].peer_macaddr,
-					rssi_info.peer_stats[i].peer_rssi);
-	}
-	wrqu->data.length++;
-	wlan_cfg80211_mc_cp_stats_put_peer_rssi(&rssi_info);
+	for (i = 0; i < rssi_info->num_peer_stats; i++)
+		wrqu->data.length +=
+			scnprintf(extra + wrqu->data.length,
+				  IW_PRIV_SIZE_MASK - wrqu->data.length,
+				  "[%pM] [%d]\n",
+				  rssi_info->peer_stats[i].peer_macaddr,
+				  rssi_info->peer_stats[i].peer_rssi);
 
+	wrqu->data.length++;
+	wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);
 	hdd_exit();
+
 	return 0;
 }
 #else

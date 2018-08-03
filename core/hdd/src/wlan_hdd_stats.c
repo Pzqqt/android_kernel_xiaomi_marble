@@ -5020,9 +5020,9 @@ int wlan_hdd_get_rcpi(struct hdd_adapter *adapter, uint8_t *mac,
 #ifdef QCA_SUPPORT_CP_STATS
 QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 {
-	int ret, i;
+	int ret = 0, i;
 	struct hdd_station_ctx *sta_ctx;
-	struct stats_event rssi_info;
+	struct stats_event *rssi_info;
 
 	if (NULL == adapter) {
 		hdd_err("Invalid context, adapter");
@@ -5051,27 +5051,27 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 		return QDF_STATUS_SUCCESS;
 	}
 
-	ret = wlan_cfg80211_mc_cp_stats_get_peer_rssi(adapter->hdd_vdev,
-						sta_ctx->conn_info.bssId.bytes,
-						&rssi_info);
-	if (ret) {
-		hdd_err("Unable to retrieve peer rssi: %d", ret);
-		wlan_cfg80211_mc_cp_stats_put_peer_rssi(&rssi_info);
+	rssi_info = wlan_cfg80211_mc_cp_stats_get_peer_rssi(
+			adapter->hdd_vdev,
+			sta_ctx->conn_info.bssId.bytes,
+			&ret);
+	if (ret || !rssi_info) {
+		wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);
 		return ret;
 	}
 
-	for (i = 0; i < rssi_info.num_peer_stats; i++) {
-		if (!qdf_mem_cmp(rssi_info.peer_stats[i].peer_macaddr,
+	for (i = 0; i < rssi_info->num_peer_stats; i++) {
+		if (!qdf_mem_cmp(rssi_info->peer_stats[i].peer_macaddr,
 				 sta_ctx->conn_info.bssId.bytes,
 				 WLAN_MACADDR_LEN)) {
-			*rssi_value = rssi_info.peer_stats[i].peer_rssi;
+			*rssi_value = rssi_info->peer_stats[i].peer_rssi;
 			hdd_debug("RSSI = %d", *rssi_value);
-			wlan_cfg80211_mc_cp_stats_put_peer_rssi(&rssi_info);
+			wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);
 			return QDF_STATUS_SUCCESS;
 		}
 	}
 
-	wlan_cfg80211_mc_cp_stats_put_peer_rssi(&rssi_info);
+	wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);
 	hdd_err("bss peer not present in returned result");
 	return QDF_STATUS_E_FAULT;
 }
@@ -5752,68 +5752,68 @@ return_cached_results:
 #ifdef QCA_SUPPORT_CP_STATS
 int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 {
-	int ret;
+	int ret = 0;
 	uint8_t mcs_rate_flags;
-	struct stats_event stats = {0};
+	struct stats_event *stats;
 
-	ret =  wlan_cfg80211_mc_cp_stats_get_station_stats(adapter->hdd_vdev,
-							   &stats);
-
-	if (!stats.vdev_summary_stats || !stats.vdev_chain_rssi) {
-		hdd_err("summary_stats: %pK, chain_rssi: %pK",
-			stats.vdev_summary_stats, stats.vdev_chain_rssi);
-		return -EINVAL;
+	stats = wlan_cfg80211_mc_cp_stats_get_station_stats(adapter->hdd_vdev,
+							    &ret);
+	if (ret || !stats) {
+		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
+		return ret;
 	}
 
 	/* save summary stats to legacy location */
 	qdf_mem_copy(adapter->hdd_stats.summary_stat.retry_cnt,
-		stats.vdev_summary_stats[0].stats.retry_cnt,
+		stats->vdev_summary_stats[0].stats.retry_cnt,
 		sizeof(adapter->hdd_stats.summary_stat.retry_cnt));
 	qdf_mem_copy(adapter->hdd_stats.summary_stat.multiple_retry_cnt,
-		stats.vdev_summary_stats[0].stats.multiple_retry_cnt,
+		stats->vdev_summary_stats[0].stats.multiple_retry_cnt,
 		sizeof(adapter->hdd_stats.summary_stat.multiple_retry_cnt));
 	qdf_mem_copy(adapter->hdd_stats.summary_stat.tx_frm_cnt,
-		stats.vdev_summary_stats[0].stats.tx_frm_cnt,
+		stats->vdev_summary_stats[0].stats.tx_frm_cnt,
 		sizeof(adapter->hdd_stats.summary_stat.tx_frm_cnt));
 	qdf_mem_copy(adapter->hdd_stats.summary_stat.fail_cnt,
-		stats.vdev_summary_stats[0].stats.fail_cnt,
+		stats->vdev_summary_stats[0].stats.fail_cnt,
 		sizeof(adapter->hdd_stats.summary_stat.fail_cnt));
 	adapter->hdd_stats.summary_stat.snr =
-		stats.vdev_summary_stats[0].stats.snr;
+		stats->vdev_summary_stats[0].stats.snr;
 	adapter->hdd_stats.summary_stat.rssi =
-		stats.vdev_summary_stats[0].stats.rssi;
+		stats->vdev_summary_stats[0].stats.rssi;
 	adapter->hdd_stats.summary_stat.rx_frm_cnt =
-		stats.vdev_summary_stats[0].stats.rx_frm_cnt;
+		stats->vdev_summary_stats[0].stats.rx_frm_cnt;
 	adapter->hdd_stats.summary_stat.frm_dup_cnt =
-		stats.vdev_summary_stats[0].stats.frm_dup_cnt;
+		stats->vdev_summary_stats[0].stats.frm_dup_cnt;
 	adapter->hdd_stats.summary_stat.rts_fail_cnt =
-		stats.vdev_summary_stats[0].stats.rts_fail_cnt;
+		stats->vdev_summary_stats[0].stats.rts_fail_cnt;
 	adapter->hdd_stats.summary_stat.ack_fail_cnt =
-		stats.vdev_summary_stats[0].stats.ack_fail_cnt;
+		stats->vdev_summary_stats[0].stats.ack_fail_cnt;
 	adapter->hdd_stats.summary_stat.rts_succ_cnt =
-		stats.vdev_summary_stats[0].stats.rts_succ_cnt;
+		stats->vdev_summary_stats[0].stats.rts_succ_cnt;
 	adapter->hdd_stats.summary_stat.rx_discard_cnt =
-		stats.vdev_summary_stats[0].stats.rx_discard_cnt;
+		stats->vdev_summary_stats[0].stats.rx_discard_cnt;
 	adapter->hdd_stats.summary_stat.rx_error_cnt =
-		stats.vdev_summary_stats[0].stats.rx_error_cnt;
+		stats->vdev_summary_stats[0].stats.rx_error_cnt;
 
 	/* save class a stats to legacy location */
 	adapter->hdd_stats.class_a_stat.nss =
 		wlan_vdev_mlme_get_nss(adapter->hdd_vdev);
-	adapter->hdd_stats.class_a_stat.tx_rate = stats.tx_rate;
-	adapter->hdd_stats.class_a_stat.tx_rate_flags = stats.tx_rate_flags;
+	adapter->hdd_stats.class_a_stat.tx_rate = stats->tx_rate;
+	adapter->hdd_stats.class_a_stat.tx_rate_flags = stats->tx_rate_flags;
 	adapter->hdd_stats.class_a_stat.mcs_index =
-		sme_get_mcs_idx(stats.tx_rate * 5, stats.tx_rate_flags,
-			&adapter->hdd_stats.class_a_stat.nss, &mcs_rate_flags);
+		sme_get_mcs_idx(stats->tx_rate * 5,
+				stats->tx_rate_flags,
+				&adapter->hdd_stats.class_a_stat.nss,
+				&mcs_rate_flags);
 	adapter->hdd_stats.class_a_stat.mcs_rate_flags = mcs_rate_flags;
 
 	/* save per chain rssi to legacy location */
 	qdf_mem_copy(adapter->hdd_stats.per_chain_rssi_stats.rssi,
-		     stats.vdev_chain_rssi[0].chain_rssi,
-		     sizeof(stats.vdev_chain_rssi[0].chain_rssi));
+		     stats->vdev_chain_rssi[0].chain_rssi,
+		     sizeof(stats->vdev_chain_rssi[0].chain_rssi));
+	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
 
-	wlan_cfg80211_mc_cp_stats_put_station_stats(&stats);
-	return ret;
+	return 0;
 }
 #else /* QCA_SUPPORT_CP_STATS */
 struct station_stats {
