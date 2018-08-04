@@ -2844,7 +2844,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		unint = true;
 		/* Fall through dont add break here */
 	case DRIVER_MODULES_CLOSED:
-		hdd_info("Wlan transitioning (CLOSED -> OPENED)");
+		hdd_info("Wlan transitioning (CLOSED -> ENABLED)");
 
 		hdd_debug_domain_set(QDF_DEBUG_DOMAIN_ACTIVE);
 
@@ -2948,19 +2948,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			hdd_ctx->hdd_psoc);
 
 		hdd_sysfs_create_version_interface(hdd_ctx->hdd_psoc);
-
 		hdd_update_hw_sw_info(hdd_ctx);
-		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
-		hdd_info("Wlan transitioned (now OPENED)");
-
-		if (unint) {
-			hdd_debug("In phase-1 initialization  don't enable modules");
-			break;
-		}
-
-	/* Fall through dont add break here */
-	case DRIVER_MODULES_OPENED:
-		hdd_info("Wlan transitioning (OPENED -> ENABLED)");
 
 		if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 			hdd_err("in ftm mode, no need to configure cds modules");
@@ -2976,8 +2964,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 
 		hdd_enable_power_management();
 
-		hdd_ctx->driver_status = DRIVER_MODULES_ENABLED;
-		hdd_info("Wlan transitioned (now ENABLED)");
 		break;
 
 	default:
@@ -2986,6 +2972,9 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		ret = -EINVAL;
 		goto release_lock;
 	}
+
+	hdd_ctx->driver_status = DRIVER_MODULES_ENABLED;
+	hdd_info("Wlan transitioned (now ENABLED)");
 
 	hdd_ctx->start_modules_in_progress = false;
 
@@ -11013,7 +11002,10 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		hdd_debug("Modules already closed");
 		goto done;
 	case DRIVER_MODULES_ENABLED:
-		hdd_info("Wlan transitioning (OPENED <- ENABLED)");
+		hdd_info("Wlan transitioning (CLOSED <- ENABLED)");
+
+		if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE)
+			break;
 
 		hdd_disable_power_management();
 		if (hdd_deconfigure_cds(hdd_ctx)) {
@@ -11023,12 +11015,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		}
 		hdd_debug("successfully Disabled the CDS modules!");
 
-		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
-		hdd_info("Wlan transitioned (now OPENED)");
-
-		/* fall through */
-	case DRIVER_MODULES_OPENED:
-		hdd_info("Wlan transitioning (CLOSED <- OPENED)");
 		break;
 	default:
 		QDF_DEBUG_PANIC("Unknown driver state:%d",

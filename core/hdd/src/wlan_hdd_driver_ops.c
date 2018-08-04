@@ -766,11 +766,6 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 		return err;
 	}
 
-	if (hdd_ctx->driver_status == DRIVER_MODULES_OPENED) {
-		hdd_err("Driver open state,  can't suspend");
-		return -EAGAIN;
-	}
-
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
 		hdd_debug("Driver Module closed; skipping suspend");
 		return 0;
@@ -883,11 +878,6 @@ static int __wlan_hdd_bus_suspend_noirq(void)
 	if (errno) {
 		hdd_err("Invalid HDD context: errno %d", errno);
 		return errno;
-	}
-
-	if (hdd_ctx->driver_status == DRIVER_MODULES_OPENED) {
-		hdd_err("Driver open state,  can't suspend");
-		return -EAGAIN;
 	}
 
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {

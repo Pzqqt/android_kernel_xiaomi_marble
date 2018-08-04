@@ -1626,12 +1626,6 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	mutex_lock(&hdd_ctx->iface_change_lock);
 
-	if (hdd_ctx->driver_status == DRIVER_MODULES_OPENED) {
-		mutex_unlock(&hdd_ctx->iface_change_lock);
-		hdd_err("Driver open state,  can't suspend");
-		return -EAGAIN;
-	}
-
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
 		mutex_unlock(&hdd_ctx->iface_change_lock);
 		hdd_debug("Driver Modules not Enabled ");

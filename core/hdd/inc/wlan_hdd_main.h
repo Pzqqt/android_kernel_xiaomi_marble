@@ -1583,13 +1583,11 @@ struct hdd_offloaded_packets_ctx {
 /**
  * enum driver_status: Driver Modules status
  * @DRIVER_MODULES_UNINITIALIZED: Driver CDS modules uninitialized
- * @DRIVER_MODULES_OPENED: Driver CDS modules opened
  * @DRIVER_MODULES_ENABLED: Driver CDS modules opened
  * @DRIVER_MODULES_CLOSED: Driver CDS modules closed
  */
 enum driver_modules_status {
 	DRIVER_MODULES_UNINITIALIZED,
-	DRIVER_MODULES_OPENED,
 	DRIVER_MODULES_ENABLED,
 	DRIVER_MODULES_CLOSED
 };
