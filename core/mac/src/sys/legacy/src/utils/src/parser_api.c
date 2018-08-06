@@ -616,24 +616,24 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 
 	ht_cap_info = &pMac->mlme_cfg->ht_caps.ht_cap_info;
 
-	pDot11f->mimoPowerSave = ht_cap_info->mimoPowerSave;
-	pDot11f->greenField = ht_cap_info->greenField;
-	pDot11f->delayedBA = ht_cap_info->delayedBA;
-	pDot11f->maximalAMSDUsize = ht_cap_info->maximalAMSDUsize;
-	pDot11f->dsssCckMode40MHz = ht_cap_info->dsssCckMode40MHz;
+	pDot11f->mimoPowerSave = ht_cap_info->mimo_power_save;
+	pDot11f->greenField = ht_cap_info->green_field;
+	pDot11f->delayedBA = ht_cap_info->delayed_ba;
+	pDot11f->maximalAMSDUsize = ht_cap_info->maximal_amsdu_size;
+	pDot11f->dsssCckMode40MHz = ht_cap_info->dsss_cck_mode_40_mhz;
 	pDot11f->psmp = ht_cap_info->psmp;
-	pDot11f->stbcControlFrame = ht_cap_info->stbcControlFrame;
-	pDot11f->lsigTXOPProtection = ht_cap_info->lsigTXOPProtection;
+	pDot11f->stbcControlFrame = ht_cap_info->stbc_control_frame;
+	pDot11f->lsigTXOPProtection = ht_cap_info->l_sig_tx_op_protection;
 
 	/* All sessionized entries will need the check below */
 	if (psessionEntry == NULL) {     /* Only in case of NO session */
 		pDot11f->supportedChannelWidthSet =
-			ht_cap_info->supportedChannelWidthSet;
-		pDot11f->advCodingCap = ht_cap_info->advCodingCap;
-		pDot11f->txSTBC = ht_cap_info->txSTBC;
-		pDot11f->rxSTBC = ht_cap_info->rxSTBC;
-		pDot11f->shortGI20MHz = ht_cap_info->shortGI20MHz;
-		pDot11f->shortGI40MHz = ht_cap_info->shortGI40MHz;
+			ht_cap_info->supported_channel_width_set;
+		pDot11f->advCodingCap = ht_cap_info->adv_coding_cap;
+		pDot11f->txSTBC = ht_cap_info->tx_stbc;
+		pDot11f->rxSTBC = ht_cap_info->rx_stbc;
+		pDot11f->shortGI20MHz = ht_cap_info->short_gi_20_mhz;
+		pDot11f->shortGI40MHz = ht_cap_info->short_gi_40_mhz;
 	} else {
 		pDot11f->advCodingCap = psessionEntry->htConfig.ht_rx_ldpc;
 		pDot11f->supportedChannelWidthSet =

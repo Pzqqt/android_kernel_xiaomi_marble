@@ -27,54 +27,54 @@
 
 /**
  * struct mlme_ht_capabilities_info - HT Capabilities Info
- * @lsigTXOPProtection: L-SIG TXOP Protection Mechanism support
- * @stbcControlFrame: STBC Control frame support
+ * @l_sig_tx_op_protection: L-SIG TXOP Protection Mechanism support
+ * @stbc_control_frame: STBC Control frame support
  * @psmp: PSMP Support
- * @dsssCckMode40MHz: To indicate use of DSSS/CCK in 40Mhz
- * @maximalAMSDUsize: Maximum AMSDU Size - 0:3839 octes, 1:7935 octets
- * @delayedBA: Support of Delayed Block Ack
- * @rxSTBC: Rx STBC Support - 0:Not Supported, 1: 1SS, 2: 1,2SS, 3: 1,2,3SS
- * @txSTBC: Tx STBC Support
- * @shortGI40MHz: Short GI Support for HT40
- * @shortGI20MHz: Short GI support for HT20
- * @greenField: Support for HT Greenfield PPDUs
- * @mimoPowerSave: SM Power Save Mode - 0:Static, 1:Dynamic, 3:Disabled, 2:Res
- * @supportedChannelWidthSet: Supported Channel Width - 0:20Mhz, 1:20Mhz & 40Mhz
- * @advCodingCap: Rx LDPC support
+ * @dsss_cck_mode_40_mhz: To indicate use of DSSS/CCK in 40Mhz
+ * @maximal_amsdu_size: Maximum AMSDU Size - 0:3839 octes, 1:7935 octets
+ * @delayed_ba: Support of Delayed Block Ack
+ * @rx_stbc: Rx STBC Support - 0:Not Supported, 1: 1SS, 2: 1,2SS, 3: 1,2,3SS
+ * @tx_stbc: Tx STBC Support
+ * @short_gi_40_mhz: Short GI Support for HT40
+ * @short_gi_20_mhz: Short GI support for HT20
+ * @green_field: Support for HT Greenfield PPDUs
+ * @mimo_power_save: SM Power Save Mode - 0:Static, 1:Dynamic, 3:Disabled, 2:Res
+ * @supported_channel_width_set: Supported Chan Width - 0:20Mhz, 1:20Mhz & 40Mhz
+ * @adv_coding_cap: Rx LDPC support
  */
 #ifndef ANI_LITTLE_BIT_ENDIAN
 struct mlme_ht_capabilities_info {
-	uint16_t lsigTXOPProtection:1;
-	uint16_t stbcControlFrame:1;
+	uint16_t l_sig_tx_op_protection:1;
+	uint16_t stbc_control_frame:1;
 	uint16_t psmp:1;
-	uint16_t dsssCckMode40MHz:1;
-	uint16_t maximalAMSDUsize:1;
-	uint16_t delayedBA:1;
-	uint16_t rxSTBC:2;
-	uint16_t txSTBC:1;
-	uint16_t shortGI40MHz:1;
-	uint16_t shortGI20MHz:1;
-	uint16_t greenField:1;
-	uint16_t mimoPowerSave:2;
-	uint16_t supportedChannelWidthSet:1;
-	uint16_t advCodingCap:1;
+	uint16_t dsss_cck_mode_40_mhz:1;
+	uint16_t maximal_amsdu_size:1;
+	uint16_t delayed_ba:1;
+	uint16_t rx_stbc:2;
+	uint16_t tx_stbc:1;
+	uint16_t short_gi_40_mhz:1;
+	uint16_t short_gi_20_mhz:1;
+	uint16_t green_field:1;
+	uint16_t mimo_power_save:2;
+	uint16_t supported_channel_width_set:1;
+	uint16_t adv_coding_cap:1;
 } qdf_packed;
 #else
 struct mlme_ht_capabilities_info {
-	uint16_t advCodingCap:1;
-	uint16_t supportedChannelWidthSet:1;
-	uint16_t mimoPowerSave:2;
-	uint16_t greenField:1;
-	uint16_t shortGI20MHz:1;
-	uint16_t shortGI40MHz:1;
-	uint16_t txSTBC:1;
-	uint16_t rxSTBC:2;
-	uint16_t delayedBA:1;
-	uint16_t maximalAMSDUsize:1;
-	uint16_t dsssCckMode40MHz:1;
+	uint16_t adv_coding_cap:1;
+	uint16_t supported_channel_width_set:1;
+	uint16_t mimo_power_save:2;
+	uint16_t green_field:1;
+	uint16_t short_gi_20_mhz:1;
+	uint16_t short_gi_40_mhz:1;
+	uint16_t tx_stbc:1;
+	uint16_t rx_stbc:2;
+	uint16_t delayed_ba:1;
+	uint16_t maximal_amsdu_size:1;
+	uint16_t dsss_cck_mode_40_mhz:1;
 	uint16_t psmp:1;
-	uint16_t stbcControlFrame:1;
-	uint16_t lsigTXOPProtection:1;
+	uint16_t stbc_control_frame:1;
+	uint16_t l_sig_tx_op_protection:1;
 } qdf_packed;
 #endif
 

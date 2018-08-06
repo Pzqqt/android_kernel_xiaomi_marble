@@ -298,7 +298,7 @@ static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 
 	/* channel bonding mode could be set to anything from 0 to 4(Titan had these */
 	/* modes But for Taurus we have only two modes: enable(>0) or disable(=0) */
-	ht_cap_info->supportedChannelWidthSet = val2 ?
+	ht_cap_info->supported_channel_width_set = val2 ?
 				      WNI_CFG_CHANNEL_BONDING_MODE_ENABLE :
 				      WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 
@@ -310,7 +310,7 @@ static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 	val8 = (uint8_t) val1;
 	pHTInfoField1 = (tSirMacHTInfoField1 *) &val8;
 	pHTInfoField1->recommendedTxWidthSet =
-				ht_cap_info->supportedChannelWidthSet;
+				ht_cap_info->supported_channel_width_set;
 	if (cfg_set_int(pMac, WNI_CFG_HT_INFO_FIELD1, *(uint8_t *) pHTInfoField1)
 	    != QDF_STATUS_SUCCESS) {
 		pe_err("could not update HT Info Field");

@@ -12276,7 +12276,7 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 	if (QDF_STATUS_SUCCESS != status)
 		hdd_err("could not get HT capability info");
 
-	if (ht_cap_info.txSTBC) {
+	if (ht_cap_info.tx_stbc) {
 		if (NULL != hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ])
 			hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ]->ht_cap.cap |=
 						IEEE80211_HT_CAP_TX_STBC;
@@ -12294,12 +12294,12 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 		hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ]->vht_cap.cap = 0;
 	}
 
-	if (!ht_cap_info.shortGI20MHz) {
+	if (!ht_cap_info.short_gi_20_mhz) {
 		wlan_hdd_band_2_4_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_20;
 		wlan_hdd_band_5_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_20;
 	}
 
-	if (!ht_cap_info.shortGI40MHz)
+	if (!ht_cap_info.short_gi_40_mhz)
 		wlan_hdd_band_5_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_40;
 }
 

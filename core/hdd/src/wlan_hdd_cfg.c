@@ -9038,11 +9038,11 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	}
 
 	if (!(hdd_ctx->ht_tx_stbc_supported && hdd_config->enable2x2)) {
-		ht_cap_info.txSTBC = 0;
+		ht_cap_info.tx_stbc = 0;
 	} else {
 		sme_cfg_get_int(mac_handle, WNI_CFG_VHT_TXSTBC, &val32);
 		hdd_debug("STBC %d", val32);
-		ht_cap_info.txSTBC = val32;
+		ht_cap_info.tx_stbc = val32;
 	}
 
 	qdf_status = ucfg_mlme_set_ht_cap_info(hdd_ctx->hdd_psoc, ht_cap_info);

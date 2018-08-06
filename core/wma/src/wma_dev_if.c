@@ -2445,7 +2445,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	ret = wma_vdev_set_param(wma_handle->wmi_handle,
 				 self_sta_req->session_id,
 				 WMI_VDEV_PARAM_TX_STBC,
-				 ht_cap_info->txSTBC);
+				 ht_cap_info->tx_stbc);
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to set WMI_VDEV_PARAM_TX_STBC");
 

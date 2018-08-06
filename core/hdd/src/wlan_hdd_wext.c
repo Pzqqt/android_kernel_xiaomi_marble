@@ -3449,7 +3449,7 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 		return -EIO;
 	}
 
-	ht_cap_info.advCodingCap = value;
+	ht_cap_info.adv_coding_cap = value;
 	status = ucfg_mlme_set_ht_cap_info(hdd_ctx->hdd_psoc, ht_cap_info);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to set HT capability info");
@@ -3523,7 +3523,7 @@ int hdd_set_tx_stbc(struct hdd_adapter *adapter, int value)
 			hdd_err("Failed to get HT capability info");
 			return -EIO;
 		}
-		if (!ht_cap_info.txSTBC) {
+		if (!ht_cap_info.tx_stbc) {
 			hdd_err("TX STBC not supported");
 			return -EINVAL;
 		}
@@ -3589,7 +3589,7 @@ int hdd_set_rx_stbc(struct hdd_adapter *adapter, int value)
 			hdd_err("Failed to get HT capability info");
 			return -EIO;
 		}
-		if (!ht_cap_info.rxSTBC) {
+		if (!ht_cap_info.rx_stbc) {
 			hdd_warn("RX STBC not supported");
 			return -EINVAL;
 		}

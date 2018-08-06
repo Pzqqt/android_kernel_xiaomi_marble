@@ -1371,17 +1371,17 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 	}
 
 	/* check and update RX STBC */
-	if (ht_cap_info.rxSTBC && !cfg->ht_rx_stbc)
-		ht_cap_info.rxSTBC = cfg->ht_rx_stbc;
+	if (ht_cap_info.rx_stbc && !cfg->ht_rx_stbc)
+		ht_cap_info.rx_stbc = cfg->ht_rx_stbc;
 
 	/* Set the LDPC capability */
-	ht_cap_info.advCodingCap = cfg->ht_rx_ldpc;
+	ht_cap_info.adv_coding_cap = cfg->ht_rx_ldpc;
 
-	if (ht_cap_info.shortGI20MHz && !cfg->ht_sgi_20)
-		ht_cap_info.shortGI20MHz = cfg->ht_sgi_20;
+	if (ht_cap_info.short_gi_20_mhz && !cfg->ht_sgi_20)
+		ht_cap_info.short_gi_20_mhz = cfg->ht_sgi_20;
 
-	if (ht_cap_info.shortGI40MHz && !cfg->ht_sgi_40)
-		ht_cap_info.shortGI40MHz = cfg->ht_sgi_40;
+	if (ht_cap_info.short_gi_40_mhz && !cfg->ht_sgi_40)
+		ht_cap_info.short_gi_40_mhz = cfg->ht_sgi_40;
 
 	hdd_ctx->num_rf_chains = cfg->num_rf_chains;
 	hdd_ctx->ht_tx_stbc_supported = cfg->ht_tx_stbc;
@@ -1390,7 +1390,7 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 		pconfig->enable2x2 = 1;
 	} else {
 		pconfig->enable2x2 = 0;
-		ht_cap_info.txSTBC = 0;
+		ht_cap_info.tx_stbc = 0;
 
 		/* 1x1 */
 		/* Update Rx Highest Long GI data Rate */
@@ -1411,7 +1411,7 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 		}
 	}
 	if (!(cfg->ht_tx_stbc && pconfig->enable2x2))
-		ht_cap_info.txSTBC = 0;
+		ht_cap_info.tx_stbc = 0;
 
 	status = ucfg_mlme_set_ht_cap_info(hdd_ctx->hdd_psoc, ht_cap_info);
 	if (status != QDF_STATUS_SUCCESS)

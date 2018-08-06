@@ -2036,7 +2036,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 	tSirMacHTParametersInfo *pHTParametersInfo;
 	union {
 		uint16_t nCfgValue16;
-		struct mlme_ht_capabilities_info htCapInfo;
+		struct mlme_ht_capabilities_info ht_cap_info;
 		tSirMacExtendedHTCapabilityInfo extHtCapInfo;
 	} uHTCapabilityInfo;
 
@@ -2047,23 +2047,23 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 
 	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
 
-	pDot11f->advCodingCap = uHTCapabilityInfo.htCapInfo.advCodingCap;
-	pDot11f->mimoPowerSave = uHTCapabilityInfo.htCapInfo.mimoPowerSave;
-	pDot11f->greenField = uHTCapabilityInfo.htCapInfo.greenField;
-	pDot11f->shortGI20MHz = uHTCapabilityInfo.htCapInfo.shortGI20MHz;
-	pDot11f->shortGI40MHz = uHTCapabilityInfo.htCapInfo.shortGI40MHz;
-	pDot11f->txSTBC = uHTCapabilityInfo.htCapInfo.txSTBC;
-	pDot11f->rxSTBC = uHTCapabilityInfo.htCapInfo.rxSTBC;
-	pDot11f->delayedBA = uHTCapabilityInfo.htCapInfo.delayedBA;
+	pDot11f->advCodingCap = uHTCapabilityInfo.ht_cap_info.adv_coding_cap;
+	pDot11f->mimoPowerSave = uHTCapabilityInfo.ht_cap_info.mimo_power_save;
+	pDot11f->greenField = uHTCapabilityInfo.ht_cap_info.green_field;
+	pDot11f->shortGI20MHz = uHTCapabilityInfo.ht_cap_info.short_gi_20_mhz;
+	pDot11f->shortGI40MHz = uHTCapabilityInfo.ht_cap_info.short_gi_40_mhz;
+	pDot11f->txSTBC = uHTCapabilityInfo.ht_cap_info.tx_stbc;
+	pDot11f->rxSTBC = uHTCapabilityInfo.ht_cap_info.rx_stbc;
+	pDot11f->delayedBA = uHTCapabilityInfo.ht_cap_info.delayed_ba;
 	pDot11f->maximalAMSDUsize =
-		uHTCapabilityInfo.htCapInfo.maximalAMSDUsize;
+		uHTCapabilityInfo.ht_cap_info.maximal_amsdu_size;
 	pDot11f->dsssCckMode40MHz =
-		uHTCapabilityInfo.htCapInfo.dsssCckMode40MHz;
-	pDot11f->psmp = uHTCapabilityInfo.htCapInfo.psmp;
+		uHTCapabilityInfo.ht_cap_info.dsss_cck_mode_40_mhz;
+	pDot11f->psmp = uHTCapabilityInfo.ht_cap_info.psmp;
 	pDot11f->stbcControlFrame =
-		uHTCapabilityInfo.htCapInfo.stbcControlFrame;
+		uHTCapabilityInfo.ht_cap_info.stbc_control_frame;
 	pDot11f->lsigTXOPProtection =
-		uHTCapabilityInfo.htCapInfo.lsigTXOPProtection;
+		uHTCapabilityInfo.ht_cap_info.l_sig_tx_op_protection;
 
 	/*
 	 * All sessionized entries will need the check below
@@ -2071,7 +2071,8 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 	 */
 	if (psessionEntry == NULL) {
 		pDot11f->supportedChannelWidthSet =
-			uHTCapabilityInfo.htCapInfo.supportedChannelWidthSet;
+			uHTCapabilityInfo.ht_cap_info.
+			supported_channel_width_set;
 	} else {
 		pDot11f->supportedChannelWidthSet =
 			psessionEntry->htSupportedChannelWidthSet;

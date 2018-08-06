@@ -2245,17 +2245,17 @@ handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 
 	ht_cap_info = &pMac->mlme_cfg->ht_caps.ht_cap_info;
 	pMac->lim.gHTLsigTXOPProtection =
-		(uint8_t)ht_cap_info->lsigTXOPProtection;
+		(uint8_t)ht_cap_info->l_sig_tx_op_protection;
 	pMac->lim.gHTMIMOPSState =
-		(tSirMacHTMIMOPowerSaveState) ht_cap_info->mimoPowerSave;
-	pMac->lim.gHTGreenfield = (uint8_t)ht_cap_info->greenField;
+		(tSirMacHTMIMOPowerSaveState)ht_cap_info->mimo_power_save;
+	pMac->lim.gHTGreenfield = (uint8_t)ht_cap_info->green_field;
 	pMac->lim.gHTMaxAmsduLength =
-		(uint8_t)ht_cap_info->maximalAMSDUsize;
-	pMac->lim.gHTShortGI20Mhz = (uint8_t)ht_cap_info->shortGI20MHz;
-	pMac->lim.gHTShortGI40Mhz = (uint8_t)ht_cap_info->shortGI40MHz;
+		(uint8_t)ht_cap_info->maximal_amsdu_size;
+	pMac->lim.gHTShortGI20Mhz = (uint8_t)ht_cap_info->short_gi_20_mhz;
+	pMac->lim.gHTShortGI40Mhz = (uint8_t)ht_cap_info->short_gi_40_mhz;
 	pMac->lim.gHTPSMPSupport = (uint8_t)ht_cap_info->psmp;
 	pMac->lim.gHTDsssCckRate40MHzSupport =
-		(uint8_t)ht_cap_info->dsssCckMode40MHz;
+		(uint8_t)ht_cap_info->dsss_cck_mode_40_mhz;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &cfgValue) !=
 	    QDF_STATUS_SUCCESS) {

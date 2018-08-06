@@ -2790,7 +2790,7 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 		break;
 
 	case eHT_STBC_CONTROL_FRAME:
-		retVal = (uint8_t)ht_cap_info.stbcControlFrame;
+		retVal = (uint8_t)ht_cap_info.stbc_control_frame;
 		break;
 
 	case eHT_PSMP:
@@ -2802,7 +2802,7 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 		break;
 
 	case eHT_MAX_AMSDU_LENGTH:
-		retVal = (uint8_t)ht_cap_info.maximalAMSDUsize;
+		retVal = (uint8_t)ht_cap_info.maximal_amsdu_size;
 		break;
 
 	case eHT_MAX_AMSDU_NUM:
@@ -2819,16 +2819,16 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 
 	case eHT_SHORT_GI_40MHZ:
 		retVal = (uint8_t) (psessionEntry->htConfig.ht_sgi40) ?
-			 ht_cap_info.shortGI40MHz : 0;
+			 ht_cap_info.short_gi_40_mhz : 0;
 		break;
 
 	case eHT_SHORT_GI_20MHZ:
 		retVal = (uint8_t) (psessionEntry->htConfig.ht_sgi20) ?
-			 ht_cap_info.shortGI20MHz : 0;
+			 ht_cap_info.short_gi_20_mhz : 0;
 		break;
 
 	case eHT_GREENFIELD:
-		retVal = (uint8_t)ht_cap_info.greenField;
+		retVal = (uint8_t)ht_cap_info.green_field;
 		break;
 
 	case eHT_MIMO_POWER_SAVE:

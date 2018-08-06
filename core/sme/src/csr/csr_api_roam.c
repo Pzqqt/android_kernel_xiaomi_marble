@@ -17443,11 +17443,11 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 	}
 
 	ht_cap_info = &mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
-	session->htConfig.ht_rx_ldpc = ht_cap_info->advCodingCap;
-	session->htConfig.ht_tx_stbc = ht_cap_info->txSTBC;
-	session->htConfig.ht_rx_stbc = ht_cap_info->rxSTBC;
-	session->htConfig.ht_sgi20 = ht_cap_info->shortGI20MHz;
-	session->htConfig.ht_sgi40 = ht_cap_info->shortGI40MHz;
+	session->htConfig.ht_rx_ldpc = ht_cap_info->adv_coding_cap;
+	session->htConfig.ht_tx_stbc = ht_cap_info->tx_stbc;
+	session->htConfig.ht_rx_stbc = ht_cap_info->rx_stbc;
+	session->htConfig.ht_sgi20 = ht_cap_info->short_gi_20_mhz;
+	session->htConfig.ht_sgi40 = ht_cap_info->short_gi_40_mhz;
 
 #ifdef FEATURE_WLAN_BTAMP_UT_RF
 	status = qdf_mc_timer_init(&session->hTimerJoinRetry, QDF_TIMER_TYPE_SW,

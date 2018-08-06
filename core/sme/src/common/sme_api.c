@@ -12643,7 +12643,7 @@ QDF_STATUS sme_update_nss(tHalHandle h_hal, uint8_t nss)
 			if (CSR_IS_SESSION_VALID(mac_ctx, i)) {
 				csr_session = &mac_ctx->roam.roamSession[i];
 				csr_session->htConfig.ht_tx_stbc =
-					ht_cap_info->txSTBC;
+					ht_cap_info->tx_stbc;
 			}
 		}
 
