@@ -137,12 +137,13 @@ static void mlme_update_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 
 	u.val_16 = (uint16_t)cfg_default(CFG_HT_CAP_INFO);
 
-	u.default_ht_cap_info.advCodingCap = cfg_get(psoc, CFG_RX_LDPC_ENABLE);
-	u.default_ht_cap_info.rxSTBC = cfg_get(psoc, CFG_RX_STBC_ENABLE);
-	u.default_ht_cap_info.txSTBC = cfg_get(psoc, CFG_TX_STBC_ENABLE);
-	u.default_ht_cap_info.shortGI20MHz =
+	u.default_ht_cap_info.adv_coding_cap =
+				cfg_get(psoc, CFG_RX_LDPC_ENABLE);
+	u.default_ht_cap_info.rx_stbc = cfg_get(psoc, CFG_RX_STBC_ENABLE);
+	u.default_ht_cap_info.tx_stbc = cfg_get(psoc, CFG_TX_STBC_ENABLE);
+	u.default_ht_cap_info.short_gi_20_mhz =
 				cfg_get(psoc, CFG_SHORT_GI_20MHZ);
-	u.default_ht_cap_info.shortGI40MHz =
+	u.default_ht_cap_info.short_gi_40_mhz =
 				cfg_get(psoc, CFG_SHORT_GI_40MHZ);
 
 	*ht_cap_info = u.default_ht_cap_info;
