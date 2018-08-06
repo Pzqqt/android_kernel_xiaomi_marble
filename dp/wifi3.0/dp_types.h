@@ -1201,8 +1201,21 @@ struct dp_pdev {
 		uint32_t mgmt_buf_len; /* Len of mgmt. payload in ppdu stats */
 		uint32_t ppdu_id;
 	} mgmtctrl_frm_info;
+
 	/* Current noise-floor reading for the pdev channel */
 	int16_t chan_noise_floor;
+
+	/*
+	 * For multiradio device, this flag indicates if
+	 * this radio is primary or secondary.
+	 *
+	 * For HK 1.0, this is used for WAR for the AST issue.
+	 * HK 1.x mandates creation of only 1 AST entry with same MAC address
+	 * across 2 radios. is_primary indicates the radio on which DP should
+	 * install HW AST entry if there is a request to add 2 AST entries
+	 * with same MAC address across 2 radios
+	 */
+	uint8_t is_primary;
 };
 
 struct dp_peer;

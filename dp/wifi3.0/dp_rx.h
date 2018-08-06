@@ -427,7 +427,6 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 					CDP_TXRX_AST_TYPE_WDS,
 					flags);
 		return;
-
 	}
 
 	/*
@@ -443,6 +442,8 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 		return;
 	}
 
+	qdf_spin_unlock_bh(&soc->ast_lock);
+
 	/*
 	 * Ensure we are updating the right AST entry by
 	 * validating ast_idx.
@@ -455,6 +456,20 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 	if (sa_sw_peer_id != ta_peer->peer_ids[0]) {
 		sa_peer = ast->peer;
 
+		if ((ast->type != CDP_TXRX_AST_TYPE_STATIC) &&
+		    (ast->type != CDP_TXRX_AST_TYPE_SELF)) {
+			if (ast->pdev_id != ta_peer->vdev->pdev->pdev_id) {
+				ret = dp_peer_add_ast(soc,
+						      ta_peer, wds_src_mac,
+						      CDP_TXRX_AST_TYPE_WDS,
+						      flags);
+			} else {
+				qdf_spin_lock_bh(&soc->ast_lock);
+				dp_peer_update_ast(soc, ta_peer, ast, flags);
+				qdf_spin_unlock_bh(&soc->ast_lock);
+				return;
+			}
+		}
 		/*
 		 * Do not kickout STA if it belongs to a different radio.
 		 * For DBDC repeater, it is possible to arrive here
@@ -462,14 +477,6 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 		 * clients and looped back (intrabss) by Root AP
 		 */
 		if (ast->pdev_id != ta_peer->vdev->pdev->pdev_id) {
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			return;
-		}
-
-		if ((ast->type != CDP_TXRX_AST_TYPE_STATIC) &&
-		    (ast->type != CDP_TXRX_AST_TYPE_SELF)) {
-			dp_peer_update_ast(soc, ta_peer, ast, flags);
-			qdf_spin_unlock_bh(&soc->ast_lock);
 			return;
 		}
 
@@ -487,7 +494,6 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 		}
 	}
 
-	qdf_spin_unlock_bh(&soc->ast_lock);
 	return;
 }
 #else

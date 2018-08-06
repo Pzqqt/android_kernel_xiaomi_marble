@@ -433,8 +433,28 @@ int dp_peer_add_ast(struct dp_soc *soc,
 	ast_entry = dp_peer_ast_hash_find(soc, mac_addr);
 
 	if (ast_entry) {
-		if (ast_entry->type == CDP_TXRX_AST_TYPE_MEC)
+		if (ast_entry->type == CDP_TXRX_AST_TYPE_MEC) {
 			ast_entry->is_active = TRUE;
+			qdf_spin_unlock_bh(&soc->ast_lock);
+			return 0;
+		}
+
+		/*
+		 * WAR for HK 1.x AST issue
+		 * If an AST entry with same mac address already exists and is
+		 * mapped to a different radio, and if the current radio is
+		 * primary radio , delete the existing AST entry and return.
+		 *
+		 * New AST entry will be created again on next SA_invalid
+		 * frame
+		 */
+		if ((ast_entry->pdev_id != vdev->pdev->pdev_id) &&
+		    vdev->pdev->is_primary) {
+			qdf_print("Deleting ast_pdev=%d pdev=%d addr=%pM\n",
+				  ast_entry->pdev_id,
+				  vdev->pdev->pdev_id, mac_addr);
+			dp_peer_del_ast(soc, ast_entry);
+		}
 
 		qdf_spin_unlock_bh(&soc->ast_lock);
 		return 0;

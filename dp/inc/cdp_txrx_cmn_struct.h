@@ -676,10 +676,12 @@ struct cdp_soc_t {
  *			to set values in pdev
  * @CDP_CONFIG_DEBUG_SNIFFER: Enable debug sniffer feature
  * @CDP_CONFIG_BPR_ENABLE: Enable bcast probe feature
+ * @CDP_CONFIG_PRIMARY_RADIO: Configure radio as primary
  */
 enum cdp_pdev_param_type {
 	CDP_CONFIG_DEBUG_SNIFFER,
 	CDP_CONFIG_BPR_ENABLE,
+	CDP_CONFIG_PRIMARY_RADIO,
 };
 
 /*

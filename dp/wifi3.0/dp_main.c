@@ -6673,12 +6673,16 @@ dp_get_htt_stats(struct cdp_pdev *pdev_handle, void *data, uint32_t data_len)
 static void dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 		enum cdp_pdev_param_type param, uint8_t val)
 {
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	switch (param) {
 	case CDP_CONFIG_DEBUG_SNIFFER:
 		dp_config_debug_sniffer(pdev_handle, val);
 		break;
 	case CDP_CONFIG_BPR_ENABLE:
 		dp_set_bpr_enable(pdev_handle, val);
+		break;
+	case CDP_CONFIG_PRIMARY_RADIO:
+		pdev->is_primary = val;
 		break;
 	default:
 		break;
