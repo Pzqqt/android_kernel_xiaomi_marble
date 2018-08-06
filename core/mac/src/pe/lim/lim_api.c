@@ -46,6 +46,7 @@
 #include "lim_ibss_peer_mgmt.h"
 #include "lim_admit_control.h"
 #include "lim_send_sme_rsp_messages.h"
+#include "lim_security_utils.h"
 #include "wmm_apsd.h"
 #include "lim_trace.h"
 #include "lim_ft_defs.h"
@@ -2604,6 +2605,25 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal pMac,
 		/* Drop the Probe Request in IBSS mode, if STA did not send out the last beacon */
 		/* In IBSS, the node which sends out the beacon, is supposed to respond to ProbeReq */
 		return eMGMT_DROP_NOT_LAST_IBSS_BCN;
+	} else if (subType == SIR_MAC_MGMT_AUTH) {
+		uint16_t curr_seq_num = 0;
+		struct tLimPreAuthNode *auth_node;
+
+		pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
+		psessionEntry = pe_find_session_by_bssid(pMac, pHdr->bssId,
+							 &sessionId);
+		if (!psessionEntry)
+			return eMGMT_DROP_NO_DROP;
+
+		curr_seq_num = ((pHdr->seqControl.seqNumHi << 4) |
+				(pHdr->seqControl.seqNumLo));
+		auth_node = lim_search_pre_auth_list(pMac, pHdr->sa);
+		if (auth_node && pHdr->fc.retry &&
+		    (auth_node->seq_num == curr_seq_num)) {
+			pe_err_rl("auth frame, seq num: %d is already processed, drop it",
+				  curr_seq_num);
+			return eMGMT_DROP_DUPLICATE_AUTH_FRAME;
+		}
 	}
 
 	return eMGMT_DROP_NO_DROP;
