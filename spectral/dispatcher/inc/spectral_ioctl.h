@@ -86,12 +86,25 @@ struct spectral_ioctl_params {
 };
 
 /**
+ * spectral_cap_hw_gen: Definitions for the Spectral hardware generation.
+ * This corresponds to definitions in qca_wlan_vendor_spectral_scan_cap_hw_gen.
+ * @SPECTRAL_CAP_HW_GEN_1: Generation 1
+ * @SPECTRAL_CAP_HW_GEN_2: Generation 2
+ * @SPECTRAL_CAP_HW_GEN_3: Generation 3
+ */
+enum spectral_cap_hw_gen {
+	SPECTRAL_CAP_HW_GEN_1 = 0,
+	SPECTRAL_CAP_HW_GEN_2 = 1,
+	SPECTRAL_CAP_HW_GEN_3 = 2,
+};
+
+/**
  * struct spectral_caps - Spectral capabilities structure
  * @phydiag_cap:         Phydiag capability
  * @radar_cap:           Radar detection capability
  * @spectral_cap:        Spectral capability
  * @advncd_spectral_cap: Advanced spectral capability
- * @hw_gen: Spectral hw generation
+ * @hw_gen: Spectral hw generation as defined in spectral_cap_hw_gen
  */
 struct spectral_caps {
 	uint8_t phydiag_cap;
