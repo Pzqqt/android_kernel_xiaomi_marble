@@ -5104,6 +5104,8 @@ typedef enum {
      * >21:  invalid value (ignored)
      */
     WMI_PDEV_PARAM_MWSCOEX_SET_5GNR_PWR_LIMIT,        /* 0xA5 */
+    /** Set max msdus available for cong ctrl in target */
+    WMI_PDEV_PARAM_SET_CONG_CTRL_MAX_MSDUS,          /* 0xA6 */
 } WMI_PDEV_PARAM;
 
 typedef struct {
