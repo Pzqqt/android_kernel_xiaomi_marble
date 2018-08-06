@@ -119,6 +119,34 @@ QDF_STATUS ucfg_tdls_deinit(void)
 }
 
 /**
+ * tdls_update_feature_flag() - update tdls feature flag
+ * @tdls_soc_obj:   pointer to tdls psoc object
+ *
+ * This function updates tdls feature flag
+ */
+static void
+tdls_update_feature_flag(struct tdls_soc_priv_obj *tdls_soc_obj)
+{
+	tdls_soc_obj->tdls_configs.tdls_feature_flags =
+		((tdls_soc_obj->tdls_configs.tdls_off_chan_enable ?
+		  1 << TDLS_FEATURE_OFF_CHANNEL : 0) |
+		 (tdls_soc_obj->tdls_configs.tdls_wmm_mode_enable ?
+		  1 << TDLS_FEATURE_WMM : 0) |
+		 (tdls_soc_obj->tdls_configs.tdls_buffer_sta_enable ?
+		  1 << TDLS_FEATURE_BUFFER_STA : 0) |
+		 (tdls_soc_obj->tdls_configs.tdls_sleep_sta_enable ?
+		  1 << TDLS_FEATURE_SLEEP_STA : 0) |
+		 (tdls_soc_obj->tdls_configs.tdls_scan_enable ?
+		  1 << TDLS_FEATURE_SCAN : 0) |
+		 (tdls_soc_obj->tdls_configs.tdls_support_enable ?
+		  1 << TDLS_FEATURE_ENABLE : 0) |
+		 (tdls_soc_obj->tdls_configs.tdls_implicit_trigger_enable ?
+		  1 << TDLS_FEAUTRE_IMPLICIT_TRIGGER : 0) |
+		 (tdls_soc_obj->tdls_configs.tdls_external_control ?
+		  1 << TDLS_FEATURE_EXTERNAL_CONTROL : 0));
+}
+
+/**
  * tdls_object_init_params() - init parameters for tdls object
  * @tdls_soc_obj: pointer to tdls psoc object
  *
@@ -189,23 +217,7 @@ static QDF_STATUS tdls_object_init_params(
 	tdls_soc_obj->tdls_configs.tdls_external_control =
 			cfg_get(psoc, CFG_TDLS_EXTERNAL_CONTROL);
 
-	tdls_soc_obj->tdls_configs.tdls_feature_flags =
-		((tdls_soc_obj->tdls_configs.tdls_off_chan_enable ?
-		  1 << TDLS_FEATURE_OFF_CHANNEL : 0) |
-		 (tdls_soc_obj->tdls_configs.tdls_wmm_mode_enable ?
-		  1 << TDLS_FEATURE_WMM : 0) |
-		 (tdls_soc_obj->tdls_configs.tdls_buffer_sta_enable ?
-		  1 << TDLS_FEATURE_BUFFER_STA : 0) |
-		 (tdls_soc_obj->tdls_configs.tdls_sleep_sta_enable ?
-		  1 << TDLS_FEATURE_SLEEP_STA : 0) |
-		 (tdls_soc_obj->tdls_configs.tdls_scan_enable ?
-		  1 << TDLS_FEATURE_SCAN : 0) |
-		 (tdls_soc_obj->tdls_configs.tdls_support_enable ?
-		  1 << TDLS_FEATURE_ENABLE : 0) |
-		 (tdls_soc_obj->tdls_configs.tdls_implicit_trigger_enable ?
-		  1 << TDLS_FEAUTRE_IMPLICIT_TRIGGER : 0) |
-		 (tdls_soc_obj->tdls_configs.tdls_external_control ?
-		  1 << TDLS_FEATURE_EXTERNAL_CONTROL : 0));
+	tdls_update_feature_flag(tdls_soc_obj);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -323,6 +335,7 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	tdls_update_feature_flag(soc_obj);
 	tdls_feature_flags = soc_obj->tdls_configs.tdls_feature_flags;
 
 	if (!TDLS_IS_IMPLICIT_TRIG_ENABLED(tdls_feature_flags))
