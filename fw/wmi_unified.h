@@ -255,6 +255,7 @@ typedef enum {
     WMI_GRP_TWT,            /* 0x3e TWT (Target Wake Time) for STA and AP */
     WMI_GRP_MOTION_DET,     /* 0x3f */
     WMI_GRP_SPATIAL_REUSE,  /* 0x40 */
+    WMI_GRP_ESP,            /* 0x41 Estimate Service Parameters (802.11mc) */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1714,6 +1715,9 @@ typedef enum {
     /** WMI events related to motion detection */
     WMI_MOTION_DET_HOST_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_MOTION_DET),
     WMI_MOTION_DET_BASE_LINE_HOST_EVENTID,
+
+    /** WMI events related to Estimation of Service Parameters (802.11mc) */
+    WMI_ESP_ESTIMATE_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_ESP),
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -5139,7 +5143,14 @@ typedef enum {
      */
     WMI_PDEV_PARAM_MWSCOEX_SET_5GNR_PWR_LIMIT,        /* 0xA5 */
     /** Set max msdus available for cong ctrl in target */
-    WMI_PDEV_PARAM_SET_CONG_CTRL_MAX_MSDUS,          /* 0xA6 */
+    WMI_PDEV_PARAM_SET_CONG_CTRL_MAX_MSDUS,           /* 0xA6 */
+    /*
+     * Configures the Estimated Throughput Calculation indication (802.11mc) settings.
+     * The accompanying A_UINT32 parameter, in units of seconds, specifies how often FW needs to send the ESP estimation indication to the host.
+     * Value 0: Disable this feature
+     * Non zero Value: Periodicity (seconds)
+     */
+    WMI_PDEV_PARAM_ESP_INDICATION_PERIOD,             /* 0xA7 */
 } WMI_PDEV_PARAM;
 
 typedef struct {
@@ -5216,6 +5227,35 @@ typedef struct {
  * ARRAY_BYTE TLV of ctltable_data
  */
 } wmi_pdev_update_ctltable_request_fixed_param;
+
+#define WMI_ESP_ESTIMATE_GET_BE(airtime)         WMI_GET_BITS(airtime, 0, 8)
+#define WMI_ESP_ESTIMATE_SET_BE(airtime, value)  WMI_SET_BITS(airtime, 0, 8, value)
+
+#define WMI_ESP_ESTIMATE_GET_BK(airtime)         WMI_GET_BITS(airtime, 8, 8)
+#define WMI_ESP_ESTIMATE_SET_BK(airtime, value)  WMI_SET_BITS(airtime, 8, 8, value)
+
+#define WMI_ESP_ESTIMATE_GET_VI(airtime)         WMI_GET_BITS(airtime, 16, 8)
+#define WMI_ESP_ESTIMATE_SET_VI(airtime, value)  WMI_SET_BITS(airtime, 16, 8, value)
+
+#define WMI_ESP_ESTIMATE_GET_VO(airtime)         WMI_GET_BITS(airtime, 24, 8)
+#define WMI_ESP_ESTIMATE_SET_VO(airtime, value)  WMI_SET_BITS(airtime, 24, 8, value)
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_esp_estimate_event_fixed_param */
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     * In non-DBDC case host should set it to 0
+     */
+    A_UINT32 pdev_id;
+    /*
+     * Percentage of air time available for each AC
+     * BIT[0-7]   : AC_BE
+     * BIT[8-15]  : AC_BK
+     * BIT[16-23] : AC_VI
+     * BIT[24-31] : AC_VO
+     */
+    A_UINT32 ac_airtime_percentage;
+} wmi_esp_estimate_event_fixed_param;
 
 #define WMI_FAST_DIVERSITY_BIT_OFFSET 0
 #define WMI_SLOW_DIVERSITY_BIT_OFFSET 1
@@ -9064,6 +9104,8 @@ typedef struct {
     A_UINT32 csa_event_bitmap;
     /** offset (in octets/bytes) of MBSSID IE in beacon frame */
     A_UINT32 mbssid_ie_offset;
+    /** offset (in octets/bytes) of ESP IE in beacon frame */
+    A_UINT32 esp_ie_offset;
 
 /*
  * The TLVs follows:
