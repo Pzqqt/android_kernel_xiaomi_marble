@@ -6898,24 +6898,26 @@ static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
  * @vdev: virtual handle
  * @req: stats request
  *
- * Return: integer
+ * Return: QDF_STATUS
  */
-static int dp_txrx_stats_request(struct cdp_vdev *vdev,
-		struct cdp_txrx_stats_req *req)
+static
+QDF_STATUS dp_txrx_stats_request(struct cdp_vdev *vdev,
+				 struct cdp_txrx_stats_req *req)
 {
 	int host_stats;
 	int fw_stats;
 	enum cdp_stats stats;
+	int num_stats;
 
 	if (!vdev || !req) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"Invalid vdev/req instance");
-		return 0;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	stats = req->stats;
 	if (stats >= CDP_TXRX_MAX_STATS)
-		return 0;
+		return QDF_STATUS_E_INVAL;
 
 	/*
 	 * DP_CURR_FW_STATS_AVAIL: no of FW stats currently available
@@ -6923,11 +6925,21 @@ static int dp_txrx_stats_request(struct cdp_vdev *vdev,
 	 */
 	if (stats > CDP_TXRX_STATS_HTT_MAX)
 		stats = stats + DP_CURR_FW_STATS_AVAIL - DP_HTT_DBG_EXT_STATS_MAX;
+
+	num_stats  = QDF_ARRAY_SIZE(dp_stats_mapping_table);
+
+	if (stats >= num_stats) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid stats option: %d", __func__, stats);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	req->stats = stats;
 	fw_stats = dp_stats_mapping_table[stats][STATS_FW];
 	host_stats = dp_stats_mapping_table[stats][STATS_HOST];
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		 "stats: %u fw_stats_type: %d host_stats_type: %d",
+		 "stats: %u fw_stats_type: %d host_stats: %d",
 		  stats, fw_stats, host_stats);
 
 	if (fw_stats != TXRX_FW_STATS_INVALID) {
@@ -6943,7 +6955,7 @@ static int dp_txrx_stats_request(struct cdp_vdev *vdev,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"Wrong Input for TxRx Stats");
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*

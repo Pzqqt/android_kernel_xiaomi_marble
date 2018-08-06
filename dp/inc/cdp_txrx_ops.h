@@ -295,8 +295,8 @@ struct cdp_cmn_ops {
 	void (*set_pdev_dscp_tid_map)(struct cdp_pdev *pdev, uint8_t map_id,
 			uint8_t tos, uint8_t tid);
 
-	int (*txrx_stats_request)(struct cdp_vdev *vdev,
-			struct cdp_txrx_stats_req *req);
+	QDF_STATUS (*txrx_stats_request)(struct cdp_vdev *vdev,
+					 struct cdp_txrx_stats_req *req);
 
 	QDF_STATUS (*display_stats)(void *psoc, uint16_t value,
 				    enum qdf_stats_verbosity_level level);
