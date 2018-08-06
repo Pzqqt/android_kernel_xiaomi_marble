@@ -1321,7 +1321,9 @@ static void hdd_update_hw_dbs_capable(struct hdd_context *hdd_ctx)
 		((cfg_ini->dual_mac_feature_disable ==
 			ENABLE_DBS_CXN_AND_SCAN) ||
 		(cfg_ini->dual_mac_feature_disable ==
-			ENABLE_DBS_CXN_AND_ENABLE_SCAN_WITH_ASYNC_SCAN_OFF)))
+			ENABLE_DBS_CXN_AND_ENABLE_SCAN_WITH_ASYNC_SCAN_OFF) ||
+		(cfg_ini->dual_mac_feature_disable ==
+			ENABLE_DBS_CXN_AND_DISABLE_SIMULTANEOUS_SCAN)))
 		hw_dbs_capable = 1;
 
 	sme_update_hw_dbs_capable(hdd_ctx->mac_handle, hw_dbs_capable);

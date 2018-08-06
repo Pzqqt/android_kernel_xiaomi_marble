@@ -8368,6 +8368,8 @@ enum dot11p_mode {
  * 4 - enable DBS for connection as well as for scan with async
  * scan policy disabled
  * 5 - enable DBS for connection but disable DBS for scan.
+ * 6 - enable DBS for connection but disable simultaneous scan
+ * from upper layer (DBS scan remains enabled in FW).
  *
  * Note: INI item value should match 'enum dbs_support'
  *
@@ -8381,7 +8383,7 @@ enum dot11p_mode {
  */
 #define CFG_DUAL_MAC_FEATURE_DISABLE              "gDualMacFeatureDisable"
 #define CFG_DUAL_MAC_FEATURE_DISABLE_MIN          (0)
-#define CFG_DUAL_MAC_FEATURE_DISABLE_MAX          (5)
+#define CFG_DUAL_MAC_FEATURE_DISABLE_MAX          (6)
 #define CFG_DUAL_MAC_FEATURE_DISABLE_DEFAULT      (0)
 
 /*
