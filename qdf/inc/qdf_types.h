@@ -1005,16 +1005,16 @@ struct qdf_tso_seg_dbg_t {
 
 /**
  * qdf_tso_seg_elem_t - tso segment element
- * @seg: instance of segment
  * @next: pointer to the next segment
+ * @seg: instance of segment
  */
 struct qdf_tso_seg_elem_t {
+	struct qdf_tso_seg_elem_t *next;
 	struct qdf_tso_seg_t seg;
 	uint32_t cookie:13,
 		on_freelist:1,
 		sent_to_target:1,
 		force_free:1;
-	struct qdf_tso_seg_elem_t *next;
 #ifdef TSOSEG_DEBUG
 	struct qdf_tso_seg_dbg_t dbg;
 #endif /* TSOSEG_DEBUG */
@@ -1033,12 +1033,12 @@ struct qdf_tso_num_seg_t {
 
 /**
  * qdf_tso_num_seg_elem_t - num of tso segment element for jumbo skb
- * @num_seg: instance of num of seg
  * @next: pointer to the next segment
+ * @num_seg: instance of num of seg
  */
 struct qdf_tso_num_seg_elem_t {
-	struct qdf_tso_num_seg_t num_seg;
 	struct qdf_tso_num_seg_elem_t *next;
+	struct qdf_tso_num_seg_t num_seg;
 };
 
 /**
