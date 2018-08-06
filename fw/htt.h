@@ -169,9 +169,10 @@
  * 3.52 Add HTT_T2H FLOW_POOL_RESIZE msg def
  * 3.53 Update HTT_T2H FLOW_POOL_RESIZE msg def
  * 3.54 Define mcast and mcast_valid flags within htt_tx_wbm_transmit_status
+ * 3.55 Add initiator / responder flags to RX_DELBA indication
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 54
+#define HTT_CURRENT_VERSION_MINOR 55
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -7809,9 +7810,9 @@ PREPACK struct htt_chan_info_t
  * The following diagram shows the format of the rx DELBA message sent
  * from the target to the host:
  *
- * |31                      20|19  16|15              8|7               0|
+ * |31                      20|19  16|15         10|9 8|7               0|
  * |---------------------------------------------------------------------|
- * |          peer ID         |  TID |     reserved    |     msg type    |
+ * |          peer ID         |  TID |   reserved  | IR|     msg type    |
  * |---------------------------------------------------------------------|
  *
  * The following field definitions describe the format of the rx ADDBA
@@ -7820,6 +7821,15 @@ PREPACK struct htt_chan_info_t
  *     Bits 7:0
  *     Purpose: identifies this as an rx ADDBA or DELBA message
  *     Value: ADDBA -> 0x5, DELBA -> 0x6
+ *   - IR (initiator / recipient)
+ *     Bits 9:8 (DELBA only)
+ *     Purpose: specify whether the DELBA handshake was initiated by the
+ *         local STA/AP, or by the peer STA/AP
+ *     Value:
+ *         0 - unspecified
+ *         1 - initiator (a.k.a. originator)
+ *         2 - recipient (a.k.a. responder)
+ *         3 - unused / reserved
  *   - WIN_SIZE
  *     Bits 15:8 (ADDBA only)
  *     Purpose: Specifies the length of the block ack window (max = 64).
@@ -7872,6 +7882,8 @@ PREPACK struct htt_chan_info_t
 #define HTT_RX_ADDBA_BYTES 4
 
 
+#define HTT_RX_DELBA_INITIATOR_M   0x00000300
+#define HTT_RX_DELBA_INITIATOR_S   8
 #define HTT_RX_DELBA_TID_M         HTT_RX_ADDBA_TID_M
 #define HTT_RX_DELBA_TID_S         HTT_RX_ADDBA_TID_S
 #define HTT_RX_DELBA_PEER_ID_M     HTT_RX_ADDBA_PEER_ID_M
@@ -7881,6 +7893,14 @@ PREPACK struct htt_chan_info_t
 #define HTT_RX_DELBA_TID_GET       HTT_RX_ADDBA_TID_GET
 #define HTT_RX_DELBA_PEER_ID_SET   HTT_RX_ADDBA_PEER_ID_SET
 #define HTT_RX_DELBA_PEER_ID_GET   HTT_RX_ADDBA_PEER_ID_GET
+
+#define HTT_RX_DELBA_INITIATOR_SET(word, value)                    \
+    do {                                                           \
+        HTT_CHECK_SET_VAL(HTT_RX_DELBA_INITIATOR, value);          \
+        (word) |= (value)  << HTT_RX_DELBA_INITIATOR;              \
+    } while (0)
+#define HTT_RX_DELBA_INITIATOR_GET(word) \
+    (((word) & HTT_RX_DELBA_INITIATOR_M) >> HTT_RX_DELBA_INITIATOR_S)
 
 #define HTT_RX_DELBA_BYTES 4
 
