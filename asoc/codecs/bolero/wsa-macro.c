@@ -1912,6 +1912,7 @@ static const struct snd_soc_dapm_route wsa_audio_map[] = {
 	{"WSA_RX INT0 INTERP", NULL, "WSA_RX INT0 SEC MIX"},
 	{"WSA_RX INT0 CHAIN", NULL, "WSA_RX INT0 INTERP"},
 	{"WSA_SPK1 OUT", NULL, "WSA_RX INT0 CHAIN"},
+	{"WSA_SPK1 OUT", NULL, "WSA_MCLK"},
 
 	{"WSA_RX1 INP0", "RX0", "WSA RX0"},
 	{"WSA_RX1 INP0", "RX1", "WSA RX1"},
@@ -1941,6 +1942,7 @@ static const struct snd_soc_dapm_route wsa_audio_map[] = {
 	{"WSA_RX INT1 INTERP", NULL, "WSA_RX INT1 SEC MIX"},
 	{"WSA_RX INT1 CHAIN", NULL, "WSA_RX INT1 INTERP"},
 	{"WSA_SPK2 OUT", NULL, "WSA_RX INT1 CHAIN"},
+	{"WSA_SPK2 OUT", NULL, "WSA_MCLK"},
 };
 
 static const struct wsa_macro_reg_mask_val wsa_macro_reg_init[] = {
