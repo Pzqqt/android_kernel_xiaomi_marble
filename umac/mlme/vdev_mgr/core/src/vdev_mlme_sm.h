@@ -23,6 +23,38 @@
 #ifndef _VDEV_MLME_SM_H_
 #define _VDEV_MLME_SM_H_
 
+#ifdef CMN_VDEV_MLME_SM_ENABLE
+/**
+ * mlme_vdev_sm_deliver_event() - Delivers event to VDEV MLME SM
+ * @vdev_mlme: MLME VDEV comp object
+ * @event: MLME event
+ * @event_data_len: data size
+ * @event_data: event data
+ *
+ * API to dispatch event to VDEV MLME SM
+ *
+ * Return: SUCCESS: on handling event
+ *         FAILURE: on ignoring the event
+ */
+QDF_STATUS mlme_vdev_sm_deliver_event(struct vdev_mlme_obj *vdev_mlme,
+				      enum wlan_vdev_sm_evt event,
+				      uint16_t event_data_len,
+				      void *event_data);
+
+#ifdef SM_ENG_HIST_ENABLE
+/**
+ * mlme_vdev_sm_history_print() - Prints SM history
+ * @vdev_mlme: MLME VDEV comp object
+ *
+ * API to print SM history
+ *
+ * Return: void
+ */
+void mlme_vdev_sm_history_print(struct vdev_mlme_obj *vdev_mlme);
+#endif
+
+#endif
+
 /**
  * mlme_vdev_sm_create - Invoke SME creation for VDEV
  * @vdev_mlme_obj:  VDEV MLME comp object
@@ -54,8 +86,7 @@ QDF_STATUS mlme_vdev_sm_destroy(struct vdev_mlme_obj *vdev_mlme);
  *
  * Return: void
  */
-static inline void mlme_vdev_sm_spinlock_create(
-						struct vdev_mlme_obj *vdev_mlme)
+static inline void mlme_vdev_sm_spinlock_create(struct vdev_mlme_obj *vdev_mlme)
 {
 	qdf_spinlock_create(&vdev_mlme->sm_lock);
 }
@@ -120,6 +151,4 @@ static inline void mlme_vdev_sm_spin_unlock(struct vdev_mlme_obj *vdev_mlme)
 {
 }
 #endif
-
 #endif
-

@@ -38,6 +38,18 @@ struct wlan_find_vdev_filter {
 	struct wlan_objmgr_vdev *found_vdev;
 };
 
+#ifdef CMN_VDEV_MLME_SM_ENABLE
+/**
+ * struct wlan_vdev_ch_check_filter - vdev chan check filter object
+ * @flag:     matches or not
+ * @vdev:     vdev to be checked against all the active vdevs
+ */
+struct wlan_vdev_ch_check_filter {
+	uint8_t flag;
+	struct wlan_objmgr_vdev *vdev;
+};
+#endif
+
 /**
  * wlan_chan_to_freq() - converts channel to frequency
  * @chan: channel number
@@ -126,9 +138,9 @@ bool wlan_is_emulation_platform(uint32_t phy_version);
 
 /**
  * wlan_get_pdev_id_from_vdev_id() - Helper func to derive pdev id from vdev_id
- * @psoc    : psoc object
- * @vdev_id : vdev identifier
- * @dbg_id  : object manager debug id
+ * @psoc: psoc object
+ * @vdev_id: vdev identifier
+ * @dbg_id: object manager debug id
  *
  * This function is used to derive the pdev id from vdev id for a psoc
  *
@@ -142,9 +154,9 @@ uint32_t wlan_get_pdev_id_from_vdev_id(struct wlan_objmgr_psoc *psoc,
 /**
  * wlan_util_get_vdev_by_ifname() - function to return vdev object from psoc
  * matching given interface name
- * @psoc    : psoc object
- * @ifname  : interface name
- * @ref_id  : object manager ref id
+ * @psoc: psoc object
+ * @ifname: interface name
+ * @ref_id: object manager ref id
  *
  * This function returns vdev object from psoc by interface name. If found this
  * will also take reference with given ref_id
@@ -167,12 +179,86 @@ struct wlan_objmgr_vdev *wlan_util_get_vdev_by_ifname(
 uint8_t *wlan_util_vdev_get_if_name(struct wlan_objmgr_vdev *vdev);
 
 /*
- * wlan_util_is_vap_active() - Check for vap active
+ * wlan_util_is_vdev_active() - Check for vdev active
  * @pdev: pdev pointer
  * @dbg_id: debug id for ref counting
  *
- * @Return: QDF_STATUS_SUCCESS in case of vap active
+ * @Return: QDF_STATUS_SUCCESS in case of vdev active
  */
-QDF_STATUS wlan_util_is_vap_active(struct wlan_objmgr_pdev *pdev,
-				   wlan_objmgr_ref_dbgid dbg_id);
+QDF_STATUS wlan_util_is_vdev_active(struct wlan_objmgr_pdev *pdev,
+				    wlan_objmgr_ref_dbgid dbg_id);
+
+/*
+ * wlan_vdev_is_up() - Check for vdev is in UP state
+ * @vdev: vdev pointer
+ *
+ * @Return: true in case of vdev is in UP state
+ */
+bool wlan_vdev_is_up(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_util_pdev_vdevs_deschan_match() - function to check des channel matches
+ *                                        with other vdevs in pdev
+ * @pdev: pdev object
+ * @vdev: vdev object
+ * @ref_id: object manager ref id
+ *
+ * This function checks the vdev desired channel with other vdev channels
+ *
+ * Return : SUCCESS, if it matches, otherwise FAILURE
+ */
+QDF_STATUS wlan_util_pdev_vdevs_deschan_match(struct wlan_objmgr_pdev *pdev,
+					      struct wlan_objmgr_vdev *vdev,
+					      wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_util_change_map_index() - function to set/reset given index bit
+ * @map: bitmpap
+ * @id: bit index
+ * @set: 1 for set, 0 of reset
+ *
+ * This function set/reset given index bit
+ *
+ * Return : void
+ */
+void wlan_util_change_map_index(uint32_t *map, uint8_t id, uint8_t set);
+
+/**
+ * wlan_util_map_index_is_set() - function to check whether given index bit is
+ *                                set
+ * @map: bitmpap
+ * @id: bit index
+ *
+ * This function checks the given index bit is set
+ *
+ * Return : true, if bit is set, otherwise false
+ */
+bool wlan_util_map_index_is_set(uint32_t *map, uint8_t id);
+
+/**
+ * wlan_pdev_chan_change_pending_vdevs() - function to test/set channel change
+ *                                         pending flag
+ * @pdev: pdev object
+ * @vdev_id_map: bitmap to derive channel change vdevs
+ * @ref_id: object manager ref id
+ *
+ * This function test/set channel change pending flag
+ *
+ * Return : SUCCESS, if it iterates through all vdevs, otherwise FAILURE
+ */
+QDF_STATUS wlan_pdev_chan_change_pending_vdevs(struct wlan_objmgr_pdev *pdev,
+					       uint32_t *vdev_id_map,
+					       wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_chan_eq() - function to check whether both channels are same
+ * @chan1: channel1 object
+ * @chan2: channel2 object
+ *
+ * This function checks the chan1 and chan2 are same
+ *
+ * Return : SUCCESS, if it matches, otherwise FAILURE
+ */
+QDF_STATUS wlan_chan_eq(struct wlan_channel *chan1, struct wlan_channel *chan2);
+
 #endif /* _WLAN_UTILITY_H_ */

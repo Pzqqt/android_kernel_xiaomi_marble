@@ -238,7 +238,7 @@ QDF_STATUS ucfg_green_ap_config(struct wlan_objmgr_pdev *pdev, uint8_t val)
 
 		ucfg_green_ap_set_ps_config(pdev, val);
 
-		if (wlan_util_is_vap_active(pdev, WLAN_GREEN_AP_ID) ==
+		if (wlan_util_is_vdev_active(pdev, WLAN_GREEN_AP_ID) ==
 					    QDF_STATUS_SUCCESS)
 			wlan_green_ap_start(pdev);
 	} else {

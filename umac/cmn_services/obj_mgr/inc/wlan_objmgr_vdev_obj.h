@@ -31,6 +31,7 @@
 #include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_psoc_obj.h"
+#include "wlan_vdev_mlme_main.h"
 
 	/* CONF: privacy enabled */
 #define WLAN_VDEV_F_PRIVACY              0x00000001
@@ -218,27 +219,6 @@
 /* Invalid VDEV identifier */
 #define WLAN_INVALID_VDEV_ID 255
 
-/**
- * enum wlan_vdev_state - VDEV state
- * @WLAN_VDEV_S_INIT:    Default state, IDLE state
- * @WLAN_VDEV_S_SCAN:    SCAN state
- * @WLAN_VDEV_S_JOIN:    Join state
- * @WLAN_VDEV_S_DFS_WAIT:CAC period
- * @WLAN_VDEV_S_RUN:     RUN state
- * @WLAN_VDEV_S_STOP:    STOP state
- * @WLAN_VDEV_S_RESET:   RESET state, STOP+INIT+JOIN
- * @WLAN_VDEV_S_MAX:     MAX state
- */
-enum wlan_vdev_state {
-	WLAN_VDEV_S_INIT     = 0,
-	WLAN_VDEV_S_SCAN     = 1,
-	WLAN_VDEV_S_JOIN     = 2,
-	WLAN_VDEV_S_DFS_WAIT = 3,
-	WLAN_VDEV_S_RUN      = 4,
-	WLAN_VDEV_S_STOP     = 5,
-	WLAN_VDEV_S_RESET    = 6,
-	WLAN_VDEV_S_MAX,
-};
 
 /**
  * struct wlan_vdev_create_params - Create params, HDD/OSIF passes this
@@ -1295,6 +1275,21 @@ static inline enum wlan_vdev_state wlan_vdev_mlme_get_state(
 	return vdev->vdev_mlme.mlme_state;
 }
 
+#ifdef CMN_VDEV_MLME_SM_ENABLE
+/**
+ * wlan_vdev_mlme_get_substate() - get mlme substate
+ * @vdev: VDEV object
+ *
+ * API to get VDEV MLME substate
+ *
+ * Return: substate of VDEV MLME
+ */
+static inline enum wlan_vdev_state wlan_vdev_mlme_get_substate(
+				struct wlan_objmgr_vdev *vdev)
+{
+	return vdev->vdev_mlme.mlme_substate;
+}
+#else
 /**
  * wlan_vdev_mlme_set_state() - set mlme state
  * @vdev: VDEV object
@@ -1305,11 +1300,12 @@ static inline enum wlan_vdev_state wlan_vdev_mlme_get_state(
  * Return: void
  */
 static inline void wlan_vdev_mlme_set_state(struct wlan_objmgr_vdev *vdev,
-					enum wlan_vdev_state state)
+						enum wlan_vdev_state state)
 {
 	if (state < WLAN_VDEV_S_MAX)
 		vdev->vdev_mlme.mlme_state = state;
 }
+#endif
 
 /**
  * wlan_vdev_set_selfpeer() - set self peer

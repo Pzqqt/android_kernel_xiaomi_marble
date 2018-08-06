@@ -47,68 +47,110 @@ enum beacon_update_op {
 };
 
 /**
+ * enum vdev_cmd_type - Command type
+ * @START_REQ:      Start request
+ * @RESTART_REQ:    Restart request
+ */
+enum vdev_cmd_type {
+	START_REQ,
+	RESTART_REQ,
+};
+
+/**
  * struct vdev_mlme_ops - VDEV MLME operation callbacks strucutre
- * @mlme_vdev_validate_basic_params:   callback to validate basic params of VDEV
- * @mlme_vdev_reset_proto_params:      callback to Reset protocol params
- * @mlme_vdev_start_send:              callback to initiate actions of VDEV MLME
- *                                     start operation
- * @mlme_vdev_restart_send:            callback to initiate actions of VDEV MLME
- *                                     restart operation
- * @mlme_vdev_start_continue:          callback to initiate operations on
- *                                     LMAC/FW start response
- * @mlme_vdev_up_send:                 callback to initiate actions of VDEV MLME
- *                                     up operation
- * @mlme_vdev_notify_up_complete:      callback to notify VDEV MLME on moving to
- *                                     UP state
- * @mlme_vdev_update_beacon:           callback to initiate beacon update
- * @mlme_vdev_disconnect_peers:        callback to initiate disconnection of
- *                                     peers
- * @mlme_vdev_dfs_cac_timer_stop:      callback to stop the DFS CAC timer
- * @mlme_vdev_stop_send:               callback to initiate actions of VDEV MLME
- *                                     stop operation
- * @mlme_vdev_stop_continue:           callback to initiate operations on
- *                                     LMAC/FW stop response
- * @mlme_vdev_bss_peer_delete_continue:callback to initiate operations on BSS
- *                                     peer delete completion
- * @mlme_vdev_down_send:               callback to initiate actions of VDEV MLME
- *                                     down operation
- * @mlme_vdev_legacy_hdl_create:       callback to invoke creation of legacy
- *                                     vdev object
- * @mlme_vdev_legacy_hdl_post_create:  callback to invoke post creation actions
- *                                     of legacy vdev object
- * @mlme_vdev_legacy_hdl_destroy:      callback to invoke destroy of legacy
- *                                     vdev object
+ * @mlme_vdev_validate_basic_params:    callback to validate VDEV basic params
+ * @mlme_vdev_reset_proto_params:       callback to Reset protocol params
+ * @mlme_vdev_start_send:               callback to initiate actions of VDEV
+ *                                      MLME start operation
+ * @mlme_vdev_restart_send:             callback to initiate actions of VDEV
+ *                                      MLME restart operation
+ * @mlme_vdev_stop_start_send:          callback to block start/restart VDEV
+ *                                      request command
+ * @mlme_vdev_start_continue:           callback to initiate operations on
+ *                                      LMAC/FW start response
+ * @mlme_vdev_up_send:                  callback to initiate actions of VDEV
+ *                                      MLME up operation
+ * @mlme_vdev_notify_up_complete:       callback to notify VDEV MLME on moving
+ *                                      to UP state
+ * @mlme_vdev_update_beacon:            callback to initiate beacon update
+ * @mlme_vdev_disconnect_peers:         callback to initiate disconnection of
+ *                                      peers
+ * @mlme_vdev_dfs_cac_timer_stop:       callback to stop the DFS CAC timer
+ * @mlme_vdev_stop_send:                callback to initiate actions of VDEV
+ *                                      MLME stop operation
+ * @mlme_vdev_stop_continue:            callback to initiate operations on
+ *                                      LMAC/FW stop response
+ * @mlme_vdev_bss_peer_delete_continue: callback to initiate operations on BSS
+ *                                      peer delete completion
+ * @mlme_vdev_down_send:                callback to initiate actions of VDEV
+ *                                      MLME down operation
+ * @mlme_vdev_legacy_hdl_create:        callback to invoke creation of legacy
+ *                                      vdev object
+ * @mlme_vdev_legacy_hdl_post_create:   callback to invoke post creation actions
+ *                                      of legacy vdev object
+ * @mlme_vdev_legacy_hdl_destroy:       callback to invoke destroy of legacy
+ *                                      vdev object
  */
 struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_validate_basic_params)(
-					struct vdev_mlme_obj *vdev_mlme);
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
 	QDF_STATUS (*mlme_vdev_reset_proto_params)(
-					struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_start_send)(struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_restart_send)(struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_start_continue)(struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_up_send)(struct vdev_mlme_obj *vdev_mlme);
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_start_send)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_restart_send)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_stop_start_send)(
+				struct vdev_mlme_obj *vdev_mlme,
+				enum vdev_cmd_type type,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_start_continue)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_sta_conn_start)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_start_req_failed)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_up_send)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
 	QDF_STATUS (*mlme_vdev_notify_up_complete)(
-					struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_update_beacon)(struct vdev_mlme_obj *vdev_mlme,
-					      enum beacon_update_op op);
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_update_beacon)(
+				struct vdev_mlme_obj *vdev_mlme,
+				enum beacon_update_op op,
+				uint16_t event_data_len, void *event_data);
 	QDF_STATUS (*mlme_vdev_disconnect_peers)(
-					struct vdev_mlme_obj *vdev_mlme);
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
 	QDF_STATUS (*mlme_vdev_dfs_cac_timer_stop)(
-					struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_stop_send)(struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_stop_continue)(struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_bss_peer_delete_continue)(
-					struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_down_send)(struct vdev_mlme_obj *vdev_mlme);
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_stop_send)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_stop_continue)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_down_send)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
 	QDF_STATUS (*mlme_vdev_notify_down_complete)(
-					struct vdev_mlme_obj *vdev_mlme);
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
 	QDF_STATUS (*mlme_vdev_legacy_hdl_create)(
-					struct vdev_mlme_obj *vdev_mlme);
+				struct vdev_mlme_obj *vdev_mlme);
 	QDF_STATUS (*mlme_vdev_legacy_hdl_post_create)(
-					struct vdev_mlme_obj *vdev_mlme);
+				struct vdev_mlme_obj *vdev_mlme);
 	QDF_STATUS (*mlme_vdev_legacy_hdl_destroy)(
-					struct vdev_mlme_obj *vdev_mlme);
+				struct vdev_mlme_obj *vdev_mlme);
 
 };
 
@@ -134,6 +176,8 @@ struct vdev_mlme_obj {
 /**
  * mlme_vdev_validate_basic_params - Validate basic params
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API validate MLME VDEV basic parameters
  *
@@ -141,13 +185,14 @@ struct vdev_mlme_obj {
  *         FAILURE, if any parameter is not initialized
  */
 static inline QDF_STATUS mlme_vdev_validate_basic_params(
-				struct vdev_mlme_obj *vdev_mlme)
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_validate_basic_params)
 		ret = vdev_mlme->ops->mlme_vdev_validate_basic_params(
-								vdev_mlme);
+					vdev_mlme, event_data_len, event_data);
 
 	return ret;
 }
@@ -155,6 +200,8 @@ static inline QDF_STATUS mlme_vdev_validate_basic_params(
 /**
  * mlme_vdev_reset_proto_params - Reset VDEV protocol params
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API resets the protocol params fo vdev
  *
@@ -162,12 +209,14 @@ static inline QDF_STATUS mlme_vdev_validate_basic_params(
  *         FAILURE, if it fails due to any
  */
 static inline QDF_STATUS mlme_vdev_reset_proto_params(
-				struct vdev_mlme_obj *vdev_mlme)
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_reset_proto_params)
-		ret = vdev_mlme->ops->mlme_vdev_reset_proto_params(vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_reset_proto_params(
+					vdev_mlme, event_data_len, event_data);
 
 	return ret;
 }
@@ -175,18 +224,23 @@ static inline QDF_STATUS mlme_vdev_reset_proto_params(
 /**
  * mlme_vdev_start_send - Invokes VDEV start operation
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API invokes VDEV start operation
  *
  * Return: SUCCESS on successful completion of start operation
  *         FAILURE, if it fails due to any
  */
-static inline QDF_STATUS mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme)
+static inline QDF_STATUS mlme_vdev_start_send(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_start_send)
-		ret = vdev_mlme->ops->mlme_vdev_start_send(vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_start_send(
+					vdev_mlme, event_data_len, event_data);
 
 	return ret;
 }
@@ -194,18 +248,48 @@ static inline QDF_STATUS mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme)
 /**
  * mlme_vdev_restart_send - Invokes VDEV restart operation
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API invokes VDEV restart operation
  *
  * Return: SUCCESS on successful completion of restart operation
  *         FAILURE, if it fails due to any
  */
-static inline QDF_STATUS mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme)
+static inline QDF_STATUS mlme_vdev_restart_send(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_restart_send)
-		ret = vdev_mlme->ops->mlme_vdev_restart_send(vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_restart_send(
+					vdev_mlme, event_data_len, event_data);
+
+	return ret;
+}
+
+/**
+ * mlme_vdev_stop_start_send - Invoke block VDEV restart operation
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @restart: restart req/start req
+ * @event_data_len: data size
+ * @event_data: event data
+ *
+ * API invokes stops pending VDEV restart operation
+ *
+ * Return: SUCCESS alsways
+ */
+static inline QDF_STATUS mlme_vdev_stop_start_send(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint8_t restart,
+				uint16_t event_data_len, void *event_data)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_stop_start_send)
+		ret = vdev_mlme->ops->mlme_vdev_stop_start_send(
+				vdev_mlme, restart, event_data_len, event_data);
 
 	return ret;
 }
@@ -213,6 +297,8 @@ static inline QDF_STATUS mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme)
 /**
  * mlme_vdev_start_continue - VDEV start response handling
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API invokes VDEV start response actions
  *
@@ -220,12 +306,62 @@ static inline QDF_STATUS mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme)
  *         FAILURE, if it fails due to any
  */
 static inline QDF_STATUS mlme_vdev_start_continue(
-				struct vdev_mlme_obj *vdev_mlme)
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_start_continue)
-		ret = vdev_mlme->ops->mlme_vdev_start_continue(vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_start_continue(
+					vdev_mlme, event_data_len, event_data);
+
+	return ret;
+}
+
+/**
+ * mlme_vdev_start_req_failed - Invoke Station VDEV connection, if it pause
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
+ *
+ * API invokes on START fail response
+ *
+ * Return: SUCCESS on successful invocation of callback
+ *         FAILURE, if it fails due to any
+ */
+static inline QDF_STATUS mlme_vdev_start_req_failed(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_start_req_failed)
+		ret = vdev_mlme->ops->mlme_vdev_start_req_failed(
+					vdev_mlme, event_data_len, event_data);
+
+	return ret;
+}
+
+/**
+ * mlme_vdev_sta_conn_start - Invoke Station VDEV connection, if it pause
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
+ *
+ * API invokes connection SM to start station connection
+ *
+ * Return: SUCCESS on successful invocation of connection sm
+ *         FAILURE, if it fails due to any
+ */
+static inline QDF_STATUS mlme_vdev_sta_conn_start(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_sta_conn_start)
+		ret = vdev_mlme->ops->mlme_vdev_sta_conn_start(
+					vdev_mlme, event_data_len, event_data);
 
 	return ret;
 }
@@ -233,18 +369,23 @@ static inline QDF_STATUS mlme_vdev_start_continue(
 /**
  * mlme_vdev_up_send - VDEV up operation
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API invokes VDEV up operations
  *
  * Return: SUCCESS on successful completion of up operation
  *         FAILURE, if it fails due to any
  */
-static inline QDF_STATUS mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme)
+static inline QDF_STATUS mlme_vdev_up_send(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_up_send)
-		ret = vdev_mlme->ops->mlme_vdev_up_send(vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_up_send(
+					vdev_mlme, event_data_len, event_data);
 
 	return ret;
 }
@@ -252,6 +393,8 @@ static inline QDF_STATUS mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme)
 /**
  * mlme_vdev_notify_up_complete - VDEV up state transition notification
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API notifies MLME on moving to UP state
  *
@@ -259,12 +402,14 @@ static inline QDF_STATUS mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme)
  *         FAILURE, if it fails due to any
  */
 static inline QDF_STATUS mlme_vdev_notify_up_complete(
-			      struct vdev_mlme_obj *vdev_mlme)
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_notify_up_complete)
-		ret = vdev_mlme->ops->mlme_vdev_notify_up_complete(vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_notify_up_complete(
+					vdev_mlme, event_data_len, event_data);
 
 	return ret;
 }
@@ -273,6 +418,8 @@ static inline QDF_STATUS mlme_vdev_notify_up_complete(
  * mlme_vdev_update_beacon - Updates beacon
  * @vdev_mlme_obj:  VDEV MLME comp object
  * @op: beacon update type
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API updates/allocates/frees the beacon
  *
@@ -280,13 +427,15 @@ static inline QDF_STATUS mlme_vdev_notify_up_complete(
  *         FAILURE, if it fails due to any
  */
 static inline QDF_STATUS mlme_vdev_update_beacon(
-						struct vdev_mlme_obj *vdev_mlme,
-						enum beacon_update_op op)
+				struct vdev_mlme_obj *vdev_mlme,
+				enum beacon_update_op op,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_update_beacon)
-		ret = vdev_mlme->ops->mlme_vdev_update_beacon(vdev_mlme, op);
+		ret = vdev_mlme->ops->mlme_vdev_update_beacon(vdev_mlme, op,
+						event_data_len, event_data);
 
 	return ret;
 }
@@ -294,6 +443,8 @@ static inline QDF_STATUS mlme_vdev_update_beacon(
 /**
  * mlme_vdev_disconnect_peers - Disconnect peers
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API trigger stations disconnection with AP VDEV or AP disconnection with STA
  * VDEV
@@ -302,12 +453,14 @@ static inline QDF_STATUS mlme_vdev_update_beacon(
  *         FAILURE, if it fails due to any
  */
 static inline QDF_STATUS mlme_vdev_disconnect_peers(
-			      struct vdev_mlme_obj *vdev_mlme)
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_disconnect_peers)
-		ret = vdev_mlme->ops->mlme_vdev_disconnect_peers(vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_disconnect_peers(
+					vdev_mlme, event_data_len, event_data);
 
 	return ret;
 }
@@ -315,6 +468,8 @@ static inline QDF_STATUS mlme_vdev_disconnect_peers(
 /**
  * mlme_vdev_dfs_cac_timer_stop - Stop CAC timer
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API stops the CAC timer through DFS API
  *
@@ -322,12 +477,14 @@ static inline QDF_STATUS mlme_vdev_disconnect_peers(
  *         FAILURE, if it fails due to any
  */
 static inline QDF_STATUS mlme_vdev_dfs_cac_timer_stop(
-			      struct vdev_mlme_obj *vdev_mlme)
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_dfs_cac_timer_stop)
-		ret = vdev_mlme->ops->mlme_vdev_dfs_cac_timer_stop(vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_dfs_cac_timer_stop(
+					vdev_mlme, event_data_len, event_data);
 
 	return ret;
 }
@@ -335,18 +492,23 @@ static inline QDF_STATUS mlme_vdev_dfs_cac_timer_stop(
 /**
  * mlme_vdev_stop_send - Invokes VDEV stop operation
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API invokes VDEV stop operation
  *
  * Return: SUCCESS on successful completion of stop operation
  *         FAILURE, if it fails due to any
  */
-static inline QDF_STATUS mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme)
+static inline QDF_STATUS mlme_vdev_stop_send(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_stop_send)
-		ret = vdev_mlme->ops->mlme_vdev_stop_send(vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_stop_send(
+					vdev_mlme, event_data_len, event_data);
 
 	return ret;
 }
@@ -354,6 +516,8 @@ static inline QDF_STATUS mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme)
 /**
  * mlme_vdev_stop_continue - VDEV stop response handling
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API invokes VDEV stop response actions
  *
@@ -361,34 +525,15 @@ static inline QDF_STATUS mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme)
  *         FAILURE, if it fails due to any
  */
 static inline QDF_STATUS mlme_vdev_stop_continue(
-						struct vdev_mlme_obj *vdev_mlme)
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_stop_continue)
-		ret = vdev_mlme->ops->mlme_vdev_stop_continue(vdev_mlme);
-
-	return ret;
-}
-
-/**
- * mlme_vdev_bss_peer_delete_continue - VDEV BSS peer delete complete
- * @vdev_mlme_obj:  VDEV MLME comp object
- *
- * API invokes VDEV BSS peer delete complete operation
- *
- * Return: SUCCESS on successful completion of BSS peer delete handling
- *         FAILURE, if it fails due to any
- */
-static inline QDF_STATUS mlme_vdev_bss_peer_delete_continue(
-			      struct vdev_mlme_obj *vdev_mlme)
-{
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if ((vdev_mlme->ops) &&
-	    vdev_mlme->ops->mlme_vdev_bss_peer_delete_continue)
-		ret = vdev_mlme->ops->mlme_vdev_bss_peer_delete_continue(
-								vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_stop_continue(vdev_mlme,
+							      event_data_len,
+							      event_data);
 
 	return ret;
 }
@@ -396,18 +541,23 @@ static inline QDF_STATUS mlme_vdev_bss_peer_delete_continue(
 /**
  * mlme_vdev_down_send - VDEV down operation
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API invokes VDEV down operation
  *
  * Return: SUCCESS on successful completion of VDEV down operation
  *         FAILURE, if it fails due to any
  */
-static inline QDF_STATUS mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme)
+static inline QDF_STATUS mlme_vdev_down_send(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_down_send)
-		ret = vdev_mlme->ops->mlme_vdev_down_send(vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_down_send(
+					vdev_mlme, event_data_len, event_data);
 
 	return ret;
 }
@@ -415,6 +565,8 @@ static inline QDF_STATUS mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme)
 /**
  * mlme_vdev_notify_down_complete - VDEV init state transition notification
  * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
  *
  * API notifies MLME on moving to INIT state
  *
@@ -422,12 +574,14 @@ static inline QDF_STATUS mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme)
  *         FAILURE, if it fails due to any
  */
 static inline QDF_STATUS mlme_vdev_notify_down_complete(
-					struct vdev_mlme_obj *vdev_mlme)
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_notify_down_complete)
-		ret = vdev_mlme->ops->mlme_vdev_notify_down_complete(vdev_mlme);
+		ret = vdev_mlme->ops->mlme_vdev_notify_down_complete(
+					vdev_mlme, event_data_len, event_data);
 
 	return ret;
 }
@@ -466,7 +620,8 @@ static inline QDF_STATUS mlme_vdev_legacy_hdl_post_create(
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if (vdev_mlme->ops && vdev_mlme->ops->mlme_vdev_legacy_hdl_post_create)
+	if ((vdev_mlme->ops) &&
+	    vdev_mlme->ops->mlme_vdev_legacy_hdl_post_create)
 		ret = vdev_mlme->ops->mlme_vdev_legacy_hdl_post_create(
 								vdev_mlme);
 

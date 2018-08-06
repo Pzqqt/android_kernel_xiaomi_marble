@@ -56,7 +56,8 @@ static QDF_STATUS wlan_green_ap_ant_ps_reset
 	 * Add protection against green AP enabling interrupts
 	 * when not valid or no VAPs exist
 	 */
-	if (wlan_util_is_vap_active(pdev, WLAN_GREEN_AP_ID) == QDF_STATUS_SUCCESS)
+	if (wlan_util_is_vdev_active(pdev, WLAN_GREEN_AP_ID) ==
+						QDF_STATUS_SUCCESS)
 		green_ap_tx_ops->reset_dev(pdev);
 	else
 		green_ap_err("Green AP tried to enable IRQs when invalid");
