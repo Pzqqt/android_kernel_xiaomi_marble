@@ -5765,6 +5765,7 @@ typedef enum {
 	wmi_pdev_param_cck_tx_enable,
 	wmi_pdev_param_esp_indication_period,
 	wmi_pdev_param_antenna_gain_half_db,
+	wmi_pdev_param_ru26_allowed,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
