@@ -168,9 +168,10 @@
  * 3.51 Add SW peer ID and TID num to HTT TX WBM COMPLETION
  * 3.52 Add HTT_T2H FLOW_POOL_RESIZE msg def
  * 3.53 Update HTT_T2H FLOW_POOL_RESIZE msg def
+ * 3.54 Define mcast and mcast_valid flags within htt_tx_wbm_transmit_status
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 53
+#define HTT_CURRENT_VERSION_MINOR 54
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -2341,7 +2342,11 @@ PREPACK struct htt_tx_wbm_transmit_status {
                               * If this "valid" flag is not set, the
                               * sw_peer_id and tid_num fields must be ignored.
                               */
-       reserved0:       10;
+       mcast:            1,
+       mcast_valid:      1,  /* If this "mcast_valid" is set, the mcast field
+                              * contains valid data.
+                              */
+       reserved0:        8;
    A_UINT32
        reserved1:       32;
 } POSTPACK;
@@ -2359,6 +2364,10 @@ PREPACK struct htt_tx_wbm_transmit_status {
 #define HTT_TX_WBM_COMPLETION_V2_TID_NUM_S             16
 #define HTT_TX_WBM_COMPLETION_V2_VALID_M               0x00200000
 #define HTT_TX_WBM_COMPLETION_V2_VALID_S               21
+#define HTT_TX_WBM_COMPLETION_V2_MCAST_M               0x00400000
+#define HTT_TX_WBM_COMPLETION_V2_MCAST_S               22
+#define HTT_TX_WBM_COMPLETION_V2_MCAST_VALID_M         0x00800000
+#define HTT_TX_WBM_COMPLETION_V2_MCAST_VALID_S         23
 
 /* DWORD 4 */
 #define HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_GET(_var) \
@@ -2410,6 +2419,26 @@ PREPACK struct htt_tx_wbm_transmit_status {
      do { \
          HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_VALID, _val); \
          ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_VALID_S)); \
+     } while (0)
+
+#define HTT_TX_WBM_COMPLETION_V2_MCAST_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V2_MCAST_M) >> \
+    HTT_TX_WBM_COMPLETION_V2_MCAST_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_MCAST_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_MCAST, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_MCAST_S)); \
+     } while (0)
+
+#define HTT_TX_WBM_COMPLETION_V2_MCAST_VALID_GET(_var) \
+    (((_var) & HTT_TX_WBM_COMPLETION_V2_MCAST_VALID_M) >> \
+    HTT_TX_WBM_COMPLETION_V2_MCAST_VALID_S)
+
+#define HTT_TX_WBM_COMPLETION_V2_MCAST_VALID_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_TX_WBM_COMPLETION_V2_MCAST_VALID, _val); \
+         ((_var) |= ((_val) << HTT_TX_WBM_COMPLETION_V2_MCAST_VALID_S)); \
      } while (0)
 
 /**
