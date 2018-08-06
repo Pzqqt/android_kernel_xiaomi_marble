@@ -4606,7 +4606,6 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	 */
 	ol_txrx_rx_fp data_rx = NULL;
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	uint8_t drop_count;
 
 	if ((!peer) || (!pdev)) {
 		ol_txrx_err("peer/pdev is NULL");
@@ -4649,11 +4648,9 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 				goto drop_rx_buf;
 
 			pkt = cds_alloc_ol_rx_pkt(sched_ctx);
-			if (!pkt) {
-				ol_txrx_info_high(
-					   "No available Rx message buffer");
+			if (!pkt)
 				goto drop_rx_buf;
-			}
+
 			pkt->callback = (cds_ol_rx_thread_cb)
 					ol_rx_data_cb;
 			pkt->context = (void *)pdev;
@@ -4669,8 +4666,7 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	return;
 
 drop_rx_buf:
-	drop_count = ol_txrx_drop_nbuf_list(rx_buf_list);
-	ol_txrx_info_high("Dropped rx packets %u", drop_count);
+	ol_txrx_drop_nbuf_list(rx_buf_list);
 }
 
 /**
@@ -4855,10 +4851,8 @@ static void ol_txrx_offld_flush(void *data)
 		ol_txrx_offld_flush_handler(data, NULL, 0);
 	} else {
 		pkt = cds_alloc_ol_rx_pkt(sched_ctx);
-		if (qdf_unlikely(!pkt)) {
-			ol_txrx_err("Not able to allocate context");
+		if (qdf_unlikely(!pkt))
 			return;
-		}
 
 		pkt->callback = ol_txrx_offld_flush_handler;
 		pkt->context = data;
