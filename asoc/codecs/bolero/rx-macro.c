@@ -226,8 +226,10 @@ struct rx_macro_priv {
 	u16 prim_int_users[INTERP_MAX];
 	int rx_mclk_users;
 	int swr_clk_users;
+	int clsh_users;
 	int rx_mclk_cnt;
 	bool is_native_on;
+	bool is_ear_mode_on;
 	u16 mclk_mux;
 	struct mutex mclk_lock;
 	struct mutex swr_clk_lock;
@@ -312,6 +314,10 @@ static const char *const rx_macro_mux_text[] = {
 static const char *const rx_macro_native_text[] = {"OFF", "ON"};
 static const struct soc_enum rx_macro_native_enum =
 	SOC_ENUM_SINGLE_EXT(2, rx_macro_native_text);
+
+static const char *const rx_macro_ear_mode_text[] = {"OFF", "ON"};
+static const struct soc_enum rx_macro_ear_mode_enum =
+	SOC_ENUM_SINGLE_EXT(2, rx_macro_ear_mode_text);
 
 RX_MACRO_DAPM_ENUM(rx_int0_2, BOLERO_CDC_RX_INP_MUX_RX_INT0_CFG1, 0,
 		rx_int_mix_mux_text);
@@ -1116,6 +1122,76 @@ static int rx_macro_config_compander(struct snd_soc_codec *codec,
 	return 0;
 }
 
+static inline void
+rx_macro_enable_clsh_block(struct rx_macro_priv *rx_priv, bool enable)
+{
+	if ((enable && ++rx_priv->clsh_users == 1) ||
+	    (!enable && --rx_priv->clsh_users == 0))
+		snd_soc_update_bits(rx_priv->codec,
+				BOLERO_CDC_RX_CLSH_CRC, 0x01,
+				(u8) enable);
+	if (rx_priv->clsh_users < 0)
+		rx_priv->clsh_users = 0;
+	dev_dbg(rx_priv->dev, "%s: clsh_users %d, enable %d", __func__,
+		rx_priv->clsh_users, enable);
+}
+
+static int rx_macro_config_classh(struct snd_soc_codec *codec,
+				struct rx_macro_priv *rx_priv,
+				int interp_n, int event)
+{
+	if (SND_SOC_DAPM_EVENT_OFF(event)) {
+		rx_macro_enable_clsh_block(rx_priv, false);
+		return 0;
+	}
+
+	if (!SND_SOC_DAPM_EVENT_ON(event))
+		return 0;
+
+	rx_macro_enable_clsh_block(rx_priv, true);
+	if (interp_n == INTERP_HPHL ||
+		interp_n == INTERP_HPHR) {
+		/*
+		 * These K1 values depend on the Headphone Impedance
+		 * For now it is assumed to be 16 ohm
+		 */
+		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_K1_LSB,
+				    0xFF, 0xC0);
+		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_K1_MSB,
+				    0x0F, 0x00);
+	}
+	switch (interp_n) {
+	case INTERP_HPHL:
+		if (rx_priv->is_ear_mode_on)
+			snd_soc_update_bits(codec,
+				BOLERO_CDC_RX_CLSH_HPH_V_PA,
+				0x3F, 0x39);
+		else
+			snd_soc_update_bits(codec,
+				BOLERO_CDC_RX_CLSH_HPH_V_PA,
+				0x3F, 0x1C);
+		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_DECAY_CTRL,
+				0x07, 0x00);
+		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_CFG0,
+				0x40, 0x40);
+		break;
+	case INTERP_HPHR:
+		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_HPH_V_PA,
+				0x3F, 0x1C);
+		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_DECAY_CTRL,
+				0x07, 0x00);
+		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX1_RX_PATH_CFG0,
+				0x40, 0x40);
+		break;
+	case INTERP_AUX:
+		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_CFG0,
+				0x10, 0x10);
+		break;
+	}
+
+	return 0;
+}
+
 static void rx_macro_hd2_control(struct snd_soc_codec *codec,
 				 u16 interp_idx, int event)
 {
@@ -1279,6 +1355,35 @@ static int rx_macro_put_native(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int rx_macro_get_ear_mode(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct device *rx_dev = NULL;
+	struct rx_macro_priv *rx_priv = NULL;
+
+	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] = rx_priv->is_ear_mode_on;
+	return 0;
+}
+
+static int rx_macro_put_ear_mode(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct device *rx_dev = NULL;
+	struct rx_macro_priv *rx_priv = NULL;
+
+	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	rx_priv->is_ear_mode_on =
+			(!ucontrol->value.integer.value[0] ? false : true);
+	return 0;
+}
+
 static void rx_macro_idle_detect_control(struct snd_soc_codec *codec,
 					 struct rx_macro_priv *rx_priv,
 					 int interp, int event)
@@ -1335,12 +1440,27 @@ static void rx_macro_hphdelay_lutbypass(struct snd_soc_codec *codec,
 	if (hph_lut_bypass_reg && SND_SOC_DAPM_EVENT_ON(event)) {
 		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_TEST0,
 				    hph_dly_mask, 0x0);
-		snd_soc_update_bits(codec, hph_lut_bypass_reg, 0x80, 0x80);
+		if (interp_idx == INTERP_HPHL) {
+			if (rx_priv->is_ear_mode_on)
+				snd_soc_update_bits(codec,
+					BOLERO_CDC_RX_RX0_RX_PATH_CFG1,
+					0x02, 0x02);
+			else
+				snd_soc_update_bits(codec,
+					hph_lut_bypass_reg,
+					0x80, 0x80);
+		} else {
+			snd_soc_update_bits(codec,
+					hph_lut_bypass_reg,
+					0x80, 0x80);
+		}
 	}
 
 	if (hph_lut_bypass_reg && SND_SOC_DAPM_EVENT_OFF(event)) {
 		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_TEST0,
 				    hph_dly_mask, hph_dly_mask);
+		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_CFG1,
+					0x02, 0x00);
 		snd_soc_update_bits(codec, hph_lut_bypass_reg, 0x80, 0x00);
 		snd_soc_update_bits(codec, hph_comp_ctrl7, 0x20, 0x0);
 	}
@@ -1377,6 +1497,8 @@ static int rx_macro_enable_interp_clk(struct snd_soc_codec *codec,
 						       event);
 			rx_macro_config_compander(codec, rx_priv,
 						interp_idx, event);
+			rx_macro_config_classh(codec, rx_priv,
+						interp_idx, event);
 		}
 		rx_priv->main_clk_users[interp_idx]++;
 	}
@@ -1385,6 +1507,8 @@ static int rx_macro_enable_interp_clk(struct snd_soc_codec *codec,
 		rx_priv->main_clk_users[interp_idx]--;
 		if (rx_priv->main_clk_users[interp_idx] <= 0) {
 			rx_priv->main_clk_users[interp_idx] = 0;
+			rx_macro_config_classh(codec, rx_priv,
+						interp_idx, event);
 			rx_macro_config_compander(codec, rx_priv,
 						interp_idx, event);
 			rx_macro_hphdelay_lutbypass(codec, rx_priv, interp_idx,
@@ -1749,6 +1873,9 @@ static const struct snd_kcontrol_new rx_macro_snd_controls[] = {
 
 	SOC_ENUM_EXT("RX_Native", rx_macro_native_enum, rx_macro_get_native,
 		rx_macro_put_native),
+
+	SOC_ENUM_EXT("RX_EAR Mode", rx_macro_ear_mode_enum,
+		rx_macro_get_ear_mode, rx_macro_put_ear_mode),
 
 	SOC_SINGLE_SX_TLV("IIR0 INP0 Volume",
 		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B1_CTL, 0, -84, 40,
