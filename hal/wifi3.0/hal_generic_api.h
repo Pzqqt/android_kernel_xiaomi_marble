@@ -388,6 +388,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 				HT_SIG_INFO_0, CBW);
 		ppdu_info->rx_status.sgi = HAL_RX_GET(ht_sig_info,
 				HT_SIG_INFO_1, SHORT_GI);
+		ppdu_info->rx_status.reception_type = HAL_RX_TYPE_SU;
 		break;
 	}
 
@@ -424,6 +425,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			break;
 		}
 		ppdu_info->rx_status.cck_flag = 1;
+		ppdu_info->rx_status.reception_type = HAL_RX_TYPE_SU;
 	break;
 	}
 
@@ -463,6 +465,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			break;
 		}
 		ppdu_info->rx_status.ofdm_flag = 1;
+		ppdu_info->rx_status.reception_type = HAL_RX_TYPE_SU;
 	break;
 	}
 
@@ -533,6 +536,11 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 
 		ppdu_info->rx_status.beamformed = HAL_RX_GET(vht_sig_a_info,
 				VHT_SIG_A_INFO_1, BEAMFORMED);
+		if (group_id == 0 || group_id == 63)
+			ppdu_info->rx_status.reception_type = HAL_RX_TYPE_SU;
+		else
+			ppdu_info->rx_status.reception_type =
+				HAL_RX_TYPE_MU_MIMO;
 
 		break;
 	}
@@ -689,6 +697,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 
 		ppdu_info->rx_status.beamformed = HAL_RX_GET(he_sig_a_su_info,
 					HE_SIG_A_SU_INFO_1, TXBF);
+		ppdu_info->rx_status.reception_type = HAL_RX_TYPE_SU;
 		break;
 	}
 	case WIFIPHYRX_HE_SIG_A_MU_DL_E:
@@ -841,6 +850,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		value = value - 1;
 		value = value << QDF_MON_STATUS_NUM_SIG_B_SYMBOLS_SHIFT;
 		ppdu_info->rx_status.he_flags2 |= value;
+		ppdu_info->rx_status.reception_type = HAL_RX_TYPE_MU_MIMO;
 		break;
 	}
 	case WIFIPHYRX_HE_SIG_B1_MU_E:
@@ -859,6 +869,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		value = HAL_RX_GET(he_sig_b1_mu_info,
 				HE_SIG_B1_MU_INFO_0, RU_ALLOCATION);
 		ppdu_info->rx_status.he_RU[0] = value;
+		ppdu_info->rx_status.reception_type = HAL_RX_TYPE_MU_MIMO;
 		break;
 	}
 	case WIFIPHYRX_HE_SIG_B2_MU_E:
@@ -971,7 +982,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		value++;
 		ppdu_info->rx_status.nss = value;
 		ppdu_info->rx_status.he_data6 |= value;
-
+		ppdu_info->rx_status.reception_type = HAL_RX_TYPE_MU_OFDMA;
 		break;
 	}
 	case WIFIPHYRX_RSSI_LEGACY_E:
@@ -984,9 +995,6 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			PHYRX_RSSI_LEGACY_35, RSSI_COMB);
 		ppdu_info->rx_status.bw = hal->ops->hal_rx_get_tlv(rx_tlv);
 		ppdu_info->rx_status.he_re = 0;
-
-		ppdu_info->rx_status.reception_type = HAL_RX_GET(rx_tlv,
-				PHYRX_RSSI_LEGACY_0, RECEPTION_TYPE);
 
 		value = HAL_RX_GET(rssi_info_tlv,
 			RECEIVE_RSSI_INFO_0, RSSI_PRI20_CHAIN0);
