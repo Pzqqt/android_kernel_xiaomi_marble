@@ -2779,6 +2779,20 @@ typedef struct {
     #define WMI_RSRC_CFG_FLAG_EAPOL_REKEY_MINRATE_SUPPORT_ENABLE_S 14
     #define WMI_RSRC_CFG_FLAG_EAPOL_REKEY_MINRATE_SUPPORT_ENABLE_M 0x4000
 
+    #define WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_VALID_S 15
+    #define WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_VALID_M 0x8000
+
+    /*
+     * If the AC override valid bit is set then this field will specify the
+     * access category to use for EAPOL frames
+     * 0 - WMM_AC_BE
+     * 1 - WMM_AC_BK
+     * 2 - WMM_AC_VI
+     * 3 - WMM_AC_VO
+     */
+    #define WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_S 16
+    #define WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_M 0x30000
+
     A_UINT32 flag1;
 
     /** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -2986,6 +3000,16 @@ typedef struct {
     WMI_RSRC_CFG_FLAG_SET((word32), EAPOL_REKEY_MINRATE_SUPPORT_ENABLE, (value))
 #define WMI_RSRC_CFG_FLAG_EAPOL_REKEY_MINRATE_SUPPORT_ENABLE_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), EAPOL_REKEY_MINRATE_SUPPORT_ENABLE)
+
+#define WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_VALID_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), EAPOL_AC_OVERRIDE_VALID, (value))
+#define WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_VALID_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), EAPOL_AC_OVERRIDE_VALID)
+
+#define WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), EAPOL_AC_OVERRIDE, (value))
+#define WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), EAPOL_AC_OVERRIDE)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
