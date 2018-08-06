@@ -23156,6 +23156,9 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 		WMI_PDEV_PARAM_ANTENNA_GAIN_HALF_DB;
 	pdev_param[wmi_pdev_param_esp_indication_period] =
 				WMI_PDEV_PARAM_ESP_INDICATION_PERIOD;
+#ifdef WLAN_RU26_SUPPORT
+	pdev_param[wmi_pdev_param_ru26_allowed] = WMI_PDEV_PARAM_RU26_ALLOWED;
+#endif
 }
 
 /**
