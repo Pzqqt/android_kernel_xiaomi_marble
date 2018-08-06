@@ -87,6 +87,13 @@ struct cdp_pkt_info {
 	uint64_t bytes;
 };
 
+/* struct cdp_pkt_type - packet type
+ * @mcs_count: Counter array for each MCS index
+ */
+struct cdp_pkt_type {
+	uint32_t mcs_count[MAX_MCS];
+};
+
 /* struct cdp_tx_stats - tx stats
  * @cdp_pkt_info comp_pkt: Pkt Info for which completions were received
  * @cdp_pkt_info ucast: Unicast Packet Count
@@ -178,10 +185,7 @@ struct cdp_tx_stats {
 	uint32_t tx_data_success_last;
 	uint32_t tx_byte_rate;
 	uint32_t tx_data_rate;
-	struct {
-		uint32_t mcs_count[MAX_MCS];
-	} pkt_type[DOT11_MAX];
-
+	struct cdp_pkt_type pkt_type[DOT11_MAX];
 	uint32_t sgi_count[MAX_GI];
 
 	uint32_t nss[SS_COUNT];
@@ -296,9 +300,7 @@ struct cdp_rx_stats {
 
 	uint32_t wme_ac_type[WME_AC_MAX];
 	uint32_t reception_type[MAX_RECEPTION_TYPES];
-	struct {
-		uint32_t mcs_count[MAX_MCS];
-	} pkt_type[DOT11_MAX];
+	struct cdp_pkt_type pkt_type[DOT11_MAX];
 	uint32_t sgi_count[MAX_GI];
 	uint32_t nss[SS_COUNT];
 	uint32_t bw[MAX_BW];

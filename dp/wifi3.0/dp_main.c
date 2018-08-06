@@ -5899,6 +5899,31 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 }
 
 /**
+ * dp_print_common_rates_info(): Print common rate for tx or rx
+ * @pkt_type_array: rate type array contains rate info
+ *
+ * Return:void
+ */
+static inline void
+dp_print_common_rates_info(struct cdp_pkt_type *pkt_type_array)
+{
+	uint8_t mcs, pkt_type;
+
+	for (pkt_type = 0; pkt_type < DOT11_MAX; pkt_type++) {
+		for (mcs = 0; mcs < MAX_MCS; mcs++) {
+			if (!dp_rate_string[pkt_type][mcs].valid)
+				continue;
+
+			DP_PRINT_STATS("	%s = %d",
+				       dp_rate_string[pkt_type][mcs].mcs_type,
+				       pkt_type_array[pkt_type].mcs_count[mcs]);
+		}
+
+		DP_PRINT_STATS("\n");
+	}
+}
+
+/**
  * dp_print_rx_rates(): Print Rx rate stats
  * @vdev: DP_VDEV handle
  *
@@ -5908,26 +5933,13 @@ static inline void
 dp_print_rx_rates(struct dp_vdev *vdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
-	uint8_t i, mcs, pkt_type;
+	uint8_t i;
 	uint8_t index = 0;
 	char nss[DP_NSS_LENGTH];
 
 	DP_PRINT_STATS("Rx Rate Info:\n");
+	dp_print_common_rates_info(pdev->stats.rx.pkt_type);
 
-	for (pkt_type = 0; pkt_type < DOT11_MAX; pkt_type++) {
-		index = 0;
-		for (mcs = 0; mcs < MAX_MCS; mcs++) {
-			if (!dp_rate_string[pkt_type][mcs].valid)
-				continue;
-
-			DP_PRINT_STATS("	%s = %d",
-					dp_rate_string[pkt_type][mcs].mcs_type,
-					pdev->stats.rx.pkt_type[pkt_type].
-					mcs_count[mcs]);
-		}
-
-		DP_PRINT_STATS("\n");
-	}
 
 	index = 0;
 	for (i = 0; i < SS_COUNT; i++) {
@@ -5979,27 +5991,12 @@ static inline void
 dp_print_tx_rates(struct dp_vdev *vdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
-	uint8_t mcs, pkt_type;
 	uint8_t index;
 	char nss[DP_NSS_LENGTH];
 	int nss_index;
 
 	DP_PRINT_STATS("Tx Rate Info:\n");
-
-	for (pkt_type = 0; pkt_type < DOT11_MAX; pkt_type++) {
-		index = 0;
-		for (mcs = 0; mcs < MAX_MCS; mcs++) {
-			if (!dp_rate_string[pkt_type][mcs].valid)
-				continue;
-
-			DP_PRINT_STATS("	%s = %d",
-					dp_rate_string[pkt_type][mcs].mcs_type,
-					pdev->stats.tx.pkt_type[pkt_type].
-					mcs_count[mcs]);
-		}
-
-		DP_PRINT_STATS("\n");
-	}
+	dp_print_common_rates_info(pdev->stats.tx.pkt_type);
 
 	DP_PRINT_STATS("SGI ="
 			" 0.8us %d"
@@ -6043,7 +6040,7 @@ dp_print_tx_rates(struct dp_vdev *vdev)
  */
 static inline void dp_print_peer_stats(struct dp_peer *peer)
 {
-	uint8_t i, mcs, pkt_type;
+	uint8_t i;
 	uint32_t index;
 	char nss[DP_NSS_LENGTH];
 	DP_PRINT_STATS("Node Tx Stats:\n");
@@ -6098,21 +6095,8 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.tx.nawds_mcast.bytes);
 
 	DP_PRINT_STATS("Rate Info:");
+	dp_print_common_rates_info(peer->stats.tx.pkt_type);
 
-	for (pkt_type = 0; pkt_type < DOT11_MAX; pkt_type++) {
-		index = 0;
-		for (mcs = 0; mcs < MAX_MCS; mcs++) {
-			if (!dp_rate_string[pkt_type][mcs].valid)
-				continue;
-
-			DP_PRINT_STATS("	%s = %d",
-					dp_rate_string[pkt_type][mcs].mcs_type,
-					peer->stats.tx.pkt_type[pkt_type].
-					mcs_count[mcs]);
-		}
-
-		DP_PRINT_STATS("\n");
-	}
 
 	DP_PRINT_STATS("SGI = "
 			" 0.8us %d"
@@ -6215,21 +6199,7 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.rx.reception_type[2],
 			peer->stats.rx.reception_type[3]);
 
-
-	for (pkt_type = 0; pkt_type < DOT11_MAX; pkt_type++) {
-		index = 0;
-		for (mcs = 0; mcs < MAX_MCS; mcs++) {
-			if (!dp_rate_string[pkt_type][mcs].valid)
-				continue;
-
-			DP_PRINT_STATS("	%s = %d",
-					dp_rate_string[pkt_type][mcs].mcs_type,
-					peer->stats.rx.pkt_type[pkt_type].
-					mcs_count[mcs]);
-		}
-
-		DP_PRINT_STATS("\n");
-	}
+	dp_print_common_rates_info(peer->stats.rx.pkt_type);
 
 	index = 0;
 	for (i = 0; i < SS_COUNT; i++) {
