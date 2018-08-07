@@ -39,7 +39,33 @@
 #include "mac_trace.h"
 #endif
 
+#ifdef WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY
+static tAniSirGlobal *global_mac_context;
+
+static inline tpAniSirGlobal mac_allocate_context_buffer(void)
+{
+	global_mac_context = qdf_mem_malloc(sizeof(tAniSirGlobal));
+
+	return global_mac_context;
+}
+
+static inline void mac_free_context_buffer(void)
+{
+	qdf_mem_free(global_mac_context);
+	global_mac_context = NULL;
+}
+#else /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
 static tAniSirGlobal global_mac_context;
+
+static inline tpAniSirGlobal mac_allocate_context_buffer(void)
+{
+	return &global_mac_context;
+}
+
+static inline void mac_free_context_buffer(void)
+{
+}
+#endif /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
 
 QDF_STATUS mac_start(mac_handle_t mac_handle,
 		     struct mac_start_params *params)
@@ -84,11 +110,19 @@ QDF_STATUS mac_stop(mac_handle_t mac_handle)
 QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 		    hdd_handle_t hdd_handle, struct cds_config_info *cds_cfg)
 {
-	tpAniSirGlobal p_mac = &global_mac_context;
+	tpAniSirGlobal p_mac;
 	QDF_STATUS status;
 
 	if (pHalHandle == NULL)
 		return QDF_STATUS_E_FAILURE;
+
+	p_mac = mac_allocate_context_buffer();
+
+	if (!p_mac) {
+		pe_err("%s: Failed to allocate %zu bytes for global_mac_context",
+		       __func__, sizeof(tAniSirGlobal));
+		return QDF_STATUS_E_NOMEM;
+	}
 
 	/*
 	 * Set various global fields of p_mac here
@@ -100,6 +134,7 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_MAC_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("PSOC get ref failure");
+		mac_free_context_buffer();
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -114,8 +149,10 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 			p_mac->gDriverType = QDF_DRIVER_TYPE_MFG;
 
 		/* Call routine to initialize CFG data structures */
-		if (QDF_STATUS_SUCCESS != cfg_init(p_mac))
+		if (QDF_STATUS_SUCCESS != cfg_init(p_mac)) {
+			mac_free_context_buffer();
 			return QDF_STATUS_E_FAILURE;
+		}
 
 		sys_init_globals(p_mac);
 	}
@@ -129,6 +166,7 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	status =  pe_open(p_mac, cds_cfg);
 	if (QDF_STATUS_SUCCESS != status) {
 		pe_err("pe_open() failure");
+		mac_free_context_buffer();
 		cfg_de_init(p_mac);
 	}
 
@@ -162,6 +200,7 @@ QDF_STATUS mac_close(tHalHandle hHal)
 	}
 	wlan_objmgr_psoc_release_ref(pMac->psoc, WLAN_LEGACY_MAC_ID);
 	pMac->psoc = NULL;
+	mac_free_context_buffer();
 
 	return QDF_STATUS_SUCCESS;
 }
