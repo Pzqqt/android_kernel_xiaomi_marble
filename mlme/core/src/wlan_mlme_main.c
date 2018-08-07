@@ -148,6 +148,20 @@ static void mlme_update_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 	*ht_cap_info = u.default_ht_cap_info;
 }
 
+static void mlme_update_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_mlme_rates *rates)
+{
+	rates->cfp_period = cfg_default(CFG_CFP_PERIOD);
+	rates->cfp_max_duration = cfg_default(CFG_CFP_MAX_DURATION);
+	rates->max_htmcs_txdata = cfg_get(psoc, CFG_INI_MAX_HT_MCS_FOR_TX_DATA);
+	rates->disable_abg_rate_txdata = cfg_get(psoc,
+					CFG_INI_DISABLE_ABG_RATE_FOR_TX_DATA);
+	rates->sap_max_mcs_txdata = cfg_get(psoc,
+					CFG_INI_SAP_MAX_MCS_FOR_TX_DATA);
+	rates->disable_high_ht_mcs_2x2 = cfg_get(psoc,
+					 CFG_INI_DISABLE_HIGH_HT_RX_MCS_2x2);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -162,6 +176,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 
 	mlme_cfg = &mlme_obj->cfg;
 	mlme_update_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps.ht_cap_info);
+	mlme_update_rates_in_cfg(psoc, &mlme_cfg->rates);
 
 	return status;
 }

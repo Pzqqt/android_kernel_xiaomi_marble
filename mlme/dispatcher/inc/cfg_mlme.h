@@ -25,10 +25,12 @@
 
 #include "cfg_mlme_ht_caps.h"
 #include "cfg_mlme_vht_caps.h"
+#include "cfg_mlme_rates.h"
 
 #define CFG_MLME_ALL \
 	CFG_HT_CAPS_ALL \
-	CFG_VHT_CAPS_ALL
+	CFG_VHT_CAPS_ALL \
+	CFG_RATES_ALL
 
 #endif /* __CFG_MLME_H */
 
