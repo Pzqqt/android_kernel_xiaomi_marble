@@ -312,24 +312,7 @@ struct sme_qos_searchinfo {
 	enum sme_qos_wmm_dir_type direction;
 	uint8_t tspec_mask;
 };
-/*
- *  DESCRIPTION
- *  SME QoS module's internal control block.
- */
-struct sme_qos_cb_s {
-	/* global Mac pointer */
-	tpAniSirGlobal pMac;
-	/* All Session Info */
-	struct sme_qos_sessioninfo sessionInfo[CSR_ROAM_SESSION_MAX];
-	/* All FLOW info */
-	tDblLinkList flow_list;
-	/* default TSPEC params */
-	struct sme_qos_wmmtspecinfo def_QoSInfo[SME_QOS_EDCA_AC_MAX];
-	/* counter for assigning Flow IDs */
-	uint32_t nextFlowId;
-	/* counter for assigning Dialog Tokens */
-	uint8_t nextDialogToken;
-} sme_qos_cb;
+
 typedef QDF_STATUS (*sme_QosProcessSearchEntry)(tpAniSirGlobal pMac,
 						tListElem *pEntry);
 
@@ -471,6 +454,77 @@ static QDF_STATUS sme_qos_update_tspec_mask(uint8_t sessionId,
 					   struct sme_qos_searchinfo search_key,
 					    uint8_t new_tspec_mask);
 
+/*
+ *  DESCRIPTION
+ *  SME QoS module's internal control block.
+ */
+struct sme_qos_cb_s {
+	/* global Mac pointer */
+	tpAniSirGlobal pMac;
+	/* All Session Info */
+	struct sme_qos_sessioninfo *sessionInfo;
+	/* All FLOW info */
+	tDblLinkList flow_list;
+	/* default TSPEC params */
+	struct sme_qos_wmmtspecinfo *def_QoSInfo;
+	/* counter for assigning Flow IDs */
+	uint32_t nextFlowId;
+	/* counter for assigning Dialog Tokens */
+	uint8_t nextDialogToken;
+} sme_qos_cb;
+
+#ifdef WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY
+static inline QDF_STATUS sme_qos_allocate_control_block_buffer(void)
+{
+	uint32_t buf_size;
+
+	buf_size = CSR_ROAM_SESSION_MAX * sizeof(struct sme_qos_sessioninfo);
+	sme_qos_cb.sessionInfo = qdf_mem_malloc(buf_size);
+	if (!sme_qos_cb.sessionInfo)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_size = SME_QOS_EDCA_AC_MAX * sizeof(struct sme_qos_wmmtspecinfo);
+	sme_qos_cb.def_QoSInfo = qdf_mem_malloc(buf_size);
+
+	if (!sme_qos_cb.def_QoSInfo) {
+		qdf_mem_free(sme_qos_cb.sessionInfo);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void sme_qos_free_control_block_buffer(void)
+{
+	qdf_mem_free(sme_qos_cb.sessionInfo);
+	sme_qos_cb.sessionInfo = NULL;
+
+	qdf_mem_free(sme_qos_cb.def_QoSInfo);
+	sme_qos_cb.def_QoSInfo = NULL;
+}
+
+#else /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
+
+struct sme_qos_sessioninfo sessionInfo[CSR_ROAM_SESSION_MAX];
+struct sme_qos_wmmtspecinfo def_QoSInfo[SME_QOS_EDCA_AC_MAX];
+
+static inline QDF_STATUS sme_qos_allocate_control_block_buffer(void)
+{
+	qdf_mem_zero(&sessionInfo, sizeof(sessionInfo));
+	sme_qos_cb.sessionInfo = sessionInfo;
+	qdf_mem_zero(&def_QoSInfo, sizeof(def_QoSInfo));
+	sme_qos_cb.def_QoSInfo = def_QoSInfo;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void sme_qos_free_control_block_buffer(void)
+{
+	sme_qos_cb.sessionInfo = NULL;
+	sme_qos_cb.def_QoSInfo = NULL;
+}
+#endif /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
+
 /* External APIs definitions */
 
 /**
@@ -490,18 +544,25 @@ QDF_STATUS sme_qos_open(tpAniSirGlobal pMac)
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: initializing SME-QoS module", __func__, __LINE__);
-	/* init the control block */
+	/* alloc and init the control block */
 	/* (note that this will make all sessions invalid) */
-	qdf_mem_zero(&sme_qos_cb, sizeof(sme_qos_cb));
+	if (!QDF_IS_STATUS_SUCCESS(sme_qos_allocate_control_block_buffer())) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SME,
+				"%s: %d: Failed to allocate buffer",
+				__func__, __LINE__);
+		return QDF_STATUS_E_NOMEM;
+	}
 	sme_qos_cb.pMac = pMac;
 	sme_qos_cb.nextFlowId = SME_QOS_MIN_FLOW_ID;
 	sme_qos_cb.nextDialogToken = SME_QOS_MIN_DIALOG_TOKEN;
+
 	/* init flow list */
 	status = csr_ll_open(&sme_qos_cb.flow_list);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: cannot initialize Flow List",
 			  __func__, __LINE__);
+		sme_qos_free_control_block_buffer();
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -516,6 +577,7 @@ QDF_STATUS sme_qos_open(tpAniSirGlobal pMac)
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: cannot initialize cmd list for session %d",
 				  __func__, __LINE__, sessionId);
+			sme_qos_free_control_block_buffer();
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
@@ -575,6 +637,7 @@ QDF_STATUS sme_qos_close(tpAniSirGlobal pMac)
 
 		pSession->sessionActive = false;
 	}
+	sme_qos_free_control_block_buffer();
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: closed down QoS", __func__, __LINE__);
 	return QDF_STATUS_SUCCESS;
