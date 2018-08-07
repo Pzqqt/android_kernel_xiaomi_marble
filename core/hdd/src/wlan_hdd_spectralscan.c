@@ -69,10 +69,8 @@ static int __wlan_hdd_cfg80211_spectral_scan_start(struct wiphy *wiphy,
 	}
 
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	if (wlan_hdd_validate_session_id(adapter->session_id)) {
-		hdd_err("invalid session id: %d", adapter->session_id);
+	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
-	}
 
 	ret = wlan_cfg80211_spectral_scan_config_and_start(wiphy,
 					hdd_ctx->hdd_pdev,

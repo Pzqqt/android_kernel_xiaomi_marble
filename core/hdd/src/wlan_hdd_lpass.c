@@ -105,10 +105,8 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id)) {
-		hdd_err("invalid session id: %d", adapter->session_id);
+	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (hdd_ctx->lpss_support && hdd_ctx->config->enable_lpass_support)

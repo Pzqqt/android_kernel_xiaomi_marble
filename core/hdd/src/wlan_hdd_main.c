@@ -932,6 +932,21 @@ int hdd_validate_adapter(struct hdd_adapter *adapter)
 	return 0;
 }
 
+int __wlan_hdd_validate_session_id(uint8_t session_id, const char *func)
+{
+	if (session_id == CSR_SESSION_ID_INVALID) {
+		hdd_debug_rl("adapter is not up (via %s)", func);
+		return -EINVAL;
+	}
+
+	if (session_id >= CSR_ROAM_SESSION_MAX) {
+		hdd_err("bad session Id:%u (via %s)", session_id, func);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 /**
  * wlan_hdd_validate_modules_state() - Check modules status
  * @hdd_ctx: HDD context pointer
