@@ -136,6 +136,7 @@
 #define HAL_TDLS_PEER_STA_MASK              0x80        /* bit 7 set for TDLS peer station */
 #endif
 
+#define LIM_DOS_PROTECTION_TIME 1000 //1000ms
 
 /* enums used by LIM are as follows */
 

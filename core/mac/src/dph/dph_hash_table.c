@@ -267,9 +267,8 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 	pStaDs->added = 1;
 	pStaDs->encPolicy = ENC_POLICY_NULL;
 	pStaDs->is_disassoc_deauth_in_progress = 0;
-#ifdef WLAN_FEATURE_11W
 	pStaDs->last_assoc_received_time = 0;
-#endif
+	pStaDs->last_disassoc_deauth_received_time = 0;
 	pStaDs->sta_deletion_in_progress = false;
 	pStaDs->valid = 1;
 	return pStaDs;
@@ -406,9 +405,8 @@ QDF_STATUS dph_delete_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 			prev->next = ptr->next;
 		ptr->added = 0;
 		ptr->is_disassoc_deauth_in_progress = 0;
-#ifdef WLAN_FEATURE_11W
 		ptr->last_assoc_received_time = 0;
-#endif
+		ptr->last_disassoc_deauth_received_time = 0;
 		ptr->sta_deletion_in_progress = false;
 		ptr->next = 0;
 	} else {

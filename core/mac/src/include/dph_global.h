@@ -224,8 +224,6 @@ typedef struct sDphHashNode {
 	uint8_t vhtBeamFormerCapable;
 	uint8_t vht_su_bfee_capable;
 #ifdef WLAN_FEATURE_11W
-	unsigned long last_unprot_deauth_disassoc;
-	unsigned long last_assoc_received_time;
 	TX_TIMER pmfSaQueryTimer;
 	uint16_t pmfSaQueryCurrentTransId;
 	uint16_t pmfSaQueryStartTransId;
@@ -243,6 +241,8 @@ typedef struct sDphHashNode {
 	/* key installed for this STA or not in the firmware */
 	uint8_t is_key_installed;
 	uint8_t is_disassoc_deauth_in_progress;
+	qdf_time_t last_assoc_received_time;
+	qdf_time_t last_disassoc_deauth_received_time;
 
 	uint8_t nss;
 	int8_t del_sta_ctx_rssi;

@@ -3807,11 +3807,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 				      uint8_t *peer_addr, uint8_t *bssid,
 				      uint8_t subtype)
 {
-	struct cdp_pdev *pdev_ctx;
 	bool should_drop = false;
-	qdf_time_t timestamp;
-	bool ret;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t nan_addr[] = {0x50, 0x6F, 0x9A, 0x01, 0x00, 0x00};
 
 	/* Drop the beacons from NAN device */
@@ -3820,53 +3816,6 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 			should_drop = true;
 			goto end;
 	}
-
-	/*
-	 * Currently this function handles only Disassoc,
-	 * Deauth and Assoc req frames. Return false for
-	 * all other frames.
-	 */
-	if (subtype != IEEE80211_FC0_SUBTYPE_DISASSOC &&
-	    subtype != IEEE80211_FC0_SUBTYPE_DEAUTH &&
-	    subtype != IEEE80211_FC0_SUBTYPE_ASSOC_REQ) {
-		should_drop = false;
-		goto end;
-	}
-
-	pdev_ctx = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev_ctx) {
-		WMA_LOGE(FL("Failed to get the context"));
-		should_drop = true;
-		goto end;
-	}
-
-	ret = cdp_peer_get_last_mgmt_timestamp(soc, pdev_ctx,
-					       peer_addr, subtype,
-					       &timestamp);
-
-	if (!ret) {
-		if (IEEE80211_FC0_SUBTYPE_ASSOC_REQ != subtype) {
-			WMA_LOGE(FL("cdp_last_mgmt_timestamp_received %s 0x%x"),
-				 "failed for subtype", subtype);
-			should_drop = true;
-		}
-		goto end;
-	} else if (timestamp > 0 &&
-		   qdf_system_time_before(qdf_get_system_timestamp(),
-					  timestamp +
-					  WMA_MGMT_FRAME_DETECT_DOS_TIMER)) {
-		WMA_LOGD(FL("Dropping subtype 0x%x frame. %s %d ms %s %d ms"),
-			 subtype, "It is received after",
-			 (int)(qdf_get_system_timestamp() - timestamp),
-			 "of last frame. Allow it only after",
-			 WMA_MGMT_FRAME_DETECT_DOS_TIMER);
-		should_drop = true;
-		goto end;
-	}
-	if (!cdp_peer_update_last_mgmt_timestamp(soc, pdev_ctx, peer_addr,
-						 qdf_get_system_timestamp(),
-						 subtype))
-		should_drop = true;
 end:
 	return should_drop;
 }

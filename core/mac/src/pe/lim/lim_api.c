@@ -2639,6 +2639,47 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal pMac,
 				  curr_seq_num);
 			return eMGMT_DROP_DUPLICATE_AUTH_FRAME;
 		}
+	} else if ((subType == SIR_MAC_MGMT_ASSOC_REQ) &&
+		   (subType == SIR_MAC_MGMT_DISASSOC) &&
+		   (subType == SIR_MAC_MGMT_DEAUTH)) {
+		uint16_t assoc_id;
+		dphHashTableClass *dph_table;
+		tDphHashNode *sta_ds;
+		qdf_time_t *timestamp;
+
+		pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
+		psessionEntry = pe_find_session_by_bssid(pMac, pHdr->bssId,
+				&sessionId);
+		if (!psessionEntry)
+			return eMGMT_DROP_NO_DROP;
+		dph_table = &psessionEntry->dph.dphHashTable;
+		sta_ds = dph_lookup_hash_entry(pMac, pHdr->sa, &assoc_id,
+					       dph_table);
+		if (!sta_ds) {
+			if (subType == SIR_MAC_MGMT_ASSOC_REQ)
+			    return eMGMT_DROP_NO_DROP;
+			else
+			    return eMGMT_DROP_EXCESSIVE_MGMT_FRAME;
+		}
+
+		if (subType == SIR_MAC_MGMT_ASSOC_REQ)
+			timestamp = &sta_ds->last_assoc_received_time;
+		else
+			timestamp = &sta_ds->last_disassoc_deauth_received_time;
+		if (*timestamp > 0 &&
+		    qdf_system_time_before(qdf_get_system_timestamp(),
+					   *timestamp +
+					   LIM_DOS_PROTECTION_TIME)) {
+			pe_debug_rl(FL("Dropping subtype 0x%x frame. %s %d ms %s %d ms"),
+				    subType, "It is received after",
+				    (int)(qdf_get_system_timestamp() - *timestamp),
+				    "of last frame. Allow it only after",
+				    LIM_DOS_PROTECTION_TIME);
+			return eMGMT_DROP_EXCESSIVE_MGMT_FRAME;
+		}
+
+		*timestamp = qdf_get_system_timestamp();
+
 	}
 
 	return eMGMT_DROP_NO_DROP;
