@@ -1367,8 +1367,14 @@ void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 		session_entry->pLimJoinReq = NULL;
 	}
 error:
-	/* Delete the session if JOIN failure occurred. */
-	if (result_code != eSIR_SME_SUCCESS) {
+	/* Delete the session if JOIN failure occurred.
+	 * if the peer is not created, then there is no
+	 * need to send down the set link state which will
+	 * try to delete the peer. Instead a join response
+	 * failure should be sent to the upper layers.
+	 */
+	if (result_code != eSIR_SME_SUCCESS &&
+	    result_code != eSIR_SME_PEER_CREATE_FAILED) {
 		param = qdf_mem_malloc(sizeof(join_params));
 		if (param != NULL) {
 			param->result_code = result_code;

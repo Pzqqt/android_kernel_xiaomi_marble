@@ -774,7 +774,7 @@ failure:
 	MTRACE(mac_trace(mac, TRACE_CODE_MLM_STATE, session_entry->peSessionId,
 			 session_entry->limMlmState));
 	session_entry->limMlmState = eLIM_MLM_IDLE_STATE;
-	mlm_join_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
+	mlm_join_cnf.resultCode = eSIR_SME_PEER_CREATE_FAILED;
 	mlm_join_cnf.sessionId = session_entry->peSessionId;
 	mlm_join_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
 	lim_post_sme_message(mac, LIM_MLM_JOIN_CNF, (uint32_t *) &mlm_join_cnf);
