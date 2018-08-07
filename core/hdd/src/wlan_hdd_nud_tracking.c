@@ -227,7 +227,7 @@ static void __hdd_nud_failure_work(void *data)
 	adapter = (struct hdd_adapter *)data;
 
 	status = hdd_validate_adapter(adapter);
-	if (0 != status)
+	if (status)
 		return;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -348,7 +348,7 @@ static void hdd_nud_filter_netevent(struct neighbour *neigh)
 
 	adapter = hdd_get_adapter_by_macaddr(hdd_ctx, netdev->dev_addr);
 	status = hdd_validate_adapter(adapter);
-	if (0 != status)
+	if (status)
 		return;
 
 	if (adapter->device_mode != QDF_STA_MODE) {

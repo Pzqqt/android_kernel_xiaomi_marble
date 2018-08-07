@@ -1257,10 +1257,8 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 	if (0 != status)
 		return -EINVAL;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err("Invalid Adapter");
+	if (hdd_validate_adapter(adapter))
 		return -EINVAL;
-	}
 
 	if (adapter->device_mode != QDF_STA_MODE) {
 		hdd_debug("Cannot set LL_STATS for device mode %d",

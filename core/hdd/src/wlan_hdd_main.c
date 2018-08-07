@@ -897,39 +897,30 @@ int __wlan_hdd_validate_context(struct hdd_context *hdd_ctx, const char *func)
 	return 0;
 }
 
-int hdd_validate_adapter(struct hdd_adapter *adapter)
+int __hdd_validate_adapter(struct hdd_adapter *adapter, const char *func)
 {
 	if (!adapter) {
-		hdd_err("adapter is null");
+		hdd_err("adapter is null (via %s)", func);
 		return -EINVAL;
 	}
 
 	if (adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
-		hdd_err("bad adapter magic");
+		hdd_err("bad adapter magic (via %s)", func);
 		return -EINVAL;
 	}
 
 	if (!adapter->dev) {
-		hdd_err("adapter net_device is null");
+		hdd_err("adapter net_device is null (via %s)", func);
 		return -EINVAL;
 	}
 
 	if (!(adapter->dev->flags & IFF_UP)) {
-		hdd_info("adapter net_device is not up");
+		hdd_debug_rl("adapter '%s' is not up (via %s)",
+			     adapter->dev->name, func);
 		return -EAGAIN;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id)) {
-		hdd_info("adapter session is not open");
-		return -EAGAIN;
-	}
-
-	if (adapter->session_id >= CSR_ROAM_SESSION_MAX) {
-		hdd_err("bad adapter session Id: %u", adapter->session_id);
-		return -EINVAL;
-	}
-
-	return 0;
+	return __wlan_hdd_validate_session_id(adapter->session_id, func);
 }
 
 int __wlan_hdd_validate_session_id(uint8_t session_id, const char *func)

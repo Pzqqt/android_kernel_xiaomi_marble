@@ -2208,7 +2208,10 @@ int __wlan_hdd_validate_context(struct hdd_context *hdd_ctx, const char *func);
  *
  * Return: Errno
  */
-int hdd_validate_adapter(struct hdd_adapter *adapter);
+#define hdd_validate_adapter(adapter) \
+	__hdd_validate_adapter(adapter, __func__)
+
+int __hdd_validate_adapter(struct hdd_adapter *adapter, const char *func);
 
 /**
  * wlan_hdd_validate_session_id() - ensure the given session Id is valid

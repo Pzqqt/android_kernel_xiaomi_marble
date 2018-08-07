@@ -299,10 +299,8 @@ static void hdd_softap_notify_dhcp_ind(void *context, struct sk_buff *netbuf)
 	uint8_t sta_id;
 	struct hdd_adapter *adapter = context;
 
-	if (hdd_validate_adapter(adapter)) {
-		hdd_err("Invalid adapter");
+	if (hdd_validate_adapter(adapter))
 		return;
-	}
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 	if (!hdd_ap_ctx) {
