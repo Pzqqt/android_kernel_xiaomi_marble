@@ -7897,7 +7897,7 @@ PREPACK struct htt_chan_info_t
 #define HTT_RX_DELBA_INITIATOR_SET(word, value)                    \
     do {                                                           \
         HTT_CHECK_SET_VAL(HTT_RX_DELBA_INITIATOR, value);          \
-        (word) |= (value)  << HTT_RX_DELBA_INITIATOR;              \
+        (word) |= (value)  << HTT_RX_DELBA_INITIATOR_S;            \
     } while (0)
 #define HTT_RX_DELBA_INITIATOR_GET(word) \
     (((word) & HTT_RX_DELBA_INITIATOR_M) >> HTT_RX_DELBA_INITIATOR_S)
