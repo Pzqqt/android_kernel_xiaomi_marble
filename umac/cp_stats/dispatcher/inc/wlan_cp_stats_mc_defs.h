@@ -303,6 +303,7 @@ struct stats_event {
 	uint32_t num_chain_rssi_stats;
 	struct chain_rssi_event *vdev_chain_rssi;
 	uint32_t tx_rate;
+	uint32_t rx_rate;
 	enum tx_rate_info tx_rate_flags;
 };
 

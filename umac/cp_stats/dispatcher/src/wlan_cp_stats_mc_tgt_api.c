@@ -571,6 +571,7 @@ tgt_mc_cp_stats_prepare_n_send_raw_station_stats(struct wlan_objmgr_psoc *psoc,
 	 * it in units of 500kbps which is expected by UMAC
 	 */
 	info.tx_rate = peer_mc_stats->tx_rate / 500;
+	info.rx_rate = peer_mc_stats->rx_rate / 500;
 	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
 
 end:
