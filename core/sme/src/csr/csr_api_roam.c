@@ -114,9 +114,6 @@
  */
 #define NEIGHBOR_REPORT_PARAM_INVALID (0xFFFFFFFFU)
 
-/* Static Type declarations */
-static struct csr_roam_session csr_roam_roam_session[CSR_ROAM_SESSION_MAX];
-
 /**
  * csr_get_ielen_from_bss_description() - to get IE length
  *             from tSirBssDescription structure
@@ -505,32 +502,72 @@ static void csr_add_social_channels(tpAniSirGlobal mac,
 		tSirUpdateChanList *chan_list, struct csr_scanstruct *pScan,
 		uint8_t *num_chan);
 
-/* Initialize global variables */
-static void csr_roam_init_globals(tpAniSirGlobal pMac)
+#ifdef WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY
+static struct csr_roam_session *csr_roam_roam_session;
+
+/* Allocate and initialize global variables */
+static QDF_STATUS csr_roam_init_globals(tpAniSirGlobal pMac)
 {
-	if (pMac) {
-		qdf_mem_zero(&csr_roam_roam_session,
-				sizeof(csr_roam_roam_session));
+	uint32_t buf_size;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	buf_size = CSR_ROAM_SESSION_MAX
+		   * sizeof(struct csr_roam_session);
+
+	csr_roam_roam_session = qdf_mem_malloc(buf_size);
+
+	if (csr_roam_roam_session) {
 		pMac->roam.roamSession = csr_roam_roam_session;
+		status = QDF_STATUS_SUCCESS;
+	} else {
+		sme_err("%s: Failed to allocate %d bytes",
+			__func__, buf_size);
+		status = QDF_STATUS_E_NOMEM;
 	}
+
+	return status;
 }
+
+/* Free memory allocated dynamically */
+static inline void csr_roam_free_globals(void)
+{
+	qdf_mem_free(csr_roam_roam_session);
+	csr_roam_roam_session = NULL;
+}
+
+#else /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
+static struct csr_roam_session csr_roam_roam_session[CSR_ROAM_SESSION_MAX];
+
+/* Initialize global variables */
+static QDF_STATUS csr_roam_init_globals(tpAniSirGlobal pMac)
+{
+	qdf_mem_zero(&csr_roam_roam_session,
+		     sizeof(csr_roam_roam_session));
+	pMac->roam.roamSession = csr_roam_roam_session;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void csr_roam_free_globals(void)
+{
+}
+#endif /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
 
 static void csr_roam_de_init_globals(tpAniSirGlobal pMac)
 {
 	uint8_t i;
 
-	if (pMac) {
-		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-			if (pMac->roam.roamSession[i].pCurRoamProfile)
-				csr_release_profile(pMac,
-						    pMac->roam.roamSession[i].
-						    pCurRoamProfile);
+	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+		if (pMac->roam.roamSession[i].pCurRoamProfile)
 			csr_release_profile(pMac,
-					    &pMac->roam.roamSession[i].
-					    stored_roam_profile.profile);
-		}
-		pMac->roam.roamSession = NULL;
+					    pMac->roam.roamSession[i].
+					    pCurRoamProfile);
+		csr_release_profile(pMac,
+				    &pMac->roam.roamSession[i].
+				    stored_roam_profile.profile);
 	}
+	csr_roam_free_globals();
+	pMac->roam.roamSession = NULL;
 }
 
 #ifdef QCA_SUPPORT_CP_STATS
@@ -566,21 +603,30 @@ QDF_STATUS csr_open(tpAniSirGlobal pMac)
 
 	do {
 		/* Initialize CSR Roam Globals */
-		csr_roam_init_globals(pMac);
+		status = csr_roam_init_globals(pMac);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			break;
+
 		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
 			csr_roam_state_change(pMac, eCSR_ROAMING_STATE_STOP, i);
 
 		init_config_param(pMac);
 		status = csr_scan_open(pMac);
-		if (!QDF_IS_STATUS_SUCCESS(status))
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			csr_roam_free_globals();
 			break;
+		}
 		status = csr_roam_open(pMac);
-		if (!QDF_IS_STATUS_SUCCESS(status))
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			csr_roam_free_globals();
 			break;
+		}
 		pMac->roam.nextRoamId = 1;      /* Must not be 0 */
 		status = csr_open_stats_ll(pMac);
-		if (QDF_IS_STATUS_ERROR(status))
+		if (QDF_IS_STATUS_ERROR(status)) {
+			csr_roam_free_globals();
 			break;
+		}
 		qdf_list_create(&pMac->roam.rssi_disallow_bssid,
 			MAX_RSSI_AVOID_BSSID_LIST);
 	} while (0);
