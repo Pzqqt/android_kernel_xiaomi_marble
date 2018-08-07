@@ -273,6 +273,7 @@ struct cdp_tx_stats {
  * @rx_wpimic: rx MIC check failed (WPI)
  * @rx_wepfail: rx wep processing failed
  * @rx_aggr: aggregation on rx
+ * @rx_discard: packets discard in rx
  */
 struct cdp_rx_stats {
 	struct cdp_pkt_info to_stack;
@@ -325,6 +326,7 @@ struct cdp_rx_stats {
 
 	/*add for peer updated for ppdu*/
 	uint32_t rx_aggr;
+	uint32_t rx_discard;
 };
 
 /* struct cdp_tx_ingress_stats - Tx ingress Stats

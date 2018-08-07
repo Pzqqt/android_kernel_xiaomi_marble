@@ -94,24 +94,6 @@ static inline int dp_ath_rate_out(int _i)
 #define VHT_INVALID_BCC_RATE  0
 #define NUM_HT_SPATIAL_STREAM 4
 
-#define RATE_PROP_LDPC 0x00000010
-#define RATE_PROP_1NSS 0x00000001
-#define RATE_PROP_2NSS 0x00000002
-#define RATE_PROP_3NSS 0x00000004
-#define RATE_PROP_STBC 0x00000020
-#define RATE_PROP_TXBF 0x00000040
-
-/* We have advanced 11n capabilities and they are enabled based on the MCS rate.
- * Enable LDPC by default for all MCS rates.
- * Enable STBC for one spatial stream rates.
- * Enable TXBF for (0-15) MCS rates.
- */
-#define RT_1SS_PROP    (RATE_PROP_1NSS | RATE_PROP_LDPC | RATE_PROP_STBC | \
-			RATE_PROP_TXBF)
-#define RT_2SS_PROP    (RATE_PROP_2NSS | RATE_PROP_LDPC | RATE_PROP_TXBF)
-#define RT_3SS_PROP    (RATE_PROP_3NSS | RATE_PROP_LDPC | RATE_PROP_TXBF)
-#define RT_PROP_DIS    (0)
-
 #define NUM_HT_RIX_PER_BW (NUM_HT_MCS * NUM_HT_SPATIAL_STREAM)
 #define NUM_VHT_RIX_PER_BW (NUM_VHT_MCS * NUM_SPATIAL_STREAMS)
 #define NUM_HE_RIX_PER_BW (NUM_HE_MCS * NUM_SPATIAL_STREAMS)
@@ -187,5 +169,4 @@ dp_getrateindex(uint16_t mcs, uint8_t nss, uint8_t preamble, uint8_t bw);
 
 int dp_rate_idx_to_kbps(uint8_t rate_idx, uint8_t gintval);
 
-int dp_kbps_to_mcs(int kbps_rate, int shortgi, int htflag, int nss_val);
 #endif /*_DP_RATES_H_*/

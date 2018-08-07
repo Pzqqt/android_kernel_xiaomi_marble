@@ -28,6 +28,10 @@
 #include "dp_internal.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 
+#ifdef FEATURE_PERPKT_INFO
+#include "dp_ratetable.h"
+#endif
+
 /**
 * dp_rx_populate_cdp_indication_ppdu() - Populate cdp rx indication structure
 * @pdev: pdev ctx
@@ -125,6 +129,38 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
  * Return: None
  */
 #ifdef FEATURE_PERPKT_INFO
+static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
+					   struct cdp_rx_indication_ppdu *ppdu)
+{
+	uint32_t ratekbps = 0;
+	uint32_t ppdu_rx_rate = 0;
+	uint32_t nss = 0;
+
+	if (!peer || !ppdu)
+		return;
+
+	if (ppdu->u.nss == 0)
+		nss = 0;
+	else
+		nss = ppdu->u.nss - 1;
+
+	ratekbps = dp_getrateindex(ppdu->u.mcs,
+				   nss,
+				   ppdu->u.preamble,
+				   ppdu->u.bw);
+
+	if (!ratekbps)
+		return;
+
+	DP_STATS_UPD(peer, rx.last_rx_rate, ratekbps);
+	dp_ath_rate_lpf(peer->stats.rx.avg_rx_rate, ratekbps);
+	ppdu_rx_rate = dp_ath_rate_out(peer->stats.rx.avg_rx_rate);
+	DP_STATS_UPD(peer, rx.rnd_avg_rx_rate, ppdu_rx_rate);
+
+	if (peer->vdev)
+		peer->vdev->stats.rx.last_rx_rate = ratekbps;
+}
+
 static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		struct cdp_rx_indication_ppdu *ppdu)
 {
@@ -199,6 +235,8 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		DP_STATS_INC(peer, rx.wme_ac_type[ac], num_msdu);
 	dp_peer_stats_notify(peer);
 	DP_STATS_UPD(peer, rx.last_rssi, ppdu->rssi);
+
+	dp_rx_rate_stats_update(peer, ppdu);
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
 		soc->cdp_soc.ol_ops->update_dp_stats(pdev->ctrl_pdev,

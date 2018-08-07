@@ -29,6 +29,10 @@
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 #include "cdp_txrx_cmn_struct.h"
 
+#ifdef FEATURE_PERPKT_INFO
+#include "dp_ratetable.h"
+#endif
+
 #define HTT_TLV_HDR_LEN HTT_T2H_EXT_STATS_CONF_TLV_HDR_SIZE
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 64
@@ -87,6 +91,38 @@ do {                                                             \
  * Return: None
  */
 #ifdef FEATURE_PERPKT_INFO
+static inline void
+dp_tx_rate_stats_update(struct dp_peer *peer,
+			struct cdp_tx_completion_ppdu_user *ppdu)
+{
+	uint32_t ratekbps = 0;
+	uint32_t ppdu_tx_rate = 0;
+
+	if (!peer || !ppdu)
+		return;
+
+	dp_peer_stats_notify(peer);
+
+	ratekbps = dp_getrateindex(ppdu->mcs,
+				   ppdu->nss,
+				   ppdu->preamble,
+				   ppdu->bw);
+
+	DP_STATS_UPD(peer, tx.last_tx_rate, ratekbps);
+
+	if (!ratekbps)
+		return;
+
+	dp_ath_rate_lpf(peer->stats.tx.avg_tx_rate, ratekbps);
+	ppdu_tx_rate = dp_ath_rate_out(peer->stats.tx.avg_tx_rate);
+	DP_STATS_UPD(peer, tx.rnd_avg_tx_rate, ppdu_tx_rate);
+
+	if (peer->vdev) {
+		peer->vdev->stats.tx.last_tx_rate = ratekbps;
+		peer->vdev->stats.tx.last_tx_rate_mcs = ppdu->mcs;
+	}
+}
+
 static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		struct cdp_tx_completion_ppdu_user *ppdu, uint32_t ack_rssi)
 {
@@ -150,8 +186,13 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_INCC(peer,
 			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < (MAX_MCS - 1)) && (preamble == DOT11_AX)));
-	dp_peer_stats_notify(peer);
-	DP_STATS_UPD(peer, tx.last_tx_rate, ppdu->tx_rate);
+
+	dp_tx_rate_stats_update(peer, ppdu);
+
+	if (peer->stats.tx.ucast.num)
+		peer->stats.tx.last_per = ((peer->stats.tx.ucast.num -
+					peer->stats.tx.tx_success.num) * 100) /
+					peer->stats.tx.ucast.num;
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
 		soc->cdp_soc.ol_ops->update_dp_stats(pdev->ctrl_pdev,

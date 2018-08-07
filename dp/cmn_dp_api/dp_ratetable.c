@@ -85,14 +85,12 @@ const struct DP_CMN_RATE_TABLE {
 	struct {
 		uint32_t validmodemask;
 		enum DP_CMN_MODULATION_TYPE phy;
-		uint32_t propmask;
 		uint32_t ratekbps;
 		uint32_t ratekbpssgi;
 		uint32_t ratekbpsdgi;
 		uint32_t ratekbpsqgi;
 		uint32_t ratekbpsdcm;
 		uint32_t userratekbps;
-		uint32_t dot11rate;
 		uint16_t ratecode;
 	} info[DP_RATE_TABLE_SIZE];
 } DP_CMN_RATE_TABLE;
@@ -3279,127 +3277,3 @@ int dp_rate_idx_to_kbps(uint8_t rate_idx, uint8_t gintval)
 }
 
 qdf_export_symbol(dp_rate_idx_to_kbps);
-
-/* dp_match_rate_to_nss - To determine mapping between rateindex and nss
- * @htflag - HT flags, for HT frames
- * @nss - NSS 1...8
- * @idx - index value
- *
- * return - 0 or 1 depending on success or failure
- */
-int dp_match_rate_to_nss(int htflag, int nss, int idx)
-{
-	int modemask = dp_11abgnratetable.info[idx].validmodemask;
-	int propmask = dp_11abgnratetable.info[idx].propmask;
-
-	if (htflag == 1) {
-		if (modemask == CCK_MODE_VALID_MASK ||
-		    modemask == OFDM_MODE_VALID_MASK)
-			return 0;
-	} else if (htflag == 2) {
-		if (modemask == HT20_MODE_VALID_MASK ||
-		    modemask == HT40_MODE_VALID_MASK) {
-			if (nss == 3 && propmask == RT_3SS_PROP)
-				return 0;
-			else if (nss == 2 && propmask == RT_2SS_PROP)
-				return 0;
-			else if (nss == 1 && propmask == RT_1SS_PROP)
-				return 0;
-		}
-	} else if (htflag == 3) {
-		if (modemask == VHT20_MODE_VALID_MASK ||
-		    modemask == VHT40_MODE_VALID_MASK ||
-		    modemask == VHT80_MODE_VALID_MASK) {
-			if (nss == 3 && propmask == RT_3SS_PROP)
-				return 0;
-			else if (nss == 2 && propmask == RT_2SS_PROP)
-				return 0;
-			else if (nss == 1 && propmask == RT_1SS_PROP)
-				return 0;
-		}
-	}
-
-	return 1;
-}
-
-/* dp_kbps_to_mcs - used to find mcs value from ratekbps
- * @kbps_rate - rate in kbps
- * @shortgi - short guard interval
- * @htflag - HT flags, for HT frames
- * @nss_val - NSS 1...8
- *
- * @return - mcs value
- */
-int dp_kbps_to_mcs(int kbps_rate, int shortgi, int htflag, int nss_val)
-{
-	int i;
-	int mcs_val1 = 1;
-	int mcs_val2 = 1;
-
-	if ((htflag < 0 || htflag > 3) ||
-	    (nss_val < 0 || nss_val > 3))
-		return QDF_STATUS_E_FAILURE;
-
-	if (shortgi == 0) {
-		for (i = 0 ; i < DP_RATE_TABLE_SIZE; i++) {
-			if (dp_11abgnratetable.info[i].ratekbps == kbps_rate) {
-				if (!htflag)
-					break;
-				if (!dp_match_rate_to_nss(htflag, nss_val, i))
-					break;
-			}
-		}
-		if (i == DP_RATE_TABLE_SIZE)
-			mcs_val1 = 0;
-		else
-			return dp_11abgnratetable.info[i].dot11rate;
-	} else {
-		for (i = 0 ; i < DP_RATE_TABLE_SIZE; i++) {
-			if (dp_11abgnratetable.info[i].ratekbpssgi ==
-					kbps_rate) {
-				if (!htflag)
-					break;
-				if (!dp_match_rate_to_nss(htflag, nss_val, i))
-					break;
-			}
-		}
-		if (i == DP_RATE_TABLE_SIZE)
-			mcs_val2 = 0;
-		else
-			return dp_11abgnratetable.info[i].dot11rate;
-	}
-
-	if (!mcs_val1) {
-		for (i = 0 ; i < DP_RATE_TABLE_SIZE; i++) {
-			if (dp_11abgnratetable.info[i].ratekbpssgi ==
-					kbps_rate) {
-				if (!htflag)
-					break;
-				if (!dp_match_rate_to_nss(htflag, nss_val, i))
-					break;
-			}
-		}
-		if (i == DP_RATE_TABLE_SIZE)
-			return QDF_STATUS_E_FAILURE;
-		else
-			return dp_11abgnratetable.info[i].dot11rate;
-	}
-
-	if (!mcs_val2) {
-		for (i = 0 ; i < DP_RATE_TABLE_SIZE; i++) {
-			if (dp_11abgnratetable.info[i].ratekbps == kbps_rate) {
-				if (!htflag)
-					break;
-				if (!dp_match_rate_to_nss(htflag, nss_val, i))
-					break;
-			}
-		}
-		if (i == DP_RATE_TABLE_SIZE)
-			return QDF_STATUS_E_FAILURE;
-		else
-			return dp_11abgnratetable.info[i].dot11rate;
-	}
-	return QDF_STATUS_E_FAILURE;
-}
-
-qdf_export_symbol(dp_kbps_to_mcs);
