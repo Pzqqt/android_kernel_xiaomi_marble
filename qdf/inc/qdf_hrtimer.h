@@ -58,12 +58,12 @@ void qdf_hrtimer_start(qdf_hrtimer_data_t *timer, qdf_ktime_t interval,
  *
  * Cancels hrtimer in given context
  *
- * Return: void
+ * Return: int
  */
 static inline
-void qdf_hrtimer_cancel(qdf_hrtimer_data_t *timer)
+int qdf_hrtimer_cancel(qdf_hrtimer_data_t *timer)
 {
-	__qdf_hrtimer_cancel(timer);
+	return __qdf_hrtimer_cancel(timer);
 }
 
 /**

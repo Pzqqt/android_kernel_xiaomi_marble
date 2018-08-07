@@ -66,15 +66,17 @@ void __qdf_hrtimer_start(__qdf_hrtimer_data_t *timer, ktime_t interval,
  *
  * cancels hrtimer in given context
  *
- * Return: void
+ * Return: int
  */
 static inline
-void __qdf_hrtimer_cancel(__qdf_hrtimer_data_t *timer)
+int __qdf_hrtimer_cancel(__qdf_hrtimer_data_t *timer)
 {
 	if (timer->ctx == QDF_CONTEXT_HARDWARE)
-		hrtimer_cancel(&timer->u.hrtimer);
+		return hrtimer_cancel(&timer->u.hrtimer);
 	else if (timer->ctx == QDF_CONTEXT_TASKLET)
-		hrtimer_cancel(&timer->u.tasklet_hrtimer.timer);
+		return hrtimer_cancel(&timer->u.tasklet_hrtimer.timer);
+
+	return 0;
 }
 
 /**
