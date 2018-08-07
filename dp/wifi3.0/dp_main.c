@@ -7966,6 +7966,7 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 					       REO_DST_RING_SIZE_QCA6290);
 		break;
 	case TARGET_TYPE_QCA8074:
+	case TARGET_TYPE_QCA8074V2:
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA8074);
 		break;

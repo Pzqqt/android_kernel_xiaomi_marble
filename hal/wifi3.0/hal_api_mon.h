@@ -738,6 +738,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info,
 
 		switch (hal->target_type) {
 		case TARGET_TYPE_QCA8074:
+		case TARGET_TYPE_QCA8074V2:
 			ppdu_info->rx_status.is_stbc =
 				HAL_RX_GET(vht_sig_a_info,
 					   VHT_SIG_A_INFO_0, STBC);
