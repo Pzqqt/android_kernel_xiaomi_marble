@@ -533,8 +533,10 @@ static void dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl,
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
-					if (ase->type ==
-						CDP_TXRX_AST_TYPE_STATIC)
+					if ((ase->type ==
+					     CDP_TXRX_AST_TYPE_STATIC) ||
+					    (ase->type ==
+					     CDP_TXRX_AST_TYPE_SELF))
 						continue;
 					ase->is_active = TRUE;
 				}
@@ -569,8 +571,10 @@ static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
-					if (ase->type ==
-						CDP_TXRX_AST_TYPE_STATIC)
+					if ((ase->type ==
+					     CDP_TXRX_AST_TYPE_STATIC) ||
+					    (ase->type ==
+					     CDP_TXRX_AST_TYPE_SELF))
 						continue;
 					dp_peer_del_ast(soc, ase);
 				}
