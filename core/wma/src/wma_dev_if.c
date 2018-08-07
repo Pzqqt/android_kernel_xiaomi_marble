@@ -4426,8 +4426,10 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	struct wma_target_req *msg;
 	bool peer_assoc_cnf = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	uint32_t mcs_limit, i, j;
+	uint32_t i, j;
+	uint16_t mcs_limit;
 	uint8_t *rate_pos;
+	struct sAniSirGlobal *mac = (struct sAniSirGlobal *)wma->mac_context;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -4513,10 +4515,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 #define CFG_CTRL_MASK              0xFF00
 #define CFG_DATA_MASK              0x00FF
 
-	if (wlan_cfg_get_int(wma->mac_context, WNI_CFG_SAP_MAX_MCS_DATA,
-			     &mcs_limit) != QDF_STATUS_SUCCESS) {
-		mcs_limit = WNI_CFG_SAP_MAX_MCS_DATA_STADEF;
-	}
+	mcs_limit = mac->mlme_cfg->rates.sap_max_mcs_txdata;
 
 	if (mcs_limit & CFG_CTRL_MASK) {
 		WMA_LOGD("%s: set mcs_limit %x", __func__, mcs_limit);

@@ -91,13 +91,33 @@ struct wlan_mlme_vht_caps {
 };
 
 /**
+ * struct wlan_mlme_rates - RATES related config items
+ * @cfpPeriod: cfp period info
+ * @cfpMaxDuration: cfp Max duration info
+ * @max_htmcs_txdata: max HT mcs info for Tx
+ * @disable_abg_rate_txdata: disable abg rate info for tx data
+ * @sap_max_mcs_txdata: sap max mcs info
+ * @disable_high_ht_mcs_2x2: disable high mcs for 2x2 info
+ */
+struct wlan_mlme_rates {
+	uint8_t cfp_period;
+	uint16_t cfp_max_duration;
+	uint16_t max_htmcs_txdata;
+	bool disable_abg_rate_txdata;
+	uint16_t sap_max_mcs_txdata;
+	uint8_t disable_high_ht_mcs_2x2;
+};
+
+/**
  * struct wlan_mlme_cfg - MLME config items
  * @ht_cfg: HT related CFG Items
  * @vht_cfg: VHT related CFG Items
+ * @rates: Rates related cfg items
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_ht_caps ht_caps;
 	struct wlan_mlme_vht_caps vht_caps;
+	struct wlan_mlme_rates rates;
 };
 
 #endif

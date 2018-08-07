@@ -665,7 +665,7 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 
 	if (psessionEntry) {
 		disable_high_ht_mcs_2x2 =
-				pMac->roam.configParam.disable_high_ht_mcs_2x2;
+				pMac->mlme_cfg->rates.disable_high_ht_mcs_2x2;
 		pe_debug("disable HT high MCS INI param[%d]",
 			 disable_high_ht_mcs_2x2);
 		if (psessionEntry->nss == NSS_1x1_MODE) {

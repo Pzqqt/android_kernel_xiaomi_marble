@@ -4909,36 +4909,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * disable_high_ht_mcs_2x2 - disable high mcs index for 2nd stream in 2.4G
- * @Min: 0
- * @Max: 8
- * @Default: 0
- *
- * This ini is used to disable high HT MCS index for 2.4G STA connection.
- * It has been introduced to resolve IOT issue with one of the vendor.
- *
- * Note: This INI is not useful with 1x1 setting. If some platform supports
- * only 1x1 then this INI is not useful.
- *
- * 0 - It won't disable any HT MCS index (just like normal HT MCS)
- * 1 - It will disable 15th bit from HT RX MCS set (from 8-15 bits slot)
- * 2 - It will disable 14th & 15th bits from HT RX MCS set
- * 3 - It will disable 13th, 14th, & 15th bits from HT RX MCS set
- * and so on.
- *
- * Related: STA
- *
- * Supported Feature: 11n
- *
- * Usage: External
- */
-#define CFG_DISABLE_HIGH_HT_RX_MCS_2x2         "disable_high_ht_mcs_2x2"
-#define CFG_DISABLE_HIGH_HT_RX_MCS_2x2_MIN     (0)
-#define CFG_DISABLE_HIGH_HT_RX_MCS_2x2_MAX     (8)
-#define CFG_DISABLE_HIGH_HT_RX_MCS_2x2_DEFAULT (0)
-
-/*
- * <ini>
  * gStaPrefer80MHzOver160MHz - set Sta perferance to connect in 80HZ/160HZ
  * @Min: 0
  * @Max: 1
@@ -6106,28 +6076,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gMaxHTMCSForTxData - max HT mcs for TX
- * @Min: 0
- * @Max: 383
- * @Default: 0
- *
- * This ini is used to configure the max HT mcs
- * for tx data.
- *
- * Usage: External
- *
- * bits 0-15:  max HT mcs
- * bits 16-31: zero to disable, otherwise enable.
- *
- * </ini>
- */
-#define CFG_MAX_HT_MCS_FOR_TX_DATA          "gMaxHTMCSForTxData"
-#define CFG_MAX_HT_MCS_FOR_TX_DATA_MIN      (WNI_CFG_MAX_HT_MCS_TX_DATA_STAMIN)
-#define CFG_MAX_HT_MCS_FOR_TX_DATA_MAX      (WNI_CFG_MAX_HT_MCS_TX_DATA_STAMAX)
-#define CFG_MAX_HT_MCS_FOR_TX_DATA_DEFAULT  (WNI_CFG_MAX_HT_MCS_TX_DATA_STADEF)
-
-/*
- * <ini>
  * gSapGetPeerInfo - Enable/Disable remote peer info query support
  * @Min: 0 - Disable remote peer info query support
  * @Max: 1 - Enable remote peer info query support
@@ -6143,27 +6091,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_SAP_GET_PEER_INFO_MIN                   (0)
 #define CFG_SAP_GET_PEER_INFO_MAX                   (1)
 #define CFG_SAP_GET_PEER_INFO_DEFAULT               (0)
-
-/*
- * <ini>
- * gDisableABGRateForTxData - disable abg rate for tx data
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to disable abg rate for tx data.
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_DISABLE_ABG_RATE_FOR_TX_DATA        "gDisableABGRateForTxData"
-#define CFG_DISABLE_ABG_RATE_FOR_TX_DATA_MIN \
-	(WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA_STAMIN)
-#define CFG_DISABLE_ABG_RATE_FOR_TX_DATA_MAX \
-	(WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA_STAMAX)
-#define CFG_DISABLE_ABG_RATE_FOR_TX_DATA_DEFAULT \
-	(WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA_STADEF)
 
 /*
  * <ini>
@@ -11343,23 +11270,6 @@ enum hdd_external_acs_policy {
 #define CFG_EXTERNAL_ACS_POLICY_DEFAULT (HDD_EXTERNAL_ACS_PCL_PREFERRED)
 
 /*
- * gSapMaxMCSForTxData - sap 11n max mcs
- * @Min: 0
- * @Max: 383
- * @Default: 0
- *
- * This ini configure SAP 11n max mcs
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SAP_MAX_MCS_FOR_TX_DATA         "gSapMaxMCSForTxData"
-#define CFG_SAP_MAX_MCS_FOR_TX_DATA_MIN     (0)
-#define CFG_SAP_MAX_MCS_FOR_TX_DATA_MAX     (383)
-#define CFG_SAP_MAX_MCS_FOR_TX_DATA_DEFAULT (0)
-
-/*
  * <ini>
  * gEnableTxOrphan- Enable/Disable orphaning of Tx packets
  * @Min: 0
@@ -14238,7 +14148,6 @@ struct hdd_config {
 	bool enable_su_tx_bformer;
 	uint8_t vhtRxMCS2x2;
 	uint8_t vhtTxMCS2x2;
-	uint8_t disable_high_ht_mcs_2x2;
 	bool enable2x2;
 	uint32_t vdev_type_nss_2g;
 	uint32_t vdev_type_nss_5g;
@@ -14330,9 +14239,7 @@ struct hdd_config {
 	bool fRegChangeDefCountry;
 	bool acs_with_more_param;
 	uint32_t auto_channel_select_weight;
-	uint16_t max_ht_mcs_txdata;
 	bool sap_get_peer_info;
-	bool disable_abg_rate_txdata;
 	uint8_t rate_for_tx_mgmt;
 	uint8_t rate_for_tx_mgmt_2g;
 	uint8_t rate_for_tx_mgmt_5g;
@@ -14677,7 +14584,6 @@ struct hdd_config {
 	bool is_force_1x1;
 	uint8_t enable_rts_sifsbursting;
 	uint8_t max_mpdus_inampdu;
-	uint16_t sap_max_mcs_txdata;
 	enum pmo_auto_pwr_detect_failure_mode auto_pwr_save_fail_mode;
 	uint16_t num_11b_tx_chains;
 	uint16_t num_11ag_tx_chains;

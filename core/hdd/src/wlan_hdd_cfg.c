@@ -1954,13 +1954,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_VHT_ENABLE_2x2_CAP_FEATURE_MIN,
 		     CFG_VHT_ENABLE_2x2_CAP_FEATURE_MAX),
 
-	REG_VARIABLE(CFG_DISABLE_HIGH_HT_RX_MCS_2x2, WLAN_PARAM_Integer,
-		     struct hdd_config, disable_high_ht_mcs_2x2,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_DISABLE_HIGH_HT_RX_MCS_2x2_DEFAULT,
-		     CFG_DISABLE_HIGH_HT_RX_MCS_2x2_MIN,
-		     CFG_DISABLE_HIGH_HT_RX_MCS_2x2_MAX),
-
 	REG_VARIABLE(CFG_VDEV_TYPE_NSS_2G, WLAN_PARAM_Integer,
 		     struct hdd_config, vdev_type_nss_2g,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2077,26 +2070,12 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_DISABLE_DFS_JAPAN_W53_MAX,
 			     ch_notify_set_g_disable_dfs_japan_w53, 0),
 
-	REG_VARIABLE(CFG_MAX_HT_MCS_FOR_TX_DATA, WLAN_PARAM_HexInteger,
-		     struct hdd_config, max_ht_mcs_txdata,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAX_HT_MCS_FOR_TX_DATA_DEFAULT,
-		     CFG_MAX_HT_MCS_FOR_TX_DATA_MIN,
-		     CFG_MAX_HT_MCS_FOR_TX_DATA_MAX),
-
 	REG_VARIABLE(CFG_SAP_GET_PEER_INFO, WLAN_PARAM_Integer,
 		     struct hdd_config, sap_get_peer_info,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_SAP_GET_PEER_INFO_DEFAULT,
 		     CFG_SAP_GET_PEER_INFO_MIN,
 		     CFG_SAP_GET_PEER_INFO_MAX),
-
-	REG_VARIABLE(CFG_DISABLE_ABG_RATE_FOR_TX_DATA, WLAN_PARAM_Integer,
-		     struct hdd_config, disable_abg_rate_txdata,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_DISABLE_ABG_RATE_FOR_TX_DATA_DEFAULT,
-		     CFG_DISABLE_ABG_RATE_FOR_TX_DATA_MIN,
-		     CFG_DISABLE_ABG_RATE_FOR_TX_DATA_MAX),
 
 	REG_VARIABLE(CFG_RATE_FOR_TX_MGMT, WLAN_PARAM_HexInteger,
 		     struct hdd_config, rate_for_tx_mgmt,
@@ -4426,13 +4405,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_MAX_MPDUS_IN_AMPDU_DEFAULT,
 		CFG_MAX_MPDUS_IN_AMPDU_MIN,
 		CFG_MAX_MPDUS_IN_AMPDU_MAX),
-
-	REG_VARIABLE(CFG_SAP_MAX_MCS_FOR_TX_DATA, WLAN_PARAM_Integer,
-		struct hdd_config, sap_max_mcs_txdata,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_SAP_MAX_MCS_FOR_TX_DATA_DEFAULT,
-		CFG_SAP_MAX_MCS_FOR_TX_DATA_MIN,
-		CFG_SAP_MAX_MCS_FOR_TX_DATA_MAX),
 
 	REG_VARIABLE(CFG_TX_ORPHAN_ENABLE_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, tx_orphan_enable,
@@ -8086,32 +8058,11 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_TGT_GTX_USR_CFG to CCM");
 	}
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_MAX_HT_MCS_TX_DATA,
-			    config->max_ht_mcs_txdata) ==
-			    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_MAX_HT_MCS_TX_DATA to CCM");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA,
-			    config->disable_abg_rate_txdata) ==
-			    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA to CCM");
-	}
-
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_RATE_FOR_TX_MGMT,
 			    config->rate_for_tx_mgmt) ==
 			    QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_RATE_FOR_TX_MGMT to CCM");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_SAP_MAX_MCS_DATA,
-			    config->sap_max_mcs_txdata) ==
-			    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Could not pass on WNI_CFG_SAP_MAX_MCS_DATA to CCM");
 	}
 
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_RATE_FOR_TX_MGMT_2G,
@@ -8621,8 +8572,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	smeConfig->csrConfig.enable_tx_ldpc = pConfig->enable_tx_ldpc;
 	smeConfig->csrConfig.enable_rx_ldpc = pConfig->enable_rx_ldpc;
-	smeConfig->csrConfig.disable_high_ht_mcs_2x2 =
-					pConfig->disable_high_ht_mcs_2x2;
 	smeConfig->csrConfig.enable_vht20_mcs9 = pConfig->enable_vht20_mcs9;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	smeConfig->csrConfig.cc_switch_mode = pConfig->WlanMccToSccSwitchMode;

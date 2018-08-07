@@ -1036,8 +1036,10 @@ wma_unified_peer_state_update(
  */
 static void wma_mask_tx_ht_rate(tp_wma_handle wma, uint8_t *mcs_set)
 {
-	uint32_t mcs_limit, i, j;
+	uint32_t i, j;
+	uint16_t mcs_limit;
 	uint8_t *rate_pos = mcs_set;
+	struct sAniSirGlobal *mac = (struct sAniSirGlobal *)wma->mac_context;
 
 	/*
 	 * Get MCS limit from ini configure, and map it to rate parameters
@@ -1045,10 +1047,7 @@ static void wma_mask_tx_ht_rate(tp_wma_handle wma, uint8_t *mcs_set)
 	 * check whether ini config is enabled and CFG_DATA_MASK to get the
 	 * MCS value.
 	 */
-	if (wlan_cfg_get_int(wma->mac_context, WNI_CFG_MAX_HT_MCS_TX_DATA,
-			   &mcs_limit) != QDF_STATUS_SUCCESS) {
-		mcs_limit = WNI_CFG_MAX_HT_MCS_TX_DATA_STADEF;
-	}
+	mcs_limit = mac->mlme_cfg->rates.max_htmcs_txdata;
 
 	if (mcs_limit & CFG_CTRL_MASK) {
 		WMA_LOGD("%s: set mcs_limit %x", __func__, mcs_limit);
@@ -1242,10 +1241,10 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	uint32_t num_peer_11a_rates = 0;
 	uint32_t phymode;
 	uint32_t peer_nss = 1;
-	uint32_t disable_abg_rate;
 	struct wma_txrx_node *intr = NULL;
 	bool is_he;
 	QDF_STATUS status;
+	struct sAniSirGlobal *mac = (struct sAniSirGlobal *)wma->mac_context;
 
 	cmd = qdf_mem_malloc(sizeof(struct peer_assoc_params));
 	if (!cmd) {
@@ -1276,12 +1275,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 
 	wma_objmgr_set_peer_mlme_phymode(wma, params->staMac, phymode);
 
-	if (wlan_cfg_get_int(wma->mac_context,
-			     WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA,
-			     &disable_abg_rate) != QDF_STATUS_SUCCESS)
-		disable_abg_rate = WNI_CFG_DISABLE_ABG_RATE_FOR_TX_DATA_STADEF;
-
-	if (!disable_abg_rate) {
+	if (!mac->mlme_cfg->rates.disable_abg_rate_txdata) {
 		/* Legacy Rateset */
 		rate_pos = (uint8_t *) peer_legacy_rates.rates;
 		for (i = 0; i < SIR_NUM_11B_RATES; i++) {

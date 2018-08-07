@@ -998,15 +998,10 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			mlm_start_req->dtimPeriod = (uint8_t) val;
 		}
 
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_CFP_PERIOD, &val) !=
-			QDF_STATUS_SUCCESS)
-			pe_err("could not retrieve Beacon interval");
-		mlm_start_req->cfParamSet.cfpPeriod = (uint8_t) val;
-
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_CFP_MAX_DURATION, &val) !=
-			QDF_STATUS_SUCCESS)
-			pe_err("could not retrieve CFPMaxDuration");
-		mlm_start_req->cfParamSet.cfpMaxDuration = (uint16_t) val;
+		mlm_start_req->cfParamSet.cfpPeriod =
+			mac_ctx->mlme_cfg->rates.cfp_period;
+		mlm_start_req->cfParamSet.cfpMaxDuration =
+			mac_ctx->mlme_cfg->rates.cfp_max_duration;
 
 		/*
 		 * this may not be needed anymore now,

@@ -32,6 +32,7 @@
 #include "wni_cfg.h"
 
 #include "cfg_api.h"
+#include "cfg_ucfg_api.h"
 #include "lim_api.h"
 #include "utils_api.h"
 #include "sch_api.h"
@@ -399,8 +400,12 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
 	}
 
 	if (bcn->cfPresent) {
-		cfg_set_int(mac_ctx, WNI_CFG_CFP_PERIOD,
-			    bcn->cfParamSet.cfpPeriod);
+		if (!cfg_in_range(CFG_CFP_PERIOD, bcn->cfParamSet.cfpPeriod)) {
+			pe_err("Error in setting CFG item CFP Period");
+			return false;
+		}
+		mac_ctx->mlme_cfg->rates.cfp_period = bcn->cfParamSet.cfpPeriod;
+
 		lim_send_cf_params(mac_ctx, *bssIdx,
 				   bcn->cfParamSet.cfpCount,
 				   bcn->cfParamSet.cfpPeriod);
