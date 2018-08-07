@@ -863,7 +863,7 @@ void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
 	qdf_ipa_set_wifi_quota_t *ipa_set_quota;
 	QDF_STATUS status;
 
-	ipa_info("event=%d", evt);
+	ipa_debug("event=%d", evt);
 
 	iface_ctx = wlan_ipa_get_iface(ipa_ctx, QDF_STA_MODE);
 	if (!iface_ctx) {

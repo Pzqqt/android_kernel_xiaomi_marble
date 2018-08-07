@@ -521,10 +521,9 @@ tListElem *csr_nonscan_pending_ll_peek_head(struct sAniSirGlobal *mac_ctx,
 
 	cmd = wlan_serialization_peek_head_pending_cmd_using_psoc(mac_ctx->psoc,
 								  false);
-	if (!cmd) {
-		sme_err("No cmd found");
+	if (!cmd)
 		return NULL;
-	}
+
 	sme_cmd = cmd->umac_cmd;
 
 	return &sme_cmd->Link;

@@ -19909,7 +19909,7 @@ static void hdd_print_netdev_txq_status(struct net_device *dev)
 	for (i = 0; i < dev->num_tx_queues; i++) {
 		struct netdev_queue *txq = netdev_get_tx_queue(dev, i);
 
-		hdd_info("netdev tx queue[%u] state: 0x%lx", i, txq->state);
+		hdd_debug("netdev tx queue[%u] state: 0x%lx", i, txq->state);
 	}
 }
 

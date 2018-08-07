@@ -2861,9 +2861,9 @@ static enum sme_qos_statustype sme_qos_setup(tpAniSirGlobal pMac,
 static QDF_STATUS sme_qos_process_set_key_success_ind(tpAniSirGlobal pMac,
 					   uint8_t sessionId, void *pEvent_info)
 {
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-		  "########### Set Key Complete #############");
+	sme_debug("Set Key complete");
 	(void)sme_qos_process_buffered_cmd(sessionId);
+
 	return QDF_STATUS_SUCCESS;
 }
 
