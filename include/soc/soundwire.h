@@ -15,6 +15,7 @@
 #include <linux/device.h>
 #include <linux/mutex.h>
 #include <linux/mod_devicetable.h>
+#include <linux/irqdomain.h>
 
 extern struct bus_type soundwire_type;
 
@@ -204,7 +205,7 @@ struct swr_device {
 	struct device    dev;
 	unsigned long    addr;
 	u8 group_id;
-	u8 slave_irq;
+	struct irq_domain *slave_irq;
 };
 
 static inline struct swr_device *to_swr_device(struct device *dev)

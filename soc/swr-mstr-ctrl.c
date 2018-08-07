@@ -1078,7 +1078,9 @@ static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 				if (swr_dev->dev_num != devnum)
 					continue;
 				if (swr_dev->slave_irq)
-					handle_nested_irq(swr_dev->slave_irq);
+					handle_nested_irq(
+						irq_find_mapping(
+						swr_dev->slave_irq, 0));
 			}
 			break;
 		case SWRM_INTERRUPT_STATUS_NEW_SLAVE_ATTACHED:
