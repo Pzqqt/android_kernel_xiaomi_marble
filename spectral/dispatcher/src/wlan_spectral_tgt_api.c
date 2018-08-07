@@ -286,7 +286,8 @@ tgt_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 	psoc = wlan_pdev_get_psoc(pdev);
 	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
 
-	if (tgt_spectral_get_target_type(psoc) == TARGET_TYPE_QCA8074)
+	if ((tgt_spectral_get_target_type(psoc) == TARGET_TYPE_QCA8074) ||
+	    (tgt_spectral_get_target_type(psoc) == TARGET_TYPE_QCA8074V2))
 		if (dbr_tx_ops->direct_buf_rx_module_register)
 			return dbr_tx_ops->direct_buf_rx_module_register
 				(pdev, 0,

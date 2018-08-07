@@ -2004,15 +2004,17 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	target_if_spectral_clear_stats(spectral);
 
 #ifdef CONFIG_WIN
-	if (target_type == TARGET_TYPE_QCA8074) {
+	if ((target_type == TARGET_TYPE_QCA8074) ||
+	    (target_type == TARGET_TYPE_QCA8074V2)) {
 		spectral->fftbin_size_war = 1;
 		spectral->inband_fftbin_size_adj = 1;
 	} else {
 		spectral->fftbin_size_war = 0;
 		spectral->inband_fftbin_size_adj = 0;
 	}
-	if ((target_type == TARGET_TYPE_QCA8074) || (
-		target_type == TARGET_TYPE_QCA6290)) {
+	if ((target_type == TARGET_TYPE_QCA8074) ||
+	    (target_type == TARGET_TYPE_QCA8074V2) ||
+	    (target_type == TARGET_TYPE_QCA6290)) {
 		spectral->spectral_gen = SPECTRAL_GEN3;
 		spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN3;
 		spectral->tag_sscan_summary_exp =
