@@ -5607,18 +5607,7 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 		dfs_csa_ie_req->ch_params.center_freq_seg0;
 skip_vht:
 	/* Send CSA IE request from here */
-	if (sch_set_fixed_beacon_fields(mac_ctx, session_entry) !=
-			QDF_STATUS_SUCCESS) {
-		pe_err("Unable to set CSA IE in beacon");
-		return;
-	}
-
-	/*
-	 * First beacon update request is sent here, the remaining updates are
-	 * done when the FW responds back after sending the first beacon after
-	 * the template update
-	 */
-	lim_send_beacon_ind(mac_ctx, session_entry);
+	lim_send_dfs_chan_sw_ie_update(mac_ctx, session_entry);
 
 	if (dfs_csa_ie_req->ch_params.ch_width == CH_WIDTH_80MHZ)
 		ch_offset = BW80;

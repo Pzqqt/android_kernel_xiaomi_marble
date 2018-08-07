@@ -1341,6 +1341,26 @@ QDF_STATUS lim_util_get_type_subtype(void *pkt, uint8_t *type,
 enum rateid lim_get_min_session_txrate(tpPESession session);
 
 /**
+ * lim_send_dfs_chan_sw_ie_update() - updates the channel switch IE in beacon
+ * template
+ *
+ * @mac_ctx - pointer to global mac context
+ * @session - A pointer to pesession
+ * Return None
+ */
+void lim_send_dfs_chan_sw_ie_update(tpAniSirGlobal mac_ctx,
+				    tpPESession session);
+
+/**
+ * lim_process_ap_ecsa_timeout() -process ECSA timeout which decrement csa count
+ * in beacon and update beacon template in firmware
+ *
+ * @data - A pointer to pesession
+ * Return None
+ */
+void lim_process_ap_ecsa_timeout(void *session);
+
+/**
  * lim_send_chan_switch_action_frame()- Send an action frame
  * containing CSA IE or ECSA IE depending on the connected
  * sta capability.

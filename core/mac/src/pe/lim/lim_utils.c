@@ -8321,3 +8321,103 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal mac_ctx, uint8_t frame_type,
 	return;
 }
 
+void
+lim_send_dfs_chan_sw_ie_update(tpAniSirGlobal mac_ctx, tpPESession session)
+{
+	/* Update the beacon template and send to FW */
+	if (sch_set_fixed_beacon_fields(mac_ctx, session) !=
+					QDF_STATUS_SUCCESS) {
+		pe_err("Unable to set CSA IE in beacon");
+		return;
+	}
+
+	/* Send update beacon template message */
+	lim_send_beacon_ind(mac_ctx, session);
+	pe_debug("Updated CSA IE, IE COUNT: %d",
+		 session->gLimChannelSwitch.switchCount);
+}
+
+void lim_process_ap_ecsa_timeout(void *data)
+{
+	tpPESession session = (tpPESession)data;
+	tpAniSirGlobal mac_ctx;
+	uint8_t bcn_int, ch, ch_width;
+	QDF_STATUS status;
+
+	if (!session) {
+		pe_err("Session is NULL");
+		return;
+	}
+
+	mac_ctx = (tpAniSirGlobal)session->mac_ctx;
+
+	if (!session->dfsIncludeChanSwIe) {
+		pe_debug("session->dfsIncludeChanSwIe not set");
+		return;
+	}
+
+	if (session->gLimChannelSwitch.switchCount) {
+		/* Decrement the beacon switch count */
+		session->gLimChannelSwitch.switchCount--;
+		pe_debug("current beacon count %d",
+			 session->gLimChannelSwitch.switchCount);
+	}
+
+	/*
+	 * Send only g_sap_chanswitch_beacon_cnt beacons with CSA IE Set in
+	 * when a radar is detected
+	 */
+	if (session->gLimChannelSwitch.switchCount > 0) {
+		/* Send the next beacon with updated CSA IE count */
+		lim_send_dfs_chan_sw_ie_update(mac_ctx, session);
+
+		ch = session->gLimChannelSwitch.primaryChannel;
+		ch_width = session->gLimChannelSwitch.ch_width;
+		if (mac_ctx->sap.SapDfsInfo.dfs_beacon_tx_enhanced)
+			/* Send Action frame after updating beacon */
+			lim_send_chan_switch_action_frame(mac_ctx, ch, ch_width,
+							  session);
+
+		/* Restart the timer */
+		if (session->beaconParams.beaconInterval)
+			bcn_int = session->beaconParams.beaconInterval;
+		else
+			bcn_int = WNI_CFG_BEACON_INTERVAL_STADEF;
+
+			status = qdf_mc_timer_start(&session->ap_ecsa_timer,
+						    bcn_int);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				pe_err("cannot start ap_ecsa_timer");
+				lim_process_ap_ecsa_timeout(session);
+			}
+	} else {
+		tSirSmeCSAIeTxCompleteRsp *chan_switch_tx_rsp;
+		struct scheduler_msg msg = {0};
+		uint8_t length = sizeof(*chan_switch_tx_rsp);
+
+		/* Done with CSA IE update, send response back to SME */
+		session->gLimChannelSwitch.switchCount = 0;
+		if (mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false)
+			session->gLimChannelSwitch.switchMode = 0;
+		session->dfsIncludeChanSwIe = false;
+		session->dfsIncludeChanWrapperIe = false;
+
+		chan_switch_tx_rsp = qdf_mem_malloc(length);
+		if (!chan_switch_tx_rsp) {
+			pe_err("AllocateMemory failed for tSirSmeCSAIeTxCompleteRsp");
+			return;
+		}
+
+		chan_switch_tx_rsp->sessionId = session->smeSessionId;
+		chan_switch_tx_rsp->chanSwIeTxStatus = QDF_STATUS_SUCCESS;
+
+		msg.type = eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND;
+		msg.bodyptr = chan_switch_tx_rsp;
+
+		status = scheduler_post_msg(QDF_MODULE_ID_SME, &msg);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			sme_err("Failed to post eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND");
+			qdf_mem_free(chan_switch_tx_rsp);
+		}
+	}
+}
