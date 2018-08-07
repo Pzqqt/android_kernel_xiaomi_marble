@@ -567,6 +567,32 @@ struct session_params {
    Function declarations and documenation
    ------------------------------------------------------------------------*/
 
+#ifdef WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY
+/**
+ * pe_allocate_dph_node_array_buffer() - Allocate g_dph_node_array
+ * memory dynamically
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_NOMEM on failure
+ */
+QDF_STATUS pe_allocate_dph_node_array_buffer(void);
+
+/**
+ * pe_free_dph_node_array_buffer() - Free memory allocated dynamically
+ *
+ * Return: None
+ */
+void pe_free_dph_node_array_buffer(void);
+#else /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
+static inline QDF_STATUS pe_allocate_dph_node_array_buffer(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void pe_free_dph_node_array_buffer(void)
+{
+}
+#endif /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
+
 /**
  * pe_create_session() - creates a new PE session given the BSSID
  *

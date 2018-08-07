@@ -38,9 +38,47 @@
 #include "sch_api.h"
 #include "lim_send_messages.h"
 
+#ifdef WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY
+static struct sDphHashNode *g_dph_node_array;
 
+QDF_STATUS pe_allocate_dph_node_array_buffer(void)
+{
+	uint32_t buf_size;
+
+	buf_size = SIR_MAX_SUPPORTED_BSS * (SIR_SAP_MAX_NUM_PEERS + 1)
+		   * sizeof(struct sDphHashNode);
+	g_dph_node_array = qdf_mem_malloc(buf_size);
+
+	if (!g_dph_node_array) {
+		pe_err("%s: Failed to allocate %d bytes", __func__, buf_size);
+		return QDF_STATUS_E_NOMEM;
+	} else {
+		return QDF_STATUS_SUCCESS;
+	}
+}
+
+void pe_free_dph_node_array_buffer(void)
+{
+	qdf_mem_free(g_dph_node_array);
+	g_dph_node_array = NULL;
+}
+
+static inline
+struct sDphHashNode *pe_get_session_dph_node_array(uint8_t session_id)
+{
+	return &g_dph_node_array[session_id * (SIR_SAP_MAX_NUM_PEERS + 1)];
+}
+
+#else /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
 static struct sDphHashNode
 	g_dph_node_array[SIR_MAX_SUPPORTED_BSS][SIR_SAP_MAX_NUM_PEERS + 1];
+
+static inline
+struct sDphHashNode *pe_get_session_dph_node_array(uint8_t session_id)
+{
+	return g_dph_node_array[session_id];
+}
+#endif /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
 
 /*--------------------------------------------------------------------------
 
@@ -560,7 +598,8 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 		return NULL;
 	}
 
-	session_ptr->dph.dphHashTable.pDphNodeArray = g_dph_node_array[i];
+	session_ptr->dph.dphHashTable.pDphNodeArray =
+					pe_get_session_dph_node_array(i);
 	session_ptr->dph.dphHashTable.size = numSta + 1;
 	dph_hash_table_class_init(pMac, &session_ptr->dph.dphHashTable);
 	session_ptr->gpLimPeerIdxpool = qdf_mem_malloc(

@@ -879,11 +879,17 @@ QDF_STATUS pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (!QDF_IS_STATUS_SUCCESS(pe_allocate_dph_node_array_buffer())) {
+		pe_err("g_dph_node_array memory allocate failed!");
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	pMac->lim.limTimers.gpLimCnfWaitTimer =
 		qdf_mem_malloc(sizeof(TX_TIMER) * (pMac->lim.maxStation + 1));
 	if (NULL == pMac->lim.limTimers.gpLimCnfWaitTimer) {
 		pe_err("gpLimCnfWaitTimer memory allocate failed!");
-		return QDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
+		goto pe_open_timer_fail;
 	}
 
 	pMac->lim.gpSession =
@@ -927,6 +933,8 @@ pe_open_lock_fail:
 pe_open_psession_fail:
 	qdf_mem_free(pMac->lim.limTimers.gpLimCnfWaitTimer);
 	pMac->lim.limTimers.gpLimCnfWaitTimer = NULL;
+pe_open_timer_fail:
+	pe_free_dph_node_array_buffer();
 
 	return status;
 }
@@ -963,6 +971,9 @@ QDF_STATUS pe_close(tpAniSirGlobal pMac)
 
 	qdf_mem_free(pMac->lim.gpSession);
 	pMac->lim.gpSession = NULL;
+
+	pe_free_dph_node_array_buffer();
+
 	if (!QDF_IS_STATUS_SUCCESS
 		    (qdf_mutex_destroy(&pMac->lim.lkPeGlobalLock))) {
 		return QDF_STATUS_E_FAILURE;
