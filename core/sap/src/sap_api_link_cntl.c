@@ -315,11 +315,11 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 	 * Also if we are waiting for sap to stop, don't proceed further
 	 * to restart SAP again.
 	 */
-	if ((eSAP_DISCONNECTING != sap_ctx->sapsMachine) ||
+	if ((sap_ctx->fsm_state != SAP_STOPPING) ||
 	    sap_ctx->stop_bss_in_progress) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL("sapdfs: state [%d] Stop BSS in progress [%d], not starting SAP after channel change"),
-			  sap_ctx->sapsMachine,
+			  sap_ctx->fsm_state,
 			  sap_ctx->stop_bss_in_progress);
 		return;
 	}
@@ -345,10 +345,10 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 	/* check if currently selected channel is a DFS channel */
 	if (is_ch_dfs && sap_ctx->pre_cac_complete) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED, FL(
-		    "sapdfs: eSAP_DISCONNECTING => eSAP_STARTING, on pre cac"));
+		    "sapdfs: SAP_STOPPING => SAP_STARTING, on pre cac"));
 		/* Start beaconing on the new pre cac channel */
 		wlansap_start_beacon_req(sap_ctx);
-		sap_ctx->sapsMachine = eSAP_STARTING;
+		sap_ctx->fsm_state = SAP_STARTING;
 		mac_ctx->sap.SapDfsInfo.sap_radar_found_status = false;
 		sap_event.event = eSAP_MAC_START_BSS_SUCCESS;
 		sap_event.params = csr_roam_info;
@@ -358,10 +358,10 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 		if ((false == mac_ctx->sap.SapDfsInfo.ignore_cac)
 		    && (eSAP_DFS_DO_NOT_SKIP_CAC ==
 			mac_ctx->sap.SapDfsInfo.cac_state)) {
-			sap_ctx->sapsMachine = eSAP_DISCONNECTED;
+			sap_ctx->fsm_state = SAP_INIT;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-				  FL("sapdfs: from state eSAP_DISCONNECTING => DISCONNECTED with ignore cac false on sapctx[%pK]"),
-				  sap_ctx);
+				  "%s: %d: sapdfs: from state SAP_STOPPING => DISCONNECTED with ignore cac false on sapctx[%pK]",
+				  __func__, __LINE__, sap_ctx);
 			/* DFS Channel */
 			sap_event.event = eSAP_DFS_CHANNEL_CAC_START;
 			sap_event.params = csr_roam_info;
@@ -370,12 +370,12 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				  QDF_TRACE_LEVEL_INFO_MED,
-				  FL("sapdfs: from state eSAP_DISCONNECTING => eSAP_STARTING with ignore cac true on sapctx[%pK]"),
-				  sap_ctx);
+				  "%s: %d: sapdfs: from state SAP_STOPPING => SAP_STARTING with ignore cac true on sapctx[%pK]",
+				  __func__, __LINE__, sap_ctx);
 
 			/* Start beaconing on the new channel */
 			wlansap_start_beacon_req(sap_ctx);
-			sap_ctx->sapsMachine = eSAP_STARTING;
+			sap_ctx->fsm_state = SAP_STARTING;
 			mac_ctx->sap.SapDfsInfo.sap_radar_found_status = false;
 			sap_event.event = eSAP_MAC_START_BSS_SUCCESS;
 			sap_event.params = csr_roam_info;
@@ -384,10 +384,10 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 		}
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			  FL("sapdfs: from state eSAP_DISCONNECTING => eSAP_STARTING on sapctx[%pK]"),
-			  sap_ctx);
+			  "%s: %d: sapdfs: from state SAP_STOPPING => SAP_STARTING on sapctx[%pK]",
+			  __func__, __LINE__, sap_ctx);
 		/* non-DFS channel */
-		sap_ctx->sapsMachine = eSAP_STARTING;
+		sap_ctx->fsm_state = SAP_STARTING;
 		mac_ctx->sap.SapDfsInfo.sap_radar_found_status = false;
 		sap_event.event = eSAP_MAC_START_BSS_SUCCESS;
 		sap_event.params = csr_roam_info;
@@ -442,19 +442,19 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 	 * Irrespective of whether the channel switch IE was sent out
 	 * successfully or not, SAP should still vacate the channel immediately
 	 */
-	if (eSAP_STARTED != sap_ctx->sapsMachine) {
+	if (sap_ctx->fsm_state != SAP_STARTED) {
 		/* Further actions to be taken here */
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 			  QDF_TRACE_LEVEL_WARN,
 			  FL("eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND received in (%d) state"),
-			  sap_ctx->sapsMachine);
+			  sap_ctx->fsm_state);
 		return;
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-		  FL("sapdfs: from state eSAP_STARTED => eSAP_DISCONNECTING"));
+		  FL("sapdfs: from state SAP_STARTED => SAP_STOPPING"));
 	/* SAP to be moved to DISCONNECTING state */
-	sap_ctx->sapsMachine = eSAP_DISCONNECTING;
+	sap_ctx->fsm_state = SAP_STOPPING;
 	sap_ctx->is_chan_change_inprogress = true;
 	/*
 	 * The associated stations have been informed to move to a different
@@ -585,7 +585,7 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
 	QDF_STATUS qdf_status;
 	tWLAN_SAPEvent sap_event;
 
-	if (eSAP_DFS_CAC_WAIT == sap_ctx->sapsMachine) {
+	if (sap_ctx->fsm_state == SAP_DFS_CAC_WAIT) {
 		if (sap_ctx->csr_roamProfile.disableDFSChSwitch) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_ERROR,
@@ -639,7 +639,7 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
 			*ret_status = QDF_STATUS_E_FAILURE;
 		return;
 	}
-	if (eSAP_STARTED == sap_ctx->sapsMachine) {
+	if (sap_ctx->fsm_state == SAP_STARTED) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 			  FL("sapdfs:Posting event eSAP_DFS_CHNL_SWITCH_ANNOUNCEMENT_START"));
 
@@ -660,7 +660,7 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
 	/* Further actions to be taken here */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 		  FL("eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND received in (%d) state"),
-		  sap_ctx->sapsMachine);
+		  sap_ctx->fsm_state);
 
 	return;
 }
@@ -893,11 +893,11 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 			break;
 		}
 
-		if (sap_ctx->sapsMachine != eSAP_STARTED &&
-		    sap_ctx->sapsMachine != eSAP_DFS_CAC_WAIT) {
+		if (sap_ctx->fsm_state != SAP_STARTED &&
+		    sap_ctx->fsm_state != SAP_DFS_CAC_WAIT) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("Ignore Radar event in sap state %d"),
-				  sap_ctx->sapsMachine);
+				  sap_ctx->fsm_state);
 			break;
 		}
 		if (sap_ctx->is_pre_cac_on) {

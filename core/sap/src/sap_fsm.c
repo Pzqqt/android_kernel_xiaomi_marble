@@ -1175,7 +1175,7 @@ static struct sap_context *sap_find_valid_concurrent_session(tHalHandle hal)
 				mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
 		    mac_ctx->sap.sapCtxList[intf].sap_context != NULL) {
 			sap_ctx = mac_ctx->sap.sapCtxList[intf].sap_context;
-			if (sap_ctx->sapsMachine != eSAP_DISCONNECTED)
+			if (sap_ctx->fsm_state != SAP_INIT)
 				return sap_ctx;
 		}
 	}
@@ -1258,49 +1258,33 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
 	sapctx->sessionId = CSR_SESSION_ID_INVALID;
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		"%s: Initializing State: %d, sapContext value = %pK", __func__,
-		sapctx->sapsMachine, sapctx);
+		sapctx->fsm_state, sapctx);
 
 	return QDF_STATUS_SUCCESS;
 }
 
-/*==========================================================================
-   FUNCTION    sapGotoDisconnecting
-
-   DESCRIPTION
-    Processing of SAP FSM Disconnecting state
-
-   DEPENDENCIES
-    NA.
-
-   PARAMETERS
-
-    IN
-    sapContext  : Sap Context value
-    status      : Return the SAP status here
-
-   RETURN VALUE
-    The QDF_STATUS code associated with performing the operation
-
-    QDF_STATUS_SUCCESS: Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-static QDF_STATUS sap_goto_disconnecting(struct sap_context *sapContext)
+/**
+ * sap_goto_stopping() - Processing of SAP FSM stopping state
+ * @sap_ctx: pointer to sap Context
+ *
+ * Return: QDF_STATUS code associated with performing the operation
+ */
+static QDF_STATUS sap_goto_stopping(struct sap_context *sap_ctx)
 {
 	QDF_STATUS qdf_ret_status;
-	tHalHandle hHal;
+	tHalHandle hal;
 
-	hHal = CDS_GET_HAL_CB();
-	if (NULL == hHal) {
+	hal = CDS_GET_HAL_CB();
+	if (!hal) {
 		/* we have a serious problem */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "In %s, invalid hHal", __func__);
+			  "In %s, invalid hal", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
-	sap_free_roam_profile(&sapContext->csr_roamProfile);
-	qdf_ret_status = sme_roam_stop_bss(hHal, sapContext->sessionId);
-	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
+	sap_free_roam_profile(&sap_ctx->csr_roamProfile);
+	qdf_ret_status = sme_roam_stop_bss(hal, sap_ctx->sessionId);
+	if (qdf_ret_status != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "Error: In %s calling sme_roam_stop_bss status = %d",
 			  __func__, qdf_ret_status);
@@ -1310,41 +1294,30 @@ static QDF_STATUS sap_goto_disconnecting(struct sap_context *sapContext)
 	return QDF_STATUS_SUCCESS;
 }
 
-/*==========================================================================
-   FUNCTION    sapGotoDisconnected
-
-   DESCRIPTION
-    Function for setting the SAP FSM to Disconnection state
-
-   DEPENDENCIES
-    NA.
-
-   PARAMETERS
-
-    IN
-    sapContext  : Sap Context value
-    sapEvent    : State machine event
-    status      : Return the SAP status here
-
-   RETURN VALUE
-    The QDF_STATUS code associated with performing the operation
-
-    QDF_STATUS_SUCCESS: Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-static QDF_STATUS sap_goto_disconnected(struct sap_context *sapContext)
+/**
+ * sap_goto_init() - Function for setting the SAP FSM to init state
+ * @sap_ctx: pointer to sap context
+ *
+ * Return: QDF_STATUS code associated with performing the operation
+ */
+static QDF_STATUS sap_goto_init(struct sap_context *sap_ctx)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	tWLAN_SAPEvent sapEvent;
+	tWLAN_SAPEvent sap_event;
 	/* Processing has to be coded */
-	/* Clean up stations from TL etc as AP BSS is shut down then set event */
-	sapEvent.event = eSAP_MAC_READY_FOR_CONNECTIONS;        /* hardcoded */
-	sapEvent.params = 0;
-	sapEvent.u1 = 0;
-	sapEvent.u2 = 0;
+
+	/*
+	 * Clean up stations from TL etc as AP BSS is shut down
+	 * then set event
+	 */
+
+	/* hardcoded event */
+	sap_event.event = eSAP_MAC_READY_FOR_CONNECTIONS;
+	sap_event.params = 0;
+	sap_event.u1 = 0;
+	sap_event.u2 = 0;
 	/* Handle event */
-	qdf_status = sap_fsm(sapContext, &sapEvent);
+	qdf_status = sap_fsm(sap_ctx, &sap_event);
 
 	return qdf_status;
 }
@@ -1510,9 +1483,9 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 				  FL("Invalid CSR Roam Info"));
 			return QDF_STATUS_E_INVAL;
 		}
-		if (eSAP_DISCONNECTING == sap_ctx->sapsMachine) {
+		if (sap_ctx->fsm_state == SAP_STOPPING) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				  "SAP is disconnecting, not able to handle any incoming (re)assoc req");
+				  "SAP is stopping, not able to handle any incoming (re)assoc req");
 			return QDF_STATUS_E_ABORTED;
 		}
 
@@ -1790,27 +1763,27 @@ static struct sap_context *sap_find_cac_wait_session(tHalHandle handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(handle);
 	uint8_t i = 0;
-	struct sap_context *sapContext;
+	struct sap_context *sap_ctx;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 			"%s", __func__);
 
 	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
-		sapContext = mac->sap.sapCtxList[i].sap_context;
+		sap_ctx = mac->sap.sapCtxList[i].sap_context;
 		if (((QDF_SAP_MODE == mac->sap.sapCtxList[i].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[i].sapPersona)) &&
-		    (sapContext) &&
-		    (sapContext->sapsMachine == eSAP_DFS_CAC_WAIT)) {
+		    (sap_ctx) &&
+		    (sap_ctx->fsm_state == SAP_DFS_CAC_WAIT)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 				"%s: found SAP in cac wait state", __func__);
-			return sapContext;
+			return sap_ctx;
 		}
-		if (sapContext) {
+		if (sap_ctx) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-					"sapdfs: mode:%d intf:%d state:%d",
-					mac->sap.sapCtxList[i].sapPersona, i,
-					sapContext->sapsMachine);
+				  "sapdfs: mode:%d intf:%d state:%d",
+				  mac->sap.sapCtxList[i].sapPersona, i,
+				  sap_ctx->fsm_state);
 		}
 	}
 
@@ -1920,12 +1893,12 @@ static QDF_STATUS wlansap_update_pre_cac_end(struct sap_context *sap_context,
 
 	sap_context->isCacEndNotified = true;
 	mac->sap.SapDfsInfo.sap_radar_found_status = false;
-	sap_context->sapsMachine = eSAP_STARTED;
+	sap_context->fsm_state = SAP_STARTED;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"In %s, pre cac end notify on %d: from state %s => %s",
-			__func__, intf, "eSAP_DFS_CAC_WAIT",
-			"eSAP_STARTED");
+			__func__, intf, "SAP_DFS_CAC_WAIT",
+			"SAP_STARTED");
 
 	qdf_status = sap_signal_hdd_event(sap_context,
 			NULL, eSAP_DFS_PRE_CAC_END,
@@ -1977,7 +1950,7 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
 		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
 		    && pMac->sap.sapCtxList[intf].sap_context != NULL &&
 		    (false == sap_context->isCacEndNotified) &&
-		    (sap_context->sapsMachine == eSAP_DFS_CAC_WAIT)) {
+		    (sap_context->fsm_state == SAP_DFS_CAC_WAIT)) {
 			sap_context = pMac->sap.sapCtxList[intf].sap_context;
 			/* Don't check CAC for non-dfs channel */
 			profile = &sap_context->csr_roamProfile;
@@ -2021,15 +1994,15 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
 			/* Start beaconing on the new channel */
 			wlansap_start_beacon_req(sap_context);
 
-			/* Transition from eSAP_STARTING to eSAP_STARTED
+			/* Transition from SAP_STARTING to SAP_STARTED
 			 * (both without substates)
 			 */
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 				  "sapdfs: channel[%d] from state %s => %s",
-				  sap_context->channel, "eSAP_STARTING",
-				  "eSAP_STARTED");
+				  sap_context->channel, "SAP_STARTING",
+				  "SAP_STARTED");
 
-			sap_context->sapsMachine = eSAP_STARTED;
+			sap_context->fsm_state = SAP_STARTED;
 
 			/*Action code for transition */
 			qdf_status = sap_signal_hdd_event(sap_context, roamInfo,
@@ -2044,13 +2017,13 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
 				return qdf_status;
 			}
 
-			/* Transition from eSAP_STARTING to eSAP_STARTED
+			/* Transition from SAP_STARTING to SAP_STARTED
 			 * (both without substates)
 			 */
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				  "In %s, from state %s => %s",
-				  __func__, "eSAP_DFS_CAC_WAIT",
-				  "eSAP_STARTED");
+				  __func__, "SAP_DFS_CAC_WAIT",
+				  "SAP_STARTED");
 		}
 	}
 	/*
@@ -2149,14 +2122,14 @@ sap_goto_starting(struct sap_context *sap_ctx,
 	}
 
 	/*
-	 * Transition from eSAP_DISCONNECTED to eSAP_STARTING
+	 * Transition from SAP_INIT to SAP_STARTING
 	 * (both without substates)
 	 */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("from state %s => %s"),
-		  "eSAP_DISCONNECTED", "eSAP_STARTING");
+		  "SAP_INIT", "SAP_STARTING");
 	/* Channel selected. Now can sap_goto_starting */
-	sap_ctx->sapsMachine = eSAP_STARTING;
+	sap_ctx->fsm_state = SAP_STARTING;
 	/* Specify the channel */
 	sap_ctx->csr_roamProfile.ChannelInfo.numOfChannels =
 					1;
@@ -2199,19 +2172,20 @@ sap_goto_starting(struct sap_context *sap_ctx,
 }
 
 /**
- * sap_fsm_state_disconnected() - utility function called from sap fsm
+ * sap_fsm_state_init() - utility function called from sap fsm
  * @sap_ctx: SAP context
  * @sap_event: SAP event buffer
  * @mac_ctx: global MAC context
  * @hal: HAL handle
  *
- * This function is called for state transition from "eSAP_DISCONNECTED"
+ * This function is called for state transition from "SAP_INIT"
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sap_fsm_state_disconnected(struct sap_context *sap_ctx,
-			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-			tHalHandle hal)
+static QDF_STATUS
+sap_fsm_state_init(struct sap_context *sap_ctx,
+		   ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
+		   tHalHandle hal)
 {
 	uint32_t msg = sap_event->event;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -2232,10 +2206,10 @@ static QDF_STATUS sap_fsm_state_disconnected(struct sap_context *sap_ctx,
 			goto exit;
 		}
 
-		/* Transition from eSAP_DISCONNECTED to eSAP_STARTING */
+		/* Transition from SAP_INIT to SAP_STARTING */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("new from state %s => %s: session:%d"),
-			  "eSAP_DISCONNECTED", "eSAP_STARTING",
+			  "SAP_INIT", "SAP_STARTING",
 			  sap_ctx->sessionId);
 
 		qdf_status = sap_goto_starting(sap_ctx, sap_event,
@@ -2249,10 +2223,10 @@ static QDF_STATUS sap_fsm_state_disconnected(struct sap_context *sap_ctx,
 		 * No need of state check here, caller is expected to perform
 		 * the checks before sending the event
 		 */
-		sap_ctx->sapsMachine = eSAP_DFS_CAC_WAIT;
+		sap_ctx->fsm_state = SAP_DFS_CAC_WAIT;
 
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			FL("from state eSAP_DISCONNECTED => SAP_DFS_CAC_WAIT"));
+			FL("from state SAP_INIT => SAP_DFS_CAC_WAIT"));
 		if (mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running != true) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 			    FL("sapdfs: starting dfs cac timer on sapctx[%pK]"),
@@ -2264,7 +2238,7 @@ static QDF_STATUS sap_fsm_state_disconnected(struct sap_context *sap_ctx,
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, event msg %d"),
-			  "eSAP_DISCONNECTED", msg);
+			  "SAP_INIT", msg);
 	}
 
 exit:
@@ -2278,7 +2252,7 @@ exit:
  * @mac_ctx: global MAC context
  * @hal: HAL handle
  *
- * This function is called for state transition from "eSAP_DFS_CAC_WAIT"
+ * This function is called for state transition from "SAP_DFS_CAC_WAIT"
  *
  * Return: QDF_STATUS
  */
@@ -2294,7 +2268,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 	if (msg == eSAP_DFS_CHANNEL_CAC_START) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("from state %s => %s"),
-			  "eSAP_STARTING", "eSAP_DFS_CAC_WAIT");
+			  "SAP_STARTING", "SAP_DFS_CAC_WAIT");
 		if (mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running != true)
 			sap_start_dfs_cac_timer(sap_ctx);
 		qdf_status = sap_cac_start_notify(hal);
@@ -2305,7 +2279,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 		 * check, need to switch the channel again
 		 */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  "ENTERTRED CAC WAIT STATE-->eSAP_DISCONNECTING\n");
+			  "ENTERTRED CAC WAIT STATE-->SAP_STOPPING\n");
 		if (mac_ctx->sap.SapDfsInfo.target_channel) {
 			wlan_reg_set_channel_params(mac_ctx->pdev,
 				mac_ctx->sap.SapDfsInfo.target_channel, 0,
@@ -2327,14 +2301,14 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 			     (QDF_P2P_GO_MODE ==
 				mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
 			    t_sap_ctx != NULL &&
-			    t_sap_ctx->sapsMachine != eSAP_DISCONNECTED) {
+			    t_sap_ctx->fsm_state != SAP_INIT) {
 				profile = &t_sap_ctx->csr_roamProfile;
 				if (!wlan_reg_is_passive_or_disable_ch(
 						mac_ctx->pdev,
 						profile->operationChannel))
 					continue;
-				/* SAP to be moved to DISCONNECTING state */
-				t_sap_ctx->sapsMachine = eSAP_DISCONNECTING;
+				/* SAP to be moved to STOPPING state */
+				t_sap_ctx->fsm_state = SAP_STOPPING;
 				t_sap_ctx->is_chan_change_inprogress = true;
 				/*
 				 * eSAP_DFS_CHANNEL_CAC_RADAR_FOUND:
@@ -2352,10 +2326,10 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_END) {
 		qdf_status = sap_cac_end_notify(hal, roam_info);
 	} else if (msg == eSAP_HDD_STOP_INFRA_BSS) {
-		/* Transition from eSAP_DFS_CAC_WAIT to eSAP_DISCONNECTING */
+		/* Transition from SAP_DFS_CAC_WAIT to SAP_STOPPING */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("from state %s => %s"),
-			  "eSAP_DFS_CAC_WAIT", "eSAP_DISCONNECTING");
+			  "SAP_DFS_CAC_WAIT", "SAP_STOPPING");
 
 		/*
 		 * Stop the CAC timer only in following conditions
@@ -2370,12 +2344,12 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 			sap_stop_dfs_cac_timer(sap_ctx);
 		}
 
-		sap_ctx->sapsMachine = eSAP_DISCONNECTING;
-		qdf_status = sap_goto_disconnecting(sap_ctx);
+		sap_ctx->fsm_state = SAP_STOPPING;
+		qdf_status = sap_goto_stopping(sap_ctx);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),
-			  "eSAP_DFS_CAC_WAIT", msg);
+			  "SAP_DFS_CAC_WAIT", msg);
 	}
 
 	return qdf_status;
@@ -2388,7 +2362,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
  * @mac_ctx: global MAC context
  * @hal: HAL handle
  *
- * This function is called for state transition from "eSAP_STARTING"
+ * This function is called for state transition from "SAP_STARTING"
  *
  * Return: QDF_STATUS
  */
@@ -2405,14 +2379,14 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 
 	if (msg == eSAP_MAC_START_BSS_SUCCESS) {
 		/*
-		 * Transition from eSAP_STARTING to eSAP_STARTED
+		 * Transition from SAP_STARTING to SAP_STARTED
 		 * (both without substates)
 		 */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("from state channel = %d %s => %s ch_width %d"),
-			  sap_ctx->channel, "eSAP_STARTING", "eSAP_STARTED",
+			  sap_ctx->channel, "SAP_STARTING", "SAP_STARTED",
 			  sap_ctx->ch_params.ch_width);
-		sap_ctx->sapsMachine = eSAP_STARTED;
+		sap_ctx->fsm_state = SAP_STARTED;
 
 		/* Action code for transition */
 		qdf_status = sap_signal_hdd_event(sap_ctx, roam_info,
@@ -2461,7 +2435,7 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 					  FL("start cac timer"));
 
 				/* Move the device in CAC_WAIT_STATE */
-				sap_ctx->sapsMachine = eSAP_DFS_CAC_WAIT;
+				sap_ctx->fsm_state = SAP_DFS_CAC_WAIT;
 
 				/*
 				 * Need to stop the OS transmit queues,
@@ -2484,30 +2458,30 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 	} else if (msg == eSAP_MAC_START_FAILS ||
 			msg == eSAP_HDD_STOP_INFRA_BSS) {
 		/*
-		 * Transition from eSAP_STARTING to eSAP_DISCONNECTED
+		 * Transition from SAP_STARTING to SAP_INIT
 		 * (both without substates)
 		 */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("from state %s => %s"),
-			  "eSAP_STARTING", "eSAP_DISCONNECTED");
+			  "SAP_STARTING", "SAP_INIT");
 
 		/* Advance outer statevar */
-		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
+		sap_ctx->fsm_state = SAP_INIT;
 		qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
 				eSAP_START_BSS_EVENT,
 				(void *) eSAP_STATUS_FAILURE);
-		qdf_status = sap_goto_disconnected(sap_ctx);
+		qdf_status = sap_goto_init(sap_ctx);
 		/* Close the SME session */
 	} else if (msg == eSAP_OPERATING_CHANNEL_CHANGED) {
 		/* The operating channel has changed, update hostapd */
 		sap_ctx->channel =
 			(uint8_t) mac_ctx->sap.SapDfsInfo.target_channel;
 
-		sap_ctx->sapsMachine = eSAP_STARTED;
+		sap_ctx->fsm_state = SAP_STARTED;
 
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("from state %s => %s"),
-			  "eSAP_STARTING", "eSAP_STARTED");
+			  "SAP_STARTING", "SAP_STARTED");
 
 		/* Indicate change in the state to upper layers */
 		qdf_status = sap_signal_hdd_event(sap_ctx, roam_info,
@@ -2516,7 +2490,7 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),
-			  "eSAP_STARTING", msg);
+			  "SAP_STARTING", msg);
 	}
 
 	return qdf_status;
@@ -2528,7 +2502,7 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
  * @sap_event: SAP event buffer
  * @mac_ctx: global MAC context
  *
- * This function is called for state transition from "eSAP_STARTED"
+ * This function is called for state transition from "SAP_STARTED"
  *
  * Return: QDF_STATUS
  */
@@ -2540,14 +2514,14 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 
 	if (msg == eSAP_HDD_STOP_INFRA_BSS) {
 		/*
-		 * Transition from eSAP_STARTED to eSAP_DISCONNECTING
+		 * Transition from SAP_STARTED to SAP_STOPPING
 		 * (both without substates)
 		 */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("from state %s => %s"),
-			  "eSAP_STARTED", "eSAP_DISCONNECTING");
-		sap_ctx->sapsMachine = eSAP_DISCONNECTING;
-		qdf_status = sap_goto_disconnecting(sap_ctx);
+			  "SAP_STARTED", "SAP_STOPPING");
+		sap_ctx->fsm_state = SAP_STOPPING;
+		qdf_status = sap_goto_stopping(sap_ctx);
 	} else if (eSAP_DFS_CHNL_SWITCH_ANNOUNCEMENT_START == msg) {
 		uint8_t intf;
 		if (!mac_ctx->sap.SapDfsInfo.target_channel) {
@@ -2612,38 +2586,39 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),
-			  "eSAP_STARTED", msg);
+			  "SAP_STARTED", msg);
 	}
 
 	return qdf_status;
 }
 
 /**
- * sap_fsm_state_disconnecting() - utility function called from sap fsm
+ * sap_fsm_state_stopping() - utility function called from sap fsm
  * @sap_ctx: SAP context
  * @sap_event: SAP event buffer
  * @mac_ctx: global MAC context
  *
- * This function is called for state transition from "eSAP_DISCONNECTING"
+ * This function is called for state transition from "SAP_STOPPING"
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sap_fsm_state_disconnecting(struct sap_context *sap_ctx,
-			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-			tHalHandle hal)
+static QDF_STATUS
+sap_fsm_state_stopping(struct sap_context *sap_ctx,
+		       ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
+		       tHalHandle hal)
 {
 	uint32_t msg = sap_event->event;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	if (msg == eSAP_MAC_READY_FOR_CONNECTIONS) {
 		/*
-		 * Transition from eSAP_DISCONNECTING to eSAP_DISCONNECTED
+		 * Transition from SAP_STOPPING to SAP_INIT
 		 * (both without substates)
 		 */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("from state %s => %s"),
-			  "eSAP_DISCONNECTING", "eSAP_DISCONNECTED");
-		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
+			  "SAP_STOPPING", "SAP_INIT");
+		sap_ctx->fsm_state = SAP_INIT;
 
 		/* Close the SME session */
 		qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
@@ -2669,20 +2644,20 @@ static QDF_STATUS sap_fsm_state_disconnecting(struct sap_context *sap_ctx,
 	} else if (msg == eWNI_SME_CHANNEL_CHANGE_RSP) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL("in state %s, event msg %d result %d"),
-			  "eSAP_DISCONNECTING ", msg, sap_event->u2);
+			  "SAP_STOPPING ", msg, sap_event->u2);
 		if (sap_event->u2 == eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE)
-			qdf_status = sap_goto_disconnecting(sap_ctx);
+			qdf_status = sap_goto_stopping(sap_ctx);
 	} else if ((msg == eSAP_HDD_STOP_INFRA_BSS) &&
 			(sap_ctx->is_chan_change_inprogress)) {
 		/* stop bss is received while processing channel change */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL("in state %s, event msg %d result %d"),
-			  "eSAP_DISCONNECTING ", msg, sap_event->u2);
-		qdf_status = sap_goto_disconnecting(sap_ctx);
+			  "SAP_STOPPING ", msg, sap_event->u2);
+		qdf_status = sap_goto_stopping(sap_ctx);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),
-			  "eSAP_DISCONNECTING", msg);
+			  "SAP_STOPPING", msg);
 	}
 
 	return qdf_status;
@@ -2704,7 +2679,7 @@ QDF_STATUS sap_fsm(struct sap_context *sap_ctx, ptWLAN_SAPEvent sap_event)
 	 * from the sap_ctx value
 	 * state var that keeps track of state machine
 	 */
-	eSapFsmStates_t state_var = sap_ctx->sapsMachine;
+	enum sap_fsm_state state_var = sap_ctx->fsm_state;
 	uint32_t msg = sap_event->event; /* State machine input event message */
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tHalHandle hal = CDS_GET_HAL_CB();
@@ -2723,29 +2698,29 @@ QDF_STATUS sap_fsm(struct sap_context *sap_ctx, ptWLAN_SAPEvent sap_event)
 		  sap_ctx, state_var, msg);
 
 	switch (state_var) {
-	case eSAP_DISCONNECTED:
-		qdf_status = sap_fsm_state_disconnected(sap_ctx, sap_event,
-				mac_ctx, hal);
+	case SAP_INIT:
+		qdf_status = sap_fsm_state_init(sap_ctx, sap_event,
+						mac_ctx, hal);
 		break;
 
-	case eSAP_DFS_CAC_WAIT:
+	case SAP_DFS_CAC_WAIT:
 		qdf_status = sap_fsm_state_dfs_cac_wait(sap_ctx, sap_event,
 				mac_ctx, hal);
 		break;
 
-	case eSAP_STARTING:
+	case SAP_STARTING:
 		qdf_status = sap_fsm_state_starting(sap_ctx, sap_event,
 				mac_ctx, hal);
 		break;
 
-	case eSAP_STARTED:
+	case SAP_STARTED:
 		qdf_status = sap_fsm_state_started(sap_ctx, sap_event,
 				mac_ctx);
 		break;
 
-	case eSAP_DISCONNECTING:
-		qdf_status = sap_fsm_state_disconnecting(sap_ctx, sap_event,
-				mac_ctx, hal);
+	case SAP_STOPPING:
+		qdf_status = sap_fsm_state_stopping(sap_ctx, sap_event,
+						    mac_ctx, hal);
 		break;
 	}
 	return qdf_status;
@@ -3399,7 +3374,7 @@ uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
 	 * SAP needs to generate Channel Switch IE
 	 * if the radar is found in the STARTED state
 	 */
-	if (eSAP_STARTED == sap_ctx->sapsMachine)
+	if (sap_ctx->fsm_state == SAP_STARTED)
 		mac->sap.SapDfsInfo.csaIERequired = true;
 
 	if (sap_ctx->csr_roamProfile.disableDFSChSwitch)

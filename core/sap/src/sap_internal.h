@@ -78,14 +78,21 @@ extern "C" {
 /* We were only using this syntax, when this was truly opaque. */
 /* (I.E., it was defined in a different file.) */
 
-/* SAP FSM states for Access Point role */
-typedef enum {
-	eSAP_DISCONNECTED,
-	eSAP_DFS_CAC_WAIT,
-	eSAP_STARTING,
-	eSAP_STARTED,
-	eSAP_DISCONNECTING
-} eSapFsmStates_t;
+/**
+ * enum sap_fsm_state - SAP FSM states for Access Point role
+ * @SAP_INIT: init state
+ * @SAP_DFS_CAC_WAIT: cac wait
+ * @SAP_STARTING: starting phase
+ * @SAP_STARTED: up and running
+ * @SAP_STOPPING: about to stop and transitions to init
+ */
+enum sap_fsm_state {
+	SAP_INIT,
+	SAP_DFS_CAC_WAIT,
+	SAP_STARTING,
+	SAP_STARTED,
+	SAP_STOPPING
+};
 
 /*----------------------------------------------------------------------------
  *  SAP context Data Type Declaration
@@ -151,7 +158,7 @@ struct sap_context {
 	 * Include the state machine structure here, state var that keeps
 	 * track of state machine
 	 */
-	eSapFsmStates_t sapsMachine;
+	enum sap_fsm_state fsm_state;
 
 	/* Actual storage for AP and self (STA) SSID */
 	tCsrSSIDInfo SSIDList[2];
