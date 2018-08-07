@@ -5440,6 +5440,16 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 					   WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					   WLAN_CONTROL_PATH);
 		}
+		/*
+		 * Clear fc flag if it was set before SSR to avoid TX queues
+		 * permanently stopped after SSR.
+		 * Here WLAN_START_ALL_NETIF_QUEUE will actually not start any
+		 * queue since it's blocked by reason WLAN_CONTROL_PATH.
+		 */
+		if (adapter->pause_map & (1 << WLAN_DATA_FLOW_CONTROL))
+			wlan_hdd_netif_queue_control(adapter,
+						     WLAN_START_ALL_NETIF_QUEUE,
+						     WLAN_DATA_FLOW_CONTROL);
 
 		hdd_reset_scan_operation(hdd_ctx, adapter);
 
