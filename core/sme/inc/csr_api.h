@@ -1473,14 +1473,18 @@ typedef struct tagCsrSummaryStatsInfo {
 } tCsrSummaryStatsInfo;
 
 typedef struct tagCsrGlobalClassAStatsInfo {
-	uint8_t nss;
+	uint8_t tx_nss;
+	uint8_t rx_nss;
 	uint32_t max_pwr;
 	uint32_t tx_rate;
+	uint32_t rx_rate;
 	/* mcs index for HT20 and HT40 rates */
-	uint32_t mcs_index;
-	uint32_t mcs_rate_flags;
+	uint32_t tx_mcs_index;
+	uint32_t rx_mcs_index;
+	uint32_t tx_mcs_rate_flags;
+	uint32_t rx_mcs_rate_flags;
 	/* to diff between HT20 & HT40 rates;short & long guard interval */
-	uint32_t tx_rate_flags;
+	uint32_t tx_rx_rate_flags;
 
 } tCsrGlobalClassAStatsInfo;
 
