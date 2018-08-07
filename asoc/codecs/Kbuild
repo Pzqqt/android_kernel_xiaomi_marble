@@ -141,6 +141,10 @@ ifdef CONFIG_SND_SOC_MSM_HDMI_CODEC_RX
 	HDMICODEC_OBJS += msm_hdmi_codec_rx.o
 endif
 
+ifdef CONFIG_SND_SOC_WCD_IRQ
+	CORE_OBJS += wcd-irq.o
+endif
+
 LINUX_INC +=	-Iinclude/linux
 
 INCS +=		$(COMMON_INC) \
