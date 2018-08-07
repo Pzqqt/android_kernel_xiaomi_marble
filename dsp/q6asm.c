@@ -4027,11 +4027,13 @@ done:
  * parameters
  *   config - session parameters (channels, bits_per_sample, sr)
  *   dir - stream direction (IN for playback, OUT for capture)
+ *   use_default_chmap: true if default channel map to be used
+ *   channel_map: input channel map
  * returns 0 if successful, error code otherwise
  */
 int q6asm_open_shared_io(struct audio_client *ac,
 			 struct shared_io_config *config,
-			 int dir)
+			 int dir, bool use_default_chmap, u8 *channel_map)
 {
 	struct asm_stream_cmd_open_shared_io *open;
 	u8 *channel_mapping;
@@ -4040,6 +4042,12 @@ int q6asm_open_shared_io(struct audio_client *ac,
 
 	if (!ac || !config)
 		return -EINVAL;
+
+	if (!use_default_chmap && (channel_map == NULL)) {
+		pr_err("%s: No valid chan map and can't use default\n",
+			__func__);
+		return -EINVAL;
+	}
 
 	bufsz = config->bufsz;
 	bufcnt = config->bufcnt;
@@ -4137,10 +4145,17 @@ int q6asm_open_shared_io(struct audio_client *ac,
 
 	memset(channel_mapping, 0, PCM_FORMAT_MAX_NUM_CHANNEL);
 
-	rc = q6asm_map_channels(channel_mapping, config->channels, false);
-	if (rc) {
-		pr_err("%s: Map channels failed, ret: %d\n", __func__, rc);
-		goto done;
+	if (use_default_chmap) {
+		rc = q6asm_map_channels(channel_mapping, config->channels,
+					false);
+		if (rc) {
+			pr_err("%s: Map channels failed, ret: %d\n",
+				 __func__, rc);
+			goto done;
+		}
+	} else {
+		memcpy(channel_mapping, channel_map,
+				PCM_FORMAT_MAX_NUM_CHANNEL);
 	}
 
 	open->num_watermark_levels = num_watermarks;

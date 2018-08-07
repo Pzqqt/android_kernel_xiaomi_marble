@@ -303,7 +303,8 @@ int q6asm_open_write_v2(struct audio_client *ac, uint32_t format,
 			uint16_t bits_per_sample);
 
 int q6asm_open_shared_io(struct audio_client *ac,
-			 struct shared_io_config *c, int dir);
+			 struct shared_io_config *c, int dir,
+			 bool use_default_chmap, u8 *channel_map);
 
 int q6asm_open_write_v3(struct audio_client *ac, uint32_t format,
 			uint16_t bits_per_sample);
