@@ -4411,14 +4411,17 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		else
 			WMA_LOGD("Sent PKT_PWR_SAVE_5G_EBT cmd to target, val = %x, status = %d",
 				pps_val, status);
-		wma_send_peer_assoc(wma, add_bss->nwType,
-					    &add_bss->staContext);
-		/* we just had peer assoc, so install key will be done later */
+		status = wma_send_peer_assoc(wma, add_bss->nwType,
+					     &add_bss->staContext);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			WMA_LOGE("Failed to send peer assoc status:%d", status);
+			goto peer_cleanup;
+		}
+		peer_assoc_sent = true;
 
+		/* we just had peer assoc, so install key will be done later */
 		if (add_bss->staContext.encryptType != eSIR_ED_NONE)
 			iface->is_waiting_for_key = true;
-
-		peer_assoc_sent = true;
 
 		if (add_bss->rmfEnabled)
 			wma_set_mgmt_frame_protection(wma);
