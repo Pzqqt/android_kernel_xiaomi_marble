@@ -1239,6 +1239,31 @@ QDF_STATUS qdf_print_set_category_verbose(unsigned int idx,
 					  bool is_set);
 
 /**
+ * qdf_log_dump_at_kernel_level() - Enable/Disable printk call
+ * @enable: Indicates whether printk is enabled in QDF_TRACE
+ *
+ * Return: void
+ */
+void qdf_log_dump_at_kernel_level(bool enable);
+
+/**
+ * qdf_logging_set_flush_timer() - Set the time period in which host logs
+ *                                 should be flushed out to user-space
+ * @milliseconds: milliseconds after which the logs should be flushed out to
+ *                 user-space
+ *
+ * Return: QDF_STATUS_SUCCESS for success and QDF_STATUS_E_FAILURE for failure
+ */
+int qdf_logging_set_flush_timer(uint32_t milliseconds);
+
+/**
+ * qdf_logging_flush_logs() - Flush out the logs to user-space one time
+ *
+ * Return: void
+ */
+void qdf_logging_flush_logs(void);
+
+/**
  * qdf_print_is_category_enabled() - Get category information for the
  *                                   print control object
  *

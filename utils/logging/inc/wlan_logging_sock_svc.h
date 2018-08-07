@@ -33,6 +33,19 @@ int wlan_logging_sock_init_svc(void);
 int wlan_logging_sock_deinit_svc(void);
 int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length);
 
+/**
+ * wlan_logging_set_flush_timer() - Sets the time period for log flush timer
+ * @milliseconds: Time period in milliseconds
+ *
+ * This function sets the time period interval during which the log buffers
+ * will be flushed out to user space. Setting this interval can set an
+ * approximate maximum delay after which any message logged through QDF_TRACE
+ * will appear at user-space
+ *
+ * Return: void
+ */
+int wlan_logging_set_flush_timer(uint32_t milliseconds);
+
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 void wlan_logging_set_per_pkt_stats(void);
 void wlan_logging_set_fw_flush_complete(void);

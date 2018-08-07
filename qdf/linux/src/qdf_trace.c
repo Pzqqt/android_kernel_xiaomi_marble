@@ -33,6 +33,12 @@
 #include <wlan_logging_sock_svc.h>
 #include <qdf_module.h>
 static int qdf_pidx = -1;
+static bool qdf_log_dump_at_kernel_enable = true;
+qdf_declare_param(qdf_log_dump_at_kernel_enable, bool);
+
+/* This value of 0 will disable the timer by default. */
+static uint32_t qdf_log_flush_timer_period;
+qdf_declare_param(qdf_log_flush_timer_period, uint);
 
 #include "qdf_time.h"
 #include "qdf_mc_timer.h"
@@ -2959,7 +2965,8 @@ void qdf_trace_msg_cmn(unsigned int idx,
 #if defined(WLAN_LOGGING_SOCK_SVC_ENABLE)
 		wlan_log_to_user(verbose, (char *)str_buffer,
 				 strlen(str_buffer));
-		print_to_console(str_buffer);
+		if (qdf_likely(qdf_log_dump_at_kernel_enable))
+			print_to_console(str_buffer);
 #else
 		pr_err("%s\n", str_buffer);
 #endif
@@ -3393,6 +3400,18 @@ QDF_STATUS qdf_print_set_category_verbose(unsigned int idx,
 }
 qdf_export_symbol(qdf_print_set_category_verbose);
 
+void qdf_log_dump_at_kernel_level(bool enable)
+{
+	if (qdf_log_dump_at_kernel_enable == enable) {
+		QDF_TRACE_INFO(QDF_MODULE_ID_QDF,
+			       "qdf_log_dump_at_kernel_enable is already %d\n",
+			       enable);
+	}
+	qdf_log_dump_at_kernel_enable = enable;
+}
+
+qdf_export_symbol(qdf_log_dump_at_kernel_level);
+
 bool qdf_print_is_category_enabled(unsigned int idx, QDF_MODULE_ID category)
 {
 	QDF_TRACE_LEVEL verbose_mask;
@@ -3556,6 +3575,7 @@ void qdf_logging_init(void)
 {
 	wlan_logging_sock_init_svc();
 	nl_srv_init(NULL);
+	wlan_logging_set_flush_timer(qdf_log_flush_timer_period);
 }
 
 void qdf_logging_exit(void)
@@ -3563,6 +3583,20 @@ void qdf_logging_exit(void)
 	nl_srv_exit();
 	wlan_logging_sock_deinit_svc();
 }
+
+int qdf_logging_set_flush_timer(uint32_t milliseconds)
+{
+	if (wlan_logging_set_flush_timer(milliseconds) == 0)
+		return QDF_STATUS_SUCCESS;
+	else
+		return QDF_STATUS_E_FAILURE;
+}
+
+void qdf_logging_flush_logs(void)
+{
+	wlan_flush_host_logs_for_fatal();
+}
+
 #else
 void qdf_logging_init(void)
 {
@@ -3573,7 +3607,19 @@ void qdf_logging_exit(void)
 {
 	nl_srv_exit();
 }
+
+int qdf_logging_set_flush_timer(uint32_t milliseconds)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+void qdf_logging_flush_logs(void)
+{
+}
 #endif
+
+qdf_export_symbol(qdf_logging_set_flush_timer);
+qdf_export_symbol(qdf_logging_flush_logs);
 
 #ifdef CONFIG_KALLSYMS
 inline int qdf_sprint_symbol(char *buffer, void *addr)

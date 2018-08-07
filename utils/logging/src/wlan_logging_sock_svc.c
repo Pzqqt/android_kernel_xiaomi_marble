@@ -38,6 +38,8 @@
 #include <qdf_time.h>
 #include <qdf_trace.h>
 #include <qdf_mc_timer.h>
+#include <qdf_timer.h>
+#include <qdf_lock.h>
 #include <wlan_ptt_sock_svc.h>
 #include <host_diag_core_event.h>
 #include "host_diag_core_log.h"
@@ -134,6 +136,7 @@ struct pkt_stats_msg {
 	struct sk_buff *skb;
 };
 
+#define MAX_FLUSH_TIMER_PERIOD_VALUE 3600000 /* maximum of 1 hour (in ms) */
 struct wlan_logging {
 	/* Log Fatal and ERROR to console */
 	bool log_to_console;
@@ -171,6 +174,10 @@ struct wlan_logging {
 	unsigned int pkt_stat_drop_cnt;
 	spinlock_t pkt_stats_lock;
 	unsigned int pkt_stats_msg_idx;
+	qdf_timer_t flush_timer;
+	bool is_flush_timer_initialized;
+	uint32_t flush_timer_period;
+	qdf_spinlock_t flush_timer_lock;
 };
 
 static struct wlan_logging gwlan_logging;
@@ -744,6 +751,19 @@ static void send_flush_completion_to_user(uint8_t ring_id)
 }
 #endif
 
+static void setup_flush_timer(void)
+{
+	qdf_spin_lock(&gwlan_logging.flush_timer_lock);
+	if (!gwlan_logging.is_flush_timer_initialized ||
+	    (gwlan_logging.flush_timer_period == 0)) {
+		qdf_spin_unlock(&gwlan_logging.flush_timer_lock);
+		return;
+	}
+	qdf_timer_mod(&gwlan_logging.flush_timer,
+		      gwlan_logging.flush_timer_period);
+	qdf_spin_unlock(&gwlan_logging.flush_timer_lock);
+}
+
 /**
  * wlan_logging_thread() - The WLAN Logger thread
  * @Arg - pointer to the HDD context
@@ -757,6 +777,7 @@ static int wlan_logging_thread(void *Arg)
 	unsigned long flags;
 
 	while (!gwlan_logging.exit) {
+		setup_flush_timer();
 		ret_wait_status =
 			wait_event_interruptible(gwlan_logging.wait_queue,
 						 (!list_empty
@@ -852,11 +873,54 @@ void wlan_logging_set_log_to_console(bool log_to_console)
 	gwlan_logging.log_to_console = log_to_console;
 }
 
+static void flush_log_buffers_timer(void *dummy)
+{
+	wlan_flush_host_logs_for_fatal();
+}
+
+int wlan_logging_set_flush_timer(uint32_t milliseconds)
+{
+	if (milliseconds > MAX_FLUSH_TIMER_PERIOD_VALUE) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_QDF,
+				"ERROR! value should be (0 - %d)\n",
+				MAX_FLUSH_TIMER_PERIOD_VALUE);
+		return -EINVAL;
+	}
+	if (!gwlan_logging.is_active) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_QDF,
+				"WLAN-Logging not active");
+		return -EINVAL;
+	}
+	qdf_spin_lock(&gwlan_logging.flush_timer_lock);
+	if (!gwlan_logging.is_flush_timer_initialized) {
+		qdf_spin_unlock(&gwlan_logging.flush_timer_lock);
+		return -EINVAL;
+	}
+	gwlan_logging.flush_timer_period = milliseconds;
+	if (milliseconds) {
+		qdf_timer_mod(&gwlan_logging.flush_timer,
+			      gwlan_logging.flush_timer_period);
+	}
+	qdf_spin_unlock(&gwlan_logging.flush_timer_lock);
+	return 0;
+}
+
+static void flush_timer_init(void)
+{
+	qdf_spinlock_create(&gwlan_logging.flush_timer_lock);
+	qdf_timer_init(NULL, &gwlan_logging.flush_timer,
+		       flush_log_buffers_timer, NULL,
+		       QDF_TIMER_TYPE_SW);
+	gwlan_logging.is_flush_timer_initialized = true;
+	gwlan_logging.flush_timer_period = 0;
+}
+
 int wlan_logging_sock_init_svc(void)
 {
 	int i = 0, j, pkt_stats_size;
 	unsigned long irq_flag;
 
+	flush_timer_init();
 	spin_lock_init(&gwlan_logging.spin_lock);
 	spin_lock_init(&gwlan_logging.pkt_stats_lock);
 
@@ -961,6 +1025,16 @@ err1:
 	return -ENOMEM;
 }
 
+static void flush_timer_deinit(void)
+{
+	gwlan_logging.is_flush_timer_initialized = false;
+	qdf_spin_lock(&gwlan_logging.flush_timer_lock);
+	qdf_timer_stop(&gwlan_logging.flush_timer);
+	qdf_timer_free(&gwlan_logging.flush_timer);
+	qdf_spin_unlock(&gwlan_logging.flush_timer_lock);
+	qdf_spinlock_destroy(&gwlan_logging.flush_timer_lock);
+}
+
 int wlan_logging_sock_deinit_svc(void)
 {
 	unsigned long irq_flag;
@@ -1001,6 +1075,7 @@ int wlan_logging_sock_deinit_svc(void)
 	vfree(gpkt_stats_buffers);
 	gpkt_stats_buffers = NULL;
 	free_log_msg_buffer();
+	flush_timer_deinit();
 
 	return 0;
 }
@@ -1060,8 +1135,9 @@ void wlan_flush_host_logs_for_fatal(void)
 #ifdef CONFIG_MCL
 	if (cds_is_log_report_in_progress()) {
 #endif
-		pr_info("%s:flush all host logs Setting HOST_LOG_POST_MASK\n",
-			__func__);
+		if (gwlan_logging.flush_timer_period == 0)
+			pr_info("%s:flush all host logs Setting HOST_LOG_POST_MASK\n",
+				__func__);
 		spin_lock_irqsave(&gwlan_logging.spin_lock, flags);
 		wlan_queue_logmsg_for_app();
 		spin_unlock_irqrestore(&gwlan_logging.spin_lock, flags);
