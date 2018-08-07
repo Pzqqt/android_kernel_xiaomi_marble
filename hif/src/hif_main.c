@@ -800,10 +800,6 @@ int hif_get_device_type(uint32_t device_id,
 		break;
 
 	case QCA8074_DEVICE_ID:
-	case RUMIM2M_DEVICE_ID_NODE0:
-	case RUMIM2M_DEVICE_ID_NODE1:
-	case RUMIM2M_DEVICE_ID_NODE2:
-	case RUMIM2M_DEVICE_ID_NODE3:
 		*hif_type = HIF_TYPE_QCA8074;
 		*target_type = TARGET_TYPE_QCA8074;
 		HIF_INFO(" *********** QCA8074  *************\n");
@@ -828,6 +824,16 @@ int hif_get_device_type(uint32_t device_id,
 		*hif_type = HIF_TYPE_QCA6390;
 		*target_type = TARGET_TYPE_QCA6390;
 		HIF_INFO(" *********** QCA6390 *************\n");
+		break;
+
+	case QCA8074V2_DEVICE_ID:
+	case RUMIM2M_DEVICE_ID_NODE0:
+	case RUMIM2M_DEVICE_ID_NODE1:
+	case RUMIM2M_DEVICE_ID_NODE2:
+	case RUMIM2M_DEVICE_ID_NODE3:
+		*hif_type = HIF_TYPE_QCA8074V2;
+		*target_type = TARGET_TYPE_QCA8074V2;
+		HIF_INFO(" *********** QCA8074V2 *************\n");
 		break;
 
 	default:

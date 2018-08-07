@@ -94,6 +94,7 @@
 					actual number once available.
 					currently defining this to 0xffff for
 					emulation purpose */
+#define QCA8074V2_DEVICE_ID (0xfffe) /* Todo: replace this with actual number */
 /* Genoa */
 #define QCN7605_COMPOSITE  (0x9900)
 #define QCN7605_STANDALONE  (0x9901)

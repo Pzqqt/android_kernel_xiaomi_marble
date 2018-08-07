@@ -81,11 +81,12 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 		 read_buffer, count, (int)*pos, buf);
 
 	tgt_info = hif_get_target_info_handle(GET_HIF_OPAQUE_HDL(hif_hdl));
-	if (scn->bus_type == QDF_BUS_TYPE_SNOC ||
-			(scn->bus_type ==  QDF_BUS_TYPE_PCI &&
-			 (tgt_info->target_type == TARGET_TYPE_QCA6290 ||
-			  tgt_info->target_type == TARGET_TYPE_QCA6390 ||
-			  tgt_info->target_type == TARGET_TYPE_QCA8074))) {
+	if ((scn->bus_type == QDF_BUS_TYPE_SNOC) ||
+	    (scn->bus_type ==  QDF_BUS_TYPE_PCI &&
+	    ((tgt_info->target_type == TARGET_TYPE_QCA6290) ||
+	     (tgt_info->target_type == TARGET_TYPE_QCA6390) ||
+	     (tgt_info->target_type == TARGET_TYPE_QCA8074) ||
+	     (tgt_info->target_type == TARGET_TYPE_QCA8074V2)))) {
 		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
 		offset = (uint32_t)(*pos) & 0xffffff;
 		HIF_TRACE("%s: offset 0x%x memtype 0x%x, datalen %zu\n",
@@ -153,11 +154,12 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 		 (int)*pos, *((uint32_t *) write_buffer));
 
 	tgt_info = hif_get_target_info_handle(GET_HIF_OPAQUE_HDL(hif_hdl));
-	if (scn->bus_type == QDF_BUS_TYPE_SNOC ||
-			(scn->bus_type ==  QDF_BUS_TYPE_PCI &&
-			 (tgt_info->target_type == TARGET_TYPE_QCA6290 ||
-			  tgt_info->target_type == TARGET_TYPE_QCA6390 ||
-			  tgt_info->target_type == TARGET_TYPE_QCA8074))) {
+	if ((scn->bus_type == QDF_BUS_TYPE_SNOC) ||
+	    ((scn->bus_type ==  QDF_BUS_TYPE_PCI) &&
+	     ((tgt_info->target_type == TARGET_TYPE_QCA6290) ||
+	      (tgt_info->target_type == TARGET_TYPE_QCA6390) ||
+	      (tgt_info->target_type == TARGET_TYPE_QCA8074) ||
+	      (tgt_info->target_type == TARGET_TYPE_QCA8074V2)))) {
 		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
 		offset = (uint32_t)(*pos) & 0xffffff;
 		HIF_TRACE("%s: offset 0x%x memtype 0x%x, datalen %zu\n",

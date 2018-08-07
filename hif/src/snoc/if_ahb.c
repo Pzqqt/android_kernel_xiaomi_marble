@@ -436,7 +436,8 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 		mem_pa_size = memres->end - memres->start + 1;
 
 		/* Should not be executed on 8074 platform */
-		if (tgt_info->target_type != TARGET_TYPE_QCA8074) {
+		if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
+		    (tgt_info->target_type != TARGET_TYPE_QCA8074V2)) {
 			hif_ahb_clk_enable_disable(&pdev->dev, 0);
 
 			hif_ahb_device_reset(scn);
@@ -538,7 +539,8 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	hif_target_register_tbl_attach(ol_sc, target_type);
 
 	/* QCA_WIFI_QCA8074_VP:Should not be executed on 8074 VP platform */
-	if (tgt_info->target_type != TARGET_TYPE_QCA8074) {
+	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
+	    (tgt_info->target_type != TARGET_TYPE_QCA8074V2)) {
 		if (hif_ahb_enable_radio(sc, pdev, id) != 0) {
 			HIF_INFO("error in enabling soc\n");
 			return -EIO;
@@ -555,7 +557,8 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	return QDF_STATUS_SUCCESS;
 err_target_sync:
 	/* QCA_WIFI_QCA8074_VP:Should not be executed on 8074 VP platform */
-	if (tgt_info->target_type != TARGET_TYPE_QCA8074) {
+	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
+	    (tgt_info->target_type != TARGET_TYPE_QCA8074V2)) {
 		HIF_INFO("Error: Disabling target\n");
 		hif_ahb_disable_bus(ol_sc);
 	}

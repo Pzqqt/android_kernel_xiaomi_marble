@@ -718,6 +718,7 @@ static void hif_select_service_to_pipe_map(struct hif_softc *scn,
 				sizeof(target_service_to_ce_map_qca6390);
 			break;
 		case TARGET_TYPE_QCA8074:
+		case TARGET_TYPE_QCA8074V2:
 			*tgt_svc_map_to_use = target_service_to_ce_map_qca8074;
 			*sz_tgt_svc_map_to_use =
 				sizeof(target_service_to_ce_map_qca8074);
@@ -902,6 +903,7 @@ bool ce_srng_based(struct hif_softc *scn)
 
 	switch (tgt_info->target_type) {
 	case TARGET_TYPE_QCA8074:
+	case TARGET_TYPE_QCA8074V2:
 	case TARGET_TYPE_QCA6290:
 	case TARGET_TYPE_QCA6390:
 		return true;
@@ -2803,6 +2805,7 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 		break;
 
 	case TARGET_TYPE_QCA8074:
+	case TARGET_TYPE_QCA8074V2:
 		if (scn->bus_type == QDF_BUS_TYPE_PCI) {
 			hif_state->host_ce_config =
 					host_ce_config_wlan_qca8074_pci;

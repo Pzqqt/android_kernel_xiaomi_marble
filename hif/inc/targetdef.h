@@ -39,6 +39,7 @@ extern struct targetdef_s *QCA6390_TARGETdef;
 extern struct targetdef_s *IPQ4019_TARGETdef;
 #endif
 extern struct targetdef_s *QCA8074_TARGETdef;
+extern struct targetdef_s *QCA8074V2_TARGETDEF;
 
 extern struct ce_reg_def *AR6002_CE_TARGETdef;
 extern struct ce_reg_def *AR6003_CE_TARGETdef;
@@ -55,6 +56,7 @@ extern struct ce_reg_def *QCA6390_CE_TARGETdef;
 extern struct ce_reg_def *IPQ4019_CE_TARGETdef;
 #endif
 extern struct ce_reg_def *QCA8074_CE_TARGETdef;
+extern struct ce_reg_def *QCA8074V2_CE_TARGETDEF;
 
 
 #endif
