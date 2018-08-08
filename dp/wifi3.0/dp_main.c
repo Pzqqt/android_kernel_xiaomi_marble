@@ -84,6 +84,8 @@ static void dp_ppdu_ring_cfg(struct dp_pdev *pdev);
 ((DP_WDS_AST_AGING_TIMER_DEFAULT_MS / DP_AST_AGING_TIMER_DEFAULT_MS) - 1)
 #define DP_MCS_LENGTH (6*MAX_MCS)
 #define DP_NSS_LENGTH (6*SS_COUNT)
+#define DP_MU_GROUP_SHOW 16
+#define DP_MU_GROUP_LENGTH (6 * DP_MU_GROUP_SHOW)
 #define DP_RXDMA_ERR_LENGTH (6*HAL_RXDMA_ERR_MAX)
 #define DP_MAX_INT_CONTEXTS_STRING_LENGTH (6 * WLAN_CFG_INT_NUM_CONTEXTS)
 #define DP_REO_ERR_LENGTH (6*HAL_REO_ERR_MAX)
@@ -6921,7 +6923,10 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 {
 	uint8_t i;
 	uint32_t index;
+	uint32_t j;
 	char nss[DP_NSS_LENGTH];
+	char mu_group_id[DP_MU_GROUP_LENGTH];
+
 	DP_PRINT_STATS("Node Tx Stats:\n");
 	DP_PRINT_STATS("Total Packet Completions = %d",
 			peer->stats.tx.comp_pkt.num);
@@ -7006,8 +7011,39 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 		index += qdf_snprint(&nss[index], DP_NSS_LENGTH - index,
 				" %d", peer->stats.tx.nss[i]);
 	}
-	DP_PRINT_STATS("NSS(1-8) = %s",
-			nss);
+	DP_PRINT_STATS("NSS(1-8) = %s", nss);
+
+	DP_PRINT_STATS("Transmit Type :");
+	DP_PRINT_STATS("SU %d, MU_MIMO %d, MU_OFDMA %d, MU_MIMO_OFDMA %d",
+		       peer->stats.tx.transmit_type[0],
+		       peer->stats.tx.transmit_type[1],
+		       peer->stats.tx.transmit_type[2],
+		       peer->stats.tx.transmit_type[3]);
+
+	for (i = 0; i < MAX_MU_GROUP_ID;) {
+		index = 0;
+		for (j = 0; j < DP_MU_GROUP_SHOW && i < MAX_MU_GROUP_ID;
+		     j++) {
+			index += qdf_snprint(&mu_group_id[index],
+					     DP_MU_GROUP_LENGTH - index,
+					     " %d",
+					     peer->stats.tx.mu_group_id[i]);
+			i++;
+		}
+
+		DP_PRINT_STATS("User position list for GID %02d->%d: [%s]",
+			       i - DP_MU_GROUP_SHOW, i - 1, mu_group_id);
+	}
+
+	DP_PRINT_STATS("Last Packet RU index [%d], Size [%d]",
+		       peer->stats.tx.ru_start, peer->stats.tx.ru_tones);
+	DP_PRINT_STATS("RU Locations RU[26 52 106 242 484 996]:");
+	DP_PRINT_STATS("RU_26: %d", peer->stats.tx.ru_loc[0]);
+	DP_PRINT_STATS("RU 52: %d", peer->stats.tx.ru_loc[1]);
+	DP_PRINT_STATS("RU 106: %d", peer->stats.tx.ru_loc[2]);
+	DP_PRINT_STATS("RU 242: %d", peer->stats.tx.ru_loc[3]);
+	DP_PRINT_STATS("RU 484: %d", peer->stats.tx.ru_loc[4]);
+	DP_PRINT_STATS("RU 996: %d", peer->stats.tx.ru_loc[5]);
 
 	DP_PRINT_STATS("Aggregation:");
 	DP_PRINT_STATS("	Number of Msdu's Part of Amsdu = %d",

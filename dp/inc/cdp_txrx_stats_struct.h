@@ -53,6 +53,22 @@
 #define MAX_BW 7
 #define MAX_RECEPTION_TYPES 4
 
+#define MAX_TRANSMIT_TYPES	9
+#define SU_TX			0
+#define MUMIMO_TX		1
+#define MUOFDMA_TX		2
+#define MUMIMO_OFDMA_TX		3
+
+#define MAX_USER_POS		8
+#define MAX_MU_GROUP_ID		64
+#define MAX_RU_LOCATIONS	6
+#define RU_26			1
+#define RU_52			2
+#define RU_106			4
+#define RU_242			9
+#define RU_484			18
+#define RU_996			37
+
 /* WME stream classes */
 #define WME_AC_BE    0    /* best effort */
 #define WME_AC_BK    1    /* background */
@@ -229,6 +245,11 @@ struct cdp_pkt_type {
  * @failed_retry_count: packets failed due to retry above 802.11 retry limit
  * @retry_count: packets successfully send after one or more retry
  * @multiple_retry_count: packets successfully sent after more than one retry
+ * @transmit_type: tx transmit type
+ * @mu_group_id: mumimo mu group id
+ * @ru_start: RU start index
+ * @ru_tones: RU tones size
+ * @ru_loc: RU location 26/ 52/ 106/ 242/ 484 counter
  */
 struct cdp_tx_stats {
 	struct cdp_pkt_info comp_pkt;
@@ -308,6 +329,12 @@ struct cdp_tx_stats {
 	uint32_t retry_count;
 	uint32_t multiple_retry_count;
 	uint32_t last_tx_rate_used;
+
+	uint32_t transmit_type[MAX_TRANSMIT_TYPES];
+	uint32_t mu_group_id[MAX_MU_GROUP_ID];
+	uint32_t ru_start;
+	uint32_t ru_tones;
+	uint32_t ru_loc[MAX_RU_LOCATIONS];
 };
 
 /* struct cdp_rx_stats - rx Level Stats
