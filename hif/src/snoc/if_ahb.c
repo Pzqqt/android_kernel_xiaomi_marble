@@ -312,6 +312,9 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 		}
 		hif_ext_group->os_irq[j] = irq;
 	}
+	qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
+
+	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
 	hif_ext_group->irq_requested = true;
 
 end:
