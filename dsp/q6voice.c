@@ -9564,6 +9564,8 @@ static int voice_pack_and_set_cvs_ui_property(struct voice_data *v,
 {
 	struct vss_icommon_cmd_set_ui_property *set_ui_property = NULL;
 	u32 total_size = 0;
+	u32 pkt_size = 0;
+	u32 param_size = 0;
 	bool iid_supported = q6common_is_instance_id_supported();
 	void *apr_cvs;
 	int ret = 0;
@@ -9574,14 +9576,15 @@ static int voice_pack_and_set_cvs_ui_property(struct voice_data *v,
 		return -EINVAL;
 	}
 
-	total_size = sizeof(struct vss_icommon_cmd_set_ui_property) +
-		     sizeof(union param_hdrs) + param_hdr.param_size;
+	pkt_size = sizeof(struct vss_icommon_cmd_set_ui_property);
+	param_size = sizeof(union param_hdrs) + param_hdr.param_size;
+	total_size = pkt_size + param_size;
 	set_ui_property = kzalloc(total_size, GFP_KERNEL);
 	if (!set_ui_property)
 		return -ENOMEM;
 
 	ret = q6common_pack_pp_params(set_ui_property->param_data, &param_hdr,
-				    param_data, &total_size);
+				    param_data, &param_size);
 	if (ret) {
 		pr_err("%s: Failed to pack params, error %d", __func__, ret);
 		goto done;
@@ -9591,11 +9594,11 @@ static int voice_pack_and_set_cvs_ui_property(struct voice_data *v,
 	 * Pack the APR header after packing the data so we have the actual
 	 * total size of the payload
 	 */
+	total_size = pkt_size + param_size;
 	set_ui_property->apr_hdr.hdr_field =
 		APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD, APR_HDR_LEN(APR_HDR_SIZE),
 			      APR_PKT_VER);
-	set_ui_property->apr_hdr.pkt_size =
-		APR_PKT_SIZE(APR_HDR_SIZE, total_size - APR_HDR_SIZE);
+	set_ui_property->apr_hdr.pkt_size = total_size;
 	set_ui_property->apr_hdr.src_svc = 0;
 	set_ui_property->apr_hdr.src_domain = APR_DOMAIN_APPS;
 	set_ui_property->apr_hdr.src_port =
