@@ -7419,11 +7419,16 @@ QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 	char *buffer, *line, *pTemp = NULL;
 	size_t size;
 	char *name, *value;
-	/* cfgIniTable is static to avoid excess stack usage */
-	static struct hdd_cfg_entry cfgIniTable[MAX_CFG_INI_ITEMS];
+	struct hdd_cfg_entry *cfg_ini_table;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
-	memset(cfgIniTable, 0, sizeof(cfgIniTable));
+	size = MAX_CFG_INI_ITEMS * sizeof(*cfg_ini_table);
+	cfg_ini_table = qdf_mem_malloc(size);
+
+	if (!cfg_ini_table) {
+		hdd_err("Failed to alloc %zu bytes for cfg_ini_table", size);
+		return QDF_STATUS_E_NOMEM;
+	}
 
 	do {
 		if (status == -EAGAIN)
@@ -7453,8 +7458,8 @@ QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 
 	if (NULL == buffer) {
 		hdd_err("qdf_mem_malloc failure");
-		release_firmware(fw);
-		return QDF_STATUS_E_NOMEM;
+		qdf_status = QDF_STATUS_E_NOMEM;
+		goto config_exit;
 	}
 	pTemp = buffer;
 
@@ -7488,8 +7493,8 @@ QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 					while (*buffer != '\0')
 						buffer++;
 					*buffer = '\0';
-					cfgIniTable[i].name = name;
-					cfgIniTable[i++].value = value;
+					cfg_ini_table[i].name = name;
+					cfg_ini_table[i++].value = value;
 					if (i >= MAX_CFG_INI_ITEMS) {
 						hdd_err("Number of items in %s > %d",
 							WLAN_INI_FILE,
@@ -7503,7 +7508,7 @@ QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 	}
 
 	/* Loop through the registry table and apply all these configs */
-	qdf_status = hdd_apply_cfg_ini(hdd_ctx, cfgIniTable, i);
+	qdf_status = hdd_apply_cfg_ini(hdd_ctx, cfg_ini_table, i);
 	hdd_set_rx_mode_value(hdd_ctx);
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
 		hdd_override_all_ps(hdd_ctx);
@@ -7511,6 +7516,7 @@ QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 config_exit:
 	release_firmware(fw);
 	qdf_mem_free(pTemp);
+	qdf_mem_free(cfg_ini_table);
 	return qdf_status;
 }
 
