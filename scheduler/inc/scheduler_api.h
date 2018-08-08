@@ -41,6 +41,10 @@
  */
 #define SYS_MSG_COOKIE      0xFACE
 
+#define scheduler_get_src_id(qid)       ((qid) >> 16)
+#define scheduler_get_dest_id(qid)      ((qid) & 0xFFFF)
+#define scheduler_get_qid(src, dest)    ((dest) | ((src) << 16))
+
 typedef enum {
 	SYS_MSG_ID_MC_TIMER,
 	SYS_MSG_ID_FTM_RSP,
@@ -140,26 +144,44 @@ QDF_STATUS scheduler_deregister_module(QDF_MODULE_ID qid);
 
 /**
  * scheduler_post_msg_by_priority() - post messages by priority
- * @qid: queue id to to post message
+ * @qid: queue id to which the message has to be posted.
  * @msg: message pointer
  * @is_high_priority: set to true for high priority message else false
  *
  * Return: QDF status
  */
-QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
-		struct scheduler_msg *msg, bool is_high_priority);
+QDF_STATUS scheduler_post_msg_by_priority(uint32_t qid,
+					  struct scheduler_msg *msg,
+					  bool is_high_priority);
 
 /**
  * scheduler_post_msg() - post normal messages(no priority)
- * @qid: queue id to to post message
+ * @qid: queue id to which the message has to be posted.
  * @msg: message pointer
  *
  * Return: QDF status
  */
-static inline QDF_STATUS scheduler_post_msg(QDF_MODULE_ID qid,
-		struct scheduler_msg *msg)
+static inline QDF_STATUS scheduler_post_msg(uint32_t qid,
+					    struct scheduler_msg *msg)
 {
 	return scheduler_post_msg_by_priority(qid, msg, false);
+}
+
+/**
+ * scheduler_post_message() - post normal messages(no priority)
+ * @src_id: Source module of the message
+ * @dest_id: Destination module of the message
+ * @msg: message pointer
+ *
+ * This function will mask the src_id, and destination id to qid of
+ * scheduler_post_msg
+ * Return: QDF status
+ */
+static inline QDF_STATUS scheduler_post_message(QDF_MODULE_ID src_id,
+						QDF_MODULE_ID dest_id,
+						struct scheduler_msg *msg)
+{
+	return scheduler_post_msg(scheduler_get_qid(src_id, dest_id), msg);
 }
 
 /**
