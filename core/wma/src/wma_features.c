@@ -3077,6 +3077,12 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len)
  */
 void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg)
 {
+	if (!wma_is_vdev_valid(msg->sessionId)) {
+		WMA_LOGE("%s: vdev id:%d is not active ", __func__,
+			 msg->sessionId);
+		qdf_mem_free(msg);
+		return;
+	}
 	if (wmi_unified_del_ts_cmd(wma->wmi_handle,
 				 msg->sessionId,
 				 TID_TO_WME_AC(msg->userPrio))) {
@@ -4368,7 +4374,6 @@ QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 {
 	struct wma_txrx_node *interface;
 	struct vdev_ie_info_param cmd = {0};
-	int ret;
 
 	if (!ie_info || !wma) {
 		WMA_LOGE(FL("input pointer is NULL"));
@@ -4381,17 +4386,12 @@ QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (ie_info->vdev_id >= wma->max_bssid) {
-		WMA_LOGE(FL("Invalid vdev_id: %d"), ie_info->vdev_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	interface = &wma->interfaces[ie_info->vdev_id];
 	if (!wma_is_vdev_valid(ie_info->vdev_id)) {
 		WMA_LOGE(FL("vdev_id: %d is not active"), ie_info->vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
+	interface = &wma->interfaces[ie_info->vdev_id];
 	cmd.vdev_id = ie_info->vdev_id;
 	cmd.ie_id = ie_info->ie_id;
 	cmd.length = ie_info->length;
@@ -4406,9 +4406,7 @@ QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 		ie_info->data, ie_info->length);
 
-	ret = wmi_unified_process_set_ie_info_cmd(wma->wmi_handle,
-				   &cmd);
-	return ret;
+	return wmi_unified_process_set_ie_info_cmd(wma->wmi_handle, &cmd);
 }
 
 #ifdef FEATURE_WLAN_APF

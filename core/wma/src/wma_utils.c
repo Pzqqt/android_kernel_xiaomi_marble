@@ -2034,8 +2034,9 @@ QDF_STATUS wma_process_ll_stats_get_req(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!wma->interfaces[getReq->staId].vdev_active) {
-		WMA_LOGE("%s: vdev not created yet", __func__);
+	if (!wma_is_vdev_valid(getReq->staId)) {
+		WMA_LOGE("%s: vdev:%d not created yet", __func__,
+			 getReq->staId);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -4379,6 +4380,11 @@ wma_send_vdev_start_to_fw(t_wma_handle *wma, struct vdev_start_params *params)
 	QDF_STATUS status;
 	struct wma_txrx_node *vdev = &wma->interfaces[params->vdev_id];
 
+	if (!wma_is_vdev_valid(params->vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__, params->vdev_id);
+		status = QDF_STATUS_E_FAILURE;
+		return status;
+	}
 	wma_acquire_wakelock(&vdev->vdev_start_wakelock,
 			     WMA_VDEV_START_REQUEST_TIMEOUT);
 	status = wmi_unified_vdev_start_send(wma->wmi_handle, params);
@@ -4393,6 +4399,11 @@ QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 	QDF_STATUS status;
 	struct wma_txrx_node *vdev = &wma->interfaces[vdev_id];
 
+	if (!wma_is_vdev_valid(vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
+		status = QDF_STATUS_E_FAILURE;
+		return status;
+	}
 	wma_acquire_wakelock(&vdev->vdev_stop_wakelock,
 			     WMA_VDEV_STOP_REQUEST_TIMEOUT);
 	status = wmi_unified_vdev_stop_send(wma->wmi_handle, vdev_id);
@@ -4500,13 +4511,20 @@ QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 				  uint8_t bssid[IEEE80211_ADDR_LEN])
 {
 	QDF_STATUS status;
-	struct wma_txrx_node *vdev = &wma->interfaces[params->vdev_id];
+	struct wma_txrx_node *vdev;
+
+	if (!wma_is_vdev_valid(params->vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__, params->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (wma_is_vdev_up(params->vdev_id)) {
 		WMA_LOGD("vdev %d is already up for bssid %pM. Do not send",
 			 params->vdev_id, bssid);
 		return QDF_STATUS_SUCCESS;
 	}
+
+	vdev = &wma->interfaces[params->vdev_id];
 	status = wmi_unified_vdev_up_send(wma->wmi_handle, bssid, params);
 	wma_release_wakelock(&vdev->vdev_start_wakelock);
 
@@ -4516,8 +4534,14 @@ QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {
 	QDF_STATUS status;
-	struct wma_txrx_node *vdev = &wma->interfaces[vdev_id];
+	struct wma_txrx_node *vdev;
 
+	if (!wma_is_vdev_valid(vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev = &wma->interfaces[vdev_id];
 	wma->interfaces[vdev_id].roaming_in_progress = false;
 	status = wmi_unified_vdev_down_send(wma->wmi_handle, vdev_id);
 	wma_release_wakelock(&vdev->vdev_start_wakelock);
