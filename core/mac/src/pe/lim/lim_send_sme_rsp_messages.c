@@ -844,7 +844,14 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal pMac,
 					pe_err("could not Add STA with assocId: %d",
 					sta_ds->assocId);
 		}
-		failure = true;
+		status = lim_prepare_disconnect_done_ind(pMac, &pMsg,
+							 smesessionId,
+							 reasonCode,
+							 &peerMacAddr[0]);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			pe_err("Failed to prepare message");
+			return;
+		}
 		break;
 
 	case eLIM_HOST_DISASSOC:
