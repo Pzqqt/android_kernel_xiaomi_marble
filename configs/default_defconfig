@@ -416,6 +416,11 @@ CONFIG_WLAN_OPEN_P2P_INTERFACE := y
 CONFIG_WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY := y
 endif
 
+#enable 4addr support for QCS405
+ifeq ($(CONFIG_ARCH_QCS405), y)
+CONFIG_FEATURE_WLAN_STA_4ADDR_SCHEME := y
+endif
+
 #Enable power management suspend/resume functionality to PCI
 CONFIG_ATH_BUS_PM := y
 
