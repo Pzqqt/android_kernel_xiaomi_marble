@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -172,6 +172,7 @@ struct target_supported_modes {
  * @service_ext_param: ext service params
  * @mac_phy_cap: phy caps array
  * @reg_cap: regulatory caps array
+ * @scaling_params: Spectral bin scaling parameters
  * @num_mem_chunks: number of mem chunks allocated
  * @hw_mode_caps: HW mode caps of preferred mode
  * @mem_chunks: allocated memory blocks for FW
@@ -196,6 +197,7 @@ struct tgt_info {
 	struct wlan_psoc_host_mac_phy_caps
 			mac_phy_cap[PSOC_MAX_MAC_PHY_CAP];
 	struct wlan_psoc_host_dbr_ring_caps *dbr_ring_cap;
+	struct wlan_psoc_host_spectral_scaling_params *scaling_params;
 	uint32_t num_mem_chunks;
 	struct wmi_host_mem_chunk mem_chunks[MAX_MEM_CHUNKS];
 	struct wlan_psoc_host_hw_mode_caps hw_mode_cap;

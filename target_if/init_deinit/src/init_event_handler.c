@@ -268,6 +268,12 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	if (err_code)
 		goto exit;
 
+	err_code = init_deinit_populate_spectral_bin_scale_params(psoc,
+								  wmi_handle,
+								  event, info);
+	if (err_code)
+		goto exit;
+
 	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
 	if (legacy_callback)
 		legacy_callback(wmi_service_ready_ext_event_id,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -83,6 +83,33 @@ static QDF_STATUS send_dbr_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 	}
 
 	return ret;
+}
+
+static QDF_STATUS extract_scaling_params_service_ready_ext_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *event, uint8_t idx,
+			struct wlan_psoc_host_spectral_scaling_params *param)
+{
+	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
+	wmi_spectral_bin_scaling_params *spectral_bin_scaling_params;
+
+	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	spectral_bin_scaling_params = &param_buf->wmi_bin_scaling_params[idx];
+
+	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+					spectral_bin_scaling_params->pdev_id);
+	param->low_level_offset = spectral_bin_scaling_params->low_level_offset;
+	param->formula_id = spectral_bin_scaling_params->formula_id;
+	param->high_level_offset =
+		spectral_bin_scaling_params->high_level_offset;
+	param->rssi_thr = spectral_bin_scaling_params->rssi_thr;
+	param->default_agc_max_gain =
+		spectral_bin_scaling_params->default_agc_max_gain;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS extract_dbr_buf_release_fixed_tlv(wmi_unified_t wmi_handle,
@@ -169,4 +196,6 @@ void wmi_dbr_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_dbr_buf_release_entry = extract_dbr_buf_release_entry_tlv;
 	ops->extract_dbr_buf_metadata = extract_dbr_buf_metadata_tlv;
 	ops->extract_dbr_buf_release_fixed = extract_dbr_buf_release_fixed_tlv;
+	ops->extract_scaling_params_service_ready_ext =
+			extract_scaling_params_service_ready_ext_tlv;
 }

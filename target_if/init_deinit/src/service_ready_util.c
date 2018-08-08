@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -389,6 +389,49 @@ free_and_return:
 	return qdf_status_to_os_return(status);
 }
 
+int init_deinit_populate_spectral_bin_scale_params(
+			struct wlan_objmgr_psoc *psoc, void *handle,
+			uint8_t *event, struct tgt_info *info)
+
+{
+	uint8_t param_idx;
+	uint32_t num_bin_scaling_params;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	num_bin_scaling_params = info->service_ext_param.num_bin_scaling_params;
+
+	if (!num_bin_scaling_params)
+		return 0;
+
+	info->scaling_params = qdf_mem_malloc(
+		sizeof(struct wlan_psoc_host_spectral_scaling_params) *
+		num_bin_scaling_params);
+
+	if (!info->scaling_params) {
+		target_if_err("Mem alloc for bin scaling params failed");
+		return -EINVAL;
+	}
+
+	for (param_idx = 0; param_idx < num_bin_scaling_params; param_idx++) {
+		status = wmi_extract_spectral_scaling_params_service_ready_ext(
+				handle,
+				event, param_idx,
+				&info->scaling_params[param_idx]);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			target_if_err("Extraction of scaling params failed");
+			goto free_and_return;
+		}
+	}
+
+	return 0;
+
+free_and_return:
+	qdf_mem_free(info->scaling_params);
+	info->scaling_params = NULL;
+
+	return qdf_status_to_os_return(status);
+}
+
 QDF_STATUS init_deinit_dbr_ring_cap_free(
 		struct target_psoc_info *tgt_psoc_info)
 {
@@ -402,6 +445,22 @@ QDF_STATUS init_deinit_dbr_ring_cap_free(
 	return status;
 }
 qdf_export_symbol(init_deinit_dbr_ring_cap_free);
+
+QDF_STATUS init_deinit_spectral_scaling_params_free(
+		struct target_psoc_info *tgt_psoc_info)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (tgt_psoc_info->info.scaling_params) {
+		qdf_mem_free(tgt_psoc_info->info.scaling_params);
+		tgt_psoc_info->info.scaling_params = NULL;
+		status = QDF_STATUS_SUCCESS;
+	}
+
+	return status;
+}
+
+qdf_export_symbol(init_deinit_spectral_scaling_params_free);
 
 int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 				void *handle, uint8_t *event,

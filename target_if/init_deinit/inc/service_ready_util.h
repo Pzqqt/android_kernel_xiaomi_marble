@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -158,6 +158,22 @@ int init_deinit_populate_dbr_ring_cap(struct wlan_objmgr_psoc *psoc,
 				struct tgt_info *info);
 
 /**
+ * init_deinit_populate_spectral_bin_scale_params() - populate Spectral scaling
+ * @psoc: PSOC object
+ * @handle: WMI handle pointer
+ * @event: event buffer received from FW
+ * @info: tgt_info object
+ *
+ * API to populate Spectral bin scaling parameters
+ *
+ * Return: zero on successful parsing of scaling params or failure
+ */
+int init_deinit_populate_spectral_bin_scale_params(
+				struct wlan_objmgr_psoc *psoc,
+				void *handle, uint8_t *event,
+				struct tgt_info *info);
+
+/**
  * init_deinit_dbr_ring_cap_free() - free dbr ring capability
  * @tgt_psoc_info: target psoc info object
  *
@@ -166,6 +182,17 @@ int init_deinit_populate_dbr_ring_cap(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS init_deinit_dbr_ring_cap_free(
+				struct target_psoc_info *tgt_psoc_info);
+
+/**
+ * init_deinit_spectral_scaling_params_free() - free Spectral scaling params
+ * @tgt_psoc_info: target psoc info object
+ *
+ * API to free Spectral scaling params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS init_deinit_spectral_scaling_params_free(
 				struct target_psoc_info *tgt_psoc_info);
 
 /**

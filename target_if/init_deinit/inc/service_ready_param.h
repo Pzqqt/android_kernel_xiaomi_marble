@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -223,6 +223,24 @@ struct wlan_psoc_host_dbr_ring_caps {
 };
 
 /**
+ * struct wlan_psoc_host_spectral_scaling_params - Spectral scaling params
+ * @pdev_id: Pdev id of the pdev
+ * @formula_id: Formula id
+ * @low_level_offset: Low level offset
+ * @high_level_offset: High level offset
+ * @rssi_thr: RSSI threshold
+ * @default_agc_max_gain: Default agc max gain
+ */
+struct wlan_psoc_host_spectral_scaling_params {
+	uint32_t pdev_id;
+	uint32_t formula_id;
+	uint32_t low_level_offset;
+	uint32_t high_level_offset;
+	uint32_t rssi_thr;
+	uint32_t default_agc_max_gain;
+};
+
+/**
  * struct wlan_psoc_host_chainmask_capabilities - chain mask capabilities list
  * @supports_chan_width_20: channel width 20 support for this chain mask.
  * @supports_chan_width_40: channel width 40 support for this chain mask.
@@ -280,6 +298,7 @@ struct wlan_psoc_host_chainmask_table {
  * @num_chainmask_tables: Number of chain mask tables.
  * @num_dbr_ring_caps: Number of direct buf rx ring capabilities
  * @max_bssid_indicator: Maximum number of VAPs in MBSS IE
+ * @num_bin_scaling_params: Number of Spectral bin scaling parameters
  * @chainmask_table: Available chain mask tables.
  * @sar_version: SAR version info
  */
@@ -296,6 +315,7 @@ struct wlan_psoc_host_service_ext_param {
 	uint32_t num_chainmask_tables;
 	uint32_t num_dbr_ring_caps;
 	uint32_t max_bssid_indicator;
+	uint32_t num_bin_scaling_params;
 	struct wlan_psoc_host_chainmask_table
 		chainmask_table[PSOC_MAX_CHAINMASK_TABLES];
 	uint32_t sar_version;

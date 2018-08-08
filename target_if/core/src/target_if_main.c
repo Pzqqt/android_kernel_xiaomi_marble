@@ -552,6 +552,7 @@ QDF_STATUS target_if_free_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 	}
 	init_deinit_chainmask_table_free(ext_param);
 	init_deinit_dbr_ring_cap_free(tgt_psoc_info);
+	init_deinit_spectral_scaling_params_free(tgt_psoc_info);
 
 	qdf_event_destroy(&tgt_psoc_info->info.event);
 

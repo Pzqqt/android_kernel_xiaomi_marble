@@ -9063,6 +9063,7 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 	param->max_bssid_rx_filters = ev->max_bssid_rx_filters;
 	param->fw_build_vers_ext = ev->fw_build_vers_ext;
 	param->num_dbr_ring_caps = param_buf->num_dma_ring_caps;
+	param->num_bin_scaling_params = param_buf->num_wmi_bin_scaling_params;
 	param->max_bssid_indicator = ev->max_bssid_indicator;
 	qdf_mem_copy(&param->ppet, &ev->ppet, sizeof(param->ppet));
 
