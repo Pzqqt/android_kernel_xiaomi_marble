@@ -17506,33 +17506,55 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 				session_param->subtype_of_persona);
 }
 
-QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
+QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal mac_ctx,
+					   uint8_t *pMsg)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct del_sta_self_params *rsp;
 	uint8_t sessionId;
+	tListElem *entry;
+	tSmeCmd *sme_command;
 
 	if (pMsg == NULL) {
 		sme_err("msg ptr is NULL");
 		return status;
 	}
+
+	entry = csr_nonscan_active_ll_peek_head(mac_ctx, LL_ACCESS_LOCK);
+	if (!entry) {
+		sme_err("NO commands are ACTIVE");
+		return status;
+	}
+
+	sme_command = GET_BASE_ADDR(entry, tSmeCmd, Link);
+	if (e_sme_command_del_sta_session != sme_command->command) {
+		sme_err("No Del sta session command ACTIVE");
+		return status;
+	}
+
 	rsp = (struct del_sta_self_params *) pMsg;
 	sessionId = rsp->session_id;
 	sme_debug("Del Sta rsp status = %d", rsp->status);
 	/* This session is done. */
-	csr_cleanup_session(pMac, sessionId);
+	csr_cleanup_session(mac_ctx, sessionId);
 	if (rsp->sme_callback) {
-		status = sme_release_global_lock(&pMac->sme);
+		status = sme_release_global_lock(&mac_ctx->sme);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			sme_debug("Failed to Release Lock");
 		else {
 			rsp->sme_callback(rsp->session_id);
-			status = sme_acquire_global_lock(&pMac->sme);
+			status = sme_acquire_global_lock(&mac_ctx->sme);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				sme_debug("Failed to get Lock");
 				return status;
 			}
 		}
+	}
+
+	/* Remove this command out of the non scan active list */
+	if (csr_nonscan_active_ll_remove_entry(mac_ctx, entry,
+					       LL_ACCESS_LOCK)) {
+		csr_release_command(mac_ctx, sme_command);
 	}
 
 	return QDF_STATUS_SUCCESS;
