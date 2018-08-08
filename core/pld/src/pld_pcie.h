@@ -216,6 +216,21 @@ static inline int pld_pcie_auto_resume(struct device *dev)
 	return 0;
 }
 
+static inline int pld_pcie_force_wake_request(struct device *dev)
+{
+	return 0;
+}
+
+static inline int pld_pcie_is_device_awake(struct device *dev)
+{
+	return true;
+}
+
+static inline int pld_pcie_force_wake_release(struct device *dev)
+{
+	return 0;
+}
+
 static inline void pld_pcie_lock_pm_sem(struct device *dev)
 {
 }
@@ -329,6 +344,21 @@ static inline int pld_pcie_auto_suspend(struct device *dev)
 static inline int pld_pcie_auto_resume(struct device *dev)
 {
 	return cnss_auto_resume(dev);
+}
+
+static inline int pld_pcie_force_wake_request(struct device *dev)
+{
+	return cnss_pci_force_wake_request(dev);
+}
+
+static inline int pld_pcie_is_device_awake(struct device *dev)
+{
+	return cnss_pci_is_device_awake(dev);
+}
+
+static inline int pld_pcie_force_wake_release(struct device *dev)
+{
+	return cnss_pci_force_wake_release(dev);
 }
 
 static inline void pld_pcie_lock_pm_sem(struct device *dev)

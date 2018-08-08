@@ -513,7 +513,9 @@ int pld_get_sha_hash(struct device *dev, const u8 *data,
 void *pld_get_fw_ptr(struct device *dev);
 int pld_auto_suspend(struct device *dev);
 int pld_auto_resume(struct device *dev);
-
+int pld_force_wake_request(struct device *dev);
+int pld_is_device_awake(struct device *dev);
+int pld_force_wake_release(struct device *dev);
 int pld_ce_request_irq(struct device *dev, unsigned int ce_id,
 		       irqreturn_t (*handler)(int, void *),
 		       unsigned long flags, const char *name, void *ctx);

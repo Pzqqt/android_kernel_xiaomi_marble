@@ -896,6 +896,94 @@ int pld_auto_resume(struct device *dev)
 }
 
 /**
+ * pld_force_wake_request() - Request vote to assert WAKE register
+ * @dev: device
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_force_wake_request(struct device *dev)
+{
+	int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_force_wake_request(dev);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * pld_is_device_awake() - Check if it's ready to access MMIO registers
+ * @dev: device
+ *
+ * Return: True for device awake
+ *         False for device not awake
+ *         Negative failure code for errors
+ */
+int pld_is_device_awake(struct device *dev)
+{
+	int ret = true;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_is_device_awake(dev);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * pld_force_wake_release() - Release vote to assert WAKE register
+ * @dev: device
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_force_wake_release(struct device *dev)
+{
+	int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_force_wake_release(dev);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+/**
  * pld_ce_request_irq() - Register IRQ for CE
  * @dev: device
  * @ce_id: CE number
