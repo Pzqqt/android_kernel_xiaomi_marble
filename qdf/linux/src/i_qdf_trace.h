@@ -301,6 +301,11 @@ static inline void __qdf_bug(void)
 		/* no-op */ \
 	} while (false)
 
+#define QDF_DEBUG_PANIC_FL(func, line, fmt, args...) \
+	do { \
+		/* no-op */ \
+	} while (false)
+
 #define QDF_BUG(_condition) \
 	do { \
 		if (!(_condition)) { \
