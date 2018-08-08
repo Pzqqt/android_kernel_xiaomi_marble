@@ -34,6 +34,99 @@
 
 static const DECLARE_TLV_DB_SCALE(line_gain, 0, 7, 1);
 static const DECLARE_TLV_DB_SCALE(analog_gain, 0, 25, 1);
+static int wcd937x_handle_pre_irq(void *data);
+static int wcd937x_handle_post_irq(void *data);
+
+static const struct regmap_irq wcd937x_irqs[WCD937X_NUM_IRQS] = {
+	REGMAP_IRQ_REG(WCD937X_IRQ_MBHC_BUTTON_PRESS_DET, 0, 0x01),
+	REGMAP_IRQ_REG(WCD937X_IRQ_MBHC_BUTTON_RELEASE_DET, 0, 0x02),
+	REGMAP_IRQ_REG(WCD937X_IRQ_MBHC_ELECT_INS_REM_DET, 0, 0x04),
+	REGMAP_IRQ_REG(WCD937X_IRQ_MBHC_ELECT_INS_REM_LEG_DET, 0, 0x08),
+	REGMAP_IRQ_REG(WCD937X_IRQ_MBHC_SW_DET, 0, 0x10),
+	REGMAP_IRQ_REG(WCD937X_IRQ_HPHR_OCP_INT, 0, 0x20),
+	REGMAP_IRQ_REG(WCD937X_IRQ_HPHR_CNP_INT, 0, 0x40),
+	REGMAP_IRQ_REG(WCD937X_IRQ_HPHL_OCP_INT, 0, 0x80),
+	REGMAP_IRQ_REG(WCD937X_IRQ_HPHL_CNP_INT, 1, 0x01),
+	REGMAP_IRQ_REG(WCD937X_IRQ_EAR_CNP_INT, 1, 0x02),
+	REGMAP_IRQ_REG(WCD937X_IRQ_EAR_SCD_INT, 1, 0x04),
+	REGMAP_IRQ_REG(WCD937X_IRQ_AUX_CNP_INT, 1, 0x08),
+	REGMAP_IRQ_REG(WCD937X_IRQ_AUX_SCD_INT, 1, 0x10),
+	REGMAP_IRQ_REG(WCD937X_IRQ_HPHL_PDM_WD_INT, 1, 0x20),
+	REGMAP_IRQ_REG(WCD937X_IRQ_HPHR_PDM_WD_INT, 1, 0x40),
+	REGMAP_IRQ_REG(WCD937X_IRQ_AUX_PDM_WD_INT, 1, 0x80),
+	REGMAP_IRQ_REG(WCD937X_IRQ_LDORT_SCD_INT, 2, 0x01),
+	REGMAP_IRQ_REG(WCD937X_IRQ_MBHC_MOISTURE_INT, 2, 0x02),
+	REGMAP_IRQ_REG(WCD937X_IRQ_HPHL_SURGE_DET_INT, 2, 0x04),
+	REGMAP_IRQ_REG(WCD937X_IRQ_HPHR_SURGE_DET_INT, 2, 0x08),
+};
+
+static struct regmap_irq_chip wcd937x_regmap_irq_chip = {
+	.name = "wcd937x",
+	.irqs = wcd937x_irqs,
+	.num_irqs = ARRAY_SIZE(wcd937x_irqs),
+	.num_regs = 3,
+	.status_base = WCD937X_DIGITAL_INTR_STATUS_0,
+	.mask_base = WCD937X_DIGITAL_INTR_MASK_0,
+	.type_base = WCD937X_DIGITAL_INTR_LEVEL_0,
+	.runtime_pm = true,
+	.handle_post_irq = wcd937x_handle_post_irq,
+	.handle_pre_irq = wcd937x_handle_pre_irq,
+};
+
+static int wcd937x_handle_pre_irq(void *data)
+{
+	struct wcd937x_priv *wcd937x = data;
+	int num_irq_regs = wcd937x->num_irq_regs;
+	int ret = 0;
+	u8 sts[num_irq_regs];
+	struct wcd937x_pdata *pdata;
+
+	pdata = dev_get_platdata(wcd937x->dev);
+
+	memset(sts, 0, sizeof(sts));
+	ret = regmap_bulk_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_0,
+			       sts, num_irq_regs);
+	if (ret < 0) {
+		dev_err(wcd937x->dev, "%s: Failed to read intr status: %d\n",
+			__func__, ret);
+	} else if (ret == 0) {
+		dev_dbg(wcd937x->dev,
+			"%s: clear interrupts except OCP and SCD\n", __func__);
+		/* Do not affect OCP and SCD interrupts */
+		sts[0] = sts[0] & 0x5F;
+		sts[1] = sts[1] & 0xEB;
+		regmap_write(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_0,
+			     sts[0]);
+		regmap_write(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_1,
+			     sts[1]);
+		regmap_write(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_2,
+			     sts[2]);
+	}
+	return IRQ_HANDLED;
+}
+
+static int wcd937x_handle_post_irq(void *data)
+{
+	struct wcd937x_priv *wcd937x = data;
+	int val = 0;
+	struct wcd937x_pdata *pdata = NULL;
+
+	pdata = dev_get_platdata(wcd937x->dev);
+
+	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_0, &val);
+	if ((val & 0xA0) != 0) {
+		dev_dbg(wcd937x->dev, "%s Clear OCP interupts\n", __func__);
+		regmap_update_bits(wcd937x->regmap,
+				   WCD937X_DIGITAL_INTR_CLEAR_0, 0xA0, 0x00);
+	}
+	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_1, &val);
+	if ((val & 0x14) != 0) {
+		dev_dbg(wcd937x->dev, "%s Clear SCD interupts\n", __func__);
+		regmap_update_bits(wcd937x->regmap,
+				   WCD937X_DIGITAL_INTR_CLEAR_1, 0x14, 0x00);
+	}
+	return IRQ_HANDLED;
+}
 
 static int wcd937x_init_reg(struct snd_soc_codec *codec)
 {
@@ -89,6 +182,31 @@ static int wcd937x_rx_clk_disable(struct snd_soc_codec *codec)
 	}
 	return 0;
 }
+
+/*
+ * wcd937x_soc_get_mbhc: get wcd937x_mbhc handle of corresponding codec
+ * @codec: handle to snd_soc_codec *
+ *
+ * return wcd937x_mbhc handle or error code in case of failure
+ */
+struct wcd937x_mbhc *wcd937x_soc_get_mbhc(struct snd_soc_codec *codec)
+{
+	struct wcd937x_priv *wcd937x;
+
+	if (!codec) {
+		pr_err("%s: Invalid params, NULL codec\n", __func__);
+		return NULL;
+	}
+	wcd937x = snd_soc_codec_get_drvdata(codec);
+
+	if (!wcd937x) {
+		pr_err("%s: Invalid params, NULL tavil\n", __func__);
+		return NULL;
+	}
+
+	return wcd937x->mbhc;
+}
+EXPORT_SYMBOL(wcd937x_soc_get_mbhc);
 
 static int wcd937x_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 					struct snd_kcontrol *kcontrol,
@@ -505,6 +623,100 @@ static int wcd937x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
+/*
+ * wcd937x_get_micb_vout_ctl_val: converts micbias from volts to register value
+ * @micb_mv: micbias in mv
+ *
+ * return register value converted
+ */
+int wcd937x_get_micb_vout_ctl_val(u32 micb_mv)
+{
+	/* min micbias voltage is 1V and maximum is 2.85V */
+	if (micb_mv < 1000 || micb_mv > 2850) {
+		pr_err("%s: unsupported micbias voltage\n", __func__);
+		return -EINVAL;
+	}
+
+	return (micb_mv - 1000) / 50;
+}
+EXPORT_SYMBOL(wcd937x_get_micb_vout_ctl_val);
+
+/*
+ * wcd937x_mbhc_micb_adjust_voltage: adjust specific micbias voltage
+ * @codec: handle to snd_soc_codec *
+ * @req_volt: micbias voltage to be set
+ * @micb_num: micbias to be set, e.g. micbias1 or micbias2
+ *
+ * return 0 if adjustment is success or error code in case of failure
+ */
+int wcd937x_mbhc_micb_adjust_voltage(struct snd_soc_codec *codec,
+				   int req_volt, int micb_num)
+{
+	struct wcd937x_priv *wcd937x = snd_soc_codec_get_drvdata(codec);
+	int cur_vout_ctl, req_vout_ctl;
+	int micb_reg, micb_val, micb_en;
+	int ret = 0;
+
+	switch (micb_num) {
+	case MIC_BIAS_1:
+		micb_reg = WCD937X_ANA_MICB1;
+		break;
+	case MIC_BIAS_2:
+		micb_reg = WCD937X_ANA_MICB2;
+		break;
+	case MIC_BIAS_3:
+		micb_reg = WCD937X_ANA_MICB3;
+		break;
+	default:
+		return -EINVAL;
+	}
+	mutex_lock(&wcd937x->micb_lock);
+
+	/*
+	 * If requested micbias voltage is same as current micbias
+	 * voltage, then just return. Otherwise, adjust voltage as
+	 * per requested value. If micbias is already enabled, then
+	 * to avoid slow micbias ramp-up or down enable pull-up
+	 * momentarily, change the micbias value and then re-enable
+	 * micbias.
+	 */
+	micb_val = snd_soc_read(codec, micb_reg);
+	micb_en = (micb_val & 0xC0) >> 6;
+	cur_vout_ctl = micb_val & 0x3F;
+
+	req_vout_ctl = wcd937x_get_micb_vout_ctl_val(req_volt);
+	if (req_vout_ctl < 0) {
+		ret = -EINVAL;
+		goto exit;
+	}
+	if (cur_vout_ctl == req_vout_ctl) {
+		ret = 0;
+		goto exit;
+	}
+
+	dev_dbg(codec->dev, "%s: micb_num: %d, cur_mv: %d, req_mv: %d, micb_en: %d\n",
+		 __func__, micb_num, WCD_VOUT_CTL_TO_MICB(cur_vout_ctl),
+		 req_volt, micb_en);
+
+	if (micb_en == 0x1)
+		snd_soc_update_bits(codec, micb_reg, 0xC0, 0x80);
+
+	snd_soc_update_bits(codec, micb_reg, 0x3F, req_vout_ctl);
+
+	if (micb_en == 0x1) {
+		snd_soc_update_bits(codec, micb_reg, 0xC0, 0x40);
+		/*
+		 * Add 2ms delay as per HW requirement after enabling
+		 * micbias
+		 */
+		usleep_range(2000, 2100);
+	}
+exit:
+	mutex_unlock(&wcd937x->micb_lock);
+	return ret;
+}
+EXPORT_SYMBOL(wcd937x_mbhc_micb_adjust_voltage);
+
 static int wcd937x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 				    struct snd_kcontrol *kcontrol,
 				    int event){
@@ -565,8 +777,8 @@ static int wcd937x_enable_req(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
-static int wcd937x_micbias_control(struct snd_soc_codec *codec,
-				   int micb_num, int req, bool is_dapm)
+int wcd937x_micbias_control(struct snd_soc_codec *codec,
+				int micb_num, int req, bool is_dapm)
 {
 
 	struct wcd937x_priv *wcd937x = snd_soc_codec_get_drvdata(codec);
@@ -663,6 +875,7 @@ static int wcd937x_micbias_control(struct snd_soc_codec *codec,
 
 	return 0;
 }
+EXPORT_SYMBOL(wcd937x_micbias_control);
 
 static int __wcd937x_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 					  int event)
@@ -1115,6 +1328,12 @@ static int wcd937x_soc_codec_probe(struct snd_soc_codec *codec)
 		goto err_hwdep;
 	}
 
+	ret = wcd937x_mbhc_init(&wcd937x->mbhc, codec, wcd937x->fw_data);
+	if (ret) {
+		pr_err("%s: mbhc initialization failed\n", __func__);
+		goto err_hwdep;
+	}
+
 	wcd937x_init_reg(codec);
 
 	if (wcd937x->variant == WCD9375_VARIANT) {
@@ -1250,7 +1469,7 @@ struct wcd937x_pdata *wcd937x_populate_dt_data(struct device *dev)
 
 static int wcd937x_bind(struct device *dev)
 {
-	int ret = 0;
+	int ret = 0, i = 0;
 	struct wcd937x_priv *wcd937x = NULL;
 	struct wcd937x_pdata *pdata = NULL;
 
@@ -1305,15 +1524,35 @@ static int wcd937x_bind(struct device *dev)
 		goto err;
 	}
 
+	/* Set all interupts as edge triggered */
+	for (i = 0; i < wcd937x_regmap_irq_chip.num_regs; i++)
+		regmap_write(wcd937x->regmap,
+			     (WCD937X_DIGITAL_INTR_LEVEL_0 + i), 0);
+
+	wcd937x->irq_info->wcd_regmap_irq_chip = &wcd937x_regmap_irq_chip;
+	wcd937x->irq_info->codec_name = "WCD937X";
+	wcd937x->irq_info->regmap = wcd937x->regmap;
+	wcd937x->irq_info->dev = dev;
+	ret = wcd_irq_init(wcd937x->irq_info, &wcd937x->virq);
+
+	if (ret) {
+		dev_err(wcd937x->dev, "%s: IRQ init failed: %d\n",
+			__func__, ret);
+		goto err;
+	}
+	wcd937x->tx_swr_dev->slave_irq = wcd937x->virq;
+
 	ret = snd_soc_register_codec(dev, &soc_codec_dev_wcd937x,
 				     NULL, 0);
 	if (ret) {
 		dev_err(dev, "%s: Codec registration failed\n",
 				__func__);
-		goto err;
+		goto err_irq;
 	}
 
 	return ret;
+err_irq:
+	wcd_irq_exit(wcd937x->irq_info, wcd937x->virq);
 err:
 	component_unbind_all(dev, wcd937x);
 	return ret;
@@ -1323,6 +1562,7 @@ static void wcd937x_unbind(struct device *dev)
 {
 	struct wcd937x_priv *wcd937x = dev_get_drvdata(dev);
 
+	wcd_irq_exit(wcd937x->irq_info, wcd937x->virq);
 	snd_soc_unregister_codec(dev);
 	component_unbind_all(dev, wcd937x);
 }
