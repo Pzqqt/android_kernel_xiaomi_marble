@@ -310,10 +310,6 @@
 #define NUM_BINS 128
 #define THOUSAND 1000
 
-/* Check if the dfs current channel is 5.8GHz */
-#define DFS_CURCHAN_IS_58GHz(freq) \
-	((((freq) >= 5745) && ((freq) <= 5865)) ? true : false)
-
 /* ETSI11_WORLD regdmn pair id */
 #define ETSI11_WORLD_REGDMN_PAIR_ID 0x26
 #define ETSI12_WORLD_REGDMN_PAIR_ID 0x28
@@ -322,6 +318,9 @@
 
 /* Array offset to ETSI legacy pulse */
 #define ETSI_LEGACY_PULSE_ARR_OFFSET 2
+
+#define ETSI_RADAR_EN302_502_FREQ_LOWER 5725
+#define ETSI_RADAR_EN302_502_FREQ_UPPER 5865
 
 #define DFS_NOL_ADD_CHAN_LOCKED(dfs, freq, timeout)         \
 	do {                                                \
@@ -2126,6 +2125,64 @@ static inline int dfs_set_thresholds(struct wlan_dfs *dfs,
 		const uint32_t value)
 {
 		return 0;
+}
+#endif
+
+/**
+ * dfs_check_intersect_excl() - Check whether curfreq falls within lower_freq
+ * and upper_freq, exclusively.
+ * @low_freq : lower bound frequency value.
+ * @high_freq: upper bound frequency value.
+ * @chan_freq: Current frequency value to be checked.
+ *
+ * Return: returns true if overlap found, else returns false.
+ */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+bool dfs_check_intersect_excl(int low_freq, int high_freq, int chan_freq);
+#else
+static inline bool dfs_check_intersect_excl(int low_freq, int high_freq,
+					    int chan_freq)
+{
+		return false;
+}
+#endif
+
+/**
+ * dfs_check_etsi_overlap() - Check whether given frequency centre/channel
+ * width entry overlap with frequency spread in any way.
+ * @center_freq         : current channel centre frequency.
+ * @chan_width          : current channel width.
+ * @en302_502_freq_low  : overlap frequency lower bound.
+ * @en302_502_freq_high : overlap frequency upper bound.
+ *
+ * Return: returns 1 if overlap found, else returns 0.
+ */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+int dfs_check_etsi_overlap(int center_freq, int chan_width,
+			   int en302_502_freq_low, int en302_502_freq_high);
+#else
+static inline int dfs_check_etsi_overlap(int center_freq, int chan_width,
+					 int en302_502_freq_low,
+					 int en302_502_freq_high)
+{
+		return 0;
+}
+#endif
+
+/**
+ * dfs_is_en302_502_applicable() - Check whether current channel frequecy spread
+ *					overlaps with EN 302 502 radar type
+ *					frequency range.
+ *@dfs: Pointer to wlan_dfs structure.
+ *
+ * Return: returns true if overlap found, else returns false.
+ */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
+bool dfs_is_en302_502_applicable(struct wlan_dfs *dfs);
+#else
+static inline bool dfs_is_en302_502_applicable(struct wlan_dfs *dfs)
+{
+		return false;
 }
 #endif
 

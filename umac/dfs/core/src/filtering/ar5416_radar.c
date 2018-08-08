@@ -115,8 +115,6 @@ void dfs_get_radars_for_ar5416(struct wlan_dfs *dfs)
 {
 	struct wlan_dfs_radar_tab_info rinfo;
 	int dfsdomain = DFS_FCC_DOMAIN;
-	uint16_t ch_freq;
-	uint16_t regdmn;
 
 	qdf_mem_zero(&rinfo, sizeof(rinfo));
 	dfsdomain = utils_get_dfsdomain(dfs->dfs_pdev_obj);
@@ -134,14 +132,7 @@ void dfs_get_radars_for_ar5416(struct wlan_dfs *dfs)
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "DFS_ETSI_DOMAIN_5416");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 
-		ch_freq = dfs->dfs_curchan->dfs_ch_freq;
-		regdmn = utils_dfs_get_cur_rd(dfs->dfs_pdev_obj);
-
-		if (((regdmn == ETSI11_WORLD_REGDMN_PAIR_ID) ||
-		    (regdmn == ETSI12_WORLD_REGDMN_PAIR_ID) ||
-		    (regdmn == ETSI13_WORLD_REGDMN_PAIR_ID) ||
-		    (regdmn == ETSI14_WORLD_REGDMN_PAIR_ID)) &&
-		    DFS_CURCHAN_IS_58GHz(ch_freq)) {
+		if (dfs_is_en302_502_applicable(dfs)) {
 			rinfo.dfs_radars = ar5416_etsi_radars;
 			rinfo.numradars = QDF_ARRAY_SIZE(ar5416_etsi_radars);
 		} else {

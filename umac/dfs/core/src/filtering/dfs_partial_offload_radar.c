@@ -291,8 +291,6 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 	int i;
 	uint32_t target_type;
 	int dfsdomain = DFS_FCC_DOMAIN;
-	uint16_t ch_freq;
-	uint16_t regdmn;
 
 	/* Fetch current radar patterns from the lmac */
 	qdf_mem_zero(&rinfo, sizeof(rinfo));
@@ -336,14 +334,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "ETSI domain");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 
-		ch_freq = dfs->dfs_curchan->dfs_ch_freq;
-		regdmn = utils_dfs_get_cur_rd(dfs->dfs_pdev_obj);
-
-		if (((regdmn == ETSI11_WORLD_REGDMN_PAIR_ID) ||
-		    (regdmn == ETSI12_WORLD_REGDMN_PAIR_ID) ||
-		    (regdmn == ETSI13_WORLD_REGDMN_PAIR_ID) ||
-		    (regdmn == ETSI14_WORLD_REGDMN_PAIR_ID)) &&
-		    DFS_CURCHAN_IS_58GHz(ch_freq)) {
+		if (dfs_is_en302_502_applicable(dfs)) {
 			rinfo.dfs_radars = dfs_etsi_radars;
 			rinfo.numradars = QDF_ARRAY_SIZE(dfs_etsi_radars);
 		} else {
