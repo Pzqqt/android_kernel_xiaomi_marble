@@ -29,6 +29,7 @@
 #include "wcd937x-registers.h"
 #include "../msm-cdc-pinctrl.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
+#include "../msm-cdc-supply.h"
 
 #define WCD9370_VARIANT 0
 #define WCD9375_VARIANT 5
@@ -1734,12 +1735,21 @@ struct wcd937x_pdata *wcd937x_populate_dt_data(struct device *dev)
 		return NULL;
 
 	pdata->rst_np = of_parse_phandle(dev->of_node,
-			"qcom,wcd937x-reset-node", 0);
+			"qcom,wcd-rst-gpio-node", 0);
 
 	if (!pdata->rst_np) {
 		dev_err(dev, "%s: Looking up %s property in node %s failed\n",
-				__func__, "qcom,wcd937x-reset-node",
+				__func__, "qcom,wcd-rst-gpio-node",
 				dev->of_node->full_name);
+		return NULL;
+	}
+
+	/* Parse power supplies */
+	msm_cdc_get_power_supplies(dev, &pdata->regulator,
+				   &pdata->num_supplies);
+	if (!pdata->regulator || (pdata->num_supplies <= 0)) {
+		dev_err(dev, "%s: no power supplies defined for codec\n",
+			__func__);
 		return NULL;
 	}
 
@@ -1775,6 +1785,24 @@ static int wcd937x_bind(struct device *dev)
 	 * as per HW requirement.
 	 */
 	usleep_range(5000, 5010);
+
+	ret = msm_cdc_init_supplies(dev, &wcd937x->supplies,
+				    pdata->regulator, pdata->num_supplies);
+	if (!wcd937x->supplies) {
+		dev_err(dev, "%s: Cannot init wcd supplies\n",
+			__func__);
+		return ret;
+	}
+
+	ret = msm_cdc_enable_static_supplies(dev, wcd937x->supplies,
+					     pdata->regulator,
+					     pdata->num_supplies);
+	if (ret) {
+		dev_err(dev, "%s: wcd static supply enable failed!\n",
+			__func__);
+		return ret;
+	}
+
 	ret = component_bind_all(dev, wcd937x);
 	if (ret) {
 		dev_err(dev, "%s: Slave bind failed, ret = %d\n",

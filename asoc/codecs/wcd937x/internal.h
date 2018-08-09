@@ -71,6 +71,7 @@ struct wcd937x_priv {
 			tx_port_mapping[MAX_PORT][MAX_CH_PER_PORT];
 	struct codec_port_info
 			rx_port_mapping[MAX_PORT][MAX_CH_PER_PORT];
+	struct regulator_bulk_data *supplies;
 };
 
 struct wcd937x_micbias_setting {
@@ -85,6 +86,9 @@ struct wcd937x_pdata {
 	struct device_node *rx_slave;
 	struct device_node *tx_slave;
 	struct wcd937x_micbias_setting micbias;
+
+	struct cdc_regulator *regulator;
+	int num_supplies;
 };
 
 enum {
