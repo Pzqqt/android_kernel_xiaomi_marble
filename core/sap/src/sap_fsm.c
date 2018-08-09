@@ -1427,6 +1427,13 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		sap_ap_event.sapHddEventCode = eSAP_START_BSS_EVENT;
 		bss_complete = &sap_ap_event.sapevt.sapStartBssCompleteEvent;
 
+		bss_complete->sessionId = sap_ctx->sessionId;
+		if (bss_complete->sessionId == CSR_SESSION_ID_INVALID) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid sessionId"));
+			return QDF_STATUS_E_INVAL;
+		}
+
 		bss_complete->status = (eSapStatus) context;
 		bss_complete->staId = sap_ctx->sap_sta_id;
 
@@ -1436,7 +1443,6 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 		bss_complete->operatingChannel = (uint8_t) sap_ctx->channel;
 		bss_complete->ch_width = sap_ctx->ch_params.ch_width;
-		bss_complete->sessionId = sap_ctx->sessionId;
 		break;
 	case eSAP_DFS_CAC_START:
 	case eSAP_DFS_CAC_INTERRUPTED:

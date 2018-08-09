@@ -5494,14 +5494,13 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			hdd_clear_fils_connection_info(adapter);
 
 		if (adapter->device_mode == QDF_SAP_MODE) {
+			wlansap_cleanup_cac_timer(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 			/*
 			 * If adapter is SAP, set session ID to invalid
 			 * since SAP session will be cleanup during SSR.
 			 */
 			wlansap_set_invalid_session(
-				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
-
-			wlansap_cleanup_cac_timer(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 		}
 
