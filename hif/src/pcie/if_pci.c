@@ -3343,10 +3343,14 @@ static void hif_ce_srng_msi_irq_enable(struct hif_softc *hif_sc, int ce_id)
 }
 
 static void hif_ce_legacy_msi_irq_disable(struct hif_softc *hif_sc, int ce_id)
-{}
+{
+	disable_irq_nosync(hif_ce_msi_map_ce_to_irq(hif_sc, ce_id));
+}
 
 static void hif_ce_legacy_msi_irq_enable(struct hif_softc *hif_sc, int ce_id)
-{}
+{
+	enable_irq(hif_ce_msi_map_ce_to_irq(hif_sc, ce_id));
+}
 
 static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 {
@@ -3647,6 +3651,7 @@ static bool hif_is_pld_based_target(int device_id)
 	case QCA6390_DEVICE_ID:
 #endif
 	case AR6320_DEVICE_ID:
+	case QCN7605_DEVICE_ID:
 		return true;
 	}
 	return false;

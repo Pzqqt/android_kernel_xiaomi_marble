@@ -812,6 +812,7 @@ int hif_get_device_type(uint32_t device_id,
 		HIF_INFO(" *********** QCA6290EMU *************\n");
 		break;
 
+	case QCN7605_DEVICE_ID:
 	case QCN7605_COMPOSITE:
 	case QCN7605_STANDALONE:
 		*hif_type = HIF_TYPE_QCN7605;

@@ -96,6 +96,7 @@
 					emulation purpose */
 #define QCA8074V2_DEVICE_ID (0xfffe) /* Todo: replace this with actual number */
 /* Genoa */
+#define QCN7605_DEVICE_ID  (0x1102) /* Genoa PCIe device ID*/
 #define QCN7605_COMPOSITE  (0x9900)
 #define QCN7605_STANDALONE  (0x9901)
 
