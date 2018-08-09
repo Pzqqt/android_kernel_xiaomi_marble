@@ -21,9 +21,18 @@
 
 /* Convert from vout ctl to micbias voltage in mV */
 #define  WCD_VOUT_CTL_TO_MICB(v)  (1000 + v * 50)
+#define MAX_PORT 8
+#define MAX_CH_PER_PORT 8
 
 extern struct regmap_config wcd937x_regmap_config;
 
+struct codec_port_info {
+	u32 slave_port_type;
+	u32 master_port_type;
+	u32 ch_mask;
+	u32 num_ch;
+	u32 ch_rate;
+};
 struct wcd937x_priv {
 	struct device *dev;
 
@@ -55,6 +64,13 @@ struct wcd937x_priv {
 	struct wcd_irq_info *irq_info;
 	u32 rx_clk_cnt;
 	int num_irq_regs;
+
+	u8 num_tx_ports;
+	u8 num_rx_ports;
+	struct codec_port_info
+			tx_port_mapping[MAX_PORT][MAX_CH_PER_PORT];
+	struct codec_port_info
+			rx_port_mapping[MAX_PORT][MAX_CH_PER_PORT];
 };
 
 struct wcd937x_micbias_setting {
