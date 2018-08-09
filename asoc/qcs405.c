@@ -1264,38 +1264,44 @@ static int cdc_dma_get_sample_rate_val(int sample_rate)
 	case SAMPLING_RATE_8KHZ:
 		sample_rate_val = 0;
 		break;
-	case SAMPLING_RATE_16KHZ:
+	case SAMPLING_RATE_11P025KHZ:
 		sample_rate_val = 1;
 		break;
-	case SAMPLING_RATE_32KHZ:
+	case SAMPLING_RATE_16KHZ:
 		sample_rate_val = 2;
 		break;
-	case SAMPLING_RATE_44P1KHZ:
+	case SAMPLING_RATE_22P05KHZ:
 		sample_rate_val = 3;
 		break;
-	case SAMPLING_RATE_48KHZ:
+	case SAMPLING_RATE_32KHZ:
 		sample_rate_val = 4;
 		break;
-	case SAMPLING_RATE_88P2KHZ:
+	case SAMPLING_RATE_44P1KHZ:
 		sample_rate_val = 5;
 		break;
-	case SAMPLING_RATE_96KHZ:
+	case SAMPLING_RATE_48KHZ:
 		sample_rate_val = 6;
 		break;
-	case SAMPLING_RATE_176P4KHZ:
+	case SAMPLING_RATE_88P2KHZ:
 		sample_rate_val = 7;
 		break;
-	case SAMPLING_RATE_192KHZ:
+	case SAMPLING_RATE_96KHZ:
 		sample_rate_val = 8;
 		break;
-	case SAMPLING_RATE_352P8KHZ:
+	case SAMPLING_RATE_176P4KHZ:
 		sample_rate_val = 9;
 		break;
-	case SAMPLING_RATE_384KHZ:
+	case SAMPLING_RATE_192KHZ:
 		sample_rate_val = 10;
 		break;
+	case SAMPLING_RATE_352P8KHZ:
+		sample_rate_val = 11;
+		break;
+	case SAMPLING_RATE_384KHZ:
+		sample_rate_val = 12;
+		break;
 	default:
-		sample_rate_val = 4;
+		sample_rate_val = 6;
 		break;
 	}
 	return sample_rate_val;
@@ -1310,33 +1316,39 @@ static int cdc_dma_get_sample_rate(int value)
 		sample_rate = SAMPLING_RATE_8KHZ;
 		break;
 	case 1:
-		sample_rate = SAMPLING_RATE_16KHZ;
+		sample_rate = SAMPLING_RATE_11P025KHZ;
 		break;
 	case 2:
-		sample_rate = SAMPLING_RATE_32KHZ;
+		sample_rate = SAMPLING_RATE_16KHZ;
 		break;
 	case 3:
-		sample_rate = SAMPLING_RATE_44P1KHZ;
+		sample_rate = SAMPLING_RATE_22P05KHZ;
 		break;
 	case 4:
-		sample_rate = SAMPLING_RATE_48KHZ;
+		sample_rate = SAMPLING_RATE_32KHZ;
 		break;
 	case 5:
-		sample_rate = SAMPLING_RATE_88P2KHZ;
+		sample_rate = SAMPLING_RATE_44P1KHZ;
 		break;
 	case 6:
-		sample_rate = SAMPLING_RATE_96KHZ;
+		sample_rate = SAMPLING_RATE_48KHZ;
 		break;
 	case 7:
-		sample_rate = SAMPLING_RATE_176P4KHZ;
+		sample_rate = SAMPLING_RATE_88P2KHZ;
 		break;
 	case 8:
-		sample_rate = SAMPLING_RATE_192KHZ;
+		sample_rate = SAMPLING_RATE_96KHZ;
 		break;
 	case 9:
-		sample_rate = SAMPLING_RATE_352P8KHZ;
+		sample_rate = SAMPLING_RATE_176P4KHZ;
 		break;
 	case 10:
+		sample_rate = SAMPLING_RATE_192KHZ;
+		break;
+	case 11:
+		sample_rate = SAMPLING_RATE_352P8KHZ;
+		break;
+	case 12:
 		sample_rate = SAMPLING_RATE_384KHZ;
 		break;
 	default:
