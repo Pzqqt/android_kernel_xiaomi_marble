@@ -1762,9 +1762,10 @@ uint32_t target_if_spectral_sops_get_params(
  *
  * This is a workaround.
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void target_if_init_spectral_capability(struct target_if_spectral *spectral);
+QDF_STATUS
+target_if_init_spectral_capability(struct target_if_spectral *spectral);
 
 /**
  * target_if_start_spectral_scan() - Start spectral scan

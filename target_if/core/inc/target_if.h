@@ -1286,6 +1286,25 @@ static inline struct wlan_psoc_host_dbr_ring_caps
 
 	return psoc_info->info.dbr_ring_cap;
 }
+
+/**
+ * target_psoc_get_spectral_scaling_params() - get Spectral scaling params
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get Spectral scaling params
+ *
+ * Return: structure pointer to wlan_psoc_host_spectral_scaling_params
+ */
+static inline struct wlan_psoc_host_spectral_scaling_params
+		*target_psoc_get_spectral_scaling_params(
+		struct target_psoc_info *psoc_info)
+{
+	if (!psoc_info)
+		return NULL;
+
+	return psoc_info->info.scaling_params;
+}
+
 /**
  * target_psoc_get_mem_chunks() - get mem_chunks
  * @psoc_info:  pointer to structure target_psoc_info

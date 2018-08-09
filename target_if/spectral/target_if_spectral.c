@@ -1267,12 +1267,36 @@ target_if_spectral_get_macaddr(void *arg, char *addr)
  *
  * This is a workaround.
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void
+QDF_STATUS
 target_if_init_spectral_capability(struct target_if_spectral *spectral)
 {
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_psoc_host_spectral_scaling_params *scaling_params;
+	uint8_t num_bin_scaling_params, param_idx, pdev_id;
+	struct target_psoc_info *tgt_psoc_info;
+	struct wlan_psoc_host_service_ext_param *ext_svc_param;
 	struct spectral_caps *pcap = &spectral->capability;
+
+	pdev = spectral->pdev_obj;
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_psoc_info) {
+		spectral_err("target_psoc_info is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ext_svc_param = target_psoc_get_service_ext_param(tgt_psoc_info);
+	num_bin_scaling_params = ext_svc_param->num_bin_scaling_params;
+	scaling_params = target_psoc_get_spectral_scaling_params(tgt_psoc_info);
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 
 	/* XXX : Workaround: Set Spectral capability */
 	pcap = &spectral->capability;
@@ -1281,6 +1305,23 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral)
 	pcap->spectral_cap = 1;
 	pcap->advncd_spectral_cap = 1;
 	pcap->hw_gen = spectral->spectral_gen;
+
+	for (param_idx = 0; param_idx < num_bin_scaling_params; param_idx++) {
+		if (scaling_params[param_idx].pdev_id == pdev_id) {
+			pcap->is_scaling_params_populated = true;
+			pcap->formula_id = scaling_params[param_idx].formula_id;
+			pcap->low_level_offset =
+				scaling_params[param_idx].low_level_offset;
+			pcap->high_level_offset =
+				scaling_params[param_idx].high_level_offset;
+			pcap->rssi_thr = scaling_params[param_idx].rssi_thr;
+			pcap->default_agc_max_gain =
+				scaling_params[param_idx].default_agc_max_gain;
+			break;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef QCA_SUPPORT_SPECTRAL_SIMULATION
@@ -1925,7 +1966,11 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 
 	spectral->params_valid = false;
 	/* Init spectral capability */
-	target_if_init_spectral_capability(spectral);
+	if (target_if_init_spectral_capability(spectral) !=
+					QDF_STATUS_SUCCESS) {
+		qdf_mem_free(spectral);
+		return NULL;
+	}
 	if (target_if_spectral_attach_simulation(spectral) < 0)
 		return NULL;
 

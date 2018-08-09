@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -550,7 +550,7 @@ int wlan_cfg80211_spectral_scan_get_cap(struct wiphy *wiphy,
 
 	wlan_spectral_get_cap(pdev, &spectral_cap);
 
-	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, 5 * sizeof(u32) +
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, 10 * sizeof(u32) +
 		NLA_HDRLEN + NLMSG_HDRLEN);
 	if (!skb) {
 		qdf_print(" reply skb alloc failed");
@@ -584,6 +584,38 @@ int wlan_cfg80211_spectral_scan_get_cap(struct wiphy *wiphy,
 			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_HW_GEN,
 			spectral_cap.hw_gen))
 		goto fail;
+
+	if (spectral_cap.is_scaling_params_populated) {
+		if (nla_put_u16(
+			skb,
+			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_FORMULA_ID,
+			spectral_cap.formula_id))
+			goto fail;
+
+		if (nla_put_u16(
+			skb,
+			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_LOW_LEVEL_OFFSET,
+			spectral_cap.low_level_offset))
+			goto fail;
+
+		if (nla_put_u16(
+		       skb,
+		       QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_HIGH_LEVEL_OFFSET,
+		       spectral_cap.high_level_offset))
+			goto fail;
+
+		if (nla_put_u16(
+			skb,
+			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_RSSI_THR,
+			spectral_cap.rssi_thr))
+			goto fail;
+
+		if (nla_put_u8(
+		    skb,
+		    QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CAP_DEFAULT_AGC_MAX_GAIN,
+		    spectral_cap.default_agc_max_gain))
+			goto fail;
+	}
 
 	qal_devcfg_send_response((qdf_nbuf_t)skb);
 

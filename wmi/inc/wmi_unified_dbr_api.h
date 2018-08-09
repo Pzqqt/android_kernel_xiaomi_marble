@@ -39,22 +39,6 @@ QDF_STATUS wmi_unified_dbr_ring_cfg(void *wmi_hdl,
 				struct direct_buf_rx_cfg_req *cfg);
 
 /**
- * wmi_extract_spectral_scaling_params_service_ready_ext: Extract Spectral
- *                                             scaling params received through
- *                                             extended service ready event
- * @wmi_hdl: WMI handle
- * @evt_buf: Event buffer
- * @idx: Index
- * @param: Pointer to Spectral scaling params
- *
- * Return: QDF status of operation
- */
-QDF_STATUS wmi_extract_spectral_scaling_params_service_ready_ext(
-			void *wmi_hdl,
-			uint8_t *evt_buf, uint8_t idx,
-			struct wlan_psoc_host_spectral_scaling_params *param);
-
-/**
  * wmi_extract_dbr_buf_release_fixed : Extract direct buffer rx fixed param
  *				     from buffer release event
  * @wmi_hdl: WMI handle

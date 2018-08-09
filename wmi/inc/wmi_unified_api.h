@@ -1303,6 +1303,22 @@ QDF_STATUS wmi_extract_dbr_ring_cap_service_ready_ext(
 			uint8_t *evt_buf, uint8_t idx,
 			struct wlan_psoc_host_dbr_ring_caps *param);
 
+/**
+ * wmi_extract_spectral_scaling_params_service_ready_ext: Extract Spectral
+ *                                             scaling params received through
+ *                                             extended service ready event
+ * @wmi_hdl: WMI handle
+ * @evt_buf: Event buffer
+ * @idx: Index
+ * @param: Pointer to Spectral scaling params
+ *
+ * Return: QDF status of operation
+ */
+QDF_STATUS wmi_extract_spectral_scaling_params_service_ready_ext(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t idx,
+			struct wlan_psoc_host_spectral_scaling_params *param);
+
 QDF_STATUS wmi_extract_pdev_utf_event(void *wmi_hdl,
 				      uint8_t *evt_buf,
 				      struct wmi_host_pdev_utf_event *param);

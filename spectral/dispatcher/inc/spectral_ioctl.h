@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -105,6 +105,12 @@ enum spectral_cap_hw_gen {
  * @spectral_cap:        Spectral capability
  * @advncd_spectral_cap: Advanced spectral capability
  * @hw_gen: Spectral hw generation as defined in spectral_cap_hw_gen
+ * @is_scaling_params_populated: indicates whether scaling params is populated
+ * @formula_id: formula_id
+ * @low_level_offset: low_level_offset
+ * @high_level_offset: high_level_offset
+ * @rssi_thr: rssi_thr
+ * @default_agc_max_gain: default_agc_max_gain
  */
 struct spectral_caps {
 	uint8_t phydiag_cap;
@@ -112,6 +118,12 @@ struct spectral_caps {
 	uint8_t spectral_cap;
 	uint8_t advncd_spectral_cap;
 	uint32_t hw_gen;
+	bool is_scaling_params_populated;
+	uint16_t formula_id;
+	int16_t low_level_offset;
+	int16_t high_level_offset;
+	int16_t rssi_thr;
+	uint8_t default_agc_max_gain;
 };
 
 #define SPECTRAL_IOCTL_PARAM_NOVAL (65535)
