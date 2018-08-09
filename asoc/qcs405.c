@@ -31,6 +31,7 @@
 #include <dsp/audio_notifier.h>
 #include <dsp/q6afe-v2.h>
 #include <dsp/q6core.h>
+#include <dsp/msm_mdf.h>
 #include "device_event.h"
 #include "msm-pcm-routing-v2.h"
 #include "codecs/msm-cdc-pinctrl.h"
@@ -8402,6 +8403,11 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	dev_info(&pdev->dev, "Sound card %s registered\n", card->name);
 	spdev = pdev;
 
+	ret = msm_mdf_mem_init();
+	if (ret)
+		dev_err(&pdev->dev, "msm_mdf_mem_init failed (%d)\n",
+			 ret);
+
 	/* Parse pinctrl info from devicetree */
 	ret = msm_get_pinctrl(pdev);
 	if (!ret) {
@@ -8426,6 +8432,7 @@ static int msm_asoc_machine_remove(struct platform_device *pdev)
 {
 	audio_notifier_deregister("qcs405");
 	msm_i2s_auxpcm_deinit();
+	msm_mdf_mem_deinit();
 
 	msm_release_pinctrl(pdev);
 	return 0;

@@ -123,6 +123,10 @@ ifdef CONFIG_MSM_ULTRASOUND
 USF_OBJS += usf.o usfcdev.o q6usm.o
 endif
 
+ifdef CONFIG_MSM_MDF
+	Q6_OBJS += msm_mdf.o
+endif
+
 LINUX_INC +=	-Iinclude/linux
 
 INCS +=		$(COMMON_INC) \

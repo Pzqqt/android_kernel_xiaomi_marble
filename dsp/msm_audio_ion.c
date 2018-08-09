@@ -220,6 +220,28 @@ err:
 	return rc;
 }
 
+int msm_audio_ion_get_smmu_info(struct device **cb_dev,
+		u64 *smmu_sid)
+{
+	if (!cb_dev || !smmu_sid) {
+		pr_err("%s: Invalid params\n",
+			__func__);
+		return -EINVAL;
+	}
+
+	if (!msm_audio_ion_data.cb_dev ||
+		!msm_audio_ion_data.smmu_sid_bits) {
+		pr_err("%s: Params not initialized\n",
+			__func__);
+		return -EINVAL;
+	}
+
+	*cb_dev = msm_audio_ion_data.cb_dev;
+	*smmu_sid = msm_audio_ion_data.smmu_sid_bits;
+
+	return 0;
+}
+
 static void *msm_audio_ion_map_kernel(struct dma_buf *dma_buf)
 {
 	int rc = 0;

@@ -33,4 +33,5 @@ int msm_audio_ion_mmap(struct audio_buffer *abuff, struct vm_area_struct *vma);
 int msm_audio_ion_cache_operations(struct audio_buffer *abuff, int cache_op);
 
 u32 msm_audio_populate_upper_32_bits(dma_addr_t pa);
+int msm_audio_ion_get_smmu_info(struct device **cb_dev, u64 *smmu_sid);
 #endif /* _LINUX_MSM_AUDIO_ION_H */
