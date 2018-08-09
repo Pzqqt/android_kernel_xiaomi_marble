@@ -1694,8 +1694,10 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		if (rssi < SOFTAP_MIN_RSSI)
 			rssi = SOFTAP_MIN_RSSI;
 
-		if (pSpectCh->weight == SAP_ACS_WEIGHT_MAX)
+		if (pSpectCh->weight == SAP_ACS_WEIGHT_MAX) {
+			pSpectCh->weight_copy = pSpectCh->weight;
 			goto debug_info;
+		}
 
 		/* There may be channels in scanlist, which were not sent to
 		 * FW for scanning as part of ACS scan list, but they do have an
