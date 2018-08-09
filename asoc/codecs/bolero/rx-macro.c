@@ -189,7 +189,8 @@ struct rx_swr_ctrl_platform_data {
 };
 
 enum {
-	RX_MACRO_AIF1_PB = 0,
+	RX_MACRO_AIF_INVALID = 0,
+	RX_MACRO_AIF1_PB,
 	RX_MACRO_AIF2_PB,
 	RX_MACRO_AIF3_PB,
 	RX_MACRO_AIF4_PB,
@@ -1301,16 +1302,16 @@ static int rx_macro_mux_put(struct snd_kcontrol *kcontrol,
 	switch (rx_port_value) {
 	case 0:
 		clear_bit(widget->shift,
-			&rx_priv->active_ch_mask[aif_rst - 1]);
-		rx_priv->active_ch_cnt[aif_rst - 1]--;
+			&rx_priv->active_ch_mask[aif_rst]);
+		rx_priv->active_ch_cnt[aif_rst]--;
 		break;
 	case 1:
 	case 2:
 	case 3:
 	case 4:
 		set_bit(widget->shift,
-			&rx_priv->active_ch_mask[rx_port_value - 1]);
-		rx_priv->active_ch_cnt[rx_port_value - 1]++;
+			&rx_priv->active_ch_mask[rx_port_value]);
+		rx_priv->active_ch_cnt[rx_port_value]++;
 		break;
 	default:
 		dev_err(codec->dev,
