@@ -2725,6 +2725,16 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		return -EBUSY;
 	}
 
+	if (!policy_mgr_allow_concurrency(
+				hdd_ctx->hdd_psoc,
+				policy_mgr_convert_device_mode_to_qdf_type(
+					adapter->device_mode),
+				target_channel,
+				HW_MODE_20_MHZ)) {
+		hdd_err("Channel switch failed due to concurrency check failure");
+		return -EINVAL;
+	}
+
 	status = policy_mgr_reset_chan_switch_complete_evt(hdd_ctx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("clear event failed");
