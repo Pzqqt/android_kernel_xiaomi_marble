@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -688,80 +688,80 @@ void qdf_nbuf_map_check_for_leaks(void);
 QDF_STATUS qdf_nbuf_map_debug(qdf_device_t osdev,
 			      qdf_nbuf_t buf,
 			      qdf_dma_dir_t dir,
-			      const char *file,
+			      const char *func,
 			      uint32_t line);
 
 #define qdf_nbuf_map(osdev, buf, dir) \
-	qdf_nbuf_map_debug(osdev, buf, dir, __FILE__, __LINE__)
+	qdf_nbuf_map_debug(osdev, buf, dir, __func__, __LINE__)
 
 void qdf_nbuf_unmap_debug(qdf_device_t osdev,
 			  qdf_nbuf_t buf,
 			  qdf_dma_dir_t dir,
-			  const char *file,
+			  const char *func,
 			  uint32_t line);
 
 #define qdf_nbuf_unmap(osdev, buf, dir) \
-	qdf_nbuf_unmap_debug(osdev, buf, dir, __FILE__, __LINE__)
+	qdf_nbuf_unmap_debug(osdev, buf, dir, __func__, __LINE__)
 
 QDF_STATUS qdf_nbuf_map_single_debug(qdf_device_t osdev,
 				     qdf_nbuf_t buf,
 				     qdf_dma_dir_t dir,
-				     const char *file,
+				     const char *func,
 				     uint32_t line);
 
 #define qdf_nbuf_map_single(osdev, buf, dir) \
-	qdf_nbuf_map_single_debug(osdev, buf, dir, __FILE__, __LINE__)
+	qdf_nbuf_map_single_debug(osdev, buf, dir, __func__, __LINE__)
 
 void qdf_nbuf_unmap_single_debug(qdf_device_t osdev,
 				 qdf_nbuf_t buf,
 				 qdf_dma_dir_t dir,
-				 const char *file,
+				 const char *func,
 				 uint32_t line);
 
 #define qdf_nbuf_unmap_single(osdev, buf, dir) \
-	qdf_nbuf_unmap_single_debug(osdev, buf, dir, __FILE__, __LINE__)
+	qdf_nbuf_unmap_single_debug(osdev, buf, dir, __func__, __LINE__)
 
 QDF_STATUS qdf_nbuf_map_nbytes_debug(qdf_device_t osdev,
 				     qdf_nbuf_t buf,
 				     qdf_dma_dir_t dir,
 				     int nbytes,
-				     const char *file,
+				     const char *func,
 				     uint32_t line);
 
 #define qdf_nbuf_map_nbytes(osdev, buf, dir, nbytes) \
-	qdf_nbuf_map_nbytes_debug(osdev, buf, dir, nbytes, __FILE__, __LINE__)
+	qdf_nbuf_map_nbytes_debug(osdev, buf, dir, nbytes, __func__, __LINE__)
 
 void qdf_nbuf_unmap_nbytes_debug(qdf_device_t osdev,
 				 qdf_nbuf_t buf,
 				 qdf_dma_dir_t dir,
 				 int nbytes,
-				 const char *file,
+				 const char *func,
 				 uint32_t line);
 
 #define qdf_nbuf_unmap_nbytes(osdev, buf, dir, nbytes) \
-	qdf_nbuf_unmap_nbytes_debug(osdev, buf, dir, nbytes, __FILE__, __LINE__)
+	qdf_nbuf_unmap_nbytes_debug(osdev, buf, dir, nbytes, __func__, __LINE__)
 
 QDF_STATUS qdf_nbuf_map_nbytes_single_debug(qdf_device_t osdev,
 					    qdf_nbuf_t buf,
 					    qdf_dma_dir_t dir,
 					    int nbytes,
-					    const char *file,
+					    const char *func,
 					    uint32_t line);
 
 #define qdf_nbuf_map_nbytes_single(osdev, buf, dir, nbytes) \
 	qdf_nbuf_map_nbytes_single_debug(osdev, buf, dir, nbytes, \
-					 __FILE__, __LINE__)
+					 __func__, __LINE__)
 
 void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
 					qdf_nbuf_t buf,
 					qdf_dma_dir_t dir,
 					int nbytes,
-					const char *file,
+					const char *func,
 					uint32_t line);
 
 #define qdf_nbuf_unmap_nbytes_single(osdev, buf, dir, nbytes) \
 	qdf_nbuf_unmap_nbytes_single_debug(osdev, buf, dir, nbytes, \
-					   __FILE__, __LINE__)
+					   __func__, __LINE__)
 
 #else /* NBUF_MAP_UNMAP_DEBUG */
 
@@ -1355,20 +1355,20 @@ void qdf_net_buf_debug_init(void);
 void qdf_net_buf_debug_exit(void);
 void qdf_net_buf_debug_clean(void);
 void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
-			uint8_t *file_name, uint32_t line_num);
+				const char *func_name, uint32_t line_num);
 /**
  * qdf_net_buf_debug_update_node() - update nbuf in debug hash table
  *
  * Return: none
  */
-void qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, uint8_t *file_name,
+void qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, const char *func_name,
 				   uint32_t line_num);
 void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf);
 
 /**
  * qdf_net_buf_debug_acquire_skb() - acquire skb to avoid memory leak
  * @net_buf: Network buf holding head segment (single)
- * @file_name: pointer to file name
+ * @func_name: pointer to function name
  * @line_num: line number
  *
  * WLAN driver module's SKB which are allocated by network stack are
@@ -1378,30 +1378,31 @@ void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf);
  * Return: none
  */
 void qdf_net_buf_debug_acquire_skb(qdf_nbuf_t net_buf,
-			uint8_t *file_name, uint32_t line_num);
+				   const char *func_name,
+				   uint32_t line_num);
 void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf);
 
 /* nbuf allocation rouines */
 
 #define qdf_nbuf_alloc(d, s, r, a, p) \
-	qdf_nbuf_alloc_debug(d, s, r, a, p, __FILE__, __LINE__)
+	qdf_nbuf_alloc_debug(d, s, r, a, p, __func__, __LINE__)
 
 qdf_nbuf_t qdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size,
 				int reserve, int align, int prio,
-				uint8_t *file, uint32_t line);
+				const char *func, uint32_t line);
 
 #define qdf_nbuf_free(d) \
-	qdf_nbuf_free_debug(d, __FILE__, __LINE__)
+	qdf_nbuf_free_debug(d, __func__, __LINE__)
 
-void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, uint8_t *file, uint32_t line);
+void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, const char *func, uint32_t line);
 
 #define qdf_nbuf_clone(buf)     \
-	qdf_nbuf_clone_debug(buf, __FILE__, __LINE__)
+	qdf_nbuf_clone_debug(buf, __func__, __LINE__)
 
 /**
  * qdf_nbuf_clone_debug() - clone the nbuf (copy is readonly)
  * @buf: nbuf to clone from
- * @file_name: pointer to file name
+ * @func_name: pointer to function name
  * @line_num: line number
  *
  * This function clones the nbuf and creates a memory tracking
@@ -1410,8 +1411,7 @@ void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, uint8_t *file, uint32_t line);
  * Return: cloned buffer
  */
 static inline qdf_nbuf_t
-qdf_nbuf_clone_debug(qdf_nbuf_t buf, uint8_t *file_name,
-			uint32_t line_num)
+qdf_nbuf_clone_debug(qdf_nbuf_t buf, const char *func_name, uint32_t line_num)
 {
 	qdf_nbuf_t cloned_buf;
 
@@ -1419,18 +1419,18 @@ qdf_nbuf_clone_debug(qdf_nbuf_t buf, uint8_t *file_name,
 
 	/* Store SKB in internal QDF tracking table */
 	if (qdf_likely(cloned_buf))
-		qdf_net_buf_debug_add_node(cloned_buf, 0, file_name, line_num);
+		qdf_net_buf_debug_add_node(cloned_buf, 0, func_name, line_num);
 
 	return cloned_buf;
 }
 
 #define qdf_nbuf_copy(buf)     \
-	qdf_nbuf_copy_debug(buf, __FILE__, __LINE__)
+	qdf_nbuf_copy_debug(buf, __func__, __LINE__)
 
 /**
  * qdf_nbuf_copy_debug() - returns a private copy of the buf
  * @buf: nbuf to copy from
- * @file_name: pointer to file name
+ * @func_name: pointer to function name
  * @line_num: line number
  *
  * This API returns a private copy of the buf, the buf returned is completely
@@ -1440,8 +1440,7 @@ qdf_nbuf_clone_debug(qdf_nbuf_t buf, uint8_t *file_name,
  * Return: copied buffer
  */
 static inline qdf_nbuf_t
-qdf_nbuf_copy_debug(qdf_nbuf_t buf, uint8_t *file_name,
-			uint32_t line_num)
+qdf_nbuf_copy_debug(qdf_nbuf_t buf, const char *func_name, uint32_t line_num)
 {
 	qdf_nbuf_t copied_buf;
 
@@ -1449,7 +1448,7 @@ qdf_nbuf_copy_debug(qdf_nbuf_t buf, uint8_t *file_name,
 
 	/* Store SKB in internal QDF tracking table */
 	if (qdf_likely(copied_buf))
-		qdf_net_buf_debug_add_node(copied_buf, 0, file_name, line_num);
+		qdf_net_buf_debug_add_node(copied_buf, 0, func_name, line_num);
 
 	return copied_buf;
 }
@@ -1460,7 +1459,8 @@ static inline void qdf_net_buf_debug_init(void) {}
 static inline void qdf_net_buf_debug_exit(void) {}
 
 static inline void qdf_net_buf_debug_acquire_skb(qdf_nbuf_t net_buf,
-			uint8_t *file_name, uint32_t line_num)
+						 const char *func_name,
+						 uint32_t line_num)
 {
 }
 
@@ -1469,7 +1469,7 @@ static inline void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf)
 }
 
 static inline void
-qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, uint8_t *file_name,
+qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, const char *func_name,
 			      uint32_t line_num)
 {
 }
@@ -3097,10 +3097,10 @@ qdf_nbuf_linearize(qdf_nbuf_t buf)
 
 #ifdef NBUF_MEMORY_DEBUG
 #define qdf_nbuf_unshare(d) \
-	qdf_nbuf_unshare_debug(d, __FILE__, __LINE__)
+	qdf_nbuf_unshare_debug(d, __func__, __LINE__)
 
 static inline qdf_nbuf_t
-qdf_nbuf_unshare_debug(qdf_nbuf_t buf, uint8_t *file_name, uint32_t line_num)
+qdf_nbuf_unshare_debug(qdf_nbuf_t buf, const char *func_name, uint32_t line_num)
 {
 	qdf_nbuf_t unshared_buf;
 
@@ -3110,7 +3110,7 @@ qdf_nbuf_unshare_debug(qdf_nbuf_t buf, uint8_t *file_name, uint32_t line_num)
 		qdf_net_buf_debug_delete_node(buf);
 
 		qdf_net_buf_debug_add_node(unshared_buf, 0,
-					   file_name, line_num);
+					   func_name, line_num);
 	}
 
 	return unshared_buf;

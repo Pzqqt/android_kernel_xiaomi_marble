@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -544,7 +544,7 @@ enum qdf_nbuf_event_type {
 
 struct qdf_nbuf_event {
 	qdf_nbuf_t nbuf;
-	char file[QDF_MEM_FILE_NAME_SIZE];
+	char func[QDF_MEM_FUNC_NAME_SIZE];
 	uint32_t line;
 	enum qdf_nbuf_event_type type;
 	uint64_t timestamp;
@@ -565,7 +565,7 @@ static int32_t qdf_nbuf_circular_index_next(qdf_atomic_t *index, int size)
 }
 
 static void
-qdf_nbuf_history_add(qdf_nbuf_t nbuf, const char *file, uint32_t line,
+qdf_nbuf_history_add(qdf_nbuf_t nbuf, const char *func, uint32_t line,
 		     enum qdf_nbuf_event_type type)
 {
 	int32_t idx = qdf_nbuf_circular_index_next(&qdf_nbuf_history_index,
@@ -573,7 +573,7 @@ qdf_nbuf_history_add(qdf_nbuf_t nbuf, const char *file, uint32_t line,
 	struct qdf_nbuf_event *event = &qdf_nbuf_history[idx];
 
 	event->nbuf = nbuf;
-	qdf_str_lcopy(event->file, kbasename(file), QDF_MEM_FILE_NAME_SIZE);
+	qdf_str_lcopy(event->func, func, QDF_MEM_FUNC_NAME_SIZE);
 	event->line = line;
 	event->type = type;
 	event->timestamp = qdf_get_log_timestamp();
@@ -584,7 +584,7 @@ qdf_nbuf_history_add(qdf_nbuf_t nbuf, const char *file, uint32_t line,
 struct qdf_nbuf_map_metadata {
 	struct hlist_node node;
 	qdf_nbuf_t nbuf;
-	char file[QDF_MEM_FILE_NAME_SIZE];
+	char func[QDF_MEM_FUNC_NAME_SIZE];
 	uint32_t line;
 };
 
@@ -615,7 +615,7 @@ static void qdf_nbuf_map_leaks_print(void)
 	hash_for_each(qdf_nbuf_map_ht, bucket, meta, node) {
 		count++;
 		qdf_nofl_alert("0x%zx @ %s:%u",
-			       (uintptr_t)meta->nbuf, meta->file, meta->line);
+			       (uintptr_t)meta->nbuf, meta->func, meta->line);
 	}
 
 	QDF_DEBUG_PANIC("%u fatal nbuf map-no-unmap events detected!", count);
@@ -651,7 +651,7 @@ static struct qdf_nbuf_map_metadata *qdf_nbuf_meta_get(qdf_nbuf_t nbuf)
 }
 
 static QDF_STATUS
-qdf_nbuf_track_map(qdf_nbuf_t nbuf, const char *file, uint32_t line)
+qdf_nbuf_track_map(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 {
 	struct qdf_nbuf_map_metadata *meta;
 
@@ -667,7 +667,7 @@ qdf_nbuf_track_map(qdf_nbuf_t nbuf, const char *file, uint32_t line)
 	if (meta)
 		QDF_DEBUG_PANIC(
 			"Double nbuf map detected @ %s:%u; last map from %s:%u",
-			kbasename(file), line, meta->file, meta->line);
+			func, line, meta->func, meta->line);
 
 	meta = qdf_flex_mem_alloc(&qdf_nbuf_map_pool);
 	if (!meta) {
@@ -676,20 +676,20 @@ qdf_nbuf_track_map(qdf_nbuf_t nbuf, const char *file, uint32_t line)
 	}
 
 	meta->nbuf = nbuf;
-	qdf_str_lcopy(meta->file, kbasename(file), QDF_MEM_FILE_NAME_SIZE);
+	qdf_str_lcopy(meta->func, func, QDF_MEM_FUNC_NAME_SIZE);
 	meta->line = line;
 
 	qdf_spin_lock_irqsave(&qdf_nbuf_map_lock);
 	hash_add(qdf_nbuf_map_ht, &meta->node, (size_t)nbuf);
 	qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
 
-	qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_MAP);
+	qdf_nbuf_history_add(nbuf, func, line, QDF_NBUF_MAP);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 static void
-qdf_nbuf_untrack_map(qdf_nbuf_t nbuf, const char *file, uint32_t line)
+qdf_nbuf_untrack_map(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 {
 	struct qdf_nbuf_map_metadata *meta;
 
@@ -705,31 +705,31 @@ qdf_nbuf_untrack_map(qdf_nbuf_t nbuf, const char *file, uint32_t line)
 	if (!meta)
 		QDF_DEBUG_PANIC(
 		      "Double nbuf unmap or unmap without map detected @ %s:%u",
-		      kbasename(file), line);
+		      func, line);
 
 	hash_del(&meta->node);
 	qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
 
 	qdf_flex_mem_free(&qdf_nbuf_map_pool, meta);
 
-	qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_UNMAP);
+	qdf_nbuf_history_add(nbuf, func, line, QDF_NBUF_UNMAP);
 }
 
 QDF_STATUS qdf_nbuf_map_debug(qdf_device_t osdev,
 			      qdf_nbuf_t buf,
 			      qdf_dma_dir_t dir,
-			      const char *file,
+			      const char *func,
 			      uint32_t line)
 {
 	QDF_STATUS status;
 
-	status = qdf_nbuf_track_map(buf, file, line);
+	status = qdf_nbuf_track_map(buf, func, line);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
 	status = __qdf_nbuf_map(osdev, buf, dir);
 	if (QDF_IS_STATUS_ERROR(status))
-		qdf_nbuf_untrack_map(buf, file, line);
+		qdf_nbuf_untrack_map(buf, func, line);
 
 	return status;
 }
@@ -739,10 +739,10 @@ qdf_export_symbol(qdf_nbuf_map_debug);
 void qdf_nbuf_unmap_debug(qdf_device_t osdev,
 			  qdf_nbuf_t buf,
 			  qdf_dma_dir_t dir,
-			  const char *file,
+			  const char *func,
 			  uint32_t line)
 {
-	qdf_nbuf_untrack_map(buf, file, line);
+	qdf_nbuf_untrack_map(buf, func, line);
 	__qdf_nbuf_unmap_single(osdev, buf, dir);
 }
 
@@ -751,18 +751,18 @@ qdf_export_symbol(qdf_nbuf_unmap_debug);
 QDF_STATUS qdf_nbuf_map_single_debug(qdf_device_t osdev,
 				     qdf_nbuf_t buf,
 				     qdf_dma_dir_t dir,
-				     const char *file,
+				     const char *func,
 				     uint32_t line)
 {
 	QDF_STATUS status;
 
-	status = qdf_nbuf_track_map(buf, file, line);
+	status = qdf_nbuf_track_map(buf, func, line);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
 	status = __qdf_nbuf_map_single(osdev, buf, dir);
 	if (QDF_IS_STATUS_ERROR(status))
-		qdf_nbuf_untrack_map(buf, file, line);
+		qdf_nbuf_untrack_map(buf, func, line);
 
 	return status;
 }
@@ -772,10 +772,10 @@ qdf_export_symbol(qdf_nbuf_map_single_debug);
 void qdf_nbuf_unmap_single_debug(qdf_device_t osdev,
 				 qdf_nbuf_t buf,
 				 qdf_dma_dir_t dir,
-				 const char *file,
+				 const char *func,
 				 uint32_t line)
 {
-	qdf_nbuf_untrack_map(buf, file, line);
+	qdf_nbuf_untrack_map(buf, func, line);
 	__qdf_nbuf_unmap_single(osdev, buf, dir);
 }
 
@@ -785,18 +785,18 @@ QDF_STATUS qdf_nbuf_map_nbytes_debug(qdf_device_t osdev,
 				     qdf_nbuf_t buf,
 				     qdf_dma_dir_t dir,
 				     int nbytes,
-				     const char *file,
+				     const char *func,
 				     uint32_t line)
 {
 	QDF_STATUS status;
 
-	status = qdf_nbuf_track_map(buf, file, line);
+	status = qdf_nbuf_track_map(buf, func, line);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
 	status = __qdf_nbuf_map_nbytes(osdev, buf, dir, nbytes);
 	if (QDF_IS_STATUS_ERROR(status))
-		qdf_nbuf_untrack_map(buf, file, line);
+		qdf_nbuf_untrack_map(buf, func, line);
 
 	return status;
 }
@@ -807,10 +807,10 @@ void qdf_nbuf_unmap_nbytes_debug(qdf_device_t osdev,
 				 qdf_nbuf_t buf,
 				 qdf_dma_dir_t dir,
 				 int nbytes,
-				 const char *file,
+				 const char *func,
 				 uint32_t line)
 {
-	qdf_nbuf_untrack_map(buf, file, line);
+	qdf_nbuf_untrack_map(buf, func, line);
 	__qdf_nbuf_unmap_nbytes(osdev, buf, dir, nbytes);
 }
 
@@ -820,18 +820,18 @@ QDF_STATUS qdf_nbuf_map_nbytes_single_debug(qdf_device_t osdev,
 					    qdf_nbuf_t buf,
 					    qdf_dma_dir_t dir,
 					    int nbytes,
-					    const char *file,
+					    const char *func,
 					    uint32_t line)
 {
 	QDF_STATUS status;
 
-	status = qdf_nbuf_track_map(buf, file, line);
+	status = qdf_nbuf_track_map(buf, func, line);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
 	status = __qdf_nbuf_map_nbytes_single(osdev, buf, dir, nbytes);
 	if (QDF_IS_STATUS_ERROR(status))
-		qdf_nbuf_untrack_map(buf, file, line);
+		qdf_nbuf_untrack_map(buf, func, line);
 
 	return status;
 }
@@ -842,16 +842,16 @@ void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
 					qdf_nbuf_t buf,
 					qdf_dma_dir_t dir,
 					int nbytes,
-					const char *file,
+					const char *func,
 					uint32_t line)
 {
-	qdf_nbuf_untrack_map(buf, file, line);
+	qdf_nbuf_untrack_map(buf, func, line);
 	__qdf_nbuf_unmap_nbytes_single(osdev, buf, dir, nbytes);
 }
 
 qdf_export_symbol(qdf_nbuf_unmap_nbytes_single_debug);
 
-static void qdf_nbuf_panic_on_free_if_mapped(qdf_nbuf_t nbuf, uint8_t *file,
+static void qdf_nbuf_panic_on_free_if_mapped(qdf_nbuf_t nbuf, const char *func,
 					     uint32_t line)
 {
 	struct qdf_nbuf_map_metadata *meta;
@@ -861,7 +861,7 @@ static void qdf_nbuf_panic_on_free_if_mapped(qdf_nbuf_t nbuf, uint8_t *file,
 	if (meta)
 		QDF_DEBUG_PANIC(
 			"Nbuf freed @ %s:%u while mapped from %s:%u",
-			kbasename(file), line, meta->file, meta->line);
+			kbasename(func), line, meta->func, meta->line);
 	qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
 }
 #else
@@ -874,7 +874,7 @@ static inline void qdf_nbuf_map_tracking_deinit(void)
 }
 
 static inline void qdf_nbuf_panic_on_free_if_mapped(qdf_nbuf_t nbuf,
-						    uint8_t *file,
+						    const char *func,
 						    uint32_t line)
 {
 }
@@ -2098,14 +2098,14 @@ qdf_export_symbol(__qdf_nbuf_is_bcast_pkt);
  *
  * @p_next: Pointer to next
  * @net_buf: Pointer to network buffer
- * @file_name: File name
+ * @func_name: Function name
  * @line_num: Line number
  * @size: Size
  */
 struct qdf_nbuf_track_t {
 	struct qdf_nbuf_track_t *p_next;
 	qdf_nbuf_t net_buf;
-	char file_name[QDF_MEM_FILE_NAME_SIZE];
+	char func_name[QDF_MEM_FUNC_NAME_SIZE];
 	uint32_t line_num;
 	size_t size;
 };
@@ -2409,8 +2409,8 @@ void qdf_net_buf_debug_exit(void)
 			p_prev = p_node;
 			p_node = p_node->p_next;
 			count++;
-			qdf_info("SKB buf memory Leak@ File %s, @Line %d, size %zu, nbuf %pK",
-				 p_prev->file_name, p_prev->line_num,
+			qdf_info("SKB buf memory Leak@ Func %s, @Line %d, size %zu, nbuf %pK",
+				 p_prev->func_name, p_prev->line_num,
 				 p_prev->size, p_prev->net_buf);
 			qdf_nbuf_track_free(p_prev);
 		}
@@ -2474,7 +2474,7 @@ static QDF_NBUF_TRACK *qdf_net_buf_debug_look_up(qdf_nbuf_t net_buf)
  * Return: none
  */
 void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
-				uint8_t *file_name, uint32_t line_num)
+				const char *func_name, uint32_t line_num)
 {
 	uint32_t i;
 	unsigned long irq_flag;
@@ -2490,15 +2490,15 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 
 	if (p_node) {
 		qdf_print("Double allocation of skb ! Already allocated from %pK %s %d current alloc from %pK %s %d",
-			  p_node->net_buf, p_node->file_name, p_node->line_num,
-			  net_buf, kbasename(file_name), line_num);
+			  p_node->net_buf, p_node->func_name, p_node->line_num,
+			  net_buf, func_name, line_num);
 		qdf_nbuf_track_free(new_node);
 	} else {
 		p_node = new_node;
 		if (p_node) {
 			p_node->net_buf = net_buf;
-			qdf_str_lcopy(p_node->file_name, kbasename(file_name),
-				      QDF_MEM_FILE_NAME_SIZE);
+			qdf_str_lcopy(p_node->func_name, func_name,
+				      QDF_MEM_FUNC_NAME_SIZE);
 			p_node->line_num = line_num;
 			p_node->size = size;
 			qdf_mem_skb_inc(size);
@@ -2507,14 +2507,14 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 		} else
 			qdf_print(
 				  "Mem alloc failed ! Could not track skb from %s %d of size %zu",
-				  kbasename(file_name), line_num, size);
+				  func_name, line_num, size);
 	}
 
 	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
 }
 qdf_export_symbol(qdf_net_buf_debug_add_node);
 
-void qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, uint8_t *file_name,
+void qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, const char *func_name,
 				   uint32_t line_num)
 {
 	uint32_t i;
@@ -2527,8 +2527,8 @@ void qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, uint8_t *file_name,
 	p_node = qdf_net_buf_debug_look_up(net_buf);
 
 	if (p_node) {
-		qdf_str_lcopy(p_node->file_name, kbasename(file_name),
-			      QDF_MEM_FILE_NAME_SIZE);
+		qdf_str_lcopy(p_node->func_name, kbasename(func_name),
+			      QDF_MEM_FUNC_NAME_SIZE);
 		p_node->line_num = line_num;
 	}
 
@@ -2591,7 +2591,7 @@ done:
 qdf_export_symbol(qdf_net_buf_debug_delete_node);
 
 void qdf_net_buf_debug_acquire_skb(qdf_nbuf_t net_buf,
-			uint8_t *file_name, uint32_t line_num)
+				   const char *func_name, uint32_t line_num)
 {
 	qdf_nbuf_t ext_list = qdf_nbuf_get_ext_list(net_buf);
 
@@ -2603,10 +2603,10 @@ void qdf_net_buf_debug_acquire_skb(qdf_nbuf_t net_buf,
 		qdf_nbuf_t next;
 
 		next = qdf_nbuf_queue_next(ext_list);
-		qdf_net_buf_debug_add_node(ext_list, 0, file_name, line_num);
+		qdf_net_buf_debug_add_node(ext_list, 0, func_name, line_num);
 		ext_list = next;
 	}
-	qdf_net_buf_debug_add_node(net_buf, 0, file_name, line_num);
+	qdf_net_buf_debug_add_node(net_buf, 0, func_name, line_num);
 }
 qdf_export_symbol(qdf_net_buf_debug_acquire_skb);
 
@@ -2652,25 +2652,25 @@ qdf_export_symbol(qdf_net_buf_debug_release_skb);
 
 qdf_nbuf_t qdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size,
 				int reserve, int align, int prio,
-				uint8_t *file, uint32_t line)
+				const char *func, uint32_t line)
 {
 	qdf_nbuf_t nbuf;
 
-	nbuf = __qdf_nbuf_alloc(osdev, size, reserve, align, prio, file, line);
+	nbuf = __qdf_nbuf_alloc(osdev, size, reserve, align, prio, func, line);
 
 	/* Store SKB in internal QDF tracking table */
 	if (qdf_likely(nbuf)) {
-		qdf_net_buf_debug_add_node(nbuf, size, file, line);
-		qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_ALLOC);
+		qdf_net_buf_debug_add_node(nbuf, size, func, line);
+		qdf_nbuf_history_add(nbuf, func, line, QDF_NBUF_ALLOC);
 	} else {
-		qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_ALLOC_FAILURE);
+		qdf_nbuf_history_add(nbuf, func, line, QDF_NBUF_ALLOC_FAILURE);
 	}
 
 	return nbuf;
 }
 qdf_export_symbol(qdf_nbuf_alloc_debug);
 
-void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, uint8_t *file, uint32_t line)
+void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 {
 	if (qdf_unlikely(!nbuf))
 		return;
@@ -2679,9 +2679,9 @@ void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, uint8_t *file, uint32_t line)
 		goto free_buf;
 
 	/* Remove SKB from internal QDF tracking table */
-	qdf_nbuf_panic_on_free_if_mapped(nbuf, file, line);
+	qdf_nbuf_panic_on_free_if_mapped(nbuf, func, line);
 	qdf_net_buf_debug_delete_node(nbuf);
-	qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_FREE);
+	qdf_nbuf_history_add(nbuf, func, line, QDF_NBUF_FREE);
 
 free_buf:
 	__qdf_nbuf_free(nbuf);

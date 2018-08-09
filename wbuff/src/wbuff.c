@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -297,7 +297,7 @@ QDF_STATUS wbuff_module_deregister(struct wbuff_mod_handle *hdl)
 }
 
 qdf_nbuf_t wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len,
-			  uint8_t *file_name, uint32_t line_num)
+			  const char *func_name, uint32_t line_num)
 {
 	struct wbuff_handle *handle;
 	struct wbuff_module *mod = NULL;
@@ -324,7 +324,7 @@ qdf_nbuf_t wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len,
 	qdf_spin_unlock_bh(&mod->lock);
 	if (buf) {
 		qdf_nbuf_set_next(buf, NULL);
-		qdf_net_buf_debug_update_node(buf, file_name, line_num);
+		qdf_net_buf_debug_update_node(buf, func_name, line_num);
 	}
 
 	return buf;

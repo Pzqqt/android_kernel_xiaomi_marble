@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,13 +86,13 @@ void qdf_mem_init(void);
  */
 void qdf_mem_exit(void);
 
-#define QDF_MEM_FILE_NAME_SIZE 48
+#define QDF_MEM_FUNC_NAME_SIZE 48
 
 #ifdef MEMORY_DEBUG
 /**
  * qdf_mem_malloc_debug() - debug version of QDF memory allocation API
  * @size: Number of bytes of memory to allocate.
- * @file: File name of the call site
+ * @func: Function name of the call site
  * @line: Line number of the call site
  * @caller: Address of the caller function
  * @flag: GFP flag
@@ -103,17 +103,17 @@ void qdf_mem_exit(void);
  *
  * Return: A valid memory location on success, or NULL on failure
  */
-void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
+void *qdf_mem_malloc_debug(size_t size, const char *func, uint32_t line,
 			   void *caller, uint32_t flag);
 
 #define qdf_mem_malloc(size) \
-	qdf_mem_malloc_debug(size, __FILE__, __LINE__, QDF_RET_IP, 0)
+	qdf_mem_malloc_debug(size, __func__, __LINE__, QDF_RET_IP, 0)
 
 #define qdf_mem_malloc_fl(size, func, line) \
 	qdf_mem_malloc_debug(size, func, line, QDF_RET_IP, 0)
 
 #define qdf_mem_malloc_atomic(size) \
-	qdf_mem_malloc_debug(size, __FILE__, __LINE__, QDF_RET_IP, GFP_ATOMIC)
+	qdf_mem_malloc_debug(size, __func__, __LINE__, QDF_RET_IP, GFP_ATOMIC)
 /**
  * qdf_mem_free_debug() - debug version of qdf_mem_free
  * @ptr: Pointer to the starting address of the memory to be freed.
@@ -126,7 +126,7 @@ void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
 void qdf_mem_free_debug(void *ptr, const char *file, uint32_t line);
 
 #define qdf_mem_free(ptr) \
-	qdf_mem_free_debug(ptr, __FILE__, __LINE__)
+	qdf_mem_free_debug(ptr, __func__, __LINE__)
 
 /**
  * qdf_mem_check_for_leaks() - Assert that the current memory domain is empty
@@ -166,7 +166,7 @@ void qdf_mem_check_for_leaks(void);
  * @dev: Pointer to device handle
  * @size: Size to be allocated
  * @paddr: Physical address
- * @file: file name of the call site
+ * @func: Function name of the call site
  * @line: line numbe rof the call site
  * @caller: Address of the caller function
  *
@@ -174,12 +174,12 @@ void qdf_mem_check_for_leaks(void);
  */
 void *qdf_mem_alloc_consistent_debug(qdf_device_t osdev, void *dev,
 				     qdf_size_t size, qdf_dma_addr_t *paddr,
-				     const char *file, uint32_t line,
+				     const char *func, uint32_t line,
 				     void *caller);
 
 #define qdf_mem_alloc_consistent(osdev, dev, size, paddr) \
 	qdf_mem_alloc_consistent_debug(osdev, dev, size, paddr, \
-				       __FILE__, __LINE__, QDF_RET_IP)
+				       __func__, __LINE__, QDF_RET_IP)
 
 /**
  * qdf_mem_free_consistent_debug() - free consistent qdf memory
@@ -188,7 +188,7 @@ void *qdf_mem_alloc_consistent_debug(qdf_device_t osdev, void *dev,
  * @vaddr: virtual address
  * @paddr: Physical address
  * @memctx: Pointer to DMA context
- * @file: file name of the call site
+ * @func: Function name of the call site
  * @line: line numbe rof the call site
  *
  * Return: none
@@ -197,11 +197,11 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
 				   qdf_size_t size, void *vaddr,
 				   qdf_dma_addr_t paddr,
 				   qdf_dma_context_t memctx,
-				   const char *file, uint32_t line);
+				   const char *func, uint32_t line);
 
 #define qdf_mem_free_consistent(osdev, dev, size, vaddr, paddr, memctx) \
 	qdf_mem_free_consistent_debug(osdev, dev, size, vaddr, paddr, memctx, \
-				  __FILE__, __LINE__)
+				  __func__, __LINE__)
 #else
 
 /**

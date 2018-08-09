@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1515,7 +1515,8 @@ int wmi_get_host_credits(wmi_unified_t wmi_handle);
 
 #ifdef NBUF_MEMORY_DEBUG
 wmi_buf_t
-wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint32_t len, uint8_t *file_name,
+wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint32_t len,
+		    const char *func_name,
 		    uint32_t line_num)
 {
 	wmi_buf_t wmi_buf;
@@ -1525,15 +1526,14 @@ wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint32_t len, uint8_t *file_name,
 		return NULL;
 	}
 
-	wmi_buf = wbuff_buff_get(wmi_handle->wbuff_handle, len, file_name,
+	wmi_buf = wbuff_buff_get(wmi_handle->wbuff_handle, len, func_name,
 				 line_num);
 	if (!wmi_buf)
 		wmi_buf = qdf_nbuf_alloc_debug(NULL,
 					       roundup(len + WMI_MIN_HEAD_ROOM,
 						       4),
 					       WMI_MIN_HEAD_ROOM, 4, false,
-					       file_name, line_num);
-
+					       func_name, line_num);
 	if (!wmi_buf)
 		return NULL;
 
@@ -1568,7 +1568,7 @@ wmi_buf_t wmi_buf_alloc_fl(wmi_unified_t wmi_handle, uint32_t len,
 		return NULL;
 	}
 
-	wmi_buf = wbuff_buff_get(wmi_handle->wbuff_handle, len, __FILE__,
+	wmi_buf = wbuff_buff_get(wmi_handle->wbuff_handle, len, __func__,
 				 __LINE__);
 	if (!wmi_buf)
 		wmi_buf = qdf_nbuf_alloc_fl(NULL, roundup(len +

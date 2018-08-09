@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -95,14 +95,14 @@ QDF_STATUS wbuff_module_deregister(struct wbuff_mod_handle *hdl);
  * wbuff_buff_get() - return buffer to the requester
  * @handle: wbuff_handle corresponding to the module
  * @len: length of buffer requested
- * file_name: file from which buffer is requested
- * line_num: line number in the file
+ * @func_name: function from which buffer is requested
+ * @line_num: line number in the file
  *
  * Return: Network buffer if success
  *         NULL if failure
  */
 qdf_nbuf_t wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len,
-			  uint8_t *file_name, uint32_t line_num);
+			  const char *func_name, uint32_t line_num);
 
 /**
  * wbuff_buff_put() - put the buffer back to wbuff pool
@@ -139,7 +139,7 @@ static inline QDF_STATUS wbuff_module_deregister(struct wbuff_mod_handle *hdl)
 }
 
 static inline qdf_nbuf_t
-wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len, int8_t *file_name,
+wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len, const char *func_name,
 	       uint32_t line_num)
 {
 	return NULL;

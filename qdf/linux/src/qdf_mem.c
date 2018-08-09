@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -80,7 +80,7 @@ static inline qdf_list_t *qdf_mem_dma_list(enum qdf_debug_domain domain)
  * @domain: the active memory domain at time of allocation
  * @freed: flag set during free, used to detect double frees
  *	Use uint8_t so we can detect corruption
- * @file: name of the file the allocation was made from
+ * @func: name of the function the allocation was made from
  * @line: line number of the file the allocation was made from
  * @size: size of the allocation in bytes
  * @caller: Caller of the function for which memory is allocated
@@ -91,7 +91,7 @@ struct qdf_mem_header {
 	qdf_list_node_t node;
 	enum qdf_debug_domain domain;
 	uint8_t freed;
-	char file[QDF_MEM_FILE_NAME_SIZE];
+	char func[QDF_MEM_FUNC_NAME_SIZE];
 	uint32_t line;
 	uint32_t size;
 	void *caller;
@@ -140,7 +140,7 @@ static void qdf_mem_trailer_init(struct qdf_mem_header *header)
 }
 
 static void qdf_mem_header_init(struct qdf_mem_header *header, qdf_size_t size,
-				const char *file, uint32_t line, void *caller)
+				const char *func, uint32_t line, void *caller)
 {
 	QDF_BUG(header);
 	if (!header)
@@ -149,8 +149,7 @@ static void qdf_mem_header_init(struct qdf_mem_header *header, qdf_size_t size,
 	header->domain = qdf_debug_domain_get();
 	header->freed = false;
 
-	/* copy the file name, rather than pointing to it */
-	qdf_str_lcopy(header->file, kbasename(file), QDF_MEM_FILE_NAME_SIZE);
+	qdf_str_lcopy(header->func, func, QDF_MEM_FUNC_NAME_SIZE);
 
 	header->line = line;
 	header->size = size;
@@ -213,7 +212,7 @@ static void
 qdf_mem_header_assert_valid(struct qdf_mem_header *header,
 			    enum qdf_debug_domain current_domain,
 			    enum qdf_mem_validation_bitmap error_bitmap,
-			    const char *file,
+			    const char *func,
 			    uint32_t line)
 {
 	if (!error_bitmap)
@@ -248,7 +247,7 @@ qdf_mem_header_assert_valid(struct qdf_mem_header *header,
 			qdf_debug_domain_name(header->domain), header->domain,
 			qdf_debug_domain_name(current_domain), current_domain);
 
-	QDF_DEBUG_PANIC("Fatal memory error detected @ %s:%d", file, line);
+	QDF_DEBUG_PANIC("Fatal memory error detected @ %s:%d", func, line);
 }
 #endif /* MEMORY_DEBUG */
 
@@ -330,7 +329,7 @@ static int seq_printf_printer(void *priv, const char *fmt, ...)
 
 /**
  * struct __qdf_mem_info - memory statistics
- * @file: the file which allocated memory
+ * @func: the function which allocated memory
  * @line: the line at which allocation happened
  * @size: the size of allocation
  * @caller: Address of the caller function
@@ -338,7 +337,7 @@ static int seq_printf_printer(void *priv, const char *fmt, ...)
  * @time: timestamp at which allocation happened
  */
 struct __qdf_mem_info {
-	char file[QDF_MEM_FILE_NAME_SIZE];
+	char func[QDF_MEM_FUNC_NAME_SIZE];
 	uint32_t line;
 	uint32_t size;
 	void *caller;
@@ -399,13 +398,13 @@ static void qdf_mem_meta_table_print(struct __qdf_mem_info *table,
 		      table[i].count,
 		      table[i].size,
 		      table[i].count * table[i].size,
-		      table[i].file,
+		      table[i].func,
 		      table[i].line, table[i].caller,
 		      table[i].time);
 		len += qdf_scnprintf(debug_str + len,
 				     sizeof(debug_str) - len,
 				     " @ %s:%u %pS",
-				     table[i].file,
+				     table[i].func,
 				     table[i].line,
 				     table[i].caller);
 	}
@@ -426,8 +425,8 @@ static bool qdf_mem_meta_table_insert(struct __qdf_mem_info *table,
 
 	for (i = 0; i < QDF_MEM_STAT_TABLE_SIZE; i++) {
 		if (!table[i].count) {
-			qdf_str_lcopy(table[i].file, meta->file,
-				      QDF_MEM_FILE_NAME_SIZE);
+			qdf_str_lcopy(table[i].func, meta->func,
+				      QDF_MEM_FUNC_NAME_SIZE);
 			table[i].line = meta->line;
 			table[i].size = meta->size;
 			table[i].count = 1;
@@ -436,7 +435,7 @@ static bool qdf_mem_meta_table_insert(struct __qdf_mem_info *table,
 			break;
 		}
 
-		if (qdf_str_eq(table[i].file, meta->file) &&
+		if (qdf_str_eq(table[i].func, meta->func) &&
 		    table[i].line == meta->line &&
 		    table[i].size == meta->size &&
 		    table[i].caller == meta->caller) {
@@ -1024,7 +1023,7 @@ static void qdf_mem_debug_exit(void)
 	qdf_spinlock_destroy(&qdf_mem_dma_list_lock);
 }
 
-void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
+void *qdf_mem_malloc_debug(size_t size, const char *func, uint32_t line,
 			   void *caller, uint32_t flag)
 {
 	QDF_STATUS status;
@@ -1035,7 +1034,7 @@ void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
 	unsigned long start, duration;
 
 	if (!size || size > QDF_MEM_MAX_MALLOC) {
-		qdf_err("Cannot malloc %zu bytes @ %s:%d", size, file, line);
+		qdf_err("Cannot malloc %zu bytes @ %s:%d", size, func, line);
 		return NULL;
 	}
 
@@ -1052,14 +1051,14 @@ void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
 
 	if (duration > QDF_MEM_WARN_THRESHOLD)
 		qdf_warn("Malloc slept; %lums, %zuB @ %s:%d",
-			 duration, size, file, line);
+			 duration, size, func, line);
 
 	if (!header) {
-		qdf_warn("Failed to malloc %zuB @ %s:%d", size, file, line);
+		qdf_warn("Failed to malloc %zuB @ %s:%d", size, func, line);
 		return NULL;
 	}
 
-	qdf_mem_header_init(header, size, file, line, caller);
+	qdf_mem_header_init(header, size, func, line, caller);
 	qdf_mem_trailer_init(header);
 	ptr = qdf_mem_get_ptr(header);
 
@@ -1075,7 +1074,7 @@ void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
 }
 qdf_export_symbol(qdf_mem_malloc_debug);
 
-void qdf_mem_free_debug(void *ptr, const char *file, uint32_t line)
+void qdf_mem_free_debug(void *ptr, const char *func, uint32_t line)
 {
 	enum qdf_debug_domain current_domain = qdf_debug_domain_get();
 	struct qdf_mem_header *header;
@@ -1091,7 +1090,7 @@ void qdf_mem_free_debug(void *ptr, const char *file, uint32_t line)
 	if (qdf_unlikely((qdf_size_t)ptr <= sizeof(*header)))
 		panic("Failed to free invalid memory location %pK", ptr);
 
-	qdf_talloc_assert_no_children_fl(ptr, file, line);
+	qdf_talloc_assert_no_children_fl(ptr, func, line);
 
 	qdf_spin_lock_irqsave(&qdf_mem_list_lock);
 	header = qdf_mem_get_header(ptr);
@@ -1106,7 +1105,7 @@ void qdf_mem_free_debug(void *ptr, const char *file, uint32_t line)
 	qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
 
 	qdf_mem_header_assert_valid(header, current_domain, error_bitmap,
-				    file, line);
+				    func, line);
 
 	qdf_mem_kmalloc_dec(header->size);
 	kfree(header);
@@ -1720,7 +1719,7 @@ qdf_mem_dma_free(void *dev, qdf_size_t size, void *vaddr, qdf_dma_addr_t paddr)
 #ifdef MEMORY_DEBUG
 void *qdf_mem_alloc_consistent_debug(qdf_device_t osdev, void *dev,
 				     qdf_size_t size, qdf_dma_addr_t *paddr,
-				     const char *file, uint32_t line,
+				     const char *func, uint32_t line,
 				     void *caller)
 {
 	QDF_STATUS status;
@@ -1730,7 +1729,7 @@ void *qdf_mem_alloc_consistent_debug(qdf_device_t osdev, void *dev,
 	void *vaddr;
 
 	if (!size || size > QDF_MEM_MAX_MALLOC) {
-		qdf_err("Cannot malloc %zu bytes @ %s:%d", size, file, line);
+		qdf_err("Cannot malloc %zu bytes @ %s:%d", size, func, line);
 		return NULL;
 	}
 
@@ -1738,7 +1737,7 @@ void *qdf_mem_alloc_consistent_debug(qdf_device_t osdev, void *dev,
 				   paddr);
 
 	if (!vaddr) {
-		qdf_warn("Failed to malloc %zuB @ %s:%d", size, file, line);
+		qdf_warn("Failed to malloc %zuB @ %s:%d", size, func, line);
 		return NULL;
 	}
 
@@ -1748,7 +1747,7 @@ void *qdf_mem_alloc_consistent_debug(qdf_device_t osdev, void *dev,
 	 * Prefix the header into DMA buffer causes SMMU faults, so
 	 * do not prefix header into the DMA buffers
 	 */
-	qdf_mem_header_init(header, size, file, line, caller);
+	qdf_mem_header_init(header, size, func, line, caller);
 
 	qdf_spin_lock_irqsave(&qdf_mem_dma_list_lock);
 	status = qdf_list_insert_front(mem_list, &header->node);
@@ -1766,7 +1765,7 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
 				   qdf_size_t size, void *vaddr,
 				   qdf_dma_addr_t paddr,
 				   qdf_dma_context_t memctx,
-				   const char *file, uint32_t line)
+				   const char *func, uint32_t line)
 {
 	enum qdf_debug_domain domain = qdf_debug_domain_get();
 	struct qdf_mem_header *header;
@@ -1776,7 +1775,7 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
 	if (qdf_unlikely(!vaddr))
 		return;
 
-	qdf_talloc_assert_no_children_fl(vaddr, file, line);
+	qdf_talloc_assert_no_children_fl(vaddr, func, line);
 
 	qdf_spin_lock_irqsave(&qdf_mem_dma_list_lock);
 	/* For DMA buffers we only add trailers, this function will retrieve
@@ -1793,7 +1792,7 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
 	}
 	qdf_spin_unlock_irqrestore(&qdf_mem_dma_list_lock);
 
-	qdf_mem_header_assert_valid(header, domain, error_bitmap, file, line);
+	qdf_mem_header_assert_valid(header, domain, error_bitmap, func, line);
 
 	qdf_mem_dma_dec(header->size);
 	qdf_mem_dma_free(dev, size + QDF_DMA_MEM_DEBUG_SIZE, vaddr, paddr);
