@@ -1384,6 +1384,11 @@ static policy_mgr_next_action_three_connection_table_type
 	[PM_STA_STA_DBS_2x2] = {PM_NOP,	PM_NOP},
 	[PM_STA_STA_SBS_5_1x1] = {PM_DBS_UPGRADE, PM_NOP},
 
+	[PM_SAP_SAP_SCC_24_1x1] = {PM_NOP, PM_DBS},
+	[PM_SAP_SAP_SCC_24_2x2] = {PM_NOP, PM_DBS},
+	[PM_SAP_SAP_SCC_5_1x1] = {PM_DBS, PM_NOP},
+	[PM_SAP_SAP_SCC_5_2x2] = {PM_DBS, PM_NOP},
+
 };
 
 #endif
