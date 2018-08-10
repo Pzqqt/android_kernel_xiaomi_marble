@@ -2652,10 +2652,8 @@ void lim_update_lost_link_info(tpAniSirGlobal mac, tpPESession session,
 		pe_err("parameter NULL");
 		return;
 	}
-	if (!LIM_IS_STA_ROLE(session)) {
-		pe_err("not STA mode, do nothing");
+	if (!LIM_IS_STA_ROLE(session))
 		return;
-	}
 
 	lost_link_info = qdf_mem_malloc(sizeof(*lost_link_info));
 	if (NULL == lost_link_info) {

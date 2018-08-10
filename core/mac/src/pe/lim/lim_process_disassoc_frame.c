@@ -145,13 +145,13 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	/* Get reasonCode from Disassociation frame body */
 	reasonCode = sir_read_u16(pBody);
 
-	pe_err("Received Disassoc frame for Addr: " MAC_ADDRESS_STR
-			  "(mlm state=%s, sme state=%d RSSI=%d),"
-			  "with reason code %d [%s] from " MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(pHdr->da),
-		       lim_mlm_state_str(psessionEntry->limMlmState),
-		       psessionEntry->limSmeState, frame_rssi, reasonCode,
-		       lim_dot11_reason_str(reasonCode), MAC_ADDR_ARRAY(pHdr->sa));
+	pe_debug("Received Disassoc frame for Addr: " MAC_ADDRESS_STR
+		 "(mlm state=%s, sme state=%d RSSI=%d),"
+		 "with reason code %d [%s] from " MAC_ADDRESS_STR,
+		 MAC_ADDR_ARRAY(pHdr->da),
+		 lim_mlm_state_str(psessionEntry->limMlmState),
+		 psessionEntry->limSmeState, frame_rssi, reasonCode,
+		 lim_dot11_reason_str(reasonCode), MAC_ADDR_ARRAY(pHdr->sa));
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_DISASSOC_FRAME_EVENT,
 		psessionEntry, 0, reasonCode);
 

@@ -2041,9 +2041,9 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		goto error;
 
 	/* STA is Associated ! */
-	pe_err("Received: %s Req  successful from " MAC_ADDRESS_STR,
-		(LIM_ASSOC == sub_type) ? "Assoc" : "ReAssoc",
-		MAC_ADDR_ARRAY(hdr->sa));
+	pe_debug("Received: %s Req  successful from " MAC_ADDRESS_STR,
+		 (LIM_ASSOC == sub_type) ? "Assoc" : "ReAssoc",
+		 MAC_ADDR_ARRAY(hdr->sa));
 
 	/*
 	 * AID for this association will be same as the peer Index used in DPH
