@@ -3069,13 +3069,12 @@ bool policy_mgr_allow_sap_go_concurrency(struct wlan_objmgr_psoc *psoc,
 					    pm_conc_connection_list[id].chan;
 					if (((con_mode == PM_SAP_MODE) ||
 					     (con_mode == PM_P2P_GO_MODE)) &&
-					    (channel != con_chan)) {
-						policy_mgr_debug("Scc is supported, but first SAP and second SAP are not in same channel, So don't allow second SAP interface");
-						return false;
+					    (channel == con_chan)) {
+						policy_mgr_debug("Scc is supported, allow second SAP interface");
+						return true;
 					}
 				}
 			}
-			return true;
 		}
 		if (!policy_mgr_is_hw_dbs_capable(psoc)) {
 			policy_mgr_debug("DBS is not supported, mcc and scc are not supported too, don't allow second SAP interface");
