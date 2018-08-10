@@ -392,6 +392,7 @@ htc_setup_epping_credit_allocation(struct hif_opaque_softc *scn,
 {
 	switch (hif_get_bus_type(scn)) {
 	case QDF_BUS_TYPE_PCI:
+	case QDF_BUS_TYPE_USB:
 		pEntry++;
 		pEntry->service_id = WMI_DATA_BE_SVC;
 		pEntry->CreditAllocation = (credits >> 1);
