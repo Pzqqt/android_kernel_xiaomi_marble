@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1164,6 +1164,9 @@ static policy_mgr_next_action_three_connection_table_type
 	[PM_P2P_CLI_SAP_MCC_24_5_1x1] = {PM_DBS,             PM_DBS},
 	[PM_P2P_CLI_SAP_MCC_24_5_2x2] = {PM_DBS_DOWNGRADE, PM_DBS_DOWNGRADE},
 	[PM_P2P_CLI_SAP_DBS_1x1] = {PM_NOP,             PM_NOP},
+
+	[PM_SAP_SAP_SCC_24_1x1] = {PM_NOP, PM_DBS},
+	[PM_SAP_SAP_SCC_5_1x1] = {PM_DBS, PM_NOP},
 
 };
 
