@@ -15937,6 +15937,12 @@ typedef struct {
 } wmi_nan_cmd_param;
 
 typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_host_config_param */
+    A_UINT32 nan_2g_disc_disable:1; /** This bit when set to 1 indicate NAN 2G discovery should be disabled */
+    A_UINT32 nan_5g_disc_disable:1; /** This bit when set to 1 indicate NAN 5G discovery should be disabled */
+} wmi_nan_host_config_param;
+
+typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_event_hdr */
     A_UINT32 data_len; /** length in byte of data[]. */
 /* This structure is used to send REQ binary blobs

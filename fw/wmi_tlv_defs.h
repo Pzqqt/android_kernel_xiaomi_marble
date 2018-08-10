@@ -925,6 +925,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_ndp_transport_ip_param,
     WMITLV_TAG_STRUC_wmi_obss_spatial_reuse_set_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_esp_estimate_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_nan_host_config_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -2934,7 +2935,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_DEL_PROACTIVE_ARP_RSP_PATTERN_CMDID);
 /* NaN Request */
 #define WMITLV_TABLE_WMI_NAN_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_cmd_param, wmi_nan_cmd_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_nan_host_config_param, host_config, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_NAN_CMDID);
 
 /* NAN Data Get Capabilities Cmd */
