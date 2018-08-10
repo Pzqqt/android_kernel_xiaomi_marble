@@ -100,11 +100,10 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		((eLIM_SME_WT_DISASSOC_STATE == psessionEntry->limSmeState) ||
 		(eLIM_SME_WT_DEAUTH_STATE == psessionEntry->limSmeState))) {
 		if (!(pMac->lim.disassocMsgCnt & 0xF)) {
-			pe_info("received Disassoc frame in %s"
-				"(already processing previously received Disassoc frame)"
-				"Dropping this.. Disassoc Failed %d",
-						lim_sme_state_str(psessionEntry->limSmeState),
-					   ++pMac->lim.disassocMsgCnt);
+			pe_debug("received Disassoc frame in %s"
+				"already processing previously received Disassoc frame, dropping this %d",
+				 lim_sme_state_str(psessionEntry->limSmeState),
+				 ++pMac->lim.disassocMsgCnt);
 		} else {
 			pMac->lim.disassocMsgCnt++;
 		}

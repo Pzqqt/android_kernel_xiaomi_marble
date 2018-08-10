@@ -395,7 +395,7 @@ void lim_set_active_edca_params(tpAniSirGlobal mac_ctx,
 			     i--)
 				;
 			new_ac = i;
-			pe_info("Downgrading AC %d ---> AC %d ", ac, new_ac);
+			pe_debug("Downgrading AC %d ---> AC %d ", ac, new_ac);
 			pe_session->gLimEdcaParamsActive[ac] =
 				edca_params[new_ac];
 		}

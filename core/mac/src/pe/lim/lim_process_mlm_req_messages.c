@@ -2378,7 +2378,7 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
 			auth_frame.authTransactionSeqNumber =
 						SIR_MAC_AUTH_FRAME_1;
 			auth_frame.authStatusCode = 0;
-			pe_warn("Retry Auth");
+			pe_debug("Retry Auth");
 			mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
 			lim_increase_fils_sequence_number(session_entry);
 			lim_send_auth_mgmt_frame(mac_ctx,
@@ -2561,7 +2561,7 @@ void lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx,
 	 * when device has missed the assoc resp sent by peer.
 	 * By sending deauth try to clear the session created on peer device.
 	 */
-	pe_info("Sessionid: %d try sending deauth on channel %d to BSSID: "
+	pe_debug("Sessionid: %d try sending deauth on channel %d to BSSID: "
 		MAC_ADDRESS_STR, session->peSessionId,
 		session->currentOperChannel,
 		MAC_ADDR_ARRAY(session->bssId));

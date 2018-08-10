@@ -130,25 +130,25 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 
 		mac_hdr = WMA_GET_RX_MAC_HEADER(bd_ptr);
 		if (subtype == SIR_MAC_MGMT_ASSOC_REQ) {
-			pe_info("ASSOC REQ frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", Assoc Req count so far: %d",
-				MAC_ADDR_ARRAY(mac_hdr->da),
-				MAC_ADDR_ARRAY(mac_hdr->sa),
-				MAC_ADDR_ARRAY(mac_hdr->bssId),
-				mac_ctx->sys.gSysFrameCount[type][subtype]);
+			pe_debug("ASSOC REQ frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", Assoc Req count so far: %d",
+				 MAC_ADDR_ARRAY(mac_hdr->da),
+				 MAC_ADDR_ARRAY(mac_hdr->sa),
+				 MAC_ADDR_ARRAY(mac_hdr->bssId),
+				 mac_ctx->sys.gSysFrameCount[type][subtype]);
 		}
 		if (subtype == SIR_MAC_MGMT_DEAUTH) {
-			pe_info("DEAUTH frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", DEAUTH count so far: %d",
-				MAC_ADDR_ARRAY(mac_hdr->da),
-				MAC_ADDR_ARRAY(mac_hdr->sa),
-				MAC_ADDR_ARRAY(mac_hdr->bssId),
-				mac_ctx->sys.gSysFrameCount[type][subtype]);
+			pe_debug("DEAUTH frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", DEAUTH count so far: %d",
+				 MAC_ADDR_ARRAY(mac_hdr->da),
+				 MAC_ADDR_ARRAY(mac_hdr->sa),
+				 MAC_ADDR_ARRAY(mac_hdr->bssId),
+				 mac_ctx->sys.gSysFrameCount[type][subtype]);
 		}
 		if (subtype == SIR_MAC_MGMT_DISASSOC) {
-			pe_info("DISASSOC frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", DISASSOC count so far: %d",
-				MAC_ADDR_ARRAY(mac_hdr->da),
-				MAC_ADDR_ARRAY(mac_hdr->sa),
-				MAC_ADDR_ARRAY(mac_hdr->bssId),
-				mac_ctx->sys.gSysFrameCount[type][subtype]);
+			pe_debug("DISASSOC frame allowed: da: " MAC_ADDRESS_STR ", sa: " MAC_ADDRESS_STR ", bssid: " MAC_ADDRESS_STR ", DISASSOC count so far: %d",
+				 MAC_ADDR_ARRAY(mac_hdr->da),
+				 MAC_ADDR_ARRAY(mac_hdr->sa),
+				 MAC_ADDR_ARRAY(mac_hdr->bssId),
+				 mac_ctx->sys.gSysFrameCount[type][subtype]);
 		}
 
 		/* Post the message to PE Queue */

@@ -1818,10 +1818,10 @@ static QDF_STATUS lim_process_csa_wbw_ie(tpAniSirGlobal mac_ctx,
 
 	ap_new_ch_width = csa_params->new_ch_width + 1;
 
-	pe_info("new channel: %d new_ch_width: %d seg0: %d seg1: %d",
-			csa_params->channel, ap_new_ch_width,
-			csa_params->new_ch_freq_seg1,
-			csa_params->new_ch_freq_seg2);
+	pe_debug("new channel: %d new_ch_width: %d seg0: %d seg1: %d",
+		 csa_params->channel, ap_new_ch_width,
+		 csa_params->new_ch_freq_seg1,
+		 csa_params->new_ch_freq_seg2);
 
 	if ((ap_new_ch_width != CH_WIDTH_80MHZ) &&
 			(ap_new_ch_width != CH_WIDTH_160MHZ) &&
@@ -1863,8 +1863,8 @@ static QDF_STATUS lim_process_csa_wbw_ie(tpAniSirGlobal mac_ctx,
 		}
 
 		if (ap_new_ch_width > fw_vht_ch_wd) {
-			pe_info("New BW is not supported, setting BW to %d",
-					fw_vht_ch_wd);
+			pe_debug("New BW is not supported, setting BW to %d",
+				 fw_vht_ch_wd);
 			ap_new_ch_width = fw_vht_ch_wd;
 		}
 		ch_params.ch_width = ap_new_ch_width ;
@@ -1875,8 +1875,8 @@ static QDF_STATUS lim_process_csa_wbw_ie(tpAniSirGlobal mac_ctx,
 		csa_params->new_ch_freq_seg2 = ch_params.center_freq_seg1;
 	} else if (!new_ch_width_dfn) {
 		if (ap_new_ch_width > fw_vht_ch_wd) {
-			pe_info("New BW is not supported, setting BW to %d",
-					fw_vht_ch_wd);
+			pe_debug("New BW is not supported, setting BW to %d",
+				 fw_vht_ch_wd);
 			ap_new_ch_width = fw_vht_ch_wd;
 		}
 		if (csa_params->new_ch_freq_seg1 != csa_params->channel +
@@ -1893,8 +1893,8 @@ static QDF_STATUS lim_process_csa_wbw_ie(tpAniSirGlobal mac_ctx,
 			return QDF_STATUS_E_INVAL;
 		}
 		if (ap_new_ch_width > fw_vht_ch_wd) {
-			pe_info("New width is not supported, setting BW to %d",
-					fw_vht_ch_wd);
+			pe_debug("New width is not supported, setting BW to %d",
+				 fw_vht_ch_wd);
 			ap_new_ch_width = fw_vht_ch_wd;
 		}
 		if ((ap_new_ch_width == CH_WIDTH_160MHZ) &&
@@ -2015,18 +2015,18 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 	chnl_switch_info =
 		&session_entry->gLimWiderBWChannelSwitch;
 
-	pe_info("vht: %d ht: %d flag: %x chan: %d, sec_ch_offset %d",
-			session_entry->vhtCapability,
-			session_entry->htSupportedChannelWidthSet,
-			csa_params->ies_present_flag,
-			csa_params->channel,
-			csa_params->sec_chan_offset);
-	pe_info("seg1: %d seg2: %d width: %d country: %s class: %d",
-			csa_params->new_ch_freq_seg1,
-			csa_params->new_ch_freq_seg2,
-			csa_params->new_ch_width,
-			mac_ctx->scan.countryCodeCurrent,
-			csa_params->new_op_class);
+	pe_debug("vht: %d ht: %d flag: %x chan: %d, sec_ch_offset %d",
+		 session_entry->vhtCapability,
+		 session_entry->htSupportedChannelWidthSet,
+		 csa_params->ies_present_flag,
+		 csa_params->channel,
+		 csa_params->sec_chan_offset);
+	pe_debug("seg1: %d seg2: %d width: %d country: %s class: %d",
+		 csa_params->new_ch_freq_seg1,
+		 csa_params->new_ch_freq_seg2,
+		 csa_params->new_ch_width,
+		 mac_ctx->scan.countryCodeCurrent,
+		 csa_params->new_op_class);
 
 	if (session_entry->vhtCapability &&
 			session_entry->htSupportedChannelWidthSet) {
@@ -2431,8 +2431,8 @@ lim_send_bss_color_change_ie_update(tpAniSirGlobal mac_ctx,
 
 	/* Send update beacon template message */
 	lim_send_beacon_ind(mac_ctx, session);
-	pe_info("Updated BSS color change countdown = %d",
-		session->he_bss_color_change.countdown);
+	pe_debug("Updated BSS color change countdown = %d",
+		 session->he_bss_color_change.countdown);
 }
 
 static void
