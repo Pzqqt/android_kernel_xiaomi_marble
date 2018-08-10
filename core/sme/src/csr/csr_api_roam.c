@@ -17630,6 +17630,13 @@ QDF_STATUS csr_roam_close_session(tpAniSirGlobal mac_ctx,
 		return status;
 	}
 
+	if (CSR_IS_WAIT_FOR_KEY(mac_ctx, session_id)) {
+		sme_debug("Stop Wait for key timer and change substate to eCSR_ROAM_SUBSTATE_NONE");
+		csr_roam_stop_wait_for_key_timer(mac_ctx);
+		csr_roam_substate_change(mac_ctx, eCSR_ROAM_SUBSTATE_NONE,
+					 session_id);
+	}
+
 	purge_sme_session_pending_cmd_list(mac_ctx, session_id);
 	purge_sme_session_active_cmd_list(mac_ctx, session_id);
 	purge_sme_session_pending_scan_cmd_list(mac_ctx, session_id);
