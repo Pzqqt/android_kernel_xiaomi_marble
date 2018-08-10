@@ -1011,9 +1011,11 @@ static ssize_t wcd_miscdev_write(struct file *filep, const char __user *ubuf,
 {
 	struct wcd_dsp_cntl *cntl = container_of(filep->private_data,
 						 struct wcd_dsp_cntl, miscdev);
-	char val[WCD_MISCDEV_CMD_MAX_LEN];
+	char val[WCD_MISCDEV_CMD_MAX_LEN + 1];
 	bool vote;
 	int ret = 0;
+
+	memset(val, 0, WCD_MISCDEV_CMD_MAX_LEN + 1);
 
 	if (count == 0 || count > WCD_MISCDEV_CMD_MAX_LEN) {
 		pr_err("%s: Invalid count = %zd\n", __func__, count);
