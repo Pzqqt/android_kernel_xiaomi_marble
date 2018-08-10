@@ -76,6 +76,8 @@ struct swr_port_info {
 	u8 hstop;
 	u8 blk_grp_count;
 	u8 blk_pack_mode;
+	u8 word_length;
+	u8 lane_ctrl;
 	u8 ch_en;
 	u8 req_ch;
 	u8 num_ch;
