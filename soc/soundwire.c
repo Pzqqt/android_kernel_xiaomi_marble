@@ -245,7 +245,7 @@ int swr_remove_from_group(struct swr_device *dev, u8 dev_num)
 	if (!dev->group_id)
 		return 0;
 
-	if (master->gr_sid == dev_num)
+	if (master->gr_sid != dev_num)
 		return 0;
 
 	if (master->remove_from_group && master->remove_from_group(master))
