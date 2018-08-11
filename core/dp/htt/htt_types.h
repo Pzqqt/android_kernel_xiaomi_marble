@@ -370,6 +370,16 @@ struct htt_pdev_t {
 		uint32_t listnode_offset;
 		bool smmu_map;
 	} rx_ring;
+
+#ifndef CONFIG_HL_SUPPORT
+	struct {
+		qdf_atomic_t fill_cnt;          /* # of buffers in pool */
+		qdf_atomic_t refill_low_mem;    /* if set refill the ring */
+		qdf_nbuf_t *netbufs_ring;
+		qdf_spinlock_t rx_buff_pool_lock;
+	} rx_buff_pool;
+#endif
+
 #ifdef CONFIG_HL_SUPPORT
 	int rx_desc_size_hl;
 #endif

@@ -146,6 +146,237 @@ static inline unsigned int htt_rx_ring_elems(struct htt_pdev_t *pdev)
 		 pdev->rx_ring.sw_rd_idx.msdu_payld) & pdev->rx_ring.size_mask;
 }
 
+/**
+ * htt_rx_buff_pool_init() - initialize the pool of buffers
+ * @pdev: pointer to device
+ *
+ * Return: 0 - success, 1 - failure
+ */
+static int htt_rx_buff_pool_init(struct htt_pdev_t *pdev)
+{
+	qdf_nbuf_t net_buf;
+	int i;
+
+	pdev->rx_buff_pool.netbufs_ring =
+		qdf_mem_malloc(HTT_RX_PRE_ALLOC_POOL_SIZE * sizeof(qdf_nbuf_t));
+
+	if (!pdev->rx_buff_pool.netbufs_ring)
+		return 1; /* failure */
+
+	qdf_atomic_init(&pdev->rx_buff_pool.fill_cnt);
+	qdf_atomic_init(&pdev->rx_buff_pool.refill_low_mem);
+
+	for (i = 0; i < HTT_RX_PRE_ALLOC_POOL_SIZE; i++) {
+		net_buf = qdf_nbuf_alloc(pdev->osdev,
+					 HTT_RX_BUF_SIZE,
+					 0, 4, false);
+		if (net_buf) {
+			qdf_atomic_inc(&pdev->rx_buff_pool.fill_cnt);
+			/*
+			 * Mark this netbuf to differentiate it
+			 * from other buf. If set 1, this buf
+			 * is from pre allocated pool.
+			 */
+			QDF_NBUF_CB_RX_PACKET_BUFF_POOL(net_buf) = 1;
+		}
+		/* Allow NULL to be inserted.
+		 * Taken care during alloc from this pool.
+		 */
+		pdev->rx_buff_pool.netbufs_ring[i] = net_buf;
+	}
+	QDF_TRACE(QDF_MODULE_ID_HTT,
+		  QDF_TRACE_LEVEL_INFO,
+		  "max pool size %d pool filled %d",
+		  HTT_RX_PRE_ALLOC_POOL_SIZE,
+		  qdf_atomic_read(&pdev->rx_buff_pool.fill_cnt));
+
+	qdf_spinlock_create(&pdev->rx_buff_pool.rx_buff_pool_lock);
+	return 0;
+}
+
+/**
+ * htt_rx_buff_pool_deinit() - deinitialize the pool of buffers
+ * @pdev: pointer to device
+ *
+ * Return: none
+ */
+static void htt_rx_buff_pool_deinit(struct htt_pdev_t *pdev)
+{
+	qdf_nbuf_t net_buf;
+	int i;
+
+	if (!pdev->rx_buff_pool.netbufs_ring)
+		return;
+
+	qdf_spin_lock_bh(&pdev->rx_buff_pool.rx_buff_pool_lock);
+	for (i = 0; i < HTT_RX_PRE_ALLOC_POOL_SIZE; i++) {
+		net_buf = pdev->rx_buff_pool.netbufs_ring[i];
+		if (!net_buf)
+			continue;
+		qdf_nbuf_free(net_buf);
+		qdf_atomic_dec(&pdev->rx_buff_pool.fill_cnt);
+	}
+	qdf_spin_unlock_bh(&pdev->rx_buff_pool.rx_buff_pool_lock);
+	QDF_TRACE(QDF_MODULE_ID_HTT,
+		  QDF_TRACE_LEVEL_INFO,
+		  "max pool size %d pool filled %d",
+		  HTT_RX_PRE_ALLOC_POOL_SIZE,
+		  qdf_atomic_read(&pdev->rx_buff_pool.fill_cnt));
+
+	qdf_mem_free(pdev->rx_buff_pool.netbufs_ring);
+	qdf_spinlock_destroy(&pdev->rx_buff_pool.rx_buff_pool_lock);
+}
+
+/**
+ * htt_rx_buff_pool_refill() - refill the pool with new buf or reuse same buf
+ * @pdev: pointer to device
+ * @netbuf: netbuf to reuse
+ *
+ * Return: true - if able to alloc new buf and insert into pool,
+ * false - if need to reuse the netbuf or not able to insert into pool
+ */
+static bool htt_rx_buff_pool_refill(struct htt_pdev_t *pdev, qdf_nbuf_t netbuf)
+{
+	bool ret = false;
+	qdf_nbuf_t net_buf;
+	int i;
+
+	net_buf = qdf_nbuf_alloc(pdev->osdev,
+				 HTT_RX_BUF_SIZE,
+				 0, 4, false);
+	if (net_buf) {
+		/* able to alloc new net_buf.
+		 * mark this netbuf as pool buf.
+		 */
+		QDF_NBUF_CB_RX_PACKET_BUFF_POOL(net_buf) = 1;
+		ret = true;
+	} else {
+		/* reuse the netbuf and
+		 * reset all fields of this netbuf.
+		 */
+		net_buf = netbuf;
+		qdf_nbuf_reset(net_buf, 0, 4);
+
+		/* mark this netbuf as pool buf */
+		QDF_NBUF_CB_RX_PACKET_BUFF_POOL(net_buf) = 1;
+	}
+
+	qdf_spin_lock_bh(&pdev->rx_buff_pool.rx_buff_pool_lock);
+	for (i = 0; i < HTT_RX_PRE_ALLOC_POOL_SIZE; i++) {
+		/* insert the netbuf in empty slot of pool */
+		if (pdev->rx_buff_pool.netbufs_ring[i])
+			continue;
+
+		pdev->rx_buff_pool.netbufs_ring[i] = net_buf;
+		qdf_atomic_inc(&pdev->rx_buff_pool.fill_cnt);
+		break;
+	}
+	qdf_spin_unlock_bh(&pdev->rx_buff_pool.rx_buff_pool_lock);
+
+	if (i == HTT_RX_PRE_ALLOC_POOL_SIZE) {
+		/* fail to insert into pool, free net_buf */
+		qdf_nbuf_free(net_buf);
+		ret = false;
+	}
+
+	return ret;
+}
+
+/**
+ * htt_rx_buff_alloc() - alloc the net buf from the pool
+ * @pdev: pointer to device
+ *
+ * Return: nbuf or NULL
+ */
+static qdf_nbuf_t htt_rx_buff_alloc(struct htt_pdev_t *pdev)
+{
+	qdf_nbuf_t net_buf = NULL;
+	int i;
+
+	if (!pdev->rx_buff_pool.netbufs_ring)
+		return net_buf;
+
+	qdf_spin_lock_bh(&pdev->rx_buff_pool.rx_buff_pool_lock);
+	for (i = 0; i < HTT_RX_PRE_ALLOC_POOL_SIZE; i++) {
+		/* allocate the valid netbuf */
+		if (!pdev->rx_buff_pool.netbufs_ring[i])
+			continue;
+
+		net_buf = pdev->rx_buff_pool.netbufs_ring[i];
+		qdf_atomic_dec(&pdev->rx_buff_pool.fill_cnt);
+		pdev->rx_buff_pool.netbufs_ring[i] = NULL;
+		break;
+	}
+	qdf_spin_unlock_bh(&pdev->rx_buff_pool.rx_buff_pool_lock);
+	return net_buf;
+}
+
+/**
+ * htt_rx_ring_buf_attach() - retrun net buf to attach in ring
+ * @pdev: pointer to device
+ *
+ * Return: nbuf or NULL
+ */
+static qdf_nbuf_t htt_rx_ring_buf_attach(struct htt_pdev_t *pdev)
+{
+	qdf_nbuf_t net_buf = NULL;
+	bool allocated = true;
+
+	net_buf =
+		qdf_nbuf_alloc(pdev->osdev, HTT_RX_BUF_SIZE,
+			       0, 4, false);
+	if (!net_buf) {
+		if (pdev->rx_buff_pool.netbufs_ring &&
+		    qdf_atomic_read(&pdev->rx_buff_pool.refill_low_mem) &&
+		    qdf_atomic_read(&pdev->rx_buff_pool.fill_cnt))
+			net_buf = htt_rx_buff_alloc(pdev);
+
+		allocated = false; /* allocated from pool */
+	}
+
+	if (allocated || !qdf_atomic_read(&pdev->rx_buff_pool.fill_cnt))
+		qdf_atomic_set(&pdev->rx_buff_pool.refill_low_mem, 0);
+
+	return net_buf;
+}
+
+/**
+ * htt_rx_ring_buff_free() - free the net buff or reuse it
+ * @pdev: pointer to device
+ * @netbuf: netbuf
+ *
+ * Return: none
+ */
+static void htt_rx_ring_buff_free(struct htt_pdev_t *pdev, qdf_nbuf_t netbuf)
+{
+	bool status = false;
+
+	if (pdev->rx_buff_pool.netbufs_ring &&
+	    QDF_NBUF_CB_RX_PACKET_BUFF_POOL(netbuf)) {
+		int i;
+
+		/* rest this netbuf before putting back into pool */
+		qdf_nbuf_reset(netbuf, 0, 4);
+
+		/* mark this netbuf as pool buf */
+		QDF_NBUF_CB_RX_PACKET_BUFF_POOL(netbuf) = 1;
+
+		qdf_spin_lock_bh(&pdev->rx_buff_pool.rx_buff_pool_lock);
+		for (i = 0; i < HTT_RX_PRE_ALLOC_POOL_SIZE; i++) {
+			/* insert the netbuf in empty slot of pool */
+			if (!pdev->rx_buff_pool.netbufs_ring[i]) {
+				pdev->rx_buff_pool.netbufs_ring[i] = netbuf;
+				qdf_atomic_inc(&pdev->rx_buff_pool.fill_cnt);
+				status = true;    /* valid insertion */
+				break;
+			}
+		}
+		qdf_spin_unlock_bh(&pdev->rx_buff_pool.rx_buff_pool_lock);
+	}
+	if (!status)
+		qdf_nbuf_free(netbuf);
+}
+
 /* full_reorder_offload case: this function is called with lock held */
 static int htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 {
@@ -177,9 +408,7 @@ moretofill:
 		qdf_nbuf_t rx_netbuf;
 		int headroom;
 
-		rx_netbuf =
-			qdf_nbuf_alloc(pdev->osdev, HTT_RX_BUF_SIZE,
-				       0, 4, false);
+		rx_netbuf = htt_rx_ring_buf_attach(pdev);
 		if (!rx_netbuf) {
 			qdf_timer_stop(&pdev->rx_ring.
 						 refill_retry_timer);
@@ -230,7 +459,7 @@ moretofill:
 				      QDF_DMA_FROM_DEVICE);
 #endif
 		if (status != QDF_STATUS_SUCCESS) {
-			qdf_nbuf_free(rx_netbuf);
+			htt_rx_ring_buff_free(pdev, rx_netbuf);
 			goto update_alloc_idx;
 		}
 
@@ -249,7 +478,8 @@ moretofill:
 				qdf_nbuf_unmap(pdev->osdev, rx_netbuf,
 					       QDF_DMA_FROM_DEVICE);
 #endif
-				qdf_nbuf_free(rx_netbuf);
+				htt_rx_ring_buff_free(pdev, rx_netbuf);
+
 				goto update_alloc_idx;
 			}
 			htt_rx_dbg_rxbuf_set(pdev, paddr_marked, rx_netbuf);
@@ -359,6 +589,9 @@ static void htt_rx_ring_refill_retry(void *arg)
 
 	num = qdf_atomic_read(&pdev->rx_ring.refill_debt);
 	qdf_atomic_sub(num, &pdev->rx_ring.refill_debt);
+
+	qdf_atomic_set(&pdev->rx_buff_pool.refill_low_mem, 1);
+
 	filled = htt_rx_ring_fill_n(pdev, num);
 
 	if (filled > num) {
@@ -1257,6 +1490,48 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 #else
 		qdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_FROM_DEVICE);
 #endif
+		msdu_count--;
+
+		if (pdev->rx_buff_pool.netbufs_ring &&
+		    QDF_NBUF_CB_RX_PACKET_BUFF_POOL(msdu) &&
+		    !htt_rx_buff_pool_refill(pdev, msdu)) {
+			if (!msdu_count) {
+				if (!prev) {
+					*head_msdu = *tail_msdu = NULL;
+					ret = 1;
+					goto end;
+				}
+				*tail_msdu = prev;
+				qdf_nbuf_set_next(prev, NULL);
+				goto end;
+			} else {
+				/* get the next msdu */
+				msg_word += HTT_RX_IN_ORD_PADDR_IND_MSDU_DWORDS;
+				paddr = htt_rx_in_ord_paddr_get(msg_word);
+				next = htt_rx_in_order_netbuf_pop(pdev, paddr);
+				if (qdf_unlikely(!next)) {
+					qdf_print("%s: netbuf pop failed!\n",
+						  __func__);
+					*tail_msdu = NULL;
+					pdev->rx_ring.pop_fail_cnt++;
+					ret = 0;
+					goto end;
+				}
+				/* if this is not the first msdu, update the
+				 * next pointer of the preceding msdu
+				 */
+				if (prev) {
+					qdf_nbuf_set_next(prev, next);
+				} else {
+					/* if this is the first msdu, update
+					 * head pointer
+					 */
+					*head_msdu = next;
+				}
+				msdu = next;
+				continue;
+			}
+		}
 
 		/* cache consistency has been taken care of by qdf_nbuf_unmap */
 		rx_desc = htt_rx_desc(msdu);
@@ -1289,8 +1564,6 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		*((uint8_t *)&rx_desc->fw_desc.u.val) =
 			HTT_RX_IN_ORD_PADDR_IND_FW_DESC_GET(*(msg_word +
 						NEXT_FIELD_OFFSET_IN32));
-
-		msdu_count--;
 
 		/* calling callback function for packet logging */
 		if (pdev->rx_pkt_dump_cb) {
@@ -1812,6 +2085,10 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	pdev->rx_ring.alloc_idx.paddr = paddr;
 	*pdev->rx_ring.alloc_idx.vaddr = 0;
 
+	if (htt_rx_buff_pool_init(pdev))
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO_LOW,
+			  "HTT: pre allocated packet pool alloc failed");
+
 	/*
 	 * Initialize the Rx refill reference counter to be one so that
 	 * only one thread is allowed to refill the Rx ring.
@@ -1962,6 +2239,8 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 		}
 		qdf_mem_free(pdev->rx_ring.buf.netbufs_ring);
 	}
+
+	htt_rx_buff_pool_deinit(pdev);
 
 	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 				sizeof(uint32_t),

@@ -377,6 +377,13 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 
 #define IS_PWR2(value) (((value) ^ ((value)-1)) == ((value) << 1) - 1)
 
+/*
+ * HTT_RX_PRE_ALLOC_POOL_SIZE -
+ * How many Rx Buffer should be there in pre-allocated pool of buffers.
+ * This is mainly for low memory condition where kernel fails to alloc
+ * SKB buffer to the Rx ring.
+ */
+#define HTT_RX_PRE_ALLOC_POOL_SIZE 64
 /* Max rx MSDU size including L2 headers */
 #define MSDU_SIZE 1560
 /* Rounding up to a cache line size. */
