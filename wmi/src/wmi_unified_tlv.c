@@ -12020,6 +12020,9 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_ru26_allowed] = WMI_PDEV_PARAM_RU26_ALLOWED;
 #endif
 	pdev_param[wmi_pdev_param_use_nol] = WMI_PDEV_PARAM_USE_NOL;
+	/* Trigger interval for all trigger types. */
+	pdev_param[wmi_pdev_param_ul_trig_int] =
+				WMI_PDEV_PARAM_SET_UL_BSR_TRIG_INTERVAL;
 }
 
 /**
@@ -12199,6 +12202,14 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 					WMI_VDEV_PARAM_CAPABILITIES;
 	vdev_param[wmi_vdev_param_autorate_misc_cfg] =
 					WMI_VDEV_PARAM_AUTORATE_MISC_CFG;
+	vdev_param[wmi_vdev_param_ul_shortgi] = WMI_VDEV_PARAM_UL_GI;
+	vdev_param[wmi_vdev_param_ul_he_ltf] = WMI_VDEV_PARAM_UL_HE_LTF;
+	vdev_param[wmi_vdev_param_ul_nss] = WMI_VDEV_PARAM_UL_NSS;
+	vdev_param[wmi_vdev_param_ul_ppdu_bw] = WMI_VDEV_PARAM_UL_PPDU_BW;
+	vdev_param[wmi_vdev_param_ul_ldpc] = WMI_VDEV_PARAM_UL_LDPC;
+	vdev_param[wmi_vdev_param_ul_stbc] = WMI_VDEV_PARAM_UL_STBC;
+	vdev_param[wmi_vdev_param_ul_fixed_rate] = WMI_VDEV_PARAM_UL_FIXED_RATE;
+
 }
 #endif
 

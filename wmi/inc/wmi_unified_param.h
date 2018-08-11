@@ -4915,6 +4915,7 @@ typedef enum {
 	wmi_pdev_param_esp_ppdu_duration,
 	wmi_pdev_param_use_nol,
 	wmi_pdev_param_enable_peer_retry_stats,
+	wmi_pdev_param_ul_trig_int,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
@@ -5036,6 +5037,13 @@ typedef enum {
 	wmi_vdev_param_amsdu_subframe_size_per_ac,
 	wmi_vdev_param_set_he_sounding_mode,
 	wmi_vdev_param_sifs_trigger_rate,
+	wmi_vdev_param_ul_shortgi,
+	wmi_vdev_param_ul_he_ltf,
+	wmi_vdev_param_ul_nss,
+	wmi_vdev_param_ul_ppdu_bw,
+	wmi_vdev_param_ul_ldpc,
+	wmi_vdev_param_ul_stbc,
+	wmi_vdev_param_ul_fixed_rate,
 
 	wmi_vdev_param_max,
 } wmi_conv_vdev_param_id;

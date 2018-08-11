@@ -1518,6 +1518,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_VIDEO_DELAY_STATS_FC = 395,
 #endif
 	OL_ATH_PARAM_ENABLE_PEER_RETRY_STATS = 396,
+	OL_ATH_PARAM_HE_UL_TRIG_INT = 397,
 };
 
 /* Enumeration of PDEV Configuration parameter */
