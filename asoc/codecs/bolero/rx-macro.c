@@ -2255,6 +2255,7 @@ static const struct snd_soc_dapm_route rx_audio_map[] = {
 	{"RX INT0 MIX2", NULL, "RX INT0 MIX2 INP"},
 	{"RX INT0 DEM MUX", "CLSH_DSM_OUT", "RX INT0 MIX2"},
 	{"HPHL_OUT", NULL, "RX INT0 DEM MUX"},
+	{"HPHL_OUT", NULL, "RX_MCLK"},
 
 	{"RX INT1_1 INTERP", NULL, "RX INT1_1 MIX1"},
 	{"RX INT1 SEC MIX", NULL, "RX INT1_1 INTERP"},
@@ -2262,13 +2263,16 @@ static const struct snd_soc_dapm_route rx_audio_map[] = {
 	{"RX INT1 MIX2", NULL, "RX INT1 MIX2 INP"},
 	{"RX INT1 DEM MUX", "CLSH_DSM_OUT", "RX INT1 MIX2"},
 	{"HPHR_OUT", NULL, "RX INT1 DEM MUX"},
+	{"HPHR_OUT", NULL, "RX_MCLK"},
 
 	{"RX INT2_1 INTERP", NULL, "RX INT2_1 MIX1"},
 	{"RX INT2 SEC MIX", NULL, "RX INT2_1 INTERP"},
 	{"RX INT2 MIX2", NULL, "RX INT2 SEC MIX"},
 	{"RX INT2 MIX2", NULL, "RX INT2 MIX2 INP"},
 	{"AUX_OUT", NULL, "RX INT2 MIX2"},
+	{"AUX_OUT", NULL, "RX_MCLK"},
 
+	{"IIR0", NULL, "RX_MCLK"},
 	{"IIR0", NULL, "IIR0 INP0 MUX"},
 	{"IIR0 INP0 MUX", "DEC0", "RX_TX DEC0_INP"},
 	{"IIR0 INP0 MUX", "DEC1", "RX_TX DEC1_INP"},
@@ -2314,6 +2318,7 @@ static const struct snd_soc_dapm_route rx_audio_map[] = {
 	{"IIR0 INP3 MUX", "RX4", "RX_RX4"},
 	{"IIR0 INP3 MUX", "RX5", "RX_RX5"},
 
+	{"IIR1", NULL, "RX_MCLK"},
 	{"IIR1", NULL, "IIR1 INP0 MUX"},
 	{"IIR1 INP0 MUX", "DEC0", "RX_TX DEC0_INP"},
 	{"IIR1 INP0 MUX", "DEC1", "RX_TX DEC1_INP"},

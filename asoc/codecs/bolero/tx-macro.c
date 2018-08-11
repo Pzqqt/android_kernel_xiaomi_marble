@@ -1057,6 +1057,15 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX_AIF2_CAP Mixer", "DEC6", "TX DEC6 MUX"},
 	{"TX_AIF2_CAP Mixer", "DEC7", "TX DEC7 MUX"},
 
+	{"TX DEC0 MUX", NULL, "TX_MCLK"},
+	{"TX DEC1 MUX", NULL, "TX_MCLK"},
+	{"TX DEC2 MUX", NULL, "TX_MCLK"},
+	{"TX DEC3 MUX", NULL, "TX_MCLK"},
+	{"TX DEC4 MUX", NULL, "TX_MCLK"},
+	{"TX DEC5 MUX", NULL, "TX_MCLK"},
+	{"TX DEC6 MUX", NULL, "TX_MCLK"},
+	{"TX DEC7 MUX", NULL, "TX_MCLK"},
+
 	{"TX DEC0 MUX", "MSM_DMIC", "TX DMIC MUX0"},
 	{"TX DMIC MUX0", "DMIC0", "TX DMIC0"},
 	{"TX DMIC MUX0", "DMIC1", "TX DMIC1"},
