@@ -142,7 +142,8 @@ struct wsa_macro_swr_ctrl_platform_data {
 };
 
 enum {
-	WSA_MACRO_AIF1_PB = 0,
+	WSA_MACRO_AIF_INVALID = 0,
+	WSA_MACRO_AIF1_PB,
 	WSA_MACRO_AIF_MIX1_PB,
 	WSA_MACRO_AIF_VI,
 	WSA_MACRO_AIF_ECHO,
@@ -1606,14 +1607,14 @@ static int wsa_macro_rx_mux_put(struct snd_kcontrol *kcontrol,
 	switch (rx_port_value) {
 	case 0:
 		clear_bit(bit_input,
-			  &wsa_priv->active_ch_mask[aif_rst - 1]);
-		wsa_priv->active_ch_cnt[aif_rst - 1]--;
+			  &wsa_priv->active_ch_mask[aif_rst]);
+		wsa_priv->active_ch_cnt[aif_rst]--;
 		break;
 	case 1:
 	case 2:
 		set_bit(bit_input,
-			&wsa_priv->active_ch_mask[rx_port_value - 1]);
-		wsa_priv->active_ch_cnt[rx_port_value - 1]++;
+			&wsa_priv->active_ch_mask[rx_port_value]);
+		wsa_priv->active_ch_cnt[rx_port_value]++;
 		break;
 	default:
 		dev_err(wsa_dev,

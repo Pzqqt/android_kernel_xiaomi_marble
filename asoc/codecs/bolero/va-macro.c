@@ -53,7 +53,8 @@ module_param(va_tx_unmute_delay, int, 0664);
 MODULE_PARM_DESC(va_tx_unmute_delay, "delay to unmute the tx path");
 
 enum {
-	VA_MACRO_AIF1_CAP = 0,
+	VA_MACRO_AIF_INVALID = 0,
+	VA_MACRO_AIF1_CAP,
 	VA_MACRO_AIF2_CAP,
 	VA_MACRO_MAX_DAIS,
 };

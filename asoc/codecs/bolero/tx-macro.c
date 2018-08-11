@@ -80,7 +80,8 @@ struct tx_macro_swr_ctrl_platform_data {
 };
 
 enum {
-	TX_MACRO_AIF1_CAP = 0,
+	TX_MACRO_AIF_INVALID = 0,
+	TX_MACRO_AIF1_CAP,
 	TX_MACRO_AIF2_CAP,
 	TX_MACRO_MAX_DAIS
 };
