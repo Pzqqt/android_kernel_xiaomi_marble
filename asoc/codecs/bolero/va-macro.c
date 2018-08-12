@@ -1032,6 +1032,12 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets[] = {
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
 
+static const struct snd_soc_dapm_widget va_macro_wod_dapm_widgets[] = {
+	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", 0, SND_SOC_NOPM, 0, 0,
+			      va_macro_mclk_event,
+			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+};
+
 static const struct snd_soc_dapm_route va_audio_map[] = {
 	{"VA_AIF1 CAP", NULL, "VA_MCLK"},
 	{"VA_AIF2 CAP", NULL, "VA_MCLK"},
@@ -1347,6 +1353,19 @@ static int va_macro_init(struct snd_soc_codec *codec)
 		return -EINVAL;
 	}
 
+	if (va_priv->va_without_decimation) {
+		ret = snd_soc_dapm_new_controls(dapm, va_macro_wod_dapm_widgets,
+					ARRAY_SIZE(va_macro_wod_dapm_widgets));
+		if (ret < 0) {
+			dev_err(va_dev,
+				"%s: Failed to add without dec controls\n",
+				__func__);
+			return ret;
+		}
+		va_priv->codec = codec;
+		return 0;
+	}
+
 	ret = snd_soc_dapm_new_controls(dapm, va_macro_dapm_widgets,
 					ARRAY_SIZE(va_macro_dapm_widgets));
 	if (ret < 0) {
@@ -1409,16 +1428,14 @@ static void va_macro_init_ops(struct macro_ops *ops,
 {
 	memset(ops, 0, sizeof(struct macro_ops));
 	if (!va_without_decimation) {
-		ops->init = va_macro_init;
-		ops->exit = va_macro_deinit;
 		ops->dai_ptr = va_macro_dai;
 		ops->num_dais = ARRAY_SIZE(va_macro_dai);
 	} else {
-		ops->init = NULL;
-		ops->exit = NULL;
 		ops->dai_ptr = NULL;
 		ops->num_dais = 0;
 	}
+	ops->init = va_macro_init;
+	ops->exit = va_macro_deinit;
 	ops->io_base = va_io_base;
 	ops->mclk_fn = va_macro_mclk_ctrl;
 }
@@ -1477,9 +1494,10 @@ static int va_macro_probe(struct platform_device *pdev)
 	/* Register MCLK for va macro */
 	va_core_clk = devm_clk_get(&pdev->dev, "va_core_clk");
 	if (IS_ERR(va_core_clk)) {
+		ret = PTR_ERR(va_core_clk);
 		dev_err(&pdev->dev, "%s: clk get %s failed\n",
 			__func__, "va_core_clk");
-		return -EINVAL;
+		return ret;
 	}
 	va_priv->va_core_clk = va_core_clk;
 

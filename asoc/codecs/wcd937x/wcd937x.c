@@ -1778,14 +1778,6 @@ static int wcd937x_bind(struct device *dev)
 	}
 
 	wcd937x->rst_np = pdata->rst_np;
-	wcd937x_reset(dev);
-	/*
-	 * Add 5msec delay to provide sufficient time for
-	 * soundwire auto enumeration of slave devices as
-	 * as per HW requirement.
-	 */
-	usleep_range(5000, 5010);
-
 	ret = msm_cdc_init_supplies(dev, &wcd937x->supplies,
 				    pdata->regulator, pdata->num_supplies);
 	if (!wcd937x->supplies) {
@@ -1802,6 +1794,14 @@ static int wcd937x_bind(struct device *dev)
 			__func__);
 		return ret;
 	}
+
+	wcd937x_reset(dev);
+	/*
+	 * Add 5msec delay to provide sufficient time for
+	 * soundwire auto enumeration of slave devices as
+	 * as per HW requirement.
+	 */
+	usleep_range(5000, 5010);
 
 	ret = component_bind_all(dev, wcd937x);
 	if (ret) {

@@ -2252,17 +2252,19 @@ static int wsa_macro_probe(struct platform_device *pdev)
 	/* Register MCLK for wsa macro */
 	wsa_core_clk = devm_clk_get(&pdev->dev, "wsa_core_clk");
 	if (IS_ERR(wsa_core_clk)) {
+		ret = PTR_ERR(wsa_core_clk);
 		dev_err(&pdev->dev, "%s: clk get %s failed\n",
 			__func__, "wsa_core_clk");
-		return -EINVAL;
+		return ret;
 	}
 	wsa_priv->wsa_core_clk = wsa_core_clk;
 	/* Register npl clk for soundwire */
 	wsa_npl_clk = devm_clk_get(&pdev->dev, "wsa_npl_clk");
 	if (IS_ERR(wsa_npl_clk)) {
+		ret = PTR_ERR(wsa_npl_clk);
 		dev_err(&pdev->dev, "%s: clk get %s failed\n",
 			__func__, "wsa_npl_clk");
-		return -EINVAL;
+		return ret;
 	}
 	wsa_priv->wsa_npl_clk = wsa_npl_clk;
 	dev_set_drvdata(&pdev->dev, wsa_priv);
