@@ -1704,6 +1704,7 @@ QDF_STATUS p2p_process_cleanup_tx_queue(struct p2p_cleanup_param *param)
 	qdf_list_node_t *p_node;
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	uint32_t vdev_id;
+	QDF_STATUS status, ret;
 
 	if (!param || !(param->p2p_soc_obj)) {
 		p2p_err("Invalid cleanup param");
@@ -1713,34 +1714,51 @@ QDF_STATUS p2p_process_cleanup_tx_queue(struct p2p_cleanup_param *param)
 	p2p_soc_obj = param->p2p_soc_obj;
 	vdev_id = param->vdev_id;
 
-	p2p_debug("clean up tx queue wait for roc, size:%d",
-		  qdf_list_size(&p2p_soc_obj->tx_q_roc));
+	p2p_debug("clean up tx queue wait for roc, size:%d, vdev_id:%d",
+		  qdf_list_size(&p2p_soc_obj->tx_q_roc), vdev_id);
 
-	while (qdf_list_remove_front(&p2p_soc_obj->tx_q_roc, &p_node) ==
-		QDF_STATUS_SUCCESS) {
+	status = qdf_list_peek_front(&p2p_soc_obj->tx_q_roc, &p_node);
+	while (QDF_IS_STATUS_SUCCESS(status)) {
 		curr_tx_ctx = qdf_container_of(p_node,
 					struct tx_action_context, node);
 		if ((vdev_id == P2P_INVALID_VDEV_ID) ||
 		    (vdev_id == curr_tx_ctx->vdev_id)) {
-			p2p_send_tx_conf(curr_tx_ctx, false);
-			qdf_mem_free(curr_tx_ctx->buf);
-			qdf_mem_free(curr_tx_ctx);
+			ret = qdf_list_remove_node(&p2p_soc_obj->tx_q_roc,
+						   &curr_tx_ctx->node);
+			if (ret == QDF_STATUS_SUCCESS) {
+				p2p_send_tx_conf(curr_tx_ctx, false);
+				qdf_mem_free(curr_tx_ctx->buf);
+				qdf_mem_free(curr_tx_ctx);
+			} else
+				p2p_err("remove %pK from roc_q fail",
+					curr_tx_ctx);
 		}
+		status = qdf_list_peek_next(&p2p_soc_obj->tx_q_roc,
+					    p_node, &p_node);
 	}
 
 	p2p_debug("clean up tx queue wait for ack, size:%d",
 		  qdf_list_size(&p2p_soc_obj->tx_q_ack));
-	while (qdf_list_remove_front(&p2p_soc_obj->tx_q_ack, &p_node) ==
-		QDF_STATUS_SUCCESS) {
+
+	status = qdf_list_peek_front(&p2p_soc_obj->tx_q_ack, &p_node);
+	while (QDF_IS_STATUS_SUCCESS(status)) {
 		curr_tx_ctx = qdf_container_of(p_node,
 					struct tx_action_context, node);
 		if ((vdev_id == P2P_INVALID_VDEV_ID) ||
 		    (vdev_id == curr_tx_ctx->vdev_id)) {
-			p2p_disable_tx_timer(curr_tx_ctx);
-			p2p_send_tx_conf(curr_tx_ctx, false);
-			qdf_mem_free(curr_tx_ctx->buf);
-			qdf_mem_free(curr_tx_ctx);
+			ret = qdf_list_remove_node(&p2p_soc_obj->tx_q_ack,
+						   &curr_tx_ctx->node);
+			if (ret == QDF_STATUS_SUCCESS) {
+				p2p_disable_tx_timer(curr_tx_ctx);
+				p2p_send_tx_conf(curr_tx_ctx, false);
+				qdf_mem_free(curr_tx_ctx->buf);
+				qdf_mem_free(curr_tx_ctx);
+			} else
+				p2p_err("remove %pK from roc_q fail",
+					curr_tx_ctx);
 		}
+		status = qdf_list_peek_next(&p2p_soc_obj->tx_q_ack,
+					    p_node, &p_node);
 	}
 
 	qdf_event_set(&p2p_soc_obj->cleanup_tx_done);
