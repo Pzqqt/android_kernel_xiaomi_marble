@@ -5247,6 +5247,10 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 		break;
 
 	case QDF_SAP_MODE:
+		if (test_bit(ACS_PENDING, &adapter->event_flags)) {
+			cds_flush_delayed_work(&adapter->acs_pending_work);
+			clear_bit(ACS_PENDING, &adapter->event_flags);
+		}
 		wlan_hdd_scan_abort(adapter);
 		/* Flush IPA exception path packets */
 		sap_config = &adapter->session.ap.sap_config;
@@ -5259,13 +5263,6 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 		/* fallthrough */
 
 	case QDF_P2P_GO_MODE:
-		if (QDF_SAP_MODE == adapter->device_mode) {
-			if (test_bit(ACS_PENDING, &adapter->event_flags)) {
-				cds_flush_delayed_work(
-						&adapter->acs_pending_work);
-				clear_bit(ACS_PENDING, &adapter->event_flags);
-			}
-		}
 		cds_flush_work(&adapter->sap_stop_bss_work);
 
 		/* Any softap specific cleanup here... */

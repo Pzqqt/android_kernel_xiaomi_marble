@@ -2856,8 +2856,8 @@ static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work)
 	struct hdd_adapter *adapter = container_of(work, struct hdd_adapter,
 						   acs_pending_work.work);
 
-	clear_bit(ACS_PENDING, &adapter->event_flags);
 	wlan_hdd_cfg80211_start_acs(adapter);
+	clear_bit(ACS_PENDING, &adapter->event_flags);
 }
 
 /**
