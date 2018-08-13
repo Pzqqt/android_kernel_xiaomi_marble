@@ -990,10 +990,7 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev,
 	if (!netbuf) {
 		qdf_print("rx hash: %s: no entry found for %pK!\n",
 			  __func__, (void *)paddr);
-		if (cds_is_self_recovery_enabled())
-			cds_trigger_recovery(QDF_RX_HASH_NO_ENTRY_FOUND);
-		else
-			HTT_ASSERT_ALWAYS(0);
+		cds_trigger_recovery(QDF_RX_HASH_NO_ENTRY_FOUND);
 	}
 
 	return netbuf;

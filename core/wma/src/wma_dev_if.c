@@ -842,17 +842,8 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	return status;
 
 send_fail_rsp:
-	if (!cds_is_driver_recovering()) {
-		if (cds_is_self_recovery_enabled()) {
-			WMA_LOGE("rcvd del_self_sta without del_bss, trigger recovery, vdev_id %d",
-				 vdev_id);
-			cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
-		} else {
-			WMA_LOGE("rcvd del_self_sta without del_bss, BUG_ON(), vdev_id %d",
-				 vdev_id);
-			QDF_BUG(0);
-		}
-	}
+	WMA_LOGE("rcvd del_self_sta without del_bss; vdev_id:%d", vdev_id);
+	cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 	status = QDF_STATUS_E_FAILURE;
 
 send_rsp:
@@ -2784,16 +2775,8 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 					    WMA_TARGET_REQ_TYPE_VDEV_STOP,
 					    false);
 		if (!req_msg || req_msg->msg_type != WMA_DELETE_BSS_REQ) {
-			if (!cds_is_driver_recovering()) {
-				if (cds_is_self_recovery_enabled()) {
-					WMA_LOGE("BSS is in started state before vdev start, trigger recovery");
-					cds_trigger_recovery(
-						QDF_REASON_UNSPECIFIED);
-				} else {
-					WMA_LOGE("BSS is in started state before vdev start, BUG_ON()");
-					QDF_BUG(0);
-				}
-			}
+			WMA_LOGE("BSS is in started state before vdev start");
+			cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 		}
 	}
 
@@ -3196,18 +3179,11 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 	return status;
 }
 
-static void wma_trigger_recovery_assert_on_fw_timeout(
-			uint16_t wma_msg)
+static void wma_trigger_recovery_assert_on_fw_timeout(uint16_t wma_msg)
 {
-	if (cds_is_self_recovery_enabled()) {
-		WMA_LOGE("%s timed out, triggering recovery",
-			 mac_trace_get_wma_msg_string(wma_msg));
-		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
-	} else {
-		WMA_LOGE("%s timed out, BUG_ON()",
-			 mac_trace_get_wma_msg_string(wma_msg));
-		QDF_BUG(0);
-	}
+	WMA_LOGE("%s timed out, triggering recovery",
+		 mac_trace_get_wma_msg_string(wma_msg));
+	cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 }
 
 static inline bool wma_crash_on_fw_timeout(bool crash_enabled)

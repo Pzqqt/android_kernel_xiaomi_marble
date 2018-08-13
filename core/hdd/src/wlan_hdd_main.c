@@ -14234,10 +14234,7 @@ void hdd_drv_ops_inactivity_handler(void)
 		return;
 	}
 
-	if (cds_is_self_recovery_enabled())
-		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
-	else
-		QDF_BUG(0);
+	cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 }
 
 void hdd_pld_ipa_uc_shutdown_pipes(void)

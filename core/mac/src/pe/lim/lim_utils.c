@@ -5965,12 +5965,7 @@ bool lim_set_nss_change(tpAniSirGlobal pMac, tpPESession psessionEntry,
 
 	if (!rxNss) {
 		pe_err("Invalid rxNss value: %u", rxNss);
-		if (!cds_is_driver_recovering()) {
-			if (cds_is_self_recovery_enabled())
-				cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
-			else
-				QDF_BUG(0);
-		}
+		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 	}
 
 	tempParam.rxNss = rxNss;
