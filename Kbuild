@@ -56,7 +56,6 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_scan.o \
 		$(HDD_SRC_DIR)/wlan_hdd_softap_tx_rx.o \
 		$(HDD_SRC_DIR)/wlan_hdd_stats.o \
-		$(HDD_SRC_DIR)/wlan_hdd_sysfs.o \
 		$(HDD_SRC_DIR)/wlan_hdd_trace.o \
 		$(HDD_SRC_DIR)/wlan_hdd_tx_rx.o \
 		$(HDD_SRC_DIR)/wlan_hdd_wmm.o \
@@ -206,6 +205,9 @@ ifeq ($(CONFIG_FEATURE_P2P_LISTEN_OFFLOAD), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_p2p_listen_offload.o
 endif
 
+ifeq ($(CONFIG_WLAN_SYSFS), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs.o
+endif
 ########### Driver Synchronization Core (DSC) ###########
 DSC_DIR := components/dsc
 DSC_INC_DIR := $(DSC_DIR)/inc
@@ -1910,14 +1912,11 @@ cppflags-$(CONFIG_WLAN_LOG_INFO) += -DWLAN_LOG_INFO
 cppflags-$(CONFIG_WLAN_LOG_DEBUG) += -DWLAN_LOG_DEBUG
 cppflags-$(CONFIG_WLAN_LOG_ENTER) += -DWLAN_LOG_ENTER
 cppflags-$(CONFIG_WLAN_LOG_EXIT) += -DWLAN_LOG_EXIT
-
 cppflags-$(WLAN_OPEN_SOURCE) += -DWLAN_OPEN_SOURCE
-
 cppflags-$(CONFIG_FEATURE_STATS_EXT) += -DWLAN_FEATURE_STATS_EXT
-
 cppflags-$(CONFIG_QCACLD_FEATURE_NAN) += -DWLAN_FEATURE_NAN
-
 cppflags-$(CONFIG_QCA_IBSS_SUPPORT) += -DQCA_IBSS_SUPPORT
+cppflags-$(CONFIG_WLAN_SYSFS) += -DWLAN_SYSFS
 
 #Enable OL debug and wmi unified functions
 cppflags-$(CONFIG_ATH_PERF_PWR_OFFLOAD) += -DATH_PERF_PWR_OFFLOAD

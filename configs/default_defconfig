@@ -89,6 +89,8 @@ endif
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
 #Flag to enable TDLS feature
 CONFIG_QCOM_TDLS := y
+
+CONFIG_WLAN_SYSFS := y
 endif
 
 CONFIG_QCACLD_FEATURE_GREEN_AP := y
