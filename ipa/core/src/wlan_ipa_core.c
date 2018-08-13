@@ -976,11 +976,6 @@ QDF_STATUS wlan_ipa_uc_disable_pipes(struct wlan_ipa_priv *ipa_ctx)
 	ipa_debug("enter");
 
 	if (ipa_ctx->ipa_pipes_down) {
-		/*
-		 * This shouldn't happen :
-		 * IPA WDI Pipes are already deactivated
-		 */
-		QDF_ASSERT(0);
 		ipa_warn("IPA WDI Pipes are already deactivated");
 		goto end;
 	}
