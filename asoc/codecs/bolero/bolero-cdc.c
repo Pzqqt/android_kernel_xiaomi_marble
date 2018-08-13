@@ -23,6 +23,8 @@
 #include "internal.h"
 
 #define BOLERO_VERSION_1_0 0x0001
+#define BOLERO_VERSION_1_1 0x0002
+#define BOLERO_VERSION_1_2 0x0003
 #define BOLERO_VERSION_ENTRY_SIZE 32
 
 static struct snd_soc_codec_driver bolero;
@@ -412,6 +414,12 @@ static ssize_t bolero_version_read(struct snd_info_entry *entry,
 	case BOLERO_VERSION_1_0:
 		len = snprintf(buffer, sizeof(buffer), "BOLERO_1_0\n");
 		break;
+	case BOLERO_VERSION_1_1:
+		len = snprintf(buffer, sizeof(buffer), "BOLERO_1_1\n");
+		break;
+	case BOLERO_VERSION_1_2:
+		len = snprintf(buffer, sizeof(buffer), "BOLERO_1_2\n");
+		break;
 	default:
 		len = snprintf(buffer, sizeof(buffer), "VER_UNDEFINED\n");
 	}
@@ -499,7 +507,20 @@ static int bolero_soc_codec_probe(struct snd_soc_codec *codec)
 		}
 	}
 	priv->codec = codec;
-	priv->version = BOLERO_VERSION_1_0;
+	/*
+	 * In order for the ADIE RTC to differentiate between targets
+	 * version info is used.
+	 * Assign 1.0 for target with only one macro
+	 * Assign 1.1 for target with two macros
+	 * Assign 1.2 for target with more than two macros
+	 */
+	if (priv->num_macros_registered == 1)
+		priv->version = BOLERO_VERSION_1_0;
+	else if (priv->num_macros_registered == 2)
+		priv->version = BOLERO_VERSION_1_1;
+	else if (priv->num_macros_registered > 2)
+		priv->version = BOLERO_VERSION_1_2;
+
 	dev_dbg(codec->dev, "%s: bolero soc codec probe success\n", __func__);
 err:
 	return ret;
