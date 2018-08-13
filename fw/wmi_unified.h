@@ -22999,6 +22999,28 @@ typedef struct {
     A_INT32 noise_floor[WMI_MAX_CHAINS];
 } wmi_dma_buf_release_spectral_meta_data;
 
+typedef enum {
+    NO_SCALING = 0, /* No bin scaling*/
+    /**
+     * scaled_bin_mag = bin_mag * 
+     *                  sqrt(10^(max(legacy_max_gain - default_agc_max_gain + low_level_offset - RSSI_corr, 
+     *                  (agc_total_gain_db < default_agc_max_gain) * high_level_offset)/10)) *
+     *                  2^(DET{0,1,2}_SPECTRAL_SCAN_BIN_SCALE - legacy_spectral_scan_bin_scale)
+     */
+    AGC_GAIN_RSSI_CORR_BASED = 1,
+} WMI_SPECTRAL_SCALING_FORMULA_ID;
+
+typedef struct
+{
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_spectral_bin_scaling_params */
+    A_UINT32 pdev_id;   /* ID of pdev to which the scaling parameters are to be applied */
+    WMI_SPECTRAL_SCALING_FORMULA_ID formula_id; /* Represets the formula to be used */
+    A_UINT32 low_level_offset; /* low level offset for fine tuning the scaling factor based on RSSI and AGC gain */
+    A_UINT32 high_level_offset; /* high level offset for fine tuning the scaling factor based on RSSI and AGC gain */
+    A_UINT32 rssi_thr; /* RSSI threshold to be used to adjust the inband power of the given spectral report */
+    A_UINT32 default_agc_max_gain;/* DEFAULT AGC MAX GAIN used. Fetched from register RXTD_RADAR_SBS_CTRL_1_L bits20:13 */
+} wmi_spectral_bin_scaling_params;
+
 typedef struct {
     A_UINT32 tlv_header;  /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_runtime_dpd_recal_cmd_fixed_param  */
     A_UINT32 enable;      /* Enable/disable */
