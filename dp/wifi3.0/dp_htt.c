@@ -104,7 +104,8 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 
 	dp_peer_stats_notify(peer);
 
-	ratekbps = dp_getrateindex(ppdu->mcs,
+	ratekbps = dp_getrateindex(ppdu->gi,
+				   ppdu->mcs,
 				   ppdu->nss,
 				   ppdu->preamble,
 				   ppdu->bw);

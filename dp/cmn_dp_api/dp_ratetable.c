@@ -18,6 +18,7 @@
 
 #include "dp_ratetable.h"
 #include "qdf_module.h"
+#include "cdp_txrx_mon_struct.h"
 
 enum {
 	MODE_11A        = 0,   /* 11a Mode */
@@ -3211,7 +3212,8 @@ enum DP_CMN_MODULATION_TYPE dp_getmodulation(
  * return - rate in kbps
  */
 uint32_t
-dp_getrateindex(uint16_t mcs, uint8_t nss, uint8_t preamble, uint8_t bw)
+dp_getrateindex(uint32_t gi, uint16_t mcs, uint8_t nss, uint8_t preamble,
+		uint8_t bw)
 {
 	uint32_t ratekbps = 0, res = RT_INVALID_INDEX; /* represents failure */
 	uint16_t rc;
@@ -3251,7 +3253,21 @@ dp_getrateindex(uint16_t mcs, uint8_t nss, uint8_t preamble, uint8_t bw)
 	if (res >= DP_RATE_TABLE_SIZE)
 		return ratekbps;
 
-	ratekbps = dp_11abgnratetable.info[res].userratekbps;
+	if (!gi) {
+		ratekbps = dp_11abgnratetable.info[res].userratekbps;
+	} else {
+		switch (gi) {
+		case CDP_SGI_0_4_US:
+			ratekbps = dp_11abgnratetable.info[res].ratekbpssgi;
+			break;
+		case CDP_SGI_1_6_US:
+			ratekbps = dp_11abgnratetable.info[res].ratekbpsdgi;
+			break;
+		case CDP_SGI_3_2_US:
+			ratekbps = dp_11abgnratetable.info[res].ratekbpsqgi;
+			break;
+		}
+	}
 
 	return ratekbps;
 }
