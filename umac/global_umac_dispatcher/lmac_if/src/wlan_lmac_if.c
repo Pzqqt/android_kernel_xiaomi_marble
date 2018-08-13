@@ -114,16 +114,22 @@ wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	atf_rx_ops->atf_get_peers = tgt_atf_get_peers;
 	atf_rx_ops->atf_get_tput_based = tgt_atf_get_tput_based;
 	atf_rx_ops->atf_get_logging = tgt_atf_get_logging;
-	atf_rx_ops->atf_get_txbuf_share = tgt_atf_get_txbuf_share;
-	atf_rx_ops->atf_get_txbuf_max = tgt_atf_get_txbuf_max;
-	atf_rx_ops->atf_get_txbuf_min = tgt_atf_get_txbuf_min;
+	atf_rx_ops->atf_update_buf_held = tgt_atf_update_buf_held;
 	atf_rx_ops->atf_get_ssidgroup = tgt_atf_get_ssidgroup;
 	atf_rx_ops->atf_get_tx_block_count = tgt_atf_get_tx_block_count;
 	atf_rx_ops->atf_get_peer_blk_txtraffic = tgt_atf_get_peer_blk_txtraffic;
 	atf_rx_ops->atf_get_vdev_blk_txtraffic = tgt_atf_get_vdev_blk_txtraffic;
 	atf_rx_ops->atf_get_sched = tgt_atf_get_sched;
 	atf_rx_ops->atf_get_tx_tokens = tgt_atf_get_tx_tokens;
-	atf_rx_ops->atf_get_shadow_tx_tokens = tgt_atf_get_shadow_tx_tokens;
+	atf_rx_ops->atf_account_subgroup_txtokens =
+					tgt_atf_account_subgroup_txtokens;
+	atf_rx_ops->atf_adjust_subgroup_txtokens =
+					tgt_atf_adjust_subgroup_txtokens;
+	atf_rx_ops->atf_get_subgroup_airtime = tgt_atf_get_subgroup_airtime;
+	atf_rx_ops->atf_subgroup_free_buf = tgt_atf_subgroup_free_buf;
+	atf_rx_ops->atf_update_subgroup_tidstate =
+					tgt_atf_update_subgroup_tidstate;
+	atf_rx_ops->atf_buf_distribute = tgt_atf_buf_distribute;
 	atf_rx_ops->atf_get_shadow_alloted_tx_tokens =
 					tgt_atf_get_shadow_alloted_tx_tokens;
 	atf_rx_ops->atf_get_txtokens_common = tgt_atf_get_txtokens_common;
