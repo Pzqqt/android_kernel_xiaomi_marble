@@ -1256,7 +1256,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx;
 	int ret;
 
-	hdd_enter();
+	hdd_enter_dev(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -1266,8 +1266,8 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
 
-	if (QDF_NDI_MODE == adapter->device_mode) {
-		hdd_err("Command not allowed for NDI interface");
+	if (adapter->device_mode != QDF_STA_MODE) {
+		hdd_info("Sched scans only supported on STA ifaces");
 		return -EINVAL;
 	}
 
@@ -1386,6 +1386,11 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct net_device *dev)
 	errno = hdd_validate_adapter(adapter);
 	if (errno)
 		return errno;
+
+	if (adapter->device_mode != QDF_STA_MODE) {
+		hdd_info("Sched scans only supported on STA ifaces");
+		return -EINVAL;
+	}
 
 	errno = wlan_hdd_validate_context(WLAN_HDD_GET_CTX(adapter));
 	if (errno)
