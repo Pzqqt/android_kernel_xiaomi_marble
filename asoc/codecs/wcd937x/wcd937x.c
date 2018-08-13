@@ -36,6 +36,9 @@
 
 #define NUM_SWRS_DT_PARAMS 5
 
+#define WCD937X_VERSION_1_0 1
+#define WCD937X_VERSION_ENTRY_SIZE 32
+
 enum {
 	CODEC_TX = 0,
 	CODEC_RX,
@@ -1564,6 +1567,95 @@ static const struct snd_soc_dapm_route wcd9375_audio_map[] = {
 
 };
 
+static ssize_t wcd937x_version_read(struct snd_info_entry *entry,
+				   void *file_private_data,
+				   struct file *file,
+				   char __user *buf, size_t count,
+				   loff_t pos)
+{
+	struct wcd937x_priv *priv;
+	char buffer[WCD937X_VERSION_ENTRY_SIZE];
+	int len = 0;
+
+	priv = (struct wcd937x_priv *) entry->private_data;
+	if (!priv) {
+		pr_err("%s: wcd937x priv is null\n", __func__);
+		return -EINVAL;
+	}
+
+	switch (priv->version) {
+	case WCD937X_VERSION_1_0:
+		len = snprintf(buffer, sizeof(buffer), "WCD937X_1_0\n");
+		break;
+	default:
+		len = snprintf(buffer, sizeof(buffer), "VER_UNDEFINED\n");
+	}
+
+	return simple_read_from_buffer(buf, count, &pos, buffer, len);
+}
+
+static struct snd_info_entry_ops wcd937x_info_ops = {
+	.read = wcd937x_version_read,
+};
+
+/*
+ * wcd937x_info_create_codec_entry - creates wcd937x module
+ * @codec_root: The parent directory
+ * @codec: Codec instance
+ *
+ * Creates wcd937x module and version entry under the given
+ * parent directory.
+ *
+ * Return: 0 on success or negative error code on failure.
+ */
+int wcd937x_info_create_codec_entry(struct snd_info_entry *codec_root,
+				   struct snd_soc_codec *codec)
+{
+	struct snd_info_entry *version_entry;
+	struct wcd937x_priv *priv;
+	struct snd_soc_card *card;
+
+	if (!codec_root || !codec)
+		return -EINVAL;
+
+	priv = snd_soc_codec_get_drvdata(codec);
+	if (priv->entry) {
+		dev_dbg(priv->dev,
+			"%s:wcd937x module already created\n", __func__);
+		return 0;
+	}
+	card = codec->component.card;
+	priv->entry = snd_info_create_subdir(codec_root->module,
+					     "wcd937x", codec_root);
+	if (!priv->entry) {
+		dev_dbg(codec->dev, "%s: failed to create wcd937x entry\n",
+			__func__);
+		return -ENOMEM;
+	}
+	version_entry = snd_info_create_card_entry(card->snd_card,
+						   "version",
+						   priv->entry);
+	if (!version_entry) {
+		dev_dbg(codec->dev, "%s: failed to create wcd937x version entry\n",
+			__func__);
+		return -ENOMEM;
+	}
+
+	version_entry->private_data = priv;
+	version_entry->size = WCD937X_VERSION_ENTRY_SIZE;
+	version_entry->content = SNDRV_INFO_CONTENT_DATA;
+	version_entry->c.ops = &wcd937x_info_ops;
+
+	if (snd_info_register(version_entry) < 0) {
+		snd_info_free_entry(version_entry);
+		return -ENOMEM;
+	}
+	priv->version_entry = version_entry;
+
+	return 0;
+}
+EXPORT_SYMBOL(wcd937x_info_create_codec_entry);
+
 static int wcd937x_soc_codec_probe(struct snd_soc_codec *codec)
 {
 	struct wcd937x_priv *wcd937x = snd_soc_codec_get_drvdata(codec);
@@ -1630,6 +1722,7 @@ static int wcd937x_soc_codec_probe(struct snd_soc_codec *codec)
 			goto err_hwdep;
 		}
 	}
+	wcd937x->version = WCD937X_VERSION_1_0;
 	return ret;
 
 err_hwdep:

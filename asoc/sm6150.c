@@ -41,6 +41,7 @@
 #include "codecs/bolero/bolero-cdc.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include "codecs/bolero/wsa-macro.h"
+#include "codecs/wcd937x/internal.h"
 
 #define DRV_NAME "sm6150-asoc-snd"
 
@@ -4915,15 +4916,17 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		}
 	}
 	card = rtd->card->snd_card;
-	entry = snd_info_create_subdir(card->module, "codecs",
-					 card->proc_root);
-	if (!entry) {
-		pr_debug("%s: Cannot create codecs module entry\n",
-			 __func__);
-		ret = 0;
-		goto err;
+	if (!pdata->codec_root) {
+		entry = snd_info_create_subdir(card->module, "codecs",
+						 card->proc_root);
+		if (!entry) {
+			pr_debug("%s: Cannot create codecs module entry\n",
+				 __func__);
+			ret = 0;
+			goto err;
+		}
+		pdata->codec_root = entry;
 	}
-	pdata->codec_root = entry;
 	bolero_info_create_codec_entry(pdata->codec_root, codec);
 	codec_reg_done = true;
 	return 0;
@@ -7878,6 +7881,8 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 	struct snd_soc_codec *codec = snd_soc_component_to_codec(component);
 	struct msm_asoc_mach_data *pdata;
 	struct snd_soc_dapm_context *dapm;
+	struct snd_card *card = component->card->snd_card;
+	struct snd_info_entry *entry;
 	int ret = 0;
 
 	if (!codec) {
@@ -7914,10 +7919,19 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 		goto err;
 	}
 	pdata = snd_soc_card_get_drvdata(component->card);
-	if (pdata && pdata->codec_root)
-		wsa881x_codec_info_create_codec_entry(pdata->codec_root,
-						      codec);
-
+	if (!pdata->codec_root) {
+		entry = snd_info_create_subdir(card->module, "codecs",
+						 card->proc_root);
+		if (!entry) {
+			pr_err("%s: Cannot create codecs module entry\n",
+				 __func__);
+			ret = 0;
+			goto err;
+		}
+		pdata->codec_root = entry;
+	}
+	wsa881x_codec_info_create_codec_entry(pdata->codec_root,
+					      codec);
 err:
 	return ret;
 }
@@ -7928,6 +7942,9 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
 	int ret = 0;
 	void *mbhc_calibration;
+	struct snd_info_entry *entry;
+	struct snd_card *card = component->card->snd_card;
+	struct msm_asoc_mach_data *pdata;
 
 	snd_soc_dapm_ignore_suspend(dapm, "EAR");
 	snd_soc_dapm_ignore_suspend(dapm, "AUX");
@@ -7939,6 +7956,20 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC4");
 	snd_soc_dapm_sync(dapm);
 
+	pdata = snd_soc_card_get_drvdata(component->card);
+	if (!pdata->codec_root) {
+		entry = snd_info_create_subdir(card->module, "codecs",
+						 card->proc_root);
+		if (!entry) {
+			pr_err("%s: Cannot create codecs module entry\n",
+				 __func__);
+			ret = 0;
+			goto codec_root_err;
+		}
+		pdata->codec_root = entry;
+	}
+	wcd937x_info_create_codec_entry(pdata->codec_root, codec);
+codec_root_err:
 	mbhc_calibration = def_wcd_mbhc_cal();
 	if (!mbhc_calibration) {
 		return -ENOMEM;
