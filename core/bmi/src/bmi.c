@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -414,8 +414,8 @@ QDF_STATUS bmi_sign_stream_start(uint32_t address, uint8_t *buffer,
 		src = &buffer[length - remaining];
 		if (remaining < (BMI_DATASZ_MAX - header)) {
 			if (remaining & 0x3) {
-				remaining = remaining + (4 - (remaining & 0x3));
 				memcpy(aligned_buf, src, remaining);
+				remaining = remaining + (4 - (remaining & 0x3));
 				src = aligned_buf;
 			}
 			txlen = remaining;
