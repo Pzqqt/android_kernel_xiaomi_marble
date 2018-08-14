@@ -515,7 +515,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info,
 	uint16_t he_ltf = 0;
 	void *rx_tlv;
 	bool unhandled = false;
-
+	bool is_no_payload_ppdu = false;
 
 	tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(rx_tlv_hdr);
 	user_id = HAL_RX_GET_USER_TLV32_USERID(rx_tlv_hdr);
@@ -637,7 +637,12 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info,
 		break;
 
 	case WIFIRX_PPDU_END_STATUS_DONE_E:
-		return HAL_TLV_STATUS_PPDU_DONE;
+	{
+		if (is_no_payload_ppdu)
+			return HAL_TLV_STATUS_PPDU_NON_STD_DONE;
+		else
+			return HAL_TLV_STATUS_PPDU_DONE;
+	}
 
 	case WIFIDUMMY_E:
 		return HAL_TLV_STATUS_BUF_DONE;
@@ -1305,6 +1310,12 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info,
 		hal_rx_proc_phyrx_other_receive_info_tlv(hal, rx_tlv_hdr,
 								ppdu_info);
 		break;
+	case WIFIPHYRX_GENERATED_CBF_DETAILS_E:
+	{
+		/* This is a NDP frame, set no payload flag to true */
+		is_no_payload_ppdu = true;
+		break;
+	}
 	case WIFIRX_HEADER_E:
 		ppdu_info->msdu_info.first_msdu_payload = rx_tlv;
 		ppdu_info->msdu_info.payload_len = tlv_len;
