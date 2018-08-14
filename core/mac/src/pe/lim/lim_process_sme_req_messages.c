@@ -581,6 +581,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	uint32_t chanwidth;
 	struct vdev_type_nss *vdev_type_nss;
 	QDF_STATUS cfg_get_wmi_dfs_master_param = QDF_STATUS_SUCCESS;
+	struct policy_mgr_hw_mode_params hw_mode;
 
 /* FEATURE_WLAN_DIAG_SUPPORT */
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
@@ -853,7 +854,14 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				session->ch_center_freq_seg1 = 0;
 			}
 		}
-
+		if (policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) &&
+		    (policy_mgr_get_current_hw_mode(mac_ctx->psoc, &hw_mode) ==
+						    QDF_STATUS_SUCCESS) &&
+		    hw_mode.dbs_cap) {
+			session->nss = 1;
+			pe_debug("HW is in DBS mode. Nss set to [%d]",
+				session->nss);
+		}
 		if (session->vhtCapability &&
 			(session->ch_width > CH_WIDTH_80MHZ)) {
 			session->nss = 1;
