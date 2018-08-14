@@ -224,14 +224,14 @@ void dfs_main_timer_reset(struct wlan_dfs *dfs)
 	}
 }
 
-void dfs_main_timer_free(struct wlan_dfs *dfs)
+void dfs_main_timer_detach(struct wlan_dfs *dfs)
 {
 	qdf_timer_free(&dfs->wlan_dfs_task_timer);
 	dfs->wlan_radar_tasksched = 0;
 }
 
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
-void dfs_host_wait_timer_free(struct wlan_dfs *dfs)
+void dfs_host_wait_timer_detach(struct wlan_dfs *dfs)
 {
 	qdf_timer_free(&dfs->dfs_host_wait_timer);
 }

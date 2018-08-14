@@ -185,13 +185,13 @@ static inline void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 #endif
 
 /**
- * dfs_zero_cac_timer_free() - Free Zero cac DFS variables.
+ * dfs_zero_cac_timer_detach() - Free Zero cac DFS variables.
  * @dfs: Pointer to wlan_dfs structure.
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD)
-void dfs_zero_cac_timer_free(struct wlan_dfs *dfs);
+void dfs_zero_cac_timer_detach(struct wlan_dfs *dfs);
 #else
-static inline void dfs_zero_cac_timer_free(struct wlan_dfs *dfs)
+static inline void dfs_zero_cac_timer_detach(struct wlan_dfs *dfs)
 {
 }
 #endif

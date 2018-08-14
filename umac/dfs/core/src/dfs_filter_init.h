@@ -58,7 +58,7 @@ static inline void dfs_main_detach(struct wlan_dfs *dfs)
 #if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_start_host_based_bangradar(struct wlan_dfs *dfs);
 #else
-static int dfs_start_host_based_bangradar(struct wlan_dfs *dfs)
+static inline int dfs_start_host_based_bangradar(struct wlan_dfs *dfs)
 {
 	return 0;
 }
@@ -71,19 +71,19 @@ static int dfs_start_host_based_bangradar(struct wlan_dfs *dfs)
 #if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_main_timer_reset(struct wlan_dfs *dfs);
 #else
-static void dfs_main_timer_reset(struct wlan_dfs *dfs)
+static inline void dfs_main_timer_reset(struct wlan_dfs *dfs)
 {
 }
 #endif
 
 /**
- * dfs_main_timer_free() - Free dfs timers.
+ * dfs_main_timer_detach() - Free dfs timers.
  * @dfs: Pointer to wlan_dfs structure.
  */
 #if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
-void dfs_main_timer_free(struct wlan_dfs *dfs);
+void dfs_main_timer_detach(struct wlan_dfs *dfs);
 #else
-static void dfs_main_timer_free(struct wlan_dfs *dfs)
+static inline void dfs_main_timer_detach(struct wlan_dfs *dfs)
 {
 }
 #endif

@@ -68,13 +68,13 @@ static inline void dfs_host_wait_timer_init(struct wlan_dfs *dfs)
 #endif
 
 /**
- * dfs_host_wait_timer_free() - Free dfs host status wait timer.
+ * dfs_host_wait_timer_detach() - Free dfs host status wait timer.
  * @dfs: Pointer to wlan_dfs structure.
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
-void dfs_host_wait_timer_free(struct wlan_dfs *dfs);
+void dfs_host_wait_timer_detach(struct wlan_dfs *dfs);
 #else
-static inline void dfs_host_wait_timer_free(struct wlan_dfs *dfs)
+static inline void dfs_host_wait_timer_detach(struct wlan_dfs *dfs)
 {
 }
 #endif

@@ -160,7 +160,7 @@ void dfs_nol_detach(struct wlan_dfs *dfs)
 	WLAN_DFSNOL_LOCK_DESTROY(dfs);
 }
 
-void dfs_nol_timer_free(struct wlan_dfs *dfs)
+void dfs_nol_timer_detach(struct wlan_dfs *dfs)
 {
 	qdf_timer_free(&dfs->dfs_nol_timer);
 }

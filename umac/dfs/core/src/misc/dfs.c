@@ -145,7 +145,7 @@ void dfs_task_testtimer_reset(struct wlan_dfs *dfs)
 	}
 }
 
-void dfs_task_testtimer_free(struct wlan_dfs *dfs)
+void dfs_task_testtimer_detach(struct wlan_dfs *dfs)
 {
 	qdf_timer_free(&dfs->wlan_dfstesttimer);
 	dfs->wlan_dfstest = 0;
@@ -168,23 +168,23 @@ void dfs_reset(struct wlan_dfs *dfs)
 	dfs_task_testtimer_reset(dfs);
 }
 
-void dfs_timer_free(struct wlan_dfs *dfs)
+void dfs_timer_detach(struct wlan_dfs *dfs)
 {
-	dfs_cac_timer_free(dfs);
-	dfs_zero_cac_timer_free(dfs);
+	dfs_cac_timer_detach(dfs);
+	dfs_zero_cac_timer_detach(dfs);
 
 	if (!dfs->dfs_is_offload_enabled) {
-		dfs_main_timer_free(dfs);
-		dfs_host_wait_timer_free(dfs);
+		dfs_main_timer_detach(dfs);
+		dfs_host_wait_timer_detach(dfs);
 	}
 
-	dfs_task_testtimer_free(dfs);
-	dfs_nol_timer_free(dfs);
+	dfs_task_testtimer_detach(dfs);
+	dfs_nol_timer_detach(dfs);
 }
 
 void dfs_detach(struct wlan_dfs *dfs)
 {
-	dfs_timer_free(dfs);
+	dfs_timer_detach(dfs);
 	if (!dfs->dfs_is_offload_enabled)
 		dfs_main_detach(dfs);
 	dfs_etsi_precac_detach(dfs);
