@@ -133,7 +133,7 @@ QDF_STATUS qdf_idr_find(qdf_idr *idp, int32_t id, void **ptr)
 	qdf_spinlock_acquire(&idp->lock);
 	*ptr = idr_find(&idp->idr, id);
 	qdf_spinlock_release(&idp->lock);
-	if (!ptr)
+	if (!(*ptr))
 		return QDF_STATUS_E_INVAL;
 	else
 		return QDF_STATUS_SUCCESS;
