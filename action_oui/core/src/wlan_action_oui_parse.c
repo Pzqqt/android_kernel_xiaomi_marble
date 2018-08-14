@@ -298,7 +298,6 @@ validate_and_convert_info_mask(uint8_t *token,
 
 	info_mask = hex_value;
 
-	info_mask |= ACTION_OUI_INFO_OUI;
 	ext->info_mask = info_mask;
 
 	if (!info_mask || !(info_mask & ~ACTION_OUI_INFO_OUI)) {
@@ -309,6 +308,16 @@ validate_and_convert_info_mask(uint8_t *token,
 	if (info_mask & ~ACTION_OUI_INFO_MASK) {
 		action_oui_err("Invalid bits are set in action OUI info mask");
 		return false;
+	}
+
+	/*
+	 * If OUI bit is not set in the info presence, we need to ignore the
+	 * OUI and OUI Data. Set OUI and OUI data length to 0 here.
+	 */
+	if (!(info_mask & ACTION_OUI_INFO_OUI)) {
+		ext->oui_length = 0;
+		ext->data_length = 0;
+		ext->data_mask_length = 0;
 	}
 
 	if (info_mask & ACTION_OUI_INFO_MAC_ADDRESS) {
@@ -861,6 +870,7 @@ action_oui_search(struct action_oui_psoc_priv *psoc_priv,
 	qdf_list_t *extension_list;
 	QDF_STATUS qdf_status;
 	const uint8_t *oui_ptr;
+	bool wildcard_oui = false;
 
 	oui_priv = psoc_priv->oui_priv[action_id];
 	if (!oui_priv) {
@@ -883,11 +893,22 @@ action_oui_search(struct action_oui_psoc_priv *psoc_priv,
 					   struct action_oui_extension_priv,
 					   item);
 		extension = &priv_ext->extension;
+
+		/*
+		 * If a wildcard OUI bit is not set in the info_mask, proceed
+		 * to other checks skipping the OUI and vendor data checks
+		 */
+
+		if (!(extension->info_mask & ACTION_OUI_INFO_OUI)) {
+			action_oui_debug("Wildcard OUI found");
+			wildcard_oui = true;
+		}
+
 		oui_ptr = wlan_get_vendor_ie_ptr_from_oui(extension->oui,
 							 extension->oui_length,
 							 attr->ie_data,
 							 attr->ie_length);
-		if (!oui_ptr) {
+		if (!oui_ptr  && !wildcard_oui) {
 			action_oui_debug("No matching IE found for OUI");
 			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
 					   QDF_TRACE_LEVEL_DEBUG,
@@ -902,7 +923,7 @@ action_oui_search(struct action_oui_psoc_priv *psoc_priv,
 				   extension->oui,
 				   extension->oui_length);
 
-		if (extension->data_length &&
+		if (extension->data_length && !wildcard_oui &&
 		    !check_for_vendor_oui_data(extension, oui_ptr)) {
 			action_oui_debug("Vendor IE Data mismatch");
 			goto next;
@@ -932,6 +953,7 @@ next:
 
 		node = next_node;
 		next_node = NULL;
+		wildcard_oui = false;
 	}
 
 	qdf_mutex_release(&oui_priv->extension_lock);
