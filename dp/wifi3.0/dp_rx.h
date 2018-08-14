@@ -517,7 +517,8 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf);
 void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
 		qdf_nbuf_t mpdu, bool mpdu_done);
-void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr);
+void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
+			     uint8_t *rx_tlv_hdr, struct dp_peer *peer);
 
 #define DP_RX_LIST_APPEND(head, tail, elem) \
 	do {                                                          \

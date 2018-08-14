@@ -2312,8 +2312,9 @@ static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 #ifdef FEATURE_PERPKT_INFO
 /**
  * dp_get_completion_indication_for_stack() - send completion to stack
- * @soc :  dp_soc handle
- * @pdev:  dp_pdev handle
+ * @soc : dp_soc handle
+ * @pdev: dp_pdev handle
+ * @peer: dp peer handle
  * @peer_id: peer_id of the peer for which completion came
  * @ppdu_id: ppdu_id
  * @first_msdu: first msdu
@@ -2324,19 +2325,17 @@ static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
  * send to stack for free or not
 */
 QDF_STATUS
-dp_get_completion_indication_for_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
-		      uint16_t peer_id, uint32_t ppdu_id, uint8_t first_msdu,
-		      uint8_t last_msdu, qdf_nbuf_t netbuf)
+dp_get_completion_indication_for_stack(struct dp_soc *soc,
+				       struct dp_pdev *pdev,
+				       struct dp_peer *peer, uint16_t peer_id,
+				       uint32_t ppdu_id, uint8_t first_msdu,
+				       uint8_t last_msdu, qdf_nbuf_t netbuf)
 {
 	struct tx_capture_hdr *ppdu_hdr;
-	struct dp_peer *peer = NULL;
 	struct ether_header *eh;
 
 	if (qdf_unlikely(!pdev->tx_sniffer_enable && !pdev->mcopy_mode))
 		return QDF_STATUS_E_NOSUPPORT;
-
-	peer = (peer_id == HTT_INVALID_PEER) ? NULL :
-			dp_peer_find_by_id(soc, peer_id);
 
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -2402,9 +2401,11 @@ void  dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 }
 #else
 static QDF_STATUS
-dp_get_completion_indication_for_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
-		      uint16_t peer_id, uint32_t ppdu_id, uint8_t first_msdu,
-		      uint8_t last_msdu, qdf_nbuf_t netbuf)
+dp_get_completion_indication_for_stack(struct dp_soc *soc,
+				       struct dp_pdev *pdev,
+				       struct dp_peer *peer, uint16_t peer_id,
+				       uint32_t ppdu_id, uint8_t first_msdu,
+				       uint8_t last_msdu, qdf_nbuf_t netbuf)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
@@ -2863,16 +2864,17 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
  * dp_tx_comp_process_tx_status() - Parse and Dump Tx completion status info
  * @tx_desc: software descriptor head pointer
  * @length: packet length
+ * @peer: peer handle
  *
  * Return: none
  */
-static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
-		uint32_t length)
+static inline
+void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
+				  uint32_t length, struct dp_peer *peer)
 {
 	struct hal_tx_completion_status ts = {0};
 	struct dp_soc *soc = NULL;
 	struct dp_vdev *vdev = tx_desc->vdev;
-	struct dp_peer *peer = NULL;
 	struct ether_header *eh =
 		(struct ether_header *)qdf_nbuf_data(tx_desc->nbuf);
 
@@ -2925,7 +2927,6 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 		dp_tx_comp_fill_tx_completion_stats(tx_desc, &ts);
 
 	/* Update peer level stats */
-	peer = dp_peer_find_by_id(soc, ts.peer_id);
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"invalid peer");
@@ -2979,7 +2980,7 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 		if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(desc->nbuf))
 			dp_tx_notify_completion(soc, desc, desc->nbuf);
 
-		dp_tx_comp_process_tx_status(desc, length);
+		dp_tx_comp_process_tx_status(desc, length, peer);
 
 		DPTRACE(qdf_dp_trace_ptr
 				(desc->nbuf,
@@ -2991,18 +2992,22 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 			);
 
 		/*currently m_copy/tx_capture is not supported for scatter gather packets*/
-		if (!(desc->msdu_ext_desc) && (dp_get_completion_indication_for_stack(soc,
-					desc->pdev, ts.peer_id, ts.ppdu_id,
+		if (!(desc->msdu_ext_desc) &&
+		    (dp_get_completion_indication_for_stack(soc, desc->pdev,
+					peer, ts.peer_id, ts.ppdu_id,
 					ts.first_msdu, ts.last_msdu,
 					desc->nbuf) == QDF_STATUS_SUCCESS)) {
 			qdf_nbuf_unmap(soc->osdev, desc->nbuf,
-						QDF_DMA_TO_DEVICE);
+				       QDF_DMA_TO_DEVICE);
 
 			dp_send_completion_to_stack(soc, desc->pdev, ts.peer_id,
-				ts.ppdu_id, desc->nbuf);
+						    ts.ppdu_id, desc->nbuf);
 		} else {
 			dp_tx_comp_free_buf(soc, desc);
 		}
+
+		if (peer)
+			dp_peer_unref_del_find_by_id(peer);
 
 		DP_HIST_PACKET_COUNT_INC(desc->pdev->pdev_id);
 

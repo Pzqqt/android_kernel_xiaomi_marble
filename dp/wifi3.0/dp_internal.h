@@ -853,4 +853,23 @@ void dp_tx_dump_flow_pool_info(void *soc);
 int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
 	bool force);
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
+
+#ifdef PEER_PROTECTED_ACCESS
+/**
+ * dp_peer_unref_del_find_by_id() - dec ref and del peer if ref count is
+ *                                  taken by dp_peer_find_by_id
+ * @peer: peer context
+ *
+ * Return: none
+ */
+static inline void dp_peer_unref_del_find_by_id(struct dp_peer *peer)
+{
+	dp_peer_unref_delete(peer);
+}
+#else
+static inline void dp_peer_unref_del_find_by_id(struct dp_peer *peer)
+{
+}
+#endif
+
 #endif /* #ifndef _DP_INTERNAL_H_ */

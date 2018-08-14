@@ -44,6 +44,7 @@ __dp_peer_find_by_id(struct dp_soc *soc,
 	return peer;
 }
 
+#ifdef PEER_PROTECTED_ACCESS
 /**
  * dp_peer_find_by_id() - Returns peer object given the peer id
  *                        if delete_in_progress in not set for peer
@@ -53,6 +54,24 @@ __dp_peer_find_by_id(struct dp_soc *soc,
  *
  * Return: struct dp_peer*: Pointer to DP peer object
  */
+static inline
+struct dp_peer *dp_peer_find_by_id(struct dp_soc *soc,
+				   uint16_t peer_id)
+{
+	struct dp_peer *peer;
+
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	peer = __dp_peer_find_by_id(soc, peer_id);
+	if (!peer || (peer && peer->delete_in_progress)) {
+		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+		return NULL;
+	}
+	qdf_atomic_inc(&peer->ref_cnt);
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+
+	return peer;
+}
+#else
 static inline struct dp_peer *
 dp_peer_find_by_id(struct dp_soc *soc,
 		   uint16_t peer_id)
@@ -60,13 +79,13 @@ dp_peer_find_by_id(struct dp_soc *soc,
 	struct dp_peer *peer;
 
 	peer = __dp_peer_find_by_id (soc, peer_id);
-
 	if (peer && peer->delete_in_progress) {
 		return NULL;
 	}
 
 	return peer;
 }
+#endif /* PEER_LOCK_REF_PROTECT */
 
 void dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
 			    uint16_t hw_peer_id, uint8_t vdev_id,
@@ -163,4 +182,13 @@ dp_get_vdev_from_soc_vdev_id_wifi3(struct dp_soc *soc,
 	return NULL;
 
 }
+
+/*
+ * dp_peer_find_by_id_exist - check if peer exists for given id
+ * @soc: core DP soc context
+ * @peer_id: peer id from peer object can be retrieved
+ *
+ * Return: true if peer exists of false otherwise
+ */
+bool dp_peer_find_by_id_valid(struct dp_soc *soc, uint16_t peer_id);
 #endif /* _DP_PEER_H_ */

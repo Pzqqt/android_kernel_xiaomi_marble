@@ -358,6 +358,7 @@ dp_rx_pn_error_handle(struct dp_soc *soc, void *ring_desc,
 			peer->mac_addr.raw[2], peer->mac_addr.raw[3],
 			peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
 
+		dp_peer_unref_del_find_by_id(peer);
 	}
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		"Packet received with PN error");
@@ -547,6 +548,7 @@ free_nbuf:
  * @nbuf: buffer pointer
  * @rx_tlv_hdr: start of rx tlv header
  * @pool_id: mac id
+ * @peer: peer handle
  *
  * This function handles NULL queue descriptor violations arising out
  * a missing REO queue for a given peer or a given TID. This typically
@@ -558,16 +560,13 @@ free_nbuf:
  *
  */
 static void
-dp_rx_null_q_desc_handle(struct dp_soc *soc,
-			qdf_nbuf_t nbuf,
-			uint8_t *rx_tlv_hdr,
-			uint8_t pool_id)
+dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
+			 uint8_t *rx_tlv_hdr, uint8_t pool_id,
+			 struct dp_peer *peer)
 {
 	uint32_t pkt_len, l2_hdr_offset;
 	uint16_t msdu_len;
 	struct dp_vdev *vdev;
-	uint16_t peer_id = 0xFFFF;
-	struct dp_peer *peer = NULL;
 	uint8_t tid;
 	struct ether_header *eh;
 
@@ -601,9 +600,6 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 				     QDF_TRACE_LEVEL_INFO);
 		qdf_assert(0);
 	}
-
-	peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
-	peer = dp_peer_find_by_id(soc, peer_id);
 
 	if (!peer) {
 		bool mpdu_done = false;
@@ -697,8 +693,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 
 #ifdef QCA_WIFI_NAPIER_EMULATION /* Debug code, remove later */
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			 "%s: p_id %d msdu_len %d hdr_off %d",
-			 __func__, peer_id, msdu_len, l2_hdr_offset);
+		  "%s: mac_add:%pM msdu_len %d hdr_off %d",
+		  __func__, peer->mac_addr.raw, msdu_len,
+		  l2_hdr_offset);
 
 	print_hex_dump(KERN_ERR, "\t Pkt Data:", DUMP_PREFIX_NONE, 32, 4,
 					qdf_nbuf_data(nbuf), 128, false);
@@ -748,24 +745,21 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 }
 
 /**
-* dp_rx_err_deliver() - Function to deliver error frames to OS
-*
-* @soc: core DP main context
-* @rx_desc : pointer to the sw rx descriptor
-* @head: pointer to head of rx descriptors to be added to free list
-* @tail: pointer to tail of rx descriptors to be added to free list
-* quota: upper limit of descriptors that can be reaped
-*
-* Return: uint32_t: No. of Rx buffers reaped
-*/
+ * dp_rx_err_deliver() - Function to deliver error frames to OS
+ * @soc: core DP main context
+ * @nbuf: buffer pointer
+ * @rx_tlv_hdr: start of rx tlv header
+ * @peer: peer reference
+ *
+ * Return: None
+ */
 static void
-dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
+dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
+		  struct dp_peer *peer)
 {
 	uint32_t pkt_len, l2_hdr_offset;
 	uint16_t msdu_len;
 	struct dp_vdev *vdev;
-	uint16_t peer_id = 0xFFFF;
-	struct dp_peer *peer = NULL;
 	struct ether_header *eh;
 	bool isBroadcast;
 
@@ -782,9 +776,6 @@ dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 				     QDF_TRACE_LEVEL_INFO);
 		qdf_assert(0);
 	}
-
-	peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
-	peer = dp_peer_find_by_id(soc, peer_id);
 
 	l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
 	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
@@ -867,25 +858,22 @@ dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 
 /**
  * dp_rx_process_mic_error(): Function to pass mic error indication to umac
- * @soc: DP SOC handle
- * @rx_desc : pointer to the sw rx descriptor
- * @head: pointer to head of rx descriptors to be added to free list
- * @tail: pointer to tail of rx descriptors to be added to free list
+ * @soc: core DP main context
+ * @nbuf: buffer pointer
+ * @rx_tlv_hdr: start of rx tlv header
+ * @peer: peer handle
  *
  * return: void
  */
-void
-dp_rx_process_mic_error(struct dp_soc *soc,
-			qdf_nbuf_t nbuf,
-			uint8_t *rx_tlv_hdr)
+void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
+			     uint8_t *rx_tlv_hdr, struct dp_peer *peer)
 {
 	struct dp_vdev *vdev = NULL;
 	struct dp_pdev *pdev = NULL;
 	struct ol_if_ops *tops = NULL;
 	struct ieee80211_frame *wh;
 	uint8_t *rx_pkt_hdr;
-	struct dp_peer *peer;
-	uint16_t peer_id, rx_seq, fragno;
+	uint16_t rx_seq, fragno;
 	unsigned int tid;
 	QDF_STATUS status;
 
@@ -895,11 +883,9 @@ dp_rx_process_mic_error(struct dp_soc *soc,
 	rx_pkt_hdr = hal_rx_pkt_hdr_get(qdf_nbuf_data(nbuf));
 	wh = (struct ieee80211_frame *)rx_pkt_hdr;
 
-	peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
-	peer = dp_peer_find_by_id(soc, peer_id);
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"peer not found");
+			  "peer not found");
 		goto fail;
 	}
 
@@ -1134,7 +1120,6 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	qdf_nbuf_t nbuf, next;
 	struct hal_wbm_err_desc_info wbm_err_info = { 0 };
 	uint8_t pool_id;
-	uint16_t peer_id = 0xFFFF;
 	uint8_t tid = 0;
 
 	/* Debug -- Remove later */
@@ -1236,7 +1221,14 @@ done:
 
 	nbuf = nbuf_head;
 	while (nbuf) {
+		struct dp_peer *peer;
+		uint16_t peer_id;
+
 		rx_tlv_hdr = qdf_nbuf_data(nbuf);
+
+		peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
+		peer = dp_peer_find_by_id(soc, peer_id);
+
 		/*
 		 * retrieve the wbm desc info from nbuf TLV, so we can
 		 * handle error cases appropriately
@@ -1265,11 +1257,13 @@ done:
 					QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_DP,
 						"Got pkt with REO ERROR: %d",
 						wbm_err_info.reo_err_code);
-					dp_rx_null_q_desc_handle(soc,
-								nbuf,
-								rx_tlv_hdr,
-								pool_id);
+					dp_rx_null_q_desc_handle(soc, nbuf,
+								 rx_tlv_hdr,
+								 pool_id, peer);
 					nbuf = next;
+					if (peer)
+						dp_peer_unref_del_find_by_id(
+									peer);
 					continue;
 				/* TODO */
 				/* Add per error code accounting */
@@ -1288,6 +1282,9 @@ done:
 					dp_2k_jump_handle(soc, nbuf, rx_tlv_hdr,
 							  peer_id, tid);
 					nbuf = next;
+					if (peer)
+						dp_peer_unref_del_find_by_id(
+									peer);
 					continue;
 				default:
 					QDF_TRACE(QDF_MODULE_ID_DP,
@@ -1300,30 +1297,30 @@ done:
 					HAL_RX_WBM_ERR_SRC_RXDMA) {
 			if (wbm_err_info.rxdma_psh_rsn
 					== HAL_RX_WBM_RXDMA_PSH_RSN_ERROR) {
-				struct dp_peer *peer = NULL;
-				uint16_t peer_id = 0xFFFF;
-
 				DP_STATS_INC(soc,
 					rx.err.rxdma_error
 					[wbm_err_info.rxdma_err_code], 1);
-				peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
-				peer = dp_peer_find_by_id(soc, peer_id);
 
 				switch (wbm_err_info.rxdma_err_code) {
 				case HAL_RXDMA_ERR_UNENCRYPTED:
-					dp_rx_err_deliver(soc,
-							nbuf,
-							rx_tlv_hdr);
+					dp_rx_err_deliver(soc, nbuf,
+							  rx_tlv_hdr, peer);
 					nbuf = next;
+					if (peer)
+						dp_peer_unref_del_find_by_id(
+									peer);
 					continue;
 
 				case HAL_RXDMA_ERR_TKIP_MIC:
-					dp_rx_process_mic_error(soc,
-								nbuf,
-								rx_tlv_hdr);
+					dp_rx_process_mic_error(soc, nbuf,
+								rx_tlv_hdr,
+								peer);
 					nbuf = next;
-					if (peer)
+					if (peer) {
 						DP_STATS_INC(peer, rx.err.mic_err, 1);
+						dp_peer_unref_del_find_by_id(
+									peer);
+					}
 					continue;
 
 				case HAL_RXDMA_ERR_DECRYPT:
@@ -1346,6 +1343,9 @@ done:
 			/* Should not come here */
 			qdf_assert(0);
 		}
+
+		if (peer)
+			dp_peer_unref_del_find_by_id(peer);
 
 		hal_rx_dump_pkt_tlvs(hal_soc, rx_tlv_hdr,
 				     QDF_TRACE_LEVEL_DEBUG);

@@ -1527,6 +1527,7 @@ done:
 			qdf_nbuf_free(nbuf);
 			nbuf = next;
 			DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
+			dp_peer_unref_del_find_by_id(peer);
 			continue;
 		}
 
@@ -1590,6 +1591,7 @@ done:
 			qdf_nbuf_free(nbuf);
 			/* Statistics */
 			nbuf = next;
+			dp_peer_unref_del_find_by_id(peer);
 			continue;
 		}
 
@@ -1603,6 +1605,7 @@ done:
 			qdf_nbuf_free(nbuf);
 			/* Statistics */
 			nbuf = next;
+			dp_peer_unref_del_find_by_id(peer);
 			continue;
 		}
 
@@ -1612,6 +1615,7 @@ done:
 			DP_STATS_INC(peer, rx.nawds_mcast_drop, 1);
 			qdf_nbuf_free(nbuf);
 			nbuf = next;
+			dp_peer_unref_del_find_by_id(peer);
 			continue;
 		}
 
@@ -1643,6 +1647,7 @@ done:
 
 				qdf_nbuf_free(nbuf);
 				nbuf = next;
+				dp_peer_unref_del_find_by_id(peer);
 				continue;
 			}
 			dp_rx_fill_mesh_stats(vdev, nbuf, rx_tlv_hdr, peer);
@@ -1673,6 +1678,7 @@ done:
 							rx_tlv_hdr,
 							nbuf)) {
 					nbuf = next;
+					dp_peer_unref_del_find_by_id(peer);
 					continue; /* Get next desc */
 				}
 		}
@@ -1686,6 +1692,7 @@ done:
 				qdf_nbuf_len(nbuf));
 
 		nbuf = next;
+		dp_peer_unref_del_find_by_id(peer);
 	}
 
 	if (deliver_list_head)

@@ -4973,9 +4973,11 @@ static void dp_get_peer_mac_from_peer_id(struct cdp_pdev *pdev_handle,
 
 	if (pdev && peer_mac) {
 		peer = dp_peer_find_by_id(pdev->soc, (uint16_t)peer_id);
-		if (peer && peer->mac_addr.raw) {
-			qdf_mem_copy(peer_mac, peer->mac_addr.raw,
-					DP_MAC_ADDR_LEN);
+		if (peer) {
+			if (peer->mac_addr.raw)
+				qdf_mem_copy(peer_mac, peer->mac_addr.raw,
+					     DP_MAC_ADDR_LEN);
+			dp_peer_unref_del_find_by_id(peer);
 		}
 	}
 }

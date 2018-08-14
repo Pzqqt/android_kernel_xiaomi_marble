@@ -1525,6 +1525,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 			now_ms + pdev->soc->rx.defrag.timeout_ms;
 
 		dp_rx_defrag_waitlist_add(peer, tid);
+		dp_peer_unref_del_find_by_id(peer);
 
 		return QDF_STATUS_SUCCESS;
 	}
@@ -1569,9 +1570,14 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	}
 
 	dp_rx_defrag_cleanup(peer, tid);
+
+	dp_peer_unref_del_find_by_id(peer);
+
 	return QDF_STATUS_SUCCESS;
 
 end:
+	dp_peer_unref_del_find_by_id(peer);
+
 	return QDF_STATUS_E_DEFRAG_ERROR;
 }
 
