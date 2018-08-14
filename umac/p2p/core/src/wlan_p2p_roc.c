@@ -233,7 +233,8 @@ static QDF_STATUS p2p_destroy_roc_ctx(struct p2p_roc_context *roc_ctx,
 		p2p_soc_obj, roc_ctx, up_layer_event, in_roc_queue);
 
 	if (up_layer_event) {
-		p2p_send_roc_event(roc_ctx, ROC_EVENT_READY_ON_CHAN);
+		if (roc_ctx->roc_state < ROC_STATE_ON_CHAN)
+			p2p_send_roc_event(roc_ctx, ROC_EVENT_READY_ON_CHAN);
 		p2p_send_roc_event(roc_ctx, ROC_EVENT_COMPLETED);
 	}
 
@@ -864,12 +865,7 @@ QDF_STATUS p2p_process_cancel_roc_req(
 	}
 
 	if (curr_roc_ctx->roc_state == ROC_STATE_IDLE) {
-		status = qdf_list_remove_node(&p2p_soc_obj->roc_q,
-				(qdf_list_node_t *)curr_roc_ctx);
-		if (status == QDF_STATUS_SUCCESS)
-			qdf_mem_free(curr_roc_ctx);
-		else
-			p2p_err("Failed to remove roc req, status %d", status);
+		status = p2p_destroy_roc_ctx(curr_roc_ctx, true, true);
 	} else if (curr_roc_ctx->roc_state ==
 				ROC_STATE_CANCEL_IN_PROG) {
 		p2p_debug("Receive cancel roc req when roc req is canceling, cookie %llx",
