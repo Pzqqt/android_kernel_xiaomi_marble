@@ -315,7 +315,6 @@ static void get_peer_rssi_cb(struct stats_event *ev, void *cookie)
 	request = osif_request_get(cookie);
 	if (!request) {
 		cfg80211_err("Obsolete request");
-		ucfg_mc_cp_stats_free_stats_resources(ev);
 		return;
 	}
 
