@@ -66,6 +66,55 @@ QDF_STATUS ucfg_mlme_psoc_open(struct wlan_objmgr_psoc *psoc);
  */
 void ucfg_mlme_psoc_close(struct wlan_objmgr_psoc *psoc);
 
+#ifdef CONFIG_VDEV_SM
+/**
+ * ucfg_mlme_pdev_open() - MLME component pdev Open
+ * @pdev: pointer to pdev object
+ *
+ * Open the MLME component and initialize the MLME pdev strucutre
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_mlme_pdev_open(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_mlme_pdev_close() - MLME component pdev close
+ * @pdev: pointer to pdev object
+ *
+ * close the MLME pdev information
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_mlme_pdev_close(struct wlan_objmgr_pdev *pdev);
+
+#else
+/**
+ * ucfg_mlme_pdev_open() - MLME component pdev Open
+ * @pdev: pointer to pdev object
+ *
+ * Open the MLME component and initialize the MLME pdev strucutre
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS ucfg_mlme_pdev_open(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * ucfg_mlme_pdev_close() - MLME component pdev close
+ * @pdev: pointer to pdev object
+ *
+ * close the MLME pdev information
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS ucfg_mlme_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * ucfg_mlme_get_ht_cap_info() - Get the HT cap info config
  * @psoc: pointer to psoc object
