@@ -229,7 +229,7 @@ static QDF_STATUS pmo_configure_ssdp(struct wlan_objmgr_vdev *vdev)
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.ssdp) {
-		pmo_err("mDNS, SSDP, LLMNR patterns are disabled from ini");
+		pmo_debug("mDNS, SSDP, LLMNR patterns are disabled from ini");
 		return QDF_STATUS_SUCCESS;
 	}
 

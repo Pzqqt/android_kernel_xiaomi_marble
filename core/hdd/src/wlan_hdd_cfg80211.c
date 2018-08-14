@@ -4118,8 +4118,8 @@ int wlan_hdd_enable_dfs_chan_scan(struct hdd_context *hdd_ctx,
 	mac_handle_t mac_handle;
 
 	if (enable_dfs_channels == hdd_ctx->config->enableDFSChnlScan) {
-		hdd_info("DFS channels are already %s",
-			 enable_dfs_channels ? "enabled" : "disabled");
+		hdd_debug("DFS channels are already %s",
+			  enable_dfs_channels ? "enabled" : "disabled");
 		return 0;
 	}
 

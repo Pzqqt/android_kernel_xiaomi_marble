@@ -747,7 +747,7 @@ QDF_STATUS sme_ps_enable_auto_ps_timer(tHalHandle hal_ctx,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	sme_info("Start auto_ps_timer for %d ms", timeout);
+	sme_debug("Start auto_ps_timer for %d ms", timeout);
 
 	qdf_status = qdf_mc_timer_start(&ps_param->auto_ps_enable_timer,
 		timeout);

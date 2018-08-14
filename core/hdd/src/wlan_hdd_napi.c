@@ -120,7 +120,7 @@ int hdd_napi_create(void)
 			hdd_err("ERR(%d) creating NAPI instances",
 				rc);
 		} else {
-			hdd_info("napi instances were created. Map=0x%x", rc);
+			hdd_debug("napi instances were created. Map=0x%x", rc);
 			hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 			if (unlikely(NULL == hdd_ctx)) {
 				QDF_ASSERT(0);

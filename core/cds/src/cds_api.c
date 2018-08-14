@@ -848,8 +848,9 @@ exit_with_status:
 
 QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status;
 	struct mac_start_params mac_params;
+	int errno;
 
 	/* We support only one instance for now ... */
 	if (!gp_cds_context) {
@@ -857,23 +858,22 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if ((!gp_cds_context->wma_context) ||
-	    (gp_cds_context->mac_context == NULL)) {
-		if (!gp_cds_context->wma_context)
-			cds_err("WMA NULL context");
-		else
-			cds_err("MAC NULL context");
+	if (!gp_cds_context->wma_context) {
+		cds_err("WMA NULL context");
+		return QDF_STATUS_E_FAILURE;
+	}
 
+	if (!gp_cds_context->mac_context) {
+		cds_err("MAC NULL context");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Start the wma */
 	qdf_status = wma_start();
 	if (qdf_status != QDF_STATUS_SUCCESS) {
-		cds_err("Failed to start wma");
+		cds_err("Failed to start wma; status:%d", qdf_status);
 		return QDF_STATUS_E_FAILURE;
 	}
-	cds_info("wma correctly started");
 
 	/* Start the MAC */
 	qdf_mem_zero(&mac_params, sizeof(mac_params));
@@ -881,38 +881,33 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 	qdf_status = mac_start(gp_cds_context->mac_context, &mac_params);
 
 	if (QDF_STATUS_SUCCESS != qdf_status) {
-		cds_alert("Failed to start MAC");
+		cds_err("Failed to start MAC; status:%d", qdf_status);
 		goto err_wma_stop;
 	}
 
-	cds_info("MAC correctly started");
-
 	/* START SME */
 	qdf_status = sme_start(gp_cds_context->mac_context);
-
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		cds_alert("Failed to start SME");
+		cds_err("Failed to start SME; status:%d", qdf_status);
 		goto err_mac_stop;
 	}
 
-	cds_info("SME correctly started");
-
-	if (cdp_soc_attach_target(cds_get_context(QDF_MODULE_ID_SOC))) {
-		cds_alert("Failed to attach soc target");
+	errno = cdp_soc_attach_target(cds_get_context(QDF_MODULE_ID_SOC));
+	if (errno) {
+		cds_err("Failed to attach soc target; errno:%d", errno);
 		goto err_sme_stop;
 	}
 
-	if (cdp_pdev_attach_target(cds_get_context(QDF_MODULE_ID_SOC),
-		(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX))) {
-		cds_alert("Failed to attach pdev target");
+	errno = cdp_pdev_attach_target(cds_get_context(QDF_MODULE_ID_SOC),
+				       cds_get_context(QDF_MODULE_ID_TXRX));
+	if (errno) {
+		cds_err("Failed to attach pdev target; errno:%d", errno);
 		goto err_soc_target_detach;
 	}
 
-	cds_info("CDS Start is successful!!");
-
 	qdf_status = dispatcher_psoc_enable(psoc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		cds_alert("dispatcher_psoc_enable failed");
+		cds_err("dispatcher_psoc_enable failed; status:%d", qdf_status);
 		goto err_soc_target_detach;
 	}
 
