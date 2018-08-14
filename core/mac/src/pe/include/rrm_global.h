@@ -160,20 +160,6 @@ typedef struct sRRMReq {
 	uint8_t sendEmptyBcnRpt;
 } tRRMReq, *tpRRMReq;
 
-/**
- * rrm_beacon_report_last_beacon_params - Last Beacon Report Indication params
- * @last_beacon_ind: flag for whether last beacon indication is required
- * @report_id: Report ID of the corresponding Beacon Report Request
- * @frag_id: Current fragment's Fragment ID
- * @num_frags: Total number of fragments in the Beacon Report
- */
-struct rrm_beacon_report_last_beacon_params {
-	uint8_t last_beacon_ind;
-	uint8_t report_id;
-	uint8_t frag_id;
-	uint8_t num_frags;
-};
-
 typedef struct sRRMCaps {
 	uint8_t LinkMeasurement:1;
 	uint8_t NeighborRpt:1;

@@ -4339,8 +4339,7 @@ QDF_STATUS
 lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 				uint8_t dialog_token,
 				uint8_t num_report,
-				struct rrm_beacon_report_last_beacon_params
-				*last_beacon_report_params,
+				bool is_last_frame,
 				tpSirMacRadioMeasureReport pRRMReport,
 				tSirMacAddr peer,
 				tpPESession psessionEntry)
@@ -4368,8 +4367,8 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 
 	smeSessionId = psessionEntry->smeSessionId;
 
-	pe_debug("dialog_token %d num_report %d",
-			dialog_token, num_report);
+	pe_debug("dialog_token %d num_report %d is_last_frame %d",
+		 dialog_token, num_report, is_last_frame);
 
 	frm->Category.category = SIR_MAC_ACTION_RRM;
 	frm->Action.action = SIR_MAC_RRM_RADIO_MEASURE_RPT;
@@ -4390,7 +4389,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 						     &frm->MeasurementReport[i],
 						     &pRRMReport[i].report.
 						     beaconReport,
-						     last_beacon_report_params);
+						     is_last_frame);
 			frm->MeasurementReport[i].incapable =
 				pRRMReport[i].incapable;
 			frm->MeasurementReport[i].refused =
