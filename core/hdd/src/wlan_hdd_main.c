@@ -1917,6 +1917,12 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		return;
 	}
 
+	status = hdd_component_pdev_open(hdd_ctx->pdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		QDF_DEBUG_PANIC("hdd component pdev open failed; status:%d",
+				status);
+		return;
+	}
 	cdp_pdev_set_ctrl_pdev(cds_get_context(QDF_MODULE_ID_SOC),
 			cds_get_context(QDF_MODULE_ID_TXRX),
 			(struct cdp_ctrl_objmgr_pdev *)hdd_ctx->pdev);
@@ -11003,7 +11009,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		ret = -EINVAL;
 		QDF_ASSERT(0);
 	}
-
+	hdd_component_pdev_close(hdd_ctx->pdev);
 	hdd_component_psoc_close(hdd_ctx->hdd_psoc);
 	dispatcher_pdev_close(hdd_ctx->pdev);
 	ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
@@ -12601,6 +12607,16 @@ void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	disa_psoc_disable(psoc);
 	ocb_psoc_disable(psoc);
+}
+
+QDF_STATUS hdd_component_pdev_open(struct wlan_objmgr_pdev *pdev)
+{
+	return ucfg_mlme_pdev_open(pdev);
+}
+
+void hdd_component_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	ucfg_mlme_pdev_close(pdev);
 }
 
 /**

@@ -22,6 +22,8 @@
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_api.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "wlan_mlme_vdev_mgr_interface.h"
 
 QDF_STATUS ucfg_mlme_init(void)
 {
@@ -84,3 +86,17 @@ void ucfg_mlme_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	/* Clear the MLME CFG Structure */
 }
+
+#ifdef CONFIG_VDEV_SM
+QDF_STATUS ucfg_mlme_pdev_open(struct wlan_objmgr_pdev *pdev)
+{
+	pdev->pdev_mlme.mlme_register_ops = mlme_register_vdev_mgr_ops;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_mlme_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif

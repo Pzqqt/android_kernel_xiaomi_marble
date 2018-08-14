@@ -3270,6 +3270,20 @@ void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc);
  */
 void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * hdd_component_pdev_open() - Trigger pdev open for CLD Components
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_component_pdev_open(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * hdd_component_pdev_close() - Trigger pdev close for CLD Components
+ *
+ * Return: None
+ */
+void hdd_component_pdev_close(struct wlan_objmgr_pdev *pdev);
+
 #ifdef WLAN_FEATURE_MEMDUMP_ENABLE
 int hdd_driver_memdump_init(void);
 void hdd_driver_memdump_deinit(void);

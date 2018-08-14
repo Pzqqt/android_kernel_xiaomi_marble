@@ -850,6 +850,10 @@ MLME_OBJS :=	$(MLME_DIR)/core/src/wlan_mlme_main.o \
 		$(MLME_DIR)/dispatcher/src/wlan_mlme_api.o \
 		$(MLME_DIR)/dispatcher/src/wlan_mlme_ucfg_api.o
 
+ifeq ($(CONFIG_VDEV_SM), y)
+MLME_OBJS += $(MLME_DIR)/core/src/wlan_mlme_vdev_mgr_interface.o
+endif
+
 ########## ACTION OUI ##########
 
 ACTION_OUI_DIR := components/action_oui
