@@ -84,6 +84,8 @@ static void hal_update_srng_hp_tp_address(void *hal_soc,
 	struct hal_srng *srng;
 	struct hal_soc *hal = (struct hal_soc *)hal_soc;
 	int ring_id;
+	struct hal_hw_srng_config *ring_config =
+		HAL_SRNG_CONFIG(hal, ring_type);
 
 	ring_id = hal_get_srng_ring_id(hal_soc, ring_type, ring_num, 0);
 	if (ring_id < 0)
@@ -91,7 +93,7 @@ static void hal_update_srng_hp_tp_address(void *hal_soc,
 
 	srng = hal_get_srng(hal_soc, ring_id);
 
-	if (srng->ring_dir == HAL_SRNG_DST_RING)
+	if (ring_config->ring_dir == HAL_SRNG_DST_RING)
 		srng->u.dst_ring.tp_addr = SHADOW_REGISTER(shadow_config_index)
 			+ hal->dev_base_addr;
 	else
