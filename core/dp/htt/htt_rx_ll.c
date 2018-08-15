@@ -1844,7 +1844,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	htt_rx_ring_fill_n(pdev, pdev->rx_ring.fill_level);
 
 	if (pdev->cfg.is_full_reorder_offload) {
-		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO_LOW,
 			  "HTT: full reorder offload enabled");
 		htt_rx_amsdu_pop = htt_rx_amsdu_rx_in_order_pop_ll;
 		htt_rx_frag_pop = htt_rx_amsdu_rx_in_order_pop_ll;

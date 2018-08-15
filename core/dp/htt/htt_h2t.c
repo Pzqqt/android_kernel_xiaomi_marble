@@ -304,7 +304,7 @@ QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_ll(struct htt_pdev_t *pdev)
 	uint32_t  msg_local;
 	struct cds_config_info *cds_cfg;
 
-	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO_LOW,
 		  "Receive flow steering configuration, disable gEnableFlowSteering(=0) in ini if FW doesnot support it\n");
 	pkt = htt_htc_pkt_alloc(pdev);
 	if (!pkt)
@@ -340,22 +340,22 @@ QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_ll(struct htt_pdev_t *pdev)
 	HTT_H2T_MSG_TYPE_SET(msg_local, HTT_H2T_MSG_TYPE_RFS_CONFIG);
 	if (ol_cfg_is_flow_steering_enabled(pdev->ctrl_pdev)) {
 		HTT_RX_RFS_CONFIG_SET(msg_local, 1);
-		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO_LOW,
 			  "Enable Rx flow steering");
 	} else {
-	    QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+	    QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO_LOW,
 		      "Disable Rx flow steering");
 	}
 	cds_cfg = cds_get_ini_config();
 	if (cds_cfg != NULL) {
 		msg_local |= ((cds_cfg->max_msdus_per_rxinorderind & 0xff)
 			      << 16);
-		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO_LOW,
 			  "Updated maxMSDUsPerRxInd");
 	}
 
 	*msg_word = msg_local;
-	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO_LOW,
 		  "%s: Sending msg_word: 0x%08x",
 		  __func__, *msg_word);
 
@@ -490,7 +490,7 @@ QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 		enable_hdr = 1;
 		enable_ppdu_start = 1;
 		enable_ppdu_end = 1;
-		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO_LOW,
 			  "%s : %d Pkt log is enabled\n",  __func__, __LINE__);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,

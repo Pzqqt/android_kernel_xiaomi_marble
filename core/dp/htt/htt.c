@@ -437,13 +437,13 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 
 	pdev->cfg.is_full_reorder_offload =
 			ol_cfg_is_full_reorder_offload(pdev->ctrl_pdev);
-	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO_LOW,
 		  "full_reorder_offloaded %d",
 		  (int)pdev->cfg.is_full_reorder_offload);
 
 	pdev->cfg.ce_classify_enabled =
 		ol_cfg_is_ce_classify_enabled(ctrl_pdev);
-	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO_LOW,
 		  "ce_classify %d",
 		  pdev->cfg.ce_classify_enabled);
 
