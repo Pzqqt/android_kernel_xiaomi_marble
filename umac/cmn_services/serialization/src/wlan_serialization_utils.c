@@ -27,6 +27,9 @@
 #include "wlan_objmgr_pdev_obj.h"
 #include "qdf_mc_timer.h"
 #include "wlan_utility.h"
+#ifdef CONFIG_MCL
+#include "qdf_platform.h"
+#endif
 
 QDF_STATUS
 wlan_serialization_put_back_to_global_list(qdf_list_t *queue,
@@ -149,6 +152,18 @@ static QDF_STATUS wlan_serialization_timer_destroy(
 	return status;
 }
 
+#ifdef CONFIG_MCL
+static void wlan_serialization_non_scan_timeout_action(void)
+{
+	qdf_trigger_self_recovery();
+}
+#else
+static void wlan_serialization_non_scan_timeout_action(void)
+{
+	QDF_BUG(0);
+}
+#endif
+
 /**
  * wlan_serialization_generic_timer_callback() - timer callback when timer fire
  * @arg: argument that timer passes to this callback
@@ -164,6 +179,7 @@ static void wlan_serialization_generic_timer_callback(void *arg)
 {
 	struct wlan_serialization_timer *timer = arg;
 	struct wlan_serialization_command *cmd = timer->cmd;
+	uint8_t vdev_id = WLAN_INVALID_VDEV_ID;
 
 	if (!cmd) {
 		serialization_err("command not found");
@@ -171,13 +187,17 @@ static void wlan_serialization_generic_timer_callback(void *arg)
 		return;
 	}
 
-	serialization_err("active cmd timeout for cmd_type[%d] vdev[%pK]",
-			  cmd->cmd_type, cmd->vdev);
+	if (cmd->vdev)
+		vdev_id = wlan_vdev_get_id(cmd->vdev);
+
+	serialization_err("active cmd timeout for cmd_type[%d] vdev_id[%d]",
+			  cmd->cmd_type, vdev_id);
+
 	if (cmd->cmd_cb)
 		cmd->cmd_cb(cmd, WLAN_SER_CB_ACTIVE_CMD_TIMEOUT);
 
 	if (cmd->cmd_type >= WLAN_SER_CMD_NONSCAN)
-		QDF_BUG(0);
+		wlan_serialization_non_scan_timeout_action();
 	/*
 	 * dequeue cmd API will cleanup and destroy the timer. If it fails to
 	 * dequeue command then we have to destroy the timer. It will also call
