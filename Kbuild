@@ -1866,6 +1866,7 @@ cppflags-$(CONFIG_WLAN_POWER_DEBUGFS) += -DWLAN_POWER_DEBUGFS
 
 # Enable object manager reference count debug infrastructure
 cppflags-$(CONFIG_WLAN_OBJMGR_DEBUG) += -DWLAN_OBJMGR_DEBUG
+cppflags-$(CONFIG_WLAN_OBJMGR_DEBUG) += -DWLAN_OBJMGR_REF_ID_DEBUG
 
 cppflags-$(CONFIG_WLAN_FEATURE_SAE) += -DWLAN_FEATURE_SAE
 
