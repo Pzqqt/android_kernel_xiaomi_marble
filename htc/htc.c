@@ -719,12 +719,12 @@ QDF_STATUS htc_start(HTC_HANDLE HTCHandle)
 			      MESSAGEID, HTC_MSG_SETUP_COMPLETE_EX_ID);
 
 		if (!htc_credit_flow) {
-			AR_DEBUG_PRINTF(ATH_DEBUG_INIT,
+			AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
 					("HTC will not use TX credit flow control"));
 			pSetupComp->SetupFlags |=
 				HTC_SETUP_COMPLETE_FLAGS_DISABLE_TX_CREDIT_FLOW;
 		} else {
-			AR_DEBUG_PRINTF(ATH_DEBUG_INIT,
+			AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
 					("HTC using TX credit flow control"));
 		}
 
