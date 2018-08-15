@@ -19364,7 +19364,7 @@ void wlan_hdd_init_chan_info(struct hdd_context *hdd_ctx)
 
 	hdd_ctx->chan_info = NULL;
 	if (!hdd_ctx->config->fEnableSNRMonitoring) {
-		hdd_info("SNR monitoring is disabled");
+		hdd_debug("SNR monitoring is disabled");
 		return;
 	}
 
