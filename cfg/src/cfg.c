@@ -521,30 +521,6 @@ QDF_STATUS cfg_parse_to_global_store(const char *path)
 
 qdf_export_symbol(cfg_parse_to_global_store);
 
-static void cfg_init(void)
-{
-	qdf_list_create(&__cfg_stores_list, 0);
-	qdf_spinlock_create(&__cfg_stores_lock);
-}
-
-static void cfg_deinit(void)
-{
-	qdf_spinlock_destroy(&__cfg_stores_lock);
-	qdf_list_destroy(&__cfg_stores_list);
-}
-
-static void cfg_try_deinit(void)
-{
-	bool empty;
-
-	qdf_spin_lock_bh(&__cfg_stores_lock);
-	empty = qdf_list_empty(&__cfg_stores_list);
-	qdf_spin_unlock_bh(&__cfg_stores_lock);
-
-	if (empty)
-		cfg_deinit();
-}
-
 static QDF_STATUS
 cfg_on_psoc_create(struct wlan_objmgr_psoc *psoc, void *context)
 {
@@ -606,6 +582,9 @@ QDF_STATUS cfg_dispatcher_init(void)
 	if (__cfg_is_init)
 		return QDF_STATUS_E_INVAL;
 
+	qdf_list_create(&__cfg_stores_list, 0);
+	qdf_spinlock_create(&__cfg_stores_lock);
+
 	status = cfg_psoc_register_create(cfg_on_psoc_create);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
@@ -637,7 +616,12 @@ QDF_STATUS cfg_dispatcher_deinit(void)
 	cfg_assert_success(cfg_psoc_unregister_create(cfg_on_psoc_create));
 	cfg_assert_success(cfg_psoc_unregister_destroy(cfg_on_psoc_destroy));
 
-	cfg_try_deinit();
+	qdf_spin_lock_bh(&__cfg_stores_lock);
+	QDF_BUG(qdf_list_empty(&__cfg_stores_list));
+	qdf_spin_unlock_bh(&__cfg_stores_lock);
+
+	qdf_spinlock_destroy(&__cfg_stores_lock);
+	qdf_list_destroy(&__cfg_stores_list);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -653,11 +637,9 @@ QDF_STATUS cfg_parse(const char *path)
 	if (__cfg_global_store)
 		return QDF_STATUS_E_INVAL;
 
-	cfg_init();
-
 	status = cfg_store_alloc(path, &store);
 	if (QDF_IS_STATUS_ERROR(status))
-		goto deinit;
+		return status;
 
 	cfg_store_set_defaults(store);
 
@@ -672,9 +654,6 @@ QDF_STATUS cfg_parse(const char *path)
 free_store:
 	cfg_store_free(store);
 
-deinit:
-	cfg_deinit();
-
 	return status;
 }
 
@@ -688,8 +667,6 @@ void cfg_release(void)
 
 	cfg_store_put(__cfg_global_store);
 	__cfg_global_store = NULL;
-
-	cfg_try_deinit();
 }
 
 QDF_STATUS cfg_psoc_parse(struct wlan_objmgr_psoc *psoc, const char *path)
