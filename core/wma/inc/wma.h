@@ -907,7 +907,6 @@ struct wma_txrx_node {
 	uint8_t wep_default_key_idx;
 	tSirHostOffloadReq arp_offload_req;
 	tSirHostOffloadReq ns_offload_req;
-	bool is_vdev_valid;
 #ifndef QCA_SUPPORT_CP_STATS
 	struct sir_vdev_wow_stats wow_stats;
 #endif

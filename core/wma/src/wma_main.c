@@ -995,7 +995,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 
 	switch (privcmd->param_vp_dev) {
 	case VDEV_CMD:
-		if (!wma->interfaces[privcmd->param_vdev_id].is_vdev_valid) {
+		if (!wma_is_vdev_valid(privcmd->param_vdev_id)) {
 			WMA_LOGE("%s Vdev id is not valid", __func__);
 			return;
 		}

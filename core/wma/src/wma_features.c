@@ -1177,7 +1177,7 @@ void wma_check_and_set_wake_timer(uint32_t time)
 
 	for (i = 0; i < wma->max_bssid; i++) {
 		iface = &wma->interfaces[i];
-		if (iface->is_vdev_valid && iface->is_waiting_for_key) {
+		if (iface->vdev_active && iface->is_waiting_for_key) {
 			/*
 			 * right now cookie is dont care, since FW disregards
 			 * that.
@@ -4379,7 +4379,7 @@ QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 	}
 
 	interface = &wma->interfaces[ie_info->vdev_id];
-	if (!interface->is_vdev_valid) {
+	if (!wma_is_vdev_valid(ie_info->vdev_id)) {
 		WMA_LOGE(FL("vdev_id: %d is not active"), ie_info->vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
