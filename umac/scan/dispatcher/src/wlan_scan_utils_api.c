@@ -980,7 +980,6 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	scan_entry = qdf_mem_malloc_atomic(sizeof(*scan_entry));
 	if (!scan_entry) {
 		scm_err("failed to allocate memory for scan_entry");
-		qdf_mem_free(scan_list);
 		return QDF_STATUS_E_NOMEM;
 	}
 	scan_entry->raw_frame.ptr =
@@ -988,7 +987,6 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	if (!scan_entry->raw_frame.ptr) {
 		scm_err("failed to allocate memory for frame");
 		qdf_mem_free(scan_entry);
-		qdf_mem_free(scan_list);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -1380,7 +1378,8 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 					 struct mgmt_rx_event_params *rx_param,
 					 qdf_list_t *scan_list)
 {
-	return QDF_STATUS_SUCCESS;
+	return util_scan_gen_scan_entry(pdev, frame, frame_len,
+					frm_subtype, rx_param, scan_list);
 }
 #endif
 
@@ -1409,13 +1408,14 @@ util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
 	 */
 	if (util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID,
 			      (uint8_t *)&bcn->ie, ie_len))
-		util_scan_parse_mbssid(pdev, frame, frame_len,
-				       frm_subtype, rx_param, scan_list);
-
-	status = util_scan_gen_scan_entry(pdev, frame, frame_len,
-					  frm_subtype, rx_param, scan_list);
+		status = util_scan_parse_mbssid(pdev, frame, frame_len,
+						frm_subtype, rx_param,
+						scan_list);
+	else
+		status = util_scan_gen_scan_entry(pdev, frame, frame_len,
+						  frm_subtype, rx_param,
+						  scan_list);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(scan_list);
 		scm_err("Failed to create a scan entry");
 	}
 
@@ -1441,7 +1441,7 @@ util_scan_unpack_beacon_frame(struct wlan_objmgr_pdev *pdev, uint8_t *frame,
 					      frm_subtype, rx_param,
 					      scan_list);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(scan_list);
+		ucfg_scan_purge_results(scan_list);
 		return NULL;
 	}
 
