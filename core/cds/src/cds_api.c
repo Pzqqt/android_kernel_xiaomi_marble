@@ -97,6 +97,16 @@ static struct ol_if_ops  dp_ol_if_ops;
 static void cds_trigger_recovery_work(void *param);
 
 /**
+ * struct cds_recovery_call_info - caller information for cds_trigger_recovery
+ * @func: caller's function name
+ * @line: caller's line number
+ */
+struct cds_recovery_call_info {
+	const char *func;
+	uint32_t line;
+} __cds_recovery_caller;
+
+/**
  * cds_recovery_work_init() - Initialize recovery work queue
  *
  * Return: none
@@ -104,7 +114,7 @@ static void cds_trigger_recovery_work(void *param);
 static QDF_STATUS cds_recovery_work_init(void)
 {
 	qdf_create_work(0, &gp_cds_context->cds_recovery_work,
-			cds_trigger_recovery_work, NULL);
+			cds_trigger_recovery_work, &__cds_recovery_caller);
 	gp_cds_context->cds_recovery_wq =
 		qdf_create_workqueue("cds_recovery_workqueue");
 	if (NULL == gp_cds_context->cds_recovery_wq) {
@@ -175,7 +185,7 @@ QDF_STATUS cds_init(void)
 	qdf_mc_timer_manager_init();
 	qdf_event_list_init();
 	qdf_cpuhp_init();
-	qdf_register_self_recovery_callback(cds_trigger_recovery);
+	qdf_register_self_recovery_callback(__cds_trigger_recovery);
 	qdf_register_fw_down_callback(cds_is_fw_down);
 	qdf_register_ssr_protect_callbacks(cds_ssr_protect,
 					   cds_ssr_unprotect);
@@ -1770,8 +1780,9 @@ static QDF_STATUS cds_force_assert_target(qdf_device_t qdf)
  *
  * Return: none
  */
-static void cds_trigger_recovery_work(void *param)
+static void cds_trigger_recovery_work(void *context)
 {
+	struct cds_recovery_call_info *call_info = context;
 	QDF_STATUS status;
 	qdf_runtime_lock_t rtl;
 	qdf_device_t qdf;
@@ -1797,8 +1808,8 @@ static void cds_trigger_recovery_work(void *param)
 	}
 
 	if (!cds_is_self_recovery_enabled()) {
-		cds_err("Recovery is not enabled");
-		QDF_BUG(0);
+		QDF_DEBUG_PANIC("Recovery is not enabled (via %s:%d)",
+				call_info->func, call_info->line);
 		return;
 	}
 
@@ -1861,13 +1872,8 @@ void cds_reset_recovery_reason(void)
 	gp_cds_context->recovery_reason = QDF_REASON_UNSPECIFIED;
 }
 
-/**
- * cds_trigger_recovery() - trigger self recovery
- * @reason: recovery reason
- *
- * Return: none
- */
-void cds_trigger_recovery(enum qdf_hang_reason reason)
+void __cds_trigger_recovery(enum qdf_hang_reason reason, const char *func,
+			    const uint32_t line)
 {
 	if (!gp_cds_context) {
 		cds_err("gp_cds_context is null");
@@ -1875,12 +1881,16 @@ void cds_trigger_recovery(enum qdf_hang_reason reason)
 	}
 
 	gp_cds_context->recovery_reason = reason;
+	__cds_recovery_caller.func = func;
+	__cds_recovery_caller.line = line;
+
 	if (in_atomic()) {
 		qdf_queue_work(0, gp_cds_context->cds_recovery_wq,
 				&gp_cds_context->cds_recovery_work);
 		return;
 	}
-	cds_trigger_recovery_work(NULL);
+
+	cds_trigger_recovery_work(&__cds_recovery_caller);
 }
 
 /**

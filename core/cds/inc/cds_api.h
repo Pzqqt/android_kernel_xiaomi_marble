@@ -480,7 +480,10 @@ void cds_reset_recovery_reason(void);
  *
  * Return: none
  */
-void cds_trigger_recovery(enum qdf_hang_reason reason);
+#define cds_trigger_recovery(reason) \
+	__cds_trigger_recovery(reason, __func__, __LINE__)
+void __cds_trigger_recovery(enum qdf_hang_reason reason, const char *func,
+			    const uint32_t line);
 
 void cds_set_wakelock_logging(bool value);
 bool cds_is_wakelock_enabled(void);
