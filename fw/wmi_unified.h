@@ -537,6 +537,12 @@ typedef enum {
      */
     WMI_PEER_TID_CONFIGURATIONS_CMDID,
 
+    /** Peer configuration for Channel Frequency Response (CFR) capture
+     * of type wmi_peer_cfr_capture_cmd.  The CFR capture is communicated
+     * through HTT_T2H_MSG_TYPE_CFR_DUMP_COMPL_IND.
+     */
+    WMI_PEER_CFR_CAPTURE_CMDID,
+
     /* beacon/management specific commands */
 
     /** transmit beacon by reference . used for transmitting beacon on low latency interface like pcie */
@@ -5151,6 +5157,33 @@ typedef enum {
      * Non zero Value: Periodicity (seconds)
      */
     WMI_PDEV_PARAM_ESP_INDICATION_PERIOD,             /* 0xA7 */
+
+    /*
+     * Enable/Disable periodic peer CFR capture
+     * WMI_PEER_CFR_CAPTURE_ENABLE - Enable per peer periodic CFR capture
+     * WMI_PEER_CFR_CAPTURE_DISABLE - Disable per peer periodic CFR capture
+     */
+    WMI_PDEV_PARAM_PER_PEER_PERIODIC_CFR_ENABLE,
+
+    /*
+     * Set the base timer for the periodic CFR capture. By default this is 10ms.
+     * The period ('periodicity' param in wmi_peer_cfr_capture_cmd) of
+     * CFR measurment of other peers will be in multiples of this base timer.
+     * The unit is in milliseconds.
+     */
+    WMI_PDEV_PARAM_PERIODIC_CFR_BASE_TIMER,
+
+    /*
+     * Once the periodic capture is enabled using
+     * WMI_PDEV_PARAM_PER_PEER_PERIODIC_CFR_ENABLE, the timer starts running in
+     * the target. This parameter will ensure that the timer stops if there are
+     * no active peers in the capture list. Once the peers are added again to
+     * the capture list, the timer will not start again. The timer has to be
+     * started again using WMI_PDEV_PARAM_PER_PEER_PERIODIC_CFR_ENABLE.
+     * Value 1: Enable this feature
+     * Value 0: Disable this feature
+     */
+    WMI_PDEV_PARAM_ENABLE_OPTIMIZED_PERIODIC_CFR_TIMER,
 } WMI_PDEV_PARAM;
 
 typedef struct {
@@ -15328,6 +15361,68 @@ typedef struct {
      */
     A_UINT32 sw_retry_threshold;
 } wmi_peer_tid_configurations_cmd_fixed_param;
+
+/* The below enable/disable macros are used for both per peer CFR capture
+ * control (as in wmi_peer_cfr_capture_cmd) and control of the entire periodic
+ * CFR capture feature (as in WMI_PDEV_PARAM_PER_PEER_PERIODIC_CFR_ENABLE)
+ */
+#define WMI_PEER_CFR_CAPTURE_ENABLE   1
+#define WMI_PEER_CFR_CAPTURE_DISABLE  0
+
+#define WMI_PEER_CFR_ONE_SHOT_REQUEST 0
+#define WMI_PEER_CFR_PERIODICITY_MIN  10 /* 10ms */
+#define WMI_PEER_CFR_PERIODICITY_MAX  10*60*1000 /* 10 minutes */
+
+/* Bandwidth of peer CFR captures */
+typedef enum {
+    WMI_PEER_CFR_CAPTURE_BW_20MHZ    = 0,
+    WMI_PEER_CFR_CAPTURE_BW_40MHZ    = 1,
+    WMI_PEER_CFR_CAPTURE_BW_80MHZ    = 2,
+    WMI_PEER_CFR_CAPTURE_BW_160MHZ   = 3,
+    WMI_PEER_CFR_CAPTURE_BW_80_80MHZ = 4,
+    WMI_PEER_CFR_CAPTURE_BW_MAX,
+} WMI_PEER_CFR_CAPTURE_BW;
+
+/* Peer CFR capture method */
+typedef enum {
+    /* Send null frame on the requested bw and capture CFR on ACK */
+    WMI_PEER_CFR_CAPTURE_METHOD_NULL_FRAME = 0,
+    /* New methods to be added here */
+    WMI_PEER_CFR_CAPTURE_METHOD_MAX,
+} WMI_PEER_CFR_CAPTURE_METHOD;
+
+/*
+ * Peer command structure to configure the CFR capture
+ */
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_peer_cfr_capture_cmd_fixed_param
+     */
+    A_UINT32 tlv_header;
+
+    /* WMI_PEER_CFR_CAPTURE_ENABLE: Enable CFR capture for the peer
+     * WMI_PEER_CFR_CAPTURE_DISABLE: Disable CFR capture for the peer
+     */
+    A_UINT32 request;
+    /* Peer MAC address. In AP mode, this is the address of the connected peer
+     * for which CFR capture is needed. In case of STA mode, this is the address
+     * of the AP to which the STA is connected
+     */
+    wmi_mac_addr mac_addr;
+    /* vdev id */
+    A_UINT32 vdev_id;
+    /* Periodicity of measurement in ms.
+     * WMI_PEER_CFR_ONE_SHOT_REQUEST: One-shot request i.e., Only one CFR
+     * capture for the request and no periodic CFR captures.
+     * The min value is WMI_PEER_CFR_PERIODICITY_MIN
+     * The max value is WMI_PEER_CFR_PERIODICITY_MAX
+     */
+    A_UINT32 periodicity;
+    /* BW of measurement - of type WMI_PEER_CFR_CAPTURE_BW */
+    A_UINT32 bandwidth;
+    /* Method used to capture CFR - of type WMI_PEER_CFR_CAPTURE_METHOD */
+    A_UINT32 capture_method;
+} wmi_peer_cfr_capture_cmd_fixed_param;
 
 typedef enum {
     WMI_PEER_IND_SMPS = 0x0, /* spatial multiplexing power save */

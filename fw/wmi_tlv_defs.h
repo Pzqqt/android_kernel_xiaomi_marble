@@ -927,6 +927,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_esp_estimate_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_nan_host_config_param,
     WMITLV_TAG_STRUC_wmi_spectral_bin_scaling_params,
+    WMITLV_TAG_STRUC_wmi_peer_cfr_capture_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1305,6 +1306,7 @@ typedef enum {
     OP(WMI_MOTION_DET_START_STOP_CMDID) \
     OP(WMI_MOTION_DET_BASE_LINE_START_STOP_CMDID) \
     OP(WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID) \
+    OP(WMI_PEER_CFR_CAPTURE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3757,6 +3759,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_TID_CONFIGURATIONS_CMDID);
 #define WMITLV_TABLE_WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_obss_spatial_reuse_set_cmd_fixed_param, wmi_obss_spatial_reuse_set_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID);
+
+/* Peer CFR capture cmd */
+#define WMITLV_TABLE_WMI_PEER_CFR_CAPTURE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_cfr_capture_cmd_fixed_param, wmi_peer_cfr_capture_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_CFR_CAPTURE_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/
