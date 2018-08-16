@@ -6184,9 +6184,9 @@ static void hdd_cfg_print_sae(struct hdd_context *hdd_ctx)
 #ifdef CONFIG_DP_TRACE
 static void hdd_cfg_print_dp_trace_params(struct hdd_context *hdd_ctx)
 {
-	hdd_info("Name = [%s] Value = [%u]",
-		 CFG_ENABLE_DP_TRACE,
-		 hdd_ctx->config->enable_dp_trace);
+	hdd_debug("Name = [%s] Value = [%u]",
+		  CFG_ENABLE_DP_TRACE,
+		  hdd_ctx->config->enable_dp_trace);
 	hdd_debug("Name = [%s] Value = [%s]",
 		  CFG_ENABLE_DP_TRACE_CONFIG,
 		  hdd_ctx->config->dp_trace_config);

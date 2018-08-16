@@ -3169,8 +3169,8 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 	if (ret)
 		return ret;
 
-	if (false == hdd_ctx->config->enable_mac_spoofing) {
-		hdd_warn("MAC address spoofing is not enabled");
+	if (!hdd_ctx->config->enable_mac_spoofing) {
+		hdd_debug("MAC address spoofing is not enabled");
 		return -ENOTSUPP;
 	}
 
@@ -16821,8 +16821,8 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		hdd_notify_sta_disconnect(adapter->session_id,
 			  false, true, adapter->hdd_vdev);
 
-		hdd_info("Disconnect request from user space with reason: %d (%s) internal reason code: %d",
-			reason, hdd_ieee80211_reason_code_to_str(reason), reasonCode);
+		hdd_info("Disconnect from userspace; reason:%d (%s)",
+			 reason, hdd_ieee80211_reason_code_to_str(reason));
 		status = wlan_hdd_disconnect(adapter, reasonCode);
 		if (0 != status) {
 			hdd_err("wlan_hdd_disconnect failed, status: %d", status);

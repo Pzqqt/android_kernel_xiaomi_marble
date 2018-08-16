@@ -146,13 +146,11 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	req.timeout = 100;   /* in milliseconds */
 	req.session_id = adapter->session_id;
 
-	hdd_info("**** Gateway Parameters: ****");
-	hdd_info("session id: %d", req.session_id);
-	hdd_info("ipv4 addr type: %d", req.ipv4_addr_type);
-	hdd_info("ipv6 addr type: %d", req.ipv6_addr_type);
-	hdd_info("gw mac addr: %pM", req.gw_mac_addr.bytes);
-	hdd_info("ipv4 addr: %pI4", req.ipv4_addr);
-	hdd_info("ipv6 addr: %pI6c", req.ipv6_addr);
+	hdd_debug("Configuring gateway for session %d", req.session_id);
+	hdd_debug("mac:%pM, ipv4:%pI4 (type %d), ipv6:%pI6c (type %d)",
+		  req.gw_mac_addr.bytes,
+		  req.ipv4_addr, req.ipv4_addr_type,
+		  req.ipv6_addr, req.ipv6_addr_type);
 
 	hdd_nud_set_gateway_addr(adapter, req.gw_mac_addr);
 

@@ -608,7 +608,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 	}
 
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
-		hdd_err("%s: Driver module is closed", __func__);
+		hdd_debug("%s: Driver module is closed", __func__);
 		return NOTIFY_DONE;
 	}
 
@@ -3254,9 +3254,9 @@ static int __hdd_stop(struct net_device *dev)
 	 * Disable TX on the interface, after this hard_start_xmit() will not
 	 * be called on that interface
 	 */
-	hdd_info("Disabling queues, adapter device mode: %s(%d)",
-		 hdd_device_mode_to_string(adapter->device_mode),
-		 adapter->device_mode);
+	hdd_debug("Disabling queues, adapter device mode: %s(%d)",
+		  hdd_device_mode_to_string(adapter->device_mode),
+		  adapter->device_mode);
 
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
@@ -4505,25 +4505,25 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 	    non_dbs_phy_cap.rx_chain_mask_2G < 3 ||
 	    non_dbs_phy_cap.tx_chain_mask_5G < 3 ||
 	    non_dbs_phy_cap.rx_chain_mask_5G < 3) {
-		hdd_info("firmware not capable. skip chain mask programming");
+		hdd_debug("firmware not capable. skip chain mask programming");
 		return 0;
 	}
 
 	if (hdd_ctx->config->enable2x2 &&
 	    !hdd_ctx->config->enable_bt_chain_separation) {
-		hdd_info("2x2 enabled. skip chain mask programming");
+		hdd_debug("2x2 enabled. skip chain mask programming");
 		return 0;
 	}
 
 	if (hdd_ctx->config->dual_mac_feature_disable !=
 	    DISABLE_DBS_CXN_AND_SCAN) {
-		hdd_info("DBS enabled(%d). skip chain mask programming",
-			 hdd_ctx->config->dual_mac_feature_disable);
+		hdd_debug("DBS enabled(%d). skip chain mask programming",
+			  hdd_ctx->config->dual_mac_feature_disable);
 		return 0;
 	}
 
 	if (hdd_ctx->lte_coex_ant_share) {
-		hdd_info("lte ant sharing enabled. skip chainmask programming");
+		hdd_debug("lte ant sharing enabled. skip chainmask programming");
 		return 0;
 	}
 
@@ -4547,7 +4547,7 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 
 	if (hdd_ctx->config->txchainmask1x1 ||
 	    hdd_ctx->config->rxchainmask1x1) {
-		hdd_info("band agnostic tx/rx chain mask set. skip per band chain mask");
+		hdd_debug("band agnostic tx/rx chain mask set. skip per band chain mask");
 		return 0;
 	}
 
@@ -11134,9 +11134,9 @@ void hdd_dp_trace_init(struct hdd_config *config)
 		live_mode = config_params[0];
 		/* fall through */
 	default:
-		hdd_info("live_mode %u thresh %u time_limit %u verbosity %u bitmap 0x%x",
-			 live_mode, thresh, thresh_time_limit,
-			 verbosity, proto_bitmap);
+		hdd_debug("live_mode %u thresh %u time_limit %u verbosity %u bitmap 0x%x",
+			  live_mode, thresh, thresh_time_limit,
+			  verbosity, proto_bitmap);
 	};
 
 	qdf_dp_trace_init(live_mode, thresh, thresh_time_limit,
