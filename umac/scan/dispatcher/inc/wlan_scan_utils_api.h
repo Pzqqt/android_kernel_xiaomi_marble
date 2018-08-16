@@ -1309,6 +1309,42 @@ util_scan_entry_extcaps(struct scan_cache_entry *scan_entry)
 }
 
 /**
+ * util_scan_entry_get_extcap() - function to read extended capability field ie
+ * @scan_entry: scan entry
+ * @extcap_bit_field: extended capability bit field
+ * @extcap_value: pointer to fill extended capability field value
+ *
+ * API, function to read extended capability field
+ *
+ * Return: QDF_STATUS_SUCCESS if extended capability field is found
+ *         QDF_STATUS_E_NOMEM if extended capability field is not found
+ */
+static inline QDF_STATUS
+util_scan_entry_get_extcap(struct scan_cache_entry *scan_entry,
+			   enum ext_cap_bit_field extcap_bit_field,
+			   uint8_t *extcap_value)
+{
+	struct wlan_ext_cap_ie *ext_cap =
+		(struct wlan_ext_cap_ie *)util_scan_entry_extcaps(scan_entry);
+
+	uint8_t ext_caps_byte = (extcap_bit_field >> 3);
+	uint8_t ext_caps_bit_pos = extcap_bit_field & 0x7;
+
+	*extcap_value = 0;
+
+	if (!ext_cap)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	if (ext_cap->ext_cap_len < ext_caps_byte)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	*extcap_value =
+		((ext_cap->ext_caps[ext_caps_byte] >> ext_caps_bit_pos) & 0x1);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * util_scan_entry_athcaps() - function to read ath caps vendor ie
  * @scan_entry: scan entry
  *

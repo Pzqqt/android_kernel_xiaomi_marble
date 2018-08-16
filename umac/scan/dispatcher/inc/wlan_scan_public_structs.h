@@ -1376,4 +1376,16 @@ enum scan_config {
 	SCAN_CFG_DISABLE_SCAN_COMMAND_TIMEOUT,
 	SCAN_CFG_DROP_BCN_ON_CHANNEL_MISMATCH,
 };
+
+/**
+ * enum ext_cap_bit_field - Extended capabilities bit field
+ * @BSS_2040_COEX_MGMT_SUPPORT: 20/40 BSS Coexistence Management Support field
+ * @OBSS_NARROW_BW_RU_IN_ULOFDMA_TOLERENT_SUPPORT: OBSS Narrow  Bandwidth RU
+ *     in UL OFDMA  Tolerance Support
+ */
+enum ext_cap_bit_field {
+	BSS_2040_COEX_MGMT_SUPPORT = 0,
+	OBSS_NARROW_BW_RU_IN_ULOFDMA_TOLERENT_SUPPORT = 79,
+};
+
 #endif

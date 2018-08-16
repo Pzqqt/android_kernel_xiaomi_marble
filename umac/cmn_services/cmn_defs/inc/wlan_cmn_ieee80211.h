@@ -1089,6 +1089,18 @@ struct wlan_esp_ie {
 } qdf_packed;
 
 /**
+ * struct wlan_ext_cap_ie - struct for extended capabilities information
+ * @ext_cap_id: Extended capabilities id
+ * @ext_cap_len: Extended capabilities IE len
+ * @ext_caps: Variable length extended capabilities information
+ */
+struct wlan_ext_cap_ie {
+	uint8_t ext_cap_id;
+	uint8_t ext_cap_len;
+	uint8_t ext_caps[];
+} qdf_packed;
+
+/**
  * struct oce_reduced_wan_metrics: struct for oce wan metrics
  * @downlink_av_cap: Download available capacity
  * @uplink_av_cap: Upload available capacity
