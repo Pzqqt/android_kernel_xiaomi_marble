@@ -13329,8 +13329,8 @@ QDF_STATUS send_pdev_set_dual_mac_config_cmd_tlv(wmi_unified_t wmi_handle,
 							WMI_HOST_PDEV_ID_SOC);
 	cmd->concurrent_scan_config_bits = msg->scan_config;
 	cmd->fw_mode_config_bits = msg->fw_mode_config;
-	WMI_LOGI("%s: scan_config:%x fw_mode_config:%x",
-			__func__, msg->scan_config, msg->fw_mode_config);
+	WMI_LOGD("%s: scan_config:%x fw_mode_config:%x",
+		 __func__, msg->scan_config, msg->fw_mode_config);
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				WMI_PDEV_SET_MAC_CONFIG_CMDID)) {
