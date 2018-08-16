@@ -3735,7 +3735,9 @@ static int q6afe_send_enc_config(u16 port_id,
 		goto exit;
 	}
 
-	if (format == ASM_MEDIA_FMT_LDAC || format == ASM_MEDIA_FMT_APTX_ADAPTIVE) {
+	if ((format == ASM_MEDIA_FMT_LDAC &&
+	     cfg->ldac_config.abr_config.is_abr_enabled) ||
+	     format == ASM_MEDIA_FMT_APTX_ADAPTIVE) {
 		pr_debug("%s:sending AFE_ENCODER_PARAM_ID_BIT_RATE_LEVEL_MAP to DSP payload",
 			__func__);
 		param_hdr.param_id = AFE_ENCODER_PARAM_ID_BIT_RATE_LEVEL_MAP;
