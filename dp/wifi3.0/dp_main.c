@@ -1263,6 +1263,12 @@ static QDF_STATUS dp_soc_interrupt_attach_wrapper(void *txrx_soc)
 	}
 }
 #else
+#if defined(DP_INTR_POLL_BASED) && DP_INTR_POLL_BASED
+static QDF_STATUS dp_soc_interrupt_attach_wrapper(void *txrx_soc)
+{
+	return dp_soc_attach_poll(txrx_soc);
+}
+#else
 static QDF_STATUS dp_soc_interrupt_attach_wrapper(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
@@ -1272,6 +1278,7 @@ static QDF_STATUS dp_soc_interrupt_attach_wrapper(void *txrx_soc)
 	else
 		return dp_soc_interrupt_attach(txrx_soc);
 }
+#endif
 #endif
 
 static void dp_soc_interrupt_map_calculate_integrated(struct dp_soc *soc,
