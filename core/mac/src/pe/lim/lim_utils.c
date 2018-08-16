@@ -8384,12 +8384,12 @@ void lim_process_ap_ecsa_timeout(void *data)
 		else
 			bcn_int = WNI_CFG_BEACON_INTERVAL_STADEF;
 
-			status = qdf_mc_timer_start(&session->ap_ecsa_timer,
-						    bcn_int);
-			if (QDF_IS_STATUS_ERROR(status)) {
-				pe_err("cannot start ap_ecsa_timer");
-				lim_process_ap_ecsa_timeout(session);
-			}
+		status = qdf_mc_timer_start(&session->ap_ecsa_timer,
+					    bcn_int);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			pe_err("cannot start ap_ecsa_timer");
+			lim_process_ap_ecsa_timeout(session);
+		}
 	} else {
 		tSirSmeCSAIeTxCompleteRsp *chan_switch_tx_rsp;
 		struct scheduler_msg msg = {0};
