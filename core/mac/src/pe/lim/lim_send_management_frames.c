@@ -3737,6 +3737,8 @@ lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 				   (uint8_t *) session_entry->bssId,
 				   sizeof(tSirMacAddr));
 
+	lim_set_protected_bit(mac_ctx, session_entry, peer, mac_hdr);
+
 	status = dot11f_pack_ext_channel_switch_action_frame(mac_ctx, &frm,
 		frame + sizeof(tSirMacMgmtHdr), n_payload, &n_payload);
 	if (DOT11F_FAILED(status)) {
