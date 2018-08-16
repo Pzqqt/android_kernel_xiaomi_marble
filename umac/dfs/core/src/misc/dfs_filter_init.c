@@ -97,7 +97,7 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 
 	dfs_clear_stats(dfs);
 	dfs->dfs_event_log_on = 1;
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "event log enabled by default");
+	dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "event log enabled by default");
 
 	dfs->dfs_enable = 1;
 

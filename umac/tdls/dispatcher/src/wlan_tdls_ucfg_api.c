@@ -269,7 +269,7 @@ QDF_STATUS ucfg_tdls_psoc_open(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS status;
 	struct tdls_soc_priv_obj *soc_obj;
 
-	tdls_notice("tdls psoc open");
+	tdls_debug("tdls psoc open");
 	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 							WLAN_UMAC_COMP_TDLS);
 	if (!soc_obj) {
@@ -289,7 +289,7 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 	uint32_t tdls_feature_flags;
 	struct policy_mgr_tdls_cbacks tdls_pm_call_backs;
 
-	tdls_notice("tdls update config ");
+	tdls_debug("tdls update config ");
 	if (!psoc || !req) {
 		tdls_err("psoc: 0x%pK, req: 0x%pK", psoc, req);
 		return QDF_STATUS_E_FAILURE;

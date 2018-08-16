@@ -313,7 +313,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 	tx_ops = &(psoc->soc_cb.tx_ops.target_tx_ops);
 	switch (dfsdomain) {
 	case DFS_FCC_DOMAIN:
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "FCC domain");
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "FCC domain");
 		rinfo.dfsdomain = DFS_FCC_DOMAIN;
 		dfs_assign_fcc_pulse_table(&rinfo, target_type, tx_ops);
 		break;

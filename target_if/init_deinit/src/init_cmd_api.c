@@ -476,12 +476,12 @@ void init_deinit_prepare_send_init_cmd(
 	if (ret_val != QDF_STATUS_SUCCESS)
 		return;
 
-	target_if_info("FW version 0x%x ", info->target_caps.fw_version);
+	target_if_debug("FW version 0x%x ", info->target_caps.fw_version);
 	if (init_deinit_is_service_ext_msg(psoc, tgt_hdl) == QDF_STATUS_SUCCESS)
-		target_if_info("0x%x\n",
-			       info->service_ext_param.fw_build_vers_ext);
+		target_if_debug("0x%x\n",
+				info->service_ext_param.fw_build_vers_ext);
 	else
-		target_if_info("0x%x\n", info->target_caps.fw_version_1);
+		target_if_debug("0x%x\n", info->target_caps.fw_version_1);
 
 	wmi_unified_init_cmd_send(wmi_handle, &init_param);
 
