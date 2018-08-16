@@ -26,10 +26,15 @@
 
 /**
  * qdf_self_recovery_callback() - callback for self recovery
+ * @reason: the reason for the recovery request
+ * @func: the caller's function name
+ * @line: the line number of the callsite
  *
  * Return: none
  */
-typedef void (*qdf_self_recovery_callback)(enum qdf_hang_reason);
+typedef void (*qdf_self_recovery_callback)(enum qdf_hang_reason reason,
+					   const char *func,
+					   const uint32_t line);
 
 /**
  * qdf_ssr_callback() - callback for ssr
@@ -81,7 +86,9 @@ void qdf_register_self_recovery_callback(qdf_self_recovery_callback callback);
  *
  * Return: None
  */
-void qdf_trigger_self_recovery(void);
+#define qdf_trigger_self_recovery() \
+	__qdf_trigger_self_recovery(__func__, __LINE__)
+void __qdf_trigger_self_recovery(const char *func, const uint32_t line);
 
 /**
  * qdf_register_ssr_protect_callbacks() - register [un]protect callbacks
