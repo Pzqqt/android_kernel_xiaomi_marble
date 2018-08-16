@@ -890,17 +890,17 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 
 		if (sta_sap_scc_on_dfs_chan) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
-				  QDF_TRACE_LEVEL_INFO_HIGH,
+				  QDF_TRACE_LEVEL_DEBUG,
 				  FL("Ignore the Radar indication"));
-			break;
+			goto EXIT;
 		}
 
 		if (sap_ctx->fsm_state != SAP_STARTED &&
 		    sap_ctx->fsm_state != SAP_DFS_CAC_WAIT) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Ignore Radar event in sap state %d"),
 				  sap_ctx->fsm_state);
-			break;
+			goto EXIT;
 		}
 
 		chan_state = wlan_reg_get_channel_state(
@@ -909,13 +909,13 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  "Ignore Radar event for sap ch %d state %d",
 				  sap_ctx->channel, chan_state);
-			return 0;
+			goto EXIT;
 		}
 
 		if (sap_ctx->is_pre_cac_on) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-				FL("sapdfs: Radar detect on pre cac:%d"),
-				sap_ctx->sessionId);
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+				  FL("sapdfs: Radar detect on pre cac:%d"),
+				  sap_ctx->sessionId);
 			if (!sap_ctx->dfs_cac_offload) {
 				qdf_mc_timer_stop(
 				&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
@@ -947,7 +947,7 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 		if (sap_ctx->vendor_acs_dfs_lte_enabled &&
 		    !mac_ctx->sap.SapDfsInfo.target_channel) {
 			/* Return from here, processing will be done later */
-			return 0;
+			goto EXIT;
 		}
 		if (mac_ctx->sap.SapDfsInfo.target_channel != 0) {
 			mac_ctx->sap.SapDfsInfo.cac_state =
@@ -1235,6 +1235,7 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 			  roam_result);
 		break;
 	}
+EXIT:
 	wlansap_context_put(sap_ctx);
 	return qdf_ret_status;
 }
