@@ -619,3 +619,30 @@ void scheduler_mc_timer_callback(unsigned long data)
 	if (QDF_IS_STATUS_ERROR(status))
 		sched_err("Could not enqueue timer to timer queue");
 }
+
+QDF_STATUS scheduler_get_queue_size(QDF_MODULE_ID qid, uint32_t *size)
+{
+	uint8_t qidx;
+	struct scheduler_mq_type *target_mq;
+	struct scheduler_ctx *sched_ctx;
+
+	sched_ctx = scheduler_get_context();
+	if (!sched_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	/* WMA also uses the target_if queue, so replace the QID */
+	if (QDF_MODULE_ID_WMA == qid)
+		qid = QDF_MODULE_ID_TARGET_IF;
+
+	qidx = sched_ctx->queue_ctx.scheduler_msg_qid_to_qidx[qid];
+	if (qidx >= SCHEDULER_NUMBER_OF_MSG_QUEUE) {
+		sched_err("Scheduler is deinitialized");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	target_mq = &(sched_ctx->queue_ctx.sch_msg_q[qidx]);
+
+	*size = qdf_list_size(&target_mq->mq_list);
+
+	return QDF_STATUS_SUCCESS;
+}

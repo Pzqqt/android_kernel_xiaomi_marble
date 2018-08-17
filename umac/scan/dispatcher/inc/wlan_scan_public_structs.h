@@ -69,6 +69,12 @@ typedef uint32_t wlan_scan_id;
 #define MAX_INDEX_SCORE 100
 #define MAX_INDEX_PER_INI 4
 
+#ifdef CONFIG_MCL
+#define MAX_BCN_PROBE_IN_SCAN_QUEUE 150
+#else
+#define MAX_BCN_PROBE_IN_SCAN_QUEUE 2000
+#endif
+
 #define WLAN_GET_BITS(_val, _index, _num_bits) \
 	(((_val) >> (_index)) & ((1 << (_num_bits)) - 1))
 

@@ -283,4 +283,14 @@ QDF_STATUS scheduler_deregister_wma_legacy_handler(void);
  */
 void scheduler_mc_timer_callback(unsigned long data);
 
+/**
+ * scheduler_get_queue_size() - Get the current size of the scheduler queue
+ * @qid: Queue ID for which the size is requested
+ * @size: Pointer to size where the size would be returned to the caller
+ *
+ * This API finds the size of the scheduler queue for the given Queue ID
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS scheduler_get_queue_size(QDF_MODULE_ID qid, uint32_t *size);
 #endif

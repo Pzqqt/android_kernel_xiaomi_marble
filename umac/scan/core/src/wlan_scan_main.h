@@ -44,6 +44,18 @@
 #define scm_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_SCAN, params)
 
+/* Rate Limited Logs */
+#define scm_alert_rl(params...) \
+	QDF_TRACE_FATAL_RL(QDF_MODULE_ID_SCAN, params)
+#define scm_err_rl(params...) \
+	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_SCAN, params)
+#define scm_warn_rl(params...) \
+	QDF_TRACE_WARN_RL(QDF_MODULE_ID_SCAN, params)
+#define scm_info_rl(params...) \
+	QDF_TRACE_INFO_RL(QDF_MODULE_ID_SCAN, params)
+#define scm_debug_rl(params...) \
+	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_SCAN, params)
+
 #define scm_nofl_alert(params...) \
 	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_SCAN, params)
 #define scm_nofl_err(params...) \
