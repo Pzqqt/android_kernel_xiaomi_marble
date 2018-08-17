@@ -5501,8 +5501,10 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 			pdev->stats.tx_i.dropped.enqueue_fail);
 	DP_PRINT_STATS("	Resources Full = %d",
 			pdev->stats.tx_i.dropped.res_full);
-	DP_PRINT_STATS("	FW removed = %d",
-			pdev->stats.tx.dropped.fw_rem);
+	DP_PRINT_STATS("	FW removed Pkts = %u",
+		       pdev->stats.tx.dropped.fw_rem.num);
+	DP_PRINT_STATS("	FW removed bytes= %llu",
+		       pdev->stats.tx.dropped.fw_rem.bytes);
 	DP_PRINT_STATS("	FW removed transmitted = %d",
 			pdev->stats.tx.dropped.fw_rem_tx);
 	DP_PRINT_STATS("	FW removed untransmitted = %d",
@@ -6105,8 +6107,10 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.tx.amsdu_cnt);
 	DP_PRINT_STATS("Last Packet RSSI = %d",
 			peer->stats.tx.last_ack_rssi);
-	DP_PRINT_STATS("Dropped At FW: Removed = %d",
-			peer->stats.tx.dropped.fw_rem);
+	DP_PRINT_STATS("Dropped At FW: Removed Pkts = %u",
+		       peer->stats.tx.dropped.fw_rem.num);
+	DP_PRINT_STATS("Dropped At FW: Removed bytes = %llu",
+		       peer->stats.tx.dropped.fw_rem.bytes);
 	DP_PRINT_STATS("Dropped At FW: Removed transmitted = %d",
 			peer->stats.tx.dropped.fw_rem_tx);
 	DP_PRINT_STATS("Dropped At FW: Removed Untransmitted = %d",
@@ -7168,8 +7172,10 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->stats.tx.tx_failed);
 		DP_TRACE_STATS(INFO_HIGH, "mpdu age out: %u",
 			       pdev->stats.tx.dropped.age_out);
-		DP_TRACE_STATS(INFO_HIGH, "firmware removed: %u",
-			       pdev->stats.tx.dropped.fw_rem);
+		DP_TRACE_STATS(INFO_HIGH, "firmware removed packets: %u",
+			       pdev->stats.tx.dropped.fw_rem.num);
+		DP_TRACE_STATS(INFO_HIGH, "firmware removed bytes: %llu",
+			       pdev->stats.tx.dropped.fw_rem.bytes);
 		DP_TRACE_STATS(INFO_HIGH, "firmware removed tx: %u",
 			       pdev->stats.tx.dropped.fw_rem_tx);
 		DP_TRACE_STATS(INFO_HIGH, "firmware removed notx %u",

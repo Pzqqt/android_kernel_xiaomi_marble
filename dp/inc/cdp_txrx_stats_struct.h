@@ -267,7 +267,7 @@ struct cdp_tx_stats {
 	uint32_t excess_retries_per_ac[WME_AC_MAX];
 
 	struct {
-		uint32_t fw_rem;
+		struct cdp_pkt_info fw_rem;
 		uint32_t fw_rem_notx;
 		uint32_t fw_rem_tx;
 		uint32_t age_out;
@@ -414,12 +414,10 @@ struct cdp_rx_stats {
  * @num_seg: No of segments in TSO packets
  * @tso_pkt:total no of TSO packets
  * @non_tso_pkts: non - TSO packets
- * @tso_desc_cnt: TSO descriptors
  * @dropped_host: TSO packets dropped by host
  * @dropped_target:TSO packets dropped by target
  * @sg_pkt: Total scatter gather packets
  * @non_sg_pkts: non SG packets
- * @sg_desc_cnt: SG Descriptors
  * @dropped_host: SG packets dropped by host
  * @dropped_target: SG packets dropped by target
  * @dma_map_error: Dma map error
@@ -459,7 +457,6 @@ struct cdp_tx_ingress_stats {
 		uint32_t num_seg;
 		struct cdp_pkt_info tso_pkt;
 		struct cdp_pkt_info non_tso_pkts;
-		uint32_t tso_desc_cnt;
 		struct cdp_pkt_info  dropped_host;
 		uint32_t dropped_target;
 	} tso;
@@ -468,7 +465,6 @@ struct cdp_tx_ingress_stats {
 	struct {
 		struct cdp_pkt_info sg_pkt;
 		struct cdp_pkt_info non_sg_pkts;
-		uint32_t sg_desc_cnt;
 		struct cdp_pkt_info  dropped_host;
 		uint32_t dropped_target;
 		uint32_t dma_map_error;
@@ -957,6 +953,8 @@ struct cdp_htt_rx_pdev_stats {
  * @low_thresh_intrs: low threshold interrupts
  * @rx_raw_pkts: Rx Raw Packets
  * @mesh_mem_alloc: Mesh Rx Stats Alloc fail
+ * @tso_desc_cnt: TSO descriptors
+ * @sg_desc_cnt: SG Descriptors
  * @desc_alloc_fail: desc alloc failed errors
  * @ip_csum_err: ip checksum errors
  * @tcp_udp_csum_err: tcp/udp checksum errors
@@ -989,6 +987,8 @@ struct cdp_pdev_stats {
 
 	uint32_t rx_raw_pkts;
 	uint32_t mesh_mem_alloc;
+	uint32_t tso_desc_cnt;
+	uint32_t sg_desc_cnt;
 
 	/* Rx errors */
 	struct {

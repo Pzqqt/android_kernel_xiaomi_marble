@@ -2565,7 +2565,7 @@ void dp_tx_comp_fill_tx_completion_stats(struct dp_tx_desc_s *tx_desc,
  */
 static inline void
 dp_tx_update_peer_stats(struct dp_peer *peer,
-			struct hal_tx_completion_status *ts)
+			struct hal_tx_completion_status *ts, uint32_t length)
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -2582,8 +2582,8 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
 		     (ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
 
-	DP_STATS_INCC(peer, tx.dropped.fw_rem, 1,
-		     (ts->status == HAL_TX_TQM_RR_REM_CMD_REM));
+	DP_STATS_INCC_PKT(peer, tx.dropped.fw_rem, 1, length,
+			  (ts->status == HAL_TX_TQM_RR_REM_CMD_REM));
 
 	DP_STATS_INCC(peer, tx.dropped.fw_rem_notx, 1,
 		     (ts->status == HAL_TX_TQM_RR_REM_CMD_NOTX));
@@ -2923,7 +2923,7 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 		}
 	}
 
-	dp_tx_update_peer_stats(peer, ts);
+	dp_tx_update_peer_stats(peer, ts, length);
 
 out:
 	return;
