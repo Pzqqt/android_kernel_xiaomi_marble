@@ -997,8 +997,6 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	 * See if these settings need to passed from DP layer
 	 */
 	ring_params.flags = 0;
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-		  FL("Ring type: %d, num:%d"), ring_type, ring_num);
 
 	num_entries = (num_entries > max_entries) ? max_entries : num_entries;
 	srng->hal_srng = NULL;
@@ -1021,6 +1019,11 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 		((unsigned long)(ring_params.ring_base_vaddr) -
 		(unsigned long)srng->base_vaddr_unaligned);
 	ring_params.num_entries = num_entries;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
+		  FL("Ring type: %d, num:%d vaddr %pK paddr %pK entries %u"),
+		  ring_type, ring_num, (void *)ring_params.ring_base_vaddr,
+		  (void *)ring_params.ring_base_paddr, ring_params.num_entries);
 
 	if (soc->intr_mode == DP_INTR_MSI) {
 		dp_srng_msi_setup(soc, &ring_params, ring_type, ring_num);
@@ -1935,12 +1938,23 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 	}
 }
 
+#ifdef IPA_OFFLOAD
+#define REO_DST_RING_SIZE_QCA6290 1023
+#ifndef QCA_WIFI_QCA8074_VP
+#define REO_DST_RING_SIZE_QCA8074 1023
+#else
+#define REO_DST_RING_SIZE_QCA8074 8
+#endif /* QCA_WIFI_QCA8074_VP */
+
+#else
+
 #define REO_DST_RING_SIZE_QCA6290 1024
 #ifndef QCA_WIFI_QCA8074_VP
 #define REO_DST_RING_SIZE_QCA8074 2048
 #else
 #define REO_DST_RING_SIZE_QCA8074 8
-#endif
+#endif /* QCA_WIFI_QCA8074_VP */
+#endif /* IPA_OFFLOAD */
 
 /*
  * dp_wds_aging_timer_fn() - Timer callback function for WDS aging
@@ -2225,12 +2239,13 @@ static bool dp_reo_remap_config(struct dp_soc *soc,
 				uint32_t *remap1,
 				uint32_t *remap2)
 {
-
 	*remap1 = ((0x1 << 0) | (0x2 << 3) | (0x3 << 6) | (0x1 << 9) |
 		(0x2 << 12) | (0x3 << 15) | (0x1 << 18) | (0x2 << 21)) << 8;
 
 	*remap2 = ((0x3 << 0) | (0x1 << 3) | (0x2 << 6) | (0x3 << 9) |
 		(0x1 << 12) | (0x2 << 15) | (0x3 << 18) | (0x1 << 21)) << 8;
+
+	dp_debug("remap1 %x remap2 %x", *remap1, *remap2);
 
 	return true;
 }
@@ -2251,7 +2266,6 @@ static bool dp_reo_remap_config(struct dp_soc *soc,
 			(0x4 << 9) | (0x1 << 12) | (0x2 << 15) |
 			(0x3 << 18) | (0x4 << 21)) << 8;
 		break;
-
 	case 1:
 		*remap1 = ((0x2 << 0) | (0x3 << 3) | (0x4 << 6) |
 			(0x2 << 9) | (0x3 << 12) | (0x4 << 15) |
@@ -2276,6 +2290,9 @@ static bool dp_reo_remap_config(struct dp_soc *soc,
 		/* return false if both radios are offloaded to NSS */
 		return false;
 	}
+
+	dp_debug("remap1 %x remap2 %x offload_radio %u",
+		 *remap1, *remap2, offload_radio);
 	return true;
 }
 #endif
@@ -4028,6 +4045,98 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 }
 
 /*
+ * dp_vdev_get_default_reo_hash() - get reo dest ring and hash values for a vdev
+ * @vdev: Datapath VDEV handle
+ * @reo_dest: pointer to default reo_dest ring for vdev to be populated
+ * @hash_based: pointer to hash value (enabled/disabled) to be populated
+ *
+ * Return: None
+ */
+static
+void dp_vdev_get_default_reo_hash(struct dp_vdev *vdev,
+				  enum cdp_host_reo_dest_ring *reo_dest,
+				  bool *hash_based)
+{
+	struct dp_soc *soc;
+	struct dp_pdev *pdev;
+
+	pdev = vdev->pdev;
+	soc = pdev->soc;
+	/*
+	 * hash based steering is disabled for Radios which are offloaded
+	 * to NSS
+	 */
+	if (!wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx))
+		*hash_based = wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx);
+
+	/*
+	 * Below line of code will ensure the proper reo_dest ring is chosen
+	 * for cases where toeplitz hash cannot be generated (ex: non TCP/UDP)
+	 */
+	*reo_dest = pdev->reo_dest;
+}
+
+#ifdef IPA_OFFLOAD
+/*
+ * dp_peer_setup_get_reo_hash() - get reo dest ring and hash values for a peer
+ * @vdev: Datapath VDEV handle
+ * @reo_dest: pointer to default reo_dest ring for vdev to be populated
+ * @hash_based: pointer to hash value (enabled/disabled) to be populated
+ *
+ * If IPA is enabled in ini, for SAP mode, disable hash based
+ * steering, use default reo_dst ring for RX. Use config values for other modes.
+ * Return: None
+ */
+static void dp_peer_setup_get_reo_hash(struct dp_vdev *vdev,
+				       enum cdp_host_reo_dest_ring *reo_dest,
+				       bool *hash_based)
+{
+	struct dp_soc *soc;
+	struct dp_pdev *pdev;
+
+	pdev = vdev->pdev;
+	soc = pdev->soc;
+
+	dp_vdev_get_default_reo_hash(vdev, reo_dest, hash_based);
+
+	/*
+	 * If IPA is enabled, disable hash-based flow steering and set
+	 * reo_dest_ring_4 as the REO ring to receive packets on.
+	 * IPA is configured to reap reo_dest_ring_4.
+	 *
+	 * Note - REO DST indexes are from 0 - 3, while cdp_host_reo_dest_ring
+	 * value enum value is from 1 - 4.
+	 * Hence, *reo_dest = IPA_REO_DEST_RING_IDX + 1
+	 */
+	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
+		if (vdev->opmode == wlan_op_mode_ap) {
+			*reo_dest = IPA_REO_DEST_RING_IDX + 1;
+			*hash_based = 0;
+		}
+	}
+}
+
+#else
+
+/*
+ * dp_peer_setup_get_reo_hash() - get reo dest ring and hash values for a peer
+ * @vdev: Datapath VDEV handle
+ * @reo_dest: pointer to default reo_dest ring for vdev to be populated
+ * @hash_based: pointer to hash value (enabled/disabled) to be populated
+ *
+ * Use system config values for hash based steering.
+ * Return: None
+ */
+
+static void dp_peer_setup_get_reo_hash(struct dp_vdev *vdev,
+				       enum cdp_host_reo_dest_ring *reo_dest,
+				       bool *hash_based)
+{
+	dp_vdev_get_default_reo_hash(vdev, reo_dest, hash_based);
+}
+#endif /* IPA_OFFLOAD */
+
+/*
  * dp_peer_setup_wifi3() - initialize the peer
  * @vdev_hdl: virtual device object
  * @peer: Peer object
@@ -4054,22 +4163,12 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	peer->last_disassoc_rcvd = 0;
 	peer->last_deauth_rcvd = 0;
 
-	/*
-	 * hash based steering is disabled for Radios which are offloaded
-	 * to NSS
-	 */
-	if (!wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx))
-		hash_based = wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx);
+	dp_peer_setup_get_reo_hash(vdev, &reo_dest, &hash_based);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		FL("hash based steering for pdev: %d is %d"),
-		pdev->pdev_id, hash_based);
+	dp_info("pdev: %d vdev :%d opmode:%u hash-based-steering:%d default-reo_dest:%u",
+		pdev->pdev_id, vdev->vdev_id,
+		vdev->opmode, hash_based, reo_dest);
 
-	/*
-	 * Below line of code will ensure the proper reo_dest ring is chosen
-	 * for cases where toeplitz hash cannot be generated (ex: non TCP/UDP)
-	 */
-	reo_dest = pdev->reo_dest;
 
 	/*
 	 * There are corner cases where the AD1 = AD2 = "VAPs address"
@@ -5669,17 +5768,17 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
  *
  * Return: void
  */
-static inline void
+static void
 dp_print_ring_stat_from_hal(struct dp_soc *soc,  struct dp_srng *srng,
 	char *ring_name)
 {
 	uint32_t tailp;
 	uint32_t headp;
 
-	if (srng->hal_srng != NULL) {
+	if (soc && srng && srng->hal_srng) {
 		hal_api_get_tphp(soc->hal_soc, srng->hal_srng, &tailp, &headp);
-		DP_PRINT_STATS("%s : Head pointer = %d  Tail Pointer = %d\n",
-				ring_name, headp, tailp);
+		DP_PRINT_STATS("%s : Head pointer = %d  Tail Pointer = %d",
+			       ring_name, headp, tailp);
 	}
 }
 
@@ -5726,6 +5825,7 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 				&pdev->soc->reo_dest_ring[i],
 				ring_name);
 	}
+
 	for (i = 0; i < pdev->soc->num_tcl_data_rings; i++) {
 		snprintf(ring_name, STR_MAXLEN, "Tcl Data Ring %d", i);
 		dp_print_ring_stat_from_hal(pdev->soc,
@@ -7280,6 +7380,8 @@ QDF_STATUS dp_update_config_parameters(struct cdp_soc *psoc,
 	soc->wlan_cfg_ctx->tcp_udp_checksumoffload =
 				params->tcp_udp_checksumoffload;
 	soc->wlan_cfg_ctx->napi_enabled = params->napi_enable;
+	soc->wlan_cfg_ctx->ipa_enabled = params->ipa_enable;
+
 	dp_update_flow_control_parameters(soc, params);
 
 	return QDF_STATUS_SUCCESS;

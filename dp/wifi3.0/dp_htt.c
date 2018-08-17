@@ -566,14 +566,10 @@ int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
 			goto fail1;
 		}
 
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			  "%s: ring_type %d ring_id %d",
-			  __func__, hal_ring_type, srng_params.ring_id);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			  "%s: hp_addr 0x%llx tp_addr 0x%llx",
-			  __func__, (uint64_t)hp_addr, (uint64_t)tp_addr);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			  "%s: htt_ring_id %d", __func__, htt_ring_id);
+		dp_info("ring_type %d ring_id %d htt_ring_id %d hp_addr 0x%llx tp_addr 0x%llx",
+			hal_ring_type, srng_params.ring_id, htt_ring_id,
+			(uint64_t)hp_addr,
+			(uint64_t)tp_addr);
 		break;
 	case RXDMA_MONITOR_BUF:
 		htt_ring_id = HTT_RXDMA_MONITOR_BUF_RING;

@@ -93,12 +93,22 @@ static void hal_update_srng_hp_tp_address(void *hal_soc,
 
 	srng = hal_get_srng(hal_soc, ring_id);
 
-	if (ring_config->ring_dir == HAL_SRNG_DST_RING)
+	if (ring_config->ring_dir == HAL_SRNG_DST_RING) {
 		srng->u.dst_ring.tp_addr = SHADOW_REGISTER(shadow_config_index)
 			+ hal->dev_base_addr;
-	else
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+			  "%s: tp_addr=%pK dev base addr %pK index %u",
+			  __func__, srng->u.dst_ring.tp_addr,
+			  hal->dev_base_addr, shadow_config_index);
+	} else {
 		srng->u.src_ring.hp_addr = SHADOW_REGISTER(shadow_config_index)
 			+ hal->dev_base_addr;
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+			  "%s: hp_addr=%pK dev base addr %pK index %u",
+			  __func__, srng->u.src_ring.hp_addr,
+			  hal->dev_base_addr, shadow_config_index);
+	}
+
 }
 
 QDF_STATUS hal_set_one_shadow_config(void *hal_soc,
@@ -132,9 +142,11 @@ QDF_STATUS hal_set_one_shadow_config(void *hal_soc,
 				      ring_num);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-	    "%s: target_reg %x, shadow_index %x, ring_type %d, ring num %d",
-	    __func__, target_register, shadow_config_index,
-	    ring_type, ring_num);
+		  "%s: target_reg %x, shadow register 0x%x shadow_index 0x%x, ring_type %d, ring num %d",
+		  __func__, target_register,
+		  SHADOW_REGISTER(shadow_config_index),
+		  shadow_config_index,
+		  ring_type, ring_num);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -435,14 +447,20 @@ void hal_srng_dst_set_hp_paddr(struct hal_srng *srng,
 void hal_srng_dst_init_hp(struct hal_srng *srng,
 			  uint32_t *vaddr)
 {
+	if (!srng)
+		return;
+
 	srng->u.dst_ring.hp_addr = vaddr;
 	SRNG_DST_REG_WRITE(srng, HP, srng->u.dst_ring.cached_hp);
-	*(srng->u.dst_ring.hp_addr) = srng->u.dst_ring.cached_hp;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		"hp_addr=%pK, cached_hp=%d, hp=%d",
-		(void *)srng->u.dst_ring.hp_addr, srng->u.dst_ring.cached_hp,
-		*(srng->u.dst_ring.hp_addr));
+	if (vaddr) {
+		*srng->u.dst_ring.hp_addr = srng->u.dst_ring.cached_hp;
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "hp_addr=%pK, cached_hp=%d, hp=%d",
+			  (void *)srng->u.dst_ring.hp_addr,
+			  srng->u.dst_ring.cached_hp,
+			  *srng->u.dst_ring.hp_addr);
+	}
 }
 
 /**

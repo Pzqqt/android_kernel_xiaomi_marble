@@ -84,50 +84,58 @@ struct wlan_cfg_dp_pdev_ctxt;
 
 /**
  * struct wlan_cfg_dp_soc_ctxt - Configuration parameters for SoC (core TxRx)
- * @num_int_ctxts - Number of NAPI/Interrupt contexts to be registered for DP
- * @max_clients - Maximum number of peers/stations supported by device
- * @max_alloc_size - Maximum allocation size for any dynamic memory
+ * @num_int_ctxts: Number of NAPI/Interrupt contexts to be registered for DP
+ * @max_clients: Maximum number of peers/stations supported by device
+ * @max_alloc_size: Maximum allocation size for any dynamic memory
  *			allocation request for this device
- * @per_pdev_tx_ring - 0 - TCL ring is not mapped per radio
- *		       1 - Each TCL ring is mapped to one radio/pdev
- * @num_tcl_data_rings - Number of TCL Data rings supported by device
- * @per_pdev_rx_ring - 0 - REO ring is not mapped per radio
- *		       1 - Each REO ring is mapped to one radio/pdev
- * @num_tx_desc_pool - Number of Tx Descriptor pools
- * @num_tx_ext_desc_pool - Number of Tx MSDU extension Descriptor pools
- * @num_tx_desc - Number of Tx Descriptors per pool
- * @num_tx_ext_desc - Number of Tx MSDU extension Descriptors per pool
- * @max_peer_id - Maximum value of peer id that FW can assign for a client
- * @htt_packet_type - Default 802.11 encapsulation type for any VAP created
- * @int_tx_ring_mask - Bitmap of Tx interrupts mapped to each NAPI/Intr context
- * @int_rx_ring_mask - Bitmap of Rx interrupts mapped to each NAPI/Intr context
- * @int_rx_mon_ring_mask - Bitmap of Rx monitor ring interrupts mapped to each
+ * @per_pdev_tx_ring: 0: TCL ring is not mapped per radio
+ *		       1: Each TCL ring is mapped to one radio/pdev
+ * @num_tcl_data_rings: Number of TCL Data rings supported by device
+ * @per_pdev_rx_ring: 0: REO ring is not mapped per radio
+ *		       1: Each REO ring is mapped to one radio/pdev
+ * @num_tx_desc_pool: Number of Tx Descriptor pools
+ * @num_tx_ext_desc_pool: Number of Tx MSDU extension Descriptor pools
+ * @num_tx_desc: Number of Tx Descriptors per pool
+ * @num_tx_ext_desc: Number of Tx MSDU extension Descriptors per pool
+ * @max_peer_id: Maximum value of peer id that FW can assign for a client
+ * @htt_packet_type: Default 802.11 encapsulation type for any VAP created
+ * @int_tx_ring_mask: Bitmap of Tx interrupts mapped to each NAPI/Intr context
+ * @int_rx_ring_mask: Bitmap of Rx interrupts mapped to each NAPI/Intr context
+ * @int_rx_mon_ring_mask: Bitmap of Rx monitor ring interrupts mapped to each
  *			  NAPI/Intr context
- * @int_rx_err_ring_mask - Bitmap of Rx err ring interrupts mapped to each
+ * @int_rx_err_ring_mask: Bitmap of Rx err ring interrupts mapped to each
  *			  NAPI/Intr context
- * @int_wbm_rel_ring_mask - Bitmap of wbm rel ring interrupts mapped to each
+ * @int_wbm_rel_ring_mask: Bitmap of wbm rel ring interrupts mapped to each
  *			  NAPI/Intr context
- * @int_reo_status_ring_mask - Bitmap of reo status ring interrupts mapped to each
- *                        NAPI/Intr context
- * @int_ce_ring_mask - Bitmap of CE interrupts mapped to each NAPI/Intr context
- * @lro_enabled - enable/disable lro feature
- * @rx_hash - Enable hash based steering of rx packets
- * @tso_enabled - enable/disable tso feature
- * @napi_enabled - enable/disable interrupt mode for reaping tx and rx packets
- * @tcp_Udp_Checksumoffload - enable/disable checksum offload
- * @nss_cfg - nss configuration
- * @rx_defrag_min_timeout - rx defrag minimum timeout
- * @wbm_release_ring - wbm release ring size
- * @tcl_cmd_ring - tcl cmd ring size
- * @tcl_status_ring - tcl status ring size
- * @reo_reinject_ring - reo reinject ring
- * @rx_release_ring - rx release ring size
- * @reo_exception_ring - reo exception ring size
- * @reo_cmd_ring - reo cmd ring size
- * @reo_status_ring - reo status ting size
- * @rxdma_refill_ring - rxdma refill ring size
- * @rxdma_err_dst_ring - rxdma error detination ring size
- * @raw_mode_war - enable/disable raw mode war
+ * @int_reo_status_ring_mask: Bitmap of reo status ring interrupts mapped to
+ *                            each NAPI/Intr context
+ * @int_ce_ring_mask: Bitmap of CE interrupts mapped to each NAPI/Intr context
+ * @lro_enabled: enable/disable lro feature
+ * @rx_hash: Enable hash based steering of rx packets
+ * @tso_enabled: enable/disable tso feature
+ * @lro_enabled: enable/disable LRO feature
+ * @sg_enabled: enable disable scatter gather feature
+ * @gro_enabled: enable disable GRO feature
+ * @ipa_enabled: Flag indicating if IPA is enabled
+ * @ol_tx_csum_enabled: Flag indicating if TX csum is enabled
+ * @ol_rx_csum_enabled: Flag indicating if Rx csum is enabled
+ * @rawmode_enabled: Flag indicating if RAW mode is enabled
+ * @peer_flow_ctrl_enabled: Flag indicating if peer flow control is enabled
+ * @napi_enabled: enable/disable interrupt mode for reaping tx and rx packets
+ * @tcp_udp_checksumoffload: enable/disable checksum offload
+ * @nss_cfg: nss configuration
+ * @rx_defrag_min_timeout: rx defrag minimum timeout
+ * @wbm_release_ring: wbm release ring size
+ * @tcl_cmd_ring: tcl cmd ring size
+ * @tcl_status_ring: tcl status ring size
+ * @reo_reinject_ring: reo reinject ring
+ * @rx_release_ring: rx release ring size
+ * @reo_exception_ring: reo exception ring size
+ * @reo_cmd_ring: reo cmd ring size
+ * @reo_status_ring: reo status ting size
+ * @rxdma_refill_ring: rxdma refill ring size
+ * @rxdma_err_dst_ring: rxdma error detination ring size
+ * @raw_mode_war: enable/disable raw mode war
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -169,6 +177,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool lro_enabled;
 	bool sg_enabled;
 	bool gro_enabled;
+	bool ipa_enabled;
 	bool ol_tx_csum_enabled;
 	bool ol_rx_csum_enabled;
 	bool rawmode_enabled;
@@ -660,19 +669,27 @@ int wlan_cfg_get_num_mac_rings(struct wlan_cfg_dp_pdev_ctxt *cfg);
 
 /*
  * wlan_cfg_is_lro_enabled - Return LRO enabled/disabled
- * @wlan_cfg_pdev_ctx
+ * @wlan_cfg_dp_soc_ctxt
  *
  * Return: true - LRO enabled false - LRO disabled
  */
 bool wlan_cfg_is_lro_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
- * wlan_cfg_is_lro_enabled - Return RX hash enabled/disabled
- * @wlan_cfg_pdev_ctx
+ * wlan_cfg_is_rx_hash_enabled - Return RX hash enabled/disabled
+ * @wlan_cfg_dp_soc_ctxt
  *
  * Return: true - enabled false - disabled
  */
 bool wlan_cfg_is_rx_hash_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_is_ipa_enabled - Return IPA enabled/disabled
+ * @wlan_cfg_dp_soc_ctxt
+ *
+ * Return: true - enabled false - disabled
+ */
+bool wlan_cfg_is_ipa_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
  * wlan_cfg_set_rx_hash - set rx hash enabled/disabled
