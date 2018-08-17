@@ -1142,6 +1142,9 @@ typedef struct {
 
 #define WMI_HOST_MAX_NUM_SS		8
 #define WMI_HOST_MAX_HECAP_PHY_SIZE	3
+#define WMI_HOST_MAX_HECAP_MAC_SIZE	2
+#define WMI_HOST_HECAP_MAC_WORD1	0
+#define WMI_HOST_HECAP_MAC_WORD2	1
 #define WMI_HOST_MAX_HE_RATE_SET	3
 /**
  * struct wmi_host_ppe_threshold -PPE threshold
@@ -1274,7 +1277,7 @@ struct peer_assoc_params {
 	bool he_flag;
 	bool twt_requester;
 	bool twt_responder;
-	uint32_t peer_he_cap_macinfo;
+	uint32_t peer_he_cap_macinfo[WMI_HOST_MAX_HECAP_MAC_SIZE];
 	uint32_t peer_he_ops;
 	uint32_t peer_he_cap_phyinfo[WMI_HOST_MAX_HECAP_PHY_SIZE];
 	uint32_t peer_he_mcs_count;

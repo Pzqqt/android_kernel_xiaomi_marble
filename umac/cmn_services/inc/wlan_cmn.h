@@ -588,6 +588,7 @@ struct wlan_ssid {
 #define PSOC_SERVICE_BM_SIZE ((128 + sizeof(uint32_t) - 1) / sizeof(uint32_t))
 #define PSOC_HOST_MAX_NUM_SS (8)
 #define PSOC_HOST_MAX_PHY_SIZE (3)
+#define PSOC_HOST_MAX_MAC_SIZE (2)
 #define PSOC_MAX_HW_MODE (2)
 #define PSOC_MAX_MAC_PHY_CAP (5)
 #define PSOC_MAX_PHY_REG_CAP (3)

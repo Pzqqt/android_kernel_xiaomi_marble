@@ -132,7 +132,7 @@ struct wlan_psoc_host_ppe_threshold {
  *         - 1 indicates support for VHT-MCS 0-8 for n spatial streams
  *         - 2 indicates support for VHT-MCS 0-9 for n spatial streams
  *         - 3 indicates that n spatial streams is not supported
- * @he_cap_info_2G: HE capability info field of 802.11ax, WMI_HE_CAP defines
+ * @he_cap_info_2G[]: HE capability info field of 802.11ax, WMI_HE_CAP defines
  * @he_supp_mcs_2G: HE Supported MCS Set field Rx/Tx same
  * @tx_chain_mask_2G: Valid Transmit chain mask
  * @rx_chain_mask_2G: Valid Receive chain mask
@@ -146,7 +146,7 @@ struct wlan_psoc_host_ppe_threshold {
  *        - 1 indicates support for VHT-MCS 0-8 for n spatial streams
  *        - 2 indicates support for VHT-MCS 0-9 for n spatial streams
  *        - 3 indicates that n spatial streams is not supported
- * @he_cap_info_5G: HE capability info field of 802.11ax, WMI_HE_CAP defines
+ * @he_cap_info_5G[]: HE capability info field of 802.11ax, WMI_HE_CAP defines
  * @he_supp_mcs_5G: HE Supported MCS Set field Rx/Tx same
  * @tx_chain_mask_5G: Valid Transmit chain mask
  * @rx_chain_mask_5G: Valid Receive chain mask
@@ -173,7 +173,7 @@ struct wlan_psoc_host_mac_phy_caps {
 	uint32_t ht_cap_info_2G;
 	uint32_t vht_cap_info_2G;
 	uint32_t vht_supp_mcs_2G;
-	uint32_t he_cap_info_2G;
+	uint32_t he_cap_info_2G[PSOC_HOST_MAX_MAC_SIZE];
 	uint32_t he_supp_mcs_2G;
 	uint32_t tx_chain_mask_2G;
 	uint32_t rx_chain_mask_2G;
@@ -181,7 +181,7 @@ struct wlan_psoc_host_mac_phy_caps {
 	uint32_t ht_cap_info_5G;
 	uint32_t vht_cap_info_5G;
 	uint32_t vht_supp_mcs_5G;
-	uint32_t he_cap_info_5G;
+	uint32_t he_cap_info_5G[PSOC_HOST_MAX_MAC_SIZE];
 	uint32_t he_supp_mcs_5G;
 	uint32_t tx_chain_mask_5G;
 	uint32_t rx_chain_mask_5G;
