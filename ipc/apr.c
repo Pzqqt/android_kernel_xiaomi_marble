@@ -543,6 +543,7 @@ struct apr_svc *apr_register(char *dest, char *svc_name, apr_fn svc_fn,
 	if (svc->need_reset) {
 		mutex_unlock(&svc->m_lock);
 		pr_err("APR: Service needs reset\n");
+		svc = NULL;
 		goto done;
 	}
 	svc->id = svc_id;
