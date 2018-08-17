@@ -2477,7 +2477,10 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->peer_phymode = param->peer_phymode;
 
 	/* Update 11ax capabilities */
-	cmd->peer_he_cap_info = param->peer_he_cap_macinfo;
+	cmd->peer_he_cap_info =
+		param->peer_he_cap_macinfo[WMI_HOST_HECAP_MAC_WORD1];
+	cmd->peer_he_cap_info_ext =
+		param->peer_he_cap_macinfo[WMI_HOST_HECAP_MAC_WORD2];
 	cmd->peer_he_ops = param->peer_he_ops;
 	qdf_mem_copy(&cmd->peer_he_cap_phy, &param->peer_he_cap_phyinfo,
 				sizeof(param->peer_he_cap_phyinfo));
@@ -2547,6 +2550,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		 "nss %d phymode %d peer_mpdu_density %d "
 		 "cmd->peer_vht_caps %x "
 		 "HE cap_info %x ops %x "
+		 "HE cap_info_ext %x "
 		 "HE phy %x  %x  %x  "
 		 "peer_bw_rxnss_override %x", __func__,
 		 cmd->vdev_id, cmd->peer_associd, cmd->peer_flags,
@@ -2555,8 +2559,9 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		 cmd->peer_max_mpdu, cmd->peer_nss, cmd->peer_phymode,
 		 cmd->peer_mpdu_density,
 		 cmd->peer_vht_caps, cmd->peer_he_cap_info,
-		 cmd->peer_he_ops, cmd->peer_he_cap_phy[0],
-		 cmd->peer_he_cap_phy[1], cmd->peer_he_cap_phy[2],
+		 cmd->peer_he_ops, cmd->peer_he_cap_info_ext,
+		 cmd->peer_he_cap_phy[0], cmd->peer_he_cap_phy[1],
+		 cmd->peer_he_cap_phy[2],
 		 cmd->peer_bw_rxnss_override);
 
 	wmi_mtrace(WMI_PEER_ASSOC_CMDID, cmd->vdev_id, 0);
@@ -19791,7 +19796,10 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	param->ht_cap_info_2G = mac_phy_caps->ht_cap_info_2G;
 	param->vht_cap_info_2G = mac_phy_caps->vht_cap_info_2G;
 	param->vht_supp_mcs_2G = mac_phy_caps->vht_supp_mcs_2G;
-	param->he_cap_info_2G = mac_phy_caps->he_cap_info_2G;
+	param->he_cap_info_2G[WMI_HOST_HECAP_MAC_WORD1] =
+		mac_phy_caps->he_cap_info_2G;
+	param->he_cap_info_2G[WMI_HOST_HECAP_MAC_WORD2] =
+		mac_phy_caps->he_cap_info_2G_ext;
 	param->he_supp_mcs_2G = mac_phy_caps->he_supp_mcs_2G;
 	param->tx_chain_mask_2G = mac_phy_caps->tx_chain_mask_2G;
 	param->rx_chain_mask_2G = mac_phy_caps->rx_chain_mask_2G;
@@ -19799,7 +19807,10 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	param->ht_cap_info_5G = mac_phy_caps->ht_cap_info_5G;
 	param->vht_cap_info_5G = mac_phy_caps->vht_cap_info_5G;
 	param->vht_supp_mcs_5G = mac_phy_caps->vht_supp_mcs_5G;
-	param->he_cap_info_5G = mac_phy_caps->he_cap_info_5G;
+	param->he_cap_info_5G[WMI_HOST_HECAP_MAC_WORD1] =
+		mac_phy_caps->he_cap_info_5G;
+	param->he_cap_info_5G[WMI_HOST_HECAP_MAC_WORD2] =
+		mac_phy_caps->he_cap_info_5G_ext;
 	param->he_supp_mcs_5G = mac_phy_caps->he_supp_mcs_5G;
 	param->tx_chain_mask_5G = mac_phy_caps->tx_chain_mask_5G;
 	param->rx_chain_mask_5G = mac_phy_caps->rx_chain_mask_5G;
