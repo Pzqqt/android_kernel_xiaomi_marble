@@ -3375,50 +3375,77 @@ QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
  *
  * Return: none
  */
-void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
+void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
 				  tHalHiddenSsidVdevRestart *pReq)
 {
-	struct wma_txrx_node *intr = wma_handle->interfaces;
+	struct wma_txrx_node *intr = wma->interfaces;
 	struct wma_target_req *msg;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct hidden_ssid_vdev_restart_params params;
+	QDF_STATUS status;
+	uint8_t vdev_id;
 
-	if ((pReq->sessionId !=
-	     intr[pReq->sessionId].vdev_restart_params.vdev_id)
-	    || !((intr[pReq->sessionId].type == WMI_VDEV_TYPE_AP)
-		 && (intr[pReq->sessionId].sub_type == 0))) {
-		WMA_LOGE("%s : invalid session id", __func__);
+	vdev_id = pReq->sessionId;
+	if ((vdev_id != intr[vdev_id].vdev_restart_params.vdev_id)
+	    || !((intr[vdev_id].type == WMI_VDEV_TYPE_AP)
+		 && (intr[vdev_id].sub_type == 0))) {
+		WMA_LOGE(FL("invalid vdev_id %d"), vdev_id);
 		return;
 	}
 
-	intr[pReq->sessionId].vdev_restart_params.ssidHidden = pReq->ssidHidden;
-	qdf_atomic_set(&intr[pReq->sessionId].vdev_restart_params.
+	intr[vdev_id].vdev_restart_params.ssidHidden = pReq->ssidHidden;
+	qdf_atomic_set(&intr[vdev_id].vdev_restart_params.
 		       hidden_ssid_restart_in_progress, 1);
 
-	msg = wma_fill_vdev_req(wma_handle, pReq->sessionId,
+	WMA_LOGD(FL("hidden ssid set using IOCTL for vdev %d ssid_hidden %d"),
+		 vdev_id, pReq->ssidHidden);
+
+	msg = wma_fill_vdev_req(wma, vdev_id,
 			WMA_HIDDEN_SSID_VDEV_RESTART,
-			WMA_TARGET_REQ_TYPE_VDEV_STOP, pReq,
-			WMA_VDEV_STOP_REQUEST_TIMEOUT);
+			WMA_TARGET_REQ_TYPE_VDEV_START,
+			pReq,
+			WMA_VDEV_START_REQUEST_TIMEOUT);
 	if (!msg) {
-		WMA_LOGE("%s: Failed to fill vdev restart request for vdev_id %d",
-				__func__, pReq->sessionId);
+		WMA_LOGE(FL("Failed to fill vdev request, vdev_id %d"),
+			 vdev_id);
+		qdf_atomic_set(&intr[vdev_id].vdev_restart_params.
+			       hidden_ssid_restart_in_progress, 0);
+		qdf_mem_free(pReq);
 		return;
 	}
 
-	/* vdev stop -> vdev restart -> vdev up */
-	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP",
-		 __func__, pReq->sessionId);
-	cdp_fc_vdev_pause(soc,
-		wma_handle->
-		interfaces[pReq->sessionId].handle,
-		OL_TXQ_PAUSE_REASON_VDEV_STOP);
-	wma_vdev_set_pause_bit(pReq->sessionId, PAUSE_TYPE_HOST);
-	if (wma_send_vdev_stop_to_fw(wma_handle, pReq->sessionId)) {
-		WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
-		qdf_atomic_set(&intr[pReq->sessionId].vdev_restart_params.
+	params.session_id = vdev_id;
+	params.ssid_len = intr[vdev_id].vdev_restart_params.ssid.ssid_len;
+	qdf_mem_copy(params.ssid,
+		     intr[vdev_id].vdev_restart_params.ssid.ssid,
+		     params.ssid_len);
+	params.flags = intr[vdev_id].vdev_restart_params.flags;
+	if (intr[vdev_id].vdev_restart_params.ssidHidden)
+		params.flags |= WMI_UNIFIED_VDEV_START_HIDDEN_SSID;
+	else
+		params.flags &= (0xFFFFFFFE);
+	params.requestor_id = intr[vdev_id].vdev_restart_params.requestor_id;
+	params.disable_hw_ack =
+		intr[vdev_id].vdev_restart_params.disable_hw_ack;
+
+	params.mhz = intr[vdev_id].vdev_restart_params.chan.mhz;
+	params.band_center_freq1 =
+		intr[vdev_id].vdev_restart_params.chan.band_center_freq1;
+	params.band_center_freq2 =
+		intr[vdev_id].vdev_restart_params.chan.band_center_freq2;
+	params.info = intr[vdev_id].vdev_restart_params.chan.info;
+	params.reg_info_1 = intr[vdev_id].vdev_restart_params.chan.reg_info_1;
+	params.reg_info_2 = intr[vdev_id].vdev_restart_params.chan.reg_info_2;
+
+	wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_STOP);
+	status = wmi_unified_hidden_ssid_vdev_restart_send(wma->wmi_handle,
+							   &params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE(FL("Failed to send vdev restart command"));
+		qdf_atomic_set(&intr[vdev_id].vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
-		wma_remove_vdev_req(wma_handle, pReq->sessionId,
-					WMA_TARGET_REQ_TYPE_VDEV_STOP);
-		return;
+		wma_remove_vdev_req(wma, vdev_id,
+				    WMA_TARGET_REQ_TYPE_VDEV_START);
+		qdf_mem_free(pReq);
 	}
 }
 

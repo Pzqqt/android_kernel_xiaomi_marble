@@ -1129,37 +1129,24 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		policy_mgr_set_do_hw_mode_change_flag(wma->psoc, false);
 		return -EINVAL;
 	}
+	qdf_mc_timer_stop(&req_msg->event_timeout);
 
-	if ((resp_event->vdev_id < wma->max_bssid) &&
-	    (qdf_atomic_read(
-	    &wma->interfaces[resp_event->vdev_id].vdev_restart_params.hidden_ssid_restart_in_progress))
-	    && (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id) == true)
-	    && (req_msg->msg_type == WMA_HIDDEN_SSID_VDEV_RESTART)) {
+	if ((qdf_atomic_read(
+	    &wma->interfaces[resp_event->vdev_id].vdev_restart_params.
+					hidden_ssid_restart_in_progress)) &&
+	    wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id) &&
+	    (req_msg->msg_type == WMA_HIDDEN_SSID_VDEV_RESTART)) {
 		tpHalHiddenSsidVdevRestart hidden_ssid_restart =
 			(tpHalHiddenSsidVdevRestart)req_msg->user_data;
 		WMA_LOGE("%s: vdev restart event recevied for hidden ssid set using IOCTL",
 			__func__);
-
-		param.vdev_id = resp_event->vdev_id;
-		param.assoc_id = 0;
 		qdf_atomic_set(&wma->interfaces[resp_event->vdev_id].
 			       vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
 
 		wma_send_msg(wma, WMA_HIDDEN_SSID_RESTART_RSP,
 				(void *)hidden_ssid_restart, 0);
-		/*
-		 * Unpause TX queue in SAP case while configuring hidden ssid
-		 * enable or disable, else the data path is paused forever
-		 * causing data packets(starting from DHCP offer) to get stuck
-		 */
-		cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
-				iface->handle,
-				OL_TXQ_PAUSE_REASON_VDEV_STOP);
-		wma_vdev_clear_pause_bit(resp_event->vdev_id, PAUSE_TYPE_HOST);
 	}
-
-	qdf_mc_timer_stop(&req_msg->event_timeout);
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	if (resp_event->status == QDF_STATUS_SUCCESS
@@ -1757,52 +1744,6 @@ err:
 }
 
 /**
- * wma_hidden_ssid_vdev_restart_on_vdev_stop() - restart vdev to set hidden ssid
- * @wma_handle: wma handle
- * @sessionId: session id
- *
- * Return: none
- */
-static void wma_hidden_ssid_vdev_restart_on_vdev_stop(tp_wma_handle wma_handle,
-						      uint8_t sessionId)
-{
-	struct wma_txrx_node *intr = wma_handle->interfaces;
-	struct hidden_ssid_vdev_restart_params params;
-	QDF_STATUS status;
-
-	params.session_id = sessionId;
-	params.ssid_len = intr[sessionId].vdev_restart_params.ssid.ssid_len;
-	qdf_mem_copy(params.ssid,
-		     intr[sessionId].vdev_restart_params.ssid.ssid,
-		     params.ssid_len);
-	params.flags = intr[sessionId].vdev_restart_params.flags;
-	if (intr[sessionId].vdev_restart_params.ssidHidden)
-		params.flags |= WMI_UNIFIED_VDEV_START_HIDDEN_SSID;
-	else
-		params.flags &= (0xFFFFFFFE);
-	params.requestor_id = intr[sessionId].vdev_restart_params.requestor_id;
-	params.disable_hw_ack =
-		intr[sessionId].vdev_restart_params.disable_hw_ack;
-
-	params.mhz = intr[sessionId].vdev_restart_params.chan.mhz;
-	params.band_center_freq1 =
-		intr[sessionId].vdev_restart_params.chan.band_center_freq1;
-	params.band_center_freq2 =
-		intr[sessionId].vdev_restart_params.chan.band_center_freq2;
-	params.info = intr[sessionId].vdev_restart_params.chan.info;
-	params.reg_info_1 = intr[sessionId].vdev_restart_params.chan.reg_info_1;
-	params.reg_info_2 = intr[sessionId].vdev_restart_params.chan.reg_info_2;
-
-	status = wmi_unified_hidden_ssid_vdev_restart_send(
-			wma_handle->wmi_handle,	&params);
-	if (status == QDF_STATUS_E_FAILURE) {
-		WMA_LOGE("%s: Failed to send vdev restart command", __func__);
-		qdf_atomic_set(&intr[sessionId].vdev_restart_params.
-			       hidden_ssid_restart_in_progress, 0);
-	}
-}
-
-/**
  * wma_cleanup_target_req_param() - free param memory of target request
  * @tgt_req: target request params
  *
@@ -2088,7 +2029,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	WMI_VDEV_STOPPED_EVENTID_param_tlvs *param_buf;
 	wmi_vdev_stopped_event_fixed_param *resp_event;
-	struct wma_target_req *req_msg, *del_req, *new_req_msg;
+	struct wma_target_req *req_msg, *del_req;
 	struct cdp_pdev *pdev;
 	void *peer = NULL;
 	uint8_t peer_id;
@@ -2135,31 +2076,6 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		WMA_LOGE("%s: Failed to lookup vdev request for vdev id %d",
 			 __func__, resp_event->vdev_id);
 		return -EINVAL;
-	}
-
-	if ((qdf_atomic_read
-		     (&wma->interfaces[resp_event->vdev_id].vdev_restart_params.
-		     hidden_ssid_restart_in_progress))
-	    && ((wma->interfaces[resp_event->vdev_id].type == WMI_VDEV_TYPE_AP)
-		&& (wma->interfaces[resp_event->vdev_id].sub_type == 0))) {
-		WMA_LOGE("%s: vdev stop event recevied for hidden ssid set using IOCTL ",
-			__func__);
-
-		wma_vdev_set_mlme_state(wma,
-				resp_event->vdev_id, WLAN_VDEV_S_STOP);
-		new_req_msg = wma_fill_vdev_req(wma, resp_event->vdev_id,
-				WMA_HIDDEN_SSID_VDEV_RESTART,
-				WMA_TARGET_REQ_TYPE_VDEV_START,
-				req_msg->user_data,
-				WMA_VDEV_START_REQUEST_TIMEOUT);
-		if (!new_req_msg) {
-			WMA_LOGE("%s: Failed to fill vdev request, vdev_id %d",
-					__func__, resp_event->vdev_id);
-			return -EINVAL;
-		}
-
-		wma_hidden_ssid_vdev_restart_on_vdev_stop(wma,
-							  resp_event->vdev_id);
 	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -3659,8 +3575,18 @@ void wma_vdev_resp_timer(void *data)
 			WLAN_VDEV_S_STOP);
 		wma_ocb_set_config_resp(wma, QDF_STATUS_E_TIMEOUT);
 	} else if (tgt_req->msg_type == WMA_HIDDEN_SSID_VDEV_RESTART) {
-		WMA_LOGE("Hidden ssid vdev restart Timed Out; vdev_id: %d, type = %d",
-				tgt_req->vdev_id, tgt_req->type);
+		if ((qdf_atomic_read(
+		    &wma->interfaces[tgt_req->vdev_id].vdev_restart_params.
+					hidden_ssid_restart_in_progress)) &&
+		    wma_is_vdev_in_ap_mode(wma, tgt_req->vdev_id)) {
+
+			WMA_LOGE("Hidden ssid vdev restart Timed Out; vdev_id: %d, type = %d",
+				 tgt_req->vdev_id, tgt_req->type);
+			qdf_atomic_set(&wma->interfaces[tgt_req->vdev_id].
+				       vdev_restart_params.
+				       hidden_ssid_restart_in_progress, 0);
+			qdf_mem_free(tgt_req->user_data);
+		}
 	} else if (tgt_req->msg_type == WMA_SET_LINK_STATE) {
 		tpLinkStateParams params =
 			(tpLinkStateParams) tgt_req->user_data;
