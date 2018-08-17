@@ -80,6 +80,40 @@ out:
 	return status;
 }
 
+static void mlme_init_chainmask_cfg(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_mlme_chainmask *chainmask_info)
+{
+	chainmask_info->txchainmask1x1 =
+		cfg_get(psoc, CFG_VHT_ENABLE_1x1_TX_CHAINMASK);
+
+	chainmask_info->rxchainmask1x1 =
+		cfg_get(psoc, CFG_VHT_ENABLE_1x1_RX_CHAINMASK);
+
+	chainmask_info->tx_chain_mask_cck =
+		cfg_get(psoc, CFG_TX_CHAIN_MASK_CCK);
+
+	chainmask_info->tx_chain_mask_1ss =
+		cfg_get(psoc, CFG_TX_CHAIN_MASK_1SS);
+
+	chainmask_info->num_11b_tx_chains =
+		cfg_get(psoc, CFG_11B_NUM_TX_CHAIN);
+
+	chainmask_info->num_11ag_tx_chains =
+		cfg_get(psoc, CFG_11AG_NUM_TX_CHAIN);
+
+	chainmask_info->tx_chain_mask_2g =
+		cfg_get(psoc, CFG_TX_CHAIN_MASK_2G);
+
+	chainmask_info->rx_chain_mask_2g =
+		cfg_get(psoc, CFG_RX_CHAIN_MASK_2G);
+
+	chainmask_info->tx_chain_mask_5g =
+		cfg_get(psoc, CFG_TX_CHAIN_MASK_5G);
+
+	chainmask_info->rx_chain_mask_5g =
+		cfg_get(psoc, CFG_RX_CHAIN_MASK_5G);
+}
+
 static void mlme_update_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 				      struct mlme_ht_capabilities_info
 				      *ht_cap_info)
@@ -145,6 +179,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_update_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps.ht_cap_info);
 	mlme_update_rates_in_cfg(psoc, &mlme_cfg->rates);
 	mlme_update_sap_protection_cfg(psoc, &mlme_cfg->sap_protection_cfg);
+	mlme_init_chainmask_cfg(psoc, &mlme_cfg->chainmask_cfg);
 
 	return status;
 }
