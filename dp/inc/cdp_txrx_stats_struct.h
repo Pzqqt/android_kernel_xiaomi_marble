@@ -1086,6 +1086,11 @@ struct ol_ath_radiostats {
 	uint8_t     ap_stats_tx_cal_enable;
 	uint8_t     self_bss_util;
 	uint8_t     obss_util;
+	uint8_t     ap_rx_util;
+	uint8_t     free_medium;
+	uint8_t     ap_tx_util;
+	uint8_t     obss_rx_util;
+	uint8_t     non_wifi_util;
 	uint32_t    tgt_asserts;
 	int16_t     chan_nf;
 	int16_t     chan_nf_sec80;
@@ -1419,6 +1424,11 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_CBS_CSA = 386,
 	OL_ATH_PARAM_TWICE_ANTENNA_GAIN = 387,
 	OL_ATH_PARAM_ACTIVITY_FACTOR = 388,
+	OL_ATH_PARAM_CHAN_AP_RX_UTIL = 389,
+	OL_ATH_PARAM_CHAN_FREE  = 390,
+	OL_ATH_PARAM_CHAN_AP_TX_UTIL = 391,
+	OL_ATH_PARAM_CHAN_OBSS_RX_UTIL = 392,
+	OL_ATH_PARAM_CHAN_NON_WIFI = 393,
 };
 
 /* Enumeration of PDEV Configuration parameter */

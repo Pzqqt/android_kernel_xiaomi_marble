@@ -27,6 +27,7 @@
 
 #ifdef QCA_SUPPORT_CP_STATS
 
+#include <wlan_cp_stats_ic_dcs_defs.h>
 /**
  * struct pdev_rx_rssi - rx rssi information
  *
@@ -121,8 +122,6 @@ struct pdev_80211_stats {
 	uint32_t cs_rx_looplimit_start;
 	uint32_t cs_rx_looplimit_end;
 	uint8_t  cs_ap_stats_tx_cal_enable;
-	uint8_t  cs_self_bss_util;
-	uint8_t  cs_obss_util;
 	uint32_t cs_tgt_asserts;
 	int16_t  cs_chan_nf;
 	int16_t  cs_chan_nf_sec80;
@@ -142,6 +141,7 @@ struct pdev_80211_stats {
 
 	/* at places of copying required for scn-stats, copy till here only */
 	struct pdev_hw_stats hw_stats;
+	struct pdev_dcs_chan_stats chan_stats;
 };
 
 /**

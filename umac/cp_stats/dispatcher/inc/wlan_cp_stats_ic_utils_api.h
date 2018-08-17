@@ -325,8 +325,49 @@ PDEV_CP_STATS_SET_FUNCS(rx_clear_count);
 PDEV_CP_STATS_SET_FUNCS(cycle_count);
 PDEV_CP_STATS_SET_FUNCS(phy_err_count);
 PDEV_CP_STATS_SET_FUNCS(chan_tx_pwr);
-PDEV_CP_STATS_SET_FUNCS(self_bss_util);
-PDEV_CP_STATS_SET_FUNCS(obss_util);
+
+#define PDEV_CHAN_STATS_SET_FUNCS(field) \
+	static inline void \
+	pdev_chan_stats_##field##_inc(struct wlan_objmgr_pdev *_pdev, \
+				      uint8_t _val) \
+	{ \
+		ucfg_pdev_chan_stats_##field##_inc(_pdev, _val); \
+	} \
+	static inline void \
+	pdev_chan_stats_##field##_dec(struct wlan_objmgr_pdev *_pdev, \
+				      uint8_t _val) \
+	{ \
+		ucfg_pdev_chan_stats_##field##_dec(_pdev, _val); \
+	} \
+	static inline void \
+	pdev_chan_stats_##field##_update(struct wlan_objmgr_pdev *_pdev, \
+					 uint8_t _val) \
+	{ \
+		ucfg_pdev_chan_stats_##field##_update(_pdev, _val); \
+	}
+
+PDEV_CHAN_STATS_SET_FUNCS(self_bss_util);
+PDEV_CHAN_STATS_SET_FUNCS(obss_util);
+PDEV_CHAN_STATS_SET_FUNCS(obss_rx_util);
+PDEV_CHAN_STATS_SET_FUNCS(ap_rx_util);
+PDEV_CHAN_STATS_SET_FUNCS(ap_tx_util);
+PDEV_CHAN_STATS_SET_FUNCS(free_medium);
+PDEV_CHAN_STATS_SET_FUNCS(non_wifi_util);
+
+#define PDEV_CHAN_STATS_GET_FUNCS(field) \
+	static inline uint8_t \
+	pdev_chan_stats_##field##_get(struct wlan_objmgr_pdev *_pdev) \
+	{ \
+		return ucfg_pdev_chan_stats_##field##_get(_pdev); \
+	}
+
+PDEV_CHAN_STATS_GET_FUNCS(self_bss_util);
+PDEV_CHAN_STATS_GET_FUNCS(obss_util);
+PDEV_CHAN_STATS_GET_FUNCS(obss_rx_util);
+PDEV_CHAN_STATS_GET_FUNCS(ap_rx_util);
+PDEV_CHAN_STATS_GET_FUNCS(ap_tx_util);
+PDEV_CHAN_STATS_GET_FUNCS(free_medium);
+PDEV_CHAN_STATS_GET_FUNCS(non_wifi_util);
 
 #define PDEV_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \

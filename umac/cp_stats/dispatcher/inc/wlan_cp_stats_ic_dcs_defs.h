@@ -29,36 +29,32 @@
 
 /**
  * struct pdev_dcs_chan_stats - DCS statistics
- * @dcs_cck_phyerr: channel noise floor
- * @dcs_total_chan_util: total channel utilization
- * @dcs_tx_chan_util: tx channel utilization
- * @dcs_rx_chan_util: rx channel utilization
- * @dcs_self_bss_util: self BSS util
- * @dcs_other_bss_util: other BSS util
- * @dcs_wasted_chan_util: wasted chan util
- * @dcs_unused_chan_util: unused chan util
+ * @dcs_total_util: total channel utilization percentage
+ * @dcs_ap_tx_util: tx channel utilization percentage
+ * @dcs_ap_rx_util: rx channel utilization percentage
+ * @dcs_self_bss_util: self BSS utilization percentage
+ * @dcs_obss_util: other BSS utilization percentage
+ * @dcs_obss_rx_util: total Rx channel utilization percentage
+ * @dcs_free_medium: free medium percentage
+ * @dcs_non_wifi_util: non wifi utilization percentage
  * @dcs_ss_under_util: spatial stream under util
  * @dcs_sec_20_util: secondary 20MHz util
  * @dcs_sec_40_util: secondary 40Mhz util
  * @dcs_sec_80_util: secondary 80MHz util
- * @dcs_ofdm_phyerr: tx ofdm errors
- * @dcs_cck_phyerr: tx cck errors
  */
 struct pdev_dcs_chan_stats {
-	uint32_t dcs_chan_nf;
-	uint32_t dcs_total_chan_util;
-	uint32_t dcs_tx_chan_util;
-	uint32_t dcs_rx_chan_util;
+	uint32_t dcs_total_util;
+	uint32_t dcs_ap_tx_util;
+	uint32_t dcs_ap_rx_util;
 	uint32_t dcs_self_bss_util;
-	uint32_t dcs_other_bss_util;
-	uint32_t dcs_wasted_chan_util;
-	uint32_t dcs_unused_chan_util;
+	uint32_t dcs_obss_util;
+	uint32_t dcs_obss_rx_util;
+	uint32_t dcs_free_medium;
+	uint32_t dcs_non_wifi_util;
 	uint32_t dcs_ss_under_util;
 	uint32_t dcs_sec_20_util;
 	uint32_t dcs_sec_40_util;
 	uint32_t dcs_sec_80_util;
-	uint32_t dcs_ofdm_phyerr;
-	uint32_t dcs_cck_phyerr;
 };
 
 #endif /* QCA_SUPPORT_CP_STATS */
