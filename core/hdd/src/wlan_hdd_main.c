@@ -4463,22 +4463,13 @@ static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
  */
 static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 {
-	int ret_val;
 	QDF_STATUS status;
 	struct wma_caps_per_phy non_dbs_phy_cap;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	hdd_debug("enable2x2: %d, lte_coex: %d, ChainMask1x1: tx: %d rx: %d",
+	hdd_debug("enable2x2: %d, lte_coex: %d, disable_DBS: %d",
 		  hdd_ctx->config->enable2x2, hdd_ctx->lte_coex_ant_share,
-		  hdd_ctx->config->txchainmask1x1,
-		  hdd_ctx->config->rxchainmask1x1);
-	hdd_debug("disable_DBS: %d, tx_chain_mask_2g: %d, rx_chain_mask_2g: %d",
-		  hdd_ctx->config->dual_mac_feature_disable,
-		  hdd_ctx->config->tx_chain_mask_2g,
-		  hdd_ctx->config->rx_chain_mask_2g);
-	hdd_debug("tx_chain_mask_5g: %d, rx_chain_mask_5g: %d",
-		  hdd_ctx->config->tx_chain_mask_5g,
-		  hdd_ctx->config->rx_chain_mask_5g);
+		  hdd_ctx->config->dual_mac_feature_disable);
 	hdd_debug("enable_bt_chain_separation %d",
 		  hdd_ctx->config->enable_bt_chain_separation);
 
@@ -4516,66 +4507,15 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 		return 0;
 	}
 
-	if (hdd_ctx->config->txchainmask1x1) {
-		ret_val = sme_cli_set_command(adapter->session_id,
-					      WMI_PDEV_PARAM_TX_CHAIN_MASK,
-					      hdd_ctx->config->txchainmask1x1,
-					      PDEV_CMD);
-		if (ret_val)
-			goto error;
-	}
-
-	if (hdd_ctx->config->rxchainmask1x1) {
-		ret_val = sme_cli_set_command(adapter->session_id,
-					      WMI_PDEV_PARAM_RX_CHAIN_MASK,
-					      hdd_ctx->config->rxchainmask1x1,
-					      PDEV_CMD);
-		if (ret_val)
-			goto error;
-	}
-
-	if (hdd_ctx->config->txchainmask1x1 ||
-	    hdd_ctx->config->rxchainmask1x1) {
-		hdd_debug("band agnostic tx/rx chain mask set. skip per band chain mask");
-		return 0;
-	}
-
-	if (hdd_ctx->config->tx_chain_mask_2g) {
-		ret_val = sme_cli_set_command(adapter->session_id,
-				WMI_PDEV_PARAM_TX_CHAIN_MASK_2G,
-				hdd_ctx->config->tx_chain_mask_2g, PDEV_CMD);
-		if (0 != ret_val)
-			goto error;
-	}
-
-	if (hdd_ctx->config->rx_chain_mask_2g) {
-		ret_val = sme_cli_set_command(adapter->session_id,
-				WMI_PDEV_PARAM_RX_CHAIN_MASK_2G,
-				hdd_ctx->config->rx_chain_mask_2g, PDEV_CMD);
-		if (0 != ret_val)
-			goto error;
-	}
-
-	if (hdd_ctx->config->tx_chain_mask_5g) {
-		ret_val = sme_cli_set_command(adapter->session_id,
-				WMI_PDEV_PARAM_TX_CHAIN_MASK_5G,
-				hdd_ctx->config->tx_chain_mask_5g, PDEV_CMD);
-		if (0 != ret_val)
-			goto error;
-	}
-
-	if (hdd_ctx->config->rx_chain_mask_5g) {
-		ret_val = sme_cli_set_command(adapter->session_id,
-				WMI_PDEV_PARAM_RX_CHAIN_MASK_5G,
-				hdd_ctx->config->rx_chain_mask_5g, PDEV_CMD);
-		if (0 != ret_val)
-			goto error;
-	}
+	status = ucfg_mlme_configure_chain_mask(hdd_ctx->hdd_psoc,
+						adapter->session_id);
+	if (status != QDF_STATUS_SUCCESS)
+		goto error;
 
 	return 0;
 
 error:
-	hdd_err("WMI PDEV set param failed %d", ret_val);
+	hdd_err("WMI PDEV set param failed");
 	return -EINVAL;
 }
 
@@ -9576,7 +9516,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->ce_classify_enabled;
 	cds_cfg->apf_packet_filter_enable =
 		hdd_ctx->config->apf_packet_filter_enable;
-	cds_cfg->tx_chain_mask_cck = hdd_ctx->config->tx_chain_mask_cck;
 	cds_cfg->self_gen_frm_pwr = hdd_ctx->config->self_gen_frm_pwr;
 	cds_cfg->max_station = hdd_ctx->config->maxNumberOfPeers;
 	cds_cfg->sub_20_channel_width = WLAN_SUB_20_CH_WIDTH_NONE;
@@ -10116,6 +10055,7 @@ static int hdd_set_ani_enabled(struct hdd_context *hdd_ctx)
 static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 {
 	int ret;
+	uint8_t val = 0;
 	QDF_STATUS status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -10151,8 +10091,13 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 		goto out;
 	}
 
-	ret = sme_cli_set_command(0, WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS,
-				  hdd_ctx->config->tx_chain_mask_1ss,
+	status = ucfg_mlme_get_tx_chainmask_1ss(hdd_ctx->hdd_psoc, &val);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Get tx_chainmask_1ss from mlme failed");
+		ret = qdf_status_to_os_return(status);
+		goto out;
+	}
+	ret = sme_cli_set_command(0, WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS, val,
 				  PDEV_CMD);
 	if (0 != ret) {
 		hdd_err("WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS failed %d", ret);
@@ -10736,8 +10681,8 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	int set_value;
 	mac_handle_t mac_handle;
 	uint32_t num_abg_tx_chains = 0;
-	uint32_t num_11b_tx_chains = 0;
-	uint32_t num_11ag_tx_chains = 0;
+	uint16_t num_11b_tx_chains = 0;
+	uint16_t num_11ag_tx_chains = 0;
 	struct policy_mgr_dp_cbacks dp_cbs = {0};
 
 	mac_handle = hdd_ctx->mac_handle;
@@ -10771,8 +10716,20 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 				    set_value, PDEV_CMD);
 	}
 
-	num_11b_tx_chains = hdd_ctx->config->num_11b_tx_chains;
-	num_11ag_tx_chains = hdd_ctx->config->num_11ag_tx_chains;
+	status = ucfg_mlme_get_num_11b_tx_chains(hdd_ctx->hdd_psoc,
+						 &num_11b_tx_chains);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to get num_11b_tx_chains");
+		goto out;
+	}
+
+	status = ucfg_mlme_get_num_11ag_tx_chains(hdd_ctx->hdd_psoc,
+						  &num_11ag_tx_chains);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to get num_11ag_tx_chains");
+		goto out;
+	}
+
 	if (!hdd_ctx->config->enable2x2) {
 		if (num_11b_tx_chains > 1)
 			num_11b_tx_chains = 1;

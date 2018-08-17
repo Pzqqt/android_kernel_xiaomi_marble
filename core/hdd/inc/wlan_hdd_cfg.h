@@ -1727,52 +1727,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * g11bNumTxChains - Number of Tx Chanins in 11b mode
- * @Min: 0
- * @Max: 2
- * @Default: 0
- *
- * Number of Tx Chanins in 11b mode
- *
- *
- * Related: None
- *
- * Supported Feature: connection
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_11B_NUM_TX_CHAIN_NAME      "g11bNumTxChains"
-#define CFG_11B_NUM_TX_CHAIN_MIN       (0)
-#define CFG_11B_NUM_TX_CHAIN_MAX       (2)
-#define CFG_11B_NUM_TX_CHAIN_DEFAULT   (0)
-
-/*
- * <ini>
- * g11agNumTxChains - Number of Tx Chanins in 11ag mode
- * @Min: 0
- * @Max: 2
- * @Default: 0
- *
- * Number of Tx Chanins in 11ag mode
- *
- *
- * Related: None
- *
- * Supported Feature: connection
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_11AG_NUM_TX_CHAIN_NAME      "g11agNumTxChains"
-#define CFG_11AG_NUM_TX_CHAIN_MIN       (0)
-#define CFG_11AG_NUM_TX_CHAIN_MAX       (2)
-#define CFG_11AG_NUM_TX_CHAIN_DEFAULT   (0)
-
-/*
- * <ini>
  * gEnableFastRoamInConcurrency - Enable LFR roaming on STA during concurrency
  * @Min: 0
  * @Max: 1
@@ -5083,64 +5037,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gSetTxChainmask1x1 - Sets Transmit chain mask.
- * @Min: 1
- * @Max: 3
- * @Default: 0
- *
- * This ini Sets Transmit chain mask.
- *
- * If gEnable2x2 is disabled, gSetTxChainmask1x1 and gSetRxChainmask1x1 values
- * are taken into account. If chainmask value exceeds the maximum number of
- * chains supported by target, the max number of chains is used. By default,
- * chain0 is selected for both Tx and Rx.
- * gSetTxChainmask1x1=1 or gSetRxChainmask1x1=1 to select chain0.
- * gSetTxChainmask1x1=2 or gSetRxChainmask1x1=2 to select chain1.
- * gSetTxChainmask1x1=3 or gSetRxChainmask1x1=3 to select both chains.
- *
- * Supported Feature: 11AC
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_VHT_ENABLE_1x1_TX_CHAINMASK         "gSetTxChainmask1x1"
-#define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_MIN     (0)
-#define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_MAX     (3)
-#define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_DEFAULT (0)
-
-/*
- * <ini>
- * gSetRxChainmask1x1 - Sets Receive chain mask.
- * @Min: 1
- * @Max: 3
- * @Default: 0
- *
- * This ini is  used to set Receive chain mask.
- *
- * If gEnable2x2 is disabled, gSetTxChainmask1x1 and gSetRxChainmask1x1 values
- * are taken into account. If chainmask value exceeds the maximum number of
- * chains supported by target, the max number of chains is used. By default,
- * chain0 is selected for both Tx and Rx.
- * gSetTxChainmask1x1=1 or gSetRxChainmask1x1=1 to select chain0.
- * gSetTxChainmask1x1=2 or gSetRxChainmask1x1=2 to select chain1.
- * gSetTxChainmask1x1=3 or gSetRxChainmask1x1=3 to select both chains.
- *
- * Supported Feature: 11AC
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_VHT_ENABLE_1x1_RX_CHAINMASK         "gSetRxChainmask1x1"
-#define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_MIN     (0)
-#define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_MAX     (3)
-#define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_DEFAULT (0)
-
-/*
- * <ini>
  * gEnableAMPDUPS - Enable the AMPDUPS
  * @Min: 0
  * @Max: 1
@@ -7883,53 +7779,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_APF_PACKET_FILTER_OFFLOAD_MIN       (0)
 #define CFG_APF_PACKET_FILTER_OFFLOAD_MAX       (1)
 #define CFG_APF_PACKET_FILTER_OFFLOAD_DEFAULT   (1)
-
-/*
- * <ini>
- * gCckChainMaskEnable - Used to enable/disable Cck ChainMask
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set default Cck ChainMask
- * 0: disable the cck tx chain mask (default)
- * 1: enable the cck tx chain mask
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_TX_CHAIN_MASK_CCK          "gCckChainMaskEnable"
-#define CFG_TX_CHAIN_MASK_CCK_MIN      (0)
-#define CFG_TX_CHAIN_MASK_CCK_MAX      (1)
-#define CFG_TX_CHAIN_MASK_CCK_DEFAULT  (0)
-/*
- * <ini>
- * gTxChainMask1ss - Enables/disables tx chain Mask1ss
- * @Min: 0
- * @Max: 3
- * @Default: 1
- *
- * This ini is used to set default tx chain Mask1ss
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_TX_CHAIN_MASK_1SS       "gTxChainMask1ss"
-#define CFG_TX_CHAIN_MASK_1SS_MIN      (0)
-#define CFG_TX_CHAIN_MASK_1SS_MAX      (3)
-#define CFG_TX_CHAIN_MASK_1SS_DEFAULT  (1)
 
 /*
  * <ini>
@@ -12942,129 +12791,6 @@ enum hdd_external_acs_policy {
 
 /*
  * <ini>
- * tx_chain_mask_2g - tx chain mask for 2g
- * @Min: 0
- * @Max: 3
- * @Default: 0
- *
- * This ini will set tx chain mask for 2g. To use the ini, make sure:
- * gSetTxChainmask1x1/gSetRxChainmask1x1 = 0,
- * gDualMacFeatureDisable = 1
- * gEnable2x2 = 0
- *
- * tx_chain_mask_2g=0 : don't care
- * tx_chain_mask_2g=1 : for 2g tx use chain 0
- * tx_chain_mask_2g=2 : for 2g tx use chain 1
- * tx_chain_mask_2g=3 : for 2g tx can use either chain
- *
- * Related: None
- *
- * Supported Feature: All profiles
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_TX_CHAIN_MASK_2G_NAME    "tx_chain_mask_2g"
-#define CFG_TX_CHAIN_MASK_2G_MIN     (0)
-#define CFG_TX_CHAIN_MASK_2G_MAX     (3)
-#define CFG_TX_CHAIN_MASK_2G_DEFAULT (0)
-
-
-/*
- * <ini>
- * tx_chain_mask_5g - tx chain mask for 5g
- * @Min: 0
- * @Max: 3
- * @Default: 0
- *
- * This ini will set tx chain mask for 5g. To use the ini, make sure:
- * gSetTxChainmask1x1/gSetRxChainmask1x1 = 0,
- * gDualMacFeatureDisable = 1
- * gEnable2x2 = 0
- *
- * tx_chain_mask_5g=0 : don't care
- * tx_chain_mask_5g=1 : for 5g tx use chain 0
- * tx_chain_mask_5g=2 : for 5g tx use chain 1
- * tx_chain_mask_5g=3 : for 5g tx can use either chain
- *
- * Related: None
- *
- * Supported Feature: All profiles
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_TX_CHAIN_MASK_5G_NAME    "tx_chain_mask_5g"
-#define CFG_TX_CHAIN_MASK_5G_MIN     (0)
-#define CFG_TX_CHAIN_MASK_5G_MAX     (3)
-#define CFG_TX_CHAIN_MASK_5G_DEFAULT (0)
-
-
-/*
- * <ini>
- * rx_chain_mask_2g - rx chain mask for 2g
- * @Min: 0
- * @Max: 3
- * @Default: 0
- *
- * This ini will set rx chain mask for 2g. To use the ini, make sure:
- * gSetTxChainmask1x1/gSetRxChainmask1x1 = 0,
- * gDualMacFeatureDisable = 1
- * gEnable2x2 = 0
- *
- * rx_chain_mask_2g=0 : don't care
- * rx_chain_mask_2g=1 : for 2g rx use chain 0
- * rx_chain_mask_2g=2 : for 2g rx use chain 1
- * rx_chain_mask_2g=3 : for 2g rx can use either chain
- *
- * Related: None
- *
- * Supported Feature: All profiles
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_RX_CHAIN_MASK_2G_NAME    "rx_chain_mask_2g"
-#define CFG_RX_CHAIN_MASK_2G_MIN     (0)
-#define CFG_RX_CHAIN_MASK_2G_MAX     (3)
-#define CFG_RX_CHAIN_MASK_2G_DEFAULT (0)
-
-
-/*
- * <ini>
- * rx_chain_mask_5g - rx chain mask for 5g
- * @Min: 0
- * @Max: 3
- * @Default: 0
- *
- * This ini will set rx chain mask for 5g. To use the ini, make sure:
- * gSetTxChainmask1x1/gSetRxChainmask1x1 = 0,
- * gDualMacFeatureDisable = 1
- * gEnable2x2 = 0
- *
- * rx_chain_mask_5g=0 : don't care
- * rx_chain_mask_5g=1 : for 5g rx use chain 0
- * rx_chain_mask_5g=2 : for 5g rx use chain 1
- * rx_chain_mask_5g=3 : for 5g rx can use either chain
- *
- * Related: None
- *
- * Supported Feature: All profiles
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_RX_CHAIN_MASK_5G_NAME    "rx_chain_mask_5g"
-#define CFG_RX_CHAIN_MASK_5G_MIN     (0)
-#define CFG_RX_CHAIN_MASK_5G_MAX     (3)
-#define CFG_RX_CHAIN_MASK_5G_DEFAULT (0)
-
-/*
- * <ini>
  * btm_offload_config - Configure BTM
  * @Min: 0x00000000
  * @Max: 0xFFFFFFFF
@@ -14240,8 +13966,6 @@ struct hdd_config {
 	bool enable2x2;
 	uint32_t vdev_type_nss_2g;
 	uint32_t vdev_type_nss_5g;
-	uint8_t txchainmask1x1;
-	uint8_t rxchainmask1x1;
 	bool enableMuBformee;
 	bool enableVhtpAid;
 	bool enableVhtGid;
@@ -14496,8 +14220,6 @@ struct hdd_config {
 	uint8_t dbs_scan_selection[CFG_DBS_SCAN_PARAM_LENGTH];
 	uint32_t sta_sap_scc_on_dfs_chan;
 	uint32_t sta_sap_scc_on_lte_coex_chan;
-	bool     tx_chain_mask_cck;
-	uint8_t  tx_chain_mask_1ss;
 	bool smart_chainmask_enabled;
 	bool alternative_chainmask_enabled;
 	uint16_t  self_gen_frm_pwr;
@@ -14675,8 +14397,6 @@ struct hdd_config {
 	uint8_t enable_rts_sifsbursting;
 	uint8_t max_mpdus_inampdu;
 	enum pmo_auto_pwr_detect_failure_mode auto_pwr_save_fail_mode;
-	uint16_t num_11b_tx_chains;
-	uint16_t num_11ag_tx_chains;
 	uint8_t ito_repeat_count;
 	/* LCA(Last connected AP) disallow configs */
 	uint32_t disallow_duration;
@@ -14761,10 +14481,6 @@ struct hdd_config {
 	bool probe_req_deferral_enabled;
 	bool fils_discovery_sap_enabled;
 	bool esp_for_roam_enabled;
-	uint8_t tx_chain_mask_2g;
-	uint8_t rx_chain_mask_2g;
-	uint8_t tx_chain_mask_5g;
-	uint8_t rx_chain_mask_5g;
 	uint32_t btm_offload_config;
 #ifdef WLAN_FEATURE_SAE
 	bool is_sae_enabled;

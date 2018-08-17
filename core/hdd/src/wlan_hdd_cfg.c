@@ -2014,20 +2014,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_VHT_ENABLE_GID_FEATURE_MIN,
 		     CFG_VHT_ENABLE_GID_FEATURE_MAX),
 
-	REG_VARIABLE(CFG_VHT_ENABLE_1x1_TX_CHAINMASK, WLAN_PARAM_Integer,
-		     struct hdd_config, txchainmask1x1,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_VHT_ENABLE_1x1_TX_CHAINMASK_DEFAULT,
-		     CFG_VHT_ENABLE_1x1_TX_CHAINMASK_MIN,
-		     CFG_VHT_ENABLE_1x1_TX_CHAINMASK_MAX),
-
-	REG_VARIABLE(CFG_VHT_ENABLE_1x1_RX_CHAINMASK, WLAN_PARAM_Integer,
-		     struct hdd_config, rxchainmask1x1,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_VHT_ENABLE_1x1_RX_CHAINMASK_DEFAULT,
-		     CFG_VHT_ENABLE_1x1_RX_CHAINMASK_MIN,
-		     CFG_VHT_ENABLE_1x1_RX_CHAINMASK_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_AMPDUPS_FEATURE, WLAN_PARAM_Integer,
 		     struct hdd_config, enableAmpduPs,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -3427,21 +3413,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_MIN,
 		     CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_MAX),
 #endif
-
-	REG_VARIABLE(CFG_TX_CHAIN_MASK_CCK, WLAN_PARAM_Integer,
-		     struct hdd_config, tx_chain_mask_cck,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TX_CHAIN_MASK_CCK_DEFAULT,
-		     CFG_TX_CHAIN_MASK_CCK_MIN,
-		     CFG_TX_CHAIN_MASK_CCK_MAX),
-
-	REG_VARIABLE(CFG_TX_CHAIN_MASK_1SS, WLAN_PARAM_Integer,
-		     struct hdd_config, tx_chain_mask_1ss,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TX_CHAIN_MASK_1SS_DEFAULT,
-		     CFG_TX_CHAIN_MASK_1SS_MIN,
-		     CFG_TX_CHAIN_MASK_1SS_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_SMART_CHAINMASK_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, smart_chainmask_enabled,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4437,20 +4408,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_AUTO_DETECT_POWER_FAIL_MODE_MIN,
 		CFG_AUTO_DETECT_POWER_FAIL_MODE_MAX),
 
-	REG_VARIABLE(CFG_11B_NUM_TX_CHAIN_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, num_11b_tx_chains,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_11B_NUM_TX_CHAIN_DEFAULT,
-		CFG_11B_NUM_TX_CHAIN_MIN,
-		CFG_11B_NUM_TX_CHAIN_MAX),
-
-	REG_VARIABLE(CFG_11AG_NUM_TX_CHAIN_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, num_11ag_tx_chains,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_11AG_NUM_TX_CHAIN_DEFAULT,
-		CFG_11AG_NUM_TX_CHAIN_MIN,
-		CFG_11AG_NUM_TX_CHAIN_MAX),
-
 	REG_VARIABLE(CFG_ITO_REPEAT_COUNT_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, ito_repeat_count,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5032,34 +4989,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_ESP_FEATURE_DEFAULT,
 		     CFG_ENABLE_ESP_FEATURE_MIN,
 		     CFG_ENABLE_ESP_FEATURE_MAX),
-
-	REG_VARIABLE(CFG_TX_CHAIN_MASK_2G_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, tx_chain_mask_2g,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TX_CHAIN_MASK_2G_DEFAULT,
-		     CFG_TX_CHAIN_MASK_2G_MIN,
-		     CFG_TX_CHAIN_MASK_2G_MAX),
-
-	REG_VARIABLE(CFG_RX_CHAIN_MASK_2G_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, rx_chain_mask_2g,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_RX_CHAIN_MASK_2G_DEFAULT,
-		     CFG_RX_CHAIN_MASK_2G_MIN,
-		     CFG_RX_CHAIN_MASK_2G_MAX),
-
-	REG_VARIABLE(CFG_TX_CHAIN_MASK_5G_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, tx_chain_mask_5g,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TX_CHAIN_MASK_5G_DEFAULT,
-		     CFG_TX_CHAIN_MASK_5G_MIN,
-		     CFG_TX_CHAIN_MASK_5G_MAX),
-
-	REG_VARIABLE(CFG_RX_CHAIN_MASK_5G_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, rx_chain_mask_5g,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_RX_CHAIN_MASK_5G_DEFAULT,
-		     CFG_RX_CHAIN_MASK_5G_MIN,
-		     CFG_RX_CHAIN_MASK_5G_MAX),
 
 	REG_VARIABLE(CFG_BTM_ENABLE_NAME, WLAN_PARAM_HexInteger,
 		     struct hdd_config, btm_offload_config,
@@ -7620,10 +7549,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	smeConfig->csrConfig.is_force_1x1 =
 			hdd_ctx->config->is_force_1x1;
-	smeConfig->csrConfig.num_11b_tx_chains =
-			hdd_ctx->config->num_11b_tx_chains;
-	smeConfig->csrConfig.num_11ag_tx_chains =
-			hdd_ctx->config->num_11ag_tx_chains;
+
 	val = (pConfig->oce_probe_req_rate_enabled *
 		WMI_VDEV_OCE_PROBE_REQUEST_RATE_FEATURE_BITMAP) +
 		(pConfig->oce_probe_resp_rate_enabled *
@@ -7664,6 +7590,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	status = sme_update_config(mac_handle, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("sme_update_config() failure: %d", status);
+
 error:
 	qdf_mem_free(smeConfig);
 	return status;

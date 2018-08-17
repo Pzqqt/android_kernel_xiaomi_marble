@@ -57,4 +57,59 @@ QDF_STATUS wlan_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_mlme_get_ignore_peer_ht_mode(struct wlan_objmgr_psoc *psoc,
 					bool *value);
+/**
+ * wlan_mlme_get_tx_chainmask_cck() - Get the tx_chainmask_cfg value
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF_STATUS_FAILURE or QDF_STATUS_SUCCESS
+ */
+QDF_STATUS wlan_mlme_get_tx_chainmask_cck(struct wlan_objmgr_psoc *psoc,
+					  bool *value);
+
+/**
+ * wlan_mlme_get_tx_chainmask_1ss() - Get the tx_chainmask_1ss value
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF_STATUS_FAILURE or QDF_STATUS_SUCCESS
+ */
+QDF_STATUS wlan_mlme_get_tx_chainmask_1ss(struct wlan_objmgr_psoc *psoc,
+					  uint8_t *value);
+
+/**
+ * wlan_mlme_get_num_11b_tx_chains() -  Get the number of 11b only tx chains
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF_STATUS_FAILURE or QDF_STATUS_SUCCESS
+ */
+QDF_STATUS wlan_mlme_get_num_11b_tx_chains(struct wlan_objmgr_psoc *psoc,
+					   uint16_t *value);
+
+/**
+ * wlan_mlme_get_num_11ag_tx_chains() - get the total number of 11a/g tx chains
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF_STATUS_FAILURE or QDF_STATUS_SUCCESS
+ */
+QDF_STATUS wlan_mlme_get_num_11ag_tx_chains(struct wlan_objmgr_psoc *psoc,
+					    uint16_t *value);
+
+/**
+ * wlan_mlme_configure_chain_mask() - configure chainmask parameters
+ *
+ * @psoc: pointer to psoc object
+ * @session_id: vdev_id
+ *
+ * Return: QDF_STATUS_FAILURE or QDF_STATUS_SUCCESS
+ */
+QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
+					  uint8_t session_id);
+
 #endif /* _WLAN_MLME_API_H_ */

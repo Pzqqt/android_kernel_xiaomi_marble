@@ -90,6 +90,7 @@
 #include "service_ready_param.h"
 #include "wlan_cp_stats_mc_ucfg_api.h"
 #include "cfg_nan_api.h"
+#include "wlan_mlme_api.h"
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -3102,6 +3103,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	struct policy_mgr_wma_cbacks wma_cbacks;
 	struct target_psoc_info *tgt_psoc_info;
 	int i;
+	bool val = 0;
 	void *cds_context;
 	target_resource_config *wlan_res_cfg;
 
@@ -3245,7 +3247,13 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	wma_set_default_tgt_config(wma_handle, wlan_res_cfg, cds_cfg);
 
-	wma_handle->tx_chain_mask_cck = cds_cfg->tx_chain_mask_cck;
+	qdf_status = wlan_mlme_get_tx_chainmask_cck(psoc, &val);
+	if (qdf_status != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s: Failed to get tx_chainmask_cck", __func__);
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto err_wma_handle;
+	}
+	wma_handle->tx_chain_mask_cck = val;
 	wma_handle->self_gen_frm_pwr = cds_cfg->self_gen_frm_pwr;
 
 	cds_cfg->max_bssid = WMA_MAX_SUPPORTED_BSS;
