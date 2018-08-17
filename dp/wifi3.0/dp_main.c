@@ -4481,6 +4481,10 @@ void dp_peer_unref_delete(void *peer_handle)
 	uint16_t peer_id;
 	uint16_t vdev_id;
 
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		  "%s: peer %pK ref_cnt(before decrement): %d", __func__,
+		  peer, qdf_atomic_read(&peer->ref_cnt));
+
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
 	 * is zero until the peer references are removed from the hash
@@ -4492,9 +4496,6 @@ void dp_peer_unref_delete(void *peer_handle)
 	 * concurrently with the empty check.
 	 */
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "%s: peer %pK ref_cnt(before decrement): %d", __func__,
-		  peer, qdf_atomic_read(&peer->ref_cnt));
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		peer_id = peer->peer_ids[0];
 		vdev_id = vdev->vdev_id;
