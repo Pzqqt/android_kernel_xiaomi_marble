@@ -50,6 +50,16 @@ QDF_STATUS hdd_lro_set_reset(struct hdd_context *hdd_ctx,
 			     struct hdd_adapter *adapter,
 			     uint8_t enable_flag);
 
+/**
+ * hdd_is_lro_enabled() - Is LRO enabled
+ * @hdd_ctx: HDD context
+ *
+ * This function checks if LRO is enabled in HDD context.
+ *
+ * Return: 0 - success, < 0 - failure
+ */
+int hdd_is_lro_enabled(struct hdd_context *hdd_ctx);
+
 #else
 static inline int hdd_lro_init(struct hdd_context *hdd_ctx)
 {
@@ -71,6 +81,11 @@ static inline QDF_STATUS hdd_lro_set_reset(struct hdd_context *hdd_ctx,
 					   uint8_t enable_flag)
 {
 	return 0;
+}
+
+static inline int hdd_is_lro_enabled(struct hdd_context *hdd_ctx)
+{
+	return -EOPNOTSUPP;
 }
 #endif /* FEATURE_LRO */
 #endif /* __WLAN_HDD_LRO_H__ */

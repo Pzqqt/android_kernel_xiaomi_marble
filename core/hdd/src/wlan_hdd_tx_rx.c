@@ -1657,7 +1657,7 @@ static void hdd_register_rx_ol(void)
 
 	hdd_ctx->en_tcp_delack_no_lro = 0;
 
-	if (hdd_ctx->ol_enable == CFG_LRO_ENABLED) {
+	if (!hdd_is_lro_enabled(hdd_ctx)) {
 		cdp_register_rx_offld_flush_cb(soc, hdd_qdf_lro_flush);
 		hdd_ctx->receive_offload_cb = hdd_lro_rx;
 		hdd_debug("LRO is enabled");

@@ -158,4 +158,10 @@ hdd_lro_set_reset(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
 	return 0;
 }
 
+int hdd_is_lro_enabled(struct hdd_context *hdd_ctx)
+{
+	if (hdd_ctx->ol_enable != CFG_LRO_ENABLED)
+		return -EOPNOTSUPP;
 
+	return 0;
+}
