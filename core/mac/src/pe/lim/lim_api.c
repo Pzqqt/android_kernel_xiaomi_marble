@@ -68,6 +68,7 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "os_if_nan.h"
 #include <wlan_scan_ucfg_api.h>
+#include <wlan_scan_public_structs.h>
 #include <wlan_p2p_ucfg_api.h>
 #include "wlan_utility.h"
 #include <wlan_tdls_cfg_api.h>
@@ -1259,6 +1260,16 @@ static QDF_STATUS pe_handle_probe_req_frames(tpAniSirGlobal mac_ctx,
 {
 	QDF_STATUS status;
 	struct scheduler_msg msg = {0};
+	uint32_t scan_queue_size = 0;
+
+	/* Check if the probe request frame can be posted in the scan queue */
+	status = scheduler_get_queue_size(QDF_MODULE_ID_SCAN, &scan_queue_size);
+	if (!QDF_IS_STATUS_SUCCESS(status) ||
+	    scan_queue_size > MAX_BCN_PROBE_IN_SCAN_QUEUE) {
+		pe_debug_rl("Dropping probe req frame, queue size %d",
+			    scan_queue_size);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	/* Forward to MAC via mesg = SIR_BB_XPORT_MGMT_MSG */
 	msg.type = SIR_BB_XPORT_MGMT_MSG;
