@@ -1653,6 +1653,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 				rx_desc->rx_buf_start);
 
 		qdf_nbuf_set_pktlen(msdu, (msdu_len + RX_PKT_TLVS_LEN));
+		qdf_nbuf_append_ext_list(msdu, NULL, 0);
 
 		tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
 						rx_desc->rx_buf_start);
