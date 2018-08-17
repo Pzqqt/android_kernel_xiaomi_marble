@@ -766,17 +766,17 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
 	struct wma_target_req *req_msg;
 
-	if (!iface->handle || !cds_is_target_ready()) {
-		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed or target is not ready",
+	if (!iface->handle) {
+		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed",
 			 vdev_id);
 		goto send_rsp;
 	}
 
 	/*
-	 * In SSR case, there is no need to destroy vdev in firmware since
-	 * it has already asserted.
+	 * In SSR case or if FW is down, there is no need to destroy vdev in
+	 * firmware since it has already asserted.
 	 */
-	if (cds_is_driver_recovering()) {
+	if (cds_is_driver_recovering() || !cds_is_target_ready()) {
 		wma_force_vdev_cleanup(wma_handle, vdev_id);
 		/* Delete objmgr self peer of STA as part of SSR. */
 		if (iface->type == WMI_VDEV_TYPE_STA) {
