@@ -555,15 +555,15 @@ sch_bcn_update_opmode_change(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 		if ((oper_mode == eHT_CHANNEL_WIDTH_80MHZ) &&
 		    (bcn->OperatingMode.chanWidth > eHT_CHANNEL_WIDTH_80MHZ))
 			skip_opmode_update = true;
+
 		if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) {
 			/*
-			 * if channel bonding is disabled from INI and
-			 * receiving beacon which has operating mode IE
-			 * containing channel width change then don't update
-			 * CH_WIDTH
+			 * if channel bonding is disabled from INI do not
+			 * update the chan width
 			 */
-			pe_debug("CB disabled & CH_WIDTH changed old[%d] new[%d]",
-				 oper_mode, bcn->OperatingMode.chanWidth);
+			pe_debug_rl("CB disabled skip bw update: old[%d] new[%d]",
+				    oper_mode,
+				    bcn->OperatingMode.chanWidth);
 			return;
 		}
 
@@ -629,15 +629,15 @@ sch_bcn_update_opmode_change(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 
 	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) {
 		/*
-		 * if channel bonding is disabled from INI and
-		 * receiving beacon which has operating mode IE
-		 * containing channel width change then don't update
-		 * CH_WIDTH
+		 * if channel bonding is disabled from INI do not
+		 * update the chan width
 		 */
-		pe_err("CB disabled & CH_WIDTH changed old[%d] new[%d]",
-			oper_mode, bcn->OperatingMode.chanWidth);
+		pe_debug_rl("CB disabled skip bw update: old[%d] new[%d]",
+			    oper_mode, bcn->OperatingMode.chanWidth);
+
 		return;
 	}
+
 	if (!skip_opmode_update &&
 	    (oper_mode != bcn->VHTOperation.chanWidth)) {
 		pe_debug("received VHTOP CHWidth %d staIdx = %d",
