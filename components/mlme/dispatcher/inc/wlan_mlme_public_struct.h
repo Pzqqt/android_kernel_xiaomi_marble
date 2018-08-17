@@ -123,6 +123,33 @@ struct wlan_mlme_sap_protection {
 	bool ignore_peer_ht_mode;
 };
 
+/*
+ * struct wlan_mlme_chainmask - All chainmask related cfg items
+ *
+ * @txchainmask1x1 - to set transmit chainmask
+ * @rxchainmask1x1 - to set rx chainmask
+ * @tx_chain_mask_cck - Used to enable/disable Cck ChainMask
+ * @tx_chain_mask_1ss - Enables/disables tx chain Mask1ss
+ * @num_11b_tx_chains - Number of Tx Chains in 11b mode
+ * @num_11ag_tx_chains - Number of Tx Chains in 11ag mode
+ * @tx_chain_mask_2g - tx chain mask for 2g
+ * @rx_chain_mask_2g - rx chain mask for 2g
+ * @tx_chain_mask_5g - tx chain mask for 5g
+ * @rx_chain_mask_5g - rx chain mask for 5g
+ */
+struct wlan_mlme_chainmask {
+	uint8_t txchainmask1x1;
+	uint8_t rxchainmask1x1;
+	bool tx_chain_mask_cck;
+	uint8_t tx_chain_mask_1ss;
+	uint16_t num_11b_tx_chains;
+	uint16_t num_11ag_tx_chains;
+	uint8_t tx_chain_mask_2g;
+	uint8_t rx_chain_mask_2g;
+	uint8_t tx_chain_mask_5g;
+	uint8_t rx_chain_mask_5g;
+};
+
 /**
  * struct wlan_mlme_cfg - MLME config items
  * @ht_cfg: HT related CFG Items
@@ -135,6 +162,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_vht_caps vht_caps;
 	struct wlan_mlme_rates rates;
 	struct wlan_mlme_sap_protection sap_protection_cfg;
+	struct wlan_mlme_chainmask chainmask_cfg;
 };
 
 #endif
