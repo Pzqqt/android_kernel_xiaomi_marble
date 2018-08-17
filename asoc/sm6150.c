@@ -36,6 +36,7 @@
 #include "codecs/msm-cdc-pinctrl.h"
 #include "codecs/wcd934x/wcd934x.h"
 #include "codecs/wcd934x/wcd934x-mbhc.h"
+#include "codecs/wcd937x/wcd937x-mbhc.h"
 #include "codecs/wsa881x.h"
 #include "codecs/bolero/bolero-cdc.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
@@ -7925,6 +7926,8 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 {
 	struct snd_soc_codec *codec = snd_soc_component_to_codec(component);
 	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	int ret = 0;
+	void *mbhc_calibration;
 
 	snd_soc_dapm_ignore_suspend(dapm, "EAR");
 	snd_soc_dapm_ignore_suspend(dapm, "AUX");
@@ -7936,7 +7939,14 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC4");
 	snd_soc_dapm_sync(dapm);
 
-	return 0;
+	mbhc_calibration = def_wcd_mbhc_cal();
+	if (!mbhc_calibration) {
+		return -ENOMEM;
+	}
+	wcd_mbhc_cfg.calibration = mbhc_calibration;
+	ret = wcd937x_mbhc_hs_detect(codec, &wcd_mbhc_cfg);
+
+	return ret;
 }
 
 static int msm_init_aux_dev(struct platform_device *pdev,
