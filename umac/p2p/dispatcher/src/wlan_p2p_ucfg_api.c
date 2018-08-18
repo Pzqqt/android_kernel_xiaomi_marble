@@ -393,7 +393,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 
 	if (QDF_STATUS_SUCCESS != qdf_idr_find(&p2p_soc_obj->p2p_idr,
 					       cookie, &tx_ctx)) {
-		p2p_err("invalid id");
+		p2p_debug("invalid id");
 		return QDF_STATUS_E_INVAL;
 	}
 

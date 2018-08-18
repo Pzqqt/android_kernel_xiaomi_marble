@@ -153,7 +153,7 @@ QDF_STATUS tdls_vdev_obj_create_notification(struct wlan_objmgr_vdev *vdev,
 	struct tdls_soc_priv_obj *tdls_soc_obj;
 	uint32_t tdls_feature_flags;
 
-	tdls_notice("tdls vdev mode %d", wlan_vdev_mlme_get_opmode(vdev));
+	tdls_debug("tdls vdev mode %d", wlan_vdev_mlme_get_opmode(vdev));
 	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE &&
 	    wlan_vdev_mlme_get_opmode(vdev) != QDF_P2P_CLIENT_MODE)
 		return QDF_STATUS_SUCCESS;
@@ -203,7 +203,7 @@ QDF_STATUS tdls_vdev_obj_create_notification(struct wlan_objmgr_vdev *vdev,
 		goto err;
 	}
 
-	tdls_notice("tdls object attach to vdev successfully");
+	tdls_debug("tdls object attach to vdev successfully");
 	return status;
 err:
 	qdf_mem_free(tdls_vdev_obj);
@@ -1343,7 +1343,7 @@ void tdls_scan_done_callback(struct tdls_soc_priv_obj *tdls_soc)
 		return;
 
 	if (TDLS_SUPPORT_DISABLED == tdls_soc->tdls_current_mode) {
-		tdls_notice("TDLS mode is disabled OR not enabled");
+		tdls_debug("TDLS mode is disabled OR not enabled");
 		return;
 	}
 

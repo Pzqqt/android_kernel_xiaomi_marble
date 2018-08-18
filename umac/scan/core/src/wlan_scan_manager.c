@@ -726,7 +726,7 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 		 * We received scan event for an already completed/cancelled
 		 * scan request. Drop this event.
 		 */
-		scm_warn("Received scan event while request not in active queue");
+		scm_debug("Received scan event while request not in active queue");
 		goto exit;
 	}
 

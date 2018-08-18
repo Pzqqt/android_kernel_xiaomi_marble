@@ -256,7 +256,7 @@ static QDF_STATUS p2p_vdev_obj_destroy_notification(
 	}
 
 	mode = wlan_vdev_mlme_get_opmode(vdev);
-	p2p_info("vdev mode:%d", mode);
+	p2p_debug("vdev mode:%d", mode);
 	if (mode != QDF_P2P_GO_MODE) {
 		p2p_debug("no p2p vdev private object if it is not GO");
 		return QDF_STATUS_SUCCESS;
