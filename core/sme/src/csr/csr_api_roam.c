@@ -11801,7 +11801,7 @@ static bool csr_is_deauth_disassoc_already_active(tpAniSirGlobal mac_ctx,
 	     eCSR_ROAM_SUBSTATE_DISASSOC_REQ) &&
 	    !qdf_mem_cmp(peer_macaddr.bytes, sme_cmd->u.roamCmd.peerMac,
 			 QDF_MAC_ADDR_SIZE)) {
-		sme_err("Ignore DEAUTH_IND/DIASSOC_IND as Deauth/Disassoc already in progress");
+		sme_debug("Ignore DEAUTH_IND/DIASSOC_IND as Deauth/Disassoc already in progress");
 		ret = true;
 	}
 

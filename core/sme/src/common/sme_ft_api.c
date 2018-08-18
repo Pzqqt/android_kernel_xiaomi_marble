@@ -357,7 +357,7 @@ QDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
 		break;
 
 	default:
-		sme_warn("Unhandled state: %d", pSession->ftSmeContext.FTState);
+		sme_debug("Unhandled state:%d", pSession->ftSmeContext.FTState);
 		status = QDF_STATUS_E_FAILURE;
 		break;
 	}

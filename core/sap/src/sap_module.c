@@ -2605,9 +2605,9 @@ QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
 
 	mac = PMAC_STRUCT(hal);
 	tgt_dfs_set_tx_leakage_threshold(mac->pdev, tx_leakage_threshold);
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			"%s: leakage_threshold %d", __func__,
-			tx_leakage_threshold);
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: leakage_threshold %d", __func__,
+		  tx_leakage_threshold);
 	return QDF_STATUS_SUCCESS;
 }
 

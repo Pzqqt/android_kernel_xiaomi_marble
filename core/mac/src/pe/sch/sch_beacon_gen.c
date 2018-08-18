@@ -1042,8 +1042,8 @@ void sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
 
 	/* If SME is not in normal mode, no need to generate beacon */
 	if (psessionEntry->limSmeState != eLIM_SME_NORMAL_STATE) {
-		pe_err("PreBeaconInd received in invalid state: %d",
-		       psessionEntry->limSmeState);
+		pe_debug("PreBeaconInd received in invalid state: %d",
+			 psessionEntry->limSmeState);
 		goto end;
 	}
 

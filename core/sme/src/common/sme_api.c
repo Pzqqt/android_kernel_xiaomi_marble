@@ -2729,8 +2729,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 				status = QDF_STATUS_E_FAILURE;
 			}
 		} else {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-					FL("Failed to get scan get result"));
+			sme_err("Failed to get scan get result");
 			status = QDF_STATUS_E_FAILURE;
 		}
 		csr_free_scan_filter(mac_ctx, scan_filter);

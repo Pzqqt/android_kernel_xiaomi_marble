@@ -632,7 +632,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	if (!assoc_rsp->suppRatesPresent) {
-		pe_err("assoc response does not have supported rate set");
+		pe_debug("assoc response does not have supported rate set");
 		qdf_mem_copy(&assoc_rsp->supportedRates,
 			&session_entry->rateSet,
 			sizeof(tSirMacRateSet));

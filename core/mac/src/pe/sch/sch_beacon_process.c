@@ -557,8 +557,8 @@ sch_bcn_update_opmode_change(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 			 * containing channel width change then don't update
 			 * CH_WIDTH
 			 */
-			pe_err("CB disabled & CH_WIDTH changed old[%d] new[%d]",
-				oper_mode, bcn->OperatingMode.chanWidth);
+			pe_debug("CB disabled & CH_WIDTH changed old[%d] new[%d]",
+				 oper_mode, bcn->OperatingMode.chanWidth);
 			return;
 		}
 
@@ -906,10 +906,10 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 
 	if ((false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)
 	    && beaconParams.paramChangeBitmap) {
-		pe_warn("Beacon for session[%d] got changed.",
-		       session->peSessionId);
-		pe_warn("sending beacon param change bitmap: 0x%x",
-		       beaconParams.paramChangeBitmap);
+		pe_debug("Beacon for session[%d] got changed.",
+			 session->peSessionId);
+		pe_debug("sending beacon param change bitmap: 0x%x",
+			 beaconParams.paramChangeBitmap);
 		lim_send_beacon_params(mac_ctx, &beaconParams, session);
 	}
 

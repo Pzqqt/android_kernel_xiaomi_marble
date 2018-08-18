@@ -2831,13 +2831,13 @@ sir_convert_assoc_req_frame2_struct(tpAniSirGlobal pMac,
 	if (ar->VHTCaps.present) {
 		qdf_mem_copy(&pAssocReq->VHTCaps, &ar->VHTCaps,
 			     sizeof(tDot11fIEVHTCaps));
-		pe_warn("Received Assoc Req with VHT Cap");
+		pe_debug("Received Assoc Req with VHT Cap");
 		lim_log_vht_cap(pMac, &pAssocReq->VHTCaps);
 	}
 	if (ar->OperatingMode.present) {
 		qdf_mem_copy(&pAssocReq->operMode, &ar->OperatingMode,
 			     sizeof(tDot11fIEOperatingMode));
-		pe_warn("Received Assoc Req with Operating Mode IE");
+		pe_debug("Received Assoc Req with Operating Mode IE");
 		lim_log_operating_mode(pMac, &pAssocReq->operMode);
 	}
 	if (ar->ExtCap.present) {

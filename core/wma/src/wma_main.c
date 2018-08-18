@@ -8510,7 +8510,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 	default:
-		WMA_LOGE("Unhandled WMA message of type %d", msg->type);
+		WMA_LOGD("Unhandled WMA message of type %d", msg->type);
 		if (msg->bodyptr)
 			qdf_mem_free(msg->bodyptr);
 	}
