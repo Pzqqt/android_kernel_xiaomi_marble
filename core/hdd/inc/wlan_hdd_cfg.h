@@ -2743,50 +2743,6 @@ enum station_keepalive_method {
 
 /*
  * <ini>
- * InfraUapsdBeSrvIntv - Set Uapsd service interval for BE
- * @Min: 0
- * @Max: 4294967295UL
- * @Default: 300
- *
- * This ini is used to set Uapsd service interval for BE
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_NAME         "InfraUapsdBeSrvIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_MIN           (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_MAX           (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SRV_INTV_DEFAULT       (300)
-
-/*
- * <ini>
- * InfraUapsdBeSuspIntv - Set Uapsd suspension interval for BE
- * @Min: 0
- * @Max: 4294967295UL
- * @Default: 2000
- *
- * This ini is used to set Uapsd suspension interval for BE
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_NAME         "InfraUapsdBeSuspIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_MIN           (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_MAX           (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_BE_SUS_INTV_DEFAULT       (2000)
-
-/*
- * <ini>
  * InfraUapsdBkSrvIntv - Set Uapsd service interval for BK
  * @Min: 0
  * @Max: 4294967295UL
@@ -2828,117 +2784,6 @@ enum station_keepalive_method {
 #define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_MIN           (0)
 #define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_MAX           (4294967295UL)
 #define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_DEFAULT       (2000)
-
- /* default TSPEC parameters for AC_BE*/
-/*
- * <ini>
- * InfraDirAcBe - Set TSPEC direction for BE
- * @Min: 0
- * @Max: 3
- * @Default: 3
- *
- * This ini is used to set TSPEC direction for BE
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_DIR_AC_BE_NAME   "InfraDirAcBe"
-#define CFG_QOS_WMM_INFRA_DIR_AC_BE_MIN     (0)
-#define CFG_QOS_WMM_INFRA_DIR_AC_BE_MAX     (3)
-#define CFG_QOS_WMM_INFRA_DIR_AC_BE_DEFAULT (3) /*WLAN_QCT_CUST_WMM_TSDIR_BOTH*/
-
-/*
- * <ini>
- * InfraNomMsduSizeAcBe - Set normal MSDU size for BE
- * @Min: 0x0
- * @Max: 0xFFFF
- * @Default: 0x85DC
- *
- * This ini is used to set normal MSDU size for BE
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_NAME      "InfraNomMsduSizeAcBe"
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_MIN        (0x0)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_MAX        (0xFFFF)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BE_DEFAULT    (0x85DC)
-
-/*
- * <ini>
- * InfraMeanDataRateAcBe - Set mean data rate for BE
- * @Min: 0x0
- * @Max: 0xFFFFFFFF
- * @Default: 0x493E0
- *
- * This ini is used to set mean data rate for BE
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_NAME    "InfraMeanDataRateAcBe"
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_MIN      (0x0)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_MAX      (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BE_DEFAULT  (0x493E0)
-
-/*
- * <ini>
- * InfraMinPhyRateAcBe - Set min PHY rate for BE
- * @Min: 0x0
- * @Max: 0xFFFFFFFF
- * @Default: 0x5B8D80
- *
- * This ini is used to set min PHY rate for BE
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_NAME        "InfraMinPhyRateAcBe"
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_MIN          (0x0)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_MAX          (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BE_DEFAULT      (0x5B8D80)
-
-/*
- * <ini>
- * InfraSbaAcBe - Set surplus bandwidth allowance for BE
- * @Min: 0x2001
- * @Max: 0xFFFF
- * @Default: 0x2001
- *
- * This ini is used to set surplus bandwidth allowance for BE
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
- #define CFG_QOS_WMM_INFRA_SBA_AC_BE_NAME                   "InfraSbaAcBe"
- #define CFG_QOS_WMM_INFRA_SBA_AC_BE_MIN                     (0x2001)
- #define CFG_QOS_WMM_INFRA_SBA_AC_BE_MAX                     (0xFFFF)
- #define CFG_QOS_WMM_INFRA_SBA_AC_BE_DEFAULT                 (0x2001)
 
  /* default TSPEC parameters for AC_Bk*/
 /*
@@ -6953,8 +6798,6 @@ struct hdd_config {
 	enum hdd_wmm_user_mode WmmMode;
 	bool b80211eIsEnabled;
 	uint8_t UapsdMask;      /* what ACs to setup U-APSD for at assoc */
-	uint32_t InfraUapsdBeSrvIntv;
-	uint32_t InfraUapsdBeSuspIntv;
 	uint32_t InfraUapsdBkSrvIntv;
 	uint32_t InfraUapsdBkSuspIntv;
 	bool isFastRoamIniFeatureEnabled;
@@ -6968,13 +6811,6 @@ struct hdd_config {
 	bool isWESModeEnabled;
 	bool isRoamOffloadScanEnabled;
 	bool bImplicitQosEnabled;
-
-	/* default TSPEC parameters for AC_BE */
-	enum sme_qos_wmm_dir_type InfraDirAcBe;
-	uint16_t InfraNomMsduSizeAcBe;
-	uint32_t InfraMeanDataRateAcBe;
-	uint32_t InfraMinPhyRateAcBe;
-	uint16_t InfraSbaAcBe;
 
 	/* default TSPEC parameters for AC_BK */
 	enum sme_qos_wmm_dir_type InfraDirAcBk;

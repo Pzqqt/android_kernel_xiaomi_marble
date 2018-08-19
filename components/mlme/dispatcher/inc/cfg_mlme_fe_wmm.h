@@ -406,6 +406,181 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"Infra uapsd vi sus intv")
 
+/*
+ * <ini>
+ * InfraDirAcBe - Set TSPEC direction for BE
+ * @Min: 0
+ * @Max: 3
+ * @Default: 3
+ *
+ * This ini is used to set TSPEC direction for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_DIR_AC_BE CFG_INI_UINT( \
+		"InfraDirAcBe", \
+		0, \
+		3, \
+		3, \
+		CFG_VALUE_OR_DEFAULT, \
+		"TSPEC direction for BE")
+
+/*
+ * <ini>
+ * InfraNomMsduSizeAcBe - Set normal MSDU size for BE
+ * @Min: 0x0
+ * @Max: 0xFFFF
+ * @Default: 0x85DC
+ *
+ * This ini is used to set normal MSDU size for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_NOM_MSDU_SIZE_AC_BE CFG_INI_UINT( \
+		"InfraNomMsduSizeAcBe", \
+		0x0, \
+		0xFFFF, \
+		0x85DC, \
+		CFG_VALUE_OR_DEFAULT, \
+		"MSDU size for BE")
+
+/*
+ * <ini>
+ * InfraMeanDataRateAcBe - Set mean data rate for BE
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x493E0
+ *
+ * This ini is used to set mean data rate for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_MEAN_DATA_RATE_AC_BE CFG_INI_UINT( \
+		"InfraMeanDataRateAcBe", \
+		0x0, \
+		0xFFFFFFFF, \
+		0x493E0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"data rate for BE")
+
+/*
+ * <ini>
+ * InfraMinPhyRateAcBe - Set min PHY rate for BE
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x5B8D80
+ *
+ * This ini is used to set min PHY rate for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_MIN_PHY_RATE_AC_BE CFG_INI_UINT( \
+		"InfraMinPhyRateAcBe", \
+		0x0, \
+		0xFFFFFFFF, \
+		0x5B8D80, \
+		CFG_VALUE_OR_DEFAULT, \
+		"min PHY rate for BE")
+
+/*
+ * <ini>
+ * InfraSbaAcBe - Set surplus bandwidth allowance for BE
+ * @Min: 0x2001
+ * @Max: 0xFFFF
+ * @Default: 0x2001
+ *
+ * This ini is used to set surplus bandwidth allowance for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_SBA_AC_BE CFG_INI_UINT( \
+		"InfraSbaAcBe", \
+		0x2001, \
+		0xFFFF, \
+		0x2001, \
+		CFG_VALUE_OR_DEFAULT, \
+		"surplus bandwidth allowance for BE")
+
+/*
+ * <ini>
+ * InfraUapsdBeSrvIntv - Set Uapsd service interval for BE
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 300
+ *
+ * This ini is used to set Uapsd service interval for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_UAPSD_BE_SRV_INTV CFG_INI_UINT( \
+		"InfraUapsdBeSrvIntv", \
+		0, \
+		4294967295UL, \
+		300, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Infra uapsd be srv intv")
+
+/*
+ * <ini>
+ * InfraUapsdBeSuspIntv - Set Uapsd suspension interval for BE
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 2000
+ *
+ * This ini is used to set Uapsd suspension interval for BE
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_UAPSD_BE_SUS_INTV CFG_INI_UINT( \
+		"InfraUapsdBeSuspIntv", \
+		0, \
+		4294967295UL, \
+		2000, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Infra uapsd vi sus intv")
+
 #define CFG_WMM_PARAMS_ALL \
 	CFG(CFG_QOS_ENABLED) \
 	CFG(CFG_WME_ENABLED) \
@@ -425,6 +600,13 @@
 	CFG(CFG_QOS_WMM_MIN_PHY_RATE_AC_VI) \
 	CFG(CFG_QOS_WMM_SBA_AC_VI) \
 	CFG(CFG_QOS_WMM_UAPSD_VI_SRV_INTV) \
-	CFG(CFG_QOS_WMM_UAPSD_VI_SUS_INTV)
+	CFG(CFG_QOS_WMM_UAPSD_VI_SUS_INTV) \
+	CFG(CFG_QOS_WMM_DIR_AC_BE) \
+	CFG(CFG_QOS_WMM_NOM_MSDU_SIZE_AC_BE) \
+	CFG(CFG_QOS_WMM_MEAN_DATA_RATE_AC_BE) \
+	CFG(CFG_QOS_WMM_MIN_PHY_RATE_AC_BE) \
+	CFG(CFG_QOS_WMM_SBA_AC_BE) \
+	CFG(CFG_QOS_WMM_UAPSD_BE_SRV_INTV) \
+	CFG(CFG_QOS_WMM_UAPSD_BE_SUS_INTV)
 
 #endif /* __CFG_MLME_FE_WMM_H */
