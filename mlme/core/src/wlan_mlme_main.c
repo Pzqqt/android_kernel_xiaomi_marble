@@ -1293,6 +1293,21 @@ static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_QOS_WMM_UAPSD_BE_SRV_INTV);
 	wmm_params->ac_be.uapsd_be_sus_intv =
 		cfg_get(psoc, CFG_QOS_WMM_UAPSD_BE_SUS_INTV);
+
+	wmm_params->ac_bk.dir_ac_bk =
+		cfg_get(psoc, CFG_QOS_WMM_DIR_AC_BK);
+	wmm_params->ac_bk.nom_msdu_size_ac_bk =
+		cfg_get(psoc, CFG_QOS_WMM_NOM_MSDU_SIZE_AC_BK);
+	wmm_params->ac_bk.mean_data_rate_ac_bk =
+		cfg_get(psoc, CFG_QOS_WMM_MEAN_DATA_RATE_AC_BK);
+	wmm_params->ac_bk.min_phy_rate_ac_bk =
+		cfg_get(psoc, CFG_QOS_WMM_MIN_PHY_RATE_AC_BK);
+	wmm_params->ac_bk.sba_ac_bk =
+		cfg_get(psoc, CFG_QOS_WMM_SBA_AC_BK);
+	wmm_params->ac_bk.uapsd_bk_srv_intv =
+		cfg_get(psoc, CFG_QOS_WMM_UAPSD_BK_SRV_INTV);
+	wmm_params->ac_bk.uapsd_bk_sus_intv =
+		cfg_get(psoc, CFG_QOS_WMM_UAPSD_BK_SUS_INTV);
 }
 
 static void mlme_init_wps_params_cfg(struct wlan_objmgr_psoc *psoc,
