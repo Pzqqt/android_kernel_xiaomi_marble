@@ -2743,161 +2743,6 @@ enum station_keepalive_method {
 
 /*
  * <ini>
- * InfraUapsdBkSrvIntv - Set Uapsd service interval for BK
- * @Min: 0
- * @Max: 4294967295UL
- * @Default: 300
- *
- * This ini is used to set Uapsd service interval for BK
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_NAME         "InfraUapsdBkSrvIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_MIN           (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_MAX           (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SRV_INTV_DEFAULT       (300)
-
-/*
- * <ini>
- * InfraUapsdBkSuspIntv - Set Uapsd suspension interval for BK
- * @Min: 0
- * @Max: 4294967295UL
- * @Default: 2000
- *
- * This ini is used to set Uapsd suspension interval for BK
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_NAME         "InfraUapsdBkSuspIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_MIN           (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_MAX           (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_DEFAULT       (2000)
-
- /* default TSPEC parameters for AC_Bk*/
-/*
- * <ini>
- * InfraDirAcBk - Set TSPEC direction for BK
- * @Min: 0
- * @Max: 3
- * @Default: 3
- *
- * This ini is used to set TSPEC direction for BK
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_DIR_AC_BK_NAME   "InfraDirAcBk"
-#define CFG_QOS_WMM_INFRA_DIR_AC_BK_MIN     (0)
-#define CFG_QOS_WMM_INFRA_DIR_AC_BK_MAX     (3)
-#define CFG_QOS_WMM_INFRA_DIR_AC_BK_DEFAULT (3) /*WLAN_QCT_CUST_WMM_TSDIR_BOTH*/
-
-/*
- * <ini>
- * InfraNomMsduSizeAcBk - Set normal MSDU size for BK
- * @Min: 0x0
- * @Max: 0xFFFF
- * @Default: 0x85DC
- *
- * This ini is used to set normal MSDU size for BK
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_NAME      "InfraNomMsduSizeAcBk"
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_MIN        (0x0)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_MAX        (0xFFFF)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_BK_DEFAULT    (0x85DC)
-
-/*
- * <ini>
- * InfraMeanDataRateAcBk - Set mean data rate for BK
- * @Min: 0x0
- * @Max: 0xFFFFFFFF
- * @Default: 0x493E0
- *
- * This ini is used to set mean data rate for BK
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_NAME    "InfraMeanDataRateAcBk"
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_MIN      (0x0)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_MAX      (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_BK_DEFAULT  (0x493E0)
-
-/*
- * <ini>
- * InfraMinPhyRateAcBke - Set min PHY rate for BK
- * @Min: 0x0
- * @Max: 0xFFFFFFFF
- * @Default: 0x5B8D80
- *
- * This ini is used to set min PHY rate for BK
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_NAME        "InfraMinPhyRateAcBk"
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_MIN          (0x0)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_MAX          (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_BK_DEFAULT      (0x5B8D80)
-
-/*
- * <ini>
- * InfraSbaAcBk - Set surplus bandwidth allowance for BK
- * @Min: 0x2001
- * @Max: 0xFFFF
- * @Default: 0x2001
- *
- * This ini is used to set surplus bandwidth allowance for BK
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
- #define CFG_QOS_WMM_INFRA_SBA_AC_BK_NAME                   "InfraSbaAcBk"
- #define CFG_QOS_WMM_INFRA_SBA_AC_BK_MIN                     (0x2001)
- #define CFG_QOS_WMM_INFRA_SBA_AC_BK_MAX                     (0xFFFF)
- #define CFG_QOS_WMM_INFRA_SBA_AC_BK_DEFAULT                 (0x2001)
-
-/*
- * <ini>
  * burstSizeDefinition - Set TS burst size
  * @Min: 0
  * @Max: 1
@@ -6798,8 +6643,6 @@ struct hdd_config {
 	enum hdd_wmm_user_mode WmmMode;
 	bool b80211eIsEnabled;
 	uint8_t UapsdMask;      /* what ACs to setup U-APSD for at assoc */
-	uint32_t InfraUapsdBkSrvIntv;
-	uint32_t InfraUapsdBkSuspIntv;
 	bool isFastRoamIniFeatureEnabled;
 	bool MAWCEnabled;
 #ifdef FEATURE_WLAN_ESE
@@ -6811,13 +6654,6 @@ struct hdd_config {
 	bool isWESModeEnabled;
 	bool isRoamOffloadScanEnabled;
 	bool bImplicitQosEnabled;
-
-	/* default TSPEC parameters for AC_BK */
-	enum sme_qos_wmm_dir_type InfraDirAcBk;
-	uint16_t InfraNomMsduSizeAcBk;
-	uint32_t InfraMeanDataRateAcBk;
-	uint32_t InfraMinPhyRateAcBk;
-	uint16_t InfraSbaAcBk;
 
 	uint32_t DelayedTriggerFrmInt;
 

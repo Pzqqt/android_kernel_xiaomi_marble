@@ -581,6 +581,181 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"Infra uapsd vi sus intv")
 
+/*
+ * <ini>
+ * InfraDirAcBk - Set TSPEC direction for BK
+ * @Min: 0
+ * @Max: 3
+ * @Default: 3
+ *
+ * This ini is used to set TSPEC direction for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_DIR_AC_BK CFG_INI_UINT( \
+		"InfraDirAcBk", \
+		0, \
+		3, \
+		3, \
+		CFG_VALUE_OR_DEFAULT, \
+		"TSPEC direction for BK")
+
+/*
+ * <ini>
+ * InfraNomMsduSizeAcBk - Set normal MSDU size for BK
+ * @Min: 0x0
+ * @Max: 0xFFFF
+ * @Default: 0x85DC
+ *
+ * This ini is used to set normal MSDU size for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_NOM_MSDU_SIZE_AC_BK CFG_INI_UINT( \
+		"InfraNomMsduSizeAcBk", \
+		0x0, \
+		0xFFFF, \
+		0x85DC, \
+		CFG_VALUE_OR_DEFAULT, \
+		"MSDU size for BK")
+
+/*
+ * <ini>
+ * InfraMeanDataRateAcBk - Set mean data rate for BK
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x493E0
+ *
+ * This ini is used to set mean data rate for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_MEAN_DATA_RATE_AC_BK CFG_INI_UINT( \
+		"InfraMeanDataRateAcBk", \
+		0x0, \
+		0xFFFFFFFF, \
+		0x493E0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"data rate for BK")
+
+/*
+ * <ini>
+ * InfraMinPhyRateAcBke - Set min PHY rate for BK
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x5B8D80
+ *
+ * This ini is used to set min PHY rate for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_MIN_PHY_RATE_AC_BK CFG_INI_UINT( \
+		"InfraMinPhyRateAcBk", \
+		0x0, \
+		0xFFFFFFFF, \
+		0x5B8D80, \
+		CFG_VALUE_OR_DEFAULT, \
+		"min PHY rate for BK")
+
+/*
+ * <ini>
+ * InfraSbaAcBk - Set surplus bandwidth allowance for BK
+ * @Min: 0x2001
+ * @Max: 0xFFFF
+ * @Default: 0x2001
+ *
+ * This ini is used to set surplus bandwidth allowance for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_SBA_AC_BK CFG_INI_UINT( \
+		"InfraSbaAcBk", \
+		0x2001, \
+		0xFFFF, \
+		0x2001, \
+		CFG_VALUE_OR_DEFAULT, \
+		"surplus bandwidth allowance for BK")
+
+/*
+ * <ini>
+ * InfraUapsdBkSrvIntv - Set Uapsd service interval for BK
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 300
+ *
+ * This ini is used to set Uapsd service interval for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_UAPSD_BK_SRV_INTV CFG_INI_UINT( \
+		"InfraUapsdBkSrvIntv", \
+		0, \
+		4294967295UL, \
+		300, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Infra uapsd bk srv intv")
+
+/*
+ * <ini>
+ * InfraUapsdBkSuspIntv - Set Uapsd suspension interval for BK
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 2000
+ *
+ * This ini is used to set Uapsd suspension interval for BK
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_UAPSD_BK_SUS_INTV CFG_INI_UINT( \
+		"InfraUapsdBkSuspIntv", \
+		0, \
+		4294967295UL, \
+		2000, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Infra uapsd bk sus intv")
+
 #define CFG_WMM_PARAMS_ALL \
 	CFG(CFG_QOS_ENABLED) \
 	CFG(CFG_WME_ENABLED) \
@@ -607,6 +782,13 @@
 	CFG(CFG_QOS_WMM_MIN_PHY_RATE_AC_BE) \
 	CFG(CFG_QOS_WMM_SBA_AC_BE) \
 	CFG(CFG_QOS_WMM_UAPSD_BE_SRV_INTV) \
-	CFG(CFG_QOS_WMM_UAPSD_BE_SUS_INTV)
+	CFG(CFG_QOS_WMM_UAPSD_BE_SUS_INTV) \
+	CFG(CFG_QOS_WMM_DIR_AC_BK) \
+	CFG(CFG_QOS_WMM_NOM_MSDU_SIZE_AC_BK) \
+	CFG(CFG_QOS_WMM_MEAN_DATA_RATE_AC_BK) \
+	CFG(CFG_QOS_WMM_MIN_PHY_RATE_AC_BK) \
+	CFG(CFG_QOS_WMM_SBA_AC_BK) \
+	CFG(CFG_QOS_WMM_UAPSD_BK_SRV_INTV) \
+	CFG(CFG_QOS_WMM_UAPSD_BK_SUS_INTV)
 
 #endif /* __CFG_MLME_FE_WMM_H */
