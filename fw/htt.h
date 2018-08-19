@@ -11010,7 +11010,7 @@ PREPACK struct htt_cfr_dump_compl_ind {
 #define HTT_T2H_CFR_DUMP_TYPE1_CAP_TYPE_S          20
 #define HTT_T2H_CFR_DUMP_TYPE1_VDEV_ID_M           0XFF000000
 #define HTT_T2H_CFR_DUMP_TYPE1_VDEV_ID_S           24
- 
+
 #define HTT_T2H_CFR_DUMP_TYPE1_MEM_REQ_ID_SET(word, value) \
    do { \
           HTT_CHECK_SET_VAL(HTT_T2H_CFR_DUMP_TYPE1_MEM_REQ_ID, value); \
@@ -11019,7 +11019,7 @@ PREPACK struct htt_cfr_dump_compl_ind {
 #define HTT_T2H_CFR_DUMP_TYPE1_MEM_REQ_ID_GET(word) \
        (((word) & HTT_T2H_CFR_DUMP_TYPE1_MEM_REQ_ID_M) >> \
            HTT_T2H_CFR_DUMP_TYPE1_MEM_REQ_ID_S)
- 
+
 #define HTT_T2H_CFR_DUMP_TYPE1_STATUS_SET(word, value) \
    do { \
           HTT_CHECK_SET_VAL(HTT_T2H_CFR_DUMP_TYPE1_STATUS, value); \
@@ -11028,7 +11028,7 @@ PREPACK struct htt_cfr_dump_compl_ind {
 #define HTT_T2H_CFR_DUMP_TYPE1_STATUS_GET(word) \
       (((word) & HTT_T2H_CFR_DUMP_TYPE1_STATUS_M) >> \
           HTT_T2H_CFR_DUMP_TYPE1_STATUS_S)
- 
+
 #define HTT_T2H_CFR_DUMP_TYPE1_CAP_BW_SET(word, value) \
    do { \
           HTT_CHECK_SET_VAL(HTT_T2H_CFR_DUMP_TYPE1_CAP_BW, value); \
@@ -11037,7 +11037,7 @@ PREPACK struct htt_cfr_dump_compl_ind {
 #define HTT_T2H_CFR_DUMP_TYPE1_CAP_BW_GET(word) \
         (((word) & HTT_T2H_CFR_DUMP_TYPE1_CAP_BW_M) >> \
            HTT_T2H_CFR_DUMP_TYPE1_CAP_BW_S)
- 
+
 #define HTT_T2H_CFR_DUMP_TYPE1_MODE_SET(word, value) \
    do { \
           HTT_CHECK_SET_VAL(HTT_T2H_CFR_DUMP_TYPE1_MODE, value); \
@@ -11046,7 +11046,7 @@ PREPACK struct htt_cfr_dump_compl_ind {
 #define HTT_T2H_CFR_DUMP_TYPE1_MODE_GET(word) \
         (((word) & HTT_T2H_CFR_DUMP_TYPE1_MODE_M) >> \
             HTT_T2H_CFR_DUMP_TYPE1_MODE_S)
- 
+
 #define HTT_T2H_CFR_DUMP_TYPE1_STS_SET(word, value) \
    do { \
           HTT_CHECK_SET_VAL(HTT_T2H_CFR_DUMP_TYPE1_STS, value); \
@@ -11055,7 +11055,7 @@ PREPACK struct htt_cfr_dump_compl_ind {
 #define HTT_T2H_CFR_DUMP_TYPE1_STS_GET(word) \
         (((word) & HTT_T2H_CFR_DUMP_TYPE1_STS_M) >> \
             HTT_T2H_CFR_DUMP_TYPE1_STS_S)
- 
+
 #define HTT_T2H_CFR_DUMP_TYPE1_CHAN_BW_SET(word, value) \
    do { \
           HTT_CHECK_SET_VAL(HTT_T2H_CFR_DUMP_TYPE1_CHAN_BW, value); \
@@ -11064,7 +11064,7 @@ PREPACK struct htt_cfr_dump_compl_ind {
 #define HTT_T2H_CFR_DUMP_TYPE1_CHAN_BW_GET(word) \
         (((word) & HTT_T2H_CFR_DUMP_TYPE1_CHAN_BW_M) >> \
             HTT_T2H_CFR_DUMP_TYPE1_CHAN_BW_S)
- 
+
 #define HTT_T2H_CFR_DUMP_TYPE1_CAP_TYPE_SET(word, value) \
    do { \
           HTT_CHECK_SET_VAL(HTT_T2H_CFR_DUMP_TYPE1_CAP_TYPE, value); \
@@ -11073,7 +11073,7 @@ PREPACK struct htt_cfr_dump_compl_ind {
 #define HTT_T2H_CFR_DUMP_TYPE1_CAP_TYPE_GET(word) \
         (((word) & HTT_T2H_CFR_DUMP_TYPE1_CAP_TYPE_M) >> \
             HTT_T2H_CFR_DUMP_TYPE1_CAP_TYPE_S)
- 
+
 #define HTT_T2H_CFR_DUMP_TYPE1_VDEV_ID_SET(word, value) \
    do { \
           HTT_CHECK_SET_VAL(HTT_T2H_CFR_DUMP_TYPE1_VDEV_ID, value); \
