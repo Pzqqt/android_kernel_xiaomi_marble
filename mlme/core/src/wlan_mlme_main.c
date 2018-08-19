@@ -1279,6 +1279,20 @@ static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
 	wmm_params->ac_vi.uapsd_vi_sus_intv =
 		cfg_get(psoc, CFG_QOS_WMM_UAPSD_VI_SUS_INTV);
 
+	wmm_params->ac_be.dir_ac_be =
+		cfg_get(psoc, CFG_QOS_WMM_DIR_AC_BE);
+	wmm_params->ac_be.nom_msdu_size_ac_be =
+		cfg_get(psoc, CFG_QOS_WMM_NOM_MSDU_SIZE_AC_BE);
+	wmm_params->ac_be.mean_data_rate_ac_be =
+		cfg_get(psoc, CFG_QOS_WMM_MEAN_DATA_RATE_AC_BE);
+	wmm_params->ac_be.min_phy_rate_ac_be =
+		cfg_get(psoc, CFG_QOS_WMM_MIN_PHY_RATE_AC_BE);
+	wmm_params->ac_be.sba_ac_be =
+		cfg_get(psoc, CFG_QOS_WMM_SBA_AC_BE);
+	wmm_params->ac_be.uapsd_be_srv_intv =
+		cfg_get(psoc, CFG_QOS_WMM_UAPSD_BE_SRV_INTV);
+	wmm_params->ac_be.uapsd_be_sus_intv =
+		cfg_get(psoc, CFG_QOS_WMM_UAPSD_BE_SUS_INTV);
 }
 
 static void mlme_init_wps_params_cfg(struct wlan_objmgr_psoc *psoc,

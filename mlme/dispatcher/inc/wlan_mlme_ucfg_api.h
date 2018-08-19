@@ -1815,4 +1815,121 @@ ucfg_mlme_get_wmm_uapsd_vi_sus_intv(struct wlan_objmgr_psoc *psoc,
 	return wlan_mlme_get_wmm_uapsd_vi_sus_intv(psoc, value);
 }
 
+/**
+ * ucfg_mlme_get_wmm_dir_ac_be() - Get TSPEC direction
+ * for BE
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_wmm_dir_ac_be(struct wlan_objmgr_psoc *psoc, uint8_t *value)
+{
+	return wlan_mlme_get_wmm_dir_ac_be(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_wmm_nom_msdu_size_ac_be() - Get normal
+ * MSDU size for BE
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_wmm_nom_msdu_size_ac_be(struct wlan_objmgr_psoc *psoc,
+				      uint16_t *value)
+{
+	return wlan_mlme_get_wmm_nom_msdu_size_ac_be(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_wmm_mean_data_rate_ac_be() - mean data
+ * rate for BE
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_wmm_mean_data_rate_ac_be(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *value)
+{
+	return wlan_mlme_get_wmm_mean_data_rate_ac_be(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_wmm_min_phy_rate_ac_be() - min PHY
+ * rate for BE
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_wmm_min_phy_rate_ac_be(struct wlan_objmgr_psoc *psoc,
+				     uint32_t *value)
+{
+	return wlan_mlme_get_wmm_min_phy_rate_ac_be(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_wmm_sba_ac_be() - surplus bandwidth
+ * allowance for BE
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_wmm_sba_ac_be(struct wlan_objmgr_psoc *psoc, uint16_t *value)
+{
+	return wlan_mlme_get_wmm_sba_ac_be(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_wmm_uapsd_be_srv_intv() - Get Uapsd service
+ * interval for BE
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_wmm_uapsd_be_srv_intv(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *value)
+{
+	return wlan_mlme_get_wmm_uapsd_be_srv_intv(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_wmm_uapsd_be_sus_intv() - Get Uapsd suspension
+ * interval for BE
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_wmm_uapsd_be_sus_intv(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *value)
+{
+	return wlan_mlme_get_wmm_uapsd_be_sus_intv(psoc, value);
+}
+
 #endif /* _WLAN_MLME_UCFG_API_H_ */
