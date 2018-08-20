@@ -152,7 +152,7 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_INC(peer, tx.wme_ac_type[TID_TO_WME_AC(ppdu->tid)], num_msdu);
 	DP_STATS_INCC(peer, tx.stbc, num_msdu, ppdu->stbc);
 	DP_STATS_INCC(peer, tx.ldpc, num_msdu, ppdu->ldpc);
-	if (!(ppdu->is_mcast))
+	if (!(ppdu->is_mcast) && ppdu->ack_rssi_valid)
 		DP_STATS_UPD(peer, tx.last_ack_rssi, ack_rssi);
 
 	DP_STATS_INC(peer, tx.retries,
@@ -1986,7 +1986,12 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 
 
 	tag_buf++;
-	ppdu_desc->ack_rssi = dp_stats_buf->ack_rssi;
+	if (qdf_likely(ppdu_user_desc->completion_status)) {
+		ppdu_desc->ack_rssi = dp_stats_buf->ack_rssi;
+		ppdu_user_desc->ack_rssi_valid = 1;
+	} else {
+		ppdu_user_desc->ack_rssi_valid = 0;
+	}
 
 	tag_buf++;
 

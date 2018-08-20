@@ -987,6 +987,7 @@ struct cdp_tx_completion_ppdu_user {
 	uint32_t tx_ratekbps;
 	/*ack rssi for separate chains*/
 	uint32_t ack_rssi[CDP_RSSI_CHAIN_LEN];
+	bool ack_rssi_valid;
 };
 
 /**
