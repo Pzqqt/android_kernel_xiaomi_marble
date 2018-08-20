@@ -420,4 +420,16 @@ typedef void (*tx_pause_callback)(uint8_t vdev_id,
 typedef void (*ipa_uc_op_cb_type)(uint8_t *op_msg,
 			void *osif_ctxt);
 
+/**
+ * struct ol_rx_inv_peer_params - rx invalid peer data parameters
+ * @vdev_id: Virtual device ID
+ * @ra: RX data receiver MAC address
+ * @ta: RX data transmitter MAC address
+ */
+struct ol_rx_inv_peer_params {
+	uint8_t vdev_id;
+	uint8_t ra[OL_TXRX_MAC_ADDR_LEN];
+	uint8_t ta[OL_TXRX_MAC_ADDR_LEN];
+};
+
 #endif /* __CDP_TXRX_MOB_DEF_H */

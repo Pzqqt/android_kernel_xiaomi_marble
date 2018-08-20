@@ -748,30 +748,68 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 	qdf_nbuf_t curr_nbuf, next_nbuf;
 	struct dp_pdev *pdev;
 	uint8_t i;
+	struct dp_vdev *vdev = NULL;
+	struct ieee80211_frame *wh;
+	uint8_t *rx_tlv_hdr = qdf_nbuf_data(mpdu);
+	uint8_t *rx_pkt_hdr = hal_rx_pkt_hdr_get(rx_tlv_hdr);
 
-	curr_nbuf = mpdu;
-	while (curr_nbuf) {
-		next_nbuf = qdf_nbuf_next(curr_nbuf);
-		/* Drop and free packet */
-		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
-				qdf_nbuf_len(curr_nbuf));
-		qdf_nbuf_free(curr_nbuf);
-		curr_nbuf = next_nbuf;
+	wh = (struct ieee80211_frame *)rx_pkt_hdr;
+
+	if (!DP_FRAME_IS_DATA(wh)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "only for data frames");
+		goto free;
 	}
 
+	if (qdf_nbuf_len(mpdu) < sizeof(struct ieee80211_frame)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid nbuf length");
+		goto free;
+	}
 	/* reset the head and tail pointers */
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		pdev = soc->pdev_list[i];
 		if (!pdev) {
 			QDF_TRACE(QDF_MODULE_ID_DP,
-				QDF_TRACE_LEVEL_ERROR,
-				"PDEV not found");
+				  QDF_TRACE_LEVEL_ERROR,
+				  "PDEV not found");
 			continue;
 		}
 
 		pdev->invalid_peer_head_msdu = NULL;
 		pdev->invalid_peer_tail_msdu = NULL;
+
+		qdf_spin_lock_bh(&pdev->vdev_list_lock);
+		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+			if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
+					DP_MAC_ADDR_LEN) == 0) {
+				qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+				goto out;
+			}
+		}
+		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
+
+	if (NULL == vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "VDEV not found");
+		goto free;
+	}
+
+out:
+	if (soc->cdp_soc.ol_ops->rx_invalid_peer)
+		soc->cdp_soc.ol_ops->rx_invalid_peer(vdev->vdev_id, wh);
+free:
+	/* Drop and free packet */
+	curr_nbuf = mpdu;
+	while (curr_nbuf) {
+		next_nbuf = qdf_nbuf_next(curr_nbuf);
+		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
+				 qdf_nbuf_len(curr_nbuf));
+		qdf_nbuf_free(curr_nbuf);
+		curr_nbuf = next_nbuf;
+	}
+
 	return 0;
 }
 

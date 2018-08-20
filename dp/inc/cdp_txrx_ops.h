@@ -801,8 +801,11 @@ struct ol_if_ops {
 			   struct cdp_lro_hash_config *rx_offld_hash);
 	void (*update_dp_stats)(void *soc, void *stats, uint16_t id,
 			uint8_t type);
+#ifdef CONFIG_WIN
 	uint8_t (*rx_invalid_peer)(void *ctrl_pdev, void *msg);
-
+#else
+	uint8_t (*rx_invalid_peer)(uint8_t vdev_id, void *wh);
+#endif
 	int  (*peer_map_event)(void *ol_soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
 			uint8_t vdev_id, uint8_t *peer_mac_addr,
 			enum cdp_txrx_ast_entry_type peer_type);
