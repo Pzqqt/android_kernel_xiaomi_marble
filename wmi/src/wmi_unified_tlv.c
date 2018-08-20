@@ -17891,6 +17891,13 @@ static QDF_STATUS extract_ext_tbttoffset_update_params_tlv(void *wmi_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_MCL
+#define IS_WMI_RX_MGMT_FRAME_STATUS_INVALID(_status) \
+			((_status) & WMI_RXERR_DECRYPT)
+#else
+#define IS_WMI_RX_MGMT_FRAME_STATUS_INVALID(_status) false
+#endif
+
 /**
  * extract_mgmt_rx_params_tlv() - extract management rx params from event
  * @wmi_handle: wmi handle
@@ -17917,6 +17924,12 @@ static QDF_STATUS extract_mgmt_rx_params_tlv(wmi_unified_t wmi_handle,
 	ev_hdr = param_tlvs->hdr;
 	if (!hdr) {
 		WMI_LOGE("Rx event is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (IS_WMI_RX_MGMT_FRAME_STATUS_INVALID(ev_hdr->status)) {
+		WMI_LOGE("%s: RX mgmt frame decrypt error, discard it",
+			 __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
