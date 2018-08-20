@@ -2478,6 +2478,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	if (ret)
 		return ret;
 
+	hdd_debug("current country is %s", hdd_ctx->reg.alpha2);
+
 	if (!((adapter->device_mode == QDF_SAP_MODE) ||
 	      (adapter->device_mode == QDF_P2P_GO_MODE))) {
 		hdd_err("Invalid device mode %d", adapter->device_mode);
