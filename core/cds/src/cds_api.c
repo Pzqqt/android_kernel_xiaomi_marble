@@ -87,7 +87,8 @@ static struct ol_if_ops  dp_ol_if_ops = {
 	.peer_rx_reorder_queue_remove = target_if_peer_rx_reorder_queue_remove,
 	.is_hw_dbs_2x2_capable = policy_mgr_is_hw_dbs_2x2_capable,
 	.lro_hash_config = target_if_lro_hash_config,
-	.rx_mic_error = wma_rx_mic_error_ind
+	.rx_mic_error = wma_rx_mic_error_ind,
+	.rx_invalid_peer = wma_rx_invalid_peer_ind
     /* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 #else

@@ -727,6 +727,8 @@ struct sir_mgmt_msg {
 #define SIR_LIM_DELETE_STA_CONTEXT_IND      (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0x11)
 /* Indication from HAL to delete BA */
 #define SIR_LIM_UPDATE_BEACON               (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0x13)
+/* Indication from HAL to handle RX invalid peer */
+#define SIR_LIM_RX_INVALID_PEER            (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0x15)
 
 /* LIM Timeout messages */
 #define SIR_LIM_TIMEOUT_MSG_START      ((SIR_LIM_MODULE_ID << 8) + 0xD0)

@@ -3194,3 +3194,33 @@ void wma_rx_mic_error_ind(void *scn_handle, uint16_t vdev_id, void *wh)
 
 	wma_indicate_err(OL_RX_ERR_TKIP_MIC, &err_info);
 }
+
+uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
+{
+	struct ol_rx_inv_peer_params *rx_inv_msg;
+	struct ieee80211_frame *wh_l = (struct ieee80211_frame *)wh;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	rx_inv_msg = (struct ol_rx_inv_peer_params *)
+		qdf_mem_malloc(sizeof(struct ol_rx_inv_peer_params));
+	if (NULL == rx_inv_msg) {
+		WMA_LOGE("%s: mem alloc failed for rx_data_msg", __func__);
+		return -ENOMEM;
+	}
+
+	rx_inv_msg->vdev_id = vdev_id;
+	qdf_mem_copy(rx_inv_msg->ra, wh_l->i_addr1, OL_TXRX_MAC_ADDR_LEN);
+	qdf_mem_copy(rx_inv_msg->ta, wh_l->i_addr2, OL_TXRX_MAC_ADDR_LEN);
+
+	WMA_LOGD("%s: vdev_id %d", __func__, vdev_id);
+	WMA_LOGD("%s: RA:" MAC_ADDRESS_STR,
+		 __func__,
+		 MAC_ADDR_ARRAY(rx_inv_msg->ra));
+	WMA_LOGD("%s: TA:" MAC_ADDRESS_STR,
+		 __func__,
+		 MAC_ADDR_ARRAY(rx_inv_msg->ta));
+
+	wma_send_msg(wma, SIR_LIM_RX_INVALID_PEER, (void *)rx_inv_msg, 0);
+
+	return 0;
+}

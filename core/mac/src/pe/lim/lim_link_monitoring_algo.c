@@ -561,3 +561,39 @@ hb_handler_fail:
 					 WLAN_WAKE_ALL_NETIF_QUEUE,
 					 WLAN_CONTROL_PATH);
 }
+
+void lim_rx_invalid_peer_process(tpAniSirGlobal mac_ctx,
+				 struct scheduler_msg *lim_msg)
+{
+	struct ol_rx_inv_peer_params *msg =
+			(struct ol_rx_inv_peer_params *)lim_msg->bodyptr;
+	tpPESession session_entry;
+	uint16_t reason_code =
+		eSIR_MAC_CLASS3_FRAME_FROM_NON_ASSOC_STA_REASON;
+
+	if (NULL == msg) {
+		pe_err("Invalid body pointer in message");
+		return;
+	}
+
+	session_entry = pe_find_session_by_sme_session_id(mac_ctx,
+							  msg->vdev_id);
+	if (NULL == session_entry) {
+		pe_err("session not found for given sme session");
+		qdf_mem_free(msg);
+		return;
+	}
+
+	/* only if SAP mode */
+	if (session_entry->operMode == BSS_OPERATIONAL_MODE_AP) {
+		pe_debug("send deauth frame to non-assoc STA");
+		lim_send_deauth_mgmt_frame(mac_ctx,
+					   reason_code,
+					   msg->ta,
+					   session_entry,
+					   false);
+	}
+
+	qdf_mem_free(msg);
+	lim_msg->bodyptr = NULL;
+}

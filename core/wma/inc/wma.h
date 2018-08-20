@@ -2542,4 +2542,15 @@ QDF_STATUS wma_config_bmiss_bcnt_params(uint32_t vdev_id, uint32_t first_cnt,
  */
 void wma_check_and_set_wake_timer(uint32_t time);
 
+/**
+ * wma_rx_invalid_peer_ind(): the callback for DP to notify WMA layer
+ * invalid peer data is received, this function will send message to
+ * lim module.
+ * @vdev_id: virtual device ID
+ * @wh: Pointer to 802.11 frame header
+ *
+ * Return: 0 for success or non-zero on failure
+ */
+uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh);
+
 #endif

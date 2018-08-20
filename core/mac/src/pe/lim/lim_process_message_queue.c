@@ -1786,6 +1786,9 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case SIR_LIM_DELETE_STA_CONTEXT_IND:
 		lim_delete_sta_context(mac_ctx, msg);
 		break;
+	case SIR_LIM_RX_INVALID_PEER:
+		lim_rx_invalid_peer_process(mac_ctx, msg);
+		break;
 	case SIR_LIM_JOIN_FAIL_TIMEOUT:
 	case SIR_LIM_PERIODIC_JOIN_PROBE_REQ_TIMEOUT:
 	case SIR_LIM_AUTH_FAIL_TIMEOUT:

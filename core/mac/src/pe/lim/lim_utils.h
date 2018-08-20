@@ -1442,4 +1442,17 @@ static inline void lim_set_peer_twt_cap(tpPESession session,
 }
 #endif
 
+/**
+ * lim_rx_invalid_peer_process() - process rx invalid peer indication
+ * @mac_ctx: Pointer to Global MAC structure
+ * @lim_msg: Pointer to scheduler message
+ *
+ * This function will process the rx data invalid peer indication,
+ * if the vdev operation mode is SAP, then send the deauth mgmt frame
+ * to STA.
+ *
+ * Return: None
+ */
+void lim_rx_invalid_peer_process(tpAniSirGlobal mac_ctx,
+				 struct scheduler_msg *lim_msg);
 #endif /* __LIM_UTILS_H */
