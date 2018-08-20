@@ -84,7 +84,7 @@ uint8_t *wlan_crypto_gcmp_decrypt(const uint8_t *tk, size_t tk_len,
 
 	plain = qdf_mem_malloc(data_len + AES_BLOCK_SIZE);
 	if (plain == NULL) {
-		qdf_print("%s[%d] mem alloc failed", __func__, __LINE__);
+		crypto_err("mem alloc failed");
 		return NULL;
 	}
 
@@ -129,7 +129,7 @@ uint8_t *wlan_crypto_gcmp_encrypt(const uint8_t *tk, size_t tk_len,
 
 	crypt = qdf_mem_malloc(hdrlen + 8 + plen + 16 + AES_BLOCK_SIZE);
 	if (crypt == NULL) {
-		qdf_print("%s[%d] mem alloc failed", __func__, __LINE__);
+		crypto_err("mem alloc failed");
 		return NULL;
 	}
 

@@ -393,6 +393,10 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 #define HAS_CIPHER_CAP(_param, _c)  ((_param)->cipher_caps & (1 << (_c)))
 #define HAS_ANY_CIPHER_CAP(_param)  ((_param)->cipher_caps)
 
+#define crypto_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_CRYPTO, params)
+#define crypto_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_CRYPTO, params)
+#define crypto_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_CRYPTO, params)
+
 /**
  * struct wlan_crypto_mmie - MMIE IE
  * @element_id:      element id
