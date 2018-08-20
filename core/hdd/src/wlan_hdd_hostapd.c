@@ -2724,19 +2724,33 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		return -EBUSY;
 	}
 
-	if (!policy_mgr_allow_concurrency(
+	/*
+	 * Do SAP concurrency check to cover channel switch case as following:
+	 * There is already existing SAP+GO combination but due to upper layer
+	 * notifying LTE-COEX event or sending command to move one connection
+	 * to different channel. Before moving existing connection to new
+	 * channel, check if new channel can co-exist with the other existing
+	 * connection. For example, SAP1 is on channel-6 and SAP2 is on
+	 * channel-36 and lets say they are doing DBS, and upper layer sends
+	 * LTE-COEX to move SAP1 from channel-6 to channel-149. SAP1 and
+	 * SAP2 will end up doing MCC which may not be desirable result. It
+	 * should will be prevented.
+	 */
+	if (!policy_mgr_allow_concurrency_csa(
 				hdd_ctx->hdd_psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 					adapter->device_mode),
 				target_channel,
-				HW_MODE_20_MHZ)) {
+				adapter->session_id)) {
 		hdd_err("Channel switch failed due to concurrency check failure");
+		qdf_atomic_set(&adapter->dfs_radar_found, 0);
 		return -EINVAL;
 	}
 
 	status = policy_mgr_reset_chan_switch_complete_evt(hdd_ctx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("clear event failed");
+		qdf_atomic_set(&adapter->dfs_radar_found, 0);
 		return -EINVAL;
 	}
 	/*
