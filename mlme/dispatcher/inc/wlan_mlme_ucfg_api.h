@@ -3194,4 +3194,18 @@ ucfg_mlme_get_mcc_feature(struct wlan_objmgr_psoc *psoc,
 {
 	return wlan_mlme_get_mcc_feature(psoc, value);
 }
+
+/**
+ * ucfg_wlan_mlme_get_rrm_enabled() - Get the rrm enabled
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be get from the caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_wlan_mlme_get_rrm_enabled(struct wlan_objmgr_psoc *psoc,
+					  bool *value)
+{
+	return wlan_mlme_get_rrm_enabled(psoc, value);
+}
 #endif /* _WLAN_MLME_UCFG_API_H_ */

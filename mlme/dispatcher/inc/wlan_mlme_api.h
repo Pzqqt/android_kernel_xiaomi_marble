@@ -1963,4 +1963,14 @@ wlan_mlme_get_mcc_rts_cts_prot(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_mlme_get_mcc_feature(struct wlan_objmgr_psoc *psoc,
 			  uint8_t *value);
+
+/**
+ * wlan_mlme_get_rrm_enabled() - Get the RRM enabled ini
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_rrm_enabled(struct wlan_objmgr_psoc *psoc,
+				     bool *value);
 #endif /* _WLAN_MLME_API_H_ */

@@ -25,6 +25,7 @@
 #include "wmi_unified.h"
 #include "wlan_scan_public_structs.h"
 #include "wlan_vdev_mlme_api.h"
+#include "wlan_mlme_api.h"
 
 #define NUM_OF_SOUNDING_DIMENSIONS     1 /*Nss - 1, (Nss = 2 for 2x2)*/
 
@@ -1857,6 +1858,51 @@ static void mlme_init_btm_cfg(struct wlan_mlme_btm *btm)
 	btm->btm_sticky_time = cfg_default(CFG_BTM_STICKY_TIME);
 }
 
+/**
+ * mlme_init_fe_wlm_in_cfg() - Populate WLM INI in MLME cfg
+ * @psoc: pointer to the psoc object
+ * @wlm_config: pointer to the MLME WLM cfg
+ *
+ * Return: None
+ */
+static void mlme_init_fe_wlm_in_cfg(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_mlme_fe_wlm *wlm_config)
+{
+	wlm_config->latency_enable = cfg_get(psoc, CFG_LATENCY_ENABLE);
+	wlm_config->latency_level = cfg_get(psoc, CFG_LATENCY_LEVEL);
+	wlm_config->latency_flags[0] = cfg_get(psoc, CFG_LATENCY_FLAGS_NORMAL);
+	wlm_config->latency_flags[1] = cfg_get(psoc, CFG_LATENCY_FLAGS_MOD);
+	wlm_config->latency_flags[2] = cfg_get(psoc, CFG_LATENCY_FLAGS_LOW);
+	wlm_config->latency_flags[3] = cfg_get(psoc, CFG_LATENCY_FLAGS_ULTLOW);
+}
+
+/**
+ * mlme_init_fe_rrm_in_cfg() - Populate RRM INI in MLME cfg
+ * @psoc: pointer to the psoc object
+ * @rrm_config: pointer to the MLME RRM cfg
+ *
+ * Return: None
+ */
+static void mlme_init_fe_rrm_in_cfg(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_mlme_fe_rrm *rrm_config)
+{
+	qdf_size_t len;
+
+	rrm_config->rrm_enabled = cfg_get(psoc, CFG_RRM_ENABLE);
+	rrm_config->rrm_rand_interval = cfg_get(psoc, CFG_RRM_MEAS_RAND_INTVL);
+
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_RM_CAPABILITY),
+			      rrm_config->rm_capability,
+			      sizeof(rrm_config->rm_capability), &len);
+
+	if (len < MLME_RMENABLEDCAP_MAX_LEN) {
+		mlme_debug("Incorrect RM capability, using default");
+		qdf_uint8_array_parse(cfg_default(CFG_RM_CAPABILITY),
+				      rrm_config->rm_capability,
+				      sizeof(rrm_config->rm_capability), &len);
+	}
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -1900,6 +1946,8 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_wifi_pos_cfg(psoc, &mlme_cfg->wifi_pos_cfg);
 	mlme_init_wps_params_cfg(psoc, &mlme_cfg->wps_params);
 	mlme_init_btm_cfg(&mlme_cfg->btm);
+	mlme_init_fe_wlm_in_cfg(psoc, &mlme_cfg->wlm_config);
+	mlme_init_fe_rrm_in_cfg(psoc, &mlme_cfg->rrm_config);
 
 	return status;
 }

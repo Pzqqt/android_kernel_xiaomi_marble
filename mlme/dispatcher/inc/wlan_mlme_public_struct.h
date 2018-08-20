@@ -265,6 +265,9 @@ struct wlan_mlme_edca_params {
 #define WLAN_CFG_MFR_PRODUCT_NAME_LEN (31)
 #define WLAN_CFG_MFR_PRODUCT_VERSION_LEN (31)
 
+#define MLME_NUM_WLM_LATENCY_LEVEL 4
+#define MLME_RMENABLEDCAP_MAX_LEN  5
+
 /**
  * struct mlme_ht_capabilities_info - HT Capabilities Info
  * @l_sig_tx_op_protection: L-SIG TXOP Protection Mechanism support
@@ -1700,6 +1703,30 @@ struct wlan_mlme_btm {
 };
 
 /**
+ * struct wlan_mlme_fe_wlm - WLM related configs
+ * @latency_enable: Flag to check if latency is enabled
+ * @latency_level: WLM latency level
+ * @latency_flags: WLM latency flags setting
+ */
+struct wlan_mlme_fe_wlm {
+	bool latency_enable;
+	uint8_t latency_level;
+	uint32_t latency_flags[MLME_NUM_WLM_LATENCY_LEVEL];
+};
+
+/**
+ * struct wlan_mlme_fe_rrm - RRM related configs
+ * @rrm_enabled: Flag to check if RRM is enabled
+ * @rrm_rand_interval: RRM randomization interval
+ * @rm_capability: RM enabled capabilities IE
+ */
+struct wlan_mlme_fe_rrm {
+	bool rrm_enabled;
+	uint8_t rrm_rand_interval;
+	uint8_t rm_capability[MLME_RMENABLEDCAP_MAX_LEN];
+};
+
+/**
  * struct wlan_mlme_cfg - MLME config items
  * @chainmask_cfg: VHT chainmask related cfg items
  * @edca_params: edca related CFG items
@@ -1731,6 +1758,8 @@ struct wlan_mlme_btm {
  * @wmm_params: WMM related CFG & INI Items
  * @wps_params: WPS related CFG itmes
  * @btm: BTM related CFG itmes
+ * @wlm_config: WLM related CFG items
+ * @rrm_config: RRM related CFG items
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_chainmask chainmask_cfg;
@@ -1765,6 +1794,8 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_wmm_params wmm_params;
 	struct wlan_mlme_wps_params wps_params;
 	struct wlan_mlme_btm btm;
+	struct wlan_mlme_fe_wlm wlm_config;
+	struct wlan_mlme_fe_rrm rrm_config;
 };
 
 #endif
