@@ -1782,13 +1782,14 @@ static QDF_STATUS cds_force_assert_target(qdf_device_t qdf)
 }
 
 /**
- * cds_trigger_recovery_work() - trigger self recovery work
+ * cds_trigger_recovery_handler() - handle a self recovery request
+ * @func: the name of the function that called cds_trigger_recovery
+ * @line: the line number of the call site which called cds_trigger_recovery
  *
  * Return: none
  */
-static void cds_trigger_recovery_work(void *context)
+static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 {
-	struct cds_recovery_call_info *call_info = context;
 	QDF_STATUS status;
 	qdf_runtime_lock_t rtl;
 	qdf_device_t qdf;
@@ -1815,7 +1816,7 @@ static void cds_trigger_recovery_work(void *context)
 
 	if (!cds_is_self_recovery_enabled()) {
 		QDF_DEBUG_PANIC("Recovery is not enabled (via %s:%d)",
-				call_info->func, call_info->line);
+				func, line);
 		return;
 	}
 
@@ -1847,6 +1848,34 @@ deinit_rtl:
 	qdf_runtime_lock_deinit(&rtl);
 }
 
+static void cds_trigger_recovery_work(void *context)
+{
+	struct cds_recovery_call_info *call_info = context;
+
+	cds_trigger_recovery_handler(call_info->func, call_info->line);
+}
+
+void __cds_trigger_recovery(enum qdf_hang_reason reason, const char *func,
+			    const uint32_t line)
+{
+	if (!gp_cds_context) {
+		cds_err("gp_cds_context is null");
+		return;
+	}
+
+	gp_cds_context->recovery_reason = reason;
+
+	if (in_atomic()) {
+		__cds_recovery_caller.func = func;
+		__cds_recovery_caller.line = line;
+		qdf_queue_work(0, gp_cds_context->cds_recovery_wq,
+			       &gp_cds_context->cds_recovery_work);
+		return;
+	}
+
+	cds_trigger_recovery_handler(func, line);
+}
+
 /**
  * cds_get_recovery_reason() - get self recovery reason
  * @reason: recovery reason
@@ -1876,27 +1905,6 @@ void cds_reset_recovery_reason(void)
 	}
 
 	gp_cds_context->recovery_reason = QDF_REASON_UNSPECIFIED;
-}
-
-void __cds_trigger_recovery(enum qdf_hang_reason reason, const char *func,
-			    const uint32_t line)
-{
-	if (!gp_cds_context) {
-		cds_err("gp_cds_context is null");
-		return;
-	}
-
-	gp_cds_context->recovery_reason = reason;
-	__cds_recovery_caller.func = func;
-	__cds_recovery_caller.line = line;
-
-	if (in_atomic()) {
-		qdf_queue_work(0, gp_cds_context->cds_recovery_wq,
-				&gp_cds_context->cds_recovery_work);
-		return;
-	}
-
-	cds_trigger_recovery_work(&__cds_recovery_caller);
 }
 
 /**
