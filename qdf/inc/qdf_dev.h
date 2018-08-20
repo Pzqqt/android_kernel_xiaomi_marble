@@ -29,6 +29,7 @@
 
 struct qdf_cpu_mask;
 struct qdf_devm;
+struct qdf_dev;
 
 /**
  * qdf_dev_alloc_mem() - allocate memory
@@ -42,7 +43,7 @@ struct qdf_devm;
  * Return: QDF_STATUS_SUCCESS on success
  */
 QDF_STATUS
-qdf_dev_alloc_mem(qdf_device_t qdfdev, struct qdf_devm **mrptr,
+qdf_dev_alloc_mem(struct qdf_dev *qdfdev, struct qdf_devm **mrptr,
 		  uint32_t reqsize, uint32_t mask);
 
 /**
@@ -55,7 +56,7 @@ qdf_dev_alloc_mem(qdf_device_t qdfdev, struct qdf_devm **mrptr,
  * Return: QDF_STATUS_SUCCESS on success
  */
 QDF_STATUS
-qdf_dev_release_mem(qdf_device_t qdfdev, struct qdf_devm *mrptr);
+qdf_dev_release_mem(struct qdf_dev *qdfdev, struct qdf_devm *mrptr);
 
 /**
  * qdf_dev_modify_irq() - modify irq

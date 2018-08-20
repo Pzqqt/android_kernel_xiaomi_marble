@@ -92,14 +92,12 @@ QDF_STATUS
 qal_vbus_get_dev_rstctl(struct qdf_pfm_hndl *pfhndl, const char *state,
 			struct qdf_vbus_rstctl **rstctl)
 {
-	struct platform_device *pfdev;
 	struct reset_control *rsctl;
 
 	if (!pfhndl || !state)
 		return QDF_STATUS_E_INVAL;
 
-	pfdev = (struct platform_device *)pfhndl;
-	rsctl = reset_control_get(&pfdev->dev, state);
+	rsctl = reset_control_get((struct device *)pfhndl, state);
 
 	if (!rsctl)
 		return QDF_STATUS_E_FAILURE;

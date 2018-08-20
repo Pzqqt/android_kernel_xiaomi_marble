@@ -28,7 +28,7 @@
 #include <linux/irq.h>
 
 QDF_STATUS
-qdf_dev_alloc_mem(qdf_device_t qdfdev, struct qdf_devm **mrptr,
+qdf_dev_alloc_mem(struct qdf_dev *qdfdev, struct qdf_devm **mrptr,
 		  uint32_t reqsize, uint32_t mask)
 {
 	struct qdf_devm *mptr;
@@ -36,7 +36,7 @@ qdf_dev_alloc_mem(qdf_device_t qdfdev, struct qdf_devm **mrptr,
 	if (!qdfdev)
 		return QDF_STATUS_E_INVAL;
 
-	mptr = devm_kzalloc(qdfdev->dev, reqsize, mask);
+	mptr = devm_kzalloc((struct device *)qdfdev, reqsize, mask);
 
 	if (!mrptr)
 		return QDF_STATUS_E_NOMEM;
@@ -49,12 +49,12 @@ qdf_dev_alloc_mem(qdf_device_t qdfdev, struct qdf_devm **mrptr,
 qdf_export_symbol(qdf_dev_alloc_mem);
 
 QDF_STATUS
-qdf_dev_release_mem(qdf_device_t qdfdev, struct qdf_devm *mrptr)
+qdf_dev_release_mem(struct qdf_dev *qdfdev, struct qdf_devm *mrptr)
 {
 	if (!mrptr)
 		return QDF_STATUS_E_INVAL;
 
-	devm_kfree(qdfdev->dev, mrptr);
+	devm_kfree((struct device *)qdfdev, mrptr);
 
 	return QDF_STATUS_SUCCESS;
 }
