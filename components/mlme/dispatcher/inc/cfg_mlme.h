@@ -52,6 +52,8 @@
 #include "cfg_mlme_wep_params.h"
 #include "cfg_mlme_wifi_pos.h"
 #include "cfg_mlme_btm.h"
+#include "cfg_mlme_fe_wlm.h"
+#include "cfg_mlme_fe_rrm.h"
 
 /* Please Maintain Alphabetic Order here */
 #define CFG_MLME_ALL \
@@ -60,6 +62,8 @@
 	CFG_CHAINMASK_ALL \
 	CFG_DFS_ALL \
 	CFG_EDCA_PARAMS_ALL \
+	CFG_FE_RRM_ALL \
+	CFG_FE_WLM_ALL \
 	CFG_FEATURE_FLAG_ALL \
 	CFG_GENERIC_ALL \
 	CFG_HT_CAPS_ALL \

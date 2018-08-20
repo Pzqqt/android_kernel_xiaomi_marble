@@ -255,25 +255,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TL_DELAYED_TRGR_FRM_INT_MIN,
 		     CFG_TL_DELAYED_TRGR_FRM_INT_MAX),
 
-	REG_VARIABLE(CFG_RRM_ENABLE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, fRrmEnable,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_RRM_ENABLE_DEFAULT,
-		     CFG_RRM_ENABLE_MIN,
-		     CFG_RRM_ENABLE_MAX),
-
-	REG_VARIABLE(CFG_RRM_MEAS_RANDOMIZATION_INTVL_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nRrmRandnIntvl,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_RRM_MEAS_RANDOMIZATION_INTVL_DEFAULT,
-		     CFG_RRM_MEAS_RANDOMIZATION_INTVL_MIN,
-		     CFG_RRM_MEAS_RANDOMIZATION_INTVL_MAX),
-
-	REG_VARIABLE_STRING(CFG_RM_CAPABILITY_NAME, WLAN_PARAM_String,
-			    struct hdd_config, rm_capability,
-			    VAR_FLAGS_OPTIONAL,
-			    (void *) CFG_RM_CAPABILITY_DEFAULT),
-
 #ifdef FEATURE_WLAN_RA_FILTERING
 
 	REG_VARIABLE(CFG_RA_RATE_LIMIT_INTERVAL_NAME, WLAN_PARAM_Integer,
@@ -882,48 +863,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_IS_BSSID_HINT_PRIORITY_DEFAULT,
 		CFG_IS_BSSID_HINT_PRIORITY_MIN,
 		CFG_IS_BSSID_HINT_PRIORITY_MAX),
-
-	REG_VARIABLE(CFG_LATENCY_ENABLE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, wlm_latency_enable,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LATENCY_ENABLE_DEFAULT,
-		     CFG_LATENCY_ENABLE_MIN,
-		     CFG_LATENCY_ENABLE_MAX),
-
-	REG_VARIABLE(CFG_LATENCY_LEVEL_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, wlm_latency_level,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LATENCY_LEVEL_DEFAULT,
-		     CFG_LATENCY_LEVEL_MIN,
-		     CFG_LATENCY_LEVEL_MAX),
-
-	REG_VARIABLE(CFG_LATENCY_FLAGS_NORMAL_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, wlm_latency_flags_normal,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LATENCY_FLAGS_NORMAL_DEFAULT,
-		     CFG_LATENCY_FLAGS_NORMAL_MIN,
-		     CFG_LATENCY_FLAGS_NORMAL_MAX),
-
-	REG_VARIABLE(CFG_LATENCY_FLAGS_MODERATE_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, wlm_latency_flags_moderate,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LATENCY_FLAGS_MODERATE_DEFAULT,
-		     CFG_LATENCY_FLAGS_MODERATE_MIN,
-		     CFG_LATENCY_FLAGS_MODERATE_MAX),
-
-	REG_VARIABLE(CFG_LATENCY_FLAGS_LOW_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, wlm_latency_flags_low,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LATENCY_FLAGS_LOW_DEFAULT,
-		     CFG_LATENCY_FLAGS_LOW_MIN,
-		     CFG_LATENCY_FLAGS_LOW_MAX),
-
-	REG_VARIABLE(CFG_LATENCY_FLAGS_ULTRALOW_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, wlm_latency_flags_ultralow,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LATENCY_FLAGS_ULTRALOW_DEFAULT,
-		     CFG_LATENCY_FLAGS_ULTRALOW_MIN,
-		     CFG_LATENCY_FLAGS_ULTRALOW_MAX),
 
 #ifdef WLAN_FEATURE_SAE
 	REG_VARIABLE(CFG_IS_SAE_ENABLED_NAME, WLAN_PARAM_Integer,
@@ -2250,26 +2189,6 @@ static QDF_STATUS hdd_convert_string_to_array(char *str, uint8_t *array,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * hdd_hex_string_to_u8_array() - used to convert hex string into u8 array
- * @str: Hexadecimal string
- * @hex_array: Array where converted value is stored
- * @len: Length of the populated array
- * @array_max_len: Maximum length of the array
- *
- * This API is called to convert hexadecimal string (each byte separated by
- * a comma) into an u8 array
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS hdd_hex_string_to_u8_array(char *str, uint8_t *hex_array,
-					     uint8_t *len,
-					     uint8_t array_max_len)
-{
-	return hdd_convert_string_to_array(str, hex_array, len,
-					   array_max_len, true);
-}
-
 QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *array,
 				  uint8_t *len, uint16_t array_max_len)
 {
@@ -2623,7 +2542,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSmeConfigParams *smeConfig;
-	uint8_t rrm_capab_len;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 	bool roam_scan_enabled;
 #ifdef FEATURE_WLAN_ESE
@@ -2674,11 +2592,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.nRestTimeConc = pConfig->nRestTimeConc;
 	smeConfig->csrConfig.min_rest_time_conc = pConfig->min_rest_time_conc;
 	smeConfig->csrConfig.idle_time_conc     = pConfig->idle_time_conc;
-	smeConfig->rrmConfig.rrm_enabled = pConfig->fRrmEnable;
-	smeConfig->rrmConfig.max_randn_interval = pConfig->nRrmRandnIntvl;
-	hdd_hex_string_to_u8_array(pConfig->rm_capability,
-			smeConfig->rrmConfig.rm_capability, &rrm_capab_len,
-			DOT11F_IE_RRMENABLEDCAP_MAX_LEN);
 	/* Remaining config params not obtained from registry
 	 * On RF EVB beacon using channel 1.
 	 */
@@ -2757,18 +2670,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	hdd_he_set_sme_config(smeConfig, pConfig);
 
-	smeConfig->csrConfig.wlm_latency_enable =
-			hdd_ctx->config->wlm_latency_enable;
-	smeConfig->csrConfig.wlm_latency_level =
-			hdd_ctx->config->wlm_latency_level;
-	smeConfig->csrConfig.wlm_latency_flags[0] =
-			hdd_ctx->config->wlm_latency_flags_normal;
-	smeConfig->csrConfig.wlm_latency_flags[1] =
-			hdd_ctx->config->wlm_latency_flags_moderate;
-	smeConfig->csrConfig.wlm_latency_flags[2] =
-			hdd_ctx->config->wlm_latency_flags_low;
-	smeConfig->csrConfig.wlm_latency_flags[3] =
-			hdd_ctx->config->wlm_latency_flags_ultralow;
 	status = hdd_set_sme_cfgs_related_to_mlme(hdd_ctx, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("hdd_set_sme_cfgs_related_to_mlme() fail: %d", status);

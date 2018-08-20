@@ -41,8 +41,6 @@ QDF_STATUS sme_rrm_msg_processor(struct mac_context *mac, uint16_t msg_type,
 		void *pMsgBuf);
 QDF_STATUS rrm_close(struct mac_context *mac);
 QDF_STATUS rrm_open(struct mac_context *mac);
-QDF_STATUS rrm_change_default_config_param(struct mac_context *mac,
-		struct rrm_config_param *rrm_config);
 QDF_STATUS sme_rrm_neighbor_report_request(struct mac_context *mac,
 		uint8_t sessionId, tpRrmNeighborReq pNeighborReq,
 		tpRrmNeighborRspCallbackInfo callbackInfo);

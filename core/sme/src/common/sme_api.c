@@ -940,13 +940,6 @@ QDF_STATUS sme_update_config(mac_handle_t mac_handle, tpSmeConfigParams
 		sme_err("csr_change_default_config_param failed status: %d",
 			status);
 
-	status = rrm_change_default_config_param(mac, &pSmeConfigParams->
-						rrmConfig);
-
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		sme_err("rrm_change_default_config_param failed status: %d",
-			status);
-
 	/* For SOC, CFG is set before start We don't want to apply global CFG
 	 * in connect state because that may cause some side affect
 	 */
@@ -8710,7 +8703,7 @@ QDF_STATUS sme_set_wlm_latency_level(mac_handle_t mac_handle,
 	if (!wma)
 		return QDF_STATUS_E_FAILURE;
 
-	if (!mac_ctx->roam.configParam.wlm_latency_enable) {
+	if (!mac_ctx->mlme_cfg->wlm_config.latency_enable) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: WLM latency level setting is disabled",
 			   __func__);
@@ -8723,7 +8716,7 @@ QDF_STATUS sme_set_wlm_latency_level(mac_handle_t mac_handle,
 
 	params.wlm_latency_level = latency_level;
 	params.wlm_latency_flags =
-		mac_ctx->roam.configParam.wlm_latency_flags[latency_level];
+		mac_ctx->mlme_cfg->wlm_config.latency_flags[latency_level];
 	params.vdev_id = session_id;
 
 	status = wma_set_wlm_latency_level(wma, &params);

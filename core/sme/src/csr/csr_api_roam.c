@@ -2479,7 +2479,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 					   tCsrConfigParam *pParam)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	int i;
 
 	if (pParam) {
 		mac->roam.configParam.is_force_1x1 =
@@ -2726,14 +2725,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			pParam->enable_bcast_probe_rsp;
 		mac->roam.configParam.is_fils_enabled =
 			pParam->is_fils_enabled;
-		mac->roam.configParam.wlm_latency_enable =
-			pParam->wlm_latency_enable;
-		mac->roam.configParam.wlm_latency_level =
-			pParam->wlm_latency_level;
-		for (i = 0; i < CSR_NUM_WLM_LATENCY_LEVEL; i++) {
-			mac->roam.configParam.wlm_latency_flags[i] =
-				pParam->wlm_latency_flags[i];
-		}
 		mac->roam.configParam.oce_feature_bitmap =
 			pParam->oce_feature_bitmap;
 		mac->roam.configParam.roam_force_rssi_trigger =
@@ -2780,7 +2771,6 @@ void csr_get_11k_offload_config_param(struct csr_config *csr_config,
 
 QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam)
 {
-	int i;
 	struct csr_config *cfg_params = &mac->roam.configParam;
 
 	if (!pParam)
@@ -2885,13 +2875,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 	csr_get_he_config_param(pParam, mac);
 
 	csr_get_11k_offload_config_param(&mac->roam.configParam, pParam);
-
-	pParam->wlm_latency_enable = mac->roam.configParam.wlm_latency_enable;
-	pParam->wlm_latency_level = mac->roam.configParam.wlm_latency_level;
-	for (i = 0; i < CSR_NUM_WLM_LATENCY_LEVEL; i++) {
-		pParam->wlm_latency_flags[i] =
-			mac->roam.configParam.wlm_latency_flags[i];
-	}
 
 	return QDF_STATUS_SUCCESS;
 }

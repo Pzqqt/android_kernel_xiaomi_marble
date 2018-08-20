@@ -462,9 +462,6 @@ struct csr_config {
 	bool enable_ul_mimo;
 #endif
 	bool is_force_1x1;
-	uint16_t wlm_latency_enable;
-	uint16_t wlm_latency_level;
-	uint32_t wlm_latency_flags[CSR_NUM_WLM_LATENCY_LEVEL];
 	uint8_t oce_feature_bitmap;
 	uint32_t offload_11k_enable_bitmask;
 	bool wep_tkip_in_he;

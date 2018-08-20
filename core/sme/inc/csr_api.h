@@ -31,7 +31,6 @@
 #include "wlan_scan_public_structs.h"
 
 #define CSR_INVALID_SCANRESULT_HANDLE       (NULL)
-#define CSR_NUM_WLM_LATENCY_LEVEL   4
 
 typedef enum {
 	/* never used */
@@ -1127,9 +1126,6 @@ typedef struct tagCsrConfigParam {
 	bool enable_ul_ofdma;
 	bool enable_ul_mimo;
 #endif
-	uint16_t wlm_latency_enable;
-	uint16_t wlm_latency_level;
-	uint32_t wlm_latency_flags[CSR_NUM_WLM_LATENCY_LEVEL];
 	bool is_force_1x1;
 	uint8_t oce_feature_bitmap;
 	uint32_t offload_11k_enable_bitmask;

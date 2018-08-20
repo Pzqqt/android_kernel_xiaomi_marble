@@ -1409,6 +1409,24 @@ static void rrm_neighbor_rsp_timeout_handler(void *userData)
 }
 
 /**
+ * rrm_change_default_config_param() - Changing default config param to new
+ * @mac - The handle returned by mac_open.
+ *
+ * Return: None
+ */
+static void rrm_change_default_config_param(struct mac_context *mac)
+{
+	mac->rrm.rrmSmeContext.rrmConfig.rrm_enabled =
+			mac->mlme_cfg->rrm_config.rrm_enabled;
+	mac->rrm.rrmSmeContext.rrmConfig.max_randn_interval =
+			mac->mlme_cfg->rrm_config.rrm_rand_interval;
+
+	qdf_mem_copy(&mac->rrm.rrmSmeContext.rrmConfig.rm_capability,
+		     &mac->mlme_cfg->rrm_config.rm_capability,
+		     RMENABLEDCAP_MAX_LEN);
+}
+
+/**
  * rrm_open() - Initialze all RRM module
  * @ mac: The handle returned by mac_open.
  *
@@ -1453,6 +1471,8 @@ QDF_STATUS rrm_open(struct mac_context *mac)
 		sme_err("Fail to open neighbor cache result");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	rrm_change_default_config_param(mac);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1519,23 +1539,6 @@ QDF_STATUS rrm_close(struct mac_context *mac)
 
 	return qdf_status;
 
-}
-
-/**
- * rrm_change_default_config_param() - Changing default config param to new
- * @mac - The handle returned by mac_open.
- * param  pRrmConfig - pointer to new rrm configs.
- *
- * Return: QDF_STATUS
- *           QDF_STATUS_SUCCESS  success
- */
-QDF_STATUS rrm_change_default_config_param(struct mac_context *mac,
-					   struct rrm_config_param *rrm_config)
-{
-	qdf_mem_copy(&mac->rrm.rrmSmeContext.rrmConfig, rrm_config,
-		     sizeof(struct rrm_config_param));
-
-	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS rrm_start(struct mac_context *mac_ctx)

@@ -5469,7 +5469,6 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	char *str_arg = NULL;
 	struct hdd_adapter *adapter = (netdev_priv(dev));
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_config *pConfig = hdd_ctx->config;
 	struct iw_point s_priv_data;
 
 	hdd_enter_dev(dev);
@@ -5521,8 +5520,12 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	{
 		tRrmNeighborReq neighborReq;
 		tRrmNeighborRspCallbackInfo callbackInfo;
+		bool rrm_enabled = false;
 
-		if (pConfig->fRrmEnable) {
+		ucfg_wlan_mlme_get_rrm_enabled(hdd_ctx->psoc,
+					       &rrm_enabled);
+
+		if (rrm_enabled) {
 			neighborReq.neighbor_report_offload = false;
 			neighborReq.no_ssid =
 				(s_priv_data.length - 1) ? false : true;
