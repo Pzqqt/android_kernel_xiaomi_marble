@@ -1794,29 +1794,36 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 	qdf_runtime_lock_t rtl;
 	qdf_device_t qdf;
 
-	if (cds_is_driver_unloading()) {
-		cds_err("Unloading in progress; ignoring recovery trigger");
-		return;
-	}
+	/* NOTE! This code path is delicate! Think very carefully before
+	 * modifying the content or order of the following. Please review any
+	 * potential changes with someone closely familiar with this feature.
+	 */
 
 	if (cds_is_driver_recovering()) {
-		cds_err("Recovery in progress; ignoring recovery trigger");
+		cds_info("WLAN recovery already in progress");
 		return;
 	}
 
 	if (cds_is_driver_in_bad_state()) {
-		cds_err("Driver is in bad state; ignoring recovery trigger");
+		cds_info("WLAN has already failed recovery");
 		return;
 	}
 
 	if (cds_is_fw_down()) {
-		cds_err("FW is down; ignoring recovery trigger");
+		cds_info("Firmware has already initiated recovery");
 		return;
 	}
 
+	/* if *wlan* recovery is disabled, crash here for debugging */
 	if (!cds_is_self_recovery_enabled()) {
-		QDF_DEBUG_PANIC("Recovery is not enabled (via %s:%d)",
+		QDF_DEBUG_PANIC("WLAN recovery is not enabled (via %s:%d)",
 				func, line);
+		return;
+	}
+
+	/* ignore recovery if we are unloading; it would be a waste anyway */
+	if (cds_is_driver_unloading()) {
+		cds_info("WLAN is unloading; ignore recovery");
 		return;
 	}
 
@@ -2479,6 +2486,7 @@ void cds_init_ini_config(struct cds_config_info *cfg)
 void cds_deinit_ini_config(void)
 {
 	struct cds_context *cds_ctx;
+	struct cds_config_info *cds_cfg;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
@@ -2486,10 +2494,11 @@ void cds_deinit_ini_config(void)
 		return;
 	}
 
-	if (cds_ctx->cds_cfg)
-		qdf_mem_free(cds_ctx->cds_cfg);
-
+	cds_cfg = cds_ctx->cds_cfg;
 	cds_ctx->cds_cfg = NULL;
+
+	if (cds_cfg)
+		qdf_mem_free(cds_cfg);
 }
 
 /**
