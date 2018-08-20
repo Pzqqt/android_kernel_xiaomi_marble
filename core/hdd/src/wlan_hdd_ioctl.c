@@ -2288,7 +2288,7 @@ static int hdd_set_dwell_time(struct hdd_adapter *adapter, uint8_t *command)
 	int retval = 0;
 
 	pCfg = (WLAN_HDD_GET_CTX(adapter))->config;
-	if (!pCfg || mac_handle) {
+	if (!pCfg || !mac_handle) {
 		hdd_err("argument passed for SETDWELLTIME is incorrect");
 		return -EINVAL;
 	}
