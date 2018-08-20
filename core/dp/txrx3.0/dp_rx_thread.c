@@ -149,6 +149,21 @@ static QDF_STATUS dp_rx_tm_thread_enqueue(struct dp_rx_thread *rx_thread,
 	dp_rx_tm_walk_skb_list(nbuf_list);
 
 	head_ptr = nbuf_list;
+
+	/* Ensure head doesn't have an ext list */
+	while (qdf_unlikely(head_ptr && qdf_nbuf_get_ext_list(head_ptr))) {
+		QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(head_ptr) = 1;
+		num_elements_in_nbuf--;
+		next_ptr_list = head_ptr->next;
+		qdf_nbuf_set_next(head_ptr, NULL);
+		qdf_nbuf_queue_head_enqueue_tail(&rx_thread->nbuf_queue,
+						 head_ptr);
+		head_ptr = next_ptr_list;
+	}
+
+	if (!head_ptr)
+		goto enq_done;
+
 	next_ptr_list = head_ptr->next;
 
 	if (next_ptr_list) {
@@ -161,6 +176,8 @@ static QDF_STATUS dp_rx_tm_thread_enqueue(struct dp_rx_thread *rx_thread,
 	qdf_nbuf_set_next(head_ptr, NULL);
 
 	qdf_nbuf_queue_head_enqueue_tail(&rx_thread->nbuf_queue, head_ptr);
+
+enq_done:
 	temp_qlen = qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue);
 
 	rx_thread->stats.nbuf_queued[reo_ring_num] += num_elements_in_nbuf;
@@ -186,7 +203,7 @@ static qdf_nbuf_t dp_rx_tm_thread_dequeue(struct dp_rx_thread *rx_thread)
 
 	head = qdf_nbuf_queue_head_dequeue(&rx_thread->nbuf_queue);
 	nbuf_list = head;
-	if (head) {
+	if (head && QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(head) > 1) {
 		/* move ext list to ->next pointer */
 		next_ptr_list = qdf_nbuf_get_ext_list(head);
 		qdf_nbuf_append_ext_list(head, NULL, 0);
