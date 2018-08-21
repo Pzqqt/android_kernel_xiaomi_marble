@@ -1570,6 +1570,19 @@ static inline void qdf_nbuf_reserve(qdf_nbuf_t buf, qdf_size_t size)
 }
 
 /**
+ * qdf_nbuf_reset() - reset the buffer data and pointer
+ * @buf: Network buf instance
+ * @reserve: reserve
+ * @align: align
+ *
+ * Return: none
+ */
+static inline void qdf_nbuf_reset(qdf_nbuf_t buf, int reserve, int align)
+{
+	__qdf_nbuf_reset(buf, reserve, align);
+}
+
+/**
  * qdf_nbuf_peek_header() - return the data pointer & length of the header
  * @buf: Network nbuf
  * @addr: Data pointer
