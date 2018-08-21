@@ -463,7 +463,7 @@ static void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 	}
 	*cac_duration_ms = DEFAULT_CAC_TIMEOUT;
 
-	if (*dfs_region != DFS_ETSI_REG) {
+	if (*dfs_region != DFS_ETSI_REGION) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			 FL("sapdfs: default cac duration"));
 		return;

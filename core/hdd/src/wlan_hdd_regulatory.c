@@ -530,7 +530,7 @@ static int hdd_regulatory_init_no_offload(struct hdd_context *hdd_ctx,
 		return ret_val;
 	}
 
-	hdd_set_dfs_region(hdd_ctx, DFS_FCC_REG);
+	hdd_set_dfs_region(hdd_ctx, DFS_FCC_REGION);
 
 	hdd_regulatory_wiphy_init(hdd_ctx, reg_info, wiphy);
 
@@ -966,11 +966,11 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 
 	if (('K' == request->alpha2[0]) &&
 	    ('R' == request->alpha2[1]))
-		request->dfs_region = (enum nl80211_dfs_regions) DFS_KR_REG;
+		request->dfs_region = (enum nl80211_dfs_regions)DFS_KR_REGION;
 
 	if (('C' == request->alpha2[0]) &&
 	    ('N' == request->alpha2[1]))
-		request->dfs_region = (enum nl80211_dfs_regions) DFS_CN_REG;
+		request->dfs_region = (enum nl80211_dfs_regions)DFS_CN_REGION;
 
 	/* first check if this callback is in response to the driver callback */
 	switch (request->initiator) {
@@ -1220,13 +1220,13 @@ static enum nl80211_dfs_regions dfs_reg_to_nl80211_dfs_regions(
 					enum dfs_reg dfs_region)
 {
 	switch (dfs_region) {
-	case DFS_UNINIT_REG:
+	case DFS_UNINIT_REGION:
 		return NL80211_DFS_UNSET;
-	case DFS_FCC_REG:
+	case DFS_FCC_REGION:
 		return NL80211_DFS_FCC;
-	case DFS_ETSI_REG:
+	case DFS_ETSI_REGION:
 		return NL80211_DFS_ETSI;
-	case DFS_MKK_REG:
+	case DFS_MKK_REGION:
 		return NL80211_DFS_JP;
 	default:
 		return NL80211_DFS_UNSET;
