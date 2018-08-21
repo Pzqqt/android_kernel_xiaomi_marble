@@ -1581,23 +1581,23 @@ static void reg_init_channel_map(enum dfs_reg dfs_region)
 static void reg_init_channel_map(enum dfs_reg dfs_region)
 {
 	switch (dfs_region) {
-	case DFS_UNINIT_REG:
-	case DFS_UNDEF_REG:
+	case DFS_UNINIT_REGION:
+	case DFS_UNDEF_REGION:
 		channel_map = channel_map_global;
 		break;
-	case DFS_FCC_REG:
+	case DFS_FCC_REGION:
 		channel_map = channel_map_us;
 		break;
-	case DFS_ETSI_REG:
+	case DFS_ETSI_REGION:
 		channel_map = channel_map_eu;
 		break;
-	case DFS_MKK_REG:
+	case DFS_MKK_REGION:
 		channel_map = channel_map_jp;
 		break;
-	case DFS_CN_REG:
+	case DFS_CN_REGION:
 		channel_map = channel_map_china;
 		break;
-	case DFS_KR_REG:
+	case DFS_KR_REGION:
 		channel_map = channel_map_eu;
 		break;
 	}

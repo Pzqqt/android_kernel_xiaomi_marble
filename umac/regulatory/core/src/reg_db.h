@@ -49,22 +49,22 @@
 
 /**
  * enum dfs_reg - DFS region
- * @DFS_UNINIT_REG: un-initialized region
- * @DFS_FCC_REG: FCC region
- * @DFS_ETSI_REG: ETSI region
- * @DFS_MKK_REG: MKK region
- * @DFS_CN_REG: China region
- * @DFS_KR_REG: Korea region
- * @DFS_UNDEF_REG: Undefined region
+ * @DFS_UNINIT_REGION: un-initialized region
+ * @DFS_FCC_REGION: FCC region
+ * @DFS_ETSI_REGION: ETSI region
+ * @DFS_MKK_REGION: MKK region
+ * @DFS_CN_REGION: China region
+ * @DFS_KR_REGION: Korea region
+ * @DFS_UNDEF_REGION: Undefined region
  */
 enum dfs_reg {
-	DFS_UNINIT_REG = 0,
-	DFS_FCC_REG = 1,
-	DFS_ETSI_REG = 2,
-	DFS_MKK_REG = 3,
-	DFS_CN_REG = 4,
-	DFS_KR_REG = 5,
-	DFS_UNDEF_REG = 0xFFFF,
+	DFS_UNINIT_REGION = 0,
+	DFS_FCC_REGION = 1,
+	DFS_ETSI_REGION = 2,
+	DFS_MKK_REGION = 3,
+	DFS_CN_REGION = 4,
+	DFS_KR_REGION = 5,
+	DFS_UNDEF_REGION = 0xFFFF,
 };
 
 /**
