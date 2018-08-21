@@ -1406,7 +1406,10 @@ target_if_consume_spectral_report_gen3(
 	report_len = (fft_hdr_length + 8);
 
 	fft_bin_len = (fft_hdr_length - 16);
-	fft_bin_len >>= 2;
+	/* Divide fft bin length by 4 if fftbin_size_war is enabled */
+	if (spectral->fftbin_size_war) {
+		fft_bin_len >>= 2;
+	}
 	if ((spectral->params.ss_rpt_mode == 2) &&
 			spectral->inband_fftbin_size_adj) {
 		fft_bin_len >>= 1;
@@ -1526,7 +1529,10 @@ target_if_consume_spectral_report_gen3(
 		report_len     = (fft_hdr_length + 8);
 
 		fft_bin_len    = (fft_hdr_length - 16);
-		fft_bin_len >>= 2;
+		/* Divide fft bin length by 4 if fftbin_size_war is enabled */
+		if (spectral->fftbin_size_war) {
+			fft_bin_len >>= 2;
+		}
 		if ((spectral->params.ss_rpt_mode == 2) &&
 				spectral->inband_fftbin_size_adj) {
 			fft_bin_len >>= 1;
