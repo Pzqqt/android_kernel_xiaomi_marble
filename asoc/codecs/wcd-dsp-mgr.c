@@ -802,6 +802,7 @@ static int wdsp_ssr_handler(struct wdsp_mgr_priv *wdsp, void *arg,
 		__wdsp_clr_ready_locked(wdsp, WDSP_SSR_STATUS_WDSP_READY);
 		wdsp_broadcast_event_downseq(wdsp, WDSP_EVENT_PRE_SHUTDOWN,
 					     NULL);
+		reinit_completion(&wdsp->ready_compl);
 		schedule_work(&wdsp->ssr_work);
 		break;
 
@@ -818,7 +819,7 @@ static int wdsp_ssr_handler(struct wdsp_mgr_priv *wdsp, void *arg,
 						     WDSP_EVENT_PRE_SHUTDOWN,
 						     NULL);
 		}
-
+		reinit_completion(&wdsp->ready_compl);
 		schedule_work(&wdsp->ssr_work);
 		break;
 
