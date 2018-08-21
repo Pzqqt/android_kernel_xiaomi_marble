@@ -22,6 +22,7 @@
 #ifndef _WLAN_CRYPTO_GLOBAL_API_H_
 #define _WLAN_CRYPTO_GLOBAL_API_H_
 
+#include "wlan_crypto_global_def.h"
 
 /**
  * wlan_crypto_set_vdev_param - called by ucfg to set crypto param
