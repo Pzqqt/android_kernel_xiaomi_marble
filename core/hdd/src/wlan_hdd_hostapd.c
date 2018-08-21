@@ -5578,6 +5578,23 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	if (policy_mgr_is_sap_mandatory_chan_list_enabled(hdd_ctx->hdd_psoc)) {
+		if (WLAN_REG_IS_5GHZ_CH(channel)) {
+			hdd_debug("channel %hu, sap mandatory chan list enabled",
+			          channel);
+			if (!policy_mgr_get_sap_mandatory_chan_list_len(
+							hdd_ctx->hdd_psoc))
+				policy_mgr_init_sap_mandatory_2g_chan(
+							hdd_ctx->hdd_psoc);
+
+			policy_mgr_add_sap_mandatory_chan(hdd_ctx->hdd_psoc,
+							  channel);
+		} else {
+			policy_mgr_init_sap_mandatory_2g_chan(
+							hdd_ctx->hdd_psoc);
+		}
+	}
+
 	adapter->session.ap.sap_config.ch_params.center_freq_seg0 =
 				cds_freq_to_chan(params->chandef.center_freq1);
 	adapter->session.ap.sap_config.ch_params.center_freq_seg1 =
