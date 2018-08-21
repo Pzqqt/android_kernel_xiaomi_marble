@@ -90,10 +90,6 @@ struct ol_txrx_peer_t *ol_txrx_peer_find_by_id(struct ol_txrx_pdev_t *pdev,
 	return NULL;
 }
 
-unsigned int
-ol_txrx_peer_find_hash_index(struct ol_txrx_pdev_t *pdev,
-			     union ol_txrx_align_mac_addr_t *mac_addr);
-
 void
 ol_txrx_peer_find_hash_add(struct ol_txrx_pdev_t *pdev,
 			   struct ol_txrx_peer_t *peer);

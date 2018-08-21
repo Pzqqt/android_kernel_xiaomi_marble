@@ -145,7 +145,7 @@ static void ol_txrx_peer_find_hash_detach(struct ol_txrx_pdev_t *pdev)
 	qdf_mem_free(pdev->peer_hash.bins);
 }
 
-unsigned int
+static inline unsigned int
 ol_txrx_peer_find_hash_index(struct ol_txrx_pdev_t *pdev,
 			     union ol_txrx_align_mac_addr_t *mac_addr)
 {
