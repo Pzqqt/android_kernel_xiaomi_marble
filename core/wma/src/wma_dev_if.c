@@ -906,7 +906,7 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 			add_bss->status = QDF_STATUS_E_NOMEM;
 			goto send_fail_resp;
 		}
-		bcn->buf = qdf_nbuf_alloc(NULL, WMA_BCN_BUF_MAX_SIZE, 0,
+		bcn->buf = qdf_nbuf_alloc(NULL, SIR_MAX_BEACON_SIZE, 0,
 					  sizeof(uint32_t), 0);
 		if (!bcn->buf) {
 			WMA_LOGE("%s: No memory allocated for beacon buffer",
