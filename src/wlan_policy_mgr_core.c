@@ -2981,6 +2981,8 @@ void  policy_mgr_init_sap_mandatory_2g_chan(struct wlan_objmgr_psoc *psoc)
 		policy_mgr_err("Error in getting valid channels");
 		return;
 	}
+	pm_ctx->sap_mandatory_channels_len = 0;
+
 	for (i = 0; i < len; i++) {
 		if (WLAN_REG_IS_24GHZ_CH(chan_list[i])) {
 			policy_mgr_debug("Add chan %hu to mandatory list",
