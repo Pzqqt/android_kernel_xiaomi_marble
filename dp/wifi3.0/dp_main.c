@@ -7949,8 +7949,6 @@ static struct cdp_peer_ops dp_ops_peer = {
 	.peer_get_peer_mac_addr = dp_peer_get_peer_mac_addr,
 	.get_vdev_for_peer = dp_get_vdev_for_peer,
 	.get_peer_state = dp_get_peer_state,
-	.get_last_mgmt_timestamp = dp_get_last_mgmt_timestamp,
-	.update_last_mgmt_timestamp = dp_update_last_mgmt_timestamp,
 };
 #endif
 
