@@ -28,10 +28,15 @@
 
 static QDF_STATUS
 target_if_action_oui_send_req(struct wlan_objmgr_psoc *psoc,
-		struct action_oui_request *req)
+			      struct action_oui_request *req)
 {
-	return wmi_unified_send_action_oui_cmd(GET_WMI_HDL_FROM_PSOC(psoc),
-						req);
+	void *wmi_hdl;
+
+	wmi_hdl = GET_WMI_HDL_FROM_PSOC(psoc);
+	if (!wmi_hdl)
+		return QDF_STATUS_E_FAILURE;
+
+	return wmi_unified_send_action_oui_cmd(wmi_hdl, req);
 }
 
 void
