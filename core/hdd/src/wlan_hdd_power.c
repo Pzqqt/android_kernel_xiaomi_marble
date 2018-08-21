@@ -1312,7 +1312,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hdd_err("HDD context is Null");
-		goto err_re_init;
+		goto err_ctx_null;
 	}
 	bug_on_reinit_failure = hdd_ctx->config->bug_on_reinit_failure;
 
@@ -1356,23 +1356,23 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	hdd_send_default_scan_ies(hdd_ctx);
 	hdd_info("WLAN host driver reinitiation completed!");
-	goto success;
 
-err_re_init:
-	hdd_bus_bandwidth_deinit(hdd_ctx);
-	qdf_dp_trace_deinit();
-	/* Allow the phone to go to sleep */
-	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
-	if (bug_on_reinit_failure)
-		QDF_BUG(0);
-	return -EPERM;
-
-success:
 	if (hdd_ctx->config->sap_internal_restart)
 		hdd_ssr_restart_sap(hdd_ctx);
 
 	hdd_wlan_ssr_reinit_event();
 	return QDF_STATUS_SUCCESS;
+
+err_re_init:
+	hdd_bus_bandwidth_deinit(hdd_ctx);
+	qdf_dp_trace_deinit();
+
+err_ctx_null:
+	/* Allow the phone to go to sleep */
+	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
+	if (bug_on_reinit_failure)
+		QDF_BUG(0);
+	return -EPERM;
 }
 
 int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
