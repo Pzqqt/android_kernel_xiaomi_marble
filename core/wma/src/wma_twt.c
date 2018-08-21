@@ -33,6 +33,10 @@ void wma_send_twt_enable_cmd(uint32_t pdev_id, uint32_t congestion_timeout)
 	struct wmi_twt_enable_param twt_enable_params = {0};
 	int32_t ret;
 
+	if (!wma) {
+		WMA_LOGE("Invalid WMA context, enable TWT failed");
+		return;
+	}
 	twt_enable_params.pdev_id = pdev_id;
 	twt_enable_params.sta_cong_timer_ms = congestion_timeout;
 	ret = wmi_unified_twt_enable_cmd(wma->wmi_handle, &twt_enable_params);
