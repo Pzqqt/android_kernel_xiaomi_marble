@@ -3262,8 +3262,10 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		hdd_debug("check for SAP restart");
 		policy_mgr_check_concurrent_intf_and_restart_sap(
 			hdd_ctx->hdd_psoc);
-		policy_mgr_checkn_update_hw_mode_single_mac_mode
-			(hdd_ctx->hdd_psoc, roam_info->pBssDesc->channelId);
+		if (roam_info->pBssDesc)
+			policy_mgr_checkn_update_hw_mode_single_mac_mode
+				(hdd_ctx->hdd_psoc,
+				 roam_info->pBssDesc->channelId);
 	} else {
 		bool connect_timeout = false;
 		/* do we need to change the HW mode */
