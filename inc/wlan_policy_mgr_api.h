@@ -2444,19 +2444,37 @@ QDF_STATUS policy_mgr_register_mode_change_cb(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS policy_mgr_deregister_mode_change_cb(struct wlan_objmgr_psoc *psoc);
 
 /**
- * policy_mgr_allow_sap_go_concurrency() - check whether multiple SAP/GO
- * interfaces are allowed
+ * policy_mgr_allow_sap_go_concurrency() - check whether SAP/GO concurrency is
+ * allowed.
  * @psoc: pointer to soc
- * @policy_mgr_con_mode: operating mode of the new interface
- * @channel: operating channel of the new interface
- * This function checks whether second SAP/GO interface is allowed on the same
- * MAC.
+ * @policy_mgr_con_mode: operating mode of interface to be checked
+ * @channel: new operating channel of the interface to be checked
+ * @vdev_id: vdev id of the connection to be checked, 0xff for new connection
+ *
+ * Checks whether new channel SAP/GO can co-exist with the channel of existing
+ * SAP/GO connection. This API mainly used for two purposes:
+ *
+ * 1) When new GO/SAP session is coming up and needs to check if this session's
+ * channel can co-exist with existing existing GO/SAP sessions. For example,
+ * when single radio platform comes, MCC for SAP/GO+SAP/GO is not supported, in
+ * such case this API should prevent bringing the second connection.
+ *
+ * 2) There is already existing SAP+GO combination but due to upper layer
+ * notifying LTE-COEX event or sending command to move one of the connections
+ * to different channel. In such cases before moving existing connection to new
+ * channel, check if new channel can co-exist with the other existing
+ * connection. For example, one SAP1 is on channel-6 and second SAP2 is on
+ * channel-36 and lets say they are doing DBS, and lets say upper layer sends
+ * LTE-COEX to move SAP1 from channel-6 to channel-149. In this case, SAP1 and
+ * SAP2 will end up doing MCC which may not be desirable result. such cases
+ * will be prevented with this API.
  *
  * Return: true or false
  */
 bool policy_mgr_allow_sap_go_concurrency(struct wlan_objmgr_psoc *psoc,
 					 enum policy_mgr_con_mode mode,
-					 uint8_t channel);
+					 uint8_t channel,
+					 uint32_t vdev_id);
 
 /**
  * policy_mgr_dual_beacon_on_single_mac_scc_capable() - get capability that
