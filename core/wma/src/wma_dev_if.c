@@ -2375,6 +2375,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 			status = QDF_STATUS_E_FAILURE;
 			wmi_unified_vdev_delete_send(wma_handle->wmi_handle,
 						     self_sta_req->session_id);
+			goto end;
 		}
 	} else if (self_sta_req->type == WMI_VDEV_TYPE_STA) {
 		obj_peer = wma_create_objmgr_peer(wma_handle,
