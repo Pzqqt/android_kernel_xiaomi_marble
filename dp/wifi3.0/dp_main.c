@@ -1780,8 +1780,8 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 
 fail:
 	if (soc->wbm_idle_link_ring.hal_srng) {
-		dp_srng_cleanup(soc->hal_soc, &soc->wbm_idle_link_ring,
-			WBM_IDLE_LINK, 0);
+		dp_srng_cleanup(soc, &soc->wbm_idle_link_ring,
+				WBM_IDLE_LINK, 0);
 	}
 
 	for (i = 0; i < MAX_IDLE_SCATTER_BUFS; i++) {

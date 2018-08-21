@@ -105,17 +105,20 @@ void dp_reo_status_ring_handler(struct dp_soc *soc)
 		switch (tlv) {
 		case HAL_REO_QUEUE_STATS_STATUS_TLV:
 			hal_reo_queue_stats_status(reo_desc,
-					   &reo_status.queue_status);
+					   &reo_status.queue_status,
+					   soc->hal_soc);
 			num = reo_status.queue_status.header.cmd_num;
 			break;
 		case HAL_REO_FLUSH_QUEUE_STATUS_TLV:
 			hal_reo_flush_queue_status(reo_desc,
-						   &reo_status.fl_queue_status);
+						   &reo_status.fl_queue_status,
+						   soc->hal_soc);
 			num = reo_status.fl_queue_status.header.cmd_num;
 			break;
 		case HAL_REO_FLUSH_CACHE_STATUS_TLV:
 			hal_reo_flush_cache_status(reo_desc, soc->hal_soc,
-						   &reo_status.fl_cache_status);
+						   &reo_status.fl_cache_status,
+						   soc->hal_soc);
 			num = reo_status.fl_cache_status.header.cmd_num;
 			break;
 		case HAL_REO_UNBLK_CACHE_STATUS_TLV:
@@ -125,17 +128,20 @@ void dp_reo_status_ring_handler(struct dp_soc *soc)
 			break;
 		case HAL_REO_TIMOUT_LIST_STATUS_TLV:
 			hal_reo_flush_timeout_list_status(reo_desc,
-						&reo_status.fl_timeout_status);
+						&reo_status.fl_timeout_status,
+						soc->hal_soc);
 			num = reo_status.fl_timeout_status.header.cmd_num;
 			break;
 		case HAL_REO_DESC_THRES_STATUS_TLV:
 			hal_reo_desc_thres_reached_status(reo_desc,
-						&reo_status.thres_status);
+						&reo_status.thres_status,
+						soc->hal_soc);
 			num = reo_status.thres_status.header.cmd_num;
 			break;
 		case HAL_REO_UPDATE_RX_QUEUE_STATUS_TLV:
 			hal_reo_rx_update_queue_status(reo_desc,
-						&reo_status.rx_queue_status);
+						&reo_status.rx_queue_status,
+						soc->hal_soc);
 			num = reo_status.rx_queue_status.header.cmd_num;
 			break;
 		default:

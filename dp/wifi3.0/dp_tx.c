@@ -912,7 +912,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	hal_tx_desc_set_fw_metadata(hal_tx_desc_cached, fw_metadata);
 	hal_tx_desc_set_buf_addr(hal_tx_desc_cached,
-			dma_addr , bm_id, tx_desc->id, type);
+					dma_addr, bm_id, tx_desc->id,
+					type, soc->hal_soc);
 
 	if (!dp_tx_is_desc_id_valid(soc, tx_desc->id))
 		return QDF_STATUS_E_RESOURCES;
@@ -1244,7 +1245,7 @@ static void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
 	struct hal_tx_completion_status ts = {0};
 	qdf_nbuf_t nbuf = tx_desc->nbuf;
 
-	hal_tx_comp_get_status(&tx_desc->comp, &ts);
+	hal_tx_comp_get_status(&tx_desc->comp, &ts, vdev->pdev->soc->hal_soc);
 	if (vdev->tx_non_std_data_callback.func) {
 		qdf_nbuf_set_next(tx_desc->nbuf, NULL);
 		vdev->tx_non_std_data_callback.func(
@@ -2858,7 +2859,7 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	struct ether_header *eh =
 		(struct ether_header *)qdf_nbuf_data(tx_desc->nbuf);
 
-	hal_tx_comp_get_status(&tx_desc->comp, &ts);
+	hal_tx_comp_get_status(&tx_desc->comp, &ts, vdev->pdev->soc->hal_soc);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				"-------------------- \n"
@@ -2953,7 +2954,7 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 	desc = comp_head;
 
 	while (desc) {
-		hal_tx_comp_get_status(&desc->comp, &ts);
+		hal_tx_comp_get_status(&desc->comp, &ts, soc->hal_soc);
 		peer = dp_peer_find_by_id(soc, ts.peer_id);
 		length = qdf_nbuf_len(desc->nbuf);
 

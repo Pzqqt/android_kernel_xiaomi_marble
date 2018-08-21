@@ -271,8 +271,8 @@ static uint32_t dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
 	link_desc_va = dp_rx_cookie_2_link_desc_va(soc, &buf_info);
 
 	/* No UNMAP required -- this is "malloc_consistent" memory */
-	hal_rx_msdu_list_get(link_desc_va, &msdu_list,
-		&mpdu_desc_info->msdu_count);
+	hal_rx_msdu_list_get(soc->hal_soc, link_desc_va, &msdu_list,
+			     &mpdu_desc_info->msdu_count);
 
 	for (i = 0; (i < mpdu_desc_info->msdu_count) && quota--; i++) {
 		struct dp_rx_desc *rx_desc =
@@ -1013,7 +1013,8 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		hal_rx_reo_buf_paddr_get(ring_desc, &hbi);
 		link_desc_va = dp_rx_cookie_2_link_desc_va(soc, &hbi);
-		hal_rx_msdu_list_get(link_desc_va, &msdu_list, &num_msdus);
+		hal_rx_msdu_list_get(soc->hal_soc, link_desc_va, &msdu_list,
+				     &num_msdus);
 
 		if (qdf_unlikely((msdu_list.rbm[0] != DP_WBM2SW_RBM) &&
 				(msdu_list.rbm[0] !=
@@ -1394,7 +1395,8 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		qdf_assert(rx_msdu_link_desc);
 
-		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, &num_msdus);
+		hal_rx_msdu_list_get(soc->hal_soc, rx_msdu_link_desc,
+				     &msdu_list, &num_msdus);
 
 		if (msdu_list.sw_cookie[0] != HAL_RX_COOKIE_SPECIAL) {
 			/* if the msdus belongs to NSS offloaded radio &&

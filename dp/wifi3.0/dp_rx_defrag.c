@@ -996,7 +996,7 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 	msdu_desc_info = (uint8_t *)msdu0 +
 		RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET;
 
-	dst_ind = hal_rx_msdu_reo_dst_ind_get(link_desc_va);
+	dst_ind = hal_rx_msdu_reo_dst_ind_get(soc->hal_soc, link_desc_va);
 
 	qdf_mem_zero(msdu_desc_info, sizeof(struct rx_msdu_desc_info));
 
@@ -1630,8 +1630,8 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 	}
 
 	/* Get msdu_list for the given MPDU */
-	hal_rx_msdu_list_get(link_desc_va, &msdu_list,
-		&mpdu_desc_info->msdu_count);
+	hal_rx_msdu_list_get(soc->hal_soc, link_desc_va, &msdu_list,
+			     &mpdu_desc_info->msdu_count);
 
 	/* Process all MSDUs in the current MPDU */
 	for (idx = 0; (idx < mpdu_desc_info->msdu_count) && quota--; idx++) {

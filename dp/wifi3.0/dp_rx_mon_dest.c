@@ -188,7 +188,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		qdf_assert(rx_msdu_link_desc);
 
-		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, &num_msdus);
+		hal_rx_msdu_list_get(soc->hal_soc, rx_msdu_link_desc,
+				     &msdu_list, &num_msdus);
 
 		for (i = 0; i < num_msdus; i++) {
 			uint32_t l2_hdr_offset;
