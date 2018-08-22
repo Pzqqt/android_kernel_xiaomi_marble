@@ -1441,7 +1441,7 @@ IE RSN (EID_RSN)                          // 7.3.2.25
 
 IE RSNOpaque (EID_RSN)                    // 7.3.2.25
 {
-    data[ 6..253 ];
+    data[ 0..253 ];
 }
 
 IE WAPI (EID_WAPI)                          // 7.3.2.25
