@@ -15485,6 +15485,27 @@ csr_check_vendor_ap_3_present(tpAniSirGlobal mac_ctx, uint8_t *ie,
 }
 
 /**
+ * csr_enable_twt() - Check if its allowed to enable twt for this session
+ * @ie: pointer to beacon/probe resp ie's
+ *
+ * TWT is allowed only if device is in 11ax mode or if QCN ie present.
+ *
+ * Return: true or flase
+ */
+static bool csr_enable_twt(tDot11fBeaconIEs *ie)
+{
+	if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
+		return true;
+
+	if (!ie) {
+		sme_debug("Beacon ie buffer is null");
+		return false;
+	}
+
+	return ie->QCN_IE.present;
+}
+
+/**
  * The communication between HDD and LIM is thru mailbox (MB).
  * Both sides will access the data structure "tSirSmeJoinReq".
  * The rule is, while the components of "tSirSmeJoinReq" can be accessed in the
@@ -16374,6 +16395,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			csr_join_req->enable_bcast_probe_rsp =
 				pMac->roam.configParam.enable_bcast_probe_rsp;
 
+		csr_join_req->enable_session_twt_support = csr_enable_twt(pIes);
 		status = umac_send_mb_message_to_mac(csr_join_req);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			/*

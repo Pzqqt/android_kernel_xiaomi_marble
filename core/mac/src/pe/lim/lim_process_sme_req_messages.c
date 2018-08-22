@@ -1336,7 +1336,8 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 						 bss_desc->channelId);
 		}
 		session->max_amsdu_num = sme_join_req->max_amsdu_num;
-
+		session->enable_session_twt_support =
+			sme_join_req->enable_session_twt_support;
 		/*
 		 * Store Session related parameters
 		 */

@@ -6307,12 +6307,15 @@ void lim_set_stads_rtt_cap(tpDphHashNode sta_ds, struct s_ext_cap *ext_cap,
 #ifdef WLAN_SUPPORT_TWT
 void lim_set_peer_twt_cap(tpPESession session, struct s_ext_cap *ext_cap)
 {
-	session->peer_twt_requestor = ext_cap->twt_requestor_support;
-	session->peer_twt_responder = ext_cap->twt_responder_support;
+	if (session->enable_session_twt_support) {
+		session->peer_twt_requestor = ext_cap->twt_requestor_support;
+		session->peer_twt_responder = ext_cap->twt_responder_support;
+	}
 
-	pe_debug("Ext Cap peer TWT requestor: %d, responder: %d",
+	pe_debug("Ext Cap peer TWT requestor: %d, responder: %d, enable_twt %d",
 		 ext_cap->twt_requestor_support,
-		 ext_cap->twt_responder_support);
+		 ext_cap->twt_responder_support,
+		 session->enable_session_twt_support);
 }
 #endif
 

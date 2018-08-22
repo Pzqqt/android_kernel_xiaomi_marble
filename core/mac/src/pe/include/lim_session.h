@@ -560,6 +560,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t peer_twt_requestor;
 	uint8_t peer_twt_responder;
 #endif
+	bool enable_session_twt_support;
 } tPESession, *tpPESession;
 
 struct session_params {

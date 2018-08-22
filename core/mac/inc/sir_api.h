@@ -1084,6 +1084,7 @@ typedef struct sSirSmeJoinReq {
 	uint8_t vdev_nss;
 	uint8_t nss;
 	bool nss_forced_1x1;
+	bool enable_session_twt_support;
 	tSirBssDescription bssDescription;
 	/*
 	 * WARNING: Pls make bssDescription as last variable in struct
