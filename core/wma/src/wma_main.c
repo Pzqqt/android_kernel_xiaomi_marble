@@ -5605,6 +5605,11 @@ static void wma_set_pmo_caps(struct wlan_objmgr_psoc *psoc)
 	struct pmo_device_caps caps;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s: wma handler is null", __func__);
+		return;
+	}
+
 	caps.arp_ns_offload =
 		wmi_service_enabled(wma->wmi_handle, wmi_service_arpns_offload);
 	caps.apf =
