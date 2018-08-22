@@ -1612,6 +1612,8 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 {
 	int tid;
 	uint32_t tid_delete_mask = 0;
+
+	DP_TRACE(INFO_HIGH, FL("Remove tids for peer: %pK"), peer);
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 

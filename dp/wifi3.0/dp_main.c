@@ -7006,17 +7006,21 @@ static void dp_print_per_ring_stats(struct dp_soc *soc)
 	uint16_t core;
 	uint64_t total_packets;
 
-	DP_TRACE(FATAL, "Reo packets per ring:");
+	DP_TRACE_STATS(INFO_HIGH, "Reo packets per ring:");
 	for (ring = 0; ring < MAX_REO_DEST_RINGS; ring++) {
 		total_packets = 0;
-		DP_TRACE(FATAL, "Packets on ring %u:", ring);
+		DP_TRACE_STATS(INFO_HIGH,
+			       "Packets on ring %u:", ring);
 		for (core = 0; core < NR_CPUS; core++) {
-			DP_TRACE(FATAL, "Packets arriving on core %u: %llu",
-				core, soc->stats.rx.ring_packets[core][ring]);
+			DP_TRACE_STATS(INFO_HIGH,
+				       "Packets arriving on core %u: %llu",
+				       core,
+				       soc->stats.rx.ring_packets[core][ring]);
 			total_packets += soc->stats.rx.ring_packets[core][ring];
 		}
-		DP_TRACE(FATAL, "Total packets on ring %u: %llu",
-			ring, total_packets);
+		DP_TRACE_STATS(INFO_HIGH,
+			       "Total packets on ring %u: %llu",
+			       ring, total_packets);
 	}
 }
 
@@ -7033,145 +7037,164 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 	struct dp_pdev *pdev;
 	uint8_t i;
 
+	if (!soc) {
+		DP_TRACE(ERROR, "%s: Invalid access",
+			 __func__);
+		return;
+	}
+
 	for (loop_pdev = 0; loop_pdev < soc->pdev_count; loop_pdev++) {
 
 		pdev = soc->pdev_list[loop_pdev];
 		dp_aggregate_pdev_stats(pdev);
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"Tx path Statistics:");
+		DP_TRACE_STATS(INFO_HIGH, "Tx path Statistics:");
+		DP_TRACE_STATS(INFO_HIGH, "from stack: %u msdus (%llu bytes)",
+			       pdev->stats.tx_i.rcvd.num,
+			       pdev->stats.tx_i.rcvd.bytes);
+		DP_TRACE_STATS(INFO_HIGH,
+			       "processed from host: %u msdus (%llu bytes)",
+			       pdev->stats.tx_i.processed.num,
+			       pdev->stats.tx_i.processed.bytes);
+		DP_TRACE_STATS(INFO_HIGH,
+			       "successfully transmitted: %u msdus (%llu bytes)",
+			       pdev->stats.tx.tx_success.num,
+			       pdev->stats.tx.tx_success.bytes);
 
-		DP_TRACE(FATAL, "from stack: %u msdus (%llu bytes)",
-			pdev->stats.tx_i.rcvd.num,
-			pdev->stats.tx_i.rcvd.bytes);
-		DP_TRACE(FATAL, "processed from host: %u msdus (%llu bytes)",
-			pdev->stats.tx_i.processed.num,
-			pdev->stats.tx_i.processed.bytes);
-		DP_TRACE(FATAL, "successfully transmitted: %u msdus (%llu bytes)",
-			pdev->stats.tx.tx_success.num,
-			pdev->stats.tx.tx_success.bytes);
+		DP_TRACE_STATS(INFO_HIGH, "Dropped in host:");
+		DP_TRACE_STATS(INFO_HIGH, "Total packets dropped: %u,",
+			       pdev->stats.tx_i.dropped.dropped_pkt.num);
+		DP_TRACE_STATS(INFO_HIGH, "Descriptor not available: %u",
+			       pdev->stats.tx_i.dropped.desc_na.num);
+		DP_TRACE_STATS(INFO_HIGH, "Ring full: %u",
+			       pdev->stats.tx_i.dropped.ring_full);
+		DP_TRACE_STATS(INFO_HIGH, "Enqueue fail: %u",
+			       pdev->stats.tx_i.dropped.enqueue_fail);
+		DP_TRACE_STATS(INFO_HIGH, "DMA Error: %u",
+			       pdev->stats.tx_i.dropped.dma_error);
 
-		DP_TRACE(FATAL, "Dropped in host:");
-		DP_TRACE(FATAL, "Total packets dropped: %u,",
-			pdev->stats.tx_i.dropped.dropped_pkt.num);
-		DP_TRACE(FATAL, "Descriptor not available: %u",
-			pdev->stats.tx_i.dropped.desc_na.num);
-		DP_TRACE(FATAL, "Ring full: %u",
-			pdev->stats.tx_i.dropped.ring_full);
-		DP_TRACE(FATAL, "Enqueue fail: %u",
-			pdev->stats.tx_i.dropped.enqueue_fail);
-		DP_TRACE(FATAL, "DMA Error: %u",
-			pdev->stats.tx_i.dropped.dma_error);
+		DP_TRACE_STATS(INFO_HIGH, "Dropped in hardware:");
+		DP_TRACE_STATS(INFO_HIGH, "total packets dropped: %u",
+			       pdev->stats.tx.tx_failed);
+		DP_TRACE_STATS(INFO_HIGH, "mpdu age out: %u",
+			       pdev->stats.tx.dropped.age_out);
+		DP_TRACE_STATS(INFO_HIGH, "firmware removed: %u",
+			       pdev->stats.tx.dropped.fw_rem);
+		DP_TRACE_STATS(INFO_HIGH, "firmware removed tx: %u",
+			       pdev->stats.tx.dropped.fw_rem_tx);
+		DP_TRACE_STATS(INFO_HIGH, "firmware removed notx %u",
+			       pdev->stats.tx.dropped.fw_rem_notx);
+		DP_TRACE_STATS(INFO_HIGH, "peer_invalid: %u",
+			       pdev->soc->stats.tx.tx_invalid_peer.num);
 
-		DP_TRACE(FATAL, "Dropped in hardware:");
-		DP_TRACE(FATAL, "total packets dropped: %u",
-			pdev->stats.tx.tx_failed);
-		DP_TRACE(FATAL, "mpdu age out: %u",
-			pdev->stats.tx.dropped.age_out);
-		DP_TRACE(FATAL, "firmware removed: %u",
-			pdev->stats.tx.dropped.fw_rem);
-		DP_TRACE(FATAL, "firmware removed tx: %u",
-			pdev->stats.tx.dropped.fw_rem_tx);
-		DP_TRACE(FATAL, "firmware removed notx %u",
-			pdev->stats.tx.dropped.fw_rem_notx);
-		DP_TRACE(FATAL, "peer_invalid: %u",
-			pdev->soc->stats.tx.tx_invalid_peer.num);
+		DP_TRACE_STATS(INFO_HIGH, "Tx packets sent per interrupt:");
+		DP_TRACE_STATS(INFO_HIGH, "Single Packet: %u",
+			       pdev->stats.tx_comp_histogram.pkts_1);
+		DP_TRACE_STATS(INFO_HIGH, "2-20 Packets:  %u",
+			       pdev->stats.tx_comp_histogram.pkts_2_20);
+		DP_TRACE_STATS(INFO_HIGH, "21-40 Packets: %u",
+			       pdev->stats.tx_comp_histogram.pkts_21_40);
+		DP_TRACE_STATS(INFO_HIGH, "41-60 Packets: %u",
+			       pdev->stats.tx_comp_histogram.pkts_41_60);
+		DP_TRACE_STATS(INFO_HIGH, "61-80 Packets: %u",
+			       pdev->stats.tx_comp_histogram.pkts_61_80);
+		DP_TRACE_STATS(INFO_HIGH, "81-100 Packets: %u",
+			       pdev->stats.tx_comp_histogram.pkts_81_100);
+		DP_TRACE_STATS(INFO_HIGH, "101-200 Packets: %u",
+			       pdev->stats.tx_comp_histogram.pkts_101_200);
+		DP_TRACE_STATS(INFO_HIGH, "   201+ Packets: %u",
+			       pdev->stats.tx_comp_histogram.pkts_201_plus);
 
+		DP_TRACE_STATS(INFO_HIGH, "Rx path statistics");
 
-		DP_TRACE(FATAL, "Tx packets sent per interrupt:");
-		DP_TRACE(FATAL, "Single Packet: %u",
-			pdev->stats.tx_comp_histogram.pkts_1);
-		DP_TRACE(FATAL, "2-20 Packets:  %u",
-			pdev->stats.tx_comp_histogram.pkts_2_20);
-		DP_TRACE(FATAL, "21-40 Packets: %u",
-			pdev->stats.tx_comp_histogram.pkts_21_40);
-		DP_TRACE(FATAL, "41-60 Packets: %u",
-			pdev->stats.tx_comp_histogram.pkts_41_60);
-		DP_TRACE(FATAL, "61-80 Packets: %u",
-			pdev->stats.tx_comp_histogram.pkts_61_80);
-		DP_TRACE(FATAL, "81-100 Packets: %u",
-			pdev->stats.tx_comp_histogram.pkts_81_100);
-		DP_TRACE(FATAL, "101-200 Packets: %u",
-			pdev->stats.tx_comp_histogram.pkts_101_200);
-		DP_TRACE(FATAL, "   201+ Packets: %u",
-			pdev->stats.tx_comp_histogram.pkts_201_plus);
-
-		DP_TRACE(FATAL, "Rx path statistics");
-
-		DP_TRACE(FATAL, "delivered %u msdus ( %llu bytes),",
-			pdev->stats.rx.to_stack.num,
-			pdev->stats.rx.to_stack.bytes);
+		DP_TRACE_STATS(INFO_HIGH,
+			       "delivered %u msdus ( %llu bytes),",
+			       pdev->stats.rx.to_stack.num,
+			       pdev->stats.rx.to_stack.bytes);
 		for (i = 0; i <  CDP_MAX_RX_RINGS; i++)
-			DP_TRACE(FATAL, "received on reo[%d] %u msdus ( %llu bytes),",
-					i, pdev->stats.rx.rcvd_reo[i].num,
-					pdev->stats.rx.rcvd_reo[i].bytes);
-		DP_TRACE(FATAL, "intra-bss packets %u msdus ( %llu bytes),",
-			pdev->stats.rx.intra_bss.pkts.num,
-			pdev->stats.rx.intra_bss.pkts.bytes);
-		DP_TRACE(FATAL, "intra-bss fails %u msdus ( %llu bytes),",
-			pdev->stats.rx.intra_bss.fail.num,
-			pdev->stats.rx.intra_bss.fail.bytes);
-		DP_TRACE(FATAL, "raw packets %u msdus ( %llu bytes),",
-			pdev->stats.rx.raw.num,
-			pdev->stats.rx.raw.bytes);
-		DP_TRACE(FATAL, "dropped: error %u msdus",
-			pdev->stats.rx.err.mic_err);
-		DP_TRACE(FATAL, "peer invalid %u",
-			pdev->soc->stats.rx.err.rx_invalid_peer.num);
+			DP_TRACE_STATS(INFO_HIGH,
+				       "received on reo[%d] %u msdus( %llu bytes),",
+				       i, pdev->stats.rx.rcvd_reo[i].num,
+				       pdev->stats.rx.rcvd_reo[i].bytes);
+		DP_TRACE_STATS(INFO_HIGH,
+			       "intra-bss packets %u msdus ( %llu bytes),",
+			       pdev->stats.rx.intra_bss.pkts.num,
+			       pdev->stats.rx.intra_bss.pkts.bytes);
+		DP_TRACE_STATS(INFO_HIGH,
+			       "intra-bss fails %u msdus ( %llu bytes),",
+			       pdev->stats.rx.intra_bss.fail.num,
+			       pdev->stats.rx.intra_bss.fail.bytes);
+		DP_TRACE_STATS(INFO_HIGH,
+			       "raw packets %u msdus ( %llu bytes),",
+			       pdev->stats.rx.raw.num,
+			       pdev->stats.rx.raw.bytes);
+		DP_TRACE_STATS(INFO_HIGH, "dropped: error %u msdus",
+			       pdev->stats.rx.err.mic_err);
+		DP_TRACE_STATS(INFO_HIGH, "peer invalid %u",
+			       pdev->soc->stats.rx.err.rx_invalid_peer.num);
 
-		DP_TRACE(FATAL, "Reo Statistics");
-		DP_TRACE(FATAL, "rbm error: %u msdus",
-			pdev->soc->stats.rx.err.invalid_rbm);
-		DP_TRACE(FATAL, "hal ring access fail: %u msdus",
-			pdev->soc->stats.rx.err.hal_ring_access_fail);
+		DP_TRACE_STATS(INFO_HIGH, "Reo Statistics");
+		DP_TRACE_STATS(INFO_HIGH, "rbm error: %u msdus",
+			       pdev->soc->stats.rx.err.invalid_rbm);
+		DP_TRACE_STATS(INFO_HIGH, "hal ring access fail: %u msdus",
+			       pdev->soc->stats.rx.err.hal_ring_access_fail);
 
 		for (error_code = 0; error_code < HAL_REO_ERR_MAX;
 				error_code++) {
 			if (!pdev->soc->stats.rx.err.reo_error[error_code])
 				continue;
-			DP_TRACE(FATAL, "Reo error number (%u): %u msdus",
-				error_code,
-				pdev->soc->stats.rx.err.reo_error[error_code]);
+			DP_TRACE_STATS(INFO_HIGH,
+				       "Reo error number (%u): %u msdus",
+				       error_code,
+				       pdev->soc->stats.rx.err
+				       .reo_error[error_code]);
 		}
 
 		for (error_code = 0; error_code < HAL_RXDMA_ERR_MAX;
 				error_code++) {
 			if (!pdev->soc->stats.rx.err.rxdma_error[error_code])
 				continue;
-			DP_TRACE(FATAL, "Rxdma error number (%u): %u msdus",
-				error_code,
-				pdev->soc->stats.rx.err
-				.rxdma_error[error_code]);
+			DP_TRACE_STATS(INFO_HIGH,
+				       "Rxdma error number (%u): %u msdus",
+				       error_code,
+				       pdev->soc->stats.rx.err
+				       .rxdma_error[error_code]);
 		}
 
-		DP_TRACE(FATAL, "Rx packets reaped per interrupt:");
-		DP_TRACE(FATAL, "Single Packet: %u",
-			 pdev->stats.rx_ind_histogram.pkts_1);
-		DP_TRACE(FATAL, "2-20 Packets:  %u",
-			 pdev->stats.rx_ind_histogram.pkts_2_20);
-		DP_TRACE(FATAL, "21-40 Packets: %u",
-			 pdev->stats.rx_ind_histogram.pkts_21_40);
-		DP_TRACE(FATAL, "41-60 Packets: %u",
-			 pdev->stats.rx_ind_histogram.pkts_41_60);
-		DP_TRACE(FATAL, "61-80 Packets: %u",
-			 pdev->stats.rx_ind_histogram.pkts_61_80);
-		DP_TRACE(FATAL, "81-100 Packets: %u",
-			 pdev->stats.rx_ind_histogram.pkts_81_100);
-		DP_TRACE(FATAL, "101-200 Packets: %u",
-			 pdev->stats.rx_ind_histogram.pkts_101_200);
-		DP_TRACE(FATAL, "   201+ Packets: %u",
-			 pdev->stats.rx_ind_histogram.pkts_201_plus);
+		DP_TRACE_STATS(INFO_HIGH, "Rx packets reaped per interrupt:");
+		DP_TRACE_STATS(INFO_HIGH, "Single Packet: %u",
+			       pdev->stats.rx_ind_histogram.pkts_1);
+		DP_TRACE_STATS(INFO_HIGH, "2-20 Packets:  %u",
+			       pdev->stats.rx_ind_histogram.pkts_2_20);
+		DP_TRACE_STATS(INFO_HIGH, "21-40 Packets: %u",
+			       pdev->stats.rx_ind_histogram.pkts_21_40);
+		DP_TRACE_STATS(INFO_HIGH, "41-60 Packets: %u",
+			       pdev->stats.rx_ind_histogram.pkts_41_60);
+		DP_TRACE_STATS(INFO_HIGH, "61-80 Packets: %u",
+			       pdev->stats.rx_ind_histogram.pkts_61_80);
+		DP_TRACE_STATS(INFO_HIGH, "81-100 Packets: %u",
+			       pdev->stats.rx_ind_histogram.pkts_81_100);
+		DP_TRACE_STATS(INFO_HIGH, "101-200 Packets: %u",
+			       pdev->stats.rx_ind_histogram.pkts_101_200);
+		DP_TRACE_STATS(INFO_HIGH, "   201+ Packets: %u",
+			       pdev->stats.rx_ind_histogram.pkts_201_plus);
 
-		DP_TRACE_STATS(ERROR, "%s: tso_enable: %u lro_enable: %u rx_hash: %u napi_enable: %u",
-			__func__,
-			pdev->soc->wlan_cfg_ctx->tso_enabled,
-			pdev->soc->wlan_cfg_ctx->lro_enabled,
-			pdev->soc->wlan_cfg_ctx->rx_hash,
-			pdev->soc->wlan_cfg_ctx->napi_enabled);
+		DP_TRACE_STATS(INFO_HIGH, "%s: tso_enable: %u lro_enable: %u rx_hash: %u napi_enable: %u",
+			       __func__,
+			       pdev->soc->wlan_cfg_ctx
+			       ->tso_enabled,
+			       pdev->soc->wlan_cfg_ctx
+			       ->lro_enabled,
+			       pdev->soc->wlan_cfg_ctx
+			       ->rx_hash,
+			       pdev->soc->wlan_cfg_ctx
+			       ->napi_enabled);
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
-		DP_TRACE_STATS(ERROR, "%s: Tx flow stop queue: %u tx flow start queue offset: %u",
-			__func__,
-			pdev->soc->wlan_cfg_ctx->tx_flow_stop_queue_threshold,
-			pdev->soc->wlan_cfg_ctx->tx_flow_start_queue_offset);
+		DP_TRACE_STATS(INFO_HIGH, "%s: Tx flow stop queue: %u tx flow start queue offset: %u",
+			       __func__,
+			       pdev->soc->wlan_cfg_ctx
+			       ->tx_flow_stop_queue_threshold,
+			       pdev->soc->wlan_cfg_ctx
+			       ->tx_flow_start_queue_offset);
 #endif
 	}
 }
