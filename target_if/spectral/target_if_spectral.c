@@ -2010,10 +2010,13 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	    (target_type == TARGET_TYPE_QCA8074V2)) {
 		spectral->fftbin_size_war = 1;
 		spectral->inband_fftbin_size_adj = 1;
+		spectral->null_fftbin_adj = 1;
 	} else {
 		spectral->fftbin_size_war = 0;
 		spectral->inband_fftbin_size_adj = 0;
+		spectral->null_fftbin_adj = 0;
 	}
+
 	if ((target_type == TARGET_TYPE_QCA8074) ||
 	    (target_type == TARGET_TYPE_QCA8074V2) ||
 	    (target_type == TARGET_TYPE_QCA6290)) {

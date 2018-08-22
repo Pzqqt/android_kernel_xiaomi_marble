@@ -767,6 +767,15 @@ struct wmi_spectral_cmd_ops {
  * DMA cannot change this value. On such chipsets the adjustment required at the
  * host driver is to check if report format is 2, and if so halve the number of
  * bins reported to get the number actually DMA'ed.
+ * @null_fftbin_adj: Whether to remove NULL FFT bins for report mode (1) in
+ * which only summary of metrics for each completed FFT + spectral scan summary
+ * report are to be provided. This would be required on some chipsets under the
+ * following circumstances: In report mode 1, HW reports a length corresponding
+ * to all bins, and provides bins with value 0. This is because the subsystem
+ * arranging for the FFT information does not arrange for DMA of FFT bin values
+ * (as expected), but cannot arrange for a smaller length to be reported by HW.
+ * In these circumstances, the driver would have to disregard the NULL bins and
+ * report a bin count of 0 to higher layers.
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -869,6 +878,7 @@ struct target_if_spectral {
 	int (*send_phy_data)(struct wlan_objmgr_pdev *pdev);
 	u_int8_t                               fftbin_size_war;
 	u_int8_t                               inband_fftbin_size_adj;
+	u_int8_t                               null_fftbin_adj;
 	enum spectral_160mhz_report_delivery_state state_160mhz_delivery;
 	void *spectral_report_cache;
 };

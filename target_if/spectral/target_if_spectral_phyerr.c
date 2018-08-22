@@ -1186,15 +1186,26 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 	int fft_hdr_length = (p_fft_report->fft_hdr_length * 4);
 	int report_len = (fft_hdr_length + 8);
 	int fft_bin_len = (fft_hdr_length - 16);
-	int fft_bin_len_adj = fft_bin_len >> 2;
-	int fft_bin_len_inband_tfer = 0;
 	int fft_bin_len_to_dump = fft_bin_len;
+	int fft_bin_len_adj = 0;
+	int fft_bin_len_inband_tfer = 0;
 
-	if ((spectral->params.ss_rpt_mode == 2) &&
-			spectral->inband_fftbin_size_adj) {
-		fft_bin_len_adj >>= 1;
-		fft_bin_len_inband_tfer = fft_bin_len >> 1;
-		fft_bin_len_to_dump = fft_bin_len_inband_tfer;
+	if ((spectral->params.ss_rpt_mode == 1) &&
+	    spectral->null_fftbin_adj) {
+		/* fft_bin_len_adj is intentionally left at 0. */
+		fft_bin_len_to_dump = 0;
+	} else {
+		if (spectral->fftbin_size_war)
+			fft_bin_len_adj = fft_bin_len >> 2;
+		else
+			fft_bin_len_adj = fft_bin_len;
+
+		if ((spectral->params.ss_rpt_mode == 2) &&
+		    spectral->inband_fftbin_size_adj) {
+			fft_bin_len_adj >>= 1;
+			fft_bin_len_inband_tfer = fft_bin_len >> 1;
+			fft_bin_len_to_dump = fft_bin_len_inband_tfer;
+		}
 	}
 
 	spectral_debug("#############################################################");
@@ -1208,14 +1219,20 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 		       fft_hdr_length, fft_hdr_length);
 	spectral_debug("Total length of search fft report is %d(0x%x) bytes",
 		       report_len, report_len);
-	spectral_debug("FW reported fftbins in report is %d(0x%x)", fft_bin_len,
+	spectral_debug("Target reported fftbins in report is %d(0x%x)",
+		       fft_bin_len,
 		       fft_bin_len);
-	if ((spectral->params.ss_rpt_mode == 2) &&
-			spectral->inband_fftbin_size_adj) {
+
+	if ((spectral->params.ss_rpt_mode == 1) &&
+	    spectral->null_fftbin_adj)
+		spectral_debug("WAR: Considering number of FFT bins as 0");
+	else if ((spectral->params.ss_rpt_mode == 2) &&
+		 spectral->inband_fftbin_size_adj) {
 		spectral_debug("FW fftbins actually transferred (in-band report mode) "
 					"%d(0x%x)",
 					fft_bin_len_inband_tfer, fft_bin_len_inband_tfer);
 	}
+
 	spectral_debug("Actual number of fftbins in report is %d(0x%x)\n",
 			fft_bin_len_adj, fft_bin_len_adj);
 
@@ -1231,13 +1248,15 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 		       p_sfft->fft_peak_mag,
 		       p_sfft->fft_avgpwr_db, p_sfft->fft_relpwr_db);
 
-	spectral_debug("FFT bins:");
-	for (i = 0; i < fft_bin_len_to_dump; i++) {
-		if (i % 16 == 0)
-			spectral_debug("\n%d :", i);
-		fft_mag =
-		    ((uint8_t *)p_fft_report)[SPECTRAL_FFT_BINS_POS + i];
-		spectral_debug("%d ", fft_mag);
+	if (fft_bin_len_to_dump > 0) {
+		spectral_debug("FFT bins:");
+		for (i = 0; i < fft_bin_len_to_dump; i++) {
+			if (i % 16 == 0)
+				spectral_debug("\n%d :", i);
+			fft_mag =
+			   ((uint8_t *)p_fft_report)[SPECTRAL_FFT_BINS_POS + i];
+			spectral_debug("%d ", fft_mag);
+		}
 	}
 	spectral_debug("\n");
 	spectral_debug("#############################################################");
@@ -1491,13 +1510,28 @@ target_if_consume_spectral_report_gen3(
 		}
 
 		report_len = (fft_hdr_length + 8);
-		fft_bin_len = (fft_hdr_length - 16);
-		/* Divide fft bin length by 4 if fftbin_size_war is enabled */
-		if (spectral->fftbin_size_war)
-			fft_bin_len >>= 2;
-		if ((spectral->params.ss_rpt_mode == 2) &&
-		    spectral->inband_fftbin_size_adj) {
-			fft_bin_len >>= 1;
+
+		if ((spectral->params.ss_rpt_mode == 1) &&
+		    spectral->null_fftbin_adj) {
+			/*
+			 * No FFT bins are expected. Explicitly set FFT bin
+			 * length to 0.
+			 */
+			fft_bin_len = 0;
+		} else {
+			fft_bin_len = (fft_hdr_length - 16);
+
+			/*
+			 * Divide fft bin length by 4 if fftbin_size_war is
+			 * enabled.
+			 */
+			if (spectral->fftbin_size_war)
+				fft_bin_len >>= 2;
+
+			if ((spectral->params.ss_rpt_mode == 2) &&
+			    spectral->inband_fftbin_size_adj) {
+				fft_bin_len >>= 1;
+			}
 		}
 
 		tsf64 = p_fft_report->fft_timestamp;
@@ -1603,14 +1637,28 @@ target_if_consume_spectral_report_gen3(
 		}
 
 		report_len     = (fft_hdr_length + 8);
-		fft_bin_len    = (fft_hdr_length - 16);
-		/* Divide fft bin length by 4 if fftbin_size_war is enabled */
-		if (spectral->fftbin_size_war) {
-			fft_bin_len >>= 2;
-		}
-		if ((spectral->params.ss_rpt_mode == 2) &&
-				spectral->inband_fftbin_size_adj) {
-			fft_bin_len >>= 1;
+
+		if ((spectral->params.ss_rpt_mode == 1) &&
+		    spectral->null_fftbin_adj) {
+			/*
+			 * No FFT bins are expected. Explicitly set FFT bin
+			 * length to 0.
+			 */
+			fft_bin_len = 0;
+		} else {
+			fft_bin_len = (fft_hdr_length - 16);
+
+			/*
+			 * Divide fft bin length by 4 if fftbin_size_war is
+			 * enabled.
+			 */
+			if (spectral->fftbin_size_war)
+				fft_bin_len >>= 2;
+
+			if ((spectral->params.ss_rpt_mode == 2) &&
+			    spectral->inband_fftbin_size_adj) {
+				fft_bin_len >>= 1;
+			}
 		}
 
 		target_if_process_sfft_report_gen3(p_fft_report, p_sfft);
