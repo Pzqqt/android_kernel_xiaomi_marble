@@ -1580,6 +1580,10 @@ void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer)
 #endif
 	}
 
+	peer->active_ba_session_cnt = 0;
+	peer->hw_buffer_size = 0;
+	peer->kill_256_sessions = 0;
+
 	/* Setup default (non-qos) rx tid queue */
 	dp_rx_tid_setup_wifi3(peer, DP_NON_QOS_TID, 1, 0);
 
@@ -1656,6 +1660,56 @@ void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 	dp_peer_rx_cleanup(vdev, peer);
 }
 
+/* dp_teardown_256_ba_session() - Teardown sessions using 256
+ *                                window size when a request with
+ *                                64 window size is received.
+ *                                This is done as a WAR since HW can
+ *                                have only one setting per peer (64 or 256).
+ * @peer: Datapath peer
+ *
+ * Return: void
+ */
+static void dp_teardown_256_ba_sessions(struct dp_peer *peer)
+{
+	uint8_t delba_rcode = 0;
+	int tid;
+	struct dp_rx_tid *rx_tid = NULL;
+
+	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
+		rx_tid = &peer->rx_tid[tid];
+		qdf_spin_lock_bh(&rx_tid->tid_lock);
+
+		if (rx_tid->ba_win_size <= 64) {
+			qdf_spin_unlock_bh(&rx_tid->tid_lock);
+			continue;
+		} else {
+			if (rx_tid->ba_status == DP_RX_BA_ACTIVE ||
+			    rx_tid->ba_status == DP_RX_BA_IN_PROGRESS) {
+				/* send delba */
+				if (!rx_tid->delba_tx_status) {
+					rx_tid->delba_tx_retry++;
+					rx_tid->delba_tx_status = 1;
+					rx_tid->delba_rcode =
+					IEEE80211_REASON_QOS_SETUP_REQUIRED;
+					delba_rcode = rx_tid->delba_rcode;
+
+					qdf_spin_unlock_bh(&rx_tid->tid_lock);
+					peer->vdev->pdev->soc->cdp_soc.ol_ops->send_delba(
+							peer->vdev->pdev->ctrl_pdev,
+							peer->ctrl_peer,
+							peer->mac_addr.raw,
+							tid, peer->vdev->ctrl_vdev,
+							delba_rcode);
+				} else {
+					qdf_spin_unlock_bh(&rx_tid->tid_lock);
+				}
+			} else {
+				qdf_spin_unlock_bh(&rx_tid->tid_lock);
+			}
+		}
+	}
+}
+
 /*
 * dp_rx_addba_resp_tx_completion_wifi3() – Update Rx Tid State
 *
@@ -1697,8 +1751,28 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/* First Session */
+	if (peer->active_ba_session_cnt == 0) {
+		if (rx_tid->ba_win_size > 64 && rx_tid->ba_win_size <= 256)
+			peer->hw_buffer_size = 256;
+		else
+			peer->hw_buffer_size = 64;
+	}
+
 	rx_tid->ba_status = DP_RX_BA_ACTIVE;
+
+	peer->active_ba_session_cnt++;
+
 	qdf_spin_unlock_bh(&rx_tid->tid_lock);
+
+	/* Kill any session having 256 buffer size
+	 * when 64 buffer size request is received.
+	 * Also, latch on to 64 as new buffer size.
+	 */
+	if (peer->kill_256_sessions) {
+		dp_teardown_256_ba_sessions(peer);
+		peer->kill_256_sessions = 0;
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1735,6 +1809,43 @@ void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
 	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 }
 
+/* dp_check_ba_buffersize() - Check buffer size in request
+ *                            and latch onto this size based on
+ *                            size used in first active session.
+ * @peer: Datapath peer
+ * @tid: Tid
+ * @buffersize: Block ack window size
+ *
+ * Return: void
+ */
+static void dp_check_ba_buffersize(struct dp_peer *peer,
+				   uint16_t tid,
+				   uint16_t buffersize)
+{
+	struct dp_rx_tid *rx_tid = NULL;
+
+	rx_tid = &peer->rx_tid[tid];
+
+	if (peer->active_ba_session_cnt == 0) {
+		rx_tid->ba_win_size = buffersize;
+	} else {
+		if (peer->hw_buffer_size == 64) {
+			if (buffersize <= 64)
+				rx_tid->ba_win_size = buffersize;
+			else
+				rx_tid->ba_win_size = peer->hw_buffer_size;
+		} else if (peer->hw_buffer_size == 256) {
+			if (buffersize > 64) {
+				rx_tid->ba_win_size = buffersize;
+			} else {
+				rx_tid->ba_win_size = buffersize;
+				peer->hw_buffer_size = 64;
+				peer->kill_256_sessions = 1;
+			}
+		}
+	}
+}
+
 /*
  * dp_addba_requestprocess_wifi3() - Process ADDBA request from peer
  *
@@ -1769,6 +1880,7 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 	    (rx_tid->ba_status == DP_RX_BA_IN_PROGRESS)) {
 		dp_rx_tid_update_wifi3(peer, tid, 1, 0);
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
+		peer->active_ba_session_cnt--;
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Rx Tid- %d hw qdesc is already setup",
@@ -1776,7 +1888,14 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (dp_rx_tid_setup_wifi3(peer, tid, buffersize, 0)) {
+	if (rx_tid->ba_status == DP_RX_BA_IN_PROGRESS) {
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dp_check_ba_buffersize(peer, tid, buffersize);
+
+	if (dp_rx_tid_setup_wifi3(peer, tid, buffersize, startseqnum)) {
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		return QDF_STATUS_E_FAILURE;
@@ -1830,7 +1949,8 @@ int dp_delba_process_wifi3(void *peer_handle,
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
 	qdf_spin_lock_bh(&rx_tid->tid_lock);
-	if (rx_tid->ba_status == DP_RX_BA_INACTIVE) {
+	if (rx_tid->ba_status == DP_RX_BA_INACTIVE ||
+	    rx_tid->ba_status == DP_RX_BA_IN_PROGRESS) {
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1838,10 +1958,12 @@ int dp_delba_process_wifi3(void *peer_handle,
 	 * replace with a new one without queue extenstion descript to save
 	 * memory
 	 */
+	rx_tid->delba_rcode = reasoncode;
 	rx_tid->num_of_delba_req++;
 	dp_rx_tid_update_wifi3(peer, tid, 1, 0);
 
 	rx_tid->ba_status = DP_RX_BA_INACTIVE;
+	peer->active_ba_session_cnt--;
 	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 	return 0;
 }
@@ -1880,13 +2002,23 @@ int dp_delba_tx_completion_wifi3(void *peer_handle,
 			qdf_spin_unlock_bh(&rx_tid->tid_lock);
 			peer->vdev->pdev->soc->cdp_soc.ol_ops->send_delba(
 				peer->vdev->pdev->ctrl_pdev, peer->ctrl_peer,
-				peer->mac_addr.raw, tid, peer->vdev->ctrl_vdev);
+				peer->mac_addr.raw, tid, peer->vdev->ctrl_vdev,
+				rx_tid->delba_rcode);
 		}
 		return QDF_STATUS_SUCCESS;
 	} else {
 		rx_tid->delba_tx_success_cnt++;
 		rx_tid->delba_tx_retry = 0;
 		rx_tid->delba_tx_status = 0;
+	}
+	if (rx_tid->ba_status == DP_RX_BA_ACTIVE) {
+		dp_rx_tid_update_wifi3(peer, tid, 1, 0);
+		rx_tid->ba_status = DP_RX_BA_INACTIVE;
+		peer->active_ba_session_cnt--;
+	}
+	if (rx_tid->ba_status == DP_RX_BA_IN_PROGRESS) {
+		dp_rx_tid_update_wifi3(peer, tid, 1, 0);
+		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 	}
 	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 

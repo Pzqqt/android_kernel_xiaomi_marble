@@ -847,7 +847,8 @@ struct ol_if_ops {
 	 * Return: 0 for success, non-zero for failure
 	 */
 	int (*send_delba)(void *pdev_handle,  void *ctrl_peer,
-			  uint8_t *peer_macaddr, uint8_t tid, void *vdev_handle);
+			  uint8_t *peer_macaddr, uint8_t tid, void *vdev_handle,
+			  uint8_t reason_code);
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 

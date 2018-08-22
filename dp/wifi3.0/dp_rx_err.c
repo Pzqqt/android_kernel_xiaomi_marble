@@ -520,12 +520,15 @@ dp_2k_jump_handle(struct dp_soc *soc,
 	if (!rx_tid->delba_tx_status) {
 		rx_tid->delba_tx_retry++;
 		rx_tid->delba_tx_status = 1;
+		rx_tid->delba_rcode =
+			IEEE80211_REASON_QOS_SETUP_REQUIRED;
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		soc->cdp_soc.ol_ops->send_delba(peer->vdev->pdev->ctrl_pdev,
 						peer->ctrl_peer,
 						peer->mac_addr.raw,
 						tid,
-						peer->vdev->ctrl_vdev);
+						peer->vdev->ctrl_vdev,
+						rx_tid->delba_rcode);
 	} else {
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 	}
