@@ -2189,7 +2189,7 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
 		qdf_atomic_init(&peer->access_list[i]);
 
 	/* keep one reference for attach */
-	ol_txrx_peer_get_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
+	ol_txrx_peer_get_ref(peer, PEER_DEBUG_ID_OL_PEER_ATTACH);
 
 	/* Set a flag to indicate peer create is pending in firmware */
 	qdf_atomic_init(&peer->fw_create_pending);
@@ -2852,27 +2852,29 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 	struct ol_txrx_pdev_t *pdev;
 	bool ref_silent = false;
 	int access_list = 0;
+	uint32_t err_code = 0;
 
 	/* preconditions */
 	TXRX_ASSERT2(peer);
 
 	vdev = peer->vdev;
 	if (NULL == vdev) {
-		ol_txrx_dbg(
-			   "The vdev is not present anymore\n");
-		return -EINVAL;
+		ol_txrx_err("The vdev is not present anymore\n");
+		err_code = 0xbad1;
+		goto ERR_STATE;
 	}
 
 	pdev = vdev->pdev;
 	if (NULL == pdev) {
-		ol_txrx_dbg(
-			   "The pdev is not present anymore\n");
-		return -EINVAL;
+		ol_txrx_err("The pdev is not present anymore\n");
+		err_code = 0xbad2;
+		goto ERR_STATE;
 	}
 
 	if (debug_id >= PEER_DEBUG_ID_MAX || debug_id < 0) {
 		ol_txrx_err("incorrect debug_id %d ", debug_id);
-		return -EINVAL;
+		err_code = 0xbad3;
+		goto ERR_STATE;
 	}
 
 	if (debug_id == PEER_DEBUG_ID_OL_RX_THREAD)
@@ -2881,7 +2883,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 	if (!ref_silent)
 		wlan_roam_debug_log(vdev->vdev_id, DEBUG_PEER_UNREF_DELETE,
 				    DEBUG_INVALID_PEER_ID, &peer->mac_addr.raw,
-				    peer, 0,
+				    peer, 0xdead,
 				    qdf_atomic_read(&peer->ref_cnt));
 
 
@@ -3035,16 +3037,20 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 
 		qdf_mem_free(peer);
 	} else {
-		access_list = qdf_atomic_read(
-						&peer->access_list[debug_id]);
+		access_list = qdf_atomic_read(&peer->access_list[debug_id]);
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 		if (!ref_silent)
-			ol_txrx_dbg("[%d][%d]: ref delete peer %pK ref_cnt -> %d",
-					debug_id,
-					access_list,
-					peer, rc);
+			ol_txrx_info_high("[%d][%d]: ref delete peer %pK ref_cnt -> %d",
+					  debug_id,
+					  access_list,
+					  peer, rc);
 	}
 	return rc;
+ERR_STATE:
+	wlan_roam_debug_log(vdev->vdev_id, DEBUG_PEER_UNREF_DELETE,
+			    DEBUG_INVALID_PEER_ID, &peer->mac_addr.raw,
+			    peer, err_code, qdf_atomic_read(&peer->ref_cnt));
+	return -EINVAL;
 }
 
 /**
@@ -3112,7 +3118,7 @@ static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
 
 void peer_unmap_timer_work_function(void *param)
 {
-	WMA_LOGE("Enter: %s", __func__);
+	WMA_LOGI("Enter: %s", __func__);
 	/* Added for debugging only */
 	ol_txrx_dump_peer_access_list(param);
 	wlan_roam_debug_dump_table();
@@ -3219,7 +3225,7 @@ static void ol_txrx_peer_detach(void *ppeer, uint32_t bitmap)
 	 * PEER_UNMAP message arrives to remove the other
 	 * reference, added by the PEER_MAP message.
 	 */
-	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
+	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_PEER_ATTACH);
 }
 
 /**

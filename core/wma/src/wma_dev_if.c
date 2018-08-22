@@ -1820,7 +1820,7 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 
 	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_addr,
 					&peer_id,
-					PEER_DEBUG_ID_OL_INTERNAL);
+					PEER_DEBUG_ID_WMA_DEL_BSS);
 	if (!peer) {
 		WMA_LOGE(FL("peer NULL for vdev_id = %d"), vdev_id);
 		wma_cleanup_target_req_param(req_msg);
@@ -1848,7 +1848,7 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 	}
 	if (peer)
 		cdp_peer_release_ref(soc, peer,
-				     PEER_DEBUG_ID_OL_INTERNAL);
+				     PEER_DEBUG_ID_WMA_DEL_BSS);
 	return ret_value;
 }
 
@@ -2130,8 +2130,8 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 			(tpLinkStateParams) req_msg->user_data;
 
 		peer = cdp_peer_get_ref_by_addr(soc, pdev, params->bssid,
-						&peer_id,
-						PEER_DEBUG_ID_OL_INTERNAL);
+					&peer_id,
+					PEER_DEBUG_ID_WMA_VDEV_STOP_RESP);
 		if (peer) {
 			WMA_LOGP(FL("Deleting peer %pM vdev id %d"),
 				 params->bssid, req_msg->vdev_id);
@@ -2167,7 +2167,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 free_req_msg:
 	if (peer)
 		cdp_peer_release_ref(soc, peer,
-				     PEER_DEBUG_ID_OL_INTERNAL);
+				     PEER_DEBUG_ID_WMA_VDEV_STOP_RESP);
 	qdf_mc_timer_destroy(&req_msg->event_timeout);
 	qdf_mem_free(req_msg);
 	return status;

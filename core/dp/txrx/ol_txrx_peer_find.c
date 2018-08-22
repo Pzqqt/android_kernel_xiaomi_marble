@@ -302,9 +302,9 @@ void ol_txrx_peer_find_hash_erase(struct ol_txrx_pdev_t *pdev)
 				 */
 				qdf_atomic_init(&peer->ref_cnt); /* set to 0 */
 				ol_txrx_peer_get_ref(peer,
-						     PEER_DEBUG_ID_OL_INTERNAL);
+						     PEER_DEBUG_ID_OL_HASH_ERS);
 				ol_txrx_peer_release_ref(peer,
-						     PEER_DEBUG_ID_OL_INTERNAL);
+						     PEER_DEBUG_ID_OL_HASH_ERS);
 			}
 		}
 	}
@@ -389,7 +389,7 @@ static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 	peer =
 		ol_txrx_peer_find_hash_find_get_ref(pdev, peer_mac_addr,
 						    1 /* is aligned */, 0,
-						    PEER_DEBUG_ID_OL_INTERNAL);
+						    PEER_DEBUG_ID_OL_PEER_MAP);
 
 	if (!peer || peer_id == HTT_INVALID_PEER) {
 		/*
@@ -649,7 +649,7 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	 * Remove a reference to the peer.
 	 * If there are no more references, delete the peer object.
 	 */
-	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
+	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_PEER_MAP);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: peer_id %d peer %pK peer_id_ref_cnt %d",
