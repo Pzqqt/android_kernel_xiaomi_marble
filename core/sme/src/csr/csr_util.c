@@ -4689,28 +4689,8 @@ uint8_t csr_retrieve_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 			break;
 		}
 
-		if (csr_roam_is_fast_roam_enabled(pMac, sessionId)) {
-			/* If "Legacy Fast Roaming" is enabled ALWAYS rebuild
-			 * the RSN IE from scratch. So it contains the current
-			 * PMK-IDs
-			 */
-			cbRsnIe =
-				csr_construct_rsn_ie(pMac, sessionId, pProfile,
-						     pSirBssDesc, pIes, pRsnIe);
-		} else if (pProfile->nRSNReqIELength && pProfile->pRSNReqIE) {
-			/* If you have one started away, re-use it. */
-			if (pProfile->nRSNReqIELength <=
-					DOT11F_IE_RSN_MAX_LEN) {
-				cbRsnIe = (uint8_t) pProfile->nRSNReqIELength;
-				qdf_mem_copy(pRsnIe, pProfile->pRSNReqIE,
-					     cbRsnIe);
-			} else
-				sme_warn("csr_retrieve_rsn_ie detect invalid RSN IE length (%d)",
-					pProfile->nRSNReqIELength);
-		} else
-			cbRsnIe = csr_construct_rsn_ie(pMac, sessionId,
-							pProfile,
-						     pSirBssDesc, pIes, pRsnIe);
+		cbRsnIe = csr_construct_rsn_ie(pMac, sessionId, pProfile,
+					       pSirBssDesc, pIes, pRsnIe);
 	} while (0);
 
 	return cbRsnIe;
