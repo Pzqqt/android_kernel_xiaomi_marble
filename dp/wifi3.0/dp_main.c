@@ -1178,7 +1178,6 @@ budget_done:
 	return dp_budget - budget;
 }
 
-#ifdef DP_INTR_POLL_BASED
 /* dp_interrupt_timer()- timer poll for interrupts
  *
  * @arg: SoC Handle
@@ -1243,12 +1242,6 @@ static QDF_STATUS dp_soc_attach_poll(void *txrx_soc)
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-static QDF_STATUS dp_soc_attach_poll(void *txrx_soc)
-{
-	return -QDF_STATUS_E_NOSUPPORT;
-}
-#endif
 
 static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc);
 #if defined(CONFIG_MCL)
