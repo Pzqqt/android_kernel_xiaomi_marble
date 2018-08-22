@@ -2836,22 +2836,22 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
       twt_request:1;
       twt_responder:1;
       fragmentation:2;
-      max_num_frag_msdu:3;
+      max_num_frag_msdu_amsdu_exp:3;
       min_frag_size:2;
       trigger_frm_mac_pad:2;
-      multi_tid_aggr:3;
+      multi_tid_aggr_rx_supp:3;
       he_link_adaptation:2;
       all_ack:1;
-      ul_mu_rsp_sched:1;
+      trigd_rsp_sched:1;
       a_bsr:1;
       broadcast_twt:1;
       ba_32bit_bitmap:1;
       mu_cascade:1;
       ack_enabled_multitid:1;
-      dl_mu_ba:1;
+      reserved:1;
       omi_a_ctrl:1;
       ofdma_ra:1;
-      max_ampdu_len:2;
+      max_ampdu_len_exp_ext:2;
       amsdu_frag:1;
       flex_twt_sched:1;
       rx_ctrl_frame:1;
@@ -2860,14 +2860,18 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
       bsrp_ampdu_aggr:1;
       qtp:1;
       a_bqr:1;
-      sr_responder:1;
+      spatial_reuse_param_rspder:1;
       ndp_feedback_supp:1;
       ops_supp:1;
       amsdu_in_ampdu:1;
-      reserved1:1;
+      multi_tid_aggr_tx_supp:3;
+      he_sub_ch_sel_tx_supp:1;
+      ul_2x996_tone_ru_supp:1;
+      om_ctrl_ul_mu_data_dis_rx:1;
+      reserved1:3;
     }
     {
-      dual_band:1;
+      reserved2:1;
       chan_width_0:1;
       chan_width_1:1;
       chan_width_2:1;
@@ -2879,7 +2883,7 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
       device_class:1;
       ldpc_coding:1;
       he_1x_ltf_800_gi_ppdu:1;
-      midamble_rx_max_nsts:2;
+      midamble_tx_rx_max_nsts:2;
       he_4x_ltf_3200_gi_ndp:1;
       tx_stbc_lt_80mhz:1;
       rx_stbc_lt_80mhz:1;
@@ -2918,9 +2922,17 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
       he_ppdu_20_in_160_80p80Mhz:1;
       he_ppdu_80_in_160_80p80Mhz:1;
       er_1x_he_ltf_gi:1;
-      midamble_rx_1x_he_ltf:1;
-      reserved2:2;
+      midamble_tx_rx_1x_he_ltf:1;
+      dcm_max_bw:2;
+      longer_than_16_he_sigb_ofdm_sym:1;
+      non_trig_cqi_feedback:1;
+      tx_1024_qam_lt_242_tone_ru:1;
+      rx_1024_qam_lt_242_tone_ru:1;
+      rx_full_bw_su_he_mu_compress_sigb:1;
+      rx_full_bw_su_he_mu_non_cmpr_sigb:1;
+      reserved3:2;
     }
+    reserved4, 1;
     rx_he_mcs_map_lt_80, 2;
     tx_he_mcs_map_lt_80, 2;
     rx_he_mcs_map_160[2][0..1] COUNTIS chan_width_2;
@@ -2939,17 +2951,20 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
 IE he_op (EID_EXTN_ID_ELEMENT) OUI (0x24)
 {
     {
-        bss_color: 6;
         default_pe: 3;
         twt_required: 1;
-        rts_threshold: 10;
-        partial_bss_col: 1;
+        txop_rts_threshold: 10;
         vht_oper_present: 1;
-        reserved1: 6;
-        mbssid_ap: 1;
-        tx_bssid_ind: 1;
-        bss_col_disabled: 1;
-        reserved2: 1;
+        co_located_bss: 1;
+    }
+    {
+        er_su_disable: 1;
+        reserved2: 7;
+    }
+    {
+        bss_color:6;
+        partial_bss_col:1;
+        bss_col_disabled:1;
     }
     basic_mcs_nss[2];
     OPTIONAL UNION vht_oper (DISCRIMINATOR vht_oper_present)
@@ -2961,9 +2976,9 @@ IE he_op (EID_EXTN_ID_ELEMENT) OUI (0x24)
             center_freq_seg1, 1;
         }
     };
-    OPTIONAL UNION maxbssid_ind (DISCRIMINATOR mbssid_ap)
+    OPTIONAL UNION maxbssid_ind (DISCRIMINATOR co_located_bss)
     {
-        info (mbssid_ap IS 1)
+        info (co_located_bss IS 1)
         {
             data, 1;
         }

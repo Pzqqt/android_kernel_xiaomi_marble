@@ -8804,34 +8804,38 @@ typedef struct sDot11fIEhe_cap {
 	uint32_t          twt_request:1;
 	uint32_t        twt_responder:1;
 	uint32_t        fragmentation:2;
-	uint32_t    max_num_frag_msdu:3;
+	uint32_t max_num_frag_msdu_amsdu_exp:3;
 	uint32_t        min_frag_size:2;
 	uint32_t  trigger_frm_mac_pad:2;
-	uint32_t       multi_tid_aggr:3;
+	uint32_t multi_tid_aggr_rx_supp:3;
 	uint32_t   he_link_adaptation:2;
 	uint32_t              all_ack:1;
-	uint32_t      ul_mu_rsp_sched:1;
+	uint32_t      trigd_rsp_sched:1;
 	uint32_t                a_bsr:1;
 	uint32_t        broadcast_twt:1;
 	uint32_t      ba_32bit_bitmap:1;
 	uint32_t           mu_cascade:1;
 	uint32_t ack_enabled_multitid:1;
-	uint32_t             dl_mu_ba:1;
+	uint32_t             reserved:1;
 	uint32_t           omi_a_ctrl:1;
 	uint32_t             ofdma_ra:1;
-	uint32_t        max_ampdu_len:2;
+	uint32_t max_ampdu_len_exp_ext:2;
 	uint32_t           amsdu_frag:1;
 	uint32_t       flex_twt_sched:1;
 	uint32_t        rx_ctrl_frame:1;
-	uint8_t      bsrp_ampdu_aggr:1;
-	uint8_t                  qtp:1;
-	uint8_t                a_bqr:1;
-	uint8_t         sr_responder:1;
-	uint8_t    ndp_feedback_supp:1;
-	uint8_t             ops_supp:1;
-	uint8_t       amsdu_in_ampdu:1;
-	uint8_t            reserved1:1;
-	uint32_t            dual_band:1;
+	uint16_t      bsrp_ampdu_aggr:1;
+	uint16_t                  qtp:1;
+	uint16_t                a_bqr:1;
+	uint16_t spatial_reuse_param_rspder:1;
+	uint16_t    ndp_feedback_supp:1;
+	uint16_t             ops_supp:1;
+	uint16_t       amsdu_in_ampdu:1;
+	uint16_t multi_tid_aggr_tx_supp:3;
+	uint16_t he_sub_ch_sel_tx_supp:1;
+	uint16_t ul_2x996_tone_ru_supp:1;
+	uint16_t om_ctrl_ul_mu_data_dis_rx:1;
+	uint16_t            reserved1:3;
+	uint32_t            reserved2:1;
 	uint32_t         chan_width_0:1;
 	uint32_t         chan_width_1:1;
 	uint32_t         chan_width_2:1;
@@ -8843,7 +8847,7 @@ typedef struct sDot11fIEhe_cap {
 	uint32_t         device_class:1;
 	uint32_t          ldpc_coding:1;
 	uint32_t he_1x_ltf_800_gi_ppdu:1;
-	uint32_t midamble_rx_max_nsts:2;
+	uint32_t midamble_tx_rx_max_nsts:2;
 	uint32_t he_4x_ltf_3200_gi_ndp:1;
 	uint32_t     tx_stbc_lt_80mhz:1;
 	uint32_t     rx_stbc_lt_80mhz:1;
@@ -8873,13 +8877,21 @@ typedef struct sDot11fIEhe_cap {
 	uint32_t               max_nc:3;
 	uint32_t     tx_stbc_gt_80mhz:1;
 	uint32_t     rx_stbc_gt_80mhz:1;
-	uint8_t  er_he_ltf_800_gi_4x:1;
-	uint8_t he_ppdu_20_in_40Mhz_2G:1;
-	uint8_t he_ppdu_20_in_160_80p80Mhz:1;
-	uint8_t he_ppdu_80_in_160_80p80Mhz:1;
-	uint8_t      er_1x_he_ltf_gi:1;
-	uint8_t midamble_rx_1x_he_ltf:1;
-	uint8_t            reserved2:2;
+	uint16_t  er_he_ltf_800_gi_4x:1;
+	uint16_t he_ppdu_20_in_40Mhz_2G:1;
+	uint16_t he_ppdu_20_in_160_80p80Mhz:1;
+	uint16_t he_ppdu_80_in_160_80p80Mhz:1;
+	uint16_t      er_1x_he_ltf_gi:1;
+	uint16_t midamble_tx_rx_1x_he_ltf:1;
+	uint16_t           dcm_max_bw:2;
+	uint16_t longer_than_16_he_sigb_ofdm_sym:1;
+	uint16_t non_trig_cqi_feedback:1;
+	uint16_t tx_1024_qam_lt_242_tone_ru:1;
+	uint16_t rx_1024_qam_lt_242_tone_ru:1;
+	uint16_t rx_full_bw_su_he_mu_compress_sigb:1;
+	uint16_t rx_full_bw_su_he_mu_non_cmpr_sigb:1;
+	uint16_t            reserved3:2;
+	uint8_t             reserved4;
 	uint16_t            rx_he_mcs_map_lt_80;
 	uint16_t            tx_he_mcs_map_lt_80;
 	uint8_t             rx_he_mcs_map_160[1][2];
@@ -8897,9 +8909,9 @@ typedef struct sDot11fIEhe_cap {
 #define DOT11F_EID_HE_CAP (255)
 
 /* N.B. These #defines do *not* include the EID & length */
-#define DOT11F_IE_HE_CAP_MIN_LEN (18)
+#define DOT11F_IE_HE_CAP_MIN_LEN (21)
 
-#define DOT11F_IE_HE_CAP_MAX_LEN (51)
+#define DOT11F_IE_HE_CAP_MAX_LEN (54)
 
 #ifdef __cplusplus
 extern "C" {
@@ -8930,17 +8942,16 @@ uint32_t dot11f_get_packed_ie_he_cap(
 /* EID 255 (0xff) Extended EID 36 (0x24) */
 typedef struct sDot11fIEhe_op {
 	uint8_t             present;
-	uint32_t            bss_color:6;
-	uint32_t           default_pe:3;
-	uint32_t         twt_required:1;
-	uint32_t        rts_threshold:10;
-	uint32_t      partial_bss_col:1;
-	uint32_t     vht_oper_present:1;
-	uint32_t            reserved1:6;
-	uint32_t            mbssid_ap:1;
-	uint32_t         tx_bssid_ind:1;
-	uint32_t     bss_col_disabled:1;
-	uint32_t            reserved2:1;
+	uint16_t           default_pe:3;
+	uint16_t         twt_required:1;
+	uint16_t   txop_rts_threshold:10;
+	uint16_t     vht_oper_present:1;
+	uint16_t       co_located_bss:1;
+	uint8_t        er_su_disable:1;
+	uint8_t            reserved2:7;
+	uint8_t            bss_color:6;
+	uint8_t      partial_bss_col:1;
+	uint8_t     bss_col_disabled:1;
 	uint8_t             basic_mcs_nss[2];
 	union {
 		struct {
@@ -8952,7 +8963,7 @@ typedef struct sDot11fIEhe_op {
 	union {
 		struct {
 			uint8_t data;
-		} info; /* mbssid_ap = 1 */
+		} info; /* co_located_bss = 1 */
 	} maxbssid_ind;
 } tDot11fIEhe_op;
 

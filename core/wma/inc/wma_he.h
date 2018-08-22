@@ -59,14 +59,24 @@ void wma_print_he_ppet(void *ppet);
 void wma_print_he_phy_cap(uint32_t *phy_cap);
 
 /**
- * wma_print_he_mac_cap() - Print HE MAC Capability
+ * wma_print_he_mac_cap_w1() - Print HE MAC Capability
  * @mac_cap: MAC Capability
  *
  * This function prints HE MAC Capability received from FW.
  *
  * Return: none
  */
-void wma_print_he_mac_cap(uint32_t mac_cap);
+void wma_print_he_mac_cap_w1(uint32_t mac_cap);
+
+/**
+ * wma_print_he_mac_cap_w2() - Print HE MAC Capability
+ * @mac_cap: MAC Capability
+ *
+ * This function prints HE MAC Capability received from FW.
+ *
+ * Return: none
+ */
+void wma_print_he_mac_cap_w2(uint32_t mac_cap);
 
 /**
  * wma_print_he_op() - Print HE Operation
@@ -243,7 +253,11 @@ static inline void wma_print_he_phy_cap(uint32_t *phy_cap)
 {
 }
 
-static inline void wma_print_he_mac_cap(uint32_t mac_cap)
+static inline void wma_print_he_mac_cap_w1(uint32_t mac_cap)
+{
+}
+
+static inline void wma_print_he_mac_cap_w2(uint32_t mac_cap)
 {
 }
 

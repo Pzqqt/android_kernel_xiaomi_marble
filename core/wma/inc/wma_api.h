@@ -76,8 +76,8 @@ struct wma_caps_per_phy {
 	uint32_t ht_5g;
 	uint32_t vht_2g;
 	uint32_t vht_5g;
-	uint32_t he_2g;
-	uint32_t he_5g;
+	uint32_t he_2g[PSOC_HOST_MAX_MAC_SIZE];
+	uint32_t he_5g[PSOC_HOST_MAX_MAC_SIZE];
 	uint32_t tx_chain_mask_2G;
 	uint32_t rx_chain_mask_2G;
 	uint32_t tx_chain_mask_5G;

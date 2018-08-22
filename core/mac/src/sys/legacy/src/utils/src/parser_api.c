@@ -6126,20 +6126,20 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_FRAGMENTATION, value);
 		he_cap->fragmentation = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MAX_FRAG_MSDU, value);
-		he_cap->max_num_frag_msdu = value;
+		he_cap->max_num_frag_msdu_amsdu_exp = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MIN_FRAG_SIZE, value);
 		he_cap->min_frag_size = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TRIG_PAD, value);
 		he_cap->trigger_frm_mac_pad = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MTID_AGGR, value);
-		he_cap->multi_tid_aggr = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MTID_AGGR_RX, value);
+		he_cap->multi_tid_aggr_rx_supp = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LINK_ADAPTATION, value);
 		he_cap->he_link_adaptation = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ALL_ACK, value);
 		he_cap->all_ack = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_UL_MU_RSP_SCHEDULING,
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TRIGD_RSP_SCHEDULING,
 			    value);
-		he_cap->ul_mu_rsp_sched = value;
+		he_cap->trigd_rsp_sched = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BUFFER_STATUS_RPT,
 			    value);
 		he_cap->a_bsr = value;
@@ -6151,14 +6151,12 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		he_cap->mu_cascade = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MULTI_TID, value);
 		he_cap->ack_enabled_multitid = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DL_MU_BA, value);
-		he_cap->dl_mu_ba = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_OMI, value);
 		he_cap->omi_a_ctrl = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_OFDMA_RA, value);
 		he_cap->ofdma_ra = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MAX_AMPDU_LEN, value);
-		he_cap->max_ampdu_len = value;
+		he_cap->max_ampdu_len_exp_ext = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_AMSDU_FRAG, value);
 		he_cap->amsdu_frag = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_FLEX_TWT_SCHED, value);
@@ -6172,7 +6170,7 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_A_BQR, value);
 		he_cap->a_bqr = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SR_RESPONDER, value);
-		he_cap->sr_responder = value;
+		he_cap->spatial_reuse_param_rspder = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NDP_FEEDBACK_SUPP,
 					     value);
 		he_cap->ndp_feedback_supp = value;
@@ -6180,9 +6178,14 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		he_cap->ops_supp = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_AMSDU_IN_AMPDU, value);
 		he_cap->amsdu_in_ampdu = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SUB_CH_SEL_TX, value);
+		he_cap->he_sub_ch_sel_tx_supp = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_UL_2X996_RU, value);
+		he_cap->ul_2x996_tone_ru_supp = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_OM_CTRL_UL_MU_DIS_RX,
+			    value);
+		he_cap->om_ctrl_ul_mu_data_dis_rx = value;
 
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DUAL_BAND, value);
-		he_cap->dual_band = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_CHAN_WIDTH, value);
 		he_cap->chan_width_0 = HE_CH_WIDTH_GET_BIT(value, 0);
 		he_cap->chan_width_1 = HE_CH_WIDTH_GET_BIT(value, 1);
@@ -6202,7 +6205,7 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		he_cap->he_1x_ltf_800_gi_ppdu = value;
 		CFG_GET_INT(status, mac_ctx,
 			    WNI_CFG_HE_MIDAMBLE_RX_MAX_NSTS, value);
-		he_cap->midamble_rx_max_nsts = value;
+		he_cap->midamble_tx_rx_max_nsts = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LTF_NDP, value);
 		he_cap->he_4x_ltf_3200_gi_ndp = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TX_STBC_LT80, value);
@@ -6275,8 +6278,29 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ER_1X_HE_LTF_GI, value);
 		he_cap->er_1x_he_ltf_gi = value;
 		CFG_GET_INT(status, mac_ctx,
-			    WNI_CFG_HE_MIDAMBLE_RX_1X_HE_LTF, value);
-		he_cap->midamble_rx_1x_he_ltf = value;
+			    WNI_CFG_HE_MIDAMBLE_TXRX_1X_HE_LTF, value);
+		he_cap->midamble_tx_rx_1x_he_ltf = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DCM_MAX_BW, value);
+		he_cap->dcm_max_bw = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LONGER_16_SIGB_OFDM_SYM,
+			    value);
+		he_cap->longer_than_16_he_sigb_ofdm_sym = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TX_1024_QAM_LT_242_RU,
+			    value);
+		he_cap->tx_1024_qam_lt_242_tone_ru = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_1024_QAM_LT_242_RU,
+			    value);
+		he_cap->rx_1024_qam_lt_242_tone_ru = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NON_TRIG_CQI_FEEDBACK,
+			    value);
+		he_cap->non_trig_cqi_feedback = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_FULL_BW_MU_CMPR_SIGB,
+			    value);
+		he_cap->rx_full_bw_su_he_mu_compress_sigb = value;
+		CFG_GET_INT(status, mac_ctx,
+			    WNI_CFG_HE_RX_FULL_BW_MU_NON_CMPR_SIGB,
+			    value);
+		he_cap->rx_full_bw_su_he_mu_non_cmpr_sigb = value;
 		CFG_GET_INT(status, mac_ctx,
 			WNI_CFG_HE_RX_MCS_MAP_LT_80, value);
 		he_cap->rx_he_mcs_map_lt_80 = value;

@@ -6097,8 +6097,10 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 		caps_per_phy->vht_2g = vht_cap_info;
 		caps_per_phy->vht_5g = vht_cap_info;
 		/* legacy platform doesn't support HE IE */
-		caps_per_phy->he_2g = 0;
-		caps_per_phy->he_5g = 0;
+		caps_per_phy->he_2g[0] = 0;
+		caps_per_phy->he_2g[1] = 0;
+		caps_per_phy->he_5g[0] = 0;
+		caps_per_phy->he_5g[1] = 0;
 
 		return QDF_STATUS_SUCCESS;
 	}
@@ -6121,8 +6123,10 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 	caps_per_phy->ht_5g = mac_phy_cap[phyid].ht_cap_info_5G;
 	caps_per_phy->vht_2g = mac_phy_cap[phyid].vht_cap_info_2G;
 	caps_per_phy->vht_5g = mac_phy_cap[phyid].vht_cap_info_5G;
-	caps_per_phy->he_2g = mac_phy_cap[phyid].he_cap_info_2G;
-	caps_per_phy->he_5g = mac_phy_cap[phyid].he_cap_info_5G;
+	qdf_mem_copy(caps_per_phy->he_2g, mac_phy_cap[phyid].he_cap_info_2G,
+		     sizeof(caps_per_phy->he_2g));
+	qdf_mem_copy(caps_per_phy->he_5g, mac_phy_cap[phyid].he_cap_info_5G,
+		     sizeof(caps_per_phy->he_5g));
 
 	caps_per_phy->tx_chain_mask_2G = mac_phy_cap->tx_chain_mask_2G;
 	caps_per_phy->rx_chain_mask_2G = mac_phy_cap->rx_chain_mask_2G;
@@ -6200,7 +6204,8 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
 static void wma_print_mac_phy_capabilities(struct wlan_psoc_host_mac_phy_caps
 					   *cap, int index)
 {
-	uint32_t mac_2G, mac_5G;
+	uint32_t mac_2G[PSOC_HOST_MAX_MAC_SIZE];
+	uint32_t mac_5G[PSOC_HOST_MAX_MAC_SIZE];
 	uint32_t phy_2G[WMI_MAX_HECAP_PHY_SIZE];
 	uint32_t phy_5G[WMI_MAX_HECAP_PHY_SIZE];
 	struct wlan_psoc_host_ppe_threshold ppet_2G, ppet_5G;
@@ -6229,12 +6234,14 @@ static void wma_print_mac_phy_capabilities(struct wlan_psoc_host_mac_phy_caps
 	WMA_LOGD("\t: vht_supp_mcs_5G[%d]", cap->vht_supp_mcs_5G);
 	WMA_LOGD("\t: tx_chain_mask_5G[%d]", cap->tx_chain_mask_5G);
 	WMA_LOGD("\t: rx_chain_mask_5G[%d]", cap->rx_chain_mask_5G);
-	WMA_LOGD("\t: he_cap_info_2G[%08x]", cap->he_cap_info_2G);
+	WMA_LOGD("\t: he_cap_info_2G[0][%08x]", cap->he_cap_info_2G[0]);
+	WMA_LOGD("\t: he_cap_info_2G[1][%08x]", cap->he_cap_info_2G[1]);
 	WMA_LOGD("\t: he_supp_mcs_2G[%08x]", cap->he_supp_mcs_2G);
-	WMA_LOGD("\t: he_cap_info_5G[%08x]", cap->he_cap_info_5G);
+	WMA_LOGD("\t: he_cap_info_5G[0][%08x]", cap->he_cap_info_5G[0]);
+	WMA_LOGD("\t: he_cap_info_5G[1][%08x]", cap->he_cap_info_5G[1]);
 	WMA_LOGD("\t: he_supp_mcs_5G[%08x]", cap->he_supp_mcs_5G);
-	mac_2G = cap->he_cap_info_2G;
-	mac_5G = cap->he_cap_info_5G;
+	qdf_mem_copy(mac_2G, cap->he_cap_info_2G, sizeof(mac_2G));
+	qdf_mem_copy(mac_5G, cap->he_cap_info_5G, sizeof(mac_5G));
 	qdf_mem_copy(phy_2G, cap->he_cap_phy_info_2G,
 		     WMI_MAX_HECAP_PHY_SIZE * 4);
 	qdf_mem_copy(phy_5G, cap->he_cap_phy_info_5G,
@@ -6242,10 +6249,12 @@ static void wma_print_mac_phy_capabilities(struct wlan_psoc_host_mac_phy_caps
 	ppet_2G = cap->he_ppet2G;
 	ppet_5G = cap->he_ppet5G;
 
-	wma_print_he_mac_cap(mac_2G);
+	wma_print_he_mac_cap_w1(mac_2G[0]);
+	wma_print_he_mac_cap_w2(mac_2G[1]);
 	wma_print_he_phy_cap(phy_2G);
 	wma_print_he_ppet(&ppet_2G);
-	wma_print_he_mac_cap(mac_5G);
+	wma_print_he_mac_cap_w1(mac_5G[0]);
+	wma_print_he_mac_cap_w1(mac_5G[1]);
 	wma_print_he_phy_cap(phy_5G);
 	wma_print_he_ppet(&ppet_5G);
 }
