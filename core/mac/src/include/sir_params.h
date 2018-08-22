@@ -115,9 +115,7 @@ enum cap_bitmap {
 	TDLS = 6,
 	P2P_GO_NOA_DECOUPLE_INIT_SCAN = 7,
 	WLANACTIVE_OFFLOAD = 8,
-#ifdef FEATURE_WLAN_EXTSCAN
 	EXTENDED_SCAN = 9,
-#endif
 #ifdef FEATURE_WLAN_SCAN_PNO
 	PNO = 10,
 #endif

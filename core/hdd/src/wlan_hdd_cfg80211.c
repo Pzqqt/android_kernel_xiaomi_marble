@@ -119,6 +119,7 @@
 #include <wlan_hdd_ota_test.h>
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
+#include "wlan_extscan_ucfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -3040,13 +3041,11 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 	/* HOTSPOT is a supplicant feature, enable it by default */
 	fset |= WIFI_FEATURE_HOTSPOT;
 
-#ifdef FEATURE_WLAN_EXTSCAN
-	if (hdd_ctx->config->extscan_enabled &&
+	if (ucfg_extscan_get_enable(hdd_ctx->hdd_psoc) &&
 	    sme_is_feature_supported_by_fw(EXTENDED_SCAN)) {
 		hdd_debug("EXTScan is supported by firmware");
 		fset |= WIFI_FEATURE_EXTSCAN | WIFI_FEATURE_HAL_EPNO;
 	}
-#endif
 	if (wlan_hdd_nan_is_supported(hdd_ctx)) {
 		hdd_debug("NAN is supported by firmware");
 		fset |= WIFI_FEATURE_NAN;

@@ -30,6 +30,7 @@
 #include "cds_utils.h"
 #include "cds_sched.h"
 #include <qca_vendor.h>
+#include "wlan_extscan_ucfg_api.h"
 
 #define EXTSCAN_PARAM_MAX QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX
 
@@ -1451,7 +1452,7 @@ void wlan_hdd_cfg80211_extscan_callback(hdd_handle_t hdd_handle,
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID
 #define PARAM_STATUS \
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_STATUS
-#define MAX_SCAN_CACHE_SIZE \
+#define MAX_EXTSCAN_CACHE_SIZE \
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_CAPABILITIES_MAX_SCAN_CACHE_SIZE
 #define MAX_SCAN_BUCKETS \
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_CAPABILITIES_MAX_SCAN_BUCKETS
@@ -1550,7 +1551,8 @@ static int wlan_hdd_send_ext_scan_capability(struct hdd_context *hdd_ctx)
 
 	if (nla_put_u32(skb, PARAM_REQUEST_ID, data->requestId) ||
 	    nla_put_u32(skb, PARAM_STATUS, data->status) ||
-	    nla_put_u32(skb, MAX_SCAN_CACHE_SIZE, data->max_scan_cache_size) ||
+	    nla_put_u32(skb, MAX_EXTSCAN_CACHE_SIZE,
+					data->max_scan_cache_size) ||
 	    nla_put_u32(skb, MAX_SCAN_BUCKETS, data->max_scan_buckets) ||
 	    nla_put_u32(skb, MAX_AP_CACHE_PER_SCAN,
 			data->max_ap_cache_per_scan) ||
@@ -1589,7 +1591,7 @@ nla_put_failure:
  */
 #undef PARAM_REQUEST_ID
 #undef PARAM_STATUS
-#undef MAX_SCAN_CACHE_SIZE
+#undef MAX_EXTSCAN_CACHE_SIZE
 #undef MAX_SCAN_BUCKETS
 #undef MAX_AP_CACHE_PER_SCAN
 #undef MAX_RSSI_SAMPLE_SIZE
@@ -1643,7 +1645,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!hdd_ctx->config->extscan_enabled) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -1782,7 +1784,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!hdd_ctx->config->extscan_enabled) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -1981,7 +1983,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!hdd_ctx->config->extscan_enabled) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -2420,7 +2422,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	if (0 != ret)
 		return -EINVAL;
 
-	if (!hdd_ctx->config->extscan_enabled) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -2642,23 +2644,27 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 	uint8_t bkt_index, j, num_channels, total_channels = 0;
 	uint32_t expected_buckets;
 	uint32_t chan_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	uint32_t extscan_active_min_chn_time;
+	uint32_t min_dwell_time_active_bucket;
+	uint32_t max_dwell_time_active_bucket;
+	uint32_t min_dwell_time_passive_bucket;
+	uint32_t max_dwell_time_passive_bucket;
 
-	uint32_t min_dwell_time_active_bucket =
-		hdd_ctx->config->extscan_active_max_chn_time;
-	uint32_t max_dwell_time_active_bucket =
-		hdd_ctx->config->extscan_active_max_chn_time;
-	uint32_t min_dwell_time_passive_bucket =
-		hdd_ctx->config->extscan_passive_max_chn_time;
-	uint32_t max_dwell_time_passive_bucket =
-		hdd_ctx->config->extscan_passive_max_chn_time;
+	ucfg_extscan_get_active_min_time(hdd_ctx->hdd_psoc,
+					&extscan_active_min_chn_time);
+	ucfg_extscan_get_active_max_time(hdd_ctx->hdd_psoc,
+					 &max_dwell_time_active_bucket);
+	ucfg_extscan_get_passive_max_time(hdd_ctx->hdd_psoc,
+					 &max_dwell_time_passive_bucket);
+
+	min_dwell_time_active_bucket = max_dwell_time_active_bucket;
+	min_dwell_time_passive_bucket = max_dwell_time_passive_bucket;
 
 	req_msg->min_dwell_time_active =
-		req_msg->max_dwell_time_active =
-			hdd_ctx->config->extscan_active_max_chn_time;
+		req_msg->max_dwell_time_active = max_dwell_time_active_bucket;
 
 	req_msg->min_dwell_time_passive =
-		req_msg->max_dwell_time_passive =
-			hdd_ctx->config->extscan_passive_max_chn_time;
+		req_msg->max_dwell_time_passive = max_dwell_time_passive_bucket;
 
 	expected_buckets = req_msg->numBuckets;
 	req_msg->numBuckets = 0;
@@ -2750,11 +2756,11 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 		/* start with known good values for bucket dwell times */
 		req_msg->buckets[bkt_index].min_dwell_time_active =
 		req_msg->buckets[bkt_index].max_dwell_time_active =
-			hdd_ctx->config->extscan_active_max_chn_time;
+						max_dwell_time_active_bucket;
 
 		req_msg->buckets[bkt_index].min_dwell_time_passive =
 		req_msg->buckets[bkt_index].max_dwell_time_passive =
-			hdd_ctx->config->extscan_passive_max_chn_time;
+						max_dwell_time_passive_bucket;
 
 		/* Framework shall pass the channel list if the input WiFi band
 		 * is WIFI_BAND_UNSPECIFIED.
@@ -2803,8 +2809,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 								passive = 1;
 					req_msg->buckets[bkt_index].channels[j].
 					dwellTimeMs =
-						hdd_ctx->config->
-						extscan_passive_max_chn_time;
+						max_dwell_time_passive_bucket;
 					/* reconfigure per-bucket dwell time */
 					if (min_dwell_time_passive_bucket >
 							req_msg->buckets[bkt_index].channels[j].dwellTimeMs) {
@@ -2822,7 +2827,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 							passive = 0;
 					req_msg->buckets[bkt_index].channels[j].
 					dwellTimeMs =
-						hdd_ctx->config->extscan_active_max_chn_time;
+						max_dwell_time_active_bucket;
 					/* reconfigure per-bucket dwell times */
 					if (min_dwell_time_active_bucket >
 							req_msg->buckets[bkt_index].channels[j].dwellTimeMs) {
@@ -2929,9 +2934,9 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 
 			/* Override dwell time if required */
 			if (req_msg->buckets[bkt_index].channels[j].dwellTimeMs <
-				hdd_ctx->config->extscan_active_min_chn_time ||
+				extscan_active_min_chn_time ||
 				req_msg->buckets[bkt_index].channels[j].dwellTimeMs >
-				hdd_ctx->config->extscan_active_max_chn_time) {
+				max_dwell_time_active_bucket) {
 				hdd_debug("WiFi band is unspecified, dwellTime:%d",
 						req_msg->buckets[bkt_index].channels[j].dwellTimeMs);
 
@@ -2941,11 +2946,13 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 					req_msg->buckets[bkt_index].
 					channels[j].channel)))
 						!= CHANNEL_STATE_ENABLE) {
-					req_msg->buckets[bkt_index].channels[j].dwellTimeMs =
-						hdd_ctx->config->extscan_passive_max_chn_time;
+					req_msg->buckets[bkt_index].channels[j].
+						dwellTimeMs =
+						max_dwell_time_passive_bucket;
 				} else {
-					req_msg->buckets[bkt_index].channels[j].dwellTimeMs =
-						hdd_ctx->config->extscan_active_max_chn_time;
+					req_msg->buckets[bkt_index].channels[j].
+						dwellTimeMs =
+						max_dwell_time_active_bucket;
 				}
 			}
 
@@ -3118,7 +3125,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!hdd_ctx->config->extscan_enabled) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -3332,7 +3339,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!hdd_ctx->config->extscan_enabled) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -3460,7 +3467,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!hdd_ctx->config->extscan_enabled) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -3575,7 +3582,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!hdd_ctx->config->extscan_enabled) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -3785,7 +3792,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	if (ret_val)
 		return ret_val;
 
-	if (!hdd_ctx->config->extscan_enabled) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}

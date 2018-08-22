@@ -618,6 +618,10 @@ UMAC_SCAN_OBJS := $(UMAC_SCAN_CORE_DIR)/wlan_scan_cache_db.o \
 		$(WLAN_COMMON_ROOT)/os_if/linux/wlan_cfg80211.o \
 		$(WLAN_COMMON_ROOT)/target_if/scan/src/target_if_scan.o
 
+ifeq ($(CONFIG_FEATURE_WLAN_EXTSCAN), y)
+UMAC_SCAN_OBJS += $(UMAC_SCAN_DISP_DIR)/wlan_extscan_api.o
+endif
+
 ############# UMAC_SPECTRAL_SCAN ############
 UMAC_SPECTRAL_DIR := spectral
 UMAC_SPECTRAL_DISP_INC_DIR := $(UMAC_SPECTRAL_DIR)/dispatcher/inc
