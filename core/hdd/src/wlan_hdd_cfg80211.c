@@ -12907,7 +12907,12 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	policy_mgr_clear_concurrency_mode(hdd_ctx->hdd_psoc,
 		adapter->device_mode);
 
-	hdd_notify_teardown_tdls_links(adapter->hdd_vdev);
+	if (!(adapter->device_mode == QDF_P2P_DEVICE_MODE &&
+	    type == NL80211_IFTYPE_STATION)) {
+		hdd_debug("Teardown tdls links and disable tdls in FW as new interface is coming up");
+		hdd_notify_teardown_tdls_links(adapter->hdd_vdev);
+	}
+
 	if ((adapter->device_mode == QDF_STA_MODE) ||
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
 	    (adapter->device_mode == QDF_P2P_DEVICE_MODE) ||
