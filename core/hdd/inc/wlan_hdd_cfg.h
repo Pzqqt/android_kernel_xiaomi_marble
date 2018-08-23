@@ -14843,13 +14843,13 @@ enum wlan_parameter_type {
 		(_Name),					\
 		(_Type),					\
 		(_Flags),					\
+		0,						\
 		VAR_OFFSET(_Struct, _VarName),			\
 		VAR_SIZE(_Struct, _VarName),			\
 		(_Default),					\
 		(_Min),						\
 		(_Max),						\
-		NULL,						\
-		0						\
+		NULL						\
 	}
 
 #define REG_DYNAMIC_VARIABLE(_Name, _Type,  _Struct, _VarName,	\
@@ -14859,13 +14859,13 @@ enum wlan_parameter_type {
 		(_Name),					\
 		(_Type),					\
 		(VAR_FLAGS_DYNAMIC_CFG | (_Flags)),		\
+		(_CBParam),					\
 		VAR_OFFSET(_Struct, _VarName),			\
 		VAR_SIZE(_Struct, _VarName),			\
 		(_Default),					\
 		(_Min),						\
 		(_Max),						\
-		(_CBFunc),					\
-		(_CBParam)					\
+		(_CBFunc)					\
 	}
 
 #define REG_VARIABLE_STRING(_Name, _Type,  _Struct, _VarName,	\
@@ -14874,19 +14874,20 @@ enum wlan_parameter_type {
 		(_Name),					\
 		(_Type),					\
 		(_Flags),					\
+		0,						\
 		VAR_OFFSET(_Struct, _VarName),			\
 		VAR_SIZE(_Struct, _VarName),			\
 		(unsigned long)(_Default),			\
 		0,						\
 		0,						\
-		NULL,						\
-		0						\
+		NULL						\
 	}
 
 struct reg_table_entry {
 	char *RegName;          /* variable name in the qcom_cfg.ini file */
-	enum wlan_parameter_type RegType;    /* variable type in hdd_config struct */
-	unsigned long Flags;    /* Specify optional parms and if RangeCheck is performed */
+	unsigned char RegType;    /* variable type in hdd_config struct */
+	unsigned char Flags;    /* Specify optional parms and if RangeCheck is performed */
+	unsigned char notifyId; /* Dynamic modification identifier */
 	unsigned short VarOffset;       /* offset to field from the base address of the structure */
 	unsigned short VarSize; /* size (in bytes) of the field */
 	unsigned long VarDefault;       /* default value to use */
@@ -14895,7 +14896,6 @@ struct reg_table_entry {
 	/* Dynamic modification notifier */
 	void (*pfnDynamicnotify)(struct hdd_context *hdd_ctx,
 				 unsigned long notifyId);
-	unsigned long notifyId; /* Dynamic modification identifier */
 };
 
 /**
