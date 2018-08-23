@@ -207,7 +207,7 @@ enum policy_mgr_conc_next_action policy_mgr_need_opportunistic_upgrade(
 		goto done;
 	}
 	if (!hw_mode.dbs_cap) {
-		policy_mgr_notice("current HW mode is non-DBS capable");
+		policy_mgr_debug("current HW mode is non-DBS capable");
 		goto done;
 	}
 
@@ -1299,7 +1299,7 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 					&operating_channel[cc_count],
 					&vdev_id[cc_count], PM_STA_MODE);
 	if (!cc_count) {
-		policy_mgr_err("Could not get STA operating channel&vdevid");
+		policy_mgr_debug("Could not get STA operating channel&vdevid");
 		return;
 	}
 

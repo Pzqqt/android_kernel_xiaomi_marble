@@ -691,10 +691,10 @@ void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
 			/* Deleting the connection entry */
 			policy_mgr_decr_connection_count(psoc,
 					info[found_index].vdev_id);
-			policy_mgr_notice("Stored %d (%d), deleted STA entry with vdev id %d, index %d",
-				info[found_index].vdev_id,
-				info[found_index].mode,
-				info[found_index].vdev_id, conn_index);
+			policy_mgr_debug("Stored %d (%d), deleted STA entry with vdev id %d, index %d",
+					 info[found_index].vdev_id,
+					 info[found_index].mode,
+					 info[found_index].vdev_id, conn_index);
 			found_index++;
 			if (all_matching_cxn_to_del)
 				continue;

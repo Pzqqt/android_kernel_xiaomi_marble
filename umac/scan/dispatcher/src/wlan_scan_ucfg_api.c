@@ -190,7 +190,7 @@ QDF_STATUS ucfg_scan_pno_stop(struct wlan_objmgr_vdev *vdev)
 		return QDF_STATUS_E_INVAL;
 	}
 	if (!scan_vdev_obj->pno_in_progress) {
-		scm_err("pno already stopped");
+		scm_debug("pno already stopped");
 		return QDF_STATUS_E_ALREADY;
 	}
 
@@ -1340,8 +1340,8 @@ ucfg_scan_register_event_handler(struct wlan_objmgr_pdev *pdev,
 		if ((cb_handler->func == event_cb) &&
 			(cb_handler->arg == arg)) {
 			qdf_spin_unlock_bh(&scan->lock);
-			scm_warn("func: %pK, arg: %pK already exists",
-				event_cb, arg);
+			scm_debug("func: %pK, arg: %pK already exists",
+				  event_cb, arg);
 			return QDF_STATUS_SUCCESS;
 		}
 	}

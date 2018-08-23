@@ -218,7 +218,7 @@ QDF_STATUS tdls_vdev_obj_destroy_notification(struct wlan_objmgr_vdev *vdev,
 	struct tdls_soc_priv_obj *tdls_soc_obj;
 	uint32_t tdls_feature_flags;
 
-	tdls_notice("tdls vdev mode %d", wlan_vdev_mlme_get_opmode(vdev));
+	tdls_debug("tdls vdev mode %d", wlan_vdev_mlme_get_opmode(vdev));
 	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE &&
 	    wlan_vdev_mlme_get_opmode(vdev) != QDF_P2P_CLIENT_MODE)
 		return QDF_STATUS_SUCCESS;
