@@ -1338,13 +1338,8 @@ static void wlan_ipa_uc_offload_enable_disable(struct wlan_ipa_priv *ipa_ctx,
 	}
 
 	if (enable == ipa_ctx->vdev_offload_enabled[session_id]) {
-		/*
-		 * This shouldn't happen :
-		 * IPA offload status is already set as desired
-		 */
-		QDF_ASSERT(0);
-		ipa_warn("IPA offload status is already set");
-		ipa_warn("offload_type=%d, vdev_id=%d, enable=%d",
+		ipa_info("IPA offload status is already set");
+		ipa_info("offload_type=%d, vdev_id=%d, enable=%d",
 			 offload_type, session_id, enable);
 		return;
 	}
@@ -1437,6 +1432,11 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			ipa_info("IPA resource %s timed out",
 				  ipa_ctx->resource_loading ?
 				  "load" : "unload");
+
+			if (type == QDF_IPA_AP_DISCONNECT)
+				wlan_ipa_uc_offload_enable_disable(ipa_ctx,
+						SIR_AP_RX_DATA_OFFLOAD,
+						session_id, false);
 
 			qdf_mutex_acquire(&ipa_ctx->ipa_lock);
 
