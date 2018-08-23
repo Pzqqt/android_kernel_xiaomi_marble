@@ -185,6 +185,15 @@ dp_tx_desc_alloc(struct dp_soc *soc, uint8_t desc_pool_id)
 			} else {
 				qdf_spin_unlock_bh(&pool->flow_pool_lock);
 			}
+
+			/*
+			 * If one packet is going to be sent, PM usage count
+			 * needs to be incremented by one to prevent future
+			 * runtime suspend. This should be tied with the
+			 * success of allocating one descriptor. It will be
+			 * decremented after the packet has been sent.
+			 */
+			hif_pm_runtime_get_noresume(soc->hif_handle);
 		} else {
 			pool->pkt_drop_no_desc++;
 			qdf_spin_unlock_bh(&pool->flow_pool_lock);
@@ -230,7 +239,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 			qdf_spin_unlock_bh(&pool->flow_pool_lock);
 			qdf_print("%s %d pool is freed!!",
 				  __func__, __LINE__);
-			return;
+			goto out;
 		}
 		break;
 
@@ -244,6 +253,12 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
 
+out:
+	/**
+	 * Decrement PM usage count if the packet has been sent. This
+	 * should be tied with the success of freeing one descriptor.
+	 */
+	hif_pm_runtime_put(soc->hif_handle);
 }
 #else /* QCA_LL_TX_FLOW_CONTROL_V2 */
 

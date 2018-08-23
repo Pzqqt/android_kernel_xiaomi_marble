@@ -969,14 +969,6 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_sync(hal_tx_desc_cached, hal_tx_desc);
 	DP_STATS_INC_PKT(vdev, tx_i.processed, 1, length);
 
-	/*
-	 * If one packet is enqueued in HW, PM usage count needs to be
-	 * incremented by one to prevent future runtime suspend. This
-	 * should be tied with the success of enqueuing. It will be
-	 * decremented after the packet has been sent.
-	 */
-	hif_pm_runtime_get_noresume(soc->hif_handle);
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3052,8 +3044,6 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 		}
 
 		num_processed += !(count & DP_TX_NAPI_BUDGET_DIV_MASK);
-		/* Decrement PM usage count if the packet has been sent.*/
-		hif_pm_runtime_put(soc->hif_handle);
 
 		/*
 		 * Processed packet count is more than given quota
