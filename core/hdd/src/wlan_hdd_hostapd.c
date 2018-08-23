@@ -5618,7 +5618,11 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		hdd_err("SAP not allowed on DFS channel!!");
 		return -EINVAL;
 	}
-
+	if (!reg_is_etsi13_srd_chan_allowed_master_mode(hdd_ctx->hdd_pdev) &&
+	     reg_is_etsi13_srd_chan(hdd_ctx->hdd_pdev, channel)) {
+		hdd_err("SAP not allowed on SRD channel.");
+		return -EINVAL;
+	}
 	if (cds_is_sub_20_mhz_enabled()) {
 		enum channel_state ch_state;
 		enum phy_ch_width sub_20_ch_width = CH_WIDTH_INVALID;
