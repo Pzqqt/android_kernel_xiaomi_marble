@@ -110,8 +110,10 @@ struct cdp_pkt_type {
  * @non_amsdu_cnt: Number of MSDUs with no MSDU level aggregation
  * @amsdu_cnt: Number of MSDUs part of AMSDU
  * @tx_rate: Tx Rate
- * @last_tx_rate: Last tx rate
- * @last_tx_rate_mcs: Tx rate mcs
+ * @last_tx_rate: Last tx rate for unicast packets
+ * @last_tx_rate_mcs: Tx rate mcs for unicast packets
+ * @mcast_last_tx_rate: Last tx rate for multicast packets
+ * @mcast_last_tx_rate_mcs: Last tx rate mcs for multicast
  * @last_per: Tx Per
  * @rnd_avg_tx_rate: Rounded average tx rate
  * @avg_tx_rate: Average TX rate
@@ -177,6 +179,8 @@ struct cdp_tx_stats {
 	uint32_t tx_rate;
 	uint32_t last_tx_rate;
 	uint32_t last_tx_rate_mcs;
+	uint32_t mcast_last_tx_rate;
+	uint32_t mcast_last_tx_rate_mcs;
 	uint32_t last_per;
 	uint32_t rnd_avg_tx_rate;
 	uint32_t avg_tx_rate;
