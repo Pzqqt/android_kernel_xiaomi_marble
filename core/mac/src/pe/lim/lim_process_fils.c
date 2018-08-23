@@ -1845,9 +1845,9 @@ void lim_update_fils_rik(tpPESession pe_session,
 	if ((!lim_is_fils_connection(pe_session) ||
 	     !pe_fils_info) && (req_buffer->is_fils_connection)) {
 		if (roam_fils_params->rrk_length > FILS_MAX_RRK_LENGTH) {
-			pe_err("FILS rrk len(%d) max (%d)",
-					roam_fils_params->rrk_length,
-					FILS_MAX_RRK_LENGTH);
+			pe_debug("FILS rrk len(%d) max (%d)",
+				 roam_fils_params->rrk_length,
+				 FILS_MAX_RRK_LENGTH);
 			return;
 		}
 

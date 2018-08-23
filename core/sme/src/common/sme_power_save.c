@@ -754,7 +754,7 @@ QDF_STATUS sme_ps_enable_auto_ps_timer(tHalHandle hal_ctx,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		if (QDF_STATUS_E_ALREADY == qdf_status) {
 			/* Consider this ok since the timer is already started*/
-			sme_warn("auto_ps_timer is already started");
+			sme_debug("auto_ps_timer is already started");
 		} else {
 			sme_err("Cannot start auto_ps_timer");
 			return QDF_STATUS_E_FAILURE;

@@ -1500,7 +1500,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 					      privcmd->param_value);
 			break;
 		default:
-			WMA_LOGE("Invalid wma_cli_set vdev command/Not yet implemented 0x%x",
+			WMA_LOGD("Invalid wma_cli_set vdev command/Not yet implemented 0x%x",
 				 privcmd->param_id);
 			break;
 		}
@@ -1994,7 +1994,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 		return;
 	}
 
-	WMA_LOGE("%s: size of buffer: %d", __func__, *size);
+	WMA_LOGD("%s: size of buffer: %d", __func__, *size);
 
 	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
 		iface = &wma->interfaces[vdev_id];
@@ -7675,8 +7675,8 @@ static QDF_STATUS wma_process_limit_off_chan(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 	if (!wma_is_vdev_up(param->vdev_id)) {
-		WMA_LOGE("vdev %d is not up skipping limit_off_chan_param",
-			param->vdev_id);
+		WMA_LOGD("vdev %d is not up skipping limit_off_chan_param",
+			 param->vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -8535,7 +8535,7 @@ void wma_log_completion_timeout(void *data)
 {
 	tp_wma_handle wma_handle;
 
-	WMA_LOGE("%s: Timeout occurred for log completion command", __func__);
+	WMA_LOGD("%s: Timeout occurred for log completion command", __func__);
 
 	wma_handle = (tp_wma_handle) data;
 	if (!wma_handle)

@@ -2374,8 +2374,8 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cds_info("Triggering bug report: type:%d, indicator=%d reason_code=%d",
-		 is_fatal, indicator, reason_code);
+	cds_debug("Triggering bug report: type:%d, indicator=%d reason_code=%d",
+		  is_fatal, indicator, reason_code);
 
 	if (dump_mac_trace)
 		qdf_trace_dump_all(p_cds_context->mac_context, 0, 0, 500, 0);

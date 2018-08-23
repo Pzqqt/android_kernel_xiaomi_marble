@@ -5697,7 +5697,7 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 		goto detach_peer;
 	}
 
-	WMA_LOGW(FL("Outstanding msdu packets: %d"),
+	WMA_LOGD(FL("Outstanding msdu packets: %d"),
 		 cdp_get_tx_pending(soc, pdev));
 	wma_wait_tx_complete(wma, params->smesessionId);
 

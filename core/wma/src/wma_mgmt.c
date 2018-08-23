@@ -2096,7 +2096,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 		/* vdev mac address will be passed for all other modes */
 		qdf_mem_copy(key_params.peer_mac, mac_addr,
 			     IEEE80211_ADDR_LEN);
-		WMA_LOGA("BSS Key setup with vdev_mac %pM\n",
+		WMA_LOGD("BSS Key setup with vdev_mac %pM\n",
 			 mac_addr);
 	}
 

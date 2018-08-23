@@ -2980,7 +2980,7 @@ lim_enable_11a_protection(tpAniSirGlobal mac_ctx,
 	}
 	/* This part is common for station as well. */
 	if (false == pe_session->beaconParams.llaCoexist) {
-		pe_warn(" => protection from 11A Enabled");
+		pe_debug(" => protection from 11A Enabled");
 		bcn_prms->llaCoexist = true;
 		pe_session->beaconParams.llaCoexist = true;
 		bcn_prms->paramChangeBitmap |= PARAM_llACOEXIST_CHANGED;
@@ -5685,7 +5685,7 @@ void lim_diag_mgmt_rx_event_report(tpAniSirGlobal mac_ctx, void *mgmt_hdr,
 	WLAN_HOST_DIAG_EVENT_DEF(mgmt_event,
 				 struct host_event_wlan_mgmt_payload_type);
 	if (!session || !mac_hdr) {
-		pe_err("not valid input");
+		pe_debug("not valid input");
 		return;
 	}
 	lim_diag_fill_mgmt_event_report(mac_ctx, mac_hdr, session,
