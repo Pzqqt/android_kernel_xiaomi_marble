@@ -4996,19 +4996,6 @@ err_free_netdev:
 	return NULL;
 }
 
-#ifdef MSM_PLATFORM
-static inline
-void hdd_cancel_bus_bw_work(struct hdd_context *hdd_ctx)
-{
-	cancel_work_sync(&hdd_ctx->bus_bw_work);
-}
-#else
-static inline
-void hdd_cancel_bus_bw_work(struct hdd_context *hdd_ctx)
-{
-}
-#endif
-
 QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
 			     bool rtnl_held)
 {
@@ -5021,9 +5008,7 @@ QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
 	 * work to access a particularly destroyed adapter, leading to
 	 * use-after-free.
 	 */
-	hdd_debug("wait for bus bw work to flush");
 	hdd_bus_bw_compute_timer_stop(hdd_ctx);
-	hdd_bus_bw_cancel_work(hdd_ctx);
 
 	qdf_list_destroy(&adapter->blocked_scan_request_q);
 	qdf_mutex_destroy(&adapter->blocked_scan_request_q_lock);
@@ -7616,6 +7601,8 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 	bool connected = false;
 	uint32_t ipa_tx_packets = 0, ipa_rx_packets = 0;
 
+	hdd_enter();
+
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
@@ -7716,6 +7703,8 @@ restart_timer:
 		qdf_timer_mod(&hdd_ctx->bus_bw_timer,
 				hdd_ctx->config->busBandwidthComputeInterval);
 	qdf_spinlock_release(&hdd_ctx->bus_bw_timer_lock);
+
+	hdd_exit();
 }
 
 /**
@@ -7751,38 +7740,33 @@ static void hdd_bus_bw_cbk(void *arg)
 
 int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx)
 {
+	hdd_enter();
+
 	spin_lock_init(&hdd_ctx->bus_bw_lock);
-	INIT_WORK(&hdd_ctx->bus_bw_work,
-			hdd_bus_bw_work_handler);
+	INIT_WORK(&hdd_ctx->bus_bw_work, hdd_bus_bw_work_handler);
 	hdd_ctx->bus_bw_timer_running = false;
 	qdf_spinlock_create(&hdd_ctx->bus_bw_timer_lock);
-	qdf_timer_init(NULL,
-		 &hdd_ctx->bus_bw_timer,
-		 hdd_bus_bw_cbk, (void *)hdd_ctx,
-		 QDF_TIMER_TYPE_SW);
+	qdf_timer_init(NULL, &hdd_ctx->bus_bw_timer, hdd_bus_bw_cbk,
+		       (void *)hdd_ctx, QDF_TIMER_TYPE_SW);
+
+	hdd_exit();
 
 	return 0;
 }
 
 void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx)
 {
-	if (hdd_ctx->bus_bw_timer_running)
-		hdd_reset_tcp_delack(hdd_ctx);
+	hdd_enter();
 
-	hdd_debug("wait for bus bw work to flush");
-	hdd_cancel_bus_bw_work(hdd_ctx);
+	hdd_bus_bw_compute_timer_stop(hdd_ctx);
+
 	qdf_timer_free(&hdd_ctx->bus_bw_timer);
-	hdd_ctx->bus_bw_timer_running = false;
 	qdf_spinlock_destroy(&hdd_ctx->bus_bw_timer_lock);
+
+	hdd_exit();
 }
 
-void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx)
-{
-	if (hdd_ctx)
-		cancel_work_sync(&hdd_ctx->bus_bw_work);
-}
-
-#endif
+#endif /* MSM_PLATFORM */
 
 /**
  * wlan_hdd_init_tx_rx_histogram() - init tx/rx histogram stats
@@ -12025,10 +12009,12 @@ static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 	ucfg_ipa_set_perf_level(hdd_ctx->hdd_pdev, 0, 0);
 
 	qdf_spinlock_acquire(&hdd_ctx->bus_bw_timer_lock);
-	qdf_timer_stop(&hdd_ctx->bus_bw_timer);
 	hdd_ctx->bus_bw_timer_running = false;
+	qdf_timer_sync_cancel(&hdd_ctx->bus_bw_timer);
 	qdf_spinlock_release(&hdd_ctx->bus_bw_timer_lock);
 
+	/* work callback is long running; flush outside of lock */
+	cancel_work_sync(&hdd_ctx->bus_bw_work);
 	hdd_reset_tcp_delack(hdd_ctx);
 }
 

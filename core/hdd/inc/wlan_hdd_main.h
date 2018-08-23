@@ -2257,16 +2257,6 @@ int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx);
  */
 void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx);
 
-/**
- * hdd_bus_bw_cancel_work() - Cancel the bus_bw_work worker
- * @hdd_ctx: HDD context
- *
- * Cancel the bus_bw_work to stop monitor link state.
- *
- * Return: None.
- */
-void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx);
-
 #define GET_CUR_RX_LVL(config) ((config)->cur_rx_level)
 #define GET_BW_COMPUTE_INTV(config) ((config)->busBandwidthComputeInterval)
 
@@ -2300,11 +2290,6 @@ int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx)
 
 static inline
 void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx)
-{
-}
-
-static inline
-void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx)
 {
 }
 
