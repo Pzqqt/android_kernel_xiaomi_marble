@@ -109,6 +109,15 @@
 #define HAL_11A_RATE_6MCS	18*2
 #define HAL_11A_RATE_7MCS	9*2
 
+#define HAL_LEGACY_MCS0  0
+#define HAL_LEGACY_MCS1  1
+#define HAL_LEGACY_MCS2  2
+#define HAL_LEGACY_MCS3  3
+#define HAL_LEGACY_MCS4  4
+#define HAL_LEGACY_MCS5  5
+#define HAL_LEGACY_MCS6  6
+#define HAL_LEGACY_MCS7  7
+
 #define HE_GI_0_8 0
 #define HE_GI_1_6 1
 #define HE_GI_3_2 2
