@@ -1021,9 +1021,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-#ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peerMacAddr, pMacHdr);
-#endif
 
 	/* That done, pack the struct: */
 	if (!pAddTS->wmeTspecPresent) {
@@ -1527,9 +1525,7 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-#ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
-#endif
 
 	/* That done, pack the struct: */
 	if (!wmmTspecPresent) {
@@ -2887,9 +2883,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 	/* Prepare the BSSID */
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-#ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
-#endif
 
 	nStatus = dot11f_pack_disassociation(pMac, &frm, pFrame +
 					     sizeof(tSirMacMgmtHdr),
@@ -3066,9 +3060,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 	/* Prepare the BSSID */
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-#ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
-#endif
 
 	nStatus = dot11f_pack_de_auth(pMac, &frm, pFrame +
 				      sizeof(tSirMacMgmtHdr), nPayload, &nPayload);
@@ -3281,9 +3273,7 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 
 	qdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
 
-#ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
-#endif
 
 	nStatus = dot11f_pack_measurement_report(pMac, &frm, pFrame +
 						 sizeof(tSirMacMgmtHdr),
@@ -3381,9 +3371,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 
 	qdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
 
-#ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
-#endif
 
 	nStatus = dot11f_pack_tpc_request(pMac, &frm, pFrame +
 					  sizeof(tSirMacMgmtHdr),
@@ -3485,9 +3473,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 
 	qdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
 
-#ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
-#endif
 
 	nStatus = dot11f_pack_tpc_report(pMac, &frm, pFrame +
 					 sizeof(tSirMacMgmtHdr),
@@ -3607,9 +3593,7 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
 	qdf_mem_copy((uint8_t *) pMacHdr->bssId,
 		     (uint8_t *) psessionEntry->bssId, sizeof(tSirMacAddr));
 
-#ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
-#endif
 
 	nStatus = dot11f_pack_channel_switch(pMac, &frm, pFrame +
 					     sizeof(tSirMacMgmtHdr),
@@ -4133,9 +4117,7 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-#ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
-#endif
 
 	/* Now, we're ready to "pack" the frames */
 	nStatus = dot11f_pack_neighbor_report_request(pMac,
@@ -4282,9 +4264,7 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-#ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
-#endif
 
 	/* Now, we're ready to "pack" the frames */
 	nStatus = dot11f_pack_link_measurement_report(pMac,
@@ -4449,9 +4429,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-#ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
-#endif
 
 	/* Now, we're ready to "pack" the frames */
 	nStatus = dot11f_pack_radio_measurement_report(pMac,

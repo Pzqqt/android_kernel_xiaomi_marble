@@ -4358,8 +4358,11 @@ QDF_STATUS wma_start(void)
 					  QDF_TIMER_TYPE_SW,
 					  wma_send_time_stamp_sync_cmd,
 					  wma_handle);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			WMA_LOGE(FL("Failed to initialize firmware time stamp sync timer"));
+			goto end;
+		}
+
 		/* Start firmware time stamp sync timer */
 		wma_send_time_stamp_sync_cmd(wma_handle);
 	}
