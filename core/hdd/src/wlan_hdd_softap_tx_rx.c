@@ -1183,6 +1183,16 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 		sme_update_channel_list(hdd_ctx->mac_handle);
 	}
 
+	if (ucfg_ipa_is_enabled()) {
+		if (ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev,
+				adapter->dev, adapter->device_mode,
+				ap_ctx->broadcast_sta_id,
+				adapter->session_id,
+				WLAN_IPA_AP_DISCONNECT,
+				adapter->dev->dev_addr) != QDF_STATUS_SUCCESS)
+			hdd_err("WLAN_AP_DISCONNECT event failed");
+	}
+
 	return qdf_status;
 }
 

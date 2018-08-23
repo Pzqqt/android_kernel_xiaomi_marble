@@ -756,7 +756,6 @@ static int hdd_stop_bss_link(struct hdd_adapter *adapter)
 		return errno;
 
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-		hdd_ipa_ap_disconnect(adapter);
 		status = wlansap_stop_bss(
 			WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 		if (QDF_IS_STATUS_SUCCESS(status))
@@ -5316,7 +5315,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 			WLAN_HDD_GET_SAP_CTX_PTR(adapter), true);
 
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
-		hdd_ipa_ap_disconnect(adapter);
 		status = wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			qdf_status =
@@ -6007,23 +6005,3 @@ bool hdd_is_peer_associated(struct hdd_adapter *adapter,
 
 	return false;
 }
-
-void hdd_ipa_ap_disconnect(struct hdd_adapter *adapter)
-{
-	struct hdd_context *hdd_ctx;
-	struct hdd_ap_ctx *ap_ctx;
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
-
-	if (ucfg_ipa_is_enabled()) {
-		if (ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev,
-				adapter->dev, adapter->device_mode,
-				ap_ctx->broadcast_sta_id,
-				adapter->session_id,
-				WLAN_IPA_AP_DISCONNECT,
-				adapter->dev->dev_addr) != QDF_STATUS_SUCCESS)
-			hdd_err("WLAN_AP_DISCONNECT event failed");
-	}
-}
-

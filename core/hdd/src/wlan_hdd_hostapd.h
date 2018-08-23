@@ -194,14 +194,4 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx,
 			       struct hdd_adapter *adapter);
 
 void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter);
-
-/**
- * hdd_ipa_ap_disconnect() - call hdd_ipa_wlan_evt if
- * ipa is enabled
- * @pAdapter: pointer to adapter context
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
-void hdd_ipa_ap_disconnect(struct hdd_adapter *adapter);
-
 #endif /* end #if !defined(WLAN_HDD_HOSTAPD_H) */
