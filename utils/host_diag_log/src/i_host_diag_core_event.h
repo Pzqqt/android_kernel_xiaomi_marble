@@ -212,16 +212,14 @@ static inline void qdf_wow_wakeup_host_event(uint8_t wow_wakeup_cause)
 	return;
 }
 
-static inline void host_log_acs_req_event(uint8_t *intf, uint8_t *hw_mode,
+static inline void host_log_acs_req_event(uint8_t *intf, const uint8_t *hw_mode,
 					  uint16_t bw, uint8_t ht, uint8_t vht,
 					  uint16_t chan_start,
 					  uint16_t chan_end)
 {
 }
 
-static inline void host_log_acs_scan_start(uint8_t *scan_type,
-					   uint8_t *bss_type, uint32_t scan_id,
-					   uint8_t vdev_id)
+static inline void host_log_acs_scan_start(uint32_t scan_id, uint8_t vdev_id)
 {
 }
 
