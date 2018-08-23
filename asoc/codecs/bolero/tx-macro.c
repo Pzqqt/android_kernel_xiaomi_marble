@@ -336,7 +336,7 @@ static void tx_macro_mute_update_callback(struct work_struct *work)
 	hpf_gate_reg = BOLERO_CDC_TX0_TX_PATH_SEC2 +
 			TX_MACRO_TX_PATH_OFFSET * decimator;
 	snd_soc_update_bits(codec, hpf_gate_reg, 0x01, 0x01);
-	snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x01, 0x00);
+	snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x00);
 	dev_dbg(tx_priv->dev, "%s: decimator %u unmute\n",
 		__func__, decimator);
 }
@@ -521,6 +521,9 @@ static int tx_macro_enable_dmic(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMU:
 		(*dmic_clk_cnt)++;
 		if (*dmic_clk_cnt == 1) {
+			snd_soc_update_bits(codec, BOLERO_CDC_VA_TOP_CSR_DMIC_CFG,
+					0x80, 0x00);
+
 			snd_soc_update_bits(codec, dmic_clk_reg,
 					0x0E, tx_priv->dmic_clk_div << 0x1);
 			snd_soc_update_bits(codec, dmic_clk_reg,
@@ -583,6 +586,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x10);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
+		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x20, 0x20);
 		snd_soc_update_bits(codec, hpf_gate_reg, 0x01, 0x00);
 
 		/* schedule work queue to Remove Mute */
@@ -613,6 +617,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				&tx_priv->tx_mute_dwork[decimator].dwork);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x20, 0x00);
 		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x00);
 		break;
 	}

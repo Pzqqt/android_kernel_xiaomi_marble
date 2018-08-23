@@ -169,7 +169,7 @@ static int wcd937x_mbhc_request_irq(struct snd_soc_codec *codec,
 {
 	struct wcd937x_priv *wcd937x = dev_get_drvdata(codec->dev);
 
-	return wcd_request_irq(wcd937x->irq_info, irq, name, handler, data);
+	return wcd_request_irq(&wcd937x->irq_info, irq, name, handler, data);
 }
 
 static void wcd937x_mbhc_irq_control(struct snd_soc_codec *codec,
@@ -178,9 +178,9 @@ static void wcd937x_mbhc_irq_control(struct snd_soc_codec *codec,
 	struct wcd937x_priv *wcd937x = dev_get_drvdata(codec->dev);
 
 	if (enable)
-		wcd_enable_irq(wcd937x->irq_info, irq);
+		wcd_enable_irq(&wcd937x->irq_info, irq);
 	else
-		wcd_disable_irq(wcd937x->irq_info, irq);
+		wcd_disable_irq(&wcd937x->irq_info, irq);
 }
 
 static int wcd937x_mbhc_free_irq(struct snd_soc_codec *codec,
@@ -188,7 +188,7 @@ static int wcd937x_mbhc_free_irq(struct snd_soc_codec *codec,
 {
 	struct wcd937x_priv *wcd937x = dev_get_drvdata(codec->dev);
 
-	wcd_free_irq(wcd937x->irq_info, irq, data);
+	wcd_free_irq(&wcd937x->irq_info, irq, data);
 
 	return 0;
 }

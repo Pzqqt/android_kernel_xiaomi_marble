@@ -61,7 +61,7 @@ struct wcd937x_priv {
 	u32 hph_mode;
 
 	struct irq_domain *virq;
-	struct wcd_irq_info *irq_info;
+	struct wcd_irq_info irq_info;
 	u32 rx_clk_cnt;
 	int num_irq_regs;
 
