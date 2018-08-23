@@ -102,6 +102,7 @@ struct swr_mstr_ctrl {
 	int clk_ref_count;
 	struct completion reset;
 	struct completion broadcast;
+	struct mutex iolock;
 	struct mutex mlock;
 	struct mutex reslock;
 	u32 swrm_base_reg;
