@@ -59,10 +59,6 @@
 #define SOFTAP_MIN_TXPWR        (0)
 #define SOFTAP_MAX_TXPWR        (63)
 
-#define SAP_DEFAULT_24GHZ_CHANNEL     (6)
-#define SAP_DEFAULT_5GHZ_CHANNEL      (40)
-#define SAP_CHANNEL_NOT_SELECTED (0)
-
 #define SOFTAP_HT20_CHANNELWIDTH 0
 /* In HT40/VHT80, Effect of primary Channel RSSi on Subband1 */
 #define SAP_SUBBAND1_RSSI_EFFECT_PRIMARY  (-20)

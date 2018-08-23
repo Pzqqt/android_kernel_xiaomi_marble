@@ -2993,9 +2993,9 @@ struct sir_wifi_start_log {
  * @pcl_len: Number of channels in the PCL
  */
 struct sir_pcl_list {
+	uint32_t pcl_len;
 	uint8_t pcl_list[128];
 	uint8_t weight_list[128];
-	uint32_t pcl_len;
 };
 
 /**

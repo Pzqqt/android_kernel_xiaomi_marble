@@ -62,6 +62,10 @@ extern "C" {
 #define       SAP_MAX_OBSS_STA_CNT         1    /* max # of OBSS STA */
 #define       SAP_ACS_WEIGHT_MAX           (26664)
 
+#define SAP_DEFAULT_24GHZ_CHANNEL     (6)
+#define SAP_DEFAULT_5GHZ_CHANNEL      (40)
+#define SAP_CHANNEL_NOT_SELECTED (0)
+
 /*--------------------------------------------------------------------------
  * reasonCode taken from 802.11 standard.
  * ------------------------------------------------------------------------*/
