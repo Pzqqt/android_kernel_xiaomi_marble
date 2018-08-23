@@ -548,6 +548,10 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 
 	soc->ast_table[ast_entry->ast_idx] = NULL;
 	TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
+
+	if (ast_entry == peer->self_ast_entry)
+		peer->self_ast_entry = NULL;
+
 	DP_STATS_INC(soc, ast.deleted, 1);
 	dp_peer_ast_hash_remove(soc, ast_entry);
 	qdf_mem_free(ast_entry);

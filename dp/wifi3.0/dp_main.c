@@ -3890,9 +3890,11 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		 * If an AST entry exists, but no peer entry exists with a given
 		 * MAC addresses, we could deduce it as a WDS entry
 		 */
+		qdf_spin_lock_bh(&soc->ast_lock);
 		ast_entry = dp_peer_ast_hash_find(soc, peer_mac_addr);
 		if (ast_entry)
 			dp_peer_del_ast(soc, ast_entry);
+		qdf_spin_unlock_bh(&soc->ast_lock);
 	}
 
 #ifdef notyet
