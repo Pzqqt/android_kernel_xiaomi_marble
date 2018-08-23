@@ -1623,9 +1623,7 @@ ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
 INCS +=		$(PKTLOG_INC)
 endif
 
-ifeq ($(BUILD_DIAG_VERSION), y)
 INCS +=		$(HOST_DIAG_LOG_INC)
-endif
 
 INCS +=		$(DISA_INC)
 INCS +=		$(ACTION_OUI_INC)

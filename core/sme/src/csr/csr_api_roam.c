@@ -7330,7 +7330,6 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 	tSirMacAddr bcast_mac = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 	QDF_STATUS status;
 	host_log_ibss_pkt_type *ibss_log;
-	uint32_t bi;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	tSirSmeHTProfile *src_profile = NULL;
 	tCsrRoamHTProfile *dst_profile = NULL;
@@ -7404,6 +7403,7 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 	WLAN_HOST_DIAG_LOG_ALLOC(ibss_log,
 		host_log_ibss_pkt_type, LOG_WLAN_IBSS_C);
 	if (ibss_log) {
+		uint32_t bi;
 		if (CSR_INVALID_SCANRESULT_HANDLE ==
 				cmd->u.roamCmd.hBSSList) {
 			/*
@@ -7431,6 +7431,7 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 		WLAN_HOST_DIAG_LOG_REPORT(ibss_log);
 	}
 #endif
+	ibss_log = NULL;
 	/*
 	 * Only set context for non-WDS_STA. We don't even need it for
 	 * WDS_AP. But since the encryption.
@@ -8135,6 +8136,7 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 			WLAN_HOST_DIAG_LOG_REPORT(ibss_log);
 		}
 #endif
+		ibss_log = NULL;
 		start_bss_rsp = (tSirSmeStartBssRsp *)context;
 		qdf_mem_set(&roam_info, sizeof(roam_info), 0);
 		roam_status = eCSR_ROAM_IBSS_IND;
