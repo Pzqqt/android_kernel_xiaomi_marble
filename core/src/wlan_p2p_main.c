@@ -201,7 +201,7 @@ static QDF_STATUS p2p_vdev_obj_create_notification(
 	}
 
 	mode = wlan_vdev_mlme_get_opmode(vdev);
-	p2p_info("vdev mode:%d", mode);
+	p2p_debug("vdev mode:%d", mode);
 	if (mode != QDF_P2P_GO_MODE) {
 		p2p_debug("won't create p2p vdev private object if it is not GO");
 		return QDF_STATUS_SUCCESS;
@@ -360,7 +360,7 @@ static QDF_STATUS p2p_peer_obj_destroy_notification(
 						WLAN_UMAC_COMP_P2P);
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!p2p_vdev_obj || !psoc) {
-		p2p_err("p2p_vdev_obj:%pK psoc:%pK", p2p_vdev_obj, psoc);
+		p2p_debug("p2p_vdev_obj:%pK psoc:%pK", p2p_vdev_obj, psoc);
 		return QDF_STATUS_E_INVAL;
 	}
 
