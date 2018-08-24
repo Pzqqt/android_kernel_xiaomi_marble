@@ -7885,7 +7885,7 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	}
 
 	qdf_status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc, &ht_cap_info);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to get HT Cap info");
 		status = false;
 	}
@@ -7899,9 +7899,9 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	}
 
 	qdf_status = ucfg_mlme_set_ht_cap_info(hdd_ctx->hdd_psoc, ht_cap_info);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		status = false;
-		hdd_err("Could not pass on HT_CAP_INFO to CFG");
+		hdd_err("Could not set the HT_CAP_INFO");
 	}
 
 	sme_cfg_get_int(mac_handle, WNI_CFG_VHT_BASIC_MCS_SET, &temp);
