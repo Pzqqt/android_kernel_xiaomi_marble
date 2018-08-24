@@ -382,6 +382,27 @@ void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
 				bool all_matching_cxn_to_del,
 				struct policy_mgr_conc_connection_info *info,
 				uint8_t *num_cxn_del);
+
+/**
+ * policy_mgr_store_and_del_conn_info_by_vdev_id() - Store and del a
+ * connection info by vdev id
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id whose entry has to be deleted
+ * @info: struture array pointer where the connection info will be saved
+ * @num_cxn_del: number of connection which are going to be deleted
+ *
+ * Saves the connection info corresponding to the provided mode
+ * and deleted that corresponding entry based on vdev from the
+ * connection info structure
+ *
+ * Return: None
+ */
+void policy_mgr_store_and_del_conn_info_by_vdev_id(
+			struct wlan_objmgr_psoc *psoc,
+			uint32_t vdev_id,
+			struct policy_mgr_conc_connection_info *info,
+			uint8_t *num_cxn_del);
+
 void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
 				struct policy_mgr_conc_connection_info *info,
 				uint8_t num_cxn_del);

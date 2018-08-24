@@ -1862,6 +1862,37 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 	return policy_mgr_is_concurrency_allowed(psoc, mode, channel, bw);
 }
 
+bool  policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
+				       enum policy_mgr_con_mode mode,
+				       uint8_t channel,
+				       uint32_t vdev_id)
+{
+	bool allow = false;
+	struct policy_mgr_conc_connection_info info;
+	uint8_t num_cxn_del = 0;
+
+	/*
+	 * Store the connection's parameter and temporarily delete it
+	 * from the concurrency table. This way the allow concurrency
+	 * check can be used as though a new connection is coming up,
+	 * after check, restore the connection to concurrency table.
+	 */
+	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, vdev_id,
+						      &info, &num_cxn_del);
+	allow = policy_mgr_allow_concurrency(
+				psoc,
+				mode,
+				channel,
+				HW_MODE_20_MHZ);
+	if (!allow)
+		policy_mgr_err("CSA concurrency check failed");
+	/* Restore the connection entry */
+	if (num_cxn_del > 0)
+		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+
+	return allow;
+}
+
 /**
  * policy_mgr_get_concurrency_mode() - return concurrency mode
  * @psoc: PSOC object information

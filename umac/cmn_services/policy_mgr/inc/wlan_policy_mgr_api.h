@@ -396,6 +396,31 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 		uint8_t channel, enum hw_mode_bandwidth bw);
 
 /**
+ * policy_mgr_allow_concurrency_csa() - Check for allowed concurrency
+ * combination when channel switch
+ * @psoc:	PSOC object information
+ * @mode:	connection mode
+ * @channel:	target channel to switch
+ * @vdev_id:	vdev id of channel switch interface
+ *
+ * There is already existing SAP+GO combination but due to upper layer
+ * notifying LTE-COEX event or sending command to move one of the connections
+ * to different channel. In such cases before moving existing connection to new
+ * channel, check if new channel can co-exist with the other existing
+ * connection. For example, one SAP1 is on channel-6 and second SAP2 is on
+ * channel-36 and lets say they are doing DBS, and lets say upper layer sends
+ * LTE-COEX to move SAP1 from channel-6 to channel-149. In this case, SAP1 and
+ * SAP2 will end up doing MCC which may not be desirable result. such cases
+ * will be prevented with this API.
+ *
+ * Return: True/False
+ */
+bool policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
+				      enum policy_mgr_con_mode mode,
+				      uint8_t channel,
+				      uint32_t vdev_id);
+
+/**
  * policy_mgr_get_first_connection_pcl_table_index() - provides the
  * row index to firstConnectionPclTable to get to the correct
  * pcl
