@@ -1258,6 +1258,9 @@ REGULATORY_OBJS := $(REG_CORE_OBJ_DIR)/reg_db.o \
                    $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_services_api.o \
                    $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_tgt_api.o \
                    $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_ucfg_api.o
+ifeq ($(CONFIG_HOST_11D_SCAN), y)
+REGULATORY_OBJS += $(REG_CORE_OBJ_DIR)/reg_host_11d.o
+endif
 
 ############## Control path common scheduler ##########
 SCHEDULER_DIR := scheduler
@@ -2175,6 +2178,9 @@ cppflags-$(CONFIG_CRYPTO_COMPONENT) += -DWLAN_CONV_CRYPTO_SUPPORTED \
                                        -DWLAN_CRYPTO_GCM_OS_DERIVATIVE \
                                        -DWLAN_CRYPTO_FILS_OS_DERIVATIVE \
                                        -DWLAN_CRYPTO_OMAC1_OS_DERIVATIVE
+
+#Enable host 11d scan
+cppflags-$(CONFIG_HOST_11D_SCAN) += -DHOST_11D_SCAN
 
 #Stats & Quota Metering feature
 ifeq ($(CONFIG_IPA_OFFLOAD), y)

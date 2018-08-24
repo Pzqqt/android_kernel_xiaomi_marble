@@ -52,6 +52,7 @@ CONFIG_WLAN_DYNAMIC_CVM := n
 
 #We might need to disable WEXT support in perf builds in future
 CONFIG_WLAN_WEXT_SUPPORT_ENABLE := y
+CONFIG_HOST_11D_SCAN := y
 
 ifeq ($(CONFIG_ARCH_MSM8996), y)
 CONFIG_CHANNEL_HOPPING_ALL_BANDS := y
