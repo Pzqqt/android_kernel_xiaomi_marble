@@ -6275,6 +6275,11 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 			set_val = 2;
 		ret_val = wma_cli_set_command(adapter->session_id,
 				WMI_VDEV_PARAM_BA_MODE, set_val, VDEV_CMD);
+		if (ret_val)
+			hdd_err("Failed to set BA operating mode %d", set_val);
+		ret_val = wma_cli_set_command(adapter->session_id,
+					      GEN_VDEV_PARAM_AMPDU,
+					      buff_size, GEN_CMD);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_NO_ACK]) {
@@ -6364,6 +6369,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		cfg_val = nla_get_u8(tb[
 				     QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_MAC_PADDING_DUR]);
 		if (cfg_val) {
+			hdd_debug("Set HE mac padding dur to %d", cfg_val);
 			ret_val = sme_cli_set_command(adapter->session_id,
 					WMI_VDEV_PARAM_MU_EDCA_FW_UPDATE_EN,
 					0, VDEV_CMD);
