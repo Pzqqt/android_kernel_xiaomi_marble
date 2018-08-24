@@ -399,6 +399,35 @@ QDF_STATUS utils_dfs_second_segment_radar_disable(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS utils_dfs_bw_reduce(struct wlan_objmgr_pdev *pdev, bool bw_reduce)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return  QDF_STATUS_E_FAILURE;
+
+	dfs->dfs_bw_reduced = bw_reduce;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(utils_dfs_bw_reduce);
+
+QDF_STATUS utils_dfs_is_bw_reduce(struct wlan_objmgr_pdev *pdev,
+				  bool *bw_reduce)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return  QDF_STATUS_E_FAILURE;
+
+	*bw_reduce = dfs->dfs_bw_reduced;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS utils_dfs_fetch_nol_ie_info(struct wlan_objmgr_pdev *pdev,
 				       uint8_t *nol_ie_bandwidth,
 				       uint16_t *nol_ie_startfreq,
@@ -828,7 +857,6 @@ qdf_export_symbol(utils_dfs_get_random_channel);
 
 QDF_STATUS utils_dfs_bw_reduced_channel(
 	struct wlan_objmgr_pdev *pdev,
-	uint16_t flags,
 	struct ch_params *ch_params,
 	uint32_t *hw_mode,
 	uint8_t *target_chan)
@@ -859,7 +887,6 @@ QDF_STATUS utils_dfs_bw_reduced_channel(
 			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1;
 		ch_params->center_freq_seg1 =
 			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2;
-		dfs->dfs_bw_reduced = 1;
 		wlan_reg_set_channel_params(pdev,
 					    dfs->dfs_curchan->dfs_ch_ieee,
 					    0, ch_params);
@@ -872,6 +899,8 @@ QDF_STATUS utils_dfs_bw_reduced_channel(
 
 	return status;
 }
+
+qdf_export_symbol(utils_dfs_bw_reduced_channel);
 
 #ifdef QCA_DFS_NOL_PLATFORM_DRV_SUPPORT
 void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)

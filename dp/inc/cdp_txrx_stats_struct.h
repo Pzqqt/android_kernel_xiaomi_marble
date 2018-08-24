@@ -1528,6 +1528,7 @@ enum _ol_ath_param_t {
 	 * full band freq range or it's 2g
 	 */
 	OL_ATH_PARAM_BAND_INFO = 399,
+	OL_ATH_PARAM_BW_REDUCE = 400,
 };
 
 /* Enumeration of PDEV Configuration parameter */

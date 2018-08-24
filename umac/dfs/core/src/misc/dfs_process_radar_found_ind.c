@@ -748,8 +748,11 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if (dfs->dfs_use_nol_subchannel_marking &&
-		!(dfs->dfs_bangradar || dfs->dfs_second_segment_bangradar))
+	/* BW reduction is dependent on subchannel marking */
+
+	if ((dfs->dfs_use_nol_subchannel_marking ||
+	     (dfs->dfs_use_nol_subchannel_marking && dfs->dfs_bw_reduced)) &&
+	      !(dfs->dfs_bangradar || dfs->dfs_second_segment_bangradar))
 		num_channels = dfs_find_radar_affected_subchans(dfs,
 								radar_found,
 								channels,

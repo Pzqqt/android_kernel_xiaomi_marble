@@ -1178,6 +1178,10 @@ struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_get_nol_subchannel_marking)(
 			struct wlan_objmgr_pdev *pdev,
 			bool *value);
+	QDF_STATUS (*dfs_set_bw_reduction)(struct wlan_objmgr_pdev *pdev,
+			bool value);
+	QDF_STATUS (*dfs_is_bw_reduction_needed)(struct wlan_objmgr_pdev *pdev,
+			bool *bw_reduce);
 };
 
 struct wlan_lmac_if_mlme_rx_ops {

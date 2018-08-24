@@ -370,6 +370,25 @@ bool utils_dfs_process_nol_ie_bitmap(struct wlan_objmgr_pdev *pdev,
 				     uint8_t nol_ie_bitmap);
 
 /**
+ * utils_dfs_bw_reduce() - Set bw reduce.
+ * @pdev: Pointer to DFS pdev object.
+ * @bw_reduce: Fill bw_reduce value in this variable.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS utils_dfs_bw_reduce(struct wlan_objmgr_pdev *pdev,
+				bool bw_reduce);
+
+/**
+ * utils_dfs_is_bw_reduce() - Get bw reduce.
+ * @pdev: Pointer to DFS pdev object.
+ * @bw_reduce: Pointer to get bw_reduce value.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS utils_dfs_is_bw_reduce(struct wlan_objmgr_pdev *pdev,
+				  bool *bw_reduce);
+/**
  * utils_dfs_set_cac_timer_running() - Sets the cac timer running.
  * @pdev: Pointer to DFS pdev object.
  * @val: Set this value to dfs_cac_timer_running variable.
@@ -413,7 +432,6 @@ QDF_STATUS utils_dfs_get_random_channel(struct wlan_objmgr_pdev *pdev,
 /**
  * utils_dfs_bw_reduced_channel() - Get BW reduced channel.
  * @pdev: Pointer to DFS pdev object.
- * @flags: Reduced bandwidth channel flags.
  * @ch_params: current channel params.
  * @hw_mode: current operating mode.
  * @target_chan: Pointer to target_chan.
@@ -424,7 +442,6 @@ QDF_STATUS utils_dfs_get_random_channel(struct wlan_objmgr_pdev *pdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS utils_dfs_bw_reduced_channel(struct wlan_objmgr_pdev *pdev,
-					uint16_t flags,
 					struct ch_params *ch_params,
 					uint32_t *hw_mode,
 					uint8_t *target_chan);

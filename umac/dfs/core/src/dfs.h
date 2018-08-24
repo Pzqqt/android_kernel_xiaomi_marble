@@ -1158,7 +1158,7 @@ struct wlan_dfs {
 	int32_t        dfs_max_sidx;
 	uint8_t        dfs_seg_id;
 	uint8_t        dfs_is_chirp;
-	uint8_t        dfs_bw_reduced;
+	bool           dfs_bw_reduced;
 	int32_t        dfs_freq_offset;
 	bool           dfs_cac_aborted;
 	qdf_spinlock_t dfs_data_struct_lock;

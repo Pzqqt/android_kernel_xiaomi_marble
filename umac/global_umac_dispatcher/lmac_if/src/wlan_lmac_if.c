@@ -371,6 +371,11 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 		ucfg_dfs_set_nol_subchannel_marking;
 	dfs_rx_ops->dfs_get_nol_subchannel_marking =
 		ucfg_dfs_get_nol_subchannel_marking;
+	dfs_rx_ops->dfs_set_bw_reduction =
+		utils_dfs_bw_reduce;
+	dfs_rx_ops->dfs_is_bw_reduction_needed =
+		utils_dfs_is_bw_reduce;
+
 	register_precac_auto_chan_rx_ops(dfs_rx_ops);
 
 	return QDF_STATUS_SUCCESS;
