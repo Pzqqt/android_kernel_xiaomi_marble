@@ -720,6 +720,48 @@ void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
 	 */
 }
 
+void policy_mgr_store_and_del_conn_info_by_vdev_id(
+			struct wlan_objmgr_psoc *psoc,
+			uint32_t vdev_id,
+			struct policy_mgr_conc_connection_info *info,
+			uint8_t *num_cxn_del)
+{
+	uint32_t conn_index = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	if (!info || !num_cxn_del) {
+		policy_mgr_err("Invalid parameters");
+		return;
+	}
+	*num_cxn_del = 0;
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+	     conn_index++) {
+		if ((pm_conc_connection_list[conn_index].vdev_id == vdev_id) &&
+		    pm_conc_connection_list[conn_index].in_use) {
+			*num_cxn_del = 1;
+			break;
+		}
+	}
+	/*
+	 * Storing the connection entry which will be
+	 * temporarily deleted.
+	 */
+	if (*num_cxn_del == 1) {
+		*info = pm_conc_connection_list[conn_index];
+		/* Deleting the connection entry */
+		policy_mgr_decr_connection_count(
+			psoc,
+			pm_conc_connection_list[conn_index].vdev_id);
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+}
+
 /**
  * policy_mgr_restore_deleted_conn_info() - Restore connection info
  * @info: An array saving connection info that is to be restored
