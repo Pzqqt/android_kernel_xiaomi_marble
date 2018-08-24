@@ -1558,7 +1558,8 @@ sme_apf_read_work_memory(tHalHandle hal,
 #endif /* FEATURE_WLAN_APF */
 
 uint32_t sme_get_wni_dot11_mode(tHalHandle hal);
-QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, uint8_t *bssid);
+QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, uint8_t *bssid,
+				  uint8_t vdev_id);
 QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
 			struct adaptive_dwelltime_params *dwelltime_params);
 

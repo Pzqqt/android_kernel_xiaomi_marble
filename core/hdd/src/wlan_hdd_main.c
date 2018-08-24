@@ -6132,7 +6132,8 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 	if (hdd_ctx->config->enable_change_channel_bandwidth &&
 	    (!sme_find_session_by_bssid(hal_hdl, adapter->mac_addr.bytes))) {
 		status = sme_create_mon_session(hal_hdl,
-						adapter->mac_addr.bytes);
+						adapter->mac_addr.bytes,
+						adapter->session_id);
 		if (status != QDF_STATUS_SUCCESS) {
 			hdd_err("Status: %d Failed to create session.",
 				status);

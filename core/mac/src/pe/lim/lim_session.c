@@ -563,27 +563,16 @@ void lim_update_bcn_probe_filter(tpAniSirGlobal mac_ctx,
 		filter->num_sap_sessions);
 }
 
-/**
- * pe_create_session() creates a new PE session given the BSSID
- * @param pMac:        pointer to global adapter context
- * @param bssid:       BSSID of the new session
- * @param sessionId:   session ID is returned here, if session is created.
- * @param bssType:     station or a
- *
- * This function returns the session context and the session ID if the session
- * corresponding to the passed BSSID is found in the PE session table.
- *
- * Return: tpPESession:   pointer to the session context or NULL if session
- *                        can not be created.
- */
-
-tpPESession
-pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
-		  uint16_t numSta, tSirBssType bssType)
+tpPESession pe_create_session(tpAniSirGlobal pMac,
+			      uint8_t *bssid,
+			      uint8_t *sessionId,
+			      uint16_t numSta, tSirBssType bssType,
+			      uint8_t sme_session_id)
 {
 	QDF_STATUS status;
 	uint8_t i;
 	tpPESession session_ptr;
+	struct wlan_objmgr_vdev *vdev;
 
 	for (i = 0; i < pMac->lim.maxBssId; i++) {
 		/* Find first free room in session table */
@@ -614,16 +603,11 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	session_ptr->gpLimPeerIdxpool = qdf_mem_malloc(
 		sizeof(*(session_ptr->gpLimPeerIdxpool)) *
 		lim_get_peer_idxpool_size(numSta, bssType));
-	if (NULL == session_ptr->gpLimPeerIdxpool) {
+	if (!session_ptr->gpLimPeerIdxpool) {
 		pe_err("memory allocate failed!");
-		qdf_mem_free(session_ptr->dph.dphHashTable.pHashTable);
-		qdf_mem_zero(session_ptr->dph.dphHashTable.pDphNodeArray,
-			sizeof(struct sDphHashNode) *
-			(SIR_SAP_MAX_NUM_PEERS + 1));
-		session_ptr->dph.dphHashTable.pHashTable = NULL;
-		session_ptr->dph.dphHashTable.pDphNodeArray = NULL;
-		return NULL;
+		goto free_dp_hash_table;
 	}
+
 	session_ptr->freePeerIdxHead = 0;
 	session_ptr->freePeerIdxTail = 0;
 	session_ptr->gLimNumOfCurrentSTAs = 0;
@@ -677,25 +661,24 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 		    || (NULL == session_ptr->pSchBeaconFrameBegin)
 		    || (NULL == session_ptr->pSchBeaconFrameEnd)) {
 			pe_err("memory allocate failed!");
-			qdf_mem_free(session_ptr->dph.dphHashTable.pHashTable);
-			qdf_mem_zero(
-				session_ptr->dph.dphHashTable.pDphNodeArray,
-				sizeof(struct sDphHashNode) *
-				(SIR_SAP_MAX_NUM_PEERS + 1));
-			qdf_mem_free(session_ptr->gpLimPeerIdxpool);
-			qdf_mem_free(session_ptr->pSchProbeRspTemplate);
-			qdf_mem_free(session_ptr->pSchBeaconFrameBegin);
-			qdf_mem_free(session_ptr->pSchBeaconFrameEnd);
-
-			session_ptr->dph.dphHashTable.pHashTable = NULL;
-			session_ptr->dph.dphHashTable.pDphNodeArray = NULL;
-			session_ptr->gpLimPeerIdxpool = NULL;
-			session_ptr->pSchProbeRspTemplate = NULL;
-			session_ptr->pSchBeaconFrameBegin = NULL;
-			session_ptr->pSchBeaconFrameEnd = NULL;
-			return NULL;
+			goto free_session_attrs;
 		}
 	}
+
+	/*
+	 * Get vdev object from soc which automatically increments
+	 * reference count.
+	 */
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(pMac->psoc,
+						    sme_session_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		pe_err("vdev is NULL for vdev_id: %u", sme_session_id);
+		goto free_session_attrs;
+	}
+	session_ptr->vdev = vdev;
+	session_ptr->smeSessionId = sme_session_id;
+
 	if (eSIR_INFRASTRUCTURE_MODE == bssType)
 		lim_ft_open(pMac, &pMac->lim.gpSession[i]);
 
@@ -733,6 +716,27 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	session_ptr->prev_auth_seq_num = 0xFFFF;
 
 	return &pMac->lim.gpSession[i];
+
+free_session_attrs:
+	qdf_mem_free(session_ptr->gpLimPeerIdxpool);
+	qdf_mem_free(session_ptr->pSchProbeRspTemplate);
+	qdf_mem_free(session_ptr->pSchBeaconFrameBegin);
+	qdf_mem_free(session_ptr->pSchBeaconFrameEnd);
+
+	session_ptr->gpLimPeerIdxpool = NULL;
+	session_ptr->pSchProbeRspTemplate = NULL;
+	session_ptr->pSchBeaconFrameBegin = NULL;
+	session_ptr->pSchBeaconFrameEnd = NULL;
+
+free_dp_hash_table:
+	qdf_mem_free(session_ptr->dph.dphHashTable.pHashTable);
+	qdf_mem_zero(session_ptr->dph.dphHashTable.pDphNodeArray,
+		     sizeof(struct sDphHashNode) * (SIR_SAP_MAX_NUM_PEERS + 1));
+
+	session_ptr->dph.dphHashTable.pHashTable = NULL;
+	session_ptr->dph.dphHashTable.pDphNodeArray = NULL;
+
+	return NULL;
 }
 
 /*--------------------------------------------------------------------------
@@ -873,6 +877,7 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	uint16_t i = 0;
 	uint16_t n;
 	TX_TIMER *timer_ptr;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!session || (session && !session->valid)) {
 		pe_err("session is not valid");
@@ -1039,7 +1044,10 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	if (LIM_IS_AP_ROLE(session))
 		lim_check_and_reset_protection_params(mac_ctx);
 
-	return;
+	vdev = session->vdev;
+	session->vdev = NULL;
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
 
 /*--------------------------------------------------------------------------

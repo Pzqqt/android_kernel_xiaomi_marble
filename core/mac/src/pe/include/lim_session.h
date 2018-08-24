@@ -123,6 +123,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t available;
 	uint16_t peSessionId;
 	uint8_t smeSessionId;
+	struct wlan_objmgr_vdev *vdev;
 	uint16_t transactionId;
 
 	/* In AP role: BSSID and selfMacAddr will be the same. */
@@ -596,13 +597,13 @@ static inline void pe_free_dph_node_array_buffer(void)
 #endif /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
 
 /**
- * pe_create_session() - creates a new PE session given the BSSID
- *
- * @pMac:          pointer to global adapter context
- * @bssid:         BSSID of the new session
- * @sessionId:     session ID is returned here, if session is created.
- * @numSta:        number of stations
- * @bssType:       bss type of new session to do conditional memory allocation.
+ * pe_create_session() - Creates a new PE session given the BSSID
+ * @pMac: pointer to global adapter context
+ * @bssid: BSSID of the new session
+ * @sessionId: PE session ID is returned here, if PE session is created.
+ * @numSta: number of stations
+ * @bssType: bss type of new session to do conditional memory allocation.
+ * @sme_session_id: sme session identifier
  *
  * This function returns the session context and the session ID if the session
  * corresponding to the passed BSSID is found in the PE session table.
@@ -612,7 +613,8 @@ static inline void pe_free_dph_node_array_buffer(void)
 tpPESession pe_create_session(tpAniSirGlobal pMac,
 			      uint8_t *bssid,
 			      uint8_t *sessionId,
-			      uint16_t numSta, tSirBssType bssType);
+			      uint16_t numSta, tSirBssType bssType,
+			      uint8_t sme_session_id);
 
 /**
  * pe_find_session_by_bssid() - looks up the PE session given the BSSID.

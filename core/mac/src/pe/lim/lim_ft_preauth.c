@@ -440,16 +440,16 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, QDF_STATUS status,
 		      psessionEntry->ftPEContext.pFTPreAuthReq->pbssDescription;
 		pftSessionEntry =
 			pe_create_session(pMac, pbssDescription->bssId,
-					&sessionId, pMac->lim.maxStation,
-					psessionEntry->bssType);
-		if (pftSessionEntry == NULL) {
+					  &sessionId, pMac->lim.maxStation,
+					  psessionEntry->bssType,
+					  psessionEntry->smeSessionId);
+		if (!pftSessionEntry) {
 			pe_err("Session not created for pre-auth 11R AP");
 			status = QDF_STATUS_E_FAILURE;
 			psessionEntry->ftPEContext.ftPreAuthStatus = status;
 			goto send_rsp;
 		}
 
-		pftSessionEntry->smeSessionId = psessionEntry->smeSessionId;
 		sir_copy_mac_addr(pftSessionEntry->selfMacAddr,
 				  psessionEntry->selfMacAddr);
 		sir_copy_mac_addr(pftSessionEntry->limReAssocbssId,

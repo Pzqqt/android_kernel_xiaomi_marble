@@ -2417,7 +2417,8 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 	}
 
 	qdf_status = sme_create_mon_session(hdd_ctx->mac_handle,
-					    adapter->mac_addr.bytes);
+					    adapter->mac_addr.bytes,
+					    adapter->session_id);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		hdd_err("sme_create_mon_session() failed to register. Status= %d [0x%08X]",
 			qdf_status, qdf_status);

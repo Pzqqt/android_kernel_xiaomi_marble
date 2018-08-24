@@ -630,8 +630,9 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session = pe_create_session(mac_ctx,
 					sme_start_bss_req->bssid.bytes,
 					&session_id, mac_ctx->lim.maxStation,
-					sme_start_bss_req->bssType);
-			if (session == NULL) {
+					sme_start_bss_req->bssType,
+					sme_start_bss_req->sessionId);
+			if (!session) {
 				pe_warn("Session Can not be created");
 				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 				goto free;
@@ -673,9 +674,6 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		}
 		/* Store the session related params in newly created session */
 		session->pLimStartBssReq = sme_start_bss_req;
-
-		/* Store SME session Id in sessionTable */
-		session->smeSessionId = sme_start_bss_req->sessionId;
 
 		session->transactionId = sme_start_bss_req->transactionId;
 
@@ -1321,7 +1319,8 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			 */
 			session = pe_create_session(mac_ctx, bss_desc->bssId,
 					&session_id, mac_ctx->lim.maxStation,
-					eSIR_INFRASTRUCTURE_MODE);
+					eSIR_INFRASTRUCTURE_MODE,
+					sme_join_req->sessionId);
 			if (session == NULL) {
 				pe_err("Session Can not be created");
 				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
@@ -1344,9 +1343,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		/* store the smejoin req handle in session table */
 		session->pLimJoinReq = sme_join_req;
-
-		/* Store SME session Id in sessionTable */
-		session->smeSessionId = sme_join_req->sessionId;
 
 		/* Store SME transaction Id in session Table */
 		session->transactionId = sme_join_req->transactionId;
