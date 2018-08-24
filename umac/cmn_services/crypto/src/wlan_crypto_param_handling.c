@@ -103,7 +103,7 @@ QDF_STATUS wlan_crypto_set_mcastcipher(struct wlan_crypto_params *crypto_params,
 
 	for (i = 0; i < WLAN_CRYPTO_CIPHER_MAX; i++) {
 		if (HAS_PARAM(cipher, i)) {
-			cap = cipher2cap(cipher & i);
+			cap = cipher2cap(i);
 			if (cap && HAS_CIPHER_CAP(crypto_params, cap)) {
 				SET_MCAST_CIPHER(crypto_params, i);
 				status = QDF_STATUS_SUCCESS;
@@ -148,7 +148,7 @@ QDF_STATUS wlan_crypto_set_ucastciphers(
 
 	for (i = 0; i < WLAN_CRYPTO_CIPHER_MAX ; i++) {
 		if (HAS_PARAM(cipher, i)) {
-			cap = cipher2cap(cipher & i);
+			cap = cipher2cap(i);
 			if (cap && HAS_CIPHER_CAP(crypto_params, cap)) {
 				SET_UCAST_CIPHER(crypto_params, i);
 				status = QDF_STATUS_SUCCESS;
