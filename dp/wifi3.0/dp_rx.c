@@ -1368,6 +1368,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 			ring_desc = hal_srng_dst_get_next(hal_soc, hal_ring);
 			if (!ring_desc)
 				break;
+			DP_STATS_INC(soc, rx.hp_oos, 1);
 		}
 
 		error = HAL_RX_ERROR_STATUS_GET(ring_desc);
@@ -1599,7 +1600,7 @@ done:
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_ERROR,
 				FL("received pkt with same src MAC"));
-			DP_STATS_INC(vdev->pdev, dropped.mec, 1);
+			DP_STATS_INC_PKT(peer, rx.mec_drop, 1, msdu_len);
 
 			/* Drop & free packet */
 			qdf_nbuf_free(nbuf);

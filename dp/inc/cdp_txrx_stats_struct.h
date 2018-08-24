@@ -309,6 +309,7 @@ struct cdp_tx_stats {
  * @bcast:  Broadcast Packet Count
  * @raw: Raw Pakets received
  * @nawds_mcast_drop: Total multicast packets
+ * @mec_drop: Total MEC packets dropped
  * @pkts: Intra BSS packets received
  * @fail: Intra BSS packets failed
  * @mic_err: Rx MIC errors CCMP
@@ -357,6 +358,7 @@ struct cdp_rx_stats {
 	struct cdp_pkt_info bcast;
 	struct cdp_pkt_info raw;
 	uint32_t nawds_mcast_drop;
+	struct cdp_pkt_info mec_drop;
 	struct {
 		struct cdp_pkt_info pkts;
 		struct cdp_pkt_info fail;

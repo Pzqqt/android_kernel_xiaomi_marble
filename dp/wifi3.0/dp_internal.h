@@ -366,6 +366,8 @@ static inline void dp_update_pdev_stats(struct dp_pdev *tgtobj,
 
 	tgtobj->stats.tx.last_ack_rssi =
 		srcobj->tx.last_ack_rssi;
+	tgtobj->stats.rx.mec_drop.num += srcobj->rx.mec_drop.num;
+	tgtobj->stats.rx.mec_drop.bytes += srcobj->rx.mec_drop.bytes;
 }
 
 static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
@@ -494,6 +496,8 @@ static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
 			srcobj->stats.rx.intra_bss.fail.bytes;
 	tgtobj->tx.last_ack_rssi =
 		srcobj->stats.tx.last_ack_rssi;
+	tgtobj->rx.mec_drop.num += srcobj->stats.rx.mec_drop.num;
+	tgtobj->rx.mec_drop.bytes += srcobj->stats.rx.mec_drop.bytes;
 }
 
 #define DP_UPDATE_STATS(_tgtobj, _srcobj)	\
@@ -581,6 +585,7 @@ static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.raw); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.intra_bss.pkts); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.intra_bss.fail); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.mec_drop); \
 								  \
 		_tgtobj->stats.tx.last_ack_rssi =	\
 			_srcobj->stats.tx.last_ack_rssi; \

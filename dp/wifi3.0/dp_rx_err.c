@@ -607,6 +607,11 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 		QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_DP, "peer is NULL");
 
+		DP_STATS_INC_PKT(soc,
+				 rx.err.rx_invalid_peer,
+				 1,
+				 qdf_nbuf_len(nbuf));
+
 		mpdu_done = dp_rx_chain_msdus(soc, nbuf, rx_tlv_hdr, pool_id);
 		/* Trigger invalid peer handler wrapper */
 		dp_rx_process_invalid_peer_wrapper(soc, nbuf, mpdu_done);
@@ -639,6 +644,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 	if (dp_rx_mcast_echo_check(soc, peer, rx_tlv_hdr, nbuf)) {
 		/* this is a looped back MCBC pkt, drop it */
+		DP_STATS_INC_PKT(peer, rx.mec_drop, 1, qdf_nbuf_len(nbuf));
 		qdf_nbuf_free(nbuf);
 		return;
 	}
@@ -648,6 +654,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	 * from any proxysta.
 	 */
 	if (check_qwrap_multicast_loopback(vdev, nbuf)) {
+		DP_STATS_INC_PKT(peer, rx.mec_drop, 1, qdf_nbuf_len(nbuf));
 		qdf_nbuf_free(nbuf);
 		return;
 	}
@@ -709,6 +716,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_INFO,
 					FL("received pkt with same src MAC"));
+			DP_STATS_INC_PKT(peer, rx.mec_drop, 1,
+					 qdf_nbuf_len(nbuf));
+
 			/* Drop & free packet */
 			qdf_nbuf_free(nbuf);
 			return;
@@ -719,9 +729,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 				FL("vdev %pK osif_rx %pK"), vdev,
 				vdev->osif_rx);
 			qdf_nbuf_set_next(nbuf, NULL);
-			vdev->osif_rx(vdev->osif_vdev, nbuf);
 			DP_STATS_INC_PKT(peer, rx.to_stack, 1,
 					 qdf_nbuf_len(nbuf));
+			vdev->osif_rx(vdev->osif_vdev, nbuf);
 			if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(
 						rx_tlv_hdr) &&
 					 (vdev->rx_decap_type ==
@@ -849,7 +859,7 @@ dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw)) {
 		dp_rx_deliver_raw(vdev, nbuf, peer);
 	} else {
-		DP_STATS_INC(vdev->pdev, rx.to_stack.num, 1);
+		DP_STATS_INC(peer, rx.to_stack.num, 1);
 		vdev->osif_rx(vdev->osif_vdev, nbuf);
 	}
 
