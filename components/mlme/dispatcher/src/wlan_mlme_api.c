@@ -244,6 +244,96 @@ QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS
+wlan_mlme_get_manufacturer_name(struct wlan_objmgr_psoc *psoc,
+				uint8_t *pbuf, uint32_t *plen)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*plen = qdf_str_lcopy(pbuf,
+			      mlme_obj->cfg.product_details.manufacturer_name,
+			      *plen);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_model_number(struct wlan_objmgr_psoc *psoc,
+			   uint8_t *pbuf, uint32_t *plen)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*plen = qdf_str_lcopy(pbuf,
+			      mlme_obj->cfg.product_details.model_number,
+			      *plen);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_model_name(struct wlan_objmgr_psoc *psoc,
+			 uint8_t *pbuf, uint32_t *plen)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*plen = qdf_str_lcopy(pbuf,
+			      mlme_obj->cfg.product_details.model_name,
+			      *plen);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_manufacture_product_version(struct wlan_objmgr_psoc *psoc,
+					  uint8_t *pbuf, uint32_t *plen)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*plen = qdf_str_lcopy(pbuf,
+		     mlme_obj->cfg.product_details.manufacture_product_version,
+		     *plen);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_manufacture_product_name(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *pbuf, uint32_t *plen)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*plen = qdf_str_lcopy(pbuf,
+			mlme_obj->cfg.product_details.manufacture_product_name,
+			*plen);
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS wlan_mlme_set_sap_listen_interval(struct wlan_objmgr_psoc *psoc,
 					     int value)
 {

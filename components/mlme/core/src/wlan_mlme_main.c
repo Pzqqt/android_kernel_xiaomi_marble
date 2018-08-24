@@ -602,6 +602,27 @@ static void mlme_init_threshold_cfg(struct wlan_objmgr_psoc *psoc,
 	threshold->frag_threshold = cfg_get(psoc, CFG_FRAG_THRESHOLD);
 }
 
+static void
+mlme_init_product_details_cfg(struct wlan_mlme_product_details_cfg
+			      *product_details)
+{
+	qdf_str_lcopy(product_details->manufacturer_name,
+		      cfg_default(CFG_MFR_NAME),
+		      sizeof(product_details->manufacturer_name));
+	qdf_str_lcopy(product_details->manufacture_product_name,
+		      cfg_default(CFG_MFR_PRODUCT_NAME),
+		      sizeof(product_details->manufacture_product_name));
+	qdf_str_lcopy(product_details->manufacture_product_version,
+		      cfg_default(CFG_MFR_PRODUCT_VERSION),
+		      sizeof(product_details->manufacture_product_version));
+	qdf_str_lcopy(product_details->model_name,
+		      cfg_default(CFG_MODEL_NAME),
+		      sizeof(product_details->model_name));
+	qdf_str_lcopy(product_details->model_number,
+		      cfg_default(CFG_MODEL_NUMBER),
+		      sizeof(product_details->model_number));
+}
+
 static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_sta_cfg *sta)
 {
@@ -973,6 +994,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_sap_cfg(psoc, &mlme_cfg->sap_cfg);
 	mlme_init_he_cap_in_cfg(psoc, &mlme_cfg->he_caps);
 	mlme_init_obss_ht40_cfg(psoc, &mlme_cfg->obss_ht40);
+	mlme_init_product_details_cfg(&mlme_cfg->product_details);
 	mlme_init_sta_cfg(psoc, &mlme_cfg->sta);
 	mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);
 	mlme_init_feature_flag_in_cfg(psoc, &mlme_cfg->feature_flags);

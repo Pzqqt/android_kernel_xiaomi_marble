@@ -44,6 +44,7 @@
 #include "wlan_utility.h"
 #include "wifi_pos_api.h"
 #include "wlan_mlme_public_struct.h"
+#include "wlan_mlme_ucfg_api.h"
 
 #define RSN_OUI_SIZE 4
 /* ////////////////////////////////////////////////////////////////////// */
@@ -5602,11 +5603,10 @@ QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal pMac,
 	}
 
 	pDot11f->Manufacturer.present = 1;
-	cfgStrLen = WNI_CFG_MANUFACTURER_NAME_LEN;
-	if (wlan_cfg_get_str(pMac,
-			     WNI_CFG_MANUFACTURER_NAME,
-			     pDot11f->Manufacturer.name,
-			     &cfgStrLen) != QDF_STATUS_SUCCESS) {
+	cfgStrLen = sizeof(pDot11f->Manufacturer.name);
+	if (wlan_mlme_get_manufacturer_name(pMac->psoc,
+					    pDot11f->Manufacturer.name,
+					    &cfgStrLen) != QDF_STATUS_SUCCESS) {
 		pDot11f->Manufacturer.num_name = 0;
 	} else {
 		pDot11f->Manufacturer.num_name =
@@ -5614,11 +5614,10 @@ QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal pMac,
 	}
 
 	pDot11f->ModelName.present = 1;
-	cfgStrLen = WNI_CFG_MODEL_NAME_LEN;
-	if (wlan_cfg_get_str(pMac,
-			     WNI_CFG_MODEL_NAME,
-			     pDot11f->ModelName.text,
-			     &cfgStrLen) != QDF_STATUS_SUCCESS) {
+	cfgStrLen = sizeof(pDot11f->ModelName.text);
+	if (wlan_mlme_get_model_name(pMac->psoc,
+				     pDot11f->ModelName.text,
+				     &cfgStrLen) != QDF_STATUS_SUCCESS) {
 		pDot11f->ModelName.num_text = 0;
 	} else {
 		pDot11f->ModelName.num_text =
@@ -5626,11 +5625,10 @@ QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal pMac,
 	}
 
 	pDot11f->ModelNumber.present = 1;
-	cfgStrLen = WNI_CFG_MODEL_NUMBER_LEN;
-	if (wlan_cfg_get_str(pMac,
-			     WNI_CFG_MODEL_NUMBER,
-			     pDot11f->ModelNumber.text,
-			     &cfgStrLen) != QDF_STATUS_SUCCESS) {
+	cfgStrLen = sizeof(pDot11f->ModelNumber.text);
+	if (wlan_mlme_get_model_number(pMac->psoc,
+				       pDot11f->ModelNumber.text,
+				       &cfgStrLen) != QDF_STATUS_SUCCESS) {
 		pDot11f->ModelNumber.num_text = 0;
 	} else {
 		pDot11f->ModelNumber.num_text =
@@ -5638,11 +5636,11 @@ QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal pMac,
 	}
 
 	pDot11f->SerialNumber.present = 1;
-	cfgStrLen = WNI_CFG_MANUFACTURER_PRODUCT_VERSION_LEN;
-	if (wlan_cfg_get_str(pMac,
-			     WNI_CFG_MANUFACTURER_PRODUCT_VERSION,
-			     pDot11f->SerialNumber.text,
-			     &cfgStrLen) != QDF_STATUS_SUCCESS) {
+	cfgStrLen = sizeof(pDot11f->SerialNumber.text);
+	if (wlan_mlme_get_manufacture_product_version
+				(pMac->psoc,
+				 pDot11f->SerialNumber.text,
+				 &cfgStrLen) != QDF_STATUS_SUCCESS) {
 		pDot11f->SerialNumber.num_text = 0;
 	} else {
 		pDot11f->SerialNumber.num_text =
@@ -5678,11 +5676,11 @@ QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal pMac,
 		pDot11f->PrimaryDeviceType.sub_category = (uint16_t) val;
 
 	pDot11f->DeviceName.present = 1;
-	cfgStrLen = WNI_CFG_MANUFACTURER_PRODUCT_NAME_LEN;
-	if (wlan_cfg_get_str(pMac,
-			     WNI_CFG_MANUFACTURER_PRODUCT_NAME,
-			     pDot11f->DeviceName.text,
-			     &cfgStrLen) != QDF_STATUS_SUCCESS) {
+	cfgStrLen = sizeof(pDot11f->DeviceName.text);
+	if (wlan_mlme_get_manufacture_product_name(pMac->psoc,
+						   pDot11f->DeviceName.text,
+						   &cfgStrLen) !=
+						   QDF_STATUS_SUCCESS) {
 		pDot11f->DeviceName.num_text = 0;
 	} else {
 		pDot11f->DeviceName.num_text =
