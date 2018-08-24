@@ -74,6 +74,76 @@ QDF_STATUS wlan_mlme_get_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 				     *ht_cap_info);
 
 /**
+ * wlan_mlme_get_manufacturer_name() - get manufacturer name
+ * @psoc: pointer to psoc object
+ * @pbuf: pointer of the buff which will be filled for the caller
+ * @plen: pointer of max buffer length
+ *        actual length will be returned at this address
+ * This function gets manufacturer name
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS
+wlan_mlme_get_manufacturer_name(struct wlan_objmgr_psoc *psoc,
+				uint8_t *pbuf, uint32_t *plen);
+
+/**
+ * wlan_mlme_get_model_number() - get model number
+ * @psoc: pointer to psoc object
+ * @pbuf: pointer of the buff which will be filled for the caller
+ * @plen: pointer of max buffer length
+ *        actual length will be returned at this address
+ * This function gets model number
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS
+wlan_mlme_get_model_number(struct wlan_objmgr_psoc *psoc,
+			   uint8_t *pbuf, uint32_t *plen);
+
+/**
+ * wlan_mlme_get_model_name() - get model name
+ * @psoc: pointer to psoc object
+ * @pbuf: pointer of the buff which will be filled for the caller
+ * @plen: pointer of max buffer length
+ *        actual length will be returned at this address
+ * This function gets model name
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS
+wlan_mlme_get_model_name(struct wlan_objmgr_psoc *psoc,
+			 uint8_t *pbuf, uint32_t *plen);
+
+/**
+ * wlan_mlme_get_manufacture_product_name() - get manufacture product name
+ * @psoc: pointer to psoc object
+ * @pbuf: pointer of the buff which will be filled for the caller
+ * @plen: pointer of max buffer length
+ *        actual length will be returned at this address
+ * This function gets manufacture product name
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS
+wlan_mlme_get_manufacture_product_name(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *pbuf, uint32_t *plen);
+
+/**
+ * wlan_mlme_get_manufacture_product_version() - get manufacture product version
+ * @psoc: pointer to psoc object
+ * @pbuf: pointer of the buff which will be filled for the caller
+ * @plen: pointer of max buffer length
+ *        actual length will be returned at this address
+ * This function gets manufacture product version
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS
+wlan_mlme_get_manufacture_product_version(struct wlan_objmgr_psoc *psoc,
+					  uint8_t *pbuf, uint32_t *plen);
+
+/**
  * wlan_mlme_set_ht_cap_info() - Set the HT cap info config
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller

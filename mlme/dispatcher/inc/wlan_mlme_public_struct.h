@@ -168,6 +168,12 @@ struct wlan_mlme_edca_params {
 	struct mlme_cfg_str etsi_acvo_b;
 };
 
+#define WLAN_CFG_MFR_NAME_LEN (63)
+#define WLAN_CFG_MODEL_NUMBER_LEN (31)
+#define WLAN_CFG_MODEL_NAME_LEN (31)
+#define WLAN_CFG_MFR_PRODUCT_NAME_LEN (31)
+#define WLAN_CFG_MFR_PRODUCT_VERSION_LEN (31)
+
 /**
  * struct mlme_ht_capabilities_info - HT Capabilities Info
  * @l_sig_tx_op_protection: L-SIG TXOP Protection Mechanism support
@@ -529,6 +535,22 @@ struct wlan_mlme_generic {
 	uint16_t pmf_sa_query_retry_interval;
 };
 
+/*
+ * struct wlan_mlme_product_details_cfg - product details config items
+ * @manufacturer_name: manufacture name
+ * @model_number: model number
+ * @model_name: model name
+ * @manufacture_product_name: manufacture product name
+ * @manufacture_product_version: manufacture product version
+ */
+struct wlan_mlme_product_details_cfg {
+	char manufacturer_name[WLAN_CFG_MFR_NAME_LEN + 1];
+	char model_number[WLAN_CFG_MODEL_NUMBER_LEN + 1];
+	char model_name[WLAN_CFG_MODEL_NAME_LEN + 1];
+	char manufacture_product_name[WLAN_CFG_MFR_PRODUCT_NAME_LEN + 1];
+	char manufacture_product_version[WLAN_CFG_MFR_PRODUCT_VERSION_LEN + 1];
+};
+
 /**
  * struct wlan_mlme_obss_ht40 - OBSS HT40 config items
  * @active_dwelltime:        obss active dwelltime
@@ -853,6 +875,7 @@ struct wlan_mlme_wep_cfg {
  * @obss_ht40:obss ht40 CFG Items
  * @vht_cfg: VHT related CFG Items
  * @rates: Rates related cfg items
+ * @product_details: product details related CFG Items
  * @sap_protection_cfg: SAP erp protection related CFG items
  * @sta: sta CFG Items
  * @scoring: BSS Scoring related CFG Items
@@ -872,6 +895,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_vht_caps vht_caps;
 	struct wlan_mlme_qos qos_mlme_params;
 	struct wlan_mlme_rates rates;
+	struct wlan_mlme_product_details_cfg product_details;
 	struct wlan_mlme_sap_protection sap_protection_cfg;
 	struct wlan_mlme_cfg_sap sap_cfg;
 	struct wlan_mlme_sta_cfg sta;
