@@ -20347,7 +20347,7 @@ static enum wlan_serialization_cmd_type csr_get_roam_cmd_type(
 		cmd_type = WLAN_SER_CMD_FORCE_IBSS_LEAVE;
 		break;
 	case eCsrStopBss:
-		cmd_type = WLAN_SER_CMD_STOP_BSS;
+		cmd_type = WLAN_SER_CMD_VDEV_STOP_BSS;
 		break;
 	case eCsrSmeIssuedFTReassoc:
 		cmd_type = WLAN_SER_CMD_SME_ISSUE_FT_REASSOC;
@@ -20486,6 +20486,8 @@ QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
 	cmd->cmd_timeout_duration = SME_DEFAULT_CMD_TIMEOUT;
 	cmd->cmd_cb = sme_ser_cmd_callback;
 	cmd->is_high_priority = high_priority;
+	cmd->is_blocking = true;
+
 	return QDF_STATUS_SUCCESS;
 }
 

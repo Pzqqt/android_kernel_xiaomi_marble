@@ -1275,13 +1275,15 @@ UMAC_SER_SRC_DIR := $(UMAC_SER_DIR)/src
 UMAC_SER_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_SER_SRC_DIR)
 
 UMAC_SER_INC := -I$(WLAN_COMMON_INC)/$(UMAC_SER_INC_DIR)
-UMAC_SER_OBJS := $(UMAC_SER_OBJ_DIR)/wlan_serialization_dequeue.o \
-		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_enqueue.o \
-		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_main.o \
+UMAC_SER_OBJS := $(UMAC_SER_OBJ_DIR)/wlan_serialization_main.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_api.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_utils.o \
 		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_legacy_api.o \
-		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_rules.o
+		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_rules.o \
+		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_internal.o \
+		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_non_scan.o \
+		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_queue.o \
+		 $(UMAC_SER_OBJ_DIR)/wlan_serialization_scan.o
 
 ###### WIFI POS ########
 WIFI_POS_OS_IF_DIR := $(WLAN_COMMON_ROOT)/os_if/linux/wifi_pos/src
@@ -2314,7 +2316,6 @@ cppflags-y += -DWLAN_CMD_SERIALIZATION_LOCKING
 
 #CONFIG_SERIALIZATION_V1: Don't use enhancements to serialization component
 #No CONFIG_SERIALIZATION_V1: Use enhancements to serialization component
-cppflags-y += -DCONFIG_SERIALIZATION_V1
 
 ccflags-$(CONFIG_ENABLE_SIZE_OPTIMIZE) += -Os
 
