@@ -121,8 +121,8 @@ void dp_rx_reorder_flush_frag(struct dp_peer *peer,
 {
 	struct dp_soc *soc;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("Flushing TID %d"), tid);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_MED,
+		  FL("Flushing TID %d"), tid);
 
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -250,9 +250,9 @@ void dp_rx_defrag_waitlist_remove(struct dp_peer *peer, unsigned tid)
 		return;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("Remove TID %u from waitlist for peer %pK"),
-				tid, peer);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_MED,
+		  FL("Remove TID %u from waitlist for peer %pK"),
+		  tid, peer);
 
 	qdf_spin_lock_bh(&soc->rx.defrag.defrag_lock);
 	TAILQ_FOREACH(rx_reorder, &soc->rx.defrag.waitlist,

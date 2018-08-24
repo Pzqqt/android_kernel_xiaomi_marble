@@ -4496,10 +4496,9 @@ void dp_peer_unref_delete(void *peer_handle)
 	uint16_t peer_id;
 	uint16_t vdev_id;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "%s: peer %pK ref_cnt(before decrement): %d", __func__,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "%s: peer %pK ref_cnt(before decrement): %d\n", __func__,
 		  peer, qdf_atomic_read(&peer->ref_cnt));
-
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
 	 * is zero until the peer references are removed from the hash
@@ -4546,9 +4545,9 @@ void dp_peer_unref_delete(void *peer_handle)
 				peer_list_elem);
 		} else {
 			/*Ignoring the remove operation as peer not found*/
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
-				"peer %pK not found in vdev (%pK)->peer_list:%pK",
-				peer, vdev, &peer->vdev->peer_list);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				  "peer:%pK not found in vdev:%pK peerlist:%pK",
+				  peer, vdev, &peer->vdev->peer_list);
 		}
 
 		/* cleanup the peer data */

@@ -944,7 +944,7 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 		/* peer's ref count was already incremented by
 		 * peer_find_hash_find
 		 */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 			  "%s: ref_cnt: %d", __func__,
 			   qdf_atomic_read(&peer->ref_cnt));
 		soc->peer_id_to_obj_map[peer_id] = peer;
