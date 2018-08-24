@@ -502,6 +502,15 @@ int dp_peer_add_ast(struct dp_soc *soc,
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
+	/* For HMWDS and HWMWDS_SEC entries can be added for same mac address
+	 * do not check for existing entry
+	 * SON takes care of deleting any existing AST entry with other types
+	 * before adding HMWDS entries
+	 */
+	if ((type == CDP_TXRX_AST_TYPE_WDS_HM) ||
+	    (type == CDP_TXRX_AST_TYPE_WDS_HM_SEC))
+		goto add_ast_entry;
+
 	/* If AST entry already exists , just return from here
 	 * ast entry with same mac address can exist on different radios
 	 * if ast_override support is enabled use search by pdev in this
@@ -548,6 +557,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		}
 	}
 
+add_ast_entry:
 	ast_entry = (struct dp_ast_entry *)
 			qdf_mem_malloc(sizeof(struct dp_ast_entry));
 
@@ -583,6 +593,10 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		ast_entry->next_hop = 1;
 		ast_entry->type = CDP_TXRX_AST_TYPE_WDS_HM;
 		break;
+	case CDP_TXRX_AST_TYPE_WDS_HM_SEC:
+		ast_entry->next_hop = 1;
+		ast_entry->type = CDP_TXRX_AST_TYPE_WDS_HM_SEC;
+		break;
 	case CDP_TXRX_AST_TYPE_MEC:
 		ast_entry->next_hop = 1;
 		ast_entry->type = CDP_TXRX_AST_TYPE_MEC;
@@ -610,7 +624,8 @@ int dp_peer_add_ast(struct dp_soc *soc,
 
 	if ((ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) &&
 	    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF) &&
-	    (ast_entry->type != CDP_TXRX_AST_TYPE_STA_BSS)) {
+	    (ast_entry->type != CDP_TXRX_AST_TYPE_STA_BSS) &&
+	    (ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC)) {
 		if (QDF_STATUS_SUCCESS ==
 				soc->cdp_soc.ol_ops->peer_add_wds_entry(
 				peer->vdev->osif_vdev,
@@ -658,7 +673,8 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 {
 	struct dp_peer *peer = ast_entry->peer;
 
-	if (ast_entry->next_hop)
+	if (ast_entry->next_hop &&
+	    ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC)
 		soc->cdp_soc.ol_ops->peer_del_wds_entry(peer->vdev->osif_vdev,
 						ast_entry->mac_addr.raw);
 
@@ -695,8 +711,9 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	struct dp_peer *old_peer;
 
 	if ((ast_entry->type == CDP_TXRX_AST_TYPE_STATIC) ||
-		(ast_entry->type == CDP_TXRX_AST_TYPE_SELF) ||
-		(ast_entry->type == CDP_TXRX_AST_TYPE_STA_BSS))
+	    (ast_entry->type == CDP_TXRX_AST_TYPE_SELF) ||
+	    (ast_entry->type == CDP_TXRX_AST_TYPE_STA_BSS) ||
+	    (ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC))
 		return 0;
 
 	old_peer = ast_entry->peer;

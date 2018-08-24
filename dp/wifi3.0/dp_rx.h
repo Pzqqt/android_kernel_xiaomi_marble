@@ -451,6 +451,10 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
+	if ((ast->type == CDP_TXRX_AST_TYPE_WDS_HM) ||
+	    (ast->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC))
+		return;
+
 	/*
 	 * Ensure we are updating the right AST entry by
 	 * validating ast_idx.
@@ -492,7 +496,8 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 		 * Kickout, when direct associated peer(SA) roams
 		 * to another AP and reachable via TA peer
 		 */
-		if (!sa_peer->delete_in_progress) {
+		if ((sa_peer->vdev->opmode == wlan_op_mode_ap) &&
+		    !sa_peer->delete_in_progress) {
 			sa_peer->delete_in_progress = true;
 			if (soc->cdp_soc.ol_ops->peer_sta_kickout) {
 				soc->cdp_soc.ol_ops->peer_sta_kickout(

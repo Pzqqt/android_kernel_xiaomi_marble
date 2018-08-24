@@ -1848,7 +1848,8 @@ qdf_nbuf_t dp_tx_send_exception(void *vap_dev, qdf_nbuf_t nbuf,
 
 	/* Mcast enhancement*/
 	if (qdf_unlikely(vdev->mcast_enhancement_en > 0)) {
-		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost)) {
+		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost) &&
+		    !DP_FRAME_IS_BROADCAST((eh)->ether_dhost)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 					  "Ignoring mcast_enhancement_en which is set and sending the mcast packet to the FW");
 		}
