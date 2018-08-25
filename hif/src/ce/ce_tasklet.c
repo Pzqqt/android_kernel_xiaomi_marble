@@ -239,7 +239,7 @@ void ce_tasklet_kill(struct hif_softc *scn)
 
 	work_initialized = false;
 
-	for (i = 0; i < CE_COUNT_MAX; i++)
+	for (i = 0; i < CE_COUNT_MAX; i++) {
 		if (hif_ce_state->tasklets[i].inited) {
 			hif_ce_state->tasklets[i].inited = false;
 			/*
@@ -251,9 +251,9 @@ void ce_tasklet_kill(struct hif_softc *scn)
 			 * tasklet_disable() will take care of that.
 			 */
 			cancel_work_sync(&tasklet_workers[i].work);
-			tasklet_disable(&hif_ce_state->tasklets[i].intr_tq);
 			tasklet_kill(&hif_ce_state->tasklets[i].intr_tq);
 		}
+	}
 	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
 }
 
