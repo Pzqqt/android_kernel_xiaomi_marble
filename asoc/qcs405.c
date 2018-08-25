@@ -7566,7 +7566,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	int total_links = 0;
 	uint32_t tasha_codec = 0, auxpcm_audio_intf = 0;
 	uint32_t va_bolero_codec = 0, wsa_bolero_codec = 0, mi2s_audio_intf = 0;
-	uint32_t spdif_audio_intf = 0;
+	uint32_t spdif_audio_intf = 0, wcn_audio_intf = 0;
 	const struct of_device_id *match;
 	char __iomem *spdif_cfg, *spdif_pin_ctl;
 	int rc = 0;
@@ -7708,6 +7708,20 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 					ioremap(TLMM_SPDIF_HDMI_ARC_CTL, 0x4);
 				iowrite32(0xc0, spdif_cfg);
 				iowrite32(0x2220, spdif_pin_ctl);
+			}
+		}
+		rc = of_property_read_u32(dev->of_node, "qcom,wcn-btfm",
+					  &wcn_audio_intf);
+		if (rc) {
+			dev_dbg(dev, "%s: No DT match WCN audio interface\n",
+				__func__);
+		} else {
+			if (wcn_audio_intf) {
+				memcpy(msm_qcs405_dai_links + total_links,
+				msm_wcn_be_dai_links,
+				sizeof(msm_wcn_be_dai_links));
+				total_links +=
+				ARRAY_SIZE(msm_wcn_be_dai_links);
 			}
 		}
 		dailink = msm_qcs405_dai_links;
