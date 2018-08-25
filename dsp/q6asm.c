@@ -1638,7 +1638,7 @@ static int32_t q6asm_srvc_callback(struct apr_client_data *data, void *priv)
 	uint32_t dir = 0;
 	uint32_t i = IN;
 	uint32_t *payload;
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 	unsigned long flags = 0;
 	struct asm_buffer_node *buf_node = NULL;
 	struct list_head *ptr, *next;
@@ -1855,7 +1855,7 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 {
 	int i = 0;
 	struct audio_client *ac = (struct audio_client *)priv;
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 	uint32_t *payload;
 	uint32_t wakeup_flag = 1;
 	int32_t  ret = 0;
