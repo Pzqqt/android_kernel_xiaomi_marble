@@ -35,6 +35,54 @@
 #define WINDOW_START MAX_UNWINDOWED_ADDRESS
 #define WINDOW_RANGE_MASK 0x7FFFF
 
+/*
+ * BAR + 4K is always accessible, any access outside this
+ * space requires force wake procedure.
+ * OFFSET = 4K - 32 bytes = 0x4063
+ */
+#define MAPPED_REF_OFF 0x4063
+#define FORCE_WAKE_DELAY_TIMEOUT 50
+#define FORCE_WAKE_DELAY_MS 5
+
+#ifndef QCA_WIFI_QCA6390
+static inline int hal_force_wake_request(struct hal_soc *soc)
+{
+	return 0;
+}
+
+static inline int hal_force_wake_release(struct hal_soc *soc)
+{
+	return 0;
+}
+#else
+static inline int hal_force_wake_request(struct hal_soc *soc)
+{
+	uint32_t timeout = 0;
+
+	if (pld_force_wake_request(soc->qdf_dev->dev)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Request send failed \n", __func__);
+		return -EINVAL;
+	}
+
+	while (!pld_is_device_awake(soc->qdf_dev->dev) &&
+	       timeout <= FORCE_WAKE_DELAY_TIMEOUT) {
+		mdelay(FORCE_WAKE_DELAY_MS);
+		timeout += FORCE_WAKE_DELAY_MS;
+	}
+
+	if (pld_is_device_awake(soc->qdf_dev->dev) == true)
+		return 0;
+	else
+		return -ETIMEDOUT;
+}
+
+static inline int hal_force_wake_release(struct hal_soc *soc)
+{
+	return pld_force_wake_release(soc->qdf_dev->dev);
+}
+#endif
+
 static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset)
 {
 	uint32_t window = (offset >> WINDOW_SHIFT) & WINDOW_VALUE_MASK;
@@ -51,10 +99,10 @@ static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset)
  * note3: WINDOW_VALUE_MASK = big enough that trying to write past that window
  *				would be a bug
  */
+#ifndef QCA_WIFI_QCA6390
 static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 				  uint32_t value)
 {
-
 	if (!hal_soc->use_register_windowing ||
 	    offset < MAX_UNWINDOWED_ADDRESS) {
 		qdf_iowrite32(hal_soc->dev_base_addr + offset, value);
@@ -66,6 +114,35 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 		qdf_spin_unlock_irqrestore(&hal_soc->register_access_lock);
 	}
 }
+#else
+static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
+				  uint32_t value)
+{
+	if ((offset > MAPPED_REF_OFF) &&
+	    hal_force_wake_request(hal_soc)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Wake up request failed\n", __func__);
+		return;
+	}
+
+	if (!hal_soc->use_register_windowing ||
+	    offset < MAX_UNWINDOWED_ADDRESS) {
+		qdf_iowrite32(hal_soc->dev_base_addr + offset, value);
+	} else {
+		qdf_spin_lock_irqsave(&hal_soc->register_access_lock);
+		hal_select_window(hal_soc, offset);
+		qdf_iowrite32(hal_soc->dev_base_addr + WINDOW_START +
+			  (offset & WINDOW_RANGE_MASK), value);
+		qdf_spin_unlock_irqrestore(&hal_soc->register_access_lock);
+	}
+
+	if ((offset > MAPPED_REF_OFF) &&
+	    hal_force_wake_release(hal_soc))
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Wake up release failed\n", __func__);
+}
+
+#endif
 
 /**
  * hal_write_address_32_mb - write a value to a register
@@ -83,6 +160,7 @@ static inline void hal_write_address_32_mb(struct hal_soc *hal_soc,
 	hal_write32_mb(hal_soc, offset, value);
 }
 
+#ifndef QCA_WIFI_QCA6390
 static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 {
 	uint32_t ret;
@@ -100,6 +178,37 @@ static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 
 	return ret;
 }
+#else
+static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
+{
+	uint32_t ret;
+
+	if ((offset > MAPPED_REF_OFF) &&
+	    hal_force_wake_request(hal_soc)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Wake up request failed\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!hal_soc->use_register_windowing ||
+	    offset < MAX_UNWINDOWED_ADDRESS) {
+		return qdf_ioread32(hal_soc->dev_base_addr + offset);
+	}
+
+	qdf_spin_lock_irqsave(&hal_soc->register_access_lock);
+	hal_select_window(hal_soc, offset);
+	ret = qdf_ioread32(hal_soc->dev_base_addr + WINDOW_START +
+		       (offset & WINDOW_RANGE_MASK));
+	qdf_spin_unlock_irqrestore(&hal_soc->register_access_lock);
+
+	if ((offset > MAPPED_REF_OFF) &&
+	    hal_force_wake_release(hal_soc))
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Wake up release failed\n", __func__);
+
+	return ret;
+}
+#endif
 
 #include "hif_io32.h"
 
