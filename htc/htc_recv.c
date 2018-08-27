@@ -287,7 +287,13 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 					sizeof(HTC_FRAME_HDR),
 					"BAD HTC Header");
 			status = QDF_STATUS_E_FAILURE;
-			QDF_BUG(0);
+			DPTRACE(qdf_dp_trace(
+					    netbuf,
+					    QDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
+					    QDF_TRACE_DEFAULT_PDEV_ID,
+					    qdf_nbuf_data_addr(netbuf),
+					    sizeof(qdf_nbuf_data(netbuf)),
+					    QDF_RX));
 			break;
 		}
 
@@ -323,7 +329,13 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 					 sizeof(HTC_FRAME_HDR),
 					 "BAD RX packet length");
 			status = QDF_STATUS_E_FAILURE;
-			QDF_BUG(0);
+			DPTRACE(qdf_dp_trace(
+					    netbuf,
+					    QDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
+					    QDF_TRACE_DEFAULT_PDEV_ID,
+					    qdf_nbuf_data_addr(netbuf),
+					    sizeof(qdf_nbuf_data(netbuf)),
+					    QDF_RX));
 			break;
 #endif
 		}
