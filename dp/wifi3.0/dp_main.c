@@ -7774,8 +7774,12 @@ static QDF_STATUS dp_runtime_suspend(struct cdp_pdev *opaque_pdev)
 	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
 	struct dp_soc *soc = pdev->soc;
 
-	/* Call DP TX flow control API to check if there is any
-	   pending packets */
+	/* Abort if there are any pending TX packets */
+	if (dp_get_tx_pending(opaque_pdev) > 0) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  FL("Abort suspend due to pending TX packets"));
+		return QDF_STATUS_E_AGAIN;
+	}
 
 	if (soc->intr_mode == DP_INTR_POLL)
 		qdf_timer_stop(&soc->int_timer);
