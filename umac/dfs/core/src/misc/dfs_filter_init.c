@@ -30,6 +30,72 @@
 #include "../dfs_filter_init.h"
 #include "../dfs_partial_offload_radar.h"
 
+#ifndef WLAN_DFS_STATIC_MEM_ALLOC
+/*
+ * dfs_alloc_dfs_events() - allocate dfs events buffer
+ *
+ * Return: events buffer, null on failure.
+ */
+static inline struct dfs_event *dfs_alloc_dfs_events(void)
+{
+	return qdf_mem_malloc(sizeof(struct dfs_event) * DFS_MAX_EVENTS);
+}
+
+/*
+ * dfs_free_dfs_events() - Free events buffer
+ * @events: Events buffer pointer
+ *
+ * Return: None
+ */
+static inline void dfs_free_dfs_events(struct dfs_event *events)
+{
+	qdf_mem_free(events);
+}
+
+/*
+ * dfs_alloc_dfs_pulseline() - allocate buffer for dfs pulses
+ *
+ * Return: events buffer, null on failure.
+ */
+static inline struct dfs_pulseline *dfs_alloc_dfs_pulseline(void)
+{
+	return qdf_mem_malloc(sizeof(struct dfs_pulseline));
+}
+
+/*
+ * dfs_free_dfs_pulseline() - Free pulse buffer
+ * @pulses: Pulses buffer pointer
+ *
+ * Return: None
+ */
+static inline void dfs_free_dfs_pulseline(struct dfs_pulseline *pulses)
+{
+	qdf_mem_free(pulses);
+}
+#else
+/* Static buffers for DFS objects */
+static struct dfs_event global_dfs_event[DFS_MAX_EVENTS];
+static struct dfs_pulseline global_dfs_pulseline;
+
+static inline struct dfs_event *dfs_alloc_dfs_events(void)
+{
+	return global_dfs_event;
+}
+
+static inline void dfs_free_dfs_events(struct dfs_event *events)
+{
+}
+
+static inline struct dfs_pulseline *dfs_alloc_dfs_pulseline(void)
+{
+	return &global_dfs_pulseline;
+}
+
+static inline void dfs_free_dfs_pulseline(struct dfs_pulseline *pulses)
+{
+}
+#endif
+
 /*
  * Channel switch announcement (CSA)
  * usenol=1 (default) make CSA and switch to a new channel on radar detect
@@ -113,22 +179,23 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	STAILQ_INIT(&(dfs->dfs_eventq));
 	WLAN_DFSEVENTQ_LOCK_CREATE(dfs);
 
-	dfs->events = (struct dfs_event *)qdf_mem_malloc(
-			sizeof(struct dfs_event)*DFS_MAX_EVENTS);
+	dfs->events = dfs_alloc_dfs_events();
 	if (!(dfs->events)) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "events allocation failed");
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "events allocation failed");
 		return 1;
 	}
+
 	for (i = 0; i < DFS_MAX_EVENTS; i++)
 		STAILQ_INSERT_TAIL(&(dfs->dfs_eventq), &dfs->events[i],
 				re_list);
 
-	dfs->pulses = (struct dfs_pulseline *)qdf_mem_malloc(
-			sizeof(struct dfs_pulseline));
+	dfs->pulses = dfs_alloc_dfs_pulseline();
 	if (!(dfs->pulses)) {
-		qdf_mem_free(dfs->events);
+		dfs_free_dfs_events(dfs->events);
 		dfs->events = NULL;
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "Pulse buffer allocation failed");
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "Pulse buffer allocation failed");
 		return 1;
 	}
 
@@ -205,11 +272,11 @@ bad1:
 		}
 	}
 	if (dfs->pulses) {
-		qdf_mem_free(dfs->pulses);
+		dfs_free_dfs_pulseline(dfs->pulses);
 		dfs->pulses = NULL;
 	}
 	if (dfs->events) {
-		qdf_mem_free(dfs->events);
+		dfs_free_dfs_events(dfs->events);
 		dfs->events = NULL;
 	}
 
@@ -248,16 +315,11 @@ void dfs_main_detach(struct wlan_dfs *dfs)
 
 	dfs->dfs_enable = 0;
 
-	if (dfs->dfs_curchan != NULL) {
-		qdf_mem_free(dfs->dfs_curchan);
-		dfs->dfs_curchan = NULL;
-	}
-
 	dfs_reset_radarq(dfs);
 	dfs_reset_alldelaylines(dfs);
 
 	if (dfs->pulses != NULL) {
-		qdf_mem_free(dfs->pulses);
+		dfs_free_dfs_pulseline(dfs->pulses);
 		dfs->pulses = NULL;
 	}
 
@@ -294,7 +356,7 @@ void dfs_main_detach(struct wlan_dfs *dfs)
 		dfs_reset_arq(dfs);
 
 	if (dfs->events != NULL) {
-		qdf_mem_free(dfs->events);
+		dfs_free_dfs_events(dfs->events);
 		dfs->events = NULL;
 	}
 

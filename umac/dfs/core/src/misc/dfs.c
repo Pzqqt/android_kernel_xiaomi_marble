@@ -33,6 +33,74 @@
 #include "../dfs_etsi_precac.h"
 #include "../dfs_partial_offload_radar.h"
 
+#ifndef WLAN_DFS_STATIC_MEM_ALLOC
+/*
+ * dfs_alloc_wlan_dfs() - allocate wlan_dfs buffer
+ *
+ * Return: buffer, null on failure.
+ */
+static inline struct wlan_dfs *dfs_alloc_wlan_dfs(void)
+{
+	return qdf_mem_malloc(sizeof(struct wlan_dfs));
+}
+
+/*
+ * dfs_free_wlan_dfs() - Free wlan_dfs buffer
+ * @dfs: wlan_dfs buffer pointer
+ *
+ * Return: None
+ */
+static inline void dfs_free_wlan_dfs(struct wlan_dfs *dfs)
+{
+	qdf_mem_free(dfs);
+}
+
+/*
+ * dfs_alloc_dfs_curchan() - allocate dfs_channel buffer
+ *
+ * Return: buffer, null on failure.
+ */
+static inline struct dfs_channel *dfs_alloc_dfs_curchan(void)
+{
+	return qdf_mem_malloc(sizeof(struct dfs_channel));
+}
+
+/*
+ * dfs_free_dfs_curchan() - Free dfs_channel buffer
+ * @dfs_curchan: dfs_channel buffer pointer
+ *
+ * Return: None
+ */
+static inline void dfs_free_dfs_curchan(struct dfs_channel *dfs_curchan)
+{
+	qdf_mem_free(dfs_curchan);
+}
+
+#else
+
+/* Static buffers for DFS objects */
+static struct wlan_dfs global_dfs;
+static struct dfs_channel global_dfs_curchan;
+
+static inline struct wlan_dfs *dfs_alloc_wlan_dfs(void)
+{
+	return &global_dfs;
+}
+
+static inline void dfs_free_wlan_dfs(struct wlan_dfs *dfs)
+{
+}
+
+static inline struct dfs_channel *dfs_alloc_dfs_curchan(void)
+{
+	return &global_dfs_curchan;
+}
+
+static inline void dfs_free_dfs_curchan(struct dfs_channel *dfs_curchan)
+{
+}
+#endif
+
 /**
  * dfs_testtimer_task() - Sends CSA in the current channel.
  *
@@ -78,19 +146,20 @@ void dfs_main_task_testtimer_init(struct wlan_dfs *dfs)
 
 int dfs_create_object(struct wlan_dfs **dfs)
 {
-	*dfs = (struct wlan_dfs *)qdf_mem_malloc(sizeof(**dfs));
+	*dfs = dfs_alloc_wlan_dfs();
 	if (!(*dfs)) {
-		dfs_alert(*dfs, WLAN_DEBUG_DFS_ALWAYS, "wlan_dfs allocation failed");
+		dfs_alert(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			  "wlan_dfs allocation failed");
 		return 1;
 	}
 
 	qdf_mem_zero(*dfs, sizeof(**dfs));
 
-	(*dfs)->dfs_curchan = (struct dfs_channel *)qdf_mem_malloc(
-			sizeof(struct dfs_channel));
-
+	(*dfs)->dfs_curchan = dfs_alloc_dfs_curchan();
 	if (!((*dfs)->dfs_curchan)) {
-		dfs_alert(*dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_curchan allocation failed");
+		dfs_free_wlan_dfs(*dfs);
+		dfs_alert(*dfs, WLAN_DEBUG_DFS_ALWAYS,
+			  "dfs_curchan allocation failed");
 		return 1;
 	}
 
@@ -193,11 +262,17 @@ void dfs_detach(struct wlan_dfs *dfs)
 	dfs_nol_detach(dfs);
 }
 
+#ifndef WLAN_DFS_STATIC_MEM_ALLOC
 void dfs_destroy_object(struct wlan_dfs *dfs)
 {
-	qdf_mem_free(dfs->dfs_curchan);
-	qdf_mem_free(dfs);
+	dfs_free_dfs_curchan(dfs->dfs_curchan);
+	dfs_free_wlan_dfs(dfs);
 }
+#else
+void dfs_destroy_object(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 int dfs_control(struct wlan_dfs *dfs,
 		u_int id,
