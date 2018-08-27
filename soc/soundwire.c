@@ -796,18 +796,24 @@ struct swr_device *get_matching_swr_slave_device(struct device_node *np)
 {
 	struct swr_device *swr = NULL;
 	struct swr_master *master;
+	bool found = false;
 
 	mutex_lock(&board_lock);
 	list_for_each_entry(master, &swr_master_list, list) {
 		mutex_lock(&master->mlock);
 		list_for_each_entry(swr, &master->devices, dev_list) {
-			if (swr->dev.of_node == np)
-				break;
+			if (swr->dev.of_node == np) {
+				found = true;
+				mutex_unlock(&master->mlock);
+				goto exit;
+			}
 		}
 		mutex_unlock(&master->mlock);
 	}
+exit:
 	mutex_unlock(&board_lock);
-
+	if (!found)
+		return NULL;
 	return swr;
 }
 EXPORT_SYMBOL(get_matching_swr_slave_device);
@@ -888,7 +894,6 @@ int swr_register_master(struct swr_master *master)
 	id = idr_alloc(&master_idr, master, master->bus_num,
 				master->bus_num + 1, GFP_KERNEL);
 	mutex_unlock(&swr_lock);
-
 	if (id < 0)
 		return id;
 
