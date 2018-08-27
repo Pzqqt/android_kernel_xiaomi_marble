@@ -581,19 +581,6 @@ ce_cancel_send_next_srng(struct CE_handle *copyeng,
 	return status;
 }
 
-/* Shift bits to convert IS_*_RING_*_WATERMARK_MASK to CE_WM_FLAG_*_* */
-#define CE_WM_SHFT 1
-
-/*
- * Number of times to check for any pending tx/rx completion on
- * a copy engine, this count should be big enough. Once we hit
- * this threashold we'll not check for any Tx/Rx comlpetion in same
- * interrupt handling. Note that this threashold is only used for
- * Rx interrupt processing, this can be used tor Tx as well if we
- * suspect any infinite loop in checking for pending Tx completion.
- */
-#define CE_TXRX_COMP_CHECK_THRESHOLD 20
-
 /*
  * Adjust interrupts for the copy complete handler.
  * If it's needed for either send or recv, then unmask
@@ -866,3 +853,8 @@ struct ce_ops *ce_services_srng()
 	return &ce_service_srng;
 }
 qdf_export_symbol(ce_services_srng);
+
+void ce_service_srng_init(void)
+{
+	ce_service_register_module(CE_SVC_SRNG, &ce_services_srng);
+}

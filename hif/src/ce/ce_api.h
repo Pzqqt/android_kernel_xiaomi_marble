@@ -102,11 +102,27 @@ typedef void (*CE_recv_cb)(struct CE_handle *copyeng,
 typedef void (*CE_watermark_cb)(struct CE_handle *copyeng,
 				void *per_CE_wm_context, unsigned int flags);
 
+
 #define CE_WM_FLAG_SEND_HIGH   1
 #define CE_WM_FLAG_SEND_LOW    2
 #define CE_WM_FLAG_RECV_HIGH   4
 #define CE_WM_FLAG_RECV_LOW    8
 #define CE_HTT_TX_CE           4
+
+
+/**
+ * ce_service_srng_init() - Initialization routine for CE services
+ *                          in SRNG based targets
+ * Return : None
+ */
+void ce_service_srng_init(void);
+
+/**
+ * ce_service_legacy_init() - Initialization routine for CE services
+ *                            in legacy targets
+ * Return : None
+ */
+void ce_service_legacy_init(void);
 
 /* A list of buffers to be gathered and sent */
 struct ce_sendlist;
@@ -385,6 +401,14 @@ void ce_enable_any_copy_compl_intr_nolock(struct hif_softc *scn);
  */
 bool ce_get_rx_pending(struct hif_softc *scn);
 
+/**
+ * war_ce_src_ring_write_idx_set() - Set write index for CE source ring
+ *
+ * Return: None
+ */
+void war_ce_src_ring_write_idx_set(struct hif_softc *scn,
+				   u32 ctrl_addr, unsigned int write_index);
+
 /* CE_attr.flags values */
 #define CE_ATTR_NO_SNOOP             0x01 /* Use NonSnooping PCIe accesses? */
 #define CE_ATTR_BYTE_SWAP_DATA       0x02 /* Byte swap data words */
@@ -536,7 +560,6 @@ struct ce_ops {
 	void (*ce_prepare_shadow_register_v2_cfg)(struct hif_softc *scn,
 			    struct pld_shadow_reg_v2_cfg **shadow_config,
 			    int *num_shadow_registers_configured);
-
 };
 
 int hif_ce_bus_early_suspend(struct hif_softc *scn);

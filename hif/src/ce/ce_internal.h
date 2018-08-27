@@ -549,4 +549,27 @@ QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
 void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
 #endif /*HIF_CE_DEBUG_DATA_BUF*/
 #endif /* #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
+
+#ifdef HIF_CONFIG_SLUB_DEBUG_ON
+/**
+ * ce_validate_nbytes() - validate nbytes for slub builds on tx descriptors
+ * @nbytes: nbytes value being written into a send descriptor
+ * @ce_state: context of the copy engine
+
+ * nbytes should be non-zero and less than max configured for the copy engine
+ *
+ * Return: none
+ */
+static inline void ce_validate_nbytes(uint32_t nbytes,
+				      struct CE_state *ce_state)
+{
+	if (nbytes <= 0 || nbytes > ce_state->src_sz_max)
+		QDF_BUG(0);
+}
+#else
+static inline void ce_validate_nbytes(uint32_t nbytes,
+				      struct CE_state *ce_state)
+{
+}
+#endif
 #endif /* __COPY_ENGINE_INTERNAL_H__ */

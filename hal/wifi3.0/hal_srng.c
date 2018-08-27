@@ -137,6 +137,8 @@ QDF_STATUS hal_set_one_shadow_config(void *hal_soc,
 	return QDF_STATUS_SUCCESS;
 }
 
+qdf_export_symbol(hal_set_one_shadow_config);
+
 QDF_STATUS hal_construct_shadow_config(void *hal_soc)
 {
 	int ring_type, ring_num;
@@ -162,6 +164,8 @@ QDF_STATUS hal_construct_shadow_config(void *hal_soc)
 	return QDF_STATUS_SUCCESS;
 }
 
+qdf_export_symbol(hal_construct_shadow_config);
+
 void hal_get_shadow_config(void *hal_soc,
 	struct pld_shadow_reg_v2_cfg **shadow_config,
 	int *num_shadow_registers_configured)
@@ -175,6 +179,8 @@ void hal_get_shadow_config(void *hal_soc,
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s", __func__);
 }
+
+qdf_export_symbol(hal_get_shadow_config);
 
 
 static void hal_validate_shadow_register(struct hal_soc *hal,

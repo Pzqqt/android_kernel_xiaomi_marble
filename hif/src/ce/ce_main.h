@@ -53,6 +53,12 @@ enum ce_id_type {
 	CE_ID_MAX
 };
 
+enum ce_target_type {
+	CE_SVC_LEGACY,
+	CE_SVC_SRNG,
+	CE_MAX_TARGET_TYPE
+};
+
 #ifdef CONFIG_WIN
 #define QWLAN_VERSIONSTR "WIN"
 #endif
@@ -227,5 +233,8 @@ void hif_select_epping_service_to_pipe_map(struct service_to_pipe
 					   uint32_t *sz_tgt_svc_map_to_use)
 { }
 #endif
+
+void ce_service_register_module(enum ce_target_type target_type,
+				struct ce_ops* (*ce_attach)(void));
 
 #endif /* __CE_H__ */

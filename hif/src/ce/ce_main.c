@@ -885,6 +885,21 @@ static void ce_free_desc_ring(struct hif_softc *scn, unsigned int CE_id,
 }
 #endif /* IPA_OFFLOAD */
 
+/*
+ * TODO: Need to explore the possibility of having this as part of a
+ * target context instead of a global array.
+ */
+static struct ce_ops* (*ce_attach_register[CE_MAX_TARGET_TYPE])(void);
+
+void ce_service_register_module(enum ce_target_type target_type,
+				struct ce_ops* (*ce_attach)(void))
+{
+	if (target_type < CE_MAX_TARGET_TYPE)
+		ce_attach_register[target_type] = ce_attach;
+}
+
+qdf_export_symbol(ce_service_register_module);
+
 /**
  * ce_srng_based() - Does this target use srng
  * @ce_state : pointer to the state context of the CE
@@ -917,17 +932,26 @@ qdf_export_symbol(ce_srng_based);
 #ifdef QCA_WIFI_SUPPORT_SRNG
 static struct ce_ops *ce_services_attach(struct hif_softc *scn)
 {
-	if (ce_srng_based(scn))
-		return ce_services_srng();
+	struct ce_ops *ops = NULL;
 
-	return ce_services_legacy();
+	if (ce_srng_based(scn)) {
+		if (ce_attach_register[CE_SVC_SRNG])
+			ops = ce_attach_register[CE_SVC_SRNG]();
+	} else if (ce_attach_register[CE_SVC_LEGACY]) {
+		ops = ce_attach_register[CE_SVC_LEGACY]();
+	}
+
+	return ops;
 }
 
 
 #else	/* QCA_LITHIUM */
 static struct ce_ops *ce_services_attach(struct hif_softc *scn)
 {
-	return ce_services_legacy();
+	if (ce_attach_register[CE_SVC_LEGACY])
+		return ce_attach_register[CE_SVC_LEGACY]();
+
+	return NULL;
 }
 #endif /* QCA_LITHIUM */
 
@@ -2740,6 +2764,25 @@ void hif_set_ce_config_qcn7605(struct hif_softc *scn,
 }
 #endif
 
+#ifdef CE_SVC_CMN_INIT
+#ifdef QCA_WIFI_SUPPORT_SRNG
+static inline void hif_ce_service_init(void)
+{
+	ce_service_srng_init();
+}
+#else
+static inline void hif_ce_service_init(void)
+{
+	ce_service_legacy_init();
+}
+#endif
+#else
+static inline void hif_ce_service_init(void)
+{
+}
+#endif
+
+
 /**
  * hif_ce_prepare_config() - load the correct static tables.
  * @scn: hif context
@@ -2753,6 +2796,7 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
+	hif_ce_service_init();
 	hif_state->ce_services = ce_services_attach(scn);
 
 	scn->ce_count = HOST_CE_COUNT;
