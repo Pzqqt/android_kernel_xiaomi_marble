@@ -1502,6 +1502,7 @@ static void wlan_hdd_set_the_pld_uevent(struct pld_uevent_data *uevent)
 	case PLD_FW_DOWN:
 		cds_set_fw_state(CDS_FW_STATE_DOWN);
 		cds_set_target_ready(false);
+		cds_set_recovery_in_progress(true);
 		break;
 	}
 }
