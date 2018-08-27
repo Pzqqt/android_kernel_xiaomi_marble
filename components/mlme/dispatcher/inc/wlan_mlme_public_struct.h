@@ -86,6 +86,36 @@ struct wlan_mlme_ht_caps {
 	struct mlme_ht_capabilities_info ht_cap_info;
 };
 
+/**
+ * struct wlan_mlme_ - HT Capabilities related config items
+ * @ht_cap_info: HT capabilities Info Structure
+ */
+struct wlan_mlme_cfg_sap {
+	uint8_t cfg_ssid[32];
+	uint16_t beacon_interval;
+	uint16_t dtim_interval;
+	uint16_t listen_interval;
+	bool sap_11g_policy;
+	uint8_t assoc_sta_limit;
+	bool enable_lte_coex;
+	uint16_t rmc_action_period_freq;
+	uint8_t rate_tx_mgmt;
+	uint8_t rate_tx_mgmt_2g;
+	uint8_t rate_tx_mgmt_5g;
+	bool tele_bcn_wakeup_en;
+	uint8_t tele_bcn_max_li;
+	bool sap_get_peer_info;
+	bool sap_allow_all_chan_param_name;
+	uint8_t sap_max_no_peers;
+	uint8_t sap_max_offload_peers;
+	uint8_t sap_max_offload_reorder_buffs;
+	uint8_t sap_ch_switch_beacon_cnt;
+	bool sap_ch_switch_mode;
+	bool sap_internal_restart_name;
+	bool chan_switch_hostapd_rate_enabled_name;
+	uint8_t reduced_beacon_interval;
+};
+
 struct wlan_mlme_vht_caps {
 	/* VHT related configs */
 };
@@ -163,6 +193,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_rates rates;
 	struct wlan_mlme_sap_protection sap_protection_cfg;
 	struct wlan_mlme_chainmask chainmask_cfg;
+	struct wlan_mlme_cfg_sap sap_cfg;
 };
 
 #endif
