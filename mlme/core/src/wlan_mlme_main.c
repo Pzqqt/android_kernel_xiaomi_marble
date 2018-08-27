@@ -163,6 +163,41 @@ static void mlme_update_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_IGNORE_PEER_HT_MODE);
 }
 
+static void mlme_update_sap_cfg(struct wlan_objmgr_psoc *psoc,
+				struct wlan_mlme_cfg_sap *sap_cfg)
+{
+	sap_cfg->beacon_interval = cfg_default(CFG_BEACON_INTERVAL);
+	sap_cfg->dtim_interval = cfg_default(CFG_DTIM_PERIOD);
+	sap_cfg->listen_interval = cfg_default(CFG_LISTEN_INTERVAL);
+	sap_cfg->sap_11g_policy = cfg_default(CFG_11G_ONLY_POLICY);
+	sap_cfg->assoc_sta_limit = cfg_default(CFG_ASSOC_STA_LIMIT);
+	sap_cfg->enable_lte_coex = cfg_get(psoc, CFG_INI_ENABLE_LTE_COEX);
+	sap_cfg->rmc_action_period_freq =
+		cfg_default(CFG_RMC_ACTION_PERIOD_FREQUENCY);
+	sap_cfg->rate_tx_mgmt = cfg_get(psoc, CFG_INI_RATE_FOR_TX_MGMT);
+	sap_cfg->rate_tx_mgmt_2g = cfg_get(psoc, CFG_INI_RATE_FOR_TX_MGMT_2G);
+	sap_cfg->rate_tx_mgmt_5g = cfg_get(psoc, CFG_INI_RATE_FOR_TX_MGMT_5G);
+	sap_cfg->tele_bcn_wakeup_en = cfg_get(psoc, CFG_INI_TELE_BCN_WAKEUP_EN);
+	sap_cfg->tele_bcn_max_li = cfg_get(psoc, CFG_INI_TELE_BCN_MAX_LI);
+	sap_cfg->sap_get_peer_info = cfg_get(psoc, CFG_INI_SAP_GET_PEER_INFO);
+	sap_cfg->sap_allow_all_chan_param_name =
+			cfg_get(psoc, CFG_INI_SAP_ALLOW_ALL_CHANNEL_PARAM);
+	sap_cfg->sap_max_no_peers = cfg_get(psoc, CFG_INI_SAP_MAX_NO_PEERS);
+	sap_cfg->sap_max_offload_peers =
+			cfg_get(psoc, CFG_INI_SAP_MAX_OFFLOAD_PEERS);
+	sap_cfg->sap_max_offload_reorder_buffs =
+			cfg_get(psoc, CFG_INI_SAP_MAX_OFFLOAD_REORDER_BUFFS);
+	sap_cfg->sap_ch_switch_beacon_cnt =
+			cfg_get(psoc, CFG_INI_SAP_CH_SWITCH_BEACON_CNT);
+	sap_cfg->sap_ch_switch_mode = cfg_get(psoc, CFG_INI_SAP_CH_SWITCH_MODE);
+	sap_cfg->sap_internal_restart_name =
+			cfg_get(psoc, CFG_INI_SAP_INTERNAL_RESTART_NAME);
+	sap_cfg->chan_switch_hostapd_rate_enabled_name =
+		cfg_get(psoc, CFG_INI_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_NAME);
+	sap_cfg->reduced_beacon_interval =
+		cfg_get(psoc, CFG_INI_REDUCED_BEACON_INTERVAL);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -180,6 +215,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_update_rates_in_cfg(psoc, &mlme_cfg->rates);
 	mlme_update_sap_protection_cfg(psoc, &mlme_cfg->sap_protection_cfg);
 	mlme_init_chainmask_cfg(psoc, &mlme_cfg->chainmask_cfg);
+	mlme_update_sap_cfg(psoc, &mlme_cfg->sap_cfg);
 
 	return status;
 }
