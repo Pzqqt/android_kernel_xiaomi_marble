@@ -116,8 +116,10 @@ QDF_STATUS tgt_p2p_lo_event_cb(struct wlan_objmgr_psoc *psoc,
 	msg.type = P2P_EVENT_LO_STOPPED;
 	msg.bodyptr = lo_stop_event;
 	msg.callback = p2p_process_evt;
-	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 
+        scheduler_post_message(QDF_MODULE_ID_P2P,
+                               QDF_MODULE_ID_P2P,
+                               QDF_MODULE_ID_TARGET_IF, &msg);
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* FEATURE_P2P_LISTEN_OFFLOAD */
@@ -198,7 +200,9 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 	msg.type = P2P_EVENT_MGMT_TX_ACK_CNF;
 	msg.bodyptr = tx_conf_event;
 	msg.callback = p2p_process_evt;
-	ret = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	ret = scheduler_post_message(QDF_MODULE_ID_P2P,
+				     QDF_MODULE_ID_P2P,
+				     QDF_MODULE_ID_TARGET_IF, &msg);
 	if (ret != QDF_STATUS_SUCCESS) {
 		qdf_mem_free(tx_conf_event);
 		qdf_mem_free(buf);
@@ -284,7 +288,9 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 	msg.type = P2P_EVENT_RX_MGMT;
 	msg.bodyptr = rx_mgmt_event;
 	msg.callback = p2p_process_evt;
-	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	scheduler_post_message(QDF_MODULE_ID_P2P,
+			       QDF_MODULE_ID_P2P,
+			       QDF_MODULE_ID_TARGET_IF, &msg);
 
 	qdf_nbuf_free(buf);
 
@@ -333,7 +339,9 @@ QDF_STATUS  tgt_p2p_noa_event_cb(struct wlan_objmgr_psoc *psoc,
 	msg.type = P2P_EVENT_NOA;
 	msg.bodyptr = noa_event;
 	msg.callback = p2p_process_evt;
-	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	scheduler_post_message(QDF_MODULE_ID_P2P,
+			       QDF_MODULE_ID_P2P,
+			       QDF_MODULE_ID_TARGET_IF, &msg);
 
 	return QDF_STATUS_SUCCESS;
 }

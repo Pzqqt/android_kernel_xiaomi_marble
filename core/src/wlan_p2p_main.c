@@ -452,7 +452,9 @@ static QDF_STATUS p2p_send_noa_to_pe(struct p2p_noa_info *noa_info)
 	msg.type = P2P_NOA_ATTR_IND;
 	msg.bodyval = 0;
 	msg.bodyptr = noa_attr;
-	scheduler_post_msg(QDF_MODULE_ID_PE,  &msg);
+	scheduler_post_message(QDF_MODULE_ID_P2P,
+			       QDF_MODULE_ID_P2P,
+			       QDF_MODULE_ID_PE,  &msg);
 
 	return QDF_STATUS_SUCCESS;
 }
