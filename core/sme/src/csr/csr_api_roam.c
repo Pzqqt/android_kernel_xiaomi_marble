@@ -15517,6 +15517,39 @@ static bool csr_enable_twt(tDot11fBeaconIEs *ie)
 }
 
 /**
+ * csr_enable_uapsd() - Used to disable uapsd if both twt and uapsd is enabled
+ * @mac_ctx: pointer to global mac structure
+ * @ie: pointer to beacon/probe resp ie's
+ *
+ * Return: true or flase
+ */
+static bool csr_enable_uapsd(tpAniSirGlobal mac_ctx, tDot11fBeaconIEs *ie)
+{
+	uint32_t value = 0;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	/* In non-HE case, TWT is enabled only for Q2Q.
+	 * So keed uAPSD enabled for non-Q2Q in this non-HE case.
+	 */
+	if (!csr_enable_twt(ie))
+		return true;
+
+	if (!ie) {
+		sme_debug("Beacon ie buffer is null");
+		return true;
+	}
+
+	CFG_GET_INT(status, mac_ctx, WNI_CFG_TWT_REQUESTOR, value);
+	if ((value || IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) &&
+	    ie->he_cap.twt_responder) {
+		sme_debug("twt supported, disable uapsd");
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * The communication between HDD and LIM is thru mailbox (MB).
  * Both sides will access the data structure "tSirSmeJoinReq".
  * The rule is, while the components of "tSirSmeJoinReq" can be accessed in the
@@ -15808,7 +15841,6 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		sme_debug("CSR PERSONA: %d CSR CbMode: %d force 24gh ht20 %d",
 			  pProfile->csrPersona, pSession->bssParams.cbMode,
 			  csr_join_req->force_24ghz_in_ht20);
-		csr_join_req->uapsdPerAcBitmask = pProfile->uapsd_mask;
 		pSession->uapsd_mask = pProfile->uapsd_mask;
 		status =
 			csr_get_rate_set(pMac, pProfile,
@@ -16352,7 +16384,8 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 				&csr_join_req->supportedChannels.numChnl,
 				false);
 
-		csr_join_req->uapsdPerAcBitmask = (uint8_t)pProfile->uapsd_mask;
+		if (csr_enable_uapsd(pMac, pIes))
+			csr_join_req->uapsdPerAcBitmask = pProfile->uapsd_mask;
 		/* Move the entire BssDescription into the join request. */
 		qdf_mem_copy(&csr_join_req->bssDescription, pBssDescription,
 				pBssDescription->length +
