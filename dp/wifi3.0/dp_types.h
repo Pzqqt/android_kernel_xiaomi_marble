@@ -156,6 +156,25 @@ union dp_rx_desc_list_elem_t;
 #define DP_MAC_ADDR_LEN 6
 
 /**
+ * Number of Tx Queues
+ * enum and macro to define how many threshold levels is used
+ * for the AC based flow control
+ */
+#ifdef QCA_AC_BASED_FLOW_CONTROL
+enum dp_fl_ctrl_threshold {
+	DP_TH_BE_BK = 0,
+	DP_TH_VI,
+	DP_TH_VO,
+	DP_TH_HI,
+};
+
+#define FL_TH_MAX (4)
+#define FL_TH_VI_PERCENTAGE (80)
+#define FL_TH_VO_PERCENTAGE (60)
+#define FL_TH_HI_PERCENTAGE (40)
+#endif
+
+/**
  * enum dp_intr_mode
  * @DP_INTR_LEGACY: Legacy/Line interrupts, for WIN
  * @DP_INTR_MSI: MSI interrupts, for MCL
@@ -314,8 +333,11 @@ struct dp_tx_desc_s {
 enum flow_pool_status {
 	FLOW_POOL_ACTIVE_UNPAUSED = 0,
 	FLOW_POOL_ACTIVE_PAUSED = 1,
-	FLOW_POOL_INVALID = 2,
-	FLOW_POOL_INACTIVE = 3,
+	FLOW_POOL_BE_BK_PAUSED = 2,
+	FLOW_POOL_VI_PAUSED = 3,
+	FLOW_POOL_VO_PAUSED = 4,
+	FLOW_POOL_INVALID = 5,
+	FLOW_POOL_INACTIVE = 6,
 };
 
 /**
@@ -377,8 +399,15 @@ struct dp_tx_desc_pool_s {
 	uint16_t avail_desc;
 	enum flow_pool_status status;
 	enum htt_flow_type flow_type;
+#ifdef QCA_AC_BASED_FLOW_CONTROL
+	uint16_t stop_th[FL_TH_MAX];
+	uint16_t start_th[FL_TH_MAX];
+	qdf_time_t max_pause_time[FL_TH_MAX];
+	qdf_time_t latest_pause_time[FL_TH_MAX];
+#else
 	uint16_t stop_th;
 	uint16_t start_th;
+#endif
 	uint16_t pkt_drop_no_desc;
 	qdf_spinlock_t flow_pool_lock;
 	uint8_t pool_create_cnt;

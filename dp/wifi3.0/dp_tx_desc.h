@@ -58,6 +58,11 @@
 #define TX_DESC_LOCK_UNLOCK(lock)
 #define IS_TX_DESC_POOL_STATUS_INACTIVE(pool) \
 	((pool)->status == FLOW_POOL_INACTIVE)
+#ifdef QCA_AC_BASED_FLOW_CONTROL
+#define TX_DESC_POOL_MEMBER_CLEAN(_tx_desc_pool)       \
+	dp_tx_flow_pool_member_clean(_tx_desc_pool)
+
+#else /* !QCA_AC_BASED_FLOW_CONTROL */
 #define TX_DESC_POOL_MEMBER_CLEAN(_tx_desc_pool)       \
 do {                                                   \
 	(_tx_desc_pool)->elem_size = 0;                \
@@ -68,6 +73,7 @@ do {                                                   \
 	(_tx_desc_pool)->stop_th = 0;                  \
 	(_tx_desc_pool)->status = FLOW_POOL_INACTIVE;  \
 } while (0)
+#endif /* QCA_AC_BASED_FLOW_CONTROL */
 #else /* !QCA_LL_TX_FLOW_CONTROL_V2 */
 #define TX_DESC_LOCK_CREATE(lock)  qdf_spinlock_create(lock)
 #define TX_DESC_LOCK_DESTROY(lock) qdf_spinlock_destroy(lock)
@@ -153,7 +159,224 @@ void dp_tx_put_desc_flow_pool(struct dp_tx_desc_pool_s *pool,
 	pool->avail_desc++;
 }
 
+#ifdef QCA_AC_BASED_FLOW_CONTROL
 
+/**
+ * dp_tx_flow_pool_member_clean() - Clean the members of TX flow pool
+ *
+ * @pool: flow pool
+ *
+ * Return: None
+ */
+static inline void
+dp_tx_flow_pool_member_clean(struct dp_tx_desc_pool_s *pool)
+{
+	pool->elem_size = 0;
+	pool->freelist = NULL;
+	pool->pool_size = 0;
+	pool->avail_desc = 0;
+	qdf_mem_zero(pool->start_th, FL_TH_MAX);
+	qdf_mem_zero(pool->stop_th, FL_TH_MAX);
+	pool->status = FLOW_POOL_INACTIVE;
+}
+
+/**
+ * dp_tx_is_threshold_reached() - Check if current avail desc meet threshold
+ *
+ * @pool: flow pool
+ * @avail_desc: available descriptor number
+ *
+ * Return: true if threshold is met, false if not
+ */
+static inline bool
+dp_tx_is_threshold_reached(struct dp_tx_desc_pool_s *pool, uint16_t avail_desc)
+{
+	if (qdf_unlikely(avail_desc == pool->stop_th[DP_TH_BE_BK]))
+		return true;
+	else if (qdf_unlikely(avail_desc == pool->stop_th[DP_TH_VI]))
+		return true;
+	else if (qdf_unlikely(avail_desc == pool->stop_th[DP_TH_VO]))
+		return true;
+	else if (qdf_unlikely(avail_desc == pool->stop_th[DP_TH_HI]))
+		return true;
+	else
+		return false;
+}
+
+/**
+ * dp_tx_desc_alloc() - Allocate a Software Tx descriptor from given pool
+ *
+ * @soc: Handle to DP SoC structure
+ * @desc_pool_id: ID of the flow control fool
+ *
+ * Return: TX descriptor allocated or NULL
+ */
+static inline struct dp_tx_desc_s *
+dp_tx_desc_alloc(struct dp_soc *soc, uint8_t desc_pool_id)
+{
+	struct dp_tx_desc_s *tx_desc = NULL;
+	struct dp_tx_desc_pool_s *pool = &soc->tx_desc[desc_pool_id];
+	bool is_pause = false;
+	enum netif_action_type act = WLAN_WAKE_NON_PRIORITY_QUEUE;
+	enum dp_fl_ctrl_threshold level = DP_TH_BE_BK;
+
+	if (qdf_likely(pool)) {
+		qdf_spin_lock_bh(&pool->flow_pool_lock);
+		if (qdf_likely(pool->avail_desc)) {
+			tx_desc = dp_tx_get_desc_flow_pool(pool);
+			tx_desc->pool_id = desc_pool_id;
+			tx_desc->flags = DP_TX_DESC_FLAG_ALLOCATED;
+			is_pause = dp_tx_is_threshold_reached(pool,
+							      pool->avail_desc);
+
+			if (qdf_unlikely(is_pause)) {
+				switch (pool->status) {
+				case FLOW_POOL_ACTIVE_UNPAUSED:
+					/* pause network BE\BK queue */
+					act = WLAN_NETIF_BE_BK_QUEUE_OFF;
+					level = DP_TH_BE_BK;
+					pool->status = FLOW_POOL_BE_BK_PAUSED;
+					break;
+				case FLOW_POOL_BE_BK_PAUSED:
+					/* pause network VI queue */
+					act = WLAN_NETIF_VI_QUEUE_OFF;
+					level = DP_TH_VI;
+					pool->status = FLOW_POOL_VI_PAUSED;
+					break;
+				case FLOW_POOL_VI_PAUSED:
+					/* pause network VO queue */
+					act = WLAN_NETIF_VO_QUEUE_OFF;
+					level = DP_TH_VO;
+					pool->status = FLOW_POOL_VO_PAUSED;
+					break;
+				case FLOW_POOL_VO_PAUSED:
+					/* pause network HI PRI queue */
+					act = WLAN_NETIF_PRIORITY_QUEUE_OFF;
+					level = DP_TH_HI;
+					pool->status = FLOW_POOL_ACTIVE_PAUSED;
+					break;
+				default:
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						  QDF_TRACE_LEVEL_ERROR,
+						  "%s %d pool is %d status!",
+						  __func__, __LINE__,
+						  pool->status);
+					break;
+				}
+				pool->latest_pause_time[level] =
+					qdf_get_system_timestamp();
+				soc->pause_cb(desc_pool_id,
+					      act, WLAN_DATA_FLOW_CONTROL);
+				qdf_spin_unlock_bh(&pool->flow_pool_lock);
+			} else {
+				qdf_spin_unlock_bh(&pool->flow_pool_lock);
+			}
+		} else {
+			pool->pkt_drop_no_desc++;
+			qdf_spin_unlock_bh(&pool->flow_pool_lock);
+		}
+	} else {
+		soc->pool_stats.pkt_drop_no_pool++;
+	}
+
+	return tx_desc;
+}
+
+/**
+ * dp_tx_desc_free() - Fee a tx descriptor and attach it to free list
+ *
+ * @soc: Handle to DP SoC structure
+ * @tx_desc: the tx descriptor to be freed
+ * @desc_pool_id: ID of the flow control fool
+ *
+ * Return: None
+ */
+static inline void
+dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
+		uint8_t desc_pool_id)
+{
+	struct dp_tx_desc_pool_s *pool = &soc->tx_desc[desc_pool_id];
+	qdf_time_t unpause_time = qdf_get_system_timestamp(), pause_dur;
+	enum netif_action_type act = WLAN_WAKE_ALL_NETIF_QUEUE;
+
+	qdf_spin_lock_bh(&pool->flow_pool_lock);
+	tx_desc->flags = 0;
+	dp_tx_put_desc_flow_pool(pool, tx_desc);
+	switch (pool->status) {
+	case FLOW_POOL_ACTIVE_PAUSED:
+		if (pool->avail_desc > pool->start_th[DP_TH_HI]) {
+			act = WLAN_NETIF_PRIORITY_QUEUE_ON;
+			pool->status = FLOW_POOL_VO_PAUSED;
+
+			/* Update maxinum pause duration for HI queue */
+			pause_dur = unpause_time -
+					pool->latest_pause_time[DP_TH_HI];
+			if (pool->max_pause_time[DP_TH_HI] < pause_dur)
+				pool->max_pause_time[DP_TH_HI] = pause_dur;
+		}
+		break;
+	case FLOW_POOL_VO_PAUSED:
+		if (pool->avail_desc > pool->start_th[DP_TH_VO]) {
+			act = WLAN_NETIF_VO_QUEUE_ON;
+			pool->status = FLOW_POOL_VI_PAUSED;
+
+			/* Update maxinum pause duration for VO queue */
+			pause_dur = unpause_time -
+					pool->latest_pause_time[DP_TH_VO];
+			if (pool->max_pause_time[DP_TH_VO] < pause_dur)
+				pool->max_pause_time[DP_TH_VO] = pause_dur;
+		}
+		break;
+	case FLOW_POOL_VI_PAUSED:
+		if (pool->avail_desc > pool->start_th[DP_TH_VI]) {
+			act = WLAN_NETIF_VI_QUEUE_ON;
+			pool->status = FLOW_POOL_BE_BK_PAUSED;
+
+			/* Update maxinum pause duration for VI queue */
+			pause_dur = unpause_time -
+					pool->latest_pause_time[DP_TH_VI];
+			if (pool->max_pause_time[DP_TH_VI] < pause_dur)
+				pool->max_pause_time[DP_TH_VI] = pause_dur;
+		}
+		break;
+	case FLOW_POOL_BE_BK_PAUSED:
+		if (pool->avail_desc > pool->start_th[DP_TH_BE_BK]) {
+			act = WLAN_WAKE_NON_PRIORITY_QUEUE;
+			pool->status = FLOW_POOL_ACTIVE_UNPAUSED;
+
+			/* Update maxinum pause duration for BE_BK queue */
+			pause_dur = unpause_time -
+					pool->latest_pause_time[DP_TH_BE_BK];
+			if (pool->max_pause_time[DP_TH_BE_BK] < pause_dur)
+				pool->max_pause_time[DP_TH_BE_BK] = pause_dur;
+		}
+		break;
+	case FLOW_POOL_INVALID:
+		if (pool->avail_desc == pool->pool_size) {
+			dp_tx_desc_pool_free(soc, desc_pool_id);
+			qdf_spin_unlock_bh(&pool->flow_pool_lock);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "%s %d pool is freed!!",
+				  __func__, __LINE__);
+			return;
+		}
+		break;
+
+	case FLOW_POOL_ACTIVE_UNPAUSED:
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s %d pool is INACTIVE State!!",
+			  __func__, __LINE__);
+		break;
+	};
+
+	if (act != WLAN_WAKE_ALL_NETIF_QUEUE)
+		soc->pause_cb(pool->flow_pool_id,
+			      act, WLAN_DATA_FLOW_CONTROL);
+	qdf_spin_unlock_bh(&pool->flow_pool_lock);
+}
+#else /* QCA_AC_BASED_FLOW_CONTROL */
 /**
  * dp_tx_desc_alloc() - Allocate a Software Tx Descriptor from given pool
  *
@@ -260,6 +483,8 @@ out:
 	 */
 	hif_pm_runtime_put(soc->hif_handle);
 }
+
+#endif /* QCA_AC_BASED_FLOW_CONTROL */
 #else /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
 static inline void dp_tx_flow_control_init(struct dp_soc *handle)
