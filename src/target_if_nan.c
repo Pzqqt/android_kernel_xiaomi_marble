@@ -219,7 +219,9 @@ static int target_if_ndp_initiator_rsp_handler(ol_scn_t scn, uint8_t *data,
 	msg.callback = target_if_nan_event_dispatcher;
 	msg.flush_callback = target_if_nan_event_flush_cb;
 	target_if_debug("NDP_INITIATOR_RSP sent: %d", msg.type);
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
 		target_if_nan_event_flush_cb(&msg);
@@ -268,7 +270,9 @@ static int target_if_ndp_ind_handler(ol_scn_t scn, uint8_t *data,
 	msg.callback = target_if_nan_event_dispatcher;
 	msg.flush_callback = target_if_nan_event_flush_cb;
 	target_if_debug("NDP_INDICATION sent: %d", msg.type);
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
 		target_if_nan_event_flush_cb(&msg);
@@ -317,7 +321,9 @@ static int target_if_ndp_confirm_handler(ol_scn_t scn, uint8_t *data,
 	msg.callback = target_if_nan_event_dispatcher;
 	msg.flush_callback = target_if_nan_event_flush_cb;
 	target_if_debug("NDP_CONFIRM sent: %d", msg.type);
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
 		target_if_nan_event_flush_cb(&msg);
@@ -415,7 +421,9 @@ static int target_if_ndp_responder_rsp_handler(ol_scn_t scn, uint8_t *data,
 	msg.callback = target_if_nan_event_dispatcher;
 	msg.flush_callback = target_if_nan_event_flush_cb;
 	target_if_debug("NDP_INITIATOR_RSP sent: %d", msg.type);
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
 		target_if_nan_event_flush_cb(&msg);
@@ -513,7 +521,9 @@ static int target_if_ndp_end_rsp_handler(ol_scn_t scn, uint8_t *data,
 	msg.callback = target_if_nan_event_dispatcher;
 	msg.flush_callback = target_if_nan_event_flush_cb;
 	target_if_debug("NDP_END_RSP sent: %d", msg.type);
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
 		target_if_nan_event_flush_cb(&msg);
@@ -555,7 +565,9 @@ static int target_if_ndp_end_ind_handler(ol_scn_t scn, uint8_t *data,
 	msg.callback = target_if_nan_event_dispatcher;
 	msg.flush_callback = target_if_nan_event_flush_cb;
 	target_if_debug("NDP_END_IND sent: %d", msg.type);
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
 		target_if_nan_event_flush_cb(&msg);
@@ -604,7 +616,9 @@ static int target_if_ndp_sch_update_handler(ol_scn_t scn, uint8_t *data,
 	msg.callback = target_if_nan_event_dispatcher;
 	msg.flush_callback = target_if_nan_event_flush_cb;
 	target_if_debug("NDP_SCHEDULE_UPDATE sent: %d", msg.type);
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
 		target_if_nan_event_flush_cb(&msg);
