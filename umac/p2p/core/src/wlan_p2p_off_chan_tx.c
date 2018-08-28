@@ -1683,7 +1683,9 @@ QDF_STATUS p2p_cleanup_tx_sync(
 	msg.type = P2P_CLEANUP_TX;
 	msg.bodyptr = param;
 	msg.callback = p2p_process_cmd;
-	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_P2P,
+					QDF_MODULE_ID_P2P,
+					QDF_MODULE_ID_OS_IF, &msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("failed to post message");
 		qdf_mem_free(param);
