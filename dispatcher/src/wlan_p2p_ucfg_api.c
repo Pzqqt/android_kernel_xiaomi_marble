@@ -159,7 +159,9 @@ QDF_STATUS ucfg_p2p_roc_req(struct wlan_objmgr_psoc *soc,
 	msg.type = P2P_ROC_REQ;
 	msg.bodyptr = roc_ctx;
 	msg.callback = p2p_process_cmd;
-	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	scheduler_post_message(QDF_MODULE_ID_HDD,
+			       QDF_MODULE_ID_P2P,
+			       QDF_MODULE_ID_OS_IF, &msg);
 	p2p_debug("cookie = 0x%llx", *cookie);
 
 	return QDF_STATUS_SUCCESS;
@@ -204,7 +206,9 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	msg.type = P2P_CANCEL_ROC_REQ;
 	msg.bodyptr = cancel_roc;
 	msg.callback = p2p_process_cmd;
-	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	scheduler_post_message(QDF_MODULE_ID_HDD,
+			       QDF_MODULE_ID_P2P,
+			       QDF_MODULE_ID_OS_IF, &msg);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -364,7 +368,9 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	msg.type = P2P_MGMT_TX;
 	msg.bodyptr = tx_action;
 	msg.callback = p2p_process_cmd;
-	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	scheduler_post_message(QDF_MODULE_ID_HDD,
+			       QDF_MODULE_ID_P2P,
+			       QDF_MODULE_ID_OS_IF, &msg);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -409,7 +415,9 @@ QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 	msg.type = P2P_MGMT_TX_CANCEL;
 	msg.bodyptr = cancel_tx;
 	msg.callback = p2p_process_cmd;
-	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	scheduler_post_message(QDF_MODULE_ID_HDD,
+			       QDF_MODULE_ID_P2P,
+			       QDF_MODULE_ID_OS_IF, &msg);
 
 	return QDF_STATUS_SUCCESS;
 }
