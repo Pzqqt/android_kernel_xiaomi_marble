@@ -46,8 +46,10 @@ static QDF_STATUS sme_post_ps_msg_to_wma(uint16_t type, void *body)
 	msg.bodyptr = body;
 	msg.bodyval = 0;
 
-	if (QDF_STATUS_SUCCESS != scheduler_post_msg(
-				QDF_MODULE_ID_WMA, &msg)) {
+	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_SME,
+							 QDF_MODULE_ID_WMA,
+							 QDF_MODULE_ID_WMA,
+							 &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s: Posting message %d failed",
 				__func__, type);
@@ -641,7 +643,9 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 session_id, msg.type));
 	if (QDF_STATUS_SUCCESS !=
-			scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
+			scheduler_post_message(QDF_MODULE_ID_SME,
+					       QDF_MODULE_ID_WMA,
+					       QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		      FL("Not able to post WMA_SET_HOST_OFFLOAD msg to WMA"));
 		qdf_mem_free(request_buf);
@@ -691,7 +695,9 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 session_id, msg.type));
 	if (QDF_STATUS_SUCCESS !=
-			scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
+			scheduler_post_message(QDF_MODULE_ID_SME,
+					       QDF_MODULE_ID_WMA,
+					       QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			"Not able to post SIR_HAL_SET_HOST_OFFLOAD message to HAL");
 		qdf_mem_free(request_buf);
@@ -723,8 +729,10 @@ QDF_STATUS sme_post_pe_message(tpAniSirGlobal mac_ctx,
 {
 	QDF_STATUS qdf_status;
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_PE,
-					 msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_PE,
+					    QDF_MODULE_ID_PE,
+					    msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		sme_err("scheduler_post_msg failed with status: %d",
 			qdf_status);
