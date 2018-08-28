@@ -81,8 +81,8 @@ extern "C" {
 /* Debug Log levels*/
 
 typedef enum {
-	DBGLOG_ML = -1,
-    DBGLOG_VERBOSE,
+	DBGLOG_ML = 0,
+    DBGLOG_VERBOSE = 0,
     DBGLOG_INFO,
     DBGLOG_INFO_LVL_1,
     DBGLOG_INFO_LVL_2,
