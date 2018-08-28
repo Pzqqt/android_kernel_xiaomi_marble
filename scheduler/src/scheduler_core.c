@@ -30,6 +30,46 @@ static struct scheduler_ctx *gp_sched_ctx;
 DEFINE_QDF_FLEX_MEM_POOL(sched_pool, sizeof(struct scheduler_msg),
 			 WLAN_SCHED_REDUCTION_LIMIT);
 
+#ifdef WLAN_SCHED_HISTORY_SIZE
+
+struct sched_history_item {
+	void *callback;
+	uint32_t type_id;
+	uint64_t start_us;
+	uint64_t duration_us;
+};
+
+static struct sched_history_item sched_history[WLAN_SCHED_HISTORY_SIZE];
+static uint32_t sched_history_index;
+
+static void sched_history_start(struct scheduler_msg *msg)
+{
+	struct sched_history_item hist = {
+		.callback = msg->callback,
+		.type_id = msg->type,
+		.start_us = qdf_get_log_timestamp_usecs(),
+	};
+
+	sched_history[sched_history_index] = hist;
+}
+
+static void sched_history_stop(void)
+{
+	struct sched_history_item *hist = &sched_history[sched_history_index];
+
+	hist->duration_us = qdf_get_log_timestamp_usecs() - hist->start_us;
+
+	sched_history_index++;
+	sched_history_index %= WLAN_SCHED_HISTORY_SIZE;
+}
+
+#else /* WLAN_SCHED_HISTORY_SIZE */
+
+static inline void sched_history_start(struct scheduler_msg *msg) { }
+static inline void sched_history_stop(void) { }
+
+#endif /* WLAN_SCHED_HISTORY_SIZE */
+
 QDF_STATUS scheduler_create_ctx(void)
 {
 	qdf_flex_mem_init(&sched_pool);
@@ -266,11 +306,14 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 		if (sch_ctx->queue_ctx.scheduler_msg_process_fn[i]) {
 			sch_ctx->watchdog_msg_type = msg->type;
 			sch_ctx->watchdog_callback = msg->callback;
+
+			sched_history_start(msg);
 			qdf_timer_start(&sch_ctx->watchdog_timer,
 					SCHEDULER_WATCHDOG_TIMEOUT);
 			status = sch_ctx->queue_ctx.
 					scheduler_msg_process_fn[i](msg);
 			qdf_timer_stop(&sch_ctx->watchdog_timer);
+			sched_history_stop();
 
 			if (QDF_IS_STATUS_ERROR(status))
 				sched_err("Failed processing Qid[%d] message",
