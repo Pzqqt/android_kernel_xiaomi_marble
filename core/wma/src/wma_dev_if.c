@@ -636,58 +636,61 @@ out:
 }
 
 /**
- * wma_peer_remove_for_vdev_callback() - remove peer for vdev when SSR
- * @handle: wma handle
- * @bssid: mac address
- * @vdev_id: vdev id
- * @peer: peer ptr
- *
- * Wapper wma_remove_peer for callback, this function will remove peer
- * without waiting for peer unmap event.
- * Return: none
- */
-static void wma_peer_remove_for_vdev_callback(void *handle, uint8_t *bssid,
-		uint8_t vdev_id, void *peer)
-{
-	wma_remove_peer(handle, bssid, vdev_id, peer, true);
-}
-
-/**
- * wma_force_vdev_cleanup() - Cleanup vdev resource when SSR
+ * wma_force_objmgr_vdev_peer_cleanup() - Cleanup ObjMgr Vdev peers during SSR
  * @wma_handle: WMA handle
  * @vdev_id: vdev ID
  *
  * Return: none
  */
-static void wma_force_vdev_cleanup(tp_wma_handle wma_handle, uint8_t vdev_id)
+static void wma_force_objmgr_vdev_peer_cleanup(tp_wma_handle wma,
+					       uint8_t vdev_id)
 {
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
-	struct cdp_pdev *pdev;
-	struct cdp_vdev *vdev;
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_peer *peer = NULL;
+	struct wlan_objmgr_peer *peer_next = NULL;
+	qdf_list_t *peer_list;
 
-	WMA_LOGE("SSR: force cleanup vdev(%d) resouce", vdev_id);
+	WMA_LOGE("%s: SSR: force cleanup peers in vdev(%d)",
+		 __func__, vdev_id);
 	iface->vdev_active = false;
 
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
-		goto VDEV_DETACH;
-	}
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, vdev_id,
+						    WLAN_LEGACY_WMA_ID);
 
-	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
 	if (!vdev) {
-		WMA_LOGE("%s: Failed to get vdev (%d)", __func__, vdev_id);
-		goto VDEV_DETACH;
+		WMA_LOGE("Failed to get Objmgr Vdev");
+		return;
 	}
 
-	/* force remove all peer for vdev */
-	cdp_peer_remove_for_vdev_no_lock(soc, vdev,
-					 wma_peer_remove_for_vdev_callback,
-					 wma_handle);
+	peer_list = &vdev->vdev_objmgr.wlan_peer_list;
+	if (!peer_list) {
+		WMA_LOGE("%s: peer_list is NULL", __func__);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+		return;
+	}
 
-VDEV_DETACH:
-	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
+	/*
+	 * We get refcount for each peer first, logically delete it and
+	 * then release the refcount so that the peer is physically
+	 * deleted.
+	 */
+	peer = wlan_vdev_peer_list_peek_active_head(vdev, peer_list,
+						    WLAN_LEGACY_WMA_ID);
+	while (peer) {
+		WMA_LOGD("%s: Deleting Peer %pM",
+			 __func__, peer->macaddr);
+		wlan_objmgr_peer_obj_delete(peer);
+		peer_next = wlan_peer_get_next_active_peer_of_vdev(vdev,
+					peer_list, peer, WLAN_LEGACY_WMA_ID);
+		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+		peer = peer_next;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+
+	/* Force delete all the peers, set the wma interface peer_count to 0 */
+	iface->peer_count = 0;
 }
 
 static bool wma_vdev_uses_self_peer(uint32_t vdev_type, uint32_t vdev_subtype)
@@ -763,6 +766,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 			uint8_t generateRsp)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t vdev_id = pdel_sta_self_req_param->session_id;
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
 	struct wma_target_req *req_msg;
@@ -774,16 +778,15 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	}
 
 	/*
-	 * In SSR case or if FW is down, there is no need to destroy vdev in
-	 * firmware since it has already asserted.
+	 * In SSR case or if FW is down we only need to clean up the host.
+	 * There is no need to destroy vdev in firmware since it
+	 * has already asserted.
+	 * Cleanup the ObjMgr Peers for the current vdev and detach the
+	 * CDP Vdev.
 	 */
 	if (cds_is_driver_recovering() || !cds_is_target_ready()) {
-		wma_force_vdev_cleanup(wma_handle, vdev_id);
-		/* Delete objmgr self peer of STA as part of SSR. */
-		if (iface->type == WMI_VDEV_TYPE_STA) {
-			wma_remove_objmgr_peer(wma_handle, vdev_id,
-				pdel_sta_self_req_param->self_mac_addr);
-		}
+		wma_force_objmgr_vdev_peer_cleanup(wma_handle, vdev_id);
+		wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 		goto send_rsp;
 	}
 
