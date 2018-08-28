@@ -543,6 +543,9 @@ typedef enum {
      */
     WMI_PEER_CFR_CAPTURE_CMDID,
 
+    /** WMI command related to AP channel width switching */
+    WMI_PEER_CHAN_WIDTH_SWITCH_CMDID,
+
     /* beacon/management specific commands */
 
     /** transmit beacon by reference . used for transmitting beacon on low latency interface like pcie */
@@ -22184,6 +22187,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_MOTION_DET_BASE_LINE_START_STOP_CMDID);
         WMI_RETURN_STRING(WMI_SAR_LIMITS_CMDID);
         WMI_RETURN_STRING(WMI_SAR_GET_LIMITS_CMDID);
+        WMI_RETURN_STRING(WMI_PEER_CHAN_WIDTH_SWITCH_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -23412,6 +23416,20 @@ typedef struct {
     A_UINT32 vdev_id;
 } wmi_obss_spatial_reuse_set_cmd_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUCT_wmi_chan_width_peer_list */
+    wmi_mac_addr peer_macaddr;
+    A_UINT32 chan_width; /* wmi_channel_width */
+} wmi_chan_width_peer_list;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_chan_width_switch_cmd_fixed_param */
+    A_UINT32 num_peers;
+    /*
+     * Following this structure is the TLV:
+     * struct wmi_chan_width_peer_list chan_width_peer_info[num_peers];
+     */
+} wmi_peer_chan_width_switch_cmd_fixed_param;
 
 /* Default PE Duration subfield indicates the PE duration in units of 4 us */
 #define WMI_HEOPS_DEFPE_GET_D3(he_ops) WMI_GET_BITS(he_ops, 0, 3)

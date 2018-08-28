@@ -928,6 +928,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_nan_host_config_param,
     WMITLV_TAG_STRUC_wmi_spectral_bin_scaling_params,
     WMITLV_TAG_STRUC_wmi_peer_cfr_capture_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_chan_width_switch_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_chan_width_peer_list,
 } WMITLV_TAG_ID;
 
 /*
@@ -1307,6 +1309,7 @@ typedef enum {
     OP(WMI_MOTION_DET_BASE_LINE_START_STOP_CMDID) \
     OP(WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID) \
     OP(WMI_PEER_CFR_CAPTURE_CMDID) \
+    OP(WMI_PEER_CHAN_WIDTH_SWITCH_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3764,6 +3767,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID);
 #define WMITLV_TABLE_WMI_PEER_CFR_CAPTURE_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_cfr_capture_cmd_fixed_param, wmi_peer_cfr_capture_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_CFR_CAPTURE_CMDID);
+
+/* CHANNEL WIDTH SWITCH commands for peers. */
+#define WMITLV_TABLE_WMI_PEER_CHAN_WIDTH_SWITCH_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_chan_width_switch_cmd_fixed_param, wmi_peer_chan_width_switch_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_chan_width_peer_list, peer_info, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_CHAN_WIDTH_SWITCH_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/
