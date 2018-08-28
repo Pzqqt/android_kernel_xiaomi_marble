@@ -4798,7 +4798,7 @@ static QDF_STATUS send_lro_config_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_lro_info_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	QDF_STATUS status;
-
+	uint8_t pdev_id = wmi_lro_cmd->pdev_id;
 
 	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
 	if (!buf) {
@@ -4851,8 +4851,9 @@ static QDF_STATUS send_lro_config_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->toeplitz_hash_ipv6_40 =
 		 wmi_lro_cmd->toeplitz_hash_ipv6[10];
 
-	WMI_LOGD("WMI_LRO_CONFIG: lro_enable %d, tcp_flag 0x%x",
-		cmd->lro_enable, cmd->tcp_flag_u32);
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(pdev_id);
+	WMI_LOGD("WMI_LRO_CONFIG: lro_enable %d, tcp_flag 0x%x, pdev_id: %d",
+		 cmd->lro_enable, cmd->tcp_flag_u32, cmd->pdev_id);
 
 	wmi_mtrace(WMI_LRO_CONFIG_CMDID, NO_SESSION, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf,
