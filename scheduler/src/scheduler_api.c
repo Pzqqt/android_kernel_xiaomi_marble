@@ -628,7 +628,9 @@ void scheduler_mc_timer_callback(unsigned long data)
 	/* bodyptr points to user data, do not free it during msg flush */
 	msg.flush_callback = scheduler_msg_flush_noop;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_SYS, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_SCHEDULER,
+					QDF_MODULE_ID_SCHEDULER,
+					QDF_MODULE_ID_SYS, &msg);
 	if (QDF_IS_STATUS_ERROR(status))
 		sched_err("Could not enqueue timer to timer queue");
 }
