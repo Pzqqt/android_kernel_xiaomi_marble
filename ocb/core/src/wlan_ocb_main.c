@@ -427,7 +427,9 @@ QDF_STATUS ocb_vdev_start(struct ocb_pdev_obj *ocb_obj)
 	msg.bodyptr = ocb_obj;
 	msg.callback = ocb_process_start_vdev_msg;
 	msg.flush_callback = ocb_flush_start_msg;
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_OCB,
+					QDF_MODULE_ID_OCB,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status))
 		ocb_err("Failed to post vdev start message");
 

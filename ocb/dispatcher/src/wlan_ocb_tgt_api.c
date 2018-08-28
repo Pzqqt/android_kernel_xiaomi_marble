@@ -85,7 +85,9 @@ tgt_ocb_channel_config_status(struct wlan_objmgr_psoc *psoc,
 	msg.bodyptr = event;
 	msg.callback = ocb_process_evt;
 	msg.flush_callback = wlan_ocb_flush_callback;
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_OCB,
+					    QDF_MODULE_ID_OCB,
+					    QDF_MODULE_ID_TARGET_IF, &msg);
 
 	if (QDF_IS_STATUS_SUCCESS(qdf_status))
 		return QDF_STATUS_SUCCESS;
@@ -141,7 +143,9 @@ tgt_ocb_get_tsf_timer(struct wlan_objmgr_psoc *psoc,
 	msg.callback = ocb_process_evt;
 	msg.flush_callback = wlan_ocb_flush_callback;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_OCB,
+					QDF_MODULE_ID_OCB,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_SUCCESS(status))
 		return QDF_STATUS_SUCCESS;
 
@@ -195,7 +199,9 @@ tgt_ocb_dcc_ndl_update(struct wlan_objmgr_psoc *psoc,
 	msg.callback = ocb_process_evt;
 	msg.flush_callback = wlan_ocb_flush_callback;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_OCB,
+					QDF_MODULE_ID_OCB,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_SUCCESS(status))
 		return QDF_STATUS_SUCCESS;
 
@@ -269,7 +275,9 @@ tgt_ocb_dcc_stats_indicate(struct wlan_objmgr_psoc *psoc,
 	msg.callback = ocb_process_evt;
 	msg.flush_callback = wlan_ocb_flush_callback;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_OCB,
+					QDF_MODULE_ID_OCB,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_SUCCESS(status))
 		return QDF_STATUS_SUCCESS;
 
