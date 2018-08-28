@@ -107,7 +107,9 @@ QDF_STATUS umac_stop(void)
 	umac_stop_msg.bodyptr = (void *)&g_stop_evt;
 
 	/* post the message.. */
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SYS, &umac_stop_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_SYS,
+					    QDF_MODULE_ID_SYS,
+					    QDF_MODULE_ID_SYS, &umac_stop_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		qdf_status = QDF_STATUS_E_BADMSG;
 
@@ -282,8 +284,10 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 	/*
 	 * Post now the message to the appropriate module for handling
 	 */
-	if (QDF_STATUS_SUCCESS != scheduler_post_msg(targetMQ,
-					 pMsg)) {
+	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_SYS,
+							 QDF_MODULE_ID_SYS,
+							 targetMQ,
+							 pMsg)) {
 		/*
 		 * Caller doesn't allocate memory for the pMsg.
 		 * It allocate memory for bodyptr free the mem and return
