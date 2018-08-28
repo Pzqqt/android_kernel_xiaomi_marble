@@ -1201,7 +1201,7 @@ static int apr_probe(struct platform_device *pdev)
 
 	ret = snd_event_client_register(&pdev->dev, &apr_ssr_ops, NULL);
 	if (ret) {
-		pr_err("%s: Registration with Audio SSR FW failed ret = %d\n",
+		pr_err("%s: Registration with SND event fwk failed ret = %d\n",
 			__func__, ret);
 		ret = 0;
 	}
