@@ -128,6 +128,16 @@ struct dp_rx_desc {
  */
 #define DP_SKIP_VLAN		8
 
+/**
+ * struct dp_rx_cached_buf - rx cached buffer
+ * @list: linked list node
+ * @buf: skb buffer
+ */
+struct dp_rx_cached_buf {
+	qdf_list_node_t node;
+	qdf_nbuf_t buf;
+};
+
 /*
  *dp_rx_xor_block() - xor block of data
  *@b: destination data block
@@ -1225,4 +1235,18 @@ void dp_rx_process_rxdma_err(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			     uint8_t *rx_tlv_hdr, struct dp_peer *peer,
 			     uint8_t err_code);
 
+#ifdef PEER_CACHE_RX_PKTS
+/**
+ * dp_rx_flush_rx_cached() - flush cached rx frames
+ * @peer: peer
+ * @drop: set flag to drop frames
+ *
+ * Return: None
+ */
+void dp_rx_flush_rx_cached(struct dp_peer *peer, bool drop);
+#else
+static inline void dp_rx_flush_rx_cached(struct dp_peer *peer, bool drop)
+{
+}
+#endif
 #endif /* _DP_RX_H */

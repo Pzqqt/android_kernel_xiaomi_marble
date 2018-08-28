@@ -153,6 +153,10 @@ bool is_dp_verbose_debug_enabled;
 				      DP_PPDU_TXLITE_STATS_BITMASK_CFG)
 
 #define RNG_ERR		"SRNG setup failed for"
+
+/* Threshold for peer's cached buf queue beyond which frames are dropped */
+#define DP_RX_CACHED_BUFQ_THRESH 64
+
 /**
  * default_dscp_tid_map - Default DSCP-TID mapping
  *
@@ -4862,6 +4866,19 @@ static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
 }
 #endif
 
+#ifdef PEER_CACHE_RX_PKTS
+static inline void dp_peer_rx_bufq_resources_init(struct dp_peer *peer)
+{
+	qdf_spinlock_create(&peer->bufq_info.bufq_lock);
+	peer->bufq_info.thresh = DP_RX_CACHED_BUFQ_THRESH;
+	qdf_list_create(&peer->bufq_info.cached_bufq, DP_RX_CACHED_BUFQ_THRESH);
+}
+#else
+static inline void dp_peer_rx_bufq_resources_init(struct dp_peer *peer)
+{
+}
+#endif
+
 /*
  * dp_peer_create_wifi3() - attach txrx peer
  * @txrx_vdev: Datapath VDEV handle
@@ -4967,6 +4984,8 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 	qdf_spinlock_create(&peer->peer_info_lock);
 
+	dp_peer_rx_bufq_resources_init(peer);
+
 	qdf_mem_copy(
 		&peer->mac_addr.raw[0], peer_mac_addr, QDF_MAC_ADDR_SIZE);
 
@@ -5012,6 +5031,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	for (i = 0; i < DP_MAX_TIDS; i++)
 		qdf_spinlock_create(&peer->rx_tid[i].tid_lock);
 
+	peer->valid = 1;
 	dp_local_peer_id_alloc(pdev, peer);
 	DP_STATS_INIT(peer);
 
@@ -5671,6 +5691,18 @@ void dp_peer_unref_delete(void *peer_handle)
 	}
 }
 
+#ifdef PEER_CACHE_RX_PKTS
+static inline void dp_peer_rx_bufq_resources_deinit(struct dp_peer *peer)
+{
+	qdf_list_destroy(&peer->bufq_info.cached_bufq);
+	qdf_spinlock_destroy(&peer->bufq_info.bufq_lock);
+}
+#else
+static inline void dp_peer_rx_bufq_resources_deinit(struct dp_peer *peer)
+{
+}
+#endif
+
 /*
  * dp_peer_detach_wifi3() – Detach txrx peer
  * @peer_handle: Datapath peer handle
@@ -5696,11 +5728,15 @@ static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap)
 	      !peer->bss_peer))
 		peer->ctrl_peer = NULL;
 
+	peer->valid = 0;
+
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 		FL("peer %pK (%pM)"),  peer, peer->mac_addr.raw);
 
 	dp_local_peer_id_free(peer->vdev->pdev, peer);
 	qdf_spinlock_destroy(&peer->peer_info_lock);
+
+	dp_peer_rx_bufq_resources_deinit(peer);
 
 	/*
 	 * Remove the reference added during peer_attach.

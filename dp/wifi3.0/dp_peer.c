@@ -24,6 +24,7 @@
 #include "dp_internal.h"
 #include "dp_peer.h"
 #include "dp_rx_defrag.h"
+#include "dp_rx.h"
 #include <hal_api.h>
 #include <hal_reo.h>
 #ifdef CONFIG_MCL
@@ -2760,6 +2761,8 @@ QDF_STATUS dp_register_peer(struct cdp_pdev *pdev_handle,
 	peer->state = OL_TXRX_PEER_STATE_CONN;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
 
+	dp_rx_flush_rx_cached(peer, false);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2785,6 +2788,8 @@ QDF_STATUS dp_clear_peer(struct cdp_pdev *pdev_handle, uint8_t local_id)
 	qdf_spin_lock_bh(&peer->peer_info_lock);
 	peer->state = OL_TXRX_PEER_STATE_DISC;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
+
+	dp_rx_flush_rx_cached(peer, true);
 
 	return QDF_STATUS_SUCCESS;
 }

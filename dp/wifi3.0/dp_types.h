@@ -1641,6 +1641,22 @@ typedef struct {
 } dp_ecm_policy;
 #endif
 
+/*
+ * struct dp_peer_cached_bufq - cached_bufq to enqueue rx packets
+ * @cached_bufq: nbuff list to enqueue rx packets
+ * @bufq_lock: spinlock for nbuff list access
+ * @thres: maximum threshold for number of rx buff to enqueue
+ * @entries: number of entries
+ * @dropped: number of packets dropped
+ */
+struct dp_peer_cached_bufq {
+	qdf_list_t cached_bufq;
+	qdf_spinlock_t bufq_lock;
+	uint32_t thresh;
+	uint32_t entries;
+	uint32_t dropped;
+};
+
 /* Peer structure for data path state */
 struct dp_peer {
 	/* VDEV to which this peer is associated */
@@ -1692,9 +1708,10 @@ struct dp_peer {
 
 	/* NAWDS Flag and Bss Peer bit */
 	uint8_t nawds_enabled:1,
-				bss_peer:1,
-				wapi:1,
-				wds_enabled:1;
+		bss_peer:1,
+		wapi:1,
+		wds_enabled:1,
+		valid:1;
 
 	/* MCL specific peer local id */
 	uint16_t local_id;
@@ -1736,6 +1753,11 @@ struct dp_peer {
 	struct cdp_peer_rate_stats_ctx *wlanstats_ctx;
 	/* average sojourn time */
 	qdf_ewma_tx_lag avg_sojourn_msdu[CDP_DATA_TID_MAX];
+
+#ifdef PEER_CACHE_RX_PKTS
+	qdf_atomic_t flush_in_progress;
+	struct dp_peer_cached_bufq bufq_info;
+#endif
 };
 
 #ifdef CONFIG_WIN
