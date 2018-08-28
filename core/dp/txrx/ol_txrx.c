@@ -5031,7 +5031,9 @@ static void ol_txrx_post_data_stall_event(
 	msg.bodyptr = data_stall_info;
 	msg.bodyval = 0;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_SYS, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TXRX,
+					QDF_MODULE_ID_HDD,
+					QDF_MODULE_ID_SYS, &msg);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,

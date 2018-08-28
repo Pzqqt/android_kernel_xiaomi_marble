@@ -2995,8 +2995,10 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 	cds_msg.bodyptr = (void *) mic_err_ind;
 
 	if (QDF_STATUS_SUCCESS !=
-		scheduler_post_msg(QDF_MODULE_ID_SME,
-				     &cds_msg)) {
+		scheduler_post_message(QDF_MODULE_ID_TXRX,
+				       QDF_MODULE_ID_SME,
+				       QDF_MODULE_ID_SME,
+				       &cds_msg)) {
 		WMA_LOGE("%s: could not post mic failure indication to SME",
 			 __func__);
 		qdf_mem_free((void *)mic_err_ind);
