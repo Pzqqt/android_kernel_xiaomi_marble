@@ -2709,7 +2709,9 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 	mmhMsg.bodyptr = addStaRsp;
 	mmhMsg.callback = tgt_tdls_add_peer_rsp;
 
-	return scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &mmhMsg);
+	return scheduler_post_message(QDF_MODULE_ID_PE,
+				      QDF_MODULE_ID_TDLS,
+				      QDF_MODULE_ID_TARGET_IF, &mmhMsg);
 }
 
 /*
@@ -2801,7 +2803,9 @@ lim_send_tdls_comp_mgmt_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 	sme_rsp->psoc = mac_ctx->psoc;
 	msg.bodyptr = sme_rsp;
 	msg.callback = tgt_tdls_send_mgmt_rsp;
-	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	scheduler_post_message(QDF_MODULE_ID_PE,
+			       QDF_MODULE_ID_TDLS,
+			       QDF_MODULE_ID_TARGET_IF, &msg);
 
 }
 
@@ -2970,7 +2974,9 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 	pDelSta->psoc = pMac->psoc;
 	mmhMsg.bodyptr = pDelSta;
 	mmhMsg.callback = tgt_tdls_del_peer_rsp;
-	return scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &mmhMsg);
+	return scheduler_post_message(QDF_MODULE_ID_PE,
+				      QDF_MODULE_ID_TDLS,
+				      QDF_MODULE_ID_TARGET_IF, &mmhMsg);
 }
 
 /*

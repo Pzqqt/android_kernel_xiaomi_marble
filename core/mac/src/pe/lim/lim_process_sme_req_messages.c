@@ -162,7 +162,9 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 	message.type    = SIR_HAL_PDEV_SET_HW_MODE;
 
 	pe_debug("Posting SIR_HAL_SOC_SET_HW_MOD to WMA");
-	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+	status = scheduler_post_message(QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		pe_err("scheduler_post_msg failed!(err=%d)",
 			status);
@@ -233,7 +235,9 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 
 	pe_debug("Post SIR_HAL_PDEV_DUAL_MAC_CFG_REQ to WMA: %x %x",
 		req_msg->scan_config, req_msg->fw_mode_config);
-	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+	status = scheduler_post_message(QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		pe_err("scheduler_post_msg failed!(err=%d)",
 				status);
@@ -297,7 +301,9 @@ static QDF_STATUS lim_process_set_antenna_mode_req(tpAniSirGlobal mac,
 	pe_debug("Post SIR_HAL_SOC_ANTENNA_MODE_REQ to WMA: %d %d",
 		req_msg->num_rx_chains,
 		req_msg->num_tx_chains);
-	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+	status = scheduler_post_message(QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		pe_err("scheduler_post_msg failed!(err=%d)",
 				status);
@@ -4032,7 +4038,10 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
 			msg.reserved = 0;
 			msg.bodyptr = pHtOpMode;
 			if (!QDF_IS_STATUS_SUCCESS
-				    (scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
+				    (scheduler_post_message(QDF_MODULE_ID_PE,
+							    QDF_MODULE_ID_WMA,
+							    QDF_MODULE_ID_WMA,
+							    &msg))) {
 				pe_err("Not able to post WMA_UPDATE_OP_MODE message to WMA");
 				qdf_mem_free(pHtOpMode);
 				return;
@@ -6031,7 +6040,10 @@ void lim_send_obss_color_collision_cfg(tpAniSirGlobal mac_ctx,
 	msg.bodyptr = cfg_param;
 	msg.reserved = 0;
 
-	if (QDF_IS_STATUS_ERROR(scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
+	if (QDF_IS_STATUS_ERROR(scheduler_post_message(QDF_MODULE_ID_PE,
+						       QDF_MODULE_ID_WMA,
+						       QDF_MODULE_ID_WMA,
+						       &msg))) {
 		pe_err("Failed to post WMA_OBSS_COLOR_COLLISION_REQ to WMA");
 		qdf_mem_free(cfg_param);
 	} else {

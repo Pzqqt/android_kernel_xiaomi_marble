@@ -1058,7 +1058,9 @@ void pe_free_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 
 QDF_STATUS lim_post_msg_api(tpAniSirGlobal mac, struct scheduler_msg *msg)
 {
-	return scheduler_post_msg(QDF_MODULE_ID_PE, msg);
+	return scheduler_post_message(QDF_MODULE_ID_PE,
+				      QDF_MODULE_ID_PE,
+				      QDF_MODULE_ID_PE, msg);
 }
 
 QDF_STATUS lim_post_msg_high_priority(tpAniSirGlobal mac,
@@ -1277,7 +1279,9 @@ static QDF_STATUS pe_handle_probe_req_frames(tpAniSirGlobal mac_ctx,
 	msg.bodyval = 0;
 	msg.callback = pe_mc_process_handler;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_SCAN, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_SCAN, &msg);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		pe_err_rl("Failed to post probe req frame to Scan Queue");

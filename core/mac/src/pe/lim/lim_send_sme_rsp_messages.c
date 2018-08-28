@@ -1169,7 +1169,9 @@ lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac,
 
 	pSirMgmtTxCompletionInd->psoc = pMac->psoc;
 	mmhMsg.callback = tgt_tdls_send_mgmt_tx_completion;
-	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &mmhMsg);
+	scheduler_post_message(QDF_MODULE_ID_PE,
+			       QDF_MODULE_ID_TDLS,
+			       QDF_MODULE_ID_TARGET_IF, &mmhMsg);
 	return;
 } /*** end lim_send_sme_tdls_delete_all_peer_ind() ***/
 
@@ -2499,7 +2501,9 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal mac_ctx, uint16_t msgType,
 		msg.type = eWNI_SME_NSS_UPDATE_RSP;
 		msg.bodyptr = bcn_tx_comp_rsp;
 		msg.bodyval = 0;
-		status = scheduler_post_msg(QDF_MODULE_ID_SME, &msg);
+		status = scheduler_post_message(QDF_MODULE_ID_PE,
+						QDF_MODULE_ID_SME,
+						QDF_MODULE_ID_SME, &msg);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			sme_err("Failed to post eWNI_SME_NSS_UPDATE_RSP");
 			qdf_mem_free(bcn_tx_comp_rsp);

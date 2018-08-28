@@ -1459,7 +1459,9 @@ QDF_STATUS lim_obss_send_detection_cfg(tpAniSirGlobal mac_ctx,
 		msg.type = WMA_OBSS_DETECTION_REQ;
 		msg.bodyptr = req_param;
 		msg.reserved = 0;
-		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
+		status = scheduler_post_message(QDF_MODULE_ID_PE,
+						QDF_MODULE_ID_WMA,
+						QDF_MODULE_ID_WMA, &msg);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			pe_err("Failed to post WMA_OBSS_DETECTION_REQ to WMA");
 			qdf_mem_free(req_param);

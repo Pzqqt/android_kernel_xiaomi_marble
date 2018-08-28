@@ -6359,7 +6359,9 @@ static QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
 	msg.bodyptr = ie_msg;
 	msg.reserved = 0;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &msg);
 	if (QDF_STATUS_SUCCESS != status) {
 		pe_err("Not able to post WMA_SET_IE_INFO to WMA");
 		qdf_mem_free(ie_msg);
@@ -6537,7 +6539,9 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	msg.reserved = 0;
 
 	if (QDF_STATUS_SUCCESS !=
-		scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
+		scheduler_post_message(QDF_MODULE_ID_PE,
+				       QDF_MODULE_ID_WMA,
+				       QDF_MODULE_ID_WMA, &msg)) {
 		pe_err("Not able to post WMA_SET_IE_INFO to WDA");
 		qdf_mem_free(vdev_ie);
 		return QDF_STATUS_E_FAILURE;
@@ -8416,7 +8420,9 @@ void lim_process_ap_ecsa_timeout(void *data)
 		msg.type = eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND;
 		msg.bodyptr = chan_switch_tx_rsp;
 
-		status = scheduler_post_msg(QDF_MODULE_ID_SME, &msg);
+		status = scheduler_post_message(QDF_MODULE_ID_PE,
+						QDF_MODULE_ID_SME,
+						QDF_MODULE_ID_SME, &msg);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			sme_err("Failed to post eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND");
 			qdf_mem_free(chan_switch_tx_rsp);
