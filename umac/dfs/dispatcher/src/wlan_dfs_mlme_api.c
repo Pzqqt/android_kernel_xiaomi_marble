@@ -62,7 +62,9 @@ static void dfs_send_radar_ind(struct wlan_objmgr_pdev *pdev,
 	sme_msg.type = eWNI_SME_DFS_RADAR_FOUND;
 	sme_msg.bodyptr = NULL;
 	sme_msg.bodyval = vdev_id;
-	scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	scheduler_post_message(QDF_MODULE_ID_DFS,
+			       QDF_MODULE_ID_SME,
+			       QDF_MODULE_ID_SME, &sme_msg);
 	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "eWNI_SME_DFS_RADAR_FOUND pdev%d posted",
 		    vdev_id);
 }
@@ -125,7 +127,9 @@ void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
 	sme_msg.type = eWNI_SME_DFS_CAC_COMPLETE;
 	sme_msg.bodyptr = NULL;
 	sme_msg.bodyval = vdev_id;
-	scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	scheduler_post_message(QDF_MODULE_ID_DFS,
+			       QDF_MODULE_ID_SME,
+			       QDF_MODULE_ID_SME, &sme_msg);
 	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "eWNI_SME_DFS_CAC_COMPLETE vdev%d posted",
 		    vdev_id);
 }
