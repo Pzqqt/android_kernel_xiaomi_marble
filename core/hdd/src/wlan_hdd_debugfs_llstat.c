@@ -436,29 +436,36 @@ static int __wlan_hdd_open_ll_stats_debugfs(struct inode *inode,
 		file->private_data = inode->i_private;
 
 	adapter = (struct hdd_adapter *)file->private_data;
-	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
+	if (!adapter || WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	ret = wlan_hdd_llstats_alloc_buf();
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	ret = wlan_hdd_ll_stats_get(adapter, DEBUGFS_LLSTATS_REQID,
 				    DEBUGFS_LLSTATS_REQMASK);
-	if (0 != ret)
-		return ret;
+	if (ret)
+		goto free_buf;
 
 	hdd_exit();
-	return 0;
-}
 
+	return 0;
+
+free_buf:
+	wlan_hdd_llstats_free_buf();
+
+	hdd_exit();
+
+	return ret;
+}
 
 /**
  * wlan_hdd_open_ll_stats_debugfs() - SSR wrapper function to save private
