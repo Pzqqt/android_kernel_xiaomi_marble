@@ -1835,7 +1835,9 @@ static void wma_set_thermal_level_ind(u_int8_t level)
 	sme_msg.bodyptr = NULL;
 	sme_msg.bodyval = level;
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		WMA_LOGE(FL(
 			"Fail to post set thermal level ind msg"));
@@ -2142,7 +2144,9 @@ send_response:
 	cds_msg.bodyval = 0;
 
 	if (QDF_STATUS_SUCCESS !=
-	    scheduler_post_msg(QDF_MODULE_ID_SME,  &cds_msg)) {
+	    scheduler_post_message(QDF_MODULE_ID_WMA,
+				   QDF_MODULE_ID_SME,
+				   QDF_MODULE_ID_SME,  &cds_msg)) {
 		WMA_LOGE("%s: could not post peer info rsp msg to SME",
 			 __func__);
 		/* free the mem and return */
@@ -3153,7 +3157,9 @@ wma_indicate_err(
 		cds_msg.type = eWNI_SME_MIC_FAILURE_IND;
 		cds_msg.bodyptr = (void *) mic_err_ind;
 		if (QDF_STATUS_SUCCESS !=
-			scheduler_post_msg(QDF_MODULE_ID_SME,
+			scheduler_post_message(QDF_MODULE_ID_WMA,
+					       QDF_MODULE_ID_SME,
+					       QDF_MODULE_ID_SME,
 				  &cds_msg)) {
 			WMA_LOGE("%s: mic failure ind post to SME failed",
 					 __func__);

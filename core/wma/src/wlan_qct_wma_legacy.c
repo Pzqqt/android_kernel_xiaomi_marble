@@ -48,7 +48,9 @@
 QDF_STATUS wma_post_ctrl_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 {
 	if (QDF_STATUS_SUCCESS !=
-	    scheduler_post_msg(QDF_MODULE_ID_WMA,  pMsg))
+	    scheduler_post_message(QDF_MODULE_ID_WMA,
+				   QDF_MODULE_ID_WMA,
+				   QDF_MODULE_ID_WMA, pMsg))
 		return QDF_STATUS_E_FAILURE;
 	else
 		return QDF_STATUS_SUCCESS;

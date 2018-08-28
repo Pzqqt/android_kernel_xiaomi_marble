@@ -1675,8 +1675,10 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			 * SME with proper reason code.
 			 */
 			if (QDF_STATUS_SUCCESS !=
-			    scheduler_post_msg(QDF_MODULE_ID_SME,
-						 &cds_msg)) {
+			    scheduler_post_message(QDF_MODULE_ID_WMA,
+						   QDF_MODULE_ID_SME,
+						   QDF_MODULE_ID_SME,
+						   &cds_msg)) {
 				qdf_mem_free(scan_offload_rsp);
 				QDF_TRACE(QDF_MODULE_ID_WMA,
 					  QDF_TRACE_LEVEL_INFO,
@@ -2971,7 +2973,9 @@ static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
 	sme_msg.bodyptr = ho_failure_ind;
 	sme_msg.bodyval = 0;
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_HO_FAIL_IND msg to SME");
 		qdf_mem_free(ho_failure_ind);
@@ -5091,8 +5095,10 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_INFO,
 		  FL("posting candidate ind to SME"));
 
-	if (QDF_STATUS_SUCCESS != scheduler_post_msg(QDF_MODULE_ID_SCAN,
-						 &cds_msg)) {
+	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_WMA,
+							 QDF_MODULE_ID_SME,
+							 QDF_MODULE_ID_SCAN,
+							 &cds_msg)) {
 		qdf_mem_free(candidate_ind);
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  FL("Failed to post candidate ind to SME"));

@@ -199,7 +199,9 @@ static int wma_wake_reason_auto_shutdown(void)
 	sme_msg.bodyptr = auto_sh_evt;
 	sme_msg.bodyval = 0;
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_AUTO_SHUTDOWN_IND msg to SME");
 		qdf_mem_free(auto_sh_evt);
@@ -403,7 +405,9 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 	tsf_msg.bodyval = 0;
 
 	if (QDF_STATUS_SUCCESS !=
-		scheduler_post_msg(QDF_MODULE_ID_SME, &tsf_msg)) {
+		scheduler_post_message(QDF_MODULE_ID_WMA,
+				       QDF_MODULE_ID_SME,
+				       QDF_MODULE_ID_SME, &tsf_msg)) {
 
 		WMA_LOGP("%s: Failed to post eWNI_SME_TSF_EVENT", __func__);
 		qdf_mem_free(ptsf);
@@ -1274,7 +1278,9 @@ int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
 	message.bodyptr = (void *)nan_rsp_event;
 	message.bodyval = 0;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_SME, &message);
+	status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &message);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post NaN response event to SME",
 			 __func__);
@@ -3776,7 +3782,9 @@ static void wma_send_status_of_ext_wow(tp_wma_handle wma, bool status)
 	message.bodyptr = (void *)ready_to_extwow;
 	message.bodyval = 0;
 
-	vstatus = scheduler_post_msg(QDF_MODULE_ID_SME, &message);
+	vstatus = scheduler_post_message(QDF_MODULE_ID_WMA,
+					 QDF_MODULE_ID_SME,
+					 QDF_MODULE_ID_SME, &message);
 	if (vstatus != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to post ready to suspend");
 		qdf_mem_free(ready_to_extwow);
@@ -5751,7 +5759,9 @@ int wma_wlan_bt_activity_evt_handler(void *handle, uint8_t *event, uint32_t len)
 	sme_msg.bodyptr = NULL;
 	sme_msg.bodyval = fixed_param->coex_profile_evt;
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_SME, &sme_msg);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		WMA_LOGE(FL("Failed to post msg to SME"));
 		return -EINVAL;

@@ -1216,7 +1216,9 @@ int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
 	sme_msg.bodyptr = NULL;
 	sme_msg.bodyval = wmi_event->value;
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		WMA_LOGE(FL("Fail to post get temperature ind msg"));
 	return 0;

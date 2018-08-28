@@ -352,7 +352,10 @@ void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 		WMA_LOGD("%s: post msg to SME, bss_idx %d, rssi %d",  __func__,
 			 lost_link_info->vdev_id, lost_link_info->rssi);
 
-		qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+		qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+						    QDF_MODULE_ID_SME,
+						    QDF_MODULE_ID_SME,
+						    &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGE("%s: fail to post msg to SME", __func__);
 			qdf_mem_free(lost_link_info);
@@ -470,7 +473,9 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	cds_msg.bodyptr = (void *)stats_ext_event;
 	cds_msg.bodyval = 0;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_SME, &cds_msg);
+	status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &cds_msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post stats ext event to SME", __func__);
 		qdf_mem_free(stats_ext_event);
@@ -1210,7 +1215,9 @@ static int wma_ll_stats_evt_handler(void *handle, u_int8_t *event,
 	sme_msg.type = eWMI_SME_LL_STATS_IND;
 	sme_msg.bodyptr = (void *)link_stats_results;
 	sme_msg.bodyval = 0;
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGP(FL("Failed to post peer stat change msg!"));
 		qdf_mem_free(link_stats_results);
@@ -1867,7 +1874,9 @@ static int wma_peer_ps_evt_handler(void *handle, u_int8_t *event,
 	sme_msg.bodyptr = link_stats_results;
 	sme_msg.bodyval = 0;
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("%s: Fail to post ps change ind msg", __func__);
 		qdf_mem_free(link_stats_results);
@@ -2570,7 +2579,10 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 		sme_msg.bodyptr = p_snr_req;
 		sme_msg.bodyval = 0;
 
-		qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+		qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+						    QDF_MODULE_ID_SME,
+						    QDF_MODULE_ID_SME,
+						    &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGE("%s: Fail to post snr ind msg", __func__);
 			qdf_mem_free(p_snr_req);
@@ -2677,7 +2689,9 @@ void wma_post_link_status(tAniGetLinkStatus *pGetLinkStatus,
 	sme_msg.bodyptr = pGetLinkStatus;
 	sme_msg.bodyval = 0;
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("%s: Fail to post link status ind msg", __func__);
 		qdf_mem_free(pGetLinkStatus);
@@ -2883,7 +2897,9 @@ int wma_rso_cmd_status_event_handler(wmi_roam_event_fixed_param *wmi_event)
 	sme_msg.bodyval = 0;
 	WMA_LOGD("%s: Post RSO cmd status to SME",  __func__);
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("%s: fail to post RSO cmd status to SME", __func__);
 		qdf_mem_free(rso_status);
@@ -2988,7 +3004,9 @@ static void wma_handle_sta_peer_info(uint32_t num_peer_stats,
 	sme_msg.bodyptr = peer_info;
 	sme_msg.bodyval = 0;
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("%s: Fail to post get rssi msg", __func__);
 		qdf_mem_free(peer_info);
@@ -3288,7 +3306,9 @@ static QDF_STATUS wma_peer_info_ext_rsp(tp_wma_handle wma, u_int8_t *buf)
 	sme_msg.bodyptr = resp;
 	sme_msg.bodyval = 0;
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_SME,
+					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("%s: Fail to post get peer info msg", __func__);
 		qdf_mem_free(resp);

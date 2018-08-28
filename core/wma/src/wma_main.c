@@ -578,7 +578,9 @@ int wma_cli_set2_command(int vdev_id, int param_id, int sval1,
 	msg.bodyptr = iwcmd;
 
 	if (QDF_STATUS_SUCCESS !=
-	    scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
+	    scheduler_post_message(QDF_MODULE_ID_WMA,
+				   QDF_MODULE_ID_WMA,
+				   QDF_MODULE_ID_WMA, &msg)) {
 		WMA_LOGE("%s: Failed to post WMA_CLI_SET_CMD msg",
 			  __func__);
 		qdf_mem_free(iwcmd);
@@ -1740,7 +1742,9 @@ static int wma_process_fw_event_mc_thread_ctx(void *ctx, void *ev)
 	cds_msg.flush_callback = wma_discard_fw_event;
 
 	if (QDF_STATUS_SUCCESS !=
-		scheduler_post_msg(QDF_MODULE_ID_WMA, &cds_msg)) {
+		scheduler_post_message(QDF_MODULE_ID_WMA,
+				       QDF_MODULE_ID_WMA,
+				       QDF_MODULE_ID_WMA, &cds_msg)) {
 		WMA_LOGE("%s: Failed to post WMA_PROCESS_FW_EVENT msg",
 			 __func__);
 		qdf_nbuf_free(ev);
@@ -1961,7 +1965,9 @@ static void wma_shutdown_notifier_cb(void *priv)
 
 	msg.bodyptr = priv;
 	msg.callback = wma_cleanup_vdev_resp_and_hold_req;
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE(FL("Failed to post SYS_MSG_ID_CLEAN_VDEV_RSP_QUEUE"));
 }
@@ -3722,7 +3728,9 @@ QDF_STATUS wma_pre_start(void)
 	wma_msg.bodyptr = NULL;
 	wma_msg.bodyval = 0;
 
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &wma_msg);
+	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_WMA,
+					    QDF_MODULE_ID_WMA, &wma_msg);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		WMA_LOGE("%s: Failed to post WNI_CFG_DNLD_REQ msg", __func__);
 		QDF_ASSERT(0);
@@ -8893,7 +8901,9 @@ int wma_lro_init(struct cdp_lro_hash_config *lro_config)
 	msg.bodyptr = iwcmd;
 
 	if (QDF_STATUS_SUCCESS !=
-		scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
+		scheduler_post_message(QDF_MODULE_ID_WMA,
+				       QDF_MODULE_ID_WMA,
+				       QDF_MODULE_ID_WMA, &msg)) {
 		WMA_LOGE("Failed to post WMA_LRO_CONFIG_CMD msg!");
 		qdf_mem_free(iwcmd);
 		return -EAGAIN;

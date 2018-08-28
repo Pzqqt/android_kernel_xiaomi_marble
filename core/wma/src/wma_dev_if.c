@@ -421,7 +421,9 @@ static inline void wma_send_del_sta_self_resp(struct del_sta_self_params *param)
 	sme_msg.type = eWNI_SME_DEL_STA_SELF_RSP;
 	sme_msg.bodyptr = param;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+	status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		WMA_LOGE("Failed to post eWNI_SME_DEL_STA_SELF_RSP");
 		qdf_mem_free(param);
@@ -2596,7 +2598,9 @@ end:
 		sme_msg.bodyptr = self_sta_req;
 		sme_msg.bodyval = 0;
 
-		status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
+		status = scheduler_post_message(QDF_MODULE_ID_WMA,
+						QDF_MODULE_ID_SME,
+						QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");
 			qdf_mem_free(self_sta_req);
