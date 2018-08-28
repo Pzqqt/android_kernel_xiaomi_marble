@@ -303,7 +303,9 @@ static QDF_STATUS wlan_objmgr_peer_obj_destroy(struct wlan_objmgr_peer *peer)
 	for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
 		handler = g_umac_glb_obj->peer_destroy_handler[id];
 		arg = g_umac_glb_obj->peer_destroy_handler_arg[id];
-		if (handler != NULL)
+		if (handler &&
+		    (peer->obj_status[id] == QDF_STATUS_SUCCESS ||
+		     peer->obj_status[id] == QDF_STATUS_COMP_ASYNC))
 			peer->obj_status[id] = handler(peer, arg);
 		else
 			peer->obj_status[id] = QDF_STATUS_COMP_DISABLED;

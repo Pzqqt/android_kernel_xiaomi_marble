@@ -207,7 +207,9 @@ static QDF_STATUS wlan_objmgr_pdev_obj_destroy(struct wlan_objmgr_pdev *pdev)
 	for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
 		handler = g_umac_glb_obj->pdev_destroy_handler[id];
 		arg = g_umac_glb_obj->pdev_destroy_handler_arg[id];
-		if (handler != NULL)
+		if (handler &&
+		    (pdev->obj_status[id] == QDF_STATUS_SUCCESS ||
+		     pdev->obj_status[id] == QDF_STATUS_COMP_ASYNC))
 			pdev->obj_status[id] = handler(pdev, arg);
 		else
 			pdev->obj_status[id] = QDF_STATUS_COMP_DISABLED;
