@@ -305,7 +305,9 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 	msg.type = tdls_soc_obj->tdls_send_mgmt_req;
 	msg.bodyptr = tdls_mgmt_req;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_PE, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_PE, &msg);
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_TDLS_SB_ID);
 release_mgmt_ref:

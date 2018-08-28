@@ -205,7 +205,9 @@ tgt_tdls_event_handler(struct wlan_objmgr_psoc *psoc,
 	msg.bodyptr = notify;
 	msg.callback = tdls_process_evt;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("can't post msg to handle tdls event");
 		wlan_objmgr_vdev_release_ref(notify->vdev, WLAN_TDLS_SB_ID);
@@ -283,7 +285,9 @@ QDF_STATUS tgt_tdls_mgmt_frame_process_rx_cb(
 	msg.type = TDLS_EVENT_RX_MGMT;
 	msg.bodyptr = rx_mgmt_event;
 	msg.callback = tdls_process_rx_frame;
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 
 	qdf_nbuf_free(buf);
 
