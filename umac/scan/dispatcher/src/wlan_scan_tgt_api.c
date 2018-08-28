@@ -243,7 +243,9 @@ tgt_scan_event_handler(struct wlan_objmgr_psoc *psoc,
 	msg.callback = scm_scan_event_handler;
 	msg.flush_callback = scm_scan_event_flush_callback;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_SCAN, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_SCAN,
+					QDF_MODULE_ID_SCAN,
+					QDF_MODULE_ID_SCAN, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wlan_objmgr_vdev_release_ref(event_info->vdev, WLAN_SCAN_ID);
 	}
@@ -311,7 +313,9 @@ QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,
 	msg.callback = scm_handle_bcn_probe;
 	msg.flush_callback = scm_bcn_probe_flush_callback;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_SCAN, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_SCAN,
+					QDF_MODULE_ID_SCAN,
+					QDF_MODULE_ID_SCAN, &msg);
 
 	if (QDF_IS_STATUS_SUCCESS(status))
 		return status;
