@@ -89,7 +89,7 @@ target_if_peer_rx_reorder_queue_remove(struct cdp_ctrl_objmgr_pdev *pdev,
  * return: QDF_STATUS_SUCCESS for success or error code
  */
 QDF_STATUS
-target_if_lro_hash_config(struct wlan_objmgr_psoc *psoc_handle,
+target_if_lro_hash_config(struct cdp_ctrl_objmgr_pdev *pdev,
 			  struct cdp_lro_hash_config *lro_hash_cfg);
 
 #endif

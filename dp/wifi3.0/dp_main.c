@@ -2522,7 +2522,7 @@ fail1:
 
 static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force);
 
-static void dp_lro_hash_setup(struct dp_soc *soc)
+static void dp_lro_hash_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 	struct cdp_lro_hash_config lro_hash;
 
@@ -2572,7 +2572,7 @@ static void dp_lro_hash_setup(struct dp_soc *soc)
 
 	if (soc->cdp_soc.ol_ops->lro_hash_config)
 		(void)soc->cdp_soc.ol_ops->lro_hash_config
-			(soc->ctrl_psoc, &lro_hash);
+			(pdev->ctrl_pdev, &lro_hash);
 }
 
 /*
@@ -3698,7 +3698,8 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 			qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 	}
 
-	dp_lro_hash_setup(soc);
+	if (pdev->vdev_count == 1)
+		dp_lro_hash_setup(soc, pdev);
 
 	/* LRO */
 	if (wlan_cfg_is_lro_enabled(soc->wlan_cfg_ctx) &&

@@ -1723,6 +1723,7 @@ struct thermal_cmd_params {
  * 5-tuple toeplitz hash for ipv4 packets
  * @toeplitz_hash_ipv6: contains seed needed to compute the flow id
  * 5-tuple toeplitz hash for ipv6 packets
+ * @pdev_id: radio on which lro hash is configured
  */
 struct wmi_lro_config_cmd_t {
 	uint32_t lro_enable;
@@ -1730,6 +1731,7 @@ struct wmi_lro_config_cmd_t {
 		tcp_flag_mask:9;
 	uint32_t toeplitz_hash_ipv4[WMI_LRO_IPV4_SEED_ARR_SZ];
 	uint32_t toeplitz_hash_ipv6[WMI_LRO_IPV6_SEED_ARR_SZ];
+	uint32_t pdev_id;
 };
 
 /**

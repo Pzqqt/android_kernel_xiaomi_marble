@@ -110,22 +110,25 @@ target_if_peer_rx_reorder_queue_remove(struct cdp_ctrl_objmgr_pdev *pdev,
 }
 
 QDF_STATUS
-target_if_lro_hash_config(struct wlan_objmgr_psoc *psoc_handle,
+target_if_lro_hash_config(struct cdp_ctrl_objmgr_pdev *pdev,
 			  struct cdp_lro_hash_config *lro_hash_cfg)
 {
 	struct wmi_lro_config_cmd_t wmi_lro_cmd = {0};
-	struct common_wmi_handle *wmi_handle;
+	struct common_wmi_handle *pdev_wmi_handle;
 
-	wmi_handle = lmac_get_wmi_hdl(psoc_handle);
-	if (!lro_hash_cfg || !wmi_handle) {
+	pdev_wmi_handle =
+		lmac_get_pdev_wmi_handle((struct wlan_objmgr_pdev *)pdev);
+	if (!lro_hash_cfg || !pdev_wmi_handle) {
 		target_if_err("wmi_handle: 0x%pK, lro_hash_cfg: 0x%pK",
-			      wmi_handle, lro_hash_cfg);
+			      pdev_wmi_handle, lro_hash_cfg);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	wmi_lro_cmd.lro_enable = lro_hash_cfg->lro_enable;
 	wmi_lro_cmd.tcp_flag = lro_hash_cfg->tcp_flag;
 	wmi_lro_cmd.tcp_flag_mask = lro_hash_cfg->tcp_flag_mask;
+	wmi_lro_cmd.pdev_id =
+		lmac_get_pdev_idx((struct wlan_objmgr_pdev *)pdev);
 
 	qdf_mem_copy(wmi_lro_cmd.toeplitz_hash_ipv4,
 		     lro_hash_cfg->toeplitz_hash_ipv4,
@@ -135,6 +138,6 @@ target_if_lro_hash_config(struct wlan_objmgr_psoc *psoc_handle,
 		     lro_hash_cfg->toeplitz_hash_ipv6,
 		     LRO_IPV6_SEED_ARR_SZ * sizeof(uint32_t));
 
-	return wmi_unified_lro_config_cmd(wmi_handle,
+	return wmi_unified_lro_config_cmd(pdev_wmi_handle,
 					  &wmi_lro_cmd);
 }

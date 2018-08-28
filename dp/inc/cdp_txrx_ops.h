@@ -827,7 +827,7 @@ struct ol_if_ops {
 	void (*peer_del_wds_cp_ctx)(void *cp_ctx);
 #endif
 	QDF_STATUS
-	(*lro_hash_config)(struct wlan_objmgr_psoc *ctrl_psoc,
+	(*lro_hash_config)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 			   struct cdp_lro_hash_config *rx_offld_hash);
 	void (*update_dp_stats)(void *soc, void *stats, uint16_t id,
 			uint8_t type);
