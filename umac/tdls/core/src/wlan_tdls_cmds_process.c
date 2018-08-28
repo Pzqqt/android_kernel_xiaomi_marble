@@ -167,7 +167,9 @@ static QDF_STATUS tdls_pe_add_peer(struct tdls_add_peer_request *req)
 		   QDF_MAC_ADDR_ARRAY(addstareq->peermac.bytes));
 	msg.type = soc_obj->tdls_add_sta_req;
 	msg.bodyptr = addstareq;
-	status = scheduler_post_msg(QDF_MODULE_ID_PE, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("fail to post pe msg to add peer");
 		goto error;
@@ -232,7 +234,9 @@ QDF_STATUS tdls_pe_del_peer(struct tdls_del_peer_request *req)
 		   QDF_MAC_ADDR_ARRAY(delstareq->peermac.bytes));
 	msg.type = soc_obj->tdls_del_sta_req;
 	msg.bodyptr = delstareq;
-	status = scheduler_post_msg(QDF_MODULE_ID_PE, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("fail to post pe msg to del peer");
 		goto error;
@@ -318,7 +322,9 @@ static QDF_STATUS tdls_pe_update_peer(struct tdls_update_peer_request *req)
 
 	msg.type = soc_obj->tdls_add_sta_req;
 	msg.bodyptr = addstareq;
-	status = scheduler_post_msg(QDF_MODULE_ID_PE, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("fail to post pe msg to update peer");
 		goto error;
@@ -1561,7 +1567,9 @@ tdls_wma_update_peer_state(struct tdls_soc_priv_obj *soc_obj,
 	msg.reserved = 0;
 	msg.bodyptr = peer_state;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("scheduler_post_msg failed");
 		status = QDF_STATUS_E_FAILURE;
