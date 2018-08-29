@@ -136,8 +136,7 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_MAC_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("PSOC get ref failure");
-		mac_free_context_buffer();
-		return QDF_STATUS_E_FAILURE;
+		goto free_mac_context;
 	}
 
 	p_mac->psoc = psoc;
@@ -145,7 +144,7 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	if (!mlme_obj) {
 		pe_err("Failed to get MLME Obj");
 		status = QDF_STATUS_E_FAILURE;
-		goto fail;
+		goto release_psoc_ref;
 	}
 	p_mac->mlme_cfg = &mlme_obj->cfg;
 
@@ -161,7 +160,7 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 		/* Call routine to initialize CFG data structures */
 		if (QDF_STATUS_SUCCESS != cfg_init(p_mac)) {
 			status = QDF_STATUS_E_FAILURE;
-			goto fail;
+			goto release_psoc_ref;
 		}
 
 		sys_init_globals(p_mac);
@@ -173,16 +172,18 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	p_mac->is_usr_cfg_amsdu_enabled = true;
 
 	status =  pe_open(p_mac, cds_cfg);
-	if (QDF_STATUS_SUCCESS != status) {
-		pe_err("pe_open() failure");
-		cfg_de_init(p_mac);
-		goto fail;
-	}
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return status;
 
-	return status;
-fail:
+	pe_err("pe_open() failure");
+	cfg_de_init(p_mac);
+
+release_psoc_ref:
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_LEGACY_MAC_ID);
+
+free_mac_context:
 	mac_free_context_buffer();
+
 	return status;
 }
 
