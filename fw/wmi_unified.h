@@ -2350,16 +2350,6 @@ typedef struct {
 
     /* 2nd DWORD of HE MAC Capabilities */
     A_UINT32 he_cap_info_ext;
-
-    /** @brief ul_resp_config - Configures the 11ax uplink ofdma feature on STA.
-     *         I.e. sending uplink response to a trigger frame sent by AP.
-     *  @details
-     *        0 - fw default behavior, based on chipset
-     *        1 - UL_RESP is disabled.
-     *        2 - UL_RESP is enabled.
-     *        other - reserved.
-     */
-    A_UINT32 ul_resp_config;
 } wmi_service_ready_ext_event_fixed_param;
 
 typedef enum {
@@ -2945,6 +2935,16 @@ typedef struct {
      * where 2^n is the maximum number of BSSIDs
      */
     A_UINT32 max_bssid_indicator;
+
+    /** @brief ul_resp_config - Configures the 11ax uplink ofdma feature on STA.
+     *         I.e. sending uplink response to a trigger frame sent by AP.
+     *  @details
+     *        0 - fw default behavior, based on chipset
+     *        1 - UL_RESP is disabled.
+     *        2 - UL_RESP is enabled.
+     *        other - reserved.
+     */
+    A_UINT32 ul_resp_config;
 } wmi_resource_config;
 
 #define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
