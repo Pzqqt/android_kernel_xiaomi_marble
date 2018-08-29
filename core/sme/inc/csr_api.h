@@ -666,6 +666,8 @@ typedef enum {
  */
 #define CSR_CB_CHANNEL_GAP 4
 #define CSR_CB_CENTER_CHANNEL_OFFSET    2
+#define CSR_SEC_CHANNEL_OFFSET    4
+
 
 /* WEP keysize (in bits) */
 typedef enum {
