@@ -786,8 +786,7 @@ dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 	qdf_nbuf_set_rx_chfrag_end(nbuf, 1);
 
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("peer is NULL"));
+		QDF_TRACE_ERROR_RL(QDF_MODULE_ID_DP, "peer is NULL");
 		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
 				qdf_nbuf_len(nbuf));
 		/* Trigger invalid peer handler wrapper */
