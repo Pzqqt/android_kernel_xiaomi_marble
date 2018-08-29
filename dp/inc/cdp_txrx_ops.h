@@ -337,7 +337,6 @@ struct cdp_cmn_ops {
 					struct cdp_ctrl_objmgr_pdev *ctrl_pdev);
 
 	ol_txrx_tx_fp tx_send;
-
 	/**
 	 * txrx_get_os_rx_handles_from_vdev() - Return function, osif vdev
 	 *					to deliver pkt to stack.
@@ -349,6 +348,9 @@ struct cdp_cmn_ops {
 					(struct cdp_vdev *vdev,
 					 ol_txrx_rx_fp *stack_fn,
 					 ol_osif_vdev_handle *osif_vdev);
+	int (*txrx_classify_update)
+		(struct cdp_vdev *vdev, qdf_nbuf_t skb,
+		 enum txrx_direction, struct ol_txrx_nbuf_classify *nbuf_class);
 };
 
 struct cdp_ctrl_ops {

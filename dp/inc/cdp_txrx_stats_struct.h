@@ -62,6 +62,31 @@
 
 #define CDP_MAX_RX_RINGS 4
 
+/* TID level VoW stats macros
+ * to add and get stats
+ */
+#define PFLOW_TXRX_TIDQ_STATS_ADD(_peer, _tid, _var, _val) \
+	(((_peer)->tidq_stats[_tid]).stats[_var]) += _val
+#define PFLOW_TXRX_TIDQ_STATS_GET(_peer, _tid, _var, _val) \
+	((_peer)->tidq_stats[_tid].stats[_var])
+/*
+ * Video only stats
+ */
+#define PFLOW_CTRL_PDEV_VIDEO_STATS_SET(_pdev, _var, _val) \
+	(((_pdev)->vow.vistats[_var]).value) = _val
+#define PFLOW_CTRL_PDEV_VIDEO_STATS_GET(_pdev, _var) \
+	((_pdev)->vow.vistats[_var].value)
+#define PFLOW_CTRL_PDEV_VIDEO_STATS_ADD(_pdev, _var, _val) \
+	(((_pdev)->vow.vistats[_var]).value) += _val
+/*
+ * video delay stats
+ */
+#define PFLOW_CTRL_PDEV_DELAY_VIDEO_STATS_SET(_pdev, _var, _val) \
+	(((_pdev)->vow.delaystats[_var]).value) = _val
+#define PFLOW_CTRL_PDEV_DELAY_VIDEO_STATS_GET(_pdev, _var) \
+	((_pdev)->vow.delaystats[_var].value)
+#define PFLOW_CTRL_PDEV_DELAY_VIDEO_STATS_ADD(_pdev, _var, _val) \
+	(((_pdev)->vow.delaystats[_var]).value) += _val
 /*
  * Number of TLVs sent by FW. Needs to reflect
  * HTT_PPDU_STATS_MAX_TAG declared in FW
@@ -76,6 +101,47 @@ enum cdp_packet_type {
 	DOT11_AC = 3,
 	DOT11_AX = 4,
 	DOT11_MAX = 5,
+};
+
+/* TID level Tx/Rx stats
+ *
+ */
+enum cdp_txrx_tidq_stats {
+	/* Tx Counters */
+	TX_MSDU_TOTAL_LINUX_SUBSYSTEM,
+	TX_MSDU_TOTAL_FROM_OSIF,
+	TX_MSDU_TX_COMP_PKT_CNT,
+	/* Rx Counters */
+	RX_MSDU_TOTAL_FROM_FW,
+	RX_MSDU_MCAST_FROM_FW,
+	RX_TID_MISMATCH_FROM_FW,
+	RX_MSDU_MISC_PKTS,
+	RX_MSDU_IS_ARP,
+	RX_MSDU_IS_EAP,
+	RX_MSDU_IS_DHCP,
+	RX_AGGREGATE_10,
+	RX_AGGREGATE_20,
+	RX_AGGREGATE_30,
+	RX_AGGREGATE_40,
+	RX_AGGREGATE_50,
+	RX_AGGREGATE_60,
+	RX_AGGREGATE_MORE,
+	RX_AMSDU_1,
+	RX_AMSDU_2,
+	RX_AMSDU_3,
+	RX_AMSDU_4,
+	RX_AMSDU_MORE,
+	RX_MSDU_CHAINED_FROM_FW,
+	RX_MSDU_REORDER_FAILED_FROM_FW,
+	RX_MSDU_REORDER_FLUSHED_FROM_FW,
+	RX_MSDU_DISCARD_FROM_FW,
+	RX_MSDU_DUPLICATE_FROM_FW,
+	RX_MSDU_DELIVERED_TO_STACK,
+	TIDQ_STATS_MAX,
+};
+
+struct cdp_tidq_stats {
+	uint32_t stats[TIDQ_STATS_MAX];
 };
 
 /* struct cdp_pkt_info - packet info
@@ -1433,6 +1499,9 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_CHAN_AP_TX_UTIL = 391,
 	OL_ATH_PARAM_CHAN_OBSS_RX_UTIL = 392,
 	OL_ATH_PARAM_CHAN_NON_WIFI = 393,
+#if PEER_FLOW_CONTROL
+	OL_ATH_PARAM_VIDEO_STATS_FC = 394,
+#endif
 };
 
 /* Enumeration of PDEV Configuration parameter */

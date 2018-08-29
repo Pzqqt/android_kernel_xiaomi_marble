@@ -361,6 +361,52 @@ typedef struct cdp_soc_t *ol_txrx_soc_handle;
 typedef void (*ol_txrx_vdev_delete_cb)(void *context);
 
 /**
+ * ol_txrx_pkt_direction - Packet Direction
+ * @rx_direction: rx path packet
+ * @tx_direction: tx path packet
+ */
+enum txrx_direction {
+	rx_direction = 1,
+	tx_direction = 0,
+};
+
+/**
+ * ol_txrx_nbuf_classify - Packet classification object
+ * @peer_id: unique peer identifier from fw
+ * @tid: traffic identifier(could be overridden)
+ * @pkt_tid: traffic identifier(cannot be overridden)
+ * @pkt_tos: ip header tos value
+ * @pkt_dscp: ip header dscp value
+ * @tos: index value in map
+ * @dscp: DSCP_TID map index
+ * @is_mcast: multicast pkt check
+ * @is_eap: eapol pkt check
+ * @is_arp: arp pkt check
+ * @is_tcp: tcp pkt check
+ * @is_dhcp: dhcp pkt check
+ * @is_igmp: igmp pkt check
+ * @is_ipv4: ip version 4 pkt check
+ * @is_ipv6: ip version 6 pkt check
+ */
+struct ol_txrx_nbuf_classify {
+	uint16_t peer_id;
+	uint8_t tid;
+	uint8_t pkt_tid;
+	uint8_t pkt_tos;
+	uint8_t pkt_dscp;
+	uint8_t tos;
+	uint8_t dscp;
+	uint8_t is_mcast;
+	uint8_t is_eap;
+	uint8_t is_arp;
+	uint8_t is_tcp;
+	uint8_t is_dhcp;
+	uint8_t is_igmp;
+	uint8_t is_ipv4;
+	uint8_t is_ipv6;
+};
+
+/**
  * ol_osif_vdev_handle - paque handle for OS shim virtual device
  * object
  */
@@ -625,7 +671,6 @@ struct ol_txrx_ops {
 		ol_txrx_stats_rx_fp           stats_rx;
 		ol_txrx_rsim_rx_decap_fp rsim_rx_decap;
 	} rx;
-
 	/* proxy arp function pointer - specified by OS shim, stored by txrx */
 	ol_txrx_proxy_arp_fp      proxy_arp;
 	ol_txrx_mcast_me_fp          me_convert;
@@ -758,7 +803,6 @@ enum cdp_vdev_param_type {
 
 #define PER_RADIO_FW_STATS_REQUEST 0
 #define PER_VDEV_FW_STATS_REQUEST 1
-
 /**
  * enum data_stall_log_event_indicator - Module triggering data stall
  * @DATA_STALL_LOG_INDICATOR_UNUSED: Unused

@@ -51,7 +51,10 @@ typedef __in6_addr_t in6_addr_t;
 #define QDF_NET_ETH_LEN          QDF_NET_MAC_ADDR_MAX_LEN
 #define QDF_NET_MAX_MCAST_ADDR   64
 #define QDF_NET_IPV4_LEN         4
-
+#define QDF_TID_VI 5
+#define QDF_TID_VO 6
+#define QDF_TID_BE 0
+#define QDF_TID_BK 1
 /* Extended Traffic ID  passed to target if the TID is unknown */
 #define QDF_NBUF_TX_EXT_TID_INVALID    0x1f
 
