@@ -2534,6 +2534,22 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 		return status;
 	}
 
+	if (synch_frame_event->bcn_probe_rsp_len >
+	    param_buf->num_bcn_probe_rsp_frame ||
+	    synch_frame_event->reassoc_req_len >
+	    param_buf->num_reassoc_req_frame ||
+	    synch_frame_event->reassoc_rsp_len >
+	    param_buf->num_reassoc_rsp_frame) {
+		WMA_LOGE("fixed/actual len err: bcn:%d/%d req:%d/%d rsp:%d/%d",
+			 synch_frame_event->bcn_probe_rsp_len,
+			 param_buf->num_bcn_probe_rsp_frame,
+			 synch_frame_event->reassoc_req_len,
+			 param_buf->num_reassoc_req_frame,
+			 synch_frame_event->reassoc_rsp_len,
+			 param_buf->num_reassoc_rsp_frame);
+		return status;
+	}
+
 	vdev_id = synch_frame_event->vdev_id;
 	iface = &wma->interfaces[vdev_id];
 
