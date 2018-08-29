@@ -5784,20 +5784,24 @@ int wma_pdev_div_info_evt_handler(void *handle, u_int8_t *event_buf,
 		return -EINVAL;
 	}
 
+	if (event->num_chains_valid > CHAIN_MAX_NUM) {
+		WMA_LOGE(FL("Invalid num of chains"));
+		return -EINVAL;
+	}
+
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->macaddr, macaddr);
 	WMA_LOGD(FL("macaddr: " MAC_ADDRESS_STR), MAC_ADDR_ARRAY(macaddr));
 
 	WMA_LOGD(FL("num_chains_valid: %d"), event->num_chains_valid);
 	chain_rssi_result.num_chains_valid = event->num_chains_valid;
 
-	for (i = 0; i < CHAIN_MAX_NUM; i++)
-		WMA_LOGD(FL("chain_rssi: %d, ant_id: %d"),
-			event->chain_rssi[i], event->ant_id[i]);
-
 	qdf_mem_copy(chain_rssi_result.chain_rssi, event->chain_rssi,
 				sizeof(event->chain_rssi));
-	for (i = 0; i < event->num_chains_valid; i++)
+	for (i = 0; i < event->num_chains_valid; i++) {
+		WMA_LOGD(FL("chain_rssi: %d, ant_id: %d"),
+			 event->chain_rssi[i], event->ant_id[i]);
 		chain_rssi_result.chain_rssi[i] += WMA_TGT_NOISE_FLOOR_DBM;
+	}
 
 	qdf_mem_copy(chain_rssi_result.ant_id, event->ant_id,
 				sizeof(event->ant_id));
