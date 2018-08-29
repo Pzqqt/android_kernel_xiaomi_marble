@@ -2623,14 +2623,21 @@ static inline void
 dp_dscp_tid_map_setup(struct dp_pdev *pdev)
 {
 	uint8_t map_id;
+	struct dp_soc *soc = pdev->soc;
+
+	if (!soc)
+		return;
+
 	for (map_id = 0; map_id < DP_MAX_TID_MAPS; map_id++) {
-		qdf_mem_copy(pdev->dscp_tid_map[map_id], default_dscp_tid_map,
-				sizeof(default_dscp_tid_map));
+		qdf_mem_copy(pdev->dscp_tid_map[map_id],
+			     default_dscp_tid_map,
+			     sizeof(default_dscp_tid_map));
 	}
-	for (map_id = 0; map_id < HAL_MAX_HW_DSCP_TID_MAPS; map_id++) {
-		hal_tx_set_dscp_tid_map(pdev->soc->hal_soc,
-				pdev->dscp_tid_map[map_id],
-				map_id);
+
+	for (map_id = 0; map_id < soc->num_hw_dscp_tid_map; map_id++) {
+		hal_tx_set_dscp_tid_map(soc->hal_soc,
+					default_dscp_tid_map,
+					map_id);
 	}
 }
 
@@ -7048,11 +7055,17 @@ static void dp_set_pdev_dscp_tid_map_wifi3(struct cdp_pdev *pdev_handle,
 {
 	uint8_t dscp;
 	struct dp_pdev *pdev = (struct dp_pdev *) pdev_handle;
+	struct dp_soc *soc = pdev->soc;
+
+	if (!soc)
+		return;
+
 	dscp = (tos >> DP_IP_DSCP_SHIFT) & DP_IP_DSCP_MASK;
 	pdev->dscp_tid_map[map_id][dscp] = tid;
-	if (map_id < HAL_MAX_HW_DSCP_TID_MAPS)
-		hal_tx_update_dscp_tid(pdev->soc->hal_soc, tid,
-			map_id, dscp);
+
+	if (map_id < soc->num_hw_dscp_tid_map)
+		hal_tx_update_dscp_tid(soc->hal_soc, tid,
+				       map_id, dscp);
 	return;
 }
 
@@ -8198,6 +8211,8 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 	soc->hal_soc = hif_get_hal_handle(hif_handle);
 	soc->htt_handle = htt_soc_attach(soc, ctrl_psoc, htc_handle,
 		soc->hal_soc, qdf_osdev);
+	soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_MAPS;
+
 	if (!soc->htt_handle) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("HTT attach failed"));
@@ -8237,6 +8252,7 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, false);
 		soc->hw_nac_monitor_support = 1;
 		soc->ast_override_support = 1;
+		soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_V2_MAPS;
 		break;
 	default:
 		qdf_print("%s: Unknown tgt type %d\n", __func__, target_type);

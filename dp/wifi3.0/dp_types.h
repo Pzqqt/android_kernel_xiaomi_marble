@@ -697,6 +697,9 @@ struct dp_soc {
 	/*ast override support in HW*/
 	bool ast_override_support;
 
+	/*number of hw dscp tid map*/
+	uint8_t num_hw_dscp_tid_map;
+
 	/* Link descriptor memory banks */
 	struct {
 		void *base_vaddr_unaligned;

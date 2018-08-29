@@ -1115,7 +1115,7 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	DP_TX_TID_OVERRIDE(msdu_info, nbuf);
 
-	if (vdev->dscp_tid_map_id <= 1)
+	if (pdev->soc && vdev->dscp_tid_map_id < pdev->soc->num_hw_dscp_tid_map)
 		return;
 
 	/* for mesh packets don't do any classification */
