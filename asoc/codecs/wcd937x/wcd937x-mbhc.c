@@ -757,7 +757,7 @@ static bool wcd937x_mbhc_get_moisture_status(struct wcd_mbhc *mbhc)
 	/* If moisture_en is already enabled, then skip to plug type
 	 * detection.
 	 */
-	if ((snd_soc_update_bits(codec, WCD937X_MBHC_NEW_CTL_2) & 0x0C))
+	if ((snd_soc_read(codec, WCD937X_MBHC_NEW_CTL_2) & 0x0C))
 		goto done;
 
 	wcd937x_mbhc_moisture_detect_en(mbhc, true);
@@ -773,6 +773,8 @@ done:
 static void wcd937x_mbhc_moisture_polling_ctrl(struct wcd_mbhc *mbhc,
 						bool enable)
 {
+	struct snd_soc_codec *codec = mbhc->codec;
+
 	snd_soc_update_bits(codec,
 			WCD937X_MBHC_NEW_INT_MOISTURE_DET_POLLING_CTRL,
 			0x04, (enable << 2));
