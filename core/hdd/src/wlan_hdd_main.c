@@ -143,6 +143,7 @@
 #include <wlan_hdd_rssi_monitor.h>
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
+#include "wlan_fwol_ucfg_api.h"
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
 #endif
@@ -304,6 +305,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_CONFIG] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_MLME] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_TARGET] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_FWOL] = {QDF_TRACE_LEVEL_ALL},
 };
 
 struct notifier_block hdd_netdev_notifier;
@@ -8830,6 +8832,7 @@ static void hdd_set_trace_level_for_each(struct hdd_context *hdd_ctx)
 	hdd_qdf_trace_enable(QDF_MODULE_ID_CP_STATS,
 				hdd_ctx->config->qdf_trace_enable_cp_stats);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_MLME, 0xffff);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_FWOL, 0xffff);
 
 	hdd_set_mtrace_for_each(hdd_ctx);
 
@@ -12539,8 +12542,9 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
 static void component_init(void)
 {
 	ucfg_mlme_init();
-	pmo_init();
+	ucfg_fwol_init();
 	disa_init();
+	pmo_init();
 	ucfg_ocb_init();
 	ipa_init();
 	ucfg_action_oui_init();
@@ -12558,16 +12562,32 @@ static void component_deinit(void)
 	ucfg_ocb_deinit();
 	pmo_deinit();
 	disa_deinit();
+	ucfg_fwol_deinit();
 	ucfg_mlme_deinit();
 }
 
 QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
-	return ucfg_mlme_psoc_open(psoc);
+	QDF_STATUS status;
+
+	status = ucfg_mlme_psoc_open(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = ucfg_fwol_psoc_open(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err;
+
+	return status;
+
+err:
+	ucfg_mlme_psoc_close(psoc);
+	return status;
 }
 
 void hdd_component_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	ucfg_fwol_psoc_close(psoc);
 	ucfg_mlme_psoc_close(psoc);
 }
 

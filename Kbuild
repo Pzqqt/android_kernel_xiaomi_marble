@@ -832,6 +832,14 @@ IPA_OBJS :=	$(IPA_DIR)/dispatcher/src/wlan_ipa_ucfg_api.o \
 		$(IPA_DIR)/core/src/wlan_ipa_rm.o
 endif
 
+######## FWOL ##########
+FWOL_DIR := components/fw_offload
+FWOL_INC := -I$(WLAN_ROOT)/$(FWOL_DIR)/core/inc \
+		-I$(WLAN_ROOT)/$(FWOL_DIR)/dispatcher/inc
+
+FWOL_OBJS :=	$(FWOL_DIR)/core/src/wlan_fw_offload_main.o \
+		$(FWOL_DIR)/dispatcher/src/wlan_fwol_ucfg_api.o
+
 
 ######## MLME ##############
 MLME_DIR := components/mlme
@@ -1617,6 +1625,7 @@ INCS +=		$(OCB_INC)
 
 INCS +=		$(IPA_INC)
 INCS +=		$(MLME_INC)
+INCS +=		$(FWOL_INC)
 
 ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
 INCS +=		$(PKTLOG_INC)
@@ -1698,6 +1707,7 @@ OBJS +=		$(PTT_OBJS)
 OBJS +=		$(UMAC_SER_OBJS)
 OBJS +=		$(PLD_OBJS)
 OBJS +=		$(MLME_OBJS)
+OBJS +=		$(FWOL_OBJS)
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 OBJS +=		$(OCB_OBJS)
