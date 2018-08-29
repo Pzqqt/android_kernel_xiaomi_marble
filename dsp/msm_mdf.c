@@ -34,13 +34,15 @@
 #include <soc/qcom/secure_buffer.h>
 #include <soc/qcom/subsystem_notif.h>
 #include <soc/qcom/subsystem_restart.h>
+#include <soc/qcom/scm.h>
 #include <dsp/q6audio-v2.h>
 #include <dsp/q6core.h>
+#include <asm/cacheflush.h>
 
 #define VMID_SSC_Q6     5
 #define VMID_LPASS      6
 #define VMID_MSS_MSA    15
-#define VMID_CDSP	8
+#define VMID_CDSP       30
 
 #define MSM_MDF_PROBED         (1 << 0)
 #define MSM_MDF_INITIALIZED    (1 << 1)
@@ -56,12 +58,37 @@
 
 #define ADSP_STATE_READY_TIMEOUT_MS 3000
 
+/* mem protection defines */
+#define TZ_MPU_LOCK_NS_REGION 0x00000025
+#define MEM_PROTECT_AC_PERM_READ 0x4
+#define MEM_PROTECT_AC_PERM_WRITE 0x2
+
+#define MSM_AUDIO_SMMU_SID_OFFSET 32
+
 enum {
 	SUBSYS_ADSP, /* Audio DSP must have index 0 */
 	SUBSYS_SCC,  /* Sensor DSP */
 	SUBSYS_MSS,  /* Modem DSP */
 	SUBSYS_CDSP, /* Compute DSP */
 	SUBSYS_MAX,
+};
+
+struct msm_mdf_dest_vm_and_perm_info {
+	uint32_t dst_vm;
+	/* Destination VM defined by ACVirtualMachineId. */
+	uint32_t dst_vm_perm;
+	/* Permissions of the IPA to be mapped to VM, bitwise OR of AC_PERM. */
+	uint64_t ctx;
+	/* Destination of the VM-specific context information. */
+	uint32_t ctx_size;
+	/* Size of context buffer in bytes. */
+};
+
+struct msm_mdf_protect_mem {
+	uint64_t dma_start_address;
+	uint64_t dma_end_address;
+	struct msm_mdf_dest_vm_and_perm_info dest_info[SUBSYS_MAX];
+	uint32_t dest_info_size;
 };
 
 struct msm_mdf_mem {
@@ -180,8 +207,8 @@ static int msm_mdf_dma_buf_map(struct msm_mdf_mem *mem,
 				return -ENODEV;
 		}
 
-		smmu->pa = dma_map_single(smmu->cb_dev, mem->va,
-					  mem->size, DMA_BIDIRECTIONAL);
+		smmu->pa = dma_map_single_attrs(smmu->cb_dev, mem->va,
+			mem->size, DMA_BIDIRECTIONAL, DMA_ATTR_SKIP_CPU_SYNC);
 		if (dma_mapping_error(smmu->cb_dev, smmu->pa)) {
 			rc = -ENOMEM;
 			pr_err("%s: failed to map single, rc = %d\n",
@@ -223,8 +250,8 @@ static int msm_mdf_alloc_dma_buf(struct msm_mdf_mem *mem)
 		return -ENODEV;
 	}
 
-	mem->va = dma_alloc_coherent(mem->dev, mem->size,
-			&mem->dma_addr, GFP_KERNEL);
+	mem->va = dma_alloc_attrs(mem->dev, mem->size,
+			&mem->dma_addr, GFP_KERNEL, DMA_ATTR_NO_KERNEL_MAPPING);
 	if (IS_ERR_OR_NULL(mem->va)) {
 		pr_err("%s: failed to allocate dma memory, rc = %d\n",
 			__func__, rc);
@@ -319,6 +346,51 @@ static void msm_mdf_unmap_memory_to_subsys(struct msm_mdf_mem *mem,
 	}
 }
 
+static int msm_mdf_assign_memory_to_subsys(struct msm_mdf_mem *mem)
+{
+	int ret = 0, i;
+	struct scm_desc desc = {0};
+	struct msm_mdf_protect_mem *scm_buffer;
+	uint32_t fnid;
+
+	scm_buffer = kzalloc(sizeof(struct msm_mdf_protect_mem), GFP_KERNEL);
+	if (!scm_buffer)
+		return -ENOMEM;
+
+	scm_buffer->dma_start_address = mem->dma_addr;
+	scm_buffer->dma_end_address = mem->dma_addr + buf_page_size(mem->size);
+	for (i = 0; i < SUBSYS_MAX; i++) {
+		scm_buffer->dest_info[i].dst_vm = mdf_smmu_data[i].vmid;
+		scm_buffer->dest_info[i].dst_vm_perm =
+			MEM_PROTECT_AC_PERM_READ | MEM_PROTECT_AC_PERM_WRITE;
+		scm_buffer->dest_info[i].ctx = 0;
+		scm_buffer->dest_info[i].ctx_size = 0;
+	}
+	scm_buffer->dest_info_size =
+		sizeof(struct msm_mdf_dest_vm_and_perm_info) * SUBSYS_MAX;
+
+	/* flush cache required by scm_call2 */
+	dmac_flush_range(scm_buffer, ((void *)scm_buffer) +
+					sizeof(struct msm_mdf_protect_mem));
+
+	desc.args[0] = scm_buffer->dma_start_address;
+	desc.args[1] = scm_buffer->dma_end_address;
+	desc.args[2] = virt_to_phys(&(scm_buffer->dest_info[0]));
+	desc.args[3] = scm_buffer->dest_info_size;
+
+	desc.arginfo = SCM_ARGS(4, SCM_VAL, SCM_VAL, SCM_RO, SCM_VAL);
+
+	fnid = SCM_SIP_FNID(SCM_SVC_MP, TZ_MPU_LOCK_NS_REGION);
+	ret = scm_call2(fnid, &desc);
+	if (ret < 0) {
+		pr_err("%s: SCM call2 failed, ret %d scm_resp %llu\n",
+			__func__, ret, desc.ret[0]);
+	}
+	/* No More need for scm_buffer, freeing the same */
+	kfree(scm_buffer);
+	return ret;
+}
+
 /**
  * msm_mdf_mem_init - Initializes MDF memory pool and
  * map memory to subsystem
@@ -376,6 +448,13 @@ int msm_mdf_mem_init(void)
 					__func__, rc);
 				goto err;
 			}
+		}
+
+		rc = msm_mdf_assign_memory_to_subsys(mem);
+		if (rc) {
+			pr_err("%s: msm_mdf_assign_memory_to_subsys failed\n",
+			__func__);
+			goto err;
 		}
 
 		for (j = 0; j < SUBSYS_MAX; j++) {
@@ -479,6 +558,9 @@ MODULE_DEVICE_TABLE(of, msm_mdf_match_table);
 static int msm_mdf_cb_probe(struct device *dev)
 {
 	struct msm_mdf_smmu *smmu;
+	u64 smmu_sid = 0;
+	u64 smmu_sid_mask = 0;
+	struct of_phandle_args iommuspec;
 	const char *subsys;
 	int rc = 0, i;
 
@@ -511,22 +593,31 @@ static int msm_mdf_cb_probe(struct device *dev)
 		smmu->subsys);
 
 	if (smmu->enabled) {
-		if (!strcmp("adsp", smmu->subsys)) {
-			/* Get SMMU info from audio ION */
-			rc = msm_audio_ion_get_smmu_info(&smmu->cb_dev,
-					&smmu->sid);
-			if (rc) {
-				dev_err(dev, "%s: msm_audio_ion_get_smmu_info failed, rc = %d\n",
-					__func__, rc);
-				goto err;
-			}
+		/* Get SMMU SID information from Devicetree */
+		rc = of_property_read_u64(dev->of_node,
+					"qcom,smmu-sid-mask",
+					&smmu_sid_mask);
+		if (rc) {
+			dev_err(dev,
+				"%s: qcom,smmu-sid-mask missing in DT node, using default\n",
+				__func__);
+			smmu_sid_mask = 0xFFFFFFFFFFFFFFFF;
 		}
-	} else {
-		/* Setup SMMU CB if enabled for subsys other than ADSP */
+
+		rc = of_parse_phandle_with_args(dev->of_node, "iommus",
+					"#iommu-cells", 0, &iommuspec);
+		if (rc)
+			dev_err(dev, "%s: could not get smmu SID, ret = %d\n",
+				__func__, rc);
+		else
+			smmu_sid = (iommuspec.args[0] & smmu_sid_mask);
+
+		smmu->sid =
+			smmu_sid << MSM_AUDIO_SMMU_SID_OFFSET;
+
+		smmu->cb_dev = dev;
 	}
 	return 0;
-err:
-	return rc;
 }
 
 static int msm_mdf_remove(struct platform_device *pdev)
