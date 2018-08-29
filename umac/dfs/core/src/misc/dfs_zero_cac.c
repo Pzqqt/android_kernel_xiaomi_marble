@@ -94,6 +94,7 @@
 #include "wlan_dfs_mlme_api.h"
 #include "wlan_dfs_utils_api.h"
 #include "../dfs_internal.h"
+#include "../dfs_etsi_precac.h"
 
 void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 {
@@ -796,9 +797,21 @@ void dfs_start_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan)
 	 * which cancels any previous CAC timer and starts a new CAC again.
 	 * So CAC expiry does not happen and moreover a new CAC is started.
 	 * Therefore do not disturb the CAC by channel restart (vdev_restart).
+	 *
+	 * If CAC was already completed on primary, then we do not need to
+	 * calculate which CAC timeout is maximum.
+	 * For example: If primary's CAC is 600 seconds and secondary's CAC
+	 * is 60 seconds then maximum gives 600 seconds which is not needed
+	 * if CAC was already completed on primary. It is to be noted that
+	 * etsi_precac/cac is done on primary segment.
 	 */
-	precac_timeout = QDF_MAX(primary_cac_timeout, secondary_cac_timeout) +
-		EXTRA_TIME_IN_SEC;
+	if (!dfs_is_etsi_precac_done(dfs))
+		precac_timeout = QDF_MAX(primary_cac_timeout,
+					 secondary_cac_timeout) +
+				 EXTRA_TIME_IN_SEC;
+	else
+		precac_timeout = secondary_cac_timeout + EXTRA_TIME_IN_SEC;
+
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
 		"precactimeout = %d", (precac_timeout)*1000);
 	qdf_timer_mod(&dfs->dfs_precac_timer, (precac_timeout) * 1000);
