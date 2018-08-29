@@ -33,7 +33,7 @@ QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	dp_debug("dp_txrx_handle allocated");
+	dp_info("dp_txrx_handle allocated");
 	dp_ext_hdl->soc = soc;
 	dp_ext_hdl->pdev = pdev;
 	cdp_soc_set_dp_txrx_handle(soc, dp_ext_hdl);
@@ -60,7 +60,9 @@ QDF_STATUS dp_txrx_deinit(ol_txrx_soc_handle soc)
 	if (!dp_ext_hdl)
 		return QDF_STATUS_E_FAULT;
 
-	dp_rx_tm_deinit(&dp_ext_hdl->rx_tm_hdl);
+	if (dp_ext_hdl->config.enable_rx_threads)
+		dp_rx_tm_deinit(&dp_ext_hdl->rx_tm_hdl);
+
 	qdf_mem_free(dp_ext_hdl);
 	dp_info("dp_txrx_handle_t de-allocated");
 
