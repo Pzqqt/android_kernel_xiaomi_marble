@@ -381,8 +381,16 @@ QDF_STATUS sme_ps_enable_disable(tHalHandle hal_ctx, uint32_t session_id,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 
 	status =  sme_enable_sta_ps_check(mac_ctx, session_id);
-	if (status != QDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS) {
+		/*
+		 * In non associated state ps state will be disabled in FW.
+		 * Hence, return success if ps disable is requested
+		 * in disconnected state.
+		 */
+		if (command == SME_PS_DISABLE)
+			status = QDF_STATUS_SUCCESS;
 		return status;
+	}
 	status = sme_ps_process_command(mac_ctx, session_id, command);
 	return status;
 }
