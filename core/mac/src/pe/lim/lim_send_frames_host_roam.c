@@ -68,7 +68,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	tLimMlmReassocReq *mlm_reassoc_req,
 	tpPESession pe_session)
 {
-	static tDot11fReAssocRequest frm;
+	tDot11fReAssocRequest *frm;
 	uint16_t caps;
 	uint8_t *frame;
 	uint32_t bytes, payload, status;
@@ -96,11 +96,17 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (NULL == pe_session->pLimReAssocReq)
 		return;
 
+	frm = qdf_mem_malloc(sizeof(*frm));
+	if (!frm) {
+		pe_err("mem alloc failed");
+		goto err;
+	}
+
 	add_ie_len = pe_session->pLimReAssocReq->addIEAssoc.length;
 	add_ie = pe_session->pLimReAssocReq->addIEAssoc.addIEdata;
 	pe_debug("called in state: %d", pe_session->limMlmState);
 
-	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) frm, sizeof(*frm), 0);
 
 	caps = mlm_reassoc_req->capabilityInfo;
 #if defined(FEATURE_WLAN_WAPI)
@@ -115,21 +121,21 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (pe_session->encryptType == eSIR_ED_WPI)
 		((tSirMacCapabilityInfo *) &caps)->privacy = 0;
 #endif
-	swap_bit_field16(caps, (uint16_t *) &frm.Capabilities);
+	swap_bit_field16(caps, (uint16_t *) &frm->Capabilities);
 
-	frm.ListenInterval.interval = mlm_reassoc_req->listenInterval;
+	frm->ListenInterval.interval = mlm_reassoc_req->listenInterval;
 
 	/*
 	 * Get the old bssid of the older AP.
 	 * The previous ap bssid is stored in the FT Session
 	 * while creating the PE FT Session for reassociation.
 	 */
-	qdf_mem_copy((uint8_t *)frm.CurrentAPAddress.mac,
+	qdf_mem_copy((uint8_t *)frm->CurrentAPAddress.mac,
 			pe_session->prev_ap_bssid, sizeof(tSirMacAddr));
 
-	populate_dot11f_ssid2(mac_ctx, &frm.SSID);
+	populate_dot11f_ssid2(mac_ctx, &frm->SSID);
 	populate_dot11f_supp_rates(mac_ctx, POPULATE_DOT11F_RATES_OPERATIONAL,
-		&frm.SuppRates, pe_session);
+		&frm->SuppRates, pe_session);
 
 	qos_enabled = (pe_session->limQosEnabled) &&
 		      SIR_MAC_GET_QOS(pe_session->limReassocBssCaps);
@@ -144,31 +150,31 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	    pe_session->pLimReAssocReq->spectrumMgtIndicator == true) {
 		power_caps_populated = true;
 
-		populate_dot11f_power_caps(mac_ctx, &frm.PowerCaps,
+		populate_dot11f_power_caps(mac_ctx, &frm->PowerCaps,
 					   LIM_REASSOC, pe_session);
-		populate_dot11f_supp_channels(mac_ctx, &frm.SuppChannels,
+		populate_dot11f_supp_channels(mac_ctx, &frm->SuppChannels,
 			LIM_REASSOC, pe_session);
 	}
 	if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
 	    SIR_MAC_GET_RRM(pe_session->limCurrentBssCaps)) {
 		if (power_caps_populated == false) {
 			power_caps_populated = true;
-			populate_dot11f_power_caps(mac_ctx, &frm.PowerCaps,
+			populate_dot11f_power_caps(mac_ctx, &frm->PowerCaps,
 				LIM_REASSOC, pe_session);
 		}
 	}
 
 	if (qos_enabled)
 		populate_dot11f_qos_caps_station(mac_ctx, pe_session,
-						&frm.QOSCapsStation);
+						&frm->QOSCapsStation);
 
 	populate_dot11f_ext_supp_rates(mac_ctx,
-		POPULATE_DOT11F_RATES_OPERATIONAL, &frm.ExtSuppRates,
+		POPULATE_DOT11F_RATES_OPERATIONAL, &frm->ExtSuppRates,
 		pe_session);
 
 	if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
 	    SIR_MAC_GET_RRM(pe_session->limCurrentBssCaps))
-		populate_dot11f_rrm_ie(mac_ctx, &frm.RRMEnabledCap, pe_session);
+		populate_dot11f_rrm_ie(mac_ctx, &frm->RRMEnabledCap, pe_session);
 
 	/*
 	 * Ideally this should be enabled for 11r also. But 11r does
@@ -205,16 +211,16 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		if (NULL == wps_ie) {
 			populate_dot11f_rsn_opaque(mac_ctx,
 				&(pe_session->pLimReAssocReq->rsnIE),
-				&frm.RSNOpaque);
+				&frm->RSNOpaque);
 			populate_dot11f_wpa_opaque(mac_ctx,
 				&(pe_session->pLimReAssocReq->rsnIE),
-				&frm.WPAOpaque);
+				&frm->WPAOpaque);
 		}
 #ifdef FEATURE_WLAN_ESE
 		if (pe_session->pLimReAssocReq->cckmIE.length) {
 			populate_dot11f_ese_cckm_opaque(mac_ctx,
 				&(pe_session->pLimReAssocReq->cckmIE),
-				&frm.ESECckmOpaque);
+				&frm->ESECckmOpaque);
 		}
 #endif
 	}
@@ -227,12 +233,12 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	 */
 	if (pe_session->is_ese_version_ie_present &&
 		mac_ctx->roam.configParam.isEseIniFeatureEnabled)
-		populate_dot11f_ese_version(&frm.ESEVersion);
+		populate_dot11f_ese_version(&frm->ESEVersion);
 	/* For ESE Associations fill the ESE IEs */
 	if (pe_session->isESEconnection &&
 	    pe_session->pLimReAssocReq->isESEFeatureIniEnabled) {
 #ifndef FEATURE_DISABLE_RM
-		populate_dot11f_ese_rad_mgmt_cap(&frm.ESERadMgmtCap);
+		populate_dot11f_ese_rad_mgmt_cap(&frm->ESERadMgmtCap);
 #endif
 	}
 #endif /* FEATURE_WLAN_ESE */
@@ -240,15 +246,15 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	/* include WME EDCA IE as well */
 	if (wme_enabled) {
 		populate_dot11f_wmm_info_station_per_session(mac_ctx,
-			pe_session, &frm.WMMInfoStation);
+			pe_session, &frm->WMMInfoStation);
 		if (wsm_enabled)
-			populate_dot11f_wmm_caps(&frm.WMMCaps);
+			populate_dot11f_wmm_caps(&frm->WMMCaps);
 #ifdef FEATURE_WLAN_ESE
 		if (pe_session->isESEconnection) {
 			uint32_t phymode;
 			uint8_t rate;
 
-			populate_dot11f_re_assoc_tspec(mac_ctx, &frm,
+			populate_dot11f_re_assoc_tspec(mac_ctx, frm,
 				pe_session);
 
 			/*
@@ -269,7 +275,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 				tsrs_ie.tsid = 0;
 				tsrs_ie.rates[0] = rate;
 				populate_dot11_tsrsie(mac_ctx, &tsrs_ie,
-					&frm.ESETrafStrmRateSet,
+					&frm->ESETrafStrmRateSet,
 					sizeof(uint8_t));
 			}
 		}
@@ -279,7 +285,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	ft_sme_context = &mac_ctx->roam.roamSession[sme_sessionid].ftSmeContext;
 	if (pe_session->htCapability &&
 	    mac_ctx->lim.htCapabilityPresentInBeacon) {
-		populate_dot11f_ht_caps(mac_ctx, pe_session, &frm.HTCaps);
+		populate_dot11f_ht_caps(mac_ctx, pe_session, &frm->HTCaps);
 	}
 	if (pe_session->pLimReAssocReq->bssDescription.mdiePresent &&
 	    (ft_sme_context->addMDIE == true)
@@ -287,36 +293,36 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	    && !pe_session->isESEconnection
 #endif
 	    ) {
-		populate_mdie(mac_ctx, &frm.MobilityDomain,
+		populate_mdie(mac_ctx, &frm->MobilityDomain,
 			pe_session->pLimReAssocReq->bssDescription.mdie);
 	}
 	if (pe_session->vhtCapability &&
 	    pe_session->vhtCapabilityPresentInBeacon) {
 		pe_debug("Populate VHT IEs in Re-Assoc Request");
-		populate_dot11f_vht_caps(mac_ctx, pe_session, &frm.VHTCaps);
+		populate_dot11f_vht_caps(mac_ctx, pe_session, &frm->VHTCaps);
 		vht_enabled = true;
-		populate_dot11f_ext_cap(mac_ctx, vht_enabled, &frm.ExtCap,
+		populate_dot11f_ext_cap(mac_ctx, vht_enabled, &frm->ExtCap,
 			pe_session);
 	}
 	if (!vht_enabled &&
 			pe_session->is_vendor_specific_vhtcaps) {
 		pe_debug("Populate Vendor VHT IEs in Re-Assoc Request");
-		frm.vendor_vht_ie.present = 1;
-		frm.vendor_vht_ie.sub_type =
+		frm->vendor_vht_ie.present = 1;
+		frm->vendor_vht_ie.sub_type =
 			pe_session->vendor_specific_vht_ie_sub_type;
-		frm.vendor_vht_ie.VHTCaps.present = 1;
+		frm->vendor_vht_ie.VHTCaps.present = 1;
 		populate_dot11f_vht_caps(mac_ctx, pe_session,
-				&frm.vendor_vht_ie.VHTCaps);
+				&frm->vendor_vht_ie.VHTCaps);
 		vht_enabled = true;
 	}
 
 	if (lim_is_session_he_capable(pe_session)) {
 		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(mac_ctx, pe_session,
-					&frm.he_cap);
+					&frm->he_cap);
 	}
 
-	status = dot11f_get_packed_re_assoc_request_size(mac_ctx, &frm,
+	status = dot11f_get_packed_re_assoc_request_size(mac_ctx, frm,
 			&payload);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failure in size calculation (0x%08x)", status);
@@ -354,7 +360,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_session->selfMacAddr);
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 	/* That done, pack the ReAssoc Request: */
-	status = dot11f_pack_re_assoc_request(mac_ctx, &frm, frame +
+	status = dot11f_pack_re_assoc_request(mac_ctx, frm, frame +
 					       sizeof(tSirMacMgmtHdr),
 					       payload, &payload);
 	if (DOT11F_FAILED(status)) {
@@ -458,6 +464,8 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 
 end:
+	qdf_mem_free(frm);
+err:
 	/* Free up buffer allocated for mlmAssocReq */
 	qdf_mem_free(mlm_reassoc_req);
 	pe_session->pLimMlmReassocReq = NULL;
@@ -540,7 +548,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 				tLimMlmReassocReq *pMlmReassocReq,
 				tpPESession psessionEntry)
 {
-	static tDot11fReAssocRequest frm;
+	tDot11fReAssocRequest *frm;
 	uint16_t caps;
 	uint8_t *pFrame;
 	uint32_t nBytes, nPayload, nStatus;
@@ -562,10 +570,16 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	smeSessionId = psessionEntry->smeSessionId;
 	if (NULL == psessionEntry->pLimReAssocReq)
 		return;
+
+	frm = qdf_mem_malloc(sizeof(*frm));
+	if (!frm) {
+		pe_err("mem alloc failed");
+		goto err;
+	}
 	nAddIELen = psessionEntry->pLimReAssocReq->addIEAssoc.length;
 	pAddIE = psessionEntry->pLimReAssocReq->addIEAssoc.addIEdata;
 
-	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) frm, sizeof(*frm), 0);
 
 	caps = pMlmReassocReq->capabilityInfo;
 #if defined(FEATURE_WLAN_WAPI)
@@ -581,16 +595,16 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	if (psessionEntry->encryptType == eSIR_ED_WPI)
 		((tSirMacCapabilityInfo *) &caps)->privacy = 0;
 #endif
-	swap_bit_field16(caps, (uint16_t *) &frm.Capabilities);
+	swap_bit_field16(caps, (uint16_t *) &frm->Capabilities);
 
-	frm.ListenInterval.interval = pMlmReassocReq->listenInterval;
+	frm->ListenInterval.interval = pMlmReassocReq->listenInterval;
 
-	qdf_mem_copy((uint8_t *) frm.CurrentAPAddress.mac,
+	qdf_mem_copy((uint8_t *) frm->CurrentAPAddress.mac,
 		     (uint8_t *) psessionEntry->bssId, 6);
 
-	populate_dot11f_ssid2(pMac, &frm.SSID);
+	populate_dot11f_ssid2(pMac, &frm->SSID);
 	populate_dot11f_supp_rates(pMac, POPULATE_DOT11F_RATES_OPERATIONAL,
-				   &frm.SuppRates, psessionEntry);
+				   &frm->SuppRates, psessionEntry);
 
 	fQosEnabled = (psessionEntry->limQosEnabled) &&
 		      SIR_MAC_GET_QOS(psessionEntry->limReassocBssCaps);
@@ -604,30 +618,30 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	if (psessionEntry->lim11hEnable &&
 	    psessionEntry->pLimReAssocReq->spectrumMgtIndicator == true) {
 		PowerCapsPopulated = true;
-		populate_dot11f_power_caps(pMac, &frm.PowerCaps, LIM_REASSOC,
+		populate_dot11f_power_caps(pMac, &frm->PowerCaps, LIM_REASSOC,
 					   psessionEntry);
-		populate_dot11f_supp_channels(pMac, &frm.SuppChannels,
+		populate_dot11f_supp_channels(pMac, &frm->SuppChannels,
 				LIM_REASSOC, psessionEntry);
 	}
 	if (pMac->rrm.rrmPEContext.rrmEnable &&
 	    SIR_MAC_GET_RRM(psessionEntry->limCurrentBssCaps)) {
 		if (PowerCapsPopulated == false) {
 			PowerCapsPopulated = true;
-			populate_dot11f_power_caps(pMac, &frm.PowerCaps,
+			populate_dot11f_power_caps(pMac, &frm->PowerCaps,
 						   LIM_REASSOC, psessionEntry);
 		}
 	}
 
 	if (fQosEnabled)
 		populate_dot11f_qos_caps_station(pMac, psessionEntry,
-						&frm.QOSCapsStation);
+						&frm->QOSCapsStation);
 
 	populate_dot11f_ext_supp_rates(pMac, POPULATE_DOT11F_RATES_OPERATIONAL,
-				       &frm.ExtSuppRates, psessionEntry);
+				       &frm->ExtSuppRates, psessionEntry);
 
 	if (pMac->rrm.rrmPEContext.rrmEnable &&
 	    SIR_MAC_GET_RRM(psessionEntry->limCurrentBssCaps))
-		populate_dot11f_rrm_ie(pMac, &frm.RRMEnabledCap, psessionEntry);
+		populate_dot11f_rrm_ie(pMac, &frm->RRMEnabledCap, psessionEntry);
 	/* The join request *should* contain zero or one of the WPA and RSN */
 	/* IEs.  The payload send along with the request is a */
 	/* 'tSirSmeJoinReq'; the IE portion is held inside a 'tSirRSNie': */
@@ -653,45 +667,45 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	if (NULL == wpsIe) {
 		populate_dot11f_rsn_opaque(pMac,
 				&(psessionEntry->pLimReAssocReq->rsnIE),
-				&frm.RSNOpaque);
+				&frm->RSNOpaque);
 		populate_dot11f_wpa_opaque(pMac,
 				&(psessionEntry->pLimReAssocReq->rsnIE),
-				&frm.WPAOpaque);
+				&frm->WPAOpaque);
 #if defined(FEATURE_WLAN_WAPI)
 		populate_dot11f_wapi_opaque(pMac,
 					    &(psessionEntry->pLimReAssocReq->
-					      rsnIE), &frm.WAPIOpaque);
+					      rsnIE), &frm->WAPIOpaque);
 #endif /* defined(FEATURE_WLAN_WAPI) */
 	}
 	/* include WME EDCA IE as well */
 	if (fWmeEnabled) {
 		populate_dot11f_wmm_info_station_per_session(pMac,
-				psessionEntry, &frm.WMMInfoStation);
+				psessionEntry, &frm->WMMInfoStation);
 
 		if (fWsmEnabled)
-			populate_dot11f_wmm_caps(&frm.WMMCaps);
+			populate_dot11f_wmm_caps(&frm->WMMCaps);
 	}
 
 	if (psessionEntry->htCapability &&
 	    pMac->lim.htCapabilityPresentInBeacon) {
-		populate_dot11f_ht_caps(pMac, psessionEntry, &frm.HTCaps);
+		populate_dot11f_ht_caps(pMac, psessionEntry, &frm->HTCaps);
 	}
 	if (psessionEntry->vhtCapability &&
 	    psessionEntry->vhtCapabilityPresentInBeacon) {
 		pe_warn("Populate VHT IEs in Re-Assoc Request");
-		populate_dot11f_vht_caps(pMac, psessionEntry, &frm.VHTCaps);
+		populate_dot11f_vht_caps(pMac, psessionEntry, &frm->VHTCaps);
 		isVHTEnabled = true;
 	}
-	populate_dot11f_ext_cap(pMac, isVHTEnabled, &frm.ExtCap, psessionEntry);
+	populate_dot11f_ext_cap(pMac, isVHTEnabled, &frm->ExtCap, psessionEntry);
 
 	if (lim_is_session_he_capable(psessionEntry)) {
 		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(pMac, psessionEntry,
-					&frm.he_cap);
+					&frm->he_cap);
 	}
 
 	nStatus =
-		dot11f_get_packed_re_assoc_request_size(pMac, &frm, &nPayload);
+		dot11f_get_packed_re_assoc_request_size(pMac, frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Fail to get size:ReassocReq: (0x%08x)", nStatus);
 		/* We'll fall back on the worst case scenario: */
@@ -723,7 +737,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	/* That done, pack the Probe Request: */
-	nStatus = dot11f_pack_re_assoc_request(pMac, &frm, pFrame +
+	nStatus = dot11f_pack_re_assoc_request(pMac, frm, pFrame +
 					       sizeof(tSirMacMgmtHdr),
 					       nPayload, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
@@ -791,6 +805,8 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	}
 
 end:
+	qdf_mem_free(frm);
+err:
 	/* Free up buffer allocated for mlmAssocReq */
 	qdf_mem_free(pMlmReassocReq);
 	psessionEntry->pLimMlmReassocReq = NULL;

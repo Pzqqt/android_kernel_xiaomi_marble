@@ -3228,15 +3228,20 @@ sir_convert_reassoc_req_frame2_struct(tpAniSirGlobal pMac,
 				      uint8_t *pFrame,
 				      uint32_t nFrame, tpSirAssocReq pAssocReq)
 {
-	static tDot11fReAssocRequest ar;
+	tDot11fReAssocRequest *ar;
 	uint32_t status;
 
+	ar = qdf_mem_malloc(sizeof(*ar));
+	if (!ar) {
+		pe_err("mem alloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
 	/* Zero-init our [out] parameter, */
 	qdf_mem_set((uint8_t *) pAssocReq, sizeof(tSirAssocReq), 0);
 
 	/* delegate to the framesc-generated code, */
 	status = dot11f_unpack_re_assoc_request(pMac, pFrame, nFrame,
-						&ar, false);
+						ar, false);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to parse a Re-association Request (0x%08x, %d bytes):",
 			status, nFrame);
@@ -3253,87 +3258,87 @@ sir_convert_reassoc_req_frame2_struct(tpAniSirGlobal pMac,
 	pAssocReq->reassocRequest = 1;
 
 	/* Capabilities */
-	pAssocReq->capabilityInfo.ess = ar.Capabilities.ess;
-	pAssocReq->capabilityInfo.ibss = ar.Capabilities.ibss;
-	pAssocReq->capabilityInfo.cfPollable = ar.Capabilities.cfPollable;
-	pAssocReq->capabilityInfo.cfPollReq = ar.Capabilities.cfPollReq;
-	pAssocReq->capabilityInfo.privacy = ar.Capabilities.privacy;
-	pAssocReq->capabilityInfo.shortPreamble = ar.Capabilities.shortPreamble;
-	pAssocReq->capabilityInfo.pbcc = ar.Capabilities.pbcc;
+	pAssocReq->capabilityInfo.ess = ar->Capabilities.ess;
+	pAssocReq->capabilityInfo.ibss = ar->Capabilities.ibss;
+	pAssocReq->capabilityInfo.cfPollable = ar->Capabilities.cfPollable;
+	pAssocReq->capabilityInfo.cfPollReq = ar->Capabilities.cfPollReq;
+	pAssocReq->capabilityInfo.privacy = ar->Capabilities.privacy;
+	pAssocReq->capabilityInfo.shortPreamble = ar->Capabilities.shortPreamble;
+	pAssocReq->capabilityInfo.pbcc = ar->Capabilities.pbcc;
 	pAssocReq->capabilityInfo.channelAgility =
-		ar.Capabilities.channelAgility;
-	pAssocReq->capabilityInfo.spectrumMgt = ar.Capabilities.spectrumMgt;
-	pAssocReq->capabilityInfo.qos = ar.Capabilities.qos;
-	pAssocReq->capabilityInfo.shortSlotTime = ar.Capabilities.shortSlotTime;
-	pAssocReq->capabilityInfo.apsd = ar.Capabilities.apsd;
-	pAssocReq->capabilityInfo.rrm = ar.Capabilities.rrm;
-	pAssocReq->capabilityInfo.dsssOfdm = ar.Capabilities.dsssOfdm;
-	pAssocReq->capabilityInfo.delayedBA = ar.Capabilities.delayedBA;
-	pAssocReq->capabilityInfo.immediateBA = ar.Capabilities.immediateBA;
+		ar->Capabilities.channelAgility;
+	pAssocReq->capabilityInfo.spectrumMgt = ar->Capabilities.spectrumMgt;
+	pAssocReq->capabilityInfo.qos = ar->Capabilities.qos;
+	pAssocReq->capabilityInfo.shortSlotTime = ar->Capabilities.shortSlotTime;
+	pAssocReq->capabilityInfo.apsd = ar->Capabilities.apsd;
+	pAssocReq->capabilityInfo.rrm = ar->Capabilities.rrm;
+	pAssocReq->capabilityInfo.dsssOfdm = ar->Capabilities.dsssOfdm;
+	pAssocReq->capabilityInfo.delayedBA = ar->Capabilities.delayedBA;
+	pAssocReq->capabilityInfo.immediateBA = ar->Capabilities.immediateBA;
 
 	/* Listen Interval */
-	pAssocReq->listenInterval = ar.ListenInterval.interval;
+	pAssocReq->listenInterval = ar->ListenInterval.interval;
 
 	/* SSID */
-	if (ar.SSID.present) {
+	if (ar->SSID.present) {
 		pAssocReq->ssidPresent = 1;
-		convert_ssid(pMac, &pAssocReq->ssId, &ar.SSID);
+		convert_ssid(pMac, &pAssocReq->ssId, &ar->SSID);
 	}
 	/* Supported Rates */
-	if (ar.SuppRates.present) {
+	if (ar->SuppRates.present) {
 		pAssocReq->suppRatesPresent = 1;
 		convert_supp_rates(pMac, &pAssocReq->supportedRates,
-				   &ar.SuppRates);
+				   &ar->SuppRates);
 	}
 	/* Extended Supported Rates */
-	if (ar.ExtSuppRates.present) {
+	if (ar->ExtSuppRates.present) {
 		pAssocReq->extendedRatesPresent = 1;
 		convert_ext_supp_rates(pMac, &pAssocReq->extendedRates,
-				       &ar.ExtSuppRates);
+				       &ar->ExtSuppRates);
 	}
 	/* QOS Capabilities: */
-	if (ar.QOSCapsStation.present) {
+	if (ar->QOSCapsStation.present) {
 		pAssocReq->qosCapabilityPresent = 1;
 		convert_qos_caps_station(pMac, &pAssocReq->qosCapability,
-					 &ar.QOSCapsStation);
+					 &ar->QOSCapsStation);
 	}
 	/* WPA */
-	if (ar.WPAOpaque.present) {
+	if (ar->WPAOpaque.present) {
 		pAssocReq->wpaPresent = 1;
-		convert_wpa_opaque(pMac, &pAssocReq->wpa, &ar.WPAOpaque);
+		convert_wpa_opaque(pMac, &pAssocReq->wpa, &ar->WPAOpaque);
 	}
 	/* RSN */
-	if (ar.RSNOpaque.present) {
+	if (ar->RSNOpaque.present) {
 		pAssocReq->rsnPresent = 1;
-		convert_rsn_opaque(pMac, &pAssocReq->rsn, &ar.RSNOpaque);
+		convert_rsn_opaque(pMac, &pAssocReq->rsn, &ar->RSNOpaque);
 	}
 
 	/* Power Capabilities */
-	if (ar.PowerCaps.present) {
+	if (ar->PowerCaps.present) {
 		pAssocReq->powerCapabilityPresent = 1;
 		convert_power_caps(pMac, &pAssocReq->powerCapability,
-				   &ar.PowerCaps);
+				   &ar->PowerCaps);
 	}
 	/* Supported Channels */
-	if (ar.SuppChannels.present) {
+	if (ar->SuppChannels.present) {
 		pAssocReq->supportedChannelsPresent = 1;
 		convert_supp_channels(pMac, &pAssocReq->supportedChannels,
-				      &ar.SuppChannels);
+				      &ar->SuppChannels);
 	}
 
-	if (ar.HTCaps.present) {
-		qdf_mem_copy(&pAssocReq->HTCaps, &ar.HTCaps,
+	if (ar->HTCaps.present) {
+		qdf_mem_copy(&pAssocReq->HTCaps, &ar->HTCaps,
 			     sizeof(tDot11fIEHTCaps));
 	}
 
-	if (ar.WMMInfoStation.present) {
+	if (ar->WMMInfoStation.present) {
 		pAssocReq->wmeInfoPresent = 1;
-		qdf_mem_copy(&pAssocReq->WMMInfoStation, &ar.WMMInfoStation,
+		qdf_mem_copy(&pAssocReq->WMMInfoStation, &ar->WMMInfoStation,
 			     sizeof(tDot11fIEWMMInfoStation));
 
 	}
 
-	if (ar.WMMCaps.present)
+	if (ar->WMMCaps.present)
 		pAssocReq->wsmCapablePresent = 1;
 
 	if (!pAssocReq->ssidPresent) {
@@ -3349,46 +3354,47 @@ sir_convert_reassoc_req_frame2_struct(tpAniSirGlobal pMac,
 	/* there is in 'sir_convert_assoc_req_frame2_struct'? */
 
 	/* WSC IE */
-	if (ar.WscIEOpaque.present) {
+	if (ar->WscIEOpaque.present) {
 		pAssocReq->addIEPresent = 1;
-		convert_wsc_opaque(pMac, &pAssocReq->addIE, &ar.WscIEOpaque);
+		convert_wsc_opaque(pMac, &pAssocReq->addIE, &ar->WscIEOpaque);
 	}
 
-	if (ar.P2PIEOpaque.present) {
+	if (ar->P2PIEOpaque.present) {
 		pAssocReq->addIEPresent = 1;
-		convert_p2p_opaque(pMac, &pAssocReq->addIE, &ar.P2PIEOpaque);
+		convert_p2p_opaque(pMac, &pAssocReq->addIE, &ar->P2PIEOpaque);
 	}
 #ifdef WLAN_FEATURE_WFD
-	if (ar.WFDIEOpaque.present) {
+	if (ar->WFDIEOpaque.present) {
 		pAssocReq->addIEPresent = 1;
-		convert_wfd_opaque(pMac, &pAssocReq->addIE, &ar.WFDIEOpaque);
+		convert_wfd_opaque(pMac, &pAssocReq->addIE, &ar->WFDIEOpaque);
 	}
 #endif
 
-	if (ar.VHTCaps.present) {
-		qdf_mem_copy(&pAssocReq->VHTCaps, &ar.VHTCaps,
+	if (ar->VHTCaps.present) {
+		qdf_mem_copy(&pAssocReq->VHTCaps, &ar->VHTCaps,
 			     sizeof(tDot11fIEVHTCaps));
 	}
-	if (ar.OperatingMode.present) {
-		qdf_mem_copy(&pAssocReq->operMode, &ar.OperatingMode,
+	if (ar->OperatingMode.present) {
+		qdf_mem_copy(&pAssocReq->operMode, &ar->OperatingMode,
 			     sizeof(tDot11fIEOperatingMode));
 		pe_warn("Received Assoc Req with Operating Mode IE");
 		lim_log_operating_mode(pMac, &pAssocReq->operMode);
 	}
-	if (ar.ExtCap.present) {
+	if (ar->ExtCap.present) {
 		struct s_ext_cap *ext_cap;
 
-		qdf_mem_copy(&pAssocReq->ExtCap, &ar.ExtCap,
+		qdf_mem_copy(&pAssocReq->ExtCap, &ar->ExtCap,
 			     sizeof(tDot11fIEExtCap));
 		ext_cap = (struct s_ext_cap *)&pAssocReq->ExtCap.bytes;
 		pe_debug("timingMeas: %d, finetimingMeas Init: %d, Resp: %d",
 			ext_cap->timing_meas, ext_cap->fine_time_meas_initiator,
 			ext_cap->fine_time_meas_responder);
 	}
-	if (ar.he_cap.present) {
-		qdf_mem_copy(&pAssocReq->he_cap, &ar.he_cap,
+	if (ar->he_cap.present) {
+		qdf_mem_copy(&pAssocReq->he_cap, &ar->he_cap,
 			     sizeof(tDot11fIEhe_cap));
 	}
+	qdf_mem_free(ar);
 
 	return QDF_STATUS_SUCCESS;
 
