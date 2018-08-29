@@ -951,6 +951,7 @@ enum reg_rules_2g {
 	CHAN_1_13_2,
 	CHAN_1_13_3,
 	CHAN_1_13_4,
+	CHAN_12_12_1,
 	CHAN_12_13_1,
 	CHAN_14_1,
 	CHAN_14_2,
@@ -965,7 +966,8 @@ const struct regulatory_rule reg_rules_2g[] = {
 	[CHAN_1_13_2] = {2402, 2482, 40, 30, 0},
 	[CHAN_1_13_3] = {2402, 2482, 40, 36, 0},
 	[CHAN_1_13_4] = {2402, 2482, 40, 23, 0},
-	[CHAN_12_13_1] = {2457, 2482, 40, 30, REGULATORY_CHAN_NO_IR},
+	[CHAN_12_12_1] = {2457, 2477, 40, 20, REGULATORY_CHAN_NO_IR},
+	[CHAN_12_13_1] = {2457, 2482, 40, 20, REGULATORY_CHAN_NO_IR},
 	[CHAN_14_1] = {2474, 2494, 20, 23, REGULATORY_CHAN_NO_OFDM},
 	[CHAN_14_2] = {2474, 2494, 20, 20,
 		       REGULATORY_CHAN_NO_OFDM | REGULATORY_CHAN_NO_IR},
@@ -985,8 +987,8 @@ const struct regdomain regdomains_2g[] = {
 	[WORLD_2G_1] = {CTL_NONE, DFS_UNINIT_REGION, 0, 0, 1, {CHAN_1_11_2} },
 	[WORLD_2G_2] = {CTL_NONE, DFS_UNINIT_REGION, 0, 0, 2,
 			{CHAN_1_11_2, CHAN_12_13_1} },
-	[WORLD_2G_3] = {CTL_NONE, DFS_UNINIT_REGION, 0, 0, 3,
-			{CHAN_1_11_2, CHAN_12_13_1, CHAN_14_2} },
+	[WORLD_2G_3] = {CTL_NONE, DFS_UNINIT_REGION, 0, 0, 2,
+			{CHAN_1_11_2, CHAN_12_12_1} },
 };
 
 
