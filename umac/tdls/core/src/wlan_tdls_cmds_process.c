@@ -825,6 +825,7 @@ QDF_STATUS tdls_process_add_peer(struct tdls_add_peer_request *req)
 	cmd.is_high_priority = false;
 	cmd.cmd_timeout_duration = WAIT_TIME_TDLS_ADD_STA;
 	cmd.vdev = vdev;
+	cmd.is_blocking = true;
 
 	ser_cmd_status = wlan_serialization_request(&cmd);
 	tdls_debug("req: 0x%pK wlan_serialization_request status:%d", req,
@@ -1034,6 +1035,7 @@ QDF_STATUS tdls_process_update_peer(struct tdls_update_peer_request *req)
 	cmd.is_high_priority = false;
 	cmd.cmd_timeout_duration = WAIT_TIME_TDLS_ADD_STA;
 	cmd.vdev = req->vdev;
+	cmd.is_blocking = true;
 
 	ser_cmd_status = wlan_serialization_request(&cmd);
 	tdls_debug("req: 0x%pK wlan_serialization_request status:%d", req,
@@ -1187,6 +1189,7 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 	cmd.is_high_priority = false;
 	cmd.cmd_timeout_duration = WAIT_TIME_TDLS_DEL_STA;
 	cmd.vdev = vdev;
+	cmd.is_blocking = true;
 
 	ser_cmd_status = wlan_serialization_request(&cmd);
 	tdls_debug("req: 0x%pK wlan_serialization_request status:%d", req,
