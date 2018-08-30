@@ -41,6 +41,8 @@ static void target_if_cp_stats_free_stats_event(struct stats_event *ev)
 	ev->pdev_stats = NULL;
 	qdf_mem_free(ev->peer_stats);
 	ev->peer_stats = NULL;
+	qdf_mem_free(ev->peer_adv_stats);
+	ev->peer_adv_stats = NULL;
 	qdf_mem_free(ev->cca_stats);
 	ev->cca_stats = NULL;
 	qdf_mem_free(ev->vdev_summary_stats);
@@ -94,7 +96,9 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 	QDF_STATUS status;
 	wmi_host_peer_stats peer_stats;
 	bool db2dbm_enabled;
+	struct wmi_host_peer_adv_stats *peer_adv_stats;
 
+	/* Extract peer_stats */
 	ev->num_peer_stats = stats_param->num_peer_stats;
 	if (!ev->num_peer_stats)
 		return QDF_STATUS_SUCCESS;
@@ -109,11 +113,11 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 	for (i = 0; i < ev->num_peer_stats; i++) {
 		status = wmi_extract_peer_stats(wmi_hdl, data, i, &peer_stats);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			cp_stats_err("wmi_extract_pdev_stats failed");
+			cp_stats_err("wmi_extract_peer_stats failed");
 			continue;
 		}
 		WMI_MAC_ADDR_TO_CHAR_ARRAY(&peer_stats.peer_macaddr,
-						ev->peer_stats[i].peer_macaddr);
+					   ev->peer_stats[i].peer_macaddr);
 		ev->peer_stats[i].tx_rate = peer_stats.peer_tx_rate;
 		ev->peer_stats[i].rx_rate = peer_stats.peer_rx_rate;
 		if (db2dbm_enabled)
@@ -123,6 +127,41 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 							TGT_NOISE_FLOOR_DBM;
 	}
 
+	/* Extract peer_adv_stats */
+	ev->num_peer_adv_stats = stats_param->num_peer_adv_stats;
+	if (!ev->num_peer_adv_stats)
+		return QDF_STATUS_SUCCESS;
+
+	ev->peer_adv_stats = qdf_mem_malloc(sizeof(*ev->peer_adv_stats) *
+					    ev->num_peer_adv_stats);
+	if (!ev->peer_adv_stats)
+		return QDF_STATUS_E_NOMEM;
+
+	peer_adv_stats = qdf_mem_malloc(sizeof(*peer_adv_stats) *
+					ev->num_peer_adv_stats);
+	if (!peer_adv_stats) {
+		qdf_mem_free(ev->peer_adv_stats);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	status = wmi_extract_peer_adv_stats(wmi_hdl, data, peer_adv_stats);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("wmi_extract_peer_stats failed");
+		qdf_mem_free(peer_adv_stats);
+		qdf_mem_free(ev->peer_adv_stats);
+		ev->peer_adv_stats = NULL;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	for (i = 0; i < ev->num_peer_adv_stats; i++) {
+		qdf_mem_copy(&ev->peer_adv_stats[i].peer_macaddr,
+			     &peer_adv_stats[i].peer_macaddr,
+			     WLAN_MACADDR_LEN);
+		ev->peer_adv_stats[i].fcs_count = peer_adv_stats[i].fcs_count;
+		ev->peer_adv_stats[i].rx_bytes = peer_adv_stats[i].rx_bytes;
+		ev->peer_adv_stats[i].rx_count = peer_adv_stats[i].rx_count;
+	}
+	qdf_mem_free(peer_adv_stats);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -280,6 +319,7 @@ static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 		       stats_param.num_pdev_stats, stats_param.num_vdev_stats,
 		       stats_param.num_peer_stats, stats_param.num_rssi_stats);
 
+	ev->last_event = stats_param.last_event;
 	status = target_if_cp_stats_extract_pdev_stats(wmi_hdl, &stats_param,
 						       ev, data);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -506,6 +546,7 @@ static uint32_t get_stats_id(enum stats_req_type type)
 			WMI_REQUEST_PEER_STAT |
 			WMI_REQUEST_VDEV_STAT |
 			WMI_REQUEST_PDEV_STAT |
+			WMI_REQUEST_PEER_EXTD2_STAT |
 			WMI_REQUEST_RSSI_PER_CHAIN_STAT);
 	}
 

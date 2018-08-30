@@ -85,11 +85,20 @@ QDF_STATUS wlan_cp_stats_peer_cs_init(struct peer_cp_stats *peer_cs)
 	if (!peer_cs->peer_stats)
 		return QDF_STATUS_E_NOMEM;
 
+	peer_cs->peer_adv_stats = qdf_mem_malloc(sizeof
+						 (struct peer_adv_mc_cp_stats));
+	if (!peer_cs->peer_adv_stats) {
+		cp_stats_err("malloc failed");
+		qdf_mem_free(peer_cs->peer_stats);
+		return QDF_STATUS_E_NOMEM;
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_cp_stats_peer_cs_deinit(struct peer_cp_stats *peer_cs)
 {
+	qdf_mem_free(peer_cs->peer_adv_stats);
+	peer_cs->peer_adv_stats = NULL;
 	qdf_mem_free(peer_cs->peer_stats);
 	peer_cs->peer_stats = NULL;
 	return QDF_STATUS_SUCCESS;
@@ -554,6 +563,7 @@ void ucfg_mc_cp_stats_free_stats_resources(struct stats_event *ev)
 		return;
 
 	qdf_mem_free(ev->pdev_stats);
+	qdf_mem_free(ev->peer_adv_stats);
 	qdf_mem_free(ev->peer_stats);
 	qdf_mem_free(ev->cca_stats);
 	qdf_mem_free(ev->vdev_summary_stats);

@@ -213,6 +213,54 @@ end:
 }
 
 static QDF_STATUS
+tgt_mc_cp_stats_update_peer_adv_stats(struct wlan_objmgr_psoc *psoc,
+				      struct peer_adv_mc_cp_stats
+				      *peer_adv_stats, uint32_t size)
+{
+	uint8_t *peer_mac_addr;
+	struct wlan_objmgr_peer *peer;
+	struct peer_adv_mc_cp_stats *peer_adv_mc_stats;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct peer_cp_stats *peer_cp_stats_priv;
+
+	if (!peer_adv_stats)
+		return QDF_STATUS_E_INVAL;
+
+	peer_mac_addr = peer_adv_stats->peer_macaddr;
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac_addr,
+					   WLAN_CP_STATS_ID);
+	if (!peer) {
+		cp_stats_err("peer is null");
+		return QDF_STATUS_E_EXISTS;
+	}
+	peer_cp_stats_priv = wlan_cp_stats_get_peer_stats_obj(peer);
+	if (!peer_cp_stats_priv) {
+		cp_stats_err("peer_cp_stats_priv is null");
+		status = QDF_STATUS_E_EXISTS;
+		goto end;
+	}
+	wlan_cp_stats_peer_obj_lock(peer_cp_stats_priv);
+	peer_adv_mc_stats = peer_cp_stats_priv->peer_adv_stats;
+
+	qdf_mem_copy(peer_adv_mc_stats->peer_macaddr,
+		     peer_adv_stats->peer_macaddr,
+		     WLAN_MACADDR_LEN);
+	if (peer_adv_stats->fcs_count)
+		peer_adv_mc_stats->fcs_count = peer_adv_stats->fcs_count;
+	if (peer_adv_stats->rx_bytes)
+		peer_adv_mc_stats->rx_bytes = peer_adv_stats->rx_bytes;
+	if (peer_adv_stats->rx_count)
+		peer_adv_mc_stats->rx_count = peer_adv_stats->rx_count;
+	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
+
+end:
+	if (peer)
+		wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
+
+	return status;
+}
+
+static QDF_STATUS
 tgt_mc_cp_stats_update_peer_stats(struct wlan_objmgr_psoc *psoc,
 				  struct peer_mc_cp_stats *peer_stats)
 {
@@ -273,10 +321,6 @@ static void tgt_mc_cp_stats_extract_peer_stats(struct wlan_objmgr_psoc *psoc,
 	struct request_info last_req = {0};
 	uint32_t selected;
 
-	if (!ev->peer_stats) {
-		cp_stats_err("no peer stats");
-		return;
-	}
 
 	if (is_station_stats)
 		status = ucfg_mc_cp_stats_get_pending_req(psoc,
@@ -290,6 +334,11 @@ static void tgt_mc_cp_stats_extract_peer_stats(struct wlan_objmgr_psoc *psoc,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cp_stats_err("ucfg_mc_cp_stats_get_pending_req failed");
 		return;
+	}
+
+	if (!ev->peer_stats) {
+		cp_stats_debug("no peer stats");
+		goto extd2_stats;
 	}
 
 	selected = ev->num_peer_stats;
@@ -311,10 +360,40 @@ static void tgt_mc_cp_stats_extract_peer_stats(struct wlan_objmgr_psoc *psoc,
 	/* no matched peer */
 	if (!QDF_IS_ADDR_BROADCAST(last_req.peer_mac_addr) &&
 	    selected == ev->num_peer_stats) {
-		cp_stats_err("peer not found stats");
+		cp_stats_err("peer not found for stats");
+	}
+
+extd2_stats:
+
+	if (!ev->peer_adv_stats) {
+		cp_stats_err("no peer_extd2 stats");
+		goto complete;
+	}
+	selected = ev->num_peer_adv_stats;
+	for (i = 0; i < ev->num_peer_adv_stats; i++) {
+		status = tgt_mc_cp_stats_update_peer_adv_stats(
+						psoc, &ev->peer_adv_stats[i],
+						ev->num_peer_adv_stats);
+		if (!QDF_IS_ADDR_BROADCAST(last_req.peer_mac_addr) &&
+		    !qdf_mem_cmp(ev->peer_adv_stats[i].peer_macaddr,
+				 last_req.peer_mac_addr,
+				 WLAN_MACADDR_LEN)) {
+			/* mac is specified, but failed to update the peer */
+			if (QDF_IS_STATUS_ERROR(status))
+				return;
+
+			selected = i;
+		}
+	}
+
+	/* no matched peer */
+	if (!QDF_IS_ADDR_BROADCAST(last_req.peer_mac_addr) &&
+	    selected == ev->num_peer_adv_stats) {
+		cp_stats_err("peer not found for extd stats");
 		return;
 	}
 
+complete:
 	if (is_station_stats)
 		return;
 
@@ -563,6 +642,10 @@ tgt_mc_cp_stats_prepare_n_send_raw_station_stats(struct wlan_objmgr_psoc *psoc,
 	info.tx_rate_flags = vdev_mc_stats->tx_rate_flags;
 	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
 
+	info.peer_adv_stats = qdf_mem_malloc(sizeof(*info.peer_adv_stats));
+	if (!info.peer_adv_stats)
+		goto end;
+
 	wlan_cp_stats_peer_obj_lock(peer_cp_stats_priv);
 	peer_mc_stats = peer_cp_stats_priv->peer_stats;
 	/*
@@ -571,6 +654,14 @@ tgt_mc_cp_stats_prepare_n_send_raw_station_stats(struct wlan_objmgr_psoc *psoc,
 	 */
 	info.tx_rate = peer_mc_stats->tx_rate / 100;
 	info.rx_rate = peer_mc_stats->rx_rate / 100;
+
+	if (peer_cp_stats_priv->peer_adv_stats) {
+		info.num_peer_adv_stats = 1;
+		qdf_mem_copy(info.peer_adv_stats,
+			     peer_cp_stats_priv->peer_adv_stats,
+			     sizeof(peer_cp_stats_priv->peer_adv_stats));
+	}
+
 	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
 
 end:
@@ -590,10 +681,14 @@ static void tgt_mc_cp_stats_extract_station_stats(
 				struct stats_event *ev)
 {
 	QDF_STATUS status;
-	bool is_peer_stats;
+	bool is_last_event;
 	struct request_info last_req = {0};
 
-	is_peer_stats = (ev->peer_stats != NULL);
+	if (IS_MSB_SET(ev->last_event))
+		is_last_event = IS_LSB_SET(ev->last_event);
+	else
+		is_last_event = !!ev->peer_stats;
+
 	status = ucfg_mc_cp_stats_get_pending_req(psoc,
 						  TYPE_STATION_STATS,
 						  &last_req);
@@ -611,7 +706,7 @@ static void tgt_mc_cp_stats_extract_station_stats(
 	 * PEER stats are the last stats sent for get_station statistics.
 	 * reset type_map bit for station stats .
 	 */
-	if (is_peer_stats) {
+	if (is_last_event) {
 		tgt_mc_cp_stats_prepare_n_send_raw_station_stats(psoc,
 								 &last_req);
 		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_STATION_STATS);

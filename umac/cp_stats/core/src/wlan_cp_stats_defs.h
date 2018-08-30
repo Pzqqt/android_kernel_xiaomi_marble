@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -87,12 +87,14 @@ struct vdev_cp_stats {
  * struct peer_cp_stats - defines cp stats at peer object
  * @peer_obj: pointer to peer
  * @peer_stats: pointer to ic/mc specific stats
+ * @peer_adv_stats: pointer to peer adv stats
  * @peer_comp_priv_obj[]: component's private object pointers
  * @peer_cp_stats_lock:	lock to protect object
  */
 struct peer_cp_stats {
 	struct wlan_objmgr_peer  *peer_obj;
 	void                     *peer_stats;
+	void                     *peer_adv_stats;
 	void *peer_comp_priv_obj[WLAN_CP_STATS_MAX_COMPONENTS];
 	qdf_spinlock_t peer_cp_stats_lock;
 };

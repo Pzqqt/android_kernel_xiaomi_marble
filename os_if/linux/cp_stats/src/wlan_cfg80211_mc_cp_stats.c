@@ -51,6 +51,7 @@ static void wlan_cfg80211_mc_cp_stats_dealloc(void *priv)
 	qdf_mem_free(stats->cca_stats);
 	qdf_mem_free(stats->vdev_summary_stats);
 	qdf_mem_free(stats->vdev_chain_rssi);
+	qdf_mem_free(stats->peer_adv_stats);
 }
 
 /**
@@ -419,7 +420,7 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 {
 	struct stats_event *priv;
 	struct osif_request *request;
-	uint32_t summary_size, rssi_size;
+	uint32_t summary_size, rssi_size, peer_adv_size;
 
 	request = osif_request_get(cookie);
 	if (!request) {
@@ -430,8 +431,10 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 	priv = osif_request_priv(request);
 	summary_size = sizeof(*ev->vdev_summary_stats) * ev->num_summary_stats;
 	rssi_size = sizeof(*ev->vdev_chain_rssi) * ev->num_chain_rssi_stats;
+	peer_adv_size = sizeof(*ev->peer_adv_stats) * ev->num_peer_adv_stats;
+
 	if (summary_size == 0 || rssi_size == 0) {
-		cfg80211_err("Invalid stats, summary size %d rssi size %d",
+		cfg80211_err("Invalid stats, summary %d rssi %d",
 			     summary_size, rssi_size);
 		goto station_stats_cb_fail;
 	}
@@ -444,11 +447,21 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 	if (!priv->vdev_chain_rssi)
 		goto station_stats_cb_fail;
 
+	if (peer_adv_size) {
+		priv->peer_adv_stats = qdf_mem_malloc(peer_adv_size);
+		if (!priv->peer_adv_stats)
+			goto station_stats_cb_fail;
+
+		qdf_mem_copy(priv->peer_adv_stats, ev->peer_adv_stats,
+			     peer_adv_size);
+	}
+
 	priv->num_summary_stats = ev->num_summary_stats;
 	priv->num_chain_rssi_stats = ev->num_chain_rssi_stats;
 	priv->tx_rate = ev->tx_rate;
 	priv->rx_rate = ev->rx_rate;
 	priv->tx_rate_flags = ev->tx_rate_flags;
+	priv->num_peer_adv_stats = ev->num_peer_adv_stats;
 	qdf_mem_copy(priv->vdev_chain_rssi, ev->vdev_chain_rssi, rssi_size);
 	qdf_mem_copy(priv->vdev_summary_stats, ev->vdev_summary_stats,
 		     summary_size);
@@ -517,7 +530,8 @@ wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 
 	if (!priv->vdev_summary_stats || !priv->vdev_chain_rssi ||
 	    priv->num_summary_stats == 0 || priv->num_chain_rssi_stats == 0) {
-		cfg80211_err("Invalid stats, summary %d:%pK, rssi %d:%pK",
+		cfg80211_err("Invalid stats");
+		cfg80211_err("summary %d:%pK, rssi %d:%pK",
 			     priv->num_summary_stats, priv->vdev_summary_stats,
 			     priv->num_chain_rssi_stats, priv->vdev_chain_rssi);
 		*errno = -EINVAL;
@@ -533,6 +547,10 @@ wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 	priv->vdev_summary_stats = NULL;
 	out->vdev_chain_rssi = priv->vdev_chain_rssi;
 	priv->vdev_chain_rssi = NULL;
+	out->num_peer_adv_stats = priv->num_peer_adv_stats;
+	if (priv->peer_adv_stats)
+		out->peer_adv_stats = priv->peer_adv_stats;
+	priv->peer_adv_stats = NULL;
 	osif_request_put(request);
 
 	return out;
@@ -554,5 +572,6 @@ void wlan_cfg80211_mc_cp_stats_free_stats_event(struct stats_event *stats)
 	qdf_mem_free(stats->cca_stats);
 	qdf_mem_free(stats->vdev_summary_stats);
 	qdf_mem_free(stats->vdev_chain_rssi);
+	qdf_mem_free(stats->peer_adv_stats);
 	qdf_mem_free(stats);
 }
