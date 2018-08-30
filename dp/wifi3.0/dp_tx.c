@@ -2859,6 +2859,12 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	struct ether_header *eh =
 		(struct ether_header *)qdf_nbuf_data(tx_desc->nbuf);
 
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				"invalid vdev");
+		goto out;
+	}
+
 	hal_tx_comp_get_status(&tx_desc->comp, &ts, vdev->pdev->soc->hal_soc);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -2889,12 +2895,6 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 				ts.mcs, ts.ofdma, ts.tones_in_ru, ts.tsf,
 				ts.ppdu_id, ts.transmit_cnt, ts.tid,
 				ts.peer_id);
-
-	if (!vdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"invalid vdev");
-		goto out;
-	}
 
 	soc = vdev->pdev->soc;
 
