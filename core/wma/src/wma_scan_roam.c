@@ -1432,8 +1432,9 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		qdf_mem_free(roam_req);
 		return QDF_STATUS_E_PERM;
 	}
-	WMA_LOGD("%s: RSO Command:%d, reason:%d session ID %d", __func__,
-		 roam_req->Command, roam_req->reason, roam_req->sessionId);
+	WMA_LOGD("%s: RSO Command:%d, reason:%d session ID %d en %d", __func__,
+		 roam_req->Command, roam_req->reason, roam_req->sessionId,
+		 roam_req->RoamScanOffloadEnabled);
 	wma_handle->interfaces[roam_req->sessionId].roaming_in_progress = false;
 	switch (roam_req->Command) {
 	case ROAM_SCAN_OFFLOAD_START:
@@ -1713,18 +1714,18 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 
 	case ROAM_SCAN_OFFLOAD_UPDATE_CFG:
 		wma_handle->suitable_ap_hb_failure = false;
-		wma_roam_scan_fill_scan_params(wma_handle, pMac, roam_req,
-					       &scan_params);
-		qdf_status =
-			wma_roam_scan_offload_mode(wma_handle, &scan_params,
-						   roam_req,
-						   WMI_ROAM_SCAN_MODE_NONE,
-						   roam_req->sessionId);
-		if (qdf_status != QDF_STATUS_SUCCESS)
-			break;
 
-		if (roam_req->RoamScanOffloadEnabled == false)
-			break;
+		if (roam_req->RoamScanOffloadEnabled) {
+			wma_roam_scan_fill_scan_params(wma_handle, pMac,
+						       roam_req, &scan_params);
+			qdf_status =
+				wma_roam_scan_offload_mode(
+					wma_handle, &scan_params, roam_req,
+					WMI_ROAM_SCAN_MODE_NONE,
+					roam_req->sessionId);
+			if (qdf_status != QDF_STATUS_SUCCESS)
+				break;
+		}
 
 		qdf_status = wma_roam_scan_bmiss_cnt(wma_handle,
 					     roam_req->RoamBmissFirstBcnt,
@@ -1795,6 +1796,9 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		qdf_status = wma_roam_scan_offload_ap_profile(wma_handle,
 					roam_req);
 		if (qdf_status != QDF_STATUS_SUCCESS)
+			break;
+
+		if (!roam_req->RoamScanOffloadEnabled)
 			break;
 
 		wma_roam_scan_fill_scan_params(wma_handle, pMac, roam_req,

@@ -18795,6 +18795,9 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		else
 			csr_roam_reset_roam_params(mac_ctx);
 		req_buf->RoamScanOffloadEnabled = 0;
+	} else if (command == ROAM_SCAN_OFFLOAD_UPDATE_CFG) {
+		req_buf->RoamScanOffloadEnabled =
+			roam_info->b_roam_scan_offload_started;
 	} else {
 		req_buf->RoamScanOffloadEnabled =
 			mac_ctx->roam.configParam.isRoamOffloadScanEnabled;
