@@ -173,21 +173,37 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
 #define NUM_CPUS 1
 #endif
 
-/**event flags registered net device*/
-#define NET_DEVICE_REGISTERED  (0)
-#define SME_SESSION_OPENED     (1)
-#define INIT_TX_RX_SUCCESS     (2)
-#define WMM_INIT_DONE          (3)
-#define SOFTAP_BSS_STARTED     (4)
-#define DEVICE_IFACE_OPENED    (5)
-#define ACS_PENDING            (7)
-#define SOFTAP_INIT_DONE       (8)
+/**
+ * enum hdd_adapter_flags - event bitmap flags registered net device
+ * @NET_DEVICE_REGISTERED: Adapter is registered with the kernel
+ * @SME_SESSION_OPENED: Firmware vdev has been created
+ * @INIT_TX_RX_SUCCESS: Adapter datapath is initialized
+ * @WMM_INIT_DONE: Adapter is initialized
+ * @SOFTAP_BSS_STARTED: Software Access Point (SAP) is running
+ * @DEVICE_IFACE_OPENED: Adapter has been "opened" via the kernel
+ * @ACS_PENDING: Auto Channel Selection (ACS) is pending
+ * @SOFTAP_INIT_DONE: Software Access Point (SAP) is initialized
+ * @VENDOR_ACS_RESPONSE_PENDING: Waiting for event for vendor acs
+ */
+enum hdd_adapter_flags {
+	NET_DEVICE_REGISTERED,
+	SME_SESSION_OPENED,
+	INIT_TX_RX_SUCCESS,
+	WMM_INIT_DONE,
+	SOFTAP_BSS_STARTED,
+	DEVICE_IFACE_OPENED,
+	ACS_PENDING,
+	SOFTAP_INIT_DONE,
+	VENDOR_ACS_RESPONSE_PENDING,
+};
 
-/* Waiting for event for vendor acs */
-#define VENDOR_ACS_RESPONSE_PENDING   (8)
-
-/* HDD global event flags */
-#define ACS_IN_PROGRESS        (0)
+/**
+ * enum hdd_driver_flags - HDD global event bitmap flags
+ * @ACS_IN_PROGRESS: Auto Channel Selection (ACS) in progress
+ */
+enum hdd_driver_flags {
+	ACS_IN_PROGRESS,
+};
 
 /** Maximum time(ms)to wait for disconnect to complete **/
 /*  This value should be larger than the timeout used by WMA to wait for
@@ -1204,6 +1220,10 @@ struct rcpi_info {
 
 struct hdd_context;
 
+/**
+ * struct hdd_adapter - hdd vdev/net_device context
+ * @event_flags: a bitmap of hdd_adapter_flags
+ */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
 	 * needs to be at the beginning of the private data structure so
@@ -1251,8 +1271,6 @@ struct hdd_adapter {
 #endif
 	bool disconnection_in_progress;
 	qdf_mutex_t disconnection_status_lock;
-
-	/**Event Flags*/
 	unsigned long event_flags;
 
 	/**Device TX/RX statistics*/
@@ -1676,7 +1694,10 @@ struct hdd_cache_channels {
 };
 #endif
 
-/** Adapter structure definition */
+/**
+ * struct hdd_context - hdd shared driver and psoc/device context
+ * @g_event_flags: a bitmap of hdd_driver_flags
+ */
 struct hdd_context {
 	struct wlan_objmgr_psoc *hdd_psoc;
 	struct wlan_objmgr_pdev *hdd_pdev;
