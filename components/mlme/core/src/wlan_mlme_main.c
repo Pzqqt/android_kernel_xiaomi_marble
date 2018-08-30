@@ -137,6 +137,33 @@ static void mlme_update_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 	*ht_cap_info = u.default_ht_cap_info;
 }
 
+static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_qos *qos_aggr_params)
+{
+	qos_aggr_params->tx_aggregation_size =
+				cfg_get(psoc, CFG_TX_AGGREGATION_SIZE);
+	qos_aggr_params->tx_aggregation_size_be =
+				cfg_get(psoc, CFG_TX_AGGREGATION_SIZEBE);
+	qos_aggr_params->tx_aggregation_size_bk =
+				cfg_get(psoc, CFG_TX_AGGREGATION_SIZEBK);
+	qos_aggr_params->tx_aggregation_size_vi =
+				cfg_get(psoc, CFG_TX_AGGREGATION_SIZEVI);
+	qos_aggr_params->tx_aggregation_size_vo =
+				cfg_get(psoc, CFG_TX_AGGREGATION_SIZEVO);
+	qos_aggr_params->rx_aggregation_size =
+				cfg_get(psoc, CFG_RX_AGGREGATION_SIZE);
+	qos_aggr_params->tx_aggr_sw_retry_threshold_be =
+				cfg_get(psoc, CFG_TX_AGGR_SW_RETRY_BE);
+	qos_aggr_params->tx_aggr_sw_retry_threshold_bk =
+				cfg_get(psoc, CFG_TX_AGGR_SW_RETRY_BK);
+	qos_aggr_params->tx_aggr_sw_retry_threshold_vi =
+				cfg_get(psoc, CFG_TX_AGGR_SW_RETRY_VI);
+	qos_aggr_params->tx_aggr_sw_retry_threshold_vo =
+				cfg_get(psoc, CFG_TX_AGGR_SW_RETRY_VO);
+	qos_aggr_params->sap_max_inactivity_override =
+				cfg_get(psoc, CFG_SAP_MAX_INACTIVITY_OVERRIDE);
+}
+
 static void mlme_update_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
 				     struct wlan_mlme_rates *rates)
 {
@@ -231,6 +258,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 
 	mlme_cfg = &mlme_obj->cfg;
 	mlme_update_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps.ht_cap_info);
+	mlme_init_qos_cfg(psoc, &mlme_cfg->qos_mlme_params);
 	mlme_update_rates_in_cfg(psoc, &mlme_cfg->rates);
 	mlme_update_sap_protection_cfg(psoc, &mlme_cfg->sap_protection_cfg);
 	mlme_init_chainmask_cfg(psoc, &mlme_cfg->chainmask_cfg);
