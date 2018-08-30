@@ -315,7 +315,13 @@ qdf_export_symbol(qdf_wake_lock_acquire);
  * QDF status success: if wake lock is acquired
  * QDF status failure: if wake lock was not acquired
  */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+QDF_STATUS qdf_wake_lock_timeout_acquire(qdf_wake_lock_t *lock, uint32_t msec)
+{
+	pm_wakeup_ws_event(lock, msec, true);
+	return QDF_STATUS_SUCCESS;
+}
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 QDF_STATUS qdf_wake_lock_timeout_acquire(qdf_wake_lock_t *lock, uint32_t msec)
 {
 	/* Wakelock for Rx is frequent.
@@ -324,12 +330,12 @@ QDF_STATUS qdf_wake_lock_timeout_acquire(qdf_wake_lock_t *lock, uint32_t msec)
 	__pm_wakeup_event(lock, msec);
 	return QDF_STATUS_SUCCESS;
 }
-#else
+#else /* LINUX_VERSION_CODE */
 QDF_STATUS qdf_wake_lock_timeout_acquire(qdf_wake_lock_t *lock, uint32_t msec)
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif
+#endif /* LINUX_VERSION_CODE */
 qdf_export_symbol(qdf_wake_lock_timeout_acquire);
 
 /**
