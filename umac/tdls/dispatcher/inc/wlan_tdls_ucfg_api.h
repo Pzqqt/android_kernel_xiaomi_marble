@@ -222,4 +222,33 @@ void ucfg_tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS ucfg_tdls_antenna_switch(struct wlan_objmgr_vdev *vdev,
 				    uint32_t mode);
 
+/**
+ * ucfg_set_tdls_offchannel() - Handle TDLS set offchannel
+ * @vdev: vdev object
+ * @offchannel: updated offchannel
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_set_tdls_offchannel(struct wlan_objmgr_vdev *vdev,
+				    int offchannel);
+
+/**
+ * ucfg_set_tdls_offchan_mode() - Handle TDLS set offchannel mode
+ * @vdev: vdev object
+ * @offchanmode: updated off-channel mode
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_set_tdls_offchan_mode(struct wlan_objmgr_vdev *vdev,
+				      int offchanmode);
+
+/**
+ * ucfg_set_tdls_secoffchanneloffset() - Handle TDLS set offchannel offset
+ * @vdev: vdev object
+ * @offchanoffset: tdls off-channel offset
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_set_tdls_secoffchanneloffset(struct wlan_objmgr_vdev *vdev,
+					     int offchanoffset);
 #endif

@@ -383,4 +383,38 @@ int tdls_set_responder(struct tdls_set_responder_req *set_req);
  */
 void tdls_decrement_peer_count(struct tdls_soc_priv_obj *soc_obj);
 
+/**
+ * wlan_tdls_offchan_parms_callback() - Callback to release ref count
+ * @vdev: vdev object
+ *
+ * Return: none
+ */
+void wlan_tdls_offchan_parms_callback(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * tdls_process_set_offchannel() - Handle set offchannel request for TDLS
+ * @req: TDLS set offchannel request
+ *
+ * Return: int status
+ */
+int tdls_process_set_offchannel(struct tdls_set_offchannel *req);
+
+/**
+ * tdls_process_set_offchan_mode() - Handle set offchan mode request for TDLS
+ * @req: TDLS set offchannel mode request
+ *
+ * Return: int status
+ */
+int tdls_process_set_offchan_mode(struct tdls_set_offchanmode *req);
+
+/**
+ * tdls_process_set_secoffchanneloffset() - Handle set sec offchannel
+ * offset request for TDLS
+ * @req: TDLS set secoffchannel offchannel request
+ *
+ * Return: int status
+ */
+int tdls_process_set_secoffchanneloffset(
+		struct tdls_set_secoffchanneloffset *req);
+
 #endif

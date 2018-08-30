@@ -190,6 +190,9 @@ enum tdls_feature_mode {
  * @TDLS_NOTIFY_RESET_ADAPTERS: notify adapter reset
  * @TDLS_CMD_GET_ALL_PEERS: get all the tdls peers from the list
  * @TDLS_CMD_ANTENNA_SWITCH: dynamic tdls antenna switch
+ * @TDLS_CMD_SET_OFFCHANNEL: tdls offchannel
+ * @TDLS_CMD_SET_OFFCHANMODE: tdls offchannel mode
+ * @TDLS_CMD_SET_SECOFFCHANOFFSET: tdls secondary offchannel offset
  */
 enum tdls_command_type {
 	TDLS_CMD_TX_ACTION = 1,
@@ -211,7 +214,10 @@ enum tdls_command_type {
 	TDLS_CMD_TEARDOWN_LINKS,
 	TDLS_NOTIFY_RESET_ADAPTERS,
 	TDLS_CMD_GET_ALL_PEERS,
-	TDLS_CMD_ANTENNA_SWITCH
+	TDLS_CMD_ANTENNA_SWITCH,
+	TDLS_CMD_SET_OFFCHANNEL,
+	TDLS_CMD_SET_OFFCHANMODE,
+	TDLS_CMD_SET_SECOFFCHANOFFSET
 };
 
 /**
@@ -581,6 +587,9 @@ typedef QDF_STATUS
 
 /* This callback is to release vdev ref for tdls sta notify msg */
 typedef void (*tdls_sta_notify_callback)(struct wlan_objmgr_vdev *vdev);
+
+/* This callback is to release vdev ref for tdls offchan param related msg */
+typedef void (*tdls_offchan_parms_callback)(struct wlan_objmgr_vdev *vdev);
 
 /**
  * struct tdls_start_params - tdls start params
@@ -1098,4 +1107,35 @@ struct tdls_antenna_switch_request {
 	struct wlan_objmgr_vdev *vdev;
 	uint32_t mode;
 };
+
+/**
+ * struct tdls_set_offchannel - TDLS set offchannel
+ * @offchannel: Updated tdls offchannel value.
+ */
+struct tdls_set_offchannel {
+	struct wlan_objmgr_vdev *vdev;
+	uint16_t offchannel;
+	tdls_offchan_parms_callback callback;
+};
+
+/**
+ * struct tdls_set_offchan_mode - TDLS set offchannel mode
+ * @offchan_mode: Updated tdls offchannel mode value.
+ */
+struct tdls_set_offchanmode {
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t offchan_mode;
+	tdls_offchan_parms_callback callback;
+};
+
+/**
+ * struct tdls_set_offchan_offset - TDLS set offchannel mode
+ * @offchan_offset: Offchan offset value.
+ */
+struct tdls_set_secoffchanneloffset {
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t offchan_offset;
+	tdls_offchan_parms_callback callback;
+};
+
 #endif
