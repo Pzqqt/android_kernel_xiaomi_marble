@@ -48,7 +48,7 @@ uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
 				  tDot11fIERSN * const rx_rsn_ie,
 				  tpPESession session_entry, uint8_t sta_is_ht,
 				  bool *pmf_connection);
-uint8_t lim_check_rx_wpa_ie_match(tpAniSirGlobal, tDot11fIEWPA, tpPESession,
+uint8_t lim_check_rx_wpa_ie_match(tpAniSirGlobal, tDot11fIEWPA *, tpPESession,
 				  uint8_t);
 uint8_t lim_check_mcs_set(tpAniSirGlobal pMac, uint8_t *supportedMCSSet);
 void limPostDummyToTmRing(tpAniSirGlobal, tpDphHashNode);

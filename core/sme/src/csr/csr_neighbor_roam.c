@@ -643,6 +643,7 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal pMac,
  * @pCurProfile: pointer to current roam profile
  * @pBssDesc: pointer to bss description
  * @pIes: pointer to local ies
+ * @session_id: Session ID
  *
  * This routine will be called to see if SSID and security parameters
  * are matching.
@@ -651,7 +652,8 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal pMac,
  */
 static bool csr_neighbor_roam_is_ssid_and_security_match(tpAniSirGlobal pMac,
 		tCsrRoamConnectedProfile *pCurProfile,
-		tSirBssDescription *pBssDesc, tDot11fBeaconIEs *pIes)
+		tSirBssDescription *pBssDesc, tDot11fBeaconIEs *pIes,
+		uint8_t session_id)
 {
 	tCsrAuthList authType;
 	tCsrEncryptionList uCEncryptionType;
@@ -693,13 +695,13 @@ static bool csr_neighbor_roam_is_ssid_and_security_match(tpAniSirGlobal pMac,
 				&pCurProfile->MFPEnabled,
 				&pCurProfile->MFPRequired,
 				&pCurProfile->MFPCapable,
-				pBssDesc, pIes, NULL, NULL, NULL);
+				pBssDesc, pIes, session_id);
 #else
 		fMatch = csr_is_security_match(pMac, &authType,
 				&uCEncryptionType,
 				&mCEncryptionType, NULL,
 				NULL, NULL, pBssDesc,
-				pIes, NULL, NULL, NULL);
+				pIes, session_id);
 #endif
 		return fMatch;
 	} else {
@@ -735,7 +737,7 @@ bool csr_neighbor_roam_is_new_connected_profile(tpAniSirGlobal pMac,
 		if (QDF_IS_STATUS_SUCCESS(
 		    csr_get_parsed_bss_description_ies(pMac, pBssDesc, &pIes))
 		    && csr_neighbor_roam_is_ssid_and_security_match(pMac,
-					pCurrProfile, pBssDesc, pIes)) {
+				pCurrProfile, pBssDesc, pIes, sessionId)) {
 			fNew = false;
 		}
 		if (pIes)
@@ -765,7 +767,8 @@ bool csr_neighbor_roam_connected_profile_match(tpAniSirGlobal pMac,
 		return false;
 
 	return csr_neighbor_roam_is_ssid_and_security_match(pMac, pCurProfile,
-							    pBssDesc, pIes);
+							    pBssDesc, pIes,
+							    sessionId);
 }
 
 /**

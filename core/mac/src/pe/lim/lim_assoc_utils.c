@@ -301,6 +301,7 @@ uint8_t lim_check_mcs_set(tpAniSirGlobal pMac, uint8_t *supportedMCSSet)
 #define SECURITY_SUITE_TYPE_GCMP 0x8
 #define SECURITY_SUITE_TYPE_GCMP_256 0x9
 
+#ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
 /**
  * is_non_rsn_cipher()- API to check whether cipher suit is rsn or not
  * @cipher_suite: cipher suit
@@ -356,7 +357,7 @@ uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
 
 	if (!rx_rsn_ie) {
 		pe_debug("Rx RSN IE is NULL");
-		return QDF_STATUS_E_FAILURE;
+		return eSIR_MAC_UNSPEC_FAILURE_STATUS;
 	}
 
 	/* Check groupwise cipher suite */
@@ -435,7 +436,7 @@ uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
 		they_require_pmf, *pmf_connection);
 #endif
 
-	return QDF_STATUS_SUCCESS;
+	return eSIR_MAC_SUCCESS_STATUS;
 }
 
 /**
@@ -455,7 +456,7 @@ uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
  */
 
 uint8_t
-lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA rx_wpaie,
+lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA *rx_wpaie,
 			  tpPESession session_entry, uint8_t sta_is_ht)
 {
 	tDot11fIEWPA *wpa_ie;
@@ -466,7 +467,8 @@ lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA rx_wpaie,
 
 	/* Check groupwise cipher suite */
 	for (i = 0; i < 4; i++) {
-		if (wpa_ie->multicast_cipher[i] != rx_wpaie.multicast_cipher[i]) {
+		if (wpa_ie->multicast_cipher[i] !=
+				rx_wpaie->multicast_cipher[i]) {
 			pe_debug("Invalid groupwise cipher suite");
 			return eSIR_MAC_INVALID_GROUP_CIPHER_STATUS;
 		}
@@ -477,9 +479,9 @@ lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA rx_wpaie,
 	 * received pairwise
 	 */
 	match = 0;
-	for (i = 0; i < rx_wpaie.unicast_cipher_count; i++) {
+	for (i = 0; i < rx_wpaie->unicast_cipher_count; i++) {
 		for (j = 0; j < wpa_ie->unicast_cipher_count; j++) {
-			if (!qdf_mem_cmp(rx_wpaie.unicast_ciphers[i],
+			if (!qdf_mem_cmp(rx_wpaie->unicast_ciphers[i],
 					    wpa_ie->unicast_ciphers[j], 4)) {
 				match = 1;
 				break;
@@ -489,12 +491,12 @@ lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA rx_wpaie,
 		if ((sta_is_ht)
 #ifdef ANI_LITTLE_BYTE_ENDIAN
 		    &&
-		    ((rx_wpaie.
+		    ((rx_wpaie->
 		      unicast_ciphers[i][3] & SECURITY_SUITE_TYPE_MASK) ==
 		     SECURITY_SUITE_TYPE_CCMP))
 #else
 		    &&
-		    ((rx_wpaie.
+		    ((rx_wpaie->
 		      unicast_ciphers[i][0] & SECURITY_SUITE_TYPE_MASK) ==
 		     SECURITY_SUITE_TYPE_CCMP))
 #endif
@@ -509,8 +511,9 @@ lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA rx_wpaie,
 		return eSIR_MAC_CIPHER_SUITE_REJECTED_STATUS;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return eSIR_MAC_SUCCESS_STATUS;
 }
+#endif
 
 /**
  * lim_cleanup_rx_path()

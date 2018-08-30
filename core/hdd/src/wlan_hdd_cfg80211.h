@@ -125,6 +125,8 @@ struct hdd_context;
 
 #endif
 
+#define HDD_SET_BIT(__param, __val)    ((__param) |= (1 << (__val)))
+
 #define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
 #define MAX_SCAN_SSID 10
 

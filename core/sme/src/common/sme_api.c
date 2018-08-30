@@ -15972,6 +15972,7 @@ void sme_store_pdev(mac_handle_t mac_handle, struct wlan_objmgr_pdev *pdev)
 		return;
 	}
 	wma_store_pdev(wma_handle, pdev);
+	pdev->pdev_nif.pdev_fw_caps |= SUPPORTED_CRYPTO_CAPS;
 }
 
 QDF_STATUS sme_congestion_register_callback(mac_handle_t mac_handle,

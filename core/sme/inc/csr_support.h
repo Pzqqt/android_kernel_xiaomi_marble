@@ -236,7 +236,7 @@ uint8_t csr_construct_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe);
 
-uint8_t csr_construct_wpa_ie(tpAniSirGlobal pMac,
+uint8_t csr_construct_wpa_ie(tpAniSirGlobal pMac, uint8_t session_id,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
@@ -249,7 +249,7 @@ bool csr_is_profile_wapi(struct csr_roam_profile *pProfile);
  * Or else construct one from the BSS Caller allocated memory for pWpaIe and
  * guarrantee it can contain a max length WPA IE
  */
-uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal pMac,
+uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal pMac, uint8_t session_id,
 			    struct csr_roam_profile *pProfile,
 			    tSirBssDescription *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
@@ -291,14 +291,12 @@ tAniEdType csr_translate_encrypt_type_to_ed_type(
  * pIes shall contain IEs from pSirBssDesc.
  * It shall be returned from function csr_get_parsed_bss_description_ies
  */
-bool csr_is_security_match(tpAniSirGlobal mac_ctx, tCsrAuthList *authType,
-		tCsrEncryptionList *pUCEncryptionType,
-		tCsrEncryptionList *pMCEncryptionType, bool *pMFPEnabled,
-		uint8_t *pMFPRequired, uint8_t *pMFPCapable,
-		tSirBssDescription *pSirBssDesc, tDot11fBeaconIEs *pIes,
-		eCsrAuthType *negotiatedAuthtype,
-		eCsrEncryptionType *negotiatedUCCipher,
-		eCsrEncryptionType *negotiatedMCCipher);
+bool csr_is_security_match(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
+			   tCsrEncryptionList *uc_enc_type,
+			   tCsrEncryptionList *mc_enc_type, bool *mfp_enabled,
+			   uint8_t *mfp_required, uint8_t *mfp_capable,
+			   tSirBssDescription *bss_desc,
+			   tDot11fBeaconIEs *ies_ptr, uint8_t session_id);
 bool csr_is_bss_type_match(eCsrRoamBssType bssType1, eCsrRoamBssType bssType2);
 bool csr_is_bss_type_ibss(eCsrRoamBssType bssType);
 bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,

@@ -38,10 +38,12 @@
 #include "lim_admit_control.h"
 #include "cds_packet.h"
 #include "lim_session_utils.h"
+#include "utils_parser.h"
 
 #include "qdf_types.h"
 #include "cds_utils.h"
 #include "wlan_utility.h"
+#include "wlan_crypto_global_api.h"
 
 /**
  * lim_convert_supported_channels - Parses channel support IE
@@ -800,6 +802,92 @@ static void lim_print_ht_cap(tpAniSirGlobal mac_ctx, tpPESession session,
 	}
 }
 
+#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
+static tSirMacStatusCodes lim_check_rsn_ie(tpPESession session,
+					   struct mac_context *mac_ctx,
+					   tpSirAssocReq assoc_req,
+					   tDot11fIERSN *rsn,
+					   bool *pmf_connection)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	uint8_t buffer[SIR_MAC_MAX_IE_LENGTH];
+	uint32_t dot11f_status, written = 0, nbuffer = SIR_MAC_MAX_IE_LENGTH;
+	tSirMacRsnInfo rsn_ie;
+
+	dot11f_status = dot11f_pack_ie_rsn(mac_ctx, rsn, buffer,
+					   nbuffer, &written);
+	if (DOT11F_FAILED(dot11f_status)) {
+		pe_err("Failed to re-pack the RSN IE (0x%0x8)", dot11f_status);
+		return eSIR_MAC_INVALID_IE_STATUS;
+	}
+
+	rsn_ie.length = (uint8_t) written;
+	qdf_mem_copy(&rsn_ie.info[0], buffer, rsn_ie.length);
+	if (wlan_crypto_check_rsn_match(mac_ctx->psoc, session->smeSessionId,
+					&rsn_ie.info[0], rsn_ie.length)) {
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+							session->smeSessionId,
+							WLAN_LEGACY_MAC_ID);
+		if (!vdev) {
+			pe_err("vdev is NULL");
+			return eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		}
+
+		*pmf_connection = wlan_crypto_vdev_is_pmf_enabled(vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+	} else {
+		return eSIR_MAC_INVALID_IE_STATUS;
+	}
+
+	return eSIR_MAC_SUCCESS_STATUS;
+}
+
+static tSirMacStatusCodes lim_check_wpa_ie(tpPESession session,
+					   struct mac_context *mac_ctx,
+					   tpSirAssocReq assoc_req,
+					   tDot11fIEWPA *wpa)
+{
+	uint8_t buffer[SIR_MAC_MAX_IE_LENGTH];
+	uint32_t dot11f_status, written = 0, nbuffer = SIR_MAC_MAX_IE_LENGTH;
+	tSirMacRsnInfo wpa_ie = {0};
+
+	dot11f_status = dot11f_pack_ie_wpa(mac_ctx, wpa, buffer,
+					   nbuffer, &written);
+	if (DOT11F_FAILED(dot11f_status)) {
+		pe_err("Failed to re-pack the RSN IE (0x%0x8)", dot11f_status);
+		return eSIR_MAC_INVALID_IE_STATUS;
+	}
+
+	wpa_ie.length = (uint8_t) written;
+	qdf_mem_copy(&wpa_ie.info[0], buffer, wpa_ie.length);
+	if (wlan_crypto_check_wpa_match(mac_ctx->psoc, session->smeSessionId,
+					&wpa_ie.info[0], wpa_ie.length))
+		return eSIR_MAC_SUCCESS_STATUS;
+
+	return eSIR_MAC_INVALID_IE_STATUS;
+}
+#else
+static tSirMacStatusCodes lim_check_rsn_ie(tpPESession session,
+					   struct mac_context *mac_ctx,
+					   tpSirAssocReq assoc_req,
+					   tDot11fIERSN *rsn,
+					   bool *pmf_connection)
+{
+	return lim_check_rx_rsn_ie_match(mac_ctx, rsn, session,
+					 assoc_req->HTCaps.present,
+					 pmf_connection);
+}
+
+static tSirMacStatusCodes lim_check_wpa_ie(tpPESession session,
+					   struct mac_context *mac_ctx,
+					   tpSirAssocReq assoc_req,
+					   tDot11fIEWPA *wpa)
+{
+	return lim_check_rx_wpa_ie_match(mac_ctx, wpa, session,
+					 assoc_req->HTCaps.present);
+}
+#endif
 /**
   * lim_check_wpa_rsn_ie() - wpa and rsn ie related checks
   * @session: pointer to pe session entry
@@ -821,7 +909,7 @@ static bool lim_check_wpa_rsn_ie(tpPESession session, tpAniSirGlobal mac_ctx,
 	uint32_t ret;
 	tDot11fIEWPA dot11f_ie_wpa = {0};
 	tDot11fIERSN dot11f_ie_rsn = {0};
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tSirMacStatusCodes status = eSIR_MAC_SUCCESS_STATUS;
 
 	/*
 	 * Clear the buffers so that frame parser knows that there isn't a
@@ -863,11 +951,10 @@ static bool lim_check_wpa_rsn_ie(tpPESession session, tpAniSirGlobal mac_ctx,
 		/* Check if the RSN version is supported */
 		if (SIR_MAC_OUI_VERSION_1 == dot11f_ie_rsn.version) {
 			/* check the groupwise and pairwise cipher suites */
-			status = lim_check_rx_rsn_ie_match(mac_ctx,
-					   &dot11f_ie_rsn, session,
-					   assoc_req->HTCaps.present,
-					   pmf_connection);
-			if (QDF_STATUS_SUCCESS != status) {
+			status = lim_check_rsn_ie(session, mac_ctx, assoc_req,
+						  &dot11f_ie_rsn,
+						  pmf_connection);
+			if (eSIR_MAC_SUCCESS_STATUS != status) {
 				pe_warn("Re/Assoc rejected from: "
 					MAC_ADDRESS_STR,
 					MAC_ADDR_ARRAY(hdr->sa));
@@ -880,7 +967,6 @@ static bool lim_check_wpa_rsn_ie(tpPESession session, tpAniSirGlobal mac_ctx,
 		} else {
 			pe_warn("Re/Assoc rejected from: " MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(hdr->sa));
-
 			/*
 			 * rcvd Assoc req frame with RSN IE but
 			 * IE version is wrong
@@ -916,13 +1002,12 @@ static bool lim_check_wpa_rsn_ie(tpPESession session, tpAniSirGlobal mac_ctx,
 		}
 
 		/* check the groupwise and pairwise cipher suites*/
-		status = lim_check_rx_wpa_ie_match(mac_ctx, dot11f_ie_wpa,
-					session, assoc_req->HTCaps.present);
-		if (QDF_STATUS_SUCCESS != status) {
+		status = lim_check_wpa_ie(session, mac_ctx, assoc_req,
+					  &dot11f_ie_wpa);
+		if (eSIR_MAC_SUCCESS_STATUS != status) {
 			pe_warn("Re/Assoc rejected from: "
 				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(hdr->sa));
-
 			/*
 			 * rcvd Assoc req frame with WPA IE
 			 * but there is mismatch
@@ -933,8 +1018,8 @@ static bool lim_check_wpa_rsn_ie(tpPESession session, tpAniSirGlobal mac_ctx,
 		}
 
 	}
-	return true;
 
+	return true;
 }
 
 /**

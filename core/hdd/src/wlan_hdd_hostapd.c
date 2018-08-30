@@ -84,6 +84,7 @@
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include "wlan_mlme_ucfg_api.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_crypto_global_api.h"
 
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
@@ -4555,6 +4556,30 @@ static void wlan_hdd_is_dhcp_enabled(struct hdd_context *hdd_ctx,
 }
 #endif
 
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
+/**
+ * hdd_set_vdev_crypto_prarams_from_ie - Sets vdev crypto params from IE info
+ * @vdev: vdev pointer
+ * @ie_ptr: pointer to IE
+ * @ie_len: IE length
+ *
+ * Return: QDF_STATUS_SUCCESS or error code
+ */
+static QDF_STATUS
+hdd_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
+				    uint8_t *ie_ptr, uint16_t ie_len)
+{
+	return wlan_set_vdev_crypto_prarams_from_ie(vdev, ie_ptr, ie_len);
+}
+#else
+static QDF_STATUS
+hdd_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
+				    uint8_t *ie_ptr, uint16_t ie_len)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * wlan_hdd_cfg80211_start_bss() - start bss
  * @adapter: Pointer to hostapd adapter
@@ -4987,6 +5012,12 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		ret = -EINVAL;
 		goto error;
 	}
+	status = hdd_set_vdev_crypto_prarams_from_ie(adapter->vdev,
+						     pConfig->RSNWPAReqIE,
+						     pConfig->RSNWPAReqIELength
+						     );
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set crypto params from IE");
 
 	pConfig->SSIDinfo.ssidHidden = false;
 

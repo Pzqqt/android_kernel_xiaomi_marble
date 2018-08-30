@@ -317,6 +317,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_CONFIG] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_MLME] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_TARGET] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_CRYPTO] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_FWOL] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_SM_ENGINE] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_CMN_MLME] = {QDF_TRACE_LEVEL_ALL},
@@ -9050,6 +9051,7 @@ static void hdd_set_trace_level_for_each(struct hdd_context *hdd_ctx)
 				hdd_ctx->config->qdf_trace_enable_cp_stats);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_MLME, 0xffff);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_FWOL, 0xffff);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_CRYPTO, 0xffff);
 
 	hdd_set_mtrace_for_each(hdd_ctx);
 

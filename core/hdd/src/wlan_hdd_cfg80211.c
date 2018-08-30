@@ -16243,8 +16243,7 @@ static bool hdd_is_wpaie_present(const uint8_t *ie, uint8_t ie_len)
 	return false;
 }
 
-#ifdef CONFIG_CRYPTO_COMPONENT
-
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 /**
  * hdd_populate_crypto_auth_type() - populate auth type for crypto
  * @vdev: pointed to vdev obmgr
@@ -16258,12 +16257,19 @@ static bool hdd_is_wpaie_present(const uint8_t *ie, uint8_t ie_len)
 static void hdd_populate_crypto_auth_type(struct wlan_objmgr_vdev *vdev,
 					  enum nl80211_auth_type auth_type)
 {
+	QDF_STATUS status;
+	uint32_t set_val = 0;
 	wlan_crypto_auth_mode crypto_auth_type =
 			osif_nl_to_crypto_auth_type(auth_type);
 
-	wlan_crypto_set_vdev_param(vdev,
-				   WLAN_CRYPTO_PARAM_AUTH_MODE,
-				   crypto_auth_type);
+	hdd_debug("set auth type %d to crypto component", crypto_auth_type);
+	HDD_SET_BIT(set_val, crypto_auth_type);
+	status = wlan_crypto_set_vdev_param(vdev,
+					    WLAN_CRYPTO_PARAM_AUTH_MODE,
+					    set_val);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set auth type %0X to crypto component",
+			set_val);
 }
 
 /**
@@ -16279,12 +16285,20 @@ static void hdd_populate_crypto_auth_type(struct wlan_objmgr_vdev *vdev,
 static void hdd_populate_crypto_akm_type(struct wlan_objmgr_vdev *vdev,
 					 u32 key_mgmt)
 {
+	QDF_STATUS status;
+	uint32_t set_val = 0;
 	wlan_crypto_key_mgmt crypto_akm_type =
 			osif_nl_to_crypto_akm_type(key_mgmt);
 
-	wlan_crypto_set_vdev_param(vdev,
-				   WLAN_CRYPTO_PARAM_KEY_MGMT,
-				   crypto_akm_type);
+	hdd_debug("set akm type %d to crypto component", crypto_akm_type);
+	HDD_SET_BIT(set_val, crypto_akm_type);
+
+	status = wlan_crypto_set_vdev_param(vdev,
+					    WLAN_CRYPTO_PARAM_KEY_MGMT,
+					    set_val);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set akm type %0x to crypto component",
+			set_val);
 }
 
 /**
@@ -16303,12 +16317,18 @@ static void hdd_populate_crypto_cipher_type(u32 cipher,
 					    wlan_crypto_param_type
 					    cipher_param_type)
 {
+	QDF_STATUS status;
+	uint32_t set_val = 0;
 	wlan_crypto_cipher_type crypto_cipher_type =
 			osif_nl_to_crypto_cipher_type(cipher);
 
-	wlan_crypto_set_vdev_param(vdev,
-				   cipher_param_type,
-				   crypto_cipher_type);
+	hdd_debug("set cipher params %d type %d to crypto",
+		  cipher_param_type, crypto_cipher_type);
+	HDD_SET_BIT(set_val, crypto_cipher_type);
+	status = wlan_crypto_set_vdev_param(vdev, cipher_param_type, set_val);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set cipher params %d type %0x to crypto",
+			cipher_param_type, set_val);
 }
 
 /**

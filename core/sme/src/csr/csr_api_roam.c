@@ -15235,10 +15235,9 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		/* rsnIE */
 		if (csr_is_profile_wpa(pProfile)) {
 			/* Insert the Wpa IE into the join request */
-			ieLen =
-				csr_retrieve_wpa_ie(pMac, pProfile,
-						pBssDescription, pIes,
-						(tCsrWpaIe *) (wpaRsnIE));
+			ieLen = csr_retrieve_wpa_ie(pMac, sessionId, pProfile,
+						    pBssDescription, pIes,
+						    (tCsrWpaIe *) (wpaRsnIE));
 		} else if (csr_is_profile_rsn(pProfile)) {
 			/* Insert the RSN IE into the join request */
 			ieLen =

@@ -32,6 +32,7 @@
 #include "wlan_policy_mgr_api.h"
 #include "wlan_serialization_legacy_api.h"
 #include "wlan_reg_services_api.h"
+#include "wlan_crypto_global_api.h"
 
 
 uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE] = {
@@ -2885,6 +2886,7 @@ static bool csr_match_wapi_oui_index(tpAniSirGlobal pMac,
 }
 #endif /* FEATURE_WLAN_WAPI */
 
+#ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
 static bool csr_match_wpaoui_index(tpAniSirGlobal pMac,
 				   uint8_t AllCyphers[][CSR_RSN_OUI_SIZE],
 				   uint8_t cAllCyphers, uint8_t ouiIndex,
@@ -2897,6 +2899,7 @@ static bool csr_match_wpaoui_index(tpAniSirGlobal pMac,
 	else
 		return false;
 }
+#endif
 
 #ifdef FEATURE_WLAN_WAPI
 static bool csr_is_auth_wapi_cert(tpAniSirGlobal pMac,
@@ -2957,6 +2960,7 @@ static bool csr_is_ese_cckm_auth_rsn(tpAniSirGlobal pMac,
 		(pMac, AllSuites, cAllSuites, csr_rsn_oui[06], Oui);
 }
 
+#ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
 static bool csr_is_ese_cckm_auth_wpa(tpAniSirGlobal pMac,
 				     uint8_t AllSuites[][CSR_WPA_OUI_SIZE],
 				     uint8_t cAllSuites, uint8_t Oui[])
@@ -2964,6 +2968,7 @@ static bool csr_is_ese_cckm_auth_wpa(tpAniSirGlobal pMac,
 	return csr_is_oui_match
 		(pMac, AllSuites, cAllSuites, csr_wpa_oui[06], Oui);
 }
+#endif
 
 #endif
 
@@ -3157,6 +3162,7 @@ static bool csr_is_auth_wpa_sae(tpAniSirGlobal mac,
 }
 #endif
 
+#ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
 static bool csr_is_auth_wpa(tpAniSirGlobal pMac,
 			    uint8_t AllSuites[][CSR_WPA_OUI_SIZE],
 			    uint8_t cAllSuites, uint8_t Oui[])
@@ -3172,6 +3178,7 @@ static bool csr_is_auth_wpa_psk(tpAniSirGlobal pMac,
 	return csr_is_oui_match
 		(pMac, AllSuites, cAllSuites, csr_wpa_oui[02], Oui);
 }
+#endif
 
 /*
  * csr_is_group_mgmt_gmac_128() - check whether oui is GMAC_128
@@ -3707,6 +3714,7 @@ static bool csr_is_rsn_match(tpAniSirGlobal mac_ctx, tCsrAuthList *pAuthType,
 	return fRSNMatch;
 }
 
+#ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
 /**
  * csr_lookup_pmkid_using_ssid() - lookup pmkid using ssid and cache_id
  * @mac: pointer to mac
@@ -3746,6 +3754,7 @@ static bool csr_lookup_pmkid_using_ssid(tpAniSirGlobal mac,
 
 	return false;
 }
+#endif
 
 bool csr_lookup_pmkid_using_bssid(tpAniSirGlobal mac,
 					struct csr_roam_session *session,
@@ -3772,6 +3781,7 @@ bool csr_lookup_pmkid_using_bssid(tpAniSirGlobal mac,
 	return false;
 }
 
+#ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
 /**
  * csr_lookup_pmkid() - lookup pmkid using bssid or ssid + cache_id
  * @mac: pointer to mac
@@ -3825,8 +3835,10 @@ static bool csr_lookup_pmkid(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	return fRC;
 }
+#endif
 
 #ifdef WLAN_FEATURE_FILS_SK
+#ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
 /*
  * csr_update_pmksa_for_cache_id: update tPmkidCacheInfo to lookup using
  * ssid and cache id
@@ -3857,7 +3869,7 @@ static bool csr_update_pmksa_for_cache_id(tSirBssDescription *bss_desc,
 	return true;
 
 }
-
+#endif
 /*
  * csr_update_pmksa_to_profile: update pmk and pmkid to profile which will be
  * used in case of fils session
@@ -3893,6 +3905,32 @@ static inline void csr_update_pmksa_to_profile(struct csr_roam_profile *profile,
 }
 #endif
 
+#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
+uint8_t csr_construct_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
+			     struct csr_roam_profile *pProfile,
+			     tSirBssDescription *pSirBssDesc,
+			     tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t *rsn_ie_end = NULL;
+	uint8_t *rsn_ie = (uint8_t *)pRSNIe;
+	uint8_t ie_len = 0;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(pMac->psoc, sessionId,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Invalid vdev");
+		return ie_len;
+	}
+	rsn_ie_end = wlan_crypto_build_rsnie(vdev, rsn_ie);
+	if (rsn_ie_end)
+		ie_len = rsn_ie_end - rsn_ie;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	return ie_len;
+}
+#else
 /**
  * csr_update_session_pmk() - Update the pmk len and pmk in the roam session
  * @session: pointer to the CSR Roam session
@@ -4110,6 +4148,7 @@ uint8_t csr_construct_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	return cbRSNIe;
 }
+#endif
 
 #ifdef FEATURE_WLAN_WAPI
 /**
@@ -4265,6 +4304,7 @@ static bool csr_is_wapi_match(tpAniSirGlobal mac_ctx, tCsrAuthList *pAuthType,
 	return fWapiMatch;
 }
 
+#ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
 static bool csr_lookup_bkid(tpAniSirGlobal pMac, uint32_t sessionId,
 			    uint8_t *pBSSId, uint8_t *pBKId)
 {
@@ -4304,7 +4344,34 @@ static bool csr_lookup_bkid(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	return fRC;
 }
+#endif
 
+#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
+uint8_t csr_construct_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
+			      struct csr_roam_profile *pProfile,
+			      tSirBssDescription *pSirBssDesc,
+			      tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t *wapi_ie_end = NULL;
+	uint8_t *wapi_ie = (uint8_t *)pWapiIe;
+	uint8_t ie_len = 0;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(pMac->psoc, sessionId,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Invalid vdev");
+		return ie_len;
+	}
+	wapi_ie_end = wlan_crypto_build_wapiie(vdev, wapi_ie);
+	if (wapi_ie_end)
+		ie_len = wapi_ie_end - wapi_ie;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	return ie_len;
+}
+#else
 uint8_t csr_construct_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 			      struct csr_roam_profile *pProfile,
 			      tSirBssDescription *pSirBssDesc,
@@ -4410,8 +4477,10 @@ uint8_t csr_construct_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	return cbWapiIe;
 }
+#endif
 #endif /* FEATURE_WLAN_WAPI */
 
+#ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
 /**
  * csr_get_wpa_cyphers() - to get WPA cipher info
  * @mac_ctx: pointer to mac context
@@ -4580,8 +4649,35 @@ static bool csr_is_wpa_encryption_match(tpAniSirGlobal pMac,
 
 	return fWpaMatch;
 }
+#endif
 
-uint8_t csr_construct_wpa_ie(tpAniSirGlobal pMac,
+#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
+uint8_t csr_construct_wpa_ie(tpAniSirGlobal pMac, uint8_t session_id,
+			     struct csr_roam_profile *pProfile,
+			     tSirBssDescription *pSirBssDesc,
+			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t *wpa_ie_end = NULL;
+	uint8_t *wpa_ie = (uint8_t *)pWpaIe;
+	uint8_t ie_len = 0;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(pMac->psoc, session_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Invalid vdev");
+		return ie_len;
+	}
+	wpa_ie_end = wlan_crypto_build_wpaie(vdev, wpa_ie);
+	if (wpa_ie_end)
+		ie_len = wpa_ie_end - wpa_ie;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	return ie_len;
+}
+#else
+uint8_t csr_construct_wpa_ie(tpAniSirGlobal pMac, uint8_t session_id,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe)
@@ -4662,12 +4758,13 @@ uint8_t csr_construct_wpa_ie(tpAniSirGlobal pMac,
 
 	return cbWpaIe;
 }
+#endif
 
 /* If a WPAIE exists in the profile, just use it. Or else construct
  * one from the BSS Caller allocated memory for pWpaIe and guarrantee
  * it can contain a max length WPA IE
  */
-uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal pMac,
+uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal pMac, uint8_t session_id,
 			    struct csr_roam_profile *pProfile,
 			    tSirBssDescription *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe)
@@ -4683,12 +4780,14 @@ uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal pMac,
 				cbWpaIe = (uint8_t) pProfile->nWPAReqIELength;
 				qdf_mem_copy(pWpaIe, pProfile->pWPAReqIE,
 					     cbWpaIe);
-			} else
-				sme_warn("Invalid WPA IE length: %d",
-					pProfile->nWPAReqIELength);
-		} else
-			cbWpaIe = csr_construct_wpa_ie(pMac, pProfile,
-						pSirBssDesc, pIes, pWpaIe);
+			} else {
+				sme_warn("Invalid WPA IE length %d",
+					 pProfile->nWPAReqIELength);
+			}
+			break;
+		}
+		cbWpaIe = csr_construct_wpa_ie(pMac, session_id, pProfile,
+					       pSirBssDesc, pIes, pWpaIe);
 	} while (0);
 
 	return cbWpaIe;
@@ -4719,11 +4818,10 @@ uint8_t csr_retrieve_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 					     cbRsnIe);
 			} else {
 				sme_warn("Invalid RSN IE length: %d",
-					pProfile->nRSNReqIELength);
+					 pProfile->nRSNReqIELength);
 			}
 			break;
 		}
-
 		cbRsnIe = csr_construct_rsn_ie(pMac, sessionId, pProfile,
 					       pSirBssDesc, pIes, pRsnIe);
 	} while (0);
@@ -4752,13 +4850,15 @@ uint8_t csr_retrieve_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 				cbWapiIe = (uint8_t) pProfile->nWAPIReqIELength;
 				qdf_mem_copy(pWapiIe, pProfile->pWAPIReqIE,
 					     cbWapiIe);
-			} else
-				sme_warn("Invalid WAPI IE length: %d",
-					pProfile->nWAPIReqIELength);
-		} else
-			cbWapiIe =
-				csr_construct_wapi_ie(pMac, sessionId, pProfile,
-						    pSirBssDesc, pIes, pWapiIe);
+			} else {
+				sme_warn("Invalid WAPI IE length %d",
+					 pProfile->nWAPIReqIELength);
+			}
+			break;
+		}
+		cbWapiIe = csr_construct_wapi_ie(pMac, sessionId,
+						 pProfile, pSirBssDesc,
+						 pIes, pWapiIe);
 	} while (0);
 
 	return cbWapiIe;
@@ -4885,20 +4985,16 @@ static bool csr_validate_wep(tpAniSirGlobal mac_ctx,
 			     eCsrEncryptionType uc_encry_type,
 			     tCsrAuthList *auth_list,
 			     tCsrEncryptionList *mc_encryption_list,
-			     eCsrAuthType *negotiated_authtype,
-			     eCsrEncryptionType *negotiated_mc_encry,
 			     tSirBssDescription *bss_descr,
 			     tDot11fBeaconIEs *ie_ptr)
 {
 	uint32_t idx;
 	bool match = false;
-	eCsrAuthType negotiated_auth = eCSR_AUTH_TYPE_OPEN_SYSTEM;
-	eCsrEncryptionType negotiated_mccipher = eCSR_ENCRYPT_TYPE_UNKNOWN;
 	uint8_t oui_index;
 
 	/* If privacy bit is not set, consider no match */
 	if (!csr_is_privacy(bss_descr))
-		goto end;
+		return match;
 
 	for (idx = 0; idx < mc_encryption_list->numEntries; idx++) {
 		switch (mc_encryption_list->encryptionType[idx]) {
@@ -4913,8 +5009,6 @@ static bool csr_validate_wep(tpAniSirGlobal mac_ctx,
 			if (uc_encry_type ==
 				mc_encryption_list->encryptionType[idx]) {
 				match = true;
-				negotiated_mccipher =
-					mc_encryption_list->encryptionType[idx];
 			}
 			break;
 		default:
@@ -4926,7 +5020,7 @@ static bool csr_validate_wep(tpAniSirGlobal mac_ctx,
 	}
 
 	if (!match)
-		goto end;
+		return match;
 
 	for (idx = 0; idx < auth_list->numEntries; idx++) {
 		switch (auth_list->authType[idx]) {
@@ -4934,7 +5028,6 @@ static bool csr_validate_wep(tpAniSirGlobal mac_ctx,
 		case eCSR_AUTH_TYPE_SHARED_KEY:
 		case eCSR_AUTH_TYPE_AUTOSWITCH:
 			match = true;
-			negotiated_auth = auth_list->authType[idx];
 			break;
 		default:
 			match = false;
@@ -4944,10 +5037,10 @@ static bool csr_validate_wep(tpAniSirGlobal mac_ctx,
 	}
 
 	if (!match)
-		goto end;
+		return match;
 
 	if (!ie_ptr)
-		goto end;
+		return match;
 
 	/*
 	 * In case of WPA / WPA2, check whether it supports WEP as well.
@@ -4966,7 +5059,7 @@ static bool csr_validate_wep(tpAniSirGlobal mac_ctx,
 					csr_wpa_oui[oui_index],
 					CSR_WPA_OUI_SIZE));
 		if (match)
-			goto end;
+			return match;
 	}
 	if (ie_ptr->RSN.present) {
 		match = (!qdf_mem_cmp(ie_ptr->RSN.gp_cipher_suite,
@@ -4975,17 +5068,10 @@ static bool csr_validate_wep(tpAniSirGlobal mac_ctx,
 				CSR_RSN_OUI_SIZE));
 	}
 
-
-end:
-	if (match) {
-		if (negotiated_authtype)
-			*negotiated_authtype = negotiated_auth;
-		if (negotiated_mc_encry)
-			*negotiated_mc_encry = negotiated_mccipher;
-	}
 	return match;
 }
 
+#ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
 /**
  * csr_validate_open_none() - Check if the security is matching
  * @bss_desc:          BSS Descriptor on which the check is done
@@ -4997,8 +5083,8 @@ end:
  * Return: Boolean value to tell if matched or not.
  */
 static bool csr_validate_open_none(tSirBssDescription *bss_desc,
-	tCsrEncryptionList *mc_enc_type, eCsrEncryptionType *mc_cipher,
-	tCsrAuthList *auth_type, eCsrAuthType *neg_auth_type)
+				   tCsrEncryptionList *mc_enc_type,
+				   tCsrAuthList *auth_type)
 {
 	bool match;
 	uint8_t idx;
@@ -5019,7 +5105,6 @@ static bool csr_validate_open_none(tSirBssDescription *bss_desc,
 			if (eCSR_ENCRYPT_TYPE_NONE ==
 				mc_enc_type->encryptionType[idx]) {
 				match = true;
-				*mc_cipher = mc_enc_type->encryptionType[idx];
 				break;
 			}
 		}
@@ -5034,8 +5119,6 @@ static bool csr_validate_open_none(tSirBssDescription *bss_desc,
 				(eCSR_AUTH_TYPE_AUTOSWITCH ==
 				auth_type->authType[idx])) {
 				match = true;
-				*neg_auth_type =
-					eCSR_AUTH_TYPE_OPEN_SYSTEM;
 				break;
 			}
 		}
@@ -5045,7 +5128,7 @@ static bool csr_validate_open_none(tSirBssDescription *bss_desc,
 	}
 	return match;
 }
-
+#endif
 /**
  * csr_validate_any_default() - Check if the security is matching
  * @mac_ctx:           Global MAC context
@@ -5119,19 +5202,19 @@ static bool csr_validate_any_default(tpAniSirGlobal mac_ctx,
 		return match;
 	*uc_cipher = eCSR_ENCRYPT_TYPE_WEP104;
 	if (csr_validate_wep(mac_ctx, *uc_cipher, auth_type, mc_enc_type,
-			neg_auth_type, mc_cipher, bss_desc, ies_ptr))
+			bss_desc, ies_ptr))
 		return match;
 	*uc_cipher = eCSR_ENCRYPT_TYPE_WEP40;
 	if (csr_validate_wep(mac_ctx, *uc_cipher, auth_type, mc_enc_type,
-			neg_auth_type, mc_cipher, bss_desc, ies_ptr))
+			bss_desc, ies_ptr))
 		return match;
 	*uc_cipher = eCSR_ENCRYPT_TYPE_WEP104_STATICKEY;
 	if (csr_validate_wep(mac_ctx, *uc_cipher, auth_type, mc_enc_type,
-			neg_auth_type, mc_cipher, bss_desc, ies_ptr))
+			bss_desc, ies_ptr))
 		return match;
 	*uc_cipher = eCSR_ENCRYPT_TYPE_WEP40_STATICKEY;
 	if (csr_validate_wep(mac_ctx, *uc_cipher, auth_type, mc_enc_type,
-			neg_auth_type, mc_cipher, bss_desc, ies_ptr))
+			bss_desc, ies_ptr))
 		return match;
 	/* It must be open and no enc */
 	if (csr_is_privacy(bss_desc)) {
@@ -5157,26 +5240,24 @@ static bool csr_validate_any_default(tpAniSirGlobal mac_ctx,
  * @mfp_capable:       Device capable of MFP
  * @bss_desc:          BSS Descriptor
  * @ies_ptr:           Pointer to the IE fields
- * @neg_auth_type:     Negotiated Auth type with the AP
- * @neg_uc_cipher:     Negotiated unicast cipher suite
- * @neg_mc_cipher:     Negotiated multicast cipher
+ * @session_id:        Session Id
  *
  * Return: Boolean value to tell if matched or not.
  */
 bool csr_is_security_match(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
-	tCsrEncryptionList *uc_enc_type,
-	tCsrEncryptionList *mc_enc_type, bool *mfp_enabled,
-	uint8_t *mfp_required, uint8_t *mfp_capable,
-	tSirBssDescription *bss_desc, tDot11fBeaconIEs *ies_ptr,
-	eCsrAuthType *neg_auth_type,
-	eCsrEncryptionType *neg_uc_cipher,
-	eCsrEncryptionType *neg_mc_cipher)
+			   tCsrEncryptionList *uc_enc_type,
+			   tCsrEncryptionList *mc_enc_type, bool *mfp_enabled,
+			   uint8_t *mfp_required, uint8_t *mfp_capable,
+			   tSirBssDescription *bss_desc,
+			   tDot11fBeaconIEs *ies_ptr, uint8_t session_id)
 {
 	bool match = false;
 	uint8_t i;
-	eCsrEncryptionType mc_cipher = eCSR_ENCRYPT_TYPE_UNKNOWN;
 	eCsrEncryptionType uc_cipher = eCSR_ENCRYPT_TYPE_UNKNOWN;
-	eCsrAuthType local_neg_auth_type = eCSR_AUTH_TYPE_UNKNOWN;
+	uint16_t ie_len;
+
+	ie_len = (bss_desc->length + sizeof(bss_desc->length) -
+		  GET_FIELD_OFFSET(tSirBssDescription, ieFields));
 
 	for (i = 0; ((i < uc_enc_type->numEntries) && (!match)); i++) {
 		uc_cipher = uc_enc_type->encryptionType[i];
@@ -5188,13 +5269,22 @@ bool csr_is_security_match(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
 		 */
 		switch (uc_cipher) {
 		case eCSR_ENCRYPT_TYPE_NONE:
+#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
+			if (csr_is_privacy(bss_desc))
+				return false;
+
+			match =	wlan_crypto_check_open_none(mac_ctx->psoc,
+							    session_id);
+#else
 			match = csr_validate_open_none(bss_desc, mc_enc_type,
-					&mc_cipher, auth_type,
-					&local_neg_auth_type);
+						       auth_type);
+#endif
 			break;
 
 		case eCSR_ENCRYPT_TYPE_WEP40_STATICKEY:
 		case eCSR_ENCRYPT_TYPE_WEP104_STATICKEY:
+		case eCSR_ENCRYPT_TYPE_WEP40:
+		case eCSR_ENCRYPT_TYPE_WEP104:
 			/*
 			 * !! might want to check for WEP keys set in the
 			 * Profile.... ? !! don't need to have the privacy bit
@@ -5204,19 +5294,19 @@ bool csr_is_security_match(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
 			 * encryption is not allowed without the Privacy bit
 			 * turned on.
 			 */
+#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
+			if (!csr_is_privacy(bss_desc))
+				return false;
+
+			match = wlan_crypto_check_wep(mac_ctx->psoc,
+						      session_id);
+#else
 			match = csr_validate_wep(mac_ctx, uc_cipher, auth_type,
-					mc_enc_type, &local_neg_auth_type,
-					&mc_cipher, bss_desc, ies_ptr);
+						 mc_enc_type, bss_desc,
+						 ies_ptr);
+#endif
 
 			break;
-		/* these are all of the WPA encryption types... */
-		case eCSR_ENCRYPT_TYPE_WEP40:
-		case eCSR_ENCRYPT_TYPE_WEP104:
-			match = csr_validate_wep(mac_ctx, uc_cipher, auth_type,
-					mc_enc_type, &local_neg_auth_type,
-					&mc_cipher, bss_desc, ies_ptr);
-			break;
-
 		case eCSR_ENCRYPT_TYPE_TKIP:
 		case eCSR_ENCRYPT_TYPE_AES:
 		case eCSR_ENCRYPT_TYPE_AES_GCMP:
@@ -5225,29 +5315,41 @@ bool csr_is_security_match(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
 				match = false;
 				break;
 			}
+#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
+			match = wlan_crypto_check_rsn_match(mac_ctx->psoc,
+							    session_id,
+							    (uint8_t *)
+							    &bss_desc->ieFields,
+							    ie_len);
+			if (match)
+				break;
+			match = wlan_crypto_check_wpa_match(mac_ctx->psoc,
+							    session_id,
+							    (uint8_t *)
+							    &bss_desc->ieFields,
+							    ie_len);
+#else
 			/* First check if there is a RSN match */
 			match = csr_is_rsn_match(mac_ctx, auth_type,
 					uc_cipher, mc_enc_type,
 					mfp_enabled, mfp_required,
 					mfp_capable, ies_ptr,
-					&local_neg_auth_type,
-					&mc_cipher);
+					NULL, NULL);
 			/* If not RSN, then check WPA match */
 			if (!match)
 				match = csr_is_wpa_encryption_match(
 						mac_ctx, auth_type,
 						uc_cipher, mc_enc_type,
 						ies_ptr,
-						&local_neg_auth_type,
-						&mc_cipher);
+						NULL, NULL);
+#endif
 			break;
 #ifdef FEATURE_WLAN_WAPI
 		case eCSR_ENCRYPT_TYPE_WPI:     /* WAPI */
 			if (ies_ptr)
 				match = csr_is_wapi_match(mac_ctx, auth_type,
 						uc_cipher, mc_enc_type, ies_ptr,
-						&local_neg_auth_type,
-						&mc_cipher);
+						NULL, NULL);
 			else
 				match = false;
 			break;
@@ -5257,21 +5359,13 @@ bool csr_is_security_match(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
 			match  = csr_validate_any_default(mac_ctx, auth_type,
 					mc_enc_type, mfp_enabled, mfp_required,
 					mfp_capable, ies_ptr,
-					&local_neg_auth_type, bss_desc,
-					&uc_cipher, &mc_cipher);
+					NULL, bss_desc,
+					&uc_cipher, NULL);
 			break;
 		}
 
 	}
 
-	if (match) {
-		if (neg_uc_cipher)
-			*neg_uc_cipher = uc_cipher;
-		if (neg_mc_cipher)
-			*neg_mc_cipher = mc_cipher;
-		if (neg_auth_type)
-			*neg_auth_type = local_neg_auth_type;
-	}
 	return match;
 }
 
