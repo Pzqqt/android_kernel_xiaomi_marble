@@ -532,27 +532,6 @@ lim_configure_ap_start_bss_session(tpAniSirGlobal mac_ctx, tpPESession session,
 }
 
 /**
- * lim_clear_he_tx_stbc() - Clear tx stbc for a given session
- * @session: Session
- *
- * Clear tx stbc for a given session
- *
- * Return: None
- */
-#ifdef WLAN_FEATURE_11AX
-static void lim_clear_he_tx_stbc(tpPESession session)
-{
-	if (session) {
-		session->he_config.tx_stbc_lt_80mhz = 0;
-		session->he_config.tx_stbc_gt_80mhz = 0;
-	}
-}
-#else
-static void lim_clear_he_tx_stbc(tpPESession session)
-{}
-#endif
-
-/**
  * __lim_handle_sme_start_bss_request() - process SME_START_BSS_REQ message
  *@mac_ctx: Pointer to Global MAC structure
  *@msg_buf: A pointer to the SME message buffer
@@ -871,13 +850,6 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		/* Delete pre-auth list if any */
 		lim_delete_pre_auth_list(mac_ctx);
 
-		if (session->nss == 1) {
-			session->vht_config.su_beam_former = 0;
-			session->vht_config.tx_stbc = 0;
-			session->vht_config.num_soundingdim = 0;
-			session->htConfig.ht_tx_stbc = 0;
-			lim_clear_he_tx_stbc(session);
-		}
 		/*
 		 * keep the RSN/WPA IE information in PE Session Entry
 		 * later will be using this to check when received (Re)Assoc req
@@ -1615,17 +1587,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			&session->limCurrentBssPropCap,
 			&session->gLimCurrentBssUapsd,
 			&local_power_constraint, session);
-
-		/*
-		 * Once the AP capabilities are available then set the
-		 * beam forming capabilities accordingly.
-		 */
-		if (session->nss == 1) {
-			session->vht_config.su_beam_former = 0;
-			session->vht_config.tx_stbc = 0;
-			session->vht_config.num_soundingdim = 0;
-			session->htConfig.ht_tx_stbc = 0;
-		}
 
 		session->maxTxPower = lim_get_max_tx_power(reg_max,
 					local_power_constraint,
