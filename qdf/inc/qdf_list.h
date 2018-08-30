@@ -137,7 +137,17 @@ static inline void qdf_list_destroy(qdf_list_t *list)
  */
 static inline uint32_t qdf_list_size(qdf_list_t *list)
 {
-	return list->count;
+	return __qdf_list_size(list);
+}
+
+/**
+ * qdf_list_max_size() - gives the max size of the list
+ * @list: object of list
+ * Return: max size of the list
+ */
+static inline uint32_t qdf_list_max_size(qdf_list_t *list)
+{
+	return __qdf_list_max_size(list);
 }
 
 QDF_STATUS qdf_list_insert_back(qdf_list_t *list, qdf_list_node_t *node);

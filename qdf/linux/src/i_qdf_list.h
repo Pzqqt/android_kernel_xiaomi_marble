@@ -51,6 +51,26 @@ static inline void __qdf_list_create(__qdf_list_t *list, uint32_t max_size)
 	list->max_size = max_size;
 }
 
+/**
+ * __qdf_list_size() - gives the size of the list
+ * @list: object of list
+ * Return: size of the list
+ */
+static inline uint32_t __qdf_list_size(__qdf_list_t *list)
+{
+	return list->count;
+}
+
+/**
+ * __qdf_list_max_size() - gives the max size of the list
+ * @list: object of list
+ * Return: max size of the list
+ */
+static inline uint32_t __qdf_list_max_size(__qdf_list_t *list)
+{
+	return list->max_size;
+}
+
 #define __QDF_LIST_ANCHOR(list) ((list).anchor)
 
 #define __QDF_LIST_NODE_INIT(prev_node, next_node) \
