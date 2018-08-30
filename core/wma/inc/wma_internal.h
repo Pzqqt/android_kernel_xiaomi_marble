@@ -540,6 +540,33 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 			  uint32_t peer_type, uint8_t vdev_id,
 			  bool roam_synch_in_progress);
 
+/**
+ * wma_send_del_bss_response() - send delete bss resp
+ * @wma: wma handle
+ * @req: target request
+ *
+ * Return: none
+ */
+void wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req);
+/**
+ * __wma_vdev_stop_resp_handler() - vdev stop response handler
+ * @handle: wma handle
+ * @cmd_param_info: event buffer
+ * @len: buffer length
+ *
+ * Return: QDF_STATUS_SUCCESS for success or QDF_ERROR code
+ */
+QDF_STATUS
+__wma_vdev_stop_resp_handler(wmi_vdev_stopped_event_fixed_param *resp_event);
+
+/**
+ * wma_vdev_stop_resp_handler() - vdev stop response handler
+ * @handle: wma handle
+ * @cmd_param_info: event buffer
+ * @len: buffer length
+ *
+ * Return: 0 for success or error code
+ */
 int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 				      u32 len);
 

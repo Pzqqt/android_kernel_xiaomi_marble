@@ -2881,18 +2881,85 @@ static void __lim_counter_measures(tpAniSirGlobal pMac, tpPESession psessionEntr
 					     mac, psessionEntry, false);
 };
 
+/**
+ * lim_send_stop_bss_failure_resp() -send failure delete bss resp to sme
+ * @mac_ctx: mac ctx
+ * @session: session pointer
+ *
+ * Return None
+ */
+static void lim_send_stop_bss_failure_resp(tpAniSirGlobal mac_ctx,
+					   tpPESession session)
+{
+	session->limSmeState = session->limPrevSmeState;
+
+	MTRACE(mac_trace(mac_ctx, TRACE_CODE_SME_STATE, session->peSessionId,
+			  session->limSmeState));
+
+	lim_send_sme_rsp(mac_ctx, eWNI_SME_STOP_BSS_RSP,
+			 eSIR_SME_STOP_BSS_FAILURE, session->smeSessionId,
+			 session->transactionId);
+}
+
+void lim_delete_all_peers(tpPESession session)
+{
+	uint8_t i = 0;
+	tpAniSirGlobal mac_ctx = session->mac_ctx;
+	tpDphHashNode sta_ds = NULL;
+	QDF_STATUS status;
+
+	for (i = 1; i < session->dph.dphHashTable.size; i++) {
+		sta_ds = dph_get_hash_entry(mac_ctx, i,
+					    &session->dph.dphHashTable);
+		if (!sta_ds)
+			continue;
+		status = lim_del_sta(mac_ctx, sta_ds, false, session);
+		if (QDF_STATUS_SUCCESS == status) {
+			lim_delete_dph_hash_entry(mac_ctx, sta_ds->staAddr,
+						  sta_ds->assocId, session);
+			lim_release_peer_idx(mac_ctx, sta_ds->assocId, session);
+		} else {
+			pe_err("lim_del_sta failed with Status: %d", status);
+			QDF_ASSERT(0);
+		}
+	}
+}
+
+void lim_send_vdev_stop(tpPESession session)
+{
+	tpAniSirGlobal mac_ctx = session->mac_ctx;
+	QDF_STATUS status;
+
+	status = lim_del_bss(mac_ctx, NULL, session->bssIdx, session);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("delBss failed for bss %d", session->bssIdx);
+		lim_send_stop_bss_failure_resp(mac_ctx, session);
+	}
+}
+
+/**
+ * lim_delete_peers_and_send_vdev_stop() -delete peers and send vdev stop
+ * @session: session pointer
+ *
+ * Return None
+ */
+static void lim_delete_peers_and_send_vdev_stop(tpPESession session)
+{
+	lim_delete_all_peers(session);
+	/* send a delBss to HAL and wait for a response */
+	lim_send_vdev_stop(session);
+}
+
 static void
 __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
 	tSirSmeStopBssReq stopBssReq;
-	QDF_STATUS status;
 	tLimSmeStates prevState;
 	tpPESession psessionEntry;
 	uint8_t smesessionId;
 	uint8_t sessionId;
 	uint16_t smetransactionId;
-	uint8_t i = 0;
-	tpDphHashNode pStaDs = NULL;
 
 	qdf_mem_copy(&stopBssReq, pMsgBuf, sizeof(tSirSmeStopBssReq));
 	smesessionId = stopBssReq.sessionId;
@@ -2947,6 +3014,7 @@ __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		stopBssReq.reasonCode);
 
 	prevState = psessionEntry->limSmeState;
+	psessionEntry->limPrevSmeState = prevState;
 
 	psessionEntry->limSmeState = eLIM_SME_IDLE_STATE;
 	MTRACE(mac_trace
@@ -2991,36 +3059,9 @@ __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		 */
 		pMac->lim.gLimIbssCoalescingHappened = false;
 	}
-	for (i = 1; i < psessionEntry->dph.dphHashTable.size; i++) {
-		pStaDs =
-			dph_get_hash_entry(pMac, i, &psessionEntry->dph.dphHashTable);
-		if (NULL == pStaDs)
-			continue;
-		status = lim_del_sta(pMac, pStaDs, false, psessionEntry);
-		if (QDF_STATUS_SUCCESS == status) {
-			lim_delete_dph_hash_entry(pMac, pStaDs->staAddr,
-						  pStaDs->assocId, psessionEntry);
-			lim_release_peer_idx(pMac, pStaDs->assocId, psessionEntry);
-		} else {
-			pe_err("lim_del_sta failed with Status: %d", status);
-			QDF_ASSERT(0);
-		}
-	}
-	/* send a delBss to HAL and wait for a response */
-	status = lim_del_bss(pMac, NULL, psessionEntry->bssIdx, psessionEntry);
 
-	if (status != QDF_STATUS_SUCCESS) {
-		pe_err("delBss failed for bss %d", psessionEntry->bssIdx);
-		psessionEntry->limSmeState = prevState;
+	lim_delete_peers_and_send_vdev_stop(psessionEntry);
 
-		MTRACE(mac_trace
-			       (pMac, TRACE_CODE_SME_STATE, psessionEntry->peSessionId,
-			       psessionEntry->limSmeState));
-
-		lim_send_sme_rsp(pMac, eWNI_SME_STOP_BSS_RSP,
-				 eSIR_SME_STOP_BSS_FAILURE, smesessionId,
-				 smetransactionId);
-	}
 }
 
 /**

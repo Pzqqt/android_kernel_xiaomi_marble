@@ -1361,6 +1361,23 @@ void lim_send_dfs_chan_sw_ie_update(tpAniSirGlobal mac_ctx,
 void lim_process_ap_ecsa_timeout(void *session);
 
 /**
+ * lim_delete_all_peers() -delete all connected peers
+ * @session: session pointer
+ *
+ * Return None
+ */
+void lim_delete_all_peers(tpPESession session);
+
+/**
+ * lim_send_vdev_stop() -send delete bss/stop vdev req
+ * @session: session pointer
+ *
+ * Return None
+ */
+void lim_send_vdev_stop(tpPESession session);
+
+
+/**
  * lim_send_chan_switch_action_frame()- Send an action frame
  * containing CSA IE or ECSA IE depending on the connected
  * sta capability.
