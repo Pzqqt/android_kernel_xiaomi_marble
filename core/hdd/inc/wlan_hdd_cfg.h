@@ -6031,6 +6031,26 @@ enum hdd_link_speed_rpt_type {
 #define CFG_VHT_ENABLE_TXBF_SAP_MODE_MAX     (1)
 #define CFG_VHT_ENABLE_TXBF_SAP_MODE_DEFAULT (0)
 
+/*
+ * <ini>
+ * gTxBFCsnValue - ini to set VHT/HE STS Caps field
+ * @Min: 0
+ * @Max: 7
+ * @Default: 7
+ *
+ * This ini is used to configure the STS capability shown in AC/AX mode
+ * MGMT frame IE, the final STS field shown in VHT/HE IE will be calculated
+ * by MIN of (INI set, target report value). Only if gTxBFEnable is enabled
+ * and SU/MU BEAMFORMEE Caps is shown, then STS Caps make sense.
+ *
+ * Related: gTxBFEnable.
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
 #define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED         "gTxBFCsnValue"
 #define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_MIN     (WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STAMIN)
 #define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_MAX     (WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STAMAX - 1)

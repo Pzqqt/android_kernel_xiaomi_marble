@@ -2449,10 +2449,13 @@ int sme_set_auto_rate_he_ltf(tHalHandle hal, uint8_t session_id,
  * sme_update_tgt_he_cap() - sets the HE caps to pmac
  * @mac_handle: Pointer to MAC handle
  * @cfg: Pointer to WMA target CFG
+ * @he_cap_ini: Pointer to HE CAP configured by INI
  *
  * Return: None
  */
-void sme_update_tgt_he_cap(mac_handle_t mac_handle, struct wma_tgt_cfg *cfg);
+void sme_update_tgt_he_cap(mac_handle_t mac_handle,
+			   struct wma_tgt_cfg *cfg,
+			   tDot11fIEhe_cap *he_cap_ini);
 
 /**
  * sme_update_he_cap_nss() - sets the nss based on user request
@@ -2595,7 +2598,8 @@ int sme_update_he_ldpc_supp(tHalHandle hal, uint8_t session_id,
 			    uint16_t he_ldpc);
 #else
 static inline void sme_update_tgt_he_cap(mac_handle_t mac_handle,
-					 struct wma_tgt_cfg *cfg)
+					 struct wma_tgt_cfg *cfg,
+					 tDot11fIEhe_cap *he_cap_ini)
 {}
 static inline void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 		uint8_t nss)

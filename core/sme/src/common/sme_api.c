@@ -12703,7 +12703,9 @@ int sme_update_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 	return sme_update_he_tx_bfee_nsts(hal, session_id, nsts_set_val);
 }
 #ifdef WLAN_FEATURE_11AX
-void sme_update_tgt_he_cap(mac_handle_t mac_handle, struct wma_tgt_cfg *cfg)
+void sme_update_tgt_he_cap(mac_handle_t mac_handle,
+			   struct wma_tgt_cfg *cfg,
+			   tDot11fIEhe_cap *he_cap_ini)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
 
@@ -12714,6 +12716,15 @@ void sme_update_tgt_he_cap(mac_handle_t mac_handle, struct wma_tgt_cfg *cfg)
 	qdf_mem_copy(&mac_ctx->he_cap_5g,
 		     &cfg->he_cap_5g,
 		     sizeof(tDot11fIEhe_cap));
+
+	/* modify HE Caps field according to INI setting */
+	mac_ctx->he_cap_2g.bfee_sts_lt_80 =
+			QDF_MIN(cfg->he_cap_2g.bfee_sts_lt_80,
+				he_cap_ini->bfee_sts_lt_80);
+
+	mac_ctx->he_cap_5g.bfee_sts_lt_80 =
+			QDF_MIN(cfg->he_cap_5g.bfee_sts_lt_80,
+				he_cap_ini->bfee_sts_lt_80);
 }
 
 void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,

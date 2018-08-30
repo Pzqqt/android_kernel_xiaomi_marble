@@ -57,6 +57,7 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	tDot11fIEhe_cap *he_cap = &cfg->he_cap;
 	struct hdd_config *config = hdd_ctx->config;
+	tDot11fIEhe_cap he_cap_ini = {0};
 
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_CONTROL, he_cap->htc_he);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TWT_REQUESTOR,
@@ -258,7 +259,8 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	if (status == QDF_STATUS_E_FAILURE)
 		hdd_alert("could not set 5G HE PPET");
 
-	sme_update_tgt_he_cap(hdd_ctx->mac_handle, cfg);
+	he_cap_ini.bfee_sts_lt_80 = config->txBFCsnValue;
+	sme_update_tgt_he_cap(hdd_ctx->mac_handle, cfg, &he_cap_ini);
 }
 
 void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
