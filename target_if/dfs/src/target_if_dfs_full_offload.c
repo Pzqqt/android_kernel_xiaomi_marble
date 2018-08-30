@@ -46,6 +46,7 @@ static int target_if_dfs_cac_complete_event_handler(
 	struct wlan_objmgr_pdev *pdev;
 	int ret = 0;
 	uint32_t vdev_id = 0;
+	struct wmi_unified *wmi_handle;
 
 	if (!scn || !data) {
 		target_if_err("scn: %pK, data: %pK", scn, data);
@@ -64,8 +65,14 @@ static int target_if_dfs_cac_complete_event_handler(
 		return -EINVAL;
 	}
 
-	if (wmi_extract_dfs_cac_complete_event(GET_WMI_HDL_FROM_PSOC(psoc),
-			data, &vdev_id, datalen) != QDF_STATUS_SUCCESS) {
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid WMI handle");
+		return -EINVAL;
+	}
+
+	if (wmi_extract_dfs_cac_complete_event(wmi_handle, data, &vdev_id,
+					       datalen) != QDF_STATUS_SUCCESS) {
 		target_if_err("failed to extract cac complete event");
 		return -EFAULT;
 	}
@@ -109,6 +116,7 @@ static int target_if_dfs_radar_detection_event_handler(
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct wlan_lmac_if_dfs_rx_ops *dfs_rx_ops;
 	int ret = 0;
+	struct wmi_unified *wmi_handle;
 
 	if (!scn || !data) {
 		target_if_err("scn: %pK, data: %pK", scn, data);
@@ -127,8 +135,15 @@ static int target_if_dfs_radar_detection_event_handler(
 		return -EINVAL;
 	}
 
-	if (wmi_extract_dfs_radar_detection_event(GET_WMI_HDL_FROM_PSOC(psoc),
-			data, &radar, datalen) != QDF_STATUS_SUCCESS) {
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid WMI handle");
+		return -EINVAL;
+	}
+
+	if (wmi_extract_dfs_radar_detection_event(wmi_handle, data, &radar,
+						  datalen)
+	    != QDF_STATUS_SUCCESS) {
 		target_if_err("failed to extract cac complete event");
 		return -EFAULT;
 	}

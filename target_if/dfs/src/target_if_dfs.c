@@ -119,6 +119,7 @@ static int target_if_radar_event_handler(
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_lmac_if_dfs_rx_ops *dfs_rx_ops;
+	struct wmi_unified *wmi_handle;
 
 	if (!scn || !data) {
 		target_if_err("scn: %pK, data: %pK", scn, data);
@@ -135,8 +136,15 @@ static int target_if_radar_event_handler(
 		target_if_err("Invalid dfs_rx_ops: %pK", dfs_rx_ops);
 		return -EINVAL;
 	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid WMI context");
+		return -EINVAL;
+	}
+
 	if (QDF_IS_STATUS_ERROR(wmi_extract_wlan_radar_event_info(
-			GET_WMI_HDL_FROM_PSOC(psoc), data,
+			wmi_handle, data,
 			&wlan_radar_event, datalen))) {
 		target_if_err("failed to extract wlan radar event");
 		return -EFAULT;
