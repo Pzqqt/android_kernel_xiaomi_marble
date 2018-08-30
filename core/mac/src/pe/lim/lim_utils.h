@@ -1376,6 +1376,15 @@ void lim_delete_all_peers(tpPESession session);
  */
 void lim_send_vdev_stop(tpPESession session);
 
+/**
+ * lim_send_start_bss_confirm() -send start bss confirm req
+ * @mac_ctx: pointer to global mac structure
+ * @start_cnf: start confirm structure pointer
+ *
+ * Return None
+ */
+void lim_send_start_bss_confirm(tpAniSirGlobal mac_ctx,
+				     tLimMlmStartCnf *start_cnf);
 
 /**
  * lim_send_chan_switch_action_frame()- Send an action frame

@@ -1157,17 +1157,15 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	}
 	qdf_mc_timer_stop(&req_msg->event_timeout);
 
-	if ((qdf_atomic_read(
-	    &wma->interfaces[resp_event->vdev_id].vdev_restart_params.
-					hidden_ssid_restart_in_progress)) &&
+	if ((qdf_atomic_read(&iface->vdev_restart_params.
+			     hidden_ssid_restart_in_progress)) &&
 	    wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id) &&
 	    (req_msg->msg_type == WMA_HIDDEN_SSID_VDEV_RESTART)) {
 		tpHalHiddenSsidVdevRestart hidden_ssid_restart =
 			(tpHalHiddenSsidVdevRestart)req_msg->user_data;
 		WMA_LOGE("%s: vdev restart event recevied for hidden ssid set using IOCTL",
 			__func__);
-		qdf_atomic_set(&wma->interfaces[resp_event->vdev_id].
-			       vdev_restart_params.
+		qdf_atomic_set(&iface->vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
 
 		wma_send_msg(wma, WMA_HIDDEN_SSID_RESTART_RSP,

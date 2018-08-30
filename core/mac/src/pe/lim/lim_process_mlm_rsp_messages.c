@@ -2155,7 +2155,8 @@ static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal pMac,
 			pAddBssParams->status);
 		mlmStartCnf.resultCode = eSIR_SME_HAL_SEND_MESSAGE_FAIL;
 	}
-	lim_post_sme_message(pMac, LIM_MLM_START_CNF, (uint32_t *) &mlmStartCnf);
+
+	lim_send_start_bss_confirm(pMac, &mlmStartCnf);
 end:
 	if (0 != limMsgQ->bodyptr) {
 		qdf_mem_free(pAddBssParams);
@@ -2255,7 +2256,7 @@ lim_process_ibss_mlm_add_bss_rsp(tpAniSirGlobal pMac,
 	/* If ADD_BSS is done as part of coalescing, this won't happen. */
 	/* Update PE session Id */
 	mlmStartCnf.sessionId = psessionEntry->peSessionId;
-	lim_post_sme_message(pMac, LIM_MLM_START_CNF, (uint32_t *) &mlmStartCnf);
+	lim_send_start_bss_confirm(pMac, &mlmStartCnf);
 end:
 	if (0 != limMsgQ->bodyptr) {
 		qdf_mem_free(pAddBssParams);
@@ -2626,8 +2627,8 @@ void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 					qdf_mem_free(add_bss_param);
 					msg->bodyptr = NULL;
 				}
-				lim_post_sme_message(mac_ctx, LIM_MLM_START_CNF,
-					(uint32_t *) &mlm_start_cnf);
+
+				lim_send_start_bss_confirm(mac_ctx, &mlm_start_cnf);
 			} else
 				lim_process_ap_mlm_add_bss_rsp(mac_ctx, msg);
 		} else {

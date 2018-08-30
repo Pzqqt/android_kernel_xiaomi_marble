@@ -380,8 +380,7 @@ void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 		mlm_start_cnf.resultCode = eSIR_SME_HAL_SEND_MESSAGE_FAIL;
 	}
 	mlm_start_cnf.sessionId = session_entry->peSessionId;
-	lim_post_sme_message(mac_ctx, LIM_MLM_START_CNF,
-				(uint32_t *) &mlm_start_cnf);
+	lim_send_start_bss_confirm(mac_ctx, &mlm_start_cnf);
 end:
 	qdf_mem_free(lim_msgq->bodyptr);
 	lim_msgq->bodyptr = NULL;

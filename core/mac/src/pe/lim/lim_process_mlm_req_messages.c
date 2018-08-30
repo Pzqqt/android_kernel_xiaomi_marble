@@ -693,8 +693,7 @@ end:
 	 * WMA_ADD_BSS_RSP from HAL
 	 */
 	if (eSIR_SME_SUCCESS != mlm_start_cnf.resultCode)
-		lim_post_sme_message(mac_ctx, LIM_MLM_START_CNF,
-				     (uint32_t *) &mlm_start_cnf);
+		lim_send_start_bss_confirm(mac_ctx, &mlm_start_cnf);
 }
 
 /**

@@ -8424,3 +8424,10 @@ void lim_process_ap_ecsa_timeout(void *data)
 	}
 }
 
+void lim_send_start_bss_confirm(tpAniSirGlobal mac_ctx,
+				     tLimMlmStartCnf *start_cnf)
+{
+	lim_post_sme_message(mac_ctx, LIM_MLM_START_CNF,
+			     (uint32_t *)start_cnf);
+}
+
