@@ -2334,3 +2334,83 @@ QDF_STATUS tdls_antenna_switch_flush_callback(struct scheduler_msg *msg)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+void wlan_tdls_offchan_parms_callback(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		tdls_err("vdev is NULL");
+		return;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+}
+
+int tdls_process_set_offchannel(struct tdls_set_offchannel *req)
+{
+	int status;
+	struct tdls_vdev_priv_obj *tdls_vdev_obj;
+	struct tdls_soc_priv_obj *tdls_soc_obj;
+
+	if (tdls_get_vdev_objects(req->vdev, &tdls_vdev_obj, &tdls_soc_obj) !=
+		QDF_STATUS_SUCCESS) {
+		status = -ENOTSUPP;
+		goto free;
+	}
+
+	tdls_debug("TDLS offchannel to be configured %d", req->offchannel);
+
+	if (req->offchannel)
+		status = tdls_set_tdls_offchannel(tdls_soc_obj,
+						  req->offchannel);
+	else
+		status = -ENOTSUPP;
+
+free:
+
+	if (req->callback)
+		req->callback(req->vdev);
+	qdf_mem_free(req);
+
+	return status;
+}
+
+int tdls_process_set_offchan_mode(struct tdls_set_offchanmode *req)
+{
+	int status;
+
+	tdls_debug("TDLS offchan mode to be configured %d", req->offchan_mode);
+	status = tdls_set_tdls_offchannelmode(req->vdev, req->offchan_mode);
+
+	if (req->callback)
+		req->callback(req->vdev);
+	qdf_mem_free(req);
+
+	return status;
+}
+
+int tdls_process_set_secoffchanneloffset(
+		struct tdls_set_secoffchanneloffset *req)
+{
+	int status;
+	struct tdls_vdev_priv_obj *tdls_vdev_obj;
+	struct tdls_soc_priv_obj *tdls_soc_obj;
+
+	if (tdls_get_vdev_objects(req->vdev, &tdls_vdev_obj, &tdls_soc_obj) !=
+		QDF_STATUS_SUCCESS) {
+		status = -ENOTSUPP;
+		goto free;
+	}
+
+	tdls_debug("TDLS offchannel offset to be configured %d",
+		   req->offchan_offset);
+	status = tdls_set_tdls_secoffchanneloffset(tdls_soc_obj,
+						   req->offchan_offset);
+
+free:
+
+	if (req->callback)
+		req->callback(req->vdev);
+	qdf_mem_free(req);
+
+	return status;
+}

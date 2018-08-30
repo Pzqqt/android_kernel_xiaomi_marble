@@ -322,6 +322,15 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 	case TDLS_CMD_GET_ALL_PEERS:
 		tdls_get_all_peers_from_list(msg->bodyptr);
 		break;
+	case TDLS_CMD_SET_OFFCHANNEL:
+		tdls_process_set_offchannel(msg->bodyptr);
+		break;
+	case TDLS_CMD_SET_OFFCHANMODE:
+		tdls_process_set_offchan_mode(msg->bodyptr);
+		break;
+	case TDLS_CMD_SET_SECOFFCHANOFFSET:
+		tdls_process_set_secoffchanneloffset(msg->bodyptr);
+		break;
 	default:
 		break;
 	}

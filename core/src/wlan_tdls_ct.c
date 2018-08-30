@@ -936,16 +936,6 @@ void tdls_ct_handler(void *user_data)
 				     WLAN_TDLS_NB_ID);
 }
 
-/**
- * tdls_set_tdls_offchannel() - set tdls off-channel number
- * @tdls_soc: tdls soc object
- * @offchanmode: tdls off-channel number
- *
- * This function sets tdls off-channel number
- *
- * Return: 0 on success; negative errno otherwise
- */
-static
 int tdls_set_tdls_offchannel(struct tdls_soc_priv_obj *tdls_soc,
 			     int offchannel)
 {
@@ -964,7 +954,7 @@ int tdls_set_tdls_offchannel(struct tdls_soc_priv_obj *tdls_soc,
 			}
 	} else {
 		tdls_err("Either TDLS or TDLS Off-channel is not enabled");
-		return  -ENOTSUPP;
+		return -ENOTSUPP;
 	}
 	tdls_notice("change tdls off channel from %d to %d",
 		   tdls_soc->tdls_off_channel, offchannel);
@@ -972,16 +962,6 @@ int tdls_set_tdls_offchannel(struct tdls_soc_priv_obj *tdls_soc,
 	return 0;
 }
 
-/**
- * tdls_set_tdls_secoffchanneloffset() - set secondary tdls off-channel offset
- * @tdls_soc: tdls soc object
- * @offchanmode: tdls off-channel offset
- *
- * This function sets 2nd tdls off-channel offset
- *
- * Return: 0 on success; negative errno otherwise
- */
-static
 int tdls_set_tdls_secoffchanneloffset(struct tdls_soc_priv_obj *tdls_soc,
 				int offchanoffset)
 {
@@ -1022,16 +1002,6 @@ int tdls_set_tdls_secoffchanneloffset(struct tdls_soc_priv_obj *tdls_soc,
 	return 0;
 }
 
-/**
- * tdls_set_tdls_offchannelmode() - set tdls off-channel mode
- * @adapter: Pointer to the HDD adapter
- * @offchanmode: tdls off-channel mode
- *
- * This function sets tdls off-channel mode
- *
- * Return: 0 on success; negative errno otherwise
- */
-static
 int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
 				 int offchanmode)
 {
@@ -1056,7 +1026,7 @@ int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 
-	if (tdls_is_vdev_connected(vdev)) {
+	if (!tdls_is_vdev_connected(vdev)) {
 		tdls_err("tdls off channel req in not associated state %d",
 			offchanmode);
 		return -EPERM;

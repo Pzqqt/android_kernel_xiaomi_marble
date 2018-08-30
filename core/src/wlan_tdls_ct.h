@@ -206,4 +206,42 @@ void tdls_disable_offchan_and_teardown_links(
 QDF_STATUS tdls_delete_all_tdls_peers(struct wlan_objmgr_vdev *vdev,
 					  struct tdls_soc_priv_obj *tdls_soc);
 
+/**
+ * tdls_set_tdls_offchannel() - set tdls off-channel number
+ * @tdls_soc: tdls soc object
+ * @offchanmode: tdls off-channel number
+ *
+ * This function sets tdls off-channel number
+ *
+ * Return: 0 on success; negative errno otherwise
+ */
+int tdls_set_tdls_offchannel(struct tdls_soc_priv_obj *tdls_soc,
+			     int offchannel);
+
+/**
+ * tdls_set_tdls_offchannelmode() - set tdls off-channel mode
+ * @adapter: Pointer to the HDD adapter
+ * @offchannel: tdls off-channel mode
+ *
+ * This function sets tdls off-channel mode
+ *
+ * Return: 0 on success; negative errno otherwise
+ */
+
+int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
+				 int offchanmode);
+
+/**
+ * tdls_set_tdls_secoffchanneloffset() - set secondary tdls off-channel offset
+ * @tdls_soc: tdls soc object
+ * @offchanoffset: tdls off-channel offset
+ *
+ * This function sets secondary tdls off-channel offset
+ *
+ * Return: 0 on success; negative errno otherwise
+ */
+
+int tdls_set_tdls_secoffchanneloffset(struct tdls_soc_priv_obj *tdls_soc,
+				      int offchanoffset);
+
 #endif
