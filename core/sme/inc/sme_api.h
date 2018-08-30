@@ -2515,6 +2515,17 @@ int sme_update_he_mcs(tHalHandle hal, uint8_t session_id, uint16_t he_mcs);
  */
 int sme_update_he_trigger_frm_mac_pad(mac_handle_t hal, uint8_t session_id,
 				      uint8_t cfg_val);
+
+/**
+ * sme_update_he_om_ctrl_supp() - sets the HE OM control capability
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @cfg_val: HE OM control config
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_he_om_ctrl_supp(mac_handle_t hal, uint8_t session_id,
+			       uint8_t cfg_val);
 /**
  * sme_set_usr_cfg_mu_edca() - sets the user cfg MU EDCA params flag
  * @hal: Pointer to HAL
@@ -2607,6 +2618,13 @@ static inline int sme_update_mu_edca_params(mac_handle_t hal,
 static inline int sme_update_he_trigger_frm_mac_pad(mac_handle_t hal,
 						    uint8_t session_id,
 						    uint8_t cfg_val)
+{
+	return 0;
+}
+
+static inline int sme_update_he_om_ctrl_supp(mac_handle_t hal,
+					     uint8_t session_id,
+					     uint8_t cfg_val)
 {
 	return 0;
 }

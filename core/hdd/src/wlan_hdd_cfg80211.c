@@ -5103,6 +5103,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_OVERRIDE_MU_EDCA] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OM_CTRL_SUPP] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -6414,6 +6416,15 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 			sme_set_usr_cfg_mu_edca(hdd_ctx->mac_handle, false);
 		}
 	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OM_CTRL_SUPP]) {
+		cfg_val = nla_get_u8(tb[
+				     QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OM_CTRL_SUPP]);
+		ret_val = sme_update_he_om_ctrl_supp(hdd_ctx->mac_handle,
+						     adapter->session_id,
+						     cfg_val);
+	}
+
 	if (update_sme_cfg)
 		sme_update_config(mac_handle, sme_config);
 

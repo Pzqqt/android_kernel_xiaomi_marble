@@ -12885,6 +12885,13 @@ int sme_update_he_trigger_frm_mac_pad(mac_handle_t hal, uint8_t session_id,
 				 cfg_val);
 }
 
+int sme_update_he_om_ctrl_supp(mac_handle_t hal, uint8_t session_id,
+			       uint8_t cfg_val)
+{
+	return sme_update_he_cap(hal, session_id, WNI_CFG_HE_OMI,
+				 cfg_val);
+}
+
 int sme_update_he_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 			       uint8_t cfg_val)
 {
