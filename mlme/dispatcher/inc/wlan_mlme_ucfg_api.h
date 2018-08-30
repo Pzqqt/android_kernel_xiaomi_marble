@@ -150,6 +150,25 @@ QDF_STATUS ucfg_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ *
+ * ucfg_mlme_get_sap_inactivity_override() - Check if sap max inactivity
+ * override flag is set.
+ * @psoc: pointer to psoc object
+ * @sme_config - Sme config struct
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to call
+ * the mlme function wlan_mlme_get_sap_inactivity_override
+ *
+ * Return: QDF Status
+ */
+static inline
+void ucfg_mlme_get_sap_inactivity_override(struct wlan_objmgr_psoc *psoc,
+					   bool *value)
+{
+	wlan_mlme_get_sap_inactivity_override(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_ignore_peer_ht_mode() - Get the ignore peer ht mode flag
  *
  * @psoc: pointer to psoc object
