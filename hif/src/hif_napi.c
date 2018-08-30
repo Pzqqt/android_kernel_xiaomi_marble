@@ -932,11 +932,14 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 		normalized = (rc / napi_info->scale);
 		if (normalized == 0)
 			normalized++;
-		bucket = normalized / (QCA_NAPI_BUDGET / QCA_NAPI_NUM_BUCKETS);
+		bucket = (normalized - 1) /
+				(QCA_NAPI_BUDGET / QCA_NAPI_NUM_BUCKETS);
 		if (bucket >= QCA_NAPI_NUM_BUCKETS) {
 			bucket = QCA_NAPI_NUM_BUCKETS - 1;
-			HIF_ERROR("Bad bucket#(%d) > QCA_NAPI_NUM_BUCKETS(%d)",
-				bucket, QCA_NAPI_NUM_BUCKETS);
+			HIF_ERROR("Bad bucket#(%d) > QCA_NAPI_NUM_BUCKETS(%d)"
+					" normalized %d, napi budget %d",
+					bucket, QCA_NAPI_NUM_BUCKETS,
+					normalized, QCA_NAPI_BUDGET);
 		}
 		napi_info->stats[cpu].napi_budget_uses[bucket]++;
 	} else {
