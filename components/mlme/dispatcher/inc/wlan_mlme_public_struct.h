@@ -171,7 +171,6 @@ struct wlan_mlme_rates {
  * struct wlan_mlme_sap_protection_cfg - SAP erp protection config items
  *
  * @protection_enabled - Force enable protection. static via cfg
- * @protection_always_11g - Force protection enable for 11g. Static via cfg
  * @protection_force_policy - Protection force policy. Static via cfg
  * @ignore_peer_ht_mode - ignore the ht opmode of the peer. Dynamic via INI.
  *

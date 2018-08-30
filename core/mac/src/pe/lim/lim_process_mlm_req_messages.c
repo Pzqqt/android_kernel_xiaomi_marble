@@ -39,6 +39,7 @@
 #include "wma_if.h"
 #include "wlan_reg_services_api.h"
 #include "lim_process_fils.h"
+#include "wlan_mlme_public_struct.h"
 
 static void lim_process_mlm_join_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_auth_req(tpAniSirGlobal, uint32_t *);
@@ -463,6 +464,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 {
 	struct scheduler_msg msg_buf = {0};
 	tpAddBssParams addbss_param = NULL;
+	struct wlan_mlme_qos *qos_aggr = &mac_ctx->mlme_cfg->qos_mlme_params;
 	uint32_t retcode;
 	bool is_ch_dfs = false;
 
@@ -600,20 +602,24 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	addbss_param->dfs_regdomain = mlm_start_req->dfs_regdomain;
 	addbss_param->beacon_tx_rate = session->beacon_tx_rate;
 	if (QDF_IBSS_MODE == addbss_param->halPersona) {
+		if (!(mac_ctx->mlme_cfg)) {
+			pe_err("Mlme cfg NULL");
+			return eSIR_SME_INVALID_PARAMETERS;
+		}
 		addbss_param->nss_2g = mac_ctx->vdev_type_nss_2g.ibss;
 		addbss_param->nss_5g = mac_ctx->vdev_type_nss_5g.ibss;
 		addbss_param->tx_aggregation_size =
-			mac_ctx->roam.configParam.tx_aggregation_size;
+					qos_aggr->tx_aggregation_size;
 		addbss_param->tx_aggregation_size_be =
-			mac_ctx->roam.configParam.tx_aggregation_size_be;
+					qos_aggr->tx_aggregation_size_be;
 		addbss_param->tx_aggregation_size_bk =
-			mac_ctx->roam.configParam.tx_aggregation_size_bk;
+					qos_aggr->tx_aggregation_size_bk;
 		addbss_param->tx_aggregation_size_vi =
-			mac_ctx->roam.configParam.tx_aggregation_size_vi;
+					qos_aggr->tx_aggregation_size_vi;
 		addbss_param->tx_aggregation_size_vo =
-			mac_ctx->roam.configParam.tx_aggregation_size_vo;
+					qos_aggr->tx_aggregation_size_vo;
 		addbss_param->rx_aggregation_size =
-			mac_ctx->roam.configParam.rx_aggregation_size;
+					qos_aggr->rx_aggregation_size;
 	}
 	pe_debug("dot11_mode:%d nss value:%d",
 			addbss_param->dot11_mode, addbss_param->nss);

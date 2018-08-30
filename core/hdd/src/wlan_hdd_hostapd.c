@@ -81,6 +81,7 @@
 #include "wlan_hdd_regulatory.h"
 #include <wlan_ipa_ucfg_api.h>
 #include <wlan_cp_stats_mc_ucfg_api.h>
+#include "wlan_mlme_ucfg_api.h"
 
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
@@ -5529,6 +5530,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	uint8_t channel;
 	bool sta_sap_scc_on_dfs_chan;
 	uint16_t sta_cnt;
+	bool val;
 
 	hdd_enter();
 
@@ -5789,7 +5791,9 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx,
 							  sap_config->channel);
 		}
-		if (hdd_ctx->config->sap_max_inactivity_override) {
+
+		ucfg_mlme_get_sap_inactivity_override(hdd_ctx->hdd_psoc, &val);
+		if (val) {
 			sta_inactivity_timer = qdf_mem_malloc(
 					sizeof(*sta_inactivity_timer));
 			if (!sta_inactivity_timer) {

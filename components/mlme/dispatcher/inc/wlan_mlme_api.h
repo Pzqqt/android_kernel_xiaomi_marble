@@ -26,6 +26,8 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_cmn.h>
 
+#include "sme_api.h"
+
 /**
  * wlan_mlme_get_ht_cap_info() - Get the HT cap info config
  * @psoc: pointer to psoc object
@@ -47,6 +49,18 @@ QDF_STATUS wlan_mlme_get_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 				     struct mlme_ht_capabilities_info
 				     ht_cap_info);
+
+/**
+ *
+ * wlan_mlme_get_sap_inactivity_override() - Check if sap max inactivity
+ * override flag is set.
+ * @psoc: pointer to psoc object
+ * @sme_config - Sme config struct
+ *
+ * Return: QDF Status
+ */
+void wlan_mlme_get_sap_inactivity_override(struct wlan_objmgr_psoc *psoc,
+					   bool *value);
 
 /**
  * wlan_mlme_get_ignore_peer_ht_mode() - Get the ignore peer ht opmode flag

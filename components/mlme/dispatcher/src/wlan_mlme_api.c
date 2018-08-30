@@ -59,6 +59,19 @@ QDF_STATUS wlan_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+void wlan_mlme_get_sap_inactivity_override(struct wlan_objmgr_psoc *psoc,
+					   bool *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return;
+	}
+	*val = mlme_obj->cfg.qos_mlme_params.sap_max_inactivity_override;
+}
+
 QDF_STATUS wlan_mlme_get_ignore_peer_ht_mode(struct wlan_objmgr_psoc *psoc,
 					     bool *value)
 {

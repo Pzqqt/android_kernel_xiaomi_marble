@@ -3204,26 +3204,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.sta_roam_policy.sap_operating_band =
 			pParam->sta_roam_policy_params.sap_operating_band;
 
-		pMac->roam.configParam.tx_aggregation_size =
-			pParam->tx_aggregation_size;
-		pMac->roam.configParam.tx_aggregation_size_be =
-			pParam->tx_aggregation_size_be;
-		pMac->roam.configParam.tx_aggregation_size_bk =
-			pParam->tx_aggregation_size_bk;
-		pMac->roam.configParam.tx_aggregation_size_vi =
-			pParam->tx_aggregation_size_vi;
-		pMac->roam.configParam.tx_aggregation_size_vo =
-			pParam->tx_aggregation_size_vo;
-		pMac->roam.configParam.rx_aggregation_size =
-			pParam->rx_aggregation_size;
-		pMac->roam.configParam.tx_aggr_sw_retry_threshold_be =
-			pParam->tx_aggr_sw_retry_threshold_be;
-		pMac->roam.configParam.tx_aggr_sw_retry_threshold_bk =
-			pParam->tx_aggr_sw_retry_threshold_bk;
-		pMac->roam.configParam.tx_aggr_sw_retry_threshold_vi =
-			pParam->tx_aggr_sw_retry_threshold_vi;
-		pMac->roam.configParam.tx_aggr_sw_retry_threshold_vo =
-			pParam->tx_aggr_sw_retry_threshold_vo;
 		pMac->roam.configParam.enable_bcast_probe_rsp =
 			pParam->enable_bcast_probe_rsp;
 		pMac->roam.configParam.is_fils_enabled =
@@ -3543,18 +3523,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.sta_roam_policy.dfs_mode;
 	pParam->sta_roam_policy_params.skip_unsafe_channels =
 		pMac->roam.configParam.sta_roam_policy.skip_unsafe_channels;
-	pParam->tx_aggregation_size =
-		pMac->roam.configParam.tx_aggregation_size;
-	pParam->tx_aggregation_size_be =
-		pMac->roam.configParam.tx_aggregation_size_be;
-	pParam->tx_aggregation_size_bk =
-		pMac->roam.configParam.tx_aggregation_size_bk;
-	pParam->tx_aggregation_size_vi =
-		pMac->roam.configParam.tx_aggregation_size_vi;
-	pParam->tx_aggregation_size_vo =
-		pMac->roam.configParam.tx_aggregation_size_vo;
-	pParam->rx_aggregation_size =
-		pMac->roam.configParam.rx_aggregation_size;
 	pParam->enable_bcast_probe_rsp =
 		pMac->roam.configParam.enable_bcast_probe_rsp;
 	pParam->is_fils_enabled =
@@ -17298,6 +17266,7 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct add_sta_self_params *add_sta_self_req;
+	struct wlan_mlme_qos *qos_aggr = &pMac->mlme_cfg->qos_mlme_params;
 	uint8_t nss_2g;
 	uint8_t nss_5g;
 	struct scheduler_msg msg = {0};
@@ -17306,6 +17275,11 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 	if (NULL == add_sta_self_req) {
 		sme_err("Unable to allocate memory for tAddSelfStaParams");
 		return QDF_STATUS_E_NOMEM;
+	}
+
+	if (!(pMac->mlme_cfg)) {
+		pe_err("Mlme cfg NULL");
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	csr_get_vdev_type_nss(pMac, pMac->sme.currDeviceMode,
@@ -17318,34 +17292,36 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 	add_sta_self_req->sub_type = subType;
 	add_sta_self_req->nss_2g = nss_2g;
 	add_sta_self_req->nss_5g = nss_5g;
-	add_sta_self_req->tx_aggregation_size =
-			pMac->roam.configParam.tx_aggregation_size;
+
+	add_sta_self_req->tx_aggregation_size = qos_aggr->tx_aggregation_size;
 	add_sta_self_req->tx_aggregation_size_be =
-			pMac->roam.configParam.tx_aggregation_size_be;
+					qos_aggr->tx_aggregation_size_be;
 	add_sta_self_req->tx_aggregation_size_bk =
-			pMac->roam.configParam.tx_aggregation_size_bk;
+					qos_aggr->tx_aggregation_size_bk;
 	add_sta_self_req->tx_aggregation_size_vi =
-			pMac->roam.configParam.tx_aggregation_size_vi;
+					qos_aggr->tx_aggregation_size_vi;
 	add_sta_self_req->tx_aggregation_size_vo =
-			pMac->roam.configParam.tx_aggregation_size_vo;
-	add_sta_self_req->rx_aggregation_size =
-			pMac->roam.configParam.rx_aggregation_size;
-	add_sta_self_req->enable_bcast_probe_rsp =
-			pMac->roam.configParam.enable_bcast_probe_rsp;
-	add_sta_self_req->fils_max_chan_guard_time =
-			pMac->roam.configParam.fils_max_chan_guard_time;
-	add_sta_self_req->pkt_err_disconn_th =
-			pMac->roam.configParam.pkt_err_disconn_th;
-	add_sta_self_req->oce_feature_bitmap =
-			pMac->roam.configParam.oce_feature_bitmap;
+					qos_aggr->tx_aggregation_size_vo;
+
+	add_sta_self_req->rx_aggregation_size = qos_aggr->rx_aggregation_size;
 	add_sta_self_req->tx_aggr_sw_retry_threshold_be =
-			pMac->roam.configParam.tx_aggr_sw_retry_threshold_be;
+					qos_aggr->tx_aggr_sw_retry_threshold_be;
 	add_sta_self_req->tx_aggr_sw_retry_threshold_bk =
-			pMac->roam.configParam.tx_aggr_sw_retry_threshold_bk;
+					qos_aggr->tx_aggr_sw_retry_threshold_bk;
 	add_sta_self_req->tx_aggr_sw_retry_threshold_vi =
-			pMac->roam.configParam.tx_aggr_sw_retry_threshold_vi;
+					qos_aggr->tx_aggr_sw_retry_threshold_vi;
 	add_sta_self_req->tx_aggr_sw_retry_threshold_vo =
-			pMac->roam.configParam.tx_aggr_sw_retry_threshold_vo;
+					qos_aggr->tx_aggr_sw_retry_threshold_vo;
+
+	add_sta_self_req->enable_bcast_probe_rsp =
+				pMac->roam.configParam.enable_bcast_probe_rsp;
+	add_sta_self_req->fils_max_chan_guard_time =
+				pMac->roam.configParam.fils_max_chan_guard_time;
+	add_sta_self_req->pkt_err_disconn_th =
+				pMac->roam.configParam.pkt_err_disconn_th;
+	add_sta_self_req->oce_feature_bitmap =
+				pMac->roam.configParam.oce_feature_bitmap;
+
 	msg.type = WMA_ADD_STA_SELF_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = add_sta_self_req;

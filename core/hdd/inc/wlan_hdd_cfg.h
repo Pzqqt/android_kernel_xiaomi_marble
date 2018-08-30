@@ -66,6 +66,11 @@ struct hdd_context;
 
 #define CFG_CONCURRENT_IFACE_MAX_LEN 16
 
+#define CFG_TX_AGGREGATION_SIZE_MIN  0
+#define CFG_TX_AGGREGATION_SIZE_MAX  64
+#define CFG_RX_AGGREGATION_SIZE_MIN  1
+#define CFG_RX_AGGREGATION_SIZE_MAX  64
+
 /* Defines for all of the things we read from the configuration (registry). */
 /*
  * <ini>
@@ -7666,256 +7671,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_SELF_GEN_FRM_PWR_DEFAULT  (0)
 
 /*
- * <ini>
- * gTxAggregationSize - Gives an option to configure Tx aggregation size
- * in no of MPDUs
- * @Min: 0
- * @Max: 64
- * @Default: 64
- *
- * gTxAggregationSize gives an option to configure Tx aggregation size
- * in no of MPDUs.This can be useful in debugging throughput issues
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_TX_AGGREGATION_SIZE      "gTxAggregationSize"
-#define CFG_TX_AGGREGATION_SIZE_MIN      (0)
-#define CFG_TX_AGGREGATION_SIZE_MAX      (64)
-#define CFG_TX_AGGREGATION_SIZE_DEFAULT  (64)
-
-/*
- * <ini>
- * gTxAggregationSizeBE - To configure Tx aggregation size for BE queue
- * in no of MPDUs
- * @Min: 0
- * @Max: 64
- * @Default: 0
- *
- * gTxAggregationSizeBE gives an option to configure Tx aggregation size
- * for BE queue in no of MPDUs.This can be useful in debugging
- * throughput issues
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal
- *
- * </ini>
- */
-
-#define CFG_TX_AGGREGATION_SIZEBE      "gTxAggregationSizeBE"
-#define CFG_TX_AGGREGATION_SIZEBE_MIN      (0)
-#define CFG_TX_AGGREGATION_SIZEBE_MAX      (64)
-#define CFG_TX_AGGREGATION_SIZEBE_DEFAULT  (0)
-
-/*
- * <ini>
- * gTxAggregationSizeBK - To configure Tx aggregation size for BK queue
- * in no of MPDUs
- * @Min: 0
- * @Max: 64
- * @Default: 0
- *
- * gTxAggregationSizeBK gives an option to configure Tx aggregation size
- * for BK queue in no of MPDUs.This can be useful in debugging
- * throughput issues
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal
- *
- * </ini>
- */
-
-#define CFG_TX_AGGREGATION_SIZEBK      "gTxAggregationSizeBK"
-#define CFG_TX_AGGREGATION_SIZEBK_MIN      (0)
-#define CFG_TX_AGGREGATION_SIZEBK_MAX      (64)
-#define CFG_TX_AGGREGATION_SIZEBK_DEFAULT  (0)
-
-/*
- * <ini>
- * gTxAggregationSizeVI - To configure Tx aggregation size for VI queue
- * in no of MPDUs
- * @Min: 0
- * @Max: 64
- * @Default: 0
- *
- * gTxAggregationSizeVI gives an option to configure Tx aggregation size
- * for VI queue in no of MPDUs.This can be useful in debugging
- * throughput issues
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal
- *
- * </ini>
- */
-
-#define CFG_TX_AGGREGATION_SIZEVI      "gTxAggregationSizeVI"
-#define CFG_TX_AGGREGATION_SIZEVI_MIN      (0)
-#define CFG_TX_AGGREGATION_SIZEVI_MAX      (64)
-#define CFG_TX_AGGREGATION_SIZEVI_DEFAULT  (0)
-
-/*
- * <ini>
- * gTxAggregationSizeVO - To configure Tx aggregation size for VO queue
- * in no of MPDUs
- * @Min: 0
- * @Max: 64
- * @Default: 0
- *
- * gTxAggregationSizeVO gives an option to configure Tx aggregation size
- * for BE queue in no of MPDUs.This can be useful in debugging
- * throughput issues
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal
- *
- * </ini>
- */
-
-#define CFG_TX_AGGREGATION_SIZEVO      "gTxAggregationSizeVO"
-#define CFG_TX_AGGREGATION_SIZEVO_MIN      (0)
-#define CFG_TX_AGGREGATION_SIZEVO_MAX      (64)
-#define CFG_TX_AGGREGATION_SIZEVO_DEFAULT  (0)
-
-/*
- * <ini>
- * gRxAggregationSize - Gives an option to configure Rx aggregation size
- * in no of MPDUs
- * @Min: 1
- * @Max: 64
- * @Default: 64
- *
- * gRxAggregationSize gives an option to configure Rx aggregation size
- * in no of MPDUs. This can be useful in debugging throughput issues
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_RX_AGGREGATION_SIZE      "gRxAggregationSize"
-#define CFG_RX_AGGREGATION_SIZE_MIN      (1)
-#define CFG_RX_AGGREGATION_SIZE_MAX      (64)
-#define CFG_RX_AGGREGATION_SIZE_DEFAULT  (64)
-
-/*
- * <ini>
- * gTxAggSwRetryBE - Configure Tx aggregation sw retry for BE
- * @Min: 0
- * @Max: 64
- * @Default: 0
- *
- * gTxAggSwRetryBE gives an option to configure Tx aggregation sw
- * retry for BE. This can be useful in debugging throughput issues.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal
- *
- * </ini>
- */
-
-#define CFG_TX_AGGR_SW_RETRY_BE      "gTxAggSwRetryBE"
-#define CFG_TX_AGGR_SW_RETRY_BE_MIN      (0)
-#define CFG_TX_AGGR_SW_RETRY_BE_MAX      (64)
-#define CFG_TX_AGGR_SW_RETRY_BE_DEFAULT  (0)
-
-/*
- * <ini>
- * gTxAggSwRetryBK - Configure Tx aggregation sw retry for BK
- * @Min: 0
- * @Max: 64
- * @Default: 0
- *
- * gTxAggSwRetryBK gives an option to configure Tx aggregation sw
- * retry for BK. This can be useful in debugging throughput issues.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal
- *
- * </ini>
- */
-
-#define CFG_TX_AGGR_SW_RETRY_BK      "gTxAggSwRetryBK"
-#define CFG_TX_AGGR_SW_RETRY_BK_MIN      (0)
-#define CFG_TX_AGGR_SW_RETRY_BK_MAX      (64)
-#define CFG_TX_AGGR_SW_RETRY_BK_DEFAULT  (0)
-
-/*
- * <ini>
- * gTxAggSwRetryVI - Configure Tx aggregation sw retry for VI
- * @Min: 0
- * @Max: 64
- * @Default: 0
- *
- * gTxAggSwRetryVI gives an option to configure Tx aggregation sw
- * retry for VI. This can be useful in debugging throughput issues.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal
- *
- * </ini>
- */
-
-#define CFG_TX_AGGR_SW_RETRY_VI      "gTxAggSwRetryVI"
-#define CFG_TX_AGGR_SW_RETRY_VI_MIN      (0)
-#define CFG_TX_AGGR_SW_RETRY_VI_MAX      (64)
-#define CFG_TX_AGGR_SW_RETRY_VI_DEFAULT  (0)
-
-/*
- * <ini>
- * gTxAggSwRetryVO - Configure Tx aggregation sw retry for VO
- * @Min: 0
- * @Max: 64
- * @Default: 0
- *
- * gTxAggSwRetryVO gives an option to configure Tx aggregation sw
- * retry for VO. This can be useful in debugging throughput issues.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal
- *
- * </ini>
- */
-
-#define CFG_TX_AGGR_SW_RETRY_VO      "gTxAggSwRetryVO"
-#define CFG_TX_AGGR_SW_RETRY_VO_MIN      (0)
-#define CFG_TX_AGGR_SW_RETRY_VO_MAX      (64)
-#define CFG_TX_AGGR_SW_RETRY_VO_DEFAULT  (0)
-
-/*
  * fine timing measurement capability information
  *
  * <----- fine_time_meas_cap (in bits) ----->
@@ -8817,20 +8572,6 @@ enum dot11p_mode {
 #define CFG_RESTART_BEACONING_ON_CH_AVOID_MIN     (CH_AVOID_RULE_DO_NOT_RESTART)
 #define CFG_RESTART_BEACONING_ON_CH_AVOID_MAX     (CH_AVOID_RULE_RESTART_24G_ONLY)
 #define CFG_RESTART_BEACONING_ON_CH_AVOID_DEFAULT (CH_AVOID_RULE_RESTART)
-/*
- * This parameter will avoid updating ap_sta_inactivity from hostapd.conf
- * file. If a station does not send anything in ap_max_inactivity seconds, an
- * empty data frame is sent to it in order to verify whether it is
- * still in range. If this frame is not ACKed, the station will be
- * disassociated and then deauthenticated. This feature is used to
- * clear station table of old entries when the STAs move out of the
- * range.
- * Default : Disable
- */
-#define CFG_SAP_MAX_INACTIVITY_OVERRIDE_NAME     "gSapMaxInactivityOverride"
-#define CFG_SAP_MAX_INACTIVITY_OVERRIDE_MIN      (0)
-#define CFG_SAP_MAX_INACTIVITY_OVERRIDE_MAX      (1)
-#define CFG_SAP_MAX_INACTIVITY_OVERRIDE_DEFAULT  (0)
 
 /*
  * <ini>
@@ -14133,18 +13874,7 @@ struct hdd_config {
 	bool multicast_replay_filter;
 	bool goptimize_chan_avoid_event;
 	bool enable_go_cts2self_for_sta;
-	uint32_t tx_aggregation_size;
-	uint32_t tx_aggregation_size_be;
-	uint32_t tx_aggregation_size_bk;
-	uint32_t tx_aggregation_size_vi;
-	uint32_t tx_aggregation_size_vo;
-	uint32_t rx_aggregation_size;
-	uint32_t tx_aggr_sw_retry_threshold_be;
-	uint32_t tx_aggr_sw_retry_threshold_bk;
-	uint32_t tx_aggr_sw_retry_threshold_vi;
-	uint32_t tx_aggr_sw_retry_threshold_vo;
 	bool sta_prefer_80MHz_over_160MHz;
-	uint8_t sap_max_inactivity_override;
 	bool fw_timeout_crash;
 	/* beacon count before channel switch */
 	uint8_t sap_chanswitch_beacon_cnt;
