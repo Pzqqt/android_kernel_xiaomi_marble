@@ -44,6 +44,7 @@ target_if_ftm_process_utf_event(ol_scn_t sc, uint8_t *event_buf, uint32_t len)
 	struct wlan_lmac_if_ftm_rx_ops *ftm_rx_ops;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t pdev_id;
+	struct wmi_unified *wmi_handle;
 
 	psoc = target_if_get_psoc_from_scn_hdl(sc);
 	if (!psoc) {
@@ -58,8 +59,16 @@ target_if_ftm_process_utf_event(ol_scn_t sc, uint8_t *event_buf, uint32_t len)
 	}
 
 	event.datalen = len;
-	if (wmi_extract_pdev_utf_event(GET_WMI_HDL_FROM_PSOC(psoc),
-				event_buf, &event) != QDF_STATUS_SUCCESS) {
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		ftm_err("Invalid WMI handle");
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_FTM_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wmi_extract_pdev_utf_event(wmi_handle, event_buf, &event)
+	    != QDF_STATUS_SUCCESS) {
 		ftm_err("Extracting utf event failed");
 		wlan_objmgr_psoc_release_ref(psoc, WLAN_FTM_ID);
 		return QDF_STATUS_E_INVAL;
