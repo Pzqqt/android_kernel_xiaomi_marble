@@ -589,4 +589,71 @@ uint16_t wlan_crypto_get_keyid(uint8_t *data, int hdrlen);
  * Return: void
  */
 void wlan_crypto_restore_keys(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_crypto_check_open_none - called by ucfg to check for open security
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ *
+ * This function gets called from ucfg to check open security.
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_check_open_none(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vedv_id);
+
+/**
+ * wlan_crypto_check_wep - called by ucfg to check for WEP security
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ *
+ * This function gets called from ucfg to check WEP security.
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_check_wep(struct wlan_objmgr_psoc *psoc, uint8_t vedv_id);
+
+/**
+ * wlan_crypto_check_rsn_match - called by ucfg to check for RSN match
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @ie_ptr: pointer to IEs
+ * @ie_len: IE length
+ *
+ * This function gets called from ucfg to check RSN match.
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_check_rsn_match(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vedv_id, uint8_t *ie_ptr,
+				 uint16_t ie_len);
+
+/**
+ * wlan_crypto_check_rsn_match - called by ucfg to check for WPA match
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @ie_ptr: pointer to IEs
+ * @ie_len: IE length
+ *
+ * This function gets called from ucfg to check WPA match.
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_check_wpa_match(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vedv_id, uint8_t *ie_ptr,
+				 uint16_t ie_len);
+
+/**
+ * wlan_set_vdev_crypto_prarams_from_ie - Sets vdev crypto params from IE info
+ * @vdev: vdev pointer
+ * @ie_ptr: pointer to IE
+ * @ie_len: IE length
+ *
+ * This function gets called from ucfg to set crypto params from IE data.
+ *
+ * Return: QDF_STATUS_SUCCESS or error code
+ */
+QDF_STATUS wlan_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
+						uint8_t *ie_ptr,
+						uint16_t ie_len);
 #endif /* end of _WLAN_CRYPTO_GLOBAL_API_H_ */
