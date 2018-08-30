@@ -121,6 +121,35 @@ struct wlan_mlme_vht_caps {
 };
 
 /**
+ * struct wlan_mlme_qos - QOS TX/RX aggregation related CFG items
+ * @tx_aggregation_size: TX aggr size in number of MPDUs
+ * @tx_aggregation_size_be: No. of MPDUs for BE queue for TX aggr
+ * @tx_aggregation_size_bk: No. of MPDUs for BK queue for TX aggr
+ * @tx_aggregation_size_vi: No. of MPDUs for VI queue for TX aggr
+ * @tx_aggregation_size_vo: No. of MPDUs for VO queue for TX aggr
+ * @rx_aggregation_size: No. of MPDUs for RX aggr
+ * @tx_aggr_sw_retry_threshold_be: Tx aggregation sw retry for BE
+ * @tx_aggr_sw_retry_threshold_bk: Tx aggregation sw retry for BK
+ * @tx_aggr_sw_retry_threshold_vi: Tx aggregation sw retry for VI
+ * @tx_aggr_sw_retry_threshold_vo: Tx aggregation sw retry for VO
+ * @sap_max_inactivity_override: Override updating ap_sta_inactivity from
+ * hostapd.conf
+ */
+struct wlan_mlme_qos {
+	uint32_t tx_aggregation_size;
+	uint32_t tx_aggregation_size_be;
+	uint32_t tx_aggregation_size_bk;
+	uint32_t tx_aggregation_size_vi;
+	uint32_t tx_aggregation_size_vo;
+	uint32_t rx_aggregation_size;
+	uint32_t tx_aggr_sw_retry_threshold_be;
+	uint32_t tx_aggr_sw_retry_threshold_bk;
+	uint32_t tx_aggr_sw_retry_threshold_vi;
+	uint32_t tx_aggr_sw_retry_threshold_vo;
+	bool sap_max_inactivity_override;
+};
+
+/**
  * struct wlan_mlme_rates - RATES related config items
  * @cfpPeriod: cfp period info
  * @cfpMaxDuration: cfp Max duration info
@@ -212,6 +241,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_ht_caps ht_caps;
 	struct wlan_mlme_obss_ht40 obss_ht40;
 	struct wlan_mlme_vht_caps vht_caps;
+	struct wlan_mlme_qos qos_mlme_params;
 	struct wlan_mlme_rates rates;
 	struct wlan_mlme_sap_protection sap_protection_cfg;
 	struct wlan_mlme_chainmask chainmask_cfg;

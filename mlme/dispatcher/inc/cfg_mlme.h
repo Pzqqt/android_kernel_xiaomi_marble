@@ -27,6 +27,7 @@
 #include "cfg_mlme_ht_caps.h"
 #include "cfg_mlme_obss_ht40.h"
 #include "cfg_mlme_vht_caps.h"
+#include "cfg_qos.h"
 #include "cfg_mlme_rates.h"
 #include "cfg_sap_protection.h"
 #include "cfg_mlme_sap.h"
@@ -36,6 +37,7 @@
 	CFG_HT_CAPS_ALL \
 	CFG_OBSS_HT40_ALL \
 	CFG_VHT_CAPS_ALL \
+	CFG_QOS_ALL \
 	CFG_RATES_ALL \
 	CFG_SAP_PROTECTION_ALL \
 	CFG_SAP_ALL
