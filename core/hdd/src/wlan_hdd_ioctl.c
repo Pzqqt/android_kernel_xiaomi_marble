@@ -6077,7 +6077,7 @@ static int drv_cmd_tdls_secondary_channel_offset(struct hdd_adapter *adapter,
 
 	hdd_debug("Tdls offchannel offset:%d", set_value);
 
-	ret = hdd_set_tdls_secoffchanneloffset(hdd_ctx, set_value);
+	ret = hdd_set_tdls_secoffchanneloffset(hdd_ctx, adapter, set_value);
 
 	return ret;
 }
@@ -6113,7 +6113,7 @@ static int drv_cmd_tdls_off_channel_mode(struct hdd_adapter *adapter,
 
 	hdd_debug("Tdls offchannel mode:%d", set_value);
 
-	ret = hdd_set_tdls_offchannelmode(adapter, set_value);
+	ret = hdd_set_tdls_offchannelmode(hdd_ctx, adapter, set_value);
 
 	return ret;
 }
@@ -6155,7 +6155,7 @@ static int drv_cmd_tdls_off_channel(struct hdd_adapter *adapter,
 
 	hdd_debug("Tdls offchannel num: %d", set_value);
 
-	ret = hdd_set_tdls_offchannel(hdd_ctx, set_value);
+	ret = hdd_set_tdls_offchannel(hdd_ctx, adapter, set_value);
 
 	return ret;
 }

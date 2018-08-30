@@ -96,7 +96,6 @@ int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *adapter,
 						buf, buflen);
 }
 
-#ifdef FEATURE_WLAN_TDLS
 static const struct nla_policy
 	wlan_hdd_tdls_config_enable_policy[QCA_WLAN_VENDOR_ATTR_TDLS_ENABLE_MAX +
 					   1] = {
@@ -742,52 +741,41 @@ int wlan_hdd_cfg80211_send_tdls_discover_req(struct wiphy *wiphy,
 #endif
 }
 
-#endif /* End of FEATURE_WLAN_TDLS */
 
-/**
- * hdd_set_tdls_offchannel() - set tdls off-channel number
- * @adapter: Pointer to the HDD adapter
- * @offchanmode: tdls off-channel number
- *
- * This function sets tdls off-channel number
- *
- * Return: 0 on success; negative errno otherwise
- */
-int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx, int offchannel)
+int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx,
+			    struct hdd_adapter *adapter,
+			    int offchannel)
 {
-	/* TODO */
-	return 0;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (hdd_ctx->tdls_umac_comp_active)
+		status = ucfg_set_tdls_offchannel(adapter->hdd_vdev,
+						  offchannel);
+	return qdf_status_to_os_return(status);
 }
 
-/**
- * hdd_set_tdls_secoffchanneloffset() - set secondary tdls off-channel offset
- * @adapter: Pointer to the HDD adapter
- * @offchanmode: tdls off-channel offset
- *
- * This function sets 2nd tdls off-channel offset
- *
- * Return: 0 on success; negative errno otherwise
- */
 int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx,
+				     struct hdd_adapter *adapter,
 				     int offchanoffset)
 {
-	/* TODO */
-	return 0;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (hdd_ctx->tdls_umac_comp_active)
+		status = ucfg_set_tdls_secoffchanneloffset(adapter->hdd_vdev,
+							   offchanoffset);
+	return qdf_status_to_os_return(status);
 }
 
-/**
- * hdd_set_tdls_offchannelmode() - set tdls off-channel mode
- * @adapter: Pointer to the HDD adapter
- * @offchanmode: tdls off-channel mode
- *
- * This function sets tdls off-channel mode
- *
- * Return: 0 on success; negative errno otherwise
- */
-int hdd_set_tdls_offchannelmode(struct hdd_adapter *adapter, int offchanmode)
+int hdd_set_tdls_offchannelmode(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				int offchanmode)
 {
-	/* TODO */
-	return 0;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (hdd_ctx->tdls_umac_comp_active)
+		status = ucfg_set_tdls_offchan_mode(adapter->hdd_vdev,
+						    offchanmode);
+	return qdf_status_to_os_return(status);
 }
 
 /**

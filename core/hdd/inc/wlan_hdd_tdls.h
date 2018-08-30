@@ -188,10 +188,49 @@ int wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 #endif
 #endif
 
-int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx, int offchannel);
+/**
+ * hdd_set_tdls_offchannel() - set tdls off-channel number
+ * @hdd_ctx:     Pointer to the HDD context
+ * @adapter: Pointer to the HDD adapter
+ * @offchannel: tdls off-channel number
+ *
+ * This function sets tdls off-channel number
+ *
+ * Return: 0 on success; negative errno otherwise
+ */
+int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx,
+			    struct hdd_adapter *adapter,
+			    int offchannel);
+
+/**
+ * hdd_set_tdls_secoffchanneloffset() - set secondary tdls off-channel offset
+ * @hdd_ctx:     Pointer to the HDD context
+ * @adapter: Pointer to the HDD adapter
+ * @offchanoffset: tdls off-channel offset
+ *
+ * This function sets secondary tdls off-channel offset
+ *
+ * Return: 0 on success; negative errno otherwise
+ */
 int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx,
+				     struct hdd_adapter *adapter,
 				     int offchanoffset);
-int hdd_set_tdls_offchannelmode(struct hdd_adapter *adapter, int offchanmode);
+
+/**
+ * hdd_set_tdls_offchannelmode() - set tdls off-channel mode
+ * @hdd_ctx:     Pointer to the HDD context
+ * @adapter: Pointer to the HDD adapter
+ * @offchanmode: tdls off-channel mode
+ * 1-Enable Channel Switch
+ * 2-Disable Channel Switch
+ *
+ * This function sets tdls off-channel mode
+ *
+ * Return: 0 on success; negative errno otherwise
+ */
+int hdd_set_tdls_offchannelmode(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				int offchanmode);
 int hdd_set_tdls_scan_type(struct hdd_context *hdd_ctx, int val);
 int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
 				 struct hdd_adapter *adapter,
