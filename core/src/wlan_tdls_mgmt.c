@@ -403,6 +403,7 @@ QDF_STATUS tdls_process_mgmt_req(
 	cmd.cmd_timeout_duration = TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT;
 
 	cmd.vdev = tdls_mgmt_req->vdev;
+	cmd.is_blocking = true;
 
 	ser_cmd_status = wlan_serialization_request(&cmd);
 	tdls_debug("wlan_serialization_request status:%d", ser_cmd_status);
