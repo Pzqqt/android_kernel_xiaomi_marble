@@ -935,8 +935,9 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 
 		qdf_nbuf_update_radiotap(&(pdev->ppdu_info.rx_status),
 			mon_mpdu, sizeof(struct rx_pkt_tlvs));
-		pdev->monitor_vdev->osif_rx_mon(
-				pdev->monitor_vdev->osif_vdev, mon_mpdu, NULL);
+		pdev->monitor_vdev->osif_rx_mon(pdev->monitor_vdev->osif_vdev,
+						mon_mpdu,
+						&pdev->ppdu_info.rx_status);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "[%s][%d] mon_mpdu=%pK monitor_vdev %pK osif_vdev %pK"
