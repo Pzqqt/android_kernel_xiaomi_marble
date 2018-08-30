@@ -40,7 +40,6 @@
 #include "wlan_reg_services_api.h"
 #include "lim_process_fils.h"
 
-static void lim_process_mlm_start_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_join_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_auth_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_assoc_req(tpAniSirGlobal, uint32_t *);
@@ -117,9 +116,6 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
 				  struct scheduler_msg *msg)
 {
 	switch (msg->type) {
-	case LIM_MLM_START_REQ:
-		lim_process_mlm_start_req(mac_ctx, msg->bodyptr);
-		break;
 	case LIM_MLM_JOIN_REQ:
 		lim_process_mlm_join_req(mac_ctx, msg->bodyptr);
 		break;
@@ -648,33 +644,17 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	return eSIR_SME_SUCCESS;
 }
 
-/**
- * lim_process_mlm_start_req() - process MLM_START_REQ message
- *
- * @mac_ctx: global MAC context
- * @msg_buf: Pointer to MLM message buffer
- *
- * This function is called to process MLM_START_REQ message
- * from SME
- * 1) MLME receives LIM_MLM_START_REQ from LIM
- * 2) MLME sends WMA_ADD_BSS_REQ to HAL
- * 3) MLME changes state to eLIM_MLM_WT_ADD_BSS_RSP_STATE
- * MLME now waits for HAL to send WMA_ADD_BSS_RSP
- *
- * Return: None
- */
-static void lim_process_mlm_start_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
+void lim_process_mlm_start_req(tpAniSirGlobal mac_ctx,
+			       tLimMlmStartReq *mlm_start_req)
 {
-	tLimMlmStartReq *mlm_start_req;
 	tLimMlmStartCnf mlm_start_cnf;
 	tpPESession session = NULL;
 
-	if (msg_buf == NULL) {
+	if (!mlm_start_req) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
-	mlm_start_req = (tLimMlmStartReq *) msg_buf;
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_start_req->sessionId);
 	if (NULL == session) {
@@ -704,7 +684,7 @@ end:
 	mlm_start_cnf.sessionId = mlm_start_req->sessionId;
 
 	/* Free up buffer allocated for LimMlmScanReq */
-	qdf_mem_free(msg_buf);
+	qdf_mem_free(mlm_start_req);
 
 	/*
 	 * Respond immediately to LIM, only if MLME has not been

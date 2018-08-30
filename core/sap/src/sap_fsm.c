@@ -2022,14 +2022,6 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
 					  __func__, intf);
 				return qdf_status;
 			}
-
-			/* Transition from SAP_STARTING to SAP_STARTED
-			 * (both without substates)
-			 */
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-				  "In %s, from state %s => %s",
-				  __func__, "SAP_DFS_CAC_WAIT",
-				  "SAP_STARTED");
 		}
 	}
 	/*
@@ -3554,16 +3546,20 @@ static int sap_start_dfs_cac_timer(struct sap_context *sap_ctx)
 	/* Start the CAC timer */
 	status = qdf_mc_timer_start(&mac->sap.SapDfsInfo.sap_dfs_cac_timer,
 			cac_dur);
-	if (status == QDF_STATUS_SUCCESS) {
-		mac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
-		return 1;
-	} else {
-		mac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
-		qdf_mc_timer_destroy(&mac->sap.SapDfsInfo.sap_dfs_cac_timer);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: failed to start cac timer", __func__);
-		return 0;
+		goto destroy_timer;
 	}
+
+	mac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
+	return 0;
+
+destroy_timer:
+	mac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
+	qdf_mc_timer_destroy(&mac->sap.SapDfsInfo.sap_dfs_cac_timer);
+
+	return 1;
 }
 
 /*

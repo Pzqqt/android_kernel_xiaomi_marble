@@ -532,6 +532,21 @@ lim_configure_ap_start_bss_session(tpAniSirGlobal mac_ctx, tpPESession session,
 }
 
 /**
+ * lim_send_start_vdev_req() - send vdev start request
+ *@session: pe session
+ *@mlm_start_req: vdev start req
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+lim_send_start_vdev_req(tpPESession session, tLimMlmStartReq *mlm_start_req)
+{
+	lim_process_mlm_start_req(session->mac_ctx, mlm_start_req);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * __lim_handle_sme_start_bss_request() - process SME_START_BSS_REQ message
  *@mac_ctx: Pointer to Global MAC structure
  *@msg_buf: A pointer to the SME message buffer
@@ -559,7 +574,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	uint16_t sme_transaction_id = 0xFF;
 	uint32_t chanwidth;
 	struct vdev_type_nss *vdev_type_nss;
-	QDF_STATUS cfg_get_wmi_dfs_master_param = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct policy_mgr_hw_mode_params hw_mode;
 
 /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -1009,13 +1024,13 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			if (session->lim11hEnable &&
 				(eSIR_INFRA_AP_MODE ==
 					mlm_start_req->bssType)) {
-				cfg_get_wmi_dfs_master_param =
+				qdf_status =
 					wlan_cfg_get_int(mac_ctx,
 						WNI_CFG_DFS_MASTER_ENABLED,
 						&val);
 				session->lim11hEnable = val;
 			}
-			if (cfg_get_wmi_dfs_master_param != QDF_STATUS_SUCCESS)
+			if (QDF_IS_STATUS_ERROR(qdf_status))
 				/* Failed get CFG WNI_CFG_DFS_MASTER_ENABLED */
 				pe_err("Get Fail, CFG DFS ENABLE");
 		}
@@ -1040,8 +1055,9 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->peSessionId,
 			session->limSmeState));
 
-		lim_post_mlm_message(mac_ctx, LIM_MLM_START_REQ,
-			(uint32_t *) mlm_start_req);
+		qdf_status = lim_send_start_vdev_req(session, mlm_start_req);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			goto free;
 		return;
 	} else {
 

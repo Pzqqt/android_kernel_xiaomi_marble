@@ -2888,6 +2888,33 @@ void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
 	}
 }
 
+void wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
+{
+	struct vdev_up_params param = {0};
+	QDF_STATUS status;
+
+	if (!((qdf_atomic_read(
+		&wma->interfaces[vdev_id].vdev_restart_params.
+		hidden_ssid_restart_in_progress)) ||
+		(wma->interfaces[vdev_id].is_channel_switch))) {
+		if (!wma_is_vdev_up(vdev_id)) {
+			param.vdev_id = vdev_id;
+			param.assoc_id = 0;
+			status = wma_send_vdev_up_to_fw(wma, &param,
+						wma->interfaces[vdev_id].bssid);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				WMA_LOGE(FL("failed to send vdev up"));
+				policy_mgr_set_do_hw_mode_change_flag(
+					wma->psoc, false);
+				return;
+			}
+			wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_RUN);
+			wma_set_sap_keepalive(wma, vdev_id);
+			wma_set_vdev_mgmt_rate(wma, vdev_id);
+		}
+	}
+}
+
 /**
  * wma_send_beacon() - send beacon template
  * @wma: wma handle
@@ -2905,7 +2932,6 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 	QDF_STATUS status;
 	uint8_t *p2p_ie;
 	struct sAniBeaconStruct *beacon;
-	struct vdev_up_params param = {0};
 
 	beacon = (struct sAniBeaconStruct *) (bcn_info->beacon);
 	vdev = wma_find_vdev_by_addr(wma, beacon->macHdr.sa, &vdev_id);
@@ -2941,26 +2967,7 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 		WMA_LOGE("%s : wma_store_bcn_tmpl Failed", __func__);
 		return;
 	}
-	if (!((qdf_atomic_read(
-		&wma->interfaces[vdev_id].vdev_restart_params.
-		hidden_ssid_restart_in_progress)) ||
-		(wma->interfaces[vdev_id].is_channel_switch))) {
-		if (!wma_is_vdev_up(vdev_id)) {
-			param.vdev_id = vdev_id;
-			param.assoc_id = 0;
-			status = wma_send_vdev_up_to_fw(wma, &param,
-							bcn_info->bssId);
-			if (QDF_IS_STATUS_ERROR(status)) {
-				WMA_LOGE(FL("failed to send vdev up"));
-				policy_mgr_set_do_hw_mode_change_flag(
-					wma->psoc, false);
-				return;
-			}
-			wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_RUN);
-			wma_set_sap_keepalive(wma, vdev_id);
-			wma_set_vdev_mgmt_rate(wma, vdev_id);
-		}
-	}
+	wma_set_ap_vdev_up(wma, vdev_id);
 }
 
 /**

@@ -640,6 +640,15 @@ int wma_tbttoffset_update_event_handler(void *handle, uint8_t *event,
 void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
 				    tpSendProbeRespParams probe_rsp_info);
 
+/**
+ * wma_set_ap_vdev_up() - send vdev up req
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+void wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id);
+
 void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info);
 
 void wma_set_keepalive_req(tp_wma_handle wma,

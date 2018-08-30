@@ -8351,7 +8351,7 @@ void lim_process_ap_ecsa_timeout(void *data)
 		return;
 	}
 
-	mac_ctx = (tpAniSirGlobal)session->mac_ctx;
+	mac_ctx = session->mac_ctx;
 
 	if (!session->dfsIncludeChanSwIe) {
 		pe_debug("session->dfsIncludeChanSwIe not set");
@@ -8423,3 +8423,4 @@ void lim_process_ap_ecsa_timeout(void *data)
 		}
 	}
 }
+

@@ -479,7 +479,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	qdf_mc_timer_t protection_fields_reset_timer;
 	/* timer to decrement CSA/ECSA count */
 	qdf_mc_timer_t ap_ecsa_timer;
-	void *mac_ctx;
+	tpAniSirGlobal mac_ctx;
 	/*
 	 * variable to store state of various protection struct like
 	 * gLimOlbcParams, gLimOverlap11gParams, gLimOverlapHt20Params etc

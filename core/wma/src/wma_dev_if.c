@@ -868,6 +868,30 @@ send_rsp:
 }
 
 /**
+ * wma_send_start_resp() - send vdev start response to upper layer
+ * @wma: wma handle
+ * @add_bss: add bss params
+ * @resp_event: response params
+ *
+ * Return: none
+ */
+static void wma_send_start_resp(tp_wma_handle wma,
+			       tpAddBssParams add_bss,
+			       wmi_vdev_start_response_event_fixed_param *
+			       resp_event)
+{
+	/* Send vdev stop if vdev start was success */
+	if (QDF_IS_STATUS_ERROR(add_bss->status) &&
+	   !resp_event->status)
+		if (wma_send_vdev_stop_to_fw(wma, resp_event->vdev_id))
+			WMA_LOGE(FL("Failed to send vdev stop"));
+
+	WMA_LOGD(FL("Sending add bss rsp to umac(vdev %d status %d)"),
+		 resp_event->vdev_id, add_bss->status);
+	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
+}
+
+/**
  * wma_vdev_start_rsp() - send vdev start response to upper layer
  * @wma: wma handle
  * @add_bss: add bss params
@@ -960,15 +984,7 @@ send_fail_resp:
 				resp_event->vdev_id, peer, false);
 	}
 
-	/* Send vdev stop if vdev start was success */
-	if ((add_bss->status != QDF_STATUS_SUCCESS) &&
-	   !resp_event->status)
-		if (wma_send_vdev_stop_to_fw(wma, resp_event->vdev_id))
-			WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
-
-	WMA_LOGD("%s: Sending add bss rsp to umac(vdev %d status %d)",
-		 __func__, resp_event->vdev_id, add_bss->status);
-	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
+	wma_send_start_resp(wma, add_bss, resp_event);
 }
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE

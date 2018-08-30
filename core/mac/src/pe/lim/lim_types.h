@@ -54,7 +54,6 @@
 #define LIM_MLM_MSG_START           1000
 #define LIM_MLM_SCAN_REQ            LIM_MLM_MSG_START
 #define LIM_MLM_SCAN_CNF            (LIM_MLM_MSG_START + 1)
-#define LIM_MLM_START_REQ           (LIM_MLM_MSG_START + 2)
 #define LIM_MLM_START_CNF           (LIM_MLM_MSG_START + 3)
 #define LIM_MLM_JOIN_REQ            (LIM_MLM_MSG_START + 4)
 #define LIM_MLM_JOIN_CNF            (LIM_MLM_MSG_START + 5)
@@ -1077,5 +1076,18 @@ void lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx,
  */
 void lim_send_mgmt_frame_tx(tpAniSirGlobal mac_ctx,
 		struct scheduler_msg *msg);
+/**
+ * lim_process_mlm_start_req() - process MLM_START_REQ message
+ *
+ * @mac_ctx: global MAC context
+ * @mlm_start_req: Pointer to start req
+ *
+ * This function is called to process MLM_START_REQ message
+ * from SME. MLME now waits for HAL to send WMA_ADD_BSS_RSP.
+ *
+ * Return: None
+ */
+void lim_process_mlm_start_req(tpAniSirGlobal mac_ctx,
+					  tLimMlmStartReq *mlm_start_req);
 
 #endif /* __LIM_TYPES_H */

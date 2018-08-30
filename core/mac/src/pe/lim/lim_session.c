@@ -136,7 +136,7 @@ static void pe_init_beacon_params(tpAniSirGlobal pMac,
 static void pe_reset_protection_callback(void *ptr)
 {
 	tpPESession pe_session_entry = (tpPESession)ptr;
-	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)pe_session_entry->mac_ctx;
+	tpAniSirGlobal mac_ctx = pe_session_entry->mac_ctx;
 	int8_t i = 0;
 	tUpdateBeaconParams beacon_params;
 	uint16_t current_protection_state = 0;
@@ -678,6 +678,7 @@ tpPESession pe_create_session(tpAniSirGlobal pMac,
 	}
 	session_ptr->vdev = vdev;
 	session_ptr->smeSessionId = sme_session_id;
+	session_ptr->mac_ctx = pMac;
 
 	if (eSIR_INFRASTRUCTURE_MODE == bssType)
 		lim_ft_open(pMac, &pMac->lim.gpSession[i]);
@@ -689,7 +690,6 @@ tpPESession pe_create_session(tpAniSirGlobal pMac,
 		session_ptr->old_protection_state = 0;
 		session_ptr->is_session_obss_offload_enabled = false;
 		session_ptr->is_obss_reset_timer_initialized = false;
-		session_ptr->mac_ctx = (void *)pMac;
 
 		status = qdf_mc_timer_init(&session_ptr->
 					   protection_fields_reset_timer,
@@ -735,6 +735,7 @@ free_dp_hash_table:
 
 	session_ptr->dph.dphHashTable.pHashTable = NULL;
 	session_ptr->dph.dphHashTable.pDphNodeArray = NULL;
+	session_ptr->valid = false;
 
 	return NULL;
 }
@@ -1036,6 +1037,7 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	pe_delete_fils_info(session);
 	session->valid = false;
 
+	session->mac_ctx = NULL;
 	if (session->access_policy_vendor_ie)
 		qdf_mem_free(session->access_policy_vendor_ie);
 
