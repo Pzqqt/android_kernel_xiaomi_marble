@@ -27,6 +27,7 @@
 #include <soc/soundwire.h>
 #include <soc/swr-wcd.h>
 #include <linux/regmap.h>
+#include <dsp/msm-audio-event-notify.h>
 #include "swrm_registers.h"
 #include "swr-mstr-ctrl.h"
 #include "swrm_port_config.h"
@@ -1423,6 +1424,33 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	return ret;
 }
 
+static int swrm_event_notify(struct notifier_block *self,
+				unsigned long action, void *data)
+{
+	struct swr_mstr_ctrl *swrm = container_of(self, struct swr_mstr_ctrl,
+							event_notifier);
+	if (!swrm || !swrm->pdev) {
+		pr_err("%s: swrm or pdev is NULL\n", __func__);
+		return -EINVAL;
+	}
+	if (action != MSM_AUD_DC_EVENT) {
+		dev_err(&swrm->pdev->dev, "%s: invalid event type: %lu\n",
+			__func__, action);
+		return -EINVAL;
+	}
+
+	schedule_work(&(swrm->dc_presence_work));
+
+	return 0;
+}
+
+static void swrm_notify_work_fn(struct work_struct *work)
+{
+	struct swr_mstr_ctrl *swrm = container_of(work, struct swr_mstr_ctrl,
+							dc_presence_work);
+	swrm_wcd_notify(swrm->pdev, SWR_DEVICE_DOWN, NULL);
+}
+
 static int swrm_probe(struct platform_device *pdev)
 {
 	struct swr_mstr_ctrl *swrm;
@@ -1671,6 +1699,10 @@ static int swrm_probe(struct platform_device *pdev)
 	pm_runtime_enable(&pdev->dev);
 	pm_runtime_mark_last_busy(&pdev->dev);
 
+	INIT_WORK(&swrm->dc_presence_work, swrm_notify_work_fn);
+	swrm->event_notifier.notifier_call  = swrm_event_notify;
+	msm_aud_evt_register_client(&swrm->event_notifier);
+
 	return 0;
 err_mstr_fail:
 	if (swrm->reg_irq)
@@ -1700,6 +1732,7 @@ static int swrm_remove(struct platform_device *pdev)
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	swr_unregister_master(&swrm->master);
+	msm_aud_evt_unregister_client(&swrm->event_notifier);
 	mutex_destroy(&swrm->mlock);
 	mutex_destroy(&swrm->reslock);
 	mutex_destroy(&swrm->force_down_lock);
