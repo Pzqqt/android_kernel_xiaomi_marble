@@ -5935,26 +5935,6 @@ static void csr_roam_assign_default_param(tpAniSirGlobal pMac,
 		encryptionType[0];
 }
 
-static void csr_set_abort_roaming_command(tpAniSirGlobal pMac,
-					tSmeCmd *pCommand)
-{
-	switch (pCommand->u.roamCmd.roamReason) {
-	case eCsrLostLink1:
-		pCommand->u.roamCmd.roamReason = eCsrLostLink1;
-		break;
-	case eCsrLostLink2:
-		pCommand->u.roamCmd.roamReason = eCsrLostLink2;
-		break;
-	case eCsrLostLink3:
-		pCommand->u.roamCmd.roamReason = eCsrLostLink3;
-		break;
-	default:
-		sme_err("aborting roaming reason %d not recognized",
-			pCommand->u.roamCmd.roamReason);
-		break;
-	}
-}
-
 /**
  * csr_roam_select_bss() - Handle join scenario based on profile
  * @mac_ctx:             Global MAC Context
@@ -6074,15 +6054,7 @@ static void csr_roam_join_handle_profile(tpAniSirGlobal mac_ctx,
 				eCSR_ROAM_ASSOCIATION_COMPLETION,
 				eCSR_ROAM_RESULT_NOT_ASSOCIATED);
 		}
-		/* If roaming has stopped, don't continue the roaming command */
-		if (!CSR_IS_ROAMING(session) && CSR_IS_ROAMING_COMMAND(cmd)) {
-			/* No need to complete roaming as it already complete */
-			sme_debug("Roam cmd(reason %d)aborted as roam complete",
-				  cmd->u.roamCmd.roamReason);
-			*roam_state = eCsrStopRoaming;
-			csr_set_abort_roaming_command(mac_ctx, cmd);
-			return;
-		}
+
 		qdf_mem_set(roam_info_ptr, sizeof(struct csr_roam_info), 0);
 		if (!scan_result)
 			cmd->u.roamCmd.roamProfile.uapsd_mask = 0;
@@ -9977,18 +9949,6 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 		sme_warn("Roam command canceled");
 		csr_roam_complete(mac_ctx, eCsrNothingToJoin, NULL,
 					sme_session_id);
-		return;
-	}
-
-	/* If the roaming has stopped, not to continue the roaming command */
-	if (!CSR_IS_ROAMING(session) && CSR_IS_ROAMING_COMMAND(cmd)) {
-		/* No need to complete roaming here as it already completes */
-		sme_warn(
-			"Roam cmd (reason %d) aborted(roaming completed)",
-			cmd->u.roamCmd.roamReason);
-		csr_set_abort_roaming_command(mac_ctx, cmd);
-		csr_roam_complete(mac_ctx, eCsrNothingToJoin, NULL,
-				sme_session_id);
 		return;
 	}
 
@@ -20485,15 +20445,6 @@ static enum wlan_serialization_cmd_type csr_get_roam_cmd_type(
 		break;
 	case eCsrHddIssued:
 		cmd_type = WLAN_SER_CMD_HDD_ISSUED;
-		break;
-	case eCsrLostLink1:
-		cmd_type = WLAN_SER_CMD_LOST_LINK1;
-		break;
-	case eCsrLostLink2:
-		cmd_type = WLAN_SER_CMD_LOST_LINK2;
-		break;
-	case eCsrLostLink3:
-		cmd_type = WLAN_SER_CMD_LOST_LINK3;
 		break;
 	case eCsrForcedDisassocMICFailure:
 		cmd_type = WLAN_SER_CMD_FORCE_DISASSOC_MIC_FAIL;

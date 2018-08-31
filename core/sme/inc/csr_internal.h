@@ -118,10 +118,6 @@ enum csr_roam_reason {
 	eCsrForcedDisassoc,
 	/* roaming because an 802.11 request was issued to the driver. */
 	eCsrHddIssued,
-	/* roaming because we lost link to an associated AP */
-	eCsrLostLink1,
-	eCsrLostLink2,
-	eCsrLostLink3,
 	/* roaming because we need to force a Disassoc due to MIC failure */
 	eCsrForcedDisassocMICFailure,
 	eCsrHddIssuedReassocToSameAP,
@@ -1138,11 +1134,6 @@ struct csr_roamstruct {
 #define CSR_IS_LOSTLINK_ROAMING(reason) \
 	((eCsrLostlinkRoamingDisassoc == (reason)) || \
 		(eCsrLostlinkRoamingDeauth == (reason)))
-
-#define CSR_IS_ROAMING_COMMAND(pCommand) \
-		((eCsrLostLink1 == (pCommand)->u.roamCmd.roamReason) || \
-			(eCsrLostLink2 == (pCommand)->u.roamCmd.roamReason) || \
-			(eCsrLostLink3 == (pCommand)->u.roamCmd.roamReason))
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 /* bit-4 and bit-5 indicate the subnet status */
