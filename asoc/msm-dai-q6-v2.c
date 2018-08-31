@@ -9594,7 +9594,7 @@ static struct platform_driver msm_dai_q6_tdm_driver = {
 static int msm_dai_q6_cdc_dma_format_put(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
-	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+	struct msm_dai_q6_cdc_dma_dai_data *dai_data = kcontrol->private_data;
 	int value = ucontrol->value.integer.value[0];
 
 	dai_data->port_config.cdc_dma.data_format = value;
@@ -9605,7 +9605,7 @@ static int msm_dai_q6_cdc_dma_format_put(struct snd_kcontrol *kcontrol,
 static int msm_dai_q6_cdc_dma_format_get(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
-	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+	struct msm_dai_q6_cdc_dma_dai_data *dai_data = kcontrol->private_data;
 
 	ucontrol->value.integer.value[0] =
 		dai_data->port_config.cdc_dma.data_format;
@@ -9807,6 +9807,11 @@ static int msm_dai_q6_cdc_dma_prepare(struct snd_pcm_substream *substream,
 				pr_err("%s: afe send island mode failed %d\n",
 					__func__, rc);
 		}
+		if ((dai->id == AFE_PORT_ID_WSA_CODEC_DMA_TX_0) &&
+			(dai_data->port_config.cdc_dma.data_format == 1))
+			dai_data->port_config.cdc_dma.data_format =
+				AFE_LINEAR_PCM_DATA_PACKED_16BIT;
+
 		rc = afe_port_start(dai->id, &dai_data->port_config,
 						dai_data->rate);
 		if (rc < 0)
@@ -9867,7 +9872,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 				   SNDRV_PCM_FMTBIT_S24_3LE |
 				   SNDRV_PCM_FMTBIT_S32_LE,
 			.channels_min = 1,
-			.channels_max = 2,
+			.channels_max = 4,
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
@@ -9893,7 +9898,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 				   SNDRV_PCM_FMTBIT_S24_3LE |
 				   SNDRV_PCM_FMTBIT_S32_LE,
 			.channels_min = 1,
-			.channels_max = 2,
+			.channels_max = 4,
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
