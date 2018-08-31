@@ -1407,7 +1407,7 @@ exit:
 int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 			  uint32_t req_mask)
 {
-	int ret;
+	int errno;
 	tSirLLStatsGetReq get_req;
 	struct hdd_station_ctx *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -1418,10 +1418,6 @@ int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 		hdd_warn("Command not allowed in FTM mode");
 		return -EPERM;
 	}
-
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return -EINVAL;
 
 	if (hddstactx->hdd_reassoc_scenario) {
 		hdd_err("Roaming in progress, cannot process the request");
@@ -1438,15 +1434,15 @@ int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 	get_req.staId = adapter->session_id;
 
 	rtnl_lock();
-	ret = wlan_hdd_send_ll_stats_req(hdd_ctx, &get_req);
+	errno = wlan_hdd_send_ll_stats_req(hdd_ctx, &get_req);
 	rtnl_unlock();
-	if (0 != ret)
+	if (errno)
 		hdd_err("Send LL stats req failed, id:%u, mask:%d, session:%d",
 			req_id, req_mask, adapter->session_id);
 
 	hdd_exit();
-	return ret;
 
+	return errno;
 }
 
 /**
