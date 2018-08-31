@@ -1169,7 +1169,6 @@ typedef struct tagCsrConfigParam {
 	uint8_t enableHtSmps;
 	uint8_t htSmps;
 	bool send_smps_action;
-	bool ignore_peer_erp_info;
 	/*
 	 * To enable/disable scanning only 2.4Ghz channels on first scan
 	 */
@@ -1203,10 +1202,7 @@ typedef struct tagCsrConfigParam {
 	uint8_t conc_custom_rule1;
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
-	bool send_deauth_before_con;
 
-	/* 802.11p enable */
-	bool enable_dot11p;
 	uint8_t max_scan_count;
 	bool early_stop_scan_enable;
 	int8_t early_stop_scan_min_threshold;
@@ -1214,7 +1210,6 @@ typedef struct tagCsrConfigParam {
 	int8_t first_scan_bucket_threshold;
 	uint8_t fEnableDebugLog;
 	uint8_t max_intf_count;
-	bool enable5gEBT;
 	bool enableSelfRecovery;
 	uint32_t f_sta_miracast_mcc_rest_time_val;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
@@ -1261,8 +1256,6 @@ typedef struct tagCsrConfigParam {
 	uint16_t wlm_latency_enable;
 	uint16_t wlm_latency_level;
 	uint32_t wlm_latency_flags[CSR_NUM_WLM_LATENCY_LEVEL];
-	bool qcn_ie_support;
-	uint8_t fils_max_chan_guard_time;
 	uint16_t pkt_err_disconn_th;
 	bool is_force_1x1;
 	uint32_t disallow_duration;

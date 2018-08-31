@@ -250,8 +250,6 @@ int iw_set_dot11p_channel_sched(struct net_device *dev,
 #endif
 
 #ifdef WLAN_FEATURE_DSRC
-void hdd_set_dot11p_config(struct hdd_context *hdd_ctx);
-
 int wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 				     struct wireless_dev *wdev,
 				     const void *data,
@@ -296,10 +294,6 @@ void wlan_hdd_dcc_register_for_dcc_stats_event(struct hdd_context *hdd_ctx);
 
 void wlan_hdd_dcc_stats_event(void *context_ptr, void *response_ptr);
 #else
-static inline void hdd_set_dot11p_config(struct hdd_context *hdd_ctx)
-{
-}
-
 static inline int wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 		struct wireless_dev *wdev,
 		const void *data,

@@ -303,7 +303,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		 * in 2x2 80MHz mode instead of connecting in 160MHz mode.
 		 */
 		if ((vht_ch_wd > WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) &&
-				mac_ctx->sta_prefer_80MHz_over_160MHz) {
+		    mac_ctx->mlme_cfg->sta.sta_prefer_80mhz_over_160mhz) {
 			if (!(IS_VHT_NSS_1x1(beacon_struct->VHTCaps.txMCSMap))
 					&&
 			   (!IS_VHT_NSS_1x1(beacon_struct->VHTCaps.rxMCSMap)))

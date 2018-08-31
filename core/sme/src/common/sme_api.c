@@ -8724,32 +8724,8 @@ void sme_get_command_q_status(tHalHandle hHal)
 		csr_nonscan_pending_ll_count(pMac));
 
 }
-/**
- * sme_set_prefer_80MHz_over_160MHz() - API to set sta_prefer_80MHz_over_160MHz
- * @hal:           The handle returned by macOpen
- * @sta_prefer_80MHz_over_160MHz: sta_prefer_80MHz_over_160MHz config param
- */
-void sme_set_prefer_80MHz_over_160MHz(tHalHandle hal,
-		bool sta_prefer_80MHz_over_160MHz)
-{
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-
-	mac_ctx->sta_prefer_80MHz_over_160MHz = sta_prefer_80MHz_over_160MHz;
-}
 
 #ifdef WLAN_FEATURE_DSRC
-/**
- * sme_set_dot11p_config() - API to set the 802.11p config
- * @hHal:           The handle returned by macOpen
- * @enable_dot11p:  802.11p config param
- */
-void sme_set_dot11p_config(tHalHandle hHal, bool enable_dot11p)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	pMac->enable_dot11p = enable_dot11p;
-}
-
 /**
  * copy_sir_ocb_config() - Performs deep copy of an OCB configuration
  * @src: the source configuration

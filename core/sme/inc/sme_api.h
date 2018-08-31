@@ -1316,8 +1316,6 @@ int sme_update_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 
 void wlan_sap_enable_phy_error_logs(tHalHandle hal, uint32_t enable_log);
 #ifdef WLAN_FEATURE_DSRC
-void sme_set_dot11p_config(tHalHandle hal, bool enable_dot11p);
-
 QDF_STATUS sme_ocb_set_config(tHalHandle hHal, void *context,
 			      ocb_callback callback,
 			      struct sir_ocb_config *config);
@@ -1359,11 +1357,6 @@ sme_set_etsi13_srd_ch_in_master_mode(tHalHandle hal,
 {
 }
 #else
-static inline void sme_set_dot11p_config(tHalHandle hal, bool enable_dot11p)
-{
-	return;
-}
-
 static inline QDF_STATUS sme_ocb_set_config(tHalHandle hHal, void *context,
 		ocb_callback callback,
 		struct sir_ocb_config *config)

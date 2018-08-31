@@ -99,7 +99,8 @@
 #include "wlan_hdd_packet_filter_api.h"
 #include "wlan_cp_stats_mc_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
-#include "wlan_mlme_public_struct.h"
+#include "cfg_mlme_sta.h"
+#include "cfg_ucfg_api.h"
 
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
@@ -8025,10 +8026,10 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 		return -EINVAL;
 	}
 
-	if (request->timePeriod > WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX) {
+	if (request->timePeriod > cfg_max(CFG_INFRA_STA_KEEP_ALIVE_PERIOD)) {
 		hdd_err("Value of timePeriod %d exceed Max limit %d",
 			request->timePeriod,
-			WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX);
+			cfg_max(CFG_INFRA_STA_KEEP_ALIVE_PERIOD));
 		return -EINVAL;
 	}
 

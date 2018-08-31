@@ -232,12 +232,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 		if (false == lim_create_non_ap_timers(pMac))
 			goto err_timer;
 
-	/* Create all CNF_WAIT Timers upfront */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_WT_CNF_TIMEOUT, &cfgValue)
-		!= QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve CNF timeout value");
-	}
-
+	cfgValue = pMac->mlme_cfg->sta.wait_cnf_timeout;
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 	for (i = 0; i < (pMac->lim.maxStation + 1); i++) {
 		if (tx_timer_create(pMac,
@@ -893,15 +888,7 @@ lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal pMac, uint32_t timerId
 			pe_err("unable to deactivate CNF wait timer");
 		}
 		/* Change timer to reactivate it in future */
-
-		if (wlan_cfg_get_int(pMac, WNI_CFG_WT_CNF_TIMEOUT,
-				     &val) != QDF_STATUS_SUCCESS) {
-			/**
-			 * Could not get cnf timeout value
-			 * from CFG. Log error.
-			 */
-			pe_err("could not retrieve cnf timeout value");
-		}
+		val = pMac->mlme_cfg->sta.wait_cnf_timeout;
 		val = SYS_MS_TO_TICKS(val);
 
 		if (tx_timer_change

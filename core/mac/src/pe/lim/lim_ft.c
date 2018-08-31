@@ -743,7 +743,6 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
 	tAddBssParams *pAddBssParams;
 	tSirFTUpdateKeyInfo *pKeyInfo;
-	uint32_t val = 0;
 	tpPESession psessionEntry;
 	uint8_t sessionId;
 
@@ -806,12 +805,9 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		qdf_mem_copy((uint8_t *) &pAddBssParams->extSetStaKeyParam.key,
 			     (uint8_t *) &pKeyInfo->keyMaterial.key,
 			     sizeof(tSirKeys));
-		if (QDF_STATUS_SUCCESS !=
-		    wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val)) {
-			pe_warn("Unable to read WNI_CFG_SINGLE_TID_RC");
-		}
 
-		pAddBssParams->extSetStaKeyParam.singleTidRc = val;
+		pAddBssParams->extSetStaKeyParam.singleTidRc =
+			(uint8_t)pMac->mlme_cfg->sta.single_tid;
 		pe_debug("Key valid: %d keyLength: %d",
 			pAddBssParams->extSetStaKeyParamValid,
 			pAddBssParams->extSetStaKeyParam.key[0].keyLength);

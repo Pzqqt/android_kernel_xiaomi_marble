@@ -867,7 +867,6 @@ typedef struct sAniSirGlobal {
 	uint8_t beacon_offload;
 	bool pmf_offload;
 	bool is_fils_roaming_supported;
-	bool enable5gEBT;
 	uint8_t f_prefer_non_dfs_on_radar;
 	uint32_t fEnableDebugLog;
 	uint32_t f_sta_miracast_mcc_rest_time_val;
@@ -879,8 +878,6 @@ typedef struct sAniSirGlobal {
 	struct vdev_type_nss vdev_type_nss_5g;
 
 	uint16_t mgmtSeqNum;
-	/* 802.11p enable */
-	bool enable_dot11p;
 	/* DBS capability based on INI and FW capability */
 	uint8_t hw_dbs_capable;
 	uint32_t sta_sap_scc_on_dfs_chan;
@@ -898,7 +895,6 @@ typedef struct sAniSirGlobal {
 	uint8_t user_configured_nss;
 	bool snr_monitor_enabled;
 	bool ignore_assoc_disallowed;
-	bool sta_prefer_80MHz_over_160MHz;
 	int8_t first_scan_bucket_threshold;
 	uint32_t peer_rssi;
 	uint32_t peer_txrate;

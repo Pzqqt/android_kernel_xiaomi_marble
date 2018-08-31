@@ -530,12 +530,10 @@ struct csr_config {
 	bool isRoamOffloadEnabled;
 #endif
 	bool obssEnabled;
-	bool ignore_peer_erp_info;
 	uint8_t conc_custom_rule1;
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
 	struct roam_ext_params roam_params;
-	bool send_deauth_before_con;
 	bool early_stop_scan_enable;
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
@@ -566,8 +564,6 @@ struct csr_config {
 	bool enable_ul_ofdma;
 	bool enable_ul_mimo;
 #endif
-	bool qcn_ie_support;
-	uint8_t fils_max_chan_guard_time;
 	uint16_t pkt_err_disconn_th;
 	bool is_force_1x1;
 	uint32_t disallow_duration;

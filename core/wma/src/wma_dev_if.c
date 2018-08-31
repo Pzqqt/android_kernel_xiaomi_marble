@@ -2401,12 +2401,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 			WMA_LOGE("failed to set aggr sizes per ac(err=%d)",
 				 status);
 
-		if (wlan_cfg_get_int(mac, WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD,
-				     &cfg_val) != QDF_STATUS_SUCCESS) {
-			WMA_LOGE("Failed to get value for WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD");
-			cfg_val = DEFAULT_INFRA_STA_KEEP_ALIVE_PERIOD;
-		}
-
+		cfg_val = mac->mlme_cfg->sta.sta_keep_alive_period;
 		wma_set_sta_keep_alive(wma_handle,
 				       self_sta_req->session_id,
 				       SIR_KEEP_ALIVE_NULL_PKT,
@@ -2784,14 +2779,8 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	intr[params.vdev_id].config.gtx_info.gtxRTMask[1] =
 		CFG_TGT_DEFAULT_GTX_VHT_MASK;
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_TGT_GTX_USR_CFG,
-			     &intr[params.vdev_id].config.gtx_info.gtxUsrcfg)
-	    != QDF_STATUS_SUCCESS) {
-		intr[params.vdev_id].config.gtx_info.gtxUsrcfg =
-						WNI_CFG_TGT_GTX_USR_CFG_STADEF;
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_WARN,
-			  "Failed to get WNI_CFG_TGT_GTX_USR_CFG");
-	}
+	intr[params.vdev_id].config.gtx_info.gtxUsrcfg =
+		mac_ctx->mlme_cfg->sta.tgt_gtx_usr_cfg;
 
 	intr[params.vdev_id].config.gtx_info.gtxPERThreshold =
 		CFG_TGT_DEFAULT_GTX_PER_THRESHOLD;
@@ -4348,8 +4337,8 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 
 		wmi_unified_send_txbf(wma, &add_bss->staContext);
 
-		pps_val = ((pMac->enable5gEBT << 31) & 0xffff0000) |
-				(PKT_PWR_SAVE_5G_EBT & 0xffff);
+		pps_val = ((pMac->mlme_cfg->sta.enable_5g_ebt << 31) &
+			   0xffff0000) | (PKT_PWR_SAVE_5G_EBT & 0xffff);
 		status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 						WMI_VDEV_PARAM_PACKET_POWERSAVE,
 						pps_val);

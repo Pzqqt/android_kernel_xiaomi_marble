@@ -51,21 +51,6 @@
 #define WLAN_WAIT_TIME_OCB_CMD 1500
 
 /**
- * hdd_set_dot11p_config() - Set 802.11p config flag
- * @hdd_ctx: HDD Context pointer
- *
- * TODO-OCB: This has been temporarily added to ensure this parameter
- * is set in CSR when we init the channel list. This should be removed
- * once the 5.9 GHz channels are added to the regulatory domain.
- */
-void hdd_set_dot11p_config(struct hdd_context *hdd_ctx)
-{
-	sme_set_dot11p_config(hdd_ctx->mac_handle,
-			      hdd_ctx->config->dot11p_mode !=
-				WLAN_HDD_11P_DISABLED);
-}
-
-/**
  * dot11p_validate_qos_params() - Check if QoS parameters are valid
  * @qos_params:   Array of QoS parameters
  *

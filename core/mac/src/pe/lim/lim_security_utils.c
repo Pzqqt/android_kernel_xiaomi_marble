@@ -784,7 +784,6 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 	tpSetBssKeyParams pSetBssKeyParams = NULL;
 	tLimMlmSetKeysCnf mlmSetKeysCnf;
 	QDF_STATUS retCode;
-	uint32_t val = 0;
 
 	if (pMlmSetKeysReq->numKeys > SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS) {
 		pe_debug("numKeys = %d is more than SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS",
@@ -809,11 +808,8 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 	pSetBssKeyParams->bssIdx = psessionEntry->bssIdx;
 	pSetBssKeyParams->encType = pMlmSetKeysReq->edType;
 
-	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val))
-		pe_warn("Unable to read WNI_CFG_SINGLE_TID_RC");
-
-	pSetBssKeyParams->singleTidRc = (uint8_t) val;
-
+	pSetBssKeyParams->singleTidRc =
+		(uint8_t)(pMac->mlme_cfg->sta.single_tid);
 	/* Update PE session Id */
 	pSetBssKeyParams->sessionId = psessionEntry->peSessionId;
 
@@ -892,7 +888,6 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	tpSetStaKeyParams pSetStaKeyParams = NULL;
 	tLimMlmSetKeysCnf mlmSetKeysCnf;
 	QDF_STATUS retCode;
-	uint32_t val = 0;
 
 	/* Package WMA_SET_STAKEY_REQ message parameters */
 	pSetStaKeyParams = qdf_mem_malloc(sizeof(tSetStaKeyParams));
@@ -905,11 +900,8 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	pSetStaKeyParams->staIdx = staIdx;
 	pSetStaKeyParams->encType = pMlmSetKeysReq->edType;
 
-	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pMac, WNI_CFG_SINGLE_TID_RC, &val))
-		pe_warn("Unable to read WNI_CFG_SINGLE_TID_RC");
-
-	pSetStaKeyParams->singleTidRc = (uint8_t) val;
-
+	pSetStaKeyParams->singleTidRc =
+		(uint8_t)(pMac->mlme_cfg->sta.single_tid);
 	/* Update  PE session ID */
 	pSetStaKeyParams->sessionId = sessionEntry->peSessionId;
 

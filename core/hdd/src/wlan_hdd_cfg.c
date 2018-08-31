@@ -1012,13 +1012,6 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_ENABLE_WES_MODE_NAME_MIN,
 			     CFG_ENABLE_WES_MODE_NAME_MAX,
 			     cb_notify_set_wes_mode, 0),
-	REG_VARIABLE(CFG_PMKID_MODES_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, pmkid_modes,
-		     VAR_FLAGS_OPTIONAL |
-		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PMKID_MODES_DEFAULT,
-		     CFG_PMKID_MODES_MIN,
-		     CFG_PMKID_MODES_MAX),
 
 	REG_DYNAMIC_VARIABLE(CFG_ROAM_SCAN_OFFLOAD_ENABLED, WLAN_PARAM_Integer,
 			     struct hdd_config, isRoamOffloadScanEnabled,
@@ -1474,13 +1467,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_RA_RATE_LIMIT_INTERVAL_MAX),
 #endif
 
-	REG_VARIABLE(CFG_IGNORE_PEER_ERP_INFO_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, ignore_peer_erp_info,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IGNORE_PEER_ERP_INFO_DEFAULT,
-		     CFG_IGNORE_PEER_ERP_INFO_MIN,
-		     CFG_IGNORE_PEER_ERP_INFO_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_HOST_SSDP_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, ssdp,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1519,26 +1505,12 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_QOS_WMM_TS_INFO_ACK_POLICY_MIN,
 		     CFG_QOS_WMM_TS_INFO_ACK_POLICY_MAX),
 
-	REG_VARIABLE(CFG_SINGLE_TID_RC_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, bSingleTidRc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SINGLE_TID_RC_DEFAULT,
-		     CFG_SINGLE_TID_RC_MIN,
-		     CFG_SINGLE_TID_RC_MAX),
-
 	REG_VARIABLE(CFG_TELE_BCN_WAKEUP_EN_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, teleBcnWakeupEn,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_TELE_BCN_WAKEUP_EN_DEFAULT,
 		     CFG_TELE_BCN_WAKEUP_EN_MIN,
 		     CFG_TELE_BCN_WAKEUP_EN_MAX),
-
-	REG_VARIABLE(CFG_INFRA_STA_KEEP_ALIVE_PERIOD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, infraStaKeepAlivePeriod,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_INFRA_STA_KEEP_ALIVE_PERIOD_DEFAULT,
-		     CFG_INFRA_STA_KEEP_ALIVE_PERIOD_MIN,
-		     CFG_INFRA_STA_KEEP_ALIVE_PERIOD_MAX),
 
 	REG_VARIABLE(CFG_STA_KEEPALIVE_METHOD_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, sta_keepalive_method,
@@ -1979,13 +1951,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_BT_CHAIN_SEPARATION_MIN,
 		     CFG_ENABLE_BT_CHAIN_SEPARATION_MAX),
 
-	REG_VARIABLE(CFG_STA_PREFER_80MHZ_OVER_160MHZ, WLAN_PARAM_Integer,
-		     struct hdd_config, sta_prefer_80MHz_over_160MHz,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_STA_PREFER_80MHZ_OVER_160MHZ_DEFAULT,
-		     CFG_STA_PREFER_80MHZ_OVER_160MHZ_MIN,
-		     CFG_STA_PREFER_80MHZ_OVER_160MHZ_MAX),
-
 	REG_VARIABLE(CFG_VDEV_TYPE_NSS_5G, WLAN_PARAM_Integer,
 		     struct hdd_config, vdev_type_nss_5g,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2115,13 +2080,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_TX_STBC_DEFAULT,
 		     CFG_ENABLE_TX_STBC_MIN,
 		     CFG_ENABLE_TX_STBC_MAX),
-
-	REG_VARIABLE(CFG_PPS_ENABLE_5G_EBT, WLAN_PARAM_Integer,
-		     struct hdd_config, enable5gEBT,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PPS_ENABLE_5G_EBT_FEATURE_DEFAULT,
-		     CFG_PPS_ENABLE_5G_EBT_FEATURE_MIN,
-		     CFG_PPS_ENABLE_5G_EBT_FEATURE_MAX),
 
 	REG_VARIABLE(CFG_PREVENT_LINK_DOWN_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, prevent_link_down,
@@ -3066,13 +3024,6 @@ struct reg_table_entry g_registry_table[] = {
 			    (void *)CFG_DHCP_SERVER_IP_DEFAULT),
 #endif /* DHCP_SERVER_OFFLOAD */
 
-	REG_VARIABLE(CFG_ENABLE_DEAUTH_BEFORE_CONNECTION, WLAN_PARAM_Integer,
-		struct hdd_config, send_deauth_before_con,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ENABLE_DEAUTH_BEFORE_CONNECTION_DEFAULT,
-		CFG_ENABLE_DEAUTH_BEFORE_CONNECTION_MIN,
-		CFG_ENABLE_DEAUTH_BEFORE_CONNECTION_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_MAC_ADDR_SPOOFING, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_mac_spoofing,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -3254,13 +3205,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_MAX_SCAN_COUNT_DEFAULT,
 		     CFG_MAX_SCAN_COUNT_MIN,
 		     CFG_MAX_SCAN_COUNT_MAX),
-
-	REG_VARIABLE(CFG_DOT11P_MODE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, dot11p_mode,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_DOT11P_MODE_DEFAULT,
-		     CFG_DOT11P_MODE_MIN,
-		     CFG_DOT11P_MODE_MAX),
 
 	REG_VARIABLE(CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE, WLAN_PARAM_Integer,
 		     struct hdd_config, etsi13_srd_chan_in_master_mode,
@@ -3540,14 +3484,6 @@ struct reg_table_entry g_registry_table[] = {
 			CFG_ENABLE_EDCA_INI_MIN,
 			CFG_ENABLE_EDCA_INI_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_GO_CTS2SELF_FOR_STA, WLAN_PARAM_Integer,
-			struct hdd_config, enable_go_cts2self_for_sta,
-			VAR_FLAGS_OPTIONAL |
-			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			CFG_ENABLE_GO_CTS2SELF_FOR_STA_DEFAULT,
-			CFG_ENABLE_GO_CTS2SELF_FOR_STA_MIN,
-			CFG_ENABLE_GO_CTS2SELF_FOR_STA_MAX),
-
 	REG_VARIABLE(CFG_EDCA_VO_CWMIN_VALUE_NAME, WLAN_PARAM_Integer,
 			struct hdd_config, edca_vo_cwmin,
 			VAR_FLAGS_OPTIONAL |
@@ -3759,13 +3695,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_SUB_20_CHANNEL_WIDTH_DEFAULT,
 		     CFG_SUB_20_CHANNEL_WIDTH_MIN,
 		     CFG_SUB_20_CHANNEL_WIDTH_MAX),
-
-	REG_VARIABLE(CFG_TGT_GTX_USR_CFG_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, tgt_gtx_usr_cfg,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TGT_GTX_USR_CFG_DEFAULT,
-		     CFG_TGT_GTX_USR_CFG_MIN,
-		     CFG_TGT_GTX_USR_CFG_MAX),
 
 	REG_VARIABLE(CFG_ADAPT_DWELL_PASMON_INTVAL_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, adapt_dwell_passive_mon_intval,
@@ -4092,13 +4021,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_ANI_MIN,
 		     CFG_ENABLE_ANI_MAX),
 
-	REG_VARIABLE(CFG_QCN_IE_SUPPORT_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, qcn_ie_support,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_QCN_IE_SUPPORT_DEFAULT,
-		CFG_QCN_IE_SUPPORT_MIN,
-		CFG_QCN_IE_SUPPORT_MAX),
-
 	REG_VARIABLE(CFG_TIMER_MULTIPLIER_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, timer_multiplier,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4173,13 +4095,6 @@ struct reg_table_entry g_registry_table[] = {
 			    struct hdd_config, probe_req_ouis,
 			    VAR_FLAGS_OPTIONAL,
 			    (void *)CFG_PROBE_REQ_OUI_DEFAULT),
-
-	REG_VARIABLE(CFG_FILS_MAX_CHAN_GUARD_TIME_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, fils_max_chan_guard_time,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_FILS_MAX_CHAN_GUARD_TIME_DEFAULT,
-		CFG_FILS_MAX_CHAN_GUARD_TIME_MIN,
-		CFG_FILS_MAX_CHAN_GUARD_TIME_MAX),
 
 	REG_VARIABLE(CFG_SCAN_BACKOFF_MULTIPLIER_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, scan_backoff_multiplier,
@@ -4729,13 +4644,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ENABLE_SCORING_FOR_ROAM_DEFAULT,
 		CFG_ENABLE_SCORING_FOR_ROAM_MIN,
 		CFG_ENABLE_SCORING_FOR_ROAM_MAX),
-
-	REG_VARIABLE(CFG_FORCE_RSNE_OVERRIDE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, force_rsne_override,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_FORCE_RSNE_OVERRIDE_DEFAULT,
-		     CFG_FORCE_RSNE_OVERRIDE_MIN,
-		     CFG_FORCE_RSNE_OVERRIDE_MAX),
 
 	REG_VARIABLE(CFG_MBO_CANDIDATE_RSSI_THRESHOLD_NAME,
 		WLAN_PARAM_SignedInteger, struct hdd_config,
@@ -6575,12 +6483,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_AP_LINK_MONITOR_TIMEOUT to CFG");
 	}
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_SINGLE_TID_RC,
-		    config->bSingleTidRc) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_SINGLE_TID_RC to CFG");
-	}
-
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_TELE_BCN_WAKEUP_EN,
 		    config->teleBcnWakeupEn) == QDF_STATUS_E_FAILURE) {
 		status = false;
@@ -6592,13 +6494,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		    QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_TELE_BCN_MAX_LI to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD,
-		    config->infraStaKeepAlivePeriod) ==
-		    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD to CFG");
 	}
 
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_FRAGMENTATION_THRESHOLD,
@@ -6670,12 +6565,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 			QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_IBSS_ATIM_WIN_SIZE to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_TGT_GTX_USR_CFG,
-	    config->tgt_gtx_usr_cfg) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_TGT_GTX_USR_CFG to CCM");
 	}
 
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_RATE_FOR_TX_MGMT,
@@ -7205,8 +7094,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	smeConfig->csrConfig.isCoalesingInIBSSAllowed =
 		hdd_ctx->config->isCoalesingInIBSSAllowed;
-	smeConfig->csrConfig.ignore_peer_erp_info =
-						pConfig->ignore_peer_erp_info;
 	/* update SSR config */
 	sme_update_enable_ssr(mac_handle, hdd_ctx->config->enableSSR);
 
@@ -7214,8 +7101,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.max_intf_count = hdd_ctx->max_intf_count;
 
 	smeConfig->csrConfig.fEnableDebugLog = hdd_ctx->config->gEnableDebugLog;
-
-	smeConfig->csrConfig.enable5gEBT = hdd_ctx->config->enable5gEBT;
 
 	smeConfig->csrConfig.enableSelfRecovery =
 			hdd_ctx->config->enableSelfRecovery;
@@ -7250,15 +7135,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 
-	smeConfig->csrConfig.send_deauth_before_con =
-		pConfig->send_deauth_before_con;
-
 	smeConfig->csrConfig.max_scan_count =
 			hdd_ctx->config->max_scan_count;
-
-	/* Update 802.11p config */
-	smeConfig->csrConfig.enable_dot11p =
-		(hdd_ctx->config->dot11p_mode != WLAN_HDD_11P_DISABLED);
 
 	smeConfig->csrConfig.early_stop_scan_enable =
 		hdd_ctx->config->early_stop_scan_enable;
@@ -7348,10 +7226,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->enable_bcast_probe_rsp;
 	smeConfig->csrConfig.is_fils_enabled =
 			hdd_ctx->config->is_fils_enabled;
-	smeConfig->csrConfig.qcn_ie_support =
-			hdd_ctx->config->qcn_ie_support;
-	smeConfig->csrConfig.fils_max_chan_guard_time =
-			hdd_ctx->config->fils_max_chan_guard_time;
 
 	hdd_he_set_sme_config(smeConfig, pConfig);
 
@@ -7495,9 +7369,16 @@ void hdd_cfg_print_global_config(struct hdd_context *hdd_ctx)
 void hdd_get_pmkid_modes(struct hdd_context *hdd_ctx,
 			 struct pmkid_mode_bits *pmkid_modes)
 {
-	pmkid_modes->fw_okc = (hdd_ctx->config->pmkid_modes &
+	uint32_t cur_pmkid_modes;
+	QDF_STATUS status;
+
+	status = ucfg_mlme_get_pmkid_modes(hdd_ctx->hdd_psoc, &cur_pmkid_modes);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err("get pmkid modes fail");
+
+	pmkid_modes->fw_okc = (cur_pmkid_modes &
 			       CFG_PMKID_MODES_OKC) ? 1 : 0;
-	pmkid_modes->fw_pmksa_cache = (hdd_ctx->config->pmkid_modes &
+	pmkid_modes->fw_pmksa_cache = (cur_pmkid_modes &
 				       CFG_PMKID_MODES_PMKSA_CACHING) ? 1 : 0;
 }
 

@@ -3050,8 +3050,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.rx_ldpc_enable = pParam->enable_rx_ldpc;
 		pMac->roam.configParam.disable_high_ht_mcs_2x2 =
 					pParam->disable_high_ht_mcs_2x2;
-		pMac->roam.configParam.ignore_peer_erp_info =
-			pParam->ignore_peer_erp_info;
 		pMac->roam.configParam.max_amsdu_num =
 			pParam->max_amsdu_num;
 		pMac->roam.configParam.nSelect5GHzMargin =
@@ -3082,10 +3080,7 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->conc_custom_rule2;
 		pMac->roam.configParam.is_sta_connection_in_5gz_enabled =
 			pParam->is_sta_connection_in_5gz_enabled;
-		pMac->roam.configParam.send_deauth_before_con =
-			pParam->send_deauth_before_con;
 
-		pMac->enable_dot11p = pParam->enable_dot11p;
 		pMac->roam.configParam.early_stop_scan_enable =
 			pParam->early_stop_scan_enable;
 		pMac->roam.configParam.early_stop_scan_min_threshold =
@@ -3147,7 +3142,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		/* update interface configuration */
 		pMac->sme.max_intf_count = pParam->max_intf_count;
 
-		pMac->enable5gEBT = pParam->enable5gEBT;
 		pMac->sme.enableSelfRecovery = pParam->enableSelfRecovery;
 
 		pMac->f_sta_miracast_mcc_rest_time_val =
@@ -3208,10 +3202,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->enable_bcast_probe_rsp;
 		pMac->roam.configParam.is_fils_enabled =
 			pParam->is_fils_enabled;
-		pMac->roam.configParam.qcn_ie_support =
-			pParam->qcn_ie_support;
-		pMac->roam.configParam.fils_max_chan_guard_time =
-			pParam->fils_max_chan_guard_time;
 		pMac->roam.configParam.disallow_duration =
 			pParam->disallow_duration;
 		pMac->roam.configParam.rssi_channel_penalization =
@@ -3361,7 +3351,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		cfg_params->enable_txbf_sap_mode;
 	pParam->enable_vht20_mcs9 = cfg_params->enable_vht20_mcs9;
 	pParam->enableVhtFor24GHz = cfg_params->enableVhtFor24GHz;
-	pParam->ignore_peer_erp_info = cfg_params->ignore_peer_erp_info;
 	pParam->enable2x2 = cfg_params->enable2x2;
 	pParam->isFastTransitionEnabled = cfg_params->isFastTransitionEnabled;
 	pParam->RoamRssiDiff = cfg_params->RoamRssiDiff;
@@ -3412,7 +3401,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	pParam->isRoamOffloadEnabled = cfg_params->isRoamOffloadEnabled;
 #endif
-	pParam->enable_dot11p = pMac->enable_dot11p;
 	csr_set_channels(pMac, pParam);
 	pParam->obssEnabled = cfg_params->obssEnabled;
 	pParam->vendor_vht_sap =
@@ -3465,8 +3453,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->conc_custom_rule2 = cfg_params->conc_custom_rule2;
 	pParam->is_sta_connection_in_5gz_enabled =
 		cfg_params->is_sta_connection_in_5gz_enabled;
-	pParam->send_deauth_before_con =
-		cfg_params->send_deauth_before_con;
 	pParam->max_scan_count = pMac->scan.max_scan_count;
 	pParam->first_scan_bucket_threshold =
 		pMac->first_scan_bucket_threshold;
@@ -3486,7 +3472,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->auto_bmps_timer_val =
 		pMac->sme.ps_global_info.auto_bmps_timer_val;
 	pParam->fEnableDebugLog = pMac->fEnableDebugLog;
-	pParam->enable5gEBT = pMac->enable5gEBT;
 	pParam->f_sta_miracast_mcc_rest_time_val =
 		pMac->f_sta_miracast_mcc_rest_time_val;
 	pParam->early_stop_scan_enable =
@@ -3527,10 +3512,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.enable_bcast_probe_rsp;
 	pParam->is_fils_enabled =
 		pMac->roam.configParam.is_fils_enabled;
-	pParam->qcn_ie_support =
-		pMac->roam.configParam.qcn_ie_support;
-	pParam->fils_max_chan_guard_time =
-		pMac->roam.configParam.fils_max_chan_guard_time;
 	pParam->disallow_duration =
 		pMac->roam.configParam.disallow_duration;
 	pParam->rssi_channel_penalization =
@@ -4267,7 +4248,6 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-	uint32_t rssi = 0;
 
 	WLAN_HOST_DIAG_EVENT_DEF(connectionStatus,
 			host_event_wlan_status_payload_type);
@@ -4390,9 +4370,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 			connectionStatus.channel =
 				roam_info->pBssDesc->channelId;
 		}
-		if (cfg_set_int(pMac, WNI_CFG_CURRENT_RSSI,
-				connectionStatus.rssi) == QDF_STATUS_E_FAILURE)
-			sme_err("Can't pass WNI_CFG_CURRENT_RSSI to cfg");
+		pMac->mlme_cfg->sta.current_rssi = connectionStatus.rssi;
 
 		connectionStatus.qosCapability =
 			roam_info->u.pConnectedProfile->qosConnection;
@@ -4416,10 +4394,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 			|| (eCSR_ROAM_RESULT_MIC_FAILURE == u2)) {
 		qdf_mem_copy(&connectionStatus, &pMac->sme.eventPayload,
 				sizeof(host_event_wlan_status_payload_type));
-		if (QDF_IS_STATUS_SUCCESS(wlan_cfg_get_int(pMac,
-				WNI_CFG_CURRENT_RSSI, &rssi)))
-			connectionStatus.rssi = rssi;
-
+		connectionStatus.rssi = pMac->mlme_cfg->sta.current_rssi;
 		connectionStatus.eventId = eCSR_WLAN_STATUS_DISCONNECT;
 		connectionStatus.reason = eCSR_REASON_MIC_ERROR;
 		WLAN_HOST_DIAG_EVENT_REPORT(&connectionStatus,
@@ -4428,10 +4403,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 	if (eCSR_ROAM_RESULT_FORCED == u2) {
 		qdf_mem_copy(&connectionStatus, &pMac->sme.eventPayload,
 				sizeof(host_event_wlan_status_payload_type));
-		if (QDF_IS_STATUS_SUCCESS(wlan_cfg_get_int(pMac,
-				WNI_CFG_CURRENT_RSSI, &rssi)))
-			connectionStatus.rssi = rssi;
-
+		connectionStatus.rssi = pMac->mlme_cfg->sta.current_rssi;
 		connectionStatus.eventId = eCSR_WLAN_STATUS_DISCONNECT;
 		connectionStatus.reason = eCSR_REASON_USER_REQUESTED;
 		WLAN_HOST_DIAG_EVENT_REPORT(&connectionStatus,
@@ -4440,10 +4412,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 	if (eCSR_ROAM_RESULT_DISASSOC_IND == u2) {
 		qdf_mem_copy(&connectionStatus, &pMac->sme.eventPayload,
 				sizeof(host_event_wlan_status_payload_type));
-		if (QDF_IS_STATUS_SUCCESS(wlan_cfg_get_int(pMac,
-				WNI_CFG_CURRENT_RSSI, &rssi)))
-			connectionStatus.rssi = rssi;
-
+		connectionStatus.rssi = pMac->mlme_cfg->sta.current_rssi;
 		connectionStatus.eventId = eCSR_WLAN_STATUS_DISCONNECT;
 		connectionStatus.reason = eCSR_REASON_DISASSOC;
 		if (roam_info)
@@ -4456,10 +4425,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 	if (eCSR_ROAM_RESULT_DEAUTH_IND == u2) {
 		qdf_mem_copy(&connectionStatus, &pMac->sme.eventPayload,
 				sizeof(host_event_wlan_status_payload_type));
-		if (QDF_IS_STATUS_SUCCESS(wlan_cfg_get_int(pMac,
-				WNI_CFG_CURRENT_RSSI, &rssi)))
-			connectionStatus.rssi = rssi;
-
+		connectionStatus.rssi = pMac->mlme_cfg->sta.current_rssi;
 		connectionStatus.eventId = eCSR_WLAN_STATUS_DISCONNECT;
 		connectionStatus.reason = eCSR_REASON_DEAUTH;
 		if (roam_info)
@@ -17316,7 +17282,7 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 	add_sta_self_req->enable_bcast_probe_rsp =
 				pMac->roam.configParam.enable_bcast_probe_rsp;
 	add_sta_self_req->fils_max_chan_guard_time =
-				pMac->roam.configParam.fils_max_chan_guard_time;
+				pMac->mlme_cfg->sta.fils_max_chan_guard_time;
 	add_sta_self_req->pkt_err_disconn_th =
 				pMac->roam.configParam.pkt_err_disconn_th;
 	add_sta_self_req->oce_feature_bitmap =
@@ -19517,7 +19483,7 @@ static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
 	ese_populate_addtional_ies(mac_ctx, session, req_buf);
 
 	/* Append QCN IE if g_support_qcn_ie INI is enabled */
-	if (mac_ctx->roam.configParam.qcn_ie_support)
+	if (mac_ctx->mlme_cfg->sta.qcn_ie_support)
 		csr_append_assoc_ies(mac_ctx, req_buf, IEEE80211_ELEMID_VENDOR,
 					DOT11F_IE_QCN_IE_MAX_LEN,
 					qcn_ie);

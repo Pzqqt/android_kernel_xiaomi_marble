@@ -1113,18 +1113,6 @@ NONE
 0    128    27
 
 *
-* Parameter to indicate or not new BSS found
-*
-WNI_CFG_NEW_BSS_FOUND_IND         I    4    9
-V    RW    NP
-NONE
-0    1    0
-V   RW    NP
-NONE
-0    1    0
-
-
-*
 * Qualcomm Prop Rates are disabled by default
 *
 WNI_CFG_PROPRIETARY_RATES_ENABLED    I    4    12
@@ -1171,19 +1159,6 @@ NONE
 V    RW    NP RESTART
 NONE
 0    1    1
-
-*
-* Wait for CNF Timeout. CNF include (RE)ASSOC, DISASSOC, AUTH, DEAUTH,
-* DUMMY packet
-*
-
-WNI_CFG_WT_CNF_TIMEOUT    I    4    12
-V   RW    NP
-NONE
-10    3000   1000
-V    RW    NP
-NONE
-10    3000   1000
 
 *
 * Proximity, set it for very short distances
@@ -3662,17 +3637,6 @@ HAL
 0    0xFF     7
 
 *
-* Infra STA mode Keep alive period (in secs) for
-* sending keep alive (Qos)Null frames to the AP.
-* 0 = disabled. Recommended values is 30 secs
-*
-WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD   I    4    7
-V    RW    NP
-HAL
-0    1000    0
-V    RW    NP
-HAL
-0    1000    0
 
 * Limit on number of associated stations
 * (applies to peer stations in IBSS, SoftAP, BT-AMP AP, & P2P-GO modes)
@@ -3867,16 +3831,6 @@ HAL
 100   1000    300
 *
 *
-
-* Current RSSI value (of connected AP)
-*
-WNI_CFG_CURRENT_RSSI I    4    7
-V    RW    NP
-NONE
-0   127    0
-V    RW    NP
-NONE
-0   127    0
 
 * RTT3 Bit Value
 *

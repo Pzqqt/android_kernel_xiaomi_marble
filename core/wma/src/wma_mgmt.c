@@ -73,6 +73,8 @@
 #include <qdf_crypto.h>
 #include "wma_twt.h"
 #include "wlan_p2p_cfg_api.h"
+#include "cfg_ucfg_api.h"
+#include "cfg_mlme_sta.h"
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -897,9 +899,9 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 		return;
 	}
 
-	if (timeperiod > WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX) {
+	if (timeperiod > cfg_max(CFG_INFRA_STA_KEEP_ALIVE_PERIOD)) {
 		WMI_LOGE("Invalid period %d Max limit %d", timeperiod,
-			 WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX);
+			 cfg_max(CFG_INFRA_STA_KEEP_ALIVE_PERIOD));
 		return;
 	}
 

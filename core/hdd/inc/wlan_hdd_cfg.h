@@ -598,29 +598,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * pmkidModes - Enable PMKID modes
- * This INI is used to enable PMKID feature options
- * @Min: 0
- * @Max: 3
- * @Default: 3
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_PMKID_MODES_NAME                       "pmkidModes"
-#define CFG_PMKID_MODES_MIN                        (0x0)
-#define CFG_PMKID_MODES_MAX                        (0x3)
-#define CFG_PMKID_MODES_DEFAULT                    (0x3)
-#define CFG_PMKID_MODES_OKC                        (0x1)
-#define CFG_PMKID_MODES_PMKSA_CACHING              (0x2)
-
-/*
- * <ini>
  * gEnableDFSPnoChnlScan - enable dfs channels in PNO scan
  * @Min: 0
  * @Max: 1
@@ -3178,30 +3155,6 @@ enum hdd_dot11_mode {
 #define CFG_WOW_DATA_INACTIVITY_TIMEOUT_MAX      (255)
 #define CFG_WOW_DATA_INACTIVITY_TIMEOUT_DEFAULT  (50)
 
-/*
- * <ini>
- * gStaKeepAlivePeriod - Sends NULL frame to AP periodically in
- * seconds to notify STA's existence
- * @Min: 0
- * @Max: 65535
- * @Default: 30
- *
- * This ini is used to send default NULL frame to AP
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_NAME          "gStaKeepAlivePeriod"
-#define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_MIN           (0)
-#define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_MAX           (65535)
-#define CFG_INFRA_STA_KEEP_ALIVE_PERIOD_DEFAULT       (60)
-
 /**
  * enum station_keepalive_method - available keepalive methods for stations
  * @HDD_STA_KEEPALIVE_NULL_DATA: null data packet
@@ -3993,28 +3946,6 @@ enum station_keepalive_method {
 
 /*
  * <ini>
- * SingleTIDRC - Set replay counter for all TID's
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to set replay counter for all TID's
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_SINGLE_TID_RC_NAME    "SingleTIDRC"
-#define CFG_SINGLE_TID_RC_MIN      (0) /* Separate replay counter for all TID */
-#define CFG_SINGLE_TID_RC_MAX      (1) /* Single replay counter for all TID */
-#define CFG_SINGLE_TID_RC_DEFAULT  (1)
-
-/*
- * <ini>
  * gAddTSWhenACMIsOff - Set ACM value for AC
  * @Min: 0
  * @Max: 1
@@ -4696,32 +4627,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gStaPrefer80MHzOver160MHz - set Sta perferance to connect in 80HZ/160HZ
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is  used to set Sta perferance to connect in 80HZ/160HZ
- *
- * 0 - Connects in 160MHz 1x1 when AP is 160MHz 2x2
- * 1 - Connects in 80MHz 2x2 when AP is 160MHz 2x2
- *
- * Related: NA
- *
- * Supported Feature: 11AC
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_STA_PREFER_80MHZ_OVER_160MHZ         "gStaPrefer80MHzOver160MHz"
-#define CFG_STA_PREFER_80MHZ_OVER_160MHZ_MIN     (0)
-#define CFG_STA_PREFER_80MHZ_OVER_160MHZ_MAX     (1)
-#define CFG_STA_PREFER_80MHZ_OVER_160MHZ_DEFAULT (1)
-
-/*
- * <ini>
  * gVdevTypeNss_2g - set Number of streams per VDEV for 2G band.
  * @Min: 0x5555
  * @Max: 0xAAAA
@@ -5137,31 +5042,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_OVERLAP_CH_MIN           (0)
 #define CFG_ENABLE_OVERLAP_CH_MAX           (1)
 #define CFG_ENABLE_OVERLAP_CH_DEFAULT       (0)
-
-/*
- * <ini>
- * gEnable5gEBT - Enables/disables 5G early beacon termination. When enabled
- *                 terminate the reception of beacon if the TIM element is
- *                 clear for the power saving
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to set default 5G early beacon termination
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_PPS_ENABLE_5G_EBT                 "gEnable5gEBT"
-#define CFG_PPS_ENABLE_5G_EBT_FEATURE_MIN     (0)
-#define CFG_PPS_ENABLE_5G_EBT_FEATURE_MAX     (1)
-#define CFG_PPS_ENABLE_5G_EBT_FEATURE_DEFAULT (1)
 
 #define CFG_ENABLE_MEMORY_DEEP_SLEEP          "gEnableMemDeepSleep"
 #define CFG_ENABLE_MEMORY_DEEP_SLEEP_MIN      (0)
@@ -6625,29 +6505,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gIgnorePeerErpInfo - Used for ignore peer infrormation
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to ignore default peer info
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_IGNORE_PEER_ERP_INFO_NAME      "gIgnorePeerErpInfo"
-#define CFG_IGNORE_PEER_ERP_INFO_MIN       (0)
-#define CFG_IGNORE_PEER_ERP_INFO_MAX       (1)
-#define CFG_IGNORE_PEER_ERP_INFO_DEFAULT   (0)
-
-/*
- * <ini>
  * gEnableMemoryDebug - Enables the memory debug
  * @Min: 0
  * @Max: 1
@@ -7202,31 +7059,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gSendDeauthBeforeCon - It will send deauth before connection
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set default DeauthBeforeCon
- * If last disconnection was due to HB failure and we reconnect
- * to same AP next time, send Deauth before starting connection
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_DEAUTH_BEFORE_CONNECTION                  "gSendDeauthBeforeCon"
-#define CFG_ENABLE_DEAUTH_BEFORE_CONNECTION_MIN              (0)
-#define CFG_ENABLE_DEAUTH_BEFORE_CONNECTION_MAX              (1)
-#define CFG_ENABLE_DEAUTH_BEFORE_CONNECTION_DEFAULT          (0)
-
-/*
- * <ini>
  * gEnableCustomConcRule1 - Enable custom concurrency rule1.
  * @Min: 0
  * @Max: 1
@@ -7698,23 +7530,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_FINE_TIME_MEAS_CAPABILITY_MAX          (0x00BD)
 #define CFG_FINE_TIME_MEAS_CAPABILITY_DEFAULT      (0x000D)
 
-/**
- * enum dot11p_mode - The 802.11p mode of operation
- * @WLAN_HDD_11P_DISABLED:   802.11p mode is disabled
- * @WLAN_HDD_11P_STANDALONE: 802.11p-only operation
- * @WLAN_HDD_11P_CONCURRENT: 802.11p and WLAN operate concurrently
- */
-enum dot11p_mode {
-	WLAN_HDD_11P_DISABLED = 0,
-	WLAN_HDD_11P_STANDALONE,
-	WLAN_HDD_11P_CONCURRENT,
-};
-
-#define CFG_DOT11P_MODE_NAME             "gDot11PMode"
-#define CFG_DOT11P_MODE_DEFAULT          (WLAN_HDD_11P_DISABLED)
-#define CFG_DOT11P_MODE_MIN              (WLAN_HDD_11P_DISABLED)
-#define CFG_DOT11P_MODE_MAX              (WLAN_HDD_11P_CONCURRENT)
-
 /*
  * <ini>
  * etsi13_srd_chan_in_master_mode - Enable/disable ETSI SRD channels in
@@ -7738,32 +7553,6 @@ enum dot11p_mode {
 #define CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_DEF (0)
 #define CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_MIN (0)
 #define CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_MAX (1)
-
-/*
- * <ini>
- * gEnable_go_cts2self_for_sta - Indicate firmware to stop NOA and
- * start using cts2self
- * @Min: 1
- * @Max: 1
- * @Default: 0
- *
- * When gEnable_go_cts2self_for_sta is
- * enabled  then if a legacy client connects to P2P GO,
- * Host will send a WMI VDEV command to FW to stop using NOA for P2P GO
- * and start using CTS2SELF.
- *
- *
- * Supported Feature: P2P
- *
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_GO_CTS2SELF_FOR_STA   "gEnable_go_cts2self_for_sta"
-#define CFG_ENABLE_GO_CTS2SELF_FOR_STA_DEFAULT  (0)
-#define CFG_ENABLE_GO_CTS2SELF_FOR_STA_MIN      (0)
-#define CFG_ENABLE_GO_CTS2SELF_FOR_STA_MAX      (1)
 
 #define CFG_CE_CLASSIFY_ENABLE_NAME	"gCEClassifyEnable"
 #define CFG_CE_CLASSIFY_ENABLE_MIN	(0)
@@ -8532,11 +8321,6 @@ enum dot11p_mode {
 #define CFG_SUB_20_CHANNEL_WIDTH_MIN               (WLAN_SUB_20_CH_WIDTH_NONE)
 #define CFG_SUB_20_CHANNEL_WIDTH_MAX               (WLAN_SUB_20_CH_WIDTH_10)
 #define CFG_SUB_20_CHANNEL_WIDTH_DEFAULT           (WLAN_SUB_20_CH_WIDTH_NONE)
-
-#define CFG_TGT_GTX_USR_CFG_NAME    "tgt_gtx_usr_cfg"
-#define CFG_TGT_GTX_USR_CFG_MIN     (0)
-#define CFG_TGT_GTX_USR_CFG_MAX     (32)
-#define CFG_TGT_GTX_USR_CFG_DEFAULT (32)
 
 #define CFG_SAP_INTERNAL_RESTART_NAME    "gEnableSapInternalRestart"
 #define CFG_SAP_INTERNAL_RESTART_MIN     (0)
@@ -10214,29 +9998,6 @@ enum hdd_wext_control {
 
 /*
  * <ini>
- * g_qcn_ie_support - QCN IE Support
- * @Min: 0 (disabled)
- * @Max: 1 (enabled)
- * @Default: 1 (enabled)
- *
- * This config item is used to support QCN IE in probe/assoc/reassoc request
- * for STA mode. QCN IE support is not added for SAP mode.
- *
- * Related: N/A
- *
- * Supported Feature: N/A
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QCN_IE_SUPPORT_NAME    "g_qcn_ie_support"
-#define CFG_QCN_IE_SUPPORT_MIN      0
-#define CFG_QCN_IE_SUPPORT_MAX      1
-#define CFG_QCN_IE_SUPPORT_DEFAULT  1
-
-/*
- * <ini>
  * gTimerMultiplier - Scale QDF timers by this value
  * @Min: 1
  * @Max: 0xFFFFFFFF
@@ -10559,28 +10320,6 @@ enum hdd_wext_control {
 #define CFG_SAP_CH_SWITCH_MODE_MIN     (0)
 #define CFG_SAP_CH_SWITCH_MODE_MAX     (1)
 #define CFG_SAP_CH_SWITCH_MODE_DEFAULT (1)
-
-/*
- * <ini>
- * g_fils_max_chan_guard_time - Set maximum channel guard time(ms)
- * @Min: 0
- * @Max: 10
- * @Default: 0
- *
- * This ini is used to set maximum channel guard time in milli seconds
- *
- * Related: None
- *
- * Supported Feature: FILS
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_FILS_MAX_CHAN_GUARD_TIME_NAME    "g_fils_max_chan_guard_time"
-#define CFG_FILS_MAX_CHAN_GUARD_TIME_MIN     (0)
-#define CFG_FILS_MAX_CHAN_GUARD_TIME_MAX     (10)
-#define CFG_FILS_MAX_CHAN_GUARD_TIME_DEFAULT (0)
 
 /**
  * gSetRTSForSIFSBursting - set rts for sifs bursting
@@ -11966,30 +11705,6 @@ enum hdd_external_acs_policy {
 #define CFG_ENABLE_SCORING_FOR_ROAM_DEFAULT  (1)
 #define CFG_ENABLE_SCORING_FOR_ROAM_MIN      (0)
 #define CFG_ENABLE_SCORING_FOR_ROAM_MAX      (1)
-
-/*
- * <ini>
- * force_rsne_override - force rsnie override from user
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable test mode to force rsne override used in
- * security enhancement test cases to pass the RSNIE sent by user in
- * assoc request.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: internal
- *
- * </ini>
- */
-#define CFG_FORCE_RSNE_OVERRIDE_NAME    "force_rsne_override"
-#define CFG_FORCE_RSNE_OVERRIDE_MIN     (0)
-#define CFG_FORCE_RSNE_OVERRIDE_MAX     (1)
-#define CFG_FORCE_RSNE_OVERRIDE_DEFAULT (0)
 
 /*
  * <ini>
@@ -13379,7 +13094,6 @@ struct hdd_config {
 	uint8_t RoamRssiDiff;
 	int32_t rssi_abs_thresh;
 	bool isWESModeEnabled;
-	uint32_t pmkid_modes;
 	bool isRoamOffloadScanEnabled;
 	bool bImplicitQosEnabled;
 
@@ -13418,7 +13132,6 @@ struct hdd_config {
 	/* Control for Replay counetr. value 1 means
 	 * single replay counter for all TID
 	 */
-	bool bSingleTidRc;
 	bool fhostArpOffload;
 	enum pmo_hw_filter_mode hw_filter_mode_bitmap;
 	bool ssdp;
@@ -13441,7 +13154,6 @@ struct hdd_config {
 
 	bool AddTSWhenACMIsOff;
 
-	uint32_t infraStaKeepAlivePeriod;
 	uint8_t nBandCapability;
 	bool teleBcnWakeupEn;
 
@@ -13550,7 +13262,6 @@ struct hdd_config {
 	bool enableTxSTBC;
 	uint8_t enable_tx_ldpc;
 	uint8_t enable_rx_ldpc;
-	bool enable5gEBT;
 	bool prevent_link_down;
 	uint8_t scanAgingTimeout;
 	uint8_t disableLDPCWithTxbfAP;
@@ -13749,12 +13460,10 @@ struct hdd_config {
 	uint8_t go_11ac_override;
 	uint8_t sap_dot11mc;
 	uint8_t prefer_non_dfs_on_radar;
-	bool ignore_peer_erp_info;
 	uint8_t multicast_host_fw_msgs;
 	uint8_t conc_system_pref;
 	uint32_t dbs_selection_policy;
 	uint32_t vdev_priority_list;
-	bool send_deauth_before_con;
 	bool tso_enable;
 	bool lro_enable;
 	bool gro_enable;
@@ -13768,7 +13477,6 @@ struct hdd_config {
 #ifdef WLAN_FEATURE_FASTPATH
 	bool fastpath_enable;
 #endif
-	uint8_t dot11p_mode;
 	bool etsi13_srd_chan_in_master_mode;
 	uint8_t rx_mode;
 	uint8_t num_dp_rx_threads;
@@ -13862,7 +13570,6 @@ struct hdd_config {
 	bool bug_on_reinit_failure;
 	uint32_t iface_change_wait_time;
 	/* parameter to control GTX */
-	uint32_t tgt_gtx_usr_cfg;
 	enum cfg_sub_20_channel_width enable_sub_20_channel_width;
 	bool indoor_channel_support;
 	/* control marking indoor channel passive to disable */
@@ -13873,8 +13580,6 @@ struct hdd_config {
 	uint16_t sap_tx_leakage_threshold;
 	bool multicast_replay_filter;
 	bool goptimize_chan_avoid_event;
-	bool enable_go_cts2self_for_sta;
-	bool sta_prefer_80MHz_over_160MHz;
 	bool fw_timeout_crash;
 	/* beacon count before channel switch */
 	uint8_t sap_chanswitch_beacon_cnt;
@@ -13914,7 +13619,6 @@ struct hdd_config {
 #endif
 	uint32_t arp_ac_category;
 	bool ani_enabled;
-	bool qcn_ie_support;
 	bool tx_orphan_enable;
 
 	bool probe_req_ie_whitelist;
@@ -13933,7 +13637,6 @@ struct hdd_config {
 	uint32_t probe_req_voui[MAX_PROBE_REQ_OUIS];
 
 	uint32_t timer_multiplier;
-	uint8_t fils_max_chan_guard_time;
 	uint8_t scan_backoff_multiplier;
 	bool mawc_nlo_enabled;
 	uint32_t mawc_nlo_exp_backoff_ratio;
@@ -14004,7 +13707,6 @@ struct hdd_config {
 	uint32_t oce_wan_score_slots11_to_8;
 	uint32_t oce_wan_score_slots15_to_12;
 	bool enable_scoring_for_roam;
-	bool force_rsne_override;
 	bool is_fils_enabled;
 	uint16_t wlm_latency_enable;
 	uint16_t wlm_latency_level;

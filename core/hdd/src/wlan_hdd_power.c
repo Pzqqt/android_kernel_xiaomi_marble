@@ -78,6 +78,8 @@
 #include "wlan_ipa_ucfg_api.h"
 #include <wlan_cfg80211_mc_cp_stats.h>
 #include "wlan_p2p_ucfg_api.h"
+#include "wlan_mlme_ucfg_api.h"
+
 /* Preprocessor definitions and constants */
 #ifdef QCA_WIFI_NAPIER_EMULATION
 #define HDD_SSR_BRING_UP_TIME 3000000
@@ -680,7 +682,8 @@ static int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
 		     sizeof(req.destIpv4Addr));
 
 	qdf_copy_macaddr(&req.bssid, &sta_ctx->conn_info.bssId);
-	req.timePeriod = hdd_ctx->config->infraStaKeepAlivePeriod;
+	ucfg_mlme_get_sta_keep_alive_period(hdd_ctx->hdd_psoc,
+					    &req.timePeriod);
 	req.sessionId = adapter->session_id;
 
 	hdd_debug("Setting gratuitous ARP keepalive; ipv4_addr:%u.%u.%u.%u",

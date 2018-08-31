@@ -114,13 +114,13 @@ ap_beacon_process_24_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		if (bcn_struct->channelNumber != session->currentOperChannel)
 			return;
 
-		tmp_exp = (!bcn_struct->erpPresent
-			    && !bcn_struct->HTInfo.present)
+		tmp_exp = (!bcn_struct->erpPresent &&
+			   !bcn_struct->HTInfo.present) ||
 			    /* if erp not present then  11B AP overlapping */
-			    || (!mac_ctx->roam.configParam.ignore_peer_erp_info &&
-					bcn_struct->erpPresent &&
-					(bcn_struct->erpIEInfo.useProtection
-				    || bcn_struct->erpIEInfo.nonErpPresent));
+			  (!mac_ctx->mlme_cfg->sta.ignore_peer_erp_info &&
+			   bcn_struct->erpPresent &&
+			   (bcn_struct->erpIEInfo.useProtection ||
+			    bcn_struct->erpIEInfo.nonErpPresent));
 		if (!tmp_exp)
 			return;
 #ifdef FEATURE_WLAN_ESE
@@ -143,12 +143,12 @@ ap_beacon_process_24_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	if (bcn_struct->channelNumber != session->currentOperChannel)
 		return;
 
-	tmp_exp = (!bcn_struct->erpPresent && !bcn_struct->HTInfo.present)
+	tmp_exp = (!bcn_struct->erpPresent && !bcn_struct->HTInfo.present) ||
 		    /* if erp not present then  11B AP overlapping */
-		    || (!mac_ctx->roam.configParam.ignore_peer_erp_info &&
-				bcn_struct->erpPresent &&
-				(bcn_struct->erpIEInfo.useProtection
-			    || bcn_struct->erpIEInfo.nonErpPresent));
+		   (!mac_ctx->mlme_cfg->sta.ignore_peer_erp_info &&
+		    bcn_struct->erpPresent &&
+		    (bcn_struct->erpIEInfo.useProtection ||
+		     bcn_struct->erpIEInfo.nonErpPresent));
 	if (tmp_exp) {
 #ifdef FEATURE_WLAN_ESE
 		if (session->isESEconnection) {
@@ -1340,7 +1340,7 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 		}
 
 		/* INI related settings */
-		if (mac_ctx->roam.configParam.ignore_peer_erp_info)
+		if (mac_ctx->mlme_cfg->sta.ignore_peer_erp_info)
 			cfg->obss_11b_sta_detect_mode =
 				OBSS_OFFLOAD_DETECTION_DISABLED;
 

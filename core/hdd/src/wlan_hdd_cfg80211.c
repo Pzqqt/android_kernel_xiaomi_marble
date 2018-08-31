@@ -120,6 +120,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_extscan_ucfg_api.h"
+#include "wlan_mlme_ucfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -5158,7 +5159,7 @@ static int wlan_hdd_save_default_scan_ies(struct hdd_context *hdd_ctx,
 					  uint8_t *ie_data, uint16_t ie_len)
 {
 	struct hdd_scan_info *scan_info = &adapter->scan_info;
-	bool add_qcn_ie = hdd_ctx->config->qcn_ie_support;
+	bool add_qcn_ie;
 
 	if (!scan_info)
 		return -EINVAL;
@@ -5169,7 +5170,7 @@ static int wlan_hdd_save_default_scan_ies(struct hdd_context *hdd_ctx,
 	}
 
 	scan_info->default_scan_ies_len = ie_len;
-
+	ucfg_mlme_get_qcn_ie_support(hdd_ctx->hdd_psoc, &add_qcn_ie);
 	if (add_qcn_ie)
 		ie_len += (QCN_IE_HDR_LEN + QCN_IE_VERSION_SUBATTR_LEN);
 
@@ -5486,6 +5487,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	uint8_t bmiss_bcnt;
 	uint16_t latency_level;
 	mac_handle_t mac_handle;
+	bool b_value;
 
 	hdd_enter_dev(dev);
 	qdf_mem_zero(&request, sizeof(request));
@@ -6024,8 +6026,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		}
 	}
 
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE] &&
-	    hdd_ctx->config->force_rsne_override) {
+	ucfg_mlme_get_force_rsne_override(hdd_ctx->hdd_psoc, &b_value);
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE] && b_value) {
 		uint8_t force_rsne_override;
 
 		force_rsne_override =

@@ -35,7 +35,7 @@
 #include <linux/ctype.h>
 #include "wma.h"
 #include "wlan_hdd_napi.h"
-
+#include "wlan_mlme_ucfg_api.h"
 #ifdef FEATURE_WLAN_ESE
 #include <sme_api.h>
 #include <sir_api.h>
@@ -4487,6 +4487,8 @@ static int drv_cmd_set_okc_mode(struct hdd_adapter *adapter,
 	uint32_t okc_mode;
 	struct pmkid_mode_bits pmkid_modes;
 	mac_handle_t mac_handle;
+	uint32_t cur_pmkid_modes;
+	QDF_STATUS status;
 
 	hdd_get_pmkid_modes(hdd_ctx, &pmkid_modes);
 
@@ -4507,7 +4509,12 @@ static int drv_cmd_set_okc_mode(struct hdd_adapter *adapter,
 	value = value + command_len + 1;
 
 	/* get the current configured value */
-	okc_mode = hdd_ctx->config->pmkid_modes & CFG_PMKID_MODES_OKC;
+	status = ucfg_mlme_get_pmkid_modes(hdd_ctx->hdd_psoc,
+					   &cur_pmkid_modes);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err("get pmkid modes failed");
+
+	okc_mode = cur_pmkid_modes & CFG_PMKID_MODES_OKC;
 
 	/* Convert the value from ascii to integer */
 	ret = kstrtou32(value, 10, &okc_mode);
@@ -4532,10 +4539,15 @@ static int drv_cmd_set_okc_mode(struct hdd_adapter *adapter,
 		  okc_mode);
 
 	if (okc_mode)
-		hdd_ctx->config->pmkid_modes |= CFG_PMKID_MODES_OKC;
+		cur_pmkid_modes |= CFG_PMKID_MODES_OKC;
 	else
-		hdd_ctx->config->pmkid_modes &= ~CFG_PMKID_MODES_OKC;
-
+		cur_pmkid_modes &= ~CFG_PMKID_MODES_OKC;
+	status = ucfg_mlme_set_pmkid_modes(hdd_ctx->hdd_psoc,
+					   cur_pmkid_modes);
+	if (status != QDF_STATUS_SUCCESS) {
+		ret = -EPERM;
+		hdd_err("set pmkid modes failed");
+	}
 exit:
 	return ret;
 }

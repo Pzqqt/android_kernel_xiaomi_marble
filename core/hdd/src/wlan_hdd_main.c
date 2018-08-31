@@ -9308,6 +9308,7 @@ static int hdd_open_interfaces(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	struct hdd_adapter *adapter;
 	int ret;
+	uint8_t dot11p_mode;
 
 	/* open monitor mode adapter if con_mode is monitor mode */
 	if (con_mode == QDF_GLOBAL_MONITOR_MODE ||
@@ -9325,8 +9326,8 @@ static int hdd_open_interfaces(struct hdd_context *hdd_ctx, bool rtnl_held)
 
 		return 0;
 	}
-
-	if (hdd_ctx->config->dot11p_mode == WLAN_HDD_11P_STANDALONE)
+	ucfg_mlme_get_dot11p_mode(hdd_ctx->hdd_psoc, &dot11p_mode);
+	if (dot11p_mode == CFG_11P_STANDALONE)
 		/* Create only 802.11p interface */
 		return hdd_open_ocb_interface(hdd_ctx, rtnl_held);
 
@@ -9348,7 +9349,7 @@ static int hdd_open_interfaces(struct hdd_context *hdd_ctx, bool rtnl_held)
 		goto err_close_adapters;
 
 	/* Open 802.11p Interface */
-	if (hdd_ctx->config->dot11p_mode == WLAN_HDD_11P_CONCURRENT) {
+	if (dot11p_mode == CFG_11P_CONCURRENT) {
 		ret = hdd_open_ocb_interface(hdd_ctx, rtnl_held);
 		if (ret)
 			goto err_close_adapters;
@@ -10070,14 +10071,6 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 	cdp_register_pause_cb(soc, wlan_hdd_txrx_pause_cb);
 	/* Register HL netdev flow control callback */
 	cdp_hl_fc_register(soc, wlan_hdd_txrx_pause_cb);
-	/*
-	 * Set 802.11p config
-	 * TODO-OCB: This has been temporarily added here to ensure this
-	 * parameter is set in CSR when we init the channel list. This should
-	 * be removed once the 5.9 GHz channels are added to the regulatory
-	 * domain.
-	 */
-	hdd_set_dot11p_config(hdd_ctx);
 
 	/*
 	 * Note that the cds_pre_enable() sequence triggers the cfg download.
@@ -10424,6 +10417,7 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	int ret;
 	mac_handle_t mac_handle;
 	struct hdd_config *cfg;
+	bool b_cts2self;
 
 	hdd_enter();
 
@@ -10441,8 +10435,6 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	/* FW capabilities received, Set the Dot11 mode */
 	mac_handle = hdd_ctx->mac_handle;
 	sme_setdef_dot11mode(mac_handle);
-	sme_set_prefer_80MHz_over_160MHz(mac_handle,
-			hdd_ctx->config->sta_prefer_80MHz_over_160MHz);
 	sme_set_etsi13_srd_ch_in_master_mode(mac_handle,
 					     cfg->
 					     etsi13_srd_chan_in_master_mode);
@@ -10456,7 +10448,8 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	sme_cli_set_command(0, WMI_PDEV_PARAM_DATA_STALL_DETECT_ENABLE,
 	hdd_ctx->config->enable_data_stall_det, PDEV_CMD);
 
-	if (hdd_ctx->config->enable_go_cts2self_for_sta)
+	ucfg_mlme_get_go_cts2self_for_sta(hdd_ctx->hdd_psoc, &b_cts2self);
+	if (b_cts2self)
 		sme_set_cts2self_for_p2p_go(mac_handle);
 
 	if (hdd_set_vc_mode_config(hdd_ctx))

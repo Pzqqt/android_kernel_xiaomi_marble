@@ -375,7 +375,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 				additional_ie, addn_ielen);
 	}
 	/* Add qcn_ie only if qcn ie is not present in additional_ie */
-	if (mac_ctx->roam.configParam.qcn_ie_support && !qcn_ie)
+	if (mac_ctx->mlme_cfg->sta.qcn_ie_support && !qcn_ie)
 		populate_dot11f_qcn_ie(&pr.QCN_IE);
 
 	/*
@@ -1879,7 +1879,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		populate_dot11f_ext_cap(mac_ctx, vht_enabled,
 				&frm->ExtCap, pe_session);
 
-	if (mac_ctx->roam.configParam.qcn_ie_support)
+	if (mac_ctx->mlme_cfg->sta.qcn_ie_support)
 		populate_dot11f_qcn_ie(&frm->QCN_IE);
 
 	if (lim_is_session_he_capable(pe_session)) {
