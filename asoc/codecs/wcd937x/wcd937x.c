@@ -43,7 +43,7 @@ enum {
 
 static const DECLARE_TLV_DB_SCALE(line_gain, 0, 7, 1);
 static const DECLARE_TLV_DB_SCALE(analog_gain, 0, 25, 1);
-static int wcd937x_handle_pre_irq(void *data);
+
 static int wcd937x_handle_post_irq(void *data);
 
 static const struct regmap_irq wcd937x_irqs[WCD937X_NUM_IRQS] = {
@@ -77,43 +77,10 @@ static struct regmap_irq_chip wcd937x_regmap_irq_chip = {
 	.status_base = WCD937X_DIGITAL_INTR_STATUS_0,
 	.mask_base = WCD937X_DIGITAL_INTR_MASK_0,
 	.type_base = WCD937X_DIGITAL_INTR_LEVEL_0,
-	.runtime_pm = true,
+	.runtime_pm = false,
 	.handle_post_irq = wcd937x_handle_post_irq,
-	.handle_pre_irq = wcd937x_handle_pre_irq,
+	.irq_drv_data = NULL,
 };
-
-static int wcd937x_handle_pre_irq(void *data)
-{
-	struct wcd937x_priv *wcd937x = data;
-	int num_irq_regs = wcd937x->num_irq_regs;
-	int ret = 0;
-	u8 sts[num_irq_regs];
-	struct wcd937x_pdata *pdata;
-
-	pdata = dev_get_platdata(wcd937x->dev);
-
-	memset(sts, 0, sizeof(sts));
-	ret = regmap_bulk_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_0,
-			       sts, num_irq_regs);
-	if (ret < 0) {
-		dev_err(wcd937x->dev, "%s: Failed to read intr status: %d\n",
-			__func__, ret);
-	} else if (ret == 0) {
-		dev_dbg(wcd937x->dev,
-			"%s: clear interrupts except OCP and SCD\n", __func__);
-		/* Do not affect OCP and SCD interrupts */
-		sts[0] = sts[0] & 0x5F;
-		sts[1] = sts[1] & 0xEB;
-		regmap_write(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_0,
-			     sts[0]);
-		regmap_write(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_1,
-			     sts[1]);
-		regmap_write(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_2,
-			     sts[2]);
-	}
-	return IRQ_HANDLED;
-}
-
 static int wcd937x_handle_post_irq(void *data)
 {
 	struct wcd937x_priv *wcd937x = data;
@@ -123,17 +90,30 @@ static int wcd937x_handle_post_irq(void *data)
 	pdata = dev_get_platdata(wcd937x->dev);
 
 	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_0, &val);
-	if ((val & 0xA0) != 0) {
-		dev_dbg(wcd937x->dev, "%s Clear OCP interupts\n", __func__);
-		regmap_update_bits(wcd937x->regmap,
-				   WCD937X_DIGITAL_INTR_CLEAR_0, 0xA0, 0x00);
-	}
+	dev_dbg(wcd937x->dev, "%s Clear OCP interupts\n", __func__);
+	regmap_write(wcd937x->regmap,
+			   WCD937X_DIGITAL_INTR_CLEAR_0, 0xFF);
+	regmap_write(wcd937x->regmap,
+			   WCD937X_DIGITAL_INTR_CLEAR_0, 0x0);
 	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_1, &val);
-	if ((val & 0x14) != 0) {
-		dev_dbg(wcd937x->dev, "%s Clear SCD interupts\n", __func__);
-		regmap_update_bits(wcd937x->regmap,
-				   WCD937X_DIGITAL_INTR_CLEAR_1, 0x14, 0x00);
-	}
+	dev_dbg(wcd937x->dev, "%s Clear SCD interupts\n", __func__);
+	regmap_write(wcd937x->regmap,
+			   WCD937X_DIGITAL_INTR_CLEAR_1, 0xFF);
+	regmap_write(wcd937x->regmap,
+			   WCD937X_DIGITAL_INTR_CLEAR_1, 0x0);
+
+	regmap_write(wcd937x->regmap,
+			   WCD937X_DIGITAL_INTR_CLEAR_2, 0xFF);
+	regmap_write(wcd937x->regmap,
+			   WCD937X_DIGITAL_INTR_CLEAR_2, 0x0);
+
+	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_0, &val);
+	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_1, &val);
+	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_2, &val);
+	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_0, &val);
+	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_1, &val);
+	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_2, &val);
+
 	return IRQ_HANDLED;
 }
 
@@ -1856,6 +1836,7 @@ static int wcd937x_bind(struct device *dev)
 		regmap_write(wcd937x->regmap,
 			     (WCD937X_DIGITAL_INTR_LEVEL_0 + i), 0);
 
+	wcd937x_regmap_irq_chip.irq_drv_data = wcd937x;
 	wcd937x->irq_info.wcd_regmap_irq_chip = &wcd937x_regmap_irq_chip;
 	wcd937x->irq_info.codec_name = "WCD937X";
 	wcd937x->irq_info.regmap = wcd937x->regmap;
