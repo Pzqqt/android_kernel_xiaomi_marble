@@ -563,6 +563,7 @@ static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.ampdu_cnt); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.non_amsdu_cnt); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.amsdu_cnt); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, rx.nawds_mcast_drop); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.to_stack); \
 								\
 		for (i = 0; i <  CDP_MAX_RX_RINGS; i++)	\
