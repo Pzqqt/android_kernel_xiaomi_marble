@@ -7597,7 +7597,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 }
 
 #define HDD_BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
-static void hdd_bus_bw_work_handler(struct work_struct *work)
+static void __hdd_bus_bw_work_handler(struct work_struct *work)
 {
 	struct hdd_context *hdd_ctx = container_of(work, struct hdd_context,
 					bus_bw_work);
@@ -7714,6 +7714,13 @@ restart_timer:
 	qdf_spinlock_release(&hdd_ctx->bus_bw_timer_lock);
 
 	hdd_exit();
+}
+
+static void hdd_bus_bw_work_handler(struct work_struct *work)
+{
+	cds_ssr_protect(__func__);
+	__hdd_bus_bw_work_handler(work);
+	cds_ssr_unprotect(__func__);
 }
 
 /**
