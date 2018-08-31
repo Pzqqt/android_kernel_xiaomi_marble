@@ -499,6 +499,7 @@ static int async_task(void *param)
 	struct hif_sdio_dev *device;
 	struct bus_request *request;
 	QDF_STATUS status;
+	bool claimed = false;
 
 	device = (struct hif_sdio_dev *) param;
 	set_current_state(TASK_INTERRUPTIBLE);
@@ -521,7 +522,6 @@ static int async_task(void *param)
 		 * if possible, but holding the host blocks
 		 * card interrupts
 		 */
-		sdio_claim_host(device->func);
 		qdf_spin_lock_irqsave(&device->asynclock);
 		/* pull the request to work on */
 		while (device->asyncreq != NULL) {
@@ -535,6 +535,10 @@ static int async_task(void *param)
 				("%s: async_task processing req: 0x%lX\n",
 				 __func__, (unsigned long)request));
 
+			if (!claimed) {
+				sdio_claim_host(device->func);
+				claimed = true;
+			}
 			if (request->scatter_req != NULL) {
 				A_ASSERT(device->scatter_enabled);
 				/* pass the request to scatter routine which
@@ -581,7 +585,10 @@ static int async_task(void *param)
 			qdf_spin_lock_irqsave(&device->asynclock);
 		}
 		qdf_spin_unlock_irqrestore(&device->asynclock);
-		sdio_release_host(device->func);
+		if (claimed) {
+			sdio_release_host(device->func);
+			claimed = false;
+		}
 	}
 
 	complete_and_exit(&device->async_completion, 0);
