@@ -5062,9 +5062,8 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	if (params->enableAmpduPs && (params->htCapable || params->vhtCapable))
 		wma_set_ppsconfig(params->smesessionId,
 				  WMA_VHT_PPS_DELIM_CRC_FAIL, 1);
-	if (WMI_SERVICE_EXT_IS_ENABLED(wma->wmi_service_bitmap,
-			wma->wmi_service_ext_bitmap,
-			WMI_SERVICE_LISTEN_INTERVAL_OFFLOAD_SUPPORT)) {
+	if (wmi_service_enabled(wma->wmi_handle,
+				wmi_service_listen_interval_offload_support)) {
 		WMA_LOGD("%s: listen interval offload enabled, setting params",
 			 __func__);
 		status = wma_vdev_set_param(wma->wmi_handle,
