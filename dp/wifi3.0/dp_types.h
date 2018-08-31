@@ -558,6 +558,8 @@ struct dp_soc_stats {
 		uint32_t err_ring_pkts;
 		/* No of Fragments */
 		uint32_t rx_frags;
+		/* No of reinjected packets */
+		uint32_t reo_reinject;
 		struct {
 			/* Invalid RBM error count */
 			uint32_t invalid_rbm;

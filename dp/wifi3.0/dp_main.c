@@ -5805,6 +5805,10 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	uint8_t index = 0;
 
 	DP_PRINT_STATS("SOC Rx Stats:\n");
+	DP_PRINT_STATS("Fragmented packets: %u",
+		       soc->stats.rx.rx_frags);
+	DP_PRINT_STATS("Reo reinjected packets: %u",
+		       soc->stats.rx.reo_reinject);
 	DP_PRINT_STATS("Errors:\n");
 	DP_PRINT_STATS("Rx Decrypt Errors = %d",
 			(soc->stats.rx.err.rxdma_error[HAL_RXDMA_ERR_DECRYPT] +
