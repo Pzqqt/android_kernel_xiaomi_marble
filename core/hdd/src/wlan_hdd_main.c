@@ -7763,7 +7763,7 @@ void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx)
 {
 	hdd_enter();
 
-	hdd_bus_bw_compute_timer_stop(hdd_ctx);
+	QDF_BUG(!hdd_ctx->bus_bw_timer_running);
 
 	qdf_timer_free(&hdd_ctx->bus_bw_timer);
 	qdf_spinlock_destroy(&hdd_ctx->bus_bw_timer_lock);
