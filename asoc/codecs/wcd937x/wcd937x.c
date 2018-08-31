@@ -337,6 +337,10 @@ static int wcd937x_rx_clk_enable(struct snd_soc_codec *codec)
 		snd_soc_update_bits(codec, WCD937X_ANA_RX_SUPPLIES, 0x01, 0x01);
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_RX0_CTL,
 				    0x40, 0x00);
+		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_RX1_CTL,
+				    0x40, 0x00);
+		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_RX2_CTL,
+				    0x40, 0x00);
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_ANA_CLK_CTL,
 				    0x02, 0x02);
 	}
@@ -1026,9 +1030,10 @@ static int wcd937x_enable_req(struct snd_soc_dapm_widget *w,
 				    0x00);
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH2, 0x40, 0x40);
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_DIG_CLK_CTL,
-				    0x10, 0x10);
+				    0x30, 0x30);
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH1, 0x80, 0x80);
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH2, 0x40, 0x00);
+		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH2, 0x80, 0x80);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_update_bits(codec, WCD937X_ANA_TX_CH1, 0x80, 0x00);
@@ -1098,6 +1103,11 @@ int wcd937x_micbias_control(struct snd_soc_codec *codec,
 	case MICB_ENABLE:
 		wcd937x->micb_ref[micb_index]++;
 		if (wcd937x->micb_ref[micb_index] == 1) {
+			snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_DIG_CLK_CTL, 0xE0, 0xE0);
+			snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x10);
+			snd_soc_update_bits(codec, WCD937X_MICB1_TEST_CTL_2, 0x01, 0x01);
+			snd_soc_update_bits(codec, WCD937X_MICB2_TEST_CTL_2, 0x01, 0x01);
+			snd_soc_update_bits(codec, WCD937X_MICB3_TEST_CTL_2, 0x01, 0x01);
 			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x40);
 			if (post_on_event)
 				blocking_notifier_call_chain(&wcd937x->notifier,
@@ -1324,7 +1334,7 @@ static const struct snd_soc_dapm_widget wcd937x_dapm_widgets[] = {
 	SND_SOC_DAPM_ADC_E("ADC1", NULL, SND_SOC_NOPM, 0, 0,
 				wcd937x_codec_enable_adc,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_ADC_E("ADC2", NULL, SND_SOC_NOPM, 0, 1,
+	SND_SOC_DAPM_ADC_E("ADC2", NULL, SND_SOC_NOPM, 1, 0,
 				wcd937x_codec_enable_adc,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
@@ -1439,7 +1449,7 @@ static const struct snd_soc_dapm_widget wcd9375_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("AMIC4"),
 
 	/*tx widgets*/
-	SND_SOC_DAPM_ADC_E("ADC3", NULL, SND_SOC_NOPM, 0, 2,
+	SND_SOC_DAPM_ADC_E("ADC3", NULL, SND_SOC_NOPM, 2, 0,
 				wcd937x_codec_enable_adc,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
@@ -1450,19 +1460,19 @@ static const struct snd_soc_dapm_widget wcd9375_dapm_widgets[] = {
 	SND_SOC_DAPM_ADC_E("DMIC1", NULL, SND_SOC_NOPM, 0, 0,
 				wcd937x_codec_enable_dmic,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_ADC_E("DMIC2", NULL, SND_SOC_NOPM, 0, 1,
+	SND_SOC_DAPM_ADC_E("DMIC2", NULL, SND_SOC_NOPM, 1, 0,
 				wcd937x_codec_enable_dmic,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_ADC_E("DMIC3", NULL, SND_SOC_NOPM, 0, 2,
+	SND_SOC_DAPM_ADC_E("DMIC3", NULL, SND_SOC_NOPM, 2, 0,
 				wcd937x_codec_enable_dmic,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_ADC_E("DMIC4", NULL, SND_SOC_NOPM, 0, 3,
+	SND_SOC_DAPM_ADC_E("DMIC4", NULL, SND_SOC_NOPM, 3, 0,
 				wcd937x_codec_enable_dmic,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_ADC_E("DMIC5", NULL, SND_SOC_NOPM, 0, 4,
+	SND_SOC_DAPM_ADC_E("DMIC5", NULL, SND_SOC_NOPM, 4, 0,
 				wcd937x_codec_enable_dmic,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_ADC_E("DMIC6", NULL, SND_SOC_NOPM, 0, 5,
+	SND_SOC_DAPM_ADC_E("DMIC6", NULL, SND_SOC_NOPM, 5, 0,
 				wcd937x_codec_enable_dmic,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
@@ -1508,18 +1518,17 @@ static const struct snd_soc_dapm_widget wcd9375_dapm_widgets[] = {
 
 static const struct snd_soc_dapm_route wcd937x_audio_map[] = {
 
-	{"ADC2_OUTPUT", NULL, "ADC2_MIXER"},
-	{"ADC2_MIXER", "Switch", "ADC2 REQ"},
-	{"ADC2 REQ", "NULL", "ADC2"},
-	{"ADC2", "NULL", "ADC2 MUX"},
-	{"ADC2 MUX", "INP3", "AMIC3"},
-	{"ADC2 MUX", "INP2", "AMIC2"},
-
-
 	{"ADC1_OUTPUT", NULL, "ADC1_MIXER"},
 	{"ADC1_MIXER", "Switch", "ADC1 REQ"},
 	{"ADC1 REQ", NULL, "ADC1"},
 	{"ADC1", NULL, "AMIC1"},
+
+	{"ADC2_OUTPUT", NULL, "ADC2_MIXER"},
+	{"ADC2_MIXER", "Switch", "ADC2 REQ"},
+	{"ADC2 REQ", NULL, "ADC2"},
+	{"ADC2", NULL, "ADC2 MUX"},
+	{"ADC2 MUX", "INP3", "AMIC3"},
+	{"ADC2 MUX", "INP2", "AMIC2"},
 
 	{"RX1", NULL, "IN1_HPHL"},
 	{"RDAC1", NULL, "RX1"},
@@ -1847,11 +1856,11 @@ static int wcd937x_bind(struct device *dev)
 		regmap_write(wcd937x->regmap,
 			     (WCD937X_DIGITAL_INTR_LEVEL_0 + i), 0);
 
-	wcd937x->irq_info->wcd_regmap_irq_chip = &wcd937x_regmap_irq_chip;
-	wcd937x->irq_info->codec_name = "WCD937X";
-	wcd937x->irq_info->regmap = wcd937x->regmap;
-	wcd937x->irq_info->dev = dev;
-	ret = wcd_irq_init(wcd937x->irq_info, &wcd937x->virq);
+	wcd937x->irq_info.wcd_regmap_irq_chip = &wcd937x_regmap_irq_chip;
+	wcd937x->irq_info.codec_name = "WCD937X";
+	wcd937x->irq_info.regmap = wcd937x->regmap;
+	wcd937x->irq_info.dev = dev;
+	ret = wcd_irq_init(&wcd937x->irq_info, &wcd937x->virq);
 
 	if (ret) {
 		dev_err(wcd937x->dev, "%s: IRQ init failed: %d\n",
@@ -1870,7 +1879,7 @@ static int wcd937x_bind(struct device *dev)
 
 	return ret;
 err_irq:
-	wcd_irq_exit(wcd937x->irq_info, wcd937x->virq);
+	wcd_irq_exit(&wcd937x->irq_info, wcd937x->virq);
 err:
 	component_unbind_all(dev, wcd937x);
 	return ret;
@@ -1880,7 +1889,7 @@ static void wcd937x_unbind(struct device *dev)
 {
 	struct wcd937x_priv *wcd937x = dev_get_drvdata(dev);
 
-	wcd_irq_exit(wcd937x->irq_info, wcd937x->virq);
+	wcd_irq_exit(&wcd937x->irq_info, wcd937x->virq);
 	snd_soc_unregister_codec(dev);
 	component_unbind_all(dev, wcd937x);
 }

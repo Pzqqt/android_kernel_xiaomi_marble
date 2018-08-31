@@ -770,6 +770,9 @@ static int rx_macro_mclk_enable(struct rx_macro_priv *rx_priv,
 				BOLERO_CDC_RX_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x01);
 			regmap_update_bits(regmap,
+				BOLERO_CDC_RX_CLK_RST_CTRL_MCLK_CONTROL,
+				0x02, 0x02);
+			regmap_update_bits(regmap,
 				BOLERO_CDC_RX_CLK_RST_CTRL_FS_CNT_CONTROL,
 				0x01, 0x01);
 		}
@@ -1022,6 +1025,7 @@ static int rx_macro_enable_mix_path(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_write(codec, gain_reg,
 			snd_soc_read(codec, gain_reg));
+		snd_soc_update_bits(codec, mix_reg, 0x10, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* Clk Disable */
@@ -1071,6 +1075,7 @@ static int rx_macro_enable_main_path(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_write(codec, gain_reg,
 			snd_soc_read(codec, gain_reg));
+		snd_soc_update_bits(codec, reg, 0x10, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		rx_macro_enable_interp_clk(codec, event, w->shift);
@@ -2395,10 +2400,13 @@ static int rx_swrm_clock(void *handle, bool enable)
 			}
 			regmap_update_bits(regmap,
 				BOLERO_CDC_RX_CLK_RST_CTRL_SWR_CONTROL,
+				0x02, 0x02);
+			regmap_update_bits(regmap,
+				BOLERO_CDC_RX_CLK_RST_CTRL_SWR_CONTROL,
 				0x01, 0x01);
 			regmap_update_bits(regmap,
 				BOLERO_CDC_RX_CLK_RST_CTRL_SWR_CONTROL,
-				0x1C, 0x0C);
+				0x02, 0x00);
 			msm_cdc_pinctrl_select_active_state(
 						rx_priv->rx_swr_gpio_p);
 		}
@@ -2471,6 +2479,15 @@ static int rx_macro_init(struct snd_soc_codec *codec)
 		dev_err(rx_dev, "%s: failed to add snd_ctls\n", __func__);
 		return ret;
 	}
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_DSM_CTL, 0x01, 0x01);
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX1_RX_PATH_DSM_CTL, 0x01, 0x01);
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_DSM_CTL, 0x01, 0x01);
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_SEC7, 0x07, 0x02);
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX1_RX_PATH_SEC7, 0x07, 0x02);
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_SEC7, 0x07, 0x02);
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_CFG3, 0x03, 0x02);
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX1_RX_PATH_CFG3, 0x03, 0x02);
+	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_CFG3, 0x03, 0x02);
 
 	rx_priv->codec = codec;
 
