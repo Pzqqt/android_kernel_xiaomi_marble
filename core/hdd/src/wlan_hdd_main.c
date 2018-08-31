@@ -10474,7 +10474,8 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	if (cds_is_driver_recovering()) {
 		if (hdd_ctx->is_pktlog_enabled)
 			hdd_pktlog_enable_disable(hdd_ctx, true, 0, 0);
-	}
+	} else if (cds_is_packet_log_enabled())
+		hdd_pktlog_enable_disable(hdd_ctx, true, 0, 0);
 
 	hddtxlimit.txPower2g = hdd_ctx->config->TxPower2g;
 	hddtxlimit.txPower5g = hdd_ctx->config->TxPower5g;
