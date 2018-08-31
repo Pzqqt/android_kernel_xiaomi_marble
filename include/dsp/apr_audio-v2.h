@@ -2225,6 +2225,7 @@ struct afe_port_data_cmd_rt_proxy_port_read_v2 {
 #define AFE_LINEAR_PCM_DATA_PACKED_60958 0x2
 #define AFE_NON_LINEAR_DATA_PACKED_60958 0x3
 #define AFE_GENERIC_COMPRESSED           0x8
+#define AFE_LINEAR_PCM_DATA_PACKED_16BIT 0X6
 
 /* This param id is used to configure I2S interface */
 #define AFE_PARAM_ID_I2S_CONFIG	0x0001020D
