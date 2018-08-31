@@ -146,6 +146,8 @@ struct swr_mstr_ctrl {
 			port_mapping[SWR_MSTR_PORT_LEN][SWR_MAX_CH_PER_PORT];
 	int swr_irq;
 	u32 clk_stop_mode0_supp;
+	struct work_struct wakeup_work;
+	u32 wakeup_req;
 };
 
 #endif /* _SWR_WCD_CTRL_H */

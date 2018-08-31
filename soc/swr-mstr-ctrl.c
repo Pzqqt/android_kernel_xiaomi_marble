@@ -1296,6 +1296,25 @@ static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 	return ret;
 }
 
+static void swrm_wakeup_work(struct work_struct *work)
+{
+	struct swr_mstr_ctrl *swrm;
+
+	swrm = container_of(work, struct swr_mstr_ctrl,
+			     wakeup_work);
+	if (!swrm || !(swrm->dev)) {
+		pr_err("%s: swrm or dev is null\n", __func__);
+		return;
+	}
+	pm_runtime_get_sync(swrm->dev);
+
+	swrm_cmd_fifo_wr_cmd(swrm, 0x4, 0xF, 0xF,
+			     SWRS_SCP_INT_STATUS_MASK_1);
+
+	pm_runtime_mark_last_busy(swrm->dev);
+	pm_runtime_put_autosuspend(swrm->dev);
+}
+
 static int swrm_get_device_status(struct swr_mstr_ctrl *swrm, u8 devnum)
 {
 	u32 val;
@@ -1425,21 +1444,28 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 }
 
 static int swrm_event_notify(struct notifier_block *self,
-				unsigned long action, void *data)
+			     unsigned long action, void *data)
 {
 	struct swr_mstr_ctrl *swrm = container_of(self, struct swr_mstr_ctrl,
-							event_notifier);
-	if (!swrm || !swrm->pdev) {
-		pr_err("%s: swrm or pdev is NULL\n", __func__);
+						  event_notifier);
+
+	if (!swrm || !(swrm->dev)) {
+		pr_err("%s: swrm or dev is NULL\n", __func__);
 		return -EINVAL;
 	}
-	if (action != MSM_AUD_DC_EVENT) {
-		dev_err(&swrm->pdev->dev, "%s: invalid event type: %lu\n",
+	switch (action) {
+	case MSM_AUD_DC_EVENT:
+		schedule_work(&(swrm->dc_presence_work));
+		break;
+	case SWR_WAKE_IRQ_EVENT:
+		if (swrm->wakeup_req)
+			schedule_work(&swrm->wakeup_work);
+		break;
+	default:
+		dev_err(swrm->dev, "%s: invalid event type: %lu\n",
 			__func__, action);
 		return -EINVAL;
 	}
-
-	schedule_work(&(swrm->dc_presence_work));
 
 	return 0;
 }
@@ -1447,7 +1473,12 @@ static int swrm_event_notify(struct notifier_block *self,
 static void swrm_notify_work_fn(struct work_struct *work)
 {
 	struct swr_mstr_ctrl *swrm = container_of(work, struct swr_mstr_ctrl,
-							dc_presence_work);
+						  dc_presence_work);
+
+	if (!swrm || !swrm->pdev) {
+		pr_err("%s: swrm or pdev is NULL\n", __func__);
+		return;
+	}
 	swrm_wcd_notify(swrm->pdev, SWR_DEVICE_DOWN, NULL);
 }
 
@@ -1466,6 +1497,7 @@ static int swrm_probe(struct platform_device *pdev)
 		ret = -ENOMEM;
 		goto err_memory_fail;
 	}
+	swrm->pdev = pdev;
 	swrm->dev = &pdev->dev;
 	platform_set_drvdata(pdev, swrm);
 	swr_set_ctrl_data(&swrm->master, swrm);
@@ -1622,6 +1654,12 @@ static int swrm_probe(struct platform_device *pdev)
 			goto err_pdata_fail;
 		}
 	}
+
+	if (of_property_read_u32(swrm->dev->of_node,
+			"qcom,swr-wakeup-required", &swrm->wakeup_req)) {
+		swrm->wakeup_req = false;
+	}
+
 	if (swrm->reg_irq) {
 		ret = swrm->reg_irq(swrm->handle, swr_mstr_interrupt, swrm,
 			    SWR_IRQ_REGISTER);
@@ -1673,6 +1711,7 @@ static int swrm_probe(struct platform_device *pdev)
 	swrm->version = swr_master_read(swrm, SWRM_COMP_HW_VERSION);
 
 	mutex_unlock(&swrm->mlock);
+	INIT_WORK(&swrm->wakeup_work, swrm_wakeup_work);
 
 	if (pdev->dev.of_node)
 		of_register_swr_devices(&swrm->master);
@@ -1768,6 +1807,11 @@ static int swrm_runtime_resume(struct device *dev)
 	mutex_lock(&swrm->reslock);
 	if ((swrm->state == SWR_MSTR_PAUSE) ||
 	    (swrm->state == SWR_MSTR_DOWN)) {
+		if (swrm->clk_stop_mode0_supp && swrm->wakeup_req) {
+			msm_aud_evt_blocking_notifier_call_chain(
+				SWR_WAKE_IRQ_DEREGISTER, (void *)swrm);
+		}
+
 		if (swrm->state == SWR_MSTR_DOWN) {
 			if (swrm_clk_request(swrm, true))
 				goto exit;
@@ -1840,6 +1884,9 @@ static int swrm_runtime_suspend(struct device *dev)
 			swrm_cmd_fifo_wr_cmd(swrm, 0x2, 0xF, 0xF,
 					SWRS_SCP_CONTROL);
 			usleep_range(100, 105);
+			if (swrm->wakeup_req)
+				msm_aud_evt_blocking_notifier_call_chain(
+					SWR_WAKE_IRQ_REGISTER, (void *)swrm);
 		}
 		swrm_clk_request(swrm, false);
 	}
