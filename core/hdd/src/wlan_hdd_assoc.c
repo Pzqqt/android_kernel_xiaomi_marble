@@ -1859,6 +1859,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	if ((eConnectionState_Connecting != sta_ctx->conn_info.connState)) {
 		hdd_conn_set_connection_state(adapter,
 					       eConnectionState_NotConnected);
+		 hdd_set_roaming_in_progress(false);
 	}
 	pmo_ucfg_flush_gtk_offload_req(adapter->vdev);
 
