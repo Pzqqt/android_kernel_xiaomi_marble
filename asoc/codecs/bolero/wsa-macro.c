@@ -229,6 +229,10 @@ static const char *const rx_mux_text[] = {
 	"ZERO", "AIF1_PB", "AIF_MIX1_PB"
 };
 
+static const char *const rx_sidetone_mix_text[] = {
+	"ZERO", "SRC0"
+};
+
 static const char * const wsa_macro_ear_spkr_pa_gain_text[] = {
 	"G_DEFAULT", "G_0_DB", "G_1_DB", "G_2_DB", "G_3_DB",
 	"G_4_DB", "G_5_DB", "G_6_DB"
@@ -260,6 +264,9 @@ static const struct soc_enum rx0_mix_chain_enum =
 	SOC_ENUM_SINGLE(BOLERO_CDC_WSA_RX_INP_MUX_RX_INT0_CFG1,
 		0, 5, rx_mix_text);
 
+static const struct soc_enum rx0_sidetone_mix_enum =
+	SOC_ENUM_SINGLE(SND_SOC_NOPM, 0, 2, rx_sidetone_mix_text);
+
 static const struct snd_kcontrol_new rx0_prim_inp0_mux =
 	SOC_DAPM_ENUM("WSA_RX0 INP0 Mux", rx0_prim_inp0_chain_enum);
 
@@ -271,6 +278,9 @@ static const struct snd_kcontrol_new rx0_prim_inp2_mux =
 
 static const struct snd_kcontrol_new rx0_mix_mux =
 	SOC_DAPM_ENUM("WSA_RX0 MIX Mux", rx0_mix_chain_enum);
+
+static const struct snd_kcontrol_new rx0_sidetone_mix_mux =
+	SOC_DAPM_ENUM("WSA_RX0 SIDETONE MIX Mux", rx0_sidetone_mix_enum);
 
 /* RX INT1 */
 static const struct soc_enum rx1_prim_inp0_chain_enum =
@@ -1825,6 +1835,15 @@ static const struct snd_soc_dapm_widget wsa_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_MIXER("WSA_RX INT0 SEC MIX", SND_SOC_NOPM, 0, 0, NULL, 0),
 	SND_SOC_DAPM_MIXER("WSA_RX INT1 SEC MIX", SND_SOC_NOPM, 0, 0, NULL, 0),
 
+	SND_SOC_DAPM_MUX_E("WSA_RX0 INT0 SIDETONE MIX",
+			   BOLERO_CDC_WSA_RX0_RX_PATH_CFG1, 4, 0,
+			   &rx0_sidetone_mix_mux, wsa_macro_enable_swr,
+			  SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_INPUT("WSA SRC0_INP"),
+
+	SND_SOC_DAPM_INPUT("WSA_TX DEC0_INP"),
+	SND_SOC_DAPM_INPUT("WSA_TX DEC1_INP"),
+
 	SND_SOC_DAPM_MIXER_E("WSA_RX INT0 INTERP", SND_SOC_NOPM,
 		WSA_MACRO_COMP1, 0, NULL, 0, wsa_macro_enable_interpolator,
 		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
@@ -1889,18 +1908,24 @@ static const struct snd_soc_dapm_route wsa_audio_map[] = {
 	{"WSA_RX0 INP0", "RX1", "WSA RX1"},
 	{"WSA_RX0 INP0", "RX_MIX0", "WSA RX_MIX0"},
 	{"WSA_RX0 INP0", "RX_MIX1", "WSA RX_MIX1"},
+	{"WSA_RX0 INP0", "DEC0", "WSA_TX DEC0_INP"},
+	{"WSA_RX0 INP0", "DEC1", "WSA_TX DEC1_INP"},
 	{"WSA_RX INT0 MIX", NULL, "WSA_RX0 INP0"},
 
 	{"WSA_RX0 INP1", "RX0", "WSA RX0"},
 	{"WSA_RX0 INP1", "RX1", "WSA RX1"},
 	{"WSA_RX0 INP1", "RX_MIX0", "WSA RX_MIX0"},
 	{"WSA_RX0 INP1", "RX_MIX1", "WSA RX_MIX1"},
+	{"WSA_RX0 INP1", "DEC0", "WSA_TX DEC0_INP"},
+	{"WSA_RX0 INP1", "DEC1", "WSA_TX DEC1_INP"},
 	{"WSA_RX INT0 MIX", NULL, "WSA_RX0 INP1"},
 
 	{"WSA_RX0 INP2", "RX0", "WSA RX0"},
 	{"WSA_RX0 INP2", "RX1", "WSA RX1"},
 	{"WSA_RX0 INP2", "RX_MIX0", "WSA RX_MIX0"},
 	{"WSA_RX0 INP2", "RX_MIX1", "WSA RX_MIX1"},
+	{"WSA_RX0 INP2", "DEC0", "WSA_TX DEC0_INP"},
+	{"WSA_RX0 INP2", "DEC1", "WSA_TX DEC1_INP"},
 	{"WSA_RX INT0 MIX", NULL, "WSA_RX0 INP2"},
 
 	{"WSA_RX0 MIX INP", "RX0", "WSA RX0"},
@@ -1911,6 +1936,8 @@ static const struct snd_soc_dapm_route wsa_audio_map[] = {
 
 	{"WSA_RX INT0 SEC MIX", NULL, "WSA_RX INT0 MIX"},
 	{"WSA_RX INT0 INTERP", NULL, "WSA_RX INT0 SEC MIX"},
+	{"WSA_RX0 INT0 SIDETONE MIX", "SRC0", "WSA SRC0_INP"},
+	{"WSA_RX INT0 INTERP", NULL, "WSA_RX0 INT0 SIDETONE MIX"},
 	{"WSA_RX INT0 CHAIN", NULL, "WSA_RX INT0 INTERP"},
 	{"WSA_SPK1 OUT", NULL, "WSA_RX INT0 CHAIN"},
 	{"WSA_SPK1 OUT", NULL, "WSA_MCLK"},
@@ -1919,18 +1946,24 @@ static const struct snd_soc_dapm_route wsa_audio_map[] = {
 	{"WSA_RX1 INP0", "RX1", "WSA RX1"},
 	{"WSA_RX1 INP0", "RX_MIX0", "WSA RX_MIX0"},
 	{"WSA_RX1 INP0", "RX_MIX1", "WSA RX_MIX1"},
+	{"WSA_RX1 INP0", "DEC0", "WSA_TX DEC0_INP"},
+	{"WSA_RX1 INP0", "DEC1", "WSA_TX DEC1_INP"},
 	{"WSA_RX INT1 MIX", NULL, "WSA_RX1 INP0"},
 
 	{"WSA_RX1 INP1", "RX0", "WSA RX0"},
 	{"WSA_RX1 INP1", "RX1", "WSA RX1"},
 	{"WSA_RX1 INP1", "RX_MIX0", "WSA RX_MIX0"},
 	{"WSA_RX1 INP1", "RX_MIX1", "WSA RX_MIX1"},
+	{"WSA_RX1 INP1", "DEC0", "WSA_TX DEC0_INP"},
+	{"WSA_RX1 INP1", "DEC1", "WSA_TX DEC1_INP"},
 	{"WSA_RX INT1 MIX", NULL, "WSA_RX1 INP1"},
 
 	{"WSA_RX1 INP2", "RX0", "WSA RX0"},
 	{"WSA_RX1 INP2", "RX1", "WSA RX1"},
 	{"WSA_RX1 INP2", "RX_MIX0", "WSA RX_MIX0"},
 	{"WSA_RX1 INP2", "RX_MIX1", "WSA RX_MIX1"},
+	{"WSA_RX1 INP2", "DEC0", "WSA_TX DEC0_INP"},
+	{"WSA_RX1 INP2", "DEC1", "WSA_TX DEC1_INP"},
 	{"WSA_RX INT1 MIX", NULL, "WSA_RX1 INP2"},
 
 	{"WSA_RX1 MIX INP", "RX0", "WSA RX0"},
