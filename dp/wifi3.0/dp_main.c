@@ -872,7 +872,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 	struct dp_peer *peer;
 	struct dp_ast_entry *ase, *tmp_ase;
 	char type[CDP_TXRX_AST_TYPE_MAX][10] = {
-			"NONE", "STATIC", "SELF", "WDS", "MEC", "HMWDS", "BSS"};
+		"NONE", "STATIC", "SELF", "WDS", "MEC", "HMWDS", "BSS", "DA"};
 
 	DP_PRINT_STATS("AST Stats:");
 	DP_PRINT_STATS("	Entries Added   = %d", soc->stats.ast.added);
