@@ -167,6 +167,8 @@ struct swr_master {
 				u8 *dev_num);
 	int (*slvdev_datapath_control)(struct swr_master *mstr, bool enable);
 	bool (*remove_from_group)(struct swr_master *mstr);
+	void (*device_wakeup_vote)(struct swr_master *mstr);
+	void (*device_wakeup_unvote)(struct swr_master *mstr);
 	u16 port_en_mask;
 
 };
@@ -333,5 +335,9 @@ extern int swr_remove_from_group(struct swr_device *dev, u8 dev_num);
 extern void swr_remove_device(struct swr_device *swr_dev);
 
 extern struct swr_device *get_matching_swr_slave_device(struct device_node *np);
+
+extern int swr_device_wakeup_vote(struct swr_device *dev);
+
+extern int swr_device_wakeup_unvote(struct swr_device *dev);
 
 #endif /* _LINUX_SOUNDWIRE_H */
