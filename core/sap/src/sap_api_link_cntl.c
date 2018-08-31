@@ -306,21 +306,16 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 	 * then we will to perform channel availability check for 60 seconds
 	 */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-		  FL("sapdfs: changing target channel to [%d]"),
-		  mac_ctx->sap.SapDfsInfo.target_channel);
+		  FL("sapdfs: changing target channel to [%d] state %d"),
+		  mac_ctx->sap.SapDfsInfo.target_channel, sap_ctx->fsm_state);
 	sap_ctx->channel = mac_ctx->sap.SapDfsInfo.target_channel;
 
-	/*
-	 * Identify if this is channel change in radar detected state
-	 * Also if we are waiting for sap to stop, don't proceed further
-	 * to restart SAP again.
-	 */
-	if ((sap_ctx->fsm_state != SAP_STOPPING) ||
-	    sap_ctx->stop_bss_in_progress) {
+	/* If SAP is not in starting or started state don't proceed further */
+	if (sap_ctx->fsm_state == SAP_INIT ||
+	    sap_ctx->fsm_state == SAP_STOPPING) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL("sapdfs: state [%d] Stop BSS in progress [%d], not starting SAP after channel change"),
-			  sap_ctx->fsm_state,
-			  sap_ctx->stop_bss_in_progress);
+			  FL("sapdfs: state [%d] not starting SAP after channel change"),
+			  sap_ctx->fsm_state);
 		return;
 	}
 
@@ -345,7 +340,7 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 	/* check if currently selected channel is a DFS channel */
 	if (is_ch_dfs && sap_ctx->pre_cac_complete) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED, FL(
-		    "sapdfs: SAP_STOPPING => SAP_STARTING, on pre cac"));
+		    "sapdfs: => SAP_STARTING, on pre cac"));
 		/* Start beaconing on the new pre cac channel */
 		wlansap_start_beacon_req(sap_ctx);
 		sap_ctx->fsm_state = SAP_STARTING;
@@ -360,7 +355,7 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 			mac_ctx->sap.SapDfsInfo.cac_state)) {
 			sap_ctx->fsm_state = SAP_INIT;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-				  "%s: %d: sapdfs: from state SAP_STOPPING => DISCONNECTED with ignore cac false on sapctx[%pK]",
+				  "%s: %d: sapdfs: => SAP_INIT with ignore cac false on sapctx[%pK]",
 				  __func__, __LINE__, sap_ctx);
 			/* DFS Channel */
 			sap_event.event = eSAP_DFS_CHANNEL_CAC_START;
@@ -370,7 +365,7 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				  QDF_TRACE_LEVEL_INFO_MED,
-				  "%s: %d: sapdfs: from state SAP_STOPPING => SAP_STARTING with ignore cac true on sapctx[%pK]",
+				  "%s: %d: sapdfs: SAP_STARTING with ignore cac true on sapctx[%pK]",
 				  __func__, __LINE__, sap_ctx);
 
 			/* Start beaconing on the new channel */
@@ -384,7 +379,7 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 		}
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			  "%s: %d: sapdfs: from state SAP_STOPPING => SAP_STARTING on sapctx[%pK]",
+			  "%s: %d: sapdfs: => SAP_STARTING on sapctx[%pK]",
 			  __func__, __LINE__, sap_ctx);
 		/* non-DFS channel */
 		sap_ctx->fsm_state = SAP_STARTING;
@@ -416,7 +411,6 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 					    struct sap_context *sap_ctx,
 					    QDF_STATUS *ret_status)
 {
-	tWLAN_SAPEvent sap_event;
 	uint8_t intf;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hHal);
@@ -453,8 +447,6 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 		  FL("sapdfs: from state SAP_STARTED => SAP_STOPPING"));
-	/* SAP to be moved to DISCONNECTING state */
-	sap_ctx->fsm_state = SAP_STOPPING;
 	sap_ctx->is_chan_change_inprogress = true;
 	/*
 	 * The associated stations have been informed to move to a different
@@ -497,16 +489,15 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 	if (sap_get_total_number_sap_intf(hHal) <= 1 ||
 	    policy_mgr_is_current_hwmode_dbs(mac_ctx->psoc) ||
 	    !sap_scc_dfs) {
-		/* Send channel switch request */
-		sap_event.event = eWNI_SME_CHANNEL_CHANGE_REQ;
-		sap_event.params = 0;
-		sap_event.u1 = 0;
-		sap_event.u2 = 0;
-		QDF_TRACE(QDF_MODULE_ID_SAP,
-			  QDF_TRACE_LEVEL_INFO_MED,
-			  FL("sapdfs: Posting event eWNI_SME_CHANNEL_CHANGE_REQ to sapFSM"));
-		/* Handle event */
-		qdf_status = sap_fsm(sap_ctx, &sap_event);
+		sap_get_cac_dur_dfs_region(sap_ctx,
+			&sap_ctx->csr_roamProfile.cac_duration_ms,
+			&sap_ctx->csr_roamProfile.dfs_regdomain);
+		/*
+		 * Most likely, radar has been detected and SAP wants to
+		 * change the channel
+		 */
+		qdf_status = wlansap_channel_change_request(sap_ctx,
+			mac_ctx->sap.SapDfsInfo.target_channel);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			*ret_status = QDF_STATUS_E_FAILURE;
 		return;
@@ -548,13 +539,15 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 			  FL("sapdfs:issue chnl change for sapctx[%pK]"),
 			  sap_context);
-		/* Send channel switch request */
-		sap_event.event = eWNI_SME_CHANNEL_CHANGE_REQ;
-		sap_event.params = 0;
-		sap_event.u1 = 0;
-		sap_event.u2 = 0;
-		/* Handle event */
-		qdf_status = sap_fsm(sap_context, &sap_event);
+		sap_get_cac_dur_dfs_region(sap_context,
+			&sap_context->csr_roamProfile.cac_duration_ms,
+			&sap_context->csr_roamProfile.dfs_regdomain);
+		/*
+		 * Most likely, radar has been detected and SAP wants to
+		 * change the channel
+		 */
+		qdf_status = wlansap_channel_change_request(sap_context,
+				mac_ctx->sap.SapDfsInfo.target_channel);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  FL("post chnl chng req failed, sap[%pK]"),
@@ -1213,14 +1206,7 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 		 * channel due to the presence of radar but our channel change
 		 * failed, stop the BSS operation completely and inform hostapd
 		 */
-		sap_event.event = eWNI_SME_CHANNEL_CHANGE_RSP;
-		sap_event.params = 0;
-		sap_event.u1 = eCSR_ROAM_INFRA_IND;
-		sap_event.u2 = eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE;
-
-		qdf_status = sap_fsm(sap_ctx, &sap_event);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			qdf_ret_status = QDF_STATUS_E_FAILURE;
+		qdf_ret_status = wlansap_stop_bss(sap_ctx);
 		break;
 	case eCSR_ROAM_EXT_CHG_CHNL_UPDATE_IND:
 		qdf_status = sap_signal_hdd_event(sap_ctx, csr_roam_info,

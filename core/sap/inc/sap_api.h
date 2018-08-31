@@ -1414,6 +1414,21 @@ QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
 QDF_STATUS wlansap_set_invalid_session(struct sap_context *sap_ctx);
 
 /**
+ * sap_get_cac_dur_dfs_region() - get cac duration and dfs region.
+ * @sap_ctxt: sap context
+ * @cac_duration_ms: pointer to cac duration
+ * @dfs_region: pointer to dfs region
+ *
+ * Get cac duration and dfs region.
+ *
+ * Return: None
+ */
+void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
+				uint32_t *cac_duration_ms,
+				uint32_t *dfs_region);
+
+
+/**
  * sap_dfs_set_current_channel() - Set current channel params in dfs component
  * @sap_ctx: sap context
  *
@@ -1434,20 +1449,6 @@ void sap_dfs_set_current_channel(void *sap_ctx);
  * Return: None
  */
 void wlansap_cleanup_cac_timer(struct sap_context *sap_ctx);
-
-/**
- * wlansap_set_stop_bss_inprogress - sets the stop_bss_in_progress flag
- *
- * @sap_ctx: Pointer to the global SAP ctx
- * @in_progress: the value to be set to the stop_bss_in_progress_flag
- *
- * This function sets the value in in_progress parameter to the
- * stop_bss_in_progress flag in sap_context.
- *
- * Return: None
- */
-void wlansap_set_stop_bss_inprogress(struct sap_context *sap_ctx,
-					bool in_progress);
 
 #ifdef __cplusplus
 }

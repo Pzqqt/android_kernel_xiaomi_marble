@@ -419,17 +419,7 @@ static uint8_t sap_ch_params_to_bonding_channels(
 	return nchannels;
 }
 
-/**
- * sap_get_cac_dur_dfs_region() - get cac duration and dfs region.
- * @sap_ctxt: sap context
- * @cac_duration_ms: pointer to cac duration
- * @dfs_region: pointer to dfs region
- *
- * Get cac duration and dfs region.
- *
- * Return: None
- */
-static void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
+void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 		uint32_t *cac_duration_ms,
 		uint32_t *dfs_region)
 {
@@ -2323,12 +2313,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 		qdf_status = sap_cac_start_notify(hal);
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_RADAR_FOUND) {
 		uint8_t intf;
-		/*
-		 * Radar found while performing channel availability
-		 * check, need to switch the channel again
-		 */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  "ENTERTRED CAC WAIT STATE-->SAP_STOPPING\n");
+
 		if (mac_ctx->sap.SapDfsInfo.target_channel) {
 			wlan_reg_set_channel_params(mac_ctx->pdev,
 				mac_ctx->sap.SapDfsInfo.target_channel, 0,
@@ -2356,8 +2341,6 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 						mac_ctx->pdev,
 						profile->operationChannel))
 					continue;
-				/* SAP to be moved to STOPPING state */
-				t_sap_ctx->fsm_state = SAP_STOPPING;
 				t_sap_ctx->is_chan_change_inprogress = true;
 				/*
 				 * eSAP_DFS_CHANNEL_CAC_RADAR_FOUND:
@@ -2673,36 +2656,6 @@ sap_fsm_state_stopping(struct sap_context *sap_ctx,
 		qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
 					eSAP_STOP_BSS_EVENT,
 					(void *)eSAP_STATUS_SUCCESS);
-	} else if (msg == eWNI_SME_CHANNEL_CHANGE_REQ) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			  FL("sapdfs: Send channel change request on sapctx[%pK]"),
-			  sap_ctx);
-
-		sap_get_cac_dur_dfs_region(sap_ctx,
-				&sap_ctx->csr_roamProfile.cac_duration_ms,
-				&sap_ctx->csr_roamProfile.dfs_regdomain);
-		/*
-		 * Most likely, radar has been detected and SAP wants to
-		 * change the channel
-		 */
-		qdf_status = wlansap_channel_change_request(sap_ctx,
-				mac_ctx->sap.SapDfsInfo.target_channel);
-
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL("Sending DFS eWNI_SME_CHANNEL_CHANGE_REQ"));
-	} else if (msg == eWNI_SME_CHANNEL_CHANGE_RSP) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL("in state %s, event msg %d result %d"),
-			  "SAP_STOPPING ", msg, sap_event->u2);
-		if (sap_event->u2 == eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE)
-			qdf_status = sap_goto_stopping(sap_ctx);
-	} else if ((msg == eSAP_HDD_STOP_INFRA_BSS) &&
-			(sap_ctx->is_chan_change_inprogress)) {
-		/* stop bss is received while processing channel change */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL("in state %s, event msg %d result %d"),
-			  "SAP_STOPPING ", msg, sap_event->u2);
-		qdf_status = sap_goto_stopping(sap_ctx);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),

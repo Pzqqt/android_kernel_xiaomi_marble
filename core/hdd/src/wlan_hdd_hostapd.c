@@ -5317,10 +5317,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		struct hdd_hostapd_state *hostapd_state =
 			WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
-		/* Set the stop_bss_in_progress flag */
-		wlansap_set_stop_bss_inprogress(
-			WLAN_HDD_GET_SAP_CTX_PTR(adapter), true);
-
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		status = wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 		if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -5335,10 +5331,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
-
-		/* Clear the stop_bss_in_progress flag */
-		wlansap_set_stop_bss_inprogress(
-			WLAN_HDD_GET_SAP_CTX_PTR(adapter), false);
 
 		/*BSS stopped, clear the active sessions for this device mode*/
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
