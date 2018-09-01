@@ -5200,6 +5200,35 @@ typedef enum {
      * Value 0: Disable this feature
      */
     WMI_PDEV_PARAM_ENABLE_OPTIMIZED_PERIODIC_CFR_TIMER,
+
+    /*
+     * Configures a portion of the Estimated Service Params indication
+     * (802.11mc) settings, which together specify estimated throughput.
+     * The accompanying A_UINT32 parameter is the ESP BA WINDOW size advertised
+     * Value 0: Disable this feature
+     * Non zero Value: ESP BA WINDOW size
+     */
+    WMI_PDEV_PARAM_ESP_BA_WINDOW,
+
+    /*
+     * Configures a portion of the Estimated Service Params indication
+     * (802.11mc) settings, which together specify estimated throughput.
+     * The accompanying A_UINT32 parameter is the air time fraction to be
+     * advertised in the ESP IE
+     * Value 0: Disable this feature
+     * Non zero Value: Air time fraction in percentage
+     */
+    WMI_PDEV_PARAM_ESP_AIRTIME_FRACTION,
+
+    /*
+     * Configures a portion of the Estimated Service Params indication
+     * (802.11mc) settings, which together specify estimated throughput.
+     * The accompanying A_UINT32 parameter specifies PPDU duration in units
+     * of milliseconds.
+     * Value 0: Disable this feature
+     * Non zero Value: PPDU duration in milliseconds
+     */
+    WMI_PDEV_PARAM_ESP_PPDU_DURATION,
 } WMI_PDEV_PARAM;
 
 typedef struct {
