@@ -6028,7 +6028,7 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *hdd_ctx)
 		total_rx_delv = 0;
 		total_rx_refused = 0;
 		stats = &adapter->hdd_stats.tx_rx_stats;
-		hdd_info("adapter: %u", adapter->session_id);
+		hdd_debug("adapter: %u", adapter->session_id);
 		for (; i < NUM_CPUS; i++) {
 			total_rx_pkt += stats->rx_packets[i];
 			total_rx_dropped += stats->rx_dropped[i];
@@ -6036,19 +6036,19 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *hdd_ctx)
 			total_rx_refused += stats->rx_refused[i];
 		}
 
-		hdd_info("Total Transmit - called %u, dropped %u orphan %u",
-			 stats->tx_called, stats->tx_dropped,
-			 stats->tx_orphaned);
+		hdd_debug("Total Transmit - called %u, dropped %u orphan %u",
+			  stats->tx_called, stats->tx_dropped,
+			  stats->tx_orphaned);
 
 		for (i = 0; i < NUM_CPUS; i++) {
 			if (stats->rx_packets[i] == 0)
 				continue;
-			hdd_info("Rx CPU[%d]: packets %u, dropped %u, delivered %u, refused %u",
-				 i, stats->rx_packets[i], stats->rx_dropped[i],
-				 stats->rx_delivered[i], stats->rx_refused[i]);
+			hdd_debug("Rx CPU[%d]: packets %u, dropped %u, delivered %u, refused %u",
+				  i, stats->rx_packets[i], stats->rx_dropped[i],
+				  stats->rx_delivered[i], stats->rx_refused[i]);
 		}
-		hdd_info("Total Receive - packets %u, dropped %u, delivered %u, refused %u",
-			 total_rx_pkt, total_rx_dropped, total_rx_delv,
-			 total_rx_refused);
+		hdd_debug("Total Receive - packets %u, dropped %u, delivered %u, refused %u",
+			  total_rx_pkt, total_rx_dropped, total_rx_delv,
+			  total_rx_refused);
 	}
 }
