@@ -756,6 +756,101 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"Infra uapsd bk sus intv")
 
+/* WMM configuration */
+/*
+ * <ini>
+ * WmmIsEnabled - Enable WMM feature
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini is used to enable/disable WMM.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_MODE CFG_INI_UINT( \
+		"WmmIsEnabled", \
+		0, \
+		2, \
+		2, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Enable WMM feature")
+
+/*
+ * <ini>
+ * 80211eIsEnabled - Enable 802.11e feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable 802.11e.
+ *
+ * Related: None.
+ *
+ * Supported Feature: 802.11e
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_80211E_ENABLED CFG_INI_BOOL( \
+		"80211eIsEnabled", \
+		0, \
+		"Enable 802.11e feature")
+
+/*
+ * <ini>
+ * UapsdMask - To setup U-APSD mask for ACs
+ * @Min: 0x00
+ * @Max: 0xFF
+ * @Default: 0x00
+ *
+ * This ini is used to setup U-APSD mask for ACs.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_UAPSD_MASK CFG_INI_UINT( \
+		"UapsdMask", \
+		0x00, \
+		0xFF, \
+		0x00, \
+		CFG_VALUE_OR_DEFAULT, \
+		"setup U-APSD mask for ACs")
+
+/*
+ * <ini>
+ * ImplicitQosIsEnabled - Enableimplicit QOS
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable implicit QOS.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED CFG_INI_BOOL( \
+		"ImplicitQosIsEnabled", \
+		0, \
+		"Enable implicit QOS")
+
 #define CFG_WMM_PARAMS_ALL \
 	CFG(CFG_QOS_ENABLED) \
 	CFG(CFG_WME_ENABLED) \
@@ -789,6 +884,10 @@
 	CFG(CFG_QOS_WMM_MIN_PHY_RATE_AC_BK) \
 	CFG(CFG_QOS_WMM_SBA_AC_BK) \
 	CFG(CFG_QOS_WMM_UAPSD_BK_SRV_INTV) \
-	CFG(CFG_QOS_WMM_UAPSD_BK_SUS_INTV)
+	CFG(CFG_QOS_WMM_UAPSD_BK_SUS_INTV) \
+	CFG(CFG_QOS_WMM_MODE) \
+	CFG(CFG_QOS_WMM_80211E_ENABLED) \
+	CFG(CFG_QOS_WMM_UAPSD_MASK) \
+	CFG(CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED)
 
 #endif /* __CFG_MLME_FE_WMM_H */

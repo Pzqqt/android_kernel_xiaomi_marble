@@ -2655,72 +2655,6 @@ enum station_keepalive_method {
 /* WMM configuration */
 /*
  * <ini>
- * WmmIsEnabled - Enable WMM feature
- * @Min: 0
- * @Max: 2
- * @Default: 0
- *
- * This ini is used to enable/disable WMM.
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_MODE_NAME                          "WmmIsEnabled"
-#define CFG_QOS_WMM_MODE_MIN                           (0)
-#define CFG_QOS_WMM_MODE_MAX                           (2) /* HDD_WMM_NO_QOS */
-#define CFG_QOS_WMM_MODE_DEFAULT                       (0) /* HDD_WMM_AUTO */
-
-/*
- * <ini>
- * 80211eIsEnabled - Enable 802.11e feature
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable 802.11e.
- *
- * Related: None.
- *
- * Supported Feature: 802.11e
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_80211E_ENABLED_NAME                   "80211eIsEnabled"
-#define CFG_QOS_WMM_80211E_ENABLED_MIN                     (0)
-#define CFG_QOS_WMM_80211E_ENABLED_MAX                     (1)
-#define CFG_QOS_WMM_80211E_ENABLED_DEFAULT                 (0)
-
-/*
- * <ini>
- * UapsdMask - To setup U-APSD mask for ACs
- * @Min: 0x00
- * @Max: 0xFF
- * @Default: 0x00
- *
- * This ini is used to setup U-APSD mask for ACs.
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_UAPSD_MASK_NAME                        "UapsdMask"
-#define CFG_QOS_WMM_UAPSD_MASK_MIN                         (0x00)
-#define CFG_QOS_WMM_UAPSD_MASK_MAX                         (0xFF)
-#define CFG_QOS_WMM_UAPSD_MASK_DEFAULT                     (0x00)
-
-/*
- * <ini>
  * ImplicitQosIsEnabled - Enableimplicit QOS
  * @Min: 0
  * @Max: 1
@@ -6640,9 +6574,6 @@ struct hdd_config {
 	uint8_t wow_data_inactivity_timeout;
 
 	/* WMM QoS Configuration */
-	enum hdd_wmm_user_mode WmmMode;
-	bool b80211eIsEnabled;
-	uint8_t UapsdMask;      /* what ACs to setup U-APSD for at assoc */
 	bool isFastRoamIniFeatureEnabled;
 	bool MAWCEnabled;
 #ifdef FEATURE_WLAN_ESE
@@ -6653,7 +6584,6 @@ struct hdd_config {
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
 	bool isRoamOffloadScanEnabled;
-	bool bImplicitQosEnabled;
 
 	uint32_t DelayedTriggerFrmInt;
 
@@ -7131,11 +7061,11 @@ struct reg_table_entry {
 /**
  * hdd_to_csr_wmm_mode() - Utility function to convert HDD to CSR WMM mode
  *
- * @enum hdd_wmm_user_mode - hdd WMM user mode
+ * @uint8_t mode - hdd WMM user mode
  *
  * Return: CSR WMM mode
  */
-eCsrRoamWmmUserModeType hdd_to_csr_wmm_mode(enum hdd_wmm_user_mode mode);
+eCsrRoamWmmUserModeType hdd_to_csr_wmm_mode(uint8_t mode);
 
 /* Function declarations and documenation */
 QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx);

@@ -1308,6 +1308,15 @@ static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_QOS_WMM_UAPSD_BK_SRV_INTV);
 	wmm_params->ac_bk.uapsd_bk_sus_intv =
 		cfg_get(psoc, CFG_QOS_WMM_UAPSD_BK_SUS_INTV);
+
+	wmm_params->wmm_config.wmm_mode =
+		cfg_get(psoc, CFG_QOS_WMM_MODE);
+	wmm_params->wmm_config.b80211e_is_enabled =
+		cfg_get(psoc, CFG_QOS_WMM_80211E_ENABLED);
+	wmm_params->wmm_config.uapsd_mask =
+		cfg_get(psoc, CFG_QOS_WMM_UAPSD_MASK);
+	wmm_params->wmm_config.bimplicit_qos_enabled =
+		cfg_get(psoc, CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED);
 }
 
 static void mlme_init_wps_params_cfg(struct wlan_objmgr_psoc *psoc,

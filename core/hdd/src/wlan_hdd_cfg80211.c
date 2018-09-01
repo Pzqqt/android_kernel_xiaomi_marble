@@ -6189,6 +6189,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	QDF_STATUS status;
 	bool bval = false;
 	uint8_t value = 0;
+	uint8_t wmm_mode = 0;
 
 	hdd_enter_dev(dev);
 
@@ -6252,8 +6253,14 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 				hdd_to_csr_wmm_mode(HDD_WMM_USER_MODE_NO_QOS);
 			hdd_debug("wmm is disabled");
 		} else {
+			status = ucfg_mlme_get_wmm_mode(hdd_ctx->psoc,
+							&wmm_mode);
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
+				hdd_err("Get wmm_mode failed");
+				return QDF_STATUS_E_FAILURE;
+			}
 			sme_config->csrConfig.WMMSupportMode =
-				hdd_to_csr_wmm_mode(hdd_ctx->config->WmmMode);
+				hdd_to_csr_wmm_mode(wmm_mode);
 			hdd_debug("using wmm default value");
 		}
 		update_sme_cfg = true;
@@ -14809,6 +14816,8 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	tSmeConfigParams *sme_config;
 	uint8_t channel = 0;
 	mac_handle_t mac_handle;
+	uint8_t wmm_mode = 0;
+	uint8_t value = 0;
 
 	hdd_enter();
 
@@ -14866,14 +14875,25 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		}
 		hdd_set_connection_in_progress(true);
 
-		if (HDD_WMM_USER_MODE_NO_QOS ==
-		    (WLAN_HDD_GET_CTX(adapter))->config->WmmMode) {
+		status = ucfg_mlme_get_wmm_mode(hdd_ctx->psoc, &wmm_mode);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get wmm_mode failed");
+			status = -EINVAL;
+			goto ret_status;
+		}
+		if (HDD_WMM_USER_MODE_NO_QOS == wmm_mode) {
 			/*QoS not enabled in cfg file */
 			roam_profile->uapsd_mask = 0;
 		} else {
 			/*QoS enabled, update uapsd mask from cfg file */
-			roam_profile->uapsd_mask =
-				(WLAN_HDD_GET_CTX(adapter))->config->UapsdMask;
+			status = ucfg_mlme_get_wmm_uapsd_mask(hdd_ctx->psoc,
+							      &value);
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
+				hdd_err("Get uapsd_mask failed");
+				status = -EINVAL;
+				goto ret_status;
+			}
+			roam_profile->uapsd_mask = value;
 		}
 
 		roam_profile->SSIDs.numOfSSIDs = 1;

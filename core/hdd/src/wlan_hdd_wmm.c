@@ -1017,7 +1017,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	struct hdd_context *hdd_ctx;
 	mac_handle_t mac_handle;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t dir_ac = 0;
+	uint8_t dir_ac, mask = 0;
 	uint16_t nom_msdu_size_ac = 0;
 	uint32_t rate_ac = 0;
 	uint16_t sba_ac = 0;
@@ -1062,9 +1062,13 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 		qosInfo.ts_info.up = SME_QOS_WMM_UP_VO;
 		/* Check if there is any valid configuration from framework */
 		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
-			qosInfo.ts_info.psb =
-				((WLAN_HDD_GET_CTX(adapter))->config->
-				 UapsdMask & SME_QOS_UAPSD_VO) ? 1 : 0;
+			status = ucfg_mlme_get_wmm_uapsd_mask(hdd_ctx->psoc,
+							      &mask);
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
+				hdd_err("Get uapsd_mask failed");
+				return;
+			}
+			qosInfo.ts_info.psb = (mask & SME_QOS_UAPSD_VO) ? 1 : 0;
 		}
 		status = ucfg_mlme_get_wmm_dir_ac_vo(hdd_ctx->psoc,
 						     &dir_ac);
@@ -1129,9 +1133,13 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 		qosInfo.ts_info.up = SME_QOS_WMM_UP_VI;
 		/* Check if there is any valid configuration from framework */
 		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
-			qosInfo.ts_info.psb =
-				((WLAN_HDD_GET_CTX(adapter))->config->
-				 UapsdMask & SME_QOS_UAPSD_VI) ? 1 : 0;
+			status = ucfg_mlme_get_wmm_uapsd_mask(hdd_ctx->psoc,
+							      &mask);
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
+				hdd_err("Get uapsd_mask failed");
+				return;
+			}
+			qosInfo.ts_info.psb = (mask & SME_QOS_UAPSD_VI) ? 1 : 0;
 		}
 		status = ucfg_mlme_get_wmm_dir_ac_vi(
 			hdd_ctx->psoc, &dir_ac);
@@ -1196,9 +1204,13 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 		qosInfo.ts_info.up = SME_QOS_WMM_UP_BE;
 		/* Check if there is any valid configuration from framework */
 		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
-			qosInfo.ts_info.psb =
-				((WLAN_HDD_GET_CTX(adapter))->config->
-				 UapsdMask & SME_QOS_UAPSD_BE) ? 1 : 0;
+			status = ucfg_mlme_get_wmm_uapsd_mask(hdd_ctx->psoc,
+							      &mask);
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
+				hdd_err("Get uapsd_mask failed");
+				return;
+			}
+			qosInfo.ts_info.psb = (mask & SME_QOS_UAPSD_BE) ? 1 : 0;
 		}
 		status = ucfg_mlme_get_wmm_dir_ac_be(hdd_ctx->psoc, &dir_ac);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -1260,9 +1272,13 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 		qosInfo.ts_info.up = SME_QOS_WMM_UP_BK;
 		/* Check if there is any valid configuration from framework */
 		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
-			qosInfo.ts_info.psb =
-				((WLAN_HDD_GET_CTX(adapter))->config->
-				 UapsdMask & SME_QOS_UAPSD_BK) ? 1 : 0;
+			status = ucfg_mlme_get_wmm_uapsd_mask(hdd_ctx->psoc,
+							      &mask);
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
+				hdd_err("Get uapsd_mask failed");
+				return;
+			}
+			qosInfo.ts_info.psb = (mask & SME_QOS_UAPSD_BK) ? 1 : 0;
 		}
 
 		status = ucfg_mlme_get_wmm_dir_ac_bk(hdd_ctx->psoc, &dir_ac);
@@ -1873,12 +1889,20 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 				  sme_ac_enum_type acType, bool *pGranted)
 {
 	struct hdd_wmm_qos_context *pQosContext;
+	struct hdd_context *hdd_ctx;
+	bool enable;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Entered for AC %d", __func__, acType);
 
-	if (!hdd_wmm_is_active(adapter) ||
-	    !(WLAN_HDD_GET_CTX(adapter))->config->bImplicitQosEnabled ||
+	status = ucfg_mlme_get_implicit_qos_is_enabled(hdd_ctx->psoc, &enable);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get implicit_qos_is_enabled failed");
+		}
+	if (!hdd_wmm_is_active(adapter) || !(enable) ||
 	    !adapter->hdd_wmm_status.wmmAcStatus[acType].wmmAcAccessRequired) {
 		/* either we don't want QoS or the AP doesn't support
 		 * QoS or we don't want to do implicit QoS
@@ -2239,14 +2263,25 @@ QDF_STATUS hdd_wmm_get_uapsd_mask(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint32_t uapsd_value = 0;
+	uint8_t wmm_mode = 0;
 
-	if (HDD_WMM_USER_MODE_NO_QOS ==
-	    (WLAN_HDD_GET_CTX(adapter))->config->WmmMode) {
+	status = ucfg_mlme_get_wmm_mode(hdd_ctx->psoc, &wmm_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Get wmm_mode failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (HDD_WMM_USER_MODE_NO_QOS == wmm_mode) {
 		/* no QOS then no UAPSD */
 		uapsdMask = 0;
 	} else {
 		/* start with the default mask */
-		uapsdMask = (WLAN_HDD_GET_CTX(adapter))->config->UapsdMask;
+		status = ucfg_mlme_get_wmm_uapsd_mask(hdd_ctx->psoc,
+						      &uapsdMask);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get uapsd_mask failed");
+			return QDF_STATUS_E_FAILURE;
+		}
 
 		/* disable UAPSD for any ACs with a 0 Service Interval */
 		status = ucfg_mlme_get_wmm_uapsd_vo_srv_intv(hdd_ctx->psoc,

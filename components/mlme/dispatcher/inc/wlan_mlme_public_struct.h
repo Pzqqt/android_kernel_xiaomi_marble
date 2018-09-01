@@ -998,6 +998,20 @@ struct wlan_mlme_lfr_cfg {
 };
 
 /**
+ * struct wlan_mlme_wmm_config - WMM configuration
+ * @wmm_mode: Enable WMM feature
+ * @b80211e_is_enabled: Enable 802.11e feature
+ * @uapsd_mask: what ACs to setup U-APSD for at assoc
+ * @bimplicit_qos_enabled: Enable implicit QOS
+ */
+struct wlan_mlme_wmm_config {
+	uint8_t wmm_mode;
+	bool b80211e_is_enabled;
+	uint8_t uapsd_mask;
+	bool bimplicit_qos_enabled;
+};
+
+/**
  * struct wlan_mlme_wmm_ac_vo - Default TSPEC parameters
  * for AC_VO
  * @dir_ac_vo: TSPEC direction for VO
@@ -1100,6 +1114,7 @@ struct wlan_mlme_wmm_params {
 	uint8_t max_sp_length;
 	bool wsm_enabled;
 	uint32_t edca_profile;
+	struct wlan_mlme_wmm_config wmm_config;
 	struct wlan_mlme_wmm_ac_vo ac_vo;
 	struct wlan_mlme_wmm_ac_vi ac_vi;
 	struct wlan_mlme_wmm_ac_be ac_be;

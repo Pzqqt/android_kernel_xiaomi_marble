@@ -2049,4 +2049,65 @@ ucfg_mlme_get_wmm_uapsd_bk_sus_intv(struct wlan_objmgr_psoc *psoc,
 	return wlan_mlme_get_wmm_uapsd_bk_sus_intv(psoc, value);
 }
 
+/**
+ * ucfg_mlme_get_wmm_mode() - Enable WMM feature
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_wmm_mode(struct wlan_objmgr_psoc *psoc, uint8_t *value)
+{
+	return wlan_mlme_get_wmm_mode(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_80211e_is_enabled() - Enable 802.11e feature
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_80211e_is_enabled(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	return wlan_mlme_get_80211e_is_enabled(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_wmm_uapsd_mask() - setup U-APSD mask for ACs
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_wmm_uapsd_mask(struct wlan_objmgr_psoc *psoc, uint8_t *value)
+{
+	return wlan_mlme_get_wmm_uapsd_mask(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_implicit_qos_is_enabled() - Enable implicit QOS
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
+				      bool *value)
+{
+	return wlan_mlme_get_implicit_qos_is_enabled(psoc, value);
+}
+
 #endif /* _WLAN_MLME_UCFG_API_H_ */

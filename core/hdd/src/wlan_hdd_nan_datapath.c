@@ -156,19 +156,32 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 	uint32_t roam_id;
 	struct csr_roam_profile *roam_profile;
 	mac_handle_t mac_handle;
+	uint8_t wmm_mode = 0;
+	struct hdd_context *hdd_ctx;
+	uint8_t value = 0;
 
 	hdd_enter();
 
 	roam_profile = hdd_roam_profile(adapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	if (HDD_WMM_USER_MODE_NO_QOS ==
-		(WLAN_HDD_GET_CTX(adapter))->config->WmmMode) {
+	status = ucfg_mlme_get_wmm_mode(hdd_ctx->psoc, &wmm_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Get wmm_mode failed");
+		return -EINVAL;
+	}
+
+	if (HDD_WMM_USER_MODE_NO_QOS == wmm_mode) {
 		/* QoS not enabled in cfg file*/
 		roam_profile->uapsd_mask = 0;
 	} else {
 		/* QoS enabled, update uapsd mask from cfg file*/
-		roam_profile->uapsd_mask =
-			(WLAN_HDD_GET_CTX(adapter))->config->UapsdMask;
+		status = ucfg_mlme_get_wmm_uapsd_mask(hdd_ctx->psoc, &value);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get uapsd_mask failed");
+			return -EINVAL;
+		}
+		roam_profile->uapsd_mask = value;
 	}
 
 	roam_profile->csrPersona = adapter->device_mode;

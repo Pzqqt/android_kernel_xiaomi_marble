@@ -749,27 +749,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_WOW_DATA_INACTIVITY_TIMEOUT_MIN,
 		     CFG_WOW_DATA_INACTIVITY_TIMEOUT_MAX),
 
-	REG_VARIABLE(CFG_QOS_WMM_MODE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, WmmMode,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_QOS_WMM_MODE_DEFAULT,
-		     CFG_QOS_WMM_MODE_MIN,
-		     CFG_QOS_WMM_MODE_MAX),
-
-	REG_VARIABLE(CFG_QOS_WMM_80211E_ENABLED_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, b80211eIsEnabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_QOS_WMM_80211E_ENABLED_DEFAULT,
-		     CFG_QOS_WMM_80211E_ENABLED_MIN,
-		     CFG_QOS_WMM_80211E_ENABLED_MAX),
-
-	REG_VARIABLE(CFG_QOS_WMM_UAPSD_MASK_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, UapsdMask,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_QOS_WMM_UAPSD_MASK_DEFAULT,
-		     CFG_QOS_WMM_UAPSD_MASK_MIN,
-		     CFG_QOS_WMM_UAPSD_MASK_MAX),
-
 #ifdef FEATURE_WLAN_ESE
 	REG_VARIABLE(CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_NAME,
 		     WLAN_PARAM_Integer,
@@ -857,13 +836,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TL_DELAYED_TRGR_FRM_INT_DEFAULT,
 		     CFG_TL_DELAYED_TRGR_FRM_INT_MIN,
 		     CFG_TL_DELAYED_TRGR_FRM_INT_MAX),
-
-	REG_VARIABLE(CFG_QOS_IMPLICIT_SETUP_ENABLED_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, bImplicitQosEnabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_QOS_IMPLICIT_SETUP_ENABLED_DEFAULT,
-		     CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN,
-		     CFG_QOS_IMPLICIT_SETUP_ENABLED_MAX),
 
 	REG_VARIABLE(CFG_RRM_ENABLE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fRrmEnable,
@@ -3968,7 +3940,7 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 	return status;
 }
 
-eCsrRoamWmmUserModeType hdd_to_csr_wmm_mode(enum hdd_wmm_user_mode mode)
+eCsrRoamWmmUserModeType hdd_to_csr_wmm_mode(uint8_t mode)
 {
 	switch (mode) {
 	case HDD_WMM_USER_MODE_QBSS_ONLY:
@@ -4067,6 +4039,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	tSmeConfigParams *smeConfig;
 	uint8_t rrm_capab_len;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	uint8_t wmm_mode = 0;
+	bool b80211e_is_enabled;
 
 	struct hdd_config *pConfig = hdd_ctx->config;
 
@@ -4075,10 +4049,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		hdd_err("unable to allocate smeConfig");
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	hdd_debug("%s bWmmIsEnabled=%d 802_11e_enabled=%d dot11Mode=%d",
-		  __func__, pConfig->WmmMode, pConfig->b80211eIsEnabled,
-		  pConfig->dot11Mode);
 
 	/* Config params obtained from the registry
 	 * To Do: set regulatory information here
@@ -4127,9 +4097,24 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.min_rest_time_conc = pConfig->min_rest_time_conc;
 	smeConfig->csrConfig.idle_time_conc     = pConfig->idle_time_conc;
 
-	smeConfig->csrConfig.Is11eSupportEnabled = pConfig->b80211eIsEnabled;
-	smeConfig->csrConfig.WMMSupportMode =
-		hdd_to_csr_wmm_mode(pConfig->WmmMode);
+	status = ucfg_mlme_get_80211e_is_enabled(hdd_ctx->psoc,
+						 &b80211e_is_enabled);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Get b80211e_is_enabled failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	smeConfig->csrConfig.Is11eSupportEnabled = b80211e_is_enabled;
+
+	status = ucfg_mlme_get_wmm_mode(hdd_ctx->psoc, &wmm_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Get wmm_mode failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	smeConfig->csrConfig.WMMSupportMode = hdd_to_csr_wmm_mode(wmm_mode);
+
+	hdd_debug("%s bWmmIsEnabled=%d 802_11e_enabled=%d dot11Mode=%d",
+		  __func__, wmm_mode, b80211e_is_enabled,
+		  pConfig->dot11Mode);
 
 	smeConfig->rrmConfig.rrm_enabled = pConfig->fRrmEnable;
 	smeConfig->rrmConfig.max_randn_interval = pConfig->nRrmRandnIntvl;
