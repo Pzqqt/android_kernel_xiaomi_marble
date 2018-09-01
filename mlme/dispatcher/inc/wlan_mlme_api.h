@@ -884,6 +884,47 @@ wlan_mlme_get_wmm_uapsd_bk_sus_intv(struct wlan_objmgr_psoc *psoc,
 				    uint32_t *value);
 
 /**
+ * wlan_mlme_get_wmm_mode() - Enable WMM feature
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_wmm_mode(struct wlan_objmgr_psoc *psoc, uint8_t *value);
+
+/**
+ * wlan_mlme_get_80211e_is_enabled() - Enable 802.11e feature
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_80211e_is_enabled(struct wlan_objmgr_psoc *psoc, bool *value);
+
+/**
+ * wlan_mlme_get_wmm_uapsd_mask() - setup U-APSD mask for ACs
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_wmm_uapsd_mask(struct wlan_objmgr_psoc *psoc, uint8_t *value);
+
+/**
+ * wlan_mlme_get_implicit_qos_is_enabled() - Enable implicit QOS
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
+				      bool *value);
+
+/**
  * wlan_mlme_get_wmm_dir_ac_vo() - Get TSPEC direction
  * for VO
  * @psoc: pointer to psoc object
