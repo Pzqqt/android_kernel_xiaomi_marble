@@ -243,6 +243,93 @@ void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
 }
 qdf_export_symbol(hal_reo_qdesc_setup);
 
+/**
+ * hal_get_ba_aging_timeout - Get BA Aging timeout
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @ac: Access category
+ * @value: window size to get
+ */
+void hal_get_ba_aging_timeout(void *hal_soc, uint8_t ac,
+			      uint32_t *value)
+{
+	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+
+	switch (ac) {
+	case WME_AC_BE:
+		*value = HAL_REG_READ(soc,
+				      HWIO_REO_R0_AGING_THRESHOLD_IX_0_ADDR(
+				      SEQ_WCSS_UMAC_REO_REG_OFFSET)) / 1000;
+		break;
+	case WME_AC_BK:
+		*value = HAL_REG_READ(soc,
+				      HWIO_REO_R0_AGING_THRESHOLD_IX_1_ADDR(
+				      SEQ_WCSS_UMAC_REO_REG_OFFSET)) / 1000;
+		break;
+	case WME_AC_VI:
+		*value = HAL_REG_READ(soc,
+				      HWIO_REO_R0_AGING_THRESHOLD_IX_2_ADDR(
+				      SEQ_WCSS_UMAC_REO_REG_OFFSET)) / 1000;
+		break;
+	case WME_AC_VO:
+		*value = HAL_REG_READ(soc,
+				      HWIO_REO_R0_AGING_THRESHOLD_IX_3_ADDR(
+				      SEQ_WCSS_UMAC_REO_REG_OFFSET)) / 1000;
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid AC: %d\n", ac);
+	}
+}
+
+qdf_export_symbol(hal_get_ba_aging_timeout);
+
+/**
+ * hal_set_ba_aging_timeout - Set BA Aging timeout
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @ac: Access category
+ * ac: 0 - Background, 1 - Best Effort, 2 - Video, 3 - Voice
+ * @value: Input value to set
+ */
+void hal_set_ba_aging_timeout(void *hal_soc, uint8_t ac,
+			      uint32_t value)
+{
+	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+
+	switch (ac) {
+	case WME_AC_BE:
+		HAL_REG_WRITE(soc,
+			      HWIO_REO_R0_AGING_THRESHOLD_IX_0_ADDR(
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+			      value * 1000);
+		break;
+	case WME_AC_BK:
+		HAL_REG_WRITE(soc,
+			      HWIO_REO_R0_AGING_THRESHOLD_IX_1_ADDR(
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+			      value * 1000);
+		break;
+	case WME_AC_VI:
+		HAL_REG_WRITE(soc,
+			      HWIO_REO_R0_AGING_THRESHOLD_IX_2_ADDR(
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+			      value * 1000);
+		break;
+	case WME_AC_VO:
+		HAL_REG_WRITE(soc,
+			      HWIO_REO_R0_AGING_THRESHOLD_IX_3_ADDR(
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+			      value * 1000);
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid AC: %d\n", ac);
+	}
+}
+
+qdf_export_symbol(hal_set_ba_aging_timeout);
+
 #define BLOCK_RES_MASK		0xF
 static inline uint8_t hal_find_one_bit(uint8_t x)
 {
