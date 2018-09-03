@@ -1738,6 +1738,37 @@ cdp_pdev_set_ctrl_pdev(ol_txrx_soc_handle soc, struct cdp_pdev *dp_pdev,
 							       ctrl_pdev);
 }
 
+/* cdp_txrx_classify_and_update() - To classify the packet and update stats
+ * @soc: opaque soc handle
+ * @vdev: opaque dp vdev handle
+ * @skb: data
+ * @dir: rx or tx packet
+ * @nbuf_classify: packet classification object
+ *
+ * Return: 1 on success else return 0
+ */
+static inline int
+cdp_txrx_classify_and_update(ol_txrx_soc_handle soc,
+			     struct cdp_vdev *vdev, qdf_nbuf_t skb,
+			     enum txrx_direction dir,
+			     struct ol_txrx_nbuf_classify *nbuf_class)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_classify_update)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->txrx_classify_update(vdev,
+							   skb,
+							   dir, nbuf_class);
+}
+
 #ifdef RECEIVE_OFFLOAD
 /**
  * cdp_register_rx_offld_flush_cb() - register LRO/GRO flush cb function pointer

@@ -2962,6 +2962,7 @@ static void reg_run_11d_state_machine(struct wlan_objmgr_psoc *psoc)
 {
 	bool temp_11d_support;
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	bool world_mode;
 
 	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						 WLAN_UMAC_COMP_REGULATORY);
@@ -2970,10 +2971,14 @@ static void reg_run_11d_state_machine(struct wlan_objmgr_psoc *psoc)
 		return;
 	}
 
+	world_mode = reg_is_world_alpha2(psoc_priv_obj->cur_country);
+
 	temp_11d_support = psoc_priv_obj->enable_11d_supp;
-	if (((psoc_priv_obj->user_ctry_set) &&
-	     (psoc_priv_obj->user_ctry_priority)) ||
-	    (psoc_priv_obj->master_vdev_cnt))
+	if ((psoc_priv_obj->enable_11d_in_world_mode) && (world_mode))
+		psoc_priv_obj->enable_11d_supp = true;
+	else if (((psoc_priv_obj->user_ctry_set) &&
+		  (psoc_priv_obj->user_ctry_priority)) ||
+		 (psoc_priv_obj->master_vdev_cnt))
 		psoc_priv_obj->enable_11d_supp = false;
 	else
 		psoc_priv_obj->enable_11d_supp =
@@ -3142,15 +3147,19 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 		soc_reg->new_11d_ctry_pending = false;
 		soc_reg->cc_src = SOURCE_11D;
 		soc_reg->user_ctry_set = false;
+		reg_run_11d_state_machine(psoc);
 	} else if (soc_reg->world_country_pending == true) {
 		soc_reg->world_country_pending = false;
 		soc_reg->cc_src = SOURCE_CORE;
 		soc_reg->user_ctry_set = false;
+		reg_run_11d_state_machine(psoc);
 	} else {
 		soc_reg->cc_src = SOURCE_DRIVER;
 
-		if (reg_is_world_alpha2(regulat_info->alpha2))
+		if (reg_is_world_alpha2(regulat_info->alpha2)) {
 			soc_reg->cc_src = SOURCE_CORE;
+			reg_run_11d_state_machine(psoc);
+		}
 
 		qdf_mem_copy(soc_reg->mas_chan_params[phy_id].default_country,
 			     regulat_info->alpha2,
@@ -3216,6 +3225,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	soc_reg_obj->vdev_cnt_11d = 0;
 	soc_reg_obj->restart_beaconing = CH_AVOID_RULE_RESTART;
 	soc_reg_obj->enable_srd_chan_in_master_mode = false;
+	soc_reg_obj->enable_11d_in_world_mode = true;
 
 	for (i = 0; i < MAX_STA_VDEV_CNT; i++)
 		soc_reg_obj->vdev_ids_11d[i] = INVALID_VDEV_ID;
@@ -3954,6 +3964,8 @@ QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 	psoc_priv_obj->restart_beaconing = config_vars.restart_beaconing;
 	psoc_priv_obj->enable_srd_chan_in_master_mode =
 		config_vars.enable_srd_chan_in_master_mode;
+	psoc_priv_obj->enable_11d_in_world_mode =
+		config_vars.enable_11d_in_world_mode;
 
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_REGULATORY_SB_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {

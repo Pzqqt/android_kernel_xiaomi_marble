@@ -279,6 +279,7 @@ struct wlan_psoc_host_chainmask_table {
  * @num_phy: Number of Phy mode.
  * @num_chainmask_tables: Number of chain mask tables.
  * @num_dbr_ring_caps: Number of direct buf rx ring capabilities
+ * @max_bssid_indicator: Maximum number of VAPs in MBSS IE
  * @chainmask_table: Available chain mask tables.
  * @sar_version: SAR version info
  */
@@ -294,6 +295,7 @@ struct wlan_psoc_host_service_ext_param {
 	uint32_t num_phy;
 	uint32_t num_chainmask_tables;
 	uint32_t num_dbr_ring_caps;
+	uint32_t max_bssid_indicator;
 	struct wlan_psoc_host_chainmask_table
 		chainmask_table[PSOC_MAX_CHAINMASK_TABLES];
 	uint32_t sar_version;

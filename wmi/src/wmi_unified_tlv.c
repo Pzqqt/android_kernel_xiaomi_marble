@@ -177,6 +177,8 @@ static QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = param->if_id;
 	cmd->vdev_type = param->type;
 	cmd->vdev_subtype = param->subtype;
+	cmd->flags = param->mbssid_flags;
+	cmd->vdevid_trans = param->vdevid_trans;
 	cmd->num_cfg_txrx_streams = num_bands;
 	copy_vdev_create_pdev_id(wmi_handle, cmd, param);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->vdev_macaddr);
@@ -852,6 +854,9 @@ static QDF_STATUS send_vdev_up_cmd_tlv(wmi_unified_t wmi,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_up_cmd_fixed_param));
 	cmd->vdev_id = params->vdev_id;
 	cmd->vdev_assoc_id = params->assoc_id;
+	cmd->profile_idx = params->profile_idx;
+	cmd->profile_num = params->profile_num;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->trans_bssid, &cmd->trans_bssid);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(bssid, &cmd->vdev_bssid);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_UP_CMDID)) {
 		WMI_LOGP("%s: Failed to send vdev up command", __func__);
@@ -2195,6 +2200,7 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_bcn_tmpl_cmd_fixed_param));
 	cmd->vdev_id = param->vdev_id;
 	cmd->tim_ie_offset = param->tim_ie_offset;
+	cmd->mbssid_ie_offset = param->mbssid_ie_offset;
 	cmd->csa_switch_count_offset = param->csa_switch_count_offset;
 	cmd->ext_csa_switch_count_offset = param->ext_csa_switch_count_offset;
 	cmd->esp_ie_offset = param->esp_ie_offset;
@@ -12676,7 +12682,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	resource_cfg->sched_params = tgt_res_cfg->scheduler_params;
 	resource_cfg->num_packet_filters = tgt_res_cfg->num_packet_filters;
 	resource_cfg->num_max_sta_vdevs = tgt_res_cfg->num_max_sta_vdevs;
-
+	resource_cfg->max_bssid_indicator = tgt_res_cfg->max_bssid_indicator;
 	if (tgt_res_cfg->atf_config)
 		WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_SET(resource_cfg->flag1, 1);
 	if (tgt_res_cfg->mgmt_comp_evt_bundle_support)
@@ -19318,6 +19324,7 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 	param->max_bssid_rx_filters = ev->max_bssid_rx_filters;
 	param->fw_build_vers_ext = ev->fw_build_vers_ext;
 	param->num_dbr_ring_caps = param_buf->num_dma_ring_caps;
+	param->max_bssid_indicator = ev->max_bssid_indicator;
 	qdf_mem_copy(&param->ppet, &ev->ppet, sizeof(param->ppet));
 
 	hw_caps = param_buf->soc_hw_mode_caps;
