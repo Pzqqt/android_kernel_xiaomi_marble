@@ -1853,6 +1853,22 @@ cdp_txrx_classify_and_update(ol_txrx_soc_handle soc,
 							   dir, nbuf_class);
 }
 
+/**
+ * cdp_get_dp_capabilities() - get DP capabilities
+ * @soc: opaque soc handle
+ * @dp_cap: enum of DP capabilities
+ *
+ * Return: bool
+ */
+static inline bool
+cdp_get_dp_capabilities(struct cdp_soc_t *soc, enum cdp_capabilities dp_caps)
+{
+	if (soc && soc->ops && soc->ops->cmn_drv_ops &&
+	    soc->ops->cmn_drv_ops->get_dp_capabilities)
+		return soc->ops->cmn_drv_ops->get_dp_capabilities(soc, dp_caps);
+	return false;
+}
+
 #ifdef RECEIVE_OFFLOAD
 /**
  * cdp_register_rx_offld_flush_cb() - register LRO/GRO flush cb function pointer

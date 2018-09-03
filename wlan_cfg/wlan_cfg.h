@@ -164,9 +164,15 @@ struct wlan_cfg_dp_soc_ctxt {
 	int int_host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int hw_macid[MAX_PDEV_CNT];
 	int base_hw_macid;
-	bool lro_enabled;
 	bool rx_hash;
 	bool tso_enabled;
+	bool lro_enabled;
+	bool sg_enabled;
+	bool gro_enabled;
+	bool ol_tx_csum_enabled;
+	bool ol_rx_csum_enabled;
+	bool rawmode_enabled;
+	bool peer_flow_ctrl_enabled;
 	bool napi_enabled;
 	bool tcp_udp_checksumoffload;
 	bool defrag_timeout_check;
@@ -865,6 +871,17 @@ wlan_cfg_get_dp_soc_rxdma_refill_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
  */
 int
 wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_caps - Get dp capablities
+ * @wlan_cfg_soc_ctx
+ * @dp_caps: enum for dp capablities
+ *
+ * Return: bool if a dp capabilities is enabled
+ */
+bool
+wlan_cfg_get_dp_caps(struct wlan_cfg_dp_soc_ctxt *cfg,
+		     enum cdp_capabilities dp_caps);
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 int wlan_cfg_get_tx_flow_stop_queue_th(struct wlan_cfg_dp_soc_ctxt *cfg);

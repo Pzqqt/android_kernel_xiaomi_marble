@@ -426,10 +426,6 @@
 		0, 1, 1, \
 		CFG_VALUE_OR_DEFAULT, "DP Base HW Mac ID")
 
-#define CFG_DP_LRO \
-	CFG_INI_BOOL("LROEnable", WLAN_LRO_ENABLE, \
-	"DP LRO Enable")
-
 #define CFG_DP_RX_HASH \
 	CFG_INI_BOOL("dp_rx_hash", true, \
 	"DP Rx Hash")
@@ -437,6 +433,34 @@
 #define CFG_DP_TSO \
 	CFG_INI_BOOL("TSOEnable", false, \
 	"DP TSO Enabled")
+
+#define CFG_DP_LRO \
+	CFG_INI_BOOL("LROEnable", WLAN_LRO_ENABLE, \
+	"DP LRO Enable")
+
+#define CFG_DP_SG \
+	CFG_INI_BOOL("dp_sg_support", false, \
+	"DP SG Enable")
+
+#define CFG_DP_GRO \
+	CFG_INI_BOOL("GROEnable", false, \
+	"DP GRO Enable")
+
+#define CFG_DP_OL_TX_CSUM \
+	CFG_INI_BOOL("dp_offload_tx_csum_support", false, \
+	"DP tx csum Enable")
+
+#define CFG_DP_OL_RX_CSUM \
+	CFG_INI_BOOL("dp_offload_rx_csum_support", false, \
+	"DP rx csum Enable")
+
+#define CFG_DP_RAWMODE \
+	CFG_INI_BOOL("dp_rawmode_support", false, \
+	"DP rawmode Enable")
+
+#define CFG_DP_PEER_FLOW_CTRL \
+	CFG_INI_BOOL("dp_peer_flow_control_support", false, \
+	"DP peer flow ctrl Enable")
 
 #define CFG_DP_NAPI \
 	CFG_INI_BOOL("dp_napi_enabled", MCL_OR_WIN_VALUE(true, false), \
@@ -579,9 +603,15 @@
 		CFG(CFG_DP_NSS_COMP_RING_SIZE) \
 		CFG(CFG_DP_PDEV_LMAC_RING) \
 		CFG(CFG_DP_BASE_HW_MAC_ID) \
-		CFG(CFG_DP_LRO) \
 		CFG(CFG_DP_RX_HASH) \
 		CFG(CFG_DP_TSO) \
+		CFG(CFG_DP_LRO) \
+		CFG(CFG_DP_SG) \
+		CFG(CFG_DP_GRO) \
+		CFG(CFG_DP_OL_TX_CSUM) \
+		CFG(CFG_DP_OL_RX_CSUM) \
+		CFG(CFG_DP_RAWMODE) \
+		CFG(CFG_DP_PEER_FLOW_CTRL) \
 		CFG(CFG_DP_NAPI) \
 		CFG(CFG_DP_TCP_UDP_CKSUM_OFFLOAD) \
 		CFG(CFG_DP_DEFRAG_TIMEOUT_CHECK) \

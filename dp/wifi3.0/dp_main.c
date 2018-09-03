@@ -7670,6 +7670,22 @@ dp_soc_set_dp_txrx_handle(struct cdp_soc *soc_handle, void *txrx_handle)
 	soc->external_txrx_handle = txrx_handle;
 }
 
+/**
+ * dp_get_cfg_capabilities() - get dp capabilities
+ * @soc_handle: datapath soc handle
+ * @dp_caps: enum for dp capabilities
+ *
+ * Return: bool to determine if dp caps is enabled
+ */
+static bool
+dp_get_cfg_capabilities(struct cdp_soc_t *soc_handle,
+			enum cdp_capabilities dp_caps)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_handle;
+
+	return wlan_cfg_get_dp_caps(soc->wlan_cfg_ctx, dp_caps);
+}
+
 #ifdef FEATURE_AST
 static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 {
@@ -7868,6 +7884,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_get_os_rx_handles_from_vdev =
 					dp_get_os_rx_handles_from_vdev_wifi3,
 	.delba_tx_completion = dp_delba_tx_completion_wifi3,
+	.get_dp_capabilities = dp_get_cfg_capabilities,
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {

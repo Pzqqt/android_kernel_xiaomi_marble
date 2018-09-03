@@ -366,6 +366,9 @@ struct cdp_cmn_ops {
 	int (*txrx_classify_update)
 		(struct cdp_vdev *vdev, qdf_nbuf_t skb,
 		 enum txrx_direction, struct ol_txrx_nbuf_classify *nbuf_class);
+
+	bool (*get_dp_capabilities)(struct cdp_soc_t *soc,
+				    enum cdp_capabilities dp_caps);
 };
 
 struct cdp_ctrl_ops {

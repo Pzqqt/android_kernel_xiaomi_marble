@@ -24,6 +24,7 @@
 
 #include "qdf_trace.h"
 #include "qdf_mem.h"
+#include <cdp_txrx_ops.h>
 #include "wlan_cfg.h"
 #include "cfg_ucfg_api.h"
 
@@ -273,9 +274,16 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void *psoc)
 
 	wlan_cfg_ctx->base_hw_macid = cfg_get(psoc, CFG_DP_BASE_HW_MAC_ID);
 
-	wlan_cfg_ctx->lro_enabled = cfg_get(psoc, CFG_DP_LRO);
 	wlan_cfg_ctx->rx_hash = cfg_get(psoc, CFG_DP_RX_HASH);
 	wlan_cfg_ctx->tso_enabled = cfg_get(psoc, CFG_DP_TSO);
+	wlan_cfg_ctx->lro_enabled = cfg_get(psoc, CFG_DP_LRO);
+	wlan_cfg_ctx->sg_enabled = cfg_get(psoc, CFG_DP_SG);
+	wlan_cfg_ctx->gro_enabled = cfg_get(psoc, CFG_DP_GRO);
+	wlan_cfg_ctx->ol_tx_csum_enabled = cfg_get(psoc, CFG_DP_OL_TX_CSUM);
+	wlan_cfg_ctx->ol_rx_csum_enabled = cfg_get(psoc, CFG_DP_OL_RX_CSUM);
+	wlan_cfg_ctx->rawmode_enabled = cfg_get(psoc, CFG_DP_RAWMODE);
+	wlan_cfg_ctx->peer_flow_ctrl_enabled =
+			cfg_get(psoc, CFG_DP_PEER_FLOW_CTRL);
 	wlan_cfg_ctx->napi_enabled = cfg_get(psoc, CFG_DP_NAPI);
 	/*Enable checksum offload by default*/
 	wlan_cfg_ctx->tcp_udp_checksumoffload =
@@ -778,6 +786,32 @@ int
 wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->rxdma_err_dst_ring;
+}
+
+bool
+wlan_cfg_get_dp_caps(struct wlan_cfg_dp_soc_ctxt *cfg,
+		     enum cdp_capabilities dp_caps)
+{
+	switch (dp_caps) {
+	case CDP_CFG_DP_TSO:
+		return cfg->tso_enabled;
+	case CDP_CFG_DP_LRO:
+		return cfg->lro_enabled;
+	case CDP_CFG_DP_SG:
+		return cfg->sg_enabled;
+	case CDP_CFG_DP_GRO:
+		return cfg->gro_enabled;
+	case CDP_CFG_DP_OL_TX_CSUM:
+		return cfg->ol_tx_csum_enabled;
+	case CDP_CFG_DP_OL_RX_CSUM:
+		return cfg->ol_rx_csum_enabled;
+	case CDP_CFG_DP_RAWMODE:
+		return cfg->rawmode_enabled;
+	case CDP_CFG_DP_PEER_FLOW_CTRL:
+		return cfg->peer_flow_ctrl_enabled;
+	default:
+		return false;
+	}
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2

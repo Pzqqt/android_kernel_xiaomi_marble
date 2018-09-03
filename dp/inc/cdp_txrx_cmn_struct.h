@@ -372,6 +372,20 @@ enum txrx_direction {
 };
 
 /**
+ * cdp_capabilities- DP capabilities
+ */
+enum cdp_capabilities {
+	CDP_CFG_DP_TSO,
+	CDP_CFG_DP_LRO,
+	CDP_CFG_DP_SG,
+	CDP_CFG_DP_GRO,
+	CDP_CFG_DP_OL_TX_CSUM,
+	CDP_CFG_DP_OL_RX_CSUM,
+	CDP_CFG_DP_RAWMODE,
+	CDP_CFG_DP_PEER_FLOW_CTRL,
+};
+
+/**
  * ol_txrx_nbuf_classify - Packet classification object
  * @peer_id: unique peer identifier from fw
  * @tid: traffic identifier(could be overridden)
