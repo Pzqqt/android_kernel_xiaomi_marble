@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -111,10 +111,21 @@ void qdf_debugfs_printf(qdf_debugfs_file_t file, const char *f, ...);
  * @file: debugfs file handle passed in fops->show() function.
  * @buf: data
  * @len: data length
+ * @rowsize: row size in bytes to dump
+ * @groupsize: group size in bytes to dump
  *
  */
 void qdf_debugfs_hexdump(qdf_debugfs_file_t file, const uint8_t *buf,
-			 qdf_size_t len);
+			 qdf_size_t len, int rowsize, int groupsize);
+
+/**
+ * qdf_debugfs_overflow() - check overflow occurrence in debugfs buffer
+ * @file: debugfs file handle passed in fops->show() function.
+ *
+ * Return: 1 on overflow occurrence else 0
+ *
+ */
+bool qdf_debugfs_overflow(qdf_debugfs_file_t file);
 
 /**
  * qdf_debugfs_write() - write data into debugfs file
@@ -260,8 +271,14 @@ static inline void qdf_debugfs_printf(qdf_debugfs_file_t file, const char *f,
 }
 
 static inline void qdf_debugfs_hexdump(qdf_debugfs_file_t file,
-				       const uint8_t *buf, qdf_size_t len)
+				       const uint8_t *buf, qdf_size_t len,
+				       int rowsize, int groupsize)
 {
+}
+
+static inline bool qdf_debugfs_overflow(qdf_debugfs_file_t file)
+{
+	return 0;
 }
 
 static inline void qdf_debugfs_write(qdf_debugfs_file_t file,
