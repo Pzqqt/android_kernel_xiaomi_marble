@@ -7960,27 +7960,43 @@ static struct cdp_cfg_ops dp_ops_cfg = {
 };
 
 /*
- * dp_wrapper_peer_get_ref_by_addr - wrapper function to get to peer
+ * dp_peer_get_ref_find_by_addr - get peer with addr by ref count inc
  * @dev: physical device instance
  * @peer_mac_addr: peer mac address
  * @local_id: local id for the peer
  * @debug_id: to track enum peer access
-
+ *
  * Return: peer instance pointer
  */
 static inline void *
-dp_wrapper_peer_get_ref_by_addr(struct cdp_pdev *dev, u8 *peer_mac_addr,
-				u8 *local_id,
-				enum peer_debug_id_type debug_id)
+dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, u8 *peer_mac_addr,
+			     u8 *local_id, enum peer_debug_id_type debug_id)
 {
-	/*
-	 * Currently this function does not implement the "get ref"
-	 * functionality and is mapped to dp_find_peer_by_addr which does not
-	 * increment the peer ref count. So the peer state is uncertain after
-	 * calling this API. The functionality needs to be implemented.
-	 * Accordingly the corresponding release_ref function is NULL.
-	 */
-	return dp_find_peer_by_addr(dev, peer_mac_addr, local_id);
+	struct dp_pdev *pdev = (struct dp_pdev *)dev;
+	struct dp_peer *peer;
+
+	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0, DP_VDEV_ALL);
+
+	if (!peer)
+		return NULL;
+
+	*local_id = peer->local_id;
+	DP_TRACE(INFO, "%s: peer %pK id %d", __func__, peer, *local_id);
+
+	return peer;
+}
+
+/*
+ * dp_peer_release_ref - release peer ref count
+ * @peer: peer handle
+ * @debug_id: to track enum peer access
+ *
+ * Return: None
+ */
+static inline
+void dp_peer_release_ref(void *peer, enum peer_debug_id_type debug_id)
+{
+	dp_peer_unref_delete(peer);
 }
 
 static struct cdp_peer_ops dp_ops_peer = {
@@ -7988,8 +8004,8 @@ static struct cdp_peer_ops dp_ops_peer = {
 	.clear_peer = dp_clear_peer,
 	.find_peer_by_addr = dp_find_peer_by_addr,
 	.find_peer_by_addr_and_vdev = dp_find_peer_by_addr_and_vdev,
-	.peer_get_ref_by_addr = dp_wrapper_peer_get_ref_by_addr,
-	.peer_release_ref = NULL,
+	.peer_get_ref_by_addr = dp_peer_get_ref_find_by_addr,
+	.peer_release_ref = dp_peer_release_ref,
 	.local_peer_id = dp_local_peer_id,
 	.peer_find_by_local_id = dp_peer_find_by_local_id,
 	.peer_state_update = dp_peer_state_update,
