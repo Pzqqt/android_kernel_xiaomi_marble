@@ -13287,6 +13287,32 @@ static const struct snd_kcontrol_new int4_mi2s_rx_port_mixer_controls[] = {
 	msm_routing_put_port_mixer),
 };
 
+static const struct snd_kcontrol_new wsa_cdc_dma_rx_0_port_mixer_controls[] = {
+	SOC_DOUBLE_EXT("VA_CDC_DMA_TX_0", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0,
+	MSM_BACKEND_DAI_VA_CDC_DMA_TX_0, 1, 0, msm_routing_get_port_mixer,
+	msm_routing_put_port_mixer),
+	SOC_DOUBLE_EXT("TX_CDC_DMA_TX_3", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0,
+	MSM_BACKEND_DAI_TX_CDC_DMA_TX_3, 1, 0, msm_routing_get_port_mixer,
+	msm_routing_put_port_mixer),
+	SOC_DOUBLE_EXT("SLIM_8_TX", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0,
+	MSM_BACKEND_DAI_SLIMBUS_8_TX, 1, 0, msm_routing_get_port_mixer,
+	msm_routing_put_port_mixer),
+};
+
+static const struct snd_kcontrol_new rx_cdc_dma_rx_0_port_mixer_controls[] = {
+	SOC_DOUBLE_EXT("TX_CDC_DMA_TX_3", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_0,
+	MSM_BACKEND_DAI_TX_CDC_DMA_TX_3, 1, 0, msm_routing_get_port_mixer,
+	msm_routing_put_port_mixer),
+	SOC_DOUBLE_EXT("SLIM_8_TX", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_0,
+	MSM_BACKEND_DAI_SLIMBUS_8_TX, 1, 0, msm_routing_get_port_mixer,
+	msm_routing_put_port_mixer),
+};
+
 static const struct snd_kcontrol_new sbus_0_rx_port_mixer_controls[] = {
 	SOC_DOUBLE_EXT("INTERNAL_FM_TX", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_SLIMBUS_0_RX,
@@ -16247,7 +16273,12 @@ static const struct snd_kcontrol_new slim4_fm_switch_mixer_controls =
 	0, 1, 0, msm_routing_get_switch_mixer,
 	msm_routing_put_switch_mixer);
 
-static const struct snd_kcontrol_new cdc_dma_fm_switch_mixer_controls =
+static const struct snd_kcontrol_new cdc_dma_wsa_switch_mixer_controls =
+	SOC_SINGLE_EXT("Switch", SND_SOC_NOPM,
+	0, 1, 0, msm_routing_get_switch_mixer,
+	msm_routing_put_switch_mixer);
+
+static const struct snd_kcontrol_new cdc_dma_rx_switch_mixer_controls =
 	SOC_SINGLE_EXT("Switch", SND_SOC_NOPM,
 	0, 1, 0, msm_routing_get_switch_mixer,
 	msm_routing_put_switch_mixer);
@@ -17594,6 +17625,8 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 		0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("CDC_DMA_UL_HL", "CDC_DMA_HOSTLESS Capture",
 		0, 0, 0, 0),
+	SND_SOC_DAPM_AIF_OUT("TX3_CDC_DMA_UL_HL",
+		"TX3_CDC_DMA_HOSTLESS Capture", 0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("CPE_LSM_UL_HL", "CPE LSM capture",
 		0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_IN("SLIM1_DL_HL", "SLIMBUS1_HOSTLESS Playback",
@@ -18339,7 +18372,9 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_SWITCH("A2DP_SLIM7_UL_HL", SND_SOC_NOPM, 0, 0,
 				&a2dp_slim7_switch_mixer_controls),
 	SND_SOC_DAPM_SWITCH("WSA_CDC_DMA_RX_0_DL_HL", SND_SOC_NOPM, 0, 0,
-				&cdc_dma_fm_switch_mixer_controls),
+				&cdc_dma_wsa_switch_mixer_controls),
+	SND_SOC_DAPM_SWITCH("RX_CDC_DMA_RX_0_DL_HL", SND_SOC_NOPM, 0, 0,
+				&cdc_dma_rx_switch_mixer_controls),
 
 	/* Mixer definitions */
 	SND_SOC_DAPM_MIXER("PRI_RX Audio Mixer", SND_SOC_NOPM, 0, 0,
@@ -18641,6 +18676,14 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 				SND_SOC_NOPM, 0, 0,
 				quat_tdm_rx_2_voice_mixer_controls,
 				ARRAY_SIZE(quat_tdm_rx_2_voice_mixer_controls)),
+	SND_SOC_DAPM_MIXER("WSA_CDC_DMA_RX_0_Voice Mixer",
+			   SND_SOC_NOPM, 0, 0,
+			   wsa_cdc_dma_rx_0_voice_mixer_controls,
+			   ARRAY_SIZE(wsa_cdc_dma_rx_0_voice_mixer_controls)),
+	SND_SOC_DAPM_MIXER("RX_CDC_DMA_RX_0_Voice Mixer",
+			   SND_SOC_NOPM, 0, 0,
+			   rx_cdc_dma_rx_0_voice_mixer_controls,
+			   ARRAY_SIZE(rx_cdc_dma_rx_0_voice_mixer_controls)),
 	SND_SOC_DAPM_MIXER("Voip_Tx Mixer",
 				SND_SOC_NOPM, 0, 0, tx_voip_mixer_controls,
 				ARRAY_SIZE(tx_voip_mixer_controls)),
@@ -18811,6 +18854,12 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_MIXER("INT4_MI2S_RX Port Mixer", SND_SOC_NOPM, 0, 0,
 	int4_mi2s_rx_port_mixer_controls,
 	ARRAY_SIZE(int4_mi2s_rx_port_mixer_controls)),
+	SND_SOC_DAPM_MIXER("WSA_CDC_DMA_RX_0 Port Mixer", SND_SOC_NOPM, 0, 0,
+	wsa_cdc_dma_rx_0_port_mixer_controls,
+	ARRAY_SIZE(wsa_cdc_dma_rx_0_port_mixer_controls)),
+	SND_SOC_DAPM_MIXER("RX_CDC_DMA_RX_0 Port Mixer", SND_SOC_NOPM, 0, 0,
+	rx_cdc_dma_rx_0_port_mixer_controls,
+	ARRAY_SIZE(rx_cdc_dma_rx_0_port_mixer_controls)),
 	SND_SOC_DAPM_MIXER("QCHAT_Tx Mixer",
 	SND_SOC_NOPM, 0, 0, tx_qchat_mixer_controls,
 	ARRAY_SIZE(tx_qchat_mixer_controls)),
@@ -20892,6 +20941,14 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"QUAT_TDM_RX_2_Voice Mixer", "VoiceMMode1", "VOICEMMODE1_DL"},
 	{"QUAT_TDM_RX_2", NULL, "QUAT_TDM_RX_2_Voice Mixer"},
 
+	{"WSA_CDC_DMA_RX_0_Voice Mixer", "VoiceMMode1", "VOICEMMODE1_DL"},
+	{"WSA_CDC_DMA_RX_0_Voice Mixer", "VoiceMMode2", "VOICEMMODE2_DL"},
+	{"WSA_CDC_DMA_RX_0", NULL, "WSA_CDC_DMA_RX_0_Voice Mixer"},
+
+	{"RX_CDC_DMA_RX_0_Voice Mixer", "VoiceMMode1", "VOICEMMODE1_DL"},
+	{"RX_CDC_DMA_RX_0_Voice Mixer", "VoiceMMode2", "VOICEMMODE2_DL"},
+	{"RX_CDC_DMA_RX_0", NULL, "RX_CDC_DMA_RX_0_Voice Mixer"},
+
 	{"VOC_EXT_EC MUX", "PRI_MI2S_TX", "PRI_MI2S_TX"},
 	{"VOC_EXT_EC MUX", "SEC_MI2S_TX", "SEC_MI2S_TX"},
 	{"VOC_EXT_EC MUX", "TERT_MI2S_TX", "TERT_MI2S_TX"},
@@ -21032,6 +21089,12 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"VoiceMMode1_Tx Mixer", "QUAT_AUX_PCM_TX_MMode1", "QUAT_AUX_PCM_TX"},
 	{"VoiceMMode1_Tx Mixer", "QUIN_AUX_PCM_TX_MMode1", "QUIN_AUX_PCM_TX"},
 	{"VoiceMMode1_Tx Mixer", "QUAT_TDM_TX_0_MMode1", "QUAT_TDM_TX_0"},
+	{"VoiceMMode1_Tx Mixer", "TX_CDC_DMA_TX_0_MMode1", "TX_CDC_DMA_TX_0"},
+	{"VoiceMMode1_Tx Mixer", "TX_CDC_DMA_TX_1_MMode1", "TX_CDC_DMA_TX_1"},
+	{"VoiceMMode1_Tx Mixer", "TX_CDC_DMA_TX_2_MMode1", "TX_CDC_DMA_TX_2"},
+	{"VoiceMMode1_Tx Mixer", "TX_CDC_DMA_TX_3_MMode1", "TX_CDC_DMA_TX_3"},
+	{"VoiceMMode1_Tx Mixer", "TX_CDC_DMA_TX_4_MMode1", "TX_CDC_DMA_TX_4"},
+	{"VoiceMMode1_Tx Mixer", "TX_CDC_DMA_TX_5_MMode1", "TX_CDC_DMA_TX_5"},
 	{"VOICEMMODE1_UL", NULL, "VoiceMMode1_Tx Mixer"},
 
 	{"VoiceMMode2_Tx Mixer", "PRI_TX_MMode2", "PRI_I2S_TX"},
@@ -21050,6 +21113,12 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"VoiceMMode2_Tx Mixer", "TERT_AUX_PCM_TX_MMode2", "TERT_AUX_PCM_TX"},
 	{"VoiceMMode2_Tx Mixer", "QUAT_AUX_PCM_TX_MMode2", "QUAT_AUX_PCM_TX"},
 	{"VoiceMMode2_Tx Mixer", "QUIN_AUX_PCM_TX_MMode2", "QUIN_AUX_PCM_TX"},
+	{"VoiceMMode2_Tx Mixer", "TX_CDC_DMA_TX_0_MMode2", "TX_CDC_DMA_TX_0"},
+	{"VoiceMMode2_Tx Mixer", "TX_CDC_DMA_TX_1_MMode2", "TX_CDC_DMA_TX_1"},
+	{"VoiceMMode2_Tx Mixer", "TX_CDC_DMA_TX_2_MMode2", "TX_CDC_DMA_TX_2"},
+	{"VoiceMMode2_Tx Mixer", "TX_CDC_DMA_TX_3_MMode2", "TX_CDC_DMA_TX_3"},
+	{"VoiceMMode2_Tx Mixer", "TX_CDC_DMA_TX_4_MMode2", "TX_CDC_DMA_TX_4"},
+	{"VoiceMMode2_Tx Mixer", "TX_CDC_DMA_TX_5_MMode2", "TX_CDC_DMA_TX_5"},
 	{"VOICEMMODE2_UL", NULL, "VoiceMMode2_Tx Mixer"},
 
 	{"Voip_Tx Mixer", "PRI_TX_Voip", "PRI_I2S_TX"},
@@ -21088,6 +21157,9 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"WSA_CDC_DMA_RX_0_DL_HL", "Switch", "CDC_DMA_DL_HL"},
 	{"WSA_CDC_DMA_RX_0", NULL, "WSA_CDC_DMA_RX_0_DL_HL"},
 	{"CDC_DMA_UL_HL", NULL, "VA_CDC_DMA_TX_0"},
+	{"RX_CDC_DMA_RX_0_DL_HL", "Switch", "CDC_DMA_DL_HL"},
+	{"RX_CDC_DMA_RX_0", NULL, "RX_CDC_DMA_RX_0_DL_HL"},
+	{"TX3_CDC_DMA_UL_HL", NULL, "TX_CDC_DMA_TX_3"},
 	{"LSM1 Mixer", "SLIMBUS_0_TX", "SLIMBUS_0_TX"},
 	{"LSM1 Mixer", "SLIMBUS_1_TX", "SLIMBUS_1_TX"},
 	{"LSM1 Mixer", "SLIMBUS_3_TX", "SLIMBUS_3_TX"},
@@ -21753,6 +21825,13 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"INT4_MI2S_RX Port Mixer", "INTERNAL_FM_TX", "INT_FM_TX"},
 	{"INT4_MI2S_RX Port Mixer", "INTERNAL_BT_SCO_TX", "INT_BT_SCO_TX"},
 	{"INT4_MI2S_RX", NULL, "INT4_MI2S_RX Port Mixer"},
+
+	{"WSA_CDC_DMA_RX_0 Port Mixer", "VA_CDC_DMA_TX_0", "VA_CDC_DMA_TX_0"},
+	{"WSA_CDC_DMA_RX_0 Port Mixer", "TX_CDC_DMA_TX_3", "TX_CDC_DMA_TX_3"},
+	{"RX_CDC_DMA_RX_0 Port Mixer", "TX_CDC_DMA_TX_3", "TX_CDC_DMA_TX_3"},
+	{"WSA_CDC_DMA_RX_0 Port Mixer", "SLIM_8_TX", "SLIMBUS_8_TX"},
+	{"RX_CDC_DMA_RX_0 Port Mixer", "SLIM_8_TX", "SLIMBUS_8_TX"},
+
 
 	{"SLIMBUS_0_RX Port Mixer", "INTERNAL_FM_TX", "INT_FM_TX"},
 	{"SLIMBUS_0_RX Port Mixer", "SLIM_0_TX", "SLIMBUS_0_TX"},
