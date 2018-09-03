@@ -38,7 +38,9 @@
 #include "qdf_status.h"
 #include "hif_debug.h"
 #include "mp_dev.h"
+#ifdef QCA_WIFI_QCA8074
 #include "hal_api.h"
+#endif
 #include "hif_napi.h"
 #include "hif_unit_test_suspend_i.h"
 #include "qdf_module.h"
