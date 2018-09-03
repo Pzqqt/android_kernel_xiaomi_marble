@@ -743,7 +743,7 @@ static enum wlan_ipa_forward_type wlan_ipa_intrabss_forward(
 }
 
 /**
- * wlan_ipa_w2i_cb() - WLAN to IPA callback handler
+ * __wlan_ipa_w2i_cb() - WLAN to IPA callback handler
  * @priv: pointer to private data registered with IPA (we register a
  *	pointer to the global IPA context)
  * @evt: the IPA event which triggered the callback
@@ -751,8 +751,8 @@ static enum wlan_ipa_forward_type wlan_ipa_intrabss_forward(
  *
  * Return: None
  */
-static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
-			    unsigned long data)
+static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
+			      unsigned long data)
 {
 	struct wlan_ipa_priv *ipa_ctx = NULL;
 	qdf_nbuf_t skb;
@@ -760,6 +760,11 @@ static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 	uint8_t session_id;
 	struct wlan_ipa_iface_context *iface_context;
 	uint8_t fw_desc;
+
+	if (qdf_is_module_state_transitioning()) {
+		ipa_err("Module transition in progress");
+		return;
+	}
 
 	ipa_ctx = (struct wlan_ipa_priv *)priv;
 
@@ -834,7 +839,24 @@ static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 }
 
 /**
- * wlan_ipa_i2w_cb() - IPA to WLAN callback
+ * wlan_ipa_w2i_cb() - SSR wrapper for __wlan_ipa_w2i_cb
+ * @priv: pointer to private data registered with IPA (we register a
+ *	pointer to the global IPA context)
+ * @evt: the IPA event which triggered the callback
+ * @data: data associated with the event
+ *
+ * Return: None
+ */
+static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
+			    unsigned long data)
+{
+	qdf_ssr_protect(__func__);
+	__wlan_ipa_w2i_cb(priv, evt, data);
+	qdf_ssr_unprotect(__func__);
+}
+
+/**
+ * __wlan_ipa_i2w_cb() - IPA to WLAN callback
  * @priv: pointer to private data registered with IPA (we register a
  *	pointer to the interface-specific IPA context)
  * @evt: the IPA event which triggered the callback
@@ -842,14 +864,19 @@ static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
  *
  * Return: None
  */
-static void wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
-			     unsigned long data)
+static void __wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
+			      unsigned long data)
 {
 	struct wlan_ipa_priv *ipa_ctx = NULL;
 	qdf_ipa_rx_data_t *ipa_tx_desc;
 	struct wlan_ipa_iface_context *iface_context;
 	qdf_nbuf_t skb;
 	struct wlan_ipa_pm_tx_cb *pm_tx_cb = NULL;
+
+	if (qdf_is_module_state_transitioning()) {
+		ipa_err("Module transition in progress");
+		return;
+	}
 
 	iface_context = (struct wlan_ipa_iface_context *)priv;
 	ipa_tx_desc = (qdf_ipa_rx_data_t *)data;
@@ -901,6 +928,23 @@ static void wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 	qdf_flush_work(&ipa_ctx->pm_work);
 
 	return wlan_ipa_send_pkt_to_tl(iface_context, ipa_tx_desc);
+}
+
+/**
+ * wlan_ipa_i2w_cb() - IPA to WLAN callback
+ * @priv: pointer to private data registered with IPA (we register a
+ *	pointer to the interface-specific IPA context)
+ * @evt: the IPA event which triggered the callback
+ * @data: data associated with the event
+ *
+ * Return: None
+ */
+static void wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
+			    unsigned long data)
+{
+	qdf_ssr_protect(__func__);
+	__wlan_ipa_i2w_cb(priv, evt, data);
+	qdf_ssr_unprotect(__func__);
 }
 
 QDF_STATUS wlan_ipa_suspend(struct wlan_ipa_priv *ipa_ctx)
@@ -2674,23 +2718,42 @@ static void wlan_ipa_uc_op_cb(struct op_msg_type *op_msg,
 }
 
 /**
- * wlan_ipa_uc_fw_op_event_handler - IPA uC FW OPvent handler
- * @work: uC OP work
+ * __wlan_ipa_uc_fw_op_event_handler - IPA uC FW OPvent handler
+ * @data: uC OP work
  *
  * Return: None
  */
-static void wlan_ipa_uc_fw_op_event_handler(void *data)
+static void __wlan_ipa_uc_fw_op_event_handler(void *data)
 {
 	struct op_msg_type *msg;
 	struct uc_op_work_struct *uc_op_work =
 				(struct uc_op_work_struct *)data;
 	struct wlan_ipa_priv *ipa_ctx = gp_ipa;
 
+	if (qdf_is_module_state_transitioning()) {
+		ipa_err("Module transition in progress");
+		return;
+	}
+
 	msg = uc_op_work->msg;
 	uc_op_work->msg = NULL;
 	ipa_debug("posted msg %d", msg->op_code);
 
 	wlan_ipa_uc_op_cb(msg, ipa_ctx);
+}
+
+/**
+ * wlan_ipa_uc_fw_op_event_handler - SSR wrapper for
+ * __wlan_ipa_uc_fw_op_event_handler
+ * @data: uC OP work
+ *
+ * Return: None
+ */
+static void wlan_ipa_uc_fw_op_event_handler(void *data)
+{
+	qdf_ssr_protect(__func__);
+	__wlan_ipa_uc_fw_op_event_handler(data);
+	qdf_ssr_unprotect(__func__);
 }
 
 /**
