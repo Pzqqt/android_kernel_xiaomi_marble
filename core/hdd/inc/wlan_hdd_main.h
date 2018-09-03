@@ -577,6 +577,18 @@ struct hdd_icmpv4_stats_s {
 	uint16_t tx_ack_cnt;
 };
 
+/**
+ * struct hdd_peer_stats - Peer stats at HDD level
+ * @rx_count: RX count
+ * @rx_bytes: RX bytes
+ * @fcs_count: FCS err count
+ */
+struct hdd_peer_stats {
+	uint32_t rx_count;
+	uint64_t rx_bytes;
+	uint32_t fcs_count;
+};
+
 struct hdd_stats {
 	tCsrSummaryStatsInfo summary_stat;
 	tCsrGlobalClassAStatsInfo class_a_stat;
@@ -587,6 +599,7 @@ struct hdd_stats {
 	struct hdd_dns_stats_s hdd_dns_stats;
 	struct hdd_tcp_stats_s hdd_tcp_stats;
 	struct hdd_icmpv4_stats_s hdd_icmpv4_stats;
+	struct hdd_peer_stats peer_stats;
 #ifdef WLAN_FEATURE_11W
 	struct hdd_pmf_stats hdd_pmf_stats;
 #endif

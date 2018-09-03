@@ -4568,8 +4568,8 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 
 	wlan_hdd_fill_summary_stats(&adapter->hdd_stats.summary_stat, sinfo);
 	sinfo->tx_bytes = adapter->stats.tx_bytes;
-	sinfo->rx_bytes = adapter->stats.rx_bytes;
-	sinfo->rx_packets = adapter->stats.rx_packets;
+	sinfo->rx_bytes = adapter->hdd_stats.peer_stats.rx_bytes;
+	sinfo->rx_packets = adapter->hdd_stats.peer_stats.rx_count;
 
 	qdf_mem_copy(&sta_ctx->conn_info.txrate,
 		     &sinfo->txrate, sizeof(sinfo->txrate));
@@ -5956,6 +5956,12 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 		stats->vdev_summary_stats[0].stats.rx_discard_cnt;
 	adapter->hdd_stats.summary_stat.rx_error_cnt =
 		stats->vdev_summary_stats[0].stats.rx_error_cnt;
+	adapter->hdd_stats.peer_stats.rx_count =
+		stats->peer_adv_stats->rx_count;
+	adapter->hdd_stats.peer_stats.rx_bytes =
+		stats->peer_adv_stats->rx_bytes;
+	adapter->hdd_stats.peer_stats.fcs_count =
+		stats->peer_adv_stats->fcs_count;
 
 	/* save class a stats to legacy location */
 	adapter->hdd_stats.class_a_stat.tx_nss =
