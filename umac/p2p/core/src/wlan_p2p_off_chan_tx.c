@@ -1900,6 +1900,11 @@ QDF_STATUS p2p_process_mgmt_tx_cancel(
 	struct p2p_roc_context *cur_roc_ctx;
 	struct cancel_roc_context cancel_roc;
 
+	if (!cancel_tx || !(cancel_tx->cookie)) {
+		p2p_info("invalid cancel info");
+		return QDF_STATUS_SUCCESS;
+	}
+
 	p2p_debug("cookie:0x%llx", cancel_tx->cookie);
 
 	cur_tx_ctx = p2p_find_tx_ctx(cancel_tx->p2p_soc_obj,
