@@ -8625,7 +8625,7 @@ int q6asm_async_write(struct audio_client *ac,
 		return -EINVAL;
 	}
 	if (ac->apr == NULL) {
-		pr_err("%s: AC APR handle NULL\n", __func__);
+		pr_err_ratelimited("%s: AC APR handle NULL\n", __func__);
 		return -EINVAL;
 	}
 
@@ -8718,7 +8718,7 @@ int q6asm_async_read(struct audio_client *ac,
 		return -EINVAL;
 	}
 	if (ac->apr == NULL) {
-		pr_err("%s: AC APR handle NULL\n", __func__);
+		pr_err_ratelimited("%s: AC APR handle NULL\n", __func__);
 		return -EINVAL;
 	}
 

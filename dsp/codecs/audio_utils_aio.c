@@ -1104,7 +1104,7 @@ static int audio_aio_async_write(struct q6audio_aio *audio,
 	buf_node->token = ac->session;
 	rc = q6asm_async_write(ac, &param);
 	if (rc < 0)
-		pr_err("%s[%pK]:failed\n", __func__, audio);
+		pr_err_ratelimited("%s[%pK]:failed\n", __func__, audio);
 	return rc;
 }
 
@@ -1157,7 +1157,7 @@ static int audio_aio_async_read(struct q6audio_aio *audio,
 	buf_node->token = ac->session;
 	rc = q6asm_async_read(ac, &param);
 	if (rc < 0)
-		pr_err("%s[%pK]:failed\n", __func__, audio);
+		pr_err_ratelimited("%s[%pK]:failed\n", __func__, audio);
 	return rc;
 }
 
