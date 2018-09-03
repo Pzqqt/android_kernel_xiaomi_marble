@@ -322,8 +322,8 @@ QDF_STATUS wlan_ipa_uc_op_metering(struct wlan_ipa_priv *ipa_ctx,
 				  struct op_msg_type *op_msg);
 
 /**
- * wlan_ipa_wdi_meter_notifier_cb() - WLAN to IPA callback handler.
- * IPA calls to get WLAN stats or set quota limit.
+ * wlan_ipa_wdi_meter_notifier_cb() - SSR wrapper for
+ * __wlan_ipa_wdi_meter_notifier_cb
  * @priv: pointer to private data registered with IPA (we register a
  *        pointer to the global IPA context)
  * @evt: the IPA event which triggered the callback
@@ -332,7 +332,7 @@ QDF_STATUS wlan_ipa_uc_op_metering(struct wlan_ipa_priv *ipa_ctx,
  * Return: None
  */
 void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
-				   void *data);
+				    void *data);
 
 /**
  * wlan_ipa_init_metering() - IPA metering stats completion event reset

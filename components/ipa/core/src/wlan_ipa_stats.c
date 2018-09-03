@@ -20,6 +20,7 @@
 #include "wlan_ipa_main.h"
 #include "wlan_ipa_core.h"
 #include "cdp_txrx_ipa.h"
+#include "qdf_platform.h"
 
 /**
  * wlan_ipa_uc_rt_debug_host_fill - fill rt debug buffer
@@ -845,7 +846,7 @@ QDF_STATUS wlan_ipa_uc_op_metering(struct wlan_ipa_priv *ipa_ctx,
 }
 
 /**
- * wlan_ipa_wdi_meter_notifier_cb() - WLAN to IPA callback handler.
+ * __wlan_ipa_wdi_meter_notifier_cb() - WLAN to IPA callback handler.
  * IPA calls to get WLAN stats or set quota limit.
  * @priv: pointer to private data registered with IPA (we register a
  *	  pointer to the IPA context)
@@ -854,8 +855,8 @@ QDF_STATUS wlan_ipa_uc_op_metering(struct wlan_ipa_priv *ipa_ctx,
  *
  * Return: None
  */
-void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
-				    void *data)
+static void __wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
+					     void *data)
 {
 	struct wlan_ipa_priv *ipa_ctx = wlan_ipa_get_obj_context();
 	struct wlan_ipa_iface_context *iface_ctx;
@@ -864,6 +865,11 @@ void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
 	QDF_STATUS status;
 
 	ipa_debug("event=%d", evt);
+
+	if (qdf_is_module_state_transitioning()) {
+		ipa_err("Module transition in progress");
+		return;
+	}
 
 	iface_ctx = wlan_ipa_get_iface(ipa_ctx, QDF_STA_MODE);
 	if (!iface_ctx) {
@@ -937,4 +943,23 @@ void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
 		break;
 	}
 }
+
+/**
+ * wlan_ipa_wdi_meter_notifier_cb() - SSR wrapper for
+ * __wlan_ipa_wdi_meter_notifier_cb
+ * @priv: pointer to private data registered with IPA (we register a
+ *	  pointer to the IPA context)
+ * @evt: the IPA event which triggered the callback
+ * @data: data associated with the event
+ *
+ * Return: None
+ */
+void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
+				    void *data)
+{
+	qdf_ssr_protect(__func__);
+	__wlan_ipa_wdi_meter_notifier_cb(evt, data);
+	qdf_ssr_unprotect(__func__);
+}
+
 #endif /* FEATURE_METERING */
