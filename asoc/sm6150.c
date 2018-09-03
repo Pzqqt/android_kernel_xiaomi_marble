@@ -3388,8 +3388,6 @@ static const struct snd_kcontrol_new msm_tavil_snd_controls[] = {
 			slim_rx_ch_get, slim_rx_ch_put),
 	SOC_ENUM_EXT("SLIM_6_RX Channels", slim_6_rx_chs,
 			slim_rx_ch_get, slim_rx_ch_put),
-	SOC_ENUM_EXT("VI_FEED_TX Channels", vi_feed_tx_chs,
-			msm_vi_feed_tx_ch_get, msm_vi_feed_tx_ch_put),
 	SOC_ENUM_EXT("SLIM_0_RX Format", slim_0_rx_format,
 			slim_rx_bit_format_get, slim_rx_bit_format_put),
 	SOC_ENUM_EXT("SLIM_5_RX Format", slim_5_rx_format,
@@ -3649,6 +3647,8 @@ static const struct snd_kcontrol_new msm_common_snd_controls[] = {
 	SOC_ENUM_EXT("BT SampleRate", bt_sample_rate,
 			msm_bt_sample_rate_get,
 			msm_bt_sample_rate_put),
+	SOC_ENUM_EXT("VI_FEED_TX Channels", vi_feed_tx_chs,
+			msm_vi_feed_tx_ch_get, msm_vi_feed_tx_ch_put),
 };
 
 static int msm_snd_enable_codec_ext_clk(struct snd_soc_codec *codec,
