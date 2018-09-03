@@ -77,7 +77,9 @@ struct wcd937x_priv {
 struct wcd937x_micbias_setting {
 	u8 ldoh_v;
 	u32 cfilt1_mv;
+	u32 micb1_mv;
 	u32 micb2_mv;
+	u32 micb3_mv;
 	u8 bias1_cfilt_sel;
 };
 

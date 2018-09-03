@@ -1714,6 +1714,65 @@ int wcd937x_reset(struct device *dev)
 	return rc;
 }
 
+static int wcd937x_read_of_property_u32(struct device *dev, const char *name,
+					u32 *val)
+{
+	int rc = 0;
+
+	rc = of_property_read_u32(dev->of_node, name, val);
+	if (rc)
+		dev_err(dev, "%s: Looking up %s property in node %s failed\n",
+			__func__, name, dev->of_node->full_name);
+
+	return rc;
+}
+
+static void wcd937x_dt_parse_micbias_info(struct device *dev,
+					  struct wcd937x_micbias_setting *mb)
+{
+	u32 prop_val = 0;
+	int rc = 0;
+
+	/* MB1 */
+	if (of_find_property(dev->of_node, "qcom,cdc-micbias1-mv",
+				    NULL)) {
+		rc = wcd937x_read_of_property_u32(dev,
+						  "qcom,cdc-micbias1-mv",
+						  &prop_val);
+		if (!rc)
+			mb->micb1_mv = prop_val;
+	} else {
+		dev_info(dev, "%s: Micbias1 DT property not found\n",
+			__func__);
+	}
+
+	/* MB2 */
+	if (of_find_property(dev->of_node, "qcom,cdc-micbias2-mv",
+				    NULL)) {
+		rc = wcd937x_read_of_property_u32(dev,
+						  "qcom,cdc-micbias2-mv",
+						  &prop_val);
+		if (!rc)
+			mb->micb2_mv = prop_val;
+	} else {
+		dev_info(dev, "%s: Micbias2 DT property not found\n",
+			__func__);
+	}
+
+	/* MB3 */
+	if (of_find_property(dev->of_node, "qcom,cdc-micbias3-mv",
+				    NULL)) {
+		rc = wcd937x_read_of_property_u32(dev,
+						  "qcom,cdc-micbias3-mv",
+						  &prop_val);
+		if (!rc)
+			mb->micb3_mv = prop_val;
+	} else {
+		dev_info(dev, "%s: Micbias3 DT property not found\n",
+			__func__);
+	}
+}
+
 struct wcd937x_pdata *wcd937x_populate_dt_data(struct device *dev)
 {
 	struct wcd937x_pdata *pdata = NULL;
@@ -1744,6 +1803,7 @@ struct wcd937x_pdata *wcd937x_populate_dt_data(struct device *dev)
 
 	pdata->rx_slave = of_parse_phandle(dev->of_node, "qcom,rx-slave", 0);
 	pdata->tx_slave = of_parse_phandle(dev->of_node, "qcom,tx-slave", 0);
+	wcd937x_dt_parse_micbias_info(dev, &pdata->micbias);
 
 	return pdata;
 }
@@ -1765,7 +1825,8 @@ static int wcd937x_bind(struct device *dev)
 		dev_err(dev, "%s: Fail to obtain platform data\n", __func__);
 		return -EINVAL;
 	}
-
+	wcd937x->dev = dev;
+	wcd937x->dev->platform_data = pdata;
 	wcd937x->rst_np = pdata->rst_np;
 	ret = msm_cdc_init_supplies(dev, &wcd937x->supplies,
 				    pdata->regulator, pdata->num_supplies);
@@ -1844,7 +1905,7 @@ static int wcd937x_bind(struct device *dev)
 	ret = wcd_irq_init(&wcd937x->irq_info, &wcd937x->virq);
 
 	if (ret) {
-		dev_err(wcd937x->dev, "%s: IRQ init failed: %d\n",
+		dev_err(dev, "%s: IRQ init failed: %d\n",
 			__func__, ret);
 		goto err;
 	}
