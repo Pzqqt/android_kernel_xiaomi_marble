@@ -897,6 +897,45 @@ static inline struct sk_buff *__qdf_nbuf_copy(struct sk_buff *skb)
 
 #define __qdf_nbuf_reserve      skb_reserve
 
+/**
+ * __qdf_nbuf_reset() - reset the buffer data and pointer
+ * @buf: Network buf instance
+ * @reserve: reserve
+ * @align: align
+ *
+ * Return: none
+ */
+static inline void
+__qdf_nbuf_reset(struct sk_buff *skb, int reserve, int align)
+{
+	int offset;
+
+	skb_push(skb, skb_headroom(skb));
+	skb_put(skb, skb_tailroom(skb));
+	memset(skb->data, 0x0, skb->len);
+	skb_trim(skb, 0);
+	skb_reserve(skb, NET_SKB_PAD);
+	memset(skb->cb, 0x0, sizeof(skb->cb));
+
+	/*
+	 * The default is for netbuf fragments to be interpreted
+	 * as wordstreams rather than bytestreams.
+	 */
+	QDF_NBUF_CB_TX_EXTRA_FRAG_WORDSTR_EFRAG(skb) = 1;
+	QDF_NBUF_CB_TX_EXTRA_FRAG_WORDSTR_NBUF(skb) = 1;
+
+	/*
+	 * Align & make sure that the tail & data are adjusted properly
+	 */
+
+	if (align) {
+		offset = ((unsigned long)skb->data) % align;
+		if (offset)
+			skb_reserve(skb, align - offset);
+	}
+
+	skb_reserve(skb, reserve);
+}
 
 /**
  * __qdf_nbuf_head() - return the pointer the skb's head pointer
