@@ -725,7 +725,7 @@ static void swrm_cleanup_disabled_port_reqs(struct swr_master *master)
 				continue;
 
 			/* remove new ch req's*/
-			port_req->req_ch = port_req->ch_en;
+			port_req->ch_en = port_req->req_ch;
 
 			/* If no streams enabled on port, remove the port req */
 			if (port_req->ch_en == 0) {
@@ -734,7 +734,7 @@ static void swrm_cleanup_disabled_port_reqs(struct swr_master *master)
 			}
 		}
 		/* remove new ch req's on mport*/
-		mport->req_ch = mport->ch_en;
+		mport->ch_en = mport->req_ch;
 
 		if (!(mport->ch_en)) {
 			mport->port_en = false;
