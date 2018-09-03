@@ -226,6 +226,7 @@ QDF_STATUS scheduler_post_msg_by_priority(uint32_t qid,
 	struct scheduler_ctx *sched_ctx;
 	uint16_t src_id;
 	uint16_t dest_id;
+	uint16_t que_id;
 
 	QDF_BUG(msg);
 	if (!msg)
@@ -248,8 +249,10 @@ QDF_STATUS scheduler_post_msg_by_priority(uint32_t qid,
 
 	dest_id = scheduler_get_dest_id(qid);
 	src_id = scheduler_get_src_id(qid);
+	que_id = scheduler_get_que_id(qid);
 
-	if (dest_id >= QDF_MODULE_ID_MAX || src_id >= QDF_MODULE_ID_MAX) {
+	if (que_id >= QDF_MODULE_ID_MAX || src_id >= QDF_MODULE_ID_MAX ||
+	    dest_id >= QDF_MODULE_ID_MAX) {
 		sched_err("Src_id/Dest_id invalid, cannot post message");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -264,20 +267,20 @@ QDF_STATUS scheduler_post_msg_by_priority(uint32_t qid,
 	 * legacy WMA message queue id to target_if queue such that its  always
 	 * handled in right order.
 	 */
-	if (QDF_MODULE_ID_WMA == dest_id) {
+	if (QDF_MODULE_ID_WMA == que_id) {
 		msg->callback = NULL;
 		/* change legacy WMA message id to new target_if mq id */
-		dest_id = QDF_MODULE_ID_TARGET_IF;
+		que_id = QDF_MODULE_ID_TARGET_IF;
 	}
 
-	qidx = sched_ctx->queue_ctx.scheduler_msg_qid_to_qidx[dest_id];
+	qidx = sched_ctx->queue_ctx.scheduler_msg_qid_to_qidx[que_id];
 	if (qidx >= SCHEDULER_NUMBER_OF_MSG_QUEUE) {
 		sched_err("Scheduler is deinitialized ignore msg");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!sched_ctx->queue_ctx.scheduler_msg_process_fn[qidx]) {
-		QDF_DEBUG_PANIC("callback not registered for qid[%d]", dest_id);
+		QDF_DEBUG_PANIC("callback not registered for qid[%d]", que_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 

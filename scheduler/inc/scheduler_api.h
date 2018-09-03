@@ -41,9 +41,11 @@
  */
 #define SYS_MSG_COOKIE      0xFACE
 
-#define scheduler_get_src_id(qid)       ((qid) >> 16)
-#define scheduler_get_dest_id(qid)      ((qid) & 0xFFFF)
-#define scheduler_get_qid(src, dest)    ((dest) | ((src) << 16))
+#define scheduler_get_src_id(qid)       (((qid) >> 20) & 0x3FF)
+#define scheduler_get_dest_id(qid)      (((qid) >> 10) & 0x3FF)
+#define scheduler_get_que_id(qid)       ((qid) & 0x3FF)
+#define scheduler_get_qid(src, dest, que_id)    ((que_id) | ((dest) << 10) |\
+					     ((src) << 20))
 
 typedef enum {
 	SYS_MSG_ID_MC_TIMER,
@@ -171,6 +173,7 @@ static inline QDF_STATUS scheduler_post_msg(uint32_t qid,
  * scheduler_post_message() - post normal messages(no priority)
  * @src_id: Source module of the message
  * @dest_id: Destination module of the message
+ * @que_id: Queue to which the message has to posted.
  * @msg: message pointer
  *
  * This function will mask the src_id, and destination id to qid of
@@ -179,9 +182,11 @@ static inline QDF_STATUS scheduler_post_msg(uint32_t qid,
  */
 static inline QDF_STATUS scheduler_post_message(QDF_MODULE_ID src_id,
 						QDF_MODULE_ID dest_id,
+						QDF_MODULE_ID que_id,
 						struct scheduler_msg *msg)
 {
-	return scheduler_post_msg(scheduler_get_qid(src_id, dest_id), msg);
+	return scheduler_post_msg(scheduler_get_qid(src_id, dest_id, que_id),
+						    msg);
 }
 
 /**
