@@ -18914,6 +18914,7 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	wmi_stats_event_fixed_param *ev;
 	wmi_per_chain_rssi_stats *rssi_event;
 	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
+	uint64_t min_data_len;
 
 	qdf_mem_zero(stats_param, sizeof(*stats_param));
 	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *) evt_buf;
@@ -18922,6 +18923,11 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	if (!ev) {
 		WMI_LOGE("%s: event fixed param NULL\n", __func__);
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (param_buf->num_data > WMI_SVC_MSG_MAX_SIZE - sizeof(*ev)) {
+		WMI_LOGE("num_data : %u is invalid", param_buf->num_data);
+		return QDF_STATUS_E_FAULT;
 	}
 
 	switch (ev->stats_id) {
@@ -18957,6 +18963,26 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 		stats_param->stats_id = 0;
 		break;
 
+	}
+
+	/* ev->num_*_stats may cause uint32_t overflow, so use uint64_t
+	 * to save total length calculated
+	 */
+	min_data_len =
+		(((uint64_t)ev->num_pdev_stats) * sizeof(wmi_pdev_stats)) +
+		(((uint64_t)ev->num_vdev_stats) * sizeof(wmi_vdev_stats)) +
+		(((uint64_t)ev->num_peer_stats) * sizeof(wmi_peer_stats)) +
+		(((uint64_t)ev->num_bcnflt_stats) *
+		 sizeof(wmi_bcnfilter_stats_t)) +
+		(((uint64_t)ev->num_chan_stats) * sizeof(wmi_chan_stats)) +
+		(((uint64_t)ev->num_mib_stats) * sizeof(wmi_mib_stats)) +
+		(((uint64_t)ev->num_bcn_stats) * sizeof(wmi_bcn_stats)) +
+		(((uint64_t)ev->num_peer_extd_stats) *
+		 sizeof(wmi_peer_extd_stats));
+	if (param_buf->num_data != min_data_len) {
+		WMI_LOGE("data len: %u isn't same as calculated: %llu",
+			 param_buf->num_data, min_data_len);
+		return QDF_STATUS_E_FAULT;
 	}
 
 	stats_param->num_pdev_stats = ev->num_pdev_stats;
