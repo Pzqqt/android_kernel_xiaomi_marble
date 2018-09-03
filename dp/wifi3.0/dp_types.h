@@ -323,12 +323,14 @@ enum flow_pool_status {
  * @pool_size: total number of pool elements
  * @num_free: free element count
  * @freelist: first free element pointer
+ * @desc_pages: multiple page allocation information for actual descriptors
  * @lock: lock for accessing the pool
  */
 struct dp_tx_tso_seg_pool_s {
 	uint16_t pool_size;
 	uint16_t num_free;
 	struct qdf_tso_seg_elem_t *freelist;
+	struct qdf_mem_multi_page_t desc_pages;
 	qdf_spinlock_t lock;
 };
 
@@ -337,6 +339,7 @@ struct dp_tx_tso_seg_pool_s {
  * @num_seg_pool_size: total number of pool elements
  * @num_free: free element count
  * @freelist: first free element pointer
+ * @desc_pages: multiple page allocation information for actual descriptors
  * @lock: lock for accessing the pool
  */
 
@@ -344,6 +347,7 @@ struct dp_tx_tso_num_seg_pool_s {
 	uint16_t num_seg_pool_size;
 	uint16_t num_free;
 	struct qdf_tso_num_seg_elem_t *freelist;
+	struct qdf_mem_multi_page_t desc_pages;
 	/*tso mutex */
 	qdf_spinlock_t lock;
 };

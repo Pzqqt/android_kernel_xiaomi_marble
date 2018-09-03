@@ -22,6 +22,9 @@
 #define _WLAN_ROAM_DEBUG_H_
 
 
+#define roam_debug(args ...) \
+		QDF_TRACE_DEBUG(QDF_MODULE_ID_ROAM_DEBUG, ## args)
+
 /**
  * struct wlan_roam_debug_rec - roam debug information record definition
  * @time: timestamp when record was added

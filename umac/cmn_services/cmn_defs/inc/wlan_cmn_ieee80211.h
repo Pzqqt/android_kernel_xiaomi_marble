@@ -446,7 +446,7 @@ struct wlan_rsn_ie_hdr {
 	u8 version[2];
 };
 
-#define WLAN_RSN_IE_MIN_LEN                    3
+#define WLAN_RSN_IE_MIN_LEN                    2
 
 /**
  * struct wlan_rsn_ie: rsn ie info

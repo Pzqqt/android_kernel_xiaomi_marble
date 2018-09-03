@@ -8402,6 +8402,7 @@ static QDF_STATUS extract_tx_data_traffic_ctrl_ev_non_tlv(
 	ev->peer_ast_idx = evt->peer_ast_idx;
 	ev->vdev_id = evt->vdev_id;
 	ev->ctrl_cmd = evt->ctrl_cmd;
+	ev->wmm_ac = evt->wmm_ac;
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -220,13 +220,10 @@ void wlan_roam_debug_dump_table(void)
 
 	current_index = qdf_atomic_read(&dbg_tbl->index);
 	if (current_index < 0) {
-		QDF_TRACE(QDF_MODULE_ID_ROAM_DEBUG, QDF_TRACE_LEVEL_ERROR,
-			  "%s: No records to dump", __func__);
+		roam_debug("No records to dump");
 		return;
 	}
-	QDF_TRACE(QDF_MODULE_ID_ROAM_DEBUG, QDF_TRACE_LEVEL_ERROR,
-		  "%s: Dumping all records. current index %d",
-		  __func__, current_index);
+	roam_debug("Dumping all records. current index %d", current_index);
 
 	i = current_index;
 	do {
@@ -248,23 +245,17 @@ void wlan_roam_debug_dump_table(void)
 				    0xffffffff);
 		delta = delta / (DEBUG_CLOCK_TICKS_PER_MSEC >> 8);
 
-		QDF_TRACE(QDF_MODULE_ID_ROAM_DEBUG, QDF_TRACE_LEVEL_ERROR,
-			  "index = %5d timestamp = 0x%016llx delta ms = %-12u",
-			  i, dbg_rec->time, delta);
-		QDF_TRACE(QDF_MODULE_ID_ROAM_DEBUG, QDF_TRACE_LEVEL_ERROR,
-			  "info = %-24s vdev_id = %-3d mac addr = %pM",
-			  wlan_roam_debug_string(dbg_rec->operation),
-			  (int8_t) dbg_rec->vdev_id, dbg_rec->mac_addr.bytes);
-		QDF_TRACE(QDF_MODULE_ID_ROAM_DEBUG, QDF_TRACE_LEVEL_ERROR,
-			  "peer obj = 0x%pK peer_id = %-4d",
-			  dbg_rec->peer_obj, (int8_t) dbg_rec->peer_id);
-		QDF_TRACE(QDF_MODULE_ID_ROAM_DEBUG, QDF_TRACE_LEVEL_ERROR,
-			  "arg1 = 0x%-8x arg2 = 0x%-8x",
-			  dbg_rec->arg1, dbg_rec->arg2);
+		roam_debug("index = %5d timestamp = 0x%016llx delta ms = %-12u",
+			   i, dbg_rec->time, delta);
+		roam_debug("info = %-24s vdev_id = %-3d mac addr = %pM",
+			   wlan_roam_debug_string(dbg_rec->operation),
+			   (int8_t)dbg_rec->vdev_id, dbg_rec->mac_addr.bytes);
+		roam_debug("peer obj = 0x%pK peer_id = %-4d", dbg_rec->peer_obj,
+			   (int8_t)dbg_rec->peer_id);
+		roam_debug("arg1 = 0x%-8x arg2 = 0x%-8x", dbg_rec->arg1,
+			   dbg_rec->arg2);
 	} while (i != current_index);
 }
-
 qdf_export_symbol(wlan_roam_debug_dump_table);
 
 #endif /* FEATURE_ROAM_DEBUG */
-
