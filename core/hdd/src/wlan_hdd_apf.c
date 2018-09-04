@@ -506,6 +506,11 @@ static int hdd_apf_read_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 
 	hdd_enter();
 
+	if (context->apf_enabled) {
+		hdd_err("Cannot get/set while interpreter is enabled");
+		return -EINVAL;
+	}
+
 	read_mem_params.vdev_id = adapter->session_id;
 
 	/* Read APF work memory offset */
@@ -529,11 +534,6 @@ static int hdd_apf_read_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 	if (bufptr == NULL) {
 		hdd_err("alloc failed for cumulative event buffer");
 		return -ENOMEM;
-	}
-
-	if (context->apf_enabled) {
-		hdd_err("Cannot get/set while interpreter is enabled");
-		return -EINVAL;
 	}
 
 	qdf_event_reset(&context->qdf_apf_event);
