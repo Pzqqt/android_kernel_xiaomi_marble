@@ -1653,8 +1653,10 @@ static void hdd_register_rx_ol(void)
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	if  (!hdd_ctx)
+	if  (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
+		return;
+	}
 
 	hdd_ctx->en_tcp_delack_no_lro = 0;
 
