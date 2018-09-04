@@ -23,6 +23,8 @@
 #include "msm-pcm-q6-v2.h"
 #include "msm-pcm-routing-v2.h"
 
+#define DRV_NAME "msm-pcm-voip-v2"
+
 #define SHARED_MEM_BUF 2
 #define VOIP_MAX_Q_LEN 10
 #define VOIP_MAX_VOC_PKT_SIZE 4096
@@ -300,9 +302,9 @@ static struct snd_kcontrol_new msm_voip_controls[] = {
 		       msm_voip_dtx_mode_get, msm_voip_dtx_mode_put),
 };
 
-static int msm_pcm_voip_probe(struct snd_soc_platform *platform)
+static int msm_pcm_voip_probe(struct snd_soc_component *component)
 {
-	snd_soc_add_platform_controls(platform, msm_voip_controls,
+	snd_soc_add_component_controls(component, msm_voip_controls,
 					ARRAY_SIZE(msm_voip_controls));
 
 	return 0;
@@ -1605,7 +1607,8 @@ static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
 	return ret;
 }
 
-static struct snd_soc_platform_driver msm_soc_platform = {
+static struct snd_soc_component_driver msm_soc_component = {
+	.name		= DRV_NAME,
 	.ops		= &msm_pcm_ops,
 	.pcm_new	= msm_asoc_pcm_new,
 	.probe		= msm_pcm_voip_probe,
@@ -1642,8 +1645,9 @@ static int msm_pcm_probe(struct platform_device *pdev)
 
 
 	pr_debug("%s: dev name %s\n", __func__, dev_name(&pdev->dev));
-	rc = snd_soc_register_platform(&pdev->dev,
-				       &msm_soc_platform);
+	rc = snd_soc_register_component(&pdev->dev,
+				       &msm_soc_component,
+					NULL, 0);
 
 done:
 	return rc;
@@ -1651,7 +1655,7 @@ done:
 
 static int msm_pcm_remove(struct platform_device *pdev)
 {
-	snd_soc_unregister_platform(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 	return 0;
 }
 

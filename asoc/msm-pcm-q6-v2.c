@@ -34,6 +34,8 @@
 #include "msm-pcm-routing-v2.h"
 #include "msm-qti-pp-config.h"
 
+#define DRV_NAME "msm-pcm-q6-v2"
+
 enum stream_state {
 	IDLE = 0,
 	STOPPED,
@@ -312,6 +314,8 @@ static int msm_pcm_playback_prepare(struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_soc_pcm_runtime *soc_prtd = substream->private_data;
+	struct snd_soc_component *component =
+			snd_soc_rtdcom_lookup(soc_prtd, DRV_NAME);
 	struct msm_audio *prtd = runtime->private_data;
 	struct msm_plat_data *pdata;
 	struct snd_pcm_hw_params *params;
@@ -320,8 +324,13 @@ static int msm_pcm_playback_prepare(struct snd_pcm_substream *substream)
 	uint16_t bits_per_sample;
 	uint16_t sample_word_size;
 
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	pdata = (struct msm_plat_data *)
-		dev_get_drvdata(soc_prtd->platform->dev);
+		dev_get_drvdata(component->dev);
 	if (!pdata) {
 		pr_err("%s: platform data not populated\n", __func__);
 		return -EINVAL;
@@ -464,6 +473,8 @@ static int msm_pcm_capture_prepare(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct msm_audio *prtd = runtime->private_data;
 	struct snd_soc_pcm_runtime *soc_prtd = substream->private_data;
+	struct snd_soc_component *component =
+			snd_soc_rtdcom_lookup(soc_prtd, DRV_NAME);
 	struct msm_plat_data *pdata;
 	struct snd_pcm_hw_params *params;
 	struct msm_pcm_routing_evt event;
@@ -472,8 +483,13 @@ static int msm_pcm_capture_prepare(struct snd_pcm_substream *substream)
 	uint16_t bits_per_sample = 16;
 	uint16_t sample_word_size;
 
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	pdata = (struct msm_plat_data *)
-		dev_get_drvdata(soc_prtd->platform->dev);
+		dev_get_drvdata(component->dev);
 	if (!pdata) {
 		pr_err("%s: platform data not populated\n", __func__);
 		return -EINVAL;
@@ -658,12 +674,19 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_soc_pcm_runtime *soc_prtd = substream->private_data;
+	struct snd_soc_component *component =
+			snd_soc_rtdcom_lookup(soc_prtd, DRV_NAME);
 	struct msm_audio *prtd;
 	struct msm_plat_data *pdata;
 	int ret = 0;
 
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	pdata = (struct msm_plat_data *)
-		dev_get_drvdata(soc_prtd->platform->dev);
+		dev_get_drvdata(component->dev);
 	if (!pdata) {
 		pr_err("%s: platform data not populated\n", __func__);
 		return -EINVAL;
@@ -682,7 +705,7 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 		return -ENOMEM;
 	}
 
-	prtd->audio_client->dev = soc_prtd->platform->dev;
+	prtd->audio_client->dev = component->dev;
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		runtime->hw = msm_pcm_hardware_playback;
@@ -858,6 +881,8 @@ static int msm_pcm_playback_close(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_soc_pcm_runtime *soc_prtd = substream->private_data;
 	struct msm_audio *prtd = runtime->private_data;
+	struct snd_soc_component *component =
+			snd_soc_rtdcom_lookup(soc_prtd, DRV_NAME);
 	struct msm_plat_data *pdata;
 	uint32_t timeout;
 	int dir = 0;
@@ -867,13 +892,17 @@ static int msm_pcm_playback_close(struct snd_pcm_substream *substream)
 
 	if (prtd->audio_client) {
 		dir = IN;
+		if (!component) {
+			pr_err("%s: component is NULL\n", __func__);
+			return -EINVAL;
+		}
 
 		/*
 		 * Unvote to downgrade the Rx thread priority from
 		 * RT Thread for Low-Latency use case.
 		 */
 		pdata = (struct msm_plat_data *)
-			dev_get_drvdata(soc_prtd->platform->dev);
+			dev_get_drvdata(component->dev);
 		if (pdata) {
 			if (pdata->perf_mode == LOW_LATENCY_PCM_MODE)
 				apr_end_rx_rt(prtd->audio_client->apr);
@@ -1139,14 +1168,20 @@ static const struct snd_pcm_ops msm_pcm_ops = {
 static int msm_pcm_adsp_stream_cmd_put(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *pcm = snd_kcontrol_chip(kcontrol);
-	struct snd_soc_platform *platform = snd_soc_component_to_platform(pcm);
-	struct msm_plat_data *pdata = dev_get_drvdata(platform->dev);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct msm_plat_data *pdata = NULL;
 	struct snd_pcm_substream *substream;
 	struct msm_audio *prtd;
 	int ret = 0;
 	struct msm_adsp_event_data *event_data = NULL;
 
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	pdata = dev_get_drvdata(component->dev);
 	if (!pdata) {
 		pr_err("%s pdata is NULL\n", __func__);
 		ret = -ENODEV;
@@ -1207,6 +1242,7 @@ done:
 static int msm_pcm_add_audio_adsp_stream_cmd_control(
 			struct snd_soc_pcm_runtime *rtd)
 {
+	struct snd_soc_component *component = NULL;
 	const char *mixer_ctl_name = DSP_STREAM_CMD;
 	const char *deviceNo = "NN";
 	char *mixer_str = NULL;
@@ -1228,6 +1264,12 @@ static int msm_pcm_add_audio_adsp_stream_cmd_control(
 		goto done;
 	}
 
+	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	ctl_len = strlen(mixer_ctl_name) + 1 + strlen(deviceNo) + 1;
 	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
 	if (!mixer_str) {
@@ -1240,7 +1282,7 @@ static int msm_pcm_add_audio_adsp_stream_cmd_control(
 	fe_audio_adsp_stream_cmd_config_control[0].private_value =
 		rtd->dai_link->id;
 	pr_debug("Registering new mixer ctl %s\n", mixer_str);
-	ret = snd_soc_add_platform_controls(rtd->platform,
+	ret = snd_soc_add_component_controls(component,
 		fe_audio_adsp_stream_cmd_config_control,
 		ARRAY_SIZE(fe_audio_adsp_stream_cmd_config_control));
 	if (ret < 0)
@@ -1255,6 +1297,7 @@ done:
 static int msm_pcm_add_audio_adsp_stream_callback_control(
 			struct snd_soc_pcm_runtime *rtd)
 {
+	struct snd_soc_component *component = NULL;
 	const char *mixer_ctl_name = DSP_STREAM_CALLBACK;
 	const char *deviceNo = "NN";
 	char *mixer_str = NULL;
@@ -1278,6 +1321,12 @@ static int msm_pcm_add_audio_adsp_stream_callback_control(
 		goto done;
 	}
 
+	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	pr_debug("%s: added new pcm FE with name %s, id %d, cpu dai %s, device no %d\n",
 		 __func__, rtd->dai_link->name, rtd->dai_link->id,
 		 rtd->dai_link->cpu_dai_name, rtd->pcm->device);
@@ -1293,7 +1342,7 @@ static int msm_pcm_add_audio_adsp_stream_callback_control(
 	fe_audio_adsp_callback_config_control[0].private_value =
 		rtd->dai_link->id;
 	pr_debug("%s: Registering new mixer ctl %s\n", __func__, mixer_str);
-	ret = snd_soc_add_platform_controls(rtd->platform,
+	ret = snd_soc_add_component_controls(component,
 			fe_audio_adsp_callback_config_control,
 			ARRAY_SIZE(fe_audio_adsp_callback_config_control));
 	if (ret < 0) {
@@ -1419,9 +1468,8 @@ static int msm_pcm_compress_ctl_info(struct snd_kcontrol *kcontrol,
 static int msm_pcm_compress_ctl_get(struct snd_kcontrol *kcontrol,
 		      struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_component *comp = snd_kcontrol_chip(kcontrol);
-	struct snd_soc_platform *platform = snd_soc_component_to_platform(comp);
-	struct msm_plat_data *pdata = dev_get_drvdata(platform->dev);
+	struct snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
+	struct msm_plat_data *pdata = dev_get_drvdata(comp->dev);
 	struct snd_pcm_substream *substream;
 	struct msm_audio *prtd;
 
@@ -1448,9 +1496,8 @@ static int msm_pcm_compress_ctl_put(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
 	int rc = 0;
-	struct snd_soc_component *comp = snd_kcontrol_chip(kcontrol);
-	struct snd_soc_platform *platform = snd_soc_component_to_platform(comp);
-	struct msm_plat_data *pdata = dev_get_drvdata(platform->dev);
+	struct snd_soc_component *comp = snd_soc_kcontrol_component(kcontrol);
+	struct msm_plat_data *pdata = dev_get_drvdata(comp->dev);
 	struct snd_pcm_substream *substream;
 	struct msm_audio *prtd;
 	int compress = ucontrol->value.integer.value[0];
@@ -1480,6 +1527,7 @@ static int msm_pcm_compress_ctl_put(struct snd_kcontrol *kcontrol,
 
 static int msm_pcm_add_compress_control(struct snd_soc_pcm_runtime *rtd)
 {
+	struct snd_soc_component *component = NULL;
 	const char *mixer_ctl_name = "Playback ";
 	const char *mixer_ctl_end_name = " Compress";
 	const char *deviceNo = "NN";
@@ -1504,6 +1552,12 @@ static int msm_pcm_add_compress_control(struct snd_soc_pcm_runtime *rtd)
 		return -EINVAL;
 	}
 
+	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	ctl_len = strlen(mixer_ctl_name) + strlen(deviceNo) +
 		  strlen(mixer_ctl_end_name) + 1;
 	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
@@ -1517,16 +1571,16 @@ static int msm_pcm_add_compress_control(struct snd_soc_pcm_runtime *rtd)
 	pcm_compress_control[0].name = mixer_str;
 	pcm_compress_control[0].private_value = rtd->dai_link->id;
 	pr_debug("%s: Registering new mixer ctl %s\n", __func__, mixer_str);
-	pdata = dev_get_drvdata(rtd->platform->dev);
+	pdata = dev_get_drvdata(component->dev);
 	if (pdata) {
 		if (!pdata->pcm) {
 			pdata->pcm = rtd->pcm;
-			snd_soc_add_platform_controls(rtd->platform,
+			snd_soc_add_component_controls(component,
 						      pcm_compress_control,
 						      ARRAY_SIZE
 						      (pcm_compress_control));
 			pr_debug("%s: add control success plt = %pK\n",
-				 __func__, rtd->platform);
+				 __func__, component);
 		}
 	} else {
 		pr_err("%s: NULL pdata\n", __func__);
@@ -1860,7 +1914,8 @@ static snd_pcm_sframes_t msm_pcm_delay_blk(struct snd_pcm_substream *substream,
 	return frames;
 }
 
-static struct snd_soc_platform_driver msm_soc_platform = {
+static struct snd_soc_component_driver msm_soc_component = {
+	.name		= DRV_NAME,
 	.ops		= &msm_pcm_ops,
 	.pcm_new	= msm_asoc_pcm_new,
 	.delay_blk      = msm_pcm_delay_blk,
@@ -1907,8 +1962,9 @@ static int msm_pcm_probe(struct platform_device *pdev)
 
 	dev_dbg(&pdev->dev, "%s: dev name %s\n",
 				__func__, dev_name(&pdev->dev));
-	return snd_soc_register_platform(&pdev->dev,
-				   &msm_soc_platform);
+	return snd_soc_register_component(&pdev->dev,
+					&msm_soc_component,
+					NULL, 0);
 }
 
 static int msm_pcm_remove(struct platform_device *pdev)
@@ -1917,7 +1973,7 @@ static int msm_pcm_remove(struct platform_device *pdev)
 
 	pdata = dev_get_drvdata(&pdev->dev);
 	kfree(pdata);
-	snd_soc_unregister_platform(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 	return 0;
 }
 static const struct of_device_id msm_pcm_dt_match[] = {

@@ -38,6 +38,8 @@
 #include "msm-dolby-dap-config.h"
 #include "msm-ds2-dap-config.h"
 
+#define DRV_NAME "msm-pcm-routing-v2"
+
 #ifndef CONFIG_DOLBY_DAP
 #undef DOLBY_ADM_COPP_TOPOLOGY_ID
 #define DOLBY_ADM_COPP_TOPOLOGY_ID 0xFFFFFFFE
@@ -23588,75 +23590,76 @@ static const struct snd_pcm_ops msm_routing_pcm_ops = {
 };
 
 /* Not used but frame seems to require it */
-static int msm_routing_probe(struct snd_soc_platform *platform)
+static int msm_routing_probe(struct snd_soc_component *component)
 {
-	snd_soc_dapm_new_controls(&platform->component.dapm, msm_qdsp6_widgets,
+	snd_soc_dapm_new_controls(&component->dapm, msm_qdsp6_widgets,
 			   ARRAY_SIZE(msm_qdsp6_widgets));
-	snd_soc_dapm_add_routes(&platform->component.dapm, intercon,
+	snd_soc_dapm_add_routes(&component->dapm, intercon,
 		ARRAY_SIZE(intercon));
 
-	snd_soc_dapm_new_widgets(platform->component.dapm.card);
+	snd_soc_dapm_new_widgets(component->dapm.card);
 
-	snd_soc_add_platform_controls(platform, lsm_controls,
+	snd_soc_add_component_controls(component, lsm_controls,
 				      ARRAY_SIZE(lsm_controls));
 
-	snd_soc_add_platform_controls(platform, aanc_slim_0_rx_mux,
+	snd_soc_add_component_controls(component, aanc_slim_0_rx_mux,
 				      ARRAY_SIZE(aanc_slim_0_rx_mux));
 
-	snd_soc_add_platform_controls(platform, aanc_noise_level,
+	snd_soc_add_component_controls(component, aanc_noise_level,
 				      ARRAY_SIZE(aanc_noise_level));
 
-	snd_soc_add_platform_controls(platform, msm_voc_session_controls,
+	snd_soc_add_component_controls(component, msm_voc_session_controls,
 				      ARRAY_SIZE(msm_voc_session_controls));
 
-	snd_soc_add_platform_controls(platform, app_type_cfg_controls,
+	snd_soc_add_component_controls(component, app_type_cfg_controls,
 				      ARRAY_SIZE(app_type_cfg_controls));
 
-	snd_soc_add_platform_controls(platform, lsm_app_type_cfg_controls,
+	snd_soc_add_component_controls(component, lsm_app_type_cfg_controls,
 				      ARRAY_SIZE(lsm_app_type_cfg_controls));
 
-	snd_soc_add_platform_controls(platform, module_cfg_controls,
+	snd_soc_add_component_controls(component, module_cfg_controls,
 				      ARRAY_SIZE(module_cfg_controls));
 
-	snd_soc_add_platform_controls(platform,
+	snd_soc_add_component_controls(component,
 				stereo_to_custom_stereo_controls,
 			ARRAY_SIZE(stereo_to_custom_stereo_controls));
 
-	snd_soc_add_platform_controls(platform, ec_ref_param_controls,
+	snd_soc_add_component_controls(component, ec_ref_param_controls,
 				ARRAY_SIZE(ec_ref_param_controls));
 
-	snd_soc_add_platform_controls(platform, channel_mixer_controls,
+	snd_soc_add_component_controls(component, channel_mixer_controls,
 				ARRAY_SIZE(channel_mixer_controls));
 
-	msm_qti_pp_add_controls(platform);
+	msm_qti_pp_add_controls(component);
 
-	msm_dts_srs_tm_add_controls(platform);
+	msm_dts_srs_tm_add_controls(component);
 
-	msm_dolby_dap_add_controls(platform);
+	msm_dolby_dap_add_controls(component);
 
-	snd_soc_add_platform_controls(platform,
+	snd_soc_add_component_controls(component,
 			use_ds1_or_ds2_controls,
 			ARRAY_SIZE(use_ds1_or_ds2_controls));
 
-	snd_soc_add_platform_controls(platform,
+	snd_soc_add_component_controls(component,
 				device_pp_params_mixer_controls,
 				ARRAY_SIZE(device_pp_params_mixer_controls));
 
-	snd_soc_add_platform_controls(platform,
+	snd_soc_add_component_controls(component,
 		msm_routing_be_dai_name_table_mixer_controls,
 		ARRAY_SIZE(msm_routing_be_dai_name_table_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, msm_source_tracking_controls,
+	snd_soc_add_component_controls(component, msm_source_tracking_controls,
 				ARRAY_SIZE(msm_source_tracking_controls));
-	snd_soc_add_platform_controls(platform, adm_channel_config_controls,
+	snd_soc_add_component_controls(component, adm_channel_config_controls,
 				ARRAY_SIZE(adm_channel_config_controls));
 
-	snd_soc_add_platform_controls(platform, aptx_dec_license_controls,
+	snd_soc_add_component_controls(component, aptx_dec_license_controls,
 					ARRAY_SIZE(aptx_dec_license_controls));
-	snd_soc_add_platform_controls(platform, stereo_channel_reverse_control,
+	snd_soc_add_component_controls(component,
+				stereo_channel_reverse_control,
 				ARRAY_SIZE(stereo_channel_reverse_control));
-	snd_soc_add_platform_controls(
-			platform, msm_routing_feature_support_mixer_controls,
+	snd_soc_add_component_controls(
+			component, msm_routing_feature_support_mixer_controls,
 			ARRAY_SIZE(msm_routing_feature_support_mixer_controls));
 
 	return 0;
@@ -23672,7 +23675,8 @@ void msm_routing_pcm_free(struct snd_pcm *pcm)
 	msm_pcm_routing_hwdep_free(pcm);
 }
 
-static struct snd_soc_platform_driver msm_soc_routing_platform = {
+static struct snd_soc_component_driver msm_soc_routing_component = {
+	.name		= DRV_NAME,
 	.ops		= &msm_routing_pcm_ops,
 	.probe		= msm_routing_probe,
 	.pcm_new	= msm_routing_pcm_new,
@@ -23683,13 +23687,14 @@ static int msm_routing_pcm_probe(struct platform_device *pdev)
 {
 
 	dev_dbg(&pdev->dev, "dev name %s\n", dev_name(&pdev->dev));
-	return snd_soc_register_platform(&pdev->dev,
-				  &msm_soc_routing_platform);
+	return snd_soc_register_component(&pdev->dev,
+				&msm_soc_routing_component,
+				NULL, 0);
 }
 
 static int msm_routing_pcm_remove(struct platform_device *pdev)
 {
-	snd_soc_unregister_platform(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 	return 0;
 }
 

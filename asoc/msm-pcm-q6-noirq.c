@@ -33,6 +33,9 @@
 #include "msm-pcm-q6-v2.h"
 #include "msm-pcm-routing-v2.h"
 
+
+#define DRV_NAME "msm-pcm-q6-noirq"
+
 #define PCM_MASTER_VOL_MAX_STEPS	0x2000
 static const DECLARE_TLV_DB_LINEAR(msm_pcm_vol_gain, 0,
 			PCM_MASTER_VOL_MAX_STEPS);
@@ -256,6 +259,8 @@ static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_soc_pcm_runtime *soc_prtd = substream->private_data;
+	struct snd_soc_component *component =
+				snd_soc_rtdcom_lookup(soc_prtd, DRV_NAME);
 	struct msm_audio *prtd = runtime->private_data;
 	struct msm_plat_data *pdata;
 	struct snd_dma_buffer *dma_buf = &substream->dma_buffer;
@@ -270,8 +275,13 @@ static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
 	bool use_default_chmap = true;
 	char *chmap = NULL;
 
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	pdata = (struct msm_plat_data *)
-		dev_get_drvdata(soc_prtd->platform->dev);
+		dev_get_drvdata(component->dev);
 	if (!pdata) {
 		ret = -EINVAL;
 		pr_err("%s: platform data not populated ret: %d\n", __func__,
@@ -790,6 +800,7 @@ end:
 
 static int msm_pcm_add_channel_map_control(struct snd_soc_pcm_runtime *rtd)
 {
+	struct snd_soc_component *component = NULL;
 	const char *mixer_ctl_name = "Playback Channel Map";
 	const char *deviceNo       = "NN";
 	char *mixer_str = NULL;
@@ -812,6 +823,12 @@ static int msm_pcm_add_channel_map_control(struct snd_soc_pcm_runtime *rtd)
 		return -EINVAL;
 	}
 
+	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	pr_debug("%s: added new pcm FE with name %s, id %d, cpu dai %s, device no %d\n",
 		 __func__, rtd->dai_link->name, rtd->dai_link->id,
 		 rtd->dai_link->cpu_dai_name, rtd->pcm->device);
@@ -826,11 +843,11 @@ static int msm_pcm_add_channel_map_control(struct snd_soc_pcm_runtime *rtd)
 	fe_channel_map_control[0].name = mixer_str;
 	fe_channel_map_control[0].private_value = rtd->dai_link->id;
 	pr_debug("%s: Registering new mixer ctl %s\n", __func__, mixer_str);
-	snd_soc_add_platform_controls(rtd->platform,
+	snd_soc_add_component_controls(component,
 				fe_channel_map_control,
 				ARRAY_SIZE(fe_channel_map_control));
 
-	pdata = snd_soc_platform_get_drvdata(rtd->platform);
+	pdata = snd_soc_component_get_drvdata(component);
 	pdata->ch_map[rtd->dai_link->id] =
 		 kzalloc(sizeof(struct msm_pcm_ch_map), GFP_KERNEL);
 	if (!pdata->ch_map[rtd->dai_link->id]) {
@@ -893,6 +910,7 @@ static int msm_pcm_fe_topology_put(struct snd_kcontrol *kcontrol,
 
 static int msm_pcm_add_fe_topology_control(struct snd_soc_pcm_runtime *rtd)
 {
+	struct snd_soc_component *component = NULL;
 	const char *mixer_ctl_name = "PCM_Dev";
 	const char *deviceNo       = "NN";
 	const char *topo_text      = "Topology";
@@ -911,6 +929,12 @@ static int msm_pcm_add_fe_topology_control(struct snd_soc_pcm_runtime *rtd)
 		},
 	};
 
+	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	ctl_len = strlen(mixer_ctl_name) + 1 + strlen(deviceNo) + 1 +
 		  strlen(topo_text) + 1;
 	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
@@ -923,7 +947,7 @@ static int msm_pcm_add_fe_topology_control(struct snd_soc_pcm_runtime *rtd)
 
 	topology_control[0].name = mixer_str;
 	topology_control[0].private_value = rtd->dai_link->id;
-	ret = snd_soc_add_platform_controls(rtd->platform, topology_control,
+	ret = snd_soc_add_component_controls(component, topology_control,
 					    ARRAY_SIZE(topology_control));
 	msm_pcm_fe_topology[rtd->dai_link->id] = 0;
 	kfree(mixer_str);
@@ -1240,7 +1264,8 @@ static const struct snd_pcm_ops msm_pcm_ops = {
 	.close          = msm_pcm_close,
 };
 
-static struct snd_soc_platform_driver msm_soc_platform = {
+static struct snd_soc_component_driver msm_soc_component = {
+	.name		= DRV_NAME,
 	.ops		= &msm_pcm_ops,
 	.pcm_new	= msm_asoc_pcm_new,
 };
@@ -1279,8 +1304,9 @@ static int msm_pcm_probe(struct platform_device *pdev)
 	dev_dbg(&pdev->dev, "%s: dev name %s\n",
 				__func__, dev_name(&pdev->dev));
 	dev_dbg(&pdev->dev, "Pull mode driver register\n");
-	rc = snd_soc_register_platform(&pdev->dev,
-				       &msm_soc_platform);
+	rc = snd_soc_register_component(&pdev->dev,
+				&msm_soc_component,
+				NULL, 0);
 
 	if (rc)
 		dev_err(&pdev->dev, "Failed to register pull mode driver\n");
@@ -1295,7 +1321,7 @@ static int msm_pcm_remove(struct platform_device *pdev)
 	dev_dbg(&pdev->dev, "Pull mode remove\n");
 	pdata = dev_get_drvdata(&pdev->dev);
 	devm_kfree(&pdev->dev, pdata);
-	snd_soc_unregister_platform(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 	return 0;
 }
 static const struct of_device_id msm_pcm_noirq_dt_match[] = {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/* Copyright (c) 2011-2014, 2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2014, 2017-2018, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -10,6 +10,7 @@
 #include <sound/soc.h>
 #include <sound/pcm.h>
 
+#define DRV_NAME "msm-pcm-hostless"
 
 static int msm_pcm_hostless_prepare(struct snd_pcm_substream *substream)
 {
@@ -25,7 +26,8 @@ static const struct snd_pcm_ops msm_pcm_hostless_ops = {
 	.prepare = msm_pcm_hostless_prepare
 };
 
-static struct snd_soc_platform_driver msm_soc_hostless_platform = {
+static struct snd_soc_component_driver msm_soc_hostless_component = {
+	.name		= DRV_NAME,
 	.ops		= &msm_pcm_hostless_ops,
 };
 
@@ -33,13 +35,14 @@ static int msm_pcm_hostless_probe(struct platform_device *pdev)
 {
 
 	pr_debug("%s: dev name %s\n", __func__, dev_name(&pdev->dev));
-	return snd_soc_register_platform(&pdev->dev,
-				   &msm_soc_hostless_platform);
+	return snd_soc_register_component(&pdev->dev,
+				&msm_soc_hostless_component,
+				NULL, 0);
 }
 
 static int msm_pcm_hostless_remove(struct platform_device *pdev)
 {
-	snd_soc_unregister_platform(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 	return 0;
 }
 

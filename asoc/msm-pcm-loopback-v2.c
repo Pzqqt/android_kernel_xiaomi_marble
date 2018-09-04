@@ -21,6 +21,8 @@
 
 #include "msm-pcm-routing-v2.h"
 
+#define DRV_NAME "msm-pcm-loopback-v2"
+
 #define LOOPBACK_VOL_MAX_STEPS 0x2000
 #define LOOPBACK_SESSION_MAX 4
 
@@ -151,9 +153,9 @@ static struct snd_kcontrol_new msm_loopback_controls[] = {
 			msm_loopback_session_mute_put),
 };
 
-static int msm_pcm_loopback_probe(struct snd_soc_platform *platform)
+static int msm_pcm_loopback_probe(struct snd_soc_component *component)
 {
-	snd_soc_add_platform_controls(platform, msm_loopback_controls,
+	snd_soc_add_component_controls(component, msm_loopback_controls,
 				      ARRAY_SIZE(msm_loopback_controls));
 
 	return 0;
@@ -180,10 +182,17 @@ static int pcm_loopback_set_volume(struct msm_pcm_loopback *prtd,
 static int msm_pcm_loopback_get_session(struct snd_soc_pcm_runtime *rtd,
 					struct msm_pcm_loopback **pcm)
 {
+	struct snd_soc_component *component =
+			snd_soc_rtdcom_lookup(rtd, DRV_NAME);
 	int ret = 0;
 	int n, index = -1;
 
-	dev_dbg(rtd->platform->dev, "%s: stream %s\n", __func__,
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	dev_dbg(component->dev, "%s: stream %s\n", __func__,
 		rtd->dai_link->stream_name);
 
 	mutex_lock(&loopback_session_lock);
@@ -206,7 +215,7 @@ static int msm_pcm_loopback_get_session(struct snd_soc_pcm_runtime *rtd,
 	}
 
 	if (index < 0) {
-		dev_err(rtd->platform->dev, "%s: Max Sessions allocated\n",
+		dev_err(component->dev, "%s: Max Sessions allocated\n",
 				 __func__);
 		ret = -EAGAIN;
 		goto exit;
@@ -222,7 +231,7 @@ static int msm_pcm_loopback_get_session(struct snd_soc_pcm_runtime *rtd,
 	strlcpy(session_map[index].stream_name,
 		rtd->dai_link->stream_name,
 		sizeof(session_map[index].stream_name));
-	dev_dbg(rtd->platform->dev, "%s: stream %s index %d\n",
+	dev_dbg(component->dev, "%s: stream %s index %d\n",
 		__func__, session_map[index].stream_name, index);
 
 	mutex_init(&session_map[index].loopback_priv->lock);
@@ -236,6 +245,8 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct snd_soc_pcm_runtime *rtd = snd_pcm_substream_chip(substream);
+	struct snd_soc_component *component =
+			snd_soc_rtdcom_lookup(rtd, DRV_NAME);
 	struct msm_pcm_loopback *pcm = NULL;
 	int ret = 0;
 	uint16_t bits_per_sample = 16;
@@ -243,6 +254,11 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 	struct asm_session_mtmx_strtr_param_window_v2_t asm_mtmx_strtr_window;
 	uint32_t param_id;
 	struct msm_pcm_pdata *pdata;
+
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
 
 	ret =  msm_pcm_loopback_get_session(rtd, &pcm);
 	if (ret)
@@ -258,7 +274,7 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 		pcm->capture_substream = substream;
 
 	pcm->instance++;
-	dev_dbg(rtd->platform->dev, "%s: pcm out open: %d,%d\n", __func__,
+	dev_dbg(component->dev, "%s: pcm out open: %d,%d\n", __func__,
 			pcm->instance, substream->stream);
 	if (pcm->instance == 2) {
 		struct snd_soc_pcm_runtime *soc_pcm_rx =
@@ -269,9 +285,9 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 			stop_pcm(pcm);
 
 		pdata = (struct msm_pcm_pdata *)
-			dev_get_drvdata(rtd->platform->dev);
+			dev_get_drvdata(component->dev);
 		if (!pdata) {
-			dev_err(rtd->platform->dev,
+			dev_err(component->dev,
 				"%s: platform data not populated\n", __func__);
 			mutex_unlock(&pcm->lock);
 			return -EINVAL;
@@ -280,7 +296,7 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 		pcm->audio_client = q6asm_audio_client_alloc(
 				(app_cb)msm_pcm_loopback_event_handler, pcm);
 		if (!pcm->audio_client) {
-			dev_err(rtd->platform->dev,
+			dev_err(component->dev,
 				"%s: Could not allocate memory\n", __func__);
 			mutex_unlock(&pcm->lock);
 			return -ENOMEM;
@@ -290,7 +306,7 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 		ret = q6asm_open_loopback_v2(pcm->audio_client,
 					     bits_per_sample);
 		if (ret < 0) {
-			dev_err(rtd->platform->dev,
+			dev_err(component->dev,
 				"%s: pcm out open failed\n", __func__);
 			q6asm_audio_client_free(pcm->audio_client);
 			mutex_unlock(&pcm->lock);
@@ -309,7 +325,7 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 			pcm->playback_substream = substream;
 			ret = pcm_loopback_set_volume(pcm, pcm->volume);
 			if (ret < 0)
-				dev_err(rtd->platform->dev,
+				dev_err(component->dev,
 					"Error %d setting volume", ret);
 		}
 		/* Set to largest negative value */
@@ -327,7 +343,7 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 					     &asm_mtmx_strtr_window,
 					     param_id);
 	}
-	dev_info(rtd->platform->dev, "%s: Instance = %d, Stream ID = %s\n",
+	dev_info(component->dev, "%s: Instance = %d, Stream ID = %s\n",
 			__func__, pcm->instance, substream->pcm->id);
 	runtime->private_data = pcm;
 
@@ -364,12 +380,19 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct msm_pcm_loopback *pcm = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = snd_pcm_substream_chip(substream);
+	struct snd_soc_component *component =
+			snd_soc_rtdcom_lookup(rtd, DRV_NAME);
 	int ret = 0, n;
 	bool found = false;
 
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	mutex_lock(&pcm->lock);
 
-	dev_dbg(rtd->platform->dev, "%s: end pcm call:%d\n",
+	dev_dbg(component->dev, "%s: end pcm call:%d\n",
 		__func__, substream->stream);
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		pcm->playback_start = 0;
@@ -378,7 +401,7 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
 
 	pcm->instance--;
 	if (!pcm->playback_start || !pcm->capture_start) {
-		dev_dbg(rtd->platform->dev, "%s: end pcm call\n", __func__);
+		dev_dbg(component->dev, "%s: end pcm call\n", __func__);
 		stop_pcm(pcm);
 	}
 
@@ -398,7 +421,7 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
 			mutex_destroy(&session_map[n].loopback_priv->lock);
 			session_map[n].loopback_priv = NULL;
 			kfree(pcm);
-			dev_dbg(rtd->platform->dev, "%s: stream freed %s\n",
+			dev_dbg(component->dev, "%s: stream freed %s\n",
 				__func__, rtd->dai_link->stream_name);
 			mutex_unlock(&loopback_session_lock);
 			return 0;
@@ -415,10 +438,17 @@ static int msm_pcm_prepare(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct msm_pcm_loopback *pcm = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = snd_pcm_substream_chip(substream);
+	struct snd_soc_component *component =
+			snd_soc_rtdcom_lookup(rtd, DRV_NAME);
+
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
 
 	mutex_lock(&pcm->lock);
 
-	dev_dbg(rtd->platform->dev, "%s: ASM loopback stream:%d\n",
+	dev_dbg(component->dev, "%s: ASM loopback stream:%d\n",
 		__func__, substream->stream);
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		if (!pcm->playback_start)
@@ -437,12 +467,19 @@ static int msm_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct msm_pcm_loopback *pcm = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = snd_pcm_substream_chip(substream);
+	struct snd_soc_component *component =
+			snd_soc_rtdcom_lookup(rtd, DRV_NAME);
+
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		dev_dbg(rtd->platform->dev,
+		dev_dbg(component->dev,
 			"%s: playback_start:%d,capture_start:%d\n", __func__,
 			pcm->playback_start, pcm->capture_start);
 		if (pcm->playback_start && pcm->capture_start)
@@ -451,7 +488,7 @@ static int msm_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 	case SNDRV_PCM_TRIGGER_STOP:
-		dev_dbg(rtd->platform->dev,
+		dev_dbg(component->dev,
 			"%s:Pause/Stop - playback_start:%d,capture_start:%d\n",
 			__func__, pcm->playback_start, pcm->capture_start);
 		if (pcm->playback_start && pcm->capture_start)
@@ -727,7 +764,8 @@ static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
 	return ret;
 }
 
-static struct snd_soc_platform_driver msm_soc_platform = {
+static struct snd_soc_component_driver msm_soc_component = {
+	.name		= DRV_NAME,
 	.ops            = &msm_pcm_ops,
 	.pcm_new        = msm_asoc_pcm_new,
 	.probe          = msm_pcm_loopback_probe,
@@ -752,13 +790,14 @@ static int msm_pcm_probe(struct platform_device *pdev)
 
 	dev_set_drvdata(&pdev->dev, pdata);
 
-	return snd_soc_register_platform(&pdev->dev,
-				   &msm_soc_platform);
+	return snd_soc_register_component(&pdev->dev,
+				&msm_soc_component,
+				NULL, 0);
 }
 
 static int msm_pcm_remove(struct platform_device *pdev)
 {
-	snd_soc_unregister_platform(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 	return 0;
 }
 

@@ -1561,63 +1561,68 @@ static const struct snd_kcontrol_new asphere_mixer_controls[] = {
 };
 
 #ifdef CONFIG_QTI_PP
-void msm_qti_pp_add_controls(struct snd_soc_platform *platform)
+void msm_qti_pp_add_controls(struct snd_soc_component *component)
 {
-	snd_soc_add_platform_controls(platform, int_fm_vol_mixer_controls,
+	snd_soc_add_component_controls(component, int_fm_vol_mixer_controls,
 			ARRAY_SIZE(int_fm_vol_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, pri_mi2s_lb_vol_mixer_controls,
+	snd_soc_add_component_controls(component,
+			pri_mi2s_lb_vol_mixer_controls,
 			ARRAY_SIZE(pri_mi2s_lb_vol_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, sec_mi2s_lb_vol_mixer_controls,
+	snd_soc_add_component_controls(component,
+			sec_mi2s_lb_vol_mixer_controls,
 			ARRAY_SIZE(sec_mi2s_lb_vol_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, tert_mi2s_lb_vol_mixer_controls,
+	snd_soc_add_component_controls(component,
+			tert_mi2s_lb_vol_mixer_controls,
 			ARRAY_SIZE(tert_mi2s_lb_vol_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, slimbus_7_lb_vol_mixer_controls,
+	snd_soc_add_component_controls(component,
+			slimbus_7_lb_vol_mixer_controls,
 			ARRAY_SIZE(slimbus_7_lb_vol_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, slimbus_8_lb_vol_mixer_controls,
+	snd_soc_add_component_controls(component,
+			slimbus_8_lb_vol_mixer_controls,
 			ARRAY_SIZE(slimbus_8_lb_vol_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, int_hfp_vol_mixer_controls,
+	snd_soc_add_component_controls(component, int_hfp_vol_mixer_controls,
 			ARRAY_SIZE(int_hfp_vol_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, int_icc_vol_mixer_controls,
+	snd_soc_add_component_controls(component, int_icc_vol_mixer_controls,
 			ARRAY_SIZE(int_icc_vol_mixer_controls));
 
-	snd_soc_add_platform_controls(platform,
+	snd_soc_add_component_controls(component,
 			pri_auxpcm_lb_vol_mixer_controls,
 			ARRAY_SIZE(pri_auxpcm_lb_vol_mixer_controls));
 
-	snd_soc_add_platform_controls(platform,
+	snd_soc_add_component_controls(component,
 				sec_auxpcm_lb_vol_mixer_controls,
 			ARRAY_SIZE(sec_auxpcm_lb_vol_mixer_controls));
 
-	snd_soc_add_platform_controls(platform,
+	snd_soc_add_component_controls(component,
 				multi_ch_channel_map_mixer_controls,
 			ARRAY_SIZE(multi_ch_channel_map_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, get_rms_controls,
+	snd_soc_add_component_controls(component, get_rms_controls,
 			ARRAY_SIZE(get_rms_controls));
 
-	snd_soc_add_platform_controls(platform, eq_enable_mixer_controls,
+	snd_soc_add_component_controls(component, eq_enable_mixer_controls,
 			ARRAY_SIZE(eq_enable_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, eq_band_mixer_controls,
+	snd_soc_add_component_controls(component, eq_band_mixer_controls,
 			ARRAY_SIZE(eq_band_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, eq_coeff_mixer_controls,
+	snd_soc_add_component_controls(component, eq_coeff_mixer_controls,
 			ARRAY_SIZE(eq_coeff_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, asphere_mixer_controls,
+	snd_soc_add_component_controls(component, asphere_mixer_controls,
 			ARRAY_SIZE(asphere_mixer_controls));
 
-	snd_soc_add_platform_controls(platform, msm_multichannel_ec_controls,
+	snd_soc_add_component_controls(component, msm_multichannel_ec_controls,
 			ARRAY_SIZE(msm_multichannel_ec_controls));
 
-	snd_soc_add_platform_controls(platform, dsp_bit_width_controls,
+	snd_soc_add_component_controls(component, dsp_bit_width_controls,
 			ARRAY_SIZE(dsp_bit_width_controls));
 }
 #endif /* CONFIG_QTI_PP */

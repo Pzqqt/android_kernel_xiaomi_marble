@@ -24,6 +24,8 @@
 #include <dsp/q6adm-v2.h>
 #include "msm-pcm-afe-v2.h"
 
+#define DRV_NAME "msm-pcm-afe-v2"
+
 #define MIN_PLAYBACK_PERIOD_SIZE (128 * 2)
 #define MAX_PLAYBACK_PERIOD_SIZE (128 * 2 * 2 * 6)
 #define MIN_PLAYBACK_NUM_PERIODS (4)
@@ -854,13 +856,14 @@ static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
 	return ret;
 }
 
-static int msm_afe_afe_probe(struct snd_soc_platform *platform)
+static int msm_afe_afe_probe(struct snd_soc_component *component)
 {
 	pr_debug("%s\n", __func__);
 	return 0;
 }
 
-static struct snd_soc_platform_driver msm_soc_platform = {
+static struct snd_soc_component_driver msm_soc_component = {
+	.name		= DRV_NAME,
 	.ops		= &msm_afe_ops,
 	.pcm_new	= msm_asoc_pcm_new,
 	.probe		= msm_afe_afe_probe,
@@ -870,14 +873,14 @@ static int msm_afe_probe(struct platform_device *pdev)
 {
 
 	pr_debug("%s: dev name %s\n", __func__, dev_name(&pdev->dev));
-	return snd_soc_register_platform(&pdev->dev,
-				   &msm_soc_platform);
+	return snd_soc_register_component(&pdev->dev,
+				   &msm_soc_component, NULL, 0);
 }
 
 static int msm_afe_remove(struct platform_device *pdev)
 {
 	pr_debug("%s\n", __func__);
-	snd_soc_unregister_platform(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 	return 0;
 }
 static const struct of_device_id msm_pcm_afe_dt_match[] = {

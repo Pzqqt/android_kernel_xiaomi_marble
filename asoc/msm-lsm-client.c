@@ -25,6 +25,8 @@
 #include <dsp/q6lsm.h>
 #include "msm-pcm-routing-v2.h"
 
+#define DRV_NAME "msm-lsm-client"
+
 #define CAPTURE_MIN_NUM_PERIODS     2
 #define CAPTURE_MAX_NUM_PERIODS     8
 #define CAPTURE_MAX_PERIOD_SIZE     61440
@@ -2932,14 +2934,15 @@ static int msm_asoc_lsm_new(struct snd_soc_pcm_runtime *rtd)
 	return ret;
 }
 
-static int msm_asoc_lsm_probe(struct snd_soc_platform *platform)
+static int msm_asoc_lsm_probe(struct snd_soc_component *component)
 {
 	pr_debug("enter %s\n", __func__);
 
 	return 0;
 }
 
-static struct snd_soc_platform_driver msm_soc_platform = {
+static struct snd_soc_component_driver msm_soc_component = {
+	.name		= DRV_NAME,
 	.ops		= &msm_lsm_ops,
 	.pcm_new	= msm_asoc_lsm_new,
 	.probe		= msm_asoc_lsm_probe,
@@ -2948,12 +2951,13 @@ static struct snd_soc_platform_driver msm_soc_platform = {
 static int msm_lsm_probe(struct platform_device *pdev)
 {
 
-	return snd_soc_register_platform(&pdev->dev, &msm_soc_platform);
+	return snd_soc_register_component(&pdev->dev, &msm_soc_component,
+					  NULL, 0);
 }
 
 static int msm_lsm_remove(struct platform_device *pdev)
 {
-	snd_soc_unregister_platform(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 
 	return 0;
 }

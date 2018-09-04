@@ -22,6 +22,8 @@
 
 #include "msm-pcm-voice-v2.h"
 
+#define DRV_NAME "msm-pcm-voice-v2"
+
 static struct msm_voice voice_info[VOICE_SESSION_INDEX_MAX];
 
 static struct snd_pcm_hardware msm_pcm_hardware = {
@@ -697,15 +699,16 @@ static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
 	return ret;
 }
 
-static int msm_pcm_voice_probe(struct snd_soc_platform *platform)
+static int msm_pcm_voice_probe(struct snd_soc_component *component)
 {
-	snd_soc_add_platform_controls(platform, msm_voice_controls,
+	snd_soc_add_component_controls(component, msm_voice_controls,
 					ARRAY_SIZE(msm_voice_controls));
 
 	return 0;
 }
 
-static struct snd_soc_platform_driver msm_soc_platform = {
+static struct snd_soc_component_driver msm_soc_component = {
+	.name		= DRV_NAME,
 	.ops		= &msm_pcm_ops,
 	.pcm_new	= msm_asoc_pcm_new,
 	.probe		= msm_pcm_voice_probe,
@@ -742,8 +745,9 @@ static int msm_pcm_probe(struct platform_device *pdev)
 						is_destroy_cvd);
 	voc_set_destroy_cvd_flag(destroy_cvd);
 
-	rc = snd_soc_register_platform(&pdev->dev,
-				       &msm_soc_platform);
+	rc = snd_soc_register_component(&pdev->dev,
+				       &msm_soc_component,
+					NULL, 0);
 
 done:
 	return rc;
@@ -751,7 +755,7 @@ done:
 
 static int msm_pcm_remove(struct platform_device *pdev)
 {
-	snd_soc_unregister_platform(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 	return 0;
 }
 

@@ -20,6 +20,8 @@
 #include <dsp/msm_audio_ion.h>
 #include <dsp/q6voice.h>
 
+#define DRV_NAME "msm-pcm-host-voice-v2"
+
 #define HPCM_MAX_Q_LEN 2
 #define HPCM_MIN_VOC_PKT_SIZE 320
 #define HPCM_MAX_VOC_PKT_SIZE 640
@@ -1435,15 +1437,16 @@ static int msm_asoc_pcm_new(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 }
 
-static int msm_pcm_hpcm_probe(struct snd_soc_platform *platform)
+static int msm_pcm_hpcm_probe(struct snd_soc_component *component)
 {
-	snd_soc_add_platform_controls(platform, msm_hpcm_controls,
+	snd_soc_add_component_controls(component, msm_hpcm_controls,
 				ARRAY_SIZE(msm_hpcm_controls));
 
 	return 0;
 }
 
-static struct snd_soc_platform_driver msm_soc_platform = {
+static struct snd_soc_component_driver msm_soc_component = {
+	.name		= DRV_NAME,
 	.ops		= &msm_pcm_ops,
 	.pcm_new	= msm_asoc_pcm_new,
 	.probe		= msm_pcm_hpcm_probe,
@@ -1453,12 +1456,13 @@ static int msm_pcm_probe(struct platform_device *pdev)
 {
 
 	pr_info("%s: dev name %s\n", __func__, dev_name(&pdev->dev));
-	return snd_soc_register_platform(&pdev->dev, &msm_soc_platform);
+	return snd_soc_register_component(&pdev->dev, &msm_soc_component,
+					  NULL, 0);
 }
 
 static int msm_pcm_remove(struct platform_device *pdev)
 {
-	snd_soc_unregister_platform(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 	return 0;
 }
 

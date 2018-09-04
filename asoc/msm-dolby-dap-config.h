@@ -67,7 +67,7 @@ int msm_dolby_dap_init(int port_id, int copp_idx, int channels,
 	return 0;
 }
 void msm_dolby_dap_deinit(int port_id) { }
-void msm_dolby_dap_add_controls(struct snd_soc_platform *platform) { }
+void msm_dolby_dap_add_controls(struct snd_soc_component *component) { }
 int dolby_dap_set_custom_stereo_onoff(int port_id, int copp_idx,
 				      bool is_custom_stereo_enabled)
 {
