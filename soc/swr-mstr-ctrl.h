@@ -139,6 +139,8 @@ struct swr_mstr_ctrl {
 	u8 num_cfg_devs;
 	struct mutex force_down_lock;
 	int force_down_state;
+	struct notifier_block event_notifier;
+	struct work_struct dc_presence_work;
 	u8 num_ports;
 	struct swrm_port_type
 			port_mapping[SWR_MSTR_PORT_LEN][SWR_MAX_CH_PER_PORT];
