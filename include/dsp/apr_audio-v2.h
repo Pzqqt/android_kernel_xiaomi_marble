@@ -4205,6 +4205,69 @@ union afe_port_config {
 	struct afe_param_id_cdc_dma_cfg_t         cdc_dma;
 } __packed;
 
+
+/*
+ * AFE event registration related APIs and corresponding payloads
+ */
+#define AFE_SVC_CMD_EVENT_CFG                        0x000100FE
+
+#define AFE_CMD_APPS_WAKEUP_IRQ_REGISTER_MINOR_VERSION          0x1
+
+/* Flag to indicate AFE to register APPS wakeup Interrupt */
+#define AFE_APPS_WAKEUP_IRQ_REGISTER_FLAG    1
+
+/* Flag to indicate AFE to de-register APPS wakeup Interrupt */
+#define AFE_APPS_WAKEUP_IRQ_DEREGISTER_FLAG  0
+
+/* Default interrupt trigger value. */
+#define DEFAULT_SETTINGS              0x00000001
+
+/* Interrupt is triggered only if the input signal at the source is high. */
+#define LEVEL_HIGH_TRIGGER             0x00000002
+
+/* Interrupt is triggered only if the input signal at the source is low. */
+#define LEVEL_LOW_TRIGGER              0x00000003
+
+/* Interrupt is triggered only if the input signal at the source transitions
+ *from low to high.
+ */
+#define RISING_EDGE_TRIGGER            0x00000004
+
+/* Interrupt is triggered only if the input signal at the source transitions
+ *from high  to low.
+ */
+#define FALLING_EDGE_TRIGGER           0x00000005
+
+/* Macro for invalid trigger type. This should not be used. */
+#define INVALID_TRIGGER                0x00000006
+
+#define AFE_EVENT_ID_MBHC_DETECTION_SW_WA           0x1
+
+/* @weakgroup weak_afe_svc_cmd_evt_cfg_payload
+ *
+ * This is payload of each event that is to be
+ * registered with AFE service.
+ */
+struct afe_svc_cmd_evt_cfg_payload {
+	struct apr_hdr hdr;
+
+	uint32_t event_id;
+/* Unique ID of the event.
+ *
+ *	@values
+ *	-# AFE_EVENT_ID_MBHC_DETECTION_SW_WA
+ */
+
+	uint32_t reg_flag;
+/* Flag for registering or de-registering an event.
+ *	@values
+ *	- #AFE_SVC_REGISTER_EVENT_FLAG
+ *	- #AFE_SVC_DEREGISTER_EVENT_FLAG
+ */
+} __packed;
+
+#define AFE_EVENT_MBHC_DETECTION_SW_WA                 0x0001010F
+
 #define AFE_PORT_CMD_DEVICE_START 0x000100E5
 
 /*  Payload of the #AFE_PORT_CMD_DEVICE_START.*/
