@@ -1032,6 +1032,25 @@ struct dual_mac_config {
 };
 
 /**
+ * enum policy_mgr_pri_id - vdev type priority id
+ * @PM_STA_PRI_ID: station vdev type priority id
+ * @PM_SAP_PRI_ID: sap vdev type priority id
+ * @PM_P2P_GO_PRI_ID: p2p go vdev type priority id
+ * @PM_P2P_CLI_PRI_ID: p2p cli vdev type priority id
+ * @PM_MAX_PRI_ID: vdev type priority id max value
+ */
+enum policy_mgr_pri_id {
+	PM_STA_PRI_ID = 1,
+	PM_SAP_PRI_ID,
+	PM_P2P_GO_PRI_ID,
+	PM_P2P_CLI_PRI_ID,
+	PM_MAX_PRI_ID = 0xF,
+};
+
+#define PM_GET_BAND_PREFERRED(_policy_) ((_policy_) & 0x1)
+#define PM_GET_VDEV_PRIORITY_ENABLED(_policy_) (((_policy_) & 0x2) >> 1)
+
+/**
  * struct policy_mgr_user_cfg - Policy manager user config variables
  * @enable_mcc_adaptive_scheduler: Enable MCC adaptive scheduler
  * @max_concurrent_active_sessions: User allowed maximum active
@@ -1040,6 +1059,17 @@ struct dual_mac_config {
  * @enable2x2: 2x2 chain mask user config
  * @mcc_to_scc_switch_mode: Control SAP channel in concurrency
  * @sub_20_mhz_enabled: Is 5 or 10 Mhz enabled
+ * @dbs_selection_policy: band preference or Vdev preference
+ *      bit[0] = 0: 5G 2x2 preferred to select 2x2 5G + 1x1 2G DBS mode.
+ *      bit[0] = 1: 2G 2x2 preferred to select 2x2 2G + 1x1 5G DBS mode.
+ *      bit[1] = 1: vdev priority enabled.
+ *      bit[1] = 0: vdev priority disabled.
+ * @vdev_priority_list: vdev priority list
+ *      bit[0-3]: pri_id (policy_mgr_pri_id) of highest priority
+ *      bit[4-7]: pri_id (policy_mgr_pri_id) of second priority
+ *      bit[8-11]: pri_id (policy_mgr_pri_id) of third priority
+ *      bit[12-15]: pri_id (policy_mgr_pri_id) of fourth priority
+ *      example: 0x4321 - CLI < GO < SAP < STA
  */
 struct policy_mgr_user_cfg {
 	uint8_t enable_mcc_adaptive_scheduler;
@@ -1051,6 +1081,8 @@ struct policy_mgr_user_cfg {
 	bool is_sta_sap_scc_allowed_on_dfs_chan;
 	uint32_t channel_select_logic_conc;
 	uint32_t sta_sap_scc_on_lte_coex_chan;
+	uint32_t dbs_selection_policy;
+	uint32_t vdev_priority_list;
 };
 
 /**

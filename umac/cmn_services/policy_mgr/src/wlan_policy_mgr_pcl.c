@@ -55,6 +55,10 @@ policy_mgr_next_action_two_connection_table_type
 		*next_action_two_connection_table;
 policy_mgr_next_action_three_connection_table_type
 		*next_action_three_connection_table;
+policy_mgr_next_action_two_connection_table_type
+		*next_action_two_connection_2x2_2g_1x1_5g_table;
+policy_mgr_next_action_three_connection_table_type
+		*next_action_three_connection_2x2_2g_1x1_5g_table;
 
 QDF_STATUS policy_mgr_get_pcl_for_existing_conn(struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_con_mode mode,

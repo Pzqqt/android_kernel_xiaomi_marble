@@ -170,18 +170,17 @@ void qdf_debugfs_printf(qdf_debugfs_file_t file, const char *f, ...)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 
 void qdf_debugfs_hexdump(qdf_debugfs_file_t file, const uint8_t *buf,
-			 qdf_size_t len)
+			 qdf_size_t len, int rowsize, int groupsize)
 {
-	seq_hex_dump(file, "", DUMP_PREFIX_OFFSET, 16, 4, buf, len, false);
+	seq_hex_dump(file, "", DUMP_PREFIX_OFFSET, rowsize, groupsize, buf, len,
+		     false);
 }
 
 #else
 
 void qdf_debugfs_hexdump(qdf_debugfs_file_t file, const uint8_t *buf,
-			 qdf_size_t len)
+			 qdf_size_t len, int rowsize, int groupsize)
 {
-	const size_t rowsize = 16;
-	const size_t groupsize = 4;
 	char *dst;
 	size_t dstlen, readlen;
 	int prefix = 0;
@@ -205,6 +204,11 @@ void qdf_debugfs_hexdump(qdf_debugfs_file_t file, const uint8_t *buf,
 }
 
 #endif
+
+bool qdf_debugfs_overflow(qdf_debugfs_file_t file)
+{
+	return seq_has_overflowed(file);
+}
 
 void qdf_debugfs_write(qdf_debugfs_file_t file, const uint8_t *buf,
 		       qdf_size_t len)
