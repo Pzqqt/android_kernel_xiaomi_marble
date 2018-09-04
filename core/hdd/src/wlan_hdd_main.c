@@ -12550,7 +12550,7 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
  */
 static void component_init(void)
 {
-	mlme_init();
+	ucfg_mlme_init();
 	pmo_init();
 	disa_init();
 	ucfg_ocb_init();
@@ -12570,17 +12570,17 @@ static void component_deinit(void)
 	ucfg_ocb_deinit();
 	pmo_deinit();
 	disa_deinit();
-	mlme_deinit();
+	ucfg_mlme_deinit();
 }
 
 QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
-	return mlme_psoc_open(psoc);
+	return ucfg_mlme_psoc_open(psoc);
 }
 
 void hdd_component_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
-	mlme_psoc_close(psoc);
+	ucfg_mlme_psoc_close(psoc);
 }
 
 void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc)

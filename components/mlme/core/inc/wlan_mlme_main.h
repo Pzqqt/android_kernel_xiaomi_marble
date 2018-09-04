@@ -23,12 +23,9 @@
 #define _WLAN_MLME_MAIN_H_
 
 #include <wlan_mlme_public_struct.h>
-#include <qdf_atomic.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_cmn.h>
-#include <qdf_time.h>
-#include <qdf_list.h>
 
 #define mlme_fatal(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_MLME, params)
 #define mlme_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MLME, params)
@@ -43,24 +40,6 @@
 struct wlan_mlme_psoc_obj {
 	struct wlan_mlme_cfg cfg;
 };
-
-/**
- * mlme_init() - initialize mlme_ctx context.
- *
- * This function initializes the mlme context.
- *
- * Return: QDF_STATUS_SUCCESS - in case of success else return error
- */
-QDF_STATUS mlme_init(void);
-
-/**
- * mlme_deinit() - De initialize mlme_ctx context.
- *
- * This function De initializes mlme contex.
- *
- * Return: QDF_STATUS_SUCCESS - in case of success else return error
- */
-QDF_STATUS mlme_deinit(void);
 
 /**
  * mlme_psoc_object_created_notification(): mlme psoc create handler

@@ -16,14 +16,60 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 /**
- * DOC: define internal APIs related to the mlme component
+ * DOC: define UCFG APIs exposed by the mlme component
  */
 
-#include "cfg_ucfg_api.h"
 #include "wlan_mlme_main.h"
+#include "wlan_mlme_api.h"
 #include "wlan_mlme_ucfg_api.h"
 
-QDF_STATUS mlme_psoc_open(struct wlan_objmgr_psoc *psoc)
+QDF_STATUS ucfg_mlme_init(void)
+{
+	QDF_STATUS status;
+
+	status = wlan_objmgr_register_psoc_create_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_psoc_object_created_notification,
+			NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		mlme_err("unable to register psoc create handle");
+		return status;
+	}
+
+	status = wlan_objmgr_register_psoc_destroy_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_psoc_object_destroyed_notification,
+			NULL);
+	if (status != QDF_STATUS_SUCCESS)
+		mlme_err("unable to register psoc create handle");
+
+	return status;
+}
+
+QDF_STATUS ucfg_mlme_deinit(void)
+{
+	QDF_STATUS status;
+
+	status = wlan_objmgr_unregister_psoc_create_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_psoc_object_created_notification,
+			NULL);
+	if (status != QDF_STATUS_SUCCESS) {
+		mlme_err("unable to unregister psoc create handle");
+		return status;
+	}
+
+	status = wlan_objmgr_unregister_psoc_destroy_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_psoc_object_destroyed_notification,
+			NULL);
+	if (status != QDF_STATUS_SUCCESS)
+		mlme_err("unable to unregister psoc destroy handle");
+
+	return status;
+}
+
+QDF_STATUS ucfg_mlme_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
 
@@ -34,41 +80,7 @@ QDF_STATUS mlme_psoc_open(struct wlan_objmgr_psoc *psoc)
 	return status;
 }
 
-void mlme_psoc_close(struct wlan_objmgr_psoc *psoc)
+void ucfg_mlme_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	/* Clear the MLME CFG Structure */
-}
-
-QDF_STATUS wlan_mlme_get_ht_cap_info(struct wlan_objmgr_psoc *psoc,
-				     struct mlme_ht_capabilities_info
-				     *ht_cap_info)
-{
-	struct wlan_mlme_psoc_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_obj(psoc);
-	if (!mlme_obj) {
-		mlme_err("Failed to get MLME Obj");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	*ht_cap_info = mlme_obj->cfg.ht_caps.ht_cap_info;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS wlan_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
-				     struct mlme_ht_capabilities_info
-				     ht_cap_info)
-{
-	struct wlan_mlme_psoc_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_obj(psoc);
-	if (!mlme_obj) {
-		mlme_err("Failed to get MLME Obj");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	mlme_obj->cfg.ht_caps.ht_cap_info = ht_cap_info;
-
-	return QDF_STATUS_SUCCESS;
 }

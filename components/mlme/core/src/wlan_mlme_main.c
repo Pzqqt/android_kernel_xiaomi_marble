@@ -33,52 +33,6 @@ struct wlan_mlme_psoc_obj *mlme_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 	return mlme_obj;
 }
 
-QDF_STATUS mlme_init(void)
-{
-	QDF_STATUS status;
-
-	status = wlan_objmgr_register_psoc_create_handler(
-			WLAN_UMAC_COMP_MLME,
-			mlme_psoc_object_created_notification,
-			NULL);
-	if (status != QDF_STATUS_SUCCESS) {
-		mlme_err("unable to register psoc create handle");
-		return status;
-	}
-
-	status = wlan_objmgr_register_psoc_destroy_handler(
-			WLAN_UMAC_COMP_MLME,
-			mlme_psoc_object_destroyed_notification,
-			NULL);
-	if (status != QDF_STATUS_SUCCESS)
-		mlme_err("unable to register psoc create handle");
-
-	return status;
-}
-
-QDF_STATUS mlme_deinit(void)
-{
-	QDF_STATUS status;
-
-	status = wlan_objmgr_unregister_psoc_create_handler(
-			WLAN_UMAC_COMP_MLME,
-			mlme_psoc_object_created_notification,
-			NULL);
-	if (status != QDF_STATUS_SUCCESS) {
-		mlme_err("unable to unregister psoc create handle");
-		return status;
-	}
-
-	status = wlan_objmgr_unregister_psoc_destroy_handler(
-			WLAN_UMAC_COMP_MLME,
-			mlme_psoc_object_destroyed_notification,
-			NULL);
-	if (status != QDF_STATUS_SUCCESS)
-		mlme_err("unable to unregister psoc destroy handle");
-
-	return status;
-}
-
 QDF_STATUS mlme_psoc_object_created_notification(
 		struct wlan_objmgr_psoc *psoc, void *arg)
 {
@@ -181,4 +135,3 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 
 	return status;
 }
-
