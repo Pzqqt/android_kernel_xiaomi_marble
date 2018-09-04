@@ -17,7 +17,6 @@ struct wcd937x_mbhc {
 	struct wcd_mbhc wcd_mbhc;
 	struct blocking_notifier_head notifier;
 	struct fw_info *fw_data;
-	bool mbhc_started;
 };
 
 #if IS_ENABLED(CONFIG_SND_SOC_WCD937X)

@@ -547,8 +547,16 @@ static int wcd937x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 					    wcd937x->rx_swr_dev->dev_num,
 					    true);
 		break;
+	case SND_SOC_DAPM_PRE_PMD:
+		blocking_notifier_call_chain(&wcd937x->mbhc->notifier,
+					     WCD_EVENT_PRE_HPHR_PA_OFF,
+					     &wcd937x->mbhc->wcd_mbhc);
+		break;
 	case SND_SOC_DAPM_POST_PMD:
 		usleep_range(7000, 7010);
+		blocking_notifier_call_chain(&wcd937x->mbhc->notifier,
+					     WCD_EVENT_POST_HPHR_PA_OFF,
+					     &wcd937x->mbhc->wcd_mbhc);
 		snd_soc_update_bits(codec, WCD937X_ANA_HPH, 0x10, 0x00);
 		break;
 	};
@@ -579,8 +587,16 @@ static int wcd937x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 				    wcd937x->rx_swr_dev->dev_num,
 				    true);
 		break;
+	case SND_SOC_DAPM_PRE_PMD:
+		blocking_notifier_call_chain(&wcd937x->mbhc->notifier,
+					     WCD_EVENT_PRE_HPHL_PA_OFF,
+					     &wcd937x->mbhc->wcd_mbhc);
+		break;
 	case SND_SOC_DAPM_POST_PMD:
 		usleep_range(7000, 7010);
+		blocking_notifier_call_chain(&wcd937x->mbhc->notifier,
+					     WCD_EVENT_POST_HPHL_PA_OFF,
+					     &wcd937x->mbhc->wcd_mbhc);
 		snd_soc_update_bits(codec, WCD937X_ANA_HPH, 0x20, 0x00);
 		break;
 	};
@@ -1092,15 +1108,15 @@ int wcd937x_micbias_control(struct snd_soc_codec *codec,
 			snd_soc_update_bits(codec, WCD937X_MICB2_TEST_CTL_2, 0x01, 0x01);
 			snd_soc_update_bits(codec, WCD937X_MICB3_TEST_CTL_2, 0x01, 0x01);
 			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x40);
-			if (post_on_event)
-				blocking_notifier_call_chain(&wcd937x->notifier,
-							     post_on_event,
-							     &wcd937x->mbhc);
+			if (post_on_event && wcd937x->mbhc)
+				blocking_notifier_call_chain(
+					&wcd937x->mbhc->notifier, post_on_event,
+					&wcd937x->mbhc->wcd_mbhc);
 		}
-		if (is_dapm && post_dapm_on)
-			blocking_notifier_call_chain(&wcd937x->notifier,
-						     post_dapm_on,
-						     &wcd937x->mbhc);
+		if (is_dapm && post_dapm_on && wcd937x->mbhc)
+			blocking_notifier_call_chain(
+				&wcd937x->mbhc->notifier, post_dapm_on,
+				&wcd937x->mbhc->wcd_mbhc);
 		break;
 	case MICB_DISABLE:
 		if (wcd937x->micb_ref[micb_index] > 0)
@@ -1110,20 +1126,21 @@ int wcd937x_micbias_control(struct snd_soc_codec *codec,
 			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x80);
 		else if ((wcd937x->micb_ref[micb_index] == 0) &&
 			 (wcd937x->pullup_ref[micb_index] == 0)) {
-			if (pre_off_event)
-				blocking_notifier_call_chain(&wcd937x->notifier,
-							     pre_off_event,
-							     &wcd937x->mbhc);
+			if (pre_off_event && wcd937x->mbhc)
+				blocking_notifier_call_chain(
+					&wcd937x->mbhc->notifier, pre_off_event,
+					&wcd937x->mbhc->wcd_mbhc);
 			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x00);
-			if (post_off_event)
-				blocking_notifier_call_chain(&wcd937x->notifier,
-							     post_off_event,
-							     &wcd937x->mbhc);
+			if (post_off_event && wcd937x->mbhc)
+				blocking_notifier_call_chain(
+					&wcd937x->mbhc->notifier,
+					post_off_event,
+					&wcd937x->mbhc->wcd_mbhc);
 		}
-		if (is_dapm && post_dapm_off)
-			blocking_notifier_call_chain(&wcd937x->notifier,
-							post_dapm_off,
-							&wcd937x->mbhc);
+		if (is_dapm && post_dapm_off && wcd937x->mbhc)
+			blocking_notifier_call_chain(
+				&wcd937x->mbhc->notifier, post_dapm_off,
+				&wcd937x->mbhc->wcd_mbhc);
 		break;
 	};
 
@@ -1367,11 +1384,11 @@ static const struct snd_soc_dapm_widget wcd937x_dapm_widgets[] = {
 	SND_SOC_DAPM_PGA_E("HPHL PGA", WCD937X_ANA_HPH, 7, 0, NULL, 0,
 				wcd937x_codec_enable_hphl_pa,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-				SND_SOC_DAPM_POST_PMD),
+				SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_PGA_E("HPHR PGA", WCD937X_ANA_HPH, 6, 0, NULL, 0,
 				wcd937x_codec_enable_hphr_pa,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-				SND_SOC_DAPM_POST_PMD),
+				SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_DAC_E("RDAC1", NULL, SND_SOC_NOPM, 0, 0,
 				wcd937x_codec_hphl_dac_event,
