@@ -23,6 +23,9 @@
  * DFS component.
  */
 
+#ifndef _DFS_PROCESS_RADAR_FOUND_IND_H_
+#define _DFS_PROCESS_RADAR_FOUND_IND_H_
+
 /* Number of channel marking offsets */
 #define DFS_NUM_FREQ_OFFSET   3
 
@@ -144,3 +147,14 @@ void dfs_radarfound_action_generic(struct wlan_dfs *dfs, uint8_t seg_id);
 uint8_t dfs_get_bonding_channels(struct dfs_channel *curchan,
 				 uint32_t segment_id,
 				 uint8_t *channels);
+
+/**
+ * dfs_get_bonding_channels_without_seg_info() - Get bonding channels in chan
+ * @chan: Pointer to dfs_channel structure.
+ * @channels: channel array holding list of bonded channels.
+ *
+ * Return: number of sub channels in the input channel.
+ */
+uint8_t dfs_get_bonding_channels_without_seg_info(struct dfs_channel *chan,
+						  uint8_t *channels);
+#endif /*_DFS_PROCESS_RADAR_FOUND_IND_H_ */

@@ -34,6 +34,7 @@
 #include "wlan_dfs_utils_api.h"
 #include "wlan_dfs_mlme_api.h"
 #include "../dfs_internal.h"
+#include "../dfs_process_radar_found_ind.h"
 
 #define IS_CHANNEL_WEATHER_RADAR(freq) ((freq >= 5600) && (freq <= 5650))
 #define ADJACENT_WEATHER_RADAR_CHANNEL   5580
@@ -183,6 +184,8 @@ void dfs_cac_timer_reset(struct wlan_dfs *dfs)
 	qdf_timer_stop(&dfs->dfs_cac_timer);
 	dfs_get_override_cac_timeout(dfs,
 			&(dfs->dfs_cac_timeout_override));
+	qdf_mem_zero(&dfs->dfs_cac_started_chan,
+		     sizeof(dfs->dfs_cac_started_chan));
 
 }
 
@@ -201,11 +204,24 @@ int dfs_is_ap_cac_timer_running(struct wlan_dfs *dfs)
 
 void dfs_start_cac_timer(struct wlan_dfs *dfs)
 {
-	qdf_timer_mod(&dfs->dfs_cac_timer,
-			dfs_mlme_get_cac_timeout(dfs->dfs_pdev_obj,
-				dfs->dfs_curchan->dfs_ch_freq,
-				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
-				dfs->dfs_curchan->dfs_ch_flags) * 1000);
+	int cac_timeout = 0;
+	struct dfs_channel *chan = dfs->dfs_curchan;
+
+	cac_timeout = dfs_mlme_get_cac_timeout(dfs->dfs_pdev_obj,
+					       chan->dfs_ch_freq,
+					       chan->dfs_ch_vhtop_ch_freq_seg2,
+					       chan->dfs_ch_flags);
+
+	dfs->dfs_cac_started_chan = *chan;
+
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		  "chan = %d cfreq2 = %d timeout = %d sec, curr_time = %d sec",
+		  chan->dfs_ch_ieee, chan->dfs_ch_vhtop_ch_freq_seg2,
+		  cac_timeout,
+		  qdf_system_ticks_to_msecs(qdf_system_ticks()) / 1000);
+
+	qdf_timer_mod(&dfs->dfs_cac_timer, cac_timeout * 1000);
+	dfs->dfs_cac_aborted = 0;
 }
 
 void dfs_cancel_cac_timer(struct wlan_dfs *dfs)
@@ -222,6 +238,8 @@ void dfs_cac_stop(struct wlan_dfs *dfs)
 		"Stopping CAC Timer %d procphyerr 0x%08x",
 		 dfs->dfs_curchan->dfs_ch_freq, phyerr);
 	qdf_timer_stop(&dfs->dfs_cac_timer);
+	if (dfs->dfs_cac_timer_running)
+		dfs->dfs_cac_aborted = 1;
 	dfs->dfs_cac_timer_running = 0;
 }
 
@@ -233,4 +251,78 @@ void dfs_stacac_stop(struct wlan_dfs *dfs)
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
 		"Stopping STA CAC Timer %d procphyerr 0x%08x",
 		 dfs->dfs_curchan->dfs_ch_freq, phyerr);
+}
+
+bool dfs_is_subset_channel(struct dfs_channel *old_chan,
+			   struct dfs_channel *new_chan)
+{
+	uint8_t old_subchans[NUM_CHANNELS_160MHZ];
+	uint8_t new_subchans[NUM_CHANNELS_160MHZ];
+	uint8_t old_n_chans;
+	uint8_t new_n_chans;
+	int i = 0, j = 0;
+	bool is_found = false;
+
+	if (WLAN_IS_CHAN_11AC_VHT160(old_chan) ||
+	    WLAN_IS_CHAN_11AC_VHT80_80(old_chan)) {
+		/* If primary segment is NON-DFS */
+		if (!WLAN_IS_CHAN_DFS(old_chan))
+			old_n_chans = dfs_get_bonding_channels(old_chan,
+							       SEG_ID_SECONDARY,
+							       old_subchans);
+		else
+			old_n_chans = dfs_get_bonding_channels_without_seg_info(
+					old_chan, old_subchans);
+	} else {
+		old_n_chans = dfs_get_bonding_channels_without_seg_info(
+				old_chan, old_subchans);
+	}
+
+	if (WLAN_IS_CHAN_11AC_VHT160(new_chan) ||
+	    WLAN_IS_CHAN_11AC_VHT80_80(new_chan)) {
+		/* If primary segment is NON-DFS */
+		if (WLAN_IS_CHAN_DFS(new_chan))
+			new_n_chans = dfs_get_bonding_channels(
+					new_chan, SEG_ID_SECONDARY,
+					new_subchans);
+		else
+			new_n_chans = dfs_get_bonding_channels_without_seg_info(
+					new_chan, new_subchans);
+	} else {
+		new_n_chans = dfs_get_bonding_channels_without_seg_info(
+				new_chan, new_subchans);
+	}
+
+	if (new_n_chans > old_n_chans)
+		return false;
+
+	for (i = 0; i < new_n_chans; i++) {
+		is_found = false;
+		for (j = 0; j < old_n_chans; j++) {
+			if (new_subchans[i] == old_subchans[j]) {
+				is_found = true;
+				break;
+			}
+		}
+
+		/* If new_subchans[i] is not found in old_subchans, then,
+		 * new_chan is not subset of old_chan.
+		 */
+		if (!is_found)
+			break;
+	}
+
+	return is_found;
+}
+
+bool dfs_is_curchan_subset_of_cac_started_chan(struct wlan_dfs *dfs)
+{
+	return dfs_is_subset_channel(&dfs->dfs_cac_started_chan,
+				     dfs->dfs_curchan);
+}
+
+void dfs_clear_cac_started_chan(struct wlan_dfs *dfs)
+{
+	qdf_mem_zero(&dfs->dfs_cac_started_chan,
+		     sizeof(dfs->dfs_cac_started_chan));
 }

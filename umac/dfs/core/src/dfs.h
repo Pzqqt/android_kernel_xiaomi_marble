@@ -942,6 +942,9 @@ struct dfs_event_log {
  * @dfs_precac_required_list:        PreCAC required list.
  * @dfs_precac_done_list:            PreCAC done list.
  * @dfs_precac_nol_list:             PreCAC NOL List.
+ * @dfs_curchan:                     DFS current channel.
+ * @dfs_cac_started_chan:            CAC started channel.
+ * @dfs_pdev_obj:                    DFS pdev object.
  * @dfs_is_offload_enabled:          Set if DFS offload enabled.
  * @dfs_use_nol:                     Use the NOL when radar found(default: TRUE)
  * @dfs_nol_lock:                    Lock to protect nol list.
@@ -974,6 +977,7 @@ struct dfs_event_log {
  * @dfs_bw_reduced:                  DFS bandwidth reduced channel bit.
  * @dfs_freq_offset:                 Frequency offset where radar was found.
  * @dfs_enhanced_bangradar:          DFS enhance bagradar bit for Full offload.
+ * @dfs_cac_aborted:                 DFS cac is aborted.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1076,6 +1080,7 @@ struct wlan_dfs {
 #endif
 
 	struct dfs_channel *dfs_curchan;
+	struct dfs_channel dfs_cac_started_chan;
 	struct wlan_objmgr_pdev *dfs_pdev_obj;
 	bool           dfs_is_offload_enabled;
 	int            dfs_use_nol;
@@ -1102,6 +1107,7 @@ struct wlan_dfs {
 	uint8_t        dfs_bw_reduced;
 	int32_t        dfs_freq_offset;
 	uint8_t        dfs_enhanced_bangradar;
+	bool           dfs_cac_aborted;
 };
 
 /**
@@ -1856,6 +1862,37 @@ void dfs_cancel_cac_timer(struct wlan_dfs *dfs);
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_start_cac_timer(struct wlan_dfs *dfs);
+
+/**
+ * dfs_is_subset_channel() - Check if the new_chan is subset of the old_chan.
+ * @old_chan: Pointer to old channel.
+ * @new_chan: Pointer to new channel.
+ *
+ * Return: true if the new channel is subset of or same as the old channel,
+ * else false.
+ */
+bool dfs_is_subset_channel(struct dfs_channel *old_chan,
+			   struct dfs_channel *new_chan);
+
+/**
+ * dfs_is_curchan_subset_of_cac_started_chan() - Check if the dfs current
+ * channel is subset of cac started channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * If the current channel and the cac_started_chan is same or
+ * if the current channel is subset of the cac_started_chan then
+ * this function returns true.
+ *
+ * Return: true if current channel is same or subset of  cac started channel,
+ * else false.
+ */
+bool dfs_is_curchan_subset_of_cac_started_chan(struct wlan_dfs *dfs);
+
+/**
+ * dfs_clear_cac_started_chan() - Clear dfs cac started channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_clear_cac_started_chan(struct wlan_dfs *dfs);
 
 /**
  * dfs_set_update_nol_flag() - Sets update_nol flag.

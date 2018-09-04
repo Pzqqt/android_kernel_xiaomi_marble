@@ -247,6 +247,40 @@ QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev)
 }
 qdf_export_symbol(utils_dfs_stacac_stop);
 
+bool utils_dfs_is_curchan_subset_of_cac_started_chan(
+		struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return false;
+
+	return dfs_is_curchan_subset_of_cac_started_chan(dfs);
+}
+
+bool utils_dfs_is_cac_aborted(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return false;
+
+	return dfs->dfs_cac_aborted;
+}
+
+void utils_dfs_clear_cac_started_chan(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return;
+
+	dfs_clear_cac_started_chan(dfs);
+}
+
 QDF_STATUS utils_dfs_get_usenol(struct wlan_objmgr_pdev *pdev, uint16_t *usenol)
 {
 	struct wlan_dfs *dfs;
@@ -794,10 +828,6 @@ QDF_STATUS utils_dfs_bw_reduced_channel(
 			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1;
 		ch_params->center_freq_seg1 =
 			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2;
-		/*If bandwidth reduction is applied,
-		 * dfs_ignore_cac ensures we skip CAC.
-		 */
-		dfs->dfs_ignore_cac = 1;
 		dfs->dfs_bw_reduced = 1;
 		wlan_reg_set_channel_params(pdev,
 					    dfs->dfs_curchan->dfs_ch_ieee,

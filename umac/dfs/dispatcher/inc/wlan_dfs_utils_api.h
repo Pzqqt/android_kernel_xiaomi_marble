@@ -243,6 +243,34 @@ QDF_STATUS utils_dfs_cac_stop(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev);
 
 /**
+ * utils_dfs_is_curchan_subset_of_cac_started_chan() - Check if the dfs current
+ * channel is subset of cac started channel.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * wrapper function for dfs_is_curchan_subset_of_cac_started_chan(). this
+ * function called from outside of dfs component.
+ *
+ * Return: true if current channel is same or subset of  cac started channel,
+ * else false.
+ */
+bool utils_dfs_is_curchan_subset_of_cac_started_chan(
+		struct wlan_objmgr_pdev *pdev);
+
+/**
+ * utils_dfs_is_cac_aborted() - Check if previous CAC was aborted.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Return: true if previous CAC was aborted, else false.
+ */
+bool utils_dfs_is_cac_aborted(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * utils_dfs_clear_cac_started_chan() - Clear dfs cac started channel.
+ * @pdev: Pointer to DFS pdev object.
+ */
+void utils_dfs_clear_cac_started_chan(struct wlan_objmgr_pdev *pdev);
+
+/**
  * utils_dfs_get_usenol() - Returns use_nol flag.
  * @pdev: Pointer to DFS pdev object.
  * @usenol: Pointer to usenol value.

@@ -216,23 +216,4 @@ static inline void dfs_add_to_etsi_precac_done_list(struct wlan_dfs *dfs)
 }
 #endif
 
-/**
- * dfs_get_bonding_channels_without_seg_info() - Get bonding channels in curchan
- * @curchan: Pointer to dfs_channel structure.
- * @channels: channel array holding list of bonded channels.
- *
- * Return: number of sub channels in the current channel.
- */
-#ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
-uint8_t dfs_get_bonding_channels_without_seg_info(struct dfs_channel *curchan,
-						  uint8_t *channels);
-#else
-static inline uint8_t
-dfs_get_bonding_channels_without_seg_info(struct dfs_channel *curchan,
-					  uint8_t *channels)
-{
-	return 0;
-}
-#endif
-
 #endif /* _DFS_ETSI_PRECAC_H_ */

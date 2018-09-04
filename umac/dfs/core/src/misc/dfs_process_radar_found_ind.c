@@ -360,6 +360,54 @@ static uint8_t dfs_find_radar_affected_subchans(struct wlan_dfs *dfs,
 	return i;
 }
 
+uint8_t dfs_get_bonding_channels_without_seg_info(struct dfs_channel *chan,
+						  uint8_t *channels)
+{
+	uint8_t center_chan;
+	uint8_t nchannels = 0;
+
+	center_chan = chan->dfs_ch_vhtop_ch_freq_seg1;
+
+	if (WLAN_IS_CHAN_MODE_20(chan)) {
+		nchannels = 1;
+		channels[0] = center_chan;
+	} else if (WLAN_IS_CHAN_MODE_40(chan)) {
+		nchannels = 2;
+		channels[0] = center_chan - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[1] = center_chan + DFS_5GHZ_NEXT_CHAN_OFFSET;
+	} else if (WLAN_IS_CHAN_MODE_80(chan)) {
+		nchannels = 4;
+		channels[0] = center_chan - DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[1] = center_chan - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[2] = center_chan + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[3] = center_chan + DFS_5GHZ_2ND_CHAN_OFFSET;
+	} else if (WLAN_IS_CHAN_MODE_80_80(chan)) {
+		nchannels = 8;
+		channels[0] = center_chan - DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[1] = center_chan - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[2] = center_chan + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[3] = center_chan + DFS_5GHZ_2ND_CHAN_OFFSET;
+		center_chan = chan->dfs_ch_vhtop_ch_freq_seg2;
+		channels[4] = center_chan - DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[5] = center_chan - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[6] = center_chan + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[7] = center_chan + DFS_5GHZ_2ND_CHAN_OFFSET;
+	} else if (WLAN_IS_CHAN_MODE_160(chan)) {
+		nchannels = 8;
+		center_chan = chan->dfs_ch_vhtop_ch_freq_seg2;
+		channels[0] = center_chan - DFS_5GHZ_4TH_CHAN_OFFSET;
+		channels[1] = center_chan - DFS_5GHZ_3RD_CHAN_OFFSET;
+		channels[2] = center_chan - DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[3] = center_chan - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[4] = center_chan + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[5] = center_chan + DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[6] = center_chan + DFS_5GHZ_3RD_CHAN_OFFSET;
+		channels[7] = center_chan + DFS_5GHZ_4TH_CHAN_OFFSET;
+	}
+
+	return nchannels;
+}
+
 uint8_t dfs_get_bonding_channels(struct dfs_channel *curchan,
 				 uint32_t segment_id,
 				 uint8_t *channels)
