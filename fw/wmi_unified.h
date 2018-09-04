@@ -20102,6 +20102,11 @@ typedef struct {
      * byte 40
      */
     A_UINT32 toeplitz_hash_ipv6_40;
+
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32 pdev_id;
 } wmi_lro_info_cmd_fixed_param;
 
 typedef struct {
