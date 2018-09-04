@@ -132,8 +132,6 @@ enum csr_roam_reason {
 	eCsrSmeIssuedDisassocForHandoff,
 	/* will be issued by Handoff logic to join a new AP with same profile */
 	eCsrSmeIssuedAssocToSimilarAP,
-	/* ibss jointimer fired before any peer showedup, so shutdown network */
-	eCsrSmeIssuedIbssJoinFailure,
 	eCsrForcedIbssLeave,
 	eCsrStopBss,
 	eCsrSmeIssuedFTReassoc,

@@ -7261,19 +7261,12 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 		break;
 	case eCsrForcedDisassoc:
 	case eCsrForcedDeauth:
-	case eCsrSmeIssuedIbssJoinFailure:
 		csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_IDLE,
 			session_id);
-
-		if (eCsrSmeIssuedIbssJoinFailure == cmd->u.roamCmd.roamReason)
-			/* notify HDD that IBSS join failed */
-			csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
-				eCSR_ROAM_IBSS_IND,
-				eCSR_ROAM_RESULT_IBSS_JOIN_FAILED);
-		else
-			csr_roam_call_callback(mac_ctx, session_id, NULL,
-				cmd->u.roamCmd.roamId, eCSR_ROAM_DISASSOCIATED,
-				eCSR_ROAM_RESULT_FORCED);
+		csr_roam_call_callback(
+			mac_ctx, session_id, NULL,
+			cmd->u.roamCmd.roamId, eCSR_ROAM_DISASSOCIATED,
+			eCSR_ROAM_RESULT_FORCED);
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 		sme_qos_csr_event_ind(mac_ctx, (uint8_t) session_id,
 				SME_QOS_CSR_DISCONNECT_IND,
@@ -9425,10 +9418,6 @@ QDF_STATUS csr_roam_issue_disassociate_cmd(tpAniSirGlobal pMac,
 			break;
 		case eCSR_DISCONNECT_REASON_ROAM_HO_FAIL:
 			pCommand->u.roamCmd.roamReason = eCsrForcedDisassoc;
-			break;
-		case eCSR_DISCONNECT_REASON_IBSS_JOIN_FAILURE:
-			pCommand->u.roamCmd.roamReason =
-				eCsrSmeIssuedIbssJoinFailure;
 			break;
 		case eCSR_DISCONNECT_REASON_IBSS_LEAVE:
 			pCommand->u.roamCmd.roamReason = eCsrForcedIbssLeave;
@@ -20525,9 +20514,6 @@ static enum wlan_serialization_cmd_type csr_get_roam_cmd_type(
 	case eCsrSmeIssuedAssocToSimilarAP:
 		cmd_type =
 			WLAN_SER_CMD_SME_ISSUE_ASSOC_TO_SIMILAR_AP;
-		break;
-	case eCsrSmeIssuedIbssJoinFailure:
-		cmd_type = WLAN_SER_CMD_SME_ISSUE_IBSS_JOIN_FAIL;
 		break;
 	case eCsrForcedIbssLeave:
 		cmd_type = WLAN_SER_CMD_FORCE_IBSS_LEAVE;
