@@ -12232,6 +12232,9 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 		hdd_err("SAP Not able to set AP IEs");
 		goto end;
 	}
+	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
+				    hdd_ap_ctx->sap_config.channel, 0,
+				    &hdd_ap_ctx->sap_config.ch_params);
 
 	qdf_event_reset(&hostapd_state->qdf_event);
 	if (wlansap_start_bss(hdd_ap_ctx->sap_context, hdd_hostapd_sap_event_cb,

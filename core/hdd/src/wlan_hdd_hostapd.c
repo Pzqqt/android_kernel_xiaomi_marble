@@ -1594,6 +1594,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	tSap_StationDisassocCompleteEvent *disassoc_comp;
 	struct hdd_station_info *stainfo;
 	mac_handle_t mac_handle;
+	tsap_config_t *sap_config;
 
 	dev = context;
 	if (!dev) {
@@ -1637,6 +1638,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	dfs_info.channel = ap_ctx->operating_channel;
 	sme_get_country_code(mac_handle, dfs_info.country_code, &cc_len);
 	staId = pSapEvent->sapevt.sapStartBssCompleteEvent.staId;
+	sap_config = &adapter->session.ap.sap_config;
 
 	switch (sapEvent) {
 	case eSAP_START_BSS_EVENT:
@@ -1650,12 +1652,16 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		adapter->session_id =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.sessionId;
 
-		adapter->session.ap.sap_config.channel =
+		sap_config->channel =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.
 			operatingChannel;
 
-		adapter->session.ap.sap_config.ch_params.ch_width =
+		sap_config->ch_params.ch_width =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.ch_width;
+
+		wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
+					    sap_config->channel, 0,
+					    &sap_config->ch_params);
 
 		hostapd_state->qdf_status =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
