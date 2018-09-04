@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -86,6 +86,8 @@ static struct wcd_mbhc_register
 			  WCD934X_MBHC_NEW_CTL_2, 0x03, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HS_COMP_RESULT",
 			  WCD934X_ANA_MBHC_RESULT_3, 0x08, 3, 0),
+	WCD_MBHC_REGISTER("WCD_MBHC_IN2P_CLAMP_STATE",
+			  WCD934X_ANA_MBHC_RESULT_3, 0x10, 4, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_MIC_SCHMT_RESULT",
 			  WCD934X_ANA_MBHC_RESULT_3, 0x20, 5, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPHL_SCHMT_RESULT",
