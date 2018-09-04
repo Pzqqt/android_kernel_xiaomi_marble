@@ -2289,12 +2289,16 @@ static QDF_STATUS htt_rx_hash_smmu_map(bool map, struct htt_pdev_t *pdev)
 						HTT_RX_BUF_SIZE);
 				ret = cds_smmu_map_unmap(map, 1,
 							 &mem_map_table);
-				if (ret)
+				if (ret) {
+					qdf_spin_unlock_bh(
+						&pdev->rx_ring.rx_hash_lock);
 					return QDF_STATUS_E_FAILURE;
+				}
 			}
 			list_iter = list_iter->next;
 		}
 	}
+
 	qdf_spin_unlock_bh(&pdev->rx_ring.rx_hash_lock);
 
 	return QDF_STATUS_SUCCESS;
