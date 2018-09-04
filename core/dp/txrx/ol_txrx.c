@@ -4846,6 +4846,11 @@ static void ol_txrx_offld_flush(void *data)
 	if (qdf_unlikely(!sched_ctx))
 		return;
 
+	if (qdf_unlikely(!pdev)) {
+		ol_txrx_err("TXRX module context is NULL");
+		return;
+	}
+
 	if (!ol_cfg_is_rx_thread_enabled(pdev->ctrl_pdev)) {
 		ol_txrx_offld_flush_handler(data, NULL, 0);
 	} else {
