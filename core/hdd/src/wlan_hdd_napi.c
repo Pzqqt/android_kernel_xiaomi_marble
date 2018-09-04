@@ -102,40 +102,48 @@ int hdd_napi_create(void)
 
 	NAPI_DEBUG("-->");
 
+	if (NULL == napid) {
+		hdd_err("unable to retrieve napi structure");
+		rc = -EFAULT;
+		goto exit;
+	}
+
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif_ctx)) {
 		QDF_ASSERT(NULL != hif_ctx);
 		rc = -EFAULT;
-	} else {
-
-		feature_flags = QCA_NAPI_FEATURE_CPU_CORRECTION |
-				QCA_NAPI_FEATURE_IRQ_BLACKLISTING |
-				QCA_NAPI_FEATURE_CORE_CTL_BOOST;
-
-		rc = hif_napi_create(hif_ctx, hdd_napi_poll,
-				     QCA_NAPI_BUDGET,
-				     QCA_NAPI_DEF_SCALE,
-				     feature_flags);
-		if (rc < 0) {
-			hdd_err("ERR(%d) creating NAPI instances",
-				rc);
-		} else {
-			hdd_debug("napi instances were created. Map=0x%x", rc);
-			hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-			if (unlikely(NULL == hdd_ctx)) {
-				QDF_ASSERT(0);
-				rc = -EFAULT;
-			} else {
-				rc = hdd_napi_event(NAPI_EVT_INI_FILE,
-					(void *)hdd_ctx->napi_enable);
-				napid->user_cpu_affin_mask =
-					hdd_ctx->config->napi_cpu_affinity_mask;
-			}
-		}
-
+		goto exit;
 	}
-	NAPI_DEBUG("<-- [rc=%d]", rc);
 
+	feature_flags = QCA_NAPI_FEATURE_CPU_CORRECTION |
+		QCA_NAPI_FEATURE_IRQ_BLACKLISTING |
+		QCA_NAPI_FEATURE_CORE_CTL_BOOST;
+
+	rc = hif_napi_create(hif_ctx, hdd_napi_poll,
+			     QCA_NAPI_BUDGET,
+			     QCA_NAPI_DEF_SCALE,
+			     feature_flags);
+	if (rc < 0) {
+		hdd_err("ERR(%d) creating NAPI instances",
+			rc);
+		goto exit;
+	}
+
+	hdd_debug("napi instances were created. Map=0x%x", rc);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (unlikely(NULL == hdd_ctx)) {
+		QDF_ASSERT(0);
+		rc = -EFAULT;
+		goto exit;
+	}
+
+	rc = hdd_napi_event(NAPI_EVT_INI_FILE,
+			    (void *)hdd_ctx->napi_enable);
+	napid->user_cpu_affin_mask =
+		hdd_ctx->config->napi_cpu_affinity_mask;
+
+ exit:
+	NAPI_DEBUG("<-- [rc=%d]", rc);
 	return rc;
 }
 
