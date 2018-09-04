@@ -245,7 +245,7 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	struct hpf_work *hpf_work;
 	struct va_macro_priv *va_priv;
 	struct snd_soc_codec *codec;
-	u16 dec_cfg_reg;
+	u16 dec_cfg_reg, hpf_gate_reg;
 	u8 hpf_cut_off_freq;
 
 	hpf_delayed_work = to_delayed_work(work);
@@ -256,12 +256,18 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 
 	dec_cfg_reg = BOLERO_CDC_VA_TX0_TX_PATH_CFG0 +
 			VA_MACRO_TX_PATH_OFFSET * hpf_work->decimator;
+	hpf_gate_reg = BOLERO_CDC_VA_TX0_TX_PATH_SEC2 +
+			VA_MACRO_TX_PATH_OFFSET * hpf_work->decimator;
 
 	dev_dbg(va_priv->dev, "%s: decimator %u hpf_cut_of_freq 0x%x\n",
 		__func__, hpf_work->decimator, hpf_cut_off_freq);
 
 	snd_soc_update_bits(codec, dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
 			    hpf_cut_off_freq << 5);
+	snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x02);
+	/* Minimum 1 clk cycle delay is required as per HW spec */
+	usleep_range(1000, 1010);
+	snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x00);
 }
 
 static void va_macro_mute_update_callback(struct work_struct *work)
@@ -512,15 +518,6 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		hpf_cut_off_freq = (snd_soc_read(codec, dec_cfg_reg) &
-				   TX_HPF_CUT_OFF_FREQ_MASK) >> 5;
-		va_priv->va_hpf_work[decimator].hpf_cut_off_freq =
-							hpf_cut_off_freq;
-
-		if (hpf_cut_off_freq != CF_MIN_3DB_150HZ)
-			snd_soc_update_bits(codec, dec_cfg_reg,
-					    TX_HPF_CUT_OFF_FREQ_MASK,
-					    CF_MIN_3DB_150HZ << 5);
 		/* Enable TX PGA Mute */
 		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x10);
 		break;
@@ -529,6 +526,22 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x20, 0x20);
 		snd_soc_update_bits(codec, hpf_gate_reg, 0x01, 0x00);
 
+		hpf_cut_off_freq = (snd_soc_read(codec, dec_cfg_reg) &
+				   TX_HPF_CUT_OFF_FREQ_MASK) >> 5;
+		va_priv->va_hpf_work[decimator].hpf_cut_off_freq =
+							hpf_cut_off_freq;
+
+		if (hpf_cut_off_freq != CF_MIN_3DB_150HZ) {
+			snd_soc_update_bits(codec, dec_cfg_reg,
+					    TX_HPF_CUT_OFF_FREQ_MASK,
+					    CF_MIN_3DB_150HZ << 5);
+			snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x02);
+			/*
+			 * Minimum 1 clk cycle delay is required as per HW spec
+			 */
+			usleep_range(1000, 1010);
+			snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x00);
+		}
 		/* schedule work queue to Remove Mute */
 		schedule_delayed_work(&va_priv->va_mute_dwork[decimator].dwork,
 				      msecs_to_jiffies(va_tx_unmute_delay));
@@ -551,6 +564,15 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				snd_soc_update_bits(codec, dec_cfg_reg,
 						    TX_HPF_CUT_OFF_FREQ_MASK,
 						    hpf_cut_off_freq << 5);
+				snd_soc_update_bits(codec, hpf_gate_reg,
+						    0x02, 0x02);
+				/*
+				 * Minimum 1 clk cycle delay is required
+				 * as per HW spec
+				 */
+				usleep_range(1000, 1010);
+				snd_soc_update_bits(codec, hpf_gate_reg,
+						    0x02, 0x00);
 			}
 		}
 		cancel_delayed_work_sync(
