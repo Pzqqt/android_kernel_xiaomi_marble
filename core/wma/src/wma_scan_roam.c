@@ -377,11 +377,11 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 
 	status = wmi_unified_roam_scan_offload_mode_cmd(wma_handle->wmi_handle,
 				scan_cmd_fp, params);
+	qdf_mem_free(params);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
 	WMA_LOGD("%s: WMA --> WMI_ROAM_SCAN_MODE", __func__);
-	qdf_mem_free(params);
 	return status;
 }
 
