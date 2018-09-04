@@ -1659,14 +1659,12 @@ done:
 #endif /* NAPIER_EMULATION */
 
 		if (qdf_likely(vdev->rx_decap_type ==
-					htt_cmn_pkt_type_ethernet) &&
-				(qdf_likely(!vdev->mesh_vdev)) &&
-				(vdev->wds_enabled)) {
+			       htt_cmn_pkt_type_ethernet) &&
+		    qdf_likely(!vdev->mesh_vdev)) {
 			/* WDS Source Port Learning */
-			dp_rx_wds_srcport_learn(soc,
-						rx_tlv_hdr,
-						peer,
-						nbuf);
+			if (vdev->wds_enabled)
+				dp_rx_wds_srcport_learn(soc, rx_tlv_hdr,
+							peer, nbuf);
 
 			/* Intrabss-fwd */
 			if (dp_rx_check_ap_bridge(vdev))
