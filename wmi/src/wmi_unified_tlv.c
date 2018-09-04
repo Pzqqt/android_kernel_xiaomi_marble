@@ -18527,6 +18527,11 @@ static QDF_STATUS extract_p2p_noa_ev_param_tlv(
 		(uint8_t) WMI_UNIFIED_NOA_ATTR_CTWIN_GET(wmi_noa_info);
 	descriptors = WMI_UNIFIED_NOA_ATTR_NUM_DESC_GET(wmi_noa_info);
 	param->num_desc = (uint8_t) descriptors;
+	if (param->num_desc > WMI_P2P_MAX_NOA_DESCRIPTORS) {
+		WMI_LOGE("%s: invalid num desc:%d", __func__,
+			 param->num_desc);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	WMI_LOGD("%s:index %u, opps_ps %u, ct_window %u, num_descriptors = %u", __func__,
 		param->index, param->opps_ps, param->ct_window,
