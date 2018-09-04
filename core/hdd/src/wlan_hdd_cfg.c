@@ -1723,6 +1723,15 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_QDF_TRACE_ENABLE_MIN,
 		     CFG_QDF_TRACE_ENABLE_MAX),
 
+#ifdef ENABLE_MTRACE_LOG
+	REG_VARIABLE(CFG_ENABLE_MTRACE, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_mtrace,
+		     VAR_FLAGS_OPTIONAL,
+		     CFG_ENABLE_MTRACE_DEFAULT,
+		     CFG_ENABLE_MTRACE_MIN,
+		     CFG_ENABLE_MTRACE_MAX),
+#endif
+
 	REG_VARIABLE(CFG_TELE_BCN_MAX_LI_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nTeleBcnMaxListenInterval,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,

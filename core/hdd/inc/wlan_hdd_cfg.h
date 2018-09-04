@@ -5631,6 +5631,16 @@ enum hdd_link_speed_rpt_type {
 /* disable debug logs for DP by default */
 #define CFG_QDF_TRACE_ENABLE_DP_DEFAULT   (0x7f)
 
+#ifdef ENABLE_MTRACE_LOG
+/*
+ * Enable MTRACE for all modules
+ */
+#define CFG_ENABLE_MTRACE            "enable_mtrace"
+#define CFG_ENABLE_MTRACE_MIN        (0)
+#define CFG_ENABLE_MTRACE_MAX        (1)
+#define CFG_ENABLE_MTRACE_DEFAULT    (0)
+#endif
+
 #define HDD_MCASTBCASTFILTER_FILTER_NONE                       0x00
 #define HDD_MCASTBCASTFILTER_FILTER_ALL_MULTICAST              0x01
 #define HDD_MCASTBCASTFILTER_FILTER_ALL_BROADCAST              0x02
@@ -14164,7 +14174,9 @@ struct hdd_config {
 	uint16_t qdf_trace_enable_nan;
 	uint16_t qdf_trace_enable_regulatory;
 	uint16_t qdf_trace_enable_cp_stats;
-
+#ifdef ENABLE_MTRACE_LOG
+	bool enable_mtrace;
+#endif
 	uint16_t nTeleBcnMaxListenInterval;
 	uint8_t enableBypass11d;
 	uint8_t enableDFSChnlScan;
