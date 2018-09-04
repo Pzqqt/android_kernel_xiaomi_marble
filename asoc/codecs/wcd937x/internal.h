@@ -56,7 +56,6 @@ struct wcd937x_priv {
 	s32 dmic_4_5_clk_cnt;
 	/* mbhc module */
 	struct wcd937x_mbhc *mbhc;
-	struct blocking_notifier_head notifier;
 
 	u32 hph_mode;
 
