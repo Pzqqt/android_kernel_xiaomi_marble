@@ -1715,12 +1715,7 @@ static int wcd937x_soc_codec_probe(struct snd_soc_codec *codec)
 				__func__);
 			goto err_hwdep;
 		}
-		ret = snd_soc_dapm_new_widgets(dapm->card);
-		if (ret < 0) {
-			dev_err(codec->dev, "%s: Failed to add widgets\n",
-				__func__);
-			goto err_hwdep;
-		}
+		snd_soc_dapm_sync(dapm);
 	}
 	wcd937x->version = WCD937X_VERSION_1_0;
 	return ret;
