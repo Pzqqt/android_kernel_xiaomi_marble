@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 /**
- * DOC: declare internal API related to the mlme component
+ * DOC: declare UCFG APIs exposed by the mlme component
  */
 
 #ifndef _WLAN_MLME_UCFG_API_H_
@@ -26,48 +26,45 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_cmn.h>
+#include <wlan_mlme_api.h>
 
 /**
- * mlme_psoc_open() - MLME component Open
+ * ucfg_mlme_init() - initialize mlme_ctx context.
+ *
+ * This function initializes the mlme context.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success else return error
+ */
+QDF_STATUS ucfg_mlme_init(void);
+
+/**
+ * ucfg_mlme_deinit() - De initialize mlme_ctx context.
+ *
+ * This function De initializes mlme contex.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success else return error
+ */
+QDF_STATUS ucfg_mlme_deinit(void);
+
+/**
+ * ucfg_mlme_psoc_open() - MLME component Open
  * @psoc: pointer to psoc object
  *
  * Open the MLME component and initialize the MLME strucutre
  *
  * Return: QDF Status
  */
-QDF_STATUS mlme_psoc_open(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS ucfg_mlme_psoc_open(struct wlan_objmgr_psoc *psoc);
 
 /**
- * mlme_psoc_close() - MLME component close
+ * ucfg_mlme_psoc_close() - MLME component close
  * @psoc: pointer to psoc object
  *
  * Close the MLME component and clear the MLME structures
  *
  * Return: None
  */
-void mlme_psoc_close(struct wlan_objmgr_psoc *psoc);
-
-/**
- * wlan_mlme_get_ht_cap_info() - Get the HT cap info config
- * @psoc: pointer to psoc object
- * @value: pointer to the value which will be filled for the caller
- *
- * Return: QDF Status
- */
-QDF_STATUS wlan_mlme_get_ht_cap_info(struct wlan_objmgr_psoc *psoc,
-				     struct mlme_ht_capabilities_info
-				     *ht_cap_info);
-
-/**
- * wlan_mlme_set_ht_cap_info() - Set the HT cap info config
- * @psoc: pointer to psoc object
- * @value: Value that needs to be set from the caller
- *
- * Return: QDF Status
- */
-QDF_STATUS wlan_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
-				     struct mlme_ht_capabilities_info
-				     ht_cap_info);
+void ucfg_mlme_psoc_close(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_mlme_get_ht_cap_info() - Get the HT cap info config
