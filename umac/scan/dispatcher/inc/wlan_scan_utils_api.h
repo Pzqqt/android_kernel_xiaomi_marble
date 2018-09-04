@@ -1548,4 +1548,18 @@ util_scan_entry_extenderie(struct scan_cache_entry *scan_entry)
 	return scan_entry->ie_list.extender;
 }
 
+/**
+ * util_scan_entry_mdie() - function to read Mobility Domain IE
+ * @scan_entry: scan entry
+ *
+ * API, function to read Mobility Domain IE
+ *
+ * Return: MDIE or NULL if IE is not present
+ */
+static inline uint8_t*
+util_scan_entry_mdie(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.mdie;
+}
+
 #endif
