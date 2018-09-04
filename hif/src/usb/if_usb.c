@@ -220,7 +220,7 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 	sc->dev = &usbdev->dev;
 	sc->devid = id->idProduct;
 
-	hif_get_device_type(vendor_id, 0, &hif_type, &target_type);
+	hif_get_device_type(product_id, 0, &hif_type, &target_type);
 	tgt_info = hif_get_target_info_handle(hif_hdl);
 	if (target_type == TARGET_TYPE_QCN7605)
 		tgt_info->target_type = TARGET_TYPE_QCN7605;
