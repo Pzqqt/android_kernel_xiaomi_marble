@@ -2342,6 +2342,8 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 		ret = hdd_start_station_adapter(adapter);
 		if (ret)
 			goto err_start_adapter;
+
+		hdd_nud_ignore_tracking(adapter, false);
 		break;
 	case QDF_P2P_GO_MODE:
 	case QDF_SAP_MODE:

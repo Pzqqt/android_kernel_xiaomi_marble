@@ -56,6 +56,7 @@ hdd_nud_flush_work(struct hdd_adapter *adapter)
 
 void hdd_nud_deinit_tracking(struct hdd_adapter *adapter)
 {
+	hdd_debug("DeInitialize the NUD tracking");
 	qdf_destroy_work(NULL, &adapter->nud_tracking.nud_event_work);
 }
 
@@ -78,7 +79,7 @@ void hdd_nud_reset_tracking(struct hdd_adapter *adapter)
 
 	if (adapter->device_mode == QDF_STA_MODE &&
 	    hdd_ctx->config->enable_nud_tracking) {
-		hdd_debug("De Initialize the NUD tracking");
+		hdd_debug("Reset the NUD tracking");
 
 		qdf_zero_macaddr(&adapter->nud_tracking.gw_mac_addr);
 		qdf_mem_zero(&adapter->nud_tracking.tx_rx_stats,
