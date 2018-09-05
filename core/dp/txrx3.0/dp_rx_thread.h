@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined(__DP_RX_THREAD__H)
+#if !defined(__DP_RX_THREAD_H)
 #define __DP_RX_THREAD_H
 
 #include <qdf_lock.h>
