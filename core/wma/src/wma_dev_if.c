@@ -572,6 +572,30 @@ wma_cdp_vdev_detach(ol_txrx_soc_handle soc,
 	iface->handle = NULL;
 }
 
+/**
+ * wma_release_vdev_ref() - Release vdev object reference count
+ * @wma_handle: wma handle
+ * @vdev_id: used to get wma interface txrx node
+ *
+ * Purpose of this function is to release vdev object reference count
+ * from wma interface txrx node.
+ *
+ * Return: None
+ */
+static void
+wma_release_vdev_ref(tp_wma_handle wma_handle, uint8_t vdev_id)
+{
+	struct wma_txrx_node *iface;
+	struct wlan_objmgr_vdev *vdev;
+
+	iface = &wma_handle->interfaces[vdev_id];
+	vdev = iface->vdev;
+
+	iface->vdev = NULL;
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+}
+
 static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 			struct del_sta_self_params *del_sta_self_req_param,
 			uint8_t generate_rsp)
@@ -618,6 +642,7 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 				     WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION);
 	}
 	WMA_LOGD("Call txrx detach with callback for vdev %d", vdev_id);
+	wma_release_vdev_ref(wma_handle, vdev_id);
 	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 
 	/*
@@ -631,6 +656,7 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 out:
 	WMA_LOGE("Call txrx detach callback for vdev %d, generate_rsp %u",
 		vdev_id, generate_rsp);
+	wma_release_vdev_ref(wma_handle, vdev_id);
 	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 
 	wma_vdev_deinit(iface);
@@ -794,6 +820,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	 */
 	if (cds_is_driver_recovering() || !cds_is_target_ready()) {
 		wma_force_objmgr_vdev_peer_cleanup(wma_handle, vdev_id);
+		wma_release_vdev_ref(wma_handle, vdev_id);
 		wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 		goto send_rsp;
 	}
@@ -2253,6 +2280,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	struct sir_set_tx_aggr_sw_retry_threshold tx_aggr_sw_retry_threshold;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_objmgr_peer *obj_peer;
+	struct wlan_objmgr_vdev *vdev;
 
 	qdf_mem_zero(&tx_rx_aggregation_size, sizeof(tx_rx_aggregation_size));
 	WMA_LOGD("mac %pM, vdev_id %hu, type %d, sub_type %d, nss 2g %d, 5g %d",
@@ -2261,12 +2289,14 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		self_sta_req->nss_2g, self_sta_req->nss_5g);
 	if (NULL == mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
+		status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
 	vdev_id = self_sta_req->session_id;
 	if (wma_is_vdev_valid(vdev_id)) {
 		WMA_LOGE("%s: vdev %d already active", __func__, vdev_id);
+		status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
@@ -2292,6 +2322,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		WMA_LOGE("Failed to get txrx vdev type");
 		wmi_unified_vdev_delete_send(wma_handle->wmi_handle,
 					     self_sta_req->session_id);
+		status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
 
@@ -2302,7 +2333,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	WMA_LOGD("vdev_id %hu, txrx_vdev_handle = %pK", self_sta_req->session_id,
 		 txrx_vdev_handle);
 
-	if (NULL == txrx_vdev_handle) {
+	if (!txrx_vdev_handle) {
 		WMA_LOGE("%s: cdp_vdev_attach failed", __func__);
 		status = QDF_STATUS_E_FAILURE;
 		wmi_unified_vdev_delete_send(wma_handle->wmi_handle,
@@ -2582,6 +2613,15 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 			WMA_LOGE("Failed to configure active APF mode");
 	}
 
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma_handle->psoc,
+						    vdev_id,
+						    WLAN_LEGACY_WMA_ID);
+	if (!vdev) {
+		WMA_LOGE(FL("vdev obj is NULL for vdev_id: %u"), vdev_id);
+		status = QDF_STATUS_E_FAILURE;
+	} else {
+		wma_handle->interfaces[vdev_id].vdev = vdev;
+	}
 end:
 	self_sta_req->status = status;
 

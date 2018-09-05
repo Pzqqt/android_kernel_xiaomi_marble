@@ -771,6 +771,7 @@ struct roam_synch_frame_ind {
 
 /**
  * struct wma_txrx_node - txrx node
+ * @vdev: pointer to vdev object
  * @addr: mac address
  * @bssid: bssid
  * @handle: wma handle
@@ -840,6 +841,7 @@ struct roam_synch_frame_ind {
  * It stores parameters per vdev in wma.
  */
 struct wma_txrx_node {
+	struct wlan_objmgr_vdev *vdev;
 	uint8_t addr[IEEE80211_ADDR_LEN];
 	uint8_t bssid[IEEE80211_ADDR_LEN];
 	struct cdp_vdev *handle;
