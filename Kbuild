@@ -844,6 +844,26 @@ FWOL_INC := -I$(WLAN_ROOT)/$(FWOL_DIR)/core/inc \
 FWOL_OBJS :=	$(FWOL_DIR)/core/src/wlan_fw_offload_main.o \
 		$(FWOL_DIR)/dispatcher/src/wlan_fwol_ucfg_api.o
 
+######## SM FRAMEWORK  ##############
+UMAC_SM_DIR := umac/cmn_services/sm_engine
+UMAC_SM_INC := -I$(WLAN_COMMON_INC)/$(UMAC_SM_DIR)/inc
+
+UMAC_SM_OBJS := $(WLAN_COMMON_ROOT)/$(UMAC_SM_DIR)/src/wlan_sm_engine.o
+
+ifeq ($(CONFIG_SM_ENG_HIST), y)
+UMAC_SM_OBJS +=	$(WLAN_COMMON_ROOT)/$(UMAC_SM_DIR)/src/wlan_sm_engine_dbg.o
+endif
+
+######## COMMON MLME ##############
+UMAC_MLME_INC := -I$(WLAN_COMMON_INC)/umac/mlme \
+		-I$(WLAN_COMMON_INC)/umac/mlme/mlme_objmgr/dispatcher/inc \
+		-I$(WLAN_COMMON_INC)/umac/mlme/vdev_mgr/dispatcher/inc
+
+ifeq ($(CONFIG_CMN_VDEV_MLME_SM), y)
+UMAC_MLME_OBJS := $(WLAN_COMMON_ROOT)/umac/mlme/mlme_objmgr/dispatcher/src/wlan_vdev_mlme_main.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/vdev_mgr/dispatcher/src/wlan_vdev_mlme_api.o
+endif
 
 ######## MLME ##############
 MLME_DIR := components/mlme
@@ -1632,6 +1652,8 @@ INCS +=		$(PLD_INC)
 INCS +=		$(OCB_INC)
 
 INCS +=		$(IPA_INC)
+INCS +=		$(UMAC_SM_INC)
+INCS +=		$(UMAC_MLME_INC)
 INCS +=		$(MLME_INC)
 INCS +=		$(FWOL_INC)
 
@@ -1714,6 +1736,8 @@ OBJS +=		$(NLINK_OBJS)
 OBJS +=		$(PTT_OBJS)
 OBJS +=		$(UMAC_SER_OBJS)
 OBJS +=		$(PLD_OBJS)
+OBJS +=		$(UMAC_SM_OBJS)
+OBJS +=		$(UMAC_MLME_OBJS)
 OBJS +=		$(MLME_OBJS)
 OBJS +=		$(FWOL_OBJS)
 
@@ -2235,6 +2259,12 @@ cppflags-$(CONFIG_WLAN_FEATURE_11AX) += -DSUPPORT_11AX_D3
 
 cppflags-$(CONFIG_LITHIUM) += -DFEATURE_AST
 cppflags-$(CONFIG_LITHIUM) += -DPEER_PROTECTED_ACCESS
+
+#Enable STATE MACHINE HISTORY
+cppflags-$(CONFIG_SM_ENG_HIST) += -DSM_ENG_HIST_ENABLE
+#Enable VDEV STATE MACHINE
+cppflags-$(CONFIG_CMN_VDEV_MLME_SM) += -DCMN_VDEV_MLME_SM_ENABLE
+cppflags-$(CONFIG_VDEV_SM) += -DCONFIG_VDEV_SM
 
 # Vendor Commands
 cppflags-$(CONFIG_FEATURE_RSSI_MONITOR) += -DFEATURE_RSSI_MONITOR
