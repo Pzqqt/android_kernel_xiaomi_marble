@@ -1842,7 +1842,11 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 }
 
 #define REO_DST_RING_SIZE_QCA6290 1024
+#ifndef QCA_WIFI_QCA8074_VP
 #define REO_DST_RING_SIZE_QCA8074 2048
+#else
+#define REO_DST_RING_SIZE_QCA8074 8
+#endif
 
 /*
  * dp_wds_aging_timer_fn() - Timer callback function for WDS aging
@@ -2749,7 +2753,7 @@ static void dp_cleanup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
 }
 #endif
 
-#ifndef QCA_WIFI_QCA6390
+#if !defined(QCA_WIFI_QCA6390) && !defined(DISABLE_MON_CONFIG)
 static
 QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 {
@@ -3117,7 +3121,7 @@ static void dp_htt_ppdu_stats_detach(struct dp_pdev *pdev)
 	}
 }
 
-#ifndef QCA_WIFI_QCA6390
+#if !defined(QCA_WIFI_QCA6390) && !defined(DISABLE_MON_CONFIG)
 static
 void dp_mon_ring_deinit(struct dp_soc *soc, struct dp_pdev *pdev,
 			int mac_id)
@@ -3336,7 +3340,7 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	qdf_mem_free(soc);
 }
 
-#ifndef QCA_WIFI_QCA6390
+#if !defined(QCA_WIFI_QCA6390) && !defined(DISABLE_MON_CONFIG)
 static void dp_mon_htt_srng_setup(struct dp_soc *soc,
 				  struct dp_pdev *pdev,
 				  int mac_id,
@@ -3476,7 +3480,7 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 
 			htt_srng_setup(soc->htt_handle, mac_for_pdev,
 				pdev->rx_refill_buf_ring.hal_srng, RXDMA_BUF);
-
+#ifndef DISABLE_MON_CONFIG
 			htt_srng_setup(soc->htt_handle, mac_for_pdev,
 				pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
 				RXDMA_MONITOR_BUF);
@@ -3489,6 +3493,7 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 			htt_srng_setup(soc->htt_handle, mac_for_pdev,
 				pdev->rxdma_mon_desc_ring[mac_id].hal_srng,
 				RXDMA_MONITOR_DESC);
+#endif
 			htt_srng_setup(soc->htt_handle, mac_for_pdev,
 				pdev->rxdma_err_dst_ring[mac_id].hal_srng,
 				RXDMA_DST);

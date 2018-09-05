@@ -1214,6 +1214,7 @@ void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
  * Return: QDF_STATUS_SUCCESS: success
  *         QDF_STATUS_E_RESOURCES: Error return
  */
+#ifndef DISABLE_MON_CONFIG
 QDF_STATUS
 dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
 	struct dp_soc *soc = pdev->soc;
@@ -1254,6 +1255,12 @@ dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
 	qdf_spinlock_create(&pdev->mon_lock);
 	return QDF_STATUS_SUCCESS;
 }
+#else
+QDF_STATUS
+dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * dp_rx_pdev_mon_detach() - detach dp rx for monitor mode
@@ -1266,6 +1273,7 @@ dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
  * Return: QDF_STATUS_SUCCESS: success
  *         QDF_STATUS_E_RESOURCES: Error return
  */
+#ifndef DISABLE_MON_CONFIG
 QDF_STATUS
 dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
 	uint8_t pdev_id = pdev->pdev_id;
@@ -1283,4 +1291,10 @@ dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+QDF_STATUS
+dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DISABLE_MON_CONFIG */
 #endif
