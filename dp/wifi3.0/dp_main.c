@@ -3807,10 +3807,6 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	/* preconditions */
 	qdf_assert(vdev);
 
-	qdf_spin_lock_bh(&pdev->vdev_list_lock);
-	/* remove the vdev from its parent pdev's list */
-	TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
-	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 
 	if (wlan_op_mode_sta == vdev->opmode)
 		dp_peer_delete_wifi3(vdev->vap_bss_peer, 0);
@@ -3851,11 +3847,14 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	}
 	qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
 
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	dp_tx_vdev_detach(vdev);
+	/* remove the vdev from its parent pdev's list */
+	TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 		FL("deleting vdev object %pK (%pM)"), vdev, vdev->mac_addr.raw);
-
 	qdf_mem_free(vdev);
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 
 	if (callback)
 		callback(cb_context);
@@ -4599,6 +4598,77 @@ bool dp_peer_is_inact(void *peer)
 }
 #endif
 
+static void dp_reset_and_release_peer_mem(struct dp_soc *soc,
+					  struct dp_pdev *pdev,
+					  struct dp_peer *peer,
+					  uint32_t vdev_id)
+{
+	struct dp_vdev *vdev = NULL;
+	struct dp_peer *bss_peer = NULL;
+	uint8_t *m_addr = NULL;
+
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		if (vdev->vdev_id == vdev_id)
+			break;
+	}
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "vdev is NULL");
+	} else {
+		if (vdev->vap_bss_peer == peer)
+		    vdev->vap_bss_peer = NULL;
+		m_addr = peer->mac_addr.raw;
+		if (soc->cdp_soc.ol_ops->peer_unref_delete)
+		    soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
+							   vdev_id, m_addr);
+		if (vdev && vdev->vap_bss_peer) {
+		    bss_peer = vdev->vap_bss_peer;
+		    DP_UPDATE_STATS(vdev, peer);
+		}
+	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+	qdf_mem_free(peer);
+}
+
+static void dp_delete_pending_vdev(struct dp_pdev *pdev, uint32_t vdev_id)
+{
+	struct dp_vdev *vdev = NULL;
+	ol_txrx_vdev_delete_cb vdev_delete_cb = NULL;
+	void *vdev_delete_context = NULL;
+
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		if (vdev->vdev_id == vdev_id)
+			break;
+	}
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "vdev is NULL");
+	} else if (vdev->delete.pending) {
+		vdev_delete_cb = vdev->delete.callback;
+		vdev_delete_context = vdev->delete.context;
+
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("deleting vdev object %pK (%pM)- its last peer is done"),
+			  vdev, vdev->mac_addr.raw);
+		/* all peers are gone, go ahead and delete it */
+		dp_tx_flow_pool_unmap_handler(pdev, vdev_id,
+				FLOW_TYPE_VDEV, vdev_id);
+		dp_tx_vdev_detach(vdev);
+		TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("deleting vdev object %pK (%pM)"),
+			  vdev, vdev->mac_addr.raw);
+		qdf_mem_free(vdev);
+		vdev = NULL;
+	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+
+	if (vdev_delete_cb)
+		vdev_delete_cb(vdev_delete_context);
+}
+
 /*
  * dp_peer_unref_delete() - unref and delete peer
  * @peer_handle:		Datapath peer handle
@@ -4607,7 +4677,6 @@ bool dp_peer_is_inact(void *peer)
 void dp_peer_unref_delete(void *peer_handle)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-	struct dp_peer *bss_peer = NULL;
 	struct dp_vdev *vdev = peer->vdev;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -4660,6 +4729,7 @@ void dp_peer_unref_delete(void *peer_handle)
 				break;
 			}
 		}
+
 		if (found) {
 			TAILQ_REMOVE(&peer->vdev->peer_list, peer,
 				peer_list_elem);
@@ -4684,61 +4754,12 @@ void dp_peer_unref_delete(void *peer_handle)
 			 * Check if the parent vdev was waiting for its peers
 			 * to be deleted, in order for it to be deleted too.
 			 */
-			if (vdev->delete.pending) {
-				ol_txrx_vdev_delete_cb vdev_delete_cb =
-					vdev->delete.callback;
-				void *vdev_delete_context =
-					vdev->delete.context;
-
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_INFO_HIGH,
-					FL("deleting vdev object %pK (%pM)"
-					" - its last peer is done"),
-					vdev, vdev->mac_addr.raw);
-				/* all peers are gone, go ahead and delete it */
-				dp_tx_flow_pool_unmap_handler(pdev, vdev_id,
-								FLOW_TYPE_VDEV,
-								vdev_id);
-				dp_tx_vdev_detach(vdev);
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_INFO_HIGH,
-					FL("deleting vdev object %pK (%pM)"),
-					vdev, vdev->mac_addr.raw);
-
-				qdf_mem_free(vdev);
-				vdev = NULL;
-				if (vdev_delete_cb)
-					vdev_delete_cb(vdev_delete_context);
-			}
+			dp_delete_pending_vdev(pdev, vdev_id);
 		} else {
 			qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 		}
+		dp_reset_and_release_peer_mem(soc, pdev, peer, vdev_id);
 
-		if (vdev) {
-			if (vdev->vap_bss_peer == peer) {
-				vdev->vap_bss_peer = NULL;
-			}
-		}
-
-		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
-			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
-					vdev_id, peer->mac_addr.raw);
-		}
-
-		if (!vdev || !vdev->vap_bss_peer) {
-			goto free_peer;
-		}
-
-#ifdef notyet
-		qdf_mempool_free(soc->osdev, soc->mempool_ol_ath_peer, peer);
-#else
-		bss_peer = vdev->vap_bss_peer;
-		DP_UPDATE_STATS(vdev, peer);
-
-free_peer:
-		qdf_mem_free(peer);
-
-#endif
 	} else {
 		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	}
