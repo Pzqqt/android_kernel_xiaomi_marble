@@ -1953,9 +1953,9 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 					toeplitz_hash_result);
 		}
 
-		qdf_spin_lock(&pipe_info->completion_freeq_lock);
+		qdf_spin_lock_bh(&pipe_info->completion_freeq_lock);
 		pipe_info->num_sends_allowed++;
-		qdf_spin_unlock(&pipe_info->completion_freeq_lock);
+		qdf_spin_unlock_bh(&pipe_info->completion_freeq_lock);
 	} while (ce_completed_send_next(copyeng,
 			&ce_context, &transfer_context,
 			&CE_data, &nbytes, &transfer_id,
