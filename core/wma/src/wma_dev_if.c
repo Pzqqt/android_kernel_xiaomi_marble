@@ -1261,13 +1261,17 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			if (QDF_IS_STATUS_ERROR(status)) {
 				WMA_LOGE("%s:vdev_up failed vdev_id %d",
 					 __func__, resp_event->vdev_id);
+#ifndef CONFIG_VDEV_SM
 				wma_vdev_set_mlme_state(wma,
 					resp_event->vdev_id, WLAN_VDEV_S_STOP);
+#endif
 				policy_mgr_set_do_hw_mode_change_flag(
 					wma->psoc, false);
 			} else {
+#ifndef CONFIG_VDEV_SM
 				wma_vdev_set_mlme_state(wma,
 					resp_event->vdev_id, WLAN_VDEV_S_RUN);
+#endif
 				if (iface->beacon_filter_enabled)
 					wma_add_beacon_filter(wma,
 							&iface->beacon_filter);
@@ -1292,8 +1296,10 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 				wma->psoc, false);
 			return -EEXIST;
 		}
+#ifndef CONFIG_VDEV_SM
 		wma_vdev_set_mlme_state(wma, resp_event->vdev_id,
 			WLAN_VDEV_S_RUN);
+#endif
 		ucfg_ocb_config_channel(wma->pdev);
 	}
 
@@ -2070,7 +2076,9 @@ wma_send_vdev_down_bss(tp_wma_handle wma, struct wma_target_req *req)
 	if (wma_send_vdev_down_to_fw(wma, vdev_id) != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to send vdev down cmd: vdev %d", vdev_id);
 	} else {
+#ifndef CONFIG_VDEV_SM
 		wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_STOP);
+#endif
 		wma_check_and_find_mcc_ap(wma, vdev_id);
 	}
 
@@ -2917,12 +2925,14 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	}
 
 	if (isRestart) {
+#ifndef CONFIG_VDEV_SM
 		/*
 		 * Marking the VDEV UP STATUS to false
 		 * since, VDEV RESTART will do a VDEV DOWN
 		 * in the firmware.
 		 */
 		wma_vdev_set_mlme_state(wma, params.vdev_id, WLAN_VDEV_S_STOP);
+#endif
 	} else {
 		WMA_LOGD("%s, vdev_id: %d, unpausing tx_ll_queue at VDEV_START",
 			 __func__, params.vdev_id);
@@ -3533,8 +3543,10 @@ void wma_vdev_resp_timer(void *data)
 			WMA_LOGE("Failed to send vdev down cmd: vdev %d",
 				 tgt_req->vdev_id);
 		} else {
+#ifndef CONFIG_VDEV_SM
 			wma_vdev_set_mlme_state(wma, tgt_req->vdev_id,
 				WLAN_VDEV_S_STOP);
+#endif
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 		if (mac_ctx->sap.sap_channel_avoidance)
 			wma_find_mcc_ap(wma, tgt_req->vdev_id, false);
@@ -3631,8 +3643,10 @@ void wma_vdev_resp_timer(void *data)
 
 		WMA_LOGE(FL("Failed to send OCB set config cmd"));
 		iface = &wma->interfaces[tgt_req->vdev_id];
+#ifndef CONFIG_VDEV_SM
 		wma_vdev_set_mlme_state(wma, tgt_req->vdev_id,
 			WLAN_VDEV_S_STOP);
+#endif
 		wma_ocb_set_config_resp(wma, QDF_STATUS_E_TIMEOUT);
 	} else if (tgt_req->msg_type == WMA_HIDDEN_SSID_VDEV_RESTART) {
 		if ((qdf_atomic_read(
@@ -5081,8 +5095,10 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		status = QDF_STATUS_E_FAILURE;
 	} else {
 		wma_set_vdev_mgmt_rate(wma, params->smesessionId);
+#ifndef CONFIG_VDEV_SM
 		wma_vdev_set_mlme_state(wma, params->smesessionId,
 				WLAN_VDEV_S_RUN);
+#endif
 	}
 
 	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STARTED);
@@ -5593,7 +5609,9 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 	WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
 			__func__, iface->type, iface->sub_type);
+#ifndef CONFIG_VDEV_SM
 	wma_vdev_set_mlme_state(wma, params->smesessionId, WLAN_VDEV_S_STOP);
+#endif
 	params->status = QDF_STATUS_SUCCESS;
 	if (!iface->peer_count) {
 		WMA_LOGE("%s: Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
@@ -5756,8 +5774,10 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 		roam_synch_in_progress = true;
 		WMA_LOGD("LFR3:%s: Setting vdev_up to FALSE for session %d",
 			__func__, params->smesessionId);
+#ifndef CONFIG_VDEV_SM
 		wma_vdev_set_mlme_state(wma, params->smesessionId,
 			WLAN_VDEV_S_STOP);
+#endif
 		goto detach_peer;
 	}
 	msg = wma_fill_vdev_req(wma, params->smesessionId, WMA_DELETE_BSS_REQ,

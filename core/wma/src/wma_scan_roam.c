@@ -2245,7 +2245,9 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 	wma_set_linkstate(wma, set_link_params);
 	wma_add_bss(wma, (tpAddBssParams)roam_synch_ind_ptr->add_bss_params);
 	wma_add_sta(wma, add_sta_params);
+#ifndef CONFIG_VDEV_SM
 	wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_RUN);
+#endif
 	qdf_mem_copy(wma->interfaces[vdev_id].bssid,
 			roam_synch_ind_ptr->bssid.bytes, IEEE80211_ADDR_LEN);
 	qdf_mem_free(del_bss_params);

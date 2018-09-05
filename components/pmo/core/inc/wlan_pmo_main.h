@@ -321,26 +321,6 @@ void pmo_core_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
 void *pmo_core_psoc_get_txrx_handle(struct wlan_objmgr_psoc *psoc);
 
 /**
- * pmo_is_vdev_up() - API to check whether vdev is UP
- * @vdev: objmgr vdev handle
- *
- * Return:true if vdev is up else false
- */
-static inline
-bool pmo_is_vdev_up(struct wlan_objmgr_vdev *vdev)
-{
-	enum wlan_vdev_state state = WLAN_VDEV_S_INIT;
-
-	if (!vdev) {
-		pmo_err("vdev context is invalid!");
-		return false;
-	}
-	state = wlan_vdev_mlme_get_state(vdev);
-
-	return state == WLAN_VDEV_S_RUN;
-}
-
-/**
  * pmo_intersect_arp_ns_offload() - intersect config and firmware capability for
  *	the ARP/NS Offload feature
  * @psoc_ctx: A PMO psoc context

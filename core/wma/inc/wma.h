@@ -2017,6 +2017,7 @@ void wma_mgmt_nbuf_unmap_cb(struct wlan_objmgr_pdev *pdev,
 int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 						uint32_t len);
 
+#ifndef CONFIG_VDEV_SM
 /**
  * wma_vdev_set_mlme_state() - Set vdev mlme state
  * @wma: wma handle
@@ -2045,7 +2046,7 @@ void wma_vdev_set_mlme_state(tp_wma_handle wma, uint8_t vdev_id,
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	}
 }
-
+#endif
 /**
  * wma_update_vdev_pause_bitmap() - update vdev pause bitmap
  * @vdev_id: the Id of the vdev to configure

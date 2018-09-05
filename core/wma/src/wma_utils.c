@@ -59,6 +59,8 @@
 #include <cdp_txrx_handle.h>
 #include "cds_reg_service.h"
 #include "target_if.h"
+#include <wlan_utility.h>
+
 
 /* MCS Based rate table */
 /* HT MCS parameters with Nss = 1 */
@@ -4350,22 +4352,20 @@ bool wma_is_vdev_up(uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev;
 	tp_wma_handle wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
-	enum wlan_vdev_state state = WLAN_VDEV_S_INIT;
+	bool is_up = false;
 
 	if (!wma) {
 		WMA_LOGE("%s: WMA context is invald!", __func__);
-		return false;
+		return is_up;
 	}
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, vdev_id,
 			WLAN_LEGACY_WMA_ID);
 	if (vdev) {
-		wlan_vdev_obj_lock(vdev);
-		state = wlan_vdev_mlme_get_state(vdev);
-		wlan_vdev_obj_unlock(vdev);
+		is_up = wlan_vdev_is_up(vdev);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	}
-	return (state == WLAN_VDEV_S_RUN) ? true : false;
+	return is_up;
 }
 
 void wma_acquire_wakelock(qdf_wake_lock_t *wl, uint32_t msec)
