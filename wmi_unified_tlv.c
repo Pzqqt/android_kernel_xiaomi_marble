@@ -5910,6 +5910,12 @@ static QDF_STATUS extract_sar_limit_event_tlv(wmi_unified_t wmi_handle,
 	event->sar_enable = fixed_param->sar_enable;
 	event->num_limit_rows = fixed_param->num_limit_rows;
 
+	if (event->num_limit_rows > param_buf->num_sar_get_limits) {
+		WMI_LOGE(FL("Num rows %d exceeds sar_get_limits rows len %d"),
+			 event->num_limit_rows, param_buf->num_sar_get_limits);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	if (event->num_limit_rows > MAX_SAR_LIMIT_ROWS_SUPPORTED) {
 		QDF_ASSERT(0);
 		WMI_LOGE(FL("Num rows %d exceeds max of %d"),
