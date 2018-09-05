@@ -2578,6 +2578,25 @@ static int wcd938x_add_slave_components(struct device *dev,
 	return 0;
 }
 
+static int wcd938x_wakeup(void *handle, bool enable)
+{
+	struct wcd938x_priv *priv;
+
+	if (!handle) {
+		pr_err("%s: NULL handle\n", __func__);
+		return -EINVAL;
+	}
+	priv = (struct wcd938x_priv *)handle;
+	if (!priv->tx_swr_dev) {
+		pr_err("%s: tx swr dev is NULL\n", __func__);
+		return -EINVAL;
+	}
+	if (enable)
+		return swr_device_wakeup_vote(priv->tx_swr_dev);
+	else
+		return swr_device_wakeup_unvote(priv->tx_swr_dev);
+}
+
 static int wcd938x_probe(struct platform_device *pdev)
 {
 	struct component_match *match = NULL;
@@ -2651,6 +2670,8 @@ static int wcd938x_probe(struct platform_device *pdev)
 		goto err;
 
 	wcd938x_reset(dev);
+
+	wcd938x->wakeup = wcd938x_wakeup;
 
 	return component_master_add_with_match(&pdev->dev,
 					&wcd938x_comp_ops, match);
