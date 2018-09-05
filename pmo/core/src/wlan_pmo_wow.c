@@ -27,6 +27,7 @@
 #include "wlan_pmo_static_config.h"
 #include "wlan_reg_services_api.h"
 #include "cfg_nan_api.h"
+#include "wlan_utility.h"
 
 void pmo_set_wow_event_bitmap(WOW_WAKE_EVENT_TYPE event,
 			      uint32_t wow_bitmap_size,
@@ -239,7 +240,7 @@ bool pmo_is_beaconing_vdev_up(struct wlan_objmgr_psoc *psoc)
 
 		vdev_opmode = pmo_get_vdev_opmode(vdev);
 		is_beaconing = pmo_is_vdev_in_beaconning_mode(vdev_opmode) &&
-			       pmo_is_vdev_up(vdev);
+			       wlan_vdev_is_up(vdev);
 
 		pmo_vdev_put_ref(vdev);
 
