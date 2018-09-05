@@ -175,7 +175,6 @@ ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_LINUX_QCMBR :=y
 endif
 
-CONFIG_MPC_UT_FRAMEWORK := y
 
 CONFIG_FEATURE_EPPING := y
 
@@ -232,6 +231,7 @@ CONFIG_MCC_TO_SCC_SWITCH := y
 ifeq ($(CONFIG_SLUB_DEBUG), y)
 	# Enable Obj Mgr Degug services if slub build
 	CONFIG_WLAN_OBJMGR_DEBUG:= y
+	CONFIG_MPC_UT_FRAMEWORK := y
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_QCA_WIFI_SDIO) $(CONFIG_HIF_USB)))

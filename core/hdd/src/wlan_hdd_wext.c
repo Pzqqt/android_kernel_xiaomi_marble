@@ -7391,8 +7391,12 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	case WE_POLICY_MANAGER_QUERY_ALLOW_CMD:
 	case WE_POLICY_MANAGER_SCENARIO_CMD:
 	{
+		if (!hdd_ctx->config->is_unit_test_framework_enabled) {
+			hdd_warn_rl("UT framework is disabled");
+			return -EINVAL;
+		}
 		iw_get_policy_manager_ut_ops(hdd_ctx, adapter,
-					     sub_cmd, apps_args);
+				sub_cmd, apps_args);
 	}
 	break;
 	case WE_SET_CHAN_AVOID:
