@@ -1028,9 +1028,12 @@ QDF_STATUS utils_dfs_is_spoof_check_failed(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
+	if (!tgt_dfs_is_pdev_5ghz(pdev))
+		return QDF_STATUS_SUCCESS;
+
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
 	if (!dfs) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null dfs");
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is null");
 		return  QDF_STATUS_E_FAILURE;
 	}
 
