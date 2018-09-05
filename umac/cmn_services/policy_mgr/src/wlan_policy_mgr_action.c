@@ -2084,6 +2084,11 @@ QDF_STATUS policy_mgr_decr_connection_count_utfw(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 
 	if (del_all) {
+		status = policy_mgr_psoc_disable(psoc);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			policy_mgr_err("Policy manager initialization failed");
+			return QDF_STATUS_E_FAILURE;
+		}
 		status = policy_mgr_psoc_enable(psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			policy_mgr_err("Policy manager initialization failed");
