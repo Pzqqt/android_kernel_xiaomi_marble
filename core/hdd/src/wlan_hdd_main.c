@@ -6988,6 +6988,8 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_enter();
 
+	qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
+
 	hdd_unregister_notifiers(hdd_ctx);
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
