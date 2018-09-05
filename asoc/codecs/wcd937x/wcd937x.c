@@ -573,7 +573,6 @@ static int wcd937x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		snd_soc_update_bits(codec, WCD937X_ANA_HPH, 0x0C, 0x08);
 		snd_soc_update_bits(codec, WCD937X_ANA_HPH, 0x20, 0x20);
 		usleep_range(100, 110);
 		break;
