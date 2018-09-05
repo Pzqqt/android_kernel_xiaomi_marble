@@ -356,6 +356,56 @@ static int check_for_probe_defer(int ret)
 }
 #endif
 
+static QDF_STATUS hdd_psoc_ctx_create(struct hdd_psoc **out_hdd_psoc)
+{
+	QDF_STATUS status;
+	struct hdd_driver *hdd_driver = hdd_driver_get();
+	struct hdd_psoc *hdd_psoc;
+
+	QDF_BUG(out_hdd_psoc);
+	if (!out_hdd_psoc)
+		return QDF_STATUS_E_INVAL;
+
+	hdd_psoc = qdf_mem_malloc(sizeof(*hdd_psoc));
+	if (!hdd_psoc)
+		return QDF_STATUS_E_NOMEM;
+
+	hdd_psoc->hdd_driver = hdd_driver;
+	hdd_psoc->state = psoc_state_uninit;
+
+	status = dsc_psoc_create(hdd_driver->dsc_driver, &hdd_psoc->dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto free_ctx;
+
+	*out_hdd_psoc = hdd_psoc;
+
+	return QDF_STATUS_SUCCESS;
+
+free_ctx:
+	qdf_mem_free(hdd_psoc);
+
+	return status;
+}
+
+static void hdd_psoc_ctx_destroy(struct hdd_psoc **out_hdd_psoc)
+{
+	struct hdd_psoc *hdd_psoc;
+
+	QDF_BUG(out_hdd_psoc);
+	if (!out_hdd_psoc)
+		return;
+
+	hdd_psoc = *out_hdd_psoc;
+	QDF_BUG(hdd_psoc);
+	if (!hdd_psoc)
+		return;
+
+	*out_hdd_psoc = NULL;
+
+	dsc_psoc_destroy(&hdd_psoc->dsc_psoc);
+	qdf_mem_free(hdd_psoc);
+}
+
 static void hdd_soc_load_lock(struct device *dev, int load_op)
 {
 	mutex_lock(&hdd_init_deinit_lock);
@@ -390,10 +440,22 @@ static int hdd_soc_probe(struct device *dev,
 			 enum qdf_bus_type bus_type)
 {
 	struct hdd_context *hdd_ctx;
+	struct hdd_psoc *hdd_psoc;
 	QDF_STATUS status;
 	int errno;
 
 	hdd_info("probing driver");
+
+	status = hdd_psoc_ctx_create(&hdd_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	status = dsc_psoc_trans_start(hdd_psoc->dsc_psoc, "probe");
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to start transition; probe, status:%u", status);
+		errno = qdf_status_to_os_return(status);
+		goto free_psoc;
+	}
 
 	hdd_soc_load_lock(dev, eHDD_DRV_OP_PROBE);
 	cds_set_load_in_progress(true);
@@ -403,9 +465,17 @@ static int hdd_soc_probe(struct device *dev,
 	if (errno)
 		goto unlock;
 
-	errno = hdd_wlan_startup(dev, &hdd_ctx);
-	if (errno)
+	hdd_ctx = hdd_context_create(dev);
+	if (IS_ERR(hdd_ctx)) {
+		errno = PTR_ERR(hdd_ctx);
 		goto assert_fail_count;
+	}
+
+	hdd_ctx->hdd_psoc = hdd_psoc;
+
+	errno = hdd_wlan_startup(hdd_ctx);
+	if (errno)
+		goto hdd_context_destroy;
 
 	status = hdd_psoc_create_vdevs(hdd_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -415,15 +485,21 @@ static int hdd_soc_probe(struct device *dev,
 
 	probe_fail_cnt = 0;
 	cds_set_driver_loaded(true);
-	hdd_start_complete(0);
 	cds_set_load_in_progress(false);
+	hdd_start_complete(0);
 
 	hdd_soc_load_unlock(dev);
+
+	hdd_psoc->state = psoc_state_active;
+	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
 
 	return 0;
 
 wlan_exit:
 	hdd_wlan_exit(hdd_ctx);
+
+hdd_context_destroy:
+	hdd_context_destroy(hdd_ctx);
 
 assert_fail_count:
 	probe_fail_cnt++;
@@ -433,6 +509,11 @@ assert_fail_count:
 unlock:
 	cds_set_load_in_progress(false);
 	hdd_soc_load_unlock(dev);
+
+	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
+
+free_psoc:
+	hdd_psoc_ctx_destroy(&hdd_psoc);
 
 	return check_for_probe_defer(errno);
 }
@@ -505,8 +586,15 @@ unlock:
  */
 static void hdd_soc_remove(struct device *dev)
 {
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_psoc *hdd_psoc = hdd_ctx->hdd_psoc;
+
 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
+
+	/* remove is triggered by rmmod, so assert we are protected by rmmod */
+	dsc_psoc_assert_trans_protected(hdd_psoc->dsc_psoc);
+	dsc_psoc_wait_for_ops(hdd_psoc->dsc_psoc);
 
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
@@ -523,20 +611,19 @@ static void hdd_soc_remove(struct device *dev)
 		epping_disable();
 		epping_close();
 	} else {
-		struct hdd_context *hdd_ctx;
-
-		hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-		if (hdd_ctx)
-			hdd_wlan_exit(hdd_ctx);
-		else
-			hdd_err("invalid hdd context");
-
+		hdd_wlan_exit(hdd_ctx);
+		hdd_context_destroy(hdd_ctx);
 	}
 	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 
 	cds_set_driver_in_bad_state(false);
 	cds_set_unload_in_progress(false);
+
+	hdd_psoc->state = psoc_state_deinit;
+	dsc_psoc_assert_trans_protected(hdd_psoc->dsc_psoc);
+
+	hdd_psoc_ctx_destroy(&hdd_psoc);
 
 	pr_info("%s: Driver De-initialized\n", WLAN_MODULE_NAME);
 }

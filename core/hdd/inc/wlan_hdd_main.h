@@ -1716,14 +1716,35 @@ struct hdd_driver {
 
 struct hdd_driver *hdd_driver_get(void);
 
+enum hdd_psoc_state {
+	psoc_state_uninit,
+	psoc_state_deinit,
+	psoc_state_active, /* historically "ENABLED" */
+	psoc_state_idle, /* historically "CLOSED" */
+};
+
+/**
+ * struct hdd_psoc - HDD psoc-level context information
+ * @hdd_driver: pointer to parent HDD driver context
+ * @dsc_psoc: driver synchronization psoc context handle
+ * @state: the current stable state of the psoc
+ */
+struct hdd_psoc {
+	struct hdd_driver *hdd_driver;
+	struct dsc_psoc *dsc_psoc;
+	enum hdd_psoc_state state;
+};
+
 /**
  * struct hdd_context - hdd shared driver and psoc/device context
+ * @hdd_psoc: hdd psoc context
  * @psoc: object manager psoc context
  * @pdev: object manager pdev context
  * @g_event_flags: a bitmap of hdd_driver_flags
  * @psoc_idle_timeout_work: delayed work for psoc idle shutdown
  */
 struct hdd_context {
+	struct hdd_psoc *hdd_psoc;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	mac_handle_t mac_handle;
@@ -2391,12 +2412,11 @@ void hdd_deinit(void);
 
 /**
  * hdd_wlan_startup() - HDD init function
- * @dev: pointer to the underlying device
- * @out_hdd_ctx: output hdd context pointer for the newly created context
+ * hdd_ctx: the HDD context corresponding to the psoc to startup
  *
  * Return: Errno
  */
-int hdd_wlan_startup(struct device *dev, struct hdd_context **out_hdd_ctx);
+int hdd_wlan_startup(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_wlan_exit() - HDD WLAN exit function
@@ -2413,6 +2433,27 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx);
  * Return: QDF_STATUS
  */
 QDF_STATUS hdd_psoc_create_vdevs(struct hdd_context *hdd_ctx);
+
+/*
+ * hdd_context_create() - Allocate and inialize HDD context.
+ * @dev: Device Pointer to the underlying device
+ *
+ * Allocate and initialize HDD context. HDD context is allocated as part of
+ * wiphy allocation and then context is initialized.
+ *
+ * Return: HDD context on success and ERR_PTR on failure
+ */
+struct hdd_context *hdd_context_create(struct device *dev);
+
+/**
+ * hdd_context_destroy() - Destroy HDD context
+ * @hdd_ctx: HDD context to be destroyed.
+ *
+ * Free config and HDD context as well as destroy all the resources.
+ *
+ * Return: None
+ */
+void hdd_context_destroy(struct hdd_context *hdd_ctx);
 
 int hdd_wlan_notify_modem_power_state(int state);
 #ifdef QCA_HT_2040_COEX

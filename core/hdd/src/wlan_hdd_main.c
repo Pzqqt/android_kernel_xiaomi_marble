@@ -6876,18 +6876,11 @@ static int hdd_context_deinit(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
-/**
- * hdd_context_destroy() - Destroy HDD context
- * @hdd_ctx:	HDD context to be destroyed.
- *
- * Free config and HDD context as well as destroy all the resources.
- *
- * Return: None
- */
-static void hdd_context_destroy(struct hdd_context *hdd_ctx)
+void hdd_context_destroy(struct hdd_context *hdd_ctx)
 {
 	cds_set_context(QDF_MODULE_ID_HDD, NULL);
 
+	hdd_exit_netlink_services(hdd_ctx);
 	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 
 	hdd_context_deinit(hdd_ctx);
@@ -6896,7 +6889,6 @@ static void hdd_context_destroy(struct hdd_context *hdd_ctx)
 
 	qdf_mem_free(hdd_ctx->config);
 	hdd_ctx->config = NULL;
-
 	cfg_release();
 
 	wiphy_free(hdd_ctx->wiphy);
@@ -7041,8 +7033,6 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_destroy(&hdd_ctx->avoid_freq_lock);
 #endif
-
-	hdd_context_destroy(hdd_ctx);
 }
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
@@ -9037,16 +9027,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	hdd_dp_cfg_update(psoc, hdd_ctx);
 }
 
-/**
- * hdd_context_create() - Allocate and inialize HDD context.
- * @dev:	Device Pointer to the underlying device
- *
- * Allocate and initialize HDD context. HDD context is allocated as part of
- * wiphy allocation and then context is initialized.
- *
- * Return: HDD context on success and ERR_PTR on failure
- */
-static struct hdd_context *hdd_context_create(struct device *dev)
+struct hdd_context *hdd_context_create(struct device *dev)
 {
 	QDF_STATUS status;
 	int ret = 0;
@@ -11226,14 +11207,14 @@ void hdd_dp_trace_init(struct hdd_config *config)
 #endif
 
 #ifdef DISABLE_CHANNEL_LIST
-static int wlan_hdd_cache_chann_mutex_create(struct hdd_context *hdd_ctx)
+static QDF_STATUS wlan_hdd_cache_chann_mutex_create(struct hdd_context *hdd_ctx)
 {
 	return qdf_mutex_create(&hdd_ctx->cache_channel_lock);
 }
 #else
-static int wlan_hdd_cache_chann_mutex_create(struct hdd_context *hdd_ctx)
+static QDF_STATUS wlan_hdd_cache_chann_mutex_create(struct hdd_context *hdd_ctx)
 {
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -11357,26 +11338,20 @@ static QDF_STATUS hdd_open_adapters_for_mode(struct hdd_context *hdd_ctx,
 	return status;
 }
 
-int hdd_wlan_startup(struct device *dev, struct hdd_context **out_hdd_ctx)
+int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
-	struct hdd_context *hdd_ctx;
-	int ret;
-	mac_handle_t mac_handle;
+	int errno;
 
 	hdd_enter();
-
-	hdd_ctx = hdd_context_create(dev);
-	if (IS_ERR(hdd_ctx))
-		return PTR_ERR(hdd_ctx);
 
 	hdd_action_oui_config(hdd_ctx);
 
 	qdf_nbuf_init_replenish_timer();
 
-	ret = wlan_hdd_cache_chann_mutex_create(hdd_ctx);
-	if (QDF_IS_STATUS_ERROR(ret))
-		goto err_hdd_free_context;
+	status = wlan_hdd_cache_chann_mutex_create(hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_init(&hdd_ctx->avoid_freq_lock);
@@ -11387,41 +11362,40 @@ int hdd_wlan_startup(struct device *dev, struct hdd_context **out_hdd_ctx)
 	hdd_driver_memdump_init();
 	hdd_bus_bandwidth_init(hdd_ctx);
 
-	ret = hdd_wlan_start_modules(hdd_ctx, false);
-	if (ret) {
-		hdd_err("Failed to start modules: %d", ret);
-		goto err_memdump_deinit;
+	errno = hdd_wlan_start_modules(hdd_ctx, false);
+	if (errno) {
+		hdd_err("Failed to start modules; errno:%d", errno);
+		goto memdump_deinit;
 	}
 
 	wlan_hdd_update_wiphy(hdd_ctx);
 
-	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	hdd_ctx->mac_handle = mac_handle;
-	if (!mac_handle) {
+	hdd_ctx->mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	if (!hdd_ctx->mac_handle) {
 		hdd_err("Mac Handle is null");
-		goto err_stop_modules;
+		goto stop_modules;
 	}
 
-	ret = hdd_wiphy_init(hdd_ctx);
-	if (ret) {
-		hdd_err("Failed to initialize wiphy: %d", ret);
-		goto err_stop_modules;
+	errno = hdd_wiphy_init(hdd_ctx);
+	if (errno) {
+		hdd_err("Failed to initialize wiphy; errno:%d", errno);
+		goto stop_modules;
 	}
 
 	hdd_dp_trace_init(hdd_ctx->config);
 
 	hdd_initialize_mac_address(hdd_ctx);
 
-	ret = register_netdevice_notifier(&hdd_netdev_notifier);
-	if (ret) {
-		hdd_err("register_netdevice_notifier failed: %d", ret);
-		goto err_wiphy_unregister;
+	errno = register_netdevice_notifier(&hdd_netdev_notifier);
+	if (errno) {
+		hdd_err("register_netdevice_notifier failed; errno:%d", errno);
+		goto unregister_wiphy;
 	}
 
-	ret = register_reboot_notifier(&system_reboot_notifier);
-	if (ret) {
-		hdd_err("Failed to register reboot notifier: %d", ret);
-		goto err_unregister_netdev;
+	errno = register_reboot_notifier(&system_reboot_notifier);
+	if (errno) {
+		hdd_err("Failed to register reboot notifier; errno:%d", errno);
+		goto unregister_netdev;
 	}
 
 	wlan_hdd_update_11n_mode(hdd_ctx->config);
@@ -11439,17 +11413,15 @@ int hdd_wlan_startup(struct device *dev, struct hdd_context **out_hdd_ctx)
 
 	hdd_lpass_notify_wlan_version(hdd_ctx);
 
-	ret = hdd_register_notifiers(hdd_ctx);
-	if (ret)
-		goto err_close_adapters;
+	errno = hdd_register_notifiers(hdd_ctx);
+	if (errno)
+		goto unregister_reboot;
 
 	status = wlansap_global_init();
 	if (QDF_IS_STATUS_ERROR(status))
 		goto unregister_notifiers;
 
 	hdd_set_idle_ps_config(hdd_ctx, hdd_ctx->config->fIsImpsEnabled);
-
-	*out_hdd_ctx = hdd_ctx;
 
 	hdd_exit();
 
@@ -11458,40 +11430,33 @@ int hdd_wlan_startup(struct device *dev, struct hdd_context **out_hdd_ctx)
 unregister_notifiers:
 	hdd_unregister_notifiers(hdd_ctx);
 
-err_close_adapters:
-	hdd_close_all_adapters(hdd_ctx, false);
-
+unregister_reboot:
 	unregister_reboot_notifier(&system_reboot_notifier);
 
-err_unregister_netdev:
+unregister_netdev:
 	unregister_netdevice_notifier(&hdd_netdev_notifier);
 
-err_wiphy_unregister:
+unregister_wiphy:
 	qdf_dp_trace_deinit();
 	wiphy_unregister(hdd_ctx->wiphy);
 
-err_stop_modules:
+stop_modules:
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
-err_memdump_deinit:
+memdump_deinit:
 	hdd_bus_bandwidth_deinit(hdd_ctx);
 	hdd_driver_memdump_deinit();
-
 	osif_request_manager_deinit();
-	hdd_exit_netlink_services(hdd_ctx);
+	qdf_nbuf_deinit_replenish_timer();
 
-err_hdd_free_context:
 	if (cds_is_fw_down())
 		hdd_err("Not setting the complete event as fw is down");
 	else
-		hdd_start_complete(ret);
-
-	qdf_nbuf_deinit_replenish_timer();
-	hdd_context_destroy(hdd_ctx);
+		hdd_start_complete(errno);
 
 	hdd_exit();
 
-	return ret;
+	return errno;
 }
 
 QDF_STATUS hdd_psoc_create_vdevs(struct hdd_context *hdd_ctx)
@@ -13049,6 +13014,7 @@ static void hdd_driver_unload(void)
 
 	hdd_driver->state = driver_state_deinit;
 	dsc_driver_trans_stop(hdd_driver->dsc_driver);
+
 	hdd_driver_ctx_deinit(hdd_driver);
 
 	hdd_qdf_deinit();
