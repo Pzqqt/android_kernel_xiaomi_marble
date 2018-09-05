@@ -77,11 +77,9 @@ enum cds_driver_state {
 /**
  * enum cds_fw_state - Firmware state
  * @CDS_FW_STATE_UNINITIALIZED: Firmware is in uninitialized state.
- * CDS_FW_STATE_DOWN: Firmware is down.
  */
 enum cds_fw_state {
 	CDS_FW_STATE_UNINITIALIZED = 0,
-	CDS_FW_STATE_DOWN,
 };
 
 #define __CDS_IS_FW_STATE(_state, _mask) (((_state) & (_mask)) == (_mask))
@@ -205,32 +203,6 @@ static inline bool cds_is_module_stop_in_progress(void)
 	enum cds_driver_state state = cds_get_driver_state();
 
 	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_MODULE_STOPPING);
-}
-
-/**
- * cds_is_fw_down() - Is FW down or not
- *
- * Return: true if FW is down and false otherwise.
- */
-static inline bool cds_is_fw_down(void)
-{
-	enum cds_fw_state state = cds_get_fw_state();
-
-	return __CDS_IS_FW_STATE(state, BIT(CDS_FW_STATE_DOWN));
-}
-
-/**
- * cds_set_fw_down() - Set or unset FW down bit
- * @value: value to set
- *
- * Return: none
- */
-static inline void cds_set_fw_down(uint8_t value)
-{
-	if (value)
-		cds_set_fw_state(CDS_FW_STATE_DOWN);
-	else
-		cds_clear_fw_state(CDS_FW_STATE_DOWN);
 }
 
 /**
@@ -532,6 +504,7 @@ bool cds_is_5_mhz_enabled(void);
 bool cds_is_10_mhz_enabled(void);
 bool cds_is_sub_20_mhz_enabled(void);
 bool cds_is_self_recovery_enabled(void);
+bool cds_is_fw_down(void);
 enum QDF_GLOBAL_MODE cds_get_conparam(void);
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE

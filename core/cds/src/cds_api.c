@@ -2616,6 +2616,19 @@ bool cds_is_self_recovery_enabled(void)
 }
 
 /**
+ * cds_is_fw_down() - Is FW down or not
+ *
+ * Return: true if FW is down and false otherwise.
+ */
+bool cds_is_fw_down(void)
+{
+	qdf_device_t qdf_ctx;
+
+	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	return pld_is_fw_down(qdf_ctx->dev);
+}
+
+/**
  * cds_svc_fw_shutdown_ind() - API to send userspace about FW crash
  *
  * @dev: Device Pointer

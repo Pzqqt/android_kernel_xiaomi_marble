@@ -390,7 +390,6 @@ static int hdd_soc_probe(struct device *dev,
 
 	probe_fail_cnt = 0;
 	cds_set_driver_loaded(true);
-	cds_set_fw_down(false);
 	hdd_start_complete(0);
 	cds_set_load_in_progress(false);
 
@@ -403,7 +402,6 @@ assert_fail_count:
 	QDF_BUG(probe_fail_cnt < SSR_MAX_FAIL_CNT);
 
 unlock:
-	cds_set_fw_down(false);
 	cds_set_load_in_progress(false);
 	hdd_soc_load_unlock(dev);
 
@@ -433,7 +431,6 @@ static int hdd_soc_reinit(struct device *dev, void *bdev,
 	}
 
 	re_init_fail_cnt = 0;
-	cds_set_fw_down(false);
 	cds_set_recovery_in_progress(false);
 
 	hdd_soc_load_unlock(dev);
@@ -447,7 +444,6 @@ assert_fail_count:
 unlock:
 	cds_set_driver_in_bad_state(true);
 	cds_set_recovery_in_progress(false);
-	cds_set_fw_down(false);
 	hdd_soc_load_unlock(dev);
 
 	return check_for_probe_defer(errno);
@@ -1497,7 +1493,6 @@ static void wlan_hdd_set_the_pld_uevent(struct pld_uevent_data *uevent)
 		cds_set_recovery_in_progress(true);
 		break;
 	case PLD_FW_DOWN:
-		cds_set_fw_state(CDS_FW_STATE_DOWN);
 		cds_set_target_ready(false);
 		cds_set_recovery_in_progress(true);
 		break;

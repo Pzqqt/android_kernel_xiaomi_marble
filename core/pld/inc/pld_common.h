@@ -542,6 +542,7 @@ void pld_get_msi_address(struct device *dev, uint32_t *msi_addr_low,
 			 uint32_t *msi_addr_high);
 unsigned int pld_socinfo_get_serial_number(struct device *dev);
 int pld_is_qmi_disable(struct device *dev);
+int pld_is_fw_down(struct device *dev);
 int pld_force_assert_target(struct device *dev);
 bool pld_is_fw_dump_skipped(struct device *dev);
 

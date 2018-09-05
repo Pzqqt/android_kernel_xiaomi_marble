@@ -1474,6 +1474,35 @@ int pld_is_qmi_disable(struct device *dev)
 }
 
 /**
+ * pld_is_fw_down() - Check WLAN fw is down or not
+ *
+ * @dev: device
+ *
+ * This API will be called to check if WLAN FW is down or not.
+ *
+ *  Return: 1 FW is down
+ *          0 FW is not down
+ *          Non zero failure code for errors
+ */
+int pld_is_fw_down(struct device *dev)
+{
+	int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_is_fw_down(dev);
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+/**
  * pld_force_assert_target() - Send a force assert to FW.
  * This can use various sideband requests available at platform to
  * initiate a FW assert.
