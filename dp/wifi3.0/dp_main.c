@@ -517,7 +517,8 @@ static void dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 
 	if (ast_entry) {
 		if ((ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) &&
-		    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF)) {
+			(ast_entry->type != CDP_TXRX_AST_TYPE_SELF) &&
+			(ast_entry->type != CDP_TXRX_AST_TYPE_STA_BSS)) {
 			ast_entry->is_active = TRUE;
 		}
 	}
@@ -550,9 +551,11 @@ static void dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl,
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
 					if ((ase->type ==
-					     CDP_TXRX_AST_TYPE_STATIC) ||
-					    (ase->type ==
-					     CDP_TXRX_AST_TYPE_SELF))
+						CDP_TXRX_AST_TYPE_STATIC) ||
+						(ase->type ==
+						CDP_TXRX_AST_TYPE_SELF) ||
+						(ase->type ==
+						CDP_TXRX_AST_TYPE_STA_BSS))
 						continue;
 					ase->is_active = TRUE;
 				}
@@ -588,9 +591,11 @@ static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
 					if ((ase->type ==
-					     CDP_TXRX_AST_TYPE_STATIC) ||
-					    (ase->type ==
-					     CDP_TXRX_AST_TYPE_SELF))
+						CDP_TXRX_AST_TYPE_STATIC) ||
+						(ase->type ==
+						 CDP_TXRX_AST_TYPE_SELF) ||
+						(ase->type ==
+						 CDP_TXRX_AST_TYPE_STA_BSS))
 						continue;
 					dp_peer_del_ast(soc, ase);
 				}
@@ -867,7 +872,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 	struct dp_peer *peer;
 	struct dp_ast_entry *ase, *tmp_ase;
 	char type[CDP_TXRX_AST_TYPE_MAX][10] = {
-			"NONE", "STATIC", "SELF", "WDS", "MEC", "HMWDS"};
+			"NONE", "STATIC", "SELF", "WDS", "MEC", "HMWDS", "BSS"};
 
 	DP_PRINT_STATS("AST Stats:");
 	DP_PRINT_STATS("	Entries Added   = %d", soc->stats.ast.added);

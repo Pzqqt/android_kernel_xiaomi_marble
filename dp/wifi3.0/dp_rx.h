@@ -464,7 +464,8 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 		sa_peer = ast->peer;
 
 		if ((ast->type != CDP_TXRX_AST_TYPE_STATIC) &&
-		    (ast->type != CDP_TXRX_AST_TYPE_SELF)) {
+		    (ast->type != CDP_TXRX_AST_TYPE_SELF) &&
+			(ast->type != CDP_TXRX_AST_TYPE_STA_BSS)) {
 			if (ast->pdev_id != ta_peer->vdev->pdev->pdev_id) {
 				ret = dp_peer_add_ast(soc,
 						      ta_peer, wds_src_mac,
