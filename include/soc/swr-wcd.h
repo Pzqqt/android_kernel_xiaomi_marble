@@ -23,12 +23,16 @@ enum {
 	SWR_DEVICE_UP,
 	SWR_SUBSYS_RESTART,
 	SWR_SET_NUM_RX_CH,
+	SWR_CLK_FREQ,
 };
 
 struct swr_mstr_port {
 	int num_port;
 	u8 *port;
 };
+
+#define MCLK_FREQ		9600000
+#define MCLK_FREQ_NATIVE	11289600
 
 #if (IS_ENABLED(CONFIG_SOUNDWIRE_WCD_CTRL) || \
 	IS_ENABLED(CONFIG_SOUNDWIRE_MSTR_CTRL))
