@@ -365,14 +365,20 @@ static QDF_STATUS p2p_execute_roc_req(struct p2p_roc_context *roc_ctx)
 	}
 
 	roc_ctx->roc_state = ROC_STATE_REQUESTED;
-	go_num = policy_mgr_mode_specific_connection_count(
-			p2p_soc_obj->soc, PM_P2P_GO_MODE, NULL);
-	p2p_debug("present go number:%d", go_num);
-	if (go_num)
-		roc_ctx->duration *= P2P_ROC_DURATION_MULTI_GO_PRESENT;
-	else
-		roc_ctx->duration *= P2P_ROC_DURATION_MULTI_GO_ABSENT;
-
+	if (roc_ctx->duration < P2P_MAX_ROC_DURATION) {
+		go_num = policy_mgr_mode_specific_connection_count(
+				p2p_soc_obj->soc, PM_P2P_GO_MODE, NULL);
+		p2p_debug("present go number:%d", go_num);
+		if (go_num)
+			roc_ctx->duration *= P2P_ROC_DURATION_MULTI_GO_PRESENT;
+		else
+			roc_ctx->duration *= P2P_ROC_DURATION_MULTI_GO_ABSENT;
+		/* this is to protect too huge value if some customers
+		 * give a higher value from supplicant
+		 */
+		if (roc_ctx->duration > P2P_MAX_ROC_DURATION)
+			roc_ctx->duration = P2P_MAX_ROC_DURATION;
+	}
 	status = p2p_scan_start(roc_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
 		qdf_mc_timer_destroy(&roc_ctx->roc_timer);
