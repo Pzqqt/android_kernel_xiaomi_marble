@@ -574,10 +574,12 @@ QDF_STATUS wmi_unified_set_p2pgo_noa_req_cmd(void *wmi_hdl,
 			struct p2p_ps_params *noa);
 
 #ifdef CONVERGED_P2P_ENABLE
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 QDF_STATUS wmi_unified_p2p_lo_start_cmd(void *wmi_hdl,
 			struct p2p_lo_start *param);
 
 QDF_STATUS wmi_unified_p2p_lo_stop_cmd(void *wmi_hdl, uint8_t vdev_id);
+#endif
 #endif
 
 QDF_STATUS wmi_unified_set_smps_params(void *wmi_hdl, uint8_t vdev_id,

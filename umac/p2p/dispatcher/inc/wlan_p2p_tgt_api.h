@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,6 +34,20 @@ struct p2p_lo_event;
 struct mgmt_rx_event_params;
 enum mgmt_frame_type;
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
+
+/**
+ * tgt_p2p_lo_event_cb() - Listen offload stop request
+ * @psoc: soc object
+ * @event_info: lo stop event buffer
+ *
+ * This function gets called from target interface.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS tgt_p2p_lo_event_cb(struct wlan_objmgr_psoc *psoc,
+			       struct p2p_lo_event *event_info);
+
 /**
  * tgt_p2p_register_lo_ev_handler() - register lo event
  * @psoc: soc object
@@ -46,17 +60,6 @@ QDF_STATUS tgt_p2p_register_lo_ev_handler(
 	struct wlan_objmgr_psoc *psoc);
 
 /**
- * tgt_p2p_register_noa_ev_handler() - register noa event
- * @psoc: soc object
- *
- * p2p tgt api to register noa event handler.
- *
- * Return: QDF_STATUS_SUCCESS - in case of success
- */
-QDF_STATUS tgt_p2p_register_noa_ev_handler(
-	struct wlan_objmgr_psoc *psoc);
-
-/**
  * tgt_p2p_unregister_lo_ev_handler() - unregister lo event
  * @psoc: soc object
  *
@@ -65,6 +68,30 @@ QDF_STATUS tgt_p2p_register_noa_ev_handler(
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS tgt_p2p_unregister_lo_ev_handler(
+	struct wlan_objmgr_psoc *psoc);
+#else
+static inline QDF_STATUS tgt_p2p_register_lo_ev_handler(
+	struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS tgt_p2p_unregister_lo_ev_handler(
+	struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * tgt_p2p_register_noa_ev_handler() - register noa event
+ * @psoc: soc object
+ *
+ * p2p tgt api to register noa event handler.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS tgt_p2p_register_noa_ev_handler(
 	struct wlan_objmgr_psoc *psoc);
 
 /**
@@ -150,17 +177,5 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS tgt_p2p_noa_event_cb(struct wlan_objmgr_psoc *psoc,
 		struct p2p_noa_info *event_info);
-
-/**
- * tgt_p2p_lo_event_cb() - Listen offload stop request
- * @psoc: soc object
- * @event_info: lo stop event buffer
- *
- * This function gets called from target interface.
- *
- * Return: QDF_STATUS_SUCCESS - in case of success
- */
-QDF_STATUS tgt_p2p_lo_event_cb(struct wlan_objmgr_psoc *psoc,
-	struct p2p_lo_event *event_info);
 
 #endif /* _WLAN_P2P_TGT_API_H_ */

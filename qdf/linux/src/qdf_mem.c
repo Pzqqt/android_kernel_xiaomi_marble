@@ -1158,19 +1158,7 @@ static void qdf_mem_debug_init(void) {}
 
 static void qdf_mem_debug_exit(void) {}
 
-/**
- * qdf_mem_malloc() - allocation QDF memory
- * @size: Number of bytes of memory to allocate.
- *
- * This function will dynamicallly allocate the specified number of bytes of
- * memory.
- *
- * Return:
- * Upon successful allocate, returns a non-NULL pointer to the allocated
- * memory.  If this function is unable to allocate the amount of memory
- * specified (for any reason) it returns NULL.
- */
-void *qdf_mem_malloc(size_t size)
+void *qdf_mem_malloc_fl(size_t size, const char *func, uint32_t line)
 {
 	void *ptr;
 
@@ -1179,28 +1167,19 @@ void *qdf_mem_malloc(size_t size)
 		return ptr;
 
 	ptr = kzalloc(size, qdf_mem_malloc_flags());
-	if (!ptr)
+	if (!ptr) {
+		qdf_nofl_warn("Failed to malloc %zuB @ %s:%d",
+			      size, func, line);
 		return NULL;
+	}
 
 	qdf_mem_kmalloc_inc(ksize(ptr));
 
 	return ptr;
 }
-qdf_export_symbol(qdf_mem_malloc);
+qdf_export_symbol(qdf_mem_malloc_fl);
 
-/**
- * qdf_mem_malloc_atomic() - allocation QDF memory atomically
- * @size: Number of bytes of memory to allocate.
- *
- * This function will dynamicallly allocate the specified number of bytes of
- * memory.
- *
- * Return:
- * Upon successful allocate, returns a non-NULL pointer to the allocated
- * memory.  If this function is unable to allocate the amount of memory
- * specified (for any reason) it returns NULL.
- */
-void *qdf_mem_malloc_atomic(size_t size)
+void *qdf_mem_malloc_atomic_fl(size_t size, const char *func, uint32_t line)
 {
 	void *ptr;
 
@@ -1209,15 +1188,17 @@ void *qdf_mem_malloc_atomic(size_t size)
 		return ptr;
 
 	ptr = kzalloc(size, GFP_ATOMIC);
-	if (!ptr)
+	if (!ptr) {
+		qdf_nofl_warn("Failed to malloc %zuB @ %s:%d",
+			      size, func, line);
 		return NULL;
+	}
 
 	qdf_mem_kmalloc_inc(ksize(ptr));
 
 	return ptr;
 }
-
-qdf_export_symbol(qdf_mem_malloc_atomic);
+qdf_export_symbol(qdf_mem_malloc_atomic_fl);
 
 /**
  * qdf_mem_free() - free QDF memory

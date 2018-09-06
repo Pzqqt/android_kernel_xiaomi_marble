@@ -168,6 +168,7 @@ fail:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
 }
 
+#ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * wlan_p2p_lo_event_callback() - Callback for listen offload event
  * @user_data: pointer to soc object
@@ -238,6 +239,18 @@ fail:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
 }
 
+static inline void wlan_p2p_init_lo_event(struct p2p_start_param *start_param,
+					  struct wlan_objmgr_psoc *psoc)
+{
+	start_param->lo_event_cb = wlan_p2p_lo_event_callback;
+	start_param->lo_event_cb_data = psoc;
+}
+#else
+static inline void wlan_p2p_init_lo_event(struct p2p_start_param *start_param,
+					  struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif /* FEATURE_P2P_LISTEN_OFFLOAD */
 /**
  * wlan_p2p_event_callback() - Callback for P2P event
  * @user_data: pointer to soc object
@@ -321,8 +334,7 @@ QDF_STATUS wlan_p2p_start(struct wlan_objmgr_psoc *psoc)
 	start_param.event_cb_data = psoc;
 	start_param.tx_cnf_cb = wlan_p2p_action_tx_cnf_callback;
 	start_param.tx_cnf_cb_data = psoc;
-	start_param.lo_event_cb = wlan_p2p_lo_event_callback;
-	start_param.lo_event_cb_data = psoc;
+	wlan_p2p_init_lo_event(&start_param, psoc);
 
 	return ucfg_p2p_psoc_start(psoc, &start_param);
 }
