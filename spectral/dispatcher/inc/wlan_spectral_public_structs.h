@@ -233,6 +233,7 @@ struct spectral_chan_stats {
  *                                 mismatches in Search FFT report
  * @spectral_vhtseg2id_mismatch:   VHT Operation Segment 2 ID
  *                                 mismatches in Search FFT report
+ * @spectral_invalid_detector_id:  Invalid detector id
  */
 struct spectral_diag_stats {
 	uint64_t spectral_mismatch;
@@ -240,6 +241,7 @@ struct spectral_diag_stats {
 	uint64_t spectral_no_sec80_sfft;
 	uint64_t spectral_vhtseg1id_mismatch;
 	uint64_t spectral_vhtseg2id_mismatch;
+	uint64_t spectral_invalid_detector_id;
 };
 
 /**
@@ -525,6 +527,7 @@ struct spectral_nl_cb {
 	void *(*get_nbuff)(struct wlan_objmgr_pdev *pdev);
 	int (*send_nl_bcast)(struct wlan_objmgr_pdev *pdev);
 	int (*send_nl_unicast)(struct wlan_objmgr_pdev *pdev);
+	void (*free_nbuff)(struct wlan_objmgr_pdev *pdev);
 };
 
 #ifndef __KERNEL__
