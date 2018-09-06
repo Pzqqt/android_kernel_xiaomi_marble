@@ -617,6 +617,32 @@ QDF_STATUS tdls_peers_deleted_notification(
 void tdls_notify_decrement_session(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * tdls_send_update_to_fw - update tdls status info
+ * @tdls_vdev_obj: tdls vdev private object.
+ * @tdls_prohibited: indicates whether tdls is prohibited.
+ * @tdls_chan_swit_prohibited: indicates whether tdls channel switch
+ *                             is prohibited.
+ * @sta_connect_event: indicate sta connect or disconnect event
+ * @session_id: session id
+ *
+ * Normally an AP does not influence TDLS connection between STAs
+ * associated to it. But AP may set bits for TDLS Prohibited or
+ * TDLS Channel Switch Prohibited in Extended Capability IE in
+ * Assoc/Re-assoc response to STA. So after STA is connected to
+ * an AP, call this function to update TDLS status as per those
+ * bits set in Ext Cap IE in received Assoc/Re-assoc response
+ * from AP.
+ *
+ * Return: None.
+ */
+void tdls_send_update_to_fw(struct tdls_vdev_priv_obj *tdls_vdev_obj,
+			    struct tdls_soc_priv_obj *tdls_soc_obj,
+			    bool tdls_prohibited,
+			    bool tdls_chan_swit_prohibited,
+			    bool sta_connect_event,
+			    uint8_t session_id);
+
+/**
  * tdls_notify_increment_session() - Notify the session increment
  * @psoc: psoc  object manager
  *
