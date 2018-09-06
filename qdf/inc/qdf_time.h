@@ -307,6 +307,16 @@ static inline uint64_t qdf_get_log_timestamp(void)
 }
 
 /**
+ * qdf_get_log_timestamp_usecs() - get time stamp for logging in microseconds
+ *
+ * Return: The current logging timestamp normalized to microsecond precision
+ */
+static inline uint64_t qdf_get_log_timestamp_usecs(void)
+{
+	return qdf_log_timestamp_to_usecs(qdf_get_log_timestamp());
+}
+
+/**
  * qdf_get_monotonic_boottime - get monotonic kernel boot time
  * This API is similar to qdf_get_system_boottime but it includes
  * time spent in suspend.

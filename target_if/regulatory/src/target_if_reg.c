@@ -99,6 +99,7 @@ static int tgt_reg_chan_list_update_handler(ol_scn_t handle,
 	struct wlan_lmac_if_reg_rx_ops *reg_rx_ops;
 	struct cur_regulatory_info *reg_info;
 	QDF_STATUS status;
+	struct wmi_unified *wmi_handle;
 
 	TARGET_IF_ENTER();
 
@@ -125,7 +126,13 @@ static int tgt_reg_chan_list_update_handler(ol_scn_t handle,
 		return -ENOMEM;
 	}
 
-	if (wmi_extract_reg_chan_list_update_event(GET_WMI_HDL_FROM_PSOC(psoc),
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid WMI handle");
+		return -EINVAL;
+	}
+
+	if (wmi_extract_reg_chan_list_update_event(wmi_handle,
 						   event_buf, reg_info, len)
 	    != QDF_STATUS_SUCCESS) {
 
@@ -163,6 +170,7 @@ static int tgt_reg_11d_new_cc_handler(ol_scn_t handle,
 	struct wlan_lmac_if_reg_rx_ops *reg_rx_ops;
 	struct reg_11d_new_country reg_11d_new_cc;
 	QDF_STATUS status;
+	struct wmi_unified *wmi_handle;
 
 	TARGET_IF_ENTER();
 
@@ -179,9 +187,14 @@ static int tgt_reg_11d_new_cc_handler(ol_scn_t handle,
 		return -EINVAL;
 	}
 
-	if (wmi_extract_reg_11d_new_cc_event(GET_WMI_HDL_FROM_PSOC(psoc),
-				event_buf, &reg_11d_new_cc, len) !=
-			QDF_STATUS_SUCCESS) {
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid WMI handle");
+		return -EINVAL;
+	}
+	if (wmi_extract_reg_11d_new_cc_event(wmi_handle, event_buf,
+					     &reg_11d_new_cc, len)
+	    != QDF_STATUS_SUCCESS) {
 
 		target_if_err("Extraction of new country event failed");
 		return -EFAULT;
@@ -205,6 +218,7 @@ static int tgt_reg_ch_avoid_event_handler(ol_scn_t handle,
 	struct wlan_lmac_if_reg_rx_ops *reg_rx_ops;
 	struct ch_avoid_ind_type ch_avoid_event;
 	QDF_STATUS status;
+	struct wmi_unified *wmi_handle;
 
 	TARGET_IF_ENTER();
 
@@ -221,9 +235,14 @@ static int tgt_reg_ch_avoid_event_handler(ol_scn_t handle,
 		return -EINVAL;
 	}
 
-	if (wmi_extract_reg_ch_avoid_event(GET_WMI_HDL_FROM_PSOC(psoc),
-				event_buf, &ch_avoid_event, len) !=
-			QDF_STATUS_SUCCESS) {
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid WMI handle");
+		return -EINVAL;
+	}
+	if (wmi_extract_reg_ch_avoid_event(wmi_handle, event_buf,
+					   &ch_avoid_event, len)
+	    != QDF_STATUS_SUCCESS) {
 
 		target_if_err("Extraction of CH avoid event failed");
 		return -EFAULT;
