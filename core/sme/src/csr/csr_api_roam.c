@@ -18201,6 +18201,40 @@ QDF_STATUS csr_roam_set_key_mgmt_offload(tpAniSirGlobal mac_ctx,
 }
 
 /**
+ * csr_update_roam_scan_ese_params() - Update ESE related params in RSO request
+ * @req_buf: Roam Scan Offload Request buffer
+ * @session: Current Roam Session
+ *
+ * This API will set the KRK and BTK required in case of Auth Type is CCKM.
+ * It will also clear the PMK Len as CCKM PMK Caching is not supported
+ *
+ * Return: None
+ */
+#ifdef FEATURE_WLAN_ESE
+static
+void csr_update_roam_scan_ese_params(tSirRoamOffloadScanReq *req_buf,
+				     struct csr_roam_session *session)
+{
+	if (csr_is_auth_type_ese(req_buf->ConnectedNetwork.authentication)) {
+		qdf_mem_copy(req_buf->KRK, session->eseCckmInfo.krk,
+			     SIR_KRK_KEY_LEN);
+		qdf_mem_copy(req_buf->BTK, session->eseCckmInfo.btk,
+			     SIR_BTK_KEY_LEN);
+		req_buf->pmkid_modes.fw_okc = 0;
+		req_buf->pmkid_modes.fw_pmksa_cache = 0;
+		req_buf->pmk_len = 0;
+		qdf_mem_zero(&req_buf->PSK_PMK[0], sizeof(req_buf->PSK_PMK));
+	}
+}
+#else
+static inline
+void csr_update_roam_scan_ese_params(tSirRoamOffloadScanReq *req_buf,
+				     struct csr_roam_session *session)
+{
+}
+#endif
+
+/**
  * csr_update_roam_scan_offload_request() - updates req msg with roam offload
  * parameters
  * @pMac:          mac global context
@@ -18240,14 +18274,9 @@ csr_update_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		req_buf->ReassocFailureTimeout =
 			DEFAULT_REASSOC_FAILURE_TIMEOUT;
 	}
-#ifdef FEATURE_WLAN_ESE
-	if (csr_is_auth_type_ese(req_buf->ConnectedNetwork.authentication)) {
-		qdf_mem_copy(req_buf->KRK, session->eseCckmInfo.krk,
-			     SIR_KRK_KEY_LEN);
-		qdf_mem_copy(req_buf->BTK, session->eseCckmInfo.btk,
-			     SIR_BTK_KEY_LEN);
-	}
-#endif
+
+	csr_update_roam_scan_ese_params(req_buf, session);
+
 	req_buf->AcUapsd.acbe_uapsd = SIR_UAPSD_GET(ACBE, session->uapsd_mask);
 	req_buf->AcUapsd.acbk_uapsd = SIR_UAPSD_GET(ACBK, session->uapsd_mask);
 	req_buf->AcUapsd.acvi_uapsd = SIR_UAPSD_GET(ACVI, session->uapsd_mask);
