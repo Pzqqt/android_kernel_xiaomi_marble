@@ -576,6 +576,7 @@ void qdf_mtrace_log(QDF_MODULE_ID src_module, QDF_MODULE_ID dst_module,
 }
 #endif
 
+#ifdef TRACE_RECORD
 /**
  * qdf_mtrace() - puts the messages in to ring-buffer
  * and logs a message tracepoint to DIAG Infrastructure.
@@ -598,6 +599,13 @@ void qdf_mtrace_log(QDF_MODULE_ID src_module, QDF_MODULE_ID dst_module,
  */
 void qdf_mtrace(QDF_MODULE_ID src_module, QDF_MODULE_ID dst_module,
 		uint16_t message_id, uint8_t vdev_id, uint32_t data);
+#else
+static inline
+void qdf_mtrace(QDF_MODULE_ID src_module, QDF_MODULE_ID dst_module,
+		uint16_t message_id, uint8_t vdev_id, uint32_t data)
+{
+}
+#endif
 
 #ifdef CONFIG_DP_TRACE
 void qdf_dp_set_proto_bitmap(uint32_t val);
