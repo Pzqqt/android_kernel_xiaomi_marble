@@ -223,17 +223,24 @@ wmi_buf_t wmi_buf_alloc_fl(wmi_unified_t wmi_handle, uint32_t len,
 void wmi_buf_free(wmi_buf_t net_buf);
 
 /**
- * generic function to send unified WMI command
+ * wmi_unified_cmd_send() -  generic function to send unified WMI command
+ * @wmi_handle: handle to WMI.
+ * @buf: wmi command buffer
+ * @buflen: wmi command buffer length
+ * @cmd_id: WMI cmd id
  *
- *  @param wmi_handle      : handle to WMI.
- *  @param buf             : wmi command buffer
- *  @param buflen          : wmi command buffer length
- *  @param cmd_id          : WMI cmd id
- *  @return 0  on success and -ve on failure.
+ * Note, it is NOT safe to access buf after calling this function!
+ *
+ * Return: QDF_STATUS
  */
+#define wmi_unified_cmd_send(wmi_handle, buf, buflen, cmd_id) \
+	wmi_unified_cmd_send_fl(wmi_handle, buf, buflen, \
+				cmd_id, __func__, __LINE__)
+
 QDF_STATUS
-wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t buflen,
-			uint32_t cmd_id);
+wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
+			uint32_t buflen, uint32_t cmd_id,
+			const char *func, uint32_t line);
 
 /**
  * wmi_unified_register_event() - WMI event handler
