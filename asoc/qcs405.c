@@ -191,7 +191,7 @@ struct msm_asoc_mach_data {
 };
 
 struct msm_asoc_wcd93xx_codec {
-	void* (*get_afe_config_fn)(struct snd_soc_codec *codec,
+	void* (*get_afe_config_fn)(struct snd_soc_component *component,
 				   enum afe_config_type config_type);
 };
 
@@ -610,7 +610,7 @@ static struct snd_soc_aux_dev *msm_aux_dev;
 static struct snd_soc_codec_conf *msm_codec_conf;
 static struct msm_asoc_wcd93xx_codec msm_codec_fn;
 
-static int msm_snd_enable_codec_ext_clk(struct snd_soc_codec *codec,
+static int msm_snd_enable_codec_ext_clk(struct snd_soc_component *component,
 					int enable, bool dapm);
 static int msm_wsa881x_init(struct snd_soc_component *component);
 static int msm_snd_vad_cfg_put(struct snd_kcontrol *kcontrol,
@@ -3773,30 +3773,30 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 			msm_spdif_tx_format_get, msm_spdif_tx_format_put),
 };
 
-static int msm_snd_enable_codec_ext_clk(struct snd_soc_codec *codec,
+static int msm_snd_enable_codec_ext_clk(struct snd_soc_component *component,
 					int enable, bool dapm)
 {
 	int ret = 0;
 
-	if (!strcmp(dev_name(codec->dev), "tasha_codec")) {
-		ret = tasha_cdc_mclk_enable(codec, enable, dapm);
+	if (!strcmp(component.name, "tasha_codec")) {
+		ret = tasha_cdc_mclk_enable(component, enable, dapm);
 	} else {
-		dev_err(codec->dev, "%s: unknown codec to enable ext clk\n",
+		dev_err(component->dev, "%s: unknown codec to enable ext clk\n",
 			__func__);
 		ret = -EINVAL;
 	}
 	return ret;
 }
 
-static int msm_snd_enable_codec_ext_tx_clk(struct snd_soc_codec *codec,
+static int msm_snd_enable_codec_ext_tx_clk(struct snd_soc_component *component,
 					   int enable, bool dapm)
 {
 	int ret = 0;
 
-	if (!strcmp(dev_name(codec->dev), "tasha_codec")) {
-		ret = tasha_cdc_mclk_tx_enable(codec, enable, dapm);
+	if (!strcmp(component.name, "tasha_codec")) {
+		ret = tasha_cdc_mclk_tx_enable(component, enable, dapm);
 	} else {
-		dev_err(codec->dev, "%s: unknown codec to enable TX ext clk\n",
+		dev_err(component->dev, "%s: unknown codec to enable TX ext clk\n",
 			__func__);
 		ret = -EINVAL;
 	}
@@ -3807,15 +3807,16 @@ static int msm_snd_enable_codec_ext_tx_clk(struct snd_soc_codec *codec,
 static int msm_mclk_tx_event(struct snd_soc_dapm_widget *w,
 			     struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 
 	pr_debug("%s: event = %d\n", __func__, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		return msm_snd_enable_codec_ext_tx_clk(codec, 1, true);
+		return msm_snd_enable_codec_ext_tx_clk(component, 1, true);
 	case SND_SOC_DAPM_POST_PMD:
-		return msm_snd_enable_codec_ext_tx_clk(codec, 0, true);
+		return msm_snd_enable_codec_ext_tx_clk(component, 0, true);
 	}
 	return 0;
 }
@@ -3823,15 +3824,16 @@ static int msm_mclk_tx_event(struct snd_soc_dapm_widget *w,
 static int msm_mclk_event(struct snd_soc_dapm_widget *w,
 				 struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 
 	pr_debug("%s: event = %d\n", __func__, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		return msm_snd_enable_codec_ext_clk(codec, 1, true);
+		return msm_snd_enable_codec_ext_clk(component, 1, true);
 	case SND_SOC_DAPM_POST_PMD:
-		return msm_snd_enable_codec_ext_clk(codec, 0, true);
+		return msm_snd_enable_codec_ext_clk(component, 0, true);
 	}
 	return 0;
 }
@@ -3854,7 +3856,8 @@ static int msm_dmic_event(struct snd_soc_dapm_widget *w,
 			  struct snd_kcontrol *kcontrol, int event)
 {
 	struct msm_asoc_mach_data *pdata = NULL;
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 	int ret = 0;
 	uint32_t dmic_idx;
 	int *dmic_gpio_cnt;
@@ -3863,18 +3866,18 @@ static int msm_dmic_event(struct snd_soc_dapm_widget *w,
 
 	wname = strpbrk(w->name, "01234567");
 	if (!wname) {
-		dev_err(codec->dev, "%s: widget not found\n", __func__);
+		dev_err(component->dev, "%s: widget not found\n", __func__);
 		return -EINVAL;
 	}
 
 	ret = kstrtouint(wname, 10, &dmic_idx);
 	if (ret < 0) {
-		dev_err(codec->dev, "%s: Invalid DMIC line on the codec\n",
+		dev_err(component->dev, "%s: Invalid DMIC line on the codec\n",
 			__func__);
 		return -EINVAL;
 	}
 
-	pdata = snd_soc_card_get_drvdata(codec->component.card);
+	pdata = snd_soc_card_get_drvdata(component->card);
 
 	switch (dmic_idx) {
 	case 0:
@@ -3898,12 +3901,12 @@ static int msm_dmic_event(struct snd_soc_dapm_widget *w,
 		dmic_gpio = pdata->dmic_67_gpio_p;
 		break;
 	default:
-		dev_err(codec->dev, "%s: Invalid DMIC Selection\n",
+		dev_err(component->dev, "%s: Invalid DMIC Selection\n",
 			__func__);
 		return -EINVAL;
 	}
 
-	dev_dbg(codec->dev, "%s: event %d DMIC%d dmic_gpio_cnt %d\n",
+	dev_dbg(component->dev, "%s: event %d DMIC%d dmic_gpio_cnt %d\n",
 			__func__, event, dmic_idx, *dmic_gpio_cnt);
 
 	switch (event) {
@@ -3913,7 +3916,7 @@ static int msm_dmic_event(struct snd_soc_dapm_widget *w,
 			ret = msm_cdc_pinctrl_select_active_state(
 						dmic_gpio);
 			if (ret < 0) {
-				dev_err(codec->dev, "%s: gpio set cannot be activated %sd\n",
+				dev_err(component->dev, "%s: gpio set cannot be activated %sd\n",
 					__func__, "dmic_gpio");
 				return ret;
 			}
@@ -3925,14 +3928,14 @@ static int msm_dmic_event(struct snd_soc_dapm_widget *w,
 			ret = msm_cdc_pinctrl_select_sleep_state(
 					dmic_gpio);
 			if (ret < 0) {
-				dev_err(codec->dev, "%s: gpio set cannot be de-activated %sd\n",
+				dev_err(component->dev, "%s: gpio set cannot be de-activated %sd\n",
 					__func__, "dmic_gpio");
 				return ret;
 			}
 		}
 		break;
 	default:
-		dev_err(codec->dev, "%s: invalid DAPM event %d\n",
+		dev_err(component->dev, "%s: invalid DAPM event %d\n",
 			__func__, event);
 		return -EINVAL;
 	}
@@ -4087,7 +4090,7 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	int rc = 0;
 	int idx;
 	void *config = NULL;
-	struct snd_soc_codec *codec = NULL;
+	struct snd_soc_component *component = NULL;
 
 	pr_debug("%s: format = %d, rate = %d\n",
 		  __func__, params_format(params), params_rate(params));
@@ -4137,11 +4140,16 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		break;
 
 	case MSM_BACKEND_DAI_SLIMBUS_5_TX:
-		codec = rtd->codec;
+		component = snd_soc_rtdcom_lookup(rtd, "tasha_codec");
+		if (!component) {
+			pr_err("%s: component is NULL\n", __func__);
+			return -EINVAL;
+		}
+
 		rate->min = rate->max = SAMPLING_RATE_16KHZ;
 		channels->min = channels->max = 1;
 
-		config = msm_codec_fn.get_afe_config_fn(codec,
+		config = msm_codec_fn.get_afe_config_fn(component,
 					AFE_SLIMBUS_SLAVE_PORT_CONFIG);
 		if (config) {
 			rc = afe_set_config(AFE_SLIMBUS_SLAVE_PORT_CONFIG,
@@ -4553,46 +4561,46 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	return rc;
 }
 
-static int msm_afe_set_config(struct snd_soc_codec *codec)
+static int msm_afe_set_config(struct snd_soc_component *component)
 {
 	int ret = 0;
 	void *config_data = NULL;
 
 	if (!msm_codec_fn.get_afe_config_fn) {
-		dev_err(codec->dev, "%s: codec get afe config not init'ed\n",
+		dev_err(component->dev, "%s: codec get afe config not init'ed\n",
 			__func__);
 		return -EINVAL;
 	}
 
-	config_data = msm_codec_fn.get_afe_config_fn(codec,
+	config_data = msm_codec_fn.get_afe_config_fn(component,
 			AFE_CDC_REGISTERS_CONFIG);
 	if (config_data) {
 		ret = afe_set_config(AFE_CDC_REGISTERS_CONFIG, config_data, 0);
 		if (ret) {
-			dev_err(codec->dev,
+			dev_err(component->dev,
 				"%s: Failed to set codec registers config %d\n",
 				__func__, ret);
 			return ret;
 		}
 	}
 
-	config_data = msm_codec_fn.get_afe_config_fn(codec,
+	config_data = msm_codec_fn.get_afe_config_fn(component,
 			AFE_CDC_REGISTER_PAGE_CONFIG);
 	if (config_data) {
 		ret = afe_set_config(AFE_CDC_REGISTER_PAGE_CONFIG, config_data,
 				    0);
 		if (ret)
-			dev_err(codec->dev,
+			dev_err(component->dev,
 				"%s: Failed to set cdc register page config\n",
 				__func__);
 	}
 
-	config_data = msm_codec_fn.get_afe_config_fn(codec,
+	config_data = msm_codec_fn.get_afe_config_fn(component,
 			AFE_SLIMBUS_SLAVE_CONFIG);
 	if (config_data) {
 		ret = afe_set_config(AFE_SLIMBUS_SLAVE_CONFIG, config_data, 0);
 		if (ret) {
-			dev_err(codec->dev,
+			dev_err(component->dev,
 				"%s: Failed to set slimbus slave config %d\n",
 				__func__, ret);
 			return ret;
@@ -4608,7 +4616,7 @@ static void msm_afe_clear_config(void)
 	afe_clear_config(AFE_SLIMBUS_SLAVE_CONFIG);
 }
 
-static int msm_adsp_power_up_config(struct snd_soc_codec *codec,
+static int msm_adsp_power_up_config(struct snd_soc_component *component,
 				    struct snd_card *card)
 {
 	int ret = 0;
@@ -4650,7 +4658,7 @@ static int msm_adsp_power_up_config(struct snd_soc_codec *codec,
 		goto err;
 	}
 
-	ret = msm_afe_set_config(codec);
+	ret = msm_afe_set_config(component);
 	if (ret)
 		pr_err("%s: Failed to set AFE config. err %d\n",
 			__func__, ret);
@@ -4668,7 +4676,8 @@ static int qcs405_notifier_service_cb(struct notifier_block *this,
 	struct snd_soc_card *card = NULL;
 	const char *be_dl_name = LPASS_BE_SLIMBUS_0_RX;
 	struct snd_soc_pcm_runtime *rtd;
-	struct snd_soc_codec *codec;
+	struct snd_soc_dai *codec_dai;
+	struct snd_soc_component *component;
 
 	pr_debug("%s: Service opcode 0x%lx\n", __func__, opcode);
 
@@ -4701,9 +4710,11 @@ static int qcs405_notifier_service_cb(struct notifier_block *this,
 			ret = -EINVAL;
 			goto err;
 		}
-		codec = rtd->codec;
+		codec_dai = rtd->codec_dai;
+		if (!strcmp(dev_name(codec_dai->dev), "tasha_codec"))
+			component = snd_soc_rtdcom_lookup(rtd, "tasha_codec");
 
-		ret = msm_adsp_power_up_config(codec, card->snd_card);
+		ret = msm_adsp_power_up_config(component, card->snd_card);
 		if (ret < 0) {
 			dev_err(card->dev,
 				"%s: msm_adsp_power_up_config failed ret = %d!\n",
@@ -4727,8 +4738,8 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 {
 	int ret = 0;
 	void *config_data;
-	struct snd_soc_codec *codec = rtd->codec;
-	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	struct snd_soc_component *component;
+	struct snd_soc_dapm_context *dapm;
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	struct snd_soc_dai *codec_dai = rtd->codec_dai;
 	struct snd_card *card;
@@ -4751,7 +4762,12 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	rtd->pmdown_time = 0;
 
-	ret = snd_soc_add_codec_controls(codec, msm_snd_sb_controls,
+	if (!strcmp(dev_name(codec_dai->dev), "tasha_codec")) {
+		component = snd_soc_rtdcom_lookup(rtd, "tasha_codec");
+		dapm = snd_soc_component_get_dapm(component);
+	}
+
+	ret = snd_soc_add_component_controls(component, msm_snd_sb_controls,
 					 ARRAY_SIZE(msm_snd_sb_controls));
 	if (ret < 0) {
 		pr_err("%s: add_codec_controls failed, err %d\n",
@@ -4777,19 +4793,19 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	msm_codec_fn.get_afe_config_fn = tasha_get_afe_config;
 
-	ret = msm_adsp_power_up_config(codec, rtd->card->snd_card);
+	ret = msm_adsp_power_up_config(component, rtd->card->snd_card);
 	if (ret) {
-		dev_err(codec->dev, "%s: Failed to set AFE config %d\n",
+		dev_err(component->dev, "%s: Failed to set AFE config %d\n",
 			__func__, ret);
 		goto err;
 	}
 
-	config_data = msm_codec_fn.get_afe_config_fn(codec,
+	config_data = msm_codec_fn.get_afe_config_fn(component,
 						     AFE_AANC_VERSION);
 	if (config_data) {
 		ret = afe_set_config(AFE_AANC_VERSION, config_data, 0);
 		if (ret) {
-			dev_err(codec->dev, "%s: Failed to set aanc version %d\n",
+			dev_err(component->dev, "%s: Failed to set aanc version %d\n",
 				__func__, ret);
 			goto err;
 		}
@@ -4805,7 +4821,7 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		ret = 0;
 		goto err;
 	}
-	tasha_codec_info_create_codec_entry(pdata->codec_root, codec);
+	tasha_codec_info_create_codec_entry(pdata->codec_root, component);
 
 	codec_reg_done = true;
 	return 0;
@@ -4817,16 +4833,25 @@ err:
 static int msm_va_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 {
 	int ret = 0;
-	struct snd_soc_codec *codec = rtd->codec;
-	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	struct snd_soc_component *component;
+	struct snd_soc_dapm_context *dapm;
 	struct snd_card *card;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
+	struct snd_soc_dai *codec_dai = rtd->codec_dai;
 
-	ret = snd_soc_add_codec_controls(codec, msm_snd_va_controls,
+	component = snd_soc_rtdcom_lookup(rtd, "bolero_codec");
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	dapm = snd_soc_component_get_dapm(component);
+
+	ret = snd_soc_add_component_controls(component, msm_snd_va_controls,
 					 ARRAY_SIZE(msm_snd_va_controls));
 	if (ret < 0) {
-		dev_err(codec->dev, "%s: add_codec_controls for va failed, err %d\n",
+		dev_err(component->dev, "%s: add_component_controls for va failed, err %d\n",
 			__func__, ret);
 		return ret;
 	}
@@ -4855,7 +4880,7 @@ static int msm_va_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 		ret = 0;
 		goto done;
 	}
-	bolero_info_create_codec_entry(pdata->codec_root, codec);
+	bolero_info_create_codec_entry(pdata->codec_root, component);
 done:
 	return ret;
 }
@@ -4863,17 +4888,24 @@ done:
 static int msm_wsa_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 {
 	int ret = 0;
-	struct snd_soc_codec *codec = rtd->codec;
-	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
-	struct snd_soc_component *aux_comp;
-	struct snd_card *card;
+	struct snd_soc_component *component = NULL;
+	struct snd_soc_dapm_context *dapm = NULL;
+	struct snd_soc_component *aux_comp = NULL;
+	struct snd_card *card = NULL;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
 
-	ret = snd_soc_add_codec_controls(codec, msm_snd_wsa_controls,
+	component = snd_soc_rtdcom_lookup(rtd, "bolero_codec");
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+	dapm = snd_soc_component_get_dapm(component);
+
+	ret = snd_soc_add_component_controls(component, msm_snd_wsa_controls,
 					 ARRAY_SIZE(msm_snd_wsa_controls));
 	if (ret < 0) {
-		dev_err(codec->dev, "%s: add_codec_controls for wsa failed, err %d\n",
+		dev_err(component->dev, "%s: add_codec_controls for wsa failed, err %d\n",
 			__func__, ret);
 		return ret;
 	}
@@ -4891,7 +4923,7 @@ static int msm_wsa_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 	 * Send speaker configuration only for WSA8810.
 	 * Default configuration is for WSA8815.
 	 */
-	dev_dbg(codec->dev, "%s: Number of aux devices: %d\n",
+	dev_dbg(component->dev, "%s: Number of aux devices: %d\n",
 		__func__, rtd->card->num_aux_devs);
 	if (rtd->card->num_aux_devs &&
 	    !list_empty(&rtd->card->component_dev_list)) {
@@ -4901,9 +4933,9 @@ static int msm_wsa_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 				card_aux_list);
 		if (!strcmp(aux_comp->name, WSA8810_NAME_1) ||
 		    !strcmp(aux_comp->name, WSA8810_NAME_2)) {
-			wsa_macro_set_spkr_mode(rtd->codec,
+			wsa_macro_set_spkr_mode(component,
 						WSA_MACRO_SPKR_MODE_1);
-			wsa_macro_set_spkr_gain_offset(rtd->codec,
+			wsa_macro_set_spkr_gain_offset(component,
 					WSA_MACRO_GAIN_OFFSET_M1P5_DB);
 		}
 	}
@@ -4912,12 +4944,12 @@ static int msm_wsa_cdc_dma_init(struct snd_soc_pcm_runtime *rtd)
 		pdata->codec_root = snd_info_create_subdir(card->module,
 					"codecs", card->proc_root);
 	if (!pdata->codec_root) {
-		dev_dbg(codec->dev, "%s: Cannot create codecs module entry\n",
+		dev_dbg(component->dev, "%s: Cannot create codecs module entry\n",
 			__func__);
 		ret = 0;
 		goto done;
 	}
-	bolero_info_create_codec_entry(pdata->codec_root, codec);
+	bolero_info_create_codec_entry(pdata->codec_root, component);
 done:
 	return ret;
 }
@@ -7884,22 +7916,20 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 							SPKR_R_BOOST, SPKR_R_VI};
 	unsigned int ch_rate[WSA881X_MAX_SWR_PORTS] = {2400, 600, 300, 1200};
 	unsigned int ch_mask[WSA881X_MAX_SWR_PORTS] = {0x1, 0xF, 0x3, 0x3};
-	struct snd_soc_codec *codec = snd_soc_component_to_codec(component);
 	struct msm_asoc_mach_data *pdata;
 	struct snd_soc_dapm_context *dapm;
 	int ret = 0;
 
-	if (!codec) {
-		pr_err("%s codec is NULL\n", __func__);
+	if (!component) {
+		pr_err("%s component is NULL\n", __func__);
 		return -EINVAL;
 	}
-
-	dapm = snd_soc_codec_get_dapm(codec);
+	dapm = snd_soc_component_get_dapm(component);
 
 	if (!strcmp(component->name_prefix, "SpkrLeft")) {
-		dev_dbg(codec->dev, "%s: setting left ch map to codec %s\n",
-			__func__, codec->component.name);
-		wsa881x_set_channel_map(codec, &spkleft_ports[0],
+		dev_dbg(component->dev, "%s: setting left ch map to codec %s\n",
+			__func__, component->name);
+		wsa881x_set_channel_map(component, &spkleft_ports[0],
 				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
 				&ch_rate[0], &spkleft_port_types[0]);
 		if (dapm->component) {
@@ -7907,9 +7937,9 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrLeft SPKR");
 		}
 	} else if (!strcmp(component->name_prefix, "SpkrRight")) {
-		dev_dbg(codec->dev, "%s: setting right ch map to codec %s\n",
-			__func__, codec->component.name);
-		wsa881x_set_channel_map(codec, &spkright_ports[0],
+		dev_dbg(component->dev, "%s: setting right ch map to codec %s\n",
+			__func__, component->name);
+		wsa881x_set_channel_map(component, &spkright_ports[0],
 				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
 				&ch_rate[0], &spkright_port_types[0]);
 		if (dapm->component) {
@@ -7917,15 +7947,15 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrRight SPKR");
 		}
 	} else {
-		dev_err(codec->dev, "%s: wrong codec name %s\n", __func__,
-			codec->component.name);
+		dev_err(component->dev, "%s: wrong codec name %s\n", __func__,
+			component->name);
 		ret = -EINVAL;
 		goto err;
 	}
 	pdata = snd_soc_card_get_drvdata(component->card);
 	if (pdata && pdata->codec_root)
 		wsa881x_codec_info_create_codec_entry(pdata->codec_root,
-						      codec);
+						      component);
 
 err:
 	return ret;
@@ -8120,10 +8150,8 @@ err:
 
 static int msm_csra66x0_init(struct snd_soc_component *component)
 {
-	struct snd_soc_codec *codec = snd_soc_component_to_codec(component);
-
-	if (!codec) {
-		pr_err("%s codec is NULL\n", __func__);
+	if (!component) {
+		pr_err("%s component is NULL\n", __func__);
 		return -EINVAL;
 	}
 	return 0;
