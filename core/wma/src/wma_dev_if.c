@@ -3297,11 +3297,6 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 	struct wma_target_req *req;
 	QDF_STATUS status;
 
-	if (!cds_is_target_ready()) {
-		WMA_LOGE("target not ready, drop the request");
-		return NULL;
-	}
-
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req) {
 		WMA_LOGE(FL("Failed to allocate memory for msg %d vdev %d"),
@@ -3636,11 +3631,6 @@ struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
 {
 	struct wma_target_req *req;
 	QDF_STATUS status;
-
-	if (!cds_is_target_ready()) {
-		WMA_LOGE("target not ready, drop the request");
-		return NULL;
-	}
 
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req) {
