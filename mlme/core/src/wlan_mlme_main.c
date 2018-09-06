@@ -1123,6 +1123,16 @@ static void mlme_init_wep_cfg(struct wlan_mlme_wep_cfg *wep_params)
 	mlme_init_wep_keys(wep_params);
 }
 
+static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_mlme_wmm_params *wmm_params)
+{
+	wmm_params->qos_enabled = cfg_default(CFG_QOS_ENABLED);
+	wmm_params->wme_enabled = cfg_default(CFG_WME_ENABLED);
+	wmm_params->max_sp_length = cfg_default(CFG_MAX_SP_LENGTH);
+	wmm_params->wsm_enabled = cfg_default(CFG_WSM_ENABLED);
+	wmm_params->edca_profile = cfg_default(CFG_EDCA_PROFILE);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -1140,6 +1150,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_edca_params(&mlme_cfg->edca_params);
 	mlme_init_timeout_cfg(psoc, &mlme_cfg->timeouts);
 	mlme_init_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps);
+	mlme_init_wmm_in_cfg(psoc, &mlme_cfg->wmm_params);
 	mlme_init_mbo_cfg(psoc, &mlme_cfg->mbo_cfg);
 	mlme_init_qos_cfg(psoc, &mlme_cfg->qos_mlme_params);
 	mlme_init_rates_in_cfg(psoc, &mlme_cfg->rates);
