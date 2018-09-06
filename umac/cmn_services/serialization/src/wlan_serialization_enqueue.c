@@ -20,6 +20,7 @@
  * This file defines the routines which are pertinent
  * to the queuing of commands.
  */
+#ifdef CONFIG_SERIALIZATION_V1
 #include <wlan_serialization_api.h>
 #include "wlan_serialization_main_i.h"
 #include "wlan_serialization_utils_i.h"
@@ -271,3 +272,4 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
 	return wlan_serialization_add_cmd_to_given_queue(queue, cmd, psoc,
 			ser_pdev_obj, is_cmd_for_active_queue, pcmd_list);
 }
+#endif

@@ -20,6 +20,7 @@
  * This file defines the routines which are pertinent
  * to the dequeue of commands.
  */
+#ifdef CONFIG_SERIALIZATION_V1
 #include <wlan_serialization_api.h>
 #include "wlan_serialization_main_i.h"
 #include "wlan_serialization_utils_i.h"
@@ -657,4 +658,4 @@ QDF_STATUS wlan_serialization_find_and_remove_cmd(
 
 	return QDF_STATUS_SUCCESS;
 }
-
+#endif
