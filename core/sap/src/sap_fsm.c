@@ -917,12 +917,16 @@ sap_validate_chan(struct sap_context *sap_context,
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("After check concurrency: con_ch:%d"),
 				  con_ch);
+			sta_sap_scc_on_dfs_chan =
+				policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
+						mac_ctx->psoc);
 			if (con_ch &&
 			    (policy_mgr_sta_sap_scc_on_lte_coex_chan(
 						mac_ctx->psoc) ||
 			     policy_mgr_is_safe_channel(mac_ctx->psoc,
 							con_ch)) &&
-			   !wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch)) {
+			     (!wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch) ||
+			      sta_sap_scc_on_dfs_chan)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					QDF_TRACE_LEVEL_ERROR,
 					"%s: Override ch %d to %d due to CC Intf",
