@@ -119,8 +119,9 @@
 #define HAL_LEGACY_MCS7  7
 
 #define HE_GI_0_8 0
-#define HE_GI_1_6 1
-#define HE_GI_3_2 2
+#define HE_GI_0_4 1
+#define HE_GI_1_6 2
+#define HE_GI_3_2 3
 
 #define HT_SGI_PRESENT 0x80
 
