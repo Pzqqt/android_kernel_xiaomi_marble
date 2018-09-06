@@ -2987,11 +2987,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 	}
 
 	hdd_ctx->start_modules_in_progress = false;
-	if (DRIVER_MODULES_ENABLED == hdd_ctx->driver_status) {
-		ret = hdd_update_country_code(hdd_ctx);
-		if (ret)
-			hdd_err("Failed to update command line country code!");
-	}
+
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 
 	hdd_exit();
@@ -10462,6 +10458,12 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	struct hdd_config *cfg;
 
 	hdd_enter();
+
+	ret = hdd_update_country_code(hdd_ctx);
+	if (ret) {
+		hdd_err("Failed to update country code; errno:%d", ret);
+		return -EINVAL;
+	}
 
 	ret = hdd_init_mws_coex(hdd_ctx);
 	if (ret)

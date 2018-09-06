@@ -685,13 +685,7 @@ void hdd_program_country_code(struct hdd_context *hdd_ctx)
 
 int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code)
 {
-	int err;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	/* validation */
-	err = wlan_hdd_validate_context(hdd_ctx);
-	if (err)
-		return err;
+	QDF_STATUS status;
 
 	if (!country_code) {
 		hdd_err("country_code is null");
@@ -699,7 +693,6 @@ int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code)
 	}
 
 	status = ucfg_reg_set_country(hdd_ctx->hdd_pdev, country_code);
-
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to set country");
 
