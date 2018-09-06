@@ -2858,7 +2858,7 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 		uint32_t length)
 {
-	struct hal_tx_completion_status ts;
+	struct hal_tx_completion_status ts = {0};
 	struct dp_soc *soc = NULL;
 	struct dp_vdev *vdev = tx_desc->vdev;
 	struct dp_peer *peer = NULL;
