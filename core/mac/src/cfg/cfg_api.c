@@ -761,12 +761,7 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 			pCapInfo->spectrumMgt = 1;
 	}
 	/* QoS bit */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_QOS_ENABLED, &val) !=
-							QDF_STATUS_SUCCESS) {
-		pe_err("cfg get WNI_CFG_QOS_ENABLED failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (val)
+	if (pMac->mlme_cfg->wmm_params.qos_enabled)
 		pCapInfo->qos = 1;
 
 	/* APSD bit */

@@ -2303,7 +2303,7 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 	uint8_t sub_type;
 	const uint8_t *wpsie = NULL;
 	uint8_t maxidx, i;
-	uint32_t tmp;
+	bool wme_enable;
 
 	/* Get a copy of the already parsed Assoc Request */
 	assoc_req =
@@ -2434,17 +2434,9 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 		}
 
 		if (assoc_req->wmeInfoPresent) {
-			if (wlan_cfg_get_int (mac_ctx,
-				(uint16_t) WNI_CFG_WME_ENABLED, &tmp)
-				!= QDF_STATUS_SUCCESS)
-				pe_err("wlan_cfg_get_int failed for id: %d",
-					WNI_CFG_WME_ENABLED);
-
-			/* check whether AP is enabled with WMM */
-			if (tmp)
-				assoc_ind->WmmStaInfoPresent = 1;
-			else
-				assoc_ind->WmmStaInfoPresent = 0;
+			/* Set whether AP is enabled with WMM or not */
+			wme_enable = mac_ctx->mlme_cfg->wmm_params.wme_enabled;
+			assoc_ind->WmmStaInfoPresent = wme_enable;
 			/*
 			 * Note: we are not rejecting association here
 			 * because IOT will fail

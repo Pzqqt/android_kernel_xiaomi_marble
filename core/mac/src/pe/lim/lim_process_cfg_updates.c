@@ -297,6 +297,7 @@ void lim_apply_configuration(tpAniSirGlobal pMac, tpPESession psessionEntry)
 static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	uint32_t val;
+	bool enabled;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val) != QDF_STATUS_SUCCESS)
 		pe_err("cfg get short preamble failed");
@@ -304,16 +305,12 @@ static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry)
 
 	/* In STA case this parameter is filled during the join request */
 	if (LIM_IS_AP_ROLE(psessionEntry) ||
-	    LIM_IS_IBSS_ROLE(psessionEntry)) {
-		if (wlan_cfg_get_int(pMac, WNI_CFG_WME_ENABLED, &val) !=
-		    QDF_STATUS_SUCCESS)
-			pe_err("cfg get wme enabled failed");
-		psessionEntry->limWmeEnabled = (val) ? 1 : 0;
+		LIM_IS_IBSS_ROLE(psessionEntry)) {
+		enabled = pMac->mlme_cfg->wmm_params.wme_enabled;
+		psessionEntry->limWmeEnabled = (enabled) ? 1 : 0;
 	}
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_WSM_ENABLED, &val) != QDF_STATUS_SUCCESS)
-		pe_err("cfg get wsm enabled failed");
-	psessionEntry->limWsmEnabled = (val) ? 1 : 0;
+	enabled = pMac->mlme_cfg->wmm_params.wsm_enabled;
+	psessionEntry->limWsmEnabled = (enabled) ? 1 : 0;
 
 	if ((!psessionEntry->limWmeEnabled) && (psessionEntry->limWsmEnabled)) {
 		pe_err("Can't enable WSM without WME");
@@ -321,10 +318,8 @@ static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	}
 	/* In STA , this parameter is filled during the join request */
 	if (LIM_IS_AP_ROLE(psessionEntry) || LIM_IS_IBSS_ROLE(psessionEntry)) {
-		if (wlan_cfg_get_int(pMac, WNI_CFG_QOS_ENABLED, &val) !=
-		    QDF_STATUS_SUCCESS)
-			pe_err("cfg get qos enabled failed");
-		psessionEntry->limQosEnabled = (val) ? 1 : 0;
+		enabled = pMac->mlme_cfg->wmm_params.qos_enabled;
+		psessionEntry->limQosEnabled = (enabled) ? 1 : 0;
 	}
 	psessionEntry->limHcfEnabled = pMac->mlme_cfg->feature_flags.enable_hcf;
 

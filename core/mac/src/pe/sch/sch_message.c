@@ -107,18 +107,12 @@ static void sch_edca_profile_update_all(tpAniSirGlobal pmac)
 
 void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
 {
-	tpPESession psessionEntry = &pMac->lim.gpSession[0];
-
 	switch (pSchMsg->type) {
 	case SIR_CFG_PARAM_UPDATE_IND:
 		switch (pSchMsg->bodyval) {
 		case WNI_CFG_COUNTRY_CODE:
 			pe_debug("sch: WNI_CFG_COUNTRY_CODE changed");
 			sch_edca_profile_update_all(pMac);
-			break;
-
-		case WNI_CFG_EDCA_PROFILE:
-			sch_edca_profile_update(pMac, psessionEntry);
 			break;
 
 		default:
@@ -174,13 +168,9 @@ sch_get_params(tpAniSirGlobal pMac,
 		val = WNI_CFG_EDCA_PROFILE_ETSI_EUROPE;
 		pe_debug("switch to ETSI EUROPE profile country code %c%c",
 			 country_code_str[0], country_code_str[1]);
-	} else if (wlan_cfg_get_int(pMac, WNI_CFG_EDCA_PROFILE, &val) !=
-		   QDF_STATUS_SUCCESS) {
-		pe_err("failed to cfg get EDCA_PROFILE id %d",
-			WNI_CFG_EDCA_PROFILE);
-		return QDF_STATUS_E_FAILURE;
+	} else {
+		val = pMac->mlme_cfg->wmm_params.edca_profile;
 	}
-
 	if (val >= WNI_CFG_EDCA_PROFILE_MAX) {
 		pe_warn("Invalid EDCA_PROFILE %d, using %d instead", val,
 			WNI_CFG_EDCA_PROFILE_ANI);

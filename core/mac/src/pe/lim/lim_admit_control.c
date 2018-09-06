@@ -816,35 +816,6 @@ QDF_STATUS lim_admit_control_init(tpAniSirGlobal pMac)
 }
 
 /** -------------------------------------------------------------
-   \fn lim_update_admit_policy
-   \brief Set the admit control policy based on CFG parameters
-   \param   tpAniSirGlobal pMac
-   \return QDF_STATUS - status
-   -------------------------------------------------------------*/
-
-QDF_STATUS lim_update_admit_policy(tpAniSirGlobal pMac)
-{
-	uint32_t val;
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_ADMIT_POLICY, &val) != QDF_STATUS_SUCCESS) {
-		pe_err("Unable to get CFG_ADMIT_POLICY");
-		return QDF_STATUS_E_FAILURE;
-	}
-	pMac->lim.admitPolicyInfo.type = (uint8_t) val;
-	if (wlan_cfg_get_int(pMac, WNI_CFG_ADMIT_BWFACTOR, &val) != QDF_STATUS_SUCCESS) {
-		pe_err("Unable to get CFG_ADMIT_BWFACTOR");
-		return QDF_STATUS_E_FAILURE;
-	}
-	pMac->lim.admitPolicyInfo.bw_factor = (uint8_t) val;
-
-	pe_debug("LIM: AdmitPolicy: %d bw_factor: %d",
-		       pMac->lim.admitPolicyInfo.type,
-		       pMac->lim.admitPolicyInfo.bw_factor);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/** -------------------------------------------------------------
    \fn lim_send_hal_msg_add_ts
    \brief Send halMsg_AddTs to HAL
    \param   tpAniSirGlobal pMac

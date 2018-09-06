@@ -835,6 +835,22 @@ struct wlan_mlme_lfr_cfg {
 };
 
 /**
+* struct wlan_mlme_wmm_params - WMM CFG Items
+ * @qos_enabled: AP is enabled with 11E
+ * @wme_enabled: AP is enabled with WMM
+ * @max_sp_length: Maximum SP Length
+ * @wsm_enabled: AP is enabled with WSM
+ * @edca_profile: edca profile id
+ */
+struct wlan_mlme_wmm_params {
+	bool qos_enabled;
+	bool wme_enabled;
+	uint8_t max_sp_length;
+	bool wsm_enabled;
+	uint32_t edca_profile;
+};
+
+/**
  * struct wlan_mlme_weight_config - weight params to
  * calculate best candidate
  *
@@ -1066,6 +1082,7 @@ struct wlan_mlme_wep_cfg {
  * @acs: ACS related CFG items
  * @feature_flags: Feature flag config items
  * @wep_params:  WEP related config items
+ * @wmm_params: WMM related CFG Items
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_chainmask chainmask_cfg;
@@ -1090,6 +1107,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_acs acs;
 	struct wlan_mlme_feature_flag feature_flags;
 	struct wlan_mlme_wep_cfg wep_params;
+	struct wlan_mlme_wmm_params wmm_params;
 };
 
 #endif

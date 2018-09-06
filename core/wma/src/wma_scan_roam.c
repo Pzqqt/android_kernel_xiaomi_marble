@@ -2721,14 +2721,10 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	}
 	if (val)
 		selfCaps.spectrumMgt = 1;
-	if (wlan_cfg_get_int(pMac, WNI_CFG_QOS_ENABLED, &val) !=
-							QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_QOS_ENABLED");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (val)
+
+	if (pMac->mlme_cfg->wmm_params.qos_enabled)
 		selfCaps.qos = 1;
+
 	if (wlan_cfg_get_int(pMac, WNI_CFG_APSD_ENABLED, &val) !=
 							QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
@@ -2813,13 +2809,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	roam_offload_params->asel_cap = nCfgValue8 & 0xFF;
 
 	/* QOS Info */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_SP_LENGTH, &nCfgValue) !=
-	    QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_MAX_SP_LENGTH");
-		return QDF_STATUS_E_FAILURE;
-	}
-	nCfgValue8 = (uint8_t) nCfgValue;
+	nCfgValue8 = pMac->mlme_cfg->wmm_params.max_sp_length;
 	macQosInfoSta.maxSpLen = nCfgValue8;
 	macQosInfoSta.moreDataAck = 0;
 	macQosInfoSta.qack = 0;

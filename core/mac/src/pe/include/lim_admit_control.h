@@ -70,8 +70,6 @@ lim_admit_control_delete_ts(tpAniSirGlobal pMac,
 			    tSirMacTSInfo *tsinfo,
 			    uint8_t *tsStatus, uint8_t *tspecIdx);
 
-extern QDF_STATUS lim_update_admit_policy(tpAniSirGlobal pMac);
-
 QDF_STATUS lim_admit_control_init(tpAniSirGlobal pMac);
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,

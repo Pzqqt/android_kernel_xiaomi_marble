@@ -2772,8 +2772,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.is_force_1x1 =
 			pParam->is_force_1x1;
 		pMac->roam.configParam.WMMSupportMode = pParam->WMMSupportMode;
-		cfg_set_int(pMac, WNI_CFG_WME_ENABLED,
-			(pParam->WMMSupportMode == eCsrRoamWmmNoQos) ? 0 : 1);
+		pMac->mlme_cfg->wmm_params.wme_enabled =
+			(pParam->WMMSupportMode == eCsrRoamWmmNoQos) ? 0 : 1;
 		pMac->roam.configParam.Is11eSupportEnabled =
 			pParam->Is11eSupportEnabled;
 		pMac->roam.configParam.Is11dSupportEnabled =

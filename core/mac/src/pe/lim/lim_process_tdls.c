@@ -1125,6 +1125,8 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 	QDF_STATUS qdf_status;
 	uint32_t selfDot11Mode;
 	uint8_t smeSessionId = 0;
+	uint8_t sp_length = 0;
+
 /*  Placeholder to support different channel bonding mode of TDLS than AP. */
 /*  Today, WNI_CFG_CHANNEL_BONDING_MODE will be overwritten when connecting to AP */
 /*  To support this feature, we need to introduce WNI_CFG_TDLS_CHANNEL_BONDING_MODE */
@@ -1169,9 +1171,9 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 					    &tdlsSetupReq.ExtCap);
 
 	if (1 == pMac->lim.gLimTDLSWmmMode) {
-		uint32_t val = 0;
 
 		pe_debug("populate WMM IE in Setup Request Frame");
+		sp_length = pMac->mlme_cfg->wmm_params.max_sp_length;
 		/* include WMM IE */
 		tdlsSetupReq.WMMInfoStation.version = SIR_MAC_OUI_VERSION_1;
 		tdlsSetupReq.WMMInfoStation.acvo_uapsd =
@@ -1182,12 +1184,7 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 			((pMac->lim.gLimTDLSUapsdMask & 0x04) >> 2);
 		tdlsSetupReq.WMMInfoStation.acbe_uapsd =
 			((pMac->lim.gLimTDLSUapsdMask & 0x08) >> 3);
-
-		if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_SP_LENGTH, &val) !=
-		    QDF_STATUS_SUCCESS)
-			pe_warn("could not retrieve Max SP Length");
-
-		tdlsSetupReq.WMMInfoStation.max_sp_length = (uint8_t) val;
+		tdlsSetupReq.WMMInfoStation.max_sp_length = sp_length;
 		tdlsSetupReq.WMMInfoStation.present = 1;
 	} else {
 		/*
@@ -1579,6 +1576,7 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 	void *pPacket;
 	QDF_STATUS qdf_status;
 	uint32_t selfDot11Mode;
+	uint8_t max_sp_length = 0;
 /*  Placeholder to support different channel bonding mode of TDLS than AP. */
 /*  Today, WNI_CFG_CHANNEL_BONDING_MODE will be overwritten when connecting to AP */
 /*  To support this feature, we need to introduce WNI_CFG_TDLS_CHANNEL_BONDING_MODE */
@@ -1632,9 +1630,9 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 					    &tdlsSetupRsp.ExtCap);
 
 	if (1 == pMac->lim.gLimTDLSWmmMode) {
-		uint32_t val = 0;
 
 		pe_debug("populate WMM IE in Setup Response frame");
+		max_sp_length = pMac->mlme_cfg->wmm_params.max_sp_length;
 		/* include WMM IE */
 		tdlsSetupRsp.WMMInfoStation.version = SIR_MAC_OUI_VERSION_1;
 		tdlsSetupRsp.WMMInfoStation.acvo_uapsd =
@@ -1645,10 +1643,7 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 			((pMac->lim.gLimTDLSUapsdMask & 0x04) >> 2);
 		tdlsSetupRsp.WMMInfoStation.acbe_uapsd =
 			((pMac->lim.gLimTDLSUapsdMask & 0x08) >> 3);
-		if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_SP_LENGTH, &val) !=
-		    QDF_STATUS_SUCCESS)
-			pe_warn("could not retrieve Max SP Length");
-			tdlsSetupRsp.WMMInfoStation.max_sp_length = (uint8_t) val;
+		tdlsSetupRsp.WMMInfoStation.max_sp_length = max_sp_length;
 		tdlsSetupRsp.WMMInfoStation.present = 1;
 	} else {
 		/*

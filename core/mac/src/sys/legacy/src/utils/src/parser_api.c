@@ -1454,14 +1454,12 @@ void
 populate_dot11f_qos_caps_station(tpAniSirGlobal pMac, tpPESession pe_session,
 				 tDot11fIEQOSCapsStation *pDot11f)
 {
-	uint32_t val = 0;
+	uint8_t max_sp_length = 0;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_SP_LENGTH, &val) !=
-							QDF_STATUS_SUCCESS)
-		pe_err("could not retrieve Max SP Length");
+	max_sp_length = pMac->mlme_cfg->wmm_params.max_sp_length;
 
 	pDot11f->more_data_ack = 0;
-	pDot11f->max_sp_length = (uint8_t) val;
+	pDot11f->max_sp_length = max_sp_length;
 	pDot11f->qack = 0;
 
 	if (pMac->lim.gUapsdEnable) {
@@ -1944,8 +1942,9 @@ void populate_dot11f_wmm_info_station_per_session(tpAniSirGlobal pMac,
 						  tpPESession psessionEntry,
 						  tDot11fIEWMMInfoStation *pInfo)
 {
-	uint32_t val = 0;
+	uint8_t max_sp_length = 0;
 
+	max_sp_length = pMac->mlme_cfg->wmm_params.max_sp_length;
 	pInfo->version = SIR_MAC_OUI_VERSION_1;
 	pInfo->acvo_uapsd =
 		LIM_UAPSD_GET(ACVO, psessionEntry->gUapsdPerAcBitmask);
@@ -1956,11 +1955,7 @@ void populate_dot11f_wmm_info_station_per_session(tpAniSirGlobal pMac,
 	pInfo->acbe_uapsd =
 		LIM_UAPSD_GET(ACBE, psessionEntry->gUapsdPerAcBitmask);
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_SP_LENGTH, &val) !=
-							QDF_STATUS_SUCCESS)
-		pe_err("could not retrieve Max SP Length");
-
-	pInfo->max_sp_length = (uint8_t) val;
+	pInfo->max_sp_length = max_sp_length;
 	pInfo->present = 1;
 }
 
@@ -6038,8 +6033,7 @@ populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 	if (val)
 		frame->Capabilities.spectrumMgt = 1;
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_QOS_ENABLED, &val);
-	if (val)
+	if (mac_ctx->mlme_cfg->wmm_params.qos_enabled)
 		frame->Capabilities.qos = 1;
 
 	wlan_cfg_get_int(mac_ctx, WNI_CFG_APSD_ENABLED, &val);
