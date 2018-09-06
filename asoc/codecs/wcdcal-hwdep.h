@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2014, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2018, The Linux Foundation. All rights reserved.
  */
 #ifndef __WCD9XXX_HWDEP_H__
 #define __WCD9XXX_HWDEP_H__
@@ -26,7 +26,8 @@ struct firmware_cal {
 };
 
 struct snd_soc_codec;
-int wcd_cal_create_hwdep(void *fw, int node, struct snd_soc_codec *codec);
+int wcd_cal_create_hwdep(void *fw, int node,
+			 struct snd_soc_component *component);
 struct firmware_cal *wcdcal_get_fw_cal(struct fw_info *fw_data,
 					enum wcd_cal_type type);
 #endif /* __WCD9XXX_HWDEP_H__ */

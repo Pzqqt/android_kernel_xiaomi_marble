@@ -17,9 +17,9 @@ enum cdc_ssr_event {
 
 struct wcd_dsp_cdc_cb {
 	/* Callback to enable codec clock */
-	int (*cdc_clk_en)(struct snd_soc_codec *, bool);
+	int (*cdc_clk_en)(struct snd_soc_component *component, bool enable);
 	/* Callback to vote and unvote for SVS2 mode */
-	void (*cdc_vote_svs)(struct snd_soc_codec *, bool);
+	void (*cdc_vote_svs)(struct snd_soc_component *component, bool enable);
 };
 
 struct wcd_dsp_irq_info {
@@ -61,7 +61,7 @@ struct wdsp_ssr_entry {
 
 struct wcd_dsp_cntl {
 	/* Handle to codec */
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 
 	/* Clk rate of the codec clock */
 	u32 clk_rate;
@@ -109,7 +109,7 @@ struct wcd_dsp_cntl {
 #endif
 };
 
-void wcd_dsp_cntl_init(struct snd_soc_codec *codec,
+void wcd_dsp_cntl_init(struct snd_soc_component *component,
 		       struct wcd_dsp_params *params,
 		       struct wcd_dsp_cntl **cntl);
 void wcd_dsp_cntl_deinit(struct wcd_dsp_cntl **cntl);

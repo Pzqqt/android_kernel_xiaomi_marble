@@ -30,7 +30,7 @@ int wsa881x_get_temp(struct thermal_zone_device *thermal,
 		     int *temp)
 {
 	struct wsa881x_tz_priv *pdata;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	struct wsa_temp_register reg;
 	int dmeas, d1, d2;
 	int ret = 0;
@@ -44,8 +44,8 @@ int wsa881x_get_temp(struct thermal_zone_device *thermal,
 
 	if (thermal->devdata) {
 		pdata = thermal->devdata;
-		if (pdata->codec) {
-			codec = pdata->codec;
+		if (pdata->component) {
+			component = pdata->component;
 		} else {
 			pr_err("%s: codec is NULL\n", __func__);
 			return -EINVAL;
@@ -70,7 +70,7 @@ int wsa881x_get_temp(struct thermal_zone_device *thermal,
 
 temp_retry:
 	if (pdata->wsa_temp_reg_read) {
-		ret = pdata->wsa_temp_reg_read(codec, &reg);
+		ret = pdata->wsa_temp_reg_read(component, &reg);
 		if (ret) {
 			pr_err("%s: temp read failed: %d, current temp: %d\n",
 				__func__, ret, pdata->curr_temp);

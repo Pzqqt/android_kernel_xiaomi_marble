@@ -15,36 +15,36 @@ struct aqt1000_mbhc {
 
 #if IS_ENABLED(CONFIG_SND_SOC_AQT1000)
 extern int aqt_mbhc_init(struct aqt1000_mbhc **mbhc,
-			   struct snd_soc_codec *codec,
+			   struct snd_soc_component *component,
 			   struct fw_info *fw_data);
-extern void aqt_mbhc_hs_detect_exit(struct snd_soc_codec *codec);
-extern int aqt_mbhc_hs_detect(struct snd_soc_codec *codec,
+extern void aqt_mbhc_hs_detect_exit(struct snd_soc_component *component);
+extern int aqt_mbhc_hs_detect(struct snd_soc_component *component,
 				struct wcd_mbhc_config *mbhc_cfg);
-extern void aqt_mbhc_deinit(struct snd_soc_codec *codec);
+extern void aqt_mbhc_deinit(struct snd_soc_component *component);
 extern int aqt_mbhc_post_ssr_init(struct aqt1000_mbhc *mbhc,
-				    struct snd_soc_codec *codec);
+				    struct snd_soc_component *component);
 extern int aqt_mbhc_get_impedance(struct aqt1000_mbhc *aqt_mbhc,
 				    uint32_t *zl, uint32_t *zr);
 #else
 static inline int aqt_mbhc_init(struct aqt1000_mbhc **mbhc,
-				  struct snd_soc_codec *codec,
+				  struct snd_soc_component *component,
 				  struct fw_info *fw_data)
 {
 	return 0;
 }
-static inline void aqt_mbhc_hs_detect_exit(struct snd_soc_codec *codec)
+static inline void aqt_mbhc_hs_detect_exit(struct snd_soc_component *component)
 {
 }
-static inline int aqt_mbhc_hs_detect(struct snd_soc_codec *codec,
+static inline int aqt_mbhc_hs_detect(struct snd_soc_component *component,
 				       struct wcd_mbhc_config *mbhc_cfg)
 {
 		return 0;
 }
-static inline void aqt_mbhc_deinit(struct snd_soc_codec *codec)
+static inline void aqt_mbhc_deinit(struct snd_soc_component *component)
 {
 }
 static inline int aqt_mbhc_post_ssr_init(struct aqt1000_mbhc *mbhc,
-					   struct snd_soc_codec *codec)
+					   struct snd_soc_component *component)
 {
 	return 0;
 }

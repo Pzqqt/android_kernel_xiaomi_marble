@@ -41,7 +41,7 @@ struct wcd_ctrl_platform_data {
 
 struct bolero_priv {
 	struct device *dev;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	struct regmap *regmap;
 	struct mutex io_lock;
 	struct mutex clk_lock;

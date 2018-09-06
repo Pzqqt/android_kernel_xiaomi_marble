@@ -154,6 +154,7 @@ static struct irq_chip aqt_irq_chip = {
 };
 
 static struct lock_class_key aqt_irq_lock_class;
+static struct lock_class_key aqt_irq_lock_requested_class;
 
 static int aqt_irq_map(struct irq_domain *irqd, unsigned int virq,
 			irq_hw_number_t hw)
@@ -162,7 +163,8 @@ static int aqt_irq_map(struct irq_domain *irqd, unsigned int virq,
 
 	irq_set_chip_data(virq, data);
 	irq_set_chip_and_handler(virq, &aqt_irq_chip, handle_simple_irq);
-	irq_set_lockdep_class(virq, &aqt_irq_lock_class);
+	irq_set_lockdep_class(virq, &aqt_irq_lock_class,
+			      &aqt_irq_lock_requested_class);
 	irq_set_nested_thread(virq, 1);
 	irq_set_noprobe(virq);
 

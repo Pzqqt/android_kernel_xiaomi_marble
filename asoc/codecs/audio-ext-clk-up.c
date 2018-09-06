@@ -10,6 +10,7 @@
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include "../../../drivers/clk/qcom/common.h"
+#include <linux/pinctrl/consumer.h>
 #include <linux/platform_device.h>
 #include <dt-bindings/clock/qcom,audio-ext-clk.h>
 #include <dsp/q6afe-v2.h>

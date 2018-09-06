@@ -9,7 +9,7 @@
 #include <linux/regmap.h>
 #include "core.h"
 
-typedef int (*regmap_patch_fptr)(struct regmap *, int);
+typedef int (*regmap_patch_fptr)(struct regmap *regmap, int version);
 
 extern struct regmap_config wcd934x_regmap_config;
 extern int wcd934x_regmap_register_patch(struct regmap *regmap,

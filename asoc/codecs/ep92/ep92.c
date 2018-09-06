@@ -21,6 +21,8 @@
 #include <linux/workqueue.h>
 #include "ep92.h"
 
+#define DRV_NAME "ep92_codec"
+
 #define EP92_POLL_INTERVAL_OFF_MSEC 200
 #define EP92_POLL_INTERVAL_ON_MSEC  20
 #define EP92_SYSFS_ENTRY_MAX_LEN 64
@@ -91,7 +93,7 @@ static bool ep92_readable_registers(struct device *dev, unsigned int reg)
 /* codec private data */
 struct ep92_pdata {
 	struct regmap        *regmap;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	struct timer_list    timer;
 	struct work_struct   read_status_worker;
 	int                  irq;
@@ -169,7 +171,7 @@ static ssize_t debugfs_codec_write_op(struct file *filp,
 		const char __user *ubuf, size_t cnt, loff_t *ppos)
 {
 	struct ep92_pdata *ep92 = (struct ep92_pdata *) filp->private_data;
-	struct snd_soc_codec *codec = ep92->codec;
+	struct snd_soc_component *component = ep92->component;
 	char lbuf[32];
 	int rc;
 	u32 param[2];
@@ -185,45 +187,45 @@ static ssize_t debugfs_codec_write_op(struct file *filp,
 	rc = debugfs_get_parameters(lbuf, param, 2);
 	if ((param[0] < EP92_ISP_MODE_ENTER_ISP)
 		|| (param[0] > EP92_GENERAL_CONTROL_4)) {
-		dev_err(codec->dev, "%s: reg address 0x%02X out of range\n",
+		dev_err(component->dev, "%s: reg address 0x%02X out of range\n",
 			__func__, param[0]);
 		return -EINVAL;
 	}
 	if ((param[1] < 0) || (param[1] > 255)) {
-		dev_err(codec->dev, "%s: reg data 0x%02X out of range\n",
+		dev_err(component->dev, "%s: reg data 0x%02X out of range\n",
 			__func__, param[1]);
 		return -EINVAL;
 	}
 	if (rc == 0) {
 		rc = cnt;
-		dev_info(codec->dev, "%s: reg[0x%02X]=0x%02X\n",
+		dev_info(component->dev, "%s: reg[0x%02X]=0x%02X\n",
 			__func__, param[0], param[1]);
-		snd_soc_write(codec, param[0], param[1]);
+		snd_soc_component_write(component, param[0], param[1]);
 	} else {
-		dev_err(codec->dev, "%s: write to register addr=0x%02X failed\n",
+		dev_err(component->dev, "%s: write to register addr=0x%02X failed\n",
 			__func__, param[0]);
 	}
 	return rc;
 }
 
-static ssize_t debugfs_ep92_reg_show(struct snd_soc_codec *codec,
+static ssize_t debugfs_ep92_reg_show(struct snd_soc_component *component,
 		char __user *ubuf, size_t count, loff_t *ppos)
 {
 	int i, reg_val, len;
 	ssize_t total = 0;
 	char tmp_buf[20];
 
-	if (!ubuf || !ppos || !codec || *ppos < 0)
+	if (!ubuf || !ppos || !component || *ppos < 0)
 		return -EINVAL;
 
 	for (i = (int) *ppos / 11; i <= EP92_MAX_REGISTER_ADDR; i++) {
-		reg_val = snd_soc_read(codec, i);
+		reg_val = snd_soc_component_read32(component, i);
 		len = snprintf(tmp_buf, 20, "0x%02X: 0x%02X\n", i,
 			(reg_val & 0xFF));
 		if ((total + len) > count)
 			break;
 		if (copy_to_user((ubuf + total), tmp_buf, len)) {
-			dev_err(codec->dev, "%s: fail to copy reg dump\n",
+			dev_err(component->dev, "%s: fail to copy reg dump\n",
 				__func__);
 			total = -EFAULT;
 			goto copy_err;
@@ -240,12 +242,12 @@ static ssize_t debugfs_codec_read_op(struct file *filp,
 		char __user *ubuf, size_t cnt, loff_t *ppos)
 {
 	struct ep92_pdata *ep92 = (struct ep92_pdata *) filp->private_data;
-	struct snd_soc_codec *codec = ep92->codec;
+	struct snd_soc_component *component = ep92->component;
 	ssize_t ret_cnt;
 
 	if (!filp || !ppos || !ubuf || *ppos < 0)
 		return -EINVAL;
-	ret_cnt = debugfs_ep92_reg_show(codec, ubuf, cnt, ppos);
+	ret_cnt = debugfs_ep92_reg_show(component, ubuf, cnt, ppos);
 	return ret_cnt;
 }
 
@@ -263,7 +265,8 @@ static int ep92_send_uevent(struct ep92_pdata *ep92, char *event)
 	if (!event || !ep92)
 		return -EINVAL;
 
-	return kobject_uevent_env(&ep92->codec->dev->kobj, KOBJ_CHANGE, env);
+	return kobject_uevent_env(&ep92->component->dev->kobj,
+			KOBJ_CHANGE, env);
 }
 
 static int ep92_startup(struct snd_pcm_substream *substream,
@@ -320,14 +323,15 @@ static struct snd_soc_dai_driver ep92_dai[] = {
 	},
 };
 
-static void ep92_read_general_control(struct snd_soc_codec *codec,
+static void ep92_read_general_control(struct snd_soc_component *component,
 	struct ep92_pdata *ep92)
 {
 	u8 old, change;
 	int val;
 
 	old = ep92->gi.tx_info;
-	ep92->gi.tx_info = snd_soc_read(codec, EP92_BI_GENERAL_INFO_0);
+	ep92->gi.tx_info = snd_soc_component_read32(component,
+				EP92_BI_GENERAL_INFO_0);
 	if (ep92->gi.tx_info == 0xff) {
 		pr_debug("ep92 EP92_BI_GENERAL_INFO_0 read 0xff\n");
 		ep92->gi.tx_info = old;
@@ -358,7 +362,8 @@ static void ep92_read_general_control(struct snd_soc_codec *codec,
 	}
 
 	old = ep92->gi.video_latency;
-	ep92->gi.video_latency = snd_soc_read(codec, EP92_BI_GENERAL_INFO_4);
+	ep92->gi.video_latency = snd_soc_component_read32(component,
+					EP92_BI_GENERAL_INFO_4);
 	if (ep92->gi.video_latency == 0xff) {
 		pr_debug("ep92 EP92_BI_GENERAL_INFO_4 read 0xff\n");
 		ep92->gi.video_latency = old;
@@ -373,7 +378,8 @@ static void ep92_read_general_control(struct snd_soc_codec *codec,
 	}
 
 	old = ep92->gc.ctl;
-	ep92->gc.ctl = snd_soc_read(codec, EP92_GENERAL_CONTROL_0);
+	ep92->gc.ctl = snd_soc_component_read32(component,
+			EP92_GENERAL_CONTROL_0);
 	if (ep92->gc.ctl == 0xff) {
 		pr_debug("ep92 EP92_GENERAL_CONTROL_0 read 0xff\n");
 		ep92->gc.ctl = old;
@@ -416,7 +422,8 @@ static void ep92_read_general_control(struct snd_soc_codec *codec,
 	}
 
 	old = ep92->gc.rx_sel;
-	ep92->gc.rx_sel = snd_soc_read(codec, EP92_GENERAL_CONTROL_1);
+	ep92->gc.rx_sel = snd_soc_component_read32(component,
+				EP92_GENERAL_CONTROL_1);
 	if (ep92->gc.rx_sel == 0xff) {
 		pr_debug("ep92 EP92_GENERAL_CONTROL_1 read 0xff\n");
 		ep92->gc.rx_sel = old;
@@ -429,7 +436,8 @@ static void ep92_read_general_control(struct snd_soc_codec *codec,
 	}
 
 	old = ep92->gc.cec_volume;
-	ep92->gc.cec_volume = snd_soc_read(codec, EP92_GENERAL_CONTROL_3);
+	ep92->gc.cec_volume = snd_soc_component_read32(component,
+				EP92_GENERAL_CONTROL_3);
 	if (ep92->gc.cec_volume == 0xff) {
 		pr_debug("ep92 EP92_GENERAL_CONTROL_3 read 0xff\n");
 		ep92->gc.cec_volume = old;
@@ -442,7 +450,8 @@ static void ep92_read_general_control(struct snd_soc_codec *codec,
 	}
 
 	old = ep92->gc.link;
-	ep92->gc.link = snd_soc_read(codec, EP92_GENERAL_CONTROL_4);
+	ep92->gc.link = snd_soc_component_read32(component,
+				EP92_GENERAL_CONTROL_4);
 	if (ep92->gc.link == 0xff) {
 		pr_debug("ep92 EP92_GENERAL_CONTROL_4 read 0xff\n");
 		ep92->gc.link = old;
@@ -524,7 +533,7 @@ static void ep92_read_general_control(struct snd_soc_codec *codec,
 	}
 }
 
-static void ep92_read_audio_info(struct snd_soc_codec *codec,
+static void ep92_read_audio_info(struct snd_soc_component *component,
 	struct ep92_pdata *ep92)
 {
 	u8 old, change;
@@ -532,7 +541,7 @@ static void ep92_read_audio_info(struct snd_soc_codec *codec,
 	bool send_uevent = false;
 
 	old = ep92->ai.system_status_0;
-	ep92->ai.system_status_0 = snd_soc_read(codec,
+	ep92->ai.system_status_0 = snd_soc_component_read32(component,
 		EP92_AUDIO_INFO_SYSTEM_STATUS_0);
 	if (ep92->ai.system_status_0 == 0xff) {
 		pr_debug("ep92 EP92_AUDIO_INFO_SYSTEM_STATUS_0 read 0xff\n");
@@ -558,7 +567,7 @@ static void ep92_read_audio_info(struct snd_soc_codec *codec,
 	}
 
 	old = ep92->ai.audio_status;
-	ep92->ai.audio_status = snd_soc_read(codec,
+	ep92->ai.audio_status = snd_soc_component_read32(component,
 		EP92_AUDIO_INFO_AUDIO_STATUS);
 	if (ep92->ai.audio_status == 0xff) {
 		pr_debug("ep92 EP92_AUDIO_INFO_AUDIO_STATUS read 0xff\n");
@@ -575,7 +584,7 @@ static void ep92_read_audio_info(struct snd_soc_codec *codec,
 	new_mode = ep92->old_mode;
 	if (ep92->ai.audio_status & EP92_AI_STD_ADO_MASK) {
 		old = ep92->ai.cs[0];
-		ep92->ai.cs[0] = snd_soc_read(codec,
+		ep92->ai.cs[0] = snd_soc_component_read32(component,
 			EP92_AUDIO_INFO_CHANNEL_STATUS_0);
 		if (ep92->ai.cs[0] == 0xff) {
 			pr_debug("ep92 EP92_AUDIO_INFO_CHANNEL_STATUS_0 read 0xff\n");
@@ -595,7 +604,8 @@ static void ep92_read_audio_info(struct snd_soc_codec *codec,
 	ep92->old_mode = new_mode;
 
 	old = ep92->ai.cc;
-	ep92->ai.cc = snd_soc_read(codec, EP92_AUDIO_INFO_ADO_INFO_FRAME_1);
+	ep92->ai.cc = snd_soc_component_read32(component,
+				EP92_AUDIO_INFO_ADO_INFO_FRAME_1);
 	if (ep92->ai.cc == 0xff) {
 		pr_debug("ep92 EP92_AUDIO_INFO_ADO_INFO_FRAME_1 read 0xff\n");
 		ep92->ai.cc = old;
@@ -610,7 +620,8 @@ static void ep92_read_audio_info(struct snd_soc_codec *codec,
 	}
 
 	old = ep92->ai.ca;
-	ep92->ai.ca = snd_soc_read(codec, EP92_AUDIO_INFO_ADO_INFO_FRAME_4);
+	ep92->ai.ca = snd_soc_component_read32(component,
+				EP92_AUDIO_INFO_ADO_INFO_FRAME_4);
 	if (ep92->ai.ca == 0xff) {
 		pr_debug("ep92 EP92_AUDIO_INFO_ADO_INFO_FRAME_4 read 0xff\n");
 		ep92->ai.ca = old;
@@ -626,42 +637,33 @@ static void ep92_read_audio_info(struct snd_soc_codec *codec,
 		ep92_send_uevent(ep92, "EP92EVT_AUDIO=MEDIA_CONFIG_CHANGE");
 }
 
-static void ep92_init(struct snd_soc_codec *codec, struct ep92_pdata *ep92)
+static void ep92_init(struct snd_soc_component *component,
+		      struct ep92_pdata *ep92)
 {
 	/* update the format information in mixer controls */
-	ep92_read_general_control(codec, ep92);
-	ep92_read_audio_info(codec, ep92);
+	ep92_read_general_control(component, ep92);
+	ep92_read_audio_info(component, ep92);
 }
 
-static int ep92_probe(struct snd_soc_codec *codec)
+static int ep92_probe(struct snd_soc_component *component)
 {
-	struct ep92_pdata *ep92 = snd_soc_codec_get_drvdata(codec);
+	struct ep92_pdata *ep92 = snd_soc_component_get_drvdata(component);
 
-	ep92->codec = codec;
-	ep92_init(codec, ep92);
+	ep92->component = component;
+	ep92_init(component, ep92);
 
 	return 0;
 }
 
-static int ep92_remove(struct snd_soc_codec *codec)
+static void ep92_remove(struct snd_soc_component *component)
 {
-	return 0;
+	return;
 }
 
-static struct regmap *ep92_get_regmap(struct device *dev)
-{
-	struct ep92_pdata *ep92_ctrl = dev_get_drvdata(dev);
-
-	if (!ep92_ctrl)
-		return NULL;
-
-	return ep92_ctrl->regmap;
-}
-
-static struct snd_soc_codec_driver soc_codec_drv_ep92 = {
+static const struct snd_soc_component_driver soc_codec_drv_ep92 = {
+	.name = DRV_NAME,
 	.probe  = ep92_probe,
 	.remove = ep92_remove,
-	.get_regmap = ep92_get_regmap,
 };
 
 static struct regmap_config ep92_regmap_config = {
@@ -680,18 +682,19 @@ void ep92_read_status(struct work_struct *work)
 {
 	struct ep92_pdata *ep92 = container_of(work, struct ep92_pdata,
 		read_status_worker);
-	struct snd_soc_codec *codec = ep92->codec;
+	struct snd_soc_component *component = ep92->component;
 	u8 val;
 
 	/* No polling before codec is initialized */
-	if (codec == NULL)
+	if (component == NULL)
 		return;
 
 	/* check ADO_CHF that is set when audio format has changed */
-	val = snd_soc_read(codec, EP92_BI_GENERAL_INFO_1);
+	val = snd_soc_component_read32(component, EP92_BI_GENERAL_INFO_1);
 	if (val == 0xff) {
 		/* workaround for Nak'ed first read */
-		val = snd_soc_read(codec, EP92_BI_GENERAL_INFO_1);
+		val = snd_soc_component_read32(component,
+				EP92_BI_GENERAL_INFO_1);
 		if (val == 0xff)
 			return;	/* assume device not present */
 	}
@@ -703,22 +706,22 @@ void ep92_read_status(struct work_struct *work)
 		pr_debug("ep92 CEC change trigger.\n");
 
 	/* check for general control changes */
-	ep92_read_general_control(codec, ep92);
+	ep92_read_general_control(component, ep92);
 
 	/* update the format information in mixer controls */
-	ep92_read_audio_info(codec, ep92);
+	ep92_read_audio_info(component, ep92);
 }
 
 static irqreturn_t ep92_irq(int irq, void *data)
 {
 	struct ep92_pdata *ep92 = data;
-	struct snd_soc_codec *codec = ep92->codec;
+	struct snd_soc_component *component = ep92->component;
 
 	/* Treat interrupt before codec is initialized as spurious */
-	if (codec == NULL)
+	if (component == NULL)
 		return IRQ_NONE;
 
-	dev_dbg(codec->dev, "ep92_interrupt\n");
+	dev_dbg(component->dev, "ep92_interrupt\n");
 
 	schedule_work(&ep92->read_status_worker);
 
@@ -1038,10 +1041,11 @@ static ssize_t ep92_sysfs_wta_arc_disable(struct device *dev,
 		goto end;
 	}
 
-	reg = snd_soc_read(ep92->codec, EP92_GENERAL_CONTROL_2);
+	reg = snd_soc_component_read32(ep92->component,
+			EP92_GENERAL_CONTROL_2);
 	reg &= ~EP92_GC_ARC_DIS_MASK;
 	reg |= ((val << EP92_GC_ARC_DIS_SHIFT) & EP92_GC_ARC_DIS_MASK);
-	snd_soc_write(ep92->codec, EP92_GENERAL_CONTROL_2, reg);
+	snd_soc_component_write(ep92->component, EP92_GENERAL_CONTROL_2, reg);
 	ep92->gc.ctl2 &= ~EP92_GC_ARC_DIS_MASK;
 	ep92->gc.ctl2 |= (val << EP92_GC_ARC_DIS_SHIFT) & EP92_GC_ARC_DIS_MASK;
 
@@ -1092,10 +1096,10 @@ static ssize_t ep92_sysfs_wta_power(struct device *dev,
 		goto end;
 	}
 
-	reg = snd_soc_read(ep92->codec, EP92_GENERAL_CONTROL_0);
+	reg = snd_soc_component_read32(ep92->component, EP92_GENERAL_CONTROL_0);
 	reg &= ~EP92_GC_POWER_MASK;
 	reg |= (val << EP92_GC_POWER_SHIFT) & EP92_GC_POWER_MASK;
-	snd_soc_write(ep92->codec, EP92_GENERAL_CONTROL_0, reg);
+	snd_soc_component_write(ep92->component, EP92_GENERAL_CONTROL_0, reg);
 	ep92->gc.ctl &= ~EP92_GC_POWER_MASK;
 	ep92->gc.ctl |= (val << EP92_GC_POWER_SHIFT) & EP92_GC_POWER_MASK;
 
@@ -1146,10 +1150,11 @@ static ssize_t ep92_sysfs_wta_audio_path(struct device *dev,
 		goto end;
 	}
 
-	reg = snd_soc_read(ep92->codec, EP92_GENERAL_CONTROL_0);
+	reg = snd_soc_component_read32(ep92->component,
+			EP92_GENERAL_CONTROL_0);
 	reg &= ~EP92_GC_AUDIO_PATH_MASK;
 	reg |= (val << EP92_GC_AUDIO_PATH_SHIFT) & EP92_GC_AUDIO_PATH_MASK;
-	snd_soc_write(ep92->codec, EP92_GENERAL_CONTROL_0, reg);
+	snd_soc_component_write(ep92->component, EP92_GENERAL_CONTROL_0, reg);
 	ep92->gc.ctl &= ~EP92_GC_AUDIO_PATH_MASK;
 	ep92->gc.ctl |= (val << EP92_GC_AUDIO_PATH_SHIFT) &
 		EP92_GC_AUDIO_PATH_MASK;
@@ -1201,10 +1206,11 @@ static ssize_t ep92_sysfs_wta_src_sel(struct device *dev,
 		goto end;
 	}
 
-	reg = snd_soc_read(ep92->codec, EP92_GENERAL_CONTROL_1);
+	reg = snd_soc_component_read32(ep92->component,
+			EP92_GENERAL_CONTROL_1);
 	reg &= ~EP92_GC_RX_SEL_MASK;
 	reg |= (val << EP92_GC_RX_SEL_SHIFT) & EP92_GC_RX_SEL_MASK;
-	snd_soc_write(ep92->codec, EP92_GENERAL_CONTROL_1, reg);
+	snd_soc_component_write(ep92->component, EP92_GENERAL_CONTROL_1, reg);
 	ep92->gc.rx_sel &= ~EP92_GC_RX_SEL_MASK;
 	ep92->gc.rx_sel |= (val << EP92_GC_RX_SEL_SHIFT) & EP92_GC_RX_SEL_MASK;
 
@@ -1255,10 +1261,10 @@ static ssize_t ep92_sysfs_wta_arc_enable(struct device *dev,
 		goto end;
 	}
 
-	reg = snd_soc_read(ep92->codec, EP92_GENERAL_CONTROL_0);
+	reg = snd_soc_component_read32(ep92->component, EP92_GENERAL_CONTROL_0);
 	reg &= ~EP92_GC_AUDIO_PATH_MASK;
 	reg |= (val << EP92_GC_AUDIO_PATH_SHIFT) & EP92_GC_AUDIO_PATH_MASK;
-	snd_soc_write(ep92->codec, EP92_GENERAL_CONTROL_0, reg);
+	snd_soc_component_write(ep92->component, EP92_GENERAL_CONTROL_0, reg);
 	ep92->gc.ctl &= ~EP92_GC_AUDIO_PATH_MASK;
 	ep92->gc.ctl |= (val << EP92_GC_AUDIO_PATH_SHIFT) &
 		EP92_GC_AUDIO_PATH_MASK;
@@ -1310,10 +1316,10 @@ static ssize_t ep92_sysfs_wta_cec_mute(struct device *dev,
 		goto end;
 	}
 
-	reg = snd_soc_read(ep92->codec, EP92_GENERAL_CONTROL_0);
+	reg = snd_soc_component_read32(ep92->component, EP92_GENERAL_CONTROL_0);
 	reg &= ~EP92_GC_CEC_MUTE_MASK;
 	reg |= (val << EP92_GC_CEC_MUTE_SHIFT) & EP92_GC_CEC_MUTE_MASK;
-	snd_soc_write(ep92->codec, EP92_GENERAL_CONTROL_0, reg);
+	snd_soc_component_write(ep92->component, EP92_GENERAL_CONTROL_0, reg);
 	ep92->gc.ctl &= ~EP92_GC_CEC_MUTE_MASK;
 	ep92->gc.ctl |= (val << EP92_GC_CEC_MUTE_SHIFT) &
 		EP92_GC_CEC_MUTE_MASK;
@@ -1367,7 +1373,7 @@ static ssize_t ep92_sysfs_wta_cec_volume(struct device *dev,
 	}
 
 	reg = val & EP92_GC_CEC_VOLUME_MASK;
-	snd_soc_write(ep92->codec, EP92_GENERAL_CONTROL_3, reg);
+	snd_soc_component_write(ep92->component, EP92_GENERAL_CONTROL_3, reg);
 	ep92->gc.cec_volume = val & EP92_GC_CEC_VOLUME_MASK;
 
 	rc = strnlen(buf, EP92_SYSFS_ENTRY_MAX_LEN);
@@ -1524,7 +1530,7 @@ static int ep92_i2c_probe(struct i2c_client *client,
 #endif /* CONFIG_DEBUG_FS */
 
 	/* register codec */
-	ret = snd_soc_register_codec(&client->dev, &soc_codec_drv_ep92,
+	ret = snd_soc_register_component(&client->dev, &soc_codec_drv_ep92,
 		ep92_dai, ARRAY_SIZE(ep92_dai));
 	if (ret) {
 		dev_err(&client->dev,
@@ -1542,7 +1548,7 @@ static int ep92_i2c_probe(struct i2c_client *client,
 	return 0;
 
 err_sysfs:
-	snd_soc_unregister_codec(&client->dev);
+	snd_soc_unregister_component(&client->dev);
 err_reg:
 	if (ep92->irq == 0)
 		del_timer(&ep92->timer);
@@ -1563,7 +1569,7 @@ static int ep92_i2c_remove(struct i2c_client *client)
 		debugfs_remove_recursive(ep92->debugfs_dir);
 #endif
 	}
-	snd_soc_unregister_codec(&client->dev);
+	snd_soc_unregister_component(&client->dev);
 
 	ep92_sysfs_remove(client, ep92);
 

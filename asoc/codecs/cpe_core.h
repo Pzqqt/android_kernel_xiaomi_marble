@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2013-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __CPE_CORE_H__
@@ -107,35 +107,37 @@ struct wcd_cpe_lsm_ops {
 					   u8 size, u8 *payload));
 
 	int (*lsm_dealloc_session)
-		(void *core_handle, struct cpe_lsm_session *);
+		(void *core_handle, struct cpe_lsm_session *session);
 
 	int (*lsm_open_tx)(void *core_handle,
-			    struct cpe_lsm_session *, u16, u16);
+			    struct cpe_lsm_session *session, u16 app_id,
+			    u16 sample_rate);
 
 	int (*lsm_close_tx)(void *core_handle,
-			     struct cpe_lsm_session *);
+			     struct cpe_lsm_session *session);
 
 	int (*lsm_shmem_alloc)(void *core_handle,
-				struct cpe_lsm_session *, u32 size);
+				struct cpe_lsm_session *session, u32 size);
 
 	int (*lsm_shmem_dealloc)(void *core_handle,
-				  struct cpe_lsm_session *);
+				  struct cpe_lsm_session *session);
 
 	int (*lsm_register_snd_model)(void *core_handle,
-				       struct cpe_lsm_session *,
-				       enum lsm_detection_mode, bool);
+				       struct cpe_lsm_session *session,
+				       enum lsm_detection_mode,
+				       bool detect_failure);
 
 	int (*lsm_deregister_snd_model)(void *core_handle,
-					 struct cpe_lsm_session *);
+					 struct cpe_lsm_session *session);
 
 	int (*lsm_get_afe_out_port_id)(void *core_handle,
 			       struct cpe_lsm_session *session);
 
 	int (*lsm_start)(void *core_handle,
-			  struct cpe_lsm_session *);
+			  struct cpe_lsm_session *session);
 
 	int (*lsm_stop)(void *core_handle,
-			 struct cpe_lsm_session *);
+			 struct cpe_lsm_session *session);
 
 	int (*lsm_lab_control)(void *core_handle,
 			       struct cpe_lsm_session *session,
@@ -156,7 +158,7 @@ struct wcd_cpe_lsm_ops {
 			struct lsm_params_info *p_info,
 			void *data, uint32_t param_type);
 	void (*lsm_get_snd_model_offset)
-		(void *core_handle, struct cpe_lsm_session *,
+		(void *core_handle, struct cpe_lsm_session *session,
 		 size_t *offset);
 	int (*lsm_set_media_fmt_params)(void *core_handle,
 				       struct cpe_lsm_session *session,
@@ -168,7 +170,7 @@ struct wcd_cpe_lsm_ops {
 #if IS_ENABLED(CONFIG_SND_SOC_WCD_CPE)
 int wcd_cpe_get_lsm_ops(struct wcd_cpe_lsm_ops *lsm_ops);
 int wcd_cpe_get_afe_ops(struct wcd_cpe_afe_ops *afe_ops);
-void *wcd_cpe_get_core_handle(struct snd_soc_codec *codec);
+void *wcd_cpe_get_core_handle(struct snd_soc_component *component);
 #else /* CONFIG_SND_SOC_WCD_CPE */
 static inline int wcd_cpe_get_lsm_ops(struct wcd_cpe_lsm_ops *lsm_ops)
 {
@@ -178,7 +180,7 @@ static inline int wcd_cpe_get_afe_ops(struct wcd_cpe_afe_ops *afe_ops)
 {
 	return 0;
 }
-static inline void *wcd_cpe_get_core_handle(struct snd_soc_codec *codec)
+static inline void *wcd_cpe_get_core_handle(struct snd_soc_component *component)
 {
 	return NULL;
 }

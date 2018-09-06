@@ -30,7 +30,7 @@ struct wcd937x_priv {
 	struct device *dev;
 
 	int variant;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	struct device_node *rst_np;
 	struct regmap *regmap;
 
@@ -160,10 +160,11 @@ enum {
 	WCD937X_NUM_IRQS,
 };
 
-extern struct wcd937x_mbhc *wcd937x_soc_get_mbhc(struct snd_soc_codec *codec);
-extern int wcd937x_mbhc_micb_adjust_voltage(struct snd_soc_codec *codec,
+extern struct wcd937x_mbhc *wcd937x_soc_get_mbhc(
+				struct snd_soc_component *component);
+extern int wcd937x_mbhc_micb_adjust_voltage(struct snd_soc_component *component,
 					int volt, int micb_num);
 extern int wcd937x_get_micb_vout_ctl_val(u32 micb_mv);
-extern int wcd937x_micbias_control(struct snd_soc_codec *codec, int micb_num,
-			int req, bool is_dapm);
+extern int wcd937x_micbias_control(struct snd_soc_component *component,
+			int micb_num, int req, bool is_dapm);
 #endif

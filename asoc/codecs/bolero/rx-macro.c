@@ -271,7 +271,7 @@ static int rx_macro_mux_get(struct snd_kcontrol *kcontrol,
 			  struct snd_ctl_elem_value *ucontrol);
 static int rx_macro_mux_put(struct snd_kcontrol *kcontrol,
 			  struct snd_ctl_elem_value *ucontrol);
-static int rx_macro_enable_interp_clk(struct snd_soc_codec *codec,
+static int rx_macro_enable_interp_clk(struct snd_soc_component *component,
 				      int event, int interp_idx);
 
 /* Hold instance to soundwire platform device */
@@ -320,7 +320,7 @@ enum {
  * @rx_swr_gpio_p: used by pinctrl API
  * @rx_core_clk: MCLK for rx macro
  * @rx_npl_clk: NPL clock for RX soundwire
- * @codec: codec handle
+ * @component: codec handle
  */
 struct rx_macro_priv {
 	struct device *dev;
@@ -347,7 +347,7 @@ struct rx_macro_priv {
 	struct device_node *rx_swr_gpio_p;
 	struct clk *rx_core_clk;
 	struct clk *rx_npl_clk;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	unsigned long active_ch_mask[RX_MACRO_MAX_DAIS];
 	unsigned long active_ch_cnt[RX_MACRO_MAX_DAIS];
 	u16 bit_width[RX_MACRO_MAX_DAIS];
@@ -631,11 +631,11 @@ ret:
  * This function updates HPHL and HPHR gain settings
  * according to the impedance value.
  *
- * @codec: codec pointer handle
+ * @component: codec pointer handle
  * @imped: impedance value of HPHL/R
  * @reset: bool variable to reset registers when teardown
  */
-static void rx_macro_wcd_clsh_imped_config(struct snd_soc_codec *codec,
+static void rx_macro_wcd_clsh_imped_config(struct snd_soc_component *component,
 					   int imped, bool reset)
 {
 	int i;
@@ -650,7 +650,7 @@ static void rx_macro_wcd_clsh_imped_config(struct snd_soc_codec *codec,
 	/* reset = 1, which means request is to reset the register values */
 	if (reset) {
 		for (i = 0; i < MAX_IMPED_PARAMS; i++)
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				imped_table_ptr[index][i].reg,
 				imped_table_ptr[index][i].mask, 0);
 		return;
@@ -666,34 +666,34 @@ static void rx_macro_wcd_clsh_imped_config(struct snd_soc_codec *codec,
 		return;
 	}
 	for (i = 0; i < MAX_IMPED_PARAMS; i++)
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				imped_table_ptr[index][i].reg,
 				imped_table_ptr[index][i].mask,
 				imped_table_ptr[index][i].val);
 }
 
-static bool rx_macro_get_data(struct snd_soc_codec *codec,
+static bool rx_macro_get_data(struct snd_soc_component *component,
 			       struct device **rx_dev,
 			       struct rx_macro_priv **rx_priv,
 			       const char *func_name)
 {
-	*rx_dev = bolero_get_device_ptr(codec->dev, RX_MACRO);
+	*rx_dev = bolero_get_device_ptr(component->dev, RX_MACRO);
 
 	if (!(*rx_dev)) {
-		dev_err(codec->dev,
+		dev_err(component->dev,
 			"%s: null device for macro!\n", func_name);
 		return false;
 	}
 
 	*rx_priv = dev_get_drvdata((*rx_dev));
 	if (!(*rx_priv)) {
-		dev_err(codec->dev,
+		dev_err(component->dev,
 			"%s: priv is null for macro!\n", func_name);
 		return false;
 	}
 
-	if (!(*rx_priv)->codec) {
-		dev_err(codec->dev,
+	if (!(*rx_priv)->component) {
+		dev_err(component->dev,
 			"%s: tx_priv codec is not initialized!\n", func_name);
 		return false;
 	}
@@ -706,7 +706,8 @@ static int rx_macro_int_dem_inp_mux_put(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_dapm_widget *widget =
 		snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(widget->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(widget->dapm);
 	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
 	unsigned int val = 0;
 	unsigned short look_ahead_dly_reg =
@@ -716,7 +717,7 @@ static int rx_macro_int_dem_inp_mux_put(struct snd_kcontrol *kcontrol,
 	if (val >= e->items)
 		return -EINVAL;
 
-	dev_dbg(codec->dev, "%s: wname: %s, val: 0x%x\n", __func__,
+	dev_dbg(component->dev, "%s: wname: %s, val: 0x%x\n", __func__,
 		widget->name, val);
 
 	if (e->reg == BOLERO_CDC_RX_RX0_RX_PATH_CFG1)
@@ -725,7 +726,7 @@ static int rx_macro_int_dem_inp_mux_put(struct snd_kcontrol *kcontrol,
 		look_ahead_dly_reg = BOLERO_CDC_RX_RX1_RX_PATH_CFG0;
 
 	/* Set Look Ahead Delay */
-	snd_soc_update_bits(codec, look_ahead_dly_reg,
+	snd_soc_component_update_bits(component, look_ahead_dly_reg,
 			    0x08, (val ? 0x08 : 0x00));
 	/* Set DEM INP Select */
 	return snd_soc_dapm_put_enum_double(kcontrol, ucontrol);
@@ -741,11 +742,11 @@ static int rx_macro_set_prim_interpolator_rate(struct snd_soc_dai *dai,
 	u16 int_fs_reg = 0;
 	u8 int_mux_cfg0_val = 0, int_mux_cfg1_val = 0;
 	u8 inp0_sel = 0, inp1_sel = 0, inp2_sel = 0;
-	struct snd_soc_codec *codec = dai->codec;
+	struct snd_soc_component *component = dai->component;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	for_each_set_bit(port, &rx_priv->active_ch_mask[dai->id],
@@ -768,8 +769,10 @@ static int rx_macro_set_prim_interpolator_rate(struct snd_soc_dai *dai,
 		for (j = 0; j < INTERP_MAX; j++) {
 			int_mux_cfg1 = int_mux_cfg0 + 4;
 
-			int_mux_cfg0_val = snd_soc_read(codec, int_mux_cfg0);
-			int_mux_cfg1_val = snd_soc_read(codec, int_mux_cfg1);
+			int_mux_cfg0_val = snd_soc_component_read32(
+						component, int_mux_cfg0);
+			int_mux_cfg1_val = snd_soc_component_read32(
+						component, int_mux_cfg1);
 			inp0_sel = int_mux_cfg0_val & 0x07;
 			inp1_sel = (int_mux_cfg0_val >> 4) & 0x038;
 			inp2_sel = (int_mux_cfg1_val >> 4) & 0x038;
@@ -783,7 +786,8 @@ static int rx_macro_set_prim_interpolator_rate(struct snd_soc_dai *dai,
 				pr_debug("%s: set INT%u_1 sample rate to %u\n",
 					__func__, j, sample_rate);
 				/* sample_rate is in Hz */
-				snd_soc_update_bits(codec, int_fs_reg,
+				snd_soc_component_update_bits(component,
+						int_fs_reg,
 						0x0F, rate_reg_val);
 			}
 			int_mux_cfg0 += 8;
@@ -801,11 +805,11 @@ static int rx_macro_set_mix_interpolator_rate(struct snd_soc_dai *dai,
 	u32 j = 0, port = 0;
 	u16 int_mux_cfg1 = 0, int_fs_reg = 0;
 	u8 int_mux_cfg1_val = 0;
-	struct snd_soc_codec *codec = dai->codec;
+	struct snd_soc_component *component = dai->component;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	for_each_set_bit(port, &rx_priv->active_ch_mask[dai->id],
@@ -820,7 +824,8 @@ static int rx_macro_set_mix_interpolator_rate(struct snd_soc_dai *dai,
 
 		int_mux_cfg1 = BOLERO_CDC_RX_INP_MUX_RX_INT0_CFG1;
 		for (j = 0; j < INTERP_MAX; j++) {
-			int_mux_cfg1_val = snd_soc_read(codec, int_mux_cfg1) &
+			int_mux_cfg1_val = snd_soc_component_read32(
+						component, int_mux_cfg1) &
 						0x07;
 			if (int_mux_cfg1_val == int_2_inp) {
 				int_fs_reg = BOLERO_CDC_RX_RX0_RX_PATH_MIX_CTL +
@@ -829,7 +834,8 @@ static int rx_macro_set_mix_interpolator_rate(struct snd_soc_dai *dai,
 					  __func__, dai->id, j);
 				pr_debug("%s: set INT%u_2 sample rate to %u\n",
 					__func__, j, sample_rate);
-				snd_soc_update_bits(codec, int_fs_reg,
+				snd_soc_component_update_bits(
+						component, int_fs_reg,
 						0x0F, rate_reg_val);
 			}
 			int_mux_cfg1 += 8;
@@ -855,13 +861,13 @@ static bool rx_macro_is_fractional_sample_rate(u32 sample_rate)
 static int rx_macro_set_interpolator_rate(struct snd_soc_dai *dai,
 					  u32 sample_rate)
 {
-	struct snd_soc_codec *codec = dai->codec;
+	struct snd_soc_component *component = dai->component;
 	int rate_val = 0;
 	int i = 0, ret = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 
@@ -876,7 +882,7 @@ static int rx_macro_set_interpolator_rate(struct snd_soc_dai *dai,
 		}
 	}
 	if ((i == ARRAY_SIZE(sr_val_tbl)) || (rate_val < 0)) {
-		dev_err(codec->dev, "%s: Unsupported sample rate: %d\n",
+		dev_err(component->dev, "%s: Unsupported sample rate: %d\n",
 			__func__, sample_rate);
 		return -EINVAL;
 	}
@@ -895,15 +901,15 @@ static int rx_macro_hw_params(struct snd_pcm_substream *substream,
 			       struct snd_pcm_hw_params *params,
 			       struct snd_soc_dai *dai)
 {
-	struct snd_soc_codec *codec = dai->codec;
+	struct snd_soc_component *component = dai->component;
 	int ret = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
-	dev_dbg(codec->dev,
+	dev_dbg(component->dev,
 		"%s: dai_name = %s DAI-ID %x rate %d num_ch %d\n", __func__,
 		 dai->name, dai->id, params_rate(params),
 		 params_channels(params));
@@ -929,13 +935,13 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 				unsigned int *tx_num, unsigned int *tx_slot,
 				unsigned int *rx_num, unsigned int *rx_slot)
 {
-	struct snd_soc_codec *codec = dai->codec;
+	struct snd_soc_component *component = dai->component;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 	unsigned int temp = 0, ch_mask = 0;
 	u16 i = 0;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	switch (dai->id) {
@@ -1031,13 +1037,14 @@ exit:
 static int rx_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			       struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
 	int ret = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 	int mclk_freq = MCLK_FREQ;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	dev_dbg(rx_dev, "%s: event = %d\n", __func__, event);
@@ -1111,14 +1118,14 @@ static int rx_macro_mclk_ctrl(struct device *dev, bool enable)
 	return 0;
 }
 
-static int rx_macro_event_handler(struct snd_soc_codec *codec, u16 event,
-				  u32 data)
+static int rx_macro_event_handler(struct snd_soc_component *component,
+				  u16 event, u32 data)
 {
 	u16 reg = 0, reg_mix = 0, rx_idx = 0, mute = 0x0, val = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	switch (event) {
@@ -1130,14 +1137,16 @@ static int rx_macro_event_handler(struct snd_soc_codec *codec, u16 event,
 					RX_MACRO_RX_PATH_OFFSET);
 		reg_mix = BOLERO_CDC_RX_RX0_RX_PATH_MIX_CTL + (rx_idx *
 					RX_MACRO_RX_PATH_OFFSET);
-		snd_soc_update_bits(codec, reg, 0x10, val);
-		snd_soc_update_bits(codec, reg_mix, 0x10, val);
+		snd_soc_component_update_bits(component, reg,
+				0x10, val);
+		snd_soc_component_update_bits(component, reg_mix,
+				0x10, val);
 		break;
 	case BOLERO_MACRO_EVT_IMPED_TRUE:
-		rx_macro_wcd_clsh_imped_config(codec, data, true);
+		rx_macro_wcd_clsh_imped_config(component, data, true);
 		break;
 	case BOLERO_MACRO_EVT_IMPED_FALSE:
-		rx_macro_wcd_clsh_imped_config(codec, data, false);
+		rx_macro_wcd_clsh_imped_config(component, data, false);
 		break;
 	case BOLERO_MACRO_EVT_SSR_DOWN:
 		rx_priv->dev_up = false;
@@ -1176,7 +1185,7 @@ static int rx_macro_find_playback_dai_id_for_port(int port_id,
 	return -EINVAL;
 }
 
-static int rx_macro_set_idle_detect_thr(struct snd_soc_codec *codec,
+static int rx_macro_set_idle_detect_thr(struct snd_soc_component *component,
 					struct rx_macro_priv *rx_priv,
 					int interp, int path_type)
 {
@@ -1204,7 +1213,8 @@ static int rx_macro_set_idle_detect_thr(struct snd_soc_codec *codec,
 	if (path_type == INTERP_MIX_PATH) {
 		mux_reg = BOLERO_CDC_RX_INP_MUX_RX_INT0_CFG1 +
 						2 * interp;
-		mux_reg_val = snd_soc_read(codec, mux_reg) & 0x0f;
+		mux_reg_val = snd_soc_component_read32(component, mux_reg) &
+				0x0f;
 
 		if ((mux_reg_val >= INTn_2_INP_SEL_RX0) &&
 		   (mux_reg_val <= INTn_2_INP_SEL_RX5)) {
@@ -1216,7 +1226,8 @@ static int rx_macro_set_idle_detect_thr(struct snd_soc_codec *codec,
 	if (path_type == INTERP_MAIN_PATH) {
 		mux_reg = BOLERO_CDC_RX_INP_MUX_RX_INT1_CFG0 +
 			  2 * (interp - 1);
-		mux_reg_val = snd_soc_read(codec, mux_reg) & 0x0f;
+		mux_reg_val = snd_soc_component_read32(component, mux_reg) &
+				0x0f;
 		i = RX_MACRO_INTERP_MUX_NUM_INPUTS;
 
 		while (i) {
@@ -1226,14 +1237,15 @@ static int rx_macro_set_idle_detect_thr(struct snd_soc_codec *codec,
 					INTn_1_INP_SEL_RX0;
 				num_ports++;
 			}
-			mux_reg_val = (snd_soc_read(codec, mux_reg) &
-						    0xf0) >> 4;
+			mux_reg_val =
+				(snd_soc_component_read32(component, mux_reg) &
+					0xf0) >> 4;
 			mux_reg += 1;
 			i--;
 		}
 	}
 
-	dev_dbg(codec->dev, "%s: num_ports: %d, ports[%d %d %d %d]\n",
+	dev_dbg(component->dev, "%s: num_ports: %d, ports[%d %d %d %d]\n",
 		__func__, num_ports, port_id[0], port_id[1],
 		port_id[2], port_id[3]);
 
@@ -1243,7 +1255,7 @@ static int rx_macro_set_idle_detect_thr(struct snd_soc_codec *codec,
 								rx_priv);
 
 		if ((dai_id >= 0) && (dai_id < RX_MACRO_MAX_DAIS)) {
-			dev_dbg(codec->dev, "%s: dai_id: %d bit_width: %d\n",
+			dev_dbg(component->dev, "%s: dai_id: %d bit_width: %d\n",
 				__func__, dai_id,
 				rx_priv->bit_width[dai_id]);
 
@@ -1266,12 +1278,13 @@ static int rx_macro_set_idle_detect_thr(struct snd_soc_codec *codec,
 		break;
 	}
 
-	dev_dbg(codec->dev, "%s: (new) idle_thr: %d, (cur) idle_thr: %d\n",
+	dev_dbg(component->dev, "%s: (new) idle_thr: %d, (cur) idle_thr: %d\n",
 		__func__, idle_thr, rx_priv->idle_det_cfg.hph_idle_thr);
 
 	if ((rx_priv->idle_det_cfg.hph_idle_thr == 0) ||
 	    (idle_thr < rx_priv->idle_det_cfg.hph_idle_thr)) {
-		snd_soc_write(codec, BOLERO_CDC_RX_IDLE_DETECT_CFG3, idle_thr);
+		snd_soc_component_write(component,
+			BOLERO_CDC_RX_IDLE_DETECT_CFG3, idle_thr);
 		rx_priv->idle_det_cfg.hph_idle_thr = idle_thr;
 	}
 
@@ -1281,16 +1294,17 @@ static int rx_macro_set_idle_detect_thr(struct snd_soc_codec *codec,
 static int rx_macro_enable_mix_path(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 	u16 gain_reg = 0, mix_reg = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	if (w->shift >= INTERP_MAX) {
-		dev_err(codec->dev, "%s: Invalid Interpolator value %d for name %s\n",
+		dev_err(component->dev, "%s: Invalid Interpolator value %d for name %s\n",
 			__func__, w->shift, w->name);
 		return -EINVAL;
 	}
@@ -1300,27 +1314,27 @@ static int rx_macro_enable_mix_path(struct snd_soc_dapm_widget *w,
 	mix_reg = BOLERO_CDC_RX_RX0_RX_PATH_MIX_CTL +
 				(w->shift * RX_MACRO_RX_PATH_OFFSET);
 
-	dev_dbg(codec->dev, "%s %d %s\n", __func__, event, w->name);
+	dev_dbg(component->dev, "%s %d %s\n", __func__, event, w->name);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		rx_macro_set_idle_detect_thr(codec, rx_priv, w->shift,
+		rx_macro_set_idle_detect_thr(component, rx_priv, w->shift,
 					INTERP_MIX_PATH);
-		rx_macro_enable_interp_clk(codec, event, w->shift);
+		rx_macro_enable_interp_clk(component, event, w->shift);
 		/* Clk enable */
-		snd_soc_update_bits(codec, mix_reg, 0x20, 0x20);
+		snd_soc_component_update_bits(component, mix_reg, 0x20, 0x20);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		snd_soc_write(codec, gain_reg,
-			snd_soc_read(codec, gain_reg));
+		snd_soc_component_write(component, gain_reg,
+			snd_soc_component_read32(component, gain_reg));
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* Clk Disable */
-		snd_soc_update_bits(codec, mix_reg, 0x20, 0x00);
-		rx_macro_enable_interp_clk(codec, event, w->shift);
+		snd_soc_component_update_bits(component, mix_reg, 0x20, 0x00);
+		rx_macro_enable_interp_clk(component, event, w->shift);
 		/* Reset enable and disable */
-		snd_soc_update_bits(codec, mix_reg, 0x40, 0x40);
-		snd_soc_update_bits(codec, mix_reg, 0x40, 0x00);
+		snd_soc_component_update_bits(component, mix_reg, 0x40, 0x40);
+		snd_soc_component_update_bits(component, mix_reg, 0x40, 0x00);
 		break;
 	}
 
@@ -1331,19 +1345,20 @@ static int rx_macro_enable_main_path(struct snd_soc_dapm_widget *w,
 					struct snd_kcontrol *kcontrol,
 					int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 	u16 gain_reg = 0;
 	u16 reg = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
-	dev_dbg(codec->dev, "%s %d %s\n", __func__, event, w->name);
+	dev_dbg(component->dev, "%s %d %s\n", __func__, event, w->name);
 
 	if (w->shift >= INTERP_MAX) {
-		dev_err(codec->dev, "%s: Invalid Interpolator value %d for name %s\n",
+		dev_err(component->dev, "%s: Invalid Interpolator value %d for name %s\n",
 			__func__, w->shift, w->name);
 		return -EINVAL;
 	}
@@ -1355,23 +1370,23 @@ static int rx_macro_enable_main_path(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		rx_macro_set_idle_detect_thr(codec, rx_priv, w->shift,
+		rx_macro_set_idle_detect_thr(component, rx_priv, w->shift,
 						INTERP_MAIN_PATH);
-		rx_macro_enable_interp_clk(codec, event, w->shift);
+		rx_macro_enable_interp_clk(component, event, w->shift);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		snd_soc_write(codec, gain_reg,
-			snd_soc_read(codec, gain_reg));
+		snd_soc_component_write(component, gain_reg,
+			snd_soc_component_read32(component, gain_reg));
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		rx_macro_enable_interp_clk(codec, event, w->shift);
+		rx_macro_enable_interp_clk(component, event, w->shift);
 		break;
 	}
 
 	return 0;
 }
 
-static int rx_macro_config_compander(struct snd_soc_codec *codec,
+static int rx_macro_config_compander(struct snd_soc_component *component,
 				struct rx_macro_priv *rx_priv,
 				int interp_n, int event)
 {
@@ -1383,7 +1398,7 @@ static int rx_macro_config_compander(struct snd_soc_codec *codec,
 		return 0;
 
 	comp = interp_n;
-	dev_dbg(codec->dev, "%s: event %d compander %d, enabled %d\n",
+	dev_dbg(component->dev, "%s: event %d compander %d, enabled %d\n",
 		__func__, event, comp + 1, rx_priv->comp_enabled[comp]);
 
 	if (!rx_priv->comp_enabled[comp])
@@ -1396,46 +1411,54 @@ static int rx_macro_config_compander(struct snd_soc_codec *codec,
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
 		/* Enable Compander Clock */
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x01, 0x01);
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x02, 0x02);
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x02, 0x00);
-		snd_soc_update_bits(codec, rx_path_cfg0_reg, 0x02, 0x02);
+		snd_soc_component_update_bits(component, comp_ctl0_reg,
+					0x01, 0x01);
+		snd_soc_component_update_bits(component, comp_ctl0_reg,
+					0x02, 0x02);
+		snd_soc_component_update_bits(component, comp_ctl0_reg,
+					0x02, 0x00);
+		snd_soc_component_update_bits(component, rx_path_cfg0_reg,
+					0x02, 0x02);
 	}
 
 	if (SND_SOC_DAPM_EVENT_OFF(event)) {
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x04, 0x04);
-		snd_soc_update_bits(codec, rx_path_cfg0_reg, 0x02, 0x00);
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x01, 0x00);
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x04, 0x00);
+		snd_soc_component_update_bits(component, comp_ctl0_reg,
+					0x04, 0x04);
+		snd_soc_component_update_bits(component, rx_path_cfg0_reg,
+					0x02, 0x00);
+		snd_soc_component_update_bits(component, comp_ctl0_reg,
+					0x01, 0x00);
+		snd_soc_component_update_bits(component, comp_ctl0_reg,
+					0x04, 0x00);
 	}
 
 	return 0;
 }
 
-static void rx_macro_enable_softclip_clk(struct snd_soc_codec *codec,
+static void rx_macro_enable_softclip_clk(struct snd_soc_component *component,
 					 struct rx_macro_priv *rx_priv,
 					 bool enable)
 {
 	if (enable) {
 		if (rx_priv->softclip_clk_users == 0)
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_SOFTCLIP_CRC,
 				0x01, 0x01);
 		rx_priv->softclip_clk_users++;
 	} else {
 		rx_priv->softclip_clk_users--;
 		if (rx_priv->softclip_clk_users == 0)
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_SOFTCLIP_CRC,
 				0x01, 0x00);
 	}
 }
 
-static int rx_macro_config_softclip(struct snd_soc_codec *codec,
+static int rx_macro_config_softclip(struct snd_soc_component *component,
 				struct rx_macro_priv *rx_priv,
 				int event)
 {
-	dev_dbg(codec->dev, "%s: event %d, enabled %d\n",
+	dev_dbg(component->dev, "%s: event %d, enabled %d\n",
 		__func__, event, rx_priv->is_softclip_on);
 
 	if (!rx_priv->is_softclip_on)
@@ -1443,16 +1466,16 @@ static int rx_macro_config_softclip(struct snd_soc_codec *codec,
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
 		/* Enable Softclip clock */
-		rx_macro_enable_softclip_clk(codec, rx_priv, true);
+		rx_macro_enable_softclip_clk(component, rx_priv, true);
 		/* Enable Softclip control */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_SOFTCLIP_SOFTCLIP_CTRL, 0x01, 0x01);
 	}
 
 	if (SND_SOC_DAPM_EVENT_OFF(event)) {
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_SOFTCLIP_SOFTCLIP_CTRL, 0x01, 0x00);
-		rx_macro_enable_softclip_clk(codec, rx_priv, false);
+		rx_macro_enable_softclip_clk(component, rx_priv, false);
 	}
 
 	return 0;
@@ -1463,7 +1486,7 @@ rx_macro_enable_clsh_block(struct rx_macro_priv *rx_priv, bool enable)
 {
 	if ((enable && ++rx_priv->clsh_users == 1) ||
 	    (!enable && --rx_priv->clsh_users == 0))
-		snd_soc_update_bits(rx_priv->codec,
+		snd_soc_component_update_bits(rx_priv->component,
 				BOLERO_CDC_RX_CLSH_CRC, 0x01,
 				(u8) enable);
 	if (rx_priv->clsh_users < 0)
@@ -1472,7 +1495,7 @@ rx_macro_enable_clsh_block(struct rx_macro_priv *rx_priv, bool enable)
 		rx_priv->clsh_users, enable);
 }
 
-static int rx_macro_config_classh(struct snd_soc_codec *codec,
+static int rx_macro_config_classh(struct snd_soc_component *component,
 				struct rx_macro_priv *rx_priv,
 				int interp_n, int event)
 {
@@ -1491,36 +1514,44 @@ static int rx_macro_config_classh(struct snd_soc_codec *codec,
 		 * These K1 values depend on the Headphone Impedance
 		 * For now it is assumed to be 16 ohm
 		 */
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_K1_LSB,
-				    0xFF, 0xC0);
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_K1_MSB,
-				    0x0F, 0x00);
+		snd_soc_component_update_bits(component,
+					BOLERO_CDC_RX_CLSH_K1_LSB,
+					0xFF, 0xC0);
+		snd_soc_component_update_bits(component,
+					BOLERO_CDC_RX_CLSH_K1_MSB,
+					0x0F, 0x00);
 	}
 	switch (interp_n) {
 	case INTERP_HPHL:
 		if (rx_priv->is_ear_mode_on)
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_CLSH_HPH_V_PA,
 				0x3F, 0x39);
 		else
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_CLSH_HPH_V_PA,
 				0x3F, 0x1C);
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_DECAY_CTRL,
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_CLSH_DECAY_CTRL,
 				0x07, 0x00);
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_CFG0,
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX0_RX_PATH_CFG0,
 				0x40, 0x40);
 		break;
 	case INTERP_HPHR:
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_HPH_V_PA,
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_CLSH_HPH_V_PA,
 				0x3F, 0x1C);
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_DECAY_CTRL,
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_CLSH_DECAY_CTRL,
 				0x07, 0x00);
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX1_RX_PATH_CFG0,
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX1_RX_PATH_CFG0,
 				0x40, 0x40);
 		break;
 	case INTERP_AUX:
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_CFG0,
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX2_RX_PATH_CFG0,
 				0x10, 0x10);
 		break;
 	}
@@ -1528,7 +1559,7 @@ static int rx_macro_config_classh(struct snd_soc_codec *codec,
 	return 0;
 }
 
-static void rx_macro_hd2_control(struct snd_soc_codec *codec,
+static void rx_macro_hd2_control(struct snd_soc_component *component,
 				 u16 interp_idx, int event)
 {
 	u16 hd2_scale_reg = 0;
@@ -1546,26 +1577,31 @@ static void rx_macro_hd2_control(struct snd_soc_codec *codec,
 	}
 
 	if (hd2_enable_reg && SND_SOC_DAPM_EVENT_ON(event)) {
-		snd_soc_update_bits(codec, hd2_scale_reg, 0x3C, 0x14);
-		snd_soc_update_bits(codec, hd2_enable_reg, 0x04, 0x04);
+		snd_soc_component_update_bits(component, hd2_scale_reg,
+				0x3C, 0x14);
+		snd_soc_component_update_bits(component, hd2_enable_reg,
+				0x04, 0x04);
 	}
 
 	if (hd2_enable_reg && SND_SOC_DAPM_EVENT_OFF(event)) {
-		snd_soc_update_bits(codec, hd2_enable_reg, 0x04, 0x00);
-		snd_soc_update_bits(codec, hd2_scale_reg, 0x3C, 0x00);
+		snd_soc_component_update_bits(component, hd2_enable_reg,
+				0x04, 0x00);
+		snd_soc_component_update_bits(component, hd2_scale_reg,
+				0x3C, 0x00);
 	}
 }
 
 static int rx_macro_get_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	ucontrol->value.integer.value[0] = rx_priv->comp_enabled[comp];
@@ -1575,17 +1611,18 @@ static int rx_macro_get_compander(struct snd_kcontrol *kcontrol,
 static int rx_macro_set_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	int value = ucontrol->value.integer.value[0];
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
-	dev_dbg(codec->dev, "%s: Compander %d enable current %d, new %d\n",
+	dev_dbg(component->dev, "%s: Compander %d enable current %d, new %d\n",
 		__func__, comp + 1, rx_priv->comp_enabled[comp], value);
 	rx_priv->comp_enabled[comp] = value;
 
@@ -1597,11 +1634,12 @@ static int rx_macro_mux_get(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_dapm_widget *widget =
 		snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(widget->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(widget->dapm);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	ucontrol->value.integer.value[0] =
@@ -1614,7 +1652,8 @@ static int rx_macro_mux_put(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_dapm_widget *widget =
 		snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(widget->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(widget->dapm);
 	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
 	struct snd_soc_dapm_update *update = NULL;
 	u32 rx_port_value = ucontrol->value.integer.value[0];
@@ -1622,7 +1661,7 @@ static int rx_macro_mux_put(struct snd_kcontrol *kcontrol,
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	aif_rst = rx_priv->rx_port_value[widget->shift];
@@ -1649,7 +1688,7 @@ static int rx_macro_mux_put(struct snd_kcontrol *kcontrol,
 		rx_priv->active_ch_cnt[rx_port_value]++;
 		break;
 	default:
-		dev_err(codec->dev,
+		dev_err(component->dev,
 			"%s:Invalid AIF_ID for RX_MACRO MUX\n", __func__);
 		goto err;
 	}
@@ -1664,11 +1703,12 @@ err:
 static int rx_macro_get_ear_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	ucontrol->value.integer.value[0] = rx_priv->is_ear_mode_on;
@@ -1678,11 +1718,12 @@ static int rx_macro_get_ear_mode(struct snd_kcontrol *kcontrol,
 static int rx_macro_put_ear_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	rx_priv->is_ear_mode_on =
@@ -1693,11 +1734,12 @@ static int rx_macro_put_ear_mode(struct snd_kcontrol *kcontrol,
 static int rx_macro_get_hph_hd2_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	ucontrol->value.integer.value[0] = rx_priv->hph_hd2_mode;
@@ -1707,11 +1749,12 @@ static int rx_macro_get_hph_hd2_mode(struct snd_kcontrol *kcontrol,
 static int rx_macro_put_hph_hd2_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	rx_priv->hph_hd2_mode = ucontrol->value.integer.value[0];
@@ -1721,11 +1764,12 @@ static int rx_macro_put_hph_hd2_mode(struct snd_kcontrol *kcontrol,
 static int rx_macro_get_hph_pwr_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	ucontrol->value.integer.value[0] = rx_priv->hph_pwr_mode;
@@ -1735,11 +1779,12 @@ static int rx_macro_get_hph_pwr_mode(struct snd_kcontrol *kcontrol,
 static int rx_macro_put_hph_pwr_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	rx_priv->hph_pwr_mode = ucontrol->value.integer.value[0];
@@ -1749,13 +1794,15 @@ static int rx_macro_put_hph_pwr_mode(struct snd_kcontrol *kcontrol,
 static int rx_macro_vbat_bcl_gsm_mode_func_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
 
 	ucontrol->value.integer.value[0] =
-		((snd_soc_read(codec, BOLERO_CDC_RX_BCL_VBAT_CFG) & 0x04) ?
+		((snd_soc_component_read32(
+			component, BOLERO_CDC_RX_BCL_VBAT_CFG) & 0x04) ?
 		  1 : 0);
 
-	dev_dbg(codec->dev, "%s: value: %lu\n", __func__,
+	dev_dbg(component->dev, "%s: value: %lu\n", __func__,
 		ucontrol->value.integer.value[0]);
 
 	return 0;
@@ -1764,18 +1811,21 @@ static int rx_macro_vbat_bcl_gsm_mode_func_get(struct snd_kcontrol *kcontrol,
 static int rx_macro_vbat_bcl_gsm_mode_func_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
 
-	dev_dbg(codec->dev, "%s: value: %lu\n", __func__,
+	dev_dbg(component->dev, "%s: value: %lu\n", __func__,
 		ucontrol->value.integer.value[0]);
 
 	/* Set Vbat register configuration for GSM mode bit based on value */
 	if (ucontrol->value.integer.value[0])
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_BCL_VBAT_CFG,
-						0x04, 0x04);
+		snd_soc_component_update_bits(component,
+					BOLERO_CDC_RX_BCL_VBAT_CFG,
+					0x04, 0x04);
 	else
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_BCL_VBAT_CFG,
-						0x04, 0x00);
+		snd_soc_component_update_bits(component,
+					BOLERO_CDC_RX_BCL_VBAT_CFG,
+					0x04, 0x00);
 
 	return 0;
 }
@@ -1783,16 +1833,17 @@ static int rx_macro_vbat_bcl_gsm_mode_func_put(struct snd_kcontrol *kcontrol,
 static int rx_macro_soft_clip_enable_get(struct snd_kcontrol *kcontrol,
 					  struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	ucontrol->value.integer.value[0] = rx_priv->is_softclip_on;
 
-	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
+	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
 		__func__, ucontrol->value.integer.value[0]);
 
 	return 0;
@@ -1801,16 +1852,17 @@ static int rx_macro_soft_clip_enable_get(struct snd_kcontrol *kcontrol,
 static int rx_macro_soft_clip_enable_put(struct snd_kcontrol *kcontrol,
 					  struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
-	rx_priv->is_softclip_on =  ucontrol->value.integer.value[0];
+	rx_priv->is_softclip_on = ucontrol->value.integer.value[0];
 
-	dev_dbg(codec->dev, "%s: soft clip enable = %d\n", __func__,
+	dev_dbg(component->dev, "%s: soft clip enable = %d\n", __func__,
 		rx_priv->is_softclip_on);
 
 	return 0;
@@ -1820,108 +1872,113 @@ static int rx_macro_enable_vbat(struct snd_soc_dapm_widget *w,
 				 struct snd_kcontrol *kcontrol,
 				 int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	dev_dbg(codec->dev, "%s %s %d\n", __func__, w->name, event);
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	dev_dbg(component->dev, "%s %s %d\n", __func__, w->name, event);
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		/* Enable clock for VBAT block */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_PATH_CTL, 0x10, 0x10);
 		/* Enable VBAT block */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_CFG, 0x01, 0x01);
 		/* Update interpolator with 384K path */
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_CFG1,
-					0x80, 0x80);
+		snd_soc_component_update_bits(component,
+			BOLERO_CDC_RX_RX2_RX_PATH_CFG1, 0x80, 0x80);
 		/* Update DSM FS rate */
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_SEC7,
-					0x02, 0x02);
+		snd_soc_component_update_bits(component,
+			BOLERO_CDC_RX_RX2_RX_PATH_SEC7, 0x02, 0x02);
 		/* Use attenuation mode */
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_BCL_VBAT_CFG,
-					0x02, 0x00);
+		snd_soc_component_update_bits(component,
+			BOLERO_CDC_RX_BCL_VBAT_CFG, 0x02, 0x00);
 		/* BCL block needs softclip clock to be enabled */
-		rx_macro_enable_softclip_clk(codec, rx_priv, true);
+		rx_macro_enable_softclip_clk(component, rx_priv, true);
 		/* Enable VBAT at channel level */
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_CFG1,
-					0x02, 0x02);
+		snd_soc_component_update_bits(component,
+			BOLERO_CDC_RX_RX2_RX_PATH_CFG1, 0x02, 0x02);
 		/* Set the ATTK1 gain */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD1,
 			0xFF, 0xFF);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD2,
 			0xFF, 0x03);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD3,
 			0xFF, 0x00);
 		/* Set the ATTK2 gain */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD4,
 			0xFF, 0xFF);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD5,
 			0xFF, 0x03);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD6,
 			0xFF, 0x00);
 		/* Set the ATTK3 gain */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD7,
 			0xFF, 0xFF);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD8,
 			0xFF, 0x03);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD9,
 			0xFF, 0x00);
 		break;
 
 	case SND_SOC_DAPM_POST_PMD:
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_CFG1,
-					0x80, 0x00);
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_SEC7,
-					0x02, 0x00);
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_BCL_VBAT_CFG,
-					0x02, 0x02);
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_CFG1,
-					0x02, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX2_RX_PATH_CFG1,
+				0x80, 0x00);
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX2_RX_PATH_SEC7,
+				0x02, 0x00);
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_BCL_VBAT_CFG,
+				0x02, 0x02);
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX2_RX_PATH_CFG1,
+				0x02, 0x00);
+		snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD1,
 				0xFF, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD2,
 				0xFF, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD3,
 				0xFF, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD4,
 				0xFF, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD5,
 				0xFF, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD6,
 				0xFF, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD7,
 				0xFF, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD8,
 				0xFF, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_BCL_VBAT_BCL_GAIN_UPD9,
 				0xFF, 0x00);
-		rx_macro_enable_softclip_clk(codec, rx_priv, false);
-		snd_soc_update_bits(codec,
+		rx_macro_enable_softclip_clk(component, rx_priv, false);
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_CFG, 0x01, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_PATH_CTL, 0x10, 0x00);
 		break;
 	default:
@@ -1931,7 +1988,7 @@ static int rx_macro_enable_vbat(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
-static void rx_macro_idle_detect_control(struct snd_soc_codec *codec,
+static void rx_macro_idle_detect_control(struct snd_soc_component *component,
 					 struct rx_macro_priv *rx_priv,
 					 int interp, int event)
 {
@@ -1952,16 +2009,17 @@ static void rx_macro_idle_detect_control(struct snd_soc_codec *codec,
 	}
 
 	if (reg && SND_SOC_DAPM_EVENT_ON(event))
-		snd_soc_update_bits(codec, reg, mask, val);
+		snd_soc_component_update_bits(component, reg, mask, val);
 
 	if (reg && SND_SOC_DAPM_EVENT_OFF(event)) {
-		snd_soc_update_bits(codec, reg, mask, 0x00);
+		snd_soc_component_update_bits(component, reg, mask, 0x00);
 		rx_priv->idle_det_cfg.hph_idle_thr = 0;
-		snd_soc_write(codec, BOLERO_CDC_RX_IDLE_DETECT_CFG3, 0x0);
+		snd_soc_component_write(component,
+				BOLERO_CDC_RX_IDLE_DETECT_CFG3, 0x0);
 	}
 }
 
-static void rx_macro_hphdelay_lutbypass(struct snd_soc_codec *codec,
+static void rx_macro_hphdelay_lutbypass(struct snd_soc_component *component,
 					struct rx_macro_priv *rx_priv,
 					u16 interp_idx, int event)
 {
@@ -1984,43 +2042,48 @@ static void rx_macro_hphdelay_lutbypass(struct snd_soc_codec *codec,
 	if (hph_lut_bypass_reg && SND_SOC_DAPM_EVENT_ON(event)) {
 		if (interp_idx == INTERP_HPHL) {
 			if (rx_priv->is_ear_mode_on)
-				snd_soc_update_bits(codec,
+				snd_soc_component_update_bits(component,
 					BOLERO_CDC_RX_RX0_RX_PATH_CFG1,
 					0x02, 0x02);
 			else
-				snd_soc_update_bits(codec,
+				snd_soc_component_update_bits(component,
 					hph_lut_bypass_reg,
 					0x80, 0x80);
 		} else {
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					hph_lut_bypass_reg,
 					0x80, 0x80);
 		}
 		if (rx_priv->hph_pwr_mode)
-			snd_soc_update_bits(codec, hph_comp_ctrl7, 0x20, 0x00);
+			snd_soc_component_update_bits(component,
+					hph_comp_ctrl7,
+					0x20, 0x00);
 	}
 
 	if (hph_lut_bypass_reg && SND_SOC_DAPM_EVENT_OFF(event)) {
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_CFG1,
+		snd_soc_component_update_bits(component,
+					BOLERO_CDC_RX_RX0_RX_PATH_CFG1,
 					0x02, 0x00);
-		snd_soc_update_bits(codec, hph_lut_bypass_reg, 0x80, 0x00);
-		snd_soc_update_bits(codec, hph_comp_ctrl7, 0x20, 0x20);
+		snd_soc_component_update_bits(component, hph_lut_bypass_reg,
+					0x80, 0x00);
+		snd_soc_component_update_bits(component, hph_comp_ctrl7,
+					0x20, 0x0);
 	}
 }
 
-static int rx_macro_enable_interp_clk(struct snd_soc_codec *codec,
+static int rx_macro_enable_interp_clk(struct snd_soc_component *component,
 				      int event, int interp_idx)
 {
 	u16 main_reg = 0, dsm_reg = 0, rx_cfg2_reg = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!codec) {
-		pr_err("%s: codec is NULL\n", __func__);
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
 		return -EINVAL;
 	}
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	main_reg = BOLERO_CDC_RX_RX0_RX_PATH_CTL +
@@ -2032,24 +2095,29 @@ static int rx_macro_enable_interp_clk(struct snd_soc_codec *codec,
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
 		if (rx_priv->main_clk_users[interp_idx] == 0) {
-			snd_soc_update_bits(codec, dsm_reg, 0x01, 0x01);
+			snd_soc_component_update_bits(component, dsm_reg,
+					0x01, 0x01);
 			/* Main path PGA mute enable */
-			snd_soc_update_bits(codec, main_reg, 0x10, 0x10);
+			snd_soc_component_update_bits(component, main_reg,
+					0x10, 0x10);
 			/* Clk enable */
-			snd_soc_update_bits(codec, main_reg, 0x20, 0x20);
-			snd_soc_update_bits(codec, rx_cfg2_reg, 0x03, 0x03);
-			rx_macro_idle_detect_control(codec, rx_priv,
+			snd_soc_component_update_bits(component, main_reg,
+					0x20, 0x20);
+			snd_soc_component_update_bits(component, rx_cfg2_reg,
+					0x03, 0x03);
+			rx_macro_idle_detect_control(component, rx_priv,
 					interp_idx, event);
 			if (rx_priv->hph_hd2_mode)
-				rx_macro_hd2_control(codec, interp_idx, event);
-			rx_macro_hphdelay_lutbypass(codec, rx_priv, interp_idx,
-						       event);
-			rx_macro_config_compander(codec, rx_priv,
+				rx_macro_hd2_control(
+					component, interp_idx, event);
+			rx_macro_hphdelay_lutbypass(component, rx_priv,
+						    interp_idx, event);
+			rx_macro_config_compander(component, rx_priv,
 						interp_idx, event);
 			if (interp_idx ==  INTERP_AUX)
-				rx_macro_config_softclip(codec, rx_priv,
+				rx_macro_config_softclip(component, rx_priv,
 							event);
-			rx_macro_config_classh(codec, rx_priv,
+			rx_macro_config_classh(component, rx_priv,
 						interp_idx, event);
 		}
 		rx_priv->main_clk_users[interp_idx]++;
@@ -2060,31 +2128,38 @@ static int rx_macro_enable_interp_clk(struct snd_soc_codec *codec,
 		if (rx_priv->main_clk_users[interp_idx] <= 0) {
 			rx_priv->main_clk_users[interp_idx] = 0;
 			/* Clk Disable */
-			snd_soc_update_bits(codec, dsm_reg, 0x01, 0x00);
-			snd_soc_update_bits(codec, main_reg, 0x20, 0x00);
+			snd_soc_component_update_bits(component, dsm_reg,
+						0x01, 0x00);
+			snd_soc_component_update_bits(component, main_reg,
+						0x20, 0x00);
 			/* Reset enable and disable */
-			snd_soc_update_bits(codec, main_reg, 0x40, 0x40);
-			snd_soc_update_bits(codec, main_reg, 0x40, 0x00);
+			snd_soc_component_update_bits(component, main_reg,
+						0x40, 0x40);
+			snd_soc_component_update_bits(component, main_reg,
+						0x40, 0x00);
 			/* Reset rate to 48K*/
-			snd_soc_update_bits(codec, main_reg, 0x0F, 0x04);
-			snd_soc_update_bits(codec, rx_cfg2_reg, 0x03, 0x00);
-			rx_macro_config_classh(codec, rx_priv,
+			snd_soc_component_update_bits(component, main_reg,
+						0x0F, 0x04);
+			snd_soc_component_update_bits(component, rx_cfg2_reg,
+						0x03, 0x00);
+			rx_macro_config_classh(component, rx_priv,
 						interp_idx, event);
-			rx_macro_config_compander(codec, rx_priv,
+			rx_macro_config_compander(component, rx_priv,
 						interp_idx, event);
 			if (interp_idx ==  INTERP_AUX)
-				rx_macro_config_softclip(codec, rx_priv,
+				rx_macro_config_softclip(component, rx_priv,
 							event);
-			rx_macro_hphdelay_lutbypass(codec, rx_priv, interp_idx,
-						       event);
+			rx_macro_hphdelay_lutbypass(component, rx_priv,
+						interp_idx, event);
 			if (rx_priv->hph_hd2_mode)
-				rx_macro_hd2_control(codec, interp_idx, event);
-			rx_macro_idle_detect_control(codec, rx_priv,
+				rx_macro_hd2_control(component, interp_idx,
+						event);
+			rx_macro_idle_detect_control(component, rx_priv,
 					interp_idx, event);
 		}
 	}
 
-	dev_dbg(codec->dev, "%s event %d main_clk_users %d\n",
+	dev_dbg(component->dev, "%s event %d main_clk_users %d\n",
 		__func__,  event, rx_priv->main_clk_users[interp_idx]);
 
 	return rx_priv->main_clk_users[interp_idx];
@@ -2093,21 +2168,24 @@ static int rx_macro_enable_interp_clk(struct snd_soc_codec *codec,
 static int rx_macro_enable_rx_path_clk(struct snd_soc_dapm_widget *w,
 				  struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
 	u16 sidetone_reg = 0;
 
-	dev_dbg(codec->dev, "%s %d %d\n", __func__, event, w->shift);
+	dev_dbg(component->dev, "%s %d %d\n", __func__, event, w->shift);
 	sidetone_reg = BOLERO_CDC_RX_RX0_RX_PATH_CFG1 +
 			RX_MACRO_RX_PATH_OFFSET * (w->shift);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		rx_macro_enable_interp_clk(codec, event, w->shift);
-		snd_soc_update_bits(codec, sidetone_reg, 0x10, 0x10);
+		rx_macro_enable_interp_clk(component, event, w->shift);
+		snd_soc_component_update_bits(component, sidetone_reg,
+					0x10, 0x10);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		snd_soc_update_bits(codec, sidetone_reg, 0x10, 0x00);
-		rx_macro_enable_interp_clk(codec, event, w->shift);
+		snd_soc_component_update_bits(component, sidetone_reg,
+					0x10, 0x00);
+		rx_macro_enable_interp_clk(component, event, w->shift);
 		break;
 	default:
 		break;
@@ -2150,7 +2228,8 @@ static void rx_macro_restore_iir_coeff(struct rx_macro_priv *rx_priv, int iir_id
 static int rx_macro_iir_enable_audio_mixer_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -2158,10 +2237,11 @@ static int rx_macro_iir_enable_audio_mixer_get(struct snd_kcontrol *kcontrol,
 	/* IIR filter band registers are at integer multiples of 0x80 */
 	u16 iir_reg = BOLERO_CDC_RX_SIDETONE_IIR0_IIR_CTL + 0x80 * iir_idx;
 
-	ucontrol->value.integer.value[0] = (snd_soc_read(codec, iir_reg) &
-					    (1 << band_idx)) != 0;
+	ucontrol->value.integer.value[0] = (
+				snd_soc_component_read32(component, iir_reg) &
+				(1 << band_idx)) != 0;
 
-	dev_dbg(codec->dev, "%s: IIR #%d band #%d enable %d\n", __func__,
+	dev_dbg(component->dev, "%s: IIR #%d band #%d enable %d\n", __func__,
 		iir_idx, band_idx,
 		(uint32_t)ucontrol->value.integer.value[0]);
 	return 0;
@@ -2170,7 +2250,8 @@ static int rx_macro_iir_enable_audio_mixer_get(struct snd_kcontrol *kcontrol,
 static int rx_macro_iir_enable_audio_mixer_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -2181,62 +2262,62 @@ static int rx_macro_iir_enable_audio_mixer_put(struct snd_kcontrol *kcontrol,
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	rx_macro_restore_iir_coeff(rx_priv, iir_idx, band_idx);
 
 	/* Mask first 5 bits, 6-8 are reserved */
-	snd_soc_update_bits(codec, iir_reg, (1 << band_idx),
+	snd_soc_component_update_bits(component, iir_reg, (1 << band_idx),
 			    (value << band_idx));
 
-	iir_band_en_status = ((snd_soc_read(codec, iir_reg) &
+	iir_band_en_status = ((snd_soc_component_read32(component, iir_reg) &
 			      (1 << band_idx)) != 0);
-	dev_dbg(codec->dev, "%s: IIR #%d band #%d enable %d\n", __func__,
+	dev_dbg(component->dev, "%s: IIR #%d band #%d enable %d\n", __func__,
 		iir_idx, band_idx, iir_band_en_status);
 	return 0;
 }
 
-static uint32_t get_iir_band_coeff(struct snd_soc_codec *codec,
+static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 				   int iir_idx, int band_idx,
 				   int coeff_idx)
 {
 	uint32_t value = 0;
 
 	/* Address does not automatically update if reading */
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B1_CTL + 0x80 * iir_idx),
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t)) & 0x7F);
 
-	value |= snd_soc_read(codec,
+	value |= snd_soc_component_read32(component,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL + 0x80 * iir_idx));
 
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B1_CTL + 0x80 * iir_idx),
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t) + 1) & 0x7F);
 
-	value |= (snd_soc_read(codec,
+	value |= (snd_soc_component_read32(component,
 			       (BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL +
 				0x80 * iir_idx)) << 8);
 
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B1_CTL + 0x80 * iir_idx),
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t) + 2) & 0x7F);
 
-	value |= (snd_soc_read(codec,
+	value |= (snd_soc_component_read32(component,
 			       (BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL +
 				0x80 * iir_idx)) << 16);
 
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B1_CTL + 0x80 * iir_idx),
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t) + 3) & 0x7F);
 
 	/* Mask bits top 2 bits since they are reserved */
-	value |= ((snd_soc_read(codec,
+	value |= ((snd_soc_component_read32(component,
 				(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL +
 				 16 * iir_idx)) & 0x3F) << 24);
 
@@ -2246,24 +2327,25 @@ static uint32_t get_iir_band_coeff(struct snd_soc_codec *codec,
 static int rx_macro_iir_band_audio_mixer_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->shift;
 
 	ucontrol->value.integer.value[0] =
-		get_iir_band_coeff(codec, iir_idx, band_idx, 0);
+		get_iir_band_coeff(component, iir_idx, band_idx, 0);
 	ucontrol->value.integer.value[1] =
-		get_iir_band_coeff(codec, iir_idx, band_idx, 1);
+		get_iir_band_coeff(component, iir_idx, band_idx, 1);
 	ucontrol->value.integer.value[2] =
-		get_iir_band_coeff(codec, iir_idx, band_idx, 2);
+		get_iir_band_coeff(component, iir_idx, band_idx, 2);
 	ucontrol->value.integer.value[3] =
-		get_iir_band_coeff(codec, iir_idx, band_idx, 3);
+		get_iir_band_coeff(component, iir_idx, band_idx, 3);
 	ucontrol->value.integer.value[4] =
-		get_iir_band_coeff(codec, iir_idx, band_idx, 4);
+		get_iir_band_coeff(component, iir_idx, band_idx, 4);
 
-	dev_dbg(codec->dev, "%s: IIR #%d band #%d b0 = 0x%x\n"
+	dev_dbg(component->dev, "%s: IIR #%d band #%d b0 = 0x%x\n"
 		"%s: IIR #%d band #%d b1 = 0x%x\n"
 		"%s: IIR #%d band #%d b2 = 0x%x\n"
 		"%s: IIR #%d band #%d a1 = 0x%x\n"
@@ -2281,24 +2363,24 @@ static int rx_macro_iir_band_audio_mixer_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static void set_iir_band_coeff(struct snd_soc_codec *codec,
+static void set_iir_band_coeff(struct snd_soc_component *component,
 			       int iir_idx, int band_idx,
 			       uint32_t value)
 {
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL + 0x80 * iir_idx),
 		(value & 0xFF));
 
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL + 0x80 * iir_idx),
 		(value >> 8) & 0xFF);
 
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL + 0x80 * iir_idx),
 		(value >> 16) & 0xFF);
 
 	/* Mask top 2 bits, 7-8 are reserved */
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL + 0x80 * iir_idx),
 		(value >> 24) & 0x3F);
 }
@@ -2306,7 +2388,8 @@ static void set_iir_band_coeff(struct snd_soc_codec *codec,
 static int rx_macro_iir_band_audio_mixer_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
 	int iir_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->reg;
 	int band_idx = ((struct soc_multi_mixer_control *)
@@ -2315,14 +2398,14 @@ static int rx_macro_iir_band_audio_mixer_put(struct snd_kcontrol *kcontrol,
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
 	/*
 	 * Mask top bit it is reserved
 	 * Updates addr automatically for each B2 write
 	 */
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B1_CTL + 16 * iir_idx),
 		(band_idx * BAND_MAX * sizeof(uint32_t)) & 0x7F);
 
@@ -2331,7 +2414,7 @@ static int rx_macro_iir_band_audio_mixer_put(struct snd_kcontrol *kcontrol,
 		coeff_idx++) {
 		uint32_t value = ucontrol->value.integer.value[coeff_idx];
 
-		set_iir_band_coeff(codec, iir_idx, band_idx, value);
+		set_iir_band_coeff(component, iir_idx, band_idx, value);
 
 		/* Four 8 bit values(one 32 bit) per coefficient */
 		rx_priv->sidetone_coeff_array[iir_idx][band_idx][idx++] =
@@ -2350,61 +2433,62 @@ static int rx_macro_iir_band_audio_mixer_put(struct snd_kcontrol *kcontrol,
 		"%s: IIR #%d band #%d a1 = 0x%x\n"
 		"%s: IIR #%d band #%d a2 = 0x%x\n",
 		__func__, iir_idx, band_idx,
-		get_iir_band_coeff(codec, iir_idx, band_idx, 0),
+		get_iir_band_coeff(component, iir_idx, band_idx, 0),
 		__func__, iir_idx, band_idx,
-		get_iir_band_coeff(codec, iir_idx, band_idx, 1),
+		get_iir_band_coeff(component, iir_idx, band_idx, 1),
 		__func__, iir_idx, band_idx,
-		get_iir_band_coeff(codec, iir_idx, band_idx, 2),
+		get_iir_band_coeff(component, iir_idx, band_idx, 2),
 		__func__, iir_idx, band_idx,
-		get_iir_band_coeff(codec, iir_idx, band_idx, 3),
+		get_iir_band_coeff(component, iir_idx, band_idx, 3),
 		__func__, iir_idx, band_idx,
-		get_iir_band_coeff(codec, iir_idx, band_idx, 4));
+		get_iir_band_coeff(component, iir_idx, band_idx, 4));
 	return 0;
 }
 
 static int rx_macro_set_iir_gain(struct snd_soc_dapm_widget *w,
 				    struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 
-	dev_dbg(codec->dev, "%s: event = %d\n", __func__, event);
+	dev_dbg(component->dev, "%s: event = %d\n", __func__, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU: /* fall through */
 	case SND_SOC_DAPM_PRE_PMD:
 		if (strnstr(w->name, "IIR0", sizeof("IIR0"))) {
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B1_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B1_CTL));
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B2_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B2_CTL));
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B3_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B3_CTL));
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B4_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B4_CTL));
 		} else {
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B1_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B1_CTL));
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B2_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B2_CTL));
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B3_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B3_CTL));
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B4_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B4_CTL));
 		}
 		break;
@@ -3018,43 +3102,43 @@ exit:
 	return ret;
 }
 
-static void rx_macro_init_bcl_pmic_reg(struct snd_soc_codec *codec)
+static void rx_macro_init_bcl_pmic_reg(struct snd_soc_component *component)
 {
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!codec) {
-		pr_err("%s: NULL codec pointer!\n", __func__);
+	if (!component) {
+		pr_err("%s: NULL component pointer!\n", __func__);
 		return;
 	}
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return;
 
 	switch (rx_priv->bcl_pmic_params.id) {
 	case 0:
 		/* Enable ID0 to listen to respective PMIC group interrupts */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_DECODE_CTL1, 0x02, 0x02);
 		/* Update MC_SID0 */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_DECODE_CFG1, 0x0F,
 			rx_priv->bcl_pmic_params.sid);
 		/* Update MC_PPID0 */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_DECODE_CFG2, 0xFF,
 			rx_priv->bcl_pmic_params.ppid);
 		break;
 	case 1:
 		/* Enable ID1 to listen to respective PMIC group interrupts */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_DECODE_CTL1, 0x01, 0x01);
 		/* Update MC_SID1 */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_DECODE_CFG3, 0x0F,
 			rx_priv->bcl_pmic_params.sid);
 		/* Update MC_PPID1 */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 			BOLERO_CDC_RX_BCL_VBAT_DECODE_CFG1, 0xFF,
 			rx_priv->bcl_pmic_params.ppid);
 		break;
@@ -3065,22 +3149,23 @@ static void rx_macro_init_bcl_pmic_reg(struct snd_soc_codec *codec)
 	}
 }
 
-static int rx_macro_init(struct snd_soc_codec *codec)
+static int rx_macro_init(struct snd_soc_component *component)
 {
-	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	struct snd_soc_dapm_context *dapm =
+				snd_soc_component_get_dapm(component);
 	int ret = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	rx_dev = bolero_get_device_ptr(codec->dev, RX_MACRO);
+	rx_dev = bolero_get_device_ptr(component->dev, RX_MACRO);
 	if (!rx_dev) {
-		dev_err(codec->dev,
+		dev_err(component->dev,
 			"%s: null device for macro!\n", __func__);
 		return -EINVAL;
 	}
 	rx_priv = dev_get_drvdata(rx_dev);
 	if (!rx_priv) {
-		dev_err(codec->dev,
+		dev_err(component->dev,
 			"%s: priv is null for macro!\n", __func__);
 		return -EINVAL;
 	}
@@ -3102,7 +3187,7 @@ static int rx_macro_init(struct snd_soc_codec *codec)
 		dev_err(rx_dev, "%s: failed to add widgets\n", __func__);
 		return ret;
 	}
-	ret = snd_soc_add_codec_controls(codec, rx_macro_snd_controls,
+	ret = snd_soc_add_component_controls(component, rx_macro_snd_controls,
 				   ARRAY_SIZE(rx_macro_snd_controls));
 	if (ret < 0) {
 		dev_err(rx_dev, "%s: failed to add snd_ctls\n", __func__);
@@ -3122,31 +3207,44 @@ static int rx_macro_init(struct snd_soc_codec *codec)
 	snd_soc_dapm_ignore_suspend(dapm, "RX_TX DEC3_INP");
 	snd_soc_dapm_sync(dapm);
 
-	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_DSM_CTL, 0x01, 0x01);
-	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX1_RX_PATH_DSM_CTL, 0x01, 0x01);
-	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_DSM_CTL, 0x01, 0x01);
-	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_SEC7, 0x07, 0x02);
-	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX1_RX_PATH_SEC7, 0x07, 0x02);
-	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_SEC7, 0x07, 0x02);
-	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_CFG3, 0x03, 0x02);
-	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX1_RX_PATH_CFG3, 0x03, 0x02);
-	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_CFG3, 0x03, 0x02);
-	rx_macro_init_bcl_pmic_reg(codec);
+	snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX0_RX_PATH_DSM_CTL,
+				0x01, 0x01);
+	snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX1_RX_PATH_DSM_CTL,
+				0x01, 0x01);
+	snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX2_RX_PATH_DSM_CTL,
+				0x01, 0x01);
+	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX0_RX_PATH_SEC7,
+				0x07, 0x02);
+	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX1_RX_PATH_SEC7,
+				0x07, 0x02);
+	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX2_RX_PATH_SEC7,
+				0x07, 0x02);
+	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX0_RX_PATH_CFG3,
+				0x03, 0x02);
+	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX1_RX_PATH_CFG3,
+				0x03, 0x02);
+	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX2_RX_PATH_CFG3,
+				0x03, 0x02);
 
-	rx_priv->codec = codec;
+	rx_macro_init_bcl_pmic_reg(component);
+
+	rx_priv->component = component;
 
 	return 0;
 }
 
-static int rx_macro_deinit(struct snd_soc_codec *codec)
+static int rx_macro_deinit(struct snd_soc_component *component)
 {
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
-	rx_priv->codec = NULL;
+	rx_priv->component = NULL;
 
 	return 0;
 }

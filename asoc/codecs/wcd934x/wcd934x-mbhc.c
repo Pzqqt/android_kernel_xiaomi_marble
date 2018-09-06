@@ -169,21 +169,21 @@ struct tavil_mbhc_zdet_param {
 	u16 btn7;
 };
 
-static int tavil_mbhc_request_irq(struct snd_soc_codec *codec,
+static int tavil_mbhc_request_irq(struct snd_soc_component *component,
 				  int irq, irq_handler_t handler,
 				  const char *name, void *data)
 {
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
+	struct wcd9xxx *wcd9xxx = dev_get_drvdata(component->dev->parent);
 	struct wcd9xxx_core_resource *core_res =
 				&wcd9xxx->core_res;
 
 	return wcd9xxx_request_irq(core_res, irq, handler, name, data);
 }
 
-static void tavil_mbhc_irq_control(struct snd_soc_codec *codec,
+static void tavil_mbhc_irq_control(struct snd_soc_component *component,
 				   int irq, bool enable)
 {
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
+	struct wcd9xxx *wcd9xxx = dev_get_drvdata(component->dev->parent);
 	struct wcd9xxx_core_resource *core_res =
 				&wcd9xxx->core_res;
 	if (enable)
@@ -192,10 +192,10 @@ static void tavil_mbhc_irq_control(struct snd_soc_codec *codec,
 		wcd9xxx_disable_irq(core_res, irq);
 }
 
-static int tavil_mbhc_free_irq(struct snd_soc_codec *codec,
+static int tavil_mbhc_free_irq(struct snd_soc_component *component,
 			       int irq, void *data)
 {
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
+	struct wcd9xxx *wcd9xxx = dev_get_drvdata(component->dev->parent);
 	struct wcd9xxx_core_resource *core_res =
 				&wcd9xxx->core_res;
 
@@ -203,27 +203,28 @@ static int tavil_mbhc_free_irq(struct snd_soc_codec *codec,
 	return 0;
 }
 
-static void tavil_mbhc_clk_setup(struct snd_soc_codec *codec,
+static void tavil_mbhc_clk_setup(struct snd_soc_component *component,
 				 bool enable)
 {
 	if (enable)
-		snd_soc_update_bits(codec, WCD934X_MBHC_NEW_CTL_1,
+		snd_soc_component_update_bits(component, WCD934X_MBHC_NEW_CTL_1,
 				    0x80, 0x80);
 	else
-		snd_soc_update_bits(codec, WCD934X_MBHC_NEW_CTL_1,
+		snd_soc_component_update_bits(component, WCD934X_MBHC_NEW_CTL_1,
 				    0x80, 0x00);
 }
 
-static int tavil_mbhc_btn_to_num(struct snd_soc_codec *codec)
+static int tavil_mbhc_btn_to_num(struct snd_soc_component *component)
 {
-	return snd_soc_read(codec, WCD934X_ANA_MBHC_RESULT_3) & 0x7;
+	return snd_soc_component_read32(component, WCD934X_ANA_MBHC_RESULT_3) &
+				0x7;
 }
 
 static int tavil_enable_ext_mb_source(struct wcd_mbhc *mbhc,
 				      bool turn_on)
 {
 	struct wcd934x_mbhc *wcd934x_mbhc;
-	struct snd_soc_codec *codec = mbhc->codec;
+	struct snd_soc_component *component = mbhc->component;
 	struct wcd934x_on_demand_supply *supply;
 	int ret = 0;
 
@@ -231,20 +232,21 @@ static int tavil_enable_ext_mb_source(struct wcd_mbhc *mbhc,
 
 	supply =  &wcd934x_mbhc->on_demand_list[WCD934X_ON_DEMAND_MICBIAS];
 	if (!supply->supply) {
-		dev_dbg(codec->dev, "%s: warning supply not present ond for %s\n",
+		dev_dbg(component->dev, "%s: warning supply not present ond for %s\n",
 				__func__, "onDemand Micbias");
 		return ret;
 	}
 
-	dev_dbg(codec->dev, "%s turn_on: %d count: %d\n", __func__, turn_on,
+	dev_dbg(component->dev, "%s turn_on: %d count: %d\n", __func__, turn_on,
 		supply->ondemand_supply_count);
 
 	if (turn_on) {
 		if (!(supply->ondemand_supply_count)) {
 			ret = snd_soc_dapm_force_enable_pin(
-				snd_soc_codec_get_dapm(codec),
+				snd_soc_component_get_dapm(component),
 				"MICBIAS_REGULATOR");
-			snd_soc_dapm_sync(snd_soc_codec_get_dapm(codec));
+			snd_soc_dapm_sync(
+				snd_soc_component_get_dapm(component));
 		}
 		supply->ondemand_supply_count++;
 	} else {
@@ -252,34 +254,34 @@ static int tavil_enable_ext_mb_source(struct wcd_mbhc *mbhc,
 			supply->ondemand_supply_count--;
 		if (!(supply->ondemand_supply_count)) {
 			ret = snd_soc_dapm_disable_pin(
-				snd_soc_codec_get_dapm(codec),
+				snd_soc_component_get_dapm(component),
 				"MICBIAS_REGULATOR");
-		snd_soc_dapm_sync(snd_soc_codec_get_dapm(codec));
+		snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
 		}
 	}
 
 	if (ret)
-		dev_err(codec->dev, "%s: Failed to %s external micbias source\n",
+		dev_err(component->dev, "%s: Failed to %s external micbias source\n",
 			__func__, turn_on ? "enable" : "disabled");
 	else
-		dev_dbg(codec->dev, "%s: %s external micbias source\n",
+		dev_dbg(component->dev, "%s: %s external micbias source\n",
 			__func__, turn_on ? "Enabled" : "Disabled");
 
 	return ret;
 }
 
-static void tavil_mbhc_mbhc_bias_control(struct snd_soc_codec *codec,
+static void tavil_mbhc_mbhc_bias_control(struct snd_soc_component *component,
 					 bool enable)
 {
 	if (enable)
-		snd_soc_update_bits(codec, WCD934X_ANA_MBHC_ELECT,
+		snd_soc_component_update_bits(component, WCD934X_ANA_MBHC_ELECT,
 				    0x01, 0x01);
 	else
-		snd_soc_update_bits(codec, WCD934X_ANA_MBHC_ELECT,
+		snd_soc_component_update_bits(component, WCD934X_ANA_MBHC_ELECT,
 				    0x01, 0x00);
 }
 
-static void tavil_mbhc_program_btn_thr(struct snd_soc_codec *codec,
+static void tavil_mbhc_program_btn_thr(struct snd_soc_component *component,
 				       s16 *btn_low, s16 *btn_high,
 				       int num_btn, bool is_micbias)
 {
@@ -287,7 +289,7 @@ static void tavil_mbhc_program_btn_thr(struct snd_soc_codec *codec,
 	int vth;
 
 	if (num_btn > WCD_MBHC_DEF_BUTTONS) {
-		dev_err(codec->dev, "%s: invalid number of buttons: %d\n",
+		dev_err(component->dev, "%s: invalid number of buttons: %d\n",
 			__func__, num_btn);
 		return;
 	}
@@ -299,17 +301,18 @@ static void tavil_mbhc_program_btn_thr(struct snd_soc_codec *codec,
 	 */
 	for (i = 0; i < num_btn; i++) {
 		vth = ((btn_high[i] * 2) / 25) & 0x3F;
-		snd_soc_update_bits(codec, WCD934X_ANA_MBHC_BTN0 + i,
-				    0xFC, vth << 2);
-		dev_dbg(codec->dev, "%s: btn_high[%d]: %d, vth: %d\n",
+		snd_soc_component_update_bits(component,
+				WCD934X_ANA_MBHC_BTN0 + i,
+				0xFC, vth << 2);
+		dev_dbg(component->dev, "%s: btn_high[%d]: %d, vth: %d\n",
 			__func__, i, btn_high[i], vth);
 	}
 }
 
 static bool tavil_mbhc_lock_sleep(struct wcd_mbhc *mbhc, bool lock)
 {
-	struct snd_soc_codec *codec = mbhc->codec;
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
+	struct snd_soc_component *component = mbhc->component;
+	struct wcd9xxx *wcd9xxx = dev_get_drvdata(component->dev->parent);
 	struct wcd9xxx_core_resource *core_res =
 				&wcd9xxx->core_res;
 	bool ret = 0;
@@ -343,20 +346,22 @@ static bool tavil_mbhc_micb_en_status(struct wcd_mbhc *mbhc, int micb_num)
 	u8 val;
 
 	if (micb_num == MIC_BIAS_2) {
-		val = (snd_soc_read(mbhc->codec, WCD934X_ANA_MICB2) >> 6);
+		val = (snd_soc_component_read32(
+				mbhc->component, WCD934X_ANA_MICB2) >> 6);
 		if (val == 0x01)
 			return true;
 	}
 	return false;
 }
 
-static bool tavil_mbhc_hph_pa_on_status(struct snd_soc_codec *codec)
+static bool tavil_mbhc_hph_pa_on_status(struct snd_soc_component *component)
 {
-	return (snd_soc_read(codec, WCD934X_ANA_HPH) & 0xC0) ? true : false;
+	return (snd_soc_component_read32(component, WCD934X_ANA_HPH) & 0xC0) ?
+			true : false;
 }
 
 static void tavil_mbhc_hph_l_pull_up_control(
-		struct snd_soc_codec *codec,
+		struct snd_soc_component *component,
 		enum mbhc_hs_pullup_iref pull_up_cur)
 {
 	/* Default pull up current to 2uA */
@@ -364,14 +369,15 @@ static void tavil_mbhc_hph_l_pull_up_control(
 	    pull_up_cur == I_DEFAULT)
 		pull_up_cur = I_2P0_UA;
 
-	dev_dbg(codec->dev, "%s: HS pull up current:%d\n",
+	dev_dbg(component->dev, "%s: HS pull up current:%d\n",
 		__func__, pull_up_cur);
 
-	snd_soc_update_bits(codec, WCD934X_MBHC_NEW_PLUG_DETECT_CTL,
-			    0xC0, pull_up_cur << 6);
+	snd_soc_component_update_bits(component,
+			WCD934X_MBHC_NEW_PLUG_DETECT_CTL,
+			0xC0, pull_up_cur << 6);
 }
 
-static int tavil_mbhc_request_micbias(struct snd_soc_codec *codec,
+static int tavil_mbhc_request_micbias(struct snd_soc_component *component,
 				      int micb_num, int req)
 {
 	int ret;
@@ -381,32 +387,32 @@ static int tavil_mbhc_request_micbias(struct snd_soc_codec *codec,
 	 * is vote to enable mclk
 	 */
 	if (req == MICB_ENABLE)
-		tavil_cdc_mclk_enable(codec, true);
+		tavil_cdc_mclk_enable(component, true);
 
-	ret = tavil_micbias_control(codec, micb_num, req, false);
+	ret = tavil_micbias_control(component, micb_num, req, false);
 
 	/*
 	 * Release vote for mclk while requesting for
 	 * micbias disable
 	 */
 	if (req == MICB_DISABLE)
-		tavil_cdc_mclk_enable(codec, false);
+		tavil_cdc_mclk_enable(component, false);
 
 	return ret;
 }
 
-static void tavil_mbhc_micb_ramp_control(struct snd_soc_codec *codec,
+static void tavil_mbhc_micb_ramp_control(struct snd_soc_component *component,
 					 bool enable)
 {
 	if (enable) {
-		snd_soc_update_bits(codec, WCD934X_ANA_MICB2_RAMP,
+		snd_soc_component_update_bits(component, WCD934X_ANA_MICB2_RAMP,
 				    0x1C, 0x0C);
-		snd_soc_update_bits(codec, WCD934X_ANA_MICB2_RAMP,
+		snd_soc_component_update_bits(component, WCD934X_ANA_MICB2_RAMP,
 				    0x80, 0x80);
 	} else {
-		snd_soc_update_bits(codec, WCD934X_ANA_MICB2_RAMP,
+		snd_soc_component_update_bits(component, WCD934X_ANA_MICB2_RAMP,
 				    0x80, 0x00);
-		snd_soc_update_bits(codec, WCD934X_ANA_MICB2_RAMP,
+		snd_soc_component_update_bits(component, WCD934X_ANA_MICB2_RAMP,
 				    0x1C, 0x00);
 	}
 }
@@ -416,26 +422,27 @@ static struct firmware_cal *tavil_get_hwdep_fw_cal(struct wcd_mbhc *mbhc,
 {
 	struct wcd934x_mbhc *wcd934x_mbhc;
 	struct firmware_cal *hwdep_cal;
-	struct snd_soc_codec *codec = mbhc->codec;
+	struct snd_soc_component *component = mbhc->component;
 
 	wcd934x_mbhc = container_of(mbhc, struct wcd934x_mbhc, wcd_mbhc);
 
-	if (!codec) {
-		pr_err("%s: NULL codec pointer\n", __func__);
+	if (!component) {
+		pr_err("%s: NULL component pointer\n", __func__);
 		return NULL;
 	}
 	hwdep_cal = wcdcal_get_fw_cal(wcd934x_mbhc->fw_data, type);
 	if (!hwdep_cal)
-		dev_err(codec->dev, "%s: cal not sent by %d\n",
+		dev_err(component->dev, "%s: cal not sent by %d\n",
 			__func__, type);
 
 	return hwdep_cal;
 }
 
-static int tavil_mbhc_micb_ctrl_threshold_mic(struct snd_soc_codec *codec,
-					      int micb_num, bool req_en)
+static int tavil_mbhc_micb_ctrl_threshold_mic(
+			struct snd_soc_component *component,
+			int micb_num, bool req_en)
 {
-	struct wcd9xxx_pdata *pdata = dev_get_platdata(codec->dev->parent);
+	struct wcd9xxx_pdata *pdata = dev_get_platdata(component->dev->parent);
 	int rc, micb_mv;
 
 	if (micb_num != MIC_BIAS_2)
@@ -451,7 +458,7 @@ static int tavil_mbhc_micb_ctrl_threshold_mic(struct snd_soc_codec *codec,
 
 	micb_mv = req_en ? WCD_MBHC_THR_HS_MICB_MV : pdata->micbias.micb2_mv;
 
-	rc = tavil_mbhc_micb_adjust_voltage(codec, micb_mv, MIC_BIAS_2);
+	rc = tavil_mbhc_micb_adjust_voltage(component, micb_mv, MIC_BIAS_2);
 
 	return rc;
 }
@@ -512,25 +519,25 @@ ramp_down:
 	}
 }
 
-static void tavil_mbhc_zdet_ramp(struct snd_soc_codec *codec,
+static void tavil_mbhc_zdet_ramp(struct snd_soc_component *component,
 				 struct tavil_mbhc_zdet_param *zdet_param,
 				 int32_t *zl, int32_t *zr, s16 *d1_a)
 {
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
+	struct wcd9xxx *wcd9xxx = dev_get_drvdata(component->dev->parent);
 	int32_t zdet = 0;
 
-	snd_soc_update_bits(codec, WCD934X_MBHC_NEW_ZDET_ANA_CTL, 0x70,
-			    zdet_param->ldo_ctl << 4);
-	snd_soc_update_bits(codec, WCD934X_ANA_MBHC_BTN5, 0xFC,
-			    zdet_param->btn5);
-	snd_soc_update_bits(codec, WCD934X_ANA_MBHC_BTN6, 0xFC,
-			    zdet_param->btn6);
-	snd_soc_update_bits(codec, WCD934X_ANA_MBHC_BTN7, 0xFC,
-			    zdet_param->btn7);
-	snd_soc_update_bits(codec, WCD934X_MBHC_NEW_ZDET_ANA_CTL, 0x0F,
-			    zdet_param->noff);
-	snd_soc_update_bits(codec, WCD934X_MBHC_NEW_ZDET_RAMP_CTL, 0x0F,
-			    zdet_param->nshift);
+	snd_soc_component_update_bits(component, WCD934X_MBHC_NEW_ZDET_ANA_CTL,
+				0x70, zdet_param->ldo_ctl << 4);
+	snd_soc_component_update_bits(component, WCD934X_ANA_MBHC_BTN5, 0xFC,
+				zdet_param->btn5);
+	snd_soc_component_update_bits(component, WCD934X_ANA_MBHC_BTN6, 0xFC,
+				zdet_param->btn6);
+	snd_soc_component_update_bits(component, WCD934X_ANA_MBHC_BTN7, 0xFC,
+				zdet_param->btn7);
+	snd_soc_component_update_bits(component, WCD934X_MBHC_NEW_ZDET_ANA_CTL,
+				0x0F, zdet_param->noff);
+	snd_soc_component_update_bits(component, WCD934X_MBHC_NEW_ZDET_RAMP_CTL,
+				0x0F, zdet_param->nshift);
 
 	if (!zl)
 		goto z_right;
@@ -560,17 +567,17 @@ z_right:
 	*zr = zdet;
 }
 
-static inline void tavil_wcd_mbhc_qfuse_cal(struct snd_soc_codec *codec,
+static inline void tavil_wcd_mbhc_qfuse_cal(struct snd_soc_component *component,
 					    int32_t *z_val, int flag_l_r)
 {
 	s16 q1;
 	int q1_cal;
 
 	if (*z_val < (TAVIL_ZDET_VAL_400/1000))
-		q1 = snd_soc_read(codec,
+		q1 = snd_soc_component_read32(component,
 			WCD934X_CHIP_TIER_CTRL_EFUSE_VAL_OUT1 + (2 * flag_l_r));
 	else
-		q1 = snd_soc_read(codec,
+		q1 = snd_soc_component_read32(component,
 			WCD934X_CHIP_TIER_CTRL_EFUSE_VAL_OUT2 + (2 * flag_l_r));
 	if (q1 & 0x80)
 		q1_cal = (10000 - ((q1 & 0x7F) * 25));
@@ -583,8 +590,8 @@ static inline void tavil_wcd_mbhc_qfuse_cal(struct snd_soc_codec *codec,
 static void tavil_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 					  uint32_t *zr)
 {
-	struct snd_soc_codec *codec = mbhc->codec;
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
+	struct snd_soc_component *component = mbhc->component;
+	struct wcd9xxx *wcd9xxx = dev_get_drvdata(component->dev->parent);
 	s16 reg0, reg1, reg2, reg3, reg4;
 	int32_t z1L, z1R, z1Ls;
 	int zMono, z_diff1, z_diff2;
@@ -606,13 +613,15 @@ static void tavil_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 
 	WCD_MBHC_RSC_ASSERT_LOCKED(mbhc);
 
-	reg0 = snd_soc_read(codec, WCD934X_ANA_MBHC_BTN5);
-	reg1 = snd_soc_read(codec, WCD934X_ANA_MBHC_BTN6);
-	reg2 = snd_soc_read(codec, WCD934X_ANA_MBHC_BTN7);
-	reg3 = snd_soc_read(codec, WCD934X_MBHC_CTL_CLK);
-	reg4 = snd_soc_read(codec, WCD934X_MBHC_NEW_ZDET_ANA_CTL);
+	reg0 = snd_soc_component_read32(component, WCD934X_ANA_MBHC_BTN5);
+	reg1 = snd_soc_component_read32(component, WCD934X_ANA_MBHC_BTN6);
+	reg2 = snd_soc_component_read32(component, WCD934X_ANA_MBHC_BTN7);
+	reg3 = snd_soc_component_read32(component, WCD934X_MBHC_CTL_CLK);
+	reg4 = snd_soc_component_read32(component,
+			WCD934X_MBHC_NEW_ZDET_ANA_CTL);
 
-	if (snd_soc_read(codec, WCD934X_ANA_MBHC_ELECT) & 0x80) {
+	if (snd_soc_component_read32(component, WCD934X_ANA_MBHC_ELECT) &
+			0x80) {
 		is_fsm_disable = true;
 		regmap_update_bits(wcd9xxx->regmap,
 				   WCD934X_ANA_MBHC_ELECT, 0x80, 0x00);
@@ -630,7 +639,7 @@ static void tavil_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 	/* First get impedance on Left */
 	d1 = d1_a[1];
 	zdet_param_ptr = &zdet_param[1];
-	tavil_mbhc_zdet_ramp(codec, zdet_param_ptr, &z1L, NULL, d1);
+	tavil_mbhc_zdet_ramp(component, zdet_param_ptr, &z1L, NULL, d1);
 
 	if (!TAVIL_MBHC_IS_SECOND_RAMP_REQUIRED(z1L))
 		goto left_ch_impedance;
@@ -646,7 +655,7 @@ static void tavil_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 		zdet_param_ptr = &zdet_param[3];
 		d1 = d1_a[3];
 	}
-	tavil_mbhc_zdet_ramp(codec, zdet_param_ptr, &z1L, NULL, d1);
+	tavil_mbhc_zdet_ramp(component, zdet_param_ptr, &z1L, NULL, d1);
 
 left_ch_impedance:
 	if ((z1L == TAVIL_ZDET_FLOATING_IMPEDANCE) ||
@@ -656,13 +665,13 @@ left_ch_impedance:
 		d1 = d1_a[1];
 	} else {
 		*zl = z1L/1000;
-		tavil_wcd_mbhc_qfuse_cal(codec, zl, 0);
+		tavil_wcd_mbhc_qfuse_cal(component, zl, 0);
 	}
-	dev_dbg(codec->dev, "%s: impedance on HPH_L = %d(ohms)\n",
+	dev_dbg(component->dev, "%s: impedance on HPH_L = %d(ohms)\n",
 		__func__, *zl);
 
 	/* Start of right impedance ramp and calculation */
-	tavil_mbhc_zdet_ramp(codec, zdet_param_ptr, NULL, &z1R, d1);
+	tavil_mbhc_zdet_ramp(component, zdet_param_ptr, NULL, &z1R, d1);
 	if (TAVIL_MBHC_IS_SECOND_RAMP_REQUIRED(z1R)) {
 		if (((z1R > TAVIL_ZDET_VAL_1200) &&
 			(zdet_param_ptr->noff == 0x6)) ||
@@ -680,7 +689,7 @@ left_ch_impedance:
 			zdet_param_ptr = &zdet_param[3];
 			d1 = d1_a[3];
 		}
-		tavil_mbhc_zdet_ramp(codec, zdet_param_ptr, NULL, &z1R, d1);
+		tavil_mbhc_zdet_ramp(component, zdet_param_ptr, NULL, &z1R, d1);
 	}
 right_ch_impedance:
 	if ((z1R == TAVIL_ZDET_FLOATING_IMPEDANCE) ||
@@ -688,15 +697,15 @@ right_ch_impedance:
 		*zr = TAVIL_ZDET_FLOATING_IMPEDANCE;
 	} else {
 		*zr = z1R/1000;
-		tavil_wcd_mbhc_qfuse_cal(codec, zr, 1);
+		tavil_wcd_mbhc_qfuse_cal(component, zr, 1);
 	}
-	dev_dbg(codec->dev, "%s: impedance on HPH_R = %d(ohms)\n",
+	dev_dbg(component->dev, "%s: impedance on HPH_R = %d(ohms)\n",
 		__func__, *zr);
 
 	/* Mono/stereo detection */
 	if ((*zl == TAVIL_ZDET_FLOATING_IMPEDANCE) &&
 		(*zr == TAVIL_ZDET_FLOATING_IMPEDANCE)) {
-		dev_dbg(codec->dev,
+		dev_dbg(component->dev,
 			"%s: plug type is invalid or extension cable\n",
 			__func__);
 		goto zdet_complete;
@@ -705,40 +714,46 @@ right_ch_impedance:
 	    (*zr == TAVIL_ZDET_FLOATING_IMPEDANCE) ||
 	    ((*zl < WCD_MONO_HS_MIN_THR) && (*zr > WCD_MONO_HS_MIN_THR)) ||
 	    ((*zl > WCD_MONO_HS_MIN_THR) && (*zr < WCD_MONO_HS_MIN_THR))) {
-		dev_dbg(codec->dev,
+		dev_dbg(component->dev,
 			"%s: Mono plug type with one ch floating or shorted to GND\n",
 			__func__);
 		mbhc->hph_type = WCD_MBHC_HPH_MONO;
 		goto zdet_complete;
 	}
-	snd_soc_update_bits(codec, WCD934X_HPH_R_ATEST, 0x02, 0x02);
-	snd_soc_update_bits(codec, WCD934X_HPH_PA_CTL2, 0x40, 0x01);
+	snd_soc_component_update_bits(component, WCD934X_HPH_R_ATEST,
+				0x02, 0x02);
+	snd_soc_component_update_bits(component, WCD934X_HPH_PA_CTL2,
+				0x40, 0x01);
 	if (*zl < (TAVIL_ZDET_VAL_32/1000))
-		tavil_mbhc_zdet_ramp(codec, &zdet_param[0], &z1Ls, NULL, d1);
+		tavil_mbhc_zdet_ramp(component, &zdet_param[0],
+				&z1Ls, NULL, d1);
 	else
-		tavil_mbhc_zdet_ramp(codec, &zdet_param[1], &z1Ls, NULL, d1);
-	snd_soc_update_bits(codec, WCD934X_HPH_PA_CTL2, 0x40, 0x00);
-	snd_soc_update_bits(codec, WCD934X_HPH_R_ATEST, 0x02, 0x00);
+		tavil_mbhc_zdet_ramp(component, &zdet_param[1],
+				&z1Ls, NULL, d1);
+	snd_soc_component_update_bits(component, WCD934X_HPH_PA_CTL2,
+				0x40, 0x00);
+	snd_soc_component_update_bits(component, WCD934X_HPH_R_ATEST,
+				0x02, 0x00);
 	z1Ls /= 1000;
-	tavil_wcd_mbhc_qfuse_cal(codec, &z1Ls, 0);
+	tavil_wcd_mbhc_qfuse_cal(component, &z1Ls, 0);
 	/* Parallel of left Z and 9 ohm pull down resistor */
 	zMono = ((*zl) * 9) / ((*zl) + 9);
 	z_diff1 = (z1Ls > zMono) ? (z1Ls - zMono) : (zMono - z1Ls);
 	z_diff2 = ((*zl) > z1Ls) ? ((*zl) - z1Ls) : (z1Ls - (*zl));
 	if ((z_diff1 * (*zl + z1Ls)) > (z_diff2 * (z1Ls + zMono))) {
-		dev_dbg(codec->dev, "%s: stereo plug type detected\n",
+		dev_dbg(component->dev, "%s: stereo plug type detected\n",
 			__func__);
 		mbhc->hph_type = WCD_MBHC_HPH_STEREO;
 	} else {
-		dev_dbg(codec->dev, "%s: MONO plug type detected\n",
+		dev_dbg(component->dev, "%s: MONO plug type detected\n",
 			__func__);
 		mbhc->hph_type = WCD_MBHC_HPH_MONO;
 	}
 
 zdet_complete:
-	snd_soc_write(codec, WCD934X_ANA_MBHC_BTN5, reg0);
-	snd_soc_write(codec, WCD934X_ANA_MBHC_BTN6, reg1);
-	snd_soc_write(codec, WCD934X_ANA_MBHC_BTN7, reg2);
+	snd_soc_component_write(component, WCD934X_ANA_MBHC_BTN5, reg0);
+	snd_soc_component_write(component, WCD934X_ANA_MBHC_BTN6, reg1);
+	snd_soc_component_write(component, WCD934X_ANA_MBHC_BTN7, reg2);
 	/* Turn on 100k pull down on HPHL */
 	regmap_update_bits(wcd9xxx->regmap,
 			   WCD934X_ANA_MBHC_MECH, 0x01, 0x01);
@@ -748,96 +763,99 @@ zdet_complete:
 		regmap_update_bits(wcd9xxx->regmap,
 				   WCD934X_ANA_MBHC_MECH, 0x80, 0x80);
 
-	snd_soc_write(codec, WCD934X_MBHC_NEW_ZDET_ANA_CTL, reg4);
-	snd_soc_write(codec, WCD934X_MBHC_CTL_CLK, reg3);
+	snd_soc_component_write(component, WCD934X_MBHC_NEW_ZDET_ANA_CTL, reg4);
+	snd_soc_component_write(component, WCD934X_MBHC_CTL_CLK, reg3);
 	if (is_fsm_disable)
 		regmap_update_bits(wcd9xxx->regmap,
 				   WCD934X_ANA_MBHC_ELECT, 0x80, 0x80);
 }
 
-static void tavil_mbhc_gnd_det_ctrl(struct snd_soc_codec *codec, bool enable)
+static void tavil_mbhc_gnd_det_ctrl(struct snd_soc_component *component,
+				    bool enable)
 {
 	if (enable) {
-		snd_soc_update_bits(codec, WCD934X_ANA_MBHC_MECH,
+		snd_soc_component_update_bits(component, WCD934X_ANA_MBHC_MECH,
 				    0x02, 0x02);
-		snd_soc_update_bits(codec, WCD934X_ANA_MBHC_MECH,
+		snd_soc_component_update_bits(component, WCD934X_ANA_MBHC_MECH,
 				    0x40, 0x40);
 	} else {
-		snd_soc_update_bits(codec, WCD934X_ANA_MBHC_MECH,
+		snd_soc_component_update_bits(component, WCD934X_ANA_MBHC_MECH,
 				    0x40, 0x00);
-		snd_soc_update_bits(codec, WCD934X_ANA_MBHC_MECH,
+		snd_soc_component_update_bits(component, WCD934X_ANA_MBHC_MECH,
 				    0x02, 0x00);
 	}
 }
 
-static void tavil_mbhc_hph_pull_down_ctrl(struct snd_soc_codec *codec,
+static void tavil_mbhc_hph_pull_down_ctrl(struct snd_soc_component *component,
 					  bool enable)
 {
 	if (enable) {
-		snd_soc_update_bits(codec, WCD934X_HPH_PA_CTL2,
+		snd_soc_component_update_bits(component, WCD934X_HPH_PA_CTL2,
 				    0x40, 0x40);
-		snd_soc_update_bits(codec, WCD934X_HPH_PA_CTL2,
+		snd_soc_component_update_bits(component, WCD934X_HPH_PA_CTL2,
 				    0x10, 0x10);
 	} else {
-		snd_soc_update_bits(codec, WCD934X_HPH_PA_CTL2,
+		snd_soc_component_update_bits(component, WCD934X_HPH_PA_CTL2,
 				    0x40, 0x00);
-		snd_soc_update_bits(codec, WCD934X_HPH_PA_CTL2,
+		snd_soc_component_update_bits(component, WCD934X_HPH_PA_CTL2,
 				    0x10, 0x00);
 	}
 }
 static void tavil_mbhc_moisture_config(struct wcd_mbhc *mbhc)
 {
-	struct snd_soc_codec *codec = mbhc->codec;
+	struct snd_soc_component *component = mbhc->component;
 
 	if ((mbhc->moist_rref == R_OFF) ||
 	    (mbhc->mbhc_cfg->enable_usbc_analog)) {
-		snd_soc_update_bits(codec, WCD934X_MBHC_NEW_CTL_2,
+		snd_soc_component_update_bits(component, WCD934X_MBHC_NEW_CTL_2,
 				    0x0C, R_OFF << 2);
 		return;
 	}
 
 	/* Donot enable moisture detection if jack type is NC */
 	if (!mbhc->hphl_swh) {
-		dev_dbg(codec->dev, "%s: disable moisture detection for NC\n",
+		dev_dbg(component->dev, "%s: disable moisture detection for NC\n",
 			__func__);
-		snd_soc_update_bits(codec, WCD934X_MBHC_NEW_CTL_2,
+		snd_soc_component_update_bits(component, WCD934X_MBHC_NEW_CTL_2,
 				    0x0C, R_OFF << 2);
 		return;
 	}
 
-	snd_soc_update_bits(codec, WCD934X_MBHC_NEW_CTL_2,
+	snd_soc_component_update_bits(component, WCD934X_MBHC_NEW_CTL_2,
 			    0x0C, mbhc->moist_rref << 2);
 }
 
 static bool tavil_hph_register_recovery(struct wcd_mbhc *mbhc)
 {
-	struct snd_soc_codec *codec = mbhc->codec;
-	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(codec);
+	struct snd_soc_component *component = mbhc->component;
+	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(component);
 
 	if (!wcd934x_mbhc)
 		return false;
 
 	wcd934x_mbhc->is_hph_recover = false;
-	snd_soc_dapm_force_enable_pin(snd_soc_codec_get_dapm(codec),
+	snd_soc_dapm_force_enable_pin(snd_soc_component_get_dapm(component),
 				      "RESET_HPH_REGISTERS");
-	snd_soc_dapm_sync(snd_soc_codec_get_dapm(codec));
+	snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
 
-	snd_soc_dapm_disable_pin(snd_soc_codec_get_dapm(codec),
+	snd_soc_dapm_disable_pin(snd_soc_component_get_dapm(component),
 				 "RESET_HPH_REGISTERS");
-	snd_soc_dapm_sync(snd_soc_codec_get_dapm(codec));
+	snd_soc_dapm_sync(snd_soc_component_get_dapm(component));
 
 	return wcd934x_mbhc->is_hph_recover;
 }
 
-static void tavil_update_anc_state(struct snd_soc_codec *codec, bool enable,
-				   int anc_num)
+static void tavil_update_anc_state(struct snd_soc_component *component,
+				   bool enable, int anc_num)
 {
 	if (enable)
-		snd_soc_update_bits(codec, WCD934X_CDC_RX1_RX_PATH_CFG0 +
-				(20 * anc_num), 0x10, 0x10);
+		snd_soc_component_update_bits(component,
+				WCD934X_CDC_RX1_RX_PATH_CFG0 + (20 * anc_num),
+				0x10, 0x10);
 	else
-		snd_soc_update_bits(codec, WCD934X_CDC_RX1_RX_PATH_CFG0 +
-				(20 * anc_num), 0x10, 0x00);
+		snd_soc_component_update_bits(component,
+				WCD934X_CDC_RX1_RX_PATH_CFG0 + (20 * anc_num),
+				0x10, 0x00);
 }
 
 static bool tavil_is_anc_on(struct wcd_mbhc *mbhc)
@@ -846,9 +864,11 @@ static bool tavil_is_anc_on(struct wcd_mbhc *mbhc)
 	u16 ancl, ancr;
 
 	ancl =
-	(snd_soc_read(mbhc->codec, WCD934X_CDC_RX1_RX_PATH_CFG0)) & 0x10;
+	(snd_soc_component_read32(
+		mbhc->component, WCD934X_CDC_RX1_RX_PATH_CFG0)) & 0x10;
 	ancr =
-	(snd_soc_read(mbhc->codec, WCD934X_CDC_RX2_RX_PATH_CFG0)) & 0x10;
+	(snd_soc_component_read32(
+		mbhc->component, WCD934X_CDC_RX2_RX_PATH_CFG0)) & 0x10;
 
 	anc_on = !!(ancl | ancr);
 
@@ -883,11 +903,11 @@ static const struct wcd_mbhc_cb mbhc_cb = {
 };
 
 static struct regulator *tavil_codec_find_ondemand_regulator(
-		struct snd_soc_codec *codec, const char *name)
+		struct snd_soc_component *component, const char *name)
 {
 	int i;
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
-	struct wcd9xxx_pdata *pdata = dev_get_platdata(codec->dev->parent);
+	struct wcd9xxx *wcd9xxx = dev_get_drvdata(component->dev->parent);
+	struct wcd9xxx_pdata *pdata = dev_get_platdata(component->dev->parent);
 
 	for (i = 0; i < wcd9xxx->num_of_supplies; ++i) {
 		if (pdata->regulator[i].ondemand &&
@@ -896,7 +916,7 @@ static struct regulator *tavil_codec_find_ondemand_regulator(
 			return wcd9xxx->supplies[i].consumer;
 	}
 
-	dev_dbg(codec->dev, "Warning: regulator not found:%s\n",
+	dev_dbg(component->dev, "Warning: regulator not found:%s\n",
 		name);
 	return NULL;
 }
@@ -904,19 +924,22 @@ static struct regulator *tavil_codec_find_ondemand_regulator(
 static int tavil_get_hph_type(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(component);
 	struct wcd_mbhc *mbhc;
 
 	if (!wcd934x_mbhc) {
-		dev_err(codec->dev, "%s: mbhc not initialized!\n", __func__);
+		dev_err(component->dev, "%s: mbhc not initialized!\n",
+			__func__);
 		return -EINVAL;
 	}
 
 	mbhc = &wcd934x_mbhc->wcd_mbhc;
 
 	ucontrol->value.integer.value[0] = (u32) mbhc->hph_type;
-	dev_dbg(codec->dev, "%s: hph_type = %u\n", __func__, mbhc->hph_type);
+	dev_dbg(component->dev, "%s: hph_type = %u\n", __func__,
+		mbhc->hph_type);
 
 	return 0;
 }
@@ -927,18 +950,21 @@ static int tavil_hph_impedance_get(struct snd_kcontrol *kcontrol,
 	uint32_t zl, zr;
 	bool hphr;
 	struct soc_multi_mixer_control *mc;
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(component);
 
 	if (!wcd934x_mbhc) {
-		dev_err(codec->dev, "%s: mbhc not initialized!\n", __func__);
+		dev_err(component->dev, "%s: mbhc not initialized!\n",
+			__func__);
 		return -EINVAL;
 	}
 
 	mc = (struct soc_multi_mixer_control *)(kcontrol->private_value);
 	hphr = mc->shift;
 	wcd_mbhc_get_impedance(&wcd934x_mbhc->wcd_mbhc, &zl, &zr);
-	dev_dbg(codec->dev, "%s: zl=%u(ohms), zr=%u(ohms)\n", __func__, zl, zr);
+	dev_dbg(component->dev, "%s: zl=%u(ohms), zr=%u(ohms)\n", __func__,
+		zl, zr);
 	ucontrol->value.integer.value[0] = hphr ? zr : zl;
 
 	return 0;
@@ -981,17 +1007,18 @@ EXPORT_SYMBOL(tavil_mbhc_get_impedance);
 
 /*
  * tavil_mbhc_hs_detect: starts mbhc insertion/removal functionality
- * @codec: handle to snd_soc_codec *
+ * @component: handle to snd_soc_component *
  * @mbhc_cfg: handle to mbhc configuration structure
  * return 0 if mbhc_start is success or error code in case of failure
  */
-int tavil_mbhc_hs_detect(struct snd_soc_codec *codec,
+int tavil_mbhc_hs_detect(struct snd_soc_component *component,
 			 struct wcd_mbhc_config *mbhc_cfg)
 {
-	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(codec);
+	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(component);
 
 	if (!wcd934x_mbhc) {
-		dev_err(codec->dev, "%s: mbhc not initialized!\n", __func__);
+		dev_err(component->dev, "%s: mbhc not initialized!\n",
+			__func__);
 		return -EINVAL;
 	}
 
@@ -1001,14 +1028,15 @@ EXPORT_SYMBOL(tavil_mbhc_hs_detect);
 
 /*
  * tavil_mbhc_hs_detect_exit: stop mbhc insertion/removal functionality
- * @codec: handle to snd_soc_codec *
+ * @component: handle to snd_soc_component *
  */
-void tavil_mbhc_hs_detect_exit(struct snd_soc_codec *codec)
+void tavil_mbhc_hs_detect_exit(struct snd_soc_component *component)
 {
-	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(codec);
+	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(component);
 
 	if (!wcd934x_mbhc) {
-		dev_err(codec->dev, "%s: mbhc not initialized!\n", __func__);
+		dev_err(component->dev, "%s: mbhc not initialized!\n",
+			__func__);
 		return;
 	}
 	wcd_mbhc_stop(&wcd934x_mbhc->wcd_mbhc);
@@ -1018,17 +1046,17 @@ EXPORT_SYMBOL(tavil_mbhc_hs_detect_exit);
 /*
  * tavil_mbhc_post_ssr_init: initialize mbhc for tavil post subsystem restart
  * @mbhc: poniter to wcd934x_mbhc structure
- * @codec: handle to snd_soc_codec *
+ * @component: handle to snd_soc_component *
  *
  * return 0 if mbhc_init is success or error code in case of failure
  */
 int tavil_mbhc_post_ssr_init(struct wcd934x_mbhc *mbhc,
-			     struct snd_soc_codec *codec)
+			     struct snd_soc_component *component)
 {
 	int ret;
 	struct wcd_mbhc *wcd_mbhc;
 
-	if (!mbhc || !codec)
+	if (!mbhc || !component)
 		return -EINVAL;
 
 	wcd_mbhc = &mbhc->wcd_mbhc;
@@ -1037,18 +1065,20 @@ int tavil_mbhc_post_ssr_init(struct wcd934x_mbhc *mbhc,
 		return -EINVAL;
 	}
 
-	tavil_mbhc_hs_detect_exit(codec);
+	tavil_mbhc_hs_detect_exit(component);
 	wcd_mbhc_deinit(wcd_mbhc);
-	ret = wcd_mbhc_init(wcd_mbhc, codec, &mbhc_cb, &intr_ids,
+	ret = wcd_mbhc_init(wcd_mbhc, component, &mbhc_cb, &intr_ids,
 			    wcd_mbhc_registers, TAVIL_ZDET_SUPPORTED);
 	if (ret) {
-		dev_err(codec->dev, "%s: mbhc initialization failed\n",
+		dev_err(component->dev, "%s: mbhc initialization failed\n",
 			__func__);
 		goto done;
 	}
 	if (wcd_mbhc->mbhc_detection_logic == WCD_DETECTION_LEGACY) {
-		snd_soc_update_bits(codec, WCD934X_MBHC_NEW_CTL_1, 0x04, 0x04);
-		snd_soc_update_bits(codec, WCD934X_MBHC_CTL_BCS, 0x01, 0x01);
+		snd_soc_component_update_bits(component, WCD934X_MBHC_NEW_CTL_1,
+					0x04, 0x04);
+		snd_soc_component_update_bits(component, WCD934X_MBHC_CTL_BCS,
+					0x01, 0x01);
 	}
 
 done:
@@ -1059,12 +1089,13 @@ EXPORT_SYMBOL(tavil_mbhc_post_ssr_init);
 /*
  * tavil_mbhc_init: initialize mbhc for tavil
  * @mbhc: poniter to wcd934x_mbhc struct pointer to store the configs
- * @codec: handle to snd_soc_codec *
+ * @component: handle to snd_soc_component *
  * @fw_data: handle to firmware data
  *
  * return 0 if mbhc_init is success or error code in case of failure
  */
-int tavil_mbhc_init(struct wcd934x_mbhc **mbhc, struct snd_soc_codec *codec,
+int tavil_mbhc_init(struct wcd934x_mbhc **mbhc,
+		    struct snd_soc_component *component,
 		    struct fw_info *fw_data)
 {
 	struct regulator *supply;
@@ -1072,12 +1103,12 @@ int tavil_mbhc_init(struct wcd934x_mbhc **mbhc, struct snd_soc_codec *codec,
 	struct wcd_mbhc *wcd_mbhc;
 	int ret;
 
-	wcd934x_mbhc = devm_kzalloc(codec->dev, sizeof(struct wcd934x_mbhc),
+	wcd934x_mbhc = devm_kzalloc(component->dev, sizeof(struct wcd934x_mbhc),
 				    GFP_KERNEL);
 	if (!wcd934x_mbhc)
 		return -ENOMEM;
 
-	wcd934x_mbhc->wcd9xxx = dev_get_drvdata(codec->dev->parent);
+	wcd934x_mbhc->wcd9xxx = dev_get_drvdata(component->dev->parent);
 	wcd934x_mbhc->fw_data = fw_data;
 	BLOCKING_INIT_NOTIFIER_HEAD(&wcd934x_mbhc->notifier);
 	wcd_mbhc = &wcd934x_mbhc->wcd_mbhc;
@@ -1091,16 +1122,16 @@ int tavil_mbhc_init(struct wcd934x_mbhc **mbhc, struct snd_soc_codec *codec,
 	/* Setting default mbhc detection logic to ADC for Tavil */
 	wcd_mbhc->mbhc_detection_logic = WCD_DETECTION_ADC;
 
-	ret = wcd_mbhc_init(wcd_mbhc, codec, &mbhc_cb,
+	ret = wcd_mbhc_init(wcd_mbhc, component, &mbhc_cb,
 				&intr_ids, wcd_mbhc_registers,
 				TAVIL_ZDET_SUPPORTED);
 	if (ret) {
-		dev_err(codec->dev, "%s: mbhc initialization failed\n",
+		dev_err(component->dev, "%s: mbhc initialization failed\n",
 			__func__);
 		goto err;
 	}
 
-	supply = tavil_codec_find_ondemand_regulator(codec,
+	supply = tavil_codec_find_ondemand_regulator(component,
 			on_demand_supply_name[WCD934X_ON_DEMAND_MICBIAS]);
 	if (supply) {
 		wcd934x_mbhc->on_demand_list[
@@ -1112,34 +1143,36 @@ int tavil_mbhc_init(struct wcd934x_mbhc **mbhc, struct snd_soc_codec *codec,
 	}
 
 	(*mbhc) = wcd934x_mbhc;
-	snd_soc_add_codec_controls(codec, impedance_detect_controls,
+	snd_soc_add_component_controls(component, impedance_detect_controls,
 				   ARRAY_SIZE(impedance_detect_controls));
-	snd_soc_add_codec_controls(codec, hph_type_detect_controls,
+	snd_soc_add_component_controls(component, hph_type_detect_controls,
 				   ARRAY_SIZE(hph_type_detect_controls));
 
 	if (wcd_mbhc->mbhc_detection_logic == WCD_DETECTION_LEGACY) {
-		snd_soc_update_bits(codec, WCD934X_MBHC_NEW_CTL_1, 0x04, 0x04);
-		snd_soc_update_bits(codec, WCD934X_MBHC_CTL_BCS, 0x01, 0x01);
+		snd_soc_component_update_bits(component, WCD934X_MBHC_NEW_CTL_1,
+					0x04, 0x04);
+		snd_soc_component_update_bits(component, WCD934X_MBHC_CTL_BCS,
+					0x01, 0x01);
 	}
 
 	return 0;
 err:
-	devm_kfree(codec->dev, wcd934x_mbhc);
+	devm_kfree(component->dev, wcd934x_mbhc);
 	return ret;
 }
 EXPORT_SYMBOL(tavil_mbhc_init);
 
 /*
  * tavil_mbhc_deinit: deinitialize mbhc for tavil
- * @codec: handle to snd_soc_codec *
+ * @component: handle to snd_soc_component *
  */
-void tavil_mbhc_deinit(struct snd_soc_codec *codec)
+void tavil_mbhc_deinit(struct snd_soc_component *component)
 {
-	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(codec);
+	struct wcd934x_mbhc *wcd934x_mbhc = tavil_soc_get_mbhc(component);
 
 	if (wcd934x_mbhc) {
 		wcd_mbhc_deinit(&wcd934x_mbhc->wcd_mbhc);
-		devm_kfree(codec->dev, wcd934x_mbhc);
+		devm_kfree(component->dev, wcd934x_mbhc);
 	}
 }
 EXPORT_SYMBOL(tavil_mbhc_deinit);

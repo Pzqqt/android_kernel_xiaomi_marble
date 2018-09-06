@@ -145,7 +145,7 @@ struct aqt1000 {
 
 	u32 mclk_rate;
 	struct regmap *regmap;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	bool dev_up;
 	bool prev_pg_valid;
 	u8 prev_pg;

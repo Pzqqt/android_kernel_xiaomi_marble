@@ -74,14 +74,14 @@ struct wcd_clsh_cdc_info {
 };
 
 #ifdef CONFIG_SND_SOC_WCD9XXX_V2
-extern void wcd_cls_h_fsm(struct snd_soc_codec *codec,
+extern void wcd_cls_h_fsm(struct snd_soc_component *component,
 		struct wcd_clsh_cdc_info *cdc_clsh_d,
 		u8 clsh_event, u8 req_state,
 		int int_mode);
 
 extern void wcd_cls_h_init(struct wcd_clsh_cdc_info *clsh);
 #else
-extern void wcd_cls_h_fsm(struct snd_soc_codec *codec,
+extern void wcd_cls_h_fsm(struct snd_soc_component *component,
 		struct wcd_clsh_cdc_info *cdc_clsh_d,
 		u8 clsh_event, u8 req_state,
 		int int_mode)

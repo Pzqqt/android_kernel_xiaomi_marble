@@ -16,13 +16,15 @@
 #include "bolero-cdc.h"
 #include "internal.h"
 
+#define DRV_NAME "bolero_codec"
+
 #define BOLERO_VERSION_1_0 0x0001
 #define BOLERO_VERSION_1_1 0x0002
 #define BOLERO_VERSION_1_2 0x0003
 #define BOLERO_VERSION_ENTRY_SIZE 32
 #define BOLERO_CDC_STRING_LEN 80
 
-static struct snd_soc_codec_driver bolero;
+static const struct snd_soc_component_driver bolero;
 
 /* pm runtime auto suspend timer in msecs */
 #define BOLERO_AUTO_SUSPEND_DELAY          100 /* delay in msec */
@@ -145,17 +147,20 @@ static int bolero_cdc_update_wcd_event(void *handle, u16 event, u32 data)
 	switch (event) {
 	case WCD_BOLERO_EVT_RX_MUTE:
 		if (priv->macro_params[RX_MACRO].event_handler)
-			priv->macro_params[RX_MACRO].event_handler(priv->codec,
+			priv->macro_params[RX_MACRO].event_handler(
+				priv->component,
 				BOLERO_MACRO_EVT_RX_MUTE, data);
 		break;
 	case WCD_BOLERO_EVT_IMPED_TRUE:
 		if (priv->macro_params[RX_MACRO].event_handler)
-			priv->macro_params[RX_MACRO].event_handler(priv->codec,
+			priv->macro_params[RX_MACRO].event_handler(
+				priv->component,
 				BOLERO_MACRO_EVT_IMPED_TRUE, data);
 		break;
 	case WCD_BOLERO_EVT_IMPED_FALSE:
 		if (priv->macro_params[RX_MACRO].event_handler)
-			priv->macro_params[RX_MACRO].event_handler(priv->codec,
+			priv->macro_params[RX_MACRO].event_handler(
+				priv->component,
 				BOLERO_MACRO_EVT_IMPED_FALSE, data);
 		break;
 	default:
@@ -367,7 +372,7 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 			bolero_mclk_mux_tbl[VA_MACRO][MCLK_MUX0] = VA_MACRO;
 			priv->current_mclk_mux_macro[VA_MACRO] = VA_MACRO;
 		}
-		ret = snd_soc_register_codec(dev->parent, &bolero,
+		ret = snd_soc_register_component(dev->parent, &bolero,
 				priv->bolero_dais, priv->num_dais);
 		if (ret < 0) {
 			dev_err(dev, "%s: register codec failed\n", __func__);
@@ -418,7 +423,7 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 
 	/* UNREGISTER CODEC HERE */
 	if (priv->num_macros - 1 == priv->num_macros_registered)
-		snd_soc_unregister_codec(dev->parent);
+		snd_soc_unregister_component(dev->parent);
 }
 EXPORT_SYMBOL(bolero_unregister_macro);
 
@@ -568,7 +573,8 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 	}
 
 	if (priv->macro_params[VA_MACRO].event_handler)
-		priv->macro_params[VA_MACRO].event_handler(priv->codec,
+		priv->macro_params[VA_MACRO].event_handler(
+			priv->component,
 			BOLERO_MACRO_EVT_WAIT_VA_CLK_RESET, 0x0);
 
 	regcache_cache_only(priv->regmap, false);
@@ -576,7 +582,8 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
 		if (!priv->macro_params[macro_idx].event_handler)
 			continue;
-		priv->macro_params[macro_idx].event_handler(priv->codec,
+		priv->macro_params[macro_idx].event_handler(
+			priv->component,
 			BOLERO_MACRO_EVT_SSR_UP, 0x0);
 	}
 	mutex_lock(&priv->clk_lock);
@@ -601,7 +608,8 @@ static void bolero_ssr_disable(struct device *dev, void *data)
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
 		if (!priv->macro_params[macro_idx].event_handler)
 			continue;
-		priv->macro_params[macro_idx].event_handler(priv->codec,
+		priv->macro_params[macro_idx].event_handler(
+			priv->component,
 			BOLERO_MACRO_EVT_SSR_DOWN, 0x0);
 	}
 	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_SSR_DOWN);
@@ -619,7 +627,7 @@ static const struct snd_event_ops bolero_ssr_ops = {
 /*
  * bolero_info_create_codec_entry - creates bolero module
  * @codec_root: The parent directory
- * @codec: Codec instance
+ * @component: Codec component instance
  *
  * Creates bolero module and version entry under the given
  * parent directory.
@@ -627,26 +635,26 @@ static const struct snd_event_ops bolero_ssr_ops = {
  * Return: 0 on success or negative error code on failure.
  */
 int bolero_info_create_codec_entry(struct snd_info_entry *codec_root,
-				   struct snd_soc_codec *codec)
+				   struct snd_soc_component *component)
 {
 	struct snd_info_entry *version_entry;
 	struct bolero_priv *priv;
 	struct snd_soc_card *card;
 
-	if (!codec_root || !codec)
+	if (!codec_root || !component)
 		return -EINVAL;
 
-	priv = snd_soc_codec_get_drvdata(codec);
+	priv = snd_soc_component_get_drvdata(component);
 	if (priv->entry) {
 		dev_dbg(priv->dev,
 			"%s:bolero module already created\n", __func__);
 		return 0;
 	}
-	card = codec->component.card;
+	card = component->card;
 	priv->entry = snd_info_create_subdir(codec_root->module,
 					     "bolero", codec_root);
 	if (!priv->entry) {
-		dev_dbg(codec->dev, "%s: failed to create bolero entry\n",
+		dev_dbg(component->dev, "%s: failed to create bolero entry\n",
 			__func__);
 		return -ENOMEM;
 	}
@@ -654,7 +662,7 @@ int bolero_info_create_codec_entry(struct snd_info_entry *codec_root,
 						   "version",
 						   priv->entry);
 	if (!version_entry) {
-		dev_err(codec->dev, "%s: failed to create bolero version entry\n",
+		dev_err(component->dev, "%s: failed to create bolero version entry\n",
 			__func__);
 		return -ENOMEM;
 	}
@@ -677,52 +685,56 @@ EXPORT_SYMBOL(bolero_info_create_codec_entry);
 /**
  * bolero_register_wake_irq - Register wake irq of Tx macro
  *
- * @codec: codec ptr.
+ * @component: codec component ptr.
  * @ipc_wakeup: bool to identify ipc_wakeup to be used or HW interrupt line.
  *
  * Return: 0 on success or negative error code on failure.
  */
-int bolero_register_wake_irq(struct snd_soc_codec *codec, u32 ipc_wakeup)
+int bolero_register_wake_irq(struct snd_soc_component *component,
+			     u32 ipc_wakeup)
 {
 	struct bolero_priv *priv = NULL;
 
-	if (!codec)
+	if (!component)
 		return -EINVAL;
 
-	priv = snd_soc_codec_get_drvdata(codec);
+	priv = snd_soc_component_get_drvdata(component);
 	if (!priv)
 		return -EINVAL;
 
 	if (!bolero_is_valid_codec_dev(priv->dev)) {
-		dev_err(codec->dev, "%s: invalid codec\n", __func__);
+		dev_err(component->dev, "%s: invalid codec\n", __func__);
 		return -EINVAL;
 	}
 
 	if (priv->macro_params[TX_MACRO].reg_wake_irq)
-		priv->macro_params[TX_MACRO].reg_wake_irq(codec, ipc_wakeup);
+		priv->macro_params[TX_MACRO].reg_wake_irq(
+				component, ipc_wakeup);
 
 	return 0;
 }
 EXPORT_SYMBOL(bolero_register_wake_irq);
 
-static int bolero_soc_codec_probe(struct snd_soc_codec *codec)
+static int bolero_soc_codec_probe(struct snd_soc_component *component)
 {
-	struct bolero_priv *priv = dev_get_drvdata(codec->dev);
+	struct bolero_priv *priv = dev_get_drvdata(component->dev);
 	int macro_idx, ret = 0;
+
+	snd_soc_component_init_regmap(component, priv->regmap);
 
 	/* call init for supported macros */
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
 		if (priv->macro_params[macro_idx].init) {
-			ret = priv->macro_params[macro_idx].init(codec);
+			ret = priv->macro_params[macro_idx].init(component);
 			if (ret < 0) {
-				dev_err(codec->dev,
+				dev_err(component->dev,
 					"%s: init for macro %d failed\n",
 					__func__, macro_idx);
 				goto err;
 			}
 		}
 	}
-	priv->codec = codec;
+	priv->component = component;
 	/*
 	 * In order for the ADIE RTC to differentiate between targets
 	 * version info is used.
@@ -741,42 +753,36 @@ static int bolero_soc_codec_probe(struct snd_soc_codec *codec)
 	if (!ret) {
 		snd_event_notify(priv->dev, SND_EVENT_UP);
 	} else {
-		dev_err(codec->dev,
+		dev_err(component->dev,
 			"%s: Registration with SND event FWK failed ret = %d\n",
 			__func__, ret);
 		goto err;
 	}
 
-	dev_dbg(codec->dev, "%s: bolero soc codec probe success\n", __func__);
+	dev_dbg(component->dev, "%s: bolero soc codec probe success\n",
+		__func__);
 err:
 	return ret;
 }
 
-static int bolero_soc_codec_remove(struct snd_soc_codec *codec)
+static void bolero_soc_codec_remove(struct snd_soc_component *component)
 {
-	struct bolero_priv *priv = dev_get_drvdata(codec->dev);
+	struct bolero_priv *priv = dev_get_drvdata(component->dev);
 	int macro_idx;
 
 	snd_event_client_deregister(priv->dev);
 	/* call exit for supported macros */
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++)
 		if (priv->macro_params[macro_idx].exit)
-			priv->macro_params[macro_idx].exit(codec);
+			priv->macro_params[macro_idx].exit(component);
 
-	return 0;
+	return;
 }
 
-static struct regmap *bolero_get_regmap(struct device *dev)
-{
-	struct bolero_priv *priv = dev_get_drvdata(dev);
-
-	return priv->regmap;
-}
-
-static struct snd_soc_codec_driver bolero = {
+static const struct snd_soc_component_driver bolero = {
+	.name = DRV_NAME,
 	.probe = bolero_soc_codec_probe,
 	.remove = bolero_soc_codec_remove,
-	.get_regmap = bolero_get_regmap,
 };
 
 static void bolero_add_child_devices(struct work_struct *work)

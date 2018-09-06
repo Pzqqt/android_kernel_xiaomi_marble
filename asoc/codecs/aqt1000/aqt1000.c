@@ -33,6 +33,8 @@
 #include "../wcdcal-hwdep.h"
 #include "aqt1000-internal.h"
 
+#define DRV_NAME "aqt_codec"
+
 #define AQT1000_TX_UNMUTE_DELAY_MS 40
 #define  TX_HPF_CUT_OFF_FREQ_MASK 0x60
 #define  CF_MIN_3DB_4HZ     0x0
@@ -52,7 +54,7 @@ static int tx_unmute_delay = AQT1000_TX_UNMUTE_DELAY_MS;
 module_param(tx_unmute_delay, int, 0664);
 MODULE_PARM_DESC(tx_unmute_delay, "delay to unmute the tx path");
 
-static void aqt_codec_set_tx_hold(struct snd_soc_codec *, u16, bool);
+static void aqt_codec_set_tx_hold(struct snd_soc_component *, u16, bool);
 
 /* Cutoff frequency for high pass filter */
 static const char * const cf_text[] = {
@@ -91,8 +93,9 @@ static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 1, 0);
 static int aqt_get_anc_slot(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = aqt->anc_slot;
 	return 0;
@@ -101,8 +104,9 @@ static int aqt_get_anc_slot(struct snd_kcontrol *kcontrol,
 static int aqt_put_anc_slot(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	aqt->anc_slot = ucontrol->value.integer.value[0];
 	return 0;
@@ -111,8 +115,9 @@ static int aqt_put_anc_slot(struct snd_kcontrol *kcontrol,
 static int aqt_get_anc_func(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = (aqt->anc_func == true ? 1 : 0);
 	return 0;
@@ -121,13 +126,15 @@ static int aqt_get_anc_func(struct snd_kcontrol *kcontrol,
 static int aqt_put_anc_func(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
-	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
+	struct snd_soc_dapm_context *dapm =
+			snd_soc_component_get_dapm(component);
 
 	mutex_lock(&aqt->codec_mutex);
 	aqt->anc_func = (!ucontrol->value.integer.value[0] ? false : true);
-	dev_dbg(codec->dev, "%s: anc_func %x", __func__, aqt->anc_func);
+	dev_dbg(component->dev, "%s: anc_func %x", __func__, aqt->anc_func);
 
 	if (aqt->anc_func == true) {
 		snd_soc_dapm_enable_pin(dapm, "ANC HPHL PA");
@@ -161,8 +168,9 @@ static const struct soc_enum aqt_anc_func_enum =
 static int aqt_rx_hph_mode_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = aqt->hph_mode;
 	return 0;
@@ -171,16 +179,17 @@ static int aqt_rx_hph_mode_get(struct snd_kcontrol *kcontrol,
 static int aqt_rx_hph_mode_put(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	u32 mode_val;
 
 	mode_val = ucontrol->value.enumerated.item[0];
 
-	dev_dbg(codec->dev, "%s: mode: %d\n", __func__, mode_val);
+	dev_dbg(component->dev, "%s: mode: %d\n", __func__, mode_val);
 
 	if (mode_val == 0) {
-		dev_warn(codec->dev, "%s:Invalid HPH Mode, default to Cls-H LOHiFi\n",
+		dev_warn(component->dev, "%s:Invalid HPH Mode, default to Cls-H LOHiFi\n",
 			__func__);
 		mode_val = CLS_H_LOHIFI;
 	}
@@ -200,15 +209,16 @@ static const struct soc_enum rx_hph_mode_mux_enum =
 static int aqt_iir_enable_audio_mixer_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
 	int band_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->shift;
 
-	ucontrol->value.integer.value[0] = (snd_soc_read(codec,
+	ucontrol->value.integer.value[0] = (snd_soc_component_read32(component,
 					    AQT1000_CDC_SIDETONE_IIR0_IIR_CTL) &
 					    (1 << band_idx)) != 0;
 
-	dev_dbg(codec->dev, "%s: IIR0 band #%d enable %d\n", __func__,
+	dev_dbg(component->dev, "%s: IIR0 band #%d enable %d\n", __func__,
 		band_idx, (uint32_t)ucontrol->value.integer.value[0]);
 
 	return 0;
@@ -217,60 +227,64 @@ static int aqt_iir_enable_audio_mixer_get(struct snd_kcontrol *kcontrol,
 static int aqt_iir_enable_audio_mixer_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
 	int band_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->shift;
 	bool iir_band_en_status;
 	int value = ucontrol->value.integer.value[0];
 
 	/* Mask first 5 bits, 6-8 are reserved */
-	snd_soc_update_bits(codec, AQT1000_CDC_SIDETONE_IIR0_IIR_CTL,
-			    (1 << band_idx), (value << band_idx));
+	snd_soc_component_update_bits(component,
+			AQT1000_CDC_SIDETONE_IIR0_IIR_CTL,
+			(1 << band_idx), (value << band_idx));
 
-	iir_band_en_status = ((snd_soc_read(codec,
+	iir_band_en_status = ((snd_soc_component_read32(component,
 				AQT1000_CDC_SIDETONE_IIR0_IIR_CTL) &
 			      (1 << band_idx)) != 0);
-	dev_dbg(codec->dev, "%s: IIR0 band #%d enable %d\n", __func__,
+	dev_dbg(component->dev, "%s: IIR0 band #%d enable %d\n", __func__,
 		band_idx, iir_band_en_status);
 
 	return 0;
 }
 
-static uint32_t aqt_get_iir_band_coeff(struct snd_soc_codec *codec,
+static uint32_t aqt_get_iir_band_coeff(struct snd_soc_component *component,
 					int band_idx, int coeff_idx)
 {
 	uint32_t value = 0;
 
 	/* Address does not automatically update if reading */
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B1_CTL,
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t)) & 0x7F);
 
-	value |= snd_soc_read(codec, AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B2_CTL);
+	value |= snd_soc_component_read32(component,
+			AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B2_CTL);
 
-	snd_soc_write(codec, AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B1_CTL,
+	snd_soc_component_write(component,
+		AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B1_CTL,
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t) + 1) & 0x7F);
 
-	value |= (snd_soc_read(codec,
-			       AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B2_CTL) << 8);
+	value |= (snd_soc_component_read32(component,
+			AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B2_CTL) << 8);
 
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B1_CTL,
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t) + 2) & 0x7F);
 
-	value |= (snd_soc_read(codec,
-			      AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B2_CTL) << 16);
+	value |= (snd_soc_component_read32(component,
+			AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B2_CTL) << 16);
 
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B1_CTL,
 		((band_idx * BAND_MAX + coeff_idx)
 		* sizeof(uint32_t) + 3) & 0x7F);
 
 	/* Mask bits top 2 bits since they are reserved */
-	value |= ((snd_soc_read(codec,
+	value |= ((snd_soc_component_read32(component,
 				AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B2_CTL)
 				& 0x3F) << 24);
 
@@ -280,22 +294,23 @@ static uint32_t aqt_get_iir_band_coeff(struct snd_soc_codec *codec,
 static int aqt_iir_band_audio_mixer_get(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
 	int band_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->shift;
 
 	ucontrol->value.integer.value[0] =
-		aqt_get_iir_band_coeff(codec, band_idx, 0);
+		aqt_get_iir_band_coeff(component, band_idx, 0);
 	ucontrol->value.integer.value[1] =
-		aqt_get_iir_band_coeff(codec, band_idx, 1);
+		aqt_get_iir_band_coeff(component, band_idx, 1);
 	ucontrol->value.integer.value[2] =
-		aqt_get_iir_band_coeff(codec, band_idx, 2);
+		aqt_get_iir_band_coeff(component, band_idx, 2);
 	ucontrol->value.integer.value[3] =
-		aqt_get_iir_band_coeff(codec, band_idx, 3);
+		aqt_get_iir_band_coeff(component, band_idx, 3);
 	ucontrol->value.integer.value[4] =
-		aqt_get_iir_band_coeff(codec, band_idx, 4);
+		aqt_get_iir_band_coeff(component, band_idx, 4);
 
-	dev_dbg(codec->dev, "%s: IIR band #%d b0 = 0x%x\n"
+	dev_dbg(component->dev, "%s: IIR band #%d b0 = 0x%x\n"
 		"%s: IIR band #%d b1 = 0x%x\n"
 		"%s: IIR band #%d b2 = 0x%x\n"
 		"%s: IIR band #%d a1 = 0x%x\n"
@@ -314,23 +329,23 @@ static int aqt_iir_band_audio_mixer_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static void aqt_set_iir_band_coeff(struct snd_soc_codec *codec,
+static void aqt_set_iir_band_coeff(struct snd_soc_component *component,
 				   int band_idx, uint32_t value)
 {
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B2_CTL),
 		(value & 0xFF));
 
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B2_CTL),
 		(value >> 8) & 0xFF);
 
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B2_CTL),
 		(value >> 16) & 0xFF);
 
 	/* Mask top 2 bits, 7-8 are reserved */
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B2_CTL),
 		(value >> 24) & 0x3F);
 }
@@ -338,7 +353,8 @@ static void aqt_set_iir_band_coeff(struct snd_soc_codec *codec,
 static int aqt_iir_band_audio_mixer_put(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
 	int band_idx = ((struct soc_multi_mixer_control *)
 					kcontrol->private_value)->shift;
 	int coeff_idx;
@@ -347,31 +363,31 @@ static int aqt_iir_band_audio_mixer_put(struct snd_kcontrol *kcontrol,
 	 * Mask top bit it is reserved
 	 * Updates addr automatically for each B2 write
 	 */
-	snd_soc_write(codec,
+	snd_soc_component_write(component,
 		(AQT1000_CDC_SIDETONE_IIR0_IIR_COEF_B1_CTL),
 		(band_idx * BAND_MAX * sizeof(uint32_t)) & 0x7F);
 
 	for (coeff_idx = 0; coeff_idx < AQT1000_CDC_SIDETONE_IIR_COEFF_MAX;
 		coeff_idx++) {
-		aqt_set_iir_band_coeff(codec, band_idx,
+		aqt_set_iir_band_coeff(component, band_idx,
 				   ucontrol->value.integer.value[coeff_idx]);
 	}
 
-	dev_dbg(codec->dev, "%s: IIR band #%d b0 = 0x%x\n"
+	dev_dbg(component->dev, "%s: IIR band #%d b0 = 0x%x\n"
 		"%s: IIR band #%d b1 = 0x%x\n"
 		"%s: IIR band #%d b2 = 0x%x\n"
 		"%s: IIR band #%d a1 = 0x%x\n"
 		"%s: IIR band #%d a2 = 0x%x\n",
 		__func__, band_idx,
-		aqt_get_iir_band_coeff(codec, band_idx, 0),
+		aqt_get_iir_band_coeff(component, band_idx, 0),
 		__func__, band_idx,
-		aqt_get_iir_band_coeff(codec, band_idx, 1),
+		aqt_get_iir_band_coeff(component, band_idx, 1),
 		__func__, band_idx,
-		aqt_get_iir_band_coeff(codec, band_idx, 2),
+		aqt_get_iir_band_coeff(component, band_idx, 2),
 		__func__, band_idx,
-		aqt_get_iir_band_coeff(codec, band_idx, 3),
+		aqt_get_iir_band_coeff(component, band_idx, 3),
 		__func__, band_idx,
-		aqt_get_iir_band_coeff(codec, band_idx, 4));
+		aqt_get_iir_band_coeff(component, band_idx, 4));
 
 	return 0;
 }
@@ -380,10 +396,11 @@ static int aqt_compander_get(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	ucontrol->value.integer.value[0] = aqt->comp_enabled[comp];
 	return 0;
@@ -392,13 +409,14 @@ static int aqt_compander_get(struct snd_kcontrol *kcontrol,
 static int aqt_compander_put(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int comp = ((struct soc_multi_mixer_control *)
 		    kcontrol->private_value)->shift;
 	int value = ucontrol->value.integer.value[0];
 
-	dev_dbg(codec->dev, "%s: Compander %d enable current %d, new %d\n",
+	dev_dbg(component->dev, "%s: Compander %d enable current %d, new %d\n",
 		 __func__, comp + 1, aqt->comp_enabled[comp], value);
 	aqt->comp_enabled[comp] = value;
 
@@ -406,12 +424,14 @@ static int aqt_compander_put(struct snd_kcontrol *kcontrol,
 	switch (comp) {
 	case COMPANDER_1:
 		/* Set Gain Source Select based on compander enable/disable */
-		snd_soc_update_bits(codec, AQT1000_HPH_L_EN, 0x20,
-				(value ? 0x00:0x20));
+		snd_soc_component_update_bits(component,
+				AQT1000_HPH_L_EN, 0x20,
+				(value ? 0x00 : 0x20));
 		break;
 	case COMPANDER_2:
-		snd_soc_update_bits(codec, AQT1000_HPH_R_EN, 0x20,
-				(value ? 0x00:0x20));
+		snd_soc_component_update_bits(component,
+				AQT1000_HPH_R_EN, 0x20,
+				(value ? 0x00 : 0x20));
 		break;
 	default:
 		/*
@@ -419,7 +439,7 @@ static int aqt_compander_put(struct snd_kcontrol *kcontrol,
 		 * it does not cause any audio failure, so do not
 		 * return error in this case, but just print a log
 		 */
-		dev_warn(codec->dev, "%s: unknown compander: %d\n",
+		dev_warn(component->dev, "%s: unknown compander: %d\n",
 			__func__, comp);
 	};
 	return 0;
@@ -428,8 +448,9 @@ static int aqt_compander_put(struct snd_kcontrol *kcontrol,
 static int aqt_hph_asrc_mode_put(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			 snd_soc_kcontrol_component(kcontrol);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int index = -EINVAL;
 
 	if (!strcmp(kcontrol->id.name, "AQT ASRC0 Output Mode"))
@@ -447,8 +468,9 @@ static int aqt_hph_asrc_mode_put(struct snd_kcontrol *kcontrol,
 static int aqt_hph_asrc_mode_get(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int val = 0;
 	int index = -EINVAL;
 
@@ -473,8 +495,9 @@ static SOC_ENUM_SINGLE_EXT_DECL(asrc_mode_enum, asrc_mode_text);
 static int aqt_hph_idle_detect_get(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int val = 0;
 
 	if (aqt)
@@ -488,8 +511,9 @@ static int aqt_hph_idle_detect_get(struct snd_kcontrol *kcontrol,
 static int aqt_hph_idle_detect_put(struct snd_kcontrol *kcontrol,
 				     struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	if (aqt)
 		aqt->idle_det_cfg.hph_idle_detect_en =
@@ -507,7 +531,8 @@ static SOC_ENUM_SINGLE_EXT_DECL(hph_idle_detect_enum, hph_idle_detect_text);
 static int aqt_amic_pwr_lvl_get(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
 	u16 amic_reg = 0;
 
 	if (!strcmp(kcontrol->id.name, "AQT AMIC_1_2 PWR MODE"))
@@ -517,7 +542,7 @@ static int aqt_amic_pwr_lvl_get(struct snd_kcontrol *kcontrol,
 
 	if (amic_reg)
 		ucontrol->value.integer.value[0] =
-			(snd_soc_read(codec, amic_reg) &
+			(snd_soc_component_read32(component, amic_reg) &
 			 AQT1000_AMIC_PWR_LVL_MASK) >>
 			  AQT1000_AMIC_PWR_LVL_SHIFT;
 	return 0;
@@ -526,13 +551,14 @@ static int aqt_amic_pwr_lvl_get(struct snd_kcontrol *kcontrol,
 static int aqt_amic_pwr_lvl_put(struct snd_kcontrol *kcontrol,
 				  struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
 	u32 mode_val;
 	u16 amic_reg = 0;
 
 	mode_val = ucontrol->value.enumerated.item[0];
 
-	dev_dbg(codec->dev, "%s: mode: %d\n", __func__, mode_val);
+	dev_dbg(component->dev, "%s: mode: %d\n", __func__, mode_val);
 
 	if (!strcmp(kcontrol->id.name, "AQT AMIC_1_2 PWR MODE"))
 		amic_reg = AQT1000_ANA_AMIC1;
@@ -540,8 +566,9 @@ static int aqt_amic_pwr_lvl_put(struct snd_kcontrol *kcontrol,
 		amic_reg = AQT1000_ANA_AMIC3;
 
 	if (amic_reg)
-		snd_soc_update_bits(codec, amic_reg, AQT1000_AMIC_PWR_LVL_MASK,
-				    mode_val << AQT1000_AMIC_PWR_LVL_SHIFT);
+		snd_soc_component_update_bits(component, amic_reg,
+				AQT1000_AMIC_PWR_LVL_MASK,
+				mode_val << AQT1000_AMIC_PWR_LVL_SHIFT);
 	return 0;
 }
 
@@ -651,41 +678,44 @@ static const struct snd_kcontrol_new aqt_snd_controls[] = {
 static int aqt_codec_enable_rx_bias(struct snd_soc_dapm_widget *w,
 				      struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
-	dev_dbg(codec->dev, "%s %s %d\n", __func__, w->name, event);
+	dev_dbg(component->dev, "%s %s %d\n", __func__, w->name, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		aqt->rx_bias_count++;
 		if (aqt->rx_bias_count == 1) {
-			snd_soc_update_bits(codec, AQT1000_ANA_RX_SUPPLIES,
-					    0x01, 0x01);
+			snd_soc_component_update_bits(component,
+					AQT1000_ANA_RX_SUPPLIES,
+					0x01, 0x01);
 		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		aqt->rx_bias_count--;
 		if (!aqt->rx_bias_count)
-			snd_soc_update_bits(codec, AQT1000_ANA_RX_SUPPLIES,
-					    0x01, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_ANA_RX_SUPPLIES,
+					0x01, 0x00);
 		break;
 	};
-	dev_dbg(codec->dev, "%s: Current RX BIAS user count: %d\n", __func__,
-		aqt->rx_bias_count);
+	dev_dbg(component->dev, "%s: Current RX BIAS user count: %d\n",
+		__func__, aqt->rx_bias_count);
 
 	return 0;
 }
 
 /*
  * aqt_mbhc_micb_adjust_voltage: adjust specific micbias voltage
- * @codec: handle to snd_soc_codec *
+ * @component: handle to snd_soc_component *
  * @req_volt: micbias voltage to be set
  * @micb_num: micbias to be set, e.g. micbias1 or micbias2
  *
  * return 0 if adjustment is success or error code in case of failure
  */
-int aqt_mbhc_micb_adjust_voltage(struct snd_soc_codec *codec,
+int aqt_mbhc_micb_adjust_voltage(struct snd_soc_component *component,
 				   int req_volt, int micb_num)
 {
 	struct aqt1000 *aqt;
@@ -693,8 +723,8 @@ int aqt_mbhc_micb_adjust_voltage(struct snd_soc_codec *codec,
 	int micb_reg, micb_val, micb_en;
 	int ret = 0;
 
-	if (!codec) {
-		pr_err("%s: Invalid codec pointer\n", __func__);
+	if (!component) {
+		pr_err("%s: Invalid component pointer\n", __func__);
 		return -EINVAL;
 	}
 
@@ -703,7 +733,7 @@ int aqt_mbhc_micb_adjust_voltage(struct snd_soc_codec *codec,
 	else
 		micb_reg = AQT1000_ANA_MICB1;
 
-	aqt = snd_soc_codec_get_drvdata(codec);
+	aqt = snd_soc_component_get_drvdata(component);
 	mutex_lock(&aqt->micb_lock);
 
 	/*
@@ -714,7 +744,7 @@ int aqt_mbhc_micb_adjust_voltage(struct snd_soc_codec *codec,
 	 * momentarily, change the micbias value and then re-enable
 	 * micbias.
 	 */
-	micb_val = snd_soc_read(codec, micb_reg);
+	micb_val = snd_soc_component_read32(component, micb_reg);
 	micb_en = (micb_val & 0xC0) >> 6;
 	cur_vout_ctl = micb_val & 0x3F;
 
@@ -728,17 +758,17 @@ int aqt_mbhc_micb_adjust_voltage(struct snd_soc_codec *codec,
 		goto exit;
 	}
 
-	dev_dbg(codec->dev, "%s: micb_num: %d, cur_mv: %d, req_mv: %d, micb_en: %d\n",
+	dev_dbg(component->dev, "%s: micb_num: %d, cur_mv: %d, req_mv: %d, micb_en: %d\n",
 		 __func__, micb_num, AQT_VOUT_CTL_TO_MICB(cur_vout_ctl),
 		 req_volt, micb_en);
 
 	if (micb_en == 0x1)
-		snd_soc_update_bits(codec, micb_reg, 0xC0, 0x80);
+		snd_soc_component_update_bits(component, micb_reg, 0xC0, 0x80);
 
-	snd_soc_update_bits(codec, micb_reg, 0x3F, req_vout_ctl);
+	snd_soc_component_update_bits(component, micb_reg, 0x3F, req_vout_ctl);
 
 	if (micb_en == 0x1) {
-		snd_soc_update_bits(codec, micb_reg, 0xC0, 0x40);
+		snd_soc_component_update_bits(component, micb_reg, 0xC0, 0x40);
 		/*
 		 * Add 2ms delay as per HW requirement after enabling
 		 * micbias
@@ -754,17 +784,17 @@ EXPORT_SYMBOL(aqt_mbhc_micb_adjust_voltage);
 
 /*
  * aqt_micbias_control: enable/disable micbias
- * @codec: handle to snd_soc_codec *
+ * @component: handle to snd_soc_component *
  * @micb_num: micbias to be enabled/disabled, e.g. micbias1 or micbias2
  * @req: control requested, enable/disable or pullup enable/disable
  * @is_dapm: triggered by dapm or not
  *
  * return 0 if control is success or error code in case of failure
  */
-int aqt_micbias_control(struct snd_soc_codec *codec,
+int aqt_micbias_control(struct snd_soc_component *component,
 			  int micb_num, int req, bool is_dapm)
 {
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	u16 micb_reg;
 	int pre_off_event = 0, post_off_event = 0;
 	int post_on_event = 0, post_dapm_off = 0;
@@ -781,7 +811,7 @@ int aqt_micbias_control(struct snd_soc_codec *codec,
 		post_dapm_off = AQT_EVENT_POST_DAPM_MICBIAS_1_OFF;
 		break;
 	default:
-		dev_err(codec->dev, "%s: Invalid micbias number: %d\n",
+		dev_err(component->dev, "%s: Invalid micbias number: %d\n",
 			__func__, micb_num);
 		return -EINVAL;
 	}
@@ -792,19 +822,22 @@ int aqt_micbias_control(struct snd_soc_codec *codec,
 		aqt->pullup_ref++;
 		if ((aqt->pullup_ref == 1) &&
 		    (aqt->micb_ref == 0))
-			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x80);
+			snd_soc_component_update_bits(component, micb_reg,
+						      0xC0, 0x80);
 		break;
 	case MICB_PULLUP_DISABLE:
 		if (aqt->pullup_ref > 0)
 			aqt->pullup_ref--;
 		if ((aqt->pullup_ref == 0) &&
 		    (aqt->micb_ref == 0))
-			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x00);
+			snd_soc_component_update_bits(component, micb_reg,
+						      0xC0, 0x00);
 		break;
 	case MICB_ENABLE:
 		aqt->micb_ref++;
 		if (aqt->micb_ref == 1) {
-			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x40);
+			snd_soc_component_update_bits(component, micb_reg,
+						      0xC0, 0x40);
 			if (post_on_event && aqt->mbhc)
 				blocking_notifier_call_chain(
 						&aqt->mbhc->notifier,
@@ -820,7 +853,8 @@ int aqt_micbias_control(struct snd_soc_codec *codec,
 			aqt->micb_ref--;
 		if ((aqt->micb_ref == 0) &&
 		    (aqt->pullup_ref > 0))
-			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x80);
+			snd_soc_component_update_bits(component, micb_reg,
+						      0xC0, 0x80);
 		else if ((aqt->micb_ref == 0) &&
 			 (aqt->pullup_ref == 0)) {
 			if (pre_off_event && aqt->mbhc)
@@ -828,7 +862,8 @@ int aqt_micbias_control(struct snd_soc_codec *codec,
 						&aqt->mbhc->notifier,
 						pre_off_event,
 						&aqt->mbhc->wcd_mbhc);
-			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x00);
+			snd_soc_component_update_bits(component, micb_reg,
+						      0xC0, 0x00);
 			if (post_off_event && aqt->mbhc)
 				blocking_notifier_call_chain(
 						&aqt->mbhc->notifier,
@@ -840,14 +875,14 @@ int aqt_micbias_control(struct snd_soc_codec *codec,
 					post_dapm_off, &aqt->mbhc->wcd_mbhc);
 		break;
 	default:
-		dev_err(codec->dev, "%s: Invalid micbias request: %d\n",
+		dev_err(component->dev, "%s: Invalid micbias request: %d\n",
 			__func__, req);
 		ret = -EINVAL;
 		break;
 	};
 
 	if (!ret)
-		dev_dbg(codec->dev,
+		dev_dbg(component->dev,
 			"%s: micb_num:%d, micb_ref: %d, pullup_ref: %d\n",
 			__func__, micb_num, aqt->micb_ref, aqt->pullup_ref);
 
@@ -860,10 +895,11 @@ EXPORT_SYMBOL(aqt_micbias_control);
 static int __aqt_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 					int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 	int micb_num;
 
-	dev_dbg(codec->dev, "%s: wname: %s, event: %d\n",
+	dev_dbg(component->dev, "%s: wname: %s, event: %d\n",
 		__func__, w->name, event);
 
 	if (strnstr(w->name, "AQT MIC BIAS1", sizeof("AQT MIC BIAS1")))
@@ -878,14 +914,14 @@ static int __aqt_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 		 * so use ref count to handle micbias pullup
 		 * and enable requests
 		 */
-		aqt_micbias_control(codec, micb_num, MICB_ENABLE, true);
+		aqt_micbias_control(component, micb_num, MICB_ENABLE, true);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		/* wait for cnp time */
 		usleep_range(1000, 1100);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		aqt_micbias_control(codec, micb_num, MICB_DISABLE, true);
+		aqt_micbias_control(component, micb_num, MICB_DISABLE, true);
 		break;
 	};
 
@@ -898,28 +934,30 @@ static int aqt_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 	return __aqt_codec_enable_micbias(w, event);
 }
 
-static int aqt_codec_enable_i2s_block(struct snd_soc_codec *codec)
+static int aqt_codec_enable_i2s_block(struct snd_soc_component *component)
 {
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	mutex_lock(&aqt->i2s_lock);
 	if (++aqt->i2s_users == 1)
-		snd_soc_update_bits(codec, AQT1000_I2S_I2S_0_CTL, 0x01, 0x01);
+		snd_soc_component_update_bits(component, AQT1000_I2S_I2S_0_CTL,
+					      0x01, 0x01);
 	mutex_unlock(&aqt->i2s_lock);
 
 	return 0;
 }
 
-static int aqt_codec_disable_i2s_block(struct snd_soc_codec *codec)
+static int aqt_codec_disable_i2s_block(struct snd_soc_component *component)
 {
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	mutex_lock(&aqt->i2s_lock);
 	if (--aqt->i2s_users == 0)
-		snd_soc_update_bits(codec, AQT1000_I2S_I2S_0_CTL, 0x01, 0x00);
+		snd_soc_component_update_bits(component, AQT1000_I2S_I2S_0_CTL,
+					      0x01, 0x00);
 
 	if (aqt->i2s_users < 0)
-		dev_warn(codec->dev, "%s: i2s_users count (%d) < 0\n",
+		dev_warn(component->dev, "%s: i2s_users count (%d) < 0\n",
 			 __func__, aqt->i2s_users);
 	mutex_unlock(&aqt->i2s_lock);
 
@@ -930,17 +968,18 @@ static int aqt_codec_enable_i2s_tx(struct snd_soc_dapm_widget *w,
 				   struct snd_kcontrol *kcontrol,
 				   int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		aqt_codec_enable_i2s_block(codec);
+		aqt_codec_enable_i2s_block(component);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		aqt_codec_disable_i2s_block(codec);
+		aqt_codec_disable_i2s_block(component);
 		break;
 	}
-	dev_dbg(codec->dev, "%s: event: %d\n", __func__, event);
+	dev_dbg(component->dev, "%s: event: %d\n", __func__, event);
 
 	return 0;
 }
@@ -949,17 +988,18 @@ static int aqt_codec_enable_i2s_rx(struct snd_soc_dapm_widget *w,
 				   struct snd_kcontrol *kcontrol,
 				   int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		aqt_codec_enable_i2s_block(codec);
+		aqt_codec_enable_i2s_block(component);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		aqt_codec_disable_i2s_block(codec);
+		aqt_codec_disable_i2s_block(component);
 		break;
 	}
-	dev_dbg(codec->dev, "%s: event: %d\n", __func__, event);
+	dev_dbg(component->dev, "%s: event: %d\n", __func__, event);
 
 	return 0;
 }
@@ -980,7 +1020,8 @@ AQT_DAPM_ENUM(tx_adc1, AQT1000_CDC_TX_INP_MUX_ADC_MUX1_CFG1, 0,
 AQT_DAPM_ENUM(tx_adc2, AQT1000_CDC_TX_INP_MUX_ADC_MUX2_CFG1, 0,
 	      tx_adc_mux_text);
 
-static int aqt_find_amic_input(struct snd_soc_codec *codec, int adc_mux_n)
+static int aqt_find_amic_input(struct snd_soc_component *component,
+			       int adc_mux_n)
 {
 	u8 mask;
 	u16 adc_mux_in_reg = 0, amic_mux_sel_reg = 0;
@@ -996,14 +1037,17 @@ static int aqt_find_amic_input(struct snd_soc_codec *codec, int adc_mux_n)
 		amic_mux_sel_reg = AQT1000_CDC_TX_INP_MUX_ADC_MUX0_CFG0 +
 				   2 * adc_mux_n;
 	}
-	is_amic = (((snd_soc_read(codec, adc_mux_in_reg) & mask)) == 0);
+	is_amic = (
+		((snd_soc_component_read32(component, adc_mux_in_reg)
+		  & mask)) == 0);
 	if (!is_amic)
 		return 0;
 
-	return snd_soc_read(codec, amic_mux_sel_reg) & 0x07;
+	return snd_soc_component_read32(component, amic_mux_sel_reg) & 0x07;
 }
 
-static u16 aqt_codec_get_amic_pwlvl_reg(struct snd_soc_codec *codec, int amic)
+static u16 aqt_codec_get_amic_pwlvl_reg(
+		struct snd_soc_component *component, int amic)
 {
 	u16 pwr_level_reg = 0;
 
@@ -1016,7 +1060,7 @@ static u16 aqt_codec_get_amic_pwlvl_reg(struct snd_soc_codec *codec, int amic)
 		pwr_level_reg = AQT1000_ANA_AMIC3;
 		break;
 	default:
-		dev_dbg(codec->dev, "%s: invalid amic: %d\n",
+		dev_dbg(component->dev, "%s: invalid amic: %d\n",
 			__func__, amic);
 		break;
 	}
@@ -1029,7 +1073,7 @@ static void aqt_tx_hpf_corner_freq_callback(struct work_struct *work)
 	struct delayed_work *hpf_delayed_work;
 	struct hpf_work *hpf_work;
 	struct aqt1000 *aqt;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	u16 dec_cfg_reg, amic_reg, go_bit_reg;
 	u8 hpf_cut_off_freq;
 	int amic_n;
@@ -1037,26 +1081,27 @@ static void aqt_tx_hpf_corner_freq_callback(struct work_struct *work)
 	hpf_delayed_work = to_delayed_work(work);
 	hpf_work = container_of(hpf_delayed_work, struct hpf_work, dwork);
 	aqt = hpf_work->aqt;
-	codec = aqt->codec;
+	component = aqt->component;
 	hpf_cut_off_freq = hpf_work->hpf_cut_off_freq;
 
 	dec_cfg_reg = AQT1000_CDC_TX0_TX_PATH_CFG0 + 16 * hpf_work->decimator;
 	go_bit_reg = dec_cfg_reg + 7;
 
-	dev_dbg(codec->dev, "%s: decimator %u hpf_cut_of_freq 0x%x\n",
+	dev_dbg(component->dev, "%s: decimator %u hpf_cut_of_freq 0x%x\n",
 		__func__, hpf_work->decimator, hpf_cut_off_freq);
 
-	amic_n = aqt_find_amic_input(codec, hpf_work->decimator);
+	amic_n = aqt_find_amic_input(component, hpf_work->decimator);
 	if (amic_n) {
 		amic_reg = AQT1000_ANA_AMIC1 + amic_n - 1;
-		aqt_codec_set_tx_hold(codec, amic_reg, false);
+		aqt_codec_set_tx_hold(component, amic_reg, false);
 	}
-	snd_soc_update_bits(codec, dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
-			    hpf_cut_off_freq << 5);
-	snd_soc_update_bits(codec, go_bit_reg, 0x02, 0x02);
+	snd_soc_component_update_bits(component, dec_cfg_reg,
+			TX_HPF_CUT_OFF_FREQ_MASK,
+			hpf_cut_off_freq << 5);
+	snd_soc_component_update_bits(component, go_bit_reg, 0x02, 0x02);
 	/* Minimum 1 clk cycle delay is required as per HW spec */
 	usleep_range(1000, 1010);
-	snd_soc_update_bits(codec, go_bit_reg, 0x02, 0x00);
+	snd_soc_component_update_bits(component, go_bit_reg, 0x02, 0x00);
 }
 
 static void aqt_tx_mute_update_callback(struct work_struct *work)
@@ -1064,26 +1109,27 @@ static void aqt_tx_mute_update_callback(struct work_struct *work)
 	struct tx_mute_work *tx_mute_dwork;
 	struct aqt1000 *aqt;
 	struct delayed_work *delayed_work;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	u16 tx_vol_ctl_reg, hpf_gate_reg;
 
 	delayed_work = to_delayed_work(work);
 	tx_mute_dwork = container_of(delayed_work, struct tx_mute_work, dwork);
 	aqt = tx_mute_dwork->aqt;
-	codec = aqt->codec;
+	component = aqt->component;
 
 	tx_vol_ctl_reg = AQT1000_CDC_TX0_TX_PATH_CTL +
 			 16 * tx_mute_dwork->decimator;
 	hpf_gate_reg = AQT1000_CDC_TX0_TX_PATH_SEC2 +
 		       16 * tx_mute_dwork->decimator;
-	snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x00);
+	snd_soc_component_update_bits(component, tx_vol_ctl_reg, 0x10, 0x00);
 }
 
 static int aqt_codec_enable_dec(struct snd_soc_dapm_widget *w,
 				struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	char *widget_name = NULL;
 	char *dec = NULL;
 	unsigned int decimator = 0;
@@ -1093,14 +1139,14 @@ static int aqt_codec_enable_dec(struct snd_soc_dapm_widget *w,
 	int ret = 0;
 	u8 hpf_cut_off_freq;
 
-	dev_dbg(codec->dev, "%s: event: %d\n", __func__, event);
+	dev_dbg(component->dev, "%s: event: %d\n", __func__, event);
 	widget_name = kstrndup(w->name, 15, GFP_KERNEL);
 	if (!widget_name)
 		return -ENOMEM;
 
 	dec = strpbrk(widget_name, "012");
 	if (!dec) {
-		dev_err(codec->dev, "%s: decimator index not found\n",
+		dev_err(component->dev, "%s: decimator index not found\n",
 			__func__);
 		ret =  -EINVAL;
 		goto out;
@@ -1108,12 +1154,12 @@ static int aqt_codec_enable_dec(struct snd_soc_dapm_widget *w,
 
 	ret = kstrtouint(dec, 10, &decimator);
 	if (ret < 0) {
-		dev_err(codec->dev, "%s: Invalid decimator = %s\n",
+		dev_err(component->dev, "%s: Invalid decimator = %s\n",
 			__func__, widget_name);
 		ret =  -EINVAL;
 		goto out;
 	}
-	dev_dbg(codec->dev, "%s(): widget = %s decimator = %u\n", __func__,
+	dev_dbg(component->dev, "%s(): widget = %s decimator = %u\n", __func__,
 			w->name, decimator);
 
 	tx_vol_ctl_reg = AQT1000_CDC_TX0_TX_PATH_CTL + 16 * decimator;
@@ -1121,56 +1167,64 @@ static int aqt_codec_enable_dec(struct snd_soc_dapm_widget *w,
 	dec_cfg_reg = AQT1000_CDC_TX0_TX_PATH_CFG0 + 16 * decimator;
 	tx_gain_ctl_reg = AQT1000_CDC_TX0_TX_VOL_CTL + 16 * decimator;
 
-	amic_n = aqt_find_amic_input(codec, decimator);
+	amic_n = aqt_find_amic_input(component, decimator);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if (amic_n)
-			pwr_level_reg = aqt_codec_get_amic_pwlvl_reg(codec,
+			pwr_level_reg = aqt_codec_get_amic_pwlvl_reg(component,
 								     amic_n);
 		if (pwr_level_reg) {
-			switch ((snd_soc_read(codec, pwr_level_reg) &
-					      AQT1000_AMIC_PWR_LVL_MASK) >>
-					      AQT1000_AMIC_PWR_LVL_SHIFT) {
+			switch ((snd_soc_component_read32(
+					component, pwr_level_reg) &
+					AQT1000_AMIC_PWR_LVL_MASK) >>
+					AQT1000_AMIC_PWR_LVL_SHIFT) {
 			case AQT1000_AMIC_PWR_LEVEL_LP:
-				snd_soc_update_bits(codec, dec_cfg_reg,
-						    AQT1000_DEC_PWR_LVL_MASK,
-						    AQT1000_DEC_PWR_LVL_LP);
+				snd_soc_component_update_bits(
+						component, dec_cfg_reg,
+						AQT1000_DEC_PWR_LVL_MASK,
+						AQT1000_DEC_PWR_LVL_LP);
 				break;
 
 			case AQT1000_AMIC_PWR_LEVEL_HP:
-				snd_soc_update_bits(codec, dec_cfg_reg,
-						    AQT1000_DEC_PWR_LVL_MASK,
-						    AQT1000_DEC_PWR_LVL_HP);
+				snd_soc_component_update_bits(
+						component, dec_cfg_reg,
+						AQT1000_DEC_PWR_LVL_MASK,
+						AQT1000_DEC_PWR_LVL_HP);
 				break;
 			case AQT1000_AMIC_PWR_LEVEL_DEFAULT:
 			default:
-				snd_soc_update_bits(codec, dec_cfg_reg,
-						    AQT1000_DEC_PWR_LVL_MASK,
-						    AQT1000_DEC_PWR_LVL_DF);
+				snd_soc_component_update_bits(
+						component, dec_cfg_reg,
+						AQT1000_DEC_PWR_LVL_MASK,
+						AQT1000_DEC_PWR_LVL_DF);
 				break;
 			}
 		}
 		/* Enable TX PGA Mute */
-		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x10);
+		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
+					      0x10, 0x10);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		hpf_cut_off_freq = (snd_soc_read(codec, dec_cfg_reg) &
-				   TX_HPF_CUT_OFF_FREQ_MASK) >> 5;
+		hpf_cut_off_freq = (snd_soc_component_read32(
+				    component, dec_cfg_reg) &
+				    TX_HPF_CUT_OFF_FREQ_MASK) >> 5;
 
 		aqt->tx_hpf_work[decimator].hpf_cut_off_freq =
 							hpf_cut_off_freq;
 		if (hpf_cut_off_freq != CF_MIN_3DB_150HZ) {
-			snd_soc_update_bits(codec, dec_cfg_reg,
+			snd_soc_component_update_bits(component, dec_cfg_reg,
 					    TX_HPF_CUT_OFF_FREQ_MASK,
 					    CF_MIN_3DB_150HZ << 5);
-			snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x02);
+			snd_soc_component_update_bits(component, hpf_gate_reg,
+						      0x02, 0x02);
 			/*
 			 * Minimum 1 clk cycle delay is required as per
 			 * HW spec.
 			 */
 			usleep_range(1000, 1010);
-			snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x00);
+			snd_soc_component_update_bits(component, hpf_gate_reg,
+						      0x02, 0x00);
 		}
 		/* schedule work queue to Remove Mute */
 		schedule_delayed_work(&aqt->tx_mute_dwork[decimator].dwork,
@@ -1181,36 +1235,42 @@ static int aqt_codec_enable_dec(struct snd_soc_dapm_widget *w,
 					&aqt->tx_hpf_work[decimator].dwork,
 					msecs_to_jiffies(300));
 		/* apply gain after decimator is enabled */
-		snd_soc_write(codec, tx_gain_ctl_reg,
-			      snd_soc_read(codec, tx_gain_ctl_reg));
+		snd_soc_component_write(component, tx_gain_ctl_reg,
+			      snd_soc_component_read32(
+					component, tx_gain_ctl_reg));
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
 			aqt->tx_hpf_work[decimator].hpf_cut_off_freq;
-		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x10);
+		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
+					      0x10, 0x10);
 		if (cancel_delayed_work_sync(
 		    &aqt->tx_hpf_work[decimator].dwork)) {
 			if (hpf_cut_off_freq != CF_MIN_3DB_150HZ) {
-				snd_soc_update_bits(codec, dec_cfg_reg,
-						    TX_HPF_CUT_OFF_FREQ_MASK,
-						    hpf_cut_off_freq << 5);
-				snd_soc_update_bits(codec, hpf_gate_reg,
-						    0x02, 0x02);
+				snd_soc_component_update_bits(
+						component, dec_cfg_reg,
+						TX_HPF_CUT_OFF_FREQ_MASK,
+						hpf_cut_off_freq << 5);
+				snd_soc_component_update_bits(
+						component, hpf_gate_reg,
+						0x02, 0x02);
 				/*
 				 * Minimum 1 clk cycle delay is required as per
 				 * HW spec.
 				 */
 				usleep_range(1000, 1010);
-				snd_soc_update_bits(codec, hpf_gate_reg,
-						    0x02, 0x00);
+				snd_soc_component_update_bits(
+						component, hpf_gate_reg,
+						0x02, 0x00);
 			}
 		}
 		cancel_delayed_work_sync(
 				&aqt->tx_mute_dwork[decimator].dwork);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x00);
-		snd_soc_update_bits(codec, dec_cfg_reg,
+		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
+					      0x10, 0x00);
+		snd_soc_component_update_bits(component, dec_cfg_reg,
 				    AQT1000_DEC_PWR_LVL_MASK,
 				    AQT1000_DEC_PWR_LVL_DF);
 		break;
@@ -1240,11 +1300,12 @@ AQT_DAPM_ENUM(tx_amic13, AQT1000_CDC_TX_INP_MUX_ADC_MUX13_CFG0, 0,
 static int aqt_codec_enable_adc(struct snd_soc_dapm_widget *w,
 				struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		aqt_codec_set_tx_hold(codec, w->reg, true);
+		aqt_codec_set_tx_hold(component, w->reg, true);
 		break;
 	default:
 		break;
@@ -1259,15 +1320,15 @@ static const struct snd_kcontrol_new anc_hphl_pa_switch =
 static const struct snd_kcontrol_new anc_hphr_pa_switch =
 	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0);
 
-static int aqt_config_compander(struct snd_soc_codec *codec, int interp_n,
-				  int event)
+static int aqt_config_compander(struct snd_soc_component *component,
+				int interp_n, int event)
 {
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int comp;
 	u16 comp_ctl0_reg, rx_path_cfg0_reg;
 
 	comp = interp_n;
-	dev_dbg(codec->dev, "%s: event %d compander %d, enabled %d\n",
+	dev_dbg(component->dev, "%s: event %d compander %d, enabled %d\n",
 		__func__, event, comp, aqt->comp_enabled[comp]);
 
 	if (!aqt->comp_enabled[comp])
@@ -1278,29 +1339,39 @@ static int aqt_config_compander(struct snd_soc_codec *codec, int interp_n,
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
 		/* Enable Compander Clock */
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x01, 0x01);
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x02, 0x02);
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x02, 0x00);
-		snd_soc_update_bits(codec, rx_path_cfg0_reg, 0x02, 0x02);
+		snd_soc_component_update_bits(
+				component, comp_ctl0_reg, 0x01, 0x01);
+		snd_soc_component_update_bits(
+				component, comp_ctl0_reg, 0x02, 0x02);
+		snd_soc_component_update_bits(
+				component, comp_ctl0_reg, 0x02, 0x00);
+		snd_soc_component_update_bits(
+				component, rx_path_cfg0_reg, 0x02, 0x02);
 	}
 
 	if (SND_SOC_DAPM_EVENT_OFF(event)) {
-		snd_soc_update_bits(codec, rx_path_cfg0_reg, 0x02, 0x00);
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x04, 0x04);
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x02, 0x02);
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x02, 0x00);
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x01, 0x00);
-		snd_soc_update_bits(codec, comp_ctl0_reg, 0x04, 0x00);
+		snd_soc_component_update_bits(
+				component, rx_path_cfg0_reg, 0x02, 0x00);
+		snd_soc_component_update_bits(
+				component, comp_ctl0_reg, 0x04, 0x04);
+		snd_soc_component_update_bits(
+				component, comp_ctl0_reg, 0x02, 0x02);
+		snd_soc_component_update_bits(
+				component, comp_ctl0_reg, 0x02, 0x00);
+		snd_soc_component_update_bits(
+				component, comp_ctl0_reg, 0x01, 0x00);
+		snd_soc_component_update_bits(
+				component, comp_ctl0_reg, 0x04, 0x00);
 	}
 
 	return 0;
 }
 
-static void aqt_codec_idle_detect_control(struct snd_soc_codec *codec,
+static void aqt_codec_idle_detect_control(struct snd_soc_component *component,
 					    int interp, int event)
 {
 	int reg = 0, mask, val;
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	if (!aqt->idle_det_cfg.hph_idle_detect_en)
 		return;
@@ -1317,19 +1388,20 @@ static void aqt_codec_idle_detect_control(struct snd_soc_codec *codec,
 	}
 
 	if (reg && SND_SOC_DAPM_EVENT_ON(event))
-		snd_soc_update_bits(codec, reg, mask, val);
+		snd_soc_component_update_bits(component, reg, mask, val);
 
 	if (reg && SND_SOC_DAPM_EVENT_OFF(event)) {
-		snd_soc_update_bits(codec, reg, mask, 0x00);
+		snd_soc_component_update_bits(component, reg, mask, 0x00);
 		aqt->idle_det_cfg.hph_idle_thr = 0;
-		snd_soc_write(codec, AQT1000_CDC_RX_IDLE_DET_CFG3, 0x0);
+		snd_soc_component_write(component,
+				AQT1000_CDC_RX_IDLE_DET_CFG3, 0x0);
 	}
 }
 
-static void aqt_codec_hphdelay_lutbypass(struct snd_soc_codec *codec,
+static void aqt_codec_hphdelay_lutbypass(struct snd_soc_component *component,
 				    u16 interp_idx, int event)
 {
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	u8 hph_dly_mask;
 	u16 hph_lut_bypass_reg = 0;
 	u16 hph_comp_ctrl7 = 0;
@@ -1351,48 +1423,55 @@ static void aqt_codec_hphdelay_lutbypass(struct snd_soc_codec *codec,
 	}
 
 	if (hph_lut_bypass_reg && SND_SOC_DAPM_EVENT_ON(event)) {
-		snd_soc_update_bits(codec, AQT1000_CDC_CLSH_TEST0,
-				    hph_dly_mask, 0x0);
-		snd_soc_update_bits(codec, hph_lut_bypass_reg, 0x80, 0x80);
+		snd_soc_component_update_bits(component, AQT1000_CDC_CLSH_TEST0,
+				hph_dly_mask, 0x0);
+		snd_soc_component_update_bits(component, hph_lut_bypass_reg,
+				0x80, 0x80);
 		if (aqt->hph_mode == CLS_H_ULP)
-			snd_soc_update_bits(codec, hph_comp_ctrl7, 0x20, 0x20);
+			snd_soc_component_update_bits(component, hph_comp_ctrl7,
+				0x20, 0x20);
 	}
 
 	if (hph_lut_bypass_reg && SND_SOC_DAPM_EVENT_OFF(event)) {
-		snd_soc_update_bits(codec, AQT1000_CDC_CLSH_TEST0,
-				    hph_dly_mask, hph_dly_mask);
-		snd_soc_update_bits(codec, hph_lut_bypass_reg, 0x80, 0x00);
-		snd_soc_update_bits(codec, hph_comp_ctrl7, 0x20, 0x0);
+		snd_soc_component_update_bits(component, AQT1000_CDC_CLSH_TEST0,
+				hph_dly_mask, hph_dly_mask);
+		snd_soc_component_update_bits(component, hph_lut_bypass_reg,
+				0x80, 0x00);
+		snd_soc_component_update_bits(component, hph_comp_ctrl7,
+				0x20, 0x0);
 	}
 }
 
-static int aqt_codec_enable_interp_clk(struct snd_soc_codec *codec,
+static int aqt_codec_enable_interp_clk(struct snd_soc_component *component,
 				       int event, int interp_idx)
 {
 	struct aqt1000 *aqt;
 	u16 main_reg, dsm_reg;
 
-	if (!codec) {
-		pr_err("%s: codec is NULL\n", __func__);
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
 		return -EINVAL;
 	}
 
-	aqt = snd_soc_codec_get_drvdata(codec);
+	aqt = snd_soc_component_get_drvdata(component);
 	main_reg = AQT1000_CDC_RX1_RX_PATH_CTL + (interp_idx * 20);
 	dsm_reg = AQT1000_CDC_RX1_RX_PATH_DSMDEM_CTL + (interp_idx * 20);
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
 		if (aqt->main_clk_users[interp_idx] == 0) {
 			/* Main path PGA mute enable */
-			snd_soc_update_bits(codec, main_reg, 0x10, 0x10);
+			snd_soc_component_update_bits(component, main_reg,
+						0x10, 0x10);
 			/* Clk enable */
-			snd_soc_update_bits(codec, dsm_reg, 0x01, 0x01);
-			snd_soc_update_bits(codec, main_reg, 0x20, 0x20);
-			aqt_codec_idle_detect_control(codec, interp_idx,
+			snd_soc_component_update_bits(component, dsm_reg,
+						0x01, 0x01);
+			snd_soc_component_update_bits(component, main_reg,
+						0x20, 0x20);
+			aqt_codec_idle_detect_control(component, interp_idx,
 							event);
-			aqt_codec_hphdelay_lutbypass(codec, interp_idx,
+			aqt_codec_hphdelay_lutbypass(component, interp_idx,
 						       event);
-			aqt_config_compander(codec, interp_idx, event);
+			aqt_config_compander(component, interp_idx, event);
 		}
 		aqt->main_clk_users[interp_idx]++;
 	}
@@ -1401,23 +1480,28 @@ static int aqt_codec_enable_interp_clk(struct snd_soc_codec *codec,
 		aqt->main_clk_users[interp_idx]--;
 		if (aqt->main_clk_users[interp_idx] <= 0) {
 			aqt->main_clk_users[interp_idx] = 0;
-			aqt_config_compander(codec, interp_idx, event);
-			aqt_codec_hphdelay_lutbypass(codec, interp_idx,
+			aqt_config_compander(component, interp_idx, event);
+			aqt_codec_hphdelay_lutbypass(component, interp_idx,
 						       event);
-			aqt_codec_idle_detect_control(codec, interp_idx,
+			aqt_codec_idle_detect_control(component, interp_idx,
 							event);
 			/* Clk Disable */
-			snd_soc_update_bits(codec, main_reg, 0x20, 0x00);
-			snd_soc_update_bits(codec, dsm_reg, 0x01, 0x00);
+			snd_soc_component_update_bits(component, main_reg,
+						0x20, 0x00);
+			snd_soc_component_update_bits(component, dsm_reg,
+						0x01, 0x00);
 			/* Reset enable and disable */
-			snd_soc_update_bits(codec, main_reg, 0x40, 0x40);
-			snd_soc_update_bits(codec, main_reg, 0x40, 0x00);
+			snd_soc_component_update_bits(component, main_reg,
+						0x40, 0x40);
+			snd_soc_component_update_bits(component, main_reg,
+						0x40, 0x00);
 			/* Reset rate to 48K*/
-			snd_soc_update_bits(codec, main_reg, 0x0F, 0x04);
+			snd_soc_component_update_bits(component, main_reg,
+						0x0F, 0x04);
 		}
 	}
 
-	dev_dbg(codec->dev, "%s event %d main_clk_users %d\n",
+	dev_dbg(component->dev, "%s event %d main_clk_users %d\n",
 		__func__,  event, aqt->main_clk_users[interp_idx]);
 
 	return aqt->main_clk_users[interp_idx];
@@ -1426,9 +1510,10 @@ static int aqt_codec_enable_interp_clk(struct snd_soc_codec *codec,
 static int aqt_anc_out_switch_cb(struct snd_soc_dapm_widget *w,
 				 struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
 
-	aqt_codec_enable_interp_clk(codec, event, w->shift);
+	aqt_codec_enable_interp_clk(component, event, w->shift);
 
 	return 0;
 }
@@ -1473,14 +1558,14 @@ AQT_DAPM_ENUM(rx_int2_1, AQT1000_CDC_RX_INP_MUX_RX_INT2_CFG0, 0,
 AQT_DAPM_ENUM(rx_int2_2, AQT1000_CDC_RX_INP_MUX_RX_INT2_CFG1, 0,
 		rx_int2_2_mux_text);
 
-static int aqt_codec_set_idle_detect_thr(struct snd_soc_codec *codec,
+static int aqt_codec_set_idle_detect_thr(struct snd_soc_component *component,
 					   int interp, int path_type)
 {
 	int port_id[4] = { 0, 0, 0, 0 };
 	int *port_ptr, num_ports;
 	int bit_width = 0;
 	int mux_reg = 0, mux_reg_val = 0;
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int idle_thr;
 
 	if ((interp != INTERP_HPHL) && (interp != INTERP_HPHR))
@@ -1505,12 +1590,13 @@ static int aqt_codec_set_idle_detect_thr(struct snd_soc_codec *codec,
 		else
 			mux_reg = AQT1000_CDC_RX_INP_MUX_RX_INT2_CFG0;
 	}
-	mux_reg_val = snd_soc_read(codec, mux_reg);
+	mux_reg_val = snd_soc_component_read32(component, mux_reg);
 
 	/* Read bit width from I2S reg if mux is set to I2S0_L or I2S0_R */
 	if (mux_reg_val == 0x02 || mux_reg_val == 0x03)
-		bit_width = ((snd_soc_read(codec, AQT1000_I2S_I2S_0_CTL) &
-					   0x40) >> 6);
+		bit_width = ((snd_soc_component_read32(
+				component, AQT1000_I2S_I2S_0_CTL) &
+				0x40) >> 6);
 
 	switch (bit_width) {
 	case 1: /* 16 bit */
@@ -1522,12 +1608,13 @@ static int aqt_codec_set_idle_detect_thr(struct snd_soc_codec *codec,
 		break;
 	}
 
-	dev_dbg(codec->dev, "%s: (new) idle_thr: %d, (cur) idle_thr: %d\n",
+	dev_dbg(component->dev, "%s: (new) idle_thr: %d, (cur) idle_thr: %d\n",
 		__func__, idle_thr, aqt->idle_det_cfg.hph_idle_thr);
 
 	if ((aqt->idle_det_cfg.hph_idle_thr == 0) ||
 	    (idle_thr < aqt->idle_det_cfg.hph_idle_thr)) {
-		snd_soc_write(codec, AQT1000_CDC_RX_IDLE_DET_CFG3, idle_thr);
+		snd_soc_component_write(component, AQT1000_CDC_RX_IDLE_DET_CFG3,
+					idle_thr);
 		aqt->idle_det_cfg.hph_idle_thr = idle_thr;
 	}
 
@@ -1538,14 +1625,15 @@ static int aqt_codec_enable_main_path(struct snd_soc_dapm_widget *w,
 					struct snd_kcontrol *kcontrol,
 					int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 	u16 gain_reg = 0;
 	int val = 0;
 
-	dev_dbg(codec->dev, "%s %d %s\n", __func__, event, w->name);
+	dev_dbg(component->dev, "%s %d %s\n", __func__, event, w->name);
 
 	if (w->shift >= AQT1000_NUM_INTERPOLATORS) {
-		dev_err(codec->dev, "%s: Invalid Interpolator value %d for name %s\n",
+		dev_err(component->dev, "%s: Invalid Interpolator value %d for name %s\n",
 			__func__, w->shift, w->name);
 		return -EINVAL;
 	};
@@ -1555,17 +1643,17 @@ static int aqt_codec_enable_main_path(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		aqt_codec_enable_interp_clk(codec, event, w->shift);
+		aqt_codec_enable_interp_clk(component, event, w->shift);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		aqt_codec_set_idle_detect_thr(codec, w->shift,
+		aqt_codec_set_idle_detect_thr(component, w->shift,
 						INTERP_MAIN_PATH);
 		/* apply gain after int clk is enabled */
-		val = snd_soc_read(codec, gain_reg);
-		snd_soc_write(codec, gain_reg, val);
+		val = snd_soc_component_read32(component, gain_reg);
+		snd_soc_component_write(component, gain_reg, val);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		aqt_codec_enable_interp_clk(codec, event, w->shift);
+		aqt_codec_enable_interp_clk(component, event, w->shift);
 		break;
 	};
 
@@ -1576,12 +1664,13 @@ static int aqt_codec_enable_mix_path(struct snd_soc_dapm_widget *w,
 				       struct snd_kcontrol *kcontrol,
 				       int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
 	u16 gain_reg = 0;
 	u16 mix_reg = 0;
 
 	if (w->shift >= AQT1000_NUM_INTERPOLATORS) {
-		dev_err(codec->dev, "%s: Invalid Interpolator value %d for name %s\n",
+		dev_err(component->dev, "%s: Invalid Interpolator value %d for name %s\n",
 			__func__, w->shift, w->name);
 		return -EINVAL;
 	};
@@ -1592,25 +1681,26 @@ static int aqt_codec_enable_mix_path(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		aqt_codec_enable_interp_clk(codec, event, w->shift);
+		aqt_codec_enable_interp_clk(component, event, w->shift);
 		/* Clk enable */
-		snd_soc_update_bits(codec, mix_reg, 0x20, 0x20);
+		snd_soc_component_update_bits(component, mix_reg, 0x20, 0x20);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		aqt_codec_set_idle_detect_thr(codec, w->shift,
+		aqt_codec_set_idle_detect_thr(component, w->shift,
 						INTERP_MIX_PATH);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* Clk Disable */
-		snd_soc_update_bits(codec, mix_reg, 0x20, 0x00);
-		aqt_codec_enable_interp_clk(codec, event, w->shift);
+		snd_soc_component_update_bits(component, mix_reg, 0x20, 0x00);
+		aqt_codec_enable_interp_clk(component, event, w->shift);
 		/* Reset enable and disable */
-		snd_soc_update_bits(codec, mix_reg, 0x40, 0x40);
-		snd_soc_update_bits(codec, mix_reg, 0x40, 0x00);
+		snd_soc_component_update_bits(component, mix_reg, 0x40, 0x40);
+		snd_soc_component_update_bits(component, mix_reg, 0x40, 0x00);
 
 		break;
 	};
-	dev_dbg(codec->dev, "%s event %d name %s\n", __func__, event, w->name);
+	dev_dbg(component->dev, "%s event %d name %s\n", __func__,
+		event, w->name);
 
 	return 0;
 }
@@ -1693,8 +1783,9 @@ static int aqt_codec_enable_asrc_resampler(struct snd_soc_dapm_widget *w,
 					     struct snd_kcontrol *kcontrol,
 					     int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int asrc = 0, ret = 0;
 	u8 cfg;
 	u16 cfg_reg = 0;
@@ -1705,9 +1796,10 @@ static int aqt_codec_enable_asrc_resampler(struct snd_soc_dapm_widget *w,
 	u16 paired_reg = 0;
 	u8 main_sr, mix_sr, asrc_mode = 0;
 
-	cfg = snd_soc_read(codec, AQT1000_CDC_RX_INP_MUX_SPLINE_ASRC_CFG0);
+	cfg = snd_soc_component_read32(component,
+			AQT1000_CDC_RX_INP_MUX_SPLINE_ASRC_CFG0);
 	if (!(cfg & 0xFF)) {
-		dev_err(codec->dev, "%s: ASRC%u input not selected\n",
+		dev_err(component->dev, "%s: ASRC%u input not selected\n",
 			__func__, w->shift);
 		return -EINVAL;
 	}
@@ -1732,7 +1824,7 @@ static int aqt_codec_enable_asrc_resampler(struct snd_soc_dapm_widget *w,
 		}
 		break;
 	default:
-		dev_err(codec->dev, "%s: Invalid asrc:%u\n", __func__,
+		dev_err(component->dev, "%s: Invalid asrc:%u\n", __func__,
 			w->shift);
 		ret = -EINVAL;
 		break;
@@ -1744,26 +1836,30 @@ static int aqt_codec_enable_asrc_resampler(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		if ((snd_soc_read(codec, clk_reg) & 0x02) ||
-		    (snd_soc_read(codec, paired_reg) & 0x02)) {
-			snd_soc_update_bits(codec, clk_reg, 0x02, 0x00);
-			snd_soc_update_bits(codec, paired_reg, 0x02, 0x00);
+		if ((snd_soc_component_read32(component, clk_reg) & 0x02) ||
+		    (snd_soc_component_read32(component, paired_reg) & 0x02)) {
+			snd_soc_component_update_bits(component, clk_reg,
+					0x02, 0x00);
+			snd_soc_component_update_bits(component, paired_reg,
+					0x02, 0x00);
 		}
-		snd_soc_update_bits(codec, cfg_reg, 0x80, 0x80);
-		snd_soc_update_bits(codec, clk_reg, 0x01, 0x01);
-		main_sr = snd_soc_read(codec, ctl_reg) & 0x0F;
+		snd_soc_component_update_bits(component, cfg_reg, 0x80, 0x80);
+		snd_soc_component_update_bits(component, clk_reg, 0x01, 0x01);
+		main_sr = snd_soc_component_read32(component, ctl_reg) & 0x0F;
 		mix_ctl_reg = ctl_reg + 5;
-		mix_sr = snd_soc_read(codec, mix_ctl_reg) & 0x0F;
+		mix_sr = snd_soc_component_read32(
+				component, mix_ctl_reg) & 0x0F;
 		asrc_mode = aqt_get_asrc_mode(aqt, asrc,
 						main_sr, mix_sr);
-		dev_dbg(codec->dev, "%s: main_sr:%d mix_sr:%d asrc_mode %d\n",
+		dev_dbg(component->dev, "%s: main_sr:%d mix_sr:%d asrc_mode %d\n",
 			__func__, main_sr, mix_sr, asrc_mode);
-		snd_soc_update_bits(codec, asrc_ctl, 0x07, asrc_mode);
+		snd_soc_component_update_bits(
+				component, asrc_ctl, 0x07, asrc_mode);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		snd_soc_update_bits(codec, asrc_ctl, 0x07, 0x00);
-		snd_soc_update_bits(codec, cfg_reg, 0x80, 0x00);
-		snd_soc_update_bits(codec, clk_reg, 0x03, 0x02);
+		snd_soc_component_update_bits(component, asrc_ctl, 0x07, 0x00);
+		snd_soc_component_update_bits(component, cfg_reg, 0x80, 0x00);
+		snd_soc_component_update_bits(component, clk_reg, 0x03, 0x02);
 		break;
 	};
 
@@ -1774,8 +1870,9 @@ done:
 static int aqt_codec_enable_anc(struct snd_soc_dapm_widget *w,
 				  struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	const char *filename;
 	const struct firmware *fw;
 	int i;
@@ -1801,28 +1898,28 @@ static int aqt_codec_enable_anc(struct snd_soc_dapm_widget *w,
 		if (hwdep_cal) {
 			data = hwdep_cal->data;
 			cal_size = hwdep_cal->size;
-			dev_dbg(codec->dev, "%s: using hwdep calibration, cal_size %zd",
+			dev_dbg(component->dev, "%s: using hwdep calibration, cal_size %zd",
 				__func__, cal_size);
 		} else {
 			filename = "AQT1000/AQT1000_anc.bin";
-			ret = request_firmware(&fw, filename, codec->dev);
+			ret = request_firmware(&fw, filename, component->dev);
 			if (ret < 0) {
-				dev_err(codec->dev, "%s: Failed to acquire ANC data: %d\n",
+				dev_err(component->dev, "%s: Failed to acquire ANC data: %d\n",
 					__func__, ret);
 				return ret;
 			}
 			if (!fw) {
-				dev_err(codec->dev, "%s: Failed to get anc fw\n",
+				dev_err(component->dev, "%s: Failed to get anc fw\n",
 					__func__);
 				return -ENODEV;
 			}
 			data = fw->data;
 			cal_size = fw->size;
-			dev_dbg(codec->dev, "%s: using request_firmware calibration\n",
+			dev_dbg(component->dev, "%s: using request_firmware calibration\n",
 				__func__);
 		}
 		if (cal_size < sizeof(struct aqt1000_anc_header)) {
-			dev_err(codec->dev, "%s: Invalid cal_size %zd\n",
+			dev_err(component->dev, "%s: Invalid cal_size %zd\n",
 				__func__, cal_size);
 			ret = -EINVAL;
 			goto err;
@@ -1835,14 +1932,14 @@ static int aqt_codec_enable_anc(struct snd_soc_dapm_widget *w,
 		num_anc_slots = anc_head->num_anc_slots;
 
 		if (aqt->anc_slot >= num_anc_slots) {
-			dev_err(codec->dev, "%s: Invalid ANC slot selected\n",
+			dev_err(component->dev, "%s: Invalid ANC slot selected\n",
 				__func__);
 			ret = -EINVAL;
 			goto err;
 		}
 		for (i = 0; i < num_anc_slots; i++) {
 			if (anc_size_remaining < AQT1000_PACKED_REG_SIZE) {
-				dev_err(codec->dev, "%s: Invalid register format\n",
+				dev_err(component->dev, "%s: Invalid register format\n",
 					__func__);
 				ret = -EINVAL;
 				goto err;
@@ -1853,7 +1950,7 @@ static int aqt_codec_enable_anc(struct snd_soc_dapm_widget *w,
 
 			if ((anc_writes_size * AQT1000_PACKED_REG_SIZE) >
 			    anc_size_remaining) {
-				dev_err(codec->dev, "%s: Invalid register format\n",
+				dev_err(component->dev, "%s: Invalid register format\n",
 					__func__);
 				ret = -EINVAL;
 				goto err;
@@ -1867,7 +1964,7 @@ static int aqt_codec_enable_anc(struct snd_soc_dapm_widget *w,
 			anc_ptr += anc_writes_size;
 		}
 		if (i == num_anc_slots) {
-			dev_err(codec->dev, "%s: Selected ANC slot not present\n",
+			dev_err(component->dev, "%s: Selected ANC slot not present\n",
 				__func__);
 			ret = -EINVAL;
 			goto err;
@@ -1877,36 +1974,36 @@ static int aqt_codec_enable_anc(struct snd_soc_dapm_widget *w,
 		anc_cal_size = anc_writes_size;
 		/* Rate converter clk enable and set bypass mode */
 		if (!strcmp(w->name, "AQT RX INT1 DAC")) {
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					    AQT1000_CDC_ANC0_RC_COMMON_CTL,
 					    0x05, 0x05);
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					AQT1000_CDC_ANC0_FIFO_COMMON_CTL,
 					0x66, 0x66);
 			anc_writes_size = anc_cal_size / 2;
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				AQT1000_CDC_ANC0_CLK_RESET_CTL, 0x39, 0x39);
 		} else if (!strcmp(w->name, "AQT RX INT2 DAC")) {
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					    AQT1000_CDC_ANC1_RC_COMMON_CTL,
 					    0x05, 0x05);
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					    AQT1000_CDC_ANC1_FIFO_COMMON_CTL,
 					    0x66, 0x66);
 			i = anc_cal_size / 2;
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				AQT1000_CDC_ANC1_CLK_RESET_CTL, 0x39, 0x39);
 		}
 
 		for (; i < anc_writes_size; i++) {
 			AQT1000_CODEC_UNPACK_ENTRY(anc_ptr[i], reg, mask, val);
-			snd_soc_write(codec, reg, (val & mask));
+			snd_soc_component_write(component, reg, (val & mask));
 		}
 		if (!strcmp(w->name, "AQT RX INT1 DAC"))
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				AQT1000_CDC_ANC0_CLK_RESET_CTL, 0x08, 0x08);
 		else if (!strcmp(w->name, "AQT RX INT2 DAC"))
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				AQT1000_CDC_ANC1_CLK_RESET_CTL, 0x08, 0x08);
 
 		if (!hwdep_cal)
@@ -1915,53 +2012,58 @@ static int aqt_codec_enable_anc(struct snd_soc_dapm_widget *w,
 
 	case SND_SOC_DAPM_POST_PMU:
 		/* Remove ANC Rx from reset */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				    AQT1000_CDC_ANC0_CLK_RESET_CTL,
 				    0x08, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				    AQT1000_CDC_ANC1_CLK_RESET_CTL,
 				    0x08, 0x00);
 		break;
 
 	case SND_SOC_DAPM_POST_PMD:
-		snd_soc_update_bits(codec, AQT1000_CDC_ANC0_RC_COMMON_CTL,
-				    0x05, 0x00);
+		snd_soc_component_update_bits(component,
+				AQT1000_CDC_ANC0_RC_COMMON_CTL,
+				0x05, 0x00);
 		if (!strcmp(w->name, "AQT ANC HPHL PA")) {
-			snd_soc_update_bits(codec, AQT1000_CDC_ANC0_MODE_1_CTL,
-					    0x30, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_CDC_ANC0_MODE_1_CTL,
+					0x30, 0x00);
 			/* 50 msec sleep is needed to avoid click and pop as
 			 * per HW requirement
 			 */
 			msleep(50);
-			snd_soc_update_bits(codec, AQT1000_CDC_ANC0_MODE_1_CTL,
-					    0x01, 0x00);
-			snd_soc_update_bits(codec,
-					    AQT1000_CDC_ANC0_CLK_RESET_CTL,
-					    0x38, 0x38);
-			snd_soc_update_bits(codec,
-					    AQT1000_CDC_ANC0_CLK_RESET_CTL,
-					    0x07, 0x00);
-			snd_soc_update_bits(codec,
-					    AQT1000_CDC_ANC0_CLK_RESET_CTL,
-					    0x38, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_CDC_ANC0_MODE_1_CTL,
+					0x01, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_CDC_ANC0_CLK_RESET_CTL,
+					0x38, 0x38);
+			snd_soc_component_update_bits(component,
+					AQT1000_CDC_ANC0_CLK_RESET_CTL,
+					0x07, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_CDC_ANC0_CLK_RESET_CTL,
+					0x38, 0x00);
 		} else if (!strcmp(w->name, "AQT ANC HPHR PA")) {
-			snd_soc_update_bits(codec, AQT1000_CDC_ANC1_MODE_1_CTL,
-					    0x30, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_CDC_ANC1_MODE_1_CTL,
+					0x30, 0x00);
 			/* 50 msec sleep is needed to avoid click and pop as
 			 * per HW requirement
 			 */
 			msleep(50);
-			snd_soc_update_bits(codec, AQT1000_CDC_ANC1_MODE_1_CTL,
-					    0x01, 0x00);
-			snd_soc_update_bits(codec,
-					    AQT1000_CDC_ANC1_CLK_RESET_CTL,
-					    0x38, 0x38);
-			snd_soc_update_bits(codec,
-					    AQT1000_CDC_ANC1_CLK_RESET_CTL,
-					    0x07, 0x00);
-			snd_soc_update_bits(codec,
-					    AQT1000_CDC_ANC1_CLK_RESET_CTL,
-					    0x38, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_CDC_ANC1_MODE_1_CTL,
+					0x01, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_CDC_ANC1_CLK_RESET_CTL,
+					0x38, 0x38);
+			snd_soc_component_update_bits(component,
+					AQT1000_CDC_ANC1_CLK_RESET_CTL,
+					0x07, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_CDC_ANC1_CLK_RESET_CTL,
+					0x38, 0x00);
 		}
 		break;
 	}
@@ -1973,25 +2075,25 @@ err:
 	return ret;
 }
 
-static void aqt_codec_override(struct snd_soc_codec *codec, int mode,
+static void aqt_codec_override(struct snd_soc_component *component, int mode,
 				 int event)
 {
 	if (mode == CLS_AB || mode == CLS_AB_HIFI) {
 		switch (event) {
 		case SND_SOC_DAPM_PRE_PMU:
 		case SND_SOC_DAPM_POST_PMU:
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				AQT1000_ANA_RX_SUPPLIES, 0x02, 0x02);
 		break;
 		case SND_SOC_DAPM_POST_PMD:
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				AQT1000_ANA_RX_SUPPLIES, 0x02, 0x00);
 		break;
 		}
 	}
 }
 
-static void aqt_codec_set_tx_hold(struct snd_soc_codec *codec,
+static void aqt_codec_set_tx_hold(struct snd_soc_component *component,
 				    u16 amic_reg, bool set)
 {
 	u8 mask = 0x20;
@@ -2006,13 +2108,15 @@ static void aqt_codec_set_tx_hold(struct snd_soc_codec *codec,
 	switch (amic_reg) {
 	case AQT1000_ANA_AMIC1:
 	case AQT1000_ANA_AMIC2:
-		snd_soc_update_bits(codec, AQT1000_ANA_AMIC2, mask, val);
+		snd_soc_component_update_bits(component, AQT1000_ANA_AMIC2,
+					mask, val);
 		break;
 	case AQT1000_ANA_AMIC3:
-		snd_soc_update_bits(codec, AQT1000_ANA_AMIC3_HPF, mask, val);
+		snd_soc_component_update_bits(component, AQT1000_ANA_AMIC3_HPF,
+					mask, val);
 		break;
 	default:
-		dev_dbg(codec->dev, "%s: invalid amic: %d\n",
+		dev_dbg(component->dev, "%s: invalid amic: %d\n",
 			__func__, amic_reg);
 		break;
 	}
@@ -2021,11 +2125,11 @@ static void aqt_codec_set_tx_hold(struct snd_soc_codec *codec,
 static void aqt_codec_clear_anc_tx_hold(struct aqt1000 *aqt)
 {
 	if (test_and_clear_bit(ANC_MIC_AMIC1, &aqt->status_mask))
-		aqt_codec_set_tx_hold(aqt->codec, AQT1000_ANA_AMIC1, false);
+		aqt_codec_set_tx_hold(aqt->component, AQT1000_ANA_AMIC1, false);
 	if (test_and_clear_bit(ANC_MIC_AMIC2, &aqt->status_mask))
-		aqt_codec_set_tx_hold(aqt->codec, AQT1000_ANA_AMIC2, false);
+		aqt_codec_set_tx_hold(aqt->component, AQT1000_ANA_AMIC2, false);
 	if (test_and_clear_bit(ANC_MIC_AMIC3, &aqt->status_mask))
-		aqt_codec_set_tx_hold(aqt->codec, AQT1000_ANA_AMIC3, false);
+		aqt_codec_set_tx_hold(aqt->component, AQT1000_ANA_AMIC3, false);
 }
 
 static const char * const rx_int_dem_inp_mux_text[] = {
@@ -2037,7 +2141,8 @@ static int aqt_int_dem_inp_mux_put(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_dapm_widget *widget =
 		snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(widget->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(widget->dapm);
 	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
 	unsigned int val;
 	unsigned short look_ahead_dly_reg = AQT1000_CDC_RX1_RX_PATH_CFG0;
@@ -2046,7 +2151,7 @@ static int aqt_int_dem_inp_mux_put(struct snd_kcontrol *kcontrol,
 	if (val >= e->items)
 		return -EINVAL;
 
-	dev_dbg(codec->dev, "%s: wname: %s, val: 0x%x\n", __func__,
+	dev_dbg(component->dev, "%s: wname: %s, val: 0x%x\n", __func__,
 		widget->name, val);
 
 	if (e->reg == AQT1000_CDC_RX1_RX_PATH_SEC0)
@@ -2055,7 +2160,7 @@ static int aqt_int_dem_inp_mux_put(struct snd_kcontrol *kcontrol,
 		look_ahead_dly_reg = AQT1000_CDC_RX2_RX_PATH_CFG0;
 
 	/* Set Look Ahead Delay */
-	snd_soc_update_bits(codec, look_ahead_dly_reg,
+	snd_soc_component_update_bits(component, look_ahead_dly_reg,
 			    0x08, (val ? 0x08 : 0x00));
 	/* Set DEM INP Select */
 	return snd_soc_dapm_put_enum_double(kcontrol, ucontrol);
@@ -2072,16 +2177,17 @@ static int aqt_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 				      struct snd_kcontrol *kcontrol,
 				      int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int hph_mode = aqt->hph_mode;
 	u8 dem_inp;
 	int ret = 0;
 	uint32_t impedl = 0;
 	uint32_t impedr = 0;
 
-	dev_dbg(codec->dev, "%s wname: %s event: %d hph_mode: %d\n", __func__,
-		w->name, event, hph_mode);
+	dev_dbg(component->dev, "%s wname: %s event: %d hph_mode: %d\n",
+		__func__, w->name, event, hph_mode);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -2091,35 +2197,37 @@ static int aqt_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 			msleep(40);
 		}
 		/* Read DEM INP Select */
-		dem_inp = snd_soc_read(codec, AQT1000_CDC_RX1_RX_PATH_SEC0) &
-			  0x03;
+		dem_inp = snd_soc_component_read32(
+				component, AQT1000_CDC_RX1_RX_PATH_SEC0) &
+				0x03;
 		if (((hph_mode == CLS_H_HIFI) || (hph_mode == CLS_H_LOHIFI) ||
 		     (hph_mode == CLS_H_LP)) && (dem_inp != 0x01)) {
-			dev_err(codec->dev, "%s: DEM Input not set correctly, hph_mode: %d\n",
+			dev_err(component->dev, "%s: DEM Input not set correctly, hph_mode: %d\n",
 					__func__, hph_mode);
 			return -EINVAL;
 		}
 		/* Disable AutoChop timer during power up */
-		snd_soc_update_bits(codec, AQT1000_HPH_NEW_INT_HPH_TIMER1,
-				    0x02, 0x00);
+		snd_soc_component_update_bits(component,
+					AQT1000_HPH_NEW_INT_HPH_TIMER1,
+					0x02, 0x00);
 
-		aqt_clsh_fsm(codec, &aqt->clsh_d,
+		aqt_clsh_fsm(component, &aqt->clsh_d,
 			     AQT_CLSH_EVENT_PRE_DAC,
 			     AQT_CLSH_STATE_HPHL,
 			     hph_mode);
 
 		if (aqt->anc_func)
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					    AQT1000_CDC_RX1_RX_PATH_CFG0,
 					    0x10, 0x10);
 
 		ret = aqt_mbhc_get_impedance(aqt->mbhc,
 					       &impedl, &impedr);
 		if (!ret) {
-			aqt_clsh_imped_config(codec, impedl, false);
+			aqt_clsh_imped_config(component, impedl, false);
 			set_bit(CLSH_Z_CONFIG, &aqt->status_mask);
 		} else {
-			dev_dbg(codec->dev, "%s: Failed to get mbhc impedance %d\n",
+			dev_dbg(component->dev, "%s: Failed to get mbhc impedance %d\n",
 				__func__, ret);
 			ret = 0;
 		}
@@ -2127,12 +2235,12 @@ static int aqt_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMD:
 		/* 1000us required as per HW requirement */
 		usleep_range(1000, 1100);
-		aqt_clsh_fsm(codec, &aqt->clsh_d,
+		aqt_clsh_fsm(component, &aqt->clsh_d,
 			     AQT_CLSH_EVENT_POST_PA,
 			     AQT_CLSH_STATE_HPHL,
 			     hph_mode);
 		if (test_bit(CLSH_Z_CONFIG, &aqt->status_mask)) {
-			aqt_clsh_imped_config(codec, impedl, true);
+			aqt_clsh_imped_config(component, impedl, true);
 			clear_bit(CLSH_Z_CONFIG, &aqt->status_mask);
 		}
 		break;
@@ -2147,14 +2255,15 @@ static int aqt_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 				      struct snd_kcontrol *kcontrol,
 				      int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int hph_mode = aqt->hph_mode;
 	u8 dem_inp;
 	int ret = 0;
 
-	dev_dbg(codec->dev, "%s wname: %s event: %d hph_mode: %d\n", __func__,
-		w->name, event, hph_mode);
+	dev_dbg(component->dev, "%s wname: %s event: %d hph_mode: %d\n",
+		__func__, w->name, event, hph_mode);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -2164,30 +2273,32 @@ static int aqt_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 			msleep(40);
 		}
 		/* Read DEM INP Select */
-		dem_inp = snd_soc_read(codec, AQT1000_CDC_RX2_RX_PATH_SEC0) &
-			  0x03;
+		dem_inp = snd_soc_component_read32(
+				component, AQT1000_CDC_RX2_RX_PATH_SEC0) &
+				0x03;
 		if (((hph_mode == CLS_H_HIFI) || (hph_mode == CLS_H_LOHIFI) ||
 		     (hph_mode == CLS_H_LP)) && (dem_inp != 0x01)) {
-			dev_err(codec->dev, "%s: DEM Input not set correctly, hph_mode: %d\n",
+			dev_err(component->dev, "%s: DEM Input not set correctly, hph_mode: %d\n",
 					__func__, hph_mode);
 			return -EINVAL;
 		}
 		/* Disable AutoChop timer during power up */
-		snd_soc_update_bits(codec, AQT1000_HPH_NEW_INT_HPH_TIMER1,
-				    0x02, 0x00);
-		aqt_clsh_fsm(codec, &aqt->clsh_d,
+		snd_soc_component_update_bits(component,
+					AQT1000_HPH_NEW_INT_HPH_TIMER1,
+					0x02, 0x00);
+		aqt_clsh_fsm(component, &aqt->clsh_d,
 			     AQT_CLSH_EVENT_PRE_DAC,
 			     AQT_CLSH_STATE_HPHR,
 			     hph_mode);
 		if (aqt->anc_func)
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					    AQT1000_CDC_RX2_RX_PATH_CFG0,
 					    0x10, 0x10);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* 1000us required as per HW requirement */
 		usleep_range(1000, 1100);
-		aqt_clsh_fsm(codec, &aqt->clsh_d,
+		aqt_clsh_fsm(component, &aqt->clsh_d,
 			     AQT_CLSH_EVENT_POST_PA,
 			     AQT_CLSH_STATE_HPHR,
 			     hph_mode);
@@ -2203,23 +2314,26 @@ static int aqt_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 				      struct snd_kcontrol *kcontrol,
 				      int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int ret = 0;
 
-	dev_dbg(codec->dev, "%s %s %d\n", __func__, w->name, event);
+	dev_dbg(component->dev, "%s %s %d\n", __func__, w->name, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if ((!(strcmp(w->name, "AQT ANC HPHR PA"))) &&
 		    (test_bit(HPH_PA_DELAY, &aqt->status_mask)))
-			snd_soc_update_bits(codec, AQT1000_ANA_HPH, 0xC0, 0xC0);
+			snd_soc_component_update_bits(component,
+					AQT1000_ANA_HPH, 0xC0, 0xC0);
 
 		set_bit(HPH_PA_DELAY, &aqt->status_mask);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		if ((!(strcmp(w->name, "AQT ANC HPHR PA")))) {
-			if ((snd_soc_read(codec, AQT1000_ANA_HPH) & 0xC0)
+			if ((snd_soc_component_read32(
+					component, AQT1000_ANA_HPH) & 0xC0)
 					!= 0xC0)
 				/*
 				 * If PA_EN is not set (potentially in ANC case)
@@ -2242,64 +2356,76 @@ static int aqt_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 		}
 		if (aqt->anc_func) {
 			/* Clear Tx FE HOLD if both PAs are enabled */
-			if ((snd_soc_read(aqt->codec, AQT1000_ANA_HPH) &
+			if ((snd_soc_component_read32(
+					aqt->component, AQT1000_ANA_HPH) &
 					0xC0) == 0xC0)
 				aqt_codec_clear_anc_tx_hold(aqt);
 		}
 
-		snd_soc_update_bits(codec, AQT1000_HPH_R_TEST, 0x01, 0x01);
+		snd_soc_component_update_bits(
+				component, AQT1000_HPH_R_TEST, 0x01, 0x01);
 
 		/* Remove mute */
-		snd_soc_update_bits(codec, AQT1000_CDC_RX2_RX_PATH_CTL,
-				    0x10, 0x00);
+		snd_soc_component_update_bits(
+					component, AQT1000_CDC_RX2_RX_PATH_CTL,
+					0x10, 0x00);
 		/* Enable GM3 boost */
-		snd_soc_update_bits(codec, AQT1000_HPH_CNP_WG_CTL,
-				    0x80, 0x80);
+		snd_soc_component_update_bits(
+					component, AQT1000_HPH_CNP_WG_CTL,
+					0x80, 0x80);
 		/* Enable AutoChop timer at the end of power up */
-		snd_soc_update_bits(codec, AQT1000_HPH_NEW_INT_HPH_TIMER1,
-				    0x02, 0x02);
+		snd_soc_component_update_bits(component,
+					AQT1000_HPH_NEW_INT_HPH_TIMER1,
+					0x02, 0x02);
 		/* Remove mix path mute if it is enabled */
-		if ((snd_soc_read(codec, AQT1000_CDC_RX2_RX_PATH_MIX_CTL)) &
-				  0x10)
-			snd_soc_update_bits(codec,
+		if ((snd_soc_component_read32(
+				component, AQT1000_CDC_RX2_RX_PATH_MIX_CTL)) &
+				0x10)
+			snd_soc_component_update_bits(component,
 					    AQT1000_CDC_RX2_RX_PATH_MIX_CTL,
 					    0x10, 0x00);
 		if (!(strcmp(w->name, "AQT ANC HPHR PA"))) {
-			dev_dbg(codec->dev,
+			dev_dbg(component->dev,
 				"%s:Do everything needed for left channel\n",
 				__func__);
 			/* Do everything needed for left channel */
-			snd_soc_update_bits(codec, AQT1000_HPH_L_TEST,
-					    0x01, 0x01);
+			snd_soc_component_update_bits(
+						component, AQT1000_HPH_L_TEST,
+						0x01, 0x01);
 
 			/* Remove mute */
-			snd_soc_update_bits(codec, AQT1000_CDC_RX1_RX_PATH_CTL,
-					    0x10, 0x00);
+			snd_soc_component_update_bits(component,
+						AQT1000_CDC_RX1_RX_PATH_CTL,
+						0x10, 0x00);
 
 			/* Remove mix path mute if it is enabled */
-			if ((snd_soc_read(codec,
+			if ((snd_soc_component_read32(component,
 					AQT1000_CDC_RX1_RX_PATH_MIX_CTL)) &
 					0x10)
-				snd_soc_update_bits(codec,
+				snd_soc_component_update_bits(component,
 					AQT1000_CDC_RX1_RX_PATH_MIX_CTL,
 					0x10, 0x00);
 
 			/* Remove ANC Rx from reset */
 			ret = aqt_codec_enable_anc(w, kcontrol, event);
 		}
-		aqt_codec_override(codec, aqt->hph_mode, event);
+		aqt_codec_override(component, aqt->hph_mode, event);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		blocking_notifier_call_chain(&aqt->mbhc->notifier,
 					     AQT_EVENT_PRE_HPHR_PA_OFF,
 					     &aqt->mbhc->wcd_mbhc);
-		snd_soc_update_bits(codec, AQT1000_HPH_R_TEST, 0x01, 0x00);
-		snd_soc_update_bits(codec, AQT1000_CDC_RX2_RX_PATH_CTL,
-				    0x10, 0x10);
-		snd_soc_update_bits(codec, AQT1000_CDC_RX2_RX_PATH_MIX_CTL,
-				    0x10, 0x10);
+		snd_soc_component_update_bits(component,
+					AQT1000_HPH_R_TEST, 0x01, 0x00);
+		snd_soc_component_update_bits(component,
+					AQT1000_CDC_RX2_RX_PATH_CTL,
+					0x10, 0x10);
+		snd_soc_component_update_bits(component,
+					AQT1000_CDC_RX2_RX_PATH_MIX_CTL,
+					0x10, 0x10);
 		if (!(strcmp(w->name, "AQT ANC HPHR PA")))
-			snd_soc_update_bits(codec, AQT1000_ANA_HPH, 0x40, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_ANA_HPH, 0x40, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/*
@@ -2310,13 +2436,13 @@ static int aqt_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 			usleep_range(20000, 20100);
 		else
 			usleep_range(5000, 5100);
-		aqt_codec_override(codec, aqt->hph_mode, event);
+		aqt_codec_override(component, aqt->hph_mode, event);
 		blocking_notifier_call_chain(&aqt->mbhc->notifier,
 					     AQT_EVENT_POST_HPHR_PA_OFF,
 					     &aqt->mbhc->wcd_mbhc);
 		if (!(strcmp(w->name, "AQT ANC HPHR PA"))) {
 			ret = aqt_codec_enable_anc(w, kcontrol, event);
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					    AQT1000_CDC_RX2_RX_PATH_CFG0,
 					    0x10, 0x00);
 		}
@@ -2330,23 +2456,26 @@ static int aqt_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 				      struct snd_kcontrol *kcontrol,
 				      int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 	int ret = 0;
 
-	dev_dbg(codec->dev, "%s %s %d\n", __func__, w->name, event);
+	dev_dbg(component->dev, "%s %s %d\n", __func__, w->name, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if ((!(strcmp(w->name, "AQT ANC HPHL PA"))) &&
 		    (test_bit(HPH_PA_DELAY, &aqt->status_mask)))
-			snd_soc_update_bits(codec, AQT1000_ANA_HPH,
-					    0xC0, 0xC0);
+			snd_soc_component_update_bits(component,
+					AQT1000_ANA_HPH,
+					0xC0, 0xC0);
 		set_bit(HPH_PA_DELAY, &aqt->status_mask);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		if (!(strcmp(w->name, "AQT ANC HPHL PA"))) {
-			if ((snd_soc_read(codec, AQT1000_ANA_HPH) & 0xC0)
+			if ((snd_soc_component_read32(
+					component, AQT1000_ANA_HPH) & 0xC0)
 								!= 0xC0)
 				/*
 				 * If PA_EN is not set (potentially in ANC
@@ -2369,64 +2498,73 @@ static int aqt_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 		}
 		if (aqt->anc_func) {
 			/* Clear Tx FE HOLD if both PAs are enabled */
-			if ((snd_soc_read(aqt->codec, AQT1000_ANA_HPH) &
+			if ((snd_soc_component_read32(
+					aqt->component, AQT1000_ANA_HPH) &
 					0xC0) == 0xC0)
 				aqt_codec_clear_anc_tx_hold(aqt);
 		}
 
-		snd_soc_update_bits(codec, AQT1000_HPH_L_TEST, 0x01, 0x01);
+		snd_soc_component_update_bits(component,
+					AQT1000_HPH_L_TEST, 0x01, 0x01);
 		/* Remove Mute on primary path */
-		snd_soc_update_bits(codec, AQT1000_CDC_RX1_RX_PATH_CTL,
-				    0x10, 0x00);
+		snd_soc_component_update_bits(component,
+					AQT1000_CDC_RX1_RX_PATH_CTL,
+					0x10, 0x00);
 		/* Enable GM3 boost */
-		snd_soc_update_bits(codec, AQT1000_HPH_CNP_WG_CTL,
-				    0x80, 0x80);
+		snd_soc_component_update_bits(component,
+					AQT1000_HPH_CNP_WG_CTL,
+					0x80, 0x80);
 		/* Enable AutoChop timer at the end of power up */
-		snd_soc_update_bits(codec, AQT1000_HPH_NEW_INT_HPH_TIMER1,
-				    0x02, 0x02);
+		snd_soc_component_update_bits(component,
+					AQT1000_HPH_NEW_INT_HPH_TIMER1,
+					0x02, 0x02);
 		/* Remove mix path mute if it is enabled */
-		if ((snd_soc_read(codec, AQT1000_CDC_RX1_RX_PATH_MIX_CTL)) &
-				  0x10)
-			snd_soc_update_bits(codec,
+		if ((snd_soc_component_read32(component,
+				AQT1000_CDC_RX1_RX_PATH_MIX_CTL)) &
+				0x10)
+			snd_soc_component_update_bits(component,
 					    AQT1000_CDC_RX1_RX_PATH_MIX_CTL,
 					    0x10, 0x00);
 		if (!(strcmp(w->name, "AQT ANC HPHL PA"))) {
-			dev_dbg(codec->dev,
+			dev_dbg(component->dev,
 				"%s:Do everything needed for right channel\n",
 				__func__);
 
 			/* Do everything needed for right channel */
-			snd_soc_update_bits(codec, AQT1000_HPH_R_TEST,
-					    0x01, 0x01);
+			snd_soc_component_update_bits(component,
+						AQT1000_HPH_R_TEST,
+						0x01, 0x01);
 
 			/* Remove mute */
-			snd_soc_update_bits(codec, AQT1000_CDC_RX2_RX_PATH_CTL,
+			snd_soc_component_update_bits(component,
+						AQT1000_CDC_RX2_RX_PATH_CTL,
 						0x10, 0x00);
 
 			/* Remove mix path mute if it is enabled */
-			if ((snd_soc_read(codec,
+			if ((snd_soc_component_read32(component,
 					AQT1000_CDC_RX2_RX_PATH_MIX_CTL)) &
 					0x10)
-				snd_soc_update_bits(codec,
+				snd_soc_component_update_bits(component,
 						AQT1000_CDC_RX2_RX_PATH_MIX_CTL,
 						0x10, 0x00);
 			/* Remove ANC Rx from reset */
 			ret = aqt_codec_enable_anc(w, kcontrol, event);
 		}
-		aqt_codec_override(codec, aqt->hph_mode, event);
+		aqt_codec_override(component, aqt->hph_mode, event);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		blocking_notifier_call_chain(&aqt->mbhc->notifier,
 					     AQT_EVENT_PRE_HPHL_PA_OFF,
 					     &aqt->mbhc->wcd_mbhc);
-		snd_soc_update_bits(codec, AQT1000_HPH_L_TEST, 0x01, 0x00);
-		snd_soc_update_bits(codec, AQT1000_CDC_RX1_RX_PATH_CTL,
-				    0x10, 0x10);
-		snd_soc_update_bits(codec, AQT1000_CDC_RX1_RX_PATH_MIX_CTL,
-				    0x10, 0x10);
+		snd_soc_component_update_bits(component,
+				AQT1000_HPH_L_TEST, 0x01, 0x00);
+		snd_soc_component_update_bits(component,
+				AQT1000_CDC_RX1_RX_PATH_CTL, 0x10, 0x10);
+		snd_soc_component_update_bits(component,
+				AQT1000_CDC_RX1_RX_PATH_MIX_CTL, 0x10, 0x10);
 		if (!(strcmp(w->name, "AQT ANC HPHL PA")))
-			snd_soc_update_bits(codec, AQT1000_ANA_HPH,
-					    0x80, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_ANA_HPH, 0x80, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/*
@@ -2437,13 +2575,13 @@ static int aqt_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 			usleep_range(20000, 20100);
 		else
 			usleep_range(5000, 5100);
-		aqt_codec_override(codec, aqt->hph_mode, event);
+		aqt_codec_override(component, aqt->hph_mode, event);
 		blocking_notifier_call_chain(&aqt->mbhc->notifier,
 					     AQT_EVENT_POST_HPHL_PA_OFF,
 					     &aqt->mbhc->wcd_mbhc);
 		if (!(strcmp(w->name, "AQT ANC HPHL PA"))) {
 			ret = aqt_codec_enable_anc(w, kcontrol, event);
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 				AQT1000_CDC_RX1_RX_PATH_CFG0, 0x10, 0x00);
 		}
 		break;
@@ -2455,29 +2593,30 @@ static int aqt_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 static int aqt_codec_set_iir_gain(struct snd_soc_dapm_widget *w,
 				    struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
 
-	dev_dbg(codec->dev, "%s: event = %d\n", __func__, event);
+	dev_dbg(component->dev, "%s: event = %d\n", __func__, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU: /* fall through */
 	case SND_SOC_DAPM_PRE_PMD:
 		if (strnstr(w->name, "AQT IIR0", sizeof("AQT IIR0"))) {
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				AQT1000_CDC_SIDETONE_IIR0_IIR_GAIN_B1_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				AQT1000_CDC_SIDETONE_IIR0_IIR_GAIN_B1_CTL));
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				AQT1000_CDC_SIDETONE_IIR0_IIR_GAIN_B2_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				AQT1000_CDC_SIDETONE_IIR0_IIR_GAIN_B2_CTL));
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				AQT1000_CDC_SIDETONE_IIR0_IIR_GAIN_B3_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				AQT1000_CDC_SIDETONE_IIR0_IIR_GAIN_B3_CTL));
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				AQT1000_CDC_SIDETONE_IIR0_IIR_GAIN_B4_CTL,
-			snd_soc_read(codec,
+			snd_soc_component_read32(component,
 				AQT1000_CDC_SIDETONE_IIR0_IIR_GAIN_B4_CTL));
 		}
 		break;
@@ -2488,20 +2627,22 @@ static int aqt_codec_set_iir_gain(struct snd_soc_dapm_widget *w,
 static int aqt_enable_native_supply(struct snd_soc_dapm_widget *w,
 				      struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if (++aqt->native_clk_users == 1) {
-			snd_soc_update_bits(codec, AQT1000_CLK_SYS_PLL_ENABLES,
-					    0x01, 0x01);
+			snd_soc_component_update_bits(component,
+					AQT1000_CLK_SYS_PLL_ENABLES,
+					0x01, 0x01);
 			/* 100usec is needed as per HW requirement */
 			usleep_range(100, 120);
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					AQT1000_CDC_CLK_RST_CTRL_MCLK_CONTROL,
 					0x02, 0x02);
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					AQT1000_CDC_CLK_RST_CTRL_FS_CNT_CONTROL,
 					0x10, 0x10);
 		}
@@ -2509,19 +2650,20 @@ static int aqt_enable_native_supply(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMD:
 		if (aqt->native_clk_users &&
 		    (--aqt->native_clk_users == 0)) {
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					AQT1000_CDC_CLK_RST_CTRL_FS_CNT_CONTROL,
 					0x10, 0x00);
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					AQT1000_CDC_CLK_RST_CTRL_MCLK_CONTROL,
 					0x02, 0x00);
-			snd_soc_update_bits(codec, AQT1000_CLK_SYS_PLL_ENABLES,
-					    0x01, 0x00);
+			snd_soc_component_update_bits(component,
+					AQT1000_CLK_SYS_PLL_ENABLES,
+					0x01, 0x00);
 		}
 		break;
 	}
 
-	dev_dbg(codec->dev, "%s: native_clk_users: %d, event: %d\n",
+	dev_dbg(component->dev, "%s: native_clk_users: %d, event: %d\n",
 		__func__, aqt->native_clk_users, event);
 
 	return 0;
@@ -2537,17 +2679,18 @@ AQT_DAPM_ENUM(int2_1_native, SND_SOC_NOPM, 0, native_mux_text);
 static int aqt_mclk_event(struct snd_soc_dapm_widget *w,
 			  struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
 	int ret = 0;
 
-	dev_dbg(codec->dev, "%s: event = %d\n", __func__, event);
+	dev_dbg(component->dev, "%s: event = %d\n", __func__, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		ret = aqt_cdc_mclk_enable(codec, true);
+		ret = aqt_cdc_mclk_enable(component, true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		ret = aqt_cdc_mclk_enable(codec, false);
+		ret = aqt_cdc_mclk_enable(component, false);
 		break;
 	}
 
@@ -2766,7 +2909,7 @@ static void aqt_shutdown(struct snd_pcm_substream *substream,
 static int aqt_set_decimator_rate(struct snd_soc_dai *dai,
 				    u32 sample_rate)
 {
-	struct snd_soc_codec *codec = dai->codec;
+	struct snd_soc_component *component = dai->component;
 	u8 tx_fs_rate = 0;
 	u8 tx_mux_sel = 0, tx0_mux_sel = 0, tx1_mux_sel = 0;
 	u16 tx_path_ctl_reg = 0;
@@ -2791,27 +2934,30 @@ static int aqt_set_decimator_rate(struct snd_soc_dai *dai,
 		tx_fs_rate = 6;
 		break;
 	default:
-		dev_err(codec->dev, "%s: Invalid TX sample rate: %d\n",
+		dev_err(component->dev, "%s: Invalid TX sample rate: %d\n",
 			__func__, sample_rate);
 		return -EINVAL;
 
 	};
 
 	/* Find which decimator path is enabled */
-	tx_mux_sel = snd_soc_read(codec, AQT1000_CDC_IF_ROUTER_TX_MUX_CFG0);
+	tx_mux_sel = snd_soc_component_read32(component,
+					AQT1000_CDC_IF_ROUTER_TX_MUX_CFG0);
 	tx0_mux_sel = (tx_mux_sel & 0x03);
 	tx1_mux_sel = (tx_mux_sel & 0xC0);
 
 	if (tx0_mux_sel) {
 		tx_path_ctl_reg = AQT1000_CDC_TX0_TX_PATH_CTL +
 					((tx0_mux_sel - 1) * 16);
-		snd_soc_update_bits(codec, tx_path_ctl_reg, 0x0F, tx_fs_rate);
+		snd_soc_component_update_bits(component, tx_path_ctl_reg,
+					0x0F, tx_fs_rate);
 	}
 
 	if (tx1_mux_sel) {
 		tx_path_ctl_reg = AQT1000_CDC_TX0_TX_PATH_CTL +
 					((tx1_mux_sel - 1) * 16);
-		snd_soc_update_bits(codec, tx_path_ctl_reg, 0x0F, tx_fs_rate);
+		snd_soc_component_update_bits(component, tx_path_ctl_reg,
+					0x0F, tx_fs_rate);
 	}
 
 	return 0;
@@ -2820,7 +2966,7 @@ static int aqt_set_decimator_rate(struct snd_soc_dai *dai,
 static int aqt_set_interpolator_rate(struct snd_soc_dai *dai,
 				       u32 sample_rate)
 {
-	struct snd_soc_codec *codec = dai->codec;
+	struct snd_soc_component *component = dai->component;
 	int rate_val = 0;
 	int i;
 
@@ -2831,23 +2977,25 @@ static int aqt_set_interpolator_rate(struct snd_soc_dai *dai,
 		}
 	}
 	if ((i == ARRAY_SIZE(sr_val_tbl)) || (rate_val < 0)) {
-		dev_err(codec->dev, "%s: Unsupported sample rate: %d\n",
+		dev_err(component->dev, "%s: Unsupported sample rate: %d\n",
 			__func__, sample_rate);
 		return -EINVAL;
 	}
 
 	/* TODO - Set the rate only to enabled path */
 	/* Set Primary interpolator rate */
-	snd_soc_update_bits(codec, AQT1000_CDC_RX1_RX_PATH_CTL,
+	snd_soc_component_update_bits(component, AQT1000_CDC_RX1_RX_PATH_CTL,
 			    0x0F, (u8)rate_val);
-	snd_soc_update_bits(codec, AQT1000_CDC_RX2_RX_PATH_CTL,
+	snd_soc_component_update_bits(component, AQT1000_CDC_RX2_RX_PATH_CTL,
 			    0x0F, (u8)rate_val);
 
 	/* Set mixing path interpolator rate */
-	snd_soc_update_bits(codec, AQT1000_CDC_RX1_RX_PATH_MIX_CTL,
-			    0x0F, (u8)rate_val);
-	snd_soc_update_bits(codec, AQT1000_CDC_RX2_RX_PATH_MIX_CTL,
-			    0x0F, (u8)rate_val);
+	snd_soc_component_update_bits(component,
+			AQT1000_CDC_RX1_RX_PATH_MIX_CTL,
+			0x0F, (u8)rate_val);
+	snd_soc_component_update_bits(component,
+			AQT1000_CDC_RX2_RX_PATH_MIX_CTL,
+			0x0F, (u8)rate_val);
 
 	return 0;
 }
@@ -2864,7 +3012,7 @@ static int aqt_hw_params(struct snd_pcm_substream *substream,
 			   struct snd_pcm_hw_params *params,
 			   struct snd_soc_dai *dai)
 {
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(dai->codec);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(dai->component);
 	int ret = 0;
 
 	dev_dbg(aqt->dev, "%s: dai_name = %s DAI-ID %x rate %d num_ch %d\n",
@@ -2965,7 +3113,7 @@ struct snd_soc_dai_driver aqt_dai[] = {
 
 static int aqt_enable_mclk(struct aqt1000 *aqt)
 {
-	struct snd_soc_codec *codec = aqt->codec;
+	struct snd_soc_component *component = aqt->component;
 
 	/* Enable mclk requires master bias to be enabled first */
 	if (aqt->master_bias_users <= 0) {
@@ -2977,14 +3125,14 @@ static int aqt_enable_mclk(struct aqt1000 *aqt)
 
 	if (++aqt->mclk_users == 1) {
 		/* Set clock div 2 */
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				AQT1000_CLK_SYS_MCLK1_PRG, 0x0C, 0x04);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				AQT1000_CLK_SYS_MCLK1_PRG, 0x10, 0x10);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				AQT1000_CDC_CLK_RST_CTRL_FS_CNT_CONTROL,
 				0x01, 0x01);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				AQT1000_CDC_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x01);
 		/*
@@ -3001,7 +3149,7 @@ static int aqt_enable_mclk(struct aqt1000 *aqt)
 
 static int aqt_disable_mclk(struct aqt1000 *aqt)
 {
-	struct snd_soc_codec *codec = aqt->codec;
+	struct snd_soc_component *component = aqt->component;
 
 	if (aqt->mclk_users <= 0) {
 		dev_err(aqt->dev, "%s: No mclk users, cannot disable mclk\n",
@@ -3010,37 +3158,41 @@ static int aqt_disable_mclk(struct aqt1000 *aqt)
 	}
 
 	if (--aqt->mclk_users == 0) {
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				AQT1000_CDC_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				AQT1000_CDC_CLK_RST_CTRL_FS_CNT_CONTROL,
 				0x01, 0x00);
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				AQT1000_CLK_SYS_MCLK1_PRG, 0x10, 0x00);
 	}
 
-	dev_dbg(codec->dev, "%s: mclk_users: %d\n", __func__, aqt->mclk_users);
+	dev_dbg(component->dev, "%s: mclk_users: %d\n", __func__,
+		aqt->mclk_users);
 
 	return 0;
 }
 
 static int aqt_enable_master_bias(struct aqt1000 *aqt)
 {
-	struct snd_soc_codec *codec = aqt->codec;
+	struct snd_soc_component *component = aqt->component;
 
 	mutex_lock(&aqt->master_bias_lock);
 
 	aqt->master_bias_users++;
 	if (aqt->master_bias_users == 1) {
-		snd_soc_update_bits(codec, AQT1000_ANA_BIAS, 0x80, 0x80);
-		snd_soc_update_bits(codec, AQT1000_ANA_BIAS, 0x40, 0x40);
+		snd_soc_component_update_bits(component, AQT1000_ANA_BIAS,
+					      0x80, 0x80);
+		snd_soc_component_update_bits(component, AQT1000_ANA_BIAS,
+					      0x40, 0x40);
 		/*
 		 * 1ms delay is required after pre-charge is enabled
 		 * as per HW requirement
 		 */
 		usleep_range(1000, 1100);
-		snd_soc_update_bits(codec, AQT1000_ANA_BIAS, 0x40, 0x00);
+		snd_soc_component_update_bits(component, AQT1000_ANA_BIAS,
+					      0x40, 0x00);
 	}
 
 	mutex_unlock(&aqt->master_bias_lock);
@@ -3050,7 +3202,7 @@ static int aqt_enable_master_bias(struct aqt1000 *aqt)
 
 static int aqt_disable_master_bias(struct aqt1000 *aqt)
 {
-	struct snd_soc_codec *codec = aqt->codec;
+	struct snd_soc_component *component = aqt->component;
 
 	mutex_lock(&aqt->master_bias_lock);
 	if (aqt->master_bias_users <= 0) {
@@ -3060,7 +3212,8 @@ static int aqt_disable_master_bias(struct aqt1000 *aqt)
 
 	aqt->master_bias_users--;
 	if (aqt->master_bias_users == 0)
-		snd_soc_update_bits(codec, AQT1000_ANA_BIAS, 0x80, 0x00);
+		snd_soc_component_update_bits(component, AQT1000_ANA_BIAS,
+					      0x80, 0x00);
 	mutex_unlock(&aqt->master_bias_lock);
 
 	return 0;
@@ -3126,14 +3279,14 @@ static int __aqt_cdc_mclk_enable(struct aqt1000 *aqt,
 /**
  * aqt_cdc_mclk_enable - Enable/disable codec mclk
  *
- * @codec: codec instance
+ * @component: codec component instance
  * @enable: Indicates clk enable or disable
  *
  * Returns 0 on Success and error on failure
  */
-int aqt_cdc_mclk_enable(struct snd_soc_codec *codec, bool enable)
+int aqt_cdc_mclk_enable(struct snd_soc_component *component, bool enable)
 {
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	return __aqt_cdc_mclk_enable(aqt, enable);
 }
@@ -3160,11 +3313,11 @@ EXPORT_SYMBOL(aqt_get_micb_vout_ctl_val);
 static int aqt_set_micbias(struct aqt1000 *aqt,
 			   struct aqt1000_pdata *pdata)
 {
-	struct snd_soc_codec *codec = aqt->codec;
+	struct snd_soc_component *component = aqt->component;
 	int vout_ctl_1;
 
 	if (!pdata) {
-		dev_err(codec->dev, "%s: NULL pdata\n", __func__);
+		dev_err(component->dev, "%s: NULL pdata\n", __func__);
 		return -ENODEV;
 	}
 
@@ -3173,7 +3326,8 @@ static int aqt_set_micbias(struct aqt1000 *aqt,
 	if (vout_ctl_1 < 0)
 		return -EINVAL;
 
-	snd_soc_update_bits(codec, AQT1000_ANA_MICB1, 0x3F, vout_ctl_1);
+	snd_soc_component_update_bits(component, AQT1000_ANA_MICB1,
+				      0x3F, vout_ctl_1);
 
 	return 0;
 }
@@ -3199,7 +3353,7 @@ static struct snd_info_entry_ops aqt_codec_info_ops = {
 /*
  * aqt_codec_info_create_codec_entry - creates aqt1000 module
  * @codec_root: The parent directory
- * @codec: Codec instance
+ * @component: Codec component instance
  *
  * Creates aqt1000 module and version entry under the given
  * parent directory.
@@ -3207,25 +3361,25 @@ static struct snd_info_entry_ops aqt_codec_info_ops = {
  * Return: 0 on success or negative error code on failure.
  */
 int aqt_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
-				struct snd_soc_codec *codec)
+				struct snd_soc_component *component)
 {
 	struct snd_info_entry *version_entry;
 	struct aqt1000 *aqt;
 	struct snd_soc_card *card;
 
-	if (!codec_root || !codec)
+	if (!codec_root || !component)
 		return -EINVAL;
 
-	aqt = snd_soc_codec_get_drvdata(codec);
+	aqt = snd_soc_component_get_drvdata(component);
 	if (!aqt) {
-		dev_dbg(codec->dev, "%s: aqt is NULL\n", __func__);
+		dev_dbg(component->dev, "%s: aqt is NULL\n", __func__);
 		return -EINVAL;
 	}
-	card = codec->component.card;
+	card = component->card;
 	aqt->entry = snd_info_create_subdir(codec_root->module,
 					   "aqt1000", codec_root);
 	if (!aqt->entry) {
-		dev_dbg(codec->dev, "%s: failed to create aqt1000 entry\n",
+		dev_dbg(component->dev, "%s: failed to create aqt1000 entry\n",
 			__func__);
 		return -ENOMEM;
 	}
@@ -3234,7 +3388,7 @@ int aqt_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 						  "version",
 						   aqt->entry);
 	if (!version_entry) {
-		dev_dbg(codec->dev, "%s: failed to create aqt1000 version entry\n",
+		dev_dbg(component->dev, "%s: failed to create aqt1000 version entry\n",
 			__func__);
 		return -ENOMEM;
 	}
@@ -3271,11 +3425,11 @@ static const struct aqt_reg_mask_val aqt_codec_reg_update[] = {
 
 static void aqt_codec_init_reg(struct aqt1000 *priv)
 {
-	struct snd_soc_codec *codec = priv->codec;
+	struct snd_soc_component *component = priv->component;
 	u32 i;
 
 	for (i = 0; i < ARRAY_SIZE(aqt_codec_reg_init); i++)
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				    aqt_codec_reg_init[i].reg,
 				    aqt_codec_reg_init[i].mask,
 				    aqt_codec_reg_init[i].val);
@@ -3283,26 +3437,29 @@ static void aqt_codec_init_reg(struct aqt1000 *priv)
 
 static void aqt_codec_update_reg(struct aqt1000 *priv)
 {
-	struct snd_soc_codec *codec = priv->codec;
+	struct snd_soc_component *component = priv->component;
 	u32 i;
 
 	for (i = 0; i < ARRAY_SIZE(aqt_codec_reg_update); i++)
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				    aqt_codec_reg_update[i].reg,
 				    aqt_codec_reg_update[i].mask,
 				    aqt_codec_reg_update[i].val);
 
 }
 
-static int aqt_soc_codec_probe(struct snd_soc_codec *codec)
+static int aqt_soc_codec_probe(struct snd_soc_component *component)
 {
 	struct aqt1000 *aqt;
 	struct aqt1000_pdata *pdata;
-	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	struct snd_soc_dapm_context *dapm =
+				snd_soc_component_get_dapm(component);
 	int i, ret = 0;
 
-	dev_dbg(codec->dev, "%s()\n", __func__);
-	aqt = snd_soc_codec_get_drvdata(codec);
+	dev_dbg(component->dev, "%s()\n", __func__);
+	aqt = snd_soc_component_get_drvdata(component);
+
+	snd_soc_component_init_regmap(component, aqt->regmap);
 
 	mutex_init(&aqt->codec_mutex);
 	mutex_init(&aqt->i2s_lock);
@@ -3311,7 +3468,7 @@ static int aqt_soc_codec_probe(struct snd_soc_codec *codec)
 	/* Default HPH Mode to Class-H Low HiFi */
 	aqt->hph_mode = CLS_H_LOHIFI;
 
-	aqt->fw_data = devm_kzalloc(codec->dev, sizeof(*(aqt->fw_data)),
+	aqt->fw_data = devm_kzalloc(component->dev, sizeof(*(aqt->fw_data)),
 				      GFP_KERNEL);
 	if (!aqt->fw_data)
 		goto err;
@@ -3328,39 +3485,40 @@ static int aqt_soc_codec_probe(struct snd_soc_codec *codec)
 	}
 
 	ret = wcd_cal_create_hwdep(aqt->fw_data,
-				   AQT1000_CODEC_HWDEP_NODE, codec);
+				   AQT1000_CODEC_HWDEP_NODE, component);
 	if (ret < 0) {
-		dev_err(codec->dev, "%s hwdep failed %d\n", __func__, ret);
+		dev_err(component->dev, "%s hwdep failed %d\n", __func__, ret);
 		goto err_hwdep;
 	}
 
 	/* Initialize MBHC module */
-	ret = aqt_mbhc_init(&aqt->mbhc, codec, aqt->fw_data);
+	ret = aqt_mbhc_init(&aqt->mbhc, component, aqt->fw_data);
 	if (ret) {
 		pr_err("%s: mbhc initialization failed\n", __func__);
 		goto err_hwdep;
 	}
-	aqt->codec = codec;
+	aqt->component = component;
 	for (i = 0; i < COMPANDER_MAX; i++)
 		aqt->comp_enabled[i] = 0;
 
-	aqt_cdc_mclk_enable(codec, true);
+	aqt_cdc_mclk_enable(component, true);
 	aqt_codec_init_reg(aqt);
-	aqt_cdc_mclk_enable(codec, false);
+	aqt_cdc_mclk_enable(component, false);
 
 	/* Add 100usec delay as per HW requirement */
 	usleep_range(100, 110);
 
 	aqt_codec_update_reg(aqt);
 
-	pdata = dev_get_platdata(codec->dev);
+	pdata = dev_get_platdata(component->dev);
 
 	/* If 1.8v is supplied externally, then disable internal 1.8v supply */
 	for (i = 0; i < pdata->num_supplies; i++) {
 		if (!strcmp(pdata->regulator->name, "aqt_vdd1p8")) {
-			snd_soc_update_bits(codec, AQT1000_BUCK_5V_EN_CTL,
-					    0x03, 0x00);
-			dev_dbg(codec->dev, "%s: Disabled internal supply\n",
+			snd_soc_component_update_bits(component,
+					AQT1000_BUCK_5V_EN_CTL,
+					0x03, 0x00);
+			dev_dbg(component->dev, "%s: Disabled internal supply\n",
 				__func__);
 			break;
 		}
@@ -3405,7 +3563,7 @@ static int aqt_soc_codec_probe(struct snd_soc_codec *codec)
 err_hwdep:
 	clk_put(aqt->ext_clk);
 err_clk:
-	devm_kfree(codec->dev, aqt->fw_data);
+	devm_kfree(component->dev, aqt->fw_data);
 	aqt->fw_data = NULL;
 err:
 	mutex_destroy(&aqt->i2s_lock);
@@ -3413,39 +3571,30 @@ err:
 	return ret;
 }
 
-static int aqt_soc_codec_remove(struct snd_soc_codec *codec)
+static void aqt_soc_codec_remove(struct snd_soc_component *component)
 {
-	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000 *aqt = snd_soc_component_get_drvdata(component);
 
 	/* Deinitialize MBHC module */
-	aqt_mbhc_deinit(codec);
+	aqt_mbhc_deinit(component);
 	aqt->mbhc = NULL;
 	mutex_destroy(&aqt->i2s_lock);
 	mutex_destroy(&aqt->codec_mutex);
 	clk_put(aqt->ext_clk);
 
-	return 0;
+	return;
 }
 
-static struct regmap *aqt_get_regmap(struct device *dev)
-{
-	struct aqt1000 *control = dev_get_drvdata(dev);
-
-	return control->regmap;
-}
-
-struct snd_soc_codec_driver snd_cdc_dev_aqt = {
+static const struct snd_soc_component_driver snd_cdc_dev_aqt = {
+	.name = DRV_NAME,
 	.probe = aqt_soc_codec_probe,
 	.remove = aqt_soc_codec_remove,
-	.get_regmap = aqt_get_regmap,
-	.component_driver = {
-		.controls = aqt_snd_controls,
-		.num_controls = ARRAY_SIZE(aqt_snd_controls),
-		.dapm_widgets = aqt_dapm_widgets,
-		.num_dapm_widgets = ARRAY_SIZE(aqt_dapm_widgets),
-		.dapm_routes = aqt_audio_map,
-		.num_dapm_routes = ARRAY_SIZE(aqt_audio_map),
-	},
+	.controls = aqt_snd_controls,
+	.num_controls = ARRAY_SIZE(aqt_snd_controls),
+	.dapm_widgets = aqt_dapm_widgets,
+	.num_dapm_widgets = ARRAY_SIZE(aqt_dapm_widgets),
+	.dapm_routes = aqt_audio_map,
+	.num_dapm_routes = ARRAY_SIZE(aqt_audio_map),
 };
 
 /*
@@ -3456,7 +3605,7 @@ struct snd_soc_codec_driver snd_cdc_dev_aqt = {
  */
 int aqt_register_codec(struct device *dev)
 {
-	return snd_soc_register_codec(dev, &snd_cdc_dev_aqt, aqt_dai,
+	return snd_soc_register_component(dev, &snd_cdc_dev_aqt, aqt_dai,
 					ARRAY_SIZE(aqt_dai));
 }
 EXPORT_SYMBOL(aqt_register_codec);

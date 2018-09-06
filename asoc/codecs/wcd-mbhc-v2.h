@@ -51,7 +51,7 @@
 #define WCD_MBHC_REG_UPDATE_BITS(function, val)         \
 do {                                                    \
 	if (mbhc->wcd_mbhc_regs[function].reg) {        \
-		snd_soc_update_bits(mbhc->codec,	\
+		snd_soc_component_update_bits(mbhc->component,	\
 		mbhc->wcd_mbhc_regs[function].reg,	\
 		mbhc->wcd_mbhc_regs[function].mask,	\
 		val << (mbhc->wcd_mbhc_regs[function].offset)); \
@@ -61,7 +61,7 @@ do {                                                    \
 #define WCD_MBHC_REG_READ(function, val)	        \
 do {                                                    \
 	if (mbhc->wcd_mbhc_regs[function].reg) {        \
-		val = (((snd_soc_read(mbhc->codec,	\
+		val = (((snd_soc_component_read32(mbhc->component,	\
 		mbhc->wcd_mbhc_regs[function].reg)) &	\
 		(mbhc->wcd_mbhc_regs[function].mask)) >> \
 		(mbhc->wcd_mbhc_regs[function].offset)); \
@@ -420,7 +420,7 @@ struct wcd_mbhc_config {
 	void *calibration;
 	bool detect_extn_cable;
 	bool mono_stero_detection;
-	bool (*swap_gnd_mic)(struct snd_soc_codec *codec, bool active);
+	bool (*swap_gnd_mic)(struct snd_soc_component *component, bool active);
 	bool hs_ext_micbias;
 	bool gnd_det_en;
 	int key_code[WCD_MBHC_KEYCODE_NUM];
@@ -452,53 +452,64 @@ struct wcd_mbhc_register {
 };
 
 struct wcd_mbhc_cb {
-	int (*enable_mb_source)(struct wcd_mbhc *, bool);
-	void (*trim_btn_reg)(struct snd_soc_codec *);
-	void (*compute_impedance)(struct wcd_mbhc *, uint32_t *, uint32_t *);
-	void (*set_micbias_value)(struct snd_soc_codec *);
-	void (*set_auto_zeroing)(struct snd_soc_codec *, bool);
-	struct firmware_cal * (*get_hwdep_fw_cal)(struct wcd_mbhc *,
+	int (*enable_mb_source)(struct wcd_mbhc *mbhc, bool turn_on);
+	void (*trim_btn_reg)(struct snd_soc_component *component);
+	void (*compute_impedance)(struct wcd_mbhc *mbhc,
+			uint32_t *zl, uint32_t *zr);
+	void (*set_micbias_value)(struct snd_soc_component *component);
+	void (*set_auto_zeroing)(struct snd_soc_component *component,
+			bool enable);
+	struct firmware_cal * (*get_hwdep_fw_cal)(struct wcd_mbhc *mbhc,
 			enum wcd_cal_type);
-	void (*set_cap_mode)(struct snd_soc_codec *, bool, bool);
-	int (*register_notifier)(struct wcd_mbhc *,
+	void (*set_cap_mode)(struct snd_soc_component *component,
+			bool micbias1, bool micbias2);
+	int (*register_notifier)(struct wcd_mbhc *mbhc,
 				 struct notifier_block *nblock,
 				 bool enable);
-	int (*request_irq)(struct snd_soc_codec *,
-			int, irq_handler_t, const char *, void *);
-	void (*irq_control)(struct snd_soc_codec *,
+	int (*request_irq)(struct snd_soc_component *component,
+			int irq, irq_handler_t handler,
+			const char *name, void *data);
+	void (*irq_control)(struct snd_soc_component *component,
 			int irq, bool enable);
-	int (*free_irq)(struct snd_soc_codec *,
-			int irq, void *);
-	void (*clk_setup)(struct snd_soc_codec *, bool);
-	int (*map_btn_code_to_num)(struct snd_soc_codec *);
-	bool (*lock_sleep)(struct wcd_mbhc *, bool);
-	bool (*micbias_enable_status)(struct wcd_mbhc *, int);
-	void (*mbhc_bias)(struct snd_soc_codec *, bool);
-	void (*mbhc_common_micb_ctrl)(struct snd_soc_codec *,
-				      int event, bool);
-	void (*micb_internal)(struct snd_soc_codec *,
-			int micb_num, bool);
-	bool (*hph_pa_on_status)(struct snd_soc_codec *);
-	void (*set_btn_thr)(struct snd_soc_codec *, s16 *, s16 *,
-			    int num_btn, bool);
-	void (*hph_pull_up_control)(struct snd_soc_codec *,
+	int (*free_irq)(struct snd_soc_component *component,
+			int irq, void *data);
+	void (*clk_setup)(struct snd_soc_component *component, bool enable);
+	int (*map_btn_code_to_num)(struct snd_soc_component *component);
+	bool (*lock_sleep)(struct wcd_mbhc *mbhc, bool lock);
+	bool (*micbias_enable_status)(struct wcd_mbhc *mbhc, int micb_num);
+	void (*mbhc_bias)(struct snd_soc_component *component, bool enable);
+	void (*mbhc_common_micb_ctrl)(struct snd_soc_component *component,
+				      int event, bool enable);
+	void (*micb_internal)(struct snd_soc_component *component,
+			int micb_num, bool enable);
+	bool (*hph_pa_on_status)(struct snd_soc_component *component);
+	void (*set_btn_thr)(struct snd_soc_component *component,
+			    s16 *btn_low, s16 *btn_high,
+			    int num_btn, bool is_micbias);
+	void (*hph_pull_up_control)(struct snd_soc_component *component,
 				    enum mbhc_hs_pullup_iref);
-	int (*mbhc_micbias_control)(struct snd_soc_codec *, int, int req);
-	void (*mbhc_micb_ramp_control)(struct snd_soc_codec *, bool);
-	void (*skip_imped_detect)(struct snd_soc_codec *);
-	bool (*extn_use_mb)(struct snd_soc_codec *);
-	int (*mbhc_micb_ctrl_thr_mic)(struct snd_soc_codec *, int, bool);
-	void (*mbhc_gnd_det_ctrl)(struct snd_soc_codec *, bool);
-	void (*hph_pull_down_ctrl)(struct snd_soc_codec *, bool);
-	void (*mbhc_moisture_config)(struct wcd_mbhc *);
-	bool (*hph_register_recovery)(struct wcd_mbhc *);
-	void (*update_anc_state)(struct snd_soc_codec *codec,
-				 bool enable, int anc_num);
+	int (*mbhc_micbias_control)(struct snd_soc_component *component,
+			int micb_num, int req);
+	void (*mbhc_micb_ramp_control)(struct snd_soc_component *component,
+			bool enable);
+	void (*skip_imped_detect)(struct snd_soc_component *component);
+	bool (*extn_use_mb)(struct snd_soc_component *component);
+	int (*mbhc_micb_ctrl_thr_mic)(struct snd_soc_component *component,
+			int micb_num, bool req_en);
+	void (*mbhc_gnd_det_ctrl)(struct snd_soc_component *component,
+			bool enable);
+	void (*hph_pull_down_ctrl)(struct snd_soc_component *component,
+			bool enable);
+	void (*mbhc_moisture_config)(struct wcd_mbhc *mbhc);
+	bool (*hph_register_recovery)(struct wcd_mbhc *mbhc);
+	void (*update_anc_state)(struct snd_soc_component *component,
+			bool enable, int anc_num);
 	bool (*is_anc_on)(struct wcd_mbhc *mbhc);
-	void (*hph_pull_up_control_v2)(struct snd_soc_codec *, int);
-	bool (*mbhc_get_moisture_status)(struct wcd_mbhc *);
-	void (*mbhc_moisture_polling_ctrl)(struct wcd_mbhc *, bool);
-	void (*mbhc_moisture_detect_en)(struct wcd_mbhc *, bool);
+	void (*hph_pull_up_control_v2)(struct snd_soc_component *component,
+			int pull_up_cur);
+	bool (*mbhc_get_moisture_status)(struct wcd_mbhc *mbhc);
+	void (*mbhc_moisture_polling_ctrl)(struct wcd_mbhc *mbhc, bool enable);
+	void (*mbhc_moisture_detect_en)(struct wcd_mbhc *mbhc, bool enable);
 };
 
 struct wcd_mbhc_fn {
@@ -544,7 +555,7 @@ struct wcd_mbhc {
 	bool is_btn_already_regd;
 	bool extn_cable_hph_rem;
 
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	/* Work to perform MBHC Firmware Read */
 	struct delayed_work mbhc_firmware_dwork;
 	const struct firmware *mbhc_fw;

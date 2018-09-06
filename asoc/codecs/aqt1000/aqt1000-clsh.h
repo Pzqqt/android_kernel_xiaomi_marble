@@ -94,14 +94,14 @@ struct aqt_reg_mask_val {
 	u8 val;
 };
 
-extern void aqt_clsh_fsm(struct snd_soc_codec *codec,
+extern void aqt_clsh_fsm(struct snd_soc_component *component,
 		struct aqt_clsh_cdc_data *cdc_clsh_d,
 		u8 clsh_event, u8 req_state,
 		int int_mode);
 
 extern void aqt_clsh_init(struct aqt_clsh_cdc_data *clsh);
 extern int aqt_clsh_get_clsh_state(struct aqt_clsh_cdc_data *clsh);
-extern void aqt_clsh_imped_config(struct snd_soc_codec *codec, int imped,
-		bool reset);
+extern void aqt_clsh_imped_config(struct snd_soc_component *component,
+		int imped, bool reset);
 
 #endif /* _AQT1000_CLSH_H */

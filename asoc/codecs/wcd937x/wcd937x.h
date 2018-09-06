@@ -7,10 +7,10 @@
 
 #ifdef CONFIG_SND_SOC_WCD937X
 extern int wcd937x_info_create_codec_entry(struct snd_info_entry *codec_root,
-				    struct snd_soc_codec *codec);
+				    struct snd_soc_component *component);
 #else
 extern int wcd937x_info_create_codec_entry(struct snd_info_entry *codec_root,
-				    struct snd_soc_codec *codec)
+				    struct snd_soc_component *component)
 {
 	return 0;
 }

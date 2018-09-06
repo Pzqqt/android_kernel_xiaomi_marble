@@ -13,28 +13,28 @@
 #define WSA881X_MAX_SWR_PORTS   4
 
 #if IS_ENABLED(CONFIG_SND_SOC_WSA881X)
-extern int wsa881x_set_channel_map(struct snd_soc_codec *codec, u8 *port,
-				   u8 num_port, unsigned int *ch_mask,
+extern int wsa881x_set_channel_map(struct snd_soc_component *component,
+				   u8 *port, u8 num_port, unsigned int *ch_mask,
 				   unsigned int *ch_rate, u8 *port_type);
 
 extern const u8 wsa881x_reg_readable[WSA881X_CACHE_SIZE];
 extern struct regmap_config wsa881x_regmap_config;
 extern int wsa881x_codec_info_create_codec_entry(
 					struct snd_info_entry *codec_root,
-					struct snd_soc_codec *codec);
+					struct snd_soc_component *component);
 void wsa881x_regmap_defaults(struct regmap *regmap, u8 version);
 
 #else
-extern int wsa881x_set_channel_map(struct snd_soc_codec *codec, u8 *port,
-				   u8 num_port, unsigned int *ch_mask,
-				   unsigned int *ch_rate, u8 *port_type);
+extern int wsa881x_set_channel_map(struct snd_soc_component *component,
+				   u8 *port, u8 num_port, unsigned int *ch_mask,
+				   unsigned int *ch_rate, u8 *port_type)
 {
 	return 0;
 }
 
 extern int wsa881x_codec_info_create_codec_entry(
 					struct snd_info_entry *codec_root,
-					struct snd_soc_codec *codec)
+					struct snd_soc_component *component)
 {
 	return 0;
 }

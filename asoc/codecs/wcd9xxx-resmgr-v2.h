@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 #ifndef __WCD9XXX_COMMON_V2_H__
 #define __WCD9XXX_COMMON_V2_H__
@@ -20,11 +20,11 @@ enum {
 };
 
 struct wcd_resmgr_cb {
-	int (*cdc_rco_ctrl)(struct snd_soc_codec *, bool);
+	int (*cdc_rco_ctrl)(struct snd_soc_component *component, bool enable);
 };
 
 struct wcd9xxx_resmgr_v2 {
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	struct wcd9xxx_core_resource *core_res;
 
 	int master_bias_users;
@@ -66,11 +66,11 @@ int wcd_resmgr_enable_master_bias(struct wcd9xxx_resmgr_v2 *resmgr);
 int wcd_resmgr_disable_master_bias(struct wcd9xxx_resmgr_v2 *resmgr);
 struct wcd9xxx_resmgr_v2 *wcd_resmgr_init(
 		struct wcd9xxx_core_resource *core_res,
-		struct snd_soc_codec *codec);
+		struct snd_soc_component *component);
 void wcd_resmgr_remove(struct wcd9xxx_resmgr_v2 *resmgr);
 int wcd_resmgr_post_init(struct wcd9xxx_resmgr_v2 *resmgr,
 			 const struct wcd_resmgr_cb *resmgr_cb,
-			 struct snd_soc_codec *codec);
+			 struct snd_soc_component *component);
 int wcd_resmgr_enable_clk_block(struct wcd9xxx_resmgr_v2 *resmgr,
 				enum wcd_clock_type type);
 int wcd_resmgr_disable_clk_block(struct wcd9xxx_resmgr_v2 *resmgr,

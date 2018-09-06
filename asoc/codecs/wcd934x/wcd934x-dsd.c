@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -162,15 +162,15 @@ int tavil_dsd_set_out_select(struct tavil_dsd_config *dsd_conf,
 			     int interp_num)
 {
 	unsigned int reg, val;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 
-	if (!dsd_conf || !dsd_conf->codec)
+	if (!dsd_conf || !dsd_conf->component)
 		return -EINVAL;
 
-	codec = dsd_conf->codec;
+	component = dsd_conf->component;
 
 	if (!is_valid_dsd_interpolator(interp_num)) {
-		dev_err(codec->dev, "%s: Invalid Interpolator: %d for DSD\n",
+		dev_err(component->dev, "%s: Invalid Interpolator: %d for DSD\n",
 			__func__, interp_num);
 		return -EINVAL;
 	}
@@ -196,7 +196,7 @@ int tavil_dsd_set_out_select(struct tavil_dsd_config *dsd_conf,
 		return -EINVAL;
 	}
 
-	snd_soc_update_bits(codec, reg, 0x02, val);
+	snd_soc_component_update_bits(component, reg, 0x02, val);
 
 	return 0;
 }
@@ -210,17 +210,21 @@ EXPORT_SYMBOL(tavil_dsd_set_out_select);
  */
 void tavil_dsd_reset(struct tavil_dsd_config *dsd_conf)
 {
-	if (!dsd_conf || !dsd_conf->codec)
+	if (!dsd_conf || !dsd_conf->component)
 		return;
 
-	snd_soc_update_bits(dsd_conf->codec, WCD934X_CDC_DSD0_PATH_CTL,
-			    0x02, 0x02);
-	snd_soc_update_bits(dsd_conf->codec, WCD934X_CDC_DSD0_PATH_CTL,
-			    0x01, 0x00);
-	snd_soc_update_bits(dsd_conf->codec, WCD934X_CDC_DSD1_PATH_CTL,
-			    0x02, 0x02);
-	snd_soc_update_bits(dsd_conf->codec, WCD934X_CDC_DSD1_PATH_CTL,
-			    0x01, 0x00);
+	snd_soc_component_update_bits(dsd_conf->component,
+			WCD934X_CDC_DSD0_PATH_CTL,
+			0x02, 0x02);
+	snd_soc_component_update_bits(dsd_conf->component,
+			WCD934X_CDC_DSD0_PATH_CTL,
+			0x01, 0x00);
+	snd_soc_component_update_bits(dsd_conf->component,
+			WCD934X_CDC_DSD1_PATH_CTL,
+			0x02, 0x02);
+	snd_soc_component_update_bits(dsd_conf->component,
+			WCD934X_CDC_DSD1_PATH_CTL,
+			0x01, 0x00);
 }
 EXPORT_SYMBOL(tavil_dsd_reset);
 
@@ -240,17 +244,17 @@ void tavil_dsd_set_interp_rate(struct tavil_dsd_config *dsd_conf, u16 rx_port,
 	u8 val0, val1;
 	u8 dsd0_out_sel, dsd1_out_sel;
 	u16 int_fs_reg, interp_num = 0;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 
-	if (!dsd_conf || !dsd_conf->codec)
+	if (!dsd_conf || !dsd_conf->component)
 		return;
 
-	codec = dsd_conf->codec;
+	component = dsd_conf->component;
 
 	dsd_inp_sel = DSD_INP_SEL_RX0 + rx_port - WCD934X_RX_PORT_START_NUMBER;
 
-	val0 = snd_soc_read(codec, WCD934X_CDC_DSD0_CFG0);
-	val1 = snd_soc_read(codec, WCD934X_CDC_DSD1_CFG0);
+	val0 = snd_soc_component_read32(component, WCD934X_CDC_DSD0_CFG0);
+	val1 = snd_soc_component_read32(component, WCD934X_CDC_DSD1_CFG0);
 	dsd0_inp = (val0 & 0x3C) >> 2;
 	dsd1_inp = (val1 & 0x3C) >> 2;
 	dsd0_out_sel = (val0 & 0x02) >> 1;
@@ -270,23 +274,24 @@ void tavil_dsd_set_interp_rate(struct tavil_dsd_config *dsd_conf, u16 rx_port,
 
 	if (interp_num) {
 		int_fs_reg = WCD934X_CDC_RX0_RX_PATH_CTL + 20 * interp_num;
-		if ((snd_soc_read(codec, int_fs_reg) & 0x0f) < 0x09) {
-			dev_dbg(codec->dev, "%s: Set Interp %d to sample_rate val 0x%x\n",
+		if ((snd_soc_component_read32(component, int_fs_reg) & 0x0f) <
+		     0x09) {
+			dev_dbg(component->dev, "%s: Set Interp %d to sample_rate val 0x%x\n",
 				__func__, interp_num, sample_rate_val);
-			snd_soc_update_bits(codec, int_fs_reg, 0x0F,
-					    sample_rate_val);
+			snd_soc_component_update_bits(component, int_fs_reg,
+						0x0F, sample_rate_val);
 		}
 	}
 }
 EXPORT_SYMBOL(tavil_dsd_set_interp_rate);
 
-static int tavil_set_dsd_mode(struct snd_soc_codec *codec, int dsd_num,
+static int tavil_set_dsd_mode(struct snd_soc_component *component, int dsd_num,
 			      u8 *pcm_rate_val)
 {
 	unsigned int dsd_out_sel_reg;
 	u8 dsd_mode;
 	u32 sample_rate;
-	struct tavil_dsd_config *dsd_conf = tavil_get_dsd_config(codec);
+	struct tavil_dsd_config *dsd_conf = tavil_get_dsd_config(component);
 
 	if (!dsd_conf)
 		return -EINVAL;
@@ -307,17 +312,19 @@ static int tavil_set_dsd_mode(struct snd_soc_codec *codec, int dsd_num,
 		*pcm_rate_val = 0xc;
 		break;
 	default:
-		dev_err(codec->dev, "%s: Invalid DSD rate: %d\n",
+		dev_err(component->dev, "%s: Invalid DSD rate: %d\n",
 			__func__, sample_rate);
 		return -EINVAL;
 	}
 
-	snd_soc_update_bits(codec, dsd_out_sel_reg, 0x01, dsd_mode);
+	snd_soc_component_update_bits(component, dsd_out_sel_reg,
+			0x01, dsd_mode);
 
 	return 0;
 }
 
-static void tavil_dsd_data_pull(struct snd_soc_codec *codec, int dsd_num,
+static void tavil_dsd_data_pull(struct snd_soc_component *component,
+				int dsd_num,
 				u8 pcm_rate_val, bool enable)
 {
 	u8 clk_en, mute_en;
@@ -332,37 +339,41 @@ static void tavil_dsd_data_pull(struct snd_soc_codec *codec, int dsd_num,
 	}
 
 	if (dsd_num & 0x01) {
-		snd_soc_update_bits(codec, WCD934X_CDC_RX7_RX_PATH_MIX_CTL,
-				    0x20, clk_en);
-		dsd_inp_sel = (snd_soc_read(codec, WCD934X_CDC_DSD0_CFG0) &
+		snd_soc_component_update_bits(component,
+				WCD934X_CDC_RX7_RX_PATH_MIX_CTL,
+				0x20, clk_en);
+		dsd_inp_sel = (snd_soc_component_read32(
+				component, WCD934X_CDC_DSD0_CFG0) &
 				0x3C) >> 2;
 		dsd_inp_sel = (enable) ? dsd_inp_sel : 0;
 		if (dsd_inp_sel < 9) {
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					WCD934X_CDC_RX_INP_MUX_RX_INT7_CFG1,
 					0x0F, dsd_inp_sel);
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					WCD934X_CDC_RX7_RX_PATH_MIX_CTL,
 					0x0F, pcm_rate_val);
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					WCD934X_CDC_RX7_RX_PATH_MIX_CTL,
 					0x10, mute_en);
 		}
 	}
 	if (dsd_num & 0x02) {
-		snd_soc_update_bits(codec, WCD934X_CDC_RX8_RX_PATH_MIX_CTL,
-				    0x20, clk_en);
-		dsd_inp_sel = (snd_soc_read(codec, WCD934X_CDC_DSD1_CFG0) &
+		snd_soc_component_update_bits(component,
+				WCD934X_CDC_RX8_RX_PATH_MIX_CTL,
+				0x20, clk_en);
+		dsd_inp_sel = (snd_soc_component_read32(
+				component, WCD934X_CDC_DSD1_CFG0) &
 				0x3C) >> 2;
 		dsd_inp_sel = (enable) ? dsd_inp_sel : 0;
 		if (dsd_inp_sel < 9) {
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					WCD934X_CDC_RX_INP_MUX_RX_INT8_CFG1,
 					0x0F, dsd_inp_sel);
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					WCD934X_CDC_RX8_RX_PATH_MIX_CTL,
 					0x0F, pcm_rate_val);
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					WCD934X_CDC_RX8_RX_PATH_MIX_CTL,
 					0x10, mute_en);
 		}
@@ -371,85 +382,99 @@ static void tavil_dsd_data_pull(struct snd_soc_codec *codec, int dsd_num,
 
 static void tavil_dsd_update_volume(struct tavil_dsd_config *dsd_conf)
 {
-	snd_soc_update_bits(dsd_conf->codec, WCD934X_CDC_TOP_TOP_CFG0,
-			    0x01, 0x01);
-	snd_soc_update_bits(dsd_conf->codec, WCD934X_CDC_TOP_TOP_CFG0,
-			    0x01, 0x00);
+	snd_soc_component_update_bits(dsd_conf->component,
+				WCD934X_CDC_TOP_TOP_CFG0,
+				0x01, 0x01);
+	snd_soc_component_update_bits(dsd_conf->component,
+				WCD934X_CDC_TOP_TOP_CFG0,
+				0x01, 0x00);
 }
 
 static int tavil_enable_dsd(struct snd_soc_dapm_widget *w,
 			    struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
-	struct tavil_dsd_config *dsd_conf = tavil_get_dsd_config(codec);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+	struct tavil_dsd_config *dsd_conf = tavil_get_dsd_config(component);
 	int rc, clk_users;
 	int interp_idx;
 	u8 pcm_rate_val;
 
 	if (!dsd_conf) {
-		dev_err(codec->dev, "%s: null dsd_config pointer\n", __func__);
+		dev_err(component->dev, "%s: null dsd_config pointer\n",
+			__func__);
 		return -EINVAL;
 	}
 
-	dev_dbg(codec->dev, "%s: DSD%d, event: %d\n", __func__,
+	dev_dbg(component->dev, "%s: DSD%d, event: %d\n", __func__,
 		w->shift, event);
 
 	if (w->shift == DSD0) {
 		/* Read out select */
-		if (snd_soc_read(codec, WCD934X_CDC_DSD0_CFG0) & 0x02)
+		if (snd_soc_component_read32(
+			component, WCD934X_CDC_DSD0_CFG0) & 0x02)
 			interp_idx = INTERP_LO1;
 		else
 			interp_idx = INTERP_HPHL;
 	} else if (w->shift == DSD1) {
 		/* Read out select */
-		if (snd_soc_read(codec, WCD934X_CDC_DSD1_CFG0) & 0x02)
+		if (snd_soc_component_read32(
+			component, WCD934X_CDC_DSD1_CFG0) & 0x02)
 			interp_idx = INTERP_LO2;
 		else
 			interp_idx = INTERP_HPHR;
 	} else {
-		dev_err(codec->dev, "%s: Unsupported DSD:%d\n",
+		dev_err(component->dev, "%s: Unsupported DSD:%d\n",
 			__func__, w->shift);
 		return -EINVAL;
 	}
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		clk_users = tavil_codec_enable_interp_clk(codec, event,
+		clk_users = tavil_codec_enable_interp_clk(component, event,
 							  interp_idx);
 
-		rc = tavil_set_dsd_mode(codec, w->shift, &pcm_rate_val);
+		rc = tavil_set_dsd_mode(component, w->shift, &pcm_rate_val);
 		if (rc)
 			return rc;
 
-		tavil_dsd_data_pull(codec, (1 << w->shift), pcm_rate_val,
+		tavil_dsd_data_pull(component, (1 << w->shift), pcm_rate_val,
 				    true);
 
-		snd_soc_update_bits(codec,
+		snd_soc_component_update_bits(component,
 				    WCD934X_CDC_CLK_RST_CTRL_DSD_CONTROL, 0x01,
 				    0x01);
 		if (w->shift == DSD0) {
-			snd_soc_update_bits(codec, WCD934X_CDC_DSD0_PATH_CTL,
-					    0x02, 0x02);
-			snd_soc_update_bits(codec, WCD934X_CDC_DSD0_PATH_CTL,
-					    0x02, 0x00);
-			snd_soc_update_bits(codec, WCD934X_CDC_DSD0_PATH_CTL,
-					    0x01, 0x01);
+			snd_soc_component_update_bits(component,
+					WCD934X_CDC_DSD0_PATH_CTL,
+					0x02, 0x02);
+			snd_soc_component_update_bits(component,
+					WCD934X_CDC_DSD0_PATH_CTL,
+					0x02, 0x00);
+			snd_soc_component_update_bits(component,
+					WCD934X_CDC_DSD0_PATH_CTL,
+					0x01, 0x01);
 			/* Apply Gain */
-			snd_soc_write(codec, WCD934X_CDC_DSD0_CFG1,
-				      dsd_conf->volume[DSD0]);
+			snd_soc_component_write(component,
+					WCD934X_CDC_DSD0_CFG1,
+					dsd_conf->volume[DSD0]);
 			if (dsd_conf->version == TAVIL_VERSION_1_1)
 				tavil_dsd_update_volume(dsd_conf);
 
 		} else if (w->shift == DSD1) {
-			snd_soc_update_bits(codec, WCD934X_CDC_DSD1_PATH_CTL,
-					    0x02, 0x02);
-			snd_soc_update_bits(codec, WCD934X_CDC_DSD1_PATH_CTL,
-					    0x02, 0x00);
-			snd_soc_update_bits(codec, WCD934X_CDC_DSD1_PATH_CTL,
-					    0x01, 0x01);
+			snd_soc_component_update_bits(component,
+					WCD934X_CDC_DSD1_PATH_CTL,
+					0x02, 0x02);
+			snd_soc_component_update_bits(component,
+					WCD934X_CDC_DSD1_PATH_CTL,
+					0x02, 0x00);
+			snd_soc_component_update_bits(component,
+					WCD934X_CDC_DSD1_PATH_CTL,
+					0x01, 0x01);
 			/* Apply Gain */
-			snd_soc_write(codec, WCD934X_CDC_DSD1_CFG1,
-				      dsd_conf->volume[DSD1]);
+			snd_soc_component_write(component,
+					WCD934X_CDC_DSD1_CFG1,
+					dsd_conf->volume[DSD1]);
 			if (dsd_conf->version == TAVIL_VERSION_1_1)
 				tavil_dsd_update_volume(dsd_conf);
 		}
@@ -457,14 +482,15 @@ static int tavil_enable_dsd(struct snd_soc_dapm_widget *w,
 		usleep_range(10000, 10100);
 
 		if (clk_users > 1) {
-			snd_soc_update_bits(codec, WCD934X_ANA_RX_SUPPLIES,
-					    0x02, 0x02);
+			snd_soc_component_update_bits(component,
+					WCD934X_ANA_RX_SUPPLIES,
+					0x02, 0x02);
 			if (w->shift == DSD0)
-				snd_soc_update_bits(codec,
+				snd_soc_component_update_bits(component,
 						    WCD934X_CDC_DSD0_CFG2,
 						    0x04, 0x00);
 			if (w->shift == DSD1)
-				snd_soc_update_bits(codec,
+				snd_soc_component_update_bits(component,
 						    WCD934X_CDC_DSD1_CFG2,
 						    0x04, 0x00);
 
@@ -472,25 +498,31 @@ static int tavil_enable_dsd(struct snd_soc_dapm_widget *w,
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		if (w->shift == DSD0) {
-			snd_soc_update_bits(codec, WCD934X_CDC_DSD0_CFG2,
-					    0x04, 0x04);
-			snd_soc_update_bits(codec, WCD934X_CDC_DSD0_PATH_CTL,
-					    0x01, 0x00);
+			snd_soc_component_update_bits(component,
+					WCD934X_CDC_DSD0_CFG2,
+					0x04, 0x04);
+			snd_soc_component_update_bits(component,
+					WCD934X_CDC_DSD0_PATH_CTL,
+					0x01, 0x00);
 		} else if (w->shift == DSD1) {
-			snd_soc_update_bits(codec, WCD934X_CDC_DSD1_CFG2,
-					    0x04, 0x04);
-			snd_soc_update_bits(codec, WCD934X_CDC_DSD1_PATH_CTL,
-					    0x01, 0x00);
+			snd_soc_component_update_bits(component,
+					WCD934X_CDC_DSD1_CFG2,
+					0x04, 0x04);
+			snd_soc_component_update_bits(component,
+					WCD934X_CDC_DSD1_PATH_CTL,
+					0x01, 0x00);
 		}
 
-		tavil_codec_enable_interp_clk(codec, event, interp_idx);
+		tavil_codec_enable_interp_clk(component, event, interp_idx);
 
-		if (!(snd_soc_read(codec, WCD934X_CDC_DSD0_PATH_CTL) & 0x01) &&
-		    !(snd_soc_read(codec, WCD934X_CDC_DSD1_PATH_CTL) & 0x01)) {
-			snd_soc_update_bits(codec,
+		if (!(snd_soc_component_read32(
+			component, WCD934X_CDC_DSD0_PATH_CTL) & 0x01) &&
+		    !(snd_soc_component_read32(
+			component, WCD934X_CDC_DSD1_PATH_CTL) & 0x01)) {
+			snd_soc_component_update_bits(component,
 					WCD934X_CDC_CLK_RST_CTRL_DSD_CONTROL,
 					0x01, 0x00);
-			tavil_dsd_data_pull(codec, 0x03, 0x04, false);
+			tavil_dsd_data_pull(component, 0x03, 0x04, false);
 			tavil_dsd_reset(dsd_conf);
 		}
 		break;
@@ -513,8 +545,9 @@ static int tavil_dsd_vol_info(struct snd_kcontrol *kcontrol,
 static int tavil_dsd_vol_put(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct tavil_dsd_config *dsd_conf = tavil_get_dsd_config(codec);
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct tavil_dsd_config *dsd_conf = tavil_get_dsd_config(component);
 	int nv[DSD_MAX], cv[DSD_MAX];
 	int step_size, nv1;
 	int i, dsd_idx;
@@ -537,7 +570,7 @@ static int tavil_dsd_vol_put(struct snd_kcontrol *kcontrol,
 		if (cv[dsd_idx] == nv[dsd_idx])
 			continue;
 
-		dev_dbg(codec->dev, "%s: DSD%d cur.vol: %d, new vol: %d\n",
+		dev_dbg(component->dev, "%s: DSD%d cur.vol: %d, new vol: %d\n",
 			__func__, dsd_idx, cv[dsd_idx], nv[dsd_idx]);
 
 		step_size =  (nv[dsd_idx] - cv[dsd_idx]) /
@@ -547,7 +580,7 @@ static int tavil_dsd_vol_put(struct snd_kcontrol *kcontrol,
 
 		for (i = 0; i < DSD_VOLUME_STEPS; i++) {
 			nv1 += step_size;
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				      WCD934X_CDC_DSD0_CFG1 + 16 * dsd_idx,
 				      nv1);
 			if (dsd_conf->version == TAVIL_VERSION_1_1)
@@ -559,7 +592,7 @@ static int tavil_dsd_vol_put(struct snd_kcontrol *kcontrol,
 				      DSD_VOLUME_USLEEP_MARGIN_US));
 		}
 		if (nv1 != nv[dsd_idx]) {
-			snd_soc_write(codec,
+			snd_soc_component_write(component,
 				      WCD934X_CDC_DSD0_CFG1 + 16 * dsd_idx,
 				      nv[dsd_idx]);
 
@@ -579,8 +612,9 @@ done:
 static int tavil_dsd_vol_get(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct tavil_dsd_config *dsd_conf = tavil_get_dsd_config(codec);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct tavil_dsd_config *dsd_conf = tavil_get_dsd_config(component);
 
 	if (dsd_conf) {
 		ucontrol->value.integer.value[0] = dsd_conf->volume[DSD0];
@@ -618,45 +652,63 @@ static const struct snd_soc_dapm_widget tavil_dsd_widgets[] = {
 /**
  * tavil_dsd_post_ssr_init - DSD intialization after subsystem restart
  *
- * @codec: pointer to snd_soc_codec
+ * @component: pointer to snd_soc_component
  *
  * Returns 0 on success or error on failure
  */
 int tavil_dsd_post_ssr_init(struct tavil_dsd_config *dsd_conf)
 {
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 
-	if (!dsd_conf || !dsd_conf->codec)
+	if (!dsd_conf || !dsd_conf->component)
 		return -EINVAL;
 
-	codec = dsd_conf->codec;
+	component = dsd_conf->component;
 	/* Disable DSD Interrupts */
-	snd_soc_update_bits(codec, WCD934X_INTR_CODEC_MISC_MASK, 0x08, 0x08);
+	snd_soc_component_update_bits(component,
+				WCD934X_INTR_CODEC_MISC_MASK,
+				0x08, 0x08);
 
 	/* DSD registers init */
 	if (dsd_conf->version == TAVIL_VERSION_1_0) {
-		snd_soc_update_bits(codec, WCD934X_CDC_DSD0_CFG2, 0x02, 0x00);
-		snd_soc_update_bits(codec, WCD934X_CDC_DSD1_CFG2, 0x02, 0x00);
+		snd_soc_component_update_bits(component,
+				WCD934X_CDC_DSD0_CFG2,
+				0x02, 0x00);
+		snd_soc_component_update_bits(component,
+				WCD934X_CDC_DSD1_CFG2,
+				0x02, 0x00);
 	}
 	/* DSD0: Mute EN */
-	snd_soc_update_bits(codec, WCD934X_CDC_DSD0_CFG2, 0x04, 0x04);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DSD0_CFG2,
+				0x04, 0x04);
 	/* DSD1: Mute EN */
-	snd_soc_update_bits(codec, WCD934X_CDC_DSD1_CFG2, 0x04, 0x04);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG3, 0x10,
-			    0x10);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG3, 0x10,
-			    0x10);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG0, 0x0E,
-			    0x0A);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG0, 0x0E,
-			    0x0A);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG1, 0x07,
-			    0x04);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG1, 0x07,
-			    0x04);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DSD1_CFG2,
+				0x04, 0x04);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG3,
+				0x10, 0x10);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG3,
+				0x10, 0x10);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG0,
+				0x0E, 0x0A);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG0,
+				0x0E, 0x0A);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG1,
+				0x07, 0x04);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG1,
+				0x07, 0x04);
 
 	/* Enable DSD Interrupts */
-	snd_soc_update_bits(codec, WCD934X_INTR_CODEC_MISC_MASK, 0x08, 0x00);
+	snd_soc_component_update_bits(component,
+				WCD934X_INTR_CODEC_MISC_MASK,
+				0x08, 0x00);
 
 	return 0;
 }
@@ -665,60 +717,71 @@ EXPORT_SYMBOL(tavil_dsd_post_ssr_init);
 /**
  * tavil_dsd_init - DSD intialization
  *
- * @codec: pointer to snd_soc_codec
+ * @component: pointer to snd_soc_component
  *
  * Returns pointer to tavil_dsd_config for success or NULL for failure
  */
-struct tavil_dsd_config *tavil_dsd_init(struct snd_soc_codec *codec)
+struct tavil_dsd_config *tavil_dsd_init(struct snd_soc_component *component)
 {
 	struct snd_soc_dapm_context *dapm;
 	struct tavil_dsd_config *dsd_conf;
 	u8 val;
 
-	if (!codec)
+	if (!component)
 		return NULL;
 
-	dapm = snd_soc_codec_get_dapm(codec);
+	dapm = snd_soc_component_get_dapm(component);
 
 	/* Read efuse register to check if DSD is supported */
-	val = snd_soc_read(codec, WCD934X_CHIP_TIER_CTRL_EFUSE_VAL_OUT14);
+	val = snd_soc_component_read32(component,
+				WCD934X_CHIP_TIER_CTRL_EFUSE_VAL_OUT14);
 	if (val & 0x80) {
-		dev_info(codec->dev, "%s: DSD unsupported for this codec version\n",
+		dev_info(component->dev, "%s: DSD unsupported for this codec version\n",
 			 __func__);
 		return NULL;
 	}
 
-	dsd_conf = devm_kzalloc(codec->dev, sizeof(struct tavil_dsd_config),
+	dsd_conf = devm_kzalloc(component->dev, sizeof(struct tavil_dsd_config),
 				GFP_KERNEL);
 	if (!dsd_conf)
 		return NULL;
 
-	dsd_conf->codec = codec;
+	dsd_conf->component = component;
 
 	/* Read version */
-	dsd_conf->version = snd_soc_read(codec,
+	dsd_conf->version = snd_soc_component_read32(component,
 					 WCD934X_CHIP_TIER_CTRL_CHIP_ID_BYTE0);
 	/* DSD registers init */
 	if (dsd_conf->version == TAVIL_VERSION_1_0) {
-		snd_soc_update_bits(codec, WCD934X_CDC_DSD0_CFG2, 0x02, 0x00);
-		snd_soc_update_bits(codec, WCD934X_CDC_DSD1_CFG2, 0x02, 0x00);
+		snd_soc_component_update_bits(component, WCD934X_CDC_DSD0_CFG2,
+					0x02, 0x00);
+		snd_soc_component_update_bits(component, WCD934X_CDC_DSD1_CFG2,
+					0x02, 0x00);
 	}
 	/* DSD0: Mute EN */
-	snd_soc_update_bits(codec, WCD934X_CDC_DSD0_CFG2, 0x04, 0x04);
+	snd_soc_component_update_bits(component, WCD934X_CDC_DSD0_CFG2,
+				0x04, 0x04);
 	/* DSD1: Mute EN */
-	snd_soc_update_bits(codec, WCD934X_CDC_DSD1_CFG2, 0x04, 0x04);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG3, 0x10,
-			    0x10);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG3, 0x10,
-			    0x10);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG0, 0x0E,
-			    0x0A);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG0, 0x0E,
-			    0x0A);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG1, 0x07,
-			    0x04);
-	snd_soc_update_bits(codec, WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG1, 0x07,
-			    0x04);
+	snd_soc_component_update_bits(component, WCD934X_CDC_DSD1_CFG2,
+				0x04, 0x04);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG3,
+				0x10, 0x10);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG3,
+				0x10, 0x10);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG0,
+				0x0E, 0x0A);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG0,
+				0x0E, 0x0A);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD0_DEBUG_CFG1,
+				0x07, 0x04);
+	snd_soc_component_update_bits(component,
+				WCD934X_CDC_DEBUG_DSD1_DEBUG_CFG1,
+				0x07, 0x04);
 
 	snd_soc_dapm_new_controls(dapm, tavil_dsd_widgets,
 				  ARRAY_SIZE(tavil_dsd_widgets));
@@ -730,11 +793,12 @@ struct tavil_dsd_config *tavil_dsd_init(struct snd_soc_codec *codec)
 	dsd_conf->volume[DSD0] = DSD_VOLUME_MAX_0dB;
 	dsd_conf->volume[DSD1] = DSD_VOLUME_MAX_0dB;
 
-	snd_soc_add_codec_controls(codec, tavil_dsd_vol_controls,
+	snd_soc_add_component_controls(component, tavil_dsd_vol_controls,
 				   ARRAY_SIZE(tavil_dsd_vol_controls));
 
 	/* Enable DSD Interrupts */
-	snd_soc_update_bits(codec, WCD934X_INTR_CODEC_MISC_MASK, 0x08, 0x00);
+	snd_soc_component_update_bits(component,
+				WCD934X_INTR_CODEC_MISC_MASK, 0x08, 0x00);
 
 	return dsd_conf;
 }
@@ -747,18 +811,19 @@ EXPORT_SYMBOL(tavil_dsd_init);
  */
 void tavil_dsd_deinit(struct tavil_dsd_config *dsd_conf)
 {
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 
 	if (!dsd_conf)
 		return;
 
-	codec = dsd_conf->codec;
+	component = dsd_conf->component;
 
 	mutex_destroy(&dsd_conf->vol_mutex);
 
 	/* Disable DSD Interrupts */
-	snd_soc_update_bits(codec, WCD934X_INTR_CODEC_MISC_MASK, 0x08, 0x08);
+	snd_soc_component_update_bits(component,
+			WCD934X_INTR_CODEC_MISC_MASK, 0x08, 0x08);
 
-	devm_kfree(codec->dev, dsd_conf);
+	devm_kfree(component->dev, dsd_conf);
 }
 EXPORT_SYMBOL(tavil_dsd_deinit);

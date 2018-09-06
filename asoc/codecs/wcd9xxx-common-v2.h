@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _WCD9XXX_COMMON_V2
@@ -141,15 +141,15 @@ struct wcd_reg_mask_val {
 	u8	val;
 };
 
-extern void wcd_clsh_fsm(struct snd_soc_codec *codec,
+extern void wcd_clsh_fsm(struct snd_soc_component *component,
 		struct wcd_clsh_cdc_data *cdc_clsh_d,
 		u8 clsh_event, u8 req_state,
 		int int_mode);
 
 extern void wcd_clsh_init(struct wcd_clsh_cdc_data *clsh);
 extern int wcd_clsh_get_clsh_state(struct wcd_clsh_cdc_data *clsh);
-extern void wcd_clsh_imped_config(struct snd_soc_codec *codec, int imped,
-		bool reset);
+extern void wcd_clsh_imped_config(struct snd_soc_component *component,
+		int imped, bool reset);
 
 enum {
 	RESERVED = 0,

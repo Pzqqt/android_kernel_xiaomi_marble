@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __WCD934X_DSD_H__
@@ -27,7 +27,7 @@ enum {
 };
 
 struct tavil_dsd_config {
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	unsigned int dsd_interp_mixer[INTERP_MAX];
 	u32 base_sample_rate[DSD_MAX];
 	int volume[DSD_MAX];
@@ -45,7 +45,7 @@ int tavil_dsd_set_out_select(struct tavil_dsd_config *dsd_conf,
 void tavil_dsd_reset(struct tavil_dsd_config *dsd_conf);
 void tavil_dsd_set_interp_rate(struct tavil_dsd_config *dsd_conf, u16 rx_port,
 			       u32 sample_rate, u8 sample_rate_val);
-struct tavil_dsd_config *tavil_dsd_init(struct snd_soc_codec *codec);
+struct tavil_dsd_config *tavil_dsd_init(struct snd_soc_component *component);
 void tavil_dsd_deinit(struct tavil_dsd_config *dsd_config);
 int tavil_dsd_post_ssr_init(struct tavil_dsd_config *dsd_config);
 #else
@@ -74,7 +74,7 @@ void tavil_dsd_set_interp_rate(struct tavil_dsd_config *dsd_conf, u16 rx_port,
 			       u32 sample_rate, u8 sample_rate_val)
 {  }
 
-struct tavil_dsd_config *tavil_dsd_init(struct snd_soc_codec *codec)
+struct tavil_dsd_config *tavil_dsd_init(struct snd_soc_component *component)
 {
 	return NULL;
 }

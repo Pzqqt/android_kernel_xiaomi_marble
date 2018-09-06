@@ -49,8 +49,9 @@ static int wcd_resmgr_codec_reg_update_bits(struct wcd9xxx_resmgr_v2 *resmgr,
 		if (reg == WCD93XX_CLK_SYS_MCLK_PRG)
 			return 0;
 	}
-	if (resmgr->codec) {
-		ret = snd_soc_update_bits(resmgr->codec, reg, mask, val);
+	if (resmgr->component) {
+		ret = snd_soc_component_update_bits(resmgr->component, reg,
+					mask, val);
 	} else if (resmgr->core_res->wcd_core_regmap) {
 		ret = regmap_update_bits_check(
 				resmgr->core_res->wcd_core_regmap,
@@ -77,8 +78,8 @@ static int wcd_resmgr_codec_reg_read(struct wcd9xxx_resmgr_v2 *resmgr,
 		if (reg == WCD93XX_CLK_SYS_MCLK_PRG)
 			return 0;
 	}
-	if (resmgr->codec) {
-		val = snd_soc_read(resmgr->codec, reg);
+	if (resmgr->component) {
+		val = snd_soc_component_read32(resmgr->component, reg);
 	} else if (resmgr->core_res->wcd_core_regmap) {
 		ret = regmap_read(resmgr->core_res->wcd_core_regmap,
 				  reg, &val);
@@ -114,8 +115,8 @@ static void wcd_resmgr_cdc_specific_get_clk(struct wcd9xxx_resmgr_v2 *resmgr,
 		if (resmgr->resmgr_cb &&
 		    resmgr->resmgr_cb->cdc_rco_ctrl) {
 			while (clk_users--)
-				resmgr->resmgr_cb->cdc_rco_ctrl(resmgr->codec,
-								true);
+				resmgr->resmgr_cb->cdc_rco_ctrl(
+					resmgr->component, true);
 		}
 	}
 }
@@ -608,11 +609,11 @@ EXPORT_SYMBOL(wcd_resmgr_disable_clk_block);
  * wcd_resmgr_init: initialize wcd resource manager
  * @core_res: handle to struct wcd9xxx_core_resource
  *
- * Early init call without a handle to snd_soc_codec *
+ * Early init call without a handle to snd_soc_component *
  */
 struct wcd9xxx_resmgr_v2 *wcd_resmgr_init(
 		struct wcd9xxx_core_resource *core_res,
-		struct snd_soc_codec *codec)
+		struct snd_soc_component *component)
 {
 	struct wcd9xxx_resmgr_v2 *resmgr;
 	struct wcd9xxx *wcd9xxx;
@@ -634,7 +635,7 @@ struct wcd9xxx_resmgr_v2 *wcd_resmgr_init(
 	resmgr->clk_mclk_users = 0;
 	resmgr->clk_rco_users = 0;
 	resmgr->master_bias_users = 0;
-	resmgr->codec = codec;
+	resmgr->component = component;
 	resmgr->core_res = core_res;
 	resmgr->sido_input_src = SIDO_SOURCE_INTERNAL;
 	resmgr->codec_type = wcd9xxx->type;
@@ -658,24 +659,24 @@ EXPORT_SYMBOL(wcd_resmgr_remove);
  * wcd_resmgr_post_init: post init call to assign codec handle
  * @resmgr: handle to struct wcd9xxx_resmgr_v2 created during early init
  * @resmgr_cb: codec callback function for resmgr
- * @codec: handle to struct snd_soc_codec
+ * @component: handle to struct snd_soc_component
  */
 int wcd_resmgr_post_init(struct wcd9xxx_resmgr_v2 *resmgr,
 			 const struct wcd_resmgr_cb *resmgr_cb,
-			 struct snd_soc_codec *codec)
+			 struct snd_soc_component *component)
 {
 	if (!resmgr) {
 		pr_err("%s: resmgr not allocated\n", __func__);
 		return -EINVAL;
 	}
 
-	if (!codec) {
+	if (!component) {
 		pr_err("%s: Codec memory is NULL, nothing to post init\n",
 			__func__);
 		return -EINVAL;
 	}
 
-	resmgr->codec = codec;
+	resmgr->component = component;
 	resmgr->resmgr_cb = resmgr_cb;
 
 	return 0;

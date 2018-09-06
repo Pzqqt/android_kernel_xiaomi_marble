@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/* Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2018, The Linux Foundation. All rights reserved.
  */
 #ifndef __WCD_MBHC_V2_API_H__
 #define __WCD_MBHC_V2_API_H__
@@ -10,7 +10,7 @@
 int wcd_mbhc_start(struct wcd_mbhc *mbhc,
 		       struct wcd_mbhc_config *mbhc_cfg);
 void wcd_mbhc_stop(struct wcd_mbhc *mbhc);
-int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_codec *codec,
+int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_component *component,
 		      const struct wcd_mbhc_cb *mbhc_cb,
 		      const struct wcd_mbhc_intr *mbhc_cdc_intr_ids,
 		      struct wcd_mbhc_register *wcd_mbhc_regs,
@@ -23,7 +23,7 @@ void wcd_mbhc_deinit(struct wcd_mbhc *mbhc);
 static inline void wcd_mbhc_stop(struct wcd_mbhc *mbhc)
 {
 }
-int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_codec *codec,
+int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_component *component,
 		      const struct wcd_mbhc_cb *mbhc_cb,
 		      const struct wcd_mbhc_intr *mbhc_cdc_intr_ids,
 		      struct wcd_mbhc_register *wcd_mbhc_regs,

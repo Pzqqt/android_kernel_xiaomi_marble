@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/* Copyright (c) 2011-2014, 2017 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2014, 2017-2018 The Linux Foundation. All rights reserved.
 
  */
 #include <linux/platform_device.h>
@@ -9,6 +9,8 @@
 #include <sound/core.h>
 #include <sound/pcm.h>
 #include <sound/soc.h>
+
+#define DRV_NAME "msm-stub-codec"
 
 /* A dummy driver useful only to advertise hardware parameters */
 static struct snd_soc_dai_driver msm_stub_dais[] = {
@@ -35,19 +37,21 @@ static struct snd_soc_dai_driver msm_stub_dais[] = {
 	},
 };
 
-static struct snd_soc_codec_driver soc_msm_stub = {};
+static const struct snd_soc_component_driver soc_msm_stub = {
+	.name = DRV_NAME,
+};
 
 static int msm_stub_dev_probe(struct platform_device *pdev)
 {
 	dev_dbg(&pdev->dev, "dev name %s\n", dev_name(&pdev->dev));
 
-	return snd_soc_register_codec(&pdev->dev,
+	return snd_soc_register_component(&pdev->dev,
 	&soc_msm_stub, msm_stub_dais, ARRAY_SIZE(msm_stub_dais));
 }
 
 static int msm_stub_dev_remove(struct platform_device *pdev)
 {
-	snd_soc_unregister_codec(&pdev->dev);
+	snd_soc_unregister_component(&pdev->dev);
 	return 0;
 }
 static const struct of_device_id msm_stub_codec_dt_match[] = {

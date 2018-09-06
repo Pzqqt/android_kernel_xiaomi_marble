@@ -95,7 +95,7 @@ struct va_macro_priv {
 	bool va_without_decimation;
 	struct clk *va_core_clk;
 	struct mutex mclk_lock;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	struct hpf_work va_hpf_work[VA_MACRO_NUM_DECIMATORS];
 	struct va_mute_work va_mute_dwork[VA_MACRO_NUM_DECIMATORS];
 	unsigned long active_ch_mask[VA_MACRO_MAX_DAIS];
@@ -113,20 +113,20 @@ struct va_macro_priv {
 	int micb_users;
 };
 
-static bool va_macro_get_data(struct snd_soc_codec *codec,
+static bool va_macro_get_data(struct snd_soc_component *component,
 			      struct device **va_dev,
 			      struct va_macro_priv **va_priv,
 			      const char *func_name)
 {
-	*va_dev = bolero_get_device_ptr(codec->dev, VA_MACRO);
+	*va_dev = bolero_get_device_ptr(component->dev, VA_MACRO);
 	if (!(*va_dev)) {
-		dev_err(codec->dev,
+		dev_err(component->dev,
 			"%s: null device for macro!\n", func_name);
 		return false;
 	}
 	*va_priv = dev_get_drvdata((*va_dev));
-	if (!(*va_priv) || !(*va_priv)->codec) {
-		dev_err(codec->dev,
+	if (!(*va_priv) || !(*va_priv)->component) {
+		dev_err(component->dev,
 			"%s: priv is null for macro!\n", func_name);
 		return false;
 	}
@@ -200,14 +200,14 @@ exit:
 	return ret;
 }
 
-static int va_macro_event_handler(struct snd_soc_codec *codec, u16 event,
-				  u32 data)
+static int va_macro_event_handler(struct snd_soc_component *component,
+				  u16 event, u32 data)
 {
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 	int retry_cnt = MAX_RETRY_ATTEMPTS;
 
-	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
 	switch (event) {
@@ -237,12 +237,13 @@ static int va_macro_event_handler(struct snd_soc_codec *codec, u16 event,
 static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			       struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
 	int ret = 0;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 
-	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
 	dev_dbg(va_dev, "%s: event = %d\n", __func__, event);
@@ -285,14 +286,14 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	struct delayed_work *hpf_delayed_work;
 	struct hpf_work *hpf_work;
 	struct va_macro_priv *va_priv;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	u16 dec_cfg_reg, hpf_gate_reg;
 	u8 hpf_cut_off_freq;
 
 	hpf_delayed_work = to_delayed_work(work);
 	hpf_work = container_of(hpf_delayed_work, struct hpf_work, dwork);
 	va_priv = hpf_work->va_priv;
-	codec = va_priv->codec;
+	component = va_priv->component;
 	hpf_cut_off_freq = hpf_work->hpf_cut_off_freq;
 
 	dec_cfg_reg = BOLERO_CDC_VA_TX0_TX_PATH_CFG0 +
@@ -303,18 +304,19 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	dev_dbg(va_priv->dev, "%s: decimator %u hpf_cut_of_freq 0x%x\n",
 		__func__, hpf_work->decimator, hpf_cut_off_freq);
 
-	snd_soc_update_bits(codec, dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
-			    hpf_cut_off_freq << 5);
-	snd_soc_update_bits(codec, hpf_gate_reg, 0x03, 0x02);
+	snd_soc_component_update_bits(component,
+			dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
+			hpf_cut_off_freq << 5);
+	snd_soc_component_update_bits(component, hpf_gate_reg, 0x03, 0x02);
 	/* Minimum 1 clk cycle delay is required as per HW spec */
 	usleep_range(1000, 1010);
-	snd_soc_update_bits(codec, hpf_gate_reg, 0x03, 0x01);
+	snd_soc_component_update_bits(component, hpf_gate_reg, 0x03, 0x01);
 }
 
 static void va_macro_mute_update_callback(struct work_struct *work)
 {
 	struct va_mute_work *va_mute_dwork;
-	struct snd_soc_codec *codec = NULL;
+	struct snd_soc_component *component = NULL;
 	struct va_macro_priv *va_priv;
 	struct delayed_work *delayed_work;
 	u16 tx_vol_ctl_reg, decimator;
@@ -322,13 +324,13 @@ static void va_macro_mute_update_callback(struct work_struct *work)
 	delayed_work = to_delayed_work(work);
 	va_mute_dwork = container_of(delayed_work, struct va_mute_work, dwork);
 	va_priv = va_mute_dwork->va_priv;
-	codec = va_priv->codec;
+	component = va_priv->component;
 	decimator = va_mute_dwork->decimator;
 
 	tx_vol_ctl_reg =
 		BOLERO_CDC_VA_TX0_TX_PATH_CTL +
 			VA_MACRO_TX_PATH_OFFSET * decimator;
-	snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x00);
+	snd_soc_component_update_bits(component, tx_vol_ctl_reg, 0x10, 0x00);
 	dev_dbg(va_priv->dev, "%s: decimator %u unmute\n",
 		__func__, decimator);
 }
@@ -338,7 +340,8 @@ static int va_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_dapm_widget *widget =
 		snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(widget->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(widget->dapm);
 	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
 	unsigned int val;
 	u16 mic_sel_reg;
@@ -347,7 +350,7 @@ static int va_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 	if (val > e->items - 1)
 		return -EINVAL;
 
-	dev_dbg(codec->dev, "%s: wname: %s, val: 0x%x\n", __func__,
+	dev_dbg(component->dev, "%s: wname: %s, val: 0x%x\n", __func__,
 		widget->name, val);
 
 	switch (e->reg) {
@@ -376,13 +379,14 @@ static int va_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 		mic_sel_reg = BOLERO_CDC_VA_TX7_TX_PATH_CFG0;
 		break;
 	default:
-		dev_err(codec->dev, "%s: e->reg: 0x%x not expected\n",
+		dev_err(component->dev, "%s: e->reg: 0x%x not expected\n",
 			__func__, e->reg);
 		return -EINVAL;
 	}
 	/* DMIC selected */
 	if (val != 0)
-		snd_soc_update_bits(codec, mic_sel_reg, 1 << 7, 1 << 7);
+		snd_soc_component_update_bits(component, mic_sel_reg,
+				1 << 7, 1 << 7);
 
 	return snd_soc_dapm_put_enum_double(kcontrol, ucontrol);
 }
@@ -392,7 +396,8 @@ static int va_macro_tx_mixer_get(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_dapm_widget *widget =
 		snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(widget->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(widget->dapm);
 	struct soc_multi_mixer_control *mixer =
 		((struct soc_multi_mixer_control *)kcontrol->private_value);
 	u32 dai_id = widget->shift;
@@ -400,7 +405,7 @@ static int va_macro_tx_mixer_get(struct snd_kcontrol *kcontrol,
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 
-	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
 	if (test_bit(dec_id, &va_priv->active_ch_mask[dai_id]))
@@ -415,7 +420,8 @@ static int va_macro_tx_mixer_put(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_dapm_widget *widget =
 		snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(widget->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(widget->dapm);
 	struct snd_soc_dapm_update *update = NULL;
 	struct soc_multi_mixer_control *mixer =
 		((struct soc_multi_mixer_control *)kcontrol->private_value);
@@ -425,7 +431,7 @@ static int va_macro_tx_mixer_put(struct snd_kcontrol *kcontrol,
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 
-	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
 	if (enable) {
@@ -444,7 +450,8 @@ static int va_macro_tx_mixer_put(struct snd_kcontrol *kcontrol,
 static int va_macro_enable_dmic(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
 	u8  dmic_clk_en = 0x01;
 	u16 dmic_clk_reg;
 	s32 *dmic_clk_cnt;
@@ -454,7 +461,7 @@ static int va_macro_enable_dmic(struct snd_soc_dapm_widget *w,
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 
-	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
 	wname = strpbrk(w->name, "01234567");
@@ -503,21 +510,21 @@ static int va_macro_enable_dmic(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMU:
 		(*dmic_clk_cnt)++;
 		if (*dmic_clk_cnt == 1) {
-			snd_soc_update_bits(codec,
+			snd_soc_component_update_bits(component,
 					BOLERO_CDC_VA_TOP_CSR_DMIC_CFG,
 					0x80, 0x00);
-			snd_soc_update_bits(codec, dmic_clk_reg,
+			snd_soc_component_update_bits(component, dmic_clk_reg,
 					VA_MACRO_TX_DMIC_CLK_DIV_MASK,
 					va_priv->dmic_clk_div <<
 					VA_MACRO_TX_DMIC_CLK_DIV_SHFT);
-			snd_soc_update_bits(codec, dmic_clk_reg,
+			snd_soc_component_update_bits(component, dmic_clk_reg,
 					dmic_clk_en, dmic_clk_en);
 		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		(*dmic_clk_cnt)--;
 		if (*dmic_clk_cnt  == 0) {
-			snd_soc_update_bits(codec, dmic_clk_reg,
+			snd_soc_component_update_bits(component, dmic_clk_reg,
 					dmic_clk_en, 0);
 		}
 		break;
@@ -529,7 +536,8 @@ static int va_macro_enable_dmic(struct snd_soc_dapm_widget *w,
 static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
 	unsigned int decimator;
 	u16 tx_vol_ctl_reg, dec_cfg_reg, hpf_gate_reg;
 	u16 tx_gain_ctl_reg;
@@ -537,7 +545,7 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 
-	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
 	decimator = w->shift;
@@ -557,28 +565,34 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		/* Enable TX PGA Mute */
-		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x10);
+		snd_soc_component_update_bits(component,
+				tx_vol_ctl_reg, 0x10, 0x10);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		/* Enable TX CLK */
-		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x20, 0x20);
-		snd_soc_update_bits(codec, hpf_gate_reg, 0x01, 0x00);
+		snd_soc_component_update_bits(component,
+				tx_vol_ctl_reg, 0x20, 0x20);
+		snd_soc_component_update_bits(component,
+				hpf_gate_reg, 0x01, 0x00);
 
-		hpf_cut_off_freq = (snd_soc_read(codec, dec_cfg_reg) &
+		hpf_cut_off_freq = (snd_soc_component_read32(
+					component, dec_cfg_reg) &
 				   TX_HPF_CUT_OFF_FREQ_MASK) >> 5;
 		va_priv->va_hpf_work[decimator].hpf_cut_off_freq =
 							hpf_cut_off_freq;
 
 		if (hpf_cut_off_freq != CF_MIN_3DB_150HZ) {
-			snd_soc_update_bits(codec, dec_cfg_reg,
+			snd_soc_component_update_bits(component, dec_cfg_reg,
 					    TX_HPF_CUT_OFF_FREQ_MASK,
 					    CF_MIN_3DB_150HZ << 5);
-			snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x02);
+			snd_soc_component_update_bits(component,
+					hpf_gate_reg, 0x02, 0x02);
 			/*
 			 * Minimum 1 clk cycle delay is required as per HW spec
 			 */
 			usleep_range(1000, 1010);
-			snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x00);
+			snd_soc_component_update_bits(component,
+				hpf_gate_reg, 0x02, 0x00);
 		}
 		/* schedule work queue to Remove Mute */
 		schedule_delayed_work(&va_priv->va_mute_dwork[decimator].dwork,
@@ -589,28 +603,32 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					&va_priv->va_hpf_work[decimator].dwork,
 					msecs_to_jiffies(300));
 		/* apply gain after decimator is enabled */
-		snd_soc_write(codec, tx_gain_ctl_reg,
-			      snd_soc_read(codec, tx_gain_ctl_reg));
+		snd_soc_component_write(component, tx_gain_ctl_reg,
+			snd_soc_component_read32(component, tx_gain_ctl_reg));
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
 			va_priv->va_hpf_work[decimator].hpf_cut_off_freq;
-		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x10);
+		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
+					0x10, 0x10);
 		if (cancel_delayed_work_sync(
 		    &va_priv->va_hpf_work[decimator].dwork)) {
 			if (hpf_cut_off_freq != CF_MIN_3DB_150HZ) {
-				snd_soc_update_bits(codec, dec_cfg_reg,
-						    TX_HPF_CUT_OFF_FREQ_MASK,
-						    hpf_cut_off_freq << 5);
-				snd_soc_update_bits(codec, hpf_gate_reg,
-						    0x02, 0x02);
+				snd_soc_component_update_bits(component,
+						dec_cfg_reg,
+						TX_HPF_CUT_OFF_FREQ_MASK,
+						hpf_cut_off_freq << 5);
+				snd_soc_component_update_bits(component,
+						hpf_gate_reg,
+						0x02, 0x02);
 				/*
 				 * Minimum 1 clk cycle delay is required
 				 * as per HW spec
 				 */
 				usleep_range(1000, 1010);
-				snd_soc_update_bits(codec, hpf_gate_reg,
-						    0x02, 0x00);
+				snd_soc_component_update_bits(component,
+						hpf_gate_reg,
+						0x02, 0x00);
 			}
 		}
 		cancel_delayed_work_sync(
@@ -618,8 +636,10 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* Disable TX CLK */
-		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x20, 0x00);
-		snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x00);
+		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
+					0x20, 0x00);
+		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
+					0x10, 0x00);
 		break;
 	}
 	return 0;
@@ -628,12 +648,13 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 static int va_macro_enable_micbias(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 	int ret = 0;
 
-	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
 	if (!va_priv->micb_supply) {
@@ -695,13 +716,13 @@ static int va_macro_hw_params(struct snd_pcm_substream *substream,
 			   struct snd_soc_dai *dai)
 {
 	int tx_fs_rate = -EINVAL;
-	struct snd_soc_codec *codec = dai->codec;
+	struct snd_soc_component *component = dai->component;
 	u32 decimator, sample_rate;
 	u16 tx_fs_reg = 0;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 
-	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
 	dev_dbg(va_dev,
@@ -744,8 +765,8 @@ static int va_macro_hw_params(struct snd_pcm_substream *substream,
 				    VA_MACRO_TX_PATH_OFFSET * decimator;
 			dev_dbg(va_dev, "%s: set DEC%u rate to %u\n",
 				__func__, decimator, sample_rate);
-			snd_soc_update_bits(codec, tx_fs_reg, 0x0F,
-					    tx_fs_rate);
+			snd_soc_component_update_bits(component, tx_fs_reg,
+						0x0F, tx_fs_rate);
 		} else {
 			dev_err(va_dev,
 				"%s: ERROR: Invalid decimator: %d\n",
@@ -760,11 +781,11 @@ static int va_macro_get_channel_map(struct snd_soc_dai *dai,
 				unsigned int *tx_num, unsigned int *tx_slot,
 				unsigned int *rx_num, unsigned int *rx_slot)
 {
-	struct snd_soc_codec *codec = dai->codec;
+	struct snd_soc_component *component = dai->component;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 
-	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
 	switch (dai->id) {
@@ -1393,22 +1414,23 @@ undefined_rate:
 	return dmic_sample_rate;
 }
 
-static int va_macro_init(struct snd_soc_codec *codec)
+static int va_macro_init(struct snd_soc_component *component)
 {
-	struct snd_soc_dapm_context *dapm = snd_soc_codec_get_dapm(codec);
+	struct snd_soc_dapm_context *dapm =
+				snd_soc_component_get_dapm(component);
 	int ret, i;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 
-	va_dev = bolero_get_device_ptr(codec->dev, VA_MACRO);
+	va_dev = bolero_get_device_ptr(component->dev, VA_MACRO);
 	if (!va_dev) {
-		dev_err(codec->dev,
+		dev_err(component->dev,
 			"%s: null device for macro!\n", __func__);
 		return -EINVAL;
 	}
 	va_priv = dev_get_drvdata(va_dev);
 	if (!va_priv) {
-		dev_err(codec->dev,
+		dev_err(component->dev,
 			"%s: priv is null for macro!\n", __func__);
 		return -EINVAL;
 	}
@@ -1422,7 +1444,7 @@ static int va_macro_init(struct snd_soc_codec *codec)
 				__func__);
 			return ret;
 		}
-		va_priv->codec = codec;
+		va_priv->component = component;
 		return 0;
 	}
 
@@ -1445,7 +1467,7 @@ static int va_macro_init(struct snd_soc_codec *codec)
 		dev_err(va_dev, "%s: Failed to add widgets\n", __func__);
 		return ret;
 	}
-	ret = snd_soc_add_codec_controls(codec, va_macro_snd_controls,
+	ret = snd_soc_add_component_controls(component, va_macro_snd_controls,
 				   ARRAY_SIZE(va_macro_snd_controls));
 	if (ret < 0) {
 		dev_err(va_dev, "%s: Failed to add snd_ctls\n", __func__);
@@ -1481,20 +1503,20 @@ static int va_macro_init(struct snd_soc_codec *codec)
 		INIT_DELAYED_WORK(&va_priv->va_mute_dwork[i].dwork,
 			  va_macro_mute_update_callback);
 	}
-	va_priv->codec = codec;
+	va_priv->component = component;
 
 	return 0;
 }
 
-static int va_macro_deinit(struct snd_soc_codec *codec)
+static int va_macro_deinit(struct snd_soc_component *component)
 {
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 
-	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
-	va_priv->codec = NULL;
+	va_priv->component = NULL;
 	return 0;
 }
 

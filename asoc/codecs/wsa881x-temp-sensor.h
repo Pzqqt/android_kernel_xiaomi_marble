@@ -15,11 +15,11 @@ struct wsa_temp_register {
 	u8 dmeas_msb;
 	u8 dmeas_lsb;
 };
-typedef int32_t (*wsa_temp_register_read)(struct snd_soc_codec *codec,
+typedef int32_t (*wsa_temp_register_read)(struct snd_soc_component *component,
 					struct wsa_temp_register *wsa_temp_reg);
 struct wsa881x_tz_priv {
 	struct thermal_zone_device *tz_dev;
-	struct snd_soc_codec *codec;
+	struct snd_soc_component *component;
 	struct wsa_temp_register *wsa_temp_reg;
 	char name[80];
 	wsa_temp_register_read wsa_temp_reg_read;

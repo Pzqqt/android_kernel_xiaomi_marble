@@ -21,16 +21,19 @@ enum {
 
 
 #if IS_ENABLED(CONFIG_WSA_MACRO)
-extern int wsa_macro_set_spkr_mode(struct snd_soc_codec *codec, int mode);
-extern int wsa_macro_set_spkr_gain_offset(struct snd_soc_codec *codec,
+extern int wsa_macro_set_spkr_mode(struct snd_soc_component *component,
+				   int mode);
+extern int wsa_macro_set_spkr_gain_offset(struct snd_soc_component *component,
 					  int offset);
 #else /* CONFIG_WSA_MACRO */
-static inline int wsa_macro_set_spkr_mode(struct snd_soc_codec *codec, int mode)
+static inline int wsa_macro_set_spkr_mode(struct snd_soc_component *component,
+					  int mode)
 {
 	return 0;
 }
-static inline int wsa_macro_set_spkr_gain_offset(struct snd_soc_codec *codec,
-						 int offset);
+static inline int wsa_macro_set_spkr_gain_offset(
+				struct snd_soc_component *component,
+				int offset);
 {
 	return 0;
 }
