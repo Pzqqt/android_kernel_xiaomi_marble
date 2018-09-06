@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -231,6 +231,7 @@ struct targetdef_s {
 	uint32_t d_CPU_INTR_ADDRESS;
 	uint32_t d_SOC_LF_TIMER_CONTROL0_ADDRESS;
 	uint32_t d_SOC_LF_TIMER_CONTROL0_ENABLE_MASK;
+	uint32_t d_SOC_LF_TIMER_STATUS0_ADDRESS;
 
 	/* chip id start */
 	uint32_t d_SI_CONFIG_ERR_INT_MASK;

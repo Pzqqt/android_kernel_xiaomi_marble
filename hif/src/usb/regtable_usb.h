@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -278,6 +278,7 @@ struct targetdef_s {
 	u_int32_t d_CPU_INTR_ADDRESS;
 	u_int32_t d_SOC_LF_TIMER_CONTROL0_ADDRESS;
 	u_int32_t d_SOC_LF_TIMER_CONTROL0_ENABLE_MASK;
+	u_int32_t d_SOC_LF_TIMER_STATUS0_ADDRESS;
 	/* chip id start */
 	u_int32_t d_SOC_CHIP_ID_ADDRESS;
 	u_int32_t d_SOC_CHIP_ID_VERSION_MASK;
@@ -455,6 +456,8 @@ struct targetdef_s {
 		(scn->targetdef->d_SOC_LF_TIMER_CONTROL0_ADDRESS)
 #define SOC_LF_TIMER_CONTROL0_ENABLE_MASK  \
 		(scn->targetdef->d_SOC_LF_TIMER_CONTROL0_ENABLE_MASK)
+#define SOC_LF_TIMER_STATUS0_ADDRESS      \
+		(scn->targetdef->d_SOC_LF_TIMER_STATUS0_ADDRESS)
 #define SOC_RESET_CONTROL_PCIE_RST_SHORT_OVRD_LSB \
 		(scn->targetdef->d_SOC_RESET_CONTROL_PCIE_RST_SHORT_OVRD_LSB)
 #define SOC_RESET_CONTROL_PCIE_RST_SHORT_OVRD_MASK \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1512,6 +1512,7 @@
 #define ADRASTEA_CPU_INTR_ADDRESS                            0xffffffff
 #define ADRASTEA_SOC_LF_TIMER_CONTROL0_ADDRESS               0xffffffff
 #define ADRASTEA_SOC_LF_TIMER_CONTROL0_ENABLE_MASK           0xffffffff
+#define ADRASTEA_SOC_LF_TIMER_STATUS0_ADDRESS                0xffffffff
 #define ADRASTEA_SOC_RESET_CONTROL_ADDRESS \
 	(0x00000000 + ADRASTEA_RTC_SOC_REG_BASE_ADDRESS)
 #define ADRASTEA_SOC_RESET_CONTROL_CE_RST_MASK            0x0100
@@ -2023,6 +2024,8 @@ struct targetdef_s adrastea_targetdef = {
 		ADRASTEA_SOC_LF_TIMER_CONTROL0_ADDRESS,
 	.d_SOC_LF_TIMER_CONTROL0_ENABLE_MASK =
 		ADRASTEA_SOC_LF_TIMER_CONTROL0_ENABLE_MASK,
+	.d_SOC_LF_TIMER_STATUS0_ADDRESS =
+		ADRASTEA_SOC_LF_TIMER_STATUS0_ADDRESS,
 	/* chip id start */
 	.d_SOC_CHIP_ID_ADDRESS = ADRASTEA_SOC_CHIP_ID_ADDRESS,
 	.d_SOC_CHIP_ID_VERSION_MASK = ADRASTEA_SOC_CHIP_ID_VERSION_MASK,
