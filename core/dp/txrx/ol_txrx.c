@@ -5112,10 +5112,10 @@ static uint16_t ol_txrx_get_vdev_id(struct cdp_vdev *pvdev)
  *
  * Return: 0
  */
-static int ol_txrx_soc_attach_target(ol_txrx_soc_handle soc)
+static QDF_STATUS ol_txrx_soc_attach_target(ol_txrx_soc_handle soc)
 {
 	/* MCL legacy OL do nothing here */
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

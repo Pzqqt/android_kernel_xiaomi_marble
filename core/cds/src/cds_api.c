@@ -897,9 +897,9 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 		goto err_mac_stop;
 	}
 
-	errno = cdp_soc_attach_target(cds_get_context(QDF_MODULE_ID_SOC));
-	if (errno) {
-		cds_err("Failed to attach soc target; errno:%d", errno);
+	qdf_status = cdp_soc_attach_target(cds_get_context(QDF_MODULE_ID_SOC));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		cds_err("Failed to attach soc target; status:%d", qdf_status);
 		goto err_sme_stop;
 	}
 
