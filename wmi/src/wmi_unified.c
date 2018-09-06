@@ -1220,17 +1220,19 @@ void wmi_buf_free(wmi_buf_t net_buf)
 }
 qdf_export_symbol(wmi_buf_free);
 #else
-wmi_buf_t wmi_buf_alloc(wmi_unified_t wmi_handle, uint32_t len)
+wmi_buf_t wmi_buf_alloc_fl(wmi_unified_t wmi_handle, uint32_t len,
+			   const char *func, uint32_t line)
 {
 	wmi_buf_t wmi_buf;
 
 	if (roundup(len + WMI_MIN_HEAD_ROOM, 4) > wmi_handle->max_msg_len) {
-		QDF_ASSERT(0);
+		wmi_nofl_err("%s:%d, Invalid len:%d", func, line, len);
+		QDF_DEBUG_PANIC();
 		return NULL;
 	}
 
-	wmi_buf = qdf_nbuf_alloc(NULL, roundup(len + WMI_MIN_HEAD_ROOM, 4),
-				WMI_MIN_HEAD_ROOM, 4, false);
+	wmi_buf = qdf_nbuf_alloc_fl(NULL, roundup(len + WMI_MIN_HEAD_ROOM, 4),
+				    WMI_MIN_HEAD_ROOM, 4, false, func, line);
 	if (!wmi_buf)
 		return NULL;
 
@@ -1243,7 +1245,7 @@ wmi_buf_t wmi_buf_alloc(wmi_unified_t wmi_handle, uint32_t len)
 	qdf_nbuf_set_pktlen(wmi_buf, len);
 	return wmi_buf;
 }
-qdf_export_symbol(wmi_buf_alloc);
+qdf_export_symbol(wmi_buf_alloc_fl);
 
 void wmi_buf_free(wmi_buf_t net_buf)
 {

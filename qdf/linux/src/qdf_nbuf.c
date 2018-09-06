@@ -354,24 +354,10 @@ void __qdf_nbuf_count_dec(__qdf_nbuf_t nbuf)
 qdf_export_symbol(__qdf_nbuf_count_dec);
 #endif
 
-
-/**
- * __qdf_nbuf_alloc() - Allocate nbuf
- * @hdl: Device handle
- * @size: Netbuf requested size
- * @reserve: headroom to start with
- * @align: Align
- * @prio: Priority
- *
- * This allocates an nbuf aligns if needed and reserves some space in the front,
- * since the reserve is done after alignment the reserve value if being
- * unaligned will result in an unaligned address.
- *
- * Return: nbuf or %NULL if no memory
- */
 #if defined(QCA_WIFI_QCA8074) && defined (BUILD_X86)
 struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
-			 int align, int prio)
+				 int align, int prio, const char *func,
+				 uint32_t line)
 {
 	struct sk_buff *skb;
 	unsigned long offset;
@@ -389,7 +375,8 @@ realloc:
 	skb = pld_nbuf_pre_alloc(size);
 
 	if (!skb) {
-		pr_info("ERROR:NBUF alloc failed\n");
+		qdf_nofl_err("NBUF alloc failed %zuB @ %s:%d",
+			     size, func, line);
 		return NULL;
 	}
 
@@ -401,7 +388,8 @@ skb_alloc:
 	if (virt_to_phys(qdf_nbuf_data(skb)) < 0x50000040) {
 		lowmem_alloc_tries++;
 		if (lowmem_alloc_tries > 100) {
-			qdf_err("Failed");
+			qdf_nofl_err("NBUF alloc failed %zuB @ %s:%d",
+				     size, func, line);
 			return NULL;
 		} else {
 			/* Not freeing to make sure it
@@ -441,7 +429,8 @@ skb_alloc:
 }
 #else
 struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
-			 int align, int prio)
+				 int align, int prio, const char *func,
+				 uint32_t line)
 {
 	struct sk_buff *skb;
 	unsigned long offset;
@@ -471,8 +460,8 @@ struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 	skb = pld_nbuf_pre_alloc(size);
 
 	if (!skb) {
-		pr_err_ratelimited("ERROR:NBUF alloc failed, size = %zu\n",
-				   size);
+		qdf_rl_nofl_err("NBUF alloc failed %zuB @ %s:%d",
+				size, func, line);
 		__qdf_nbuf_start_replenish_timer();
 		return NULL;
 	} else {
@@ -2619,7 +2608,7 @@ qdf_nbuf_t qdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size,
 {
 	qdf_nbuf_t nbuf;
 
-	nbuf = __qdf_nbuf_alloc(osdev, size, reserve, align, prio);
+	nbuf = __qdf_nbuf_alloc(osdev, size, reserve, align, prio, file, line);
 
 	/* Store SKB in internal QDF tracking table */
 	if (qdf_likely(nbuf)) {
