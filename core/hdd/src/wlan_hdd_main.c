@@ -2676,36 +2676,6 @@ int hdd_assemble_rate_code(uint8_t preamble, uint8_t nss, uint8_t rate)
 	return set_value;
 }
 
-#ifdef IPA_OFFLOAD
-/**
- * hdd_update_ipa_component_config() - update ipa config
- * @hdd_ctx: Pointer to hdd context
- *
- * Return: none
- */
-static void hdd_update_ipa_component_config(struct hdd_context *hdd_ctx)
-{
-	struct hdd_config *cfg = hdd_ctx->config;
-	struct wlan_ipa_config ipa_cfg;
-
-	ipa_cfg.ipa_config = cfg->IpaConfig;
-	ipa_cfg.desc_size = cfg->IpaDescSize;
-	ipa_cfg.txbuf_count = cfg->IpaUcTxBufCount;
-	ipa_cfg.bus_bw_high = cfg->bus_bw_high_threshold;
-	ipa_cfg.bus_bw_medium = cfg->bus_bw_medium_threshold;
-	ipa_cfg.bus_bw_low = cfg->bus_bw_low_threshold;
-	ipa_cfg.ipa_bw_high = cfg->IpaHighBandwidthMbps;
-	ipa_cfg.ipa_bw_medium = cfg->IpaMediumBandwidthMbps;
-	ipa_cfg.ipa_bw_low = cfg->IpaLowBandwidthMbps;
-
-	ucfg_ipa_update_config(&ipa_cfg);
-}
-#else
-static void hdd_update_ipa_component_config(struct hdd_context *hdd_ctx)
-{
-}
-#endif
-
 #ifdef FEATURE_WLAN_WAPI
 /**
  * hdd_wapi_security_sta_exist() - return wapi security sta exist or not
@@ -2936,7 +2906,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			goto hif_close;
 		}
 
-		hdd_update_ipa_component_config(hdd_ctx);
+		ucfg_ipa_component_config_update(hdd_ctx->psoc);
 
 		hdd_update_cds_ac_specs_params(hdd_ctx);
 
@@ -8932,12 +8902,6 @@ static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 		hdd_debug("Module enable_11d set to %d", enable_11d);
 	}
 
-	if (!ucfg_ipa_is_present()) {
-		hdd_ctx->config->IpaConfig = 0;
-		hdd_debug("IpaConfig override to %d",
-			hdd_ctx->config->IpaConfig);
-	}
-
 	if (hdd_ctx->config->action_oui_enable && !ucfg_action_oui_enabled()) {
 		hdd_ctx->config->action_oui_enable = 0;
 		hdd_err("Ignore ini: %s, since no action_oui component",
@@ -9715,21 +9679,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 
 	/* IPA micro controller data path offload resource config item */
 	cds_cfg->uc_offload_enabled = ucfg_ipa_uc_is_enabled();
-	if (!is_power_of_2(hdd_ctx->config->IpaUcTxBufCount)) {
-		/* IpaUcTxBufCount should be power of 2 */
-		hdd_debug("Round down IpaUcTxBufCount %d to nearest power of 2",
-			hdd_ctx->config->IpaUcTxBufCount);
-		hdd_ctx->config->IpaUcTxBufCount =
-			rounddown_pow_of_two(
-				hdd_ctx->config->IpaUcTxBufCount);
-		if (!hdd_ctx->config->IpaUcTxBufCount) {
-			hdd_err("Failed to round down IpaUcTxBufCount");
-			goto exit;
-		}
-		hdd_debug("IpaUcTxBufCount rounded down to %d",
-			hdd_ctx->config->IpaUcTxBufCount);
-	}
-	cds_cfg->uc_txbuf_count = hdd_ctx->config->IpaUcTxBufCount;
 	cds_cfg->uc_txbuf_size = hdd_ctx->config->IpaUcTxBufSize;
 	if (!is_power_of_2(hdd_ctx->config->IpaUcRxIndRingCount)) {
 		/* IpaUcRxIndRingCount should be power of 2 */

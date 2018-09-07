@@ -26,6 +26,7 @@
 #include "wlan_ipa_obj_mgmt_api.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "qdf_types.h"
+#include "wlan_ipa_main.h"
 
 #ifdef IPA_OFFLOAD
 
@@ -56,13 +57,6 @@ bool ucfg_ipa_is_enabled(void);
  *         false - ipa uC is not enabled
  */
 bool ucfg_ipa_uc_is_enabled(void);
-
-/**
- * ucfg_ipa_update_config() - Update IPA component config
- *
- * Return: None
- */
-void ucfg_ipa_update_config(struct wlan_ipa_config *config);
 
 /**
  * ucfg_ipa_set_dp_handle() - register DP handle
@@ -332,6 +326,21 @@ void ucfg_ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *pdev);
  */
 void ucfg_ipa_fw_rejuvenate_send_msg(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * ucfg_ipa_component_config_update() - update IPA component config
+ * @psoc: pointer to psoc object
+ *
+ * Return: None
+ */
+void ucfg_ipa_component_config_update(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_get_ipa_tx_buf_count() - get IPA tx buffer count
+ *
+ * Return: IPA tx buffer count
+ */
+uint32_t ucfg_ipa_get_tx_buf_count(void);
+
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -516,6 +525,17 @@ void ucfg_ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *pdev)
 static inline
 void ucfg_ipa_fw_rejuvenate_send_msg(struct wlan_objmgr_pdev *pdev)
 {
+}
+
+static inline
+void ucfg_ipa_component_config_update(struct wlan_objmgr_psoc *psoc)
+{
+}
+
+static inline
+uint32_t ucfg_ipa_get_tx_buf_count(void)
+{
+	return 0;
 }
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_UCFG_API_H_ */

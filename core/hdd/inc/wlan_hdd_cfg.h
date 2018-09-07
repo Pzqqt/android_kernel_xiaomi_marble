@@ -4617,42 +4617,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_FASTPATH_DEFAULT              (CFG_ENABLE_FASTPATH_MIN)
 #endif /* WLAN_FEATURE_FASTPATH */
 
-/*
- * IPA Offload configuration - Each bit enables a feature
- * bit0 - IPA Enable
- * bit1 - IPA Pre filter enable
- * bit2 - IPv6 enable
- * bit3 - IPA Resource Manager (RM) enable
- * bit4 - IPA Clock scaling enable
- */
-#define CFG_IPA_OFFLOAD_CONFIG_NAME              "gIPAConfig"
-#define CFG_IPA_OFFLOAD_CONFIG_MIN               (0)
-#define CFG_IPA_OFFLOAD_CONFIG_MAX               (0xFFFFFFFF)
-#define CFG_IPA_OFFLOAD_CONFIG_DEFAULT           (CFG_IPA_OFFLOAD_CONFIG_MIN)
-
-/*
- * IPA DESC SIZE
- */
-#define CFG_IPA_DESC_SIZE_NAME                   "gIPADescSize"
-#define CFG_IPA_DESC_SIZE_MIN                    (800)
-#define CFG_IPA_DESC_SIZE_MAX                    (8000)
-#define CFG_IPA_DESC_SIZE_DEFAULT                (800)
-
-#define CFG_IPA_HIGH_BANDWIDTH_MBPS              "gIPAHighBandwidthMbps"
-#define CFG_IPA_HIGH_BANDWIDTH_MBPS_MIN          (200)
-#define CFG_IPA_HIGH_BANDWIDTH_MBPS_MAX          (1000)
-#define CFG_IPA_HIGH_BANDWIDTH_MBPS_DEFAULT      (400)
-
-#define CFG_IPA_MEDIUM_BANDWIDTH_MBPS            "gIPAMediumBandwidthMbps"
-#define CFG_IPA_MEDIUM_BANDWIDTH_MBPS_MIN        (100)
-#define CFG_IPA_MEDIUM_BANDWIDTH_MBPS_MAX        (400)
-#define CFG_IPA_MEDIUM_BANDWIDTH_MBPS_DEFAULT    (200)
-
-#define CFG_IPA_LOW_BANDWIDTH_MBPS               "gIPALowBandwidthMbps"
-#define CFG_IPA_LOW_BANDWIDTH_MBPS_MIN           (0)
-#define CFG_IPA_LOW_BANDWIDTH_MBPS_MAX           (100)
-#define CFG_IPA_LOW_BANDWIDTH_MBPS_DEFAULT       (100)
-
 /* SAR Thermal limit values for 2g and 5g */
 
 #define CFG_SET_TXPOWER_LIMIT2G_NAME               "TxPower2g"
@@ -4937,12 +4901,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_REORDER_OFFLOAD_SUPPORT_MIN     (0)
 #define CFG_REORDER_OFFLOAD_SUPPORT_MAX     (1)
 #define CFG_REORDER_OFFLOAD_SUPPORT_DEFAULT (1)
-
-/* IpaUcTxBufCount should be power of 2 */
-#define CFG_IPA_UC_TX_BUF_COUNT_NAME               "IpaUcTxBufCount"
-#define CFG_IPA_UC_TX_BUF_COUNT_MIN                (0)
-#define CFG_IPA_UC_TX_BUF_COUNT_MAX                (2048)
-#define CFG_IPA_UC_TX_BUF_COUNT_DEFAULT            (512)
 
 #define CFG_IPA_UC_TX_BUF_SIZE_NAME                "IpaUcTxBufSize"
 #define CFG_IPA_UC_TX_BUF_SIZE_MIN                (0)
@@ -8302,12 +8260,7 @@ struct hdd_config {
 	bool enable_ip_tcp_udp_checksum_offload;
 	uint8_t fVhtAmpduLenExponent;
 	uint32_t vhtMpduLen;
-	uint32_t IpaConfig;
 	bool IpaClkScalingEnable;
-	uint32_t IpaDescSize;
-	uint32_t IpaHighBandwidthMbps;
-	uint32_t IpaMediumBandwidthMbps;
-	uint32_t IpaLowBandwidthMbps;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint32_t WlanMccToSccSwitchMode;
 #endif
@@ -8338,7 +8291,6 @@ struct hdd_config {
 	int32_t dfsRadarPriMultiplier;
 	uint8_t reorderOffloadSupport;
 
-	uint32_t IpaUcTxBufCount;
 	uint32_t IpaUcTxBufSize;
 	uint32_t IpaUcRxIndRingCount;
 	uint32_t IpaUcTxPartitionBase;

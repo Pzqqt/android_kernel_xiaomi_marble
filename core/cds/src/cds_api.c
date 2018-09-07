@@ -321,7 +321,7 @@ static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
 
 	cdp_cfg.is_full_reorder_offload = cds_cfg->reorder_offload;
 	cdp_cfg.is_uc_offload_enabled = cds_cfg->uc_offload_enabled;
-	cdp_cfg.uc_tx_buffer_count = cds_cfg->uc_txbuf_count;
+	cdp_cfg.uc_tx_buffer_count = ucfg_ipa_get_tx_buf_count();
 	cdp_cfg.uc_tx_buffer_size = cds_cfg->uc_txbuf_size;
 	cdp_cfg.uc_rx_indication_ring_count = cds_cfg->uc_rxind_ringcount;
 	cdp_cfg.uc_tx_partition_base = cds_cfg->uc_tx_partition_base;
