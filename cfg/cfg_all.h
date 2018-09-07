@@ -20,6 +20,7 @@
 #include "cfg_converged.h"
 #include "cfg_mlme.h"
 #include "cfg_fwol.h"
+#include "cfg_ipa.h"
 
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_cfg.h"
@@ -49,6 +50,7 @@
 	CFG_FWOL_ALL \
 	CFG_HDD_ALL \
 	CFG_HDD_DP_ALL \
+	CFG_IPA \
 	CFG_MLME_ALL \
 	CFG_NAN_ALL \
 	CFG_P2P_ALL \

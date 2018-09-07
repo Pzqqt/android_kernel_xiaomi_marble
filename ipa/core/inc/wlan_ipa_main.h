@@ -115,14 +115,6 @@ QDF_STATUS ipa_config_mem_alloc(void);
 void ipa_config_mem_free(void);
 
 /**
- * ipa_config_update() - IPA component config update
- * @config: IPA config
- *
- * Return: None
- */
-void ipa_config_update(struct wlan_ipa_config *config);
-
-/**
  * ipa_config_is_enabled() - Is IPA config enabled?
  *
  * Return: true if IPA is enabled in IPA config
@@ -422,5 +414,20 @@ void ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *pdev);
  */
 void ipa_fw_rejuvenate_send_msg(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * ipa_component_config_update() - update ipa config from psoc
+ * @psoc: psoc obj
+ *
+ * Return: None
+ */
+void ipa_component_config_update(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ipa_get_tx_buf_count() - get IPA config tx buffer count
+ *
+ * Return: IPA config tx buffer count
+ */
+
+uint32_t ipa_get_tx_buf_count(void);
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */
