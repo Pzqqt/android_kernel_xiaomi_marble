@@ -1050,7 +1050,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
 		(struct cdp_pdev *)pdev, adapter->session_id),
-		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->hdd_vdev,
+		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
 		&txrx_ops);
 	adapter->txrx_vdev = (void *)cdp_get_vdev_from_vdev_id(soc,
 					(struct cdp_pdev *)pdev,
@@ -1225,7 +1225,7 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 	if (QDF_STATUS_SUCCESS == qdf_status) {
 		adapter->sta_info[sta_id].peer_state =
 			OL_TXRX_PEER_STATE_AUTH;
-		p2p_peer_authorized(adapter->hdd_vdev, sta_mac->bytes);
+		p2p_peer_authorized(adapter->vdev, sta_mac->bytes);
 	}
 
 	hdd_exit();

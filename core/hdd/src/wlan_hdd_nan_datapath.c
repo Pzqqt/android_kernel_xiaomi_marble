@@ -281,7 +281,7 @@ void hdd_ndp_event_handler(struct hdd_adapter *adapter,
 			   eCsrRoamResult roam_result)
 {
 	bool success;
-	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(adapter->hdd_vdev);
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(adapter->vdev);
 
 	if (roam_status == eCSR_ROAM_NDP_STATUS_UPDATE) {
 		switch (roam_result) {
@@ -385,7 +385,7 @@ int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 
 static int update_ndi_state(struct hdd_adapter *adapter, uint32_t state)
 {
-	return os_if_nan_set_ndi_state(adapter->hdd_vdev, state);
+	return os_if_nan_set_ndi_state(adapter->vdev, state);
 }
 
 /**
@@ -530,9 +530,9 @@ int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 	 * Create transaction id is required to be saved since the firmware
 	 * does not honor the transaction id for create request
 	 */
-	ucfg_nan_set_ndp_create_transaction_id(adapter->hdd_vdev,
+	ucfg_nan_set_ndp_create_transaction_id(adapter->vdev,
 					       transaction_id);
-	ucfg_nan_set_ndi_state(adapter->hdd_vdev,
+	ucfg_nan_set_ndi_state(adapter->vdev,
 			       NAN_DATA_NDI_CREATING_STATE);
 
 	/*
@@ -594,9 +594,9 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = 0;
 	sta_ctx->broadcast_staid = HDD_WLAN_INVALID_STA_ID;
 
-	os_if_nan_set_ndp_delete_transaction_id(adapter->hdd_vdev,
+	os_if_nan_set_ndp_delete_transaction_id(adapter->vdev,
 						transaction_id);
-	os_if_nan_set_ndi_state(adapter->hdd_vdev, NAN_DATA_NDI_DELETING_STATE);
+	os_if_nan_set_ndi_state(adapter->vdev, NAN_DATA_NDI_DELETING_STATE);
 
 	/* Delete the interface */
 	ret = __wlan_hdd_del_virtual_intf(hdd_ctx->wiphy, &adapter->wdev);
@@ -638,8 +638,8 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 
 	if (ndi_rsp->status == QDF_STATUS_SUCCESS) {
 		hdd_alert("NDI interface successfully created");
-		os_if_nan_set_ndp_create_transaction_id(adapter->hdd_vdev, 0);
-		os_if_nan_set_ndi_state(adapter->hdd_vdev,
+		os_if_nan_set_ndp_create_transaction_id(adapter->vdev, 0);
+		os_if_nan_set_ndi_state(adapter->vdev,
 					NAN_DATA_NDI_CREATED_STATE);
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
@@ -715,7 +715,7 @@ void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
 
 void hdd_ndp_session_end_handler(struct hdd_adapter *adapter)
 {
-	os_if_nan_ndi_session_end(adapter->hdd_vdev);
+	os_if_nan_ndi_session_end(adapter->vdev);
 }
 
 int hdd_ndp_get_peer_idx(uint8_t vdev_id, struct qdf_mac_addr *addr)

@@ -256,7 +256,7 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
 		(struct cdp_pdev *)pdev, adapter->session_id),
-		adapter, adapter->hdd_vdev, &txrx_ops);
+		adapter, adapter->vdev, &txrx_ops);
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
 	adapter->tx_fn = txrx_ops.tx.tx;
 
@@ -412,7 +412,7 @@ static int hdd_ocb_set_config_req(struct hdd_adapter *adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
 
-	status = ucfg_ocb_set_channel_config(adapter->hdd_vdev, config,
+	status = ucfg_ocb_set_channel_config(adapter->vdev, config,
 					     hdd_ocb_set_config_callback,
 					     cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1038,7 +1038,7 @@ static int __wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 	qdf_mem_copy(utc->time_error, nla_data(time_error_attr),
 		SIZE_UTC_TIME_ERROR);
 
-	if (ucfg_ocb_set_utc_time(adapter->hdd_vdev, utc) !=
+	if (ucfg_ocb_set_utc_time(adapter->vdev, utc) !=
 			QDF_STATUS_SUCCESS) {
 		hdd_err("Error while setting UTC time");
 		rc = -EINVAL;
@@ -1151,7 +1151,7 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 		goto fail;
 	}
 
-	if (ucfg_ocb_start_timing_advert(adapter->hdd_vdev, timing_advert) !=
+	if (ucfg_ocb_start_timing_advert(adapter->vdev, timing_advert) !=
 			QDF_STATUS_SUCCESS) {
 		hdd_err("Error while starting timing advert");
 		rc = -EINVAL;
@@ -1250,7 +1250,7 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 	timing_advert->chan_freq = nla_get_u32(
 		tb[QCA_WLAN_VENDOR_ATTR_OCB_STOP_TIMING_ADVERT_CHANNEL_FREQ]);
 
-	if (ucfg_ocb_stop_timing_advert(adapter->hdd_vdev, timing_advert) !=
+	if (ucfg_ocb_stop_timing_advert(adapter->vdev, timing_advert) !=
 			QDF_STATUS_SUCCESS) {
 		hdd_err("Error while stopping timing advert");
 		rc = -EINVAL;
@@ -1417,7 +1417,7 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 	cookie = osif_request_cookie(request);
 
 	tsf_request.vdev_id = adapter->session_id;
-	status = ucfg_ocb_get_tsf_timer(adapter->hdd_vdev, &tsf_request,
+	status = ucfg_ocb_get_tsf_timer(adapter->vdev, &tsf_request,
 					hdd_ocb_get_tsf_timer_callback,
 					cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1666,7 +1666,7 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	dcc_request.request_array_len = request_array_len;
 	dcc_request.request_array = request_array;
 
-	status = ucfg_ocb_dcc_get_stats(adapter->hdd_vdev, &dcc_request,
+	status = ucfg_ocb_dcc_get_stats(adapter->vdev, &dcc_request,
 					hdd_dcc_get_stats_callback,
 					cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1776,7 +1776,7 @@ static int __wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (ucfg_ocb_dcc_clear_stats(adapter->hdd_vdev, adapter->session_id,
+	if (ucfg_ocb_dcc_clear_stats(adapter->vdev, adapter->session_id,
 		nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_DCC_CLEAR_STATS_BITMAP])) !=
 			QDF_STATUS_SUCCESS) {
@@ -1933,7 +1933,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	dcc_request.dcc_ndl_active_state_list_len = ndl_active_state_array_len;
 	dcc_request.dcc_ndl_active_state_list = ndl_active_state_array;
 
-	status = ucfg_ocb_dcc_update_ndl(adapter->hdd_vdev, &dcc_request,
+	status = ucfg_ocb_dcc_update_ndl(adapter->vdev, &dcc_request,
 					 hdd_dcc_update_ndl_callback,
 					 cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {

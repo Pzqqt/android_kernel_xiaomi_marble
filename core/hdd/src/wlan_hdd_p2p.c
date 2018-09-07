@@ -86,7 +86,7 @@ void wlan_hdd_cancel_existing_remain_on_channel(struct hdd_adapter *adapter)
 		return;
 	}
 
-	ucfg_p2p_cleanup_roc_by_vdev(adapter->hdd_vdev);
+	ucfg_p2p_cleanup_roc_by_vdev(adapter->vdev);
 }
 
 int wlan_hdd_check_remain_on_channel(struct hdd_adapter *adapter)
@@ -105,7 +105,7 @@ void wlan_hdd_cleanup_remain_on_channel_ctx(struct hdd_adapter *adapter)
 		return;
 	}
 
-	ucfg_p2p_cleanup_roc_by_vdev(adapter->hdd_vdev);
+	ucfg_p2p_cleanup_roc_by_vdev(adapter->vdev);
 }
 
 void wlan_hdd_cleanup_actionframe(struct hdd_adapter *adapter)
@@ -115,7 +115,7 @@ void wlan_hdd_cleanup_actionframe(struct hdd_adapter *adapter)
 		return;
 	}
 
-	ucfg_p2p_cleanup_tx_by_vdev(adapter->hdd_vdev);
+	ucfg_p2p_cleanup_tx_by_vdev(adapter->vdev);
 }
 
 static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
@@ -145,10 +145,9 @@ static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
 
-	status = wlan_cfg80211_roc(adapter->hdd_vdev, chan,
-				duration, cookie);
+	status = wlan_cfg80211_roc(adapter->vdev, chan, duration, cookie);
 	hdd_debug("remain on channel request, status:%d, cookie:0x%llx",
-			status, *cookie);
+		  status, *cookie);
 
 	return qdf_status_to_os_return(status);
 }
@@ -189,7 +188,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
 
-	status = wlan_cfg80211_cancel_roc(adapter->hdd_vdev, cookie);
+	status = wlan_cfg80211_cancel_roc(adapter->vdev, cookie);
 	hdd_debug("cancel remain on channel, status:%d", status);
 
 	return 0;
@@ -261,9 +260,8 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 			return -EINVAL;
 	}
 
-	status = wlan_cfg80211_mgmt_tx(adapter->hdd_vdev, chan,
-			offchan, wait, buf, len, no_cck,
-			dont_wait_for_ack, cookie);
+	status = wlan_cfg80211_mgmt_tx(adapter->vdev, chan, offchan, wait, buf,
+				       len, no_cck, dont_wait_for_ack, cookie);
 	hdd_debug("mgmt tx, status:%d, cookie:0x%llx", status, *cookie);
 
 	return 0;
@@ -317,8 +315,7 @@ static int __wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
 
-	status = wlan_cfg80211_mgmt_tx_cancel(adapter->hdd_vdev,
-						cookie);
+	status = wlan_cfg80211_mgmt_tx_cancel(adapter->vdev, cookie);
 	hdd_debug("cancel mgmt tx, status:%d", status);
 
 	return 0;
@@ -659,7 +656,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 
 	adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
 	if (adapter && !wlan_hdd_validate_session_id(adapter->session_id)) {
-		if (ucfg_scan_get_vdev_status(adapter->hdd_vdev) !=
+		if (ucfg_scan_get_vdev_status(adapter->vdev) !=
 				SCAN_NOT_IN_PROGRESS) {
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, false);

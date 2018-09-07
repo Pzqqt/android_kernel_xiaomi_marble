@@ -2526,7 +2526,7 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 			hdd_err("String to Hex conversion Failed");
 	}
 
-	rssi_info = wlan_cfg80211_mc_cp_stats_get_peer_rssi(adapter->hdd_vdev,
+	rssi_info = wlan_cfg80211_mc_cp_stats_get_peer_rssi(adapter->vdev,
 							    macaddress.bytes,
 							    &ret);
 	if (ret || !rssi_info) {

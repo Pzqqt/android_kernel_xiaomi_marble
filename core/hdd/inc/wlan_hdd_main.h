@@ -1225,6 +1225,7 @@ struct hdd_context;
 
 /**
  * struct hdd_adapter - hdd vdev/net_device context
+ * @vdev: object manager vdev context
  * @event_flags: a bitmap of hdd_adapter_flags
  */
 struct hdd_adapter {
@@ -1239,7 +1240,7 @@ struct hdd_adapter {
 	qdf_list_node_t node;
 
 	struct hdd_context *hdd_ctx;
-	struct wlan_objmgr_vdev *hdd_vdev;
+	struct wlan_objmgr_vdev *vdev;
 
 	void *txrx_vdev;
 

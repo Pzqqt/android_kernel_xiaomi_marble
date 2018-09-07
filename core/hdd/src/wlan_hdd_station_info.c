@@ -114,7 +114,7 @@ static int hdd_get_sta_congestion(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	struct cca_stats cca_stats;
 
-	status = ucfg_mc_cp_stats_cca_stats_get(adapter->hdd_vdev, &cca_stats);
+	status = ucfg_mc_cp_stats_cca_stats_get(adapter->vdev, &cca_stats);
 	if (QDF_IS_STATUS_ERROR(status))
 		return -EINVAL;
 

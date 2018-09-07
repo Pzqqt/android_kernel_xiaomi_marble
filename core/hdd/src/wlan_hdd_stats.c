@@ -5048,7 +5048,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 	}
 
 	rssi_info = wlan_cfg80211_mc_cp_stats_get_peer_rssi(
-			adapter->hdd_vdev,
+			adapter->vdev,
 			sta_ctx->conn_info.bssId.bytes,
 			&ret);
 	if (ret || !rssi_info) {
@@ -5752,7 +5752,7 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	uint8_t mcs_rate_flags;
 	struct stats_event *stats;
 
-	stats = wlan_cfg80211_mc_cp_stats_get_station_stats(adapter->hdd_vdev,
+	stats = wlan_cfg80211_mc_cp_stats_get_station_stats(adapter->vdev,
 							    &ret);
 	if (ret || !stats) {
 		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
@@ -5793,7 +5793,7 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 
 	/* save class a stats to legacy location */
 	adapter->hdd_stats.class_a_stat.nss =
-		wlan_vdev_mlme_get_nss(adapter->hdd_vdev);
+		wlan_vdev_mlme_get_nss(adapter->vdev);
 	adapter->hdd_stats.class_a_stat.tx_rate = stats->tx_rate;
 	adapter->hdd_stats.class_a_stat.tx_rate_flags = stats->tx_rate_flags;
 	adapter->hdd_stats.class_a_stat.mcs_index =

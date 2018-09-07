@@ -142,7 +142,7 @@ wlan_hdd_arp_offload_info_debugfs(struct hdd_context *hdd_ctx,
 	struct pmo_arp_offload_params info = {0};
 	QDF_STATUS status;
 
-	status = pmo_ucfg_get_arp_offload_params(adapter->hdd_vdev,
+	status = pmo_ucfg_get_arp_offload_params(adapter->vdev,
 						 &info);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		ret_val = scnprintf(buf, buf_avail_len,
@@ -232,7 +232,7 @@ wlan_hdd_ns_offload_info_debugfs(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	uint32_t i;
 
-	status = pmo_ucfg_get_ns_offload_params(adapter->hdd_vdev,
+	status = pmo_ucfg_get_ns_offload_params(adapter->vdev,
 						&info);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		ret = scnprintf(buf, buf_avail_len,

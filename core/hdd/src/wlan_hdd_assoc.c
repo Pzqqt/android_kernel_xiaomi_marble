@@ -1342,7 +1342,7 @@ static void hdd_send_association_event(struct net_device *dev,
 			/* Update tdls module about the disconnection event */
 			hdd_notify_sta_disconnect(adapter->session_id,
 						 true, false,
-						 adapter->hdd_vdev);
+						 adapter->vdev);
 		}
 #endif
 	if (eConnectionState_Associated == sta_ctx->conn_info.connState) {
@@ -1362,7 +1362,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		memcpy(wrqu.ap_addr.sa_data, pCsrRoamInfo->pBssDesc->bssId,
 		       sizeof(pCsrRoamInfo->pBssDesc->bssId));
 
-		ucfg_p2p_status_connect(adapter->hdd_vdev);
+		ucfg_p2p_status_connect(adapter->vdev);
 
 		hdd_info("wlan: " MAC_ADDRESS_STR " connected to "
 			MAC_ADDRESS_STR "\n",
@@ -1403,7 +1403,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		chan_info.reg_info_2 =
 			pCsrRoamInfo->chan_info.reg_info_2;
 
-		ret = hdd_objmgr_set_peer_mlme_state(adapter->hdd_vdev,
+		ret = hdd_objmgr_set_peer_mlme_state(adapter->vdev,
 						     WLAN_ASSOC_STATE);
 		if (ret)
 			hdd_err("Peer object %pM fail to set associated state",
@@ -1419,7 +1419,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		hdd_notify_sta_connect(adapter->session_id,
 				       pCsrRoamInfo->tdls_chan_swit_prohibited,
 				       pCsrRoamInfo->tdls_prohibited,
-				       adapter->hdd_vdev);
+				       adapter->vdev);
 
 #ifdef MSM_PLATFORM
 		/* start timer in sta/p2p_cli */
@@ -1471,7 +1471,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		hdd_notify_sta_disconnect(adapter->session_id,
 					  false,
 					  false,
-					  adapter->hdd_vdev);
+					  adapter->vdev);
 
 #ifdef MSM_PLATFORM
 		/* stop timer in sta/p2p_cli */
@@ -1784,7 +1784,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		}
 
 		/* update P2P connection status */
-		ucfg_p2p_status_disconnect(adapter->hdd_vdev);
+		ucfg_p2p_status_disconnect(adapter->vdev);
 	}
 
 	hdd_wmm_adapter_clear(adapter);
@@ -1860,7 +1860,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		 hdd_conn_set_connection_state(adapter,
 					       eConnectionState_NotConnected);
 	}
-	pmo_ucfg_flush_gtk_offload_req(adapter->hdd_vdev);
+	pmo_ucfg_flush_gtk_offload_req(adapter->vdev);
 
 	if ((QDF_STA_MODE == adapter->device_mode) ||
 	    (QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
@@ -2114,7 +2114,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	txrx_ops.tx.tx = NULL;
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)adapter->txrx_vdev, adapter,
-		(struct cdp_ctrl_objmgr_vdev *)adapter->hdd_vdev, &txrx_ops);
+		(struct cdp_ctrl_objmgr_vdev *)adapter->vdev, &txrx_ops);
 	if (!txrx_ops.tx.tx) {
 		hdd_err("%s vdev register fail", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -2145,7 +2145,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 						);
 
 		hdd_conn_set_authenticated(adapter, true);
-		hdd_objmgr_set_peer_mlme_auth_state(adapter->hdd_vdev, true);
+		hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, true);
 	} else {
 		hdd_debug("ULA auth StaId= %d. Changing TL state to CONNECTED at Join time",
 			 sta_ctx->conn_info.staId[0]);
@@ -2159,7 +2159,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 #endif
 						);
 		hdd_conn_set_authenticated(adapter, false);
-		hdd_objmgr_set_peer_mlme_auth_state(adapter->hdd_vdev, false);
+		hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, false);
 	}
 	return qdf_status;
 }
@@ -2494,7 +2494,7 @@ static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
 	status = hdd_change_peer_state(adapter, staid, OL_TXRX_PEER_STATE_AUTH,
 			hdd_is_roam_sync_in_progress(roaminfo));
 	hdd_conn_set_authenticated(adapter, true);
-	hdd_objmgr_set_peer_mlme_auth_state(adapter->hdd_vdev, true);
+	hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, true);
 
 	if ((QDF_STA_MODE == adapter->device_mode) ||
 	    (QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
@@ -3236,7 +3236,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						);
 				hdd_conn_set_authenticated(adapter, false);
 				hdd_objmgr_set_peer_mlme_auth_state(
-							adapter->hdd_vdev,
+							adapter->vdev,
 							false);
 			} else {
 				hdd_debug("staId: %d Changing TL state to AUTHENTICATED",
@@ -3253,7 +3253,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						);
 				hdd_conn_set_authenticated(adapter, true);
 				hdd_objmgr_set_peer_mlme_auth_state(
-							adapter->hdd_vdev,
+							adapter->vdev,
 							true);
 			}
 
@@ -3964,7 +3964,7 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
 		(struct cdp_pdev *)pdev, adapter->session_id),
-		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->hdd_vdev,
+		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
 		&txrx_ops);
 	adapter->tx_fn = txrx_ops.tx.tx;
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;

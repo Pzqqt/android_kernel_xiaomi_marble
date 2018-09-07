@@ -92,7 +92,7 @@ int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *adapter,
 		return len;
 	}
 
-	return wlan_cfg80211_tdls_get_all_peers(adapter->hdd_vdev,
+	return wlan_cfg80211_tdls_get_all_peers(adapter->vdev,
 						buf, buflen);
 }
 
@@ -232,8 +232,8 @@ __wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 	hdd_debug("TDLS trigger mode %d", trigger_mode);
 
 	if (hdd_ctx->tdls_umac_comp_active) {
-		ret = wlan_cfg80211_tdls_configure_mode(adapter->hdd_vdev,
-						trigger_mode);
+		ret = wlan_cfg80211_tdls_configure_mode(adapter->vdev,
+							trigger_mode);
 		return ret;
 	}
 
@@ -749,7 +749,7 @@ int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (hdd_ctx->tdls_umac_comp_active)
-		status = ucfg_set_tdls_offchannel(adapter->hdd_vdev,
+		status = ucfg_set_tdls_offchannel(adapter->vdev,
 						  offchannel);
 	return qdf_status_to_os_return(status);
 }
@@ -761,7 +761,7 @@ int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (hdd_ctx->tdls_umac_comp_active)
-		status = ucfg_set_tdls_secoffchanneloffset(adapter->hdd_vdev,
+		status = ucfg_set_tdls_secoffchanneloffset(adapter->vdev,
 							   offchanoffset);
 	return qdf_status_to_os_return(status);
 }
@@ -773,7 +773,7 @@ int hdd_set_tdls_offchannelmode(struct hdd_context *hdd_ctx,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (hdd_ctx->tdls_umac_comp_active)
-		status = ucfg_set_tdls_offchan_mode(adapter->hdd_vdev,
+		status = ucfg_set_tdls_offchan_mode(adapter->vdev,
 						    offchanmode);
 	return qdf_status_to_os_return(status);
 }
@@ -819,7 +819,7 @@ int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
 				 uint32_t mode)
 {
 	if (hdd_ctx->tdls_umac_comp_active)
-		return wlan_tdls_antenna_switch(adapter->hdd_vdev, mode);
+		return wlan_tdls_antenna_switch(adapter->vdev, mode);
 
 	return 0;
 }

@@ -2081,7 +2081,7 @@ bool hdd_wmm_is_acm_allowed(struct wlan_objmgr_vdev **vdev)
 	struct hdd_wmm_ac_status *wmm_ac_status;
 
 
-	adapter = container_of(vdev, struct hdd_adapter, hdd_vdev);
+	adapter = container_of(vdev, struct hdd_adapter, vdev);
 	if (NULL == adapter) {
 		hdd_err("failed, hdd adapter is NULL");
 		return false;

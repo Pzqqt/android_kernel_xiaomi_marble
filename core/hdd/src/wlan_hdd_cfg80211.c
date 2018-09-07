@@ -4759,7 +4759,7 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
 	for (i = 0; i < 8; i++)
 		buf[7 - i] = replay_ctr[i];
 
-	status = pmo_ucfg_cache_gtk_offload_req(adapter->hdd_vdev, gtk_req);
+	status = pmo_ucfg_cache_gtk_offload_req(adapter->vdev, gtk_req);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Failed to cache GTK Offload");
 
@@ -5216,7 +5216,7 @@ static int wlan_hdd_handle_restrict_offchan_config(struct hdd_adapter *adapter,
 		hdd_err("Invalid interface type:%d", dev_mode);
 		return -EINVAL;
 	}
-	status = wlan_objmgr_vdev_try_get_ref(adapter->hdd_vdev, WLAN_OSIF_ID);
+	status = wlan_objmgr_vdev_try_get_ref(adapter->vdev, WLAN_OSIF_ID);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Access hdd_vdev failed: %d", status);
 		return -EINVAL;
@@ -5226,12 +5226,12 @@ static int wlan_hdd_handle_restrict_offchan_config(struct hdd_adapter *adapter,
 		policy_mgr_convert_device_mode_to_qdf_type(dev_mode);
 		int chan;
 
-		u32 vdev_id = wlan_vdev_get_id(adapter->hdd_vdev);
+		u32 vdev_id = wlan_vdev_get_id(adapter->vdev);
 
-		wlan_vdev_obj_lock(adapter->hdd_vdev);
-		wlan_vdev_mlme_cap_set(adapter->hdd_vdev,
+		wlan_vdev_obj_lock(adapter->vdev);
+		wlan_vdev_mlme_cap_set(adapter->vdev,
 				       WLAN_VDEV_C_RESTRICT_OFFCHAN);
-		wlan_vdev_obj_unlock(adapter->hdd_vdev);
+		wlan_vdev_obj_unlock(adapter->vdev);
 		chan = policy_mgr_get_channel(hdd_ctx->hdd_psoc, pmode,
 					      &vdev_id);
 		if (!chan ||
@@ -5241,10 +5241,10 @@ static int wlan_hdd_handle_restrict_offchan_config(struct hdd_adapter *adapter,
 		}
 		hdd_info("vdev %d mode %d dnbs enabled", vdev_id, dev_mode);
 	} else if (restrict_offchan == 0) {
-		wlan_vdev_obj_lock(adapter->hdd_vdev);
-		wlan_vdev_mlme_cap_clear(adapter->hdd_vdev,
+		wlan_vdev_obj_lock(adapter->vdev);
+		wlan_vdev_mlme_cap_clear(adapter->vdev,
 					 WLAN_VDEV_C_RESTRICT_OFFCHAN);
-		wlan_vdev_obj_unlock(adapter->hdd_vdev);
+		wlan_vdev_obj_unlock(adapter->vdev);
 		if (wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, 0)) {
 			hdd_err("unable to clear avoid_freq");
 			ret_val = -EINVAL;
@@ -5254,7 +5254,7 @@ static int wlan_hdd_handle_restrict_offchan_config(struct hdd_adapter *adapter,
 		ret_val = -EINVAL;
 		hdd_err("Invalid RESTRICT_OFFCHAN setting");
 	}
-	wlan_objmgr_vdev_release_ref(adapter->hdd_vdev, WLAN_OSIF_ID);
+	wlan_objmgr_vdev_release_ref(adapter->vdev, WLAN_OSIF_ID);
 	return ret_val;
 }
 
@@ -5525,7 +5525,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		modulated_dtim = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM]);
 
-		status = pmo_ucfg_config_modulated_dtim(adapter->hdd_vdev,
+		status = pmo_ucfg_config_modulated_dtim(adapter->vdev,
 							modulated_dtim);
 		if (QDF_STATUS_SUCCESS != status)
 			ret_val = -EPERM;
@@ -5541,7 +5541,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 			return -EINVAL;
 		}
 
-		status = pmo_ucfg_config_listen_interval(adapter->hdd_vdev,
+		status = pmo_ucfg_config_listen_interval(adapter->vdev,
 							 override_li);
 		if (status != QDF_STATUS_SUCCESS)
 			ret_val = -EPERM;
@@ -12928,7 +12928,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	if (!(adapter->device_mode == QDF_P2P_DEVICE_MODE &&
 	    type == NL80211_IFTYPE_STATION)) {
 		hdd_debug("Teardown tdls links and disable tdls in FW as new interface is coming up");
-		hdd_notify_teardown_tdls_links(adapter->hdd_vdev);
+		hdd_notify_teardown_tdls_links(adapter->vdev);
 	}
 
 	if ((adapter->device_mode == QDF_STA_MODE) ||
@@ -14654,7 +14654,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	/* Disable roaming on all other adapters before connect start */
 	wlan_hdd_disable_roaming(adapter);
 
-	hdd_notify_teardown_tdls_links(adapter->hdd_vdev);
+	hdd_notify_teardown_tdls_links(adapter->vdev);
 
 	qdf_mem_zero(&hdd_sta_ctx->conn_info.conn_flag,
 		     sizeof(hdd_sta_ctx->conn_info.conn_flag));
@@ -14787,7 +14787,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			}
 		}
 #endif
-		pmo_ucfg_flush_gtk_offload_req(adapter->hdd_vdev);
+		pmo_ucfg_flush_gtk_offload_req(adapter->vdev);
 		roam_profile->csrPersona = adapter->device_mode;
 
 		if (operatingChannel) {
@@ -16824,7 +16824,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 			reasonCode = eCSR_DISCONNECT_REASON_UNSPECIFIED;
 			break;
 		}
-		if (ucfg_scan_get_vdev_status(adapter->hdd_vdev) !=
+		if (ucfg_scan_get_vdev_status(adapter->vdev) !=
 				SCAN_NOT_IN_PROGRESS) {
 			hdd_debug("Disconnect is in progress, Aborting Scan");
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
@@ -16833,7 +16833,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 		/* First clean up the tdls peers if any */
 		hdd_notify_sta_disconnect(adapter->session_id,
-			  false, true, adapter->hdd_vdev);
+			  false, true, adapter->vdev);
 
 		hdd_info("Disconnect from userspace; reason:%d (%s)",
 			 reason, hdd_ieee80211_reason_code_to_str(reason));
@@ -18353,7 +18353,7 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 	wlan_hdd_copy_gtk_kek(gtk_req, data);
 	qdf_mem_copy(gtk_req->kck, data->kck, NL80211_KCK_LEN);
 	gtk_req->is_fils_connection = hdd_is_fils_connection(adapter);
-	status = pmo_ucfg_cache_gtk_offload_req(adapter->hdd_vdev, gtk_req);
+	status = pmo_ucfg_cache_gtk_offload_req(adapter->vdev, gtk_req);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to cache GTK Offload");
 		result = qdf_status_to_os_return(status);

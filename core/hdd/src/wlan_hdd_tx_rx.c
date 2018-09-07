@@ -1064,7 +1064,7 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 
 	mac_addr = (struct qdf_mac_addr *)skb->data;
 
-	ucfg_tdls_update_tx_pkt_cnt(adapter->hdd_vdev, mac_addr);
+	ucfg_tdls_update_tx_pkt_cnt(adapter->vdev, mac_addr);
 
 	if (qdf_nbuf_is_tso(skb))
 		adapter->stats.tx_packets += qdf_nbuf_get_tso_num_seg(skb);
@@ -1937,7 +1937,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 
 		mac_addr = (struct qdf_mac_addr *)(skb->data+QDF_MAC_ADDR_SIZE);
 
-		ucfg_tdls_update_rx_pkt_cnt(adapter->hdd_vdev, mac_addr);
+		ucfg_tdls_update_rx_pkt_cnt(adapter->vdev, mac_addr);
 
 		skb->dev = adapter->dev;
 		skb->protocol = eth_type_trans(skb, skb->dev);
@@ -2407,7 +2407,7 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
 		(struct cdp_pdev *)pdev, adapter->session_id),
-		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->hdd_vdev,
+		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
 		&txrx_ops);
 	/* peer is created wma_vdev_attach->wma_create_peer */
 	qdf_status = cdp_peer_register(soc,

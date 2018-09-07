@@ -661,7 +661,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 		break;
 
 	case NETDEV_GOING_DOWN:
-		if (ucfg_scan_get_vdev_status(adapter->hdd_vdev) !=
+		if (ucfg_scan_get_vdev_status(adapter->vdev) !=
 				SCAN_NOT_IN_PROGRESS) {
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, true);
@@ -3943,18 +3943,18 @@ int hdd_vdev_ready(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 
-	status = pmo_vdev_ready(adapter->hdd_vdev);
+	status = pmo_vdev_ready(adapter->vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		return qdf_status_to_os_return(status);
 
-	status = ucfg_reg_11d_vdev_created_update(adapter->hdd_vdev);
+	status = ucfg_reg_11d_vdev_created_update(adapter->vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		return qdf_status_to_os_return(status);
 
 	if (wma_capability_enhanced_mcast_filter())
-		status = pmo_ucfg_enhanced_mc_filter_enable(adapter->hdd_vdev);
+		status = pmo_ucfg_enhanced_mc_filter_enable(adapter->vdev);
 	else
-		status = pmo_ucfg_enhanced_mc_filter_disable(adapter->hdd_vdev);
+		status = pmo_ucfg_enhanced_mc_filter_disable(adapter->vdev);
 
 	return qdf_status_to_os_return(status);
 }
@@ -3975,8 +3975,8 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 
-	status = ucfg_reg_11d_vdev_delete_update(adapter->hdd_vdev);
-	ucfg_scan_set_vdev_del_in_progress(adapter->hdd_vdev);
+	status = ucfg_reg_11d_vdev_delete_update(adapter->vdev);
+	ucfg_scan_set_vdev_del_in_progress(adapter->vdev);
 
 	/* close sme session (destroy vdev in firmware via legacy API) */
 	qdf_event_reset(&adapter->qdf_session_close_event);
@@ -4008,7 +4008,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	}
 
 release_vdev:
-	ucfg_scan_clear_vdev_del_in_progress(adapter->hdd_vdev);
+	ucfg_scan_clear_vdev_del_in_progress(adapter->vdev);
 
 	/* do vdev logical destroy via objmgr */
 	errno = hdd_objmgr_release_and_destroy_vdev(adapter);
@@ -4132,7 +4132,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 
 	if (adapter->device_mode == QDF_STA_MODE ||
 	    adapter->device_mode == QDF_P2P_CLIENT_MODE)
-		wlan_vdev_set_max_peer_count(adapter->hdd_vdev,
+		wlan_vdev_set_max_peer_count(adapter->vdev,
 					     HDD_MAX_VDEV_PEER_COUNT);
 
 	hdd_info("vdev %d created successfully", adapter->session_id);
@@ -5346,7 +5346,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 		/*
 		 * If Do_Not_Break_Stream was enabled clear avoid channel list.
 		 */
-		if (policy_mgr_is_dnsc_set(adapter->hdd_vdev))
+		if (policy_mgr_is_dnsc_set(adapter->vdev))
 			wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, 0);
 
 #ifdef WLAN_OPEN_SOURCE
@@ -5465,7 +5465,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 			/* Stop tdls timers */
-			hdd_notify_tdls_reset_adapter(adapter->hdd_vdev);
+			hdd_notify_tdls_reset_adapter(adapter->vdev);
 			adapter->session.station.hdd_reassoc_scenario = false;
 		}
 

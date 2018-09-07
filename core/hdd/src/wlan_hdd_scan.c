@@ -656,7 +656,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if ((request->n_ssids == 1) && (request->ssids != NULL) &&
 	    (request->ssids[0].ssid_len > 7) &&
 	     !qdf_mem_cmp(&request->ssids[0], "DIRECT-", 7))
-		ucfg_p2p_status_scan(adapter->hdd_vdev);
+		ucfg_p2p_status_scan(adapter->vdev);
 
 	status = wlan_cfg80211_scan(hdd_ctx->hdd_pdev, request, &params);
 	if (params.default_ie.ptr)

@@ -2160,7 +2160,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			qdf_mem_free(sta_info);
 		}
 		/* Lets abort scan to ensure smooth authentication for client */
-		if (ucfg_scan_get_vdev_status(adapter->hdd_vdev) !=
+		if (ucfg_scan_get_vdev_status(adapter->vdev) !=
 				SCAN_NOT_IN_PROGRESS) {
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, false);
@@ -4508,7 +4508,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
-	hdd_notify_teardown_tdls_links(adapter->hdd_vdev);
+	hdd_notify_teardown_tdls_links(adapter->vdev);
 
 	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->hdd_psoc)) {
 		status = policy_mgr_wait_for_connection_update(
@@ -5152,7 +5152,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		wlan_hdd_set_dhcp_server_offload(adapter);
 #endif /* DHCP_SERVER_OFFLOAD */
 
-	ucfg_p2p_status_start_bss(adapter->hdd_vdev);
+	ucfg_p2p_status_start_bss(adapter->vdev);
 
 	/* Check and restart SAP if it is on unsafe channel */
 	hdd_unsafe_channel_restart_sap(hdd_ctx);
@@ -5384,7 +5384,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	wlan_hdd_reset_prob_rspies(adapter);
 	hdd_destroy_acs_timer(adapter);
 
-	ucfg_p2p_status_stop_bss(adapter->hdd_vdev);
+	ucfg_p2p_status_stop_bss(adapter->vdev);
 
 	hdd_exit();
 
@@ -5795,7 +5795,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		 * If Do_Not_Break_Stream enabled send avoid channel list
 		 * to application.
 		 */
-		if (policy_mgr_is_dnsc_set(adapter->hdd_vdev) &&
+		if (policy_mgr_is_dnsc_set(adapter->vdev) &&
 		    sap_config->channel) {
 			wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx,
 							  sap_config->channel);

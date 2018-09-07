@@ -134,7 +134,7 @@ static void hdd_enable_gtk_offload(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 
-	status = pmo_ucfg_enable_gtk_offload_in_fwr(adapter->hdd_vdev);
+	status = pmo_ucfg_enable_gtk_offload_in_fwr(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to enable gtk offload");
 }
@@ -153,22 +153,21 @@ static void hdd_disable_gtk_offload(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 
 	/* ensure to get gtk rsp first before disable it*/
-	gtk_rsp_request.callback =
-		wlan_hdd_cfg80211_update_replay_counter_cb;
+	gtk_rsp_request.callback = wlan_hdd_cfg80211_update_replay_counter_cb;
+
 	/* Passing as void* as PMO does not know legacy HDD adapter type */
-	gtk_rsp_request.callback_context =
-		(void *)adapter;
-	status = pmo_ucfg_get_gtk_rsp(adapter->hdd_vdev,
-			&gtk_rsp_request);
+	gtk_rsp_request.callback_context = (void *)adapter;
+
+	status = pmo_ucfg_get_gtk_rsp(adapter->vdev, &gtk_rsp_request);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to send get gtk rsp status:%d", status);
 		return;
 	}
+
 	hdd_debug("send get_gtk_rsp successful");
-	status = pmo_ucfg_disable_gtk_offload_in_fwr(adapter->hdd_vdev);
+	status = pmo_ucfg_disable_gtk_offload_in_fwr(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to disable gtk offload");
-
 }
 
 #ifdef WLAN_NS_OFFLOAD
@@ -405,7 +404,7 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 	}
 
 	/* enable ns request */
-	status = pmo_ucfg_enable_ns_offload_in_fwr(adapter->hdd_vdev, trigger);
+	status = pmo_ucfg_enable_ns_offload_in_fwr(adapter->vdev, trigger);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to enable ns offload; status:%d", status);
 		goto free_req;
@@ -426,13 +425,13 @@ void hdd_disable_ns_offload(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	hdd_enter();
-	status = pmo_ucfg_flush_ns_offload_req(adapter->hdd_vdev);
+	status = pmo_ucfg_flush_ns_offload_req(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to flush NS Offload");
 		goto out;
 	}
 
-	status = pmo_ucfg_disable_ns_offload_in_fwr(adapter->hdd_vdev, trigger);
+	status = pmo_ucfg_disable_ns_offload_in_fwr(adapter->vdev, trigger);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Failed to disable NS Offload");
 	else
@@ -492,7 +491,7 @@ static void hdd_enable_hw_filter(struct hdd_adapter *adapter)
 
 	hdd_enter();
 
-	status = pmo_ucfg_enable_hw_filter_in_fwr(adapter->hdd_vdev);
+	status = pmo_ucfg_enable_hw_filter_in_fwr(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to enable hardware filter");
 
@@ -505,7 +504,7 @@ static void hdd_disable_hw_filter(struct hdd_adapter *adapter)
 
 	hdd_enter();
 
-	status = pmo_ucfg_disable_hw_filter_in_fwr(adapter->hdd_vdev);
+	status = pmo_ucfg_disable_hw_filter_in_fwr(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to disable hardware filter");
 
@@ -517,13 +516,13 @@ void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 {
 	hdd_enter();
 
-	if (!ucfg_pmo_is_vdev_supports_offload(adapter->hdd_vdev)) {
+	if (!ucfg_pmo_is_vdev_supports_offload(adapter->vdev)) {
 		hdd_debug("offload is not supported on vdev opmode %d",
 			  adapter->device_mode);
 		goto out;
 	}
 
-	if (!ucfg_pmo_is_vdev_connected(adapter->hdd_vdev)) {
+	if (!ucfg_pmo_is_vdev_connected(adapter->vdev)) {
 		hdd_debug("offload is not supported on disconnected vdevs");
 		goto out;
 	}
@@ -544,13 +543,13 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 {
 	hdd_enter();
 
-	if (!ucfg_pmo_is_vdev_supports_offload(adapter->hdd_vdev)) {
+	if (!ucfg_pmo_is_vdev_supports_offload(adapter->vdev)) {
 		hdd_info("offload is not supported on this vdev opmode: %d",
 				adapter->device_mode);
 			goto out;
 	}
 
-	if (!ucfg_pmo_is_vdev_connected(adapter->hdd_vdev)) {
+	if (!ucfg_pmo_is_vdev_connected(adapter->vdev)) {
 		hdd_info("vdev is not connected");
 		goto out;
 	}
@@ -896,7 +895,7 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 		goto free_req;
 	}
 
-	status = pmo_ucfg_enable_arp_offload_in_fwr(adapter->hdd_vdev, trigger);
+	status = pmo_ucfg_enable_arp_offload_in_fwr(adapter->vdev, trigger);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed arp offload config in fw; status:%d", status);
 		goto free_req;
@@ -917,13 +916,13 @@ void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	hdd_enter();
-	status = pmo_ucfg_flush_arp_offload_req(adapter->hdd_vdev);
+	status = pmo_ucfg_flush_arp_offload_req(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to flush arp Offload");
 		goto out;
 	}
 
-	status = pmo_ucfg_disable_arp_offload_in_fwr(adapter->hdd_vdev,
+	status = pmo_ucfg_disable_arp_offload_in_fwr(adapter->vdev,
 						     trigger);
 	if (status == QDF_STATUS_SUCCESS)
 		hdd_wlan_offload_event(PMO_IPV4_ARP_REPLY_OFFLOAD,
@@ -2000,7 +1999,7 @@ int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 #ifdef QCA_SUPPORT_CP_STATS
 static void wlan_hdd_get_tx_power(struct hdd_adapter *adapter, int *dbm)
 {
-	wlan_cfg80211_mc_cp_stats_get_tx_power(adapter->hdd_vdev, dbm);
+	wlan_cfg80211_mc_cp_stats_get_tx_power(adapter->vdev, dbm);
 }
 #else
 static void wlan_hdd_get_tx_power(struct hdd_adapter *adapter, int *dbm)

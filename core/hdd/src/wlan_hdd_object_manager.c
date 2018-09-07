@@ -281,7 +281,7 @@ int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 		goto vdev_destroy;
 	}
 
-	adapter->hdd_vdev = vdev;
+	adapter->vdev = vdev;
 	adapter->session_id = wlan_vdev_get_id(vdev);
 
 	return 0;
@@ -298,10 +298,10 @@ osif_priv_free:
 int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
-	struct wlan_objmgr_vdev *vdev = adapter->hdd_vdev;
+	struct wlan_objmgr_vdev *vdev = adapter->vdev;
 	struct vdev_osif_priv *osif_priv;
 
-	adapter->hdd_vdev = NULL;
+	adapter->vdev = NULL;
 	adapter->session_id = HDD_SESSION_ID_INVALID;
 
 	QDF_BUG(vdev);
