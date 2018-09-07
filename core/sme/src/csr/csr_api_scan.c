@@ -1887,14 +1887,10 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
 
 		if ((pCommand->command == commandType) &&
 		    (pCommand->sessionId == sessionId)) {
-			/* Remove that entry only */
-			if (csr_nonscan_pending_ll_remove_entry(pMac,
-						pEntryToRemove,
-			    LL_ACCESS_NOLOCK)) {
-				csr_ll_insert_tail(&localList, pEntryToRemove,
-						   LL_ACCESS_NOLOCK);
-				status = QDF_STATUS_SUCCESS;
-			}
+			/* Insert to localList and remove later */
+			csr_ll_insert_tail(&localList, pEntryToRemove,
+					   LL_ACCESS_NOLOCK);
+			status = QDF_STATUS_SUCCESS;
 		}
 	}
 	csr_nonscan_pending_ll_unlock(pMac);

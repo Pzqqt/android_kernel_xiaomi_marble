@@ -4071,11 +4071,9 @@ static void csr_roam_remove_duplicate_pending_cmd_from_list(
 			!CSR_IS_DISCONNECT_COMMAND(dup_cmd))))) {
 			sme_debug("RoamReason: %d",
 					dup_cmd->u.roamCmd.roamReason);
-			/* Remove the roam command from the pending list */
-			if (csr_nonscan_pending_ll_remove_entry(mac_ctx,
-						entry, LL_ACCESS_NOLOCK))
-				csr_ll_insert_tail(&local_list, entry,
-							LL_ACCESS_NOLOCK);
+			/* Insert to local_list and remove later */
+			csr_ll_insert_tail(&local_list, entry,
+					   LL_ACCESS_NOLOCK);
 		}
 		entry = next_entry;
 	}

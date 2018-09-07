@@ -541,18 +541,6 @@ bool csr_nonscan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
 	return false;
 }
 
-bool csr_nonscan_pending_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool inter_locked)
-{
-	tListElem *head;
-
-	head = csr_nonscan_pending_ll_next(mac_ctx, entry, inter_locked);
-	if (head == entry)
-		return true;
-
-	return false;
-}
-
 tListElem *csr_nonscan_active_ll_remove_head(struct sAniSirGlobal *mac_ctx,
 		bool inter_locked)
 {

@@ -1360,9 +1360,6 @@ bool csr_nonscan_pending_ll_is_list_empty(
 bool csr_nonscan_active_ll_remove_entry(
 			struct sAniSirGlobal *mac_ctx,
 			tListElem *pEntryToRemove, bool inter_locked);
-bool csr_nonscan_pending_ll_remove_entry(
-			struct sAniSirGlobal *mac_ctx,
-			tListElem *pEntryToRemove, bool inter_locked);
 tListElem *csr_nonscan_active_ll_peek_head(
 			struct sAniSirGlobal *mac_ctx,
 			bool inter_locked);
