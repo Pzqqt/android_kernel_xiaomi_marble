@@ -7449,6 +7449,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	bool tx_level_change = false;
 	bool rxthread_high_tput_req = false;
 	bool dptrace_high_tput_req;
+
 	if (total_pkts > hdd_ctx->config->busBandwidthHighThreshold)
 		next_vote_level = PLD_BUS_WIDTH_HIGH;
 	else if (total_pkts > hdd_ctx->config->busBandwidthMediumThreshold)

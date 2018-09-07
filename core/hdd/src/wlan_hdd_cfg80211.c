@@ -6279,6 +6279,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_NO_ACK]) {
 		int he_mcs_val;
+
 		if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_NO_ACK_AC]) {
 			ac = nla_get_u8(tb[
 			     QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_NO_ACK_AC]);
@@ -17882,6 +17883,7 @@ static void hdd_fill_pmksa_info(struct hdd_adapter *adapter,
 				struct cfg80211_pmksa *pmksa, bool is_delete)
 {
 	mac_handle_t mac_handle;
+
 	hdd_debug("%s PMKSA for " MAC_ADDRESS_STR, is_delete ? "Delete" : "Set",
 	MAC_ADDR_ARRAY(pmksa->bssid));
 	qdf_mem_copy(pmk_cache->BSSID.bytes,
