@@ -3419,8 +3419,8 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 			return -EINVAL;
 		}
 	} else if (!config->enable_rx_ldpc) {
-			hdd_err("LDCP is already disabled");
-			return 0;
+		hdd_err("LDCP is already disabled");
+		return 0;
 	}
 	status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc, &ht_cap_info);
 	if (QDF_STATUS_SUCCESS != status) {

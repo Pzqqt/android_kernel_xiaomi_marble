@@ -9707,16 +9707,16 @@ static int hdd_set_clear_connectivity_check_stats_info(
 					arp_stats_params->pkt_type_bitmap;
 
 				if (pkt_bitmap & CONNECTIVITY_CHECK_SET_ARP) {
-				if (!tb[STATS_GW_IPV4]) {
-					hdd_err("GW ipv4 address is not present");
-					err = -EINVAL;
-					goto end;
-				}
-				arp_stats_params->ip_addr =
+					if (!tb[STATS_GW_IPV4]) {
+						hdd_err("GW ipv4 address is not present");
+						err = -EINVAL;
+						goto end;
+					}
+					arp_stats_params->ip_addr =
 						nla_get_u32(tb[STATS_GW_IPV4]);
-				arp_stats_params->pkt_type =
+					arp_stats_params->pkt_type =
 						WLAN_NUD_STATS_ARP_PKT_TYPE;
-				adapter->track_arp_ip =
+					adapter->track_arp_ip =
 						arp_stats_params->ip_addr;
 				}
 

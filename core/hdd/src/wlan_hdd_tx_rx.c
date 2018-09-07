@@ -741,10 +741,10 @@ void hdd_tx_rx_collect_connectivity_stats_info(struct sk_buff *skb,
 				} else if (action == PKT_TYPE_TX_HOST_FW_SENT &&
 					adapter->hdd_stats.hdd_tcp_stats.
 							is_tcp_ack_sent) {
-				/* host receives tx completion */
-				++adapter->hdd_stats.hdd_tcp_stats.
+					/* host receives tx completion */
+					++adapter->hdd_stats.hdd_tcp_stats.
 							tx_tcp_ack_host_fw_sent;
-				adapter->hdd_stats.hdd_tcp_stats.
+					adapter->hdd_stats.hdd_tcp_stats.
 							is_tcp_ack_sent = false;
 				}
 			}

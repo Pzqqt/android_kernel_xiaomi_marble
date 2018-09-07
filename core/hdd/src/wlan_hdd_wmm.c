@@ -1471,10 +1471,9 @@ void hdd_wmm_classify_pkt(struct hdd_adapter *adapter,
 			hdd_debug("Ether II VLAN tagged IP Packet, tos is %d",
 				 tos);
 #endif /* HDD_WMM_DEBUG */
-		} else
-		if ((ntohs(eth_hdr->eth_IIv.h_vlan_encapsulated_proto)
-			< WLAN_MIN_PROTO)
-		    && (eth_hdr->eth_8023v.h_snap.dsap ==
+		} else if ((ntohs(eth_hdr->eth_IIv.h_vlan_encapsulated_proto)
+			< WLAN_MIN_PROTO) &&
+			(eth_hdr->eth_8023v.h_snap.dsap ==
 			WLAN_SNAP_DSAP)
 			&& (eth_hdr->eth_8023v.h_snap.ssap ==
 			WLAN_SNAP_SSAP)

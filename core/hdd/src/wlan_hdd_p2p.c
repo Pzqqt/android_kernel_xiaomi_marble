@@ -962,7 +962,7 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 				 * as destination, we are dropping
 				 * action frame
 				 */
-			return;
+				return;
 			}
 		}
 	}
