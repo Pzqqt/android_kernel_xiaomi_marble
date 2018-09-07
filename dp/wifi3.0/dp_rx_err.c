@@ -127,16 +127,18 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 			 * ast is not in ast_table, we use the below API to get
 			 * AST entry for STA's own mac_address.
 			 */
-			ase = dp_peer_ast_hash_find(soc,
-							&data[DP_MAC_ADDR_LEN]);
 
+			ase = dp_peer_ast_list_find(soc, peer,
+						    &data[DP_MAC_ADDR_LEN]);
+			if (ase) {
+				ase->ast_idx = sa_idx;
+				soc->ast_table[sa_idx] = ase;
+			}
 		}
 	} else
 		ase = dp_peer_ast_hash_find(soc, &data[DP_MAC_ADDR_LEN]);
 
 	if (ase) {
-		ase->ast_idx = sa_idx;
-		soc->ast_table[sa_idx] = ase;
 
 		if (ase->pdev_id != vdev->pdev->pdev_id) {
 			qdf_spin_unlock_bh(&soc->ast_lock);

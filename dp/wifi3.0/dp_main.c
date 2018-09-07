@@ -880,6 +880,8 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("	Entries Deleted = %d", soc->stats.ast.deleted);
 	DP_PRINT_STATS("	Entries Agedout = %d", soc->stats.ast.aged_out);
 	DP_PRINT_STATS("AST Table:");
+
+	qdf_spin_lock_bh(&soc->ast_lock);
 	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
 		pdev = soc->pdev_list[i];
 		qdf_spin_lock_bh(&pdev->vdev_list_lock);
@@ -912,6 +914,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 		}
 		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
+	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 #else
 static void dp_print_ast_stats(struct dp_soc *soc)
@@ -3921,7 +3924,7 @@ static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
 	if (peer->bss_peer)
 		return peer;
 
-	qdf_atomic_dec(&peer->ref_cnt);
+	dp_peer_unref_delete(peer);
 	return NULL;
 }
 #else
@@ -3938,7 +3941,7 @@ static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
 	if (peer->bss_peer && (peer->vdev->vdev_id == vdev->vdev_id))
 		return peer;
 
-	qdf_atomic_dec(&peer->ref_cnt);
+	dp_peer_unref_delete(peer);
 	return NULL;
 }
 #endif

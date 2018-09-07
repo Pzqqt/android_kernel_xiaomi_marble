@@ -636,6 +636,7 @@ union dp_align_mac_addr {
 	} align4_2;
 };
 
+#define DP_INVALID_AST_IDX 0xFFFF
 /*
  * dp_ast_entry
  *

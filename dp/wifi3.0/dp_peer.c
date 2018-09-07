@@ -339,6 +339,34 @@ static inline void dp_peer_ast_hash_remove(struct dp_soc *soc,
 }
 
 /*
+ * dp_peer_ast_list_find() - Find AST entry by MAC address from peer ast list
+ * @soc: SoC handle
+ * @peer: peer handle
+ * @ast_mac_addr: mac address
+ *
+ * It assumes caller has taken the ast lock to protect the access to ast list
+ *
+ * Return: AST entry
+ */
+struct dp_ast_entry *dp_peer_ast_list_find(struct dp_soc *soc,
+					   struct dp_peer *peer,
+					   uint8_t *ast_mac_addr)
+{
+	struct dp_ast_entry *ast_entry = NULL;
+	union dp_align_mac_addr *mac_addr =
+		(union dp_align_mac_addr *)ast_mac_addr;
+
+	TAILQ_FOREACH(ast_entry, &peer->ast_entry_list, ase_list_elem) {
+		if (!dp_peer_find_mac_addr_cmp(mac_addr,
+					       &ast_entry->mac_addr)) {
+			return ast_entry;
+		}
+	}
+
+	return NULL;
+}
+
+/*
  * dp_peer_ast_hash_find_by_pdevid() - Find AST entry by MAC address
  *				       and pdev id
  * @soc: SoC handle
@@ -418,9 +446,8 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 	struct dp_peer *peer, uint8_t *mac_addr, uint16_t hw_peer_id,
 	uint8_t vdev_id, uint16_t ast_hash)
 {
-	struct dp_ast_entry *ast_entry;
+	struct dp_ast_entry *ast_entry = NULL;
 	enum cdp_txrx_ast_entry_type peer_type = CDP_TXRX_AST_TYPE_STATIC;
-	bool ast_entry_found = FALSE;
 
 	if (!peer) {
 		return;
@@ -433,19 +460,18 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 		mac_addr[4], mac_addr[5]);
 
 	qdf_spin_lock_bh(&soc->ast_lock);
-	TAILQ_FOREACH(ast_entry, &peer->ast_entry_list, ase_list_elem) {
-		if (!(qdf_mem_cmp(mac_addr, ast_entry->mac_addr.raw,
-				DP_MAC_ADDR_LEN))) {
-			ast_entry->ast_idx = hw_peer_id;
-			soc->ast_table[hw_peer_id] = ast_entry;
-			ast_entry->is_active = TRUE;
-			peer_type = ast_entry->type;
-			ast_entry_found = TRUE;
-			ast_entry->ast_hash_value = ast_hash;
-		}
+
+	ast_entry = dp_peer_ast_list_find(soc, peer, mac_addr);
+
+	if (ast_entry) {
+		ast_entry->ast_idx = hw_peer_id;
+		soc->ast_table[hw_peer_id] = ast_entry;
+		ast_entry->is_active = TRUE;
+		peer_type = ast_entry->type;
+		ast_entry->ast_hash_value = ast_hash;
 	}
 
-	if (ast_entry_found || (peer->vdev && peer->vdev->proxysta_vdev)) {
+	if (ast_entry || (peer->vdev && peer->vdev->proxysta_vdev)) {
 		if (soc->cdp_soc.ol_ops->peer_map_event) {
 			soc->cdp_soc.ol_ops->peer_map_event(
 			soc->ctrl_psoc, peer->peer_ids[0],
@@ -573,6 +599,7 @@ add_ast_entry:
 	ast_entry->peer = peer;
 	ast_entry->pdev_id = vdev->pdev->pdev_id;
 	ast_entry->vdev_id = vdev->vdev_id;
+	ast_entry->ast_idx = DP_INVALID_AST_IDX;
 
 	switch (type) {
 	case CDP_TXRX_AST_TYPE_STATIC:
@@ -1335,7 +1362,7 @@ void *dp_find_peer_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 	/* ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
 	 */
-	qdf_atomic_dec(&peer->ref_cnt);
+	dp_peer_unref_delete(peer);
 
 	return peer;
 }
@@ -2513,7 +2540,7 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 		return NULL;
 
 	if (peer->vdev != vdev) {
-		qdf_atomic_dec(&peer->ref_cnt);
+		dp_peer_unref_delete(peer);
 		return NULL;
 	}
 
@@ -2523,7 +2550,7 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 	/* ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
 	 */
-	qdf_atomic_dec(&peer->ref_cnt);
+	dp_peer_unref_delete(peer);
 
 	return peer;
 }
@@ -2596,7 +2623,7 @@ QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 	/* ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
 	 */
-	qdf_atomic_dec(&peer->ref_cnt);
+	dp_peer_unref_delete(peer);
 
 	return QDF_STATUS_SUCCESS;
 }
