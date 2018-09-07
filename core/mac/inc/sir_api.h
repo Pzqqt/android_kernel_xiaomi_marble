@@ -1576,16 +1576,6 @@ typedef struct sSirSmeSwitchChannelInd {
 	struct qdf_mac_addr bssid;      /* BSSID */
 } tSirSmeSwitchChannelInd, *tpSirSmeSwitchChannelInd;
 
-/* / Definition for Neighbor BSS indication */
-/* / MAC ---> */
-/* / MAC reports this each time a new I/BSS is detected */
-typedef struct sSirSmeNeighborBssInd {
-	uint16_t messageType;   /* eWNI_SME_NEIGHBOR_BSS_IND */
-	uint16_t length;
-	uint8_t sessionId;
-	tSirBssDescription bssDescription[1];
-} tSirSmeNeighborBssInd, *tpSirSmeNeighborBssInd;
-
 /* / Definition for MIC failure indication */
 /* / MAC ---> */
 /* / MAC reports this each time a MIC failure occures on Rx TKIP packet */
