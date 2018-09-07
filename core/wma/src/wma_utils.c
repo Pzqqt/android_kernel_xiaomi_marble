@@ -1682,6 +1682,18 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		}
 	}
 	link_stats_results = wma_handle->link_stats_results;
+	if (link_stats_results->num_radio == 0) {
+		link_stats_results->num_radio = fixed_param->num_radio;
+	} else if (link_stats_results->num_radio < fixed_param->num_radio) {
+		/*
+		 * The link stats results size allocated based on num_radio of
+		 * first event must be same as following events. Otherwise these
+		 * events may be spoofed. Drop all of them and report error.
+		 */
+		WMA_LOGE("Invalid following WMI_RADIO_LINK_STATS_EVENTID. Discarding this set");
+		wma_unified_radio_tx_mem_free(handle);
+		return -EINVAL;
+	}
 
 	WMA_LOGD("Radio stats Fixed Param:");
 	WMA_LOGD("req_id: %u num_radio: %u more_radio_events: %u",
@@ -1704,7 +1716,6 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	link_stats_results->paramId = WMI_LINK_STATS_RADIO;
 	link_stats_results->rspId = fixed_param->request_id;
 	link_stats_results->ifaceId = 0;
-	link_stats_results->num_radio = fixed_param->num_radio;
 	link_stats_results->peer_event_number = 0;
 
 	/*
