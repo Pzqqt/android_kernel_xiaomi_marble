@@ -61,12 +61,36 @@ struct wlan_fwol_coex_config {
 	int16_t bt_interference_high_ul;
 };
 
+/*
+ * struct wlan_fwol_thermal_temp - Thermal temperature config items
+ * thermal_temp_min_level0: Thermal temperature minimum level 0
+ * thermal_temp_max_level0: Thermal temperature maximum level 0
+ * thermal_temp_min_level1: Thermal temperature minimum level 1
+ * thermal_temp_max_level1: Thermal temperature maximum level 1
+ * thermal_temp_min_level2: Thermal temperature minimum level 2
+ * thermal_temp_max_level2: Thermal temperature maximum level 2
+ * thermal_temp_min_level3: Thermal temperature minimum level 3
+ * thermal_temp_max_level3: Thermal temperature maximum level 3
+ */
+struct wlan_fwol_thermal_temp {
+	uint16_t thermal_temp_min_level0;
+	uint16_t thermal_temp_max_level0;
+	uint16_t thermal_temp_min_level1;
+	uint16_t thermal_temp_max_level1;
+	uint16_t thermal_temp_min_level2;
+	uint16_t thermal_temp_max_level2;
+	uint16_t thermal_temp_min_level3;
+	uint16_t thermal_temp_max_level3;
+};
+
 /**
  * struct wlan_fwol_cfg - fwol config items
  * coex_config: coex config items
+ * thermal_temp_cfg: Thermal temperature related config items
  */
 struct wlan_fwol_cfg {
 	struct wlan_fwol_coex_config coex_config;
+	struct wlan_fwol_thermal_temp thermal_temp_cfg;
 };
 
 /**

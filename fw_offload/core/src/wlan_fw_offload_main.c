@@ -54,6 +54,28 @@ fwol_update_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_BT_INTERFERENCE_HIGH_UL);
 }
 
+static void
+fwol_update_thermal_temp_in_cfg(struct wlan_objmgr_psoc *psoc,
+				struct wlan_fwol_thermal_temp *thermal_temp)
+{
+	thermal_temp->thermal_temp_min_level0 =
+				cfg_get(psoc, CFG_THERMAL_TEMP_MIN_LEVEL0);
+	thermal_temp->thermal_temp_max_level0 =
+				cfg_get(psoc, CFG_THERMAL_TEMP_MAX_LEVEL0);
+	thermal_temp->thermal_temp_min_level1 =
+				cfg_get(psoc, CFG_THERMAL_TEMP_MIN_LEVEL1);
+	thermal_temp->thermal_temp_max_level1 =
+				cfg_get(psoc, CFG_THERMAL_TEMP_MAX_LEVEL1);
+	thermal_temp->thermal_temp_min_level2 =
+				cfg_get(psoc, CFG_THERMAL_TEMP_MIN_LEVEL2);
+	thermal_temp->thermal_temp_max_level2 =
+				cfg_get(psoc, CFG_THERMAL_TEMP_MAX_LEVEL2);
+	thermal_temp->thermal_temp_min_level3 =
+				cfg_get(psoc, CFG_THERMAL_TEMP_MIN_LEVEL3);
+	thermal_temp->thermal_temp_max_level3 =
+				cfg_get(psoc, CFG_THERMAL_TEMP_MAX_LEVEL3);
+}
+
 QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -69,6 +91,7 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	fwol_cfg = &fwol_obj->cfg;
 
 	fwol_update_coex_config_in_cfg(psoc, &fwol_cfg->coex_config);
+	fwol_update_thermal_temp_in_cfg(psoc, &fwol_cfg->thermal_temp_cfg);
 
 	return status;
 }

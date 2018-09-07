@@ -25,6 +25,7 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_cmn.h>
+#include "wlan_fw_offload_main.h"
 
 #include "wlan_fw_offload_main.h"
 
@@ -76,5 +77,16 @@ void ucfg_fwol_deinit(void);
 QDF_STATUS
 ucfg_fwol_get_coex_config_params(struct wlan_objmgr_psoc *psoc,
 				 struct wlan_fwol_coex_config *coex_config);
+
+/**
+ * ucfg_fwol_get_thermal_temp() - Get thermal temperature config params
+ * @psoc: Pointer to psoc object
+ * @thermal_temp: Pointer to struct wlan_fwol_thermal_temp
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_get_thermal_temp(struct wlan_objmgr_psoc *psoc,
+			   struct wlan_fwol_thermal_temp *thermal_temp);
 
 #endif /* _WLAN_FWOL_UCFG_API_H_ */
