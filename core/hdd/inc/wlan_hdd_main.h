@@ -1704,11 +1704,12 @@ struct hdd_cache_channels {
 
 /**
  * struct hdd_context - hdd shared driver and psoc/device context
+ * @pdev: object manager pdev context
  * @g_event_flags: a bitmap of hdd_driver_flags
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *hdd_psoc;
-	struct wlan_objmgr_pdev *hdd_pdev;
+	struct wlan_objmgr_pdev *pdev;
 	mac_handle_t mac_handle;
 	struct wiphy *wiphy;
 	qdf_spinlock_t hdd_adapter_lock;

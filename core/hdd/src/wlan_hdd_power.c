@@ -1150,7 +1150,7 @@ static int hdd_resume_wlan(void)
 			status = hdd_disable_default_pkt_filters(adapter);
 	}
 
-	ucfg_ipa_resume(hdd_ctx->hdd_pdev);
+	ucfg_ipa_resume(hdd_ctx->pdev);
 	status = pmo_ucfg_psoc_user_space_resume_req(hdd_ctx->hdd_psoc,
 						     QDF_SYSTEM_SUSPEND);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -1695,7 +1695,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 			return -EAGAIN;
 		}
 
-		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
+		wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, false);
 	}
 
@@ -1711,7 +1711,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	 * Suspend IPA early before proceeding to suspend other entities like
 	 * firmware to avoid any race conditions.
 	 */
-	if (ucfg_ipa_suspend(hdd_ctx->hdd_pdev)) {
+	if (ucfg_ipa_suspend(hdd_ctx->pdev)) {
 		hdd_err("IPA not ready to suspend!");
 		wlan_hdd_inc_suspend_stats(hdd_ctx, SUSPEND_FAIL_IPA);
 		return -EAGAIN;

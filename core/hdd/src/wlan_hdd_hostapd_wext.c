@@ -956,7 +956,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 		hdd_debug("Set QCASAP_SET_RADAR_CMD val %d", set_value);
 
-		pdev = hdd_ctx->hdd_pdev;
+		pdev = hdd_ctx->pdev;
 		if (!pdev) {
 			hdd_err("null pdev");
 			return -EINVAL;
@@ -1004,16 +1004,16 @@ static __iw_softap_setparam(struct net_device *dev,
 		/* If input value is non-zero get stats */
 		switch (set_value) {
 		case 1:
-			ucfg_ipa_uc_stat(hdd_ctx->hdd_pdev);
+			ucfg_ipa_uc_stat(hdd_ctx->pdev);
 			break;
 		case 2:
-			ucfg_ipa_uc_info(hdd_ctx->hdd_pdev);
+			ucfg_ipa_uc_info(hdd_ctx->pdev);
 			break;
 		case 3:
-			ucfg_ipa_uc_rt_debug_host_dump(hdd_ctx->hdd_pdev);
+			ucfg_ipa_uc_rt_debug_host_dump(hdd_ctx->pdev);
 			break;
 		case 4:
-			ucfg_ipa_dump_info(hdd_ctx->hdd_pdev);
+			ucfg_ipa_dump_info(hdd_ctx->pdev);
 			break;
 		default:
 			/* place holder for stats clean up
@@ -1332,7 +1332,7 @@ static __iw_softap_getparam(struct net_device *dev,
 		struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 		struct wlan_objmgr_pdev *pdev;
 
-		pdev = hdd_ctx->hdd_pdev;
+		pdev = hdd_ctx->pdev;
 		if (!pdev) {
 			hdd_err("null pdev");
 			return -EINVAL;
@@ -2014,10 +2014,10 @@ static int __iw_get_channel_list(struct net_device *dev,
 
 	for (i = band_start_channel; i <= band_end_channel; i++) {
 		if ((CHANNEL_STATE_ENABLE ==
-		     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+		     wlan_reg_get_channel_state(hdd_ctx->pdev,
 						WLAN_REG_CH_NUM(i))) ||
 		    (is_dfs_mode_enabled && CHANNEL_STATE_DFS ==
-		     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+		     wlan_reg_get_channel_state(hdd_ctx->pdev,
 						WLAN_REG_CH_NUM(i)))) {
 			channel_list->channels[num_channels] =
 						WLAN_REG_CH_NUM(i);

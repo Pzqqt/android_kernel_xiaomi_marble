@@ -6147,7 +6147,7 @@ static int drv_cmd_tdls_off_channel(struct hdd_adapter *adapter,
 	if (ret != 1)
 		return -EINVAL;
 
-	if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, set_value)) {
+	if (wlan_reg_is_dfs_ch(hdd_ctx->pdev, set_value)) {
 		hdd_err("DFS channel %d is passed for hdd_set_tdls_offchannel",
 		    set_value);
 		return -EINVAL;
@@ -6822,8 +6822,7 @@ static int drv_cmd_set_fcc_channel(struct hdd_adapter *adapter,
 		return err;
 	}
 
-	status = ucfg_reg_set_fcc_constraint(hdd_ctx->hdd_pdev,
-			fcc_constraint);
+	status = ucfg_reg_set_fcc_constraint(hdd_ctx->pdev, fcc_constraint);
 
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to %s tx power for channels 12/13",
@@ -7158,7 +7157,7 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 							parsed_channels[j];
 
 		/* Cache the channel list in regulatory also */
-		ucfg_reg_cache_channel_state(hdd_ctx->hdd_pdev, parsed_channels,
+		ucfg_reg_cache_channel_state(hdd_ctx->pdev, parsed_channels,
 					     num_channels);
 	} else {
 		for (i = 0; i < num_channels; i++) {

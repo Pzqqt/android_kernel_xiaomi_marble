@@ -56,7 +56,7 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 
 void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 {
-	uint8_t pdev_id = hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id;
+	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
 	uint32_t req_val = 0, resp_val = 0, bcast_val = 0;
 	uint32_t congestion_timeout = hdd_ctx->config->twt_congestion_timeout;
 

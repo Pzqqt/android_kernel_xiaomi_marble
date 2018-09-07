@@ -2336,9 +2336,9 @@ static void hdd_remove_dsrc_channels(struct hdd_context *hdd_ctx,
 	int i;
 
 	for (i = 0; i < *num_channels; i++) {
-		if (!wlan_reg_is_dsrc_chan(hdd_ctx->hdd_pdev,
+		if (!wlan_reg_is_dsrc_chan(hdd_ctx->pdev,
 					   wlan_reg_freq_to_chan(
-					   hdd_ctx->hdd_pdev,
+					   hdd_ctx->pdev,
 					   chan_list[i]))) {
 			chan_list[num_chan_temp] = chan_list[i];
 			num_chan_temp++;
@@ -2796,7 +2796,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 				req_msg->buckets[bkt_index].channels[j].
 							chnlClass = 0;
 				if ((wlan_reg_get_channel_state(
-					hdd_ctx->hdd_pdev,
+					hdd_ctx->pdev,
 					cds_freq_to_chan(chan_list[j]))) !=
 						CHANNEL_STATE_ENABLE) {
 					req_msg->buckets[bkt_index].channels[j].
@@ -2936,7 +2936,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 						req_msg->buckets[bkt_index].channels[j].dwellTimeMs);
 
 				if ((wlan_reg_get_channel_state(
-					hdd_ctx->hdd_pdev,
+					hdd_ctx->pdev,
 					cds_freq_to_chan(
 					req_msg->buckets[bkt_index].
 					channels[j].channel)))
@@ -2952,7 +2952,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 			hdd_debug("New Dwell time %u ms",
 				req_msg->buckets[bkt_index].channels[j].dwellTimeMs);
 
-			if ((wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+			if ((wlan_reg_get_channel_state(hdd_ctx->pdev,
 					cds_freq_to_chan(
 					req_msg->buckets[bkt_index].
 					channels[j].channel)))
@@ -2992,7 +2992,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 			hdd_debug("Chnl spec passive %u",
 				req_msg->buckets[bkt_index].channels[j].passive);
 			/* Override scan type if required */
-			if ((wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+			if ((wlan_reg_get_channel_state(hdd_ctx->pdev,
 					cds_freq_to_chan(
 					req_msg->buckets[bkt_index].
 					channels[j].channel)))

@@ -388,7 +388,7 @@ static void hdd_modify_wiphy(struct wiphy  *wiphy,
 static void hdd_set_dfs_region(struct hdd_context *hdd_ctx,
 			       enum dfs_reg dfs_reg)
 {
-	wlan_reg_set_dfs_region(hdd_ctx->hdd_pdev, dfs_reg);
+	wlan_reg_set_dfs_region(hdd_ctx->pdev, dfs_reg);
 }
 #endif
 
@@ -544,7 +544,7 @@ static int hdd_regulatory_init_no_offload(struct hdd_context *hdd_ctx,
 
 	cds_fill_and_send_ctl_to_fw(reg_info);
 
-	wlan_reg_get_dfs_region(hdd_ctx->hdd_pdev, &dfs_reg);
+	wlan_reg_get_dfs_region(hdd_ctx->pdev, &dfs_reg);
 
 	reg_program_config_vars(hdd_ctx, &config_vars);
 	ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
@@ -650,8 +650,8 @@ void hdd_update_indoor_channel(struct hdd_context *hdd_ctx,
 	}
 
 	/* Notify the regulatory domain to update the channel list */
-	if (QDF_IS_STATUS_ERROR(ucfg_reg_notify_sap_event(hdd_ctx->hdd_pdev,
-		disable))) {
+	if (QDF_IS_STATUS_ERROR(ucfg_reg_notify_sap_event(hdd_ctx->pdev,
+							  disable))) {
 		hdd_err("Failed to notify sap event");
 	}
 	hdd_exit();
@@ -692,7 +692,7 @@ int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code)
 		return -EINVAL;
 	}
 
-	status = ucfg_reg_set_country(hdd_ctx->hdd_pdev, country_code);
+	status = ucfg_reg_set_country(hdd_ctx->pdev, country_code);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to set country");
 
@@ -743,8 +743,8 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 		band = hdd_ctx->config->nBandCapability;
 	}
 
-	if (QDF_STATUS_SUCCESS != ucfg_reg_get_curr_band(hdd_ctx->hdd_pdev,
-							 &currBand)) {
+	if (ucfg_reg_get_curr_band(hdd_ctx->pdev, &currBand) !=
+	    QDF_STATUS_SUCCESS) {
 		hdd_debug("Failed to get current band config");
 		return -EIO;
 	}
@@ -763,7 +763,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 
 	mac_handle = hdd_ctx->mac_handle;
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
+		wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, false);
 		connectedBand = hdd_conn_get_connected_band(
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter));
@@ -812,7 +812,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 		sme_scan_flush_result(mac_handle);
 	}
 
-	if (QDF_IS_STATUS_ERROR(ucfg_reg_set_band(hdd_ctx->hdd_pdev, band))) {
+	if (QDF_IS_STATUS_ERROR(ucfg_reg_set_band(hdd_ctx->pdev, band))) {
 		hdd_err("Failed to set the band value to %u", band);
 		return -EINVAL;
 	}
@@ -909,7 +909,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 	case NL80211_REGDOM_SET_BY_USER:
 		qdf_mem_copy(country, request->alpha2, QDF_MIN(
 			     sizeof(request->alpha2), sizeof(country)));
-		status = ucfg_reg_set_country(hdd_ctx->hdd_pdev, country);
+		status = ucfg_reg_set_country(hdd_ctx->pdev, country);
 		break;
 	case NL80211_REGDOM_SET_BY_CORE:
 	case NL80211_REGDOM_SET_BY_COUNTRY_IE:
@@ -1023,7 +1023,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		cds_fill_and_send_ctl_to_fw(&hdd_ctx->reg);
 
 		hdd_set_dfs_region(hdd_ctx, request->dfs_region);
-		wlan_reg_get_dfs_region(hdd_ctx->hdd_pdev, &dfs_reg);
+		wlan_reg_get_dfs_region(hdd_ctx->pdev, &dfs_reg);
 
 		reg_program_config_vars(hdd_ctx, &config_vars);
 		ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
@@ -1239,7 +1239,7 @@ void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx)
 		hdd_err("hdd_ctx is NULL");
 		return;
 	}
-	reg_rules = ucfg_reg_get_regd_rules(hdd_ctx->hdd_pdev);
+	reg_rules = ucfg_reg_get_regd_rules(hdd_ctx->pdev);
 	if (!reg_rules) {
 		hdd_err("reg_rules is NULL");
 		return;
@@ -1366,7 +1366,7 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 	hdd_debug("regulatory offload_enabled %d", offload_enabled);
 	if (offload_enabled) {
 		hdd_ctx->reg_offload = true;
-		ucfg_reg_get_current_chan_list(hdd_ctx->hdd_pdev,
+		ucfg_reg_get_current_chan_list(hdd_ctx->pdev,
 					       cur_chan_list);
 		fill_wiphy_band_channels(wiphy, cur_chan_list,
 					 NL80211_BAND_2GHZ);
@@ -1378,7 +1378,7 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 		sme_set_cc_src(hdd_ctx->mac_handle, cc_src);
 	} else {
 		hdd_ctx->reg_offload = false;
-		ucfg_reg_program_default_cc(hdd_ctx->hdd_pdev,
+		ucfg_reg_program_default_cc(hdd_ctx->pdev,
 					    hdd_ctx->reg.reg_domain);
 	}
 

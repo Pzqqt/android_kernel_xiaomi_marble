@@ -2036,7 +2036,7 @@ void wlan_hdd_dcc_register_for_dcc_stats_event(struct hdd_context *hdd_ctx)
 {
 	int rc;
 
-	rc = ucfg_ocb_register_for_dcc_stats_event(hdd_ctx->hdd_pdev, hdd_ctx,
+	rc = ucfg_ocb_register_for_dcc_stats_event(hdd_ctx->pdev, hdd_ctx,
 				      wlan_hdd_dcc_stats_event_callback);
 	if (rc)
 		hdd_err("Register DCC stats callback failed: %d", rc);

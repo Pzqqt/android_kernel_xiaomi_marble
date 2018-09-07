@@ -73,7 +73,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_start(struct wiphy *wiphy,
 		return -EINVAL;
 
 	ret = wlan_cfg80211_spectral_scan_config_and_start(wiphy,
-					hdd_ctx->hdd_pdev,
+					hdd_ctx->pdev,
 					data, data_len);
 	hdd_exit();
 
@@ -110,8 +110,8 @@ static int __wlan_hdd_cfg80211_spectral_scan_stop(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	ret = wlan_cfg80211_spectral_scan_stop(wiphy, hdd_ctx->hdd_pdev,
-					data, data_len);
+	ret = wlan_cfg80211_spectral_scan_stop(wiphy, hdd_ctx->pdev,
+					       data, data_len);
 	hdd_exit();
 
 	return ret;
@@ -148,8 +148,8 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_config(
 		return -EPERM;
 	}
 
-	ret = wlan_cfg80211_spectral_scan_get_config(wiphy, hdd_ctx->hdd_pdev,
-					data, data_len);
+	ret = wlan_cfg80211_spectral_scan_get_config(wiphy, hdd_ctx->pdev,
+						     data, data_len);
 	hdd_exit();
 
 	return ret;
@@ -187,7 +187,7 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_diag_stats(
 	}
 
 	ret = wlan_cfg80211_spectral_scan_get_diag_stats(wiphy,
-					hdd_ctx->hdd_pdev,
+					hdd_ctx->pdev,
 					data, data_len);
 	hdd_exit();
 
@@ -225,8 +225,8 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_cap_info(
 		return -EPERM;
 	}
 
-	ret = wlan_cfg80211_spectral_scan_get_cap(wiphy, hdd_ctx->hdd_pdev,
-					data, data_len);
+	ret = wlan_cfg80211_spectral_scan_get_cap(wiphy, hdd_ctx->pdev,
+						  data, data_len);
 	hdd_exit();
 
 	return ret;
@@ -264,8 +264,8 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_status(
 		return -EPERM;
 	}
 
-	ret = wlan_cfg80211_spectral_scan_get_status(wiphy, hdd_ctx->hdd_pdev,
-					data, data_len);
+	ret = wlan_cfg80211_spectral_scan_get_status(wiphy, hdd_ctx->pdev,
+						     data, data_len);
 	hdd_exit();
 
 	return ret;
@@ -452,8 +452,8 @@ static void __spectral_scan_msg_handler(const void *data, int data_len,
 		hdd_debug("spectral scan application registered, pid=%d",
 				 hdd_ctx->sscan_pid);
 		send_spectral_scan_reg_rsp_msg(hdd_ctx);
-		ucfg_spectral_scan_set_ppid(hdd_ctx->hdd_pdev,
-						hdd_ctx->sscan_pid);
+		ucfg_spectral_scan_set_ppid(hdd_ctx->pdev,
+					    hdd_ctx->sscan_pid);
 		break;
 	default:
 		hdd_warn("invalid message type %d", ss_msg->msg_type);

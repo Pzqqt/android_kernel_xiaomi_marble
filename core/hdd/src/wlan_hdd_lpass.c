@@ -56,7 +56,7 @@ static void wlan_hdd_get_channel_info(struct hdd_context *hdd_ctx,
 	chan_info->band_center_freq2 = 0;
 	chan_info->info = 0;
 	if (CHANNEL_STATE_DFS ==
-	    wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+	    wlan_reg_get_channel_state(hdd_ctx->pdev,
 				       chan_id))
 		WMI_SET_CHANNEL_FLAG(chan_info,
 				     WMI_CHAN_FLAG_DFS);

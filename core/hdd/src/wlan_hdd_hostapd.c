@@ -306,8 +306,8 @@ static void hdd_hostapd_channel_allow_suspend(struct hdd_adapter *adapter,
 	if (hostapd_state->bss_state == BSS_STOP)
 		return;
 
-	if (CHANNEL_STATE_DFS != wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
-				channel))
+	if (wlan_reg_get_channel_state(hdd_ctx->pdev, channel) !=
+	    CHANNEL_STATE_DFS)
 		return;
 
 	/* Release wakelock when no more DFS channels are used */
@@ -345,8 +345,8 @@ static void hdd_hostapd_channel_prevent_suspend(struct hdd_adapter *adapter,
 		(atomic_read(&hdd_ctx->sap_dfs_ref_cnt) >= 1))
 		return;
 
-	if (CHANNEL_STATE_DFS != wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
-				channel))
+	if (wlan_reg_get_channel_state(hdd_ctx->pdev, channel) !=
+	    CHANNEL_STATE_DFS)
 		return;
 
 	/* Acquire wakelock if we have at least one DFS channel in use */
@@ -1659,7 +1659,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		sap_config->ch_params.ch_width =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.ch_width;
 
-		wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
+		wlan_reg_set_channel_params(hdd_ctx->pdev,
 					    sap_config->channel, 0,
 					    &sap_config->ch_params);
 
@@ -1677,16 +1677,16 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		wlansap_get_dfs_ignore_cac(mac_handle, &ignoreCAC);
 
 		/* DFS requirement: DO NOT transmit during CAC. */
-		if ((CHANNEL_STATE_DFS !=
-			wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
-				ap_ctx->operating_channel))
+		if (CHANNEL_STATE_DFS !=
+			wlan_reg_get_channel_state(hdd_ctx->pdev,
+						   ap_ctx->operating_channel)
 			|| ignoreCAC
 			|| hdd_ctx->dev_dfs_cac_status == DFS_CAC_ALREADY_DONE)
 			ap_ctx->dfs_cac_block_tx = false;
 		else
 			ap_ctx->dfs_cac_block_tx = true;
 
-		ucfg_ipa_set_dfs_cac_tx(hdd_ctx->hdd_pdev,
+		ucfg_ipa_set_dfs_cac_tx(hdd_ctx->pdev,
 					ap_ctx->dfs_cac_block_tx);
 
 		hdd_debug("The value of dfs_cac_block_tx[%d] for ApCtx[%pK]:%d",
@@ -1732,12 +1732,13 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 
 		if (ucfg_ipa_is_enabled()) {
-			status = ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev,
-					adapter->dev, adapter->device_mode,
-					ap_ctx->broadcast_sta_id,
-					adapter->session_id,
-					WLAN_IPA_AP_CONNECT,
-					adapter->dev->dev_addr);
+			status = ucfg_ipa_wlan_evt(hdd_ctx->pdev,
+						   adapter->dev,
+						   adapter->device_mode,
+						   ap_ctx->broadcast_sta_id,
+						   adapter->session_id,
+						   WLAN_IPA_AP_CONNECT,
+						   adapter->dev->dev_addr);
 			if (status)
 				hdd_err("WLAN_AP_CONNECT event failed");
 		}
@@ -1902,7 +1903,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					    &dfs_info,
 					    sizeof(struct wlan_dfs_info));
 		ap_ctx->dfs_cac_block_tx = false;
-		ucfg_ipa_set_dfs_cac_tx(hdd_ctx->hdd_pdev,
+		ucfg_ipa_set_dfs_cac_tx(hdd_ctx->pdev,
 					ap_ctx->dfs_cac_block_tx);
 		hdd_ctx->dev_dfs_cac_status = DFS_CAC_ALREADY_DONE;
 		if (QDF_STATUS_SUCCESS !=
@@ -1957,7 +1958,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_send_conditional_chan_switch_status(hdd_ctx,
 			&adapter->wdev, true);
 		ap_ctx->dfs_cac_block_tx = false;
-		ucfg_ipa_set_dfs_cac_tx(hdd_ctx->hdd_pdev,
+		ucfg_ipa_set_dfs_cac_tx(hdd_ctx->pdev,
 					ap_ctx->dfs_cac_block_tx);
 		hdd_ctx->dev_dfs_cac_status = DFS_CAC_ALREADY_DONE;
 
@@ -2085,7 +2086,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		adapter->sta_info[staId].ecsa_capable = event->ecsa_capable;
 
 		if (ucfg_ipa_is_enabled()) {
-			status = ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev,
+			status = ucfg_ipa_wlan_evt(hdd_ctx->pdev,
 						   adapter->dev,
 						   adapter->device_mode,
 						   event->staId,
@@ -2162,8 +2163,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		/* Lets abort scan to ensure smooth authentication for client */
 		if (ucfg_scan_get_vdev_status(adapter->vdev) !=
 				SCAN_NOT_IN_PROGRESS) {
-			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
-				adapter->session_id, INVALID_SCAN_ID, false);
+			wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
+					adapter->session_id, INVALID_SCAN_ID,
+					false);
 		}
 		if (adapter->device_mode == QDF_P2P_GO_MODE) {
 			/* send peer status indication to oem app */
@@ -2403,7 +2405,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			pSapEvent->sapevt.sap_ch_selected.vht_seg0_center_ch;
 		sap_ch_param.center_freq_seg1 =
 			pSapEvent->sapevt.sap_ch_selected.vht_seg1_center_ch;
-		wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
+		wlan_reg_set_channel_params(hdd_ctx->pdev,
 			pSapEvent->sapevt.sap_ch_selected.pri_ch,
 			pSapEvent->sapevt.sap_ch_selected.ht_sec_ch,
 			&sap_ch_param);
@@ -2529,9 +2531,9 @@ stopbss:
 			hdd_warn("hdd_softap_stop_bss failed %d",
 			       qdf_status);
 			if (ucfg_ipa_is_enabled()) {
-				ucfg_ipa_uc_disconnect_ap(hdd_ctx->hdd_pdev,
+				ucfg_ipa_uc_disconnect_ap(hdd_ctx->pdev,
 							  adapter->dev);
-				ucfg_ipa_cleanup_dev_iface(hdd_ctx->hdd_pdev,
+				ucfg_ipa_cleanup_dev_iface(hdd_ctx->pdev,
 							   adapter->dev);
 			}
 		}
@@ -2932,10 +2934,10 @@ sap_restart:
 	hdd_ap_ctx->sap_config.ch_params.ch_width = CH_WIDTH_MAX;
 	hdd_ap_ctx->bss_stop_reason = BSS_STOP_DUE_TO_MCC_SCC_SWITCH;
 
-	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
-			hdd_ap_ctx->sap_config.channel,
-			hdd_ap_ctx->sap_config.sec_ch,
-			&hdd_ap_ctx->sap_config.ch_params);
+	wlan_reg_set_channel_params(hdd_ctx->pdev,
+				    hdd_ap_ctx->sap_config.channel,
+				    hdd_ap_ctx->sap_config.sec_ch,
+				    &hdd_ap_ctx->sap_config.ch_params);
 	*channel = hdd_ap_ctx->sap_config.channel;
 	*sec_ch = hdd_ap_ctx->sap_config.sec_ch;
 
@@ -4348,7 +4350,7 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
 
 	for (i = 0; i < cache_chann->num_channels; i++) {
 		freq = reg_chan_to_freq(
-				hdd_ctx->hdd_pdev,
+				hdd_ctx->pdev,
 				cache_chann->channel_info[i].channel_num);
 		if (!freq)
 			continue;
@@ -4368,9 +4370,9 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
 
 	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
 	if (notify_sap_event)
-		ucfg_reg_notify_sap_event(hdd_ctx->hdd_pdev, false);
+		ucfg_reg_notify_sap_event(hdd_ctx->pdev, false);
 	else
-		ucfg_reg_restore_cached_channels(hdd_ctx->hdd_pdev);
+		ucfg_reg_restore_cached_channels(hdd_ctx->pdev);
 	status = sme_update_channel_list(hdd_ctx->mac_handle);
 	if (status)
 		hdd_err("Can't Restore channel list");
@@ -4419,7 +4421,7 @@ static int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 	}
 
 	for (i = 0; i < cache_chann->num_channels; i++) {
-		freq = reg_chan_to_freq(hdd_ctx->hdd_pdev,
+		freq = reg_chan_to_freq(hdd_ctx->pdev,
 					cache_chann->
 						channel_info[i].channel_num);
 		if (!freq)
@@ -4434,7 +4436,7 @@ static int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 		 */
 		cache_chann->channel_info[i].reg_status =
 					reg_get_channel_state(
-							hdd_ctx->hdd_pdev,
+							hdd_ctx->pdev,
 							rf_channel);
 		cache_chann->channel_info[i].wiphy_status =
 							wiphy_channel->flags;
@@ -4447,7 +4449,7 @@ static int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 	}
 
 	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
-	status = ucfg_reg_notify_sap_event(hdd_ctx->hdd_pdev, true);
+	status = ucfg_reg_notify_sap_event(hdd_ctx->pdev, true);
 	status = sme_update_channel_list(hdd_ctx->mac_handle);
 
 	hdd_exit();
@@ -4667,8 +4669,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 			pConfig->ieee80211d = 1;
 			qdf_mem_copy(pConfig->countryCode, &pIe[2], 3);
-			status = ucfg_reg_set_country(hdd_ctx->hdd_pdev,
-					pConfig->countryCode);
+			status = ucfg_reg_set_country(hdd_ctx->pdev,
+						      pConfig->countryCode);
 			if (QDF_IS_STATUS_ERROR(status)) {
 				hdd_err("Failed to set country");
 				pConfig->ieee80211d = 0;
@@ -4680,16 +4682,11 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		}
 
 		ret = wlan_hdd_sap_cfg_dfs_override(adapter);
-		if (ret < 0) {
+		if (ret < 0)
 			goto error;
-		} else {
-			if (ret == 0) {
-				if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
-							pConfig->channel))
-					hdd_ctx->dev_dfs_cac_status =
-							DFS_CAC_NEVER_DONE;
-			}
-		}
+
+		if (!ret && wlan_reg_is_dfs_ch(hdd_ctx->pdev, pConfig->channel))
+			hdd_ctx->dev_dfs_cac_status = DFS_CAC_NEVER_DONE;
 
 		if (QDF_STATUS_SUCCESS !=
 		    wlan_hdd_validate_operation_channel(adapter,
@@ -4702,7 +4699,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		/* reject SAP if DFS channel scan is not allowed */
 		if (!(hdd_ctx->config->enableDFSChnlScan) &&
 		    (CHANNEL_STATE_DFS ==
-		     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+		     wlan_reg_get_channel_state(hdd_ctx->pdev,
 						pConfig->channel))) {
 			hdd_err("No SAP start on DFS channel");
 			ret = -EOPNOTSUPP;
@@ -5005,7 +5002,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	pConfig->ch_params.ch_width = pConfig->ch_width_orig;
-	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, pConfig->channel,
+	wlan_reg_set_channel_params(hdd_ctx->pdev, pConfig->channel,
 				    pConfig->sec_ch, &pConfig->ch_params);
 
 	/* ht_capab is not what the name conveys,
@@ -5621,13 +5618,13 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	/* if sta_sap_scc_on_dfs_chan ini is set, DFS master capability is
 	 * assumed disabled in the driver.
 	 */
-	if ((reg_get_channel_state(hdd_ctx->hdd_pdev, channel) ==
+	if ((reg_get_channel_state(hdd_ctx->pdev, channel) ==
 	     CHANNEL_STATE_DFS) && sta_sap_scc_on_dfs_chan && !sta_cnt) {
 		hdd_err("SAP not allowed on DFS channel!!");
 		return -EINVAL;
 	}
-	if (!reg_is_etsi13_srd_chan_allowed_master_mode(hdd_ctx->hdd_pdev) &&
-	     reg_is_etsi13_srd_chan(hdd_ctx->hdd_pdev, channel)) {
+	if (!reg_is_etsi13_srd_chan_allowed_master_mode(hdd_ctx->pdev) &&
+	    reg_is_etsi13_srd_chan(hdd_ctx->pdev, channel)) {
 		hdd_err("SAP not allowed on SRD channel.");
 		return -EINVAL;
 	}
@@ -5637,7 +5634,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		tsap_config_t *sap_cfg = &adapter->session.ap.sap_config;
 
 		if (CHANNEL_STATE_DFS == wlan_reg_get_channel_state(
-					hdd_ctx->hdd_pdev, channel)) {
+					hdd_ctx->pdev, channel)) {
 			hdd_err("Can't start SAP-DFS (channel=%d)with sub 20 MHz ch wd",
 				channel);
 			return -EINVAL;
@@ -5652,11 +5649,11 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			sub_20_ch_width = CH_WIDTH_10MHZ;
 		if (WLAN_REG_IS_5GHZ_CH(channel))
 			ch_state = wlan_reg_get_5g_bonded_channel_state(
-					hdd_ctx->hdd_pdev, channel,
+					hdd_ctx->pdev, channel,
 					sub_20_ch_width);
 		else
 			ch_state = wlan_reg_get_2g_bonded_channel_state(
-					hdd_ctx->hdd_pdev, channel,
+					hdd_ctx->pdev, channel,
 					sub_20_ch_width, 0);
 		if (CHANNEL_STATE_DISABLE == ch_state) {
 			hdd_err("Given ch width not supported by reg domain");

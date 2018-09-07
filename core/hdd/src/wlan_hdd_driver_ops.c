@@ -1171,7 +1171,7 @@ static int __wlan_hdd_runtime_suspend(struct device *dev)
 		return 0;
 	}
 
-	if (ucfg_scan_get_pdev_status(hdd_ctx->hdd_pdev) !=
+	if (ucfg_scan_get_pdev_status(hdd_ctx->pdev) !=
 	    SCAN_NOT_IN_PROGRESS) {
 		hdd_debug("Scan in progress, ignore runtime suspend");
 		return -EBUSY;
@@ -1552,7 +1552,7 @@ static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 	case PLD_FW_DOWN:
 		qdf_complete_wait_events();
 		cds_set_target_ready(false);
-		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev, NULL);
+		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
 		break;
 	default:
 		break;

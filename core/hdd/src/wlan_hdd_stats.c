@@ -4649,7 +4649,7 @@ static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	sme_get_operation_channel(hdd_ctx->mac_handle, &channel,
 				  adapter->session_id);
-	opfreq = wlan_reg_chan_to_freq(hdd_ctx->hdd_pdev, channel);
+	opfreq = wlan_reg_chan_to_freq(hdd_ctx->pdev, channel);
 
 	mutex_lock(&hdd_ctx->chan_info_lock);
 

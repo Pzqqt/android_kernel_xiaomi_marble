@@ -979,7 +979,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 
 	if (adapter->sta_info[sta_id].in_use) {
 		if (ucfg_ipa_is_enabled()) {
-			if (ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev, adapter->dev,
+			if (ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
 					  adapter->device_mode,
 					  adapter->sta_info[sta_id].sta_id,
 					  adapter->session_id,
@@ -1184,12 +1184,14 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 	}
 
 	if (ucfg_ipa_is_enabled()) {
-		if (ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev,
-				adapter->dev, adapter->device_mode,
-				ap_ctx->broadcast_sta_id,
-				adapter->session_id,
-				WLAN_IPA_AP_DISCONNECT,
-				adapter->dev->dev_addr) != QDF_STATUS_SUCCESS)
+		if (ucfg_ipa_wlan_evt(hdd_ctx->pdev,
+				      adapter->dev,
+				      adapter->device_mode,
+				      ap_ctx->broadcast_sta_id,
+				      adapter->session_id,
+				      WLAN_IPA_AP_DISCONNECT,
+				      adapter->dev->dev_addr) !=
+		    QDF_STATUS_SUCCESS)
 			hdd_err("WLAN_AP_DISCONNECT event failed");
 	}
 

@@ -440,10 +440,10 @@ static int hdd_get_valid_chan(struct hdd_context *hdd_ctx,
 	struct regulatory_channel *cur_chan_list;
 	struct wlan_objmgr_pdev *pdev;
 
-	if (!hdd_ctx || !hdd_ctx->hdd_pdev || !chan_list || !chan_num)
+	if (!hdd_ctx || !hdd_ctx->pdev || !chan_list || !chan_num)
 		return -EINVAL;
 
-	pdev = hdd_ctx->hdd_pdev;
+	pdev = hdd_ctx->pdev;
 	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
 			sizeof(struct regulatory_channel));
 	if (!cur_chan_list)
@@ -663,8 +663,9 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 	case NETDEV_GOING_DOWN:
 		if (ucfg_scan_get_vdev_status(adapter->vdev) !=
 				SCAN_NOT_IN_PROGRESS) {
-			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
-				adapter->session_id, INVALID_SCAN_ID, true);
+			wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
+					adapter->session_id, INVALID_SCAN_ID,
+					true);
 		}
 		cds_flush_work(&adapter->scan_block_work);
 		/* Need to clean up blocked scan request */
@@ -676,7 +677,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 		 * flag after which driver does not send the cfg80211_scan_done.
 		 * Ensure to cleanup the scan queue in NETDEV_GOING_DOWN
 		 */
-		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev, dev);
+		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, dev);
 		break;
 
 	default:
@@ -1074,7 +1075,7 @@ static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx)
 	qdf_runtime_lock_init(&ctx->dfs);
 	qdf_runtime_lock_init(&ctx->connect);
 
-	wlan_scan_runtime_pm_init(hdd_ctx->hdd_pdev);
+	wlan_scan_runtime_pm_init(hdd_ctx->pdev);
 }
 
 /**
@@ -1090,7 +1091,7 @@ static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx)
 	qdf_runtime_lock_deinit(&ctx->dfs);
 	qdf_runtime_lock_deinit(&ctx->connect);
 
-	wlan_scan_runtime_pm_deinit(hdd_ctx->hdd_pdev);
+	wlan_scan_runtime_pm_deinit(hdd_ctx->pdev);
 }
 
 #else /* FEATURE_RUNTIME_PM */
@@ -1905,9 +1906,9 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	}
 
 	hdd_debug("New pdev has been created with pdev_id = %u",
-		  hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id);
+		  hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id);
 
-	status = dispatcher_pdev_open(hdd_ctx->hdd_pdev);
+	status = dispatcher_pdev_open(hdd_ctx->pdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_DEBUG_PANIC("dispatcher pdev open failed; status:%d",
 				status);
@@ -1916,9 +1917,9 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 
 	cdp_pdev_set_ctrl_pdev(cds_get_context(QDF_MODULE_ID_SOC),
 			cds_get_context(QDF_MODULE_ID_TXRX),
-			(struct cdp_ctrl_objmgr_pdev *)hdd_ctx->hdd_pdev);
+			(struct cdp_ctrl_objmgr_pdev *)hdd_ctx->pdev);
 
-	wlan_pdev_set_dp_handle(hdd_ctx->hdd_pdev,
+	wlan_pdev_set_dp_handle(hdd_ctx->pdev,
 				cds_get_context(QDF_MODULE_ID_TXRX));
 
 	hdd_objmgr_update_tgt_max_vdev_psoc(hdd_ctx, cfg->max_intf_count);
@@ -1929,9 +1930,9 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 			       cds_get_context(QDF_MODULE_ID_SOC));
 	ucfg_ipa_set_txrx_handle(hdd_ctx->hdd_psoc,
 				 cds_get_context(QDF_MODULE_ID_TXRX));
-	ucfg_ipa_reg_sap_xmit_cb(hdd_ctx->hdd_pdev,
+	ucfg_ipa_reg_sap_xmit_cb(hdd_ctx->pdev,
 				 hdd_softap_hard_start_xmit);
-	ucfg_ipa_reg_send_to_nw_cb(hdd_ctx->hdd_pdev,
+	ucfg_ipa_reg_send_to_nw_cb(hdd_ctx->pdev,
 				   hdd_ipa_send_skb_to_network);
 
 	if (cds_cfg) {
@@ -2121,7 +2122,7 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 
 		if ((QDF_SAP_MODE == adapter->device_mode ||
 		    QDF_P2P_GO_MODE == adapter->device_mode) &&
-		    (wlan_reg_is_passive_or_disable_ch(hdd_ctx->hdd_pdev,
+		    (wlan_reg_is_passive_or_disable_ch(hdd_ctx->pdev,
 		     ap_ctx->operating_channel))) {
 			WLAN_HDD_GET_AP_CTX_PTR(adapter)->dfs_cac_block_tx =
 				true;
@@ -3002,7 +3003,7 @@ cds_txrx_free:
 
 	if (tgt_hdl && target_psoc_get_wmi_ready(tgt_hdl)) {
 		hdd_runtime_suspend_context_deinit(hdd_ctx);
-		dispatcher_pdev_close(hdd_ctx->hdd_pdev);
+		dispatcher_pdev_close(hdd_ctx->pdev);
 		hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
 	}
 
@@ -4061,7 +4062,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 
 	/* do vdev create via objmgr */
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	errno = hdd_objmgr_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter);
+	errno = hdd_objmgr_create_and_store_vdev(hdd_ctx->pdev, adapter);
 	if (errno) {
 		hdd_err("failed to create objmgr vdev: %d", errno);
 		return errno;
@@ -5237,7 +5238,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 #endif
 
 		if (adapter->device_mode == QDF_STA_MODE)
-			wlan_cfg80211_sched_scan_stop(hdd_ctx->hdd_pdev,
+			wlan_cfg80211_sched_scan_stop(hdd_ctx->pdev,
 						      adapter->dev);
 
 		if (wlan_hdd_try_disconnect(adapter)) {
@@ -5265,7 +5266,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 		if (sap_config)
 			wlansap_reset_sap_config_add_ie(sap_config,
 							eUPDATE_IE_ALL);
-		ucfg_ipa_flush(hdd_ctx->hdd_pdev);
+		ucfg_ipa_flush(hdd_ctx->pdev);
 		if (!(flag & HDD_IN_CAC_WORK_TH_CONTEXT))
 			cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 		/* fallthrough */
@@ -5431,8 +5432,8 @@ static void hdd_reset_scan_operation(struct hdd_context *hdd_ctx,
 		wlan_hdd_scan_abort(adapter);
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 		if (adapter->device_mode == QDF_STA_MODE)
-			wlan_cfg80211_sched_scan_stop(hdd_ctx->hdd_pdev,
-							adapter->dev);
+			wlan_cfg80211_sched_scan_stop(hdd_ctx->pdev,
+						      adapter->dev);
 		break;
 	case QDF_P2P_GO_MODE:
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
@@ -6145,7 +6146,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 		     QDF_MAC_ADDR_SIZE);
 
 	ch_params.ch_width = bandwidth;
-	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, chan, 0, &ch_params);
+	wlan_reg_set_channel_params(hdd_ctx->pdev, chan, 0, &ch_params);
 	if (ch_params.ch_width == CH_WIDTH_INVALID) {
 		hdd_err("Invalid capture channel or bandwidth for a country");
 		return -EINVAL;
@@ -6622,7 +6623,7 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx)
 		    adapter->device_mode == QDF_P2P_DEVICE_MODE ||
 		    adapter->device_mode == QDF_SAP_MODE ||
 		    adapter->device_mode == QDF_P2P_GO_MODE) {
-			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
+			wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
 					adapter->session_id, INVALID_SCAN_ID,
 					true);
 		}
@@ -7019,7 +7020,7 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	 */
 	hdd_set_idle_ps_config(hdd_ctx, false);
 	/* clear the scan queue in all the scenarios */
-	wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev, NULL);
+	wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
 
 	if (driver_status != DRIVER_MODULES_CLOSED) {
 		hdd_unregister_wext_all_adapters(hdd_ctx);
@@ -7691,9 +7692,9 @@ static void __hdd_bus_bw_work_handler(struct work_struct *work)
 	tx_packets += fwd_tx_packets_diff;
 	rx_packets += fwd_rx_packets_diff;
 
-	if (ucfg_ipa_is_fw_wdi_activated(hdd_ctx->hdd_pdev)) {
-		ucfg_ipa_uc_stat_query(hdd_ctx->hdd_pdev, &ipa_tx_packets,
-				&ipa_rx_packets);
+	if (ucfg_ipa_is_fw_wdi_activated(hdd_ctx->pdev)) {
+		ucfg_ipa_uc_stat_query(hdd_ctx->pdev, &ipa_tx_packets,
+				       &ipa_rx_packets);
 		tx_packets += (uint64_t)ipa_tx_packets;
 		rx_packets += (uint64_t)ipa_rx_packets;
 
@@ -7702,8 +7703,8 @@ static void __hdd_bus_bw_work_handler(struct work_struct *work)
 			con_sap_adapter->stats.rx_packets += ipa_rx_packets;
 		}
 
-		ucfg_ipa_set_perf_level(hdd_ctx->hdd_pdev, tx_packets, rx_packets);
-		ucfg_ipa_uc_stat_request(hdd_ctx->hdd_pdev, 2);
+		ucfg_ipa_set_perf_level(hdd_ctx->pdev, tx_packets, rx_packets);
+		ucfg_ipa_uc_stat_request(hdd_ctx->pdev, 2);
 	}
 
 	hdd_pld_request_bus_bandwidth(hdd_ctx, tx_packets, rx_packets);
@@ -8204,10 +8205,10 @@ static void hdd_set_thermal_level_cb(hdd_handle_t hdd_handle, u_int8_t level)
 
 	/* Change IPA to SW path when throttle level greater than 0 */
 	if (level > THROTTLE_LEVEL_0)
-		ucfg_ipa_send_mcc_scc_msg(hdd_ctx->hdd_pdev, true);
+		ucfg_ipa_send_mcc_scc_msg(hdd_ctx->pdev, true);
 	else
 		/* restore original concurrency mode */
-		ucfg_ipa_send_mcc_scc_msg(hdd_ctx->hdd_pdev, hdd_ctx->mcc_mode);
+		ucfg_ipa_send_mcc_scc_msg(hdd_ctx->pdev, hdd_ctx->mcc_mode);
 }
 
 /**
@@ -8410,10 +8411,10 @@ void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel,
 	hdd_debug("chan:%d width:%d",
 		channel, hdd_ap_ctx->sap_config.ch_width_orig);
 
-	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
-			hdd_ap_ctx->sap_config.channel,
-			hdd_ap_ctx->sap_config.sec_ch,
-			&hdd_ap_ctx->sap_config.ch_params);
+	wlan_reg_set_channel_params(hdd_ctx->pdev,
+				    hdd_ap_ctx->sap_config.channel,
+				    hdd_ap_ctx->sap_config.sec_ch,
+				    &hdd_ap_ctx->sap_config.ch_params);
 
 	policy_mgr_change_sap_channel_with_csa(hdd_ctx->hdd_psoc,
 		adapter->session_id, channel,
@@ -10805,8 +10806,8 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	 * IPA module before configuring them to FW. Sequence required as crash
 	 * observed otherwise.
 	 */
-	if (ucfg_ipa_uc_ol_init(hdd_ctx->hdd_pdev,
-	    cds_get_context(QDF_MODULE_ID_QDF_DEVICE))) {
+	if (ucfg_ipa_uc_ol_init(hdd_ctx->pdev,
+				cds_get_context(QDF_MODULE_ID_QDF_DEVICE))) {
 		hdd_err("Failed to setup pipes");
 		goto out;
 	}
@@ -10914,7 +10915,7 @@ static int hdd_deconfigure_cds(struct hdd_context *hdd_ctx)
 		ret = -EINVAL;
 	}
 
-	if (ucfg_ipa_uc_ol_deinit(hdd_ctx->hdd_pdev) != QDF_STATUS_SUCCESS) {
+	if (ucfg_ipa_uc_ol_deinit(hdd_ctx->pdev) != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to disconnect pipes");
 		ret = -EINVAL;
 	}
@@ -11064,7 +11065,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	}
 
 	hdd_component_psoc_close(hdd_ctx->hdd_psoc);
-	dispatcher_pdev_close(hdd_ctx->hdd_pdev);
+	dispatcher_pdev_close(hdd_ctx->pdev);
 	ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to destroy pdev; errno:%d", ret);
@@ -12080,7 +12081,7 @@ void hdd_bus_bw_compute_timer_try_start(struct hdd_context *hdd_ctx)
 
 static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 {
-	ucfg_ipa_set_perf_level(hdd_ctx->hdd_pdev, 0, 0);
+	ucfg_ipa_set_perf_level(hdd_ctx->pdev, 0, 0);
 
 	qdf_spinlock_acquire(&hdd_ctx->bus_bw_timer_lock);
 	hdd_ctx->bus_bw_timer_running = false;
@@ -12277,7 +12278,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 		hdd_err("SAP Not able to set AP IEs");
 		goto end;
 	}
-	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
+	wlan_reg_set_channel_params(hdd_ctx->pdev,
 				    hdd_ap_ctx->sap_config.channel, 0,
 				    &hdd_ap_ctx->sap_config.ch_params);
 
@@ -13035,7 +13036,7 @@ static void hdd_stop_present_mode(struct hdd_context *hdd_ctx,
 	case QDF_GLOBAL_MISSION_MODE:
 	case QDF_GLOBAL_FTM_MODE:
 		hdd_abort_mac_scan_all_adapters(hdd_ctx);
-		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev, NULL);
+		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
 		hdd_stop_all_adapters(hdd_ctx);
 
 		break;
@@ -14174,17 +14175,17 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 	}
 
 	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
-	if (ap_adapter != NULL && test_bit(SOFTAP_BSS_STARTED,
-			&ap_adapter->event_flags) &&
-			wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
-				ap_adapter->session.ap.operating_channel)) {
+	if (ap_adapter &&
+	    test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags) &&
+	    wlan_reg_is_dfs_ch(hdd_ctx->pdev,
+			       ap_adapter->session.ap.operating_channel)) {
 
 		hdd_warn("STA-AP Mode DFS not supported, Switch SAP channel to Non DFS");
 
 		restart_chan =
 			hdd_get_safe_channel_from_pcl_and_acs_range(ap_adapter);
 		if (!restart_chan ||
-		    wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, restart_chan))
+		    wlan_reg_is_dfs_ch(hdd_ctx->pdev, restart_chan))
 			restart_chan = SAP_DEFAULT_5GHZ_CHANNEL;
 
 		hdd_switch_sap_channel(ap_adapter, restart_chan, true);
@@ -14411,7 +14412,7 @@ void hdd_pld_ipa_uc_shutdown_pipes(void)
 	if (!hdd_ctx)
 		return;
 
-	ucfg_ipa_uc_force_pipe_shutdown(hdd_ctx->hdd_pdev);
+	ucfg_ipa_uc_force_pipe_shutdown(hdd_ctx->pdev);
 }
 
 /**

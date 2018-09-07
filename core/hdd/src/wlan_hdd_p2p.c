@@ -658,8 +658,9 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	if (adapter && !wlan_hdd_validate_session_id(adapter->session_id)) {
 		if (ucfg_scan_get_vdev_status(adapter->vdev) !=
 				SCAN_NOT_IN_PROGRESS) {
-			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
-				adapter->session_id, INVALID_SCAN_ID, false);
+			wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
+					adapter->session_id, INVALID_SCAN_ID,
+					false);
 			hdd_debug("Abort Scan while adding virtual interface");
 		}
 	}

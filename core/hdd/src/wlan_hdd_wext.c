@@ -8588,8 +8588,9 @@ static int __iw_set_pno(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(hdd_ctx->hdd_pdev,
-		dev->dev_addr, WLAN_LEGACY_MAC_ID);
+	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(hdd_ctx->pdev,
+							 dev->dev_addr,
+							 WLAN_LEGACY_MAC_ID);
 	if (!vdev) {
 		hdd_err("vdev object is NULL");
 		return -EIO;
@@ -8785,9 +8786,9 @@ static int __iw_set_pno(struct net_device *dev,
 		ptr += offset;
 	req.fast_scan_max_cycles = value;
 
-	wlan_pdev_obj_lock(hdd_ctx->hdd_pdev);
-	psoc = wlan_pdev_get_psoc(hdd_ctx->hdd_pdev);
-	wlan_pdev_obj_unlock(hdd_ctx->hdd_pdev);
+	wlan_pdev_obj_lock(hdd_ctx->pdev);
+	psoc = wlan_pdev_get_psoc(hdd_ctx->pdev);
+	wlan_pdev_obj_unlock(hdd_ctx->pdev);
 	ucfg_scan_register_pno_cb(psoc,
 		found_pref_network_cb, NULL);
 

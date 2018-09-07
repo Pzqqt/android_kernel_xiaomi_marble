@@ -38,8 +38,8 @@ static void hdd_init_pdev_os_priv(struct hdd_context *hdd_ctx,
 	/* Initialize the OS private structure*/
 	os_priv->wiphy = hdd_ctx->wiphy;
 	os_priv->legacy_osif_priv = hdd_ctx;
-	wlan_cfg80211_scan_priv_init(hdd_ctx->hdd_pdev);
-	os_if_spectral_netlink_init(hdd_ctx->hdd_pdev);
+	wlan_cfg80211_scan_priv_init(hdd_ctx->pdev);
+	os_if_spectral_netlink_init(hdd_ctx->pdev);
 }
 
 static void hdd_deinit_pdev_os_priv(struct wlan_objmgr_pdev *pdev)
@@ -197,8 +197,8 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 		goto pdev_destroy;
 	}
 
-	hdd_ctx->hdd_pdev = pdev;
-	sme_store_pdev(hdd_ctx->mac_handle, hdd_ctx->hdd_pdev);
+	hdd_ctx->pdev = pdev;
+	sme_store_pdev(hdd_ctx->mac_handle, hdd_ctx->pdev);
 	hdd_init_pdev_os_priv(hdd_ctx, priv);
 	return 0;
 
@@ -213,10 +213,10 @@ free_priv:
 int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
-	struct wlan_objmgr_pdev *pdev = hdd_ctx->hdd_pdev;
+	struct wlan_objmgr_pdev *pdev = hdd_ctx->pdev;
 	struct pdev_osif_priv *osif_priv;
 
-	hdd_ctx->hdd_pdev = NULL;
+	hdd_ctx->pdev = NULL;
 
 	QDF_BUG(pdev);
 	if (!pdev)

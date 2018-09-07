@@ -474,7 +474,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 	}
 
 	if (hdd_ctx->tdls_umac_comp_active)
-		return wlan_cfg80211_tdls_mgmt(hdd_ctx->hdd_pdev, dev,
+		return wlan_cfg80211_tdls_mgmt(hdd_ctx->pdev, dev,
 					       peer,
 					       action_code, dialog_token,
 					       status_code, peer_capability,
@@ -662,7 +662,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 		return status;
 
 	if (hdd_ctx->tdls_umac_comp_active) {
-		status = wlan_cfg80211_tdls_oper(hdd_ctx->hdd_pdev,
+		status = wlan_cfg80211_tdls_oper(hdd_ctx->pdev,
 						 dev, peer, oper);
 		hdd_exit();
 		return status;

@@ -66,19 +66,19 @@ static int hdd_green_ap_check_enable(struct hdd_context *hdd_ctx,
 
 void hdd_green_ap_add_sta(struct hdd_context *hdd_ctx)
 {
-	wlan_green_ap_add_sta(hdd_ctx->hdd_pdev);
+	wlan_green_ap_add_sta(hdd_ctx->pdev);
 }
 
 void hdd_green_ap_del_sta(struct hdd_context *hdd_ctx)
 {
-	wlan_green_ap_del_sta(hdd_ctx->hdd_pdev);
+	wlan_green_ap_del_sta(hdd_ctx->pdev);
 }
 
 int hdd_green_ap_enable_egap(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 
-	status = ucfg_green_ap_enable_egap(hdd_ctx->hdd_pdev);
+	status = ucfg_green_ap_enable_egap(hdd_ctx->pdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_debug("enhance green ap is not enabled, status %d",
 			  status);
@@ -99,7 +99,7 @@ int hdd_green_ap_update_config(struct hdd_context *hdd_ctx)
 	green_ap_cfg.egap_wait_time = cfg->egap_wait_time;
 	green_ap_cfg.egap_feature_flags = cfg->egap_feature_flag;
 
-	status = ucfg_green_ap_update_user_config(hdd_ctx->hdd_pdev,
+	status = ucfg_green_ap_update_user_config(hdd_ctx->pdev,
 						  &green_ap_cfg);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("failed to update green ap user configuration");
@@ -144,9 +144,9 @@ int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 
 		if (is_session_start) {
 			hdd_debug("Disabling Green AP");
-			ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev,
+			ucfg_green_ap_set_ps_config(hdd_ctx->pdev,
 						    false);
-			wlan_green_ap_stop(hdd_ctx->hdd_pdev);
+			wlan_green_ap_stop(hdd_ctx->pdev);
 		} else {
 			ret = hdd_green_ap_check_enable(hdd_ctx,
 							&enable_green_ap);
@@ -154,8 +154,8 @@ int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 				if (enable_green_ap) {
 					hdd_debug("Enabling Green AP");
 					ucfg_green_ap_set_ps_config(
-						hdd_ctx->hdd_pdev, true);
-					wlan_green_ap_start(hdd_ctx->hdd_pdev);
+						hdd_ctx->pdev, true);
+					wlan_green_ap_start(hdd_ctx->pdev);
 				}
 			} else {
 				hdd_err("Failed to check Green AP enable status");
@@ -171,8 +171,8 @@ int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 				if (enable_green_ap) {
 					hdd_debug("Enabling Green AP");
 					ucfg_green_ap_set_ps_config(
-						hdd_ctx->hdd_pdev, true);
-					wlan_green_ap_start(hdd_ctx->hdd_pdev);
+						hdd_ctx->pdev, true);
+					wlan_green_ap_start(hdd_ctx->pdev);
 				}
 			} else {
 				hdd_err("Failed to check Green AP enable status");
@@ -180,9 +180,9 @@ int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 		} else {
 			if (!num_sap_sessions && !num_p2p_go_sessions) {
 				hdd_debug("Disabling Green AP");
-				ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev,
+				ucfg_green_ap_set_ps_config(hdd_ctx->pdev,
 							    false);
-				wlan_green_ap_stop(hdd_ctx->hdd_pdev);
+				wlan_green_ap_stop(hdd_ctx->pdev);
 			}
 		}
 		break;

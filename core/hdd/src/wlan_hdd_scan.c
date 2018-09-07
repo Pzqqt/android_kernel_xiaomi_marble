@@ -524,7 +524,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 				con_sap_adapter->session.ap.operating_channel;
 
 		if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->hdd_psoc) &&
-			wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, con_dfs_ch) &&
+			wlan_reg_is_dfs_ch(hdd_ctx->pdev, con_dfs_ch) &&
 			!policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 			hdd_ctx->hdd_psoc)) {
 			/* Provide empty scan result during DFS operation since
@@ -658,7 +658,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	     !qdf_mem_cmp(&request->ssids[0], "DIRECT-", 7))
 		ucfg_p2p_status_scan(adapter->vdev);
 
-	status = wlan_cfg80211_scan(hdd_ctx->hdd_pdev, request, &params);
+	status = wlan_cfg80211_scan(hdd_ctx->pdev, request, &params);
 	if (params.default_ie.ptr)
 		qdf_mem_free(params.default_ie.ptr);
 	hdd_exit();
@@ -1189,7 +1189,7 @@ static int __wlan_hdd_vendor_abort_scan(
 	if (0 != ret)
 		return ret;
 
-	wlan_vendor_abort_scan(hdd_ctx->hdd_pdev, data, data_len);
+	wlan_vendor_abort_scan(hdd_ctx->pdev, data, data_len);
 
 	return ret;
 }
@@ -1231,7 +1231,7 @@ int wlan_hdd_scan_abort(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
+	wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
 			adapter->session_id, INVALID_SCAN_ID, true);
 
 	return 0;
@@ -1289,7 +1289,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EBUSY;
 	}
 
-	return wlan_cfg80211_sched_scan_start(hdd_ctx->hdd_pdev, dev, request,
+	return wlan_cfg80211_sched_scan_start(hdd_ctx->pdev, dev, request,
 				      hdd_ctx->config->scan_backoff_multiplier);
 }
 
@@ -1340,7 +1340,7 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
 		return -EINVAL;
 	}
 
-	return wlan_cfg80211_sched_scan_stop(hdd_ctx->hdd_pdev, dev);
+	return wlan_cfg80211_sched_scan_stop(hdd_ctx->pdev, dev);
 }
 
 /**
@@ -1464,7 +1464,7 @@ static void __wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
 	if (ret)
 		return;
 
-	wlan_cfg80211_abort_scan(hdd_ctx->hdd_pdev);
+	wlan_cfg80211_abort_scan(hdd_ctx->pdev);
 
 	hdd_exit();
 }

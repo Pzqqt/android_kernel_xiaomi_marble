@@ -458,5 +458,5 @@ void hdd_ipa_set_mcc_mode(bool mcc_mode)
 		return;
 	}
 
-	ucfg_ipa_set_mcc_mode(hdd_ctx->hdd_pdev, mcc_mode);
+	ucfg_ipa_set_mcc_mode(hdd_ctx->pdev, mcc_mode);
 }

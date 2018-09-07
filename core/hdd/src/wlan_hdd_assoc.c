@@ -1709,7 +1709,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 
 	if (ucfg_ipa_is_enabled() &&
 	    (sta_ctx->conn_info.staId[0] != HDD_WLAN_INVALID_STA_ID))
-		ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev, adapter->dev,
+		ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
 				  adapter->device_mode,
 				  sta_ctx->conn_info.staId[0],
 				  adapter->session_id,
@@ -2868,7 +2868,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			hdd_err("Wrong Staid: %d", roam_info->staId);
 
 		if (ucfg_ipa_is_enabled())
-			ucfg_ipa_wlan_evt(hdd_ctx->hdd_pdev, adapter->dev,
+			ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
 					  adapter->device_mode,
 					  roam_info->staId,
 					  adapter->session_id,

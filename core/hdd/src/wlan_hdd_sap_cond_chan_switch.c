@@ -123,7 +123,7 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 							 pcl_weights,
 							 weight_len);
 		for (i = 0; i < len; i++) {
-			if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
+			if (wlan_reg_is_dfs_ch(hdd_ctx->pdev,
 					       channel_list[i])) {
 				*pre_cac_chan = channel_list[i];
 				break;
@@ -140,7 +140,7 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 		 */
 		mac_handle = hdd_ctx->mac_handle;
 		if (!sme_is_channel_valid(mac_handle, channel) ||
-		    !wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, channel)) {
+		    !wlan_reg_is_dfs_ch(hdd_ctx->pdev, channel)) {
 			hdd_err("Invalid channel for pre cac:%d", channel);
 			return -EINVAL;
 		}
@@ -204,7 +204,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 		return -EINVAL;
 	}
 
-	if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
+	if (wlan_reg_is_dfs_ch(hdd_ctx->pdev,
 			       hdd_ap_ctx->operating_channel)) {
 		hdd_err("SAP is already on DFS channel:%d",
 			hdd_ap_ctx->operating_channel);

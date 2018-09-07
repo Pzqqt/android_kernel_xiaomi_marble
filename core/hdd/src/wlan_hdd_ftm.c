@@ -104,7 +104,7 @@ static int wlan_hdd_qcmbr_command(struct hdd_adapter *adapter,
 	if (ret)
 		return ret;
 
-	ret = wlan_ioctl_ftm_testmode_cmd(hdd_ctx->hdd_pdev,
+	ret = wlan_ioctl_ftm_testmode_cmd(hdd_ctx->pdev,
 					  pqcmbr_data->cmd,
 					  pqcmbr_data->buf,
 					  pqcmbr_data->length);
