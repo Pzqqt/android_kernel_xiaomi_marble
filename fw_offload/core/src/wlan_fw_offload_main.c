@@ -108,6 +108,17 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	fwol_init_coex_config_in_cfg(psoc, &fwol_cfg->coex_config);
 	fwol_init_thermal_temp_in_cfg(psoc, &fwol_cfg->thermal_temp_cfg);
 	fwol_init_ie_whiltelist_in_cfg(psoc, &fwol_cfg->ie_whitelist_cfg);
+	fwol_cfg->ani_enabled = cfg_get(psoc, CFG_ENABLE_ANI);
+	fwol_cfg->enable_rts_sifsbursting =
+				cfg_get(psoc, CFG_SET_RTS_FOR_SIFS_BURSTING);
+	fwol_cfg->max_mpdus_inampdu = cfg_get(psoc, CFG_MAX_MPDUS_IN_AMPDU);
+	fwol_cfg->arp_ac_category = cfg_get(psoc, CFG_ARP_AC_CATEGORY);
+	fwol_cfg->enable_phy_reg_retention = cfg_get(psoc, CFG_ENABLE_PHY_REG);
+	fwol_cfg->upper_brssi_thresh = cfg_get(psoc, CFG_UPPER_BRSSI_THRESH);
+	fwol_cfg->lower_brssi_thresh = cfg_get(psoc, CFG_LOWER_BRSSI_THRESH);
+	fwol_cfg->enable_dtim_1chrx = cfg_get(psoc, CFG_DTIM_1CHRX_ENABLE);
+	fwol_cfg->alternative_chainmask_enabled =
+				cfg_get(psoc, CFG_ENABLE_COEX_ALT_CHAINMASK);
 
 	return status;
 }
