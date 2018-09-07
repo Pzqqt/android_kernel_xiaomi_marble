@@ -10136,9 +10136,15 @@ int q6asm_send_cal(struct audio_client *ac)
 	memset(&mem_hdr, 0, sizeof(mem_hdr));
 	mutex_lock(&cal_data[ASM_AUDSTRM_CAL]->lock);
 	cal_block = cal_utils_get_only_cal_block(cal_data[ASM_AUDSTRM_CAL]);
-	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
+	if (cal_block == NULL) {
+		pr_err("%s: cal_block is NULL\n",
+			__func__);
+		goto unlock;
+	}
+
+	if (cal_utils_is_cal_stale(cal_block)) {
 		rc = 0; /* not error case */
-		pr_err("%s: cal_block is NULL or stale\n",
+		pr_debug("%s: cal_block is stale\n",
 			__func__);
 		goto unlock;
 	}
