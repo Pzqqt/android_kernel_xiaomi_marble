@@ -395,38 +395,34 @@ void dp_rx_add_to_free_desc_list(union dp_rx_desc_list_elem_t **head,
 }
 
 /**
- * dp_rx_wds_srcport_learn() - Add or update the STA PEER which
- *				is behind the WDS repeater.
+ * dp_rx_wds_add_or_update_ast() - Add or update the ast entry.
  *
  * @soc: core txrx main context
- * @rx_tlv_hdr: base address of RX TLV header
  * @ta_peer: WDS repeater peer
- * @nbuf: rx pkt
+ * @mac_addr: mac address of the peer
+ * @is_ad4_valid: 4-address valid flag
+ * @is_sa_valid: source address valid flag
+ * @is_chfrag_start: frag start flag
+ * @sa_idx: source-address index for peer
+ * @sa_sw_peer_id: software source-address peer-id
  *
  * Return: void:
  */
 #ifdef FEATURE_WDS
 static inline void
-dp_rx_wds_srcport_learn(struct dp_soc *soc,
-			 uint8_t *rx_tlv_hdr,
-			 struct dp_peer *ta_peer,
-			 qdf_nbuf_t nbuf)
+dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
+			    uint8_t *wds_src_mac, uint8_t is_ad4_valid,
+			    uint8_t is_sa_valid, uint8_t is_chfrag_start,
+			    uint16_t sa_idx, uint16_t sa_sw_peer_id)
 {
-	uint16_t sa_sw_peer_id = hal_rx_msdu_end_sa_sw_peer_id_get(rx_tlv_hdr);
-	uint32_t flags = IEEE80211_NODE_F_WDS_HM;
-	uint32_t ret = 0;
-	uint8_t wds_src_mac[IEEE80211_ADDR_LEN];
 	struct dp_peer *sa_peer;
 	struct dp_peer *wds_peer;
 	struct dp_ast_entry *ast;
-	uint16_t sa_idx;
+	uint32_t flags = IEEE80211_NODE_F_WDS_HM;
+	uint32_t ret = 0;
 	bool del_in_progress;
-	uint8_t sa_is_valid;
 	struct dp_neighbour_peer *neighbour_peer = NULL;
 	struct dp_pdev *pdev = ta_peer->vdev->pdev;
-
-	if (qdf_unlikely(!ta_peer))
-		return;
 
 	/* For AP mode : Do wds source port learning only if it is a
 	 * 4-address mpdu
@@ -437,8 +433,7 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 	 * backbone getting wrongly learnt as MEC on repeater
 	 */
 	if (ta_peer->vdev->opmode != wlan_op_mode_sta) {
-		if (!(qdf_nbuf_is_rx_chfrag_start(nbuf) &&
-		      hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr)))
+		if (!(is_chfrag_start && is_ad4_valid))
 			return;
 	} else {
 		/* For HKv2 Source port learing is not needed in STA mode
@@ -448,11 +443,7 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 			return;
 	}
 
-	memcpy(wds_src_mac, (qdf_nbuf_data(nbuf) + IEEE80211_ADDR_LEN),
-		IEEE80211_ADDR_LEN);
-
-	sa_is_valid = hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr);
-	if (qdf_unlikely(!sa_is_valid)) {
+	if (qdf_unlikely(!is_sa_valid)) {
 		ret = dp_peer_add_ast(soc,
 					ta_peer,
 					wds_src_mac,
@@ -460,11 +451,6 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 					flags);
 		return;
 	}
-
-	/*
-	 * Get the AST entry from HW SA index and mark it as active
-	 */
-	sa_idx = hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr);
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	ast = soc->ast_table[sa_idx];
@@ -607,6 +593,50 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 			}
 		}
 	}
+}
+
+/**
+ * dp_rx_wds_srcport_learn() - Add or update the STA PEER which
+ *				is behind the WDS repeater.
+ *
+ * @soc: core txrx main context
+ * @rx_tlv_hdr: base address of RX TLV header
+ * @ta_peer: WDS repeater peer
+ * @nbuf: rx pkt
+ *
+ * Return: void:
+ */
+static inline void
+dp_rx_wds_srcport_learn(struct dp_soc *soc,
+			uint8_t *rx_tlv_hdr,
+			struct dp_peer *ta_peer,
+			qdf_nbuf_t nbuf)
+{
+	uint16_t sa_sw_peer_id = hal_rx_msdu_end_sa_sw_peer_id_get(rx_tlv_hdr);
+	uint8_t sa_is_valid = hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr);
+	uint8_t wds_src_mac[IEEE80211_ADDR_LEN];
+	uint16_t sa_idx;
+	uint8_t is_chfrag_start = 0;
+	uint8_t is_ad4_valid = 0;
+
+	if (qdf_unlikely(!ta_peer))
+		return;
+
+	is_chfrag_start = qdf_nbuf_is_rx_chfrag_start(nbuf);
+	if (is_chfrag_start)
+		is_ad4_valid = hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr);
+
+	memcpy(wds_src_mac, (qdf_nbuf_data(nbuf) + IEEE80211_ADDR_LEN),
+	       IEEE80211_ADDR_LEN);
+
+	/*
+	 * Get the AST entry from HW SA index and mark it as active
+	 */
+	sa_idx = hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr);
+
+	dp_rx_wds_add_or_update_ast(soc, ta_peer, wds_src_mac, is_ad4_valid,
+				    sa_is_valid, is_chfrag_start,
+				    sa_idx, sa_sw_peer_id);
 
 	return;
 }
