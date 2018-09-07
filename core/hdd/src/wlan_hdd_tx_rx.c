@@ -1822,7 +1822,8 @@ static inline void hdd_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
 #endif
 
 QDF_STATUS hdd_rx_pkt_thread_enqueue_cbk(void *adapter,
-					 qdf_nbuf_t nbuf_list) {
+					 qdf_nbuf_t nbuf_list)
+{
 	if (unlikely((!adapter) || (!nbuf_list))) {
 		hdd_err("Null params being passed");
 		return QDF_STATUS_E_FAILURE;

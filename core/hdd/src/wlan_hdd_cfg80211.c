@@ -6100,8 +6100,8 @@ static int wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
  */
 static int
 __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
-		struct wireless_dev *wdev, const void *data, int data_len) {
-
+		struct wireless_dev *wdev, const void *data, int data_len)
+{
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx  = wiphy_priv(wiphy);
