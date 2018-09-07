@@ -16510,9 +16510,9 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	status = wlan_hdd_cfg80211_connect_start(adapter, req->ssid,
 						 req->ssid_len, req->bssid,
 						 bssid_hint, channel, 0);
-	if (0 > status) {
+	if (0 > status)
 		hdd_err("connect failed");
-	}
+
 	return status;
 
 con_chk_failed:

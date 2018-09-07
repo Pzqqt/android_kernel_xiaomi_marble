@@ -1831,12 +1831,13 @@ static void hdd_dcc_update_ndl_callback(void *context_ptr, void *response_ptr)
 		hdd_err("Obsolete request");
 		return;
 	}
+
 	priv = osif_request_priv(request);
-	if (response && (0 == response->status)) {
+	if (response && (0 == response->status))
 		priv->status = 0;
-	} else {
+	else
 		priv->status = -EINVAL;
-	}
+
 	osif_request_complete(request);
 	osif_request_put(request);
 }

@@ -10905,9 +10905,8 @@ static int hdd_deconfigure_cds(struct hdd_context *hdd_ctx)
 	hdd_deregister_cb(hdd_ctx);
 
 	qdf_status = policy_mgr_deregister_mode_change_cb(hdd_ctx->hdd_psoc);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		hdd_debug("Failed to deregister mode change cb with Policy Manager");
-	}
 
 	qdf_status = cds_disable(hdd_ctx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -12504,9 +12503,8 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 		goto exit;
 	}
 
-	if (strncmp(buf, wlan_on_str, strlen(wlan_on_str)) == 0) {
+	if (strncmp(buf, wlan_on_str, strlen(wlan_on_str)) == 0)
 		pr_info("Wifi Turning On from UI\n");
-	}
 
 	if (strncmp(buf, wlan_on_str, strlen(wlan_on_str)) != 0) {
 		pr_err("Invalid value received from framework");
