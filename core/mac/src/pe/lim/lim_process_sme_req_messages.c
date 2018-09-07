@@ -2574,7 +2574,8 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 		return;
 	} /* end switch (mac_ctx->lim.gLimSystemRole) */
 
-	if (sme_deauth_req.reasonCode == eLIM_LINK_MONITORING_DEAUTH) {
+	if (sme_deauth_req.reasonCode == eLIM_LINK_MONITORING_DEAUTH &&
+	    session_entry->limSystemRole == eLIM_STA_ROLE) {
 		/* Deauthentication is triggered by Link Monitoring */
 		pe_debug("** Lost link with AP **");
 		deauth_trigger = eLIM_LINK_MONITORING_DEAUTH;
