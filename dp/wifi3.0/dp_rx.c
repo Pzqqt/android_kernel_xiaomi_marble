@@ -1105,10 +1105,10 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
 			 (vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))) {
 		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+		DP_STATS_INC_PKT(peer, rx.multicast, 1, msdu_len);
 		if (IEEE80211_IS_BROADCAST(eh->ether_dhost)) {
 			DP_STATS_INC_PKT(peer, rx.bcast, 1, msdu_len);
-		} else {
-			DP_STATS_INC_PKT(peer, rx.multicast, 1, msdu_len);
+
 		}
 	}
 
