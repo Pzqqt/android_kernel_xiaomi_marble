@@ -1141,7 +1141,7 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 	if (!req || !req->vdev) {
 		tdls_err("req: %pK", req);
 		status = QDF_STATUS_E_INVAL;
-		goto error;
+		goto free_req;
 	}
 
 	vdev = req->vdev;
@@ -1213,6 +1213,8 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 	return status;
 error:
 	status = tdls_internal_del_peer_rsp(req);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+free_req:
 	qdf_mem_free(req);
 	return status;
 }
