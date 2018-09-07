@@ -26,22 +26,16 @@
 #include "qdf_nbuf.h"
 
 QDF_STATUS wlan_mgmt_txrx_desc_pool_init(
-			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx,
-			uint32_t pool_size)
+			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx)
 {
 	uint32_t i;
 
-	if (!pool_size) {
-		mgmt_txrx_err("Invalid pool size %u given", pool_size);
-		qdf_assert_always(pool_size);
-		return QDF_STATUS_E_INVAL;
-	}
-
 	mgmt_txrx_info(
-			"mgmt_txrx ctx: %pK pdev: %pK"
-			"initialize mgmt desc pool of size %d",
-			mgmt_txrx_pdev_ctx, mgmt_txrx_pdev_ctx->pdev, pool_size);
-	mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool = qdf_mem_malloc(pool_size *
+			"mgmt_txrx ctx: %pK pdev: %pK mgmt desc pool size %d",
+			mgmt_txrx_pdev_ctx, mgmt_txrx_pdev_ctx->pdev,
+			MGMT_DESC_POOL_MAX);
+	mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool = qdf_mem_malloc(
+			MGMT_DESC_POOL_MAX *
 			sizeof(struct mgmt_txrx_desc_elem_t));
 
 	if (!mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool) {
@@ -49,9 +43,9 @@ QDF_STATUS wlan_mgmt_txrx_desc_pool_init(
 		return QDF_STATUS_E_NOMEM;
 	}
 	qdf_list_create(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.free_list,
-					pool_size);
+					MGMT_DESC_POOL_MAX);
 
-	for (i = 0; i < pool_size; i++) {
+	for (i = 0; i < MGMT_DESC_POOL_MAX; i++) {
 		mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[i].desc_id = i;
 		mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[i].in_use = false;
 		qdf_list_insert_front(

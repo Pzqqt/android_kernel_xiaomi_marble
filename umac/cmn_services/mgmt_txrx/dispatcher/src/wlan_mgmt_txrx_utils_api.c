@@ -169,8 +169,7 @@ static QDF_STATUS wlan_mgmt_txrx_pdev_obj_create_notification(
 
 	mgmt_txrx_pdev_ctx->pdev = pdev;
 
-	status = wlan_mgmt_txrx_desc_pool_init(mgmt_txrx_pdev_ctx,
-					       MGMT_DESC_POOL_MAX);
+	status = wlan_mgmt_txrx_desc_pool_init(mgmt_txrx_pdev_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
 		mgmt_txrx_err(
 			"Failed to initialize mgmt desc. pool with status: %u",

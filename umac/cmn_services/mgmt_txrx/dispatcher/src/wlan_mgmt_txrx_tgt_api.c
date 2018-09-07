@@ -1092,6 +1092,11 @@ qdf_nbuf_t tgt_mgmt_txrx_get_nbuf_from_desc_id(
 		mgmt_txrx_err("Mgmt txrx context empty for pdev %pK", pdev);
 		goto fail;
 	}
+	if (desc_id >= MGMT_DESC_POOL_MAX) {
+		mgmt_txrx_err("desc_id:%u is out of bounds", desc_id);
+		goto fail;
+	}
+
 	mgmt_desc = &mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[desc_id];
 	if (!mgmt_desc) {
 		mgmt_txrx_err("Mgmt descriptor unavailable for id %d pdev %pK",
@@ -1149,6 +1154,10 @@ uint8_t tgt_mgmt_txrx_get_vdev_id_from_desc_id(
 				WLAN_UMAC_COMP_MGMT_TXRX);
 	if (!mgmt_txrx_pdev_ctx) {
 		mgmt_txrx_err("Mgmt txrx context empty for pdev %pK", pdev);
+		goto fail;
+	}
+	if (desc_id >= MGMT_DESC_POOL_MAX) {
+		mgmt_txrx_err("desc_id:%u is out of bounds", desc_id);
 		goto fail;
 	}
 

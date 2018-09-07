@@ -199,15 +199,13 @@ struct mgmt_txrx_priv_pdev_context {
 /**
  * wlan_mgmt_txrx_desc_pool_init() - initializes mgmt. desc. pool
  * @mgmt_txrx_pdev_ctx: mgmt txrx pdev context
- * @pool_size: desc. pool size
  *
  * This function initializes the mgmt descriptor pool.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS wlan_mgmt_txrx_desc_pool_init(
-			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx,
-			uint32_t pool_size);
+			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx);
 
 /**
  * wlan_mgmt_txrx_desc_pool_deinit() - deinitializes mgmt. desc. pool
