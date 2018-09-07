@@ -165,3 +165,20 @@ ucfg_fwol_get_coex_config_params(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+ucfg_fwol_get_thermal_temp(struct wlan_objmgr_psoc *psoc,
+			   struct wlan_fwol_thermal_temp *thermal_info)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*thermal_info = fwol_obj->cfg.thermal_temp_cfg;
+
+	return QDF_STATUS_SUCCESS;
+}

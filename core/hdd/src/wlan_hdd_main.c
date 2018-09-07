@@ -9756,6 +9756,7 @@ static int hdd_init_thermal_info(struct hdd_context *hdd_ctx)
 	tSmeThermalParams thermal_param;
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
+	struct wlan_fwol_thermal_temp thermal_temp = {0};
 
 	thermal_param.smeThermalMgmtEnabled =
 		hdd_ctx->config->thermalMitigationEnable;
@@ -9770,22 +9771,26 @@ static int hdd_init_thermal_info(struct hdd_context *hdd_ctx)
 	thermal_param.sme_throttle_duty_cycle_tbl[3] =
 		hdd_ctx->config->throttle_dutycycle_level3;
 
+	status = ucfg_fwol_get_thermal_temp(hdd_ctx->hdd_psoc, &thermal_temp);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
 	thermal_param.smeThermalLevels[0].smeMinTempThreshold =
-		hdd_ctx->config->thermalTempMinLevel0;
+					thermal_temp.thermal_temp_min_level0;
 	thermal_param.smeThermalLevels[0].smeMaxTempThreshold =
-		hdd_ctx->config->thermalTempMaxLevel0;
+					thermal_temp.thermal_temp_max_level0;
 	thermal_param.smeThermalLevels[1].smeMinTempThreshold =
-		hdd_ctx->config->thermalTempMinLevel1;
+					thermal_temp.thermal_temp_min_level1;
 	thermal_param.smeThermalLevels[1].smeMaxTempThreshold =
-		hdd_ctx->config->thermalTempMaxLevel1;
+					thermal_temp.thermal_temp_max_level1;
 	thermal_param.smeThermalLevels[2].smeMinTempThreshold =
-		hdd_ctx->config->thermalTempMinLevel2;
+					thermal_temp.thermal_temp_min_level2;
 	thermal_param.smeThermalLevels[2].smeMaxTempThreshold =
-		hdd_ctx->config->thermalTempMaxLevel2;
+					thermal_temp.thermal_temp_max_level2;
 	thermal_param.smeThermalLevels[3].smeMinTempThreshold =
-		hdd_ctx->config->thermalTempMinLevel3;
+					thermal_temp.thermal_temp_min_level3;
 	thermal_param.smeThermalLevels[3].smeMaxTempThreshold =
-		hdd_ctx->config->thermalTempMaxLevel3;
+					thermal_temp.thermal_temp_max_level3;
 
 	mac_handle = hdd_ctx->mac_handle;
 	status = sme_init_thermal_info(mac_handle, thermal_param);

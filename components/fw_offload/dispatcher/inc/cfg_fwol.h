@@ -24,9 +24,11 @@
 #include "qdf_types.h"
 
 #include "cfg_coex.h"
+#include "cfg_thermal_temp.h"
 
 #define CFG_FWOL_ALL \
-	CFG_COEX_ALL
+	CFG_COEX_ALL \
+	CFG_THERMAL_TEMP_ALL
 
 #endif /* __CFG_FWOL_H */
 

@@ -5081,46 +5081,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_THROTTLE_DUTY_CYCLE_LEVEL3_MAX     (100)
 #define CFG_THROTTLE_DUTY_CYCLE_LEVEL3_DEFAULT (94)
 
-#define CFG_THERMAL_TEMP_MIN_LEVEL0_NAME      "gThermalTempMinLevel0"
-#define CFG_THERMAL_TEMP_MIN_LEVEL0_MIN       (0)
-#define CFG_THERMAL_TEMP_MIN_LEVEL0_MAX       (1000)
-#define CFG_THERMAL_TEMP_MIN_LEVEL0_DEFAULT   (0)
-
-#define CFG_THERMAL_TEMP_MAX_LEVEL0_NAME      "gThermalTempMaxLevel0"
-#define CFG_THERMAL_TEMP_MAX_LEVEL0_MIN       (0)
-#define CFG_THERMAL_TEMP_MAX_LEVEL0_MAX       (1000)
-#define CFG_THERMAL_TEMP_MAX_LEVEL0_DEFAULT   (90)
-
-#define CFG_THERMAL_TEMP_MIN_LEVEL1_NAME      "gThermalTempMinLevel1"
-#define CFG_THERMAL_TEMP_MIN_LEVEL1_MIN       (0)
-#define CFG_THERMAL_TEMP_MIN_LEVEL1_MAX       (1000)
-#define CFG_THERMAL_TEMP_MIN_LEVEL1_DEFAULT   (70)
-
-#define CFG_THERMAL_TEMP_MAX_LEVEL1_NAME      "gThermalTempMaxLevel1"
-#define CFG_THERMAL_TEMP_MAX_LEVEL1_MIN       (0)
-#define CFG_THERMAL_TEMP_MAX_LEVEL1_MAX       (1000)
-#define CFG_THERMAL_TEMP_MAX_LEVEL1_DEFAULT   (110)
-
-#define CFG_THERMAL_TEMP_MIN_LEVEL2_NAME      "gThermalTempMinLevel2"
-#define CFG_THERMAL_TEMP_MIN_LEVEL2_MIN       (0)
-#define CFG_THERMAL_TEMP_MIN_LEVEL2_MAX       (1000)
-#define CFG_THERMAL_TEMP_MIN_LEVEL2_DEFAULT   (90)
-
-#define CFG_THERMAL_TEMP_MAX_LEVEL2_NAME      "gThermalTempMaxLevel2"
-#define CFG_THERMAL_TEMP_MAX_LEVEL2_MIN       (0)
-#define CFG_THERMAL_TEMP_MAX_LEVEL2_MAX       (1000)
-#define CFG_THERMAL_TEMP_MAX_LEVEL2_DEFAULT   (125)
-
-#define CFG_THERMAL_TEMP_MIN_LEVEL3_NAME      "gThermalTempMinLevel3"
-#define CFG_THERMAL_TEMP_MIN_LEVEL3_MIN       (0)
-#define CFG_THERMAL_TEMP_MIN_LEVEL3_MAX       (1000)
-#define CFG_THERMAL_TEMP_MIN_LEVEL3_DEFAULT   (110)
-
-#define CFG_THERMAL_TEMP_MAX_LEVEL3_NAME      "gThermalTempMaxLevel3"
-#define CFG_THERMAL_TEMP_MAX_LEVEL3_MIN       (0)
-#define CFG_THERMAL_TEMP_MAX_LEVEL3_MAX       (1000)
-#define CFG_THERMAL_TEMP_MAX_LEVEL3_DEFAULT   (0)
-
 /*
  * Enable/Disable Modulated DTIM feature
  * Default: Disable
@@ -11080,14 +11040,6 @@ struct hdd_config {
 	uint8_t wowEnable;
 	uint8_t disableDFSChSwitch;
 	uint8_t enableDFSMasterCap;
-	uint16_t thermalTempMinLevel0;
-	uint16_t thermalTempMaxLevel0;
-	uint16_t thermalTempMinLevel1;
-	uint16_t thermalTempMaxLevel1;
-	uint16_t thermalTempMinLevel2;
-	uint16_t thermalTempMaxLevel2;
-	uint16_t thermalTempMinLevel3;
-	uint16_t thermalTempMaxLevel3;
 	uint32_t TxPower2g;
 	uint32_t TxPower5g;
 	uint32_t gEnableDebugLog;
