@@ -4672,6 +4672,9 @@ err:
 int hdd_set_fw_params(struct hdd_adapter *adapter)
 {
 	int ret;
+	uint16_t upper_brssi_thresh, lower_brssi_thresh;
+	bool enable_dtim_1chrx;
+	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
 
 	hdd_enter_dev(adapter->dev);
@@ -4725,17 +4728,32 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	}
 
 	if (adapter->device_mode == QDF_STA_MODE) {
-		sme_set_smps_cfg(adapter->session_id,
-					HDD_STA_SMPS_PARAM_UPPER_BRSSI_THRESH,
-					hdd_ctx->config->upper_brssi_thresh);
+		status = ucfg_get_upper_brssi_thresh(hdd_ctx->psoc,
+						     &upper_brssi_thresh);
+		if (QDF_IS_STATUS_ERROR(status))
+			return -EINVAL;
 
 		sme_set_smps_cfg(adapter->session_id,
-					HDD_STA_SMPS_PARAM_LOWER_BRSSI_THRESH,
-					hdd_ctx->config->lower_brssi_thresh);
+				 HDD_STA_SMPS_PARAM_UPPER_BRSSI_THRESH,
+				 upper_brssi_thresh);
+
+		status = ucfg_get_lower_brssi_thresh(hdd_ctx->psoc,
+						     &lower_brssi_thresh);
+		if (QDF_IS_STATUS_ERROR(status))
+			return -EINVAL;
 
 		sme_set_smps_cfg(adapter->session_id,
-					HDD_STA_SMPS_PARAM_DTIM_1CHRX_ENABLE,
-					hdd_ctx->config->enable_dtim_1chrx);
+				 HDD_STA_SMPS_PARAM_LOWER_BRSSI_THRESH,
+				 lower_brssi_thresh);
+
+		status = ucfg_get_enable_dtim_1chrx(hdd_ctx->psoc,
+						    &enable_dtim_1chrx);
+		if (QDF_IS_STATUS_ERROR(status))
+			return -EINVAL;
+
+		sme_set_smps_cfg(adapter->session_id,
+				 HDD_STA_SMPS_PARAM_DTIM_1CHRX_ENABLE,
+				 enable_dtim_1chrx);
 	}
 
 	if (hdd_ctx->config->enable2x2) {
@@ -10182,8 +10200,8 @@ static void hdd_initialize_mac_address(struct hdd_context *hdd_ctx)
 static int hdd_set_smart_chainmask_enabled(struct hdd_context *hdd_ctx)
 {
 	int vdev_id = 0;
-	int param_id = WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME;
 	int value = hdd_ctx->config->smart_chainmask_enabled;
+	int param_id = WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME;
 	int vpdev = PDEV_CMD;
 	int ret;
 
@@ -10197,12 +10215,20 @@ static int hdd_set_smart_chainmask_enabled(struct hdd_context *hdd_ctx)
 static int hdd_set_alternative_chainmask_enabled(struct hdd_context *hdd_ctx)
 {
 	int vdev_id = 0;
+	QDF_STATUS status;
 	int param_id = WMI_PDEV_PARAM_ALTERNATIVE_CHAINMASK_SCHEME;
-	int value = hdd_ctx->config->alternative_chainmask_enabled;
+	bool alternative_chainmask_enabled;
 	int vpdev = PDEV_CMD;
 	int ret;
 
-	ret = sme_cli_set_command(vdev_id, param_id, value, vpdev);
+	status = ucfg_get_alternative_chainmask_enabled(
+				hdd_ctx->psoc,
+				&alternative_chainmask_enabled);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
+
+	ret = sme_cli_set_command(vdev_id, param_id,
+				  (int)alternative_chainmask_enabled, vpdev);
 	if (ret)
 		hdd_err("WMI_PDEV_PARAM_ALTERNATIVE_CHAINMASK_SCHEME failed %d",
 			ret);
@@ -10212,13 +10238,18 @@ static int hdd_set_alternative_chainmask_enabled(struct hdd_context *hdd_ctx)
 
 static int hdd_set_ani_enabled(struct hdd_context *hdd_ctx)
 {
+	QDF_STATUS status;
 	int vdev_id = 0;
 	int param_id = WMI_PDEV_PARAM_ANI_ENABLE;
-	int value = hdd_ctx->config->ani_enabled;
+	bool value;
 	int vpdev = PDEV_CMD;
 	int ret;
 
-	ret = sme_cli_set_command(vdev_id, param_id, value, vpdev);
+	status = ucfg_fwol_get_ani_enabled(hdd_ctx->psoc, &value);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
+
+	ret = sme_cli_set_command(vdev_id, param_id, (int)value, vpdev);
 	if (ret)
 		hdd_err("WMI_PDEV_PARAM_ANI_ENABLE failed %d", ret);
 
@@ -10238,6 +10269,7 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 	int ret;
 	uint8_t val = 0;
 	QDF_STATUS status;
+	uint32_t arp_ac_category;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	cdp_register_pause_cb(soc, wlan_hdd_txrx_pause_cb);
@@ -10289,12 +10321,17 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 	if (ret)
 		goto out;
 
+	status = ucfg_get_arp_ac_category(hdd_ctx->psoc, &arp_ac_category);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
+
 	ret = sme_cli_set_command(0, WMI_PDEV_PARAM_ARP_AC_OVERRIDE,
-				  hdd_ctx->config->arp_ac_category,
+				  arp_ac_category,
 				  PDEV_CMD);
 	if (0 != ret) {
 		hdd_err("WMI_PDEV_PARAM_ARP_AC_OVERRIDE ac: %d ret: %d",
-			hdd_ctx->config->arp_ac_category, ret);
+			arp_ac_category, ret);
 		goto out;
 	}
 
@@ -10836,6 +10873,9 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 	int set_value;
 	mac_handle_t mac_handle;
+	bool enable_rts_sifsbursting;
+	uint8_t enable_phy_reg_retention;
+	uint8_t max_mpdus_inampdu;
 	uint32_t num_abg_tx_chains = 0;
 	uint16_t num_11b_tx_chains = 0;
 	uint16_t num_11ag_tx_chains = 0;
@@ -10854,14 +10894,24 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	sme_set_chip_pwr_save_fail_cb(mac_handle,
 				      hdd_chip_pwr_save_fail_detected_cb);
 
-	if (hdd_ctx->config->max_mpdus_inampdu) {
-		set_value = hdd_ctx->config->max_mpdus_inampdu;
+	status = ucfg_get_max_mpdus_inampdu(hdd_ctx->psoc,
+					    &max_mpdus_inampdu);
+	if (status)
+		return status;
+
+	if (max_mpdus_inampdu) {
+		set_value = max_mpdus_inampdu;
 		sme_cli_set_command(0, (int)WMI_PDEV_PARAM_MAX_MPDUS_IN_AMPDU,
 				    set_value, PDEV_CMD);
 	}
 
-	if (hdd_ctx->config->enable_rts_sifsbursting) {
-		set_value = hdd_ctx->config->enable_rts_sifsbursting;
+	status = ucfg_get_enable_rts_sifsbursting(hdd_ctx->psoc,
+						  &enable_rts_sifsbursting);
+	if (status)
+		return status;
+
+	if (enable_rts_sifsbursting) {
+		set_value = enable_rts_sifsbursting;
 		sme_cli_set_command(0,
 				    (int)WMI_PDEV_PARAM_ENABLE_RTS_SIFS_BURSTING,
 				    set_value, PDEV_CMD);
@@ -10977,10 +11027,15 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	sme_cli_set_command(0, WMI_PDEV_AUTO_DETECT_POWER_FAILURE,
 			    auto_power_fail_mode, PDEV_CMD);
 
+	status = ucfg_get_enable_phy_reg_retention(hdd_ctx->psoc,
+						   &enable_phy_reg_retention);
 
-	if (hdd_ctx->config->enable_phy_reg_retention)
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
+
+	if (enable_phy_reg_retention)
 		wma_cli_set_command(0, WMI_PDEV_PARAM_FAST_PWR_TRANSITION,
-			hdd_ctx->config->enable_phy_reg_retention, PDEV_CMD);
+			enable_phy_reg_retention, PDEV_CMD);
 
 	return 0;
 

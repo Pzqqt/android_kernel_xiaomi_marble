@@ -22,13 +22,14 @@
 #include "cfg_define.h"
 #include "cfg_converged.h"
 #include "qdf_types.h"
-
 #include "cfg_coex.h"
 #include "cfg_thermal_temp.h"
 #include "cfg_ie_whitelist.h"
+#include "cfg_fwol_generic.h"
 
 #define CFG_FWOL_ALL \
 	CFG_COEX_ALL \
+	CFG_FWOL_GENERIC_ALL \
 	CFG_IE_WHITELIST \
 	CFG_THERMAL_TEMP_ALL
 

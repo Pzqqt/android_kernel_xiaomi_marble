@@ -112,11 +112,30 @@ struct wlan_fwol_ie_whitelist {
  * coex_config: coex config items
  * thermal_temp_cfg: Thermal temperature related config items
  * ie_whitelist_cfg: IE Whitelist related config items
+ * @ani_enabled: ANI enable/disable
+ * @enable_rts_sifsbursting: Enable RTS SIFS Bursting
+ * @max_mpdus_inampdu: Max number of MPDUS
+ * @arp_ac_category: ARP AC category
+ * @enable_phy_reg_retention: Enable PHY reg retention
+ * @upper_brssi_thresh: Upper BRSSI threshold
+ * @lower_brssi_thresh: Lower BRSSI threshold
+ * @enable_dtim_1chrx: Enable/disable DTIM 1 CHRX
+ * @alternative_chainmask_enabled: Alternate chainmask
  */
 struct wlan_fwol_cfg {
+	/* Add CFG and INI items here */
 	struct wlan_fwol_coex_config coex_config;
 	struct wlan_fwol_thermal_temp thermal_temp_cfg;
 	struct wlan_fwol_ie_whitelist ie_whitelist_cfg;
+	bool ani_enabled;
+	bool enable_rts_sifsbursting;
+	uint8_t max_mpdus_inampdu;
+	uint32_t arp_ac_category;
+	uint8_t enable_phy_reg_retention;
+	uint16_t upper_brssi_thresh;
+	uint16_t lower_brssi_thresh;
+	bool enable_dtim_1chrx;
+	bool alternative_chainmask_enabled;
 };
 
 /**

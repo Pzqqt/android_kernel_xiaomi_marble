@@ -6308,30 +6308,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_SMART_CHAINMASK_DEFAULT (0)
 
 /*
- * <ini>
- * gEnableAlternativeChainmask - Enable Co-Ex Alternative Chainmask
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable the Co-ex Alternative Chainmask
- * feature via the WMI_PDEV_PARAM_ALTERNATIVE_CHAINMASK_SCHEME
- * firmware parameter.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_COEX_ALT_CHAINMASK_NAME    "gEnableAlternativeChainmask"
-#define CFG_ENABLE_COEX_ALT_CHAINMASK_MIN     (0)
-#define CFG_ENABLE_COEX_ALT_CHAINMASK_MAX     (1)
-#define CFG_ENABLE_COEX_ALT_CHAINMASK_DEFAULT (0)
-
-/*
  * set the self gen power value from
  * 0 to 0xffff
  */
@@ -7876,31 +7852,6 @@ enum hdd_wext_control {
 #define CFG_ENABLE_RUNTIME_PM_DEFAULT          (0)
 #endif
 
-/**
- * arp_ac_category - ARP access category
- * @Min: 0
- * @Max: 3
- * @Default: 3
- *
- * Firmware by default categorizes ARP packets with VOICE TID.
- * This ini shall be used to override the default configuration.
- * Access category enums are referenced in ieee80211_common.h
- * WME_AC_BE = 0 (Best effort)
- * WME_AC_BK = 1 (Background)
- * WME_AC_VI = 2 (Video)
- * WME_AC_VO = 3 (Voice)
- *
- * Related: none
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ARP_AC_CATEGORY                "arp_ac_category"
-#define CFG_ARP_AC_CATEGORY_MIN            (0)
-#define CFG_ARP_AC_CATEGORY_MAX            (3)
-#define CFG_ARP_AC_CATEGORY_DEFAULT        (3)
-
 /*
  * <ini>
  * gActiveUcBpfMode - Control UC active APF mode
@@ -8101,28 +8052,6 @@ enum hdd_wext_control {
 
 /*
  * <ini>
- * gEnableANI - Enable Adaptive Noise Immunity
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable or disable Adaptive Noise Immunity.
- *
- * Related: None
- *
- * Supported Feature: ANI
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_ANI_NAME              "gEnableANI"
-#define CFG_ENABLE_ANI_MIN               (0)
-#define CFG_ENABLE_ANI_MAX               (1)
-#define CFG_ENABLE_ANI_DEFAULT           (1)
-
-/*
- * <ini>
  * gTimerMultiplier - Scale QDF timers by this value
  * @Min: 1
  * @Max: 0xFFFFFFFF
@@ -8177,41 +8106,6 @@ enum hdd_wext_control {
 #define CFG_PROBE_REQ_OUI_NAME    "gProbeReqOUIs"
 #define CFG_PROBE_REQ_OUI_DEFAULT ""
 /* End of probe request IE whitelisting feature ini params */
-
-/**
- * gSetRTSForSIFSBursting - set rts for sifs bursting
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini set rts for sifs bursting
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SET_RTS_FOR_SIFS_BURSTING           "gSetRTSForSIFSBursting"
-#define CFG_SET_RTS_FOR_SIFS_BURSTING_MIN       (0)
-#define CFG_SET_RTS_FOR_SIFS_BURSTING_MAX       (1)
-#define CFG_SET_RTS_FOR_SIFS_BURSTING_DEFAULT   (0)
-
-/**
- * <ini>
- * gMaxMPDUsInAMPDU - max mpdus in ampdu
- * @Min: 0
- * @Max: 64
- * @Default: 0
- *
- * This ini configure max mpdus in ampdu
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_MAX_MPDUS_IN_AMPDU                  "gMaxMPDUsInAMPDU"
-#define CFG_MAX_MPDUS_IN_AMPDU_MIN              (0)
-#define CFG_MAX_MPDUS_IN_AMPDU_MAX              (64)
-#define CFG_MAX_MPDUS_IN_AMPDU_DEFAULT          (0)
 
 /*
  * <ini>
@@ -8388,75 +8282,6 @@ enum hdd_wext_control {
 
 /*
  * <ini>
- * gUpperBrssiThresh - Sets Upper threshold for beacon RSSI
- * @Min: 36
- * @Max: 66
- * @Default: 46
- *
- * This ini sets Upper beacon threshold for beacon RSSI in FW
- * Used to reduced RX chainmask in FW, once this threshold is
- * reached FW will switch to 1X1 (Single chain).
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_UPPER_BRSSI_THRESH_NAME             "gUpperBrssiThresh"
-#define CFG_UPPER_BRSSI_THRESH_MIN              (36)
-#define CFG_UPPER_BRSSI_THRESH_MAX              (66)
-#define CFG_UPPER_BRSSI_THRESH_DEFAULT          (46)
-
-/*
- * <ini>
- * gLowerrBrssiThresh - Sets Lower threshold for beacon RSSI
- * @Min: 6
- * @Max: 36
- * @Default: 26
- *
- * This ini sets Lower beacon threshold for beacon RSSI in FW
- * Used to increase RX chainmask in FW, once this threshold is
- * reached FW will switch to 2X2 chain.
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_LOWER_BRSSI_THRESH_NAME     "gLowerBrssiThresh"
-#define CFG_LOWER_BRSSI_THRESH_MIN      (6)
-#define CFG_LOWER_BRSSI_THRESH_MAX      (36)
-#define CFG_LOWER_BRSSI_THRESH_DEFAULT  (26)
-
-/*
- * <ini>
- * gDtim1ChRxEnable - Enable/Disable DTIM 1Chrx feature
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini Enables or Disables DTIM 1CHRX feature in FW
- * If this flag is set FW enables shutting off one chain
- * while going to power save.
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_DTIM_1CHRX_ENABLE_NAME      "gDtim1ChRxEnable"
-#define CFG_DTIM_1CHRX_ENABLE_MIN       (0)
-#define CFG_DTIM_1CHRX_ENABLE_MAX       (1)
-#define CFG_DTIM_1CHRX_ENABLE_DEFAULT   (1)
-
-/*
- * <ini>
  * scan_11d_interval - 11d scan interval in ms
  * @Min: 1 sec
  * @Max: 10 hr
@@ -8501,26 +8326,6 @@ enum hdd_wext_control {
 #define CFG_IS_BSSID_HINT_PRIORITY_DEFAULT (0)
 #define CFG_IS_BSSID_HINT_PRIORITY_MIN     (0)
 #define CFG_IS_BSSID_HINT_PRIORITY_MAX     (1)
-
-/*
- * gEnableFastPwrTransition - Configuration for fast power transition
- * @Min: 0
- * @Max: 2
- * @Default: 0
- *
- * This ini supported values:
- * 0x0: Phy register retention disabled (Higher timeline, Good for power)
- * 0x1: Phy register retention statically enabled
- * 0x2: Phy register retention enabled/disabled dynamically
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_ENABLE_PHY_REG  "gEnableFastPwrTransition"
-#define CFG_PHY_REG_DEFAULT (0x0)
-#define CFG_PHY_REG_MIN     (0x0)
-#define CFG_PHY_REG_MAX     (0x2)
 
 /*
  * <ini>
@@ -9948,7 +9753,6 @@ struct hdd_config {
 	uint32_t sta_sap_scc_on_dfs_chan;
 	uint32_t sta_sap_scc_on_lte_coex_chan;
 	bool smart_chainmask_enabled;
-	bool alternative_chainmask_enabled;
 	uint16_t  self_gen_frm_pwr;
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool pno_channel_prediction;
@@ -10048,8 +9852,6 @@ struct hdd_config {
 	bool enable_twt;
 	uint32_t twt_congestion_timeout;
 #endif
-	uint32_t arp_ac_category;
-	bool ani_enabled;
 	bool tx_orphan_enable;
 
 	/* Probe Request multiple vendor OUIs */
@@ -10066,8 +9868,7 @@ struct hdd_config {
 	/* threshold of packet drops at which FW initiates disconnect */
 	uint16_t pkt_err_disconn_th;
 	bool is_force_1x1;
-	uint8_t enable_rts_sifsbursting;
-	uint8_t max_mpdus_inampdu;
+	enum pmo_auto_pwr_detect_failure_mode auto_pwr_save_fail_mode;
 	uint8_t ito_repeat_count;
 	bool enable_11d_in_world_mode;
 	/* 5G preference parameters for boosting RSSI */
@@ -10080,9 +9881,6 @@ struct hdd_config {
 	uint8_t                     rssi_penalize_factor_5g;
 	uint8_t                     max_rssi_penalize_5g;
 	bool enable_lprx;
-	uint8_t upper_brssi_thresh;
-	uint8_t lower_brssi_thresh;
-	bool enable_dtim_1chrx;
 	int8_t rssi_thresh_offset_5g;
 	uint32_t scan_11d_interval;
 	bool is_bssid_hint_priority;
@@ -10092,7 +9890,9 @@ struct hdd_config {
 	uint32_t wlm_latency_flags_moderate;
 	uint32_t wlm_latency_flags_low;
 	uint32_t wlm_latency_flags_ultralow;
-	uint8_t enable_phy_reg_retention;
+#ifdef WLAN_FEATURE_PACKET_FILTERING
+	uint8_t packet_filters_bitmap;
+#endif
 	uint8_t dfs_beacon_tx_enhanced;
 	uint32_t btm_offload_config;
 #ifdef WLAN_FEATURE_SAE

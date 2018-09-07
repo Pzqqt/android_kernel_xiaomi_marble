@@ -128,4 +128,85 @@ QDF_STATUS
 ucfg_fwol_get_all_whitelist_params(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_fwol_ie_whitelist *whitelist);
 
+/** ucfg_fwol_get_ani_enabled() - Assigns the ani_enabled value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_ani_enabled(struct wlan_objmgr_psoc *psoc,
+				     bool *ani_enabled);
+
+/**
+ * ucfg_fwol_get_ani_enabled() - Assigns the enable_rts_sifsbursting value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_get_enable_rts_sifsbursting(struct wlan_objmgr_psoc *psoc,
+					    bool *enable_rts_sifsbursting);
+
+/**
+ * ucfg_get_max_mpdus_inampdu() - Assigns the max_mpdus_inampdu value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_get_max_mpdus_inampdu(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *max_mpdus_inampdu);
+
+/**
+ * ucfg_get_arp_ac_category() - Assigns the arp_ac_category value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_get_arp_ac_category(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *arp_ac_category);
+
+/**
+ * ucfg_get_enable_phy_reg_retention() - Assigns enable_phy_reg_retention value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_get_enable_phy_reg_retention(struct wlan_objmgr_psoc *psoc,
+					     uint8_t *enable_phy_reg_retention);
+
+/**
+ * ucfg_get_upper_brssi_thresh() - Assigns upper_brssi_thresh value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_get_upper_brssi_thresh(struct wlan_objmgr_psoc *psoc,
+				       uint16_t *upper_brssi_thresh);
+
+/**
+ * ucfg_get_lower_brssi_thresh() - Assigns lower_brssi_thresh value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_get_lower_brssi_thresh(struct wlan_objmgr_psoc *psoc,
+				       uint16_t *lower_brssi_thresh);
+
+/**
+ * ucfg_get_enable_dtim_1chrx() - Assigns enable_dtim_1chrx value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_get_enable_dtim_1chrx(struct wlan_objmgr_psoc *psoc,
+				      bool *enable_dtim_1chrx);
+
+/**
+ * ucfg_get_alternate_chainmask_enabled() - Assigns alt chainmask_enabled value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_get_alternative_chainmask_enabled(struct wlan_objmgr_psoc *psoc,
+				       bool *alternative_chainmask_enabled);
+
 #endif /* _WLAN_FWOL_UCFG_API_H_ */
