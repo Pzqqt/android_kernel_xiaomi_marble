@@ -1017,8 +1017,6 @@ flush_mc_list:
 		hdd_err("failed to flush mc list; status:%d", status);
 
 	hdd_exit();
-
-	return;
 }
 
 /**
