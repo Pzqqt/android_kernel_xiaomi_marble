@@ -2347,6 +2347,14 @@ ifdef CONFIG_SIR_SAP_MAX_NUM_PEERS
 ccflags-y += -DSIR_SAP_MAX_NUM_PEERS=$(CONFIG_SIR_SAP_MAX_NUM_PEERS)
 endif
 
+ifdef CONFIG_LOCK_STATS_ON
+ccflags-y += -DQDF_LOCK_STATS=1
+ccflags-y += -DQDF_LOCK_STATS_DESTROY_PRINT=0
+ccflags-y += -DQDF_LOCK_STATS_BUG_ON=1
+ccflags-y += -DQDF_LOCK_STATS_LIST=1
+ccflags-y += -DQDF_LOCK_STATS_LIST_SIZE=256
+endif
+
 KBUILD_CPPFLAGS += $(cppflags-y)
 
 # Currently, for versions of gcc which support it, the kernel Makefile
