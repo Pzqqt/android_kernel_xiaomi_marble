@@ -2129,3 +2129,23 @@ source "arch/arm64/gunyah/Kconfig"
 if CRYPTO
 source "arch/arm64/crypto/Kconfig"
 endif
+
+menu "Xiaomi configuration options"
+
+config MACH_XIAOMI
+        bool "Xiaomi board"
+        depends on ARCH_QCOM
+        help
+          Support for Xiaomi boards.
+
+menu "Xiaomi board selection"
+
+config MACH_XIAOMI_MARBLE
+        bool "marble board"
+        select MACH_XIAOMI
+        help
+          Support for Redmi Note 12 Turbo / Poco F5, condenamed marble / marblein.
+
+endmenu
+
+endmenu
