@@ -409,6 +409,85 @@ static void mlme_init_mbo_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_MBO_CAND_RSSI_BTC_THRESHOLD);
 }
 
+static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
+				  struct mlme_vht_capabilities_info
+				  *vht_cap_info)
+{
+	vht_cap_info->supp_chan_width =
+			cfg_default(CFG_VHT_SUPP_CHAN_WIDTH);
+	vht_cap_info->tx_bfee_ant_supp =
+			cfg_default(CFG_VHT_BEAMFORMEE_ANT_SUPP);
+	vht_cap_info->num_soundingdim =
+			cfg_default(CFG_VHT_NUM_SOUNDING_DIMENSIONS);
+	vht_cap_info->htc_vhtc =
+			cfg_default(CFG_VHT_HTC_VHTC);
+	vht_cap_info->link_adap_cap =
+			cfg_default(CFG_VHT_LINK_ADAPTATION_CAP);
+	vht_cap_info->rx_antpattern =
+			cfg_default(CFG_VHT_RX_ANT_PATTERN);
+	vht_cap_info->tx_antpattern =
+			cfg_default(CFG_VHT_TX_ANT_PATTERN);
+	vht_cap_info->rx_supp_data_rate =
+			cfg_default(CFG_VHT_RX_SUPP_DATA_RATE);
+	vht_cap_info->tx_supp_data_rate =
+			cfg_default(CFG_VHT_TX_SUPP_DATA_RATE);
+	vht_cap_info->enable_txbf_20mhz =
+			cfg_default(CFG_VHT_ENABLE_TXBF_20MHZ);
+
+	vht_cap_info->ampdu_len =
+			cfg_get(psoc, CFG_VHT_MPDU_LEN);
+	vht_cap_info->ldpc_coding_cap =
+			cfg_get(psoc, CFG_VHT_LDPC_CODING_CAP);
+	vht_cap_info->short_gi_80mhz =
+			cfg_get(psoc, CFG_VHT_SHORT_GI_80MHZ);
+	vht_cap_info->short_gi_160mhz =
+			cfg_get(psoc, CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ);
+	vht_cap_info->tx_stbc =
+			cfg_get(psoc, CFG_VHT_TXSTBC);
+	vht_cap_info->rx_stbc =
+			cfg_get(psoc, CFG_VHT_RXSTBC);
+	vht_cap_info->su_bformer =
+			cfg_get(psoc, CFG_VHT_SU_BEAMFORMER_CAP);
+	vht_cap_info->su_bformee =
+			cfg_get(psoc, CFG_VHT_SU_BEAMFORMEE_CAP);
+	vht_cap_info->mu_bformer =
+			cfg_get(psoc, CFG_VHT_MU_BEAMFORMER_CAP);
+	vht_cap_info->enable_mu_bformee =
+			cfg_get(psoc, CFG_VHT_ENABLE_MU_BFORMEE_CAP_FEATURE);
+	vht_cap_info->txop_ps =
+			cfg_get(psoc, CFG_VHT_TXOP_PS);
+	vht_cap_info->ampdu_len_exponent =
+			cfg_get(psoc, CFG_VHT_AMPDU_LEN_EXPONENT);
+	vht_cap_info->rx_mcs_map =
+			cfg_get(psoc, CFG_VHT_RX_MCS_MAP);
+	vht_cap_info->tx_mcs_map =
+			cfg_get(psoc, CFG_VHT_TX_MCS_MAP);
+	vht_cap_info->basic_mcs_set =
+			cfg_get(psoc, CFG_VHT_BASIC_MCS_SET);
+	vht_cap_info->channel_width =
+			cfg_get(psoc, CFG_VHT_CHANNEL_WIDTH);
+	vht_cap_info->rx_mcs =
+			cfg_get(psoc, CFG_VHT_ENABLE_RX_MCS_8_9);
+	vht_cap_info->tx_mcs =
+			cfg_get(psoc, CFG_VHT_ENABLE_TX_MCS_8_9);
+	vht_cap_info->rx_mcs2x2 =
+			cfg_get(psoc, CFG_VHT_ENABLE_RX_MCS2x2_8_9);
+	vht_cap_info->tx_mcs2x2 =
+			cfg_get(psoc, CFG_VHT_ENABLE_TX_MCS2x2_8_9);
+	vht_cap_info->enable_vht20_mcs9 =
+			cfg_get(psoc, CFG_ENABLE_VHT20_MCS9);
+	vht_cap_info->enable2x2 =
+			cfg_get(psoc, CFG_VHT_ENABLE_2x2_CAP_FEATURE);
+	vht_cap_info->enable_paid =
+			cfg_get(psoc, CFG_VHT_ENABLE_PAID_FEATURE);
+	vht_cap_info->enable_gid =
+			cfg_get(psoc, CFG_VHT_ENABLE_GID_FEATURE);
+	vht_cap_info->b24ghz_band =
+			cfg_get(psoc, CFG_ENABLE_VHT_FOR_24GHZ);
+	vht_cap_info->vendor_24ghz_band =
+			cfg_get(psoc, CFG_ENABLE_VENDOR_VHT_FOR_24GHZ);
+}
+
 static void mlme_init_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_mlme_rates *rates)
 {
@@ -1020,6 +1099,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_qos_cfg(psoc, &mlme_cfg->qos_mlme_params);
 	mlme_init_rates_in_cfg(psoc, &mlme_cfg->rates);
 	mlme_init_sap_protection_cfg(psoc, &mlme_cfg->sap_protection_cfg);
+	mlme_init_vht_cap_cfg(psoc, &mlme_cfg->vht_caps.vht_cap_info);
 	mlme_init_chainmask_cfg(psoc, &mlme_cfg->chainmask_cfg);
 	mlme_init_sap_cfg(psoc, &mlme_cfg->sap_cfg);
 	mlme_init_he_cap_in_cfg(psoc, &mlme_cfg->he_caps);

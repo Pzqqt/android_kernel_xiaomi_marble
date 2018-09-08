@@ -279,8 +279,92 @@ struct wlan_mlme_mbo {
 	int8_t mbo_candidate_rssi_btc_thres;
 };
 
+/**
+ * struct wlan_mlme_vht_caps - MLME VHT config items
+ * @supp_chan_width: Supported Channel Width
+ * @ldpc_coding_cap: LDPC Coding Capability
+ * @short_gi_80mhz: 80MHz Short Guard Interval
+ * @short_gi_160mhz: 160MHz Short Guard Interval
+ * @tx_stbc: Tx STBC cap
+ * @rx_stbc: Rx STBC cap
+ * @su_bformer: SU Beamformer cap
+ * @su_bformee: SU Beamformee cap
+ * @tx_bfee_ant_supp: Tx beamformee anti supp
+ * @num_soundingdim: Number of sounding dimensions
+ * @mu_bformer: MU Beamformer cap
+ * @txop_ps: Tx OPs in power save
+ * @htc_vhtc: htc_vht capability
+ * @link_adap_cap: Link adaptation capability
+ * @rx_antpattern: Rx Antenna Pattern cap
+ * @tx_antpattern: Tx Antenna Pattern cap
+ * @rx_mcs_map: Rx MCS Map
+ * @tx_mcs_map: Tx MCS Map
+ * @rx_supp_data_rate: Rx highest supported data rate
+ * @tx_supp_data_rate: Tx highest supported data rate
+ * @basic_mcs_set: Basic MCS set
+ * @enable_txbf_20mhz: enable tx bf for 20mhz
+ * @channel_width: Channel width capability for 11ac
+ * @rx_mcs: VHT Rx MCS capability for 1x1 mode
+ * @tx_mcs: VHT Tx MCS capability for 1x1 mode
+ * @rx_mcs2x2: VHT Rx MCS capability for 2x2 mode
+ * @tx_mcs2x2: VHT Tx MCS capability for 2x2 mode
+ * @enable_vht20_mcs9: Enables VHT MCS9 in 20M BW operation
+ * @enable2x2: Enables/disables VHT Tx/Rx MCS values for 2x2
+ * @enable_mu_bformee: Enables/disables multi-user (MU)
+ * beam formee capability
+ * @enable_paid: Enables/disables paid
+ * @enable_gid: Enables/disables gid
+ * @b24ghz_band: To control VHT support in 2.4 GHz band
+ * @vendor_24ghz_band: to control VHT support based on vendor
+ * ie in 2.4 GHz band
+ * @ampdu_len_exponent: To handle maximum receive AMPDU ampdu len exponent
+ * @ampdu_len: To handle maximum receive AMPDU ampdu len
+ */
+struct mlme_vht_capabilities_info {
+	uint8_t supp_chan_width;
+	bool ldpc_coding_cap;
+	bool short_gi_80mhz;
+	bool short_gi_160mhz;
+	bool tx_stbc;
+	bool rx_stbc;
+	bool su_bformer;
+	bool su_bformee;
+	uint8_t tx_bfee_ant_supp;
+	uint8_t num_soundingdim;
+	bool mu_bformer;
+	bool txop_ps;
+	bool htc_vhtc;
+	uint8_t link_adap_cap;
+	bool rx_antpattern;
+	bool tx_antpattern;
+	uint32_t rx_mcs_map;
+	uint32_t tx_mcs_map;
+	uint32_t rx_supp_data_rate;
+	uint32_t tx_supp_data_rate;
+	uint32_t basic_mcs_set;
+	bool enable_txbf_20mhz;
+	uint8_t channel_width;
+	uint8_t rx_mcs;
+	uint8_t tx_mcs;
+	uint8_t rx_mcs2x2;
+	uint8_t tx_mcs2x2;
+	bool enable_vht20_mcs9;
+	bool enable2x2;
+	bool enable_mu_bformee;
+	bool enable_paid;
+	bool enable_gid;
+	bool b24ghz_band;
+	bool vendor_24ghz_band;
+	uint8_t ampdu_len_exponent;
+	uint8_t ampdu_len;
+};
+
+/**
+ * struct wlan_mlme_vht_caps - VHT Capabilities related config items
+ * @vht_cap_info: VHT capabilities Info Structure
+ */
 struct wlan_mlme_vht_caps {
-	/* VHT related configs */
+	struct mlme_vht_capabilities_info vht_cap_info;
 };
 
 /**
