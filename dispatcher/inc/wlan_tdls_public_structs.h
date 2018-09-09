@@ -1110,7 +1110,9 @@ struct tdls_antenna_switch_request {
 
 /**
  * struct tdls_set_offchannel - TDLS set offchannel
+ * @vdev: vdev object
  * @offchannel: Updated tdls offchannel value.
+ * @callback: callback to release vdev ref.
  */
 struct tdls_set_offchannel {
 	struct wlan_objmgr_vdev *vdev;
@@ -1120,7 +1122,9 @@ struct tdls_set_offchannel {
 
 /**
  * struct tdls_set_offchan_mode - TDLS set offchannel mode
+ * @vdev: vdev object
  * @offchan_mode: Updated tdls offchannel mode value.
+ * @callback: callback to release vdev ref.
  */
 struct tdls_set_offchanmode {
 	struct wlan_objmgr_vdev *vdev;
@@ -1130,7 +1134,9 @@ struct tdls_set_offchanmode {
 
 /**
  * struct tdls_set_offchan_offset - TDLS set offchannel mode
+ * @vdev: vdev object
  * @offchan_offset: Offchan offset value.
+ * @callback: callback to release vdev ref.
  */
 struct tdls_set_secoffchanneloffset {
 	struct wlan_objmgr_vdev *vdev;
