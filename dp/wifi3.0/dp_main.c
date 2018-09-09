@@ -4250,9 +4250,8 @@ static int dp_update_filter_neighbour_peers(struct cdp_vdev *vdev_handle,
 
 		/* first neighbour */
 		if (!pdev->neighbour_peers_added) {
-			if (!pdev->mcopy_mode && !pdev->enhanced_stats_en)
-				dp_ppdu_ring_cfg(pdev);
 			pdev->neighbour_peers_added = true;
+			dp_ppdu_ring_cfg(pdev);
 		}
 		return 1;
 
@@ -5805,6 +5804,10 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	uint8_t index = 0;
 
 	DP_PRINT_STATS("SOC Rx Stats:\n");
+	DP_PRINT_STATS("Fragmented packets: %u",
+		       soc->stats.rx.rx_frags);
+	DP_PRINT_STATS("Reo reinjected packets: %u",
+		       soc->stats.rx.reo_reinject);
 	DP_PRINT_STATS("Errors:\n");
 	DP_PRINT_STATS("Rx Decrypt Errors = %d",
 			(soc->stats.rx.err.rxdma_error[HAL_RXDMA_ERR_DECRYPT] +
@@ -6464,6 +6467,11 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 	htt_tlv_filter.ppdu_end_status_done = 1;
 	htt_tlv_filter.enable_fp = 1;
 	htt_tlv_filter.enable_md = 0;
+	if (pdev->neighbour_peers_added &&
+	    pdev->soc->hw_nac_monitor_support) {
+		htt_tlv_filter.enable_md = 1;
+		htt_tlv_filter.packet_header = 1;
+	}
 	if (pdev->mcopy_mode) {
 		htt_tlv_filter.packet_header = 1;
 		htt_tlv_filter.enable_mo = 1;
@@ -6474,6 +6482,9 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 	htt_tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
 	htt_tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
 	htt_tlv_filter.mo_data_filter = FILTER_DATA_ALL;
+	if (pdev->neighbour_peers_added &&
+	    pdev->soc->hw_nac_monitor_support)
+		htt_tlv_filter.md_data_filter = FILTER_DATA_ALL;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
@@ -8120,11 +8131,13 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA8074);
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, true);
+		soc->hw_nac_monitor_support = 1;
 		break;
 	case TARGET_TYPE_QCA8074V2:
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA8074);
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, false);
+		soc->hw_nac_monitor_support = 1;
 		break;
 	default:
 		qdf_print("%s: Unknown tgt type %d\n", __func__, target_type);

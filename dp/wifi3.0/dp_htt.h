@@ -132,6 +132,9 @@ struct htt_rx_ring_tlv_filter {
 		mo_ctrl_filter:16;
 	u_int32_t fp_data_filter:16,
 		mo_data_filter:16;
+	u_int16_t md_data_filter;
+	u_int16_t md_mgmt_filter;
+	u_int16_t md_ctrl_filter;
 };
 
 void *

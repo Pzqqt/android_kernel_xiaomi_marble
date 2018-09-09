@@ -126,7 +126,9 @@ static void dfs_nol_elem_free_work_cb(void *context)
 				tmp_nol_entry) {
 			TAILQ_REMOVE(&dfs->dfs_nol_free_list,
 					nol_entry, nolelem_list);
+			WLAN_DFSNOL_UNLOCK(dfs);
 			qdf_timer_free(&nol_entry->nol_timer);
+			WLAN_DFSNOL_LOCK(dfs);
 			qdf_mem_free(nol_entry);
 		}
 	WLAN_DFSNOL_UNLOCK(dfs);

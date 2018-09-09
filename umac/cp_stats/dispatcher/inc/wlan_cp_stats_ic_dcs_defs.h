@@ -43,14 +43,14 @@
  * @dcs_sec_80_util: secondary 80MHz util
  */
 struct pdev_dcs_chan_stats {
-	uint32_t dcs_total_util;
-	uint32_t dcs_ap_tx_util;
-	uint32_t dcs_ap_rx_util;
-	uint32_t dcs_self_bss_util;
-	uint32_t dcs_obss_util;
-	uint32_t dcs_obss_rx_util;
-	uint32_t dcs_free_medium;
-	uint32_t dcs_non_wifi_util;
+	uint8_t dcs_total_util;
+	uint8_t dcs_ap_tx_util;
+	uint8_t dcs_ap_rx_util;
+	uint8_t dcs_self_bss_util;
+	uint8_t dcs_obss_util;
+	uint8_t dcs_obss_rx_util;
+	uint8_t dcs_free_medium;
+	uint8_t dcs_non_wifi_util;
 	uint32_t dcs_ss_under_util;
 	uint32_t dcs_sec_20_util;
 	uint32_t dcs_sec_40_util;

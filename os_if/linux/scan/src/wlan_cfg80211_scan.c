@@ -534,8 +534,6 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	cfg80211_notice("Number of hidden networks being Configured = %d",
 		  request->n_ssids);
 
-	if (req->scan_random.randomize)
-		wlan_pno_scan_rand_attr(vdev, request, req);
 	/*
 	 * Before Kernel 4.4
 	 *   Driver gets only one time interval which is hard coded in
@@ -565,6 +563,10 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	ucfg_scan_register_pno_cb(psoc,
 		wlan_cfg80211_pno_callback, NULL);
 	ucfg_scan_get_pno_def_params(vdev, req);
+
+	if (req->scan_random.randomize)
+		wlan_pno_scan_rand_attr(vdev, request, req);
+
 	if (ucfg_ie_whitelist_enabled(psoc, vdev))
 		ucfg_copy_ie_whitelist_attrs(psoc, &req->ie_whitelist);
 	status = ucfg_scan_pno_start(vdev, req);

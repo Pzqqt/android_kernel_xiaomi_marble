@@ -51,7 +51,7 @@ wlan_ftm_process_utf_event(struct wlan_objmgr_pdev *pdev,
 			    uint8_t *event_buf, uint32_t len)
 {
 	struct wifi_ftm_pdev_priv_obj *ftm_pdev_obj;
-	u_int16_t utf_datalen;
+	uint32_t utf_datalen;
 	uint8_t *utf_data;
 	struct ftm_seg_hdr_info seghdr_info;
 	u_int8_t total_segments, current_seq;
@@ -82,6 +82,11 @@ wlan_ftm_process_utf_event(struct wlan_objmgr_pdev *pdev,
 		}
 	}
 
+	if ((len > FTM_CMD_MAX_BUF_LENGTH) ||
+	    (ftm_pdev_obj->offset > (FTM_CMD_MAX_BUF_LENGTH - utf_datalen))) {
+		ftm_err("Invalid utf data len :%d", len);
+		return QDF_STATUS_E_FAILURE;
+	}
 	qdf_mem_copy(&ftm_pdev_obj->data[ftm_pdev_obj->offset],
 			&utf_data[sizeof(seghdr_info)], utf_datalen);
 

@@ -324,6 +324,7 @@ ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
 	pno_def = &scan->pno_cfg;
 	req->active_dwell_time = scan_def->active_dwell;
 	req->passive_dwell_time = scan_def->passive_dwell;
+	req->scan_random.randomize = scan_def->enable_mac_spoofing;
 
 	/*
 	 *  Update active and passive dwell time depending

@@ -1107,6 +1107,7 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 
 	hal_srng_access_end(soc->hal_soc, hal_srng);
 
+	DP_STATS_INC(soc, rx.reo_reinject, 1);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"%s: reinjection done !", __func__);
 	return QDF_STATUS_SUCCESS;
@@ -1652,6 +1653,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 				rx_desc->rx_buf_start);
 
 		qdf_nbuf_set_pktlen(msdu, (msdu_len + RX_PKT_TLVS_LEN));
+		qdf_nbuf_append_ext_list(msdu, NULL, 0);
 
 		tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
 						rx_desc->rx_buf_start);

@@ -634,12 +634,14 @@ QDF_STATUS (*send_lphb_config_udp_params_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_lphb_config_udp_pkt_filter_cmd)(wmi_unified_t wmi_handle,
 					wmi_hb_set_udp_pkt_filter_cmd_fixed_param *lphb_conf_req);
 
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 QDF_STATUS (*send_enable_disable_packet_filter_cmd)(wmi_unified_t wmi_handle,
 					uint8_t vdev_id, bool enable);
 
 QDF_STATUS (*send_config_packet_filter_cmd)(wmi_unified_t wmi_handle,
 		uint8_t vdev_id, struct pmo_rcv_pkt_fltr_cfg *rcv_filter_param,
 		uint8_t filter_id, bool enable);
+#endif
 #endif /* end of WLAN_POWER_MANAGEMENT_OFFLOAD */
 #ifdef CONFIG_MCL
 QDF_STATUS (*send_process_dhcp_ind_cmd)(wmi_unified_t wmi_handle,
@@ -1618,6 +1620,17 @@ QDF_STATUS (*extract_swfda_vdev_id)(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS (*send_fils_discovery_send_cmd)(wmi_unified_t wmi_handle,
 					   struct fd_params *param);
 #endif /* WLAN_SUPPORT_FILS */
+
+QDF_STATUS
+(*send_roam_scan_stats_cmd)(wmi_unified_t wmi_handle,
+			    struct wmi_roam_scan_stats_req *params);
+
+QDF_STATUS
+(*extract_roam_scan_stats_res_evt)(wmi_unified_t wmi_handle,
+				   void *evt_buf,
+				   uint32_t *vdev_id,
+				   struct wmi_roam_scan_stats_res **res_param);
+
 QDF_STATUS (*send_offload_11k_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_11k_offload_params *params);
 

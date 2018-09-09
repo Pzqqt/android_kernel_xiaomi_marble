@@ -487,6 +487,11 @@ QDF_STATUS ucfg_mc_cp_stats_set_pending_req(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	if (type > TYPE_MAX) {
+		cp_stats_err("Invalid type index: %d", type);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
 	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
 	psoc_mc_stats->pending.type_map |= (1 << type);
@@ -506,6 +511,11 @@ QDF_STATUS ucfg_mc_cp_stats_reset_pending_req(struct wlan_objmgr_psoc *psoc,
 	if (!psoc_cp_stats_priv) {
 		cp_stats_err("psoc cp stats object is null");
 		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (type > TYPE_MAX) {
+		cp_stats_err("Invalid type index: %d", type);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
@@ -531,6 +541,10 @@ QDF_STATUS ucfg_mc_cp_stats_get_pending_req(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	if (type > TYPE_MAX) {
+		cp_stats_err("Invalid type index: %d", type);
+		return QDF_STATUS_E_INVAL;
+	}
 	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
 	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
 	*info = psoc_mc_stats->pending.req[type];

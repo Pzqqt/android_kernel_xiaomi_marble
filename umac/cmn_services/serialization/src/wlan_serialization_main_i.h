@@ -22,6 +22,8 @@
  */
 #ifndef __WLAN_SERIALIZATION_MAIN_I_H
 #define __WLAN_SERIALIZATION_MAIN_I_H
+
+#ifdef CONFIG_SERIALIZATION_V1
 /* Include files */
 #include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_psoc_obj.h"
@@ -72,5 +74,54 @@ struct serialization_legacy_callback {
 	void (*serialization_purge_cmd_list) (struct wlan_objmgr_psoc *,
 		struct wlan_objmgr_vdev *, bool, bool, bool, bool, bool);
 };
+#else /*New serialization code*/
+/* Include files */
+#include <wlan_objmgr_cmn.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <qdf_mc_timer.h>
 
+#define WLAN_SER_MAX_VDEVS 17
+
+#define WLAN_SER_MAX_ACTIVE_CMDS WLAN_SER_MAX_VDEVS
+#define WLAN_SER_MAX_PENDING_CMDS (WLAN_SER_MAX_VDEVS * 4)
+
+#define WLAN_SER_MAX_ACTIVE_SCAN_CMDS 8
+#define WLAN_SER_MAX_PENDING_SCAN_CMDS 24
+
+#define WLAN_SERIALIZATION_MAX_GLOBAL_POOL_CMDS \
+	(WLAN_SER_MAX_ACTIVE_CMDS + \
+	 WLAN_SER_MAX_PENDING_CMDS + \
+	 WLAN_SER_MAX_ACTIVE_SCAN_CMDS + \
+	 WLAN_SER_MAX_PENDING_SCAN_CMDS)
+
+#define ser_alert(params...) \
+	QDF_TRACE_FATAL(QDF_MODULE_ID_SERIALIZATION, params)
+#define ser_err(params...) \
+	QDF_TRACE_ERROR(QDF_MODULE_ID_SERIALIZATION, params)
+#define ser_warn(params...) \
+	QDF_TRACE_WARN(QDF_MODULE_ID_SERIALIZATION, params)
+#define ser_info(params...) \
+	QDF_TRACE_INFO(QDF_MODULE_ID_SERIALIZATION, params)
+#define ser_debug(params...) \
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_SERIALIZATION, params)
+#define ser_enter() \
+	QDF_TRACE_ENTER(QDF_MODULE_ID_SERIALIZATION, "enter")
+#define ser_exit() \
+	QDF_TRACE_EXIT(QDF_MODULE_ID_SERIALIZATION, "exit")
+
+/**
+ * struct serialization_legacy_callback - to handle legacy serialization cb
+ * @serialization_purge_cmd_list: function ptr to be filled by serialization
+ *				  module
+ *
+ * Some of the legacy modules wants to call API to purge the commands in
+ * order to handle backward compatibility.
+ */
+struct serialization_legacy_callback {
+	void (*serialization_purge_cmd_list)(struct wlan_objmgr_psoc *,
+					     struct wlan_objmgr_vdev *,
+					     bool, bool, bool, bool, bool);
+};
+#endif
 #endif

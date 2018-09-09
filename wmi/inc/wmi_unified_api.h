@@ -2331,6 +2331,33 @@ QDF_STATUS wmi_unified_fils_discovery_send_cmd(void *wmi_hdl,
 #endif /* WLAN_SUPPORT_FILS */
 
 /**
+ * wmi_unified_send_roam_scan_stats_cmd() - Wrapper to request roam scan stats
+ * @wmi_hdl: wmi handle
+ * @params: request params
+ *
+ * This function is used to send the roam scan stats request command to
+ * firmware.
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_send_roam_scan_stats_cmd(void *wmi_hdl,
+				     struct wmi_roam_scan_stats_req *params);
+
+/**
+ * wmi_extract_roam_scan_stats_res_evt() - API to extract roam scan stats res
+ * @wmi: wmi handle
+ * @evt_buf: pointer to the event buffer
+ * @vdev_id: output pointer to hold vdev id
+ * @res_param: output pointer to hold extracted memory
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_extract_roam_scan_stats_res_evt(wmi_unified_t wmi, void *evt_buf,
+				    uint32_t *vdev_id,
+				    struct wmi_roam_scan_stats_res **res_param);
+/**
  * wmi_unified_offload_11k_cmd() - send 11k offload command
  * @wmi_hdl: wmi handle
  * @params: 11k offload params

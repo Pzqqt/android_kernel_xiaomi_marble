@@ -2139,10 +2139,10 @@ more_completions:
 				struct HIF_CE_pipe_info *pipe_info =
 					(struct HIF_CE_pipe_info *)CE_context;
 
-				qdf_spin_lock(&pipe_info->
+				qdf_spin_lock_bh(&pipe_info->
 					      completion_freeq_lock);
 				pipe_info->num_sends_allowed++;
-				qdf_spin_unlock(&pipe_info->
+				qdf_spin_unlock_bh(&pipe_info->
 						completion_freeq_lock);
 			}
 		}

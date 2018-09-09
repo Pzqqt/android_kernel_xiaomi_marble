@@ -966,6 +966,7 @@ static QDF_STATUS p2p_roc_req_for_tx_action(
 	roc_ctx->roc_state = ROC_STATE_IDLE;
 	roc_ctx->roc_type = OFF_CHANNEL_TX;
 	roc_ctx->tx_ctx = tx_ctx;
+	roc_ctx->id = tx_ctx->id;
 	tx_ctx->roc_cookie = (uintptr_t)roc_ctx;
 
 	p2p_debug("create roc request for off channel tx, tx ctx:%pK, roc ctx:%pK",
@@ -1244,7 +1245,8 @@ static QDF_STATUS p2p_remove_tx_context(
 	}
 
 end:
-	qdf_idr_remove(&p2p_soc_obj->p2p_idr, tx_ctx->id);
+	if (!tx_ctx->roc_cookie)
+		qdf_idr_remove(&p2p_soc_obj->p2p_idr, tx_ctx->id);
 	qdf_mem_free(tx_ctx->buf);
 	qdf_mem_free(tx_ctx);
 
@@ -1885,6 +1887,7 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 
 fail:
 	p2p_send_tx_conf(tx_ctx, false);
+	qdf_idr_remove(&p2p_soc_obj->p2p_idr, tx_ctx->id);
 	qdf_mem_free(tx_ctx->buf);
 	qdf_mem_free(tx_ctx);
 

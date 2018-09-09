@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,6 +168,7 @@ QDF_STATUS wmi_unified_send_gtk_offload_cmd(void *wmi_hdl, uint8_t vdev_id,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_PACKET_FILTERING
 QDF_STATUS wmi_unified_enable_disable_packet_filter_cmd(void *wmi_hdl,
 		uint8_t vdev_id, bool enable)
 {
@@ -192,6 +193,7 @@ QDF_STATUS wmi_unified_config_packet_filter_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif
 
 QDF_STATUS wmi_unified_enable_arp_ns_offload_cmd(void *wmi_hdl,
 			   struct pmo_arp_offload_params *arp_offload_req,
