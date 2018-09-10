@@ -22,6 +22,8 @@
 #include "wlan_mlme_main.h"
 #include "cfg_ucfg_api.h"
 #include "wmi_unified.h"
+#include "wlan_scan_public_structs.h"
+#include "cfg_mlme_threshold.h"
 
 struct wlan_mlme_psoc_obj *mlme_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 {
@@ -593,6 +595,12 @@ static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,
 	obss_ht40->scan_activity_threshold = (uint32_t)
 		cfg_default(CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD);
 }
+static void mlme_init_threshold_cfg(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_mlme_threshold *threshold)
+{
+	threshold->rts_threshold = cfg_get(psoc, CFG_RTS_THRESHOLD);
+	threshold->frag_threshold = cfg_get(psoc, CFG_FRAG_THRESHOLD);
+}
 
 static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_sta_cfg *sta)
@@ -969,6 +977,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);
 	mlme_init_feature_flag_in_cfg(psoc, &mlme_cfg->feature_flags);
 	mlme_init_scoring_cfg(psoc, &mlme_cfg->scoring);
+	mlme_init_threshold_cfg(psoc, &mlme_cfg->threshold);
 	mlme_init_oce_cfg(psoc, &mlme_cfg->oce);
 	mlme_init_wep_cfg(&mlme_cfg->wep_params);
 

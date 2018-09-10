@@ -792,6 +792,15 @@ struct wlan_mlme_scoring_cfg {
 	uint32_t band_weight_per_index;
 };
 
+/* struct wlan_mlme_threshold - Threshold related config items
+ * @rts_threshold: set rts threshold
+ * @frag_threshold: set fragmentation threshold
+ */
+struct wlan_mlme_threshold {
+	uint32_t rts_threshold;
+	uint32_t frag_threshold;
+};
+
 /**
  * struct wlan_mlme_oce - OCE related config items
  * @enable_bcast_probe_rsp: enable broadcast probe response
@@ -847,6 +856,7 @@ struct wlan_mlme_wep_cfg {
  * @sap_protection_cfg: SAP erp protection related CFG items
  * @sta: sta CFG Items
  * @scoring: BSS Scoring related CFG Items
+ * @threshold: threshold related cfg items
  * @feature_flags: Feature flag config items
  * @wep_params:  WEP related config items
  */
@@ -867,6 +877,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_sta_cfg sta;
 	struct wlan_mlme_scoring_cfg scoring;
 	struct wlan_mlme_oce oce;
+	struct wlan_mlme_threshold threshold;
 	struct wlan_mlme_feature_flag feature_flags;
 	struct wlan_mlme_wep_cfg wep_params;
 };
