@@ -453,6 +453,28 @@ struct wlan_mlme_rates {
 #define MLME_PROTECTION_ENABLED_OLBC_RIFS           14
 #define MLME_PROTECTION_ENABLED_OLBC_OBSS           15
 
+/**
+ * struct wlan_mlme_feature_flag - feature related information
+ * @accept_short_slot_assoc: enable short sloc feature
+ * @enable_hcf: enable HCF feature
+ * @enable_rsn: enable RSN for connection
+ * @enable_short_preamble_11g: enable short preamble for 11g
+ * @channel_bonding_mode: channel bonding mode
+ * @enable_block_ack: enable block ack feature
+ * @enable_ampdu: Enable AMPDU feature
+ */
+
+struct wlan_mlme_feature_flag {
+	bool accept_short_slot_assoc;
+	bool enable_hcf;
+	bool enable_rsn;
+	bool enable_short_preamble_11g;
+	bool enable_short_slot_time_11g;
+	uint32_t channel_bonding_mode;
+	uint32_t enable_block_ack;
+	bool enable_ampdu;
+};
+
 /*
  * struct wlan_mlme_sap_protection_cfg - SAP erp protection config items
  *
@@ -798,6 +820,7 @@ struct wlan_mlme_oce {
  * @sap_protection_cfg: SAP erp protection related CFG items
  * @sta: sta CFG Items
  * @scoring: BSS Scoring related CFG Items
+ * @feature_flags: Feature flag config items
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_edca_params edca_params;
@@ -816,6 +839,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_sta_cfg sta;
 	struct wlan_mlme_scoring_cfg scoring;
 	struct wlan_mlme_oce oce;
+	struct wlan_mlme_feature_flag feature_flags;
 };
 
 #endif

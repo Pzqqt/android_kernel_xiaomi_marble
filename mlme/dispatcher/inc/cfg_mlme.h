@@ -39,11 +39,13 @@
 #include "cfg_mlme_sap.h"
 #include "cfg_mlme_scoring.h"
 #include "cfg_mlme_oce.h"
+#include "cfg_mlme_feature_flag.h"
 
 /* Please Maintain Alphabetic Order here */
 #define CFG_MLME_ALL \
 	CFG_CHAINMASK_ALL \
 	CFG_EDCA_PARAMS_ALL \
+	CFG_FEATURE_FLAG_ALL \
 	CFG_GENERIC_ALL \
 	CFG_HT_CAPS_ALL \
 	CFG_HE_CAPS_ALL \
@@ -57,6 +59,6 @@
 	CFG_SAP_PROTECTION_ALL \
 	CFG_SCORING_ALL \
 	CFG_STA_ALL \
-	CFG_VHT_CAPS_ALL
+	CFG_VHT_CAPS_ALL \
 
 #endif /* __CFG_MLME_H */
