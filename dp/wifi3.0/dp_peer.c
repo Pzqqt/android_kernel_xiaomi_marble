@@ -380,7 +380,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 			soc->cdp_soc.ol_ops->peer_map_event(
 			soc->ctrl_psoc, peer->peer_ids[0],
 			hw_peer_id, vdev_id,
-			mac_addr, peer_type);
+			mac_addr, peer_type, 0);
 		}
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
