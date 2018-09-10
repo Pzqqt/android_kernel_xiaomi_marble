@@ -524,6 +524,7 @@ CONFIG_FEATURE_STATS_EXT := y
 
 #Flag to allocate memory dynamically for different buffers
 CONFIG_WLAN_LOGGING_BUFFERS_DYNAMICALLY := n
+CONFIG_WLAN_DFS_STATIC_MEM_ALLOC := y
 
 #Flag to enable HTC credit history feature
 CONFIG_FEATURE_HTC_CREDIT_HISTORY := y
