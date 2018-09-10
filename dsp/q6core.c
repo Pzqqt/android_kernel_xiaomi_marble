@@ -193,23 +193,6 @@ int q6core_send_uevent(struct audio_uevent_data *uevent_data, char *event)
 }
 EXPORT_SYMBOL(q6core_send_uevent);
 
-/**
- * q6core_send_uevent_env - send uevent with list of keys to userspace.
- *
- * @uevent_data: uevent data.
- * @event: array of event keys to send.
- *
- * Returns 0 on success or error otherwise.
- */
-int q6core_send_uevent_env(struct audio_uevent_data *uevent_data, char *env[])
-{
-	if (!env || !uevent_data)
-		return -EINVAL;
-
-	return kobject_uevent_env(&uevent_data->kobj, KOBJ_CHANGE, env);
-}
-EXPORT_SYMBOL(q6core_send_uevent_env);
-
 static int parse_fwk_version_info(uint32_t *payload)
 {
 	size_t ver_size;

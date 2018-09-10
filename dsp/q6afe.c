@@ -110,12 +110,9 @@ struct afe_ctl {
 		uint32_t token, uint32_t *payload, void *priv);
 	void *pri_spdif_tx_private_data;
 	void *sec_spdif_tx_private_data;
-	struct afe_port_mod_evt_rsp_hdr pri_spdif_evt_pl;
-	struct afe_event_fmt_update pri_spdif_fmt_event;
-	struct afe_port_mod_evt_rsp_hdr sec_spdif_evt_pl;
-	struct afe_event_fmt_update sec_spdif_fmt_event;
-	struct work_struct afe_pri_spdif_work;
-	struct work_struct afe_sec_spdif_work;
+	int pri_spdif_config_change;
+	int sec_spdif_config_change;
+	struct work_struct afe_spdif_work;
 
 	int	topology[AFE_MAX_PORTS];
 	struct cal_type_data *cal_data[MAX_AFE_CAL_TYPES];
@@ -387,107 +384,26 @@ static int afe_aud_event_notify(struct notifier_block *self,
 	return 0;
 }
 
-static const char *const afe_event_port_text[] = {
-	"PORT=Primary",
-	"PORT=Secondary",
-};
-
-static const char * const afe_event_state_text[] = {
-	"STATE=Inactive",
-	"STATE=Active",
-	"STATE=EOS",
-};
-
-static const char *const afe_event_rate_text[] = {
-	"RATE=32000",
-	"RATE=44100",
-	"RATE=48000",
-	"RATE=88200",
-	"RATE=96000",
-	"RATE=176400",
-	"RATE=192000",
-};
-
-static const char *const afe_event_format_text[] = {
-	"FORMAT=LPCM",
-	"FORMAT=Compr",
-};
-
-static void afe_notify_spdif_fmt_update_common(void *payload)
+static void afe_notify_spdif_fmt_update_work_fn(struct work_struct *work)
 {
 	int ret = 0;
-	char *env[6];
-	struct afe_port_mod_evt_rsp_hdr *evt_pl;
-	struct afe_event_fmt_update *fmt_event;
+	char event_pri[] = "PRI_SPDIF_TX=MEDIA_CONFIG_CHANGE";
+	char event_sec[] = "SEC_SPDIF_TX=MEDIA_CONFIG_CHANGE";
 
-	evt_pl = (struct afe_port_mod_evt_rsp_hdr *)payload;
-	fmt_event = (struct afe_event_fmt_update *)
-			(payload + sizeof(struct afe_port_mod_evt_rsp_hdr));
-
-	env[0] = "SPDIF_FMT_UPDATE=TRUE";
-	if (evt_pl->port_id == AFE_PORT_ID_PRIMARY_SPDIF_TX)
-		env[1] = (char *)afe_event_port_text[0];
-	else
-		env[1] = (char *)afe_event_port_text[1];
-
-	switch (fmt_event->status) {
-	case AFE_PORT_STATUS_AUDIO_ACTIVE:
-		env[2] = (char *)afe_event_state_text[1];
-		break;
-	case AFE_PORT_STATUS_AUDIO_EOS:
-		env[2] = (char *)afe_event_state_text[2];
-		break;
-	default:
-		env[2] = (char *)afe_event_state_text[0];
+	if (this_afe.pri_spdif_config_change) {
+		this_afe.pri_spdif_config_change = 0;
+		ret = q6core_send_uevent(this_afe.uevent_data, event_pri);
+		if (ret)
+			pr_err("%s: Send UEvent %s failed :%d\n",
+			       __func__, event_pri, ret);
 	}
-
-	switch (fmt_event->sample_rate) {
-	case 32000:
-		env[3] = (char *)afe_event_rate_text[0];
-		break;
-	case 44100:
-		env[3] = (char *)afe_event_rate_text[1];
-		break;
-	case 48000:
-		env[3] = (char *)afe_event_rate_text[2];
-		break;
-	case 88200:
-		env[3] = (char *)afe_event_rate_text[3];
-		break;
-	case 96000:
-		env[3] = (char *)afe_event_rate_text[4];
-		break;
-	case 176400:
-		env[3] = (char *)afe_event_rate_text[5];
-		break;
-	case 192000:
-		env[3] = (char *)afe_event_rate_text[6];
-		break;
-	default:
-		env[3] = (char *)afe_event_rate_text[2];
+	if (this_afe.sec_spdif_config_change) {
+		this_afe.sec_spdif_config_change = 0;
+		ret = q6core_send_uevent(this_afe.uevent_data, event_sec);
+		if (ret)
+			pr_err("%s: Send UEvent %s failed :%d\n",
+			       __func__, event_sec, ret);
 	}
-
-	if (fmt_event->data_format == AFE_NON_LINEAR_DATA)
-		env[4] = (char *)afe_event_format_text[1];
-	else
-		env[4] = (char *)afe_event_format_text[0];
-
-	env[5] = NULL;
-
-	ret = q6core_send_uevent_env(this_afe.uevent_data, env);
-	if (ret)
-		pr_err("%s: Send UEvent %s failed: %d\n", __func__,
-			env[0], ret);
-}
-
-static void afe_notify_pri_spdif_fmt_update_work_fn(struct work_struct *work)
-{
-	afe_notify_spdif_fmt_update_common(&this_afe.pri_spdif_evt_pl);
-}
-
-static void afe_notify_sec_spdif_fmt_update_work_fn(struct work_struct *work)
-{
-	afe_notify_spdif_fmt_update_common(&this_afe.sec_spdif_evt_pl);
 }
 
 static void afe_notify_spdif_fmt_update(void *payload)
@@ -495,17 +411,12 @@ static void afe_notify_spdif_fmt_update(void *payload)
 	struct afe_port_mod_evt_rsp_hdr *evt_pl;
 
 	evt_pl = (struct afe_port_mod_evt_rsp_hdr *)payload;
-	if (evt_pl->port_id == AFE_PORT_ID_PRIMARY_SPDIF_TX) {
-		memcpy(&this_afe.pri_spdif_evt_pl, payload,
-			sizeof(struct afe_port_mod_evt_rsp_hdr) +
-			sizeof(struct afe_event_fmt_update));
-		schedule_work(&this_afe.afe_pri_spdif_work);
-	} else {
-		memcpy(&this_afe.sec_spdif_evt_pl, payload,
-			sizeof(struct afe_port_mod_evt_rsp_hdr) +
-			sizeof(struct afe_event_fmt_update));
-		schedule_work(&this_afe.afe_sec_spdif_work);
-	}
+	if (evt_pl->port_id == AFE_PORT_ID_PRIMARY_SPDIF_TX)
+		this_afe.pri_spdif_config_change = 1;
+	else
+		this_afe.sec_spdif_config_change = 1;
+
+	schedule_work(&this_afe.afe_spdif_work);
 }
 
 static int32_t afe_callback(struct apr_client_data *data, void *priv)
@@ -8163,10 +8074,8 @@ int __init afe_init(void)
 	q6core_init_uevent_data(this_afe.uevent_data, "q6afe_uevent");
 
 	INIT_WORK(&this_afe.afe_dc_work, afe_notify_dc_presence_work_fn);
-	INIT_WORK(&this_afe.afe_pri_spdif_work,
-		  afe_notify_pri_spdif_fmt_update_work_fn);
-	INIT_WORK(&this_afe.afe_sec_spdif_work,
-		  afe_notify_sec_spdif_fmt_update_work_fn);
+	INIT_WORK(&this_afe.afe_spdif_work,
+		  afe_notify_spdif_fmt_update_work_fn);
 
 	this_afe.event_notifier.notifier_call  = afe_aud_event_notify;
 	msm_aud_evt_blocking_register_client(&this_afe.event_notifier);

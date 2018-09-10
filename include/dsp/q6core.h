@@ -35,7 +35,6 @@ struct audio_uevent_data {
 int q6core_init_uevent_data(struct audio_uevent_data *uevent_data, char *name);
 void q6core_destroy_uevent_data(struct audio_uevent_data *uevent_data);
 int q6core_send_uevent(struct audio_uevent_data *uevent_data, char *name);
-int q6core_send_uevent_env(struct audio_uevent_data *uevent_data, char *env[]);
 int q6core_get_avcs_api_version_per_service(uint32_t service_id);
 
 #define ADSP_CMD_SET_DTS_EAGLE_DATA_ID 0x00012919
