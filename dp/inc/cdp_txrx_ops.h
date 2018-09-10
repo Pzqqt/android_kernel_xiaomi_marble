@@ -739,6 +739,9 @@ struct cdp_host_stats_ops {
 	int
 		(*txrx_get_vdev_extd_stats)(struct cdp_vdev *vdev_handle,
 					    void *buffer);
+	void
+		(*txrx_update_vdev_stats)(struct cdp_vdev *vdev, void *buf,
+					  uint16_t stats_id);
 };
 
 struct cdp_wds_ops {
