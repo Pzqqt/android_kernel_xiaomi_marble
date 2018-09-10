@@ -1984,6 +1984,18 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 				void *mgmt_tx_params);
 
 /**
+ * wma_mgmt_nbuf_unmap_cb() - dma unmap for pending mgmt pkts
+ * @pdev: objmgr pdev
+ * @buf: buffer
+ *
+ * This function does the dma unmap of the pending mgmt packet cleanup
+ *
+ * Return: None
+ */
+void wma_mgmt_nbuf_unmap_cb(struct wlan_objmgr_pdev *pdev,
+			    qdf_nbuf_t buf);
+
+/**
  * wma_chan_info_event_handler() - chan info event handler
  * @handle: wma handle
  * @event_buf: event handler data

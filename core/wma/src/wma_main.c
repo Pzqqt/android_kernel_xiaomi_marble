@@ -2231,6 +2231,9 @@ wma_register_tx_ops_handler(struct wlan_lmac_if_tx_ops *tx_ops)
 	/* mgmt_txrx component's tx ops */
 	tx_ops->mgmt_txrx_tx_ops.mgmt_tx_send = wma_mgmt_unified_cmd_send;
 
+	/* mgmt txrx component nbuf op for nbuf dma unmap */
+	tx_ops->mgmt_txrx_tx_ops.tx_drain_nbuf_op = wma_mgmt_nbuf_unmap_cb;
+
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -4368,3 +4368,22 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+void wma_mgmt_nbuf_unmap_cb(struct wlan_objmgr_pdev *pdev,
+			    qdf_nbuf_t buf)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma_handle) {
+		WMA_LOGE("%s: wma handle is NULL", __func__);
+		return;
+	}
+
+	if (!buf)
+		return;
+
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_mgmt_tx_wmi)) {
+		qdf_nbuf_unmap_single(wma_handle->qdf_dev, buf,
+				      QDF_DMA_TO_DEVICE);
+	}
+}
