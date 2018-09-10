@@ -2296,12 +2296,9 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		goto end;
 	}
 
-	txrx_vdev_handle = cdp_vdev_attach(soc,
-					txrx_pdev,
-					self_sta_req->self_mac_addr,
-					self_sta_req->session_id,
-					txrx_vdev_type);
-	wma_vdev_update_pause_bitmap(self_sta_req->session_id, 0);
+	txrx_vdev_handle = cdp_vdev_attach(soc, txrx_pdev,
+					   self_sta_req->self_mac_addr,
+					   vdev_id, txrx_vdev_type);
 
 	WMA_LOGD("vdev_id %hu, txrx_vdev_handle = %pK", self_sta_req->session_id,
 		 txrx_vdev_handle);
@@ -2313,12 +2310,12 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 					     self_sta_req->session_id);
 		goto end;
 	}
-	wma_handle->interfaces[self_sta_req->session_id].vdev_active = true;
 
-	wma_handle->interfaces[self_sta_req->session_id].handle =
-		txrx_vdev_handle;
+	wma_handle->interfaces[vdev_id].vdev_active = true;
+	wma_handle->interfaces[vdev_id].handle = txrx_vdev_handle;
+	wma_vdev_update_pause_bitmap(vdev_id, 0);
 
-	wma_handle->interfaces[self_sta_req->session_id].ptrn_match_enable =
+	wma_handle->interfaces[vdev_id].ptrn_match_enable =
 		wma_handle->ptrn_match_enable_all_vdev ? true : false;
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_WOWLAN_DEAUTH_ENABLE, &cfg_val)
@@ -2339,10 +2336,9 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	else
 		wma_handle->wow.bmiss_enable = cfg_val ? true : false;
 
-	qdf_mem_copy(wma_handle->interfaces[self_sta_req->session_id].addr,
+	qdf_mem_copy(wma_handle->interfaces[vdev_id].addr,
 		     self_sta_req->self_mac_addr,
-		     sizeof(wma_handle->interfaces[self_sta_req->session_id].
-			    addr));
+		     sizeof(wma_handle->interfaces[vdev_id].addr));
 
 	tx_rx_aggregation_size.tx_aggregation_size =
 				self_sta_req->tx_aggregation_size;
