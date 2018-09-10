@@ -89,4 +89,43 @@ QDF_STATUS
 ucfg_fwol_get_thermal_temp(struct wlan_objmgr_psoc *psoc,
 			   struct wlan_fwol_thermal_temp *thermal_temp);
 
+/**
+ * ucfg_fwol_get_ie_whitelist() - Get IE whitelist param value
+ * @psoc: Pointer to psoc object
+ * @ie_whitelist: Pointer to return the IE whitelist param value
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_get_ie_whitelist(struct wlan_objmgr_psoc *psoc, bool *ie_whitelist);
+
+/**
+ * ucfg_fwol_set_ie_whitelist() - Set IE whitelist param value
+ * @psoc: Pointer to psoc object
+ * @ie_whitelist: Value to set IE whitelist param
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_set_ie_whitelist(struct wlan_objmgr_psoc *psoc, bool ie_whitelist);
+
+/**
+ * ucfg_validate_ie_bitmaps() - Validate all IE whitelist bitmap param values
+ * @psoc: Pointer to psoc object
+ *
+ * Return: True if all bitmap values are valid, else false
+ */
+bool ucfg_validate_ie_bitmaps(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_fwol_get_all_whitelist_params() - Get all IE whitelist param values
+ * @psoc: Pointer to psoc object
+ * @whitelist: Pointer to struct wlan_fwol_ie_whitelist
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_get_all_whitelist_params(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_fwol_ie_whitelist *whitelist);
+
 #endif /* _WLAN_FWOL_UCFG_API_H_ */

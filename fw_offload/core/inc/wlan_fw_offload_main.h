@@ -84,13 +84,39 @@ struct wlan_fwol_thermal_temp {
 };
 
 /**
+ * struct wlan_fwol_ie_whitelist - Probe request IE whitelist config items
+ * ie_whitelist: IE whitelist flag
+ * ie_bitmap_0: IE bitmap 0
+ * ie_bitmap_1: IE bitmap 1
+ * ie_bitmap_2: IE bitmap 2
+ * ie_bitmap_3: IE bitmap 3
+ * ie_bitmap_4: IE bitmap 4
+ * ie_bitmap_5: IE bitmap 5
+ * ie_bitmap_6: IE bitmap 6
+ * ie_bitmap_7: IE bitmap 7
+ */
+struct wlan_fwol_ie_whitelist {
+	bool ie_whitelist;
+	uint32_t ie_bitmap_0;
+	uint32_t ie_bitmap_1;
+	uint32_t ie_bitmap_2;
+	uint32_t ie_bitmap_3;
+	uint32_t ie_bitmap_4;
+	uint32_t ie_bitmap_5;
+	uint32_t ie_bitmap_6;
+	uint32_t ie_bitmap_7;
+};
+
+/**
  * struct wlan_fwol_cfg - fwol config items
  * coex_config: coex config items
  * thermal_temp_cfg: Thermal temperature related config items
+ * ie_whitelist_cfg: IE Whitelist related config items
  */
 struct wlan_fwol_cfg {
 	struct wlan_fwol_coex_config coex_config;
 	struct wlan_fwol_thermal_temp thermal_temp_cfg;
+	struct wlan_fwol_ie_whitelist ie_whitelist_cfg;
 };
 
 /**
