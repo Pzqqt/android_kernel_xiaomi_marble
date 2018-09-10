@@ -63,7 +63,7 @@
 #define SAMPLING_RATE_352P8KHZ  352800
 #define SAMPLING_RATE_384KHZ    384000
 
-#define SPDIF_TX_CORE_CLK_204_P8_MHZ  204800000
+#define SPDIF_TX_CORE_CLK_163_P84_MHZ  163840000
 #define TLMM_EAST_SPARE 0x07BA0000
 #define TLMM_SPDIF_HDMI_ARC_CTL 0x07BA2000
 
@@ -5599,11 +5599,11 @@ static int msm_spdif_set_clk(struct snd_pcm_substream *substream, bool enable)
 		break;
 	case AFE_PORT_ID_PRIMARY_SPDIF_TX:
 		clk_cfg.clk_id = AFE_CLOCK_SET_CLOCK_ID_PRI_SPDIF_INPUT_CORE;
-		clk_cfg.clk_freq_in_hz = SPDIF_TX_CORE_CLK_204_P8_MHZ;
+		clk_cfg.clk_freq_in_hz = SPDIF_TX_CORE_CLK_163_P84_MHZ;
 		break;
 	case AFE_PORT_ID_SECONDARY_SPDIF_TX:
 		clk_cfg.clk_id = AFE_CLOCK_SET_CLOCK_ID_SEC_SPDIF_INPUT_CORE;
-		clk_cfg.clk_freq_in_hz = SPDIF_TX_CORE_CLK_204_P8_MHZ;
+		clk_cfg.clk_freq_in_hz = SPDIF_TX_CORE_CLK_163_P84_MHZ;
 		break;
 	}
 
