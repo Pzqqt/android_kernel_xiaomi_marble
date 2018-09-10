@@ -137,6 +137,9 @@ struct sap_context {
 	/* Include the SME(CSR) sessionId here */
 	uint8_t sessionId;
 
+	/* vdev object corresponding to sessionId */
+	struct wlan_objmgr_vdev *vdev;
+
 	/* Include the associations MAC addresses */
 	uint8_t self_mac_addr[CDS_MAC_ADDRESS_LEN];
 
@@ -478,6 +481,30 @@ uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg);
 uint8_t sap_channel_in_acs_channel_list(uint8_t channel_num,
 					struct sap_context *sap_ctx,
 					tSapChSelSpectInfo *spect_info_params);
+
+/**
+ * sap_acquire_vdev_ref() - Increment reference count for vdev object
+ * @mac: mac handle
+ * @sap_ctx: to store vdev object pointer
+ * @session_id: used to get vdev object
+ *
+ * This function is used to increment vdev object reference count and store
+ * vdev pointer in sap_ctx.
+ *
+ * Return: QDF_STATUS_SUCCESS - If able to get vdev object reference
+ *				else qdf status failure codes
+ */
+QDF_STATUS sap_acquire_vdev_ref(tpAniSirGlobal mac,
+				struct sap_context *sap_ctx,
+				uint8_t session_id);
+
+/**
+ * sap_release_vdev_ref() - Decrement reference count for vdev object
+ * @sap_ctx: for which vdev reference is to be decremented
+ *
+ * Return: None
+ */
+void sap_release_vdev_ref(struct sap_context *sap_ctx);
 
 #ifdef __cplusplus
 }

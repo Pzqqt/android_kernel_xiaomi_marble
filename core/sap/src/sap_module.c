@@ -2619,6 +2619,8 @@ QDF_STATUS wlansap_set_invalid_session(struct sap_context *sap_ctx)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	sap_release_vdev_ref(sap_ctx);
+
 	sap_ctx->sessionId = CSR_SESSION_ID_INVALID;
 
 	return QDF_STATUS_SUCCESS;

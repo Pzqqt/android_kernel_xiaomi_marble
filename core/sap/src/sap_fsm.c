@@ -1215,11 +1215,47 @@ static QDF_STATUS sap_clear_global_dfs_param(tHalHandle hal)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS sap_acquire_vdev_ref(tpAniSirGlobal mac,
+				struct sap_context *sap_ctx,
+				uint8_t session_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	if (sap_ctx->vdev) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid vdev obj in sap context"));
+		return QDF_STATUS_E_FAULT;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
+						    session_id,
+						    WLAN_LEGACY_SAP_ID);
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("vdev is NULL for vdev_id: %u"), session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sap_ctx->vdev = vdev;
+	return QDF_STATUS_SUCCESS;
+}
+
+void sap_release_vdev_ref(struct sap_context *sap_ctx)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = sap_ctx->vdev;
+	sap_ctx->vdev = NULL;
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SAP_ID);
+}
+
 QDF_STATUS sap_set_session_param(tHalHandle hal, struct sap_context *sapctx,
 				uint32_t session_id)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	int i;
+	QDF_STATUS status;
 
 	sapctx->sessionId = session_id;
 	sapctx->is_pre_cac_on = false;
@@ -1231,6 +1267,15 @@ QDF_STATUS sap_set_session_param(tHalHandle hal, struct sap_context *sapctx,
 		if (mac_ctx->sap.sapCtxList[i].sap_context == sapctx)
 			mac_ctx->sap.sapCtxList[i].sap_context = NULL;
 	}
+
+	status = sap_acquire_vdev_ref(mac_ctx, sapctx, session_id);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("sap context init failed for session_id: %u"),
+			  session_id);
+		return status;
+	}
+
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sessionID =
 				sapctx->sessionId;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sap_context = sapctx;
@@ -1250,6 +1295,8 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
 
 	if (sapctx->sessionId >= SAP_MAX_NUM_SESSION)
 		return QDF_STATUS_E_FAILURE;
+
+	sap_release_vdev_ref(sapctx);
 
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sessionID =
 		CSR_SESSION_ID_INVALID;
