@@ -735,7 +735,7 @@ void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 	}
 
 	while (num_deleted_maps-- > 0)
-		ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
+		ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_PEER_MAP);
 }
 
 struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev)
