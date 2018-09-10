@@ -116,6 +116,8 @@ struct wlan_lmac_if_cp_stats_rx_ops {
  * @mgmt_tx_send: function pointer to transmit mgmt tx frame
  * @beacon_send:  function pointer to transmit beacon frame
  * @fd_action_frame_send: function pointer to transmit FD action frame
+ * @tx_drain_nbuf_op: function pointer for any umac nbuf realted ops for
+ *                    pending mgmt frames cleanup
  */
 struct wlan_lmac_if_mgmt_txrx_tx_ops {
 	QDF_STATUS (*mgmt_tx_send)(struct wlan_objmgr_vdev *vdev,
@@ -125,6 +127,8 @@ struct wlan_lmac_if_mgmt_txrx_tx_ops {
 			qdf_nbuf_t nbuf);
 	QDF_STATUS (*fd_action_frame_send)(struct wlan_objmgr_vdev *vdev,
 					   qdf_nbuf_t nbuf);
+	void (*tx_drain_nbuf_op)(struct wlan_objmgr_pdev *pdev,
+				 qdf_nbuf_t nbuf);
 };
 
 /**

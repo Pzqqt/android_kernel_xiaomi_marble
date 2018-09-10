@@ -746,19 +746,6 @@ typedef QDF_STATUS (*mgmt_frame_fill_peer_cb)(
 			qdf_nbuf_t buf);
 
 /**
- * mgmt_frame_nbuf_op - Function pointer for any nbuf ops
- * @peer: peer
- * @buf: buffer
- *
- * This is the function pointer to be called during drain at peer
- * peer deletion
- *
- * Return: None
- */
-typedef void (*mgmt_frame_nbuf_op)(struct wlan_objmgr_peer *peer,
-				   qdf_nbuf_t buf);
-
-/**
  * struct mgmt_txrx_mgmt_frame_cb_info - frm and corresponding rx cb info
  * @frm_type:    mgmt frm type
  * @mgmt_rx_cb:  corresponding rx callback
@@ -859,20 +846,6 @@ QDF_STATUS wlan_mgmt_txrx_register_rx_cb(
 			enum wlan_umac_comp_id comp_id,
 			struct mgmt_txrx_mgmt_frame_cb_info *frm_cb_info,
 			uint8_t num_entries);
-
-/**
- * wlan_mgmt_txrx_peer_drain() - Function to drain all mgmt packets
- * specific to a peer
- * @peer: peer context
- * @mgmt_nbuf_op: callback func to UMAC for nbuf related operation
- *
- * This function drains all mgmt packets of a peer at the time of
- * peer deletion.
- *
- * Return: QDF_STATUS_SUCCESS - in case of success
- */
-QDF_STATUS wlan_mgmt_txrx_peer_drain(struct wlan_objmgr_peer *peer,
-				     mgmt_frame_nbuf_op mgmt_nbuf_op);
 
 /**
  * wlan_mgmt_txrx_vdev_drain() - Function to drain all mgmt packets

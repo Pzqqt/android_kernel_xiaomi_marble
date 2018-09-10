@@ -729,6 +729,7 @@ QDF_STATUS wlan_mgmt_txrx_pdev_open(struct wlan_objmgr_pdev *pdev)
 
 QDF_STATUS wlan_mgmt_txrx_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
+	struct wlan_objmgr_psoc *psoc;
 	struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx;
 	struct mgmt_txrx_desc_elem_t *mgmt_desc;
 	uint32_t pool_size;
@@ -737,6 +738,12 @@ QDF_STATUS wlan_mgmt_txrx_pdev_close(struct wlan_objmgr_pdev *pdev)
 	if (!pdev) {
 		mgmt_txrx_err("pdev context is NULL");
 		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mgmt_txrx_err("psoc unavailable for pdev %pK", pdev);
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	mgmt_txrx_pdev_ctx = (struct mgmt_txrx_priv_pdev_context *)
@@ -760,62 +767,14 @@ QDF_STATUS wlan_mgmt_txrx_pdev_close(struct wlan_objmgr_pdev *pdev)
 				"mgmt descriptor with desc id: %d not in freelist",
 				index);
 			mgmt_desc = &mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[index];
+			if (psoc->soc_cb.tx_ops.mgmt_txrx_tx_ops.
+					tx_drain_nbuf_op)
+				psoc->soc_cb.tx_ops.mgmt_txrx_tx_ops.
+					tx_drain_nbuf_op(pdev, mgmt_desc->nbuf);
 			qdf_nbuf_free(mgmt_desc->nbuf);
 			wlan_objmgr_peer_release_ref(mgmt_desc->peer,
 				WLAN_MGMT_NB_ID);
 			wlan_mgmt_txrx_desc_put(mgmt_txrx_pdev_ctx, index);
-		}
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS wlan_mgmt_txrx_peer_drain(struct wlan_objmgr_peer *peer,
-				     mgmt_frame_nbuf_op mgmt_nbuf_op)
-{
-	struct wlan_objmgr_pdev *pdev;
-	struct wlan_objmgr_vdev *vdev;
-	struct mgmt_txrx_priv_pdev_context *mgmt_txrx_ctx;
-	struct mgmt_txrx_desc_elem_t *mgmt_desc;
-	struct wlan_objmgr_peer *des_peer;
-	uint32_t pool_size;
-	int i;
-
-	vdev = wlan_peer_get_vdev(peer);
-	if (!vdev) {
-		mgmt_txrx_err("vdev context is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	pdev = wlan_vdev_get_pdev(vdev);
-	if (!pdev) {
-		mgmt_txrx_err("pdev context is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	mgmt_txrx_ctx = wlan_objmgr_pdev_get_comp_private_obj(pdev,
-						WLAN_UMAC_COMP_MGMT_TXRX);
-	if (!mgmt_txrx_ctx) {
-		mgmt_txrx_err("mgmt txrx context is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pool_size = mgmt_txrx_ctx->mgmt_desc_pool.free_list.max_size;
-	if (!pool_size) {
-		mgmt_txrx_err("pool size is 0");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	for (i = 0; i < pool_size; i++) {
-		if (mgmt_txrx_ctx->mgmt_desc_pool.pool[i].in_use) {
-			mgmt_desc = &mgmt_txrx_ctx->mgmt_desc_pool.pool[i];
-			des_peer = mgmt_txrx_get_peer(pdev, mgmt_desc->desc_id);
-			if (peer == des_peer) {
-				if (mgmt_nbuf_op)
-					mgmt_nbuf_op(peer, mgmt_desc->nbuf);
-				mgmt_txrx_tx_completion_handler(pdev,
-						mgmt_desc->desc_id, 0, 0);
-			}
 		}
 	}
 
