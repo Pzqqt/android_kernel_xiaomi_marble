@@ -115,16 +115,13 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	QDF_STATUS status;
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
-	if (pHalHandle == NULL)
+	QDF_BUG(pHalHandle);
+	if (!pHalHandle)
 		return QDF_STATUS_E_FAILURE;
 
 	p_mac = mac_allocate_context_buffer();
-
-	if (!p_mac) {
-		pe_err("%s: Failed to allocate %zu bytes for global_mac_context",
-		       __func__, sizeof(tAniSirGlobal));
+	if (!p_mac)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	/*
 	 * Set various global fields of p_mac here
@@ -148,34 +145,34 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, tHalHandle *pHalHandle,
 	}
 	p_mac->mlme_cfg = &mlme_obj->cfg;
 
-	*pHalHandle = (tHalHandle) p_mac;
+	*pHalHandle = (tHalHandle)p_mac;
 
-	{
-		/*
-		 * For Non-FTM cases this value will be reset during mac_start
-		 */
-		if (cds_cfg->driver_type)
-			p_mac->gDriverType = QDF_DRIVER_TYPE_MFG;
+	/* For Non-FTM cases this value will be reset during mac_start */
+	if (cds_cfg->driver_type)
+		p_mac->gDriverType = QDF_DRIVER_TYPE_MFG;
 
-		/* Call routine to initialize CFG data structures */
-		if (QDF_STATUS_SUCCESS != cfg_init(p_mac)) {
-			status = QDF_STATUS_E_FAILURE;
-			goto release_psoc_ref;
-		}
-
-		sys_init_globals(p_mac);
+	status = cfg_init(p_mac);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("failed to init legacy CFG; status:%u", status);
+		goto release_psoc_ref;
 	}
+
+	sys_init_globals(p_mac);
 
 	/* FW: 0 to 2047 and Host: 2048 to 4095 */
 	p_mac->mgmtSeqNum = WLAN_HOST_SEQ_NUM_MIN - 1;
 	p_mac->he_sgi_ltf_cfg_bit_mask = DEF_HE_AUTO_SGI_LTF;
 	p_mac->is_usr_cfg_amsdu_enabled = true;
 
-	status =  pe_open(p_mac, cds_cfg);
-	if (QDF_IS_STATUS_SUCCESS(status))
-		return status;
+	status = pe_open(p_mac, cds_cfg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("failed to open PE; status:%u", status);
+		goto deinit_cfg;
+	}
 
-	pe_err("pe_open() failure");
+	return QDF_STATUS_SUCCESS;
+
+deinit_cfg:
 	cfg_de_init(p_mac);
 
 release_psoc_ref:
