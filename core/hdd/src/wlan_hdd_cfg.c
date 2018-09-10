@@ -44,6 +44,7 @@
 #include "wlan_hdd_twt.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
+#include "wlan_fwol_ucfg_api.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(struct hdd_context *hdd_ctx,
@@ -3641,69 +3642,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TIMER_MULTIPLIER_MIN,
 		     CFG_TIMER_MULTIPLIER_MAX),
 
-	REG_VARIABLE(CFG_PRB_REQ_IE_WHITELIST_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, probe_req_ie_whitelist,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PRB_REQ_IE_WHITELIST_DEFAULT,
-		     CFG_PRB_REQ_IE_WHITELIST_MIN,
-		     CFG_PRB_REQ_IE_WHITELIST_MAX),
-
-	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP0_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, probe_req_ie_bitmap_0,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP0_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP0_MIN,
-		     CFG_PRB_REQ_IE_BIT_MAP0_MAX),
-
-	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP1_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, probe_req_ie_bitmap_1,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP1_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP1_MIN,
-		     CFG_PRB_REQ_IE_BIT_MAP1_MAX),
-
-	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP2_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, probe_req_ie_bitmap_2,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP2_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP2_MIN,
-		     CFG_PRB_REQ_IE_BIT_MAP2_MAX),
-
-	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP3_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, probe_req_ie_bitmap_3,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP3_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP3_MIN,
-		     CFG_PRB_REQ_IE_BIT_MAP3_MAX),
-
-	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP4_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, probe_req_ie_bitmap_4,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP4_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP4_MIN,
-		     CFG_PRB_REQ_IE_BIT_MAP4_MAX),
-
-	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP5_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, probe_req_ie_bitmap_5,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP5_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP5_MIN,
-		     CFG_PRB_REQ_IE_BIT_MAP5_MAX),
-
-	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP6_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, probe_req_ie_bitmap_6,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP6_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP6_MIN,
-		     CFG_PRB_REQ_IE_BIT_MAP6_MAX),
-
-	REG_VARIABLE(CFG_PRB_REQ_IE_BIT_MAP7_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, probe_req_ie_bitmap_7,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP7_DEFAULT,
-		     CFG_PRB_REQ_IE_BIT_MAP7_MIN,
-		     CFG_PRB_REQ_IE_BIT_MAP7_MAX),
-
 	REG_VARIABLE_STRING(CFG_PROBE_REQ_OUI_NAME, WLAN_PARAM_String,
 			    struct hdd_config, probe_req_ouis,
 			    VAR_FLAGS_OPTIONAL,
@@ -6260,15 +6198,23 @@ void hdd_get_pmkid_modes(struct hdd_context *hdd_ctx,
 
 bool hdd_validate_prb_req_ie_bitmap(struct hdd_context *hdd_ctx)
 {
-	if (!(hdd_ctx->config->probe_req_ie_bitmap_0 ||
-	    hdd_ctx->config->probe_req_ie_bitmap_1 ||
-	    hdd_ctx->config->probe_req_ie_bitmap_2 ||
-	    hdd_ctx->config->probe_req_ie_bitmap_3 ||
-	    hdd_ctx->config->probe_req_ie_bitmap_4 ||
-	    hdd_ctx->config->probe_req_ie_bitmap_5 ||
-	    hdd_ctx->config->probe_req_ie_bitmap_6 ||
-	    hdd_ctx->config->probe_req_ie_bitmap_7))
+	struct wlan_fwol_ie_whitelist whitelist = {0};
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
+	QDF_STATUS status;
+
+	if (!psoc) {
+		hdd_err("HDD psoc got NULL");
 		return false;
+	}
+
+	if (!ucfg_validate_ie_bitmaps(psoc))
+		return false;
+
+	status = ucfg_fwol_get_all_whitelist_params(psoc, &whitelist);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Could not get IE bitmap 6");
+		return false;
+	}
 
 	/*
 	 * check whether vendor oui IE is set and OUIs are present, each OUI
@@ -6276,14 +6222,12 @@ bool hdd_validate_prb_req_ie_bitmap(struct hdd_context *hdd_ctx)
 	 * for atleast one OUI, minimum length is 8 and hence this string length
 	 * is checked for minimum of 8
 	 */
-	if ((hdd_ctx->config->probe_req_ie_bitmap_6 &
-	    VENDOR_SPECIFIC_IE_BITMAP) &&
+	if ((whitelist.ie_bitmap_6 & VENDOR_SPECIFIC_IE_BITMAP) &&
 	    (strlen(hdd_ctx->config->probe_req_ouis) < 8))
 		return false;
 
 	/* check whether vendor oui IE is not set but OUIs are present */
-	if (!(hdd_ctx->config->probe_req_ie_bitmap_6 &
-	    VENDOR_SPECIFIC_IE_BITMAP) &&
+	if (!(whitelist.ie_bitmap_6 & VENDOR_SPECIFIC_IE_BITMAP) &&
 	    (strlen(hdd_ctx->config->probe_req_ouis) > 0))
 		return false;
 

@@ -29,8 +29,8 @@ struct wlan_fwol_psoc_obj *fwol_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 }
 
 static void
-fwol_update_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
-			       struct wlan_fwol_coex_config *coex_config)
+fwol_init_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
+			     struct wlan_fwol_coex_config *coex_config)
 {
 	coex_config->btc_mode = cfg_get(psoc, CFG_BTC_MODE);
 	coex_config->antenna_isolation = cfg_get(psoc, CFG_ANTENNA_ISOLATION);
@@ -55,8 +55,8 @@ fwol_update_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
 }
 
 static void
-fwol_update_thermal_temp_in_cfg(struct wlan_objmgr_psoc *psoc,
-				struct wlan_fwol_thermal_temp *thermal_temp)
+fwol_init_thermal_temp_in_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_fwol_thermal_temp *thermal_temp)
 {
 	thermal_temp->thermal_temp_min_level0 =
 				cfg_get(psoc, CFG_THERMAL_TEMP_MIN_LEVEL0);
@@ -76,6 +76,21 @@ fwol_update_thermal_temp_in_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_THERMAL_TEMP_MAX_LEVEL3);
 }
 
+static void
+fwol_init_ie_whiltelist_in_cfg(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_fwol_ie_whitelist *whitelist)
+{
+	whitelist->ie_whitelist = cfg_get(psoc, CFG_PROBE_REQ_IE_WHITELIST);
+	whitelist->ie_bitmap_0 = cfg_get(psoc, CFG_PROBE_REQ_IE_BIT_MAP0);
+	whitelist->ie_bitmap_1 = cfg_get(psoc, CFG_PROBE_REQ_IE_BIT_MAP1);
+	whitelist->ie_bitmap_2 = cfg_get(psoc, CFG_PROBE_REQ_IE_BIT_MAP2);
+	whitelist->ie_bitmap_3 = cfg_get(psoc, CFG_PROBE_REQ_IE_BIT_MAP3);
+	whitelist->ie_bitmap_4 = cfg_get(psoc, CFG_PROBE_REQ_IE_BIT_MAP4);
+	whitelist->ie_bitmap_5 = cfg_get(psoc, CFG_PROBE_REQ_IE_BIT_MAP5);
+	whitelist->ie_bitmap_6 = cfg_get(psoc, CFG_PROBE_REQ_IE_BIT_MAP6);
+	whitelist->ie_bitmap_7 = cfg_get(psoc, CFG_PROBE_REQ_IE_BIT_MAP7);
+}
+
 QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -90,8 +105,9 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 
 	fwol_cfg = &fwol_obj->cfg;
 
-	fwol_update_coex_config_in_cfg(psoc, &fwol_cfg->coex_config);
-	fwol_update_thermal_temp_in_cfg(psoc, &fwol_cfg->thermal_temp_cfg);
+	fwol_init_coex_config_in_cfg(psoc, &fwol_cfg->coex_config);
+	fwol_init_thermal_temp_in_cfg(psoc, &fwol_cfg->thermal_temp_cfg);
+	fwol_init_ie_whiltelist_in_cfg(psoc, &fwol_cfg->ie_whitelist_cfg);
 
 	return status;
 }

@@ -9081,14 +9081,30 @@ list_destroy:
  */
 static int ie_whitelist_attrs_init(struct hdd_context *hdd_ctx)
 {
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 	int ret;
+	QDF_STATUS status;
+	bool is_ie_whitelist_enable = false;
 
-	if (!hdd_ctx->config->probe_req_ie_whitelist)
+	if (!psoc) {
+		hdd_err("HDD psoc got NULL");
+		return -EINVAL;
+	}
+
+	status = ucfg_fwol_get_ie_whitelist(psoc, &is_ie_whitelist_enable);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	if (!is_ie_whitelist_enable)
 		return 0;
 
 	if (!hdd_validate_prb_req_ie_bitmap(hdd_ctx)) {
 		hdd_err("invalid ie bitmap and ouis: disable ie whitelisting");
-		hdd_ctx->config->probe_req_ie_whitelist = false;
+		status = ucfg_fwol_set_ie_whitelist(psoc, false);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Could not set IE whitelist param");
+			return qdf_status_to_os_return(status);
+		}
 		return -EINVAL;
 	}
 
@@ -9096,7 +9112,11 @@ static int ie_whitelist_attrs_init(struct hdd_context *hdd_ctx)
 	ret = hdd_parse_probe_req_ouis(hdd_ctx);
 	if (ret) {
 		hdd_err("parsing error: disable ie whitelisting");
-		hdd_ctx->config->probe_req_ie_whitelist = false;
+		status = ucfg_fwol_set_ie_whitelist(psoc, false);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Could not set IE whitelist param");
+			return qdf_status_to_os_return(status);
+		}
 	}
 
 	return ret;
@@ -13836,22 +13856,39 @@ hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
 #endif
 
 void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
-				  struct hdd_config *cfg)
+				  struct hdd_context *hdd_ctx)
 {
+	struct wlan_fwol_ie_whitelist whitelist = {0};
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
+	struct hdd_config *cfg = hdd_ctx->config;
+	QDF_STATUS status;
+	bool is_ie_whitelist_enable = false;
 	uint8_t i = 0;
 
-	ie_whitelist->white_list = cfg->probe_req_ie_whitelist;
+	status = ucfg_fwol_get_ie_whitelist(psoc, &is_ie_whitelist_enable);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Unable to get IE whitelist param");
+		return;
+	}
+
+	ie_whitelist->white_list = is_ie_whitelist_enable;
 	if (!ie_whitelist->white_list)
 		return;
 
-	ie_whitelist->ie_bitmap[0] = cfg->probe_req_ie_bitmap_0;
-	ie_whitelist->ie_bitmap[1] = cfg->probe_req_ie_bitmap_1;
-	ie_whitelist->ie_bitmap[2] = cfg->probe_req_ie_bitmap_2;
-	ie_whitelist->ie_bitmap[3] = cfg->probe_req_ie_bitmap_3;
-	ie_whitelist->ie_bitmap[4] = cfg->probe_req_ie_bitmap_4;
-	ie_whitelist->ie_bitmap[5] = cfg->probe_req_ie_bitmap_5;
-	ie_whitelist->ie_bitmap[6] = cfg->probe_req_ie_bitmap_6;
-	ie_whitelist->ie_bitmap[7] = cfg->probe_req_ie_bitmap_7;
+	status = ucfg_fwol_get_all_whitelist_params(psoc, &whitelist);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Unable to get all whitelist params");
+		return;
+	}
+
+	ie_whitelist->ie_bitmap[0] = whitelist.ie_bitmap_0;
+	ie_whitelist->ie_bitmap[1] = whitelist.ie_bitmap_1;
+	ie_whitelist->ie_bitmap[2] = whitelist.ie_bitmap_2;
+	ie_whitelist->ie_bitmap[3] = whitelist.ie_bitmap_3;
+	ie_whitelist->ie_bitmap[4] = whitelist.ie_bitmap_4;
+	ie_whitelist->ie_bitmap[5] = whitelist.ie_bitmap_5;
+	ie_whitelist->ie_bitmap[6] = whitelist.ie_bitmap_6;
+	ie_whitelist->ie_bitmap[7] = whitelist.ie_bitmap_7;
 
 	ie_whitelist->num_vendor_oui = cfg->no_of_probe_req_ouis;
 	for (i = 0; i < ie_whitelist->num_vendor_oui; i++)
@@ -13983,7 +14020,7 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	scan_cfg.sta_miracast_mcc_rest_time =
 				cfg->sta_miracast_mcc_rest_time_val;
 	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);
-	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, cfg);
+	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, hdd_ctx);
 
 	status = hdd_update_score_config(&scan_cfg.score_config, cfg);
 	if (QDF_IS_STATUS_ERROR(status)) {

@@ -3223,7 +3223,7 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 	hdd_debug("Oui (%02x:%02x:%02x), vdev_id = %d", pReqMsg->oui[0],
 		  pReqMsg->oui[1], pReqMsg->oui[2], pReqMsg->vdev_id);
 
-	hdd_update_ie_whitelist_attr(&pReqMsg->ie_whitelist, hdd_ctx->config);
+	hdd_update_ie_whitelist_attr(&pReqMsg->ie_whitelist, hdd_ctx);
 
 	mac_handle = hdd_ctx->mac_handle;
 	status = sme_set_scanning_mac_oui(mac_handle, pReqMsg);

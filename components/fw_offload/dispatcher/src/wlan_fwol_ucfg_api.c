@@ -182,3 +182,74 @@ ucfg_fwol_get_thermal_temp(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+ucfg_fwol_get_ie_whitelist(struct wlan_objmgr_psoc *psoc, bool *ie_whitelist)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*ie_whitelist = fwol_obj->cfg.ie_whitelist_cfg.ie_whitelist;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_fwol_set_ie_whitelist(struct wlan_objmgr_psoc *psoc, bool ie_whitelist)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	fwol_obj->cfg.ie_whitelist_cfg.ie_whitelist = ie_whitelist;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool ucfg_validate_ie_bitmaps(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+	struct wlan_fwol_ie_whitelist whitelist = {0};
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return false;
+	}
+
+	whitelist = fwol_obj->cfg.ie_whitelist_cfg;
+
+	if (whitelist.ie_bitmap_0 && whitelist.ie_bitmap_1 &&
+	    whitelist.ie_bitmap_2 && whitelist.ie_bitmap_3 &&
+	    whitelist.ie_bitmap_4 && whitelist.ie_bitmap_5 &&
+	    whitelist.ie_bitmap_6 && whitelist.ie_bitmap_7)
+		return true;
+
+	return false;
+}
+
+QDF_STATUS
+ucfg_fwol_get_all_whitelist_params(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_fwol_ie_whitelist *whitelist)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*whitelist = fwol_obj->cfg.ie_whitelist_cfg;
+
+	return QDF_STATUS_SUCCESS;
+}

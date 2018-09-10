@@ -25,9 +25,11 @@
 
 #include "cfg_coex.h"
 #include "cfg_thermal_temp.h"
+#include "cfg_ie_whitelist.h"
 
 #define CFG_FWOL_ALL \
 	CFG_COEX_ALL \
+	CFG_IE_WHITELIST \
 	CFG_THERMAL_TEMP_ALL
 
 #endif /* __CFG_FWOL_H */

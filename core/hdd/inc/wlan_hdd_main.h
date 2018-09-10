@@ -3115,12 +3115,12 @@ void hdd_chip_pwr_save_fail_detected_cb(hdd_handle_t hdd_handle,
 /**
  * hdd_update_ie_whitelist_attr() - Copy probe req ie whitelist attrs from cfg
  * @ie_whitelist: output parameter
- * @cfg: pointer to hdd config
+ * @hdd_ctx: pointer to hdd context
  *
  * Return: None
  */
 void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
-				  struct hdd_config *cfg);
+				  struct hdd_context *hdd_ctx);
 
 /**
  * hdd_get_rssi_snr_by_bssid() - gets the rssi and snr by bssid from scan cache
