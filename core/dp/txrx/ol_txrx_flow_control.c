@@ -135,7 +135,7 @@ void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc)
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
-		qdf_print("%s: pdev is NULL\n", __func__);
+		qdf_print("pdev is NULL");
 		return;
 	}
 	pdev->num_msdu_desc = num_msdu_desc;
@@ -235,14 +235,12 @@ static int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool, bool force)
 	struct ol_tx_desc_t *tx_desc = NULL;
 
 	if (!pool) {
-		ol_txrx_err(
-		   "%s: pool is NULL\n", __func__);
+		ol_txrx_err("pool is NULL");
 		QDF_ASSERT(0);
 		return -ENOMEM;
 	}
 	if (!pdev) {
-		ol_txrx_err(
-		   "%s: pdev is NULL\n", __func__);
+		ol_txrx_err("pdev is NULL");
 		QDF_ASSERT(0);
 		return -ENOMEM;
 	}
@@ -271,9 +269,8 @@ static int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool, bool force)
 		ol_tx_inc_pool_ref(pool);
 
 		pdev->tx_desc.num_invalid_bin++;
-		ol_txrx_info(
-			"%s: invalid pool created %d\n",
-			 __func__, pdev->tx_desc.num_invalid_bin);
+		ol_txrx_info("invalid pool created %d",
+			     pdev->tx_desc.num_invalid_bin);
 		if (pdev->tx_desc.num_invalid_bin > MAX_INVALID_BIN)
 			ASSERT(0);
 
@@ -451,8 +448,7 @@ void ol_tx_clear_flow_pool_stats(void)
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
-		ol_txrx_err("%s: pdev is null\n",
-						 __func__);
+		ol_txrx_err("pdev is null");
 		return;
 	}
 	qdf_mem_zero(&pdev->pool_stats, sizeof(pdev->pool_stats));
@@ -529,8 +525,7 @@ ol_tx_distribute_descs_to_deficient_pools(struct ol_tx_flow_pool_t *src_pool)
 	uint16_t desc_move_count = 0;
 
 	if (!pdev) {
-		ol_txrx_err(
-		   "%s: pdev is NULL\n", __func__);
+		ol_txrx_err("pdev is NULL");
 		return -EINVAL;
 	}
 	qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
@@ -590,19 +585,16 @@ struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
 	uint32_t start_threshold;
 
 	if (!pdev) {
-		ol_txrx_err(
-		   "%s: pdev is NULL\n", __func__);
+		ol_txrx_err("pdev is NULL");
 		return NULL;
 	}
 	stop_threshold = ol_cfg_get_tx_flow_stop_queue_th(pdev->ctrl_pdev);
 	start_threshold = stop_threshold +
 		ol_cfg_get_tx_flow_start_queue_offset(pdev->ctrl_pdev);
 	pool = qdf_mem_malloc(sizeof(*pool));
-	if (!pool) {
-		ol_txrx_err(
-		   "%s: malloc failed\n", __func__);
+	if (!pool)
 		return NULL;
-	}
+
 	pool->flow_pool_id = flow_pool_id;
 	pool->flow_pool_size = flow_pool_size;
 	pool->status = FLOW_POOL_ACTIVE_UNPAUSED;
@@ -663,8 +655,7 @@ int ol_tx_free_invalid_flow_pool(struct ol_tx_flow_pool_t *pool)
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if ((!pdev) || (!pool) || (pool->status != FLOW_POOL_INVALID)) {
-		ol_txrx_err(
-		   "%s: Invalid pool/pdev\n", __func__);
+		ol_txrx_err("Invalid pool/pdev");
 		return -EINVAL;
 	}
 
@@ -676,9 +667,8 @@ int ol_tx_free_invalid_flow_pool(struct ol_tx_flow_pool_t *pool)
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
 
 	pdev->tx_desc.num_invalid_bin--;
-	ol_txrx_info(
-		"%s: invalid pool deleted %d\n",
-		 __func__, pdev->tx_desc.num_invalid_bin);
+	ol_txrx_info("invalid pool deleted %d",
+		     pdev->tx_desc.num_invalid_bin);
 
 	return ol_tx_dec_pool_ref(pool, false);
 }
@@ -734,9 +724,7 @@ static void ol_tx_flow_pool_vdev_map(struct ol_tx_flow_pool_t *pool,
 
 	vdev = (struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (!vdev) {
-		ol_txrx_err(
-		   "%s: invalid vdev_id %d\n",
-		   __func__, vdev_id);
+		ol_txrx_err("invalid vdev_id %d", vdev_id);
 		return;
 	}
 
@@ -760,9 +748,7 @@ static void ol_tx_flow_pool_vdev_unmap(struct ol_tx_flow_pool_t *pool,
 
 	vdev = (struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (!vdev) {
-		ol_txrx_err(
-		   "%s: invalid vdev_id %d\n",
-		   __func__, vdev_id);
+		ol_txrx_err("invalid vdev_id %d", vdev_id);
 		return;
 	}
 
@@ -792,13 +778,11 @@ void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 	uint8_t pool_create = 0;
 	enum htt_flow_type type = flow_type;
 
-	ol_txrx_dbg(
-		"%s: flow_id %d flow_type %d flow_pool_id %d flow_pool_size %d\n",
-		__func__, flow_id, flow_type, flow_pool_id, flow_pool_size);
+	ol_txrx_dbg("flow_id %d flow_type %d flow_pool_id %d flow_pool_size %d",
+		    flow_id, flow_type, flow_pool_id, flow_pool_size);
 
 	if (qdf_unlikely(!pdev)) {
-		ol_txrx_err(
-			"%s: pdev is NULL", __func__);
+		ol_txrx_err("pdev is NULL");
 		return;
 	}
 	pdev->pool_stats.pool_map_count++;
@@ -807,9 +791,8 @@ void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 	if (!pool) {
 		pool = ol_tx_create_flow_pool(flow_pool_id, flow_pool_size);
 		if (pool == NULL) {
-			ol_txrx_err(
-				   "%s: creation of flow_pool %d size %d failed\n",
-				   __func__, flow_pool_id, flow_pool_size);
+			ol_txrx_err("creation of flow_pool %d size %d failed",
+				    flow_pool_id, flow_pool_size);
 			return;
 		}
 		pool_create = 1;
@@ -826,9 +809,7 @@ void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 	default:
 		if (pool_create)
 			ol_tx_dec_pool_ref(pool, false);
-		ol_txrx_err(
-		   "%s: flow type %d not supported !!!\n",
-		   __func__, type);
+		ol_txrx_err("flow type %d not supported", type);
 		break;
 	}
 }
@@ -851,22 +832,18 @@ void ol_tx_flow_pool_unmap_handler(uint8_t flow_id, uint8_t flow_type,
 	struct ol_tx_flow_pool_t *pool;
 	enum htt_flow_type type = flow_type;
 
-	ol_txrx_dbg(
-		"%s: flow_id %d flow_type %d flow_pool_id %d\n",
-		__func__, flow_id, flow_type, flow_pool_id);
+	ol_txrx_dbg("flow_id %d flow_type %d flow_pool_id %d",
+		    flow_id, flow_type, flow_pool_id);
 
 	if (qdf_unlikely(!pdev)) {
-		ol_txrx_err(
-			"%s: pdev is NULL", __func__);
+		ol_txrx_err("pdev is NULL");
 		return;
 	}
 	pdev->pool_stats.pool_unmap_count++;
 
 	pool = ol_tx_get_flow_pool(flow_pool_id);
 	if (!pool) {
-		ol_txrx_info(
-		   "%s: flow_pool not available flow_pool_id %d\n",
-		   __func__, type);
+		ol_txrx_info("flow_pool not available flow_pool_id %d", type);
 		return;
 	}
 
@@ -876,9 +853,7 @@ void ol_tx_flow_pool_unmap_handler(uint8_t flow_id, uint8_t flow_type,
 		ol_tx_flow_pool_vdev_unmap(pool, flow_id);
 		break;
 	default:
-		ol_txrx_info(
-		   "%s: flow type %d not supported !!!\n",
-		   __func__, type);
+		ol_txrx_info("flow type %d not supported", type);
 		return;
 	}
 
@@ -911,8 +886,7 @@ int ol_tx_distribute_descs_to_deficient_pools_from_global_pool(void)
 	uint8_t free_invalid_pool = 0;
 
 	if (!pdev) {
-		ol_txrx_err(
-		   "%s: pdev is NULL\n", __func__);
+		ol_txrx_err("pdev is NULL");
 		return -EINVAL;
 	}
 
@@ -1206,20 +1180,19 @@ void ol_tx_flow_pool_resize_handler(uint8_t flow_pool_id,
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_tx_flow_pool_t *pool;
 
-	ol_txrx_dbg("%s: flow_pool_id %d flow_pool_size %d\n",
-		    __func__, flow_pool_id, flow_pool_size);
+	ol_txrx_dbg("flow_pool_id %d flow_pool_size %d",
+		    flow_pool_id, flow_pool_size);
 
 	if (qdf_unlikely(!pdev)) {
-		ol_txrx_err(
-			"%s: pdev is NULL", __func__);
+		ol_txrx_err("pdev is NULL");
 		return;
 	}
 	pdev->pool_stats.pool_resize_count++;
 
 	pool = ol_tx_get_flow_pool(flow_pool_id);
 	if (!pool) {
-		ol_txrx_err("%s: resize for flow_pool %d size %d failed\n",
-			    __func__, flow_pool_id, flow_pool_size);
+		ol_txrx_err("resize for flow_pool %d size %d failed",
+			    flow_pool_id, flow_pool_size);
 		return;
 	}
 
@@ -1250,9 +1223,7 @@ ol_txrx_map_to_netif_reason_type(uint32_t reason)
 	case OL_TXQ_PAUSE_REASON_THERMAL_MITIGATION:
 		return WLAN_THERMAL_MITIGATION;
 	default:
-		ol_txrx_err(
-			   "%s: reason not supported %d\n",
-			   __func__, reason);
+		ol_txrx_err("reason not supported %d", reason);
 		return WLAN_REASON_TYPE_MAX;
 	}
 }
@@ -1271,7 +1242,7 @@ void ol_txrx_vdev_pause(struct cdp_vdev *pvdev, uint32_t reason)
 	enum netif_reason_type netif_reason;
 
 	if (qdf_unlikely((!pdev) || (!pdev->pause_cb))) {
-		ol_txrx_err("%s: invalid pdev\n", __func__);
+		ol_txrx_err("invalid pdev");
 		return;
 	}
 
@@ -1296,7 +1267,7 @@ void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason)
 	enum netif_reason_type netif_reason;
 
 	if (qdf_unlikely((!pdev) || (!pdev->pause_cb))) {
-		ol_txrx_err("%s: invalid pdev\n", __func__);
+		ol_txrx_err("invalid pdev");
 		return;
 	}
 

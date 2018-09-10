@@ -396,10 +396,7 @@ void htt_register_rx_pkt_dump_callback(struct htt_pdev_t *pdev,
 				tp_rx_pkt_dump_cb callback)
 {
 	if (!pdev) {
-		qdf_print("%s: %s, %s",
-			__func__,
-			"htt pdev is NULL",
-			"rx packet status callback register unsuccessful\n");
+		qdf_print("pdev is NULL");
 		return;
 	}
 	pdev->rx_pkt_dump_cb = callback;
@@ -420,10 +417,7 @@ void htt_register_rx_pkt_dump_callback(struct htt_pdev_t *pdev,
 void htt_deregister_rx_pkt_dump_callback(struct htt_pdev_t *pdev)
 {
 	if (!pdev) {
-		qdf_print("%s: %s, %s",
-			__func__,
-			"htt pdev is NULL",
-			"rx packet status callback deregister unsuccessful\n");
+		qdf_print("pdev is NULL");
 		return;
 	}
 	pdev->rx_pkt_dump_cb = NULL;

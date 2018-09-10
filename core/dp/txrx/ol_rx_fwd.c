@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -70,8 +70,7 @@ static inline void ol_ap_fwd_check(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 	    qdf_mem_cmp
 		     (mac_header->i_addr3, vdev->mac_addr.raw,
 		     IEEE80211_ADDR_LEN)) {
-		ol_txrx_dbg("Exit: %s | Unnecessary to adjust mac header\n",
-			   __func__);
+		ol_txrx_dbg("Exit | Unnecessary to adjust mac header");
 	} else {
 		/* Flip the ToDs bit to FromDs */
 		mac_header->i_fc[1] &= 0xfe;

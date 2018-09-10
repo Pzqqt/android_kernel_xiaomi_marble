@@ -475,7 +475,6 @@ QDF_STATUS dp_rx_tm_init(struct dp_rx_tm_handle *rx_tm_hdl,
 		if (qdf_unlikely(!rx_tm_hdl->rx_thread[i])) {
 			QDF_ASSERT(0);
 			qdf_status = QDF_STATUS_E_NOMEM;
-			dp_err("failed to allocate memory for dp_rx_thread");
 			goto ret;
 		}
 		rx_tm_hdl->rx_thread[i]->rtm_handle_cmn =

@@ -72,10 +72,9 @@ struct htt_htc_pkt *htt_htc_pkt_alloc(struct htt_pdev_t *pdev)
 	if (pkt == NULL)
 		pkt = qdf_mem_malloc(sizeof(*pkt));
 
-	if (!pkt) {
-		qdf_print("%s: HTC packet allocation failed\n", __func__);
+	if (!pkt)
 		return NULL;
-	}
+
 	htc_packet_set_magic_cookie(&(pkt->u.pkt.htc_pkt), 0);
 	return &pkt->u.pkt;     /* not actually a dereference */
 }
@@ -85,7 +84,7 @@ void htt_htc_pkt_free(struct htt_pdev_t *pdev, struct htt_htc_pkt *pkt)
 	struct htt_htc_pkt_union *u_pkt = (struct htt_htc_pkt_union *)pkt;
 
 	if (!u_pkt) {
-		qdf_print("%s: HTC packet is NULL\n", __func__);
+		qdf_print("HTC packet is NULL");
 		return;
 	}
 

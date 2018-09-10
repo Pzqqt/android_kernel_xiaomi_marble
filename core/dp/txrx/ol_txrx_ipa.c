@@ -1131,11 +1131,9 @@ static QDF_STATUS ol_txrx_ipa_remove_header(char *name)
 		  hdrlookup.hdl);
 	len = sizeof(qdf_ipa_ioc_del_hdr_t) + sizeof(qdf_ipa_hdr_del_t) * 1;
 	ipa_hdr = (qdf_ipa_ioc_del_hdr_t *)qdf_mem_malloc(len);
-	if (ipa_hdr == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "ipa_hdr allocation failed");
+	if (!ipa_hdr)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	QDF_IPA_IOC_DEL_HDR_NUM_HDRS(ipa_hdr) = 1;
 	QDF_IPA_IOC_DEL_HDR_COMMIT(ipa_hdr) = 0;
 	QDF_IPA_IOC_DEL_HDR_HDL(ipa_hdr) = QDF_IPA_IOC_GET_HDR_HDL(&hdrlookup);
@@ -1174,8 +1172,6 @@ static int ol_txrx_ipa_add_header_info(char *ifname, uint8_t *mac_addr,
 	ipa_hdr = qdf_mem_malloc(sizeof(qdf_ipa_ioc_add_hdr_t)
 				 + sizeof(qdf_ipa_hdr_add_t));
 	if (!ipa_hdr) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			    "%s: ipa_hdr allocation failed", ifname);
 		ret = -ENOMEM;
 		goto end;
 	}
@@ -1283,20 +1279,14 @@ static int ol_txrx_ipa_register_interface(char *ifname,
 	/* Allocate TX properties for TOS categories, 1 each for IPv4 & IPv6 */
 	tx_prop =
 		qdf_mem_malloc(sizeof(qdf_ipa_ioc_tx_intf_prop_t) * num_prop);
-	if (!tx_prop) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "tx_prop allocation failed");
+	if (!tx_prop)
 		goto register_interface_fail;
-	}
 
 	/* Allocate RX properties, 1 each for IPv4 & IPv6 */
 	rx_prop =
 		qdf_mem_malloc(sizeof(qdf_ipa_ioc_rx_intf_prop_t) * num_prop);
-	if (!rx_prop) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "rx_prop allocation failed");
+	if (!rx_prop)
 		goto register_interface_fail;
-	}
 
 	qdf_mem_zero(&tx_intf, sizeof(tx_intf));
 	qdf_mem_zero(&rx_intf, sizeof(rx_intf));

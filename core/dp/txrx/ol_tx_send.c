@@ -897,7 +897,7 @@ void ol_tx_desc_update_group_credit(ol_txrx_pdev_handle pdev,
 	struct ol_tx_desc_t *tx_desc;
 
 	if (tx_desc_id >= pdev->tx_desc.pool_size) {
-		qdf_print("%s: Invalid desc id", __func__);
+		qdf_print("Invalid desc id");
 		return;
 	}
 
@@ -1036,8 +1036,7 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 
 	tx_desc = ol_tx_desc_find_check(pdev, tx_desc_id);
 	if (tx_desc == NULL) {
-		ol_txrx_err("%s: invalid desc_id(%u), ignore it.\n",
-			    __func__, tx_desc_id);
+		ol_txrx_err("invalid desc_id(%u), ignore it", tx_desc_id);
 		return;
 	}
 
@@ -1508,8 +1507,7 @@ void ol_register_packetdump_callback(tp_ol_packetdump_cb ol_tx_packetdump_cb,
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
-		ol_txrx_err(
-				"%s: pdev is NULL", __func__);
+		ol_txrx_err("pdev is NULL");
 		return;
 	}
 
@@ -1533,8 +1531,7 @@ void ol_deregister_packetdump_callback(void)
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
-		ol_txrx_err(
-				"%s: pdev is NULL", __func__);
+		ol_txrx_err("pdev is NULL");
 		return;
 	}
 
@@ -1548,7 +1545,7 @@ void ol_register_timestamp_callback(tp_ol_timestamp_cb ol_tx_timestamp_cb)
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
-		ol_txrx_err("%s: pdev is NULL", __func__);
+		ol_txrx_err("pdev is NULL");
 		return;
 	}
 	pdev->ol_tx_timestamp_cb = ol_tx_timestamp_cb;
@@ -1559,7 +1556,7 @@ void ol_deregister_timestamp_callback(void)
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
-		ol_txrx_err("%s: pdev is NULL", __func__);
+		ol_txrx_err("pdev is NULL");
 		return;
 	}
 	pdev->ol_tx_timestamp_cb = NULL;

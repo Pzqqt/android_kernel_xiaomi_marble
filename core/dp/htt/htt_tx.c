@@ -838,7 +838,7 @@ htt_tx_resume_handler(void *context) { }
 qdf_nbuf_t
 htt_tx_send_batch(htt_pdev_handle pdev, qdf_nbuf_t head_msdu, int num_msdus)
 {
-	qdf_print("*** %s currently only applies for HL systems\n", __func__);
+	qdf_print("Not apply to LL");
 	qdf_assert(0);
 	return head_msdu;
 
@@ -1072,8 +1072,7 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 	if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
 		mem_map_table = qdf_mem_map_table_alloc(uc_tx_buf_cnt);
 		if (!mem_map_table) {
-			qdf_print("%s: Failed to allocate memory for mem map table\n",
-				  __func__);
+			qdf_print("Failed to allocate memory");
 			return 0;
 		}
 		mem_info = mem_map_table;
@@ -1191,8 +1190,7 @@ static void htt_tx_buf_pool_free(struct htt_pdev_t *pdev)
 		mem_map_table = qdf_mem_map_table_alloc(
 					pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt);
 		if (!mem_map_table) {
-			qdf_print("%s: Failed to allocate memory for mem map table\n",
-				  __func__);
+			qdf_print("Failed to allocate memory");
 			return;
 		}
 		mem_info = mem_map_table;
@@ -1238,8 +1236,7 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 	if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
 		mem_map_table = qdf_mem_map_table_alloc(uc_tx_buf_cnt);
 		if (!mem_map_table) {
-			qdf_print("%s: Failed to allocate memory for mem map table\n",
-				  __func__);
+			qdf_print("Failed to allocate memory");
 			return 0;
 		}
 		mem_info = mem_map_table;
@@ -1251,8 +1248,8 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		shared_tx_buffer = qdf_mem_shared_mem_alloc(pdev->osdev,
 							    uc_tx_buf_sz);
 		if (!shared_tx_buffer || !shared_tx_buffer->vaddr) {
-			qdf_print("%s: TX BUF alloc fail, loop index: %d",
-				  __func__, tx_buffer_count);
+			qdf_print("TX BUF alloc fail, loop index: %d",
+				  tx_buffer_count);
 			goto pwr2;
 		}
 
@@ -1338,8 +1335,7 @@ static void htt_tx_buf_pool_free(struct htt_pdev_t *pdev)
 		mem_map_table = qdf_mem_map_table_alloc(
 					pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt);
 		if (!mem_map_table) {
-			qdf_print("%s: Failed to allocate memory for mem map table\n",
-				  __func__);
+			qdf_print("Failed to allocate memory");
 			return;
 		}
 		mem_info = mem_map_table;
@@ -1390,8 +1386,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	pdev->ipa_uc_tx_rsc.tx_ce_idx =
 		qdf_mem_shared_mem_alloc(pdev->osdev, 4);
 	if (!pdev->ipa_uc_tx_rsc.tx_ce_idx) {
-		qdf_print("%s: Unable to allocate memory for IPA tx ce idx\n",
-			  __func__);
+		qdf_print("Unable to allocate memory for IPA tx ce idx");
 		return -ENOBUFS;
 	}
 
@@ -1402,7 +1397,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 					 tx_comp_ring_size);
 	if (!pdev->ipa_uc_tx_rsc.tx_comp_ring ||
 	    !pdev->ipa_uc_tx_rsc.tx_comp_ring->vaddr) {
-		qdf_print("%s: TX COMP ring alloc fail", __func__);
+		qdf_print("TX COMP ring alloc fail");
 		return_code = -ENOBUFS;
 		goto free_tx_ce_idx;
 	}
@@ -1412,7 +1407,6 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 		qdf_mem_malloc(uc_tx_buf_cnt *
 			sizeof(*pdev->ipa_uc_tx_rsc.tx_buf_pool_strg));
 	if (!pdev->ipa_uc_tx_rsc.tx_buf_pool_strg) {
-		qdf_print("%s: TX BUF POOL vaddr storage alloc fail", __func__);
 		return_code = -ENOBUFS;
 		goto free_tx_comp_base;
 	}

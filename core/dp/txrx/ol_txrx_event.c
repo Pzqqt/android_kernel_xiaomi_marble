@@ -194,11 +194,9 @@ A_STATUS wdi_event_attach(struct ol_txrx_pdev_t *txrx_pdev)
 				    qdf_mem_malloc(
 					    sizeof(wdi_event_subscribe *) *
 					    WDI_NUM_EVENTS);
-	if (!txrx_pdev->wdi_event_list) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Insufficient memory for the WDI event lists\n");
+	if (!txrx_pdev->wdi_event_list)
 		return A_NO_MEMORY;
-	}
+
 	return A_OK;
 }
 

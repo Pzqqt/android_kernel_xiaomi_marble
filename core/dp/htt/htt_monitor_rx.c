@@ -97,7 +97,7 @@ int htt_mon_rx_handle_amsdu_packet(qdf_nbuf_t msdu, htt_pdev_handle pdev,
 	paddr = htt_rx_in_ord_paddr_get(*msg_word);
 	frag_nbuf = htt_rx_in_order_netbuf_pop(pdev, paddr);
 	if (qdf_unlikely(!frag_nbuf)) {
-		qdf_print("%s: netbuf pop failed!\n", __func__);
+		qdf_print("netbuf pop failed!");
 		return 0;
 	}
 	*frag_cnt = *frag_cnt + 1;
@@ -124,7 +124,7 @@ int htt_mon_rx_handle_amsdu_packet(qdf_nbuf_t msdu, htt_pdev_handle pdev,
 			     *msg_word)->msdu_info;
 
 		if (qdf_unlikely(!frag_nbuf)) {
-			qdf_print("%s: netbuf pop failed!\n", __func__);
+			qdf_print("netbuf pop failed!");
 			prev_frag_nbuf->next = NULL;
 			return 0;
 		}
@@ -548,7 +548,7 @@ int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	msdu = htt_rx_in_order_netbuf_pop(pdev, paddr);
 
 	if (qdf_unlikely(!msdu)) {
-		qdf_print("%s: netbuf pop failed!\n", __func__);
+		qdf_print("netbuf pop failed!");
 		*tail_msdu = NULL;
 		return 0;
 	}
@@ -581,8 +581,7 @@ int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 					htt_rx_in_ord_paddr_ind_msdu_t *)
 					msg_word)->msdu_info;
 				if (qdf_unlikely(!msdu)) {
-					qdf_print("%s: netbuf pop failed!\n",
-						  __func__);
+					qdf_print("netbuf pop failed!");
 					return 0;
 				}
 				*replenish_cnt = *replenish_cnt + 1;
@@ -698,8 +697,7 @@ int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 							    &msg_word,
 							    amsdu_len,
 							    replenish_cnt)) {
-				qdf_print("%s: failed to handle amsdu packet\n",
-					  __func__);
+				qdf_print("failed to handle amsdu packet");
 				return 0;
 			}
 		}
@@ -711,8 +709,7 @@ next_pop:
 			paddr = htt_rx_in_ord_paddr_get(msg_word);
 			next = htt_rx_in_order_netbuf_pop(pdev, paddr);
 			if (qdf_unlikely(!next)) {
-				qdf_print("%s: netbuf pop failed!\n",
-					  __func__);
+				qdf_print("netbuf pop failed!");
 				*tail_msdu = NULL;
 				return 0;
 			}

@@ -202,9 +202,7 @@ void ol_tx_throttle_set_level(struct cdp_pdev *ppdev, int level)
 	int ms = 0;
 
 	if (level >= THROTTLE_LEVEL_MAX) {
-		ol_txrx_dbg(
-			   "%s invalid throttle level set %d, ignoring\n",
-			   __func__, level);
+		ol_txrx_dbg("invalid throttle level set %d, ignoring", level);
 		return;
 	}
 

@@ -230,7 +230,7 @@ void ol_rx_update_histogram_stats(uint32_t msdu_count, uint8_t frag_ind,
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
-		ol_txrx_err("%s pdev is NULL\n", __func__);
+		ol_txrx_err("pdev is NULL");
 		return;
 	}
 
@@ -555,8 +555,7 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 			ol_rx_reorder_peer_cleanup(vdev, peer);
 		} else {
 			if (tid >= OL_TXRX_NUM_EXT_TIDS) {
-				ol_txrx_err("%s:  invalid tid, %u\n",
-					    __func__, tid);
+				ol_txrx_err("invalid tid, %u", tid);
 				WARN_ON(1);
 				return;
 			}
@@ -970,9 +969,7 @@ ol_rx_offload_deliver_ind_handler(ol_txrx_pdev_handle pdev,
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
 
 	if (msdu_cnt > htt_rx_offload_msdu_cnt(htt_pdev)) {
-		ol_txrx_err("%s: invalid msdu_cnt=%u\n",
-			__func__,
-			msdu_cnt);
+		ol_txrx_err("invalid msdu_cnt=%u", msdu_cnt);
 
 		if (pdev->cfg.is_high_latency)
 			htt_rx_desc_frame_free(htt_pdev, msg);
@@ -1503,7 +1500,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	uint32_t filled = 0;
 
 	if (tid >= OL_TXRX_NUM_EXT_TIDS) {
-		ol_txrx_err("%s:  invalid tid, %u\n", __FUNCTION__, tid);
+		ol_txrx_err("invalid tid, %u", tid);
 		WARN_ON(1);
 		return;
 	}
@@ -1515,14 +1512,14 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 			peer = ol_txrx_peer_find_by_id(pdev, peer_id);
 		htt_pdev = pdev->htt_pdev;
 	} else {
-		ol_txrx_err("%s: Invalid pdev passed!\n", __func__);
+		ol_txrx_err("Invalid pdev passed!");
 		qdf_assert_always(pdev);
 		return;
 	}
 
 #if defined(HELIUMPLUS_DEBUG)
-	qdf_print("%s %d: rx_ind_msg 0x%pK peer_id %d tid %d is_offload %d\n",
-		  __func__, __LINE__, rx_ind_msg, peer_id, tid, is_offload);
+	qdf_print("rx_ind_msg 0x%pK peer_id %d tid %d is_offload %d",
+		  rx_ind_msg, peer_id, tid, is_offload);
 #endif
 
 	pktlog_bit = (htt_rx_amsdu_rx_in_order_get_pktlog(rx_ind_msg) == 0x01);
@@ -1543,7 +1540,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	ol_rx_ind_record_event(status, OL_RX_INDICATION_POP_END);
 
 	if (qdf_unlikely(0 == status)) {
-		ol_txrx_warn("%s: Pop status is 0, returning here", __func__);
+		ol_txrx_warn("pop failed");
 		return;
 	}
 
@@ -1574,9 +1571,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	if (peer) {
 		vdev = peer->vdev;
 	} else {
-		ol_txrx_dbg(
-			   "%s: Couldn't find peer from ID 0x%x\n",
-			   __func__, peer_id);
+		ol_txrx_dbg("Couldn't find peer from ID 0x%x", peer_id);
 		while (head_msdu) {
 			qdf_nbuf_t msdu = head_msdu;
 
@@ -1619,14 +1614,13 @@ void ol_rx_pkt_dump_call(
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
-		ol_txrx_err("%s: pdev is NULL", __func__);
+		ol_txrx_err("pdev is NULL");
 		return;
 	}
 
 	peer = ol_txrx_peer_find_by_id(pdev, peer_id);
 	if (!peer) {
-		ol_txrx_dbg("%s: peer with peer id %d is NULL", __func__,
-			peer_id);
+		ol_txrx_dbg("peer with peer id %d is NULL", peer_id);
 		return;
 	}
 

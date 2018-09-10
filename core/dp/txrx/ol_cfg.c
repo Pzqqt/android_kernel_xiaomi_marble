@@ -115,10 +115,8 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 	int i;
 
 	cfg_ctx = qdf_mem_malloc(sizeof(*cfg_ctx));
-	if (!cfg_ctx) {
-		printk(KERN_ERR "cfg ctx allocation failed\n");
+	if (!cfg_ctx)
 		return NULL;
-	}
 
 	ol_pdev_cfg_param_update(cfg_ctx);
 

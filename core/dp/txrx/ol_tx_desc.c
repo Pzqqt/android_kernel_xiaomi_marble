@@ -39,9 +39,8 @@ static inline void ol_tx_desc_sanity_checks(struct ol_txrx_pdev_t *pdev,
 					struct ol_tx_desc_t *tx_desc)
 {
 	if (tx_desc->pkt_type != ol_tx_frm_freed) {
-		ol_txrx_err(
-				   "%s Potential tx_desc corruption pkt_type:0x%x pdev:0x%pK",
-				   __func__, tx_desc->pkt_type, pdev);
+		ol_txrx_err("Potential tx_desc corruption pkt_type:0x%x pdev:0x%pK",
+			    tx_desc->pkt_type, pdev);
 		qdf_assert(0);
 	}
 }
@@ -53,8 +52,7 @@ static inline void ol_tx_desc_reset_pkt_type(struct ol_tx_desc_t *tx_desc)
 static inline void ol_tx_desc_compute_delay(struct ol_tx_desc_t *tx_desc)
 {
 	if (tx_desc->entry_timestamp_ticks != 0xffffffff) {
-		ol_txrx_err("%s Timestamp:0x%x\n",
-				   __func__, tx_desc->entry_timestamp_ticks);
+		ol_txrx_err("Timestamp:0x%x", tx_desc->entry_timestamp_ticks);
 		qdf_assert(0);
 	}
 	tx_desc->entry_timestamp_ticks = qdf_system_ticks();
@@ -526,16 +524,14 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 		if (pool->avail_desc == pool->flow_pool_size) {
 			qdf_spin_unlock_bh(&pool->flow_pool_lock);
 			ol_tx_free_invalid_flow_pool(pool);
-			qdf_print("%s %d pool is INVALID State!!\n",
-				 __func__, __LINE__);
+			qdf_print("pool is INVALID State!!");
 			return;
 		}
 		break;
 	case FLOW_POOL_ACTIVE_UNPAUSED:
 		break;
 	default:
-		qdf_print("%s %d pool is INACTIVE State!!\n",
-				 __func__, __LINE__);
+		qdf_print("pool is INACTIVE State!!");
 		break;
 	};
 
@@ -712,8 +708,8 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc,
 					 i - 1, frag_paddr, frag_len);
 #if defined(HELIUMPLUS_DEBUG)
-			qdf_print("%s:%d: htt_fdesc=%pK frag=%d frag_vaddr=0x%pK frag_paddr=0x%llx len=%zu\n",
-				  __func__, __LINE__, tx_desc->htt_frag_desc,
+			qdf_debug("htt_fdesc=%pK frag=%d frag_vaddr=0x%pK frag_paddr=0x%llx len=%zu\n",
+				  tx_desc->htt_frag_desc,
 				  i-1, frag_vaddr, frag_paddr, frag_len);
 			ol_txrx_dump_pkt(netbuf, frag_paddr, 64);
 #endif /* HELIUMPLUS_DEBUG */
@@ -855,8 +851,8 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 		 * table pointer needs to be reset.
 		 */
 #if defined(HELIUMPLUS_DEBUG)
-		qdf_print("%s %d: Frag Descriptor Reset [%d] to 0x%x\n",
-			  __func__, __LINE__, tx_desc->id,
+		qdf_print("Frag Descriptor Reset [%d] to 0x%x\n",
+			  tx_desc->id,
 			  frag_desc_paddr);
 #endif /* HELIUMPLUS_DEBUG */
 #endif /* HELIUMPLUS */

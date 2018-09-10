@@ -922,7 +922,7 @@ htt_rx_offload_msdu_pop_ll(htt_pdev_handle pdev,
 	*head_buf = *tail_buf = buf = htt_rx_netbuf_pop(pdev);
 
 	if (qdf_unlikely(!buf)) {
-		qdf_print("%s: netbuf pop failed!\n", __func__);
+		qdf_print("netbuf pop failed!");
 		return 1;
 	}
 
@@ -972,7 +972,7 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 	*head_buf = *tail_buf = buf = htt_rx_in_order_netbuf_pop(pdev, paddr);
 
 	if (qdf_unlikely(!buf)) {
-		qdf_print("%s: netbuf pop failed!\n", __func__);
+		qdf_print("netbuf pop failed!");
 		return 1;
 	}
 	qdf_nbuf_set_pktlen(buf, HTT_RX_BUF_SIZE);
@@ -1149,8 +1149,8 @@ htt_rx_hash_list_insert(struct htt_pdev_t *pdev,
 	htt_list_add_tail(&pdev->rx_ring.hash_table[i]->listhead,
 			  &hash_element->listnode);
 
-	RX_HASH_LOG(qdf_print("rx hash: %s: paddr 0x%x netbuf %pK bucket %d\n",
-			      __func__, paddr, netbuf, (int)i));
+	RX_HASH_LOG(qdf_print("rx hash: paddr 0x%x netbuf %pK bucket %d\n",
+			      paddr, netbuf, (int)i));
 
 	HTT_RX_HASH_COUNT_INCR(pdev->rx_ring.hash_table[i]);
 	HTT_RX_HASH_COUNT_PRINT(pdev->rx_ring.hash_table[i]);
@@ -1214,15 +1214,15 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev,
 		}
 	}
 
-	RX_HASH_LOG(qdf_print("rx hash: %s: paddr 0x%x, netbuf %pK, bucket %d\n",
-			      __func__, paddr, netbuf, (int)i));
+	RX_HASH_LOG(qdf_print("rx hash: paddr 0x%x, netbuf %pK, bucket %d\n",
+			      paddr, netbuf, (int)i));
 	HTT_RX_HASH_COUNT_PRINT(pdev->rx_ring.hash_table[i]);
 
 	qdf_spin_unlock_bh(&pdev->rx_ring.rx_hash_lock);
 
 	if (!netbuf) {
-		qdf_print("rx hash: %s: no entry found for %pK!\n",
-			  __func__, (void *)paddr);
+		qdf_print("rx hash: no entry found for %pK!\n",
+			  (void *)paddr);
 		cds_trigger_recovery(QDF_RX_HASH_NO_ENTRY_FOUND);
 	}
 
@@ -1247,10 +1247,8 @@ static int htt_rx_hash_init(struct htt_pdev_t *pdev)
 		qdf_mem_malloc(RX_NUM_HASH_BUCKETS *
 			       sizeof(struct htt_rx_hash_bucket *));
 
-	if (!pdev->rx_ring.hash_table) {
-		qdf_print("rx hash table allocation failed!\n");
+	if (!pdev->rx_ring.hash_table)
 		return 1;
-	}
 
 	qdf_spinlock_create(&pdev->rx_ring.rx_hash_lock);
 	qdf_spin_lock_bh(&pdev->rx_ring.rx_hash_lock);
@@ -1465,7 +1463,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	(*head_msdu) = msdu = htt_rx_in_order_netbuf_pop(pdev, paddr);
 
 	if (qdf_unlikely(!msdu)) {
-		qdf_print("%s: netbuf pop failed!\n", __func__);
+		qdf_print("netbuf pop failed!");
 		*tail_msdu = NULL;
 		pdev->rx_ring.pop_fail_cnt++;
 		ret = 0;
@@ -1510,8 +1508,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 				paddr = htt_rx_in_ord_paddr_get(msg_word);
 				next = htt_rx_in_order_netbuf_pop(pdev, paddr);
 				if (qdf_unlikely(!next)) {
-					qdf_print("%s: netbuf pop failed!\n",
-						  __func__);
+					qdf_print("netbuf pop failed!");
 					*tail_msdu = NULL;
 					pdev->rx_ring.pop_fail_cnt++;
 					ret = 0;
@@ -1606,8 +1603,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 				paddr = htt_rx_in_ord_paddr_get(msg_word);
 				next = htt_rx_in_order_netbuf_pop(pdev, paddr);
 				if (qdf_unlikely(!next)) {
-					qdf_print("%s: netbuf pop failed!\n",
-						  __func__);
+					qdf_print("netbuf pop failed!");
 					*tail_msdu = NULL;
 					pdev->rx_ring.pop_fail_cnt++;
 					ret = 0;
@@ -1635,8 +1631,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 			paddr = htt_rx_in_ord_paddr_get(msg_word);
 			next = htt_rx_in_order_netbuf_pop(pdev, paddr);
 			if (qdf_unlikely(!next)) {
-				qdf_print("%s: netbuf pop failed!\n",
-					  __func__);
+				qdf_print("netbuf pop failed!");
 				*tail_msdu = NULL;
 				pdev->rx_ring.pop_fail_cnt++;
 				ret = 0;

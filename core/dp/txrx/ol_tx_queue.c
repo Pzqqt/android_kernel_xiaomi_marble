@@ -120,8 +120,7 @@ ol_tx_queue_vdev_flush(struct ol_txrx_pdev_t *pdev, struct ol_txrx_vdev_t *vdev)
 				if (txq->frms)
 					ol_tx_queue_free(pdev, txq, j, true);
 			}
-			ol_txrx_info(
-				   "%s: Delete Peer %pK\n", __func__, peer);
+			ol_txrx_info("Delete Peer %pK", peer);
 			ol_txrx_peer_release_ref(peers[i],
 						 PEER_DEBUG_ID_OL_TXQ_VDEV_FL);
 		}

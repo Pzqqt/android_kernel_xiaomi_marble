@@ -77,7 +77,7 @@ qdf_nbuf_t ol_tx_data(void *data_vdev, qdf_nbuf_t skb)
 	qdf_nbuf_set_next(skb, NULL);
 	ret = OL_TX_SEND(vdev, skb);
 	if (ret) {
-		ol_txrx_dbg("%s: Failed to tx", __func__);
+		ol_txrx_dbg("Failed to tx");
 		return ret;
 	}
 
@@ -93,7 +93,7 @@ qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb)
 	if (qdf_unlikely(!pdev)) {
 		qdf_net_buf_debug_acquire_skb(skb, __FILE__, __LINE__);
 
-		ol_txrx_err("%s: pdev is NULL", __func__);
+		ol_txrx_err("pdev is NULL");
 		return skb;
 	}
 
@@ -113,7 +113,7 @@ qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb)
 
 	ret = OL_TX_SEND((struct ol_txrx_vdev_t *)vdev, skb);
 	if (ret) {
-		ol_txrx_dbg("%s: Failed to tx", __func__);
+		ol_txrx_dbg("Failed to tx");
 		return ret;
 	}
 

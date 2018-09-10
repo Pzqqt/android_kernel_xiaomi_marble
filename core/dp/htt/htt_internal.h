@@ -968,8 +968,8 @@ htt_rx_paddr_unmark_high_bits(qdf_dma_addr_t paddr)
 		 * padded (with 0b0) to 8 bits
 		 */
 		if ((markings & 0xFFFF0000) != RX_PADDR_MAGIC_PATTERN) {
-			qdf_print("%s: paddr not marked correctly: 0x%pK!\n",
-				  __func__, (void *)paddr);
+			qdf_print("paddr not marked correctly: 0x%pK!\n",
+				  (void *)paddr);
 			HTT_ASSERT_ALWAYS(0);
 		}
 

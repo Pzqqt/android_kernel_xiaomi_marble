@@ -28,7 +28,6 @@ QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 
 	dp_ext_hdl = qdf_mem_malloc(sizeof(*dp_ext_hdl));
 	if (!dp_ext_hdl) {
-		dp_err("failed to alloc dp_txrx_handle");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NOMEM;
 	}
