@@ -392,6 +392,24 @@ static void mlme_init_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
 					 CFG_INI_DISABLE_HIGH_HT_RX_MCS_2x2);
 }
 
+static void mlme_init_feature_flag_in_cfg(
+				struct wlan_objmgr_psoc *psoc,
+				struct wlan_mlme_feature_flag *feature_flags)
+{
+	feature_flags->accept_short_slot_assoc =
+				cfg_default(CFG_ACCEPT_SHORT_SLOT_ASSOC_ONLY);
+	feature_flags->enable_hcf = cfg_default(CFG_HCF_ENABLED);
+	feature_flags->enable_rsn = cfg_default(CFG_RSN_ENABLED);
+	feature_flags->enable_short_preamble_11g =
+				cfg_default(CFG_11G_SHORT_PREAMBLE_ENABLED);
+	feature_flags->enable_short_slot_time_11g =
+				cfg_default(CFG_11G_SHORT_SLOT_TIME_ENABLED);
+	feature_flags->channel_bonding_mode =
+				cfg_default(CFG_CHANNEL_BONDING_MODE);
+	feature_flags->enable_block_ack = cfg_default(CFG_BLOCK_ACK_ENABLED);
+	feature_flags->enable_ampdu = cfg_get(psoc, CFG_ENABLE_AMPDUPS);
+}
+
 static void mlme_init_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,
 					 struct wlan_mlme_sap_protection
 					 *sap_protection_params)
@@ -916,6 +934,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_obss_ht40_cfg(psoc, &mlme_cfg->obss_ht40);
 	mlme_init_sta_cfg(psoc, &mlme_cfg->sta);
 	mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);
+	mlme_init_feature_flag_in_cfg(psoc, &mlme_cfg->feature_flags);
 	mlme_init_scoring_cfg(psoc, &mlme_cfg->scoring);
 	mlme_init_oce_cfg(psoc, &mlme_cfg->oce);
 

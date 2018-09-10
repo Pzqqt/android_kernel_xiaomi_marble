@@ -4261,29 +4261,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_VHT_ENABLE_GID_FEATURE_MAX          (1)
 #define CFG_VHT_ENABLE_GID_FEATURE_DEFAULT      (0)
 
-/*
- * <ini>
- * gEnableAMPDUPS - Enable the AMPDUPS
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set default AMPDUPS
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_AMPDUPS_FEATURE              "gEnableAMPDUPS"
-#define CFG_ENABLE_AMPDUPS_FEATURE_MIN          (0)
-#define CFG_ENABLE_AMPDUPS_FEATURE_MAX          (1)
-#define CFG_ENABLE_AMPDUPS_FEATURE_DEFAULT      (0)
-
 #define CFG_HT_ENABLE_SMPS_CAP_FEATURE          "gEnableHtSMPS"
 #define CFG_HT_ENABLE_SMPS_CAP_FEATURE_MIN      (0)
 #define CFG_HT_ENABLE_SMPS_CAP_FEATURE_MAX      (1)

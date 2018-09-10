@@ -736,11 +736,6 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 	if (LIM_IS_AP_ROLE(sessionEntry)) {
 		pCapInfo->shortSlotTime = sessionEntry->shortSlotTimeSupported;
 	} else {
-		if (wlan_cfg_get_int(pMac, WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED,
-				     &val) != QDF_STATUS_SUCCESS) {
-			pe_err("cfg get WNI_CFG_11G_SHORT_SLOT_TIME failed");
-			return QDF_STATUS_E_FAILURE;
-		}
 		/* When in STA mode, we need to check if short slot is
 		 * enabled as well as check if the current operating
 		 * mode is short slot time and then decide whether to
@@ -753,7 +748,7 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 		 * deleting the previous IBSS or in start BSS as part
 		 * of coalescing
 		 */
-		if (val) {
+		if (pMac->mlme_cfg->feature_flags.enable_short_slot_time_11g) {
 			pCapInfo->shortSlotTime =
 				sessionEntry->shortSlotTimeSupported;
 		}
@@ -793,11 +788,7 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 	/* FIXME : no config defined yet. */
 
 	/* Block ack bit */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_BLOCK_ACK_ENABLED, &val) !=
-							QDF_STATUS_SUCCESS) {
-		pe_err("cfg get WNI_CFG_BLOCK_ACK_ENABLED failed");
-		return QDF_STATUS_E_FAILURE;
-	}
+	val = pMac->mlme_cfg->feature_flags.enable_block_ack;
 	pCapInfo->delayedBA =
 		(uint16_t) ((val >> WNI_CFG_BLOCK_ACK_ENABLED_DELAYED) & 1);
 	pCapInfo->immediateBA =

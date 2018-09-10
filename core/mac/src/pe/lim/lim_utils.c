@@ -1574,7 +1574,7 @@ lim_update_short_slot_time(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 		mac_ctx->lim.gLimNoShortSlotParams.
 			numNonShortSlotSta++;
 	}
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED, &val);
+	val = mac_ctx->mlme_cfg->feature_flags.enable_short_slot_time_11g;
 	/*
 	 * Here we check if we are AP role and short slot enabled
 	 * (both admin and oper modes) but we have atleast one STA
@@ -4160,13 +4160,8 @@ lim_enable_short_preamble(tpAniSirGlobal pMac, uint8_t enable,
 	if (!val)
 		return QDF_STATUS_SUCCESS;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_11G_SHORT_PREAMBLE_ENABLED, &val) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve 11G short preamble switching  enabled flag");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!val) /* 11G short preamble switching is disabled. */
+	/* 11G short preamble switching is disabled. */
+	if (!pMac->mlme_cfg->feature_flags.enable_short_preamble_11g)
 		return QDF_STATUS_SUCCESS;
 
 	if (LIM_IS_AP_ROLE(psessionEntry)) {

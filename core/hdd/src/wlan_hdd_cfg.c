@@ -1889,12 +1889,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_VHT_ENABLE_GID_FEATURE_MIN,
 		     CFG_VHT_ENABLE_GID_FEATURE_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_AMPDUPS_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, enableAmpduPs,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_AMPDUPS_FEATURE_DEFAULT,
-		     CFG_ENABLE_AMPDUPS_FEATURE_MIN,
-		     CFG_ENABLE_AMPDUPS_FEATURE_MAX),
 
 	REG_VARIABLE(CFG_HT_ENABLE_SMPS_CAP_FEATURE, WLAN_PARAM_Integer,
 		     struct hdd_config, enableHtSmps,
@@ -5921,7 +5915,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.enableMuBformee = pConfig->enableMuBformee;
 	smeConfig->csrConfig.enableVhtpAid = pConfig->enableVhtpAid;
 	smeConfig->csrConfig.enableVhtGid = pConfig->enableVhtGid;
-	smeConfig->csrConfig.enableAmpduPs = pConfig->enableAmpduPs;
 	smeConfig->csrConfig.enableHtSmps = pConfig->enableHtSmps;
 	smeConfig->csrConfig.htSmps = pConfig->htSmps;
 	/* This param cannot be configured from INI */

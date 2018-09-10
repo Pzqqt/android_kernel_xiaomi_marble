@@ -499,7 +499,6 @@ struct csr_config {
 	bool enableVhtFor24GHz;
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
-	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmps;
 	bool send_smps_action;

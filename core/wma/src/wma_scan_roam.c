@@ -2714,13 +2714,8 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 
 	selfCaps.pbcc = 0;
 	selfCaps.channelAgility = 0;
-	if (wlan_cfg_get_int(pMac, WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED,
-			     &val) != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (val)
+
+	if (pMac->mlme_cfg->feature_flags.enable_short_slot_time_11g)
 		selfCaps.shortSlotTime = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_11H_ENABLED, &val) !=
 							QDF_STATUS_SUCCESS) {
@@ -2749,12 +2744,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 
 	selfCaps.rrm = pMac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_BLOCK_ACK_ENABLED, &val) !=
-	    QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_BLOCK_ACK_ENABLED");
-		return QDF_STATUS_E_FAILURE;
-	}
+	val = pMac->mlme_cfg->feature_flags.enable_block_ack;
 	selfCaps.delayedBA =
 		(uint16_t) ((val >> WNI_CFG_BLOCK_ACK_ENABLED_DELAYED) & 1);
 	selfCaps.immediateBA =

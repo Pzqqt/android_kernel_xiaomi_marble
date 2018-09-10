@@ -283,11 +283,7 @@ static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 	pMac->lim.gLimIbssStaLimit = val1;
 	ht_cap_info = &pMac->mlme_cfg->ht_caps.ht_cap_info;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_CHANNEL_BONDING_MODE, &val2) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve Channel Bonding CFG");
-		return QDF_STATUS_E_FAILURE;
-	}
+	val2 = pMac->mlme_cfg->feature_flags.channel_bonding_mode;
 
 	/* channel bonding mode could be set to anything from 0 to 4(Titan had these */
 	/* modes But for Taurus we have only two modes: enable(>0) or disable(=0) */
@@ -1902,16 +1898,10 @@ QDF_STATUS lim_update_short_slot(tpAniSirGlobal pMac,
 
 	tSirSmeApNewCaps apNewCaps;
 	uint32_t nShortSlot;
-	uint32_t val = 0;
 	uint32_t phyMode;
 
 	/* Check Admin mode first. If it is disabled just return */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED, &val)
-	    != QDF_STATUS_SUCCESS) {
-		pe_err("cfg get WNI_CFG_11G_SHORT_SLOT_TIME failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (val == false)
+	if (!pMac->mlme_cfg->feature_flags.enable_short_slot_time_11g)
 		return QDF_STATUS_SUCCESS;
 
 	/* Check for 11a mode or 11b mode. In both cases return since slot time is constant and cannot/should not change in beacon */

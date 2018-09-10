@@ -6048,7 +6048,7 @@ populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 	if (val)
 		frame->Capabilities.apsd = 1;
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_BLOCK_ACK_ENABLED, &val);
+	val = mac_ctx->mlme_cfg->feature_flags.enable_block_ack;
 	frame->Capabilities.delayedBA =
 		(uint16_t)((val >> WNI_CFG_BLOCK_ACK_ENABLED_DELAYED) & 1);
 	frame->Capabilities.immediateBA =

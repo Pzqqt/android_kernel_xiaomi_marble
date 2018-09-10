@@ -335,9 +335,7 @@ static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry)
 			pe_err("cfg get qos enabled failed");
 		psessionEntry->limQosEnabled = (val) ? 1 : 0;
 	}
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HCF_ENABLED, &val) != QDF_STATUS_SUCCESS)
-		pe_err("cfg get hcf enabled failed");
-	psessionEntry->limHcfEnabled = (val) ? 1 : 0;
+	psessionEntry->limHcfEnabled = pMac->mlme_cfg->feature_flags.enable_hcf;
 
 	/* AP: WSM should enable HCF as well, for STA enable WSM only after */
 	/* association response is received */

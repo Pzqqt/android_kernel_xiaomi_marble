@@ -66,10 +66,7 @@ lim_is_rsn_ie_valid_in_sme_req_message(tpAniSirGlobal mac_ctx, tpSirRSNie rsn_ie
 			     &privacy) != QDF_STATUS_SUCCESS)
 		pe_warn("Unable to retrieve POI from CFG");
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_RSN_ENABLED, &val)
-		!= QDF_STATUS_SUCCESS)
-		pe_warn("Unable to retrieve RSN_ENABLED from CFG");
-
+	val = mac_ctx->mlme_cfg->feature_flags.enable_rsn;
 	if (rsn_ie->length && (!privacy || !val)) {
 		/* Privacy & RSN not enabled in CFG.
 		 * In order to allow mixed mode for Guest access
@@ -231,10 +228,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
 			     &privacy) != QDF_STATUS_SUCCESS)
 		pe_warn("Unable to retrieve POI from CFG");
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_RSN_ENABLED,
-			     &val) != QDF_STATUS_SUCCESS)
-		pe_warn("Unable to retrieve RSN_ENABLED from CFG");
-
+	val = mac_ctx->mlme_cfg->feature_flags.enable_rsn;
 	if (rsn_ie->length && (!privacy || !val)) {
 		/*
 		 * Privacy & RSN not enabled in CFG.

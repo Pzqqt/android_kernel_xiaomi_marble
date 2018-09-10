@@ -105,8 +105,6 @@ lim_compare_capabilities(tpAniSirGlobal pMac,
 			 tSirMacCapabilityInfo *pLocalCapabs,
 			 tpPESession psessionEntry)
 {
-	uint32_t val;
-
 	if (LIM_IS_AP_ROLE(psessionEntry) &&
 	    (pAssocReq->capabilityInfo.ibss)) {
 		/* Requesting STA asserting IBSS capability. */
@@ -144,13 +142,7 @@ lim_compare_capabilities(tpAniSirGlobal pMac,
 	 */
 	if (LIM_IS_AP_ROLE(psessionEntry) &&
 	    (pLocalCapabs->shortSlotTime == 1)) {
-		if (wlan_cfg_get_int
-			    (pMac, WNI_CFG_ACCEPT_SHORT_SLOT_ASSOC_ONLY,
-			    &val) != QDF_STATUS_SUCCESS) {
-			pe_err("error getting WNI_CFG_FORCE_SHORT_SLOT_ASSOC_ONLY");
-			return false;
-		}
-		if (val) {
+		if (pMac->mlme_cfg->feature_flags.accept_short_slot_assoc) {
 			if (pAssocReq->capabilityInfo.shortSlotTime !=
 			    pLocalCapabs->shortSlotTime) {
 				pe_err("AP rejects association as station doesn't support shortslot time");
@@ -1252,8 +1244,7 @@ lim_decide_short_slot(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 		mac_ctx->lim.gLimNoShortSlotParams.numNonShortSlotSta,
 		sta_ds->staAddr);
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED,
-			 &val);
+	val = mac_ctx->mlme_cfg->feature_flags.enable_short_slot_time_11g;
 
 	if (LIM_IS_AP_ROLE(session_entry)) {
 		non_short_slot_sta_count =

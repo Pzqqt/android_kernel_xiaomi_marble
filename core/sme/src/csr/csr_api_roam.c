@@ -56,6 +56,8 @@
 #include <wlan_action_oui_ucfg_api.h>
 #include <wlan_utility.h>
 #include "wlan_mlme_public_struct.h"
+#include "cfg_mlme.h"
+#include "cfg_ucfg_api.h"
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -1330,8 +1332,10 @@ void csr_set_global_cfgs(tpAniSirGlobal pMac)
 	 * Once session is established we will use the session related params
 	 * stored in PE session for CB mode
 	 */
-	cfg_set_int(pMac, WNI_CFG_CHANNEL_BONDING_MODE,
-			!!(pMac->roam.configParam.channelBondingMode5GHz));
+	if (cfg_in_range(CFG_CHANNEL_BONDING_MODE,
+			 pMac->roam.configParam.channelBondingMode5GHz))
+		pMac->mlme_cfg->feature_flags.channel_bonding_mode =
+				pMac->roam.configParam.channelBondingMode5GHz;
 	cfg_set_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD,
 			pMac->roam.configParam.HeartbeatThresh24);
 
@@ -3020,7 +3024,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->enableVhtFor24GHz;
 		pMac->roam.configParam.enableVhtpAid = pParam->enableVhtpAid;
 		pMac->roam.configParam.enableVhtGid = pParam->enableVhtGid;
-		pMac->roam.configParam.enableAmpduPs = pParam->enableAmpduPs;
 		pMac->roam.configParam.enableHtSmps = pParam->enableHtSmps;
 		pMac->roam.configParam.htSmps = pParam->htSmps;
 		pMac->roam.configParam.send_smps_action =
@@ -4976,7 +4979,7 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 	}
 
 	cfg_set_int(pMac, WNI_CFG_PRIVACY_ENABLED, PrivacyEnabled);
-	cfg_set_int(pMac, WNI_CFG_RSN_ENABLED, RsnEnabled);
+	pMac->mlme_cfg->feature_flags.enable_rsn = RsnEnabled;
 	cfg_set_str(pMac, WNI_CFG_WEP_DEFAULT_KEY_1, Key0, Key0Length);
 	cfg_set_str(pMac, WNI_CFG_WEP_DEFAULT_KEY_2, Key1, Key1Length);
 	cfg_set_str(pMac, WNI_CFG_WEP_DEFAULT_KEY_3, Key2, Key2Length);
@@ -5373,8 +5376,8 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 	/* encryption type */
 	csr_set_cfg_privacy(pMac, pProfile, (bool) pBssConfig->BssCap.privacy);
 	/* short slot time */
-	cfg_set_int(pMac, WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED,
-			pBssConfig->uShortSlotTime);
+	pMac->mlme_cfg->feature_flags.enable_short_slot_time_11g =
+						pBssConfig->uShortSlotTime;
 	/* 11d */
 	cfg_set_int(pMac, WNI_CFG_11D_ENABLED,
 			((pBssConfig->f11hSupport) ? pBssConfig->f11hSupport :
@@ -16047,7 +16050,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			(uint8_t) pMac->roam.configParam.enableVhtGid;
 
 		csr_join_req->enableAmpduPs =
-			(uint8_t) pMac->roam.configParam.enableAmpduPs;
+			(uint8_t)pMac->mlme_cfg->feature_flags.enable_ampdu;
 
 		csr_join_req->enableHtSmps =
 			(uint8_t) pMac->roam.configParam.enableHtSmps;
